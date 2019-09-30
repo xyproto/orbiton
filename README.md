@@ -1,6 +1,6 @@
 # red
 
-`red` is limited, but relatively small and fast text editor.
+`red` is a limited, but relatively small and fast text editor.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
