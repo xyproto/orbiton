@@ -6,6 +6,7 @@ import (
 	"github.com/xyproto/vt100"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -47,17 +48,17 @@ func main() {
 Hotkeys
 
 ctrl-q to quit
+ctrl-s to save
+ctrl-h to toggle syntax highlighting for Go.
+ctrl-f to format the current file with "go fmt" (but not save the result).
 ctrl-a go to start of line
 ctrl-e go to end of line
 ctrl-p scroll up 10 lines
 ctrl-n scroll down 10 lines
 ctrl-l to redraw the screen
 ctrl-k to delete characters to the end of the line
-ctrl-s to save (don't use this on files you care about!)
 ctrl-g to show cursor positions, current letter and word count
 ctrl-d to delete a single character
-ctrl-f to format the current file with "go fmt" (but not save the result).
-ctrl-h to toggle syntax highlighting for Go.
 esc to toggle "text edit mode" and "ASCII graphics mode"
 
 `)
@@ -76,7 +77,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 	c := vt100.NewCanvas()
 
 	// 4 spaces per tab, scroll 10 lines at a time
-	e := NewEditor(4, 10, defaultEditorForeground, defaultEditorBackground, false)
+	e := NewEditor(4, 10, defaultEditorForeground, defaultEditorBackground, strings.HasSuffix(filename, ".go"))
 
 	status := NewStatusBar(defaultEditorStatusForeground, defaultEditorStatusBackground, e, statusDuration)
 
