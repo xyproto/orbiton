@@ -4,7 +4,7 @@ Just a tiny editor.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
-`red` is small and fast, but pretty limited.
+`red` is limited, but small and fast.
 
 ## Screenshot
 
