@@ -4,14 +4,22 @@ Just a tiny editor, using VT100 terminal codes.
 
 For a more modern editor, also written in Go, look into [micro](https://github.com/zyedidia/micro).
 
+`red` is small and fast, but pretty limited. It never asks before saving, so please be careful.
+
+## Installation
+
+You can install `red` with ie. Go 1.12 or later:
+
+    go get -u github.com/xyproto/red
+
 ## Features and limitations
 
+* Will strip trailing whitespace.
 * Has syntax highlighting for Go code.
-* Can run `gofmt`.
+* Can format Go code using `gofmt`.
 * Can be used for drawing "ASCII graphics".
 * The editor must be given a filename at start.
 * The editor is always in "overwrite mode". Characters are never inserted so that other characters are moved around, except for `ctrl-d` for deleting a character.
-* All trailing spaces are removed when saving, but a final newline is kept.
 * `Esc` can be used to toggle "writing mode" where the cursor is limited to the end of lines and "ASCII drawing mode".
 * Can handle text that contains the tab character (`\t`).
 * Keys like `Home` and `End` are not even registered by the key handler (but `ctrl-a` and `ctrl-e` works).
@@ -20,15 +28,14 @@ For a more modern editor, also written in Go, look into [micro](https://github.c
 
 ## Known bugs
 
-* Letters that are not a-z, A-Z or simple punctuation may not be possible to type in.
-* Lines longer than the terminal width are not handled correctly.
+* Lines longer than the terminal width may not be handled correctly.
 * Characters may appear on the screen when keys are pressed. Clear them with `ctrl-l`.
 * Unicode characters may not be displayed correctly when loading a file.
 
 ## Hotkeys
 
 * `ctrl-q` to quit
-* `ctrl-s` to save (don't use this on files you care about!)
+* `ctrl-s` to save
 * `ctrl-h` to toggle syntax highlighting for Go code.
 * `ctrl-f` to format the current file with `go fmt` (but not save the result).
 * `ctrl-a` go to start of line
