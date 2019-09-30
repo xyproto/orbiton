@@ -16,14 +16,6 @@ You can install `red` with ie. Go 1.12 or later:
 
     go get -u github.com/xyproto/red
 
-## Size
-
-The `red` executable is 409k if built with GCC 9.1 (for 64-bit Linux):
-
-    go build -gccgoflags '-Os -s'
-
-For comparison, it's 2.8M when building with Go 1.13 and no particular build flags are given.
-
 ## Features and limitations
 
 * Has syntax highlighting for Go code.
@@ -61,3 +53,17 @@ For comparison, it's 2.8M when building with Go 1.13 and no particular build fla
 * `ctrl-g` to show cursor positions, current letter and word count
 * `ctrl-d` to delete a single character
 * `esc` to toggle "text edit mode" and "ASCII graphics mode"
+
+## Size
+
+The `red` executable is **409k** if built with GCC 9.1 (for 64-bit Linux):
+
+    go build -gccgoflags '-Os -s'
+
+For comparison, it's **2.8M** when building with Go 1.13 and no particular build flags are given.
+
+## General info
+
+* Version: 1.0.0
+* License: MIT
+* Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
