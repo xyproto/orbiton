@@ -1,8 +1,8 @@
 # red
 
-For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
+`red` is limited, but relatively small and fast text editor.
 
-`red` is limited, but relatively small and fast.
+For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
 ## Screenshot
 
