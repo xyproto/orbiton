@@ -1,10 +1,8 @@
 # red
 
-Just a tiny editor.
-
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
-`red` is limited, but small and fast.
+`red` is limited, but relatively small and fast.
 
 ## Screenshot
 
