@@ -10,6 +10,12 @@
 * Uses the spec directly, but memoizes the commands sent to the terminal, for speed.
 * Could be used for building a better `dialog` or `whiptail` utility.
 
+### Editor
+
+A small text editor that can be used for creating ASCII graphics is included. Quick installation:
+
+    go get -u github.com/xyproto/vt100/cmd/red
+
 ### Images
 
 ![shooter example](img/shooter.gif)
