@@ -341,3 +341,7 @@ func (e *Editor) WordCount() int {
 func (e *Editor) ToggleHighlight() {
 	e.highlight = !e.highlight
 }
+
+func (e *Editor) SetHighlight(highlight bool) {
+	e.highlight = highlight
+}

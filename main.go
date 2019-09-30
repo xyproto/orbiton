@@ -77,7 +77,8 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 	c := vt100.NewCanvas()
 
 	// 4 spaces per tab, scroll 10 lines at a time
-	e := NewEditor(4, 10, defaultEditorForeground, defaultEditorBackground, strings.HasSuffix(filename, ".go"))
+	defaultHighlight := strings.HasSuffix(filename, ".go")
+	e := NewEditor(4, 10, defaultEditorForeground, defaultEditorBackground, defaultHighlight)
 
 	status := NewStatusBar(defaultEditorStatusForeground, defaultEditorStatusBackground, e, statusDuration)
 
@@ -115,12 +116,14 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				e.SetColors(defaultEditorForeground, defaultEditorBackground)
 				status.SetColors(defaultEditorStatusForeground, defaultEditorStatusBackground)
 				c.FillBackground(e.bg)
+				e.SetHighlight(defaultHighlight)
 				status.SetMessage("Text edit mode")
 				redraw = true
 			} else {
 				e.SetColors(defaultASCIIGraphicsForeground, defaultASCIIGraphicsBackground)
 				status.SetColors(defaultASCIIGraphicsStatusForeground, defaultASCIIGraphicsStatusBackground)
 				c.FillBackground(e.bg)
+				e.SetHighlight(false)
 				status.SetMessage("ASCII graphics mode")
 				redraw = true
 			}
