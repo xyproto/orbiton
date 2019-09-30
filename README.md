@@ -1,10 +1,10 @@
 # red
 
-Just a tiny editor, using VT100 terminal codes.
+Just a tiny editor.
 
 For a more modern editor, also written in Go, look into [micro](https://github.com/zyedidia/micro).
 
-`red` is small and fast, but pretty limited. It never asks before saving, so please be careful.
+`red` is small and fast, but pretty limited.
 
 ## Installation
 
@@ -14,15 +14,17 @@ You can install `red` with ie. Go 1.12 or later:
 
 ## Features and limitations
 
-* Will strip trailing whitespace.
 * Has syntax highlighting for Go code.
+* Never asks before saving, so please be careful.
+* Only outputs text with VT100 terminal codes.
+* Keys like `Home` and `End` are not even registered by the key handler (but `ctrl-a` and `ctrl-e` works).
+* Will strip trailing whitespace.
 * Can format Go code using `gofmt`.
 * Can be used for drawing "ASCII graphics".
-* The editor must be given a filename at start.
+* Must be given a filename at start.
 * The editor is always in "overwrite mode". Characters are never inserted so that other characters are moved around, except for `ctrl-d` for deleting a character.
 * `Esc` can be used to toggle "writing mode" where the cursor is limited to the end of lines and "ASCII drawing mode".
 * Can handle text that contains the tab character (`\t`).
-* Keys like `Home` and `End` are not even registered by the key handler (but `ctrl-a` and `ctrl-e` works).
 * There is no undo.
 * Expects utilities like `gofmt` to be in `/usr/bin`.
 
