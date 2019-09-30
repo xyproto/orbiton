@@ -17,7 +17,7 @@ You can install `red` with ie. Go 1.12 or later:
 ## Features and limitations
 
 * Has syntax highlighting for Go code.
-* Never asks before saving, so please be careful.
+* Never asks before saving or quitting. Be careful.
 * Only outputs text with VT100 terminal codes.
 * Keys like `Home` and `End` are not even registered by the key handler (but `ctrl-a` and `ctrl-e` works).
 * Will strip trailing whitespace.
