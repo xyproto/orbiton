@@ -2,7 +2,7 @@
 
 Just a tiny editor.
 
-For a more modern editor, also written in Go, look into [micro](https://github.com/zyedidia/micro).
+For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
 `red` is small and fast, but pretty limited.
 
