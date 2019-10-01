@@ -24,17 +24,18 @@ You can install `red` with ie. Go 1.12 or later:
 * Can format Go code using `gofmt`.
 * Can be used for drawing "ASCII graphics".
 * Must be given a filename at start.
-* The editor is always in "overwrite mode". Characters are never inserted. Lines can not be removed. The only time characters are moved areound is with `ctrl-d`, for deleting a character.
 * `Esc` can be used to toggle "writing mode" where the cursor is limited to the end of lines and "ASCII graphics mode".
 * Can handle text that contains the tab character (`\t`).
-* There is no undo!
 * Expects utilities like `gofmt` to be in `/usr/bin`.
+* The editor is always in "overwrite mode". Characters are never inserted. Lines can not be removed. This is unpractical.
+* There is no undo!
 
 ## Known bugs
 
 * Lines longer than the terminal width may not be handled correctly.
 * Characters may appear on the screen when keys are pressed. Clear them with `ctrl-l`.
 * Unicode characters may not be displayed correctly when loading a file.
+* Does not handle terminal resizing, yet.
 
 ## Hotkeys
 
