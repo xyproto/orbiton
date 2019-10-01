@@ -104,6 +104,17 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 	status.Show(c, p)
 	c.Draw()
 
+	// One minute undo buffer
+	u := NewUndo(e, p, 60)
+
+	// Make an undo snapshot every second
+	go func() {
+		for {
+			u.Snapshot(e, p)
+			time.Sleep(1 * time.Second)
+		}
+	}()
+
 	tty, err := vt100.NewTTY()
 	if err != nil {
 		panic(err)
@@ -253,7 +264,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				p.Down(c)
 				p.Home(e)
 				redraw = true
-			} else if e.EOLMode() && dataCursor.X >= len(e.Line(dataCursor.Y)) {
+			} else if e.EOLMode() && dataCursor.X >= (len(e.Line(dataCursor.Y))-1) {
 				// Insert a new line a the current y position, then shift the rest down.
 				p.Down(c)
 				e.InsertLineBelow(p)
@@ -261,12 +272,17 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				p.Home(e)
 				redraw = true
 			} else {
-				p.End(e)
+				p.Down(c)
+				e.InsertLineBelow(p)
+				p.Home(e)
+				//e.CreateLineIfMissing(dataCursor.Y + 1)
+				//p.Home(e)
+				//p.End(e)
 				//e.CreateLineIfMissing(dataCursor.Y + 1)
 				// Move down and end
 				//p.Down(c)
 				//p.End(e)
-				//redraw = true
+				redraw = true
 			}
 		case 127: // backspace
 			// Move back
@@ -315,6 +331,9 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			status.Show(c, p)
 			c.Draw()
 			// Redraw after save, for syntax highlighting
+			redraw = true
+		case 26: // ctrl-z, undo
+			e, p = u.Back()
 			redraw = true
 		case 12: // ctrl-l, redraw
 			redraw = true
