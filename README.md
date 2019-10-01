@@ -24,18 +24,18 @@ You can install `red` with ie. Go 1.12 or later:
 * Can format Go code using `gofmt`.
 * Can be used for drawing "ASCII graphics".
 * Must be given a filename at start.
-* `Esc` can be used to toggle "writing mode" where the cursor is limited to the end of lines and "ASCII graphics mode".
+* `esc` can be used to toggle "writing mode" where the cursor is limited to the end of lines and "ASCII graphics mode".
 * Can handle text that contains the tab character (`\t`).
 * Expects utilities like `gofmt` to be in `/usr/bin`.
-* The editor is always in "overwrite mode". Characters are never inserted. Lines can not be removed. This is unpractical.
+* The editor is always in "overwrite mode". Characters are only inserted with `return` or `ctrl-j`. This is a bit unpractical.
 * There is no undo!
+* Does not handle terminal resizing, yet.
 
 ## Known bugs
 
 * Lines longer than the terminal width may not be handled correctly.
 * Characters may appear on the screen when keys are pressed. Clear them with `ctrl-l`.
 * Unicode characters may not be displayed correctly when loading a file.
-* Does not handle terminal resizing, yet.
 
 ## Hotkeys
 
@@ -48,9 +48,10 @@ You can install `red` with ie. Go 1.12 or later:
 * `ctrl-p` scroll up 10 lines
 * `ctrl-n` scroll down 10 lines
 * `ctrl-l` to redraw the screen
-* `ctrl-k` to delete characters to the end of the line
+* `ctrl-k` to delete characters to the end of the line, then delete the line
 * `ctrl-g` to show cursor positions, current letter and word count
 * `ctrl-d` to delete a single character
+* `ctrl-j` to insert a blank character
 * `esc` to toggle "text edit mode" and "ASCII graphics mode"
 
 ## Size
@@ -63,6 +64,6 @@ For comparison, it's **2.8M** when building with Go 1.13 and no particular build
 
 ## General info
 
-* Version: 1.0.1
+* Version: 1.1.0
 * License: MIT
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

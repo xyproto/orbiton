@@ -271,24 +271,124 @@ func (e *Editor) DeleteRestOfLine(x, y int) {
 	e.lines[y] = e.lines[y][:x]
 }
 
+func (e *Editor) DeleteLine(y int) {
+	endOfDocument := y >= (e.Len() - 1)
+	if endOfDocument {
+		// Just delete this line
+		delete(e.lines, y)
+		return
+	}
+	// Shift all lines after y so that y is overwritten.
+	// Then delete the last item.
+	maxIndex := 0
+	found := false
+	for k, _ := range e.lines {
+		if k > maxIndex {
+			maxIndex = k
+			found = true
+		}
+	}
+	if !found {
+		// This should never happen
+		//panic("IMPOSSIBRUUUU!")
+		return
+	}
+	if _, ok := e.lines[maxIndex]; !ok {
+		// The line numbers and the length of e.lines does not match
+		return
+	}
+	// Shift all lines after y one step closer to y, overwriting y
+	for i := y; i <= (maxIndex - 1); i++ {
+		e.lines[i] = e.lines[i+1]
+	}
+	// delete the final item
+	delete(e.lines, maxIndex)
+}
+
 func (e *Editor) Delete(x, y int) {
-	if e.lines == nil {
-		e.lines = make(map[int][]rune)
-	}
-	_, ok := e.lines[y]
-	if !ok {
+	if _, ok := e.lines[y]; !ok || len(e.lines[y]) == 0 || (len(e.lines[y]) == 1 && unicode.IsSpace(e.lines[y][0])) {
+		// All keys in the map that are > y should be shifted -1.
+		// This also overwrites e.lines[y].
+		e.DeleteLine(y)
 		return
 	}
-	if x >= len(e.lines[y]) {
-		return
-	}
-	// Is it the last index?
-	if x == len(e.lines[y])-1 {
+	if x >= len(e.lines[y])-1 {
+		// on the last index, just use every element but x
 		e.lines[y] = e.lines[y][:x]
+		// check if the next line exists
+		if _, ok := e.lines[y+1]; ok {
+			// then add the contents of the next line, if available
+			nextLine, ok := e.lines[y+1]
+			if ok && len(nextLine) > 0 {
+				e.lines[y] = append(e.lines[y], nextLine...)
+				// then delete the next line
+				e.DeleteLine(y + 1)
+			}
+		}
 		return
 	}
-	// Delete this character
+	// Delete just this character
 	e.lines[y] = append(e.lines[y][:x], e.lines[y][x+1:]...)
+}
+
+func (e *Editor) Empty() bool {
+	l := len(e.lines)
+	if l == 0 {
+		return true
+	} else if l == 1 {
+		// Check the contents of the 1 remaining line,
+		// without specifying a key.
+		for _, v := range e.lines {
+			if len(strings.TrimSpace(string(v))) == 0 {
+				return true
+			}
+			break
+		}
+		return false
+	} else {
+		// > 1 lines
+		return false
+	}
+}
+
+//func (e *Editor) InsertLineAbove(p *Position) {
+//	y := p.DataCursor(e).Y
+//	newmap := make(map[int][]rune)
+//	for i := 0; i < len(e.lines); i++ {
+//		if i < (y - 1) {
+//			newmap[i] = e.lines[i]
+//		} else {
+//			newmap[i+1] = e.lines[i]
+//		}
+//	}
+//	// Create a new line
+//	newmap[y-1] = make([]rune, 0)
+//	e.lines = newmap
+//}
+
+func (e *Editor) InsertLineBelow(p *Position) {
+	y := p.DataCursor(e).Y
+	newLength := len(e.lines) + 1
+	newMap := make(map[int][]rune, newLength)
+	// i <= len(e.lines) goes up to len(e.lines)+1, on purpose
+	for i := 0; i <= newLength; i++ {
+		if i < y {
+			newMap[i] = e.lines[i]
+		} else if i > y {
+			newMap[i+1] = e.lines[i]
+		}
+	}
+	// Create a new line
+	newMap[y] = make([]rune, 0)
+	e.lines = newMap
+	// Skip trailing newlines after this line
+	for i := len(e.lines); i > y; i-- {
+		if len(e.lines[i]) == 0 {
+			delete(e.lines, i)
+		} else {
+			break
+		}
+	}
 }
 
 func (e *Editor) Insert(p *Position, r rune) {

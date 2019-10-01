@@ -8,9 +8,10 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+	"unicode"
 )
 
-const versionString = "red 1.0.1"
+const versionString = "red 1.1.0"
 
 func main() {
 	var (
@@ -56,9 +57,10 @@ ctrl-e go to end of line
 ctrl-p scroll up 10 lines
 ctrl-n scroll down 10 lines
 ctrl-l to redraw the screen
-ctrl-k to delete characters to the end of the line
+ctrl-k to delete characters to the end of the line, then delete the line
 ctrl-g to show cursor positions, current letter and word count
 ctrl-d to delete a single character
+ctrl-j to insert a blank character
 esc to toggle "text edit mode" and "ASCII graphics mode"
 
 `)
@@ -76,8 +78,9 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 
 	c := vt100.NewCanvas()
 
+	defaultHighlight := true // strings.HasSuffix(filename, ".go")
+
 	// 4 spaces per tab, scroll 10 lines at a time
-	defaultHighlight := strings.HasSuffix(filename, ".go")
 	e := NewEditor(4, 10, defaultEditorForeground, defaultEditorBackground, defaultHighlight)
 
 	status := NewStatusBar(defaultEditorStatusForeground, defaultEditorStatusBackground, e, statusDuration)
@@ -143,6 +146,11 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				}
 				redraw = true
 			}
+		case 10: // ctrl-j, insert a blank
+			// Insert a blank
+			e.Insert(p, ' ')
+			p.Next(c, e)
+			redraw = true
 		case 7: // ctrl-g, status information
 			dataCursor := p.DataCursor(e)
 			currentRune := p.Rune(e)
@@ -235,11 +243,31 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			// Move to the next position
 			p.Next(c, e)
 		case 13: // return
+			// if the current line is empty, insert a blank line
 			dataCursor := p.DataCursor(e)
-			e.CreateLineIfMissing(dataCursor.Y + 1)
-			// Move down and home
-			p.Down(c)
-			p.Home(e)
+			emptyLine := 0 == len(strings.TrimSpace(e.Line(dataCursor.Y)))
+			if emptyLine {
+				// Insert a new line a the current y position, then shift the rest down.
+				e.InsertLineBelow(p)
+				// Also move the cursor to the start, since it's now on a new blank line.
+				p.Down(c)
+				p.Home(e)
+				redraw = true
+			} else if e.EOLMode() && dataCursor.X >= len(e.Line(dataCursor.Y)) {
+				// Insert a new line a the current y position, then shift the rest down.
+				p.Down(c)
+				e.InsertLineBelow(p)
+				// Also move the cursor to the start, since it's now on a new blank line.
+				p.Home(e)
+				redraw = true
+			} else {
+				p.End(e)
+				//e.CreateLineIfMissing(dataCursor.Y + 1)
+				// Move down and end
+				//p.Down(c)
+				//p.End(e)
+				//redraw = true
+			}
 		case 127: // backspace
 			// Move back
 			p.Prev(c, e)
@@ -261,9 +289,14 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 		case 5: // ctrl-e, end
 			p.End(e)
 		case 4: // ctrl-d, delete
-			dataCursor := p.DataCursor(e)
-			e.Delete(dataCursor.X, dataCursor.Y)
-			redraw = true
+			if e.Empty() {
+				status.SetMessage("Empty")
+				status.Show(c, p)
+			} else {
+				dataCursor := p.DataCursor(e)
+				e.Delete(dataCursor.X, dataCursor.Y)
+				redraw = true
+			}
 		case 19: // ctrl-s, save
 			err := e.Save(filename, e.eolMode)
 			if err != nil {
@@ -286,10 +319,20 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 		case 12: // ctrl-l, redraw
 			redraw = true
 		case 11: // ctrl-k, delete to end of line
-			dataCursor := p.DataCursor(e)
-			e.DeleteRestOfLine(dataCursor.X, dataCursor.Y)
-			vt100.Do("Erase End of Line")
-			redraw = true
+			if e.Empty() {
+				status.SetMessage("Empty")
+				status.Show(c, p)
+			} else {
+				dataCursor := p.DataCursor(e)
+				e.DeleteRestOfLine(dataCursor.X, dataCursor.Y)
+				if len(strings.TrimRightFunc(e.Line(dataCursor.Y), unicode.IsSpace)) == 0 {
+					// Deleting the rest of the line cleared this line,
+					// so just remove it.
+					e.DeleteLine(dataCursor.Y)
+				}
+				vt100.Do("Erase End of Line")
+				redraw = true
+			}
 		default:
 			if (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') { // letter
 				// Place a letter
