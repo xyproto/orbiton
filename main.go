@@ -276,9 +276,6 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				e.InsertLineBelow(p)
 				p.Home(e)
 				//e.CreateLineIfMissing(dataCursor.Y + 1)
-				//p.Home(e)
-				//p.End(e)
-				//e.CreateLineIfMissing(dataCursor.Y + 1)
 				// Move down and end
 				//p.Down(c)
 				//p.End(e)

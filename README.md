@@ -27,7 +27,7 @@ You can install `red` with ie. Go 1.12 or later:
 * `esc` can be used to toggle "writing mode" where the cursor is limited to the end of lines and "ASCII graphics mode".
 * Can handle text that contains the tab character (`\t`).
 * Expects utilities like `gofmt` to be in `/usr/bin`.
-* The editor is always in "overwrite mode". Characters are only inserted with `return` or `ctrl-j`. This is a bit unpractical.
+* The editor is always in "overwrite mode". Characters are only inserted with `return` or `ctrl-j`.
 * There is no undo!
 * Does not handle terminal resizing, yet.
 
@@ -36,6 +36,7 @@ You can install `red` with ie. Go 1.12 or later:
 * Lines longer than the terminal width may not be handled correctly.
 * Characters may appear on the screen when keys are pressed. Clear them with `ctrl-l`.
 * Unicode characters may not be displayed correctly when loading a file.
+* Inserting new lines with `return` is broken.
 
 ## Hotkeys
 
