@@ -24,28 +24,41 @@ func NewUndo(e *Editor, p *Position, size int) *Undo {
 }
 
 // Save a snapshot, and move to the next position in the circular buffer
-func (u *Undo) Snapshot(e *Editor, p *Position) {
+func (u *Undo) Snapshot(p *Position) {
 	u.mut.Lock()
-	u.editorCopies[u.index] = *e
+
 	u.positionCopies[u.index] = *p
+	u.editorCopies[u.index] = *(p.e)
+	// Go forward 1 step in the circular buffer
 	u.index++
-	// Circular buffer
+	// Circular buffer wrap
 	if u.index == u.size {
 		u.index = 0
 	}
+
 	u.mut.Unlock()
 }
 
 // Restore the previous snapshot, and move to the previous position in the circular buffer
 func (u *Undo) Back() (*Editor, *Position) {
 	u.mut.Lock()
-	e := u.editorCopies[u.index]
-	p := u.positionCopies[u.index]
+
+	// Go back 1 step in the circular buffer
 	u.index--
-	// Circular buffer
-	if u.index == 0 {
+	// Circular buffer wrap
+	if u.index < 0 {
 		u.index = u.size - 1
 	}
+	// Restore the state from this index
+	e := u.editorCopies[u.index]
+	p := u.positionCopies[u.index]
+	// link the Position and Editor structs
+	p.e = &e
+
 	u.mut.Unlock()
 	return &e, &p
+}
+
+func (u *Undo) Position() int {
+	return u.index
 }

@@ -105,15 +105,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 	c.Draw()
 
 	// One minute undo buffer
-	u := NewUndo(e, p, 60)
-
-	// Make an undo snapshot every second
-	go func() {
-		for {
-			u.Snapshot(e, p)
-			time.Sleep(1 * time.Second)
-		}
-	}()
+	undo := NewUndo(e, p, 60)
 
 	tty, err := vt100.NewTTY()
 	if err != nil {
@@ -144,6 +136,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 		case 17: // ctrl-q, quit
 			quit = true
 		case 6: // ctrl-f
+			undo.Snapshot(p)
 			if e.eolMode {
 				err := e.Save("/tmp/_tmp.go", true)
 				if err == nil {
@@ -158,6 +151,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				redraw = true
 			}
 		case 10: // ctrl-j, insert a blank
+			undo.Snapshot(p)
 			// Insert a blank
 			e.Insert(p, ' ')
 			p.Next(c)
@@ -165,7 +159,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 		case 7: // ctrl-g, status information
 			currentRune := p.Rune()
 			if e.EOLMode() {
-				status.SetMessage(fmt.Sprintf("line %d col %d unicode %U wordcount: %d", p.DataY(), p.ViewX(), currentRune, e.WordCount()))
+				status.SetMessage(fmt.Sprintf("line %d col %d unicode %U wordcount: %d undo index: %d", p.DataY(), p.ViewX(), currentRune, e.WordCount(), undo.Position()))
 			} else {
 				if currentRune > 32 {
 					status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %c (%U) wordcount: %d", p.ViewX(), p.ViewY(), p.DataX(), p.DataY(), currentRune, currentRune, e.WordCount()))
@@ -246,12 +240,14 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			e.ToggleHighlight()
 			redraw = true
 		case 32: // space
+			undo.Snapshot(p)
 			// Place a space
 			p.SetRune(' ')
 			p.WriteRune(c)
 			// Move to the next position
 			p.Next(c)
 		case 13: // return
+			undo.Snapshot(p)
 			// if the current line is empty, insert a blank line
 			dataCursor := p.DataCursor()
 			emptyLine := 0 == len(strings.TrimSpace(e.Line(dataCursor.Y)))
@@ -280,6 +276,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				redraw = true
 			}
 		case 127: // backspace
+			undo.Snapshot(p)
 			// Move back
 			p.Prev(c)
 			// Type a blank
@@ -288,6 +285,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			// Delete the blank
 			e.Delete(p)
 		case 9: // tab
+			undo.Snapshot(p)
 			// Place a tab
 			p.SetRune('\t')
 			// Write the spaces that represent the tab
@@ -299,6 +297,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 		case 5: // ctrl-e, end
 			p.End()
 		case 4: // ctrl-d, delete
+			undo.Snapshot(p)
 			if e.Empty() {
 				status.SetMessage("Empty")
 				status.Show(c, p)
@@ -326,11 +325,12 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			// Redraw after save, for syntax highlighting
 			redraw = true
 		case 26: // ctrl-z, undo
-			e, p = u.Back()
+			e, p = undo.Back()
 			redraw = true
 		case 12: // ctrl-l, redraw
 			redraw = true
 		case 11: // ctrl-k, delete to end of line
+			undo.Snapshot(p)
 			if e.Empty() {
 				status.SetMessage("Empty")
 				status.Show(c, p)
@@ -347,6 +347,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			}
 		default:
 			if (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') { // letter
+				undo.Snapshot(p)
 				// Place a letter
 				//e.Insert(p, rune(key))
 				p.SetRune(rune(key))
