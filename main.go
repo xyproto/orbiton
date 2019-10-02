@@ -201,13 +201,14 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 					// Output a helpful message
 					if p.DataY() == 0 {
 						status.SetMessage("Start of text")
+						status.Show(c, p)
 					} else {
 						//status.SetMessage("Top of screen, scroll with ctrl-p")
+						//status.Show(c, p)
 						redraw = p.ScrollUp(c, status, 1)
 						p.Down(c)
 						p.UpEnd(c)
 					}
-					status.Show(c, p)
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
 				if e.EOLMode() && p.AfterLineContents() {
@@ -229,13 +230,14 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 					// Output a helpful message
 					if p.EndOfDocument() {
 						status.SetMessage("End of text")
+						status.Show(c, p)
 					} else {
 						//status.SetMessage("Bottom of screen, scroll with ctrl-n")
+						//status.Show(c, p)
 						redraw = p.ScrollDown(c, status, 1)
 						p.Up()
 						p.DownEnd(c)
 					}
-					status.Show(c, p)
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
 				if e.EOLMode() && p.AfterLineContents() {
