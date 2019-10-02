@@ -8,13 +8,19 @@ import (
 
 // Position represents a position on the screen, including how far down the view has scrolled
 type Position struct {
-	sx     int     // the position of the cursor in the current scrollview
-	sy     int     // the position of the cursor in the current scrollview
-	scroll int     // how far one has scrolled
-	e      *Editor // needed for examining the underlying data
+	sx          int     // the position of the cursor in the current scrollview
+	sy          int     // the position of the cursor in the current scrollview
+	scroll      int     // how far one has scrolled
+	scrollSpeed int     // how many lines to scroll, when scrolling
+	e           *Editor // needed for examining the underlying data
 }
 
-// Based on the position on the screen, find the X position in the data
+// NewPosition returns a new Position struct
+func NewPosition(scrollSpeed int, e *Editor) *Position {
+	return &Position{0, 0, 0, scrollSpeed, e}
+}
+
+// DataX will return the X position in the data (as opposed to the X position in the viewport)
 func (p *Position) DataX() int {
 	if !p.e.eolMode {
 		return p.sx
@@ -44,7 +50,7 @@ func (p *Position) DataX() int {
 	return dataX
 }
 
-// Based on the position on the screen, find the Y position in the data
+// DataY will return the Y position in the data (as opposed to the Y position in the viewport)
 func (p *Position) DataY() int {
 	return p.scroll + p.sy
 }
@@ -84,36 +90,36 @@ func (p *Position) SetOffset(offset int) {
 	p.scroll = offset
 }
 
-// Set a rune at the current data position
+// SetRune will set a rune at the current data position
 func (p *Position) SetRune(r rune) {
 	dataCursor := p.DataCursor()
 	p.e.Set(dataCursor.X, dataCursor.Y, r)
 }
 
-// Get the rune at the current data position
+// Rune will get the rune at the current data position
 func (p *Position) Rune() rune {
 	dataCursor := p.DataCursor()
 	return p.e.Get(dataCursor.X, dataCursor.Y)
 }
 
-// Get the current data line
+// Line will get the current data line, as a string
 func (p *Position) Line() string {
 	dataCursor := p.DataCursor()
 	return p.e.Line(dataCursor.Y)
 }
 
-// Move the cursor the the start of the line (x 0)
+// Home will move the cursor the the start of the line (x = 0)
 func (p *Position) Home() {
 	p.sx = 0
 }
 
-// Move the cursor to the position right after the end of the cirrent line contents
+// End will move the cursor to the position right after the end of the cirrent line contents
 func (p *Position) End() {
 	dataCursor := p.DataCursor()
 	p.sx = p.e.LastScreenPosition(dataCursor.Y, p.e.spacesPerTab) + 1
 }
 
-// Move to the next position in the contents
+// Next will move the cursor to the next position in the contents
 func (p *Position) Next(c *vt100.Canvas) error {
 	dataCursor := p.DataCursor()
 	atTab := p.e.eolMode && ('\t' == p.e.Get(dataCursor.X, dataCursor.Y))
@@ -144,7 +150,7 @@ func (p *Position) Next(c *vt100.Canvas) error {
 	return nil
 }
 
-// Move to the previous position in the contents
+// Prev will move the cursor to the previous position in the contents
 func (p *Position) Prev(c *vt100.Canvas) error {
 	dataCursor := p.DataCursor()
 	atTab := false
@@ -177,6 +183,7 @@ func (p *Position) Prev(c *vt100.Canvas) error {
 	return nil
 }
 
+// Up will move the cursor up
 func (p *Position) Up() error {
 	if p.sy <= 0 {
 		return errors.New("already at the top of the canvas")
@@ -185,6 +192,7 @@ func (p *Position) Up() error {
 	return nil
 }
 
+// Down will move the cursor down
 func (p *Position) Down(c *vt100.Canvas) error {
 	if p.sy >= int(c.H()-1) {
 		return errors.New("already at the bottom of the canvas")
@@ -193,6 +201,7 @@ func (p *Position) Down(c *vt100.Canvas) error {
 	return nil
 }
 
+// ScrollDown will scroll down the given amount of lines given in scrollSpeed
 func (p *Position) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int) bool {
 	// Find out if we can scroll scrollSpeed, or less
 	canScroll := scrollSpeed
@@ -219,6 +228,7 @@ func (p *Position) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed in
 	return true
 }
 
+// ScrollUp will scroll down the given amount of lines given in scrollSpeed
 func (p *Position) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) bool {
 	// Find out if we can scroll scrollSpeed, or less
 	canScroll := scrollSpeed
@@ -253,13 +263,14 @@ func (p *Position) StartOfDocument() bool {
 	return p.sy == 0 && p.scroll == 0
 }
 
-// Check if the cursor is after the current line contents
+// AfterLineContents will check if the cursor is after the current line contents
 func (p *Position) AfterLineContents() bool {
 	dataCursor := p.DataCursor()
 	return p.sx > p.e.LastScreenPosition(dataCursor.Y, p.e.spacesPerTab)
 	//return dataCursor.X > e.LastDataPosition(dataCursor.Y)
 }
 
+// AfterLineContentsPlusOne will check if the cursor is after the current line contents, with a margin of 1
 func (p *Position) AfterLineContentsPlusOne() bool {
 	dataCursor := p.DataCursor()
 	return p.sx > (p.e.LastScreenPosition(dataCursor.Y, p.e.spacesPerTab) + 1)

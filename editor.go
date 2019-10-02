@@ -13,6 +13,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+// Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
 	lines        map[int][]rune
 	eolMode      bool // stop at the end of lines
@@ -20,35 +21,36 @@ type Editor struct {
 	fg           vt100.AttributeColor
 	bg           vt100.AttributeColor
 	spacesPerTab int // how many spaces per tab character
-	scrollSpeed  int // how many lines to scroll, when scrolling
 	highlight    bool
 }
 
-// Takes:
+// NewEditor takes:
 // * the number of spaces per tab (typically 2, 4 or 8)
 // * how many lines the editor should scroll when ctrl-n or ctrl-p are pressed (typically 1, 5 or 10)
 // * foreground color attributes
 // * background color attributes
-func NewEditor(spacesPerTab, scrollSpeed int, fg, bg vt100.AttributeColor, highlight bool) *Editor {
+func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight bool) *Editor {
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
 	e.eolMode = true
 	e.fg = fg
 	e.bg = bg
 	e.spacesPerTab = spacesPerTab
-	e.scrollSpeed = scrollSpeed
 	e.highlight = highlight
 	return e
 }
 
+// EOLMode returns true if the editor is in "text edit mode" and the cursor should not float around
 func (e *Editor) EOLMode() bool {
 	return e.eolMode
 }
 
+// ToggleEOLMode toggles if the editor is in "text edit mode" or "ASCII graphics mode"
 func (e *Editor) ToggleEOLMode() {
 	e.eolMode = !e.eolMode
 }
 
+// Set will store a rune in the editor data, at the given coordinates
 func (e *Editor) Set(x, y int, r rune) {
 	if e.lines == nil {
 		e.lines = make(map[int][]rune)
@@ -70,6 +72,7 @@ func (e *Editor) Set(x, y int, r rune) {
 	e.changed = true
 }
 
+// Get will retrieve a rune from the editor data, at the given coordinates
 func (e *Editor) Get(x, y int) rune {
 	if e.lines == nil {
 		return ' '
@@ -84,8 +87,11 @@ func (e *Editor) Get(x, y int) rune {
 	return runes[x]
 }
 
+// Changed will return true if the contents were changed since last time this function was called
 func (e *Editor) Changed() bool {
-	return e.changed
+	retval := e.changed
+	e.changed = false
+	return retval
 }
 
 // Line returns the contents of line number N, counting from 0
@@ -110,12 +116,12 @@ func (e *Editor) LastDataPosition(n int) int {
 // LastScreenPosition returns the last X index for this line, for the screen (expands tabs)
 // Can be negative, if the line is empty.
 func (e *Editor) LastScreenPosition(n, spacesPerTab int) int {
-	extraSpaceBecauseOfTabs := int(e.Count(n, '\t') * (spacesPerTab - 1))
+	extraSpaceBecauseOfTabs := int(e.Count('\t', n) * (spacesPerTab - 1))
 	return e.LastDataPosition(n) + extraSpaceBecauseOfTabs
 }
 
-// For a given line index, count the number of given runes
-func (e *Editor) Count(n int, r rune) int {
+// Count the number of instances of the rune r in the line n
+func (e *Editor) Count(r rune, n int) int {
 	var counter int
 	line, ok := e.lines[n]
 	if ok {
@@ -148,10 +154,12 @@ func (e *Editor) String() string {
 	return sb.String()
 }
 
+// Clear removes all data from the editor
 func (e *Editor) Clear() {
 	e.lines = make(map[int][]rune)
 }
 
+// Load will try to load a file
 func (e *Editor) Load(filename string) error {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -168,6 +176,7 @@ func (e *Editor) Load(filename string) error {
 	return nil
 }
 
+// Save will try to save a file
 func (e *Editor) Save(filename string, stripTrailingSpaces bool) error {
 	var data []byte
 	if stripTrailingSpaces {
@@ -186,7 +195,7 @@ func (e *Editor) Save(filename string, stripTrailingSpaces bool) error {
 	return ioutil.WriteFile(filename, data, 0664)
 }
 
-// Remove spaces from the end of the given line number
+// TrimSpaceRight will remove spaces from the end of the given line number
 func (e *Editor) TrimSpaceRight(n int) {
 	_, ok := e.lines[n]
 	if !ok {
@@ -204,7 +213,7 @@ func (e *Editor) TrimSpaceRight(n int) {
 	e.lines[n] = e.lines[n][:(lastIndex + 1)]
 }
 
-// Write editor lines from "fromline" to and up to "toline" to the canvas at cx, cy
+// WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error {
 	o := textoutput.NewTextOutput(true, true)
 	tabString := strings.Repeat(" ", e.spacesPerTab)
@@ -258,7 +267,10 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	return nil
 }
 
-func (e *Editor) DeleteRestOfLine(x, y int) {
+// DeleteRestOfLine will delete the rest of the line, from the given position
+func (e *Editor) DeleteRestOfLine(p *Position) {
+	x := p.DataX()
+	y := p.DataY()
 	if e.lines == nil {
 		e.lines = make(map[int][]rune)
 	}
@@ -272,18 +284,19 @@ func (e *Editor) DeleteRestOfLine(x, y int) {
 	e.lines[y] = e.lines[y][:x]
 }
 
-func (e *Editor) DeleteLine(y int) {
-	endOfDocument := y >= (e.Len() - 1)
+// DeleteLine will delete the given line index
+func (e *Editor) DeleteLine(n int) {
+	endOfDocument := n >= (e.Len() - 1)
 	if endOfDocument {
 		// Just delete this line
-		delete(e.lines, y)
+		delete(e.lines, n)
 		return
 	}
 	// Shift all lines after y so that y is overwritten.
 	// Then delete the last item.
 	maxIndex := 0
 	found := false
-	for k, _ := range e.lines {
+	for k := range e.lines {
 		if k > maxIndex {
 			maxIndex = k
 			found = true
@@ -298,18 +311,25 @@ func (e *Editor) DeleteLine(y int) {
 		// The line numbers and the length of e.lines does not match
 		return
 	}
-	// Shift all lines after y one step closer to y, overwriting y
-	for i := y; i <= (maxIndex - 1); i++ {
+	// Shift all lines after n one step closer to n, overwriting e.lines[n]
+	for i := n; i <= (maxIndex - 1); i++ {
 		e.lines[i] = e.lines[i+1]
 	}
 	// delete the final item
 	delete(e.lines, maxIndex)
+
+	// Check if the keys in the map are consistent
+	if err := e.Consistent(); err != nil {
+		vt100.Reset()
+		vt100.Clear()
+		panic(err)
+	}
 }
 
+// Delete will delete a character at the given position
 func (e *Editor) Delete(p *Position) {
-	dataCursor := p.DataCursor()
-	x := dataCursor.X
-	y := dataCursor.Y
+	x := p.DataX()
+	y := p.DataY()
 	if _, ok := e.lines[y]; !ok || len(e.lines[y]) == 0 || (len(e.lines[y]) == 1 && unicode.IsSpace(e.lines[y][0])) {
 		// All keys in the map that are > y should be shifted -1.
 		// This also overwrites e.lines[y].
@@ -333,8 +353,18 @@ func (e *Editor) Delete(p *Position) {
 	}
 	// Delete just this character
 	e.lines[y] = append(e.lines[y][:x], e.lines[y][x+1:]...)
+
+	// Check if the keys in the map are consistent
+	if err := e.Consistent(); err != nil {
+		vt100.Reset()
+		vt100.Clear()
+		panic(err)
+	}
+
 }
 
+// Empty will check if the current editor contents are empty or not.
+// If there's only one line left and it is only whitespace, that will be considered empty as well.
 func (e *Editor) Empty() bool {
 	l := len(e.lines)
 	if l == 0 {
@@ -355,36 +385,42 @@ func (e *Editor) Empty() bool {
 	}
 }
 
-//func (e *Editor) InsertLineAbove(p *Position) {
-//	y := p.DataCursor(e).Y
-//	newmap := make(map[int][]rune)
-//	for i := 0; i < len(e.lines); i++ {
-//		if i < (y - 1) {
-//			newmap[i] = e.lines[i]
-//		} else {
-//			newmap[i+1] = e.lines[i]
-//		}
-//	}
-//	// Create a new line
-//	newmap[y-1] = make([]rune, 0)
-//	e.lines = newmap
-//}
+// Consistent checks if the keys in the hash map are consistent with the line count
+func (e *Editor) Consistent() error {
+	// Check if the keys in the map are consistent
+	for i := 0; i < len(e.lines); i++ {
+		if _, found := e.lines[i]; !found {
+			return fmt.Errorf("line number %d is missing", i)
+		}
+	}
+	return nil
+}
 
+// InsertLineBelow will attempt to insert a new line below the current position
 func (e *Editor) InsertLineBelow(p *Position) {
 	y := p.DataY()
 	newLength := len(e.lines) + 1
 	newMap := make(map[int][]rune, newLength)
-	// i <= len(e.lines) goes up to len(e.lines)+1, on purpose
-	for i := 0; i <= newLength; i++ {
+	for i := 0; i < len(e.lines); i++ {
 		if i < y {
 			newMap[i] = e.lines[i]
+		} else if i == y {
+			// Create a new line
+			newMap[i] = make([]rune, 0)
 		} else if i > y {
 			newMap[i+1] = e.lines[i]
 		}
 	}
-	// Create a new line
-	newMap[y] = make([]rune, 0)
+	// Assign the new map
 	e.lines = newMap
+
+	// Check if the keys in the map are consistent
+	if err := e.Consistent(); err != nil {
+		vt100.Reset()
+		vt100.Clear()
+		panic(err)
+	}
+
 	// Skip trailing newlines after this line
 	for i := len(e.lines); i > y; i-- {
 		if len(e.lines[i]) == 0 {
@@ -395,6 +431,7 @@ func (e *Editor) InsertLineBelow(p *Position) {
 	}
 }
 
+// Insert will insert a rune at the given position
 func (e *Editor) Insert(p *Position, r rune) {
 	dataCursor := p.DataCursor()
 	x := dataCursor.X
@@ -420,8 +457,16 @@ func (e *Editor) Insert(p *Position, r rune) {
 		newline[i] = e.lines[y][i-1]
 	}
 	e.lines[y] = newline
+
+	// Check if the keys in the map are consistent
+	if err := e.Consistent(); err != nil {
+		vt100.Reset()
+		vt100.Clear()
+		panic(err)
+	}
 }
 
+// CreateLineIfMissing will create a line at the given Y index, if it's missing
 func (e *Editor) CreateLineIfMissing(n int) {
 	if e.lines == nil {
 		e.lines = make(map[int][]rune)
@@ -430,8 +475,17 @@ func (e *Editor) CreateLineIfMissing(n int) {
 	if !ok {
 		e.lines[n] = make([]rune, 0)
 	}
+
+	// Check if the keys in the map are consistent
+	if err := e.Consistent(); err != nil {
+		vt100.Reset()
+		vt100.Clear()
+		panic(err)
+	}
 }
 
+// SetColors will set the current editor theme (foreground, background).
+// The background color should be a background attribute (like vt100.BackgroundBlue).
 func (e *Editor) SetColors(fg, bg vt100.AttributeColor) {
 	e.fg = fg
 	e.bg = bg
@@ -442,10 +496,12 @@ func (e *Editor) WordCount() int {
 	return strings.Count(e.String(), " ") + 1
 }
 
+// ToggleHighlight toggles syntax highlighting
 func (e *Editor) ToggleHighlight() {
 	e.highlight = !e.highlight
 }
 
+// SetHighlight enables or disables syntax highlighting
 func (e *Editor) SetHighlight(highlight bool) {
 	e.highlight = highlight
 }

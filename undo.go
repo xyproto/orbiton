@@ -2,8 +2,11 @@ package main
 
 import (
 	"sync"
+
+	"github.com/xyproto/vt100"
 )
 
+// Undo is a struct that can store several states of the editor and position
 type Undo struct {
 	index          int
 	size           int
@@ -12,7 +15,7 @@ type Undo struct {
 	mut            *sync.RWMutex
 }
 
-// New undo take arguments that are only for initializing the undo buffers.
+// NewUndo takes arguments that are only for initializing the undo buffers.
 // The editor and position is used only as a default value for the structs.
 func NewUndo(e *Editor, p *Position, size int) *Undo {
 	u := &Undo{0, size, make([]Editor, size, size), make([]Position, size, size), &sync.RWMutex{}}
@@ -23,7 +26,7 @@ func NewUndo(e *Editor, p *Position, size int) *Undo {
 	return u
 }
 
-// Save a snapshot, and move to the next position in the circular buffer
+// Snapshot will store a snapshot, and move to the next position in the circular buffer
 func (u *Undo) Snapshot(p *Position) {
 	u.mut.Lock()
 
@@ -39,7 +42,7 @@ func (u *Undo) Snapshot(p *Position) {
 	u.mut.Unlock()
 }
 
-// Restore the previous snapshot, and move to the previous position in the circular buffer
+// Back will restore a previous snapshot, and move to the previous position in the circular buffer
 func (u *Undo) Back() (*Editor, *Position) {
 	u.mut.Lock()
 
@@ -56,9 +59,13 @@ func (u *Undo) Back() (*Editor, *Position) {
 	p.e = &e
 
 	u.mut.Unlock()
+
+	vt100.SetXY(uint(p.sx), uint(p.sy))
+
 	return &e, &p
 }
 
-func (u *Undo) Position() int {
+// Index will return the current undo index, in the undo buffers
+func (u *Undo) Index() int {
 	return u.index
 }

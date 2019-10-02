@@ -3,12 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/xyproto/vt100"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/xyproto/vt100"
 )
 
 const versionString = "red 1.1.0"
@@ -81,7 +82,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 	defaultHighlight := true // strings.HasSuffix(filename, ".go")
 
 	// 4 spaces per tab, scroll 10 lines at a time
-	e := NewEditor(4, 10, defaultEditorForeground, defaultEditorBackground, defaultHighlight)
+	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight)
 
 	status := NewStatusBar(defaultEditorStatusForeground, defaultEditorStatusBackground, e, statusDuration)
 
@@ -100,7 +101,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 	} else {
 		status.SetMessage(versionString)
 	}
-	p := &Position{0, 0, 0, e}
+	p := NewPosition(10, e)
 	status.Show(c, p)
 	c.Draw()
 
@@ -159,7 +160,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 		case 7: // ctrl-g, status information
 			currentRune := p.Rune()
 			if e.EOLMode() {
-				status.SetMessage(fmt.Sprintf("line %d col %d unicode %U wordcount: %d undo index: %d", p.DataY(), p.ViewX(), currentRune, e.WordCount(), undo.Position()))
+				status.SetMessage(fmt.Sprintf("line %d col %d unicode %U wordcount: %d undo index: %d", p.DataY(), p.ViewX(), currentRune, e.WordCount(), undo.Index()))
 			} else {
 				if currentRune > 32 {
 					status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %c (%U) wordcount: %d", p.ViewX(), p.ViewY(), p.DataX(), p.DataY(), currentRune, currentRune, e.WordCount()))
@@ -227,12 +228,12 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				p.End()
 			}
 		case 14: // ctrl-n, scroll down
-			redraw = p.ScrollDown(c, status, e.scrollSpeed)
+			redraw = p.ScrollDown(c, status, p.scrollSpeed)
 			if e.EOLMode() && p.AfterLineContents() {
 				p.End()
 			}
 		case 16: // ctrl-p, scroll up
-			redraw = p.ScrollUp(c, status, e.scrollSpeed)
+			redraw = p.ScrollUp(c, status, p.scrollSpeed)
 			if e.EOLMode() && p.AfterLineContents() {
 				p.End()
 			}
@@ -336,7 +337,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				status.Show(c, p)
 			} else {
 				dataCursor := p.DataCursor()
-				e.DeleteRestOfLine(dataCursor.X, dataCursor.Y)
+				e.DeleteRestOfLine(p)
 				if len(strings.TrimRightFunc(e.Line(dataCursor.Y), unicode.IsSpace)) == 0 {
 					// Deleting the rest of the line cleared this line,
 					// so just remove it.
