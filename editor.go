@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/xyproto/syntax"
-	"github.com/xyproto/textoutput"
-	"github.com/xyproto/vt100"
 	"io/ioutil"
 	"strings"
 	"unicode"
+
+	"github.com/xyproto/syntax"
+	"github.com/xyproto/textoutput"
+	"github.com/xyproto/vt100"
 )
 
 type Editor struct {
