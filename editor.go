@@ -108,6 +108,20 @@ func (e *Editor) Line(n int) string {
 	return ""
 }
 
+// ScreenLine returns the screen contents of line number N, counting from 0
+func (e *Editor) ScreenLine(n int) string {
+	line, ok := e.lines[n]
+	if ok {
+		var sb strings.Builder
+		for _, r := range line {
+			sb.WriteRune(r)
+		}
+		tabSpace := strings.Repeat("\t", e.spacesPerTab)
+		return strings.ReplaceAll(sb.String(), "\t", tabSpace)
+	}
+	return ""
+}
+
 // LastDataPosition returns the last X index for this line, for the data (does not expand tabs)
 // Can be negative, if the line is empty.
 func (e *Editor) LastDataPosition(n int) int {

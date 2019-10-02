@@ -15,11 +15,12 @@ type Position struct {
 	scroll      int     // how far one has scrolled
 	scrollSpeed int     // how many lines to scroll, when scrolling
 	e           *Editor // needed for examining the underlying data
+	savedX      int     // for smart down cursor movement
 }
 
 // NewPosition returns a new Position struct
 func NewPosition(scrollSpeed int, e *Editor) *Position {
-	return &Position{0, 0, 0, scrollSpeed, e}
+	return &Position{0, 0, 0, scrollSpeed, e, 0}
 }
 
 // DataX will return the X position in the data (as opposed to the X position in the viewport)
@@ -122,8 +123,105 @@ func (p *Position) Home() {
 
 // End will move the cursor to the position right after the end of the cirrent line contents
 func (p *Position) End() {
-	dataCursor := p.DataCursor()
-	p.sx = p.e.LastScreenPosition(dataCursor.Y, p.e.spacesPerTab) + 1
+	p.sx = p.e.LastScreenPosition(p.DataY(), p.e.spacesPerTab) + 1
+}
+
+// UpEnd will move up and then "intelligently" XD choose an X position
+func (p *Position) UpEnd() error {
+	thisLine := p.e.ScreenLine(p.DataY())
+	thisScreenLineLen := len(thisLine)
+	thisTrimmedScreenLineLen := len(strings.TrimRightFunc(thisLine, unicode.IsSpace))
+
+	prevLine := p.e.ScreenLine(p.DataY() - 1)
+	prevScreenLineLen := len(prevLine)
+	prevTrimmedScreenLineLen := len(strings.TrimRightFunc(prevLine, unicode.IsSpace))
+
+	if thisTrimmedScreenLineLen == 0 && prevTrimmedScreenLineLen == 0 {
+		// both are empty, just don't touch the saved x position
+		err := p.Up()
+		p.End()
+		return err
+	}
+
+	if thisTrimmedScreenLineLen > 0 && prevTrimmedScreenLineLen == 0 {
+		// this line is not empty, but the next is, save the X and move the cursor up and to the end
+		if thisScreenLineLen > 1 && prevScreenLineLen == 0 {
+			p.savedX = p.sx
+		}
+		err := p.Up()
+		p.End()
+		return err
+	}
+
+	if thisTrimmedScreenLineLen > 0 && prevTrimmedScreenLineLen == 1 {
+		// this line is not empty, but the next is almost, save the X and move the cursor up and to the beginning
+		if thisScreenLineLen > 1 && prevScreenLineLen == 0 {
+			p.savedX = p.sx
+		}
+		err := p.Up()
+		p.Home()
+		return err
+	}
+
+	// the line to be moved to is not empty, use the saved x position
+	err := p.Up()
+	if p.sx <= prevScreenLineLen {
+		if thisScreenLineLen == 0 || prevScreenLineLen == 0 {
+			p.sx = p.savedX
+		}
+	} else {
+		p.End()
+	}
+	return err
+}
+
+// DownEnd will move down and then "intelligently" XD choose an X position
+func (p *Position) DownEnd(c *vt100.Canvas) error {
+	thisLine := p.e.ScreenLine(p.DataY())
+	thisScreenLineLen := len(thisLine)
+	thisTrimmedScreenLineLen := len(strings.TrimRightFunc(thisLine, unicode.IsSpace))
+
+	nextLine := p.e.ScreenLine(p.DataY() + 1)
+	nextScreenLineLen := len(nextLine)
+	nextTrimmedScreenLineLen := len(strings.TrimRightFunc(nextLine, unicode.IsSpace))
+
+	if thisTrimmedScreenLineLen == 0 && nextTrimmedScreenLineLen == 0 {
+		// both are empty, just don't touch the saved x position
+		err := p.Down(c)
+		p.End()
+		return err
+	}
+
+	if thisTrimmedScreenLineLen > 0 && nextTrimmedScreenLineLen == 0 {
+		// this line is not empty, but the next is, save the X and move the cursor down and to the end
+		if thisScreenLineLen > 1 && nextScreenLineLen == 0 {
+			p.savedX = p.sx
+		}
+		err := p.Down(c)
+		p.End()
+		return err
+	}
+
+	if thisTrimmedScreenLineLen > 0 && nextTrimmedScreenLineLen == 1 {
+		// this line is not empty, but the next is almost, save the X and move the cursor up and to the beginning
+		if thisScreenLineLen > 1 && nextScreenLineLen == 0 {
+			p.savedX = p.sx
+		}
+		err := p.Down(c)
+		p.Home()
+		return err
+	}
+
+	// the line to be moved to is not empty, use the saved x position
+	err := p.Down(c)
+	if p.sx <= nextScreenLineLen {
+		if thisScreenLineLen == 0 || nextScreenLineLen == 0 {
+			p.sx = p.savedX
+		}
+	} else {
+		p.End()
+	}
+	return err
 }
 
 // Next will move the cursor to the next position in the contents

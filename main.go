@@ -191,19 +191,26 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			}
 		case 253: // up arrow
 			// Move the screen cursor
-			if p.ViewY() == 0 {
-				// If at the top, don't move up, but scroll the contents
-				// Output a helpful message
-				if p.DataY() == 0 {
-					status.SetMessage("Start of text")
-				} else {
-					//status.SetMessage("Top of screen, scroll with ctrl-p")
-					redraw = p.ScrollUp(c, status, 1)
+			if !e.EOLMode() || (e.EOLMode() && p.DataY() > 0) {
+				// Move the position up in the current screen
+				if p.UpEnd() != nil {
+					// If at the top, don't move up, but scroll the contents
+					// Output a helpful message
+					if p.sy == 0 {
+						status.SetMessage("Start of text")
+					} else {
+						//status.SetMessage("Top of screen, scroll with ctrl-p")
+						redraw = p.ScrollUp(c, status, 1)
+					}
+					status.Show(c, p)
 				}
+				// If the cursor is after the length of the current line, move it to the end of the current line
+				if e.EOLMode() && p.AfterLineContents() {
+					p.End()
+				}
+			} else if e.EOLMode() {
+				status.SetMessage("Start of text")
 				status.Show(c, p)
-			} else {
-				// Move the data cursor
-				p.Up()
 			}
 			// If the cursor is after the length of the current line, move it to the end of the current line
 			if e.EOLMode() && p.AfterLineContents() {
@@ -212,8 +219,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 		case 255: // down arrow
 			if !e.EOLMode() || (e.EOLMode() && p.DataY() < e.Len()) {
 				// Move the position down in the current screen
-				err := p.Down(c)
-				if err != nil {
+				if p.DownEnd(c) != nil {
 					// If at the bottom, don't move down, but scroll the contents
 					// Output a helpful message
 					if p.EndOfDocument() {
