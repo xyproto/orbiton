@@ -37,6 +37,8 @@ You can install `red` with ie. Go 1.12 or later:
 * Characters may appear on the screen when keys are pressed. Clear them with `ctrl-l`.
 * Unicode characters may not be displayed correctly when loading a file.
 * Inserting new lines with `return` is broken.
+* Inserting blank characters is broken.
+* The undo feature is broken.
 
 ## Hotkeys
 
@@ -53,6 +55,7 @@ You can install `red` with ie. Go 1.12 or later:
 * `ctrl-g` to show cursor positions, current letter and word count
 * `ctrl-d` to delete a single character
 * `ctrl-j` to insert a blank character
+* `ctrl-z` to undo.
 * `esc` to toggle "text edit mode" and "ASCII graphics mode"
 
 ## Size
