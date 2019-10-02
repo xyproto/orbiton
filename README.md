@@ -27,16 +27,15 @@ You can install `red` with ie. Go 1.12 or later:
 * Can handle text that contains the tab character (`\t`).
 * Expects utilities like `gofmt` to be in `/usr/bin`.
 * Does not handle terminal resizing, yet.
-* * Must be given a filename at start.
+* Must be given a filename at start.
+* No undo, yet.
+* Pressing `return` in the middle of text inserts a blank line on the line underneath instead of moving half of the text down.
 
 ## Known bugs
 
 * Lines longer than the terminal width are not be handled correctly.
 * Random characters may appear on the screen when keys are pressed. Clear them with `ctrl-l`. Terminals are weird.
 * Wide unicode characters are not be displayed correctly.
-* Pressing `tab` when in "ASCII graphics" mode shifts text to the right in an unexpected way.
-* Pressing `return` in the middle of text inserts a blank line on the line underneath instead of moving half of the text down.
-* Undo does not work properly, yet.
 
 ## Hotkeys
 
@@ -66,6 +65,6 @@ For comparison, it's **2.8M** when building with Go 1.13 and no particular build
 
 ## General info
 
-* Version: 1.2.0
+* Version: 1.2.1
 * License: MIT
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
