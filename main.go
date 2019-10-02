@@ -183,7 +183,9 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				p.End()
 			}
 		case 254: // right arrow
-			p.Next(c)
+			if !e.EOLMode() || (e.EOLMode() && p.DataY() < e.Len()) {
+				p.Next(c)
+			}
 			if e.EOLMode() && p.AfterLineContents() {
 				p.End()
 			}
@@ -208,8 +210,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				p.End()
 			}
 		case 255: // down arrow
-			dataCursor := p.DataCursor()
-			if !e.EOLMode() || (e.EOLMode() && dataCursor.Y < e.Len()) {
+			if !e.EOLMode() || (e.EOLMode() && p.DataY() < e.Len()) {
 				// Move the position down in the current screen
 				err := p.Down(c)
 				if err != nil {
@@ -315,12 +316,6 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				p.WriteTab(c)
 				// Move to the next position
 				p.Next(c)
-			} else {
-				// Place a tab
-				p.Prev(c)
-				p.InsertRune('\t')
-				p.WriteTab(c)
-				//vt100.SetXY(uint(p.ViewX()), uint(p.ViewY()))
 			}
 			redraw = true
 		case 1: // ctrl-a, home
@@ -376,12 +371,11 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				status.SetMessage("Empty")
 				status.Show(c, p)
 			} else {
-				dataCursor := p.DataCursor()
 				e.DeleteRestOfLine(p)
 				if e.EOLMode() && p.EmptyLine() {
 					// Deleting the rest of the line cleared this line,
 					// so just remove it.
-					e.DeleteLine(dataCursor.Y)
+					e.DeleteLine(p.DataY())
 				}
 				vt100.Do("Erase End of Line")
 				redraw = true
