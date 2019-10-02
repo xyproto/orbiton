@@ -18,27 +18,25 @@ You can install `red` with ie. Go 1.12 or later:
 
 * Has syntax highlighting for Go code.
 * Never asks before saving or quitting. Be careful.
-* Only outputs text with VT100 terminal codes.
+* Only outputs text with VT100 terminal codes. This may result in weird terminal characters appearing some times, which can be cleared with `ctrl-l`.
 * Keys like `Home` and `End` are not even registered by the key handler (but `ctrl-a` and `ctrl-e` works).
 * Will strip trailing whitespace.
 * Can format Go code using `gofmt`.
 * Can be used for drawing "ASCII graphics".
-* Must be given a filename at start.
 * `esc` can be used to toggle "writing mode" where the cursor is limited to the end of lines and "ASCII graphics mode".
 * Can handle text that contains the tab character (`\t`).
 * Expects utilities like `gofmt` to be in `/usr/bin`.
-* The editor is always in "overwrite mode". Characters are only inserted with `return` or `ctrl-j`.
-* There is no undo!
 * Does not handle terminal resizing, yet.
+* * Must be given a filename at start.
 
 ## Known bugs
 
-* Lines longer than the terminal width may not be handled correctly.
-* Characters may appear on the screen when keys are pressed. Clear them with `ctrl-l`.
-* Unicode characters may not be displayed correctly when loading a file.
-* Inserting new lines with `return` is broken.
-* Inserting blank characters is broken.
-* The undo feature is broken.
+* Lines longer than the terminal width are not be handled correctly.
+* Random characters may appear on the screen when keys are pressed. Clear them with `ctrl-l`. Terminals are weird.
+* Wide unicode characters are not be displayed correctly.
+* Pressing `tab` when in "ASCII graphics" mode shifts text to the right in an unexpected way.
+* Pressing `return` in the middle of text inserts a blank line on the line underneath instead of moving half of the text down.
+* Undo does not work properly, yet.
 
 ## Hotkeys
 

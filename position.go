@@ -2,6 +2,8 @@ package main
 
 import (
 	"errors"
+	"strings"
+	"unicode"
 
 	"github.com/xyproto/vt100"
 )
@@ -94,6 +96,11 @@ func (p *Position) SetOffset(offset int) {
 func (p *Position) SetRune(r rune) {
 	dataCursor := p.DataCursor()
 	p.e.Set(dataCursor.X, dataCursor.Y, r)
+}
+
+// InsertRune will insert a rune at the current data position
+func (p *Position) InsertRune(r rune) {
+	p.e.Insert(p, r)
 }
 
 // Rune will get the rune at the current data position
@@ -287,4 +294,9 @@ func (p *Position) WriteTab(c *vt100.Canvas) {
 	for x := p.sx; x < p.sx+p.e.spacesPerTab; x++ {
 		c.WriteRune(uint(x), uint(p.sy), p.e.fg, p.e.bg, ' ')
 	}
+}
+
+// EmptyLine checks if the current line is empty (and whitespace doesn't count)
+func (p *Position) EmptyLine() bool {
+	return 0 == len(strings.TrimRightFunc(p.e.Line(p.DataY()), unicode.IsSpace))
 }

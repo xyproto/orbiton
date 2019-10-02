@@ -3,11 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
-	"unicode"
 
 	"github.com/xyproto/vt100"
 )
@@ -79,10 +79,10 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 
 	c := vt100.NewCanvas()
 
-	defaultHighlight := true // strings.HasSuffix(filename, ".go")
+	defaultHighlight := strings.Contains(filename, ".")
 
 	// 4 spaces per tab, scroll 10 lines at a time
-	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight)
+	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true)
 
 	status := NewStatusBar(defaultEditorStatusForeground, defaultEditorStatusBackground, e, statusDuration)
 
@@ -105,8 +105,8 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 	status.Show(c, p)
 	c.Draw()
 
-	// One minute undo buffer
-	undo := NewUndo(e, p, 60)
+	// Undo buffer with room for 1000 actions
+	undo := NewUndo(1000)
 
 	tty, err := vt100.NewTTY()
 	if err != nil {
@@ -124,6 +124,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				status.SetColors(defaultEditorStatusForeground, defaultEditorStatusBackground)
 				c.FillBackground(e.bg)
 				e.SetHighlight(defaultHighlight)
+				e.SetInsertMode(true)
 				status.SetMessage("Text edit mode")
 				redraw = true
 			} else {
@@ -131,32 +132,39 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				status.SetColors(defaultASCIIGraphicsStatusForeground, defaultASCIIGraphicsStatusBackground)
 				c.FillBackground(e.bg)
 				e.SetHighlight(false)
+				e.SetInsertMode(false)
 				status.SetMessage("ASCII graphics mode")
 				redraw = true
 			}
 		case 17: // ctrl-q, quit
 			quit = true
 		case 6: // ctrl-f
-			undo.Snapshot(p)
+			undo.Snapshot(c, p, e)
 			if e.eolMode {
-				err := e.Save("/tmp/_tmp.go", true)
+				// Use a globally unique tempfile
+				f, err := ioutil.TempFile("/tmp", "_red*.go")
 				if err == nil {
-					cmd := exec.Command("/usr/bin/gofmt", "-w", "/tmp/_tmp.go")
-					err = cmd.Run()
+					tempFilename := f.Name()
+					err := e.Save(tempFilename, true)
 					if err == nil {
-						e.Load("/tmp/_tmp.go")
+						// Run "go fmt" on the temporary file
+						cmd := exec.Command("/usr/bin/gofmt", "-w", tempFilename)
+						err = cmd.Run()
+						if err == nil {
+							e.Load(tempFilename)
+							// Mark the data as changed, despite just having loaded a file
+							e.changed = true
+						}
+						// Try to remove the temporary file regardless if "gofmt -w" worked out or not
+						_ = os.Remove(tempFilename)
 					}
-					cmd = exec.Command("/usr/bin/rm", "-f", "/tmp/_tmp.go")
-					_ = cmd.Run()
+					// Try to close the file. f.Close() checks if f is nil before closing.
+					_ = f.Close()
+					redraw = true
 				}
-				redraw = true
 			}
-		case 10: // ctrl-j, insert a blank
-			undo.Snapshot(p)
-			// Insert a blank
-			e.Insert(p, ' ')
-			p.Next(c)
-			redraw = true
+		case 10: // ctrl-j, toggle insert mode
+			e.ToggleInsertMode()
 		case 7: // ctrl-g, status information
 			currentRune := p.Rune()
 			if e.EOLMode() {
@@ -241,64 +249,86 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			e.ToggleHighlight()
 			redraw = true
 		case 32: // space
-			undo.Snapshot(p)
+			undo.Snapshot(c, p, e)
 			// Place a space
-			p.SetRune(' ')
+			if e.InsertMode() {
+				p.InsertRune(' ')
+				redraw = true
+			} else {
+				p.SetRune(' ')
+			}
 			p.WriteRune(c)
 			// Move to the next position
 			p.Next(c)
 		case 13: // return
-			undo.Snapshot(p)
+			undo.Snapshot(c, p, e)
 			// if the current line is empty, insert a blank line
 			dataCursor := p.DataCursor()
-			emptyLine := 0 == len(strings.TrimSpace(e.Line(dataCursor.Y)))
-			if emptyLine {
-				// Insert a new line a the current y position, then shift the rest down.
-				e.InsertLineBelow(p)
-				// Also move the cursor to the start, since it's now on a new blank line.
-				p.Down(c)
-				p.Home()
-				redraw = true
-			} else if e.EOLMode() && dataCursor.X >= (len(e.Line(dataCursor.Y))-1) {
-				// Insert a new line a the current y position, then shift the rest down.
-				p.Down(c)
-				e.InsertLineBelow(p)
-				// Also move the cursor to the start, since it's now on a new blank line.
-				p.Home()
-				redraw = true
+			//emptyLine := 0 == len(strings.TrimSpace(e.Line(dataCursor.Y)))
+			if e.EOLMode() {
+				if dataCursor.X >= (len(e.Line(dataCursor.Y)) - 1) {
+					// Insert a new line at the current y position, then shift the rest down.
+					p.Down(c)
+					e.InsertLineBelow(p)
+					// Also move the cursor to the start, since it's now on a new blank line
+					p.Home()
+				} else {
+					// Insert a new line a the current y position, then shift the rest down.
+					e.InsertLineBelow(p)
+					// Also move the cursor to the start, since it's now on a new blank line.
+					p.Down(c)
+					p.Home()
+				}
 			} else {
+				e.CreateLineIfMissing(dataCursor.Y + 1)
 				p.Down(c)
-				e.InsertLineBelow(p)
-				p.Home()
-				//e.CreateLineIfMissing(dataCursor.Y + 1)
-				// Move down and end
-				//p.Down(c)
-				//p.End()
-				redraw = true
 			}
+			redraw = true
 		case 127: // backspace
-			undo.Snapshot(p)
-			// Move back
-			p.Prev(c)
-			// Type a blank
-			p.SetRune(' ')
-			p.WriteRune(c)
-			// Delete the blank
-			e.Delete(p)
+			undo.Snapshot(c, p, e)
+			if e.EOLMode() && len(p.Line()) == 0 {
+				e.DeleteLine(p.DataY())
+				p.Up()
+				p.End()
+			} else {
+				// Move back
+				p.Prev(c)
+				// Type a blank
+				p.SetRune(' ')
+				p.WriteRune(c)
+				if e.EOLMode() {
+					// Delete the blank
+					e.Delete(p)
+				}
+			}
+			redraw = true
 		case 9: // tab
-			undo.Snapshot(p)
-			// Place a tab
-			p.SetRune('\t')
-			// Write the spaces that represent the tab
-			p.WriteTab(c)
-			// Move to the next position
-			p.Next(c)
+			undo.Snapshot(c, p, e)
+			if e.EOLMode() {
+				// Place a tab
+				if e.InsertMode() {
+					p.InsertRune('\t')
+				} else {
+					p.SetRune('\t')
+				}
+				// Write the spaces that represent the tab
+				p.WriteTab(c)
+				// Move to the next position
+				p.Next(c)
+			} else {
+				// Place a tab
+				p.Prev(c)
+				p.InsertRune('\t')
+				p.WriteTab(c)
+				//vt100.SetXY(uint(p.ViewX()), uint(p.ViewY()))
+			}
+			redraw = true
 		case 1: // ctrl-a, home
 			p.Home()
 		case 5: // ctrl-e, end
 			p.End()
 		case 4: // ctrl-d, delete
-			undo.Snapshot(p)
+			undo.Snapshot(c, p, e)
 			if e.Empty() {
 				status.SetMessage("Empty")
 				status.Show(c, p)
@@ -324,21 +354,31 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			status.Show(c, p)
 			c.Draw()
 			// Redraw after save, for syntax highlighting
-			redraw = true
+			//redraw = true
 		case 26: // ctrl-z, undo
-			e, p = undo.Back()
-			redraw = true
+			if undoCanvas, undoPosition, undoEditor, err := undo.Back(); err == nil {
+				// no error
+				*c = *(undoCanvas)
+				*p = *(undoPosition)
+				*e = *(undoEditor)
+				// link the position and editor structs
+				p.e = e
+				// redraw everything
+				c.Draw()
+				vt100.SetXY(uint(p.ViewX()), uint(p.ViewY()))
+				redraw = true
+			}
 		case 12: // ctrl-l, redraw
 			redraw = true
 		case 11: // ctrl-k, delete to end of line
-			undo.Snapshot(p)
+			undo.Snapshot(c, p, e)
 			if e.Empty() {
 				status.SetMessage("Empty")
 				status.Show(c, p)
 			} else {
 				dataCursor := p.DataCursor()
 				e.DeleteRestOfLine(p)
-				if len(strings.TrimRightFunc(e.Line(dataCursor.Y), unicode.IsSpace)) == 0 {
+				if e.EOLMode() && p.EmptyLine() {
 					// Deleting the rest of the line cleared this line,
 					// so just remove it.
 					e.DeleteLine(dataCursor.Y)
@@ -348,17 +388,26 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			}
 		default:
 			if (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') { // letter
-				undo.Snapshot(p)
+				undo.Snapshot(c, p, e)
 				// Place a letter
-				//e.Insert(p, rune(key))
-				p.SetRune(rune(key))
+				if e.InsertMode() {
+					p.InsertRune(rune(key))
+					redraw = true
+				} else {
+					p.SetRune(rune(key))
+				}
 				p.WriteRune(c)
 				// Move to the next position
 				p.Next(c)
 			} else if key != 0 { // any other key
 				// Place *something*
 				r := rune(key)
-				p.SetRune(r)
+				if e.InsertMode() {
+					p.InsertRune(rune(key))
+					redraw = true
+				} else {
+					p.SetRune(rune(key))
+				}
 				p.WriteRune(c)
 				if len(string(r)) > 0 {
 					// Move to the next position
@@ -371,7 +420,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			h := int(c.Height())
 			e.WriteLines(c, 0+p.Offset(), h+p.Offset(), 0, 0)
 			c.Draw()
-			status.Show(c, p)
+			//status.Show(c, p)
 			redraw = false
 		} else if e.Changed() {
 			c.Draw()
