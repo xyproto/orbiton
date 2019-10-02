@@ -182,6 +182,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			if e.EOLMode() && p.AfterLineContents() {
 				p.End()
 			}
+			p.SaveX()
 		case 254: // right arrow
 			if !e.EOLMode() || (e.EOLMode() && p.DataY() < e.Len()) {
 				p.Next(c)
@@ -189,6 +190,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			if e.EOLMode() && p.AfterLineContents() {
 				p.End()
 			}
+			p.SaveX()
 		case 253: // up arrow
 			// Move the screen cursor
 			if !e.EOLMode() || (e.EOLMode() && p.DataY() > 0) {
@@ -201,6 +203,8 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 					} else {
 						//status.SetMessage("Top of screen, scroll with ctrl-p")
 						redraw = p.ScrollUp(c, status, 1)
+						p.Down(c)
+						p.UpEnd(c)
 					}
 					status.Show(c, p)
 				}
@@ -227,6 +231,8 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 					} else {
 						//status.SetMessage("Bottom of screen, scroll with ctrl-n")
 						redraw = p.ScrollDown(c, status, 1)
+						p.Up()
+						p.DownEnd(c)
 					}
 					status.Show(c, p)
 				}

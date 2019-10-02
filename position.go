@@ -134,8 +134,10 @@ func (p *Position) DownEnd(c *vt100.Canvas) error {
 		return err
 	}
 	if p.AfterLineContentsPlusOne() && tmpx > 1 {
-		p.savedX = tmpx
 		p.End()
+		if p.sx != tmpx && p.sx > p.savedX {
+			p.savedX = tmpx
+		}
 	} else {
 		p.sx = p.savedX
 		if p.Rune() == '\t' {
@@ -153,8 +155,10 @@ func (p *Position) UpEnd(c *vt100.Canvas) error {
 		return err
 	}
 	if p.AfterLineContentsPlusOne() && tmpx > 1 {
-		p.savedX = tmpx
 		p.End()
+		if p.sx != tmpx && p.sx > p.savedX {
+			p.savedX = tmpx
+		}
 	} else {
 		p.sx = p.savedX
 		if p.Rune() == '\t' {
@@ -226,6 +230,13 @@ func (p *Position) Prev(c *vt100.Canvas) error {
 		}
 	}
 	return nil
+}
+
+// SaveX will save the current X position, if it's within reason
+func (p *Position) SaveX() {
+	if !p.AfterLineContentsPlusOne() && p.sx > 1 {
+		p.savedX = p.sx
+	}
 }
 
 // Up will move the cursor up
