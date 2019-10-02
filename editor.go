@@ -130,9 +130,27 @@ func (e *Editor) LastDataPosition(n int) int {
 
 // LastScreenPosition returns the last X index for this line, for the screen (expands tabs)
 // Can be negative, if the line is empty.
-func (e *Editor) LastScreenPosition(n, spacesPerTab int) int {
-	extraSpaceBecauseOfTabs := int(e.Count('\t', n) * (spacesPerTab - 1))
+func (e *Editor) LastScreenPosition(n int) int {
+	extraSpaceBecauseOfTabs := int(e.Count('\t', n) * (e.spacesPerTab - 1))
 	return e.LastDataPosition(n) + extraSpaceBecauseOfTabs
+}
+
+// FirstScreenPosition returns the first X index for this line, that is not whitespace.
+func (e *Editor) FirstScreenPosition(n int) int {
+	counter := 0
+	for _, r := range e.Line(n) {
+		if unicode.IsSpace(r) {
+			if r == '\t' {
+				counter += e.spacesPerTab
+			} else {
+				counter++
+			}
+			continue
+		} else {
+			break
+		}
+	}
+	return counter
 }
 
 // Count the number of instances of the rune r in the line n

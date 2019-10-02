@@ -193,7 +193,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			// Move the screen cursor
 			if !e.EOLMode() || (e.EOLMode() && p.DataY() > 0) {
 				// Move the position up in the current screen
-				if p.UpEnd() != nil {
+				if p.UpEnd(c) != nil {
 					// If at the top, don't move up, but scroll the contents
 					// Output a helpful message
 					if p.sy == 0 {

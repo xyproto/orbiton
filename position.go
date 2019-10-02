@@ -123,111 +123,45 @@ func (p *Position) Home() {
 
 // End will move the cursor to the position right after the end of the cirrent line contents
 func (p *Position) End() {
-	p.sx = p.e.LastScreenPosition(p.DataY(), p.e.spacesPerTab) + 1
+	p.sx = p.e.LastScreenPosition(p.DataY()) + 1
 }
 
-// UpEnd will move up and then "intelligently" XD choose an X position
-func (p *Position) UpEnd() error {
-	thisLine := p.e.ScreenLine(p.DataY())
-	thisScreenLineLen := len(thisLine)
-	thisTrimmedScreenLineLen := len(strings.TrimRightFunc(thisLine, unicode.IsSpace))
-
-	prevLine := p.e.ScreenLine(p.DataY() - 1)
-	prevScreenLineLen := len(prevLine)
-	prevTrimmedScreenLineLen := len(strings.TrimRightFunc(prevLine, unicode.IsSpace))
-
-	if thisTrimmedScreenLineLen == 0 && prevTrimmedScreenLineLen == 0 {
-		// both are empty, just don't touch the saved x position
-		err := p.Up()
-		p.End()
-		return err
-	}
-
-	if thisTrimmedScreenLineLen > 0 && prevTrimmedScreenLineLen == 0 {
-		// this line is not empty, but the next is, save the X and move the cursor up and to the end
-		if thisScreenLineLen > 1 && prevScreenLineLen == 0 {
-			p.savedX = p.sx
-		}
-		err := p.Up()
-		p.End()
-		return err
-	}
-
-	if thisTrimmedScreenLineLen > 0 && prevTrimmedScreenLineLen == 1 {
-		// this line is not empty, but the next is almost, save the X and move the cursor up and to the beginning
-		if thisScreenLineLen > 1 && prevScreenLineLen == 0 {
-			p.savedX = p.sx
-		}
-		err := p.Up()
-		p.Home()
-		return err
-	}
-
-	// the line to be moved to is not empty, use the saved x position
-	err := p.Up()
-	if p.sx <= prevScreenLineLen {
-		if thisScreenLineLen == 0 || prevScreenLineLen == 0 {
-			p.sx = p.savedX
-			if p.AfterLineContentsPlusOne() {
-				p.End()
-			}
-		}
-	} else {
-		p.End()
-	}
-	return err
-}
-
-// DownEnd will move down and then "intelligently" XD choose an X position
+// DownEnd will move down and then choose a "smart" X position
 func (p *Position) DownEnd(c *vt100.Canvas) error {
-	thisLine := p.e.ScreenLine(p.DataY())
-	thisScreenLineLen := len(thisLine)
-	thisTrimmedScreenLineLen := len(strings.TrimRightFunc(thisLine, unicode.IsSpace))
-
-	nextLine := p.e.ScreenLine(p.DataY() + 1)
-	nextScreenLineLen := len(nextLine)
-	nextTrimmedScreenLineLen := len(strings.TrimRightFunc(nextLine, unicode.IsSpace))
-
-	if thisTrimmedScreenLineLen == 0 && nextTrimmedScreenLineLen == 0 {
-		// both are empty, just don't touch the saved x position
-		err := p.Down(c)
-		p.End()
-		return err
-	}
-
-	if thisTrimmedScreenLineLen > 0 && nextTrimmedScreenLineLen == 0 {
-		// this line is not empty, but the next is, save the X and move the cursor down and to the end
-		if thisScreenLineLen > 1 && nextScreenLineLen == 0 {
-			p.savedX = p.sx
-		}
-		err := p.Down(c)
-		p.End()
-		return err
-	}
-
-	if thisTrimmedScreenLineLen > 0 && nextTrimmedScreenLineLen == 1 {
-		// this line is not empty, but the next is almost, save the X and move the cursor up and to the beginning
-		if thisScreenLineLen > 1 && nextScreenLineLen == 0 {
-			p.savedX = p.sx
-		}
-		err := p.Down(c)
-		p.Home()
-		return err
-	}
-
-	// the line to be moved to is not empty, use the saved x position
+	tmpx := p.sx
 	err := p.Down(c)
-	if p.sx <= nextScreenLineLen {
-		if thisScreenLineLen == 0 || nextScreenLineLen == 0 {
-			p.sx = p.savedX
-			if p.AfterLineContentsPlusOne() {
-				p.End()
-			}
-		}
-	} else {
-		p.End()
+	if err != nil {
+		return err
 	}
-	return err
+	if p.AfterLineContentsPlusOne() && tmpx > 1 {
+		p.savedX = tmpx
+		p.End()
+	} else {
+		p.sx = p.savedX
+		if p.Rune() == '\t' {
+			p.sx = p.e.FirstScreenPosition(p.DataY())
+		}
+	}
+	return nil
+}
+
+// UpEnd will move up and then choose a "smart" X position
+func (p *Position) UpEnd(c *vt100.Canvas) error {
+	tmpx := p.sx
+	err := p.Up()
+	if err != nil {
+		return err
+	}
+	if p.AfterLineContentsPlusOne() && tmpx > 1 {
+		p.savedX = tmpx
+		p.End()
+	} else {
+		p.sx = p.savedX
+		if p.Rune() == '\t' {
+			p.sx = p.e.FirstScreenPosition(p.DataY())
+		}
+	}
+	return nil
 }
 
 // Next will move the cursor to the next position in the contents
@@ -377,14 +311,14 @@ func (p *Position) StartOfDocument() bool {
 // AfterLineContents will check if the cursor is after the current line contents
 func (p *Position) AfterLineContents() bool {
 	dataCursor := p.DataCursor()
-	return p.sx > p.e.LastScreenPosition(dataCursor.Y, p.e.spacesPerTab)
+	return p.sx > p.e.LastScreenPosition(dataCursor.Y)
 	//return dataCursor.X > e.LastDataPosition(dataCursor.Y)
 }
 
 // AfterLineContentsPlusOne will check if the cursor is after the current line contents, with a margin of 1
 func (p *Position) AfterLineContentsPlusOne() bool {
 	dataCursor := p.DataCursor()
-	return p.sx > (p.e.LastScreenPosition(dataCursor.Y, p.e.spacesPerTab) + 1)
+	return p.sx > (p.e.LastScreenPosition(dataCursor.Y) + 1)
 	//return dataCursor.X > e.LastDataPosition(dataCursor.Y)
 }
 
