@@ -168,6 +168,9 @@ func (p *Position) UpEnd() error {
 	if p.sx <= prevScreenLineLen {
 		if thisScreenLineLen == 0 || prevScreenLineLen == 0 {
 			p.sx = p.savedX
+			if p.AfterLineContentsPlusOne() {
+				p.End()
+			}
 		}
 	} else {
 		p.End()
@@ -217,6 +220,9 @@ func (p *Position) DownEnd(c *vt100.Canvas) error {
 	if p.sx <= nextScreenLineLen {
 		if thisScreenLineLen == 0 || nextScreenLineLen == 0 {
 			p.sx = p.savedX
+			if p.AfterLineContentsPlusOne() {
+				p.End()
+			}
 		}
 	} else {
 		p.End()
