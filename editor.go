@@ -305,7 +305,10 @@ func (e *Editor) DeleteLine(y int) {
 	delete(e.lines, maxIndex)
 }
 
-func (e *Editor) Delete(x, y int) {
+func (e *Editor) Delete(p *Position) {
+	dataCursor := p.DataCursor()
+	x := dataCursor.X
+	y := dataCursor.Y
 	if _, ok := e.lines[y]; !ok || len(e.lines[y]) == 0 || (len(e.lines[y]) == 1 && unicode.IsSpace(e.lines[y][0])) {
 		// All keys in the map that are > y should be shifted -1.
 		// This also overwrites e.lines[y].
@@ -367,7 +370,7 @@ func (e *Editor) Empty() bool {
 //}
 
 func (e *Editor) InsertLineBelow(p *Position) {
-	y := p.DataCursor(e).Y
+	y := p.DataY()
 	newLength := len(e.lines) + 1
 	newMap := make(map[int][]rune, newLength)
 	// i <= len(e.lines) goes up to len(e.lines)+1, on purpose
@@ -392,7 +395,7 @@ func (e *Editor) InsertLineBelow(p *Position) {
 }
 
 func (e *Editor) Insert(p *Position, r rune) {
-	dataCursor := p.DataCursor(e)
+	dataCursor := p.DataCursor()
 	x := dataCursor.X
 	y := dataCursor.Y
 	if e.lines == nil {

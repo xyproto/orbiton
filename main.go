@@ -100,7 +100,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 	} else {
 		status.SetMessage(versionString)
 	}
-	p := &Position{}
+	p := &Position{0, 0, 0, e}
 	status.Show(c, p)
 	c.Draw()
 
@@ -160,42 +160,40 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 		case 10: // ctrl-j, insert a blank
 			// Insert a blank
 			e.Insert(p, ' ')
-			p.Next(c, e)
+			p.Next(c)
 			redraw = true
 		case 7: // ctrl-g, status information
-			dataCursor := p.DataCursor(e)
-			currentRune := p.Rune(e)
+			currentRune := p.Rune()
 			if e.EOLMode() {
-				status.SetMessage(fmt.Sprintf("line %d col %d unicode %U wordcount: %d", dataCursor.Y, p.X(), currentRune, e.WordCount()))
+				status.SetMessage(fmt.Sprintf("line %d col %d unicode %U wordcount: %d", p.DataY(), p.ViewX(), currentRune, e.WordCount()))
 			} else {
 				if currentRune > 32 {
-					status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %c (%U) wordcount: %d", p.X(), p.Y(), dataCursor.X, dataCursor.Y, currentRune, currentRune, e.WordCount()))
+					status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %c (%U) wordcount: %d", p.ViewX(), p.ViewY(), p.DataX(), p.DataY(), currentRune, currentRune, e.WordCount()))
 				} else {
-					status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %U wordcount: %d", p.X(), p.Y(), dataCursor.X, dataCursor.Y, currentRune, e.WordCount()))
+					status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %U wordcount: %d", p.ViewX(), p.ViewY(), p.DataX(), p.DataY(), currentRune, e.WordCount()))
 				}
 			}
 			status.Show(c, p)
 		case 252: // left arrow
-			p.Prev(c, e)
-			if e.EOLMode() && p.AfterLineContents(e) {
-				p.End(e)
+			p.Prev(c)
+			if e.EOLMode() && p.AfterLineContents() {
+				p.End()
 			}
 		case 254: // right arrow
-			p.Next(c, e)
-			if e.EOLMode() && p.AfterLineContents(e) {
-				p.End(e)
+			p.Next(c)
+			if e.EOLMode() && p.AfterLineContents() {
+				p.End()
 			}
 		case 253: // up arrow
-			dataCursor := p.DataCursor(e)
 			// Move the screen cursor
-			if p.Y() == 0 {
+			if p.ViewY() == 0 {
 				// If at the top, don't move up, but scroll the contents
 				// Output a helpful message
-				if dataCursor.Y == 0 {
+				if p.DataY() == 0 {
 					status.SetMessage("Start of text")
 				} else {
 					//status.SetMessage("Top of screen, scroll with ctrl-p")
-					redraw = p.ScrollUp(c, status, e, 1)
+					redraw = p.ScrollUp(c, status, 1)
 				}
 				status.Show(c, p)
 			} else {
@@ -203,111 +201,109 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				p.Up()
 			}
 			// If the cursor is after the length of the current line, move it to the end of the current line
-			if e.EOLMode() && p.AfterLineContents(e) {
-				p.End(e)
+			if e.EOLMode() && p.AfterLineContents() {
+				p.End()
 			}
 		case 255: // down arrow
-			dataCursor := p.DataCursor(e)
+			dataCursor := p.DataCursor()
 			if !e.EOLMode() || (e.EOLMode() && dataCursor.Y < e.Len()) {
 				// Move the position down in the current screen
 				err := p.Down(c)
 				if err != nil {
 					// If at the bottom, don't move down, but scroll the contents
 					// Output a helpful message
-					if p.EndOfDocument(e) {
+					if p.EndOfDocument() {
 						status.SetMessage("End of text")
 					} else {
 						//status.SetMessage("Bottom of screen, scroll with ctrl-n")
-						redraw = p.ScrollDown(c, status, e, 1)
+						redraw = p.ScrollDown(c, status, 1)
 					}
 					status.Show(c, p)
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
-				if e.EOLMode() && p.AfterLineContents(e) {
-					p.End(e)
+				if e.EOLMode() && p.AfterLineContents() {
+					p.End()
 				}
 			} else if e.EOLMode() {
 				status.SetMessage("End of text")
 				status.Show(c, p)
 			}
 			// If the cursor is after the length of the current line, move it to the end of the current line
-			if e.EOLMode() && p.AfterLineContents(e) {
-				p.End(e)
+			if e.EOLMode() && p.AfterLineContents() {
+				p.End()
 			}
 		case 14: // ctrl-n, scroll down
-			redraw = p.ScrollDown(c, status, e, e.scrollSpeed)
-			if e.EOLMode() && p.AfterLineContents(e) {
-				p.End(e)
+			redraw = p.ScrollDown(c, status, e.scrollSpeed)
+			if e.EOLMode() && p.AfterLineContents() {
+				p.End()
 			}
 		case 16: // ctrl-p, scroll up
-			redraw = p.ScrollUp(c, status, e, e.scrollSpeed)
-			if e.EOLMode() && p.AfterLineContents(e) {
-				p.End(e)
+			redraw = p.ScrollUp(c, status, e.scrollSpeed)
+			if e.EOLMode() && p.AfterLineContents() {
+				p.End()
 			}
 		case 8: // ctrl-h, toggle highlight
 			e.ToggleHighlight()
 			redraw = true
 		case 32: // space
 			// Place a space
-			p.SetRune(e, ' ')
-			p.WriteRune(c, e)
+			p.SetRune(' ')
+			p.WriteRune(c)
 			// Move to the next position
-			p.Next(c, e)
+			p.Next(c)
 		case 13: // return
 			// if the current line is empty, insert a blank line
-			dataCursor := p.DataCursor(e)
+			dataCursor := p.DataCursor()
 			emptyLine := 0 == len(strings.TrimSpace(e.Line(dataCursor.Y)))
 			if emptyLine {
 				// Insert a new line a the current y position, then shift the rest down.
 				e.InsertLineBelow(p)
 				// Also move the cursor to the start, since it's now on a new blank line.
 				p.Down(c)
-				p.Home(e)
+				p.Home()
 				redraw = true
 			} else if e.EOLMode() && dataCursor.X >= (len(e.Line(dataCursor.Y))-1) {
 				// Insert a new line a the current y position, then shift the rest down.
 				p.Down(c)
 				e.InsertLineBelow(p)
 				// Also move the cursor to the start, since it's now on a new blank line.
-				p.Home(e)
+				p.Home()
 				redraw = true
 			} else {
 				p.Down(c)
 				e.InsertLineBelow(p)
-				p.Home(e)
+				p.Home()
 				//e.CreateLineIfMissing(dataCursor.Y + 1)
 				// Move down and end
 				//p.Down(c)
-				//p.End(e)
+				//p.End()
 				redraw = true
 			}
 		case 127: // backspace
 			// Move back
-			p.Prev(c, e)
+			p.Prev(c)
 			// Type a blank
-			p.SetRune(e, ' ')
-			p.WriteRune(c, e)
+			p.SetRune(' ')
+			p.WriteRune(c)
 			// Delete the blank
-			dataCursor := p.DataCursor(e)
-			e.Delete(dataCursor.X, dataCursor.Y)
+			e.Delete(p)
 		case 9: // tab
 			// Place a tab
-			p.SetRune(e, '\t')
+			p.SetRune('\t')
 			// Write the spaces that represent the tab
-			p.WriteTab(c, e)
+			p.WriteTab(c)
 			// Move to the next position
-			p.Next(c, e)
+			p.Next(c)
 		case 1: // ctrl-a, home
-			p.Home(e)
+			p.Home()
 		case 5: // ctrl-e, end
-			p.End(e)
+			p.End()
 		case 4: // ctrl-d, delete
 			if e.Empty() {
 				status.SetMessage("Empty")
 				status.Show(c, p)
 			} else {
-				dataCursor := p.DataCursor(e)
-				e.Delete(dataCursor.X, dataCursor.Y)
+				e.Delete(p)
 				redraw = true
 			}
 		case 19: // ctrl-s, save
@@ -320,8 +316,8 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			}
 			// TODO: Go to the end of the document at this point, if needed
 			// Lines may be trimmed for whitespace, so move to the end, if needed
-			if e.EOLMode() && p.AfterLineContents(e) {
-				p.End(e)
+			if e.EOLMode() && p.AfterLineContents() {
+				p.End()
 			}
 			// Status message
 			status.SetMessage("Saved " + filename)
@@ -339,7 +335,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				status.SetMessage("Empty")
 				status.Show(c, p)
 			} else {
-				dataCursor := p.DataCursor(e)
+				dataCursor := p.DataCursor()
 				e.DeleteRestOfLine(dataCursor.X, dataCursor.Y)
 				if len(strings.TrimRightFunc(e.Line(dataCursor.Y), unicode.IsSpace)) == 0 {
 					// Deleting the rest of the line cleared this line,
@@ -353,18 +349,18 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			if (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') { // letter
 				// Place a letter
 				//e.Insert(p, rune(key))
-				p.SetRune(e, rune(key))
-				p.WriteRune(c, e)
+				p.SetRune(rune(key))
+				p.WriteRune(c)
 				// Move to the next position
-				p.Next(c, e)
+				p.Next(c)
 			} else if key != 0 { // any other key
 				// Place *something*
 				r := rune(key)
-				p.SetRune(e, r)
-				p.WriteRune(c, e)
+				p.SetRune(r)
+				p.WriteRune(c)
 				if len(string(r)) > 0 {
 					// Move to the next position
-					p.Next(c, e)
+					p.Next(c)
 				}
 			}
 		}
@@ -378,7 +374,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 		} else if e.Changed() {
 			c.Draw()
 		}
-		vt100.SetXY(uint(p.X()), uint(p.Y()))
+		vt100.SetXY(uint(p.ViewX()), uint(p.ViewY()))
 	}
 	tty.Close()
 	vt100.Close()
