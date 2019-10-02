@@ -199,7 +199,7 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 				if p.UpEnd(c) != nil {
 					// If at the top, don't move up, but scroll the contents
 					// Output a helpful message
-					if p.sy == 0 {
+					if p.DataY() == 0 {
 						status.SetMessage("Start of text")
 					} else {
 						//status.SetMessage("Top of screen, scroll with ctrl-p")
