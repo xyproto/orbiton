@@ -1,5 +1,4 @@
-Find a better underlying structure for all the characters.
+# TODO
 
-Perhaps just a large slice of runes.
-
-Or a large slice of runes, with color attributes per rune.
+- [X] Make the arrow keys work really well.
+- [ ] Perfect the rest.
