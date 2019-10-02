@@ -11,7 +11,6 @@ import (
 type Undo struct {
 	index          int
 	size           int
-	linesCopies    []map[int][]rune
 	editorCopies   []Editor
 	positionCopies []Position
 	canvasCopies   []vt100.Canvas
@@ -22,7 +21,7 @@ type Undo struct {
 // NewUndo takes arguments that are only for initializing the undo buffers.
 // The *Position and *vt100.Canvas is used only as a default values for the elements in the undo buffers.
 func NewUndo(size int) *Undo {
-	return &Undo{0, size, make([]map[int][]rune, size, size), make([]Editor, size, size), make([]Position, size, size), make([]vt100.Canvas, size, size), make([]bool, size, size), &sync.RWMutex{}}
+	return &Undo{0, size, make([]Editor, size, size), make([]Position, size, size), make([]vt100.Canvas, size, size), make([]bool, size, size), &sync.RWMutex{}}
 }
 
 // Snapshot will store a snapshot, and move to the next position in the circular buffer
@@ -33,12 +32,6 @@ func (u *Undo) Snapshot(c *vt100.Canvas, p *Position, e *Editor) {
 	u.positionCopies[u.index] = *p
 	u.editorCopies[u.index] = *e
 	u.hasSomething[u.index] = true
-
-	// Copy over the text lines (slices of runes)
-	u.linesCopies[u.index] = make(map[int][]rune, len(p.e.lines))
-	for i := 0; i < len(u.linesCopies[u.index]); i++ {
-		u.linesCopies[u.index][i] = p.e.lines[i][:]
-	}
 
 	// Go forward 1 step in the circular buffer
 	u.index++
@@ -66,13 +59,6 @@ func (u *Undo) Back() (*vt100.Canvas, *Position, *Editor, error) {
 		c := u.canvasCopies[u.index]
 		e := u.editorCopies[u.index]
 		p := u.positionCopies[u.index]
-		// link the Position and Editor structs
-		p.e = &e
-		// Copy over the text lines (slices of runes)
-		p.e.lines = make(map[int][]rune, len(u.linesCopies[u.index]))
-		for i := 0; i < len(p.e.lines); i++ {
-			p.e.lines[i] = u.linesCopies[u.index][i][:]
-		}
 		return &c, &p, &e, nil
 	}
 	return nil, nil, nil, errors.New("no undo state at this index")

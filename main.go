@@ -61,7 +61,8 @@ ctrl-l to redraw the screen
 ctrl-k to delete characters to the end of the line, then delete the line
 ctrl-g to show cursor positions, current letter and word count
 ctrl-d to delete a single character
-ctrl-j to insert a blank character
+ctrl-j to toggle insert mode
+ctrl-z to undo
 esc to toggle "text edit mode" and "ASCII graphics mode"
 
 `)
@@ -362,19 +363,17 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			c.Draw()
 			// Redraw after save, for syntax highlighting
 			//redraw = true
-		//case 26: // ctrl-z, undo
-		//	if undoCanvas, undoPosition, undoEditor, err := undo.Back(); err == nil {
-		//		// no error
-		//		*c = *(undoCanvas)
-		//		*p = *(undoPosition)
-		//		*e = *(undoEditor)
-		//		// link the position and editor structs
-		//		p.e = e
-		//		// redraw everything
-		//		c.Draw()
-		//		vt100.SetXY(uint(p.ViewX()), uint(p.ViewY()))
-		//		redraw = true
-		//	}
+		case 26: // ctrl-z, undo
+			if undoCanvas, undoPosition, undoEditor, err := undo.Back(); err == nil {
+				// no error
+				*c = *(undoCanvas)
+				*p = *(undoPosition)
+				*e = *(undoEditor)
+				// link the position and editor structs
+				p.e = e
+				// redraw everything
+				redraw = true
+			}
 		case 12: // ctrl-l, redraw
 			redraw = true
 		case 11: // ctrl-k, delete to end of line
