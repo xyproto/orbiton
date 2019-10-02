@@ -319,7 +319,7 @@ func (e *Editor) DeleteLine(n int) {
 	delete(e.lines, maxIndex)
 
 	// Check if the keys in the map are consistent
-	if err := e.Consistent(); err != nil {
+	if err := e.MakeConsistent(); err != nil {
 		vt100.Reset()
 		vt100.Clear()
 		panic(err)
@@ -355,7 +355,7 @@ func (e *Editor) Delete(p *Position) {
 	e.lines[y] = append(e.lines[y][:x], e.lines[y][x+1:]...)
 
 	// Check if the keys in the map are consistent
-	if err := e.Consistent(); err != nil {
+	if err := e.MakeConsistent(); err != nil {
 		vt100.Reset()
 		vt100.Clear()
 		panic(err)
@@ -385,41 +385,47 @@ func (e *Editor) Empty() bool {
 	}
 }
 
-// Consistent checks if the keys in the hash map are consistent with the line count
-func (e *Editor) Consistent() error {
+// MakeConsistent makes sure all the keys in the map that should be there are present, and removes all keys that should not be there
+func (e *Editor) MakeConsistent() error {
 	// Check if the keys in the map are consistent
 	for i := 0; i < len(e.lines); i++ {
 		if _, found := e.lines[i]; !found {
-			return fmt.Errorf("line number %d is missing", i)
+			e.lines[i] = make([]rune, 0)
 		}
+	}
+	i := len(e.lines)
+	if _, found := e.lines[i]; found {
+		return fmt.Errorf("line number %d should not be there", i)
 	}
 	return nil
 }
 
 // InsertLineBelow will attempt to insert a new line below the current position
 func (e *Editor) InsertLineBelow(p *Position) {
+	// Check if the keys in the map are consistent
+	if err := e.MakeConsistent(); err != nil {
+		vt100.Reset()
+		vt100.Clear()
+		panic(err)
+	}
+
 	y := p.DataY()
 	newLength := len(e.lines) + 1
 	newMap := make(map[int][]rune, newLength)
-	for i := 0; i < len(e.lines); i++ {
+	for i := 0; i < newLength; i++ {
 		if i < y {
 			newMap[i] = e.lines[i]
 		} else if i == y {
 			// Create a new line
 			newMap[i] = make([]rune, 0)
 		} else if i > y {
-			newMap[i+1] = e.lines[i]
+			newMap[i] = e.lines[i-1]
 		}
 	}
 	// Assign the new map
 	e.lines = newMap
 
-	// Check if the keys in the map are consistent
-	if err := e.Consistent(); err != nil {
-		vt100.Reset()
-		vt100.Clear()
-		panic(err)
-	}
+	e.MakeConsistent()
 
 	// Skip trailing newlines after this line
 	for i := len(e.lines); i > y; i-- {
@@ -429,6 +435,14 @@ func (e *Editor) InsertLineBelow(p *Position) {
 			break
 		}
 	}
+
+	// Check if the keys in the map are consistent
+	if err := e.MakeConsistent(); err != nil {
+		vt100.Reset()
+		vt100.Clear()
+		panic(err)
+	}
+
 }
 
 // Insert will insert a rune at the given position
@@ -459,7 +473,7 @@ func (e *Editor) Insert(p *Position, r rune) {
 	e.lines[y] = newline
 
 	// Check if the keys in the map are consistent
-	if err := e.Consistent(); err != nil {
+	if err := e.MakeConsistent(); err != nil {
 		vt100.Reset()
 		vt100.Clear()
 		panic(err)
@@ -477,7 +491,7 @@ func (e *Editor) CreateLineIfMissing(n int) {
 	}
 
 	// Check if the keys in the map are consistent
-	if err := e.Consistent(); err != nil {
+	if err := e.MakeConsistent(); err != nil {
 		vt100.Reset()
 		vt100.Clear()
 		panic(err)
