@@ -36,6 +36,7 @@ You can install `red` with ie. Go 1.12 or later:
 * Lines longer than the terminal width are not be handled correctly.
 * Random characters may appear on the screen when keys are pressed. Clear them with `ctrl-l`. Terminals are weird.
 * Wide unicode characters are not be displayed correctly.
+* Typing is slow on large terminals.
 
 ## Hotkeys
 
