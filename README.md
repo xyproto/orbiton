@@ -43,19 +43,19 @@ You can install `red` with ie. Go 1.12 or later:
 
 * `ctrl-q` to quit
 * `ctrl-s` to save
-* `ctrl-h` to toggle syntax highlighting for Go code.
-* `ctrl-f` to format the current file with `go fmt` (but not save the result).
-* `ctrl-a` go to start of line
+* `ctrl-h` to toggle syntax highlighting for Go code
+* `ctrl-f` to format the current file with `go fmt`
+* `ctrl-a` go to start of line, then start of text
 * `ctrl-e` go to end of line
-* `ctrl-p` scroll up 10 lines
-* `ctrl-n` scroll down 10 lines
+* `ctrl-p` to scroll up 10 lines
+* `ctrl-n` to scroll down 10 lines
 * `ctrl-l` to redraw the screen
 * `ctrl-k` to delete characters to the end of the line, then delete the line
 * `ctrl-g` to show cursor positions, current letter and word count
 * `ctrl-d` to delete a single character
 * `ctrl-j` to toggle insert mode
 * `ctrl-z` to undo
-* `esc` to toggle "text edit mode" and "ASCII graphics mode"
+* `esc` to toggle between "text edit mode" and "ASCII graphics mode"
 
 ## Size
 
