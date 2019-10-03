@@ -51,19 +51,19 @@ Hotkeys
 
 ctrl-q to quit
 ctrl-s to save
-ctrl-h to toggle syntax highlighting for Go.
-ctrl-f to format the current file with "go fmt" (but not save the result).
-ctrl-a go to start of line
+ctrl-h to toggle syntax highlighting for Go code
+ctrl-f to format the current file with "go fmt"
+ctrl-a go to start of line, then start of text
 ctrl-e go to end of line
-ctrl-p scroll up 10 lines
-ctrl-n scroll down 10 lines
+ctrl-p to scroll up 10 lines
+ctrl-n to scroll down 10 lines
 ctrl-l to redraw the screen
 ctrl-k to delete characters to the end of the line, then delete the line
 ctrl-g to show cursor positions, current letter and word count
 ctrl-d to delete a single character
 ctrl-j to toggle insert mode
 ctrl-z to undo
-esc to toggle "text edit mode" and "ASCII graphics mode"
+esc to toggle between "text edit mode" and "ASCII graphics mode"
 
 `)
 		return
@@ -166,6 +166,12 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			}
 		case 10: // ctrl-j, toggle insert mode
 			e.ToggleInsertMode()
+			if e.InsertMode() {
+				status.SetMessage("Insert mode")
+			} else {
+				status.SetMessage("Overwrite mode")
+			}
+			status.Show(c, p)
 		case 7: // ctrl-g, status information
 			currentRune := p.Rune()
 			if e.EOLMode() {
@@ -432,7 +438,6 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			h := int(c.Height())
 			e.WriteLines(c, 0+p.Offset(), h+p.Offset(), 0, 0)
 			c.Draw()
-			//status.Show(c, p)
 			redraw = false
 		} else if e.Changed() {
 			c.Draw()
