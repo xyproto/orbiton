@@ -334,7 +334,12 @@ esc to toggle "text edit mode" and "ASCII graphics mode"
 			}
 			redraw = true
 		case 1: // ctrl-a, home
-			p.Home()
+			// toggle between start of line and start of non-whitespace
+			if p.sx == 0 {
+				p.SetX(p.e.FirstScreenPosition(p.DataY()))
+			} else {
+				p.Home()
+			}
 		case 5: // ctrl-e, end
 			p.End()
 		case 4: // ctrl-d, delete
