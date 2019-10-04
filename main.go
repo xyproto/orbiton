@@ -175,12 +175,12 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 		case 7: // ctrl-g, status information
 			currentRune := p.Rune()
 			if e.EOLMode() {
-				status.SetMessage(fmt.Sprintf("line %d col %d unicode %U wordcount: %d undo index: %d", p.DataY(), p.ViewX(), currentRune, e.WordCount(), undo.Index()))
+				status.SetMessage(fmt.Sprintf("line %d col %d unicode %U wordcount: %d undo index: %d", p.DataY(), p.ScreenX(), currentRune, e.WordCount(), undo.Index()))
 			} else {
 				if currentRune > 32 {
-					status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %c (%U) wordcount: %d", p.ViewX(), p.ViewY(), p.DataX(), p.DataY(), currentRune, currentRune, e.WordCount()))
+					status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %c (%U) wordcount: %d", p.ScreenX(), p.ScreenY(), p.DataX(), p.DataY(), currentRune, currentRune, e.WordCount()))
 				} else {
-					status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %U wordcount: %d", p.ViewX(), p.ViewY(), p.DataX(), p.DataY(), currentRune, e.WordCount()))
+					status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %U wordcount: %d", p.ScreenX(), p.ScreenY(), p.DataX(), p.DataY(), currentRune, e.WordCount()))
 				}
 			}
 			status.Show(c, p)
@@ -288,16 +288,24 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			dataCursor := p.DataCursor()
 			//emptyLine := 0 == len(strings.TrimSpace(e.Line(dataCursor.Y)))
 			if e.EOLMode() {
-				if dataCursor.X >= (len(e.Line(dataCursor.Y)) - 1) {
-					// Insert a new line at the current y position, then shift the rest down.
-					p.Down(c)
-					e.InsertLineBelow(p)
-					// Also move the cursor to the start, since it's now on a new blank line
-					p.Home()
-				} else {
+				p.e.FirstScreenPosition(p.DataY())
+				if p.AtStartOfLine() {
 					// Insert a new line a the current y position, then shift the rest down.
 					e.InsertLineBelow(p)
 					// Also move the cursor to the start, since it's now on a new blank line.
+					p.Down(c)
+					p.Home()
+				} else if p.BeforeOrAtStartOfText(e) {
+					x := p.ScreenX()
+					// Insert a new line a the current y position, then shift the rest down.
+					e.InsertLineBelow(p)
+					// Also move the cursor to the start, since it's now on a new blank line.
+					p.Down(c)
+					p.SetX(x)
+				} else {
+					// Split the current line in two
+					e.SplitLine(p)
+					// Move to the start of the next line
 					p.Down(c)
 					p.Home()
 				}
@@ -442,7 +450,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 		} else if e.Changed() {
 			c.Draw()
 		}
-		vt100.SetXY(uint(p.ViewX()), uint(p.ViewY()))
+		vt100.SetXY(uint(p.ScreenX()), uint(p.ScreenY()))
 	}
 	tty.Close()
 	vt100.Close()
