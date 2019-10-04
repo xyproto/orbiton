@@ -18,7 +18,7 @@ You can install `red` with ie. Go 1.12 or later:
 
 * Has syntax highlighting for Go code.
 * Never asks before saving or quitting. Be careful.
-* Only outputs text with VT100 terminal codes. This may result in weird terminal characters appearing some times, which can be cleared with `ctrl-l`.
+* Random characters may appear on the screen when keys are pressed. Clear them with `ctrl-l`.
 * Keys like `Home` and `End` are not even registered by the key handler (but `ctrl-a` and `ctrl-e` works).
 * Will strip trailing whitespace.
 * Can format Go code using `gofmt`.
@@ -28,16 +28,13 @@ You can install `red` with ie. Go 1.12 or later:
 * Expects utilities like `gofmt` to be in `/usr/bin`.
 * Does not handle terminal resizing, yet.
 * Must be given a filename at start.
-* No undo, yet.
-* Pressing `return` in the middle of text inserts a blank line on the line underneath instead of moving half of the text down.
 
 ## Known bugs
 
-* Lines longer than the terminal width are not be handled correctly.
-* Random characters may appear on the screen when keys are pressed. Clear them with `ctrl-l`. Terminals are weird.
-* Wide unicode characters are not be displayed correctly.
-* Typing is slow on large terminals.
-* The undo functionality is broken (shallow copy when it should have been deep).
+* Some letters can not be typed. Like `ø`.
+* Lines longer than the terminal width are not handled correctly.
+* The undo functionality is currently broken.
+* Pressing `return` in the middle of text inserts a blank line on the line underneath instead of moving half of the text down.
 
 ## Hotkeys
 
@@ -67,6 +64,6 @@ For comparison, it's **2.8M** when building with Go 1.13 and no particular build
 
 ## General info
 
-* Version: 1.2.2
+* Version: 1.2.3
 * License: MIT
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
