@@ -301,7 +301,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 			counter += len(line)
 		}
 		// Fill the rest of the line on the canvas with "blanks"
-		for x := counter; x < w; x++ {
+		for x := (counter - 1); x < w; x++ {
 			c.WriteRune(uint(cx+x), uint(cy+y), e.fg, e.bg, ' ')
 		}
 	}
