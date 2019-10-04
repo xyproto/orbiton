@@ -51,6 +51,9 @@ You can install `red` with ie. Go 1.12 or later:
 * `ctrl-d` to delete a single character
 * `ctrl-j` to toggle insert mode
 * `ctrl-z` to undo
+* `ctrl-x' to cut the current line
+* `ctrl-c' to copy the current line
+* `ctrl-v' to paste the current line
 * `esc` to toggle between "text edit mode" and "ASCII graphics mode"
 
 ## Size

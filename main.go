@@ -28,12 +28,13 @@ func main() {
 		defaultASCIIGraphicsStatusForeground = vt100.White
 		defaultASCIIGraphicsStatusBackground = vt100.BackgroundMagenta
 
-		statusDuration = 2200 * time.Millisecond
-
-		redraw = false
-
 		version = flag.Bool("version", false, "show version information")
 		help    = flag.Bool("help", false, "show simple help")
+
+		statusDuration = 2200 * time.Millisecond
+
+		redraw   bool
+		copyLine string
 	)
 
 	flag.Parse()
@@ -62,6 +63,9 @@ ctrl-g to show cursor positions, current letter and word count
 ctrl-d to delete a single character
 ctrl-j to toggle insert mode
 ctrl-z to undo
+ctrl-x to cut the current line
+ctrl-c to copy the current line
+ctrl-v to paste the current line
 esc to toggle between "text edit mode" and "ASCII graphics mode"
 
 `)
@@ -435,6 +439,17 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 				vt100.Do("Erase End of Line")
 				redraw = true
 			}
+		case 24: // ctrl-x, cut
+			y := p.DataY()
+			copyLine = e.Line(y)
+			e.DeleteLine(y)
+			redraw = true
+		case 3: // ctrl-c, copy line
+			copyLine = e.Line(p.DataY())
+			redraw = true
+		case 22: // ctrl-v, paste
+			e.SetLine(p.DataY(), copyLine)
+			redraw = true
 		default:
 			if (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') { // letter
 				undo.Snapshot(c, p, e)
