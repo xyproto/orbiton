@@ -116,7 +116,10 @@ func (e *Editor) ScreenLine(n int) string {
 		for _, r := range line {
 			sb.WriteRune(r)
 		}
-		tabSpace := strings.Repeat("\t", e.spacesPerTab)
+		tabSpace := "\t"
+		if !e.DrawMode() {
+			tabSpace = strings.Repeat("\t", e.spacesPerTab)
+		}
 		return strings.ReplaceAll(sb.String(), "\t", tabSpace)
 	}
 	return ""
@@ -131,17 +134,24 @@ func (e *Editor) LastDataPosition(n int) int {
 // LastScreenPosition returns the last X index for this line, for the screen (expands tabs)
 // Can be negative, if the line is empty.
 func (e *Editor) LastScreenPosition(n int) int {
+	if e.DrawMode() {
+		return e.LastDataPosition(n)
+	}
 	extraSpaceBecauseOfTabs := int(e.Count('\t', n) * (e.spacesPerTab - 1))
 	return e.LastDataPosition(n) + extraSpaceBecauseOfTabs
 }
 
 // FirstScreenPosition returns the first X index for this line, that is not whitespace.
 func (e *Editor) FirstScreenPosition(n int) int {
+	spacesPerTab := e.spacesPerTab
+	if e.DrawMode() {
+		spacesPerTab = 1
+	}
 	counter := 0
 	for _, r := range e.Line(n) {
 		if unicode.IsSpace(r) {
 			if r == '\t' {
-				counter += e.spacesPerTab
+				counter += spacesPerTab
 			} else {
 				counter++
 			}
@@ -257,7 +267,10 @@ func (e *Editor) TrimSpaceRight(n int) {
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error {
 	o := textoutput.NewTextOutput(true, true)
-	tabString := strings.Repeat(" ", e.spacesPerTab)
+	tabString := " "
+	if !e.DrawMode() {
+		tabString = strings.Repeat(" ", e.spacesPerTab)
+	}
 	w := int(c.Width())
 	if fromline >= toline {
 		return errors.New("fromline >= toline in WriteLines")

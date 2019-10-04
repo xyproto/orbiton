@@ -188,11 +188,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 				p.SaveX()
 			} else {
 				// Draw mode
-				x := p.ScreenX()
-				if x > 0 {
-					x--
-					p.SetX(x)
-				}
+				p.Left()
 			}
 		case 254: // right arrow
 			if !e.DrawMode() {
@@ -205,13 +201,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 				p.SaveX()
 			} else {
 				// Draw mode
-				lastX := int(c.Width() - 1)
-				x := p.ScreenX()
-				if x < lastX {
-					x++
-					p.SetX(x)
-				}
-				p.SetX(x)
+				p.Right(c)
 			}
 		case 253: // up arrow
 			// Move the screen cursor
@@ -296,7 +286,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 		case 32: // space
 			undo.Snapshot(c, p, e)
 			// Place a space
-			if e.InsertMode() {
+			if !e.DrawMode() && e.InsertMode() {
 				p.InsertRune(' ')
 				redraw = true
 			} else {
@@ -304,7 +294,9 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			}
 			p.WriteRune(c)
 			// Move to the next position
-			p.Next(c)
+			if !e.DrawMode() {
+				p.Next(c)
+			}
 		case 13: // return
 			undo.Snapshot(c, p, e)
 			// if the current line is empty, insert a blank line
@@ -452,7 +444,11 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 				}
 				p.WriteRune(c)
 				// Move to the next position
-				p.Next(c)
+				if !e.DrawMode() {
+					p.Next(c)
+				} else {
+					p.sx++
+				}
 			} else if key != 0 { // any other key
 				// Place *something*
 				r := rune(key)
@@ -468,7 +464,11 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 				p.WriteRune(c)
 				if len(string(r)) > 0 {
 					// Move to the next position
-					p.Next(c)
+					if !e.DrawMode() {
+						p.Next(c)
+					} else {
+						p.sx++
+					}
 				}
 			}
 		}

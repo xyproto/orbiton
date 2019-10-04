@@ -26,7 +26,7 @@ func NewPosition(scrollSpeed int, e *Editor) *Position {
 // DataX will return the X position in the data (as opposed to the X position in the viewport)
 func (p *Position) DataX() int {
 	if p.e.DrawMode() {
-		return p.sx + strings.Count(p.e.Line(p.sy), "\t")*(p.e.spacesPerTab-1)
+		return p.sx //+ strings.Count(p.e.Line(p.sy), "\t")*(p.e.spacesPerTab-1)
 	}
 	var dataX int
 	// the y position in the data is the lines scrolled + current screen cursor Y position
@@ -171,8 +171,8 @@ func (p *Position) UpEnd(c *vt100.Canvas) error {
 // Next will move the cursor to the next position in the contents
 func (p *Position) Next(c *vt100.Canvas) error {
 	dataCursor := p.DataCursor()
-	atTab := !p.e.DrawMode() && ('\t' == p.e.Get(dataCursor.X, dataCursor.Y))
-	if atTab {
+	atTab := '\t' == p.e.Get(dataCursor.X, dataCursor.Y)
+	if atTab && !p.e.DrawMode() {
 		p.sx += p.e.spacesPerTab
 	} else {
 		p.sx++
@@ -181,7 +181,7 @@ func (p *Position) Next(c *vt100.Canvas) error {
 	w := int(c.W())
 	if (!p.e.DrawMode() && p.AfterLineContentsPlusOne()) || (p.e.DrawMode() && p.sx >= w) {
 		// Undo the move
-		if atTab {
+		if atTab && !p.e.DrawMode() {
 			p.sx -= p.e.spacesPerTab
 		} else {
 			p.sx--
@@ -204,10 +204,10 @@ func (p *Position) Prev(c *vt100.Canvas) error {
 	dataCursor := p.DataCursor()
 	atTab := false
 	if dataCursor.X > 0 {
-		atTab = !p.e.DrawMode() && ('\t' == p.e.Get(dataCursor.X-1, dataCursor.Y))
+		atTab = '\t' == p.e.Get(dataCursor.X-1, dataCursor.Y)
 	}
 	// If at a tab character, move a few more posisions
-	if atTab {
+	if atTab && !p.e.DrawMode() {
 		p.sx -= p.e.spacesPerTab
 	} else {
 		p.sx--
@@ -215,7 +215,7 @@ func (p *Position) Prev(c *vt100.Canvas) error {
 	// Did we move too far?
 	if p.sx < 0 {
 		// Undo the move
-		if atTab {
+		if atTab && !p.e.DrawMode() {
 			p.sx += p.e.spacesPerTab
 		} else {
 			p.sx++
@@ -230,6 +230,19 @@ func (p *Position) Prev(c *vt100.Canvas) error {
 		}
 	}
 	return nil
+}
+
+func (p *Position) Right(c *vt100.Canvas) {
+	lastX := int(c.Width() - 1)
+	if p.sx < lastX {
+		p.sx++
+	}
+}
+
+func (p *Position) Left() {
+	if p.sx > 0 {
+		p.sx--
+	}
 }
 
 // SaveX will save the current X position, if it's within reason
@@ -345,7 +358,11 @@ func (p *Position) WriteRune(c *vt100.Canvas) {
 
 // WriteTab writes spaces when there is a tab character, to the canvas
 func (p *Position) WriteTab(c *vt100.Canvas) {
-	for x := p.sx; x < p.sx+p.e.spacesPerTab; x++ {
+	spacesPerTab := p.e.spacesPerTab
+	if p.e.DrawMode() {
+		spacesPerTab = 1
+	}
+	for x := p.sx; x < p.sx+spacesPerTab; x++ {
 		c.WriteRune(uint(x), uint(p.sy), p.e.fg, p.e.bg, ' ')
 	}
 }
