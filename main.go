@@ -353,8 +353,10 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			} else {
 				p.Home()
 			}
+			p.SaveXRegardless()
 		case 5: // ctrl-e, end
 			p.End()
+			p.SaveXRegardless()
 		case 4: // ctrl-d, delete
 			undo.Snapshot(c, p, e)
 			if e.Empty() {

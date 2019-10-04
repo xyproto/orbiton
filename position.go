@@ -140,7 +140,7 @@ func (p *Position) DownEnd(c *vt100.Canvas) error {
 		}
 	} else {
 		p.sx = p.savedX
-		if p.Rune() == '\t' {
+		if p.sx > 0 && p.Rune() == '\t' {
 			p.sx = p.e.FirstScreenPosition(p.DataY())
 		}
 	}
@@ -161,7 +161,7 @@ func (p *Position) UpEnd(c *vt100.Canvas) error {
 		}
 	} else {
 		p.sx = p.savedX
-		if p.Rune() == '\t' {
+		if p.sx > 0 && p.Rune() == '\t' {
 			p.sx = p.e.FirstScreenPosition(p.DataY())
 		}
 	}
@@ -237,6 +237,11 @@ func (p *Position) SaveX() {
 	if !p.AfterLineContentsPlusOne() && p.sx > 1 {
 		p.savedX = p.sx
 	}
+}
+
+// SaveXRegardless will save the current X position, regardless
+func (p *Position) SaveXRegardless() {
+	p.savedX = p.sx
 }
 
 // Up will move the cursor up
