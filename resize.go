@@ -8,6 +8,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+// SetUpResizeHandler sets up a signal handler for when the terminal is resized
 func SetUpResizeHandler(c *vt100.Canvas, e *Editor, p *Position) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGWINCH)
