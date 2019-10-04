@@ -33,8 +33,7 @@ You can install `red` with ie. Go 1.12 or later:
 
 * Some letters can not be typed. Like `ø`.
 * Lines longer than the terminal width are not handled correctly.
-* The undo functionality is currently broken.
-* Pressing `return` in the middle of text inserts a blank line on the line underneath instead of moving half of the text down.
+* The undo functionality is currently a bit broken.
 
 ## Hotkeys
 
