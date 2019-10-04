@@ -612,6 +612,8 @@ func (e *Editor) InsertMode() bool {
 	return e.insertMode
 }
 
+// SetLine will fill the given line index with the given string.
+// Any previous contents of that line is removed.
 func (e *Editor) SetLine(n int, s string) {
 	e.CreateLineIfMissing(n)
 	e.lines[n] = []rune{}
@@ -624,7 +626,8 @@ func (e *Editor) SetLine(n int, s string) {
 	}
 }
 
-// At the given position, split the line in two, then place the right side of the contents on a new line below
+// SplitLine will, at the given position, split the line in two.
+// The right side of the contents is moved to a new line below.
 func (e *Editor) SplitLine(p *Position) {
 	dataCursor := p.DataCursor()
 	x := dataCursor.X
