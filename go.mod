@@ -5,6 +5,6 @@ go 1.13
 require (
 	github.com/xyproto/syntax v0.0.0-20190927172147-1aa81d747d75
 	github.com/xyproto/textoutput v1.8.0
-	github.com/xyproto/vt100 v1.4.1-0.20190930164325-cae000091b43
-	golang.org/x/sys v0.0.0-20191002091554-b397fe3ad8ed // indirect
+	github.com/xyproto/vt100 v1.5.0
+	golang.org/x/sys v0.0.0-20191003212358-c178f38b412c // indirect
 )

@@ -5,8 +5,8 @@
 * Supports colors and attributes.
 * Developed for Linux. May work on other systems, but there are no guarantees.
 * Can detect the terminal size.
-* Can get key-presses, including arrow keys.
-* Has a Canvas struct, for drawing only the updated characters to the terminal.
+* Can get key-presses, including arrow keys (252, 253, 254, 255).
+* Has a Canvas struct, for drawing only the updated lines to the terminal.
 * Uses the spec directly, but memoizes the commands sent to the terminal, for speed.
 * Could be used for building a better `dialog` or `whiptail` utility.
 
@@ -70,6 +70,6 @@ See `cmd/move` for a more advanced example, where a character can be moved aroun
 
 ### General info
 
-* Version: 1.4.0
+* Version: 1.5.0
 * Licence: MIT
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

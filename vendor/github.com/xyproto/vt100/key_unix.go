@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	defaultTimeout = 10 * time.Millisecond
+	defaultTimeout = 5 * time.Millisecond
 	lastKey        int
 )
 
@@ -94,7 +94,7 @@ func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
 	} else if numRead == 1 {
 		ascii = int(bytes[0])
 	} else {
-		// Two characters read??
+		// TWo characters read??
 	}
 	return
 }

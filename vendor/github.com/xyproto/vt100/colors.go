@@ -336,7 +336,7 @@ func (ac AttributeColor) Combine(other AttributeColor) AttributeColor {
 	}
 	newAttributes := make(AttributeColor, len(amap))
 	index := 0
-	for attr, _ := range amap {
+	for attr := range amap {
 		newAttributes[index] = attr
 		index++
 	}
