@@ -53,7 +53,7 @@ func (e *Editor) ToggleEOLMode() {
 	e.eolMode = !e.eolMode
 }
 
-// Set will store a rune in the editor data, at the given coordinates
+// Set will store a rune in the editor data, at the given data coordinates
 func (e *Editor) Set(x, y int, r rune) {
 	if e.lines == nil {
 		e.lines = make(map[int][]rune)
@@ -271,6 +271,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 			// Shorten the line a bit if it's too wide
 			line = line[:w]
 		}
+		lastIsBlank := false
 		if e.highlight {
 			// Output a syntax highlighted line
 			vt100.SetXY(uint(cx+counter), uint(cy+y))
@@ -291,6 +292,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 						counter += 4
 					} else {
 						c.WriteRune(uint(cx+counter), uint(cy+y), fg, e.bg, letter)
+						lastIsBlank = letter == ' ' || letter == rune(0)
 						counter++
 					}
 				}
@@ -301,7 +303,10 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 			counter += len(line)
 		}
 		// Fill the rest of the line on the canvas with "blanks"
-		for x := (counter - 1); x < w; x++ {
+		if lastIsBlank {
+			counter--
+		}
+		for x := counter; x < w; x++ {
 			c.WriteRune(uint(cx+x), uint(cy+y), e.fg, e.bg, ' ')
 		}
 	}
@@ -591,4 +596,32 @@ func (e *Editor) SetInsertMode(insertMode bool) {
 // InsertMode returns the current state for the insert mode
 func (e *Editor) InsertMode() bool {
 	return e.insertMode
+}
+
+func (e *Editor) SetLine(n int, s string) {
+	e.CreateLineIfMissing(n)
+	e.lines[n] = []rune{}
+	counter := 0
+	// It's important not to use the index value when looping over a string,
+	// unless the byte index is what one's after, as opposed to the rune index.
+	for _, letter := range s {
+		e.Set(counter, n, letter)
+		counter++
+	}
+}
+
+// At the given position, split the line in two, then place the right side of the contents on a new line below
+func (e *Editor) SplitLine(p *Position) {
+	dataCursor := p.DataCursor()
+	x := dataCursor.X
+	y := dataCursor.Y
+	// Get the contents of this line
+	line := e.Line(y)
+	leftContents := strings.TrimRightFunc(line[:x], unicode.IsSpace)
+	rightContents := line[x:]
+	// Insert a new line below this one
+	e.InsertLineBelow(p)
+	// Replace this line with the left contents
+	e.SetLine(y, leftContents)
+	e.SetLine(y+1, rightContents)
 }
