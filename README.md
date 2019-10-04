@@ -49,11 +49,13 @@ You can install `red` with ie. Go 1.12 or later:
 * `ctrl-k` to delete characters to the end of the line, then delete the line
 * `ctrl-g` to show cursor positions, current letter and word count
 * `ctrl-d` to delete a single character
-* `ctrl-j` to toggle insert mode
+* `ctrl-t` to toggle insert mode
 * `ctrl-z` to undo
 * `ctrl-x' to cut the current line
 * `ctrl-c' to copy the current line
 * `ctrl-v' to paste the current line
+* `ctrl-b` to bookmark the current position
+* `ctrl-j` to jump to the bookmark
 * `esc` to toggle between "text edit mode" and "ASCII graphics mode"
 
 ## Size

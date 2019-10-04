@@ -35,6 +35,7 @@ func main() {
 
 		redraw   bool
 		copyLine string
+		bookmark Position
 	)
 
 	flag.Parse()
@@ -61,11 +62,13 @@ ctrl-l to redraw the screen
 ctrl-k to delete characters to the end of the line, then delete the line
 ctrl-g to show cursor positions, current letter and word count
 ctrl-d to delete a single character
-ctrl-j to toggle insert mode
+ctrl-t to toggle insert mode
 ctrl-z to undo
 ctrl-x to cut the current line
 ctrl-c to copy the current line
 ctrl-v to paste the current line
+ctrl-b to bookmark the current position
+ctrl-j to jump to the bookmark
 esc to toggle between "text edit mode" and "ASCII graphics mode"
 
 `)
@@ -166,7 +169,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 				_ = f.Close()
 				redraw = true
 			}
-		case 10: // ctrl-j, toggle insert mode
+		case 20: // ctrl-t, toggle insert mode
 			e.ToggleInsertMode()
 			if e.InsertMode() {
 				status.SetMessage("Insert mode")
@@ -304,8 +307,8 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			// Move to the next position
 			if !e.DrawMode() {
 				p.Next(c)
-			} else {
-				p.Right(c)
+				//} else {
+				//	p.Right(c)
 			}
 		case 13: // return
 			undo.Snapshot(c, p, e)
@@ -450,6 +453,13 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 		case 22: // ctrl-v, paste
 			e.SetLine(p.DataY(), copyLine)
 			redraw = true
+		case 2: // ctrl-b, bookmark
+			bookmark = *p
+		case 10: // ctrl-j, jump to bookmark
+			if bookmark.e != nil {
+				*p = bookmark
+				redraw = true
+			}
 		default:
 			if (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') { // letter
 				undo.Snapshot(c, p, e)
@@ -464,11 +474,11 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 					redraw = true
 				}
 				p.WriteRune(c)
-				// Move to the next position
 				if !e.DrawMode() {
+					// Move to the next position
 					p.Next(c)
-				} else {
-					p.Right(c)
+					//} else {
+					//	p.Right(c)
 				}
 			} else if key != 0 { // any other key
 				// Place *something*
@@ -484,11 +494,11 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 				}
 				p.WriteRune(c)
 				if len(string(r)) > 0 {
-					// Move to the next position
 					if !e.DrawMode() {
+						// Move to the next position
 						p.Next(c)
-					} else {
-						p.Right(c)
+						//} else {
+						//	p.Right(c)
 					}
 				}
 			}
