@@ -42,6 +42,7 @@ func (sb *StatusBar) Clear(c *vt100.Canvas) {
 	// place all characters back in the canvas, but only for the last line
 	h := int(c.H())
 	sb.editor.WriteLines(c, (h-1)+sb.offset, h+sb.offset, 0, h-1)
+	c.Draw()
 }
 
 // Show will draw a status message, then clear it after a certain delay

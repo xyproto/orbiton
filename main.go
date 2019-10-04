@@ -30,7 +30,6 @@ func main() {
 
 		statusDuration = 2200 * time.Millisecond
 
-		//offset = 0
 		redraw = false
 
 		version = flag.Bool("version", false, "show version information")
