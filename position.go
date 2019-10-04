@@ -58,13 +58,13 @@ func (p *Position) DataY() int {
 	return p.scroll + p.sy
 }
 
-// ViewX returns the screen X position in the current view
-func (p *Position) ViewX() int {
+// ScreenX returns the screen X position in the current view
+func (p *Position) ScreenX() int {
 	return p.sx
 }
 
-// ViewY returns the screen Y position in the current view
-func (p *Position) ViewY() int {
+// ScreenY returns the screen Y position in the current view
+func (p *Position) ScreenY() int {
 	return p.sy
 }
 
@@ -348,4 +348,24 @@ func (p *Position) WriteTab(c *vt100.Canvas) {
 // EmptyLine checks if the current line is empty (and whitespace doesn't count)
 func (p *Position) EmptyLine() bool {
 	return 0 == len(strings.TrimRightFunc(p.e.Line(p.DataY()), unicode.IsSpace))
+}
+
+// AtStartOfLine returns true if the position is at the very start of the line, regardless of whitespace
+func (p *Position) AtStartOfLine() bool {
+	return p.sx == 0
+}
+
+// AtStartOfText returns true if the position is at the start of the text for this line
+func (p *Position) AtStartOfText(e *Editor) bool {
+	return p.sx == p.e.FirstScreenPosition(p.DataY())
+}
+
+// BeforeStartOfText returns true if the position is before the start of the text for this line
+func (p *Position) BeforeStartOfText(e *Editor) bool {
+	return p.sx < p.e.FirstScreenPosition(p.DataY())
+}
+
+// BeforeOrAtStartOfText returns true if the position is before or at the start of the text for this line
+func (p *Position) BeforeOrAtStartOfText(e *Editor) bool {
+	return p.sx <= p.e.FirstScreenPosition(p.DataY())
 }
