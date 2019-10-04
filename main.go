@@ -293,9 +293,14 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 				p.SetRune(' ')
 			}
 			p.WriteRune(c)
+			if e.DrawMode() {
+				redraw = true
+			}
 			// Move to the next position
 			if !e.DrawMode() {
 				p.Next(c)
+			} else {
+				p.Right(c)
 			}
 		case 13: // return
 			undo.Snapshot(c, p, e)
@@ -364,7 +369,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			redraw = true
 		case 1: // ctrl-a, home
 			// toggle between start of line and start of non-whitespace
-			if p.sx == 0 {
+			if p.AtStartOfLine() {
 				p.SetX(p.e.FirstScreenPosition(p.DataY()))
 			} else {
 				p.Home()
@@ -447,7 +452,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 				if !e.DrawMode() {
 					p.Next(c)
 				} else {
-					p.sx++
+					p.Right(c)
 				}
 			} else if key != 0 { // any other key
 				// Place *something*
@@ -467,7 +472,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 					if !e.DrawMode() {
 						p.Next(c)
 					} else {
-						p.sx++
+						p.Right(c)
 					}
 				}
 			}

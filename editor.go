@@ -280,17 +280,17 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	for y := 0; y < numlines; y++ {
 		counter := 0
 		line := strings.ReplaceAll(e.Line(y+offset), "\t", tabString)
-		if len(line) >= w {
-			// Shorten the line a bit if it's too wide
-			line = line[:w]
+		screenLine := strings.TrimRightFunc(line, unicode.IsSpace)
+		if len(screenLine) >= w {
+			screenLine = screenLine[:w]
 		}
-		lastIsBlank := false
 		if e.highlight {
 			// Output a syntax highlighted line
 			vt100.SetXY(uint(cx+counter), uint(cy+y))
 			if textWithTags, err := syntax.AsText([]byte(line)); err != nil {
-				fmt.Println(line)
-				counter += len(line)
+				// Only output the line up to the width of the canvas
+				fmt.Println(screenLine)
+				counter += len(screenLine)
 			} else {
 				// Slice of runes and color attributes
 				charactersAndAttributes := o.Extract(o.DarkTags(string(textWithTags)))
@@ -302,23 +302,24 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					}
 					if letter == '\t' {
 						c.Write(uint(cx+counter), uint(cy+y), fg, e.bg, tabString)
-						counter += 4
+						if e.DrawMode() {
+							counter++
+						} else {
+							counter += e.spacesPerTab
+						}
 					} else {
 						c.WriteRune(uint(cx+counter), uint(cy+y), fg, e.bg, letter)
-						lastIsBlank = letter == ' ' || letter == rune(0)
 						counter++
 					}
 				}
 			}
 		} else {
 			// Output a regular line
-			c.Write(uint(cx+counter), uint(cy+y), e.fg, e.bg, line)
-			counter += len(line)
+			c.Write(uint(cx+counter), uint(cy+y), e.fg, e.bg, screenLine)
+			counter += len([]rune(screenLine))
 		}
+		//length := len([]rune(screenLine)) + strings.Count(screenLine, "\t")*(e.spacesPerTab-1)
 		// Fill the rest of the line on the canvas with "blanks"
-		if lastIsBlank {
-			counter--
-		}
 		for x := counter; x < w; x++ {
 			c.WriteRune(uint(cx+x), uint(cy+y), e.fg, e.bg, ' ')
 		}
