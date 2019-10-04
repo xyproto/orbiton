@@ -315,7 +315,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			// if the current line is empty, insert a blank line
 			dataCursor := p.DataCursor()
 			//emptyLine := 0 == len(strings.TrimSpace(e.Line(dataCursor.Y)))
-			if !e.DrawMode() {
+			if e.InsertMode() {
 				p.e.FirstScreenPosition(p.DataY())
 				if p.AtStartOfLine() {
 					// Insert a new line a the current y position, then shift the rest down.
@@ -340,6 +340,9 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			} else {
 				e.CreateLineIfMissing(dataCursor.Y + 1)
 				p.Down(c)
+				if !e.DrawMode() {
+					p.Home()
+				}
 			}
 			redraw = true
 		case 127: // backspace
@@ -364,7 +367,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			undo.Snapshot(c, p, e)
 			if !e.DrawMode() {
 				// Place a tab
-				if e.InsertMode() {
+				if e.InsertMode() && !e.DrawMode() {
 					p.InsertRune('\t')
 				} else {
 					p.SetRune('\t')
@@ -464,44 +467,33 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			if (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') { // letter
 				undo.Snapshot(c, p, e)
 				// Place a letter
-				if !e.DrawMode() || e.InsertMode() {
+				if e.InsertMode() {
 					p.InsertRune(rune(key))
-					redraw = true
 				} else {
 					p.SetRune(rune(key))
 				}
-				if e.DrawMode() {
-					redraw = true
-				}
 				p.WriteRune(c)
-				if !e.DrawMode() {
+				if !e.InsertMode() {
 					// Move to the next position
 					p.Next(c)
-					//} else {
-					//	p.Right(c)
 				}
 			} else if key != 0 { // any other key
 				// Place *something*
 				r := rune(key)
-				if !e.DrawMode() || e.InsertMode() {
+				if e.InsertMode() {
 					p.InsertRune(rune(key))
-					redraw = true
 				} else {
 					p.SetRune(rune(key))
 				}
-				if e.DrawMode() {
-					redraw = true
-				}
 				p.WriteRune(c)
 				if len(string(r)) > 0 {
-					if !e.DrawMode() {
+					if !e.InsertMode() {
 						// Move to the next position
 						p.Next(c)
-						//} else {
-						//	p.Right(c)
 					}
 				}
 			}
+			redraw = true
 		}
 		if redraw {
 			// redraw all characters
