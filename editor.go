@@ -16,7 +16,7 @@ import (
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
 	lines        map[int][]rune
-	eolMode      bool // stop at the end of lines, or float around?
+	drawMode     bool // stop at the end of lines, or float around?
 	changed      bool // has the contents changed, since last save?
 	fg           vt100.AttributeColor
 	bg           vt100.AttributeColor
@@ -34,7 +34,7 @@ type Editor struct {
 func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, insertMode bool) *Editor {
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
-	e.eolMode = true
+	e.drawMode = false
 	e.fg = fg
 	e.bg = bg
 	e.spacesPerTab = spacesPerTab
@@ -43,14 +43,14 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, insertM
 	return e
 }
 
-// EOLMode returns true if the editor is in "text edit mode" and the cursor should not float around
-func (e *Editor) EOLMode() bool {
-	return e.eolMode
+// DrawMode returns true if the editor is in "text edit mode" and the cursor should not float around
+func (e *Editor) DrawMode() bool {
+	return e.drawMode
 }
 
-// ToggleEOLMode toggles if the editor is in "text edit mode" or "ASCII graphics mode"
-func (e *Editor) ToggleEOLMode() {
-	e.eolMode = !e.eolMode
+// ToggleDrawMode toggles if the editor is in "text edit mode" or "ASCII graphics mode"
+func (e *Editor) ToggleDrawMode() {
+	e.drawMode = !e.drawMode
 }
 
 // Set will store a rune in the editor data, at the given data coordinates

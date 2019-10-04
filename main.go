@@ -118,8 +118,8 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 		key := tty.Key()
 		switch key {
 		case 27: // esc
-			e.ToggleEOLMode()
-			if e.EOLMode() {
+			e.ToggleDrawMode()
+			if !e.DrawMode() {
 				e.SetColors(defaultEditorForeground, defaultEditorBackground)
 				status.SetColors(defaultEditorStatusForeground, defaultEditorStatusBackground)
 				c.FillBackground(e.bg)
@@ -140,28 +140,26 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			quit = true
 		case 6: // ctrl-f
 			undo.Snapshot(c, p, e)
-			if e.eolMode {
-				// Use a globally unique tempfile
-				f, err := ioutil.TempFile("/tmp", "_red*.go")
+			// Use a globally unique tempfile
+			if f, err := ioutil.TempFile("/tmp", "_red*.go"); !e.DrawMode() && err == nil {
+				// no error, everyting is fine
+				tempFilename := f.Name()
+				err := e.Save(tempFilename, true)
 				if err == nil {
-					tempFilename := f.Name()
-					err := e.Save(tempFilename, true)
+					// Run "go fmt" on the temporary file
+					cmd := exec.Command("/usr/bin/gofmt", "-w", tempFilename)
+					err = cmd.Run()
 					if err == nil {
-						// Run "go fmt" on the temporary file
-						cmd := exec.Command("/usr/bin/gofmt", "-w", tempFilename)
-						err = cmd.Run()
-						if err == nil {
-							e.Load(tempFilename)
-							// Mark the data as changed, despite just having loaded a file
-							e.changed = true
-						}
-						// Try to remove the temporary file regardless if "gofmt -w" worked out or not
-						_ = os.Remove(tempFilename)
+						e.Load(tempFilename)
+						// Mark the data as changed, despite just having loaded a file
+						e.changed = true
 					}
-					// Try to close the file. f.Close() checks if f is nil before closing.
-					_ = f.Close()
-					redraw = true
+					// Try to remove the temporary file regardless if "gofmt -w" worked out or not
+					_ = os.Remove(tempFilename)
 				}
+				// Try to close the file. f.Close() checks if f is nil before closing.
+				_ = f.Close()
+				redraw = true
 			}
 		case 10: // ctrl-j, toggle insert mode
 			e.ToggleInsertMode()
@@ -173,97 +171,123 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			status.Show(c, p)
 		case 7: // ctrl-g, status information
 			currentRune := p.Rune()
-			if e.EOLMode() {
-				status.SetMessage(fmt.Sprintf("line %d col %d unicode %U wordcount: %d undo index: %d", p.DataY(), p.ScreenX(), currentRune, e.WordCount(), undo.Index()))
+			if !e.DrawMode() {
+				status.SetMessage(fmt.Sprintf("line %d col %d unicode %U wordcount: %d undo count: %d", p.DataY(), p.ScreenX(), currentRune, e.WordCount(), undo.Index()+1))
+			} else if currentRune > 32 {
+				status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %c (%U) wordcount: %d", p.ScreenX(), p.ScreenY(), p.DataX(), p.DataY(), currentRune, currentRune, e.WordCount()))
 			} else {
-				if currentRune > 32 {
-					status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %c (%U) wordcount: %d", p.ScreenX(), p.ScreenY(), p.DataX(), p.DataY(), currentRune, currentRune, e.WordCount()))
-				} else {
-					status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %U wordcount: %d", p.ScreenX(), p.ScreenY(), p.DataX(), p.DataY(), currentRune, e.WordCount()))
-				}
+				status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %U wordcount: %d", p.ScreenX(), p.ScreenY(), p.DataX(), p.DataY(), currentRune, e.WordCount()))
 			}
 			status.Show(c, p)
 		case 252: // left arrow
-			p.Prev(c)
-			if e.EOLMode() && p.AfterLineContents() {
-				p.End()
+			if !e.DrawMode() {
+				p.Prev(c)
+				if p.AfterLineContents() {
+					p.End()
+				}
+				p.SaveX()
+			} else {
+				// Draw mode
+				x := p.ScreenX()
+				if x > 0 {
+					x--
+					p.SetX(x)
+				}
 			}
-			p.SaveX()
 		case 254: // right arrow
-			if !e.EOLMode() || (e.EOLMode() && p.DataY() < e.Len()) {
-				p.Next(c)
+			if !e.DrawMode() {
+				if p.DataY() < e.Len() {
+					p.Next(c)
+				}
+				if p.AfterLineContents() {
+					p.End()
+				}
+				p.SaveX()
+			} else {
+				// Draw mode
+				lastX := int(c.Width() - 1)
+				x := p.ScreenX()
+				if x < lastX {
+					x++
+					p.SetX(x)
+				}
+				p.SetX(x)
 			}
-			if e.EOLMode() && p.AfterLineContents() {
-				p.End()
-			}
-			p.SaveX()
 		case 253: // up arrow
 			// Move the screen cursor
-			if !e.EOLMode() || (e.EOLMode() && p.DataY() > 0) {
-				// Move the position up in the current screen
-				if p.UpEnd(c) != nil {
-					// If at the top, don't move up, but scroll the contents
-					// Output a helpful message
-					if p.DataY() == 0 {
-						status.SetMessage("Start of text")
-						status.Show(c, p)
-					} else {
-						//status.SetMessage("Top of screen, scroll with ctrl-p")
-						//status.Show(c, p)
-						redraw = p.ScrollUp(c, status, 1)
-						p.Down(c)
-						p.UpEnd(c)
+			if !e.DrawMode() {
+				if p.DataY() > 0 {
+					// Move the position up in the current screen
+					if p.UpEnd(c) != nil {
+						// If at the top, don't move up, but scroll the contents
+						// Output a helpful message
+						if p.DataY() == 0 {
+							status.SetMessage("Start of text")
+							status.Show(c, p)
+						} else {
+							//status.SetMessage("Top of screen, scroll with ctrl-p")
+							//status.Show(c, p)
+							redraw = p.ScrollUp(c, status, 1)
+							p.Down(c)
+							p.UpEnd(c)
+						}
 					}
+					// If the cursor is after the length of the current line, move it to the end of the current line
+					if p.AfterLineContents() {
+						p.End()
+					}
+				} else {
+					status.SetMessage("Start of text")
+					status.Show(c, p)
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
-				if e.EOLMode() && p.AfterLineContents() {
+				if p.AfterLineContents() {
 					p.End()
 				}
-			} else if e.EOLMode() {
-				status.SetMessage("Start of text")
-				status.Show(c, p)
-			}
-			// If the cursor is after the length of the current line, move it to the end of the current line
-			if e.EOLMode() && p.AfterLineContents() {
-				p.End()
+			} else {
+				p.Up()
 			}
 		case 255: // down arrow
-			if !e.EOLMode() || (e.EOLMode() && p.DataY() < e.Len()) {
-				// Move the position down in the current screen
-				if p.DownEnd(c) != nil {
-					// If at the bottom, don't move down, but scroll the contents
-					// Output a helpful message
-					if p.EndOfDocument() {
-						status.SetMessage("End of text")
-						status.Show(c, p)
-					} else {
-						//status.SetMessage("Bottom of screen, scroll with ctrl-n")
-						//status.Show(c, p)
-						redraw = p.ScrollDown(c, status, 1)
-						p.Up()
-						p.DownEnd(c)
+			if !e.DrawMode() {
+				if p.DataY() < e.Len() {
+					// Move the position down in the current screen
+					if p.DownEnd(c) != nil {
+						// If at the bottom, don't move down, but scroll the contents
+						// Output a helpful message
+						if p.EndOfDocument() {
+							status.SetMessage("End of text")
+							status.Show(c, p)
+						} else {
+							//status.SetMessage("Bottom of screen, scroll with ctrl-n")
+							//status.Show(c, p)
+							redraw = p.ScrollDown(c, status, 1)
+							p.Up()
+							p.DownEnd(c)
+						}
 					}
+					// If the cursor is after the length of the current line, move it to the end of the current line
+					if p.AfterLineContents() {
+						p.End()
+					}
+				} else {
+					status.SetMessage("End of text")
+					status.Show(c, p)
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
-				if e.EOLMode() && p.AfterLineContents() {
+				if p.AfterLineContents() {
 					p.End()
 				}
-			} else if e.EOLMode() {
-				status.SetMessage("End of text")
-				status.Show(c, p)
-			}
-			// If the cursor is after the length of the current line, move it to the end of the current line
-			if e.EOLMode() && p.AfterLineContents() {
-				p.End()
+			} else {
+				p.Down(c)
 			}
 		case 14: // ctrl-n, scroll down
 			redraw = p.ScrollDown(c, status, p.scrollSpeed)
-			if e.EOLMode() && p.AfterLineContents() {
+			if !e.DrawMode() && p.AfterLineContents() {
 				p.End()
 			}
 		case 16: // ctrl-p, scroll up
 			redraw = p.ScrollUp(c, status, p.scrollSpeed)
-			if e.EOLMode() && p.AfterLineContents() {
+			if !e.DrawMode() && p.AfterLineContents() {
 				p.End()
 			}
 		case 8: // ctrl-h, toggle highlight
@@ -286,7 +310,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			// if the current line is empty, insert a blank line
 			dataCursor := p.DataCursor()
 			//emptyLine := 0 == len(strings.TrimSpace(e.Line(dataCursor.Y)))
-			if e.EOLMode() {
+			if !e.DrawMode() {
 				p.e.FirstScreenPosition(p.DataY())
 				if p.AtStartOfLine() {
 					// Insert a new line a the current y position, then shift the rest down.
@@ -315,7 +339,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			redraw = true
 		case 127: // backspace
 			undo.Snapshot(c, p, e)
-			if e.EOLMode() && len(p.Line()) == 0 {
+			if !e.DrawMode() && len(p.Line()) == 0 {
 				e.DeleteLine(p.DataY())
 				p.Up()
 				p.End()
@@ -325,7 +349,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 				// Type a blank
 				p.SetRune(' ')
 				p.WriteRune(c)
-				if e.EOLMode() {
+				if !e.DrawMode() {
 					// Delete the blank
 					e.Delete(p)
 				}
@@ -333,7 +357,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			redraw = true
 		case 9: // tab
 			undo.Snapshot(c, p, e)
-			if e.EOLMode() {
+			if !e.DrawMode() {
 				// Place a tab
 				if e.InsertMode() {
 					p.InsertRune('\t')
@@ -367,7 +391,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 				redraw = true
 			}
 		case 19: // ctrl-s, save
-			err := e.Save(filename, e.eolMode)
+			err := e.Save(filename, !e.DrawMode())
 			if err != nil {
 				tty.Close()
 				vt100.Close()
@@ -376,7 +400,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			}
 			// TODO: Go to the end of the document at this point, if needed
 			// Lines may be trimmed for whitespace, so move to the end, if needed
-			if e.EOLMode() && p.AfterLineContents() {
+			if !e.DrawMode() && p.AfterLineContents() {
 				p.End()
 			}
 			// Status message
@@ -405,7 +429,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 				status.Show(c, p)
 			} else {
 				e.DeleteRestOfLine(p)
-				if e.EOLMode() && p.EmptyLine() {
+				if !e.DrawMode() && p.EmptyLine() {
 					// Deleting the rest of the line cleared this line,
 					// so just remove it.
 					e.DeleteLine(p.DataY())
@@ -417,11 +441,14 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			if (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') { // letter
 				undo.Snapshot(c, p, e)
 				// Place a letter
-				if e.InsertMode() {
+				if !e.DrawMode() || e.InsertMode() {
 					p.InsertRune(rune(key))
 					redraw = true
 				} else {
 					p.SetRune(rune(key))
+				}
+				if e.DrawMode() {
+					redraw = true
 				}
 				p.WriteRune(c)
 				// Move to the next position
@@ -429,11 +456,14 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			} else if key != 0 { // any other key
 				// Place *something*
 				r := rune(key)
-				if e.InsertMode() {
+				if !e.DrawMode() || e.InsertMode() {
 					p.InsertRune(rune(key))
 					redraw = true
 				} else {
 					p.SetRune(rune(key))
+				}
+				if e.DrawMode() {
+					redraw = true
 				}
 				p.WriteRune(c)
 				if len(string(r)) > 0 {

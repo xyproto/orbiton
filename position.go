@@ -25,8 +25,8 @@ func NewPosition(scrollSpeed int, e *Editor) *Position {
 
 // DataX will return the X position in the data (as opposed to the X position in the viewport)
 func (p *Position) DataX() int {
-	if !p.e.eolMode {
-		return p.sx
+	if p.e.DrawMode() {
+		return p.sx + strings.Count(p.e.Line(p.sy), "\t")*(p.e.spacesPerTab-1)
 	}
 	var dataX int
 	// the y position in the data is the lines scrolled + current screen cursor Y position
@@ -42,7 +42,7 @@ func (p *Position) DataX() int {
 			dataX = i
 			break
 		}
-		// Increase the conter, based on the current rune
+		// Increase the counter, based on the current rune
 		if r == '\t' {
 			screenCounter += p.e.spacesPerTab
 		} else {
@@ -171,7 +171,7 @@ func (p *Position) UpEnd(c *vt100.Canvas) error {
 // Next will move the cursor to the next position in the contents
 func (p *Position) Next(c *vt100.Canvas) error {
 	dataCursor := p.DataCursor()
-	atTab := p.e.eolMode && ('\t' == p.e.Get(dataCursor.X, dataCursor.Y))
+	atTab := !p.e.DrawMode() && ('\t' == p.e.Get(dataCursor.X, dataCursor.Y))
 	if atTab {
 		p.sx += p.e.spacesPerTab
 	} else {
@@ -179,7 +179,7 @@ func (p *Position) Next(c *vt100.Canvas) error {
 	}
 	// Did we move too far on this line?
 	w := int(c.W())
-	if (p.e.eolMode && p.AfterLineContentsPlusOne()) || (!p.e.eolMode && p.sx >= w) {
+	if (!p.e.DrawMode() && p.AfterLineContentsPlusOne()) || (p.e.DrawMode() && p.sx >= w) {
 		// Undo the move
 		if atTab {
 			p.sx -= p.e.spacesPerTab
@@ -187,7 +187,7 @@ func (p *Position) Next(c *vt100.Canvas) error {
 			p.sx--
 		}
 		// Move down
-		if p.e.eolMode {
+		if !p.e.DrawMode() {
 			err := p.Down(c)
 			if err != nil {
 				return err
@@ -204,7 +204,7 @@ func (p *Position) Prev(c *vt100.Canvas) error {
 	dataCursor := p.DataCursor()
 	atTab := false
 	if dataCursor.X > 0 {
-		atTab = p.e.eolMode && ('\t' == p.e.Get(dataCursor.X-1, dataCursor.Y))
+		atTab = !p.e.DrawMode() && ('\t' == p.e.Get(dataCursor.X-1, dataCursor.Y))
 	}
 	// If at a tab character, move a few more posisions
 	if atTab {
@@ -221,7 +221,7 @@ func (p *Position) Prev(c *vt100.Canvas) error {
 			p.sx++
 		}
 		// Move up, and to the end of the line above, if in EOL mode
-		if p.e.eolMode {
+		if !p.e.DrawMode() {
 			err := p.Up()
 			if err != nil {
 				return err
