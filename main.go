@@ -12,7 +12,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "red 1.2.3"
+const versionString = "red 1.2.4"
 
 func main() {
 	var (
