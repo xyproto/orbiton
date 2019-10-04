@@ -203,8 +203,10 @@ func (e *Editor) Load(filename string) error {
 	e.Clear()
 	for y, dataline := range datalines {
 		line := string(dataline)
-		for x, letter := range line {
-			e.Set(int(x), int(y), letter)
+		counter := 0
+		for _, letter := range line {
+			e.Set(counter, int(y), letter)
+			counter++
 		}
 	}
 	// Mark the data as "not changed"
