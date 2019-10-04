@@ -140,7 +140,7 @@ func (p *Position) DownEnd(c *vt100.Canvas) error {
 		}
 	} else {
 		p.sx = p.savedX
-		if p.sx > 0 && p.Rune() == '\t' {
+		if p.Rune() == '\t' || p.Rune() == ' ' {
 			p.sx = p.e.FirstScreenPosition(p.DataY())
 		}
 	}
@@ -161,7 +161,7 @@ func (p *Position) UpEnd(c *vt100.Canvas) error {
 		}
 	} else {
 		p.sx = p.savedX
-		if p.sx > 0 && p.Rune() == '\t' {
+		if p.Rune() == '\t' || p.Rune() == ' ' {
 			p.sx = p.e.FirstScreenPosition(p.DataY())
 		}
 	}
