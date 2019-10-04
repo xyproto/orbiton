@@ -73,13 +73,11 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 		fmt.Fprintln(os.Stderr, "Please supply a filename.")
 		os.Exit(1)
 	}
+	defaultHighlight := strings.Contains(filename, ".")
 
 	vt100.Init()
 	vt100.ShowCursor(true)
-
 	c := vt100.NewCanvas()
-
-	defaultHighlight := strings.Contains(filename, ".")
 
 	// 4 spaces per tab, scroll 10 lines at a time
 	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true)
@@ -104,6 +102,9 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 	p := NewPosition(10, e)
 	status.Show(c, p)
 	c.Draw()
+
+	// Resize handler
+	SetUpResizeHandler(c, e, p)
 
 	// Undo buffer with room for 1000 actions
 	undo := NewUndo(1000)
