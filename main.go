@@ -501,10 +501,11 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			e.WriteLines(c, 0+p.Offset(), h+p.Offset(), 0, 0)
 			c.Draw()
 			redraw = false
+			vt100.SetXY(uint(p.ScreenX()), uint(p.ScreenY()))
 		} else if e.Changed() {
 			c.Draw()
+			vt100.SetXY(uint(p.ScreenX()), uint(p.ScreenY()))
 		}
-		vt100.SetXY(uint(p.ScreenX()), uint(p.ScreenY()))
 	}
 	tty.Close()
 	vt100.Close()
