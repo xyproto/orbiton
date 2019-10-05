@@ -120,7 +120,8 @@ func (e *Editor) ScreenLine(n int) string {
 		if !e.DrawMode() {
 			tabSpace = strings.Repeat("\t", e.spacesPerTab)
 		}
-		return strings.ReplaceAll(sb.String(), "\t", tabSpace)
+		//return strings.ReplaceAll(sb.String(), "\t", tabSpace)
+		return strings.Replace(sb.String(), "\t", tabSpace, -1)
 	}
 	return ""
 }
@@ -279,7 +280,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	offset := fromline
 	for y := 0; y < numlines; y++ {
 		counter := 0
-		line := strings.ReplaceAll(e.Line(y+offset), "\t", tabString)
+		//line := strings.ReplaceAll(e.Line(y+offset), "\t", tabString)
+		line := strings.Replace(e.Line(y+offset), "\t", tabString, -1)
 		screenLine := strings.TrimRightFunc(line, unicode.IsSpace)
 		if len(screenLine) >= w {
 			screenLine = screenLine[:w]

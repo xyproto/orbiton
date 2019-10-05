@@ -10,7 +10,7 @@ For a more feature complete editor that is also written in Go, check out [micro]
 
 ## Installation
 
-You can install `red` with ie. Go 1.12 or later:
+You can install `red` with Go 1.11 or later (development version):
 
     go get -u github.com/xyproto/red
 
