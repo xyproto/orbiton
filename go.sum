@@ -22,6 +22,8 @@ github.com/xyproto/vt100 v1.4.1-0.20190927171939-ded707e5fa0f h1:6+kLGNHd6gQqQbl
 github.com/xyproto/vt100 v1.4.1-0.20190927171939-ded707e5fa0f/go.mod h1:+oNsIfL2iEv0XNDwSfyiekezmDlX5yXz3Bu/iFeRNnY=
 github.com/xyproto/vt100 v1.5.0 h1:x/b0vriSt5/uvNdGbGKgxoyg2wEHZiBHIXwqD+TSgDg=
 github.com/xyproto/vt100 v1.5.0/go.mod h1:uhKWUqCFhSMSvPAsERJ2Niiq0uZAl1v1W2FMFH7sKWw=
+github.com/xyproto/vt100 v1.5.1-0.20191004110514-d83a206d4012 h1:+3WfSwBeFXk/qrrrYrwx7ZG2+oNIkXztFsocgkZAbpA=
+github.com/xyproto/vt100 v1.5.1-0.20191004110514-d83a206d4012/go.mod h1:uhKWUqCFhSMSvPAsERJ2Niiq0uZAl1v1W2FMFH7sKWw=
 golang.org/x/sys v0.0.0-20190916202348-b4ddaad3f8a3/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20190919044723-0c1ff786ef13/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20190927073244-c990c680b611 h1:q9u40nxWT5zRClI/uU9dHCiYGottAg6Nzz4YUQyHxdA=

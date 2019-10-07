@@ -305,10 +305,8 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 				redraw = true
 			}
 			// Move to the next position
-			if !e.DrawMode() {
+			if e.InsertMode() {
 				p.Next(c)
-				//} else {
-				//	p.Right(c)
 			}
 		case 13: // return
 			undo.Snapshot(c, p, e)
@@ -375,7 +373,9 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 				// Write the spaces that represent the tab
 				p.WriteTab(c)
 				// Move to the next position
-				p.Next(c)
+				if e.InsertMode() {
+					p.Next(c)
+				}
 			}
 			redraw = true
 		case 1: // ctrl-a, home
@@ -473,7 +473,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 					p.SetRune(rune(key))
 				}
 				p.WriteRune(c)
-				if !e.InsertMode() {
+				if e.InsertMode() {
 					// Move to the next position
 					p.Next(c)
 				}
@@ -487,7 +487,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 				}
 				p.WriteRune(c)
 				if len(string(r)) > 0 {
-					if !e.InsertMode() {
+					if e.InsertMode() {
 						// Move to the next position
 						p.Next(c)
 					}
