@@ -22,8 +22,6 @@ You can install `red` with Go 1.11 or later (development version):
 * Keys like `Home` and `End` are not even registered by the key handler (but `ctrl-a` and `ctrl-e` works).
 * Will strip trailing whitespace.
 * Can format Go code using `gofmt`.
-* Can be used for drawing "ASCII graphics".
-* `esc` can be used to toggle "writing mode" where the cursor is limited to the end of lines and "ASCII graphics mode".
 * Can handle text that contains the tab character (`\t`).
 * Expects utilities like `gofmt` to be in `/usr/bin`.
 * Does not handle terminal resizing, yet.
@@ -56,7 +54,6 @@ You can install `red` with Go 1.11 or later (development version):
 * `ctrl-v' to paste the current line
 * `ctrl-b` to bookmark the current position
 * `ctrl-j` to jump to the bookmark
-* `esc` to toggle between "text edit mode" and "ASCII graphics mode"
 
 ## Size
 

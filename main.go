@@ -69,7 +69,6 @@ ctrl-c to copy the current line
 ctrl-v to paste the current line
 ctrl-b to bookmark the current position
 ctrl-j to jump to the bookmark
-esc to toggle between "text edit mode" and "ASCII graphics mode"
 
 `)
 		return
@@ -132,25 +131,27 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 	for !quit {
 		key := tty.Key()
 		switch key {
-		case 27: // esc
-			e.ToggleDrawMode()
-			if !e.DrawMode() {
-				e.SetColors(defaultEditorForeground, defaultEditorBackground)
-				status.SetColors(defaultEditorStatusForeground, defaultEditorStatusBackground)
-				c.FillBackground(e.bg)
-				e.SetHighlight(defaultHighlight)
-				e.SetInsertMode(true)
-				status.SetMessage("Text edit mode")
-				redraw = true
-			} else {
-				e.SetColors(defaultASCIIGraphicsForeground, defaultASCIIGraphicsBackground)
-				status.SetColors(defaultASCIIGraphicsStatusForeground, defaultASCIIGraphicsStatusBackground)
-				c.FillBackground(e.bg)
-				e.SetHighlight(false)
-				e.SetInsertMode(false)
-				status.SetMessage("ASCII graphics mode")
-				redraw = true
-			}
+		//case 27: // esc
+		//	e.ToggleDrawMode()
+		//	if !e.DrawMode() {
+		//		e.SetColors(defaultEditorForeground, defaultEditorBackground)
+		//		status.SetColors(defaultEditorStatusForeground, defaultEditorStatusBackground)
+		//		c.FillBackground(e.bg)
+		//		c.Draw()
+		//		e.SetHighlight(defaultHighlight)
+		//		e.SetInsertMode(true)
+		//		status.SetMessage("Text edit mode")
+		//		redraw = true
+		//	} else {
+		//		e.SetColors(defaultASCIIGraphicsForeground, defaultASCIIGraphicsBackground)
+		//		status.SetColors(defaultASCIIGraphicsStatusForeground, defaultASCIIGraphicsStatusBackground)
+		//		c.FillBackground(e.bg)
+		//		c.Draw()
+		//		e.SetHighlight(false)
+		//		e.SetInsertMode(false)
+		//		status.SetMessage("ASCII graphics mode")
+		//		redraw = true
+		//	}
 		case 17: // ctrl-q, quit
 			quit = true
 		case 6: // ctrl-f
