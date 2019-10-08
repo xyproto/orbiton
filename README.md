@@ -32,8 +32,8 @@ You can install `red` with Go 1.11 or later (development version):
 ## Known bugs
 
 * Some letters can not be typed. Like `ø`.
-* Lines longer than the terminal width are not handled correctly.
-* The undo functionality is currently a bit broken.
+* The undo functionality is currently broken.
+* If a line contains a unicode character (like `ø`), the cursor positioning is wrong after that position.
 
 ## Hotkeys
 
