@@ -12,7 +12,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "red 1.2.4"
+const versionString = "red 1.3.0"
 
 func main() {
 	var (
@@ -23,10 +23,10 @@ func main() {
 		defaultEditorStatusBackground = vt100.BackgroundGray
 
 		// Color scheme for the "ASCII graphics" mode
-		defaultASCIIGraphicsForeground       = vt100.LightBlue
-		defaultASCIIGraphicsBackground       = vt100.BackgroundDefault
-		defaultASCIIGraphicsStatusForeground = vt100.White
-		defaultASCIIGraphicsStatusBackground = vt100.BackgroundMagenta
+		//defaultASCIIGraphicsForeground       = vt100.LightBlue
+		//defaultASCIIGraphicsBackground       = vt100.BackgroundDefault
+		//defaultASCIIGraphicsStatusForeground = vt100.White
+		//defaultASCIIGraphicsStatusBackground = vt100.BackgroundMagenta
 
 		version = flag.Bool("version", false, "show version information")
 		help    = flag.Bool("help", false, "show simple help")
