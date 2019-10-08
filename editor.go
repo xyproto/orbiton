@@ -43,6 +43,28 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, insertM
 	return e
 }
 
+// Copy will create a new Editor struct that is a copy of this one
+func (e *Editor) Copy() Editor {
+	lines2 := make(map[int][]rune)
+	for key, runes := range e.lines {
+		runes2 := make([]rune, len(runes), len(runes))
+		for i, r := range runes {
+			runes2[i] = r
+		}
+		lines2[key] = runes2
+	}
+	var e2 Editor
+	e2.lines = lines2
+	e2.drawMode = e.drawMode
+	e2.changed = e.changed
+	e2.fg = e.fg
+	e2.bg = e.bg
+	e2.spacesPerTab = e.spacesPerTab
+	e2.highlight = e.highlight
+	e2.insertMode = e.insertMode
+	return e2
+}
+
 // DrawMode returns true if the editor is in "text edit mode" and the cursor should not float around
 func (e *Editor) DrawMode() bool {
 	return e.drawMode
