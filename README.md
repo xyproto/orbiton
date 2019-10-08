@@ -34,7 +34,6 @@ You can install `red` with Go 1.11 or later (development version):
 * Some letters can not be typed. Like `ø`.
 * The undo functionality is currently broken.
 * If a line contains a unicode character (like `ø`), the cursor positioning is wrong after that position.
-* The new yellow cursor sometimes disappears.
 
 ## Hotkeys
 

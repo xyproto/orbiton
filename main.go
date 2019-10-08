@@ -513,7 +513,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			r = '¶'
 		} else {
 			r = e.Get(x, p.DataY())
-			if r == rune(0) || r == ' ' {
+			if r == rune(0) || r == ' ' || r == '\t' {
 				r = '_'
 			}
 		}
