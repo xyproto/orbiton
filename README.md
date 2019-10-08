@@ -16,6 +16,7 @@ You can install `red` with Go 1.11 or later (development version):
 
 ## Features and limitations
 
+* Tested and works with at least `urxvt`, `xfce4-terminal` and `st`.
 * Has syntax highlighting for Go code.
 * Never asks before saving or quitting. Be careful.
 * Random characters may appear on the screen when keys are pressed. Clear them with `ctrl-l`.
