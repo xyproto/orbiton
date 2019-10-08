@@ -23,6 +23,19 @@ func NewPosition(scrollSpeed int, e *Editor) *Position {
 	return &Position{0, 0, 0, scrollSpeed, e, 0}
 }
 
+// Copy will create a new Position struct that is a copy of this one
+func (p *Position) Copy() Position {
+	var p2 Position
+	p2.sx = p.sx
+	p2.sy = p.sy
+	p2.scroll = p.scroll
+	p2.scrollSpeed = p.scrollSpeed
+	e2 := p.e.Copy()
+	p2.e = &e2
+	p2.savedX = p.savedX
+	return p2
+}
+
 // DataX will return the X position in the data (as opposed to the X position in the viewport)
 func (p *Position) DataX() (int, error) {
 	if p.e.DrawMode() {

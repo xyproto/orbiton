@@ -63,7 +63,6 @@ ctrl-k to delete characters to the end of the line, then delete the line
 ctrl-g to show cursor positions, current letter and word count
 ctrl-d to delete a single character
 ctrl-t to toggle insert mode
-ctrl-z to undo
 ctrl-x to cut the current line
 ctrl-c to copy the current line
 ctrl-v to paste the current line
@@ -155,7 +154,7 @@ ctrl-j to jump to the bookmark
 		case 17: // ctrl-q, quit
 			quit = true
 		case 6: // ctrl-f
-			undo.Snapshot(c, p, e)
+			undo.Snapshot(c, p)
 			// Use a globally unique tempfile
 			if f, err := ioutil.TempFile("/tmp", "_red*.go"); !e.DrawMode() && err == nil {
 				// no error, everyting is fine
@@ -302,7 +301,7 @@ ctrl-j to jump to the bookmark
 			e.ToggleHighlight()
 			redraw = true
 		case 32: // space
-			undo.Snapshot(c, p, e)
+			undo.Snapshot(c, p)
 			// Place a space
 			if !e.DrawMode() && e.InsertMode() {
 				p.InsertRune(' ')
@@ -319,7 +318,7 @@ ctrl-j to jump to the bookmark
 				p.Next(c)
 			}
 		case 13: // return
-			undo.Snapshot(c, p, e)
+			undo.Snapshot(c, p)
 			// if the current line is empty, insert a blank line
 			dataCursor := p.DataCursor()
 			//emptyLine := 0 == len(strings.TrimSpace(e.Line(dataCursor.Y)))
@@ -354,7 +353,7 @@ ctrl-j to jump to the bookmark
 			}
 			redraw = true
 		case 127: // backspace
-			undo.Snapshot(c, p, e)
+			undo.Snapshot(c, p)
 			if !e.DrawMode() && len(p.Line()) == 0 {
 				e.DeleteLine(p.DataY())
 				p.Up()
@@ -372,7 +371,7 @@ ctrl-j to jump to the bookmark
 			}
 			redraw = true
 		case 9: // tab
-			undo.Snapshot(c, p, e)
+			undo.Snapshot(c, p)
 			if !e.DrawMode() {
 				// Place a tab
 				if e.InsertMode() && !e.DrawMode() {
@@ -400,7 +399,7 @@ ctrl-j to jump to the bookmark
 			p.End()
 			p.SaveXRegardless()
 		case 4: // ctrl-d, delete
-			undo.Snapshot(c, p, e)
+			undo.Snapshot(c, p)
 			if e.Empty() {
 				status.SetMessage("Empty")
 				status.Show(c, p)
@@ -427,21 +426,18 @@ ctrl-j to jump to the bookmark
 			c.Draw()
 			// Redraw after save, for syntax highlighting
 			//redraw = true
-		case 26: // ctrl-z, undo
-			if undoCanvas, undoPosition, undoEditor, err := undo.Back(); err == nil {
-				// no error
-				*c = *(undoCanvas)
-				*p = *(undoPosition)
-				*e = *(undoEditor)
-				// link the position and editor structs
-				p.e = e
-				// redraw everything
-				redraw = true
-			}
+		//case 26: // ctrl-z, undo
+		//	if undoCanvas, undoPosition, err := undo.Restore(); err == nil {
+		//		// no error
+		//		c = undoCanvas
+		//		p = undoPosition
+		//		e.changed = true
+		//		redraw = true
+		//	}
 		case 12: // ctrl-l, redraw
 			redraw = true
 		case 11: // ctrl-k, delete to end of line
-			undo.Snapshot(c, p, e)
+			undo.Snapshot(c, p)
 			if e.Empty() {
 				status.SetMessage("Empty")
 				status.Show(c, p)
@@ -475,7 +471,7 @@ ctrl-j to jump to the bookmark
 			}
 		default:
 			if (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') { // letter
-				undo.Snapshot(c, p, e)
+				undo.Snapshot(c, p)
 				// Place a letter
 				if e.InsertMode() {
 					p.InsertRune(rune(key))
