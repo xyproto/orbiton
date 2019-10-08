@@ -27,12 +27,12 @@ You can install `red` with Go 1.11 or later (development version):
 * Expects utilities like `gofmt` to be in `/usr/bin`.
 * Does not handle terminal resizing, yet.
 * Must be given a filename at start.
+* There is no undo-functionality, yet.
 
 ## Known bugs
 
 * Some letters can not be typed. Like `ø`.
 * If a line contains a unicode character (like `ø`), the cursor is misplaced after that position, on the same line.
-* The undo functionality is broken. It may work when moving lines around, but not for changes within lines.
 
 ## Hotkeys
 
@@ -49,7 +49,6 @@ You can install `red` with Go 1.11 or later (development version):
 * `ctrl-g` to show cursor positions, current letter and word count
 * `ctrl-d` to delete a single character
 * `ctrl-t` to toggle insert mode
-* `ctrl-z` to undo
 * `ctrl-x' to cut the current line
 * `ctrl-c' to copy the current line
 * `ctrl-v' to paste the current line
