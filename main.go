@@ -83,9 +83,10 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 	defaultHighlight := strings.Contains(filename, ".")
 
 	vt100.Init()
-	c := vt100.NewCanvas()
 
-	vt100.ShowCursor(false)
+	c := vt100.NewCanvas()
+	//c.HideCursor()
+	c.ShowCursor()
 
 	// 4 spaces per tab, scroll 10 lines at a time
 	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true)
@@ -508,17 +509,22 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			c.Draw()
 		}
 		// Cursor trickery
-		var r rune
-		if x, err := p.DataX(); err != nil {
-			r = '¶'
-		} else {
-			r = e.Get(x, p.DataY())
-			if r == rune(0) || r == ' ' || r == '\t' {
-				r = '_'
-			}
-		}
+		//var r rune
+		//if x, err := p.DataX(); err != nil {
+		//	// End of line
+		//	r = '¶'
+		//	//r = '_'
+		//} else {
+		//	r = e.Get(x, p.DataY())
+		//	if x == 0 && r == rune(0) || r == ' ' || r == '\t' {
+		//		// Beginning of line
+		//		r = 'a'
+		//	} else if x == 0 && r == rune(0) || r == ' ' || r == '\t' {
+		//		r = 'b'
+		//	}
+		//}
 		vt100.SetXY(uint(p.ScreenX()), uint(p.ScreenY()))
-		vt100.LightYellow.Output(string(r))
+		//p.e.bg.Combine(vt100.LightYellow).Output(string(r))
 	}
 	tty.Close()
 	vt100.Close()
