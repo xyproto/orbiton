@@ -83,8 +83,9 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 	defaultHighlight := strings.Contains(filename, ".")
 
 	vt100.Init()
-	vt100.ShowCursor(true)
 	c := vt100.NewCanvas()
+
+	vt100.ShowCursor(false)
 
 	// 4 spaces per tab, scroll 10 lines at a time
 	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true)
@@ -182,9 +183,11 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			if !e.DrawMode() {
 				status.SetMessage(fmt.Sprintf("line %d col %d unicode %U wordcount: %d undo count: %d", p.DataY(), p.ScreenX(), currentRune, e.WordCount(), undo.Index()+1))
 			} else if currentRune > 32 {
-				status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %c (%U) wordcount: %d", p.ScreenX(), p.ScreenY(), p.DataX(), p.DataY(), currentRune, currentRune, e.WordCount()))
+				x, _ := p.DataX()
+				status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %c (%U) wordcount: %d", p.ScreenX(), p.ScreenY(), x, p.DataY(), currentRune, currentRune, e.WordCount()))
 			} else {
-				status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %U wordcount: %d", p.ScreenX(), p.ScreenY(), p.DataX(), p.DataY(), currentRune, e.WordCount()))
+				x, _ := p.DataX()
+				status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %U wordcount: %d", p.ScreenX(), p.ScreenY(), x, p.DataY(), currentRune, e.WordCount()))
 			}
 			status.Show(c, p)
 		case 252: // left arrow
@@ -501,11 +504,21 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 			e.WriteLines(c, 0+p.Offset(), h+p.Offset(), 0, 0)
 			c.Draw()
 			redraw = false
-			vt100.SetXY(uint(p.ScreenX()), uint(p.ScreenY()))
 		} else if e.Changed() {
 			c.Draw()
-			vt100.SetXY(uint(p.ScreenX()), uint(p.ScreenY()))
 		}
+		// Cursor trickery
+		var r rune
+		if x, err := p.DataX(); err != nil {
+			r = '¶'
+		} else {
+			r = e.Get(x, p.DataY())
+			if r == rune(0) || r == ' ' {
+				r = '_'
+			}
+		}
+		vt100.SetXY(uint(p.ScreenX()), uint(p.ScreenY()))
+		vt100.LightYellow.Output(string(r))
 	}
 	tty.Close()
 	vt100.Close()
