@@ -508,23 +508,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 		} else if e.Changed() {
 			c.Draw()
 		}
-		// Cursor trickery
-		//var r rune
-		//if x, err := p.DataX(); err != nil {
-		//	// End of line
-		//	r = '¶'
-		//	//r = '_'
-		//} else {
-		//	r = e.Get(x, p.DataY())
-		//	if x == 0 && r == rune(0) || r == ' ' || r == '\t' {
-		//		// Beginning of line
-		//		r = 'a'
-		//	} else if x == 0 && r == rune(0) || r == ' ' || r == '\t' {
-		//		r = 'b'
-		//	}
-		//}
 		vt100.SetXY(uint(p.ScreenX()), uint(p.ScreenY()))
-		//p.e.bg.Combine(vt100.LightYellow).Output(string(r))
 	}
 	tty.Close()
 	vt100.Close()
