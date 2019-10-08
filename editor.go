@@ -138,6 +138,7 @@ func (e *Editor) LastScreenPosition(n int) int {
 	if e.DrawMode() {
 		return e.LastDataPosition(n)
 	}
+	// TODO: THIS IS WRONG, it does not account for unicode characters
 	extraSpaceBecauseOfTabs := int(e.Count('\t', n) * (e.spacesPerTab - 1))
 	return e.LastDataPosition(n) + extraSpaceBecauseOfTabs
 }
@@ -288,7 +289,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		}
 		if e.highlight {
 			// Output a syntax highlighted line
-			vt100.SetXY(uint(cx+counter), uint(cy+y))
+			//vt100.SetXY(uint(cx+counter), uint(cy+y))
 			if textWithTags, err := syntax.AsText([]byte(line)); err != nil {
 				// Only output the line up to the width of the canvas
 				fmt.Println(screenLine)
@@ -331,7 +332,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 
 // DeleteRestOfLine will delete the rest of the line, from the given position
 func (e *Editor) DeleteRestOfLine(p *Position) {
-	x := p.DataX()
+	x, err := p.DataX()
+	if err != nil {
+		// position is after the data, do nothing
+		return
+	}
 	y := p.DataY()
 	if e.lines == nil {
 		e.lines = make(map[int][]rune)
@@ -393,7 +398,6 @@ func (e *Editor) DeleteLine(n int) {
 
 // Delete will delete a character at the given position
 func (e *Editor) Delete(p *Position) {
-	x := p.DataX()
 	y := p.DataY()
 	if _, ok := e.lines[y]; !ok || len(e.lines[y]) == 0 || (len(e.lines[y]) == 1 && unicode.IsSpace(e.lines[y][0])) {
 		// All keys in the map that are > y should be shifted -1.
@@ -402,7 +406,8 @@ func (e *Editor) Delete(p *Position) {
 		e.changed = true
 		return
 	}
-	if x >= len(e.lines[y])-1 {
+	x, err := p.DataX()
+	if err != nil || x >= len(e.lines[y])-1 {
 		// on the last index, just use every element but x
 		e.lines[y] = e.lines[y][:x]
 		// check if the next line exists
