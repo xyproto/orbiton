@@ -55,6 +55,7 @@ func (sb *StatusBar) Show(c *vt100.Canvas, p *Position) {
 		time.Sleep(sb.show)
 		sb.Clear(c)
 	}()
+	c.Draw()
 }
 
 // SetColors can be used for setting a color theme for the status bar field

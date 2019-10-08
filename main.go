@@ -31,7 +31,7 @@ func main() {
 		version = flag.Bool("version", false, "show version information")
 		help    = flag.Bool("help", false, "show simple help")
 
-		statusDuration = 2200 * time.Millisecond
+		statusDuration = 3000 * time.Millisecond
 
 		redraw   bool
 		copyLine string
@@ -122,7 +122,12 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 	if err != nil {
 		panic(err)
 	}
-	tty.SetTimeout(10 * time.Millisecond)
+
+	//tty.SetTimeout(10 * time.Millisecond)
+
+	previousX := -1
+	previousY := -1
+
 	quit := false
 	for !quit {
 		key := tty.Key()
@@ -481,6 +486,7 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 					// Move to the next position
 					p.Next(c)
 				}
+				redraw = true
 			} else if key != 0 { // any other key
 				// Place *something*
 				r := rune(key)
@@ -496,8 +502,9 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 						p.Next(c)
 					}
 				}
+				redraw = true
+			} else {
 			}
-			redraw = true
 		}
 		if redraw {
 			// redraw all characters
@@ -508,7 +515,13 @@ esc to toggle between "text edit mode" and "ASCII graphics mode"
 		} else if e.Changed() {
 			c.Draw()
 		}
-		vt100.SetXY(uint(p.ScreenX()), uint(p.ScreenY()))
+		x := p.ScreenX()
+		y := p.ScreenY()
+		if x != previousX || y != previousY {
+			vt100.SetXY(uint(x), uint(y))
+		}
+		previousY = x
+		previousY = y
 	}
 	tty.Close()
 	vt100.Close()
