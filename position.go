@@ -24,22 +24,24 @@ func NewPosition(scrollSpeed int, e *Editor) *Position {
 }
 
 // DataX will return the X position in the data (as opposed to the X position in the viewport)
-func (p *Position) DataX() int {
+func (p *Position) DataX() (int, error) {
 	if p.e.DrawMode() {
-		return p.sx //+ strings.Count(p.e.Line(p.sy), "\t")*(p.e.spacesPerTab-1)
+		return p.sx, nil //+ strings.Count(p.e.Line(p.sy), "\t")*(p.e.spacesPerTab-1)
 	}
-	var dataX int
 	// the y position in the data is the lines scrolled + current screen cursor Y position
 	dataY := p.scroll + p.sy
 	// get the current line of text
-	line := p.e.Line(dataY)
 	screenCounter := 0 // counter for the characters on the screen
 	// loop, while also keeping track of tab expansion
 	// add a space to allow to jump to the position after the line and get a valid data position
-	for i, r := range line + " " {
+	found := false
+	dataX := 0
+	runeCounter := 0
+	for _, r := range p.e.lines[dataY] {
 		// When we reached the correct screen position, use i as the data position
 		if screenCounter == p.sx {
-			dataX = i
+			dataX = runeCounter
+			found = true
 			break
 		}
 		// Increase the counter, based on the current rune
@@ -48,9 +50,13 @@ func (p *Position) DataX() int {
 		} else {
 			screenCounter++
 		}
+		runeCounter++
+	}
+	if !found {
+		return runeCounter, errors.New("position is after data")
 	}
 	// Return the data cursor
-	return dataX
+	return dataX, nil
 }
 
 // DataY will return the Y position in the data (as opposed to the Y position in the viewport)
@@ -75,7 +81,8 @@ func (p *Position) Offset() int {
 
 // DataCursor returns the (x,y) position in the underlying data
 func (p *Position) DataCursor() *Cursor {
-	return &Cursor{p.DataX(), p.DataY()}
+	x, _ := p.DataX()
+	return &Cursor{x, p.DataY()}
 }
 
 // SetX will set the screen X position
@@ -140,7 +147,8 @@ func (p *Position) DownEnd(c *vt100.Canvas) error {
 		}
 	} else {
 		p.sx = p.savedX
-		if p.Rune() == '\t' || p.Rune() == ' ' {
+		// Also checking if e.Rune() is ' ' is nice for code, but horrible for regular text files
+		if p.Rune() == '\t' {
 			p.sx = p.e.FirstScreenPosition(p.DataY())
 		}
 	}
@@ -161,7 +169,8 @@ func (p *Position) UpEnd(c *vt100.Canvas) error {
 		}
 	} else {
 		p.sx = p.savedX
-		if p.Rune() == '\t' || p.Rune() == ' ' {
+		// Also checking if e.Rune() is ' ' is nice for code, but horrible for regular text files
+		if p.Rune() == '\t' {
 			p.sx = p.e.FirstScreenPosition(p.DataY())
 		}
 	}
