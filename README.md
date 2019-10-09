@@ -1,6 +1,8 @@
 # red
 
-`red` is a limited, but relatively small and fast text editor.
+`red` is a limited, but small and fast text editor.
+
+Compiles with `go` and `gccgo`. Tested with `st`, `urxvt` and `xfce4-terminal`.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
@@ -16,7 +18,6 @@ You can install `red` with Go 1.11 or later (development version):
 
 ## Features and limitations
 
-* Tested and works with at least `urxvt`, `xfce4-terminal` and `st`.
 * Has syntax highlighting for Go code.
 * Never asks before saving or quitting. Be careful.
 * Random characters may appear on the screen when keys are pressed. Clear them with `ctrl-l`.
