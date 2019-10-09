@@ -1,4 +1,4 @@
-module github.com/xyproto/red
+module github.com/xyproto/o
 
 go 1.11
 

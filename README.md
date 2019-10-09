@@ -1,8 +1,8 @@
-# red
+# o
 
-`red` is a limited, but small and fast text editor.
+`o` is a limited, but small and fast text editor.
 
-Compiles with `go` and `gccgo`. Tested with `st`, `urxvt` and `xfce4-terminal`.
+Compiles with either `go` or `gccgo`. Tested with `st`, `urxvt` and `xfce4-terminal`.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
@@ -10,11 +10,11 @@ For a more feature complete editor that is also written in Go, check out [micro]
 
 ![screenshot](img/screenshot.png)
 
-## Installation
+## Quick Start
 
-You can install `red` with Go 1.11 or later (development version):
+You can install `o` with Go 1.11 or later (development version):
 
-    go get -u github.com/xyproto/red
+    go get -u github.com/xyproto/o
 
 ## Features and limitations
 
@@ -22,18 +22,17 @@ You can install `red` with Go 1.11 or later (development version):
 * Never asks before saving or quitting. Be careful.
 * Random characters may appear on the screen when keys are pressed. Clear them with `ctrl-l`.
 * Keys like `Home` and `End` are not even registered by the key handler (but `ctrl-a` and `ctrl-e` works).
-* Will strip trailing whitespace.
-* Can format Go code using `gofmt`.
-* Can handle text that contains the tab character (`\t`).
+* Can format Go code using `gofmt` (press `ctrl-f`).
 * Expects utilities like `gofmt` to be in `/usr/bin`.
-* Does not handle terminal resizing, yet.
+* Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
-* There is no undo-functionality, yet.
+* There is no undo-functionality, yet!
 
 ## Known bugs
 
+* There may be issues when resizing the terminal.
 * Some letters can not be typed. Like `ø`.
-* If a line contains a unicode character (like `ø`), the cursor is misplaced after that position, on the same line.
+* If a line contains a unicode character (like `ø`), the cursor may be misplaced after that position.
 
 ## Hotkeys
 
@@ -59,7 +58,7 @@ You can install `red` with Go 1.11 or later (development version):
 
 ## Size
 
-The `red` executable is **409k** if built with GCC 9.1 (for 64-bit Linux):
+The `o` executable is **409k** if built with GCC 9.1 (for 64-bit Linux):
 
     go build -gccgoflags '-Os -s'
 
