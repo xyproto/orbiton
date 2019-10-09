@@ -311,8 +311,8 @@ func (p *Position) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed in
 	l := p.e.Len()
 	if p.scroll >= p.e.Len()-canvasLastY {
 		// Status message
-		status.SetMessage("End of text")
-		status.Show(c, p)
+		//status.SetMessage("End of text")
+		//status.Show(c, p)
 		c.Draw()
 		// Don't redraw
 		return false
@@ -335,8 +335,8 @@ func (p *Position) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int)
 	if p.scroll == 0 {
 		// Can't scroll further up
 		// Status message
-		status.SetMessage("Start of text")
-		status.Show(c, p)
+		//status.SetMessage("Start of text")
+		//status.Show(c, p)
 		c.Draw()
 		// Don't redraw
 		return false

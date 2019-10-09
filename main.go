@@ -13,7 +13,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "red 1.3.0"
+const versionString = "red 1.3.1"
 
 func main() {
 	var (
@@ -203,8 +203,8 @@ esc to toggle syntax highlighting
 						// If at the top, don't move up, but scroll the contents
 						// Output a helpful message
 						if p.DataY() == 0 {
-							status.SetMessage("Start of text")
-							status.Show(c, p)
+							//status.SetMessage("Start of text")
+							//status.Show(c, p)
 						} else {
 							//status.SetMessage("Top of screen, scroll with ctrl-p")
 							//status.Show(c, p)
@@ -218,8 +218,8 @@ esc to toggle syntax highlighting
 						p.End()
 					}
 				} else {
-					status.SetMessage("Start of text")
-					status.Show(c, p)
+					//status.SetMessage("Start of text")
+					//status.Show(c, p)
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
 				if p.AfterLineContents() {
@@ -236,11 +236,9 @@ esc to toggle syntax highlighting
 						// If at the bottom, don't move down, but scroll the contents
 						// Output a helpful message
 						if p.EndOfDocument() {
-							status.SetMessage("End of text")
-							status.Show(c, p)
-						} else {
-							//status.SetMessage("Bottom of screen, scroll with ctrl-n")
+							//status.SetMessage("End of text")
 							//status.Show(c, p)
+						} else {
 							redraw = p.ScrollDown(c, status, 1)
 							p.Up()
 							p.DownEnd(c)
@@ -251,8 +249,8 @@ esc to toggle syntax highlighting
 						p.End()
 					}
 				} else {
-					status.SetMessage("End of text")
-					status.Show(c, p)
+					//status.SetMessage("End of text")
+					//status.Show(c, p)
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
 				if p.AfterLineContents() {
