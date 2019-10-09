@@ -38,7 +38,6 @@ You can install `red` with Go 1.11 or later (development version):
 
 * `ctrl-q` to quit
 * `ctrl-s` to save
-* `ctrl-h` to toggle syntax highlighting for Go code
 * `ctrl-f` to format the current file with `go fmt`
 * `ctrl-a` go to start of line, then start of text
 * `ctrl-e` go to end of line
@@ -54,6 +53,8 @@ You can install `red` with Go 1.11 or later (development version):
 * `ctrl-v' to paste the current line
 * `ctrl-b` to bookmark the current position
 * `ctrl-j` to jump to the bookmark
+* `ctrl-h` to show a minimal help text
+* `esc` to toggle syntax highlighting
 
 ## Size
 

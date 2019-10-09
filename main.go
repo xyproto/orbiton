@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -21,12 +22,6 @@ func main() {
 		defaultEditorBackground       = vt100.BackgroundBlack
 		defaultEditorStatusForeground = vt100.Black
 		defaultEditorStatusBackground = vt100.BackgroundGray
-
-		// Color scheme for the "ASCII graphics" mode
-		//defaultASCIIGraphicsForeground       = vt100.LightBlue
-		//defaultASCIIGraphicsBackground       = vt100.BackgroundDefault
-		//defaultASCIIGraphicsStatusForeground = vt100.White
-		//defaultASCIIGraphicsStatusBackground = vt100.BackgroundMagenta
 
 		version = flag.Bool("version", false, "show version information")
 		help    = flag.Bool("help", false, "show simple help")
@@ -46,13 +41,12 @@ func main() {
 	}
 
 	if *help {
-		fmt.Println(versionString + " - a very simple and limited text editor")
+		fmt.Println(versionString + " - simple and limited text editor")
 		fmt.Print(`
 Hotkeys
 
 ctrl-q to quit
 ctrl-s to save
-ctrl-h to toggle syntax highlighting for Go code
 ctrl-f to format the current file with "go fmt"
 ctrl-a go to start of line, then start of text
 ctrl-e go to end of line
@@ -68,17 +62,18 @@ ctrl-c to copy the current line
 ctrl-v to paste the current line
 ctrl-b to bookmark the current position
 ctrl-j to jump to the bookmark
-
+ctrl-h to show a minimal help text
+esc to toggle syntax highlighting
 `)
 		return
 	}
 
 	filename := flag.Arg(0)
 	if filename == "" {
-		fmt.Fprintln(os.Stderr, "Please supply a filename.")
+		fmt.Fprintln(os.Stderr, "Need a filename.")
 		os.Exit(1)
 	}
-	defaultHighlight := strings.Contains(filename, ".")
+	defaultHighlight := strings.Contains(filepath.Base(filename), ".")
 
 	vt100.Init()
 
@@ -104,7 +99,7 @@ ctrl-j to jump to the bookmark
 	if loaded {
 		status.SetMessage("Loaded " + filename)
 	} else {
-		status.SetMessage(versionString)
+		status.SetMessage("New " + filename)
 	}
 	p := NewPosition(10, e)
 	status.Show(c, p)
@@ -113,8 +108,8 @@ ctrl-j to jump to the bookmark
 	// Resize handler
 	SetUpResizeHandler(c, e, p)
 
-	// Undo buffer with room for 1000 actions
-	undo := NewUndo(1000)
+	// Undo buffer with room for 100 actions
+	undo := NewUndo(100)
 
 	tty, err := vt100.NewTTY()
 	if err != nil {
@@ -130,27 +125,6 @@ ctrl-j to jump to the bookmark
 	for !quit {
 		key := tty.Key()
 		switch key {
-		//case 27: // esc
-		//	e.ToggleDrawMode()
-		//	if !e.DrawMode() {
-		//		e.SetColors(defaultEditorForeground, defaultEditorBackground)
-		//		status.SetColors(defaultEditorStatusForeground, defaultEditorStatusBackground)
-		//		c.FillBackground(e.bg)
-		//		c.Draw()
-		//		e.SetHighlight(defaultHighlight)
-		//		e.SetInsertMode(true)
-		//		status.SetMessage("Text edit mode")
-		//		redraw = true
-		//	} else {
-		//		e.SetColors(defaultASCIIGraphicsForeground, defaultASCIIGraphicsBackground)
-		//		status.SetColors(defaultASCIIGraphicsStatusForeground, defaultASCIIGraphicsStatusBackground)
-		//		c.FillBackground(e.bg)
-		//		c.Draw()
-		//		e.SetHighlight(false)
-		//		e.SetInsertMode(false)
-		//		status.SetMessage("ASCII graphics mode")
-		//		redraw = true
-		//	}
 		case 17: // ctrl-q, quit
 			quit = true
 		case 6: // ctrl-f
@@ -297,7 +271,10 @@ ctrl-j to jump to the bookmark
 			if !e.DrawMode() && p.AfterLineContents() {
 				p.End()
 			}
-		case 8: // ctrl-h, toggle highlight
+		case 8: // ctrl-h, help
+			status.SetMessage("[" + versionString + "] ctrl-s to save, ctrl-q to quit")
+			status.Show(c, p)
+		case 27: // esc, toggle highlight
 			e.ToggleHighlight()
 			redraw = true
 		case 32: // space
@@ -426,14 +403,16 @@ ctrl-j to jump to the bookmark
 			c.Draw()
 			// Redraw after save, for syntax highlighting
 			//redraw = true
-		//case 26: // ctrl-z, undo
-		//	if undoCanvas, undoPosition, err := undo.Restore(); err == nil {
-		//		// no error
-		//		c = undoCanvas
-		//		p = undoPosition
-		//		e.changed = true
-		//		redraw = true
-		//	}
+		case 26: // ctrl-z, may background the application :/
+			redraw = true
+		case 21: // ctrl-u, undo
+			if undoCanvas, undoPosition, err := undo.Restore(); err == nil {
+				// no error
+				c = undoCanvas
+				p = undoPosition
+				e.changed = true
+				redraw = true
+			}
 		case 12: // ctrl-l, redraw
 			redraw = true
 		case 11: // ctrl-k, delete to end of line
