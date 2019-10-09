@@ -27,6 +27,7 @@ You can install `o` with Go 1.11 or later (development version):
 * Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
 * There is no undo-functionality, yet!
+* Requires that `/dev/tty` is available.
 
 ## Known bugs
 
