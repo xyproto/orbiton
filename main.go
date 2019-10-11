@@ -13,7 +13,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "o 2.0.0"
+const versionString = "o 2.1.0"
 
 func main() {
 	var (
@@ -63,6 +63,8 @@ ctrl-v to paste the current line
 ctrl-b to bookmark the current position
 ctrl-j to jump to the bookmark
 ctrl-h to show a minimal help text
+ctrl-u to undo
+ctrl-z to undo, but this may also background the editor ("fg" to foreground)
 esc to toggle syntax highlighting
 `)
 		return
@@ -398,11 +400,7 @@ esc to toggle syntax highlighting
 			status.SetMessage("Saved " + filename)
 			status.Show(c, e)
 			c.Draw()
-			// Redraw after save, for syntax highlighting
-			//redraw = true
-		case 26: // ctrl-z, may background the application :/
-			redraw = true
-		case 21: // ctrl-u, undo
+		case 21, 26: // ctrl-u or ctrl-z, undo (ctrl-z may beckground the application)
 			if err := undo.Restore(e); err == nil {
 				//c.Draw()
 				x := e.pos.ScreenX()
