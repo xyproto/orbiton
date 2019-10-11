@@ -20,17 +20,15 @@ You can install `o` with Go 1.11 or later (development version):
 
 * Has syntax highlighting for Go code.
 * Never asks before saving or quitting. Be careful.
-* Random characters may appear on the screen when keys are pressed. Clear them with `esc`.
-* `Home` and `End` are not detected by the key handler. VT100 only.
+* `Home` and `End` are not detected by the key handler. `ctrl-a` and `ctrl-e` works, though.
 * Can format Go code using `gofmt` (press `ctrl-f`).
 * Expects utilities like `gofmt` to be in `/usr/bin`.
 * Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
 * Requires that `/dev/tty` is available.
-* Copy, cut and paste are only for one line at a time.
+* Copy, cut and paste is only for one line at a time.
+* Some letters can not be typed. Like `æ`.
 * There may be issues when resizing the terminal.
-* Some letters can not be typed. Like `ø`.
-* If a line contains a unicode character (like `ø`), the cursor may be misplaced after that position.
 
 ## Hotkeys
 
@@ -53,7 +51,6 @@ You can install `o` with Go 1.11 or later (development version):
 * `ctrl-j` to jump to the bookmark
 * `ctrl-h` to show a minimal help text
 * `ctrl-u` to undo
-* `ctrl-z` to undo, but this may also background the editor ("fg" to foreground)
 * `esc` to redraw the screen
 
 ## Size
