@@ -10,5 +10,5 @@ addons:
     - gccgo-9
 
 script:
-  - go build -gccgoflags '-Os -s'
+  - go build -mod=vendor
   - ./o --version
