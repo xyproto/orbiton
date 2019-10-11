@@ -58,7 +58,7 @@ You can install `o` with Go 1.11 or later (development version):
 
 ## Size
 
-The `o` executable is **444k** when built with GCC 9.1 (for 64-bit Linux):
+The `o` executable is only **437k** when built with GCC 9.1 (for 64-bit Linux):
 
     go build -gccgoflags '-Os -s'
 
