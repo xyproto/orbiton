@@ -13,7 +13,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "o 2.1.0"
+const versionString = "o 2.1.1"
 
 func main() {
 	var (
@@ -52,11 +52,10 @@ ctrl-a go to start of line, then start of text
 ctrl-e go to end of line
 ctrl-p to scroll up 10 lines
 ctrl-n to scroll down 10 lines
-ctrl-l to redraw the screen
 ctrl-k to delete characters to the end of the line, then delete the line
 ctrl-g to show cursor positions, current letter and word count
 ctrl-d to delete a single character
-ctrl-t to toggle insert mode
+ctrl-t to toggle syntax highlighting
 ctrl-x to cut the current line
 ctrl-c to copy the current line
 ctrl-v to paste the current line
@@ -65,7 +64,7 @@ ctrl-j to jump to the bookmark
 ctrl-h to show a minimal help text
 ctrl-u to undo
 ctrl-z to undo, but this may also background the editor ("fg" to foreground)
-esc to toggle syntax highlighting
+esc to redraw the screen
 `)
 		return
 	}
@@ -151,14 +150,16 @@ esc to toggle syntax highlighting
 				_ = f.Close()
 				redraw = true
 			}
-		case 20: // ctrl-t, toggle insert mode
-			e.ToggleInsertMode()
-			if e.InsertMode() {
-				status.SetMessage("Insert mode")
-			} else {
-				status.SetMessage("Overwrite mode")
-			}
-			status.Show(c, e)
+		case 20: // ctrl-t, toggle syntax highlighting
+			e.ToggleHighlight()
+			//e.ToggleInsertMode()
+			//if e.InsertMode() {
+			//	status.SetMessage("Insert mode")
+			//} else {
+			//	status.SetMessage("Overwrite mode")
+			//}
+			//status.Show(c, e)
+			redraw = true
 		case 7: // ctrl-g, status information
 			currentRune := e.Rune()
 			if !e.DrawMode() {
@@ -273,8 +274,7 @@ esc to toggle syntax highlighting
 		case 8: // ctrl-h, help
 			status.SetMessage("[" + versionString + "] ctrl-s to save, ctrl-q to quit")
 			status.Show(c, e)
-		case 27: // esc, toggle highlight
-			e.ToggleHighlight()
+		case 27: // esc, redraw
 			redraw = true
 		case 32: // space
 			undo.Snapshot(e)
@@ -340,7 +340,7 @@ esc to toggle syntax highlighting
 				// Type a blank
 				e.SetRune(' ')
 				e.WriteRune(c)
-				if !e.DrawMode() {
+				if !e.DrawMode() && !e.AtEndOfLine() {
 					// Delete the blank
 					e.Delete()
 				}
@@ -411,7 +411,8 @@ esc to toggle syntax highlighting
 				status.SetMessage("Nothing more to undo")
 				status.Show(c, e)
 			}
-		case 12: // ctrl-l, redraw
+		case 12: // ctrl-l, go to line number
+			// TODO: Implement
 			redraw = true
 		case 11: // ctrl-k, delete to end of line
 			undo.Snapshot(e)

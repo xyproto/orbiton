@@ -951,6 +951,16 @@ func (e *Editor) StartOfDocument() bool {
 	return e.pos.sy == 0 && e.pos.scroll == 0
 }
 
+// Is the cursor at or after the contents of this line?
+func (e *Editor) AtEndOfLine() bool {
+	x, err := e.DataX()
+	if err != nil {
+		// After end of data
+		return true
+	}
+	return x >= e.LastDataPosition(e.DataY())
+}
+
 // AfterLineContents will check if the cursor is after the current line contents
 func (e *Editor) AfterLineContents() bool {
 	dataCursor := e.DataCursor()

@@ -7,18 +7,19 @@ import (
 
 // Undo is a struct that can store several states of the editor and position
 type Undo struct {
-	index            int
-	size             int
-	editorCopies     []Editor
-	editorLineCopies []map[int][]rune
-	hasSomething     []bool
-	mut              *sync.RWMutex
+	index                int
+	size                 int
+	editorCopies         []Editor
+	editorLineCopies     []map[int][]rune
+	editorPositionCopies []Position
+	hasSomething         []bool
+	mut                  *sync.RWMutex
 }
 
 // NewUndo takes arguments that are only for initializing the undo buffers.
 // The *Position and *vt100.Canvas is used only as a default values for the elements in the undo buffers.
 func NewUndo(size int) *Undo {
-	return &Undo{0, size, make([]Editor, size, size), make([]map[int][]rune, size, size), make([]bool, size, size), &sync.RWMutex{}}
+	return &Undo{0, size, make([]Editor, size, size), make([]map[int][]rune, size, size), make([]Position, size, size), make([]bool, size, size), &sync.RWMutex{}}
 }
 
 // Snapshot will store a snapshot, and move to the next position in the circular buffer
@@ -29,6 +30,7 @@ func (u *Undo) Snapshot(e *Editor) {
 	u.hasSomething[u.index] = true
 	u.editorCopies[u.index] = e.Copy()
 	u.editorLineCopies[u.index] = e.CopyLines()
+	u.editorPositionCopies[u.index] = e.pos
 
 	// Go forward 1 step in the circular buffer
 	u.index++
@@ -54,6 +56,7 @@ func (u *Undo) Restore(e *Editor) error {
 	if u.hasSomething[u.index] {
 		*e = u.editorCopies[u.index]
 		e.lines = u.editorLineCopies[u.index]
+		e.pos = u.editorPositionCopies[u.index]
 		return nil
 	}
 	return errors.New("no undo state at this index")
