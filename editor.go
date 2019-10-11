@@ -90,13 +90,13 @@ func (e *Editor) Set(x, y int, r rune) {
 	if !ok {
 		e.lines[y] = make([]rune, 0, x+1)
 	}
-	if x < int(len(e.lines[y])) {
+	if x < int(len([]rune(e.lines[y]))) {
 		e.lines[y][x] = r
 		e.changed = true
 		return
 	}
 	// If the line is too short, fill it up with spaces
-	for x >= int(len(e.lines[y])) {
+	for x >= int(len([]rune(e.lines[y]))) {
 		e.lines[y] = append(e.lines[y], ' ')
 	}
 	e.lines[y][x] = r
@@ -157,7 +157,7 @@ func (e *Editor) ScreenLine(n int) string {
 // LastDataPosition returns the last X index for this line, for the data (does not expand tabs)
 // Can be negative, if the line is empty.
 func (e *Editor) LastDataPosition(n int) int {
-	return len(e.Line(n)) - 1
+	return len([]rune(e.Line(n))) - 1
 }
 
 // LastScreenPosition returns the last X index for this line, for the screen (expands tabs)
@@ -281,7 +281,7 @@ func (e *Editor) TrimSpaceRight(n int) {
 	if !ok {
 		return
 	}
-	lastIndex := len(e.lines[n]) - 1
+	lastIndex := len([]rune(e.lines[n])) - 1
 	// find the last non-space position
 	for x := lastIndex; x > 0; x-- {
 		if !unicode.IsSpace(e.lines[n][x]) {
@@ -312,7 +312,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		//line := strings.ReplaceAll(e.Line(y+offset), "\t", tabString)
 		line := strings.Replace(e.Line(y+offset), "\t", tabString, -1)
 		screenLine := strings.TrimRightFunc(line, unicode.IsSpace)
-		if len(screenLine) >= w {
+		if len([]rune(screenLine)) >= w {
 			screenLine = screenLine[:w]
 		}
 		if e.highlight {
@@ -321,7 +321,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 			if textWithTags, err := syntax.AsText([]byte(line)); err != nil {
 				// Only output the line up to the width of the canvas
 				fmt.Println(screenLine)
-				counter += len(screenLine)
+				counter += len([]rune(screenLine))
 			} else {
 				// Slice of runes and color attributes
 				charactersAndAttributes := o.Extract(o.DarkTags(string(textWithTags)))
@@ -373,7 +373,7 @@ func (e *Editor) DeleteRestOfLine() {
 	if !ok {
 		return
 	}
-	if x >= len(e.lines[y]) {
+	if x >= len([]rune(e.lines[y])) {
 		return
 	}
 	e.lines[y] = e.lines[y][:x]
@@ -427,7 +427,8 @@ func (e *Editor) DeleteLine(n int) {
 // Delete will delete a character at the given position
 func (e *Editor) Delete() {
 	y := e.DataY()
-	if _, ok := e.lines[y]; !ok || len(e.lines[y]) == 0 || (len(e.lines[y]) == 1 && unicode.IsSpace(e.lines[y][0])) {
+	llen := len([]rune(e.lines[y]))
+	if _, ok := e.lines[y]; !ok || llen == 0 || llen == 1 && unicode.IsSpace(e.lines[y][0]) {
 		// All keys in the map that are > y should be shifted -1.
 		// This also overwrites e.lines[y].
 		e.DeleteLine(y)
@@ -435,14 +436,14 @@ func (e *Editor) Delete() {
 		return
 	}
 	x, err := e.DataX()
-	if err != nil || x >= len(e.lines[y])-1 {
+	if err != nil || x >= len([]rune(e.lines[y]))-1 {
 		// on the last index, just use every element but x
 		e.lines[y] = e.lines[y][:x]
 		// check if the next line exists
 		if _, ok := e.lines[y+1]; ok {
 			// then add the contents of the next line, if available
 			nextLine, ok := e.lines[y+1]
-			if ok && len(nextLine) > 0 {
+			if ok && len([]rune(nextLine)) > 0 {
 				e.lines[y] = append(e.lines[y], nextLine...)
 				// then delete the next line
 				e.DeleteLine(y + 1)
@@ -468,9 +469,10 @@ func (e *Editor) Delete() {
 // If there's only one line left and it is only whitespace, that will be considered empty as well.
 func (e *Editor) Empty() bool {
 	l := len(e.lines)
-	if l == 0 {
+	switch l {
+	case 0:
 		return true
-	} else if l == 1 {
+	case 1:
 		// Check the contents of the 1 remaining line,
 		// without specifying a key.
 		for _, v := range e.lines {
@@ -479,8 +481,8 @@ func (e *Editor) Empty() bool {
 			}
 			break
 		}
-		return false
-	} else {
+		fallthrough
+	default:
 		// > 1 lines
 		return false
 	}
@@ -504,34 +506,30 @@ func (e *Editor) MakeConsistent() error {
 
 // InsertLineBelow will attempt to insert a new line below the current position
 func (e *Editor) InsertLineBelow() {
-	// Check if the keys in the map are consistent
-	if err := e.MakeConsistent(); err != nil {
-		vt100.Reset()
-		vt100.Clear()
-		panic(err)
-	}
-
 	y := e.DataY()
-	newLength := len(e.lines) + 1
-	newMap := make(map[int][]rune, newLength)
-	for i := 0; i < newLength; i++ {
-		if i < y {
-			newMap[i] = e.lines[i]
-		} else if i == y {
-			// Create a new line
-			newMap[i] = make([]rune, 0)
-		} else if i > y {
-			newMap[i] = e.lines[i-1]
+
+	// Create new set of lines
+	lines2 := make(map[int][]rune)
+
+	// For each line in the old map
+	for k, v := range e.lines {
+		if k < (y - 1) {
+			lines2[k] = v
+		} else if k == (y - 1) {
+			lines2[k] = v
+			lines2[k+1] = make([]rune, 0)
+		} else if k > (y - 1) {
+			lines2[k+1] = v
 		}
 	}
-	// Assign the new map
-	e.lines = newMap
+	// Use the new set of lines
+	e.lines = lines2
 
 	e.MakeConsistent()
 
 	// Skip trailing newlines after this line
 	for i := len(e.lines); i > y; i-- {
-		if len(e.lines[i]) == 0 {
+		if len([]rune(e.lines[i])) == 0 {
 			delete(e.lines, i)
 		} else {
 			break
@@ -567,16 +565,17 @@ func (e *Editor) Insert(r rune) {
 		e.lines[y] = []rune{r}
 		return
 	}
-	if len(e.lines[y]) < x {
+	if len([]rune(e.lines[y])) < x {
 		// Can only insert in the existing block of text
 		return
 	}
-	newline := make([]rune, len(e.lines[y])+1)
+	newlineLength := len(e.lines[y]) + 1
+	newline := make([]rune, newlineLength)
 	for i := 0; i < x; i++ {
 		newline[i] = e.lines[y][i]
 	}
 	newline[x] = r
-	for i := x + 1; i < len(newline); i++ {
+	for i := x + 1; i < newlineLength; i++ {
 		newline[i] = e.lines[y][i-1]
 	}
 	e.lines[y] = newline
@@ -653,9 +652,9 @@ func (e *Editor) SplitLine() {
 	x := dataCursor.X
 	y := dataCursor.Y
 	// Get the contents of this line
-	line := e.Line(y)
-	leftContents := strings.TrimRightFunc(line[:x], unicode.IsSpace)
-	rightContents := line[x:]
+	runeLine := e.lines[y]
+	leftContents := strings.TrimRightFunc(string(runeLine[:x]), unicode.IsSpace)
+	rightContents := string(runeLine[x:])
 	// Insert a new line below this one
 	e.InsertLineBelow()
 	// Replace this line with the left contents

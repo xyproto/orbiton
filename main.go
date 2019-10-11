@@ -26,7 +26,7 @@ func main() {
 		version = flag.Bool("version", false, "show version information")
 		help    = flag.Bool("help", false, "show simple help")
 
-		statusDuration = 3000 * time.Millisecond
+		statusDuration = 2500 * time.Millisecond
 
 		redraw   bool
 		copyLine string
@@ -64,7 +64,6 @@ ctrl-b to bookmark the current position
 ctrl-j to jump to the bookmark
 ctrl-h to show a minimal help text
 ctrl-u to undo
-ctrl-z to undo, but this may also background the editor ("fg" to foreground)
 esc to redraw the screen
 `)
 		return
