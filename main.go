@@ -384,22 +384,20 @@ esc to redraw the screen
 				redraw = true
 			}
 		case 19: // ctrl-s, save
-			err := e.Save(filename, !e.DrawMode())
-			if err != nil {
-				tty.Close()
-				vt100.Close()
-				fmt.Fprintln(os.Stderr, vt100.Red.Get(err.Error()))
-				os.Exit(1)
+			if err := e.Save(filename, !e.DrawMode()); err != nil {
+				status.SetMessage(err.Error())
+				status.Show(c, e)
+			} else {
+				// TODO: Go to the end of the document at this point, if needed
+				// Lines may be trimmed for whitespace, so move to the end, if needed
+				if !e.DrawMode() && e.AfterLineContents() {
+					e.End()
+				}
+				// Status message
+				status.SetMessage("Saved " + filename)
+				status.Show(c, e)
+				c.Draw()
 			}
-			// TODO: Go to the end of the document at this point, if needed
-			// Lines may be trimmed for whitespace, so move to the end, if needed
-			if !e.DrawMode() && e.AfterLineContents() {
-				e.End()
-			}
-			// Status message
-			status.SetMessage("Saved " + filename)
-			status.Show(c, e)
-			c.Draw()
 		case 21, 26: // ctrl-u or ctrl-z, undo (ctrl-z may beckground the application)
 			if err := undo.Restore(e); err == nil {
 				//c.Draw()
@@ -500,5 +498,6 @@ esc to redraw the screen
 		previousY = y
 	}
 	tty.Close()
+	vt100.Reset()
 	vt100.Close()
 }
