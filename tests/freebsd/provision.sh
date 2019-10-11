@@ -11,6 +11,3 @@ pkg-static upgrade -y
 
 # Install basic packages for Linux-like development
 pkg install -y bash git go
-
-rm -rf o || true
-git clone https://github.com/xyproto/o
