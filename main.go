@@ -330,10 +330,14 @@ esc to redraw the screen
 			redraw = true
 		case 127: // backspace
 			undo.Snapshot(e)
-			if !e.DrawMode() && len(e.CurrentLine()) == 0 {
+			if !e.DrawMode() && e.EmptyLine() {
 				e.DeleteLine(e.DataY())
 				e.pos.Up()
 				e.End()
+			} else if !e.DrawMode() && e.pos.AtStartOfLine() {
+				e.pos.Up()
+				e.End()
+				e.Delete()
 			} else {
 				// Move back
 				e.Prev(c)
