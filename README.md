@@ -65,6 +65,6 @@ For comparison, it's **2.8M** when building with Go 1.13 and no particular build
 
 ## General info
 
-* Version: 2.1.4
+* Version: 2.1.5
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
