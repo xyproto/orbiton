@@ -41,11 +41,10 @@ You can install `o` with Go 1.11 or later (development version):
 * `ctrl-e` go to end of line
 * `ctrl-p` to scroll up 10 lines
 * `ctrl-n` to scroll down 10 lines
-* `ctrl-l` to redraw the screen
 * `ctrl-k` to delete characters to the end of the line, then delete the line
 * `ctrl-g` to show cursor positions, current letter and word count
 * `ctrl-d` to delete a single character
-* `ctrl-t` to toggle insert mode
+* `ctrl-t` to toggle syntax highlighting
 * `ctrl-x' to cut the current line
 * `ctrl-c' to copy the current line
 * `ctrl-v' to paste the current line
@@ -54,7 +53,7 @@ You can install `o` with Go 1.11 or later (development version):
 * `ctrl-h` to show a minimal help text
 * `ctrl-u` to undo
 * `ctrl-z` to undo, but this may also background the editor ("fg" to foreground)
-* `esc` to toggle syntax highlighting
+* `esc` to redraw the screen
 
 ## Size
 
@@ -66,6 +65,6 @@ For comparison, it's **2.8M** when building with Go 1.13 and no particular build
 
 ## General info
 
-* Version: 2.1.0
+* Version: 2.1.1
 * License: MIT
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
