@@ -803,31 +803,30 @@ func (e *Editor) UpEnd(c *vt100.Canvas) error {
 
 // Next will move the cursor to the next position in the contents
 func (e *Editor) Next(c *vt100.Canvas) error {
-	p := e.pos
 	dataCursor := e.DataCursor()
 	atTab := '\t' == e.Get(dataCursor.X, dataCursor.Y)
 	if atTab && !e.DrawMode() {
-		p.sx += e.spacesPerTab
+		e.pos.sx += e.spacesPerTab
 	} else {
-		p.sx++
+		e.pos.sx++
 	}
 	// Did we move too far on this line?
 	w := int(c.W())
-	if (!e.DrawMode() && e.AfterLineContentsPlusOne()) || (e.DrawMode() && p.sx >= w) {
+	if (!e.DrawMode() && e.AfterLineContentsPlusOne()) || (e.DrawMode() && e.pos.sx >= w) {
 		// Undo the move
 		if atTab && !e.DrawMode() {
-			p.sx -= e.spacesPerTab
+			e.pos.sx -= e.spacesPerTab
 		} else {
-			p.sx--
+			e.pos.sx--
 		}
 		// Move down
 		if !e.DrawMode() {
-			err := p.Down(c)
+			err := e.pos.Down(c)
 			if err != nil {
 				return err
 			}
 			// Move to the start of the line
-			p.sx = 0
+			e.pos.sx = 0
 		}
 	}
 	return nil

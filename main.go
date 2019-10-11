@@ -127,7 +127,7 @@ esc to toggle syntax highlighting
 		case 17: // ctrl-q, quit
 			quit = true
 		case 6: // ctrl-f
-			undo.Snapshot(c, e)
+			undo.Snapshot(e)
 			// Use a globally unique tempfile
 			if f, err := ioutil.TempFile("/tmp", "_red*.go"); !e.DrawMode() && err == nil {
 				// no error, everyting is fine
@@ -275,7 +275,7 @@ esc to toggle syntax highlighting
 			e.ToggleHighlight()
 			redraw = true
 		case 32: // space
-			undo.Snapshot(c, e)
+			undo.Snapshot(e)
 			// Place a space
 			if !e.DrawMode() && e.InsertMode() {
 				e.InsertRune(' ')
@@ -292,7 +292,7 @@ esc to toggle syntax highlighting
 				e.Next(c)
 			}
 		case 13: // return
-			undo.Snapshot(c, e)
+			undo.Snapshot(e)
 			// if the current line is empty, insert a blank line
 			dataCursor := e.DataCursor()
 			//emptyLine := 0 == len(strings.TrimSpace(e.Line(dataCursor.Y)))
@@ -327,7 +327,7 @@ esc to toggle syntax highlighting
 			}
 			redraw = true
 		case 127: // backspace
-			undo.Snapshot(c, e)
+			undo.Snapshot(e)
 			if !e.DrawMode() && len(e.CurrentLine()) == 0 {
 				e.DeleteLine(e.DataY())
 				e.pos.Up()
@@ -345,7 +345,7 @@ esc to toggle syntax highlighting
 			}
 			redraw = true
 		case 9: // tab
-			undo.Snapshot(c, e)
+			undo.Snapshot(e)
 			if !e.DrawMode() {
 				// Place a tab
 				if e.InsertMode() && !e.DrawMode() {
@@ -373,7 +373,7 @@ esc to toggle syntax highlighting
 			e.End()
 			e.pos.SaveXRegardless()
 		case 4: // ctrl-d, delete
-			undo.Snapshot(c, e)
+			undo.Snapshot(e)
 			if e.Empty() {
 				status.SetMessage("Empty")
 				status.Show(c, e)
@@ -403,20 +403,20 @@ esc to toggle syntax highlighting
 		case 26: // ctrl-z, may background the application :/
 			redraw = true
 		case 21: // ctrl-u, undo
-			if err := undo.Restore(c, e); err == nil {
-				// no error
-				c.Clear()
-				c.Redraw()
-				c.Draw()
+			if err := undo.Restore(e); err == nil {
+				//c.Draw()
+				x := e.pos.ScreenX()
+				y := e.pos.ScreenY()
+				vt100.SetXY(uint(x), uint(y))
 				redraw = true
 			} else {
-				status.SetMessage("Undo error")
+				status.SetMessage("Nothing more to undo")
 				status.Show(c, e)
 			}
 		case 12: // ctrl-l, redraw
 			redraw = true
 		case 11: // ctrl-k, delete to end of line
-			undo.Snapshot(c, e)
+			undo.Snapshot(e)
 			if e.Empty() {
 				status.SetMessage("Empty")
 				status.Show(c, e)
@@ -431,6 +431,7 @@ esc to toggle syntax highlighting
 				redraw = true
 			}
 		case 24: // ctrl-x, cut
+			undo.Snapshot(e)
 			y := e.DataY()
 			copyLine = e.Line(y)
 			e.DeleteLine(y)
@@ -439,6 +440,7 @@ esc to toggle syntax highlighting
 			copyLine = e.Line(e.DataY())
 			redraw = true
 		case 22: // ctrl-v, paste
+			undo.Snapshot(e)
 			e.SetLine(e.DataY(), copyLine)
 			redraw = true
 		case 2: // ctrl-b, bookmark
@@ -449,7 +451,7 @@ esc to toggle syntax highlighting
 			redraw = true
 		default:
 			if (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') { // letter
-				undo.Snapshot(c, e)
+				undo.Snapshot(e)
 				// Place a letter
 				if e.InsertMode() {
 					e.InsertRune(rune(key))
