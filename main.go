@@ -498,6 +498,6 @@ esc to redraw the screen
 		previousY = y
 	}
 	tty.Close()
-	vt100.Reset()
+	vt100.Clear()
 	vt100.Close()
 }

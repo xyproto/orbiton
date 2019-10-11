@@ -400,7 +400,6 @@ func (e *Editor) DeleteLine(n int) {
 	}
 	if !found {
 		// This should never happen
-		//panic("IMPOSSIBRUUUU!")
 		return
 	}
 	if _, ok := e.lines[maxIndex]; !ok {
@@ -416,8 +415,9 @@ func (e *Editor) DeleteLine(n int) {
 
 	// Check if the keys in the map are consistent
 	if err := e.MakeConsistent(); err != nil {
-		vt100.Reset()
+		// This should never happen
 		vt100.Clear()
+		vt100.Close()
 		panic(err)
 	}
 
@@ -457,8 +457,9 @@ func (e *Editor) Delete() {
 
 	// Check if the keys in the map are consistent
 	if err := e.MakeConsistent(); err != nil {
-		vt100.Reset()
+		// This should never happen
 		vt100.Clear()
+		vt100.Close()
 		panic(err)
 	}
 
@@ -538,8 +539,9 @@ func (e *Editor) InsertLineBelow() {
 
 	// Check if the keys in the map are consistent
 	if err := e.MakeConsistent(); err != nil {
-		vt100.Reset()
+		// This should never happen
 		vt100.Clear()
+		vt100.Close()
 		panic(err)
 	}
 
@@ -582,8 +584,9 @@ func (e *Editor) Insert(r rune) {
 
 	// Check if the keys in the map are consistent
 	if err := e.MakeConsistent(); err != nil {
-		vt100.Reset()
+		// This should never happen
 		vt100.Clear()
+		vt100.Close()
 		panic(err)
 	}
 
@@ -603,8 +606,9 @@ func (e *Editor) CreateLineIfMissing(n int) {
 
 	// Check if the keys in the map are consistent
 	if err := e.MakeConsistent(); err != nil {
-		vt100.Reset()
+		// This should never happen
 		vt100.Clear()
+		vt100.Close()
 		panic(err)
 	}
 }
