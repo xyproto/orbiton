@@ -56,6 +56,7 @@ ctrl-k to delete characters to the end of the line, then delete the line
 ctrl-g to show cursor positions, current letter and word count
 ctrl-d to delete a single character
 ctrl-t to toggle syntax highlighting
+ctrl-r to toggle text or draw mode (for ASCII graphics)
 ctrl-x to cut the current line
 ctrl-c to copy the current line
 ctrl-v to paste the current line
@@ -74,12 +75,12 @@ esc to redraw the screen
 		fmt.Fprintln(os.Stderr, "Need a filename.")
 		os.Exit(1)
 	}
-	defaultHighlight := strings.Contains(filepath.Base(filename), ".")
+
+	defaultHighlight := filepath.Base(filename) == "PKGBUILD" || strings.Contains(filepath.Base(filename), ".")
 
 	vt100.Init()
 
 	c := vt100.NewCanvas()
-	//c.HideCursor()
 	c.ShowCursor()
 
 	// 4 spaces per tab, scroll 10 lines at a time
@@ -152,14 +153,15 @@ esc to redraw the screen
 			}
 		case 20: // ctrl-t, toggle syntax highlighting
 			e.ToggleHighlight()
-			//e.ToggleInsertMode()
-			//if e.InsertMode() {
-			//	status.SetMessage("Insert mode")
-			//} else {
-			//	status.SetMessage("Overwrite mode")
-			//}
-			//status.Show(c, e)
 			redraw = true
+		case 18: // ctrl-r, toggle draw mode
+			e.ToggleDrawMode()
+			if e.DrawMode() {
+				status.SetMessage("Draw mode")
+			} else {
+				status.SetMessage("Text mode")
+			}
+			status.Show(c, e)
 		case 7: // ctrl-g, status information
 			currentRune := e.Rune()
 			if !e.DrawMode() {
@@ -279,7 +281,7 @@ esc to redraw the screen
 		case 32: // space
 			undo.Snapshot(e)
 			// Place a space
-			if !e.DrawMode() && e.InsertMode() {
+			if !e.DrawMode() {
 				e.InsertRune(' ')
 				redraw = true
 			} else {
@@ -288,9 +290,8 @@ esc to redraw the screen
 			e.WriteRune(c)
 			if e.DrawMode() {
 				redraw = true
-			}
-			// Move to the next position
-			if e.InsertMode() {
+			} else {
+				// Move to the next position
 				e.Next(c)
 			}
 		case 13: // return
@@ -298,7 +299,7 @@ esc to redraw the screen
 			// if the current line is empty, insert a blank line
 			dataCursor := e.DataCursor()
 			//emptyLine := 0 == len(strings.TrimSpace(e.Line(dataCursor.Y)))
-			if e.InsertMode() {
+			if !e.DrawMode() {
 				e.FirstScreenPosition(e.DataY())
 				if e.pos.AtStartOfLine() {
 					// Insert a new line a the current y position, then shift the rest down.
@@ -350,7 +351,7 @@ esc to redraw the screen
 			undo.Snapshot(e)
 			if !e.DrawMode() {
 				// Place a tab
-				if e.InsertMode() && !e.DrawMode() {
+				if !e.DrawMode() {
 					e.InsertRune('\t')
 				} else {
 					e.SetRune('\t')
@@ -358,7 +359,7 @@ esc to redraw the screen
 				// Write the spaces that represent the tab
 				e.WriteTab(c)
 				// Move to the next position
-				if e.InsertMode() {
+				if !e.DrawMode() {
 					e.Next(c)
 				}
 			}
@@ -452,13 +453,13 @@ esc to redraw the screen
 			if (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') { // letter
 				undo.Snapshot(e)
 				// Place a letter
-				if e.InsertMode() {
+				if !e.DrawMode() {
 					e.InsertRune(rune(key))
 				} else {
 					e.SetRune(rune(key))
 				}
 				e.WriteRune(c)
-				if e.InsertMode() {
+				if !e.DrawMode() {
 					// Move to the next position
 					e.Next(c)
 				}
@@ -466,14 +467,14 @@ esc to redraw the screen
 			} else if key != 0 { // any other key
 				// Place *something*
 				r := rune(key)
-				if e.InsertMode() {
+				if !e.DrawMode() {
 					e.InsertRune(rune(key))
 				} else {
 					e.SetRune(rune(key))
 				}
 				e.WriteRune(c)
 				if len(string(r)) > 0 {
-					if e.InsertMode() {
+					if !e.DrawMode() {
 						// Move to the next position
 						e.Next(c)
 					}

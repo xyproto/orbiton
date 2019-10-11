@@ -16,13 +16,12 @@ import (
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
 	lines        map[int][]rune
-	drawMode     bool // stop at the end of lines, or float around?
 	changed      bool // has the contents changed, since last save?
 	fg           vt100.AttributeColor
 	bg           vt100.AttributeColor
 	spacesPerTab int  // how many spaces per tab character
 	highlight    bool // syntax highlighting
-	insertMode   bool // insert or overwrite mode?
+	drawMode     bool // text or draw mode (for ASCII graphics)?
 	pos          Position
 }
 
@@ -31,16 +30,15 @@ type Editor struct {
 // * foreground color attributes
 // * background color attributes
 // * if syntax highlighting is enabled
-// * if "insert mode" is enabled (as opposed to "overwrite mode")
-func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, insertMode bool, scrollSpeed int) *Editor {
+// * if "insert mode" is enabled (as opposed to "draw mode")
+func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEditMode bool, scrollSpeed int) *Editor {
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
-	e.drawMode = false
 	e.fg = fg
 	e.bg = bg
 	e.spacesPerTab = spacesPerTab
 	e.highlight = highlight
-	e.insertMode = insertMode
+	e.drawMode = !textEditMode
 	p := NewPosition(scrollSpeed)
 	e.pos = *p
 	return e
@@ -63,13 +61,13 @@ func (e *Editor) CopyLines() map[int][]rune {
 func (e *Editor) Copy() Editor {
 	var e2 Editor
 	e2.lines = e.CopyLines()
-	e2.drawMode = e.drawMode
 	e2.changed = e.changed
 	e2.fg = e.fg
 	e2.bg = e.bg
 	e2.spacesPerTab = e.spacesPerTab
 	e2.highlight = e.highlight
-	e2.insertMode = e.insertMode
+	e2.drawMode = e.drawMode
+	e2.pos = e.pos
 	return e2
 }
 
@@ -634,21 +632,6 @@ func (e *Editor) SetHighlight(highlight bool) {
 	e.highlight = highlight
 }
 
-// ToggleInsertMode toggles insert mode
-func (e *Editor) ToggleInsertMode() {
-	e.insertMode = !e.insertMode
-}
-
-// SetInsertMode enables or disables insert mode
-func (e *Editor) SetInsertMode(insertMode bool) {
-	e.insertMode = insertMode
-}
-
-// InsertMode returns the current state for the insert mode
-func (e *Editor) InsertMode() bool {
-	return e.insertMode
-}
-
 // SetLine will fill the given line index with the given string.
 // Any previous contents of that line is removed.
 func (e *Editor) SetLine(n int, s string) {
@@ -682,6 +665,9 @@ func (e *Editor) SplitLine() {
 
 // DataX will return the X position in the data (as opposed to the X position in the viewport)
 func (e *Editor) DataX() (int, error) {
+	if e.drawMode {
+		return e.pos.sx, nil
+	}
 	// the y position in the data is the lines scrolled + current screen cursor Y position
 	dataY := e.pos.scroll + e.pos.sy
 	// get the current line of text
@@ -715,6 +701,9 @@ func (e *Editor) DataX() (int, error) {
 
 // DataY will return the Y position in the data (as opposed to the Y position in the viewport)
 func (e *Editor) DataY() int {
+	if e.drawMode {
+		return e.pos.sy
+	}
 	return e.pos.scroll + e.pos.sy
 }
 

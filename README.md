@@ -20,7 +20,7 @@ You can install `o` with Go 1.11 or later (development version):
 
 * Has syntax highlighting for Go code.
 * Never asks before saving or quitting. Be careful.
-* Random characters may appear on the screen when keys are pressed. Clear them with `ctrl-l`.
+* Random characters may appear on the screen when keys are pressed. Clear them with `esc`.
 * `Home` and `End` are not detected by the key handler. VT100 only.
 * Can format Go code using `gofmt` (press `ctrl-f`).
 * Expects utilities like `gofmt` to be in `/usr/bin`.
@@ -45,6 +45,7 @@ You can install `o` with Go 1.11 or later (development version):
 * `ctrl-g` to show cursor positions, current letter and word count
 * `ctrl-d` to delete a single character
 * `ctrl-t` to toggle syntax highlighting
+* `ctrl-r` to toggle text or draw mode (for ASCII graphics)
 * `ctrl-x' to cut the current line
 * `ctrl-c' to copy the current line
 * `ctrl-v' to paste the current line
