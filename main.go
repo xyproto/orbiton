@@ -13,7 +13,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "o 2.1.2"
+const versionString = "o 2.1.3"
 
 func main() {
 	var (
@@ -108,8 +108,8 @@ esc to redraw the screen
 	// Resize handler
 	SetUpResizeHandler(c, e)
 
-	// Undo buffer with room for 100 actions
-	undo := NewUndo(100)
+	// Undo buffer with room for 1024 actions
+	undo := NewUndo(1024)
 
 	tty, err := vt100.NewTTY()
 	if err != nil {
