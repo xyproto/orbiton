@@ -6,6 +6,8 @@ Compiles with either `go` or `gccgo`. Tested with `st`, `urxvt` and `xfce4-termi
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
+Tested on Arch Linux and FreeBSD.
+
 ## Screenshot
 
 ![screenshot](img/screenshot.png)
