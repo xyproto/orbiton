@@ -82,7 +82,7 @@ esc to toggle syntax highlighting
 	c.ShowCursor()
 
 	// 4 spaces per tab, scroll 10 lines at a time
-	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true)
+	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10)
 
 	status := NewStatusBar(defaultEditorStatusForeground, defaultEditorStatusBackground, e, statusDuration)
 
@@ -101,12 +101,11 @@ esc to toggle syntax highlighting
 	} else {
 		status.SetMessage("New " + filename)
 	}
-	p := NewPosition(10, e)
-	status.Show(c, p)
+	status.Show(c, e)
 	c.Draw()
 
 	// Resize handler
-	SetUpResizeHandler(c, e, p)
+	SetUpResizeHandler(c, e)
 
 	// Undo buffer with room for 100 actions
 	undo := NewUndo(100)
@@ -128,7 +127,7 @@ esc to toggle syntax highlighting
 		case 17: // ctrl-q, quit
 			quit = true
 		case 6: // ctrl-f
-			undo.Snapshot(c, p)
+			undo.Snapshot(c, e)
 			// Use a globally unique tempfile
 			if f, err := ioutil.TempFile("/tmp", "_red*.go"); !e.DrawMode() && err == nil {
 				// no error, everyting is fine
@@ -157,229 +156,229 @@ esc to toggle syntax highlighting
 			} else {
 				status.SetMessage("Overwrite mode")
 			}
-			status.Show(c, p)
+			status.Show(c, e)
 		case 7: // ctrl-g, status information
-			currentRune := p.Rune()
+			currentRune := e.Rune()
 			if !e.DrawMode() {
-				status.SetMessage(fmt.Sprintf("line %d col %d unicode %U wordcount: %d undo count: %d", p.DataY(), p.ScreenX(), currentRune, e.WordCount(), undo.Index()+1))
+				status.SetMessage(fmt.Sprintf("line %d col %d unicode %U wordcount: %d undo count: %d", e.DataY(), e.pos.ScreenX(), currentRune, e.WordCount(), undo.Index()+1))
 			} else if currentRune > 32 {
-				x, _ := p.DataX()
-				status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %c (%U) wordcount: %d", p.ScreenX(), p.ScreenY(), x, p.DataY(), currentRune, currentRune, e.WordCount()))
+				x, _ := e.DataX()
+				status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %c (%U) wordcount: %d", e.pos.ScreenX(), e.pos.ScreenY(), x, e.DataY(), currentRune, currentRune, e.WordCount()))
 			} else {
-				x, _ := p.DataX()
-				status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %U wordcount: %d", p.ScreenX(), p.ScreenY(), x, p.DataY(), currentRune, e.WordCount()))
+				x, _ := e.DataX()
+				status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %U wordcount: %d", e.pos.ScreenX(), e.pos.ScreenY(), x, e.DataY(), currentRune, e.WordCount()))
 			}
-			status.Show(c, p)
+			status.Show(c, e)
 		case 252: // left arrow
 			if !e.DrawMode() {
-				p.Prev(c)
-				if p.AfterLineContents() {
-					p.End()
+				e.Prev(c)
+				if e.AfterLineContents() {
+					e.End()
 				}
-				p.SaveX()
+				e.SaveX()
 			} else {
 				// Draw mode
-				p.Left()
+				e.pos.Left()
 			}
 		case 254: // right arrow
 			if !e.DrawMode() {
-				if p.DataY() < e.Len() {
-					p.Next(c)
+				if e.DataY() < e.Len() {
+					e.Next(c)
 				}
-				if p.AfterLineContents() {
-					p.End()
+				if e.AfterLineContents() {
+					e.End()
 				}
-				p.SaveX()
+				e.SaveX()
 			} else {
 				// Draw mode
-				p.Right(c)
+				e.pos.Right(c)
 			}
 		case 253: // up arrow
 			// Move the screen cursor
 			if !e.DrawMode() {
-				if p.DataY() > 0 {
+				if e.DataY() > 0 {
 					// Move the position up in the current screen
-					if p.UpEnd(c) != nil {
+					if e.UpEnd(c) != nil {
 						// If at the top, don't move up, but scroll the contents
 						// Output a helpful message
-						if p.DataY() == 0 {
+						if e.DataY() == 0 {
 							//status.SetMessage("Start of text")
-							//status.Show(c, p)
+							//status.Show(c, e)
 						} else {
 							//status.SetMessage("Top of screen, scroll with ctrl-p")
-							//status.Show(c, p)
-							redraw = p.ScrollUp(c, status, 1)
-							p.Down(c)
-							p.UpEnd(c)
+							//status.Show(c, e)
+							redraw = e.ScrollUp(c, status, 1)
+							e.pos.Down(c)
+							e.UpEnd(c)
 						}
 					}
 					// If the cursor is after the length of the current line, move it to the end of the current line
-					if p.AfterLineContents() {
-						p.End()
+					if e.AfterLineContents() {
+						e.End()
 					}
 				} else {
 					//status.SetMessage("Start of text")
-					//status.Show(c, p)
+					//status.Show(c, e)
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
-				if p.AfterLineContents() {
-					p.End()
+				if e.AfterLineContents() {
+					e.End()
 				}
 			} else {
-				p.Up()
+				e.pos.Up()
 			}
 		case 255: // down arrow
 			if !e.DrawMode() {
-				if p.DataY() < e.Len() {
+				if e.DataY() < e.Len() {
 					// Move the position down in the current screen
-					if p.DownEnd(c) != nil {
+					if e.DownEnd(c) != nil {
 						// If at the bottom, don't move down, but scroll the contents
 						// Output a helpful message
-						if p.EndOfDocument() {
+						if e.EndOfDocument() {
 							//status.SetMessage("End of text")
-							//status.Show(c, p)
+							//status.Show(c, e)
 						} else {
-							redraw = p.ScrollDown(c, status, 1)
-							p.Up()
-							p.DownEnd(c)
+							redraw = e.ScrollDown(c, status, 1)
+							e.pos.Up()
+							e.DownEnd(c)
 						}
 					}
 					// If the cursor is after the length of the current line, move it to the end of the current line
-					if p.AfterLineContents() {
-						p.End()
+					if e.AfterLineContents() {
+						e.End()
 					}
 				} else {
 					//status.SetMessage("End of text")
-					//status.Show(c, p)
+					//status.Show(c, e)
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
-				if p.AfterLineContents() {
-					p.End()
+				if e.AfterLineContents() {
+					e.End()
 				}
 			} else {
-				p.Down(c)
+				e.pos.Down(c)
 			}
 		case 14: // ctrl-n, scroll down
-			redraw = p.ScrollDown(c, status, p.scrollSpeed)
-			if !e.DrawMode() && p.AfterLineContents() {
-				p.End()
+			redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
+			if !e.DrawMode() && e.AfterLineContents() {
+				e.End()
 			}
 		case 16: // ctrl-p, scroll up
-			redraw = p.ScrollUp(c, status, p.scrollSpeed)
-			if !e.DrawMode() && p.AfterLineContents() {
-				p.End()
+			redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
+			if !e.DrawMode() && e.AfterLineContents() {
+				e.End()
 			}
 		case 8: // ctrl-h, help
 			status.SetMessage("[" + versionString + "] ctrl-s to save, ctrl-q to quit")
-			status.Show(c, p)
+			status.Show(c, e)
 		case 27: // esc, toggle highlight
 			e.ToggleHighlight()
 			redraw = true
 		case 32: // space
-			undo.Snapshot(c, p)
+			undo.Snapshot(c, e)
 			// Place a space
 			if !e.DrawMode() && e.InsertMode() {
-				p.InsertRune(' ')
+				e.InsertRune(' ')
 				redraw = true
 			} else {
-				p.SetRune(' ')
+				e.SetRune(' ')
 			}
-			p.WriteRune(c)
+			e.WriteRune(c)
 			if e.DrawMode() {
 				redraw = true
 			}
 			// Move to the next position
 			if e.InsertMode() {
-				p.Next(c)
+				e.Next(c)
 			}
 		case 13: // return
-			undo.Snapshot(c, p)
+			undo.Snapshot(c, e)
 			// if the current line is empty, insert a blank line
-			dataCursor := p.DataCursor()
+			dataCursor := e.DataCursor()
 			//emptyLine := 0 == len(strings.TrimSpace(e.Line(dataCursor.Y)))
 			if e.InsertMode() {
-				p.e.FirstScreenPosition(p.DataY())
-				if p.AtStartOfLine() {
+				e.FirstScreenPosition(e.DataY())
+				if e.pos.AtStartOfLine() {
 					// Insert a new line a the current y position, then shift the rest down.
-					e.InsertLineBelow(p)
+					e.InsertLineBelow()
 					// Also move the cursor to the start, since it's now on a new blank line.
-					p.Down(c)
-					p.Home()
-				} else if p.BeforeOrAtStartOfText(e) {
-					x := p.ScreenX()
+					e.pos.Down(c)
+					e.Home()
+				} else if e.BeforeOrAtStartOfText() {
+					x := e.pos.ScreenX()
 					// Insert a new line a the current y position, then shift the rest down.
-					e.InsertLineBelow(p)
+					e.InsertLineBelow()
 					// Also move the cursor to the start, since it's now on a new blank line.
-					p.Down(c)
-					p.SetX(x)
+					e.pos.Down(c)
+					e.pos.SetX(x)
 				} else {
 					// Split the current line in two
-					e.SplitLine(p)
+					e.SplitLine()
 					// Move to the start of the next line
-					p.Down(c)
-					p.Home()
+					e.pos.Down(c)
+					e.Home()
 				}
 			} else {
 				e.CreateLineIfMissing(dataCursor.Y + 1)
-				p.Down(c)
+				e.pos.Down(c)
 				if !e.DrawMode() {
-					p.Home()
+					e.Home()
 				}
 			}
 			redraw = true
 		case 127: // backspace
-			undo.Snapshot(c, p)
-			if !e.DrawMode() && len(p.Line()) == 0 {
-				e.DeleteLine(p.DataY())
-				p.Up()
-				p.End()
+			undo.Snapshot(c, e)
+			if !e.DrawMode() && len(e.CurrentLine()) == 0 {
+				e.DeleteLine(e.DataY())
+				e.pos.Up()
+				e.End()
 			} else {
 				// Move back
-				p.Prev(c)
+				e.Prev(c)
 				// Type a blank
-				p.SetRune(' ')
-				p.WriteRune(c)
+				e.SetRune(' ')
+				e.WriteRune(c)
 				if !e.DrawMode() {
 					// Delete the blank
-					e.Delete(p)
+					e.Delete()
 				}
 			}
 			redraw = true
 		case 9: // tab
-			undo.Snapshot(c, p)
+			undo.Snapshot(c, e)
 			if !e.DrawMode() {
 				// Place a tab
 				if e.InsertMode() && !e.DrawMode() {
-					p.InsertRune('\t')
+					e.InsertRune('\t')
 				} else {
-					p.SetRune('\t')
+					e.SetRune('\t')
 				}
 				// Write the spaces that represent the tab
-				p.WriteTab(c)
+				e.WriteTab(c)
 				// Move to the next position
 				if e.InsertMode() {
-					p.Next(c)
+					e.Next(c)
 				}
 			}
 			redraw = true
 		case 1: // ctrl-a, home
 			// toggle between start of line and start of non-whitespace
-			if p.AtStartOfLine() {
-				p.SetX(p.e.FirstScreenPosition(p.DataY()))
+			if e.pos.AtStartOfLine() {
+				e.pos.SetX(e.FirstScreenPosition(e.DataY()))
 			} else {
-				p.Home()
+				e.Home()
 			}
-			p.SaveXRegardless()
+			e.pos.SaveXRegardless()
 		case 5: // ctrl-e, end
-			p.End()
-			p.SaveXRegardless()
+			e.End()
+			e.pos.SaveXRegardless()
 		case 4: // ctrl-d, delete
-			undo.Snapshot(c, p)
+			undo.Snapshot(c, e)
 			if e.Empty() {
 				status.SetMessage("Empty")
-				status.Show(c, p)
+				status.Show(c, e)
 			} else {
-				e.Delete(p)
+				e.Delete()
 				redraw = true
 			}
 		case 19: // ctrl-s, save
@@ -392,88 +391,90 @@ esc to toggle syntax highlighting
 			}
 			// TODO: Go to the end of the document at this point, if needed
 			// Lines may be trimmed for whitespace, so move to the end, if needed
-			if !e.DrawMode() && p.AfterLineContents() {
-				p.End()
+			if !e.DrawMode() && e.AfterLineContents() {
+				e.End()
 			}
 			// Status message
 			status.SetMessage("Saved " + filename)
-			status.Show(c, p)
+			status.Show(c, e)
 			c.Draw()
 			// Redraw after save, for syntax highlighting
 			//redraw = true
 		case 26: // ctrl-z, may background the application :/
 			redraw = true
 		case 21: // ctrl-u, undo
-			if undoCanvas, undoPosition, err := undo.Restore(); err == nil {
+			if err := undo.Restore(c, e); err == nil {
 				// no error
-				c = undoCanvas
-				p = undoPosition
-				e.changed = true
+				c.Clear()
+				c.Redraw()
+				c.Draw()
 				redraw = true
+			} else {
+				status.SetMessage("Undo error")
+				status.Show(c, e)
 			}
 		case 12: // ctrl-l, redraw
 			redraw = true
 		case 11: // ctrl-k, delete to end of line
-			undo.Snapshot(c, p)
+			undo.Snapshot(c, e)
 			if e.Empty() {
 				status.SetMessage("Empty")
-				status.Show(c, p)
+				status.Show(c, e)
 			} else {
-				e.DeleteRestOfLine(p)
-				if !e.DrawMode() && p.EmptyLine() {
+				e.DeleteRestOfLine()
+				if !e.DrawMode() && e.EmptyLine() {
 					// Deleting the rest of the line cleared this line,
 					// so just remove it.
-					e.DeleteLine(p.DataY())
+					e.DeleteLine(e.DataY())
 				}
 				vt100.Do("Erase End of Line")
 				redraw = true
 			}
 		case 24: // ctrl-x, cut
-			y := p.DataY()
+			y := e.DataY()
 			copyLine = e.Line(y)
 			e.DeleteLine(y)
 			redraw = true
 		case 3: // ctrl-c, copy line
-			copyLine = e.Line(p.DataY())
+			copyLine = e.Line(e.DataY())
 			redraw = true
 		case 22: // ctrl-v, paste
-			e.SetLine(p.DataY(), copyLine)
+			e.SetLine(e.DataY(), copyLine)
 			redraw = true
 		case 2: // ctrl-b, bookmark
-			bookmark = *p
+			bookmark = e.pos
 		case 10: // ctrl-j, jump to bookmark
-			if bookmark.e != nil {
-				*p = bookmark
-				redraw = true
-			}
+			// TODO: Add a check for if a bookmark exists?
+			e.pos = bookmark
+			redraw = true
 		default:
 			if (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') { // letter
-				undo.Snapshot(c, p)
+				undo.Snapshot(c, e)
 				// Place a letter
 				if e.InsertMode() {
-					p.InsertRune(rune(key))
+					e.InsertRune(rune(key))
 				} else {
-					p.SetRune(rune(key))
+					e.SetRune(rune(key))
 				}
-				p.WriteRune(c)
+				e.WriteRune(c)
 				if e.InsertMode() {
 					// Move to the next position
-					p.Next(c)
+					e.Next(c)
 				}
 				redraw = true
 			} else if key != 0 { // any other key
 				// Place *something*
 				r := rune(key)
 				if e.InsertMode() {
-					p.InsertRune(rune(key))
+					e.InsertRune(rune(key))
 				} else {
-					p.SetRune(rune(key))
+					e.SetRune(rune(key))
 				}
-				p.WriteRune(c)
+				e.WriteRune(c)
 				if len(string(r)) > 0 {
 					if e.InsertMode() {
 						// Move to the next position
-						p.Next(c)
+						e.Next(c)
 					}
 				}
 				redraw = true
@@ -483,14 +484,14 @@ esc to toggle syntax highlighting
 		if redraw {
 			// redraw all characters
 			h := int(c.Height())
-			e.WriteLines(c, 0+p.Offset(), h+p.Offset(), 0, 0)
+			e.WriteLines(c, e.pos.Offset(), h+e.pos.Offset(), 0, 0)
 			c.Draw()
 			redraw = false
 		} else if e.Changed() {
 			c.Draw()
 		}
-		x := p.ScreenX()
-		y := p.ScreenY()
+		x := e.pos.ScreenX()
+		y := e.pos.ScreenY()
 		if x != previousX || y != previousY {
 			vt100.SetXY(uint(x), uint(y))
 		}

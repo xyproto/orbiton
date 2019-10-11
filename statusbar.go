@@ -46,11 +46,11 @@ func (sb *StatusBar) Clear(c *vt100.Canvas) {
 }
 
 // Show will draw a status message, then clear it after a certain delay
-func (sb *StatusBar) Show(c *vt100.Canvas, p *Position) {
+func (sb *StatusBar) Show(c *vt100.Canvas, e *Editor) {
 	if sb.msg == "" {
 		return
 	}
-	sb.Draw(c, p.Offset())
+	sb.Draw(c, e.pos.Offset())
 	go func() {
 		time.Sleep(sb.show)
 		sb.Clear(c)

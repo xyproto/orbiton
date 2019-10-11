@@ -9,7 +9,7 @@ import (
 )
 
 // SetUpResizeHandler sets up a signal handler for when the terminal is resized
-func SetUpResizeHandler(c *vt100.Canvas, e *Editor, p *Position) {
+func SetUpResizeHandler(c *vt100.Canvas, e *Editor) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGWINCH)
 	go func() {
@@ -23,7 +23,7 @@ func SetUpResizeHandler(c *vt100.Canvas, e *Editor, p *Position) {
 				c = nc
 			}
 			h := int(c.Height())
-			e.WriteLines(c, 0+p.Offset(), h+p.Offset(), 0, 0)
+			e.WriteLines(c, e.pos.Offset(), h+e.pos.Offset(), 0, 0)
 			c.Draw()
 		}
 	}()

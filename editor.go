@@ -23,6 +23,7 @@ type Editor struct {
 	spacesPerTab int  // how many spaces per tab character
 	highlight    bool // syntax highlighting
 	insertMode   bool // insert or overwrite mode?
+	pos          Position
 }
 
 // NewEditor takes:
@@ -31,7 +32,7 @@ type Editor struct {
 // * background color attributes
 // * if syntax highlighting is enabled
 // * if "insert mode" is enabled (as opposed to "overwrite mode")
-func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, insertMode bool) *Editor {
+func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, insertMode bool, scrollSpeed int) *Editor {
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
 	e.drawMode = false
@@ -40,11 +41,13 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, insertM
 	e.spacesPerTab = spacesPerTab
 	e.highlight = highlight
 	e.insertMode = insertMode
+	p := NewPosition(scrollSpeed)
+	e.pos = *p
 	return e
 }
 
-// Copy will create a new Editor struct that is a copy of this one
-func (e *Editor) Copy() Editor {
+// CopyLines will create a new map[int][]rune struct that is the copy of all the lines in the editor
+func (e *Editor) CopyLines() map[int][]rune {
 	lines2 := make(map[int][]rune)
 	for key, runes := range e.lines {
 		runes2 := make([]rune, len(runes), len(runes))
@@ -53,8 +56,13 @@ func (e *Editor) Copy() Editor {
 		}
 		lines2[key] = runes2
 	}
+	return lines2
+}
+
+// Copy will create a new Editor struct that is a copy of this one
+func (e *Editor) Copy() Editor {
 	var e2 Editor
-	e2.lines = lines2
+	e2.lines = e.CopyLines()
 	e2.drawMode = e.drawMode
 	e2.changed = e.changed
 	e2.fg = e.fg
@@ -353,13 +361,13 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 }
 
 // DeleteRestOfLine will delete the rest of the line, from the given position
-func (e *Editor) DeleteRestOfLine(p *Position) {
-	x, err := p.DataX()
+func (e *Editor) DeleteRestOfLine() {
+	x, err := e.DataX()
 	if err != nil {
 		// position is after the data, do nothing
 		return
 	}
-	y := p.DataY()
+	y := e.DataY()
 	if e.lines == nil {
 		e.lines = make(map[int][]rune)
 	}
@@ -419,8 +427,8 @@ func (e *Editor) DeleteLine(n int) {
 }
 
 // Delete will delete a character at the given position
-func (e *Editor) Delete(p *Position) {
-	y := p.DataY()
+func (e *Editor) Delete() {
+	y := e.DataY()
 	if _, ok := e.lines[y]; !ok || len(e.lines[y]) == 0 || (len(e.lines[y]) == 1 && unicode.IsSpace(e.lines[y][0])) {
 		// All keys in the map that are > y should be shifted -1.
 		// This also overwrites e.lines[y].
@@ -428,7 +436,7 @@ func (e *Editor) Delete(p *Position) {
 		e.changed = true
 		return
 	}
-	x, err := p.DataX()
+	x, err := e.DataX()
 	if err != nil || x >= len(e.lines[y])-1 {
 		// on the last index, just use every element but x
 		e.lines[y] = e.lines[y][:x]
@@ -497,7 +505,7 @@ func (e *Editor) MakeConsistent() error {
 }
 
 // InsertLineBelow will attempt to insert a new line below the current position
-func (e *Editor) InsertLineBelow(p *Position) {
+func (e *Editor) InsertLineBelow() {
 	// Check if the keys in the map are consistent
 	if err := e.MakeConsistent(); err != nil {
 		vt100.Reset()
@@ -505,7 +513,7 @@ func (e *Editor) InsertLineBelow(p *Position) {
 		panic(err)
 	}
 
-	y := p.DataY()
+	y := e.DataY()
 	newLength := len(e.lines) + 1
 	newMap := make(map[int][]rune, newLength)
 	for i := 0; i < newLength; i++ {
@@ -543,8 +551,8 @@ func (e *Editor) InsertLineBelow(p *Position) {
 }
 
 // Insert will insert a rune at the given position
-func (e *Editor) Insert(p *Position, r rune) {
-	dataCursor := p.DataCursor()
+func (e *Editor) Insert(r rune) {
+	dataCursor := e.DataCursor()
 	x := dataCursor.X
 	y := dataCursor.Y
 
@@ -657,8 +665,8 @@ func (e *Editor) SetLine(n int, s string) {
 
 // SplitLine will, at the given position, split the line in two.
 // The right side of the contents is moved to a new line below.
-func (e *Editor) SplitLine(p *Position) {
-	dataCursor := p.DataCursor()
+func (e *Editor) SplitLine() {
+	dataCursor := e.DataCursor()
 	x := dataCursor.X
 	y := dataCursor.Y
 	// Get the contents of this line
@@ -666,8 +674,330 @@ func (e *Editor) SplitLine(p *Position) {
 	leftContents := strings.TrimRightFunc(line[:x], unicode.IsSpace)
 	rightContents := line[x:]
 	// Insert a new line below this one
-	e.InsertLineBelow(p)
+	e.InsertLineBelow()
 	// Replace this line with the left contents
 	e.SetLine(y, leftContents)
 	e.SetLine(y+1, rightContents)
+}
+
+// DataX will return the X position in the data (as opposed to the X position in the viewport)
+func (e *Editor) DataX() (int, error) {
+	// the y position in the data is the lines scrolled + current screen cursor Y position
+	dataY := e.pos.scroll + e.pos.sy
+	// get the current line of text
+	screenCounter := 0 // counter for the characters on the screen
+	// loop, while also keeping track of tab expansion
+	// add a space to allow to jump to the position after the line and get a valid data position
+	found := false
+	dataX := 0
+	runeCounter := 0
+	for _, r := range e.lines[dataY] {
+		// When we reached the correct screen position, use i as the data position
+		if screenCounter == e.pos.sx {
+			dataX = runeCounter
+			found = true
+			break
+		}
+		// Increase the counter, based on the current rune
+		if r == '\t' {
+			screenCounter += e.spacesPerTab
+		} else {
+			screenCounter++
+		}
+		runeCounter++
+	}
+	if !found {
+		return runeCounter, errors.New("position is after data")
+	}
+	// Return the data cursor
+	return dataX, nil
+}
+
+// DataY will return the Y position in the data (as opposed to the Y position in the viewport)
+func (e *Editor) DataY() int {
+	return e.pos.scroll + e.pos.sy
+}
+
+// DataCursor returns the (x,y) position in the underlying data
+func (e *Editor) DataCursor() *Cursor {
+	x, _ := e.DataX()
+	return &Cursor{x, e.DataY()}
+}
+
+// SetRune will set a rune at the current data position
+func (e *Editor) SetRune(r rune) {
+	dataCursor := e.DataCursor()
+	e.Set(dataCursor.X, dataCursor.Y, r)
+}
+
+// InsertRune will insert a rune at the current data position
+func (e *Editor) InsertRune(r rune) {
+	e.Insert(r)
+}
+
+// Rune will get the rune at the current data position
+func (e *Editor) Rune() rune {
+	dataCursor := e.DataCursor()
+	return e.Get(dataCursor.X, dataCursor.Y)
+}
+
+// CurrentLine will get the current data line, as a string
+func (e *Editor) CurrentLine() string {
+	dataCursor := e.DataCursor()
+	return e.Line(dataCursor.Y)
+}
+
+// Home will move the cursor the the start of the line (x = 0)
+func (e *Editor) Home() {
+	e.pos.sx = 0
+}
+
+// End will move the cursor to the position right after the end of the cirrent line contents
+func (e *Editor) End() {
+	e.pos.sx = e.LastScreenPosition(e.DataY()) + 1
+}
+
+// DownEnd will move down and then choose a "smart" X position
+func (e *Editor) DownEnd(c *vt100.Canvas) error {
+	tmpx := e.pos.sx
+	err := e.pos.Down(c)
+	if err != nil {
+		return err
+	}
+	if e.AfterLineContentsPlusOne() && tmpx > 1 {
+		e.End()
+		if e.pos.sx != tmpx && e.pos.sx > e.pos.savedX {
+			e.pos.savedX = tmpx
+		}
+	} else {
+		e.pos.sx = e.pos.savedX
+		// Also checking if e.Rune() is ' ' is nice for code, but horrible for regular text files
+		if e.Rune() == '\t' {
+			e.pos.sx = e.FirstScreenPosition(e.DataY())
+		}
+	}
+	return nil
+}
+
+// UpEnd will move up and then choose a "smart" X position
+func (e *Editor) UpEnd(c *vt100.Canvas) error {
+	tmpx := e.pos.sx
+	err := e.pos.Up()
+	if err != nil {
+		return err
+	}
+	if e.AfterLineContentsPlusOne() && tmpx > 1 {
+		e.End()
+		if e.pos.sx != tmpx && e.pos.sx > e.pos.savedX {
+			e.pos.savedX = tmpx
+		}
+	} else {
+		e.pos.sx = e.pos.savedX
+		// Also checking if e.Rune() is ' ' is nice for code, but horrible for regular text files
+		if e.Rune() == '\t' {
+			e.pos.sx = e.FirstScreenPosition(e.DataY())
+		}
+	}
+	return nil
+}
+
+// Next will move the cursor to the next position in the contents
+func (e *Editor) Next(c *vt100.Canvas) error {
+	p := e.pos
+	dataCursor := e.DataCursor()
+	atTab := '\t' == e.Get(dataCursor.X, dataCursor.Y)
+	if atTab && !e.DrawMode() {
+		p.sx += e.spacesPerTab
+	} else {
+		p.sx++
+	}
+	// Did we move too far on this line?
+	w := int(c.W())
+	if (!e.DrawMode() && e.AfterLineContentsPlusOne()) || (e.DrawMode() && p.sx >= w) {
+		// Undo the move
+		if atTab && !e.DrawMode() {
+			p.sx -= e.spacesPerTab
+		} else {
+			p.sx--
+		}
+		// Move down
+		if !e.DrawMode() {
+			err := p.Down(c)
+			if err != nil {
+				return err
+			}
+			// Move to the start of the line
+			p.sx = 0
+		}
+	}
+	return nil
+}
+
+// Prev will move the cursor to the previous position in the contents
+func (e *Editor) Prev(c *vt100.Canvas) error {
+	dataCursor := e.DataCursor()
+	atTab := false
+	if dataCursor.X > 0 {
+		atTab = '\t' == e.Get(dataCursor.X-1, dataCursor.Y)
+	}
+	// If at a tab character, move a few more posisions
+	if atTab && !e.DrawMode() {
+		e.pos.sx -= e.spacesPerTab
+	} else {
+		e.pos.sx--
+	}
+	// Did we move too far?
+	if e.pos.sx < 0 {
+		// Undo the move
+		if atTab && !e.DrawMode() {
+			e.pos.sx += e.spacesPerTab
+		} else {
+			e.pos.sx++
+		}
+		// Move up, and to the end of the line above, if in EOL mode
+		if !e.DrawMode() {
+			err := e.pos.Up()
+			if err != nil {
+				return err
+			}
+			e.End()
+		}
+	}
+	return nil
+}
+
+// Right will move the cursor to the right, if possible.
+// It will not move the cursor up or down.
+func (p *Position) Right(c *vt100.Canvas) {
+	lastX := int(c.Width() - 1)
+	if p.sx < lastX {
+		p.sx++
+	}
+}
+
+// Left will move the cursor to the left, if possible.
+// It will not move the cursor up or down.
+func (p *Position) Left() {
+	if p.sx > 0 {
+		p.sx--
+	}
+}
+
+// SaveX will save the current X position, if it's within reason
+func (e *Editor) SaveX() {
+	if !e.AfterLineContentsPlusOne() && e.pos.sx > 1 {
+		e.pos.savedX = e.pos.sx
+	}
+}
+
+// ScrollDown will scroll down the given amount of lines given in scrollSpeed
+func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int) bool {
+	// Find out if we can scroll scrollSpeed, or less
+	canScroll := scrollSpeed
+	// last y posision in the canvas
+	canvasLastY := int(c.H() - 1)
+	// number of lines in the document
+	l := e.Len()
+	if e.pos.scroll >= e.Len()-canvasLastY {
+		// Status message
+		//status.SetMessage("End of text")
+		//status.Show(c, p)
+		c.Draw()
+		// Don't redraw
+		return false
+	}
+	status.Clear(c)
+	if (e.pos.scroll + canScroll) >= (l - canvasLastY) {
+		// Almost at the bottom, we can scroll the remaining lines
+		canScroll = (l - canvasLastY) - e.pos.scroll
+	}
+	// Move the scroll offset
+	e.pos.scroll += canScroll
+	// Prepare to redraw
+	return true
+}
+
+// ScrollUp will scroll down the given amount of lines given in scrollSpeed
+func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) bool {
+	// Find out if we can scroll scrollSpeed, or less
+	canScroll := scrollSpeed
+	if e.pos.scroll == 0 {
+		// Can't scroll further up
+		// Status message
+		//status.SetMessage("Start of text")
+		//status.Show(c, p)
+		c.Draw()
+		// Don't redraw
+		return false
+	}
+	status.Clear(c)
+	if e.pos.scroll-canScroll < 0 {
+		// Almost at the top, we can scroll the remaining lines
+		canScroll = e.pos.scroll
+	}
+	// Move the scroll offset
+	e.pos.scroll -= canScroll
+	// Prepare to redraw
+	return true
+}
+
+// EndOfDocument is true if we're at the last line of the document (or beyond)
+func (e *Editor) EndOfDocument() bool {
+	dataCursor := e.DataCursor()
+	return dataCursor.Y >= (e.Len() - 1)
+}
+
+// StartOfDocument is true if we're at the first line of the document
+func (e *Editor) StartOfDocument() bool {
+	return e.pos.sy == 0 && e.pos.scroll == 0
+}
+
+// AfterLineContents will check if the cursor is after the current line contents
+func (e *Editor) AfterLineContents() bool {
+	dataCursor := e.DataCursor()
+	return e.pos.sx > e.LastScreenPosition(dataCursor.Y)
+	//return dataCursor.X > e.LastDataPosition(dataCursor.Y)
+}
+
+// AfterLineContentsPlusOne will check if the cursor is after the current line contents, with a margin of 1
+func (e *Editor) AfterLineContentsPlusOne() bool {
+	dataCursor := e.DataCursor()
+	return e.pos.sx > (e.LastScreenPosition(dataCursor.Y) + 1)
+	//return dataCursor.X > e.LastDataPosition(dataCursor.Y)
+}
+
+// WriteRune writes the current rune to the given canvas
+func (e *Editor) WriteRune(c *vt100.Canvas) {
+	c.WriteRune(uint(e.pos.sx), uint(e.pos.sy), e.fg, e.bg, e.Rune())
+}
+
+// WriteTab writes spaces when there is a tab character, to the canvas
+func (e *Editor) WriteTab(c *vt100.Canvas) {
+	spacesPerTab := e.spacesPerTab
+	if e.DrawMode() {
+		spacesPerTab = 1
+	}
+	for x := e.pos.sx; x < e.pos.sx+spacesPerTab; x++ {
+		c.WriteRune(uint(x), uint(e.pos.sy), e.fg, e.bg, ' ')
+	}
+}
+
+// EmptyLine checks if the current line is empty (and whitespace doesn't count)
+func (e *Editor) EmptyLine() bool {
+	return 0 == len(strings.TrimRightFunc(e.CurrentLine(), unicode.IsSpace))
+}
+
+// AtStartOfText returns true if the position is at the start of the text for this line
+func (e *Editor) AtStartOfText() bool {
+	return e.pos.sx == e.FirstScreenPosition(e.DataY())
+}
+
+// BeforeStartOfText returns true if the position is before the start of the text for this line
+func (e *Editor) BeforeStartOfText() bool {
+	return e.pos.sx < e.FirstScreenPosition(e.DataY())
+}
+
+// BeforeOrAtStartOfText returns true if the position is before or at the start of the text for this line
+func (e *Editor) BeforeOrAtStartOfText() bool {
+	return e.pos.sx <= e.FirstScreenPosition(e.DataY())
 }
