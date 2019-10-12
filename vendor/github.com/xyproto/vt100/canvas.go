@@ -51,8 +51,26 @@ func (c *Canvas) Copy() Canvas {
 	var c2 Canvas
 	c2.w = c.w
 	c2.h = c.h
-	copy(c2.chars, c.chars)
-	copy(c2.oldchars, c2.oldchars)
+	chars2 := make([]Char, len(c.chars), len(c.chars))
+	for i, ch := range c.chars {
+		var ch2 Char
+		ch2.fg = ch.fg
+		ch2.bg = ch.bg
+		ch2.s = ch.s
+		ch2.drawn = ch.drawn
+		chars2[i] = ch
+	}
+	c2.chars = chars2
+	oldchars2 := make([]Char, len(c.chars), len(c.chars))
+	for i, ch := range c.oldchars {
+		var ch2 Char
+		ch2.fg = ch.fg
+		ch2.bg = ch.bg
+		ch2.s = ch.s
+		ch2.drawn = ch.drawn
+		oldchars2[i] = ch
+	}
+	c2.oldchars = oldchars2
 	c2.mut = c.mut
 	c2.cursorVisible = c.cursorVisible
 	c2.lineWrap = c.lineWrap
