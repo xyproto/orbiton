@@ -193,6 +193,18 @@ func (e *Editor) FirstScreenPosition(n int) int {
 	return counter
 }
 
+// FirstDataPosition returns the first X index for this line, that is not whitespace.
+func (e *Editor) FirstDataPosition(n int) int {
+	counter := 0
+	for _, r := range e.Line(n) {
+		if !unicode.IsSpace(r) {
+			break
+		}
+		counter++
+	}
+	return counter
+}
+
 // Count the number of instances of the rune r in the line n
 func (e *Editor) Count(r rune, n int) int {
 	var counter int
@@ -512,7 +524,8 @@ func (e *Editor) InsertLineAbove() {
 	// Create new set of lines
 	lines2 := make(map[int][]rune)
 
-	// For each line in the old map
+	// For each line in the old map, if at (y-1), insert a blank line
+	// (insert a blank line above)
 	for k, v := range e.lines {
 		if k < (y - 1) {
 			lines2[k] = v
@@ -520,6 +533,50 @@ func (e *Editor) InsertLineAbove() {
 			lines2[k] = v
 			lines2[k+1] = make([]rune, 0)
 		} else if k > (y - 1) {
+			lines2[k+1] = v
+		}
+	}
+	// Use the new set of lines
+	e.lines = lines2
+
+	e.MakeConsistent()
+
+	// Skip trailing newlines after this line
+	for i := len(e.lines); i > y; i-- {
+		if len([]rune(e.lines[i])) == 0 {
+			delete(e.lines, i)
+		} else {
+			break
+		}
+	}
+
+	// Check if the keys in the map are consistent
+	if err := e.MakeConsistent(); err != nil {
+		// This should never happen
+		vt100.Clear()
+		vt100.Close()
+		panic(err)
+	}
+
+	e.changed = true
+}
+
+// InsertLineBelow will attempt to insert a new line below the current position
+func (e *Editor) InsertLineBelow() {
+	y := e.DataY()
+
+	// Create new set of lines
+	lines2 := make(map[int][]rune)
+
+	// For each line in the old map, if at (y-1), insert a blank line
+	// (insert a blank line above)
+	for k, v := range e.lines {
+		if k < y {
+			lines2[k] = v
+		} else if k == y {
+			lines2[k] = v
+			lines2[k+1] = make([]rune, 0)
+		} else if k > y {
 			lines2[k+1] = v
 		}
 	}
@@ -1029,25 +1086,45 @@ func (e *Editor) AtOrBeforeStartOfTextLine() bool {
 	return e.pos.sx <= e.FirstScreenPosition(e.DataY())
 }
 
-// GoTo will go to a given line number
-func (e *Editor) GoTo(lineNumber int, c *vt100.Canvas, status *StatusBar) bool {
+// GoToLineNumber will go to a given line number, but counting from 1, not from 0!
+func (e *Editor) GoToLineNumber(lineNumber int, c *vt100.Canvas, status *StatusBar) bool {
+	return e.GoTo(lineNumber-1, c, status)
+}
+
+// GoTo will go to a given line index, counting from 0
+func (e *Editor) GoTo(y int, c *vt100.Canvas, status *StatusBar) bool {
 	redraw := false
 	h := int(c.Height())
-	if lineNumber > h {
+	if y >= h {
 		e.pos.sy = 0
 		e.pos.scroll = 0
-		e.ScrollDown(c, status, lineNumber-1)
+		e.ScrollDown(c, status, y)
 		e.pos.SetX(e.FirstScreenPosition(e.DataY()))
 		redraw = true
 	} else {
 		e.pos.sy = 0
 		e.pos.scroll = 0
 		// Jump to the given line number, if > 0
-		for i := 1; i < lineNumber; i++ {
+		for i := 0; i < y; i++ {
 			e.pos.Down(c)
 		}
 		e.pos.SetX(e.FirstScreenPosition(e.DataY()))
 		redraw = true
 	}
 	return redraw
+}
+
+// Up tried to move the cursor up, and also scroll
+func (e *Editor) Up(c *vt100.Canvas, status *StatusBar) {
+	e.GoTo(e.DataY()-1, c, status)
+}
+
+// Down tries to move the cursor down, and also scroll
+func (e *Editor) Down(c *vt100.Canvas, status *StatusBar) {
+	e.GoTo(e.DataY()+1, c, status)
+}
+
+// LeadingWhitespace returns the leading whitespace for this line
+func (e *Editor) LeadingWhitespace() string {
+	return e.CurrentLine()[:e.FirstDataPosition(e.DataY())]
 }

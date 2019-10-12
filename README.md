@@ -34,7 +34,6 @@ You can install `o` with Go 1.11 or later (development version):
 ## Known bugs
 
 * After resizing the terminal, the scolling may stop working and everything may be displayed wrong.
-* The behavior of the return key when reaching the end of document or bottom of screen is wrong.
 * Sometimes, pressing return rapidly twice in a row makes the cursor jump up.
 
 ## Hotkeys

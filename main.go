@@ -125,7 +125,7 @@ esc to redraw the screen
 	previousY := -1
 
 	if lineNumber > 0 {
-		redraw = e.GoTo(lineNumber, c, status)
+		redraw = e.GoToLineNumber(lineNumber, c, status)
 	}
 
 	quit := false
@@ -311,23 +311,38 @@ esc to redraw the screen
 					// Also move the cursor to the start, since it's now on a new blank line.
 					e.pos.Down(c)
 					e.pos.SetX(x)
-				} else if e.AtOrAfterEndOfDocument() {
-					e.CreateLineIfMissing(e.DataY() + 1)
+				} else if e.AtOrAfterEndOfLine() && e.AtLastLineOfDocument() {
+					e.InsertLineBelow()
+					e.ScrollDown(c, status, 1)
 					e.pos.Down(c)
+					e.Home()
+				} else if e.AtOrAfterEndOfLine() {
+					e.InsertLineBelow()
+					e.Down(c, status)
 					e.Home()
 				} else {
 					// Split the current line in two
 					if !e.SplitLine() {
-						e.CreateLineIfMissing(e.DataY() + 1)
-						e.pos.Down(c)
+						// Grab the leading whitespace from the current line
+						leadingWhitespace := e.LeadingWhitespace()
+						// Insert a line below, then move down and to the start of it
+						e.InsertLineBelow()
+						e.Down(c, status)
+						e.Home()
+						// Insert the same leading whitespace for the new line, while moving to the right
+						for _, r := range leadingWhitespace {
+							e.InsertRune(r)
+							e.Next(c)
+						}
+					} else {
+						e.Down(c, status)
 						e.Home()
 					}
-					// Move to the start of the next line
-					e.pos.Down(c)
-					e.Home()
 				}
 			} else {
-				e.CreateLineIfMissing(e.DataY() + 1)
+				if e.AtLastLineOfDocument() {
+					e.CreateLineIfMissing(e.DataY() + 1)
+				}
 				e.pos.Down(c)
 			}
 			redraw = true
@@ -446,7 +461,7 @@ esc to redraw the screen
 			status.ClearAll(c)
 			if lns != "" {
 				if ln, err := strconv.Atoi(lns); err == nil { // no error
-					redraw = e.GoTo(ln, c, status)
+					redraw = e.GoToLineNumber(ln, c, status)
 					status.SetMessage(lns)
 					status.Show(c, e)
 					redraw = true
