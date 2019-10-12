@@ -19,7 +19,7 @@ const versionString = "o 2.2.1"
 func main() {
 	var (
 		// Color scheme for the "text edit" mode
-		defaultEditorForeground       = vt100.Red
+		defaultEditorForeground       = vt100.White
 		defaultEditorBackground       = vt100.BackgroundBlack
 		defaultEditorStatusForeground = vt100.Blue
 		defaultEditorStatusBackground = vt100.BackgroundGray
