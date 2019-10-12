@@ -162,11 +162,13 @@ esc to redraw the screen
 			redraw = true
 		case 23: // ctrl-w, always show word count
 			// Enter writers mode. There is no escape.
-			wordcount = true
-			status.ShowWordCount(c, e)
-			// Writers mode, green on black
-			e.fg = vt100.LightGreen
-			e.bg = vt100.BackgroundDefault
+			wordcount = !wordcount
+			if wordcount {
+				status.ShowWordCount(c, e)
+				// Writers mode, green on black
+				e.fg = vt100.LightGreen
+				e.bg = vt100.BackgroundDefault
+			}
 			redraw = true
 		case 18: // ctrl-r, toggle draw mode
 			e.ToggleDrawMode()
