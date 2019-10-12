@@ -309,24 +309,39 @@ esc to redraw the screen
 				e.Next(c)
 			}
 		case 13: // return
+
 			undo.Snapshot(e)
 			// if the current line is empty, insert a blank line
+			dataCursor := e.DataCursor()
+			//emptyLine := 0 == len(strings.TrimSpace(e.Line(dataCursor.Y)))
 			if !e.DrawMode() {
-				if e.SplitLine() {
-					e.DownEnd(c)
+				e.FirstScreenPosition(e.DataY())
+				if e.pos.AtStartOfLine() {
+					// Insert a new line a the current y position, then shift the rest down.
+					e.InsertLineAbove()
+					// Also move the cursor to the start, since it's now on a new blank line.
+					e.pos.Down(c)
 					e.Home()
+				} else if e.BeforeOrAtStartOfText() {
+					x := e.pos.ScreenX()
+					// Insert a new line a the current y position, then shift the rest down.
+					e.InsertLineAbove()
+					// Also move the cursor to the start, since it's now on a new blank line.
+					e.pos.Down(c)
+					e.pos.SetX(x)
 				} else {
-					if e.BeforeOrAtStartOfText() {
-						e.InsertLineAbove()
-					} else {
-						e.DownEnd(c)
-						e.Home()
-						e.InsertLineAbove()
-					}
+					// Split the current line in two
+					e.SplitLine()
+					// Move to the start of the next line
+					e.pos.Down(c)
+					e.Home()
 				}
 			} else {
-				e.CreateLineIfMissing(e.DataY() + 1)
+				e.CreateLineIfMissing(dataCursor.Y + 1)
 				e.pos.Down(c)
+				if !e.DrawMode() {
+					e.Home()
+				}
 			}
 			redraw = true
 		case 127: // backspace
