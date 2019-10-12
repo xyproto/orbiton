@@ -17,14 +17,12 @@ func SetUpResizeHandler(c *vt100.Canvas, e *Editor) {
 			// Create a new canvas, with the new size
 			nc := c.Resized()
 			if nc != nil {
-				c.Clear()
 				vt100.Clear()
-				c.Draw()
 				c = nc
 			}
 			h := int(c.Height())
 			e.WriteLines(c, e.pos.Offset(), h+e.pos.Offset(), 0, 0)
-			c.Draw()
+			c.Redraw()
 		}
 	}()
 }
