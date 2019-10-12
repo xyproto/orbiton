@@ -59,7 +59,7 @@ You can install `o` with Go 1.11 or later (development version):
 * `ctrl-h` - show a minimal help text
 * `ctrl-u` - undo
 * `ctrl-l` - jump to a specific line
-* `ctrl-w` - word count / writers mode
+* `ctrl-w` - search
 * `esc` - redraw the screen
 
 ## Size
