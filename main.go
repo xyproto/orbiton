@@ -21,7 +21,7 @@ func main() {
 		// Color scheme for the "text edit" mode
 		defaultEditorForeground       = vt100.Red
 		defaultEditorBackground       = vt100.BackgroundBlack
-		defaultEditorStatusForeground = vt100.Black
+		defaultEditorStatusForeground = vt100.Blue
 		defaultEditorStatusBackground = vt100.BackgroundGray
 
 		version = flag.Bool("version", false, "show version information")
@@ -169,13 +169,13 @@ esc to redraw the screen
 		case 7: // ctrl-g, status information
 			currentRune := e.Rune()
 			if !e.DrawMode() {
-				status.SetMessage(fmt.Sprintf("line %d col %d unicode %U wordcount: %d undo count: %d", e.DataY(), e.pos.ScreenX(), currentRune, e.WordCount(), undo.Index()+1))
+				status.SetMessage(fmt.Sprintf("line %d col %d rune %U word count: %d", e.DataY(), e.pos.ScreenX(), currentRune, e.WordCount()))
 			} else if currentRune > 32 {
 				x, _ := e.DataX()
-				status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %c (%U) wordcount: %d", e.pos.ScreenX(), e.pos.ScreenY(), x, e.DataY(), currentRune, currentRune, e.WordCount()))
+				status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %c (%U) word count: %d", e.pos.ScreenX(), e.pos.ScreenY(), x, e.DataY(), currentRune, currentRune, e.WordCount()))
 			} else {
 				x, _ := e.DataX()
-				status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %U wordcount: %d", e.pos.ScreenX(), e.pos.ScreenY(), x, e.DataY(), currentRune, e.WordCount()))
+				status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %U word count: %d", e.pos.ScreenX(), e.pos.ScreenY(), x, e.DataY(), currentRune, e.WordCount()))
 			}
 			status.Show(c, e)
 		case 252: // left arrow
