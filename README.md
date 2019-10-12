@@ -22,6 +22,7 @@ You can install `o` with Go 1.11 or later (development version):
 
 * Has syntax highlighting for Go code.
 * Never asks before saving or quitting. Be careful.
+* Has a "wordcount mode" for distraction-free writing, that shows a word-counter at the bottom (`ctrl-w` to toggle).
 * `Home` and `End` are not detected by the key handler. `ctrl-a` and `ctrl-e` works, though.
 * Can format Go code using `gofmt` (press `ctrl-f`).
 * Expects utilities like `gofmt` to be in `/usr/bin`.
@@ -35,6 +36,7 @@ You can install `o` with Go 1.11 or later (development version):
 
 * After resizing the terminal, the scolling may stop working and everything may be displayed wrong.
 * Sometimes, pressing return rapidly twice in a row makes the cursor jump up.
+* The color scheme from "wordcount mode" will remain when toggling back to the regular mode.
 
 ## Hotkeys
 
