@@ -67,7 +67,7 @@ ctrl-j to jump to the bookmark
 ctrl-h to show a minimal help text
 ctrl-u to undo
 ctrl-l to jump to a specific line
-ctrl-w to show a word counter
+ctrl-w to show a word counter and enter "writers mode"
 esc to redraw the screen
 `)
 		return

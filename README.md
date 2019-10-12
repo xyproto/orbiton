@@ -34,7 +34,7 @@ You can install `o` with Go 1.11 or later (development version):
 ## Known bugs
 
 * After resizing the terminal, the scolling may stop working and everything may be displayed wrong.
-* Pressing return rapidly two times in a row may sometimes (1 out of 10 times, perhaps) make the cursor jump to the top of the screen. I'm trying to figure out why.
+* Sometimes, pressing return rapidly twice in a row makes the cursor jump up.
 
 ## Hotkeys
 
@@ -58,6 +58,7 @@ You can install `o` with Go 1.11 or later (development version):
 * `ctrl-h` - show a minimal help text
 * `ctrl-u` - undo
 * `ctrl-l` - jump to a specific line
+* `ctrl-w` - word count / writers mode
 * `esc` - redraw the screen
 
 ## Size
