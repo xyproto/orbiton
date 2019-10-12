@@ -34,26 +34,26 @@ You can install `o` with Go 1.11 or later (development version):
 
 ## Hotkeys
 
-* `ctrl-q` to quit
-* `ctrl-s` to save
-* `ctrl-f` to format the current file with `go fmt`
-* `ctrl-a` go to start of line, then start of text
-* `ctrl-e` go to end of line
-* `ctrl-p` to scroll up 10 lines
-* `ctrl-n` to scroll down 10 lines
-* `ctrl-k` to delete characters to the end of the line, then delete the line
-* `ctrl-g` to show cursor positions, current letter and word count
-* `ctrl-d` to delete a single character
-* `ctrl-t` to toggle syntax highlighting
-* `ctrl-r` to toggle text or draw mode (for ASCII graphics)
-* `ctrl-x' to cut the current line
-* `ctrl-c' to copy the current line
-* `ctrl-v' to paste the current line
-* `ctrl-b` to bookmark the current position
-* `ctrl-j` to jump to the bookmark
-* `ctrl-h` to show a minimal help text
-* `ctrl-u` to undo
-* `esc` to redraw the screen
+* `ctrl-q` - quit
+* `ctrl-s` - save
+* `ctrl-f` - format the current file with `go fmt`
+* `ctrl-a` - go to start of line, then start of text on the same line
+* `ctrl-e` - go to end of line
+* `ctrl-p` - scroll up 10 lines
+* `ctrl-n` - scroll down 10 lines
+* `ctrl-k` - delete characters to the end of the line, then delete the line
+* `ctrl-g` - show cursor positions, current letter and word count
+* `ctrl-d` - delete a single character
+* `ctrl-t` - toggle syntax highlighting
+* `ctrl-r` - toggle text or draw mode (for ASCII graphics)
+* `ctrl-x` - cut the current line
+* `ctrl-c` - copy the current line
+* `ctrl-v` - paste the current line
+* `ctrl-b` - bookmark the current position
+* `ctrl-j` - jump to the bookmark
+* `ctrl-h` - show a minimal help text
+* `ctrl-u` - undo
+* `esc` - redraw the screen
 
 ## Size
 
