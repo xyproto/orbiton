@@ -7,13 +7,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "o 2.1.5"
+const versionString = "o 2.2.0"
 
 func main() {
 	var (
@@ -26,7 +27,7 @@ func main() {
 		version = flag.Bool("version", false, "show version information")
 		help    = flag.Bool("help", false, "show simple help")
 
-		statusDuration = 2500 * time.Millisecond
+		statusDuration = 2700 * time.Millisecond
 
 		redraw   bool
 		copyLine string
@@ -64,18 +65,25 @@ ctrl-b to bookmark the current position
 ctrl-j to jump to the bookmark
 ctrl-h to show a minimal help text
 ctrl-u to undo
+ctrl-l to jump to a specific line
 esc to redraw the screen
 `)
 		return
 	}
 
-	filename := flag.Arg(0)
-	if filename == "" {
+	if flag.Arg(0) == "" {
 		fmt.Fprintln(os.Stderr, "Need a filename.")
 		os.Exit(1)
 	}
 
+	filename, lineNumber := FilenameAndLineNumber(flag.Arg(0), flag.Arg(1))
+
 	defaultHighlight := filepath.Base(filename) == "PKGBUILD" || strings.Contains(filepath.Base(filename), ".")
+
+	tty, err := vt100.NewTTY()
+	if err != nil {
+		panic(err)
+	}
 
 	vt100.Init()
 
@@ -88,9 +96,7 @@ esc to redraw the screen
 	status := NewStatusBar(defaultEditorStatusForeground, defaultEditorStatusBackground, e, statusDuration)
 
 	// Try to load the filename, ignore errors since giving a new filename is also okay
-	// TODO: Check if the file exists and add proper error reporting
-	err := e.Load(filename)
-	loaded := err == nil
+	loaded := e.Load(filename) == nil
 
 	// Draw editor lines from line 0 uE to h onto the canvas at 0,0
 	h := int(c.Height())
@@ -105,21 +111,20 @@ esc to redraw the screen
 	status.Show(c, e)
 	c.Draw()
 
-	// Resize handler
-	SetUpResizeHandler(c, e)
-
 	// Undo buffer with room for 4096 actions
 	undo := NewUndo(4096)
 
-	tty, err := vt100.NewTTY()
-	if err != nil {
-		panic(err)
-	}
+	// Resize handler
+	SetUpResizeHandler(c, e, tty)
 
 	//tty.SetTimeout(10 * time.Millisecond)
 
 	previousX := -1
 	previousY := -1
+
+	if lineNumber > 0 {
+		redraw = e.GoTo(lineNumber, c, status)
+	}
 
 	quit := false
 	for !quit {
@@ -179,7 +184,7 @@ esc to redraw the screen
 				if e.AfterLineContents() {
 					e.End()
 				}
-				e.SaveX()
+				e.SaveX(true)
 			} else {
 				// Draw mode
 				e.pos.Left()
@@ -192,7 +197,7 @@ esc to redraw the screen
 				if e.AfterLineContents() {
 					e.End()
 				}
-				e.SaveX()
+				e.SaveX(true)
 			} else {
 				// Draw mode
 				e.pos.Right(c)
@@ -374,10 +379,10 @@ esc to redraw the screen
 			} else {
 				e.Home()
 			}
-			e.pos.SaveXRegardless()
+			e.SaveX(true)
 		case 5: // ctrl-e, end
 			e.End()
-			e.pos.SaveXRegardless()
+			e.SaveX(true)
 		case 4: // ctrl-d, delete
 			undo.Snapshot(e)
 			if e.Empty() {
@@ -414,8 +419,39 @@ esc to redraw the screen
 				status.Show(c, e)
 			}
 		case 12: // ctrl-l, go to line number
-			// TODO: Implement
-			redraw = true
+			status.SetMessage("Go to line number:")
+			status.ShowNoTimeout(c, e)
+			lns := ""
+			doneCollectingDigits := false
+			for !doneCollectingDigits {
+				numkey := tty.Key()
+				switch numkey {
+				case 48, 49, 50, 51, 52, 53, 54, 55, 56, 57: // 0 .. 9
+					lns += string('0' + (numkey - 48))
+					status.SetMessage("Go to line number: " + lns)
+					status.ShowNoTimeout(c, e)
+				case 127: // backspace
+					if len(lns) > 0 {
+						lns = lns[:len(lns)-1]
+						status.SetMessage("Go to line number: " + lns)
+						status.ShowNoTimeout(c, e)
+					}
+				case 27, 17: // esc or ctrl-q
+					lns = ""
+					fallthrough
+				case 13: // return
+					doneCollectingDigits = true
+				}
+			}
+			status.ClearAll(c)
+			if lns != "" {
+				if ln, err := strconv.Atoi(lns); err == nil { // no error
+					redraw = e.GoTo(ln, c, status)
+					status.SetMessage(lns)
+					status.Show(c, e)
+					redraw = true
+				}
+			}
 		case 11: // ctrl-k, delete to end of line
 			undo.Snapshot(e)
 			if e.Empty() {

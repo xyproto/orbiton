@@ -31,6 +31,10 @@ You can install `o` with Go 1.11 or later (development version):
 * Copy, cut and paste is only for one line at a time.
 * Some letters can not be typed in. Like `æ`.
 
+## Known bugs
+
+* After resizing the terminal, the scolling may stop working and everything may be displayed wrong.
+
 ## Hotkeys
 
 * `ctrl-q` - quit
@@ -52,6 +56,7 @@ You can install `o` with Go 1.11 or later (development version):
 * `ctrl-j` - jump to the bookmark
 * `ctrl-h` - show a minimal help text
 * `ctrl-u` - undo
+* `ctrl-l` - jump to a specific line
 * `esc` - redraw the screen
 
 ## Size
@@ -62,8 +67,19 @@ The `o` executable is only **437k** when built with GCC 9.1 (for 64-bit Linux):
 
 For comparison, it's **2.8M** when building with Go 1.13 and no particular build flags are given.
 
+## Jumping to a specific line when opening a file
+
+These four ways of opening `file.txt` at line `7` are supported:
+
+* `o file.txt 7`
+* `o file.txt +7`
+* `o file.txt:7`
+* `o file.txt+7`
+
+This also means that filenames containing `+` or `:` are not supported.
+
 ## General info
 
-* Version: 2.1.5
+* Version: 2.2.0
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
