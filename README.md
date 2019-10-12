@@ -29,8 +29,7 @@ You can install `o` with Go 1.11 or later (development version):
 * Must be given a filename at start.
 * Requires that `/dev/tty` is available.
 * Copy, cut and paste is only for one line at a time.
-* Some letters can not be typed. Like `æ`.
-* There may be issues when resizing the terminal.
+* Some letters can not be typed in. Like `æ`.
 
 ## Hotkeys
 
