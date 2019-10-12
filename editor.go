@@ -875,8 +875,8 @@ func (p *Position) Left() {
 }
 
 // SaveX will save the current X position, if it's within reason
-func (e *Editor) SaveX() {
-	if !e.AfterLineContentsPlusOne() && e.pos.sx > 1 {
+func (e *Editor) SaveX(regardless bool) {
+	if regardless || (!e.AfterLineContentsPlusOne() && e.pos.sx > 1) {
 		e.pos.savedX = e.pos.sx
 	}
 }
@@ -1001,4 +1001,27 @@ func (e *Editor) BeforeStartOfText() bool {
 // BeforeOrAtStartOfText returns true if the position is before or at the start of the text for this line
 func (e *Editor) BeforeOrAtStartOfText() bool {
 	return e.pos.sx <= e.FirstScreenPosition(e.DataY())
+}
+
+// GoTo will go to a given line number
+func (e *Editor) GoTo(lineNumber int, c *vt100.Canvas, status *StatusBar) bool {
+	redraw := false
+	h := int(c.Height())
+	if lineNumber > h {
+		e.pos.sy = 0
+		e.pos.scroll = 0
+		e.ScrollDown(c, status, lineNumber-1)
+		e.pos.SetX(e.FirstScreenPosition(e.DataY()))
+		redraw = true
+	} else {
+		e.pos.sy = 0
+		e.pos.scroll = 0
+		// Jump to the given line number, if > 0
+		for i := 1; i < lineNumber; i++ {
+			e.pos.Down(c)
+		}
+		e.pos.SetX(e.FirstScreenPosition(e.DataY()))
+		redraw = true
+	}
+	return redraw
 }
