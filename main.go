@@ -20,7 +20,7 @@ func main() {
 	var (
 		// Color scheme for the "text edit" mode
 		defaultEditorForeground       = vt100.White
-		defaultEditorBackground       = vt100.BackgroundBlack
+		defaultEditorBackground       = vt100.BackgroundDefault
 		defaultEditorStatusForeground = vt100.Blue
 		defaultEditorStatusBackground = vt100.BackgroundGray
 
@@ -29,10 +29,9 @@ func main() {
 
 		statusDuration = 2700 * time.Millisecond
 
-		redraw    bool     // if the contents should be redrawn in the next loop
-		copyLine  string   // for the cut/copy/paste functionality
-		bookmark  Position // for the bookmark/jump functionality
-		wordcount bool     // always show wordcount at the bottom?
+		redraw   bool     // if the contents should be redrawn in the next loop
+		copyLine string   // for the cut/copy/paste functionality
+		bookmark Position // for the bookmark/jump functionality
 	)
 
 	flag.Parse()
@@ -67,7 +66,7 @@ ctrl-j to jump to the bookmark
 ctrl-h to show a minimal help text
 ctrl-u to undo
 ctrl-l to jump to a specific line
-ctrl-w to show a word counter and enter "writers mode"
+ctrl-w to search
 esc to redraw the screen
 `)
 		return
@@ -160,15 +159,7 @@ esc to redraw the screen
 		case 20: // ctrl-t, toggle syntax highlighting
 			e.ToggleHighlight()
 			redraw = true
-		case 23: // ctrl-w, always show word count
-			// Enter writers mode. There is no escape.
-			wordcount = !wordcount
-			if wordcount {
-				status.ShowWordCount(c, e)
-				// Writers mode, green on black
-				e.fg = vt100.LightGreen
-				e.bg = vt100.BackgroundDefault
-			}
+		case 23: // ctrl-w, search
 			redraw = true
 		case 18: // ctrl-r, toggle draw mode
 			e.ToggleDrawMode()
@@ -541,15 +532,9 @@ esc to redraw the screen
 			// redraw all characters
 			h := int(c.Height())
 			e.WriteLines(c, e.pos.Offset(), h+e.pos.Offset(), 0, 0)
-			if wordcount {
-				status.ShowWordCount(c, e)
-			}
 			c.Draw()
 			redraw = false
 		} else if e.Changed() {
-			if wordcount {
-				status.ShowWordCount(c, e)
-			}
 			c.Draw()
 		}
 		x := e.pos.ScreenX()

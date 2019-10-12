@@ -22,7 +22,6 @@ You can install `o` with Go 1.11 or later (development version):
 
 * Has syntax highlighting for Go code.
 * Never asks before saving or quitting. Be careful.
-* Has a "wordcount mode" for distraction-free writing, that shows a word-counter at the bottom (`ctrl-w` to toggle).
 * `Home` and `End` are not detected by the key handler. `ctrl-a` and `ctrl-e` works, though.
 * Can format Go code using `gofmt` (press `ctrl-f`).
 * Expects utilities like `gofmt` to be in `/usr/bin`.
@@ -31,7 +30,6 @@ You can install `o` with Go 1.11 or later (development version):
 * Requires that `/dev/tty` is available.
 * Copy, cut and paste is only for one line at a time.
 * Some letters can not be typed in. Like `æ`.
-* Once the "wordcount mode" has been activated, the color scheme will remain.
 
 ## Known bugs
 
