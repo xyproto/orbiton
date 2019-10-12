@@ -15,11 +15,6 @@ type Position struct {
 	savedX      int // for smart down cursor movement
 }
 
-// Cursor is an X and Y position
-type Cursor struct {
-	X, Y int
-}
-
 // NewPosition returns a new Position struct
 func NewPosition(scrollSpeed int) *Position {
 	return &Position{0, 0, 0, scrollSpeed, 0}

@@ -550,9 +550,10 @@ func (e *Editor) InsertLineAbove() {
 
 // Insert will insert a rune at the given position
 func (e *Editor) Insert(r rune) {
-	dataCursor := e.DataCursor()
-	x := dataCursor.X
-	y := dataCursor.Y
+	// Ignore it if the current position is out of bounds
+	x, _ := e.DataX()
+
+	y := e.DataY()
 
 	// If there are no lines, initialize and set the 0th rune to the given one
 	if e.lines == nil {
@@ -652,9 +653,14 @@ func (e *Editor) SetLine(n int, s string) {
 // SplitLine will, at the given position, split the line in two.
 // The right side of the contents is moved to a new line below.
 func (e *Editor) SplitLine() bool {
-	dataCursor := e.DataCursor()
-	x := dataCursor.X
-	y := dataCursor.Y
+	x, err := e.DataX()
+	if err != nil {
+		// After contents, this should not happen, do nothing
+		return false
+	}
+
+	y := e.DataY()
+
 	// Get the contents of this line
 	runeLine := e.lines[y]
 	if len(runeLine) < 2 {
@@ -716,16 +722,12 @@ func (e *Editor) DataY() int {
 	return e.pos.scroll + e.pos.sy
 }
 
-// DataCursor returns the (x,y) position in the underlying data
-func (e *Editor) DataCursor() *Cursor {
-	x, _ := e.DataX()
-	return &Cursor{x, e.DataY()}
-}
-
 // SetRune will set a rune at the current data position
 func (e *Editor) SetRune(r rune) {
-	dataCursor := e.DataCursor()
-	e.Set(dataCursor.X, dataCursor.Y, r)
+	// Only set a rune if x is within the current line contents
+	if x, err := e.DataX(); err == nil {
+		e.Set(x, e.DataY(), r)
+	}
 }
 
 // InsertRune will insert a rune at the current data position
@@ -735,14 +737,17 @@ func (e *Editor) InsertRune(r rune) {
 
 // Rune will get the rune at the current data position
 func (e *Editor) Rune() rune {
-	dataCursor := e.DataCursor()
-	return e.Get(dataCursor.X, dataCursor.Y)
+	x, err := e.DataX()
+	if err != nil {
+		// after line contents, return a zero rune
+		return rune(0)
+	}
+	return e.Get(x, e.DataY())
 }
 
 // CurrentLine will get the current data line, as a string
 func (e *Editor) CurrentLine() string {
-	dataCursor := e.DataCursor()
-	return e.Line(dataCursor.Y)
+	return e.Line(e.DataY())
 }
 
 // Home will move the cursor the the start of the line (x = 0)
@@ -754,6 +759,14 @@ func (e *Editor) Home() {
 func (e *Editor) End() {
 	e.pos.sx = e.LastScreenPosition(e.DataY()) + 1
 }
+
+func (e *Editor) AtEndOfLine() bool {
+	return e.pos.sx == e.LastScreenPosition(e.DataY())
+}
+
+//func (e *Editor) AtOrAfterEndOfLine() bool {
+//	return e.pos.sx >= e.LastScreenPosition(e.DataY())
+//}
 
 // DownEnd will move down and then choose a "smart" X position
 func (e *Editor) DownEnd(c *vt100.Canvas) error {
@@ -801,8 +814,9 @@ func (e *Editor) UpEnd(c *vt100.Canvas) error {
 
 // Next will move the cursor to the next position in the contents
 func (e *Editor) Next(c *vt100.Canvas) error {
-	dataCursor := e.DataCursor()
-	atTab := '\t' == e.Get(dataCursor.X, dataCursor.Y)
+	// Ignore it if the position is out of bounds
+	x, _ := e.DataX()
+	atTab := '\t' == e.Get(x, e.DataY())
 	if atTab && !e.DrawMode() {
 		e.pos.sx += e.spacesPerTab
 	} else {
@@ -832,10 +846,11 @@ func (e *Editor) Next(c *vt100.Canvas) error {
 
 // Prev will move the cursor to the previous position in the contents
 func (e *Editor) Prev(c *vt100.Canvas) error {
-	dataCursor := e.DataCursor()
 	atTab := false
-	if dataCursor.X > 0 {
-		atTab = '\t' == e.Get(dataCursor.X-1, dataCursor.Y)
+	// Ignore it if the position is out of bounds
+	x, _ := e.DataX()
+	if x > 0 {
+		atTab = '\t' == e.Get(x-1, e.DataY())
 	}
 	// If at a tab character, move a few more posisions
 	if atTab && !e.DrawMode() {
@@ -938,19 +953,28 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 	return true
 }
 
-// EndOfDocument is true if we're at the last line of the document (or beyond)
-func (e *Editor) EndOfDocument() bool {
-	dataCursor := e.DataCursor()
-	return dataCursor.Y >= (e.Len() - 1)
+// AtLastLineOfDocument is true if we're at the last line of the document (or beyond)
+func (e *Editor) AtLastLineOfDocument() bool {
+	return e.DataY() >= (e.Len() - 1)
+}
+
+// AtOrAfterEndOfDocument is true if the cursor is at or after the end of the last line of the documebnt
+func (e *Editor) AtOrAfterEndOfDocument() bool {
+	return e.AtLastLineOfDocument() && e.AtOrAfterEndOfLine()
+}
+
+// AtEndOfDocument is true if the cursor is at the end of the last line of the documebnt
+func (e *Editor) AtEndOfDocument() bool {
+	return e.AtLastLineOfDocument() && e.AtEndOfLine()
 }
 
 // StartOfDocument is true if we're at the first line of the document
-func (e *Editor) StartOfDocument() bool {
+func (e *Editor) AtStartOfDocument() bool {
 	return e.pos.sy == 0 && e.pos.scroll == 0
 }
 
 // Is the cursor at or after the contents of this line?
-func (e *Editor) AtEndOfLine() bool {
+func (e *Editor) AtOrAfterEndOfLine() bool {
 	x, err := e.DataX()
 	if err != nil {
 		// After end of data
@@ -961,16 +985,12 @@ func (e *Editor) AtEndOfLine() bool {
 
 // AfterLineContents will check if the cursor is after the current line contents
 func (e *Editor) AfterLineContents() bool {
-	dataCursor := e.DataCursor()
-	return e.pos.sx > e.LastScreenPosition(dataCursor.Y)
-	//return dataCursor.X > e.LastDataPosition(dataCursor.Y)
+	return e.pos.sx > e.LastScreenPosition(e.DataY())
 }
 
 // AfterLineContentsPlusOne will check if the cursor is after the current line contents, with a margin of 1
 func (e *Editor) AfterLineContentsPlusOne() bool {
-	dataCursor := e.DataCursor()
-	return e.pos.sx > (e.LastScreenPosition(dataCursor.Y) + 1)
-	//return dataCursor.X > e.LastDataPosition(dataCursor.Y)
+	return e.pos.sx > (e.LastScreenPosition(e.DataY()) + 1)
 }
 
 // WriteRune writes the current rune to the given canvas
@@ -995,17 +1015,17 @@ func (e *Editor) EmptyLine() bool {
 }
 
 // AtStartOfText returns true if the position is at the start of the text for this line
-func (e *Editor) AtStartOfText() bool {
+func (e *Editor) AtStartOfTextLine() bool {
 	return e.pos.sx == e.FirstScreenPosition(e.DataY())
 }
 
 // BeforeStartOfText returns true if the position is before the start of the text for this line
-func (e *Editor) BeforeStartOfText() bool {
+func (e *Editor) BeforeStartOfTextLine() bool {
 	return e.pos.sx < e.FirstScreenPosition(e.DataY())
 }
 
 // BeforeOrAtStartOfText returns true if the position is before or at the start of the text for this line
-func (e *Editor) BeforeOrAtStartOfText() bool {
+func (e *Editor) AtOrBeforeStartOfTextLine() bool {
 	return e.pos.sx <= e.FirstScreenPosition(e.DataY())
 }
 

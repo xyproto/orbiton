@@ -218,14 +218,8 @@ esc to redraw the screen
 				if e.DataY() > 0 {
 					// Move the position up in the current screen
 					if e.UpEnd(c) != nil {
-						// If at the top, don't move up, but scroll the contents
-						// Output a helpful message
-						if e.DataY() == 0 {
-							//status.SetMessage("Start of text")
-							//status.Show(c, e)
-						} else {
-							//status.SetMessage("Top of screen, scroll with ctrl-p")
-							//status.Show(c, e)
+						// If below the top, scroll the contents up
+						if e.DataY() > 0 {
 							redraw = e.ScrollUp(c, status, 1)
 							e.pos.Down(c)
 							e.UpEnd(c)
@@ -235,9 +229,6 @@ esc to redraw the screen
 					if e.AfterLineContents() {
 						e.End()
 					}
-				} else {
-					//status.SetMessage("Start of text")
-					//status.Show(c, e)
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
 				if e.AfterLineContents() {
@@ -253,10 +244,7 @@ esc to redraw the screen
 					if e.DownEnd(c) != nil {
 						// If at the bottom, don't move down, but scroll the contents
 						// Output a helpful message
-						if e.EndOfDocument() {
-							//status.SetMessage("End of text")
-							//status.Show(c, e)
-						} else {
+						if !e.AtOrAfterEndOfDocument() {
 							redraw = e.ScrollDown(c, status, 1)
 							e.pos.Up()
 							e.DownEnd(c)
@@ -266,9 +254,6 @@ esc to redraw the screen
 					if e.AfterLineContents() {
 						e.End()
 					}
-				} else {
-					//status.SetMessage("End of text")
-					//status.Show(c, e)
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
 				if e.AfterLineContents() {
@@ -309,11 +294,8 @@ esc to redraw the screen
 				e.Next(c)
 			}
 		case 13: // return
-
 			undo.Snapshot(e)
 			// if the current line is empty, insert a blank line
-			dataCursor := e.DataCursor()
-			//emptyLine := 0 == len(strings.TrimSpace(e.Line(dataCursor.Y)))
 			if !e.DrawMode() {
 				e.FirstScreenPosition(e.DataY())
 				if e.pos.AtStartOfLine() {
@@ -322,26 +304,31 @@ esc to redraw the screen
 					// Also move the cursor to the start, since it's now on a new blank line.
 					e.pos.Down(c)
 					e.Home()
-				} else if e.BeforeOrAtStartOfText() {
+				} else if e.AtOrBeforeStartOfTextLine() {
 					x := e.pos.ScreenX()
 					// Insert a new line a the current y position, then shift the rest down.
 					e.InsertLineAbove()
 					// Also move the cursor to the start, since it's now on a new blank line.
 					e.pos.Down(c)
 					e.pos.SetX(x)
+				} else if e.AtOrAfterEndOfDocument() {
+					e.CreateLineIfMissing(e.DataY() + 1)
+					e.pos.Down(c)
+					e.Home()
 				} else {
 					// Split the current line in two
-					e.SplitLine()
+					if !e.SplitLine() {
+						e.CreateLineIfMissing(e.DataY() + 1)
+						e.pos.Down(c)
+						e.Home()
+					}
 					// Move to the start of the next line
 					e.pos.Down(c)
 					e.Home()
 				}
 			} else {
-				e.CreateLineIfMissing(dataCursor.Y + 1)
+				e.CreateLineIfMissing(e.DataY() + 1)
 				e.pos.Down(c)
-				if !e.DrawMode() {
-					e.Home()
-				}
 			}
 			redraw = true
 		case 127: // backspace
@@ -362,7 +349,7 @@ esc to redraw the screen
 				// Type a blank
 				e.SetRune(' ')
 				e.WriteRune(c)
-				if !e.DrawMode() && !e.AtEndOfLine() {
+				if !e.DrawMode() && !e.AtOrAfterEndOfLine() {
 					// Delete the blank
 					e.Delete()
 				}
