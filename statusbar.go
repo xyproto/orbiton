@@ -45,16 +45,37 @@ func (sb *StatusBar) Clear(c *vt100.Canvas) {
 	c.Draw()
 }
 
+func (sb *StatusBar) ClearAll(c *vt100.Canvas) {
+	sb.Clear(c)
+	statusBeingShown = 0
+}
+
+var statusBeingShown int
+
 // Show will draw a status message, then clear it after a certain delay
 func (sb *StatusBar) Show(c *vt100.Canvas, e *Editor) {
 	if sb.msg == "" {
 		return
 	}
 	sb.Draw(c, e.pos.Offset())
+	statusBeingShown++
 	go func() {
 		time.Sleep(sb.show)
-		sb.Clear(c)
+		statusBeingShown--
+		if statusBeingShown == 0 {
+			sb.Clear(c)
+		}
 	}()
+	c.Draw()
+}
+
+// ShowNoTimeout will draw a status message that will not be cleared after a certain timeout
+func (sb *StatusBar) ShowNoTimeout(c *vt100.Canvas, e *Editor) {
+	if sb.msg == "" {
+		return
+	}
+	sb.Draw(c, e.pos.Offset())
+	statusBeingShown++
 	c.Draw()
 }
 
