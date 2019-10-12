@@ -108,8 +108,8 @@ esc to redraw the screen
 	// Resize handler
 	SetUpResizeHandler(c, e)
 
-	// Undo buffer with room for 1024 actions
-	undo := NewUndo(1024)
+	// Undo buffer with room for 4096 actions
+	undo := NewUndo(4096)
 
 	tty, err := vt100.NewTTY()
 	if err != nil {
