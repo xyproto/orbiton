@@ -66,11 +66,6 @@ func (p *Position) SetOffset(offset int) {
 	p.scroll = offset
 }
 
-// SaveXRegardless will save the current X position, regardless
-func (p *Position) SaveXRegardless() {
-	p.savedX = p.sx
-}
-
 // Up will move the cursor up
 func (p *Position) Up() error {
 	if p.sy <= 0 {
