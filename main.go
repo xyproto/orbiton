@@ -99,16 +99,16 @@ esc to redraw the screen
 	// Try to load the filename, ignore errors since giving a new filename is also okay
 	loaded := e.Load(filename) == nil
 
-	// Draw editor lines from line 0 uE to h onto the canvas at 0,0
+	// Draw editor lines from line 0 to h onto the canvas at 0,0
 	h := int(c.Height())
 	e.WriteLines(c, 0, h, 0, 0)
 
 	// Friendly status message
+	statusMessage := "New " + filename
 	if loaded {
-		status.SetMessage("Loaded " + filename)
-	} else {
-		status.SetMessage("New " + filename)
+		statusMessage = "Loaded " + filename
 	}
+	status.SetMessage(statusMessage)
 	status.Show(c, e)
 	c.Draw()
 
@@ -160,14 +160,82 @@ esc to redraw the screen
 			e.ToggleHighlight()
 			redraw = true
 		case 23: // ctrl-w, search
-			redraw = true
+			status.SetMessage("Search:")
+			status.ShowNoTimeout(c, e)
+			s := ""
+			doneCollectingLetters := false
+			for !doneCollectingLetters {
+				key2 := tty.Key()
+				switch key2 {
+				case 127: // backspace
+					if len(s) > 0 {
+						s = s[:len(s)-1]
+						status.SetMessage("Search: " + s)
+						status.ShowNoTimeout(c, e)
+					}
+				case 27, 17: // esc or ctrl-q
+					s = ""
+					fallthrough
+				case 13: // return
+					doneCollectingLetters = true
+				default:
+					if key2 != 0 {
+						s += string(rune(key2))
+						status.SetMessage("Search: " + s)
+						status.ShowNoTimeout(c, e)
+					}
+				}
+			}
+			status.ClearAll(c)
+			if s != "" {
+				// Go to the next line with "s"
+				foundY := -1
+				foundX := -1
+				for y := e.DataY(); y < e.Len(); y++ {
+					lineContents := e.Line(y)
+					if y == e.DataY() {
+						x, err := e.DataX()
+						if err != nil {
+							continue
+						}
+						// Search from the next position on this line
+						x++
+						if x >= len(lineContents) {
+							continue
+						}
+						if strings.Contains(lineContents[x:], s) {
+							foundX = x + strings.Index(lineContents[x:], s)
+							foundY = y
+							break
+						}
+					} else {
+						if strings.Contains(lineContents, s) {
+							foundX = strings.Index(lineContents, s)
+							foundY = y
+							break
+						}
+					}
+				}
+				if foundY != -1 {
+					e.GoTo(foundY, c, status)
+					if foundX != -1 {
+						for i := 0; i < foundX; i++ {
+							e.Next(c)
+						}
+					}
+					redraw = true
+				} else {
+					status.SetMessage("Not found")
+					status.Show(c, e)
+				}
+			}
 		case 18: // ctrl-r, toggle draw mode
 			e.ToggleDrawMode()
+			statusMessage := "Text mode"
 			if e.DrawMode() {
-				status.SetMessage("Draw mode")
-			} else {
-				status.SetMessage("Text mode")
+				statusMessage = "Draw mode"
 			}
+			status.SetMessage(statusMessage)
 			status.Show(c, e)
 		case 7: // ctrl-g, status information
 			currentRune := e.Rune()
