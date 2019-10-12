@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/xyproto/vt100"
@@ -84,4 +85,10 @@ func (sb *StatusBar) ShowNoTimeout(c *vt100.Canvas, e *Editor) {
 func (sb *StatusBar) SetColors(fg, bg vt100.AttributeColor) {
 	sb.fg = fg
 	sb.bg = bg
+}
+
+func (sb *StatusBar) ShowWordCount(c *vt100.Canvas, e *Editor) {
+	wordCountString := strconv.Itoa(e.WordCount())
+	sb.SetMessage(wordCountString)
+	sb.ShowNoTimeout(c, e)
 }

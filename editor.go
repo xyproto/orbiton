@@ -505,8 +505,8 @@ func (e *Editor) MakeConsistent() error {
 	return nil
 }
 
-// InsertLineBelow will attempt to insert a new line below the current position
-func (e *Editor) InsertLineBelow() {
+// InsertLineAbove will attempt to insert a new line below the current position
+func (e *Editor) InsertLineAbove() {
 	y := e.DataY()
 
 	// Create new set of lines
@@ -622,7 +622,7 @@ func (e *Editor) SetColors(fg, bg vt100.AttributeColor) {
 
 // WordCount returns the number of spaces in the text + 1
 func (e *Editor) WordCount() int {
-	return strings.Count(e.String(), " ") + 1
+	return len(strings.Fields(e.String()))
 }
 
 // ToggleHighlight toggles syntax highlighting
@@ -651,19 +651,25 @@ func (e *Editor) SetLine(n int, s string) {
 
 // SplitLine will, at the given position, split the line in two.
 // The right side of the contents is moved to a new line below.
-func (e *Editor) SplitLine() {
+func (e *Editor) SplitLine() bool {
 	dataCursor := e.DataCursor()
 	x := dataCursor.X
 	y := dataCursor.Y
 	// Get the contents of this line
 	runeLine := e.lines[y]
+	if len(runeLine) < 2 {
+		// Did not split
+		return false
+	}
 	leftContents := strings.TrimRightFunc(string(runeLine[:x]), unicode.IsSpace)
 	rightContents := string(runeLine[x:])
-	// Insert a new line below this one
-	e.InsertLineBelow()
+	// Insert a new line above this one
+	e.InsertLineAbove()
 	// Replace this line with the left contents
 	e.SetLine(y, leftContents)
 	e.SetLine(y+1, rightContents)
+	// Splitted
+	return true
 }
 
 // DataX will return the X position in the data (as opposed to the X position in the viewport)
