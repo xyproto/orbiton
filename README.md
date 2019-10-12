@@ -31,12 +31,13 @@ You can install `o` with Go 1.11 or later (development version):
 * Requires that `/dev/tty` is available.
 * Copy, cut and paste is only for one line at a time.
 * Some letters can not be typed in. Like `æ`.
+* Once the "wordcount mode" has been activated, the color scheme will remain.
 
 ## Known bugs
 
-* After resizing the terminal, the scolling may stop working and everything may be displayed wrong.
 * Sometimes, pressing return rapidly twice in a row makes the cursor jump up.
-* The color scheme from "wordcount mode" will remain when toggling back to the regular mode.
+* After resizing the terminal, the scolling may stop working and everything may be displayed wrong.
+* Lines that are longer than the terminal width are not displayed correctly, and the cursor will not move to the end of them.
 
 ## Hotkeys
 
