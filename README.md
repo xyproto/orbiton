@@ -22,7 +22,6 @@ You can install `o` with Go 1.11 or later (development version):
 
 * Has syntax highlighting for Go code.
 * Never asks before saving or quitting. Be careful.
-* Has a "wordcount mode" for distraction-free writing, that shows a word-counter at the bottom (`ctrl-w` to toggle).
 * `Home` and `End` are not detected by the key handler. `ctrl-a` and `ctrl-e` works, though.
 * Can format Go code using `gofmt` (press `ctrl-f`).
 * Expects utilities like `gofmt` to be in `/usr/bin`.
@@ -31,7 +30,6 @@ You can install `o` with Go 1.11 or later (development version):
 * Requires that `/dev/tty` is available.
 * Copy, cut and paste is only for one line at a time.
 * Some letters can not be typed in. Like `æ`.
-* Once the "wordcount mode" has been activated, the color scheme will remain.
 
 ## Known bugs
 
@@ -61,7 +59,7 @@ You can install `o` with Go 1.11 or later (development version):
 * `ctrl-h` - show a minimal help text
 * `ctrl-u` - undo
 * `ctrl-l` - jump to a specific line
-* `ctrl-w` - word count / writers mode
+* `ctrl-w` - search
 * `esc` - redraw the screen
 
 ## Size
@@ -85,6 +83,6 @@ This also means that filenames containing `+` or `:` are not supported.
 
 ## General info
 
-* Version: 2.2.1
+* Version: 2.3.0
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
