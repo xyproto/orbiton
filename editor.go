@@ -1091,8 +1091,15 @@ func (e *Editor) GoTo(y int, c *vt100.Canvas, status *StatusBar) bool {
 		e.pos.sy = 0
 		e.pos.scroll = 0
 		e.ScrollDown(c, status, y)
-		if y > (len(e.lines)-h) {
-			e.pos.sy = ((y + 1) % h) + 1
+		// Move the cursor down until y is correct,
+		// or until the counter reaches one screen height
+		counter := 0
+		for e.DataY() < y {
+			e.pos.Down(c)
+			counter++
+			if counter >= h {
+				break
+			}
 		}
 		e.pos.SetX(e.FirstScreenPosition(e.DataY()))
 		redraw = true

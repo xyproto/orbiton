@@ -521,7 +521,6 @@ esc to redraw the screen
 					redraw = e.GoToLineNumber(ln, c, status)
 					status.SetMessage(lns)
 					status.Show(c, e)
-					redraw = true
 				}
 			}
 		case 11: // ctrl-k, delete to end of line
