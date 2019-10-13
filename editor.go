@@ -817,13 +817,10 @@ func (e *Editor) End() {
 	e.pos.sx = e.LastScreenPosition(e.DataY()) + 1
 }
 
+// AtEndOfLine returns true if the cursor is at exactly the last character of the line, not the one after
 func (e *Editor) AtEndOfLine() bool {
 	return e.pos.sx == e.LastScreenPosition(e.DataY())
 }
-
-//func (e *Editor) AtOrAfterEndOfLine() bool {
-//	return e.pos.sx >= e.LastScreenPosition(e.DataY())
-//}
 
 // DownEnd will move down and then choose a "smart" X position
 func (e *Editor) DownEnd(c *vt100.Canvas) error {
@@ -1086,11 +1083,6 @@ func (e *Editor) AtOrBeforeStartOfTextLine() bool {
 	return e.pos.sx <= e.FirstScreenPosition(e.DataY())
 }
 
-// GoToLineNumber will go to a given line number, but counting from 1, not from 0!
-func (e *Editor) GoToLineNumber(lineNumber int, c *vt100.Canvas, status *StatusBar) bool {
-	return e.GoTo(lineNumber-1, c, status)
-}
-
 // GoTo will go to a given line index, counting from 0
 func (e *Editor) GoTo(y int, c *vt100.Canvas, status *StatusBar) bool {
 	redraw := false
@@ -1099,6 +1091,9 @@ func (e *Editor) GoTo(y int, c *vt100.Canvas, status *StatusBar) bool {
 		e.pos.sy = 0
 		e.pos.scroll = 0
 		e.ScrollDown(c, status, y)
+		if y > (len(e.lines)-h) {
+			e.pos.sy = ((y + 1) % h) + 1
+		}
 		e.pos.SetX(e.FirstScreenPosition(e.DataY()))
 		redraw = true
 	} else {
@@ -1112,6 +1107,11 @@ func (e *Editor) GoTo(y int, c *vt100.Canvas, status *StatusBar) bool {
 		redraw = true
 	}
 	return redraw
+}
+
+// GoToLineNumber will go to a given line number, but counting from 1, not from 0!
+func (e *Editor) GoToLineNumber(lineNumber int, c *vt100.Canvas, status *StatusBar) bool {
+	return e.GoTo(lineNumber-1, c, status)
 }
 
 // Up tried to move the cursor up, and also scroll
