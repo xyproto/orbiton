@@ -93,8 +93,8 @@ func (sb *StatusBar) ShowWordCount(c *vt100.Canvas, e *Editor) {
 	sb.ShowNoTimeout(c, e)
 }
 
-func (sb *StatusBar) ShowLineColWordCount(c *vt100.Canvas, e *Editor) {
-	statusString := e.StatusMessage()
+func (sb *StatusBar) ShowLineColWordCount(c *vt100.Canvas, e *Editor, filename string) {
+	statusString := filename + ": " + e.StatusMessage()
 	sb.SetMessage(statusString)
 	sb.ShowNoTimeout(c, e)
 }

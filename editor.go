@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"strconv"
 	"strings"
 	"unicode"
 
@@ -1141,6 +1140,7 @@ func (e *Editor) ColumnNumber() int {
 	return x + 1
 }
 
+// StatusMessage returns a status message, intended for being displayed at the bottom
 func (e *Editor) StatusMessage() string {
-	return "(" + strconv.Itoa(e.ColumnNumber()) + ", " + strconv.Itoa(e.LineNumber()) + ") words: " + strconv.Itoa(e.WordCount())
+	return fmt.Sprintf("line %d col %d rune %U words %d", e.LineNumber(), e.ColumnNumber(), e.Rune(), e.WordCount())
 }

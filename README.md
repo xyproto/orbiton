@@ -47,7 +47,7 @@ You can install `o` with Go 1.11 or later (development version):
 * `ctrl-p` - scroll up 10 lines
 * `ctrl-n` - scroll down 10 lines
 * `ctrl-k` - delete characters to the end of the line, then delete the line
-* `ctrl-g` - show cursor positions, current letter and word count
+* `ctrl-g` - toggle filename/line/column/unicode/word count status display
 * `ctrl-d` - delete a single character
 * `ctrl-t` - toggle syntax highlighting
 * `ctrl-r` - toggle text or draw mode (for ASCII graphics)

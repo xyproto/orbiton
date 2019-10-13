@@ -29,9 +29,10 @@ func main() {
 
 		statusDuration = 2700 * time.Millisecond
 
-		redraw   bool     // if the contents should be redrawn in the next loop
-		copyLine string   // for the cut/copy/paste functionality
-		bookmark Position // for the bookmark/jump functionality
+		redraw     bool     // if the contents should be redrawn in the next loop
+		copyLine   string   // for the cut/copy/paste functionality
+		bookmark   Position // for the bookmark/jump functionality
+		statusMode bool     // if infomration should be shown at the bottom
 	)
 
 	flag.Parse()
@@ -54,7 +55,7 @@ ctrl-e go to end of line
 ctrl-p to scroll up 10 lines
 ctrl-n to scroll down 10 lines
 ctrl-k to delete characters to the end of the line, then delete the line
-ctrl-g to show cursor positions, current letter and word count
+ctrl-g to toggle filename/line/column/unicode/word count status display
 ctrl-d to delete a single character
 ctrl-t to toggle syntax highlighting
 ctrl-r to toggle text or draw mode (for ASCII graphics)
@@ -237,18 +238,13 @@ esc to redraw the screen
 			}
 			status.SetMessage(statusMessage)
 			status.Show(c, e)
-		case 7: // ctrl-g, status information
-			currentRune := e.Rune()
-			if !e.DrawMode() {
-				status.SetMessage(fmt.Sprintf("line %d col %d rune %U word count: %d", e.DataY(), e.pos.ScreenX(), currentRune, e.WordCount()))
-			} else if currentRune > 32 {
-				x, _ := e.DataX()
-				status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %c (%U) word count: %d", e.pos.ScreenX(), e.pos.ScreenY(), x, e.DataY(), currentRune, currentRune, e.WordCount()))
+		case 7: // ctrl-g, status mode
+			statusMode = !statusMode
+			if statusMode {
+				status.ShowLineColWordCount(c, e, filename)
 			} else {
-				x, _ := e.DataX()
-				status.SetMessage(fmt.Sprintf("%d,%d (data %d,%d) %U word count: %d", e.pos.ScreenX(), e.pos.ScreenY(), x, e.DataY(), currentRune, e.WordCount()))
+				status.ClearAll(c)
 			}
-			status.Show(c, e)
 		case 252: // left arrow
 			if !e.DrawMode() {
 				e.Prev(c)
@@ -595,6 +591,9 @@ esc to redraw the screen
 				redraw = true
 			} else {
 			}
+		}
+		if statusMode {
+			status.ShowLineColWordCount(c, e, filename)
 		}
 		if redraw {
 			// redraw all characters
