@@ -92,3 +92,9 @@ func (sb *StatusBar) ShowWordCount(c *vt100.Canvas, e *Editor) {
 	sb.SetMessage(wordCountString)
 	sb.ShowNoTimeout(c, e)
 }
+
+func (sb *StatusBar) ShowLineColWordCount(c *vt100.Canvas, e *Editor) {
+	statusString := e.StatusMessage()
+	sb.SetMessage(statusString)
+	sb.ShowNoTimeout(c, e)
+}

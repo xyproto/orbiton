@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -1127,4 +1128,19 @@ func (e *Editor) Down(c *vt100.Canvas, status *StatusBar) {
 // LeadingWhitespace returns the leading whitespace for this line
 func (e *Editor) LeadingWhitespace() string {
 	return e.CurrentLine()[:e.FirstDataPosition(e.DataY())]
+}
+
+// LineNumber will return the current line number (data y index + 1)
+func (e *Editor) LineNumber() int {
+	return e.DataY() + 1
+}
+
+// ColumNumber will return the current column number (data x index + 1)
+func (e *Editor) ColumnNumber() int {
+	x, _ := e.DataX()
+	return x + 1
+}
+
+func (e *Editor) StatusMessage() string {
+	return "(" + strconv.Itoa(e.ColumnNumber()) + ", " + strconv.Itoa(e.LineNumber()) + ") words: " + strconv.Itoa(e.WordCount())
 }
