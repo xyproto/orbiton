@@ -31,6 +31,12 @@ You can install `o` with Go 1.11 or later (development version):
 * Some letters can not be typed in. Like `æ`.
 * May take a line number as the second argument, with an optional `+` prefix.
 
+## Large files
+
+When loading large files, an animated spinner will appear. The loading operation can be stopped at any time by pressing `esc`, `q` or `ctrl-q`.
+
+![progress](img/progress.gif)
+
 ## Known bugs
 
 * Sometimes, pressing return rapidly twice in a row makes the cursor jump up.
