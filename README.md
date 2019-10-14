@@ -18,6 +18,12 @@ You can install `o` with Go 1.11 or later (development version):
 
     go get -u github.com/xyproto/o
 
+## Screen recording
+
+When loading large files, an animated spinner will appear. The loading operation can be stopped at any time by pressing `esc`, `q` or `ctrl-q`.
+
+![progress](img/progress.gif)
+
 ## Features and limitations
 
 * Has syntax highlighting for Go code.
@@ -30,12 +36,6 @@ You can install `o` with Go 1.11 or later (development version):
 * Copy, cut and paste is only for one line at a time.
 * Some letters can not be typed in. Like `æ`.
 * May take a line number as the second argument, with an optional `+` prefix.
-
-## Large files
-
-When loading large files, an animated spinner will appear. The loading operation can be stopped at any time by pressing `esc`, `q` or `ctrl-q`.
-
-![progress](img/progress.gif)
 
 ## Known bugs
 
