@@ -14,7 +14,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "o 2.3.1"
+const versionString = "o 2.3.2"
 
 func main() {
 	var (
@@ -32,7 +32,7 @@ func main() {
 		redraw     bool     // if the contents should be redrawn in the next loop
 		copyLine   string   // for the cut/copy/paste functionality
 		bookmark   Position // for the bookmark/jump functionality
-		statusMode bool     // if infomration should be shown at the bottom
+		statusMode bool     // if information should be shown at the bottom
 	)
 
 	flag.Parse()
@@ -136,9 +136,9 @@ esc to redraw the screen
 			quit = true
 		case 6: // ctrl-f
 			undo.Snapshot(e)
-			// Use a globally unique tempfile
+			// Use a globally unique temp file
 			if f, err := ioutil.TempFile("/tmp", "_red*.go"); !e.DrawMode() && err == nil {
-				// no error, everyting is fine
+				// no error, everything is fine
 				tempFilename := f.Name()
 				err := e.Save(tempFilename, true)
 				if err == nil {
@@ -480,7 +480,7 @@ esc to redraw the screen
 				status.Show(c, e)
 				c.Draw()
 			}
-		case 21, 26: // ctrl-u or ctrl-z, undo (ctrl-z may beckground the application)
+		case 21, 26: // ctrl-u or ctrl-z, undo (ctrl-z may background the application)
 			if err := undo.Restore(e); err == nil {
 				//c.Draw()
 				x := e.pos.ScreenX()

@@ -812,7 +812,7 @@ func (e *Editor) Home() {
 	e.pos.sx = 0
 }
 
-// End will move the cursor to the position right after the end of the cirrent line contents
+// End will move the cursor to the position right after the end of the current line contents
 func (e *Editor) End() {
 	e.pos.sx = e.LastScreenPosition(e.DataY()) + 1
 }
@@ -960,7 +960,7 @@ func (e *Editor) SaveX(regardless bool) {
 func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int) bool {
 	// Find out if we can scroll scrollSpeed, or less
 	canScroll := scrollSpeed
-	// last y posision in the canvas
+	// last y position in the canvas
 	canvasLastY := int(c.H() - 1)
 	// number of lines in the document
 	l := e.Len()
@@ -1012,12 +1012,12 @@ func (e *Editor) AtLastLineOfDocument() bool {
 	return e.DataY() >= (e.Len() - 1)
 }
 
-// AtOrAfterEndOfDocument is true if the cursor is at or after the end of the last line of the documebnt
+// AtOrAfterEndOfDocument is true if the cursor is at or after the end of the last line of the document
 func (e *Editor) AtOrAfterEndOfDocument() bool {
 	return e.AtLastLineOfDocument() && e.AtOrAfterEndOfLine()
 }
 
-// AtEndOfDocument is true if the cursor is at the end of the last line of the documebnt
+// AtEndOfDocument is true if the cursor is at the end of the last line of the document
 func (e *Editor) AtEndOfDocument() bool {
 	return e.AtLastLineOfDocument() && e.AtEndOfLine()
 }

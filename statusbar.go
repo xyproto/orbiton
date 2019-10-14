@@ -30,7 +30,7 @@ func (sb *StatusBar) Draw(c *vt100.Canvas, offset int) {
 	sb.offset = offset
 }
 
-// SetMessage will change the statusbar message.
+// SetMessage will change the status bar message.
 // A couple of spaces are added as padding.
 func (sb *StatusBar) SetMessage(msg string) {
 	sb.msg = "    " + msg + "    "
