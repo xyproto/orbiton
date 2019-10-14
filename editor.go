@@ -261,7 +261,7 @@ func (e *Editor) Save(filename string, stripTrailingSpaces bool) error {
 	if stripTrailingSpaces {
 		// Strip trailing spaces
 		for i := 0; i < e.Len(); i++ {
-			e.TrimSpaceRight(i)
+			e.TrimRight(i)
 		}
 		// Skip trailing newlines
 		data = bytes.TrimRightFunc([]byte(e.String()), unicode.IsSpace)
@@ -276,8 +276,8 @@ func (e *Editor) Save(filename string, stripTrailingSpaces bool) error {
 	return ioutil.WriteFile(filename, data, 0664)
 }
 
-// TrimSpaceRight will remove spaces from the end of the given line number
-func (e *Editor) TrimSpaceRight(n int) {
+// TrimRight will remove whitespace from the end of the given line number
+func (e *Editor) TrimRight(n int) {
 	_, ok := e.lines[n]
 	if !ok {
 		return
