@@ -855,7 +855,7 @@ func (e *Editor) DataX() (int, error) {
 		return e.pos.sx, nil
 	}
 	// the y position in the data is the lines scrolled + current screen cursor Y position
-	dataY := e.pos.scroll + e.pos.sy
+	dataY := e.pos.offset + e.pos.sy
 	// get the current line of text
 	screenCounter := 0 // counter for the characters on the screen
 	// loop, while also keeping track of tab expansion
@@ -890,7 +890,7 @@ func (e *Editor) DataY() int {
 	if e.drawMode {
 		return e.pos.sy
 	}
-	return e.pos.scroll + e.pos.sy
+	return e.pos.offset + e.pos.sy
 }
 
 // SetRune will set a rune at the current data position
@@ -1078,7 +1078,7 @@ func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int)
 	canvasLastY := int(c.H() - 1)
 	// number of lines in the document
 	l := e.Len()
-	if e.pos.scroll >= e.Len()-canvasLastY {
+	if e.pos.offset >= e.Len()-canvasLastY {
 		// Status message
 		//status.SetMessage("End of text")
 		//status.Show(c, p)
@@ -1087,12 +1087,12 @@ func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int)
 		return false
 	}
 	status.Clear(c)
-	if (e.pos.scroll + canScroll) >= (l - canvasLastY) {
+	if (e.pos.offset + canScroll) >= (l - canvasLastY) {
 		// Almost at the bottom, we can scroll the remaining lines
-		canScroll = (l - canvasLastY) - e.pos.scroll
+		canScroll = (l - canvasLastY) - e.pos.offset
 	}
 	// Move the scroll offset
-	e.pos.scroll += canScroll
+	e.pos.offset += canScroll
 	// Prepare to redraw
 	return true
 }
@@ -1101,7 +1101,7 @@ func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int)
 func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) bool {
 	// Find out if we can scroll scrollSpeed, or less
 	canScroll := scrollSpeed
-	if e.pos.scroll == 0 {
+	if e.pos.offset == 0 {
 		// Can't scroll further up
 		// Status message
 		//status.SetMessage("Start of text")
@@ -1111,12 +1111,12 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 		return false
 	}
 	status.Clear(c)
-	if e.pos.scroll-canScroll < 0 {
+	if e.pos.offset-canScroll < 0 {
 		// Almost at the top, we can scroll the remaining lines
-		canScroll = e.pos.scroll
+		canScroll = e.pos.offset
 	}
 	// Move the scroll offset
-	e.pos.scroll -= canScroll
+	e.pos.offset -= canScroll
 	// Prepare to redraw
 	return true
 }
@@ -1138,7 +1138,7 @@ func (e *Editor) AtEndOfDocument() bool {
 
 // AtStartOfDocument is true if we're at the first line of the document
 func (e *Editor) AtStartOfDocument() bool {
-	return e.pos.sy == 0 && e.pos.scroll == 0
+	return e.pos.sy == 0 && e.pos.offset == 0
 }
 
 // AtOrAfterEndOfLine returns true if the cursor is at or after the contents of this line?
@@ -1199,36 +1199,50 @@ func (e *Editor) AtOrBeforeStartOfTextLine() bool {
 
 // GoTo will go to a given line index, counting from 0
 func (e *Editor) GoTo(y int, c *vt100.Canvas, status *StatusBar) bool {
-	var redraw bool
+	// Out of bounds checking for y
+	if y < 0 {
+		y = 0
+	} else if y >= len(e.lines) {
+		y = len(e.lines) - 1
+	}
+	// Find out how large the current window is
 	h := int(c.Height())
-	// Only scroll if the current e.pos.scroll position requires it
-	if y-e.pos.scroll >= h {
+	// Find out where we are now, in the file
+	//dataY := e.pos.sx + e.pos.offset
+	// Find out where we are now, in the current window
+	//screenY := e.pos.sx
+	// Is the place we want to go within the current scroll window?
+	topY := e.pos.offset
+	botY := e.pos.offset + h
+	if y >= topY && y <= botY {
+		// Yes, no scrolling needed, just move the screen y position
+		e.pos.sy = y - e.pos.offset
+	} else {
+		// No, scrolling is needed
+		e.pos.offset = y
 		e.pos.sy = 0
-		e.pos.scroll = 0
-		e.ScrollDown(c, status, y)
-		// Move the cursor down until y is correct,
-		// or until the counter reaches one screen height
-		counter := 0
-		for e.DataY() < y {
-			e.pos.Down(c)
-			counter++
-			if counter >= h {
+		// Adjust the position within the window
+		for e.pos.offset >= (len(e.lines) - h) {
+			if e.pos.offset == 0 {
 				break
 			}
+			e.pos.offset--
+			e.pos.sy++
 		}
-		e.pos.SetX(e.FirstScreenPosition(e.DataY()))
-		redraw = true
-	} else {
-		e.pos.sy = 0
-		e.pos.scroll = 0
-		// Jump to the given line number, if > 0
-		for i := 0; i < y; i++ {
-			e.pos.Down(c)
-		}
-		e.pos.SetX(e.FirstScreenPosition(e.DataY()))
-		redraw = true
 	}
-	return redraw
+	// Out of bounds checking
+	if e.pos.offset < 0 {
+		e.pos.offset = 0
+	} else if e.pos.offset >= (len(e.lines) - h) {
+		e.pos.offset = (len(e.lines) - h) - 2
+	}
+	if e.pos.sy >= h {
+		e.pos.sy = h - 1
+	}
+	// The Y scrolling is done, move the X position according to the contents of the line
+	e.pos.SetX(e.FirstScreenPosition(e.DataY()))
+	// Now redraw
+	return true
 }
 
 // GoToLineNumber will go to a given line number, but counting from 1, not from 0!
