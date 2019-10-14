@@ -71,11 +71,11 @@ When loading large files, an animated spinner will appear. The loading operation
 
 ## Size
 
-The `o` executable is only **464k** when built with GCC 9.1 (for 64-bit Linux). This isn't as small as [e3](https://sites.google.com/site/e3editor/), an editor written in assembly (which is **234k**), but it's resonably small.
+The `o` executable is only **464k** when built with GCC 9.1 (for 64-bit Linux). This isn't as small as [e3](https://sites.google.com/site/e3editor/), an editor written in assembly (which is **234k**), but it's resonably lean. :cool:
 
     go build -gccgoflags '-Os -s'
 
-For comparison, it's **2.8M** when building with Go 1.13 and no particular build flags are given.
+For comparison, it's **2.9M** when building with Go 1.13 and no particular build flags are given.
 
 ## Jumping to a specific line when opening a file
 
