@@ -34,7 +34,7 @@ You can install `o` with Go 1.11 or later (development version):
 ## Known bugs
 
 * Sometimes, pressing return rapidly twice in a row makes the cursor jump up.
-* After resizing the terminal, the scolling may stop working and everything may be displayed wrong.
+* After resizing the terminal, the scrolling may stop working and everything may be displayed wrong.
 * Lines that are longer than the terminal width are not displayed correctly, and the cursor will not move to the end of them.
 
 ## Hotkeys
@@ -83,6 +83,6 @@ This also means that filenames containing `+` or `:` are not supported.
 
 ## General info
 
-* Version: 2.3.1
+* Version: 2.3.2
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
