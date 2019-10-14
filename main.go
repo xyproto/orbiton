@@ -86,7 +86,8 @@ esc to redraw the screen
 
 	tty, err := vt100.NewTTY()
 	if err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, "error: "+err.Error())
+		os.Exit(1)
 	}
 
 	vt100.Init()
@@ -114,6 +115,15 @@ esc to redraw the screen
 		} else {
 			statusMessage = "Loaded an empty file: " + filename
 		}
+	} else if err := e.Save(filename, true); err != nil {
+		// Check if the new file can be saved before the user starts working on the file.
+		tty.Close()
+		vt100.Reset()
+		vt100.Clear()
+		vt100.Close()
+		fmt.Fprintln(os.Stderr, "error: "+err.Error())
+		vt100.SetXY(uint(0), uint(1))
+		os.Exit(1)
 	}
 	status.SetMessage(statusMessage)
 	status.Show(c, e)
