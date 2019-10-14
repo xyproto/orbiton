@@ -221,9 +221,8 @@ esc to redraw the screen
 				if foundY != -1 {
 					e.GoTo(foundY, c, status)
 					if foundX != -1 {
-						for i := 0; i < foundX; i++ {
-							e.Next(c)
-						}
+						tabs := strings.Count(e.Line(foundY), "\t")
+						e.pos.sx = foundX + (tabs * (e.spacesPerTab-1))
 					}
 					redraw = true
 				} else {
@@ -607,7 +606,7 @@ esc to redraw the screen
 		}
 		x := e.pos.ScreenX()
 		y := e.pos.ScreenY()
-		if x != previousX || y != previousY {
+		if redraw || x != previousX || y != previousY {
 			vt100.SetXY(uint(x), uint(y))
 		}
 		previousX = x
