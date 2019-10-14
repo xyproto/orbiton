@@ -363,6 +363,7 @@ esc to redraw the screen
 			undo.Snapshot(e)
 			// if the current line is empty, insert a blank line
 			if !e.DrawMode() {
+				lineContents := e.CurrentLine()
 				e.FirstScreenPosition(e.DataY())
 				if e.pos.AtStartOfLine() {
 					// Insert a new line a the current y position, then shift the rest down.
@@ -378,14 +379,34 @@ esc to redraw the screen
 					e.pos.Down(c)
 					e.pos.SetX(x)
 				} else if e.AtOrAfterEndOfLine() && e.AtLastLineOfDocument() {
+					leadingWhitespace := e.LeadingWhitespace()
+					if leadingWhitespace == "" && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[")) {
+						// "smart indentation"
+						leadingWhitespace = "\t"
+					}
 					e.InsertLineBelow()
 					e.ScrollDown(c, status, 1)
 					e.pos.Down(c)
 					e.Home()
+					// Insert the same leading whitespace for the new line, while moving to the right
+					for _, r := range leadingWhitespace {
+						e.InsertRune(r)
+						e.Next(c)
+					}
 				} else if e.AtOrAfterEndOfLine() {
+					leadingWhitespace := e.LeadingWhitespace()
+					if leadingWhitespace == "" && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[")) {
+						// "smart indentation"
+						leadingWhitespace = "\t"
+					}
 					e.InsertLineBelow()
 					e.Down(c, status)
 					e.Home()
+					// Insert the same leading whitespace for the new line, while moving to the right
+					for _, r := range leadingWhitespace {
+						e.InsertRune(r)
+						e.Next(c)
+					}
 				} else {
 					// Split the current line in two
 					if !e.SplitLine() {
@@ -414,14 +435,16 @@ esc to redraw the screen
 			redraw = true
 		case 127: // backspace
 			undo.Snapshot(e)
-			if !e.DrawMode() && e.EmptyLine() {
+			if !e.DrawMode() && e.CurrentLine() == "" {
 				e.DeleteLine(e.DataY())
 				e.pos.Up()
+				e.TrimRight(e.DataY())
 				e.End()
 			} else if !e.DrawMode() && e.pos.AtStartOfLine() {
 				if e.DataY() > 0 {
 					e.pos.Up()
 					e.End()
+					e.TrimRight(e.DataY())
 					e.Delete()
 				}
 			} else {
