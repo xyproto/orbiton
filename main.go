@@ -68,7 +68,7 @@ ctrl-j to jump to the bookmark
 ctrl-h to show a minimal help text
 ctrl-u to undo
 ctrl-l to jump to a specific line
-ctrl-w to search (press return to repeat last search)
+ctrl-w to search ("where"). Press return to repeat last search
 esc to redraw the screen
 `)
 		return
@@ -670,8 +670,8 @@ esc to redraw the screen
 						e.Next(c)
 					}
 				}
+				e.redrawCursor = true
 				e.redraw = true
-			} else {
 			}
 		}
 		if statusMode {

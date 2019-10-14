@@ -1201,7 +1201,8 @@ func (e *Editor) AtOrBeforeStartOfTextLine() bool {
 func (e *Editor) GoTo(y int, c *vt100.Canvas, status *StatusBar) bool {
 	var redraw bool
 	h := int(c.Height())
-	if y >= h {
+	// Only scroll if the current e.pos.scroll position requires it
+	if y-e.pos.scroll >= h {
 		e.pos.sy = 0
 		e.pos.scroll = 0
 		e.ScrollDown(c, status, y)

@@ -66,7 +66,7 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-h` - show a minimal help text
 * `ctrl-u` - undo
 * `ctrl-l` - jump to a specific line
-* `ctrl-w` - search (press return to repeat last search)
+* `ctrl-w` - search ("where"). Press return to repeat last search.
 * `esc` - redraw the screen
 
 ## Size
