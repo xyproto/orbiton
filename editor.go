@@ -412,6 +412,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		if len([]rune(screenLine)) >= w {
 			screenLine = screenLine[:w]
 		}
+		// escape tags with unlikely strings, only for err == nil for the AsText function call below
+		line = Escape(line)
 		if e.highlight {
 			// Output a syntax highlighted line
 			if textWithTags, err := syntax.AsText([]byte(line)); err != nil {
@@ -419,8 +421,13 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 				fmt.Println(screenLine)
 				counter += len([]rune(screenLine))
 			} else {
+				coloredString := o.DarkTags(string(textWithTags))
+
+				// escape tags with unlikely strings
+				coloredString = UnEscape(coloredString)
+
 				// Slice of runes and color attributes, while at the same time highlighting search terms
-				charactersAndAttributes := o.Extract(o.DarkTags(string(textWithTags)))
+				charactersAndAttributes := o.Extract(coloredString)
 				searchTermRunes := []rune(e.searchTerm)
 				matchForAnotherN := 0
 				for characterIndex, ca := range charactersAndAttributes {
