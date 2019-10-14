@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -104,8 +105,7 @@ esc to redraw the screen
 	loaded := e.Load(filename) == nil
 
 	// Draw editor lines from line 0 to h onto the canvas at 0,0
-	h := int(c.Height())
-	e.WriteLines(c, 0, h, 0, 0)
+	e.DrawLines(c, false, false)
 
 	// Friendly status message
 	statusMessage := "New " + filename
@@ -113,17 +113,27 @@ esc to redraw the screen
 		if !e.Empty() {
 			statusMessage = "Loaded " + filename
 		} else {
-			statusMessage = "Loaded an empty file: " + filename
+			statusMessage = "Loaded empty file: " + filename
 		}
+		fileInfo, err := os.Stat(filename)
+		if err != nil {
+			errorMessageQuit(tty, err)
+		}
+		if fileInfo.IsDir() {
+			errorMessageQuit(tty, errors.New(filename+" is a directory"))
+		}
+		testFile, err := os.OpenFile(filename, os.O_WRONLY, 0664)
+		if err != nil {
+			// Can not open the file for writing
+			statusMessage += " (read only)"
+			// Set the color to red when in read-only mode
+			e.fg = vt100.Red
+			e.DrawLines(c, false, false)
+		}
+		testFile.Close()
 	} else if err := e.Save(filename, true); err != nil {
 		// Check if the new file can be saved before the user starts working on the file.
-		tty.Close()
-		vt100.Reset()
-		vt100.Clear()
-		vt100.Close()
-		fmt.Fprintln(os.Stderr, "error: "+err.Error())
-		vt100.SetXY(uint(0), uint(1))
-		os.Exit(1)
+		errorMessageQuit(tty, err)
 	}
 	status.SetMessage(statusMessage)
 	status.Show(c, e)
@@ -659,10 +669,8 @@ esc to redraw the screen
 			status.ShowLineColWordCount(c, e, filename)
 		}
 		if redraw {
-			// redraw all characters
-			h := int(c.Height())
-			e.WriteLines(c, e.pos.Offset(), h+e.pos.Offset(), 0, 0)
-			c.Draw()
+			// Draw the editor lines on the canvas, respecting the offset
+			e.DrawLines(c, true, false)
 			redraw = false
 		} else if e.Changed() {
 			c.Draw()
