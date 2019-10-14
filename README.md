@@ -21,15 +21,15 @@ You can install `o` with Go 1.11 or later (development version):
 ## Features and limitations
 
 * Has syntax highlighting for Go code.
-* Never asks before saving or quitting. Be careful.
+* Never asks before saving or quitting. Be careful!
 * `Home` and `End` are not detected by the key handler. `ctrl-a` and `ctrl-e` works, though.
-* Can format Go code using `gofmt` (press `ctrl-f`).
-* Expects utilities like `gofmt` to be in `/usr/bin`.
+* Can format Go code using `/usr/bin/gofmt` (press `ctrl-f`).
 * Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
 * Requires that `/dev/tty` is available.
 * Copy, cut and paste is only for one line at a time.
 * Some letters can not be typed in. Like `æ`.
+* May take a line number as the second argument, with an optional `+` prefix.
 
 ## Known bugs
 
