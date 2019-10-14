@@ -12,17 +12,11 @@ For a more feature complete editor that is also written in Go, check out [micro]
 
 ![screenshot](img/screenshot.png)
 
-## Quick Start
+## Quick start
 
 You can install `o` with Go 1.11 or later (development version):
 
     go get -u github.com/xyproto/o
-
-## Screen recording
-
-When loading large files, an animated spinner will appear. The loading operation can be stopped at any time by pressing `esc`, `q` or `ctrl-q`.
-
-![progress](img/progress.gif)
 
 ## Features and limitations
 
@@ -36,6 +30,12 @@ When loading large files, an animated spinner will appear. The loading operation
 * Copy, cut and paste is only for one line at a time.
 * Some letters can not be typed in. Like `æ`.
 * May take a line number as the second argument, with an optional `+` prefix.
+
+## Animated spinner
+
+When loading large files, an animated spinner will appear. The loading operation can be stopped at any time by pressing `esc`, `q` or `ctrl-q`.
+
+![progress](img/progress.gif)
 
 ## Known bugs
 
