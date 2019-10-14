@@ -135,6 +135,12 @@ esc to redraw the screen
 	} else if err := e.Save(filename, true); err != nil {
 		// Check if the new file can be saved before the user starts working on the file.
 		quitError(tty, err)
+	} else {
+		// Creating a new empty file worked out fine, don't save it until the user saves it
+		if os.Remove(filename) != nil {
+			// This should never happen
+			quitError(tty, errors.New("could not remove an empty file that was just created: "+filename))
+		}
 	}
 	status.SetMessage(statusMessage)
 	status.Show(c, e)
