@@ -59,7 +59,7 @@ You can install `o` with Go 1.11 or later (development version):
 * `ctrl-h` - show a minimal help text
 * `ctrl-u` - undo
 * `ctrl-l` - jump to a specific line
-* `ctrl-w` - search
+* `ctrl-w` - search (press return to repeat last search)
 * `esc` - redraw the screen
 
 ## Size
@@ -83,6 +83,6 @@ This also means that filenames containing `+` or `:` are not supported.
 
 ## General info
 
-* Version: 2.3.2
+* Version: 2.3.3
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

@@ -14,7 +14,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "o 2.3.2"
+const versionString = "o 2.3.3"
 
 func main() {
 	var (
@@ -68,7 +68,7 @@ ctrl-j to jump to the bookmark
 ctrl-h to show a minimal help text
 ctrl-u to undo
 ctrl-l to jump to a specific line
-ctrl-w to search
+ctrl-w to search (press return to repeat last search)
 esc to redraw the screen
 `)
 		return
