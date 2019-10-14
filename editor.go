@@ -1081,8 +1081,8 @@ func (e *Editor) WriteTab(c *vt100.Canvas) {
 	}
 }
 
-// EmptyLine checks if the current line is empty (and whitespace doesn't count)
-func (e *Editor) EmptyLine() bool {
+// EmptyRightTrimmedLine checks if the current line is empty (and whitespace doesn't count)
+func (e *Editor) EmptyRightTrimmedLine() bool {
 	return 0 == len(strings.TrimRightFunc(e.CurrentLine(), unicode.IsSpace))
 }
 

@@ -108,7 +108,11 @@ esc to redraw the screen
 	// Friendly status message
 	statusMessage := "New " + filename
 	if loaded {
-		statusMessage = "Loaded " + filename
+		if !e.Empty() {
+			statusMessage = "Loaded " + filename
+		} else {
+			statusMessage = "Loaded an empty file: " + filename
+		}
 	}
 	status.SetMessage(statusMessage)
 	status.Show(c, e)
@@ -563,7 +567,7 @@ esc to redraw the screen
 				status.Show(c, e)
 			} else {
 				e.DeleteRestOfLine()
-				if !e.DrawMode() && e.EmptyLine() {
+				if !e.DrawMode() && e.EmptyRightTrimmedLine() {
 					// Deleting the rest of the line cleared this line,
 					// so just remove it.
 					e.DeleteLine(e.DataY())
