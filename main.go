@@ -565,6 +565,7 @@ esc to redraw the screen
 				x := e.pos.ScreenX()
 				y := e.pos.ScreenY()
 				vt100.SetXY(uint(x), uint(y))
+				e.redrawCursor = true
 				e.redraw = true
 			} else {
 				status.SetMessage("Nothing more to undo")
@@ -654,6 +655,7 @@ esc to redraw the screen
 				}
 				e.redraw = true
 			} else if key != 0 { // any other key
+				undo.Snapshot(e)
 				// Place *something*
 				r := rune(key)
 				if !e.DrawMode() {
