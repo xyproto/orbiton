@@ -30,6 +30,7 @@ You can install `o` with Go 1.11 or later (development version):
 * Copy, cut and paste is only for one line at a time.
 * Some letters can not be typed in. Like `æ`.
 * May take a line number as the second argument, with an optional `+` prefix.
+* The text will be red if a loaded file can only be read and not written.
 
 ## Animated spinner
 
