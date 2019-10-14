@@ -31,18 +31,13 @@ You can install `o` with Go 1.11 or later (development version):
 * Some letters can not be typed in. Like `æ`.
 * May take a line number as the second argument, with an optional `+` prefix.
 * The text will be red if a loaded file can only be read and not written.
+* The terminal needs to be resized to show the second half of lines that are longer than the terminal width.
 
 ## Animated spinner
 
 When loading large files, an animated spinner will appear. The loading operation can be stopped at any time by pressing `esc`, `q` or `ctrl-q`.
 
 ![progress](img/progress.gif)
-
-## Known bugs
-
-* Sometimes, pressing return rapidly twice in a row makes the cursor jump up.
-* After resizing the terminal, the scrolling may stop working and everything may be displayed wrong.
-* Lines that are longer than the terminal width are not displayed correctly, and the cursor will not move to the end of them.
 
 ## Hotkeys
 
@@ -90,6 +85,6 @@ This also means that filenames containing `+` or `:` are not supported.
 
 ## General info
 
-* Version: 2.4.0
+* Version: 2.4.1
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
