@@ -23,6 +23,7 @@ func main() {
 		defaultEditorBackground       = vt100.BackgroundDefault
 		defaultEditorStatusForeground = vt100.Blue
 		defaultEditorStatusBackground = vt100.BackgroundGray
+		defaultEditorSearchHighlight  = vt100.LightBlue
 
 		version = flag.Bool("version", false, "show version information")
 		help    = flag.Bool("help", false, "show simple help")
@@ -93,7 +94,7 @@ esc to redraw the screen
 	c.ShowCursor()
 
 	// 4 spaces per tab, scroll 10 lines at a time
-	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10)
+	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight)
 
 	status := NewStatusBar(defaultEditorStatusForeground, defaultEditorStatusBackground, e, statusDuration)
 
@@ -161,10 +162,15 @@ esc to redraw the screen
 			e.ToggleHighlight()
 			redraw = true
 		case 23: // ctrl-w, search
+			s := e.searchTerm
+			//e.SetSearchTerm(s, c)
 			status.ClearAll(c)
-			status.SetMessage("Search:")
+			if s == "" {
+				status.SetMessage("Search:")
+			} else {
+				status.SetMessage("Search: " + s)
+			}
 			status.ShowNoTimeout(c, e)
-			s := ""
 			doneCollectingLetters := false
 			for !doneCollectingLetters {
 				key2 := tty.Key()
@@ -172,17 +178,20 @@ esc to redraw the screen
 				case 127: // backspace
 					if len(s) > 0 {
 						s = s[:len(s)-1]
+						e.SetSearchTerm(s, c)
 						status.SetMessage("Search: " + s)
 						status.ShowNoTimeout(c, e)
 					}
 				case 27, 17: // esc or ctrl-q
 					s = ""
+					e.searchTerm = s
 					fallthrough
 				case 13: // return
 					doneCollectingLetters = true
 				default:
 					if key2 != 0 {
 						s += string(rune(key2))
+						e.SetSearchTerm(s, c)
 						status.SetMessage("Search: " + s)
 						status.ShowNoTimeout(c, e)
 					}
@@ -222,7 +231,7 @@ esc to redraw the screen
 					e.GoTo(foundY, c, status)
 					if foundX != -1 {
 						tabs := strings.Count(e.Line(foundY), "\t")
-						e.pos.sx = foundX + (tabs * (e.spacesPerTab-1))
+						e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
 					}
 					redraw = true
 				} else {
@@ -487,7 +496,7 @@ esc to redraw the screen
 				vt100.SetXY(uint(x), uint(y))
 				redraw = true
 			} else {
-				status.SetMessage("Nothing more to undo")
+				status.SetMessage("No more regrets")
 				status.Show(c, e)
 			}
 		case 12: // ctrl-l, go to line number

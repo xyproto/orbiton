@@ -23,6 +23,8 @@ type Editor struct {
 	highlight    bool // syntax highlighting
 	drawMode     bool // text or draw mode (for ASCII graphics)?
 	pos          Position
+	searchTerm   string               // for marking found instances
+	searchFg     vt100.AttributeColor // search highlight color
 }
 
 // NewEditor takes:
@@ -31,7 +33,7 @@ type Editor struct {
 // * background color attributes
 // * if syntax highlighting is enabled
 // * if "insert mode" is enabled (as opposed to "draw mode")
-func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEditMode bool, scrollSpeed int) *Editor {
+func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEditMode bool, scrollSpeed int, searchFg vt100.AttributeColor) *Editor {
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
 	e.fg = fg
@@ -39,6 +41,7 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEdi
 	e.spacesPerTab = spacesPerTab
 	e.highlight = highlight
 	e.drawMode = !textEditMode
+	e.searchFg = searchFg
 	p := NewPosition(scrollSpeed)
 	e.pos = *p
 	return e
@@ -60,14 +63,17 @@ func (e *Editor) CopyLines() map[int][]rune {
 // Copy will create a new Editor struct that is a copy of this one
 func (e *Editor) Copy() Editor {
 	var e2 Editor
-	e2.lines = e.CopyLines()
-	e2.changed = e.changed
-	e2.fg = e.fg
-	e2.bg = e.bg
-	e2.spacesPerTab = e.spacesPerTab
-	e2.highlight = e.highlight
-	e2.drawMode = e.drawMode
-	e2.pos = e.pos
+	e2 = *e
+	//e2.lines = e.CopyLines()
+	//e2.changed = e.changed
+	//e2.fg = e.fg
+	//e2.bg = e.bg
+	//e2.spacesPerTab = e.spacesPerTab
+	//e2.highlight = e.highlight
+	//e2.drawMode = e.drawMode
+	//e2.pos = e.pos
+	//e2.searchTerm = e.searchTerm
+	//e2.searchFg = e.searchFg
 	return e2
 }
 
@@ -329,19 +335,48 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		}
 		if e.highlight {
 			// Output a syntax highlighted line
-			//vt100.SetXY(uint(cx+counter), uint(cy+y))
 			if textWithTags, err := syntax.AsText([]byte(line)); err != nil {
 				// Only output the line up to the width of the canvas
 				fmt.Println(screenLine)
 				counter += len([]rune(screenLine))
 			} else {
-				// Slice of runes and color attributes
+				// Slice of runes and color attributes, while at the same time highlighting search terms
 				charactersAndAttributes := o.Extract(o.DarkTags(string(textWithTags)))
-				for _, ca := range charactersAndAttributes {
+				searchTermRunes := []rune(e.searchTerm)
+				matchForAnotherN := 0
+				for characterIndex, ca := range charactersAndAttributes {
 					letter := ca.R
 					fg := ca.A
 					if letter == ' ' {
 						fg = e.fg
+					}
+					if matchForAnotherN > 0 {
+						// Coloring an already found match
+						fg = e.searchFg
+						matchForAnotherN--
+					} else if len(e.searchTerm) > 0 && letter == searchTermRunes[0] {
+						// Potential search highlight match
+						length := len([]rune(e.searchTerm))
+						counter := 0
+						match := true
+						for i := characterIndex; i < (characterIndex + length); i++ {
+							if i >= len(charactersAndAttributes) {
+								match = false
+								break
+							}
+							ca2 := charactersAndAttributes[i]
+							if ca2.R != []rune(e.searchTerm)[counter] {
+								// mismatch, not a hit
+								match = false
+								break
+							}
+							counter++
+						}
+						// match?
+						if match {
+							fg = e.searchFg
+							matchForAnotherN = length - 1
+						}
 					}
 					if letter == '\t' {
 						c.Write(uint(cx+counter), uint(cy+y), fg, e.bg, tabString)
