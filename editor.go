@@ -1085,7 +1085,7 @@ func (e *Editor) AtOrBeforeStartOfTextLine() bool {
 
 // GoTo will go to a given line index, counting from 0
 func (e *Editor) GoTo(y int, c *vt100.Canvas, status *StatusBar) bool {
-	redraw := false
+	var redraw bool
 	h := int(c.Height())
 	if y >= h {
 		e.pos.sy = 0
