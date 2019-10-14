@@ -17,6 +17,9 @@ type StatusBar struct {
 	offset int                  // scroll offset
 }
 
+// Used for keeping track of how many status messages are lined up to be cleared
+var statusBeingShown int
+
 // NewStatusBar takes a foreground color, background color, foreground color for clearing,
 // background color for clearing and a duration for how long to display status messages.
 func NewStatusBar(fg, bg vt100.AttributeColor, editor *Editor, show time.Duration) *StatusBar {
@@ -46,12 +49,11 @@ func (sb *StatusBar) Clear(c *vt100.Canvas) {
 	c.Draw()
 }
 
+// ClearAll will clear all status messages
 func (sb *StatusBar) ClearAll(c *vt100.Canvas) {
 	sb.Clear(c)
 	statusBeingShown = 0
 }
-
-var statusBeingShown int
 
 // Show will draw a status message, then clear it after a certain delay
 func (sb *StatusBar) Show(c *vt100.Canvas, e *Editor) {
@@ -87,12 +89,14 @@ func (sb *StatusBar) SetColors(fg, bg vt100.AttributeColor) {
 	sb.bg = bg
 }
 
+// ShowWordCount displays a status message with only the current word count
 func (sb *StatusBar) ShowWordCount(c *vt100.Canvas, e *Editor) {
 	wordCountString := strconv.Itoa(e.WordCount())
 	sb.SetMessage(wordCountString)
 	sb.ShowNoTimeout(c, e)
 }
 
+// ShowLineColWordCount shows a status message with the current filename, line, column and word count
 func (sb *StatusBar) ShowLineColWordCount(c *vt100.Canvas, e *Editor, filename string) {
 	statusString := filename + ": " + e.StatusMessage()
 	sb.SetMessage(statusString)

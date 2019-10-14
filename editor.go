@@ -1022,12 +1022,12 @@ func (e *Editor) AtEndOfDocument() bool {
 	return e.AtLastLineOfDocument() && e.AtEndOfLine()
 }
 
-// StartOfDocument is true if we're at the first line of the document
+// AtStartOfDocument is true if we're at the first line of the document
 func (e *Editor) AtStartOfDocument() bool {
 	return e.pos.sy == 0 && e.pos.scroll == 0
 }
 
-// Is the cursor at or after the contents of this line?
+// AtOrAfterEndOfLine returns true if the cursor is at or after the contents of this line?
 func (e *Editor) AtOrAfterEndOfLine() bool {
 	x, err := e.DataX()
 	if err != nil {
@@ -1068,17 +1068,17 @@ func (e *Editor) EmptyLine() bool {
 	return 0 == len(strings.TrimRightFunc(e.CurrentLine(), unicode.IsSpace))
 }
 
-// AtStartOfText returns true if the position is at the start of the text for this line
+// AtStartOfTextLine returns true if the position is at the start of the text for this line
 func (e *Editor) AtStartOfTextLine() bool {
 	return e.pos.sx == e.FirstScreenPosition(e.DataY())
 }
 
-// BeforeStartOfText returns true if the position is before the start of the text for this line
+// BeforeStartOfTextLine returns true if the position is before the start of the text for this line
 func (e *Editor) BeforeStartOfTextLine() bool {
 	return e.pos.sx < e.FirstScreenPosition(e.DataY())
 }
 
-// BeforeOrAtStartOfText returns true if the position is before or at the start of the text for this line
+// AtOrBeforeStartOfTextLine returns true if the position is before or at the start of the text for this line
 func (e *Editor) AtOrBeforeStartOfTextLine() bool {
 	return e.pos.sx <= e.FirstScreenPosition(e.DataY())
 }
@@ -1141,7 +1141,7 @@ func (e *Editor) LineNumber() int {
 	return e.DataY() + 1
 }
 
-// ColumNumber will return the current column number (data x index + 1)
+// ColumnNumber will return the current column number (data x index + 1)
 func (e *Editor) ColumnNumber() int {
 	x, _ := e.DataX()
 	return x + 1
