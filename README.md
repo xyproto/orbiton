@@ -1,4 +1,4 @@
-# o [![Build Status](https://travis-ci.org/xyproto/o.svg?branch=master)](https://travis-ci.org/xyproto/o) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/algernon/master/LICENSE)
+# o [![Build Status](https://travis-ci.org/xyproto/o.svg?branch=master)](https://travis-ci.org/xyproto/o) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/o/master/LICENSE)
 
 `o` is a limited, but small and fast text editor.
 
