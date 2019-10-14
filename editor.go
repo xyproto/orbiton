@@ -25,6 +25,8 @@ type Editor struct {
 	pos          Position
 	searchTerm   string               // for marking found instances
 	searchFg     vt100.AttributeColor // search highlight color
+	redraw       bool                 // if the contents should be redrawn in the next loop
+	redrawCursor bool                 // if the cursor should be moved to the location it is supposed to be
 }
 
 // NewEditor takes:
@@ -41,9 +43,9 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEdi
 	e.spacesPerTab = spacesPerTab
 	e.highlight = highlight
 	e.drawMode = !textEditMode
-	e.searchFg = searchFg
 	p := NewPosition(scrollSpeed)
 	e.pos = *p
+	e.searchFg = searchFg
 	return e
 }
 

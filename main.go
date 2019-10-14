@@ -31,11 +31,9 @@ func main() {
 
 		statusDuration = 2700 * time.Millisecond
 
-		redraw       bool     // if the contents should be redrawn in the next loop
-		redrawCursor bool     // if the cursor should be moved to the location it is supposed to be
-		copyLine     string   // for the cut/copy/paste functionality
-		bookmark     Position // for the bookmark/jump functionality
-		statusMode   bool     // if information should be shown at the bottom
+		copyLine   string   // for the cut/copy/paste functionality
+		bookmark   Position // for the bookmark/jump functionality
+		statusMode bool     // if information should be shown at the bottom
 	)
 
 	flag.Parse()
@@ -154,7 +152,7 @@ esc to redraw the screen
 	previousY := -1
 
 	if lineNumber > 0 {
-		redraw = e.GoToLineNumber(lineNumber, c, status)
+		e.redraw = e.GoToLineNumber(lineNumber, c, status)
 	}
 
 	quit := false
@@ -184,11 +182,11 @@ esc to redraw the screen
 				}
 				// Try to close the file. f.Close() checks if f is nil before closing.
 				_ = f.Close()
-				redraw = true
+				e.redraw = true
 			}
 		case 20: // ctrl-t, toggle syntax highlighting
 			e.ToggleHighlight()
-			redraw = true
+			e.redraw = true
 		case 23: // ctrl-w, search
 			s := e.SearchTerm()
 			//e.SetSearchTerm(s, c)
@@ -261,7 +259,7 @@ esc to redraw the screen
 						tabs := strings.Count(e.Line(foundY), "\t")
 						e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
 					}
-					redraw = true
+					e.redraw = true
 				} else {
 					status.SetMessage("Not found")
 					status.Show(c, e)
@@ -314,8 +312,8 @@ esc to redraw the screen
 					if e.UpEnd(c) != nil {
 						// If below the top, scroll the contents up
 						if e.DataY() > 0 {
-							redraw = e.ScrollUp(c, status, 1)
-							redrawCursor = true
+							e.redraw = e.ScrollUp(c, status, 1)
+							e.redrawCursor = true
 							e.pos.Down(c)
 							e.UpEnd(c)
 						}
@@ -340,8 +338,8 @@ esc to redraw the screen
 						// If at the bottom, don't move down, but scroll the contents
 						// Output a helpful message
 						if !e.AtOrAfterEndOfDocument() {
-							redraw = e.ScrollDown(c, status, 1)
-							redrawCursor = true
+							e.redraw = e.ScrollDown(c, status, 1)
+							e.redrawCursor = true
 							e.pos.Up()
 							e.DownEnd(c)
 						}
@@ -359,14 +357,14 @@ esc to redraw the screen
 				e.pos.Down(c)
 			}
 		case 14: // ctrl-n, scroll down
-			redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
-			redrawCursor = true
+			e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
+			e.redrawCursor = true
 			if !e.DrawMode() && e.AfterLineContents() {
 				e.End()
 			}
 		case 16: // ctrl-p, scroll up
-			redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
-			redrawCursor = true
+			e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
+			e.redrawCursor = true
 			if !e.DrawMode() && e.AfterLineContents() {
 				e.End()
 			}
@@ -380,20 +378,20 @@ esc to redraw the screen
 			vt100.Init()
 			c = vt100.NewCanvas()
 			c.ShowCursor()
-			redrawCursor = true
-			redraw = true
+			e.redrawCursor = true
+			e.redraw = true
 		case 32: // space
 			undo.Snapshot(e)
 			// Place a space
 			if !e.DrawMode() {
 				e.InsertRune(' ')
-				redraw = true
+				e.redraw = true
 			} else {
 				e.SetRune(' ')
 			}
 			e.WriteRune(c)
 			if e.DrawMode() {
-				redraw = true
+				e.redraw = true
 			} else {
 				// Move to the next position
 				e.Next(c)
@@ -428,7 +426,7 @@ esc to redraw the screen
 					h := int(c.Height())
 					if e.DataY() >= (h - 1) {
 						e.ScrollDown(c, status, 1)
-						redrawCursor = true
+						e.redrawCursor = true
 					}
 					e.pos.Down(c)
 					e.Home()
@@ -476,7 +474,7 @@ esc to redraw the screen
 				}
 				e.pos.Down(c)
 			}
-			redraw = true
+			e.redraw = true
 		case 127: // backspace
 			undo.Snapshot(e)
 			if !e.DrawMode() && e.CurrentLine() == "" {
@@ -502,7 +500,7 @@ esc to redraw the screen
 					e.Delete()
 				}
 			}
-			redraw = true
+			e.redraw = true
 		case 9: // tab
 			undo.Snapshot(e)
 			if !e.DrawMode() {
@@ -519,7 +517,7 @@ esc to redraw the screen
 					e.Next(c)
 				}
 			}
-			redraw = true
+			e.redraw = true
 		case 1: // ctrl-a, home
 			// toggle between start of line and start of non-whitespace
 			if e.pos.AtStartOfLine() {
@@ -538,7 +536,7 @@ esc to redraw the screen
 				status.Show(c, e)
 			} else {
 				e.Delete()
-				redraw = true
+				e.redraw = true
 			}
 		case 19: // ctrl-s, save
 			if err := e.Save(filename, !e.DrawMode()); err != nil {
@@ -561,7 +559,7 @@ esc to redraw the screen
 				x := e.pos.ScreenX()
 				y := e.pos.ScreenY()
 				vt100.SetXY(uint(x), uint(y))
-				redraw = true
+				e.redraw = true
 			} else {
 				status.SetMessage("Nothing more to undo")
 				status.Show(c, e)
@@ -595,7 +593,7 @@ esc to redraw the screen
 			status.ClearAll(c)
 			if lns != "" {
 				if ln, err := strconv.Atoi(lns); err == nil { // no error
-					redraw = e.GoToLineNumber(ln, c, status)
+					e.redraw = e.GoToLineNumber(ln, c, status)
 					status.SetMessage(lns)
 					status.Show(c, e)
 				}
@@ -613,27 +611,27 @@ esc to redraw the screen
 					e.DeleteLine(e.DataY())
 				}
 				vt100.Do("Erase End of Line")
-				redraw = true
+				e.redraw = true
 			}
 		case 24: // ctrl-x, cut
 			undo.Snapshot(e)
 			y := e.DataY()
 			copyLine = e.Line(y)
 			e.DeleteLine(y)
-			redraw = true
+			e.redraw = true
 		case 3: // ctrl-c, copy line
 			copyLine = e.Line(e.DataY())
-			redraw = true
+			e.redraw = true
 		case 22: // ctrl-v, paste
 			undo.Snapshot(e)
 			e.SetLine(e.DataY(), copyLine)
-			redraw = true
+			e.redraw = true
 		case 2: // ctrl-b, bookmark
 			bookmark = e.pos
 		case 10: // ctrl-j, jump to bookmark
 			// TODO: Add a check for if a bookmark exists?
 			e.pos = bookmark
-			redraw = true
+			e.redraw = true
 		default:
 			if (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') { // letter
 				undo.Snapshot(e)
@@ -648,7 +646,7 @@ esc to redraw the screen
 					// Move to the next position
 					e.Next(c)
 				}
-				redraw = true
+				e.redraw = true
 			} else if key != 0 { // any other key
 				// Place *something*
 				r := rune(key)
@@ -664,25 +662,25 @@ esc to redraw the screen
 						e.Next(c)
 					}
 				}
-				redraw = true
+				e.redraw = true
 			} else {
 			}
 		}
 		if statusMode {
 			status.ShowLineColWordCount(c, e, filename)
 		}
-		if redraw {
+		if e.redraw {
 			// Draw the editor lines on the canvas, respecting the offset
 			e.DrawLines(c, true, false)
-			redraw = false
+			e.redraw = false
 		} else if e.Changed() {
 			c.Draw()
 		}
 		x := e.pos.ScreenX()
 		y := e.pos.ScreenY()
-		if redrawCursor || x != previousX || y != previousY {
+		if e.redrawCursor || x != previousX || y != previousY {
 			vt100.SetXY(uint(x), uint(y))
-			redrawCursor = false
+			e.redrawCursor = false
 		}
 		previousX = x
 		previousY = y
