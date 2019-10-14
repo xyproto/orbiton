@@ -60,23 +60,6 @@ func (e *Editor) CopyLines() map[int][]rune {
 	return lines2
 }
 
-// Copy will create a new Editor struct that is a copy of this one
-func (e *Editor) Copy() Editor {
-	var e2 Editor
-	e2 = *e
-	//e2.lines = e.CopyLines()
-	//e2.changed = e.changed
-	//e2.fg = e.fg
-	//e2.bg = e.bg
-	//e2.spacesPerTab = e.spacesPerTab
-	//e2.highlight = e.highlight
-	//e2.drawMode = e.drawMode
-	//e2.pos = e.pos
-	//e2.searchTerm = e.searchTerm
-	//e2.searchFg = e.searchFg
-	return e2
-}
-
 // DrawMode returns true if the editor is in "text edit mode" and the cursor should not float around
 func (e *Editor) DrawMode() bool {
 	return e.drawMode
