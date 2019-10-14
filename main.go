@@ -161,6 +161,7 @@ esc to redraw the screen
 			e.ToggleHighlight()
 			redraw = true
 		case 23: // ctrl-w, search
+			status.ClearAll(c)
 			status.SetMessage("Search:")
 			status.ShowNoTimeout(c, e)
 			s := ""
@@ -491,6 +492,7 @@ esc to redraw the screen
 				status.Show(c, e)
 			}
 		case 12: // ctrl-l, go to line number
+			status.ClearAll(c)
 			status.SetMessage("Go to line number:")
 			status.ShowNoTimeout(c, e)
 			lns := ""
