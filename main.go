@@ -367,6 +367,7 @@ esc to redraw the screen
 			undo.Snapshot(e)
 			// if the current line is empty, insert a blank line
 			if !e.DrawMode() {
+				e.TrimRight(e.DataY())
 				lineContents := e.CurrentLine()
 				e.FirstScreenPosition(e.DataY())
 				if e.pos.AtStartOfLine() {
@@ -389,7 +390,10 @@ esc to redraw the screen
 						leadingWhitespace = "\t"
 					}
 					e.InsertLineBelow()
-					e.ScrollDown(c, status, 1)
+					h := int(c.Height())
+					if e.DataY() >= (h - 1) {
+						e.ScrollDown(c, status, 1)
+					}
 					e.pos.Down(c)
 					e.Home()
 					// Insert the same leading whitespace for the new line, while moving to the right
