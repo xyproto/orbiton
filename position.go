@@ -10,7 +10,7 @@ import (
 type Position struct {
 	sx          int // the position of the cursor in the current scrollview
 	sy          int // the position of the cursor in the current scrollview
-	scroll      int // how far one has scrolled
+	offset      int // how far one has scrolled
 	scrollSpeed int // how many lines to scroll, when scrolling
 	savedX      int // for smart down cursor movement
 }
@@ -25,7 +25,7 @@ func (p *Position) Copy() Position {
 	var p2 Position
 	p2.sx = p.sx
 	p2.sy = p.sy
-	p2.scroll = p.scroll
+	p2.offset = p.offset
 	p2.scrollSpeed = p.scrollSpeed
 	p2.savedX = p.savedX
 	return p2
@@ -43,7 +43,7 @@ func (p *Position) ScreenY() int {
 
 // Offset returns the scroll offset for the current view
 func (p *Position) Offset() int {
-	return p.scroll
+	return p.offset
 }
 
 // SetX will set the screen X position
@@ -58,7 +58,7 @@ func (p *Position) SetY(y int) {
 
 // SetOffset will set the screen scolling offset
 func (p *Position) SetOffset(offset int) {
-	p.scroll = offset
+	p.offset = offset
 }
 
 // Up will move the cursor up
