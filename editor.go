@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/xyproto/syntax"
@@ -239,30 +240,47 @@ func (e *Editor) Clear() {
 // Load will try to load a file
 func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
 
-	// Find a good start location
-	w := int(c.Width())
-	h := int(c.Height())
-	x := uint(w / 7)
-	y := uint(h / 7)
-
-	// Move the cursor there and write a message
-	vt100.SetXY(x, y)
-	msg := vt100.White.Get(fmt.Sprintf("Reading %s... ", filename))
-	fmt.Print(msg)
-
-	// Store the position after the message
-	x += uint(len(msg)) + 1
-
-	// Start a spinner
+	// Start a spinner, in a little short while
 	quit := make(chan bool)
 	go func() {
+
+		// Wait 4 * 4 milliseconds, while listening to the quit channel.
+		// This is to delay showing the progressbar until some time has passed.
+		for i := 0; i < 4; i++ {
+			// Check if we should quit or wait
+			select {
+			case <-quit:
+				return
+			default:
+				// Wait a tiny bit
+				time.Sleep(4 * time.Millisecond)
+			}
+		}
+
+		// Find a good start location
+		w := int(c.Width())
+		h := int(c.Height())
+		x := uint(w / 7)
+		y := uint(h / 7)
+
+		// Move the cursor there and write a message
+		vt100.SetXY(x, y)
+		msg := vt100.White.Get(fmt.Sprintf("Reading %s... ", filename))
+		fmt.Print(msg)
+
+		// Store the position after the message
+		x += uint(len(msg)) + 1
+
+		// Prepare to output colored text
 		o := textoutput.NewTextOutput(true, true)
-		counter := uint(0)
 		vt100.ShowCursor(false)
+
+		var counter uint
+
+		// Start the spinner
 		for {
 			select {
 			case <-quit:
-				// TODO: Only show the cursor if it is enabled for the Editor struct
 				vt100.ShowCursor(true)
 				return
 			default:
@@ -297,8 +315,6 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
 				}
 				fmt.Print(o.LightTags(s))
 				counter++
-				// Sleep just a bit
-				//time.Sleep(80 * time.Millisecond)
 				// Wait for a key press (also sleeps just a bit)
 				switch tty.Key() {
 				case 27, 113, 17: // esc, q or ctrl-q
