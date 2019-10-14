@@ -21,7 +21,7 @@ func main() {
 		// Color scheme for the "text edit" mode
 		defaultEditorForeground       = vt100.White
 		defaultEditorBackground       = vt100.BackgroundDefault
-		defaultEditorStatusForeground = vt100.Blue
+		defaultEditorStatusForeground = vt100.Black
 		defaultEditorStatusBackground = vt100.BackgroundGray
 		defaultEditorSearchHighlight  = vt100.LightBlue
 
@@ -162,7 +162,7 @@ esc to redraw the screen
 			e.ToggleHighlight()
 			redraw = true
 		case 23: // ctrl-w, search
-			s := e.searchTerm
+			s := e.SearchTerm()
 			//e.SetSearchTerm(s, c)
 			status.ClearAll(c)
 			if s == "" {
@@ -184,7 +184,7 @@ esc to redraw the screen
 					}
 				case 27, 17: // esc or ctrl-q
 					s = ""
-					e.searchTerm = s
+					e.SetSearchTerm(s, c)
 					fallthrough
 				case 13: // return
 					doneCollectingLetters = true
@@ -496,7 +496,7 @@ esc to redraw the screen
 				vt100.SetXY(uint(x), uint(y))
 				redraw = true
 			} else {
-				status.SetMessage("No more regrets")
+				status.SetMessage("Nothing more to undo")
 				status.Show(c, e)
 			}
 		case 12: // ctrl-l, go to line number
