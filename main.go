@@ -610,7 +610,7 @@ esc to redraw the screen
 		if x != previousX || y != previousY {
 			vt100.SetXY(uint(x), uint(y))
 		}
-		previousY = x
+		previousX = x
 		previousY = y
 	}
 	tty.Close()
