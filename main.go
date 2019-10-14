@@ -30,10 +30,11 @@ func main() {
 
 		statusDuration = 2700 * time.Millisecond
 
-		redraw     bool     // if the contents should be redrawn in the next loop
-		copyLine   string   // for the cut/copy/paste functionality
-		bookmark   Position // for the bookmark/jump functionality
-		statusMode bool     // if information should be shown at the bottom
+		redraw       bool     // if the contents should be redrawn in the next loop
+		redrawCursor bool     // if the cursor should be moved to the location it is supposed to be
+		copyLine     string   // for the cut/copy/paste functionality
+		bookmark     Position // for the bookmark/jump functionality
+		statusMode   bool     // if information should be shown at the bottom
 	)
 
 	flag.Parse()
@@ -291,6 +292,7 @@ esc to redraw the screen
 						// If below the top, scroll the contents up
 						if e.DataY() > 0 {
 							redraw = e.ScrollUp(c, status, 1)
+							redrawCursor = true
 							e.pos.Down(c)
 							e.UpEnd(c)
 						}
@@ -316,6 +318,7 @@ esc to redraw the screen
 						// Output a helpful message
 						if !e.AtOrAfterEndOfDocument() {
 							redraw = e.ScrollDown(c, status, 1)
+							redrawCursor = true
 							e.pos.Up()
 							e.DownEnd(c)
 						}
@@ -334,18 +337,27 @@ esc to redraw the screen
 			}
 		case 14: // ctrl-n, scroll down
 			redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
+			redrawCursor = true
 			if !e.DrawMode() && e.AfterLineContents() {
 				e.End()
 			}
 		case 16: // ctrl-p, scroll up
 			redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
+			redrawCursor = true
 			if !e.DrawMode() && e.AfterLineContents() {
 				e.End()
 			}
 		case 8: // ctrl-h, help
 			status.SetMessage("[" + versionString + "] ctrl-s to save, ctrl-q to quit")
 			status.Show(c, e)
-		case 27: // esc, redraw
+		case 27: // esc, reset, clean and redraw
+			vt100.Close()
+			vt100.Reset()
+			vt100.Clear()
+			vt100.Init()
+			c = vt100.NewCanvas()
+			c.ShowCursor()
+			redrawCursor = true
 			redraw = true
 		case 32: // space
 			undo.Snapshot(e)
@@ -393,6 +405,7 @@ esc to redraw the screen
 					h := int(c.Height())
 					if e.DataY() >= (h - 1) {
 						e.ScrollDown(c, status, 1)
+						redrawCursor = true
 					}
 					e.pos.Down(c)
 					e.Home()
@@ -646,8 +659,9 @@ esc to redraw the screen
 		}
 		x := e.pos.ScreenX()
 		y := e.pos.ScreenY()
-		if redraw || x != previousX || y != previousY {
+		if redrawCursor || x != previousX || y != previousY {
 			vt100.SetXY(uint(x), uint(y))
+			redrawCursor = false
 		}
 		previousX = x
 		previousY = y

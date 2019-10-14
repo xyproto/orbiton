@@ -21,7 +21,10 @@ func SetUpResizeHandler(c *vt100.Canvas, e *Editor, tty *vt100.TTY) {
 			h := int(c.Height())
 			e.WriteLines(c, e.pos.Offset(), h+e.pos.Offset(), 0, 0)
 			c.Redraw()
-			// TODO: Find out why the new size can not be reliably detected
+			// Redraw cursor
+			x := e.pos.ScreenX()
+			y := e.pos.ScreenY()
+			vt100.SetXY(uint(x), uint(y))
 		}
 	}()
 }
