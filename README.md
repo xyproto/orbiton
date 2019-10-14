@@ -27,11 +27,15 @@ You can install `o` with Go 1.11 or later (development version):
 * Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
 * Requires that `/dev/tty` is available.
-* Copy, cut and paste is only for one line at a time.
+* Copy, cut and paste is only for one line at a time, and only within the editor.
 * Some letters can not be typed in. Like `æ`.
 * May take a line number as the second argument, with an optional `+` prefix.
 * The text will be red if a loaded file can only be read and not written.
 * The terminal needs to be resized to show the second half of lines that are longer than the terminal width.
+
+## Known bugs
+
+* The undo functionality isn't watertight.
 
 ## Animated spinner
 
@@ -66,7 +70,7 @@ When loading large files, an animated spinner will appear. The loading operation
 
 ## Size
 
-The `o` executable is only **464k** when built with GCC 9.1 (for 64-bit Linux):
+The `o` executable is only **464k** when built with GCC 9.1 (for 64-bit Linux). This isn't as small as an editor written in assembly, such as [e3](https://sites.google.com/site/e3editor/) (**234k**), but it's resonably lean.
 
     go build -gccgoflags '-Os -s'
 
