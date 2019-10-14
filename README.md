@@ -35,8 +35,8 @@ You can install `o` with Go 1.11 or later (development version):
 
 ## Known bugs
 
-* When pressing return, the screen may scroll up a bit.
 * Text with color tags like `<red>` and `</red>` will be displayed incorrectly.
+* The cursor may sometimes disappear when scrolling.
 
 ## Animated spinner
 
