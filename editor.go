@@ -1169,3 +1169,18 @@ func (e *Editor) ColumnNumber() int {
 func (e *Editor) StatusMessage() string {
 	return fmt.Sprintf("line %d col %d rune %U words %d", e.LineNumber(), e.ColumnNumber(), e.Rune(), e.WordCount())
 }
+
+// DrawLines will draw a screenful of lines on the given canvas
+func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redraw bool) {
+	h := int(c.Height())
+	if respectOffset {
+		e.WriteLines(c, e.pos.Offset(), h+e.pos.Offset(), 0, 0)
+	} else {
+		e.WriteLines(c, 0, h, 0, 0)
+	}
+	if redraw {
+		c.Redraw()
+	} else {
+		c.Draw()
+	}
+}

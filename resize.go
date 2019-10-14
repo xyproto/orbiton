@@ -18,9 +18,10 @@ func SetUpResizeHandler(c *vt100.Canvas, e *Editor, tty *vt100.TTY) {
 			c = vt100.NewCanvas()
 			c.ShowCursor()
 			// Then write to that
-			h := int(c.Height())
-			e.WriteLines(c, e.pos.Offset(), h+e.pos.Offset(), 0, 0)
-			c.Redraw()
+			e.DrawLines(c, true, true)
+			//h := int(c.Height())
+			//e.WriteLines(c, e.pos.Offset(), h+e.pos.Offset(), 0, 0)
+			//c.Redraw()
 			// Redraw cursor
 			x := e.pos.ScreenX()
 			y := e.pos.ScreenY()

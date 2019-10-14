@@ -8,10 +8,8 @@ import (
 func (e *Editor) SetSearchTerm(s string, c *vt100.Canvas) {
 	// set the search term
 	e.searchTerm = s
-	// redraw all characters
-	h := int(c.Height())
-	e.WriteLines(c, e.pos.Offset(), h+e.pos.Offset(), 0, 0)
-	c.Draw()
+	// draw the lines to the canvas
+	e.DrawLines(c, true, false)
 }
 
 // SearchTerm will return the current search term
