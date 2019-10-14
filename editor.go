@@ -271,15 +271,15 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
 				// Switch between 12 different ASCII images
 				switch counter % 12 {
 				case 0:
-					s = "<red>| <yellow>C<blue> · ·</blue> <red>|<off>"
+					s = "<red>| <yellow>c<blue> · ·</blue> <red>|<off>"
 				case 1:
 					s = "<red>| <blue>·<yellow>C<blue>· · <red>|<off>"
 				case 2:
-					s = "<red>| <blue>· <yellow>C<blue> · <red>|<off>"
+					s = "<red>| <blue>· <yellow>c<blue> · <red>|<off>"
 				case 3:
 					s = "<red>| <blue>· ·<yellow>C<blue>· <red>|<off>"
 				case 4:
-					s = "<red>| <blue>· · <yellow>C <red>|<off>"
+					s = "<red>| <blue>· · <yellow>c <red>|<off>"
 				case 5:
 					s = "<red>| <blue>· · ·<yellow>¤<red>|<off>"
 				case 6:
