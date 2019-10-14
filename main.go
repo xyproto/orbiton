@@ -265,6 +265,7 @@ esc to redraw the screen
 						tabs := strings.Count(e.Line(foundY), "\t")
 						e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
 					}
+					e.redrawCursor = true
 					e.redraw = true
 				} else {
 					status.SetMessage("Not found")
@@ -297,6 +298,7 @@ esc to redraw the screen
 				// Draw mode
 				e.pos.Left()
 			}
+			e.redrawCursor = true
 		case 254: // right arrow
 			if !e.DrawMode() {
 				if e.DataY() < e.Len() {
@@ -310,6 +312,7 @@ esc to redraw the screen
 				// Draw mode
 				e.pos.Right(c)
 			}
+			e.redrawCursor = true
 		case 253: // up arrow
 			// Move the screen cursor
 			if !e.DrawMode() {
@@ -336,6 +339,7 @@ esc to redraw the screen
 			} else {
 				e.pos.Up()
 			}
+			e.redrawCursor = true
 		case 255: // down arrow
 			if !e.DrawMode() {
 				if e.DataY() < e.Len() {
@@ -362,6 +366,7 @@ esc to redraw the screen
 			} else {
 				e.pos.Down(c)
 			}
+			e.redrawCursor = true
 		case 14: // ctrl-n, scroll down
 			e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
 			e.redrawCursor = true
@@ -430,7 +435,7 @@ esc to redraw the screen
 					}
 					e.InsertLineBelow()
 					h := int(c.Height())
-					if e.DataY() >= (h - 1) {
+					if e.pos.sy >= (h - 1) {
 						e.ScrollDown(c, status, 1)
 						e.redrawCursor = true
 					}
@@ -601,6 +606,7 @@ esc to redraw the screen
 			if lns != "" {
 				if ln, err := strconv.Atoi(lns); err == nil { // no error
 					e.redraw = e.GoToLineNumber(ln, c, status)
+					e.redrawCursor = true
 					status.SetMessage(lns)
 					status.Show(c, e)
 				}
