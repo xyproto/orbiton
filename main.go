@@ -102,7 +102,7 @@ esc to redraw the screen
 	status := NewStatusBar(defaultEditorStatusForeground, defaultEditorStatusBackground, e, statusDuration)
 
 	// Try to load the filename, ignore errors since giving a new filename is also okay
-	loaded := e.Load(filename) == nil
+	loaded := e.Load(c, tty, filename) == nil
 
 	// Draw editor lines from line 0 to h onto the canvas at 0,0
 	e.DrawLines(c, false, false)
@@ -117,10 +117,10 @@ esc to redraw the screen
 		}
 		fileInfo, err := os.Stat(filename)
 		if err != nil {
-			errorMessageQuit(tty, err)
+			quitError(tty, err)
 		}
 		if fileInfo.IsDir() {
-			errorMessageQuit(tty, errors.New(filename+" is a directory"))
+			quitError(tty, errors.New(filename+" is a directory"))
 		}
 		testFile, err := os.OpenFile(filename, os.O_WRONLY, 0664)
 		if err != nil {
@@ -128,12 +128,15 @@ esc to redraw the screen
 			statusMessage += " (read only)"
 			// Set the color to red when in read-only mode
 			e.fg = vt100.Red
+			// Disable syntax highlighting, to make it clear that the text is red
+			e.highlight = false
+			// Draw the editor lines again
 			e.DrawLines(c, false, false)
 		}
 		testFile.Close()
 	} else if err := e.Save(filename, true); err != nil {
 		// Check if the new file can be saved before the user starts working on the file.
-		errorMessageQuit(tty, err)
+		quitError(tty, err)
 	}
 	status.SetMessage(statusMessage)
 	status.Show(c, e)
@@ -172,7 +175,7 @@ esc to redraw the screen
 					cmd := exec.Command("/usr/bin/gofmt", "-w", tempFilename)
 					err = cmd.Run()
 					if err == nil {
-						e.Load(tempFilename)
+						e.Load(c, tty, tempFilename)
 						// Mark the data as changed, despite just having loaded a file
 						e.changed = true
 					}

@@ -235,8 +235,86 @@ func (e *Editor) Clear() {
 }
 
 // Load will try to load a file
-func (e *Editor) Load(filename string) error {
+func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
+
+	// Find a good start location
+	w := int(c.Width())
+	h := int(c.Height())
+	x := uint(w / 7)
+	y := uint(h / 7)
+
+	// Move the cursor there and write a message
+	vt100.SetXY(x, y)
+	msg := vt100.White.Get(fmt.Sprintf("Reading %s... ", filename))
+	fmt.Print(msg)
+
+	// Store the position after the message
+	x += uint(len(msg)) + 1
+
+	// Start a spinner
+	quit := make(chan bool)
+	go func() {
+		o := textoutput.NewTextOutput(true, true)
+		counter := uint(0)
+		vt100.ShowCursor(false)
+		for {
+			select {
+			case <-quit:
+				// TODO: Only show the cursor if it is enabled for the Editor struct
+				vt100.ShowCursor(true)
+				return
+			default:
+				vt100.SetXY(x, y)
+				s := ""
+				// Switch between 12 different ASCII images
+				switch counter % 12 {
+				case 0:
+					s = "<red>| <yellow>C<blue> · ·</blue> <red>|<off>"
+				case 1:
+					s = "<red>| <blue>·<yellow>C<blue>· · <red>|<off>"
+				case 2:
+					s = "<red>| <blue>· <yellow>C<blue> · <red>|<off>"
+				case 3:
+					s = "<red>| <blue>· ·<yellow>C<blue>· <red>|<off>"
+				case 4:
+					s = "<red>| <blue>· · <yellow>C <red>|<off>"
+				case 5:
+					s = "<red>| <blue>· · ·<yellow>¤<red>|<off>"
+				case 6:
+					s = "<red>| <blue>· · <yellow>œ <red>|<off>"
+				case 7:
+					s = "<red>| <blue>· ·<yellow>œ<blue>· <red>|<off>"
+				case 8:
+					s = "<red>| <blue>· <yellow>œ <blue>· <red>|<off>"
+				case 9:
+					s = "<red>| <blue>·<yellow>œ<blue>· · <red>|<off>"
+				case 10:
+					s = "<red>| <yellow>œ <blue>· · <red>|<off>"
+				case 11:
+					s = "<red>|<yellow>¤<blue>· · · <red>|<off>"
+				}
+				fmt.Print(o.LightTags(s))
+				counter++
+				// Sleep just a bit
+				//time.Sleep(80 * time.Millisecond)
+				// Wait for a key press (also sleeps just a bit)
+				switch tty.Key() {
+				case 27, 113, 17: // esc, q or ctrl-q
+					vt100.ShowCursor(true)
+					quitMessage(tty, "loading "+filename+": canceled by user")
+				}
+			}
+
+		}
+	}()
+
+	// Read the file
 	data, err := ioutil.ReadFile(filename)
+
+	// Stop the spinner
+	quit <- true
+
+	// Check if the file could be read
 	if err != nil {
 		return err
 	}
@@ -1170,7 +1248,7 @@ func (e *Editor) StatusMessage() string {
 	return fmt.Sprintf("line %d col %d rune %U words %d", e.LineNumber(), e.ColumnNumber(), e.Rune(), e.WordCount())
 }
 
-// DrawLines will draw a screenful of lines on the given canvas
+// DrawLines will draw a screen full of lines on the given canvas
 func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redraw bool) {
 	h := int(c.Height())
 	if respectOffset {
