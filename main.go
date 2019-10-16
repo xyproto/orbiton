@@ -169,26 +169,55 @@ esc to redraw the screen
 			quit = true
 		case 6: // ctrl-f
 			undo.Snapshot(e)
-			// Use a globally unique temp file
-			if f, err := ioutil.TempFile("/tmp", "_red*.go"); !e.DrawMode() && err == nil {
-				// no error, everything is fine
-				tempFilename := f.Name()
-				err := e.Save(tempFilename, true)
-				if err == nil {
-					// Run "go fmt" on the temporary file
-					cmd := exec.Command("/usr/bin/gofmt", "-w", tempFilename)
-					err = cmd.Run()
+			if strings.HasSuffix(filename, ".go") {
+				// Use a globally unique temp file
+				if f, err := ioutil.TempFile("/tmp", "_o_*.go"); !e.DrawMode() && err == nil {
+					// no error, everything is fine
+					tempFilename := f.Name()
+					err := e.Save(tempFilename, true)
 					if err == nil {
-						e.Load(c, tty, tempFilename)
-						// Mark the data as changed, despite just having loaded a file
-						e.changed = true
+						// Run "go fmt" on the temporary file
+						cmd := exec.Command("/usr/bin/gofmt", "-w", tempFilename)
+						err = cmd.Run()
+						if err == nil {
+							e.Load(c, tty, tempFilename)
+							// Mark the data as changed, despite just having loaded a file
+							e.changed = true
+						} else {
+							quitMessage(tty, "Could not execute: "+cmd.String())
+						}
+						// Try to remove the temporary file regardless if "gofmt -w" worked out or not
+						_ = os.Remove(tempFilename)
 					}
-					// Try to remove the temporary file regardless if "gofmt -w" worked out or not
-					_ = os.Remove(tempFilename)
+					// Try to close the file. f.Close() checks if f is nil before closing.
+					_ = f.Close()
+					e.redraw = true
 				}
-				// Try to close the file. f.Close() checks if f is nil before closing.
-				_ = f.Close()
-				e.redraw = true
+			} else if strings.HasSuffix(filename, ".cpp") || strings.HasSuffix(filename, ".cxx") || strings.HasSuffix(filename, ".h") || strings.HasSuffix(filename, ".hpp") || strings.HasSuffix(filename, "c++") {
+				// Use a globally unique temp file
+				if f, err := ioutil.TempFile("/tmp", "_o_*.cpp"); !e.DrawMode() && err == nil {
+					// no error, everything is fine
+					tempFilename := f.Name()
+					err := e.Save(tempFilename, true)
+					if err == nil {
+						// Run "go fmt" on the temporary file
+						// lang-format -style='{BasedOnStyle: WebKit, ColumnLimit: 99}' -i main.cpp
+						cmd := exec.Command("/usr/bin/clang-format", "--style='{BasedOnStyle: WebKit, ColumnLimit: 99}' -i "+tempFilename)
+						err = cmd.Run()
+						if err == nil {
+							e.Load(c, tty, tempFilename)
+							// Mark the data as changed, despite just having loaded a file
+							e.changed = true
+						} else {
+							quitMessage(tty, "Could not execute: "+cmd.String())
+						}
+						// Try to remove the temporary file regardless if "gofmt -w" worked out or not
+						_ = os.Remove(tempFilename)
+					}
+					// Try to close the file. f.Close() checks if f is nil before closing.
+					_ = f.Close()
+					e.redraw = true
+				}
 			}
 		case 20: // ctrl-t, toggle syntax highlighting
 			e.ToggleHighlight()
