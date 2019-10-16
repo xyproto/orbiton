@@ -171,8 +171,8 @@ esc to redraw the screen
 			undo.Snapshot(e)
 			// Map from formatting command to a list of file extensions
 			format := map[*exec.Cmd][]string{
-				exec.Command("/usr/bin/gofmt", "-w "): []string{".go"},
-				exec.Command("/usr/bin/clang-format", "-style", "'{BasedOnStyle:WebKit,ColumnLimit:99}'", "-i"): []string{".cpp", ".cxx", ".h", ".hpp"},
+				exec.Command("/usr/bin/gofmt", "-w", "--"):                                                 []string{".go"},
+				exec.Command("/usr/bin/clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): []string{".cpp", ".cxx", ".h", ".hpp"},
 			}
 		OUT:
 			for cmd, extensions := range format {
@@ -194,8 +194,7 @@ esc to redraw the screen
 									// Mark the data as changed, despite just having loaded a file
 									e.changed = true
 								} else {
-									//quitMessage(tty, "Failed to execute: "+cmd.String() + " output: " + string(output))
-									quitMessage(tty, string(output))
+									quitMessage(tty, "Failed to execute: "+cmd.String()+" Output: "+string(output))
 								}
 								// Try to remove the temporary file regardless if "gofmt -w" worked out or not
 								_ = os.Remove(tempFilename)
