@@ -7,7 +7,9 @@ import (
 )
 
 func quitError(tty *vt100.TTY, err error) {
-	tty.Close()
+	if tty != nil {
+		tty.Close()
+	}
 	vt100.Reset()
 	vt100.Clear()
 	vt100.Close()
@@ -17,7 +19,9 @@ func quitError(tty *vt100.TTY, err error) {
 }
 
 func quitMessage(tty *vt100.TTY, msg string) {
-	tty.Close()
+	if tty != nil {
+		tty.Close()
+	}
 	vt100.Reset()
 	vt100.Clear()
 	vt100.Close()

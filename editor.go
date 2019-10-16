@@ -947,7 +947,7 @@ func (e *Editor) DownEnd(c *vt100.Canvas) error {
 	if err != nil {
 		return err
 	}
-	if e.AfterLineContentsPlusOne() && tmpx > 1 {
+	if e.AfterLineScreenContentsPlusOne() && tmpx > 1 {
 		e.End()
 		if e.pos.sx != tmpx && e.pos.sx > e.pos.savedX {
 			e.pos.savedX = tmpx
@@ -969,7 +969,7 @@ func (e *Editor) UpEnd(c *vt100.Canvas) error {
 	if err != nil {
 		return err
 	}
-	if e.AfterLineContentsPlusOne() && tmpx > 1 {
+	if e.AfterLineScreenContentsPlusOne() && tmpx > 1 {
 		e.End()
 		if e.pos.sx != tmpx && e.pos.sx > e.pos.savedX {
 			e.pos.savedX = tmpx
@@ -996,7 +996,7 @@ func (e *Editor) Next(c *vt100.Canvas) error {
 	}
 	// Did we move too far on this line?
 	w := int(c.W())
-	if (!e.DrawMode() && e.AfterLineContentsPlusOne()) || (e.DrawMode() && e.pos.sx >= w) {
+	if (!e.DrawMode() && e.AfterLineScreenContentsPlusOne()) || (e.DrawMode() && e.pos.sx >= w) {
 		// Undo the move
 		if atTab && !e.DrawMode() {
 			e.pos.sx -= e.spacesPerTab
@@ -1069,7 +1069,7 @@ func (p *Position) Left() {
 
 // SaveX will save the current X position, if it's within reason
 func (e *Editor) SaveX(regardless bool) {
-	if regardless || (!e.AfterLineContentsPlusOne() && e.pos.sx > 1) {
+	if regardless || (!e.AfterLineScreenContentsPlusOne() && e.pos.sx > 1) {
 		e.pos.savedX = e.pos.sx
 	}
 }
@@ -1145,7 +1145,7 @@ func (e *Editor) AtStartOfDocument() bool {
 	return e.pos.sy == 0 && e.pos.offset == 0
 }
 
-// AtOrAfterEndOfLine returns true if the cursor is at or after the contents of this line?
+// AtOrAfterEndOfLine returns true if the cursor is at or after the contents of this line
 func (e *Editor) AtOrAfterEndOfLine() bool {
 	x, err := e.DataX()
 	if err != nil {
@@ -1155,13 +1155,23 @@ func (e *Editor) AtOrAfterEndOfLine() bool {
 	return x >= e.LastDataPosition(e.DataY())
 }
 
-// AfterLineContents will check if the cursor is after the current line contents
-func (e *Editor) AfterLineContents() bool {
+// AfterEndOfLine returns true if the cursor is after the contents of this line
+func (e *Editor) AfterEndOfLine() bool {
+	x, err := e.DataX()
+	if err != nil {
+		// After end of data
+		return true
+	}
+	return x > e.LastDataPosition(e.DataY())
+}
+
+// AfterLineScreenContents will check if the cursor is after the current line contents
+func (e *Editor) AfterLineScreenContents() bool {
 	return e.pos.sx > e.LastScreenPosition(e.DataY())
 }
 
-// AfterLineContentsPlusOne will check if the cursor is after the current line contents, with a margin of 1
-func (e *Editor) AfterLineContentsPlusOne() bool {
+// AfterLineScreenContentsPlusOne will check if the cursor is after the current line contents, with a margin of 1
+func (e *Editor) AfterLineScreenContentsPlusOne() bool {
 	return e.pos.sx > (e.LastScreenPosition(e.DataY()) + 1)
 }
 
@@ -1218,11 +1228,11 @@ func (e *Editor) GoTo(y int, c *vt100.Canvas, status *StatusBar) bool {
 	// Is the place we want to go within the current scroll window?
 	topY := e.pos.offset
 	botY := e.pos.offset + h
-	if y >= topY && y <= botY {
-		// Yes, no scrolling needed, just move the screen y position
+	if (y >= topY && y <= botY) || (len(e.lines) < h) {
+		// No scrolling is needed, just move the screen y position
 		e.pos.sy = y - e.pos.offset
 	} else {
-		// No, scrolling is needed
+		// Scrolling is needed
 		e.pos.offset = y
 		e.pos.sy = 0
 		// Adjust the position within the window
@@ -1235,11 +1245,6 @@ func (e *Editor) GoTo(y int, c *vt100.Canvas, status *StatusBar) bool {
 		}
 	}
 	// Out of bounds checking
-	if e.pos.offset < 0 {
-		e.pos.offset = 0
-	} else if e.pos.offset >= (len(e.lines) - h) {
-		e.pos.offset = (len(e.lines) - h) - 2
-	}
 	if e.pos.sy >= h {
 		e.pos.sy = h - 1
 	}

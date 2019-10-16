@@ -319,7 +319,7 @@ esc to redraw the screen
 		case 252: // left arrow
 			if !e.DrawMode() {
 				e.Prev(c)
-				if e.AfterLineContents() {
+				if e.AfterLineScreenContents() {
 					e.End()
 				}
 				e.SaveX(true)
@@ -333,7 +333,7 @@ esc to redraw the screen
 				if e.DataY() < e.Len() {
 					e.Next(c)
 				}
-				if e.AfterLineContents() {
+				if e.AfterLineScreenContents() {
 					e.End()
 				}
 				e.SaveX(true)
@@ -357,12 +357,12 @@ esc to redraw the screen
 						}
 					}
 					// If the cursor is after the length of the current line, move it to the end of the current line
-					if e.AfterLineContents() {
+					if e.AfterLineScreenContents() {
 						e.End()
 					}
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
-				if e.AfterLineContents() {
+				if e.AfterLineScreenContents() {
 					e.End()
 				}
 			} else {
@@ -384,12 +384,12 @@ esc to redraw the screen
 						}
 					}
 					// If the cursor is after the length of the current line, move it to the end of the current line
-					if e.AfterLineContents() {
+					if e.AfterLineScreenContents() {
 						e.End()
 					}
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
-				if e.AfterLineContents() {
+				if e.AfterLineScreenContents() {
 					e.End()
 				}
 			} else {
@@ -399,13 +399,13 @@ esc to redraw the screen
 		case 14: // ctrl-n, scroll down
 			e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
 			e.redrawCursor = true
-			if !e.DrawMode() && e.AfterLineContents() {
+			if !e.DrawMode() && e.AfterLineScreenContents() {
 				e.End()
 			}
 		case 16: // ctrl-p, scroll up
 			e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
 			e.redrawCursor = true
-			if !e.DrawMode() && e.AfterLineContents() {
+			if !e.DrawMode() && e.AfterLineScreenContents() {
 				e.End()
 			}
 		case 8: // ctrl-h, help
@@ -475,7 +475,7 @@ esc to redraw the screen
 						e.InsertRune(r)
 						e.Next(c)
 					}
-				} else if e.AtOrAfterEndOfLine() {
+				} else if e.AfterEndOfLine() {
 					leadingWhitespace := e.LeadingWhitespace()
 					if leadingWhitespace == "" && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[")) {
 						// "smart indentation"
@@ -585,7 +585,7 @@ esc to redraw the screen
 			} else {
 				// TODO: Go to the end of the document at this point, if needed
 				// Lines may be trimmed for whitespace, so move to the end, if needed
-				if !e.DrawMode() && e.AfterLineContents() {
+				if !e.DrawMode() && e.AfterLineScreenContents() {
 					e.End()
 				}
 				// Status message
