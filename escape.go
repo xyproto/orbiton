@@ -2,10 +2,11 @@ package main
 
 import "strings"
 
-// The special strings should be as unusual as possible, but short
+// The special strings should be as unusual as possible, but short.
+// It's important that the various characters will not be syntax highlighted separately.
 const (
-	specialString1 = ".·lt²ø"
-	specialString2 = ".·gt²ø"
+	specialString1 = "æøå_lt_æøå"
+	specialString2 = "æøå_gt_æøå"
 )
 
 // Escape escapes < and > by replacing them with specialString1 and specialString2

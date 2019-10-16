@@ -412,19 +412,16 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		if len([]rune(screenLine)) >= w {
 			screenLine = screenLine[:w]
 		}
-		// escape tags with unlikely strings, only for err == nil for the AsText function call below
-		line = Escape(line)
 		if e.highlight {
-			// Output a syntax highlighted line
-			if textWithTags, err := syntax.AsText([]byte(line)); err != nil {
+			// Output a syntax highlighted line. Escape any tags in the input line.
+			// textWithTags must be unescaped if there is not an error.
+			if textWithTags, err := syntax.AsText([]byte(Escape(line))); err != nil {
 				// Only output the line up to the width of the canvas
 				fmt.Println(screenLine)
 				counter += len([]rune(screenLine))
 			} else {
-				coloredString := o.DarkTags(string(textWithTags))
-
-				// escape tags with unlikely strings
-				coloredString = UnEscape(coloredString)
+				// Color and unescape
+				coloredString := UnEscape(o.DarkTags(string(textWithTags)))
 
 				// Slice of runes and color attributes, while at the same time highlighting search terms
 				charactersAndAttributes := o.Extract(coloredString)
