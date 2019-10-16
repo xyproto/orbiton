@@ -194,7 +194,8 @@ esc to redraw the screen
 									// Mark the data as changed, despite just having loaded a file
 									e.changed = true
 								} else {
-									quitMessage(tty, "Failed to execute: "+cmd.String()+" Output: "+string(output))
+									//quitMessage(tty, "Failed to execute: "+cmd.String()+" Output: "+string(output))
+									quitMessage(tty, "Failed to format code: " + string(output))
 								}
 								// Try to remove the temporary file regardless if "gofmt -w" worked out or not
 								_ = os.Remove(tempFilename)
