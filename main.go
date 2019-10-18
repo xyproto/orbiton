@@ -22,7 +22,7 @@ func main() {
 		// Color scheme for the "text edit" mode
 		defaultEditorForeground       = vt100.White
 		defaultEditorBackground       = vt100.BackgroundDefault
-		defaultEditorStatusForeground = vt100.Black
+		defaultEditorStatusForeground = vt100.LightCyan
 		defaultEditorStatusBackground = vt100.BackgroundGray
 		defaultEditorSearchHighlight  = vt100.LightBlue
 
@@ -108,7 +108,8 @@ esc to redraw the screen
 
 	// If we're editing a git commit message, add a newline
 	if e.gitMode {
-		status.fg = vt100.LightGreen
+		e.gitColor = vt100.LightGreen
+		status.fg = vt100.LightBlue
 		status.bg = vt100.BackgroundDefault
 		e.InsertLineBelow()
 	}
@@ -582,6 +583,8 @@ esc to redraw the screen
 				e.Delete()
 				e.redraw = true
 			}
+			e.redrawCursor = true
+			e.redraw = true
 		case 19: // ctrl-s, save
 			if err := e.Save(filename, !e.DrawMode()); err != nil {
 				status.SetMessage(err.Error())

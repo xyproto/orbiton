@@ -29,6 +29,7 @@ type Editor struct {
 	redraw       bool                 // if the contents should be redrawn in the next loop
 	redrawCursor bool                 // if the cursor should be moved to the location it is supposed to be
 	gitMode      bool
+	gitColor     vt100.AttributeColor // git commit message color
 }
 
 // NewEditor takes:
@@ -425,7 +426,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 				var coloredString string
 				if e.gitMode {
 					if !strings.HasPrefix(strings.TrimSpace(line), "#") {
-						coloredString = vt100.LightBlue.Get(line)
+						coloredString = e.gitColor.Get(line)
 					} else {
 						coloredString = vt100.DarkGray.Get(line)
 					}
