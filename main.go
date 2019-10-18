@@ -34,6 +34,8 @@ func main() {
 		copyLine   string   // for the cut/copy/paste functionality
 		bookmark   Position // for the bookmark/jump functionality
 		statusMode bool     // if information should be shown at the bottom
+
+		firstLetterSinceStart = rune(0)
 	)
 
 	flag.Parse()
@@ -677,16 +679,31 @@ esc to redraw the screen
 		default:
 			if (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') { // letter
 				undo.Snapshot(e)
-				// Place a letter
-				if !e.DrawMode() {
-					e.InsertRune(rune(key))
-				} else {
-					e.SetRune(rune(key))
+				dropO := false
+				if firstLetterSinceStart == rune(0) {
+					firstLetterSinceStart = rune(key)
+				} else if firstLetterSinceStart == 'O' && (key >= 'A' && key <= 'Z') {
+					// If the first typed letter since starting this editor was 'O', and this is also uppercase,
+					// then disregard the initial 'O'. This is to help vim-users.
+					dropO = true
+					// Set the first letter since start to something that will not trigger this branch any more.
+					firstLetterSinceStart = 'x'
 				}
-				e.WriteRune(c)
-				if !e.DrawMode() {
-					// Move to the next position
+				if dropO {
+					// Replace the previous letter.
+					e.Prev(c)
+					e.SetRune(rune(key))
+					e.WriteRune(c)
 					e.Next(c)
+				} else if !e.DrawMode() {
+					// Insert a letter. This is what normally happens.
+					e.InsertRune(rune(key))
+					e.WriteRune(c)
+					e.Next(c)
+				} else {
+					// Replace this letter.
+					e.SetRune(rune(key))
+					e.WriteRune(c)
 				}
 				e.redraw = true
 			} else if key != 0 { // any other key
