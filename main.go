@@ -195,7 +195,7 @@ esc to redraw the screen
 									e.changed = true
 								} else {
 									//quitMessage(tty, "Failed to execute: "+cmd.String()+" Output: "+string(output))
-									quitMessage(tty, "Failed to format code: " + string(output))
+									quitMessage(tty, "Failed to format code: "+string(output))
 								}
 								// Try to remove the temporary file regardless if "gofmt -w" worked out or not
 								_ = os.Remove(tempFilename)
@@ -400,7 +400,9 @@ esc to redraw the screen
 		case 8: // ctrl-h, help
 			status.SetMessage("[" + versionString + "] ctrl-s to save, ctrl-q to quit")
 			status.Show(c, e)
-		case 27: // esc, reset, clean and redraw
+		case 27: // esc, clear search term, reset, clean and redraw
+			status.ClearAll(c)
+			e.SetSearchTerm("", c)
 			vt100.Close()
 			vt100.Reset()
 			vt100.Clear()
@@ -464,7 +466,7 @@ esc to redraw the screen
 						e.InsertRune(r)
 						e.Next(c)
 					}
-				} else if e.AfterEndOfLine() {
+				} else if e.AtOrAfterEndOfLine() {
 					leadingWhitespace := e.LeadingWhitespace()
 					if leadingWhitespace == "" && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[")) {
 						// "smart indentation"
