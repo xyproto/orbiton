@@ -477,7 +477,7 @@ esc to redraw the screen
 						e.InsertRune(r)
 						e.Next(c)
 					}
-				} else if e.AtOrAfterEndOfLine() {
+				} else if e.AfterEndOfLine() {
 					leadingWhitespace := e.LeadingWhitespace()
 					if leadingWhitespace == "" && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[")) {
 						// "smart indentation"
