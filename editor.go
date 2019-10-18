@@ -28,6 +28,7 @@ type Editor struct {
 	searchFg     vt100.AttributeColor // search highlight color
 	redraw       bool                 // if the contents should be redrawn in the next loop
 	redrawCursor bool                 // if the cursor should be moved to the location it is supposed to be
+	gitMode      bool
 }
 
 // NewEditor takes:
@@ -421,7 +422,16 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 				counter += len([]rune(screenLine))
 			} else {
 				// Color and unescape
-				coloredString := UnEscape(o.DarkTags(string(textWithTags)))
+				var coloredString string
+				if e.gitMode {
+					if !strings.HasPrefix(strings.TrimSpace(line), "#") {
+						coloredString = vt100.LightBlue.Get(line)
+					} else {
+						coloredString = vt100.DarkGray.Get(line)
+					}
+				} else {
+					coloredString = UnEscape(o.DarkTags(string(textWithTags)))
+				}
 
 				// Slice of runes and color attributes, while at the same time highlighting search terms
 				charactersAndAttributes := o.Extract(coloredString)

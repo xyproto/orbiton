@@ -81,7 +81,8 @@ esc to redraw the screen
 
 	filename, lineNumber := FilenameAndLineNumber(flag.Arg(0), flag.Arg(1))
 
-	defaultHighlight := filepath.Base(filename) == "PKGBUILD" || strings.Contains(filepath.Base(filename), ".")
+	gitMode := filepath.Base(filename) == "COMMIT_EDITMSG"
+	defaultHighlight := gitMode || filepath.Base(filename) == "PKGBUILD" || strings.Contains(filepath.Base(filename), ".")
 
 	tty, err := vt100.NewTTY()
 	if err != nil {
@@ -96,11 +97,17 @@ esc to redraw the screen
 
 	// 4 spaces per tab, scroll 10 lines at a time
 	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight)
+	e.gitMode = gitMode
 
 	status := NewStatusBar(defaultEditorStatusForeground, defaultEditorStatusBackground, e, statusDuration)
 
 	// Try to load the filename, ignore errors since giving a new filename is also okay
 	loaded := e.Load(c, tty, filename) == nil
+
+	// If we're editing a git commit message, add a newline
+	if e.gitMode {
+		e.InsertLineBelow()
+	}
 
 	// Draw editor lines from line 0 to h onto the canvas at 0,0
 	e.DrawLines(c, false, false)
