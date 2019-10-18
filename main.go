@@ -76,12 +76,11 @@ esc to redraw the screen and clear the last search.
 		return
 	}
 
-	if flag.Arg(0) == "" {
+	filename, lineNumber := FilenameAndLineNumber(flag.Arg(0), flag.Arg(1))
+	if filename == "" {
 		fmt.Fprintln(os.Stderr, "Need a filename.")
 		os.Exit(1)
 	}
-
-	filename, lineNumber := FilenameAndLineNumber(flag.Arg(0), flag.Arg(1))
 
 	gitMode := filepath.Base(filename) == "COMMIT_EDITMSG"
 	defaultHighlight := gitMode || filepath.Base(filename) == "PKGBUILD" || strings.Contains(filepath.Base(filename), ".")
@@ -642,11 +641,11 @@ esc to redraw the screen and clear the last search.
 			if lns != "" {
 				if ln, err := strconv.Atoi(lns); err == nil { // no error
 					e.redraw = e.GoToLineNumber(ln, c, status)
-					e.redrawCursor = true
 					status.SetMessage(lns)
 					status.Show(c, e)
 				}
 			}
+			e.redrawCursor = true
 		case 11: // ctrl-k, delete to end of line
 			undo.Snapshot(e)
 			if e.Empty() {
@@ -667,6 +666,7 @@ esc to redraw the screen and clear the last search.
 			y := e.DataY()
 			copyLine = e.Line(y)
 			e.DeleteLine(y)
+			e.redrawCursor = true
 			e.redraw = true
 		case 3: // ctrl-c, copy line
 			copyLine = e.Line(e.DataY())
@@ -674,6 +674,8 @@ esc to redraw the screen and clear the last search.
 		case 22: // ctrl-v, paste
 			undo.Snapshot(e)
 			e.SetLine(e.DataY(), copyLine)
+			e.End()
+			e.redrawCursor = true
 			e.redraw = true
 		case 2: // ctrl-b, bookmark
 			bookmark = e.pos
@@ -753,4 +755,5 @@ esc to redraw the screen and clear the last search.
 	tty.Close()
 	vt100.Clear()
 	vt100.Close()
+	//fmt.Println(filename)
 }
