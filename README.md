@@ -33,6 +33,10 @@ You can install `o` with Go 1.11 or later (development version):
 * The text will be red if a loaded file is read-only.
 * The terminal needs to be resized to show the second half of lines that are longer than the terminal width.
 
+## Known bugs
+
+* Pressing backspace and/or return at the very end of a document may cause the cursor to be misplaced.
+
 ## Spinner
 
 When loading large files, an animated spinner will appear. The loading operation can be stopped at any time by pressing `esc`, `q` or `ctrl-q`.
