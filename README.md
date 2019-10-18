@@ -36,7 +36,7 @@ You can install `o` with Go 1.11 or later (development version):
 
 ## Known bugs
 
-* Pressing backspace and/or return at the very end of a document may cause the cursor to be misplaced.
+* Find and GoTo line may jump to the wrong locations.
 
 ## Spinner
 

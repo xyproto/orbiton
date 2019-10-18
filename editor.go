@@ -1229,18 +1229,13 @@ func (e *Editor) AtOrBeforeStartOfTextLine() bool {
 
 // GoTo will go to a given line index, counting from 0
 func (e *Editor) GoTo(y int, c *vt100.Canvas, status *StatusBar) bool {
+	h := int(c.Height())
 	// Out of bounds checking for y
 	if y < 0 {
 		y = 0
 	} else if y >= len(e.lines) {
 		y = len(e.lines) - 1
 	}
-	// Find out how large the current window is
-	h := int(c.Height())
-	// Find out where we are now, in the file
-	//dataY := e.pos.sx + e.pos.offset
-	// Find out where we are now, in the current window
-	//screenY := e.pos.sx
 	// Is the place we want to go within the current scroll window?
 	topY := e.pos.offset
 	botY := e.pos.offset + h
@@ -1259,10 +1254,6 @@ func (e *Editor) GoTo(y int, c *vt100.Canvas, status *StatusBar) bool {
 			e.pos.offset--
 			e.pos.sy++
 		}
-	}
-	// Out of bounds checking
-	if e.pos.sy >= h {
-		e.pos.sy = h - 1
 	}
 	// The Y scrolling is done, move the X position according to the contents of the line
 	e.pos.SetX(e.FirstScreenPosition(e.DataY()))
