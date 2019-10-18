@@ -1249,8 +1249,8 @@ func (e *Editor) GoTo(y int, c *vt100.Canvas, status *StatusBar) bool {
 		e.pos.sy = y - e.pos.offset
 	} else {
 		// Scrolling is needed
-		e.pos.offset = y
-		e.pos.sy = 0
+		e.pos.offset = y - (y % h)
+		e.pos.sy = y % h
 		// Adjust the position within the window
 		for e.pos.offset >= (len(e.lines) - h) {
 			if e.pos.offset == 0 {
