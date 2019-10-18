@@ -519,7 +519,7 @@ esc to redraw the screen
 			e.redraw = true
 		case 127: // backspace
 			undo.Snapshot(e)
-			if !e.DrawMode() && e.CurrentLine() == "" {
+			if !e.DrawMode() && e.EmptyLine() {
 				e.DeleteLine(e.DataY())
 				e.pos.Up()
 				e.TrimRight(e.DataY())
@@ -542,6 +542,7 @@ esc to redraw the screen
 					e.Delete()
 				}
 			}
+			e.redrawCursor = true
 			e.redraw = true
 		case 9: // tab
 			undo.Snapshot(e)
@@ -559,6 +560,7 @@ esc to redraw the screen
 					e.Next(c)
 				}
 			}
+			e.redrawCursor = true
 			e.redraw = true
 		case 1: // ctrl-a, home
 			// toggle between start of line and start of non-whitespace

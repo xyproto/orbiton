@@ -1206,6 +1206,11 @@ func (e *Editor) EmptyRightTrimmedLine() bool {
 	return 0 == len(strings.TrimRightFunc(e.CurrentLine(), unicode.IsSpace))
 }
 
+// EmptyLine returns true if the line is completely empty, no whitespace or anything
+func (e *Editor) EmptyLine() bool {
+	return "" == e.CurrentLine()
+}
+
 // AtStartOfTextLine returns true if the position is at the start of the text for this line
 func (e *Editor) AtStartOfTextLine() bool {
 	return e.pos.sx == e.FirstScreenPosition(e.DataY())
