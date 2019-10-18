@@ -321,7 +321,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
 				switch tty.Key() {
 				case 27, 113, 17: // esc, q or ctrl-q
 					vt100.ShowCursor(true)
-					quitMessage(tty, "loading "+filename+": stopped by user")
+					quitMessage(tty, "reading "+filename+": stopped by user")
 				}
 			}
 
