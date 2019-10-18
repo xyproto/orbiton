@@ -48,7 +48,7 @@ When loading large files, an animated spinner will appear. The loading operation
 
 * `ctrl-q` - quit
 * `ctrl-s` - save
-* `ctrl-f` - format the current file with `go fmt`
+* `ctrl-w` - format the current file with `go fmt`
 * `ctrl-a` - go to start of line, then start of text on the same line
 * `ctrl-e` - go to end of line
 * `ctrl-p` - scroll up 10 lines
@@ -66,8 +66,8 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-h` - show a minimal help text
 * `ctrl-u` - undo
 * `ctrl-l` - jump to a specific line
-* `ctrl-w` - search ("where"). Press return to repeat last search.
-* `esc` - redraw the screen
+* `ctrl-f` - find a string. Press ctrl-f and return to repeat the search.
+* `esc` - redraw the screen and clear the last search.
 
 ## Size
 

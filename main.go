@@ -52,7 +52,7 @@ Hotkeys
 
 ctrl-q to quit
 ctrl-s to save
-ctrl-f to format the current file with "go fmt"
+ctrl-w to format the current file with "go fmt"
 ctrl-a go to start of line, then start of text
 ctrl-e go to end of line
 ctrl-p to scroll up 10 lines
@@ -70,8 +70,8 @@ ctrl-j to jump to the bookmark
 ctrl-h to show a minimal help text
 ctrl-u to undo
 ctrl-l to jump to a specific line
-ctrl-w to search ("where"). Press return to repeat last search
-esc to redraw the screen
+ctrl-f to find a string. Press ctrl-f and return to repeat the search.
+esc to redraw the screen and clear the last search.
 `)
 		return
 	}
@@ -179,7 +179,7 @@ esc to redraw the screen
 		switch key {
 		case 17: // ctrl-q, quit
 			quit = true
-		case 6: // ctrl-f
+		case 23: // ctrl-d
 			undo.Snapshot(e)
 			// Map from formatting command to a list of file extensions
 			format := map[*exec.Cmd][]string{
@@ -223,7 +223,7 @@ esc to redraw the screen
 		case 20: // ctrl-t, toggle syntax highlighting
 			e.ToggleHighlight()
 			e.redraw = true
-		case 23: // ctrl-w, search
+		case 6: // ctrl-f, find
 			s := e.SearchTerm()
 			//e.SetSearchTerm(s, c)
 			status.ClearAll(c)
