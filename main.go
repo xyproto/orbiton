@@ -106,6 +106,8 @@ esc to redraw the screen
 
 	// If we're editing a git commit message, add a newline
 	if e.gitMode {
+		status.fg = vt100.LightGreen
+		status.bg = vt100.BackgroundDefault
 		e.InsertLineBelow()
 	}
 
