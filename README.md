@@ -23,7 +23,7 @@ You can install `o` with Go 1.11 or later (development version):
 * Has syntax highlighting for Go code.
 * Never asks before saving or quitting. Be careful!
 * `Home` and `End` are not detected by the key handler. `ctrl-a` and `ctrl-e` works, though.
-* Can format Go code using `/usr/bin/gofmt` (press `ctrl-f`).
+* Can format Go or C++ code, just press `ctrl-f`. This uses either `gofmt` or `clang-format`.
 * Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
 * Requires that `/dev/tty` is available.
