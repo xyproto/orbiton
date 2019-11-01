@@ -14,7 +14,7 @@ For a more feature complete editor that is also written in Go, check out [micro]
 
 ## Quick start
 
-You can install `o` with Go 1.11 or later (development version):
+You can install `o` with Go 1.10 or later (development version):
 
     go get -u github.com/xyproto/o
 
