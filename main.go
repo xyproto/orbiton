@@ -12,19 +12,36 @@ import (
 	"strings"
 	"time"
 
+	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "o 2.4.9"
+const versionString = "o 2.5.0"
 
 func main() {
 	var (
 		// Color scheme for the "text edit" mode
 		defaultEditorForeground       = vt100.White
-		defaultEditorBackground       = vt100.BackgroundDefault
+		defaultEditorBackground       = vt100.BackgroundMagenta
 		defaultEditorStatusForeground = vt100.LightCyan
 		defaultEditorStatusBackground = vt100.BackgroundGray
 		defaultEditorSearchHighlight  = vt100.LightBlue
+
+		defaultEditorHighlightTheme = syntax.TextConfig{
+			String:        "lightblue",
+			Keyword:       "lightyellow",
+			Comment:       "darkgray",
+			Type:          "lightgreen",
+			Literal:       "lightmagenta",
+			Punctuation:   "lightblue",
+			Plaintext:     "yellow",
+			Tag:           "gray",
+			TextTag:       "gray",
+			TextAttrName:  "gray",
+			TextAttrValue: "gray",
+			Decimal:       "lightred",
+			Whitespace:    "",
+		}
 
 		version = flag.Bool("version", false, "show version information")
 		help    = flag.Bool("help", false, "show simple help")
@@ -97,7 +114,7 @@ esc to redraw the screen and clear the last search.
 	c.ShowCursor()
 
 	// 4 spaces per tab, scroll 10 lines at a time
-	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight)
+	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme)
 	e.gitMode = gitMode
 
 	status := NewStatusBar(defaultEditorStatusForeground, defaultEditorStatusBackground, e, statusDuration)
