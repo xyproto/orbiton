@@ -21,11 +21,11 @@ const versionString = "o 2.5.0"
 func main() {
 	var (
 		// Color scheme for the "text edit" mode
-		defaultEditorForeground       = vt100.White
+		defaultEditorForeground       = vt100.Gray // for when syntax highlighting is not in use
 		defaultEditorBackground       = vt100.BackgroundMagenta
-		defaultEditorStatusForeground = vt100.LightCyan
-		defaultEditorStatusBackground = vt100.BackgroundGray
-		defaultEditorSearchHighlight  = vt100.LightBlue
+		defaultEditorStatusForeground = vt100.LightYellow
+		defaultEditorStatusBackground = vt100.BackgroundBlue
+		defaultEditorSearchHighlight  = vt100.LightRed
 
 		defaultEditorHighlightTheme = syntax.TextConfig{
 			String:        "lightblue",
@@ -236,9 +236,6 @@ esc to redraw the screen and clear the last search.
 					}
 				}
 			}
-		case 20: // ctrl-t, toggle syntax highlighting
-			e.ToggleHighlight()
-			e.redraw = true
 		case 6: // ctrl-f, find
 			s := e.SearchTerm()
 			//e.SetSearchTerm(s, c)
@@ -428,6 +425,15 @@ esc to redraw the screen and clear the last search.
 		case 8: // ctrl-h, help
 			status.SetMessage("[" + versionString + "] ctrl-s to save, ctrl-q to quit")
 			status.Show(c, e)
+		case 20: // ctrl-t, toggle syntax highlighting
+			e.ToggleHighlight()
+			if e.highlight {
+				e.bg = defaultEditorBackground
+			} else {
+				e.bg = vt100.BackgroundDefault
+			}
+			// Now do a full reset/redraw
+			fallthrough
 		case 27: // esc, clear search term, reset, clean and redraw
 			status.ClearAll(c)
 			e.SetSearchTerm("", c)
