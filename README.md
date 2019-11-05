@@ -8,9 +8,10 @@
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
-## Screenshot
+<!--## Screenshot
 
 ![screenshot](img/screenshot.png)
+-->
 
 ## Quick start
 
