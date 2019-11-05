@@ -10,12 +10,6 @@
 * Uses the spec directly, but memoizes the commands sent to the terminal, for speed.
 * Could be used for building a better `dialog` or `whiptail` utility.
 
-### Editor
-
-A small text editor that can be used for creating ASCII graphics is included. Quick installation:
-
-    go get -u github.com/xyproto/vt100/cmd/red
-
 ### Images
 
 ![shooter example](img/shooter.gif)
@@ -35,6 +29,14 @@ Screen recording of the [`menu`](cmd/menu) example, which uses VT100 terminal co
 A physical VT100 terminal. Photo by [Jason Scott](https://www.flickr.com/photos/54568729@N00/9636183501), [CC BY 2.0](https://creativecommons.org/licenses/by/2.0)
 
 ### The `vt100` Go Module
+
+Requires Go 1.10 or later.
+
+### Features and limitations
+
+* Can detect letters, arrow keys and space. F12 and similar keys are not supported (they are supported by vt220 but not vt100).
+* Resizing the terminal when using the Canvas struct may cause artifacts, for a brief moment.
+* Holding down a key may trigger key repetition which may speed up the main loop.
 
 ### Simple use
 
@@ -62,11 +64,11 @@ The full overview of possible commands are at the top of `vt100.go`.
 
 See `cmd/move` for a more advanced example, where a character can be moved around with the arrow keys.
 
-### Features and limitations
+### A small editor using `vt100`
 
-* Can detect letters, arrow keys and space. F12 and similar keys are not supported (they are supported by vt220 but not vt100).
-* Resizing the terminal when using the Canvas struct may cause artifacts, for a brief moment.
-* Holding down a key may trigger key repetition which may speed up the main loop.
+The `o` editor that uses `vt100` can be used for editing Go or C++ code, or for creating ASCII graphics. Quick installation:
+
+    go get -u github.com/xyproto/o
 
 ### General info
 
