@@ -1,6 +1,6 @@
 # o [![Build Status](https://travis-ci.com/xyproto/o.svg?branch=master)](https://travis-ci.com/xyproto/o) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/o/master/LICENSE)
 
-`o` is a small and fast, but limited text editor.
+`o` is yet another small and fast text editor.
 
 * Compiles with either `go` or `gccgo`.
 * Tested with `st`, `urxvt` and `xfce4-terminal`.
@@ -21,13 +21,13 @@ You can install `o` with Go 1.10 or later (development version):
 
 ## Features and limitations
 
-* Has syntax highlighting for Go code.
-* Never asks before saving or quitting. Be careful!
-* `Home` and `End` are not detected by the key handler. `ctrl-a` and `ctrl-e` works, though.
+* Has syntax highlighting for Go and C++ code.
 * Can format Go or C++ code, just press `ctrl-w`. This uses either `goimports` (`go get golang.org/x/tools/cmd/goimports`) or `clang-format`.
+* Never asks before saving or quitting. Be careful!
 * Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
-* Requires that `/dev/tty` is available.
+* `Home` and `End` are not detected by the key handler. `ctrl-a` and `ctrl-e` works, though.
+* Requires `/dev/tty` to be available.
 * Copy, cut and paste is only for one line at a time, and only within the editor.
 * Some letters can not be typed in. Like `æ`.
 * May take a line number as the second argument, with an optional `+` prefix.
@@ -72,7 +72,7 @@ When loading large files, an animated spinner will appear. The loading operation
 
 ## Size
 
-The `o` executable is only **464k** when built with GCC 9.1 (for 64-bit Linux). This isn't as small as [e3](https://sites.google.com/site/e3editor/), an editor written in assembly (which is **234k**), but it's resonably lean. :sunglasses:
+The `o` executable is only **464k** when built with GCC 9.1 (for 64-bit Linux). This isn't as small as [e3](https://sites.google.com/site/e3editor/), an editor written in assembly (which is **234k**), but it's resonably lean.
 
     go build -gccgoflags '-Os -s'
 
