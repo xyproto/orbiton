@@ -605,7 +605,6 @@ esc to redraw the screen and clear the last search.
 				e.redraw = true
 			}
 			e.redrawCursor = true
-			e.redraw = true
 		case 19: // ctrl-s, save
 			if err := e.Save(filename, !e.DrawMode()); err != nil {
 				status.SetMessage(err.Error())
@@ -683,6 +682,7 @@ esc to redraw the screen and clear the last search.
 				vt100.Do("Erase End of Line")
 				e.redraw = true
 			}
+			e.redrawCursor = true
 		case 24: // ctrl-x, cut
 			undo.Snapshot(e)
 			y := e.DataY()
