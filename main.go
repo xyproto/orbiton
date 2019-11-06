@@ -16,30 +16,29 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "o 2.5.1"
+const versionString = "o 2.5.2"
 
 func main() {
 	var (
 		// Color scheme for the "text edit" mode
-		defaultEditorForeground       = vt100.Gray // for when syntax highlighting is not in use
-		defaultEditorBackground       = vt100.BackgroundMagenta
-		defaultEditorStatusForeground = vt100.LightYellow
+		defaultEditorForeground       = vt100.Black // for when syntax highlighting is not in use
+		defaultEditorBackground       = vt100.BackgroundGray
+		defaultEditorStatusForeground = vt100.White
 		defaultEditorStatusBackground = vt100.BackgroundBlue
 		defaultEditorSearchHighlight  = vt100.LightRed
-
-		defaultEditorHighlightTheme = syntax.TextConfig{
-			String:        "lightblue",
-			Keyword:       "lightyellow",
+		defaultEditorHighlightTheme   = syntax.TextConfig{
+			String:        "red",
+			Keyword:       "blue",
 			Comment:       "darkgray",
-			Type:          "lightgreen",
-			Literal:       "lightmagenta",
-			Punctuation:   "lightblue",
-			Plaintext:     "yellow",
-			Tag:           "gray",
-			TextTag:       "gray",
-			TextAttrName:  "gray",
-			TextAttrValue: "gray",
-			Decimal:       "lightred",
+			Type:          "cyan",
+			Literal:       "black",
+			Punctuation:   "blue",
+			Plaintext:     "black",
+			Tag:           "black",
+			TextTag:       "black",
+			TextAttrName:  "black",
+			TextAttrValue: "black",
+			Decimal:       "yellow",
 			Whitespace:    "",
 		}
 
@@ -199,7 +198,7 @@ esc to redraw the screen and clear the last search.
 			undo.Snapshot(e)
 			// Map from formatting command to a list of file extensions
 			format := map[*exec.Cmd][]string{
-				exec.Command("/usr/bin/gofmt", "-w", "--"):                                                 []string{".go"},
+				exec.Command("/usr/bin/goimports", "-w", "--"):                                             []string{".go"},
 				exec.Command("/usr/bin/clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): []string{".cpp", ".cxx", ".h", ".hpp"},
 			}
 		OUT:
@@ -225,7 +224,7 @@ esc to redraw the screen and clear the last search.
 									//quitMessage(tty, "Failed to execute: "+cmd.String()+" Output: "+string(output))
 									quitMessage(tty, "Failed to format code: "+string(output))
 								}
-								// Try to remove the temporary file regardless if "gofmt -w" worked out or not
+								// Try to remove the temporary file regardless if "goimports -w" worked out or not
 								_ = os.Remove(tempFilename)
 							}
 							// Try to close the file. f.Close() checks if f is nil before closing.
