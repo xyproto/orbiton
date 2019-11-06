@@ -22,23 +22,23 @@ func main() {
 	var (
 		// Color scheme for the "text edit" mode
 		defaultEditorForeground       = vt100.Black // for when syntax highlighting is not in use
-		defaultEditorBackground       = vt100.BackgroundGray
-		defaultEditorStatusForeground = vt100.White
-		defaultEditorStatusBackground = vt100.BackgroundBlue
+		defaultEditorBackground       = vt100.BackgroundDefault
+		defaultEditorStatusForeground = vt100.Black
+		defaultEditorStatusBackground = vt100.BackgroundGray
 		defaultEditorSearchHighlight  = vt100.LightRed
 		defaultEditorHighlightTheme   = syntax.TextConfig{
 			String:        "red",
-			Keyword:       "blue",
+			Keyword:       "lightblue",
 			Comment:       "darkgray",
 			Type:          "cyan",
-			Literal:       "black",
-			Punctuation:   "blue",
-			Plaintext:     "black",
-			Tag:           "black",
-			TextTag:       "black",
-			TextAttrName:  "black",
-			TextAttrValue: "black",
-			Decimal:       "yellow",
+			Literal:       "white",
+			Punctuation:   "white",
+			Plaintext:     "white",
+			Tag:           "white",
+			TextTag:       "white",
+			TextAttrName:  "white",
+			TextAttrValue: "white",
+			Decimal:       "lightyellow",
 			Whitespace:    "",
 		}
 
