@@ -22,6 +22,7 @@ You can install `o` with Go 1.10 or later (development version):
 ## Features and limitations
 
 * Has syntax highlighting for Go and C++ code.
+* Loads faster than both `vim` and `emacs`, but maybe not as fast as `nano`. It`s hard to tell.
 * Can format Go or C++ code, just press `ctrl-w`. This uses either `goimports` (`go get golang.org/x/tools/cmd/goimports`) or `clang-format`.
 * Never asks before saving or quitting. Be careful!
 * Will strip trailing whitespace whenever it can.
