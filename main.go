@@ -586,10 +586,10 @@ esc to redraw the screen and clear the last search.
 			e.redraw = true
 		case 1: // ctrl-a, home
 			// toggle between start of line and start of non-whitespace
-			if e.pos.AtStartOfLine() {
-				e.pos.SetX(e.FirstScreenPosition(e.DataY()))
-			} else {
+			if e.AtStartOfTextLine() {
 				e.Home()
+			} else {
+				e.pos.SetX(e.FirstScreenPosition(e.DataY()))
 			}
 			e.SaveX(true)
 		case 5: // ctrl-e, end
