@@ -88,7 +88,7 @@ These four ways of opening `file.txt` at line `7` are supported:
 * `o file.txt:7`
 * `o file.txt+7`
 
-This also means that filenames containing `+` or `:` are not supported.
+This also means that filenames containing `+` or `:` are not supported, if followed by a number. Opening files with the `c++` extension works, if you should want that.
 
 ## General info
 
