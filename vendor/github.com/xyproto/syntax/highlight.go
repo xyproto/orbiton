@@ -6,6 +6,7 @@ package syntax
 import (
 	"bytes"
 	"io"
+	"strings"
 	"text/scanner"
 	"unicode"
 	"unicode/utf8"
@@ -238,6 +239,9 @@ func NewScannerReader(src io.Reader) *scanner.Scanner {
 }
 
 func tokenKind(tok rune, tokText string) Kind {
+	if strings.HasPrefix(strings.TrimSpace(tokText), "#") {
+		return Comment
+	}
 	switch tok {
 	case scanner.Ident:
 		if _, isKW := keywords[tokText]; isKW {
