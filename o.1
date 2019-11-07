@@ -1,0 +1,100 @@
+.\"             -*-Nroff-*-
+.\"
+.TH "o" 1 "07 Nov 2019" "" ""
+.SH NAME
+o \- an editor
+.SH SYNOPSIS
+.B o
+filename
+.SH DESCRIPTION
+Edit an existing file or create a new one.
+.sp
+.SH KEYBINDINGS
+.sp
+.B ctrl-q
+  Quit o.
+.sp
+.B ctrl-s
+  Save the file.
+.sp
+.B ctrl-w
+  Format the current file with `goimport` or `clang-format`, depending on the file extension.
+.sp
+.B ctrl-a
+  Go to start of ithe line, or to the start of the text if already at the start of the line.
+.sp
+.B ctrl-e
+  Go to end of the line.
+.sp
+.B ctrl-p
+  Scroll up 10 lines.
+.sp
+.B ctrl-n
+  Scroll down 10 lines.
+.sp
+.B ctrl-k
+  Delete all characters to the end of the line. Delete the line if it is empty.
+.sp
+.B ctrl-g
+  Toggle filename/line/column/unicode/word count status display at the bottom.
+.sp
+.B ctrl-d
+  Delete a single character.
+.sp
+.B ctrl-t
+  Toggle syntax highlighting.
+.sp
+.B ctrl-r
+  Toggle text or draw mode (for ASCII graphics).
+.sp
+.B ctrl-x
+  Cut the current line (not to the system clipboard).
+.sp
+.B ctrl-c
+  Copy the current line (not to the system clipboard).
+.sp
+.B ctrl-v
+  Paste the current line (not from the system clipboard).
+.sp
+.B ctrl-b
+  Bookmark the current position.
+.sp
+.B ctrl-j
+  Jump to the bookmark.
+.sp
+.B ctrl-h
+  Display a minimal help text.
+.sp
+.B ctrl-u
+  Undo (uses a ring buffer with room for 8192 actions).
+.sp
+.B ctrl-l
+  Jump to a specific line.
+.sp
+.B ctrl-f
+  Find a string. Press ctrl-f and return to repeat the search.
+.sp
+.B esc
+  Redraw the screen and clear the last search.
+.sp
+.SH OPTIONS
+.TP
+.B \-v or\-\-version
+displays the current version number
+.TP
+.B \-h or \-\-help
+displays brief usage information
+.PP
+.SH "WHY"
+.sp
+I wanted to write a simple editor that only used VT100 terminal codes.
+.SH "SEE ALSO"
+.BR nano (1)
+.BR micro (1)
+.SH BUGS
+Lines longer than the terminal width are not handled well.
+.SH VERSION
+2.5.3
+.SH AUTHOR
+.B o
+was written by  Alexander F. Rødseth <xyproto@archlinux.org>
