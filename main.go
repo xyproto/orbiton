@@ -173,8 +173,8 @@ esc to redraw the screen and clear the last search.
 	status.Show(c, e)
 	c.Draw()
 
-	// Undo buffer with room for 4096 actions
-	undo := NewUndo(4096)
+	// Undo buffer with room for 8192 actions
+	undo := NewUndo(8192)
 
 	// Resize handler
 	SetUpResizeHandler(c, e, tty)
