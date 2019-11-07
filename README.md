@@ -1,6 +1,6 @@
 # o [![Build Status](https://travis-ci.com/xyproto/o.svg?branch=master)](https://travis-ci.com/xyproto/o) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/o/master/LICENSE)
 
-`o` is yet another small and fast text editor.
+`o` is yet another editor. It's limited to the VT100 standard, and can be used for programming in Go or C++. It has many limitations, but is small and fast.
 
 * Compiles with either `go` or `gccgo`.
 * Tested with `st`, `urxvt` and `xfce4-terminal`.
