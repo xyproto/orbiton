@@ -5,10 +5,22 @@
 o \- an editor
 .SH SYNOPSIS
 .B o
-filename
+filename [LINE NUMBER]
+.sp
 .SH DESCRIPTION
 Edit an existing file or create a new one.
 .sp
+.SH OPTIONS
+.sp
+The line number can be prefixed with \fB+\fP, or be a suffix of the filename if prefixed with \fB:\fP.
+.sp
+.TP
+.B \-v or\-\-version
+displays the current version number
+.TP
+.B \-h or \-\-help
+displays brief usage information
+.PP
 .SH KEYBINDINGS
 .sp
 .B ctrl-q
@@ -18,7 +30,7 @@ Edit an existing file or create a new one.
   Save the file.
 .sp
 .B ctrl-w
-  Format the current file with `goimport` or `clang-format`, depending on the file extension.
+  Format the current file with \fBgoimport\fP or \fBclang-format\fP, depending on the file extension.
 .sp
 .B ctrl-a
   Go to start of ithe line, or to the start of the text if already at the start of the line.
@@ -77,14 +89,6 @@ Edit an existing file or create a new one.
 .B esc
   Redraw the screen and clear the last search.
 .sp
-.SH OPTIONS
-.TP
-.B \-v or\-\-version
-displays the current version number
-.TP
-.B \-h or \-\-help
-displays brief usage information
-.PP
 .SH "WHY"
 .sp
 I wanted to write a simple editor that only used VT100 terminal codes.
