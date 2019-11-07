@@ -179,7 +179,7 @@ esc to redraw the screen and clear the last search.
 	// Resize handler
 	SetUpResizeHandler(c, e, tty)
 
-	tty.SetTimeout(10 * time.Millisecond)
+	tty.SetTimeout(2 * time.Millisecond)
 
 	previousX := -1
 	previousY := -1
