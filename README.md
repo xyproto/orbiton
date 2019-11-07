@@ -38,7 +38,8 @@ You can install `o` with Go 1.10 or later:
 
 ## Known bugs
 
-* Find and GoTo line may jump to the wrong locations.
+* Lines longer than the terminal width are not handled gracefully.
+* Jumping to a line number after the length of the file may cause odd cursor behavior.
 
 ## Spinner
 
