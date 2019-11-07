@@ -1,0 +1,43 @@
+# .goreleaser.yml
+# https://goreleaser.com/
+
+project_name: o
+
+# Build customization
+builds:
+  - binary: o
+    goos:
+      - linux
+      - freebsd
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    goarm:
+      - 6
+      - 7
+    ignore:
+      - goos: darwin
+        goarch: arm
+      - goos: darwin
+        goarch: arm64
+      - goos: linux
+        goarch: arm
+        goarm: 7
+      - goos: freebsd
+        goarch: arm
+        goarm: 7
+
+# Archive customization
+archive:
+  format: tar.gz
+  replacements:
+    amd64: x86_64
+    386: i686
+    darwin: macos
+  wrap_in_directory: true
+  files:
+    - o.1
+    - LICENSE*
+    - README.*
