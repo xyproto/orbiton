@@ -6,7 +6,6 @@ package syntax
 import (
 	"bytes"
 	"io"
-	"strings"
 	"text/scanner"
 	"unicode"
 	"unicode/utf8"
@@ -168,9 +167,10 @@ var DefaultTextConfig = TextConfig{
 
 func Print(s *scanner.Scanner, w io.Writer, p Printer) error {
 	tok := s.Scan()
+	inSingleLineComment := false
 	for tok != scanner.EOF {
 		tokText := s.TokenText()
-		err := p.Print(w, tokenKind(tok, tokText), tokText)
+		err := p.Print(w, tokenKind(tok, tokText, &inSingleLineComment), tokText)
 		if err != nil {
 			return err
 		}
@@ -182,16 +182,16 @@ func Print(s *scanner.Scanner, w io.Writer, p Printer) error {
 }
 
 func Annotate(src []byte, a Annotator) (annotate.Annotations, error) {
-	s := NewScanner(src)
-
-	var anns annotate.Annotations
-	read := 0
-
-	tok := s.Scan()
+	var (
+		anns                annotate.Annotations
+		s                   = NewScanner(src)
+		read                = 0
+		inSingleLineComment = false
+		tok                 = s.Scan()
+	)
 	for tok != scanner.EOF {
 		tokText := s.TokenText()
-
-		ann, err := a.Annotate(read, tokenKind(tok, tokText), tokText)
+		ann, err := a.Annotate(read, tokenKind(tok, tokText, &inSingleLineComment), tokText)
 		if err != nil {
 			return nil, err
 		}
@@ -202,7 +202,6 @@ func Annotate(src []byte, a Annotator) (annotate.Annotations, error) {
 
 		tok = s.Scan()
 	}
-
 	return anns, nil
 }
 
@@ -238,10 +237,18 @@ func NewScannerReader(src io.Reader) *scanner.Scanner {
 	return &s
 }
 
-func tokenKind(tok rune, tokText string) Kind {
-	if strings.HasPrefix(strings.TrimSpace(tokText), "#") {
+func tokenKind(tok rune, tokText string, inSingleLineComment *bool) Kind {
+	// Check if we are in a bash-style single line comment
+	if tok == '#' {
+		*inSingleLineComment = true
+	} else if tok == '\n' {
+		*inSingleLineComment = false
+	}
+	// If we are, return the Comment kind
+	if *inSingleLineComment {
 		return Comment
 	}
+	// If not, do the regular switch
 	switch tok {
 	case scanner.Ident:
 		if _, isKW := keywords[tokText]; isKW {
