@@ -40,7 +40,6 @@ You can install `o` with Go 1.10 or later:
 ## Known bugs
 
 * Lines longer than the terminal width are not handled gracefully.
-* Jumping to a line number after the length of the file may cause odd cursor behavior.
 
 ## Spinner
 
@@ -94,6 +93,6 @@ This also means that filenames containing `+` or `:` are not supported, if follo
 
 ## General info
 
-* Version: 2.6.2
+* Version: 2.6.3
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
