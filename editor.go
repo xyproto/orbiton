@@ -1230,40 +1230,55 @@ func (e *Editor) AtOrBeforeStartOfTextLine() bool {
 
 // GoTo will go to a given line index, counting from 0
 // Returns true if the editor should be redrawim
-func (e *Editor) GoTo(y int, c *vt100.Canvas, status *StatusBar) (bool, string) {
+func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
+	reachedEnd := false
 	// Out of bounds checking for y
-	if y < 0 {
-		y = 0
-	} else if y >= len(e.lines) {
-		y = len(e.lines) - 1
+	if dataY < 0 {
+		dataY = 0
+	} else if dataY >= e.Len() {
+		dataY = e.Len() - 1
+		reachedEnd = true
 	}
 	// Get the current terminal height
 	h := int(c.Height())
-
-	// There are two options, either no scrolling is needed and the cursor can just be moved a bit up or down
-	// or scrolling is needed, and then movement of the cursor.
 
 	// Is the place we want to go within the current scroll window?
 	topY := e.pos.offset
 	botY := e.pos.offset + h
 
-	if y >= topY && y < botY {
+	if dataY >= topY && dataY < botY {
 		// No scrolling is needed, just move the screen y position
-		e.pos.sy = y - e.pos.offset
+		e.pos.sy = dataY - e.pos.offset
+	} else if dataY < h {
+		// No scrolling is needed, just move the screen y position
+		e.pos.offset = 0
+		e.pos.sy = dataY
+	} else if reachedEnd {
+		// To the end of the text, and one line up
+		leftover := e.Len() % (h - 1)
+		e.pos.offset = (e.Len() - leftover) - 2
+		e.pos.sy = h - 2
 	} else {
+		prevY := e.pos.sy
 		// Scrolling is needed
-		originalSY := e.pos.sy
-		e.pos.offset = y - (y % h)
-		e.pos.sy = y%h + originalSY
+		e.pos.sy = 0
+		e.pos.offset = dataY
+		lessJumpY := prevY
+		lessJumpOffset := dataY - prevY
+		if (lessJumpY + lessJumpOffset) < len(e.lines) {
+			e.pos.sy = lessJumpY
+			e.pos.offset = lessJumpOffset
+		}
 	}
-
-	msg := fmt.Sprintf("Jumping to offset=%d, y=%d", e.pos.offset, e.pos.sy)
 
 	// The Y scrolling is done, move the X position according to the contents of the line
 	e.pos.SetX(e.FirstScreenPosition(e.DataY()))
 
-	// Now redraw, then output this status message
-	return true, msg
+	// Clear all status messages
+	status.ClearAll(c)
+
+	// Now redraw
+	return true
 }
 
 // GoToLineNumber will go to a given line number, but counting from 1, not from 0!

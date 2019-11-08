@@ -187,6 +187,7 @@ esc to redraw the screen and clear the last search.
 
 	if lineNumber > 0 {
 		e.redraw = e.GoToLineNumber(lineNumber, c, status)
+		e.redrawCursor = true
 	}
 
 	quit := false
@@ -228,7 +229,7 @@ esc to redraw the screen and clear the last search.
 										foundY := -1
 										if y, err := strconv.Atoi(fields[1]); err == nil { // no error
 											foundY = y - 1
-											e.GoTo(foundY, c, status)
+											e.redraw = e.GoTo(foundY, c, status)
 											foundX := -1
 											if x, err := strconv.Atoi(fields[2]); err == nil { // no error
 												foundX = x - 1
@@ -325,7 +326,7 @@ esc to redraw the screen and clear the last search.
 					}
 				}
 				if foundY != -1 {
-					e.GoTo(foundY, c, status)
+					e.redraw = e.GoTo(foundY, c, status)
 					if foundX != -1 {
 						tabs := strings.Count(e.Line(foundY), "\t")
 						e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
@@ -618,9 +619,8 @@ esc to redraw the screen and clear the last search.
 		case 5: // ctrl-e, end
 			if e.AfterEndOfLine() {
 				lastLine := e.Len() - 1
-				e.GoToLineNumber(lastLine, c, status)
+				e.redraw = e.GoToLineNumber(lastLine, c, status)
 				e.redrawCursor = true
-				e.redraw = true
 			} else {
 				e.End()
 			}
@@ -692,11 +692,8 @@ esc to redraw the screen and clear the last search.
 			if lns != "" {
 				if ln, err := strconv.Atoi(lns); err == nil { // no error
 					e.redraw = e.GoToLineNumber(ln, c, status)
-					status.SetMessage(lns)
-					status.Show(c, e)
 				}
 			}
-			e.redraw = true
 			e.redrawCursor = true
 		case 11: // ctrl-k, delete to end of line
 			undo.Snapshot(e)
