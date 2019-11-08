@@ -1229,37 +1229,41 @@ func (e *Editor) AtOrBeforeStartOfTextLine() bool {
 }
 
 // GoTo will go to a given line index, counting from 0
-func (e *Editor) GoTo(y int, c *vt100.Canvas, status *StatusBar) bool {
-	h := int(c.Height())
+// Returns true if the editor should be redrawim
+func (e *Editor) GoTo(y int, c *vt100.Canvas, status *StatusBar) (bool, string) {
 	// Out of bounds checking for y
 	if y < 0 {
 		y = 0
 	} else if y >= len(e.lines) {
 		y = len(e.lines) - 1
 	}
+	// Get the current terminal height
+	h := int(c.Height())
+
+	// There are two options, either no scrolling is needed and the cursor can just be moved a bit up or down
+	// or scrolling is needed, and then movement of the cursor.
+
 	// Is the place we want to go within the current scroll window?
 	topY := e.pos.offset
 	botY := e.pos.offset + h
-	if (y >= topY && y <= botY) || (len(e.lines) < h) {
+
+	if y >= topY && y < botY {
 		// No scrolling is needed, just move the screen y position
 		e.pos.sy = y - e.pos.offset
 	} else {
 		// Scrolling is needed
+		originalSY := e.pos.sy
 		e.pos.offset = y - (y % h)
-		e.pos.sy = y % h
-		// Adjust the position within the window
-		for e.pos.offset >= (len(e.lines) - h) {
-			if e.pos.offset == 0 {
-				break
-			}
-			e.pos.offset--
-			e.pos.sy++
-		}
+		e.pos.sy = y%h + originalSY
 	}
+
+	msg := fmt.Sprintf("Jumping to offset=%d, y=%d", e.pos.offset, e.pos.sy)
+
 	// The Y scrolling is done, move the X position according to the contents of the line
 	e.pos.SetX(e.FirstScreenPosition(e.DataY()))
-	// Now redraw
-	return true
+
+	// Now redraw, then output this status message
+	return true, msg
 }
 
 // GoToLineNumber will go to a given line number, but counting from 1, not from 0!

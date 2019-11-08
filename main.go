@@ -616,7 +616,14 @@ esc to redraw the screen and clear the last search.
 			}
 			e.SaveX(true)
 		case 5: // ctrl-e, end
-			e.End()
+			if e.AfterEndOfLine() {
+				lastLine := e.Len() - 1
+				e.GoToLineNumber(lastLine, c, status)
+				e.redrawCursor = true
+				e.redraw = true
+			} else {
+				e.End()
+			}
 			e.SaveX(true)
 		case 4: // ctrl-d, delete
 			undo.Snapshot(e)
@@ -689,6 +696,7 @@ esc to redraw the screen and clear the last search.
 					status.Show(c, e)
 				}
 			}
+			e.redraw = true
 			e.redrawCursor = true
 		case 11: // ctrl-k, delete to end of line
 			undo.Snapshot(e)
