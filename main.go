@@ -25,7 +25,7 @@ func main() {
 		defaultEditorBackground       = vt100.BackgroundDefault
 		defaultEditorStatusForeground = vt100.White
 		defaultEditorStatusBackground = vt100.BackgroundBlack
-		defaultEditorSearchHighlight  = vt100.LightRed
+		defaultEditorSearchHighlight  = vt100.LightMagenta
 		defaultEditorHighlightTheme   = syntax.TextConfig{
 			String:        "lightyellow",
 			Keyword:       "lightred",
@@ -212,17 +212,39 @@ esc to redraw the screen and clear the last search.
 							err := e.Save(tempFilename, true)
 							if err == nil {
 								// Format the temporary file
-								//cmd.Args[len(cmd.Args)-1] += tempFilename
 								cmd.Args = append(cmd.Args, tempFilename)
 								output, err := cmd.CombinedOutput()
-								//err := cmd.Run()
-								if err == nil {
+								if err != nil {
+									// Only grab the first error message
+									errorMessage := strings.TrimSpace(string(output))
+									if strings.Count(errorMessage, "\n") > 0 {
+										errorMessage = strings.TrimSpace(strings.SplitN(errorMessage, "\n", 2)[0])
+									}
+									status.SetMessage("Failed to format code: " + errorMessage)
+									if strings.Count(errorMessage, ":") >= 3 {
+										fields := strings.Split(errorMessage, ":")
+										// Go To Y:X, if available
+										foundY := -1
+										if y, err := strconv.Atoi(fields[1]); err == nil { // no error
+											foundY = y - 1
+											e.GoTo(foundY, c, status)
+											foundX := -1
+											if x, err := strconv.Atoi(fields[2]); err == nil { // no error
+												foundX = x - 1
+											}
+											if foundX != -1 {
+												tabs := strings.Count(e.Line(foundY), "\t")
+												e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
+											}
+										}
+										e.redrawCursor = true
+									}
+									status.Show(c, e)
+									break OUT
+								} else {
 									e.Load(c, tty, tempFilename)
 									// Mark the data as changed, despite just having loaded a file
 									e.changed = true
-								} else {
-									//quitMessage(tty, "Failed to execute: "+cmd.String()+" Output: "+string(output))
-									quitMessage(tty, "Failed to format code: "+string(output))
 								}
 								// Try to remove the temporary file regardless if "goimports -w" worked out or not
 								_ = os.Remove(tempFilename)
