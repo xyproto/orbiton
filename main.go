@@ -504,9 +504,9 @@ esc to redraw the screen and clear the last search.
 					e.pos.SetX(x)
 				} else if e.AtOrAfterEndOfLine() && e.AtLastLineOfDocument() {
 					leadingWhitespace := e.LeadingWhitespace()
-					if leadingWhitespace == "" && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[")) {
+					if len(lineContents) > 0 && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[")) {
 						// "smart indentation"
-						leadingWhitespace = "\t"
+						leadingWhitespace += "\t"
 					}
 					e.InsertLineBelow()
 					h := int(c.Height())
@@ -523,9 +523,9 @@ esc to redraw the screen and clear the last search.
 					}
 				} else if e.AfterEndOfLine() {
 					leadingWhitespace := e.LeadingWhitespace()
-					if leadingWhitespace == "" && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[")) {
+					if len(lineContents) > 0 && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[")) {
 						// "smart indentation"
-						leadingWhitespace = "\t"
+						leadingWhitespace += "\t"
 					}
 					e.InsertLineBelow()
 					e.Down(c, status)
@@ -761,6 +761,17 @@ esc to redraw the screen and clear the last search.
 				undo.Snapshot(e)
 				// Place *something*
 				r := rune(key)
+
+				// "smart dedent"
+				if r == '}' || r == ']' || r == ')' {
+					lineContents := strings.TrimSpace(e.CurrentLine())
+					whitespaceInFront := e.LeadingWhitespace()
+					if len(lineContents) == 0 && len(whitespaceInFront) > 0 {
+						// move one step left
+						e.Prev(c)
+					}
+				}
+
 				if !e.DrawMode() {
 					e.InsertRune(rune(key))
 				} else {
