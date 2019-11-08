@@ -98,8 +98,9 @@ esc to redraw the screen and clear the last search.
 		os.Exit(1)
 	}
 
-	gitMode := filepath.Base(filename) == "COMMIT_EDITMSG"
-	defaultHighlight := gitMode || filepath.Base(filename) == "PKGBUILD" || strings.Contains(filepath.Base(filename), ".")
+	baseFilename := filepath.Base(filename)
+	gitMode := baseFilename == "COMMIT_EDITMSG" || (strings.HasPrefix(baseFilename, "git-") && !strings.Contains(baseFilename, ".") && strings.Count(baseFilename, "-") >= 2)
+	defaultHighlight := gitMode || baseFilename == "PKGBUILD" || strings.Contains(baseFilename, ".")
 
 	tty, err := vt100.NewTTY()
 	if err != nil {
