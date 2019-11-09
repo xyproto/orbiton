@@ -201,7 +201,7 @@ esc to redraw the screen and clear the last search.
 			// Map from formatting command to a list of file extensions
 			format := map[*exec.Cmd][]string{
 				exec.Command("/usr/bin/goimports", "-w", "--"):                                             []string{".go"},
-				exec.Command("/usr/bin/clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): []string{".cpp", ".cxx", ".h", ".hpp"},
+				exec.Command("/usr/bin/clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): []string{".cpp", ".cxx", ".h", ".hpp", ".c++", ".h++"},
 			}
 		OUT:
 			for cmd, extensions := range format {
