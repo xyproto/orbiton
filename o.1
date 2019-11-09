@@ -97,6 +97,8 @@ I wanted to write a simple editor that only used VT100 terminal codes.
 .BR micro (1)
 .SH BUGS
 Lines longer than the terminal width are not handled gracefully.
+.sp
+The cursor may jump up if return is pressed quickly twice in a row.
 .SH VERSION
 2.6.4
 .SH AUTHOR

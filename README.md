@@ -40,6 +40,7 @@ You can install `o` with Go 1.10 or later:
 ## Known bugs
 
 * Lines longer than the terminal width are not handled gracefully.
+* Quickly pressing return twice in a row may cause the cursor to jump to the top of the screen.
 
 ## Spinner
 
