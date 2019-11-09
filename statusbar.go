@@ -43,9 +43,10 @@ func (sb *StatusBar) SetMessage(msg string) {
 // to remove the status bar field at the bottom of the editor.
 func (sb *StatusBar) Clear(c *vt100.Canvas) {
 	sb.msg = ""
-	// place all characters back in the canvas, but only for the last line
 	h := int(c.H())
-	sb.editor.WriteLines(c, (h-1)+sb.offset, h+sb.offset, 0, h-1)
+	e := sb.editor
+	// Write all lines to the buffer
+	e.WriteLines(c, e.pos.Offset(), h+e.pos.Offset(), 0, 0)
 	c.Draw()
 }
 
