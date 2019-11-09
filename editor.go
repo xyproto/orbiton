@@ -383,7 +383,7 @@ func (e *Editor) TrimRight(n int) {
 	}
 	lastIndex := len([]rune(e.lines[n])) - 1
 	// find the last non-space position
-	for x := lastIndex; x > 0; x-- {
+	for x := lastIndex; x >= 0; x-- {
 		if !unicode.IsSpace(e.lines[n][x]) {
 			lastIndex = x
 			break
@@ -944,7 +944,9 @@ func (e *Editor) Home() {
 
 // End will move the cursor to the position right after the end of the current line contents
 func (e *Editor) End() {
-	e.pos.sx = e.LastScreenPosition(e.DataY()) + 1
+	y := e.DataY()
+	e.TrimRight(y)
+	e.pos.sx = e.LastScreenPosition(y) + 1
 }
 
 // AtEndOfLine returns true if the cursor is at exactly the last character of the line, not the one after
@@ -959,7 +961,10 @@ func (e *Editor) DownEnd(c *vt100.Canvas) error {
 	if err != nil {
 		return err
 	}
-	if e.AfterLineScreenContentsPlusOne() && tmpx > 1 {
+	if len(strings.TrimSpace(e.CurrentLine())) == 1 {
+		e.TrimRight(e.DataY())
+		e.End()
+	} else if e.AfterLineScreenContentsPlusOne() && tmpx > 1 {
 		e.End()
 		if e.pos.sx != tmpx && e.pos.sx > e.pos.savedX {
 			e.pos.savedX = tmpx
@@ -1142,9 +1147,19 @@ func (e *Editor) AtLastLineOfDocument() bool {
 	return e.DataY() >= (e.Len() - 1)
 }
 
+// AfterLastLineOfDocument is true if we're after the last line of the document (or beyond)
+func (e *Editor) AfterLastLineOfDocument() bool {
+	return e.DataY() > (e.Len() - 1)
+}
+
 // AtOrAfterEndOfDocument is true if the cursor is at or after the end of the last line of the document
 func (e *Editor) AtOrAfterEndOfDocument() bool {
 	return e.AtLastLineOfDocument() && e.AtOrAfterEndOfLine()
+}
+
+// AfterEndOfDocument is true if the cursor is after the end of the last line of the document
+func (e *Editor) AfterEndOfDocument() bool {
+	return e.AfterLastLineOfDocument() && e.AtOrAfterEndOfLine()
 }
 
 // AtEndOfDocument is true if the cursor is at the end of the last line of the document

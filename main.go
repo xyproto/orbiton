@@ -413,7 +413,7 @@ esc to redraw the screen and clear the last search.
 					if e.DownEnd(c) != nil {
 						// If at the bottom, don't move down, but scroll the contents
 						// Output a helpful message
-						if !e.AtOrAfterEndOfDocument() {
+						if !e.AfterEndOfDocument() {
 							e.redraw = e.ScrollDown(c, status, 1)
 							e.redrawCursor = true
 							e.pos.Up()
@@ -775,6 +775,8 @@ esc to redraw the screen and clear the last search.
 					if len(lineContents) == 0 && len(whitespaceInFront) > 0 {
 						// move one step left
 						e.Prev(c)
+						// trim trailing whitespace
+						e.TrimRight(e.DataY())
 					}
 				}
 
