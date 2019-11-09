@@ -617,10 +617,10 @@ esc to redraw the screen and clear the last search.
 			}
 			e.SaveX(true)
 		case 5: // ctrl-e, end
-			if e.AfterEndOfLine() {
-				lastLine := e.Len() - 1
-				e.redraw = e.GoToLineNumber(lastLine, c, status)
-				e.redrawCursor = true
+			if e.AfterEndOfLine() { // && !e.EmptyLine() {
+				// go to the end of the next line if already at the end of the line
+				e.Down(c, status)
+				e.End()
 			} else {
 				e.End()
 			}

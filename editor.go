@@ -1252,12 +1252,11 @@ func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
 	} else if dataY < h {
 		// No scrolling is needed, just move the screen y position
 		e.pos.offset = 0
-		e.pos.sy = dataY
+		e.pos.sy = dataY - 1
 	} else if reachedEnd {
-		// To the end of the text, and one line up
-		leftover := e.Len() % (h - 1)
-		e.pos.offset = (e.Len() - leftover) - 2
-		e.pos.sy = h - 2
+		// To the end of the text
+		e.pos.offset = e.Len() - h
+		e.pos.sy = h - 1
 	} else {
 		prevY := e.pos.sy
 		// Scrolling is needed
@@ -1265,7 +1264,7 @@ func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
 		e.pos.offset = dataY
 		lessJumpY := prevY
 		lessJumpOffset := dataY - prevY
-		if (lessJumpY + lessJumpOffset) < len(e.lines) {
+		if (lessJumpY + lessJumpOffset) < e.Len() {
 			e.pos.sy = lessJumpY
 			e.pos.offset = lessJumpOffset
 		}
