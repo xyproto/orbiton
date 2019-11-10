@@ -259,9 +259,9 @@ esc to redraw the screen and clear the last search.
 					}
 				}
 			}
-		case 6: // ctrl-f, find
+		case 6: // ctrl-f, find string
 			s := e.SearchTerm()
-			//e.SetSearchTerm(s, c)
+			//e.SetSearchTerm(s, c, status)
 			status.ClearAll(c)
 			if s == "" {
 				status.SetMessage("Search:")
@@ -276,20 +276,20 @@ esc to redraw the screen and clear the last search.
 				case 127: // backspace
 					if len(s) > 0 {
 						s = s[:len(s)-1]
-						e.SetSearchTerm(s, c)
+						e.SetSearchTerm(s, c, status)
 						status.SetMessage("Search: " + s)
 						status.ShowNoTimeout(c, e)
 					}
 				case 27, 17: // esc or ctrl-q
 					s = ""
-					e.SetSearchTerm(s, c)
+					e.SetSearchTerm(s, c, status)
 					fallthrough
 				case 13: // return
 					doneCollectingLetters = true
 				default:
 					if key2 != 0 {
 						s += string(rune(key2))
-						e.SetSearchTerm(s, c)
+						e.SetSearchTerm(s, c, status)
 						status.SetMessage("Search: " + s)
 						status.ShowNoTimeout(c, e)
 					}
@@ -331,10 +331,11 @@ esc to redraw the screen and clear the last search.
 						tabs := strings.Count(e.Line(foundY), "\t")
 						e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
 					}
-					e.redrawCursor = true
 					e.redraw = true
+					e.redrawCursor = e.redraw
 				} else {
-					status.SetMessage("Not found")
+					e.GoTo(e.lineBeforeSearch, c, status)
+					status.SetMessage("Not found (no wraparound)")
 					status.Show(c, e)
 				}
 			}
@@ -459,7 +460,7 @@ esc to redraw the screen and clear the last search.
 			fallthrough
 		case 27: // esc, clear search term, reset, clean and redraw
 			status.ClearAll(c)
-			e.SetSearchTerm("", c)
+			e.SetSearchTerm("", c, status)
 			vt100.Close()
 			vt100.Reset()
 			vt100.Clear()

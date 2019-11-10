@@ -16,20 +16,21 @@ import (
 
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
-	lines        map[int][]rune
-	changed      bool // has the contents changed, since last save?
-	fg           vt100.AttributeColor
-	bg           vt100.AttributeColor
-	spacesPerTab int  // how many spaces per tab character
-	highlight    bool // syntax highlighting
-	drawMode     bool // text or draw mode (for ASCII graphics)?
-	pos          Position
-	searchTerm   string               // for marking found instances
-	searchFg     vt100.AttributeColor // search highlight color
-	redraw       bool                 // if the contents should be redrawn in the next loop
-	redrawCursor bool                 // if the cursor should be moved to the location it is supposed to be
-	gitMode      bool
-	gitColor     vt100.AttributeColor // git commit message color
+	lines            map[int][]rune
+	changed          bool // has the contents changed, since last save?
+	fg               vt100.AttributeColor
+	bg               vt100.AttributeColor
+	spacesPerTab     int  // how many spaces per tab character
+	highlight        bool // syntax highlighting
+	drawMode         bool // text or draw mode (for ASCII graphics)?
+	pos              Position
+	searchTerm       string               // for marking found instances
+	searchFg         vt100.AttributeColor // search highlight color
+	redraw           bool                 // if the contents should be redrawn in the next loop
+	redrawCursor     bool                 // if the cursor should be moved to the location it is supposed to be
+	gitMode          bool
+	gitColor         vt100.AttributeColor // git commit message color
+	lineBeforeSearch int
 }
 
 // NewEditor takes:
@@ -1244,7 +1245,7 @@ func (e *Editor) AtOrBeforeStartOfTextLine() bool {
 }
 
 // GoTo will go to a given line index, counting from 0
-// Returns true if the editor should be redrawim
+// Returns true if the editor should be redrawn
 func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
 	reachedEnd := false
 	// Out of bounds checking for y
