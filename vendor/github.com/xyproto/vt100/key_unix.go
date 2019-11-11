@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	defaultTimeout = 5 * time.Millisecond
+	defaultTimeout = 2 * time.Millisecond
 	lastKey        int
 )
 
@@ -230,4 +230,55 @@ func WaitForKey() {
 			return
 		}
 	}
+}
+
+// Use 252 to 255 for the arrow keys, block until keypress
+func asciiAndKeyCodeBlock(tty *TTY) (ascii, keyCode int, err error) {
+	bytes := make([]byte, 3)
+	var numRead int
+	tty.RawMode()
+	//tty.NoBlock()
+	tty.SetTimeout(0)
+	numRead, err = tty.t.Read(bytes)
+	tty.Restore()
+	tty.t.Flush()
+	if err != nil {
+		return
+	}
+	if numRead == 3 && bytes[0] == 27 && bytes[1] == 91 {
+		// Three-character control sequence, beginning with "ESC-[".
+
+		// Since there are no ASCII codes for arrow keys, we use
+		// the last 4 values of a byte
+		if bytes[2] == 65 {
+			// Up
+			keyCode = 253
+		} else if bytes[2] == 66 {
+			// Down
+			keyCode = 255
+		} else if bytes[2] == 67 {
+			// Right
+			keyCode = 254
+		} else if bytes[2] == 68 {
+			// Left
+			keyCode = 252
+		}
+	} else if numRead == 1 {
+		ascii = int(bytes[0])
+	} else {
+		// Two characters read??
+	}
+	return
+}
+
+// KeyBlock will block until a key is pressed and then return the keyCode or ascii
+func (tty *TTY) KeyBlock() int {
+	ascii, keyCode, err := asciiAndKeyCodeBlock(tty)
+	if err != nil {
+		return 0
+	}
+	if keyCode != 0 {
+		return keyCode
+	}
+	return ascii
 }
