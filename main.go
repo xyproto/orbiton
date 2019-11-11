@@ -742,7 +742,7 @@ esc to redraw the screen and clear the last search.
 			e.pos = bookmark
 			e.redraw = true
 		default:
-			if unicode.IsLetter([]rune(key)[0]) { // letter
+			if len([]rune(key)) > 0 && unicode.IsLetter([]rune(key)[0]) { // letter
 				undo.Snapshot(e)
 				dropO := false
 				if firstLetterSinceStart == "" {
