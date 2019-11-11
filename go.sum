@@ -19,8 +19,8 @@ github.com/xyproto/textoutput v1.8.0/go.mod h1:p8JnxsbjikbGWPedZKUU1Lq+11pv1mA2t
 github.com/xyproto/vt100 v1.4.0/go.mod h1:XbSlky3UyOsVx2zzoHtlVWx8+BTAgVz6P3ECsdcKe5o=
 github.com/xyproto/vt100 v1.4.1-0.20190927171939-ded707e5fa0f h1:6+kLGNHd6gQqQblHuB4Ped4DpNyzYfz4HOZTLwJZ8WY=
 github.com/xyproto/vt100 v1.4.1-0.20190927171939-ded707e5fa0f/go.mod h1:+oNsIfL2iEv0XNDwSfyiekezmDlX5yXz3Bu/iFeRNnY=
-github.com/xyproto/vt100 v1.6.0 h1:mfuI9ViAo1YfJACIUAbYXTs3cKkF54tLS3rNdRmK8TI=
-github.com/xyproto/vt100 v1.6.0/go.mod h1:WHs+m6sqUQn8Hy91Z6wxs9cQd/ztwd3sv1CFH2rR9vI=
+github.com/xyproto/vt100 v1.7.0 h1:twYM6H8LILPlQDb+i6VxqIUOY1JNFEdrBmxdpTUR+BQ=
+github.com/xyproto/vt100 v1.7.0/go.mod h1:WHs+m6sqUQn8Hy91Z6wxs9cQd/ztwd3sv1CFH2rR9vI=
 golang.org/x/sys v0.0.0-20190916202348-b4ddaad3f8a3/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20190919044723-0c1ff786ef13/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20190927073244-c990c680b611/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=

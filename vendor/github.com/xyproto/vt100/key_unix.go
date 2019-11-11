@@ -3,8 +3,11 @@
 package vt100
 
 import (
-	"github.com/pkg/term"
+	"strconv"
 	"time"
+	"unicode"
+
+	"github.com/pkg/term"
 )
 
 var (
@@ -232,19 +235,20 @@ func WaitForKey() {
 	}
 }
 
-// Use 252 to 255 for the arrow keys, block until keypress
-func asciiAndKeyCodeBlock(tty *TTY) (ascii, keyCode int, err error) {
+// KeyBlock will block and then return a string
+// Arrow keys are returned as ←, →, ↑ or ↓
+// returns an empty string if the pressed key could not be interpreted
+func (tty *TTY) KeyBlock() string {
 	bytes := make([]byte, 3)
-	var numRead int
 	tty.RawMode()
 	//tty.NoBlock()
 	tty.SetTimeout(0)
-	numRead, err = tty.t.Read(bytes)
+	numRead, err := tty.t.Read(bytes)
+	if err != nil {
+		return ""
+	}
 	tty.Restore()
 	tty.t.Flush()
-	if err != nil {
-		return
-	}
 	if numRead == 3 && bytes[0] == 27 && bytes[1] == 91 {
 		// Three-character control sequence, beginning with "ESC-[".
 
@@ -252,33 +256,26 @@ func asciiAndKeyCodeBlock(tty *TTY) (ascii, keyCode int, err error) {
 		// the last 4 values of a byte
 		if bytes[2] == 65 {
 			// Up
-			keyCode = 253
+			return "↑"
 		} else if bytes[2] == 66 {
 			// Down
-			keyCode = 255
+			return "↓"
 		} else if bytes[2] == 67 {
 			// Right
-			keyCode = 254
+			return "→"
 		} else if bytes[2] == 68 {
 			// Left
-			keyCode = 252
+			return "←"
 		}
 	} else if numRead == 1 {
-		ascii = int(bytes[0])
+		r := rune(bytes[0])
+		if unicode.IsPrint(r) {
+			return string(r)
+		}
+		return "c:" + strconv.Itoa(int(r))
 	} else {
-		// Two characters read??
+		// Two or more bytes, a unicode character (or mashing several keys)
+		return string([]rune(string(bytes))[0])
 	}
-	return
-}
-
-// KeyBlock will block until a key is pressed and then return the keyCode or ascii
-func (tty *TTY) KeyBlock() int {
-	ascii, keyCode, err := asciiAndKeyCodeBlock(tty)
-	if err != nil {
-		return 0
-	}
-	if keyCode != 0 {
-		return keyCode
-	}
-	return ascii
+	return ""
 }
