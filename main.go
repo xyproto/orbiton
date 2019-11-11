@@ -192,7 +192,7 @@ esc to redraw the screen and clear the last search.
 
 	quit := false
 	for !quit {
-		key := tty.Key()
+		key := tty.KeyBlock()
 		switch key {
 		case 17: // ctrl-q, quit
 			quit = true
@@ -271,7 +271,7 @@ esc to redraw the screen and clear the last search.
 			status.ShowNoTimeout(c, e)
 			doneCollectingLetters := false
 			for !doneCollectingLetters {
-				key2 := tty.Key()
+				key2 := tty.KeyBlock()
 				switch key2 {
 				case 127: // backspace
 					if len(s) > 0 {
@@ -670,7 +670,7 @@ esc to redraw the screen and clear the last search.
 			lns := ""
 			doneCollectingDigits := false
 			for !doneCollectingDigits {
-				numkey := tty.Key()
+				numkey := tty.KeyBlock()
 				switch numkey {
 				case 48, 49, 50, 51, 52, 53, 54, 55, 56, 57: // 0 .. 9
 					lns += string('0' + (numkey - 48))
