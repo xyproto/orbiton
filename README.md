@@ -31,11 +31,11 @@ You can install `o` with Go 1.10 or later:
 * `Home` and `End` are not detected by the key handler. `ctrl-a` and `ctrl-e` works, though.
 * Requires `/dev/tty` to be available.
 * Copy, cut and paste is only for one line at a time, and only within the editor.
-* Some letters can not be typed in. Like `æ`.
 * May take a line number as the second argument, with an optional `+` prefix.
 * The text will be red if a loaded file is read-only.
 * The terminal needs to be resized to show the second half of lines that are longer than the terminal width.
 * If the filename is `COMMIT_EDITMSG`, the look and feel will be adjusted for git commit messages.
+* Supports `UTF-8`.
 
 ## Known bugs
 
@@ -93,6 +93,6 @@ This also means that filenames containing `+` or `:` are not supported, if follo
 
 ## General info
 
-* Version: 2.6.6
+* Version: 2.6.7
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
