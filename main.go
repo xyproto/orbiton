@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
@@ -51,7 +52,7 @@ func main() {
 		bookmark   Position // for the bookmark/jump functionality
 		statusMode bool     // if information should be shown at the bottom
 
-		firstLetterSinceStart = rune(0)
+		firstLetterSinceStart string
 	)
 
 	flag.Parse()
@@ -194,15 +195,16 @@ esc to redraw the screen and clear the last search.
 	for !quit {
 		key := tty.KeyBlock()
 		switch key {
-		case 17: // ctrl-q, quit
+		case "c:17": // ctrl-q, quit
 			quit = true
-		case 23: // ctrl-d
+		case "c:23": // ctrl-w, format
 			undo.Snapshot(e)
 			// Map from formatting command to a list of file extensions
 			format := map[*exec.Cmd][]string{
 				exec.Command("/usr/bin/goimports", "-w", "--"):                                             []string{".go"},
 				exec.Command("/usr/bin/clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): []string{".cpp", ".cxx", ".h", ".hpp", ".c++", ".h++"},
 			}
+			formatted := false
 		OUT:
 			for cmd, extensions := range format {
 				for _, ext := range extensions {
@@ -247,6 +249,7 @@ esc to redraw the screen and clear the last search.
 									e.Load(c, tty, tempFilename)
 									// Mark the data as changed, despite just having loaded a file
 									e.changed = true
+									formatted = true
 								}
 								// Try to remove the temporary file regardless if "goimports -w" worked out or not
 								_ = os.Remove(tempFilename)
@@ -259,7 +262,11 @@ esc to redraw the screen and clear the last search.
 					}
 				}
 			}
-		case 6: // ctrl-f, find string
+			if !formatted {
+				status.SetMessage("Can only format Go or C++ code.")
+				status.Show(c, e)
+			}
+		case "c:6": // ctrl-f, find string
 			s := e.SearchTerm()
 			//e.SetSearchTerm(s, c, status)
 			status.ClearAll(c)
@@ -273,22 +280,22 @@ esc to redraw the screen and clear the last search.
 			for !doneCollectingLetters {
 				key2 := tty.KeyBlock()
 				switch key2 {
-				case 127: // backspace
+				case "c:127": // backspace
 					if len(s) > 0 {
 						s = s[:len(s)-1]
 						e.SetSearchTerm(s, c, status)
 						status.SetMessage("Search: " + s)
 						status.ShowNoTimeout(c, e)
 					}
-				case 27, 17: // esc or ctrl-q
+				case "c:27", "c:17": // esc or ctrl-q
 					s = ""
 					e.SetSearchTerm(s, c, status)
 					fallthrough
-				case 13: // return
+				case "c:13": // return
 					doneCollectingLetters = true
 				default:
-					if key2 != 0 {
-						s += string(rune(key2))
+					if key2 != "" {
+						s += key2 // string(rune(key2))
 						e.SetSearchTerm(s, c, status)
 						status.SetMessage("Search: " + s)
 						status.ShowNoTimeout(c, e)
@@ -339,7 +346,7 @@ esc to redraw the screen and clear the last search.
 					status.Show(c, e)
 				}
 			}
-		case 18: // ctrl-r, toggle draw mode
+		case "c:18": // ctrl-r, toggle draw mode
 			e.ToggleDrawMode()
 			statusMessage := "Text mode"
 			if e.DrawMode() {
@@ -347,14 +354,14 @@ esc to redraw the screen and clear the last search.
 			}
 			status.SetMessage(statusMessage)
 			status.Show(c, e)
-		case 7: // ctrl-g, status mode
+		case "c:7": // ctrl-g, status mode
 			statusMode = !statusMode
 			if statusMode {
 				status.ShowLineColWordCount(c, e, filename)
 			} else {
 				status.ClearAll(c)
 			}
-		case 252: // left arrow
+		case "←": // left arrow
 			if !e.DrawMode() {
 				e.Prev(c)
 				if e.AfterLineScreenContents() {
@@ -366,7 +373,7 @@ esc to redraw the screen and clear the last search.
 				e.pos.Left()
 			}
 			e.redrawCursor = true
-		case 254: // right arrow
+		case "→": // right arrow
 			if !e.DrawMode() {
 				if e.DataY() < e.Len() {
 					e.Next(c)
@@ -380,7 +387,7 @@ esc to redraw the screen and clear the last search.
 				e.pos.Right(c)
 			}
 			e.redrawCursor = true
-		case 253: // up arrow
+		case "↑": // up arrow
 			// Move the screen cursor
 			if !e.DrawMode() {
 				if e.DataY() > 0 {
@@ -407,7 +414,7 @@ esc to redraw the screen and clear the last search.
 				e.pos.Up()
 			}
 			e.redrawCursor = true
-		case 255: // down arrow
+		case "↓": // down arrow
 			if !e.DrawMode() {
 				if e.DataY() < e.Len() {
 					// Move the position down in the current screen
@@ -434,22 +441,22 @@ esc to redraw the screen and clear the last search.
 				e.pos.Down(c)
 			}
 			e.redrawCursor = true
-		case 14: // ctrl-n, scroll down
+		case "c:14": // ctrl-n, scroll down
 			e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
 			e.redrawCursor = true
 			if !e.DrawMode() && e.AfterLineScreenContents() {
 				e.End()
 			}
-		case 16: // ctrl-p, scroll up
+		case "c:16": // ctrl-p, scroll up
 			e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
 			e.redrawCursor = true
 			if !e.DrawMode() && e.AfterLineScreenContents() {
 				e.End()
 			}
-		case 8: // ctrl-h, help
+		case "c:8": // ctrl-h, help
 			status.SetMessage("[" + versionString + "] ctrl-s to save, ctrl-q to quit")
 			status.Show(c, e)
-		case 20: // ctrl-t, toggle syntax highlighting
+		case "c:20": // ctrl-t, toggle syntax highlighting
 			e.ToggleHighlight()
 			if e.highlight {
 				e.bg = defaultEditorBackground
@@ -458,7 +465,7 @@ esc to redraw the screen and clear the last search.
 			}
 			// Now do a full reset/redraw
 			fallthrough
-		case 27: // esc, clear search term, reset, clean and redraw
+		case "c:27": // esc, clear search term, reset, clean and redraw
 			status.ClearAll(c)
 			e.SetSearchTerm("", c, status)
 			vt100.Close()
@@ -469,7 +476,7 @@ esc to redraw the screen and clear the last search.
 			c.ShowCursor()
 			e.redrawCursor = true
 			e.redraw = true
-		case 32: // space
+		case " ": // space
 			undo.Snapshot(e)
 			// Place a space
 			if !e.DrawMode() {
@@ -485,7 +492,7 @@ esc to redraw the screen and clear the last search.
 				// Move to the next position
 				e.Next(c)
 			}
-		case 13: // return
+		case "c:13": // return
 			undo.Snapshot(e)
 			// if the current line is empty, insert a blank line
 			if !e.DrawMode() {
@@ -564,7 +571,7 @@ esc to redraw the screen and clear the last search.
 				e.pos.Down(c)
 			}
 			e.redraw = true
-		case 127: // backspace
+		case "c:127": // backspace
 			undo.Snapshot(e)
 			if !e.DrawMode() && e.EmptyLine() {
 				e.DeleteLine(e.DataY())
@@ -591,7 +598,7 @@ esc to redraw the screen and clear the last search.
 			}
 			e.redrawCursor = true
 			e.redraw = true
-		case 9: // tab
+		case "c:9": // tab
 			undo.Snapshot(e)
 			if !e.DrawMode() {
 				// Place a tab
@@ -609,7 +616,7 @@ esc to redraw the screen and clear the last search.
 			}
 			e.redrawCursor = true
 			e.redraw = true
-		case 1: // ctrl-a, home
+		case "c:1": // ctrl-a, home
 			// toggle between start of line and start of non-whitespace
 			if e.AtStartOfTextLine() {
 				e.Home()
@@ -617,7 +624,7 @@ esc to redraw the screen and clear the last search.
 				e.pos.SetX(e.FirstScreenPosition(e.DataY()))
 			}
 			e.SaveX(true)
-		case 5: // ctrl-e, end
+		case "c:5": // ctrl-e, end
 			if e.AfterEndOfLine() { // && !e.EmptyLine() {
 				// go to the end of the next line if already at the end of the line
 				e.Down(c, status)
@@ -626,7 +633,7 @@ esc to redraw the screen and clear the last search.
 				e.End()
 			}
 			e.SaveX(true)
-		case 4: // ctrl-d, delete
+		case "c:4": // ctrl-d, delete
 			undo.Snapshot(e)
 			if e.Empty() {
 				status.SetMessage("Empty")
@@ -636,7 +643,7 @@ esc to redraw the screen and clear the last search.
 				e.redraw = true
 			}
 			e.redrawCursor = true
-		case 19: // ctrl-s, save
+		case "c:19": // ctrl-s, save
 			if err := e.Save(filename, !e.DrawMode()); err != nil {
 				status.SetMessage(err.Error())
 				status.Show(c, e)
@@ -651,7 +658,7 @@ esc to redraw the screen and clear the last search.
 				status.Show(c, e)
 				c.Draw()
 			}
-		case 21, 26: // ctrl-u or ctrl-z, undo (ctrl-z may background the application)
+		case "c:21", "c:26": // ctrl-u or ctrl-z, undo (ctrl-z may background the application)
 			if err := undo.Restore(e); err == nil {
 				//c.Draw()
 				x := e.pos.ScreenX()
@@ -663,7 +670,7 @@ esc to redraw the screen and clear the last search.
 				status.SetMessage("Nothing more to undo")
 				status.Show(c, e)
 			}
-		case 12: // ctrl-l, go to line number
+		case "c:12": // ctrl-l, go to line number
 			status.ClearAll(c)
 			status.SetMessage("Go to line number:")
 			status.ShowNoTimeout(c, e)
@@ -672,20 +679,20 @@ esc to redraw the screen and clear the last search.
 			for !doneCollectingDigits {
 				numkey := tty.KeyBlock()
 				switch numkey {
-				case 48, 49, 50, 51, 52, 53, 54, 55, 56, 57: // 0 .. 9
-					lns += string('0' + (numkey - 48))
+				case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9": // 0 .. 9
+					lns += numkey // string('0' + (numkey - 48))
 					status.SetMessage("Go to line number: " + lns)
 					status.ShowNoTimeout(c, e)
-				case 127: // backspace
+				case "c:127": // backspace
 					if len(lns) > 0 {
 						lns = lns[:len(lns)-1]
 						status.SetMessage("Go to line number: " + lns)
 						status.ShowNoTimeout(c, e)
 					}
-				case 27, 17: // esc or ctrl-q
+				case "c:27", "c:17": // esc or ctrl-q
 					lns = ""
 					fallthrough
-				case 13: // return
+				case "c:13": // return
 					doneCollectingDigits = true
 				}
 			}
@@ -696,7 +703,7 @@ esc to redraw the screen and clear the last search.
 				}
 			}
 			e.redrawCursor = true
-		case 11: // ctrl-k, delete to end of line
+		case "c:11": // ctrl-k, delete to end of line
 			undo.Snapshot(e)
 			if e.Empty() {
 				status.SetMessage("Empty")
@@ -712,62 +719,62 @@ esc to redraw the screen and clear the last search.
 				e.redraw = true
 			}
 			e.redrawCursor = true
-		case 24: // ctrl-x, cut
+		case "c:24": // ctrl-x, cut line
 			undo.Snapshot(e)
 			y := e.DataY()
 			copyLine = e.Line(y)
 			e.DeleteLine(y)
 			e.redrawCursor = true
 			e.redraw = true
-		case 3: // ctrl-c, copy line
+		case "c:3": // ctrl-c, copy line
 			copyLine = e.Line(e.DataY())
 			e.redraw = true
-		case 22: // ctrl-v, paste
+		case "c:22": // ctrl-v, paste line
 			undo.Snapshot(e)
 			e.SetLine(e.DataY(), copyLine)
 			e.End()
 			e.redrawCursor = true
 			e.redraw = true
-		case 2: // ctrl-b, bookmark
+		case "c:2": // ctrl-b, bookmark
 			bookmark = e.pos
-		case 10: // ctrl-j, jump to bookmark
+		case "c:10": // ctrl-j, jump to bookmark
 			// TODO: Add a check for if a bookmark exists?
 			e.pos = bookmark
 			e.redraw = true
 		default:
-			if (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') { // letter
+			if unicode.IsLetter([]rune(key)[0]) { // letter
 				undo.Snapshot(e)
 				dropO := false
-				if firstLetterSinceStart == rune(0) {
-					firstLetterSinceStart = rune(key)
-				} else if firstLetterSinceStart == 'O' && (key >= 'A' && key <= 'Z') {
+				if firstLetterSinceStart == "" {
+					firstLetterSinceStart = key
+				} else if firstLetterSinceStart == "O" && ([]rune(key)[0] >= 'A' && []rune(key)[0] <= 'Z') {
 					// If the first typed letter since starting this editor was 'O', and this is also uppercase,
 					// then disregard the initial 'O'. This is to help vim-users.
 					dropO = true
 					// Set the first letter since start to something that will not trigger this branch any more.
-					firstLetterSinceStart = 'x'
+					firstLetterSinceStart = "x"
 				}
 				if dropO {
 					// Replace the previous letter.
 					e.Prev(c)
-					e.SetRune(rune(key))
+					e.SetRune([]rune(key)[0])
 					e.WriteRune(c)
 					e.Next(c)
 				} else if !e.DrawMode() {
 					// Insert a letter. This is what normally happens.
-					e.InsertRune(rune(key))
+					e.InsertRune([]rune(key)[0])
 					e.WriteRune(c)
 					e.Next(c)
 				} else {
 					// Replace this letter.
-					e.SetRune(rune(key))
+					e.SetRune([]rune(key)[0])
 					e.WriteRune(c)
 				}
 				e.redraw = true
-			} else if key != 0 { // any other key
+			} else if key != "" { // any other key
 				undo.Snapshot(e)
 				// Place *something*
-				r := rune(key)
+				r := []rune(key)[0]
 
 				// "smart dedent"
 				if r == '}' || r == ']' || r == ')' {
@@ -782,9 +789,9 @@ esc to redraw the screen and clear the last search.
 				}
 
 				if !e.DrawMode() {
-					e.InsertRune(rune(key))
+					e.InsertRune([]rune(key)[0])
 				} else {
-					e.SetRune(rune(key))
+					e.SetRune([]rune(key)[0])
 				}
 				e.WriteRune(c)
 				if len(string(r)) > 0 {
