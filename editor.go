@@ -58,10 +58,8 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEdi
 func (e *Editor) CopyLines() map[int][]rune {
 	lines2 := make(map[int][]rune)
 	for key, runes := range e.lines {
-		runes2 := make([]rune, len(runes), len(runes))
-		for i, r := range runes {
-			runes2[i] = r
-		}
+		runes2 := make([]rune, len(runes))
+		copy(runes2, runes)
 		lines2[key] = runes2
 	}
 	return lines2
@@ -1006,7 +1004,7 @@ func (e *Editor) UpEnd(c *vt100.Canvas) error {
 func (e *Editor) Next(c *vt100.Canvas) error {
 	// Ignore it if the position is out of bounds
 	x, _ := e.DataX()
-	atTab := '\t' == e.Get(x, e.DataY())
+	atTab := e.Get(x, e.DataY()) == '\t'
 	if atTab && !e.DrawMode() {
 		e.pos.sx += e.spacesPerTab
 	} else {
@@ -1040,7 +1038,7 @@ func (e *Editor) Prev(c *vt100.Canvas) error {
 	// Ignore it if the position is out of bounds
 	x, _ := e.DataX()
 	if x > 0 {
-		atTab = '\t' == e.Get(x-1, e.DataY())
+		atTab = e.Get(x-1, e.DataY()) == '\t'
 	}
 	// If at a tab character, move a few more posisions
 	if atTab && !e.DrawMode() {
@@ -1221,12 +1219,12 @@ func (e *Editor) WriteTab(c *vt100.Canvas) {
 
 // EmptyRightTrimmedLine checks if the current line is empty (and whitespace doesn't count)
 func (e *Editor) EmptyRightTrimmedLine() bool {
-	return 0 == len(strings.TrimRightFunc(e.CurrentLine(), unicode.IsSpace))
+	return len(strings.TrimRightFunc(e.CurrentLine(), unicode.IsSpace)) == 0
 }
 
 // EmptyLine returns true if the line is completely empty, no whitespace or anything
 func (e *Editor) EmptyLine() bool {
-	return "" == e.CurrentLine()
+	return e.CurrentLine() == ""
 }
 
 // AtStartOfTextLine returns true if the position is at the start of the text for this line
