@@ -1,6 +1,5 @@
 # TODO
 
-- [ ] Use [go-terminput](https://github.com/tj/go-terminput) for keyboard input.
+- [ ] Handle long lines, but try to avoid horizontal scrolling. Perhaps open long lines in a new instance of the editor, but split at a custom rune, then join the line at exit.
 - [ ] Make it easier to spot the cursor when scrolling or searching.
-- [ ] Handle long lines.
 - [ ] Have a "wrap around" toggle, for being able to write text and e-mails.
