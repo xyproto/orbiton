@@ -78,17 +78,19 @@ ctrl-k to delete characters to the end of the line, then delete the line
 ctrl-g to toggle filename/line/column/unicode/word count status display
 ctrl-d to delete a single character
 ctrl-t to toggle syntax highlighting
-ctrl-r to toggle text or draw mode (for ASCII graphics)
+ctrl-o to toggle text or draw mode (for ASCII graphics)
 ctrl-x to cut the current line
 ctrl-c to copy the current line
 ctrl-v to paste the current line
-ctrl-b to bookmark the current position
+ctrl-space to bookmark the current position
 ctrl-j to jump to the bookmark
 ctrl-h to show a minimal help text
 ctrl-u to undo
 ctrl-l to jump to a specific line
 ctrl-f to search for a string
 esc to redraw the screen and clear the last search.
+ctrl-b to build
+ctrl-r to run
 `)
 		return
 	}
@@ -274,7 +276,11 @@ esc to redraw the screen and clear the last search.
 			}
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
-		case "c:18": // ctrl-r, toggle draw mode
+		case "c:2": // ctrl-b, "cxx" or "go build -race"
+			fmt.Println("cxx or go build -race")
+		case "c:18": // ctrl-r, "cxx run" or "go run -race ."
+			fmt.Println("cxx run or go run -race")
+		case "c:15": // ctrl-o, toggle draw mode
 			e.ToggleDrawMode()
 			statusMessage := "Text mode"
 			if e.DrawMode() {
@@ -662,7 +668,7 @@ esc to redraw the screen and clear the last search.
 			e.End()
 			e.redrawCursor = true
 			e.redraw = true
-		case "c:2": // ctrl-b, bookmark
+		case "c:0": // ctrl-space, bookmark
 			bookmark = e.pos
 		case "c:10": // ctrl-j, jump to bookmark
 			// TODO: Add a check for if a bookmark exists?

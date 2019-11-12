@@ -60,17 +60,19 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, unicode number and word count
 * `ctrl-d` - Delete a single character
 * `ctrl-t` - Toggle syntax highlighting
-* `ctrl-r` - Toggle between "text" and "draw mode" (for ASCII graphics)
+* `ctrl-o` - Toggle between "text" and "draw mode" (for ASCII graphics)
 * `ctrl-x` - Cut the current line
 * `ctrl-c` - Copy the current line
 * `ctrl-v` - Paste the current line
-* `ctrl-b` - Bookmark the current position
+* `ctrl-space` - Bookmark the current position
 * `ctrl-j` - Jump to the bookmark
 * `ctrl-h` - Show a minimal help text
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application)
 * `ctrl-l` - Jump to a specific line number
 * `ctrl-f` - Search for a string.
 * `esc` - Redraw the screen and clear the last search.
+* `ctrl-b` - Build
+* `ctrl-r` - Run
 
 ## Size
 
