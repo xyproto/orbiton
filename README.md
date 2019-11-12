@@ -93,6 +93,6 @@ This also means that filenames containing `+` or `:` are not supported, if follo
 
 ## General info
 
-* Version: 2.6.9
+* Version: 2.6.10
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
