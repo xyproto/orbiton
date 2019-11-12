@@ -17,7 +17,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "o 2.6.10"
+const versionString = "o 2.7.0"
 
 func main() {
 	var (
@@ -73,7 +73,7 @@ ctrl-w to format the current file with "go fmt"
 ctrl-a go to start of line, then start of text
 ctrl-e go to end of line
 ctrl-p to scroll up 10 lines
-ctrl-n to scroll down 10 lines
+ctrl-n to scroll down 10 lines or go to the next match if a search is active
 ctrl-k to delete characters to the end of the line, then delete the line
 ctrl-g to toggle filename/line/column/unicode/word count status display
 ctrl-d to delete a single character
@@ -87,7 +87,7 @@ ctrl-j to jump to the bookmark
 ctrl-h to show a minimal help text
 ctrl-u to undo
 ctrl-l to jump to a specific line
-ctrl-f to find a string. Press ctrl-f and return to repeat the search.
+ctrl-f to search for a string
 esc to redraw the screen and clear the last search.
 `)
 		return
@@ -199,7 +199,7 @@ esc to redraw the screen and clear the last search.
 
 	quit := false
 	for !quit {
-		key := tty.KeyBlock()
+		key := tty.String()
 		switch key {
 		case "c:17": // ctrl-q, quit
 			quit = true
@@ -272,86 +272,8 @@ esc to redraw the screen and clear the last search.
 				status.SetMessage("Can only format Go or C++ code.")
 				status.Show(c, e)
 			}
-		case "c:6": // ctrl-f, find string
-			s := e.SearchTerm()
-			//e.SetSearchTerm(s, c, status)
-			status.ClearAll(c)
-			if s == "" {
-				status.SetMessage("Search:")
-			} else {
-				status.SetMessage("Search: " + s)
-			}
-			status.ShowNoTimeout(c, e)
-			doneCollectingLetters := false
-			for !doneCollectingLetters {
-				key2 := tty.KeyBlock()
-				switch key2 {
-				case "c:127": // backspace
-					if len(s) > 0 {
-						s = s[:len(s)-1]
-						e.SetSearchTerm(s, c, status)
-						status.SetMessage("Search: " + s)
-						status.ShowNoTimeout(c, e)
-					}
-				case "c:27", "c:17": // esc or ctrl-q
-					s = ""
-					e.SetSearchTerm(s, c, status)
-					fallthrough
-				case "c:13": // return
-					doneCollectingLetters = true
-				default:
-					if key2 != "" {
-						s += key2 // string(rune(key2))
-						e.SetSearchTerm(s, c, status)
-						status.SetMessage("Search: " + s)
-						status.ShowNoTimeout(c, e)
-					}
-				}
-			}
-			status.ClearAll(c)
-			if s != "" {
-				// Go to the next line with "s"
-				foundY := -1
-				foundX := -1
-				for y := e.DataY(); y < e.Len(); y++ {
-					lineContents := e.Line(y)
-					if y == e.DataY() {
-						x, err := e.DataX()
-						if err != nil {
-							continue
-						}
-						// Search from the next position on this line
-						x++
-						if x >= len(lineContents) {
-							continue
-						}
-						if strings.Contains(lineContents[x:], s) {
-							foundX = x + strings.Index(lineContents[x:], s)
-							foundY = y
-							break
-						}
-					} else {
-						if strings.Contains(lineContents, s) {
-							foundX = strings.Index(lineContents, s)
-							foundY = y
-							break
-						}
-					}
-				}
-				if foundY != -1 {
-					e.redraw = e.GoTo(foundY, c, status)
-					if foundX != -1 {
-						tabs := strings.Count(e.Line(foundY), "\t")
-						e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
-					}
-					e.redraw = true
-					e.redrawCursor = e.redraw
-				} else {
-					e.GoTo(e.lineBeforeSearch, c, status)
-					status.SetMessage("Not found (no wraparound)")
-					status.Show(c, e)
-				}
-			}
+		case "c:6": // ctrl-f, search for a string
+			e.SearchMode(c, status, tty)
 		case "c:18": // ctrl-r, toggle draw mode
 			e.ToggleDrawMode()
 			statusMessage := "Text mode"
@@ -447,11 +369,17 @@ esc to redraw the screen and clear the last search.
 				e.pos.Down(c)
 			}
 			e.redrawCursor = true
-		case "c:14": // ctrl-n, scroll down
-			e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
-			e.redrawCursor = true
-			if !e.DrawMode() && e.AfterLineScreenContents() {
-				e.End()
+		case "c:14": // ctrl-n, scroll down or jump to next match
+			if e.SearchTerm() != "" {
+				// Go to next match
+				e.GoToNextMatch(c, status)
+			} else {
+				// Scroll down
+				e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
+				e.redrawCursor = true
+				if !e.DrawMode() && e.AfterLineScreenContents() {
+					e.End()
+				}
 			}
 		case "c:16": // ctrl-p, scroll up
 			e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
@@ -676,7 +604,7 @@ esc to redraw the screen and clear the last search.
 			lns := ""
 			doneCollectingDigits := false
 			for !doneCollectingDigits {
-				numkey := tty.KeyBlock()
+				numkey := tty.String()
 				switch numkey {
 				case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9": // 0 .. 9
 					lns += numkey // string('0' + (numkey - 48))
@@ -740,10 +668,22 @@ esc to redraw the screen and clear the last search.
 			// TODO: Add a check for if a bookmark exists?
 			e.pos = bookmark
 			e.redraw = true
+		case "/": // check if this is was the first pressed letter or not
+			if firstLetterSinceStart == "" {
+				// Set the first letter since start to something that will not trigger this branch any more.
+				firstLetterSinceStart = "x"
+				// If the first typed letter since starting this editor was '/', go straight to search mode.
+				e.SearchMode(c, status, tty)
+				// Case handled
+				break
+			}
+			// This was not the first pressed letter, continue handling this key in the default case
+			fallthrough
 		default:
 			if len([]rune(key)) > 0 && unicode.IsLetter([]rune(key)[0]) { // letter
 				undo.Snapshot(e)
 				dropO := false
+				// Check for if a special "first letter" has been pressed, which triggers vi-like behavior
 				if firstLetterSinceStart == "" {
 					firstLetterSinceStart = key
 				} else if firstLetterSinceStart == "O" && ([]rune(key)[0] >= 'A' && []rune(key)[0] <= 'Z') {
@@ -772,6 +712,7 @@ esc to redraw the screen and clear the last search.
 				e.redraw = true
 			} else if key != "" { // any other key
 				undo.Snapshot(e)
+
 				// Place *something*
 				r := []rune(key)[0]
 

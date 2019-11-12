@@ -28,3 +28,95 @@ func (e *Editor) SetSearchTerm(s string, c *vt100.Canvas, status *StatusBar) {
 func (e *Editor) SearchTerm() string {
 	return e.searchTerm
 }
+
+// GoToNextMatch will go to the next match, using e.SearchTerm(), if possible.
+// The search does not wrap around and is case-sensitive.
+// TODO: Add wrap around behavior, toggled with a bool argument.
+// TOOD: Add case-insensitive behavior, toggled with a bool argument.
+func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar) {
+	s := e.SearchTerm()
+	if s != "" {
+		// Go to the next line with "s"
+		foundY := -1
+		foundX := -1
+		for y := e.DataY(); y < e.Len(); y++ {
+			lineContents := e.Line(y)
+			if y == e.DataY() {
+				x, err := e.DataX()
+				if err != nil {
+					continue
+				}
+				// Search from the next position on this line
+				x++
+				if x >= len(lineContents) {
+					continue
+				}
+				if strings.Contains(lineContents[x:], s) {
+					foundX = x + strings.Index(lineContents[x:], s)
+					foundY = y
+					break
+				}
+			} else {
+				if strings.Contains(lineContents, s) {
+					foundX = strings.Index(lineContents, s)
+					foundY = y
+					break
+				}
+			}
+		}
+		if foundY != -1 {
+			e.redraw = e.GoTo(foundY, c, status)
+			if foundX != -1 {
+				tabs := strings.Count(e.Line(foundY), "\t")
+				e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
+			}
+			e.redraw = true
+			e.redrawCursor = e.redraw
+		} else {
+			e.GoTo(e.lineBeforeSearch, c, status)
+			status.SetMessage(s + " not found from here")
+			status.Show(c, e)
+		}
+	}
+}
+
+// SearchMode will enter the interactive "search mode" where the user can type in a string and then press return to search
+func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
+	s := e.SearchTerm()
+	status.ClearAll(c)
+	if s == "" {
+		status.SetMessage("Search:")
+	} else {
+		status.SetMessage("Search: " + s)
+	}
+	status.ShowNoTimeout(c, e)
+	doneCollectingLetters := false
+	for !doneCollectingLetters {
+		key := tty.String()
+		switch key {
+		case "c:127": // backspace
+			if len(s) > 0 {
+				s = s[:len(s)-1]
+				e.SetSearchTerm(s, c, status)
+				status.SetMessage("Search: " + s)
+				status.ShowNoTimeout(c, e)
+			}
+		case "c:27", "c:17": // esc or ctrl-q
+			s = ""
+			e.SetSearchTerm(s, c, status)
+			fallthrough
+		case "c:13": // return
+			doneCollectingLetters = true
+		default:
+			if key != "" && !strings.HasPrefix(key, "c:") {
+				s += key
+				e.SetSearchTerm(s, c, status)
+				status.SetMessage("Search: " + s)
+				status.ShowNoTimeout(c, e)
+			}
+		}
+	}
+	status.ClearAll(c)
+	e.SetSearchTerm(s, c, status)
+	e.GoToNextMatch(c, status)
+}
