@@ -55,7 +55,7 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-a` - Go to start of line, then start of text on the same line
 * `ctrl-e` - Go to end of line, then to the end of the next line
 * `ctrl-p` - Scroll up 10 lines
-* `ctrl-n` - Scroll down 10 lines
+* `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active
 * `ctrl-k` - Delete characters to the end of the line, then delete the line
 * `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, unicode number and word count
 * `ctrl-d` - Delete a single character
@@ -69,7 +69,7 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-h` - Show a minimal help text
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application)
 * `ctrl-l` - Jump to a specific line number
-* `ctrl-f` - Find a string. Press `ctrl-f` and return to repeat the search.
+* `ctrl-f` - Search for a string.
 * `esc` - Redraw the screen and clear the last search.
 
 ## Size
