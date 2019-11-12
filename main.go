@@ -325,14 +325,15 @@ ctrl-b to build
 								}
 							}
 							if !foundMessage {
-								status.ClearAll(c)
-								status.SetMessage("Build failed")
-								status.Show(c, e)
+								//status.ClearAll(c)
+								//status.SetMessage("Build failed")
+								//status.Show(c, e)
 							}
 						} else {
-							status.ClearAll(c)
-							status.SetMessage("Build OK")
-							status.Show(c, e)
+							// This is not watertight for C++
+							//status.ClearAll(c)
+							//status.SetMessage("Build OK")
+							//status.Show(c, e)
 						}
 						break OUT2
 					}
