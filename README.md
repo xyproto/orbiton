@@ -72,7 +72,6 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-f` - Search for a string.
 * `esc` - Redraw the screen and clear the last search.
 * `ctrl-b` - Build
-* `ctrl-r` - Run
 
 ## Size
 

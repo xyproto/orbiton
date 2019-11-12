@@ -90,7 +90,6 @@ ctrl-l to jump to a specific line
 ctrl-f to search for a string
 esc to redraw the screen and clear the last search.
 ctrl-b to build
-ctrl-r to run
 `)
 		return
 	}
@@ -232,6 +231,7 @@ ctrl-r to run
 									if strings.Count(errorMessage, "\n") > 0 {
 										errorMessage = strings.TrimSpace(strings.SplitN(errorMessage, "\n", 2)[0])
 									}
+									// TODO: This error never shows up. Fix it.
 									status.SetMessage("Failed to format code: " + errorMessage)
 									if strings.Count(errorMessage, ":") >= 3 {
 										fields := strings.Split(errorMessage, ":")
@@ -276,10 +276,70 @@ ctrl-r to run
 			}
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
-		case "c:2": // ctrl-b, "cxx" or "go build -race"
-			fmt.Println("cxx or go build -race")
-		case "c:18": // ctrl-r, "cxx run" or "go run -race ."
-			fmt.Println("cxx run or go run -race")
+		case "c:2": // ctrl-b, "cxx" or "go build"
+			// Map from formatting command to a list of file extensions
+			build := map[*exec.Cmd][]string{
+				exec.Command("go", "build"): []string{".go"},
+				exec.Command("cxx"):         []string{".cpp", ".cxx", ".h", ".hpp", ".c++", ".h++"},
+			}
+		OUT2:
+			for cmd, extensions := range build {
+				for _, ext := range extensions {
+					if strings.HasSuffix(filename, ext) {
+						status.ClearAll(c)
+						status.SetMessage("Building")
+						status.Show(c, e)
+
+						output, err := cmd.CombinedOutput()
+						if err != nil {
+							foundMessage := false
+							lines := strings.Split(string(output), "\n")
+							for _, line := range lines {
+								if strings.Count(line, ":") >= 3 {
+									fields := strings.SplitN(line, ":", 4)
+
+									// Go To Y:X, if available
+									foundY := -1
+									if y, err := strconv.Atoi(fields[1]); err == nil { // no error
+										foundY = y - 1
+										e.redraw = e.GoTo(foundY, c, status)
+										foundX := -1
+										if x, err := strconv.Atoi(fields[2]); err == nil { // no error
+											foundX = x - 1
+										}
+										if foundX != -1 {
+											tabs := strings.Count(e.Line(foundY), "\t")
+											e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
+										}
+									}
+									e.redrawCursor = true
+
+									foundMessage = true
+
+									// TODO: This error never shows up. Fix it.
+									//status.ClearAll(c)
+									//status.SetMessage(fields[3])
+									//status.Show(c, e)
+
+									break
+								}
+							}
+							if !foundMessage {
+								status.ClearAll(c)
+								status.SetMessage("Build failed")
+								status.Show(c, e)
+							}
+						} else {
+							status.ClearAll(c)
+							status.SetMessage("Build OK")
+							status.Show(c, e)
+						}
+						break OUT2
+					}
+				}
+			}
+		case "c:18": // ctrl-r, render as PNG
+			// TODO: implement
 		case "c:15": // ctrl-o, toggle draw mode
 			e.ToggleDrawMode()
 			statusMessage := "Text mode"
@@ -773,8 +833,8 @@ ctrl-r to run
 		previousX = x
 		previousY = y
 	}
-	tty.Close()
 	vt100.Clear()
 	vt100.Close()
+	tty.Close()
 	//fmt.Println(filename)
 }
