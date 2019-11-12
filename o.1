@@ -42,7 +42,7 @@ displays brief usage information
   Scroll up 10 lines.
 .sp
 .B ctrl-n
-  Scroll down 10 lines.
+  Scroll down 10 lines or go to the next match if a search is active.
 .sp
 .B ctrl-k
   Delete all characters to the end of the line. Delete the line if it is empty.
@@ -84,7 +84,7 @@ displays brief usage information
   Jump to a specific line number.
 .sp
 .B ctrl-f
-  Find a string. Press `ctrl-f` and return to repeat the search.
+  Search for a string.
 .sp
 .B esc
   Redraw the screen and clear the last search.
@@ -98,7 +98,7 @@ I wanted to write a simple editor that only used VT100 terminal codes.
 .SH BUGS
 Lines longer than the terminal width are not handled gracefully.
 .SH VERSION
-2.6.10
+2.7.0
 .SH AUTHOR
 .B o
 was written by  Alexander F. Rødseth <xyproto@archlinux.org>
