@@ -273,7 +273,7 @@ esc to redraw the screen and clear the last search.
 				status.Show(c, e)
 			}
 		case "c:6": // ctrl-f, search for a string
-			e.SearchMode(c, status, tty)
+			e.SearchMode(c, status, tty, true)
 		case "c:18": // ctrl-r, toggle draw mode
 			e.ToggleDrawMode()
 			statusMessage := "Text mode"
@@ -673,7 +673,7 @@ esc to redraw the screen and clear the last search.
 				// Set the first letter since start to something that will not trigger this branch any more.
 				firstLetterSinceStart = "x"
 				// If the first typed letter since starting this editor was '/', go straight to search mode.
-				e.SearchMode(c, status, tty)
+				e.SearchMode(c, status, tty, true)
 				// Case handled
 				break
 			}

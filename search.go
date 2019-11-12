@@ -81,7 +81,11 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar) {
 }
 
 // SearchMode will enter the interactive "search mode" where the user can type in a string and then press return to search
-func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
+func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, clear bool) {
+	if clear {
+		// Clear the previous search
+		e.SetSearchTerm("", c, status)
+	}
 	s := e.SearchTerm()
 	status.ClearAll(c)
 	if s == "" {
