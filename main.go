@@ -734,10 +734,11 @@ ctrl-b to build
 			e.redraw = true
 		case "c:0": // ctrl-space, bookmark
 			bookmark = e.pos
+			status.SetMessage("Set bookmark on line " + strconv.Itoa(e.LineNumber()))
+			status.Show(c, e)
+			e.redrawCursor = true
 		case "c:10": // ctrl-j, jump to bookmark
-			// TODO: Add a check for if a bookmark exists?
-			e.pos = bookmark
-			e.redraw = true
+			e.GoToPosition(c, status, bookmark)
 		case "/": // check if this is was the first pressed letter or not
 			if firstLetterSinceStart == "" {
 				// Set the first letter since start to something that will not trigger this branch any more.

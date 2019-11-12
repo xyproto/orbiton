@@ -1359,3 +1359,10 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar) *vt100.Canv
 	e.pos = savePos
 	return newC
 }
+
+// Set and go to the given position struct
+func (e *Editor) GoToPosition(c *vt100.Canvas, status *StatusBar, pos Position) {
+	e.pos = pos
+	e.redraw = e.GoTo(e.DataY(), c, status)
+	e.redrawCursor = true
+}
