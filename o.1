@@ -36,7 +36,7 @@ displays brief usage information
   Go to start of ithe line, or to the start of the text if already at the start of the line.
 .sp
 .B ctrl-e
-  Go to end of the line.
+  Go to end of the line, or to the end of the next line if already at the end of the line.
 .sp
 .B ctrl-p
   Scroll up 10 lines.
@@ -48,7 +48,7 @@ displays brief usage information
   Delete all characters to the end of the line. Delete the line if it is empty.
 .sp
 .B ctrl-g
-  Toggle filename/line/column/unicode/word count status display at the bottom.
+  Toggle a status line at the bottom for displaying: filename, line, column, unicode number and word count
 .sp
 .B ctrl-d
   Delete a single character.
@@ -57,16 +57,16 @@ displays brief usage information
   Toggle syntax highlighting.
 .sp
 .B ctrl-r
-  Toggle text or draw mode (for ASCII graphics).
+  Toggle between "text" and "draw mode" (for ASCII graphics).
 .sp
 .B ctrl-x
-  Cut the current line (not to the system clipboard).
+  Cut the current line.
 .sp
 .B ctrl-c
-  Copy the current line (not to the system clipboard).
+  Copy the current line.
 .sp
 .B ctrl-v
-  Paste the current line (not from the system clipboard).
+  Paste the current line.
 .sp
 .B ctrl-b
   Bookmark the current position.
@@ -78,13 +78,13 @@ displays brief usage information
   Display a minimal help text.
 .sp
 .B ctrl-u
-  Undo (uses a ring buffer with room for 8192 actions).
+  Undo (`ctrl-z` is also possible, but may background the application).
 .sp
 .B ctrl-l
-  Jump to a specific line.
+  Jump to a specific line number.
 .sp
 .B ctrl-f
-  Find a string. Press ctrl-f and return to repeat the search.
+  Find a string. Press `ctrl-f` and return to repeat the search.
 .sp
 .B esc
   Redraw the screen and clear the last search.
@@ -93,12 +93,10 @@ displays brief usage information
 .sp
 I wanted to write a simple editor that only used VT100 terminal codes.
 .SH "SEE ALSO"
-.BR nano (1)
 .BR micro (1)
+.BR nano (1)
 .SH BUGS
 Lines longer than the terminal width are not handled gracefully.
-.sp
-The cursor may jump up if return is pressed quickly twice in a row.
 .SH VERSION
 2.6.10
 .SH AUTHOR

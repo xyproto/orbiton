@@ -51,24 +51,24 @@ When loading large files, an animated spinner will appear. The loading operation
 
 * `ctrl-q` - Quit
 * `ctrl-s` - Save
-* `ctrl-w` - Format the current file using `goimport` or `clang-format`. Jump to the problematic line on error when using `goimport`.
+* `ctrl-w` - Format the current file using `goimport` or `clang-format`, depending on the file extension.
 * `ctrl-a` - Go to start of line, then start of text on the same line
 * `ctrl-e` - Go to end of line, then to the end of the next line
 * `ctrl-p` - Scroll up 10 lines
 * `ctrl-n` - Scroll down 10 lines
 * `ctrl-k` - Delete characters to the end of the line, then delete the line
-* `ctrl-g` - toggle status bar for filename, line, column, unicode number and word count
+* `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, unicode number and word count
 * `ctrl-d` - Delete a single character
 * `ctrl-t` - Toggle syntax highlighting
-* `ctrl-r` - Toggle text or draw mode (for ASCII graphics)
+* `ctrl-r` - Toggle between "text" and "draw mode" (for ASCII graphics)
 * `ctrl-x` - Cut the current line
 * `ctrl-c` - Copy the current line
 * `ctrl-v` - Paste the current line
 * `ctrl-b` - Bookmark the current position
 * `ctrl-j` - Jump to the bookmark
 * `ctrl-h` - Show a minimal help text
-* `ctrl-u` - Undo
-* `ctrl-l` - Jump to a specific line
+* `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application)
+* `ctrl-l` - Jump to a specific line number
 * `ctrl-f` - Find a string. Press `ctrl-f` and return to repeat the search.
 * `esc` - Redraw the screen and clear the last search.
 
