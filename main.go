@@ -779,7 +779,7 @@ esc to redraw the screen and clear the last search.
 				if r == '}' || r == ']' || r == ')' {
 					lineContents := strings.TrimSpace(e.CurrentLine())
 					whitespaceInFront := e.LeadingWhitespace()
-					if len(lineContents) == 0 && len(whitespaceInFront) > 0 {
+					if e.pos.sx > 0 && len(lineContents) == 0 && len(whitespaceInFront) > 0 {
 						// move one step left
 						e.Prev(c)
 						// trim trailing whitespace
