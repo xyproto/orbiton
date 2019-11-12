@@ -330,10 +330,10 @@ ctrl-b to build
 								//status.Show(c, e)
 							}
 						} else {
-							// This is not watertight for C++
-							//status.ClearAll(c)
-							//status.SetMessage("Build OK")
-							//status.Show(c, e)
+							// TODO: This is not correct for cxx / C++, fix
+							status.ClearAll(c)
+							status.SetMessage("Build OK")
+							status.Show(c, e)
 						}
 						break OUT2
 					}
