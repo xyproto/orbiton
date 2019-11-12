@@ -22,7 +22,7 @@ You can install `o` with Go 1.10 or later:
 ## Features and limitations
 
 * Has syntax highlighting for Go and C++ code.
-* Loads faster than both `vim` and `emacs`, but maybe not as fast as `nano`. It`s hard to tell.
+* Loads faster than both `vim` and `emacs`. It feels instant.
 * Can format Go or C++ code, just press `ctrl-w`. This uses either `goimports` (`go get golang.org/x/tools/cmd/goimports`) or `clang-format`.
 * Never asks before saving or quitting. Be careful!
 * Will strip trailing whitespace whenever it can.
@@ -53,11 +53,11 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-s` - Save
 * `ctrl-w` - Format the current file using `goimport` or `clang-format`. Jump to the problematic line on error when using `goimport`.
 * `ctrl-a` - Go to start of line, then start of text on the same line
-* `ctrl-e` - Go to end of line
+* `ctrl-e` - Go to end of line, then to the end of the next line
 * `ctrl-p` - Scroll up 10 lines
 * `ctrl-n` - Scroll down 10 lines
 * `ctrl-k` - Delete characters to the end of the line, then delete the line
-* `ctrl-g` - toggle filename/line/column/unicode/word count status display
+* `ctrl-g` - toggle status bar for filename, line, column, unicode number and word count
 * `ctrl-d` - Delete a single character
 * `ctrl-t` - Toggle syntax highlighting
 * `ctrl-r` - Toggle text or draw mode (for ASCII graphics)
@@ -69,7 +69,7 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-h` - Show a minimal help text
 * `ctrl-u` - Undo
 * `ctrl-l` - Jump to a specific line
-* `ctrl-f` - Find a string. Press ctrl-f and return to repeat the search.
+* `ctrl-f` - Find a string. Press `ctrl-f` and return to repeat the search.
 * `esc` - Redraw the screen and clear the last search.
 
 ## Size
