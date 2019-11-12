@@ -1344,3 +1344,18 @@ func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redraw bool) {
 		c.Draw()
 	}
 }
+
+// FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
+func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar) *vt100.Canvas {
+	savePos := e.pos
+	status.ClearAll(c)
+	e.SetSearchTerm("", c, status)
+	vt100.Close()
+	vt100.Reset()
+	vt100.Clear()
+	vt100.Init()
+	newC := vt100.NewCanvas()
+	newC.ShowCursor()
+	e.pos = savePos
+	return newC
+}

@@ -157,8 +157,13 @@ esc to redraw the screen and clear the last search.
 			e.fg = vt100.Red
 			// Disable syntax highlighting, to make it clear that the text is red
 			e.highlight = false
+			// Do a full reset and redraw
+			c = e.FullResetRedraw(c, status)
 			// Draw the editor lines again
-			e.DrawLines(c, false, false)
+			e.DrawLines(c, false, true)
+			// Prepare to redraw
+			e.redrawCursor = true
+			e.redraw = true
 		}
 		testFile.Close()
 	} else if err := e.Save(filename, true); err != nil {
@@ -174,6 +179,7 @@ esc to redraw the screen and clear the last search.
 	status.SetMessage(statusMessage)
 	status.Show(c, e)
 	c.Draw()
+	vt100.SetXY(0, 0)
 
 	// Undo buffer with room for 8192 actions
 	undo := NewUndo(8192)
@@ -183,8 +189,8 @@ esc to redraw the screen and clear the last search.
 
 	tty.SetTimeout(2 * time.Millisecond)
 
-	previousX := -1
-	previousY := -1
+	previousX := 1
+	previousY := 1
 
 	if lineNumber > 0 {
 		e.redraw = e.GoToLineNumber(lineNumber, c, status)
@@ -466,16 +472,9 @@ esc to redraw the screen and clear the last search.
 			// Now do a full reset/redraw
 			fallthrough
 		case "c:27": // esc, clear search term, reset, clean and redraw
-			status.ClearAll(c)
-			e.SetSearchTerm("", c, status)
-			vt100.Close()
-			vt100.Reset()
-			vt100.Clear()
-			vt100.Init()
-			c = vt100.NewCanvas()
-			c.ShowCursor()
-			e.redrawCursor = true
+			c = e.FullResetRedraw(c, status)
 			e.redraw = true
+			e.redrawCursor = true
 		case " ": // space
 			undo.Snapshot(e)
 			// Place a space
