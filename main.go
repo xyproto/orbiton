@@ -647,6 +647,10 @@ ctrl-r to run
 					// Deleting the rest of the line cleared this line,
 					// so just remove it.
 					e.DeleteLine(e.DataY())
+					// Then go to the end of the line, if needed
+					if e.AtOrAfterEndOfLine() {
+						e.End()
+					}
 				}
 				vt100.Do("Erase End of Line")
 				e.redraw = true
