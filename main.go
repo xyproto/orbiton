@@ -13,6 +13,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/atotto/clipboard"
 	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
 )
@@ -721,14 +722,27 @@ ctrl-b to build
 			undo.Snapshot(e)
 			y := e.DataY()
 			copyLine = e.Line(y)
+			// Copy the line to the clipboard
+			_ = clipboard.WriteAll(copyLine)
 			e.DeleteLine(y)
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:3": // ctrl-c, copy line
 			copyLine = e.Line(e.DataY())
+			// Copy the line to the clipboard
+			_ = clipboard.WriteAll(copyLine)
 			e.redraw = true
 		case "c:22": // ctrl-v, paste line
 			undo.Snapshot(e)
+			// Try fetching the line from the clipboard first
+			lines, err := clipboard.ReadAll()
+			if err == nil { // no error
+				if strings.Contains(lines, "\n") {
+					copyLine = strings.SplitN(lines, "\n", 2)[0]
+				} else {
+					copyLine = lines
+				}
+			}
 			e.SetLine(e.DataY(), copyLine)
 			e.End()
 			e.redrawCursor = true
