@@ -727,10 +727,13 @@ ctrl-b to build
 			e.DeleteLine(y)
 			e.redrawCursor = true
 			e.redraw = true
-		case "c:3": // ctrl-c, copy line
-			copyLine = e.Line(e.DataY())
-			// Copy the line to the clipboard
-			_ = clipboard.WriteAll(copyLine)
+		case "c:3": // ctrl-c, copy the stripped contents of the current line
+			trimmed := strings.TrimSpace(e.Line(e.DataY()))
+			if trimmed != "" {
+				copyLine = trimmed
+				// Copy the line to the clipboard
+				_ = clipboard.WriteAll(copyLine)
+			}
 			e.redraw = true
 		case "c:22": // ctrl-v, paste
 			undo.Snapshot(e)
