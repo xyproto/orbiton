@@ -735,11 +735,18 @@ ctrl-b to build
 			e.redraw = true
 		case "c:0": // ctrl-space, bookmark
 			bookmark = e.pos
-			status.SetMessage("Set bookmark on line " + strconv.Itoa(e.LineNumber()))
+			status.SetMessage("Bookmarked line " + strconv.Itoa(e.LineNumber()))
 			status.Show(c, e)
 			e.redrawCursor = true
 		case "c:10": // ctrl-j, jump to bookmark
 			e.GoToPosition(c, status, bookmark)
+			// Do the redraw manually before showing the status message
+			e.DrawLines(c, true, false)
+			e.redraw = false
+			// Show the status message.
+			status.SetMessage("Jumped to bookmark at line " + strconv.Itoa(e.LineNumber()))
+			status.Show(c, e)
+			e.redrawCursor = true
 		case "/": // check if this is was the first pressed letter or not
 			if firstLetterSinceStart == "" {
 				// Set the first letter since start to something that will not trigger this branch any more.
@@ -834,6 +841,8 @@ ctrl-b to build
 		}
 		previousX = x
 		previousY = y
+		// The first letter was not O or /, which invokes special vi-compatible behavior
+		firstLetterSinceStart = "x"
 	}
 	vt100.Clear()
 	vt100.Close()
