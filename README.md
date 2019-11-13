@@ -53,7 +53,7 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-s` - Save
 * `ctrl-w` - Format the current file using `goimport` or `clang-format`, depending on the file extension.
 * `ctrl-a` - Go to start of line, then start of text on the same line
-* `ctrl-e` - Go to end of line, then to the end of the next line
+* `ctrl-e` - Go to end of line
 * `ctrl-p` - Scroll up 10 lines
 * `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active
 * `ctrl-k` - Delete characters to the end of the line, then delete the line
