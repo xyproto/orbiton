@@ -199,6 +199,8 @@ ctrl-b to build
 		e.redrawCursor = true
 	}
 
+	dropO := false
+
 	quit := false
 	for !quit {
 		key := tty.String()
@@ -620,13 +622,13 @@ ctrl-b to build
 			}
 			e.SaveX(true)
 		case "c:5": // ctrl-e, end
-			if e.AfterEndOfLine() { // && !e.EmptyLine() {
-				// go to the end of the next line if already at the end of the line
-				e.Down(c, status)
-				e.End()
-			} else {
-				e.End()
-			}
+			//if e.AfterEndOfLine() { // && !e.EmptyLine() {
+			//	// go to the end of the next line if already at the end of the line
+			//	e.Down(c, status)
+			//	e.End()
+			//} else {
+			e.End()
+			//}
 			e.SaveX(true)
 		case "c:4": // ctrl-d, delete
 			undo.Snapshot(e)
@@ -779,7 +781,6 @@ ctrl-b to build
 		default:
 			if len([]rune(key)) > 0 && unicode.IsLetter([]rune(key)[0]) { // letter
 				undo.Snapshot(e)
-				dropO := false
 				// Check for if a special "first letter" has been pressed, which triggers vi-like behavior
 				if firstLetterSinceStart == "" {
 					firstLetterSinceStart = key
@@ -791,20 +792,30 @@ ctrl-b to build
 						firstLetterSinceStart = "x"
 						break
 					}
-				} else if firstLetterSinceStart == "O" && ([]rune(key)[0] >= 'A' && []rune(key)[0] <= 'Z') {
+				}
+				if firstLetterSinceStart == "O" {
 					// If the first typed letter since starting this editor was 'O', and this is also uppercase,
 					// then disregard the initial 'O'. This is to help vim-users.
 					dropO = true
 					// Set the first letter since start to something that will not trigger this branch any more.
 					firstLetterSinceStart = "x"
+					// ignore the O
+					break
 				}
+				// If the previous letter was an "O" and this letter is uppercase, invoke vi-compatibility for a short moment
 				if dropO {
-					// Replace the previous letter.
-					e.Prev(c)
-					e.SetRune([]rune(key)[0])
-					e.WriteRune(c)
-					e.Next(c)
-				} else if !e.DrawMode() {
+					// This is a one-time operation
+					dropO = false
+					// Lowercase? Type the O, since it was meant to be typed.
+					if unicode.IsLower([]rune(key)[0]) {
+						e.Prev(c)
+						e.SetRune('O')
+						e.WriteRune(c)
+						e.Next(c)
+					}
+				}
+				// Type the letter that was pressed
+				if !e.DrawMode() {
 					// Insert a letter. This is what normally happens.
 					e.InsertRune([]rune(key)[0])
 					e.WriteRune(c)
