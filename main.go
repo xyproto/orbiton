@@ -774,7 +774,7 @@ ctrl-b to build
 			// This was not the first pressed letter, continue handling this key in the default case
 			fallthrough
 		default:
-			if unicode.IsLetter([]rune(key)[0]) { // letter
+			if len([]rune(key)) > 0 && unicode.IsLetter([]rune(key)[0]) { // letter
 				undo.Snapshot(e)
 				dropO := false
 				// Check for if a special "first letter" has been pressed, which triggers vi-like behavior
