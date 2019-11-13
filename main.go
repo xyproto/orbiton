@@ -779,6 +779,13 @@ ctrl-b to build
 				// Check for if a special "first letter" has been pressed, which triggers vi-like behavior
 				if firstLetterSinceStart == "" {
 					firstLetterSinceStart = key
+					// If the first pressed key is "G", then invoke vi-compatible behavior and jump to the end
+					if key == "G" {
+						// Go to the end of the document
+						e.redraw = e.GoToLineNumber(e.Len()+1, c, status)
+						e.redrawCursor = true
+						break
+					}
 				} else if firstLetterSinceStart == "O" && ([]rune(key)[0] >= 'A' && []rune(key)[0] <= 'Z') {
 					// If the first typed letter since starting this editor was 'O', and this is also uppercase,
 					// then disregard the initial 'O'. This is to help vim-users.
