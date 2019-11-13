@@ -732,7 +732,7 @@ ctrl-b to build
 			// Copy the line to the clipboard
 			_ = clipboard.WriteAll(copyLine)
 			e.redraw = true
-		case "c:22": // ctrl-v, paste line
+		case "c:22": // ctrl-v, paste
 			undo.Snapshot(e)
 			// Try fetching the line from the clipboard first
 			lines, err := clipboard.ReadAll()
@@ -743,8 +743,9 @@ ctrl-b to build
 					copyLine = lines
 				}
 			}
-			e.SetLine(e.DataY(), copyLine)
-			e.End()
+			e.InsertString(c, copyLine)
+			//e.SetLine(e.DataY(), copyLine)
+			//e.End()
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:0": // ctrl-space, bookmark
@@ -773,7 +774,7 @@ ctrl-b to build
 			// This was not the first pressed letter, continue handling this key in the default case
 			fallthrough
 		default:
-			if len([]rune(key)) > 0 && unicode.IsLetter([]rune(key)[0]) { // letter
+			if unicode.IsLetter([]rune(key)[0]) { // letter
 				undo.Snapshot(e)
 				dropO := false
 				// Check for if a special "first letter" has been pressed, which triggers vi-like behavior
@@ -784,6 +785,7 @@ ctrl-b to build
 						// Go to the end of the document
 						e.redraw = e.GoToLineNumber(e.Len()+1, c, status)
 						e.redrawCursor = true
+						firstLetterSinceStart = "x"
 						break
 					}
 				} else if firstLetterSinceStart == "O" && ([]rune(key)[0] >= 'A' && []rune(key)[0] <= 'Z') {

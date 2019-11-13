@@ -554,13 +554,8 @@ func (e *Editor) DeleteLine(n int) {
 	// delete the final item
 	delete(e.lines, maxIndex)
 
-	// Check if the keys in the map are consistent
-	if err := e.MakeConsistent(); err != nil {
-		// This should never happen
-		vt100.Clear()
-		vt100.Close()
-		panic(err)
-	}
+	// Make sure lines are consistent
+	e.MakeConsistent()
 
 	e.changed = true
 }
@@ -596,13 +591,8 @@ func (e *Editor) Delete() {
 	// Delete just this character
 	e.lines[y] = append(e.lines[y][:x], e.lines[y][x+1:]...)
 
-	// Check if the keys in the map are consistent
-	if err := e.MakeConsistent(); err != nil {
-		// This should never happen
-		vt100.Clear()
-		vt100.Close()
-		panic(err)
-	}
+	// Make sure lines are consistent
+	e.MakeConsistent()
 
 	e.changed = true
 }
@@ -723,13 +713,8 @@ func (e *Editor) InsertLineBelow() {
 		}
 	}
 
-	// Check if the keys in the map are consistent
-	if err := e.MakeConsistent(); err != nil {
-		// This should never happen
-		vt100.Clear()
-		vt100.Close()
-		panic(err)
-	}
+	// Make sure lines are consistent
+	e.MakeConsistent()
 
 	e.changed = true
 }
@@ -791,13 +776,8 @@ func (e *Editor) CreateLineIfMissing(n int) {
 		e.changed = true
 	}
 
-	// Check if the keys in the map are consistent
-	if err := e.MakeConsistent(); err != nil {
-		// This should never happen
-		vt100.Clear()
-		vt100.Close()
-		panic(err)
-	}
+	// Make sure lines are consistent
+	e.MakeConsistent()
 }
 
 // SetColors will set the current editor theme (foreground, background).
@@ -919,6 +899,16 @@ func (e *Editor) SetRune(r rune) {
 // InsertRune will insert a rune at the current data position
 func (e *Editor) InsertRune(r rune) {
 	e.Insert(r)
+}
+
+// InsertString will insert a string at the current data position.
+// This will also call e.WriteRune and e.Next, as needed.
+func (e *Editor) InsertString(c *vt100.Canvas, s string) {
+	for _, r := range s {
+		e.InsertRune(r)
+		e.WriteRune(c)
+		e.Next(c)
+	}
 }
 
 // Rune will get the rune at the current data position
