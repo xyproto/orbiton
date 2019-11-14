@@ -163,9 +163,6 @@ ctrl-b to build
 			c = e.FullResetRedraw(c, status)
 			// Draw the editor lines again
 			e.DrawLines(c, false, true)
-			// Prepare to redraw
-			e.redrawCursor = true
-			e.redraw = true
 		}
 		testFile.Close()
 	} else if err := e.Save(filename, true); err != nil {
@@ -187,7 +184,7 @@ ctrl-b to build
 	undo := NewUndo(8192)
 
 	// Resize handler
-	SetUpResizeHandler(c, e, tty)
+	SetUpResizeHandler(c, e, status, tty)
 
 	tty.SetTimeout(2 * time.Millisecond)
 
@@ -471,8 +468,6 @@ ctrl-b to build
 			fallthrough
 		case "c:27": // esc, clear search term, reset, clean and redraw
 			c = e.FullResetRedraw(c, status)
-			e.redraw = true
-			e.redrawCursor = true
 		case " ": // space
 			undo.Snapshot(e)
 			// Place a space

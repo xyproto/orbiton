@@ -1347,6 +1347,8 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar) *vt100.Canv
 	newC := vt100.NewCanvas()
 	newC.ShowCursor()
 	e.pos = savePos
+	e.redraw = true
+	e.redrawCursor = true
 	return newC
 }
 
