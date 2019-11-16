@@ -103,7 +103,7 @@ ctrl-b to build
 
 	baseFilename := filepath.Base(filename)
 	gitMode := baseFilename == "COMMIT_EDITMSG" || (strings.HasPrefix(baseFilename, "git-") && !strings.Contains(baseFilename, ".") && strings.Count(baseFilename, "-") >= 2)
-	defaultHighlight := gitMode || baseFilename == "PKGBUILD" || strings.Contains(baseFilename, ".")
+	defaultHighlight := gitMode || baseFilename == "PKGBUILD" || strings.Contains(baseFilename, ".") || baseFilename == "Makefile"
 
 	tty, err := vt100.NewTTY()
 	if err != nil {
@@ -292,7 +292,6 @@ ctrl-b to build
 
 						output, err := cmd.CombinedOutput()
 						if err != nil {
-							foundMessage := false
 							lines := strings.Split(string(output), "\n")
 							for _, line := range lines {
 								if strings.Count(line, ":") >= 3 {
@@ -313,21 +312,8 @@ ctrl-b to build
 										}
 									}
 									e.redrawCursor = true
-
-									foundMessage = true
-
-									// TODO: This error never shows up. Fix it.
-									//status.ClearAll(c)
-									//status.SetMessage(fields[3])
-									//status.Show(c, e)
-
 									break
 								}
-							}
-							if !foundMessage {
-								//status.ClearAll(c)
-								//status.SetMessage("Build failed")
-								//status.Show(c, e)
 							}
 						} else {
 							// TODO: This is not correct for cxx / C++, fix
