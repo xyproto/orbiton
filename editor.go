@@ -554,10 +554,11 @@ func (e *Editor) DeleteLine(n int) {
 	// delete the final item
 	delete(e.lines, maxIndex)
 
-	// Make sure lines are consistent
+	e.changed = true
+
+	// Make sure no lines are nil
 	e.MakeConsistent()
 
-	e.changed = true
 }
 
 // Delete will delete a character at the given position
@@ -591,10 +592,10 @@ func (e *Editor) Delete() {
 	// Delete just this character
 	e.lines[y] = append(e.lines[y][:x], e.lines[y][x+1:]...)
 
-	// Make sure lines are consistent
-	e.MakeConsistent()
-
 	e.changed = true
+
+	// Make sure no lines are nil
+	e.MakeConsistent()
 }
 
 // Empty will check if the current editor contents are empty or not.
@@ -620,8 +621,9 @@ func (e *Editor) Empty() bool {
 	}
 }
 
-// MakeConsistent makes sure all the keys in the map that should be there are present, and removes all keys that should not be there
-func (e *Editor) MakeConsistent() error {
+// MakeConsistent creates an empty slice of runes for any empty lines,
+// to make sure that no line number below e.Len() points to a nil map.
+func (e *Editor) MakeConsistent() {
 	// Check if the keys in the map are consistent
 	for i := 0; i < len(e.lines); i++ {
 		if _, found := e.lines[i]; !found {
@@ -629,11 +631,6 @@ func (e *Editor) MakeConsistent() error {
 			e.changed = true
 		}
 	}
-	i := len(e.lines)
-	if _, found := e.lines[i]; found {
-		return fmt.Errorf("line number %d should not be there", i)
-	}
-	return nil
 }
 
 // InsertLineAbove will attempt to insert a new line below the current position
@@ -658,6 +655,7 @@ func (e *Editor) InsertLineAbove() {
 	// Use the new set of lines
 	e.lines = lines2
 
+	// Make sure no lines are nil
 	e.MakeConsistent()
 
 	// Skip trailing newlines after this line
@@ -668,16 +666,10 @@ func (e *Editor) InsertLineAbove() {
 			break
 		}
 	}
-
-	// Check if the keys in the map are consistent
-	if err := e.MakeConsistent(); err != nil {
-		// This should never happen
-		vt100.Clear()
-		vt100.Close()
-		panic(err)
-	}
-
 	e.changed = true
+
+	// Make sure no lines are nil
+	e.MakeConsistent()
 }
 
 // InsertLineBelow will attempt to insert a new line below the current position
@@ -702,6 +694,7 @@ func (e *Editor) InsertLineBelow() {
 	// Use the new set of lines
 	e.lines = lines2
 
+	// Make sure no lines are nil
 	e.MakeConsistent()
 
 	// Skip trailing newlines after this line
@@ -713,10 +706,10 @@ func (e *Editor) InsertLineBelow() {
 		}
 	}
 
-	// Make sure lines are consistent
-	e.MakeConsistent()
-
 	e.changed = true
+
+	// Make sure no lines are nil
+	e.MakeConsistent()
 }
 
 // Insert will insert a rune at the given position
@@ -754,15 +747,10 @@ func (e *Editor) Insert(r rune) {
 	}
 	e.lines[y] = newline
 
-	// Check if the keys in the map are consistent
-	if err := e.MakeConsistent(); err != nil {
-		// This should never happen
-		vt100.Clear()
-		vt100.Close()
-		panic(err)
-	}
-
 	e.changed = true
+
+	// Make sure no lines are nil
+	e.MakeConsistent()
 }
 
 // CreateLineIfMissing will create a line at the given Y index, if it's missing
@@ -776,7 +764,7 @@ func (e *Editor) CreateLineIfMissing(n int) {
 		e.changed = true
 	}
 
-	// Make sure lines are consistent
+	// Make sure no lines are nil
 	e.MakeConsistent()
 }
 
@@ -896,8 +884,12 @@ func (e *Editor) SetRune(r rune) {
 	}
 }
 
-// InsertRune will insert a rune at the current data position
-func (e *Editor) InsertRune(r rune) {
+// InsertRune will insert a rune at the current data position, with word wrap
+func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
+	w := int(c.Width())
+	if e.pos.sx >= w {
+		panic("WORD WRAP TIME!")
+	}
 	e.Insert(r)
 }
 
@@ -905,7 +897,7 @@ func (e *Editor) InsertRune(r rune) {
 // This will also call e.WriteRune and e.Next, as needed.
 func (e *Editor) InsertString(c *vt100.Canvas, s string) {
 	for _, r := range s {
-		e.InsertRune(r)
+		e.InsertRune(c, r)
 		e.WriteRune(c)
 		e.Next(c)
 	}
@@ -1287,7 +1279,7 @@ func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
 // GoToLineNumber will go to a given line number, but counting from 1, not from 0!
 func (e *Editor) GoToLineNumber(lineNumber int, c *vt100.Canvas, status *StatusBar, center bool) bool {
 	redraw := e.GoTo(lineNumber-1, c, status)
-	if center {
+	if redraw && center {
 		e.Center(c)
 	}
 	return redraw
@@ -1408,29 +1400,35 @@ func (e *Editor) GoToPrevParagraph(c *vt100.Canvas, status *StatusBar) bool {
 
 // Center will scroll the contents so that the line with the cursor ends up in the center of the screen
 func (e *Editor) Center(c *vt100.Canvas) {
+	// Find the terminal height
 	h := int(c.Height())
 
+	// General information about how the positions and offsets relate:
+	//
 	// offset + screen y = data y
-
+	//
 	// offset = e.pos.offset
 	// screen y = e.pos.sy
 	// data y = e.DataY()
+	//
+	// offset = data y - screen y
 
-	// offset == data y - screen y
-
+	// Plan:
 	// 1. offset = data y - (h / 2)
 	// 2. screen y = data y - offset
 
+	// Find the center line
 	centerY := h / 2
-
 	if e.DataY() < centerY {
 		// Not enough room to adjust
 		return
 	}
 
+	// Find the new offset and y position
 	newOffset := e.DataY() - centerY
 	newScreenY := e.DataY() - newOffset
 
+	// Assign the new values to the editor
 	e.pos.offset = newOffset
 	e.pos.sy = newScreenY
 }
