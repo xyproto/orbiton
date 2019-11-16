@@ -364,7 +364,7 @@ ctrl-b to build
 					}
 				}
 			}
-		case "c:18": // ctrl-r, render as PNG
+		case "c:18": // ctrl-r, screen recording or render as PNG
 			// TODO: implement
 		case "c:25": // ctrl-y, not used for anything yet
 			// TODO: implement
@@ -635,11 +635,21 @@ ctrl-b to build
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:1": // ctrl-a, home
-			// If at the start of the line,
-			if x, err := e.DataX(); err == nil && x == 0 {
+			// If at an empty line, go up one line
+			if e.EmptyRightTrimmedLine() {
+				e.Up(c, status)
+				e.GoToStartOfTextLine()
+			} else if x, err := e.DataX(); err == nil && x == 0 {
+				// If at the start of the line,
 				// go to the end of the previous paragraph
-				e.redraw = e.GoToPrevParagraph(c, status)
-				e.End()
+				if e.GoToPrevParagraph(c, status) {
+					e.redraw = true
+					e.End()
+				} else {
+					// if a previous paragraph was not found, go to the start of the text above
+					e.Up(c, status)
+					e.GoToStartOfTextLine()
+				}
 			} else if e.AtStartOfTextLine() {
 				// If at the start of the text, go to the start of the line
 				e.Home()
@@ -889,9 +899,7 @@ ctrl-b to build
 				e.redraw = true
 			}
 		}
-		if statusMode {
-			status.ShowLineColWordCount(c, e, filename)
-		}
+		// Redraw, if needed
 		if e.redraw {
 			// Draw the editor lines on the canvas, respecting the offset
 			e.DrawLines(c, true, false)
@@ -899,6 +907,11 @@ ctrl-b to build
 		} else if e.Changed() {
 			c.Draw()
 		}
+		// Drawing status messages should come after redrawing, but before cursor positioning
+		if statusMode {
+			status.ShowLineColWordCount(c, e, filename)
+		}
+		// Position the cursor
 		x := e.pos.ScreenX()
 		y := e.pos.ScreenY()
 		if e.redrawCursor || x != previousX || y != previousY {
