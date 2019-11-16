@@ -904,7 +904,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	}
 
 	lineContents := e.CurrentLine()
-	if e.pos.sx < w || len(lineContents) == 0 {
+	if e.pos.sx < (w-1) || len(lineContents) == 0 {
 		// Not a word-wrap situation, insert the rune and leave
 		e.Insert(r)
 		return
@@ -946,23 +946,52 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 			e.Insert(r)
 			return
 		}
-		beginningOfWord := words[len(words)-1]
+		//beginningOfWord := words[len(words)-1]
+		//preceededBySpace := len(words) > 1
 		// The length of the word being typed is already longer than the accepted width!
-		if len(beginningOfWord) >= w {
-			// Split it at the end - 1, then add a dash
-			e.pos.sx = w - 1
+		if len(words) == 1 {
+			// Split it at the end - 2, then add a dash
+			e.pos.sx = w - 2
 			e.SplitLine()
 			e.Insert('-')
+			e.Down(c, nil)
 		} else {
-			e.pos.sx = len(e.lines[y]) - len(beginningOfWord)
+			// TODO: This is ugly. Rewrite.
+			e.End()
+			// > 0 instead of >= 0 to avoid the final Prev
+			for i := len(e.lines[e.DataY()]) - 1; i > 0; i-- {
+				if e.lines[e.DataY()][i] == rune(' ') {
+					break
+				}
+				e.Prev(c)
+			}
 			e.SplitLine()
+			e.Down(c, nil)
+			// Tremove the single trailing space, if present
+			// TODO: This is ugly. Rewrite.
+			if len(e.lines[e.DataY()]) > 0 {
+				if e.lines[e.DataY()][0] == rune(' ') {
+					e.lines[e.DataY()] = e.lines[e.DataY()][1:]
+				}
+			}
+			// If this line now has a space as the second letter, then move it up to the end of the line above.
+			// TODO: This is ugly. Rewrite.
+			if len(e.lines[e.DataY()]) > 2 {
+				if e.lines[e.DataY()][2] == rune(' ') {
+					// Add it to the line above
+					e.lines[e.DataY()-1] = append(e.lines[e.DataY()-1], e.lines[e.DataY()][0])
+					// Remove it from this line
+					e.lines[e.DataY()] = e.lines[e.DataY()][2:]
+				}
+			}
 		}
-		e.Down(c, nil)
 		e.End()
 		e.Insert(r)
 		e.redrawCursor = true
 	}
 
+	// Just to make sure
+	e.MakeConsistent()
 	e.redraw = true
 }
 
