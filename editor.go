@@ -31,6 +31,7 @@ type Editor struct {
 	gitMode          bool
 	gitColor         vt100.AttributeColor // git commit message color
 	lineBeforeSearch int
+	wordWrapAt       int // set to 80 or 100 to trigger word wrap when typing to that column
 }
 
 // NewEditor takes:
@@ -51,6 +52,7 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEdi
 	p := NewPosition(scrollSpeed)
 	e.pos = *p
 	e.searchFg = searchFg
+	e.wordWrapAt = 99 // When typing, wrap words when reaching column 99
 	return e
 }
 
@@ -887,9 +889,47 @@ func (e *Editor) SetRune(r rune) {
 // InsertRune will insert a rune at the current data position, with word wrap
 func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	w := int(c.Width())
-	if e.pos.sx >= w {
-		panic("WORD WRAP TIME!")
+
+	// Use the smallest value of the terminal width and the configured
+	// e.wordWrapAt for the word wrap limit
+	if (e.wordWrapAt > 0) && (e.wordWrapAt < w) {
+		w = e.wordWrapAt
 	}
+
+	if e.pos.sx >= w {
+		// Word wrap time, what should be done?
+		// 1. fetch the final word of this line and remove it from this line
+		words := strings.Fields(e.CurrentLine())
+		lastWord := ""
+		if len(words) > 0 {
+			lastWord = words[len(words)-1]
+		}
+		y := e.DataY()
+		// number of runes in this line
+		rc := len(e.lines[y])
+		// number of runes in the last word
+		lwrc := len([]rune(lastWord))
+		// find the position where the lines should be cut off
+		cutOffPos := (rc - 1) - lwrc
+		// shorten the current line
+		if cutOffPos > 0 {
+			e.lines[y] = e.lines[y][:cutOffPos]
+			// trim the current line after shortening
+			//e.TrimRight(y)
+		}
+		// Now start a new line below
+		e.CreateLineIfMissing(y + 1)
+		// Then go there, without clearing status bar messages
+		e.GoTo(y+1, c, nil)
+		e.Home()
+		// And then place the word there
+		e.InsertString(c, lastWord)
+		// If the last word was just one letter, insert an exclamation mark
+		if len(lastWord) == 1 {
+			e.Insert(rune('!'))
+		}
+	}
+	// Insert the given rune
 	e.Insert(r)
 }
 
@@ -1226,7 +1266,12 @@ func (e *Editor) AtOrBeforeStartOfTextLine() bool {
 
 // GoTo will go to a given line index, counting from 0
 // Returns true if the editor should be redrawn
+// status is used for clearing status bar messages and can be nil
 func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
+	if dataY == e.DataY() {
+		// Already at the correct line
+		return false
+	}
 	reachedEnd := false
 	// Out of bounds checking for y
 	if dataY < 0 {
@@ -1270,7 +1315,9 @@ func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
 	e.pos.SetX(e.FirstScreenPosition(e.DataY()))
 
 	// Clear all status messages
-	status.ClearAll(c)
+	if status != nil {
+		status.ClearAll(c)
+	}
 
 	// Now redraw
 	return true
@@ -1291,6 +1338,7 @@ func (e *Editor) Up(c *vt100.Canvas, status *StatusBar) {
 }
 
 // Down tries to move the cursor down, and also scroll
+// status is used for clearing status bar messages and can be nil
 func (e *Editor) Down(c *vt100.Canvas, status *StatusBar) {
 	e.GoTo(e.DataY()+1, c, status)
 }
