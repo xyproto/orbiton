@@ -202,12 +202,14 @@ ctrl-b to build
 
 	// Check if a line number was given on the command line
 	if lineNumber > 0 {
-		e.redraw = e.GoToLineNumber(lineNumber, c, status, false)
+		e.GoToLineNumber(lineNumber, c, status, false)
+		e.redraw = true
 		e.redrawCursor = true
 	} else if recordedLineNumber, ok := locationHistory[absFilename]; ok {
 		// If this filename exists in the location history, jump there
 		lineNumber = recordedLineNumber
-		e.redraw = e.GoToLineNumber(lineNumber, c, status, true)
+		e.GoToLineNumber(lineNumber, c, status, true)
+		e.redraw = true
 		e.redrawCursor = true
 	} else {
 		// Draw editor lines from line 0 to h onto the canvas at 0,0
@@ -777,6 +779,7 @@ ctrl-b to build
 				// Copy the line to the clipboard
 				_ = clipboard.WriteAll(copyLine)
 			}
+			e.redrawCursor = true
 			e.redraw = true
 		case "c:22": // ctrl-v, paste
 			undo.Snapshot(e)
