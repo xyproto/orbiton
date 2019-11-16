@@ -33,10 +33,10 @@ displays brief usage information
   Format the current file with \fBgoimport\fP or \fBclang-format\fP, depending on the file extension.
 .sp
 .B ctrl-a
-  Go to start of ithe line, or to the start of the text if already at the start of the line.
+  Go to start of ithe line, or to the start of the text if already at the start of the line, then to the previous paragraph if at the start of the line.
 .sp
 .B ctrl-e
-  Go to end of the line.
+  Go to end of the line, then to th next paragraph.
 .sp
 .B ctrl-p
   Scroll up 10 lines.
@@ -101,7 +101,7 @@ I wanted to write a simple editor that only used VT100 terminal codes.
 .SH BUGS
 Lines longer than the terminal width are not handled gracefully.
 .SH VERSION
-2.7.3
+2.7.4
 .SH AUTHOR
 .B o
 was written by  Alexander F. Rødseth <xyproto@archlinux.org>

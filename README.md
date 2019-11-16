@@ -52,8 +52,8 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-q` - Quit
 * `ctrl-s` - Save
 * `ctrl-w` - Format the current file using `goimport` or `clang-format`, depending on the file extension.
-* `ctrl-a` - Go to start of line, then start of text on the same line
-* `ctrl-e` - Go to end of line
+* `ctrl-a` - Go to start of line, then start of text on the same line, then the previous paragraph.
+* `ctrl-e` - Go to end of line, then next paragraph.
 * `ctrl-p` - Scroll up 10 lines
 * `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active
 * `ctrl-k` - Delete characters to the end of the line, then delete the line
@@ -104,6 +104,6 @@ The reason for adding these is to make using `o` easier to use for long-time vi/
 
 ## General info
 
-* Version: 2.7.3
+* Version: 2.7.4
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

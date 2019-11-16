@@ -18,7 +18,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "o 2.7.3"
+const versionString = "o 2.7.4"
 
 func main() {
 	var (
@@ -73,8 +73,8 @@ Hotkeys
 ctrl-q to quit
 ctrl-s to save
 ctrl-w to format the current file with "go fmt"
-ctrl-a go to start of line, then start of text
-ctrl-e go to end of line
+ctrl-a go to start of line, then start of text, then previous paragraph
+ctrl-e go to end of line, then next paragraph
 ctrl-p to scroll up 10 lines
 ctrl-n to scroll down 10 lines or go to the next match if a search is active
 ctrl-k to delete characters to the end of the line, then delete the line
