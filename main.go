@@ -54,6 +54,8 @@ func main() {
 		statusMode bool     // if information should be shown at the bottom
 
 		firstLetterSinceStart string
+
+		locationHistory map[string]int // remember where we were in each absolute filename
 	)
 
 	flag.Parse()
@@ -133,8 +135,9 @@ ctrl-b to build
 		e.InsertLineBelow()
 	}
 
-	// Draw editor lines from line 0 to h onto the canvas at 0,0
-	e.DrawLines(c, false, false)
+	// We wish to redraw the canvas and reposition the cursor
+	e.redraw = true
+	e.redrawCursor = true
 
 	// Friendly status message
 	statusMessage := "New " + filename
@@ -163,6 +166,7 @@ ctrl-b to build
 			c = e.FullResetRedraw(c, status)
 			// Draw the editor lines again
 			e.DrawLines(c, false, true)
+			e.redraw = false
 		}
 		testFile.Close()
 	} else if err := e.Save(filename, true); err != nil {
@@ -175,10 +179,6 @@ ctrl-b to build
 			quitError(tty, errors.New("could not remove an empty file that was just created: "+filename))
 		}
 	}
-	status.SetMessage(statusMessage)
-	status.Show(c, e)
-	c.Draw()
-	vt100.SetXY(0, 0)
 
 	// Undo buffer with room for 8192 actions
 	undo := NewUndo(8192)
@@ -191,9 +191,46 @@ ctrl-b to build
 	previousX := 1
 	previousY := 1
 
+	// Find the absolute path to this filename
+	absFilename, err := filepath.Abs(filename)
+	if err != nil {
+		absFilename = filename
+	}
+
+	// Load the location history, if available
+	locationHistory = LoadLocationHistory(expandUser(locationHistoryFilename))
+
+	// Check if a line number was given on the command line
 	if lineNumber > 0 {
+		e.redraw = e.GoToLineNumber(lineNumber, c, status, false)
+		e.redrawCursor = true
+	} else if recordedLineNumber, ok := locationHistory[absFilename]; ok {
+		// If this filename exists in the location history, jump there
+		lineNumber = recordedLineNumber
 		e.redraw = e.GoToLineNumber(lineNumber, c, status, true)
 		e.redrawCursor = true
+	} else {
+		// Draw editor lines from line 0 to h onto the canvas at 0,0
+		e.DrawLines(c, false, false)
+		e.redraw = false
+	}
+
+	if e.redraw {
+		e.Center(c)
+		e.DrawLines(c, true, false)
+		e.redraw = false
+	}
+
+	status.SetMessage(statusMessage)
+	status.Show(c, e)
+
+	if e.redrawCursor {
+		x := e.pos.ScreenX()
+		y := e.pos.ScreenY()
+		previousX = x
+		previousY = y
+		vt100.SetXY(uint(x), uint(y))
+		e.redrawCursor = false
 	}
 
 	dropO := false
@@ -247,6 +284,7 @@ ctrl-b to build
 											if foundX != -1 {
 												tabs := strings.Count(e.Line(foundY), "\t")
 												e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
+												e.Center(c)
 											}
 										}
 										e.redrawCursor = true
@@ -309,6 +347,7 @@ ctrl-b to build
 										if foundX != -1 {
 											tabs := strings.Count(e.Line(foundY), "\t")
 											e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
+											e.Center(c)
 										}
 									}
 									e.redrawCursor = true
@@ -460,7 +499,7 @@ ctrl-b to build
 			undo.Snapshot(e)
 			// Place a space
 			if !e.DrawMode() {
-				e.InsertRune(' ')
+				e.InsertRune(c, ' ')
 				e.redraw = true
 			} else {
 				e.SetRune(' ')
@@ -507,7 +546,7 @@ ctrl-b to build
 					e.Home()
 					// Insert the same leading whitespace for the new line, while moving to the right
 					for _, r := range leadingWhitespace {
-						e.InsertRune(r)
+						e.InsertRune(c, r)
 						e.Next(c)
 					}
 				} else if e.AfterEndOfLine() {
@@ -521,7 +560,7 @@ ctrl-b to build
 					e.Home()
 					// Insert the same leading whitespace for the new line, while moving to the right
 					for _, r := range leadingWhitespace {
-						e.InsertRune(r)
+						e.InsertRune(c, r)
 						e.Next(c)
 					}
 				} else {
@@ -535,7 +574,7 @@ ctrl-b to build
 						e.Home()
 						// Insert the same leading whitespace for the new line, while moving to the right
 						for _, r := range leadingWhitespace {
-							e.InsertRune(r)
+							e.InsertRune(c, r)
 							e.Next(c)
 						}
 					} else {
@@ -582,7 +621,7 @@ ctrl-b to build
 			if !e.DrawMode() {
 				// Place a tab
 				if !e.DrawMode() {
-					e.InsertRune('\t')
+					e.InsertRune(c, '\t')
 				} else {
 					e.SetRune('\t')
 				}
@@ -645,6 +684,8 @@ ctrl-b to build
 				status.Show(c, e)
 				c.Draw()
 			}
+			// Save the current location in the location history and write it to file
+			e.SaveLocation(absFilename, locationHistory)
 		case "c:21", "c:26": // ctrl-u or ctrl-z, undo (ctrl-z may background the application)
 			if err := undo.Restore(e); err == nil {
 				//c.Draw()
@@ -805,7 +846,7 @@ ctrl-b to build
 				// Type the letter that was pressed
 				if !e.DrawMode() {
 					// Insert a letter. This is what normally happens.
-					e.InsertRune([]rune(key)[0])
+					e.InsertRune(c, []rune(key)[0])
 					e.WriteRune(c)
 					e.Next(c)
 				} else {
@@ -833,7 +874,7 @@ ctrl-b to build
 				}
 
 				if !e.DrawMode() {
-					e.InsertRune([]rune(key)[0])
+					e.InsertRune(c, []rune(key)[0])
 				} else {
 					e.SetRune([]rune(key)[0])
 				}
@@ -869,8 +910,10 @@ ctrl-b to build
 		// The first letter was not O or /, which invokes special vi-compatible behavior
 		firstLetterSinceStart = "x"
 	}
+	// Save the current location in the location history and write it to file
+	e.SaveLocation(absFilename, locationHistory)
+	// Quit everything that has to do with the terminal
 	vt100.Clear()
 	vt100.Close()
 	tty.Close()
-	//fmt.Println(filename)
 }
