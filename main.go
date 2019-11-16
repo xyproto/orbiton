@@ -601,6 +601,7 @@ ctrl-b to build
 			} else {
 				e.pos.SetX(e.FirstScreenPosition(e.DataY()))
 			}
+			e.redrawCursor = true
 			e.SaveX(true)
 		case "c:5": // ctrl-e, end
 			//if e.AfterEndOfLine() { // && !e.EmptyLine() {
@@ -610,6 +611,7 @@ ctrl-b to build
 			//} else {
 			e.End()
 			//}
+			e.redrawCursor = true
 			e.SaveX(true)
 		case "c:4": // ctrl-d, delete
 			undo.Snapshot(e)
