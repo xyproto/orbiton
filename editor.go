@@ -1358,3 +1358,46 @@ func (e *Editor) GoToPosition(c *vt100.Canvas, status *StatusBar, pos Position) 
 	e.redraw = e.GoTo(e.DataY(), c, status)
 	e.redrawCursor = true
 }
+
+// GoToStartOfTextLine will go to the start of the non-whitespace text, for this line
+func (e *Editor) GoToStartOfTextLine() {
+	e.pos.SetX(e.FirstScreenPosition(e.DataY()))
+}
+
+// GoToNextParagraph will jump to the next line that has a blank line above it, if possible
+// Returns true if the editor should be redrawn
+func (e *Editor) GoToNextParagraph(c *vt100.Canvas, status *StatusBar) bool {
+	lastFoundBlankLine := -1
+	for i := e.DataY() + 1; i < e.Len(); i++ {
+		// Check if this is a blank line
+		if len(strings.TrimSpace(e.Line(i))) == 0 {
+			lastFoundBlankLine = i
+		} else {
+			// This is a non-blank line, check if the line above is blank (or before the first line)
+			if lastFoundBlankLine == (i - 1) {
+				// Yes, this is the line we wish to jump to
+				return e.GoTo(i, c, status)
+			}
+		}
+	}
+	return false
+}
+
+// GoToPrevParagraph will jump to the next line that has a blank line below it, if possible
+// Returns true if the editor should be redrawn
+func (e *Editor) GoToPrevParagraph(c *vt100.Canvas, status *StatusBar) bool {
+	lastFoundBlankLine := e.Len()
+	for i := e.DataY() - 1; i >= 0; i-- {
+		// Check if this is a blank line
+		if len(strings.TrimSpace(e.Line(i))) == 0 {
+			lastFoundBlankLine = i
+		} else {
+			// This is a non-blank line, check if the line below is blank (or after the last line)
+			if lastFoundBlankLine == (i + 1) {
+				// Yes, this is the line we wish to jump to
+				return e.GoTo(i, c, status)
+			}
+		}
+	}
+	return false
+}

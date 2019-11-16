@@ -476,7 +476,6 @@ ctrl-b to build
 			if !e.DrawMode() {
 				e.TrimRight(e.DataY())
 				lineContents := e.CurrentLine()
-				e.FirstScreenPosition(e.DataY())
 				if e.pos.AtStartOfLine() {
 					// Insert a new line a the current y position, then shift the rest down.
 					e.InsertLineAbove()
@@ -595,22 +594,25 @@ ctrl-b to build
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:1": // ctrl-a, home
-			// toggle between start of line and start of non-whitespace
-			if e.AtStartOfTextLine() {
+			if x, err := e.DataX(); err == nil && x == 0 {
+				// If at the start of the line, go to the previous paragraph
+				e.redraw = e.GoToPrevParagraph(c, status)
+			} else if e.AtStartOfTextLine() {
+				// If at the start of the text, go to the start of the line
 				e.Home()
 			} else {
-				e.pos.SetX(e.FirstScreenPosition(e.DataY()))
+				// If none of the above, go to the start of the text
+				e.GoToStartOfTextLine()
 			}
 			e.redrawCursor = true
 			e.SaveX(true)
 		case "c:5": // ctrl-e, end
-			//if e.AfterEndOfLine() { // && !e.EmptyLine() {
-			//	// go to the end of the next line if already at the end of the line
-			//	e.Down(c, status)
-			//	e.End()
-			//} else {
-			e.End()
-			//}
+			if e.AfterEndOfLine() {
+				// go to the next paragraph
+				e.redraw = e.GoToNextParagraph(c, status)
+			} else {
+				e.End()
+			}
 			e.redrawCursor = true
 			e.SaveX(true)
 		case "c:4": // ctrl-d, delete
