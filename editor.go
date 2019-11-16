@@ -1496,7 +1496,7 @@ func (e *Editor) GoToNextParagraph(c *vt100.Canvas, status *StatusBar) bool {
 	return false
 }
 
-// GoToPrevParagraph will jump to the next line that has a blank line below it, if possible
+// GoToPrevParagraph will jump to the previous line that has a blank line below it, if possible
 // Returns true if the editor should be redrawn
 func (e *Editor) GoToPrevParagraph(c *vt100.Canvas, status *StatusBar) bool {
 	lastFoundBlankLine := e.Len()
