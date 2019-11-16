@@ -192,7 +192,7 @@ ctrl-b to build
 	previousY := 1
 
 	if lineNumber > 0 {
-		e.redraw = e.GoToLineNumber(lineNumber, c, status)
+		e.redraw = e.GoToLineNumber(lineNumber, c, status, true)
 		e.redrawCursor = true
 	}
 
@@ -326,6 +326,8 @@ ctrl-b to build
 				}
 			}
 		case "c:18": // ctrl-r, render as PNG
+			// TODO: implement
+		case "c:25": // ctrl-y, not used for anything yet
 			// TODO: implement
 		case "c:15": // ctrl-o, toggle draw mode
 			e.ToggleDrawMode()
@@ -594,9 +596,11 @@ ctrl-b to build
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:1": // ctrl-a, home
+			// If at the start of the line,
 			if x, err := e.DataX(); err == nil && x == 0 {
-				// If at the start of the line, go to the previous paragraph
+				// go to the end of the previous paragraph
 				e.redraw = e.GoToPrevParagraph(c, status)
+				e.End()
 			} else if e.AtStartOfTextLine() {
 				// If at the start of the text, go to the start of the line
 				e.Home()
@@ -608,8 +612,9 @@ ctrl-b to build
 			e.SaveX(true)
 		case "c:5": // ctrl-e, end
 			if e.AfterEndOfLine() {
-				// go to the next paragraph
+				// go to the start of the next paragraph
 				e.redraw = e.GoToNextParagraph(c, status)
+				e.GoToStartOfTextLine()
 			} else {
 				e.End()
 			}
@@ -681,7 +686,7 @@ ctrl-b to build
 			status.ClearAll(c)
 			if lns != "" {
 				if ln, err := strconv.Atoi(lns); err == nil { // no error
-					e.redraw = e.GoToLineNumber(ln, c, status)
+					e.redraw = e.GoToLineNumber(ln, c, status, true)
 				}
 			}
 			e.redrawCursor = true
@@ -734,8 +739,6 @@ ctrl-b to build
 				}
 			}
 			e.InsertString(c, copyLine)
-			//e.SetLine(e.DataY(), copyLine)
-			//e.End()
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:0": // ctrl-space, bookmark
@@ -772,7 +775,7 @@ ctrl-b to build
 					// If the first pressed key is "G", then invoke vi-compatible behavior and jump to the end
 					if key == "G" {
 						// Go to the end of the document
-						e.redraw = e.GoToLineNumber(e.Len()+1, c, status)
+						e.redraw = e.GoToLineNumber(e.Len()+1, c, status, true)
 						e.redrawCursor = true
 						firstLetterSinceStart = "x"
 						break

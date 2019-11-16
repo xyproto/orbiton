@@ -1285,8 +1285,12 @@ func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
 }
 
 // GoToLineNumber will go to a given line number, but counting from 1, not from 0!
-func (e *Editor) GoToLineNumber(lineNumber int, c *vt100.Canvas, status *StatusBar) bool {
-	return e.GoTo(lineNumber-1, c, status)
+func (e *Editor) GoToLineNumber(lineNumber int, c *vt100.Canvas, status *StatusBar, center bool) bool {
+	redraw := e.GoTo(lineNumber-1, c, status)
+	if center {
+		e.Center(c)
+	}
+	return redraw
 }
 
 // Up tried to move the cursor up, and also scroll
@@ -1400,4 +1404,33 @@ func (e *Editor) GoToPrevParagraph(c *vt100.Canvas, status *StatusBar) bool {
 		}
 	}
 	return false
+}
+
+// Center will scroll the contents so that the line with the cursor ends up in the center of the screen
+func (e *Editor) Center(c *vt100.Canvas) {
+	h := int(c.Height())
+
+	// offset + screen y = data y
+
+	// offset = e.pos.offset
+	// screen y = e.pos.sy
+	// data y = e.DataY()
+
+	// offset == data y - screen y
+
+	// 1. offset = data y - (h / 2)
+	// 2. screen y = data y - offset
+
+	centerY := h / 2
+
+	if e.DataY() < centerY {
+		// Not enough room to adjust
+		return
+	}
+
+	newOffset := e.DataY() - centerY
+	newScreenY := e.DataY() - newOffset
+
+	e.pos.offset = newOffset
+	e.pos.sy = newScreenY
 }

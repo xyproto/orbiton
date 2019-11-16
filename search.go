@@ -70,6 +70,7 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar) {
 				tabs := strings.Count(e.Line(foundY), "\t")
 				e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
 			}
+			e.Center(c)
 			e.redraw = true
 			e.redrawCursor = e.redraw
 		} else {
@@ -123,4 +124,5 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 	status.ClearAll(c)
 	e.SetSearchTerm(s, c, status)
 	e.GoToNextMatch(c, status)
+	e.Center(c)
 }
