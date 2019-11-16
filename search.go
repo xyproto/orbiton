@@ -16,7 +16,10 @@ func (e *Editor) SetSearchTerm(s string, c *vt100.Canvas, status *StatusBar) {
 		if strings.Contains(e.Line(y), s) {
 			// Found an instance, scroll there
 			// GoTo returns true if the screen should be redrawn
-			e.GoTo(y, c, status)
+			redraw := e.GoTo(y, c, status)
+			if redraw {
+				e.Center(c)
+			}
 			break
 		}
 	}
