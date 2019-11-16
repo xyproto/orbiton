@@ -635,7 +635,7 @@ func (e *Editor) MakeConsistent() {
 	}
 }
 
-// InsertLineAbove will attempt to insert a new line below the current position
+// InsertLineAbove will attempt to insert a new line above the current position
 func (e *Editor) InsertLineAbove() {
 	y := e.DataY()
 
@@ -678,11 +678,19 @@ func (e *Editor) InsertLineAbove() {
 func (e *Editor) InsertLineBelow() {
 	y := e.DataY()
 
+	// If we are the the last line, add an empty line at the end and return
+	if y == (len(e.lines) - 1) {
+		e.lines[y+1] = make([]rune, 0)
+		e.changed = true
+		e.MakeConsistent()
+		return
+	}
+
 	// Create new set of lines
 	lines2 := make(map[int][]rune)
 
-	// For each line in the old map, if at (y-1), insert a blank line
-	// (insert a blank line above)
+	// For each line in the old map, if at y, insert a blank line
+	// (insert a blank line below)
 	for k, v := range e.lines {
 		if k < y {
 			lines2[k] = v
@@ -765,7 +773,6 @@ func (e *Editor) CreateLineIfMissing(n int) {
 		e.lines[n] = make([]rune, 0)
 		e.changed = true
 	}
-
 	// Make sure no lines are nil
 	e.MakeConsistent()
 }
@@ -888,7 +895,7 @@ func (e *Editor) SetRune(r rune) {
 
 // InsertRune will insert a rune at the current data position, with word wrap
 func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
-	w := int(c.Width())
+	w := int(c.Width() - 1)
 
 	// Use the smallest value of the terminal width and the configured
 	// e.wordWrapAt for the word wrap limit
@@ -896,41 +903,67 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		w = e.wordWrapAt
 	}
 
-	if e.pos.sx >= w {
-		// Word wrap time, what should be done?
-		// 1. fetch the final word of this line and remove it from this line
-		words := strings.Fields(e.CurrentLine())
-		lastWord := ""
-		if len(words) > 0 {
-			lastWord = words[len(words)-1]
-		}
-		y := e.DataY()
-		// number of runes in this line
-		rc := len(e.lines[y])
-		// number of runes in the last word
-		lwrc := len([]rune(lastWord))
-		// find the position where the lines should be cut off
-		cutOffPos := (rc - 1) - lwrc
-		// shorten the current line
-		if cutOffPos > 0 {
-			e.lines[y] = e.lines[y][:cutOffPos]
-			// trim the current line after shortening
-			//e.TrimRight(y)
-		}
-		// Now start a new line below
-		e.CreateLineIfMissing(y + 1)
-		// Then go there, without clearing status bar messages
-		e.GoTo(y+1, c, nil)
-		e.Home()
-		// And then place the word there
-		e.InsertString(c, lastWord)
-		// If the last word was just one letter, insert an exclamation mark
-		if len(lastWord) == 1 {
-			e.Insert(rune('!'))
-		}
+	lineContents := e.CurrentLine()
+	if e.pos.sx < w || len(lineContents) == 0 {
+		// Not a word-wrap situation, insert the rune and leave
+		e.Insert(r)
+		return
 	}
-	// Insert the given rune
-	e.Insert(r)
+
+	y := e.DataY()
+	lastRune := e.lines[y][len(e.lines[y])-1]
+
+	// This way of doing word wrap while typing is not the best, since there will be no re-flow if lines are modified later on.
+	// There could be a hotkey to reflow text, though.
+	// TODO: Ctrl-w for regular text files should reflow the text.
+
+	if r == rune(' ') { // We are inserting a space at the end of a line that is going to be wrapped, just ignore it and go to the next line.
+		e.GoTo(e.DataY(), c, nil)
+		e.TrimRight(y)
+		if e.AtLastLineOfDocument() {
+			e.CreateLineIfMissing(e.DataY() + 1)
+		}
+		// TODO: Figure out why on earth down goes two down!
+		e.pos.Down(c)
+		e.pos.Up()
+		e.redrawCursor = true
+		// Don't insert the rune, since it would be a space at the beginning of a new line
+	} else if lastRune == rune(' ') { // If we reached the end and the last rune is a space, great, just jump to the next line and insert it there.
+		// Create a new line
+		//if e.AtLastLineOfDocument() {
+		e.CreateLineIfMissing(y + 1)
+		//}
+		// Then go there, without clearing status bar messages
+		e.Down(c, nil)
+		// Now insert the given rune
+		e.Insert(r)
+		e.redrawCursor = true
+	} else { // This is where it's interesting, we are in the middle of typing a word when the wrapping happens.
+		// The first part of the word we are typing are the letters at the end of this line
+		words := strings.Fields(e.CurrentLine())
+		if len(words) == 0 {
+			// This should never happen, just insert the given rune and leave
+			e.Insert(r)
+			return
+		}
+		beginningOfWord := words[len(words)-1]
+		// The length of the word being typed is already longer than the accepted width!
+		if len(beginningOfWord) >= w {
+			// Split it at the end - 1, then add a dash
+			e.pos.sx = w - 1
+			e.SplitLine()
+			e.Insert('-')
+		} else {
+			e.pos.sx = len(e.lines[y]) - len(beginningOfWord)
+			e.SplitLine()
+		}
+		e.Down(c, nil)
+		e.End()
+		e.Insert(r)
+		e.redrawCursor = true
+	}
+
+	e.redraw = true
 }
 
 // InsertString will insert a string at the current data position.
@@ -1269,8 +1302,8 @@ func (e *Editor) AtOrBeforeStartOfTextLine() bool {
 // status is used for clearing status bar messages and can be nil
 func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
 	if dataY == e.DataY() {
-		// Already at the correct line
-		return false
+		// Already at the correct line, but still trigger a redraw
+		return true
 	}
 	reachedEnd := false
 	// Out of bounds checking for y
@@ -1319,12 +1352,19 @@ func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
 		status.ClearAll(c)
 	}
 
-	// Now redraw
+	// Trigger cursor redraw
+	e.redrawCursor = true
+
+	// Should also redraw the text
 	return true
 }
 
 // GoToLineNumber will go to a given line number, but counting from 1, not from 0!
 func (e *Editor) GoToLineNumber(lineNumber int, c *vt100.Canvas, status *StatusBar, center bool) bool {
+	// e.GoTo will check for this
+	//if lineNumber >= e.Len() {
+	//	return false
+	//}
 	redraw := e.GoTo(lineNumber-1, c, status)
 	if redraw && center {
 		e.Center(c)
