@@ -29,7 +29,7 @@ func main() {
 		defaultEditorStatusBackground = vt100.BackgroundBlack
 		defaultEditorSearchHighlight  = vt100.LightMagenta
 		defaultEditorHighlightTheme   = syntax.TextConfig{
-			String:        "lightyellow",
+			String:        "yellow",
 			Keyword:       "lightred",
 			Comment:       "gray",
 			Type:          "lightblue",
@@ -87,7 +87,6 @@ ctrl-c to copy the current line
 ctrl-v to paste the current line
 ctrl-space to bookmark the current position
 ctrl-j to jump to the bookmark
-ctrl-h to show a minimal help text
 ctrl-u to undo
 ctrl-l to jump to a specific line
 ctrl-f to search for a string
@@ -483,9 +482,6 @@ ctrl-b to build
 			if !e.DrawMode() && e.AfterLineScreenContents() {
 				e.End()
 			}
-		case "c:8": // ctrl-h, help
-			status.SetMessage("[" + versionString + "] ctrl-s to save, ctrl-q to quit")
-			status.Show(c, e)
 		case "c:20": // ctrl-t, toggle syntax highlighting
 			e.ToggleHighlight()
 			if e.highlight {
@@ -591,7 +587,7 @@ ctrl-b to build
 				e.pos.Down(c)
 			}
 			e.redraw = true
-		case "c:127": // backspace
+		case "c:8", "c:127": // ctrl-h or backspace
 			undo.Snapshot(e)
 			if !e.DrawMode() && e.EmptyLine() {
 				e.DeleteLine(e.DataY())
@@ -723,7 +719,7 @@ ctrl-b to build
 					lns += numkey // string('0' + (numkey - 48))
 					status.SetMessage("Go to line number: " + lns)
 					status.ShowNoTimeout(c, e)
-				case "c:127": // backspace
+				case "c:8", "c:127": // ctrl-h or backspace
 					if len(lns) > 0 {
 						lns = lns[:len(lns)-1]
 						status.SetMessage("Go to line number: " + lns)

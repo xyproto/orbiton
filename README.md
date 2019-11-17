@@ -66,7 +66,6 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-v` - Paste the current line
 * `ctrl-space` - Bookmark the current position
 * `ctrl-j` - Jump to the bookmark
-* `ctrl-h` - Show a minimal help text
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application)
 * `ctrl-l` - Jump to a specific line number
 * `ctrl-f` - Search for a string.
