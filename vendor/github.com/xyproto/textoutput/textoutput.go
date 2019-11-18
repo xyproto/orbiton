@@ -28,7 +28,7 @@ type TextOutput struct {
 func NewTextOutput(color, enabled bool) *TextOutput {
 	// Respect the NO_COLOR environment variable
 	if os.Getenv("NO_COLOR") != "" {
-		enabled = false
+		color = false
 	}
 	o := &TextOutput{color, enabled, nil, nil}
 	o.initializeTagReplacers()
@@ -63,7 +63,11 @@ func (o *TextOutput) Println(msg ...interface{}) {
 // Write an error message in red to stderr if output is enabled
 func (o *TextOutput) Err(msg string) {
 	if o.enabled {
-		vt100.Red.Error(msg)
+		if o.color {
+			vt100.Red.Error(msg)
+		} else {
+			vt100.Default.Error(msg)
+		}
 	}
 }
 
