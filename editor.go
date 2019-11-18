@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 	"unicode"
@@ -279,6 +280,8 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
 		o := textoutput.NewTextOutput(true, true)
 		vt100.ShowCursor(false)
 
+		noColor := os.Getenv("NO_COLOR") != ""
+
 		var counter uint
 
 		// Start the spinner
@@ -291,31 +294,61 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
 				vt100.SetXY(x, y)
 				s := ""
 				// Switch between 12 different ASCII images
-				switch counter % 12 {
-				case 0:
-					s = "<red>| <yellow>c<blue> · ·</blue> <red>|<off>"
-				case 1:
-					s = "<red>| <blue>·<yellow>C<blue>· · <red>|<off>"
-				case 2:
-					s = "<red>| <blue>· <yellow>c<blue> · <red>|<off>"
-				case 3:
-					s = "<red>| <blue>· ·<yellow>C<blue>· <red>|<off>"
-				case 4:
-					s = "<red>| <blue>· · <yellow>c <red>|<off>"
-				case 5:
-					s = "<red>| <blue>· · ·<yellow>¤<red>|<off>"
-				case 6:
-					s = "<red>| <blue>· · <yellow>œ <red>|<off>"
-				case 7:
-					s = "<red>| <blue>· ·<yellow>œ<blue>· <red>|<off>"
-				case 8:
-					s = "<red>| <blue>· <yellow>œ <blue>· <red>|<off>"
-				case 9:
-					s = "<red>| <blue>·<yellow>œ<blue>· · <red>|<off>"
-				case 10:
-					s = "<red>| <yellow>œ <blue>· · <red>|<off>"
-				case 11:
-					s = "<red>|<yellow>¤<blue>· · · <red>|<off>"
+				if noColor {
+					switch counter % 12 {
+					case 0:
+						s = "| c · · |"
+					case 1:
+						s = "| ·C· · |"
+					case 2:
+						s = "| · c · |"
+					case 3:
+						s = "| · ·C· |"
+					case 4:
+						s = "| · · c |"
+					case 5:
+						s = "| · · ·¤|"
+					case 6:
+						s = "| · · œ |"
+					case 7:
+						s = "| · ·œ· |"
+					case 8:
+						s = "| · œ · |"
+					case 9:
+						s = "| ·œ· · |"
+					case 10:
+						s = "| œ · · |"
+					case 11:
+						s = "|¤· · · |"
+					}
+				} else {
+					switch counter % 12 {
+					case 0:
+						s = "<red>| <yellow>c<blue> · ·</blue> <red>|<off>"
+					case 1:
+						s = "<red>| <blue>·<yellow>C<blue>· · <red>|<off>"
+					case 2:
+						s = "<red>| <blue>· <yellow>c<blue> · <red>|<off>"
+					case 3:
+						s = "<red>| <blue>· ·<yellow>C<blue>· <red>|<off>"
+					case 4:
+						s = "<red>| <blue>· · <yellow>c <red>|<off>"
+					case 5:
+						s = "<red>| <blue>· · ·<yellow>¤<red>|<off>"
+					case 6:
+						s = "<red>| <blue>· · <yellow>œ <red>|<off>"
+					case 7:
+						s = "<red>| <blue>· ·<yellow>œ<blue>· <red>|<off>"
+					case 8:
+						s = "<red>| <blue>· <yellow>œ <blue>· <red>|<off>"
+					case 9:
+						s = "<red>| <blue>·<yellow>œ<blue>· · <red>|<off>"
+					case 10:
+						s = "<red>| <yellow>œ <blue>· · <red>|<off>"
+					case 11:
+						s = "<red>|<yellow>¤<blue>· · · <red>|<off>"
+					}
+
 				}
 				fmt.Print(o.LightTags(s))
 				counter++
