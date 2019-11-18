@@ -39,7 +39,8 @@ You can install `o` with Go 1.10 or later:
 
 ## Known bugs
 
-* Lines longer than the terminal width are not handled gracefully.
+* Files with lines longer than the terminal width are not handled gracefully.
+* Word wrap sometimes break a word at the wrong position.
 
 ## Spinner
 
