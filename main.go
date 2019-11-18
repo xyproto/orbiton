@@ -119,9 +119,12 @@ ctrl-b to build
 
 	// 4 spaces per tab, scroll 10 lines at a time
 	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme)
+	e.respectNoColorEnvironmentVariable()
+
 	e.gitMode = gitMode
 
 	status := NewStatusBar(defaultEditorStatusForeground, defaultEditorStatusBackground, e, statusDuration)
+	status.respectNoColorEnvironmentVariable()
 
 	// Try to load the filename, ignore errors since giving a new filename is also okay
 	loaded := e.Load(c, tty, filename) == nil
@@ -274,7 +277,7 @@ ctrl-b to build
 									if strings.Count(errorMessage, ":") >= 3 {
 										fields := strings.Split(errorMessage, ":")
 										// Go To Y:X, if available
-										foundY := -1
+										var foundY int
 										if y, err := strconv.Atoi(fields[1]); err == nil { // no error
 											foundY = y - 1
 											e.redraw = e.GoTo(foundY, c, status)
@@ -337,7 +340,7 @@ ctrl-b to build
 									fields := strings.SplitN(line, ":", 4)
 
 									// Go To Y:X, if available
-									foundY := -1
+									var foundY int
 									if y, err := strconv.Atoi(fields[1]); err == nil { // no error
 										foundY = y - 1
 										e.redraw = e.GoTo(foundY, c, status)
