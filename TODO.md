@@ -6,5 +6,5 @@
 - [ ] Keep indentation when pasting a single line.
 - [ ] Highlight the background of the active line.
 - [ ] (maybe) Make the "smart dedentation" even smarter - let it consider the whitespace of the line above before dedenting.
-- [ ] Screen recording at "ctrl-r" when in text mode. Render to PNG when in ASCII graphics mode.
-- [ ] ctrl-w for regular text files should reflow the text.
+- [ ] `ctrl-r` - Screen recording to `.gif`. If in ASCII draw mode, render to `.png`.
+- [ ] `ctrl-w` for regular text files should reflow the text.
