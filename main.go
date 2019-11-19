@@ -661,7 +661,7 @@ ctrl-b to build
 			e.redrawCursor = true
 			e.SaveX(true)
 		case "c:5": // ctrl-e, end
-			if e.AtOrAfterEndOfLine() {
+			if e.AfterEndOfLine() {
 				// go to the start of the next paragraph
 				e.redraw = e.GoToNextParagraph(c, status)
 				e.GoToStartOfTextLine()
