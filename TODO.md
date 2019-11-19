@@ -8,3 +8,6 @@
 - [ ] (maybe) Make the "smart dedentation" even smarter - let it consider the whitespace of the line above before dedenting.
 - [ ] `ctrl-r` - Screen recording to `.gif`. If in ASCII draw mode, render to `.png`.
 - [ ] `ctrl-w` for regular text files should reflow the text.
+- [ ] Rainbow paranthesis.
+- [ ] Go to definition, rename symbol, find references and suggestions while typing. Wonder which hotkey should be used for go to definition, though.
+      Perhaps pressing `ctrl-g` three times.
