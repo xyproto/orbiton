@@ -1582,3 +1582,18 @@ func (e *Editor) Center(c *vt100.Canvas) {
 	e.pos.offset = newOffset
 	e.pos.sy = newScreenY
 }
+
+// ToggleComment will toggle single-line comments on or off ("// ")
+func (e *Editor) ToggleComment() {
+	contents := e.CurrentLine()
+	newContents := ""
+	if strings.HasPrefix(strings.TrimSpace(contents), "// ") {
+		// toggle off comment
+		newContents = strings.Replace(contents, "// ", "", 1)
+	} else {
+		// toggle on comment
+		newContents = e.LeadingWhitespace() + "// " + strings.TrimSpace(contents)
+	}
+	_ = newContents
+	e.SetLine(e.DataY(), newContents)
+}

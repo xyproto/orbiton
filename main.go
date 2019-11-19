@@ -81,7 +81,7 @@ ctrl-k to delete characters to the end of the line, then delete the line
 ctrl-g to toggle filename/line/column/unicode/word count status display
 ctrl-d to delete a single character
 ctrl-t to toggle syntax highlighting
-ctrl-o to toggle text or draw mode (for ASCII graphics)
+ctrl-y to toggle text or draw mode (for ASCII graphics)
 ctrl-x to cut the current line
 ctrl-c to copy the current line
 ctrl-v to paste the current line
@@ -92,6 +92,7 @@ ctrl-l to jump to a specific line
 ctrl-f to search for a string
 esc to redraw the screen and clear the last search.
 ctrl-b to build
+ctrl-o to toggle single-line comments
 `)
 		return
 	}
@@ -370,9 +371,11 @@ ctrl-b to build
 			}
 		case "c:18": // ctrl-r, screen recording or render as PNG
 			// TODO: implement
-		case "c:25": // ctrl-y, not used for anything yet
-			// TODO: implement
-		case "c:15": // ctrl-o, toggle draw mode
+		case "c:15": // ctrl-o, toggle comment
+			e.ToggleComment()
+			e.redraw = true
+			e.redrawCursor = true
+		case "c:25": // ctrl-y, toggle ASCII draw mode
 			e.ToggleDrawMode()
 			statusMessage := "Text mode"
 			if e.DrawMode() {
@@ -791,7 +794,14 @@ ctrl-b to build
 					copyLine = lines
 				}
 			}
-			e.InsertString(c, copyLine)
+			if e.EmptyRightTrimmedLine() {
+				// If the line is empty, use the existing indentation before pasting
+				e.SetLine(e.DataY(), e.LeadingWhitespace()+strings.TrimSpace(copyLine))
+			} else {
+				// If the line is not empty, insert the trimmed string
+				e.InsertString(c, strings.TrimSpace(copyLine))
+			}
+			// Prepare to redraw the text
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:0": // ctrl-space, bookmark

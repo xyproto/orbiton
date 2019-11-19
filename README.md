@@ -61,7 +61,7 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, unicode number and word count
 * `ctrl-d` - Delete a single character
 * `ctrl-t` - Toggle syntax highlighting
-* `ctrl-o` - Toggle between "text" and "draw mode" (for ASCII graphics)
+* `ctrl-y` - Toggle between "text" and "draw mode" (for ASCII graphics)
 * `ctrl-x` - Cut the current line
 * `ctrl-c` - Copy the current line
 * `ctrl-v` - Paste the current line
@@ -72,6 +72,7 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-f` - Search for a string.
 * `esc` - Redraw the screen and clear the last search.
 * `ctrl-b` - Build
+* `ctrl-o` - Toggle single-line comments
 
 ## Size
 
