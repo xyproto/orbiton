@@ -65,13 +65,13 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-x` - Cut the current line
 * `ctrl-c` - Copy the current line
 * `ctrl-v` - Paste the current line
-* `ctrl-space` - Bookmark the current position
+* `ctrl-b` - Bookmark the current line
 * `ctrl-j` - Jump to the bookmark
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application)
 * `ctrl-l` - Jump to a specific line number
 * `ctrl-f` - Search for a string.
 * `esc` - Redraw the screen and clear the last search.
-* `ctrl-b` - Build
+* `ctrl-space` - Build
 * `ctrl-o` - Toggle single-line comments
 
 ## Size

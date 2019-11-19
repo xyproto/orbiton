@@ -85,14 +85,14 @@ ctrl-y to toggle text or draw mode (for ASCII graphics)
 ctrl-x to cut the current line
 ctrl-c to copy the current line
 ctrl-v to paste the current line
-ctrl-space to bookmark the current position
+ctrl-b to bookmark the current line
 ctrl-j to jump to the bookmark
 ctrl-u to undo
 ctrl-l to jump to a specific line
 ctrl-f to search for a string
 esc to redraw the screen and clear the last search.
-ctrl-b to build
 ctrl-o to toggle single-line comments
+ctrl-space to build
 `)
 		return
 	}
@@ -320,7 +320,7 @@ ctrl-o to toggle single-line comments
 			}
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
-		case "c:2": // ctrl-b, "cxx" or "go build"
+		case "c:0": // ctrl-space, "cxx" or "go build"
 			// Map from formatting command to a list of file extensions
 			build := map[*exec.Cmd][]string{
 				exec.Command("go", "build"): []string{".go"},
@@ -805,7 +805,7 @@ ctrl-o to toggle single-line comments
 			// Prepare to redraw the text
 			e.redrawCursor = true
 			e.redraw = true
-		case "c:0": // ctrl-space, bookmark
+		case "c:2": // ctrl-b, bookmark
 			bookmark = e.pos
 			status.SetMessage("Bookmarked line " + strconv.Itoa(e.LineNumber()))
 			status.Show(c, e)

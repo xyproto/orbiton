@@ -10,6 +10,7 @@ import (
 )
 
 const locationHistoryFilename = "~/.config/o/locations.txt"
+const maxLocationHistoryEntries = 7
 
 // expandUser replaces a leading ~ or $HOME with the path
 // to the home directory of the current user
@@ -82,6 +83,9 @@ func SaveLocationHistory(locationHistory map[string]int, configFile string) {
 // SaveLocation takes a filename (which includes the absolute path) and a map which contains
 // an overview of which files were at which line location.
 func (e *Editor) SaveLocation(absFilename string, locationHistory map[string]int) {
+	if len(locationHistory) > maxLocationHistoryEntries {
+		locationHistory = make(map[string]int, 1)
+	}
 	// Save the current line location
 	locationHistory[absFilename] = e.LineNumber()
 	// Save the location history (best effort, ignore errors)
