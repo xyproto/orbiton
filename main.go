@@ -118,7 +118,7 @@ ctrl-o to toggle single-line comments
 	c := vt100.NewCanvas()
 	c.ShowCursor()
 
-	// 4 spaces per tab, scroll 10 lines at a time
+	// 4 spaces per tab, scroll 10 lines at a time, no word wrap
 	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme)
 	e.respectNoColorEnvironmentVariable()
 
@@ -130,12 +130,13 @@ ctrl-o to toggle single-line comments
 	// Try to load the filename, ignore errors since giving a new filename is also okay
 	loaded := e.Load(c, tty, filename) == nil
 
-	// If we're editing a git commit message, add a newline
+	// If we're editing a git commit message, add a newline and enable word-wrap at 80
 	if e.gitMode {
 		e.gitColor = vt100.LightGreen
 		status.fg = vt100.LightBlue
 		status.bg = vt100.BackgroundDefault
 		e.InsertLineBelow()
+		e.wordWrapAt = 80
 	}
 
 	// We wish to redraw the canvas and reposition the cursor

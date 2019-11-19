@@ -53,7 +53,10 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEdi
 	p := NewPosition(scrollSpeed)
 	e.pos = *p
 	e.searchFg = searchFg
-	e.wordWrapAt = 99 // When typing, wrap words when reaching column 99
+	// If the file is not to be highlighted, set word wrap to 99 (0 to disable)
+	if !highlight {
+		e.wordWrapAt = 99
+	}
 	return e
 }
 
