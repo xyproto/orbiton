@@ -29,7 +29,7 @@ func main() {
 		defaultEditorStatusBackground = vt100.BackgroundBlack
 		defaultEditorSearchHighlight  = vt100.LightMagenta
 		defaultEditorHighlightTheme   = syntax.TextConfig{
-			String:        "yellow",
+			String:        "lightyellow",
 			Keyword:       "lightred",
 			Comment:       "gray",
 			Type:          "lightblue",
@@ -120,6 +120,13 @@ ctrl-space to build
 
 	// 4 spaces per tab, scroll 10 lines at a time, no word wrap
 	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme)
+
+	// Use a theme for light backgrounds if XTERM_VERSION is set,
+	// because $COLORFGBG is "15;0" even though the background is white.
+	if os.Getenv("XTERM_VERSION") != "" {
+		e.lightTheme()
+	}
+
 	e.respectNoColorEnvironmentVariable()
 
 	e.gitMode = gitMode
