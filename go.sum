@@ -11,8 +11,8 @@ github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d h1:yKm7XZV6j9
 github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d/go.mod h1:UdhH50NIW0fCiwBSr0co2m7BnFLdv4fQTgdqdJTHFeE=
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e h1:qpG93cPwA5f7s/ZPBJnGOYQNK/vKsaDaseuKT5Asee8=
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod h1:HuIsMU8RRBOtsCgI77wP899iHVBQpCmg4ErYMZB+2IA=
-github.com/xyproto/burnfont v1.2.0 h1:fm/HRgsN37XZO8RO/hrwXvBAW/pQUiF2gbK1IMvjHrc=
-github.com/xyproto/burnfont v1.2.0/go.mod h1:mrCb636FOE6nLvXx4HgWGyUU8tACdEDHxJfZozw8Tpc=
+github.com/xyproto/burnfont v1.2.1 h1:LVneYiDx3UYmE93xhIJ3Rm9FkbtYef/BsHOmcZ1s1Ho=
+github.com/xyproto/burnfont v1.2.1/go.mod h1:mrCb636FOE6nLvXx4HgWGyUU8tACdEDHxJfZozw8Tpc=
 github.com/xyproto/syntax v0.0.0-20190927130316-33ad839f30fd/go.mod h1:mCJxUY00r+o4tVnC800hsbzKKMdyLYEmZtn3Fd5RKtw=
 github.com/xyproto/syntax v0.0.0-20191110113215-eefd975cad7d h1:iZucET+CVMcBY9LZEUKhfJ3MxD0M/N6ZJUKObD+bgEc=
 github.com/xyproto/syntax v0.0.0-20191110113215-eefd975cad7d/go.mod h1:h3+dxeju13EJ5hbm/9uLl0fNVHNVFNofeBRzNZpgJ2c=

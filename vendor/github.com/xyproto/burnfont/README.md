@@ -47,5 +47,5 @@ The `scaled` utility can be built and run like this:
 ## General information
 
 * License: MIT
-* Version: 1.2.0
+* Version: 1.2.1
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
