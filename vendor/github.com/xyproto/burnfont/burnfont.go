@@ -7,7 +7,7 @@ import (
 )
 
 // Available is a slice with all available runes, for this package
-var Available = []rune{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'æ', 'ø', 'å', '.', ';', ',', '\'', '"', '*', '+', '!', '?', '-', '=', '_', '/', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '(', ')', '→', '{', '}', '[', ']', '<', '>', '&', '|'}
+var Available = []rune{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Æ', 'Ø', 'Å', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'æ', 'ø', 'å', '.', ';', ',', '\'', '"', '*', '+', '!', '?', '-', '=', '_', '/', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '(', ')', '→', '{', '}', '[', ']', '<', '>', '&', '|', '\\'}
 
 // Drawable is an interface for anything that has a Set function, for drawing
 type Drawable interface {
@@ -483,7 +483,7 @@ func Draw(d Drawable, l rune, x, y int, r, g, b byte) error {
 		fontLine("*-", x+3, y+2)
 		fontLine("*-", x+2, y+3)
 		fontLine("*-", x+1, y+4)
-		fontLine("*-", x+0, y+5)
+		fontLine("*-", x, y+5)
 	case '1':
 		fontLine("-**", x+1, y)
 		fontLine("***", x+1, y+1)
@@ -611,11 +611,11 @@ func Draw(d Drawable, l rune, x, y int, r, g, b byte) error {
 		fontLine("-*", x+3, y+4)
 		fontLine("-*", x+2, y+5)
 	case '&':
-		fontLine(" **    ", x, y)
-		fontLine("** *  *", x, y+1)
+		fontLine(" **", x, y)
+		fontLine("** *", x, y+1)
 		fontLine(" **  *", x, y+2)
-		fontLine(" **-* ", x, y+3)
-		fontLine("*  ** ", x, y+4)
+		fontLine(" **-*", x, y+3)
+		fontLine("*  **", x, y+4)
 		fontLine(" ** **", x, y+5)
 	case '|':
 		fontLine("*", x+3, y)
@@ -624,6 +624,13 @@ func Draw(d Drawable, l rune, x, y int, r, g, b byte) error {
 		fontLine("*", x+3, y+3)
 		fontLine("*", x+3, y+4)
 		fontLine("*", x+3, y+5)
+	case '\\':
+		fontLine("**", x+1, y+1)
+		fontLine("-**", x+1, y+2)
+		fontLine("-**", x+2, y+3)
+		fontLine("-**", x+3, y+4)
+		fontLine("-**", x+4, y+5)
+
 	case 0:
 		return errors.New("the rune was 0. Did you pass a coordinate instead of a rune?")
 	default:
