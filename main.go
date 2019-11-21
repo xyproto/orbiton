@@ -380,10 +380,17 @@ ctrl-r to render the current text to a PNG image
 			}
 		case "c:18": // ctrl-r, screen recording or render as PNG
 			imageFilename := filename + ".png"
-			statusMessage = "Wrote " + imageFilename
+			// Show a status message while writing
+			statusMessage := "Rendering image..."
+			status.SetMessage(statusMessage)
+			status.Show(c, e)
+			// Write the image
 			if err := e.Render(imageFilename); err != nil {
 				statusMessage = err.Error()
+			} else {
+				statusMessage = "Saved " + imageFilename
 			}
+			// Show a status message after writing
 			status.SetMessage(statusMessage)
 			status.Show(c, e)
 		case "c:15": // ctrl-w, toggle comment
