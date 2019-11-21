@@ -72,7 +72,7 @@ Hotkeys
 
 ctrl-q to quit
 ctrl-s to save
-ctrl-w to format the current file with "go fmt"
+ctrl-o to format the current file with "go fmt"
 ctrl-a go to start of line, then start of text, then previous paragraph
 ctrl-e go to end of line, then next paragraph
 ctrl-p to scroll up 10 lines
@@ -90,9 +90,10 @@ ctrl-j to jump to the bookmark
 ctrl-u to undo
 ctrl-l to jump to a specific line
 ctrl-f to search for a string
-esc to redraw the screen and clear the last search.
-ctrl-o to toggle single-line comments
+esc to redraw the screen and clear the last search
+ctrl-w to toggle single-line comments
 ctrl-space to build
+ctrl-r to render the current text to a PNG image
 `)
 		return
 	}
@@ -254,7 +255,7 @@ ctrl-space to build
 		switch key {
 		case "c:17": // ctrl-q, quit
 			quit = true
-		case "c:23": // ctrl-w, format
+		case "c:23": // ctrl-o, format
 			undo.Snapshot(e)
 			// Map from formatting command to a list of file extensions
 			format := map[*exec.Cmd][]string{
@@ -378,8 +379,14 @@ ctrl-space to build
 				}
 			}
 		case "c:18": // ctrl-r, screen recording or render as PNG
-			// TODO: implement
-		case "c:15": // ctrl-o, toggle comment
+			imageFilename := filename + ".png"
+			statusMessage = "Wrote " + imageFilename
+			if err := e.Render(imageFilename); err != nil {
+				statusMessage = err.Error()
+			}
+			status.SetMessage(statusMessage)
+			status.Show(c, e)
+		case "c:15": // ctrl-w, toggle comment
 			e.ToggleComment()
 			e.redraw = true
 			e.redrawCursor = true

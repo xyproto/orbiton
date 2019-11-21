@@ -52,7 +52,7 @@ When loading large files, an animated spinner will appear. The loading operation
 
 * `ctrl-q` - Quit
 * `ctrl-s` - Save
-* `ctrl-w` - Format the current file using `goimport` or `clang-format`, depending on the file extension.
+* `ctrl-o` - Format the current file using `goimport` or `clang-format`, depending on the file extension.
 * `ctrl-a` - Go to start of line, then start of text on the same line, then the previous paragraph.
 * `ctrl-e` - Go to end of line, then next paragraph.
 * `ctrl-p` - Scroll up 10 lines
@@ -72,7 +72,8 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-f` - Search for a string.
 * `esc` - Redraw the screen and clear the last search.
 * `ctrl-space` - Build
-* `ctrl-o` - Toggle single-line comments
+* `ctrl-w` - Toggle single-line comments
+* `ctrl-r` - Render the current text to a PNG image.
 
 ## Size
 
