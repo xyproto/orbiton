@@ -30,7 +30,7 @@ You can install `o` with Go 1.10 or later:
 * Smart indentation.
 * `Home` and `End` are not detected by the key handler. `ctrl-a` and `ctrl-e` works, though.
 * Requires `/dev/tty` to be available.
-* Copy, cut and paste is only for one line at a time, and only within the editor.
+* Copy, cut and paste is only for one line at a time. `xclip` must be installed if the system clipboard is to be used.
 * May take a line number as the second argument, with an optional `+` prefix.
 * The text will be red if a loaded file is read-only.
 * The terminal needs to be resized to show the second half of lines that are longer than the terminal width.
@@ -80,7 +80,7 @@ The `o` executable is only **464k** when built with GCC 9.1 (for 64-bit Linux). 
 
     go build -gccgoflags '-Os -s'
 
-For comparison, it's **2.9M** when building with Go 1.13 and no particular build flags are given.
+It's **2.9M** when building with Go 1.13 and no particular build flags are given, which is also reasonable.
 
 ## Jumping to a specific line when opening a file
 
