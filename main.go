@@ -192,6 +192,15 @@ ctrl-r to render the current text to a PNG image
 		}
 	}
 
+	// If the file starts with a hashbang, enable syntax highlighting
+	if strings.HasPrefix(strings.TrimSpace(e.Line(0)), "#!") {
+		// Enable highlighting and redraw
+		e.highlight = true
+		e.bg = defaultEditorBackground
+		// Now do a full reset/redraw
+		c = e.FullResetRedraw(c, status)
+	}
+
 	// Undo buffer with room for 8192 actions
 	undo := NewUndo(8192)
 
