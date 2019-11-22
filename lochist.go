@@ -9,8 +9,10 @@ import (
 	"strings"
 )
 
-const locationHistoryFilename = "~/.config/o/locations.txt"
-const maxLocationHistoryEntries = 7
+const (
+	locationHistoryFilename   = "~/.cache/o/locations.txt"
+	maxLocationHistoryEntries = 256
+)
 
 // expandUser replaces a leading ~ or $HOME with the path
 // to the home directory of the current user
