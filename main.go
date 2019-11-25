@@ -696,9 +696,13 @@ ctrl-r to render the current text to a PNG image
 			e.SaveX(true)
 		case "c:5": // ctrl-e, end
 			if e.AfterEndOfLine() {
+				prevY := e.DataY()
 				// go to the start of the next paragraph
 				e.redraw = e.GoToNextParagraph(c, status)
-				e.GoToStartOfTextLine()
+				// Only move to the start of the line if there was a next paragraph to move to
+				if e.DataY() != prevY {
+					e.GoToStartOfTextLine()
+				}
 			} else {
 				e.End()
 			}
