@@ -244,6 +244,10 @@ func tokenKind(tok rune, tokText string, inSingleLineComment *bool) Kind {
 	} else if tok == '\n' {
 		*inSingleLineComment = false
 	}
+	// Check if this is #include or #define
+	if tokText == "include" || tokText == "define" {
+		*inSingleLineComment = false
+	}
 	// If we are, return the Comment kind
 	if *inSingleLineComment {
 		return Comment
