@@ -14,8 +14,8 @@ github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod
 github.com/xyproto/burnfont v1.2.2 h1:ZSUe5Ezm2Ib4BzjbSk8HGxjm9NNPzknFnIFl8zY7BYA=
 github.com/xyproto/burnfont v1.2.2/go.mod h1:mrCb636FOE6nLvXx4HgWGyUU8tACdEDHxJfZozw8Tpc=
 github.com/xyproto/syntax v0.0.0-20190927130316-33ad839f30fd/go.mod h1:mCJxUY00r+o4tVnC800hsbzKKMdyLYEmZtn3Fd5RKtw=
-github.com/xyproto/syntax v0.0.0-20191126125908-1b68257d8b9a h1:iyJZmQhoeNTWd8TQ6SfrWsWL5qMsSoEGPns4IBUtjDw=
-github.com/xyproto/syntax v0.0.0-20191126125908-1b68257d8b9a/go.mod h1:h3+dxeju13EJ5hbm/9uLl0fNVHNVFNofeBRzNZpgJ2c=
+github.com/xyproto/syntax v0.0.0-20191126140930-ed6c955196d3 h1:y98CnvsyWWo5VUK5oMzrYlxbvGN+KVWgQmkOwpc9Reo=
+github.com/xyproto/syntax v0.0.0-20191126140930-ed6c955196d3/go.mod h1:h3+dxeju13EJ5hbm/9uLl0fNVHNVFNofeBRzNZpgJ2c=
 github.com/xyproto/textoutput v1.7.0/go.mod h1:wucBdKjWDgglMwRR84vP5/RG7PEgEOr9ITFAeZ/cFFU=
 github.com/xyproto/textoutput v1.7.1-0.20190927112604-959d7da24b61/go.mod h1:wucBdKjWDgglMwRR84vP5/RG7PEgEOr9ITFAeZ/cFFU=
 github.com/xyproto/textoutput v1.9.1 h1:jqyZpKWOn7/SWQGMuLzE8FLAtEvQ6/7v5O1aWrIFF+8=
@@ -34,6 +34,6 @@ golang.org/x/sys v0.0.0-20191110163157-d32e6e3b99c4 h1:Hynbrlo6LbYI3H1IqXpkVDOcX
 golang.org/x/sys v0.0.0-20191110163157-d32e6e3b99c4/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191118133127-cf1e2d577169 h1:LPLFLulk2vyM7yI3CwNW64O6e8AxBmr9opfv14yI7HI=
 golang.org/x/sys v0.0.0-20191118133127-cf1e2d577169/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20191120155948-bd437916bb0e h1:N7DeIrjYszNmSW409R3frPPwglRwMkXSBzwVbkOjLLA=
-golang.org/x/sys v0.0.0-20191120155948-bd437916bb0e/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20191126131656-8a8471f7e56d h1:kCXqdOO2GMlu0vCsEMBXwj/b0E9wyFpNPBpuv/go/F8=
+golang.org/x/sys v0.0.0-20191126131656-8a8471f7e56d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=

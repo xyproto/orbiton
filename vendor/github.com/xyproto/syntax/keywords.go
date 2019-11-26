@@ -177,4 +177,6 @@ var keywords = map[string]struct{}{
 	"while":            {},
 	"with":             {},
 	"yield":            {},
+	"#include":         {},
+	"#define":          {},
 }
