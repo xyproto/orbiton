@@ -107,6 +107,6 @@ The reason for adding these is to make using `o` easier to use for long-time vi/
 
 ## General info
 
-* Version: 2.10.1
+* Version: 2.10.2
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
