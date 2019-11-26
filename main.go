@@ -106,7 +106,7 @@ ctrl-r to render the current text to a PNG image
 
 	baseFilename := filepath.Base(filename)
 	gitMode := baseFilename == "COMMIT_EDITMSG" || (strings.HasPrefix(baseFilename, "git-") && !strings.Contains(baseFilename, ".") && strings.Count(baseFilename, "-") >= 2)
-	defaultHighlight := gitMode || baseFilename == "PKGBUILD" || strings.Contains(baseFilename, ".") || baseFilename == "Makefile"
+	defaultHighlight := gitMode || baseFilename == "PKGBUILD" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
 
 	tty, err := vt100.NewTTY()
 	if err != nil {
