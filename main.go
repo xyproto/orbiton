@@ -143,7 +143,9 @@ ctrl-r to render the current text to a PNG image
 		e.gitColor = vt100.LightGreen
 		status.fg = vt100.LightBlue
 		status.bg = vt100.BackgroundDefault
-		e.InsertLineBelow()
+		if e.EmptyLine() {
+			e.InsertLineBelow()
+		}
 		e.wordWrapAt = 80
 	}
 
