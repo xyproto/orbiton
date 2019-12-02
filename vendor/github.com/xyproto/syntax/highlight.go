@@ -247,8 +247,8 @@ func tokenKind(tok rune, tokText string, inSingleLineComment *bool) Kind {
 	// Check if this is #include or #define
 	if tokText == "include" || tokText == "define" {
 		*inSingleLineComment = false
-		// Color it like plaintext
-		return Plaintext
+		// Color it like a keyword
+		return Keyword
 	}
 	// If we are, return the Comment kind
 	if *inSingleLineComment {

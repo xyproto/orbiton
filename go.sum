@@ -14,8 +14,8 @@ github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod
 github.com/xyproto/burnfont v1.2.2 h1:ZSUe5Ezm2Ib4BzjbSk8HGxjm9NNPzknFnIFl8zY7BYA=
 github.com/xyproto/burnfont v1.2.2/go.mod h1:mrCb636FOE6nLvXx4HgWGyUU8tACdEDHxJfZozw8Tpc=
 github.com/xyproto/syntax v0.0.0-20190927130316-33ad839f30fd/go.mod h1:mCJxUY00r+o4tVnC800hsbzKKMdyLYEmZtn3Fd5RKtw=
-github.com/xyproto/syntax v0.0.0-20191202134042-836f8dda9b99 h1:0wpj2EvDJyXv88sVldaJlR01N2/qhA78Nam2JLfA3Ps=
-github.com/xyproto/syntax v0.0.0-20191202134042-836f8dda9b99/go.mod h1:h3+dxeju13EJ5hbm/9uLl0fNVHNVFNofeBRzNZpgJ2c=
+github.com/xyproto/syntax v0.0.0-20191202134557-64354a20998a h1:Oyl3zKmadzL/fOA5vFR0spFJbEbxKRbD9qOTGWBx2xE=
+github.com/xyproto/syntax v0.0.0-20191202134557-64354a20998a/go.mod h1:h3+dxeju13EJ5hbm/9uLl0fNVHNVFNofeBRzNZpgJ2c=
 github.com/xyproto/textoutput v1.7.0/go.mod h1:wucBdKjWDgglMwRR84vP5/RG7PEgEOr9ITFAeZ/cFFU=
 github.com/xyproto/textoutput v1.7.1-0.20190927112604-959d7da24b61/go.mod h1:wucBdKjWDgglMwRR84vP5/RG7PEgEOr9ITFAeZ/cFFU=
 github.com/xyproto/textoutput v1.9.1 h1:jqyZpKWOn7/SWQGMuLzE8FLAtEvQ6/7v5O1aWrIFF+8=
