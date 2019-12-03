@@ -37,11 +37,12 @@ You can install `o` with Go 1.10 or later:
 * If the filename is `COMMIT_EDITMSG`, the look and feel will be adjusted for git commit messages.
 * Supports `UTF-8`.
 * Respects the `NO_COLOR` environment variable.
+* Only UNIX-style line endings are supported (`\n`).
 
 ## Known bugs
 
 * Files with lines longer than the terminal width are not handled gracefully.
-* Word wrap sometimes break a word at the wrong position.
+* Word wrap sometimes break a word at the wrong position when typing.
 
 ## Spinner
 
