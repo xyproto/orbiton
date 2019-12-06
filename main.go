@@ -700,9 +700,13 @@ ctrl-r to render the current text to a PNG image
 			if e.AfterEndOfLine() {
 				prevY := e.DataY()
 				// go to the start of the next paragraph
-				e.redraw = e.GoToNextParagraph(c, status)
-				// Only move to the start of the line if there was a next paragraph to move to
+				if !e.GoToNextParagraph(c, status) {
+					// Move down if moving to the next paragraph was not possible
+					e.Down(c, status)
+				}
+				// Only move to the start of the line if there was another line to move to
 				if e.DataY() != prevY {
+					e.redraw = true
 					e.GoToStartOfTextLine()
 				}
 			} else {
