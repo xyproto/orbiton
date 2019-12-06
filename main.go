@@ -389,17 +389,26 @@ ctrl-r to render the current text to a PNG image
 					}
 				}
 			}
-		case "c:18": // ctrl-r, screen recording or render as PNG
-			imageFilename := filename + ".png"
+		case "c:18": // ctrl-r, output PDF
+			pngFilenameFormat := "output%d.png"
+			pngFilename := "output.png"
+			// Find an available filename
+			for i := 0; i < 9999; i++ {
+				if !exists(fmt.Sprintf(pngFilenameFormat, i)) {
+					pngFilename = fmt.Sprintf(pngFilenameFormat, i)
+					break
+				}
+			}
 			// Show a status message while writing
 			statusMessage := "Rendering image..."
 			status.SetMessage(statusMessage)
 			status.Show(c, e)
 			// Write the image
-			if err := e.Render(imageFilename); err != nil {
+			//if err := e.SavePDF(pdfFilename); err != nil {
+			if err := e.SavePNG(pngFilename); err != nil {
 				statusMessage = err.Error()
 			} else {
-				statusMessage = "Saved " + imageFilename
+				statusMessage = "Saved " + pngFilename
 			}
 			// Show a status message after writing
 			status.SetMessage(statusMessage)
