@@ -115,6 +115,10 @@ After saving a series of `.png` images with `ctrl-r`, it is possible to convert 
 convert output*.png output.gif
 ```
 
+Here's an example:
+
+![animation test](img/anim.gif)
+
 ## General info
 
 * Version: 2.10.2
