@@ -107,6 +107,14 @@ If the very first keypress after starting `o` is `O`, `G` or `/`, it will trigge
 
 The reason for adding these is to make using `o` easier to use for long-time vi/vim/neovim users.
 
+## Creating GIF animations
+
+After saving a series of `.png` images with `ctrl-r`, it is possible to convert them to a GIF animation with:
+
+```sh
+convert output*.png output.gif
+```
+
 ## General info
 
 * Version: 2.10.2

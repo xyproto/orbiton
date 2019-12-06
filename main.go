@@ -390,12 +390,13 @@ ctrl-r to render the current text to a PNG image
 				}
 			}
 		case "c:18": // ctrl-r, output PDF
-			pngFilenameFormat := "output%d.png"
+			pngFilenameFormat := "output%04d.png"
 			pngFilename := "output.png"
 			// Find an available filename
 			for i := 0; i < 9999; i++ {
-				if !exists(fmt.Sprintf(pngFilenameFormat, i)) {
-					pngFilename = fmt.Sprintf(pngFilenameFormat, i)
+				tmpFilename := fmt.Sprintf(pngFilenameFormat, i)
+				if !exists(tmpFilename) {
+					pngFilename = tmpFilename
 					break
 				}
 			}

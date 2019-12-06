@@ -28,8 +28,8 @@ func (e *Editor) SavePNG(filename string) error {
 
 	lineHeight := 14
 	marginRight := 4 * lineHeight
-	width := maxlen*8 + marginRight
-	height := (e.Len()+1)*lineHeight + lineHeight
+	width := 8*(maxlen+1) + marginRight
+	height := (e.Len() * lineHeight) + 2*lineHeight
 
 	dimension := image.Rectangle{image.Point{}, image.Point{width, height}}
 
