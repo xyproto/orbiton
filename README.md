@@ -115,7 +115,7 @@ After saving a series of `.png` images with `ctrl-r`, it is possible to convert 
 convert output*.png output.gif
 ```
 
-Here's an example:
+Here's an example, created with only `o` and the `convert` command from ImageMagick:
 
 ![animation test](img/anim.gif)
 
