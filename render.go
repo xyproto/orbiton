@@ -36,10 +36,10 @@ func (e *Editor) SavePNG(filename string) error {
 	textImage := image.NewRGBA(dimension)
 	finalImage := image.NewRGBA(dimension)
 
-	cyan := color.NRGBA{0x25, 0x96, 0xd1, 0xff}
-	black := color.NRGBA{0, 0, 0, 0xff}
+	darkgray := color.NRGBA{0x10, 0x10, 0x10, 0xff}
+	white := color.NRGBA{0xff, 0xff, 0xff, 0xff}
 
-	draw.Draw(finalImage, finalImage.Bounds(), &image.Uniform{black}, image.Point{}, draw.Src)
+	draw.Draw(finalImage, finalImage.Bounds(), &image.Uniform{white}, image.Point{}, draw.Src)
 
 	// For each line of this text document, draw the string to an image
 	var contents string
@@ -47,7 +47,7 @@ func (e *Editor) SavePNG(filename string) error {
 		// Expand tabs for each line
 		contents = strings.Replace(e.Line(i), "\t", strings.Repeat(" ", e.spacesPerTab), -1)
 		// Draw the string to the textImage
-		burnfont.DrawString(textImage, lineHeight, (i+1)*lineHeight, contents, cyan)
+		burnfont.DrawString(textImage, lineHeight, (i+1)*lineHeight, contents, darkgray)
 	}
 
 	// Now overlay the text image on top of the final image with the background color
