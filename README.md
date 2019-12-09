@@ -23,7 +23,7 @@ You can install `o` with Go 1.10 or later:
 
 * Has syntax highlighting for Go and C++ code.
 * Loads faster than both `vim` and `emacs`. It feels instant.
-* Can format Go or C++ code, just press `ctrl-w`. This uses either `goimports` (`go get golang.org/x/tools/cmd/goimports`) or `clang-format`.
+* Can format Go or C++ code, just press `ctrl-o`. This uses either `goimports` (`go get golang.org/x/tools/cmd/goimports`) or `clang-format`.
 * Never asks before saving or quitting. Be careful!
 * Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
@@ -63,7 +63,7 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, unicode number and word count
 * `ctrl-d` - Delete a single character
 * `ctrl-t` - Toggle syntax highlighting
-* `ctrl-y` - Toggle between "text" and "draw mode" (for ASCII graphics)
+* `ctrl-w` - Toggle between "text" and "draw mode" (for ASCII graphics)
 * `ctrl-x` - Cut the current line
 * `ctrl-c` - Copy the current line
 * `ctrl-v` - Paste the current line
@@ -74,7 +74,7 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-f` - Search for a string.
 * `esc` - Redraw the screen and clear the last search.
 * `ctrl-space` - Build
-* `ctrl-w` - Toggle single-line comments
+* `ctrl-\` - Toggle single-line comments
 * `ctrl-r` - Render the current text to a PNG image.
 
 ## Size

@@ -11,3 +11,4 @@
 - [ ] Rainbow paranthesis.
 - [ ] Go to definition, rename symbol, find references and suggestions while typing. Wonder which hotkey should be used for go to definition, though.
       Perhaps pressing `ctrl-g` three times.
+- [ ] Stop the st terminal from inserting ^E and ^Y when scrolling with the mouse.

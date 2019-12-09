@@ -81,7 +81,7 @@ ctrl-k to delete characters to the end of the line, then delete the line
 ctrl-g to toggle filename/line/column/unicode/word count status display
 ctrl-d to delete a single character
 ctrl-t to toggle syntax highlighting
-ctrl-y to toggle text or draw mode (for ASCII graphics)
+ctrl-w to toggle text or draw mode (for ASCII graphics)
 ctrl-x to cut the current line
 ctrl-c to copy the current line
 ctrl-v to paste the current line
@@ -91,9 +91,9 @@ ctrl-u to undo
 ctrl-l to jump to a specific line
 ctrl-f to search for a string
 esc to redraw the screen and clear the last search
-ctrl-w to toggle single-line comments
 ctrl-space to build
 ctrl-r to render the current text to a PNG image
+ctrl-\ to toggle single-line comments
 `)
 		return
 	}
@@ -414,11 +414,11 @@ ctrl-r to render the current text to a PNG image
 			// Show a status message after writing
 			status.SetMessage(statusMessage)
 			status.Show(c, e)
-		case "c:15": // ctrl-w, toggle comment
+		case "c:28": // ctrl-\, toggle comment
 			e.ToggleComment()
 			e.redraw = true
 			e.redrawCursor = true
-		case "c:25": // ctrl-y, toggle ASCII draw mode
+		case "c:15": // ctrl-w, toggle ASCII draw mode
 			e.ToggleDrawMode()
 			statusMessage := "Text mode"
 			if e.DrawMode() {
@@ -681,7 +681,7 @@ ctrl-r to render the current text to a PNG image
 			}
 			e.redrawCursor = true
 			e.redraw = true
-		case "c:1": // ctrl-a, home
+		case "c:1", "c:25": // ctrl-a, home (or ctrl-y for scrolling up in the st terminal)
 			// If at an empty line, go up one line
 			if e.EmptyRightTrimmedLine() {
 				e.Up(c, status)
