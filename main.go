@@ -881,7 +881,7 @@ ctrl-\ to toggle single-line comments
 			// This was not the first pressed letter, continue handling this key in the default case
 			fallthrough
 		default:
-			if len([]rune(key)) > 0 && unicode.IsLetter([]rune(key)[0]) { // letter
+			if len([]rune(key)) >= 0 && unicode.IsLetter([]rune(key)[0]) { // letter
 				undo.Snapshot(e)
 				// Check for if a special "first letter" has been pressed, which triggers vi-like behavior
 				if firstLetterSinceStart == "" {
@@ -928,7 +928,7 @@ ctrl-\ to toggle single-line comments
 					e.WriteRune(c)
 				}
 				e.redraw = true
-			} else if key != "" { // any other key
+			} else if len([]rune(key)) >= 0 && unicode.IsGraphic([]rune(key)[0]) { // any other key that can be drawn
 				undo.Snapshot(e)
 
 				// Place *something*
