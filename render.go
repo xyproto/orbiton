@@ -92,7 +92,7 @@ func (e *Editor) SavePDF(filename string) error {
 	pdf.Write(5, contents+"\n")
 
 	if _, err := os.Stat(filename); !os.IsNotExist(err) {
-		return fmt.Errorf("%s already exists!\n", filename)
+		return fmt.Errorf("%s already exists", filename)
 	}
 	//fmt.Printf("Writing %s... ", filename)
 	if err := pdf.OutputFileAndClose(filename); err != nil {
