@@ -121,6 +121,6 @@ Here's an example, created with only `o` and the `convert` command from ImageMag
 
 ## General info
 
-* Version: 2.11.0
+* Version: 2.12.1
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
