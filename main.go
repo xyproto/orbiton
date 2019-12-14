@@ -881,7 +881,7 @@ ctrl-\ to toggle single-line comments
 			// This was not the first pressed letter, continue handling this key in the default case
 			fallthrough
 		default:
-			if len([]rune(key)) >= 0 && unicode.IsLetter([]rune(key)[0]) { // letter
+			if len([]rune(key)) > 0 && unicode.IsLetter([]rune(key)[0]) { // letter
 				undo.Snapshot(e)
 				// Check for if a special "first letter" has been pressed, which triggers vi-like behavior
 				if firstLetterSinceStart == "" {
@@ -909,7 +909,7 @@ ctrl-\ to toggle single-line comments
 					// This is a one-time operation
 					dropO = false
 					// Lowercase? Type the O, since it was meant to be typed.
-					if unicode.IsLower([]rune(key)[0]) {
+					if len([]rune(key)) > 0 && unicode.IsLower([]rune(key)[0]) {
 						e.Prev(c)
 						e.SetRune('O')
 						e.WriteRune(c)
@@ -917,18 +917,20 @@ ctrl-\ to toggle single-line comments
 					}
 				}
 				// Type the letter that was pressed
-				if !e.DrawMode() {
-					// Insert a letter. This is what normally happens.
-					e.InsertRune(c, []rune(key)[0])
-					e.WriteRune(c)
-					e.Next(c)
-				} else {
-					// Replace this letter.
-					e.SetRune([]rune(key)[0])
-					e.WriteRune(c)
+				if len([]rune(key)) > 0 {
+					if !e.DrawMode() {
+						// Insert a letter. This is what normally happens.
+						e.InsertRune(c, []rune(key)[0])
+						e.WriteRune(c)
+						e.Next(c)
+					} else {
+						// Replace this letter.
+						e.SetRune([]rune(key)[0])
+						e.WriteRune(c)
+					}
+					e.redraw = true
 				}
-				e.redraw = true
-			} else if len([]rune(key)) >= 0 && unicode.IsGraphic([]rune(key)[0]) { // any other key that can be drawn
+			} else if len([]rune(key)) > 0 && unicode.IsGraphic([]rune(key)[0]) { // any other key that can be drawn
 				undo.Snapshot(e)
 
 				// Place *something*
