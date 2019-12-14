@@ -1589,14 +1589,28 @@ func (e *Editor) Center(c *vt100.Canvas) {
 // ToggleComment will toggle single-line comments on or off ("// ")
 func (e *Editor) ToggleComment() {
 	contents := e.CurrentLine()
+	changed := false
 	newContents := ""
-	if strings.HasPrefix(strings.TrimSpace(contents), "// ") {
+	trimContents := strings.TrimSpace(contents)
+	if strings.HasPrefix(trimContents, "// ") {
 		// toggle off comment
 		newContents = strings.Replace(contents, "// ", "", 1)
+		changed = true
+	} else if strings.HasPrefix(trimContents, "//") {
+		// toggle off comment
+		newContents = strings.Replace(contents, "//", "", 1)
+		changed = true
 	} else {
-		// toggle on comment
-		newContents = e.LeadingWhitespace() + "// " + strings.TrimSpace(contents)
+		// toggle on comment if there is no leading "//" (check without a trailing space this time)
+		if !strings.HasPrefix(strings.TrimSpace(contents), "//") {
+			newContents = e.LeadingWhitespace() + "// " + strings.TrimSpace(contents)
+			changed = true
+		}
 	}
-	_ = newContents
-	e.SetLine(e.DataY(), newContents)
+	if changed {
+		e.SetLine(e.DataY(), newContents)
+		if e.AfterEndOfLine() {
+			e.End()
+		}
+	}
 }
