@@ -271,7 +271,7 @@ ctrl-\ to toggle single-line comments
 			// Map from formatting command to a list of file extensions
 			format := map[*exec.Cmd][]string{
 				exec.Command("/usr/bin/goimports", "-w", "--"):                                             []string{".go"},
-				exec.Command("/usr/bin/clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): []string{".cpp", ".cxx", ".h", ".hpp", ".c++", ".h++"},
+				exec.Command("/usr/bin/clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): []string{".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++"},
 			}
 			formatted := false
 		OUT:
@@ -343,7 +343,7 @@ ctrl-\ to toggle single-line comments
 			// Map from formatting command to a list of file extensions
 			build := map[*exec.Cmd][]string{
 				exec.Command("go", "build"): []string{".go"},
-				exec.Command("cxx"):         []string{".cpp", ".cxx", ".h", ".hpp", ".c++", ".h++"},
+				exec.Command("cxx"):         []string{".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++"},
 			}
 		OUT2:
 			for cmd, extensions := range build {
@@ -389,7 +389,7 @@ ctrl-\ to toggle single-line comments
 					}
 				}
 			}
-		case "c:18": // ctrl-r, output PDF
+		case "c:18": // ctrl-r, render to PNG
 			pngFilenameFormat := "output%04d.png"
 			pngFilename := "output.png"
 			// Find an available filename
