@@ -75,7 +75,7 @@ When loading large files, an animated spinner will appear. The loading operation
 * `esc` - Redraw the screen and clear the last search.
 * `ctrl-space` - Build
 * `ctrl-\` - Toggle single-line comments
-* `ctrl-r` - Render the current text to a PNG image.
+* `ctrl-r` - Render the current text to a PDF document.
 
 ## Size
 
@@ -106,18 +106,6 @@ If the very first keypress after starting `o` is `O`, `G` or `/`, it will trigge
 * `G` - go to the end of the file
 
 The reason for adding these is to make using `o` easier to use for long-time vi/vim/neovim users.
-
-## Creating GIF animations
-
-After saving a series of `.png` images with `ctrl-r`, it is possible to convert them to a GIF animation with:
-
-```sh
-convert output*.png output.gif
-```
-
-Here's an example, created with only `o` and the `convert` command from ImageMagick:
-
-![animation test](img/anim.gif)
 
 ## General info
 

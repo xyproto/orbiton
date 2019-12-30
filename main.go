@@ -92,7 +92,7 @@ ctrl-l to jump to a specific line
 ctrl-f to search for a string
 esc to redraw the screen and clear the last search
 ctrl-space to build
-ctrl-r to render the current text to a PNG image
+ctrl-r to render the current text to a PDF document
 ctrl-\ to toggle single-line comments
 `)
 		return
@@ -389,27 +389,18 @@ ctrl-\ to toggle single-line comments
 					}
 				}
 			}
-		case "c:18": // ctrl-r, render to PNG
-			pngFilenameFormat := "output%04d.png"
-			pngFilename := "output.png"
-			// Find an available filename
-			for i := 0; i < 9999; i++ {
-				tmpFilename := fmt.Sprintf(pngFilenameFormat, i)
-				if !exists(tmpFilename) {
-					pngFilename = tmpFilename
-					break
-				}
-			}
-			// Show a status message while writing
-			statusMessage := "Rendering image..."
+		case "c:18": // ctrl-r, render to PDF
+			pdfFilename := "output.pdf"
+			//// Show a status message while writing
+			statusMessage := "Saving PDF..."
 			status.SetMessage(statusMessage)
 			status.Show(c, e)
-			// Write the image
-			//if err := e.SavePDF(pdfFilename); err != nil {
-			if err := e.SavePNG(pngFilename); err != nil {
+			// Write the file
+			_ = os.Remove(pdfFilename)
+			if err := e.SavePDF(filename, pdfFilename); err != nil {
 				statusMessage = err.Error()
 			} else {
-				statusMessage = "Saved " + pngFilename
+				statusMessage = "Saved " + pdfFilename
 			}
 			// Show a status message after writing
 			status.SetMessage(statusMessage)
