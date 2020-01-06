@@ -23,8 +23,8 @@ You can install `o` with Go 1.10 or later:
 * Tested with `st`, `urxvt` and `xfce4-terminal`.
 * Tested on Arch Linux and FreeBSD.
 * Loads faster than both `vim` and `emacs`.
-* Can format Go or C++ code, just press `ctrl-space`. This uses either `goimports` (`go get golang.org/x/tools/cmd/goimports`) or `clang-format`.
 * Never asks before saving or quitting. Be careful!
+* Can format Go or C++ code, just press `ctrl-space`. This uses either `goimports` (`go get golang.org/x/tools/cmd/goimports`) or `clang-format`.
 * Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
 * Smart indentation.
