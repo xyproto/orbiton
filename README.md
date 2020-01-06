@@ -42,7 +42,6 @@ You can install `o` with Go 1.10 or later:
 ## Known bugs
 
 * Files with lines longer than the terminal width are not handled gracefully.
-* Word wrap sometimes break a word at the wrong position when typing.
 
 ## Spinner
 
@@ -73,7 +72,7 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-l` - Jump to a specific line number
 * `ctrl-f` - Search for a string.
 * `esc` - Redraw the screen and clear the last search.
-* `ctrl-space` - Build
+* `ctrl-space` - Build Go or C++ files, word-wrap other files.
 * `ctrl-\` - Toggle single-line comments
 * `ctrl-r` - Render the current text to a PDF document.
 

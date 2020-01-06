@@ -91,7 +91,7 @@ ctrl-u to undo
 ctrl-l to jump to a specific line
 ctrl-f to search for a string
 esc to redraw the screen and clear the last search
-ctrl-space to build
+ctrl-space to build Go, C++ or word wrap
 ctrl-r to render the current text to a PDF document
 ctrl-\ to toggle single-line comments
 `)
@@ -121,6 +121,15 @@ ctrl-\ to toggle single-line comments
 
 	// 4 spaces per tab, scroll 10 lines at a time, no word wrap
 	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme)
+
+	// For non-highlighted files, adjust the word wrap
+	if !defaultHighlight {
+		// Adjust the word wrap if the terminal is too narrow
+		w := int(c.Width())
+		if w < e.wordWrapAt {
+			e.wordWrapAt = w
+		}
+	}
 
 	// Use a theme for light backgrounds if XTERM_VERSION is set,
 	// because $COLORFGBG is "15;0" even though the background is white.
@@ -339,16 +348,18 @@ ctrl-\ to toggle single-line comments
 			}
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
-		case "c:0": // ctrl-space, "cxx" or "go build"
+		case "c:0": // ctrl-space, "cxx", "go build" or word wrap
 			// Map from formatting command to a list of file extensions
 			build := map[*exec.Cmd][]string{
 				exec.Command("go", "build"): []string{".go"},
 				exec.Command("cxx"):         []string{".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++"},
 			}
+			var foundExtensionToBuild bool
 		OUT2:
 			for cmd, extensions := range build {
 				for _, ext := range extensions {
 					if strings.HasSuffix(filename, ext) {
+						foundExtensionToBuild = true
 						status.ClearAll(c)
 						status.SetMessage("Building")
 						status.Show(c, e)
@@ -388,6 +399,13 @@ ctrl-\ to toggle single-line comments
 						break OUT2
 					}
 				}
+			}
+			if !foundExtensionToBuild {
+				// word wrap at the current width - 5, with an allowed overshoot of 5 runes
+				e.WrapAllLinesAt(e.wordWrapAt-5, 5)
+				//e.WrapAllLinesAt(10, 3)
+				e.redraw = true
+				e.redrawCursor = true
 			}
 		case "c:18": // ctrl-r, render to PDF
 			pdfFilename := "output.pdf"

@@ -596,7 +596,6 @@ func (e *Editor) DeleteLine(n int) {
 
 	// Make sure no lines are nil
 	e.MakeConsistent()
-
 }
 
 // Delete will delete a character at the given position
@@ -671,6 +670,95 @@ func (e *Editor) MakeConsistent() {
 	}
 }
 
+// WithinLimit will check if a line is within the word wrap limit,
+// given a Y position.
+func (e *Editor) WithinLimit(y int) bool {
+	return len(e.lines[y]) < e.wordWrapAt
+}
+
+// LastWord will return the last word of a line,
+// given a Y position. Returns an empty string if there is no last word.
+func (e *Editor) LastWord(y int) string {
+	words := strings.Fields(strings.TrimSpace(string(e.lines[y])))
+	if len(words) > 0 {
+		return words[len(words)-1]
+	}
+	return ""
+}
+
+// SplitOvershoot will split the line into a first part that is within the
+// word wrap length and a second part that is the overshooting part.
+// y is the line index (y position, counting from 0).
+// isSpace is true if a space has just been inserted on purpose at the current position.
+func (e *Editor) SplitOvershoot(y int, isSpace bool) ([]rune, []rune) {
+	// Maximum word length to not keep as one word
+	maxDistance := e.wordWrapAt / 2
+	if e.WithinLimit(y) {
+		return e.lines[y], []rune{}
+	}
+	splitPosition := e.wordWrapAt
+	if isSpace {
+		splitPosition, _ = e.DataX()
+	} else {
+		// Starting at the split position, move left until a space is reached (or the start of the line).
+		// If a space is reached, check if it is too far away from n to be used as a split position, or not.
+		spacePosition := -1
+		for i := splitPosition; i >= 0; i-- {
+			if i < len(e.lines[y]) && unicode.IsSpace(e.lines[y][i]) {
+				// Found a space at position i
+				spacePosition = i
+				break
+			}
+		}
+		// Found a better position to split, at a nearby space?
+		if spacePosition != -1 {
+			distance := splitPosition - spacePosition
+			if distance > maxDistance {
+				// To far away, don't use this as a split point,
+				// stick to the hard split.
+			} else {
+				// Okay, we found a better split point.
+				splitPosition = spacePosition
+			}
+		}
+	}
+
+	// Split the line into two parts
+	n := splitPosition
+	first := make([]rune, len(e.lines[y][:n]))
+	second := make([]rune, len(e.lines[y][n:]))
+	copy(first, e.lines[y][:n])
+	copy(second, e.lines[y][n:])
+
+	// If the second part starts with a space, remove it
+	if len(second) > 0 && unicode.IsSpace(second[0]) {
+		second = second[1:]
+	}
+
+	return first, second
+}
+
+// WrapAllLinesAt will word wrap all lines that are longer than n,
+// with a maximum overshoot of too long words (measured in runes) of maxOvershoot.
+func (e *Editor) WrapAllLinesAt(n, maxOvershoot int) {
+	for i := 0; i < len(e.lines); i++ {
+		if e.WithinLimit(i) {
+			continue
+		}
+		first, second := e.SplitOvershoot(i, false)
+		if len(second) > 0 {
+			e.InsertLineBelowAt(i)
+			e.lines[i] = first
+			e.lines[i+1] = second
+			e.changed = true
+			// Move the cursor as well, so that it is at the same line as before the word wrap
+			if i < e.DataY() {
+				e.pos.sy++
+			}
+		}
+	}
+}
+
 // InsertLineAbove will attempt to insert a new line above the current position
 func (e *Editor) InsertLineAbove() {
 	y := e.DataY()
@@ -712,8 +800,11 @@ func (e *Editor) InsertLineAbove() {
 
 // InsertLineBelow will attempt to insert a new line below the current position
 func (e *Editor) InsertLineBelow() {
-	y := e.DataY()
+	e.InsertLineBelowAt(e.DataY())
+}
 
+// InsertLineBelowAt will attempt to insert a new line below the given y position
+func (e *Editor) InsertLineBelowAt(y int) {
 	// If we are the the last line, add an empty line at the end and return
 	if y == (len(e.lines) - 1) {
 		e.lines[y+1] = make([]rune, 0)
@@ -931,104 +1022,44 @@ func (e *Editor) SetRune(r rune) {
 
 // InsertRune will insert a rune at the current data position, with word wrap
 func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
-	w := int(c.Width() - 1)
 
-	// Use the smallest value of the terminal width and the configured
-	// e.wordWrapAt for the word wrap limit
-	if (e.wordWrapAt > 0) && (e.wordWrapAt < w) {
-		w = e.wordWrapAt
-	}
+	// Make a copy of the current line
+	y := e.DataY()
+	lineCopy := make([]rune, len(e.lines[y]))
+	copy(lineCopy, e.lines[y])
 
-	lineContents := e.CurrentLine()
-	if e.pos.sx < (w-1) || len(lineContents) == 0 {
-		// Not a word-wrap situation, insert the rune and leave
-		e.Insert(r)
+	// Then just instert the rune
+	e.Insert(r)
+
+	// If it's not a word-wrap situation, just return
+	if e.WithinLimit(y) {
 		return
 	}
 
-	y := e.DataY()
-	lastRune := e.lines[y][len(e.lines[y])-1]
+	// We need to wrap the line, start by removing the inserted rune
+	e.lines[y] = lineCopy
+	// Then splitting the line, if needed
+	first, second := e.SplitOvershoot(y, unicode.IsSpace(r))
+	if len(second) > 0 {
 
-	// This way of doing word wrap while typing is not the best, since there will be no re-flow if lines are modified later on.
-	// There could be a hotkey to reflow text, though.
-	// TODO: Ctrl-w for regular text files should reflow the text.
+		e.InsertLineBelowAt(y)
+		e.lines[y] = first
+		e.lines[y+1] = second
 
-	if r == rune(' ') { // We are inserting a space at the end of a line that is going to be wrapped, just ignore it and go to the next line.
-		e.GoTo(e.DataY(), c, nil)
-		e.TrimRight(y)
-		if e.AtLastLineOfDocument() {
-			e.CreateLineIfMissing(e.DataY() + 1)
-		}
-		// TODO: Figure out why on earth down goes two down!
-		e.pos.Down(c)
-		e.pos.Up()
+		e.changed = true
 		e.redrawCursor = true
-		// Don't insert the rune, since it would be a space at the beginning of a new line
-	} else if lastRune == rune(' ') { // If we reached the end and the last rune is a space, great, just jump to the next line and insert it there.
-		// Create a new line
-		//if e.AtLastLineOfDocument() {
-		e.CreateLineIfMissing(y + 1)
-		//}
-		// Then go there, without clearing status bar messages
+		e.redraw = true
+
 		e.Down(c, nil)
-		// Now insert the given rune
-		e.Insert(r)
-		e.redrawCursor = true
-	} else { // This is where it's interesting, we are in the middle of typing a word when the wrapping happens.
-		// The first part of the word we are typing are the letters at the end of this line
-		words := strings.Fields(e.CurrentLine())
-		if len(words) == 0 {
-			// This should never happen, just insert the given rune and leave
-			e.Insert(r)
-			return
-		}
-		//beginningOfWord := words[len(words)-1]
-		//preceededBySpace := len(words) > 1
-		// The length of the word being typed is already longer than the accepted width!
-		if len(words) == 1 {
-			// Split it at the end - 2, then add a dash
-			e.pos.sx = w - 2
-			e.SplitLine()
-			e.Insert('-')
-			e.Down(c, nil)
-		} else {
-			// TODO: This is ugly. Rewrite.
-			e.End()
-			// > 0 instead of >= 0 to avoid the final Prev
-			for i := len(e.lines[e.DataY()]) - 1; i > 0; i-- {
-				if e.lines[e.DataY()][i] == rune(' ') {
-					break
-				}
-				e.Prev(c)
-			}
-			e.SplitLine()
-			e.Down(c, nil)
-			// Tremove the single trailing space, if present
-			// TODO: This is ugly. Rewrite.
-			if len(e.lines[e.DataY()]) > 0 {
-				if e.lines[e.DataY()][0] == rune(' ') {
-					e.lines[e.DataY()] = e.lines[e.DataY()][1:]
-				}
-			}
-			// If this line now has a space as the second letter, then move it up to the end of the line above.
-			// TODO: This is ugly. Rewrite.
-			if len(e.lines[e.DataY()]) > 2 {
-				if e.lines[e.DataY()][2] == rune(' ') {
-					// Add it to the line above
-					e.lines[e.DataY()-1] = append(e.lines[e.DataY()-1], e.lines[e.DataY()][0])
-					// Remove it from this line
-					e.lines[e.DataY()] = e.lines[e.DataY()][2:]
-				}
-			}
-		}
 		e.End()
-		e.Insert(r)
-		e.redrawCursor = true
 	}
 
-	// Just to make sure
-	e.MakeConsistent()
-	e.redraw = true
+	// Then insert the rune, now that the wrapping has been taken care of, unless it was a space
+	if !unicode.IsSpace(r) {
+		e.Insert(r)
+	} else {
+		//e.Up(c, nil)
+	}
 }
 
 // InsertString will insert a string at the current data position.
@@ -1495,6 +1526,9 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar) *vt100.Canv
 	vt100.Init()
 	newC := vt100.NewCanvas()
 	newC.ShowCursor()
+	if int(newC.Width()) < e.wordWrapAt {
+		e.wordWrapAt = int(newC.Width())
+	}
 	e.pos = savePos
 	e.redraw = true
 	e.redrawCursor = true
