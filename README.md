@@ -1,17 +1,10 @@
 # o [![Build Status](https://travis-ci.com/xyproto/o.svg?branch=master)](https://travis-ci.com/xyproto/o) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/o/master/LICENSE)
 
-`o` is yet another editor. It's limited to the VT100 standard, and can be used for programming in Go or C++. It has many limitations, but is small and fast. It's a good fit for writing git commit messages, using `EDITOR=o git commit`.
+`o` is a small and fast text editor that is limited to the VT100 standard.
 
-* Compiles with either `go` or `gccgo`.
-* Tested with `st`, `urxvt` and `xfce4-terminal`.
-* Tested on Arch Linux and FreeBSD.
+It's a good fit for writing git commit messages, using `EDITOR=o git commit`.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
-
-<!--## Screenshot
-
-![screenshot](img/screenshot.png)
--->
 
 ## Quick start
 
@@ -21,14 +14,20 @@ You can install `o` with Go 1.10 or later:
 
 ## Features and limitations
 
-* Has syntax highlighting for Go and C++ code.
-* Loads faster than both `vim` and `emacs`. It feels instant.
-* Can format Go or C++ code, just press `ctrl-o`. This uses either `goimports` (`go get golang.org/x/tools/cmd/goimports`) or `clang-format`.
+* Loads up instantly.
+* Small executable size (around 500k, when built with `gccgo` and then stripped).
+* Provides syntax highlighting for Go, C++ and Bash.
+* Configuration-free, for better and for worse.
+* Is limited to the VT100 standard, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`.
+* Compiles with either `go` or `gccgo`.
+* Tested with `st`, `urxvt` and `xfce4-terminal`.
+* Tested on Arch Linux and FreeBSD.
+* Loads faster than both `vim` and `emacs`.
+* Can format Go or C++ code, just press `ctrl-space`. This uses either `goimports` (`go get golang.org/x/tools/cmd/goimports`) or `clang-format`.
 * Never asks before saving or quitting. Be careful!
 * Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
 * Smart indentation.
-* `Home` and `End` are not detected by the key handler. `ctrl-a` and `ctrl-e` works, though.
 * Requires `/dev/tty` to be available.
 * Copy, cut and paste is only for one line at a time. `xclip` must be installed if the system clipboard is to be used.
 * May take a line number as the second argument, with an optional `+` prefix.
@@ -37,6 +36,7 @@ You can install `o` with Go 1.10 or later:
 * If the filename is `COMMIT_EDITMSG`, the look and feel will be adjusted for git commit messages.
 * Supports `UTF-8`.
 * Respects the `NO_COLOR` environment variable.
+* Can render text to PDF.
 * Only UNIX-style line endings are supported (`\n`).
 
 ## Known bugs
@@ -74,7 +74,7 @@ When loading large files, an animated spinner will appear. The loading operation
 * `esc` - Redraw the screen and clear the last search.
 * `ctrl-space` - Build Go or C++ files, word-wrap other files.
 * `ctrl-\` - Toggle single-line comments
-* `ctrl-r` - Render the current text to a PDF document.
+* `ctrl-r` - Render to a PDF document.
 
 ## Size
 
