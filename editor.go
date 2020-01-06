@@ -1032,7 +1032,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	e.Insert(r)
 
 	// If it's not a word-wrap situation, just return
-	if e.WithinLimit(y) {
+	if e.wordWrapAt == 0 || e.WithinLimit(y) {
 		return
 	}
 
@@ -1058,7 +1058,8 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	if !unicode.IsSpace(r) {
 		e.Insert(r)
 	} else {
-		//e.Up(c, nil)
+		//e.WrapAllLinesAt(e.wordWrapAt-5, 5)
+		//e.Insert(r)
 	}
 }
 
