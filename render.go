@@ -72,6 +72,8 @@ func (e *Editor) SavePDF(title, filename string) error {
 	timestamp := time.Now().Format("2006-01-02")
 
 	pdf := gofpdf.New("P", "mm", "A4", "")
+	tr := pdf.UnicodeTranslatorFromDescriptor("") // "" defaults to "cp1252"
+
 	pdf.SetTopMargin(30)
 	pdf.SetHeaderFunc(func() {
 		pdf.SetY(5)
@@ -87,10 +89,13 @@ func (e *Editor) SavePDF(title, filename string) error {
 	})
 	pdf.AddPage()
 	pdf.SetY(20)
+	ht := pdf.PointConvert(8.0)
 	pdf.SetFont("Courier", "B", 12)
-	pdf.Write(5, title+"\n\n")
+	pdf.MultiCell(190, ht, tr(title+"\n\n"), "", "L", false)
+	pdf.Ln(ht)
 	pdf.SetFont("Courier", "", 6)
-	pdf.Write(5, contents+"\n")
+	pdf.MultiCell(190, ht, tr(contents+"\n"), "", "L", false)
+	pdf.Ln(ht)
 
 	if _, err := os.Stat(filename); !os.IsNotExist(err) {
 		return fmt.Errorf("%s already exists", filename)
