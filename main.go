@@ -529,6 +529,12 @@ ctrl-\ to toggle single-line comments
 			} else {
 				// Scroll down
 				e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
+				// If e.redraw is false, the end of file is reached
+				if !e.redraw {
+					status.Clear(c)
+					status.SetMessage("EOF")
+					status.Show(c, e)
+				}
 				e.redrawCursor = true
 				if !e.DrawMode() && e.AfterLineScreenContents() {
 					e.End()
