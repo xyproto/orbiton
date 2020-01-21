@@ -1,6 +1,8 @@
 o
-.vscode
-*.o
+hai
+HAI
+hai.*
+output*.p*
 *.bak
 *.swp
 *.tmp
@@ -9,9 +11,6 @@ test.*
 *.test
 *.fil
 *.txt
-hai
-.vagrant
-hai.*
 *.*.png
-output*.png
-output.pdf
+.vagrant
+.vscode
