@@ -29,7 +29,7 @@ type Editor struct {
 	searchFg         vt100.AttributeColor // search highlight color
 	redraw           bool                 // if the contents should be redrawn in the next loop
 	redrawCursor     bool                 // if the cursor should be moved to the location it is supposed to be
-	gitMode          bool
+	gitMode          bool                 // a mode specifically for git commits and interactive rebases
 	gitColor         vt100.AttributeColor // git commit message color
 	lineBeforeSearch int
 	wordWrapAt       int // set to 80 or 100 to trigger word wrap when typing to that column
@@ -41,7 +41,7 @@ type Editor struct {
 // * background color attributes
 // * if syntax highlighting is enabled
 // * if "insert mode" is enabled (as opposed to "draw mode")
-func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEditMode bool, scrollSpeed int, searchFg vt100.AttributeColor, scheme syntax.TextConfig) *Editor {
+func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEditMode bool, scrollSpeed int, searchFg vt100.AttributeColor, scheme syntax.TextConfig, gitMode bool) *Editor {
 	syntax.DefaultTextConfig = scheme
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
@@ -57,6 +57,7 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEdi
 	if !highlight {
 		e.wordWrapAt = 99
 	}
+	e.gitMode = gitMode
 	return e
 }
 
@@ -463,10 +464,39 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 				// Color and unescape
 				var coloredString string
 				if e.gitMode {
-					if !strings.HasPrefix(strings.TrimSpace(line), "#") {
-						coloredString = e.gitColor.Get(line)
+					if strings.HasPrefix(line, "#") {
+						filenameColor := vt100.Red
+						if strings.HasPrefix(line, "# On branch ") {
+							coloredString = vt100.DarkGray.Get(line[:12]) + vt100.LightGreen.Get(line[12:])
+						} else if strings.HasPrefix(line, "# Your branch is up to date with '") && strings.Count(line, "'") == 2 {
+							parts := strings.SplitN(line, "'", 3)
+							coloredString = vt100.DarkGray.Get(parts[0]+"'") + vt100.LightGreen.Get(parts[1]) + vt100.DarkGray.Get("'"+parts[2])
+						} else if line == "# Changes to be committed:" {
+							coloredString = vt100.DarkGray.Get("# ") + vt100.LightBlue.Get("Changes to be committed:")
+						} else if line == "# Untracked files:" {
+							coloredString = vt100.DarkGray.Get("# ") + vt100.LightBlue.Get("Untracked files:")
+						} else if strings.Contains(line, "new file:") {
+							parts := strings.SplitN(line[1:], ":", 2)
+							coloredString = vt100.DarkGray.Get("#") + vt100.LightYellow.Get(parts[0]) + vt100.DarkGray.Get(":") + filenameColor.Get(parts[1])
+						} else if strings.Contains(line, "modified:") {
+							parts := strings.SplitN(line[1:], ":", 2)
+							coloredString = vt100.DarkGray.Get("#") + vt100.LightYellow.Get(parts[0]) + vt100.DarkGray.Get(":") + filenameColor.Get(parts[1])
+						} else if strings.Contains(line, "deleted:") {
+							parts := strings.SplitN(line[1:], ":", 2)
+							coloredString = vt100.DarkGray.Get("#") + vt100.LightYellow.Get(parts[0]) + vt100.DarkGray.Get(":") + filenameColor.Get(parts[1])
+						} else if strings.Contains(line, "renamed:") {
+							parts := strings.SplitN(line[1:], ":", 2)
+							if strings.Contains(parts[1], "->") {
+								filenames := strings.SplitN(parts[1], "->", 2)
+								coloredString = vt100.DarkGray.Get("#") + vt100.LightYellow.Get(parts[0]) + vt100.DarkGray.Get(":") + filenameColor.Get(filenames[0]) + vt100.White.Get("->") + filenameColor.Get(filenames[1])
+							} else {
+								coloredString = vt100.DarkGray.Get("#") + vt100.LightYellow.Get(parts[0]) + vt100.DarkGray.Get(":") + filenameColor.Get(parts[1])
+							}
+						} else {
+							coloredString = vt100.DarkGray.Get(line)
+						}
 					} else {
-						coloredString = vt100.DarkGray.Get(line)
+						coloredString = e.gitColor.Get(line)
 					}
 				} else {
 					coloredString = UnEscape(o.DarkTags(string(textWithTags)))

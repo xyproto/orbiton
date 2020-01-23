@@ -120,7 +120,7 @@ ctrl-\ to toggle single-line comments
 	c.ShowCursor()
 
 	// 4 spaces per tab, scroll 10 lines at a time, no word wrap
-	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme)
+	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, gitMode)
 
 	// For non-highlighted files, adjust the word wrap
 	if !defaultHighlight {
@@ -237,7 +237,7 @@ ctrl-\ to toggle single-line comments
 		e.GoToLineNumber(lineNumber, c, status, false)
 		e.redraw = true
 		e.redrawCursor = true
-	} else if recordedLineNumber, ok := locationHistory[absFilename]; ok {
+	} else if recordedLineNumber, ok := locationHistory[absFilename]; ok && !gitMode {
 		// If this filename exists in the location history, jump there
 		lineNumber = recordedLineNumber
 		e.GoToLineNumber(lineNumber, c, status, true)
