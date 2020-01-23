@@ -1,6 +1,6 @@
 .\"             -*-Nroff-*-
 .\"
-.TH "o" 1 "20 Jan 2020" "" ""
+.TH "o" 1 "23 Jan 2020" "" ""
 .SH NAME
 o \- an editor
 .SH SYNOPSIS
@@ -48,13 +48,13 @@ displays brief usage information
   Delete all characters to the end of the line. Delete the line if it is empty.
 .sp
 .B ctrl-g
-  Toggle a status line at the bottom for displaying: filename, line, column, unicode number and word count
+  Toggle a status line at the bottom for displaying: filename, line, column, unicode number and word count.
 .sp
 .B ctrl-d
   Delete a single character.
 .sp
 .B ctrl-t
-  Toggle syntax highlighting.
+  Toggle syntax highlighting (or cycle the git interactive rebase keyword, if in git mode).
 .sp
 .B ctrl-w
   Toggle between "text" and "draw mode" (for ASCII graphics).
@@ -89,11 +89,15 @@ displays brief usage information
 .B ctrl-space
   Build Go programs with `go build`. Build C++ programs with `cxx`. Otherwise, perform word-wrapping.
 .sp
-.B ctrl-\
+.B ctrl-\\\\
   Toggle single-line comments.
 .sp
 .B ctrl-r
-  Render the current text to a PDF document.
+  Render the current text as a PDF document.
+.sp
+.SH "ENV"
+.sp
+The `NO_COLOR` environment variable can be set to 1 to disable all colors.
 .sp
 .SH "WHY"
 .sp
@@ -104,7 +108,7 @@ I wanted to write a simple editor that only used VT100 terminal codes.
 .SH BUGS
 Lines longer than the terminal width are not handled gracefully.
 .SH VERSION
-2.14.0
+2.15.0
 .SH AUTHOR
 .B o
 was written by  Alexander F. Rødseth <xyproto@archlinux.org>

@@ -61,7 +61,7 @@ When loading large files, an animated spinner will appear. The loading operation
 * `ctrl-k` - Delete characters to the end of the line, then delete the line
 * `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, unicode number and word count
 * `ctrl-d` - Delete a single character
-* `ctrl-t` - Toggle syntax highlighting
+* `ctrl-t` - Toggle syntax highlighting (or cycle the git interactive rebase keyword, if in git mode)
 * `ctrl-w` - Toggle between "text" and "draw mode" (for ASCII graphics)
 * `ctrl-x` - Cut the current line
 * `ctrl-c` - Copy the current line
@@ -74,7 +74,7 @@ When loading large files, an animated spinner will appear. The loading operation
 * `esc` - Redraw the screen and clear the last search.
 * `ctrl-space` - Build Go or C++ files, word-wrap other files.
 * `ctrl-\` - Toggle single-line comments
-* `ctrl-r` - Render to a PDF document.
+* `ctrl-r` - Render the current text as a PDF document.
 
 ## Size
 
@@ -108,6 +108,6 @@ The reason for adding these is to make using `o` easier to use for long-time vi/
 
 ## General info
 
-* Version: 2.14.0
+* Version: 2.15.0
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

@@ -18,7 +18,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "o 2.14.0"
+const versionString = "o 2.15.0"
 
 func main() {
 	var (
@@ -80,7 +80,7 @@ ctrl-n to scroll down 10 lines or go to the next match if a search is active
 ctrl-k to delete characters to the end of the line, then delete the line
 ctrl-g to toggle filename/line/column/unicode/word count status display
 ctrl-d to delete a single character
-ctrl-t to toggle syntax highlighting, or toggle interactive git rebase keyword
+ctrl-t to toggle syntax highlighting (or cycle the git interactive rebase keyword)
 ctrl-w to toggle text or draw mode (for ASCII graphics)
 ctrl-x to cut the current line
 ctrl-c to copy the current line
