@@ -70,30 +70,33 @@ func main() {
 		fmt.Print(`
 Hotkeys
 
-ctrl-q to quit
-ctrl-s to save
-ctrl-o to format the current file with "go fmt" or "clang-format"
-ctrl-a go to start of line, then start of text, then previous paragraph
-ctrl-e go to end of line, then next paragraph
-ctrl-p to scroll up 10 lines
-ctrl-n to scroll down 10 lines or go to the next match if a search is active
-ctrl-k to delete characters to the end of the line, then delete the line
-ctrl-g to toggle filename/line/column/unicode/word count status display
-ctrl-d to delete a single character
-ctrl-t to toggle syntax highlighting (or cycle the git interactive rebase keyword)
-ctrl-w to toggle text or draw mode (for ASCII graphics)
-ctrl-x to cut the current line
-ctrl-c to copy the current line
-ctrl-v to paste the current line
-ctrl-b to bookmark the current line
-ctrl-j to jump to the bookmark
-ctrl-u to undo
-ctrl-l to jump to a specific line
-ctrl-f to search for a string
-esc to redraw the screen and clear the last search
+ctrl-q     to quit
+ctrl-s     to save
+ctrl-o     to format the current file with "go fmt" or "clang-format"
+ctrl-a     go to start of line, then start of text, then previous paragraph
+ctrl-e     go to end of line, then next paragraph
+ctrl-p     to scroll up 10 lines
+ctrl-n     to scroll down 10 lines or go to the next match if a search is active
+ctrl-k     to delete characters to the end of the line, then delete the line
+ctrl-g     to toggle filename/line/column/unicode/word count status display
+ctrl-d     to delete a single character
+ctrl-t     to toggle syntax highlighting (or cycle the git interactive rebase keyword)
+ctrl-w     to toggle text or draw mode (for ASCII graphics)
+ctrl-x     to cut the current line
+ctrl-c     to copy the current line
+ctrl-v     to paste the current line
+ctrl-b     to bookmark the current line
+ctrl-j     to jump to the bookmark
+ctrl-u     to undo
+ctrl-l     to jump to a specific line
+ctrl-f     to search for a string
+esc        to redraw the screen and clear the last search
 ctrl-space to build Go, C++, word wrap
-ctrl-r to render the current text to a PDF document
-ctrl-\ to toggle single-line comments
+ctrl-r     to render the current text to a PDF document
+ctrl-\     to toggle single-line comments
+
+Set NO_COLOR=1 to 1 to disable colors.
+
 `)
 		return
 	}
