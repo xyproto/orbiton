@@ -492,9 +492,15 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 							} else {
 								coloredString = vt100.DarkGray.Get("#") + vt100.LightYellow.Get(parts[0]) + vt100.DarkGray.Get(":") + filenameColor.Get(parts[1])
 							}
+						} else if fields := strings.Fields(line); strings.HasPrefix(line, "# Rebase ") && len(fields) >= 5 && strings.Contains(fields[2], "..") {
+							textColor := vt100.LightGray
+							commitRange := strings.SplitN(fields[2], "..", 2)
+							coloredString = vt100.DarkGray.Get("# ") + textColor.Get(fields[1]) + " " + vt100.LightBlue.Get(commitRange[0]) + textColor.Get("..") + vt100.LightBlue.Get(commitRange[1]) + " " + textColor.Get(fields[3]) + " " + vt100.LightBlue.Get(fields[4]) + " " + textColor.Get(strings.Join(fields[5:], " "))
 						} else {
 							coloredString = vt100.DarkGray.Get(line)
 						}
+					} else if fields := strings.Fields(line); len(fields) >= 3 && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
+						coloredString = vt100.Red.Get(fields[0]) + " " + vt100.LightBlue.Get(fields[1]) + " " + vt100.LightGray.Get(strings.Join(fields[2:], " "))
 					} else {
 						coloredString = e.gitColor.Get(line)
 					}

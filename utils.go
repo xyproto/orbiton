@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 // exists checks if the given path exists
@@ -14,4 +15,13 @@ func exists(path string) bool {
 // errLog outputs a message to stderr
 func errLog(s string) {
 	fmt.Fprintf(os.Stderr, "%s\n", s)
+}
+
+func hasAnyPrefixWord(line string, wordList []string) bool {
+	for _, word := range wordList {
+		if strings.HasPrefix(line, word+" ") {
+			return true
+		}
+	}
+	return false
 }
