@@ -43,12 +43,6 @@ You can install `o` with Go 1.10 or later:
 
 * Files with lines longer than the terminal width are not handled gracefully.
 
-## Spinner
-
-When loading large files, an animated spinner will appear. The loading operation can be stopped at any time by pressing `esc`, `q` or `ctrl-q`.
-
-![progress](img/progress.gif)
-
 ## Hotkeys
 
 * `ctrl-q` - Quit
@@ -105,6 +99,12 @@ If the very first keypress after starting `o` is `O`, `G` or `/`, it will trigge
 * `G` - go to the end of the file
 
 The reason for adding these is to make using `o` easier to use for long-time vi/vim/neovim users.
+
+## Spinner
+
+When loading large files, an animated spinner will appear. The loading operation can be interrupted by pressing `esc`, `q` or `ctrl-q`.
+
+![progress](img/progress.gif)
 
 ## General info
 
