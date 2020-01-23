@@ -24,31 +24,27 @@ GOOS=linux GOARCH=arm GOARM=6 go build -mod=vendor -o $name.rpi
 echo '* Linux static w/ upx'
 CGO_ENABLED=0 GOOS=linux go build -mod=vendor -v -trimpath -ldflags "-s" -a -o $name.linux_static && upx $name.linux_static
 
-# Compress the Windows release
-echo "Compressing $name-$version.zip"
-mkdir "$name-$version"
-cp $name.exe LICENSE "$name-$version/"
-zip -q -r "$name-$version.zip" "$name-$version/"
-rm -r "$name-$version"
-rm $name.exe
-
 # Compress the Linux releases with xz
 for p in linux linux_arm64 rpi linux_static; do
   echo "Compressing $name-$version.$p.tar.xz"
   mkdir "$name-$version-$p"
-  cp $name.$p LICENSE "$name-$version-$p/"
+  cp $name.1 "$name-$version-$p/"
+  gzip "$name-$version-$p/$name.1"
+  cp $name.$p "$name-$version-$p/$name"
+  cp LICENSE "$name-$version-$p/"
   tar Jcf "$name-$version-$p.tar.xz" "$name-$version-$p/"
   rm -r "$name-$version-$p"
   rm $name.$p
 done
 
 # Compress the other tarballs with gz
-for p in macos freebsd netbsd openbsd; do
+for p in macos freebsd netbsd; do
   echo "Compressing $name-$version.$p.tar.gz"
   mkdir "$name-$version-$p"
-  #cp $name.1 "$name-$version-$p/"
-  #gzip "$name-$version-$p/$name.1"
-  cp $name.$p LICENSE "$name-$version-$p/"
+  cp $name.1 "$name-$version-$p/"
+  gzip "$name-$version-$p/$name.1"
+  cp $name.$p "$name-$version-$p/$name"
+  cp LICENSE "$name-$version-$p/"
   tar zcf "$name-$version-$p.tar.gz" "$name-$version-$p/"
   rm -r "$name-$version-$p"
   rm $name.$p
