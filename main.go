@@ -72,7 +72,7 @@ Hotkeys
 
 ctrl-q to quit
 ctrl-s to save
-ctrl-o to format the current file with "go fmt"
+ctrl-o to format the current file with "go fmt" or "clang-format"
 ctrl-a go to start of line, then start of text, then previous paragraph
 ctrl-e go to end of line, then next paragraph
 ctrl-p to scroll up 10 lines
@@ -80,7 +80,7 @@ ctrl-n to scroll down 10 lines or go to the next match if a search is active
 ctrl-k to delete characters to the end of the line, then delete the line
 ctrl-g to toggle filename/line/column/unicode/word count status display
 ctrl-d to delete a single character
-ctrl-t to toggle syntax highlighting
+ctrl-t to toggle syntax highlighting, or toggle interactive git rebase keyword
 ctrl-w to toggle text or draw mode (for ASCII graphics)
 ctrl-x to cut the current line
 ctrl-c to copy the current line
@@ -91,7 +91,7 @@ ctrl-u to undo
 ctrl-l to jump to a specific line
 ctrl-f to search for a string
 esc to redraw the screen and clear the last search
-ctrl-space to build Go, C++ or word wrap
+ctrl-space to build Go, C++, word wrap
 ctrl-r to render the current text to a PDF document
 ctrl-\ to toggle single-line comments
 `)
@@ -546,12 +546,20 @@ ctrl-\ to toggle single-line comments
 			if !e.DrawMode() && e.AfterLineScreenContents() {
 				e.End()
 			}
-		case "c:20": // ctrl-t, toggle syntax highlighting
-			e.ToggleHighlight()
-			if e.highlight {
-				e.bg = defaultEditorBackground
+		case "c:20": // ctrl-t, toggle syntax highlighting or use the next git interactive rebase keyword
+			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
+				newLine := nextGitRebaseKeyword(line)
+				e.SetLine(e.DataY(), newLine)
+				e.redraw = true
+				e.redrawCursor = true
+				break
 			} else {
-				e.bg = vt100.BackgroundDefault
+				e.ToggleHighlight()
+				if e.highlight {
+					e.bg = defaultEditorBackground
+				} else {
+					e.bg = vt100.BackgroundDefault
+				}
 			}
 			// Now do a full reset/redraw
 			fallthrough
