@@ -18,7 +18,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "o 2.15.0"
+const versionString = "o 2.15.1"
 
 func main() {
 	var (
