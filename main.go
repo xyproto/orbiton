@@ -18,7 +18,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "o 2.15.1"
+const version = "o 2.15.1"
 
 func main() {
 	var (
@@ -44,8 +44,8 @@ func main() {
 			Whitespace:    "",
 		}
 
-		version = flag.Bool("version", false, "show version information")
-		help    = flag.Bool("help", false, "show simple help")
+		versionFlag = flag.Bool("version", false, "show version information")
+		helpFlag    = flag.Bool("help", false, "show simple help")
 
 		statusDuration = 2700 * time.Millisecond
 
@@ -60,13 +60,13 @@ func main() {
 
 	flag.Parse()
 
-	if *version {
-		fmt.Println(versionString)
+	if *versionFlag {
+		fmt.Println(version)
 		return
 	}
 
-	if *help {
-		fmt.Println(versionString + " - simple and limited text editor")
+	if *helpFlag {
+		fmt.Println(version + " - simple and limited text editor")
 		fmt.Print(`
 Hotkeys
 
