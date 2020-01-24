@@ -56,8 +56,8 @@ You can install `o` with Go 1.10 or later:
 * `ctrl-k` - Delete characters to the end of the line, then delete the line
 * `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, unicode number and word count
 * `ctrl-d` - Delete a single character
-* `ctrl-t` - Toggle syntax highlighting (or cycle the git interactive rebase keyword, if in git mode)
-* `ctrl-w` - Toggle between "text" and "draw mode" (for ASCII graphics)
+* `ctrl-t` - Toggle syntax highlighting
+* `ctrl-w` - Toggle between text and draw mode (or cycle the git interactive rebase keyword, if in git mode)
 * `ctrl-x` - Cut the current line
 * `ctrl-c` - Copy the current line
 * `ctrl-v` - Paste the current line
@@ -111,6 +111,6 @@ When loading large files, an animated spinner will appear. The loading operation
 
 ## General info
 
-* Version: 2.15.2
+* Version: 2.15.3
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

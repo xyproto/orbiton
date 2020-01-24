@@ -18,7 +18,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const version = "o 2.15.2"
+const version = "o 2.15.3"
 
 func main() {
 	var (
@@ -80,8 +80,8 @@ ctrl-n     to scroll down 10 lines or go to the next match if a search is active
 ctrl-k     to delete characters to the end of the line, then delete the line
 ctrl-g     to toggle filename/line/column/unicode/word count status display
 ctrl-d     to delete a single character
-ctrl-t     to toggle syntax highlighting (or cycle the git interactive rebase keyword)
-ctrl-w     to toggle text or draw mode (for ASCII graphics)
+ctrl-t     to toggle syntax highlighting
+ctrl-w     to toggle text or draw mode (or cycle git rebase keywords)
 ctrl-x     to cut the current line
 ctrl-c     to copy the current line
 ctrl-v     to paste the current line
@@ -430,14 +430,21 @@ Set NO_COLOR=1 to 1 to disable colors.
 			e.ToggleComment()
 			e.redraw = true
 			e.redrawCursor = true
-		case "c:15": // ctrl-w, toggle ASCII draw mode
-			e.ToggleDrawMode()
-			statusMessage := "Text mode"
-			if e.DrawMode() {
-				statusMessage = "Draw mode"
+		case "c:15": // ctrl-w, toggle ASCII draw mode, or cycle git interactive rebase keywords
+			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
+				newLine := nextGitRebaseKeyword(line)
+				e.SetLine(e.DataY(), newLine)
+				e.redraw = true
+				e.redrawCursor = true
+			} else {
+				e.ToggleDrawMode()
+				statusMessage := "Text mode"
+				if e.DrawMode() {
+					statusMessage = "Draw mode"
+				}
+				status.SetMessage(statusMessage)
+				status.Show(c, e)
 			}
-			status.SetMessage(statusMessage)
-			status.Show(c, e)
 		case "c:7": // ctrl-g, status mode
 			statusMode = !statusMode
 			if statusMode {
