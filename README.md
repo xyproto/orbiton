@@ -38,10 +38,11 @@ You can install `o` with Go 1.10 or later:
 * Respects the `NO_COLOR` environment variable.
 * Can render text to PDF.
 * Only UNIX-style line endings are supported (`\n`).
+* Will jump to the last visited line when opening a recent file.
 
 ## Known bugs
 
-* Files with lines longer than the terminal width are not handled gracefully.
+* Files with lines longer than the terminal width are not displayed in a useable manner.
 
 ## Hotkeys
 
@@ -90,7 +91,7 @@ These four ways of opening `file.txt` at line `7` are supported:
 
 This also means that filenames containing `+` or `:` are not supported, if followed by a number. Opening files with the `c++` extension works, if you should want that.
 
-## The very first kepyress
+## The very first keypress
 
 If the very first keypress after starting `o` is `O`, `G` or `/`, it will trigger the following vi-compatible behavior:
 
