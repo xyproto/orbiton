@@ -72,7 +72,8 @@ Hotkeys
 
 ctrl-q     to quit
 ctrl-s     to save
-ctrl-o     to format the current file with "go fmt" or "clang-format"
+ctrl-w     to format the current file with "go fmt" or "clang-format"
+           (or if in git interactive rebase mode, cycle the keywords)
 ctrl-a     go to start of line, then start of text, then previous paragraph
 ctrl-e     go to end of line, then next paragraph
 ctrl-p     to scroll up 10 lines
@@ -81,7 +82,7 @@ ctrl-k     to delete characters to the end of the line, then delete the line
 ctrl-g     to toggle filename/line/column/unicode/word count status display
 ctrl-d     to delete a single character
 ctrl-t     to toggle syntax highlighting
-ctrl-w     to toggle text or draw mode (or cycle git rebase keywords)
+ctrl-o     to toggle text or draw mode
 ctrl-x     to cut the current line
 ctrl-c     to copy the current line
 ctrl-v     to paste the current line

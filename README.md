@@ -48,27 +48,27 @@ You can install `o` with Go 1.10 or later:
 
 * `ctrl-q` - Quit
 * `ctrl-s` - Save
-* `ctrl-o` - Format the current file using `goimport` or `clang-format`, depending on the file extension.
+* `ctrl-w` - Format the current file using `goimport` or `clang-format`, depending on the file extension. (Or if in an interactive git rebase, cycle the keywords).
 * `ctrl-a` - Go to start of line, then start of text on the same line, then the previous paragraph.
 * `ctrl-e` - Go to end of line, then next paragraph.
-* `ctrl-p` - Scroll up 10 lines
-* `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active
-* `ctrl-k` - Delete characters to the end of the line, then delete the line
-* `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, unicode number and word count
-* `ctrl-d` - Delete a single character
-* `ctrl-t` - Toggle syntax highlighting
-* `ctrl-w` - Toggle between text and draw mode (or cycle the git interactive rebase keyword, if in git mode)
-* `ctrl-x` - Cut the current line
-* `ctrl-c` - Copy the current line
-* `ctrl-v` - Paste the current line
-* `ctrl-b` - Bookmark the current line
-* `ctrl-j` - Jump to the bookmark
-* `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application)
-* `ctrl-l` - Jump to a specific line number
+* `ctrl-p` - Scroll up 10 lines.
+* `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active.
+* `ctrl-k` - Delete characters to the end of the line, then delete the line.
+* `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, unicode number and word count.
+* `ctrl-d` - Delete a single character.
+* `ctrl-t` - Toggle syntax highlighting.
+* `ctrl-o` - Toggle between text and draw mode.
+* `ctrl-x` - Cut the current line.
+* `ctrl-c` - Copy the current line.
+* `ctrl-v` - Paste the current line.
+* `ctrl-b` - Bookmark the current line.
+* `ctrl-j` - Jump to the bookmark.
+* `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
+* `ctrl-l` - Jump to a specific line number.
 * `ctrl-f` - Search for a string.
 * `esc` - Redraw the screen and clear the last search.
 * `ctrl-space` - Build Go or C++ files, word-wrap other files.
-* `ctrl-\` - Toggle single-line comments
+* `ctrl-\` - Toggle single-line comments.
 * `ctrl-r` - Render the current text as a PDF document.
 
 ## Size
@@ -80,7 +80,7 @@ One way of building with `gccgo`:
 
     go build -gccgoflags '-Os -s'
 
-It's around **3M** when building with Go 1.13 and no particular build flags are given.
+It's around **3M** when built with Go 1.13 and no particular build flags are given.
 
 ## Jumping to a specific line when opening a file
 
