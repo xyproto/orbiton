@@ -278,7 +278,19 @@ Set NO_COLOR=1 to 1 to disable colors.
 		switch key {
 		case "c:17": // ctrl-q, quit
 			quit = true
-		case "c:23": // ctrl-o, format
+		case "c:23": // ctrl-w, format (or if in git mode, cycle interactive rebase keywords)
+			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
+				newLine := nextGitRebaseKeyword(line)
+				e.SetLine(e.DataY(), newLine)
+				e.redraw = true
+				e.redrawCursor = true
+				break
+			}
+			status.Clear(c)
+			status.SetMessage("Formatting")
+			status.Show(c, e)
+
+			// Not in git mode, format Go or C++ code with goimports or clang-format
 			undo.Snapshot(e)
 			// Map from formatting command to a list of file extensions
 			format := map[*exec.Cmd][]string{
@@ -345,7 +357,8 @@ Set NO_COLOR=1 to 1 to disable colors.
 					}
 				}
 			}
-			if !formatted {
+			if !gitMode && !formatted {
+				status.Clear(c)
 				status.SetMessage("Can only format Go or C++ code.")
 				status.Show(c, e)
 			}
@@ -363,7 +376,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 				for _, ext := range extensions {
 					if strings.HasSuffix(filename, ext) {
 						foundExtensionToBuild = true
-						status.ClearAll(c)
+						status.Clear(c)
 						status.SetMessage("Building")
 						status.Show(c, e)
 
@@ -395,7 +408,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 							}
 						} else {
 							// TODO: This is not correct for cxx / C++, fix
-							status.ClearAll(c)
+							status.Clear(c)
 							status.SetMessage("Build OK")
 							status.Show(c, e)
 						}
@@ -411,7 +424,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 				e.redrawCursor = true
 			}
 		case "c:18": // ctrl-r, render to PDF
-			pdfFilename := "output.pdf"
+			pdfFilename := "o_output.pdf"
 			//// Show a status message while writing
 			statusMessage := "Saving PDF..."
 			status.SetMessage(statusMessage)
@@ -430,21 +443,15 @@ Set NO_COLOR=1 to 1 to disable colors.
 			e.ToggleComment()
 			e.redraw = true
 			e.redrawCursor = true
-		case "c:15": // ctrl-w, toggle ASCII draw mode, or cycle git interactive rebase keywords
-			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
-				newLine := nextGitRebaseKeyword(line)
-				e.SetLine(e.DataY(), newLine)
-				e.redraw = true
-				e.redrawCursor = true
-			} else {
-				e.ToggleDrawMode()
-				statusMessage := "Text mode"
-				if e.DrawMode() {
-					statusMessage = "Draw mode"
-				}
-				status.SetMessage(statusMessage)
-				status.Show(c, e)
+		case "c:15": // ctrl-o, toggle ASCII draw mode
+			e.ToggleDrawMode()
+			statusMessage := "Text mode"
+			if e.DrawMode() {
+				statusMessage = "Draw mode"
 			}
+			status.Clear(c)
+			status.SetMessage(statusMessage)
+			status.Show(c, e)
 		case "c:7": // ctrl-g, status mode
 			statusMode = !statusMode
 			if statusMode {
