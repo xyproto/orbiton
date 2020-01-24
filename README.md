@@ -16,7 +16,7 @@ You can install `o` with Go 1.10 or later:
 
 * Loads up instantly.
 * Small executable size (around 500k, when built with `gccgo` and then stripped).
-* Provides syntax highlighting for Go, C++ and Bash.
+* Provides syntax highlighting for Go, C++ and Bash. Other files may also be highlighted (toggle with `ctrl-t`).
 * Configuration-free, for better and for worse.
 * Is limited to the VT100 standard, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`.
 * Compiles with either `go` or `gccgo`.
@@ -48,7 +48,7 @@ You can install `o` with Go 1.10 or later:
 
 * `ctrl-q` - Quit
 * `ctrl-s` - Save
-* `ctrl-w` - Format the current file using `goimport` or `clang-format`, depending on the file extension. (Or if in an interactive git rebase, cycle the keywords).
+* `ctrl-w` - Format the current file using `goimport` or `clang-format`, depending on the file extension.
 * `ctrl-a` - Go to start of line, then start of text on the same line, then the previous paragraph.
 * `ctrl-e` - Go to end of line, then next paragraph.
 * `ctrl-p` - Scroll up 10 lines.
@@ -70,6 +70,8 @@ You can install `o` with Go 1.10 or later:
 * `ctrl-space` - Build Go or C++ files, word-wrap other files.
 * `ctrl-\` - Toggle single-line comments.
 * `ctrl-r` - Render the current text as a PDF document.
+
+If `EDITOR` is `o` and interactive rebase is launched with `git rebase -i`, `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
 
 ## Size
 
