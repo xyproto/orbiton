@@ -35,7 +35,7 @@ func (e *Editor) SearchTerm() string {
 // GoToNextMatch will go to the next match, using e.SearchTerm(), if possible.
 // The search does not wrap around and is case-sensitive.
 // TODO: Add wrap around behavior, toggled with a bool argument.
-// TOOD: Add case-insensitive behavior, toggled with a bool argument.
+// TODO: Add case-insensitive behavior, toggled with a bool argument.
 func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar) {
 	s := e.SearchTerm()
 	if s != "" {

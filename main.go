@@ -302,8 +302,8 @@ Set NO_COLOR=1 to 1 to disable colors.
 			undo.Snapshot(e)
 			// Map from formatting command to a list of file extensions
 			format := map[*exec.Cmd][]string{
-				exec.Command("/usr/bin/goimports", "-w", "--"):                                             []string{".go"},
-				exec.Command("/usr/bin/clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): []string{".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++"},
+				exec.Command("/usr/bin/goimports", "-w", "--"):                                             {".go"},
+				exec.Command("/usr/bin/clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++"},
 			}
 			formatted := false
 		OUT:
@@ -375,8 +375,8 @@ Set NO_COLOR=1 to 1 to disable colors.
 		case "c:0": // ctrl-space, "cxx", "go build" or word wrap
 			// Map from formatting command to a list of file extensions
 			build := map[*exec.Cmd][]string{
-				exec.Command("go", "build"): []string{".go"},
-				exec.Command("cxx"):         []string{".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
+				exec.Command("go", "build"): {".go"},
+				exec.Command("cxx"):         {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
 			}
 			var foundExtensionToBuild bool
 		OUT2:
