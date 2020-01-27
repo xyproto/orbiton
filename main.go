@@ -77,8 +77,8 @@ ctrl-q     to quit
 ctrl-s     to save
 ctrl-w     to format the current file with "go fmt" or "clang-format"
            (or if in git interactive rebase mode, cycle the keywords)
-ctrl-a     go to start of line, then start of text
-ctrl-e     go to end of line
+ctrl-a     go to start of line, then start of text and then the previous line
+ctrl-e     go to end of line and then the next line
 ctrl-p     to scroll up 10 lines
 ctrl-n     to scroll down 10 lines or go to the next match if a search is active
 ctrl-k     to delete characters to the end of the line, then delete the line

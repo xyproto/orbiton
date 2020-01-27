@@ -1,6 +1,6 @@
 .\"             -*-Nroff-*-
 .\"
-.TH "o" 1 "24 Jan 2020" "" ""
+.TH "o" 1 "27 Jan 2020" "" ""
 .SH NAME
 o \- an editor
 .SH SYNOPSIS
@@ -34,10 +34,10 @@ displays brief usage information
   If in git mode, cycle the git interactive rebase keyword on the current line.
 .sp
 .B ctrl-a
-  Go to start of ithe line, or to the start of the text if already at the start of the line, then to the previous paragraph if at the start of the line.
+  Go to start of the text, then the start of the line and then the previous line.
 .sp
 .B ctrl-e
-  Go to end of the line, then to th next paragraph.
+  Go to end of the line and then the next line.
 .sp
 .B ctrl-p
   Scroll up 10 lines.
@@ -109,7 +109,7 @@ I wanted to write a simple editor that only used VT100 terminal codes.
 .SH BUGS
 Lines longer than the terminal width are not handled gracefully.
 .SH VERSION
-2.15.3
+2.16.0
 .SH AUTHOR
 .B o
 was written by  Alexander F. Rødseth <xyproto@archlinux.org>
