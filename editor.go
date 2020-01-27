@@ -482,7 +482,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					if strings.HasPrefix(line, "#") {
 						filenameColor := vt100.Red
 						if strings.HasPrefix(line, "# On branch ") {
-							coloredString = vt100.DarkGray.Get(line[:12]) + vt100.LightGreen.Get(line[12:])
+							coloredString = vt100.DarkGray.Get(line[:12]) + vt100.LightCyan.Get(line[12:])
 						} else if strings.HasPrefix(line, "# Your branch is up to date with '") && strings.Count(line, "'") == 2 {
 							parts := strings.SplitN(line, "'", 3)
 							coloredString = vt100.DarkGray.Get(parts[0]+"'") + vt100.LightGreen.Get(parts[1]) + vt100.DarkGray.Get("'"+parts[2])
