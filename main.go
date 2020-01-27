@@ -21,6 +21,8 @@ import (
 
 const version = "o 2.16.0"
 
+var rebaseKeywords = []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}
+
 func main() {
 	var (
 		// Color scheme for the "text edit" mode
@@ -284,13 +286,14 @@ Set NO_COLOR=1 to 1 to disable colors.
 		case "c:17": // ctrl-q, quit
 			quit = true
 		case "c:23": // ctrl-w, format (or if in git mode, cycle interactive rebase keywords)
-			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
+			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, rebaseKeywords) {
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
 				e.redraw = true
 				e.redrawCursor = true
 				break
 			}
+
 			status.Clear(c)
 			status.SetMessage("Formatting")
 			status.Show(c, e)
@@ -436,7 +439,15 @@ Set NO_COLOR=1 to 1 to disable colors.
 				e.redraw = true
 				e.redrawCursor = true
 			}
-		case "c:18": // ctrl-r, render to PDF
+		case "c:18": // ctrl-r, render to PDF, or if in git mode, cycle rebase keywords
+			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, rebaseKeywords) {
+				newLine := nextGitRebaseKeyword(line)
+				e.SetLine(e.DataY(), newLine)
+				e.redraw = true
+				e.redrawCursor = true
+				break
+			}
+
 			pdfFilename := "o.pdf"
 			//// Show a status message while writing
 			statusMessage := "Saving PDF..."
