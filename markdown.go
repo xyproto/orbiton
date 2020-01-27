@@ -123,15 +123,13 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 	case "#", "##", "###", "####", "#####", "######", "#######":
 		if len(words) > 1 {
 			return leadingSpace + vt100.LightGreen.Get(firstWord) + " " + vt100.LightGreen.Get(backTickReplace(line[dataPos+len(firstWord)+1:], vt100.LightGreen, vt100.White)), true, false
-		} else {
-			return leadingSpace + vt100.LightGreen.Get(rest), true, false
 		}
+		return leadingSpace + vt100.LightGreen.Get(rest), true, false
 	case "*", "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.":
 		if len(words) > 1 {
 			return leadingSpace + vt100.LightRed.Get(firstWord) + " " + backTickReplace(line[dataPos+len(firstWord)+1:], vt100.LightMagenta, vt100.LightYellow), true, false
-		} else {
-			return leadingSpace + vt100.LightRed.Get(rest), true, false
 		}
+		return leadingSpace + vt100.LightRed.Get(rest), true, false
 	}
 
 	// A completely regular line of text
