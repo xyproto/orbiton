@@ -43,6 +43,7 @@ You can install `o` with Go 1.10 or later:
 ## Known bugs
 
 * Files with lines longer than the terminal width are not supported.
+* The smart indentation is dumb some times.
 
 ## Hotkeys
 
