@@ -17,22 +17,23 @@ import (
 
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
-	lines            map[int][]rune
-	changed          bool // has the contents changed, since last save?
-	fg               vt100.AttributeColor
-	bg               vt100.AttributeColor
-	spacesPerTab     int  // how many spaces per tab character
-	highlight        bool // syntax highlighting
-	drawMode         bool // text or draw mode (for ASCII graphics)?
-	pos              Position
+	lines            map[int][]rune       // the contents of the current document
+	changed          bool                 // has the contents changed, since last save?
+	fg               vt100.AttributeColor // default foreground color
+	bg               vt100.AttributeColor // default background color
+	spacesPerTab     int                  // how many spaces per tab character
+	highlight        bool                 // syntax highlighting
+	drawMode         bool                 // text or draw mode (for ASCII graphics)?
+	pos              Position             // the current cursor and scroll position
 	searchTerm       string               // for marking found instances
 	searchFg         vt100.AttributeColor // search highlight color
 	redraw           bool                 // if the contents should be redrawn in the next loop
 	redrawCursor     bool                 // if the cursor should be moved to the location it is supposed to be
 	gitMode          bool                 // a mode specifically for git commits and interactive rebases
 	gitColor         vt100.AttributeColor // git commit message color
-	lineBeforeSearch int
-	wordWrapAt       int // set to 80 or 100 to trigger word wrap when typing to that column
+	lineBeforeSearch int                  // save the current line when jumping between search results
+	wordWrapAt       int                  // set to 80 or 100 to trigger word wrap when typing to that column
+	markdownMode     bool                 // a mode specifically for Markdown
 }
 
 // NewEditor takes:
@@ -41,7 +42,7 @@ type Editor struct {
 // * background color attributes
 // * if syntax highlighting is enabled
 // * if "insert mode" is enabled (as opposed to "draw mode")
-func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEditMode bool, scrollSpeed int, searchFg vt100.AttributeColor, scheme syntax.TextConfig, gitMode bool) *Editor {
+func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEditMode bool, scrollSpeed int, searchFg vt100.AttributeColor, scheme syntax.TextConfig, gitMode, markdownMode bool) *Editor {
 	syntax.DefaultTextConfig = scheme
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
@@ -58,6 +59,7 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEdi
 		e.wordWrapAt = 99
 	}
 	e.gitMode = gitMode
+	e.markdownMode = markdownMode
 	return e
 }
 
@@ -445,6 +447,19 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	}
 	numlines := toline - fromline
 	offset := fromline
+	inCodeBlock := false // used when highlighting Markdown
+	// If in Markdown mode, figure out the current state of block quotes
+	if e.markdownMode {
+		// Figure out if "fromline" is within a markdown code block or not
+		for i := 0; i < fromline; i++ {
+			// Check if the untrimmed line starts with ~~~ or ```
+			contents := e.Line(i)
+			if strings.HasPrefix(contents, "~~~") || strings.HasPrefix(contents, "```") {
+				// Toggle the flag for if we're in a code block or not
+				inCodeBlock = !inCodeBlock
+			}
+		}
+	}
 	for y := 0; y < numlines; y++ {
 		counter := 0
 		//line := strings.ReplaceAll(e.Line(y+offset), "\t", tabString)
@@ -503,6 +518,16 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 						coloredString = vt100.Red.Get(fields[0]) + " " + vt100.LightBlue.Get(fields[1]) + " " + vt100.LightGray.Get(strings.Join(fields[2:], " "))
 					} else {
 						coloredString = e.gitColor.Get(line)
+					}
+				} else if e.markdownMode {
+					if highlighted, ok, codeBlockFound := markdownHighlight(line, inCodeBlock); ok {
+						coloredString = highlighted
+						if codeBlockFound {
+							inCodeBlock = !inCodeBlock
+						}
+					} else {
+						// Syntax highlight the line if it's not picked up by the markdownHighlight function
+						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					}
 				} else {
 					coloredString = UnEscape(o.DarkTags(string(textWithTags)))

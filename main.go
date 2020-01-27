@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"flag"
 	"fmt"
@@ -18,17 +19,19 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const version = "o 2.15.3"
+const version = "o 2.16.0"
 
 func main() {
 	var (
 		// Color scheme for the "text edit" mode
-		defaultEditorForeground       = vt100.LightGreen // for when syntax highlighting is not in use
-		defaultEditorBackground       = vt100.BackgroundDefault
-		defaultEditorStatusForeground = vt100.White
-		defaultEditorStatusBackground = vt100.BackgroundBlack
-		defaultEditorSearchHighlight  = vt100.LightMagenta
-		defaultEditorHighlightTheme   = syntax.TextConfig{
+		defaultEditorForeground      = vt100.LightGreen // for when syntax highlighting is not in use
+		defaultEditorBackground      = vt100.BackgroundDefault
+		defaultStatusForeground      = vt100.White
+		defaultStatusBackground      = vt100.BackgroundBlack
+		defaultStatusErrorForeground = vt100.LightRed
+		defaultStatusErrorBackground = vt100.BackgroundDefault
+		defaultEditorSearchHighlight = vt100.LightMagenta
+		defaultEditorHighlightTheme  = syntax.TextConfig{
 			String:        "lightyellow",
 			Keyword:       "lightred",
 			Comment:       "gray",
@@ -74,8 +77,8 @@ ctrl-q     to quit
 ctrl-s     to save
 ctrl-w     to format the current file with "go fmt" or "clang-format"
            (or if in git interactive rebase mode, cycle the keywords)
-ctrl-a     go to start of line, then start of text, then previous paragraph
-ctrl-e     go to end of line, then next paragraph
+ctrl-a     go to start of line, then start of text
+ctrl-e     go to end of line
 ctrl-p     to scroll up 10 lines
 ctrl-n     to scroll down 10 lines or go to the next match if a search is active
 ctrl-k     to delete characters to the end of the line, then delete the line
@@ -111,6 +114,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 	baseFilename := filepath.Base(filename)
 	gitMode := baseFilename == "COMMIT_EDITMSG" || (strings.HasPrefix(baseFilename, "git-") && !strings.Contains(baseFilename, ".") && strings.Count(baseFilename, "-") >= 2)
 	defaultHighlight := gitMode || baseFilename == "PKGBUILD" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
+	markdownMode := strings.HasSuffix(baseFilename, ".md")
 
 	tty, err := vt100.NewTTY()
 	if err != nil {
@@ -124,7 +128,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 	c.ShowCursor()
 
 	// 4 spaces per tab, scroll 10 lines at a time, no word wrap
-	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, gitMode)
+	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, gitMode, markdownMode)
 
 	// For non-highlighted files, adjust the word wrap
 	if !defaultHighlight {
@@ -145,7 +149,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 
 	e.gitMode = gitMode
 
-	status := NewStatusBar(defaultEditorStatusForeground, defaultEditorStatusBackground, e, statusDuration)
+	status := NewStatusBar(defaultStatusForeground, defaultStatusBackground, defaultStatusErrorForeground, defaultStatusErrorBackground, e, statusDuration)
 	status.respectNoColorEnvironmentVariable()
 
 	// Try to load the filename, ignore errors since giving a new filename is also okay
@@ -369,7 +373,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 			// Map from formatting command to a list of file extensions
 			build := map[*exec.Cmd][]string{
 				exec.Command("go", "build"): []string{".go"},
-				exec.Command("cxx"):         []string{".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++"},
+				exec.Command("cxx"):         []string{".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
 			}
 			var foundExtensionToBuild bool
 		OUT2:
@@ -377,12 +381,17 @@ Set NO_COLOR=1 to 1 to disable colors.
 				for _, ext := range extensions {
 					if strings.HasSuffix(filename, ext) {
 						foundExtensionToBuild = true
-						status.Clear(c)
+						status.ClearAll(c)
 						status.SetMessage("Building")
 						status.Show(c, e)
 
+						// Save the current line location to file, for later
+						e.SaveLocation(absFilename, locationHistory)
+
 						output, err := cmd.CombinedOutput()
-						if err != nil {
+						if err != nil || bytes.Contains(output, []byte(": error:")) {
+							status.ClearAll(c)
+							status.SetErrorMessage("Build error")
 							lines := strings.Split(string(output), "\n")
 							for _, line := range lines {
 								if strings.Count(line, ":") >= 3 {
@@ -401,6 +410,10 @@ Set NO_COLOR=1 to 1 to disable colors.
 											tabs := strings.Count(e.Line(foundY), "\t")
 											e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
 											e.Center(c)
+											// Use the error message as the status message
+											if len(fields) >= 4 {
+												status.SetErrorMessage(strings.Join(fields[3:], " "))
+											}
 										}
 									}
 									e.redrawCursor = true
@@ -408,8 +421,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 								}
 							}
 						} else {
-							// TODO: This is not correct for cxx / C++, fix
-							status.Clear(c)
+							status.ClearAll(c)
 							status.SetMessage("Build OK")
 							status.Show(c, e)
 						}
@@ -425,13 +437,14 @@ Set NO_COLOR=1 to 1 to disable colors.
 				e.redrawCursor = true
 			}
 		case "c:18": // ctrl-r, render to PDF
-			pdfFilename := "o_output.pdf"
+			pdfFilename := "o.pdf"
 			//// Show a status message while writing
 			statusMessage := "Saving PDF..."
 			status.SetMessage(statusMessage)
 			status.Show(c, e)
-			// Write the file
+			// TODO: Only overwrite if the previous PDF file was also rendered by "o".
 			_ = os.Remove(pdfFilename)
+			// Write the file
 			if err := e.SavePDF(filename, pdfFilename); err != nil {
 				statusMessage = err.Error()
 			} else {
@@ -726,18 +739,13 @@ Set NO_COLOR=1 to 1 to disable colors.
 			// If at an empty line, go up one line
 			if e.EmptyRightTrimmedLine() {
 				e.Up(c, status)
-				e.GoToStartOfTextLine()
+				//e.GoToStartOfTextLine()
+				e.End()
 			} else if x, err := e.DataX(); err == nil && x == 0 {
 				// If at the start of the line,
-				// go to the end of the previous paragraph
-				if e.GoToPrevParagraph(c, status) {
-					e.redraw = true
-					e.End()
-				} else {
-					// if a previous paragraph was not found, go to the start of the text above
-					e.Up(c, status)
-					e.GoToStartOfTextLine()
-				}
+				// go to the end of the previous line
+				e.Up(c, status)
+				e.End()
 			} else if e.AtStartOfTextLine() {
 				// If at the start of the text, go to the start of the line
 				e.Home()
@@ -749,17 +757,9 @@ Set NO_COLOR=1 to 1 to disable colors.
 			e.SaveX(true)
 		case "c:5": // ctrl-e, end
 			if e.AfterEndOfLine() {
-				prevY := e.DataY()
-				// go to the start of the next paragraph
-				if !e.GoToNextParagraph(c, status) {
-					// Move down if moving to the next paragraph was not possible
-					e.Down(c, status)
-				}
-				// Only move to the start of the line if there was another line to move to
-				if e.DataY() != prevY {
-					e.redraw = true
-					e.GoToStartOfTextLine()
-				}
+				// Move down and to the end
+				e.Down(c, status)
+				e.End()
 			} else {
 				e.End()
 			}
@@ -776,6 +776,8 @@ Set NO_COLOR=1 to 1 to disable colors.
 			}
 			e.redrawCursor = true
 		case "c:19": // ctrl-s, save
+			status.ClearAll(c)
+			// Write the file
 			if err := e.Save(filename, !e.DrawMode()); err != nil {
 				status.SetMessage(err.Error())
 				status.Show(c, e)
@@ -1016,6 +1018,9 @@ Set NO_COLOR=1 to 1 to disable colors.
 		// Drawing status messages should come after redrawing, but before cursor positioning
 		if statusMode {
 			status.ShowLineColWordCount(c, e, filename)
+		} else if status.isError {
+			// Show the status message
+			status.Show(c, e)
 		}
 		// Position the cursor
 		x := e.pos.ScreenX()
