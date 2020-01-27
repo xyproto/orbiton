@@ -7,9 +7,14 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-func backTickReplace(line string, regular, quoted vt100.AttributeColor) string {
+// quotedWordReplace will replace quoted words with a highlighted version
+// line is the uncolored string
+// quote is the quote string (like "`" or "**")
+// regular is the color of the regular text
+// quoted is the color of the highlighted quoted text (including the quotes)
+func quotedWordReplace(line, quote string, regular, quoted vt100.AttributeColor) string {
 	// Now do backtick replacements
-	if strings.Contains(line, "`") && strings.Count(line, "`")%2 == 0 {
+	if strings.Contains(line, quote) && strings.Count(line, quote)%2 == 0 {
 		inQuote := false
 		s := make([]rune, 0, len(line)*2)
 		// Start by setting the color to the regular one
@@ -122,16 +127,16 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 	switch firstWord {
 	case "#", "##", "###", "####", "#####", "######", "#######":
 		if len(words) > 1 {
-			return leadingSpace + vt100.LightGreen.Get(firstWord) + " " + vt100.LightGreen.Get(backTickReplace(line[dataPos+len(firstWord)+1:], vt100.LightGreen, vt100.White)), true, false
+			return leadingSpace + vt100.LightGreen.Get(firstWord) + " " + vt100.LightGreen.Get(quotedWordReplace(line[dataPos+len(firstWord)+1:], "`", vt100.LightGreen, vt100.White)), true, false
 		}
 		return leadingSpace + vt100.LightGreen.Get(rest), true, false
 	case "*", "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.":
 		if len(words) > 1 {
-			return leadingSpace + vt100.LightRed.Get(firstWord) + " " + backTickReplace(line[dataPos+len(firstWord)+1:], vt100.LightMagenta, vt100.LightYellow), true, false
+			return leadingSpace + vt100.LightRed.Get(firstWord) + " " + quotedWordReplace(line[dataPos+len(firstWord)+1:], "`", vt100.LightMagenta, vt100.LightYellow), true, false
 		}
 		return leadingSpace + vt100.LightRed.Get(rest), true, false
 	}
 
 	// A completely regular line of text
-	return backTickReplace(line, vt100.LightBlue, vt100.White), true, false
+	return quotedWordReplace(line, "`", vt100.LightBlue, vt100.White), true, false
 }
