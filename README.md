@@ -71,7 +71,7 @@ You can install `o` with Go 1.10 or later:
 * `ctrl-\` - Toggle single-line comments.
 * `ctrl-r` - Render the current text as a PDF document.
 
-If `EDITOR` is `o` and interactive rebase is launched with `git rebase -i`, `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
+If `EDITOR` is `o` and interactive rebase is launched with `git rebase -i`, either `ctrl-r` or `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
 
 ## Dependencies
 
