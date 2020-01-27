@@ -2,7 +2,7 @@ o
 hai
 HAI
 hai.*
-output*.p*
+o*.p*
 *.bak
 *.swp
 *.tmp
