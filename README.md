@@ -43,8 +43,8 @@ You can install `o` with Go 1.10 or later:
 ## Known bugs
 
 * Files with lines longer than the terminal width are not supported.
-* The smart indentation is dumb some times.
-* The name is a bit short. See the poll at issue [#1](https://github.com/xyproto/o/issues/1).
+* The smart indentation is a bit dumb.
+* The name is a quite short. See the poll at issue [#1](https://github.com/xyproto/o/issues/1).
 
 ## Hotkeys
 
