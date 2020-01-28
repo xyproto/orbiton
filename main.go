@@ -19,7 +19,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const version = "o 2.16.1"
+const version = "o 2.16.2"
 
 var rebaseKeywords = []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}
 
@@ -304,6 +304,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 			format := map[*exec.Cmd][]string{
 				exec.Command("/usr/bin/goimports", "-w", "--"):                                             {".go"},
 				exec.Command("/usr/bin/clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++"},
+				exec.Command("/usr/bin/zig", "fmt"):                                                        {".zig"},
 			}
 			formatted := false
 		OUT:
@@ -375,8 +376,9 @@ Set NO_COLOR=1 to 1 to disable colors.
 		case "c:0": // ctrl-space, "cxx", "go build" or word wrap
 			// Map from formatting command to a list of file extensions
 			build := map[*exec.Cmd][]string{
-				exec.Command("go", "build"): {".go"},
-				exec.Command("cxx"):         {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
+				exec.Command("go", "build"):  {".go"},
+				exec.Command("cxx"):          {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
+				exec.Command("zig", "build"): {".zig"},
 			}
 			var foundExtensionToBuild bool
 		OUT2:
@@ -433,11 +435,12 @@ Set NO_COLOR=1 to 1 to disable colors.
 				}
 			}
 			if !foundExtensionToBuild {
+				// Check if at least one line is longer than the word wrap limit first
 				// word wrap at the current width - 5, with an allowed overshoot of 5 runes
-				e.WrapAllLinesAt(e.wordWrapAt-5, 5)
-				//e.WrapAllLinesAt(10, 3)
-				e.redraw = true
-				e.redrawCursor = true
+				if e.WrapAllLinesAt(e.wordWrapAt-5, 5) {
+					e.redraw = true
+					e.redrawCursor = true
+				}
 			}
 		case "c:18": // ctrl-r, render to PDF, or if in git mode, cycle rebase keywords
 			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, rebaseKeywords) {
