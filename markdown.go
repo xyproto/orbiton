@@ -132,7 +132,7 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 		return leadingSpace + vt100.LightGreen.Get(rest), true, false
 	case "*", "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.":
 		if len(words) > 1 {
-			return leadingSpace + vt100.LightRed.Get(firstWord) + " " + quotedWordReplace(line[dataPos+len(firstWord)+1:], "`", vt100.LightMagenta, vt100.LightYellow), true, false
+			return leadingSpace + vt100.LightRed.Get(firstWord) + " " + quotedWordReplace(line[dataPos+len(firstWord)+1:], "`", vt100.LightCyan, vt100.White), true, false
 		}
 		return leadingSpace + vt100.LightRed.Get(rest), true, false
 	}
