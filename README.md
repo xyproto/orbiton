@@ -83,6 +83,8 @@ If `EDITOR` is `o` and interactive rebase is launched with `git rebase -i`, eith
 * For building Go code with `ctrl-space`, The `go` compiler must be installed.
 * For formatting Go code with `ctrl-w`, [`goimports`](https://godoc.org/golang.org/x/tools/cmd/goimports) must be installed.
 
+* For building and formatting Zig code, only the `zig` command is needed.
+
 ## Size
 
 * The `o` executable is only **541k** when built with GCC 9.2 (for 64-bit Linux).
@@ -123,6 +125,6 @@ When loading large files, an animated spinner will appear. The loading operation
 
 ## General info
 
-* Version: 2.16.1
+* Version: 2.16.2
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
