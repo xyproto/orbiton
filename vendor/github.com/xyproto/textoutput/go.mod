@@ -1,5 +1,5 @@
 module github.com/xyproto/textoutput
 
-go 1.11
+go 1.10
 
-require github.com/xyproto/vt100 v1.8.2
+require github.com/xyproto/vt100 v1.8.3

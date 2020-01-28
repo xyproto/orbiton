@@ -76,6 +76,6 @@ The `o` editor that uses `vt100` can be used for editing Go or C++ code, or for 
 
 ### General info
 
-* Version: 1.8.2
+* Version: 1.8.3
 * Licence: MIT
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
