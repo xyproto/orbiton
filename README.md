@@ -123,6 +123,6 @@ When loading large files, an animated spinner will appear. The loading operation
 
 ## General info
 
-* Version: 2.16.0
+* Version: 2.16.1
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

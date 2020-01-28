@@ -19,7 +19,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const version = "o 2.16.0"
+const version = "o 2.16.1"
 
 var rebaseKeywords = []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}
 
