@@ -801,13 +801,16 @@ func (e *Editor) SplitOvershoot(y int, isSpace bool) ([]rune, []rune) {
 
 // WrapAllLinesAt will word wrap all lines that are longer than n,
 // with a maximum overshoot of too long words (measured in runes) of maxOvershoot.
-func (e *Editor) WrapAllLinesAt(n, maxOvershoot int) {
-	for i := 0; i < len(e.lines); i++ {
+// Returns true if any lines were wrapped.
+func (e *Editor) WrapAllLinesAt(n, maxOvershoot int) bool {
+	wrapped := false
+	for i := 0; i < e.Len(); i++ {
 		if e.WithinLimit(i) {
 			continue
 		}
+		wrapped = true
 		first, second := e.SplitOvershoot(i, false)
-		if len(second) > 0 {
+		if len(first) > 0 && len(second) > 0 {
 			e.InsertLineBelowAt(i)
 			e.lines[i] = first
 			e.lines[i+1] = second
@@ -818,6 +821,7 @@ func (e *Editor) WrapAllLinesAt(n, maxOvershoot int) {
 			}
 		}
 	}
+	return wrapped
 }
 
 // InsertLineAbove will attempt to insert a new line above the current position
@@ -1118,9 +1122,6 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	// Then insert the rune, now that the wrapping has been taken care of, unless it was a space
 	if !unicode.IsSpace(r) {
 		e.Insert(r)
-	} else {
-		//e.WrapAllLinesAt(e.wordWrapAt-5, 5)
-		//e.Insert(r)
 	}
 }
 
