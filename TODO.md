@@ -9,3 +9,5 @@
 - [ ] Go to definition, rename symbol, find references and suggestions while typing. Wonder which hotkey should be used for go to definition, though.
       Perhaps pressing `ctrl-g` three times.
 - [ ] Functionality for commenting out a block of code.
+- [ ] When entering a closing bracket, the smart indentation deindents one level too many. Fix this.
+- [ ] Syntax highlighting of checkboxes in Markdown.
