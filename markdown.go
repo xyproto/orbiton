@@ -7,6 +7,23 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+var (
+	textColor         = vt100.LightBlue
+	headerBulletColor = vt100.DarkGray
+	headerTextColor   = vt100.Red
+	listBulletColor   = vt100.LightRed
+	listTextColor     = vt100.LightCyan
+	listCodeColor     = vt100.Default
+	codeColor         = vt100.Default
+	codeBlockColor    = vt100.Default
+	imageColor        = vt100.LightYellow
+	linkColor         = vt100.Magenta
+	commentColor      = vt100.LightGray
+	quoteColor        = vt100.LightYellow
+	quoteTextColor    = vt100.LightCyan
+	htmlColor         = vt100.DarkGray
+)
+
 // quotedWordReplace will replace quoted words with a highlighted version
 // line is the uncolored string
 // quote is the quote string (like "`" or "**")
@@ -64,55 +81,55 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 
 	// Starting or ending a code block
 	if strings.HasPrefix(rest, "~~~") || strings.HasPrefix(rest, "```") {
-		return vt100.White.Get(line), true, true
+		return codeBlockColor.Get(line), true, true
 	}
 
 	if inCodeBlock {
-		return vt100.White.Get(line), true, false
+		return codeBlockColor.Get(line), true, false
 	}
 
 	if leadingSpace == "    " && !strings.HasPrefix(rest, "*") {
 		// Four leading spaces means a quoted line
 		// Assume it's not a quote if it starts with "*"
-		return vt100.White.Get(line), true, false
+		return codeColor.Get(line), true, false
 	}
 
 	// An image (or a link to a single image) on a single line
 	if (strings.HasPrefix(rest, "[!") || strings.HasPrefix(rest, "!")) && strings.HasSuffix(rest, ")") {
-		return vt100.LightYellow.Get(line), true, false
+		return imageColor.Get(line), true, false
 	}
 
 	// A link on a single line
 	if strings.HasPrefix(rest, "[") && strings.HasSuffix(rest, ")") && strings.Count(rest, "[") == 1 {
-		return vt100.LightYellow.Get(line), true, false
+		return linkColor.Get(line), true, false
 	}
 
 	// A header line
 	if strings.HasPrefix(rest, "---") {
-		return vt100.LightGreen.Get(line), true, false
+		return headerTextColor.Get(line), true, false
 	}
 
 	// HTML comments
 	if strings.HasPrefix(rest, "<!--") || strings.HasPrefix(rest, "-->") {
-		return vt100.DarkGray.Get(line), true, false
+		return commentColor.Get(line), true, false
 	}
 
 	// A line with just a quote mark
 	if strings.TrimSpace(rest) == ">" {
-		return vt100.Red.Get(line), true, false
+		return quoteColor.Get(line), true, false
 	}
 
 	// A quote with something that follows
 	if pos := strings.Index(rest, "> "); pos >= 0 && pos < 5 {
 		words := strings.Fields(rest)
 		if len(words) >= 2 {
-			return vt100.Red.Get(words[0]) + " " + vt100.LightCyan.Get(strings.Join(words[1:], " ")), true, false
+			return quoteColor.Get(words[0]) + " " + quoteTextColor.Get(strings.Join(words[1:], " ")), true, false
 		}
 	}
 
 	// HTML
 	if strings.HasPrefix(rest, "<") || strings.HasPrefix(rest, ">") {
-		return vt100.LightRed.Get(line), true, false
+		return htmlColor.Get(line), true, false
 	}
 
 	// Split the rest of the line into words
@@ -127,16 +144,16 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 	switch firstWord {
 	case "#", "##", "###", "####", "#####", "######", "#######":
 		if len(words) > 1 {
-			return leadingSpace + vt100.LightGreen.Get(firstWord) + " " + vt100.LightGreen.Get(quotedWordReplace(line[dataPos+len(firstWord)+1:], "`", vt100.LightGreen, vt100.White)), true, false
+			return leadingSpace + headerBulletColor.Get(firstWord) + " " + headerTextColor.Get(quotedWordReplace(line[dataPos+len(firstWord)+1:], "`", headerTextColor, codeColor)), true, false
 		}
-		return leadingSpace + vt100.LightGreen.Get(rest), true, false
+		return leadingSpace + headerTextColor.Get(rest), true, false
 	case "*", "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.":
 		if len(words) > 1 {
-			return leadingSpace + vt100.LightRed.Get(firstWord) + " " + quotedWordReplace(line[dataPos+len(firstWord)+1:], "`", vt100.LightCyan, vt100.White), true, false
+			return leadingSpace + listBulletColor.Get(firstWord) + " " + quotedWordReplace(line[dataPos+len(firstWord)+1:], "`", listTextColor, listCodeColor), true, false
 		}
-		return leadingSpace + vt100.LightRed.Get(rest), true, false
+		return leadingSpace + listTextColor.Get(rest), true, false
 	}
 
 	// A completely regular line of text
-	return quotedWordReplace(line, "`", vt100.LightBlue, vt100.White), true, false
+	return quotedWordReplace(line, "`", textColor, codeColor), true, false
 }
