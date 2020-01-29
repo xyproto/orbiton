@@ -42,8 +42,8 @@ You can install `o` with Go 1.10 or later:
 
 ## Known bugs
 
-* Files with lines longer than the terminal width are not supported.
-* The smart indentation is a bit dumb.
+* Files with lines longer than the terminal width are not supported (resize the terminal to edit long lines).
+* The smart indentation can be dumb when typing a closing bracket (`}`).
 
 ## Hotkeys
 
@@ -76,13 +76,23 @@ If `EDITOR` is `o` and interactive rebase is launched with `git rebase -i`, eith
 
 ## Dependencies
 
-* For building C++ code with `ctrl-space`, [`cxx`](https://github.com/xyproto/cxx) must be installed.
-* For formatting C++ code with `ctrl-w`, `clang-format` must be installed.
+C++
 
-* For building Go code with `ctrl-space`, The `go` compiler must be installed.
-* For formatting Go code with `ctrl-w`, [`goimports`](https://godoc.org/golang.org/x/tools/cmd/goimports) must be installed.
+* For building code with `ctrl-space`, [`cxx`](https://github.com/xyproto/cxx) must be installed.
+* For formatting code with `ctrl-w`, `clang-format` must be installed.
+
+Go
+
+* For building code with `ctrl-space`, The `go` compiler must be installed.
+* For formatting code with `ctrl-w`, [`goimports`](https://godoc.org/golang.org/x/tools/cmd/goimports) must be installed.
+
+Zig
 
 * For building and formatting Zig code, only the `zig` command is needed.
+
+V
+
+* For building and formatting V (`vlang`) code, only the `v` command is needed (`ctrl-e` runs `v fmt`, but when I tried it the `v` command said that `v fmt` was temporary disabled).
 
 ## Size
 
