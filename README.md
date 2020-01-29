@@ -43,7 +43,7 @@ You can install `o` with Go 1.10 or later:
 ## Known bugs
 
 * Files with lines longer than the terminal width are not supported (resize the terminal to edit long lines).
-* The smart indentation can be dumb when typing a closing bracket (`}`).
+* The smart indentation can be a bit dumb at times.
 
 ## Hotkeys
 
@@ -134,6 +134,6 @@ When loading large files, an animated spinner will appear. The loading operation
 
 ## General info
 
-* Version: 2.16.2
+* Version: 2.16.3
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
