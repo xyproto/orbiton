@@ -19,7 +19,7 @@ var (
 	imageColor        = vt100.LightYellow
 	linkColor         = vt100.Magenta
 	commentColor      = vt100.LightGray
-	quoteColor        = vt100.LightYellow
+	quoteColor        = vt100.Yellow
 	quoteTextColor    = vt100.LightCyan
 	htmlColor         = vt100.DarkGray
 )
@@ -147,11 +147,16 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 			return leadingSpace + headerBulletColor.Get(firstWord) + " " + headerTextColor.Get(quotedWordReplace(line[dataPos+len(firstWord)+1:], "`", headerTextColor, codeColor)), true, false
 		}
 		return leadingSpace + headerTextColor.Get(rest), true, false
-	case "*", "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.":
+	case "*", "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.": // ignore two-digit numbers
 		if len(words) > 1 {
 			return leadingSpace + listBulletColor.Get(firstWord) + " " + quotedWordReplace(line[dataPos+len(firstWord)+1:], "`", listTextColor, listCodeColor), true, false
 		}
 		return leadingSpace + listTextColor.Get(rest), true, false
+	}
+
+	// Bullet point or hash without a trailing space? (ignore numbers without trailing space)
+	if (strings.HasPrefix(line, "#") && !strings.Contains(line, "# ")) || (strings.HasPrefix(line, "*") && !strings.Contains(line, "* ")) {
+		return vt100.Red.Get(line), true, false
 	}
 
 	// A completely regular line of text
