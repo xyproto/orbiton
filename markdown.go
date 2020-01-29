@@ -10,8 +10,8 @@ import (
 var (
 	textColor         = vt100.LightBlue
 	headerBulletColor = vt100.DarkGray
-	headerTextColor   = vt100.Red
-	listBulletColor   = vt100.LightRed
+	headerTextColor   = vt100.LightGreen
+	listBulletColor   = vt100.Red
 	listTextColor     = vt100.LightCyan
 	listCodeColor     = vt100.Default
 	codeColor         = vt100.Default
