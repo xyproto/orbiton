@@ -18,10 +18,10 @@ var (
 	codeBlockColor    = vt100.Default
 	imageColor        = vt100.LightYellow
 	linkColor         = vt100.Magenta
-	commentColor      = vt100.LightGray
 	quoteColor        = vt100.Yellow
 	quoteTextColor    = vt100.LightCyan
 	htmlColor         = vt100.DarkGray
+	commentColor      = vt100.DarkGray
 )
 
 // quotedWordReplace will replace quoted words with a highlighted version
