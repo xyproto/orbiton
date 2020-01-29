@@ -302,9 +302,10 @@ Set NO_COLOR=1 to 1 to disable colors.
 			undo.Snapshot(e)
 			// Map from formatting command to a list of file extensions
 			format := map[*exec.Cmd][]string{
-				exec.Command("/usr/bin/goimports", "-w", "--"):                                             {".go"},
-				exec.Command("/usr/bin/clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++"},
-				exec.Command("/usr/bin/zig", "fmt"):                                                        {".zig"},
+				exec.Command("goimports", "-w", "--"):                                             {".go"},
+				exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++"},
+				exec.Command("zig", "fmt"):                                                        {".zig"},
+				exec.Command("v", "fmt"):                                                          {".v"},
 			}
 			formatted := false
 		OUT:
@@ -379,6 +380,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 				exec.Command("go", "build"):  {".go"},
 				exec.Command("cxx"):          {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
 				exec.Command("zig", "build"): {".zig"},
+				exec.Command("v", filename):  {".v"},
 			}
 			var foundExtensionToBuild bool
 		OUT2:
