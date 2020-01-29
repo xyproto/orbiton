@@ -90,9 +90,6 @@ Zig
 
 * For building and formatting Zig code, only the `zig` command is needed.
 
-V
-
-* For building and formatting V (`vlang`) code, only the `v` command is needed (`ctrl-e` runs `v fmt`, but when I tried it the `v` command said that `v fmt` was temporary disabled).
 
 ## Size
 
