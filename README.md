@@ -12,22 +12,13 @@ You can install `o` with Go 1.10 or later:
 
     go get -u github.com/xyproto/o
 
-## Manual installation
+## Setting `o` as the default editor for `git`
 
-On Linux:
-
-    git clone https://github.com/xyproto/o
-    cd o
-    go build -mod=vendor
-    sudo install -Dm755 o /usr/bin/o
-    gzip o.1
-    sudo install -Dm644 o.1.gz /usr/share/man/man1/o.1.gz
-
-And for setting `o` as the editor for `git`:
+To set:
 
     git config --global core.editor o
 
-The `git` editor config can be unset with:
+To unset:
 
     git config --global --unset core.editor
 
@@ -92,6 +83,17 @@ The `git` editor config can be unset with:
 * `ctrl-r` - Render the current text as a PDF document.
 
 If `EDITOR` is `o` and interactive rebase is launched with `git rebase -i`, either `ctrl-r` or `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
+
+## Manual installation
+
+On Linux:
+
+    git clone https://github.com/xyproto/o
+    cd o
+    go build -mod=vendor
+    sudo install -Dm755 o /usr/bin/o
+    gzip o.1
+    sudo install -Dm644 o.1.gz /usr/share/man/man1/o.1.gz
 
 ## Dependencies
 
