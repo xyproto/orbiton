@@ -12,6 +12,20 @@ You can install `o` with Go 1.10 or later:
 
     go get -u github.com/xyproto/o
 
+## Manual installation
+
+On Linux:
+
+    git clone https://github.com/xyproto/o
+    cd o
+    go build -mod=vendor
+    sudo install -Dm755 o /usr/bin/o
+    gzip o.1
+    sudo install -Dm644 o.1.gz /usr/share/man/man1/o.1.gz
+    git config --global core.editor o
+
+This also sets the default editor for git to `o`.
+
 ## Features and limitations
 
 * Loads up instantly.
