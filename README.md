@@ -22,9 +22,14 @@ On Linux:
     sudo install -Dm755 o /usr/bin/o
     gzip o.1
     sudo install -Dm644 o.1.gz /usr/share/man/man1/o.1.gz
+
+And for setting `o` as the editor for `git`:
+
     git config --global core.editor o
 
-This also sets the default editor for git to `o`.
+The `git` editor config can be unset with:
+
+    git config --global --unset core.editor
 
 ## Features and limitations
 
