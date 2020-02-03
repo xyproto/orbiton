@@ -20,24 +20,38 @@ var (
 	linkColor         = vt100.Magenta
 	quoteColor        = vt100.Yellow
 	quoteTextColor    = vt100.LightCyan
-	htmlColor         = vt100.DarkGray
+	htmlColor         = vt100.Default
 	commentColor      = vt100.DarkGray
+	boldColor         = vt100.LightYellow
+	italicsColor      = vt100.White
+	strikeColor       = vt100.DarkGray
+	tableColor        = vt100.White
 )
+
+func runeCount(s string, r rune) int {
+	counter := 0
+	for _, e := range s {
+		if e == r {
+			counter++
+		}
+	}
+	return counter
+}
 
 // quotedWordReplace will replace quoted words with a highlighted version
 // line is the uncolored string
 // quote is the quote string (like "`" or "**")
 // regular is the color of the regular text
 // quoted is the color of the highlighted quoted text (including the quotes)
-func quotedWordReplace(line, quote string, regular, quoted vt100.AttributeColor) string {
+func quotedWordReplace(line string, quote rune, regular, quoted vt100.AttributeColor) string {
 	// Now do backtick replacements
-	if strings.Contains(line, quote) && strings.Count(line, quote)%2 == 0 {
+	if strings.ContainsRune(line, quote) && runeCount(line, quote)%2 == 0 {
 		inQuote := false
 		s := make([]rune, 0, len(line)*2)
 		// Start by setting the color to the regular one
 		s = append(s, []rune(regular.String())...)
 		for _, r := range line {
-			if r == '`' {
+			if r == quote {
 				inQuote = !inQuote
 				if inQuote {
 					s = append(s, []rune(vt100.Stop())...)
@@ -59,6 +73,56 @@ func quotedWordReplace(line, quote string, regular, quoted vt100.AttributeColor)
 	}
 	// Return the same line, but colored, if the quotes are not balanced
 	return regular.Get(line)
+}
+
+func style(line, marker string, textColor, styleColor vt100.AttributeColor) string {
+	n := strings.Count(line, marker)
+	if n < 2 {
+		// There must be at least two found markers
+		return line
+	}
+	if n%2 != 0 {
+		// The markers must be found in pairs
+		return line
+	}
+	// Split the line up in parts, then combine the parts, with colors
+	parts := strings.Split(line, marker)
+	lastIndex := len(parts) - 1
+	result := ""
+	for i, part := range parts {
+		switch {
+		case i == lastIndex:
+			// Last case
+			result += part
+		case i%2 == 0:
+			// Even case that is not the last case
+			if len(part) == 0 {
+				result += marker
+			} else {
+				result += part + vt100.Stop() + styleColor.String() + marker
+			}
+		default:
+			// Odd case that is not the last case
+			if len(part) == 0 {
+				result += marker
+			} else {
+				result += part + marker + vt100.Stop() + textColor.String()
+			}
+		}
+	}
+	return result
+}
+
+func emphasis(line string, textColor, italicsColor, boldColor, strikeColor vt100.AttributeColor) string {
+	result := line
+	result = style(result, "~~", textColor, strikeColor)
+	result = style(result, "**", textColor, boldColor)
+	result = style(result, "__", textColor, boldColor)
+	// For now, nested emphasis and italics are not supported, only bold and strikethrough
+	// TODO: Implement nexted emphasis and italics
+	//result = style(result, "*", textColor, italicsColor)
+	//result = style(result, "_", textColor, italicsColor)
+	return result
 }
 
 // markdownHighlight returns a VT100 colored line, a bool that is true if it worked out and a bool that is true if it's the start or stop of a block quote
@@ -88,9 +152,9 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 		return codeBlockColor.Get(line), true, false
 	}
 
-	if leadingSpace == "    " && !strings.HasPrefix(rest, "*") {
+	if leadingSpace == "    " && !strings.HasPrefix(rest, "*") && !strings.HasPrefix(rest, "-") {
 		// Four leading spaces means a quoted line
-		// Assume it's not a quote if it starts with "*"
+		// Also assume it's not a quote if it starts with "*" or "-"
 		return codeColor.Get(line), true, false
 	}
 
@@ -132,6 +196,11 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 		return htmlColor.Get(line), true, false
 	}
 
+	// Table
+	if strings.HasPrefix(rest, "|") && strings.HasSuffix(rest, "|") {
+		return tableColor.Get(line), true, false
+	}
+
 	// Split the rest of the line into words
 	words := strings.Fields(rest)
 	if len(words) == 0 {
@@ -144,21 +213,21 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 	switch firstWord {
 	case "#", "##", "###", "####", "#####", "######", "#######":
 		if len(words) > 1 {
-			return leadingSpace + headerBulletColor.Get(firstWord) + " " + headerTextColor.Get(quotedWordReplace(line[dataPos+len(firstWord)+1:], "`", headerTextColor, codeColor)), true, false
+			return leadingSpace + headerBulletColor.Get(firstWord) + " " + headerTextColor.Get(emphasis(quotedWordReplace(line[dataPos+len(firstWord)+1:], '`', headerTextColor, codeColor), headerTextColor, italicsColor, boldColor, strikeColor)), true, false
 		}
 		return leadingSpace + headerTextColor.Get(rest), true, false
-	case "*", "-", "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.": // ignore two-digit numbers
+	case "*", "-", "+", "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.", "10.": // ignore numbers over 10
 		if len(words) > 1 {
-			return leadingSpace + listBulletColor.Get(firstWord) + " " + quotedWordReplace(line[dataPos+len(firstWord)+1:], "`", listTextColor, listCodeColor), true, false
+			return leadingSpace + listBulletColor.Get(firstWord) + " " + emphasis(quotedWordReplace(line[dataPos+len(firstWord)+1:], '`', listTextColor, listCodeColor), listTextColor, italicsColor, boldColor, strikeColor), true, false
 		}
 		return leadingSpace + listTextColor.Get(rest), true, false
 	}
 
-	// Bullet point or hash without a trailing space? (ignore numbers without trailing space)
-	if (strings.HasPrefix(line, "#") && !strings.Contains(line, "# ")) || (strings.HasPrefix(line, "*") && !strings.Contains(line, "* ")) || (strings.HasPrefix(line, "-") && !strings.Contains(line, "- ")) {
+	// Leading hash without a space afterwards?
+	if strings.HasPrefix(line, "#") && !strings.HasPrefix(line, "# ") {
 		return vt100.Red.Get(line), true, false
 	}
 
 	// A completely regular line of text
-	return quotedWordReplace(line, "`", textColor, codeColor), true, false
+	return emphasis(quotedWordReplace(line, '`', textColor, codeColor), textColor, italicsColor, boldColor, strikeColor), true, false
 }
