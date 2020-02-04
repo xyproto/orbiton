@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -10,6 +11,16 @@ import (
 func exists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+// which tries to find the given executable name in the $PATH
+// Returns an empty string if not found.
+func which(executable string) string {
+	p, err := exec.LookPath(executable)
+	if err != nil {
+		return ""
+	}
+	return p
 }
 
 // errLog outputs a message to stderr
