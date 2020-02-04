@@ -13,4 +13,5 @@ test.*
 *.txt
 *.*.png
 .vagrant
-.vscode
+*.log
+*.tex
