@@ -114,7 +114,13 @@ Set NO_COLOR=1 to 1 to disable colors.
 	}
 
 	baseFilename := filepath.Base(filename)
-	gitMode := baseFilename == "COMMIT_EDITMSG" || (strings.HasPrefix(baseFilename, "git-") && !strings.Contains(baseFilename, ".") && strings.Count(baseFilename, "-") >= 2)
+	gitMode :=
+		baseFilename == "COMMIT_EDITMSG" ||
+			baseFilename == "MERGE_MSG" ||
+			(strings.HasPrefix(baseFilename, "git-") &&
+				!strings.Contains(baseFilename, ".") &&
+				strings.Count(baseFilename, "-") >= 2)
+
 	defaultHighlight := gitMode || baseFilename == "PKGBUILD" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
 	markdownMode := strings.HasSuffix(baseFilename, ".md")
 
