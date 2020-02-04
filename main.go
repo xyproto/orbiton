@@ -121,7 +121,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 				!strings.Contains(baseFilename, ".") &&
 				strings.Count(baseFilename, "-") >= 2)
 
-	defaultHighlight := gitMode || baseFilename == "PKGBUILD" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
+	defaultHighlight := gitMode || baseFilename == "config" || baseFilename == "PKGBUILD" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
 	markdownMode := strings.HasSuffix(baseFilename, ".md")
 
 	tty, err := vt100.NewTTY()
