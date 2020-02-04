@@ -313,7 +313,11 @@ Set NO_COLOR=1 to 1 to disable colors.
 				for _, ext := range extensions {
 					if strings.HasSuffix(filename, ext) {
 						// Use a globally unique temp file
-						if f, err := ioutil.TempFile("/tmp", "__o*"+ext); err == nil {
+						tempdir := os.Getenv("TMPDIR")
+						if tempdir == "" {
+							tempdir = "/tmp"
+						}
+						if f, err := ioutil.TempFile(tempdir, "__o*"+ext); err == nil {
 							// no error, everything is fine
 							tempFilename := f.Name()
 							err := e.Save(tempFilename, true)
@@ -452,8 +456,52 @@ Set NO_COLOR=1 to 1 to disable colors.
 				e.redrawCursor = true
 				break
 			}
-
+			// Save to PDF, either by using pandoc or by writing the text file directly
 			pdfFilename := "o.pdf"
+			if pandocPath := which("pandoc"); e.markdownMode && pandocPath != "" {
+
+				statusMessage := "Converting to PDF using Pandoc..."
+				status.SetMessage(statusMessage)
+				status.Show(c, e)
+
+				tmpfn := "__o__.md"
+
+				if exists(tmpfn) {
+					statusMessage = tmpfn + " already exists, please remove it"
+					status.SetMessage(statusMessage)
+					status.Show(c, e)
+					break
+				}
+
+				err := e.Save(tmpfn, !e.DrawMode())
+				if err != nil {
+					statusMessage = err.Error()
+					status.SetMessage(statusMessage)
+					status.Show(c, e)
+					break
+				}
+
+				pandoc := exec.Command(pandocPath, "-N", "--toc", "-V", "geometry:a4paper", "-o", "o.pdf", tmpfn)
+				if err = pandoc.Run(); err != nil {
+					statusMessage = err.Error()
+					status.SetMessage(statusMessage)
+					status.Show(c, e)
+					break
+				}
+
+				if err = os.Remove(tmpfn); err != nil {
+					statusMessage = err.Error()
+					status.SetMessage(statusMessage)
+					status.Show(c, e)
+					break
+				}
+
+				statusMessage = "Saved " + pdfFilename
+				status.SetMessage(statusMessage)
+				status.Show(c, e)
+
+				break
+			}
 			//// Show a status message while writing
 			statusMessage := "Saving PDF..."
 			status.SetMessage(statusMessage)
