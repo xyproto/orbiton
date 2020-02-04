@@ -150,6 +150,10 @@ When loading large files, an animated spinner will appear. The loading operation
 
 ![progress](img/progress.gif)
 
+## Easter eggs
+
+Pressing `ctrl-space` will render Markdown files to PDF using `pandoc` (as opposed to `ctrl-r`, which will save the text directly to a PDF, without using `pandoc`).
+
 ## General info
 
 * Version: 2.16.3
