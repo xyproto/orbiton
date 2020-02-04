@@ -134,7 +134,7 @@ These four ways of opening `file.txt` at line `7` are supported:
 
 This also means that filenames containing `+` or `:` are not supported, if followed by a number, with the exception of `c++` files.
 
-## The very first keypress
+## The first keypress
 
 If the very first keypress after starting `o` is `O`, `G` or `/`, it will trigger the following vi-compatible behavior:
 
