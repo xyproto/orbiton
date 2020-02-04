@@ -381,48 +381,51 @@ Set NO_COLOR=1 to 1 to disable colors.
 		case "c:0": // ctrl-space, build source code to executable, word wrap or convert to PDF, depending on the mode
 			// Is this a Markdown file? Save to PDF, either by using pandoc or by writing the text file directly
 			if pandocPath := which("pandoc"); e.markdownMode && pandocPath != "" {
-				pdfFilename := "o.pdf"
 
-				statusMessage := "Converting to PDF using Pandoc..."
-				status.SetMessage(statusMessage)
-				status.Show(c, e)
+				go func() {
+					pdfFilename := "o.pdf"
 
-				tmpfn := "__o__.md"
-
-				if exists(tmpfn) {
-					statusMessage = tmpfn + " already exists, please remove it"
+					statusMessage := "Converting to PDF using Pandoc..."
 					status.SetMessage(statusMessage)
 					status.Show(c, e)
-					break
-				}
 
-				err := e.Save(tmpfn, !e.DrawMode())
-				if err != nil {
-					statusMessage = err.Error()
+					tmpfn := "__o__.md"
+
+					if exists(tmpfn) {
+						statusMessage = tmpfn + " already exists, please remove it"
+						status.SetMessage(statusMessage)
+						status.Show(c, e)
+						return // from goroutine
+					}
+
+					err := e.Save(tmpfn, !e.DrawMode())
+					if err != nil {
+						statusMessage = err.Error()
+						status.SetMessage(statusMessage)
+						status.Show(c, e)
+						return // from goroutine
+					}
+
+					pandoc := exec.Command(pandocPath, "-N", "--toc", "-V", "geometry:a4paper", "-o", "o.pdf", tmpfn)
+					if err = pandoc.Run(); err != nil {
+						statusMessage = err.Error()
+						status.SetMessage(statusMessage)
+						status.Show(c, e)
+						return // from goroutine
+					}
+
+					if err = os.Remove(tmpfn); err != nil {
+						statusMessage = err.Error()
+						status.SetMessage(statusMessage)
+						status.Show(c, e)
+						return // from goroutine
+					}
+
+					statusMessage = "Saved " + pdfFilename
 					status.SetMessage(statusMessage)
 					status.Show(c, e)
-					break
-				}
-
-				pandoc := exec.Command(pandocPath, "-N", "--toc", "-V", "geometry:a4paper", "-o", "o.pdf", tmpfn)
-				if err = pandoc.Run(); err != nil {
-					statusMessage = err.Error()
-					status.SetMessage(statusMessage)
-					status.Show(c, e)
-					break
-				}
-
-				if err = os.Remove(tmpfn); err != nil {
-					statusMessage = err.Error()
-					status.SetMessage(statusMessage)
-					status.Show(c, e)
-					break
-				}
-
-				statusMessage = "Saved " + pdfFilename
-				status.SetMessage(statusMessage)
-				status.Show(c, e)
-				break
+				}()
+				break // from case
 			}
 
 			// Is this a .go, .cpp, .cc, .cxx, .h, .hpp, .c++, .h++, .c, .zig or .v file?
@@ -509,24 +512,28 @@ Set NO_COLOR=1 to 1 to disable colors.
 
 			// Save the current text to .pdf directly (without using pandoc)
 
-			// Show a status message while writing
-			statusMessage := "Saving PDF..."
-			status.SetMessage(statusMessage)
-			status.Show(c, e)
+			// Write to PDF in a goroutine
+			go func() {
 
-			pdfFilename := "o.pdf"
+				pdfFilename := "o.pdf"
 
-			// TODO: Only overwrite if the previous PDF file was also rendered by "o".
-			_ = os.Remove(pdfFilename)
-			// Write the file
-			if err := e.SavePDF(filename, pdfFilename); err != nil {
-				statusMessage = err.Error()
-			} else {
-				statusMessage = "Saved " + pdfFilename
-			}
-			// Show a status message after writing
-			status.SetMessage(statusMessage)
-			status.Show(c, e)
+				// Show a status message while writing
+				statusMessage := "Saving PDF..."
+				status.SetMessage(statusMessage)
+				status.Show(c, e)
+
+				// TODO: Only overwrite if the previous PDF file was also rendered by "o".
+				_ = os.Remove(pdfFilename)
+				// Write the file
+				if err := e.SavePDF(filename, pdfFilename); err != nil {
+					statusMessage = err.Error()
+				} else {
+					statusMessage = "Saved " + pdfFilename
+				}
+				// Show a status message after writing
+				status.SetMessage(statusMessage)
+				status.Show(c, e)
+			}()
 		case "c:28": // ctrl-\, toggle comment
 			e.ToggleComment()
 			e.redraw = true
@@ -850,24 +857,29 @@ Set NO_COLOR=1 to 1 to disable colors.
 			}
 			e.redrawCursor = true
 		case "c:19": // ctrl-s, save
-			status.ClearAll(c)
-			// Write the file
-			if err := e.Save(filename, !e.DrawMode()); err != nil {
-				status.SetMessage(err.Error())
-				status.Show(c, e)
-			} else {
-				// TODO: Go to the end of the document at this point, if needed
-				// Lines may be trimmed for whitespace, so move to the end, if needed
-				if !e.DrawMode() && e.AfterLineScreenContents() {
-					e.End()
+			// Write the file, concurrently
+			go func() {
+				status.ClearAll(c)
+				if err := e.Save(filename, !e.DrawMode()); err != nil {
+					status.SetMessage(err.Error())
+					status.Show(c, e)
+				} else {
+					// TODO: Go to the end of the document at this point, if needed
+					// Lines may be trimmed for whitespace, so move to the end, if needed
+					if !e.DrawMode() && e.AfterLineScreenContents() {
+						e.End()
+					}
+					// Status message
+					status.SetMessage("Saved " + filename)
+					status.Show(c, e)
+					c.Draw()
 				}
-				// Status message
-				status.SetMessage("Saved " + filename)
-				status.Show(c, e)
-				c.Draw()
-			}
-			// Save the current location in the location history and write it to file
-			e.SaveLocation(absFilename, locationHistory)
+			}()
+			// Write to the location history, concurrently
+			go func() {
+				// Save the current location in the location history and write it to file
+				e.SaveLocation(absFilename, locationHistory)
+			}()
 		case "c:21", "c:26": // ctrl-u or ctrl-z, undo (ctrl-z may background the application)
 			if err := undo.Restore(e); err == nil {
 				//c.Draw()
