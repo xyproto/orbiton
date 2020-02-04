@@ -378,7 +378,55 @@ Set NO_COLOR=1 to 1 to disable colors.
 			}
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
-		case "c:0": // ctrl-space, "cxx", "go build" or word wrap
+		case "c:0": // ctrl-space, build source code to executable, word wrap or convert to PDF, depending on the mode
+			// Is this a Markdown file? Save to PDF, either by using pandoc or by writing the text file directly
+			if pandocPath := which("pandoc"); e.markdownMode && pandocPath != "" {
+				pdfFilename := "o.pdf"
+
+				statusMessage := "Converting to PDF using Pandoc..."
+				status.SetMessage(statusMessage)
+				status.Show(c, e)
+
+				tmpfn := "__o__.md"
+
+				if exists(tmpfn) {
+					statusMessage = tmpfn + " already exists, please remove it"
+					status.SetMessage(statusMessage)
+					status.Show(c, e)
+					break
+				}
+
+				err := e.Save(tmpfn, !e.DrawMode())
+				if err != nil {
+					statusMessage = err.Error()
+					status.SetMessage(statusMessage)
+					status.Show(c, e)
+					break
+				}
+
+				pandoc := exec.Command(pandocPath, "-N", "--toc", "-V", "geometry:a4paper", "-o", "o.pdf", tmpfn)
+				if err = pandoc.Run(); err != nil {
+					statusMessage = err.Error()
+					status.SetMessage(statusMessage)
+					status.Show(c, e)
+					break
+				}
+
+				if err = os.Remove(tmpfn); err != nil {
+					statusMessage = err.Error()
+					status.SetMessage(statusMessage)
+					status.Show(c, e)
+					break
+				}
+
+				statusMessage = "Saved " + pdfFilename
+				status.SetMessage(statusMessage)
+				status.Show(c, e)
+				break
+			}
+
+			// Is this a .go, .cpp, .cc, .cxx, .h, .hpp, .c++, .h++, .c, .zig or .v file?
+
 			// Map from formatting command to a list of file extensions
 			build := map[*exec.Cmd][]string{
 				exec.Command("go", "build"):  {".go"},
@@ -449,6 +497,8 @@ Set NO_COLOR=1 to 1 to disable colors.
 				}
 			}
 		case "c:18": // ctrl-r, render to PDF, or if in git mode, cycle rebase keywords
+
+			// Are we in git mode?
 			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, rebaseKeywords) {
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
@@ -456,56 +506,16 @@ Set NO_COLOR=1 to 1 to disable colors.
 				e.redrawCursor = true
 				break
 			}
-			// Save to PDF, either by using pandoc or by writing the text file directly
-			pdfFilename := "o.pdf"
-			if pandocPath := which("pandoc"); e.markdownMode && pandocPath != "" {
 
-				statusMessage := "Converting to PDF using Pandoc..."
-				status.SetMessage(statusMessage)
-				status.Show(c, e)
+			// Save the current text to .pdf directly (without using pandoc)
 
-				tmpfn := "__o__.md"
-
-				if exists(tmpfn) {
-					statusMessage = tmpfn + " already exists, please remove it"
-					status.SetMessage(statusMessage)
-					status.Show(c, e)
-					break
-				}
-
-				err := e.Save(tmpfn, !e.DrawMode())
-				if err != nil {
-					statusMessage = err.Error()
-					status.SetMessage(statusMessage)
-					status.Show(c, e)
-					break
-				}
-
-				pandoc := exec.Command(pandocPath, "-N", "--toc", "-V", "geometry:a4paper", "-o", "o.pdf", tmpfn)
-				if err = pandoc.Run(); err != nil {
-					statusMessage = err.Error()
-					status.SetMessage(statusMessage)
-					status.Show(c, e)
-					break
-				}
-
-				if err = os.Remove(tmpfn); err != nil {
-					statusMessage = err.Error()
-					status.SetMessage(statusMessage)
-					status.Show(c, e)
-					break
-				}
-
-				statusMessage = "Saved " + pdfFilename
-				status.SetMessage(statusMessage)
-				status.Show(c, e)
-
-				break
-			}
-			//// Show a status message while writing
+			// Show a status message while writing
 			statusMessage := "Saving PDF..."
 			status.SetMessage(statusMessage)
 			status.Show(c, e)
+
+			pdfFilename := "o.pdf"
+
 			// TODO: Only overwrite if the previous PDF file was also rendered by "o".
 			_ = os.Remove(pdfFilename)
 			// Write the file
