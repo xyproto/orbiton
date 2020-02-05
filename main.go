@@ -284,8 +284,9 @@ Set NO_COLOR=1 to 1 to disable colors.
 	}
 
 	dropO := false
-
 	quit := false
+	previousKey := ""
+
 	for !quit {
 		key := tty.String()
 		switch key {
@@ -823,12 +824,14 @@ Set NO_COLOR=1 to 1 to disable colors.
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:1", "c:25": // ctrl-a, home (or ctrl-y for scrolling up in the st terminal)
+			// First check if we just moved to this line with the arrow keys
+			justMovedUpOrDown := previousKey == "↓" || previousKey == "↑"
 			// If at an empty line, go up one line
-			if e.EmptyRightTrimmedLine() {
+			if !justMovedUpOrDown && e.EmptyRightTrimmedLine() {
 				e.Up(c, status)
 				//e.GoToStartOfTextLine()
 				e.End()
-			} else if x, err := e.DataX(); err == nil && x == 0 {
+			} else if x, err := e.DataX(); err == nil && x == 0 && !justMovedUpOrDown {
 				// If at the start of the line,
 				// go to the end of the previous line
 				e.Up(c, status)
@@ -843,8 +846,12 @@ Set NO_COLOR=1 to 1 to disable colors.
 			e.redrawCursor = true
 			e.SaveX(true)
 		case "c:5": // ctrl-e, end
-			if e.AfterEndOfLine() {
-				// Move down and to the end
+			// First check if we just moved to this line with the arrow keys
+			justMovedUpOrDown := previousKey == "↓" || previousKey == "↑"
+			// If we didn't just move here, and are at the end of the line,
+			// move down one line and to the end, if not,
+			// just move to the end.
+			if !justMovedUpOrDown && e.AfterEndOfLine() {
 				e.Down(c, status)
 				e.End()
 			} else {
@@ -1099,6 +1106,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 				e.redraw = true
 			}
 		}
+		previousKey = key
 		// Redraw, if needed
 		if e.redraw {
 			// Draw the editor lines on the canvas, respecting the offset
