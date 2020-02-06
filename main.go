@@ -873,6 +873,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 			// Write the file, concurrently
 			go func() {
 				status.ClearAll(c)
+				// Save the file
 				if err := e.Save(filename, !e.DrawMode()); err != nil {
 					status.SetMessage(err.Error())
 					status.Show(c, e)
@@ -882,16 +883,13 @@ Set NO_COLOR=1 to 1 to disable colors.
 					if !e.DrawMode() && e.AfterLineScreenContents() {
 						e.End()
 					}
+					// Save the current location in the location history and write it to file
+					e.SaveLocation(absFilename, locationHistory)
 					// Status message
 					status.SetMessage("Saved " + filename)
 					status.Show(c, e)
 					c.Draw()
 				}
-			}()
-			// Write to the location history, concurrently
-			go func() {
-				// Save the current location in the location history and write it to file
-				e.SaveLocation(absFilename, locationHistory)
 			}()
 		case "c:21", "c:26": // ctrl-u or ctrl-z, undo (ctrl-z may background the application)
 			if err := undo.Restore(e); err == nil {
