@@ -1,5 +1,10 @@
 # TODO
 
+- [ ] Fix word wrapping when elongating a line from somewhere in the middle.
+- [ ] Don't completely clear and reset the terminal at exit, to allow for scrolling.
+- [ ] After ending a line with "\", indent two spaces relative to that line when pressing enter.
+- [ ] Don't highlight the word "package" in red for PKGBUILD files.
+- [ ] Build PKGBUILD files with `ctrl-space`.
 - [ ] Rainbow paranthesis.
 - [ ] Functionality for moving a block of code up or down. Perhaps a line-movement-mode that can also be used to reorder lines for `git rebase -i`.
 - [ ] Handle long lines, but try to avoid horizontal scrolling. Perhaps open long lines in a new instance of the editor, but split at a custom rune, then join the line at exit.
