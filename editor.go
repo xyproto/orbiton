@@ -799,31 +799,6 @@ func (e *Editor) SplitOvershoot(y int, isSpace bool) ([]rune, []rune) {
 	return first, second
 }
 
-// WrapAllLinesAt will word wrap all lines that are longer than n,
-// with a maximum overshoot of too long words (measured in runes) of maxOvershoot.
-// Returns true if any lines were wrapped.
-func (e *Editor) WrapAllLinesAt(n, maxOvershoot int) bool {
-	wrapped := false
-	for i := 0; i < e.Len(); i++ {
-		if e.WithinLimit(i) {
-			continue
-		}
-		wrapped = true
-		first, second := e.SplitOvershoot(i, false)
-		if len(first) > 0 && len(second) > 0 {
-			e.InsertLineBelowAt(i)
-			e.lines[i] = first
-			e.lines[i+1] = second
-			e.changed = true
-			// Move the cursor as well, so that it is at the same line as before the word wrap
-			if i < e.DataY() {
-				e.pos.sy++
-			}
-		}
-	}
-	return wrapped
-}
-
 // InsertLineAbove will attempt to insert a new line above the current position
 func (e *Editor) InsertLineAbove() {
 	y := e.DataY()
@@ -1101,6 +1076,17 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		return
 	}
 
+	// If not at the end of the line, reflow and return
+	if !e.AtEndOfLine() {
+		// Wrap limit at width - 6, with an allowed overshoot of 6 runes
+		if e.WrapAllLinesAt(e.wordWrapAt-6, 6) {
+			e.redraw = true
+			e.redrawCursor = true
+			return
+		}
+	}
+	// At the end of a line, use the SplitOvershoot method
+
 	// We need to wrap the line, start by removing the inserted rune
 	e.lines[y] = lineCopy
 	// Then splitting the line, if needed
@@ -1120,9 +1106,12 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	}
 
 	// Then insert the rune, now that the wrapping has been taken care of, unless it was a space
-	if !unicode.IsSpace(r) {
-		e.Insert(r)
-	}
+	//if !unicode.IsSpace(r) {
+	//	e.Insert(r)
+	//}
+	e.Insert(r)
+
+	e.End()
 }
 
 // InsertString will insert a string at the current data position.

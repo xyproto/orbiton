@@ -499,12 +499,10 @@ Set NO_COLOR=1 to 1 to disable colors.
 				}
 			}
 			if !foundExtensionToBuild {
-				// Check if at least one line is longer than the word wrap limit first
-				// word wrap at the current width - 5, with an allowed overshoot of 5 runes
-				if e.WrapAllLinesAt(e.wordWrapAt-5, 5) {
-					e.redraw = true
-					e.redrawCursor = true
-				}
+				// Reflow everything
+				e.Reflow(e.wordWrapAt)
+				e.redraw = true
+				e.redrawCursor = true
 			}
 		case "c:18": // ctrl-r, render to PDF, or if in git mode, cycle rebase keywords
 
