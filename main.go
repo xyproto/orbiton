@@ -310,7 +310,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 			// Map from formatting command to a list of file extensions
 			format := map[*exec.Cmd][]string{
 				exec.Command("goimports", "-w", "--"):                                             {".go"},
-				exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++"},
+				exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
 				exec.Command("zig", "fmt"):                                                        {".zig"},
 				exec.Command("v", "fmt"):                                                          {".v"},
 			}
