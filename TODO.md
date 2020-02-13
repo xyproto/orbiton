@@ -1,5 +1,6 @@
 # TODO
 
+- [ ] ctrl-l, 0 and then searching sometimes causes issues. Investigate.
 - [ ] Fix word wrapping when elongating a line from somewhere in the middle.
 - [ ] Don't completely clear and reset the terminal at exit, to allow for scrolling.
 - [ ] After ending a line with "\", indent two spaces relative to that line when pressing enter.
