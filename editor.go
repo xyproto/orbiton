@@ -356,7 +356,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
 					}
 
 				}
-				fmt.Print(o.LightTags(s))
+				o.Print(s)
 				counter++
 				// Wait for a key press (also sleeps just a bit)
 				switch tty.Key() {
