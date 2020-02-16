@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -73,4 +74,19 @@ func nextGitRebaseKeyword(line string) string {
 	}
 	// Return the line with the keyword replaced with the next one in cycle1 or cycle2
 	return strings.Replace(line, first, next, 1)
+}
+
+// logf, for quick "printf-style" debugging
+func logf(head string, tail ...interface{}) {
+	logfilename := "o.log"
+	f, err := os.OpenFile(logfilename, os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		f, err = os.Create(logfilename)
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
+	f.WriteString(fmt.Sprintf(head, tail...))
+	f.Sync()
+	f.Close()
 }

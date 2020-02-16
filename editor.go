@@ -63,6 +63,16 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEdi
 	return e
 }
 
+// NewSimpleEditor return a new simple editor, where the settings are 4 spaces per tab, white text on black background,
+// no syntax highlighting, text edit mode (as opposed to ASCII draw mode), scroll 1 line at a time, color
+// search results magenta, use the default syntax highlighting scheme, don't use git mode and don't use markdown mode,
+// then set the word wrap limit at the given column width.
+func NewSimpleEditor(wordWrapLimit int) *Editor {
+	e := NewEditor(4, vt100.White, vt100.Black, false, true, 1, vt100.Magenta, syntax.DefaultTextConfig, false, false)
+	e.wordWrapAt = wordWrapLimit
+	return e
+}
+
 // CopyLines will create a new map[int][]rune struct that is the copy of all the lines in the editor
 func (e *Editor) CopyLines() map[int][]rune {
 	lines2 := make(map[int][]rune)
@@ -713,6 +723,7 @@ func (e *Editor) LastWord(y int) string {
 // y is the line index (y position, counting from 0).
 // isSpace is true if a space has just been inserted on purpose at the current position.
 func (e *Editor) SplitOvershoot(y int, isSpace bool) ([]rune, []rune) {
+
 	// Maximum word length to not keep as one word
 	maxDistance := e.wordWrapAt / 2
 	if e.WithinLimit(y) {
@@ -746,9 +757,12 @@ func (e *Editor) SplitOvershoot(y int, isSpace bool) ([]rune, []rune) {
 	}
 
 	// Split the line into two parts
+
 	n := splitPosition
+	// Make space for the two parts
 	first := make([]rune, len(e.lines[y][:n]))
 	second := make([]rune, len(e.lines[y][n:]))
+	// Copy the line into first and second
 	copy(first, e.lines[y][:n])
 	copy(second, e.lines[y][n:])
 
@@ -764,18 +778,25 @@ func (e *Editor) SplitOvershoot(y int, isSpace bool) ([]rune, []rune) {
 // with a maximum overshoot of too long words (measured in runes) of maxOvershoot.
 // Returns true if any lines were wrapped.
 func (e *Editor) WrapAllLinesAt(n, maxOvershoot int) bool {
+	// This is not even called when the problematic insert behavior occurs
+
 	wrapped := false
 	for i := 0; i < e.Len(); i++ {
 		if e.WithinLimit(i) {
 			continue
 		}
 		wrapped = true
+
 		first, second := e.SplitOvershoot(i, false)
+
 		if len(first) > 0 && len(second) > 0 {
+
 			e.InsertLineBelowAt(i)
 			e.lines[i] = first
 			e.lines[i+1] = second
+
 			e.changed = true
+
 			// Move the cursor as well, so that it is at the same line as before the word wrap
 			if i < e.DataY() {
 				e.pos.sy++
@@ -1054,7 +1075,8 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	lineCopy := make([]rune, len(e.lines[y]))
 	copy(lineCopy, e.lines[y])
 
-	// Then just instert the rune
+	//prevIsSpace := unicode.IsSpace(e.Rune())
+
 	e.Insert(r)
 
 	// If it's not a word-wrap situation, just return
@@ -1062,15 +1084,21 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		return
 	}
 
+	// Then delete the same rune
+	e.Delete()
+
 	// We need to wrap the line, start by removing the inserted rune
 	e.lines[y] = lineCopy
 	// Then splitting the line, if needed
 	first, second := e.SplitOvershoot(y, unicode.IsSpace(r))
+
 	if len(second) > 0 {
 
 		e.InsertLineBelowAt(y)
 		e.lines[y] = first
-		e.lines[y+1] = second
+		if len(e.lines) >= y {
+			e.lines[y+1] = second
+		}
 
 		e.changed = true
 		e.redrawCursor = true
@@ -1080,10 +1108,8 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		e.End()
 	}
 
-	// Then insert the rune, now that the wrapping has been taken care of, unless it was a space
-	if !unicode.IsSpace(r) {
-		e.Insert(r)
-	}
+	// Then just insert the rune
+	e.Insert(r)
 }
 
 // InsertString will insert a string at the current data position.
@@ -1186,7 +1212,10 @@ func (e *Editor) Next(c *vt100.Canvas) error {
 		e.pos.sx++
 	}
 	// Did we move too far on this line?
-	w := int(c.W())
+	w := e.wordWrapAt
+	if c != nil {
+		w = int(c.W())
+	}
 	if (!e.DrawMode() && e.AfterLineScreenContentsPlusOne()) || (e.DrawMode() && e.pos.sx >= w) {
 		// Undo the move
 		if atTab && !e.DrawMode() {
@@ -1378,7 +1407,9 @@ func (e *Editor) AfterLineScreenContentsPlusOne() bool {
 
 // WriteRune writes the current rune to the given canvas
 func (e *Editor) WriteRune(c *vt100.Canvas) {
-	c.WriteRune(uint(e.pos.sx), uint(e.pos.sy), e.fg, e.bg, e.Rune())
+	if c != nil {
+		c.WriteRune(uint(e.pos.sx), uint(e.pos.sy), e.fg, e.bg, e.Rune())
+	}
 }
 
 // WriteTab writes spaces when there is a tab character, to the canvas
@@ -1433,8 +1464,11 @@ func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
 		dataY = e.Len() - 1
 		reachedEnd = true
 	}
-	// Get the current terminal height
-	h := int(c.Height())
+	h := 25
+	if c != nil {
+		// Get the current terminal height
+		h = int(c.Height())
+	}
 
 	// Is the place we want to go within the current scroll window?
 	topY := e.pos.offset
