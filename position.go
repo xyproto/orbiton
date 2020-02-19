@@ -72,7 +72,11 @@ func (p *Position) Up() error {
 
 // Down will move the cursor down
 func (p *Position) Down(c *vt100.Canvas) error {
-	if p.sy >= int(c.H()-1) {
+	h := 25
+	if c != nil {
+		h = int(c.H())
+	}
+	if p.sy >= h-1 {
 		return errors.New("already at the bottom of the canvas")
 	}
 	p.sy++
