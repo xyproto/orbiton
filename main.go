@@ -315,6 +315,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 				exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
 				exec.Command("zig", "fmt"):                                                        {".zig"},
 				exec.Command("v", "fmt"):                                                          {".v"},
+				exec.Command("rustfmt"):                                                           {".rs"},
 			}
 			formatted := false
 		OUT:
@@ -441,10 +442,11 @@ Set NO_COLOR=1 to 1 to disable colors.
 
 			// Map from formatting command to a list of file extensions
 			build := map[*exec.Cmd][]string{
-				exec.Command("go", "build"):  {".go"},
-				exec.Command("cxx"):          {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
-				exec.Command("zig", "build"): {".zig"},
-				exec.Command("v", filename):  {".v"},
+				exec.Command("go", "build"):    {".go"},
+				exec.Command("cxx"):            {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
+				exec.Command("zig", "build"):   {".zig"},
+				exec.Command("v", filename):    {".v"},
+				exec.Command("cargo", "build"): {".rs"},
 			}
 			var foundExtensionToBuild bool
 		OUT2:
