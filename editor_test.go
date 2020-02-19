@@ -96,3 +96,21 @@ func ExampleEditor_InsertString_wrap4() {
 	// hello
 	// there
 }
+
+func ExampleEditor_InsertString_wrap5() {
+	e := NewSimpleEditor(5)
+	e.InsertString(nil, "hello odd")
+	e.Home()
+	e.Next(nil)
+	e.Next(nil)
+	e.Next(nil)
+	e.Next(nil)
+	e.Next(nil)
+	e.Next(nil)
+	e.InsertRune(nil, 'T')
+
+	fmt.Println(e)
+	// Output:
+	// hello
+	// Todd
+}
