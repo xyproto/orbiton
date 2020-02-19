@@ -1113,6 +1113,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	if len(second) > 0 {
 		e.lines[y+1] = second
 	} else {
+		logf("InsertRune, end of line\n")
 		e.End()
 	}
 
