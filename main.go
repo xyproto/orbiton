@@ -512,6 +512,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 
 			// Are we in git mode?
 			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, rebaseKeywords) {
+				undo.Snapshot(e)
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
 				e.redraw = true
@@ -669,6 +670,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 			}
 		case "c:20": // ctrl-t, toggle syntax highlighting or use the next git interactive rebase keyword
 			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
+				undo.Snapshot(e)
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
 				e.redraw = true
