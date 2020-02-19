@@ -1071,11 +1071,7 @@ func (e *Editor) SetRune(r rune) {
 
 // InsertRune will insert a rune at the current data position, with word wrap
 func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
-
-	// Make a copy of the current line
 	y := e.DataY()
-	lineCopy := make([]rune, len(e.lines[y]))
-	copy(lineCopy, e.lines[y])
 
 	// If it's not a word-wrap situation, just insert and return
 	if e.wordWrapAt == 0 || e.WithinLimit(y) {
@@ -1083,57 +1079,53 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		return
 	}
 
+	// The line is too long if r is inserted. What to do?
+
 	prevIsSpace := false
-	if x, err := e.DataX(); err == nil && x >= 1 { // no error
-		prevIsSpace = unicode.IsSpace(lineCopy[x-1])
+
+	// 1. Take the rest of the line (if any) and move it to the start of the next line
+	first := make([]rune, len(e.lines[y]))
+	copy(first, e.lines[y])
+	second := make([]rune, 0)
+	if x, err := e.DataX(); err == nil && x < len(e.lines[y]) {
+		if x > 0 && unicode.IsSpace(e.lines[y][x-1]) {
+			prevIsSpace = true
+		}
+		first = make([]rune, x)
+		copy(first, e.lines[y][:x])
+		second = make([]rune, len(e.lines[y])-x)
+		copy(second, e.lines[y][x:])
 	}
-
-	// Then delete the same rune
-	e.Delete()
-
-	// We need to wrap the line, start by removing the inserted rune
-	e.lines[y] = lineCopy
-	// Then splitting the line, if needed
-	first, second := e.SplitOvershoot(y, unicode.IsSpace(r))
 
 	if prevIsSpace {
-		logf("InsertRune A, word wrap: line=%s\n", e.Line(y))
-		logf("InsertRune A, word wrap: prevIsSpace=%v, first=%s, r=%s, second=%s\n", prevIsSpace, string(first), string(r), string(second))
-
-		e.InsertLineBelowAt(y)
-		e.lines[y] = first
-
-		if len(e.lines) >= y {
-			e.lines[y+1] = append([]rune{r}, second...)
-		}
-
-		e.Down(c, nil)
-		e.Home()
-		e.Next(c)
-
-		e.changed = true
-		e.redrawCursor = true
-		e.redraw = true
-	} else {
-		if len(second) > 0 {
-
-			e.InsertLineBelowAt(y)
-			e.lines[y] = first
-			if len(e.lines) >= y {
-				e.lines[y+1] = second
-			}
-
-			e.changed = true
-			e.redrawCursor = true
-			e.redraw = true
-
-			e.Down(c, nil)
-			e.End()
-		}
-
-		// Then just insert the rune
-		e.Insert(r)
+		second = append([]rune{r}, second...)
 	}
+
+	logf("InsertRune, first=\"%s\", second=\"%s\", prevIsSpace=%v\n", string(first), string(second), prevIsSpace)
+
+	if !prevIsSpace {
+		e.lines[y] = append(first, r)
+	} else {
+		e.lines[y] = first
+	}
+
+	e.InsertLineBelow()
+	if len(second) > 0 {
+		e.lines[y+1] = second
+	} else {
+		e.End()
+	}
+
+	// 2. Insert r as planned
+	// DONE
+
+	// 3. Reflow all the text
+	e.WrapAllLinesAt(e.wordWrapAt-5, 5)
+
+	// Repaint
+	e.changed = true
+	e.redrawCursor = true
+	e.redraw = true
 }
 
 // InsertString will insert a string at the current data position.

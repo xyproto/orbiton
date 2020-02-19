@@ -131,7 +131,7 @@ func ExampleEditor_InsertString_wrap7() {
 	e := NewSimpleEditor(12)
 	e.InsertString(nil, "Hello there")
 	e.NewLine(nil, nil)
-	e.InsertString(nil, "This is text")
+	e.InsertString(nil, "Yoda")
 	e.Up(nil, nil)
 	e.Home()
 	e.Next(nil)
@@ -140,11 +140,17 @@ func ExampleEditor_InsertString_wrap7() {
 	e.Next(nil)
 	e.Next(nil)
 	e.Next(nil)
-	e.InsertString(nil, "you ")
+	e.InsertRune(nil, 'y')
+	e.Next(nil)
+	e.InsertRune(nil, 'o')
+	e.Next(nil)
+	e.InsertRune(nil, 'u')
+	e.Next(nil)
+	e.InsertRune(nil, ' ')
 
 	fmt.Println(e)
 	// Output:
 	// Hello you
 	// there
-	// This is text
+	// Yoda
 }
