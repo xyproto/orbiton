@@ -852,16 +852,18 @@ func (e *Editor) InsertLineBelow() {
 
 // InsertLineBelowAt will attempt to insert a new line below the given y position
 func (e *Editor) InsertLineBelowAt(y int) {
+	// Make sure no lines are nil
+	e.MakeConsistent()
+
 	// If we are the the last line, add an empty line at the end and return
 	if y == (len(e.lines) - 1) {
 		e.lines[y+1] = make([]rune, 0)
 		e.changed = true
-		e.MakeConsistent()
 		return
 	}
 
-	// Create new set of lines
-	lines2 := make(map[int][]rune)
+	// Create new set of lines, with room for one more
+	lines2 := make(map[int][]rune, len(e.lines)+1)
 
 	// For each line in the old map, if at y, insert a blank line
 	// (insert a blank line below)
@@ -1075,14 +1077,14 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	lineCopy := make([]rune, len(e.lines[y]))
 	copy(lineCopy, e.lines[y])
 
-	//prevIsSpace := unicode.IsSpace(e.Rune())
-
-	e.Insert(r)
-
-	// If it's not a word-wrap situation, just return
+	// If it's not a word-wrap situation, just insert and return
 	if e.wordWrapAt == 0 || e.WithinLimit(y) {
+		e.Insert(r)
 		return
 	}
+
+	//prevIsSpace := unicode.IsSpace(e.Rune())
+	//logf("InsertRune, word wrap: prevIsSpace=%v, line=%s\n", prevIsSpace, e.Line(y))
 
 	// Then delete the same rune
 	e.Delete()
