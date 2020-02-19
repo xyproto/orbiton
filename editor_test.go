@@ -99,7 +99,7 @@ func ExampleEditor_InsertString_wrap4() {
 
 func ExampleEditor_InsertString_wrap5() {
 	e := NewSimpleEditor(9)
-	e.InsertString(nil, "hello odd")
+	e.InsertString(nil, "Hello odd")
 	e.Home()
 	e.Next(nil)
 	e.Next(nil)
@@ -111,6 +111,40 @@ func ExampleEditor_InsertString_wrap5() {
 
 	fmt.Println(e)
 	// Output:
-	// hello
+	// Hello
 	// Todd
+}
+
+func ExampleEditor_InsertString_wrap6() {
+	e := NewSimpleEditor(12)
+	e.InsertString(nil, "Hello there")
+	e.NewLine(nil, nil)
+	e.InsertString(nil, "This is text")
+
+	fmt.Println(e)
+	// Output:
+	// Hello there
+	// This is text
+}
+
+func ExampleEditor_InsertString_wrap7() {
+	e := NewSimpleEditor(12)
+	e.InsertString(nil, "Hello there")
+	e.NewLine(nil, nil)
+	e.InsertString(nil, "This is text")
+	e.Up(nil, nil)
+	e.Home()
+	e.Next(nil)
+	e.Next(nil)
+	e.Next(nil)
+	e.Next(nil)
+	e.Next(nil)
+	e.Next(nil)
+	e.InsertString(nil, "you ")
+
+	fmt.Println(e)
+	// Output:
+	// Hello you
+	// there
+	// This is text
 }

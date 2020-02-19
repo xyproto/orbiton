@@ -1083,8 +1083,10 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		return
 	}
 
-	//prevIsSpace := unicode.IsSpace(e.Rune())
-	//logf("InsertRune, word wrap: prevIsSpace=%v, line=%s\n", prevIsSpace, e.Line(y))
+	prevIsSpace := false
+	if x, err := e.DataX(); err == nil && x >= 1 { // no error
+		prevIsSpace = unicode.IsSpace(lineCopy[x-1])
+	}
 
 	// Then delete the same rune
 	e.Delete()
@@ -1094,24 +1096,44 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	// Then splitting the line, if needed
 	first, second := e.SplitOvershoot(y, unicode.IsSpace(r))
 
-	if len(second) > 0 {
+	if prevIsSpace {
+		logf("InsertRune A, word wrap: line=%s\n", e.Line(y))
+		logf("InsertRune A, word wrap: prevIsSpace=%v, first=%s, r=%s, second=%s\n", prevIsSpace, string(first), string(r), string(second))
 
 		e.InsertLineBelowAt(y)
 		e.lines[y] = first
+
 		if len(e.lines) >= y {
-			e.lines[y+1] = second
+			e.lines[y+1] = append([]rune{r}, second...)
 		}
+
+		e.Down(c, nil)
+		e.Home()
+		e.Next(c)
 
 		e.changed = true
 		e.redrawCursor = true
 		e.redraw = true
+	} else {
+		if len(second) > 0 {
 
-		e.Down(c, nil)
-		e.End()
+			e.InsertLineBelowAt(y)
+			e.lines[y] = first
+			if len(e.lines) >= y {
+				e.lines[y+1] = second
+			}
+
+			e.changed = true
+			e.redrawCursor = true
+			e.redraw = true
+
+			e.Down(c, nil)
+			e.End()
+		}
+
+		// Then just insert the rune
+		e.Insert(r)
 	}
-
-	// Then just insert the rune
-	e.Insert(r)
 }
 
 // InsertString will insert a string at the current data position.
@@ -1707,4 +1729,10 @@ func (e *Editor) ToggleComment() {
 			e.End()
 		}
 	}
+}
+
+// NewLine inserts a new line below and moves down one step
+func (e *Editor) NewLine(c *vt100.Canvas, status *StatusBar) {
+	e.InsertLineBelow()
+	e.Down(c, status)
 }
