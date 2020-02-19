@@ -98,7 +98,7 @@ func ExampleEditor_InsertString_wrap4() {
 }
 
 func ExampleEditor_InsertString_wrap5() {
-	e := NewSimpleEditor(5)
+	e := NewSimpleEditor(9)
 	e.InsertString(nil, "hello odd")
 	e.Home()
 	e.Next(nil)
