@@ -118,7 +118,7 @@ V
 
 Rust
 
-* For building code with `ctrl-space`, the editor must be started in a directory with `Cargo.toml` and `cargo` must be installed.
+* For building code with `ctrl-space`, `Cargo.toml` must exist and `cargo` must be installed.
 * For formatting code with `ctrl-w`, `rustfmt` must be installed.
 
 ## Size
