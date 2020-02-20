@@ -322,7 +322,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 			for cmd, extensions := range format {
 				for _, ext := range extensions {
 					if strings.HasSuffix(filename, ext) {
-						// Use a globally unique temp file
+						// Use the temporary directory defined in TMPDIR, with fallback to /tmp
 						tempdir := os.Getenv("TMPDIR")
 						if tempdir == "" {
 							tempdir = "/tmp"
@@ -399,7 +399,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 					status.SetMessage(statusMessage)
 					status.Show(c, e)
 
-					tmpfn := "__o__.md"
+					tmpfn := ".___\\o/___.md"
 
 					if exists(tmpfn) {
 						statusMessage = tmpfn + " already exists, please remove it"
@@ -491,13 +491,12 @@ Set NO_COLOR=1 to 1 to disable colors.
 									}
 									e.redrawCursor = true
 									break
-								} else if strings.Contains(line, " --> ") && strings.Count(line, ":") == 2 { // Rust
-									msgLine := lines[i-1] // There will always be a previous line for this case
-									errorFields := strings.SplitN(msgLine, ":", 2)
-									errorMessage := strings.TrimSpace(errorFields[1])
-									locationFields := strings.SplitN(line, ":", 3)
-									filenameFields := strings.SplitN(locationFields[0], "-->", 2)
-									errorFilename := strings.TrimSpace(filenameFields[1])
+								} else if msgLine := lines[i-1]; strings.Contains(line, " --> ") && strings.Count(line, ":") == 2 && strings.Count(msgLine, ":") >= 1 { // Rust
+									errorFields := strings.SplitN(msgLine, ":", 2)                  // Already checked for 2 colons
+									errorMessage := strings.TrimSpace(errorFields[1])               // There will always be 3 elements in errorFields, so [1] is fine
+									locationFields := strings.SplitN(line, ":", 3)                  // Already checked for 2 colons in line
+									filenameFields := strings.SplitN(locationFields[0], " --> ", 2) // [0] is fine, already checked for " ---> "
+									errorFilename := strings.TrimSpace(filenameFields[1])           // [1] is fine
 									if filename != errorFilename {
 										status.ClearAll(c)
 										status.SetMessage("Error in " + errorFilename + ": " + errorMessage)
