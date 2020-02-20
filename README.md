@@ -112,6 +112,14 @@ Zig
 
 * For building and formatting Zig code, only the `zig` command is needed.
 
+V
+
+* For building and formatting V code, only the `v` command is needed.
+
+Rust
+
+* For building code with `ctrl-space`, the editor must be started in a directory with `Cargo.toml` and `cargo` must be installed.
+* For formatting code with `ctrl-w`, `rustfmt` must be installed.
 
 ## Size
 

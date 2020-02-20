@@ -466,11 +466,11 @@ Set NO_COLOR=1 to 1 to disable colors.
 							status.ClearAll(c)
 							status.SetErrorMessage("Build error")
 							lines := strings.Split(string(output), "\n")
-							for _, line := range lines {
-								if strings.Count(line, ":") >= 3 {
+							for i, line := range lines {
+								if strings.Count(line, ":") >= 3 { // C++ and go
 									fields := strings.SplitN(line, ":", 4)
 
-									// Go To Y:X, if available
+									// Go to Y:X, if available
 									var foundY int
 									if y, err := strconv.Atoi(fields[1]); err == nil { // no error
 										foundY = y - 1
@@ -486,6 +486,43 @@ Set NO_COLOR=1 to 1 to disable colors.
 											// Use the error message as the status message
 											if len(fields) >= 4 {
 												status.SetErrorMessage(strings.Join(fields[3:], " "))
+											}
+										}
+									}
+									e.redrawCursor = true
+									break
+								} else if strings.Contains(line, " --> ") && strings.Count(line, ":") == 2 { // Rust
+									msgLine := lines[i-1] // There will always be a previous line for this case
+									errorFields := strings.SplitN(msgLine, ":", 2)
+									errorMessage := strings.TrimSpace(errorFields[1])
+									locationFields := strings.SplitN(line, ":", 3)
+									filenameFields := strings.SplitN(locationFields[0], "-->", 2)
+									errorFilename := strings.TrimSpace(filenameFields[1])
+									if filename != errorFilename {
+										status.ClearAll(c)
+										status.SetMessage("Error in " + errorFilename + ": " + errorMessage)
+										status.Show(c, e)
+										break OUT2
+									}
+									errorY := locationFields[1]
+									errorX := locationFields[2]
+
+									// Go to Y:X, if available
+									var foundY int
+									if y, err := strconv.Atoi(errorY); err == nil { // no error
+										foundY = y - 1
+										e.redraw = e.GoTo(foundY, c, status)
+										foundX := -1
+										if x, err := strconv.Atoi(errorX); err == nil { // no error
+											foundX = x - 1
+										}
+										if foundX != -1 {
+											tabs := strings.Count(e.Line(foundY), "\t")
+											e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
+											e.Center(c)
+											// Use the error message as the status message
+											if errorMessage != "" {
+												status.SetErrorMessage(errorMessage)
 											}
 										}
 									}
