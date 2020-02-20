@@ -249,6 +249,7 @@ func (e *Editor) String() string {
 	for i := 0; i < e.Len(); i++ {
 		sb.WriteString(e.Line(i) + "\n")
 	}
+	//return strings.TrimRight(sb.String(), " \n\t\r")
 	return sb.String()
 }
 
@@ -427,8 +428,7 @@ func (e *Editor) Save(filename string, stripTrailingSpaces bool) error {
 
 // TrimRight will remove whitespace from the end of the given line number
 func (e *Editor) TrimRight(n int) {
-	_, ok := e.lines[n]
-	if !ok {
+	if _, ok := e.lines[n]; !ok {
 		return
 	}
 	lastIndex := len([]rune(e.lines[n])) - 1
@@ -711,6 +711,7 @@ func (e *Editor) WithinLimit(y int) bool {
 // LastWord will return the last word of a line,
 // given a Y position. Returns an empty string if there is no last word.
 func (e *Editor) LastWord(y int) string {
+	// TODO: Use a faster method
 	words := strings.Fields(strings.TrimSpace(string(e.lines[y])))
 	if len(words) > 0 {
 		return words[len(words)-1]
@@ -898,7 +899,8 @@ func (e *Editor) InsertLineBelowAt(y int) {
 	e.MakeConsistent()
 }
 
-// Insert will insert a rune at the given position
+// Insert will insert a rune at the given position, with no word wrap,
+// but MakeConsisten will be called.
 func (e *Editor) Insert(r rune) {
 	// Ignore it if the current position is out of bounds
 	x, _ := e.DataX()
@@ -1069,6 +1071,40 @@ func (e *Editor) SetRune(r rune) {
 	}
 }
 
+// nextLine will go to the start of the next line
+func (e *Editor) nextLine(y int, c *vt100.Canvas, status *StatusBar) {
+	e.pos.sx = 0
+	e.GoTo(y+1, c, status)
+}
+
+// insertBelow will insert the given rune at the start of the line below,
+// starting a new line if required.
+func (e *Editor) insertBelow(y int, r rune) {
+	if _, ok := e.lines[y+1]; !ok {
+		// If the next line does not exist, create one containing just "r"
+		e.lines[y+1] = []rune{r}
+	} else if len(e.lines[y+1]) > 0 {
+		// If the next line is non-empty, insert "r" at the start
+		e.lines[y+1] = append([]rune{r}, e.lines[y+1][:]...)
+	} else {
+		// The next line exists, but is of length 0, should not happen, just replace it
+		e.lines[y+1] = []rune{r}
+	}
+}
+
+// popRune returns a slice of runes, with the last one removed
+func popRune(rs []rune) []rune {
+	if len(rs) == 0 {
+		return rs
+	}
+	return rs[:len(rs)-1]
+}
+
+// insertRune returns a slice of runes, with the given rune inserted at the front
+func insertRune(rs []rune, r rune) []rune {
+	return append([]rune{r}, rs...)
+}
+
 // InsertRune will insert a rune at the current data position, with word wrap
 func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	y := e.DataY()
@@ -1079,54 +1115,145 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		return
 	}
 
-	// The line is too long if r is inserted. What to do?
+	// --- Repaint, afterwards ---
 
-	prevIsSpace := false
-
-	// 1. Take the rest of the line (if any) and move it to the start of the next line
-	first := make([]rune, len(e.lines[y]))
-	copy(first, e.lines[y])
-	second := make([]rune, 0)
-	if x, err := e.DataX(); err == nil && x < len(e.lines[y]) {
-		if x > 0 && unicode.IsSpace(e.lines[y][x-1]) {
-			prevIsSpace = true
-		}
-		first = make([]rune, x)
-		copy(first, e.lines[y][:x])
-		second = make([]rune, len(e.lines[y])-x)
-		copy(second, e.lines[y][x:])
-	}
-
-	if prevIsSpace {
-		second = append([]rune{r}, second...)
-	}
-
-	// logf("InsertRune, first=\"%s\", second=\"%s\", prevIsSpace=%v\n", string(first), string(second), prevIsSpace)
-
-	if !prevIsSpace {
-		e.lines[y] = append(first, r)
-	} else {
-		e.lines[y] = first
-	}
-
-	e.InsertLineBelow()
-	if len(second) > 0 {
-		e.lines[y+1] = second
-	} else {
-		// logf("InsertRune, end of line\n")
-		e.End()
-	}
-
-	// 2. Insert r as planned
-	// DONE
-
-	// 3. Reflow all the text
-	e.WrapAllLinesAt(e.wordWrapAt-5, 5)
-
-	// Repaint
 	e.changed = true
 	e.redrawCursor = true
 	e.redraw = true
+
+	// --- Gather some facts ---
+
+	isSpace := unicode.IsSpace(r)
+	x, err := e.DataX()
+	if err != nil {
+		x = e.pos.sx
+	}
+	prevAtSpace := false
+	if x > 0 && x <= len(e.lines[y]) {
+		prevAtSpace = unicode.IsSpace(e.lines[y][x-1])
+	}
+	atSpace := false
+	if x >= 0 && x < len(e.lines[y]) {
+		atSpace = unicode.IsSpace(e.lines[y][x])
+	}
+	//panic(fmt.Sprintf("x=%d, y=%d, line=%s, atSpace=%v, prevAtSpace=%v\n", x, y, e.Line(y), atSpace, prevAtSpace))
+	EOL := e.AtOrAfterEndOfLine()
+
+	lastWord := []rune(strings.TrimSpace(e.LastWord(y)))
+	shortWord := (len(string(lastWord)) < 10) && (len(string(lastWord)) < e.wordWrapAt)
+
+	//s := fmt.Sprintf("InsertRune, isSpace=%v, atSpace=%v, prevAtSpace=%v, EOL=%v, r=%s, lastWord=%s, shortWord=%v\n", isSpace, atSpace, prevAtSpace, EOL, string(r), string(lastWord), shortWord)
+	//logf(s)
+
+	// --- A large switch/case for catching all cases ---
+
+	switch {
+	case !EOL && shortWord:
+		// Inserting a letter in the middle of something
+		e.lines[y] = e.lines[y][:len(e.lines[y])-len(lastWord)]
+		e.TrimRight(y)
+		if len(lastWord) > 0 {
+			e.insertBelow(y, r)
+			e.lines[y+1] = append(e.lines[y+1], lastWord...)
+		}
+		e.nextLine(y, c, nil)
+	case !isSpace && !atSpace && EOL:
+		// Pressing letters, producing a short word that overflows
+		lastWord = append(lastWord, r)
+		// Remove the last r of the current line
+		pos := len(e.lines[y]) - len(lastWord)
+		if pos > 0 {
+			e.lines[y] = e.lines[y][:pos]
+			e.TrimRight(y)
+		} else {
+			// This would leave the current line empty!
+			// Typing a letter at the end of a line, breaking a word
+			if _, ok := e.lines[y+1]; !ok {
+				// If the next line does not exist, create one containing just "r"
+				e.lines[y+1] = []rune{r}
+			} else if len(e.lines[y+1]) > 0 {
+				// If the next line is non-empty, insert "r" at the start
+				e.lines[y+1] = append([]rune{r}, e.lines[y+1][:]...)
+			}
+			// Go to the start of the next line
+			e.nextLine(y, c, nil)
+			break
+		}
+		// Insert the last word of the above line on the next line
+		if _, ok := e.lines[y+1]; !ok {
+			// If the next line does not exist, create one containing just "lastWord" + "r"
+			if prevAtSpace {
+				lastpos := len(lastWord) - 1
+				lastWord = append(lastWord[:lastpos], ' ')
+				lastWord = append(lastWord, r)
+			}
+			e.lines[y+1] = lastWord
+		} else if len(e.lines[y+1]) > 0 {
+			// If the next line is non-empty, insert "lastWord" + "r" at the start
+			e.lines[y+1] = append(lastWord, e.lines[y+1][:]...)
+		}
+		// Go to the len(lastWord)-1 of the next line
+		e.GoTo(y+1, c, nil)
+		e.pos.sx = len(lastWord) - 1
+	case isSpace && EOL:
+		// Space at the end of a long word
+		e.InsertLineBelowAt(y)
+	case !isSpace && EOL && !shortWord:
+		fallthrough
+	case !isSpace && prevAtSpace && EOL:
+		fallthrough
+	case !isSpace && atSpace && !prevAtSpace && EOL && shortWord:
+		fallthrough
+	case !isSpace && !atSpace && !prevAtSpace && EOL && !shortWord:
+		// Pressing a single letter
+		e.insertBelow(y, r)
+		e.nextLine(y, c, nil)
+	case !isSpace && !atSpace && !prevAtSpace && EOL && shortWord:
+		// Typing a letter or a space, and the word is short, so it should be moved down
+		if !isSpace {
+			lastWord = append(lastWord, r)
+		}
+		// Remove the last r of the current line
+		pos := len(e.lines[y]) - len(lastWord)
+		if pos > 0 {
+			e.lines[y] = e.lines[y][:pos]
+			e.TrimRight(y)
+		} else {
+			// This would leave the current line empty!
+			// Typing a letter at the end of a line, breaking a word
+			if _, ok := e.lines[y+1]; !ok {
+				// If the next line does not exist, create one containing just "r"
+				e.lines[y+1] = []rune{r}
+			} else if len(e.lines[y+1]) > 0 {
+				// If the next line is non-empty, insert "r" at the start
+				e.lines[y+1] = append([]rune{r}, e.lines[y+1][:]...)
+			}
+			// Go to the start of the next line
+			e.nextLine(y, c, nil)
+			break
+		}
+		// Insert the last word of the above line on the next line
+		if _, ok := e.lines[y+1]; !ok {
+			// If the next line does not exist, create one containing just "lastWord" + "r"
+			if prevAtSpace {
+				lastpos := len(lastWord) - 1
+				lastWord = append(lastWord[:lastpos], ' ')
+				lastWord = append(lastWord, r)
+			}
+			e.lines[y+1] = lastWord
+		} else if len(e.lines[y+1]) > 0 {
+			// If the next line is non-empty, insert "lastWord" + "r" at the start
+			e.lines[y+1] = append(lastWord, e.lines[y+1][:]...)
+		}
+		// Go to the len(lastWord)-1 of the next line
+		e.GoTo(y+1, c, nil)
+		e.pos.sx = len(lastWord) - 1
+	default:
+		e.Insert(r)
+	}
+	e.TrimRight(y)
+	e.MakeConsistent()
+	return
 }
 
 // InsertString will insert a string at the current data position.
@@ -1159,7 +1286,8 @@ func (e *Editor) Home() {
 	e.pos.sx = 0
 }
 
-// End will move the cursor to the position right after the end of the current line contents
+// End will move the cursor to the position right after the end of the current line contents,
+// and also trim away whitespace from the right side.
 func (e *Editor) End() {
 	y := e.DataY()
 	e.TrimRight(y)
