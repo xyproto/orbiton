@@ -399,7 +399,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 					status.SetMessage(statusMessage)
 					status.Show(c, e)
 
-					tmpfn := ".___\\o/___.md"
+					tmpfn := "___o___.md"
 
 					if exists(tmpfn) {
 						statusMessage = tmpfn + " already exists, please remove it"
@@ -418,6 +418,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 
 					pandoc := exec.Command(pandocPath, "-N", "--toc", "-V", "geometry:a4paper", "-o", "o.pdf", tmpfn)
 					if err = pandoc.Run(); err != nil {
+						_ = os.Remove(tmpfn) // Try removing the temporary filename if pandoc fails
 						statusMessage = err.Error()
 						status.SetMessage(statusMessage)
 						status.Show(c, e)
