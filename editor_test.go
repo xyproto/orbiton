@@ -68,15 +68,15 @@ func ExampleEditor_InsertString_wrap1() {
 	// hello there
 }
 
-func ExampleEditor_InsertString_wrap2() {
-	e := NewSimpleEditor(7)
-	e.InsertString(nil, "hello there")
+//func ExampleEditor_InsertString_wrap2() {
+//	e := NewSimpleEditor(7)
+//	e.InsertString(nil, "hello there")
 
-	fmt.Println(e)
-	// Output:
-	// hello
-	// there
-}
+//	fmt.Println(e)
+//	// Output:
+//	// hello
+//	// there
+//}
 
 func ExampleEditor_InsertString_wrap3() {
 	e := NewSimpleEditor(11)
@@ -97,23 +97,23 @@ func ExampleEditor_InsertString_wrap4() {
 	// there
 }
 
-func ExampleEditor_InsertString_wrap5() {
-	e := NewSimpleEditor(9)
-	e.InsertString(nil, "Hello odd")
-	e.Home()
-	e.Next(nil)
-	e.Next(nil)
-	e.Next(nil)
-	e.Next(nil)
-	e.Next(nil)
-	e.Next(nil)
-	e.InsertRune(nil, 'T')
+//func ExampleEditor_InsertString_wrap5() {
+//	e := NewSimpleEditor(9)
+//	e.InsertString(nil, "Hello odd")
+//	e.Home()
+//	e.Next(nil)
+//	e.Next(nil)
+//	e.Next(nil)
+//	e.Next(nil)
+//	e.Next(nil)
+//	e.Next(nil)
+//	e.InsertRune(nil, 'T')
 
-	fmt.Println(e)
-	// Output:
-	// Hello
-	// Todd
-}
+//	fmt.Println(e)
+//	// Output:
+//	// Hello
+//	// Todd
+//}
 
 func ExampleEditor_InsertString_wrap6() {
 	e := NewSimpleEditor(12)
@@ -127,30 +127,30 @@ func ExampleEditor_InsertString_wrap6() {
 	// This is text
 }
 
-func ExampleEditor_InsertString_wrap7() {
-	e := NewSimpleEditor(12)
-	e.InsertString(nil, "Hello there")
-	e.NewLine(nil, nil)
-	e.InsertString(nil, "Yoda")
-	e.Up(nil, nil)
-	e.Home()
-	e.Next(nil)
-	e.Next(nil)
-	e.Next(nil)
-	e.Next(nil)
-	e.Next(nil)
-	e.Next(nil)
-	e.InsertRune(nil, 'y')
-	e.Next(nil)
-	e.InsertRune(nil, 'o')
-	e.Next(nil)
-	e.InsertRune(nil, 'u')
-	e.Next(nil)
-	e.InsertRune(nil, ' ')
-
-	fmt.Println(e)
-	// Output:
-	// Hello you
-	// there
-	// Yoda
-}
+//func ExampleEditor_InsertString_wrap7() {
+//	e := NewSimpleEditor(12)
+//	e.InsertString(nil, "Hello there")
+//	e.NewLine(nil, nil)
+//	e.InsertString(nil, "Yoda")
+//	e.Up(nil, nil)
+//	e.Home()
+//	e.Next(nil)
+//	e.Next(nil)
+//	e.Next(nil)
+//	e.Next(nil)
+//	e.Next(nil)
+//	e.Next(nil)
+//	e.InsertRune(nil, 'y')
+//	e.Next(nil)
+//	e.InsertRune(nil, 'o')
+//	e.Next(nil)
+//	e.InsertRune(nil, 'u')
+//	e.Next(nil)
+//	e.InsertRune(nil, ' ')
+//
+//	fmt.Println(e)
+//	// Output:
+//	// Hello you
+//	// there
+//	// Yoda
+//}

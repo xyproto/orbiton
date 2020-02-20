@@ -1101,7 +1101,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		second = append([]rune{r}, second...)
 	}
 
-	logf("InsertRune, first=\"%s\", second=\"%s\", prevIsSpace=%v\n", string(first), string(second), prevIsSpace)
+	// logf("InsertRune, first=\"%s\", second=\"%s\", prevIsSpace=%v\n", string(first), string(second), prevIsSpace)
 
 	if !prevIsSpace {
 		e.lines[y] = append(first, r)
@@ -1113,7 +1113,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	if len(second) > 0 {
 		e.lines[y+1] = second
 	} else {
-		logf("InsertRune, end of line\n")
+		// logf("InsertRune, end of line\n")
 		e.End()
 	}
 
