@@ -16,3 +16,5 @@ test.*
 *.log
 *.tex
 .vscode/
+o.html
+manpage.1
