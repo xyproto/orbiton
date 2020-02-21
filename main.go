@@ -397,12 +397,13 @@ Set NO_COLOR=1 to 1 to disable colors.
 
 					statusMessage := "Converting to PDF using Pandoc..."
 					status.SetMessage(statusMessage)
-					status.Show(c, e)
+					status.ShowNoTimeout(c, e)
 
 					tmpfn := "___o___.md"
 
 					if exists(tmpfn) {
 						statusMessage = tmpfn + " already exists, please remove it"
+						status.ClearAll(c)
 						status.SetMessage(statusMessage)
 						status.Show(c, e)
 						return // from goroutine
@@ -411,6 +412,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 					err := e.Save(tmpfn, !e.DrawMode())
 					if err != nil {
 						statusMessage = err.Error()
+						status.ClearAll(c)
 						status.SetMessage(statusMessage)
 						status.Show(c, e)
 						return // from goroutine
@@ -420,6 +422,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 					if err = pandoc.Run(); err != nil {
 						_ = os.Remove(tmpfn) // Try removing the temporary filename if pandoc fails
 						statusMessage = err.Error()
+						status.ClearAll(c)
 						status.SetMessage(statusMessage)
 						status.Show(c, e)
 						return // from goroutine
@@ -427,12 +430,14 @@ Set NO_COLOR=1 to 1 to disable colors.
 
 					if err = os.Remove(tmpfn); err != nil {
 						statusMessage = err.Error()
+						status.ClearAll(c)
 						status.SetMessage(statusMessage)
 						status.Show(c, e)
 						return // from goroutine
 					}
 
 					statusMessage = "Saved " + pdfFilename
+					status.ClearAll(c)
 					status.SetMessage(statusMessage)
 					status.Show(c, e)
 				}()
@@ -457,7 +462,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 						foundExtensionToBuild = true
 						status.ClearAll(c)
 						status.SetMessage("Building")
-						status.Show(c, e)
+						status.ShowNoTimeout(c, e)
 
 						// Save the current line location to file, for later
 						e.SaveLocation(absFilename, locationHistory)
@@ -468,7 +473,8 @@ Set NO_COLOR=1 to 1 to disable colors.
 							status.SetErrorMessage("Build error")
 							lines := strings.Split(string(output), "\n")
 							for i, line := range lines {
-								if strings.Count(line, ":") >= 3 { // C++ and go
+								// Jump to the error location, for C++ and Go
+								if strings.Count(line, ":") >= 3 {
 									fields := strings.SplitN(line, ":", 4)
 
 									// Go to Y:X, if available
@@ -492,7 +498,8 @@ Set NO_COLOR=1 to 1 to disable colors.
 									}
 									e.redrawCursor = true
 									break
-								} else if msgLine := lines[i-1]; strings.Contains(line, " --> ") && strings.Count(line, ":") == 2 && strings.Count(msgLine, ":") >= 1 { // Rust
+								} else if msgLine := lines[i-1]; strings.Contains(line, " --> ") && strings.Count(line, ":") == 2 && strings.Count(msgLine, ":") >= 1 {
+									// Jump to the error location, for Rust
 									errorFields := strings.SplitN(msgLine, ":", 2)                  // Already checked for 2 colons
 									errorMessage := strings.TrimSpace(errorFields[1])               // There will always be 3 elements in errorFields, so [1] is fine
 									locationFields := strings.SplitN(line, ":", 3)                  // Already checked for 2 colons in line
@@ -569,7 +576,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 				// Show a status message while writing
 				statusMessage := "Saving PDF..."
 				status.SetMessage(statusMessage)
-				status.Show(c, e)
+				status.ShowNoTimeout(c, e)
 
 				// TODO: Only overwrite if the previous PDF file was also rendered by "o".
 				_ = os.Remove(pdfFilename)
@@ -580,6 +587,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 					statusMessage = "Saved " + pdfFilename
 				}
 				// Show a status message after writing
+				status.ClearAll(c)
 				status.SetMessage(statusMessage)
 				status.Show(c, e)
 			}()
