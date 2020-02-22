@@ -174,15 +174,14 @@ func ExampleEditor_InsertString_wrap9() {
 	// be
 }
 
-//func ExampleEditor_InsertString_wrap10() {
-//	e := NewSimpleEditor(12)
-//	e.InsertString(nil, "hello there")
-//	e.Home()
-//	e.Next(nil)
-//	e.InsertString(nil, "disturbance")
-//
-//	fmt.Println(e)
-//	// Output:
-//	// hdisturbanceello
-//	// there
-//}
+func ExampleEditor_InsertString_wrap10() {
+	e := NewSimpleEditor(40)
+	e.InsertString(nil, "hello there")
+	e.Home()
+	e.Next(nil)
+	e.InsertString(nil, "disturbance")
+
+	fmt.Println(e)
+	// Output:
+	// hdisturbanceello there
+}
