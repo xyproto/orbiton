@@ -140,6 +140,12 @@ Set NO_COLOR=1 to 1 to disable colors.
 	// 4 spaces per tab, scroll 10 lines at a time, no word wrap
 	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, gitMode, markdownMode)
 
+	if gitMode {
+		// The subject should ideally be maximum 50 characters long, then the body of the
+		// git commit message can be 72 characters long. Because e-mail standards.
+		e.wordWrapAt = 72
+	}
+
 	// For non-highlighted files, adjust the word wrap
 	if !defaultHighlight {
 		// Adjust the word wrap if the terminal is too narrow

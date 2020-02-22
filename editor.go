@@ -1148,15 +1148,16 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	// --- A large switch/case for catching all cases ---
 
 	switch {
-	case !EOL && shortWord:
-		// Inserting a letter in the middle of something
-		e.lines[y] = e.lines[y][:len(e.lines[y])-len(lastWord)]
+	case !EOL:
+		// The line is full. Move everything one line down and continue writing.
+		right := e.lines[y][x:]
+		e.lines[y] = e.lines[y][:x]
 		e.TrimRight(y)
-		if len(lastWord) > 0 {
-			e.insertBelow(y, r)
-			e.lines[y+1] = append(e.lines[y+1], lastWord...)
-		}
-		e.nextLine(y, c, nil)
+		e.insertBelow(y, r)
+		e.lines[y+1] = append([]rune{r}, right...)
+		// Go to the len(lastWord)-1 of the next line
+		e.GoTo(y+1, c, nil)
+		e.pos.sx = 0
 	case !isSpace && !atSpace && EOL:
 		// Pressing letters, producing a short word that overflows
 		lastWord = append(lastWord, r)
