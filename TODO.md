@@ -17,3 +17,4 @@
 - [ ] Functionality for commenting out a block of code.
 - [ ] When entering a closing bracket, the smart indentation deindents one level too many. Fix this.
 - [ ] Syntax highlighting of checkboxes in Markdown.
+- [ ] Syntax highlighting of `..`, `::`, `:asdfasdf:` and `^^^` in .rst
