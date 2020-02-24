@@ -124,7 +124,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 	defaultHighlight := gitMode || baseFilename == "config" || baseFilename == "PKGBUILD" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
 
 	// TODO: Introduce a separate mode for AsciiDoctor. Use Markdown syntax highlighting, for now.
-	markdownMode := strings.HasSuffix(baseFilename, ".md") || strings.HasSuffix(baseFilename, ".adoc")
+	docMode := strings.HasSuffix(baseFilename, ".md") || strings.HasSuffix(baseFilename, ".adoc") || strings.HasSuffix(baseFilename, ".rst")
 
 	tty, err := vt100.NewTTY()
 	if err != nil {
@@ -138,7 +138,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 	c.ShowCursor()
 
 	// 4 spaces per tab, scroll 10 lines at a time, no word wrap
-	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, gitMode, markdownMode)
+	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, gitMode, docMode)
 
 	if gitMode {
 		// The subject should ideally be maximum 50 characters long, then the body of the
