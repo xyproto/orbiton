@@ -390,9 +390,12 @@ Set NO_COLOR=1 to 1 to disable colors.
 				}
 			}
 			if !gitMode && !formatted {
-				status.Clear(c)
-				status.SetMessage("Can only format Go or C++ code.")
-				status.Show(c, e)
+				// Check if at least one line is longer than the word wrap limit first
+				// word wrap at the current width - 5, with an allowed overshoot of 5 runes
+				if e.WrapAllLinesAt(e.wordWrapAt-5, 5) {
+					e.redraw = true
+					e.redrawCursor = true
+				}
 			}
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
@@ -571,12 +574,12 @@ Set NO_COLOR=1 to 1 to disable colors.
 				}
 			}
 			if !foundExtensionToBuild {
-				// Check if at least one line is longer than the word wrap limit first
-				// word wrap at the current width - 5, with an allowed overshoot of 5 runes
-				if e.WrapAllLinesAt(e.wordWrapAt-5, 5) {
-					e.redraw = true
-					e.redrawCursor = true
-				}
+				// Building this file extension is not implemented yet.
+				// Just display the current time.
+				status.ClearAll(c)
+				statusMessage := time.Now().Format("15:04") // HH:MM
+				status.SetMessage(statusMessage)
+				status.Show(c, e)
 			}
 		case "c:18": // ctrl-r, render to PDF, or if in git mode, cycle rebase keywords
 
