@@ -520,43 +520,45 @@ Set NO_COLOR=1 to 1 to disable colors.
 									}
 									e.redrawCursor = true
 									break
-								} else if msgLine := lines[i-1]; strings.Contains(line, " --> ") && strings.Count(line, ":") == 2 && strings.Count(msgLine, ":") >= 1 {
-									// Jump to the error location, for Rust
-									errorFields := strings.SplitN(msgLine, ":", 2)                  // Already checked for 2 colons
-									errorMessage := strings.TrimSpace(errorFields[1])               // There will always be 3 elements in errorFields, so [1] is fine
-									locationFields := strings.SplitN(line, ":", 3)                  // Already checked for 2 colons in line
-									filenameFields := strings.SplitN(locationFields[0], " --> ", 2) // [0] is fine, already checked for " ---> "
-									errorFilename := strings.TrimSpace(filenameFields[1])           // [1] is fine
-									if filename != errorFilename {
-										status.ClearAll(c)
-										status.SetMessage("Error in " + errorFilename + ": " + errorMessage)
-										status.Show(c, e)
-										break OUT2
-									}
-									errorY := locationFields[1]
-									errorX := locationFields[2]
-
-									// Go to Y:X, if available
-									var foundY int
-									if y, err := strconv.Atoi(errorY); err == nil { // no error
-										foundY = y - 1
-										e.redraw = e.GoTo(foundY, c, status)
-										foundX := -1
-										if x, err := strconv.Atoi(errorX); err == nil { // no error
-											foundX = x - 1
+								} else if (i-1) > 0 && (i-1) < len(lines) {
+									if msgLine := lines[i-1]; strings.Contains(line, " --> ") && strings.Count(line, ":") == 2 && strings.Count(msgLine, ":") >= 1 {
+										// Jump to the error location, for Rust
+										errorFields := strings.SplitN(msgLine, ":", 2)                  // Already checked for 2 colons
+										errorMessage := strings.TrimSpace(errorFields[1])               // There will always be 3 elements in errorFields, so [1] is fine
+										locationFields := strings.SplitN(line, ":", 3)                  // Already checked for 2 colons in line
+										filenameFields := strings.SplitN(locationFields[0], " --> ", 2) // [0] is fine, already checked for " ---> "
+										errorFilename := strings.TrimSpace(filenameFields[1])           // [1] is fine
+										if filename != errorFilename {
+											status.ClearAll(c)
+											status.SetMessage("Error in " + errorFilename + ": " + errorMessage)
+											status.Show(c, e)
+											break OUT2
 										}
-										if foundX != -1 {
-											tabs := strings.Count(e.Line(foundY), "\t")
-											e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
-											e.Center(c)
-											// Use the error message as the status message
-											if errorMessage != "" {
-												status.SetErrorMessage(errorMessage)
+										errorY := locationFields[1]
+										errorX := locationFields[2]
+
+										// Go to Y:X, if available
+										var foundY int
+										if y, err := strconv.Atoi(errorY); err == nil { // no error
+											foundY = y - 1
+											e.redraw = e.GoTo(foundY, c, status)
+											foundX := -1
+											if x, err := strconv.Atoi(errorX); err == nil { // no error
+												foundX = x - 1
+											}
+											if foundX != -1 {
+												tabs := strings.Count(e.Line(foundY), "\t")
+												e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
+												e.Center(c)
+												// Use the error message as the status message
+												if errorMessage != "" {
+													status.SetErrorMessage(errorMessage)
+												}
 											}
 										}
+										e.redrawCursor = true
+										break
 									}
-									e.redrawCursor = true
-									break
 								}
 							}
 						} else {
