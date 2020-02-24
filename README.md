@@ -39,7 +39,7 @@ To unset:
 * Must be given a filename at start.
 * Smart indentation.
 * Requires `/dev/tty` to be available.
-* Copy, cut and paste is only for one line at a time. `xclip` must be installed if the system clipboard is to be used.
+* Copy, cut and paste is only for one line at a time. `xclip` (for X) or `wl-clipboard` (for Wayland) must be installed if the system clipboard is to be used.
 * May take a line number as the second argument, with an optional `+` prefix.
 * The text will be red if a loaded file is read-only.
 * The terminal needs to be resized to show the second half of lines that are longer than the terminal width.
