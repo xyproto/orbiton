@@ -106,6 +106,7 @@ var keywords = map[string]struct{}{
 	"long":             {},
 	"make":             {},
 	"map":              {},
+	"match":            {},
 	"module":           {},
 	"mutable":          {},
 	"mut":              {},
