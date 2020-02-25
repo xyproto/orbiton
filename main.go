@@ -492,6 +492,11 @@ Set NO_COLOR=1 to 1 to disable colors.
 						// Save the current line location to file, for later
 						e.SaveLocation(absFilename, locationHistory)
 
+						// Use rustc instead of cargo if Cargo.toml is missing and the extension is .rs
+						if ext == ".rs" && (!exists("Cargo.toml") && !exists("../Cargo.toml")) {
+							cmd = exec.Command("rustc", filename)
+						}
+
 						output, err := cmd.CombinedOutput()
 						if err != nil || bytes.Contains(output, []byte(": error:")) {
 							status.ClearAll(c)
