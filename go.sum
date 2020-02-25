@@ -22,8 +22,8 @@ github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e h1:qpG
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod h1:HuIsMU8RRBOtsCgI77wP899iHVBQpCmg4ErYMZB+2IA=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/xyproto/syntax v0.0.0-20190927130316-33ad839f30fd/go.mod h1:mCJxUY00r+o4tVnC800hsbzKKMdyLYEmZtn3Fd5RKtw=
-github.com/xyproto/syntax v0.0.0-20200209122628-ff72b0d66198 h1:9B7GNS6YHIhMxTNmlc1tdCU84rmlUPV+UqPF7dw+3T4=
-github.com/xyproto/syntax v0.0.0-20200209122628-ff72b0d66198/go.mod h1:h3+dxeju13EJ5hbm/9uLl0fNVHNVFNofeBRzNZpgJ2c=
+github.com/xyproto/syntax v0.0.0-20200225141949-0bfe6ffffac3 h1:RZ7wkoL/UtTqgCSrBlTECHmDpt1IMrb+0ndDTSTKE1I=
+github.com/xyproto/syntax v0.0.0-20200225141949-0bfe6ffffac3/go.mod h1:h3+dxeju13EJ5hbm/9uLl0fNVHNVFNofeBRzNZpgJ2c=
 github.com/xyproto/textoutput v1.7.0/go.mod h1:wucBdKjWDgglMwRR84vP5/RG7PEgEOr9ITFAeZ/cFFU=
 github.com/xyproto/textoutput v1.7.1-0.20190927112604-959d7da24b61/go.mod h1:wucBdKjWDgglMwRR84vP5/RG7PEgEOr9ITFAeZ/cFFU=
 github.com/xyproto/textoutput v1.11.0 h1:VORV3VEOxjpO9Y/0OYhfuFbDE7PI7U772uZEdFMtdc8=
@@ -41,6 +41,6 @@ golang.org/x/sys v0.0.0-20200124204421-9fbb57f87de9 h1:1/DFK4b7JH8DmkqhUk48onnSf
 golang.org/x/sys v0.0.0-20200124204421-9fbb57f87de9/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 h1:LfCXLvNmTYH9kEmVgqbnsWfruoXZIrh4YBgqVHtDvw0=
 golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20200219091948-cb0a6d8edb6c h1:jceGD5YNJGgGMkJz79agzOln1K9TaZUjv5ird16qniQ=
-golang.org/x/sys v0.0.0-20200219091948-cb0a6d8edb6c/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae h1:/WDfKMnPU+m5M4xB+6x4kaepxRw6jWvR5iDRdvjHgy8=
+golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
