@@ -124,7 +124,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 	defaultHighlight := gitMode || baseFilename == "config" || baseFilename == "PKGBUILD" || baseFilename == "BUILD" || baseFilename == "WORKSPACE" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
 
 	// TODO: Introduce a separate mode for AsciiDoctor. Use Markdown syntax highlighting, for now.
-	docMode := strings.HasSuffix(baseFilename, ".md") || strings.HasSuffix(baseFilename, ".adoc") || strings.HasSuffix(baseFilename, ".rst")
+	docMode := strings.HasSuffix(baseFilename, ".md") || strings.HasSuffix(baseFilename, ".adoc") || strings.HasSuffix(baseFilename, ".rst") || strings.HasSuffix(baseFilename, ".scdoc") || strings.HasSuffix(baseFilename, ".scd")
 
 	tty, err := vt100.NewTTY()
 	if err != nil {
@@ -400,7 +400,25 @@ Set NO_COLOR=1 to 1 to disable colors.
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
 		case "c:0": // ctrl-space, build source code to executable, word wrap or convert to PDF, depending on the mode
-			if strings.HasSuffix(filepath.Base(filename), ".adoc") {
+		    if strings.HasSuffix(baseFilename, ".scd") || strings.HasSuffix(baseFilename, ".scdoc") {
+				scdoc := exec.Command("/usr/bin/sdcoc")
+				ioutil.ReadFile( ...
+				scdoc.Stdin = &buf
+				if err := asciidoctor.Run(); err != nil {
+					statusMessage = err.Error()
+					status.ClearAll(c)
+					status.SetMessage(statusMessage)
+					status.Show(c, e)
+					break // from case
+				}
+				statusMessage = "Saved manpage.1"
+				status.ClearAll(c)
+				status.SetMessage(statusMessage)
+				status.Show(c, e)
+				break // from case
+
+
+			} else if strings.HasSuffix(baseFilename, ".adoc") {
 				asciidoctor := exec.Command("/usr/bin/asciidoctor", "-b", "manpage", "-o", "manpage.1", filename)
 				if err := asciidoctor.Run(); err != nil {
 					statusMessage = err.Error()
@@ -415,7 +433,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 				status.Show(c, e)
 				break // from case
 				// Is this a Markdown file? Save to PDF, either by using pandoc or by writing the text file directly
-			} else if pandocPath := which("pandoc"); e.markdownMode && strings.HasSuffix(filepath.Base(filename), ".md") && pandocPath != "" {
+			} else if pandocPath := which("pandoc"); e.markdownMode && strings.HasSuffix(baseFilename), ".md") && pandocPath != "" {
 
 				go func() {
 					pdfFilename := "o.pdf"
