@@ -470,6 +470,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 			}
 		}
 	}
+	noColor := os.Getenv("NO_COLOR") != ""
 	for y := 0; y < numlines; y++ {
 		counter := 0
 		//line := strings.ReplaceAll(e.Line(y+offset), "\t", tabString)
@@ -478,7 +479,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		if len([]rune(screenLine)) >= w {
 			screenLine = screenLine[:w]
 		}
-		if e.highlight {
+		if e.highlight && !noColor {
 			// Output a syntax highlighted line. Escape any tags in the input line.
 			// textWithTags must be unescaped if there is not an error.
 			if textWithTags, err := syntax.AsText([]byte(Escape(line))); err != nil {
