@@ -1,5 +1,7 @@
 # TODO
 
+- [ ] Keybinding from cutting the line at the bookmark and inserting it at the current location.
+      Pressing this key repeatedly can be used for moving a block of code from one place to another.
 - [ ] ctrl-l, 0 and then searching sometimes causes issues. Investigate.
 - [ ] Fix word wrapping when elongating a line from somewhere in the middle.
 - [ ] Don't completely clear and reset the terminal at exit, to allow for scrolling.
