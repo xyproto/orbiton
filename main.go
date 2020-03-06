@@ -19,9 +19,9 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const version = "o 2.18.1"
+const version = "o 2.19.0"
 
-var rebaseKeywords = []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}
+var rebaseKeywords = []string{"p", "pick", "r", "reword", "d", "drop", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "l", "label", "t", "reset", "m", "merge"}
 
 func main() {
 	var (
