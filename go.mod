@@ -8,5 +8,5 @@ require (
 	github.com/xyproto/syntax v0.0.0-20200225142236-7d02d219ec6f
 	github.com/xyproto/textoutput v1.11.0
 	github.com/xyproto/vt100 v1.8.3
-	golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae // indirect
+	golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527 // indirect
 )
