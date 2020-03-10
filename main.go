@@ -317,10 +317,6 @@ Set NO_COLOR=1 to 1 to disable colors.
 				break
 			}
 
-			status.Clear(c)
-			status.SetMessage("Formatting")
-			status.Show(c, e)
-
 			// Not in git mode, format Go or C++ code with goimports or clang-format
 			undo.Snapshot(e)
 			// Map from formatting command to a list of file extensions
@@ -383,6 +379,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 									// Mark the data as changed, despite just having loaded a file
 									e.changed = true
 									formatted = true
+									e.redrawCursor = true
 								}
 								// Try to remove the temporary file regardless if "goimports -w" worked out or not
 								_ = os.Remove(tempFilename)
@@ -390,6 +387,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 							// Try to close the file. f.Close() checks if f is nil before closing.
 							_ = f.Close()
 							e.redraw = true
+							e.redrawCursor = true
 						}
 						break OUT
 					}
