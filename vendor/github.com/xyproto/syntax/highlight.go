@@ -257,7 +257,7 @@ func tokenKind(tok rune, tokText string, inSingleLineComment *bool) Kind {
 	// If not, do the regular switch
 	switch tok {
 	case scanner.Ident:
-		if _, isKW := keywords[tokText]; isKW {
+		if _, isKW := Keywords[tokText]; isKW {
 			return Keyword
 		}
 		if r, _ := utf8.DecodeRuneInString(tokText); unicode.IsUpper(r) {

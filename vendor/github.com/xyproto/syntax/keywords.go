@@ -1,6 +1,6 @@
 package syntax
 
-var keywords = map[string]struct{}{
+var Keywords = map[string]struct{}{
 	"BEGIN":            {},
 	"END":              {},
 	"False":            {},
@@ -186,6 +186,8 @@ var keywords = map[string]struct{}{
 	"yield":            {},
 	"#define":          {},
 	"#endif":           {},
+	"#ifdef":           {},
+	"#ifndef":          {},
 	"#include":         {},
 	"#pragma":          {},
 }
