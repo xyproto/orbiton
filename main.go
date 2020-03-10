@@ -640,9 +640,9 @@ Set NO_COLOR=1 to 1 to disable colors.
 			}
 			if !foundExtensionToBuild {
 				// Building this file extension is not implemented yet.
-				// Just display the current time.
 				status.ClearAll(c)
-				statusMessage := time.Now().Format("15:04") // HH:MM
+				// Just display the current time and word count.
+				statusMessage := fmt.Sprintf("%d words, %s", e.WordCount(), time.Now().Format("15:04")) // HH:MM
 				status.SetMessage(statusMessage)
 				status.Show(c, e)
 			}
