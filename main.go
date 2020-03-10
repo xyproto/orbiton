@@ -126,6 +126,12 @@ Set NO_COLOR=1 to 1 to disable colors.
 	// TODO: Introduce a separate mode for AsciiDoctor. Use Markdown syntax highlighting, for now.
 	docMode := strings.HasSuffix(baseFilename, ".md") || strings.HasSuffix(baseFilename, ".adoc") || strings.HasSuffix(baseFilename, ".rst") || strings.HasSuffix(baseFilename, ".scdoc") || strings.HasSuffix(baseFilename, ".scd")
 
+	// Per-language adjustments to highlighting of keywords
+	if !strings.HasSuffix(baseFilename, ".go") {
+		delete(syntax.Keywords, "build")
+		delete(syntax.Keywords, "package")
+	}
+
 	tty, err := vt100.NewTTY()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error: "+err.Error())
@@ -532,13 +538,25 @@ Set NO_COLOR=1 to 1 to disable colors.
 						// Use rustc instead of cargo if Cargo.toml is missing and the extension is .rs
 						if ext == ".rs" && (!exists("Cargo.toml") && !exists("../Cargo.toml")) {
 							cmd = exec.Command("rustc", filename)
+						} else if (ext == ".cc" || ext == ".h") && exists("BUILD.bazel") {
+							// Google-style C++ + Bazel projects
+							cmd = exec.Command("bazel", "build")
 						}
 
 						output, err := cmd.CombinedOutput()
-						if err != nil || bytes.Contains(output, []byte(": error:")) {
-							status.ClearAll(c)
-							status.SetErrorMessage("Build error")
+						if err != nil || bytes.Contains(output, []byte("error:")) {
+							// Find the first error message
 							lines := strings.Split(string(output), "\n")
+							errorMessage := "Build error"
+							for _, line := range lines {
+								if strings.Contains(line, "error:") {
+									parts := strings.SplitN(line, "error:", 2)
+									errorMessage = parts[1]
+									break
+								}
+							}
+							status.ClearAll(c)
+							status.SetErrorMessage(errorMessage)
 							for i, line := range lines {
 								// Jump to the error location, for C++ and Go
 								if strings.Count(line, ":") >= 3 {
@@ -559,7 +577,10 @@ Set NO_COLOR=1 to 1 to disable colors.
 											e.Center(c)
 											// Use the error message as the status message
 											if len(fields) >= 4 {
+												status.ClearAll(c)
 												status.SetErrorMessage(strings.Join(fields[3:], " "))
+												status.Show(c, e)
+												break OUT2
 											}
 										}
 									}
@@ -598,6 +619,8 @@ Set NO_COLOR=1 to 1 to disable colors.
 												// Use the error message as the status message
 												if errorMessage != "" {
 													status.SetErrorMessage(errorMessage)
+													status.Show(c, e)
+													break OUT2
 												}
 											}
 										}
