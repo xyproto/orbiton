@@ -18,3 +18,4 @@ test.*
 .vscode/
 o.html
 manpage.1
+*_go.pdf
