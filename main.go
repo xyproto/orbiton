@@ -1168,10 +1168,10 @@ Set NO_COLOR=1 to 1 to disable colors.
 				// Check for if a special "first letter" has been pressed, which triggers vi-like behavior
 				if firstLetterSinceStart == "" {
 					firstLetterSinceStart = key
-					// If the first pressed key is "G", then invoke vi-compatible behavior and jump to the end
-					if key == "G" {
+					// If the first pressed key is "G" and this is not git mode, then invoke vi-compatible behavior and jump to the end
+					if key == "G" && !gitMode {
 						// Go to the end of the document
-						e.redraw = e.GoToLineNumber(e.Len()+1, c, status, true)
+						e.redraw = e.GoToLineNumber(e.Len(), c, status, true)
 						e.redrawCursor = true
 						firstLetterSinceStart = "x"
 						break
