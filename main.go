@@ -459,7 +459,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 			} else if pandocPath := which("pandoc"); e.markdownMode && strings.HasSuffix(baseFilename, ".md") && pandocPath != "" {
 
 				go func() {
-					pdfFilename := "o.pdf"
+					pdfFilename := strings.Replace(baseFilename, ".", "_", -1) + ".pdf"
 
 					statusMessage := "Converting to PDF using Pandoc..."
 					status.SetMessage(statusMessage)
@@ -484,7 +484,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 						return // from goroutine
 					}
 
-					pandoc := exec.Command(pandocPath, "-N", "--toc", "-V", "geometry:a4paper", "-o", "o.pdf", tmpfn)
+					pandoc := exec.Command(pandocPath, "-N", "--toc", "-V", "geometry:a4paper", "-o", pdfFilename, tmpfn)
 					if err = pandoc.Run(); err != nil {
 						_ = os.Remove(tmpfn) // Try removing the temporary filename if pandoc fails
 						statusMessage = err.Error()
@@ -661,7 +661,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 			// Write to PDF in a goroutine
 			go func() {
 
-				pdfFilename := "o.pdf"
+				pdfFilename := strings.Replace(baseFilename, ".", "_", -1) + ".pdf"
 
 				// Show a status message while writing
 				statusMessage := "Saving PDF..."
@@ -1010,6 +1010,9 @@ Set NO_COLOR=1 to 1 to disable colors.
 				e.redraw = true
 			}
 			e.redrawCursor = true
+		case "c:30": // ctrl-~, save and quit
+			quit = true
+			fallthrough
 		case "c:19": // ctrl-s, save
 			// Write the file
 			status.ClearAll(c)
