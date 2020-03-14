@@ -82,6 +82,7 @@ To unset:
 * `ctrl-space` - Build Go or C++ files, word-wrap other files.
 * `ctrl-\` - Toggle single-line comments.
 * `ctrl-r` - Render the current text as a PDF document.
+* `ctrl-~` - Save and quit.
 
 If `EDITOR` is `o` and interactive rebase is launched with `git rebase -i`, either `ctrl-r` or `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
 
@@ -165,6 +166,6 @@ Pressing `ctrl-space` will render Markdown files to PDF using `pandoc` (as oppos
 
 ## General info
 
-* Version: 2.20.0
+* Version: 2.21.0
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

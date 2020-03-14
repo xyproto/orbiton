@@ -1,6 +1,6 @@
 .\"             -*-Nroff-*-
 .\"
-.TH "o" 1 "11 Mar 2020" "" ""
+.TH "o" 1 "14 Mar 2020" "" ""
 .SH NAME
 o \- an editor
 .SH SYNOPSIS
@@ -93,6 +93,9 @@ displays brief usage information
 .B ctrl-\\\\
   Toggle single-line comments.
 .sp
+.B ctrl-~
+  Save and quit.
+.sp
 .B ctrl-r
   Render the current text as a PDF document.
 .sp
@@ -109,7 +112,7 @@ I wanted to write a simple editor that only used VT100 terminal codes.
 .SH BUGS
 Lines longer than the terminal width are not handled gracefully.
 .SH VERSION
-2.20.0
+2.21.0
 .SH AUTHOR
 .B o
 was written by  Alexander F. Rødseth <xyproto@archlinux.org>

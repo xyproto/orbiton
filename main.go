@@ -19,7 +19,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const version = "o 2.20.0"
+const version = "o 2.21.0"
 
 var rebaseKeywords = []string{"p", "pick", "r", "reword", "d", "drop", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "l", "label", "t", "reset", "m", "merge"}
 
@@ -100,6 +100,7 @@ esc        to redraw the screen and clear the last search
 ctrl-space to build Go, C++, word wrap
 ctrl-r     to render the current text to a PDF document
 ctrl-\     to toggle single-line comments
+ctrl-~     to save and quit
 
 Set NO_COLOR=1 to 1 to disable colors.
 
