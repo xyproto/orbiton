@@ -311,6 +311,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 			quit = true
 		case "c:23": // ctrl-w, format (or if in git mode, cycle interactive rebase keywords)
 			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, rebaseKeywords) {
+				undo.Snapshot(e)
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
 				e.redraw = true
