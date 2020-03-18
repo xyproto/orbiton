@@ -25,7 +25,7 @@ var (
 	boldColor         = vt100.LightYellow
 	italicsColor      = vt100.White
 	strikeColor       = vt100.DarkGray
-	tableColor        = vt100.White
+	tableColor        = vt100.Magenta
 )
 
 func runeCount(s string, r rune) int {
@@ -197,7 +197,7 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 	}
 
 	// Table
-	if strings.HasPrefix(rest, "|") && strings.HasSuffix(rest, "|") {
+	if strings.HasPrefix(rest, "|") || strings.HasSuffix(rest, "|") {
 		return tableColor.Get(line), true, false
 	}
 
