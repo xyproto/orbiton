@@ -127,10 +127,17 @@ Set NO_COLOR=1 to 1 to disable colors.
 	// TODO: Introduce a separate mode for AsciiDoctor. Use Markdown syntax highlighting, for now.
 	docMode := strings.HasSuffix(baseFilename, ".md") || strings.HasSuffix(baseFilename, ".adoc") || strings.HasSuffix(baseFilename, ".rst") || strings.HasSuffix(baseFilename, ".scdoc") || strings.HasSuffix(baseFilename, ".scd")
 
+	shellMode := strings.HasSuffix(baseFilename, ".sh") || strings.HasSuffix(baseFilename, ".bash") || baseFilename == "PKGBUILD"
+
 	// Per-language adjustments to highlighting of keywords
 	if !strings.HasSuffix(baseFilename, ".go") {
 		delete(syntax.Keywords, "build")
 		delete(syntax.Keywords, "package")
+	}
+
+	spacesPerTab := 4
+	if shellMode {
+		spacesPerTab = 2
 	}
 
 	tty, err := vt100.NewTTY()
@@ -145,7 +152,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 	c.ShowCursor()
 
 	// 4 spaces per tab, scroll 10 lines at a time, no word wrap
-	e := NewEditor(4, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, gitMode, docMode)
+	e := NewEditor(spacesPerTab, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, gitMode, docMode)
 
 	if gitMode {
 		// The subject should ideally be maximum 50 characters long, then the body of the
