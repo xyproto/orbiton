@@ -128,6 +128,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 	docMode := strings.HasSuffix(baseFilename, ".md") || strings.HasSuffix(baseFilename, ".adoc") || strings.HasSuffix(baseFilename, ".rst") || strings.HasSuffix(baseFilename, ".scdoc") || strings.HasSuffix(baseFilename, ".scd")
 
 	shellMode := strings.HasSuffix(baseFilename, ".sh") || strings.HasSuffix(baseFilename, ".bash") || baseFilename == "PKGBUILD"
+	mlMode := strings.HasSuffix(baseFilename, ".yml") || strings.HasSuffix(baseFilename, ".toml")
 
 	// Per-language adjustments to highlighting of keywords
 	if !strings.HasSuffix(baseFilename, ".go") {
@@ -136,7 +137,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 	}
 
 	spacesPerTab := 4
-	if shellMode {
+	if shellMode || mlMode {
 		spacesPerTab = 2
 	}
 
