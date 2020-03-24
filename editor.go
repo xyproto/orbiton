@@ -34,6 +34,7 @@ type Editor struct {
 	lineBeforeSearch int                  // save the current line when jumping between search results
 	wordWrapAt       int                  // set to 80 or 100 to trigger word wrap when typing to that column
 	markdownMode     bool                 // a mode specifically for Markdown
+	makefileMode     bool                 // a mode specifically for Makefiles
 }
 
 // NewEditor takes:
@@ -42,7 +43,7 @@ type Editor struct {
 // * background color attributes
 // * if syntax highlighting is enabled
 // * if "insert mode" is enabled (as opposed to "draw mode")
-func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEditMode bool, scrollSpeed int, searchFg vt100.AttributeColor, scheme syntax.TextConfig, gitMode, markdownMode bool) *Editor {
+func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEditMode bool, scrollSpeed int, searchFg vt100.AttributeColor, scheme syntax.TextConfig, gitMode, markdownMode, makefileMode bool) *Editor {
 	syntax.DefaultTextConfig = scheme
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
@@ -60,6 +61,7 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEdi
 	}
 	e.gitMode = gitMode
 	e.markdownMode = markdownMode
+	e.makefileMode = makefileMode
 	return e
 }
 
@@ -68,7 +70,7 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEdi
 // search results magenta, use the default syntax highlighting scheme, don't use git mode and don't use markdown mode,
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
-	e := NewEditor(4, vt100.White, vt100.Black, false, true, 1, vt100.Magenta, syntax.DefaultTextConfig, false, false)
+	e := NewEditor(4, vt100.White, vt100.Black, false, true, 1, vt100.Magenta, syntax.DefaultTextConfig, false, false, false)
 	e.wordWrapAt = wordWrapLimit
 	return e
 }
@@ -159,7 +161,11 @@ func (e *Editor) ScreenLine(n int) string {
 		}
 		tabSpace := "\t"
 		if !e.DrawMode() {
-			tabSpace = strings.Repeat("\t", e.spacesPerTab)
+			if e.makefileMode {
+				tabSpace = strings.Repeat("·", e.spacesPerTab)
+			} else {
+				tabSpace = strings.Repeat("\t", e.spacesPerTab)
+			}
 		}
 		//return strings.ReplaceAll(sb.String(), "\t", tabSpace)
 		return strings.Replace(sb.String(), "\t", tabSpace, -1)
@@ -422,6 +428,10 @@ func (e *Editor) Save(filename string, stripTrailingSpaces bool) error {
 	}
 	// Mark the data as "not changed"
 	e.changed = false
+	// If this is in Makefile mode, replace mid-dot with tab
+	if e.makefileMode {
+		data = bytes.Replace(data, []byte("·"), []byte{'\t'}, -1)
+	}
 	// Write the data to file
 	return ioutil.WriteFile(filename, data, 0664)
 }
@@ -449,7 +459,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	o := textoutput.NewTextOutput(true, true)
 	tabString := " "
 	if !e.DrawMode() {
-		tabString = strings.Repeat(" ", e.spacesPerTab)
+		if e.makefileMode {
+			tabString = strings.Repeat("·", e.spacesPerTab)
+		} else {
+			tabString = strings.Repeat(" ", e.spacesPerTab)
+		}
 	}
 	w := int(c.Width())
 	if fromline >= toline {

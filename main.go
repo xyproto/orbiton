@@ -128,7 +128,8 @@ Set NO_COLOR=1 to 1 to disable colors.
 	docMode := strings.HasSuffix(baseFilename, ".md") || strings.HasSuffix(baseFilename, ".adoc") || strings.HasSuffix(baseFilename, ".rst") || strings.HasSuffix(baseFilename, ".scdoc") || strings.HasSuffix(baseFilename, ".scd")
 
 	shellMode := strings.HasSuffix(baseFilename, ".sh") || strings.HasSuffix(baseFilename, ".bash") || baseFilename == "PKGBUILD"
-	mlMode := strings.HasSuffix(baseFilename, ".yml") || strings.HasSuffix(baseFilename, ".toml")
+	ymlMode := strings.HasSuffix(baseFilename, ".yml") || strings.HasSuffix(baseFilename, ".toml")
+	makefileMode := baseFilename == "Makefile" || baseFilename == "makefile" || baseFilename == "GNUmakefile"
 
 	// Per-language adjustments to highlighting of keywords
 	if !strings.HasSuffix(baseFilename, ".go") {
@@ -137,8 +138,11 @@ Set NO_COLOR=1 to 1 to disable colors.
 	}
 
 	spacesPerTab := 4
-	if shellMode || mlMode {
+
+	if shellMode || ymlMode {
 		spacesPerTab = 2
+	} else if makefileMode {
+		spacesPerTab = 1
 	}
 
 	tty, err := vt100.NewTTY()
@@ -153,7 +157,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 	c.ShowCursor()
 
 	// 4 spaces per tab, scroll 10 lines at a time, no word wrap
-	e := NewEditor(spacesPerTab, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, gitMode, docMode)
+	e := NewEditor(spacesPerTab, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, gitMode, docMode, makefileMode)
 
 	if gitMode {
 		// The subject should ideally be maximum 50 characters long, then the body of the
