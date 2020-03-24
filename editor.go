@@ -15,6 +15,8 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+const tabCharacter = "·" // Used when editing makfiles, for the \t character
+
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
 	lines            map[int][]rune       // the contents of the current document
@@ -162,7 +164,7 @@ func (e *Editor) ScreenLine(n int) string {
 		tabSpace := "\t"
 		if !e.DrawMode() {
 			if e.makefileMode {
-				tabSpace = strings.Repeat("·", e.spacesPerTab)
+				tabSpace = strings.Repeat(tabCharacter, e.spacesPerTab)
 			} else {
 				tabSpace = strings.Repeat("\t", e.spacesPerTab)
 			}
@@ -430,7 +432,7 @@ func (e *Editor) Save(filename string, stripTrailingSpaces bool) error {
 	e.changed = false
 	// If this is in Makefile mode, replace mid-dot with tab
 	if e.makefileMode {
-		data = bytes.Replace(data, []byte("·"), []byte{'\t'}, -1)
+		data = bytes.Replace(data, []byte(tabCharacter), []byte{'\t'}, -1)
 	}
 	// Write the data to file
 	return ioutil.WriteFile(filename, data, 0664)
@@ -460,7 +462,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	tabString := " "
 	if !e.DrawMode() {
 		if e.makefileMode {
-			tabString = strings.Repeat("·", e.spacesPerTab)
+			tabString = strings.Repeat(tabCharacter, e.spacesPerTab)
 		} else {
 			tabString = strings.Repeat(" ", e.spacesPerTab)
 		}
