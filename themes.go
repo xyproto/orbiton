@@ -23,5 +23,6 @@ func (e *Editor) lightTheme() {
 	syntax.DefaultTextConfig.TextAttrName = "black"
 	syntax.DefaultTextConfig.TextAttrValue = "black"
 	syntax.DefaultTextConfig.Decimal = "cyan"
+	syntax.DefaultTextConfig.AndOr = "red"
 	syntax.DefaultTextConfig.Whitespace = ""
 }

@@ -46,6 +46,7 @@ func main() {
 			TextAttrName:  "lightgreen",
 			TextAttrValue: "lightgreen",
 			Decimal:       "white",
+			AndOr:         "green",
 			Whitespace:    "",
 		}
 
@@ -136,6 +137,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 		delete(syntax.Keywords, "build")
 		delete(syntax.Keywords, "package")
 	}
+	delete(syntax.Keywords, "my")
 
 	spacesPerTab := 4
 
