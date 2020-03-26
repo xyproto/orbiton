@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -46,7 +47,7 @@ func main() {
 			TextAttrName:  "lightgreen",
 			TextAttrValue: "lightgreen",
 			Decimal:       "white",
-			AndOr:         "green",
+			AndOr:         "lightyellow",
 			Whitespace:    "",
 		}
 
@@ -113,6 +114,17 @@ Set NO_COLOR=1 to 1 to disable colors.
 	if filename == "" {
 		fmt.Fprintln(os.Stderr, "Need a filename.")
 		os.Exit(1)
+	}
+
+	// If the filename ends with "." and the file does not exist, assume this was an attempt at tab-completion gone wrong.
+	// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
+	if strings.HasSuffix(filename, ".") && !exists(filename) {
+		// Glob
+		matches, err := filepath.Glob(filename + "*")
+		if err == nil && len(matches) > 0 { // no error and at least 1 match
+			sort.Strings(matches)
+			filename = matches[0]
+		}
 	}
 
 	baseFilename := filepath.Base(filename)
