@@ -146,9 +146,8 @@ This also means that filenames containing `+` or `:` are not supported, if follo
 
 ## The first keypress
 
-If the very first keypress after starting `o` is `O`, `G` or `/`, it will trigger the following vi-compatible behavior:
+If the very first keypress after starting `o` is `G` or `/`, it will trigger the following vi-compatible behavior:
 
-* `O` - if followed by an uppercase letter, ignore the initial `O`
 * `/` - enter search-mode (same as when pressing `ctrl-f`)
 * `G` - go to the end of the file
 
