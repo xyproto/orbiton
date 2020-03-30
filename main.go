@@ -326,7 +326,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 		e.redrawCursor = false
 	}
 
-	dropO := false
+	//dropO := false
 	quit := false
 	previousKey := ""
 
@@ -1205,27 +1205,27 @@ Set NO_COLOR=1 to 1 to disable colors.
 						break
 					}
 				}
-				if firstLetterSinceStart == "O" {
-					// If the first typed letter since starting this editor was 'O', and this is also uppercase,
-					// then disregard the initial 'O'. This is to help vim-users.
-					dropO = true
-					// Set the first letter since start to something that will not trigger this branch any more.
-					firstLetterSinceStart = "x"
-					// ignore the O
-					break
-				}
-				// If the previous letter was an "O" and this letter is uppercase, invoke vi-compatibility for a short moment
-				if dropO {
-					// This is a one-time operation
-					dropO = false
-					// Lowercase? Type the O, since it was meant to be typed.
-					if len([]rune(key)) > 0 && unicode.IsLower([]rune(key)[0]) {
-						e.Prev(c)
-						e.SetRune('O')
-						e.WriteRune(c)
-						e.Next(c)
-					}
-				}
+				//if firstLetterSinceStart == "O" {
+				//	// If the first typed letter since starting this editor was 'O', and this is also uppercase,
+				//	// then disregard the initial 'O'. This is to help vim-users.
+				//	dropO = true
+				//	// Set the first letter since start to something that will not trigger this branch any more.
+				//	firstLetterSinceStart = "x"
+				//	// ignore the O
+				//	break
+				//}
+				//// If the previous letter was an "O" and this letter is uppercase, invoke vi-compatibility for a short moment
+				//if dropO {
+				//	// This is a one-time operation
+				//	dropO = false
+				//	// Lowercase? Type the O, since it was meant to be typed.
+				//	if len([]rune(key)) > 0 && unicode.IsLower([]rune(key)[0]) {
+				//		e.Prev(c)
+				//		e.SetRune('O')
+				//		e.WriteRune(c)
+				//		e.Next(c)
+				//	}
+				//}
 				// Type the letter that was pressed
 				if len([]rune(key)) > 0 {
 					if !e.DrawMode() {
