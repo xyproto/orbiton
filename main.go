@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"errors"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -51,8 +50,10 @@ func main() {
 			Whitespace:    "",
 		}
 
-		versionFlag = flag.Bool("version", false, "show version information")
-		helpFlag    = flag.Bool("help", false, "show simple help")
+		versionFlag = false
+		//versionFlag = flag.Bool("version", false, "show version information")
+		helpFlag = false
+		//helpFlag    = flag.Bool("help", false, "show simple help")
 
 		statusDuration = 2700 * time.Millisecond
 
@@ -65,14 +66,14 @@ func main() {
 		locationHistory map[string]int // remember where we were in each absolute filename
 	)
 
-	flag.Parse()
+	//flag.Parse()
 
-	if *versionFlag {
+	if versionFlag {
 		fmt.Println(version)
 		return
 	}
 
-	if *helpFlag {
+	if helpFlag {
 		fmt.Println(version + " - simple and limited text editor")
 		fmt.Print(`
 Hotkeys
@@ -110,7 +111,16 @@ Set NO_COLOR=1 to 1 to disable colors.
 		return
 	}
 
-	filename, lineNumber := FilenameAndLineNumber(flag.Arg(0), flag.Arg(1))
+	filename := ""
+	lineNumber := 0
+	if len(os.Args) > 1 {
+		arg1 := os.Args[1]
+		arg2 := ""
+		if len(os.Args) > 2 {
+			arg2 = os.Args[2]
+		}
+		filename, lineNumber = FilenameAndLineNumber(arg1, arg2)
+	}
 	if filename == "" {
 		fmt.Fprintln(os.Stderr, "Need a filename.")
 		os.Exit(1)
