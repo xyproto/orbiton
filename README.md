@@ -40,6 +40,7 @@ To unset:
 * Smart indentation.
 * Requires `/dev/tty` to be available.
 * Copy, cut and paste is only for one line at a time. `xclip` (for X) or `wl-clipboard` (for Wayland) must be installed if the system clipboard is to be used.
+* Only forward search.
 * May take a line number as the second argument, with an optional `+` prefix.
 * The text will be red if a loaded file is read-only.
 * The terminal needs to be resized to show the second half of lines that are longer than the terminal width.
@@ -49,6 +50,7 @@ To unset:
 * Can render text to PDF.
 * Only UNIX-style line endings are supported (`\n`).
 * Will jump to the last visited line when opening a recent file.
+* If tab completion on the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
 
 ## Known bugs
 
