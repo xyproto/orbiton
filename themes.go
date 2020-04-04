@@ -5,8 +5,8 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// lightTheme sets a theme suitable for white backgrounds
-func (e *Editor) lightTheme() {
+// setLightTheme sets a theme suitable for white backgrounds
+func (e *Editor) setLightTheme() {
 	e.fg = vt100.Black
 	e.bg = vt100.Gray
 	e.searchFg = vt100.Red
@@ -25,4 +25,16 @@ func (e *Editor) lightTheme() {
 	syntax.DefaultTextConfig.Decimal = "cyan"
 	syntax.DefaultTextConfig.AndOr = "red"
 	syntax.DefaultTextConfig.Whitespace = ""
+
+	// Markdown, switch light colors to darker ones
+	headerTextColor = vt100.Blue
+	textColor = vt100.Default
+	listTextColor = vt100.Default
+	imageColor = vt100.Green
+	boldColor = vt100.Blue
+	xColor = vt100.Blue
+	listCodeColor = vt100.Red
+	codeColor = vt100.Red
+	codeBlockColor = vt100.Red
+
 }
