@@ -50,5 +50,4 @@ func (e *Editor) gitHighlight(line string) string {
 		coloredString = e.gitColor.Get(line)
 	}
 	return coloredString
-
 }
