@@ -22,7 +22,10 @@ import (
 
 const version = "o 2.21.0"
 
-var rebaseKeywords = []string{"p", "pick", "r", "reword", "d", "drop", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "l", "label", "t", "reset", "m", "merge"}
+var (
+	rebasePrefixes   = []string{"p", "pick", "r", "reword", "d", "drop", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "l", "label", "t", "reset", "m", "merge"}
+	checkboxPrefixes = []string{"- [ ]", "- [x]", "- [X]", "* [ ]", "* [x]", "* [X]"}
+)
 
 func main() {
 	var (
@@ -63,6 +66,8 @@ func main() {
 		firstLetterSinceStart string
 
 		locationHistory map[string]int // remember where we were in each absolute filename
+
+		clearOnQuit bool = true // clear the terminal when quitting, or not
 	)
 
 	flag.Parse()
@@ -80,7 +85,8 @@ Hotkeys
 ctrl-q     to quit
 ctrl-s     to save
 ctrl-w     to format the current file with "go fmt" or "clang-format"
-           (or if in git interactive rebase mode, cycle the keywords)
+           if in markdown mode: toggle checkboxes
+		   if in git mode: cycle git interactive rebase keywords
 ctrl-a     go to start of line, then start of text and then the previous line
 ctrl-e     go to end of line and then the next line
 ctrl-p     to scroll up 10 lines
@@ -102,7 +108,7 @@ esc        to redraw the screen and clear the last search
 ctrl-space to build Go, C++, word wrap
 ctrl-r     to render the current text to a PDF document
 ctrl-\     to toggle single-line comments
-ctrl-~     to save and quit
+ctrl-~     to save and quit, without clearing the terminal
 
 Set NO_COLOR=1 to 1 to disable colors.
 
@@ -164,7 +170,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 		fmt.Fprintln(os.Stderr, "error: "+err.Error())
 		os.Exit(1)
 	}
-
+	defer tty.Close()
 	vt100.Init()
 
 	c := vt100.NewCanvas()
@@ -191,7 +197,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 	// Use a theme for light backgrounds if XTERM_VERSION is set,
 	// because $COLORFGBG is "15;0" even though the background is white.
 	if os.Getenv("XTERM_VERSION") != "" {
-		e.lightTheme()
+		e.setLightTheme()
 	}
 
 	e.respectNoColorEnvironmentVariable()
@@ -336,8 +342,10 @@ Set NO_COLOR=1 to 1 to disable colors.
 		case "c:17": // ctrl-q, quit
 			quit = true
 		case "c:23": // ctrl-w, format (or if in git mode, cycle interactive rebase keywords)
-			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, rebaseKeywords) {
-				undo.Snapshot(e)
+			undo.Snapshot(e)
+
+			// Cycle git rebase keywords
+			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, rebasePrefixes) {
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
 				e.redraw = true
@@ -345,8 +353,23 @@ Set NO_COLOR=1 to 1 to disable colors.
 				break
 			}
 
+			// Toggle Markdown checkboxes
+			if line := e.CurrentLine(); e.markdownMode && hasAnyPrefixWord(strings.TrimSpace(line), checkboxPrefixes) {
+				if strings.Contains(line, "[ ]") {
+					e.SetLine(e.DataY(), strings.Replace(line, "[ ]", "[x]", 1))
+					e.redraw = true
+				} else if strings.Contains(line, "[x]") {
+					e.SetLine(e.DataY(), strings.Replace(line, "[x]", "[ ]", 1))
+					e.redraw = true
+				} else if strings.Contains(line, "[X]") {
+					e.SetLine(e.DataY(), strings.Replace(line, "[X]", "[ ]", 1))
+					e.redraw = true
+				}
+				e.redrawCursor = e.redraw
+				break
+			}
+
 			// Not in git mode, format Go or C++ code with goimports or clang-format
-			undo.Snapshot(e)
 			// Map from formatting command to a list of file extensions
 			format := map[*exec.Cmd][]string{
 				exec.Command("goimports", "-w", "--"):                                             {".go"},
@@ -675,7 +698,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 		case "c:18": // ctrl-r, render to PDF, or if in git mode, cycle rebase keywords
 
 			// Are we in git mode?
-			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, rebaseKeywords) {
+			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, rebasePrefixes) {
 				undo.Snapshot(e)
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
@@ -1038,7 +1061,8 @@ Set NO_COLOR=1 to 1 to disable colors.
 				e.redraw = true
 			}
 			e.redrawCursor = true
-		case "c:30": // ctrl-~, save and quit
+		case "c:30": // ctrl-~, save and quit + don't clear the terminal
+			clearOnQuit = false
 			quit = true
 			fallthrough
 		case "c:19": // ctrl-s, save
@@ -1304,8 +1328,12 @@ Set NO_COLOR=1 to 1 to disable colors.
 	}
 	// Save the current location in the location history and write it to file
 	e.SaveLocation(absFilename, locationHistory)
+
 	// Quit everything that has to do with the terminal
-	vt100.Clear()
-	vt100.Close()
-	tty.Close()
+	if clearOnQuit {
+		vt100.Clear()
+		vt100.Close()
+	} else {
+		c.Draw()
+	}
 }
