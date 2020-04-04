@@ -26,6 +26,8 @@ var (
 	italicsColor      = vt100.White
 	strikeColor       = vt100.DarkGray
 	tableColor        = vt100.Magenta
+	checkboxColor     = vt100.Default     // a Markdown checkbox: [ ], [x] or [X]
+	xColor            = vt100.LightYellow // the x in the checkbox: [x]
 )
 
 func runeCount(s string, r rune) int {
@@ -217,6 +219,9 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 		}
 		return leadingSpace + headerTextColor.Get(rest), true, false
 	case "*", "-", "+", "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.", "10.": // ignore numbers over 10
+		if strings.HasPrefix(rest, "- [ ] ") || strings.HasPrefix(rest, "- [x] ") || strings.HasPrefix(rest, "- [X] ") {
+			return leadingSpace + listBulletColor.Get(rest[:1]) + " " + checkboxColor.Get(rest[2:3]) + xColor.Get(rest[3:4]) + checkboxColor.Get(rest[4:5]) + " " + emphasis(quotedWordReplace(line[dataPos+6:], '`', listTextColor, listCodeColor), listTextColor, italicsColor, boldColor, strikeColor), true, false
+		}
 		if len(words) > 1 {
 			return leadingSpace + listBulletColor.Get(firstWord) + " " + emphasis(quotedWordReplace(line[dataPos+len(firstWord)+1:], '`', listTextColor, listCodeColor), listTextColor, italicsColor, boldColor, strikeColor), true, false
 		}
