@@ -67,7 +67,7 @@ func main() {
 
 		locationHistory map[string]int // remember where we were in each absolute filename
 
-		clearOnQuit bool = true // clear the terminal when quitting, or not
+		clearOnQuit bool // clear the terminal when quitting, or not
 	)
 
 	flag.Parse()
@@ -108,7 +108,7 @@ esc        to redraw the screen and clear the last search
 ctrl-space to build Go, C++, word wrap
 ctrl-r     to render the current text to a PDF document
 ctrl-\     to toggle single-line comments
-ctrl-~     to save and quit, without clearing the terminal
+ctrl-~     to save and quit + clear the terminal
 
 Set NO_COLOR=1 to 1 to disable colors.
 
@@ -1061,8 +1061,8 @@ Set NO_COLOR=1 to 1 to disable colors.
 				e.redraw = true
 			}
 			e.redrawCursor = true
-		case "c:30": // ctrl-~, save and quit + don't clear the terminal
-			clearOnQuit = false
+		case "c:30": // ctrl-~, save and quit + clear the terminal
+			clearOnQuit = true
 			quit = true
 			fallthrough
 		case "c:19": // ctrl-s, save
