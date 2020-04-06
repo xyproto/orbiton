@@ -1329,6 +1329,9 @@ Set NO_COLOR=1 to 1 to disable colors.
 	// Save the current location in the location history and write it to file
 	e.SaveLocation(absFilename, locationHistory)
 
+	// Clear all status bar messages
+	status.ClearAll(c)
+
 	// Quit everything that has to do with the terminal
 	if clearOnQuit {
 		vt100.Clear()
