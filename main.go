@@ -143,6 +143,10 @@ Set NO_COLOR=1 to 1 to disable colors.
 
 	defaultHighlight := gitMode || baseFilename == "config" || baseFilename == "PKGBUILD" || baseFilename == "BUILD" || baseFilename == "WORKSPACE" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
 
+	if gitMode {
+		clearOnQuit = true
+	}
+
 	// TODO: Introduce a separate mode for AsciiDoctor. Use Markdown syntax highlighting, for now.
 	docMode := strings.HasSuffix(baseFilename, ".md") || strings.HasSuffix(baseFilename, ".adoc") || strings.HasSuffix(baseFilename, ".rst") || strings.HasSuffix(baseFilename, ".scdoc") || strings.HasSuffix(baseFilename, ".scd")
 
