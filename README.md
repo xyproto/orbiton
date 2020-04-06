@@ -74,7 +74,7 @@ To unset:
 * `ctrl-p` - Scroll up 10 lines.
 * `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active.
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
-* `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, unicode number and word count.
+* `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - Toggle syntax highlighting.
 * `ctrl-o` - Toggle between text and draw mode.
@@ -96,8 +96,6 @@ Additionally:
 
 * If interactive rebase is launched with `git rebase -i`, either `ctrl-r` or `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
 * When editing Markdown, checkboxes can be toggled with `ctrl-w`.
-
-The `EDITOR` environment variable can be set to `o`.
 
 ## Manual installation
 
@@ -138,7 +136,7 @@ Rust
 ## Size
 
 * The `o` executable is only **541k** when built with GCC 9.2 (for 64-bit Linux).
-* This isn't as small as [e3](https://sites.google.com/site/e3editor/), an editor written in assembly (which is **234k**), but it's resonably lean.
+* This isn't as small as [e3](https://sites.google.com/site/e3editor/), an editor written in assembly (which is **234k**), but it's reasonably lean.
 
 One way of building with `gccgo`:
 
