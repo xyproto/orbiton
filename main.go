@@ -268,7 +268,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 		}
 	}
 
-	// If the file starts with a hashbang, enable syntax highlighting
+	// If the file starts with a hash bang, enable syntax highlighting
 	if strings.HasPrefix(strings.TrimSpace(e.Line(0)), "#!") {
 		// Enable highlighting and redraw
 		e.highlight = true
