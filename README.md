@@ -6,6 +6,12 @@ It's a good fit for writing git commit messages, using `EDITOR=o git commit`.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
+## Packaging status
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/o.svg)](https://repology.org/project/o/versions)
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/o-editor.svg)](https://repology.org/project/o-editor/versions)
+
 ## Quick start
 
 You can install `o` with Go 1.10 or later:
