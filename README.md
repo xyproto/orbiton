@@ -86,7 +86,12 @@ To unset:
 * `ctrl-r` - Render the current text as a PDF document.
 * `ctrl-~` - Save and quit.
 
-If `EDITOR` is `o` and interactive rebase is launched with `git rebase -i`, either `ctrl-r` or `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
+Additionally:
+
+* If interactive rebase is launched with `git rebase -i`, either `ctrl-r` or `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
+* When editing Markdown, checkboxes can be toggled with `ctrl-w`.
+
+The `EDITOR` environment variable can be set to `o`.
 
 ## Manual installation
 
@@ -167,6 +172,6 @@ Pressing `ctrl-space` will render Markdown files to PDF using `pandoc` (as oppos
 
 ## General info
 
-* Version: 2.21.0
+* Version: 2.22.0
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
