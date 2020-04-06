@@ -42,6 +42,7 @@ To unset:
 * Never asks before saving or quitting. Be careful!
 * Can format Go or C++ code, just press `ctrl-space`. This uses either `goimports` (`go get golang.org/x/tools/cmd/goimports`) or `clang-format`.
 * Will strip trailing whitespace whenever it can.
+* Will replace nonbreaking space (`0xc2 0xa0`) with a regular space (`0x20`) whenever it can.
 * Must be given a filename at start.
 * Smart indentation.
 * Requires `/dev/tty` to be available.

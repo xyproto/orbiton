@@ -1183,6 +1183,8 @@ Set NO_COLOR=1 to 1 to disable colors.
 					copyLine = lines
 				}
 			}
+			// Fix nonbreaking spaces
+			copyLine = strings.Replace(copyLine, string([]byte{0xc2, 0xa0}), string([]byte{0x20}), -1)
 			if e.EmptyRightTrimmedLine() {
 				// If the line is empty, use the existing indentation before pasting
 				e.SetLine(e.DataY(), e.LeadingWhitespace()+strings.TrimSpace(copyLine))

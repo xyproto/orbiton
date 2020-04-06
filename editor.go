@@ -423,6 +423,8 @@ func (e *Editor) Save(filename string, stripTrailingSpaces bool) error {
 		}
 		// Skip trailing newlines
 		data = bytes.TrimRightFunc([]byte(e.String()), unicode.IsSpace)
+		// Replace nonbreaking space with regular spaces
+		data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
 		// Add a final newline
 		data = append(data, '\n')
 	} else {
