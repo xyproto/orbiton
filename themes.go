@@ -23,7 +23,8 @@ func (e *Editor) setLightTheme() {
 	syntax.DefaultTextConfig.TextAttrName = "black"
 	syntax.DefaultTextConfig.TextAttrValue = "black"
 	syntax.DefaultTextConfig.Decimal = "cyan"
-	syntax.DefaultTextConfig.AndOr = "red"
+	syntax.DefaultTextConfig.AndOr = "black"
+	syntax.DefaultTextConfig.Star = "black"
 	syntax.DefaultTextConfig.Whitespace = ""
 
 	// Markdown, switch light colors to darker ones

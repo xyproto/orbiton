@@ -51,6 +51,7 @@ func main() {
 			TextAttrValue: "lightgreen",
 			Decimal:       "white",
 			AndOr:         "lightyellow",
+			Star:          "lightyellow",
 			Whitespace:    "",
 		}
 
