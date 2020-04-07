@@ -33,6 +33,7 @@ const (
 	TextAttrValue
 	Decimal
 	AndOr
+	Star
 )
 
 //go:generate gostringer -type=Kind
@@ -59,6 +60,7 @@ type TextConfig struct {
 	TextAttrValue string
 	Decimal       string
 	AndOr         string
+	Star          string
 	Whitespace    string
 }
 
@@ -95,6 +97,8 @@ func (c TextConfig) Class(kind Kind) string {
 		return c.Decimal
 	case AndOr:
 		return c.AndOr
+	case Star:
+		return c.Star
 	}
 	return ""
 }
@@ -167,6 +171,7 @@ var DefaultTextConfig = TextConfig{
 	TextAttrValue: "white",
 	Decimal:       "red",
 	AndOr:         "red",
+	Star:          "white",
 	Whitespace:    "",
 }
 
@@ -278,6 +283,9 @@ func tokenKind(tok rune, tokText string, inSingleLineComment *bool) Kind {
 	}
 	if tok == '&' || tok == '|' {
 		return AndOr
+	}
+	if tok == '*' {
+		return Star
 	}
 	if unicode.IsSpace(tok) {
 		return Whitespace
