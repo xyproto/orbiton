@@ -201,7 +201,8 @@ Set NO_COLOR=1 to 1 to disable colors.
 
 	// Use a theme for light backgrounds if XTERM_VERSION is set,
 	// because $COLORFGBG is "15;0" even though the background is white.
-	if os.Getenv("XTERM_VERSION") != "" {
+	xterm := os.Getenv("XTERM_VERSION") != ""
+	if xterm {
 		e.setLightTheme()
 	}
 
@@ -1346,5 +1347,11 @@ Set NO_COLOR=1 to 1 to disable colors.
 		vt100.Close()
 	} else {
 		c.Draw()
+		if xterm {
+			fmt.Print("\n\n")
+		} else {
+			// All others
+			fmt.Println(vt100.Black.Get(strings.Repeat("-", int(c.Width()))))
+		}
 	}
 }
