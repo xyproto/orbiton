@@ -1872,6 +1872,17 @@ func (e *Editor) ToggleComment() {
 	}
 }
 
+// Toggle comments until a blank line or the end of the document is reached
+func (e *Editor) ToggleCommentBlock(c *vt100.Canvas, status *StatusBar) {
+	for !e.EmptyLine() && !e.AtOrAfterEndOfDocument() {
+		e.ToggleComment()
+		e.Down(c, status)
+	}
+	if !e.EmptyLine() {
+		e.ToggleComment()
+	}
+}
+
 // NewLine inserts a new line below and moves down one step
 func (e *Editor) NewLine(c *vt100.Canvas, status *StatusBar) {
 	e.InsertLineBelow()
