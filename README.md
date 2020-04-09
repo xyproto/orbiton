@@ -89,7 +89,7 @@ To unset:
 * `ctrl-f` - Search for a string.
 * `esc` - Redraw the screen and clear the last search.
 * `ctrl-space` - Build Go or C++ files, word-wrap other files.
-* `ctrl-\` - Toggle single-line comments.
+* `ctrl-\` - Toggle single-line comments for a block of code.
 * `ctrl-r` - Render the current text as a PDF document.
 * `ctrl-~` - Save and quit.
 

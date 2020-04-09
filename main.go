@@ -108,7 +108,7 @@ ctrl-f     to search for a string
 esc        to redraw the screen and clear the last search
 ctrl-space to build Go, C++, word wrap
 ctrl-r     to render the current text to a PDF document
-ctrl-\     to toggle single-line comments
+ctrl-\     to toggle single-line comments for a block of code
 ctrl-~     to save and quit + clear the terminal
 
 Set NO_COLOR=1 to 1 to disable colors.
