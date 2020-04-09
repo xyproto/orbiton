@@ -19,3 +19,4 @@
 - [ ] When entering a closing bracket, the smart indentation deindents one level too many. Fix this.
 - [ ] Syntax highlighting of checkboxes in Markdown.
 - [ ] Syntax highlighting of `..`, `::`, `:asdfasdf:` and `^^^` in .rst
+- [ ] Add a key to toggle "block mode" where cut/copy/paste applies to the current block of code, or just always use block mode for "cut" (and then for paste as well). The main objective is to be able to move blocks of code, while copy and paste can still work for single lines. Paste can paste a block if cut has recently been used. Something along those lines, for simplicity. The user can still copy and delete single lines with ctrl-c and ctrl-k.
