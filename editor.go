@@ -1844,11 +1844,14 @@ func (e *Editor) Center(c *vt100.Canvas) {
 }
 
 // ToggleComment will toggle single-line comments on or off ("// ")
+// There may be an indent before the comment
 func (e *Editor) ToggleComment() {
-	contents := e.CurrentLine()
-	changed := false
-	newContents := ""
-	trimContents := strings.TrimSpace(contents)
+	var (
+		changed      bool
+		newContents  string
+		contents     = e.CurrentLine()
+		trimContents = strings.TrimSpace(contents)
+	)
 	if strings.HasPrefix(trimContents, "// ") {
 		// toggle off comment
 		newContents = strings.Replace(contents, "// ", "", 1)
@@ -1872,14 +1875,87 @@ func (e *Editor) ToggleComment() {
 	}
 }
 
+// CommentOn will insert "// " in front of the line
+func (e *Editor) CommentOn() {
+	newContents := "// " + e.CurrentLine()
+	e.SetLine(e.DataY(), newContents)
+	if e.AfterEndOfLine() {
+		e.End()
+	}
+}
+
+// CommentOff will remove "//" from the front of the line
+func (e *Editor) CommentOff() {
+	var (
+		changed      bool
+		newContents  string
+		contents     = e.CurrentLine()
+		trimContents = strings.TrimSpace(contents)
+	)
+	if strings.HasPrefix(trimContents, "// ") {
+		// toggle off comment
+		newContents = strings.Replace(contents, "// ", "", 1)
+		changed = true
+	} else if strings.HasPrefix(trimContents, "//") {
+		// toggle off comment
+		newContents = strings.Replace(contents, "//", "", 1)
+		changed = true
+	}
+	if changed {
+		e.SetLine(e.DataY(), newContents)
+		if e.AfterEndOfLine() {
+			e.End()
+		}
+	}
+}
+
+func (e *Editor) CurrentLineCommented() bool {
+	return strings.HasPrefix(strings.TrimSpace(e.CurrentLine()), "//")
+}
+
+// ForEachLineInBlock will move the cursor and run the given function for
+// each line in the current block of text (until newline or end of document)
+func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, status *StatusBar, f func()) {
+	downCounter := 0
+	for !e.EmptyLine() && !e.AtOrAfterEndOfDocument() {
+		f()
+		e.Down(c, status)
+		downCounter++
+	}
+	// Go up again
+	for i := downCounter; i > 0; i-- {
+		e.Up(c, status)
+	}
+}
+
 // Toggle comments until a blank line or the end of the document is reached
 func (e *Editor) ToggleCommentBlock(c *vt100.Canvas, status *StatusBar) {
+	// If most of the lines in the block are comments, comment it out
+	// If most of the lines in the block are not comments, comment it in
+
+	downCounter := 0
+	commentCounter := 0
+
+	// Count the commented lines in this block while going down
 	for !e.EmptyLine() && !e.AtOrAfterEndOfDocument() {
-		e.ToggleComment()
+		if e.CurrentLineCommented() {
+			commentCounter++
+		}
 		e.Down(c, status)
+		downCounter++
 	}
-	if !e.EmptyLine() {
-		e.ToggleComment()
+	// Go up again
+	for i := downCounter; i > 0; i-- {
+		e.Up(c, status)
+	}
+
+	// Check if most lines are commented out
+	mostLinesAreComments := commentCounter > (downCounter / 2)
+
+	if mostLinesAreComments {
+		e.ForEachLineInBlock(c, status, e.CommentOff)
+	} else {
+		e.ForEachLineInBlock(c, status, e.CommentOn)
 	}
 }
 
