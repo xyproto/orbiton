@@ -1909,27 +1909,29 @@ func (e *Editor) CommentOff() {
 	}
 }
 
+// CurrentLineCommented checks if the current trimmed line starts with "//"
 func (e *Editor) CurrentLineCommented() bool {
 	return strings.HasPrefix(strings.TrimSpace(e.CurrentLine()), "//")
 }
 
 // ForEachLineInBlock will move the cursor and run the given function for
 // each line in the current block of text (until newline or end of document)
-func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, status *StatusBar, f func()) {
+func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func()) {
 	downCounter := 0
 	for !e.EmptyLine() && !e.AtOrAfterEndOfDocument() {
 		f()
-		e.Down(c, status)
+		e.Down(c, nil)
 		downCounter++
 	}
 	// Go up again
 	for i := downCounter; i > 0; i-- {
-		e.Up(c, status)
+		e.Up(c, nil)
 	}
 }
 
-// Toggle comments until a blank line or the end of the document is reached
-func (e *Editor) ToggleCommentBlock(c *vt100.Canvas, status *StatusBar) {
+// ToggleCommentBlock will toggle comments until a blank line or the end of the document is reached
+// The amount of existing commented lines is considered before deciding to comment the block in or out
+func (e *Editor) ToggleCommentBlock(c *vt100.Canvas) {
 	// If most of the lines in the block are comments, comment it out
 	// If most of the lines in the block are not comments, comment it in
 
@@ -1941,21 +1943,21 @@ func (e *Editor) ToggleCommentBlock(c *vt100.Canvas, status *StatusBar) {
 		if e.CurrentLineCommented() {
 			commentCounter++
 		}
-		e.Down(c, status)
+		e.Down(c, nil)
 		downCounter++
 	}
 	// Go up again
 	for i := downCounter; i > 0; i-- {
-		e.Up(c, status)
+		e.Up(c, nil)
 	}
 
 	// Check if most lines are commented out
 	mostLinesAreComments := commentCounter > (downCounter / 2)
 
 	if mostLinesAreComments {
-		e.ForEachLineInBlock(c, status, e.CommentOff)
+		e.ForEachLineInBlock(c, e.CommentOff)
 	} else {
-		e.ForEachLineInBlock(c, status, e.CommentOn)
+		e.ForEachLineInBlock(c, e.CommentOn)
 	}
 }
 

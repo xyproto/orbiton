@@ -739,7 +739,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 			}()
 		case "c:28": // ctrl-\, toggle comment for this block
 			undo.Snapshot(e)
-			e.ToggleCommentBlock(c, status)
+			e.ToggleCommentBlock(c)
 			e.redraw = true
 			e.redrawCursor = true
 		case "c:15": // ctrl-o, toggle ASCII draw mode
