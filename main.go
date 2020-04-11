@@ -1347,11 +1347,6 @@ Set NO_COLOR=1 to 1 to disable colors.
 		vt100.Close()
 	} else {
 		c.Draw()
-		if xterm {
-			fmt.Print("\n\n")
-		} else {
-			// All others
-			fmt.Println(vt100.Black.Get(strings.Repeat("-", int(c.Width()))))
-		}
+		fmt.Println()
 	}
 }
