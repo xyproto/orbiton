@@ -69,6 +69,8 @@ func main() {
 		locationHistory map[string]int // remember where we were in each absolute filename
 
 		clearOnQuit bool // clear the terminal when quitting, or not
+
+		fm Mode // an int signalling if this file should be in git mode, markdown mode etc
 	)
 
 	flag.Parse()
@@ -135,25 +137,34 @@ Set NO_COLOR=1 to 1 to disable colors.
 	}
 
 	baseFilename := filepath.Base(filename)
-	gitMode :=
-		baseFilename == "COMMIT_EDITMSG" ||
-			baseFilename == "MERGE_MSG" ||
-			(strings.HasPrefix(baseFilename, "git-") &&
-				!strings.Contains(baseFilename, ".") &&
-				strings.Count(baseFilename, "-") >= 2)
+	if baseFilename == "COMMIT_EDITMSG" ||
+		baseFilename == "MERGE_MSG" ||
+		(strings.HasPrefix(baseFilename, "git-") &&
+			!strings.Contains(baseFilename, ".") &&
+			strings.Count(baseFilename, "-") >= 2) {
+		fm = gitMode
+	}
 
-	defaultHighlight := gitMode || baseFilename == "config" || baseFilename == "PKGBUILD" || baseFilename == "BUILD" || baseFilename == "WORKSPACE" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
+	defaultHighlight := fm == gitMode || baseFilename == "config" || baseFilename == "PKGBUILD" || baseFilename == "BUILD" || baseFilename == "WORKSPACE" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
 
-	if gitMode {
+	if fm == gitMode {
 		clearOnQuit = true
 	}
 
-	// TODO: Introduce a separate mode for AsciiDoctor. Use Markdown syntax highlighting, for now.
-	docMode := strings.HasSuffix(baseFilename, ".md") || strings.HasSuffix(baseFilename, ".adoc") || strings.HasSuffix(baseFilename, ".rst") || strings.HasSuffix(baseFilename, ".scdoc") || strings.HasSuffix(baseFilename, ".scd")
-
-	shellMode := strings.HasSuffix(baseFilename, ".sh") || strings.HasSuffix(baseFilename, ".bash") || baseFilename == "PKGBUILD"
-	ymlMode := strings.HasSuffix(baseFilename, ".yml") || strings.HasSuffix(baseFilename, ".toml")
-	makefileMode := baseFilename == "Makefile" || baseFilename == "makefile" || baseFilename == "GNUmakefile"
+	// TODO: Switch on the extension instead of if/else if/else
+	if strings.HasSuffix(baseFilename, ".md") {
+		fm = markdownMode
+	} else if strings.HasSuffix(baseFilename, ".adoc") || strings.HasSuffix(baseFilename, ".rst") || strings.HasSuffix(baseFilename, ".scdoc") || strings.HasSuffix(baseFilename, ".scd") {
+		// TODO: Introduce a separate mode for these.
+		// Use Markdown-inspired syntax highlighting.
+		fm = markdownMode
+	} else if strings.HasSuffix(baseFilename, ".sh") || strings.HasSuffix(baseFilename, ".bash") || baseFilename == "PKGBUILD" {
+		fm = shellMode
+	} else if strings.HasSuffix(baseFilename, ".yml") || strings.HasSuffix(baseFilename, ".toml") {
+		fm = ymlMode
+	} else if baseFilename == "Makefile" || baseFilename == "makefile" || baseFilename == "GNUmakefile" {
+		fm = makefileMode
+	}
 
 	// Per-language adjustments to highlighting of keywords
 	if !strings.HasSuffix(baseFilename, ".go") {
@@ -164,9 +175,9 @@ Set NO_COLOR=1 to 1 to disable colors.
 
 	spacesPerTab := 4
 
-	if shellMode || ymlMode {
+	if fm == shellMode || fm == ymlMode {
 		spacesPerTab = 2
-	} else if makefileMode {
+	} else if fm == makefileMode {
 		spacesPerTab = 1
 	}
 
@@ -182,9 +193,9 @@ Set NO_COLOR=1 to 1 to disable colors.
 	c.ShowCursor()
 
 	// 4 spaces per tab, scroll 10 lines at a time, no word wrap
-	e := NewEditor(spacesPerTab, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, gitMode, docMode, makefileMode)
+	e := NewEditor(spacesPerTab, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, fm)
 
-	if gitMode {
+	if fm == gitMode {
 		// The subject should ideally be maximum 50 characters long, then the body of the
 		// git commit message can be 72 characters long. Because e-mail standards.
 		e.wordWrapAt = 72
@@ -208,8 +219,6 @@ Set NO_COLOR=1 to 1 to disable colors.
 
 	e.respectNoColorEnvironmentVariable()
 
-	e.gitMode = gitMode
-
 	status := NewStatusBar(defaultStatusForeground, defaultStatusBackground, defaultStatusErrorForeground, defaultStatusErrorBackground, e, statusDuration)
 	status.respectNoColorEnvironmentVariable()
 
@@ -217,7 +226,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 	loaded := e.Load(c, tty, filename) == nil
 
 	// If we're editing a git commit message, add a newline and enable word-wrap at 80
-	if e.gitMode {
+	if fm == gitMode {
 		e.gitColor = vt100.LightGreen
 		status.fg = vt100.LightBlue
 		status.bg = vt100.BackgroundDefault
@@ -308,7 +317,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 		e.GoToLineNumber(lineNumber, c, status, false)
 		e.redraw = true
 		e.redrawCursor = true
-	} else if recordedLineNumber, ok := locationHistory[absFilename]; ok && !gitMode {
+	} else if recordedLineNumber, ok := locationHistory[absFilename]; ok && fm != gitMode {
 		// If this filename exists in the location history, jump there
 		lineNumber = recordedLineNumber
 		e.GoToLineNumber(lineNumber, c, status, true)
@@ -351,7 +360,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 			undo.Snapshot(e)
 
 			// Cycle git rebase keywords
-			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, rebasePrefixes) {
+			if line := e.CurrentLine(); fm == gitMode && hasAnyPrefixWord(line, rebasePrefixes) {
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
 				e.redraw = true
@@ -360,7 +369,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 			}
 
 			// Toggle Markdown checkboxes
-			if line := e.CurrentLine(); e.markdownMode && hasAnyPrefixWord(strings.TrimSpace(line), checkboxPrefixes) {
+			if line := e.CurrentLine(); fm == markdownMode && hasAnyPrefixWord(strings.TrimSpace(line), checkboxPrefixes) {
 				if strings.Contains(line, "[ ]") {
 					e.SetLine(e.DataY(), strings.Replace(line, "[ ]", "[x]", 1))
 					e.redraw = true
@@ -450,7 +459,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 					}
 				}
 			}
-			if !gitMode && !formatted {
+			if fm != gitMode && !formatted {
 				// Check if at least one line is longer than the word wrap limit first
 				// word wrap at the current width - 5, with an allowed overshoot of 5 runes
 				if e.WrapAllLinesAt(e.wordWrapAt-5, 5) {
@@ -513,7 +522,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 				status.Show(c, e)
 				break // from case
 				// Is this a Markdown file? Save to PDF, either by using pandoc or by writing the text file directly
-			} else if pandocPath := which("pandoc"); e.markdownMode && strings.HasSuffix(baseFilename, ".md") && pandocPath != "" {
+			} else if pandocPath := which("pandoc"); fm == markdownMode && strings.HasSuffix(baseFilename, ".md") && pandocPath != "" {
 
 				go func() {
 					pdfFilename := strings.Replace(baseFilename, ".", "_", -1) + ".pdf"
@@ -704,7 +713,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 		case "c:18": // ctrl-r, render to PDF, or if in git mode, cycle rebase keywords
 
 			// Are we in git mode?
-			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, rebasePrefixes) {
+			if line := e.CurrentLine(); fm == gitMode && hasAnyPrefixWord(line, rebasePrefixes) {
 				undo.Snapshot(e)
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
@@ -864,7 +873,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 				e.End()
 			}
 		case "c:20": // ctrl-t, toggle syntax highlighting or use the next git interactive rebase keyword
-			if line := e.CurrentLine(); e.gitMode && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
+			if line := e.CurrentLine(); fm == gitMode && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
 				undo.Snapshot(e)
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
@@ -1101,7 +1110,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 				e.redrawCursor = true
 				e.redraw = true
 			} else {
-				status.SetMessage("Nothing more to undo")
+				status.SetMessage("No more to undo")
 				status.Show(c, e)
 			}
 		case "c:12": // ctrl-l, go to line number
@@ -1230,7 +1239,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 				if firstLetterSinceStart == "" {
 					firstLetterSinceStart = key
 					// If the first pressed key is "G" and this is not git mode, then invoke vi-compatible behavior and jump to the end
-					if key == "G" && !gitMode {
+					if key == "G" && (fm != gitMode) {
 						// Go to the end of the document
 						e.redraw = e.GoToLineNumber(e.Len(), c, status, true)
 						e.redrawCursor = true

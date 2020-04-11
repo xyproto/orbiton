@@ -31,12 +31,10 @@ type Editor struct {
 	searchFg         vt100.AttributeColor // search highlight color
 	redraw           bool                 // if the contents should be redrawn in the next loop
 	redrawCursor     bool                 // if the cursor should be moved to the location it is supposed to be
-	gitMode          bool                 // a mode specifically for git commits and interactive rebases
 	gitColor         vt100.AttributeColor // git commit message color
 	lineBeforeSearch int                  // save the current line when jumping between search results
 	wordWrapAt       int                  // set to 80 or 100 to trigger word wrap when typing to that column
-	markdownMode     bool                 // a mode specifically for Markdown
-	makefileMode     bool                 // a mode specifically for Makefiles
+	fm               Mode                 // a filetype mode, like for git or markdown
 }
 
 // NewEditor takes:
@@ -45,7 +43,7 @@ type Editor struct {
 // * background color attributes
 // * if syntax highlighting is enabled
 // * if "insert mode" is enabled (as opposed to "draw mode")
-func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEditMode bool, scrollSpeed int, searchFg vt100.AttributeColor, scheme syntax.TextConfig, gitMode, markdownMode, makefileMode bool) *Editor {
+func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEditMode bool, scrollSpeed int, searchFg vt100.AttributeColor, scheme syntax.TextConfig, fm Mode) *Editor {
 	syntax.DefaultTextConfig = scheme
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
@@ -61,9 +59,7 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEdi
 	if !highlight {
 		e.wordWrapAt = 99
 	}
-	e.gitMode = gitMode
-	e.markdownMode = markdownMode
-	e.makefileMode = makefileMode
+	e.fm = fm
 	return e
 }
 
@@ -72,7 +68,7 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEdi
 // search results magenta, use the default syntax highlighting scheme, don't use git mode and don't use markdown mode,
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
-	e := NewEditor(4, vt100.White, vt100.Black, false, true, 1, vt100.Magenta, syntax.DefaultTextConfig, false, false, false)
+	e := NewEditor(4, vt100.White, vt100.Black, false, true, 1, vt100.Magenta, syntax.DefaultTextConfig, blankMode)
 	e.wordWrapAt = wordWrapLimit
 	return e
 }
@@ -163,7 +159,7 @@ func (e *Editor) ScreenLine(n int) string {
 		}
 		tabSpace := "\t"
 		if !e.DrawMode() {
-			if e.makefileMode {
+			if e.fm == makefileMode {
 				tabSpace = strings.Repeat(tabCharacter, e.spacesPerTab)
 			} else {
 				tabSpace = strings.Repeat("\t", e.spacesPerTab)
@@ -433,7 +429,7 @@ func (e *Editor) Save(filename string, stripTrailingSpaces bool) error {
 	// Mark the data as "not changed"
 	e.changed = false
 	// If this is in Makefile mode, replace mid-dot with tab
-	if e.makefileMode {
+	if e.fm == makefileMode {
 		data = bytes.Replace(data, []byte(tabCharacter), []byte{'\t'}, -1)
 	}
 	// Write the data to file
@@ -463,7 +459,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	o := textoutput.NewTextOutput(true, true)
 	tabString := " "
 	if !e.DrawMode() {
-		if e.makefileMode {
+		if e.fm == makefileMode {
 			tabString = strings.Repeat(tabCharacter, e.spacesPerTab)
 		} else {
 			tabString = strings.Repeat(" ", e.spacesPerTab)
@@ -477,7 +473,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	offset := fromline
 	inCodeBlock := false // used when highlighting Markdown
 	// If in Markdown mode, figure out the current state of block quotes
-	if e.markdownMode {
+	if e.fm == markdownMode {
 		// Figure out if "fromline" is within a markdown code block or not
 		for i := 0; i < fromline; i++ {
 			// Check if the untrimmed line starts with ~~~ or ```
@@ -507,9 +503,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 			} else {
 				// Color and unescape
 				var coloredString string
-				if e.gitMode {
+				if e.fm == gitMode {
 					coloredString = e.gitHighlight(line)
-				} else if e.markdownMode {
+				} else if e.fm == markdownMode {
 					if highlighted, ok, codeBlockFound := markdownHighlight(line, inCodeBlock); ok {
 						coloredString = highlighted
 						if codeBlockFound {
