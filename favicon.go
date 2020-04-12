@@ -109,3 +109,8 @@ func ReadFavicon(filename string) (Mode, []byte, error) {
 	}
 	return mode, buf.Bytes(), nil
 }
+
+// WriteFavicon converts the textual representation to an .ico image
+func WriteFavicon(mode Mode, text, filename string) error {
+	return errors.New("TO BE IMPLEMENTED")
+}

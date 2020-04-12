@@ -418,8 +418,8 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
 		if err != nil {
 			e.mode = mode
 		}
-		e.drawMode = true
 		e.syntaxHighlight = false
+		e.drawMode = true
 	} else {
 		// Any other file extension
 		data, err = ioutil.ReadFile(filename)
@@ -451,8 +451,11 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
 // Save will try to save a file
 func (e *Editor) Save(filename string, stripTrailingSpaces bool) error {
 	if strings.HasSuffix(filename, ".ico") {
-		// To be implemented, for 16-color grayscale .ico files
-		return errors.New("Can not save .ico files yet")
+		if exists(filename) {
+			// TODO: If a grayscale icon was opened, save back to it without prefixing the filename
+			return WriteFavicon(e.mode, e.String(), "grayscale_"+filename)
+		}
+		return WriteFavicon(e.mode, e.String(), filename)
 	}
 	var data []byte
 	if stripTrailingSpaces {
