@@ -15,7 +15,20 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const tabCharacter = "·" // Used when editing makfiles, for the \t character
+const (
+	tabCharacter = "·" // Used when editing makfiles, for the \t character
+
+	// Mode "enum"
+	modeBlank    = iota
+	modeGit      // for git commits and interactive rebases
+	modeMarkdown // for Markdown (and asciidoctor and rst files)
+	modeMakefile // for Makefiles
+	modeShell    // for shell scripts and PKGBUILD files
+	modeYml      // for yml and toml files
+)
+
+// Mode is a per-filetype mode, like for Markdown
+type Mode int
 
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
@@ -34,7 +47,7 @@ type Editor struct {
 	gitColor         vt100.AttributeColor // git commit message color
 	lineBeforeSearch int                  // save the current line when jumping between search results
 	wordWrapAt       int                  // set to 80 or 100 to trigger word wrap when typing to that column
-	fm               Mode                 // a filetype mode, like for git or markdown
+	mode             Mode                 // a filetype mode, like for git or markdown
 }
 
 // NewEditor takes:
@@ -43,7 +56,7 @@ type Editor struct {
 // * background color attributes
 // * if syntax highlighting is enabled
 // * if "insert mode" is enabled (as opposed to "draw mode")
-func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEditMode bool, scrollSpeed int, searchFg vt100.AttributeColor, scheme syntax.TextConfig, fm Mode) *Editor {
+func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEditMode bool, scrollSpeed int, searchFg vt100.AttributeColor, scheme syntax.TextConfig, mode Mode) *Editor {
 	syntax.DefaultTextConfig = scheme
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
@@ -59,7 +72,12 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEdi
 	if !highlight {
 		e.wordWrapAt = 99
 	}
-	e.fm = fm
+	if mode == modeGit {
+		// The subject should ideally be maximum 50 characters long, then the body of the
+		// git commit message can be 72 characters long. Because e-mail standards.
+		e.wordWrapAt = 72
+	}
+	e.mode = mode
 	return e
 }
 
@@ -68,7 +86,7 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEdi
 // search results magenta, use the default syntax highlighting scheme, don't use git mode and don't use markdown mode,
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
-	e := NewEditor(4, vt100.White, vt100.Black, false, true, 1, vt100.Magenta, syntax.DefaultTextConfig, blankMode)
+	e := NewEditor(4, vt100.White, vt100.Black, false, true, 1, vt100.Magenta, syntax.DefaultTextConfig, modeBlank)
 	e.wordWrapAt = wordWrapLimit
 	return e
 }
@@ -159,7 +177,7 @@ func (e *Editor) ScreenLine(n int) string {
 		}
 		tabSpace := "\t"
 		if !e.DrawMode() {
-			if e.fm == makefileMode {
+			if e.mode == modeMakefile {
 				tabSpace = strings.Repeat(tabCharacter, e.spacesPerTab)
 			} else {
 				tabSpace = strings.Repeat("\t", e.spacesPerTab)
@@ -429,7 +447,7 @@ func (e *Editor) Save(filename string, stripTrailingSpaces bool) error {
 	// Mark the data as "not changed"
 	e.changed = false
 	// If this is in Makefile mode, replace mid-dot with tab
-	if e.fm == makefileMode {
+	if e.mode == modeMakefile {
 		data = bytes.Replace(data, []byte(tabCharacter), []byte{'\t'}, -1)
 	}
 	// Write the data to file
@@ -459,7 +477,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	o := textoutput.NewTextOutput(true, true)
 	tabString := " "
 	if !e.DrawMode() {
-		if e.fm == makefileMode {
+		if e.mode == modeMakefile {
 			tabString = strings.Repeat(tabCharacter, e.spacesPerTab)
 		} else {
 			tabString = strings.Repeat(" ", e.spacesPerTab)
@@ -473,7 +491,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	offset := fromline
 	inCodeBlock := false // used when highlighting Markdown
 	// If in Markdown mode, figure out the current state of block quotes
-	if e.fm == markdownMode {
+	if e.mode == modeMarkdown {
 		// Figure out if "fromline" is within a markdown code block or not
 		for i := 0; i < fromline; i++ {
 			// Check if the untrimmed line starts with ~~~ or ```
@@ -503,9 +521,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 			} else {
 				// Color and unescape
 				var coloredString string
-				if e.fm == gitMode {
+				if e.mode == modeGit {
 					coloredString = e.gitHighlight(line)
-				} else if e.fm == markdownMode {
+				} else if e.mode == modeMarkdown {
 					if highlighted, ok, codeBlockFound := markdownHighlight(line, inCodeBlock); ok {
 						coloredString = highlighted
 						if codeBlockFound {

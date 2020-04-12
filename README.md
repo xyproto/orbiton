@@ -162,6 +162,7 @@ If the very first keypress after starting is `G` or `/`, it will trigger the fol
 
 * `/` - enter search-mode (same as when pressing `ctrl-f`)
 * `G` - go to the end of the file
+* `O` - if the following key is uppercase and not 'K' (because of "OK")
 
 The reason for adding these is to make using `o` easier to use for long-time vi/vim/neovim users.
 

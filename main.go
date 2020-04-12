@@ -70,7 +70,9 @@ func main() {
 
 		clearOnQuit bool // clear the terminal when quitting, or not
 
-		fm Mode // an int signalling if this file should be in git mode, markdown mode etc
+		spacesPerTab = 4 // default spaces per tab
+
+		mode Mode // an "enum"/int signalling if this file should be in git mode, markdown mode etc
 	)
 
 	flag.Parse()
@@ -113,7 +115,7 @@ ctrl-r     to render the current text to a PDF document
 ctrl-\     to toggle single-line comments for a block of code
 ctrl-~     to save and quit + clear the terminal
 
-Set NO_COLOR=1 to 1 to disable colors.
+Set NO_COLOR=1 to disable colors.
 
 `)
 		return
@@ -137,34 +139,33 @@ Set NO_COLOR=1 to 1 to disable colors.
 	}
 
 	baseFilename := filepath.Base(filename)
-	if baseFilename == "COMMIT_EDITMSG" ||
+
+	// Check if we should be in a particular mode for a particular type of file
+	switch {
+	case baseFilename == "COMMIT_EDITMSG" ||
 		baseFilename == "MERGE_MSG" ||
 		(strings.HasPrefix(baseFilename, "git-") &&
 			!strings.Contains(baseFilename, ".") &&
-			strings.Count(baseFilename, "-") >= 2) {
-		fm = gitMode
-	}
-
-	defaultHighlight := fm == gitMode || baseFilename == "config" || baseFilename == "PKGBUILD" || baseFilename == "BUILD" || baseFilename == "WORKSPACE" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
-
-	if fm == gitMode {
-		clearOnQuit = true
-	}
-
-	// TODO: Switch on the extension instead of if/else if/else
-	if strings.HasSuffix(baseFilename, ".md") {
-		fm = markdownMode
-	} else if strings.HasSuffix(baseFilename, ".adoc") || strings.HasSuffix(baseFilename, ".rst") || strings.HasSuffix(baseFilename, ".scdoc") || strings.HasSuffix(baseFilename, ".scd") {
+			strings.Count(baseFilename, "-") >= 2):
+		// Git mode
+		mode = modeGit
+	case strings.HasSuffix(baseFilename, ".md"):
+		// Markdown mode
+		mode = modeMarkdown
+	case strings.HasSuffix(baseFilename, ".adoc") || strings.HasSuffix(baseFilename, ".rst") || strings.HasSuffix(baseFilename, ".scdoc") || strings.HasSuffix(baseFilename, ".scd"):
+		// Markdown-like syntax highlighting
 		// TODO: Introduce a separate mode for these.
-		// Use Markdown-inspired syntax highlighting.
-		fm = markdownMode
-	} else if strings.HasSuffix(baseFilename, ".sh") || strings.HasSuffix(baseFilename, ".bash") || baseFilename == "PKGBUILD" {
-		fm = shellMode
-	} else if strings.HasSuffix(baseFilename, ".yml") || strings.HasSuffix(baseFilename, ".toml") {
-		fm = ymlMode
-	} else if baseFilename == "Makefile" || baseFilename == "makefile" || baseFilename == "GNUmakefile" {
-		fm = makefileMode
+		mode = modeMarkdown
+	case strings.HasSuffix(baseFilename, ".sh") || strings.HasSuffix(baseFilename, ".bash") || baseFilename == "PKGBUILD":
+		mode = modeShell
+	case strings.HasSuffix(baseFilename, ".yml") || strings.HasSuffix(baseFilename, ".toml"):
+		mode = modeYml
+	case baseFilename == "Makefile" || baseFilename == "makefile" || baseFilename == "GNUmakefile":
+		mode = modeMakefile
 	}
+
+	// Check if we should enable syntax highlighting by default
+	defaultHighlight := mode == modeGit || baseFilename == "config" || baseFilename == "PKGBUILD" || baseFilename == "BUILD" || baseFilename == "WORKSPACE" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
 
 	// Per-language adjustments to highlighting of keywords
 	if !strings.HasSuffix(baseFilename, ".go") {
@@ -173,14 +174,16 @@ Set NO_COLOR=1 to 1 to disable colors.
 	}
 	delete(syntax.Keywords, "my")
 
-	spacesPerTab := 4
-
-	if fm == shellMode || fm == ymlMode {
+	// Additional per-mode considerations
+	if mode == modeGit {
+		clearOnQuit = true
+	} else if mode == modeShell || mode == modeYml {
 		spacesPerTab = 2
-	} else if fm == makefileMode {
+	} else if mode == modeMakefile {
 		spacesPerTab = 1
 	}
 
+	// Initialize the terminal
 	tty, err := vt100.NewTTY()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error: "+err.Error())
@@ -189,17 +192,12 @@ Set NO_COLOR=1 to 1 to disable colors.
 	defer tty.Close()
 	vt100.Init()
 
+	// Create a Canvas for drawing onto the terminal
 	c := vt100.NewCanvas()
 	c.ShowCursor()
 
-	// 4 spaces per tab, scroll 10 lines at a time, no word wrap
-	e := NewEditor(spacesPerTab, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, fm)
-
-	if fm == gitMode {
-		// The subject should ideally be maximum 50 characters long, then the body of the
-		// git commit message can be 72 characters long. Because e-mail standards.
-		e.wordWrapAt = 72
-	}
+	// scroll 10 lines at a time, no word wrap
+	e := NewEditor(spacesPerTab, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, mode)
 
 	// For non-highlighted files, adjust the word wrap
 	if !defaultHighlight {
@@ -226,7 +224,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 	loaded := e.Load(c, tty, filename) == nil
 
 	// If we're editing a git commit message, add a newline and enable word-wrap at 80
-	if fm == gitMode {
+	if mode == modeGit {
 		e.gitColor = vt100.LightGreen
 		status.fg = vt100.LightBlue
 		status.bg = vt100.BackgroundDefault
@@ -317,7 +315,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 		e.GoToLineNumber(lineNumber, c, status, false)
 		e.redraw = true
 		e.redrawCursor = true
-	} else if recordedLineNumber, ok := locationHistory[absFilename]; ok && fm != gitMode {
+	} else if recordedLineNumber, ok := locationHistory[absFilename]; ok && mode != modeGit {
 		// If this filename exists in the location history, jump there
 		lineNumber = recordedLineNumber
 		e.GoToLineNumber(lineNumber, c, status, true)
@@ -347,9 +345,13 @@ Set NO_COLOR=1 to 1 to disable colors.
 		e.redrawCursor = false
 	}
 
-	//dropO := false
-	quit := false
-	previousKey := ""
+	var (
+		quit        bool
+		previousKey string
+
+		// Used for vi-compatible "O"-mode at start
+		dropO bool
+	)
 
 	for !quit {
 		key := tty.String()
@@ -360,7 +362,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 			undo.Snapshot(e)
 
 			// Cycle git rebase keywords
-			if line := e.CurrentLine(); fm == gitMode && hasAnyPrefixWord(line, rebasePrefixes) {
+			if line := e.CurrentLine(); mode == modeGit && hasAnyPrefixWord(line, rebasePrefixes) {
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
 				e.redraw = true
@@ -369,7 +371,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 			}
 
 			// Toggle Markdown checkboxes
-			if line := e.CurrentLine(); fm == markdownMode && hasAnyPrefixWord(strings.TrimSpace(line), checkboxPrefixes) {
+			if line := e.CurrentLine(); mode == modeMarkdown && hasAnyPrefixWord(strings.TrimSpace(line), checkboxPrefixes) {
 				if strings.Contains(line, "[ ]") {
 					e.SetLine(e.DataY(), strings.Replace(line, "[ ]", "[x]", 1))
 					e.redraw = true
@@ -459,7 +461,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 					}
 				}
 			}
-			if fm != gitMode && !formatted {
+			if mode != modeGit && !formatted {
 				// Check if at least one line is longer than the word wrap limit first
 				// word wrap at the current width - 5, with an allowed overshoot of 5 runes
 				if e.WrapAllLinesAt(e.wordWrapAt-5, 5) {
@@ -522,7 +524,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 				status.Show(c, e)
 				break // from case
 				// Is this a Markdown file? Save to PDF, either by using pandoc or by writing the text file directly
-			} else if pandocPath := which("pandoc"); fm == markdownMode && strings.HasSuffix(baseFilename, ".md") && pandocPath != "" {
+			} else if pandocPath := which("pandoc"); mode == modeMarkdown && strings.HasSuffix(baseFilename, ".md") && pandocPath != "" {
 
 				go func() {
 					pdfFilename := strings.Replace(baseFilename, ".", "_", -1) + ".pdf"
@@ -713,7 +715,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 		case "c:18": // ctrl-r, render to PDF, or if in git mode, cycle rebase keywords
 
 			// Are we in git mode?
-			if line := e.CurrentLine(); fm == gitMode && hasAnyPrefixWord(line, rebasePrefixes) {
+			if line := e.CurrentLine(); mode == modeGit && hasAnyPrefixWord(line, rebasePrefixes) {
 				undo.Snapshot(e)
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
@@ -873,7 +875,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 				e.End()
 			}
 		case "c:20": // ctrl-t, toggle syntax highlighting or use the next git interactive rebase keyword
-			if line := e.CurrentLine(); fm == gitMode && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
+			if line := e.CurrentLine(); mode == modeGit && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
 				undo.Snapshot(e)
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
@@ -1239,7 +1241,7 @@ Set NO_COLOR=1 to 1 to disable colors.
 				if firstLetterSinceStart == "" {
 					firstLetterSinceStart = key
 					// If the first pressed key is "G" and this is not git mode, then invoke vi-compatible behavior and jump to the end
-					if key == "G" && (fm != gitMode) {
+					if key == "G" && (mode != modeGit) {
 						// Go to the end of the document
 						e.redraw = e.GoToLineNumber(e.Len(), c, status, true)
 						e.redrawCursor = true
@@ -1247,30 +1249,36 @@ Set NO_COLOR=1 to 1 to disable colors.
 						break
 					}
 				}
-				//if firstLetterSinceStart == "O" {
-				//	// If the first typed letter since starting this editor was 'O', and this is also uppercase,
-				//	// then disregard the initial 'O'. This is to help vim-users.
-				//	dropO = true
-				//	// Set the first letter since start to something that will not trigger this branch any more.
-				//	firstLetterSinceStart = "x"
-				//	// ignore the O
-				//	break
-				//}
-				//// If the previous letter was an "O" and this letter is uppercase, invoke vi-compatibility for a short moment
-				//if dropO {
-				//	// This is a one-time operation
-				//	dropO = false
-				//	// Lowercase? Type the O, since it was meant to be typed.
-				//	if len([]rune(key)) > 0 && unicode.IsLower([]rune(key)[0]) {
-				//		e.Prev(c)
-				//		e.SetRune('O')
-				//		e.WriteRune(c)
-				//		e.Next(c)
-				//	}
-				//}
+				if firstLetterSinceStart == "O" {
+					// If the first typed letter since starting this editor was 'O', and this is also uppercase,
+					// then disregard the initial 'O'. This is to help vim-users.
+					dropO = true
+					// Set the first letter since start to something that will not trigger this branch any more.
+					firstLetterSinceStart = "x"
+					// ignore the O
+					break
+				}
+				// If the previous letter was an "O" and this letter is lowercase, invoke vi-compatibility for a short moment
+				if dropO {
+					// This is a one-time operation
+					dropO = false
+					// Lowercase? Type the O, since it was meant to be typed.
+					if len([]rune(key)) > 0 && unicode.IsLower([]rune(key)[0]) {
+						e.Prev(c)
+						e.SetRune('O')
+						e.WriteRune(c)
+						e.Next(c)
+					}
+				}
 				// Type the letter that was pressed
 				if len([]rune(key)) > 0 {
 					if !e.DrawMode() {
+						// Was this a special case of "OK" as the first thing written?
+						if key == "K" {
+							e.InsertRune(c, 'O')
+							e.WriteRune(c)
+							e.Next(c)
+						}
 						// Insert a letter. This is what normally happens.
 						e.InsertRune(c, []rune(key)[0])
 						e.WriteRune(c)
