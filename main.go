@@ -165,7 +165,7 @@ Set NO_COLOR=1 to disable colors.
 	}
 
 	// Check if we should enable syntax highlighting by default
-	defaultHighlight := mode == modeGit || baseFilename == "config" || baseFilename == "PKGBUILD" || baseFilename == "BUILD" || baseFilename == "WORKSPACE" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
+	syntaxHighlight := mode == modeGit || baseFilename == "config" || baseFilename == "PKGBUILD" || baseFilename == "BUILD" || baseFilename == "WORKSPACE" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
 
 	// Per-language adjustments to highlighting of keywords
 	if !strings.HasSuffix(baseFilename, ".go") {
@@ -197,10 +197,10 @@ Set NO_COLOR=1 to disable colors.
 	c.ShowCursor()
 
 	// scroll 10 lines at a time, no word wrap
-	e := NewEditor(spacesPerTab, defaultEditorForeground, defaultEditorBackground, defaultHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, mode)
+	e := NewEditor(spacesPerTab, defaultEditorForeground, defaultEditorBackground, syntaxHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, mode)
 
 	// For non-highlighted files, adjust the word wrap
-	if !defaultHighlight {
+	if !syntaxHighlight {
 		// Adjust the word wrap if the terminal is too narrow
 		w := int(c.Width())
 		if w < e.wordWrapAt {
@@ -262,7 +262,7 @@ Set NO_COLOR=1 to disable colors.
 			// Set the color to red when in read-only mode
 			e.fg = vt100.Red
 			// Disable syntax highlighting, to make it clear that the text is red
-			e.highlight = false
+			e.syntaxHighlight = false
 			// Do a full reset and redraw
 			c = e.FullResetRedraw(c, status)
 			// Draw the editor lines again
@@ -283,8 +283,8 @@ Set NO_COLOR=1 to disable colors.
 
 	// If the file starts with a hash bang, enable syntax highlighting
 	if strings.HasPrefix(strings.TrimSpace(e.Line(0)), "#!") {
-		// Enable highlighting and redraw
-		e.highlight = true
+		// Enable styntax highlighting and redraw
+		e.syntaxHighlight = true
 		e.bg = defaultEditorBackground
 		// Now do a full reset/redraw
 		c = e.FullResetRedraw(c, status)
@@ -884,7 +884,7 @@ Set NO_COLOR=1 to disable colors.
 				break
 			} else {
 				e.ToggleHighlight()
-				if e.highlight {
+				if e.syntaxHighlight {
 					e.bg = defaultEditorBackground
 				} else {
 					e.bg = vt100.BackgroundDefault
