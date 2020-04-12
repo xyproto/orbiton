@@ -25,6 +25,9 @@ const (
 	modeMakefile // for Makefiles
 	modeShell    // for shell scripts and PKGBUILD files
 	modeYml      // for yml and toml files
+	modeGray4    // for 4-bit grayscale images
+	modeRGB      // for 8+8+8 bit RGB images
+	modeRGBA     // for 8+8+8+8 bit RGBA images
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -403,14 +406,18 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
 	}()
 
 	var (
-		err  error
+		mode Mode
 		data []byte
+		err  error
 	)
 
 	// Read the file
 	if strings.HasSuffix(filename, ".ico") {
 		// Is it an .ico file?
-		data, err = ReadFavicon(filename)
+		mode, data, err = ReadFavicon(filename)
+		if err != nil {
+			e.mode = mode
+		}
 		e.drawMode = true
 		e.syntaxHighlight = false
 	} else {
