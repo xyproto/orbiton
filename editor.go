@@ -285,7 +285,10 @@ func (e *Editor) Clear() {
 }
 
 // Load will try to load a file
-func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
+// May return a warning/message string
+func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string, error) {
+
+	var message string
 
 	// Start a spinner, in a little short while
 	quit := make(chan bool)
@@ -414,12 +417,18 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
 	// Read the file
 	if strings.HasSuffix(filename, ".ico") {
 		// Is it an .ico file?
-		mode, data, err = ReadFavicon(filename)
-		if err != nil {
-			e.mode = mode
+		if exists(filename) {
+			// Try to read the file
+			mode, data, message, err = ReadFavicon(filename, false)
+		} else {
+			// Create empty content, if the file does not exists
+			mode, data, message, err = ReadFavicon(filename, true)
 		}
-		e.syntaxHighlight = false
-		e.drawMode = true
+		if err == nil { // no error
+			e.mode = mode
+			e.syntaxHighlight = false
+			e.drawMode = true
+		}
 	} else {
 		// Any other file extension
 		data, err = ioutil.ReadFile(filename)
@@ -430,7 +439,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
 
 	// Check if the file could be read
 	if err != nil {
-		return err
+		return message, err
 	}
 
 	datalines := bytes.Split(data, []byte{'\n'})
@@ -445,17 +454,21 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
 	}
 	// Mark the data as "not changed"
 	e.changed = false
-	return nil
+
+	return message, nil
 }
 
 // Save will try to save a file
-func (e *Editor) Save(filename string, stripTrailingSpaces bool) error {
-	if strings.HasSuffix(filename, ".ico") {
-		if exists(filename) {
-			// TODO: If a grayscale icon was opened, save back to it without prefixing the filename
-			return WriteFavicon(e.mode, e.String(), "grayscale_"+filename)
-		}
-		return WriteFavicon(e.mode, e.String(), filename)
+func (e *Editor) Save(filename *string, stripTrailingSpaces bool) error {
+	if strings.HasSuffix(*filename, ".ico") {
+		//if exists(*filename) {
+		//	// TODO: If a grayscale icon was opened, save back to it without prefixing the filename
+		//	*filename = "gray_" + *filename // Change the filename!
+		//	return WriteFavicon(e.mode, e.String(), *filename)
+		//}
+		// TODO: Find a way to check if the file was written with "o".
+		//       If it was not, save to a new flename.
+		return WriteFavicon(e.mode, e.String(), *filename)
 	}
 	var data []byte
 	if stripTrailingSpaces {
@@ -479,7 +492,7 @@ func (e *Editor) Save(filename string, stripTrailingSpaces bool) error {
 		data = bytes.Replace(data, []byte(tabCharacter), []byte{'\t'}, -1)
 	}
 	// Write the data to file
-	return ioutil.WriteFile(filename, data, 0664)
+	return ioutil.WriteFile(*filename, data, 0664)
 }
 
 // TrimRight will remove whitespace from the end of the given line number

@@ -221,7 +221,8 @@ Set NO_COLOR=1 to disable colors.
 	status.respectNoColorEnvironmentVariable()
 
 	// Try to load the filename, ignore errors since giving a new filename is also okay
-	loaded := e.Load(c, tty, filename) == nil
+	warningMessage, err := e.Load(c, tty, filename)
+	loaded := err == nil // no error
 
 	// If we're editing a git commit message, add a newline and enable word-wrap at 80
 	if mode == modeGit {
@@ -242,7 +243,15 @@ Set NO_COLOR=1 to disable colors.
 
 	// Friendly status message
 	statusMessage := "New " + filename
-	if loaded {
+	if strings.HasSuffix(filename, ".ico") {
+		// .ico files are either new or loaded
+		if loaded {
+			statusMessage = "Loaded " + filename
+		}
+		if warningMessage != "" {
+			statusMessage = "Loaded " + filename + ", " + warningMessage
+		}
+	} else if loaded {
 		if !e.Empty() {
 			statusMessage = "Loaded " + filename
 		} else {
@@ -270,7 +279,7 @@ Set NO_COLOR=1 to disable colors.
 			e.redraw = false
 		}
 		testFile.Close()
-	} else if err := e.Save(filename, true); err != nil {
+	} else if err := e.Save(&filename, true); err != nil {
 		// Check if the new file can be saved before the user starts working on the file.
 		quitError(tty, err)
 	} else {
@@ -408,7 +417,7 @@ Set NO_COLOR=1 to disable colors.
 						if f, err := ioutil.TempFile(tempdir, "__o*"+ext); err == nil {
 							// no error, everything is fine
 							tempFilename := f.Name()
-							err := e.Save(tempFilename, true)
+							err := e.Save(&tempFilename, true)
 							if err == nil {
 								// Format the temporary file
 								cmd.Args = append(cmd.Args, tempFilename)
@@ -543,7 +552,7 @@ Set NO_COLOR=1 to disable colors.
 						return // from goroutine
 					}
 
-					err := e.Save(tmpfn, !e.DrawMode())
+					err := e.Save(&tmpfn, !e.DrawMode())
 					if err != nil {
 						statusMessage = err.Error()
 						status.ClearAll(c)
@@ -1087,7 +1096,7 @@ Set NO_COLOR=1 to disable colors.
 			// Write the file
 			status.ClearAll(c)
 			// Save the file
-			if err := e.Save(filename, !e.DrawMode()); err != nil {
+			if err := e.Save(&filename, !e.DrawMode()); err != nil {
 				status.SetMessage(err.Error())
 				status.Show(c, e)
 			} else {
