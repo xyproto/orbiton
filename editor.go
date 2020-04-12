@@ -37,7 +37,7 @@ type Editor struct {
 	fg               vt100.AttributeColor // default foreground color
 	bg               vt100.AttributeColor // default background color
 	spacesPerTab     int                  // how many spaces per tab character
-	highlight        bool                 // syntax highlighting
+	syntaxHighlight  bool                 // syntax highlighting
 	drawMode         bool                 // text or draw mode (for ASCII graphics)?
 	pos              Position             // the current cursor and scroll position
 	searchTerm       string               // for marking found instances
@@ -56,20 +56,20 @@ type Editor struct {
 // * background color attributes
 // * if syntax highlighting is enabled
 // * if "insert mode" is enabled (as opposed to "draw mode")
-func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, highlight, textEditMode bool, scrollSpeed int, searchFg vt100.AttributeColor, scheme syntax.TextConfig, mode Mode) *Editor {
+func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, syntaxHighlight, textEditMode bool, scrollSpeed int, searchFg vt100.AttributeColor, scheme syntax.TextConfig, mode Mode) *Editor {
 	syntax.DefaultTextConfig = scheme
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
 	e.fg = fg
 	e.bg = bg
 	e.spacesPerTab = spacesPerTab
-	e.highlight = highlight
+	e.syntaxHighlight = syntaxHighlight
 	e.drawMode = !textEditMode
 	p := NewPosition(scrollSpeed)
 	e.pos = *p
 	e.searchFg = searchFg
 	// If the file is not to be highlighted, set word wrap to 99 (0 to disable)
-	if !highlight {
+	if !syntaxHighlight {
 		e.wordWrapAt = 99
 	}
 	if mode == modeGit {
@@ -402,8 +402,21 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
 		}
 	}()
 
+	var (
+		err  error
+		data []byte
+	)
+
 	// Read the file
-	data, err := ioutil.ReadFile(filename)
+	if strings.HasSuffix(filename, ".ico") {
+		// Is it an .ico file?
+		data, err = ReadFavicon(filename)
+		e.drawMode = true
+		e.syntaxHighlight = false
+	} else {
+		// Any other file extension
+		data, err = ioutil.ReadFile(filename)
+	}
 
 	// Stop the spinner
 	quit <- true
@@ -412,6 +425,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
 	if err != nil {
 		return err
 	}
+
 	datalines := bytes.Split(data, []byte{'\n'})
 	e.Clear()
 	for y, dataline := range datalines {
@@ -429,6 +443,10 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
 
 // Save will try to save a file
 func (e *Editor) Save(filename string, stripTrailingSpaces bool) error {
+	if strings.HasSuffix(filename, ".ico") {
+		// To be implemented, for 16-color grayscale .ico files
+		return errors.New("Can not save .ico files yet")
+	}
 	var data []byte
 	if stripTrailingSpaces {
 		// Strip trailing spaces
@@ -511,7 +529,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		if len([]rune(screenLine)) >= w {
 			screenLine = screenLine[:w]
 		}
-		if e.highlight && !noColor {
+		if e.syntaxHighlight && !noColor {
 			// Output a syntax highlighted line. Escape any tags in the input line.
 			// textWithTags must be unescaped if there is not an error.
 			if textWithTags, err := syntax.AsText([]byte(Escape(line))); err != nil {
@@ -1002,12 +1020,12 @@ func (e *Editor) WordCount() int {
 
 // ToggleHighlight toggles syntax highlighting
 func (e *Editor) ToggleHighlight() {
-	e.highlight = !e.highlight
+	e.syntaxHighlight = !e.syntaxHighlight
 }
 
 // SetHighlight enables or disables syntax highlighting
-func (e *Editor) SetHighlight(highlight bool) {
-	e.highlight = highlight
+func (e *Editor) SetHighlight(syntaxHighlight bool) {
+	e.syntaxHighlight = syntaxHighlight
 }
 
 // SetLine will fill the given line index with the given string.
