@@ -96,6 +96,8 @@ func ReadFavicon(filename string, dummy bool) (Mode, []byte, string, error) {
 		message = "will convert to 4-bit grayscale when saving"
 	}
 
+	var hasTransparentPixels bool
+
 	// Convert the image to a textual representation
 	bounds = m.Bounds()
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
@@ -114,9 +116,13 @@ func ReadFavicon(filename string, dummy bool) (Mode, []byte, string, error) {
 
 			if mode == modeGray4 {
 				// 4-bit grayscale
-				if luma16 == 0 {
-					buf.WriteString("  ")
+				if a == 0 {
+					buf.WriteString("T ") // transparent
+					hasTransparentPixels = true
+				} else if luma16 == 0 {
+					buf.WriteString("  ") // black
 				} else {
+					// a grayscale pixel
 					buf.WriteRune(lookupLetters[byte(luma16)])
 					buf.Write([]byte{' '}) // Add a space, to make the proportions look better
 				}
@@ -154,6 +160,9 @@ func ReadFavicon(filename string, dummy bool) (Mode, []byte, string, error) {
 		for i := byte(0); i < byte(16); i++ {
 			buf.WriteString(fmt.Sprintf("%2d = %c\n", i, lookupLetters[i]))
 		}
+		if hasTransparentPixels {
+			buf.WriteString(" T = transparent, will be saved as black\n")
+		}
 	}
 	return mode, buf.Bytes(), message, nil
 }
@@ -187,12 +196,17 @@ func WriteFavicon(mode Mode, text, filename string) error {
 		for x = 0; x < 16; x++ { // max 16x16 pixels
 			if (x * 2) < len(runes) {
 				r = runes[x*2]
-				intensity = lookupRunes[r]*16 + 15 // from 0..15 to 15..255
-				// Draw pixel to image
-				m.Set(x, y, color.RGBA{intensity, intensity, intensity, 0xff})
+				if r == 'T' { // transparent
+					// Draw a black transparent pixel
+					m.Set(x, y, color.RGBA{0, 0, 0, 0})
+				} else {
+					intensity = lookupRunes[r]*16 + 15 // from 0..15 to 15..255
+					// Draw pixel to image
+					m.Set(x, y, color.RGBA{intensity, intensity, intensity, 0xff})
+				}
 			} else {
-				// Draw a transparent pixel
-				m.Set(x, y, color.RGBA{0, 0, 0, 0})
+				// Draw a white transparent pixel
+				m.Set(x, y, color.RGBA{0xff, 0xff, 0xff, 0})
 			}
 		}
 	}
@@ -205,7 +219,7 @@ func WriteFavicon(mode Mode, text, filename string) error {
 
 	// Encode the image as an .ico image
 	//return ico.Encode(f, m)
-	return EncodeGrayscale4bit(f, m)
+	return EncodeGrayscale4bit(f, m) // Sadly, this does not seem to support transparency
 }
 
 // This is from github.com/biessek/golang-ico, only to be able to use private structs
