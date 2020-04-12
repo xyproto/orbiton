@@ -1,5 +1,6 @@
 # TODO
 
+- [ ] Make it possible to save 16x16 16-grayscale favicon.ico files, using 0-F in a 16x16 grid, but only open favicon files with few enough colors.
 - [ ] Keybinding for cutting the line at the bookmark and inserting it at the current location.
       Pressing this key repeatedly can be used for moving a block of code from one place to another.
 - [ ] Backwards search + using `ctrl-p` to jump to previous location.
