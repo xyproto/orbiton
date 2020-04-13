@@ -136,14 +136,14 @@ Rust
 
 ## Size
 
-* The `o` executable is only **541k** when built with GCC 9.2 (for 64-bit Linux).
+* The `o` executable is only **508k** when built with GCC 9.3 (for 64-bit Linux) + compressed with `upx`.
 * This isn't as small as [e3](https://sites.google.com/site/e3editor/), an editor written in assembly (which is **234k**), but it's reasonably lean.
 
-One way of building with `gccgo`:
+One way of building with `gccgo` and `upx`:
 
-    go build -gccgoflags '-Os -s'
+    go build -mod=vendor -gccgoflags '-Os -s' && upx o
 
-It's around **3M** when built with Go 1.13 and no particular build flags are given.
+It's **5.2M** when built with Go 1.14 and no particular build flags are given.
 
 ## Jumping to a specific line when opening a file
 
