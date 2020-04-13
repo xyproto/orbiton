@@ -419,10 +419,24 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 		// Is it an .ico file?
 		if exists(filename) {
 			// Try to read the file
-			mode, data, message, err = ReadFavicon(filename, false)
+			mode, data, message, err = ReadFavicon(filename, false, false)
 		} else {
 			// Create empty content, if the file does not exists
-			mode, data, message, err = ReadFavicon(filename, true)
+			mode, data, message, err = ReadFavicon(filename, true, false)
+		}
+		if err == nil { // no error
+			e.mode = mode
+			e.syntaxHighlight = false
+			e.drawMode = true
+		}
+	} else if strings.HasSuffix(filename, ".png") {
+		// Is it a .png file?
+		if exists(filename) {
+			// Try to read the file
+			mode, data, message, err = ReadFavicon(filename, false, true)
+		} else {
+			// Create empty content, if the file does not exists
+			mode, data, message, err = ReadFavicon(filename, true, true)
 		}
 		if err == nil { // no error
 			e.mode = mode
@@ -459,16 +473,16 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 }
 
 // Save will try to save a file
-func (e *Editor) Save(filename *string, stripTrailingSpaces bool) error {
-	if strings.HasSuffix(*filename, ".ico") {
-		//if exists(*filename) {
-		//	// TODO: If a grayscale icon was opened, save back to it without prefixing the filename
-		//	*filename = "gray_" + *filename // Change the filename!
-		//	return WriteFavicon(e.mode, e.String(), *filename)
-		//}
+// if asOther is true, .ico files will be saved as .png, and .png files will be saved as .ico
+func (e *Editor) Save(filename *string, stripTrailingSpaces, asOther bool) error {
+	if strings.HasSuffix(*filename, ".ico") || strings.HasSuffix(*filename, ".png") {
 		// TODO: Find a way to check if the file was written with "o".
 		//       If it was not, save to a new flename.
-		return WriteFavicon(e.mode, e.String(), *filename)
+		// Save the image as .ico if this is a .png file and asOther is true
+		// Save the image as .png if this is a .ico file and asOther is true
+		// If asOther is false, save as the same filename
+		// TODO: Find a cleaner API
+		return WriteFavicon(e.mode, e.String(), *filename, asOther)
 	}
 	var data []byte
 	if stripTrailingSpaces {

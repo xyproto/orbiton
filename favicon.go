@@ -44,7 +44,8 @@ var (
 // Returns a Mode (representing: 16 color grayscale, rgb or rgba), the textual representation and an error
 // If dummy is true, the textual representation of a blank 16 color grayscale image will be returned.
 // May return a warning/message string as well.
-func ReadFavicon(filename string, dummy bool) (Mode, []byte, string, error) {
+// If PNG is true, tries to read a PNG image instead
+func ReadFavicon(filename string, dummy, PNG bool) (Mode, []byte, string, error) {
 	var (
 		mode    Mode = modeBlank
 		m       image.Image
@@ -71,13 +72,21 @@ func ReadFavicon(filename string, dummy bool) (Mode, []byte, string, error) {
 		}
 		defer reader.Close()
 
-		// Decode the image
-		icoImage, err := ico.Decode(reader)
-		if err != nil {
-			return mode, []byte{}, "", err
+		if PNG {
+			// Decode the image
+			pngImage, err := png.Decode(reader)
+			if err != nil {
+				return mode, []byte{}, "", err
+			}
+			m = pngImage
+		} else {
+			// Decode the image
+			icoImage, err := ico.Decode(reader)
+			if err != nil {
+				return mode, []byte{}, "", err
+			}
+			m = icoImage
 		}
-
-		m = icoImage
 	}
 
 	// Check the size of the image
@@ -168,9 +177,10 @@ func ReadFavicon(filename string, dummy bool) (Mode, []byte, string, error) {
 }
 
 // WriteFavicon converts the textual representation to an .ico image
-func WriteFavicon(mode Mode, text, filename string) error {
+// If asOther is true, .png images are written as .ico and the other way around
+func WriteFavicon(mode Mode, text, filename string, asOther bool) error {
 	if mode != modeGray4 {
-		return errors.New("Saving .ico files is only implenented for 4-bit grayscale images")
+		return errors.New("Saving .ico files is only implemented for 4-bit grayscale images")
 	}
 
 	var (
@@ -209,6 +219,26 @@ func WriteFavicon(mode Mode, text, filename string) error {
 				m.Set(x, y, color.RGBA{0xff, 0xff, 0xff, 0})
 			}
 		}
+	}
+
+	if asOther && strings.HasSuffix(filename, ".ico") {
+		filename = strings.Replace(filename, ".ico", ".png", 1)
+		// Create a new file
+		f, err := os.Create(filename)
+		if err != nil {
+			return err
+		}
+		// Encode the image as a .png image
+		return png.Encode(f, m)
+	} else if !asOther && strings.HasSuffix(filename, ".png") {
+		// Create a new file
+		f, err := os.Create(filename)
+		if err != nil {
+			return err
+		}
+		return png.Encode(f, m)
+	} else if asOther && strings.HasSuffix(filename, ".png") {
+		filename = strings.Replace(filename, ".png", ".ico", 1)
 	}
 
 	// Create a new file

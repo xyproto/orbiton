@@ -221,6 +221,7 @@ Set NO_COLOR=1 to disable colors.
 	status.respectNoColorEnvironmentVariable()
 
 	// Try to load the filename, ignore errors since giving a new filename is also okay
+	// This will also create textual representations of empty images, if the extension is .ico or .png
 	warningMessage, err := e.Load(c, tty, filename)
 	loaded := err == nil // no error
 
@@ -243,8 +244,8 @@ Set NO_COLOR=1 to disable colors.
 
 	// Friendly status message
 	statusMessage := "New " + filename
-	if strings.HasSuffix(filename, ".ico") {
-		// .ico files are either new or loaded
+	if strings.HasSuffix(filename, ".ico") || strings.HasSuffix(filename, ".png") {
+		// images are either new or loaded
 		if loaded {
 			statusMessage = "Loaded " + filename
 		}
@@ -279,7 +280,7 @@ Set NO_COLOR=1 to disable colors.
 			e.redraw = false
 		}
 		testFile.Close()
-	} else if err := e.Save(&filename, true); err != nil {
+	} else if err := e.Save(&filename, true, false); err != nil {
 		// Check if the new file can be saved before the user starts working on the file.
 		quitError(tty, err)
 	} else {
@@ -417,7 +418,7 @@ Set NO_COLOR=1 to disable colors.
 						if f, err := ioutil.TempFile(tempdir, "__o*"+ext); err == nil {
 							// no error, everything is fine
 							tempFilename := f.Name()
-							err := e.Save(&tempFilename, true)
+							err := e.Save(&tempFilename, true, false)
 							if err == nil {
 								// Format the temporary file
 								cmd.Args = append(cmd.Args, tempFilename)
@@ -480,8 +481,36 @@ Set NO_COLOR=1 to disable colors.
 			}
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
-		case "c:0": // ctrl-space, build source code to executable, word wrap or convert to PDF, depending on the mode
-			if strings.HasSuffix(baseFilename, ".scd") || strings.HasSuffix(baseFilename, ".scdoc") {
+		case "c:0": // ctrl-space, build source code to executable, word wrap, convert to PDF or write to PNG, depending on the mode
+			if strings.HasSuffix(baseFilename, ".ico") {
+				// Save .ico as .png
+				err := e.Save(&filename, !e.DrawMode(), true)
+				if err != nil {
+					statusMessage = err.Error()
+					status.ClearAll(c)
+					status.SetMessage(statusMessage)
+					status.Show(c, e)
+				} else {
+					status.ClearAll(c)
+					status.SetMessage("Saved " + strings.Replace(baseFilename, ".ico", ".png", 1))
+					status.Show(c, e)
+				}
+				break // from case
+			} else if strings.HasSuffix(baseFilename, ".png") {
+				// Save .png as .ico
+				err := e.Save(&filename, !e.DrawMode(), true)
+				if err != nil {
+					statusMessage = err.Error()
+					status.ClearAll(c)
+					status.SetMessage(statusMessage)
+					status.Show(c, e)
+				} else {
+					status.ClearAll(c)
+					status.SetMessage("Saved " + strings.Replace(baseFilename, ".png", ".ico", 1))
+					status.Show(c, e)
+				}
+				break // from case
+			} else if strings.HasSuffix(baseFilename, ".scd") || strings.HasSuffix(baseFilename, ".scdoc") {
 				scdoc := exec.Command("/usr/bin/scdoc")
 
 				// Place the current contents in a buffer, and feed it to stdin to the command
@@ -552,7 +581,7 @@ Set NO_COLOR=1 to disable colors.
 						return // from goroutine
 					}
 
-					err := e.Save(&tmpfn, !e.DrawMode())
+					err := e.Save(&tmpfn, !e.DrawMode(), false)
 					if err != nil {
 						statusMessage = err.Error()
 						status.ClearAll(c)
@@ -1093,10 +1122,9 @@ Set NO_COLOR=1 to disable colors.
 			quit = true
 			fallthrough
 		case "c:19": // ctrl-s, save
-			// Write the file
 			status.ClearAll(c)
 			// Save the file
-			if err := e.Save(&filename, !e.DrawMode()); err != nil {
+			if err := e.Save(&filename, !e.DrawMode(), false); err != nil {
 				status.SetMessage(err.Error())
 				status.Show(c, e)
 			} else {
