@@ -42,10 +42,9 @@ To unset:
 * Never asks before saving or quitting. Be careful!
 * Can format Go or C++ code, just press `ctrl-space`. This uses either `goimports` (`go get golang.org/x/tools/cmd/goimports`) or `clang-format`.
 * Will strip trailing whitespace whenever it can.
-* Will convert DOS/Windows line endings (`\r\n`) to UNIX line endings (just `\n`), whenever it can.
 * Will replace nonbreaking space (`0xc2 0xa0`) with a regular space (`0x20`) whenever it can.
 * Must be given a filename at start.
-* Smart indentation.
+* Can provide smart indentation.
 * Requires `/dev/tty` to be available.
 * Copy, cut and paste is only for one line at a time. `xclip` (for X) or `wl-clipboard` (for Wayland) must be installed if the system clipboard is to be used.
 * Only forward search.
@@ -56,8 +55,8 @@ To unset:
 * Supports `UTF-8`.
 * Respects the `NO_COLOR` environment variable.
 * Can render text to PDF.
-* Can open or create 16x16 `favicon.ico` or `favicon.png` files, then save them as tiny (often < 256 bytes) 4-bit grayscale images.
 * Only UNIX-style line endings are supported (`\n`).
+* Will convert DOS/Windows line endings (`\r\n`) to UNIX line endings (just `\n`), whenever possible.
 * Will jump to the last visited line when opening a recent file.
 * If tab completion on the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
 
@@ -177,6 +176,8 @@ When loading large files, an animated spinner will appear. The loading operation
 ## Easter eggs
 
 Pressing `ctrl-space` will render Markdown files to PDF using `pandoc` (as opposed to `ctrl-r`, which will save the text directly to a PDF, without using `pandoc`).
+
+Can create or edit 16x16 `favicon.ico` or `favicon.png` images (can save tiny 4-bit grayscale images).
 
 ## General info
 
