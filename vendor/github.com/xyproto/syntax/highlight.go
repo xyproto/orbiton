@@ -6,6 +6,7 @@ package syntax
 import (
 	"bytes"
 	"io"
+	"strings"
 	"text/scanner"
 	"unicode"
 	"unicode/utf8"
@@ -34,6 +35,7 @@ const (
 	Decimal
 	AndOr
 	Star
+	Label
 )
 
 //go:generate gostringer -type=Kind
@@ -62,6 +64,7 @@ type TextConfig struct {
 	AndOr         string
 	Star          string
 	Whitespace    string
+	Label         string
 }
 
 // TextPrinter implements Printer interface and is used to produce
@@ -99,6 +102,8 @@ func (c TextConfig) Class(kind Kind) string {
 		return c.AndOr
 	case Star:
 		return c.Star
+	case Label:
+		return c.Label
 	}
 	return ""
 }
@@ -173,6 +178,7 @@ var DefaultTextConfig = TextConfig{
 	AndOr:         "red",
 	Star:          "white",
 	Whitespace:    "",
+	Label:         "magenta",
 }
 
 func Print(s *scanner.Scanner, w io.Writer, p Printer) error {
@@ -248,14 +254,17 @@ func NewScannerReader(src io.Reader) *scanner.Scanner {
 }
 
 func tokenKind(tok rune, tokText string, inSingleLineComment *bool) Kind {
-	// Check if we are in a bash-style single line comment
-	if tok == '#' {
+	// Check if we are in a bash-style single line comment, or assembly-style single line comments
+	if tok == '#' || (tok == ';' && strings.HasPrefix(tokText, ";")) {
 		*inSingleLineComment = true
 	} else if tok == '\n' {
 		*inSingleLineComment = false
 	}
+	if strings.HasSuffix(tokText, ":") {
+		return Label
+	}
 	// Check if this is #include or #define
-	if tokText == "include" || tokText == "define" {
+	if tokText == "include" || tokText == "define" || tokText == "ifdef" || tokText == "ifndef" || tokText == "endif" {
 		*inSingleLineComment = false
 		// Color it like a keyword
 		return Keyword
