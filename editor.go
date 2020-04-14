@@ -435,8 +435,12 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	} else {
 		// Any other file extension
 		data, err = ioutil.ReadFile(filename)
-		// Replace DOS line endings with UNIX line endings
-		data = bytes.Replace(data, []byte{'\r', '\n'}, []byte{'\n'}, -1)
+		if bytes.Contains(data, []byte{'\r'}) {
+			// Replace DOS line endings with UNIX line endings
+			data = bytes.Replace(data, []byte{'\r', '\n'}, []byte{'\n'}, -1)
+			// Replace any remaining \r characters with \n
+			data = bytes.Replace(data, []byte{'\r'}, []byte{'\n'}, -1)
+		}
 	}
 
 	// Stop the spinner
