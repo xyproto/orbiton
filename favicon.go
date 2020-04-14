@@ -42,11 +42,10 @@ var (
 
 // ReadFavicon will try to load an ICO or PNG image into a "\n" separated []byte slice.
 // Returns a Mode (representing: 16 color grayscale, rgb or rgba), the textual representation and an error.
-// If dummy is true, the textual representation of a blank 16 color grayscale image will be returned.
+// If blank is true, the textual representation of a blank 16 color grayscale image will be returned.
 // May return a warning/message string as well.
 // If PNG is true, tries to read a PNG image instead
-// TODO: Refactor out the "dummy" functionality into a "CreateBlank" function.
-func ReadFavicon(filename string, dummy, PNG bool) (Mode, []byte, string, error) {
+func ReadFavicon(filename string, blank, PNG bool) (Mode, []byte, string, error) {
 	var (
 		mode    Mode = modeBlank
 		m       image.Image
@@ -55,8 +54,8 @@ func ReadFavicon(filename string, dummy, PNG bool) (Mode, []byte, string, error)
 		message string
 	)
 
-	if dummy {
-		// Create a dummy image, 16x16, all gray
+	if blank {
+		// Create the textual representation of a blank image (16x16, all gray)
 		tm := image.NewNRGBA(image.Rect(0, 0, 16, 16))
 		bounds = tm.Bounds()
 		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {

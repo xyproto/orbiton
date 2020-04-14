@@ -466,26 +466,25 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 // PrepareEmpty prepares an empty textual representation of a given filename.
 // If it's an image, there will be text placeholders for pixels.
 // If it's anything else, it will just be blank.
-// Returns a warning message (possibly empty) and an error type
-func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) (string, Mode, error) {
+// Returns an editor mode and an error type.
+func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) (Mode, error) {
 	var (
-		message string
-		mode    Mode = modeBlank
-		data    []byte
-		err     error
+		mode Mode = modeBlank
+		data []byte
+		err  error
 	)
 
 	// Prepare the file
 	if strings.HasSuffix(filename, ".ico") {
 		// Create empty content
-		mode, data, message, err = ReadFavicon(filename, true, false)
+		mode, data, _, err = ReadFavicon(filename, true, false)
 		if err == nil { // no error
 			e.syntaxHighlight = false
 			e.drawMode = true
 		}
 	} else if strings.HasSuffix(filename, ".png") {
 		// Create empty content
-		mode, data, message, err = ReadFavicon(filename, true, true)
+		mode, data, _, err = ReadFavicon(filename, true, true)
 		if err == nil { // no error
 			e.syntaxHighlight = false
 			e.drawMode = true
@@ -496,7 +495,7 @@ func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 
 	// Check if the data could be prepared
 	if err != nil {
-		return message, mode, err
+		return mode, err
 	}
 
 	datalines := bytes.Split(data, []byte{'\n'})
@@ -512,7 +511,7 @@ func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 	// Mark the data as "not changed"
 	e.changed = false
 
-	return message, mode, nil
+	return mode, nil
 }
 
 // Save will try to save a file
