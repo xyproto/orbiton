@@ -665,6 +665,9 @@ Set NO_COLOR=1 to disable colors.
 						} else if (ext == ".cc" || ext == ".h") && exists("BUILD.bazel") {
 							// Google-style C++ + Bazel projects
 							cmd = exec.Command("bazel", "build")
+						} else if ext == ".zig" && !exists("build.zig") {
+							// Just build the current file
+							cmd = exec.Command("zig", "build-exe", "-lc", filename)
 						}
 
 						output, err := cmd.CombinedOutput()
