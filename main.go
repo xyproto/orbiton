@@ -220,11 +220,78 @@ Set NO_COLOR=1 to disable colors.
 	status := NewStatusBar(defaultStatusForeground, defaultStatusBackground, defaultStatusErrorForeground, defaultStatusErrorBackground, e, statusDuration)
 	status.respectNoColorEnvironmentVariable()
 
-	// Try to load the filename, ignore errors since giving a new filename is also okay
-	// This will also create textual representations of empty images, if the extension is .ico or .png
-	// TODO: Refactor LoadOrCreate into two functions
-	warningMessage, err := e.LoadOrCreate(c, tty, filename)
-	loaded := exists(filename) && err == nil // file exists, and there were no errors calling LoadOrCreate
+	// Load a file, or a prepare an empty version of the file (without saving it until the user saves it)
+	var (
+		statusMessage  string
+		warningMessage string
+	)
+
+	// We wish to redraw the canvas and reposition the cursor
+	e.redraw = true
+	e.redrawCursor = true
+
+	// Check if the file exists, then load the file
+	if exists(filename) {
+
+		// Check that os.Stat can be used to retrieve info about this file
+		fileInfo, err := os.Stat(filename)
+		if err != nil {
+			quitError(tty, err)
+		}
+
+		// TODO: Enter file-rename mode when opening a directory?
+		// Check if this is a directory
+		if fileInfo.IsDir() {
+			quitError(tty, errors.New(filename+" is a directory"))
+		}
+
+		warningMessage, err = e.Load(c, tty, filename)
+		if !e.Empty() {
+			statusMessage = "Loaded " + filename + warningMessage
+		} else {
+			statusMessage = "Loaded empty file: " + filename + warningMessage
+		}
+
+		// Test write, to check if the file can be written or not
+		testfile, err := os.OpenFile(filename, os.O_WRONLY, 0664)
+		if err != nil {
+			// can not open the file for writing
+			statusMessage += " (read only)"
+			// set the color to red when in read-only mode
+			e.fg = vt100.Red
+			// disable syntax highlighting, to make it clear that the text is red
+			e.syntaxHighlight = false
+			// do a full reset and redraw
+			c = e.FullResetRedraw(c, status)
+			// draw the editor lines again
+			e.DrawLines(c, false, true)
+			e.redraw = false
+		}
+		testfile.Close()
+	} else {
+		var newMode Mode
+		warningMessage, newMode, err = e.PrepareEmpty(c, tty, filename)
+		statusMessage = "New " + filename + warningMessage
+
+		// For .ico and .png
+		if newMode != modeBlank {
+			mode = newMode
+		}
+
+		// Test save, to check if the file can be created and written, or not
+		if err := e.Save(&filename, true, false); err != nil {
+			// Check if the new file can be saved before the user starts working on the file.
+			quitError(tty, err)
+		} else {
+			// Creating a new empty file worked out fine, don't save it until the user saves it
+			if os.Remove(filename) != nil {
+				// This should never happen
+				quitError(tty, errors.New("could not remove an empty file that was just created: "+filename))
+			}
+		}
+	}
+
+	// The editing mode is decided at this point
 
 	// If we're editing a git commit message, add a newline and enable word-wrap at 80
 	if mode == modeGit {
@@ -237,59 +304,6 @@ Set NO_COLOR=1 to disable colors.
 			e.InsertLineBelow()
 		}
 		e.wordWrapAt = 80
-	}
-
-	// We wish to redraw the canvas and reposition the cursor
-	e.redraw = true
-	e.redrawCursor = true
-
-	// Friendly status message
-	statusMessage := "New " + filename
-	if strings.HasSuffix(filename, ".ico") || strings.HasSuffix(filename, ".png") {
-		// images are either new or loaded
-		if loaded {
-			statusMessage = "Loaded " + filename
-			if warningMessage != "" {
-				statusMessage += ", " + warningMessage
-			}
-		}
-	} else if loaded {
-		if !e.Empty() {
-			statusMessage = "Loaded " + filename
-		} else {
-			statusMessage = "Loaded empty file: " + filename
-		}
-		fileInfo, err := os.Stat(filename)
-		if err != nil {
-			quitError(tty, err)
-		}
-		if fileInfo.IsDir() {
-			quitError(tty, errors.New(filename+" is a directory"))
-		}
-		testFile, err := os.OpenFile(filename, os.O_WRONLY, 0664)
-		if err != nil {
-			// Can not open the file for writing
-			statusMessage += " (read only)"
-			// Set the color to red when in read-only mode
-			e.fg = vt100.Red
-			// Disable syntax highlighting, to make it clear that the text is red
-			e.syntaxHighlight = false
-			// Do a full reset and redraw
-			c = e.FullResetRedraw(c, status)
-			// Draw the editor lines again
-			e.DrawLines(c, false, true)
-			e.redraw = false
-		}
-		testFile.Close()
-	} else if err := e.Save(&filename, true, false); err != nil {
-		// Check if the new file can be saved before the user starts working on the file.
-		quitError(tty, err)
-	} else {
-		// Creating a new empty file worked out fine, don't save it until the user saves it
-		if os.Remove(filename) != nil {
-			// This should never happen
-			quitError(tty, errors.New("could not remove an empty file that was just created: "+filename))
-		}
 	}
 
 	// If the file starts with a hash bang, enable syntax highlighting
@@ -454,7 +468,11 @@ Set NO_COLOR=1 to disable colors.
 									status.Show(c, e)
 									break OUT
 								} else {
-									e.LoadOrCreate(c, tty, tempFilename)
+									if _, err := e.Load(c, tty, tempFilename); err != nil {
+										status.ClearAll(c)
+										status.SetMessage(err.Error())
+										status.Show(c, e)
+									}
 									// Mark the data as changed, despite just having loaded a file
 									e.changed = true
 									formatted = true

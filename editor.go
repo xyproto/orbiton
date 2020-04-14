@@ -284,10 +284,9 @@ func (e *Editor) Clear() {
 	e.changed = true
 }
 
-// LoadOrCreate will try to load a file
-// May return a warning/message string
-// TODO: Refactor into two functions, one for loading and one for creating
-func (e *Editor) LoadOrCreate(c *vt100.Canvas, tty *vt100.TTY, filename string) (string, error) {
+// Load will try to load a file. The file is assumed to be checked to already exist.
+// Returns a warning message (possibly empty) and an error type
+func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string, error) {
 
 	var message string
 
@@ -415,30 +414,19 @@ func (e *Editor) LoadOrCreate(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 		err  error
 	)
 
+	// TODO: Use a lookup table from file extension to read function and editor settings function
 	// Read the file
 	if strings.HasSuffix(filename, ".ico") {
-		// Is it an .ico file?
-		if exists(filename) {
-			// Try to read the file
-			mode, data, message, err = ReadFavicon(filename, false, false)
-		} else {
-			// Create empty content, if the file does not exists
-			mode, data, message, err = ReadFavicon(filename, true, false)
-		}
+		// Try to read the file
+		mode, data, message, err = ReadFavicon(filename, false, false)
 		if err == nil { // no error
 			e.mode = mode
 			e.syntaxHighlight = false
 			e.drawMode = true
 		}
 	} else if strings.HasSuffix(filename, ".png") {
-		// Is it a .png file?
-		if exists(filename) {
-			// Try to read the file
-			mode, data, message, err = ReadFavicon(filename, false, true)
-		} else {
-			// Create empty content, if the file does not exists
-			mode, data, message, err = ReadFavicon(filename, true, true)
-		}
+		// Try to read the file
+		mode, data, message, err = ReadFavicon(filename, false, true)
 		if err == nil { // no error
 			e.mode = mode
 			e.syntaxHighlight = false
@@ -473,6 +461,58 @@ func (e *Editor) LoadOrCreate(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 	e.changed = false
 
 	return message, nil
+}
+
+// PrepareEmpty prepares an empty textual representation of a given filename.
+// If it's an image, there will be text placeholders for pixels.
+// If it's anything else, it will just be blank.
+// Returns a warning message (possibly empty) and an error type
+func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) (string, Mode, error) {
+	var (
+		message string
+		mode    Mode = modeBlank
+		data    []byte
+		err     error
+	)
+
+	// Prepare the file
+	if strings.HasSuffix(filename, ".ico") {
+		// Create empty content
+		mode, data, message, err = ReadFavicon(filename, true, false)
+		if err == nil { // no error
+			e.syntaxHighlight = false
+			e.drawMode = true
+		}
+	} else if strings.HasSuffix(filename, ".png") {
+		// Create empty content
+		mode, data, message, err = ReadFavicon(filename, true, true)
+		if err == nil { // no error
+			e.syntaxHighlight = false
+			e.drawMode = true
+		}
+	}
+
+	// For any other extension, data is left empty and mode is left as blankMode
+
+	// Check if the data could be prepared
+	if err != nil {
+		return message, mode, err
+	}
+
+	datalines := bytes.Split(data, []byte{'\n'})
+	e.Clear()
+	for y, dataline := range datalines {
+		line := string(dataline)
+		counter := 0
+		for _, letter := range line {
+			e.Set(counter, int(y), letter)
+			counter++
+		}
+	}
+	// Mark the data as "not changed"
+	e.changed = false
+
+	return message, mode, nil
 }
 
 // Save will try to save a file

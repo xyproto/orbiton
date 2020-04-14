@@ -104,9 +104,9 @@ func ReadFavicon(filename string, dummy, PNG bool) (Mode, []byte, string, error)
 	if m.ColorModel() != color.GrayModel {
 		// Warning message
 		if PNG {
-			message = "will convert to grayscale on save"
+			message = " (will be saved as grayscale)"
 		} else {
-			message = "will convert to 4-bit grayscale on save"
+			message = " (will be saved as 16 color grayscale)"
 		}
 	}
 
