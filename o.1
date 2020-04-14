@@ -1,6 +1,6 @@
 .\"             -*-Nroff-*-
 .\"
-.TH "o" 1 "06 Apr 2020" "" ""
+.TH "o" 1 "14 Apr 2020" "" ""
 .SH NAME
 o \- an editor
 .SH SYNOPSIS
@@ -89,6 +89,8 @@ displays brief usage information
 .sp
 .B ctrl-space
   Build Go programs with `go build`. Build C++ programs with `cxx`. Otherwise, perform word-wrapping.
+  For .ico files, export to .png. For .png files, export to .ico.
+  For Markdown files, export to .pdf using `pandoc`.
 .sp
 .B ctrl-\\\\
   Toggle single-line comments for a block of code.
@@ -112,7 +114,7 @@ I wanted to write a simple editor that only used VT100 terminal codes.
 .SH BUGS
 Lines longer than the terminal width are not handled gracefully.
 .SH VERSION
-2.22.0
+2.23.0
 .SH AUTHOR
 .B o
 was written by  Alexander F. Rødseth <xyproto@archlinux.org>
