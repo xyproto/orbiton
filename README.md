@@ -173,7 +173,7 @@ When loading large files, an animated spinner will appear. The loading operation
 
 ![progress](img/progress.gif)
 
-## Tiny images
+## `favicon.ico`
 
 When using `ssh` to a server, it is sometimes useful to be able to create a quick `favicon.ico` file, without having to copy files back and forth to a graphical environment. `o` can create and edit small 16x16 images, and will save them as 16-color grayscale ICO or PNG. Press `ctrl-s` to save and `ctrl-space` to save as the other file format. Any existing color will be discarded, but the resulting images will be tiny (usually under 256 bytes).
 
