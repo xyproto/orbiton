@@ -230,14 +230,8 @@ Set NO_COLOR=1 to disable colors.
 	e.redraw = true
 	e.redrawCursor = true
 
-	// Check if the file exists, then load the file
-	if exists(filename) {
-
-		// Check that os.Stat can be used to retrieve info about this file
-		fileInfo, err := os.Stat(filename)
-		if err != nil {
-			quitError(tty, err)
-		}
+	// Use os.Stat to check if the file exists, and load the file if it does
+	if fileInfo, err := os.Stat(filename); err == nil {
 
 		// TODO: Enter file-rename mode when opening a directory?
 		// Check if this is a directory
@@ -249,6 +243,7 @@ Set NO_COLOR=1 to disable colors.
 		if err != nil {
 			quitError(tty, err)
 		}
+
 		if !e.Empty() {
 			statusMessage = "Loaded " + filename + warningMessage
 		} else {
@@ -272,8 +267,11 @@ Set NO_COLOR=1 to disable colors.
 		}
 		testfile.Close()
 	} else {
-		var newMode Mode
-		newMode, err = e.PrepareEmpty(c, tty, filename)
+		newMode, err := e.PrepareEmpty(c, tty, filename)
+		if err != nil {
+			quitError(tty, err)
+		}
+
 		statusMessage = "New " + filename
 
 		// For .ico and .png
