@@ -19,5 +19,4 @@ test.*
 o.html
 manpage.1
 *_go.pdf
-favicon.ico
-favicon.png
+favicon.*
