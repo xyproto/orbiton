@@ -92,7 +92,7 @@ func ReadFavicon(filename string, blank, PNG bool) (Mode, []byte, string, error)
 	// Check the size of the image
 	// TODO: Consider lifting this restriction
 	if m.Bounds() != image.Rect(0, 0, 16, 16) {
-		return mode, []byte{}, "", errors.New("Only 16x16 images are supported")
+		return mode, []byte{}, "", errors.New("can not load " + filename + ", the size is not 16x16")
 	}
 
 	lookupLetters := make(map[byte]rune)

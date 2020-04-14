@@ -246,6 +246,9 @@ Set NO_COLOR=1 to disable colors.
 		}
 
 		warningMessage, err = e.Load(c, tty, filename)
+		if err != nil {
+			quitError(tty, err)
+		}
 		if !e.Empty() {
 			statusMessage = "Loaded " + filename + warningMessage
 		} else {
