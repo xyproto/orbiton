@@ -40,11 +40,12 @@ var (
 	}
 )
 
-// ReadFavicon will try to load an .ico file into a "\n" separated []byte
-// Returns a Mode (representing: 16 color grayscale, rgb or rgba), the textual representation and an error
+// ReadFavicon will try to load an ICO or PNG image into a "\n" separated []byte slice.
+// Returns a Mode (representing: 16 color grayscale, rgb or rgba), the textual representation and an error.
 // If dummy is true, the textual representation of a blank 16 color grayscale image will be returned.
 // May return a warning/message string as well.
 // If PNG is true, tries to read a PNG image instead
+// TODO: Refactor out the "dummy" functionality into a "CreateBlank" function.
 func ReadFavicon(filename string, dummy, PNG bool) (Mode, []byte, string, error) {
 	var (
 		mode    Mode = modeBlank
@@ -102,7 +103,11 @@ func ReadFavicon(filename string, dummy, PNG bool) (Mode, []byte, string, error)
 
 	if m.ColorModel() != color.GrayModel {
 		// Warning message
-		message = "will convert to 4-bit grayscale when saving"
+		if PNG {
+			message = "will convert to grayscale on save"
+		} else {
+			message = "will convert to 4-bit grayscale on save"
+		}
 	}
 
 	var hasTransparentPixels bool

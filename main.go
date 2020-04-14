@@ -222,8 +222,9 @@ Set NO_COLOR=1 to disable colors.
 
 	// Try to load the filename, ignore errors since giving a new filename is also okay
 	// This will also create textual representations of empty images, if the extension is .ico or .png
-	warningMessage, err := e.Load(c, tty, filename)
-	loaded := err == nil // no error
+	// TODO: Refactor LoadOrCreate into two functions
+	warningMessage, err := e.LoadOrCreate(c, tty, filename)
+	loaded := exists(filename) && err == nil // file exists, and there were no errors calling LoadOrCreate
 
 	// If we're editing a git commit message, add a newline and enable word-wrap at 80
 	if mode == modeGit {
@@ -248,9 +249,9 @@ Set NO_COLOR=1 to disable colors.
 		// images are either new or loaded
 		if loaded {
 			statusMessage = "Loaded " + filename
-		}
-		if warningMessage != "" {
-			statusMessage = "Loaded " + filename + ", " + warningMessage
+			if warningMessage != "" {
+				statusMessage += ", " + warningMessage
+			}
 		}
 	} else if loaded {
 		if !e.Empty() {
@@ -453,7 +454,7 @@ Set NO_COLOR=1 to disable colors.
 									status.Show(c, e)
 									break OUT
 								} else {
-									e.Load(c, tty, tempFilename)
+									e.LoadOrCreate(c, tty, tempFilename)
 									// Mark the data as changed, despite just having loaded a file
 									e.changed = true
 									formatted = true
