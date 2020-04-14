@@ -284,9 +284,10 @@ func (e *Editor) Clear() {
 	e.changed = true
 }
 
-// Load will try to load a file
+// LoadOrCreate will try to load a file
 // May return a warning/message string
-func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string, error) {
+// TODO: Refactor into two functions, one for loading and one for creating
+func (e *Editor) LoadOrCreate(c *vt100.Canvas, tty *vt100.TTY, filename string) (string, error) {
 
 	var message string
 
