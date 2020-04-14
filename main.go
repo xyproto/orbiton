@@ -270,12 +270,12 @@ Set NO_COLOR=1 to disable colors.
 		testfile.Close()
 	} else {
 		var newMode Mode
-		warningMessage, newMode, err = e.PrepareEmpty(c, tty, filename)
-		statusMessage = "New " + filename + warningMessage
+		newMode, err = e.PrepareEmpty(c, tty, filename)
+		statusMessage = "New " + filename
 
 		// For .ico and .png
 		if newMode != modeBlank {
-			mode = newMode
+			mode, e.mode = newMode, newMode
 		}
 
 		// Test save, to check if the file can be created and written, or not
