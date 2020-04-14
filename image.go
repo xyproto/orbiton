@@ -20,23 +20,30 @@ import (
 
 var (
 	// 4-bit, 16-color grayscale grading by runes
+	// This map has room for improvement.
+	// I wanted it to
+	// - Not contain regular letters, to avoid confusion when someone typed in the lowercase/uppercase version of it
+	// - Make it easy to type the 0 and 15 value on most keyboard layouts
+	// - Not contain '?' or '#'
+	// - Have visible 0 values (not ' ')
+	// _,.'-~+:*<=!%{$@
 	lookupRunes = map[rune]byte{
-		' ': 0,
-		'.': 1,
-		',': 2,
-		'-': 3,
-		'~': 4,
-		':': 5,
-		'=': 6,
-		';': 7,
-		'+': 8,
-		'x': 9,
-		'*': 10,
-		'?': 11,
-		'%': 12,
-		'@': 13,
-		'#': 14,
-		'W': 15,
+		'_':  0,
+		',':  1,
+		'.':  2,
+		'\'': 3,
+		'-':  4,
+		'~':  5,
+		'+':  6,
+		':':  7,
+		'*':  8,
+		'<':  9,
+		'=':  10,
+		'!':  11,
+		'%':  12,
+		'{':  15,
+		'$':  13,
+		'@':  14,
 	}
 )
 
