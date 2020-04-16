@@ -64,7 +64,7 @@ type Editor struct {
 // * background color attributes
 // * if syntax highlighting is enabled
 // * if "insert mode" is enabled (as opposed to "draw mode")
-func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, syntaxHighlight, textEditMode bool, scrollSpeed int, searchFg vt100.AttributeColor, scheme syntax.TextConfig, mode Mode) *Editor {
+func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, syntaxHighlight, textEditMode bool, scrollSpeed int, searchFg vt100.AttributeColor, scheme syntax.TextConfig, multilineComment vt100.AttributeColor, mode Mode) *Editor {
 	syntax.DefaultTextConfig = scheme
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
@@ -86,7 +86,7 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, syntaxHighlight, t
 		e.wordWrapAt = 72
 	}
 	e.mode = mode
-	e.multilineComment = vt100.Magenta
+	e.multilineComment = multilineComment
 	return e
 }
 
@@ -95,7 +95,7 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, syntaxHighlight, t
 // search results magenta, use the default syntax highlighting scheme, don't use git mode and don't use markdown mode,
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
-	e := NewEditor(4, vt100.White, vt100.Black, false, true, 1, vt100.Magenta, syntax.DefaultTextConfig, modeBlank)
+	e := NewEditor(4, vt100.White, vt100.Black, false, true, 1, vt100.Magenta, syntax.DefaultTextConfig, vt100.Gray, modeBlank)
 	e.wordWrapAt = wordWrapLimit
 	return e
 }

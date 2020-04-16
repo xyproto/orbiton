@@ -20,7 +20,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const version = "o 2.23.0"
+const version = "o 2.24.0"
 
 var (
 	rebasePrefixes   = []string{"p", "pick", "r", "reword", "d", "drop", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "l", "label", "t", "reset", "m", "merge"}
@@ -54,6 +54,7 @@ func main() {
 			Star:          "lightyellow",
 			Whitespace:    "",
 		}
+		defaultEditorMultilineComment = vt100.Magenta
 
 		versionFlag = flag.Bool("version", false, "show version information")
 		helpFlag    = flag.Bool("help", false, "show simple help")
@@ -197,7 +198,16 @@ Set NO_COLOR=1 to disable colors.
 	c.ShowCursor()
 
 	// scroll 10 lines at a time, no word wrap
-	e := NewEditor(spacesPerTab, defaultEditorForeground, defaultEditorBackground, syntaxHighlight, true, 10, defaultEditorSearchHighlight, defaultEditorHighlightTheme, mode)
+	e := NewEditor(spacesPerTab,
+		defaultEditorForeground,
+		defaultEditorBackground,
+		syntaxHighlight,
+		true,
+		10,
+		defaultEditorSearchHighlight,
+		defaultEditorHighlightTheme,
+		defaultEditorMultilineComment,
+		mode)
 
 	// For non-highlighted files, adjust the word wrap
 	if !syntaxHighlight {
