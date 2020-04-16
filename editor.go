@@ -409,38 +409,17 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	}()
 
 	var (
-		mode Mode
 		data []byte
 		err  error
 	)
 
-	// TODO: Use a lookup table from file extension to read function and editor settings function
 	// Read the file
-	if strings.HasSuffix(filename, ".ico") {
-		// Try to read the file
-		mode, data, message, err = ReadFavicon(filename, false, false)
-		if err == nil { // no error
-			e.mode = mode
-			e.syntaxHighlight = false
-			e.drawMode = true
-		}
-	} else if strings.HasSuffix(filename, ".png") {
-		// Try to read the file
-		mode, data, message, err = ReadFavicon(filename, false, true)
-		if err == nil { // no error
-			e.mode = mode
-			e.syntaxHighlight = false
-			e.drawMode = true
-		}
-	} else {
-		// Any other file extension
-		data, err = ioutil.ReadFile(filename)
-		if bytes.Contains(data, []byte{'\r'}) {
-			// Replace DOS line endings with UNIX line endings
-			data = bytes.Replace(data, []byte{'\r', '\n'}, []byte{'\n'}, -1)
-			// Replace any remaining \r characters with \n
-			data = bytes.Replace(data, []byte{'\r'}, []byte{'\n'}, -1)
-		}
+	data, err = ioutil.ReadFile(filename)
+	if bytes.Contains(data, []byte{'\r'}) {
+		// Replace DOS line endings with UNIX line endings
+		data = bytes.Replace(data, []byte{'\r', '\n'}, []byte{'\n'}, -1)
+		// Replace any remaining \r characters with \n
+		data = bytes.Replace(data, []byte{'\r'}, []byte{'\n'}, -1)
 	}
 
 	// Stop the spinner
@@ -478,25 +457,6 @@ func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 		err  error
 	)
 
-	// Prepare the file
-	if strings.HasSuffix(filename, ".ico") {
-		// Create empty content
-		mode, data, _, err = ReadFavicon(filename, true, false)
-		if err == nil { // no error
-			e.syntaxHighlight = false
-			e.drawMode = true
-		}
-	} else if strings.HasSuffix(filename, ".png") {
-		// Create empty content
-		mode, data, _, err = ReadFavicon(filename, true, true)
-		if err == nil { // no error
-			e.syntaxHighlight = false
-			e.drawMode = true
-		}
-	}
-
-	// For any other extension, data is left empty and mode is left as blankMode
-
 	// Check if the data could be prepared
 	if err != nil {
 		return mode, err
@@ -521,15 +481,6 @@ func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 // Save will try to save a file
 // if asOther is true, .ico files will be saved as .png, and .png files will be saved as .ico
 func (e *Editor) Save(filename *string, stripTrailingSpaces, asOther bool) error {
-	if strings.HasSuffix(*filename, ".ico") || strings.HasSuffix(*filename, ".png") {
-		// TODO: Find a way to check if the file was written with "o".
-		//       If it was not, save to a new flename.
-		// Save the image as .ico if this is a .png file and asOther is true
-		// Save the image as .png if this is a .ico file and asOther is true
-		// If asOther is false, save as the same filename
-		// TODO: Find a cleaner API
-		return WriteFavicon(e.mode, e.String(), *filename, asOther)
-	}
 	var data []byte
 	if stripTrailingSpaces {
 		// Strip trailing spaces
