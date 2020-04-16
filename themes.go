@@ -11,6 +11,8 @@ func (e *Editor) setLightTheme() {
 	e.bg = vt100.Gray
 	e.searchFg = vt100.Red
 	e.gitColor = vt100.Blue
+	e.multilineComment = vt100.Green
+
 	syntax.DefaultTextConfig.String = "red"
 	syntax.DefaultTextConfig.Keyword = "blue"
 	syntax.DefaultTextConfig.Comment = "darkgreen"
@@ -37,5 +39,4 @@ func (e *Editor) setLightTheme() {
 	listCodeColor = vt100.Red
 	codeColor = vt100.Red
 	codeBlockColor = vt100.Red
-
 }

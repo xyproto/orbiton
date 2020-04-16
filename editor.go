@@ -33,24 +33,29 @@ const (
 // Mode is a per-filetype mode, like for Markdown
 type Mode int
 
-// Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
-type Editor struct {
-	lines            map[int][]rune       // the contents of the current document
-	changed          bool                 // has the contents changed, since last save?
+type EditorColors struct {
 	fg               vt100.AttributeColor // default foreground color
 	bg               vt100.AttributeColor // default background color
-	spacesPerTab     int                  // how many spaces per tab character
-	syntaxHighlight  bool                 // syntax highlighting
-	drawMode         bool                 // text or draw mode (for ASCII graphics)?
-	pos              Position             // the current cursor and scroll position
-	searchTerm       string               // for marking found instances
 	searchFg         vt100.AttributeColor // search highlight color
-	redraw           bool                 // if the contents should be redrawn in the next loop
-	redrawCursor     bool                 // if the cursor should be moved to the location it is supposed to be
 	gitColor         vt100.AttributeColor // git commit message color
-	lineBeforeSearch int                  // save the current line when jumping between search results
-	wordWrapAt       int                  // set to 80 or 100 to trigger word wrap when typing to that column
-	mode             Mode                 // a filetype mode, like for git or markdown
+	multilineComment vt100.AttributeColor // color for multiline comments
+}
+
+// Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
+type Editor struct {
+	lines            map[int][]rune // the contents of the current document
+	changed          bool           // has the contents changed, since last save?
+	spacesPerTab     int            // how many spaces per tab character
+	syntaxHighlight  bool           // syntax highlighting
+	drawMode         bool           // text or draw mode (for ASCII graphics)?
+	pos              Position       // the current cursor and scroll position
+	searchTerm       string         // for marking found instances
+	redraw           bool           // if the contents should be redrawn in the next loop
+	redrawCursor     bool           // if the cursor should be moved to the location it is supposed to be
+	lineBeforeSearch int            // save the current line when jumping between search results
+	wordWrapAt       int            // set to 80 or 100 to trigger word wrap when typing to that column
+	mode             Mode           // a filetype mode, like for git or markdown
+	EditorColors
 }
 
 // NewEditor takes:
@@ -81,6 +86,7 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, syntaxHighlight, t
 		e.wordWrapAt = 72
 	}
 	e.mode = mode
+	e.multilineComment = vt100.Magenta
 	return e
 }
 
@@ -555,9 +561,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		}
 	}
 	noColor := os.Getenv("NO_COLOR") != ""
+	inMultilineComment := false // used when highlighting C, Go, C++ etc (using /* and */)
 	for y := 0; y < numlines; y++ {
 		counter := 0
-		//line := strings.ReplaceAll(e.Line(y+offset), "\t", tabString)
 		line := strings.Replace(e.Line(y+offset), "\t", tabString, -1)
 		screenLine := strings.TrimRightFunc(line, unicode.IsSpace)
 		if len([]rune(screenLine)) >= w {
@@ -586,7 +592,19 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					}
 				} else {
-					coloredString = UnEscape(o.DarkTags(string(textWithTags)))
+					lastLineInMultilineComment := false
+					if strings.HasPrefix(strings.TrimLeft(line, " \t"), "/*") {
+						inMultilineComment = true
+					}
+					if strings.HasSuffix(strings.TrimRight(line, " \t\n"), "*/") {
+						inMultilineComment = false
+						lastLineInMultilineComment = true
+					}
+					if inMultilineComment || lastLineInMultilineComment {
+						coloredString = UnEscape(e.multilineComment.Get(line))
+					} else {
+						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
+					}
 				}
 
 				// Slice of runes and color attributes, while at the same time highlighting search terms
