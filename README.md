@@ -62,7 +62,6 @@ To unset:
 
 * Files with lines longer than the terminal width are not supported (resize the terminal to edit long lines).
 * When elongating a long line (one that is already longer than the terminal width), the line will break at an unexpected location.
-* The smart indentation can be a bit dumb at times.
 
 ## Hotkeys
 
