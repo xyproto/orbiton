@@ -1362,7 +1362,14 @@ Set NO_COLOR=1 to disable colors.
 				if r == '}' || r == ']' || r == ')' {
 					lineContents := strings.TrimSpace(e.CurrentLine())
 					whitespaceInFront := e.LeadingWhitespace()
-					if e.pos.sx > 0 && len(lineContents) == 0 && len(whitespaceInFront) > 0 {
+					currentX, _ := e.DataX()
+					nextLineContents := e.Line(e.DataY() + 1)
+					foundCurlyBracketBelow := currentX-1 == strings.Index(nextLineContents, "}")
+					foundSquareBracketBelow := currentX-1 == strings.Index(nextLineContents, "]")
+					foundParenthesisBelow := currentX-1 == strings.Index(nextLineContents, ")")
+					noDedent := foundCurlyBracketBelow || foundSquareBracketBelow || foundParenthesisBelow
+
+					if e.pos.sx > 0 && len(lineContents) == 0 && len(whitespaceInFront) > 0 && !noDedent {
 						// move one step left
 						e.Prev(c)
 						// trim trailing whitespace
