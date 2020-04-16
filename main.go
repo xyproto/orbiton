@@ -1219,8 +1219,10 @@ Set NO_COLOR=1 to disable colors.
 					// Deleting the rest of the line cleared this line,
 					// so just remove it.
 					e.DeleteLine(e.DataY())
-					// Then go to the end of the line, if needed
-					if e.AtOrAfterEndOfLine() {
+					// Then go to the start or end of the line, if needed
+					if len(e.CurrentLine()) == 1 {
+						e.Home()
+					} else if e.AtOrAfterEndOfLine() {
 						e.End()
 					}
 				}
@@ -1374,11 +1376,9 @@ Set NO_COLOR=1 to disable colors.
 					e.SetRune([]rune(key)[0])
 				}
 				e.WriteRune(c)
-				if len(string(r)) > 0 {
-					if !e.DrawMode() {
-						// Move to the next position
-						e.Next(c)
-					}
+				if len(string(r)) > 0 && !e.DrawMode() {
+					// Move to the next position
+					e.Next(c)
 				}
 				e.redrawCursor = true
 				e.redraw = true
