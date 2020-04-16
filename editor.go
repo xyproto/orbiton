@@ -1988,7 +1988,7 @@ func (e *Editor) CurrentLineCommented() bool {
 // each line in the current block of text (until newline or end of document)
 func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func()) {
 	downCounter := 0
-	for !e.EmptyLine() && !e.AtOrAfterEndOfDocument() {
+	for !e.EmptyRightTrimmedLine() && !e.AtOrAfterEndOfDocument() {
 		f()
 		e.Down(c, nil)
 		downCounter++
@@ -2009,7 +2009,7 @@ func (e *Editor) ToggleCommentBlock(c *vt100.Canvas) {
 	commentCounter := 0
 
 	// Count the commented lines in this block while going down
-	for !e.EmptyLine() && !e.AtOrAfterEndOfDocument() {
+	for !e.EmptyRightTrimmedLine() && !e.AtOrAfterEndOfDocument() {
 		if e.CurrentLineCommented() {
 			commentCounter++
 		}
