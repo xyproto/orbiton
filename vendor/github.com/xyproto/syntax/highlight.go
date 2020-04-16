@@ -6,7 +6,6 @@ package syntax
 import (
 	"bytes"
 	"io"
-	"strings"
 	"text/scanner"
 	"unicode"
 	"unicode/utf8"
@@ -249,8 +248,8 @@ func NewScannerReader(src io.Reader) *scanner.Scanner {
 }
 
 func tokenKind(tok rune, tokText string, inSingleLineComment *bool) Kind {
-	// Check if we are in a bash-style single line comment, or assembly-style single line comments
-	if tok == '#' || (tok == ';' && strings.HasPrefix(tokText, ";")) {
+	// Check if we are in a bash-style single line comment
+	if tok == '#' {
 		*inSingleLineComment = true
 	} else if tok == '\n' {
 		*inSingleLineComment = false

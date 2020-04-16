@@ -22,8 +22,8 @@ github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e h1:qpG
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod h1:HuIsMU8RRBOtsCgI77wP899iHVBQpCmg4ErYMZB+2IA=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/xyproto/syntax v0.0.0-20190927130316-33ad839f30fd/go.mod h1:mCJxUY00r+o4tVnC800hsbzKKMdyLYEmZtn3Fd5RKtw=
-github.com/xyproto/syntax v1.5.0 h1:KiOyskoxfTf+wAPTHsPhzLBGXZwv50C4mhCHuakzBMI=
-github.com/xyproto/syntax v1.5.0/go.mod h1:qlI2iu6tnbgRUQAylyBVat9PO01N1/xHo6i4nnHvtsk=
+github.com/xyproto/syntax v1.6.0 h1:TwOUSzMOqxv8CGdDchHPRnZMR63nb380Ah3lESnoaLg=
+github.com/xyproto/syntax v1.6.0/go.mod h1:qlI2iu6tnbgRUQAylyBVat9PO01N1/xHo6i4nnHvtsk=
 github.com/xyproto/textoutput v1.7.0/go.mod h1:wucBdKjWDgglMwRR84vP5/RG7PEgEOr9ITFAeZ/cFFU=
 github.com/xyproto/textoutput v1.7.1-0.20190927112604-959d7da24b61/go.mod h1:wucBdKjWDgglMwRR84vP5/RG7PEgEOr9ITFAeZ/cFFU=
 github.com/xyproto/textoutput v1.11.0 h1:VORV3VEOxjpO9Y/0OYhfuFbDE7PI7U772uZEdFMtdc8=
