@@ -1177,19 +1177,6 @@ func (e *Editor) insertBelow(y int, r rune) {
 	}
 }
 
-// popRune returns a slice of runes, with the last one removed
-func popRune(rs []rune) []rune {
-	if len(rs) == 0 {
-		return rs
-	}
-	return rs[:len(rs)-1]
-}
-
-// insertRune returns a slice of runes, with the given rune inserted at the front
-func insertRune(rs []rune, r rune) []rune {
-	return append([]rune{r}, rs...)
-}
-
 // InsertRune will insert a rune at the current data position, with word wrap
 func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	y := e.DataY()
@@ -1339,7 +1326,6 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	}
 	e.TrimRight(y)
 	e.MakeConsistent()
-	return
 }
 
 // InsertString will insert a string at the current data position.
