@@ -174,6 +174,20 @@ When loading large files, an animated spinner will appear. The loading operation
 
 Pressing `ctrl-space` will render Markdown files to PDF using `pandoc` (as opposed to `ctrl-r`, which will save the text directly to a PDF, without using `pandoc`).
 
+## Shell function
+
+This shell function works in `zsh` and `bash` and may be useful for both searching for and opening a file at the given line number:
+
+```bash
+fo() { find . -type f -wholename "*$1" -exec /usr/bin/o {} $2 \;; }
+```
+
+Example use:
+
+```sh
+fo somefile.cpp 123
+```
+
 ## General info
 
 * Version: 2.24.2
