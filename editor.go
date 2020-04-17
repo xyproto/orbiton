@@ -33,6 +33,7 @@ const (
 // Mode is a per-filetype mode, like for Markdown
 type Mode int
 
+// EditorColors is a collection of a few selected colors, for setting up a new editor
 type EditorColors struct {
 	fg               vt100.AttributeColor // default foreground color
 	bg               vt100.AttributeColor // default background color
@@ -49,7 +50,8 @@ type Editor struct {
 	syntaxHighlight  bool           // syntax highlighting
 	drawMode         bool           // text or draw mode (for ASCII graphics)?
 	pos              Position       // the current cursor and scroll position
-	searchTerm       string         // for marking found instances
+	searchTerm       string         // the current search term, used when searching
+	stickySearchTerm string         // for going to the next match with ctrl-n, unless esc has been pressed
 	redraw           bool           // if the contents should be redrawn in the next loop
 	redrawCursor     bool           // if the cursor should be moved to the location it is supposed to be
 	lineBeforeSearch int            // save the current line when jumping between search results

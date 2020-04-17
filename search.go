@@ -10,6 +10,8 @@ import (
 func (e *Editor) SetSearchTerm(s string, c *vt100.Canvas, status *StatusBar) {
 	// set the search term
 	e.searchTerm = s
+	// set the sticky search term (used by ctrl-n, cleared by Esc only)
+	e.stickySearchTerm = s
 	// Go to the first instance after the current line, if found
 	e.lineBeforeSearch = e.DataY()
 	for y := e.DataY(); y < e.Len(); y++ {
@@ -30,6 +32,19 @@ func (e *Editor) SetSearchTerm(s string, c *vt100.Canvas, status *StatusBar) {
 // SearchTerm will return the current search term
 func (e *Editor) SearchTerm() string {
 	return e.searchTerm
+}
+
+// UseStickySearchTerm will use the sticky search term as the current search term,
+// which is not cleared by Esc, but by ctrl-p.
+func (e *Editor) UseStickySearchTerm() {
+	if e.stickySearchTerm != "" {
+		e.searchTerm = e.stickySearchTerm
+	}
+}
+
+// ClearStickySearchTerm will clear the sticky search term, for when ctrl-n is pressed.
+func (e *Editor) ClearStickySearchTerm() {
+	e.stickySearchTerm = ""
 }
 
 // GoToNextMatch will go to the next match, using e.SearchTerm(), if possible.

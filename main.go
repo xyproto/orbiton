@@ -921,7 +921,8 @@ Set NO_COLOR=1 to disable colors.
 				e.pos.Down(c)
 			}
 			e.redrawCursor = true
-		case "c:14": // ctrl-n, scroll down or jump to next match
+		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
+			e.UseStickySearchTerm()
 			if e.SearchTerm() != "" {
 				// Go to next match
 				e.GoToNextMatch(c, status)
@@ -939,12 +940,13 @@ Set NO_COLOR=1 to disable colors.
 					e.End()
 				}
 			}
-		case "c:16": // ctrl-p, scroll up
+		case "c:16": // ctrl-p, scroll up, and clear the sticky search term
 			e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
 			e.redrawCursor = true
 			if !e.DrawMode() && e.AfterLineScreenContents() {
 				e.End()
 			}
+			// Additional way to clear the sticky search term, like with Esc
 		case "c:20": // ctrl-t, toggle syntax highlighting or use the next git interactive rebase keyword
 			if line := e.CurrentLine(); mode == modeGit && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
 				undo.Snapshot(e)
@@ -963,7 +965,7 @@ Set NO_COLOR=1 to disable colors.
 			}
 			// Now do a full reset/redraw
 			fallthrough
-		case "c:27": // esc, clear search term, reset, clean and redraw
+		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
 			c = e.FullResetRedraw(c, status)
 		case " ": // space
 			undo.Snapshot(e)
