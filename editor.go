@@ -562,8 +562,21 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 			}
 		}
 	}
-	noColor := os.Getenv("NO_COLOR") != ""
-	inMultilineComment := false // used when highlighting C, Go, C++ etc (using /* and */)
+	var (
+		noColor            bool = "" != os.Getenv("NO_COLOR")
+		inMultilineComment bool // used when highlighting C, Go, C++ etc (using /* and */)
+	)
+	// First loop from 0 to offset to figure out if we are already in a multiline comment
+	for i := 0; i < offset; i++ {
+		untrimmedLine := e.Line(i)
+		if strings.HasPrefix(strings.TrimLeft(untrimmedLine, " \t"), "/*") {
+			inMultilineComment = true
+		}
+		if strings.HasSuffix(strings.TrimRight(untrimmedLine, " \t\n"), "*/") {
+			inMultilineComment = false
+		}
+	}
+	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y := 0; y < numlines; y++ {
 		counter := 0
 		line := strings.Replace(e.Line(y+offset), "\t", tabString, -1)
@@ -685,11 +698,14 @@ func (e *Editor) DeleteRestOfLine() {
 	if e.lines == nil {
 		e.lines = make(map[int][]rune)
 	}
-	_, ok := e.lines[y]
+	v, ok := e.lines[y]
 	if !ok {
 		return
 	}
-	if x >= len([]rune(e.lines[y])) {
+	if v == nil {
+		e.lines[y] = make([]rune, 0)
+	}
+	if x > len([]rune(e.lines[y])) {
 		return
 	}
 	e.lines[y] = e.lines[y][:x]
@@ -698,14 +714,19 @@ func (e *Editor) DeleteRestOfLine() {
 
 // DeleteLine will delete the given line index
 func (e *Editor) DeleteLine(n int) {
-	endOfDocument := n >= (e.Len() - 1)
+	if n < 0 {
+		// This should never happen
+		return
+	}
+	lastLineIndex := e.Len() - 1
+	endOfDocument := n >= lastLineIndex
 	if endOfDocument {
 		// Just delete this line
 		delete(e.lines, n)
 		return
 	}
-	// Shift all lines after y so that y is overwritten.
-	// Then delete the last item.
+	// TODO: Rely on the length of the hash map for finding the index instead of
+	//       searching through each line number key.
 	maxIndex := 0
 	found := false
 	for k := range e.lines {
@@ -722,13 +743,15 @@ func (e *Editor) DeleteLine(n int) {
 		// The line numbers and the length of e.lines does not match
 		return
 	}
-	// Shift all lines after n one step closer to n, overwriting e.lines[n]
+	// Shift all lines after y:
+	// shift all lines after n one step closer to n, overwriting e.lines[n]
 	for i := n; i <= (maxIndex - 1); i++ {
 		e.lines[i] = e.lines[i+1]
 	}
-	// delete the final item
+	// Then delete the final item
 	delete(e.lines, maxIndex)
 
+	// This changes the document
 	e.changed = true
 
 	// Make sure no lines are nil
@@ -1234,8 +1257,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	lastWord := []rune(strings.TrimSpace(e.LastWord(y)))
 	shortWord := (len(string(lastWord)) < 10) && (len(string(lastWord)) < e.wordWrapAt)
 
-	//s := fmt.Sprintf("InsertRune, isSpace=%v, atSpace=%v, prevAtSpace=%v, EOL=%v, r=%s, lastWord=%s, shortWord=%v\n", isSpace, atSpace, prevAtSpace, EOL, string(r), string(lastWord), shortWord)
-	//logf(s)
+	// logf("InsertRune, isSpace=%v, atSpace=%v, prevAtSpace=%v, EOL=%v, r=%s, lastWord=%s, shortWord=%v\n", isSpace, atSpace, prevAtSpace, EOL, string(r), string(lastWord), shortWord)
 
 	// --- A large switch/case for catching all cases ---
 
@@ -1714,10 +1736,16 @@ func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
 	if dataY >= topY && dataY < botY {
 		// No scrolling is needed, just move the screen y position
 		e.pos.sy = dataY - e.pos.offset
+		if e.pos.sy < 0 {
+			e.pos.sy = 0
+		}
 	} else if dataY < h {
 		// No scrolling is needed, just move the screen y position
 		e.pos.offset = 0
 		e.pos.sy = dataY - 1
+		if e.pos.sy < 0 {
+			e.pos.sy = 0
+		}
 	} else if reachedEnd {
 		// To the end of the text
 		e.pos.offset = e.Len() - h
@@ -1752,10 +1780,9 @@ func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
 
 // GoToLineNumber will go to a given line number, but counting from 1, not from 0!
 func (e *Editor) GoToLineNumber(lineNumber int, c *vt100.Canvas, status *StatusBar, center bool) bool {
-	// e.GoTo will check for this
-	//if lineNumber >= e.Len() {
-	//	return false
-	//}
+	if lineNumber < 1 {
+		lineNumber = 1
+	}
 	redraw := e.GoTo(lineNumber-1, c, status)
 	if redraw && center {
 		e.Center(c)
