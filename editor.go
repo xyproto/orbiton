@@ -532,6 +532,25 @@ func (e *Editor) TrimRight(n int) {
 	e.changed = true
 }
 
+// TrimLeft will remove whitespace from the start of the given line number
+func (e *Editor) TrimLeft(n int) {
+	if _, ok := e.lines[n]; !ok {
+		return
+	}
+	firstIndex := 0
+	lastIndex := len([]rune(e.lines[n])) - 1
+	// find the last non-space position
+	for x := 0; x <= lastIndex; x++ {
+		if !unicode.IsSpace(e.lines[n][x]) {
+			firstIndex = x
+			break
+		}
+	}
+	// Remove the leading spaces
+	e.lines[n] = e.lines[n][firstIndex:]
+	e.changed = true
+}
+
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error {
 	o := textoutput.NewTextOutput(true, true)
@@ -563,7 +582,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		}
 	}
 	var (
-		noColor            bool = "" != os.Getenv("NO_COLOR")
+		noColor            bool = os.Getenv("NO_COLOR") != ""
 		inMultilineComment bool // used when highlighting C, Go, C++ etc (using /* and */)
 	)
 	// First loop from 0 to offset to figure out if we are already in a multiline comment
@@ -1685,6 +1704,11 @@ func (e *Editor) WriteTab(c *vt100.Canvas) {
 // EmptyRightTrimmedLine checks if the current line is empty (and whitespace doesn't count)
 func (e *Editor) EmptyRightTrimmedLine() bool {
 	return len(strings.TrimRightFunc(e.CurrentLine(), unicode.IsSpace)) == 0
+}
+
+// EmptyRightTrimmedLineBelow checks if the next line is empty (and whitespace doesn't count)
+func (e *Editor) EmptyRightTrimmedLineBelow() bool {
+	return len(strings.TrimRightFunc(e.Line(e.DataY()+1), unicode.IsSpace)) == 0
 }
 
 // EmptyLine returns true if the line is completely empty, no whitespace or anything

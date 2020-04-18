@@ -61,9 +61,9 @@ func main() {
 
 		statusDuration = 2700 * time.Millisecond
 
-		copyLine   string   // for the cut/copy/paste functionality
-		bookmark   Position // for the bookmark/jump functionality
-		statusMode bool     // if information should be shown at the bottom
+		copyLine   string    // for the cut/copy/paste functionality
+		bookmark   *Position // for the bookmark/jump functionality
+		statusMode bool      // if information should be shown at the bottom
 
 		firstLetterSinceStart string
 
@@ -106,7 +106,7 @@ ctrl-x     to cut the current line
 ctrl-c     to copy the current line
 ctrl-v     to paste the current line
 ctrl-b     to bookmark the current line
-ctrl-j     to jump to the bookmark
+ctrl-j     to jump to the bookmark (or join lines if a bookmark is not set)
 ctrl-u     to undo
 ctrl-l     to jump to a specific line
 ctrl-f     to search for a string
@@ -1284,19 +1284,46 @@ Set NO_COLOR=1 to disable colors.
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:2": // ctrl-b, bookmark
-			bookmark = e.pos
+			bookmark = &e.pos
 			status.SetMessage("Bookmarked line " + strconv.Itoa(e.LineNumber()))
 			status.Show(c, e)
 			e.redrawCursor = true
-		case "c:10": // ctrl-j, jump to bookmark
-			e.GoToPosition(c, status, bookmark)
-			// Do the redraw manually before showing the status message
-			e.DrawLines(c, true, false)
-			e.redraw = false
-			// Show the status message.
-			status.SetMessage("Jumped to bookmark at line " + strconv.Itoa(e.LineNumber()))
-			status.Show(c, e)
+		case "c:10": // ctrl-j, jump to bookmark (or join line if bookmark is not set)
+			if bookmark != nil {
+				undo.Snapshot(e)
+				e.GoToPosition(c, status, *bookmark)
+				// Do the redraw manually before showing the status message
+				e.DrawLines(c, true, false)
+				e.redraw = false
+				// Show the status message.
+				status.SetMessage("Jumped to bookmark at line " + strconv.Itoa(e.LineNumber()))
+				status.Show(c, e)
+				e.redrawCursor = true
+				break
+			}
+			// Join line
+			if e.Empty() {
+				status.SetMessage("Empty")
+				status.Show(c, e)
+			} else {
+				undo.Snapshot(e)
+				nextLineIndex := e.DataY() + 1
+				if e.EmptyRightTrimmedLineBelow() {
+					// Just delete the line below if it's empty
+					e.DeleteLine(nextLineIndex)
+				} else {
+					// Join the line below with this line. Also add a space in between.
+					e.TrimLeft(nextLineIndex) // this is unproblematic, even at the end of the document
+					e.End()
+					e.InsertRune(c, ' ')
+					e.WriteRune(c)
+					e.Next(c)
+					e.Delete()
+				}
+				e.redraw = true
+			}
 			e.redrawCursor = true
+
 		case "/": // check if this is was the first pressed letter or not
 			if firstLetterSinceStart == "" {
 				// Set the first letter since start to something that will not trigger this branch any more.

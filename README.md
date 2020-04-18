@@ -50,6 +50,7 @@ To unset:
 * The text will be red if a loaded file is read-only.
 * The terminal needs to be resized to show the second half of lines that are longer than the terminal width.
 * If the filename is `COMMIT_EDITMSG`, the look and feel will be adjusted for git commit messages.
+* There's currently no good way to move blocks of code around, but this will be added.
 * Supports `UTF-8`.
 * Respects the `NO_COLOR` environment variable.
 * Can render text to PDF.
@@ -81,7 +82,7 @@ To unset:
 * `ctrl-c` - Copy the current line.
 * `ctrl-v` - Paste the current line.
 * `ctrl-b` - Bookmark the current line.
-* `ctrl-j` - Jump to the bookmark.
+* `ctrl-j` - Jump to the bookmark (or join lines if a bookmark is not set).
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
 * `ctrl-l` - Jump to a specific line number.
 * `ctrl-f` - Search for a string.
