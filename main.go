@@ -1184,7 +1184,7 @@ Set NO_COLOR=1 to disable colors.
 				e.redrawCursor = true
 				e.redraw = true
 			} else {
-				status.SetMessage("No more to undo")
+				status.SetMessage("Nothing more to undo")
 				status.Show(c, e)
 			}
 		case "c:12": // ctrl-l, go to line number
