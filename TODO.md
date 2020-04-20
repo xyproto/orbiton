@@ -13,3 +13,4 @@
       Perhaps pressing `ctrl-g` two times.
 - [ ] Syntax highlighting of `..`, `::`, `:asdfasdf:` and `^^^` in .rst
 - [ ] Block mode, where operations work on the current block of text?
+- [ ] Make smart indentation smarter when inserting a "}" four spaces in, and there is no "}" at the start of the next line.
