@@ -584,15 +584,22 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	var (
 		noColor            bool = os.Getenv("NO_COLOR") != ""
 		inMultilineComment bool // used when highlighting C, Go, C++ etc (using /* and */)
+		inMultilineString  bool // used for multiline strings in Go
 	)
 	// First loop from 0 to offset to figure out if we are already in a multiline comment
 	for i := 0; i < offset; i++ {
-		untrimmedLine := e.Line(i)
-		if strings.HasPrefix(strings.TrimLeft(untrimmedLine, " \t"), "/*") {
+		trimmedLine := strings.TrimSpace(e.Line(i))
+		if strings.HasPrefix(trimmedLine, "/*") {
 			inMultilineComment = true
 		}
-		if strings.HasSuffix(strings.TrimRight(untrimmedLine, " \t\n"), "*/") {
+		if strings.HasSuffix(trimmedLine, "*/") {
 			inMultilineComment = false
+		}
+		if !inMultilineComment && !strings.HasPrefix(trimmedLine, "//") && strings.HasSuffix(trimmedLine, "`") {
+			inMultilineString = true
+		}
+		if strings.HasPrefix(trimmedLine, "`") && !inMultilineComment {
+			inMultilineString = false
 		}
 	}
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
@@ -627,17 +634,25 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					}
 				} else {
 					lastLineInMultilineComment := false
-					if strings.HasPrefix(strings.TrimLeft(line, " \t"), "/*") {
+					trimmedLine := strings.TrimSpace(line)
+					inSingleLineComment := strings.HasPrefix(trimmedLine, "//")
+					if strings.HasPrefix(trimmedLine, "/*") {
 						inMultilineComment = true
 					}
-					if strings.HasSuffix(strings.TrimRight(line, " \t\n"), "*/") {
+					if strings.HasSuffix(trimmedLine, "*/") {
 						inMultilineComment = false
 						lastLineInMultilineComment = true
 					}
-					if inMultilineComment || lastLineInMultilineComment {
+					if !inMultilineComment && !inSingleLineComment && strings.HasPrefix(trimmedLine, "`") {
+						inMultilineString = false
+					}
+					if inMultilineComment || lastLineInMultilineComment || inMultilineString {
 						coloredString = UnEscape(e.multilineComment.Get(line))
 					} else {
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
+					}
+					if !inMultilineComment && !inSingleLineComment && strings.HasSuffix(trimmedLine, "`") {
+						inMultilineString = true
 					}
 				}
 
