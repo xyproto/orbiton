@@ -40,6 +40,7 @@ type EditorColors struct {
 	searchFg         vt100.AttributeColor // search highlight color
 	gitColor         vt100.AttributeColor // git commit message color
 	multilineComment vt100.AttributeColor // color for multiline comments
+	multilineString  vt100.AttributeColor // colo for multiline strings
 }
 
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
@@ -66,7 +67,7 @@ type Editor struct {
 // * background color attributes
 // * if syntax highlighting is enabled
 // * if "insert mode" is enabled (as opposed to "draw mode")
-func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, syntaxHighlight, textEditMode bool, scrollSpeed int, searchFg vt100.AttributeColor, scheme syntax.TextConfig, multilineComment vt100.AttributeColor, mode Mode) *Editor {
+func NewEditor(spacesPerTab int, syntaxHighlight, textEditMode bool, scrollSpeed int, fg, bg, searchFg, multilineComment, multilineString vt100.AttributeColor, scheme syntax.TextConfig, mode Mode) *Editor {
 	syntax.DefaultTextConfig = scheme
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
@@ -89,6 +90,7 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, syntaxHighlight, t
 	}
 	e.mode = mode
 	e.multilineComment = multilineComment
+	e.multilineString = multilineString
 	return e
 }
 
@@ -97,7 +99,7 @@ func NewEditor(spacesPerTab int, fg, bg vt100.AttributeColor, syntaxHighlight, t
 // search results magenta, use the default syntax highlighting scheme, don't use git mode and don't use markdown mode,
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
-	e := NewEditor(4, vt100.White, vt100.Black, false, true, 1, vt100.Magenta, syntax.DefaultTextConfig, vt100.Gray, modeBlank)
+	e := NewEditor(4, false, true, 1, vt100.White, vt100.Black, vt100.Magenta, vt100.Gray, vt100.Magenta, syntax.DefaultTextConfig, modeBlank)
 	e.wordWrapAt = wordWrapLimit
 	return e
 }
@@ -646,11 +648,16 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					if !inMultilineComment && !inSingleLineComment && strings.HasPrefix(trimmedLine, "`") {
 						inMultilineString = false
 					}
-					if inMultilineComment || lastLineInMultilineComment || inMultilineString {
+
+					// Color the line
+					if inMultilineComment || lastLineInMultilineComment {
 						coloredString = UnEscape(e.multilineComment.Get(line))
+					} else if inMultilineString {
+						coloredString = UnEscape(e.multilineString.Get(line))
 					} else {
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					}
+
 					if !inMultilineComment && !inSingleLineComment && strings.HasSuffix(trimmedLine, "`") {
 						inMultilineString = true
 					}

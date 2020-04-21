@@ -30,14 +30,16 @@ var (
 func main() {
 	var (
 		// Color scheme for the "text edit" mode
-		defaultEditorForeground      = vt100.LightGreen // for when syntax highlighting is not in use
-		defaultEditorBackground      = vt100.BackgroundDefault
-		defaultStatusForeground      = vt100.White
-		defaultStatusBackground      = vt100.BackgroundBlack
-		defaultStatusErrorForeground = vt100.LightRed
-		defaultStatusErrorBackground = vt100.BackgroundDefault
-		defaultEditorSearchHighlight = vt100.LightMagenta
-		defaultEditorHighlightTheme  = syntax.TextConfig{
+		defaultEditorForeground       = vt100.LightGreen // for when syntax highlighting is not in use
+		defaultEditorBackground       = vt100.BackgroundDefault
+		defaultStatusForeground       = vt100.White
+		defaultStatusBackground       = vt100.BackgroundBlack
+		defaultStatusErrorForeground  = vt100.LightRed
+		defaultStatusErrorBackground  = vt100.BackgroundDefault
+		defaultEditorSearchHighlight  = vt100.LightMagenta
+		defaultEditorMultilineComment = vt100.Gray
+		defaultEditorMultilineString  = vt100.Magenta
+		defaultEditorHighlightTheme   = syntax.TextConfig{
 			String:        "lightyellow",
 			Keyword:       "lightred",
 			Comment:       "gray",
@@ -54,7 +56,6 @@ func main() {
 			Star:          "lightyellow",
 			Whitespace:    "",
 		}
-		defaultEditorMultilineComment = vt100.Magenta
 
 		versionFlag = flag.Bool("version", false, "show version information")
 		helpFlag    = flag.Bool("help", false, "show simple help")
@@ -199,14 +200,15 @@ Set NO_COLOR=1 to disable colors.
 
 	// scroll 10 lines at a time, no word wrap
 	e := NewEditor(spacesPerTab,
-		defaultEditorForeground,
-		defaultEditorBackground,
 		syntaxHighlight,
 		true,
 		10,
+		defaultEditorForeground,
+		defaultEditorBackground,
 		defaultEditorSearchHighlight,
-		defaultEditorHighlightTheme,
 		defaultEditorMultilineComment,
+		defaultEditorMultilineString,
+		defaultEditorHighlightTheme,
 		mode)
 
 	// For non-highlighted files, adjust the word wrap
