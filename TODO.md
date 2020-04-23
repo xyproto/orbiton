@@ -14,3 +14,4 @@
 - [ ] Syntax highlighting of `..`, `::`, `:asdfasdf:` and `^^^` in .rst
 - [ ] Block mode, where operations work on the current block of text?
 - [ ] Make smart indentation smarter when inserting a "}" four spaces in, and there is no "}" at the start of the next line.
+- [ ] Introduce a key for jumping between the two locations where you've spent most time the last 10 minutes.
