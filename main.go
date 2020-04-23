@@ -684,6 +684,8 @@ Set NO_COLOR=1 to disable colors.
 
 						output, err := cmd.CombinedOutput()
 						if err != nil || bytes.Contains(output, []byte("error:")) {
+							// Clear all existing status messages and status message clearing goroutines
+							status.ClearAll(c)
 							// Find the first error message
 							lines := strings.Split(string(output), "\n")
 							errorMessage := "Build error"
@@ -694,8 +696,8 @@ Set NO_COLOR=1 to disable colors.
 									break
 								}
 							}
-							status.ClearAll(c)
 							status.SetErrorMessage(errorMessage)
+							status.Show(c, e)
 							for i, line := range lines {
 								// Jump to the error location, for C++ and Go
 								if strings.Count(line, ":") >= 3 {

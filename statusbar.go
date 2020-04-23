@@ -81,7 +81,12 @@ func (sb *StatusBar) Show(c *vt100.Canvas, e *Editor) {
 	sb.Draw(c, e.pos.Offset())
 	statusBeingShown++
 	go func() {
-		time.Sleep(sb.show)
+		if sb.isError {
+			// Show error messages for 3x as long
+			time.Sleep(sb.show * 3)
+		} else {
+			time.Sleep(sb.show)
+		}
 		statusBeingShown--
 		if statusBeingShown == 0 {
 			sb.Clear(c)
