@@ -54,6 +54,10 @@ func main() {
 			Decimal:       "white",
 			AndOr:         "lightyellow",
 			Star:          "lightyellow",
+			Class:         "lightred",
+			Private:       "darkred",
+			Protected:     "darkyellow",
+			Public:        "darkgreen",
 			Whitespace:    "",
 		}
 
