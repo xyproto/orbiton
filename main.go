@@ -1373,17 +1373,18 @@ Set NO_COLOR=1 to disable colors.
 						e.SetRune('O')
 						e.WriteRune(c)
 						e.Next(c)
-					}
-				}
-				// Type the letter that was pressed
-				if len([]rune(key)) > 0 {
-					if !e.DrawMode() {
+					} else if !e.DrawMode() {
 						// Was this a special case of "OK" as the first thing written?
 						if key == "K" {
 							e.InsertRune(c, 'O')
 							e.WriteRune(c)
 							e.Next(c)
 						}
+					}
+				}
+				// Type the letter that was pressed
+				if len([]rune(key)) > 0 {
+					if !e.DrawMode() {
 						// Insert a letter. This is what normally happens.
 						e.InsertRune(c, []rune(key)[0])
 						e.WriteRune(c)
