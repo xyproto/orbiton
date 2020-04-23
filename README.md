@@ -177,7 +177,7 @@ Pressing `ctrl-space` will render Markdown files to PDF using `pandoc` (as oppos
 
 ## Shell function
 
-This shell function works in `zsh` and `bash` and may be useful for both searching for and opening a file at the given line number:
+This shell function works in `zsh` and `bash` and may be useful for both searching for and opening a file at the given line number (works best if there is only one matching file):
 
 ```bash
 fo() { find . -type f -wholename "*$1" -exec /usr/bin/o {} $2 \;; }
