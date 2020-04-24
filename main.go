@@ -20,7 +20,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const version = "o 2.24.2"
+const version = "o 2.25.0"
 
 var (
 	rebasePrefixes   = []string{"p", "pick", "r", "reword", "d", "drop", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "l", "label", "t", "reset", "m", "merge"}
@@ -79,6 +79,8 @@ func main() {
 		spacesPerTab = 4 // default spaces per tab
 
 		mode Mode // an "enum"/int signalling if this file should be in git mode, markdown mode etc
+
+		lastCopyY = -1 // used for keeping track if ctrl-c is pressed twice on the same line
 	)
 
 	flag.Parse()
@@ -111,7 +113,7 @@ ctrl-x     to cut the current line
 ctrl-c     to copy the current line
 ctrl-v     to paste the current line
 ctrl-b     to bookmark the current line
-ctrl-j     to jump to the bookmark (or join lines if a bookmark is not set)
+ctrl-j     to join lines (or jump to the bookmark, if set)
 ctrl-u     to undo
 ctrl-l     to jump to a specific line
 ctrl-f     to search for a string
@@ -1260,14 +1262,35 @@ Set NO_COLOR=1 to disable colors.
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:3": // ctrl-c, copy the stripped contents of the current line
-			trimmed := strings.TrimSpace(e.Line(e.DataY()))
-			if trimmed != "" {
-				copyLine = trimmed
-				// Copy the line to the clipboard
-				_ = clipboard.WriteAll(copyLine)
+			y := e.DataY()
+			if lastCopyY != y {
+				lastCopyY = y
+				// Pressed for the first time for this line number
+				trimmed := strings.TrimSpace(e.Line(y))
+				if trimmed != "" {
+					copyLine = trimmed
+					// Copy the line to the clipboard
+					_ = clipboard.WriteAll(copyLine)
+					// Display a status message
+					status.SetMessage("Copied 1 line")
+					status.Show(c, e)
+				}
+			} else {
+				// Pressed multiple times for this line number, copy the block of text starting from this line
+				s := e.Block(y)
+				if s != "" {
+					// Place the block of text in the clipboard
+					_ = clipboard.WriteAll(s)
+					// Display a status message
+					plural := ""
+					lineCount := strings.Count(s, "\n")
+					if lineCount > 1 {
+						plural = "s"
+					}
+					status.SetMessage(fmt.Sprintf("Copied %d line%s", lineCount, plural))
+					status.Show(c, e)
+				}
 			}
-			e.redrawCursor = true
-			e.redraw = true
 		case "c:22": // ctrl-v, paste
 			undo.Snapshot(e)
 			// Try fetching the line from the clipboard first
