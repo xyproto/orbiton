@@ -82,6 +82,7 @@ func main() {
 
 		lastCopyY  = -1 // used for keeping track if ctrl-c is pressed twice on the same line
 		lastPasteY = -1 // used for keeping track if ctrl-v is pressed twice on the same line
+		lastCutY   = -1 // used for keeping track if ctrl-x is pressed twice on the same line
 	)
 
 	flag.Parse()
@@ -1254,19 +1255,53 @@ Set NO_COLOR=1 to disable colors.
 			}
 			e.redrawCursor = true
 		case "c:24": // ctrl-x, cut line
-			undo.Snapshot(e)
 			y := e.DataY()
-			copyLines = []string{e.Line(y)}
-			// Copy the line to the clipboard
-			_ = clipboard.WriteAll(strings.Join(copyLines, "\n"))
-			e.DeleteLine(y)
+			line := e.Line(y)
+			// Now check if there is anything to cut
+			if len(strings.TrimSpace(line)) == 0 {
+				break
+			}
+			// Prepare to cut
+			undo.Snapshot(e)
+			// Check if ctrl-x was pressed once or twice, for this line
+			if lastCutY != y { // Single line cut
+				lastCutY = y
+				lastCopyY = -1
+				lastPasteY = -1
+				// Copy the line internally
+				copyLines = []string{line}
+				// Copy the line to the clipboard
+				_ = clipboard.WriteAll(line)
+				// Delete the line
+				e.DeleteLine(y)
+			} else { // Multi line cut (add to the clipboard, since it's the second press)
+				lastCutY = y
+				lastCopyY = -1
+				lastPasteY = -1
+
+				s := e.Block(y)
+				lines := strings.Split(s, "\n")
+				if len(lines) < 1 {
+					// Need at least 1 line to be able to cut "the rest" after the first line has been cut
+					break
+				}
+				copyLines = append(copyLines, lines...)
+				s = strings.Join(copyLines, "\n")
+				// Place the block of text in the clipboard
+				_ = clipboard.WriteAll(s)
+				// Delete the corresponding number of lines
+				for range lines {
+					e.DeleteLine(y)
+				}
+			}
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:3": // ctrl-c, copy the stripped contents of the current line
 			y := e.DataY()
-			if lastCopyY != y {
+			if lastCopyY != y { // Single line copy
 				lastCopyY = y
 				lastPasteY = -1
+				lastCutY = -1
 				// Pressed for the first time for this line number
 				trimmed := strings.TrimSpace(e.Line(y))
 				if trimmed != "" {
@@ -1277,12 +1312,14 @@ Set NO_COLOR=1 to disable colors.
 					status.SetMessage("Copied 1 line")
 					status.Show(c, e)
 				}
-			} else {
+			} else { // Multi line copy
 				lastCopyY = y
 				lastPasteY = -1
+				lastCutY = -1
 				// Pressed multiple times for this line number, copy the block of text starting from this line
 				s := e.Block(y)
 				if s != "" {
+					copyLines = strings.Split(s, "\n")
 					// Place the block of text in the clipboard
 					_ = clipboard.WriteAll(s)
 					// Display a status message
@@ -1311,7 +1348,7 @@ Set NO_COLOR=1 to disable colors.
 			// Prepare to paste
 			undo.Snapshot(e)
 			y := e.DataY()
-			if lastPasteY != y {
+			if lastPasteY != y { // Single line paste
 				lastPasteY = y
 				// Pressed for the first time for this line number, paste only one line
 
@@ -1324,7 +1361,7 @@ Set NO_COLOR=1 to disable colors.
 					// If the line is not empty, insert the trimmed string
 					e.InsertString(c, strings.TrimSpace(copyLines[0]))
 				}
-			} else {
+			} else { // Multi line paste (the rest of the lines)
 				lastPasteY = y
 				// Pressed the second time for this line number, paste multiple lines without trimming
 
