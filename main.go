@@ -1368,6 +1368,9 @@ Set NO_COLOR=1 to disable colors.
 				// copyLines contains the lines to be pasted, and they are > 1
 				// the first line is skipped since that was already pasted when ctrl-v was pressed the first time
 				lastIndex := len(copyLines[1:]) - 1
+				// Start by pasting (and overwritig) an indented version of this line
+				e.SetLine(y, e.LeadingWhitespace()+strings.TrimSpace(copyLines[0]))
+				// The paste the rest of the lines, also untrimmed
 				for i, line := range copyLines[1:] {
 					if i == lastIndex && len(strings.TrimSpace(line)) == 0 {
 						// If the last line is blank, skip it
