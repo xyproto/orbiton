@@ -1292,7 +1292,8 @@ Set NO_COLOR=1 to disable colors.
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:2": // ctrl-b, bookmark
-			bookmark = &e.pos
+			tmpBookmark := e.pos
+			bookmark = &tmpBookmark
 			status.SetMessage("Bookmarked line " + strconv.Itoa(e.LineNumber()))
 			status.Show(c, e)
 			e.redrawCursor = true
