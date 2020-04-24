@@ -82,7 +82,7 @@ To unset:
 * `ctrl-c` - Copy the current line.
 * `ctrl-v` - Paste the current line.
 * `ctrl-b` - Bookmark the current line.
-* `ctrl-j` - Jump to the bookmark (or join lines if a bookmark is not set).
+* `ctrl-j` - Join lines (or jump to the bookmark, if set).
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
 * `ctrl-l` - Jump to a specific line number.
 * `ctrl-f` - Search for a string.
@@ -191,6 +191,6 @@ fo somefile.cpp 123
 
 ## General info
 
-* Version: 2.24.2
+* Version: 2.25.0
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
