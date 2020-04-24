@@ -2081,6 +2081,7 @@ func (e *Editor) Block(n int) string {
 		bb, lb strings.Builder // block string builder and line string builder
 		line   []rune
 		ok     bool
+		s      string
 	)
 	for {
 		line, ok = e.lines[n]
@@ -2093,15 +2094,15 @@ func (e *Editor) Block(n int) string {
 		for _, r := range line {
 			lb.WriteRune(r)
 		}
-		if s := lb.String(); len(strings.TrimSpace(s)) == 0 {
+		s = lb.String()
+		if len(strings.TrimSpace(s)) == 0 {
 			// Empty trimmed line, end of block
 			return bb.String()
-		} else {
-			// Save this line to bb
-			bb.WriteString(s)
-			// And add a newline
-			bb.Write([]byte{'\n'})
 		}
+		// Save this line to bb
+		bb.WriteString(s)
+		// And add a newline
+		bb.Write([]byte{'\n'})
 	}
 }
 
