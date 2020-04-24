@@ -897,7 +897,7 @@ func (e *Editor) SplitOvershoot(y int, isSpace bool) ([]rune, []rune) {
 	// Maximum word length to not keep as one word
 	maxDistance := e.wordWrapAt / 2
 	if e.WithinLimit(y) {
-		return e.lines[y], []rune{}
+		return e.lines[y], make([]rune, 0)
 	}
 	splitPosition := e.wordWrapAt
 	if isSpace {
@@ -1150,7 +1150,7 @@ func (e *Editor) SetHighlight(syntaxHighlight bool) {
 // Any previous contents of that line is removed.
 func (e *Editor) SetLine(n int, s string) {
 	e.CreateLineIfMissing(n)
-	e.lines[n] = []rune{}
+	e.lines[n] = make([]rune, 0)
 	counter := 0
 	// It's important not to use the index value when looping over a string,
 	// unless the byte index is what one's after, as opposed to the rune index.
