@@ -2074,6 +2074,37 @@ func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func()) {
 	}
 }
 
+// Block will return the text from the given line until
+// either a newline or the end of the document.
+func (e *Editor) Block(n int) string {
+	var (
+		bb, lb strings.Builder // block string builder and line string builder
+		line   []rune
+		ok     bool
+	)
+	for {
+		line, ok = e.lines[n]
+		n++
+		if !ok || len(line) == 0 {
+			// End of document, empty line or invalid line: end of block
+			return bb.String()
+		}
+		lb.Reset()
+		for _, r := range line {
+			lb.WriteRune(r)
+		}
+		if s := lb.String(); len(strings.TrimSpace(s)) == 0 {
+			// Empty trimmed line, end of block
+			return bb.String()
+		} else {
+			// Save this line to bb
+			bb.WriteString(s)
+			// And add a newline
+			bb.Write([]byte{'\n'})
+		}
+	}
+}
+
 // ToggleCommentBlock will toggle comments until a blank line or the end of the document is reached
 // The amount of existing commented lines is considered before deciding to comment the block in or out
 func (e *Editor) ToggleCommentBlock(c *vt100.Canvas) {
