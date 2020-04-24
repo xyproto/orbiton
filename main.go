@@ -66,7 +66,7 @@ func main() {
 
 		statusDuration = 2700 * time.Millisecond
 
-		copyLine   string    // for the cut/copy/paste functionality
+		copyLines  []string  // for the cut/copy/paste functionality
 		bookmark   *Position // for the bookmark/jump functionality
 		statusMode bool      // if information should be shown at the bottom
 
@@ -80,7 +80,8 @@ func main() {
 
 		mode Mode // an "enum"/int signalling if this file should be in git mode, markdown mode etc
 
-		lastCopyY = -1 // used for keeping track if ctrl-c is pressed twice on the same line
+		lastCopyY  = -1 // used for keeping track if ctrl-c is pressed twice on the same line
+		lastPasteY = -1 // used for keeping track if ctrl-v is pressed twice on the same line
 	)
 
 	flag.Parse()
@@ -109,9 +110,9 @@ ctrl-g     to toggle filename/line/column/unicode/word count status display
 ctrl-d     to delete a single character
 ctrl-t     to toggle syntax highlighting
 ctrl-o     to toggle text or draw mode
-ctrl-x     to cut the current line
-ctrl-c     to copy the current line
-ctrl-v     to paste the current line
+ctrl-c     to copy the current line, press twice to copy the current block
+ctrl-v     to paste one line, press twice to paste the rest
+ctrl-x     to cut the current line, press twice to cut the current block
 ctrl-b     to bookmark the current line
 ctrl-j     to join lines (or jump to the bookmark, if set)
 ctrl-u     to undo
@@ -1255,9 +1256,9 @@ Set NO_COLOR=1 to disable colors.
 		case "c:24": // ctrl-x, cut line
 			undo.Snapshot(e)
 			y := e.DataY()
-			copyLine = e.Line(y)
+			copyLines = []string{e.Line(y)}
 			// Copy the line to the clipboard
-			_ = clipboard.WriteAll(copyLine)
+			_ = clipboard.WriteAll(strings.Join(copyLines, "\n"))
 			e.DeleteLine(y)
 			e.redrawCursor = true
 			e.redraw = true
@@ -1265,17 +1266,20 @@ Set NO_COLOR=1 to disable colors.
 			y := e.DataY()
 			if lastCopyY != y {
 				lastCopyY = y
+				lastPasteY = -1
 				// Pressed for the first time for this line number
 				trimmed := strings.TrimSpace(e.Line(y))
 				if trimmed != "" {
-					copyLine = trimmed
+					copyLines = []string{trimmed}
 					// Copy the line to the clipboard
-					_ = clipboard.WriteAll(copyLine)
+					_ = clipboard.WriteAll(strings.Join(copyLines, "\n"))
 					// Display a status message
 					status.SetMessage("Copied 1 line")
 					status.Show(c, e)
 				}
 			} else {
+				lastCopyY = y
+				lastPasteY = -1
 				// Pressed multiple times for this line number, copy the block of text starting from this line
 				s := e.Block(y)
 				if s != "" {
@@ -1292,24 +1296,50 @@ Set NO_COLOR=1 to disable colors.
 				}
 			}
 		case "c:22": // ctrl-v, paste
-			undo.Snapshot(e)
-			// Try fetching the line from the clipboard first
+			// Try fetching the lines from the clipboard first
 			lines, err := clipboard.ReadAll()
 			if err == nil { // no error
-				if strings.Contains(lines, "\n") {
-					copyLine = strings.SplitN(lines, "\n", 2)[0]
-				} else {
-					copyLine = lines
-				}
+				// Fix nonbreaking spaces first
+				lines = strings.Replace(lines, string([]byte{0xc2, 0xa0}), string([]byte{0x20}), -1)
+				// Split the text into lines and store it in "copyLines"
+				copyLines = strings.Split(lines, "\n")
 			}
-			// Fix nonbreaking spaces
-			copyLine = strings.Replace(copyLine, string([]byte{0xc2, 0xa0}), string([]byte{0x20}), -1)
-			if e.EmptyRightTrimmedLine() {
-				// If the line is empty, use the existing indentation before pasting
-				e.SetLine(e.DataY(), e.LeadingWhitespace()+strings.TrimSpace(copyLine))
+			// Now check if there is anything to paste
+			if len(copyLines) == 0 {
+				break
+			}
+			// Prepare to paste
+			undo.Snapshot(e)
+			y := e.DataY()
+			if lastPasteY != y {
+				lastPasteY = y
+				// Pressed for the first time for this line number, paste only one line
+
+				// copyLines[0] is the line to be pasted, and it exists
+
+				if e.EmptyRightTrimmedLine() {
+					// If the line is empty, use the existing indentation before pasting
+					e.SetLine(y, e.LeadingWhitespace()+strings.TrimSpace(copyLines[0]))
+				} else {
+					// If the line is not empty, insert the trimmed string
+					e.InsertString(c, strings.TrimSpace(copyLines[0]))
+				}
 			} else {
-				// If the line is not empty, insert the trimmed string
-				e.InsertString(c, strings.TrimSpace(copyLine))
+				lastPasteY = y
+				// Pressed the second time for this line number, paste multiple lines without trimming
+
+				// copyLines contains the lines to be pasted, and they are > 1
+				// the first line is skipped since that was already pasted when ctrl-v was pressed the first time
+				lastIndex := len(copyLines[1:]) - 1
+				for i, line := range copyLines[1:] {
+					if i == lastIndex && len(strings.TrimSpace(line)) == 0 {
+						// If the last line is blank, skip it
+						break
+					}
+					e.InsertLineBelow()
+					e.Down(c, nil) // no status message if the end of ducment is reached, there should always be a new line
+					e.InsertString(c, line)
+				}
 			}
 			// Prepare to redraw the text
 			e.redrawCursor = true
