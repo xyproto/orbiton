@@ -1,6 +1,6 @@
 .\"             -*-Nroff-*-
 .\"
-.TH "o" 1 "24 Apr 2020" "" ""
+.TH "o" 1 "25 Apr 2020" "" ""
 .SH NAME
 o \- an editor
 .SH SYNOPSIS
@@ -61,13 +61,16 @@ displays brief usage information
   Toggle between "text" and "draw mode" (for ASCII graphics).
 .sp
 .B ctrl-c
-  Copy the current line. Press twice to copy the current block of text (until newline or the end of the document).
+  Press twice to copy the current block of text (until a blank line or the end of the file).
+  Press once to only copy the current line.
 .sp
 .B ctrl-v
-  Paste one line (trimmed). Press twice to paste the rest of the text (untrimmed).
+  Press twice to paste the copied text, untrimmed.
+  Press once to paste only the first line of the copied text, trimmed.
 .sp
 .B ctrl-x
-  Cut the current line. Press twice to cut the current block of text (until newline or the end of the document).
+  Press twice to cut the current block of text (until a blank line or the end of the file).
+  Press once to only cut the current line.
 .sp
 .B ctrl-b
   Bookmark the current position.
