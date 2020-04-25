@@ -87,3 +87,8 @@ func (p *Position) Down(c *vt100.Canvas) error {
 func (p *Position) AtStartOfLine() bool {
 	return p.sx == 0
 }
+
+// LineNumber returns the current line number this Position is at
+func (p *Position) LineNumber() int {
+	return (p.offset + p.sy) - 1
+}

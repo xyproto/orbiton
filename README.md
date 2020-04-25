@@ -81,7 +81,7 @@ To unset:
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text.
 * `ctrl-c` - Copy one line. Press twice to copy a block of text.
 * `ctrl-v` - Paste one trimmed line. Press twice to paste multiple untrimmed lines.
-* `ctrl-b` - Bookmark the current line.
+* `ctrl-b` - Bookmark the current line. Press again to remove bookmark.
 * `ctrl-j` - Join lines (or jump to the bookmark, if set).
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
 * `ctrl-l` - Jump to a specific line number.

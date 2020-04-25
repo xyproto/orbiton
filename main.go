@@ -114,7 +114,7 @@ ctrl-o     to toggle text or draw mode
 ctrl-c     to copy the current line, press twice to copy the current block
 ctrl-v     to paste one line, press twice to paste the rest
 ctrl-x     to cut the current line, press twice to cut the current block
-ctrl-b     to bookmark the current line
+ctrl-b     to bookmark the current line, press again to unbookmark
 ctrl-j     to join lines (or jump to the bookmark, if set)
 ctrl-u     to undo
 ctrl-l     to jump to a specific line
@@ -1393,9 +1393,15 @@ Set NO_COLOR=1 to disable colors.
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:2": // ctrl-b, bookmark
-			tmpBookmark := e.pos
-			bookmark = &tmpBookmark
-			status.SetMessage("Bookmarked line " + strconv.Itoa(e.LineNumber()))
+			if bookmark == nil {
+				tmpBookmark := e.pos
+				bookmark = &tmpBookmark
+				status.SetMessage("Bookmarked line " + strconv.Itoa(e.LineNumber()))
+			} else {
+				bookmarkLine := bookmark.LineNumber()
+				bookmark = nil
+				status.SetMessage("Unbookmark line " + strconv.Itoa(bookmarkLine))
+			}
 			status.Show(c, e)
 			e.redrawCursor = true
 		case "c:10": // ctrl-j, jump to bookmark (or join line if bookmark is not set)
