@@ -892,7 +892,6 @@ Set NO_COLOR=1 to disable colors.
 						// If below the top, scroll the contents up
 						if e.DataY() > 0 {
 							e.redraw = e.ScrollUp(c, status, 1)
-							e.redrawCursor = true
 							e.pos.Down(c)
 							e.UpEnd(c)
 						}
@@ -923,7 +922,6 @@ Set NO_COLOR=1 to disable colors.
 						// Output a helpful message
 						if !e.AfterEndOfDocument() {
 							e.redraw = e.ScrollDown(c, status, 1)
-							e.redrawCursor = true
 							e.pos.Up()
 							e.DownEnd(c)
 						}
@@ -1548,6 +1546,10 @@ Set NO_COLOR=1 to disable colors.
 			}
 		}
 		previousKey = key
+		// Clear status, if needed
+		if statusMode && e.redrawCursor {
+			status.ClearAll(c)
+		}
 		// Redraw, if needed
 		if e.redraw {
 			// Draw the editor lines on the canvas, respecting the offset
