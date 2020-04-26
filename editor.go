@@ -2020,30 +2020,30 @@ func (e *Editor) ToggleComment() {
 	}
 }
 
-// CommentOn will insert "// " in front of the line
-func (e *Editor) CommentOn() {
-	newContents := "// " + e.CurrentLine()
+// CommentOn will insert "// " in front of the line if "//" is given
+func (e *Editor) CommentOn(s string) {
+	newContents := s + " " + e.CurrentLine()
 	e.SetLine(e.DataY(), newContents)
 	if e.AfterEndOfLine() {
 		e.End()
 	}
 }
 
-// CommentOff will remove "//" from the front of the line
-func (e *Editor) CommentOff() {
+// CommentOff will remove "//" or "// " from the front of the line if "//" is given
+func (e *Editor) CommentOff(s string) {
 	var (
 		changed      bool
 		newContents  string
 		contents     = e.CurrentLine()
 		trimContents = strings.TrimSpace(contents)
 	)
-	if strings.HasPrefix(trimContents, "// ") {
+	if strings.HasPrefix(trimContents, s+" ") {
 		// toggle off comment
-		newContents = strings.Replace(contents, "// ", "", 1)
+		newContents = strings.Replace(contents, s+" ", "", 1)
 		changed = true
-	} else if strings.HasPrefix(trimContents, "//") {
+	} else if strings.HasPrefix(trimContents, s) {
 		// toggle off comment
-		newContents = strings.Replace(contents, "//", "", 1)
+		newContents = strings.Replace(contents, s, "", 1)
 		changed = true
 	}
 	if changed {
@@ -2054,17 +2054,18 @@ func (e *Editor) CommentOff() {
 	}
 }
 
-// CurrentLineCommented checks if the current trimmed line starts with "//"
-func (e *Editor) CurrentLineCommented() bool {
-	return strings.HasPrefix(strings.TrimSpace(e.CurrentLine()), "//")
+// CurrentLineCommented checks if the current trimmed line starts with "//", if "//" is given
+func (e *Editor) CurrentLineCommented(s string) bool {
+	return strings.HasPrefix(strings.TrimSpace(e.CurrentLine()), s)
 }
 
 // ForEachLineInBlock will move the cursor and run the given function for
 // each line in the current block of text (until newline or end of document)
-func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func()) {
+// Also takes a string that will be passed on to the function.
+func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func(s string), s string) {
 	downCounter := 0
 	for !e.EmptyRightTrimmedLine() && !e.AtOrAfterEndOfDocument() {
-		f()
+		f(s)
 		e.Down(c, nil)
 		downCounter++
 	}
@@ -2115,9 +2116,14 @@ func (e *Editor) ToggleCommentBlock(c *vt100.Canvas) {
 	downCounter := 0
 	commentCounter := 0
 
+	s := "//"
+	if e.mode == modeShell {
+		s = "#"
+	}
+
 	// Count the commented lines in this block while going down
 	for !e.EmptyRightTrimmedLine() && !e.AtOrAfterEndOfDocument() {
-		if e.CurrentLineCommented() {
+		if e.CurrentLineCommented(s) {
 			commentCounter++
 		}
 		e.Down(c, nil)
@@ -2132,9 +2138,9 @@ func (e *Editor) ToggleCommentBlock(c *vt100.Canvas) {
 	mostLinesAreComments := commentCounter > (downCounter / 2)
 
 	if mostLinesAreComments {
-		e.ForEachLineInBlock(c, e.CommentOff)
+		e.ForEachLineInBlock(c, e.CommentOff, s)
 	} else {
-		e.ForEachLineInBlock(c, e.CommentOn)
+		e.ForEachLineInBlock(c, e.CommentOn, s)
 	}
 }
 
