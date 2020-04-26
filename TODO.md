@@ -1,17 +1,16 @@
 # TODO
 
 - [ ] Rainbow parenthesis.
-- [ ] Keybinding for cutting the line at the bookmark and inserting it at the current location.
-      Pressing this key repeatedly can be used for moving a block of code from one place to another.
-- [ ] Backwards search + using `ctrl-p` to jump to previous location.
+- [ ] Backwards search + using `ctrl-p` to jump to previous location (or pop from a location stack).
 - [ ] After ending a line with "\", indent two spaces relative to that line when pressing enter.
 - [ ] Build PKGBUILD files with `ctrl-space`.
-- [ ] Functionality for moving a block of code up or down. Perhaps a line-movement-mode that can also be used to reorder lines for `git rebase -i`.
-- [ ] Handle long lines, but try to avoid horizontal scrolling. Perhaps open long lines in a new instance of the editor, but split at a custom rune, then join the line at exit.
+- [ ] Functionality for marking two locations, then later swap those lines and move both locations one line down.
+- [ ] Handle long lines with a dedicated mode for editing a long line, perhaps by breaking it into one word per line in a
+      separate Editor struct, then joining them back together when that Editor quits (`/tmp/_o_longline_splitted.txt`)?
 - [ ] Make it easier to spot the cursor when scrolling or searching.
-- [ ] Go to definition, rename symbol, find references and suggestions while typing. Wonder which hotkey should be used for go to definition, though.
-      Perhaps pressing `ctrl-g` two times.
-- [ ] Syntax highlighting of `..`, `::`, `:asdfasdf:` and `^^^` in .rst
-- [ ] Block mode, where operations work on the current block of text?
-- [ ] Make smart indentation smarter when inserting a "}" four spaces in, and there is no "}" at the start of the next line.
+- [ ] Press `ctrl-g` for "go to definition". Toggle the status bar if pressed on a blank line.
+- [ ] `ctrl-r` to rename symbols, when editing code.
+- [ ] Syntax highlighting of `..`, `::`, `:asdfasdf:` and `^^^` in `.rst` files.
+- [ ] Spellcheck all comments. Highlight misspelled words. Make it possible to add/ignore words.
 - [ ] Introduce a key for jumping between the two locations where you've spent most time the last 10 minutes.
+- [ ] Stop `ctrl-g` from flickering when holding down `up`, `down`, `ctrl-n` or `ctrl-p`.
