@@ -163,15 +163,11 @@ The reason for adding these is to make using `o` easier to use for long-time vi/
 
 ## Spinner
 
-When loading large files, an animated spinner will appear. The loading operation can be interrupted by pressing `esc`, `q` or `ctrl-q`.
+When loading files that are large or from a slow disk, an animated spinner will appear. The loading operation can be interrupted by pressing `esc`, `q` or `ctrl-q`.
 
 ![progress](img/progress.gif)
 
-## Easter eggs
-
-Pressing `ctrl-space` will render Markdown files to PDF using `pandoc` (as opposed to `ctrl-r`, which will save the text directly to a PDF, without using `pandoc`).
-
-## Shell function
+## Find and open
 
 This shell function works in `zsh` and `bash` and may be useful for both searching for and opening a file at the given line number (works best if there is only one matching file):
 
@@ -184,6 +180,10 @@ Example use:
 ```sh
 fo somefile.cpp 123
 ```
+
+## Easter eggs
+
+Pressing `ctrl-space` will render Markdown files to PDF using `pandoc` (as opposed to `ctrl-r`, which will save the text directly to a PDF, without using `pandoc`).
 
 ## General info
 
