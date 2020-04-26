@@ -70,6 +70,8 @@ func main() {
 		bookmark   *Position // for the bookmark/jump functionality
 		statusMode bool      // if information should be shown at the bottom
 
+		temporarilyDisabledStatusMode bool // if information should temporarily not be shown at the bottom (when holding down up or down arrow key)
+
 		firstLetterSinceStart string
 
 		locationHistory map[string]int // remember where we were in each absolute filename
@@ -83,6 +85,11 @@ func main() {
 		lastCopyY  = -1 // used for keeping track if ctrl-c is pressed twice on the same line
 		lastPasteY = -1 // used for keeping track if ctrl-v is pressed twice on the same line
 		lastCutY   = -1 // used for keeping track if ctrl-x is pressed twice on the same line
+
+		// Detect if the up or down arrow are being held down (only used if status mode is enabled)
+		keySpamLimit         time.Duration = 100 * time.Millisecond
+		upKeySpamTimestamp                 = time.Now().Add(-keySpamLimit) // initial value for the up arrow key spam detector
+		downKeySpamTimestamp               = time.Now().Add(-keySpamLimit) // initial value for the down arrow key spam detector
 	)
 
 	flag.Parse()
@@ -880,7 +887,23 @@ Set NO_COLOR=1 to disable colors.
 			}
 			e.redrawCursor = true
 		case "↑": // up arrow
-			// Disregard the curren copy/cut/paste state
+
+			if statusMode || temporarilyDisabledStatusMode {
+				// Workaround for the status bar flashing when holding down the up key and the status bar is enabled
+				now := time.Now()
+				sinceLastUp := now.Sub(upKeySpamTimestamp)
+				upKeySpamTimestamp = now
+				if sinceLastUp < keySpamLimit {
+					status.ClearAll(c)
+					temporarilyDisabledStatusMode = true
+					statusMode = false
+				} else {
+					temporarilyDisabledStatusMode = false
+					statusMode = true
+				}
+			}
+
+			// Disregard the current copy/cut/paste state
 			lastCutY = -1
 			lastCopyY = -1
 			lastPasteY = -1
@@ -910,7 +933,23 @@ Set NO_COLOR=1 to disable colors.
 			}
 			e.redrawCursor = true
 		case "↓": // down arrow
-			// Disregard the curren copy/cut/paste state
+
+			if statusMode || temporarilyDisabledStatusMode {
+				// Workaround for the status bar flashing when holding down the up key and the status bar is enabled
+				now := time.Now()
+				sinceLastUp := now.Sub(downKeySpamTimestamp)
+				downKeySpamTimestamp = now
+				if sinceLastUp < keySpamLimit {
+					status.ClearAll(c)
+					temporarilyDisabledStatusMode = true
+					statusMode = false
+				} else {
+					temporarilyDisabledStatusMode = false
+					statusMode = true
+				}
+			}
+
+			// Disregard the current copy/cut/paste state
 			lastCutY = -1
 			lastCopyY = -1
 			lastPasteY = -1
