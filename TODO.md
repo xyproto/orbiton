@@ -14,3 +14,4 @@
 - [ ] Spellcheck all comments. Highlight misspelled words. Make it possible to add/ignore words.
 - [ ] Introduce a key for jumping between the two locations where you've spent most time the last 10 minutes.
 - [ ] Stop `ctrl-g` from flickering when holding down `up`, `down`, `ctrl-n` or `ctrl-p`.
+- [ ] If `xclip` or `wl-clipboard` are not found when pasting, present a status message. Also check related env. vars.
