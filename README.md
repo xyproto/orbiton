@@ -40,24 +40,25 @@ To unset:
 * Never asks before saving or quitting. Be careful!
 * Can format Go or C++ code, just press `ctrl-space`. This uses either `goimports` (`go get golang.org/x/tools/cmd/goimports`) or `clang-format`.
 * Will strip trailing whitespace whenever it can.
-* Will replace nonbreaking space (`0xc2 0xa0`) with a regular space (`0x20`) whenever it can.
 * Must be given a filename at start.
-* Can provide smart indentation.
+* May provide smart indentation.
 * Requires `/dev/tty` to be available.
-* Copy, cut and paste is only for one line at a time. `xclip` (for X) or `wl-clipboard` (for Wayland) must be installed if the system clipboard is to be used.
-* Only forward search.
+* `xclip` (for X) or `wl-clipboard` (for Wayland) must be installed if the system clipboard is to be used.
+* Only forward search. Press `ctrl-l` a d then type `0` to jump to the top before searching.
 * May take a line number as the second argument, with an optional `+` prefix.
 * The text will be red if a loaded file is read-only.
 * The terminal needs to be resized to show the second half of lines that are longer than the terminal width.
 * If the filename is `COMMIT_EDITMSG`, the look and feel will be adjusted for git commit messages.
-* There's currently no good way to move blocks of code around, but this will be added.
 * Supports `UTF-8`.
 * Respects the `NO_COLOR` environment variable.
 * Can render text to PDF.
 * Only UNIX-style line endings are supported (`\n`).
 * Will convert DOS/Windows line endings (`\r\n`) to UNIX line endings (just `\n`), whenever possible.
+* Will replace nonbreaking space (`0xc2 0xa0`) with a regular space (`0x20`) whenever possible.
 * Will jump to the last visited line when opening a recent file.
 * If tab completion on the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
+* If interactive rebase is launched with `git rebase -i`, either `ctrl-r` or `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
+* When editing Markdown, checkboxes can be toggled with `ctrl-w`.
 
 ## Known bugs
 
@@ -90,12 +91,7 @@ To unset:
 * `ctrl-space` - Build Go or C++ files, word-wrap other files.
 * `ctrl-\` - Toggle single-line comments for a block of code.
 * `ctrl-r` - Render the current text as a PDF document.
-* `ctrl-~` - Save and quit.
-
-Additionally:
-
-* If interactive rebase is launched with `git rebase -i`, either `ctrl-r` or `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
-* When editing Markdown, checkboxes can be toggled with `ctrl-w`.
+* `ctrl-~` - Save and quit. Only works in some terminal emulators.
 
 ## Manual installation
 
