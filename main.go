@@ -1289,6 +1289,8 @@ Set NO_COLOR=1 to disable colors.
 					status.SetMessage("Copied 1 line")
 					status.Show(c, e)
 				}
+				// Go to the end of the line, for easy line duplication with ctrl-c, enter, ctrl-v
+				e.End()
 			} else { // Multi line copy
 				lastCopyY = y
 				lastPasteY = -1
