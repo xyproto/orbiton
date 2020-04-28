@@ -756,7 +756,7 @@ Set NO_COLOR=1 to disable colors.
 							}
 						} else {
 							status.ClearAll(c)
-							status.SetMessage("Build OK")
+							status.SetMessage("Success")
 							status.Show(c, e)
 						}
 						break OUT2
