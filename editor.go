@@ -489,8 +489,7 @@ func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 }
 
 // Save will try to save a file
-// if asOther is true, .ico files will be saved as .png, and .png files will be saved as .ico
-func (e *Editor) Save(filename *string, stripTrailingSpaces, asOther bool) error {
+func (e *Editor) Save(filename *string, stripTrailingSpaces bool) error {
 	var data []byte
 	if stripTrailingSpaces {
 		// Strip trailing spaces

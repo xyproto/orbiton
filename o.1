@@ -107,6 +107,9 @@ displays brief usage information
 .sp
 The `NO_COLOR` environment variable can be set to 1 to disable all colors.
 .sp
+If `XTERM_VERSION` is set, the `light` color scheme will be used, unless `O_THEME` is set to `dark`.
+.sp
+The `O_THEME` environment variable can be set to `light` to use a color scheme suitable for light backgrounds (or `dark` for the default color scheme).
 .SH "WHY"
 .sp
 I wanted to write a simple editor that only used VT100 terminal codes.
