@@ -195,12 +195,12 @@ var DefaultTextConfig = TextConfig{
 	Protected:     "red",
 }
 
-func Print(s *scanner.Scanner, w io.Writer, p Printer) error {
+func Print(s *scanner.Scanner, w io.Writer, p Printer, assemblyMode bool) error {
 	tok := s.Scan()
 	inSingleLineComment := false
 	for tok != scanner.EOF {
 		tokText := s.TokenText()
-		err := p.Print(w, tokenKind(tok, tokText, &inSingleLineComment), tokText)
+		err := p.Print(w, tokenKind(tok, tokText, &inSingleLineComment, assemblyMode), tokText)
 		if err != nil {
 			return err
 		}
@@ -211,7 +211,7 @@ func Print(s *scanner.Scanner, w io.Writer, p Printer) error {
 	return nil
 }
 
-func Annotate(src []byte, a Annotator) (annotate.Annotations, error) {
+func Annotate(src []byte, a Annotator, assemblyMode bool) (annotate.Annotations, error) {
 	var (
 		anns                annotate.Annotations
 		s                   = NewScanner(src)
@@ -221,7 +221,7 @@ func Annotate(src []byte, a Annotator) (annotate.Annotations, error) {
 	)
 	for tok != scanner.EOF {
 		tokText := s.TokenText()
-		ann, err := a.Annotate(read, tokenKind(tok, tokText, &inSingleLineComment), tokText)
+		ann, err := a.Annotate(read, tokenKind(tok, tokText, &inSingleLineComment, assemblyMode), tokText)
 		if err != nil {
 			return nil, err
 		}
@@ -238,14 +238,14 @@ func Annotate(src []byte, a Annotator) (annotate.Annotations, error) {
 // AsText converts source code into an Text-highlighted version;
 // It accepts optional configuration parameters to control rendering
 // (see OrderedList as one example)
-func AsText(src []byte, options ...Option) ([]byte, error) {
+func AsText(src []byte, assemblyMode bool, options ...Option) ([]byte, error) {
 	opt := DefaultTextConfig
 	for _, f := range options {
 		f(&opt)
 	}
 
 	var buf bytes.Buffer
-	err := Print(NewScanner(src), &buf, TextPrinter(opt))
+	err := Print(NewScanner(src), &buf, TextPrinter(opt), assemblyMode)
 	if err != nil {
 		return nil, err
 	}
@@ -267,9 +267,9 @@ func NewScannerReader(src io.Reader) *scanner.Scanner {
 	return &s
 }
 
-func tokenKind(tok rune, tokText string, inSingleLineComment *bool) Kind {
+func tokenKind(tok rune, tokText string, inSingleLineComment *bool, assemblyMode bool) Kind {
 	// Check if we are in a bash-style single line comment
-	if tok == '#' {
+	if (assemblyMode && tok == ';') || (!assemblyMode && tok == '#') {
 		*inSingleLineComment = true
 	} else if tok == '\n' {
 		*inSingleLineComment = false

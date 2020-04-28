@@ -5,7 +5,7 @@ go 1.10
 require (
 	github.com/atotto/clipboard v0.1.2
 	github.com/jung-kurt/gofpdf v1.16.2
-	github.com/xyproto/syntax v1.6.1-0.20200423180322-e2ee02dcd3e8
+	github.com/xyproto/syntax v1.7.0
 	github.com/xyproto/textoutput v1.11.0
 	github.com/xyproto/vt100 v1.8.3
 	golang.org/x/sys v0.0.0-20200427175716-29b57079015a // indirect

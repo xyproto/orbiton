@@ -109,7 +109,6 @@ var Keywords = map[string]struct{}{
 	"module":           {},
 	"mutable":          {},
 	"mut":              {},
-	"my":               {},
 	"namespace":        {},
 	"native":           {},
 	"new":              {},
