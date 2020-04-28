@@ -187,7 +187,6 @@ Set NO_COLOR=1 to disable colors.
 		delete(syntax.Keywords, "build")
 		delete(syntax.Keywords, "package")
 	}
-	delete(syntax.Keywords, "my")
 
 	// Additional per-mode considerations
 	if mode == modeGit {
