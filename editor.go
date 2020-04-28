@@ -27,6 +27,7 @@ const (
 	modeYml      // for yml and toml files
 	modeAssembly // for Assembly files
 	modeGo       // for Go source files
+	modeHaskell  // for Haskell source files
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -551,12 +552,16 @@ func (e *Editor) TrimLeft(n int) {
 	e.changed = true
 }
 
+// SingleLineCommentMarker will return the string that starts a single-line
+// comment for the current language mode the editor is in.
 func (e *Editor) SingleLineCommentMarker() string {
 	switch e.mode {
 	case modeShell:
 		return "#"
 	case modeAssembly:
 		return ";"
+	case modeHaskell:
+		return "--"
 	default:
 		return "//"
 	}

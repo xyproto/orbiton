@@ -177,6 +177,8 @@ Set NO_COLOR=1 to disable colors.
 		mode = modeAssembly
 	case strings.HasSuffix(baseFilename, ".go"):
 		mode = modeGo
+	case strings.HasSuffix(baseFilename, ".hs"):
+		mode = modeHaskell
 	}
 
 	// Check if we should enable syntax highlighting by default
