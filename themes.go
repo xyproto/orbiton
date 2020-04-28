@@ -12,19 +12,20 @@ func (e *Editor) setLightTheme() {
 	e.searchFg = vt100.Red
 	e.gitColor = vt100.Blue
 	e.multilineComment = vt100.Green
+	e.multilineString = vt100.Red
 
 	syntax.DefaultTextConfig.String = "red"
 	syntax.DefaultTextConfig.Keyword = "blue"
 	syntax.DefaultTextConfig.Comment = "darkgreen"
 	syntax.DefaultTextConfig.Type = "blue"
-	syntax.DefaultTextConfig.Literal = "cyan"
+	syntax.DefaultTextConfig.Literal = "darkcyan"
 	syntax.DefaultTextConfig.Punctuation = "black"
 	syntax.DefaultTextConfig.Plaintext = "black"
 	syntax.DefaultTextConfig.Tag = "black"
 	syntax.DefaultTextConfig.TextTag = "black"
 	syntax.DefaultTextConfig.TextAttrName = "black"
 	syntax.DefaultTextConfig.TextAttrValue = "black"
-	syntax.DefaultTextConfig.Decimal = "cyan"
+	syntax.DefaultTextConfig.Decimal = "darkcyan"
 	syntax.DefaultTextConfig.AndOr = "black"
 	syntax.DefaultTextConfig.Star = "black"
 	syntax.DefaultTextConfig.Class = "blue"
