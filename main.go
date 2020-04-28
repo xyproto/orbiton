@@ -151,6 +151,7 @@ Set NO_COLOR=1 to disable colors.
 	baseFilename := filepath.Base(filename)
 
 	// Check if we should be in a particular mode for a particular type of file
+	// TODO: Extract the filename extension first, then perform the switch, to skip the HasSuffix calls
 	switch {
 	case baseFilename == "COMMIT_EDITMSG" ||
 		baseFilename == "MERGE_MSG" ||
@@ -172,13 +173,17 @@ Set NO_COLOR=1 to disable colors.
 		mode = modeYml
 	case baseFilename == "Makefile" || baseFilename == "makefile" || baseFilename == "GNUmakefile":
 		mode = modeMakefile
+	case strings.HasSuffix(baseFilename, ".asm") || strings.HasSuffix(baseFilename, ".S") || strings.HasSuffix(baseFilename, ".inc"):
+		mode = modeAssembly
+	case strings.HasSuffix(baseFilename, ".go"):
+		mode = modeGo
 	}
 
 	// Check if we should enable syntax highlighting by default
 	syntaxHighlight := mode == modeGit || baseFilename == "config" || baseFilename == "PKGBUILD" || baseFilename == "BUILD" || baseFilename == "WORKSPACE" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
 
 	// Per-language adjustments to highlighting of keywords
-	if !strings.HasSuffix(baseFilename, ".go") {
+	if mode != modeGo {
 		delete(syntax.Keywords, "build")
 		delete(syntax.Keywords, "package")
 	}
