@@ -615,6 +615,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 			inMultilineString = false
 		}
 	}
+	assemblyMode := e.mode == modeAssembly
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y := 0; y < numlines; y++ {
 		counter := 0
@@ -626,7 +627,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		if e.syntaxHighlight && !noColor {
 			// Output a syntax highlighted line. Escape any tags in the input line.
 			// textWithTags must be unescaped if there is not an error.
-			if textWithTags, err := syntax.AsText([]byte(Escape(line))); err != nil {
+			if textWithTags, err := syntax.AsText([]byte(Escape(line)), assemblyMode); err != nil {
 				// Only output the line up to the width of the canvas
 				fmt.Println(screenLine)
 				counter += len([]rune(screenLine))
