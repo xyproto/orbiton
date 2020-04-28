@@ -17,18 +17,22 @@ func SingleLineComment(trimmedLine, singleLineCommentMarker string, inMultiLineC
 	return (!inMultiLineComment && !inMultiLineString) && (strings.HasPrefix(trimmedLine, singleLineCommentMarker) || (strings.HasPrefix(trimmedLine, "/*") && strings.HasSuffix(trimmedLine, "*/")))
 }
 
+// MultiLineCommentStart returns true if the given trimmed line is the start of a multi line comment
 func MultiLineCommentStart(trimmedLine string, inMultiLineComment, inMultiLineString, inSingleLineComment bool) bool {
 	return (!inMultiLineComment && !inMultiLineString && !inSingleLineComment) && strings.Contains(trimmedLine, "/*")
 }
 
+// MultiLineCommentStop returns true if the given trimmed line is the stop of a multi line comment
 func MultiLineCommentStop(trimmedLine string, inMultiLineComment, inMultiLineString, inSingleLineComment bool) bool {
 	return (inMultiLineComment && !inMultiLineString && !inSingleLineComment) && strings.Contains(trimmedLine, "*/")
 }
 
+// MultiLineStringStart returns true if the given trimmed line is the assumed start of a multi line string
 func MultiLineStringStart(trimmedLine string, inMultiLineComment, inMultiLineString, inSingleLineComment bool) bool {
 	return (!inMultiLineComment && !inMultiLineString && !inSingleLineComment) && ((strings.Count(trimmedLine, "`") % 2) != 0)
 }
 
+// MultiLineStringStop returns true if the given trimmed line is the assumed stop of a multi line string
 func MultiLineStringStop(trimmedLine string, inMultiLineComment, inMultiLineString, inSingleLineComment bool) bool {
 	return (!inMultiLineComment && inMultiLineString && !inSingleLineComment) && ((strings.Count(trimmedLine, "`") % 2) != 0)
 }
@@ -89,17 +93,18 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		}
 	}
 	var (
-		counter                int
-		line                   string
-		screenLine             string
-		y                      int
-		inSingleLineComment    bool
-		startedMultiLineString bool
+		counter                     int
+		line                        string
+		screenLine                  string
+		y                           int
+		inSingleLineComment         bool
+		newlyStartedMultiLineString bool
+		assemblyMode                = e.mode == modeAssembly
 	)
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y = 0; y < numlines; y++ {
-		startedMultiLineString = false
 		counter = 0
+		newlyStartedMultiLineString = false
 		line = strings.Replace(e.Line(y+offset), "\t", tabString, -1)
 		screenLine = strings.TrimRightFunc(line, unicode.IsSpace)
 		if len([]rune(screenLine)) >= w {
@@ -108,7 +113,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		if e.syntaxHighlight && !noColor {
 			// Output a syntax highlighted line. Escape any tags in the input line.
 			// textWithTags must be unescaped if there is not an error.
-			if textWithTags, err := syntax.AsText([]byte(Escape(line)), e.mode == modeAssembly); err != nil {
+			if textWithTags, err := syntax.AsText([]byte(Escape(line)), assemblyMode); err != nil {
 				// Only output the line up to the width of the canvas
 				fmt.Println(screenLine)
 				counter += len([]rune(screenLine))
@@ -130,27 +135,24 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 				} else {
 					trimmedLine = strings.TrimSpace(line)
 					inSingleLineComment = false
-					switch {
-					case SingleLineComment(trimmedLine, singleLineCommentMarker, inMultiLineComment, inMultiLineString):
+					if SingleLineComment(trimmedLine, singleLineCommentMarker, inMultiLineComment, inMultiLineString) {
 						// A single line comment (including /* ... */)
 						inSingleLineComment = true
 					}
-					switch {
-					case MultiLineCommentStart(trimmedLine, inMultiLineComment, inMultiLineString, inSingleLineComment):
+					if MultiLineCommentStart(trimmedLine, inMultiLineComment, inMultiLineString, inSingleLineComment) {
 						// Multi line comment start
 						inMultiLineComment = true
-					case MultiLineCommentStop(trimmedLine, inMultiLineComment, inMultiLineString, inSingleLineComment):
+					} else if MultiLineCommentStop(trimmedLine, inMultiLineComment, inMultiLineString, inSingleLineComment) {
 						// Multi line comment stop
 						inMultiLineComment = false
 					}
-					switch {
-					case MultiLineStringStop(trimmedLine, inMultiLineComment, inMultiLineString, inSingleLineComment):
+					if MultiLineStringStop(trimmedLine, inMultiLineComment, inMultiLineString, inSingleLineComment) {
 						// Multi line string stop
 						inMultiLineString = false
-					case MultiLineStringStart(trimmedLine, inMultiLineComment, inMultiLineString, inSingleLineComment):
+					} else if MultiLineStringStart(trimmedLine, inMultiLineComment, inMultiLineString, inSingleLineComment) {
 						// Multi line string start
 						inMultiLineString = true
-						startedMultiLineString = true
+						newlyStartedMultiLineString = true
 					}
 
 					// TODO: Multiline string start and stop at the same line
@@ -162,7 +164,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					case inMultiLineComment:
 						// A multi line comment
 						coloredString = UnEscape(e.multilineComment.Get(line))
-					case !startedMultiLineString && inMultiLineString:
+					case !newlyStartedMultiLineString && inMultiLineString:
 						// A multi line string
 						coloredString = UnEscape(e.multilineString.Get(line))
 					default:
