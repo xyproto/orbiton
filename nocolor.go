@@ -11,8 +11,12 @@ func (e *Editor) respectNoColorEnvironmentVariable() {
 	if os.Getenv("NO_COLOR") != "" {
 		e.fg = vt100.Default
 		e.bg = vt100.BackgroundDefault
+
+		// The following is not strictly needed, since the text will be black and white just by setting e.fg and e.bg above
 		e.searchFg = vt100.Default
 		e.gitColor = vt100.Default
+		e.multilineComment = vt100.Default
+		e.multilineString = vt100.Default
 		syntax.DefaultTextConfig.String = ""
 		syntax.DefaultTextConfig.Keyword = ""
 		syntax.DefaultTextConfig.Comment = ""
@@ -25,6 +29,13 @@ func (e *Editor) respectNoColorEnvironmentVariable() {
 		syntax.DefaultTextConfig.TextAttrName = ""
 		syntax.DefaultTextConfig.TextAttrValue = ""
 		syntax.DefaultTextConfig.Decimal = ""
+		syntax.DefaultTextConfig.AndOr = ""
+		syntax.DefaultTextConfig.Star = ""
+		syntax.DefaultTextConfig.Class = ""
+		syntax.DefaultTextConfig.Private = ""
+		syntax.DefaultTextConfig.Protected = ""
+		syntax.DefaultTextConfig.Public = ""
+		syntax.DefaultTextConfig.Whitespace = ""
 	}
 }
 
