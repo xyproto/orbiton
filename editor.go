@@ -25,9 +25,8 @@ const (
 	modeMakefile // for Makefiles
 	modeShell    // for shell scripts and PKGBUILD files
 	modeYml      // for yml and toml files
-	modeGray4    // for 4-bit grayscale images
-	modeRGB      // for 8+8+8 bit RGB images
-	modeRGBA     // for 8+8+8+8 bit RGBA images
+	modeAssembly // for Assembly files
+	modeGo       // for Go source files
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -552,6 +551,17 @@ func (e *Editor) TrimLeft(n int) {
 	e.changed = true
 }
 
+func (e *Editor) SingleLineCommentMarker() string {
+	switch e.mode {
+	case modeShell:
+		return "#"
+	case modeAssembly:
+		return ";"
+	default:
+		return "//"
+	}
+}
+
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error {
 	o := textoutput.NewTextOutput(true, true)
@@ -583,10 +593,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		}
 	}
 	var (
-		noColor            bool = os.Getenv("NO_COLOR") != ""
-		inMultilineComment bool // used when highlighting C, Go, C++ etc (using /* and */)
-		inMultilineString  bool // used for multiline strings in Go
+		noColor                 bool = os.Getenv("NO_COLOR") != ""
+		inMultilineComment      bool // used when highlighting C, Go, C++ etc (using /* and */)
+		inMultilineString       bool // used for multiline strings in Go
+		singleLineCommentMarker = e.SingleLineCommentMarker()
 	)
+
 	// First loop from 0 to offset to figure out if we are already in a multiline comment
 	for i := 0; i < offset; i++ {
 		trimmedLine := strings.TrimSpace(e.Line(i))
@@ -596,7 +608,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		if strings.HasSuffix(trimmedLine, "*/") {
 			inMultilineComment = false
 		}
-		if !inMultilineComment && !strings.HasPrefix(trimmedLine, "//") && strings.HasSuffix(trimmedLine, "`") {
+		if !inMultilineComment && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "`") {
 			inMultilineString = true
 		}
 		if strings.HasPrefix(trimmedLine, "`") && !inMultilineComment {
@@ -636,7 +648,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 				} else {
 					lastLineInMultilineComment := false
 					trimmedLine := strings.TrimSpace(line)
-					inSingleLineComment := strings.HasPrefix(trimmedLine, "//")
+					inSingleLineComment := strings.HasPrefix(trimmedLine, singleLineCommentMarker)
 					if strings.HasPrefix(trimmedLine, "/*") {
 						inMultilineComment = true
 					}
@@ -1987,66 +1999,32 @@ func (e *Editor) Center(c *vt100.Canvas) {
 	e.pos.sy = newScreenY
 }
 
-// ToggleComment will toggle single-line comments on or off ("// ")
-// There may be an indent before the comment
-func (e *Editor) ToggleComment() {
-	var (
-		changed      bool
-		newContents  string
-		contents     = e.CurrentLine()
-		trimContents = strings.TrimSpace(contents)
-	)
-	if strings.HasPrefix(trimContents, "// ") {
-		// toggle off comment
-		newContents = strings.Replace(contents, "// ", "", 1)
-		changed = true
-	} else if strings.HasPrefix(trimContents, "//") {
-		// toggle off comment
-		newContents = strings.Replace(contents, "//", "", 1)
-		changed = true
-	} else {
-		// toggle on comment if there is no leading "//" (check without a trailing space this time)
-		if !strings.HasPrefix(strings.TrimSpace(contents), "//") {
-			newContents = e.LeadingWhitespace() + "// " + strings.TrimSpace(contents)
-			changed = true
-		}
-	}
-	if changed {
-		e.SetLine(e.DataY(), newContents)
-		if e.AfterEndOfLine() {
-			e.End()
-		}
-	}
-}
-
-// CommentOn will insert "// " in front of the line if "//" is given
-func (e *Editor) CommentOn(s string) {
-	newContents := s + " " + e.CurrentLine()
-	e.SetLine(e.DataY(), newContents)
-	if e.AfterEndOfLine() {
-		e.End()
-	}
+// CommentOn will insert a comment marker (like # or //) in front of a line
+func (e *Editor) CommentOn(commentMarker string) {
+	e.SetLine(e.DataY(), commentMarker+" "+e.CurrentLine())
 }
 
 // CommentOff will remove "//" or "// " from the front of the line if "//" is given
-func (e *Editor) CommentOff(s string) {
+func (e *Editor) CommentOff(commentMarker string) {
 	var (
 		changed      bool
 		newContents  string
 		contents     = e.CurrentLine()
 		trimContents = strings.TrimSpace(contents)
 	)
-	if strings.HasPrefix(trimContents, s+" ") {
+	commentMarkerPlusSpace := commentMarker + " "
+	if strings.HasPrefix(trimContents, commentMarkerPlusSpace) {
 		// toggle off comment
-		newContents = strings.Replace(contents, s+" ", "", 1)
+		newContents = strings.Replace(contents, commentMarkerPlusSpace, "", 1)
 		changed = true
-	} else if strings.HasPrefix(trimContents, s) {
+	} else if strings.HasPrefix(trimContents, commentMarker) {
 		// toggle off comment
-		newContents = strings.Replace(contents, s, "", 1)
+		newContents = strings.Replace(contents, commentMarker, "", 1)
 		changed = true
 	}
 	if changed {
 		e.SetLine(e.DataY(), newContents)
+		// If the line was shortened and the cursor ended up after the line, move it
 		if e.AfterEndOfLine() {
 			e.End()
 		}
@@ -2054,17 +2032,17 @@ func (e *Editor) CommentOff(s string) {
 }
 
 // CurrentLineCommented checks if the current trimmed line starts with "//", if "//" is given
-func (e *Editor) CurrentLineCommented(s string) bool {
-	return strings.HasPrefix(strings.TrimSpace(e.CurrentLine()), s)
+func (e *Editor) CurrentLineCommented(commentMarker string) bool {
+	return strings.HasPrefix(strings.TrimSpace(e.CurrentLine()), commentMarker)
 }
 
 // ForEachLineInBlock will move the cursor and run the given function for
 // each line in the current block of text (until newline or end of document)
 // Also takes a string that will be passed on to the function.
-func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func(s string), s string) {
+func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func(string), commentMarker string) {
 	downCounter := 0
 	for !e.EmptyRightTrimmedLine() && !e.AtOrAfterEndOfDocument() {
-		f(s)
+		f(commentMarker)
 		e.Down(c, nil)
 		downCounter++
 	}
@@ -2112,17 +2090,15 @@ func (e *Editor) ToggleCommentBlock(c *vt100.Canvas) {
 	// If most of the lines in the block are comments, comment it out
 	// If most of the lines in the block are not comments, comment it in
 
-	downCounter := 0
-	commentCounter := 0
-
-	s := "//"
-	if e.mode == modeShell {
-		s = "#"
-	}
+	var (
+		downCounter    = 0
+		commentCounter = 0
+		commentMarker  = e.SingleLineCommentMarker()
+	)
 
 	// Count the commented lines in this block while going down
 	for !e.EmptyRightTrimmedLine() && !e.AtOrAfterEndOfDocument() {
-		if e.CurrentLineCommented(s) {
+		if e.CurrentLineCommented(commentMarker) {
 			commentCounter++
 		}
 		e.Down(c, nil)
@@ -2134,12 +2110,12 @@ func (e *Editor) ToggleCommentBlock(c *vt100.Canvas) {
 	}
 
 	// Check if most lines are commented out
-	mostLinesAreComments := commentCounter > (downCounter / 2)
+	mostLinesAreComments := commentCounter >= (downCounter / 2)
 
 	if mostLinesAreComments {
-		e.ForEachLineInBlock(c, e.CommentOff, s)
+		e.ForEachLineInBlock(c, e.CommentOff, commentMarker)
 	} else {
-		e.ForEachLineInBlock(c, e.CommentOn, s)
+		e.ForEachLineInBlock(c, e.CommentOn, commentMarker)
 	}
 }
 
