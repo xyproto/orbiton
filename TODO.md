@@ -16,3 +16,4 @@
 - [ ] Stop `ctrl-g` from flickering when holding down `up`, `down`, `ctrl-n` or `ctrl-p`.
 - [ ] If `xclip` or `wl-clipboard` are not found when pasting, present a status message. Also check related env. vars.
 - [ ] Smarter indentation for } for switches, and after case/default.
+- [ ] Fix Tab key behavior for PKGBUILD files.
