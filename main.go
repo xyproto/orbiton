@@ -445,6 +445,7 @@ Set NO_COLOR=1 to disable colors.
 				exec.Command("zig", "fmt"):                                                        {".zig"},
 				exec.Command("v", "fmt"):                                                          {".v"},
 				exec.Command("rustfmt"):                                                           {".rs"},
+				exec.Command("brittany", "--write-mode=inplace", "--"):                            {".hs"},
 			}
 			formatted := false
 		OUT:
@@ -470,8 +471,11 @@ Set NO_COLOR=1 to disable colors.
 									if strings.Count(errorMessage, "\n") > 0 {
 										errorMessage = strings.TrimSpace(strings.SplitN(errorMessage, "\n", 2)[0])
 									}
-									// TODO: This error never shows up. Fix it.
-									status.SetMessage("Failed to format code: " + errorMessage)
+									if errorMessage == "" {
+										status.SetErrorMessage("Failed to format code")
+									} else {
+										status.SetErrorMessage("Failed to format code: " + errorMessage)
+									}
 									if strings.Count(errorMessage, ":") >= 3 {
 										fields := strings.Split(errorMessage, ":")
 										// Go To Y:X, if available
@@ -633,15 +637,14 @@ Set NO_COLOR=1 to disable colors.
 				break // from case
 			}
 
-			// Is this a .go, .cpp, .cc, .cxx, .h, .hpp, .c++, .h++, .c, .zig or .v file?
-
 			// Map from formatting command to a list of file extensions
 			build := map[*exec.Cmd][]string{
-				exec.Command("go", "build"):    {".go"},
-				exec.Command("cxx"):            {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
-				exec.Command("zig", "build"):   {".zig"},
-				exec.Command("v", filename):    {".v"},
-				exec.Command("cargo", "build"): {".rs"},
+				exec.Command("go", "build"):               {".go"},
+				exec.Command("cxx"):                       {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
+				exec.Command("zig", "build"):              {".zig"},
+				exec.Command("v", filename):               {".v"},
+				exec.Command("cargo", "build"):            {".rs"},
+				exec.Command("ghc", "-dynamic", filename): {".hs"},
 			}
 			var foundExtensionToBuild bool
 		OUT2:
@@ -656,8 +659,9 @@ Set NO_COLOR=1 to disable colors.
 						// Save the current line location to file, for later
 						e.SaveLocation(absFilename, locationHistory)
 
-						// Use rustc instead of cargo if Cargo.toml is missing and the extension is .rs
+						// Special per-language considerations
 						if ext == ".rs" && (!exists("Cargo.toml") && !exists("../Cargo.toml")) {
+							// Use rustc instead of cargo if Cargo.toml is missing and the extension is .rs
 							cmd = exec.Command("rustc", filename)
 						} else if (ext == ".cc" || ext == ".h") && exists("BUILD.bazel") {
 							// Google-style C++ + Bazel projects

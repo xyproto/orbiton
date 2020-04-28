@@ -129,6 +129,11 @@ Rust
 * For building code with `ctrl-space`, `Cargo.toml` must exist and `cargo` must be installed.
 * For formatting code with `ctrl-w`, `rustfmt` must be installed.
 
+Haskell
+
+* For building the current file with `ctrl-space`, the `ghc` compiler must be installed.
+* For formatting code with `ctrl-w`, [`brittany`](https://github.com/lspitzner/brittany) must be installed.
+
 ## Size
 
 * The `o` executable is only **508k** when built with GCC 9.3 (for 64-bit Linux) + compressed with `upx`.
