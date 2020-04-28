@@ -1082,21 +1082,24 @@ Set NO_COLOR=1 to disable colors.
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:9": // tab
-			undo.Snapshot(e)
-			if !e.DrawMode() {
-				// Place a tab
-				if !e.DrawMode() {
-					e.InsertRune(c, '\t')
-				} else {
-					e.SetRune('\t')
-				}
-				// Write the spaces that represent the tab
-				e.WriteTab(c)
-				// Move to the next position
-				if !e.DrawMode() {
-					e.Next(c)
-				}
+			if e.DrawMode() {
+				// Do nothing
+				break
 			}
+			undo.Snapshot(e)
+			if e.mode == modeShell {
+				// Insert two spaces into the file
+				e.InsertRune(c, ' ')
+				e.InsertRune(c, ' ')
+			} else {
+				// Insert a tab character to the file
+				e.InsertRune(c, '\t')
+			}
+			// Write the spaces that represent the tab to the canvas
+			e.WriteTab(c)
+			// Move to the next position
+			e.Next(c)
+			// Prepare to redraw
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:1", "c:25": // ctrl-a, home (or ctrl-y for scrolling up in the st terminal)
