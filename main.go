@@ -528,6 +528,10 @@ Set NO_COLOR=1 to disable colors.
 					e.redrawCursor = true
 				}
 			}
+			// Move the cursor if after the end of the line
+			if e.AtOrAfterEndOfLine() {
+				e.End()
+			}
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
 		case "c:0": // ctrl-space, build source code to executable, word wrap, convert to PDF or write to PNG, depending on the mode
@@ -1092,12 +1096,113 @@ Set NO_COLOR=1 to disable colors.
 				// Do nothing
 				break
 			}
-			undo.Snapshot(e)
-			if e.mode == modeShell {
-				// Insert two spaces into the file
-				e.InsertRune(c, ' ')
-				e.InsertRune(c, ' ')
+			y := e.DataY()
+			leftRune := e.LeftRune()
+			ext := filepath.Ext(filename)
+			if leftRune == '.' && ext != "" {
+				// Autocompletion
+				undo.Snapshot(e)
+
+				runes, ok := e.lines[y]
+				if !ok {
+					// This should never happen
+					break
+				}
+
+				// Either find x or use the last index of the line
+				x, err := e.DataX()
+				if err != nil {
+					x = len(runes) - 1
+				}
+
+				if x <= 0 {
+					// This should never happen
+					break
+				}
+
+				word := make([]rune, 0)
+				// Loop from the current location (at the ".") and to the left in the current line
+				for i := x - 1; i >= 0; i-- {
+					r := e.lines[y][i]
+					if r == '.' {
+						continue
+					}
+					if !unicode.IsLetter(r) {
+						break
+					}
+					// Gather the letters in reverse
+					word = append([]rune{r}, word...)
+				}
+
+				if len(word) == 0 {
+					// No word before ".", nothing to complete
+					break
+				}
+
+				// Now the preceeding word before the "." has been found
+
+				// Grep all files in this directory with the same extension as the currently edited file
+				// for what could follow the word and a "."
+				suggestions := corpus(string(word), "*"+ext)
+
+				// Choose a suggestion (tab cycles to the next suggestion)
+				chosen := e.SuggestMode(c, status, tty, suggestions)
+				e.redrawCursor = true
+				e.redraw = true
+
+				if chosen != "" {
+					// Insert the chosen word
+					e.InsertString(c, chosen)
+					break
+				}
+			}
+			// Auto-indentation or regular indentation
+			if !e.AtOrBeforeStartOfTextLine() && ext != "" {
+				// If in the middle of the text and the character to the left is not a ".", then autoindent
+				if strings.TrimSpace(e.Line(y-1)) == "" {
+					// The line above is empty, do nothing
+					break
+				}
+				// Move the current indentation to the same as the line above
+				undo.Snapshot(e)
+
+				var (
+					//spaceHere         = e.LeadingWhitespace()
+					spaceAbove        = e.LeadingWhitespaceAt(y - 1)
+					trimmedLine       = strings.TrimSpace(e.Line(y))
+					strippedLineAbove = e.StripSingleLineComment(strings.TrimSpace(e.Line(y - 1)))
+					newLeadingSpace   = spaceAbove
+					oneIndentation    = "\t"
+				)
+				if e.mode == modeShell {
+					oneIndentation = strings.Repeat(" ", spacesPerTab)
+				}
+
+				// Smart-ish indentation
+				if (strings.HasPrefix(trimmedLine, "case ") && !strings.HasPrefix(trimmedLine, "switch ")) || trimmedLine == "}" || trimmedLine == "]" || trimmedLine == ")" {
+					//strings.HasSuffix(strippedLineAbove, "}") || strings.HasSuffix(strippedLineAbove, "]") || strings.HasSuffix(strippedLineAbove, ")") ||
+					// Use one less indentation than the line above
+					if (len(spaceAbove) - len(oneIndentation)) <= 0 {
+						// Do nothing
+						break
+					}
+					newLeadingSpace = spaceAbove[:len(spaceAbove)-len(oneIndentation)]
+				} else if strings.HasSuffix(strippedLineAbove, "{") || strings.HasSuffix(strippedLineAbove, "[") || strings.HasSuffix(strippedLineAbove, "(") || strings.HasSuffix(strippedLineAbove, ":") {
+					newLeadingSpace = spaceAbove + oneIndentation
+				}
+
+				e.SetLine(y, newLeadingSpace+trimmedLine)
+				e.redrawCursor = true
+				e.redraw = true
+				break
+			} else if e.mode == modeShell {
+				undo.Snapshot(e)
+				// For shell and PKGBUILD files, insert spaces instead of tab
+				for i := 0; i < spacesPerTab; i++ {
+					e.InsertRune(c, ' ')
+				}
 			} else {
+				undo.Snapshot(e)
 				// Insert a tab character to the file
 				e.InsertRune(c, '\t')
 			}
@@ -1223,26 +1328,27 @@ Set NO_COLOR=1 to disable colors.
 			}
 			e.redrawCursor = true
 		case "c:11": // ctrl-k, delete to end of line
-			undo.Snapshot(e)
 			if e.Empty() {
-				status.SetMessage("Empty")
+				status.SetMessage("Empty file")
 				status.Show(c, e)
-			} else {
-				e.DeleteRestOfLine()
-				if !e.DrawMode() && e.EmptyRightTrimmedLine() {
-					// Deleting the rest of the line cleared this line,
-					// so just remove it.
-					e.DeleteLine(e.DataY())
-					// Then go to the start or end of the line, if needed
-					if len(e.CurrentLine()) == 1 {
-						e.Home()
-					} else if e.AtOrAfterEndOfLine() {
-						e.End()
-					}
-				}
-				vt100.Do("Erase End of Line")
-				e.redraw = true
+				break
 			}
+			undo.Snapshot(e)
+			e.DeleteRestOfLine()
+			if !e.DrawMode() && e.EmptyRightTrimmedLine() {
+				// Deleting the rest of the line cleared this line,
+				// so just remove it.
+				e.DeleteLine(e.DataY())
+				// Then go to the start or end of the line, if needed
+				if len(e.CurrentLine()) == 1 {
+					e.Home()
+				} else if e.AtOrAfterEndOfLine() {
+					e.End()
+				}
+			}
+			// TODO: Is this one needed/useful?
+			vt100.Do("Erase End of Line")
+			e.redraw = true
 			e.redrawCursor = true
 		case "c:24": // ctrl-x, cut line
 			y := e.DataY()
@@ -1284,6 +1390,7 @@ Set NO_COLOR=1 to disable colors.
 					e.DeleteLine(y)
 				}
 			}
+			// No status message is needed for the cut operation, because it's visible that lines are cut
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:3": // ctrl-c, copy the stripped contents of the current line
@@ -1295,11 +1402,16 @@ Set NO_COLOR=1 to disable colors.
 				// Pressed for the first time for this line number
 				trimmed := strings.TrimSpace(e.Line(y))
 				if trimmed != "" {
+					// Copy the line to the internal clipboard
 					copyLines = []string{trimmed}
 					// Copy the line to the clipboard
-					_ = clipboard.WriteAll(strings.Join(copyLines, "\n"))
-					// Display a status message
-					status.SetMessage("Copied 1 line")
+					if err := clipboard.WriteAll(strings.Join(copyLines, "\n")); err != nil {
+						// The copy did not work out, only copying internally
+						status.SetMessage("Copied 1 line")
+					} else {
+						// The copy operation worked out
+						status.SetMessage("Copied 1 line (clipboard)")
+					}
 					status.Show(c, e)
 				}
 				// Go to the end of the line, for easy line duplication with ctrl-c, enter, ctrl-v
@@ -1312,15 +1424,19 @@ Set NO_COLOR=1 to disable colors.
 				s := e.Block(y)
 				if s != "" {
 					copyLines = strings.Split(s, "\n")
-					// Place the block of text in the clipboard
-					_ = clipboard.WriteAll(s)
-					// Display a status message
+					// Prepare a status message
 					plural := ""
 					lineCount := strings.Count(s, "\n")
 					if lineCount > 1 {
 						plural = "s"
 					}
-					status.SetMessage(fmt.Sprintf("Copied %d line%s", lineCount, plural))
+					// Place the block of text in the clipboard
+					err := clipboard.WriteAll(s)
+					if err != nil {
+						status.SetMessage(fmt.Sprintf("Copied %d line%s", lineCount, plural))
+					} else {
+						status.SetMessage(fmt.Sprintf("Copied %d line%s (clipboard)", lineCount, plural))
+					}
 					status.Show(c, e)
 				}
 			}

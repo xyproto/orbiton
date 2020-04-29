@@ -156,7 +156,7 @@ func (e *Editor) Get(x, y int) rune {
 	if !ok {
 		return ' '
 	}
-	if x >= int(len(runes)) {
+	if x >= len(runes) {
 		return ' '
 	}
 	return runes[x]
@@ -565,6 +565,19 @@ func (e *Editor) SingleLineCommentMarker() string {
 	default:
 		return "//"
 	}
+}
+
+// StripSingleLineComment will strip away trailing single-linecomments.
+// TODO: Also strip trailing /* ... */ comments
+func (e *Editor) StripSingleLineComment(line string) string {
+	// TODO: Fix this syntax highlighting issue
+	_ = "/*"
+	commentMarker := e.SingleLineCommentMarker()
+	if strings.Count(line, commentMarker) == 1 {
+		p := strings.Index(line, commentMarker)
+		return strings.TrimSpace(line[:p])
+	}
+	return line
 }
 
 // DeleteRestOfLine will delete the rest of the line, from the given position
@@ -1270,6 +1283,27 @@ func (e *Editor) Rune() rune {
 	return e.Get(x, e.DataY())
 }
 
+// LeftRune will get the rune to the left of the current data position
+func (e *Editor) LeftRune() rune {
+	y := e.DataY()
+	x, err := e.DataX()
+	if err != nil {
+		// This is after the line contents, return the last rune
+		runes, ok := e.lines[y]
+		if !ok || len(runes) == 0 {
+			return rune(0)
+		}
+		// Return the last rune
+		return runes[len(runes)-1]
+	}
+	if x <= 0 {
+		// Nothing to the left of this
+		return rune(0)
+	}
+	// Return the rune to the left
+	return e.Get(x-1, e.DataY())
+}
+
 // CurrentLine will get the current data line, as a string
 func (e *Editor) CurrentLine() string {
 	return e.Line(e.DataY())
@@ -1689,6 +1723,11 @@ func (e *Editor) Down(c *vt100.Canvas, status *StatusBar) {
 // LeadingWhitespace returns the leading whitespace for this line
 func (e *Editor) LeadingWhitespace() string {
 	return e.CurrentLine()[:e.FirstDataPosition(e.DataY())]
+}
+
+// LeadingWhitespaceAt returns the leading whitespace for a given line index
+func (e *Editor) LeadingWhitespaceAt(y int) string {
+	return e.Line(y)[:e.FirstDataPosition(y)]
 }
 
 // LineNumber will return the current line number (data y index + 1)
