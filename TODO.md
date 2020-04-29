@@ -1,19 +1,17 @@
 # TODO
 
+- [ ] When in "SuggestMode", typing should start filtering the list.
 - [ ] Rainbow parenthesis.
 - [ ] Backwards search + using `ctrl-p` to jump to previous location (or pop from a location stack).
+- [ ] Search wraparound by going to line 0 and searching again.
 - [ ] After ending a line with "\", indent two spaces relative to that line when pressing enter.
-- [ ] Build PKGBUILD files with `ctrl-space`.
-- [ ] Functionality for marking two locations, then later swap those lines and move both locations one line down.
-- [ ] Handle long lines with a dedicated mode for editing a long line, perhaps by breaking it into one word per line in a
-      separate Editor struct, then joining them back together when that Editor quits (`/tmp/_o_longline_splitted.txt`)?
-- [ ] Make it easier to spot the cursor when scrolling or searching.
-- [ ] Press `ctrl-g` for "go to definition". Toggle the status bar if pressed on a blank line.
-- [ ] `ctrl-r` to rename symbols, when editing code.
+- [ ] Build PKGBUILD files with `ctrl-space` instead of displaying the time.
 - [ ] Syntax highlighting of `..`, `::`, `:asdfasdf:` and `^^^` in `.rst` files.
 - [ ] Spellcheck all comments. Highlight misspelled words. Make it possible to add/ignore words.
 - [ ] Introduce a key for jumping between the two locations where you've spent most time the last 10 minutes.
-- [ ] Stop `ctrl-g` from flickering when holding down `up`, `down`, `ctrl-n` or `ctrl-p`.
 - [ ] If `xclip` or `wl-clipboard` are not found when pasting, present a status message. Also check related env. vars.
-- [ ] Smarter indentation for } for switches, and after case/default.
-- [ ] Fix Tab key behavior for PKGBUILD files.
+- [ ] Smarter indentation for `}`. There are still a few cases where it's not too smart.
+- [ ] If a word is typed 1 letter differently from all the other instances in the current file: color it red.
+- [ ] Let the autocompletion also look at method definitions with matching variable names (ignoring types, for now).
+- [ ] Find out which keys could be used to "go to definition" and "rename".
+- [ ] Fix syntax highlighting for comments within strings, like `"/* hello */"`.
