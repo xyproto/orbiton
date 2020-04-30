@@ -62,26 +62,38 @@ func corpus(searchword, glob string) []string {
 
 // SuggestMode lets the user tab through the suggested words
 func (e *Editor) SuggestMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, suggestions []string) string {
-	suggestIndex := 0
 	if len(suggestions) == 0 {
 		return ""
 	}
-	status.ClearAll(c)
+
+	suggestIndex := 0
 	s := suggestions[suggestIndex]
-	suggestIndex++
+
+	status.ClearAll(c)
 	status.SetMessage("Suggest: " + s)
 	status.ShowNoTimeout(c, e)
-	doneCollectingLetters := false
-	for !doneCollectingLetters {
+
+	var doneChoosing bool
+	for !doneChoosing {
 		key := tty.String()
 		switch key {
-		case "c:9": // tab
+		case "c:9", "↓", "→": // tab, down arrow or right arrow
 			// Cycle suggested words
+			suggestIndex++
 			if suggestIndex == len(suggestions) {
 				suggestIndex = 0
 			}
 			s = suggestions[suggestIndex]
-			suggestIndex++
+			status.ClearAll(c)
+			status.SetMessage("Suggest: " + s)
+			status.ShowNoTimeout(c, e)
+		case "↑", "←": // up arrow or left arrow
+			// Cycle suggested words (one back)
+			suggestIndex--
+			if suggestIndex < 0 {
+				suggestIndex = len(suggestions) - 1
+			}
+			s = suggestions[suggestIndex]
 			status.ClearAll(c)
 			status.SetMessage("Suggest: " + s)
 			status.ShowNoTimeout(c, e)
@@ -91,7 +103,7 @@ func (e *Editor) SuggestMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			s = ""
 			fallthrough
 		case "c:13", "c:32": // return or space
-			doneCollectingLetters = true
+			doneChoosing = true
 		}
 	}
 	status.ClearAll(c)
