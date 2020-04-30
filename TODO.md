@@ -16,3 +16,4 @@
 - [ ] Let the autocompletion also look at method definitions with matching variable names (ignoring types, for now).
 - [ ] Find out which keys could be used for "go to definition" and "rename". Perhaps `ctrl-r` could be repurposed to offer a menu that could be browsed with `tab` the arrow keys.
 - [ ] Plugins? When there's "txt2something" and "something2txt", o should be able to edit "something" files. This could be used for hex editing, editing ELF files etc.
+- [ ] Fix the tab/space positioning issue in the editor UpEnd function.
