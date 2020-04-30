@@ -85,7 +85,7 @@ To unset:
 * `ctrl-b` - Bookmark the current line. Press again to remove bookmark.
 * `ctrl-j` - Join lines (or jump to the bookmark, if set).
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
-* `ctrl-l` - Jump to a specific line number.
+* `ctrl-l` - Jump to a specific line number. Press return to go to the top.
 * `ctrl-f` - Search for a string.
 * `esc` - Redraw the screen and clear the last search.
 * `ctrl-space` - Build Go or C++ files, word-wrap other files.

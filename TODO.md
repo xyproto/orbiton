@@ -1,7 +1,9 @@
 # TODO
 
+- [ ] Open .gz files.
 - [ ] When in "SuggestMode", typing should start filtering the list.
 - [ ] Rainbow parenthesis.
+- [ ] `ctl-l` and then return should go to the top.
 - [ ] Backwards search + using `ctrl-p` to jump to previous location (or pop from a location stack).
 - [ ] Search wraparound by going to line 0 and searching again.
 - [ ] After ending a line with "\", indent two spaces relative to that line when pressing enter.
@@ -15,3 +17,6 @@
 - [ ] Let the autocompletion also look at method definitions with matching variable names (ignoring types, for now).
 - [ ] Find out which keys could be used to "go to definition" and "rename".
 - [ ] Fix syntax highlighting for comments within strings, like `"/* hello */"`.
+- [ ] Open files given an URL? No, then "save as" needs to be implemented too. Then there's file management.
+- [ ] Open and edit ELF files?
+- [ ] Plugins? When there's "txt2something" and "something2txt", o should be able to edit "something" files.
