@@ -1033,7 +1033,7 @@ Set NO_COLOR=1 to disable colors.
 					e.InsertLineBelow()
 					h := int(c.Height())
 					if e.pos.sy >= (h - 1) {
-						e.ScrollDown(c, status, 1)
+						e.redraw = e.ScrollDown(c, status, 1)
 						e.redrawCursor = true
 					}
 					e.pos.Down(c)
