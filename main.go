@@ -236,8 +236,7 @@ Set NO_COLOR=1 to disable colors.
 
 	// Use a theme for light backgrounds if XTERM_VERSION is set,
 	// because $COLORFGBG is "15;0" even though the background is white.
-	envTheme := os.Getenv("O_THEME")
-	if envTheme == "light" || (envTheme != "dark" && os.Getenv("XTERM_VERSION") != "") {
+	if os.Getenv("XTERM_VERSION") != "" {
 		e.setLightTheme()
 	}
 
