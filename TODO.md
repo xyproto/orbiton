@@ -1,5 +1,6 @@
 # TODO
 
+- [ ] If pressing return at the end of the document, after a full screen, then also scroll down 1 line.
 - [ ] Be able to edit `.txt.gz` and `.1.gz` files.
 - [ ] Rainbow parenthesis.
 - [ ] When in "SuggestMode", typing should start filtering the list.
