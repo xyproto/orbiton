@@ -117,8 +117,8 @@ ctrl-x     to cut the current line, press twice to cut the current block
 ctrl-b     to bookmark the current line, press again to unbookmark
 ctrl-j     to join lines (or jump to the bookmark, if set)
 ctrl-u     to undo
-ctrl-l     to jump to a specific line
-ctrl-f     to search for a string
+ctrl-l     to jump to a specific line (or press return to jump to the top)
+ctrl-f     to search for a string, forward from the current location
 esc        to redraw the screen and clear the last search
 ctrl-space to build Go, C++, word wrap
 ctrl-r     to render the current text to a PDF document
@@ -1321,7 +1321,11 @@ Set NO_COLOR=1 to disable colors.
 				}
 			}
 			status.ClearAll(c)
-			if lns != "" {
+			if lns == "" {
+				// Go to the top, line number 1
+				e.redraw = e.GoToLineNumber(1, c, status, true)
+			} else {
+				// Go to the specified line
 				if ln, err := strconv.Atoi(lns); err == nil { // no error
 					e.redraw = e.GoToLineNumber(ln, c, status, true)
 				}
