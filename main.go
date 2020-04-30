@@ -1186,7 +1186,6 @@ Set NO_COLOR=1 to disable colors.
 				undo.Snapshot(e)
 
 				var (
-					//spaceHere         = e.LeadingWhitespace()
 					spaceAbove        = e.LeadingWhitespaceAt(y - 1)
 					trimmedLine       = strings.TrimSpace(e.Line(y))
 					strippedLineAbove = e.StripSingleLineComment(strings.TrimSpace(e.Line(y - 1)))

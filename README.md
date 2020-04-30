@@ -54,7 +54,7 @@ To unset:
 * Can render text to PDF.
 * Only UNIX-style line endings are supported (`\n`).
 * Will convert DOS/Windows line endings (`\r\n`) to UNIX line endings (just `\n`), whenever possible.
-* Will replace nonbreaking space (`0xc2 0xa0`) with a regular space (`0x20`) whenever possible.
+* Will replace non-breaking space (`0xc2 0xa0`) with a regular space (`0x20`) whenever possible.
 * Will jump to the last visited line when opening a recent file.
 * If tab completion on the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
 * If interactive rebase is launched with `git rebase -i`, either `ctrl-r` or `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
