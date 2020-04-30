@@ -101,6 +101,7 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar) {
 
 // SearchMode will enter the interactive "search mode" where the user can type in a string and then press return to search
 func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, clear bool) {
+	const searchPrompt = "Search:"
 	if clear {
 		// Clear the previous search
 		e.SetSearchTerm("", c, status)
@@ -108,20 +109,23 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 	s := e.SearchTerm()
 	status.ClearAll(c)
 	if s == "" {
-		status.SetMessage("Search:")
+		status.SetMessage(searchPrompt)
 	} else {
-		status.SetMessage("Search: " + s)
+		status.SetMessage(searchPrompt + " " + s)
 	}
 	status.ShowNoTimeout(c, e)
-	doneCollectingLetters := false
+	var (
+		key                   string
+		doneCollectingLetters bool
+	)
 	for !doneCollectingLetters {
-		key := tty.String()
+		key = tty.String()
 		switch key {
 		case "c:127": // backspace
 			if len(s) > 0 {
 				s = s[:len(s)-1]
 				e.SetSearchTerm(s, c, status)
-				status.SetMessage("Search: " + s)
+				status.SetMessage(searchPrompt + " " + s)
 				status.ShowNoTimeout(c, e)
 			}
 		case "c:27", "c:17": // esc or ctrl-q
@@ -134,7 +138,7 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 			if key != "" && !strings.HasPrefix(key, "c:") {
 				s += key
 				e.SetSearchTerm(s, c, status)
-				status.SetMessage("Search: " + s)
+				status.SetMessage(searchPrompt + " " + s)
 				status.ShowNoTimeout(c, e)
 			}
 		}
