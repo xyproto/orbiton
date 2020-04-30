@@ -641,16 +641,19 @@ Set NO_COLOR=1 to disable colors.
 				break // from case
 			}
 
-			// Map from formatting command to a list of file extensions
-			build := map[*exec.Cmd][]string{
-				exec.Command("go", "build"):               {".go"},
-				exec.Command("cxx"):                       {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
-				exec.Command("zig", "build"):              {".zig"},
-				exec.Command("v", filename):               {".v"},
-				exec.Command("cargo", "build"):            {".rs"},
-				exec.Command("ghc", "-dynamic", filename): {".hs"},
-			}
-			var foundExtensionToBuild bool
+			var (
+				// Map from formatting command to a list of file extensions
+				build = map[*exec.Cmd][]string{
+					exec.Command("go", "build"):               {".go"},
+					exec.Command("cxx"):                       {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
+					exec.Command("zig", "build"):              {".zig"},
+					exec.Command("v", filename):               {".v"},
+					exec.Command("cargo", "build"):            {".rs"},
+					exec.Command("ghc", "-dynamic", filename): {".hs"},
+				}
+				foundExtensionToBuild bool
+				testingInstead        bool
+			)
 		OUT2:
 			for cmd, extensions := range build {
 				for _, ext := range extensions {
@@ -658,7 +661,6 @@ Set NO_COLOR=1 to disable colors.
 						foundExtensionToBuild = true
 						status.ClearAll(c)
 						status.SetMessage("Building")
-						status.ShowNoTimeout(c, e)
 
 						// Save the current line location to file, for later
 						e.SaveLocation(absFilename, locationHistory)
@@ -673,22 +675,40 @@ Set NO_COLOR=1 to disable colors.
 						} else if ext == ".zig" && !exists("build.zig") {
 							// Just build the current file
 							cmd = exec.Command("zig", "build-exe", "-lc", filename)
+						} else if strings.HasSuffix(filename, "_test.go") {
+							// If it's a test-file, run the test instead of building
+							cmd = exec.Command("go", "test")
+							status.SetMessage("Testing")
+							testingInstead = true
 						}
 
+						status.ShowNoTimeout(c, e)
+
 						output, err := cmd.CombinedOutput()
-						if err != nil || bytes.Contains(output, []byte("error:")) {
+						if err != nil || bytes.Contains(output, []byte("error:")) { // failed tests also end up here
 							// Clear all existing status messages and status message clearing goroutines
 							status.ClearAll(c)
+							errorMessage := "Build error"
+
+							errorMarker := "error:"
+							if testingInstead {
+								errorMarker = "FAIL:"
+							}
+
 							// Find the first error message
 							lines := strings.Split(string(output), "\n")
-							errorMessage := "Build error"
 							for _, line := range lines {
-								if strings.Contains(line, "error:") {
-									parts := strings.SplitN(line, "error:", 2)
-									errorMessage = parts[1]
+								if strings.Contains(line, errorMarker) {
+									parts := strings.SplitN(line, errorMarker, 2)
+									errorMessage = strings.TrimSpace(parts[1])
 									break
 								}
 							}
+
+							if testingInstead {
+								errorMessage = "Test failed: " + errorMessage
+							}
+
 							status.SetErrorMessage(errorMessage)
 							status.Show(c, e)
 							for i, line := range lines {
