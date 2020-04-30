@@ -570,8 +570,6 @@ func (e *Editor) SingleLineCommentMarker() string {
 // StripSingleLineComment will strip away trailing single-linecomments.
 // TODO: Also strip trailing /* ... */ comments
 func (e *Editor) StripSingleLineComment(line string) string {
-	// TODO: Fix this syntax highlighting issue
-	_ = "/*"
 	commentMarker := e.SingleLineCommentMarker()
 	if strings.Count(line, commentMarker) == 1 {
 		p := strings.Index(line, commentMarker)
@@ -1348,6 +1346,12 @@ func (e *Editor) DownEnd(c *vt100.Canvas) error {
 		if e.Rune() == '\t' {
 			e.pos.sx = e.FirstScreenPosition(e.DataY())
 		}
+
+		// Expand the line, then check if e.pos.sx falls on a tab character ("\t" is expanded to several tabs ie. "\t\t\t\t")
+		expandedRunes := []rune(strings.Replace(e.CurrentLine(), "\t", strings.Repeat("\t", e.spacesPerTab), -1))
+		if e.pos.sx < len(expandedRunes) && expandedRunes[e.pos.sx] == '\t' {
+			e.pos.sx = e.FirstScreenPosition(e.DataY())
+		}
 	}
 	return nil
 }
@@ -1370,7 +1374,12 @@ func (e *Editor) UpEnd(c *vt100.Canvas) error {
 		if e.Rune() == '\t' {
 			e.pos.sx = e.FirstScreenPosition(e.DataY())
 		}
-		// TODO: Check that the cursor does not end up between tab characters on the screen!
+
+		// Expand the line, then check if e.pos.sx falls on a tab character ("\t" is expanded to several tabs ie. "\t\t\t\t")
+		expandedRunes := []rune(strings.Replace(e.CurrentLine(), "\t", strings.Repeat("\t", e.spacesPerTab), -1))
+		if e.pos.sx < len(expandedRunes) && expandedRunes[e.pos.sx] == '\t' {
+			e.pos.sx = e.FirstScreenPosition(e.DataY())
+		}
 	}
 	return nil
 }
