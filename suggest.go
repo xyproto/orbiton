@@ -8,6 +8,8 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+// corpus will grep all files matching the glob for "searchword.*" and return a list of what matched "*".
+// I thought this might be slow, but initial tests shows that this appears to be fast enough for interactive usage.
 func corpus(searchword, glob string) []string {
 	wordCount := make(map[string]int)
 
@@ -83,7 +85,9 @@ func (e *Editor) SuggestMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			status.ClearAll(c)
 			status.SetMessage("Suggest: " + s)
 			status.ShowNoTimeout(c, e)
-		case "c:27", "c:17": // esc or ctrl-q
+		case "c:8", "c:127": // ctrl-h or backspace
+			fallthrough
+		case "c:27", "c:17": // esc, ctrl-q or backspace
 			s = ""
 			fallthrough
 		case "c:13", "c:32": // return or space
