@@ -1446,12 +1446,16 @@ Set NO_COLOR=1 to disable colors.
 			}
 		case "c:22": // ctrl-v, paste
 			// Try fetching the lines from the clipboard first
-			lines, err := clipboard.ReadAll()
+			s, err := clipboard.ReadAll()
 			if err == nil { // no error
 				// Fix nonbreaking spaces first
-				lines = strings.Replace(lines, string([]byte{0xc2, 0xa0}), string([]byte{0x20}), -1)
+				s = strings.Replace(s, string([]byte{0xc2, 0xa0}), string([]byte{0x20}), -1)
+				// And \r\n
+				s = strings.Replace(s, string([]byte{'\r', '\n'}), string([]byte{'\n'}), -1)
+				// Then \r
+				s = strings.Replace(s, string([]byte{'\r'}), string([]byte{'\n'}), -1)
 				// Split the text into lines and store it in "copyLines"
-				copyLines = strings.Split(lines, "\n")
+				copyLines = strings.Split(s, "\n")
 			}
 			// Now check if there is anything to paste
 			if len(copyLines) == 0 {
