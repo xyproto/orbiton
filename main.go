@@ -226,7 +226,7 @@ Set NO_COLOR=1 to disable colors.
 		mode)
 
 	// For non-highlighted files, adjust the word wrap
-	if !syntaxHighlight {
+	if !e.syntaxHighlight {
 		// Adjust the word wrap if the terminal is too narrow
 		w := int(c.Width())
 		if w < e.wordWrapAt {
@@ -1175,52 +1175,65 @@ Set NO_COLOR=1 to disable colors.
 					break
 				}
 			}
-			// Auto-indentation or regular indentation
-			if !e.AtOrBeforeStartOfTextLine() && ext != "" {
+
+			// Enable auto indent if the file has an extension, the cursor is after the start of the line and syntax highlighting is enabled
+			if ext != "" && !e.AtOrBeforeStartOfTextLine() && e.syntaxHighlight {
 				// If in the middle of the text and the character to the left is not a ".", then autoindent
-				if strings.TrimSpace(e.Line(y-1)) == "" {
-					// The line above is empty, do nothing
-					break
-				}
-				// Move the current indentation to the same as the line above
-				undo.Snapshot(e)
-
-				var (
-					spaceAbove        = e.LeadingWhitespaceAt(y - 1)
-					trimmedLine       = strings.TrimSpace(e.Line(y))
-					strippedLineAbove = e.StripSingleLineComment(strings.TrimSpace(e.Line(y - 1)))
-					newLeadingSpace   = spaceAbove
-					oneIndentation    = "\t"
-				)
-				if e.mode == modeShell {
-					oneIndentation = strings.Repeat(" ", spacesPerTab)
+				lineAbove := 1
+				if strings.TrimSpace(e.Line(y-lineAbove)) == "" {
+					// The line above is empty, use the indendation before the line above that
+					lineAbove--
 				}
 
-				// Smart-ish indentation
-				if (strings.HasPrefix(trimmedLine, "case ") && !strings.HasPrefix(trimmedLine, "switch ")) || trimmedLine == "}" || trimmedLine == "]" || trimmedLine == ")" {
-					//strings.HasSuffix(strippedLineAbove, "}") || strings.HasSuffix(strippedLineAbove, "]") || strings.HasSuffix(strippedLineAbove, ")") ||
-					// Use one less indentation than the line above
-					if (len(spaceAbove) - len(oneIndentation)) <= 0 {
-						// Do nothing
-						break
+				// If we have a line (one or two lines above) as a reference point for the indentation
+				if strings.TrimSpace(e.Line(y-lineAbove)) != "" {
+
+					// Move the current indentation to the same as the line above
+					undo.Snapshot(e)
+
+					var (
+						spaceAbove        = e.LeadingWhitespaceAt(y - lineAbove)
+						trimmedLine       = strings.TrimSpace(e.Line(y))
+						strippedLineAbove = e.StripSingleLineComment(strings.TrimSpace(e.Line(y - lineAbove)))
+						newLeadingSpace   = spaceAbove
+						oneIndentation    string
+					)
+					if e.mode == modeShell {
+						oneIndentation = strings.Repeat(" ", spacesPerTab)
+					} else {
+						oneIndentation = "\t"
 					}
-					newLeadingSpace = spaceAbove[:len(spaceAbove)-len(oneIndentation)]
-				} else if strings.HasSuffix(strippedLineAbove, "{") || strings.HasSuffix(strippedLineAbove, "[") || strings.HasSuffix(strippedLineAbove, "(") || strings.HasSuffix(strippedLineAbove, ":") {
-					newLeadingSpace = spaceAbove + oneIndentation
-				}
 
-				e.SetLine(y, newLeadingSpace+trimmedLine)
-				e.redrawCursor = true
-				e.redraw = true
-				break
-			} else if e.mode == modeShell {
-				undo.Snapshot(e)
+					// Smart-ish indentation
+					if (strings.HasPrefix(trimmedLine, "case ") && !strings.HasPrefix(trimmedLine, "switch ")) || trimmedLine == "}" || trimmedLine == "]" || trimmedLine == ")" {
+						//strings.HasSuffix(strippedLineAbove, "}") || strings.HasSuffix(strippedLineAbove, "]") || strings.HasSuffix(strippedLineAbove, ")") ||
+						// Use one less indentation than the line above
+						if (len(spaceAbove) - len(oneIndentation)) <= 0 {
+							// Do nothing
+							break
+						}
+						newLeadingSpace = spaceAbove[:len(spaceAbove)-len(oneIndentation)]
+					} else if strings.HasSuffix(strippedLineAbove, "{") || strings.HasSuffix(strippedLineAbove, "[") || strings.HasSuffix(strippedLineAbove, "(") || strings.HasSuffix(strippedLineAbove, ":") {
+						newLeadingSpace = spaceAbove + oneIndentation
+					}
+
+					e.SetLine(y, newLeadingSpace+trimmedLine)
+					e.redrawCursor = true
+					e.redraw = true
+
+					// job done
+					break
+
+				}
+			}
+
+			undo.Snapshot(e)
+			if e.mode == modeShell {
 				// For shell and PKGBUILD files, insert spaces instead of tab
 				for i := 0; i < spacesPerTab; i++ {
 					e.InsertRune(c, ' ')
 				}
 			} else {
-				undo.Snapshot(e)
 				// Insert a tab character to the file
 				e.InsertRune(c, '\t')
 			}

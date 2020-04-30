@@ -1370,6 +1370,7 @@ func (e *Editor) UpEnd(c *vt100.Canvas) error {
 		if e.Rune() == '\t' {
 			e.pos.sx = e.FirstScreenPosition(e.DataY())
 		}
+		// TODO: Check that the cursor does not end up between tab characters on the screen!
 	}
 	return nil
 }
@@ -1377,8 +1378,7 @@ func (e *Editor) UpEnd(c *vt100.Canvas) error {
 // Next will move the cursor to the next position in the contents
 func (e *Editor) Next(c *vt100.Canvas) error {
 	// Ignore it if the position is out of bounds
-	x, _ := e.DataX()
-	atTab := e.Get(x, e.DataY()) == '\t'
+	atTab := e.Rune() == '\t'
 	if atTab && !e.DrawMode() {
 		e.pos.sx += e.spacesPerTab
 	} else {
