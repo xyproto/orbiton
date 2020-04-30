@@ -19,12 +19,12 @@ func SingleLineComment(trimmedLine, singleLineCommentMarker string, inMultiLineC
 
 // MultiLineCommentStart returns true if the given trimmed line is the start of a multi line comment
 func MultiLineCommentStart(trimmedLine string, inMultiLineComment, inMultiLineString, inSingleLineComment bool) bool {
-	return (!inMultiLineComment && !inMultiLineString && !inSingleLineComment) && strings.Contains(trimmedLine, "/*")
+	return (!inMultiLineComment && !inMultiLineString && !inSingleLineComment) && strings.HasPrefix(trimmedLine, "/*")
 }
 
 // MultiLineCommentStop returns true if the given trimmed line is the stop of a multi line comment
 func MultiLineCommentStop(trimmedLine string, inMultiLineComment, inMultiLineString, inSingleLineComment bool) bool {
-	return (inMultiLineComment && !inMultiLineString && !inSingleLineComment) && strings.Contains(trimmedLine, "*/")
+	return (inMultiLineComment && !inMultiLineString && !inSingleLineComment) && strings.HasSuffix(trimmedLine, "*/")
 }
 
 // MultiLineStringStart returns true if the given trimmed line is the assumed start of a multi line string
