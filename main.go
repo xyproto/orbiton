@@ -1340,8 +1340,13 @@ Set NO_COLOR=1 to disable colors.
 			}
 			status.ClearAll(c)
 			if lns == "" {
-				// Go to the top, line number 1
-				e.redraw = e.GoToLineNumber(1, c, status, true)
+				if e.DataY() > 0 {
+					// If not at the top, go to the first line (by line number, not by index)
+					e.redraw = e.GoToLineNumber(1, c, status, true)
+				} else {
+					// Go to the last line (by line number, not by index, e.Len() returns an index which is why there is no -1)
+					e.redraw = e.GoToLineNumber(e.Len(), c, status, true)
+				}
 			} else {
 				// Go to the specified line
 				if ln, err := strconv.Atoi(lns); err == nil { // no error
