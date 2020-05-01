@@ -38,7 +38,6 @@ To unset:
 * Tested on Arch Linux and FreeBSD.
 * Loads faster than both `vim` and `emacs`.
 * Never asks before saving or quitting. Be careful!
-* Can format Go or C++ code, just press `ctrl-space`. This uses either `goimports` (`go get golang.org/x/tools/cmd/goimports`) or `clang-format`.
 * Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
 * May provide smart indentation.
@@ -136,12 +135,12 @@ On Linux:
 
 C++
 
-* For building code with `ctrl-space`, [`cxx`](https://github.com/xyproto/cxx) must be installed.
+* For building code with `ctrl-b`, [`cxx`](https://github.com/xyproto/cxx) must be installed.
 * For formatting code with `ctrl-w`, `clang-format` must be installed.
 
 Go
 
-* For building code with `ctrl-space`, The `go` compiler must be installed.
+* For building code with `ctrl-b`, The `go` compiler must be installed.
 * For formatting code with `ctrl-w`, [`goimports`](https://godoc.org/golang.org/x/tools/cmd/goimports) must be installed.
 
 Zig
@@ -154,12 +153,12 @@ V
 
 Rust
 
-* For building code with `ctrl-space`, `Cargo.toml` must exist and `cargo` must be installed.
+* For building code with `ctrl-b`, `Cargo.toml` must exist and `cargo` must be installed.
 * For formatting code with `ctrl-w`, `rustfmt` must be installed.
 
 Haskell
 
-* For building the current file with `ctrl-space`, the `ghc` compiler must be installed.
+* For building the current file with `ctrl-b`, the `ghc` compiler must be installed.
 * For formatting code with `ctrl-w`, [`brittany`](https://github.com/lspitzner/brittany) must be installed.
 
 ## Size
@@ -216,7 +215,7 @@ fo somefile.cpp 123
 
 ## Easter eggs
 
-Pressing `ctrl-space` will render Markdown files to PDF using `pandoc` (as opposed to `ctrl-r`, which will save the text directly to a PDF, without using `pandoc`).
+Pressing `ctrl-b` will render Markdown files to PDF using `pandoc` (as opposed to `ctrl-r`, which will save the text directly to a PDF, without using `pandoc`).
 
 ## Suggested color scheme and font
 
