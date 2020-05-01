@@ -95,36 +95,31 @@ To unset:
 
 ## Build and format
 
-| Programming language | File extensions                                           | Jump to error | Build command            | Format command ($filename is a temporary file)                    |
-|----------------------|-----------------------------------------------------------|---------------|--------------------------|-------------------------------------------------------------------|
-| Go                   |`.go`                                                      | yes           |`go build`                | `goimports -w -- $filename`                                       |
-| C++                  | `.cpp`, `.cc`, `.cxx`, `.h`, `.hpp`, `.c++`, `.h++`, `.c` | yes           | `cxx`                    | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
-| Rust                 | `.rs`                                                     | yes           | `cargo build`            | `rustfmt`                                                         |
-| Zig                  | `.zig`                                                    | no            | `zig build`              | `zig fmt`                                                         |
-| V                    | `.v`                                                      | no            | `v build`                | `v fmt`                                                           |
-| Haskell              | `.hs`                                                     | no            | `ghc -dynamic $filename` | `brittany --write-mode=inplace -- $filename`                      |
+* At the press of `ctrl-b`, `o` will try to build or export the current file.
+* At the press of `ctrl-w`, `o` will try to format the current file.
 
-| File type | File extensions | Build command | Format command |
-|-----------|-----------------|---------------|----------------|
-| PKGBUILD  | ``              | `makepkg`     |                |
+| Programming language                            | File extensions                                           | Jump to error | Build command            | Format command ($filename is a temporary file)                    |
+|-------------------------------------------------|-----------------------------------------------------------|---------------|--------------------------|-------------------------------------------------------------------|
+| Go                                              | `.go`                                                     | yes           |`go build`                | `goimports -w -- $filename`                                       |
+| C++                                             | `.cpp`, `.cc`, `.cxx`, `.h`, `.hpp`, `.c++`, `.h++`, `.c` | yes           | `cxx`                    | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
+| C++, if `BUILD.bazel` exists                    | `.cc`, `.h`                                               | needs testing | `bazel build`            | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
+| Rust                        i                   | `.rs`                                                     | needs testing | `rustc $filename`        | `rustfmt`                                                         |
+| Rust, if `Cargo.toml` or `../Cargo.toml` exists | `.rs`                                                     | needs testing | `cargo build`            | `rustfmt`                                                         |
+| Zig                                             | `.zig`                                                    | needs testing | `zig build`              | `zig fmt`                                                         |
+| V                                               | `.v`                                                      | needs testing | `v build`                | `v fmt`                                                           |
+| Haskell                                         | `.hs`                                                     | needs testing | `ghc -dynamic $filename` | `brittany --write-mode=inplace -- $filename`                      |
 
-(this table is a work in progress)
+* `o` will try to jump to the location where the error is, otherwise display `Success`.
+* For regular text files, `ctrl-w` will word wrap the lines to a length of 99.
 
+CXX can be downloaded here: [GitHub project page for CXX](https://github.com/xyproto/cxx).
 
-At the press of `ctrl-b`, `o` will:
-
-* Build Go programs with `go build`.
-* Build C++ programs with [`cxx`](https://github.com/xyproto/cxx).
-* Export Markdown to PDF using `pandoc`.
-* Export scdoc files to man using `scdoc`.
-* Export asciidoctor files to man using `asciidoctor`.
-* Build Zig programs with `zig build`.
-* Build V programs with `v $filename`.
-* Build Rust programs with `cargo build`.
-* Build Haskell programs with `ghc -dynamic $filename`.
-* Build Arch Linux packages with `makepkg`.
-
-`o` will try to jump to the location where the error is, otherwise display `Success`.
+| File type | File extensions  | Build or export command                                          |
+|-----------|------------------|------------------------------------------------------------------|
+| PKGBUILD  |                  | `makepkg`                                                        |
+| AsciiDoc  | `.adoc`          | `asciidoctor -b manpage` (writes to `out.1`)                     |
+| scdoc     | `.scd`, `.scdoc` | `scdoc` (writes to `out.1`)                                      |
+| Markdown  | `.md`            | pandoc -N --toc -V geometry:a4paper` (writes to `$filename.pdf`) |
 
 ## Manual installation
 
