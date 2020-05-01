@@ -46,7 +46,7 @@ func corpus(searchword, glob string) []string {
 
 	// Copy the words from the map to a string slice, such
 	// that the most frequent words appear first.
-	sl := make([]string, len(wordCount), len(wordCount))
+	sl := make([]string, len(wordCount))
 	slIndex := 0
 	for i := highestCount; i >= 0; i-- {
 		for word, count := range wordCount {
