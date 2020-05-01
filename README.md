@@ -29,7 +29,7 @@ To unset:
 ## Features and limitations
 
 * Loads up instantly.
-* Small executable size (around 500k, when built with `gccgo` and then stripped).
+* Small executable size (around **500k**, when built with `gccgo` and compressed with `upx`).
 * Provides syntax highlighting for Go, C++, Markdown and Bash. Other files may also be highlighted (toggle with `ctrl-t`).
 * Configuration-free, for better and for worse.
 * Is limited to the VT100 standard, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`.
@@ -163,7 +163,7 @@ Haskell
 
 ## Size
 
-* The `o` executable is only **508k** when built with GCC 9.3 (for 64-bit Linux) + compressed with `upx`.
+* The `o` executable is only **508k** when built with GCC 9.3 (for 64-bit Linux) and compressed with `upx`.
 * This isn't as small as [e3](https://sites.google.com/site/e3editor/), an editor written in assembly (which is **234k**), but it's reasonably lean.
 
 One way of building with `gccgo` and `upx`:

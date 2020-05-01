@@ -1,5 +1,7 @@
 # TODO
 
+- [ ] Make it easier to build without moving the hand too much. `ctrl-space` was easier than `ctrl-b`.
+- [ ] Fix the TODO items in `markdown.go` + fix table coloring so that the `|`'s can be white (for instance).
 - [ ] Rainbow parenthesis.
 - [ ] When in "SuggestMode", typing should start filtering the list.
 - [ ] Backwards search result browsing using `ctrl-p` (alternatively keep a location stack when using `ctrl-n` and pop from that one).
