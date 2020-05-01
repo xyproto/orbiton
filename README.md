@@ -207,7 +207,7 @@ When loading files that are large or from a slow disk, an animated spinner will 
 
 ## Find and open
 
-This shell function works in `zsh` and `bash` and may be useful for both searching for and opening a file at the given line number (works best if there is only one matching file):
+This shell function works in `zsh` and `bash` and may be useful for both searching for and opening a file at the given line number (works best if there is only one matching file, if not it will open several files in succession):
 
 ```bash
 fo() { find . -type f -wholename "*$1" -exec /usr/bin/o {} $2 \;; }
