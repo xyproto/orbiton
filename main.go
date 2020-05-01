@@ -1163,7 +1163,7 @@ Set NO_COLOR=1 to disable colors.
 					break
 				}
 
-				// Now the preceeding word before the "." has been found
+				// Now the preceding word before the "." has been found
 
 				// Grep all files in this directory with the same extension as the currently edited file
 				// for what could follow the word and a "."
