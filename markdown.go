@@ -146,7 +146,7 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 	rest := line[dataPos:]
 
 	// Starting or ending a code block
-	if strings.HasPrefix(rest, "~~~") || strings.HasPrefix(rest, "```") {
+	if strings.HasPrefix(rest, "~~~") || strings.HasPrefix(rest, "```") { // TODO: fix syntax highlighting when this comment is removed `
 		return codeBlockColor.Get(line), true, true
 	}
 
@@ -201,6 +201,8 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 	// Table
 	if strings.HasPrefix(rest, "|") || strings.HasSuffix(rest, "|") {
 		return tableColor.Get(line), true, false
+		// TODO: Figure out why this does not work:
+		// return vt100.White.String() + strings.Replace(line, "|", vt100.White.String() + "|" + tableColor.String(), -1) + vt100.NoColor(), true, false
 	}
 
 	// Split the rest of the line into words
@@ -215,7 +217,7 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 	switch firstWord {
 	case "#", "##", "###", "####", "#####", "######", "#######":
 		if len(words) > 1 {
-			return leadingSpace + headerBulletColor.Get(firstWord) + " " + headerTextColor.Get(emphasis(quotedWordReplace(line[dataPos+len(firstWord)+1:], '`', headerTextColor, codeColor), headerTextColor, italicsColor, boldColor, strikeColor)), true, false
+			return leadingSpace + headerBulletColor.Get(firstWord) + " " + headerTextColor.Get(emphasis(quotedWordReplace(line[dataPos+len(firstWord)+1:], '`', headerTextColor, codeColor), headerTextColor, italicsColor, boldColor, strikeColor)), true, false // TODO: `
 		}
 		return leadingSpace + headerTextColor.Get(rest), true, false
 	case "*", "-", "+", "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.", "10.": // ignore numbers over 10
