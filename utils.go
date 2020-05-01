@@ -90,3 +90,6 @@ func logf(head string, tail ...interface{}) {
 	f.Sync()
 	f.Close()
 }
+
+// Silence the "logf is unused" message by staticcheck
+var _ = logf
