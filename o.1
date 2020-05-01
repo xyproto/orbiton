@@ -1,6 +1,6 @@
 .\"             -*-Nroff-*-
 .\"
-.TH "o" 1 "25 Apr 2020" "" ""
+.TH "o" 1 "1 May 2020" "" ""
 .SH NAME
 o \- an editor
 .SH SYNOPSIS
@@ -72,11 +72,12 @@ displays brief usage information
   Press twice to cut the current block of text (until a blank line or the end of the file).
   Press once to only cut the current line.
 .sp
-.B ctrl-b
-  Bookmark the current position. Press again to remove the bookmark.
+.B ctrl-space
+  Bookmark the current line. Press again to remove the bookmark.
+  If a bookmark is set, and not on the bookmarked line, jump to the bookmark.
 .sp
 .B ctrl-j
-  Join lines (or jump to the bookmark, if set).
+  Join lines.
 .sp
 .B ctrl-u
   Undo (`ctrl-z` is also possible, but may background the application).
@@ -90,9 +91,19 @@ displays brief usage information
 .B esc
   Redraw the screen and clear the last search.
 .sp
-.B ctrl-space
-  Build Go programs with `go build`. Build C++ programs with `cxx`. Otherwise, perform word-wrapping.
-  For Markdown files, export to .pdf using `pandoc`.
+.B ctrl-b
+  Build Go programs with `go build`.
+  Build C++ programs with `cxx`.
+  Export Markdown to PDF using `pandoc`.
+  Export scdoc files to man using `scdoc`.
+  Export asciidoctor files to man using `asciidoctor`.
+  Build Zig programs with `zig build`.
+  Build V programs with `v $filename`.
+  Build Rust programs with `cargo build`.
+  Build Haskell programs with `ghc -dynamic $filename`.
+  Build Arch Linux packages with `makepkg`.
+.sp
+  `o` will try to jump to the location where the error is, otherwise display "Success".
 .sp
 .B ctrl-\\\\
   Toggle single-line comments for a block of code.

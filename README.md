@@ -69,7 +69,7 @@ To unset:
 
 * `ctrl-q` - Quit
 * `ctrl-s` - Save
-* `ctrl-w` - Format the current file using `goimport` or `clang-format`, depending on the file extension.
+* `ctrl-w` - Format the current file (see the table below).
 * `ctrl-a` - Go to start of text, then start of line and then to the previous line.
 * `ctrl-e` - Go to end of line and then to the next line.
 * `ctrl-p` - Scroll up 10 lines.
@@ -82,16 +82,49 @@ To unset:
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text.
 * `ctrl-c` - Copy one line. Press twice to copy a block of text.
 * `ctrl-v` - Paste one trimmed line. Press twice to paste multiple untrimmed lines.
-* `ctrl-b` - Bookmark the current line. Press again to remove bookmark.
+* `ctrl-b` - Build (see table below).
 * `ctrl-j` - Join lines (or jump to the bookmark, if set).
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
-* `ctrl-l` - Jump to a specific line number. Press return to go to the top.
-* `ctrl-f` - Search for a string.
+* `ctrl-l` - Jump to a specific line number. Press just return to jump to the top. If at the top, press just return to jump to the bottom.
+* `ctrl-f` - Forward search for a string.
 * `esc` - Redraw the screen and clear the last search.
-* `ctrl-space` - Build Go or C++ files, word-wrap other files.
+* `ctrl-space` - Toggle a bookmark for the current line, or jump to a bookmark on a different line, if set.
 * `ctrl-\` - Toggle single-line comments for a block of code.
 * `ctrl-r` - Render the current text as a PDF document.
 * `ctrl-~` - Save and quit. Only works in some terminal emulators.
+
+## Build and format
+
+| Programming language | File extensions                                           | Jump to error | Build command            | Format command ($filename is a temporary file)                    |
+|----------------------|-----------------------------------------------------------|---------------|--------------------------|-------------------------------------------------------------------|
+| Go                   |`.go`                                                      | yes           |`go build`                | `goimports -w -- $filename`                                       |
+| C++                  | `.cpp`, `.cc`, `.cxx`, `.h`, `.hpp`, `.c++`, `.h++`, `.c` | yes           | `cxx`                    | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
+| Rust                 | `.rs`                                                     | yes           | `cargo build`            | `rustfmt`                                                         |
+| Zig                  | `.zig`                                                    | no            | `zig build`              | `zig fmt`                                                         |
+| V                    | `.v`                                                      | no            | `v build`                | `v fmt`                                                           |
+| Haskell              | `.hs`                                                     | no            | `ghc -dynamic $filename` | `brittany --write-mode=inplace -- $filename`                      |
+
+| File type | File extensions | Build command | Format command |
+|-----------|-----------------|---------------|----------------|
+| PKGBUILD  | ``              | `makepkg`     |                |
+
+(this table is a work in progress)
+
+
+At the press of `ctrl-b`, `o` will:
+
+* Build Go programs with `go build`.
+* Build C++ programs with [`cxx`](https://github.com/xyproto/cxx).
+* Export Markdown to PDF using `pandoc`.
+* Export scdoc files to man using `scdoc`.
+* Export asciidoctor files to man using `asciidoctor`.
+* Build Zig programs with `zig build`.
+* Build V programs with `v $filename`.
+* Build Rust programs with `cargo build`.
+* Build Haskell programs with `ghc -dynamic $filename`.
+* Build Arch Linux packages with `makepkg`.
+
+`o` will try to jump to the location where the error is, otherwise display `Success`.
 
 ## Manual installation
 
