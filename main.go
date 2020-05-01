@@ -99,9 +99,10 @@ Hotkeys
 
 ctrl-q     to quit
 ctrl-s     to save
-ctrl-w     to format the current file with "go fmt" or "clang-format"
-           if in markdown mode: toggle checkboxes
-		   if in git mode: cycle git interactive rebase keywords
+ctrl-w     for Zig, Rust, V and Go, format with the "... fmt" command
+           for C++, format the current file with "clang-format"
+           for markdown, toggle checkboxes
+           for git interactive rebases, cycle the rebase keywords
 ctrl-a     go to start of line, then start of text and then the previous line
 ctrl-e     go to end of line and then the next line
 ctrl-p     to scroll up 10 lines
@@ -114,16 +115,18 @@ ctrl-o     to toggle text or draw mode
 ctrl-c     to copy the current line, press twice to copy the current block
 ctrl-v     to paste one line, press twice to paste the rest
 ctrl-x     to cut the current line, press twice to cut the current block
-ctrl-b     to bookmark the current line, press again to unbookmark
-ctrl-j     to join lines (or jump to the bookmark, if set)
-ctrl-u     to undo
+ctrl-space to toggle a bookmark for the current line, or jump to a bookmark
+ctrl-j     to join lines
+ctrl-u     to undo (ctrl-z is also possible, but may background the application)
 ctrl-l     to jump to a specific line (or press return to jump to the top)
-ctrl-f     to search for a string, forward from the current location
+ctrl-f     to forward search for a string, from the current location
 esc        to redraw the screen and clear the last search
-ctrl-space to build Go, C++, word wrap
+ctrl-b     to build Go, C++, Zig, V, Rust, Haskell, Markdown, Adoc or Sdoc
 ctrl-r     to render the current text to a PDF document
 ctrl-\     to toggle single-line comments for a block of code
 ctrl-~     to save and quit + clear the terminal
+
+See the man page for more information.
 
 Set NO_COLOR=1 to disable colors.
 
@@ -533,9 +536,10 @@ Set NO_COLOR=1 to disable colors.
 			}
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
-		case "c:0": // ctrl-space, build source code to executable, word wrap, convert to PDF or write to PNG, depending on the mode
-			if strings.HasSuffix(baseFilename, ".scd") || strings.HasSuffix(baseFilename, ".scdoc") {
-				scdoc := exec.Command("/usr/bin/scdoc")
+		case "c:2": // ctrl-b, build source code to executable, convert to PDF or write to PNG, depending on the mode
+			ext := filepath.Ext(baseFilename)
+			if ext == ".scd" || ext == ".scdoc" {
+				scdoc := exec.Command("scdoc")
 
 				// Place the current contents in a buffer, and feed it to stdin to the command
 				var buf bytes.Buffer
@@ -571,8 +575,8 @@ Set NO_COLOR=1 to disable colors.
 				status.Show(c, e)
 				break // from case
 
-			} else if strings.HasSuffix(baseFilename, ".adoc") {
-				asciidoctor := exec.Command("/usr/bin/asciidoctor", "-b", "manpage", "-o", "out.1", filename)
+			} else if ext == ".adoc" {
+				asciidoctor := exec.Command("asciidoctor", "-b", "manpage", "-o", "out.1", filename)
 				if err := asciidoctor.Run(); err != nil {
 					statusMessage = err.Error()
 					status.ClearAll(c)
@@ -586,7 +590,7 @@ Set NO_COLOR=1 to disable colors.
 				status.Show(c, e)
 				break // from case
 				// Is this a Markdown file? Save to PDF, either by using pandoc or by writing the text file directly
-			} else if pandocPath := which("pandoc"); mode == modeMarkdown && strings.HasSuffix(baseFilename, ".md") && pandocPath != "" {
+			} else if pandocPath := which("pandoc"); ext == ".md" && mode == modeMarkdown && pandocPath != "" {
 
 				go func() {
 					pdfFilename := strings.Replace(baseFilename, ".", "_", -1) + ".pdf"
@@ -641,7 +645,7 @@ Set NO_COLOR=1 to disable colors.
 			}
 
 			var (
-				// Map from formatting command to a list of file extensions
+				// Map from build command to a list of file extensions (or basenames for files without an extension)
 				build = map[*exec.Cmd][]string{
 					exec.Command("go", "build"):               {".go"},
 					exec.Command("cxx"):                       {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
@@ -649,6 +653,7 @@ Set NO_COLOR=1 to disable colors.
 					exec.Command("v", filename):               {".v"},
 					exec.Command("cargo", "build"):            {".rs"},
 					exec.Command("ghc", "-dynamic", filename): {".hs"},
+					exec.Command("makepkg"):                   {"PKGBUILD"},
 				}
 				foundExtensionToBuild bool
 				testingInstead        bool
@@ -656,7 +661,7 @@ Set NO_COLOR=1 to disable colors.
 		OUT2:
 			for cmd, extensions := range build {
 				for _, ext := range extensions {
-					if strings.HasSuffix(filename, ext) {
+					if strings.HasSuffix(filename, ext) || filename == ext {
 						foundExtensionToBuild = true
 						status.ClearAll(c)
 						status.SetMessage("Building")
@@ -1536,20 +1541,19 @@ Set NO_COLOR=1 to disable colors.
 			// Prepare to redraw the text
 			e.redrawCursor = true
 			e.redraw = true
-		case "c:2": // ctrl-b, bookmark
+		case "c:0": // ctrl-space, bookmark, unbookmark or jump to bookmark
 			if bookmark == nil {
+				// no bookmark, create a bookmark at the current line
 				tmpBookmark := e.pos
 				bookmark = &tmpBookmark
 				status.SetMessage("Bookmarked line " + strconv.Itoa(e.LineNumber()))
-			} else {
+			} else if bookmark.LineNumber() == e.LineNumber() {
+				// bookmarking the same line twice: remove the bookmark
 				bookmarkLine := bookmark.LineNumber()
 				bookmark = nil
-				status.SetMessage("Unbookmark line " + strconv.Itoa(bookmarkLine))
-			}
-			status.Show(c, e)
-			e.redrawCursor = true
-		case "c:10": // ctrl-j, jump to bookmark (or join line if bookmark is not set)
-			if bookmark != nil {
+				status.SetMessage("Removed bookmark for line " + strconv.Itoa(bookmarkLine))
+			} else {
+				// jumping to a bookmark
 				undo.Snapshot(e)
 				e.GoToPosition(c, status, *bookmark)
 				// Do the redraw manually before showing the status message
@@ -1557,11 +1561,10 @@ Set NO_COLOR=1 to disable colors.
 				e.redraw = false
 				// Show the status message.
 				status.SetMessage("Jumped to bookmark at line " + strconv.Itoa(e.LineNumber()))
-				status.Show(c, e)
-				e.redrawCursor = true
-				break
 			}
-			// Join line
+			status.Show(c, e)
+			e.redrawCursor = true
+		case "c:10": // ctrl-j, join line
 			if e.Empty() {
 				status.SetMessage("Empty")
 				status.Show(c, e)
