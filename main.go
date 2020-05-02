@@ -949,6 +949,10 @@ Set NO_COLOR=1 to disable colors.
 					// If the cursor is after the length of the current line, move it to the end of the current line
 					if e.AfterLineScreenContents() {
 						e.End()
+						// Then move one step to the left
+						if strings.TrimSpace(e.CurrentLine()) != "" {
+							e.Prev(c)
+						}
 					}
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
