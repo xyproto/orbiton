@@ -41,6 +41,7 @@ To unset:
 * Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
 * May provide smart indentation.
+* The syntax highlighting is instant.
 * Requires `/dev/tty` to be available.
 * `xclip` (for X) or `wl-clipboard` (for Wayland) must be installed if the system clipboard is to be used.
 * Only forward search. Press `ctrl-l` a d then type `0` to jump to the top before searching.
@@ -63,6 +64,7 @@ To unset:
 
 * Files with lines longer than the terminal width are not supported (resize the terminal to edit long lines).
 * When elongating a long line (one that is already longer than the terminal width), the line will break at an unexpected location.
+* The smart indentation is not always smart.
 
 ## Hotkeys
 
