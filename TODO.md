@@ -1,13 +1,13 @@
 # TODO
 
+- [ ] If a word is typed 1 letter differently from all the other instances in the current file: color it red.
+- [ ] Highlight links in Markdown (perhaps color `[` and `]` yellow).
 - [ ] Rainbow parenthesis.
 - [ ] When in "SuggestMode", typing should start filtering the list.
 - [ ] Backwards search result browsing using `ctrl-p` (alternatively keep a location stack when using `ctrl-n` and pop from that one).
-- [ ] If a word is typed 1 letter differently from all the other instances in the current file: color it red.
 - [ ] Enable search wraparound.
 - [ ] Be able to edit `.txt.gz` and `.1.gz` files.
 - [ ] Smart indent: After ending a line with `\`, indent two spaces relative to that line when pressing enter.
-- [ ] Use smart indent for tabs also when the character is at the start of the line
 - [ ] Syntax highlighting of `..`, `::`, `:asdfasdf:` and `^^^` in `.rst` files.
 - [ ] Spellcheck all comments. Highlight misspelled words. Make it possible to add/ignore words.
 - [ ] `ctrl-f` and then `return` could jump to a location at least 10 lines away that has been most visited within the last 10 minutes.
@@ -18,3 +18,4 @@
 - [ ] If pressing return at the end of the document, after a full screen, then also scroll down 1 line.
 - [ ] Plugins? When there's "txt2something" and "something2txt", o should be able to edit "something" files. This could be used for hex editing, editing ELF files etc.
 - [ ] Tab in the middle of a line, especially on a `|` character, could insert spaces until the `|` alignes with the `|` above, if applicable (For Markdown tables).
+- [ ] Use smart indent for tabs also when the character is at the start of the line? Then a key for inserting tab no matter what is needed.
