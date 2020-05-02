@@ -1544,14 +1544,12 @@ Set NO_COLOR=1 to disable colors.
 		case "c:2": // ctrl-b, bookmark, unbookmark or jump to bookmark
 			if bookmark == nil {
 				// no bookmark, create a bookmark at the current line
-				tmpBookmark := e.pos
-				bookmark = &tmpBookmark
-				status.SetMessage("Bookmarked line " + strconv.Itoa(e.LineNumber()))
+				bookmark = e.pos.Copy()
+				status.SetMessage("  Bookmarked line " + strconv.Itoa(e.LineNumber()) + "  ")
 			} else if bookmark.LineNumber() == e.LineNumber() {
 				// bookmarking the same line twice: remove the bookmark
-				bookmarkLine := bookmark.LineNumber()
+				status.SetMessage("Removed bookmark for line " + strconv.Itoa(bookmark.LineNumber()))
 				bookmark = nil
-				status.SetMessage("Removed bookmark for line " + strconv.Itoa(bookmarkLine))
 			} else {
 				// jumping to a bookmark
 				undo.Snapshot(e)

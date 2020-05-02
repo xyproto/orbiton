@@ -21,14 +21,8 @@ func NewPosition(scrollSpeed int) *Position {
 }
 
 // Copy will create a new Position struct that is a copy of this one
-func (p *Position) Copy() Position {
-	var p2 Position
-	p2.sx = p.sx
-	p2.sy = p.sy
-	p2.offset = p.offset
-	p2.scrollSpeed = p.scrollSpeed
-	p2.savedX = p.savedX
-	return p2
+func (p *Position) Copy() *Position {
+	return &Position{p.sx, p.sy, p.offset, p.scrollSpeed, p.savedX}
 }
 
 // ScreenX returns the screen X position in the current view
@@ -90,5 +84,5 @@ func (p *Position) AtStartOfLine() bool {
 
 // LineNumber returns the current line number this Position is at
 func (p *Position) LineNumber() int {
-	return (p.offset + p.sy) - 1
+	return p.offset + p.sy + 1
 }
