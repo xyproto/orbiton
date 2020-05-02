@@ -12,31 +12,6 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// SingleLineComment returns true if the given trimmed line is a single line comment (and not in a multi line comment or in a multi line string)
-func SingleLineComment(trimmedLine, singleLineCommentMarker string, inMultiLineComment, inMultiLineString bool) bool {
-	return (!inMultiLineComment && !inMultiLineString) && (strings.HasPrefix(trimmedLine, singleLineCommentMarker) || (strings.HasPrefix(trimmedLine, "/*") && strings.HasSuffix(trimmedLine, "*/")))
-}
-
-// MultiLineCommentStart returns true if the given trimmed line is the start of a multi line comment
-func MultiLineCommentStart(trimmedLine string, inMultiLineComment, inMultiLineString, inSingleLineComment bool) bool {
-	return (!inMultiLineComment && !inMultiLineString && !inSingleLineComment) && strings.HasPrefix(trimmedLine, "/*")
-}
-
-// MultiLineCommentStop returns true if the given trimmed line is the stop of a multi line comment
-func MultiLineCommentStop(trimmedLine string, inMultiLineComment, inMultiLineString, inSingleLineComment bool) bool {
-	return (inMultiLineComment && !inMultiLineString && !inSingleLineComment) && strings.HasSuffix(trimmedLine, "*/")
-}
-
-// MultiLineStringStart returns true if the given trimmed line is the assumed start of a multi line string
-func MultiLineStringStart(trimmedLine string, inMultiLineComment, inMultiLineString, inSingleLineComment bool) bool {
-	return (!inMultiLineComment && !inMultiLineString && !inSingleLineComment) && ((strings.Count(trimmedLine, "`") % 2) != 0)
-}
-
-// MultiLineStringStop returns true if the given trimmed line is the assumed stop of a multi line string
-func MultiLineStringStop(trimmedLine string, inMultiLineComment, inMultiLineString, inSingleLineComment bool) bool {
-	return (!inMultiLineComment && inMultiLineString && !inSingleLineComment) && ((strings.Count(trimmedLine, "`") % 2) != 0)
-}
-
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error {
 	o := textoutput.NewTextOutput(true, true)
@@ -68,43 +43,29 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		}
 	}
 	var (
-		noColor                 bool = os.Getenv("NO_COLOR") != ""
-		inMultiLineComment      bool // used when highlighting C, Go, C++ etc (using /* and */)
-		inMultiLineString       bool // used for multiline strings in Go
-		singleLineCommentMarker = e.SingleLineCommentMarker()
-		trimmedLine             string
+		noColor     bool = os.Getenv("NO_COLOR") != ""
+		trimmedLine string
+		q           = NewQuoteState(e.SingleLineCommentMarker())
 	)
 	// First loop from 0 to offset to figure out if we are already in a multiline comment or a multiline string at the current line
 	for i := 0; i < offset; i++ {
 		trimmedLine = strings.TrimSpace(e.Line(i))
-		switch {
-		case SingleLineComment(trimmedLine, singleLineCommentMarker, inMultiLineComment, inMultiLineString):
-			// A single line comment (including /* ... */)
-		case MultiLineCommentStart(trimmedLine, inMultiLineComment, inMultiLineString, false):
-			// Multi line comment start
-			inMultiLineComment = true
-		case MultiLineCommentStop(trimmedLine, inMultiLineComment, inMultiLineString, false):
-			// Multi line comment stop
-			inMultiLineComment = false
-		case MultiLineStringStart(trimmedLine, inMultiLineComment, inMultiLineString, false):
-			inMultiLineString = true
-		case MultiLineStringStop(trimmedLine, inMultiLineComment, inMultiLineString, false):
-			inMultiLineString = false
-		}
+		// Have a trimmed line. Want to know: the current state of which quotes, comments or strings we are in.
+		// Solution, have a state struct!
+		q.Process(trimmedLine)
 	}
+	// q should now contain the current quote state
+	//panic(q.String())
 	var (
-		counter                     int
-		line                        string
-		screenLine                  string
-		y                           int
-		inSingleLineComment         bool
-		newlyStartedMultiLineString bool
-		assemblyMode                = e.mode == modeAssembly
+		counter      int
+		line         string
+		screenLine   string
+		y            int
+		assemblyMode = e.mode == modeAssembly
 	)
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y = 0; y < numlines; y++ {
 		counter = 0
-		newlyStartedMultiLineString = false
 		line = strings.Replace(e.Line(y+offset), "\t", tabString, -1)
 		screenLine = strings.TrimRightFunc(line, unicode.IsSpace)
 		if len([]rune(screenLine)) >= w {
@@ -134,44 +95,22 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					}
 				} else {
 					trimmedLine = strings.TrimSpace(line)
-					inSingleLineComment = false
-					if SingleLineComment(trimmedLine, singleLineCommentMarker, inMultiLineComment, inMultiLineString) {
-						// A single line comment (including /* ... */)
-						inSingleLineComment = true
-					}
-					if MultiLineCommentStart(trimmedLine, inMultiLineComment, inMultiLineString, inSingleLineComment) {
-						// Multi line comment start
-						inMultiLineComment = true
-					} else if MultiLineCommentStop(trimmedLine, inMultiLineComment, inMultiLineString, inSingleLineComment) {
-						// Multi line comment stop
-						inMultiLineComment = false
-					}
-					if MultiLineStringStop(trimmedLine, inMultiLineComment, inMultiLineString, inSingleLineComment) {
-						// Multi line string stop
-						inMultiLineString = false
-					} else if MultiLineStringStart(trimmedLine, inMultiLineComment, inMultiLineString, inSingleLineComment) {
-						// Multi line string start
-						inMultiLineString = true
-						newlyStartedMultiLineString = true
-					}
-
-					// TODO: Multiline string start and stop at the same line
+					q.Process(trimmedLine)
 
 					switch {
-					case inSingleLineComment:
+					case q.singleLineComment:
 						// A single line comment (the syntax module did the highlighting)
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
-					case inMultiLineComment:
+					case q.multiLineComment:
 						// A multi line comment
 						coloredString = UnEscape(e.multilineComment.Get(line))
-					case !newlyStartedMultiLineString && inMultiLineString:
+					case !q.startedMultiLineString && q.backtick > 0:
 						// A multi line string
 						coloredString = UnEscape(e.multilineString.Get(line))
 					default:
 						// Regular code
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					}
-
 				}
 
 				// Slice of runes and color attributes, while at the same time highlighting search terms
