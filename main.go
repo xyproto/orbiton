@@ -20,7 +20,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const version = "o 2.26.1"
+const version = "o 2.26.2"
 
 var (
 	rebasePrefixes   = []string{"p", "pick", "r", "reword", "d", "drop", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "l", "label", "t", "reset", "m", "merge"}
