@@ -81,20 +81,20 @@ To unset:
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text.
 * `ctrl-c` - Copy one line. Press twice to copy a block of text.
 * `ctrl-v` - Paste one trimmed line. Press twice to paste multiple untrimmed lines.
-* `ctrl-b` - Build (see table below).
+* `ctrl-space` - Build (see table below).
 * `ctrl-j` - Join lines (or jump to the bookmark, if set).
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
 * `ctrl-l` - Jump to a specific line number. Press just return to jump to the top. If at the top, press just return to jump to the bottom.
 * `ctrl-f` - Forward search for a string.
 * `esc` - Redraw the screen and clear the last search.
-* `ctrl-space` - Toggle a bookmark for the current line, or jump to a bookmark on a different line, if set.
+* `ctrl-b` - Toggle a bookmark for the current line, or jump to a bookmark on a different line, if set.
 * `ctrl-\` - Toggle single-line comments for a block of code.
 * `ctrl-r` - Render the current text as a PDF document.
 * `ctrl-~` - Save and quit. Only works in some terminal emulators.
 
 ## Build and format
 
-* At the press of `ctrl-b`, `o` will try to build or export the current file.
+* At the press of `ctrl-space`, `o` will try to build or export the current file.
 * At the press of `ctrl-w`, `o` will try to format the current file.
 
 | Programming language                            | File extensions                                           | Jump to error | Build command            | Format command ($filename is a temporary file)                    |
@@ -135,12 +135,12 @@ On Linux:
 
 C++
 
-* For building code with `ctrl-b`, [`cxx`](https://github.com/xyproto/cxx) must be installed.
+* For building code with `ctrl-space`, [`cxx`](https://github.com/xyproto/cxx) must be installed.
 * For formatting code with `ctrl-w`, `clang-format` must be installed.
 
 Go
 
-* For building code with `ctrl-b`, The `go` compiler must be installed.
+* For building code with `ctrl-space`, The `go` compiler must be installed.
 * For formatting code with `ctrl-w`, [`goimports`](https://godoc.org/golang.org/x/tools/cmd/goimports) must be installed.
 
 Zig
@@ -153,12 +153,12 @@ V
 
 Rust
 
-* For building code with `ctrl-b`, `Cargo.toml` must exist and `cargo` must be installed.
+* For building code with `ctrl-space`, `Cargo.toml` must exist and `cargo` must be installed.
 * For formatting code with `ctrl-w`, `rustfmt` must be installed.
 
 Haskell
 
-* For building the current file with `ctrl-b`, the `ghc` compiler must be installed.
+* For building the current file with `ctrl-space`, the `ghc` compiler must be installed.
 * For formatting code with `ctrl-w`, [`brittany`](https://github.com/lspitzner/brittany) must be installed.
 
 ## Size
@@ -215,7 +215,7 @@ fo somefile.cpp 123
 
 ## Easter eggs
 
-Pressing `ctrl-b` will render Markdown files to PDF using `pandoc` (as opposed to `ctrl-r`, which will save the text directly to a PDF, without using `pandoc`).
+Pressing `ctrl-space` will render Markdown files to PDF using `pandoc` (as opposed to `ctrl-r`, which will save the text directly to a PDF, without using `pandoc`).
 
 ## Suggested color scheme and font
 

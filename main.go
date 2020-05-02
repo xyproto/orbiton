@@ -115,13 +115,13 @@ ctrl-o     to toggle text or draw mode
 ctrl-c     to copy the current line, press twice to copy the current block
 ctrl-v     to paste one line, press twice to paste the rest
 ctrl-x     to cut the current line, press twice to cut the current block
-ctrl-space to toggle a bookmark for the current line, or jump to a bookmark
+ctrl-b     to toggle a bookmark for the current line, or jump to a bookmark
 ctrl-j     to join lines
 ctrl-u     to undo (ctrl-z is also possible, but may background the application)
 ctrl-l     to jump to a specific line (or press return to jump to the top)
 ctrl-f     to forward search for a string, from the current location
 esc        to redraw the screen and clear the last search
-ctrl-b     to build Go, C++, Zig, V, Rust, Haskell, Markdown, Adoc or Sdoc
+ctrl-space to build Go, C++, Zig, V, Rust, Haskell, Markdown, Adoc or Sdoc
 ctrl-r     to render the current text to a PDF document
 ctrl-\     to toggle single-line comments for a block of code
 ctrl-~     to save and quit + clear the terminal
@@ -536,7 +536,7 @@ Set NO_COLOR=1 to disable colors.
 			}
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
-		case "c:2": // ctrl-b, build source code to executable, convert to PDF or write to PNG, depending on the mode
+		case "c:0": // ctrl-space, build source code to executable, convert to PDF or write to PNG, depending on the mode
 			ext := filepath.Ext(baseFilename)
 			if ext == ".scd" || ext == ".scdoc" {
 				scdoc := exec.Command("scdoc")
@@ -1541,7 +1541,7 @@ Set NO_COLOR=1 to disable colors.
 			// Prepare to redraw the text
 			e.redrawCursor = true
 			e.redraw = true
-		case "c:0": // ctrl-space, bookmark, unbookmark or jump to bookmark
+		case "c:2": // ctrl-b, bookmark, unbookmark or jump to bookmark
 			if bookmark == nil {
 				// no bookmark, create a bookmark at the current line
 				tmpBookmark := e.pos
