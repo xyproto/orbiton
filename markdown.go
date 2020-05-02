@@ -203,7 +203,7 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 		if strings.HasPrefix(line, "|-") {
 			return tableColor.String() + line + vt100.NoColor(), true, false
 		}
-		return strings.Replace(line, "|", tableColor.String() + "|" + vt100.NoColor(), -1),true, false
+		return strings.Replace(line, "|", tableColor.String()+"|"+vt100.NoColor(), -1), true, false
 	}
 
 	// Split the rest of the line into words
