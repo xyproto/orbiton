@@ -54,6 +54,8 @@ func (q *QuoteState) String() string {
 	return fmt.Sprintf("singleQuote=%v doubleQuote=%v backtick=%v multiLineComment=%v singleLineComment=%v startedMultiLineString=%v\n", q.singleQuote, q.doubleQuote, q.backtick, q.multiLineComment, q.singleLineComment, q.startedMultiLineString)
 }
 
+// Process takes a line of text and modifies the current quote state accordingly,
+// depending on which runes are encountered.
 func (q *QuoteState) Process(line string) {
 	var prevRune rune
 	q.singleLineComment = false
