@@ -106,7 +106,7 @@ To unset:
 | Rust, if `Cargo.toml` or `../Cargo.toml` exists | `.rs`                                                     | needs testing | `cargo build`            | `rustfmt`                                                         |
 | Zig                                             | `.zig`                                                    | needs testing | `zig build`              | `zig fmt`                                                         |
 | V                                               | `.v`                                                      | needs testing | `v build`                | `v fmt`                                                           |
-| Haskell                                         | `.hs`                                                     | needs testing | `ghc -dynamic $filename` | `brittany --write-mode=inplace -- $filename`                      |
+| Haskell                                         | `.hs`                                                     | yes           | `ghc -dynamic $filename` | `brittany --write-mode=inplace -- $filename`                      |
 
 * `o` will try to jump to the location where the error is, otherwise display `Success`.
 * For regular text files, `ctrl-w` will word wrap the lines to a length of 99.

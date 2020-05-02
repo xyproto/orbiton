@@ -701,12 +701,21 @@ Set NO_COLOR=1 to disable colors.
 
 							// Find the first error message
 							lines := strings.Split(string(output), "\n")
+							var prevLine string
 							for _, line := range lines {
-								if strings.Contains(line, errorMarker) {
+								if ext == ".hs" {
+									if strings.Contains(prevLine, errorMarker) {
+										if errorMessage = strings.TrimSpace(line); strings.HasPrefix(errorMessage, "• ") {
+											errorMessage = string([]rune(errorMessage)[2:])
+											break
+										}
+									}
+								} else if strings.Contains(line, errorMarker) {
 									parts := strings.SplitN(line, errorMarker, 2)
 									errorMessage = strings.TrimSpace(parts[1])
 									break
 								}
+								prevLine = line
 							}
 
 							if testingInstead {
@@ -716,7 +725,7 @@ Set NO_COLOR=1 to disable colors.
 							status.SetErrorMessage(errorMessage)
 							status.Show(c, e)
 							for i, line := range lines {
-								// Jump to the error location, for C++ and Go
+								// Jump to the error location, C++, Go and Haskell
 								if strings.Count(line, ":") >= 3 {
 									fields := strings.SplitN(line, ":", 4)
 
@@ -735,9 +744,11 @@ Set NO_COLOR=1 to disable colors.
 											e.Center(c)
 											// Use the error message as the status message
 											if len(fields) >= 4 {
-												status.ClearAll(c)
-												status.SetErrorMessage(strings.Join(fields[3:], " "))
-												status.Show(c, e)
+												if ext != ".hs" {
+													status.ClearAll(c)
+													status.SetErrorMessage(strings.Join(fields[3:], " "))
+													status.Show(c, e)
+												}
 												break OUT2
 											}
 										}
