@@ -25,7 +25,7 @@ var (
 	boldColor         = vt100.LightYellow
 	italicsColor      = vt100.White
 	strikeColor       = vt100.DarkGray
-	tableColor        = vt100.Magenta
+	tableColor        = vt100.Blue
 	checkboxColor     = vt100.Default     // a Markdown checkbox: [ ], [x] or [X]
 	xColor            = vt100.LightYellow // the x in the checkbox: [x]
 )
@@ -200,9 +200,10 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 
 	// Table
 	if strings.HasPrefix(rest, "|") || strings.HasSuffix(rest, "|") {
-		return tableColor.Get(line), true, false
-		// TODO: Figure out why this does not work:
-		// return vt100.White.String() + strings.Replace(line, "|", vt100.White.String() + "|" + tableColor.String(), -1) + vt100.NoColor(), true, false
+		if strings.HasPrefix(line, "|-") {
+			return tableColor.String() + line + vt100.NoColor(), true, false
+		}
+		return strings.Replace(line, "|", tableColor.String() + "|" + vt100.NoColor(), -1),true, false
 	}
 
 	// Split the rest of the line into words
