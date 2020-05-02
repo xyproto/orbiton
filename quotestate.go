@@ -83,24 +83,20 @@ func (q *QuoteState) Process(line string) {
 			if prevRune == '/' && q.None() {
 				q.multiLineComment = true
 			}
-		case '/':
-			if prevRune == '*' && !q.None() {
-				q.multiLineComment = false
-				break
-			}
-			if []rune(q.singleLineCommentMarker)[0] == '/' {
-				// Wish I could fallthrough to the next case at this point
-				if len(q.singleLineCommentMarker) > 1 && prevRune == []rune(q.singleLineCommentMarker)[1] && q.None() {
-					q.singleLineComment = true
-					// We're in a single line comment, nothing more to do for this line
-					return
-				}
-			}
 		case []rune(q.singleLineCommentMarker)[0]:
 			if len(q.singleLineCommentMarker) > 1 && prevRune == []rune(q.singleLineCommentMarker)[1] && q.None() {
 				q.singleLineComment = true
 				// We're in a single line comment, nothing more to do for this line
 				return
+			}
+			if r != '/' {
+				break
+			}
+			// r == '/'
+			fallthrough
+		case '/':
+			if prevRune == '*' && !q.None() {
+				q.multiLineComment = false
 			}
 		}
 		prevRune = r
