@@ -20,3 +20,4 @@
 - [ ] Tab in the middle of a line, especially on a `|` character, could insert spaces until the `|` alignes with the `|` above, if applicable (For Markdown tables).
 - [ ] Use smart indent for tabs also when the character is at the start of the line? Then a key for inserting tab no matter what is needed.
 - [ ] Auto-detect existing tabs/spaces.
+- [ ] `.git/config` files should not highlight lines with `/*` any differently.
