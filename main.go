@@ -154,7 +154,7 @@ Set NO_COLOR=1 to disable colors.
 	baseFilename := filepath.Base(filename)
 
 	// Check if we should be in a particular mode for a particular type of file
-	// TODO: Extract the filename extension first, then perform the switch, to skip the HasSuffix calls
+	ext := filepath.Ext(baseFilename)
 	switch {
 	case baseFilename == "COMMIT_EDITMSG" ||
 		baseFilename == "MERGE_MSG" ||
@@ -163,29 +163,29 @@ Set NO_COLOR=1 to disable colors.
 			strings.Count(baseFilename, "-") >= 2):
 		// Git mode
 		mode = modeGit
-	case strings.HasSuffix(baseFilename, ".md"):
+	case ext == ".md":
 		// Markdown mode
 		mode = modeMarkdown
-	case strings.HasSuffix(baseFilename, ".adoc") || strings.HasSuffix(baseFilename, ".rst") || strings.HasSuffix(baseFilename, ".scdoc") || strings.HasSuffix(baseFilename, ".scd"):
+	case ext == ".adoc" || ext == ".rst" || ext == ".scdoc" || ext == ".scd":
 		// Markdown-like syntax highlighting
 		// TODO: Introduce a separate mode for these.
 		mode = modeMarkdown
-	case strings.HasSuffix(baseFilename, ".sh") || strings.HasSuffix(baseFilename, ".bash") || baseFilename == "PKGBUILD":
+	case ext == ".sh" || ext == ".ksh" || ext == ".tcsh" || ext == ".bash" || ext == ".zsh" || baseFilename == "PKGBUILD" || (strings.HasPrefix(baseFilename, ".") && strings.Contains(baseFilename, "sh")): // This last part covers .bashrc, .zshrc etc
 		mode = modeShell
 	case strings.HasSuffix(baseFilename, ".yml") || strings.HasSuffix(baseFilename, ".toml"):
 		mode = modeYml
 	case baseFilename == "Makefile" || baseFilename == "makefile" || baseFilename == "GNUmakefile":
 		mode = modeMakefile
-	case strings.HasSuffix(baseFilename, ".asm") || strings.HasSuffix(baseFilename, ".S") || strings.HasSuffix(baseFilename, ".inc"):
+	case ext == ".asm" || ext == ".S" || ext == ".inc":
 		mode = modeAssembly
-	case strings.HasSuffix(baseFilename, ".go"):
+	case ext == ".go":
 		mode = modeGo
-	case strings.HasSuffix(baseFilename, ".hs"):
+	case ext == ".hs":
 		mode = modeHaskell
 	}
 
 	// Check if we should enable syntax highlighting by default
-	syntaxHighlight := mode == modeGit || baseFilename == "config" || baseFilename == "PKGBUILD" || baseFilename == "BUILD" || baseFilename == "WORKSPACE" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
+	syntaxHighlight := mode == modeGit || baseFilename == "config" || mode == modeShell || baseFilename == "BUILD" || baseFilename == "WORKSPACE" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
 
 	// Per-language adjustments to highlighting of keywords
 	if mode != modeGo {
