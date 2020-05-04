@@ -19,3 +19,4 @@
 - [ ] Plugins? When there's "txt2something" and "something2txt", o should be able to edit "something" files. This could be used for hex editing, editing ELF files etc.
 - [ ] Tab in the middle of a line, especially on a `|` character, could insert spaces until the `|` alignes with the `|` above, if applicable (For Markdown tables).
 - [ ] Use smart indent for tabs also when the character is at the start of the line? Then a key for inserting tab no matter what is needed.
+- [ ] Auto-detect existing tabs/spaces.
