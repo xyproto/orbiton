@@ -1048,7 +1048,11 @@ Set NO_COLOR=1 to disable colors.
 					leadingWhitespace := e.LeadingWhitespace()
 					if len(lineContents) > 0 && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[")) {
 						// "smart indentation"
-						leadingWhitespace += "\t"
+						if e.mode == modeShell {
+							leadingWhitespace += strings.Repeat(" ", e.spacesPerTab)
+						} else {
+							leadingWhitespace += "\t"
+						}
 					}
 					e.InsertLineBelow()
 					h := int(c.Height())
@@ -1067,7 +1071,11 @@ Set NO_COLOR=1 to disable colors.
 					leadingWhitespace := e.LeadingWhitespace()
 					if len(lineContents) > 0 && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[")) {
 						// "smart indentation"
-						leadingWhitespace += "\t"
+						if e.mode == modeShell {
+							leadingWhitespace += strings.Repeat(" ", e.spacesPerTab)
+						} else {
+							leadingWhitespace += "\t"
+						}
 					}
 					e.InsertLineBelow()
 					e.Down(c, status)
@@ -1219,7 +1227,7 @@ Set NO_COLOR=1 to disable colors.
 						oneIndentation    string
 					)
 					if e.mode == modeShell {
-						oneIndentation = strings.Repeat(" ", spacesPerTab)
+						oneIndentation = strings.Repeat(" ", e.spacesPerTab)
 					} else {
 						oneIndentation = "\t"
 					}
@@ -1560,6 +1568,7 @@ Set NO_COLOR=1 to disable colors.
 			if bookmark == nil {
 				// no bookmark, create a bookmark at the current line
 				bookmark = e.pos.Copy()
+				// TODO: Modify the statusbar implementation so that extra spaces are not needed here.
 				status.SetMessage("  Bookmarked line " + strconv.Itoa(e.LineNumber()) + "  ")
 			} else if bookmark.LineNumber() == e.LineNumber() {
 				// bookmarking the same line twice: remove the bookmark
