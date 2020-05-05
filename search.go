@@ -148,7 +148,8 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		// If the search term was followed by an up arrow:
 		// Go to the top (and strip away the trailing up arrow symbol) before searching.
 		e.redraw = e.GoToLineNumber(1, c, status, true)
-		s = s[:len(s)-1]
+		// Strip away the last rune
+		s = string([]rune(s)[:len([]rune(s))-1])
 	}
 	e.SetSearchTerm(s, c, status)
 	e.GoToNextMatch(c, status)
