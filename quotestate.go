@@ -58,7 +58,7 @@ func (q *QuoteState) String() string {
 // depending on which runes are encountered.
 func (q *QuoteState) Process(line string) {
 	var (
-		prevRune rune = '\n'
+		prevRune     rune = '\n'
 		prevPrevRune rune = '\n'
 	)
 	q.singleLineComment = false
@@ -85,7 +85,7 @@ func (q *QuoteState) Process(line string) {
 				q.singleQuote--
 			}
 		case '*':
-			if prevRune == '/' && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None(){
+			if prevRune == '/' && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
 				q.multiLineComment = true
 			}
 		case []rune(q.singleLineCommentMarker)[0]:
