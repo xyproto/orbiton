@@ -1205,9 +1205,9 @@ Set NO_COLOR=1 to disable colors.
 			}
 
 			// Enable auto indent if the extension is not "" and either:
-			// * The mode is for Go
+			// * The mode is set to Go and the position is not at the very start of the line (empty or not)
 			// * Syntax highlighting is enabled and the cursor is not at the start of the line (or before)
-			if ext != "" && (e.mode == modeGo || (!e.AtOrBeforeStartOfTextLine() && e.syntaxHighlight)) {
+			if ext != "" && ((e.mode == modeGo && e.pos.sx > 0) || (!e.AtOrBeforeStartOfTextLine() && e.syntaxHighlight)) {
 				// If in the middle of the text and the character to the left is not a ".", then autoindent
 				lineAbove := 1
 				if strings.TrimSpace(e.Line(y-lineAbove)) == "" {
