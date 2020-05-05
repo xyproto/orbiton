@@ -144,6 +144,12 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		}
 	}
 	status.ClearAll(c)
+	if strings.HasSuffix(s, "↑") {
+		// If the search term was followed by an up arrow:
+		// Go to the top (and strip away the trailing up arrow symbol) before searching.
+		e.redraw = e.GoToLineNumber(1, c, status, true)
+		s = s[:len(s)-1]
+	}
 	e.SetSearchTerm(s, c, status)
 	e.GoToNextMatch(c, status)
 	e.Center(c)
