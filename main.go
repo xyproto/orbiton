@@ -1207,14 +1207,15 @@ Set NO_COLOR=1 to disable colors.
 			// Enable auto indent if the extension is not "" and either:
 			// * The mode is set to Go and the position is not at the very start of the line (empty or not)
 			// * Syntax highlighting is enabled and the cursor is not at the start of the line (or before)
-			if ext != "" && ((e.mode == modeGo && e.pos.sx > 0) || (!e.AtOrBeforeStartOfTextLine() && e.syntaxHighlight)) {
+			trimmedLine := strings.TrimSpace(e.Line(y))
+			emptyLine := len(trimmedLine) == 0
+			if ext != "" && (!emptyLine || (!e.BeforeStartOfTextLine() && e.syntaxHighlight)) {
 				// If in the middle of the text and the character to the left is not a ".", then autoindent
 				lineAbove := 1
 				if strings.TrimSpace(e.Line(y-lineAbove)) == "" {
 					// The line above is empty, use the indendation before the line above that
 					lineAbove--
 				}
-
 				// If we have a line (one or two lines above) as a reference point for the indentation
 				if strings.TrimSpace(e.Line(y-lineAbove)) != "" {
 
@@ -1223,14 +1224,19 @@ Set NO_COLOR=1 to disable colors.
 
 					var (
 						spaceAbove        = e.LeadingWhitespaceAt(y - lineAbove)
-						trimmedLine       = strings.TrimSpace(e.Line(y))
 						strippedLineAbove = e.StripSingleLineComment(strings.TrimSpace(e.Line(y - lineAbove)))
 						newLeadingSpace   = spaceAbove
 						oneIndentation    string
 					)
-					if e.mode == modeShell {
+
+					if len(spaceAbove) > 0 {
+						// If the above line is indented, also use that indentation type when indenting here
+						oneIndentation = spaceAbove
+					} else if e.mode == modeShell {
+						// If this is a shell script, use 2 spaces (or however many spaces are defined in e.spacesPerTab)
 						oneIndentation = strings.Repeat(" ", e.spacesPerTab)
 					} else {
+						// For anything else, use real tabs
 						oneIndentation = "\t"
 					}
 
@@ -1248,6 +1254,9 @@ Set NO_COLOR=1 to disable colors.
 					}
 
 					e.SetLine(y, newLeadingSpace+trimmedLine)
+					if e.AtOrAfterEndOfLine() {
+						e.End()
+					}
 					e.redrawCursor = true
 					e.redraw = true
 
