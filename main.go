@@ -1146,7 +1146,7 @@ Set NO_COLOR=1 to disable colors.
 			y := e.DataY()
 			leftRune := e.LeftRune()
 			ext := filepath.Ext(filename)
-			if leftRune == '.' && ext != "" {
+			if leftRune == '.' && !unicode.IsLetter(e.Rune()) && ext != "" {
 				// Autocompletion
 				undo.Snapshot(e)
 
@@ -1204,8 +1204,10 @@ Set NO_COLOR=1 to disable colors.
 				}
 			}
 
-			// Enable auto indent if the file has an extension, the cursor is after the start of the line and syntax highlighting is enabled
-			if ext != "" && !e.AtOrBeforeStartOfTextLine() && e.syntaxHighlight {
+			// Enable auto indent if the extension is not "" and either:
+			// * The mode is for Go
+			// * Syntax highlighting is enabled and the cursor is not at the start of the line (or before)
+			if ext != "" && (e.mode == modeGo || (!e.AtOrBeforeStartOfTextLine() && e.syntaxHighlight)) {
 				// If in the middle of the text and the character to the left is not a ".", then autoindent
 				lineAbove := 1
 				if strings.TrimSpace(e.Line(y-lineAbove)) == "" {
