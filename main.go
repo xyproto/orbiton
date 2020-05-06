@@ -201,9 +201,9 @@ Set NO_COLOR=1 to disable colors.
 	switch mode {
 	case modeGit:
 		clearOnQuit = true
-	case modePython, modeMakefile:
+	case modeMakefile, modePython:
 		spacesPerTab = 4
-	case modeShell, modeYml:
+	case modeShell, modeYml, modeHaskell:
 		spacesPerTab = 2
 	}
 
@@ -453,6 +453,8 @@ Set NO_COLOR=1 to disable colors.
 				exec.Command("v", "fmt"):                                                          {".v"},
 				exec.Command("rustfmt"):                                                           {".rs"},
 				exec.Command("brittany", "--write-mode=inplace", "--"):                            {".hs"},
+				exec.Command("autopep8", "-i", "--max-line-length", "120"):                        {".py"},
+				exec.Command("ocamlformat"):                                                       {".ml"},
 			}
 			formatted := false
 		OUT:
@@ -649,17 +651,26 @@ Set NO_COLOR=1 to disable colors.
 				break // from case
 			}
 
+			// Find a suitable default executable name
+			defaultExecutableName := "main"            // If the current directory name is not found
+			if curdir, err := os.Getwd(); err == nil { // no error
+				defaultExecutableName = filepath.Base(curdir)
+			}
+
 			var (
 				// Map from build command to a list of file extensions (or basenames for files without an extension)
 				build = map[*exec.Cmd][]string{
-					exec.Command("go", "build"):               {".go"},
-					exec.Command("cxx"):                       {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
-					exec.Command("zig", "build"):              {".zig"},
-					exec.Command("v", filename):               {".v"},
-					exec.Command("cargo", "build"):            {".rs"},
-					exec.Command("ghc", "-dynamic", filename): {".hs"},
-					exec.Command("makepkg"):                   {"PKGBUILD"},
+					exec.Command("go", "build"):                                     {".go"},
+					exec.Command("cxx"):                                             {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
+					exec.Command("zig", "build"):                                    {".zig"},
+					exec.Command("v", filename):                                     {".v"},
+					exec.Command("cargo", "build"):                                  {".rs"},
+					exec.Command("ghc", "-dynamic", filename):                       {".hs"},
+					exec.Command("makepkg"):                                         {"PKGBUILD"},
+					exec.Command("python", "-m", "py_compile", filename):            {".py"}, // Compile to .pyc
+					exec.Command("ocamlopt", "-o", defaultExecutableName, filename): {".ml"}, // OCaml
 				}
+
 				foundExtensionToBuild bool
 				testingInstead        bool
 			)
