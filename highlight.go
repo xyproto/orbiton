@@ -17,11 +17,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	o := textoutput.NewTextOutput(true, true)
 	tabString := " "
 	if !e.DrawMode() {
-		if e.mode == modeMakefile {
-			tabString = strings.Repeat(tabCharacter, e.spacesPerTab)
-		} else {
-			tabString = strings.Repeat(" ", e.spacesPerTab)
-		}
+		tabString = strings.Repeat(" ", e.spacesPerTab)
 	}
 	w := int(c.Width())
 	if fromline >= toline {

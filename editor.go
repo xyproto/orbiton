@@ -16,8 +16,6 @@ import (
 )
 
 const (
-	tabCharacter = "·" // Used when editing makfiles, for the \t character
-
 	// Mode "enum"
 	modeBlank    = iota
 	modeGit      // for git commits and interactive rebases
@@ -28,6 +26,8 @@ const (
 	modeAssembly // for Assembly files
 	modeGo       // for Go source files
 	modeHaskell  // for Haskell source files
+	modeSML      // for Standard ML source files
+	modePython   // for Python source files
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -190,13 +190,8 @@ func (e *Editor) ScreenLine(n int) string {
 		}
 		tabSpace := "\t"
 		if !e.DrawMode() {
-			if e.mode == modeMakefile {
-				tabSpace = strings.Repeat(tabCharacter, e.spacesPerTab)
-			} else {
-				tabSpace = strings.Repeat("\t", e.spacesPerTab)
-			}
+			tabSpace = strings.Repeat("\t", e.spacesPerTab)
 		}
-		//return strings.ReplaceAll(sb.String(), "\t", tabSpace)
 		return strings.Replace(sb.String(), "\t", tabSpace, -1)
 	}
 	return ""
@@ -507,10 +502,6 @@ func (e *Editor) Save(filename *string, stripTrailingSpaces bool) error {
 	}
 	// Mark the data as "not changed"
 	e.changed = false
-	// If this is in Makefile mode, replace mid-dot with tab
-	if e.mode == modeMakefile {
-		data = bytes.Replace(data, []byte(tabCharacter), []byte{'\t'}, -1)
-	}
 	// Write the data to file
 	return ioutil.WriteFile(*filename, data, 0664)
 }
@@ -556,7 +547,7 @@ func (e *Editor) TrimLeft(n int) {
 // comment for the current language mode the editor is in.
 func (e *Editor) SingleLineCommentMarker() string {
 	switch e.mode {
-	case modeShell:
+	case modeShell, modePython:
 		return "#"
 	case modeAssembly:
 		return ";"

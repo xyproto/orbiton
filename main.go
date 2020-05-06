@@ -182,10 +182,14 @@ Set NO_COLOR=1 to disable colors.
 		mode = modeGo
 	case ext == ".hs":
 		mode = modeHaskell
+	case ext == ".ml":
+		mode = modeSML
+	case ext == ".py":
+		mode = modePython
 	}
 
 	// Check if we should enable syntax highlighting by default
-	syntaxHighlight := mode == modeGit || baseFilename == "config" || mode == modeShell || baseFilename == "BUILD" || baseFilename == "WORKSPACE" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
+	syntaxHighlight := mode != modeBlank || baseFilename == "config" || baseFilename == "BUILD" || baseFilename == "WORKSPACE" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
 
 	// Per-language adjustments to highlighting of keywords
 	if mode != modeGo {
@@ -194,12 +198,13 @@ Set NO_COLOR=1 to disable colors.
 	}
 
 	// Additional per-mode considerations
-	if mode == modeGit {
+	switch mode {
+	case modeGit:
 		clearOnQuit = true
-	} else if mode == modeShell || mode == modeYml {
+	case modePython, modeMakefile:
+		spacesPerTab = 4
+	case modeShell, modeYml:
 		spacesPerTab = 2
-	} else if mode == modeMakefile {
-		spacesPerTab = 1
 	}
 
 	// Initialize the terminal
