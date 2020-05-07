@@ -368,6 +368,14 @@ Set NO_COLOR=1 to disable colors.
 	// Load the location history, if available
 	locationHistory = LoadLocationHistory(expandUser(locationHistoryFilename))
 
+	// Load the ViM location history as well, if available
+	for key, value := range LoadVimLocationHistory(expandUser(vimLocationHistoryFilename)) {
+		// Only add entries that does not already exist
+		if _, hasKey := locationHistory[key]; !hasKey {
+			locationHistory[key] = value
+		}
+	}
+
 	// Check if a line number was given on the command line
 	if lineNumber > 0 {
 		e.GoToLineNumber(lineNumber, c, status, false)
@@ -1064,7 +1072,7 @@ Set NO_COLOR=1 to disable colors.
 					leadingWhitespace := e.LeadingWhitespace()
 					if len(lineContents) > 0 && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[")) {
 						// "smart indentation"
-						if e.mode == modeShell {
+						if e.mode == modeShell || e.mode == modePython {
 							leadingWhitespace += strings.Repeat(" ", e.spacesPerTab)
 						} else {
 							leadingWhitespace += "\t"
@@ -1087,7 +1095,7 @@ Set NO_COLOR=1 to disable colors.
 					leadingWhitespace := e.LeadingWhitespace()
 					if len(lineContents) > 0 && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[")) {
 						// "smart indentation"
-						if e.mode == modeShell {
+						if e.mode == modeShell || e.mode == modePython {
 							leadingWhitespace += strings.Repeat(" ", e.spacesPerTab)
 						} else {
 							leadingWhitespace += "\t"
@@ -1224,8 +1232,11 @@ Set NO_COLOR=1 to disable colors.
 			// * The mode is set to Go and the position is not at the very start of the line (empty or not)
 			// * Syntax highlighting is enabled and the cursor is not at the start of the line (or before)
 			trimmedLine := strings.TrimSpace(e.Line(y))
-			emptyLine := len(trimmedLine) == 0
-			if ext != "" && (!emptyLine || (!e.BeforeStartOfTextLine() && e.syntaxHighlight)) {
+			//emptyLine := len(trimmedLine) == 0
+			almostEmptyLine := len(trimmedLine) <= 1
+
+			// TODO: Rethink this. It doesn't work great.
+			if !almostEmptyLine || (!e.BeforeStartOfTextLine() && e.syntaxHighlight) {
 				// If in the middle of the text and the character to the left is not a ".", then autoindent
 				lineAbove := 1
 				if strings.TrimSpace(e.Line(y-lineAbove)) == "" {
@@ -1248,7 +1259,7 @@ Set NO_COLOR=1 to disable colors.
 					if len(spaceAbove) > 0 {
 						// If the above line is indented, also use that indentation type when indenting here
 						oneIndentation = spaceAbove
-					} else if e.mode == modeShell {
+					} else if e.mode == modeShell || e.mode == modePython {
 						// If this is a shell script, use 2 spaces (or however many spaces are defined in e.spacesPerTab)
 						oneIndentation = strings.Repeat(" ", e.spacesPerTab)
 					} else {
@@ -1283,8 +1294,8 @@ Set NO_COLOR=1 to disable colors.
 			}
 
 			undo.Snapshot(e)
-			if e.mode == modeShell {
-				// For shell and PKGBUILD files, insert spaces instead of tab
+			if e.mode == modeShell || e.mode == modePython {
+				// For shell and Python files, insert spaces instead of tabs
 				for i := 0; i < spacesPerTab; i++ {
 					e.InsertRune(c, ' ')
 				}
