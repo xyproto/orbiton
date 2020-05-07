@@ -1,5 +1,6 @@
 # TODO
 
+- [ ] Rethink how smart indentation should work.
 - [ ] If a word is typed 1 letter differently from all the other instances in the current file: color it red.
 - [ ] Highlight links in Markdown (perhaps color `[` and `]` yellow).
 - [ ] Rainbow parenthesis.
