@@ -1,10 +1,13 @@
 package main
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/xyproto/vt100"
 )
+
+var errNoSearchMatch = errors.New("no search match")
 
 // SetSearchTerm will set the current search term to highlight
 func (e *Editor) SetSearchTerm(s string, c *vt100.Canvas, status *StatusBar) {
@@ -51,52 +54,61 @@ func (e *Editor) ClearStickySearchTerm() {
 // The search does not wrap around and is case-sensitive.
 // TODO: Add wrap around behavior, toggled with a bool argument.
 // TODO: Add case-insensitive behavior, toggled with a bool argument.
-func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar) {
+// Returns an error if the search was successful but no match was found.
+func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar) error {
 	s := e.SearchTerm()
-	if s != "" {
-		// Go to the next line with "s"
-		foundY := -1
-		foundX := -1
-		for y := e.DataY(); y < e.Len(); y++ {
-			lineContents := e.Line(y)
-			if y == e.DataY() {
-				x, err := e.DataX()
-				if err != nil {
-					continue
-				}
-				// Search from the next position on this line
-				x++
-				if x >= len(lineContents) {
-					continue
-				}
-				if strings.Contains(lineContents[x:], s) {
-					foundX = x + strings.Index(lineContents[x:], s)
-					foundY = y
-					break
-				}
-			} else {
-				if strings.Contains(lineContents, s) {
-					foundX = strings.Index(lineContents, s)
-					foundY = y
-					break
-				}
+	if s == "" {
+		return nil
+	}
+
+	foundY := -1
+	foundX := -1
+	for y := e.DataY(); y < e.Len(); y++ {
+		lineContents := e.Line(y)
+		if y == e.DataY() {
+			x, err := e.DataX()
+			if err != nil {
+				continue
 			}
-		}
-		if foundY != -1 {
-			e.redraw = e.GoTo(foundY, c, status)
-			if foundX != -1 {
-				tabs := strings.Count(e.Line(foundY), "\t")
-				e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
+			// Search from the next position on this line
+			x++
+			if x >= len(lineContents) {
+				continue
 			}
-			e.Center(c)
-			e.redraw = true
-			e.redrawCursor = e.redraw
+			if strings.Contains(lineContents[x:], s) {
+				foundX = x + strings.Index(lineContents[x:], s)
+				foundY = y
+				break
+			}
 		} else {
-			e.GoTo(e.lineBeforeSearch, c, status)
-			status.SetMessage(s + " not found from here")
-			status.Show(c, e)
+			if strings.Contains(lineContents, s) {
+				foundX = strings.Index(lineContents, s)
+				foundY = y
+				break
+			}
 		}
 	}
+
+	// Check if a match was found
+	if foundY == -1 {
+		// Not found
+		e.GoTo(e.lineBeforeSearch, c, status)
+		status.SetMessage(s + " not found from here")
+		status.Show(c, e)
+		return errNoSearchMatch
+	}
+
+	// Go to the found match
+	e.redraw = e.GoTo(foundY, c, status)
+	if foundX != -1 {
+		tabs := strings.Count(e.Line(foundY), "\t")
+		e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
+	}
+	e.Center(c)
+
+	e.redraw = true
+	e.redrawCursor = e.redraw
+	return nil
 }
 
 // SearchMode will enter the interactive "search mode" where the user can type in a string and then press return to search
@@ -134,6 +146,9 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 			fallthrough
 		case "c:13": // return
 			doneCollectingLetters = true
+		case "↑": // previous search
+			// TODO: Browse backwards in the search history and don't fall through
+			fallthrough
 		default:
 			if key != "" && !strings.HasPrefix(key, "c:") {
 				s += key
@@ -144,14 +159,13 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		}
 	}
 	status.ClearAll(c)
-	if strings.HasSuffix(s, "↑") {
-		// If the search term was followed by an up arrow:
-		// Go to the top (and strip away the trailing up arrow symbol) before searching.
-		e.redraw = e.GoToLineNumber(1, c, status, true)
-		// Strip away the last rune
-		s = string([]rune(s)[:len([]rune(s))-1])
-	}
 	e.SetSearchTerm(s, c, status)
-	e.GoToNextMatch(c, status)
+	// Perform the actual search
+	if err := e.GoToNextMatch(c, status); err == errNoSearchMatch {
+		// If no match was found, try again from the top
+		e.redraw = e.GoToLineNumber(1, c, status, true)
+		_ = e.GoToNextMatch(c, status)
+
+	}
 	e.Center(c)
 }
