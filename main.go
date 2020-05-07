@@ -192,7 +192,10 @@ Set NO_COLOR=1 to disable colors.
 	syntaxHighlight := mode != modeBlank || baseFilename == "config" || baseFilename == "BUILD" || baseFilename == "WORKSPACE" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
 
 	// Per-language adjustments to highlighting of keywords
-	if mode != modeGo {
+	// TODO: Use a different syntax highlighting package, with support for many different programming languages
+	if mode == modeGo {
+		syntax.Keywords["fallthrough"] = struct{}{}
+	} else {
 		delete(syntax.Keywords, "build")
 		delete(syntax.Keywords, "package")
 	}
@@ -1149,6 +1152,16 @@ Set NO_COLOR=1 to disable colors.
 					e.TrimRight(e.DataY())
 					e.Delete()
 				}
+			} else if (mode == modeShell || mode == modePython) && e.AtStartOfTextLine() && len(e.LeadingWhitespace()) >= e.spacesPerTab {
+				// Delete several spaces
+				for i := 0; i < e.spacesPerTab; i++ {
+					// Move back
+					e.Prev(c)
+					// Type a blank
+					e.SetRune(' ')
+					e.WriteRune(c)
+					e.Delete()
+				}
 			} else {
 				// Move back
 				e.Prev(c)
@@ -1236,7 +1249,8 @@ Set NO_COLOR=1 to disable colors.
 			//almostEmptyLine := len(trimmedLine) <= 1
 
 			// Smart indent only if the cursor is at the end of the line
-			if e.AtOrAfterEndOfLine() && e.syntaxHighlight {
+			// Disable smart indentation, for now
+			if false { // e.mode != modeBlank && (strings.HasSuffix(trimmedLine, "{") || strings.HasSuffix(trimmedLine, "}") || e.AtOrAfterEndOfLine()) {
 				// If in the middle of the text and the character to the left is not a ".", then autoindent
 				lineAbove := 1
 				if strings.TrimSpace(e.Line(y-lineAbove)) == "" {
