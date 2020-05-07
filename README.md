@@ -6,7 +6,7 @@ It's a good fit for writing git commit messages, using `EDITOR=o git commit`.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
-One of the goals of `o` is that it shall be small, limited and unsurprising. If it's too surprising, please file an issue.
+One of the goals of `o` is that it shall be small, fast, limited and unsurprising. If it's surprising, please file an issue.
 
 ## Packaging status
 
@@ -34,7 +34,7 @@ To unset:
 * Small executable size (around **500k**, when built with `gccgo` and compressed with `upx`).
 * Provides syntax highlighting for Go, C++, Markdown and Bash. Other files may also be highlighted (toggle with `ctrl-t`).
 * Configuration-free, for better and for worse.
-* Is limited to the VT100 standard, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`.
+* Limited to the VT100 standard, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`.
 * Compiles with either `go` or `gccgo`.
 * Tested with `st`, `urxvt` and `xfce4-terminal`.
 * Tested on Arch Linux and FreeBSD.
@@ -46,13 +46,13 @@ To unset:
 * The syntax highlighting is instant.
 * Requires `/dev/tty` to be available.
 * `xclip` (for X) or `wl-clipboard` (for Wayland) must be installed if the system clipboard is to be used.
-* Only forward search. Press `ctrl-l` a d then type `0` to jump to the top before searching.
+* Only forward search. Press `ctrl-l` and press `return` to jump to the top before searching.
 * May take a line number as the second argument, with an optional `+` prefix.
 * The text will be red if a loaded file is read-only.
 * The terminal needs to be resized to show the second half of lines that are longer than the terminal width.
 * If the filename is `COMMIT_EDITMSG`, the look and feel will be adjusted for git commit messages.
 * Supports `UTF-8`.
-* Respects the `NO_COLOR` environment variable.
+* Respects the `NO_COLOR` environment variable (for disabling all colors).
 * Can render text to PDF.
 * Only UNIX-style line endings are supported (`\n`).
 * Will convert DOS/Windows line endings (`\r\n`) to UNIX line endings (just `\n`), whenever possible.
@@ -82,47 +82,48 @@ To unset:
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - Toggle syntax highlighting.
 * `ctrl-o` - Toggle between text and draw mode.
-* `ctrl-x` - Cut the current line. Press twice to cut a block of text.
+* `ctrl-x` - Cut the current line. Press twice to cut a block of text (to the next blank line).
 * `ctrl-c` - Copy one line. Press twice to copy a block of text.
 * `ctrl-v` - Paste one trimmed line. Press twice to paste multiple untrimmed lines.
 * `ctrl-space` - Build (see table below).
 * `ctrl-j` - Join lines (or jump to the bookmark, if set).
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
-* `ctrl-l` - Jump to a specific line number. Press just return to jump to the top. If at the top, press just return to jump to the bottom.
+* `ctrl-l` - Jump to a specific line number. Followes by `return` to jump to the top. If at the top, press `return` to jump to the bottom.
 * `ctrl-f` - Forward search for a string.
 * `esc` - Redraw the screen and clear the last search.
-* `ctrl-b` - Toggle a bookmark for the current line, or jump to a bookmark on a different line, if set.
-* `ctrl-\` - Toggle single-line comments for a block of code.
+* `ctrl-b` - Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
+* `ctrl-\` - Comment in or out a block of code.
 * `ctrl-r` - Render the current text as a PDF document.
 * `ctrl-~` - Save and quit. Only works in some terminal emulators.
 
 ## Build and format
 
 * At the press of `ctrl-space`, `o` will try to build or export the current file.
-* At the press of `ctrl-w`, `o` will try to format the current file.
+* At the press of `ctrl-w`, `o` will try to format the current file, in an opinionated way.
 
 | Programming language                            | File extensions                                           | Jump to error | Build command            | Format command ($filename is a temporary file)                    |
 |-------------------------------------------------|-----------------------------------------------------------|---------------|--------------------------|-------------------------------------------------------------------|
 | Go                                              | `.go`                                                     | yes           |`go build`                | `goimports -w -- $filename`                                       |
 | C++                                             | `.cpp`, `.cc`, `.cxx`, `.h`, `.hpp`, `.c++`, `.h++`, `.c` | yes           | `cxx`                    | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
 | C++, if `BUILD.bazel` exists                    | `.cc`, `.h`                                               | needs testing | `bazel build`            | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
-| Rust                        i                   | `.rs`                                                     | needs testing | `rustc $filename`        | `rustfmt`                                                         |
+| Rust                                            | `.rs`                                                     | needs testing | `rustc $filename`        | `rustfmt`                                                         |
 | Rust, if `Cargo.toml` or `../Cargo.toml` exists | `.rs`                                                     | needs testing | `cargo build`            | `rustfmt`                                                         |
 | Zig                                             | `.zig`                                                    | needs testing | `zig build`              | `zig fmt`                                                         |
 | V                                               | `.v`                                                      | needs testing | `v build`                | `v fmt`                                                           |
 | Haskell                                         | `.hs`                                                     | yes           | `ghc -dynamic $filename` | `brittany --write-mode=inplace -- $filename`                      |
+| Python                                          | `.py`                                                     | not yet       |                          | `autopep8 ...`                                                    |
 
-* `o` will try to jump to the location where the error is, otherwise display `Success`.
+* `o` will try to jump to the location where the error is and otherwise display `Success`.
 * For regular text files, `ctrl-w` will word wrap the lines to a length of 99.
 
 CXX can be downloaded here: [GitHub project page for CXX](https://github.com/xyproto/cxx).
 
-| File type | File extensions  | Build or export command                                          |
-|-----------|------------------|------------------------------------------------------------------|
-| PKGBUILD  |                  | `makepkg`                                                        |
-| AsciiDoc  | `.adoc`          | `asciidoctor -b manpage` (writes to `out.1`)                     |
-| scdoc     | `.scd`, `.scdoc` | `scdoc` (writes to `out.1`)                                      |
-| Markdown  | `.md`            | pandoc -N --toc -V geometry:a4paper` (writes to `$filename.pdf`) |
+| File type | File extensions  | Build or export command                                           |
+|-----------|------------------|-------------------------------------------------------------------|
+| PKGBUILD  |                  | `makepkg`                                                         |
+| AsciiDoc  | `.adoc`          | `asciidoctor -b manpage` (writes to `out.1`)                      |
+| scdoc     | `.scd`, `.scdoc` | `scdoc` (writes to `out.1`)                                       |
+| Markdown  | `.md`            | `pandoc -N --toc -V geometry:a4paper` (writes to `$filename.pdf`) |
 
 ## Manual installation
 
@@ -164,6 +165,10 @@ Haskell
 
 * For building the current file with `ctrl-space`, the `ghc` compiler must be installed.
 * For formatting code with `ctrl-w`, [`brittany`](https://github.com/lspitzner/brittany) must be installed.
+
+Python
+
+* `ctrl-space` only checks the syntax, without executing.
 
 ## Size
 
@@ -223,7 +228,7 @@ Pressing `ctrl-space` will render Markdown files to PDF using `pandoc` (as oppos
 
 ## Suggested color scheme and font
 
-`o` has undergone most testing in Konsole, using the `JetBrains Mono NL` font and the `Breeze` color scheme (but with a black background). This can be configured by selecting `Edit Current Profile...` in Konsole. The `JetBrains` font is free and open source.
+`o` has seen most testing in Konsole, using the `JetBrains Mono NL` font and the `Breeze` color scheme (but with a black background). This can be configured by selecting `Edit Current Profile...` in Konsole. The `JetBrains Mono` font is free and open source.
 
 ## General info
 
