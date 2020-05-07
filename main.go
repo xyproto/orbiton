@@ -1233,10 +1233,10 @@ Set NO_COLOR=1 to disable colors.
 			// * Syntax highlighting is enabled and the cursor is not at the start of the line (or before)
 			trimmedLine := strings.TrimSpace(e.Line(y))
 			//emptyLine := len(trimmedLine) == 0
-			almostEmptyLine := len(trimmedLine) <= 1
+			//almostEmptyLine := len(trimmedLine) <= 1
 
-			// TODO: Rethink this. It doesn't work great.
-			if !almostEmptyLine || (!e.BeforeStartOfTextLine() && e.syntaxHighlight) {
+			// Smart indent only if the cursor is at the end of the line
+			if e.AtOrAfterEndOfLine() && e.syntaxHighlight {
 				// If in the middle of the text and the character to the left is not a ".", then autoindent
 				lineAbove := 1
 				if strings.TrimSpace(e.Line(y-lineAbove)) == "" {
@@ -1295,18 +1295,22 @@ Set NO_COLOR=1 to disable colors.
 
 			undo.Snapshot(e)
 			if e.mode == modeShell || e.mode == modePython {
-				// For shell and Python files, insert spaces instead of tabs
 				for i := 0; i < spacesPerTab; i++ {
 					e.InsertRune(c, ' ')
+					// Write the spaces that represent the tab to the canvas
+					e.WriteTab(c)
+					// Move to the next position
+					e.Next(c)
 				}
 			} else {
 				// Insert a tab character to the file
 				e.InsertRune(c, '\t')
+				// Write the spaces that represent the tab to the canvas
+				e.WriteTab(c)
+				// Move to the next position
+				e.Next(c)
 			}
-			// Write the spaces that represent the tab to the canvas
-			e.WriteTab(c)
-			// Move to the next position
-			e.Next(c)
+
 			// Prepare to redraw
 			e.redrawCursor = true
 			e.redraw = true
