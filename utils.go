@@ -25,6 +25,19 @@ func which(executable string) string {
 	return p
 }
 
+// expandUser replaces a leading ~ or $HOME with the path
+// to the home directory of the current user
+func expandUser(path string) string {
+	// this is a simpler (and Linux/UNIX only) alternative to using os.UserHomeDir (which requires Go 1.12 or later)
+	if strings.HasPrefix(path, "~") {
+		path = strings.Replace(path, "~", os.Getenv("HOME"), 1)
+	} else if strings.HasPrefix(path, "$HOME") {
+		path = strings.Replace(path, "$HOME", os.Getenv("HOME"), 1)
+	}
+	return path
+}
+
+// hasAnyPrefixWord checks if the given line is prefixed with any one of the given words
 func hasAnyPrefixWord(line string, wordList []string) bool {
 	for _, word := range wordList {
 		if strings.HasPrefix(line, word+" ") {
@@ -34,10 +47,21 @@ func hasAnyPrefixWord(line string, wordList []string) bool {
 	return false
 }
 
-// Take the first word and increase it to the next git rebase keyword
+// filterS returns all strings that makes the function f return true
+func filterS(sl []string, f func(string) bool) []string {
+	var results []string
+	for _, e := range sl {
+		if f(e) {
+			results = append(results, e)
+		}
+	}
+	return results
+}
+
+// nextGitRebaseKeywords takes the first word and increase it to the next git rebase keyword
 func nextGitRebaseKeyword(line string) string {
-	cycle1 := []string{"pick", "fixup", "reword", "drop", "edit", "squash", "exec", "break", "label", "reset", "merge"}
-	cycle2 := []string{"p", "f", "r", "d", "e", "s", "x", "b", "l", "t", "m"}
+	cycle1 := filterS(rebasePrefixes, func(s string) bool { return len(s) > 1 })
+	cycle2 := filterS(rebasePrefixes, func(s string) bool { return len(s) == 1 })
 	first := strings.Fields(line)[0]
 	next := ""
 	// Check if the word is in cycle1, then set "next" to the next one in the cycle
