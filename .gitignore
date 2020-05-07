@@ -20,3 +20,4 @@ o.html
 manpage.1
 *_go.pdf
 favicon.*
+__pycache__/
