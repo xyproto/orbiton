@@ -10,23 +10,13 @@ import (
 )
 
 const (
-	locationHistoryFilename   = "~/.cache/o/locations.txt"
-	maxLocationHistoryEntries = 256
+	locationHistoryFilename    = "~/.cache/o/locations.txt"
+	vimLocationHistoryFilename = "~/.viminfo"
+	maxLocationHistoryEntries  = 1024
 )
 
-// expandUser replaces a leading ~ or $HOME with the path
-// to the home directory of the current user
-func expandUser(path string) string {
-	// this is a simpler alternative to using os.UserHomeDir (which requires Go 1.12 or later)
-	if strings.HasPrefix(path, "~") {
-		path = strings.Replace(path, "~", os.Getenv("HOME"), 1)
-	} else if strings.HasPrefix(path, "$HOME") {
-		path = strings.Replace(path, "$HOME", os.Getenv("HOME"), 1)
-	}
-	return path
-}
-
-// LoadLocationHistory will attempt to load the per-absolute-filename recording of which line is active
+// LoadLocationHistory will attempt to load the per-absolute-filename recording of which line is active.
+// The returned map can be empty.
 func LoadLocationHistory(configFile string) map[string]int {
 	locationHistory := make(map[string]int)
 
@@ -64,6 +54,45 @@ func LoadLocationHistory(configFile string) map[string]int {
 	}
 
 	// Return the location history map. It could be empty, which is fine.
+	return locationHistory
+}
+
+// LoadVimLocationHistory will attempt to load the history of where the cursor should be when opening a file from ~/.viminfo
+// The returned map can be empty. The filenames have absolute paths.
+func LoadVimLocationHistory(vimInfoFilename string) map[string]int {
+	locationHistory := make(map[string]int)
+	// If reading fails, it's a good enough check. No need to check os.Stat in advance.
+	//if !exists(vimInfoFilename) {
+	//	return locationHistory
+	//}
+	data, err := ioutil.ReadFile(vimInfoFilename)
+	if err != nil {
+		return locationHistory
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		if strings.HasPrefix(line, "-'") {
+			fields := strings.Fields(line)
+			if len(fields) < 4 {
+				continue
+			}
+			lineNumberString := fields[1]
+			//colNumberString := fields[2]
+			filename := fields[3]
+			// Skip if the filename already exists in the location history, since .viminfo
+			// may have duplication locations and lists the newest first.
+			if _, alreadyExists := locationHistory[filename]; alreadyExists {
+				continue
+			}
+			//fmt.Println("LINE NUMBER", lineNumberString, "FILENAME", filename)
+			lineNumber, err := strconv.Atoi(lineNumberString)
+			if err != nil {
+				// Not a line number after all
+				continue
+			}
+			absFilename, err := filepath.Abs(filename)
+			locationHistory[absFilename] = lineNumber
+		}
+	}
 	return locationHistory
 }
 
