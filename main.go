@@ -163,6 +163,8 @@ Set NO_COLOR=1 to disable colors.
 			strings.Count(baseFilename, "-") >= 2):
 		// Git mode
 		mode = modeGit
+	case strings.HasSuffix(filename, ".git/config") || ext == "ini":
+		mode = modeConfig
 	case ext == ".md":
 		// Markdown mode
 		mode = modeMarkdown
@@ -172,8 +174,8 @@ Set NO_COLOR=1 to disable colors.
 		mode = modeMarkdown
 	case ext == ".sh" || ext == ".ksh" || ext == ".tcsh" || ext == ".bash" || ext == ".zsh" || baseFilename == "PKGBUILD" || (strings.HasPrefix(baseFilename, ".") && strings.Contains(baseFilename, "sh")): // This last part covers .bashrc, .zshrc etc
 		mode = modeShell
-	case strings.HasSuffix(baseFilename, ".yml") || strings.HasSuffix(baseFilename, ".toml"):
-		mode = modeYml
+	case ext == ".yml" || ext == ".toml" || ext == ".ini" || strings.HasSuffix(filename, ".git/config"):
+		mode = modeConfig
 	case baseFilename == "Makefile" || baseFilename == "makefile" || baseFilename == "GNUmakefile":
 		mode = modeMakefile
 	case ext == ".asm" || ext == ".S" || ext == ".inc":
@@ -206,7 +208,7 @@ Set NO_COLOR=1 to disable colors.
 		clearOnQuit = true
 	case modeMakefile, modePython:
 		spacesPerTab = 4
-	case modeShell, modeYml, modeHaskell:
+	case modeShell, modeConfig, modeHaskell:
 		spacesPerTab = 2
 	}
 

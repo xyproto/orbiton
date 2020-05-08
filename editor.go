@@ -22,7 +22,7 @@ const (
 	modeMarkdown // for Markdown (and asciidoctor and rst files)
 	modeMakefile // for Makefiles
 	modeShell    // for shell scripts and PKGBUILD files
-	modeYml      // for yml and toml files
+	modeConfig   // for yml, toml, and ini files etc
 	modeAssembly // for Assembly files
 	modeGo       // for Go source files
 	modeHaskell  // for Haskell source files

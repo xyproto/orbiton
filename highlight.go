@@ -89,6 +89,14 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 						// Syntax highlight the line if it's not picked up by the markdownHighlight function
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					}
+				} else if e.mode == modeConfig {
+					if strings.Contains(line, "/*") || strings.Contains(line, "*/") {
+						// No highlight
+						coloredString = line
+					} else {
+						// Regular highlight
+						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
+					}
 				} else {
 					trimmedLine = strings.TrimSpace(line)
 					q.Process(trimmedLine)
