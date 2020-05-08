@@ -8,6 +8,8 @@ import (
 )
 
 var (
+	checkboxPrefixes = []string{"- [ ]", "- [x]", "- [X]", "* [ ]", "* [x]", "* [X]"}
+
 	textColor         = vt100.LightBlue
 	headerBulletColor = vt100.DarkGray
 	headerTextColor   = vt100.LightGreen

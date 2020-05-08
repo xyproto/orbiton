@@ -22,11 +22,6 @@ import (
 
 const version = "o 2.26.2"
 
-var (
-	rebasePrefixes   = []string{"p", "pick", "r", "reword", "d", "drop", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "l", "label", "t", "reset", "m", "merge"}
-	checkboxPrefixes = []string{"- [ ]", "- [x]", "- [X]", "* [ ]", "* [x]", "* [X]"}
-)
-
 func main() {
 	var (
 		// Color scheme for the "text edit" mode
@@ -435,7 +430,7 @@ Set NO_COLOR=1 to disable colors.
 			undo.Snapshot(e)
 
 			// Cycle git rebase keywords
-			if line := e.CurrentLine(); mode == modeGit && hasAnyPrefixWord(line, rebasePrefixes) {
+			if line := e.CurrentLine(); mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
 				e.redraw = true
@@ -859,7 +854,7 @@ Set NO_COLOR=1 to disable colors.
 		case "c:18": // ctrl-r, render to PDF, or if in git mode, cycle rebase keywords
 
 			// Are we in git mode?
-			if line := e.CurrentLine(); mode == modeGit && hasAnyPrefixWord(line, rebasePrefixes) {
+			if line := e.CurrentLine(); mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
 				undo.Snapshot(e)
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)

@@ -60,8 +60,8 @@ func filterS(sl []string, f func(string) bool) []string {
 
 // nextGitRebaseKeywords takes the first word and increase it to the next git rebase keyword
 func nextGitRebaseKeyword(line string) string {
-	cycle1 := filterS(rebasePrefixes, func(s string) bool { return len(s) > 1 })
-	cycle2 := filterS(rebasePrefixes, func(s string) bool { return len(s) == 1 })
+	cycle1 := filterS(gitRebasePrefixes, func(s string) bool { return len(s) > 1 })
+	cycle2 := filterS(gitRebasePrefixes, func(s string) bool { return len(s) == 1 })
 	first := strings.Fields(line)[0]
 	next := ""
 	// Check if the word is in cycle1, then set "next" to the next one in the cycle
