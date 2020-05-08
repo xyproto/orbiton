@@ -137,6 +137,7 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 			if len(s) > 0 {
 				s = s[:len(s)-1]
 				e.SetSearchTerm(s, c, status)
+				status.ClearAll(c)
 				status.SetMessage(searchPrompt + " " + s)
 				status.ShowNoTimeout(c, e)
 			}
@@ -146,9 +147,10 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 			fallthrough
 		case "c:13": // return
 			doneCollectingLetters = true
-		case "↑": // previous search
+		case "↑": // previous in the search history
 			// TODO: Browse backwards in the search history and don't fall through
-			fallthrough
+		case "↓": // next in the search history
+			// TODO: Browse backwards in the search history and don't fall through
 		default:
 			if key != "" && !strings.HasPrefix(key, "c:") {
 				s += key
