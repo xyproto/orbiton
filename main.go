@@ -1465,38 +1465,21 @@ Set NO_COLOR=1 to disable colors.
 				}
 			}
 			e.redrawCursor = true
-		case "c:11": // ctrl-k, delete to end of line
-			if e.Empty() {
-				status.SetMessage("Empty file")
-				status.Show(c, e)
-				break
-			}
-			undo.Snapshot(e)
-			e.DeleteRestOfLine()
-			if !e.DrawMode() && e.EmptyRightTrimmedLine() {
-				// Deleting the rest of the line cleared this line,
-				// so just remove it.
-				e.DeleteLine(e.DataY())
-				// Then go to the start or end of the line, if needed
-				if len(e.CurrentLine()) == 1 {
-					e.Home()
-				} else if e.AtOrAfterEndOfLine() {
-					e.End()
-				}
-			}
-			// TODO: Is this one needed/useful?
-			vt100.Do("Erase End of Line")
-			e.redraw = true
-			e.redrawCursor = true
 		case "c:24": // ctrl-x, cut line
 			y := e.DataY()
 			line := e.Line(y)
-			// Now check if there is anything to cut
-			if len(strings.TrimSpace(line)) == 0 {
-				break
-			}
 			// Prepare to cut
 			undo.Snapshot(e)
+			// Now check if there is anything to cut
+			if len(strings.TrimSpace(line)) == 0 {
+				// Nothing to cut, just remove the current line
+				e.Home()
+				e.DeleteLine(e.DataY())
+				e.End()
+				e.redraw = true
+				e.redrawCursor = true
+				break
+			}
 			// Check if ctrl-x was pressed once or twice, for this line
 			if lastCutY != y { // Single line cut
 				lastCutY = y
@@ -1531,6 +1514,29 @@ Set NO_COLOR=1 to disable colors.
 			// No status message is needed for the cut operation, because it's visible that lines are cut
 			e.redrawCursor = true
 			e.redraw = true
+		case "c:11": // ctrl-k, delete to end of line
+			if e.Empty() {
+				status.SetMessage("Empty file")
+				status.Show(c, e)
+				break
+			}
+			undo.Snapshot(e)
+			e.DeleteRestOfLine()
+			if !e.DrawMode() && e.EmptyRightTrimmedLine() {
+				// Deleting the rest of the line cleared this line,
+				// so just remove it.
+				e.DeleteLine(e.DataY())
+				// Then go to the start or end of the line, if needed
+				if len(e.CurrentLine()) == 1 {
+					e.Home()
+				} else if e.AtOrAfterEndOfLine() {
+					e.End()
+				}
+			}
+			// TODO: Is this one needed/useful?
+			vt100.Do("Erase End of Line")
+			e.redraw = true
+			e.redrawCursor = true
 		case "c:3": // ctrl-c, copy the stripped contents of the current line
 			y := e.DataY()
 			if lastCopyY != y { // Single line copy

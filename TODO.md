@@ -1,9 +1,8 @@
 # TODO
 
 - [ ] Resolve any dataraces in statusbar.go.
-- [ ] `ctrl-x` on an empty line should remove the empty line (possibly clearing the clipboard as well).
-- [ ] If the rune to the left is a printable unicode character, smart indent the whole line.
 - [ ] Rethink how smart indentation should work.
+- [ ] If the rune to the left is a printable unicode character, smart indent the whole line.
 - [ ] If a word is typed 1 letter differently from all the other instances in the current file: color it red.
 - [ ] Highlight links in Markdown (perhaps color `[` and `]` yellow).
 - [ ] Rainbow parenthesis.
