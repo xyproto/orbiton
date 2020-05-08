@@ -277,10 +277,28 @@ Set NO_COLOR=1 to disable colors.
 			quitError(tty, err)
 		}
 
-		if !e.Empty() {
-			statusMessage = "Loaded " + filename + warningMessage
-		} else {
+		if e.Empty() {
 			statusMessage = "Loaded empty file: " + filename + warningMessage
+		} else {
+			statusMessage = "Loaded " + filename + warningMessage
+			// Check if the first line is special
+			firstLine := e.Line(0)
+			if strings.HasPrefix(firstLine, "#!") { // The line starts with a shebang
+				mode = e.mode
+				words := strings.Split(firstLine, " ")
+				lastWord := words[len(words)-1]
+				if strings.Contains(lastWord, "/") {
+					words = strings.Split(lastWord, "/")
+					lastWord = words[len(words)-1]
+				}
+				switch lastWord {
+				case "python":
+					mode = modePython
+				case "bash", "fish", "zsh", "tcsh", "ksh", "sh", "ash":
+					mode = modeShell
+				}
+				e.mode = mode
+			}
 		}
 
 		// Test write, to check if the file can be written or not

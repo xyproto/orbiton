@@ -500,10 +500,18 @@ func (e *Editor) Save(filename *string, stripTrailingSpaces bool) error {
 	} else {
 		data = []byte(e.String())
 	}
+
 	// Mark the data as "not changed"
 	e.changed = false
+
+	// Choose appropriate permissions (+x if there is a shebang)
+	var fileMode os.FileMode = 0664
+	if bytes.HasPrefix(data, []byte("#!")) {
+		fileMode = 0775
+	}
+
 	// Write the data to file
-	return ioutil.WriteFile(*filename, data, 0664)
+	return ioutil.WriteFile(*filename, data, fileMode)
 }
 
 // TrimRight will remove whitespace from the end of the given line number
