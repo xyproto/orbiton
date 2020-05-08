@@ -1,10 +1,8 @@
 # TODO
 
-- [ ] Resolve any dataraces in statusbar.go.
-- [ ] If the rune to the left is a printable unicode character, smart indent the whole line.
 - [ ] If a word is typed 1 letter differently from all the other instances in the current file: color it red.
-- [ ] Highlight links in Markdown (perhaps color `[` and `]` yellow).
 - [ ] Rainbow parenthesis.
+- [ ] Highlight links in Markdown (perhaps color `[` and `]` yellow).
 - [ ] When in "SuggestMode", typing should start filtering the list.
 - [ ] Backwards search result browsing using `ctrl-p` (alternatively keep a location stack when using `ctrl-n` and pop from that one).
 - [ ] More predictable  search wraparound.
@@ -20,4 +18,5 @@
 - [ ] Plugins? When there's "txt2something" and "something2txt", o should be able to edit "something" files. This could be used for hex editing, editing ELF files etc.
 - [ ] Tab in the middle of a line, especially on a `|` character, could insert spaces until the `|` alignes with the `|` above, if applicable (For Markdown tables).
 - [ ] Auto-detect if a loaded file uses "\t", "  ", "   ", "    ", or "        " for indentation.
-- [ ] `.git/config` files should not highlight lines with `/*` any differently.
+- [ ] Fix the dataraces in statusbar.go that may be triggered by terminal resize and/or freezing the terminal with `ctrl-s`, for some terminal emulators.
+- [ ] Be able to browse the search history with arrow up and down when searching. Introduce a search history.
