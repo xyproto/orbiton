@@ -1195,7 +1195,7 @@ Set NO_COLOR=1 to disable colors.
 			y := e.DataY()
 			leftRune := e.LeftRune()
 			ext := filepath.Ext(filename)
-			if leftRune == '.' && !unicode.IsLetter(e.Rune()) && ext != "" {
+			if leftRune == '.' && !unicode.IsLetter(e.Rune()) && mode != modeBlank {
 				// Autocompletion
 				undo.Snapshot(e)
 
@@ -1260,10 +1260,8 @@ Set NO_COLOR=1 to disable colors.
 			//emptyLine := len(trimmedLine) == 0
 			//almostEmptyLine := len(trimmedLine) <= 1
 
-			// Smart indent only if the cursor is at the end of the line
-			// Disable smart indentation, for now
-			if false { // e.mode != modeBlank && (strings.HasSuffix(trimmedLine, "{") || strings.HasSuffix(trimmedLine, "}") || e.AtOrAfterEndOfLine()) {
-				// If in the middle of the text and the character to the left is not a ".", then autoindent
+			// Smart indent if the rune to the left is not a blank character (and not the start of the line)
+			if !unicode.IsSpace(leftRune) && e.pos.sx > 0 && mode != modeBlank {
 				lineAbove := 1
 				if strings.TrimSpace(e.Line(y-lineAbove)) == "" {
 					// The line above is empty, use the indendation before the line above that
@@ -1282,10 +1280,7 @@ Set NO_COLOR=1 to disable colors.
 						oneIndentation    string
 					)
 
-					if len(spaceAbove) > 0 {
-						// If the above line is indented, also use that indentation type when indenting here
-						oneIndentation = spaceAbove
-					} else if e.mode == modeShell || e.mode == modePython {
+					if e.mode == modeShell || e.mode == modePython {
 						// If this is a shell script, use 2 spaces (or however many spaces are defined in e.spacesPerTab)
 						oneIndentation = strings.Repeat(" ", e.spacesPerTab)
 					} else {
@@ -1294,16 +1289,20 @@ Set NO_COLOR=1 to disable colors.
 					}
 
 					// Smart-ish indentation
-					if (strings.HasPrefix(trimmedLine, "case ") && !strings.HasPrefix(trimmedLine, "switch ")) || trimmedLine == "}" || trimmedLine == "]" || trimmedLine == ")" {
-						//strings.HasSuffix(strippedLineAbove, "}") || strings.HasSuffix(strippedLineAbove, "]") || strings.HasSuffix(strippedLineAbove, ")") ||
-						// Use one less indentation than the line above
-						if (len(spaceAbove) - len(oneIndentation)) <= 0 {
-							// Do nothing
-							break
-						}
-						newLeadingSpace = spaceAbove[:len(spaceAbove)-len(oneIndentation)]
-					} else if strings.HasSuffix(strippedLineAbove, "{") || strings.HasSuffix(strippedLineAbove, "[") || strings.HasSuffix(strippedLineAbove, "(") || strings.HasSuffix(strippedLineAbove, ":") {
+					if !strings.HasPrefix(strippedLineAbove, "switch ") && (strings.HasPrefix(strippedLineAbove, "case ") ||
+						strings.HasSuffix(strippedLineAbove, "{") ||
+						strings.HasSuffix(strippedLineAbove, "[") ||
+						strings.HasSuffix(strippedLineAbove, "(") ||
+						strings.HasSuffix(strippedLineAbove, ":") ||
+						strings.HasPrefix(strippedLineAbove, "if ")) {
+						// Use one more indentation than the line above
 						newLeadingSpace = spaceAbove + oneIndentation
+					} else if ((len(spaceAbove) - len(oneIndentation)) > 0) && strings.HasSuffix(trimmedLine, "}") {
+						// Use one less indentation than the line above
+						newLeadingSpace = spaceAbove[:len(spaceAbove)-len(oneIndentation)]
+					} else {
+						// Use the same indentation as the line above
+						newLeadingSpace = spaceAbove
 					}
 
 					e.SetLine(y, newLeadingSpace+trimmedLine)
