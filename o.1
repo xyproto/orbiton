@@ -1,6 +1,6 @@
 .\"             -*-Nroff-*-
 .\"
-.TH "o" 1 "2 May 2020" "" ""
+.TH "o" 1 "8 May 2020" "" ""
 .SH NAME
 o \- an editor
 .SH SYNOPSIS
@@ -70,7 +70,7 @@ displays brief usage information
 .sp
 .B ctrl-x
   Press twice to cut the current block of text (until a blank line or the end of the file).
-  Press once to only cut the current line.
+  Press once to only cut the current line (or delete the line, if empty).
 .sp
 .B ctrl-b
   Bookmark the current line. Press again to remove the bookmark.
@@ -129,7 +129,7 @@ I wanted to write a simple editor that only used VT100 terminal codes.
 .SH BUGS
 Lines longer than the terminal width are not handled gracefully.
 .SH VERSION
-2.26.2
+2.26.3
 .SH AUTHOR
 .B o
 was written by  Alexander F. Rødseth <xyproto@archlinux.org>
