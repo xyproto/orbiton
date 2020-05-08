@@ -347,56 +347,56 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 				if noColor {
 					switch counter % 12 {
 					case 0:
-						s = "| c · · |"
+						s = "| C · · |"
 					case 1:
 						s = "|  C· · |"
 					case 2:
-						s = "|   c · |"
+						s = "|   C · |"
 					case 3:
 						s = "|    C· |"
 					case 4:
-						s = "|     c |"
+						s = "|     C |"
 					case 5:
-						s = "|      o|"
+						s = "|      C|"
 					case 6:
-						s = "| · · © |"
+						s = "| · · Ɔ |"
 					case 7:
-						s = "| · ·©  |"
+						s = "| · ·Ɔ  |"
 					case 8:
-						s = "| · ©   |"
+						s = "| · Ɔ   |"
 					case 9:
-						s = "| ·©    |"
+						s = "| ·Ɔ    |"
 					case 10:
-						s = "| ©     |"
+						s = "| Ɔ     |"
 					case 11:
-						s = "|o· · · |"
+						s = "|Ɔ· · · |"
 					}
 				} else {
 					switch counter % 12 {
 					case 0:
-						s = "<red>| <yellow>c<blue> · ·</blue> <red>|<off>"
+						s = "<red>| <yellow>C<blue> · ·</blue> <red>|<off>"
 					case 1:
 						s = "<red>| <blue> <yellow>C<blue>· · <red>|<off>"
 					case 2:
-						s = "<red>| <blue>  <yellow>c<blue> · <red>|<off>"
+						s = "<red>| <blue>  <yellow>C<blue> · <red>|<off>"
 					case 3:
 						s = "<red>| <blue>   <yellow>C<blue>· <red>|<off>"
 					case 4:
-						s = "<red>| <blue>    <yellow>c <red>|<off>"
+						s = "<red>| <blue>    <yellow>C <red>|<off>"
 					case 5:
-						s = "<red>| <blue>     <yellow>o<red>|<off>"
+						s = "<red>| <blue>     <yellow>C<red>|<off>"
 					case 6:
-						s = "<red>| <blue>· · <yellow>© <red>|<off>"
+						s = "<red>| <blue>· · <yellow>Ɔ <red>|<off>"
 					case 7:
-						s = "<red>| <blue>· ·<yellow>©<blue>  <red>|<off>"
+						s = "<red>| <blue>· ·<yellow>Ɔ<blue>  <red>|<off>"
 					case 8:
-						s = "<red>| <blue>· <yellow>© <blue>  <red>|<off>"
+						s = "<red>| <blue>· <yellow>Ɔ <blue>  <red>|<off>"
 					case 9:
-						s = "<red>| <blue>·<yellow>©<blue>    <red>|<off>"
+						s = "<red>| <blue>·<yellow>Ɔ<blue>    <red>|<off>"
 					case 10:
-						s = "<red>| <yellow>© <blue>    <red>|<off>"
+						s = "<red>| <yellow>Ɔ <blue>    <red>|<off>"
 					case 11:
-						s = "<red>|<yellow>o<blue>· · · <red>|<off>"
+						s = "<red>|<yellow>Ɔ<blue>· · · <red>|<off>"
 					}
 
 				}
