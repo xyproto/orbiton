@@ -1,5 +1,6 @@
 # TODO
 
+- [ ] Resolve any dataraces in statusbar.go.
 - [ ] `ctrl-x` on an empty line should remove the empty line (possibly clearing the clipboard as well).
 - [ ] If the rune to the left is a printable unicode character, smart indent the whole line.
 - [ ] Rethink how smart indentation should work.
