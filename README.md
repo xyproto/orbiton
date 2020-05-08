@@ -227,9 +227,12 @@ fo somefile.cpp 123
 
 Pressing `ctrl-space` will render Markdown files to PDF using `pandoc` (as opposed to `ctrl-r`, which will save the text directly to a PDF, without using `pandoc`).
 
-## Suggested color scheme and font
+## Suggested settings
 
-`o` has seen most testing in Konsole, using the `JetBrains Mono NL` font and the `Breeze` color scheme (but with a black background). This can be configured by selecting `Edit Current Profile...` in Konsole. The `JetBrains Mono` font is free and open source.
+### Konsole
+
+* Try the `Breeze` color scheme (but with a black background) and the wonderful (and open source) `JetBrains Mono NL` font.
+* Untick the `Flow control` option in the profile settings, to ensure that `ctrl-s` will never freeze the terminal.
 
 ## General info
 
