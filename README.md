@@ -101,17 +101,17 @@ To unset:
 * At the press of `ctrl-space`, `o` will try to build or export the current file.
 * At the press of `ctrl-w`, `o` will try to format the current file, in an opinionated way.
 
-| Programming language                            | File extensions                                           | Jump to error | Build command            | Format command ($filename is a temporary file)                    |
-|-------------------------------------------------|-----------------------------------------------------------|---------------|--------------------------|-------------------------------------------------------------------|
-| Go                                              | `.go`                                                     | yes           |`go build`                | `goimports -w -- $filename`                                       |
-| C++                                             | `.cpp`, `.cc`, `.cxx`, `.h`, `.hpp`, `.c++`, `.h++`, `.c` | yes           | `cxx`                    | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
-| C++, if `BUILD.bazel` exists                    | `.cc`, `.h`                                               | needs testing | `bazel build`            | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
-| Rust                                            | `.rs`                                                     | needs testing | `rustc $filename`        | `rustfmt`                                                         |
-| Rust, if `Cargo.toml` or `../Cargo.toml` exists | `.rs`                                                     | needs testing | `cargo build`            | `rustfmt`                                                         |
-| Zig                                             | `.zig`                                                    | needs testing | `zig build`              | `zig fmt`                                                         |
-| V                                               | `.v`                                                      | needs testing | `v build`                | `v fmt`                                                           |
-| Haskell                                         | `.hs`                                                     | yes           | `ghc -dynamic $filename` | `brittany --write-mode=inplace -- $filename`                      |
-| Python                                          | `.py`                                                     | not yet       |                          | `autopep8 ...`                                                    |
+| Programming language                            | File extensions                                           | Jump to error | Build command                    | Format command ($filename is a temporary file)                    |
+|-------------------------------------------------|-----------------------------------------------------------|---------------|----------------------------------|-------------------------------------------------------------------|
+| Go                                              | `.go`                                                     | yes           | `go build`                       | `goimports -w -- $filename`                                       |
+| C++                                             | `.cpp`, `.cc`, `.cxx`, `.h`, `.hpp`, `.c++`, `.h++`, `.c` | yes           | `cxx`                            | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
+| C++, if `BUILD.bazel` exists                    | `.cc`, `.h`                                               | not yet       | `bazel build`                    | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
+| Rust                                            | `.rs`                                                     | not yet       | `rustc $filename`                | `rustfmt`                                                         |
+| Rust, if `Cargo.toml` or `../Cargo.toml` exists | `.rs`                                                     | not yet       | `cargo build`                    | `rustfmt`                                                         |
+| Zig                                             | `.zig`                                                    | not yet       | `zig build`                      | `zig fmt`                                                         |
+| V                                               | `.v`                                                      | not yet       | `v build`                        | `v fmt`                                                           |
+| Haskell                                         | `.hs`                                                     | yes           | `ghc -dynamic $filename`         | `brittany --write-mode=inplace -- $filename`                      |
+| Python                                          | `.py`                                                     | yes           | `python -m py_compile $filename` | `autopep8 -i --maxline-length 120`                                |
 
 * `o` will try to jump to the location where the error is and otherwise display `Success`.
 * For regular text files, `ctrl-w` will word wrap the lines to a length of 99.
@@ -168,7 +168,8 @@ Haskell
 
 Python
 
-* `ctrl-space` only checks the syntax, without executing.
+* `ctrl-space` only checks the syntax, without executing. This only requires `python` to be available.
+* For formatting the code with `ctrl-w`, `autopep8` must be installed.
 
 ## Size
 
