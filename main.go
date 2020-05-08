@@ -730,9 +730,9 @@ Set NO_COLOR=1 to disable colors.
 
 							if mode == modePython {
 								if errorLine, errorMessage := ParsePythonError(string(output), baseFilename); errorLine != -1 {
-									e.redraw = e.GoTo(errorLine, c, status)
+									e.redraw = e.GoTo(errorLine-1, c, status)
 									status.ClearAll(c)
-									status.SetMessage("Error in " + baseFilename + ": " + errorMessage)
+									status.SetErrorMessage("Error: " + errorMessage)
 									status.Show(c, e)
 									break OUT2
 								}
@@ -1426,6 +1426,7 @@ Set NO_COLOR=1 to disable colors.
 			status.SetMessage("Go to line number:")
 			status.ShowNoTimeout(c, e)
 			lns := ""
+			cancel := false
 			doneCollectingDigits := false
 			for !doneCollectingDigits {
 				numkey := tty.String()
@@ -1441,6 +1442,7 @@ Set NO_COLOR=1 to disable colors.
 						status.ShowNoTimeout(c, e)
 					}
 				case "c:27", "c:17": // esc or ctrl-q
+					cancel = true
 					lns = ""
 					fallthrough
 				case "c:13": // return
@@ -1448,7 +1450,7 @@ Set NO_COLOR=1 to disable colors.
 				}
 			}
 			status.ClearAll(c)
-			if lns == "" {
+			if lns == "" && !cancel {
 				if e.DataY() > 0 {
 					// If not at the top, go to the first line (by line number, not by index)
 					e.redraw = e.GoToLineNumber(1, c, status, true)
