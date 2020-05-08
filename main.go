@@ -1294,6 +1294,7 @@ Set NO_COLOR=1 to disable colors.
 						strings.HasSuffix(strippedLineAbove, "[") ||
 						strings.HasSuffix(strippedLineAbove, "(") ||
 						strings.HasSuffix(strippedLineAbove, ":") ||
+						strings.HasSuffix(strippedLineAbove, " \\") ||
 						strings.HasPrefix(strippedLineAbove, "if ")) {
 						// Use one more indentation than the line above
 						newLeadingSpace = spaceAbove + oneIndentation
