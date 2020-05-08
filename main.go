@@ -1087,7 +1087,7 @@ Set NO_COLOR=1 to disable colors.
 					e.pos.SetX(x)
 				} else if e.AtOrAfterEndOfLine() && e.AtLastLineOfDocument() {
 					leadingWhitespace := e.LeadingWhitespace()
-					if len(lineContents) > 0 && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[")) {
+					if len(lineContents) > 0 && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[") || strings.HasSuffix(lineContents, ":")) {
 						// "smart indentation"
 						if e.mode == modeShell || e.mode == modePython {
 							leadingWhitespace += strings.Repeat(" ", e.spacesPerTab)
