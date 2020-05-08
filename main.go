@@ -423,7 +423,9 @@ Set NO_COLOR=1 to disable colors.
 	)
 
 	for !quit {
+		// Read the next key
 		key := tty.String()
+
 		switch key {
 		case "c:17": // ctrl-q, quit
 			quit = true
@@ -724,6 +726,16 @@ Set NO_COLOR=1 to disable colors.
 							errorMarker := "error:"
 							if testingInstead {
 								errorMarker = "FAIL:"
+							}
+
+							if mode == modePython {
+								if errorLine, errorMessage := ParsePythonError(string(output), baseFilename); errorLine != -1 {
+									e.redraw = e.GoTo(errorLine, c, status)
+									status.ClearAll(c)
+									status.SetMessage("Error in " + baseFilename + ": " + errorMessage)
+									status.Show(c, e)
+									break OUT2
+								}
 							}
 
 							// Find the first error message
@@ -1804,6 +1816,7 @@ Set NO_COLOR=1 to disable colors.
 		// The first letter was not O or /, which invokes special vi-compatible behavior
 		firstLetterSinceStart = "x"
 	}
+
 	// Save the current location in the location history and write it to file
 	e.SaveLocation(absFilename, locationHistory)
 
