@@ -20,3 +20,4 @@
 - [ ] Auto-detect if a loaded file uses "\t", "  ", "   ", "    ", or "        " for indentation.
 - [ ] Fix the dataraces in statusbar.go that may be triggered by terminal resize and/or freezing the terminal with `ctrl-s`, for some terminal emulators.
 - [ ] Be able to browse the search history with arrow up and down when searching. Introduce a search history.
+- [ ] Syntax highlight `--with-long=yes` in PKGBUILD files differently.
