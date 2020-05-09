@@ -47,6 +47,16 @@ func hasAnyPrefixWord(line string, wordList []string) bool {
 	return false
 }
 
+// hasS checks if the given string slice contains the given string
+func hasS(sl []string, s string) bool {
+	for _, e := range sl {
+		if e == s {
+			return true
+		}
+	}
+	return false
+}
+
 // filterS returns all strings that makes the function f return true
 func filterS(sl []string, f func(string) bool) []string {
 	var results []string

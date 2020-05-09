@@ -148,6 +148,9 @@ Set NO_COLOR=1 to disable colors.
 
 	baseFilename := filepath.Base(filename)
 
+	// A list of the most common configuration filenames that does not have an extension
+	var configFilenames = []string{"fstab", "config", "BUILD", "WORKSPACE", "passwd", "group", "environment", "shadow", "gshadow", "hostname", "hosts", "issue"}
+
 	// Check if we should be in a particular mode for a particular type of file
 	ext := filepath.Ext(baseFilename)
 	switch {
@@ -169,7 +172,7 @@ Set NO_COLOR=1 to disable colors.
 		mode = modeMarkdown
 	case ext == ".sh" || ext == ".ksh" || ext == ".tcsh" || ext == ".bash" || ext == ".zsh" || baseFilename == "PKGBUILD" || (strings.HasPrefix(baseFilename, ".") && strings.Contains(baseFilename, "sh")): // This last part covers .bashrc, .zshrc etc
 		mode = modeShell
-	case ext == ".yml" || ext == ".toml" || ext == ".ini" || strings.HasSuffix(filename, ".git/config"):
+	case ext == ".yml" || ext == ".toml" || ext == ".ini" || strings.HasSuffix(filename, ".git/config") || (ext == "" && (strings.HasSuffix(baseFilename, "file") || strings.HasSuffix(baseFilename, "rc") || hasS(configFilenames, baseFilename) )):
 		mode = modeConfig
 	case baseFilename == "Makefile" || baseFilename == "makefile" || baseFilename == "GNUmakefile":
 		mode = modeMakefile
@@ -186,12 +189,19 @@ Set NO_COLOR=1 to disable colors.
 	}
 
 	// Check if we should enable syntax highlighting by default
-	syntaxHighlight := mode != modeBlank || baseFilename == "config" || baseFilename == "BUILD" || baseFilename == "WORKSPACE" || strings.Contains(baseFilename, ".") || strings.HasSuffix(baseFilename, "file") // Makefile, Dockerfile, Jenkinsfile, Vagrantfile
+	syntaxHighlight := mode != modeBlank
 
 	// Per-language adjustments to highlighting of keywords
 	// TODO: Use a different syntax highlighting package, with support for many different programming languages
 	if mode == modeGo {
 		syntax.Keywords["fallthrough"] = struct{}{}
+	} else if mode == modeShell {
+		delete(syntax.Keywords, "float")
+		delete(syntax.Keywords, "with")
+		delete(syntax.Keywords, "exec")
+		delete(syntax.Keywords, "long")
+		delete(syntax.Keywords, "double")
+		delete(syntax.Keywords, "no")
 	} else {
 		delete(syntax.Keywords, "build")
 		delete(syntax.Keywords, "package")
