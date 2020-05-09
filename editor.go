@@ -26,7 +26,7 @@ const (
 	modeAssembly // for Assembly files
 	modeGo       // for Go source files
 	modeHaskell  // for Haskell source files
-	modeSML      // for Standard ML source files
+	modeOCaml    // for OCaml source files
 	modePython   // for Python source files
 )
 

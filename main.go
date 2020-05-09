@@ -183,7 +183,7 @@ Set NO_COLOR=1 to disable colors.
 	case ext == ".hs":
 		mode = modeHaskell
 	case ext == ".ml":
-		mode = modeSML
+		mode = modeOCaml
 	case ext == ".py":
 		mode = modePython
 	}
