@@ -89,7 +89,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 						// Syntax highlight the line if it's not picked up by the markdownHighlight function
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					}
-				} else if e.mode == modeConfig {
+				} else if e.mode == modeConfig || e.mode == modeShell {
 					if strings.Contains(line, "/*") || strings.Contains(line, "*/") {
 						// No highlight
 						coloredString = line
