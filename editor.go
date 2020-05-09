@@ -566,7 +566,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 	}
 }
 
-// StripSingleLineComment will strip away trailing single-linecomments.
+// StripSingleLineComment will strip away trailing single-line comments.
 // TODO: Also strip trailing /* ... */ comments
 func (e *Editor) StripSingleLineComment(line string) string {
 	commentMarker := e.SingleLineCommentMarker()
