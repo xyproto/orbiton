@@ -189,7 +189,7 @@ Set NO_COLOR=1 to disable colors.
 	}
 
 	// Check if we should enable syntax highlighting by default
-	syntaxHighlight := mode != modeBlank
+	syntaxHighlight := mode != modeBlank || ext != ""
 
 	// Per-language adjustments to highlighting of keywords
 	// TODO: Use a different syntax highlighting package, with support for many different programming languages
