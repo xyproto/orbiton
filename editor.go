@@ -504,14 +504,19 @@ func (e *Editor) Save(filename *string, stripTrailingSpaces bool) error {
 	// Mark the data as "not changed"
 	e.changed = false
 
-	// Choose appropriate permissions (+x if there is a shebang)
-	var fileMode os.FileMode = 0664
-	if bytes.HasPrefix(data, []byte("#!")) {
-		fileMode = 0775
+	// Check if the file contents starts with a shebang (#!)
+	if bytes.HasPrefix(data, []byte{'#', '!'}) {
+		// Write to a file with permissions 0775 (respects umask, may not chmod +x)
+		var fileMode os.FileMode = 0775
+		if err := ioutil.WriteFile(*filename, data, fileMode); err != nil {
+			return err
+		}
+		// Then modify the permissions (chmod +x)
+		return os.Chmod(*filename, fileMode)
 	}
 
-	// Write the data to file
-	return ioutil.WriteFile(*filename, data, fileMode)
+	// Write to a regular file, no chmod needed
+	return ioutil.WriteFile(*filename, data, 0664)
 }
 
 // TrimRight will remove whitespace from the end of the given line number
