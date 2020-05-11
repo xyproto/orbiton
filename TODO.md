@@ -22,3 +22,4 @@
       (For Markdown tables).
 - [ ] Auto-detect if a loaded file uses "\t", "  ", "   ", "    ", or "        " for indentation.
 - [ ] Be able to browse the search history with arrow up and down when searching. Introduce a search history.
+- [ ] Load ViM and Emacs location after the file loads into a bookmark that can be jumped to with `ctrl-j`, for increased loading speed. Benchmark.
