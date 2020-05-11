@@ -90,6 +90,10 @@ func LoadVimLocationHistory(vimInfoFilename string) map[string]int {
 				continue
 			}
 			absFilename, err := filepath.Abs(filename)
+			if err != nil {
+				// Could not get the absolute path
+				continue
+			}
 			locationHistory[absFilename] = lineNumber
 		}
 	}
