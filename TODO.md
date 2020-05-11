@@ -20,6 +20,9 @@
       This could be used for hex editing, editing ELF files etc.
 - [ ] Tab in the middle of a line, especially on a `|` character, could insert spaces until the `|` alignes with the `|` above, if applicable
       (For Markdown tables).
-- [ ] Auto-detect if a loaded file uses "\t", "  ", "   ", "    ", or "        " for indentation.
+- [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
 - [ ] Be able to browse the search history with arrow up and down when searching. Introduce a search history.
-- [ ] Load ViM and Emacs location after the file loads into a bookmark that can be jumped to with `ctrl-j`, for increased loading speed. Benchmark.
+- [ ] At start, after loading the file contents, load the vim and emacs location histories concurrently. If they load within a short amount
+      of time (50ms?), jump to those locations.
+- [ ] (maybe) If the emacs and vim locations takes too long to load, and they come up with something, store it in a bookmark that can be jumped to with `ctrl-b`.
+- [ ] In Markdown, if the previous line has a checkbox, color the text in the same color as the text on the line above?
