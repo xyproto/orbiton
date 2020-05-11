@@ -193,18 +193,25 @@ Set NO_COLOR=1 to disable colors.
 
 	// Per-language adjustments to highlighting of keywords
 	// TODO: Use a different syntax highlighting package, with support for many different programming languages
-	if mode == modeGo {
-		syntax.Keywords["fallthrough"] = struct{}{}
-	} else if mode == modeShell {
-		delete(syntax.Keywords, "float")
-		delete(syntax.Keywords, "with")
-		delete(syntax.Keywords, "exec")
-		delete(syntax.Keywords, "long")
-		delete(syntax.Keywords, "double")
-		delete(syntax.Keywords, "no")
-	} else {
-		delete(syntax.Keywords, "build")
-		delete(syntax.Keywords, "package")
+	var addKeywords, delKeywords []string
+	switch mode {
+	case modeGo:
+		addKeywords = []string{"fallthrough", "string"}
+		delKeywords = []string{"mut"}
+	case modeShell:
+		delKeywords = []string{"float", "with", "exec", "long", "double", "no"}
+		fallthrough
+	default:
+		delKeywords = append(delKeywords, []string{"build", "package"}...)
+	}
+
+	// Add extra keywords that are to be syntax highlighted
+	for _, kw := range addKeywords {
+		syntax.Keywords[kw] = struct{}{}
+	}
+	// Remove keywords that should not be syntax highlighted
+	for _, kw := range delKeywords {
+		delete(syntax.Keywords, kw)
 	}
 
 	// Additional per-mode considerations
@@ -1500,13 +1507,8 @@ Set NO_COLOR=1 to disable colors.
 				// Nothing to cut, just remove the current line
 				e.Home()
 				e.DeleteLine(e.DataY())
-				e.End()
-				e.redraw = true
-				e.redrawCursor = true
-				break
-			}
-			// Check if ctrl-x was pressed once or twice, for this line
-			if lastCutY != y { // Single line cut
+				// Check if ctrl-x was pressed once or twice, for this line
+			} else if lastCutY != y { // Single line cut
 				lastCutY = y
 				lastCopyY = -1
 				lastPasteY = -1
@@ -1536,6 +1538,8 @@ Set NO_COLOR=1 to disable colors.
 					e.DeleteLine(y)
 				}
 			}
+			// Go to the end of the current line
+			e.End()
 			// No status message is needed for the cut operation, because it's visible that lines are cut
 			e.redrawCursor = true
 			e.redraw = true
@@ -1833,7 +1837,7 @@ Set NO_COLOR=1 to disable colors.
 		// Drawing status messages should come after redrawing, but before cursor positioning
 		if statusMode {
 			status.ShowLineColWordCount(c, e, filename)
-		} else if status.isError {
+		} else if status.IsError() {
 			// Show the status message
 			status.Show(c, e)
 		}
