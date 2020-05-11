@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	locationHistoryFilename    = "~/.cache/o/locations.txt"
-	vimLocationHistoryFilename = "~/.viminfo"
-	maxLocationHistoryEntries  = 1024
+	locationHistoryFilename      = "~/.cache/o/locations.txt"
+	vimLocationHistoryFilename   = "~/.viminfo"
+	emacsLocationHistoryFilename = "~/.emacs.d/places"
+	maxLocationHistoryEntries    = 1024
 )
 
 // LoadLocationHistory will attempt to load the per-absolute-filename recording of which line is active.
@@ -61,10 +62,7 @@ func LoadLocationHistory(configFile string) map[string]int {
 // The returned map can be empty. The filenames have absolute paths.
 func LoadVimLocationHistory(vimInfoFilename string) map[string]int {
 	locationHistory := make(map[string]int)
-	// If reading fails, it's a good enough check. No need to check os.Stat in advance.
-	//if !exists(vimInfoFilename) {
-	//	return locationHistory
-	//}
+	// Attempt to read the ViM location history (that may or may not exist)
 	data, err := ioutil.ReadFile(vimInfoFilename)
 	if err != nil {
 		return locationHistory
@@ -96,6 +94,48 @@ func LoadVimLocationHistory(vimInfoFilename string) map[string]int {
 			}
 			locationHistory[absFilename] = lineNumber
 		}
+	}
+	return locationHistory
+}
+
+// LoadEmacsLocationHistory will attempt to load the history of where the cursor should be when opening a file from ~/.emacs.d/places.
+// The returned map can be empty. The filenames have absolute paths.
+// The values in the map are NOT line numbers but character positions.
+func LoadEmacsLocationHistory(emacsPlacesFilename string) map[string]int {
+	locationHistory := make(map[string]int)
+	// Attempt to read the Emacs location history (that may or may not exist)
+	data, err := ioutil.ReadFile(emacsPlacesFilename)
+	if err != nil {
+		return locationHistory
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		// Looking for lines with filenames with ""
+		fields := strings.SplitN(line, "\"", 3)
+		if len(fields) != 3 {
+			continue
+		}
+		filename := fields[1]
+		locationAndMore := fields[2]
+		// Strip trailing parenthesis
+		for strings.HasSuffix(locationAndMore, ")") {
+			locationAndMore = locationAndMore[:len(locationAndMore)-1]
+		}
+		fields = strings.Fields(locationAndMore)
+		if len(fields) == 0 {
+			continue
+		}
+		lastField := fields[len(fields)-1]
+		charNumber, err := strconv.Atoi(lastField)
+		if err != nil {
+			// Not a character number
+			continue
+		}
+		absFilename, err := filepath.Abs(filename)
+		if err != nil {
+			// Could not get absolute path
+			continue
+		}
+		locationHistory[absFilename] = charNumber
 	}
 	return locationHistory
 }

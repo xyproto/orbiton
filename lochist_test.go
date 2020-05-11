@@ -4,6 +4,10 @@ import (
 	"testing"
 )
 
-func TestViminfo(t *testing.T) {
+func TestVimInfo(t *testing.T) {
 	LoadVimLocationHistory(expandUser(vimLocationHistoryFilename))
+}
+
+func TestEmacsPlaces(t *testing.T) {
+	LoadEmacsLocationHistory(expandUser(emacsLocationHistoryFilename))
 }
