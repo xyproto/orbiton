@@ -197,9 +197,9 @@ Set NO_COLOR=1 to disable colors.
 	switch mode {
 	case modeGo:
 		addKeywords = []string{"fallthrough", "string"}
-		delKeywords = []string{"mut"}
+		delKeywords = []string{"mut", "pass"}
 	case modeShell:
-		delKeywords = []string{"float", "with", "exec", "long", "double", "no"}
+		delKeywords = []string{"float", "with", "exec", "long", "double", "no", "pass"}
 		fallthrough
 	default:
 		delKeywords = append(delKeywords, []string{"build", "package"}...)
