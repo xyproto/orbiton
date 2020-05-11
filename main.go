@@ -403,13 +403,14 @@ Set NO_COLOR=1 to disable colors.
 	// Load the location history, if available
 	locationHistory = LoadLocationHistory(expandUser(locationHistoryFilename))
 
+	// This is disabled for now, since it decreases the file loading time just a bit:
 	// Load the ViM location history as well, if available
-	for key, value := range LoadVimLocationHistory(expandUser(vimLocationHistoryFilename)) {
-		// Only add entries that does not already exist
-		if _, hasKey := locationHistory[key]; !hasKey {
-			locationHistory[key] = value
-		}
-	}
+	// for key, value := range LoadVimLocationHistory(expandUser(vimLocationHistoryFilename)) {
+	//	// Only add entries that does not already exist
+	//	if _, hasKey := locationHistory[key]; !hasKey {
+	//		locationHistory[key] = value
+	//	}
+	//}
 
 	// Check if a line number was given on the command line
 	if lineNumber > 0 {
