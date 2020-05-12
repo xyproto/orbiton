@@ -505,19 +505,32 @@ func (e *Editor) Save(filename *string, stripTrailingSpaces bool) error {
 	// Mark the data as "not changed"
 	e.changed = false
 
-	// Check if the file contents starts with a shebang (#!)
-	if bytes.HasPrefix(data, []byte{'#', '!'}) {
-		// Write to a file with permissions 0775 (respects umask, may not chmod +x)
-		var fileMode os.FileMode = 0775
-		if err := ioutil.WriteFile(*filename, data, fileMode); err != nil {
-			return err
-		}
-		// Then modify the permissions (chmod +x)
-		return os.Chmod(*filename, fileMode)
+	// Should the file be saved with the executable bit enabled?
+	shebang := bytes.HasPrefix(data, []byte{'#', '!'})
+
+	// Default file mode (0644 for regular files, 0755 for executable files)
+	var fileMode os.FileMode = 0644
+
+	// Checking the syntax highlighting makes it easy to press `ctrl-t` before saving a script,
+	// to toggle the executable bit on or off. This is only for files that start with "#!".
+	if shebang && e.syntaxHighlight {
+		// This is both a script file and the syntax highlight is enabled.
+		fileMode = 0755
 	}
 
-	// Write to a regular file, no chmod needed
-	return ioutil.WriteFile(*filename, data, 0664)
+	// Save the file and return any errors
+	if err := ioutil.WriteFile(*filename, data, fileMode); err != nil {
+		return err
+	}
+
+	// "chmod +x" or "chmod -x". This is needed after saving the file, in order to toggle the executable bit.
+	if shebang {
+		// Call Chmod, but ignore errors (since this is just a bonus and not critical)
+		os.Chmod(*filename, fileMode)
+	}
+
+	// All done
+	return nil
 }
 
 // TrimRight will remove whitespace from the end of the given line number
