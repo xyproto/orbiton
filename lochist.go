@@ -163,19 +163,13 @@ func FindInNvimLocationHistory(nvimLocationFilename, searchFilename string) (Lin
 		return nol, errors.New("not a binary data type")
 	}
 
-	stringLength := int(data[pos-1])
-	if len(searchFilename) != stringLength {
-		// this should never happen
-		return nol, errors.New("mismatching string length")
-	}
-
 	maxi := len(data) - 1
 	nextNumberIsTheLineNumber := false
 
 	pp := pos - 2
 
-	// Search 500 bytes from here, at a maximum
-	for i := 0; i < 500; i++ {
+	// Search 512 bytes from here, at a maximum
+	for i := 0; i < 512; i++ {
 		if (pp + i) >= maxi {
 			return nol, errors.New("corresponding line not found for " + searchFilename)
 		}
