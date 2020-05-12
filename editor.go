@@ -280,7 +280,6 @@ func (e *Editor) String() string {
 	for i := 0; i < e.Len(); i++ {
 		sb.WriteString(e.Line(LineIndex(i)) + "\n")
 	}
-	//return strings.TrimRight(sb.String(), " \n\t\r")
 	return sb.String()
 }
 
@@ -293,10 +292,9 @@ func (e *Editor) Clear() {
 // Load will try to load a file. The file is assumed to be checked to already exist.
 // Returns a warning message (possibly empty) and an error type
 func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string, error) {
-
 	var message string
 
-	// Start a spinner, in a little short while
+	// Start a spinner, in a short while
 	quit := make(chan bool)
 	go func() {
 
@@ -313,9 +311,10 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 			}
 		}
 
-		// Find a good start location
 		w := int(c.Width())
 		h := int(c.Height())
+
+		// Find a good start location
 		x := uint(w / 7)
 		y := uint(h / 7)
 
@@ -414,13 +413,8 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 		}
 	}()
 
-	var (
-		data []byte
-		err  error
-	)
-
 	// Read the file
-	data, err = ioutil.ReadFile(filename)
+	data, err := ioutil.ReadFile(filename)
 	if bytes.Contains(data, []byte{'\r'}) {
 		// Replace DOS line endings with UNIX line endings
 		data = bytes.Replace(data, []byte{'\r', '\n'}, []byte{'\n'}, -1)
