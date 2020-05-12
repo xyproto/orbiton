@@ -448,6 +448,7 @@ Set NO_COLOR=1 to disable colors.
 		locationHistory[absFilename] = lineNumber
 	}
 
+	// Redraw the TUI, if needed
 	if e.redraw {
 		e.Center(c)
 		e.DrawLines(c, true, false)
