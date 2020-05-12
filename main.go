@@ -1551,6 +1551,12 @@ Set NO_COLOR=1 to disable colors.
 				status.Show(c, e)
 				break
 			}
+
+			// Reset the cut/copy/paste double-keypress detection
+			lastCopyY = -1
+			lastPasteY = -1
+			lastCutY = -1
+
 			undo.Snapshot(e)
 			e.DeleteRestOfLine()
 			if !e.DrawMode() && e.EmptyRightTrimmedLine() {
@@ -1571,9 +1577,9 @@ Set NO_COLOR=1 to disable colors.
 		case "c:3": // ctrl-c, copy the stripped contents of the current line
 			y := e.DataY()
 			if lastCopyY != y { // Single line copy
+				lastCutY = -1
 				lastCopyY = y
 				lastPasteY = -1
-				lastCutY = -1
 				// Pressed for the first time for this line number
 				trimmed := strings.TrimSpace(e.Line(y))
 				if trimmed != "" {
@@ -1592,9 +1598,9 @@ Set NO_COLOR=1 to disable colors.
 				// Go to the end of the line, for easy line duplication with ctrl-c, enter, ctrl-v
 				e.End()
 			} else { // Multi line copy
+				lastCutY = -1
 				lastCopyY = y
 				lastPasteY = -1
-				lastCutY = -1
 				// Pressed multiple times for this line number, copy the block of text starting from this line
 				s := e.Block(y)
 				if s != "" {
