@@ -418,9 +418,6 @@ Set NO_COLOR=1 to disable colors.
 			// Try to load the NeoVim location history, then
 			recordedLineNumber, err = FindInNvimLocationHistory(expandUser(nvimLocationHistoryFilename), absFilename)
 			found = err == nil
-			if err != nil {
-				panic(err)
-			}
 		}
 		if !found {
 			// Try to load the ViM location history, then
