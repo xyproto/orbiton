@@ -130,6 +130,7 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 	var (
 		key                   string
 		doneCollectingLetters bool
+		initialLocation       = e.DataY().LineNumber()
 	)
 	for !doneCollectingLetters {
 		key = tty.String()
@@ -138,7 +139,7 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 			if len(s) > 0 {
 				s = s[:len(s)-1]
 				e.SetSearchTerm(s, c, status)
-				status.ClearAll(c)
+				e.GoToLineNumber(initialLocation, c, status, false)
 				status.SetMessage(searchPrompt + " " + s)
 				status.ShowNoTimeout(c, e)
 			}
