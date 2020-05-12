@@ -185,7 +185,7 @@ func FindInNvimLocationHistory(nvimLocationFilename, searchFilename string) (Lin
 		//fmt.Printf("--- byte pos %d [value %x]---\n", i, b)
 
 		switch {
-		case b >= 0 && b <= 0x7f:
+		case b <= 0x7f: //&& b >= 0
 			//fmt.Printf("%d (positive fixint)\n", b)
 			if nextNumberIsTheLineNumber {
 				//fmt.Println("FOUND THE LINE NUMBER FOR " + searchFilename + "!")
@@ -233,26 +233,33 @@ func FindInNvimLocationHistory(nvimLocationFilename, searchFilename string) (Lin
 			_ = bd
 			//fmt.Printf("%s (bin 8, size %d)\n", string(bd), size)
 		case b == 0xc5:
-			fmt.Println("bin 16")
+			//fmt.Println("bin 16")
 			//panic("unimplemented")
+			return nol, errors.New("unimplemented msgpack field: bin 16")
 		case b == 0xc6:
-			fmt.Println("bin 32")
+			//fmt.Println("bin 32")
 			//panic("unimplemented")
+			return nol, errors.New("unimplemented msgpack field: bin 32")
 		case b == 0xc7:
-			fmt.Println("ext 8")
+			//fmt.Println("ext 8")
 			//panic("unimplemented")
+			return nol, errors.New("unimplemented msgpack field: ext 8")
 		case b == 0xc8:
-			fmt.Println("ext 16")
+			//fmt.Println("ext 16")
 			//panic("unimplemented")
+			return nol, errors.New("unimplemented msgpack field: ext 16")
 		case b == 0xc9:
-			fmt.Println("ext 32")
+			//fmt.Println("ext 32")
 			//panic("unimplemented")
+			return nol, errors.New("unimplemented msgpack field: ext 32")
 		case b == 0xca:
-			fmt.Println("float 32")
+			//fmt.Println("float 32")
 			//panic("unimplemented")
+			return nol, errors.New("unimplemented msgpack field: float 32")
 		case b == 0xcb:
-			fmt.Println("float 64")
+			//fmt.Println("float 64")
 			//panic("unimplemented")
+			return nol, errors.New("unimplemented msgpack field: float 64")
 		case b == 0xcc:
 			i++
 			d0 := data[pp+i]
@@ -384,7 +391,7 @@ func FindInNvimLocationHistory(nvimLocationFilename, searchFilename string) (Lin
 			_ = n
 			//fmt.Printf("%d (negative fixint)\n", n)
 		default:
-			return nol, errors.New(fmt.Sprintf("unrecognized msgpack field: %x", b))
+			return nol, fmt.Errorf("unrecognized msgpack field: %x", b)
 		}
 	}
 	return nol, errors.New("could not find line number for " + searchFilename)
