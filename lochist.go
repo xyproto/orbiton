@@ -141,7 +141,7 @@ func LoadEmacsLocationHistory(emacsPlacesFilename string) map[string]int {
 }
 
 // SaveLocationHistory will attempt to save the per-absolute-filename recording of which line is active
-func SaveLocationHistory(locationHistory map[string]int, configFile string) {
+func SaveLocationHistory(locationHistory map[string]int, configFile string) error {
 	folderPath := filepath.Dir(configFile)
 
 	// First create the folder, if needed, in a best effort attempt
@@ -151,18 +151,19 @@ func SaveLocationHistory(locationHistory map[string]int, configFile string) {
 	for k, v := range locationHistory {
 		sb.WriteString(fmt.Sprintf("\"%s\": %d\n", k, v))
 	}
-	// Ignore errors, this is a best effort attempt
-	_ = ioutil.WriteFile(configFile, []byte(sb.String()), 0644)
+	// Write the location history and return the error, if any
+	return ioutil.WriteFile(configFile, []byte(sb.String()), 0644)
 }
 
 // SaveLocation takes a filename (which includes the absolute path) and a map which contains
 // an overview of which files were at which line location.
-func (e *Editor) SaveLocation(absFilename string, locationHistory map[string]int) {
+func (e *Editor) SaveLocation(absFilename string, locationHistory map[string]int) error {
 	if len(locationHistory) > maxLocationHistoryEntries {
+		// Cull the history
 		locationHistory = make(map[string]int, 1)
 	}
 	// Save the current line location
 	locationHistory[absFilename] = e.LineNumber()
-	// Save the location history (best effort, ignore errors)
-	SaveLocationHistory(locationHistory, expandUser(locationHistoryFilename))
+	// Save the location history and return the error, if any
+	return SaveLocationHistory(locationHistory, expandUser(locationHistoryFilename))
 }
