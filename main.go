@@ -1243,9 +1243,10 @@ Set NO_COLOR=1 to disable colors.
 				break
 			}
 			y := int(e.DataY())
+			r := e.Rune()
 			leftRune := e.LeftRune()
 			ext := filepath.Ext(filename)
-			if leftRune == '.' && !unicode.IsLetter(e.Rune()) && mode != modeBlank {
+			if leftRune == '.' && !unicode.IsLetter(r) && mode != modeBlank {
 				// Autocompletion
 				undo.Snapshot(e)
 
@@ -1311,7 +1312,7 @@ Set NO_COLOR=1 to disable colors.
 			//almostEmptyLine := len(trimmedLine) <= 1
 
 			// Smart indent if the rune to the left is not a blank character (and not the start of the line)
-			if !unicode.IsSpace(leftRune) && e.pos.sx > 0 && mode != modeBlank {
+			if (!unicode.IsSpace(leftRune) || r == '{' || r == '(' || r == '[' || r == ':') && e.pos.sx > 0 && mode != modeBlank {
 				lineAbove := 1
 				if strings.TrimSpace(e.Line(LineIndex(y-lineAbove))) == "" {
 					// The line above is empty, use the indendation before the line above that
