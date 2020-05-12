@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,10 +11,15 @@ import (
 )
 
 const (
-	locationHistoryFilename      = "~/.cache/o/locations.txt"
+	locationHistoryFilename      = "~/.cache/o/locations.txt" // TODO: Use XDG_CACHE_HOME
 	vimLocationHistoryFilename   = "~/.viminfo"
 	emacsLocationHistoryFilename = "~/.emacs.d/places"
+	nvimLocationHistoryFilename  = "~/.local/share/nvim/shada/main.shada" // TODO: Use XDG_DATA_HOME
 	maxLocationHistoryEntries    = 1024
+)
+
+var (
+	locationHistory map[string]LineNumber // remember where we were in each absolute filename
 )
 
 // LoadLocationHistory will attempt to load the per-absolute-filename recording of which line is active.
@@ -60,8 +66,8 @@ func LoadLocationHistory(configFile string) map[string]LineNumber {
 
 // LoadVimLocationHistory will attempt to load the history of where the cursor should be when opening a file from ~/.viminfo
 // The returned map can be empty. The filenames have absolute paths.
-func LoadVimLocationHistory(vimInfoFilename string) map[string]int {
-	locationHistory := make(map[string]int)
+func LoadVimLocationHistory(vimInfoFilename string) map[string]LineNumber {
+	locationHistory := make(map[string]LineNumber)
 	// Attempt to read the ViM location history (that may or may not exist)
 	data, err := ioutil.ReadFile(vimInfoFilename)
 	if err != nil {
@@ -81,7 +87,6 @@ func LoadVimLocationHistory(vimInfoFilename string) map[string]int {
 			if _, alreadyExists := locationHistory[filename]; alreadyExists {
 				continue
 			}
-			//fmt.Println("LINE NUMBER", lineNumberString, "FILENAME", filename)
 			lineNumber, err := strconv.Atoi(lineNumberString)
 			if err != nil {
 				// Not a line number after all
@@ -92,10 +97,108 @@ func LoadVimLocationHistory(vimInfoFilename string) map[string]int {
 				// Could not get the absolute path
 				continue
 			}
-			locationHistory[absFilename] = lineNumber
+			locationHistory[absFilename] = LineNumber(lineNumber)
 		}
 	}
 	return locationHistory
+}
+
+// FindInVimLocationHistory will try to find the given filename in the ViM .viminfo file
+func FindInVimLocationHistory(vimInfoFilename, searchFilename string) (LineNumber, error) {
+	// Attempt to read the ViM location history (that may or may not exist)
+	data, err := ioutil.ReadFile(vimInfoFilename)
+	if err != nil {
+		return LineNumber(-1), err
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		if strings.HasPrefix(line, "-'") {
+			fields := strings.Fields(line)
+			if len(fields) < 4 {
+				continue
+			}
+			lineNumberString := fields[1]
+			filename := fields[3]
+			lineNumber, err := strconv.Atoi(lineNumberString)
+			if err != nil {
+				// Not a line number after all
+				continue
+			}
+			absFilename, err := filepath.Abs(filename)
+			if err != nil {
+				// Could not get the absolute path
+				continue
+			}
+			if absFilename == searchFilename {
+				return LineNumber(lineNumber), nil
+			}
+		}
+	}
+	return LineNumber(-1), errors.New("filename not found in vim location history: " + searchFilename)
+}
+
+// LoadNvimLocationHistory will attempt to load the NeoVim location history
+func LoadNvimLocationHistory(nvimLocationFilename string) map[string]LineNumber {
+	locationHistory := make(map[string]LineNumber)
+	// Attempt to read the NeoVim location history (that may or may not exist)
+	data, err := ioutil.ReadFile(nvimLocationFilename)
+	if err != nil {
+		return locationHistory
+	}
+	var absFilename string
+	for _, line := range strings.Split(string(data), "\n") {
+		if strings.HasPrefix(line, "+ f ") && strings.Contains(line, "file name") && strings.Count(line, "\"") == 2 {
+			fields := strings.SplitN(line, "\"", 3)
+			if len(fields) != 3 {
+				continue
+			}
+			absFilename = fields[1]
+		} else if strings.HasPrefix(line, "+ l ") && strings.Contains(line, "line number") {
+			fields := strings.Fields(line)
+			if len(fields) == 0 {
+				continue
+			}
+			lastField := fields[len(fields)-1]
+			lineNumber, err := strconv.Atoi(lastField)
+			if err != nil {
+				continue
+			}
+			locationHistory[absFilename] = LineNumber(lineNumber)
+		}
+	}
+	return locationHistory
+}
+
+// FindInNvimLocationHistory will try to find the given filename in the NeoVim location history file
+func FindInNvimLocationHistory(nvimLocationFilename, searchFilename string) (LineNumber, error) {
+	// Attempt to read the NeoVim location history (that may or may not exist)
+	data, err := ioutil.ReadFile(nvimLocationFilename)
+	if err != nil {
+		return LineNumber(-1), err
+	}
+	var absFilename string
+	for _, line := range strings.Split(string(data), "\n") {
+		if strings.HasPrefix(line, "+ f ") && strings.Contains(line, "file name") && strings.Count(line, "\"") == 2 {
+			fields := strings.SplitN(line, "\"", 3)
+			if len(fields) != 3 {
+				continue
+			}
+			absFilename = fields[1]
+		} else if strings.HasPrefix(line, "+ l ") && strings.Contains(line, "line number") {
+			fields := strings.Fields(line)
+			if len(fields) == 0 {
+				continue
+			}
+			lastField := fields[len(fields)-1]
+			lineNumber, err := strconv.Atoi(lastField)
+			if err != nil {
+				continue
+			}
+			if absFilename == searchFilename {
+				return LineNumber(lineNumber), nil
+			}
+		}
+	}
+	return LineNumber(-1), errors.New("filename not found in nvim location history: " + searchFilename)
 }
 
 // LoadEmacsLocationHistory will attempt to load the history of where the cursor should be when opening a file from ~/.emacs.d/places.
