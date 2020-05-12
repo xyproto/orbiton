@@ -27,3 +27,4 @@
 - [ ] (maybe) If the emacs and vim locations takes too long to load, and they come up with something, store it in a bookmark that can be jumped to with `ctrl-b`.
 - [ ] In Markdown, if the previous line has a checkbox, color the text in the same color as the text on the line above?
 - [ ] Make it easy to make recordings of the editing process.
+- [ ] Introduce line number, line index and character position as different types, instead of just using "int".
