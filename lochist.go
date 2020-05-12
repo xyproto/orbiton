@@ -174,19 +174,16 @@ func FindInNvimLocationHistory(nvimLocationFilename, searchFilename string) (Lin
 			return nol, errors.New("corresponding line not found for " + searchFilename)
 		}
 		b := data[pp+i] // The current byte
-		//nb := data[pp+i+1] // The next byte
 
 		//fmt.Printf("--- byte pos %d [value %x]---\n", i, b)
 
 		switch {
-		case b <= 0x7f: //&& b >= 0
+		case b <= 0x7f: // fixint
 			//fmt.Printf("%d (positive fixint)\n", b)
 			if nextNumberIsTheLineNumber {
-				//fmt.Println("FOUND THE LINE NUMBER FOR " + searchFilename + "!")
-				//fmt.Printf("=== %d ===\n", int(b))
 				return LineNumber(int(b)), nil
 			}
-		case b >= 0x80 && b <= 0x8f:
+		case b >= 0x80 && b <= 0x8f: // fixmap
 			size := uint(b - 128) // - b10000000
 			size--
 			size *= 2
@@ -194,14 +191,14 @@ func FindInNvimLocationHistory(nvimLocationFilename, searchFilename string) (Lin
 			i += int(size)
 			_ = bd
 			//fmt.Printf("%s (fixmap, size %d)\n", bd, size)
-		case b >= 0x90 && b <= 0x9f:
+		case b >= 0x90 && b <= 0x9f: // fixarray
 			size := uint(b - 144) // - b10010000
 			size--
 			bd := data[pp+i+1 : pp+i+1+int(size)]
 			i += int(size)
 			_ = bd
 			//fmt.Printf("%s (fixarray, size %d)\n", bd, size)
-		case b >= 0xa0 && b <= 0xbf:
+		case b >= 0xa0 && b <= 0xbf: // fixstr
 			size := uint(b - 160) // - 101xxxxx
 			bd := data[pp+i+1 : pp+i+1+int(size)]
 			i += int(size)
@@ -211,15 +208,15 @@ func FindInNvimLocationHistory(nvimLocationFilename, searchFilename string) (Lin
 				// element is a number.
 				nextNumberIsTheLineNumber = true
 			}
-		case b == 0xc0:
+		case b == 0xc0: // nil
 			//fmt.Println("nil")
-		case b == 0xc1:
+		case b == 0xc1: // unused
 			//fmt.Println("<unused>")
-		case b == 0xc2:
+		case b == 0xc2: // false
 			//fmt.Println("false")
-		case b == 0xc3:
+		case b == 0xc3: // true
 			//fmt.Println("true")
-		case b == 0xc4:
+		case b == 0xc4: // bin 8
 			i++
 			size := uint(data[pp+i])
 			bd := data[pp+i+1 : pp+i+1+int(size)]
@@ -228,43 +225,34 @@ func FindInNvimLocationHistory(nvimLocationFilename, searchFilename string) (Lin
 			//fmt.Printf("%s (bin 8, size %d)\n", string(bd), size)
 		case b == 0xc5:
 			//fmt.Println("bin 16")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: bin 16")
 		case b == 0xc6:
 			//fmt.Println("bin 32")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: bin 32")
 		case b == 0xc7:
 			//fmt.Println("ext 8")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: ext 8")
 		case b == 0xc8:
 			//fmt.Println("ext 16")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: ext 16")
 		case b == 0xc9:
 			//fmt.Println("ext 32")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: ext 32")
 		case b == 0xca:
 			//fmt.Println("float 32")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: float 32")
 		case b == 0xcb:
 			//fmt.Println("float 64")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: float 64")
-		case b == 0xcc:
+		case b == 0xcc: // uint 8
 			i++
 			d0 := data[pp+i]
 			l := d0
 			//fmt.Printf("%d (uint 8)\n", l)
 			if nextNumberIsTheLineNumber {
-				//fmt.Println("FOUND THE LINE NUMBER FOR " + searchFilename + "!")
-				//fmt.Printf("=== %d ===\n", l)
 				return LineNumber(l), nil
 			}
-		case b == 0xcd:
+		case b == 0xcd: // uint 16
 			i++
 			d0 := data[pp+i]
 			i++
@@ -272,11 +260,9 @@ func FindInNvimLocationHistory(nvimLocationFilename, searchFilename string) (Lin
 			l := uint16(d0)<<8 + uint16(d1)
 			//fmt.Printf("%d (uint 16)\n", l)
 			if nextNumberIsTheLineNumber {
-				//fmt.Println("FOUND THE LINE NUMBER FOR " + searchFilename + "!")
-				//fmt.Printf("=== %d ===\n", l)
 				return LineNumber(l), nil
 			}
-		case b == 0xce:
+		case b == 0xce: // uint 32
 			i++
 			d0 := data[pp+i]
 			i++
@@ -288,8 +274,6 @@ func FindInNvimLocationHistory(nvimLocationFilename, searchFilename string) (Lin
 			l := uint32(d0)<<24 + uint32(d1)<<16 + uint32(d2)<<8 + uint32(d3)
 			//fmt.Printf("%d (uint 32)\n", l)
 			if nextNumberIsTheLineNumber {
-				//fmt.Println("FOUND THE LINE NUMBER FOR " + searchFilename + "!")
-				//fmt.Printf("=== %d ===\n", l)
 				return LineNumber(l), nil
 			}
 		case b == 0xcf:
@@ -312,75 +296,57 @@ func FindInNvimLocationHistory(nvimLocationFilename, searchFilename string) (Lin
 			l := uint64(d0)<<56 + uint64(d1)<<48 + uint64(d2)<<40 + uint64(d3)<<32 + uint64(d4)<<24 + uint64(d5)<<16 + uint64(d6)<<8 + uint64(d7)
 			//fmt.Printf("%d (uint 64)\n", l)
 			if nextNumberIsTheLineNumber {
-				//fmt.Println("FOUND THE LINE NUMBER FOR " + searchFilename + "!")
-				//fmt.Printf("=== %d ===\n", l)
 				return LineNumber(l), nil
 			}
 		case b == 0xd0:
 			//fmt.Println("int 8")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: int 8")
 		case b == 0xd1:
 			//fmt.Println("int 16")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: int 16")
 		case b == 0xd2:
 			//fmt.Println("int 32")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: int 32")
 		case b == 0xd3:
 			//fmt.Println("int 64")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: int 64")
 		case b == 0xd4:
 			//fmt.Println("fixext 1")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: fixext 1")
 		case b == 0xd5:
 			//fmt.Println("fixext 2")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: fixext 2")
 		case b == 0xd6:
 			//fmt.Println("fixext 4")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: fixext 4")
 		case b == 0xd7:
 			//fmt.Println("fixext 8")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: fixext 8")
 		case b == 0xd8:
 			//fmt.Println("fixext 16")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: fixext 16")
 		case b == 0xd9:
 			//fmt.Println("str 8")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: str 8")
 		case b == 0xda:
 			//fmt.Println("str 16")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: str 16")
 		case b == 0xdb:
 			//fmt.Println("str 32")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: str 32")
 		case b == 0xdc:
 			//fmt.Println("array 16")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: array 16")
 		case b == 0xdd:
 			//fmt.Println("array 32")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: array 32")
 		case b == 0xde:
 			//fmt.Println("map 16")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: map 16")
 		case b == 0xdf:
 			//fmt.Println("map 32")
-			//panic("unimplemented")
 			return nol, errors.New("unimplemented msgpack field: map 32")
-		case b >= 0xe0 && b <= 0xff:
+		case b >= 0xe0 && b <= 0xff: // negative fixint
 			n := -(int(b) - 224) // - 111xxxxx
 			_ = n
 			//fmt.Printf("%d (negative fixint)\n", n)
