@@ -83,6 +83,6 @@ func (p *Position) AtStartOfLine() bool {
 }
 
 // LineNumber returns the current line number this Position is at
-func (p *Position) LineNumber() int {
-	return p.offset + p.sy + 1
+func (p *Position) LineNumber() LineNumber {
+	return LineIndex(p.offset + p.sy).LineNumber()
 }

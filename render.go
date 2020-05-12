@@ -21,7 +21,7 @@ func (e *Editor) SavePDF(title, filename string) error {
 	var sb strings.Builder
 	for i := 0; i < e.Len(); i++ {
 		// Expand tabs for each line
-		sb.WriteString(strings.Replace(e.Line(i), "\t", strings.Repeat(" ", e.spacesPerTab), -1) + "\n")
+		sb.WriteString(strings.Replace(e.Line(LineIndex(i)), "\t", strings.Repeat(" ", e.spacesPerTab), -1) + "\n")
 	}
 	contents := sb.String()
 

@@ -55,7 +55,7 @@ type Editor struct {
 	stickySearchTerm string         // for going to the next match with ctrl-n, unless esc has been pressed
 	redraw           bool           // if the contents should be redrawn in the next loop
 	redrawCursor     bool           // if the cursor should be moved to the location it is supposed to be
-	lineBeforeSearch int            // save the current line when jumping between search results
+	lineBeforeSearch LineIndex      // save the current line when jumping between search results
 	wordWrapAt       int            // set to 80 or 100 to trigger word wrap when typing to that column
 	mode             Mode           // a filetype mode, like for git or markdown
 	EditorColors
@@ -126,7 +126,8 @@ func (e *Editor) ToggleDrawMode() {
 }
 
 // Set will store a rune in the editor data, at the given data coordinates
-func (e *Editor) Set(x, y int, r rune) {
+func (e *Editor) Set(x int, index LineIndex, r rune) {
+	y := int(index)
 	if e.lines == nil {
 		e.lines = make(map[int][]rune)
 	}
@@ -148,11 +149,11 @@ func (e *Editor) Set(x, y int, r rune) {
 }
 
 // Get will retrieve a rune from the editor data, at the given coordinates
-func (e *Editor) Get(x, y int) rune {
+func (e *Editor) Get(x int, y LineIndex) rune {
 	if e.lines == nil {
 		return ' '
 	}
-	runes, ok := e.lines[y]
+	runes, ok := e.lines[int(y)]
 	if !ok {
 		return ' '
 	}
@@ -168,8 +169,8 @@ func (e *Editor) Changed() bool {
 }
 
 // Line returns the contents of line number N, counting from 0
-func (e *Editor) Line(n int) string {
-	line, ok := e.lines[n]
+func (e *Editor) Line(n LineIndex) string {
+	line, ok := e.lines[int(n)]
 	if ok {
 		var sb strings.Builder
 		for _, r := range line {
@@ -199,23 +200,23 @@ func (e *Editor) ScreenLine(n int) string {
 
 // LastDataPosition returns the last X index for this line, for the data (does not expand tabs)
 // Can be negative, if the line is empty.
-func (e *Editor) LastDataPosition(n int) int {
+func (e *Editor) LastDataPosition(n LineIndex) int {
 	return len([]rune(e.Line(n))) - 1
 }
 
 // LastScreenPosition returns the last X index for this line, for the screen (expands tabs)
 // Can be negative, if the line is empty.
-func (e *Editor) LastScreenPosition(n int) int {
+func (e *Editor) LastScreenPosition(n LineIndex) int {
 	if e.DrawMode() {
 		return e.LastDataPosition(n)
 	}
 	// TODO: THIS IS WRONG, it does not account for unicode characters
-	extraSpaceBecauseOfTabs := int(e.Count('\t', n) * (e.spacesPerTab - 1))
+	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.spacesPerTab - 1))
 	return e.LastDataPosition(n) + extraSpaceBecauseOfTabs
 }
 
 // FirstScreenPosition returns the first X index for this line, that is not whitespace.
-func (e *Editor) FirstScreenPosition(n int) int {
+func (e *Editor) FirstScreenPosition(n LineIndex) int {
 	spacesPerTab := e.spacesPerTab
 	if e.DrawMode() {
 		spacesPerTab = 1
@@ -237,7 +238,7 @@ func (e *Editor) FirstScreenPosition(n int) int {
 }
 
 // FirstDataPosition returns the first X index for this line, that is not whitespace.
-func (e *Editor) FirstDataPosition(n int) int {
+func (e *Editor) FirstDataPosition(n LineIndex) int {
 	counter := 0
 	for _, r := range e.Line(n) {
 		if !unicode.IsSpace(r) {
@@ -248,10 +249,10 @@ func (e *Editor) FirstDataPosition(n int) int {
 	return counter
 }
 
-// Count the number of instances of the rune r in the line n
-func (e *Editor) Count(r rune, n int) int {
+// CountRune will count the number of instances of the rune r in the line n
+func (e *Editor) CountRune(r rune, n LineIndex) int {
 	var counter int
-	line, ok := e.lines[n]
+	line, ok := e.lines[int(n)]
 	if ok {
 		for _, l := range line {
 			if l == r {
@@ -277,7 +278,7 @@ func (e *Editor) Len() int {
 func (e *Editor) String() string {
 	var sb strings.Builder
 	for i := 0; i < e.Len(); i++ {
-		sb.WriteString(e.Line(i) + "\n")
+		sb.WriteString(e.Line(LineIndex(i)) + "\n")
 	}
 	//return strings.TrimRight(sb.String(), " \n\t\r")
 	return sb.String()
@@ -441,7 +442,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 		line := string(dataline)
 		counter := 0
 		for _, letter := range line {
-			e.Set(counter, int(y), letter)
+			e.Set(counter, LineIndex(y), letter)
 			counter++
 		}
 	}
@@ -473,7 +474,7 @@ func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 		line := string(dataline)
 		counter := 0
 		for _, letter := range line {
-			e.Set(counter, int(y), letter)
+			e.Set(counter, LineIndex(y), letter)
 			counter++
 		}
 	}
@@ -489,7 +490,7 @@ func (e *Editor) Save(filename *string, stripTrailingSpaces bool) error {
 	if stripTrailingSpaces {
 		// Strip trailing spaces
 		for i := 0; i < e.Len(); i++ {
-			e.TrimRight(i)
+			e.TrimRight(LineIndex(i))
 		}
 		// Skip trailing newlines
 		data = bytes.TrimRightFunc([]byte(e.String()), unicode.IsSpace)
@@ -520,7 +521,8 @@ func (e *Editor) Save(filename *string, stripTrailingSpaces bool) error {
 }
 
 // TrimRight will remove whitespace from the end of the given line number
-func (e *Editor) TrimRight(n int) {
+func (e *Editor) TrimRight(index LineIndex) {
+	n := int(index)
 	if _, ok := e.lines[n]; !ok {
 		return
 	}
@@ -538,7 +540,8 @@ func (e *Editor) TrimRight(n int) {
 }
 
 // TrimLeft will remove whitespace from the start of the given line number
-func (e *Editor) TrimLeft(n int) {
+func (e *Editor) TrimLeft(index LineIndex) {
+	n := int(index)
 	if _, ok := e.lines[n]; !ok {
 		return
 	}
@@ -589,7 +592,7 @@ func (e *Editor) DeleteRestOfLine() {
 		// position is after the data, do nothing
 		return
 	}
-	y := e.DataY()
+	y := int(e.DataY())
 	if e.lines == nil {
 		e.lines = make(map[int][]rune)
 	}
@@ -608,25 +611,25 @@ func (e *Editor) DeleteRestOfLine() {
 }
 
 // DeleteLine will delete the given line index
-func (e *Editor) DeleteLine(n int) {
+func (e *Editor) DeleteLine(n LineIndex) {
 	if n < 0 {
 		// This should never happen
 		return
 	}
-	lastLineIndex := e.Len() - 1
+	lastLineIndex := LineIndex(e.Len() - 1)
 	endOfDocument := n >= lastLineIndex
 	if endOfDocument {
 		// Just delete this line
-		delete(e.lines, n)
+		delete(e.lines, int(n))
 		return
 	}
 	// TODO: Rely on the length of the hash map for finding the index instead of
 	//       searching through each line number key.
-	maxIndex := 0
+	var maxIndex LineIndex
 	found := false
 	for k := range e.lines {
-		if k > maxIndex {
-			maxIndex = k
+		if LineIndex(k) > maxIndex {
+			maxIndex = LineIndex(k)
 			found = true
 		}
 	}
@@ -634,17 +637,18 @@ func (e *Editor) DeleteLine(n int) {
 		// This should never happen
 		return
 	}
-	if _, ok := e.lines[maxIndex]; !ok {
+	if _, ok := e.lines[int(maxIndex)]; !ok {
 		// The line numbers and the length of e.lines does not match
 		return
 	}
 	// Shift all lines after y:
 	// shift all lines after n one step closer to n, overwriting e.lines[n]
-	for i := n; i <= (maxIndex - 1); i++ {
+	for index := n; index <= (maxIndex - 1); index++ {
+		i := int(index)
 		e.lines[i] = e.lines[i+1]
 	}
 	// Then delete the final item
-	delete(e.lines, maxIndex)
+	delete(e.lines, int(maxIndex))
 
 	// This changes the document
 	e.changed = true
@@ -655,12 +659,12 @@ func (e *Editor) DeleteLine(n int) {
 
 // Delete will delete a character at the given position
 func (e *Editor) Delete() {
-	y := e.DataY()
+	y := int(e.DataY())
 	llen := len([]rune(e.lines[y]))
 	if _, ok := e.lines[y]; !ok || llen == 0 || llen == 1 && unicode.IsSpace(e.lines[y][0]) {
 		// All keys in the map that are > y should be shifted -1.
 		// This also overwrites e.lines[y].
-		e.DeleteLine(y)
+		e.DeleteLine(LineIndex(y))
 		e.changed = true
 		return
 	}
@@ -675,7 +679,7 @@ func (e *Editor) Delete() {
 			if ok && len([]rune(nextLine)) > 0 {
 				e.lines[y] = append(e.lines[y], nextLine...)
 				// then delete the next line
-				e.DeleteLine(y + 1)
+				e.DeleteLine(LineIndex(y + 1))
 			}
 		}
 		e.changed = true
@@ -727,8 +731,8 @@ func (e *Editor) MakeConsistent() {
 
 // WithinLimit will check if a line is within the word wrap limit,
 // given a Y position.
-func (e *Editor) WithinLimit(y int) bool {
-	return len(e.lines[y]) < e.wordWrapAt
+func (e *Editor) WithinLimit(y LineIndex) bool {
+	return len(e.lines[int(y)]) < e.wordWrapAt
 }
 
 // LastWord will return the last word of a line,
@@ -746,11 +750,13 @@ func (e *Editor) LastWord(y int) string {
 // word wrap length and a second part that is the overshooting part.
 // y is the line index (y position, counting from 0).
 // isSpace is true if a space has just been inserted on purpose at the current position.
-func (e *Editor) SplitOvershoot(y int, isSpace bool) ([]rune, []rune) {
+func (e *Editor) SplitOvershoot(index LineIndex, isSpace bool) ([]rune, []rune) {
+
+	y := int(index)
 
 	// Maximum word length to not keep as one word
 	maxDistance := e.wordWrapAt / 2
-	if e.WithinLimit(y) {
+	if e.WithinLimit(index) {
 		return e.lines[y], make([]rune, 0)
 	}
 	splitPosition := e.wordWrapAt
@@ -806,23 +812,23 @@ func (e *Editor) WrapAllLinesAt(n, maxOvershoot int) bool {
 
 	wrapped := false
 	for i := 0; i < e.Len(); i++ {
-		if e.WithinLimit(i) {
+		if e.WithinLimit(LineIndex(i)) {
 			continue
 		}
 		wrapped = true
 
-		first, second := e.SplitOvershoot(i, false)
+		first, second := e.SplitOvershoot(LineIndex(i), false)
 
 		if len(first) > 0 && len(second) > 0 {
 
-			e.InsertLineBelowAt(i)
+			e.InsertLineBelowAt(LineIndex(i))
 			e.lines[i] = first
 			e.lines[i+1] = second
 
 			e.changed = true
 
 			// Move the cursor as well, so that it is at the same line as before the word wrap
-			if i < e.DataY() {
+			if LineIndex(i) < e.DataY() {
 				e.pos.sy++
 			}
 		}
@@ -832,7 +838,7 @@ func (e *Editor) WrapAllLinesAt(n, maxOvershoot int) bool {
 
 // InsertLineAbove will attempt to insert a new line above the current position
 func (e *Editor) InsertLineAbove() {
-	y := e.DataY()
+	y := int(e.DataY())
 
 	// Create new set of lines
 	lines2 := make(map[int][]rune)
@@ -875,13 +881,14 @@ func (e *Editor) InsertLineBelow() {
 }
 
 // InsertLineBelowAt will attempt to insert a new line below the given y position
-func (e *Editor) InsertLineBelowAt(y int) {
+func (e *Editor) InsertLineBelowAt(index LineIndex) {
+	y := int(index)
 	// Make sure no lines are nil
 	e.MakeConsistent()
 
 	// If we are the the last line, add an empty line at the end and return
 	if y == (len(e.lines) - 1) {
-		e.lines[y+1] = make([]rune, 0)
+		e.lines[int(y)+1] = make([]rune, 0)
 		e.changed = true
 		return
 	}
@@ -928,7 +935,7 @@ func (e *Editor) Insert(r rune) {
 	// Ignore it if the current position is out of bounds
 	x, _ := e.DataX()
 
-	y := e.DataY()
+	y := int(e.DataY())
 
 	// If there are no lines, initialize and set the 0th rune to the given one
 	if e.lines == nil {
@@ -965,13 +972,13 @@ func (e *Editor) Insert(r rune) {
 }
 
 // CreateLineIfMissing will create a line at the given Y index, if it's missing
-func (e *Editor) CreateLineIfMissing(n int) {
+func (e *Editor) CreateLineIfMissing(n LineIndex) {
 	if e.lines == nil {
 		e.lines = make(map[int][]rune)
 	}
-	_, ok := e.lines[n]
+	_, ok := e.lines[int(n)]
 	if !ok {
-		e.lines[n] = make([]rune, 0)
+		e.lines[int(n)] = make([]rune, 0)
 		e.changed = true
 	}
 	// Make sure no lines are nil
@@ -1002,9 +1009,9 @@ func (e *Editor) SetHighlight(syntaxHighlight bool) {
 
 // SetLine will fill the given line index with the given string.
 // Any previous contents of that line is removed.
-func (e *Editor) SetLine(n int, s string) {
+func (e *Editor) SetLine(n LineIndex, s string) {
 	e.CreateLineIfMissing(n)
-	e.lines[n] = make([]rune, 0)
+	e.lines[int(n)] = make([]rune, 0)
 	counter := 0
 	// It's important not to use the index value when looping over a string,
 	// unless the byte index is what one's after, as opposed to the rune index.
@@ -1026,7 +1033,7 @@ func (e *Editor) SplitLine() bool {
 	y := e.DataY()
 
 	// Get the contents of this line
-	runeLine := e.lines[y]
+	runeLine := e.lines[int(y)]
 	if len(runeLine) < 2 {
 		// Did not split
 		return false
@@ -1079,11 +1086,11 @@ func (e *Editor) DataX() (int, error) {
 }
 
 // DataY will return the Y position in the data (as opposed to the Y position in the viewport)
-func (e *Editor) DataY() int {
+func (e *Editor) DataY() LineIndex {
 	if e.drawMode {
-		return e.pos.sy
+		return LineIndex(e.pos.sy)
 	}
-	return e.pos.offset + e.pos.sy
+	return LineIndex(e.pos.offset + e.pos.sy)
 }
 
 // SetRune will set a rune at the current data position
@@ -1095,7 +1102,7 @@ func (e *Editor) SetRune(r rune) {
 }
 
 // nextLine will go to the start of the next line
-func (e *Editor) nextLine(y int, c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) nextLine(y LineIndex, c *vt100.Canvas, status *StatusBar) {
 	e.pos.sx = 0
 	e.GoTo(y+1, c, status)
 }
@@ -1117,10 +1124,10 @@ func (e *Editor) insertBelow(y int, r rune) {
 
 // InsertRune will insert a rune at the current data position, with word wrap
 func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
-	y := e.DataY()
+	y := int(e.DataY())
 
 	// If it's not a word-wrap situation, just insert and return
-	if e.wordWrapAt == 0 || e.WithinLimit(y) {
+	if e.wordWrapAt == 0 || e.WithinLimit(LineIndex(y)) {
 		e.Insert(r)
 		return
 	}
@@ -1161,11 +1168,11 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		// The line is full. Move everything one line down and continue writing.
 		right := e.lines[y][x:]
 		e.lines[y] = e.lines[y][:x]
-		e.TrimRight(y)
+		e.TrimRight(LineIndex(y))
 		e.insertBelow(y, r)
 		e.lines[y+1] = append([]rune{r}, right...)
 		// Go to the len(lastWord)-1 of the next line
-		e.GoTo(y+1, c, nil)
+		e.GoTo(LineIndex(y+1), c, nil)
 		e.pos.sx = 0
 	case !isSpace && !atSpace && EOL:
 		// Pressing letters, producing a short word that overflows
@@ -1174,7 +1181,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		pos := len(e.lines[y]) - len(lastWord)
 		if pos > 0 {
 			e.lines[y] = e.lines[y][:pos]
-			e.TrimRight(y)
+			e.TrimRight(LineIndex(y))
 		} else {
 			// This would leave the current line empty!
 			// Typing a letter at the end of a line, breaking a word
@@ -1186,7 +1193,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 				e.lines[y+1] = append([]rune{r}, e.lines[y+1][:]...)
 			}
 			// Go to the start of the next line
-			e.nextLine(y, c, nil)
+			e.nextLine(LineIndex(y), c, nil)
 			break
 		}
 		// Insert the last word of the above line on the next line
@@ -1203,11 +1210,11 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 			e.lines[y+1] = append(lastWord, e.lines[y+1][:]...)
 		}
 		// Go to the len(lastWord)-1 of the next line
-		e.GoTo(y+1, c, nil)
+		e.GoTo(LineIndex(y+1), c, nil)
 		e.pos.sx = len(lastWord) - 1
 	case isSpace && EOL:
 		// Space at the end of a long word
-		e.InsertLineBelowAt(y)
+		e.InsertLineBelowAt(LineIndex(y))
 	case !isSpace && EOL && !shortWord:
 		fallthrough
 	case !isSpace && prevAtSpace && EOL:
@@ -1217,7 +1224,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	case !isSpace && !atSpace && !prevAtSpace && EOL && !shortWord:
 		// Pressing a single letter
 		e.insertBelow(y, r)
-		e.nextLine(y, c, nil)
+		e.nextLine(LineIndex(y), c, nil)
 	case !isSpace && !atSpace && !prevAtSpace && EOL && shortWord:
 		// Typing a letter or a space, and the word is short, so it should be moved down
 		if !isSpace {
@@ -1227,7 +1234,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		pos := len(e.lines[y]) - len(lastWord)
 		if pos > 0 {
 			e.lines[y] = e.lines[y][:pos]
-			e.TrimRight(y)
+			e.TrimRight(LineIndex(y))
 		} else {
 			// This would leave the current line empty!
 			// Typing a letter at the end of a line, breaking a word
@@ -1239,7 +1246,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 				e.lines[y+1] = append([]rune{r}, e.lines[y+1][:]...)
 			}
 			// Go to the start of the next line
-			e.nextLine(y, c, nil)
+			e.nextLine(LineIndex(y), c, nil)
 			break
 		}
 		// Insert the last word of the above line on the next line
@@ -1256,12 +1263,12 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 			e.lines[y+1] = append(lastWord, e.lines[y+1][:]...)
 		}
 		// Go to the len(lastWord)-1 of the next line
-		e.GoTo(y+1, c, nil)
+		e.GoTo(LineIndex(y+1), c, nil)
 		e.pos.sx = len(lastWord) - 1
 	default:
 		e.Insert(r)
 	}
-	e.TrimRight(y)
+	e.TrimRight(LineIndex(y))
 	e.MakeConsistent()
 }
 
@@ -1291,7 +1298,7 @@ func (e *Editor) LeftRune() rune {
 	x, err := e.DataX()
 	if err != nil {
 		// This is after the line contents, return the last rune
-		runes, ok := e.lines[y]
+		runes, ok := e.lines[int(y)]
 		if !ok || len(runes) == 0 {
 			return rune(0)
 		}
@@ -1533,12 +1540,12 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 
 // AtLastLineOfDocument is true if we're at the last line of the document (or beyond)
 func (e *Editor) AtLastLineOfDocument() bool {
-	return e.DataY() >= (e.Len() - 1)
+	return e.DataY() >= LineIndex(e.Len()-1)
 }
 
 // AfterLastLineOfDocument is true if we're after the last line of the document (or beyond)
 func (e *Editor) AfterLastLineOfDocument() bool {
-	return e.DataY() > (e.Len() - 1)
+	return e.DataY() > LineIndex(e.Len()-1)
 }
 
 // AtOrAfterEndOfDocument is true if the cursor is at or after the end of the last line of the document
@@ -1642,7 +1649,7 @@ func (e *Editor) AtOrBeforeStartOfTextLine() bool {
 // GoTo will go to a given line index, counting from 0
 // Returns true if the editor should be redrawn
 // status is used for clearing status bar messages and can be nil
-func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
+func (e *Editor) GoTo(dataY LineIndex, c *vt100.Canvas, status *StatusBar) bool {
 	if dataY == e.DataY() {
 		// Already at the correct line, but still trigger a redraw
 		return true
@@ -1651,8 +1658,8 @@ func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
 	// Out of bounds checking for y
 	if dataY < 0 {
 		dataY = 0
-	} else if dataY >= e.Len() {
-		dataY = e.Len() - 1
+	} else if dataY >= LineIndex(e.Len()) {
+		dataY = LineIndex(e.Len() - 1)
 		reachedEnd = true
 	}
 	h := 25
@@ -1662,19 +1669,19 @@ func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
 	}
 
 	// Is the place we want to go within the current scroll window?
-	topY := e.pos.offset
-	botY := e.pos.offset + h
+	topY := LineIndex(e.pos.offset)
+	botY := LineIndex(e.pos.offset + h)
 
 	if dataY >= topY && dataY < botY {
 		// No scrolling is needed, just move the screen y position
-		e.pos.sy = dataY - e.pos.offset
+		e.pos.sy = int(dataY) - e.pos.offset
 		if e.pos.sy < 0 {
 			e.pos.sy = 0
 		}
-	} else if dataY < h {
+	} else if int(dataY) < h {
 		// No scrolling is needed, just move the screen y position
 		e.pos.offset = 0
-		e.pos.sy = dataY - 1
+		e.pos.sy = int(dataY - 1)
 		if e.pos.sy < 0 {
 			e.pos.sy = 0
 		}
@@ -1686,9 +1693,9 @@ func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
 		prevY := e.pos.sy
 		// Scrolling is needed
 		e.pos.sy = 0
-		e.pos.offset = dataY
+		e.pos.offset = int(dataY)
 		lessJumpY := prevY
-		lessJumpOffset := dataY - prevY
+		lessJumpOffset := int(dataY) - prevY
 		if (lessJumpY + lessJumpOffset) < e.Len() {
 			e.pos.sy = lessJumpY
 			e.pos.offset = lessJumpOffset
@@ -1711,11 +1718,11 @@ func (e *Editor) GoTo(dataY int, c *vt100.Canvas, status *StatusBar) bool {
 }
 
 // GoToLineNumber will go to a given line number, but counting from 1, not from 0!
-func (e *Editor) GoToLineNumber(lineNumber int, c *vt100.Canvas, status *StatusBar, center bool) bool {
+func (e *Editor) GoToLineNumber(lineNumber LineNumber, c *vt100.Canvas, status *StatusBar, center bool) bool {
 	if lineNumber < 1 {
 		lineNumber = 1
 	}
-	redraw := e.GoTo(lineNumber-1, c, status)
+	redraw := e.GoTo(LineIndex(lineNumber-1), c, status)
 	if redraw && center {
 		e.Center(c)
 	}
@@ -1739,13 +1746,18 @@ func (e *Editor) LeadingWhitespace() string {
 }
 
 // LeadingWhitespaceAt returns the leading whitespace for a given line index
-func (e *Editor) LeadingWhitespaceAt(y int) string {
+func (e *Editor) LeadingWhitespaceAt(y LineIndex) string {
 	return e.Line(y)[:e.FirstDataPosition(y)]
 }
 
 // LineNumber will return the current line number (data y index + 1)
-func (e *Editor) LineNumber() int {
-	return e.DataY() + 1
+func (e *Editor) LineNumber() LineNumber {
+	return LineNumber(e.DataY() + 1)
+}
+
+// LineIndex will return the current line index (data y index)
+func (e *Editor) LineIndex() LineIndex {
+	return e.DataY()
 }
 
 // ColumnNumber will return the current column number (data x index + 1)
@@ -1809,8 +1821,8 @@ func (e *Editor) GoToStartOfTextLine() {
 // GoToNextParagraph will jump to the next line that has a blank line above it, if possible
 // Returns true if the editor should be redrawn
 func (e *Editor) GoToNextParagraph(c *vt100.Canvas, status *StatusBar) bool {
-	lastFoundBlankLine := -1
-	for i := e.DataY() + 1; i < e.Len(); i++ {
+	var lastFoundBlankLine LineIndex = -1
+	for i := e.DataY() + 1; i < LineIndex(e.Len()); i++ {
 		// Check if this is a blank line
 		if len(strings.TrimSpace(e.Line(i))) == 0 {
 			lastFoundBlankLine = i
@@ -1828,7 +1840,7 @@ func (e *Editor) GoToNextParagraph(c *vt100.Canvas, status *StatusBar) bool {
 // GoToPrevParagraph will jump to the previous line that has a blank line below it, if possible
 // Returns true if the editor should be redrawn
 func (e *Editor) GoToPrevParagraph(c *vt100.Canvas, status *StatusBar) bool {
-	lastFoundBlankLine := e.Len()
+	var lastFoundBlankLine LineIndex = LineIndex(e.Len())
 	for i := e.DataY() - 1; i >= 0; i-- {
 		// Check if this is a blank line
 		if len(strings.TrimSpace(e.Line(i))) == 0 {
@@ -1865,14 +1877,15 @@ func (e *Editor) Center(c *vt100.Canvas) {
 
 	// Find the center line
 	centerY := h / 2
-	if e.DataY() < centerY {
+	y := int(e.DataY())
+	if y < centerY {
 		// Not enough room to adjust
 		return
 	}
 
 	// Find the new offset and y position
-	newOffset := e.DataY() - centerY
-	newScreenY := e.DataY() - newOffset
+	newOffset := y - centerY
+	newScreenY := y - newOffset
 
 	// Assign the new values to the editor
 	e.pos.offset = newOffset
@@ -1934,7 +1947,7 @@ func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func(string), commentMark
 
 // Block will return the text from the given line until
 // either a newline or the end of the document.
-func (e *Editor) Block(n int) string {
+func (e *Editor) Block(n LineIndex) string {
 	var (
 		bb, lb strings.Builder // block string builder and line string builder
 		line   []rune
@@ -1942,7 +1955,7 @@ func (e *Editor) Block(n int) string {
 		s      string
 	)
 	for {
-		line, ok = e.lines[n]
+		line, ok = e.lines[int(n)]
 		n++
 		if !ok || len(line) == 0 {
 			// End of document, empty line or invalid line: end of block

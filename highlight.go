@@ -31,7 +31,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		// Figure out if "fromline" is within a markdown code block or not
 		for i := 0; i < fromline; i++ {
 			// Check if the untrimmed line starts with ~~~ or ```
-			contents := e.Line(i)
+			contents := e.Line(LineIndex(i))
 			if strings.HasPrefix(contents, "~~~") || strings.HasPrefix(contents, "```") {
 				// Toggle the flag for if we're in a code block or not
 				inCodeBlock = !inCodeBlock
@@ -45,7 +45,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	)
 	// First loop from 0 to offset to figure out if we are already in a multiline comment or a multiline string at the current line
 	for i := 0; i < offset; i++ {
-		trimmedLine = strings.TrimSpace(e.Line(i))
+		trimmedLine = strings.TrimSpace(e.Line(LineIndex(i)))
 		// Have a trimmed line. Want to know: the current state of which quotes, comments or strings we are in.
 		// Solution, have a state struct!
 		q.Process(trimmedLine)
@@ -62,7 +62,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y = 0; y < numlines; y++ {
 		counter = 0
-		line = strings.Replace(e.Line(y+offset), "\t", tabString, -1)
+		line = strings.Replace(e.Line(LineIndex(y+offset)), "\t", tabString, -1)
 		screenLine = strings.TrimRightFunc(line, unicode.IsSpace)
 		if len([]rune(screenLine)) >= w {
 			screenLine = screenLine[:w]

@@ -67,7 +67,7 @@ func main() {
 
 		firstLetterSinceStart string
 
-		locationHistory map[string]int // remember where we were in each absolute filename
+		locationHistory map[string]LineNumber // remember where we were in each absolute filename
 
 		clearOnQuit bool // clear the terminal when quitting, or not
 
@@ -75,9 +75,9 @@ func main() {
 
 		mode Mode // an "enum"/int signalling if this file should be in git mode, markdown mode etc
 
-		lastCopyY  = -1 // used for keeping track if ctrl-c is pressed twice on the same line
-		lastPasteY = -1 // used for keeping track if ctrl-v is pressed twice on the same line
-		lastCutY   = -1 // used for keeping track if ctrl-x is pressed twice on the same line
+		lastCopyY  LineIndex = -1 // used for keeping track if ctrl-c is pressed twice on the same line
+		lastPasteY LineIndex = -1 // used for keeping track if ctrl-v is pressed twice on the same line
+		lastCutY   LineIndex = -1 // used for keeping track if ctrl-x is pressed twice on the same line
 	)
 
 	flag.Parse()
@@ -537,13 +537,13 @@ Set NO_COLOR=1 to disable colors.
 										var foundY int
 										if y, err := strconv.Atoi(fields[1]); err == nil { // no error
 											foundY = y - 1
-											e.redraw = e.GoTo(foundY, c, status)
+											e.redraw = e.GoTo(LineIndex(foundY), c, status)
 											foundX := -1
 											if x, err := strconv.Atoi(fields[2]); err == nil { // no error
 												foundX = x - 1
 											}
 											if foundX != -1 {
-												tabs := strings.Count(e.Line(foundY), "\t")
+												tabs := strings.Count(e.Line(LineIndex(foundY)), "\t")
 												e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
 												e.Center(c)
 											}
@@ -763,7 +763,7 @@ Set NO_COLOR=1 to disable colors.
 
 							if mode == modePython {
 								if errorLine, errorMessage := ParsePythonError(string(output), baseFilename); errorLine != -1 {
-									e.redraw = e.GoTo(errorLine-1, c, status)
+									e.redraw = e.GoTo(LineIndex(errorLine-1), c, status)
 									status.ClearAll(c)
 									status.SetErrorMessage("Error: " + errorMessage)
 									status.Show(c, e)
@@ -802,9 +802,9 @@ Set NO_COLOR=1 to disable colors.
 									fields := strings.SplitN(line, ":", 4)
 
 									// Go to Y:X, if available
-									var foundY int
+									var foundY LineIndex
 									if y, err := strconv.Atoi(fields[1]); err == nil { // no error
-										foundY = y - 1
+										foundY = LineIndex(y - 1)
 										e.redraw = e.GoTo(foundY, c, status)
 										foundX := -1
 										if x, err := strconv.Atoi(fields[2]); err == nil { // no error
@@ -845,9 +845,9 @@ Set NO_COLOR=1 to disable colors.
 										errorX := locationFields[2]
 
 										// Go to Y:X, if available
-										var foundY int
+										var foundY LineIndex
 										if y, err := strconv.Atoi(errorY); err == nil { // no error
-											foundY = y - 1
+											foundY = LineIndex(y - 1)
 											e.redraw = e.GoTo(foundY, c, status)
 											foundX := -1
 											if x, err := strconv.Atoi(errorX); err == nil { // no error
@@ -959,7 +959,7 @@ Set NO_COLOR=1 to disable colors.
 			e.redrawCursor = true
 		case "→": // right arrow
 			if !e.DrawMode() {
-				if e.DataY() < e.Len() {
+				if e.DataY() < LineIndex(e.Len()) {
 					e.Next(c)
 				}
 				if e.AfterLineScreenContents() {
@@ -1007,7 +1007,7 @@ Set NO_COLOR=1 to disable colors.
 			lastCopyY = -1
 			lastPasteY = -1
 			if !e.DrawMode() {
-				if e.DataY() < e.Len() {
+				if e.DataY() < LineIndex(e.Len()) {
 					// Move the position down in the current screen
 					if e.DownEnd(c) != nil {
 						// If at the bottom, don't move down, but scroll the contents
@@ -1225,7 +1225,7 @@ Set NO_COLOR=1 to disable colors.
 				// Do nothing
 				break
 			}
-			y := e.DataY()
+			y := int(e.DataY())
 			leftRune := e.LeftRune()
 			ext := filepath.Ext(filename)
 			if leftRune == '.' && !unicode.IsLetter(e.Rune()) && mode != modeBlank {
@@ -1289,26 +1289,27 @@ Set NO_COLOR=1 to disable colors.
 			// Enable auto indent if the extension is not "" and either:
 			// * The mode is set to Go and the position is not at the very start of the line (empty or not)
 			// * Syntax highlighting is enabled and the cursor is not at the start of the line (or before)
-			trimmedLine := strings.TrimSpace(e.Line(y))
+			trimmedLine := strings.TrimSpace(e.Line(LineIndex(y)))
 			//emptyLine := len(trimmedLine) == 0
 			//almostEmptyLine := len(trimmedLine) <= 1
 
 			// Smart indent if the rune to the left is not a blank character (and not the start of the line)
 			if !unicode.IsSpace(leftRune) && e.pos.sx > 0 && mode != modeBlank {
 				lineAbove := 1
-				if strings.TrimSpace(e.Line(y-lineAbove)) == "" {
+				if strings.TrimSpace(e.Line(LineIndex(y-lineAbove))) == "" {
 					// The line above is empty, use the indendation before the line above that
 					lineAbove--
 				}
+				indexAbove := LineIndex(y - lineAbove)
 				// If we have a line (one or two lines above) as a reference point for the indentation
-				if strings.TrimSpace(e.Line(y-lineAbove)) != "" {
+				if strings.TrimSpace(e.Line(indexAbove)) != "" {
 
 					// Move the current indentation to the same as the line above
 					undo.Snapshot(e)
 
 					var (
-						spaceAbove        = e.LeadingWhitespaceAt(y - lineAbove)
-						strippedLineAbove = e.StripSingleLineComment(strings.TrimSpace(e.Line(y - lineAbove)))
+						spaceAbove        = e.LeadingWhitespaceAt(indexAbove)
+						strippedLineAbove = e.StripSingleLineComment(strings.TrimSpace(e.Line(indexAbove)))
 						newLeadingSpace   = spaceAbove
 						oneIndentation    string
 					)
@@ -1339,7 +1340,7 @@ Set NO_COLOR=1 to disable colors.
 						newLeadingSpace = spaceAbove
 					}
 
-					e.SetLine(y, newLeadingSpace+trimmedLine)
+					e.SetLine(LineIndex(y), newLeadingSpace+trimmedLine)
 					if e.AtOrAfterEndOfLine() {
 						e.End()
 					}
@@ -1489,12 +1490,12 @@ Set NO_COLOR=1 to disable colors.
 					e.redraw = e.GoToLineNumber(1, c, status, true)
 				} else {
 					// Go to the last line (by line number, not by index, e.Len() returns an index which is why there is no -1)
-					e.redraw = e.GoToLineNumber(e.Len(), c, status, true)
+					e.redraw = e.GoToLineNumber(LineNumber(e.Len()), c, status, true)
 				}
 			} else {
 				// Go to the specified line
 				if ln, err := strconv.Atoi(lns); err == nil { // no error
-					e.redraw = e.GoToLineNumber(ln, c, status, true)
+					e.redraw = e.GoToLineNumber(LineNumber(ln), c, status, true)
 				}
 			}
 			e.redrawCursor = true
@@ -1675,10 +1676,10 @@ Set NO_COLOR=1 to disable colors.
 				// no bookmark, create a bookmark at the current line
 				bookmark = e.pos.Copy()
 				// TODO: Modify the statusbar implementation so that extra spaces are not needed here.
-				status.SetMessage("  Bookmarked line " + strconv.Itoa(e.LineNumber()) + "  ")
+				status.SetMessage("  Bookmarked line " + e.LineNumber().String() + "  ")
 			} else if bookmark.LineNumber() == e.LineNumber() {
 				// bookmarking the same line twice: remove the bookmark
-				status.SetMessage("Removed bookmark for line " + strconv.Itoa(bookmark.LineNumber()))
+				status.SetMessage("Removed bookmark for line " + bookmark.LineNumber().String())
 				bookmark = nil
 			} else {
 				// jumping to a bookmark
@@ -1688,7 +1689,7 @@ Set NO_COLOR=1 to disable colors.
 				e.DrawLines(c, true, false)
 				e.redraw = false
 				// Show the status message.
-				status.SetMessage("Jumped to bookmark at line " + strconv.Itoa(e.LineNumber()))
+				status.SetMessage("Jumped to bookmark at line " + e.LineNumber().String())
 			}
 			status.Show(c, e)
 			e.redrawCursor = true
@@ -1735,7 +1736,7 @@ Set NO_COLOR=1 to disable colors.
 					// If the first pressed key is "G" and this is not git mode, then invoke vi-compatible behavior and jump to the end
 					if key == "G" && (mode != modeGit) {
 						// Go to the end of the document
-						e.redraw = e.GoToLineNumber(e.Len(), c, status, true)
+						e.redraw = e.GoToLineNumber(LineNumber(e.Len()), c, status, true)
 						e.redrawCursor = true
 						firstLetterSinceStart = "x"
 						break

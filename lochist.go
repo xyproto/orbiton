@@ -18,8 +18,8 @@ const (
 
 // LoadLocationHistory will attempt to load the per-absolute-filename recording of which line is active.
 // The returned map can be empty.
-func LoadLocationHistory(configFile string) map[string]int {
-	locationHistory := make(map[string]int)
+func LoadLocationHistory(configFile string) map[string]LineNumber {
+	locationHistory := make(map[string]LineNumber)
 
 	contents, err := ioutil.ReadFile(configFile)
 	if err != nil {
@@ -51,7 +51,7 @@ func LoadLocationHistory(configFile string) map[string]int {
 			// Could not convert to a number
 			continue
 		}
-		locationHistory[filename] = lineNumber
+		locationHistory[filename] = LineNumber(lineNumber)
 	}
 
 	// Return the location history map. It could be empty, which is fine.
@@ -101,8 +101,8 @@ func LoadVimLocationHistory(vimInfoFilename string) map[string]int {
 // LoadEmacsLocationHistory will attempt to load the history of where the cursor should be when opening a file from ~/.emacs.d/places.
 // The returned map can be empty. The filenames have absolute paths.
 // The values in the map are NOT line numbers but character positions.
-func LoadEmacsLocationHistory(emacsPlacesFilename string) map[string]int {
-	locationHistory := make(map[string]int)
+func LoadEmacsLocationHistory(emacsPlacesFilename string) map[string]CharacterPosition {
+	locationHistory := make(map[string]CharacterPosition)
 	// Attempt to read the Emacs location history (that may or may not exist)
 	data, err := ioutil.ReadFile(emacsPlacesFilename)
 	if err != nil {
@@ -135,13 +135,13 @@ func LoadEmacsLocationHistory(emacsPlacesFilename string) map[string]int {
 			// Could not get absolute path
 			continue
 		}
-		locationHistory[absFilename] = charNumber
+		locationHistory[absFilename] = CharacterPosition(charNumber)
 	}
 	return locationHistory
 }
 
 // SaveLocationHistory will attempt to save the per-absolute-filename recording of which line is active
-func SaveLocationHistory(locationHistory map[string]int, configFile string) error {
+func SaveLocationHistory(locationHistory map[string]LineNumber, configFile string) error {
 	folderPath := filepath.Dir(configFile)
 
 	// First create the folder, if needed, in a best effort attempt
@@ -157,10 +157,10 @@ func SaveLocationHistory(locationHistory map[string]int, configFile string) erro
 
 // SaveLocation takes a filename (which includes the absolute path) and a map which contains
 // an overview of which files were at which line location.
-func (e *Editor) SaveLocation(absFilename string, locationHistory map[string]int) error {
+func (e *Editor) SaveLocation(absFilename string, locationHistory map[string]LineNumber) error {
 	if len(locationHistory) > maxLocationHistoryEntries {
 		// Cull the history
-		locationHistory = make(map[string]int, 1)
+		locationHistory = make(map[string]LineNumber, 1)
 	}
 	// Save the current line location
 	locationHistory[absFilename] = e.LineNumber()

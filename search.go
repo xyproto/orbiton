@@ -17,7 +17,7 @@ func (e *Editor) SetSearchTerm(s string, c *vt100.Canvas, status *StatusBar) {
 	e.stickySearchTerm = s
 	// Go to the first instance after the current line, if found
 	e.lineBeforeSearch = e.DataY()
-	for y := e.DataY(); y < e.Len(); y++ {
+	for y := e.DataY(); y < LineIndex(e.Len()); y++ {
 		if strings.Contains(e.Line(y), s) {
 			// Found an instance, scroll there
 			// GoTo returns true if the screen should be redrawn
@@ -60,10 +60,11 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar) error {
 	if s == "" {
 		return nil
 	}
-
-	foundY := -1
-	foundX := -1
-	for y := e.DataY(); y < e.Len(); y++ {
+	var (
+		foundX int       = -1
+		foundY LineIndex = -1
+	)
+	for y := e.DataY(); y < LineIndex(e.Len()); y++ {
 		lineContents := e.Line(y)
 		if y == e.DataY() {
 			x, err := e.DataX()
