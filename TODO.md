@@ -1,6 +1,6 @@
 # TODO
 
-- [ ] When searching for a term, then pressing backspace, the position should return to where it was when starting the search.
+- [ ] JSON formatter.
 - [ ] If a word is typed 1 letter differently from all the other instances in the current file: color it red.
 - [ ] Rainbow parenthesis.
 - [ ] Highlight links in Markdown (perhaps color `[` and `]` yellow).
@@ -29,4 +29,4 @@
 - [ ] In Markdown, if the previous line has a checkbox, color the text in the same color as the text on the line above?
 - [ ] Make it easy to make recordings of the editing process.
 - [ ] Introduce line number, line index and character position as different types, instead of just using "int".
-- [ ] If an error is in another file, let the error message be: "error is in filename.filename". Or save and jump to that file?
+- [ ] If an error is in another file, make that clearer.
