@@ -1,5 +1,6 @@
 # TODO
 
+- [ ] When searching for a term, then pressing backspace, the position should return to where it was when starting the search.
 - [ ] If a word is typed 1 letter differently from all the other instances in the current file: color it red.
 - [ ] Rainbow parenthesis.
 - [ ] Highlight links in Markdown (perhaps color `[` and `]` yellow).
