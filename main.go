@@ -299,7 +299,6 @@ Set NO_COLOR=1 to disable colors.
 			// Check if the first line is special
 			firstLine := e.Line(0)
 			if strings.HasPrefix(firstLine, "#!") { // The line starts with a shebang
-				mode = e.mode
 				words := strings.Split(firstLine, " ")
 				lastWord := words[len(words)-1]
 				if strings.Contains(lastWord, "/") {
@@ -308,11 +307,10 @@ Set NO_COLOR=1 to disable colors.
 				}
 				switch lastWord {
 				case "python":
-					mode = modePython
+					e.mode = modePython
 				case "bash", "fish", "zsh", "tcsh", "ksh", "sh", "ash":
-					mode = modeShell
+					e.mode = modeShell
 				}
-				e.mode = mode
 			}
 		}
 
@@ -341,7 +339,7 @@ Set NO_COLOR=1 to disable colors.
 		statusMessage = "New " + filename
 
 		if newMode != modeBlank {
-			mode, e.mode = newMode, newMode
+			e.mode = newMode
 		}
 
 		// Test save, to check if the file can be created and written, or not
@@ -360,7 +358,7 @@ Set NO_COLOR=1 to disable colors.
 	// The editing mode is decided at this point
 
 	// If we're editing a git commit message, add a newline and enable word-wrap at 80
-	if mode == modeGit {
+	if e.mode == modeGit {
 		e.gitColor = vt100.LightGreen
 		status.fg = vt100.LightBlue
 		status.bg = vt100.BackgroundDefault
@@ -395,6 +393,7 @@ Set NO_COLOR=1 to disable colors.
 	// Find the absolute path to this filename
 	absFilename, err := filepath.Abs(filename)
 	if err != nil {
+		// This should never happen, just use the given filename
 		absFilename = filename
 	}
 
@@ -472,7 +471,9 @@ Set NO_COLOR=1 to disable colors.
 		dropO bool
 	)
 
+	// This is the main loop for the editor
 	for !quit {
+
 		// Read the next key
 		key := tty.String()
 
@@ -483,7 +484,7 @@ Set NO_COLOR=1 to disable colors.
 			undo.Snapshot(e)
 
 			// Cycle git rebase keywords
-			if line := e.CurrentLine(); mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
+			if line := e.CurrentLine(); e.mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
 				e.redraw = true
@@ -492,7 +493,7 @@ Set NO_COLOR=1 to disable colors.
 			}
 
 			// Toggle Markdown checkboxes
-			if line := e.CurrentLine(); mode == modeMarkdown && hasAnyPrefixWord(strings.TrimSpace(line), checkboxPrefixes) {
+			if line := e.CurrentLine(); e.mode == modeMarkdown && hasAnyPrefixWord(strings.TrimSpace(line), checkboxPrefixes) {
 				if strings.Contains(line, "[ ]") {
 					e.SetLine(e.DataY(), strings.Replace(line, "[ ]", "[x]", 1))
 					e.redraw = true
@@ -592,7 +593,7 @@ Set NO_COLOR=1 to disable colors.
 					}
 				}
 			}
-			if mode != modeGit && !formatted {
+			if e.mode != modeGit && !formatted {
 				// Check if at least one line is longer than the word wrap limit first
 				// word wrap at the current width - 5, with an allowed overshoot of 5 runes
 				if e.WrapAllLinesAt(e.wordWrapAt-5, 5) {
@@ -660,7 +661,7 @@ Set NO_COLOR=1 to disable colors.
 				status.Show(c, e)
 				break // from case
 				// Is this a Markdown file? Save to PDF, either by using pandoc or by writing the text file directly
-			} else if pandocPath := which("pandoc"); ext == ".md" && mode == modeMarkdown && pandocPath != "" {
+			} else if pandocPath := which("pandoc"); ext == ".md" && e.mode == modeMarkdown && pandocPath != "" {
 
 				go func() {
 					pdfFilename := strings.Replace(baseFilename, ".", "_", -1) + ".pdf"
@@ -778,7 +779,7 @@ Set NO_COLOR=1 to disable colors.
 								errorMarker = "FAIL:"
 							}
 
-							if mode == modePython {
+							if e.mode == modePython {
 								if errorLine, errorMessage := ParsePythonError(string(output), baseFilename); errorLine != -1 {
 									e.redraw = e.GoTo(LineIndex(errorLine-1), c, status)
 									status.ClearAll(c)
@@ -907,7 +908,7 @@ Set NO_COLOR=1 to disable colors.
 		case "c:18": // ctrl-r, render to PDF, or if in git mode, cycle rebase keywords
 
 			// Are we in git mode?
-			if line := e.CurrentLine(); mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
+			if line := e.CurrentLine(); e.mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
 				undo.Snapshot(e)
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
@@ -1079,7 +1080,7 @@ Set NO_COLOR=1 to disable colors.
 			}
 			// Additional way to clear the sticky search term, like with Esc
 		case "c:20": // ctrl-t, toggle syntax highlighting or use the next git interactive rebase keyword
-			if line := e.CurrentLine(); mode == modeGit && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
+			if line := e.CurrentLine(); e.mode == modeGit && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
 				undo.Snapshot(e)
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
@@ -1214,7 +1215,7 @@ Set NO_COLOR=1 to disable colors.
 					e.TrimRight(e.DataY())
 					e.Delete()
 				}
-			} else if (mode == modeShell || mode == modePython) && e.AtStartOfTextLine() && len(e.LeadingWhitespace()) >= e.spacesPerTab {
+			} else if (e.mode == modeShell || e.mode == modePython) && e.AtStartOfTextLine() && len(e.LeadingWhitespace()) >= e.spacesPerTab {
 				// Delete several spaces
 				for i := 0; i < e.spacesPerTab; i++ {
 					// Move back
@@ -1246,7 +1247,7 @@ Set NO_COLOR=1 to disable colors.
 			r := e.Rune()
 			leftRune := e.LeftRune()
 			ext := filepath.Ext(filename)
-			if leftRune == '.' && !unicode.IsLetter(r) && mode != modeBlank {
+			if leftRune == '.' && !unicode.IsLetter(r) && e.mode != modeBlank {
 				// Autocompletion
 				undo.Snapshot(e)
 
@@ -1312,7 +1313,7 @@ Set NO_COLOR=1 to disable colors.
 			//almostEmptyLine := len(trimmedLine) <= 1
 
 			// Smart indent if the rune to the left is not a blank character (and not the start of the line)
-			if (!unicode.IsSpace(leftRune) || r == '{' || r == '(' || r == '[' || r == ':') && e.pos.sx > 0 && mode != modeBlank {
+			if (!unicode.IsSpace(leftRune) || r == '{' || r == '(' || r == '[' || r == ':') && e.pos.sx > 0 && e.mode != modeBlank {
 				lineAbove := 1
 				if strings.TrimSpace(e.Line(LineIndex(y-lineAbove))) == "" {
 					// The line above is empty, use the indendation before the line above that
@@ -1758,7 +1759,7 @@ Set NO_COLOR=1 to disable colors.
 				if firstLetterSinceStart == "" {
 					firstLetterSinceStart = key
 					// If the first pressed key is "G" and this is not git mode, then invoke vi-compatible behavior and jump to the end
-					if key == "G" && (mode != modeGit) {
+					if key == "G" && (e.mode != modeGit) {
 						// Go to the end of the document
 						e.redraw = e.GoToLineNumber(LineNumber(e.Len()), c, status, true)
 						e.redrawCursor = true
