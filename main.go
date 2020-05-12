@@ -67,8 +67,6 @@ func main() {
 
 		firstLetterSinceStart string
 
-		locationHistory map[string]LineNumber // remember where we were in each absolute filename
-
 		clearOnQuit bool // clear the terminal when quitting, or not
 
 		spacesPerTab = 4 // default spaces per tab
@@ -196,7 +194,7 @@ Set NO_COLOR=1 to disable colors.
 	var addKeywords, delKeywords []string
 	switch mode {
 	case modeGo:
-		addKeywords = []string{"fallthrough", "string"}
+		addKeywords = []string{"fallthrough", "string", "print", "println", "range", "defer"}
 		delKeywords = []string{"mut", "pass"}
 	case modeShell:
 		delKeywords = []string{"float", "with", "exec", "long", "double", "no", "pass"}
@@ -400,33 +398,54 @@ Set NO_COLOR=1 to disable colors.
 		absFilename = filename
 	}
 
-	// Load the location history, if available
-	locationHistory = LoadLocationHistory(expandUser(locationHistoryFilename))
-
-	// This is disabled for now, since it decreases the file loading time just a bit:
-	// Load the ViM location history as well, if available
-	// for key, value := range LoadVimLocationHistory(expandUser(vimLocationHistoryFilename)) {
-	//	// Only add entries that does not already exist
-	//	if _, hasKey := locationHistory[key]; !hasKey {
-	//		locationHistory[key] = value
-	//	}
-	//}
-
-	// Check if a line number was given on the command line
-	if lineNumber > 0 {
+	// Jump to the correct line number
+	switch {
+	case lineNumber > 0:
 		e.GoToLineNumber(lineNumber, c, status, false)
 		e.redraw = true
 		e.redrawCursor = true
-	} else if recordedLineNumber, ok := locationHistory[absFilename]; ok && mode != modeGit {
-		// If this filename exists in the location history, jump there
-		lineNumber = recordedLineNumber
-		e.GoToLineNumber(lineNumber, c, status, true)
-		e.redraw = true
-		e.redrawCursor = true
-	} else {
+	case lineNumber == 0 && mode != modeGit:
+		// Load the o location history, if a line number was not given on the command line (and if available)
+		var (
+			recordedLineNumber LineNumber
+			found              bool
+		)
+		locationHistory, err = LoadLocationHistory(expandUser(locationHistoryFilename))
+		if err == nil { // no error
+			recordedLineNumber, found = locationHistory[absFilename]
+		}
+		if !found {
+			// Try to load the NeoVim location history, then
+			recordedLineNumber, err = FindInNvimLocationHistory(expandUser(nvimLocationHistoryFilename), absFilename)
+			found = err == nil
+			if err != nil {
+				panic(err)
+			}
+		}
+		if !found {
+			// Try to load the ViM location history, then
+			recordedLineNumber, err = FindInVimLocationHistory(expandUser(vimLocationHistoryFilename), absFilename)
+			found = err == nil
+		}
+		// Check if an existing line number was found
+		if found {
+			lineNumber = recordedLineNumber
+			e.GoToLineNumber(lineNumber, c, status, true)
+			e.redraw = true
+			e.redrawCursor = true
+			break
+		}
+		fallthrough
+	default:
 		// Draw editor lines from line 0 to h onto the canvas at 0,0
 		e.DrawLines(c, false, false)
 		e.redraw = false
+	}
+
+	// Make sure the location history isn't empty
+	if locationHistory == nil {
+		locationHistory = make(map[string]LineNumber, 1)
+		locationHistory[absFilename] = lineNumber
 	}
 
 	if e.redraw {
