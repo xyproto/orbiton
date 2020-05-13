@@ -14,6 +14,7 @@
 - [ ] Let the autocompletion also look at method definitions with matching variable names (ignoring types, for now).
 - [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
 - [ ] Be able to browse the search history with arrow up and down when searching. Introduce a search history.
+- [ ] If `ctrl-p` is pressed repeatedly, clear the search string. Same with `ctrl-n`.
 
 ## Features in general
 
