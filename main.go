@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"flag"
 	"fmt"
@@ -586,295 +585,34 @@ Set NO_COLOR=1 to disable colors.
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
 		case "c:0": // ctrl-space, build source code to executable, convert to PDF or write to PNG, depending on the mode
-			ext := filepath.Ext(filename)
-			if ext == ".scd" || ext == ".scdoc" {
-				scdoc := exec.Command("scdoc")
 
-				// Place the current contents in a buffer, and feed it to stdin to the command
-				var buf bytes.Buffer
-				buf.WriteString(e.String())
-				scdoc.Stdin = &buf
+			// Save the current line location to file, for later
+			e.SaveLocation(absFilename, locationHistory)
 
-				// Create a new file and use it as stdout
-				manpageFile, err := os.Create("out.1")
-				if err != nil {
-					status.ClearAll(c)
-					status.SetMessage(err.Error())
-					status.Show(c, e)
-					break // from case
-				}
-				scdoc.Stdout = manpageFile
+			// Build or export the current file
+			statusMessage, err := e.BuildOrExport(c, status, filename)
 
-				var errBuf bytes.Buffer
-				scdoc.Stderr = &errBuf
-
-				// Run scdoc
-				if err := scdoc.Run(); err != nil {
-					statusMessage = strings.TrimSpace(errBuf.String())
-					status.ClearAll(c)
-					status.SetMessage(statusMessage)
-					status.Show(c, e)
-					break // from case
-				}
-
-				status.ClearAll(c)
-				status.SetMessage("Saved out.1")
-				status.Show(c, e)
-				break // from case
-
-			} else if ext == ".adoc" {
-				asciidoctor := exec.Command("asciidoctor", "-b", "manpage", "-o", "out.1", filename)
-				if err := asciidoctor.Run(); err != nil {
-					status.ClearAll(c)
-					status.SetMessage(err.Error())
-					status.Show(c, e)
-					break // from case
-				}
-				status.ClearAll(c)
-				status.SetMessage("Saved out.1")
-				status.Show(c, e)
-				break // from case
-				// Is this a Markdown file? Save to PDF, either by using pandoc or by writing the text file directly
-			} else if pandocPath := which("pandoc"); ext == ".md" && e.mode == modeMarkdown && pandocPath != "" {
-
-				go func() {
-					pdfFilename := strings.Replace(filepath.Base(filename), ".", "_", -1) + ".pdf"
-
-					status.SetMessage("Converting to PDF using Pandoc...")
-					status.ShowNoTimeout(c, e)
-
-					// TODO: Use a proper function for generating a temporary file
-					tmpfn := "___o___.md"
-
-					if exists(tmpfn) {
-						statusMessage = tmpfn + " already exists, please remove it"
-						status.ClearAll(c)
-						status.SetMessage(statusMessage)
-						status.Show(c, e)
-						return // from goroutine
-					}
-
-					err := e.Save(&tmpfn, !e.DrawMode())
-					if err != nil {
-						status.ClearAll(c)
-						status.SetMessage(err.Error())
-						status.Show(c, e)
-						return // from goroutine
-					}
-
-					pandoc := exec.Command(pandocPath, "-N", "--toc", "-V", "geometry:a4paper", "-o", pdfFilename, tmpfn)
-					if err = pandoc.Run(); err != nil {
-						_ = os.Remove(tmpfn) // Try removing the temporary filename if pandoc fails
-						status.ClearAll(c)
-						status.SetMessage(err.Error())
-						status.Show(c, e)
-						return // from goroutine
-					}
-
-					if err = os.Remove(tmpfn); err != nil {
-						status.ClearAll(c)
-						status.SetMessage(err.Error())
-						status.Show(c, e)
-						return // from goroutine
-					}
-
-					statusMessage = "Saved " + pdfFilename
-					status.ClearAll(c)
-					status.SetMessage(statusMessage)
-					status.Show(c, e)
-				}()
-				break // from case
-			}
-
-			// Find a suitable default executable name
-			defaultExecutableName := "main"            // If the current directory name is not found
-			if curdir, err := os.Getwd(); err == nil { // no error
-				defaultExecutableName = filepath.Base(curdir)
-			}
-
-			var (
-				// Map from build command to a list of file extensions (or basenames for files without an extension)
-				build = map[*exec.Cmd][]string{
-					exec.Command("go", "build"):                                     {".go"},
-					exec.Command("cxx"):                                             {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
-					exec.Command("zig", "build"):                                    {".zig"},
-					exec.Command("v", filename):                                     {".v"},
-					exec.Command("cargo", "build"):                                  {".rs"},
-					exec.Command("ghc", "-dynamic", filename):                       {".hs"},
-					exec.Command("makepkg"):                                         {"PKGBUILD"},
-					exec.Command("python", "-m", "py_compile", filename):            {".py"}, // Compile to .pyc
-					exec.Command("ocamlopt", "-o", defaultExecutableName, filename): {".ml"}, // OCaml
-				}
-
-				foundExtensionToBuild bool
-				testingInstead        bool
-			)
-		OUT2:
-			for cmd, extensions := range build {
-				for _, ext := range extensions {
-					if strings.HasSuffix(filename, ext) || filename == ext {
-						foundExtensionToBuild = true
-						status.ClearAll(c)
-						status.SetMessage("Building")
-
-						// Save the current line location to file, for later
-						e.SaveLocation(absFilename, locationHistory)
-
-						// Special per-language considerations
-						if ext == ".rs" && (!exists("Cargo.toml") && !exists("../Cargo.toml")) {
-							// Use rustc instead of cargo if Cargo.toml is missing and the extension is .rs
-							cmd = exec.Command("rustc", filename)
-						} else if (ext == ".cc" || ext == ".h") && exists("BUILD.bazel") {
-							// Google-style C++ + Bazel projects
-							cmd = exec.Command("bazel", "build")
-						} else if ext == ".zig" && !exists("build.zig") {
-							// Just build the current file
-							cmd = exec.Command("zig", "build-exe", "-lc", filename)
-						} else if strings.HasSuffix(filename, "_test.go") {
-							// If it's a test-file, run the test instead of building
-							cmd = exec.Command("go", "test")
-							status.SetMessage("Testing")
-							testingInstead = true
-						}
-
-						status.ShowNoTimeout(c, e)
-
-						output, err := cmd.CombinedOutput()
-						if err != nil || bytes.Contains(output, []byte("error:")) { // failed tests also end up here
-							// Clear all existing status messages and status message clearing goroutines
-							status.ClearAll(c)
-							errorMessage := "Build error"
-
-							errorMarker := "error:"
-							if testingInstead {
-								errorMarker = "FAIL:"
-							}
-
-							if e.mode == modePython {
-								if errorLine, errorMessage := ParsePythonError(string(output), filepath.Base(filename)); errorLine != -1 {
-									e.redraw = e.GoTo(LineIndex(errorLine-1), c, status)
-									status.ClearAll(c)
-									status.SetErrorMessage("Error: " + errorMessage)
-									status.Show(c, e)
-									break OUT2
-								}
-							}
-
-							// Find the first error message
-							lines := strings.Split(string(output), "\n")
-							var prevLine string
-							for _, line := range lines {
-								if ext == ".hs" {
-									if strings.Contains(prevLine, errorMarker) {
-										if errorMessage = strings.TrimSpace(line); strings.HasPrefix(errorMessage, "• ") {
-											errorMessage = string([]rune(errorMessage)[2:])
-											break
-										}
-									}
-								} else if strings.Contains(line, errorMarker) {
-									parts := strings.SplitN(line, errorMarker, 2)
-									errorMessage = strings.TrimSpace(parts[1])
-									break
-								}
-								prevLine = line
-							}
-
-							if testingInstead {
-								errorMessage = "Test failed: " + errorMessage
-							}
-
-							status.SetErrorMessage(errorMessage)
-							status.Show(c, e)
-							for i, line := range lines {
-								// Jump to the error location, C++, Go and Haskell
-								if strings.Count(line, ":") >= 3 {
-									fields := strings.SplitN(line, ":", 4)
-
-									// Go to Y:X, if available
-									var foundY LineIndex
-									if y, err := strconv.Atoi(fields[1]); err == nil { // no error
-										foundY = LineIndex(y - 1)
-										e.redraw = e.GoTo(foundY, c, status)
-										foundX := -1
-										if x, err := strconv.Atoi(fields[2]); err == nil { // no error
-											foundX = x - 1
-										}
-										if foundX != -1 {
-											tabs := strings.Count(e.Line(foundY), "\t")
-											e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
-											e.Center(c)
-											// Use the error message as the status message
-											if len(fields) >= 4 {
-												if ext != ".hs" {
-													status.ClearAll(c)
-													status.SetErrorMessage(strings.Join(fields[3:], " "))
-													status.Show(c, e)
-												}
-												break OUT2
-											}
-										}
-									}
-									e.redrawCursor = true
-									break
-								} else if (i-1) > 0 && (i-1) < len(lines) {
-									if msgLine := lines[i-1]; strings.Contains(line, " --> ") && strings.Count(line, ":") == 2 && strings.Count(msgLine, ":") >= 1 {
-										// Jump to the error location, for Rust
-										errorFields := strings.SplitN(msgLine, ":", 2)                  // Already checked for 2 colons
-										errorMessage := strings.TrimSpace(errorFields[1])               // There will always be 3 elements in errorFields, so [1] is fine
-										locationFields := strings.SplitN(line, ":", 3)                  // Already checked for 2 colons in line
-										filenameFields := strings.SplitN(locationFields[0], " --> ", 2) // [0] is fine, already checked for " ---> "
-										errorFilename := strings.TrimSpace(filenameFields[1])           // [1] is fine
-										if filename != errorFilename {
-											status.ClearAll(c)
-											status.SetMessage("Error in " + errorFilename + ": " + errorMessage)
-											status.Show(c, e)
-											break OUT2
-										}
-										errorY := locationFields[1]
-										errorX := locationFields[2]
-
-										// Go to Y:X, if available
-										var foundY LineIndex
-										if y, err := strconv.Atoi(errorY); err == nil { // no error
-											foundY = LineIndex(y - 1)
-											e.redraw = e.GoTo(foundY, c, status)
-											foundX := -1
-											if x, err := strconv.Atoi(errorX); err == nil { // no error
-												foundX = x - 1
-											}
-											if foundX != -1 {
-												tabs := strings.Count(e.Line(foundY), "\t")
-												e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
-												e.Center(c)
-												// Use the error message as the status message
-												if errorMessage != "" {
-													status.SetErrorMessage(errorMessage)
-													status.Show(c, e)
-													break OUT2
-												}
-											}
-										}
-										e.redrawCursor = true
-										break
-									}
-								}
-							}
-						} else {
-							status.ClearAll(c)
-							status.SetMessage("Success")
-							status.Show(c, e)
-						}
-						break OUT2
-					}
-				}
-			}
-			if !foundExtensionToBuild {
+			// Could an action be performed for this file extension?
+			if err == errNoSuitableBuildCommand {
 				// Building this file extension is not implemented yet.
-				status.ClearAll(c)
 				// Just display the current time and word count.
 				statusMessage := fmt.Sprintf("%d words, %s", e.WordCount(), time.Now().Format("15:04")) // HH:MM
+				status.ClearAll(c)
 				status.SetMessage(statusMessage)
 				status.Show(c, e)
+			} else if err != nil {
+				// Did something go wrong?
+				status.ClearAll(c)
+				status.SetErrorMessage(err.Error())
+				status.Show(c, e)
+			} else if statusMessage != "" {
+				// Did it work out, but there was a status message?
+				status.ClearAll(c)
+				status.SetMessage(statusMessage)
+				status.ShowNoTimeout(c, e)
+			} else {
+				// Did it work out, but without any status message?
+				// Fine.
 			}
 		case "c:18": // ctrl-r, render to PDF, or if in git mode, cycle rebase keywords
 
