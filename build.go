@@ -125,26 +125,26 @@ func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath
 	status.Show(c, e)
 }
 
-// BuildOrExport will try to build the source code or export the document
-// Returns a positive status message or an empty string and an error
-func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename string) (string, error) {
+// BuildOrExport will try to build the source code or export the document.
+// Returns a status message and then true if an action was performed and another true if compilation worked out.
+func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename string) (string, bool, bool) {
 	ext := filepath.Ext(filename)
 
 	// scdoc
 	manFilename := "out.1"
 	if ext == ".scd" || ext == ".scdoc" {
 		if err := e.exportScdoc(manFilename); err != nil {
-			return "", err
+			return err.Error(), true, false
 		}
-		return "Exported " + manFilename, nil
+		return "Exported " + manFilename, true, true
 	}
 
 	// asciidoctor
 	if ext == ".adoc" {
 		if err := e.exportAdoc(manFilename); err != nil {
-			return "", err
+			return err.Error(), true, false
 		}
-		return "Exported " + manFilename, nil
+		return "Exported " + manFilename, true, true
 	}
 
 	// pandoc
@@ -153,7 +153,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		// Export to PDF using pandoc, concurrently.
 		go e.mustExportPandoc(c, status, pandocPath, pdfFilename)
 		// TODO: Add a minimum of error detection. Perhaps wait just 20ms and check if the goroutine is still running.
-		return "", nil
+		return "", true, true // no message returned, the mustExportPandoc function handles it's own status output
 	}
 
 	defaultExecutableName := "main" // If the current directory name is not found
@@ -191,9 +191,10 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			}
 		}
 	}
+
 	// Can not export nor compile, nothing more to do
 	if foundCommand == nil {
-		return "", errNoSuitableBuildCommand
+		return errNoSuitableBuildCommand.Error(), false, false
 	}
 
 	// --- Compilation ---
@@ -221,21 +222,23 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		testingInstead = true
 	}
 
-	// Display a status message with no timeout about what is currently being done
+	// Display a status message with no timeout, about what is currently being done
 	if status != nil {
 		status.ClearAll(c)
 		status.SetMessage(progressStatusMessage)
 		status.ShowNoTimeout(c, e)
 	}
 
-	// Run the command and fetch the combined output from stderr and stdout
+	// Run the command and fetch the combined output from stderr and stdout.
+	// Ignore the status code / error, only look at the output.
 	output, err := cmd.CombinedOutput()
-	if err != nil { // did the executable not return 0?
-		return "", errors.New("error: " + err.Error())
-	}
 
-	// Could run the command, but got errors?
-	if bytes.Contains(output, []byte("error:")) { // failed tests also end up here
+	// NOTE: Don't do anything with the output and err variables here, let the if below handle it.
+
+	// Did the command return a non-zero status code, or does the output contain "error:"?
+	if err != nil || bytes.Contains(output, []byte("error:")) { // failed tests also end up here
+
+		// This is not for Go, since the word "error:" may not appear when there are errors
 
 		errorMessage := "Build error"
 
@@ -247,7 +250,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		if e.mode == modePython {
 			if errorLine, errorMessage := ParsePythonError(string(output), filepath.Base(filename)); errorLine != -1 {
 				e.redraw = e.GoTo(LineIndex(errorLine-1), c, status)
-				return "", errors.New("Error: " + errorMessage)
+				return "Error: " + errorMessage, true, false
 			}
 		}
 
@@ -275,10 +278,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			errorMessage = "Test failed: " + errorMessage
 		}
 
-		// Found a generic error message, or a Haskell error message
-		if errorMessage != "" {
-			return "", errors.New(errorMessage)
-		}
+		// NOTE: Don't return here even if errorMessage contains an error message
 
 		// Analyze all lines
 		for i, line := range lines {
@@ -302,14 +302,14 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 						// Use the error message as the status message
 						if len(fields) >= 4 {
 							if ext != ".hs" {
-								return "", errors.New(strings.Join(fields[3:], " "))
+								return strings.Join(fields[3:], " "), true, false
 							}
 							// TODO: Test this code path
-							return "A", errors.New("A")
+							return "UNIMPLEMENTED 1", true, false
 						}
 					}
 				}
-				return "B", errors.New("B")
+				return "UNIMPLEMENTED 2", true, false
 			} else if (i-1) > 0 && (i-1) < len(lines) {
 				// Rust
 				if msgLine := lines[i-1]; strings.Contains(line, " --> ") && strings.Count(line, ":") == 2 && strings.Count(msgLine, ":") >= 1 {
@@ -319,7 +319,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 					filenameFields := strings.SplitN(locationFields[0], " --> ", 2) // [0] is fine, already checked for " ---> "
 					errorFilename := strings.TrimSpace(filenameFields[1])           // [1] is fine
 					if filename != errorFilename {
-						return "", errors.New("Error in " + errorFilename + ": " + errorMessage)
+						return "Error in " + errorFilename + ": " + errorMessage, true, false
 					}
 					errorY := locationFields[1]
 					errorX := locationFields[2]
@@ -340,7 +340,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 							e.Center(c)
 							// Use the error message as the status message
 							if errorMessage != "" {
-								return "", errors.New(errorMessage)
+								return errorMessage, true, false
 							}
 						}
 					}
@@ -350,10 +350,10 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			}
 		}
 	} else {
-		// The command failed (status code != 0), but no errors were picked from the output
-		return "", errors.New("Could not compile")
+		// The command failed (status code != 0), but no errors were picked up from the output
+		return "Could not compile", true, false
 	}
 
-	// No status message, no error
-	return "", nil
+	// No status message, no error, not a success?
+	return "", false, false
 }
