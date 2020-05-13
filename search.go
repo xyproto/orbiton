@@ -37,6 +37,11 @@ func (e *Editor) SearchTerm() string {
 	return e.searchTerm
 }
 
+// ClearSearchTerm will clear the current search term
+func (e *Editor) ClearSearchTerm() {
+	e.searchTerm = ""
+}
+
 // UseStickySearchTerm will use the sticky search term as the current search term,
 // which is not cleared by Esc, but by ctrl-p.
 func (e *Editor) UseStickySearchTerm() {
@@ -50,28 +55,31 @@ func (e *Editor) ClearStickySearchTerm() {
 	e.stickySearchTerm = ""
 }
 
-// GoToNextMatch will go to the next match, using e.SearchTerm(), if possible.
-// The search does not wrap around and is case-sensitive.
-// TODO: Add wrap around behavior, toggled with a bool argument.
-// TODO: Add case-insensitive behavior, toggled with a bool argument.
-// Returns an error if the search was successful but no match was found.
-func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar) error {
-	s := e.SearchTerm()
-	if s == "" {
-		return nil
-	}
+// forwardSearch is a helper function for searching for a string from the given startIndex,
+// up to and including the given stopIndex. -1, -1 is returned if there are no matches.
+func (e *Editor) forwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex) {
 	var (
+		s      string    = e.SearchTerm()
 		foundX int       = -1
 		foundY LineIndex = -1
 	)
-	for y := e.DataY(); y < LineIndex(e.Len()); y++ {
+	if s == "" {
+		// Return -1, -1 if no search term is set
+		return foundX, foundY
+	}
+
+	currentIndex := e.DataY()
+
+	// Search from the given startIndex up to and including the given stopIndex
+	for y := startIndex; y < stopIndex; y++ {
 		lineContents := e.Line(y)
-		if y == e.DataY() {
+		if y == currentIndex {
 			x, err := e.DataX()
 			if err != nil {
 				continue
 			}
-			// Search from the next position on this line
+			// Search from the next byte (not rune) position on this line
+			// TODO: Move forward one rune instead of one byte
 			x++
 			if x >= len(lineContents) {
 				continue
@@ -89,13 +97,40 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar) error {
 			}
 		}
 	}
+	return foundX, LineIndex(foundY)
+}
+
+// GoToNextMatch will go to the next match, using e.SearchTerm(), if possible.
+// The search does not wrap around and is case-sensitive.
+// TODO: Add wrap around behavior, toggled with a bool argument.
+// TODO: Add case-insensitive behavior, toggled with a bool argument.
+// Returns an error if the search was successful but no match was found.
+func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap bool) error {
+	s := e.SearchTerm()
+	if s == "" {
+		return nil
+	}
+
+	// Forward search from the current location
+	startIndex := e.DataY()
+	stopIndex := LineIndex(e.Len())
+	foundX, foundY := e.forwardSearch(startIndex, stopIndex)
+
+	// Do a search from the top if a match was not found
+	if foundY == -1 && wrap {
+		startIndex = 0
+		stopIndex = e.DataY()
+		foundX, foundY = e.forwardSearch(startIndex, stopIndex)
+		// TODO: Figure out why this appears to be needed (after the wraparound, the match is 1 off)
+		if foundY > 0 {
+			foundY++
+		}
+	}
 
 	// Check if a match was found
 	if foundY == -1 {
 		// Not found
 		e.GoTo(e.lineBeforeSearch, c, status)
-		status.SetMessage(s + " not found from here")
-		status.Show(c, e)
 		return errNoSearchMatch
 	}
 
@@ -105,10 +140,12 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar) error {
 		tabs := strings.Count(e.Line(foundY), "\t")
 		e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
 	}
-	e.Center(c)
 
+	// Center and prepare to redraw
+	e.Center(c)
 	e.redraw = true
 	e.redrawCursor = e.redraw
+
 	return nil
 }
 
@@ -131,6 +168,7 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		key                   string
 		doneCollectingLetters bool
 		initialLocation       = e.DataY().LineNumber()
+		pressedReturn         bool
 	)
 	for !doneCollectingLetters {
 		key = tty.String()
@@ -146,8 +184,9 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		case "c:27", "c:17": // esc or ctrl-q
 			s = ""
 			e.SetSearchTerm(s, c, status)
-			fallthrough
+			doneCollectingLetters = true
 		case "c:13": // return
+			pressedReturn = true
 			doneCollectingLetters = true
 		case "↑": // previous in the search history
 			// TODO: Browse backwards in the search history and don't fall through
@@ -164,12 +203,27 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 	}
 	status.ClearAll(c)
 	e.SetSearchTerm(s, c, status)
-	// Perform the actual search
-	if err := e.GoToNextMatch(c, status); err == errNoSearchMatch {
-		// If no match was found, try again from the top
-		e.redraw = e.GoToLineNumber(1, c, status, true)
-		_ = e.GoToNextMatch(c, status)
 
+	if pressedReturn {
+		// Return to the first location before performing the actual search
+		e.GoToLineNumber(initialLocation, c, status, false)
+	}
+
+	wrap := true
+
+	// Perform the actual search
+	if err := e.GoToNextMatch(c, status, wrap); err == errNoSearchMatch {
+		// If no match was found, and return was not pressed, try again from the top
+		//e.redraw = e.GoToLineNumber(1, c, status, true)
+		//err = e.GoToNextMatch(c, status)
+		if err == errNoSearchMatch {
+			if wrap {
+				status.SetMessage(s + " not found")
+			} else {
+				status.SetMessage(s + " not found from here")
+			}
+			status.Show(c, e)
+		}
 	}
 	e.Center(c)
 }
