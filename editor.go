@@ -1851,7 +1851,10 @@ func (e *Editor) GoToPrevParagraph(c *vt100.Canvas, status *StatusBar) bool {
 // Center will scroll the contents so that the line with the cursor ends up in the center of the screen
 func (e *Editor) Center(c *vt100.Canvas) {
 	// Find the terminal height
-	h := int(c.Height())
+	h := 25
+	if c != nil {
+		h = int(c.Height())
+	}
 
 	// General information about how the positions and offsets relate:
 	//
