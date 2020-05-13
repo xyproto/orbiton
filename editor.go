@@ -1653,6 +1653,7 @@ func (e *Editor) GoTo(dataY LineIndex, c *vt100.Canvas, status *StatusBar) bool 
 		dataY = LineIndex(e.Len() - 1)
 		reachedEnd = true
 	}
+
 	h := 25
 	if c != nil {
 		// Get the current terminal height
@@ -1672,7 +1673,7 @@ func (e *Editor) GoTo(dataY LineIndex, c *vt100.Canvas, status *StatusBar) bool 
 	} else if int(dataY) < h {
 		// No scrolling is needed, just move the screen y position
 		e.pos.offset = 0
-		e.pos.sy = int(dataY - 1)
+		e.pos.sy = int(dataY)
 		if e.pos.sy < 0 {
 			e.pos.sy = 0
 		}
@@ -1713,7 +1714,7 @@ func (e *Editor) GoToLineNumber(lineNumber LineNumber, c *vt100.Canvas, status *
 	if lineNumber < 1 {
 		lineNumber = 1
 	}
-	redraw := e.GoTo(LineIndex(lineNumber-1), c, status)
+	redraw := e.GoTo(lineNumber.LineIndex(), c, status)
 	if redraw && center {
 		e.Center(c)
 	}

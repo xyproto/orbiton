@@ -119,7 +119,8 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap bool) er
 	// Do a search from the top if a match was not found
 	if foundY == -1 && wrap {
 		startIndex = 0
-		stopIndex = e.DataY() + 1
+		//stopIndex = e.DataY()
+		stopIndex := LineIndex(e.Len())
 		foundX, foundY = e.forwardSearch(startIndex, stopIndex)
 	}
 
@@ -135,20 +136,6 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap bool) er
 	if foundX != -1 {
 		tabs := strings.Count(e.Line(foundY), "\t")
 		e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
-	}
-
-	// I have checked that the foundY line actually contains the match before the GoTo call above.
-	// TODO: Fix the GoTo function so that it does not go to the wrong line index.
-	if strings.Contains(e.CurrentLine(), s) {
-		// OK GOOD
-	} else if strings.Contains(e.Line(e.DataY()-1), s) {
-		// BAD, the match is on the previous line
-		e.Up(c, status)
-		e.Next(c)
-	} else if strings.Contains(e.Line(e.DataY()+1), s) {
-		// BAD, the match is on the next line
-		e.Down(c, status)
-		e.Next(c)
 	}
 
 	// Center and prepare to redraw
