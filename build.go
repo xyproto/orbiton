@@ -309,8 +309,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 					}
 				}
 				return errorMessage, true, false
-			} else if (i-1) > 0 && (i-1) < len(lines) {
-				// Rust
+			}
+			// Rust
+			if (i > 0) && i < (len(lines)-1) {
 				if msgLine := lines[i-1]; strings.Contains(line, " --> ") && strings.Count(line, ":") == 2 && strings.Count(msgLine, ":") >= 1 {
 					errorFields := strings.SplitN(msgLine, ":", 2)                  // Already checked for 2 colons
 					errorMessage := strings.TrimSpace(errorFields[1])               // There will always be 3 elements in errorFields, so [1] is fine
@@ -346,6 +347,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 					e.redrawCursor = true
 					// Nope, just the error message
 					return errorMessage, true, false
+				} else {
+					continue
 				}
 			}
 		}
