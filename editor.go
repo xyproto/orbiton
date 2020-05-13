@@ -706,23 +706,17 @@ func (e *Editor) Delete() {
 // If there's only one line left and it is only whitespace, that will be considered empty as well.
 func (e *Editor) Empty() bool {
 	l := len(e.lines)
-	switch l {
-	case 0:
+	if l == 0 {
 		return true
-	case 1:
-		// Check the contents of the 1 remaining line,
-		// without specifying a key.
-		for _, v := range e.lines {
-			if len(strings.TrimSpace(string(v))) == 0 {
-				return true
-			}
-			break
-		}
-		fallthrough
-	default:
-		// > 1 lines
-		return false
 	}
+	if l == 1 {
+		// Regardless of line number key, check the contents of the one remaining trimmed line
+		for _, line := range e.lines {
+			return len(strings.TrimSpace(string(line))) == 0
+		}
+	}
+	// > 1 lines
+	return false
 }
 
 // MakeConsistent creates an empty slice of runes for any empty lines,
@@ -878,9 +872,6 @@ func (e *Editor) InsertLineAbove() {
 		}
 	}
 	e.changed = true
-
-	// Make sure no lines are nil
-	e.MakeConsistent()
 }
 
 // InsertLineBelow will attempt to insert a new line below the current position
@@ -891,6 +882,7 @@ func (e *Editor) InsertLineBelow() {
 // InsertLineBelowAt will attempt to insert a new line below the given y position
 func (e *Editor) InsertLineBelowAt(index LineIndex) {
 	y := int(index)
+
 	// Make sure no lines are nil
 	e.MakeConsistent()
 
@@ -919,9 +911,6 @@ func (e *Editor) InsertLineBelowAt(index LineIndex) {
 	// Use the new set of lines
 	e.lines = lines2
 
-	// Make sure no lines are nil
-	e.MakeConsistent()
-
 	// Skip trailing newlines after this line
 	for i := len(e.lines); i > y; i-- {
 		if len([]rune(e.lines[i])) == 0 {
@@ -932,9 +921,6 @@ func (e *Editor) InsertLineBelowAt(index LineIndex) {
 	}
 
 	e.changed = true
-
-	// Make sure no lines are nil
-	e.MakeConsistent()
 }
 
 // Insert will insert a rune at the given position, with no word wrap,
@@ -989,8 +975,6 @@ func (e *Editor) CreateLineIfMissing(n LineIndex) {
 		e.lines[int(n)] = make([]rune, 0)
 		e.changed = true
 	}
-	// Make sure no lines are nil
-	e.MakeConsistent()
 }
 
 // SetColors will set the current editor theme (foreground, background).
@@ -1277,7 +1261,6 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		e.Insert(r)
 	}
 	e.TrimRight(LineIndex(y))
-	e.MakeConsistent()
 }
 
 // InsertString will insert a string at the current data position.
