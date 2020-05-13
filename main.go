@@ -410,7 +410,8 @@ Set NO_COLOR=1 to disable colors.
 	}
 
 	// Record the startup duration, in milliseconds
-	startupMilliseconds := time.Since(startTime).Milliseconds()
+	//startupMilliseconds := time.Since(startTime).Milliseconds() // Go 1.11 and above only
+	startupMilliseconds := int64(time.Since(startTime)) / 1e6
 
 	// Craft an appropriate status message
 	if createdNewFile {
