@@ -188,6 +188,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		for _, ext := range exts {
 			if strings.HasSuffix(filename, ext) || baseFilename == ext {
 				foundCommand = command
+				// TODO: also check that the executable in the command exists
 			}
 		}
 	}
@@ -208,16 +209,24 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 	// Special per-language considerations
 	if ext == ".rs" && (!exists("Cargo.toml") && !exists("../Cargo.toml")) {
 		// Use rustc instead of cargo if Cargo.toml is missing and the extension is .rs
-		cmd = exec.Command("rustc", filename)
+		if which("rustc") != "" {
+			cmd = exec.Command("rustc", filename)
+		}
 	} else if (ext == ".cc" || ext == ".h") && exists("BUILD.bazel") {
 		// Google-style C++ + Bazel projects
-		cmd = exec.Command("bazel", "build")
+		if which("bazel") != "" {
+			cmd = exec.Command("bazel", "build")
+		}
 	} else if ext == ".zig" && !exists("build.zig") {
 		// Just build the current file
-		cmd = exec.Command("zig", "build-exe", "-lc", filename)
+		if which("zig") != "" {
+			cmd = exec.Command("zig", "build-exe", "-lc", filename)
+		}
 	} else if strings.HasSuffix(filename, "_test.go") {
 		// If it's a test-file, run the test instead of building
-		cmd = exec.Command("go", "test")
+		if which("go") != "" {
+			cmd = exec.Command("go", "test")
+		}
 		progressStatusMessage = "Testing"
 		testingInstead = true
 	}
@@ -309,9 +318,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 					}
 				}
 				return errorMessage, true, false
-			}
-			// Rust
-			if (i > 0) && i < (len(lines)-1) {
+			} else if (i > 0) && i < (len(lines)-1) {
+				// Rust
 				if msgLine := lines[i-1]; strings.Contains(line, " --> ") && strings.Count(line, ":") == 2 && strings.Count(msgLine, ":") >= 1 {
 					errorFields := strings.SplitN(msgLine, ":", 2)                  // Already checked for 2 colons
 					errorMessage := strings.TrimSpace(errorFields[1])               // There will always be 3 elements in errorFields, so [1] is fine
@@ -346,7 +354,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 					}
 					e.redrawCursor = true
 					// Nope, just the error message
-					return errorMessage, true, false
+					//return errorMessage, true, false
 				}
 			}
 		}
