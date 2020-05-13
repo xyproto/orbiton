@@ -461,6 +461,9 @@ Set NO_COLOR=1 to disable colors.
 		case "c:23": // ctrl-w, format (or if in git mode, cycle interactive rebase keywords)
 			undo.Snapshot(e)
 
+			// Clear the search term
+			e.ClearSearchTerm()
+
 			// Cycle git rebase keywords
 			if line := e.CurrentLine(); e.mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
 				newLine := nextGitRebaseKeyword(line)
@@ -589,6 +592,9 @@ Set NO_COLOR=1 to disable colors.
 
 			// Save the current line location to file, for later
 			e.SaveLocation(absFilename, locationHistory)
+
+			// Clear the current search term
+			e.ClearSearchTerm()
 
 			// Build or export the current file
 			statusMessage, performedAction, compiled := e.BuildOrExport(c, status, filename)
