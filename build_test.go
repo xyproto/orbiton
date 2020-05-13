@@ -26,5 +26,5 @@ func ExampleEditor_BuildOrExport_RustError() {
 	fmt.Printf("%s [performed action: %v] [compiled OK: %v]\n", s, performedAction, compiledOK)
 
 	// Output:
-	// undefined: ? [performed action: true] [compiled OK: false]
+	// cannot find macro `rintln` in this scope [performed action: true] [compiled OK: false]
 }
