@@ -1306,8 +1306,14 @@ Set NO_COLOR=1 to disable colors.
 			//emptyLine := len(trimmedLine) == 0
 			//almostEmptyLine := len(trimmedLine) <= 1
 
-			// Smart indent if the rune to the left is not a blank character (and not the start of the line)
-			if (!unicode.IsSpace(leftRune) || r == '{' || r == '(' || r == '[' || r == ':') && e.pos.sx > 0 && e.mode != modeBlank {
+			// Check if a line that is more than just a '{', '(', '[' or ':' ends with one of those
+			endsWithSpecial := len(trimmedLine) > 1 && r == '{' || r == '(' || r == '[' || r == ':'
+
+			// Smart indent if:
+			// * the rune to the left is not a blank character or the line ends with {, (, [ or :
+			// * and also if it the cursor is not to the very left
+			// * and also if this is not a text file or a blank file
+			if (!unicode.IsSpace(leftRune) || endsWithSpecial) && e.pos.sx > 0 && e.mode != modeBlank {
 				lineAbove := 1
 				if strings.TrimSpace(e.Line(LineIndex(y-lineAbove))) == "" {
 					// The line above is empty, use the indendation before the line above that
