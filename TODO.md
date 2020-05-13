@@ -1,5 +1,6 @@
 # TODO
 
+- [ ] If over a certain percentage of the characters are not unicode.Graphics, enter binary mode.
 - [ ] Let `ctrl-p` go to the previous search result, when a search is active.
 - [ ] Locatization.
 - [ ] JSON formatter.
