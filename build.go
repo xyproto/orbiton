@@ -230,8 +230,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 
 	// Run the command and fetch the combined output from stderr and stdout
 	output, err := cmd.CombinedOutput()
-	if err == nil { // no problems
-		return "Success", nil
+	if err != nil { // did the executable not return 0?
+		return "", errors.New("error: " + err.Error())
 	}
 
 	// Could run the command, but got errors?

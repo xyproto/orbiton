@@ -7,10 +7,13 @@ import (
 func ExampleEditor_BuildOrExport() {
 	e := NewSimpleEditor(80)
 	s, err := e.BuildOrExport(nil, nil, "tests/err.go")
-	fmt.Println(s)
+
+	if s != "" {
+		fmt.Println("FAIL")
+	}
+
 	fmt.Println(err)
 
 	// Output:
-	// Success
-	// <nil>
+	// Could not compile
 }
