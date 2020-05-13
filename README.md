@@ -75,7 +75,7 @@ To unset:
 * `ctrl-w` - Format the current file (see the table below).
 * `ctrl-a` - Go to start of text, then start of line and then to the previous line.
 * `ctrl-e` - Go to end of line and then to the next line.
-* `ctrl-p` - Scroll up 10 lines.
+* `ctrl-p` - Scroll up 10 lines, or go to the previous match if a search is active.
 * `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active.
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
 * `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
