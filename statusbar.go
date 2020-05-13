@@ -63,7 +63,7 @@ func (sb *StatusBar) SetMessage(msg string) {
 // IsError returns true if the error message to be shown is an error message
 // (it's being displayed a bit longer)
 func (sb *StatusBar) IsError() bool {
-	isError := false
+	var isError bool
 
 	mut.RLock()
 	isError = sb.isError

@@ -1287,7 +1287,7 @@ Set NO_COLOR=1 to disable colors.
 					var (
 						spaceAbove        = e.LeadingWhitespaceAt(indexAbove)
 						strippedLineAbove = e.StripSingleLineComment(strings.TrimSpace(e.Line(indexAbove)))
-						newLeadingSpace   = spaceAbove
+						newLeadingSpace   string
 						oneIndentation    string
 					)
 
