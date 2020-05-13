@@ -129,8 +129,22 @@ func emphasis(line string, textColor, italicsColor, boldColor, strikeColor vt100
 	return result
 }
 
+// isListItem checks if the given line is likely to be a Markdown list item
+func isListItem(line string) bool {
+	trimmedLine := strings.TrimSpace(line)
+	fields := strings.Fields(trimmedLine)
+	if len(fields) == 0 {
+		return false
+	}
+	switch fields[0] {
+	case "*", "-", "+", "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.", "10.": // ignore numbers over 10
+		return true
+	}
+	return false
+}
+
 // markdownHighlight returns a VT100 colored line, a bool that is true if it worked out and a bool that is true if it's the start or stop of a block quote
-func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
+func markdownHighlight(line string, inCodeBlock, prevLineIsListItem bool) (string, bool, bool) {
 
 	dataPos := 0
 	for i, r := range line {
@@ -225,6 +239,7 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 		return leadingSpace + headerTextColor.Get(rest), true, false
 	case "*", "-", "+", "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.", "10.": // ignore numbers over 10
 		if strings.HasPrefix(rest, "- [ ] ") || strings.HasPrefix(rest, "- [x] ") || strings.HasPrefix(rest, "- [X] ") {
+
 			return leadingSpace + listBulletColor.Get(rest[:1]) + " " + checkboxColor.Get(rest[2:3]) + xColor.Get(rest[3:4]) + checkboxColor.Get(rest[4:5]) + " " + emphasis(quotedWordReplace(line[dataPos+6:], '`', listTextColor, listCodeColor), listTextColor, italicsColor, boldColor, strikeColor), true, false
 		}
 		if len(words) > 1 {
@@ -236,6 +251,11 @@ func markdownHighlight(line string, inCodeBlock bool) (string, bool, bool) {
 	// Leading hash without a space afterwards?
 	if strings.HasPrefix(line, "#") && !strings.HasPrefix(line, "# ") {
 		return vt100.Red.Get(line), true, false
+	}
+
+	// A completely regular line of text that is also the Continuation of a list item
+	if prevLineIsListItem {
+		return emphasis(quotedWordReplace(line, '`', listTextColor, listCodeColor), listTextColor, italicsColor, boldColor, strikeColor), true, false
 	}
 
 	// A completely regular line of text

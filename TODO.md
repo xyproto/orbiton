@@ -6,8 +6,6 @@
 
 ## Features I see myself using straight away
 
-- [ ] In Markdown, if the previous line has a checkbox, color the text in the same color as the text on the line above.
-      Or, just color all Markdown checkbox text in the same color as the rest of the text.
 - [ ] JSON formatter.
 - [ ] If a word is typed 1 letter differently from all the other instances in the current file: color it red.
 - [ ] Rainbow parenthesis.

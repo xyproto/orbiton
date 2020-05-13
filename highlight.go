@@ -53,11 +53,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	// q should now contain the current quote state
 	//panic(q.String())
 	var (
-		counter      int
-		line         string
-		screenLine   string
-		y            int
-		assemblyMode = e.mode == modeAssembly
+		counter            int
+		line               string
+		screenLine         string
+		y                  int
+		assemblyMode       = e.mode == modeAssembly
+		prevLineIsListItem bool
 	)
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y = 0; y < numlines; y++ {
@@ -80,7 +81,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 				if e.mode == modeGit {
 					coloredString = e.gitHighlight(line)
 				} else if e.mode == modeMarkdown {
-					if highlighted, ok, codeBlockFound := markdownHighlight(line, inCodeBlock); ok {
+					if highlighted, ok, codeBlockFound := markdownHighlight(line, inCodeBlock, prevLineIsListItem); ok {
 						coloredString = highlighted
 						if codeBlockFound {
 							inCodeBlock = !inCodeBlock
@@ -89,6 +90,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 						// Syntax highlight the line if it's not picked up by the markdownHighlight function
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					}
+					// If this is a list item, store true in "prevLineIsListItem"
+					prevLineIsListItem = isListItem(line)
 				} else if e.mode == modeConfig || e.mode == modeShell {
 					if strings.Contains(line, "/*") || strings.Contains(line, "*/") {
 						// No highlight
