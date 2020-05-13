@@ -24,6 +24,10 @@ const version = "o 2.27.0"
 
 func main() {
 	var (
+		// Record the time when the program starts
+		startTime       = time.Now()
+		startupDuration time.Duration
+
 		// Color scheme for the "text edit" mode
 		defaultEditorForeground       = vt100.LightGreen // for when syntax highlighting is not in use
 		defaultEditorBackground       = vt100.BackgroundDefault
@@ -74,6 +78,16 @@ func main() {
 		lastCopyY  LineIndex = -1 // used for keeping track if ctrl-c is pressed twice on the same line
 		lastPasteY LineIndex = -1 // used for keeping track if ctrl-v is pressed twice on the same line
 		lastCutY   LineIndex = -1 // used for keeping track if ctrl-x is pressed twice on the same line
+
+		createdNewFile bool // used for indicating that a new file was created
+		readOnly       bool // used for indicating that a loaded file is read-only
+
+		statusMessage  string // used when loading or creating a file, for the initial status message
+		warningMessage string // used when loading or creating a file, for the initial status message
+
+		quit        bool   // for indicating if the user has pressed a key to quit the program
+		previousKey string // keep track of the previous key press
+		dropO       bool   // used for vi-compatible "O"-mode at start
 	)
 
 	flag.Parse()
@@ -218,17 +232,11 @@ Set NO_COLOR=1 to disable colors.
 	if os.Getenv("XTERM_VERSION") != "" {
 		e.setLightTheme()
 	}
-
 	e.respectNoColorEnvironmentVariable()
 
+	// Prepare a status bar
 	status := NewStatusBar(defaultStatusForeground, defaultStatusBackground, defaultStatusErrorForeground, defaultStatusErrorBackground, e, statusDuration)
 	status.respectNoColorEnvironmentVariable()
-
-	// Load a file, or a prepare an empty version of the file (without saving it until the user saves it)
-	var (
-		statusMessage  string
-		warningMessage string
-	)
 
 	// We wish to redraw the canvas and reposition the cursor
 	e.redraw = true
@@ -248,10 +256,7 @@ Set NO_COLOR=1 to disable colors.
 			quitError(tty, err)
 		}
 
-		if e.Empty() {
-			statusMessage = "Loaded empty file: " + filename + warningMessage
-		} else {
-			statusMessage = "Loaded " + filename + warningMessage
+		if !e.Empty() {
 			// Check if the first line is special
 			firstLine := e.Line(0)
 			if strings.HasPrefix(firstLine, "#!") { // The line starts with a shebang
@@ -274,7 +279,7 @@ Set NO_COLOR=1 to disable colors.
 		testfile, err := os.OpenFile(filename, os.O_WRONLY, 0664)
 		if err != nil {
 			// can not open the file for writing
-			statusMessage += " (read only)"
+			readOnly = true
 			// set the color to red when in read-only mode
 			e.fg = vt100.Red
 			// disable syntax highlighting, to make it clear that the text is red
@@ -287,14 +292,10 @@ Set NO_COLOR=1 to disable colors.
 		}
 		testfile.Close()
 	} else {
-		newMode, err := e.PrepareEmpty(c, tty, filename)
-		if err != nil {
+		// Prepare an empty file
+		if newMode, err := e.PrepareEmpty(c, tty, filename); err != nil {
 			quitError(tty, err)
-		}
-
-		statusMessage = "New " + filename
-
-		if newMode != modeBlank {
+		} else if newMode != modeBlank {
 			e.mode = newMode
 		}
 
@@ -309,6 +310,7 @@ Set NO_COLOR=1 to disable colors.
 				quitError(tty, errors.New("could not remove an empty file that was just created: "+filename))
 			}
 		}
+		createdNewFile = true
 	}
 
 	// The editing mode is decided at this point
@@ -362,10 +364,10 @@ Set NO_COLOR=1 to disable colors.
 	case lineNumber == 0 && mode != modeGit:
 		// Load the o location history, if a line number was not given on the command line (and if available)
 		var (
-			recordedLineNumber LineNumber
-			found              bool
+			recordedLineNumber   LineNumber
+			found                bool
+			locationHistory, err = LoadLocationHistory(expandUser(locationHistoryFilename))
 		)
-		locationHistory, err = LoadLocationHistory(expandUser(locationHistoryFilename))
 		if err == nil { // no error
 			recordedLineNumber, found = locationHistory[absFilename]
 		}
@@ -407,9 +409,35 @@ Set NO_COLOR=1 to disable colors.
 		e.redraw = false
 	}
 
+	// Record the startup duration
+	startupDuration = time.Now().Sub(startTime)
+	startupMilliseconds := startupDuration.Milliseconds()
+
+	// Craft an appropriate status message
+	if createdNewFile {
+		statusMessage = "New " + filename
+	} else if e.Empty() {
+		statusMessage = "Loaded empty file: " + filename + warningMessage
+		if readOnly {
+			statusMessage += " (read only)"
+		}
+	} else {
+		// If startup is slow (> 100 ms), display the startup time in the status bar
+		if startupMilliseconds >= 100 {
+			statusMessage = fmt.Sprintf("Loaded %s%s (%dms)", filename, warningMessage, startupMilliseconds)
+		} else {
+			statusMessage = fmt.Sprintf("Loaded %s%s", filename, warningMessage)
+		}
+		if readOnly {
+			statusMessage += " (read only)"
+		}
+	}
+
+	// Display the status message
 	status.SetMessage(statusMessage)
 	status.Show(c, e)
 
+	// Redraw the cursor, if needed
 	if e.redrawCursor {
 		x := e.pos.ScreenX()
 		y := e.pos.ScreenY()
@@ -418,14 +446,6 @@ Set NO_COLOR=1 to disable colors.
 		vt100.SetXY(uint(x), uint(y))
 		e.redrawCursor = false
 	}
-
-	var (
-		quit        bool
-		previousKey string
-
-		// Used for vi-compatible "O"-mode at start
-		dropO bool
-	)
 
 	// This is the main loop for the editor
 	for !quit {
@@ -576,9 +596,8 @@ Set NO_COLOR=1 to disable colors.
 				// Create a new file and use it as stdout
 				manpageFile, err := os.Create("out.1")
 				if err != nil {
-					statusMessage = err.Error()
 					status.ClearAll(c)
-					status.SetMessage(statusMessage)
+					status.SetMessage(err.Error())
 					status.Show(c, e)
 					break // from case
 				}
@@ -596,24 +615,21 @@ Set NO_COLOR=1 to disable colors.
 					break // from case
 				}
 
-				statusMessage = "Saved out.1"
 				status.ClearAll(c)
-				status.SetMessage(statusMessage)
+				status.SetMessage("Saved out.1")
 				status.Show(c, e)
 				break // from case
 
 			} else if ext == ".adoc" {
 				asciidoctor := exec.Command("asciidoctor", "-b", "manpage", "-o", "out.1", filename)
 				if err := asciidoctor.Run(); err != nil {
-					statusMessage = err.Error()
 					status.ClearAll(c)
-					status.SetMessage(statusMessage)
+					status.SetMessage(err.Error())
 					status.Show(c, e)
 					break // from case
 				}
-				statusMessage = "Saved out.1"
 				status.ClearAll(c)
-				status.SetMessage(statusMessage)
+				status.SetMessage("Saved out.1")
 				status.Show(c, e)
 				break // from case
 				// Is this a Markdown file? Save to PDF, either by using pandoc or by writing the text file directly
@@ -622,10 +638,10 @@ Set NO_COLOR=1 to disable colors.
 				go func() {
 					pdfFilename := strings.Replace(filepath.Base(filename), ".", "_", -1) + ".pdf"
 
-					statusMessage := "Converting to PDF using Pandoc..."
-					status.SetMessage(statusMessage)
+					status.SetMessage("Converting to PDF using Pandoc...")
 					status.ShowNoTimeout(c, e)
 
+					// TODO: Use a proper function for generating a temporary file
 					tmpfn := "___o___.md"
 
 					if exists(tmpfn) {
@@ -638,9 +654,8 @@ Set NO_COLOR=1 to disable colors.
 
 					err := e.Save(&tmpfn, !e.DrawMode())
 					if err != nil {
-						statusMessage = err.Error()
 						status.ClearAll(c)
-						status.SetMessage(statusMessage)
+						status.SetMessage(err.Error())
 						status.Show(c, e)
 						return // from goroutine
 					}
@@ -648,17 +663,15 @@ Set NO_COLOR=1 to disable colors.
 					pandoc := exec.Command(pandocPath, "-N", "--toc", "-V", "geometry:a4paper", "-o", pdfFilename, tmpfn)
 					if err = pandoc.Run(); err != nil {
 						_ = os.Remove(tmpfn) // Try removing the temporary filename if pandoc fails
-						statusMessage = err.Error()
 						status.ClearAll(c)
-						status.SetMessage(statusMessage)
+						status.SetMessage(err.Error())
 						status.Show(c, e)
 						return // from goroutine
 					}
 
 					if err = os.Remove(tmpfn); err != nil {
-						statusMessage = err.Error()
 						status.ClearAll(c)
-						status.SetMessage(statusMessage)
+						status.SetMessage(err.Error())
 						status.Show(c, e)
 						return // from goroutine
 					}
@@ -881,8 +894,7 @@ Set NO_COLOR=1 to disable colors.
 				pdfFilename := strings.Replace(filepath.Base(filename), ".", "_", -1) + ".pdf"
 
 				// Show a status message while writing
-				statusMessage := "Saving PDF..."
-				status.SetMessage(statusMessage)
+				status.SetMessage("Saving PDF...")
 				status.ShowNoTimeout(c, e)
 
 				// TODO: Only overwrite if the previous PDF file was also rendered by "o".
@@ -1013,7 +1025,16 @@ Set NO_COLOR=1 to disable colors.
 			e.UseStickySearchTerm()
 			if e.SearchTerm() != "" {
 				// Go to next match
-				e.GoToNextMatch(c, status)
+				wrap := true
+				if err := e.GoToNextMatch(c, status, wrap); err == errNoSearchMatch {
+					status.Clear(c)
+					if wrap {
+						status.SetMessage(e.SearchTerm() + " not found")
+					} else {
+						status.SetMessage(e.SearchTerm() + " not found from here")
+					}
+					status.Show(c, e)
+				}
 			} else {
 				// Scroll down
 				e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
@@ -1460,6 +1481,9 @@ Set NO_COLOR=1 to disable colors.
 					doneCollectingDigits = true
 				}
 			}
+			if !cancel {
+				e.ClearSearchTerm()
+			}
 			status.ClearAll(c)
 			if lns == "" && !cancel {
 				if e.DataY() > 0 {
@@ -1837,7 +1861,8 @@ Set NO_COLOR=1 to disable colors.
 		previousY = y
 		// The first letter was not O or /, which invokes special vi-compatible behavior
 		firstLetterSinceStart = "x"
-	}
+
+	} // end of main loop
 
 	// Save the current location in the location history and write it to file
 	e.SaveLocation(absFilename, locationHistory)
