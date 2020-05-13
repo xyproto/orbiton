@@ -1048,11 +1048,27 @@ Set NO_COLOR=1 to disable colors.
 					e.End()
 				}
 			}
-		case "c:16": // ctrl-p, scroll up, and clear the sticky search term
-			e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
-			e.redrawCursor = true
-			if !e.DrawMode() && e.AfterLineScreenContents() {
-				e.End()
+		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term
+			e.UseStickySearchTerm()
+			if e.SearchTerm() != "" {
+				// Go to previous match
+				wrap := true
+				forward := false
+				if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
+					status.Clear(c)
+					if wrap {
+						status.SetMessage(e.SearchTerm() + " not found")
+					} else {
+						status.SetMessage(e.SearchTerm() + " not found from here")
+					}
+					status.Show(c, e)
+				}
+			} else {
+				e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
+				e.redrawCursor = true
+				if !e.DrawMode() && e.AfterLineScreenContents() {
+					e.End()
+				}
 			}
 			// Additional way to clear the sticky search term, like with Esc
 		case "c:20": // ctrl-t, toggle syntax highlighting or use the next git interactive rebase keyword
