@@ -354,6 +354,16 @@ Set NO_COLOR=1 to disable colors.
 		absFilename = filename
 	}
 
+	// Load the o location history, since this will be saved again later
+	var (
+		found bool
+		recordedLineNumber LineNumber
+	)
+	locationHistory, err := LoadLocationHistory(expandUser(locationHistoryFilename))
+	if err == nil { // no error
+		recordedLineNumber, found = locationHistory[absFilename]
+	}
+
 	// Jump to the correct line number
 	switch {
 	case lineNumber > 0:
@@ -362,14 +372,6 @@ Set NO_COLOR=1 to disable colors.
 		e.redrawCursor = true
 	case lineNumber == 0 && mode != modeGit:
 		// Load the o location history, if a line number was not given on the command line (and if available)
-		var (
-			recordedLineNumber   LineNumber
-			found                bool
-			locationHistory, err = LoadLocationHistory(expandUser(locationHistoryFilename))
-		)
-		if err == nil { // no error
-			recordedLineNumber, found = locationHistory[absFilename]
-		}
 		if !found {
 			// Try to load the NeoVim location history, then
 			recordedLineNumber, err = FindInNvimLocationHistory(expandUser(nvimLocationHistoryFilename), absFilename)
