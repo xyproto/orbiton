@@ -347,8 +347,6 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 					e.redrawCursor = true
 					// Nope, just the error message
 					return errorMessage, true, false
-				} else {
-					continue
 				}
 			}
 		}
