@@ -124,7 +124,7 @@ ctrl-b     to toggle a bookmark for the current line, or jump to a bookmark
 ctrl-j     to join lines
 ctrl-u     to undo (ctrl-z is also possible, but may background the application)
 ctrl-l     to jump to a specific line (or press return to jump to the top)
-ctrl-f     to forward search for a string, from the current location
+ctrl-f     to find a string
 esc        to redraw the screen and clear the last search
 ctrl-space to build Go, C++, Zig, V, Rust, Haskell, Markdown, Adoc or Sdoc
 ctrl-r     to render the current text to a PDF document

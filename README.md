@@ -89,7 +89,7 @@ To unset:
 * `ctrl-j` - Join lines (or jump to the bookmark, if set).
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
 * `ctrl-l` - Jump to a specific line number. Followes by `return` to jump to the top. If at the top, press `return` to jump to the bottom.
-* `ctrl-f` - Forward search for a string.
+* `ctrl-f` - Search for a string. The search wraps around and is case sensitive.
 * `esc` - Redraw the screen and clear the last search.
 * `ctrl-b` - Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
 * `ctrl-\` - Comment in or out a block of code.

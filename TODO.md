@@ -1,5 +1,6 @@
 # TODO
 
+- [ ] If joining a line that starts with a single-line comment with a line below that also starts with a single line comment, remove the extra comment marker.
 - [ ] If over a certain percentage of the characters are not unicode.Graphics, enter binary mode.
 - [ ] Let `ctrl-p` go to the previous search result, when a search is active.
 - [ ] Locatization.
@@ -33,3 +34,4 @@
 - [ ] Make it easy to make recordings of the editing process.
 - [ ] Introduce line number, line index and character position as different types, instead of just using "int".
 - [ ] If an error is in another file, make that clearer.
+- [ ] Fix e.GoTo in the context of search wraparound.
