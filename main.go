@@ -71,8 +71,6 @@ func main() {
 
 		spacesPerTab = 4 // default spaces per tab
 
-		mode Mode // an "enum"/int signalling if this file should be in git mode, markdown mode etc
-
 		lastCopyY  LineIndex = -1 // used for keeping track if ctrl-c is pressed twice on the same line
 		lastPasteY LineIndex = -1 // used for keeping track if ctrl-v is pressed twice on the same line
 		lastCutY   LineIndex = -1 // used for keeping track if ctrl-x is pressed twice on the same line
@@ -144,55 +142,8 @@ Set NO_COLOR=1 to disable colors.
 		}
 	}
 
-	baseFilename := filepath.Base(filename)
-
-	// A list of the most common configuration filenames that does not have an extension
-	var configFilenames = []string{"fstab", "config", "BUILD", "WORKSPACE", "passwd", "group", "environment", "shadow", "gshadow", "hostname", "hosts", "issue"}
-
-	// Check if we should be in a particular mode for a particular type of file
-	ext := filepath.Ext(baseFilename)
-	switch {
-	case baseFilename == "COMMIT_EDITMSG" ||
-		baseFilename == "MERGE_MSG" ||
-		(strings.HasPrefix(baseFilename, "git-") &&
-			!strings.Contains(baseFilename, ".") &&
-			strings.Count(baseFilename, "-") >= 2):
-		// Git mode
-		mode = modeGit
-	case strings.HasSuffix(filename, ".git/config") || ext == "ini":
-		mode = modeConfig
-	case ext == ".sh" || ext == ".ksh" || ext == ".tcsh" || ext == ".bash" || ext == ".zsh" || baseFilename == "PKGBUILD" || (strings.HasPrefix(baseFilename, ".") && strings.Contains(baseFilename, "sh")): // This last part covers .bashrc, .zshrc etc
-		mode = modeShell
-	case ext == ".yml" || ext == ".toml" || ext == ".ini" || strings.HasSuffix(filename, ".git/config") || (ext == "" && (strings.HasSuffix(baseFilename, "file") || strings.HasSuffix(baseFilename, "rc") || hasS(configFilenames, baseFilename))):
-		mode = modeConfig
-	case baseFilename == "Makefile" || baseFilename == "makefile" || baseFilename == "GNUmakefile":
-		mode = modeMakefile
-	default:
-		switch ext {
-		case ".asm", ".S", ".s", ".inc":
-			mode = modeAssembly
-		case ".go":
-			mode = modeGo
-		case ".hs":
-			mode = modeHaskell
-		case ".ml":
-			mode = modeOCaml
-		case ".py":
-			mode = modePython
-		case ".md":
-			// Markdown mode
-			mode = modeMarkdown
-		case ".adoc", ".rst", ".scdoc", ".scd":
-			// Markdown-like syntax highlighting
-			// TODO: Introduce a separate mode for these.
-			mode = modeMarkdown
-		case ".txt", ".text", ".nfo", ".diz":
-			mode = modeBlank
-		}
-	}
-
-	// Check if we should enable syntax highlighting by default
-	syntaxHighlight := mode != modeBlank || ext != ""
+	// mode is what would have been an enum in other languages, for signalling if this file should be in git mode, markdown mode etc
+	mode, syntaxHighlight := detectEditorMode(filename)
 
 	// Per-language adjustments to highlighting of keywords
 	// TODO: Use a different syntax highlighting package, with support for many different programming languages
@@ -367,7 +318,7 @@ Set NO_COLOR=1 to disable colors.
 		e.gitColor = vt100.LightGreen
 		status.fg = vt100.LightBlue
 		status.bg = vt100.BackgroundDefault
-		if baseFilename == "MERGE_MSG" {
+		if filepath.Base(filename) == "MERGE_MSG" {
 			e.InsertLineBelow()
 		} else if e.EmptyLine() {
 			e.InsertLineBelow()
@@ -613,7 +564,7 @@ Set NO_COLOR=1 to disable colors.
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
 		case "c:0": // ctrl-space, build source code to executable, convert to PDF or write to PNG, depending on the mode
-			ext := filepath.Ext(baseFilename)
+			ext := filepath.Ext(filename)
 			if ext == ".scd" || ext == ".scdoc" {
 				scdoc := exec.Command("scdoc")
 
@@ -669,7 +620,7 @@ Set NO_COLOR=1 to disable colors.
 			} else if pandocPath := which("pandoc"); ext == ".md" && e.mode == modeMarkdown && pandocPath != "" {
 
 				go func() {
-					pdfFilename := strings.Replace(baseFilename, ".", "_", -1) + ".pdf"
+					pdfFilename := strings.Replace(filepath.Base(filename), ".", "_", -1) + ".pdf"
 
 					statusMessage := "Converting to PDF using Pandoc..."
 					status.SetMessage(statusMessage)
@@ -785,7 +736,7 @@ Set NO_COLOR=1 to disable colors.
 							}
 
 							if e.mode == modePython {
-								if errorLine, errorMessage := ParsePythonError(string(output), baseFilename); errorLine != -1 {
+								if errorLine, errorMessage := ParsePythonError(string(output), filepath.Base(filename)); errorLine != -1 {
 									e.redraw = e.GoTo(LineIndex(errorLine-1), c, status)
 									status.ClearAll(c)
 									status.SetErrorMessage("Error: " + errorMessage)
@@ -927,7 +878,7 @@ Set NO_COLOR=1 to disable colors.
 			// Write to PDF in a goroutine
 			go func() {
 
-				pdfFilename := strings.Replace(baseFilename, ".", "_", -1) + ".pdf"
+				pdfFilename := strings.Replace(filepath.Base(filename), ".", "_", -1) + ".pdf"
 
 				// Show a status message while writing
 				statusMessage := "Saving PDF..."
@@ -1085,20 +1036,20 @@ Set NO_COLOR=1 to disable colors.
 			}
 			// Additional way to clear the sticky search term, like with Esc
 		case "c:20": // ctrl-t, toggle syntax highlighting or use the next git interactive rebase keyword
-			if line := e.CurrentLine(); e.mode == modeGit && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
+			if line := e.CurrentLine(); e.mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
 				undo.Snapshot(e)
 				newLine := nextGitRebaseKeyword(line)
 				e.SetLine(e.DataY(), newLine)
 				e.redraw = true
 				e.redrawCursor = true
 				break
+			}
+			// Regular syntax highlight toggle
+			e.ToggleHighlight()
+			if e.syntaxHighlight {
+				e.bg = defaultEditorBackground
 			} else {
-				e.ToggleHighlight()
-				if e.syntaxHighlight {
-					e.bg = defaultEditorBackground
-				} else {
-					e.bg = vt100.BackgroundDefault
-				}
+				e.bg = vt100.BackgroundDefault
 			}
 			// Now do a full reset/redraw
 			fallthrough

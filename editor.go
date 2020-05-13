@@ -28,6 +28,7 @@ const (
 	modeHaskell  // for Haskell source files
 	modeOCaml    // for OCaml source files
 	modePython   // for Python source files
+	modeText     // for plain text documents
 )
 
 // Mode is a per-filetype mode, like for Markdown
