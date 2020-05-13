@@ -109,8 +109,8 @@ ctrl-w     for Zig, Rust, V and Go, format with the "... fmt" command
            for git interactive rebases, cycle the rebase keywords
 ctrl-a     go to start of line, then start of text and then the previous line
 ctrl-e     go to end of line and then the next line
-ctrl-p     to scroll up 10 lines
 ctrl-n     to scroll down 10 lines or go to the next match if a search is active
+ctrl-p     to scroll up 10 lines or go to the previous match
 ctrl-k     to delete characters to the end of the line, then delete the line
 ctrl-g     to toggle filename/line/column/unicode/word count status display
 ctrl-d     to delete a single character
@@ -445,11 +445,13 @@ Set NO_COLOR=1 to disable colors.
 		e.redrawCursor = false
 	}
 
+	var key string
+
 	// This is the main loop for the editor
 	for !quit {
 
 		// Read the next key
-		key := tty.String()
+		key = tty.String()
 
 		switch key {
 		case "c:17": // ctrl-q, quit
@@ -956,10 +958,6 @@ Set NO_COLOR=1 to disable colors.
 			}
 			e.redrawCursor = true
 		case "↑": // up arrow
-			// Disregard the curren copy/cut/paste state
-			lastCutY = -1
-			lastCopyY = -1
-			lastPasteY = -1
 			// Move the screen cursor
 			if !e.DrawMode() {
 				if e.DataY() > 0 {
@@ -986,10 +984,6 @@ Set NO_COLOR=1 to disable colors.
 			}
 			e.redrawCursor = true
 		case "↓": // down arrow
-			// Disregard the curren copy/cut/paste state
-			lastCutY = -1
-			lastCopyY = -1
-			lastPasteY = -1
 			if !e.DrawMode() {
 				if e.DataY() < LineIndex(e.Len()) {
 					// Move the position down in the current screen
@@ -1110,6 +1104,12 @@ Set NO_COLOR=1 to disable colors.
 				e.Next(c)
 			}
 		case "c:13": // return
+
+			// Modify the paste double-keypress detection to allow for a manual return before pasting the rest
+			if lastPasteY != -1 && previousKey != "c:13" {
+				lastPasteY++
+			}
+
 			undo.Snapshot(e)
 			// if the current line is empty, insert a blank line
 			if !e.DrawMode() {
@@ -1671,22 +1671,36 @@ Set NO_COLOR=1 to disable colors.
 					e.InsertString(c, strings.TrimSpace(copyLines[0]))
 				}
 			} else { // Multi line paste (the rest of the lines)
-				lastPasteY = y
 				// Pressed the second time for this line number, paste multiple lines without trimming
+				var (
+					// copyLines contains the lines to be pasted, and they are > 1
+					// the first line is skipped since that was already pasted when ctrl-v was pressed the first time
+					lastIndex = len(copyLines[1:]) - 1
 
-				// copyLines contains the lines to be pasted, and they are > 1
-				// the first line is skipped since that was already pasted when ctrl-v was pressed the first time
-				lastIndex := len(copyLines[1:]) - 1
-				// Start by pasting (and overwriting) an untrimmed version of this line
-				e.SetLine(y, copyLines[0])
+					// If the first line has been pasted, and return has been pressed, paste the rest of the lines differently
+					skipFirstLineInsert bool
+				)
+
+				if previousKey != "c:13" {
+					// Start by pasting (and overwriting) an untrimmed version of this line,
+					// if the previous key was not return.
+					e.SetLine(y, copyLines[0])
+				} else if e.EmptyRightTrimmedLine() {
+					skipFirstLineInsert = true
+				}
+
 				// The paste the rest of the lines, also untrimmed
 				for i, line := range copyLines[1:] {
 					if i == lastIndex && len(strings.TrimSpace(line)) == 0 {
 						// If the last line is blank, skip it
 						break
 					}
-					e.InsertLineBelow()
-					e.Down(c, nil) // no status message if the end of ducment is reached, there should always be a new line
+					if skipFirstLineInsert {
+						skipFirstLineInsert = false
+					} else {
+						e.InsertLineBelow()
+						e.Down(c, nil) // no status message if the end of ducment is reached, there should always be a new line
+					}
 					e.InsertString(c, line)
 				}
 			}
