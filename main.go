@@ -356,7 +356,7 @@ Set NO_COLOR=1 to disable colors.
 
 	// Load the o location history, since this will be saved again later
 	var (
-		found bool
+		found              bool
 		recordedLineNumber LineNumber
 	)
 	locationHistory, err := LoadLocationHistory(expandUser(locationHistoryFilename))
