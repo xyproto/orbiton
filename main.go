@@ -161,29 +161,34 @@ Set NO_COLOR=1 to disable colors.
 		mode = modeGit
 	case strings.HasSuffix(filename, ".git/config") || ext == "ini":
 		mode = modeConfig
-	case ext == ".md":
-		// Markdown mode
-		mode = modeMarkdown
-	case ext == ".adoc" || ext == ".rst" || ext == ".scdoc" || ext == ".scd":
-		// Markdown-like syntax highlighting
-		// TODO: Introduce a separate mode for these.
-		mode = modeMarkdown
 	case ext == ".sh" || ext == ".ksh" || ext == ".tcsh" || ext == ".bash" || ext == ".zsh" || baseFilename == "PKGBUILD" || (strings.HasPrefix(baseFilename, ".") && strings.Contains(baseFilename, "sh")): // This last part covers .bashrc, .zshrc etc
 		mode = modeShell
 	case ext == ".yml" || ext == ".toml" || ext == ".ini" || strings.HasSuffix(filename, ".git/config") || (ext == "" && (strings.HasSuffix(baseFilename, "file") || strings.HasSuffix(baseFilename, "rc") || hasS(configFilenames, baseFilename))):
 		mode = modeConfig
 	case baseFilename == "Makefile" || baseFilename == "makefile" || baseFilename == "GNUmakefile":
 		mode = modeMakefile
-	case ext == ".asm" || ext == ".S" || ext == ".inc":
-		mode = modeAssembly
-	case ext == ".go":
-		mode = modeGo
-	case ext == ".hs":
-		mode = modeHaskell
-	case ext == ".ml":
-		mode = modeOCaml
-	case ext == ".py":
-		mode = modePython
+	default:
+		switch ext {
+		case ".asm", ".S", ".s", ".inc":
+			mode = modeAssembly
+		case ".go":
+			mode = modeGo
+		case ".hs":
+			mode = modeHaskell
+		case ".ml":
+			mode = modeOCaml
+		case ".py":
+			mode = modePython
+		case ".md":
+			// Markdown mode
+			mode = modeMarkdown
+		case ".adoc", ".rst", ".scdoc", ".scd":
+			// Markdown-like syntax highlighting
+			// TODO: Introduce a separate mode for these.
+			mode = modeMarkdown
+		case ".txt", ".text", ".nfo", ".diz":
+			mode = modeBlank
+		}
 	}
 
 	// Check if we should enable syntax highlighting by default
