@@ -6,7 +6,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-var gitRebasePrefixes = []string{"p", "pick", "r", "reword", "d", "drop", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "l", "label", "t", "reset", "m", "merge"}
+var gitRebasePrefixes = []string{"p", "pick", "f", "fixup", "r", "reword", "d", "drop", "e", "edit", "s", "squash", "x", "exec", "b", "break", "l", "label", "t", "reset", "m", "merge"}
 
 func (e *Editor) gitHighlight(line string) string {
 	var coloredString string
