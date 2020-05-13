@@ -56,7 +56,7 @@ func (e *Editor) ClearStickySearchTerm() {
 }
 
 // forwardSearch is a helper function for searching for a string from the given startIndex,
-// up to and including the given stopIndex. -1, -1 is returned if there are no matches.
+// up to the given stopIndex. -1, -1 is returned if there are no matches.
 func (e *Editor) forwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex) {
 	var (
 		s      string    = e.SearchTerm()
@@ -70,7 +70,7 @@ func (e *Editor) forwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex)
 
 	currentIndex := e.DataY()
 
-	// Search from the given startIndex up to and including the given stopIndex
+	// Search from the given startIndex up to the given stopIndex
 	for y := startIndex; y < stopIndex; y++ {
 		lineContents := e.Line(y)
 		if y == currentIndex {
@@ -119,12 +119,8 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap bool) er
 	// Do a search from the top if a match was not found
 	if foundY == -1 && wrap {
 		startIndex = 0
-		stopIndex = e.DataY()
+		stopIndex = e.DataY() + 1
 		foundX, foundY = e.forwardSearch(startIndex, stopIndex)
-		// TODO: Figure out why this appears to be needed (after the wraparound, the match is 1 off)
-		if foundY > 0 {
-			foundY++
-		}
 	}
 
 	// Check if a match was found
@@ -139,6 +135,20 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap bool) er
 	if foundX != -1 {
 		tabs := strings.Count(e.Line(foundY), "\t")
 		e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
+	}
+
+	// I have checked that the foundY line actually contains the match before the GoTo call above.
+	// TODO: Fix the GoTo function so that it does not go to the wrong line index.
+	if strings.Contains(e.CurrentLine(), s) {
+		// OK GOOD
+	} else if strings.Contains(e.Line(e.DataY()-1), s) {
+		// BAD, the match is on the previous line
+		e.Up(c, status)
+		e.Next(c)
+	} else if strings.Contains(e.Line(e.DataY()+1), s) {
+		// BAD, the match is on the next line
+		e.Down(c, status)
+		e.Next(c)
 	}
 
 	// Center and prepare to redraw
