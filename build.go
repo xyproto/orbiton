@@ -242,6 +242,11 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 	// Ignore the status code / error, only look at the output.
 	output, err := cmd.CombinedOutput()
 
+	if err != nil && len(bytes.TrimSpace(output)) == 0 {
+		// Could not run, and there was no output. Perhaps the executable is missing?
+		return "Error: silent compiler", true, false
+	}
+
 	// NOTE: Don't do anything with the output and err variables here, let the if below handle it.
 
 	// Did the command return a non-zero status code, or does the output contain "error:"?
