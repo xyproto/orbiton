@@ -600,19 +600,16 @@ Set NO_COLOR=1 to disable colors.
 				status.ClearAll(c)
 				status.SetMessage(statusMessage)
 				status.Show(c, e)
-			} else if !compiled {
-				// Did something go wrong?
+			} else if performedAction && !compiled {
+				// Performed an action, but it did not work out
 				status.ClearAll(c)
-				status.SetErrorMessage(err.Error())
+				status.SetErrorMessage(statusMessage)
 				status.Show(c, e)
-			} else if statusMessage != "" {
-				// Did it work out, but there was a status message?
+			} else if performedAction && compiled {
+				// Everything worked out
 				status.ClearAll(c)
 				status.SetMessage(statusMessage)
 				status.ShowNoTimeout(c, e)
-			} else {
-				// Did it work out, but without any status message?
-				// Fine.
 			}
 		case "c:18": // ctrl-r, render to PDF, or if in git mode, cycle rebase keywords
 

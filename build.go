@@ -304,12 +304,11 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 							if ext != ".hs" {
 								return strings.Join(fields[3:], " "), true, false
 							}
-							// TODO: Test this code path
-							return "UNIMPLEMENTED 1", true, false
+							return errorMessage, true, false
 						}
 					}
 				}
-				return "UNIMPLEMENTED 2", true, false
+				return errorMessage, true, false
 			} else if (i-1) > 0 && (i-1) < len(lines) {
 				// Rust
 				if msgLine := lines[i-1]; strings.Contains(line, " --> ") && strings.Count(line, ":") == 2 && strings.Count(msgLine, ":") >= 1 {
@@ -345,15 +344,11 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 						}
 					}
 					e.redrawCursor = true
-					break
+					// Nope, just the error message
+					return errorMessage, true, false
 				}
 			}
 		}
-	} else {
-		// The command failed (status code != 0), but no errors were picked up from the output
-		return "Could not compile", true, false
 	}
-
-	// No status message, no error, not a success?
-	return "", false, false
+	return "Success", true, true
 }
