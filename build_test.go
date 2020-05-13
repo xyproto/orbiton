@@ -41,6 +41,7 @@ func TestBuildOrExport(t *testing.T) {
 
 	} else {
 		fmt.Println(s)
+		// silent compiler
 		if performedAction {
 			t.Fail()
 		}
