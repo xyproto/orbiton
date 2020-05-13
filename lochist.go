@@ -19,10 +19,6 @@ const (
 	maxLocationHistoryEntries    = 1024
 )
 
-var (
-	locationHistory map[string]LineNumber // remember where we were in each absolute filename
-)
-
 // LoadLocationHistory will attempt to load the per-absolute-filename recording of which line is active.
 // The returned map can be empty.
 func LoadLocationHistory(configFile string) (map[string]LineNumber, error) {
