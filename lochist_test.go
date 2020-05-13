@@ -29,5 +29,8 @@ func TestNeoVimMsgPack(t *testing.T) {
 		// main.go might not be in the neovim location history, this is fine
 		fmt.Println(err)
 	}
-	fmt.Println("line", line)
+	_ = line
+
+	// Enable this for debugging
+	//fmt.Println("line", line)
 }
