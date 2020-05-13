@@ -1,5 +1,7 @@
 # TODO
 
+- [ ] Let `ctrl-p` go to the previous search result, when a search is active.
+- [ ] Locatization.
 - [ ] JSON formatter.
 - [ ] If a word is typed 1 letter differently from all the other instances in the current file: color it red.
 - [ ] Rainbow parenthesis.
