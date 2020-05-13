@@ -244,7 +244,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 
 	if err != nil && len(bytes.TrimSpace(output)) == 0 {
 		// Could not run, and there was no output. Perhaps the executable is missing?
-		return "Error: silent compiler", true, false
+		return "Error: silent compiler", false, false
 	}
 
 	// NOTE: Don't do anything with the output and err variables here, let the if below handle it.
