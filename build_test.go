@@ -8,7 +8,13 @@ import (
 func ExampleEditor_BuildOrExport_goError() {
 	e := NewSimpleEditor(80)
 	os.Chdir("tests")
+
+	// The rename is so that "err.go" is not picked up by the CI tests
+	os.Rename("err_go", "err.go")
+	defer os.Rename("err.go", "err_go")
+
 	s, performedAction, compiledOK := e.BuildOrExport(nil, nil, "err.go")
+
 	os.Chdir("..")
 
 	fmt.Printf("%s [performed action: %v] [compiled OK: %v]\n", s, performedAction, compiledOK)
