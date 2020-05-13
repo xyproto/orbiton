@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func ExampleEditor_BuildOrExport() {
+func ExampleEditor_BuildOrExport_GoError() {
 	e := NewSimpleEditor(80)
 	os.Chdir("tests")
 	s, performedAction, compiledOK := e.BuildOrExport(nil, nil, "err.go")
@@ -15,4 +15,16 @@ func ExampleEditor_BuildOrExport() {
 
 	// Output:
 	// undefined: asdfasdf [performed action: true] [compiled OK: false]
+}
+
+func ExampleEditor_BuildOrExport_RustError() {
+	e := NewSimpleEditor(80)
+	os.Chdir("tests")
+	s, performedAction, compiledOK := e.BuildOrExport(nil, nil, "err.rs")
+	os.Chdir("..")
+
+	fmt.Printf("%s [performed action: %v] [compiled OK: %v]\n", s, performedAction, compiledOK)
+
+	// Output:
+	// undefined: ? [performed action: true] [compiled OK: false]
 }
