@@ -57,6 +57,7 @@ func (e *Editor) ClearStickySearchTerm() {
 
 // forwardSearch is a helper function for searching for a string from the given startIndex,
 // up to the given stopIndex. -1, -1 is returned if there are no matches.
+// startIndex is expected to be smaller than stopIndex
 func (e *Editor) forwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex) {
 	var (
 		s      string    = e.SearchTerm()
@@ -67,9 +68,7 @@ func (e *Editor) forwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex)
 		// Return -1, -1 if no search term is set
 		return foundX, foundY
 	}
-
 	currentIndex := e.DataY()
-
 	// Search from the given startIndex up to the given stopIndex
 	for y := startIndex; y < stopIndex; y++ {
 		lineContents := e.Line(y)
@@ -100,28 +99,92 @@ func (e *Editor) forwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex)
 	return foundX, LineIndex(foundY)
 }
 
-// GoToNextMatch will go to the next match, using e.SearchTerm(), if possible.
-// The search does not wrap around and is case-sensitive.
-// TODO: Add wrap around behavior, toggled with a bool argument.
-// TODO: Add case-insensitive behavior, toggled with a bool argument.
+// backwardSearch is a helper function for searching for a string from the given startIndex,
+// backwards to the given stopIndex. -1, -1 is returned if there are no matches.
+// startIndex is expected to be larger than stopIndex
+func (e *Editor) backwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex) {
+	var (
+		s      string    = e.SearchTerm()
+		foundX int       = -1
+		foundY LineIndex = -1
+	)
+	if s == "" {
+		// Return -1, -1 if no search term is set
+		return foundX, foundY
+	}
+	currentIndex := e.DataY()
+	// Search from the given startIndex backwards up to the given stopIndex
+	for y := startIndex; y >= stopIndex; y-- {
+		lineContents := e.Line(y)
+		if y == currentIndex {
+			x, err := e.DataX()
+			if err != nil {
+				continue
+			}
+			// Search from the next byte (not rune) position on this line
+			// TODO: Move forward one rune instead of one byte
+			x++
+			if x >= len(lineContents) {
+				continue
+			}
+			if strings.Contains(lineContents[x:], s) {
+				foundX = x + strings.Index(lineContents[x:], s)
+				foundY = y
+				break
+			}
+		} else {
+			if strings.Contains(lineContents, s) {
+				foundX = strings.Index(lineContents, s)
+				foundY = y
+				break
+			}
+		}
+	}
+	return foundX, LineIndex(foundY)
+}
+
+// GoToNextMatch will go to the next match, searching for "e.SearchTerm()".
+// * The search wraps around if wrap is true.
+// * The search is backawards if forward is false.
+// * The search is case-sensitive.
 // Returns an error if the search was successful but no match was found.
-func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap bool) error {
-	s := e.SearchTerm()
+func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap, forward bool) error {
+	var (
+		foundX int
+		foundY LineIndex
+		s      = e.SearchTerm()
+	)
+
+	// Check if there's something to search for
 	if s == "" {
 		return nil
 	}
 
-	// Forward search from the current location
-	startIndex := e.DataY()
-	stopIndex := LineIndex(e.Len())
-	foundX, foundY := e.forwardSearch(startIndex, stopIndex)
-
-	// Do a search from the top if a match was not found
-	if foundY == -1 && wrap {
-		startIndex = 0
-		//stopIndex = e.DataY()
+	// Search forward or backward
+	if forward {
+		// Forward search from the current location
+		startIndex := e.DataY()
 		stopIndex := LineIndex(e.Len())
 		foundX, foundY = e.forwardSearch(startIndex, stopIndex)
+	} else {
+		// Backward search form the current location
+		startIndex := e.DataY()
+		stopIndex := LineIndex(0)
+		foundX, foundY = e.backwardSearch(startIndex, stopIndex)
+	}
+
+	if foundY == -1 && wrap {
+		if forward {
+			// Do a search from the top if a match was not found
+			startIndex := LineIndex(0)
+			stopIndex := LineIndex(e.Len())
+			foundX, foundY = e.forwardSearch(startIndex, stopIndex)
+		} else {
+			// Do a search from the bottom if a match was not found
+			startIndex := LineIndex(e.Len())
+			stopIndex := LineIndex(0)
+			foundX, foundY = e.backwardSearch(startIndex, stopIndex)
+		}
 	}
 
 	// Check if a match was found
@@ -206,10 +269,10 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		e.GoToLineNumber(initialLocation, c, status, false)
 	}
 
-	wrap := true
-
 	// Perform the actual search
-	if err := e.GoToNextMatch(c, status, wrap); err == errNoSearchMatch {
+	wrap := true    // with wraparound
+	forward := true // forward search
+	if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
 		// If no match was found, and return was not pressed, try again from the top
 		//e.redraw = e.GoToLineNumber(1, c, status, true)
 		//err = e.GoToNextMatch(c, status)

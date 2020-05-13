@@ -1024,7 +1024,8 @@ Set NO_COLOR=1 to disable colors.
 			if e.SearchTerm() != "" {
 				// Go to next match
 				wrap := true
-				if err := e.GoToNextMatch(c, status, wrap); err == errNoSearchMatch {
+				forward := true
+				if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
 					status.Clear(c)
 					if wrap {
 						status.SetMessage(e.SearchTerm() + " not found")
