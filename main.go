@@ -1051,6 +1051,8 @@ Set NO_COLOR=1 to disable colors.
 			} else {
 				e.bg = vt100.BackgroundDefault
 			}
+			e.redraw = true
+			e.redrawCursor = true
 			// Now do a full reset/redraw
 			fallthrough
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
