@@ -73,6 +73,8 @@ func (e *Editor) exportAdoc(manFilename string) error {
 	return nil
 }
 
+// mustExportPandoc returns nothing, but can be used concurrently.
+// This takes a bit longer than the other export types, which is why this one is different.
 func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath, pdfFilename string) {
 	status.SetMessage("Exporting to PDF using Pandoc...")
 	status.ShowNoTimeout(c, e)
@@ -108,12 +110,15 @@ func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath
 		status.Show(c, e)
 		return // from goroutine
 	}
+
+	// Remove the temporary file
 	if err = os.Remove(tmpfn); err != nil {
 		status.ClearAll(c)
 		status.SetMessage(err.Error())
 		status.Show(c, e)
 		return // from goroutine
 	}
+
 	statusMessage := "Saved " + pdfFilename
 	status.ClearAll(c)
 	status.SetMessage(statusMessage)
@@ -123,18 +128,17 @@ func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath
 // BuildOrExport will try to build the source code or export the document
 // Returns a positive status message or an empty string and an error
 func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename string) (string, error) {
-	var (
-		ext         = filepath.Ext(filename)
-		manFilename = "out.1"
-	)
+	ext := filepath.Ext(filename)
 
 	// scdoc
+	manFilename := "out.1"
 	if ext == ".scd" || ext == ".scdoc" {
 		if err := e.exportScdoc(manFilename); err != nil {
 			return "", err
 		}
 		return "Exported " + manFilename, nil
 	}
+
 	// asciidoctor
 	if ext == ".adoc" {
 		if err := e.exportAdoc(manFilename); err != nil {
@@ -142,6 +146,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		}
 		return "Exported " + manFilename, nil
 	}
+
 	// pandoc
 	if pandocPath := which("pandoc"); ext == ".md" && e.mode == modeMarkdown && pandocPath != "" {
 		pdfFilename := strings.Replace(filepath.Base(filename), ".", "_", -1) + ".pdf"
@@ -151,10 +156,13 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		return "", nil
 	}
 
-	// Find a suitable default executable name
-	defaultExecutableName := "main"            // If the current directory name is not found
-	if curdir, err := os.Getwd(); err == nil { // no error
-		defaultExecutableName = filepath.Base(curdir)
+	defaultExecutableName := "main" // If the current directory name is not found
+
+	// Find a suitable default executable name (only used with OCaml)
+	if ext == ".ml" {
+		if curdir, err := os.Getwd(); err == nil { // no error
+			defaultExecutableName = filepath.Base(curdir)
+		}
 	}
 
 	// Set up a few variables
@@ -183,13 +191,12 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			}
 		}
 	}
-
-	// Can not export or compile, nothing more to do
+	// Can not export nor compile, nothing more to do
 	if foundCommand == nil {
 		return "", errNoSuitableBuildCommand
 	}
 
-	// --- compilation ---
+	// --- Compilation ---
 
 	var (
 		cmd                   = foundCommand // shorthand
@@ -215,14 +222,16 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 	}
 
 	// Display a status message with no timeout about what is currently being done
-	status.ClearAll(c)
-	status.SetMessage(progressStatusMessage)
-	status.ShowNoTimeout(c, e)
+	if status != nil {
+		status.ClearAll(c)
+		status.SetMessage(progressStatusMessage)
+		status.ShowNoTimeout(c, e)
+	}
 
-	// Run the command
+	// Run the command and fetch the combined output from stderr and stdout
 	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", err
+	if err == nil { // no problems
+		return "Success", nil
 	}
 
 	// Could run the command, but got errors?
@@ -244,6 +253,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 
 		// Find the first error message
 		lines := strings.Split(string(output), "\n")
+
 		var prevLine string
 		for _, line := range lines {
 			if ext == ".hs" {
@@ -265,12 +275,14 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			errorMessage = "Test failed: " + errorMessage
 		}
 
+		// Found a generic error message, or a Haskell error message
 		if errorMessage != "" {
 			return "", errors.New(errorMessage)
 		}
 
+		// Analyze all lines
 		for i, line := range lines {
-			// Jump to the error location, C++, Go and Haskell
+			// Go, C++ and Haskell
 			if strings.Count(line, ":") >= 3 {
 				fields := strings.SplitN(line, ":", 4)
 				// Go to Y:X, if available
@@ -278,6 +290,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 				if y, err := strconv.Atoi(fields[1]); err == nil { // no error
 					foundY = LineIndex(y - 1)
 					e.redraw = e.GoTo(foundY, c, status)
+					e.redrawCursor = e.redraw
 					foundX := -1
 					if x, err := strconv.Atoi(fields[2]); err == nil { // no error
 						foundX = x - 1
@@ -292,15 +305,14 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 								return "", errors.New(strings.Join(fields[3:], " "))
 							}
 							// TODO: Test this code path
-							return "", errors.New(line)
+							return "A", errors.New("A")
 						}
 					}
 				}
-				e.redrawCursor = true
-				break
+				return "B", errors.New("B")
 			} else if (i-1) > 0 && (i-1) < len(lines) {
+				// Rust
 				if msgLine := lines[i-1]; strings.Contains(line, " --> ") && strings.Count(line, ":") == 2 && strings.Count(msgLine, ":") >= 1 {
-					// Jump to the error location, for Rust
 					errorFields := strings.SplitN(msgLine, ":", 2)                  // Already checked for 2 colons
 					errorMessage := strings.TrimSpace(errorFields[1])               // There will always be 3 elements in errorFields, so [1] is fine
 					locationFields := strings.SplitN(line, ":", 3)                  // Already checked for 2 colons in line
@@ -317,6 +329,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 					if y, err := strconv.Atoi(errorY); err == nil { // no error
 						foundY = LineIndex(y - 1)
 						e.redraw = e.GoTo(foundY, c, status)
+						e.redrawCursor = e.redraw
 						foundX := -1
 						if x, err := strconv.Atoi(errorX); err == nil { // no error
 							foundX = x - 1
@@ -337,7 +350,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			}
 		}
 	} else {
-		return "Success", nil
+		// The command failed (status code != 0), but no errors were picked from the output
+		return "", errors.New("Could not compile")
 	}
 
 	// No status message, no error
