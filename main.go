@@ -590,17 +590,17 @@ Set NO_COLOR=1 to disable colors.
 			e.SaveLocation(absFilename, locationHistory)
 
 			// Build or export the current file
-			statusMessage, err := e.BuildOrExport(c, status, filename)
+			statusMessage, performedAction, compiled := e.BuildOrExport(c, status, filename)
 
 			// Could an action be performed for this file extension?
-			if err == errNoSuitableBuildCommand {
+			if !performedAction {
 				// Building this file extension is not implemented yet.
 				// Just display the current time and word count.
 				statusMessage := fmt.Sprintf("%d words, %s", e.WordCount(), time.Now().Format("15:04")) // HH:MM
 				status.ClearAll(c)
 				status.SetMessage(statusMessage)
 				status.Show(c, e)
-			} else if err != nil {
+			} else if !compiled {
 				// Did something go wrong?
 				status.ClearAll(c)
 				status.SetErrorMessage(err.Error())
