@@ -2,18 +2,17 @@ package main
 
 import (
 	"fmt"
+	"os"
 )
 
 func ExampleEditor_BuildOrExport() {
 	e := NewSimpleEditor(80)
-	s, err := e.BuildOrExport(nil, nil, "tests/err.go")
+	os.Chdir("tests")
+	s, performedAction, compiledOK := e.BuildOrExport(nil, nil, "err.go")
+	os.Chdir("..")
 
-	if s != "" {
-		fmt.Println("FAIL")
-	}
-
-	fmt.Println(err)
+	fmt.Printf("%s [performed action: %v] [compiled OK: %v]\n", s, performedAction, compiledOK)
 
 	// Output:
-	// Could not compile
+	// undefined: asdfasdf [performed action: true] [compiled OK: false]
 }
