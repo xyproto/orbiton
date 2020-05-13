@@ -25,8 +25,7 @@ const version = "o 2.27.0"
 func main() {
 	var (
 		// Record the time when the program starts
-		startTime       = time.Now()
-		startupDuration time.Duration
+		startTime = time.Now()
 
 		// Color scheme for the "text edit" mode
 		defaultEditorForeground       = vt100.LightGreen // for when syntax highlighting is not in use
@@ -409,9 +408,8 @@ Set NO_COLOR=1 to disable colors.
 		e.redraw = false
 	}
 
-	// Record the startup duration
-	startupDuration = time.Now().Sub(startTime)
-	startupMilliseconds := startupDuration.Milliseconds()
+	// Record the startup duration, in milliseconds
+	startupMilliseconds := time.Since(startTime).Milliseconds()
 
 	// Craft an appropriate status message
 	if createdNewFile {
