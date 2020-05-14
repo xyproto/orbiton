@@ -610,13 +610,21 @@ Set NO_COLOR=1 to disable colors.
 			} else if performedAction && !compiled {
 				// Performed an action, but it did not work out
 				status.ClearAll(c)
-				status.SetErrorMessage(statusMessage)
-				status.Show(c, e)
+				if statusMessage != "" {
+					status.SetErrorMessage(statusMessage)
+				} else {
+					// This should never happen, failed compilations should return a message
+					status.SetErrorMessage("Compilation failed")
+				}
+				status.ShowNoTimeout(c, e)
 			} else if performedAction && compiled {
 				// Everything worked out
-				status.ClearAll(c)
-				status.SetMessage(statusMessage)
-				status.ShowNoTimeout(c, e)
+				if statusMessage != "" {
+					// Got a status message (this may not be the case for build/export processes running in the background)
+					status.ClearAll(c)
+					status.SetMessage(statusMessage)
+					status.Show(c, e)
+				}
 			}
 		case "c:18": // ctrl-r, render to PDF, or if in git mode, cycle rebase keywords
 

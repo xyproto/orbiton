@@ -76,6 +76,7 @@ func (e *Editor) exportAdoc(manFilename string) error {
 // mustExportPandoc returns nothing, but can be used concurrently.
 // This takes a bit longer than the other export types, which is why this one is different.
 func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath, pdfFilename string) {
+	status.ClearAll(c)
 	status.SetMessage("Exporting to PDF using Pandoc...")
 	status.ShowNoTimeout(c, e)
 
@@ -94,7 +95,7 @@ func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath
 	err := e.Save(&tmpfn, !e.DrawMode())
 	if err != nil {
 		status.ClearAll(c)
-		status.SetMessage(err.Error())
+		status.SetErrorMessage(err.Error())
 		status.Show(c, e)
 		return // from goroutine
 	}
@@ -106,7 +107,7 @@ func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath
 	if err = pandocCommand.Run(); err != nil {
 		_ = os.Remove(tmpfn) // Try removing the temporary filename if pandoc fails
 		status.ClearAll(c)
-		status.SetMessage(err.Error())
+		status.SetErrorMessage(err.Error())
 		status.Show(c, e)
 		return // from goroutine
 	}
@@ -119,10 +120,9 @@ func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath
 		return // from goroutine
 	}
 
-	statusMessage := "Saved " + pdfFilename
 	status.ClearAll(c)
-	status.SetMessage(statusMessage)
-	status.Show(c, e)
+	status.SetMessage("Saved " + pdfFilename)
+	status.ShowNoTimeout(c, e)
 }
 
 // BuildOrExport will try to build the source code or export the document.
@@ -136,7 +136,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		if err := e.exportScdoc(manFilename); err != nil {
 			return err.Error(), true, false
 		}
-		return "Exported " + manFilename, true, true
+		return "Saved " + manFilename, true, true
 	}
 
 	// asciidoctor
@@ -144,13 +144,13 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		if err := e.exportAdoc(manFilename); err != nil {
 			return err.Error(), true, false
 		}
-		return "Exported " + manFilename, true, true
+		return "Saved " + manFilename, true, true
 	}
 
 	// pandoc
 	if pandocPath := which("pandoc"); ext == ".md" && e.mode == modeMarkdown && pandocPath != "" {
 		pdfFilename := strings.Replace(filepath.Base(filename), ".", "_", -1) + ".pdf"
-		// Export to PDF using pandoc, concurrently.
+		// Export to PDF using pandoc, concurrently. The goroutine handles its own status messages.
 		go e.mustExportPandoc(c, status, pandocPath, pdfFilename)
 		// TODO: Add a minimum of error detection. Perhaps wait just 20ms and check if the goroutine is still running.
 		return "", true, true // no message returned, the mustExportPandoc function handles it's own status output
