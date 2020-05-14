@@ -623,7 +623,7 @@ Set NO_COLOR=1 to disable colors.
 					// Got a status message (this may not be the case for build/export processes running in the background)
 					status.ClearAll(c)
 					status.SetMessage(statusMessage)
-					status.Show(c, e)
+					status.ShowNoTimeout(c, e)
 				}
 			}
 		case "c:18": // ctrl-r, render to PDF, or if in git mode, cycle rebase keywords
