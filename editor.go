@@ -669,7 +669,7 @@ func (e *Editor) DeleteLine(n LineIndex) {
 func (e *Editor) Delete() {
 	y := int(e.DataY())
 	llen := len([]rune(e.lines[y]))
-	if _, ok := e.lines[y]; !ok || llen == 0 || llen == 1 && unicode.IsSpace(e.lines[y][0]) {
+	if _, ok := e.lines[y]; !ok || llen == 0 || (llen == 1 && unicode.IsSpace(e.lines[y][0])) {
 		// All keys in the map that are > y should be shifted -1.
 		// This also overwrites e.lines[y].
 		e.DeleteLine(LineIndex(y))
@@ -677,7 +677,7 @@ func (e *Editor) Delete() {
 		return
 	}
 	x, err := e.DataX()
-	if err != nil || x >= len([]rune(e.lines[y]))-1 {
+	if err != nil || x > len([]rune(e.lines[y]))-1 {
 		// on the last index, just use every element but x
 		e.lines[y] = e.lines[y][:x]
 		// check if the next line exists
