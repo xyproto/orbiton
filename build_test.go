@@ -25,13 +25,13 @@ func ExampleEditor_BuildOrExport_goError() {
 func TestBuildOrExport(t *testing.T) {
 	e := NewSimpleEditor(80)
 	os.Chdir("tests")
-	s, performedAction, compiledOK := e.BuildOrExport(nil, nil, "err.rs")
+	_, performedAction, compiledOK := e.BuildOrExport(nil, nil, "err.rs")
 	os.Chdir("..")
 
 	//fmt.Printf("%s [performed action: %v] [compiled OK: %v]\n", s, performedAction, compiledOK)
 
 	if which("rustc") != "" {
-		fmt.Println(s)
+		//fmt.Println(s)
 		if !performedAction {
 			t.Fail()
 		}
@@ -40,7 +40,7 @@ func TestBuildOrExport(t *testing.T) {
 		}
 
 	} else {
-		fmt.Println(s)
+		//fmt.Println(s)
 		// silent compiler
 		if performedAction {
 			t.Fail()
