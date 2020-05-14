@@ -6,8 +6,6 @@ It's a good fit for writing git commit messages, using `EDITOR=o git commit`.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
-One of the goals of `o` is that it shall be small, fast, limited and unsurprising. If it's surprising, please file an issue.
-
 ## Packaging status
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/o-editor.svg)](https://repology.org/project/o-editor/versions) [![Packaging status](https://repology.org/badge/vertical-allrepos/o.svg)](https://repology.org/project/o/versions)
@@ -68,6 +66,8 @@ To unset:
 * When elongating a long line (one that is already longer than the terminal width), the line will break at an unexpected location.
 * The smart indentation is not always smart.
 
+One of the goals of `o` is that it shall be small, fast, limited and unsurprising. If it's surprising, please file an issue.
+
 ## Hotkeys
 
 * `ctrl-q` - Quit
@@ -105,11 +105,11 @@ To unset:
 |-------------------------------------------------|-----------------------------------------------------------|---------------|----------------------------------|-------------------------------------------------------------------|
 | Go                                              | `.go`                                                     | yes           | `go build`                       | `goimports -w -- $filename`                                       |
 | C++                                             | `.cpp`, `.cc`, `.cxx`, `.h`, `.hpp`, `.c++`, `.h++`, `.c` | yes           | `cxx`                            | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
-| C++, if `BUILD.bazel` exists                    | `.cc`, `.h`                                               | not yet       | `bazel build`                    | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
-| Rust                                            | `.rs`                                                     | not yet       | `rustc $filename`                | `rustfmt $filename`                                               |
-| Rust, if `Cargo.toml` or `../Cargo.toml` exists | `.rs`                                                     | not yet       | `cargo build`                    | `rustfmt $filename`                                               |
-| Zig                                             | `.zig`                                                    | not yet       | `zig build`                      | `zig fmt $filename`                                               |
-| V                                               | `.v`                                                      | not yet       | `v build`                        | `v fmt $filename`                                                 |
+| C++, if `BUILD.bazel` exists                    | `.cc`, `.h`                                               | needs testing | `bazel build`                    | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
+| Rust                                            | `.rs`                                                     | yes           | `rustc $filename`                | `rustfmt $filename`                                               |
+| Rust, if `Cargo.toml` or `../Cargo.toml` exists | `.rs`                                                     | yes           | `cargo build`                    | `rustfmt $filename`                                               |
+| Zig                                             | `.zig`                                                    | yes           | `zig build`                      | `zig fmt $filename`                                               |
+| V                                               | `.v`                                                      | needs testing | `v build`                        | `v fmt $filename`                                                 |
 | Haskell                                         | `.hs`                                                     | yes           | `ghc -dynamic $filename`         | `brittany --write-mode=inplace $filename`                         |
 | Python                                          | `.py`                                                     | yes           | `python -m py_compile $filename` | `autopep8 -i --maxline-length 120`                                |
 
