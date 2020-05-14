@@ -3,6 +3,7 @@
 ## Bug fixes
 
 - [ ] If an error is in another file, make that clearer, or save and jump to that file, with a hotkey for going back.
+- [ ] `ctrl-d` at the last character of a line should not make the line below jump up, unless it's the only character of the line.
 
 ## Features I see myself using straight away
 
