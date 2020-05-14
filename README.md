@@ -106,11 +106,11 @@ To unset:
 | Go                                              | `.go`                                                     | yes           | `go build`                       | `goimports -w -- $filename`                                       |
 | C++                                             | `.cpp`, `.cc`, `.cxx`, `.h`, `.hpp`, `.c++`, `.h++`, `.c` | yes           | `cxx`                            | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
 | C++, if `BUILD.bazel` exists                    | `.cc`, `.h`                                               | not yet       | `bazel build`                    | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
-| Rust                                            | `.rs`                                                     | not yet       | `rustc $filename`                | `rustfmt`                                                         |
-| Rust, if `Cargo.toml` or `../Cargo.toml` exists | `.rs`                                                     | not yet       | `cargo build`                    | `rustfmt`                                                         |
-| Zig                                             | `.zig`                                                    | not yet       | `zig build`                      | `zig fmt`                                                         |
-| V                                               | `.v`                                                      | not yet       | `v build`                        | `v fmt`                                                           |
-| Haskell                                         | `.hs`                                                     | yes           | `ghc -dynamic $filename`         | `brittany --write-mode=inplace -- $filename`                      |
+| Rust                                            | `.rs`                                                     | not yet       | `rustc $filename`                | `rustfmt $filename`                                               |
+| Rust, if `Cargo.toml` or `../Cargo.toml` exists | `.rs`                                                     | not yet       | `cargo build`                    | `rustfmt $filename`                                               |
+| Zig                                             | `.zig`                                                    | not yet       | `zig build`                      | `zig fmt $filename`                                               |
+| V                                               | `.v`                                                      | not yet       | `v build`                        | `v fmt $filename`                                                 |
+| Haskell                                         | `.hs`                                                     | yes           | `ghc -dynamic $filename`         | `brittany --write-mode=inplace $filename`                         |
 | Python                                          | `.py`                                                     | yes           | `python -m py_compile $filename` | `autopep8 -i --maxline-length 120`                                |
 
 * `o` will try to jump to the location where the error is and otherwise display `Success`.
