@@ -840,6 +840,10 @@ Set NO_COLOR=1 to disable colors.
 			fallthrough
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
 			c = e.FullResetRedraw(c, status)
+			// Reset the cut/copy/paste double-keypress detection
+			lastCopyY = -1
+			lastPasteY = -1
+			lastCutY = -1
 		case " ": // space
 			undo.Snapshot(e)
 			// Place a space
