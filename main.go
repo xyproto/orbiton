@@ -497,7 +497,7 @@ Set NO_COLOR=1 to disable colors.
 				exec.Command("zig", "fmt"):                                                        {".zig"},
 				exec.Command("v", "fmt"):                                                          {".v"},
 				exec.Command("rustfmt"):                                                           {".rs"},
-				exec.Command("brittany", "--write-mode=inplace", "--"):                            {".hs"},
+				exec.Command("brittany", "--write-mode=inplace"):                                  {".hs"},
 				exec.Command("autopep8", "-i", "--max-line-length", "120"):                        {".py"},
 				exec.Command("ocamlformat"):                                                       {".ml"},
 			}
@@ -516,8 +516,9 @@ Set NO_COLOR=1 to disable colors.
 							tempFilename := f.Name()
 							err := e.Save(&tempFilename, true)
 							if err == nil {
-								// Format the temporary file
+								// Add the filename of the temporary file to the command
 								cmd.Args = append(cmd.Args, tempFilename)
+								// Format the temporary file
 								output, err := cmd.CombinedOutput()
 								if err != nil {
 									// Only grab the first error message
