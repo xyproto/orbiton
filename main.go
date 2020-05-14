@@ -58,8 +58,8 @@ func main() {
 			Whitespace:    "",
 		}
 
-		versionFlag = flag.Bool("version", false, "show version information")
-		helpFlag    = flag.Bool("help", false, "show simple help")
+		versionFlag = flag.Bool("version", false, "version information")
+		helpFlag    = flag.Bool("help", false, "quick overview of hotkeys")
 
 		statusDuration = 2700 * time.Millisecond
 
