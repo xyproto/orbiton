@@ -2,7 +2,7 @@
 
 ## Bug fixes
 
-- [ ] If an error is in another file, make that clearer, or save and jump to that file, with a hotkey for going back.
+- [ ] When breaking long lines, the cursor should sometimes go to the end of the next line. Figure out when.
 
 ## Features I see myself using straight away
 
