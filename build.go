@@ -244,7 +244,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 
 	if err != nil && len(bytes.TrimSpace(output)) == 0 {
 		// Could not run, and there was no output. Perhaps the executable is missing?
-		return "Error: silent compiler", false, false
+		return "Error: no output", false, false
 	}
 
 	// NOTE: Don't do anything with the output and err variables here, let the if below handle it.
@@ -299,6 +299,11 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			// Go, C++ and Haskell
 			if strings.Count(line, ":") >= 3 {
 				fields := strings.SplitN(line, ":", 4)
+				baseErrorFilename := filepath.Base(fields[0])
+				// Check if the filenames are matching, or if the error is in a different file
+				if baseErrorFilename != baseFilename {
+					return "Error in another file: " + baseErrorFilename + ": " + strings.TrimSpace(fields[3]), true, false
+				}
 				// Go to Y:X, if available
 				var foundY LineIndex
 				if y, err := strconv.Atoi(fields[1]); err == nil { // no error
