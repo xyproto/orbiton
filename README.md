@@ -171,6 +171,24 @@ Python
 * `ctrl-space` only checks the syntax, without executing. This only requires `python` to be available.
 * For formatting the code with `ctrl-w`, `autopep8` must be installed.
 
+## List of optional runtime dependencies
+
+* `go` / `golang`
+* `goimports`
+* [`cxx`](https://github.com/xyproto/cxx)
+* `g++` / `base-devel`
+* `clang-format`
+* `bazel`
+* `rustc`
+* `rustfmt`
+* `cargo`
+* `zig`
+* `v`
+* `ghc`
+* `brittany`
+* `python`
+* `autopep8`
+
 ## Size
 
 * The `o` executable is only **508k** when built with GCC 9.3 (for 64-bit Linux) and compressed with `upx`.
