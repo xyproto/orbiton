@@ -136,15 +136,19 @@ func (e *Editor) Set(x int, index LineIndex, r rune) {
 	if !ok {
 		e.lines[y] = make([]rune, 0, x+1)
 	}
-	if x < int(len([]rune(e.lines[y]))) {
+	l := len(e.lines[y])
+	if x < l {
 		e.lines[y][x] = r
 		e.changed = true
 		return
 	}
 	// If the line is too short, fill it up with spaces
-	for x >= int(len([]rune(e.lines[y]))) {
-		e.lines[y] = append(e.lines[y], ' ')
+	if l <= x {
+		n := (x + 1) - l
+		e.lines[y] = append(e.lines[y], []rune(strings.Repeat(" ", n))...)
 	}
+
+	// Set the rune
 	e.lines[y][x] = r
 	e.changed = true
 }
@@ -278,7 +282,8 @@ func (e *Editor) Len() int {
 // String returns the contents of the editor
 func (e *Editor) String() string {
 	var sb strings.Builder
-	for i := 0; i < e.Len(); i++ {
+	l := e.Len()
+	for i := 0; i < l; i++ {
 		sb.WriteString(e.Line(LineIndex(i)) + "\n")
 	}
 	return sb.String()
@@ -483,8 +488,9 @@ func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 func (e *Editor) Save(filename *string, stripTrailingSpaces bool) error {
 	var data []byte
 	if stripTrailingSpaces {
-		// Strip trailing spaces
-		for i := 0; i < e.Len(); i++ {
+		// Strip trailing spaces on all lines
+		l := e.Len()
+		for i := 0; i < l; i++ {
 			e.TrimRight(LineIndex(i))
 		}
 		// Skip trailing newlines
@@ -1767,7 +1773,8 @@ func (e *Editor) StatusMessage() string {
 func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redraw bool) {
 	h := int(c.Height())
 	if respectOffset {
-		e.WriteLines(c, e.pos.Offset(), h+e.pos.Offset(), 0, 0)
+		offset := e.pos.Offset()
+		e.WriteLines(c, offset, h+offset, 0, 0)
 	} else {
 		e.WriteLines(c, 0, h, 0, 0)
 	}
@@ -1814,7 +1821,8 @@ func (e *Editor) GoToStartOfTextLine() {
 // Returns true if the editor should be redrawn
 func (e *Editor) GoToNextParagraph(c *vt100.Canvas, status *StatusBar) bool {
 	var lastFoundBlankLine LineIndex = -1
-	for i := e.DataY() + 1; i < LineIndex(e.Len()); i++ {
+	l := e.Len()
+	for i := e.DataY() + 1; i < LineIndex(l); i++ {
 		// Check if this is a blank line
 		if len(strings.TrimSpace(e.Line(i))) == 0 {
 			lastFoundBlankLine = i

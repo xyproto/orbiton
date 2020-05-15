@@ -63,7 +63,10 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y = 0; y < numlines; y++ {
 		counter = 0
-		line = strings.Replace(e.Line(LineIndex(y+offset)), "\t", tabString, -1)
+		line = e.Line(LineIndex(y + offset))
+		if strings.Contains(line, "\t") {
+			line = strings.Replace(line, "\t", tabString, -1)
+		}
 		screenLine = strings.TrimRightFunc(line, unicode.IsSpace)
 		if len([]rune(screenLine)) >= w {
 			screenLine = screenLine[:w]
