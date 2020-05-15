@@ -5,9 +5,12 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"runtime/pprof"
 	"sort"
 	"strconv"
 	"strings"
@@ -60,6 +63,8 @@ func main() {
 
 		versionFlag = flag.Bool("version", false, "version information")
 		helpFlag    = flag.Bool("help", false, "quick overview of hotkeys")
+		cpuprofile  = flag.String("cpuprofile", "", "write cpu profile to `file`")
+		memprofile  = flag.String("memprofile", "", "write memory profile to `file`")
 
 		statusDuration = 2700 * time.Millisecond
 
@@ -135,6 +140,18 @@ Set NO_COLOR=1 to disable colors.
 
 `)
 		return
+	}
+
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal("could not create CPU profile: ", err)
+		}
+		defer f.Close() // error handling omitted for example
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Fatal("could not start CPU profile: ", err)
+		}
+		defer pprof.StopCPUProfile()
 	}
 
 	filename, lineNumber := FilenameAndLineNumber(flag.Arg(0), flag.Arg(1))
@@ -1669,5 +1686,17 @@ Set NO_COLOR=1 to disable colors.
 	} else {
 		c.Draw()
 		fmt.Println()
+	}
+
+	if *memprofile != "" {
+		f, err := os.Create(*memprofile)
+		if err != nil {
+			log.Fatal("could not create memory profile: ", err)
+		}
+		defer f.Close() // error handling omitted for example
+		runtime.GC()    // get up-to-date statistics
+		if err := pprof.WriteHeapProfile(f); err != nil {
+			log.Fatal("could not write memory profile: ", err)
+		}
 	}
 }
