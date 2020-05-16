@@ -3,6 +3,7 @@
 ## Bug fixes
 
 - [ ] When breaking long lines, the cursor should sometimes go to the end of the next line. Figure out when.
+- [ ] `tests/grub` starts a multiline comment in a single line comment, somehow. Fix.
 
 ## Features I see myself using straight away
 
