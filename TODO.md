@@ -28,6 +28,10 @@
 
 - [ ] If pressing return at the end of the document, after a full screen, then also scroll down 1 line.
       Currently, blank lines at the end of the document is immediately trimmed, which might make sense.
+- [ ] Introduce a hexedit mode (toggled with `ctrl-o` instead of drawing mode, which could be renamed) that will:
+      * Not load the entire file into memory.
+      * Display all bytes as a grid of "0xff" style fields, with the string representation to the right.
+      * This might be better solved by having a separate hex editor?
 
 ## Smart (too smart?) features
 

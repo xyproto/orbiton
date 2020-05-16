@@ -66,8 +66,6 @@ To unset:
 * When elongating a long line (one that is already longer than the terminal width), the line will break at an unexpected location.
 * The smart indentation is not always smart.
 
-One of the goals of `o` is that it shall be small, fast, limited and unsurprising. If it's surprising, please file an issue.
-
 ## Hotkeys
 
 * `ctrl-q` - Quit
