@@ -27,7 +27,7 @@ func detectEditorMode(filename string) (Mode, bool) {
 			strings.Count(baseFilename, "-") >= 2):
 		// Git mode
 		mode = modeGit
-	case strings.HasSuffix(filename, ".git/config") || ext == "ini":
+	case strings.HasSuffix(filename, ".git/config") || ext == "ini" || ext == "cfg" || ext == "conf":
 		mode = modeConfig
 	case ext == ".sh" || ext == ".ksh" || ext == ".tcsh" || ext == ".bash" || ext == ".zsh" || baseFilename == "PKGBUILD" || (strings.HasPrefix(baseFilename, ".") && strings.Contains(baseFilename, "sh")): // This last part covers .bashrc, .zshrc etc
 		mode = modeShell
