@@ -6,10 +6,11 @@
 
 ## Features I see myself using straight away
 
-- [ ] JSON formatter.
-- [ ] If a word is typed 1 letter differently from all the other instances in the current file: color it red.
-- [ ] Rainbow parenthesis.
+- [ ] If pressing `ctrl-l` and then moving the arrow keys, don't stay in the mode where a line number can be typed.
 - [ ] Spellcheck all comments. Highlight misspelled words. Make it possible to add/ignore words.
+- [ ] JSON formatter.
+- [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.
+- [ ] Rainbow parenthesis.
 - [ ] If `xclip` or `wl-clipboard` are not found when pasting, present a status message. Also check related env. vars.
 - [ ] Let the autocompletion also look at method definitions with matching variable names (ignoring types, for now).
 - [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
