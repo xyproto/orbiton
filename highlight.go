@@ -81,9 +81,10 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 			} else {
 				// Color and unescape
 				var coloredString string
-				if e.mode == modeGit {
+				switch e.mode {
+				case modeGit:
 					coloredString = e.gitHighlight(line)
-				} else if e.mode == modeMarkdown {
+				case modeMarkdown:
 					if highlighted, ok, codeBlockFound := markdownHighlight(line, inCodeBlock, prevLineIsListItem); ok {
 						coloredString = highlighted
 						if codeBlockFound {
@@ -95,7 +96,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					}
 					// If this is a list item, store true in "prevLineIsListItem"
 					prevLineIsListItem = isListItem(line)
-				} else if e.mode == modeConfig || e.mode == modeShell {
+				case modeConfig, modeShell:
 					if strings.Contains(line, "/*") || strings.Contains(line, "*/") {
 						// No highlight
 						coloredString = line
@@ -103,7 +104,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 						// Regular highlight
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					}
-				} else {
+				default:
 					trimmedLine = strings.TrimSpace(line)
 					q.Process(trimmedLine)
 
