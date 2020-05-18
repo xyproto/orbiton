@@ -2,11 +2,13 @@
 
 ## Bug fixes
 
+- [ ] Fix multiline strings in Go code.
 - [ ] When breaking long lines, the cursor should sometimes go to the end of the next line. Figure out when.
 - [ ] `tests/grub` starts a multiline comment in a single line comment, somehow. Fix.
 
 ## Features I see myself using straight away
 
+- [ ] Reduce memory usage.
 - [ ] If pressing `ctrl-l` and then moving the arrow keys, don't stay in the mode where a line number can be typed.
 - [ ] Spellcheck all comments. Highlight misspelled words. Make it possible to add/ignore words.
 - [ ] JSON formatter.
