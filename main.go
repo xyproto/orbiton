@@ -234,6 +234,23 @@ Set NO_COLOR=1 to disable colors.
 					e.mode = modeShell
 				}
 			}
+			// If more lines start with "# " than "// " or "/* ", and mode is blank,
+			// set the mode to modeConfig and enable syntax highlighting.
+			if e.mode == modeBlank {
+				hashComment := 0
+				slashComment := 0
+				for _, line := range strings.Split(e.String(), "\n") {
+					if strings.HasPrefix(line, "# ") {
+						hashComment++
+					} else if strings.HasPrefix(line, "/") { // Count all lines starting with "/" as a comment, for this purpose
+						slashComment++
+					}
+				}
+				if hashComment > slashComment {
+					e.mode = modeConfig
+					e.syntaxHighlight = true
+				}
+			}
 		}
 
 		// Test write, to check if the file can be written or not

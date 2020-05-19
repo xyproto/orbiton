@@ -86,10 +86,20 @@ func (q *QuoteState) Process(line string) {
 				q.multiLineComment = true
 			}
 		case []rune(q.singleLineCommentMarker)[0]:
-			if len(q.singleLineCommentMarker) > 1 && prevRune == []rune(q.singleLineCommentMarker)[1] && q.None() {
-				q.singleLineComment = true
-				// We're in a single line comment, nothing more to do for this line
-				return
+			// TODO: Simplify by checking q.None() first, and assuming that the len of the marker is > 1 if it's not 1 since it's not 0
+			if q.None() {
+				switch {
+				case len(q.singleLineCommentMarker) == 1:
+					fallthrough
+				case len(q.singleLineCommentMarker) > 1 && prevRune == []rune(q.singleLineCommentMarker)[1]:
+					q.singleLineComment = true
+					q.startedMultiLineString = false
+					q.backtick = 0
+					q.doubleQuote = 0
+					q.singleQuote = 0
+					// We're in a single line comment, nothing more to do for this line
+					return
+				}
 			}
 			if r != '/' {
 				break
