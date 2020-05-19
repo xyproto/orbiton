@@ -8,7 +8,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-var mut sync.RWMutex
+var mut *sync.RWMutex
 
 // StatusBar represents the little status field that can appear at the bottom of the screen
 type StatusBar struct {
@@ -29,6 +29,7 @@ var statusBeingShown int
 // NewStatusBar takes a foreground color, background color, foreground color for clearing,
 // background color for clearing and a duration for how long to display status messages.
 func NewStatusBar(fg, bg, errfg, errbg vt100.AttributeColor, editor *Editor, show time.Duration) *StatusBar {
+	mut = &sync.RWMutex{}
 	return &StatusBar{"", fg, bg, errfg, errbg, editor, show, 0, false}
 }
 
@@ -84,28 +85,22 @@ func (sb *StatusBar) SetErrorMessage(msg string) {
 // Clear will set the message to nothing and then use the editor contents
 // to remove the status bar field at the bottom of the editor.
 func (sb *StatusBar) Clear(c *vt100.Canvas) {
-	mut.Lock()
-	sb.msg = ""
-	mut.Unlock()
-
 	h := int(c.H())
 
-	mut.RLock()
-	e := sb.editor
-	mut.RUnlock()
-
 	// Write all lines to the buffer
-	mut.RLock()
-	offset := e.pos.Offset()
-	mut.RUnlock()
-
-	e.WriteLines(c, offset, h+offset, 0, 0)
-	c.Draw()
-
-	// Not an error message
 	mut.Lock()
+	// Clear the message
+	sb.msg = ""
+	// Not an error message
 	sb.isError = false
 	mut.Unlock()
+
+	mut.RLock()
+	offset := sb.editor.pos.Offset()
+	sb.editor.WriteLines(c, offset, h+offset, 0, 0)
+	mut.RUnlock()
+
+	c.Draw()
 }
 
 // ClearAll will clear all status messages

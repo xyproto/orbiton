@@ -1492,25 +1492,36 @@ func (e *Editor) SaveX(regardless bool) {
 func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int) bool {
 	// Find out if we can scroll scrollSpeed, or less
 	canScroll := scrollSpeed
-	// last y position in the canvas
+
+	// Last y position in the canvas
 	canvasLastY := int(c.H() - 1)
-	// number of lines in the document
+
+	// Retrieve the current editor scroll offset offset
+	mut.RLock()
+	offset := e.pos.offset
+	mut.RUnlock()
+
+	// Number of lines in the document
 	l := e.Len()
-	if e.pos.offset >= e.Len()-canvasLastY {
-		// Status message
-		//status.SetMessage("End of text")
-		//status.Show(c, p)
+
+	if offset >= e.Len()-canvasLastY {
 		c.Draw()
 		// Don't redraw
 		return false
 	}
+
 	status.Clear(c)
-	if (e.pos.offset + canScroll) >= (l - canvasLastY) {
+
+	if (offset + canScroll) >= (l - canvasLastY) {
 		// Almost at the bottom, we can scroll the remaining lines
-		canScroll = (l - canvasLastY) - e.pos.offset
+		canScroll = (l - canvasLastY) - offset
 	}
+
 	// Move the scroll offset
+	mut.Lock()
 	e.pos.offset += canScroll
+	mut.Unlock()
+
 	// Prepare to redraw
 	return true
 }
