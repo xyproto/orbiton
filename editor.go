@@ -422,12 +422,15 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 
 	// Read the file
 	data, err := ioutil.ReadFile(filename)
-	if bytes.Contains(data, []byte{'\r'}) {
-		// Replace DOS line endings with UNIX line endings
-		data = bytes.Replace(data, []byte{'\r', '\n'}, []byte{'\n'}, -1)
-		// Replace any remaining \r characters with \n
-		data = bytes.Replace(data, []byte{'\r'}, []byte{'\n'}, -1)
-	}
+
+	// Replace nonbreaking space with regular space
+	data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
+	// Replace DOS line endings with UNIX line endings
+	data = bytes.Replace(data, []byte{'\r', '\n'}, []byte{'\n'}, -1)
+	// Replace any remaining \r characters with \n
+	data = bytes.Replace(data, []byte{'\r'}, []byte{'\n'}, -1)
+
+	// Note that control characters are not replaced, they are just not printed.
 
 	// Stop the spinner
 	quit <- true

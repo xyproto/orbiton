@@ -12,6 +12,8 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+const controlRuneReplacement = '¿' // for displaying control sequence characters
+
 var (
 	// Color scheme for the "text edit" mode
 	defaultEditorForeground       = vt100.LightGreen // for when syntax highlighting is not in use
@@ -204,6 +206,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 							counter += e.spacesPerTab
 						}
 					} else {
+						if unicode.IsControl(letter) { // letter < ' ' && letter != '\t' && letter != '\n' {
+							letter = controlRuneReplacement
+						}
 						c.WriteRune(uint(cx+counter), uint(cy+y), fg, e.bg, letter)
 						counter++
 					}

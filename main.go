@@ -1394,6 +1394,9 @@ Set NO_COLOR=1 to disable colors.
 				s = strings.Replace(s, string([]byte{'\r', '\n'}), string([]byte{'\n'}), -1)
 				// Then \r
 				s = strings.Replace(s, string([]byte{'\r'}), string([]byte{'\n'}), -1)
+
+				// Note that control characters are not replaced, they are just not printed.
+
 				// Split the text into lines and store it in "copyLines"
 				copyLines = strings.Split(s, "\n")
 			}
