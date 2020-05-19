@@ -35,6 +35,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 		mode = modeConfig
 	case baseFilename == "Makefile" || baseFilename == "makefile" || baseFilename == "GNUmakefile":
 		mode = modeMakefile
+	case baseFilename == "CMakeLists.txt" || ext == ".cmake":
+		mode = modeCMake
 	default:
 		switch ext {
 		case ".asm", ".S", ".s", ".inc":

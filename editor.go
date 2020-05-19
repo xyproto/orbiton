@@ -29,6 +29,7 @@ const (
 	modeOCaml    // for OCaml source files
 	modePython   // for Python source files
 	modeText     // for plain text documents
+	modeCMake    // for CMake files
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -577,7 +578,7 @@ func (e *Editor) TrimLeft(index LineIndex) {
 // comment for the current language mode the editor is in.
 func (e *Editor) SingleLineCommentMarker() string {
 	switch e.mode {
-	case modeShell, modePython:
+	case modeShell, modePython, modeCMake:
 		return "#"
 	case modeAssembly:
 		return ";"

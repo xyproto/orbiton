@@ -12,6 +12,40 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+var (
+	// Color scheme for the "text edit" mode
+	defaultEditorForeground       = vt100.LightGreen // for when syntax highlighting is not in use
+	defaultEditorBackground       = vt100.BackgroundDefault
+	defaultStatusForeground       = vt100.White
+	defaultStatusBackground       = vt100.BackgroundBlack
+	defaultStatusErrorForeground  = vt100.LightRed
+	defaultStatusErrorBackground  = vt100.BackgroundDefault
+	defaultEditorSearchHighlight  = vt100.LightMagenta
+	defaultEditorMultilineComment = vt100.Gray
+	defaultEditorMultilineString  = vt100.Magenta
+	defaultEditorHighlightTheme   = syntax.TextConfig{
+		String:        "lightyellow",
+		Keyword:       "lightred",
+		Comment:       "gray",
+		Type:          "lightblue",
+		Literal:       "lightgreen",
+		Punctuation:   "lightblue",
+		Plaintext:     "lightgreen",
+		Tag:           "lightgreen",
+		TextTag:       "lightgreen",
+		TextAttrName:  "lightgreen",
+		TextAttrValue: "lightgreen",
+		Decimal:       "white",
+		AndOr:         "lightyellow",
+		Star:          "lightyellow",
+		Class:         "lightred",
+		Private:       "darkred",
+		Protected:     "darkyellow",
+		Public:        "darkgreen",
+		Whitespace:    "",
+	}
+)
+
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error {
 	o := textoutput.NewTextOutput(true, true)
@@ -96,7 +130,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					}
 					// If this is a list item, store true in "prevLineIsListItem"
 					prevLineIsListItem = isListItem(line)
-				case modeConfig, modeShell:
+				case modeConfig, modeShell, modeCMake:
 					if strings.Contains(line, "/*") || strings.Contains(line, "*/") {
 						// No highlight
 						coloredString = line

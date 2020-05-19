@@ -18,7 +18,6 @@ import (
 	"unicode"
 
 	"github.com/atotto/clipboard"
-	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
 )
 
@@ -28,38 +27,6 @@ func main() {
 	var (
 		// Record the time when the program starts
 		startTime = time.Now()
-
-		// Color scheme for the "text edit" mode
-		defaultEditorForeground       = vt100.LightGreen // for when syntax highlighting is not in use
-		defaultEditorBackground       = vt100.BackgroundDefault
-		defaultStatusForeground       = vt100.White
-		defaultStatusBackground       = vt100.BackgroundBlack
-		defaultStatusErrorForeground  = vt100.LightRed
-		defaultStatusErrorBackground  = vt100.BackgroundDefault
-		defaultEditorSearchHighlight  = vt100.LightMagenta
-		defaultEditorMultilineComment = vt100.Gray
-		defaultEditorMultilineString  = vt100.Magenta
-		defaultEditorHighlightTheme   = syntax.TextConfig{
-			String:        "lightyellow",
-			Keyword:       "lightred",
-			Comment:       "gray",
-			Type:          "lightblue",
-			Literal:       "lightgreen",
-			Punctuation:   "lightblue",
-			Plaintext:     "lightgreen",
-			Tag:           "lightgreen",
-			TextTag:       "lightgreen",
-			TextAttrName:  "lightgreen",
-			TextAttrValue: "lightgreen",
-			Decimal:       "white",
-			AndOr:         "lightyellow",
-			Star:          "lightyellow",
-			Class:         "lightred",
-			Private:       "darkred",
-			Protected:     "darkyellow",
-			Public:        "darkgreen",
-			Whitespace:    "",
-		}
 
 		versionFlag = flag.Bool("version", false, "version information")
 		helpFlag    = flag.Bool("help", false, "quick overview of hotkeys")
@@ -174,34 +141,13 @@ Set NO_COLOR=1 to disable colors.
 	// mode is what would have been an enum in other languages, for signalling if this file should be in git mode, markdown mode etc
 	mode, syntaxHighlight := detectEditorMode(filename)
 
-	// Per-language adjustments to highlighting of keywords
-	// TODO: Use a different syntax highlighting package, with support for many different programming languages
-	var addKeywords, delKeywords []string
-	switch mode {
-	case modeGo:
-		addKeywords = []string{"fallthrough", "string", "print", "println", "range", "defer"}
-		delKeywords = []string{"mut", "pass", "build"}
-	case modeShell:
-		delKeywords = []string{"float", "with", "exec", "long", "double", "no", "pass"}
-		fallthrough
-	default:
-		delKeywords = append(delKeywords, []string{"build", "package"}...)
-	}
-
-	// Add extra keywords that are to be syntax highlighted
-	for _, kw := range addKeywords {
-		syntax.Keywords[kw] = struct{}{}
-	}
-	// Remove keywords that should not be syntax highlighted
-	for _, kw := range delKeywords {
-		delete(syntax.Keywords, kw)
-	}
+	adjustSyntaxHighlightingKeywords(mode)
 
 	// Additional per-mode considerations
 	switch mode {
 	case modeGit:
 		clearOnQuit = true
-	case modeMakefile, modePython:
+	case modeMakefile, modePython, modeCMake:
 		spacesPerTab = 4
 	case modeShell, modeConfig, modeHaskell:
 		spacesPerTab = 2
@@ -906,9 +852,10 @@ Set NO_COLOR=1 to disable colors.
 					leadingWhitespace := e.LeadingWhitespace()
 					if len(lineContents) > 0 && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[") || strings.HasSuffix(lineContents, ":")) {
 						// "smart indentation"
-						if e.mode == modeShell || e.mode == modePython {
+						switch e.mode {
+						case modeShell, modePython, modeCMake:
 							leadingWhitespace += strings.Repeat(" ", e.spacesPerTab)
-						} else {
+						default:
 							leadingWhitespace += "\t"
 						}
 					}
@@ -929,9 +876,10 @@ Set NO_COLOR=1 to disable colors.
 					leadingWhitespace := e.LeadingWhitespace()
 					if len(lineContents) > 0 && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[")) {
 						// "smart indentation"
-						if e.mode == modeShell || e.mode == modePython {
+						switch e.mode {
+						case modeShell, modePython, modeCMake:
 							leadingWhitespace += strings.Repeat(" ", e.spacesPerTab)
-						} else {
+						default:
 							leadingWhitespace += "\t"
 						}
 					}
@@ -983,7 +931,7 @@ Set NO_COLOR=1 to disable colors.
 					e.TrimRight(e.DataY())
 					e.Delete()
 				}
-			} else if (e.mode == modeShell || e.mode == modePython) && e.AtStartOfTextLine() && len(e.LeadingWhitespace()) >= e.spacesPerTab {
+			} else if (e.mode == modeShell || e.mode == modePython || e.mode == modeCMake) && e.AtStartOfTextLine() && len(e.LeadingWhitespace()) >= e.spacesPerTab {
 				// Delete several spaces
 				for i := 0; i < e.spacesPerTab; i++ {
 					// Move back
@@ -1107,10 +1055,11 @@ Set NO_COLOR=1 to disable colors.
 						oneIndentation    string
 					)
 
-					if e.mode == modeShell || e.mode == modePython {
+					switch e.mode {
+					case modeShell, modePython, modeCMake:
 						// If this is a shell script, use 2 spaces (or however many spaces are defined in e.spacesPerTab)
 						oneIndentation = strings.Repeat(" ", e.spacesPerTab)
-					} else {
+					default:
 						// For anything else, use real tabs
 						oneIndentation = "\t"
 					}
@@ -1147,7 +1096,8 @@ Set NO_COLOR=1 to disable colors.
 			}
 
 			undo.Snapshot(e)
-			if e.mode == modeShell || e.mode == modePython {
+			switch e.mode {
+			case modeShell, modePython, modeCMake:
 				for i := 0; i < spacesPerTab; i++ {
 					e.InsertRune(c, ' ')
 					// Write the spaces that represent the tab to the canvas
@@ -1155,7 +1105,7 @@ Set NO_COLOR=1 to disable colors.
 					// Move to the next position
 					e.Next(c)
 				}
-			} else {
+			default:
 				// Insert a tab character to the file
 				e.InsertRune(c, '\t')
 				// Write the spaces that represent the tab to the canvas
