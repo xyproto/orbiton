@@ -1352,13 +1352,17 @@ Set NO_COLOR=1 to disable colors.
 			e.redraw = true
 			e.redrawCursor = true
 		case "c:3": // ctrl-c, copy the stripped contents of the current line
+			y := e.DataY()
+
 			// Forget the cut and paste line state
 			lastCutY = -1
 			lastPasteY = -1
 
-			y := e.DataY()
+			// check if this operation is done on the same line as last time
+			singleLineCopy := lastCopyY != y
 			lastCopyY = y
-			if lastCopyY != y { // Single line copy
+
+			if singleLineCopy { // Single line copy
 				// Pressed for the first time for this line number
 				trimmed := strings.TrimSpace(e.Line(y))
 				if trimmed != "" {
