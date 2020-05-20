@@ -579,7 +579,7 @@ Set NO_COLOR=1 to disable colors.
 			e.SaveLocation(absFilename, locationHistory)
 
 			// Save the current search history
-			SaveSearchHistory(searchHistoryFilename, searchHistory)
+			SaveSearchHistory(expandUser(searchHistoryFilename), searchHistory)
 
 			// Clear the current search term
 			e.ClearSearchTerm()
@@ -1208,7 +1208,7 @@ Set NO_COLOR=1 to disable colors.
 				e.SaveLocation(absFilename, locationHistory)
 
 				// Save the current search history
-				SaveSearchHistory(searchHistoryFilename, searchHistory)
+				SaveSearchHistory(expandUser(searchHistoryFilename), searchHistory)
 
 				// Status message
 				status.SetMessage("Saved " + filename)
@@ -1665,7 +1665,7 @@ Set NO_COLOR=1 to disable colors.
 	e.SaveLocation(absFilename, locationHistory)
 
 	// Save the current search history
-	SaveSearchHistory(searchHistoryFilename, searchHistory)
+	SaveSearchHistory(expandUser(searchHistoryFilename), searchHistory)
 
 	// Clear all status bar messages
 	status.ClearAll(c)
