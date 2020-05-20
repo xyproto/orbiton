@@ -2,6 +2,7 @@
 
 ## Bug fixes
 
+- [ ] Find out why the search history is not being saved.
 - [ ] Multiline strings are not syntax highligted correctly in Go code. Fix.
 - [ ] When breaking long lines, the cursor should sometimes go to the end of the next line. Figure out when.
 
