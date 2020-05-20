@@ -1352,11 +1352,13 @@ Set NO_COLOR=1 to disable colors.
 			e.redraw = true
 			e.redrawCursor = true
 		case "c:3": // ctrl-c, copy the stripped contents of the current line
+			// Forget the cut and paste line state
+			lastCutY = -1
+			lastPasteY = -1
+
 			y := e.DataY()
+			lastCopyY = y
 			if lastCopyY != y { // Single line copy
-				lastCutY = -1
-				lastCopyY = y
-				lastPasteY = -1
 				// Pressed for the first time for this line number
 				trimmed := strings.TrimSpace(e.Line(y))
 				if trimmed != "" {
@@ -1375,9 +1377,6 @@ Set NO_COLOR=1 to disable colors.
 				// Go to the end of the line, for easy line duplication with ctrl-c, enter, ctrl-v
 				e.End()
 			} else { // Multi line copy
-				lastCutY = -1
-				lastCopyY = y
-				lastPasteY = -1
 				// Pressed multiple times for this line number, copy the block of text starting from this line
 				s := e.Block(y)
 				if s != "" {
@@ -1421,6 +1420,11 @@ Set NO_COLOR=1 to disable colors.
 			// Prepare to paste
 			undo.Snapshot(e)
 			y := e.DataY()
+
+			// Forget the cut and copy line state
+			lastCutY = -1
+			lastCopyY = -1
+
 			if lastPasteY != y { // Single line paste
 				lastPasteY = y
 				// Pressed for the first time for this line number, paste only one line
