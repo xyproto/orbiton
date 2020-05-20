@@ -11,9 +11,9 @@ import (
 )
 
 var (
-	errNoSearchMatch      = errors.New("no search match")
-	searchHistory         = []string{}
 	searchHistoryFilename = "~/.cache/o/search.txt" // TODO: Use XDG_CACHE_HOME
+	searchHistory         = []string{}
+	errNoSearchMatch      = errors.New("no search match")
 )
 
 // SetSearchTerm will set the current search term to highlight
@@ -260,6 +260,9 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 			pressedReturn = true
 			doneCollectingLetters = true
 		case "↑": // previous in the search history
+			if len(searchHistory) == 0 {
+				break
+			}
 			index--
 			if index < 0 {
 				// wraparound
@@ -272,6 +275,9 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
 		case "↓": // next in the search history
+			if len(searchHistory) == 0 {
+				break
+			}
 			index++
 			if index >= len(searchHistory) {
 				// wraparound
@@ -303,7 +309,9 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		e.GoToLineNumber(initialLocation, c, status, false)
 	}
 
-	searchHistory = append(searchHistory, s)
+	if len(strings.TrimSpace(s)) > 0 {
+		searchHistory = append(searchHistory, s)
+	}
 
 	// Perform the actual search
 	wrap := true    // with wraparound
@@ -336,7 +344,6 @@ func LoadSearchHistory(filename string) ([]string, error) {
 
 // SaveSearchHistory will save a list of strings to the given filename
 func SaveSearchHistory(filename string, list []string) error {
-
 	if len(list) == 0 {
 		return nil
 	}
@@ -345,7 +352,7 @@ func SaveSearchHistory(filename string, list []string) error {
 	folderPath := filepath.Dir(filename)
 	os.MkdirAll(folderPath, os.ModePerm)
 
-	// Save the list
+	// Then save the data, with strict permissions
 	data := []byte(strings.Join(list, "\n"))
 	return ioutil.WriteFile(filename, data, 0600)
 }
