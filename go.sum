@@ -24,6 +24,10 @@ github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXf
 github.com/xyproto/syntax v0.0.0-20190927130316-33ad839f30fd/go.mod h1:mCJxUY00r+o4tVnC800hsbzKKMdyLYEmZtn3Fd5RKtw=
 github.com/xyproto/syntax v1.7.1 h1:q3hAEGx7GRp9Fhx0Wzu0EUNchVXvUjhO9oC75/nBt18=
 github.com/xyproto/syntax v1.7.1/go.mod h1:qlI2iu6tnbgRUQAylyBVat9PO01N1/xHo6i4nnHvtsk=
+github.com/xyproto/syntax v1.7.2-0.20200520202404-6e7a24f98fd3 h1:iVa3n1d3EYrZuFTauy4Xk1j6ww7l0SbjaFkdZfWvzyc=
+github.com/xyproto/syntax v1.7.2-0.20200520202404-6e7a24f98fd3/go.mod h1:qlI2iu6tnbgRUQAylyBVat9PO01N1/xHo6i4nnHvtsk=
+github.com/xyproto/syntax v1.7.2-0.20200520202548-236883b630eb h1:BuDWJsXm5MNXmHDvPYHKebQZu+/1W/+P3Gn0NGpSS84=
+github.com/xyproto/syntax v1.7.2-0.20200520202548-236883b630eb/go.mod h1:qlI2iu6tnbgRUQAylyBVat9PO01N1/xHo6i4nnHvtsk=
 github.com/xyproto/textoutput v1.7.0/go.mod h1:wucBdKjWDgglMwRR84vP5/RG7PEgEOr9ITFAeZ/cFFU=
 github.com/xyproto/textoutput v1.7.1-0.20190927112604-959d7da24b61/go.mod h1:wucBdKjWDgglMwRR84vP5/RG7PEgEOr9ITFAeZ/cFFU=
 github.com/xyproto/textoutput v1.11.0 h1:VORV3VEOxjpO9Y/0OYhfuFbDE7PI7U772uZEdFMtdc8=

@@ -184,6 +184,7 @@ var Keywords = map[string]struct{}{
 	"#ifdef":           {},
 	"#ifndef":          {},
 	"#include":         {},
+	"#else":            {},
 	"#pragma":          {},
 	"ret":              {},
 }

@@ -275,7 +275,7 @@ func tokenKind(tok rune, tokText string, inSingleLineComment *bool, assemblyMode
 		*inSingleLineComment = false
 	}
 	// Check if this is #include or #define
-	if tokText == "include" || tokText == "define" || tokText == "ifdef" || tokText == "ifndef" || tokText == "endif" {
+	if tokText == "include" || tokText == "define" || tokText == "ifdef" || tokText == "ifndef" || tokText == "endif" || tokText == "else" {
 		*inSingleLineComment = false
 		// Color it like a keyword
 		return Keyword
