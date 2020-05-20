@@ -15,26 +15,6 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const (
-	// Mode "enum"
-	modeBlank    = iota
-	modeGit      // for git commits and interactive rebases
-	modeMarkdown // for Markdown (and asciidoctor and rst files)
-	modeMakefile // for Makefiles
-	modeShell    // for shell scripts and PKGBUILD files
-	modeConfig   // for yml, toml, and ini files etc
-	modeAssembly // for Assembly files
-	modeGo       // for Go source files
-	modeHaskell  // for Haskell source files
-	modeOCaml    // for OCaml source files
-	modePython   // for Python source files
-	modeText     // for plain text documents
-	modeCMake    // for CMake files
-)
-
-// Mode is a per-filetype mode, like for Markdown
-type Mode int
-
 // EditorColors is a collection of a few selected colors, for setting up a new editor
 type EditorColors struct {
 	fg               vt100.AttributeColor // default foreground color
@@ -587,6 +567,8 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return ";"
 	case modeHaskell:
 		return "--"
+	case modeVim:
+		return "\""
 	default:
 		return "//"
 	}

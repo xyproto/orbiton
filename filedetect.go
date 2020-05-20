@@ -5,6 +5,27 @@ import (
 	"strings"
 )
 
+const (
+	// Mode "enum"
+	modeBlank    = iota
+	modeGit      // for git commits and interactive rebases
+	modeMarkdown // for Markdown (and asciidoctor and rst files)
+	modeMakefile // for Makefiles
+	modeShell    // for shell scripts and PKGBUILD files
+	modeConfig   // for yml, toml, and ini files etc
+	modeAssembly // for Assembly files
+	modeGo       // for Go source files
+	modeHaskell  // for Haskell source files
+	modeOCaml    // for OCaml source files
+	modePython   // for Python source files
+	modeText     // for plain text documents
+	modeCMake    // for CMake files
+	modeVim      // for Vim or NeoVim configuration, or .vim scripts
+)
+
+// Mode is a per-filetype mode, like for Markdown
+type Mode int
+
 // detectFileMode looks at the filename and tries to guess what could be an appropriate editor mode.
 // This mainly affects syntax highlighting (which can be toggled with ctrl-t) and indentation.
 func detectEditorMode(filename string) (Mode, bool) {
@@ -27,6 +48,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			strings.Count(baseFilename, "-") >= 2):
 		// Git mode
 		mode = modeGit
+	case (ext == "" && strings.Contains(baseFilename, "vimrc")) || ext == ".vim" || ext == ".nvim":
+		mode = modeVim
 	case strings.HasSuffix(filename, ".git/config") || ext == "ini" || ext == "cfg" || ext == "conf":
 		mode = modeConfig
 	case ext == ".sh" || ext == ".ksh" || ext == ".tcsh" || ext == ".bash" || ext == ".zsh" || baseFilename == "PKGBUILD" || (strings.HasPrefix(baseFilename, ".") && strings.Contains(baseFilename, "sh")): // This last part covers .bashrc, .zshrc etc
@@ -62,6 +85,7 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeBlank
 		}
 	}
+
 	// Check if we should enable syntax highlighting by default
 	syntaxHighlightingEnabled := (mode != modeBlank || ext != "") && mode != modeText
 

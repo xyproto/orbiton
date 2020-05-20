@@ -82,6 +82,17 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 	// First loop from 0 to offset to figure out if we are already in a multiline comment or a multiline string at the current line
 	for i := 0; i < offset; i++ {
 		trimmedLine = strings.TrimSpace(e.Line(LineIndex(i)))
+
+		// Special case for ViM
+		if e.mode == modeVim && strings.HasPrefix(trimmedLine, "\"") {
+			q.singleLineComment = true
+			q.startedMultiLineString = false
+			q.backtick = 0
+			q.doubleQuote = 0
+			q.singleQuote = 0
+			continue
+		}
+
 		// Have a trimmed line. Want to know: the current state of which quotes, comments or strings we are in.
 		// Solution, have a state struct!
 		q.Process(trimmedLine)
@@ -140,6 +151,29 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 						// Regular highlight
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					}
+				case modeVim:
+					// Special case for ViM single-line comments
+					trimmedLine = strings.TrimSpace(line)
+					if strings.Count(trimmedLine, "\"") == 1 {
+						q.singleLineComment = true
+						q.startedMultiLineString = false
+						q.backtick = 0
+						q.doubleQuote = 0
+						q.singleQuote = 0
+						// Color the line with the same color as for multiline comments
+						if strings.HasPrefix(trimmedLine, "\"") {
+							coloredString = UnEscape(e.multilineComment.Get(line))
+						} else {
+							parts := strings.SplitN(line, "\"", 2)
+							if newTextWithTags, err := syntax.AsText([]byte(Escape(parts[0])), false); err != nil {
+								coloredString = UnEscape(o.DarkTags(string(textWithTags)))
+							} else {
+								coloredString = UnEscape(o.DarkTags(string(newTextWithTags)) + e.multilineComment.Get("\""+parts[1]))
+							}
+						}
+						break
+					}
+					fallthrough
 				default:
 					trimmedLine = strings.TrimSpace(line)
 					q.Process(trimmedLine)

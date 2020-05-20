@@ -149,7 +149,7 @@ Set NO_COLOR=1 to disable colors.
 		clearOnQuit = true
 	case modeMakefile, modePython, modeCMake:
 		spacesPerTab = 4
-	case modeShell, modeConfig, modeHaskell:
+	case modeShell, modeConfig, modeHaskell, modeVim:
 		spacesPerTab = 2
 	}
 
