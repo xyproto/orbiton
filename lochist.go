@@ -397,17 +397,17 @@ func LoadEmacsLocationHistory(emacsPlacesFilename string) map[string]CharacterPo
 
 // SaveLocationHistory will attempt to save the per-absolute-filename recording of which line is active
 func SaveLocationHistory(locationHistory map[string]LineNumber, configFile string) error {
-	folderPath := filepath.Dir(configFile)
-
 	// First create the folder, if needed, in a best effort attempt
+	folderPath := filepath.Dir(configFile)
 	os.MkdirAll(folderPath, os.ModePerm)
 
 	var sb strings.Builder
 	for k, v := range locationHistory {
 		sb.WriteString(fmt.Sprintf("\"%s\": %d\n", k, v))
 	}
-	// Write the location history and return the error, if any
-	return ioutil.WriteFile(configFile, []byte(sb.String()), 0644)
+	// Write the location history and return the error, if any.
+	// The permissions are a bit stricter for this one.
+	return ioutil.WriteFile(configFile, []byte(sb.String()), 0600)
 }
 
 // SaveLocation takes a filename (which includes the absolute path) and a map which contains
