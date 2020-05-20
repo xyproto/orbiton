@@ -2,7 +2,6 @@
 
 ## Bug fixes
 
-- [ ] Find out why the search history is not being saved.
 - [ ] Multiline strings are not syntax highligted correctly in Go code. Fix.
 - [ ] When breaking long lines, the cursor should sometimes go to the end of the next line. Figure out when.
 
@@ -17,7 +16,6 @@
 - [ ] If `xclip` or `wl-clipboard` are not found when pasting, present a status message. Also check related env. vars.
 - [ ] Let the autocompletion also look at method definitions with matching variable names (ignoring types, for now).
 - [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
-- [ ] Be able to browse the search history with arrow up and down when searching. Introduce a search history.
 
 ## Features in general
 
