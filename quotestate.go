@@ -87,7 +87,7 @@ func (q *QuoteState) Process(line string) {
 			}
 		case []rune(q.singleLineCommentMarker)[0]:
 			// TODO: Simplify by checking q.None() first, and assuming that the len of the marker is > 1 if it's not 1 since it's not 0
-			if q.None() {
+			if !q.multiLineComment && !q.singleLineComment {
 				switch {
 				case len(q.singleLineCommentMarker) == 1:
 					fallthrough

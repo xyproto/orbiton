@@ -148,9 +148,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					case q.singleLineComment:
 						// A single line comment (the syntax module did the highlighting)
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
+						q.backtick = 0
 					case q.multiLineComment:
 						// A multi line comment
 						coloredString = UnEscape(e.multilineComment.Get(line))
+						q.backtick = 0
 					case !q.startedMultiLineString && q.backtick > 0:
 						// A multi line string
 						coloredString = UnEscape(e.multilineString.Get(line))
