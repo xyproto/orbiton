@@ -5,17 +5,22 @@
 - [ ] Multiline strings are not syntax highligted correctly in Go code. Fix.
 - [ ] When breaking long lines, the cursor should sometimes go to the end of the next line. Figure out when.
 
+## Major changes that might be useful
+
+- [ ] Replace and/or rewrite the syntax highlighting system.
+
 ## Features I see myself using straight away
 
-- [ ] Reduce memory usage.
-- [ ] If pressing `ctrl-l` and then moving the arrow keys, don't stay in the mode where a line number can be typed.
-- [ ] Spellcheck all comments. Highlight misspelled words. Make it possible to add/ignore words.
-- [ ] JSON formatter.
+- [ ] Spellcheck all comments that are in English. Highlight misspelled words. Make it possible to add/ignore words.
 - [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.
 - [ ] Rainbow parenthesis.
 - [ ] If `xclip` or `wl-clipboard` are not found when pasting, present a status message. Also check related env. vars.
-- [ ] Let the autocompletion also look at method definitions with matching variable names (ignoring types, for now).
+- [ ] Drop draw mode and let `ctrl-o` present a menu where you can choose from: Insert file, Regex search, Update PKGBUILD file.
+- [ ] Also add these to the `ctrl-o` menu: Hex editor, Go to definition, Rename symbol, Find references and Disassembly.
+- [ ] Reduce memory usage.
+- [ ] Also format JSON documents with `ctrl-w`.
 - [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
+- [ ] Let the autocompletion also look at method definitions with matching variable names (ignoring types, for now).
 
 ## Features in general
 
@@ -30,7 +35,7 @@
 
 - [ ] If pressing return at the end of the document, after a full screen, then also scroll down 1 line.
       Currently, blank lines at the end of the document is immediately trimmed, which might make sense.
-- [ ] Introduce a hexedit mode (toggled with `ctrl-o` instead of drawing mode, which could be renamed) that will:
+- [ ] Introduce a hexedit mode that will:
       * Not load the entire file into memory.
       * Display all bytes as a grid of "0xff" style fields, with the string representation to the right.
       * This might be better solved by having a separate hex editor?
@@ -41,7 +46,6 @@
       This could be used for hex editing, editing ELF files etc.
 - [ ] Tab in the middle of a line, especially on a `|` character, could insert spaces until the `|` alignes with the `|` above, if applicable
       (For Markdown tables).
-- [ ] Introduce keys could be used for "go to definition" and "rename".
 - [ ] Smarter indentation for `}`. There are still a few cases where it's not too smart.
       Perhaps use the logic for tab-indenting for when dedenting `}`?
 - [ ] If joining a line that starts with a single-line comment with a line below that also starts with a single line comment,
