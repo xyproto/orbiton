@@ -2,14 +2,22 @@ package main
 
 import (
 	"errors"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/xyproto/vt100"
 )
 
-var errNoSearchMatch = errors.New("no search match")
+var (
+	errNoSearchMatch      = errors.New("no search match")
+	searchHistory         = []string{}
+	searchHistoryFilename = "~/.cache/o/search.txt" // TODO: Use XDG_CACHE_HOME
+)
 
 // SetSearchTerm will set the current search term to highlight
+// TODO: Move the string parameter so that it is last
 func (e *Editor) SetSearchTerm(s string, c *vt100.Canvas, status *StatusBar) {
 	// set the search term
 	e.searchTerm = s
@@ -229,6 +237,7 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		doneCollectingLetters bool
 		initialLocation       = e.DataY().LineNumber()
 		pressedReturn         bool
+		index                 int = 1
 	)
 	for !doneCollectingLetters {
 		key = tty.String()
@@ -238,6 +247,8 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 				s = s[:len(s)-1]
 				e.SetSearchTerm(s, c, status)
 				e.GoToLineNumber(initialLocation, c, status, false)
+
+				status.ClearAll(c)
 				status.SetMessage(searchPrompt + " " + s)
 				status.ShowNoTimeout(c, e)
 			}
@@ -249,15 +260,38 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 			pressedReturn = true
 			doneCollectingLetters = true
 		case "↑": // previous in the search history
-			// TODO: Browse backwards in the search history and don't fall through
+			index--
+			if index < 0 {
+				// wraparound
+				index = len(searchHistory) - 1
+			}
+			s = searchHistory[index]
+			e.SetSearchTerm(s, c, status)
+
+			status.ClearAll(c)
+			status.SetMessage(searchPrompt + " " + s)
+			status.ShowNoTimeout(c, e)
 		case "↓": // next in the search history
-			// TODO: Browse backwards in the search history and don't fall through
+			index++
+			if index >= len(searchHistory) {
+				// wraparound
+				index = 0
+			}
+			s = searchHistory[index]
+			e.SetSearchTerm(s, c, status)
+
+			status.ClearAll(c)
+			status.SetMessage(searchPrompt + " " + s)
+			status.ShowNoTimeout(c, e)
 		default:
 			if key != "" && !strings.HasPrefix(key, "c:") {
 				s += key
 				e.SetSearchTerm(s, c, status)
+
+				status.ClearAll(c)
 				status.SetMessage(searchPrompt + " " + s)
 				status.ShowNoTimeout(c, e)
+
 			}
 		}
 	}
@@ -268,6 +302,8 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		// Return to the first location before performing the actual search
 		e.GoToLineNumber(initialLocation, c, status, false)
 	}
+
+	searchHistory = append(searchHistory, s)
 
 	// Perform the actual search
 	wrap := true    // with wraparound
@@ -286,4 +322,29 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		}
 	}
 	e.Center(c)
+}
+
+// LoadSearchHistory will load a list of strings from the given filename
+func LoadSearchHistory(filename string) ([]string, error) {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return []string{}, err
+	}
+	return strings.Split(string(data), "\n"), nil
+}
+
+// SaveSearchHistory will save a list of strings to the given filename
+func SaveSearchHistory(filename string, list []string) error {
+
+	if len(list) == 0 {
+		return nil
+	}
+
+	// First create the folder, if needed, in a best effort attempt
+	folderPath := filepath.Dir(filename)
+	os.MkdirAll(folderPath, os.ModePerm)
+
+	// Save the list
+	data := []byte(strings.Join(list, "\n"))
+	return ioutil.WriteFile(filename, data, 0600)
 }

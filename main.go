@@ -333,15 +333,19 @@ Set NO_COLOR=1 to disable colors.
 		absFilename = filename
 	}
 
-	// Load the o location history, since this will be saved again later
 	var (
 		found              bool
 		recordedLineNumber LineNumber
 	)
+
+	// Load the location history. This will be saved again later. Errors are ignored.
 	locationHistory, err := LoadLocationHistory(expandUser(locationHistoryFilename))
 	if err == nil { // no error
 		recordedLineNumber, found = locationHistory[absFilename]
 	}
+
+	// Load the search history. This will be saved again later. Errors are ignored.
+	searchHistory, _ = LoadSearchHistory(expandUser(searchHistoryFilename))
 
 	// Jump to the correct line number
 	switch {
@@ -573,6 +577,9 @@ Set NO_COLOR=1 to disable colors.
 
 			// Save the current line location to file, for later
 			e.SaveLocation(absFilename, locationHistory)
+
+			// Save the current search history
+			SaveSearchHistory(searchHistoryFilename, searchHistory)
 
 			// Clear the current search term
 			e.ClearSearchTerm()
@@ -1196,8 +1203,13 @@ Set NO_COLOR=1 to disable colors.
 				if !e.DrawMode() && e.AfterLineScreenContents() {
 					e.End()
 				}
+
 				// Save the current location in the location history and write it to file
 				e.SaveLocation(absFilename, locationHistory)
+
+				// Save the current search history
+				SaveSearchHistory(searchHistoryFilename, searchHistory)
+
 				// Status message
 				status.SetMessage("Saved " + filename)
 				status.Show(c, e)
@@ -1235,6 +1247,8 @@ Set NO_COLOR=1 to disable colors.
 						status.SetMessage("Go to line number: " + lns)
 						status.ShowNoTimeout(c, e)
 					}
+				case "↑", "↓": // up arrow or down arrow
+					fallthrough
 				case "c:27", "c:17": // esc or ctrl-q
 					cancel = true
 					lns = ""
@@ -1645,6 +1659,9 @@ Set NO_COLOR=1 to disable colors.
 
 	// Save the current location in the location history and write it to file
 	e.SaveLocation(absFilename, locationHistory)
+
+	// Save the current search history
+	SaveSearchHistory(searchHistoryFilename, searchHistory)
 
 	// Clear all status bar messages
 	status.ClearAll(c)
