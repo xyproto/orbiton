@@ -330,6 +330,7 @@ func LoadSearchHistory(filename string) ([]string, error) {
 	if err != nil {
 		return []string{}, err
 	}
+	// This can load empty words, but they should never be stored in the first place
 	return strings.Split(string(data), "\n"), nil
 }
 

@@ -405,6 +405,7 @@ func SaveLocationHistory(locationHistory map[string]LineNumber, configFile strin
 	for k, v := range locationHistory {
 		sb.WriteString(fmt.Sprintf("\"%s\": %d\n", k, v))
 	}
+
 	// Write the location history and return the error, if any.
 	// The permissions are a bit stricter for this one.
 	return ioutil.WriteFile(configFile, []byte(sb.String()), 0600)
