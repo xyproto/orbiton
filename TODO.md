@@ -28,6 +28,10 @@
 - [ ] Highlight links in Markdown (perhaps color `[` and `]` yellow).
 - [ ] Localization.
 
+## Bug fixes that might not be needed
+
+- [ ] Also enable rainbow parenthesis for lines that ends with a single-line comment.
+
 ## Features that might not be needed
 
 - [ ] If pressing return at the end of the document, after a full screen, then also scroll down 1 line.
