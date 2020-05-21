@@ -12,7 +12,7 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 	switch mode {
 	case modeGo:
 		addKeywords = []string{"fallthrough", "string", "print", "println", "range", "defer"}
-		delKeywords = []string{"mut", "pass", "build"}
+		delKeywords = []string{"mut", "pass", "build", "None"}
 	case modeShell:
 		delKeywords = []string{"float", "with", "exec", "long", "double", "no", "pass"}
 		fallthrough
