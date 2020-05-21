@@ -11,8 +11,8 @@ func (e *Editor) setLightTheme() {
 	e.bg = vt100.Gray
 	e.searchFg = vt100.Red
 	e.gitColor = vt100.Blue
-	e.multilineComment = vt100.Green
-	e.multilineString = vt100.Red
+	e.multiLineComment = vt100.Green
+	e.multiLineString = vt100.Red
 
 	syntax.DefaultTextConfig.String = "red"
 	syntax.DefaultTextConfig.Keyword = "blue"

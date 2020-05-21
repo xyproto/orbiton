@@ -21,8 +21,8 @@ type EditorColors struct {
 	bg               vt100.AttributeColor // default background color
 	searchFg         vt100.AttributeColor // search highlight color
 	gitColor         vt100.AttributeColor // git commit message color
-	multilineComment vt100.AttributeColor // color for multiline comments
-	multilineString  vt100.AttributeColor // colo for multiline strings
+	multiLineComment vt100.AttributeColor // color for multiLine comments
+	multiLineString  vt100.AttributeColor // colo for multiLine strings
 }
 
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
@@ -49,7 +49,7 @@ type Editor struct {
 // * background color attributes
 // * if syntax highlighting is enabled
 // * if "insert mode" is enabled (as opposed to "draw mode")
-func NewEditor(spacesPerTab int, syntaxHighlight, textEditMode bool, scrollSpeed int, fg, bg, searchFg, multilineComment, multilineString vt100.AttributeColor, scheme syntax.TextConfig, mode Mode) *Editor {
+func NewEditor(spacesPerTab int, syntaxHighlight, textEditMode bool, scrollSpeed int, fg, bg, searchFg, multiLineComment, multiLineString vt100.AttributeColor, scheme syntax.TextConfig, mode Mode) *Editor {
 	syntax.DefaultTextConfig = scheme
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
@@ -71,8 +71,8 @@ func NewEditor(spacesPerTab int, syntaxHighlight, textEditMode bool, scrollSpeed
 		e.wordWrapAt = 72
 	}
 	e.mode = mode
-	e.multilineComment = multilineComment
-	e.multilineString = multilineString
+	e.multiLineComment = multiLineComment
+	e.multiLineString = multiLineString
 	return e
 }
 

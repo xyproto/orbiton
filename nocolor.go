@@ -15,8 +15,8 @@ func (e *Editor) respectNoColorEnvironmentVariable() {
 		// The following is not strictly needed, since the text will be black and white just by setting e.fg and e.bg above
 		e.searchFg = vt100.Default
 		e.gitColor = vt100.Default
-		e.multilineComment = vt100.Default
-		e.multilineString = vt100.Default
+		e.multiLineComment = vt100.Default
+		e.multiLineString = vt100.Default
 		syntax.DefaultTextConfig.String = ""
 		syntax.DefaultTextConfig.Keyword = ""
 		syntax.DefaultTextConfig.Comment = ""
