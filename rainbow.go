@@ -6,12 +6,14 @@ import (
 )
 
 var (
-	colorSlice = make([]vt100.AttributeColor, 0) // to be pushed to and popped from
+	colorSlice         = make([]vt100.AttributeColor, 0) // to be pushed to and popped from
+	rainbowParenColors = []vt100.AttributeColor{vt100.LightMagenta, vt100.LightRed, vt100.Yellow, vt100.LightYellow, vt100.LightGreen, vt100.Green, vt100.LightBlue, vt100.Blue}
+	parenErrorColor    = vt100.White // this color is meant to stand out, for unbalanced parenthesis
 )
 
 // rainbowParen implements "rainbow parenthesis" which colors "(" and ")" according to how deep they are nested
 // pCount is the existing parenthesis count when reaching the start of this line
-func rainbowParen(pCount *int, chars *[]textoutput.CharAttribute, singleLineCommentMarker string) {
+func rainbowParen(pCount *int, chars *[]textoutput.CharAttribute, singleLineCommentMarker string, ignoreSingleQuotes bool) {
 	var (
 		q = NewQuoteState(singleLineCommentMarker) // TODO: Use the proper single line comment
 		//decrement              = 0
@@ -24,7 +26,7 @@ func rainbowParen(pCount *int, chars *[]textoutput.CharAttribute, singleLineComm
 	//q.parCount = *pCount
 	for i, charAttr := range *chars {
 		r := charAttr.R
-		q.ProcessRune(r, prevRune, prevPrevRune)
+		q.ProcessRune(r, prevRune, prevPrevRune, ignoreSingleQuotes)
 		prevPrevRune = prevRune
 		prevRune = r
 
@@ -59,70 +61,31 @@ func rainbowParen(pCount *int, chars *[]textoutput.CharAttribute, singleLineComm
 			*pCount = 0
 		}
 
-		// Select a color, using modulo 6 of the parenthesis count
+		// Select a color, using modulo
 		// Select another color if it's the same as the text that follows
 		if opening {
-			switch *pCount % 9 {
-			case 1: // the first one because of modulo (and a parenthesis has already been counted)
-				charAttr.A = vt100.LightRed
-				if charAttr.A.Equal(nextColor) {
-					charAttr.A = vt100.White
+			selected := (*pCount) % len(rainbowParenColors)
+			charAttr.A = rainbowParenColors[selected]
+			// Loop until a color that is not the same as the color of the next character is selected
+			for charAttr.A.Equal(nextColor) {
+				selected++
+				if selected >= len(rainbowParenColors) {
+					selected = 0
 				}
-				colorSlice = append(colorSlice, charAttr.A)
-			case 2:
-				charAttr.A = vt100.Yellow
-				if charAttr.A.Equal(nextColor) {
-					charAttr.A = vt100.White
-				}
-				colorSlice = append(colorSlice, charAttr.A)
-			case 3:
-				charAttr.A = vt100.LightYellow
-				if charAttr.A.Equal(nextColor) {
-					charAttr.A = vt100.White
-				}
-				colorSlice = append(colorSlice, charAttr.A)
-			case 4:
-				charAttr.A = vt100.LightGreen
-				if charAttr.A.Equal(nextColor) {
-					charAttr.A = vt100.White
-				}
-				colorSlice = append(colorSlice, charAttr.A)
-			case 5:
-				charAttr.A = vt100.Green
-				if charAttr.A.Equal(nextColor) {
-					charAttr.A = vt100.White
-				}
-				colorSlice = append(colorSlice, charAttr.A)
-			case 6:
-				charAttr.A = vt100.LightBlue
-				if charAttr.A.Equal(nextColor) {
-					charAttr.A = vt100.White
-				}
-				colorSlice = append(colorSlice, charAttr.A)
-			case 7:
-				charAttr.A = vt100.Blue
-				if charAttr.A.Equal(nextColor) {
-					charAttr.A = vt100.White
-				}
-				colorSlice = append(colorSlice, charAttr.A)
-			case 0: // the last one because of modulo
-				charAttr.A = vt100.Magenta
-				if charAttr.A.Equal(nextColor) {
-					charAttr.A = vt100.White
-				}
-				colorSlice = append(colorSlice, charAttr.A)
+				charAttr.A = rainbowParenColors[selected]
 			}
+			// Push the color to the color stack
+			colorSlice = append(colorSlice, charAttr.A)
 		} else {
 			if len(colorSlice) > 0 {
+				// pop the color from the color stack
 				lastIndex = len(colorSlice) - 1
 				charAttr.A = colorSlice[lastIndex]
 				colorSlice = colorSlice[:lastIndex]
 			} else {
-				charAttr.A = vt100.Red
+				charAttr.A = parenErrorColor
 			}
 		}
-
-		//*pCount -= parens
 
 		// For debugging
 		//charAttr.R = []rune(strconv.Itoa(*pCount))[0]
