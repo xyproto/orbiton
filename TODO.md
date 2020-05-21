@@ -3,13 +3,15 @@
 ## Bug fixes
 
 - [ ] When breaking long lines, the cursor should sometimes go to the end of the next line. Identify when.
+- [ ] Fix syntax highlighting of multiline strings in Go.
+- [ ] When pressing `ctrl-k` on an indented line above an indented line containing only `}`, the cursor ends up after the `}` instead of before.
 
 ## Features I see myself using straight away
 
+- [ ] Let the cut/copy/paste line state be part of the editor state, because of undo.
+- [ ] When pressing `ctrl-f` and then `return`, use the previous search word.
 - [ ] Spellcheck all comments that are in English. Highlight misspelled words. Make it possible to add/ignore words.
-- [ ] Rainbow parenthesis.
 - [ ] If `xclip` or `wl-clipboard` are not found when pasting, present a status message. Also check related env. vars.
-
 - [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.
 - [ ] Drop draw mode and let `ctrl-o` present a menu where you can choose from: Insert file, Regex search, Update PKGBUILD file.
 - [ ] Also add these to the `ctrl-o` menu: Hex editor, Go to definition, Rename symbol, Find references and Disassembly.
