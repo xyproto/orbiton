@@ -12,7 +12,10 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const controlRuneReplacement = '¿' // for displaying control sequence characters
+const (
+	controlRuneReplacement   = '¿'  // for displaying control sequence characters
+	enableRainbowParenthesis = true // enable rainbow parenthesis
+)
 
 var (
 	// Color scheme for the "text edit" mode
@@ -75,11 +78,13 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		}
 	}
 	var (
-		noColor     bool = os.Getenv("NO_COLOR") != ""
-		trimmedLine string
-		q           = NewQuoteState(e.SingleLineCommentMarker())
+		noColor                 bool = os.Getenv("NO_COLOR") != ""
+		trimmedLine             string
+		singleLineCommentMarker      = e.SingleLineCommentMarker()
+		q                            = NewQuoteState(singleLineCommentMarker)
+		prevRune, prevPrevRune  rune = '\n', '\n'
 	)
-	// First loop from 0 to offset to figure out if we are already in a multiline comment or a multiline string at the current line
+	// First loop from 0 to offset to figure out if we are already in a multiLine comment or a multiLine string at the current line
 	for i := 0; i < offset; i++ {
 		trimmedLine = strings.TrimSpace(e.Line(LineIndex(i)))
 
@@ -95,10 +100,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 
 		// Have a trimmed line. Want to know: the current state of which quotes, comments or strings we are in.
 		// Solution, have a state struct!
-		q.Process(trimmedLine)
+		prevRune, prevPrevRune = q.Process(trimmedLine, prevRune, prevPrevRune)
 	}
 	// q should now contain the current quote state
-	//panic(q.String())
 	var (
 		counter            int
 		line               string
@@ -128,6 +132,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 			} else {
 				// Color and unescape
 				var coloredString string
+				addedPar := 0 // Added parenthesis to the parenthesis count when processing this line
 				switch e.mode {
 				case modeGit:
 					coloredString = e.gitHighlight(line)
@@ -155,7 +160,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					// Handle single line comments starting with (* and ending with *)
 					trimmedLine = strings.TrimSpace(line)
 					if strings.HasPrefix(trimmedLine, "(*") && strings.HasSuffix(trimmedLine, "*)") {
-						coloredString = UnEscape(e.multilineComment.Get(trimmedLine))
+						coloredString = UnEscape(e.multiLineComment.Get(trimmedLine))
 					} else {
 						// Regular highlight
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
@@ -169,15 +174,15 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 						q.backtick = 0
 						q.doubleQuote = 0
 						q.singleQuote = 0
-						// Color the line with the same color as for multiline comments
+						// Color the line with the same color as for multiLine comments
 						if strings.HasPrefix(trimmedLine, "\"") {
-							coloredString = UnEscape(e.multilineComment.Get(line))
+							coloredString = UnEscape(e.multiLineComment.Get(line))
 						} else {
 							parts := strings.SplitN(line, "\"", 2)
 							if newTextWithTags, err := syntax.AsText([]byte(Escape(parts[0])), false); err != nil {
 								coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 							} else {
-								coloredString = UnEscape(o.DarkTags(string(newTextWithTags)) + e.multilineComment.Get("\""+parts[1]))
+								coloredString = UnEscape(o.DarkTags(string(newTextWithTags)) + e.multiLineComment.Get("\""+parts[1]))
 							}
 						}
 						break
@@ -185,20 +190,22 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					fallthrough
 				default:
 					trimmedLine = strings.TrimSpace(line)
-					q.Process(trimmedLine)
+					previousParCount := q.parCount
+					prevRune, prevPrevRune = q.Process(trimmedLine, prevRune, prevPrevRune)
+					addedPar = q.parCount - previousParCount // can be negative
+
+					//logf("%s -[ %d ]-->\n\t%s\n", trimmedLine, addedPar, q.String())
 
 					switch {
 					case q.singleLineComment:
 						// A single line comment (the syntax module did the highlighting)
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
-						q.backtick = 0
 					case q.multiLineComment:
 						// A multi-line comment
-						coloredString = UnEscape(e.multilineComment.Get(line))
-						q.backtick = 0
+						coloredString = UnEscape(e.multiLineComment.Get(line))
 					case !q.startedMultiLineString && q.backtick > 0:
 						// A multi-line string
-						coloredString = UnEscape(e.multilineString.Get(line))
+						coloredString = UnEscape(e.multiLineString.Get(line))
 					default:
 						// Regular code
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
@@ -207,6 +214,17 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 
 				// Slice of runes and color attributes, while at the same time highlighting search terms
 				charactersAndAttributes := o.Extract(coloredString)
+
+				// If we're not in a comment or a string, enable rainbow parenthesis
+				if enableRainbowParenthesis && q.None() {
+					if addedPar != 0 {
+						parCount := q.parCount + (addedPar - 1)
+						rainbowParen(&parCount, &charactersAndAttributes, singleLineCommentMarker)
+					} else {
+						rainbowParen(&(q.parCount), &charactersAndAttributes, singleLineCommentMarker)
+					}
+				}
+
 				searchTermRunes := []rune(e.searchTerm)
 				matchForAnotherN := 0
 				for characterIndex, ca := range charactersAndAttributes {

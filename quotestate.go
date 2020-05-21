@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-// QuoteState keeps track of if we're within a multiline comment, single quotes, double quotes or multiline quotes.
+// QuoteState keeps track of if we're within a multi-line comment, single quotes, double quotes or multi-line quotes.
 // Single line comments are not kept track of in the same way, they can be detected just by checking the current line.
 // If one of the ints are > 0, the other ints should not be added to.
 // Multiline comments (/* ... */) are special.
@@ -15,6 +15,7 @@ type QuoteState struct {
 	singleLineComment       bool
 	singleLineCommentMarker string
 	startedMultiLineString  bool
+	parCount                int // Parenthesis count
 }
 
 // NewQuoteState takes a singleLineCommentMarker (such as "//" or "#") and returns a pointer to a new QuoteState struct
@@ -44,7 +45,7 @@ func (q *QuoteState) OnlyDoubleQuote() bool {
 	return q.singleQuote == 0 && q.doubleQuote > 0 && q.backtick == 0 && !q.multiLineComment && !q.singleLineComment
 }
 
-// OnlyMultiLineComment returns true if we're only within a multiline comment
+// OnlyMultiLineComment returns true if we're only within a multi-line comment
 func (q *QuoteState) OnlyMultiLineComment() bool {
 	return q.singleQuote == 0 && q.doubleQuote == 0 && q.backtick == 0 && q.multiLineComment && !q.singleLineComment
 }
@@ -54,64 +55,86 @@ func (q *QuoteState) String() string {
 	return fmt.Sprintf("singleQuote=%v doubleQuote=%v backtick=%v multiLineComment=%v singleLineComment=%v startedMultiLineString=%v\n", q.singleQuote, q.doubleQuote, q.backtick, q.multiLineComment, q.singleLineComment, q.startedMultiLineString)
 }
 
+// ProcessRune is for processing single runes
+func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
+	switch r {
+	case '`':
+		if q.None() {
+			q.backtick++
+			q.startedMultiLineString = true
+		} else {
+			q.backtick--
+			if q.backtick < 0 {
+				q.backtick = 0
+			}
+		}
+	case '"':
+		if q.None() {
+			q.doubleQuote++
+		} else {
+			q.doubleQuote--
+			if q.doubleQuote < 0 {
+				q.doubleQuote = 0
+			}
+		}
+	case '\'':
+		if q.None() {
+			q.singleQuote++
+		} else {
+			q.singleQuote--
+			if q.singleQuote < 0 {
+				q.singleQuote = 0
+			}
+		}
+	case '*': // support C-style and multi-line comments
+		if prevRune == '/' && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
+			q.multiLineComment = true
+		}
+	case []rune(q.singleLineCommentMarker)[0]:
+		// TODO: Simplify by checking q.None() first, and assuming that the len of the marker is > 1 if it's not 1 since it's not 0
+		if !q.multiLineComment && !q.singleLineComment && !q.startedMultiLineString {
+			switch {
+			case len(q.singleLineCommentMarker) == 1:
+				fallthrough
+			case len(q.singleLineCommentMarker) > 1 && prevRune == []rune(q.singleLineCommentMarker)[1]:
+				q.singleLineComment = true
+				q.startedMultiLineString = false
+				q.backtick = 0
+				q.doubleQuote = 0
+				q.singleQuote = 0
+				// We're in a single line comment, nothing more to do for this line
+				return
+			}
+		}
+		if r != '/' {
+			break
+		}
+		// r == '/'
+		fallthrough
+	case '/': // support C-style multi-line comments
+		if prevRune == '*' && !q.None() {
+			q.multiLineComment = false
+		}
+	case '(':
+		if q.None() {
+			q.parCount++
+		}
+	case ')':
+		if q.None() {
+			q.parCount--
+		}
+	}
+}
+
 // Process takes a line of text and modifies the current quote state accordingly,
 // depending on which runes are encountered.
-func (q *QuoteState) Process(line string) {
-	var prevRune, prevPrevRune rune = '\n', '\n'
+func (q *QuoteState) Process(line string, prevRune, prevPrevRune rune) (rune, rune) {
 	q.singleLineComment = false
 	q.startedMultiLineString = false
 	for _, r := range line {
-		switch r {
-		case '`':
-			if q.None() {
-				q.backtick++
-				q.startedMultiLineString = true
-			} else {
-				q.backtick--
-			}
-		case '"':
-			if q.None() {
-				q.doubleQuote++
-			} else {
-				q.doubleQuote--
-			}
-		case '\'':
-			if q.None() {
-				q.singleQuote++
-			} else {
-				q.singleQuote--
-			}
-		case '*': // support C-style and StandardML-style multiline comments
-			if (prevRune == '/' || prevRune == '(') && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
-				q.multiLineComment = true
-			}
-		case []rune(q.singleLineCommentMarker)[0]:
-			// TODO: Simplify by checking q.None() first, and assuming that the len of the marker is > 1 if it's not 1 since it's not 0
-			if !q.multiLineComment && !q.singleLineComment {
-				switch {
-				case len(q.singleLineCommentMarker) == 1:
-					fallthrough
-				case len(q.singleLineCommentMarker) > 1 && prevRune == []rune(q.singleLineCommentMarker)[1]:
-					q.singleLineComment = true
-					q.startedMultiLineString = false
-					q.backtick = 0
-					q.doubleQuote = 0
-					q.singleQuote = 0
-					// We're in a single line comment, nothing more to do for this line
-					return
-				}
-			}
-			if r != '/' {
-				break
-			}
-			// r == '/'
-			fallthrough
-		case '/', ')': // support C-style and StandardML-style multiline comments
-			if prevRune == '*' && !q.None() {
-				q.multiLineComment = false
-			}
-		}
+		q.ProcessRune(r, prevRune, prevPrevRune)
 		prevPrevRune = prevRune
 		prevRune = r
 	}
+	return prevRune, prevPrevRune
 }
