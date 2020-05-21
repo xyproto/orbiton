@@ -81,8 +81,8 @@ func (q *QuoteState) Process(line string) {
 			} else {
 				q.singleQuote--
 			}
-		case '*':
-			if prevRune == '/' && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
+		case '*': // support C-style and StandardML-style multiline comments
+			if (prevRune == '/' || prevRune == '(') && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
 				q.multiLineComment = true
 			}
 		case []rune(q.singleLineCommentMarker)[0]:
@@ -106,7 +106,7 @@ func (q *QuoteState) Process(line string) {
 			}
 			// r == '/'
 			fallthrough
-		case '/':
+		case '/', ')': // support C-style and StandardML-style multiline comments
 			if prevRune == '*' && !q.None() {
 				q.multiLineComment = false
 			}

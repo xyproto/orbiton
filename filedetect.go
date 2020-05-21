@@ -7,20 +7,21 @@ import (
 
 const (
 	// Mode "enum"
-	modeBlank    = iota
-	modeGit      // for git commits and interactive rebases
-	modeMarkdown // for Markdown (and asciidoctor and rst files)
-	modeMakefile // for Makefiles
-	modeShell    // for shell scripts and PKGBUILD files
-	modeConfig   // for yml, toml, and ini files etc
-	modeAssembly // for Assembly files
-	modeGo       // for Go source files
-	modeHaskell  // for Haskell source files
-	modeOCaml    // for OCaml source files
-	modePython   // for Python source files
-	modeText     // for plain text documents
-	modeCMake    // for CMake files
-	modeVim      // for Vim or NeoVim configuration, or .vim scripts
+	modeBlank      = iota
+	modeGit        // for git commits and interactive rebases
+	modeMarkdown   // for Markdown (and asciidoctor and rst files)
+	modeMakefile   // for Makefiles
+	modeShell      // for shell scripts and PKGBUILD files
+	modeConfig     // for yml, toml, and ini files etc
+	modeAssembly   // for Assembly files
+	modeGo         // for Go source files
+	modeHaskell    // for Haskell source files
+	modeOCaml      // for OCaml source files
+	modeStandardML // for Standard ML source files
+	modePython     // for Python source files
+	modeText       // for plain text documents
+	modeCMake      // for CMake files
+	modeVim        // for Vim or NeoVim configuration, or .vim scripts
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -68,8 +69,10 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeGo
 		case ".hs":
 			mode = modeHaskell
+		case ".sml":
+			mode = modeStandardML
 		case ".ml":
-			mode = modeOCaml
+			mode = modeOCaml // or standard ML, if the file does not contain ";;"
 		case ".py":
 			mode = modePython
 		case ".md":

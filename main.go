@@ -251,6 +251,12 @@ Set NO_COLOR=1 to disable colors.
 					e.syntaxHighlight = true
 				}
 			}
+			// If the mode is modeOCaml and there are no ";;" strings, switch to Standard ML
+			if e.mode == modeOCaml {
+				if !strings.Contains(e.String(), ";;") {
+					e.mode = modeStandardML
+				}
+			}
 		}
 
 		// Test write, to check if the file can be written or not

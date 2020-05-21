@@ -151,6 +151,15 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 						// Regular highlight
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					}
+				case modeStandardML, modeOCaml:
+					// Handle single line comments starting with (* and ending with *)
+					trimmedLine = strings.TrimSpace(line)
+					if strings.HasPrefix(trimmedLine, "(*") && strings.HasSuffix(trimmedLine, "*)") {
+						coloredString = UnEscape(e.multilineComment.Get(trimmedLine))
+					} else {
+						// Regular highlight
+						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
+					}
 				case modeVim:
 					// Special case for ViM single-line comments
 					trimmedLine = strings.TrimSpace(line)
@@ -184,11 +193,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 						q.backtick = 0
 					case q.multiLineComment:
-						// A multi line comment
+						// A multi-line comment
 						coloredString = UnEscape(e.multilineComment.Get(line))
 						q.backtick = 0
 					case !q.startedMultiLineString && q.backtick > 0:
-						// A multi line string
+						// A multi-line string
 						coloredString = UnEscape(e.multilineString.Get(line))
 					default:
 						// Regular code
