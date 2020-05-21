@@ -1222,6 +1222,12 @@ Set NO_COLOR=1 to disable colors.
 				c.Draw()
 			}
 		case "c:21", "c:26": // ctrl-u or ctrl-z, undo (ctrl-z may background the application)
+			// Forget the cut, copy and paste line state
+			lastCutY = -1
+			lastPasteY = -1
+			lastCopyY = -1
+
+			// Try to restore the previous editor state in the undo buffer
 			if err := undo.Restore(e); err == nil {
 				//c.Draw()
 				x := e.pos.ScreenX()
