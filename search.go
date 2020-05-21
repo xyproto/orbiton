@@ -17,8 +17,7 @@ var (
 )
 
 // SetSearchTerm will set the current search term to highlight
-// TODO: Move the string parameter so that it is last
-func (e *Editor) SetSearchTerm(s string, c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) SetSearchTerm(c *vt100.Canvas, status *StatusBar, s string) {
 	// set the search term
 	e.searchTerm = s
 	// set the sticky search term (used by ctrl-n, cleared by Esc only)
@@ -222,7 +221,7 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 	const searchPrompt = "Search:"
 	if clear {
 		// Clear the previous search
-		e.SetSearchTerm("", c, status)
+		e.SetSearchTerm(c, status, "")
 	}
 	s := e.SearchTerm()
 	status.ClearAll(c)
@@ -245,16 +244,17 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		case "c:127": // backspace
 			if len(s) > 0 {
 				s = s[:len(s)-1]
-				e.SetSearchTerm(s, c, status)
+				e.SetSearchTerm(c, status, s)
 				e.GoToLineNumber(initialLocation, c, status, false)
 
-				status.ClearAll(c)
+				//status.ClearAll(c)
 				status.SetMessage(searchPrompt + " " + s)
+				//status.Show(c, e)
 				status.ShowNoTimeout(c, e)
 			}
 		case "c:27", "c:17": // esc or ctrl-q
 			s = ""
-			e.SetSearchTerm(s, c, status)
+			e.SetSearchTerm(c, status, s)
 			doneCollectingLetters = true
 		case "c:13": // return
 			pressedReturn = true
@@ -269,10 +269,11 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 				index = len(searchHistory) - 1
 			}
 			s = searchHistory[index]
-			e.SetSearchTerm(s, c, status)
+			e.SetSearchTerm(c, status, s)
 
-			status.ClearAll(c)
+			//status.ClearAll(c)
 			status.SetMessage(searchPrompt + " " + s)
+			//status.Show(c, e)
 			status.ShowNoTimeout(c, e)
 		case "↓": // next in the search history
 			if len(searchHistory) == 0 {
@@ -284,17 +285,15 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 				index = 0
 			}
 			s = searchHistory[index]
-			e.SetSearchTerm(s, c, status)
+			e.SetSearchTerm(c, status, s)
 
-			status.ClearAll(c)
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
 		default:
 			if key != "" && !strings.HasPrefix(key, "c:") {
 				s += key
-				e.SetSearchTerm(s, c, status)
+				e.SetSearchTerm(c, status, s)
 
-				status.ClearAll(c)
 				status.SetMessage(searchPrompt + " " + s)
 				status.ShowNoTimeout(c, e)
 
@@ -302,7 +301,7 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		}
 	}
 	status.ClearAll(c)
-	e.SetSearchTerm(s, c, status)
+	e.SetSearchTerm(c, status, s)
 
 	if pressedReturn {
 		// Return to the first location before performing the actual search
@@ -326,7 +325,7 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 			} else {
 				status.SetMessage(s + " not found from here")
 			}
-			status.Show(c, e)
+			status.ShowNoTimeout(c, e)
 		}
 	}
 	e.Center(c)
