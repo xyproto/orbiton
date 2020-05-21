@@ -6,7 +6,10 @@ import (
 )
 
 var (
-	colorSlice         = make([]vt100.AttributeColor, 0) // to be pushed to and popped from
+	colorSlice = make([]vt100.AttributeColor, 0) // to be pushed to and popped from
+
+	// the first color in this slice will normally not be used until the paranthesis are many levels deep,
+	// the second one will be used for the regular case which is 1 level deep
 	rainbowParenColors = []vt100.AttributeColor{vt100.LightMagenta, vt100.LightRed, vt100.Yellow, vt100.LightYellow, vt100.LightGreen, vt100.Green, vt100.LightBlue, vt100.Blue}
 	parenErrorColor    = vt100.White // this color is meant to stand out, for unbalanced parenthesis
 )

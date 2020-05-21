@@ -27,29 +27,37 @@ type EditorColors struct {
 
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
-	lines            map[int][]rune // the contents of the current document
-	changed          bool           // has the contents changed, since last save?
-	spacesPerTab     int            // how many spaces per tab character
-	syntaxHighlight  bool           // syntax highlighting
-	drawMode         bool           // text or draw mode (for ASCII graphics)?
-	pos              Position       // the current cursor and scroll position
-	searchTerm       string         // the current search term, used when searching
-	stickySearchTerm string         // for going to the next match with ctrl-n, unless esc has been pressed
-	redraw           bool           // if the contents should be redrawn in the next loop
-	redrawCursor     bool           // if the cursor should be moved to the location it is supposed to be
-	lineBeforeSearch LineIndex      // save the current line when jumping between search results
-	wordWrapAt       int            // set to 80 or 100 to trigger word wrap when typing to that column
-	mode             Mode           // a filetype mode, like for git or markdown
+	lines              map[int][]rune // the contents of the current document
+	changed            bool           // has the contents changed, since last save?
+	spacesPerTab       int            // how many spaces per tab character
+	syntaxHighlight    bool           // syntax highlighting
+	rainbowParenthesis bool           // rainbow parenthesis
+	drawMode           bool           // text or draw mode (for ASCII graphics)?
+	pos                Position       // the current cursor and scroll position
+	searchTerm         string         // the current search term, used when searching
+	stickySearchTerm   string         // for going to the next match with ctrl-n, unless esc has been pressed
+	redraw             bool           // if the contents should be redrawn in the next loop
+	redrawCursor       bool           // if the cursor should be moved to the location it is supposed to be
+	lineBeforeSearch   LineIndex      // save the current line when jumping between search results
+	wordWrapAt         int            // set to 80 or 100 to trigger word wrap when typing to that column
+	mode               Mode           // a filetype mode, like for git or markdown
 	EditorColors
 }
 
 // NewEditor takes:
 // * the number of spaces per tab (typically 2, 4 or 8)
-// * foreground color attributes
-// * background color attributes
-// * if syntax highlighting is enabled
-// * if "insert mode" is enabled (as opposed to "draw mode")
-func NewEditor(spacesPerTab int, syntaxHighlight, textEditMode bool, scrollSpeed int, fg, bg, searchFg, multiLineComment, multiLineString vt100.AttributeColor, scheme syntax.TextConfig, mode Mode) *Editor {
+// * if the text should be syntax highlighted
+// * if rainbow parenthesis should be enabled
+// * if text edit mode is enabled (as opposed to "ASCII draw mode")
+// * the current scroll speed, in lines
+// * the following colors:
+//    - text foreground
+//    - text background
+//    - search highlight
+//    - multiline comment
+// * a syntax highlighting scheme
+// * a file mode
+func NewEditor(spacesPerTab int, syntaxHighlight, rainbowParenthesis, textEditMode bool, scrollSpeed int, fg, bg, searchFg, multiLineComment, multiLineString vt100.AttributeColor, scheme syntax.TextConfig, mode Mode) *Editor {
 	syntax.DefaultTextConfig = scheme
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
@@ -57,6 +65,7 @@ func NewEditor(spacesPerTab int, syntaxHighlight, textEditMode bool, scrollSpeed
 	e.bg = bg
 	e.spacesPerTab = spacesPerTab
 	e.syntaxHighlight = syntaxHighlight
+	e.rainbowParenthesis = rainbowParenthesis
 	e.drawMode = !textEditMode
 	p := NewPosition(scrollSpeed)
 	e.pos = *p
@@ -81,7 +90,7 @@ func NewEditor(spacesPerTab int, syntaxHighlight, textEditMode bool, scrollSpeed
 // search results magenta, use the default syntax highlighting scheme, don't use git mode and don't use markdown mode,
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
-	e := NewEditor(4, false, true, 1, vt100.White, vt100.Black, vt100.Magenta, vt100.Gray, vt100.Magenta, syntax.DefaultTextConfig, modeBlank)
+	e := NewEditor(4, false, false, true, 1, vt100.White, vt100.Black, vt100.Magenta, vt100.Gray, vt100.Magenta, syntax.DefaultTextConfig, modeBlank)
 	e.wordWrapAt = wordWrapLimit
 	return e
 }
@@ -972,6 +981,16 @@ func (e *Editor) ToggleHighlight() {
 // SetHighlight enables or disables syntax highlighting
 func (e *Editor) SetHighlight(syntaxHighlight bool) {
 	e.syntaxHighlight = syntaxHighlight
+}
+
+// ToggleRainbow toggles rainbow parenthesis
+func (e *Editor) ToggleRainbow() {
+	e.rainbowParenthesis = !e.rainbowParenthesis
+}
+
+// SetRainbow enables or disables rainbow parenthesis
+func (e *Editor) SetRainbow(rainbowParenthesis bool) {
+	e.rainbowParenthesis = rainbowParenthesis
 }
 
 // SetLine will fill the given line index with the given string.

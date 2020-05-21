@@ -144,6 +144,7 @@ Set NO_COLOR=1 to disable colors.
 	adjustSyntaxHighlightingKeywords(mode)
 
 	// Additional per-mode considerations
+	rainbowParenthesis := syntaxHighlight // rainbow parenthesis
 	switch mode {
 	case modeGit:
 		clearOnQuit = true
@@ -151,6 +152,8 @@ Set NO_COLOR=1 to disable colors.
 		spacesPerTab = 4
 	case modeShell, modeConfig, modeHaskell, modeVim:
 		spacesPerTab = 2
+	case modeMarkdown, modeText, modeBlank:
+		rainbowParenthesis = false
 	}
 
 	// Initialize the terminal
@@ -166,11 +169,18 @@ Set NO_COLOR=1 to disable colors.
 	c := vt100.NewCanvas()
 	c.ShowCursor()
 
+	// Prepare to use the text edit mode, as opposed to "ASCII draw mode"
+	textEditor := true
+
+	// How many lines to scroll at the time when using `ctrl-n` and `ctrl-p`
+	scrollSpeed := 10
+
 	// scroll 10 lines at a time, no word wrap
 	e := NewEditor(spacesPerTab,
 		syntaxHighlight,
-		true,
-		10,
+		rainbowParenthesis,
+		textEditor,
+		scrollSpeed,
 		defaultEditorForeground,
 		defaultEditorBackground,
 		defaultEditorSearchHighlight,

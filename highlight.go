@@ -13,8 +13,7 @@ import (
 )
 
 const (
-	controlRuneReplacement   = '¿'  // for displaying control sequence characters
-	enableRainbowParenthesis = true // enable rainbow parenthesis
+	controlRuneReplacement = '¿' // for displaying control sequence characters
 )
 
 var (
@@ -251,8 +250,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 				// Slice of runes and color attributes, while at the same time highlighting search terms
 				charactersAndAttributes := o.Extract(coloredString)
 
-				// If we're not in a comment or a string, enable rainbow parenthesis
-				if enableRainbowParenthesis && q.None() {
+				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
+				if e.rainbowParenthesis && q.None() {
 					if addedPar != 0 {
 						parCount := q.parCount + (addedPar - 1)
 						rainbowParen(&parCount, &charactersAndAttributes, singleLineCommentMarker, ignoreSingleQuotes)
