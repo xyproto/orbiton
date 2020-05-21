@@ -3,7 +3,6 @@
 ## Bug fixes
 
 - [ ] When breaking long lines, the cursor should sometimes go to the end of the next line. Identify when.
-- [ ] Fix syntax highlighting of multiline strings in Go.
 - [ ] When pressing `ctrl-k` on an indented line above an indented line containing only `}`, the cursor ends up after the `}` instead of before.
 
 ## Features I see myself using straight away
