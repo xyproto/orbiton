@@ -1786,7 +1786,7 @@ func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redraw bool) {
 func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar) *vt100.Canvas {
 	savePos := e.pos
 	status.ClearAll(c)
-	e.SetSearchTerm("", c, status)
+	e.SetSearchTerm(c, status, "")
 	vt100.Close()
 	vt100.Reset()
 	vt100.Clear()
