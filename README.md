@@ -31,6 +31,7 @@ To unset:
 * Loads up instantly.
 * Small executable size (around **500k**, when built with `gccgo` and compressed with `upx`).
 * Provides syntax highlighting for Go, C++, Markdown and Bash. Other files may also be highlighted (toggle with `ctrl-t`).
+* Rainbow parenthesis, if syntax highlighting is enabled.
 * Configuration-free, for better and for worse.
 * Limited to the VT100 standard, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`.
 * Compiles with either `go` or `gccgo`.

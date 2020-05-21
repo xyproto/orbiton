@@ -7,9 +7,8 @@
 
 ## Features I see myself using straight away
 
-- [ ] Let the cut/copy/paste line state be part of the editor state, because of undo.
-- [ ] When pressing `ctrl-f` and then `return`, use the previous search word.
 - [ ] Spellcheck all comments that are in English. Highlight misspelled words. Make it possible to add/ignore words.
+- [ ] When pressing `ctrl-f` and then `return`, use the previous search word.
 - [ ] If `xclip` or `wl-clipboard` are not found when pasting, present a status message. Also check related env. vars.
 - [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.
 - [ ] Drop draw mode and let `ctrl-o` present a menu where you can choose from: Insert file, Regex search, Update PKGBUILD file.
@@ -18,6 +17,7 @@
 - [ ] Also format JSON documents with `ctrl-w`.
 - [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
 - [ ] Let the autocompletion also look at method definitions with matching variable names (ignoring types, for now).
+- [ ] Let the cut/copy/paste line state be part of the editor state, because of undo.
 
 ## Features in general
 
