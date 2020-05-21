@@ -22,6 +22,7 @@ const (
 	modeText       // for plain text documents
 	modeCMake      // for CMake files
 	modeVim        // for Vim or NeoVim configuration, or .vim scripts
+	modeLisp       // for Common Lisp, Emacs Lisp and Clojure
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -84,6 +85,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeMarkdown
 		case ".txt", ".text", ".nfo", ".diz":
 			mode = modeText
+		case ".lsp", ".emacs", ".el", ".elisp", ".clojure", ".clj", ".lisp", ".cl", ".l":
+			mode = modeLisp
 		default:
 			mode = modeBlank
 		}

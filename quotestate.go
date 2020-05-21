@@ -56,7 +56,7 @@ func (q *QuoteState) String() string {
 }
 
 // ProcessRune is for processing single runes
-func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
+func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuotes bool) {
 	switch r {
 	case '`':
 		if q.None() {
@@ -78,6 +78,9 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			}
 		}
 	case '\'':
+		if ignoreSingleQuotes {
+			return
+		}
 		if q.None() {
 			q.singleQuote++
 		} else {
@@ -128,11 +131,11 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 
 // Process takes a line of text and modifies the current quote state accordingly,
 // depending on which runes are encountered.
-func (q *QuoteState) Process(line string, prevRune, prevPrevRune rune) (rune, rune) {
+func (q *QuoteState) Process(line string, prevRune, prevPrevRune rune, ignoreSingleQuotes bool) (rune, rune) {
 	q.singleLineComment = false
 	q.startedMultiLineString = false
 	for _, r := range line {
-		q.ProcessRune(r, prevRune, prevPrevRune)
+		q.ProcessRune(r, prevRune, prevPrevRune, ignoreSingleQuotes)
 		prevPrevRune = prevRune
 		prevRune = r
 	}
