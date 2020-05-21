@@ -557,23 +557,6 @@ func (e *Editor) TrimLeft(index LineIndex) {
 	e.changed = true
 }
 
-// SingleLineCommentMarker will return the string that starts a single-line
-// comment for the current language mode the editor is in.
-func (e *Editor) SingleLineCommentMarker() string {
-	switch e.mode {
-	case modeShell, modePython, modeCMake:
-		return "#"
-	case modeAssembly:
-		return ";"
-	case modeHaskell:
-		return "--"
-	case modeVim:
-		return "\""
-	default:
-		return "//"
-	}
-}
-
 // StripSingleLineComment will strip away trailing single-line comments.
 // TODO: Also strip trailing /* ... */ comments
 func (e *Editor) StripSingleLineComment(line string) string {
