@@ -62,13 +62,19 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		drawModeStatus = "off"
 	}
 
+	syntaxStatus := "on"
+	if !e.syntaxHighlight {
+		syntaxStatus = "off"
+	}
+
 	var (
 		// These numbers must correspond with actionFunctions!
 		actionTitles = map[int]string{
 			0: "Save and quit",
 			1: "Sort the list of strings on the current line",
-			2: "Toggle draw mode (currently " + drawModeStatus + ")",
-			3: "Save",
+			2: "Toggle syntax highlighting (currently " + syntaxStatus + ")",
+			3: "Toggle draw mode (currently " + drawModeStatus + ")",
+			4: "Save",
 		}
 		// These numbers must correspond with actionTitles!
 		// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file.
@@ -83,8 +89,9 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 					status.Show(c, e)
 				}
 			},
-			2: func() { e.ToggleDrawMode() },
-			3: func() { e.UserCommand(c, status, "save") },
+			2: func() { e.ToggleSyntaxHighlight() },
+			3: func() { e.ToggleDrawMode() },
+			4: func() { e.UserCommand(c, status, "save") },
 		}
 		extraDashes = false
 		menuChoices = make([]string, len(actionTitles))
