@@ -10,14 +10,15 @@ var (
 
 	// the first color in this slice will normally not be used until the paranthesis are many levels deep,
 	// the second one will be used for the regular case which is 1 level deep
-	rainbowParenColors = []vt100.AttributeColor{vt100.LightMagenta, vt100.LightRed, vt100.Yellow, vt100.LightYellow, vt100.LightGreen, vt100.Green, vt100.LightBlue}
+	rainbowParenColors = []vt100.AttributeColor{vt100.LightMagenta, vt100.LightRed, vt100.Yellow, vt100.LightYellow, vt100.LightGreen, vt100.LightBlue}
 
-	parenErrorColor = vt100.White // this color is meant to stand out, for unbalanced parenthesis
+	// the color for unmatched parenthesis
+	unmatchedParenColor = vt100.White
 )
 
 // rainbowParen implements "rainbow parenthesis" which colors "(" and ")" according to how deep they are nested
 // pCount is the existing parenthesis count when reaching the start of this line
-func rainbowParen(pCount *int, chars *[]textoutput.CharAttribute, singleLineCommentMarker string, ignoreSingleQuotes bool) {
+func rainbowParen(parCount *int, chars *[]textoutput.CharAttribute, singleLineCommentMarker string, ignoreSingleQuotes bool) {
 	var (
 		q            = NewQuoteState(singleLineCommentMarker)
 		prevPrevRune = '\n'
@@ -29,6 +30,9 @@ func rainbowParen(pCount *int, chars *[]textoutput.CharAttribute, singleLineComm
 		lastIndex = len(*chars) - 1
 		lastColor = rainbowParenColors[len(rainbowParenColors)-1]
 	)
+
+	// Initialize the quote state parenthesis count with the one that is for the beginning of this line, in the current document
+	q.parCount = *parCount
 
 	for i, char := range *chars {
 		q.ProcessRune(char.R, prevChar.R, prevPrevRune, ignoreSingleQuotes)
@@ -53,7 +57,7 @@ func rainbowParen(pCount *int, chars *[]textoutput.CharAttribute, singleLineComm
 
 		opening := false
 
-		*pCount = q.parCount
+		*parCount = q.parCount
 
 		// Count parenthesis
 		if char.R == '(' {
@@ -65,14 +69,13 @@ func rainbowParen(pCount *int, chars *[]textoutput.CharAttribute, singleLineComm
 			continue
 		}
 
-		if *pCount < 0 {
-			*pCount = 0
-		}
-
-		// Select a color, using modulo
-		// Select another color if it's the same as the text that follows
-		if opening {
-			selected := (*pCount) % len(rainbowParenColors)
+		if *parCount < 0 {
+			// Too many closing parenthesis!
+			char.A = unmatchedParenColor
+		} else if opening {
+			// Select a color, using modulo
+			// Select another color if it's the same as the text that follows
+			selected := (*parCount) % len(rainbowParenColors)
 			char.A = rainbowParenColors[selected]
 
 			// If the character before ( or ) are ' ' or '\t' OR the index is 0, color it with the last color in rainbowParenColors
@@ -81,7 +84,7 @@ func rainbowParen(pCount *int, chars *[]textoutput.CharAttribute, singleLineComm
 			} else {
 				// Loop until a color that is not the same as the color of the next character is selected
 				// (and the next rune is not blank or end of line)
-				for (char.A.Equal(nextChar.A) && nextChar.R != ' ' && nextChar.R != '\t') || (char.A.Equal(prevChar.A) && prevChar.R != ' ' && prevChar.R != '\t') {
+				for (char.A.Equal(nextChar.A) && nextChar.R != ' ' && nextChar.R != '\t' && nextChar.R != '(' && nextChar.R != ')') || (char.A.Equal(prevChar.A) && prevChar.R != ' ' && prevChar.R != '\t' && prevChar.R != '(' && prevChar.R != ')') {
 					selected++
 					if selected >= len(rainbowParenColors) {
 						selected = 0
@@ -98,12 +101,17 @@ func rainbowParen(pCount *int, chars *[]textoutput.CharAttribute, singleLineComm
 				char.A = colorSlice[lastIndex]
 				colorSlice = colorSlice[:lastIndex]
 			} else {
-				char.A = parenErrorColor
+				char.A = lastColor
 			}
 		}
 
 		// For debugging
-		//char.R = []rune(strconv.Itoa(*pCount))[0]
+		//s := strconv.Itoa(*parCount)
+		//if len(s) == 1 {
+		//	char.R = []rune(s)[0]
+		//} else {
+		//	char.R = []rune(s)[1]
+		//}
 
 		// Keep the rune, but use the new AttributeColor
 		(*chars)[i] = char

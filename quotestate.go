@@ -141,3 +141,13 @@ func (q *QuoteState) Process(line string, prevRune, prevPrevRune rune, ignoreSin
 	}
 	return prevRune, prevPrevRune
 }
+
+// ParCount will count the parenthesis for a single line, while skipping comments and multiline strings
+// and without modifying the QuoteState.
+func (q *QuoteState) ParCount(line string, prevRune, prevPrevRune rune, ignoreSingleQuotes bool) int {
+	var qCopy QuoteState
+	qCopy = *q
+	qCopy.parCount = 0
+	qCopy.Process(line, prevRune, prevPrevRune, ignoreSingleQuotes)
+	return qCopy.parCount
+}

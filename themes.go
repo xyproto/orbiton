@@ -46,5 +46,5 @@ func (e *Editor) setLightTheme() {
 	codeBlockColor = vt100.Red
 
 	rainbowParenColors = []vt100.AttributeColor{vt100.Magenta, vt100.Black, vt100.Blue, vt100.Green}
-	parenErrorColor = vt100.Red // this color is meant to stand out, for unbalanced parenthesis
+	unmatchedParenColor = vt100.Red
 }
