@@ -1215,7 +1215,8 @@ Set NO_COLOR=1 to disable colors.
 			e.quit = true
 			fallthrough
 		case "c:19": // ctrl-s, save
-			e.Command(c, status, "save")
+			// TODO: Call a Save method directly, not via a string
+			e.UserCommand(c, status, "save")
 		case "c:21", "c:26": // ctrl-u or ctrl-z, undo (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state
 			lastCutY = -1

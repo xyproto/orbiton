@@ -7,8 +7,8 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// Command performs an editor command, given an action string, like "save"
-func (e *Editor) Command(c *vt100.Canvas, status *StatusBar, action string) {
+// UserCommand performs an editor command, given an action string, like "save"
+func (e *Editor) UserCommand(c *vt100.Canvas, status *StatusBar, action string) {
 	switch action {
 	case "save":
 		status.ClearAll(c)
@@ -45,30 +45,30 @@ func (e *Editor) Command(c *vt100.Canvas, status *StatusBar, action string) {
 // Also returns the selected menu index (can be -1).
 func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, lastMenuIndex int) (bool, int) {
 
-	s := "on"
+	drawModeStatus := "on"
 	if !e.drawMode {
-		s = "off"
+		drawModeStatus = "off"
 	}
 
 	var (
-		// TODO: Save the menu actions in an ordered state, so that they are not presented in a random order to the user
-		actionMap = map[string]func(){
-			"Toggle draw mode (currently " + s + ")": func() { e.ToggleDrawMode() },
-			"Save " + e.filename:                     func() { e.Command(c, status, "save") },
-			"Quit o":                                 func() { e.Command(c, status, "quit") },
+		actionTitles = map[int]string{
+			0: "Toggle draw mode (currently " + drawModeStatus + ")",
+			1: "Save " + e.filename,
+			2: "Quit o",
 		}
-		menuChoices = make([]string, len(actionMap))
-		functionMap = make(map[int]func(), len(actionMap))
-		counter     int
+		actionFunctions = map[int]func(){
+			0: func() { e.ToggleDrawMode() },
+			1: func() { e.UserCommand(c, status, "save") },
+			2: func() { e.UserCommand(c, status, "quit") },
+		}
 		extraDashes = false
+		menuChoices = make([]string, len(actionTitles))
 	)
 
 	// Create a list of strings that are menu choices,
 	// while also creating a mapping from the menu index to a function.
-	for description, f := range actionMap {
-		menuChoices[counter] = fmt.Sprintf("[%d] %s", counter, description)
-		functionMap[counter] = f
-		counter++
+	for i, description := range actionTitles {
+		menuChoices[i] = fmt.Sprintf("[%d] %s", i, description)
 	}
 
 	// Launch a generic menu
@@ -92,7 +92,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 	}
 
 	// Perform the selected command (call the function from the functionMap above)
-	functionMap[selected]()
+	actionFunctions[selected]()
 
 	// Redraw editor
 	return true, selected
