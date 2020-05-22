@@ -10,7 +10,7 @@ var (
 
 	// the first color in this slice will normally not be used until the paranthesis are many levels deep,
 	// the second one will be used for the regular case which is 1 level deep
-	rainbowParenColors = []vt100.AttributeColor{vt100.LightMagenta, vt100.LightRed, vt100.Yellow, vt100.LightYellow, vt100.LightGreen, vt100.Green, vt100.LightBlue, vt100.Blue}
+	rainbowParenColors = []vt100.AttributeColor{vt100.LightMagenta, vt100.LightRed, vt100.Yellow, vt100.LightYellow, vt100.LightGreen, vt100.Green, vt100.LightBlue}
 	parenErrorColor    = vt100.White // this color is meant to stand out, for unbalanced parenthesis
 )
 
@@ -18,43 +18,47 @@ var (
 // pCount is the existing parenthesis count when reaching the start of this line
 func rainbowParen(pCount *int, chars *[]textoutput.CharAttribute, singleLineCommentMarker string, ignoreSingleQuotes bool) {
 	var (
-		q = NewQuoteState(singleLineCommentMarker) // TODO: Use the proper single line comment
-		//decrement              = 0
-		prevRune, prevPrevRune = '\n', '\n'
+		q            = NewQuoteState(singleLineCommentMarker) // TODO: Use the proper single line comment
+		prevPrevRune = '\n'
 
 		// CharAttribute has a rune "R" and a vt100.AttributeColor "A"
-		nextColor = defaultEditorForeground // Used for smarter color selection for parenthesis
+		nextChar = textoutput.CharAttribute{'\n', defaultEditorBackground}
+		prevChar = textoutput.CharAttribute{'\n', defaultEditorBackground}
+
 		lastIndex = len(*chars) - 1
+		lastColor = rainbowParenColors[len(rainbowParenColors)-1]
 	)
-	//q.parCount = *pCount
-	for i, charAttr := range *chars {
-		r := charAttr.R
-		q.ProcessRune(r, prevRune, prevPrevRune, ignoreSingleQuotes)
-		prevPrevRune = prevRune
-		prevRune = r
+
+	for i, char := range *chars {
+		q.ProcessRune(char.R, prevChar.R, prevPrevRune, ignoreSingleQuotes)
+		prevPrevRune = prevChar.R
 
 		if !q.None() {
 			// Skip comments and strings
 			continue
 		}
 
+		// TODO: Just use nextChar.A and nextChar.R instead of having nextColor and nextRune
+
 		if (i + 1) < len(*chars) {
-			nextColor = (*chars)[i+1].A
+			nextChar.R = (*chars)[i+1].R
+			nextChar.A = (*chars)[i+1].A
+		}
+
+		if i > 0 {
+			prevChar.R = (*chars)[i-1].R
+			prevChar.A = (*chars)[i-1].A
 		}
 
 		opening := false
 
 		*pCount = q.parCount
-		//parens := 0
 
 		// Count parenthesis
-		if r == '(' {
+		if char.R == '(' {
 			opening = true
-			//*pCount++
-			//parens++
-		} else if r == ')' {
+		} else if char.R == ')' {
 			opening = false
-			//parens--
 		} else {
 			// Not an opening or closing parenthesis
 			continue
@@ -68,32 +72,39 @@ func rainbowParen(pCount *int, chars *[]textoutput.CharAttribute, singleLineComm
 		// Select another color if it's the same as the text that follows
 		if opening {
 			selected := (*pCount) % len(rainbowParenColors)
-			charAttr.A = rainbowParenColors[selected]
+			char.A = rainbowParenColors[selected]
 			// Loop until a color that is not the same as the color of the next character is selected
-			for charAttr.A.Equal(nextColor) {
-				selected++
-				if selected >= len(rainbowParenColors) {
-					selected = 0
+			// (and the next rune is not blank or end of line)
+
+			// TODO: If the character before ( or ) are ' ' or '\t' OR the index is 0, color it blue (last color in rainbowParenColors)
+			if prevChar.R == ' ' || prevChar.R == '\t' || i == 0 {
+				char.A = lastColor
+			} else {
+				for char.A.Equal(nextChar.A) && (nextChar.R != ' ' && nextChar.R != '\n') {
+					selected++
+					if selected >= len(rainbowParenColors) {
+						selected = 0
+					}
+					char.A = rainbowParenColors[selected]
 				}
-				charAttr.A = rainbowParenColors[selected]
 			}
 			// Push the color to the color stack
-			colorSlice = append(colorSlice, charAttr.A)
+			colorSlice = append(colorSlice, char.A)
 		} else {
 			if len(colorSlice) > 0 {
 				// pop the color from the color stack
 				lastIndex = len(colorSlice) - 1
-				charAttr.A = colorSlice[lastIndex]
+				char.A = colorSlice[lastIndex]
 				colorSlice = colorSlice[:lastIndex]
 			} else {
-				charAttr.A = parenErrorColor
+				char.A = parenErrorColor
 			}
 		}
 
 		// For debugging
-		//charAttr.R = []rune(strconv.Itoa(*pCount))[0]
+		//char.R = []rune(strconv.Itoa(*pCount))[0]
 
 		// Keep the rune, but use the new AttributeColor
-		(*chars)[i] = charAttr
+		(*chars)[i] = char
 	}
 }
