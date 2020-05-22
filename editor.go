@@ -973,13 +973,13 @@ func (e *Editor) WordCount() int {
 	return len(strings.Fields(e.String()))
 }
 
-// ToggleHighlight toggles syntax highlighting
-func (e *Editor) ToggleHighlight() {
+// ToggleSyntaxHighlight toggles syntax highlighting
+func (e *Editor) ToggleSyntaxHighlight() {
 	e.syntaxHighlight = !e.syntaxHighlight
 }
 
-// SetHighlight enables or disables syntax highlighting
-func (e *Editor) SetHighlight(syntaxHighlight bool) {
+// SetSyntaxHighlight enables or disables syntax highlighting
+func (e *Editor) SetSyntaxHighlight(syntaxHighlight bool) {
 	e.syntaxHighlight = syntaxHighlight
 }
 
