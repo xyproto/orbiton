@@ -53,9 +53,8 @@ func (e *Editor) UserCommand(c *vt100.Canvas, status *StatusBar, action string) 
 }
 
 // CommandMenu will display a menu with various commands that can be browsed with arrow up and arrow down
-// Returns true if the editor should immediately be redrawn.
 // Also returns the selected menu index (can be -1).
-func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, undo *Undo, lastMenuIndex int) (bool, int) {
+func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, undo *Undo, lastMenuIndex int) int {
 
 	drawModeStatus := "on"
 	if !e.drawMode {
@@ -74,7 +73,12 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			1: "Sort the list of strings on the current line",
 			2: "Toggle syntax highlighting (currently " + syntaxStatus + ")",
 			3: "Toggle draw mode (currently " + drawModeStatus + ")",
-			4: "Save",
+			4: "Amber mode",
+			5: "Save",
+			/*
+				6: "Green mode",
+				7: "Blue mode",
+			*/
 		}
 		// These numbers must correspond with actionTitles!
 		// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file.
@@ -91,7 +95,30 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			},
 			2: func() { e.ToggleSyntaxHighlight() },
 			3: func() { e.ToggleDrawMode() },
-			4: func() { e.UserCommand(c, status, "save") },
+			4: func() {
+				e.fg = vt100.Yellow
+				e.SetSyntaxHighlight(false)
+				e.bg = vt100.BackgroundDefault
+				e.DrawLines(c, true, true)
+				c = e.FullResetRedraw(c, status)
+			},
+			5: func() { e.UserCommand(c, status, "save") },
+			/*
+				6: func() {
+					e.fg = vt100.LightGreen
+					e.SetSyntaxHighlight(false)
+					e.bg = vt100.BackgroundDefault
+					e.DrawLines(c, true, true)
+					c = e.FullResetRedraw(c, status)
+				},
+				7: func() {
+					e.fg = vt100.LightBlue
+					e.SetSyntaxHighlight(false)
+					e.bg = vt100.BackgroundDefault
+					e.DrawLines(c, true, true)
+					c = e.FullResetRedraw(c, status)
+				},
+			*/
 		}
 		extraDashes = false
 		menuChoices = make([]string, len(actionTitles))
@@ -120,12 +147,14 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		status.Show(c, e)
 
 		// Do not immediately redraw the editor
-		return false, selected
+		e.redraw = false
+		return selected
 	}
 
 	// Perform the selected command (call the function from the functionMap above)
 	actionFunctions[selected]()
 
 	// Redraw editor
-	return true, selected
+	e.redraw = true
+	return selected
 }
