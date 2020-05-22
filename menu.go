@@ -99,12 +99,12 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 		// Handle events
 		key := tty.String()
 		switch key {
-		case "↑", "←", "k", "c:16": // Up, left, k or ctrl-p
+		case "↑", "←", "c:16": // Up, left or ctrl-p
 			resizeMut.Lock()
 			menu.Up(c)
 			changed = true
 			resizeMut.Unlock()
-		case "↓", "→", "j", "c:14": // Down, right, j or ctrl-n
+		case "↓", "→", "c:14": // Down, right or ctrl-n
 			resizeMut.Lock()
 			menu.Down(c)
 			changed = true
@@ -152,8 +152,8 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 					letter, err := getLetter(choice, pos)
 					if err == nil {
 						_, exists := keymap[letter]
-						// If the letter is not already stored in the keymap, and it's not q, j or k
-						if !exists && (letter != 113) && (letter != 106) && (letter != 107) {
+						// If the letter is not already stored in the keymap, and it's not q
+						if !exists && (letter != 113) {
 							keymap[letter] = index
 							// Found a letter for this choice, move on
 							break
