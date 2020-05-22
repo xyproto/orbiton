@@ -66,7 +66,9 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 			if nc != nil {
 				vt100.Clear()
 				c = nc
+				menu.Draw(c)
 				c.Redraw()
+				changed = true
 			}
 
 			// Inform all elements that the terminal was resized
@@ -84,10 +86,8 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 	for running {
 
 		// Draw elements in their new positions
-		// vt100.Clear()
 
 		if changed {
-
 			resizeMut.RLock()
 			menu.Draw(c)
 			resizeMut.RUnlock()
@@ -119,7 +119,7 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 			menu.SelectLast()
 			changed = true
 			resizeMut.Unlock()
-		case "c:27", "q": // ESC or q
+		case "c:27", "q", "c:3", "c:17": // ESC, q, ctrl-c or ctrl-q
 			running = false
 			changed = true
 		case " ", "c:13": // Space or Return
