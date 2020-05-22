@@ -118,9 +118,10 @@ func (sb *StatusBar) Show(c *vt100.Canvas, e *Editor) {
 		mut.RUnlock()
 		return
 	}
+	offset := e.pos.Offset()
 	mut.RUnlock()
 
-	sb.Draw(c, e.pos.Offset())
+	sb.Draw(c, offset)
 
 	mut.Lock()
 	statusBeingShown++

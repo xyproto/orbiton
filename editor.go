@@ -1518,7 +1518,13 @@ func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int)
 func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) bool {
 	// Find out if we can scroll scrollSpeed, or less
 	canScroll := scrollSpeed
-	if e.pos.offset == 0 {
+
+	// Retrieve the current editor scroll offset offset
+	mut.RLock()
+	offset := e.pos.offset
+	mut.RUnlock()
+
+	if offset == 0 {
 		// Can't scroll further up
 		// Status message
 		//status.SetMessage("Start of text")
@@ -1528,12 +1534,14 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 		return false
 	}
 	status.Clear(c)
-	if e.pos.offset-canScroll < 0 {
+	if offset-canScroll < 0 {
 		// Almost at the top, we can scroll the remaining lines
-		canScroll = e.pos.offset
+		canScroll = offset
 	}
 	// Move the scroll offset
+	mut.Lock()
 	e.pos.offset -= canScroll
+	mut.Unlock()
 	// Prepare to redraw
 	return true
 }
