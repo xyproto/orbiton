@@ -331,7 +331,7 @@ Set NO_COLOR=1 to disable colors.
 		c = e.FullResetRedraw(c, status)
 	}
 
-	// Undo buffer with room for 8192 actions
+	// Circular undo buffer with room for N actions
 	undo := NewUndo(8192)
 
 	// Resize handler

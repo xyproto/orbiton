@@ -18,7 +18,7 @@ var (
 // pCount is the existing parenthesis count when reaching the start of this line
 func rainbowParen(pCount *int, chars *[]textoutput.CharAttribute, singleLineCommentMarker string, ignoreSingleQuotes bool) {
 	var (
-		q            = NewQuoteState(singleLineCommentMarker) // TODO: Use the proper single line comment
+		q            = NewQuoteState(singleLineCommentMarker)
 		prevPrevRune = '\n'
 
 		// CharAttribute has a rune "R" and a vt100.AttributeColor "A"
@@ -38,13 +38,13 @@ func rainbowParen(pCount *int, chars *[]textoutput.CharAttribute, singleLineComm
 			continue
 		}
 
-		// TODO: Just use nextChar.A and nextChar.R instead of having nextColor and nextRune
-
+		// Get the next rune and attribute
 		if (i + 1) < len(*chars) {
 			nextChar.R = (*chars)[i+1].R
 			nextChar.A = (*chars)[i+1].A
 		}
 
+		// Get the previous rune and attribute
 		if i > 0 {
 			prevChar.R = (*chars)[i-1].R
 			prevChar.A = (*chars)[i-1].A
@@ -73,13 +73,13 @@ func rainbowParen(pCount *int, chars *[]textoutput.CharAttribute, singleLineComm
 		if opening {
 			selected := (*pCount) % len(rainbowParenColors)
 			char.A = rainbowParenColors[selected]
-			// Loop until a color that is not the same as the color of the next character is selected
-			// (and the next rune is not blank or end of line)
 
-			// TODO: If the character before ( or ) are ' ' or '\t' OR the index is 0, color it blue (last color in rainbowParenColors)
+			// If the character before ( or ) are ' ' or '\t' OR the index is 0, color it with the last color in rainbowParenColors
 			if prevChar.R == ' ' || prevChar.R == '\t' || i == 0 {
 				char.A = lastColor
 			} else {
+				// Loop until a color that is not the same as the color of the next character is selected
+				// (and the next rune is not blank or end of line)
 				for char.A.Equal(nextChar.A) && (nextChar.R != ' ' && nextChar.R != '\n') {
 					selected++
 					if selected >= len(rainbowParenColors) {
