@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+
 	"github.com/xyproto/textoutput"
 	"github.com/xyproto/vt100"
 )
@@ -14,18 +16,20 @@ var (
 
 	// the color for unmatched parenthesis
 	unmatchedParenColor = vt100.White
+
+	errUnmatchedParenthesis = errors.New("unmatched parenthesis")
 )
 
 // rainbowParen implements "rainbow parenthesis" which colors "(" and ")" according to how deep they are nested
 // pCount is the existing parenthesis count when reaching the start of this line
-func rainbowParen(parCount *int, chars *[]textoutput.CharAttribute, singleLineCommentMarker string, ignoreSingleQuotes bool) {
+func rainbowParen(parCount *int, chars *[]textoutput.CharAttribute, singleLineCommentMarker string, ignoreSingleQuotes bool) (err error) {
 	var (
 		q            = NewQuoteState(singleLineCommentMarker)
 		prevPrevRune = '\n'
 
 		// CharAttribute has a rune "R" and a vt100.AttributeColor "A"
-		nextChar = textoutput.CharAttribute{'\n', defaultEditorBackground}
-		prevChar = textoutput.CharAttribute{'\n', defaultEditorBackground}
+		nextChar = textoutput.CharAttribute{R: '\n', A: defaultEditorBackground}
+		prevChar = textoutput.CharAttribute{R: '\n', A: defaultEditorBackground}
 
 		lastIndex = len(*chars) - 1
 		lastColor = rainbowParenColors[len(rainbowParenColors)-1]
@@ -72,6 +76,7 @@ func rainbowParen(parCount *int, chars *[]textoutput.CharAttribute, singleLineCo
 		if *parCount < 0 {
 			// Too many closing parenthesis!
 			char.A = unmatchedParenColor
+			err = errUnmatchedParenthesis
 		} else if opening {
 			// Select a color, using modulo
 			// Select another color if it's the same as the text that follows
@@ -116,4 +121,5 @@ func rainbowParen(parCount *int, chars *[]textoutput.CharAttribute, singleLineCo
 		// Keep the rune, but use the new AttributeColor
 		(*chars)[i] = char
 	}
+	return
 }

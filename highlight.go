@@ -77,12 +77,13 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		}
 	}
 	var (
-		noColor                 bool = os.Getenv("NO_COLOR") != ""
-		trimmedLine             string
-		singleLineCommentMarker      = e.SingleLineCommentMarker()
-		q                            = NewQuoteState(singleLineCommentMarker)
-		prevRune, prevPrevRune  rune = '\n', '\n'
-		ignoreSingleQuotes      bool = e.mode == modeLisp
+		noColor                  bool = os.Getenv("NO_COLOR") != ""
+		trimmedLine              string
+		singleLineCommentMarker       = e.SingleLineCommentMarker()
+		q                             = NewQuoteState(singleLineCommentMarker)
+		prevRune, prevPrevRune   rune = '\n', '\n'
+		prevRune2, prevPrevRune2 rune = '\n', '\n'
+		ignoreSingleQuotes       bool = e.mode == modeLisp
 	)
 	// First loop from 0 to offset to figure out if we are already in a multiLine comment or a multiLine string at the current line
 	for i := 0; i < offset; i++ {
@@ -133,7 +134,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 				var (
 					// Color and unescape
 					coloredString string
-					addedPar      = 0 // Added parenthesis to the parenthesis count when processing this line
 					runDefault    = false
 				)
 				switch e.mode {
@@ -225,9 +225,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 				}
 				if runDefault {
 					trimmedLine = strings.TrimSpace(line)
-					previousParCount := q.parCount
+					prevRune2, prevPrevRune2 = prevRune, prevPrevRune // only used for q.ParCount below
 					prevRune, prevPrevRune = q.Process(trimmedLine, prevRune, prevPrevRune, ignoreSingleQuotes)
-					addedPar = q.parCount - previousParCount // can be negative
 
 					//logf("%s -[ %d ]-->\n\t%s\n", trimmedLine, addedPar, q.String())
 
@@ -252,11 +251,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 
 				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
 				if e.rainbowParenthesis && q.None() {
-					if addedPar != 0 {
-						parCount := q.parCount + (addedPar - 1)
-						rainbowParen(&parCount, &charactersAndAttributes, singleLineCommentMarker, ignoreSingleQuotes)
-					} else {
-						rainbowParen(&(q.parCount), &charactersAndAttributes, singleLineCommentMarker, ignoreSingleQuotes)
+					thisLineParCount := q.ParCount(trimmedLine, prevRune2, prevPrevRune2, ignoreSingleQuotes)
+					parCountBeforeThisLine := q.parCount - thisLineParCount
+					if rainbowParen(&parCountBeforeThisLine, &charactersAndAttributes, singleLineCommentMarker, ignoreSingleQuotes) == errUnmatchedParenthesis {
+						// Don't mark the rest of the parenthesis as wrong, even though this one is
+						q.parCount = 0
 					}
 				}
 
