@@ -18,7 +18,7 @@ const (
 
 var (
 	// Color scheme for the "text edit" mode
-	defaultEditorForeground       = vt100.Yellow // for when syntax highlighting is not in use
+	defaultEditorForeground       = vt100.Green // for when syntax highlighting is not in use
 	defaultEditorBackground       = vt100.BackgroundDefault
 	defaultStatusForeground       = vt100.White
 	defaultStatusBackground       = vt100.BackgroundBlack
