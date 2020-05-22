@@ -27,20 +27,24 @@ type EditorColors struct {
 
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
-	lines              map[int][]rune // the contents of the current document
-	changed            bool           // has the contents changed, since last save?
-	spacesPerTab       int            // how many spaces per tab character
-	syntaxHighlight    bool           // syntax highlighting
-	rainbowParenthesis bool           // rainbow parenthesis
-	drawMode           bool           // text or draw mode (for ASCII graphics)?
-	pos                Position       // the current cursor and scroll position
-	searchTerm         string         // the current search term, used when searching
-	stickySearchTerm   string         // for going to the next match with ctrl-n, unless esc has been pressed
-	redraw             bool           // if the contents should be redrawn in the next loop
-	redrawCursor       bool           // if the cursor should be moved to the location it is supposed to be
-	lineBeforeSearch   LineIndex      // save the current line when jumping between search results
-	wordWrapAt         int            // set to 80 or 100 to trigger word wrap when typing to that column
-	mode               Mode           // a filetype mode, like for git or markdown
+	lines              map[int][]rune        // the contents of the current document
+	changed            bool                  // has the contents changed, since last save?
+	spacesPerTab       int                   // how many spaces per tab character
+	syntaxHighlight    bool                  // syntax highlighting
+	rainbowParenthesis bool                  // rainbow parenthesis
+	drawMode           bool                  // text or draw mode (for ASCII graphics)?
+	pos                Position              // the current cursor and scroll position
+	searchTerm         string                // the current search term, used when searching
+	stickySearchTerm   string                // for going to the next match with ctrl-n, unless esc has been pressed
+	redraw             bool                  // if the contents should be redrawn in the next loop
+	redrawCursor       bool                  // if the cursor should be moved to the location it is supposed to be
+	lineBeforeSearch   LineIndex             // save the current line when jumping between search results
+	wordWrapAt         int                   // set to 80 or 100 to trigger word wrap when typing to that column
+	mode               Mode                  // a filetype mode, like for git or markdown
+	filename           string                // the current filename
+	locationHistory    map[string]LineNumber // location history, for jumping to the last location when opening a file
+	quit               bool                  // for indicating if the user wants to end the editor session
+	clearOnQuit        bool                  // clear the terminal when quitting the editor, or not
 	EditorColors
 }
 
@@ -477,8 +481,8 @@ func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 	return mode, nil
 }
 
-// Save will try to save a file
-func (e *Editor) Save(filename *string, stripTrailingSpaces bool) error {
+// Save will try to save the current editor contents to file
+func (e *Editor) Save(stripTrailingSpaces bool) error {
 	var data []byte
 	if stripTrailingSpaces {
 		// Strip trailing spaces on all lines
@@ -513,14 +517,14 @@ func (e *Editor) Save(filename *string, stripTrailingSpaces bool) error {
 	}
 
 	// Save the file and return any errors
-	if err := ioutil.WriteFile(*filename, data, fileMode); err != nil {
+	if err := ioutil.WriteFile(e.filename, data, fileMode); err != nil {
 		return err
 	}
 
 	// "chmod +x" or "chmod -x". This is needed after saving the file, in order to toggle the executable bit.
 	if shebang {
 		// Call Chmod, but ignore errors (since this is just a bonus and not critical)
-		os.Chmod(*filename, fileMode)
+		os.Chmod(e.filename, fileMode)
 	}
 
 	// All done

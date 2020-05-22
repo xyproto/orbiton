@@ -17,6 +17,7 @@ func (e *Editor) respectNoColorEnvironmentVariable() {
 		e.gitColor = vt100.Default
 		e.multiLineComment = vt100.Default
 		e.multiLineString = vt100.Default
+
 		syntax.DefaultTextConfig.String = ""
 		syntax.DefaultTextConfig.Keyword = ""
 		syntax.DefaultTextConfig.Comment = ""
@@ -36,6 +37,17 @@ func (e *Editor) respectNoColorEnvironmentVariable() {
 		syntax.DefaultTextConfig.Protected = ""
 		syntax.DefaultTextConfig.Public = ""
 		syntax.DefaultTextConfig.Whitespace = ""
+
+		// Rainbow parentheses
+		rainbowParenColors = []vt100.AttributeColor{vt100.Gray}
+		unmatchedParenColor = vt100.White
+
+		// Command menu
+		menuTitleColor = vt100.White
+		menuArrowColor = vt100.White
+		menuTextColor = vt100.Gray
+		menuHighlightColor = vt100.White
+		menuSelectedColor = vt100.Black
 	}
 }
 

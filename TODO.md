@@ -5,12 +5,13 @@
 - [ ] When breaking long lines, the cursor should sometimes go to the end of the next line. Identify when.
 - [ ] When pressing `ctrl-k` on an indented line above an indented line containing only `}`, the cursor ends up after the `}` instead of before.
 - [ ] The `}` indentation is wrong when pressing return in front of a `}`. Fix.
+- [ ] Specify the command menu in an ordered structure, not a map.
 
 ## Features I see myself using straight away
 
+- [ ] Add one or more of these commands: insert file, regex search, update PKGBUILD file, hex editor,
+      go to definition, rename symbol, find references and disassembly.
 - [ ] When pressing `ctrl-f` and then `return`, use the previous search word.
-- [ ] Drop draw mode and let `ctrl-o` present a menu where you can choose from: Insert file, Regex search, Update PKGBUILD file.
-      Also add these to the `ctrl-o` menu: Hex editor, Go to definition, Rename symbol, Find references and Disassembly.
 - [ ] Spellcheck all comments that are in English. Highlight misspelled words. Make it possible to add/ignore words.
 - [ ] If `xclip` or `wl-clipboard` are not found when pasting, present a status message. Also check related env. vars.
 - [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.

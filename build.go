@@ -51,18 +51,22 @@ func (e *Editor) exportAdoc(manFilename string) error {
 
 	// TODO: Use a proper function for generating temporary files
 	tmpfn := "___o___.adoc"
-
 	if exists(tmpfn) {
 		return errors.New(tmpfn + " already exists, please remove it")
 	}
-	err := e.Save(&tmpfn, !e.DrawMode())
+
+	// TODO: Write a SaveAs function for the Editor
+	oldFilename := e.filename
+	e.filename = tmpfn
+	err := e.Save(!e.DrawMode())
 	if err != nil {
+		e.filename = oldFilename
 		return err
 	}
-
-	adocCommand := exec.Command("asciidoctor", "-b", "manpage", "-o", manFilename, tmpfn)
+	e.filename = oldFilename
 
 	// Run asciidoctor
+	adocCommand := exec.Command("asciidoctor", "-b", "manpage", "-o", manFilename, tmpfn)
 	if err = adocCommand.Run(); err != nil {
 		_ = os.Remove(tmpfn) // Try removing the temporary filename if pandoc fails
 		return err
@@ -91,19 +95,25 @@ func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath
 		return // from goroutine
 	}
 
-	// Create the temporary file
-	err := e.Save(&tmpfn, !e.DrawMode())
+	// TODO: Write a SaveAs function for the Editor
+
+	// Save to tmpfn
+	oldFilename := e.filename
+	e.filename = tmpfn
+	err := e.Save(!e.DrawMode())
 	if err != nil {
+		e.filename = oldFilename
 		status.ClearAll(c)
 		status.SetErrorMessage(err.Error())
 		status.Show(c, e)
 		return // from goroutine
 	}
+	e.filename = oldFilename
 
 	// TODO: Check if there are environment variables applicable to paper sizes
-	pandocCommand := exec.Command(pandocPath, "-N", "--toc", "-V", "geometry:a4paper", "-o", pdfFilename, tmpfn)
 
 	// Run pandoc
+	pandocCommand := exec.Command(pandocPath, "-N", "--toc", "-V", "geometry:a4paper", "-o", pdfFilename, tmpfn)
 	if err = pandocCommand.Run(); err != nil {
 		_ = os.Remove(tmpfn) // Try removing the temporary filename if pandoc fails
 		status.ClearAll(c)

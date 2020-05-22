@@ -80,7 +80,7 @@ To unset:
 * `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - Toggle syntax highlighting.
-* `ctrl-o` - Toggle between text and draw mode.
+* `ctrl-o` - Open a command menu with actions that can be performed.
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text (to the next blank line).
 * `ctrl-c` - Copy one line. Press twice to copy a block of text.
 * `ctrl-v` - Paste one trimmed line. Press twice to paste multiple untrimmed lines.

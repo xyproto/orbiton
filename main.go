@@ -41,8 +41,6 @@ func main() {
 
 		firstLetterSinceStart string
 
-		clearOnQuit bool // clear the terminal when quitting, or not
-
 		spacesPerTab = 4 // default spaces per tab
 
 		lastCopyY  LineIndex = -1 // used for keeping track if ctrl-c is pressed twice on the same line
@@ -55,9 +53,10 @@ func main() {
 		statusMessage  string // used when loading or creating a file, for the initial status message
 		warningMessage string // used when loading or creating a file, for the initial status message
 
-		quit        bool   // for indicating if the user has pressed a key to quit the program
 		previousKey string // keep track of the previous key press
 		dropO       bool   // used for vi-compatible "O"-mode at start
+
+		lastCommandMenuIndex int // for the command menu
 	)
 
 	flag.Parse()
@@ -86,7 +85,7 @@ ctrl-k     to delete characters to the end of the line, then delete the line
 ctrl-g     to toggle filename/line/column/unicode/word count status display
 ctrl-d     to delete a single character
 ctrl-t     to toggle syntax highlighting
-ctrl-o     to toggle text or draw mode
+ctrl-o     to open the command menu
 ctrl-c     to copy the current line, press twice to copy the current block
 ctrl-v     to paste one line, press twice to paste the rest
 ctrl-x     to cut the current line, press twice to cut the current block
@@ -143,11 +142,9 @@ Set NO_COLOR=1 to disable colors.
 
 	adjustSyntaxHighlightingKeywords(mode)
 
-	// Additional per-mode considerations
+	// Additional per-mode considerations, before launching the editor
 	rainbowParenthesis := syntaxHighlight // rainbow parenthesis
 	switch mode {
-	case modeGit:
-		clearOnQuit = true
 	case modeMakefile, modePython, modeCMake:
 		spacesPerTab = 4
 	case modeShell, modeConfig, modeHaskell, modeVim:
@@ -175,7 +172,7 @@ Set NO_COLOR=1 to disable colors.
 	// How many lines to scroll at the time when using `ctrl-n` and `ctrl-p`
 	scrollSpeed := 10
 
-	// scroll 10 lines at a time, no word wrap
+	// New editor struct. Scroll 10 lines at a time, no word wrap.
 	e := NewEditor(spacesPerTab,
 		syntaxHighlight,
 		rainbowParenthesis,
@@ -188,6 +185,14 @@ Set NO_COLOR=1 to disable colors.
 		defaultEditorMultilineString,
 		defaultEditorHighlightTheme,
 		mode)
+
+	// Set the editor filename
+	e.filename = filename
+
+	// Per file mode editor adjustments
+	if e.mode == modeGit {
+		e.clearOnQuit = true
+	}
 
 	// For non-highlighted files, adjust the word wrap
 	if !e.syntaxHighlight {
@@ -214,15 +219,15 @@ Set NO_COLOR=1 to disable colors.
 	e.redrawCursor = true
 
 	// Use os.Stat to check if the file exists, and load the file if it does
-	if fileInfo, err := os.Stat(filename); err == nil {
+	if fileInfo, err := os.Stat(e.filename); err == nil {
 
 		// TODO: Enter file-rename mode when opening a directory?
 		// Check if this is a directory
 		if fileInfo.IsDir() {
-			quitError(tty, errors.New(filename+" is a directory"))
+			quitError(tty, errors.New(e.filename+" is a directory"))
 		}
 
-		warningMessage, err = e.Load(c, tty, filename)
+		warningMessage, err = e.Load(c, tty, e.filename)
 		if err != nil {
 			quitError(tty, err)
 		}
@@ -270,7 +275,7 @@ Set NO_COLOR=1 to disable colors.
 		}
 
 		// Test write, to check if the file can be written or not
-		testfile, err := os.OpenFile(filename, os.O_WRONLY, 0664)
+		testfile, err := os.OpenFile(e.filename, os.O_WRONLY, 0664)
 		if err != nil {
 			// can not open the file for writing
 			readOnly = true
@@ -287,21 +292,21 @@ Set NO_COLOR=1 to disable colors.
 		testfile.Close()
 	} else {
 		// Prepare an empty file
-		if newMode, err := e.PrepareEmpty(c, tty, filename); err != nil {
+		if newMode, err := e.PrepareEmpty(c, tty, e.filename); err != nil {
 			quitError(tty, err)
 		} else if newMode != modeBlank {
 			e.mode = newMode
 		}
 
 		// Test save, to check if the file can be created and written, or not
-		if err := e.Save(&filename, true); err != nil {
+		if err := e.Save(true); err != nil {
 			// Check if the new file can be saved before the user starts working on the file.
 			quitError(tty, err)
 		} else {
 			// Creating a new empty file worked out fine, don't save it until the user saves it
-			if os.Remove(filename) != nil {
+			if os.Remove(e.filename) != nil {
 				// This should never happen
-				quitError(tty, errors.New("could not remove an empty file that was just created: "+filename))
+				quitError(tty, errors.New("could not remove an empty file that was just created: "+e.filename))
 			}
 		}
 		createdNewFile = true
@@ -314,7 +319,7 @@ Set NO_COLOR=1 to disable colors.
 		e.gitColor = vt100.LightGreen
 		status.fg = vt100.LightBlue
 		status.bg = vt100.BackgroundDefault
-		if filepath.Base(filename) == "MERGE_MSG" {
+		if filepath.Base(e.filename) == "MERGE_MSG" {
 			e.InsertLineBelow()
 		} else if e.EmptyLine() {
 			e.InsertLineBelow()
@@ -335,7 +340,7 @@ Set NO_COLOR=1 to disable colors.
 	undo := NewUndo(8192)
 
 	// Resize handler
-	SetUpResizeHandler(c, e, status, tty)
+	e.SetUpResizeHandler(c, status, tty)
 
 	tty.SetTimeout(2 * time.Millisecond)
 
@@ -343,10 +348,10 @@ Set NO_COLOR=1 to disable colors.
 	previousY := 1
 
 	// Find the absolute path to this filename
-	absFilename, err := filepath.Abs(filename)
+	absFilename, err := filepath.Abs(e.filename)
 	if err != nil {
 		// This should never happen, just use the given filename
-		absFilename = filename
+		absFilename = e.filename
 	}
 
 	var (
@@ -355,9 +360,9 @@ Set NO_COLOR=1 to disable colors.
 	)
 
 	// Load the location history. This will be saved again later. Errors are ignored.
-	locationHistory, err := LoadLocationHistory(expandUser(locationHistoryFilename))
+	e.locationHistory, err = LoadLocationHistory(expandUser(locationHistoryFilename))
 	if err == nil { // no error
-		recordedLineNumber, found = locationHistory[absFilename]
+		recordedLineNumber, found = e.locationHistory[absFilename]
 	}
 
 	// Load the search history. This will be saved again later. Errors are ignored.
@@ -397,9 +402,9 @@ Set NO_COLOR=1 to disable colors.
 	}
 
 	// Make sure the location history isn't empty
-	if locationHistory == nil {
-		locationHistory = make(map[string]LineNumber, 1)
-		locationHistory[absFilename] = lineNumber
+	if e.locationHistory == nil {
+		e.locationHistory = make(map[string]LineNumber, 1)
+		e.locationHistory[absFilename] = lineNumber
 	}
 
 	// Redraw the TUI, if needed
@@ -415,18 +420,18 @@ Set NO_COLOR=1 to disable colors.
 
 	// Craft an appropriate status message
 	if createdNewFile {
-		statusMessage = "New " + filename
+		statusMessage = "New " + e.filename
 	} else if e.Empty() {
-		statusMessage = "Loaded empty file: " + filename + warningMessage
+		statusMessage = "Loaded empty file: " + e.filename + warningMessage
 		if readOnly {
 			statusMessage += " (read only)"
 		}
 	} else {
 		// If startup is slow (> 100 ms), display the startup time in the status bar
 		if startupMilliseconds >= 100 {
-			statusMessage = fmt.Sprintf("Loaded %s%s (%dms)", filename, warningMessage, startupMilliseconds)
+			statusMessage = fmt.Sprintf("Loaded %s%s (%dms)", e.filename, warningMessage, startupMilliseconds)
 		} else {
-			statusMessage = fmt.Sprintf("Loaded %s%s", filename, warningMessage)
+			statusMessage = fmt.Sprintf("Loaded %s%s", e.filename, warningMessage)
 		}
 		if readOnly {
 			statusMessage += " (read only)"
@@ -450,14 +455,14 @@ Set NO_COLOR=1 to disable colors.
 	var key string
 
 	// This is the main loop for the editor
-	for !quit {
+	for !e.quit {
 
 		// Read the next key
 		key = tty.String()
 
 		switch key {
 		case "c:17": // ctrl-q, quit
-			quit = true
+			e.quit = true
 		case "c:23": // ctrl-w, format (or if in git mode, cycle interactive rebase keywords)
 			undo.Snapshot(e)
 
@@ -505,7 +510,7 @@ Set NO_COLOR=1 to disable colors.
 		OUT:
 			for cmd, extensions := range format {
 				for _, ext := range extensions {
-					if strings.HasSuffix(filename, ext) {
+					if strings.HasSuffix(e.filename, ext) {
 						// Use the temporary directory defined in TMPDIR, with fallback to /tmp
 						tempdir := os.Getenv("TMPDIR")
 						if tempdir == "" {
@@ -514,7 +519,13 @@ Set NO_COLOR=1 to disable colors.
 						if f, err := ioutil.TempFile(tempdir, "__o*"+ext); err == nil {
 							// no error, everything is fine
 							tempFilename := f.Name()
-							err := e.Save(&tempFilename, true)
+
+							// TODO: Implement e.SaveAs
+							oldFilename := e.filename
+							e.filename = tempFilename
+							err := e.Save(true)
+							e.filename = oldFilename
+
 							if err == nil {
 								// Add the filename of the temporary file to the command
 								cmd.Args = append(cmd.Args, tempFilename)
@@ -592,7 +603,8 @@ Set NO_COLOR=1 to disable colors.
 		case "c:0": // ctrl-space, build source code to executable, convert to PDF or write to PNG, depending on the mode
 
 			// Save the current line location to file, for later
-			e.SaveLocation(absFilename, locationHistory)
+			// TODO: Change SaveLocation to not require an e.locationHistory
+			e.SaveLocation(absFilename, e.locationHistory)
 
 			// Save the current search history
 			SaveSearchHistory(expandUser(searchHistoryFilename), searchHistory)
@@ -601,7 +613,7 @@ Set NO_COLOR=1 to disable colors.
 			e.ClearSearchTerm()
 
 			// Build or export the current file
-			statusMessage, performedAction, compiled := e.BuildOrExport(c, status, filename)
+			statusMessage, performedAction, compiled := e.BuildOrExport(c, status, e.filename)
 
 			// Could an action be performed for this file extension?
 			if !performedAction {
@@ -647,7 +659,7 @@ Set NO_COLOR=1 to disable colors.
 			// Write to PDF in a goroutine
 			go func() {
 
-				pdfFilename := strings.Replace(filepath.Base(filename), ".", "_", -1) + ".pdf"
+				pdfFilename := strings.Replace(filepath.Base(e.filename), ".", "_", -1) + ".pdf"
 
 				// Show a status message while writing
 				status.SetMessage("Saving PDF...")
@@ -656,7 +668,7 @@ Set NO_COLOR=1 to disable colors.
 				// TODO: Only overwrite if the previous PDF file was also rendered by "o".
 				_ = os.Remove(pdfFilename)
 				// Write the file
-				if err := e.SavePDF(filename, pdfFilename); err != nil {
+				if err := e.SavePDF(e.filename, pdfFilename); err != nil {
 					statusMessage = err.Error()
 				} else {
 					statusMessage = "Saved " + pdfFilename
@@ -671,19 +683,14 @@ Set NO_COLOR=1 to disable colors.
 			e.ToggleCommentBlock(c)
 			e.redraw = true
 			e.redrawCursor = true
-		case "c:15": // ctrl-o, toggle ASCII draw mode
-			e.ToggleDrawMode()
-			statusMessage := "Text mode"
-			if e.DrawMode() {
-				statusMessage = "Draw mode"
-			}
-			status.Clear(c)
-			status.SetMessage(statusMessage)
-			status.Show(c, e)
+		case "c:15": // ctrl-o, launch the command menu
+			status.ClearAll(c)
+			e.redraw, lastCommandMenuIndex = e.CommandMenu(c, status, tty, lastCommandMenuIndex)
+			e.redrawCursor = e.redraw
 		case "c:7": // ctrl-g, status mode
 			statusMode = !statusMode
 			if statusMode {
-				status.ShowLineColWordCount(c, e, filename)
+				status.ShowLineColWordCount(c, e, e.filename)
 			} else {
 				status.ClearAll(c)
 			}
@@ -831,7 +838,7 @@ Set NO_COLOR=1 to disable colors.
 				break
 			}
 			// Regular syntax highlight toggle
-			e.ToggleHighlight()
+			e.ToggleSyntaxHighlight()
 			if e.syntaxHighlight {
 				e.bg = defaultEditorBackground
 			} else {
@@ -1002,7 +1009,7 @@ Set NO_COLOR=1 to disable colors.
 			y := int(e.DataY())
 			r := e.Rune()
 			leftRune := e.LeftRune()
-			ext := filepath.Ext(filename)
+			ext := filepath.Ext(e.filename)
 			if leftRune == '.' && !unicode.IsLetter(r) && e.mode != modeBlank {
 				// Autocompletion
 				undo.Snapshot(e)
@@ -1204,33 +1211,11 @@ Set NO_COLOR=1 to disable colors.
 			}
 			e.redrawCursor = true
 		case "c:30": // ctrl-~, save and quit + clear the terminal
-			clearOnQuit = true
-			quit = true
+			e.clearOnQuit = true
+			e.quit = true
 			fallthrough
 		case "c:19": // ctrl-s, save
-			status.ClearAll(c)
-			// Save the file
-			if err := e.Save(&filename, !e.DrawMode()); err != nil {
-				status.SetMessage(err.Error())
-				status.Show(c, e)
-			} else {
-				// TODO: Go to the end of the document at this point, if needed
-				// Lines may be trimmed for whitespace, so move to the end, if needed
-				if !e.DrawMode() && e.AfterLineScreenContents() {
-					e.End()
-				}
-
-				// Save the current location in the location history and write it to file
-				e.SaveLocation(absFilename, locationHistory)
-
-				// Save the current search history
-				SaveSearchHistory(expandUser(searchHistoryFilename), searchHistory)
-
-				// Status message
-				status.SetMessage("Saved " + filename)
-				status.Show(c, e)
-				c.Draw()
-			}
+			e.Command(c, status, "save")
 		case "c:21", "c:26": // ctrl-u or ctrl-z, undo (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state
 			lastCutY = -1
@@ -1668,7 +1653,7 @@ Set NO_COLOR=1 to disable colors.
 		}
 		// Drawing status messages should come after redrawing, but before cursor positioning
 		if statusMode {
-			status.ShowLineColWordCount(c, e, filename)
+			status.ShowLineColWordCount(c, e, e.filename)
 		} else if status.IsError() {
 			// Show the status message
 			status.Show(c, e)
@@ -1688,7 +1673,7 @@ Set NO_COLOR=1 to disable colors.
 	} // end of main loop
 
 	// Save the current location in the location history and write it to file
-	e.SaveLocation(absFilename, locationHistory)
+	e.SaveLocation(absFilename, e.locationHistory)
 
 	// Save the current search history
 	SaveSearchHistory(expandUser(searchHistoryFilename), searchHistory)
@@ -1697,7 +1682,7 @@ Set NO_COLOR=1 to disable colors.
 	status.ClearAll(c)
 
 	// Quit everything that has to do with the terminal
-	if clearOnQuit {
+	if e.clearOnQuit {
 		vt100.Clear()
 		vt100.Close()
 	} else {

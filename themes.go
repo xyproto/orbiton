@@ -45,6 +45,14 @@ func (e *Editor) setLightTheme() {
 	codeColor = vt100.Red
 	codeBlockColor = vt100.Red
 
+	// Rainbow parentheses
 	rainbowParenColors = []vt100.AttributeColor{vt100.Magenta, vt100.Black, vt100.Blue, vt100.Green}
 	unmatchedParenColor = vt100.Red
+
+	// Command menu
+	menuTitleColor = vt100.Blue
+	menuArrowColor = vt100.Red
+	menuTextColor = vt100.Black
+	menuHighlightColor = vt100.Red
+	menuSelectedColor = vt100.LightRed
 }
