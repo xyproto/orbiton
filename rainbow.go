@@ -31,7 +31,6 @@ func rainbowParen(parCount *int, chars *[]textoutput.CharAttribute, singleLineCo
 		nextChar = textoutput.CharAttribute{R: '\n', A: defaultEditorBackground}
 		prevChar = textoutput.CharAttribute{R: '\n', A: defaultEditorBackground}
 
-		lastIndex = len(*chars) - 1
 		lastColor = rainbowParenColors[len(rainbowParenColors)-1]
 	)
 
@@ -59,15 +58,15 @@ func rainbowParen(parCount *int, chars *[]textoutput.CharAttribute, singleLineCo
 			prevChar.A = (*chars)[i-1].A
 		}
 
-		opening := false
-
+		// Count parenthesis
 		*parCount = q.parCount
 
-		// Count parenthesis
+		opening := false
 		if char.R == '(' {
 			opening = true
 		} else if char.R == ')' {
-			opening = false
+			// opening is already set to false, for this case
+			// opening = false
 		} else {
 			// Not an opening or closing parenthesis
 			continue
@@ -102,7 +101,7 @@ func rainbowParen(parCount *int, chars *[]textoutput.CharAttribute, singleLineCo
 		} else {
 			if len(colorSlice) > 0 {
 				// pop the color from the color stack
-				lastIndex = len(colorSlice) - 1
+				lastIndex := len(colorSlice) - 1
 				char.A = colorSlice[lastIndex]
 				colorSlice = colorSlice[:lastIndex]
 			} else {
