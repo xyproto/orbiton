@@ -4,6 +4,7 @@
 
 - [ ] When breaking long lines, the cursor should sometimes go to the end of the next line. Identify when.
 - [ ] When pressing `ctrl-k` on an indented line above an indented line containing only `}`, the cursor ends up after the `}` instead of before.
+- [ ] The `}` indentation is wrong when pressing return in front of a `}`. Fix.
 
 ## Features I see myself using straight away
 
