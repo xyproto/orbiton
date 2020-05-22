@@ -80,7 +80,7 @@ To unset:
 * `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - Toggle syntax highlighting.
-* `ctrl-o` - Open a command menu with actions that can be performed.
+* `ctrl-o` - Open a command menu with actions that can be performed. The first item is "save and quit".
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text (to the next blank line).
 * `ctrl-c` - Copy one line. Press twice to copy a block of text.
 * `ctrl-v` - Paste one trimmed line. Press twice to paste multiple untrimmed lines.
@@ -93,7 +93,7 @@ To unset:
 * `ctrl-b` - Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
 * `ctrl-\` - Comment in or out a block of code.
 * `ctrl-r` - Render the current text as a PDF document.
-* `ctrl-~` - Save and quit. Only works in some terminal emulators.
+* `ctrl-~` - Toggle "ASCII draw mode". The keypress registers only in some terminal emulators.
 
 ## Build and format
 

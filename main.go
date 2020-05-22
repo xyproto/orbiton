@@ -85,7 +85,7 @@ ctrl-k     to delete characters to the end of the line, then delete the line
 ctrl-g     to toggle filename/line/column/unicode/word count status display
 ctrl-d     to delete a single character
 ctrl-t     to toggle syntax highlighting
-ctrl-o     to open the command menu
+ctrl-o     to open the command menu, where the first option is "save and quit"
 ctrl-c     to copy the current line, press twice to copy the current block
 ctrl-v     to paste one line, press twice to paste the rest
 ctrl-x     to cut the current line, press twice to cut the current block
@@ -98,7 +98,7 @@ esc        to redraw the screen and clear the last search
 ctrl-space to build Go, C++, Zig, V, Rust, Haskell, Markdown, Adoc or Sdoc
 ctrl-r     to render the current text to a PDF document
 ctrl-\     to toggle single-line comments for a block of code
-ctrl-~     to save and quit + clear the terminal
+ctrl-~     to toggle "ASCII draw mode"
 
 See the man page for more information.
 
@@ -1210,12 +1210,11 @@ Set NO_COLOR=1 to disable colors.
 				e.redraw = true
 			}
 			e.redrawCursor = true
-		case "c:30": // ctrl-~, save and quit + clear the terminal
-			e.clearOnQuit = true
-			e.quit = true
-			fallthrough
+		case "c:30": // ctrl-~, toggle draw mode
+			// TODO: Call a toggle method directly, not via a string?
+			e.UserCommand(c, status, "toggledrawmode")
 		case "c:19": // ctrl-s, save
-			// TODO: Call a Save method directly, not via a string
+			// TODO: Call a Save method directly, not via a string?
 			e.UserCommand(c, status, "save")
 		case "c:21", "c:26": // ctrl-u or ctrl-z, undo (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state

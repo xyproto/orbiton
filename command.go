@@ -37,6 +37,15 @@ func (e *Editor) UserCommand(c *vt100.Canvas, status *StatusBar, action string) 
 	case "quit":
 		e.quit = true        // indicate that the user wishes to quit
 		e.clearOnQuit = true // clear the terminal after quitting
+	case "toggledrawmode":
+		e.ToggleDrawMode()
+		statusMessage := "Text mode"
+		if e.DrawMode() {
+			statusMessage = "Draw mode"
+		}
+		status.Clear(c)
+		status.SetMessage(statusMessage)
+		status.Show(c, e)
 	}
 }
 
@@ -52,14 +61,14 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 
 	var (
 		actionTitles = map[int]string{
-			0: "Toggle draw mode (currently " + drawModeStatus + ")",
-			1: "Save " + e.filename,
-			2: "Quit o",
+			0: "Save and quit",
+			1: "Just save " + e.filename,
+			2: "Toggle draw mode (currently " + drawModeStatus + ")",
 		}
 		actionFunctions = map[int]func(){
-			0: func() { e.ToggleDrawMode() },
+			0: func() { e.UserCommand(c, status, "save"); e.UserCommand(c, status, "quit") },
 			1: func() { e.UserCommand(c, status, "save") },
-			2: func() { e.UserCommand(c, status, "quit") },
+			2: func() { e.ToggleDrawMode() },
 		}
 		extraDashes = false
 		menuChoices = make([]string, len(actionTitles))
