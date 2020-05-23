@@ -136,7 +136,7 @@ func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath
 }
 
 // BuildOrExport will try to build the source code or export the document.
-// Returns a status message and then true if an action was performed and another true if compilation worked out.
+// Returns a status message and then true if an action was performed and another true if compilation/testing worked out.
 func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename string) (string, bool, bool) {
 	ext := filepath.Ext(filename)
 
@@ -259,17 +259,17 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 
 	// NOTE: Don't do anything with the output and err variables here, let the if below handle it.
 
+	errorMarker := "error:"
+	if testingInstead {
+		errorMarker = "FAIL:"
+	}
+
 	// Did the command return a non-zero status code, or does the output contain "error:"?
-	if err != nil || bytes.Contains(output, []byte("error:")) { // failed tests also end up here
+	if err != nil || bytes.Contains(output, []byte(errorMarker)) { // failed tests also end up here
 
 		// This is not for Go, since the word "error:" may not appear when there are errors
 
 		errorMessage := "Build error"
-
-		errorMarker := "error:"
-		if testingInstead {
-			errorMarker = "FAIL:"
-		}
 
 		if e.mode == modePython {
 			if errorLine, errorMessage := ParsePythonError(string(output), filepath.Base(filename)); errorLine != -1 {
@@ -300,6 +300,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 
 		if testingInstead {
 			errorMessage = "Test failed: " + errorMessage
+			return errorMessage, true, false
 		}
 
 		// NOTE: Don't return here even if errorMessage contains an error message
