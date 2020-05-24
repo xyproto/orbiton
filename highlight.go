@@ -132,8 +132,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 			} else {
 				var (
 					// Color and unescape
-					coloredString string
-					runDefault    = false
+					coloredString    string
+					doneHighlighting = true
 				)
 				switch e.mode {
 				case modeGit:
@@ -163,6 +163,15 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					trimmedLine = strings.TrimSpace(line)
 					if strings.HasPrefix(trimmedLine, "(*") && strings.HasSuffix(trimmedLine, "*)") {
 						coloredString = UnEscape(e.multiLineComment.Get(trimmedLine))
+					} else {
+						// Regular highlight
+						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
+					}
+				case modeZig:
+					// Handle doc comments (starting with ///)
+					trimmedLine = strings.TrimSpace(line)
+					if strings.HasPrefix(trimmedLine, "///") {
+						coloredString = UnEscape(e.multiLineString.Get(trimmedLine))
 					} else {
 						// Regular highlight
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
@@ -197,7 +206,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 						}
 						break
 					}
-					runDefault = true
+					doneHighlighting = false
 
 				case modeVim:
 
@@ -217,12 +226,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 						}
 						break
 					}
-					runDefault = true
+					doneHighlighting = false
 
 				default:
-					runDefault = true
+					doneHighlighting = false
 				}
-				if runDefault {
+				if !doneHighlighting {
 
 					// C, C++, Go, Rust etc
 
