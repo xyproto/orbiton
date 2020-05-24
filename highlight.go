@@ -93,6 +93,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		if e.mode == modeVim && strings.HasPrefix(trimmedLine, "\"") {
 			q.singleLineComment = true
 			q.startedMultiLineString = false
+			q.stoppedMultiLineComment = false
 			q.backtick = 0
 			q.doubleQuote = 0
 			q.singleQuote = 0
@@ -234,7 +235,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					case q.singleLineComment:
 						// A single line comment (the syntax module did the highlighting)
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
-					case q.multiLineComment:
+					case q.multiLineComment || q.stoppedMultiLineComment:
 						// A multi-line comment
 						coloredString = UnEscape(e.multiLineComment.Get(line))
 					case !q.startedMultiLineString && q.backtick > 0:

@@ -15,6 +15,7 @@ type QuoteState struct {
 	singleLineComment       bool
 	singleLineCommentMarker string
 	startedMultiLineString  bool
+	stoppedMultiLineComment bool
 	parCount                int // Parenthesis count
 }
 
@@ -102,6 +103,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 			case len(q.singleLineCommentMarker) > 1 && prevRune == []rune(q.singleLineCommentMarker)[1]:
 				q.singleLineComment = true
 				q.startedMultiLineString = false
+				q.stoppedMultiLineComment = false
 				q.backtick = 0
 				q.doubleQuote = 0
 				q.singleQuote = 0
@@ -116,6 +118,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 		fallthrough
 	case '/': // support C-style multi-line comments
 		if prevRune == '*' && !q.None() {
+			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
 		}
 	case '(':
@@ -134,6 +137,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 func (q *QuoteState) Process(line string, prevRune, prevPrevRune rune, ignoreSingleQuotes bool) (rune, rune) {
 	q.singleLineComment = false
 	q.startedMultiLineString = false
+	q.stoppedMultiLineComment = false
 	for _, r := range line {
 		q.ProcessRune(r, prevRune, prevPrevRune, ignoreSingleQuotes)
 		prevPrevRune = prevRune
