@@ -168,9 +168,10 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					}
 				case modeZig:
-					// Handle doc comments (starting with ///)
 					trimmedLine = strings.TrimSpace(line)
-					if strings.HasPrefix(trimmedLine, "///") {
+					// Handle doc comments (starting with ///)
+					// and multiline strings (starting with \\)
+					if strings.HasPrefix(trimmedLine, "///") || strings.HasPrefix(trimmedLine, `\\`) {
 						coloredString = UnEscape(e.multiLineString.Get(trimmedLine))
 					} else {
 						// Regular highlight
