@@ -67,10 +67,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		actionTitles = map[int]string{
 			0: "Save and quit",
 			1: "Sort the list of strings on the current line",
-			2: "Amber text",
-			3: "Green text",
-			4: "Blue text",
-			5: syntaxToggleText,
+			2: syntaxToggleText,
 		}
 		// These numbers must correspond with actionTitles!
 		// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file.
@@ -91,48 +88,47 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 					return // from anonymous function
 				}
 			},
-			2: func() { // amber text
-				// Clear and redraw, with syntax highlighting
-				vt100.Clear()
-				e.SetSyntaxHighlight(true)
-				e.DrawLines(c, true, true)
-				// Set the color and redraw, without syntax highlighting
-				e.fg = vt100.Yellow
-				e.SetSyntaxHighlight(false)
-				e.DrawLines(c, true, true)
-			},
-			3: func() { // green text
-				// Clear and redraw, with syntax highlighting
-				vt100.Clear()
-				e.SetSyntaxHighlight(true)
-				e.DrawLines(c, true, true)
-				// Set the color and redraw, without syntax highlighting
-				e.fg = vt100.LightGreen
-				e.SetSyntaxHighlight(false)
-				e.DrawLines(c, true, true)
-			},
-			4: func() { // blue text
-				// Clear and redraw, with syntax highlighting
-				vt100.Clear()
-				e.SetSyntaxHighlight(true)
-				e.DrawLines(c, true, true)
-				// Set the color and redraw, without syntax highlighting
-				e.fg = vt100.LightBlue
-				e.SetSyntaxHighlight(false)
-				e.DrawLines(c, true, true)
-			},
-			5: func() { // toggle syntax highlighting
+			2: func() { // toggle syntax highlighting
 				e.ToggleSyntaxHighlight()
 			},
 		}
 		extraDashes = false
-		menuChoices = make([]string, len(actionTitles))
 	)
+
+	// Add the option to change the colors, for non-light themes (fg != black)
+	if !e.lightTheme { // Not a light theme
+		// TODO: Use a fixed order instead of a random order
+		colors := []vt100.AttributeColor{
+			vt100.Yellow,
+			vt100.LightGreen,
+			vt100.LightBlue,
+		}
+		colorText := []string{
+			"Amber",
+			"Green",
+			"Blue",
+		}
+		// Add menu items and menu functions for changing the text color
+		// while also turning off syntax highlighting.
+		for i, color := range colors {
+			actionTitles[len(actionTitles)] = colorText[i] + " text"
+			actionFunctions[len(actionFunctions)] = func() {
+				// Clear and redraw, with syntax highlighting
+				vt100.Clear()
+				e.SetSyntaxHighlight(true)
+				e.DrawLines(c, true, true)
+				// Set the color and redraw, without syntax highlighting
+				e.fg = color
+				e.SetSyntaxHighlight(false)
+				e.DrawLines(c, true, true)
+			}
+		}
+	}
 
 	// Add an action for updating the source= line if this is a PKGBUILD file
 	if filepath.Base(e.filename) == "PKGBUILD" {
-		actionTitles[len(actionTitles)-1] = "Update PKGBUILD"
-		actionFunctions[len(actionFunctions)-1] = func() { // update the source= line
+		actionTitles[len(actionTitles)] = "Update PKGBUILD"
+		actionFunctions[len(actionFunctions)] = func() { // update the source= line
 
 			status.SetMessage("Finding new version and commit hash...")
 			status.ShowNoTimeout(c, e)
@@ -159,6 +155,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 
 	// Create a list of strings that are menu choices,
 	// while also creating a mapping from the menu index to a function.
+	menuChoices := make([]string, len(actionTitles))
 	for i, description := range actionTitles {
 		menuChoices[i] = fmt.Sprintf("[%d] %s", i, description)
 	}

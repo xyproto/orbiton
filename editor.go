@@ -45,6 +45,7 @@ type Editor struct {
 	locationHistory    map[string]LineNumber // location history, for jumping to the last location when opening a file
 	quit               bool                  // for indicating if the user wants to end the editor session
 	clearOnQuit        bool                  // clear the terminal when quitting the editor, or not
+	lightTheme         bool                  // using a light theme? (the XTERM_VERSION environment variable is set)
 	EditorColors
 }
 

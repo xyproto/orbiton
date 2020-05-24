@@ -7,6 +7,8 @@ import (
 
 // setLightTheme sets a theme suitable for white backgrounds
 func (e *Editor) setLightTheme() {
+	e.lightTheme = true
+
 	e.fg = vt100.Black
 	e.bg = vt100.Gray
 	e.searchFg = vt100.Red
