@@ -1349,10 +1349,8 @@ Set NO_COLOR=1 to disable colors.
 				// Deleting the rest of the line cleared this line,
 				// so just remove it.
 				e.DeleteLine(e.DataY())
-				// Then go to the start or end of the line, if needed
-				if len(e.CurrentLine()) == 1 {
-					e.Home()
-				} else if e.AtOrAfterEndOfLine() {
+				// Then go to the end of the line, if needed
+				if e.AfterEndOfLine() {
 					e.End()
 				}
 			}
