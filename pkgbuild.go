@@ -45,7 +45,8 @@ func unquote(s string) string {
 // It takes the contents of a PKGBUILD file and returns a new "source=" string.
 // The new version number is guessed after looking online for a newer source.
 // The git commit is included in the "source=" string, if possible.
-func GuessSourceString(pkgbuildContents string) (string, error) {
+// Returns the new pkgver and the new source.
+func GuessSourceString(pkgbuildContents string) (string, string, error) {
 	lines := strings.Split(pkgbuildContents, "\n")
 	var rawURL, rawSource string
 	inSource := false
@@ -77,7 +78,7 @@ func GuessSourceString(pkgbuildContents string) (string, error) {
 	url := unquote(strings.TrimSpace(rawURL))
 
 	if len(url) == 0 {
-		return "", errors.New("found no URL definition")
+		return "", "", errors.New("found no URL definition")
 	}
 
 	shortURL := url
@@ -105,7 +106,7 @@ func GuessSourceString(pkgbuildContents string) (string, error) {
 	//fmt.Println("getver: " + url)
 	newVer, err := getver(url)
 	if err != nil {
-		return "", errors.New("could not guess a version number by visiting " + url)
+		return "", "", errors.New("could not guess a version number by visiting " + url)
 	}
 
 	gotCommit := ""
@@ -120,7 +121,7 @@ func GuessSourceString(pkgbuildContents string) (string, error) {
 		cmd = exec.Command("git", "ls-remote", "-t", "https://"+shortURL, "v"+tag)
 		data, err = cmd.CombinedOutput()
 		if err != nil {
-			return "", errors.New("got no git commit has from tag " + tag + " or tag v" + tag + " at " + shortURL)
+			return "", "", errors.New("got no git commit has from tag " + tag + " or tag v" + tag + " at " + shortURL)
 		}
 		gotCommit = strings.TrimSpace(string(data))
 		tag = "v" + newVer
@@ -132,7 +133,7 @@ func GuessSourceString(pkgbuildContents string) (string, error) {
 	//fmt.Println("new commit: " + gotCommit)
 
 	if len(gotCommit) == 0 {
-		return "", errors.New("got no git commit for tag " + tag + " or tag v" + tag)
+		return "", "", errors.New("got no git commit for tag " + tag + " or tag v" + tag)
 	}
 
 	fields := strings.Fields(gotCommit)
@@ -147,7 +148,7 @@ func GuessSourceString(pkgbuildContents string) (string, error) {
 	if len(gotCommit) != 0 && strings.Contains(source, "#commit=") {
 		pos := strings.Index(source, "#commit=")
 		if pos == -1 {
-			return "", errors.New("found no #commit= in source")
+			return "", "", errors.New("found no #commit= in source")
 		}
 		pos += len("#commit=")
 		if pos+len(gotCommit) < len(source) {
@@ -164,7 +165,11 @@ func GuessSourceString(pkgbuildContents string) (string, error) {
 		newSource += " # tag: " + tag
 	}
 
-	return "source=" + newSource, nil
+	if len(newVer) == 0 {
+		return "", "", errors.New("found no new version number")
+	}
+
+	return "pkgver=" + newVer, "source=" + newSource, nil
 }
 
 func linkIsPage(url string) bool {

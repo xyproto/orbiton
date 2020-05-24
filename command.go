@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/xyproto/vt100"
 )
@@ -137,24 +138,21 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			status.ShowNoTimeout(c, e)
 
 			undo.Snapshot(e)
-			sourceString, err := GuessSourceString(e.String())
+			pkgverString, sourceString, err := GuessSourceString(e.String())
 			if err != nil {
 				status.Clear(c)
 				status.SetErrorMessage(err.Error())
 				status.Show(c, e)
 				return // from anonymous function
 			}
-			e.SetSearchTerm(c, status, "source=")
 
-			_, y := e.forwardSearch(0, LineIndex(e.Len()-1))
-			e.ClearSearchTerm()
-			if y == -1 {
-				status.Clear(c)
-				status.SetErrorMessage("Could not find an existing source line")
-				status.Show(c, e)
-				return // from anonymous function
-			} else {
-				e.SetLine(y, sourceString)
+			for i, runeLine := range e.lines {
+				line := string(runeLine)
+				if strings.HasPrefix(line, "source=") {
+					e.lines[i] = []rune(sourceString)
+				} else if strings.HasPrefix(line, "pkgver=") {
+					e.lines[i] = []rune(pkgverString)
+				}
 			}
 		}
 	}
