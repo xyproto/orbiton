@@ -3,7 +3,6 @@
 ## Bug fixes
 
 - [ ] When breaking long lines, the cursor should sometimes go to the end of the next line. Identify when.
-- [ ] When pressing `ctrl-k` on an indented line above an indented line containing only `}`, the cursor ends up after the `}` instead of before.
 - [ ] Don't count escaped characters when syntax highlighting (like `\'`).
 
 ## Features I see myself using straight away
@@ -35,9 +34,9 @@
 
 ## Features that might not be needed
 
-- [ ] If typing "dd" at the end of a line, delete it.
-- [ ] If typing ":wq" at the end of a line, remote the text, save and quit.
-- [ ] If typing ":w" at the end of a line, remote the text and save.
+- [ ] If typing "dd" at the start or end of a line, delete it.
+- [ ] If typing ":wq" at the start or end of a line, remove the text, save and quit.
+- [ ] If typing ":w" at the start or end of a line, remove the text and save.
 - [ ] If pressing return at the end of the document, after a full screen, then also scroll down 1 line.
       Currently, blank lines at the end of the document is immediately trimmed, which might make sense.
 - [ ] Introduce a hexedit mode that will:
