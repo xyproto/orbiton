@@ -110,6 +110,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			color := color // per-loop copy of the color variable, since it's closed over
 			actionFunctions[len(actionFunctions)] = func() {
 				// Clear and redraw, with syntax highlighting
+				vt100.Reset()
 				vt100.Clear()
 				e.SetSyntaxHighlight(true)
 				e.DrawLines(c, true, true)

@@ -1051,7 +1051,7 @@ func (e *Editor) DataX() (int, error) {
 		return e.pos.sx, nil
 	}
 	// the y position in the data is the lines scrolled + current screen cursor Y position
-	dataY := e.pos.offset + e.pos.sy
+	dataY := e.pos.offsetY + e.pos.sy
 	// get the current line of text
 	screenCounter := 0 // counter for the characters on the screen
 	// loop, while also keeping track of tab expansion
@@ -1086,7 +1086,7 @@ func (e *Editor) DataY() LineIndex {
 	if e.drawMode {
 		return LineIndex(e.pos.sy)
 	}
-	return LineIndex(e.pos.offset + e.pos.sy)
+	return LineIndex(e.pos.offsetY + e.pos.sy)
 }
 
 // SetRune will set a rune at the current data position
@@ -1343,7 +1343,7 @@ func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int)
 
 	// Retrieve the current editor scroll offset offset
 	mut.RLock()
-	offset := e.pos.offset
+	offset := e.pos.offsetY
 	mut.RUnlock()
 
 	// Number of lines in the document
@@ -1364,7 +1364,7 @@ func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int)
 
 	// Move the scroll offset
 	mut.Lock()
-	e.pos.offset += canScroll
+	e.pos.offsetY += canScroll
 	mut.Unlock()
 
 	// Prepare to redraw
@@ -1378,7 +1378,7 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 
 	// Retrieve the current editor scroll offset offset
 	mut.RLock()
-	offset := e.pos.offset
+	offset := e.pos.offsetY
 	mut.RUnlock()
 
 	if offset == 0 {
@@ -1397,7 +1397,7 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 	}
 	// Move the scroll offset
 	mut.Lock()
-	e.pos.offset -= canScroll
+	e.pos.offsetY -= canScroll
 	mut.Unlock()
 	// Prepare to redraw
 	return true
@@ -1430,7 +1430,12 @@ func (e *Editor) AtEndOfDocument() bool {
 
 // AtStartOfDocument is true if we're at the first line of the document
 func (e *Editor) AtStartOfDocument() bool {
-	return e.pos.sy == 0 && e.pos.offset == 0
+	return e.pos.sy == 0 && e.pos.offsetY == 0
+}
+
+// AtLeftEdgeOfDocument is true if we're at the first column at the document
+func (e *Editor) AtLeftEdgeOfDocument() bool {
+	return e.pos.sx == 0 && e.pos.offsetX == 0
 }
 
 // AtOrAfterEndOfLine returns true if the cursor is at or after the contents of this line
@@ -1535,36 +1540,36 @@ func (e *Editor) GoTo(dataY LineIndex, c *vt100.Canvas, status *StatusBar) bool 
 	}
 
 	// Is the place we want to go within the current scroll window?
-	topY := LineIndex(e.pos.offset)
-	botY := LineIndex(e.pos.offset + h)
+	topY := LineIndex(e.pos.offsetY)
+	botY := LineIndex(e.pos.offsetY + h)
 
 	if dataY >= topY && dataY < botY {
 		// No scrolling is needed, just move the screen y position
-		e.pos.sy = int(dataY) - e.pos.offset
+		e.pos.sy = int(dataY) - e.pos.offsetY
 		if e.pos.sy < 0 {
 			e.pos.sy = 0
 		}
 	} else if int(dataY) < h {
 		// No scrolling is needed, just move the screen y position
-		e.pos.offset = 0
+		e.pos.offsetY = 0
 		e.pos.sy = int(dataY)
 		if e.pos.sy < 0 {
 			e.pos.sy = 0
 		}
 	} else if reachedEnd {
 		// To the end of the text
-		e.pos.offset = e.Len() - h
+		e.pos.offsetY = e.Len() - h
 		e.pos.sy = h - 1
 	} else {
 		prevY := e.pos.sy
 		// Scrolling is needed
 		e.pos.sy = 0
-		e.pos.offset = int(dataY)
+		e.pos.offsetY = int(dataY)
 		lessJumpY := prevY
 		lessJumpOffset := int(dataY) - prevY
 		if (lessJumpY + lessJumpOffset) < e.Len() {
 			e.pos.sy = lessJumpY
-			e.pos.offset = lessJumpOffset
+			e.pos.offsetY = lessJumpOffset
 		}
 	}
 
@@ -1641,8 +1646,8 @@ func (e *Editor) StatusMessage() string {
 func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redraw bool) {
 	h := int(c.Height())
 	if respectOffset {
-		offset := e.pos.Offset()
-		e.WriteLines(c, offset, h+offset, 0, 0)
+		offsetY := e.pos.OffsetY()
+		e.WriteLines(c, offsetY, h+offsetY, 0, 0)
 	} else {
 		e.WriteLines(c, 0, h, 0, 0)
 	}
@@ -1759,7 +1764,7 @@ func (e *Editor) Center(c *vt100.Canvas) {
 	newScreenY := y - newOffset
 
 	// Assign the new values to the editor
-	e.pos.offset = newOffset
+	e.pos.offsetY = newOffset
 	e.pos.sy = newScreenY
 }
 

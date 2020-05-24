@@ -10,19 +10,20 @@ import (
 type Position struct {
 	sx          int // the position of the cursor in the current scrollview
 	sy          int // the position of the cursor in the current scrollview
-	offset      int // how far one has scrolled
+	offsetX     int // how far one has scrolled along the X axis
+	offsetY     int // how far one has scrolled along the Y axis
 	scrollSpeed int // how many lines to scroll, when scrolling
 	savedX      int // for smart down cursor movement
 }
 
 // NewPosition returns a new Position struct
 func NewPosition(scrollSpeed int) *Position {
-	return &Position{0, 0, 0, scrollSpeed, 0}
+	return &Position{0, 0, 0, 0, scrollSpeed, 0}
 }
 
 // Copy will create a new Position struct that is a copy of this one
 func (p *Position) Copy() *Position {
-	return &Position{p.sx, p.sy, p.offset, p.scrollSpeed, p.savedX}
+	return &Position{p.sx, p.sy, p.offsetX, p.offsetY, p.scrollSpeed, p.savedX}
 }
 
 // ScreenX returns the screen X position in the current view
@@ -35,9 +36,14 @@ func (p *Position) ScreenY() int {
 	return p.sy
 }
 
-// Offset returns the scroll offset for the current view
-func (p *Position) Offset() int {
-	return p.offset
+// OffsetX returns the X scroll offset for the current view
+func (p *Position) OffsetX() int {
+	return p.offsetX
+}
+
+// OffsetY returns the Y scroll offset for the current view
+func (p *Position) OffsetY() int {
+	return p.offsetY
 }
 
 // SetX will set the screen X position
@@ -50,9 +56,9 @@ func (p *Position) SetY(y int) {
 	p.sy = y
 }
 
-// SetOffset will set the screen scolling offset
-func (p *Position) SetOffset(offset int) {
-	p.offset = offset
+// SetOffsetY will set the screen Y scolling offset
+func (p *Position) SetOffsetY(offset int) {
+	p.offsetY = offset
 }
 
 // Up will move the cursor up
@@ -84,5 +90,5 @@ func (p *Position) AtStartOfLine() bool {
 
 // LineNumber returns the current line number this Position is at
 func (p *Position) LineNumber() LineNumber {
-	return LineIndex(p.offset + p.sy).LineNumber()
+	return LineIndex(p.offsetY + p.sy).LineNumber()
 }

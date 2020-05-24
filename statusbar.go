@@ -96,8 +96,8 @@ func (sb *StatusBar) Clear(c *vt100.Canvas) {
 	h := int(c.H())
 
 	mut.RLock()
-	offset := sb.editor.pos.Offset()
-	sb.editor.WriteLines(c, offset, h+offset, 0, 0)
+	offsetY := sb.editor.pos.OffsetY()
+	sb.editor.WriteLines(c, offsetY, h+offsetY, 0, 0)
 	mut.RUnlock()
 
 	c.Draw()
@@ -118,10 +118,10 @@ func (sb *StatusBar) Show(c *vt100.Canvas, e *Editor) {
 		mut.RUnlock()
 		return
 	}
-	offset := e.pos.Offset()
+	offsetY := e.pos.OffsetY()
 	mut.RUnlock()
 
-	sb.Draw(c, offset)
+	sb.Draw(c, offsetY)
 
 	mut.Lock()
 	statusBeingShown++
@@ -163,10 +163,10 @@ func (sb *StatusBar) ShowNoTimeout(c *vt100.Canvas, e *Editor) {
 	mut.RUnlock()
 
 	mut.RLock()
-	offset := e.pos.Offset()
+	offsetY := e.pos.OffsetY()
 	mut.RUnlock()
 
-	sb.Draw(c, offset)
+	sb.Draw(c, offsetY)
 
 	mut.Lock()
 	statusBeingShown++
