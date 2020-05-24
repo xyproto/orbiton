@@ -14,27 +14,22 @@ func (e *Editor) UserCommand(c *vt100.Canvas, status *StatusBar, action string) 
 	case "save":
 		status.ClearAll(c)
 		// Save the file
-		if err := e.Save(!e.DrawMode()); err != nil {
+		if err := e.Save(); err != nil {
 			status.SetMessage(err.Error())
 			status.Show(c, e)
-		} else {
-			// TODO: Go to the end of the document at this point, if needed
-			// Lines may be trimmed for whitespace, so move to the end, if needed
-			if !e.DrawMode() && e.AfterLineScreenContents() {
-				e.End()
-			}
-			// Save the current location in the location history and write it to file
-			absFilename, err := filepath.Abs(e.filename)
-			if err == nil { // no error
-				e.SaveLocation(absFilename, e.locationHistory)
-			}
-			// Save the current search history
-			SaveSearchHistory(expandUser(searchHistoryFilename), searchHistory)
-			// Status message
-			status.SetMessage("Saved " + e.filename)
-			status.Show(c, e)
-			c.Draw()
+			break
 		}
+		// Save the current location in the location history and write it to file
+		absFilename, err := filepath.Abs(e.filename)
+		if err == nil { // no error
+			e.SaveLocation(absFilename, e.locationHistory)
+		}
+		// Save the current search history
+		SaveSearchHistory(expandUser(searchHistoryFilename), searchHistory)
+		// Status message
+		status.SetMessage("Saved " + e.filename)
+		status.Show(c, e)
+		c.Draw()
 	case "quit":
 		e.quit = true        // indicate that the user wishes to quit
 		e.clearOnQuit = true // clear the terminal after quitting

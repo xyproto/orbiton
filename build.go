@@ -58,7 +58,7 @@ func (e *Editor) exportAdoc(manFilename string) error {
 	// TODO: Write a SaveAs function for the Editor
 	oldFilename := e.filename
 	e.filename = tmpfn
-	err := e.Save(!e.DrawMode())
+	err := e.Save()
 	if err != nil {
 		e.filename = oldFilename
 		return err
@@ -100,7 +100,7 @@ func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath
 	// Save to tmpfn
 	oldFilename := e.filename
 	e.filename = tmpfn
-	err := e.Save(!e.DrawMode())
+	err := e.Save()
 	if err != nil {
 		e.filename = oldFilename
 		status.ClearAll(c)
@@ -313,7 +313,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 				baseErrorFilename := filepath.Base(fields[0])
 				// Check if the filenames are matching, or if the error is in a different file
 				if baseErrorFilename != baseFilename {
-					return "Error in another file: " + baseErrorFilename + ": " + strings.TrimSpace(fields[3]), true, false
+					return "In " + baseErrorFilename + "! " + strings.TrimSpace(fields[3]), true, false
 				}
 				// Go to Y:X, if available
 				var foundY LineIndex

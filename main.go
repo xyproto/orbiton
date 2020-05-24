@@ -299,7 +299,7 @@ Set NO_COLOR=1 to disable colors.
 		}
 
 		// Test save, to check if the file can be created and written, or not
-		if err := e.Save(true); err != nil {
+		if err := e.Save(); err != nil {
 			// Check if the new file can be saved before the user starts working on the file.
 			quitError(tty, err)
 		} else {
@@ -523,7 +523,7 @@ Set NO_COLOR=1 to disable colors.
 							// TODO: Implement e.SaveAs
 							oldFilename := e.filename
 							e.filename = tempFilename
-							err := e.Save(true)
+							err := e.Save()
 							e.filename = oldFilename
 
 							if err == nil {

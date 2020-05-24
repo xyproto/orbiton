@@ -483,9 +483,9 @@ func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 }
 
 // Save will try to save the current editor contents to file
-func (e *Editor) Save(stripTrailingSpaces bool) error {
+func (e *Editor) Save() error {
 	var data []byte
-	if stripTrailingSpaces {
+	if !e.drawMode {
 		// Strip trailing spaces on all lines
 		l := e.Len()
 		for i := 0; i < l; i++ {
@@ -526,6 +526,11 @@ func (e *Editor) Save(stripTrailingSpaces bool) error {
 	if shebang {
 		// Call Chmod, but ignore errors (since this is just a bonus and not critical)
 		os.Chmod(e.filename, fileMode)
+	}
+
+	// Trailing spaces may be trimmed, so move to the end, if needed
+	if !e.drawMode && e.AfterLineScreenContents() {
+		e.End()
 	}
 
 	// All done
