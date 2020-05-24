@@ -85,7 +85,7 @@ ctrl-k     to delete characters to the end of the line, then delete the line
 ctrl-g     to toggle filename/line/column/unicode/word count status display
 ctrl-d     to delete a single character
 ctrl-t     to toggle syntax highlighting
-ctrl-o     to open the command menu, where the first option is "save and quit"
+ctrl-o     to open the command menu, where the first option is always "Save and quit"
 ctrl-c     to copy the current line, press twice to copy the current block
 ctrl-v     to paste one line, press twice to paste the rest
 ctrl-x     to cut the current line, press twice to cut the current block
