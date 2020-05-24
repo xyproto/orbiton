@@ -1,0 +1,5 @@
+// a
+/* multi
+ * line
+ * comment
+ */
