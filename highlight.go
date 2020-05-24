@@ -77,13 +77,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		}
 	}
 	var (
-		noColor                  bool = os.Getenv("NO_COLOR") != ""
-		trimmedLine              string
-		singleLineCommentMarker       = e.SingleLineCommentMarker()
-		q                             = NewQuoteState(singleLineCommentMarker)
-		prevRune, prevPrevRune   rune = '\n', '\n'
-		prevRune2, prevPrevRune2 rune = '\n', '\n'
-		ignoreSingleQuotes       bool = e.mode == modeLisp
+		noColor                 bool = os.Getenv("NO_COLOR") != ""
+		trimmedLine             string
+		singleLineCommentMarker      = e.SingleLineCommentMarker()
+		q                            = NewQuoteState(singleLineCommentMarker)
+		ignoreSingleQuotes      bool = e.mode == modeLisp
 	)
 	// First loop from 0 to offset to figure out if we are already in a multiLine comment or a multiLine string at the current line
 	for i := 0; i < offset; i++ {
@@ -102,7 +100,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 
 		// Have a trimmed line. Want to know: the current state of which quotes, comments or strings we are in.
 		// Solution, have a state struct!
-		prevRune, prevPrevRune = q.Process(trimmedLine, prevRune, prevPrevRune, ignoreSingleQuotes)
+		q.Process(trimmedLine, ignoreSingleQuotes)
 	}
 	// q should now contain the current quote state
 	var (
@@ -229,8 +227,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					// C, C++, Go, Rust etc
 
 					trimmedLine = strings.TrimSpace(line)
-					prevRune2, prevPrevRune2 = prevRune, prevPrevRune // only used for q.ParCount below
-					prevRune, prevPrevRune = q.Process(trimmedLine, prevRune, prevPrevRune, ignoreSingleQuotes)
+					q.Process(trimmedLine, ignoreSingleQuotes)
 
 					//logf("%s -[ %d ]-->\n\t%s\n", trimmedLine, addedPar, q.String())
 
@@ -255,7 +252,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 
 				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
 				if e.rainbowParenthesis && q.None() {
-					thisLineParCount := q.ParCount(trimmedLine, prevRune2, prevPrevRune2, ignoreSingleQuotes)
+					thisLineParCount := q.ParCount(trimmedLine, ignoreSingleQuotes)
 					parCountBeforeThisLine := q.parCount - thisLineParCount
 					if rainbowParen(&parCountBeforeThisLine, &charactersAndAttributes, singleLineCommentMarker, ignoreSingleQuotes) == errUnmatchedParenthesis {
 						// Don't mark the rest of the parenthesis as wrong, even though this one is

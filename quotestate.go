@@ -135,12 +135,12 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 
 // Process takes a line of text and modifies the current quote state accordingly,
 // depending on which runes are encountered.
-func (q *QuoteState) Process(line string, prevRune, prevPrevRune rune, ignoreSingleQuotes bool) (rune, rune) {
+func (q *QuoteState) Process(line string, ignoreSingleQuotes bool) (rune, rune) {
 	q.singleLineComment = false
 	q.startedMultiLineString = false
 	q.stoppedMultiLineComment = false
-	prevRune = '\n'
-	prevPrevRune = '\n'
+	prevRune := '\n'
+	prevPrevRune := '\n'
 	for _, r := range line {
 		q.ProcessRune(r, prevRune, prevPrevRune, ignoreSingleQuotes)
 		prevPrevRune = prevRune
@@ -151,9 +151,9 @@ func (q *QuoteState) Process(line string, prevRune, prevPrevRune rune, ignoreSin
 
 // ParCount will count the parenthesis for a single line, while skipping comments and multiline strings
 // and without modifying the QuoteState.
-func (q *QuoteState) ParCount(line string, prevRune, prevPrevRune rune, ignoreSingleQuotes bool) int {
+func (q *QuoteState) ParCount(line string, ignoreSingleQuotes bool) int {
 	qCopy := *q
 	qCopy.parCount = 0
-	qCopy.Process(line, prevRune, prevPrevRune, ignoreSingleQuotes)
+	qCopy.Process(line, ignoreSingleQuotes)
 	return qCopy.parCount
 }
