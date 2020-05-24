@@ -70,24 +70,28 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 			}
 		}
 	case '"':
-		if q.None() {
-			q.doubleQuote++
-		} else {
-			q.doubleQuote--
-			if q.doubleQuote < 0 {
-				q.doubleQuote = 0
+		if prevRune != '\\' {
+			if q.None() {
+				q.doubleQuote++
+			} else {
+				q.doubleQuote--
+				if q.doubleQuote < 0 {
+					q.doubleQuote = 0
+				}
 			}
 		}
 	case '\'':
-		if ignoreSingleQuotes {
-			return
-		}
-		if q.None() {
-			q.singleQuote++
-		} else {
-			q.singleQuote--
-			if q.singleQuote < 0 {
-				q.singleQuote = 0
+		if prevRune != '\\' {
+			if ignoreSingleQuotes {
+				return
+			}
+			if q.None() {
+				q.singleQuote++
+			} else {
+				q.singleQuote--
+				if q.singleQuote < 0 {
+					q.singleQuote = 0
+				}
 			}
 		}
 	case '*': // support C-style and multi-line comments

@@ -3,7 +3,6 @@
 ## Bug fixes
 
 - [ ] When breaking long lines, the cursor should sometimes go to the end of the next line. Identify when.
-- [ ] Don't count escaped characters when syntax highlighting (like `\'`).
 
 ## Features I see myself using straight away
 
