@@ -225,6 +225,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					runDefault = true
 				}
 				if runDefault {
+
+					// C, C++, Go, Rust etc
+
 					trimmedLine = strings.TrimSpace(line)
 					prevRune2, prevPrevRune2 = prevRune, prevPrevRune // only used for q.ParCount below
 					prevRune, prevPrevRune = q.Process(trimmedLine, prevRune, prevPrevRune, ignoreSingleQuotes)
@@ -232,12 +235,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					//logf("%s -[ %d ]-->\n\t%s\n", trimmedLine, addedPar, q.String())
 
 					switch {
-					case q.singleLineComment:
-						// A single line comment (the syntax module did the highlighting)
-						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					case q.multiLineComment || q.stoppedMultiLineComment:
 						// A multi-line comment
 						coloredString = UnEscape(e.multiLineComment.Get(line))
+					case q.singleLineComment:
+						// A single line comment (the syntax module did the highlighting)
+						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					case !q.startedMultiLineString && q.backtick > 0:
 						// A multi-line string
 						coloredString = UnEscape(e.multiLineString.Get(line))
@@ -260,6 +263,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 					}
 				}
 
+				// Search term highlighting
 				searchTermRunes := []rune(e.searchTerm)
 				matchForAnotherN := 0
 				for characterIndex, ca := range charactersAndAttributes {
