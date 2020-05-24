@@ -877,10 +877,10 @@ Set NO_COLOR=1 to disable colors.
 			}
 
 			undo.Snapshot(e)
-			// if the current line is empty, insert a blank line
 			if !e.DrawMode() {
 				e.TrimRight(e.DataY())
 				lineContents := e.CurrentLine()
+				trimmedLine := strings.TrimSpace(lineContents)
 				if e.pos.AtStartOfLine() {
 					// Insert a new line a the current y position, then shift the rest down.
 					e.InsertLineAbove()
@@ -895,16 +895,11 @@ Set NO_COLOR=1 to disable colors.
 					e.pos.Down(c)
 					e.pos.SetX(x)
 				} else if e.AtOrAfterEndOfLine() && e.AtLastLineOfDocument() {
-					leadingWhitespace := e.LeadingWhitespace()
-					if len(lineContents) > 0 && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[") || strings.HasSuffix(lineContents, ":")) {
-						// "smart indentation"
-						switch e.mode {
-						case modeShell, modePython, modeCMake:
-							leadingWhitespace += strings.Repeat(" ", e.spacesPerTab)
-						default:
-							leadingWhitespace += "\t"
-						}
-					}
+
+					// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
+					const alsoDedent = false
+					leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
+
 					e.InsertLineBelow()
 					h := int(c.Height())
 					if e.pos.sy >= (h - 1) {
@@ -913,47 +908,47 @@ Set NO_COLOR=1 to disable colors.
 					}
 					e.pos.Down(c)
 					e.Home()
+
 					// Insert the same leading whitespace for the new line, while moving to the right
-					for _, r := range leadingWhitespace {
-						e.InsertRune(c, r)
-						e.Next(c)
-					}
+					e.InsertString(c, leadingWhitespace)
+
 				} else if e.AfterEndOfLine() {
-					leadingWhitespace := e.LeadingWhitespace()
-					if len(lineContents) > 0 && (strings.HasSuffix(lineContents, "(") || strings.HasSuffix(lineContents, "{") || strings.HasSuffix(lineContents, "[")) {
-						// "smart indentation"
-						switch e.mode {
-						case modeShell, modePython, modeCMake:
-							leadingWhitespace += strings.Repeat(" ", e.spacesPerTab)
-						default:
-							leadingWhitespace += "\t"
-						}
-					}
+
+					// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
+					const alsoDedent = false
+					leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
+
 					e.InsertLineBelow()
 					e.Down(c, status)
 					e.Home()
+
 					// Insert the same leading whitespace for the new line, while moving to the right
-					for _, r := range leadingWhitespace {
-						e.InsertRune(c, r)
-						e.Next(c)
-					}
+					e.InsertString(c, leadingWhitespace)
 				} else {
+					const alsoDedent = true
+
 					// Split the current line in two
 					if !e.SplitLine() {
-						// Grab the leading whitespace from the current line
-						leadingWhitespace := e.LeadingWhitespace()
+
+						// Grab the leading whitespace from the current line, and indent or dedent depending on the end of trimmedLine
+						leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
+
 						// Insert a line below, then move down and to the start of it
 						e.InsertLineBelow()
 						e.Down(c, status)
 						e.Home()
+
 						// Insert the same leading whitespace for the new line, while moving to the right
-						for _, r := range leadingWhitespace {
-							e.InsertRune(c, r)
-							e.Next(c)
-						}
+						e.InsertString(c, leadingWhitespace)
+
 					} else {
+						leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
+
 						e.Down(c, status)
 						e.Home()
+
+						// Insert the same leading whitespace for the new line, while moving to the right
+						e.InsertString(c, leadingWhitespace)
 					}
 				}
 			} else {
