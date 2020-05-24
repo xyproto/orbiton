@@ -104,6 +104,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 				q.singleLineComment = true
 				q.startedMultiLineString = false
 				q.stoppedMultiLineComment = false
+				q.multiLineComment = false
 				q.backtick = 0
 				q.doubleQuote = 0
 				q.singleQuote = 0
@@ -138,6 +139,8 @@ func (q *QuoteState) Process(line string, prevRune, prevPrevRune rune, ignoreSin
 	q.singleLineComment = false
 	q.startedMultiLineString = false
 	q.stoppedMultiLineComment = false
+	prevRune = '\n'
+	prevPrevRune = '\n'
 	for _, r := range line {
 		q.ProcessRune(r, prevRune, prevPrevRune, ignoreSingleQuotes)
 		prevPrevRune = prevRune
