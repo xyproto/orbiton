@@ -1,7 +1,7 @@
 package main
 
 // This file is mainly extracted from the "getver" project, for automatically finding the newest
-// version number for a given PKGBUILD file, by examining the web page.
+// version number for a given PKGBUILD file, by examining the corresponding web page.
 // It has also been modified to fetch the latest git commit for the latest git version tag.
 // TODO: Check if git can retrieve the newest tag, and use that.
 
@@ -32,6 +32,7 @@ var (
 	defaultProtocol = "http" // If the protocol is missing
 )
 
+// unquote will strip a trimmed string from surrounding " or ' quotes
 func unquote(s string) string {
 	if (strings.HasPrefix(s, "'") && strings.HasSuffix(s, "'")) ||
 		(strings.HasPrefix(s, "\"") && strings.HasSuffix(s, "\"")) {
@@ -73,9 +74,11 @@ func GuessSourceString(pkgbuildContents string) (string, error) {
 			inSource = true
 		}
 	}
-	//pkgver := unquote(strings.TrimSpace(rawPkgver))
-	//pkgrel := unquote(strings.TrimSpace(rawPkgrel))
 	url := unquote(strings.TrimSpace(rawURL))
+
+	if len(url) == 0 {
+		return "", errors.New("found no URL definition")
+	}
 
 	shortURL := url
 	if strings.HasPrefix(url, "http://") {
@@ -147,7 +150,13 @@ func GuessSourceString(pkgbuildContents string) (string, error) {
 			return "", errors.New("found no #commit= in source")
 		}
 		pos += len("#commit=")
-		newSource = source[:pos] + gotCommit + source[pos+len(gotCommit):]
+		if pos+len(gotCommit) < len(source) {
+			// replace the existing commit hash, which is assumed to be as long as the new one
+			newSource = source[:pos] + gotCommit + source[pos+len(gotCommit):]
+		} else {
+			// the existing commit has was too short, just replace the rest of the line
+			newSource = source[:pos] + gotCommit + "\")"
+		}
 	}
 
 	// add a tag commit

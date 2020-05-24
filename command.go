@@ -56,14 +56,9 @@ func (e *Editor) UserCommand(c *vt100.Canvas, status *StatusBar, action string) 
 // Also returns the selected menu index (can be -1).
 func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, undo *Undo, lastMenuIndex int) int {
 
-	drawModeStatus := "on"
-	if !e.drawMode {
-		drawModeStatus = "off"
-	}
-
-	syntaxStatus := "on"
+	syntaxToggleText := "Disable syntax highlighting"
 	if !e.syntaxHighlight {
-		syntaxStatus = "off"
+		syntaxToggleText = "Enable syntax highlighting"
 	}
 
 	var (
@@ -71,58 +66,98 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		actionTitles = map[int]string{
 			0: "Save and quit",
 			1: "Sort the list of strings on the current line",
-			2: "Toggle syntax highlighting (currently " + syntaxStatus + ")",
-			3: "Toggle draw mode (currently " + drawModeStatus + ")",
-			4: "Amber mode",
-			5: "Save",
-			/*
-				6: "Green mode",
-				7: "Blue mode",
-			*/
+			2: "Amber text",
+			3: "Green text",
+			4: "Blue text",
+			5: syntaxToggleText,
 		}
 		// These numbers must correspond with actionTitles!
 		// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file.
 		actionFunctions = map[int]func(){
-			0: func() { e.UserCommand(c, status, "save"); e.UserCommand(c, status, "quit") },
-			1: func() {
+			//0: func() { e.UserCommand(c, status, "save") },
+			//0: func() { e.ToggleDrawMode() },
+			0: func() { // save and quit
+				e.UserCommand(c, status, "save")
+				e.UserCommand(c, status, "quit")
+			},
+			1: func() { // sort strings on the current line
 				undo.Snapshot(e)
 				err := e.SortStrings(c, status)
 				if err != nil {
 					status.Clear(c)
 					status.SetErrorMessage(err.Error())
 					status.Show(c, e)
+					return // from anonymous function
 				}
 			},
-			2: func() { e.ToggleSyntaxHighlight() },
-			3: func() { e.ToggleDrawMode() },
-			4: func() {
+			2: func() { // amber text
+				// Clear and redraw, with syntax highlighting
+				vt100.Clear()
+				e.SetSyntaxHighlight(true)
+				e.DrawLines(c, true, true)
+				// Set the color and redraw, without syntax highlighting
 				e.fg = vt100.Yellow
 				e.SetSyntaxHighlight(false)
-				e.bg = vt100.BackgroundDefault
 				e.DrawLines(c, true, true)
-				c = e.FullResetRedraw(c, status)
 			},
-			5: func() { e.UserCommand(c, status, "save") },
-			/*
-				6: func() {
-					e.fg = vt100.LightGreen
-					e.SetSyntaxHighlight(false)
-					e.bg = vt100.BackgroundDefault
-					e.DrawLines(c, true, true)
-					c = e.FullResetRedraw(c, status)
-				},
-				7: func() {
-					e.fg = vt100.LightBlue
-					e.SetSyntaxHighlight(false)
-					e.bg = vt100.BackgroundDefault
-					e.DrawLines(c, true, true)
-					c = e.FullResetRedraw(c, status)
-				},
-			*/
+			3: func() { // green text
+				// Clear and redraw, with syntax highlighting
+				vt100.Clear()
+				e.SetSyntaxHighlight(true)
+				e.DrawLines(c, true, true)
+				// Set the color and redraw, without syntax highlighting
+				e.fg = vt100.LightGreen
+				e.SetSyntaxHighlight(false)
+				e.DrawLines(c, true, true)
+			},
+			4: func() { // blue text
+				// Clear and redraw, with syntax highlighting
+				vt100.Clear()
+				e.SetSyntaxHighlight(true)
+				e.DrawLines(c, true, true)
+				// Set the color and redraw, without syntax highlighting
+				e.fg = vt100.LightBlue
+				e.SetSyntaxHighlight(false)
+				e.DrawLines(c, true, true)
+			},
+			5: func() { // toggle syntax highlighting
+				e.ToggleSyntaxHighlight()
+			},
 		}
 		extraDashes = false
 		menuChoices = make([]string, len(actionTitles))
 	)
+
+	// Add an action for updating the source= line if this is a PKGBUILD file
+	if filepath.Base(e.filename) == "PKGBUILD" {
+		actionTitles[len(actionTitles)-1] = "Update PKGBUILD"
+		actionFunctions[len(actionFunctions)-1] = func() { // update the source= line
+
+			status.SetMessage("Finding new version and commit hash...")
+			status.ShowNoTimeout(c, e)
+
+			undo.Snapshot(e)
+			sourceString, err := GuessSourceString(e.String())
+			if err != nil {
+				status.Clear(c)
+				status.SetErrorMessage(err.Error())
+				status.Show(c, e)
+				return // from anonymous function
+			}
+			e.SetSearchTerm(c, status, "source=")
+
+			_, y := e.forwardSearch(0, LineIndex(e.Len()-1))
+			e.ClearSearchTerm()
+			if y == -1 {
+				status.Clear(c)
+				status.SetErrorMessage("Could not find an existing source line")
+				status.Show(c, e)
+				return // from anonymous function
+			} else {
+				e.SetLine(y, sourceString)
+			}
+		}
+	}
 
 	// Create a list of strings that are menu choices,
 	// while also creating a mapping from the menu index to a function.
@@ -139,7 +174,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 	selected := e.Menu(status, tty, "Select an action", menuChoices, menuTitleColor, menuArrowColor, menuTextColor, menuHighlightColor, menuSelectedColor, useMenuIndex, extraDashes)
 
 	// Redraw the editor contents
-	e.DrawLines(c, true, false)
+	//e.DrawLines(c, true, false)
 
 	if selected < 0 {
 		// Output the selected item text
@@ -156,5 +191,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 
 	// Redraw editor
 	e.redraw = true
+	e.redrawCursor = true
 	return selected
 }
