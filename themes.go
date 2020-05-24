@@ -29,6 +29,7 @@ func (e *Editor) setLightTheme() {
 	syntax.DefaultTextConfig.TextAttrValue = "black"
 	syntax.DefaultTextConfig.Decimal = "darkcyan"
 	syntax.DefaultTextConfig.AndOr = "black"
+	syntax.DefaultTextConfig.Dollar = "red"
 	syntax.DefaultTextConfig.Star = "black"
 	syntax.DefaultTextConfig.Class = "blue"
 	syntax.DefaultTextConfig.Private = "black"

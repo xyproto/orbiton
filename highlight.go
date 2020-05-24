@@ -41,6 +41,7 @@ var (
 		TextAttrValue: "lightgreen",
 		Decimal:       "white",
 		AndOr:         "lightyellow",
+		Dollar:        "lightred",
 		Star:          "lightyellow",
 		Class:         "lightred",
 		Private:       "darkred",

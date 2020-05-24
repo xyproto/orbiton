@@ -31,6 +31,7 @@ func (e *Editor) respectNoColorEnvironmentVariable() {
 		syntax.DefaultTextConfig.TextAttrValue = ""
 		syntax.DefaultTextConfig.Decimal = ""
 		syntax.DefaultTextConfig.AndOr = ""
+		syntax.DefaultTextConfig.Dollar = ""
 		syntax.DefaultTextConfig.Star = ""
 		syntax.DefaultTextConfig.Class = ""
 		syntax.DefaultTextConfig.Private = ""
