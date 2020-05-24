@@ -107,6 +107,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		// while also turning off syntax highlighting.
 		for i, color := range colors {
 			actionTitles[len(actionTitles)] = colorText[i] + " text"
+			color := color // per-loop copy of the color variable, since it's closed over
 			actionFunctions[len(actionFunctions)] = func() {
 				// Clear and redraw, with syntax highlighting
 				vt100.Clear()
