@@ -63,8 +63,10 @@ func (e *Editor) ClearStickySearchTerm() {
 }
 
 // forwardSearch is a helper function for searching for a string from the given startIndex,
-// up to the given stopIndex. -1, -1 is returned if there are no matches.
+// up to the given stopIndex. -1
+// -1 is returned if there are no matches.
 // startIndex is expected to be smaller than stopIndex
+// x, y is returned.
 func (e *Editor) forwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex) {
 	var (
 		s      string    = e.SearchTerm()
