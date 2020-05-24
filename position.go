@@ -12,7 +12,7 @@ type Position struct {
 	sy          int // the position of the cursor in the current scrollview
 	offsetX     int // how far one has scrolled along the X axis
 	offsetY     int // how far one has scrolled along the Y axis
-	scrollSpeed int // how many lines to scroll, when scrolling
+	scrollSpeed int // how many lines to scroll, when scrolling up and down
 	savedX      int // for smart down cursor movement
 }
 
@@ -54,6 +54,11 @@ func (p *Position) SetX(x int) {
 // SetY will set the screen Y position
 func (p *Position) SetY(y int) {
 	p.sy = y
+}
+
+// SetOffsetX will set the screen X scolling offset
+func (p *Position) SetOffsetX(offset int) {
+	p.offsetX = offset
 }
 
 // SetOffsetY will set the screen Y scolling offset
