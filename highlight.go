@@ -52,7 +52,7 @@ var (
 )
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
-func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error {
+func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy int) error {
 	o := textoutput.NewTextOutput(true, true)
 	tabString := " "
 	if !e.DrawMode() {
@@ -63,14 +63,14 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		return errors.New("fromline >= toline in WriteLines")
 	}
 	numlines := toline - fromline
-	offset := fromline
+	offsetY := fromline
 	inCodeBlock := false // used when highlighting Markdown
 	// If in Markdown mode, figure out the current state of block quotes
 	if e.mode == modeMarkdown {
 		// Figure out if "fromline" is within a markdown code block or not
-		for i := 0; i < fromline; i++ {
+		for i := LineIndex(0); i < fromline; i++ {
 			// Check if the untrimmed line starts with ~~~ or ```
-			contents := e.Line(LineIndex(i))
+			contents := e.Line(i)
 			if strings.HasPrefix(contents, "~~~") || strings.HasPrefix(contents, "```") {
 				// Toggle the flag for if we're in a code block or not
 				inCodeBlock = !inCodeBlock
@@ -85,7 +85,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		ignoreSingleQuotes      bool = e.mode == modeLisp
 	)
 	// First loop from 0 to offset to figure out if we are already in a multiLine comment or a multiLine string at the current line
-	for i := 0; i < offset; i++ {
+	for i := LineIndex(0); i < offsetY; i++ {
 		trimmedLine = strings.TrimSpace(e.Line(LineIndex(i)))
 
 		// Special case for ViM
@@ -108,14 +108,13 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 		counter               int
 		line                  string
 		screenLine            string
-		y                     int
 		assemblyStyleComments = (e.mode == modeAssembly) || (e.mode == modeLisp)
 		prevLineIsListItem    bool
 	)
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
-	for y = 0; y < numlines; y++ {
+	for y := LineIndex(0); y < numlines; y++ {
 		counter = 0
-		line = e.Line(LineIndex(y + offset))
+		line = e.Line(LineIndex(y + offsetY))
 		if strings.Contains(line, "\t") {
 			line = strings.Replace(line, "\t", tabString, -1)
 		}
@@ -309,7 +308,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 						}
 					}
 					if letter == '\t' {
-						c.Write(uint(cx+counter), uint(cy+y), fg, e.bg, tabString)
+						c.Write(uint(cx+counter), uint(cy)+uint(y), fg, e.bg, tabString)
 						if e.DrawMode() {
 							counter++
 						} else {
@@ -319,20 +318,20 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline, cx, cy int) error
 						if unicode.IsControl(letter) { // letter < ' ' && letter != '\t' && letter != '\n' {
 							letter = controlRuneReplacement
 						}
-						c.WriteRune(uint(cx+counter), uint(cy+y), fg, e.bg, letter)
+						c.WriteRune(uint(cx+counter), uint(cy)+uint(y), fg, e.bg, letter)
 						counter++
 					}
 				}
 			}
 		} else {
 			// Output a regular line
-			c.Write(uint(cx+counter), uint(cy+y), e.fg, e.bg, screenLine)
+			c.Write(uint(cx+counter), uint(cy)+uint(y), e.fg, e.bg, screenLine)
 			counter += len([]rune(screenLine))
 		}
 		//length := len([]rune(screenLine)) + strings.Count(screenLine, "\t")*(e.spacesPerTab-1)
 		// Fill the rest of the line on the canvas with "blanks"
 		for x := counter; x < w; x++ {
-			c.WriteRune(uint(cx+x), uint(cy+y), e.fg, e.bg, ' ')
+			c.WriteRune(uint(cx+x), uint(cy)+uint(y), e.fg, e.bg, ' ')
 		}
 	}
 	return nil

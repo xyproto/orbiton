@@ -1057,7 +1057,7 @@ func (e *Editor) DataX() (int, error) {
 	// loop, while also keeping track of tab expansion
 	// add a space to allow to jump to the position after the line and get a valid data position
 	found := false
-	dataX := 0
+	dataX := e.pos.offsetX
 	runeCounter := 0
 	for _, r := range e.lines[dataY] {
 		// When we reached the correct screen position, use i as the data position
@@ -1647,9 +1647,9 @@ func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redraw bool) {
 	h := int(c.Height())
 	if respectOffset {
 		offsetY := e.pos.OffsetY()
-		e.WriteLines(c, offsetY, h+offsetY, 0, 0)
+		e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
 	} else {
-		e.WriteLines(c, 0, h, 0, 0)
+		e.WriteLines(c, LineIndex(0), LineIndex(h), 0, 0)
 	}
 	if redraw {
 		c.Redraw()

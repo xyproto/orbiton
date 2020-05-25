@@ -97,7 +97,7 @@ func (sb *StatusBar) Clear(c *vt100.Canvas) {
 
 	mut.RLock()
 	offsetY := sb.editor.pos.OffsetY()
-	sb.editor.WriteLines(c, offsetY, h+offsetY, 0, 0)
+	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
 	mut.RUnlock()
 
 	c.Draw()
