@@ -1110,10 +1110,8 @@ Set NO_COLOR=1 to disable colors.
 
 					// Smart-ish indentation
 					if !strings.HasPrefix(strippedLineAbove, "switch ") && (strings.HasPrefix(strippedLineAbove, "case ") ||
-						strings.HasSuffix(strippedLineAbove, "{") ||
-						strings.HasSuffix(strippedLineAbove, "[") ||
-						strings.HasSuffix(strippedLineAbove, "(") ||
-						strings.HasSuffix(strippedLineAbove, ":") ||
+						strings.HasSuffix(strippedLineAbove, "{") || strings.HasSuffix(strippedLineAbove, "[") ||
+						strings.HasSuffix(strippedLineAbove, "(") || strings.HasSuffix(strippedLineAbove, ":") ||
 						strings.HasSuffix(strippedLineAbove, " \\") ||
 						strings.HasPrefix(strippedLineAbove, "if ")) {
 						// Use one more indentation than the line above
