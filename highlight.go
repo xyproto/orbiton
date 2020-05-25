@@ -271,7 +271,14 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				// Search term highlighting
 				searchTermRunes := []rune(e.searchTerm)
 				matchForAnotherN := 0
+
+				// Output a line with the chars (Rune + AttributeColor)
+				skipX := e.pos.offsetX
 				for characterIndex, ca := range charactersAndAttributes {
+					if skipX > 0 {
+						skipX--
+						continue
+					}
 					letter := ca.R
 					fg := ca.A
 					if letter == ' ' {
