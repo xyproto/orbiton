@@ -57,13 +57,13 @@ func (p *Position) SetY(y int) {
 }
 
 // SetOffsetX will set the screen X scolling offset
-func (p *Position) SetOffsetX(offset int) {
-	p.offsetX = offset
+func (p *Position) SetOffsetX(offsetX int) {
+	p.offsetX = offsetX
 }
 
 // SetOffsetY will set the screen Y scolling offset
-func (p *Position) SetOffsetY(offset int) {
-	p.offsetY = offset
+func (p *Position) SetOffsetY(offsetY int) {
+	p.offsetY = offsetY
 }
 
 // Up will move the cursor up
@@ -77,7 +77,7 @@ func (p *Position) Up() error {
 
 // Down will move the cursor down
 func (p *Position) Down(c *vt100.Canvas) error {
-	h := 25
+	h := 25 // default height
 	if c != nil {
 		h = int(c.H())
 	}
