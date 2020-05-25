@@ -2,8 +2,7 @@
 
 ## Bug fixes
 
-- [ ] When breaking long lines, the cursor should sometimes go to the end of the next line. Identify when.
-- [ ] There are sometimes trailing spaces. Find out why.
+- [ ] Implement horizontal scrolling.
 
 ## Features I see myself using straight away
 
