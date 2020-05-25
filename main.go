@@ -596,7 +596,7 @@ Set NO_COLOR=1 to disable colors.
 			}
 			// Move the cursor if after the end of the line
 			if e.AtOrAfterEndOfLine() {
-				e.End()
+				e.End(c)
 			}
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
@@ -700,7 +700,7 @@ Set NO_COLOR=1 to disable colors.
 			if !e.DrawMode() {
 				e.Prev(c)
 				if e.AfterLineScreenContents() {
-					e.End()
+					e.End(c)
 				}
 				e.SaveX(true)
 			} else {
@@ -714,7 +714,7 @@ Set NO_COLOR=1 to disable colors.
 					e.Next(c)
 				}
 				if e.AfterLineScreenContents() {
-					e.End()
+					e.End(c)
 				}
 				e.SaveX(true)
 			} else {
@@ -725,6 +725,12 @@ Set NO_COLOR=1 to disable colors.
 		case "↑": // up arrow
 			// Move the screen cursor
 			if !e.DrawMode() {
+
+				// TODO: Stay at the same X offset when moving up in the document?
+				if e.pos.offsetX > 0 {
+					e.pos.offsetX = 0
+				}
+
 				if e.DataY() > 0 {
 					// Move the position up in the current screen
 					if e.UpEnd(c) != nil {
@@ -737,19 +743,26 @@ Set NO_COLOR=1 to disable colors.
 					}
 					// If the cursor is after the length of the current line, move it to the end of the current line
 					if e.AfterLineScreenContents() {
-						e.End()
+						e.End(c)
 					}
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
 				if e.AfterLineScreenContents() {
-					e.End()
+					e.End(c)
 				}
 			} else {
 				e.pos.Up()
 			}
 			e.redrawCursor = true
 		case "↓": // down arrow
+
 			if !e.DrawMode() {
+
+				// TODO: Stay at the same X offset when moving down in the document?
+				if e.pos.offsetX > 0 {
+					e.pos.offsetX = 0
+				}
+
 				if e.DataY() < LineIndex(e.Len()) {
 					// Move the position down in the current screen
 					if e.DownEnd(c) != nil {
@@ -763,7 +776,7 @@ Set NO_COLOR=1 to disable colors.
 					}
 					// If the cursor is after the length of the current line, move it to the end of the current line
 					if e.AfterLineScreenContents() {
-						e.End()
+						e.End(c)
 						// Then move one step to the left
 						if strings.TrimSpace(e.CurrentLine()) != "" {
 							e.Prev(c)
@@ -772,7 +785,7 @@ Set NO_COLOR=1 to disable colors.
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
 				if e.AfterLineScreenContents() {
-					e.End()
+					e.End(c)
 				}
 			} else {
 				e.pos.Down(c)
@@ -804,7 +817,7 @@ Set NO_COLOR=1 to disable colors.
 				}
 				e.redrawCursor = true
 				if !e.DrawMode() && e.AfterLineScreenContents() {
-					e.End()
+					e.End(c)
 				}
 			}
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term
@@ -826,7 +839,7 @@ Set NO_COLOR=1 to disable colors.
 				e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
 				e.redrawCursor = true
 				if !e.DrawMode() && e.AfterLineScreenContents() {
-					e.End()
+					e.End(c)
 				}
 			}
 			// Additional way to clear the sticky search term, like with Esc
@@ -896,7 +909,7 @@ Set NO_COLOR=1 to disable colors.
 					e.InsertLineAbove()
 					// Also move the cursor to the start, since it's now on a new blank line.
 					e.pos.Down(c)
-					e.pos.SetX(x)
+					e.pos.SetX(c, x)
 				} else if e.AtOrAfterEndOfLine() && e.AtLastLineOfDocument() {
 
 					// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
@@ -967,11 +980,11 @@ Set NO_COLOR=1 to disable colors.
 				e.DeleteLine(e.DataY())
 				e.pos.Up()
 				e.TrimRight(e.DataY())
-				e.End()
+				e.End(c)
 			} else if !e.DrawMode() && e.pos.AtStartOfLine() {
 				if e.DataY() > 0 {
 					e.pos.Up()
-					e.End()
+					e.End(c)
 					e.TrimRight(e.DataY())
 					e.Delete()
 				}
@@ -1126,7 +1139,7 @@ Set NO_COLOR=1 to disable colors.
 
 					e.SetLine(LineIndex(y), newLeadingSpace+trimmedLine)
 					if e.AtOrAfterEndOfLine() {
-						e.End()
+						e.End(c)
 					}
 					e.redrawCursor = true
 					e.redraw = true
@@ -1166,18 +1179,18 @@ Set NO_COLOR=1 to disable colors.
 			if !justMovedUpOrDown && e.EmptyRightTrimmedLine() {
 				e.Up(c, status)
 				//e.GoToStartOfTextLine()
-				e.End()
+				e.End(c)
 			} else if x, err := e.DataX(); err == nil && x == 0 && !justMovedUpOrDown {
 				// If at the start of the line,
 				// go to the end of the previous line
 				e.Up(c, status)
-				e.End()
+				e.End(c)
 			} else if e.AtStartOfTextLine() {
 				// If at the start of the text, go to the start of the line
 				e.Home()
 			} else {
 				// If none of the above, go to the start of the text
-				e.GoToStartOfTextLine()
+				e.GoToStartOfTextLine(c)
 			}
 			e.redrawCursor = true
 			e.SaveX(true)
@@ -1189,9 +1202,9 @@ Set NO_COLOR=1 to disable colors.
 			// just move to the end.
 			if !justMovedUpOrDown && e.AfterEndOfLine() {
 				e.Down(c, status)
-				e.End()
+				e.End(c)
 			} else {
-				e.End()
+				e.End(c)
 			}
 			e.redrawCursor = true
 			e.SaveX(true)
@@ -1320,7 +1333,7 @@ Set NO_COLOR=1 to disable colors.
 				}
 			}
 			// Go to the end of the current line
-			e.End()
+			e.End(c)
 			// No status message is needed for the cut operation, because it's visible that lines are cut
 			e.redrawCursor = true
 			e.redraw = true
@@ -1344,7 +1357,7 @@ Set NO_COLOR=1 to disable colors.
 				e.DeleteLine(e.DataY())
 				// Then go to the end of the line, if needed
 				if e.AfterEndOfLine() {
-					e.End()
+					e.End(c)
 				}
 			}
 			// TODO: Is this one needed/useful?
@@ -1379,7 +1392,7 @@ Set NO_COLOR=1 to disable colors.
 					status.Show(c, e)
 				}
 				// Go to the end of the line, for easy line duplication with ctrl-c, enter, ctrl-v
-				e.End()
+				e.End(c)
 			} else { // Multi line copy
 				// Pressed multiple times for this line number, copy the block of text starting from this line
 				s := e.Block(y)
@@ -1514,7 +1527,7 @@ Set NO_COLOR=1 to disable colors.
 				} else {
 					// Join the line below with this line. Also add a space in between.
 					e.TrimLeft(nextLineIndex) // this is unproblematic, even at the end of the document
-					e.End()
+					e.End(c)
 					e.InsertRune(c, ' ')
 					e.WriteRune(c)
 					e.Next(c)

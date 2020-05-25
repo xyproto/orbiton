@@ -39,7 +39,7 @@ func ExampleEditor_End() {
 	e.InsertString(nil, "el")
 	e.Home()
 	e.InsertRune(nil, 'h')
-	e.End()
+	e.End(nil)
 	e.InsertString(nil, "lo")
 
 	fmt.Println(e)

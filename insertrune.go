@@ -30,6 +30,8 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	if err != nil {
 		x = e.pos.sx
 	}
+	x += e.pos.offsetX
+
 	prevAtSpace := false
 	if x > 0 && x <= len(e.lines[y]) {
 		prevAtSpace = unicode.IsSpace(e.lines[y][x-1])
@@ -38,6 +40,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	if x >= 0 && x < len(e.lines[y]) {
 		atSpace = unicode.IsSpace(e.lines[y][x])
 	}
+
 	//panic(fmt.Sprintf("x=%d, y=%d, line=%s, atSpace=%v, prevAtSpace=%v\n", x, y, e.Line(y), atSpace, prevAtSpace))
 	EOL := e.AtOrAfterEndOfLine()
 

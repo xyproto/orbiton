@@ -47,8 +47,17 @@ func (p *Position) OffsetY() int {
 }
 
 // SetX will set the screen X position
-func (p *Position) SetX(x int) {
+func (p *Position) SetX(c *vt100.Canvas, x int) {
 	p.sx = x
+	w := 80 // default width
+	if c != nil {
+		w = int(c.W())
+	}
+	if x < w {
+		p.offsetX = 0
+	} else {
+		p.offsetX = x - w
+	}
 }
 
 // SetY will set the screen Y position

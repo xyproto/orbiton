@@ -187,7 +187,12 @@ func (e *Editor) ScreenLine(n int) string {
 	line, ok := e.lines[n]
 	if ok {
 		var sb strings.Builder
+		skipX := e.pos.offsetX
 		for _, r := range line {
+			if skipX > 0 {
+				skipX--
+				continue
+			}
 			sb.WriteRune(r)
 		}
 		tabSpace := "\t"
@@ -209,14 +214,14 @@ func (e *Editor) LastDataPosition(n LineIndex) int {
 // Can be negative, if the line is empty.
 func (e *Editor) LastScreenPosition(n LineIndex) int {
 	if e.DrawMode() {
-		return e.LastDataPosition(n)
+		return e.LastDataPosition(n) - e.pos.offsetX
 	}
-	// TODO: THIS IS WRONG, it does not account for unicode characters
 	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.spacesPerTab - 1))
-	return e.LastDataPosition(n) + extraSpaceBecauseOfTabs
+	return (e.LastDataPosition(n) + extraSpaceBecauseOfTabs) - e.pos.offsetX
 }
 
 // FirstScreenPosition returns the first X index for this line, that is not whitespace.
+// Does not deal with the X offset.
 func (e *Editor) FirstScreenPosition(n LineIndex) int {
 	spacesPerTab := e.spacesPerTab
 	if e.DrawMode() {
@@ -531,7 +536,7 @@ func (e *Editor) Save() error {
 
 	// Trailing spaces may be trimmed, so move to the end, if needed
 	if !e.drawMode && e.AfterLineScreenContents() {
-		e.End()
+		e.End(nil)
 	}
 
 	// All done
@@ -1058,7 +1063,7 @@ func (e *Editor) DataX() (int, error) {
 	// loop, while also keeping track of tab expansion
 	// add a space to allow to jump to the position after the line and get a valid data position
 	found := false
-	dataX := e.pos.offsetX
+	dataX := 0
 	runeCounter := 0
 	for _, r := range e.lines[dataY] {
 		// When we reached the correct screen position, use i as the data position
@@ -1166,16 +1171,21 @@ func (e *Editor) CurrentLine() string {
 }
 
 // Home will move the cursor the the start of the line (x = 0)
+// And also scroll all the way to the left.
 func (e *Editor) Home() {
 	e.pos.sx = 0
+	e.pos.offsetX = 0
+	e.redraw = true
 }
 
 // End will move the cursor to the position right after the end of the current line contents,
 // and also trim away whitespace from the right side.
-func (e *Editor) End() {
+func (e *Editor) End(c *vt100.Canvas) {
 	y := e.DataY()
 	e.TrimRight(y)
-	e.pos.sx = e.LastScreenPosition(y) + 1
+	x := e.LastScreenPosition(y) + 1
+	e.pos.SetX(c, x)
+	e.redraw = true
 }
 
 // AtEndOfLine returns true if the cursor is at exactly the last character of the line, not the one after
@@ -1192,9 +1202,9 @@ func (e *Editor) DownEnd(c *vt100.Canvas) error {
 	}
 	if len(strings.TrimSpace(e.CurrentLine())) == 1 {
 		e.TrimRight(e.DataY())
-		e.End()
+		e.End(c)
 	} else if e.AfterLineScreenContentsPlusOne() && tmpx > 1 {
-		e.End()
+		e.End(c)
 		if e.pos.sx != tmpx && e.pos.sx > e.pos.savedX {
 			e.pos.savedX = tmpx
 		}
@@ -1216,13 +1226,13 @@ func (e *Editor) DownEnd(c *vt100.Canvas) error {
 
 // UpEnd will move up and then choose a "smart" X position
 func (e *Editor) UpEnd(c *vt100.Canvas) error {
-	tmpx := e.pos.sx
+	tmpx := e.pos.sx + e.pos.offsetX
 	err := e.pos.Up()
 	if err != nil {
 		return err
 	}
 	if e.AfterLineScreenContentsPlusOne() && tmpx > 1 {
-		e.End()
+		e.End(c)
 		if e.pos.sx != tmpx && e.pos.sx > e.pos.savedX {
 			e.pos.savedX = tmpx
 		}
@@ -1290,8 +1300,7 @@ func (e *Editor) Prev(c *vt100.Canvas) error {
 	} else {
 		e.pos.sx--
 	}
-	// Did we move too far?
-	if e.pos.sx < 0 {
+	if e.pos.sx < 0 { // Did we move too far and there is no X offset?
 		// Undo the move
 		if atTab && !e.DrawMode() {
 			e.pos.sx += e.spacesPerTab
@@ -1304,7 +1313,7 @@ func (e *Editor) Prev(c *vt100.Canvas) error {
 			if err != nil {
 				return err
 			}
-			e.End()
+			e.End(c)
 		}
 	}
 	return nil
@@ -1313,9 +1322,15 @@ func (e *Editor) Prev(c *vt100.Canvas) error {
 // Right will move the cursor to the right, if possible.
 // It will not move the cursor up or down.
 func (p *Position) Right(c *vt100.Canvas) {
-	lastX := int(c.Width() - 1)
-	if p.sx < lastX {
+	w := 80 // default width
+	if c != nil {
+		w = int(c.Width())
+	}
+	if p.sx < (w - 1) {
 		p.sx++
+	} else {
+		p.sx = 0
+		p.offsetX += (w - 1)
 	}
 }
 
@@ -1365,6 +1380,7 @@ func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int)
 
 	// Move the scroll offset
 	mut.Lock()
+	e.pos.offsetX = 0
 	e.pos.offsetY += canScroll
 	mut.Unlock()
 
@@ -1398,6 +1414,7 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 	}
 	// Move the scroll offset
 	mut.Lock()
+	e.pos.offsetX = 0
 	e.pos.offsetY -= canScroll
 	mut.Unlock()
 	// Prepare to redraw
@@ -1472,7 +1489,7 @@ func (e *Editor) AfterLineScreenContentsPlusOne() bool {
 // WriteRune writes the current rune to the given canvas
 func (e *Editor) WriteRune(c *vt100.Canvas) {
 	if c != nil {
-		c.WriteRune(uint(e.pos.sx), uint(e.pos.sy), e.fg, e.bg, e.Rune())
+		c.WriteRune(uint(e.pos.sx+e.pos.offsetX), uint(e.pos.sy), e.fg, e.bg, e.Rune())
 	}
 }
 
@@ -1483,7 +1500,7 @@ func (e *Editor) WriteTab(c *vt100.Canvas) {
 		spacesPerTab = 1
 	}
 	for x := e.pos.sx; x < e.pos.sx+spacesPerTab; x++ {
-		c.WriteRune(uint(x), uint(e.pos.sy), e.fg, e.bg, ' ')
+		c.WriteRune(uint(x+e.pos.offsetX), uint(e.pos.sy), e.fg, e.bg, ' ')
 	}
 }
 
@@ -1575,7 +1592,7 @@ func (e *Editor) GoTo(dataY LineIndex, c *vt100.Canvas, status *StatusBar) bool 
 	}
 
 	// The Y scrolling is done, move the X position according to the contents of the line
-	e.pos.SetX(e.FirstScreenPosition(e.DataY()))
+	e.pos.SetX(c, e.FirstScreenPosition(e.DataY()))
 
 	// Clear all status messages
 	if status != nil {
@@ -1687,8 +1704,9 @@ func (e *Editor) GoToPosition(c *vt100.Canvas, status *StatusBar, pos Position) 
 }
 
 // GoToStartOfTextLine will go to the start of the non-whitespace text, for this line
-func (e *Editor) GoToStartOfTextLine() {
-	e.pos.SetX(e.FirstScreenPosition(e.DataY()))
+func (e *Editor) GoToStartOfTextLine(c *vt100.Canvas) {
+	e.pos.SetX(c, e.FirstScreenPosition(e.DataY()))
+	e.redraw = true
 }
 
 // GoToNextParagraph will jump to the next line that has a blank line above it, if possible
@@ -1796,7 +1814,7 @@ func (e *Editor) CommentOff(commentMarker string) {
 		e.SetLine(e.DataY(), newContents)
 		// If the line was shortened and the cursor ended up after the line, move it
 		if e.AfterEndOfLine() {
-			e.End()
+			e.End(nil)
 		}
 	}
 }
