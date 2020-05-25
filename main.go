@@ -602,20 +602,15 @@ Set NO_COLOR=1 to disable colors.
 			e.SearchMode(c, status, tty, true)
 		case "c:0": // ctrl-space, build source code to executable, convert to PDF or write to PNG, depending on the mode
 
-			// Save the current file
-			if err := e.Save(); err != nil {
-				status.ClearAll(c)
-				status.SetErrorMessage(err.Error())
-				status.Show(c, e)
-				break
+			// Save the current file, but only if it has changed
+			if e.changed {
+				if err := e.Save(); err != nil {
+					status.ClearAll(c)
+					status.SetErrorMessage(err.Error())
+					status.Show(c, e)
+					break
+				}
 			}
-
-			// Save the current line location to file, for later
-			// TODO: Change SaveLocation to not require an e.locationHistory
-			e.SaveLocation(absFilename, e.locationHistory)
-
-			// Save the current search history
-			SaveSearchHistory(expandUser(searchHistoryFilename), searchHistory)
 
 			// Clear the current search term
 			e.ClearSearchTerm()
