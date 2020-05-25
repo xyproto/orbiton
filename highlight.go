@@ -107,26 +107,24 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	var (
 		counter               int
 		line                  string
-		screenLine            string
 		assemblyStyleComments = (e.mode == modeAssembly) || (e.mode == modeLisp)
 		prevLineIsListItem    bool
 	)
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y := LineIndex(0); y < numlines; y++ {
 		counter = 0
+
 		line = e.Line(LineIndex(y + offsetY))
 		if strings.Contains(line, "\t") {
 			line = strings.Replace(line, "\t", tabString, -1)
 		}
-		screenLine = strings.TrimRightFunc(line, unicode.IsSpace)
-		if len([]rune(screenLine)) >= w {
-			screenLine = screenLine[:w]
-		}
+
 		if e.syntaxHighlight && !noColor {
 			// Output a syntax highlighted line. Escape any tags in the input line.
 			// textWithTags must be unescaped if there is not an error.
 			if textWithTags, err := syntax.AsText([]byte(Escape(line)), assemblyStyleComments); err != nil {
 				// Only output the line up to the width of the canvas
+				screenLine := e.ChopLine(line, w)
 				fmt.Println(screenLine)
 				counter += len([]rune(screenLine))
 			} else {
@@ -324,11 +322,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				}
 			}
 		} else {
-			// Output a regular line
+			// Output a regular line, scrolled to the current e.pos.offsetX
+			screenLine := e.ChopLine(line, w)
 			c.Write(uint(cx+counter), uint(cy)+uint(y), e.fg, e.bg, screenLine)
 			counter += len([]rune(screenLine))
 		}
-		//length := len([]rune(screenLine)) + strings.Count(screenLine, "\t")*(e.spacesPerTab-1)
+
 		// Fill the rest of the line on the canvas with "blanks"
 		for x := counter; x < w; x++ {
 			c.WriteRune(uint(cx+x), uint(cy)+uint(y), e.fg, e.bg, ' ')

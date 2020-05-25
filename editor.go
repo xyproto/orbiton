@@ -181,7 +181,8 @@ func (e *Editor) Line(n LineIndex) string {
 	return ""
 }
 
-// ScreenLine returns the screen contents of line number N, counting from 0
+// ScreenLine returns the screen contents of line number N, counting from 0.
+// The tabs are expanded.
 func (e *Editor) ScreenLine(n int) string {
 	line, ok := e.lines[n]
 	if ok {
@@ -1892,4 +1893,20 @@ func (e *Editor) ToggleCommentBlock(c *vt100.Canvas) {
 func (e *Editor) NewLine(c *vt100.Canvas, status *StatusBar) {
 	e.InsertLineBelow()
 	e.Down(c, status)
+}
+
+// ChopLine takes a string where the tabs have been expanded
+// and scrolls it + chops it up for display in the current viewport.
+// e.pos.offsetX and the given viewportWidth are respected.
+func (e *Editor) ChopLine(line string, viewportWidth int) string {
+	var screenLine string
+	// Shorten the screen line to account for the X offset
+	if len([]rune(line)) > e.pos.offsetX {
+		screenLine = line[e.pos.offsetX:]
+	}
+	// Shorten the screen line to account for the terminal width
+	if len([]rune(screenLine)) >= viewportWidth {
+		screenLine = screenLine[:viewportWidth]
+	}
+	return screenLine
 }
