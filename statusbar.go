@@ -19,7 +19,7 @@ type StatusBar struct {
 	errbg   vt100.AttributeColor // error background color
 	editor  *Editor              // an editor struct (for getting the colors when clearing the status)
 	show    time.Duration        // show the message for how long before clearing
-	offset  int                  // scroll offset
+	offsetY int                  // scroll offset
 	isError bool                 // is this an error message that should be shown after redraw?
 }
 
@@ -34,7 +34,7 @@ func NewStatusBar(fg, bg, errfg, errbg vt100.AttributeColor, editor *Editor, sho
 }
 
 // Draw will draw the status bar to the canvas
-func (sb *StatusBar) Draw(c *vt100.Canvas, offset int) {
+func (sb *StatusBar) Draw(c *vt100.Canvas, offsetY int) {
 	w := int(c.W())
 
 	if sb.IsError() {
@@ -48,7 +48,7 @@ func (sb *StatusBar) Draw(c *vt100.Canvas, offset int) {
 	}
 
 	mut.Lock()
-	sb.offset = offset
+	sb.offsetY = offsetY
 	mut.Unlock()
 }
 
