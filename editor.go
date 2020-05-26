@@ -222,16 +222,16 @@ func (e *Editor) LastScreenPosition(n LineIndex) int {
 
 // FirstScreenPosition returns the first X index for this line, that is not whitespace.
 // Does not deal with the X offset.
-func (e *Editor) FirstScreenPosition(n LineIndex) int {
+func (e *Editor) FirstScreenPosition(n LineIndex) uint {
 	spacesPerTab := e.spacesPerTab
 	if e.DrawMode() {
 		spacesPerTab = 1
 	}
-	counter := 0
+	var counter uint
 	for _, r := range e.Line(n) {
 		if unicode.IsSpace(r) {
 			if r == '\t' {
-				counter += spacesPerTab
+				counter += uint(spacesPerTab)
 			} else {
 				counter++
 			}
@@ -405,7 +405,6 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 					case 11:
 						s = "<red>|<yellow>Ɔ<blue>· · · <red>|<off>"
 					}
-
 				}
 				o.Print(s)
 				counter++
@@ -420,8 +419,11 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 		}
 	}()
 
-	// Read the file
+	// Read the file and check if it could be read
 	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return message, err
+	}
 
 	// Replace nonbreaking space with regular space
 	data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
@@ -430,15 +432,25 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	// Replace any remaining \r characters with \n
 	data = bytes.Replace(data, []byte{'\r'}, []byte{'\n'}, -1)
 
-	// Note that control characters are not replaced, they are just not printed.
+	// NOTE: Converting from ISO-8859-1 this way completely distorts the file when saving again!
+	// Check if decoding from ISO-8859-1 gives fewer replacement runes (0xfffd or �)
+	//utf8string := string(data)
+	//latin1decoder := charmap.ISO8859_1.NewDecoder()
+	//if utf8stringDecodedFromLatin1, err := latin1decoder.String(utf8string); err == nil { // Success
+	//logf("ENCODING: %s\n", "ISO-8859-1")
+	// Are there fewer replacement runes (0xfffd)? If yes, assume the text was ISO-8859-1 encoded.
+	//latin1questions := bytes.Count([]byte(utf8stringDecodedFromLatin1), []byte{0xff, 0xfd})
+	//utf8questions := bytes.Count(data, []byte{0xff, 0xfd})
+	//panic(fmt.Sprintf("utf8 questions: %d, latin1 questions: %d\n", utf8questions, latin1questions))
+	//if latin1questions < utf8questions {
+	//data = []byte(utf8stringDecodedFromLatin1)
+	//}
+	//} else {
+	//logf("ENCODING: %s\n", "UTF-8")
+	//}
 
 	// Stop the spinner
 	quit <- true
-
-	// Check if the file could be read
-	if err != nil {
-		return message, err
-	}
 
 	datalines := bytes.Split(data, []byte{'\n'})
 	e.Clear()
@@ -1200,7 +1212,8 @@ func (e *Editor) DownEnd(c *vt100.Canvas) error {
 	if err != nil {
 		return err
 	}
-	if len(strings.TrimSpace(e.CurrentLine())) == 1 {
+	line := e.CurrentLine()
+	if len(strings.TrimSpace(line)) == 1 {
 		e.TrimRight(e.DataY())
 		e.End(c)
 	} else if e.AfterLineScreenContentsPlusOne() && tmpx > 1 {
@@ -1210,15 +1223,23 @@ func (e *Editor) DownEnd(c *vt100.Canvas) error {
 		}
 	} else {
 		e.pos.sx = e.pos.savedX
+
+		if e.pos.sx < 0 {
+			e.pos.sx = 0
+		}
+		if e.AfterLineScreenContentsPlusOne() {
+			e.End(c)
+		}
+
 		// Also checking if e.Rune() is ' ' is nice for code, but horrible for regular text files
 		if e.Rune() == '\t' {
-			e.pos.sx = e.FirstScreenPosition(e.DataY())
+			e.pos.sx = int(e.FirstScreenPosition(e.DataY()))
 		}
 
 		// Expand the line, then check if e.pos.sx falls on a tab character ("\t" is expanded to several tabs ie. "\t\t\t\t")
-		expandedRunes := []rune(strings.Replace(e.CurrentLine(), "\t", strings.Repeat("\t", e.spacesPerTab), -1))
+		expandedRunes := []rune(strings.Replace(line, "\t", strings.Repeat("\t", e.spacesPerTab), -1))
 		if e.pos.sx < len(expandedRunes) && expandedRunes[e.pos.sx] == '\t' {
-			e.pos.sx = e.FirstScreenPosition(e.DataY())
+			e.pos.sx = int(e.FirstScreenPosition(e.DataY()))
 		}
 	}
 	return nil
@@ -1226,7 +1247,7 @@ func (e *Editor) DownEnd(c *vt100.Canvas) error {
 
 // UpEnd will move up and then choose a "smart" X position
 func (e *Editor) UpEnd(c *vt100.Canvas) error {
-	tmpx := e.pos.sx + e.pos.offsetX
+	tmpx := e.pos.sx
 	err := e.pos.Up()
 	if err != nil {
 		return err
@@ -1238,15 +1259,23 @@ func (e *Editor) UpEnd(c *vt100.Canvas) error {
 		}
 	} else {
 		e.pos.sx = e.pos.savedX
+
+		if e.pos.sx < 0 {
+			e.pos.sx = 0
+		}
+		if e.AfterLineScreenContentsPlusOne() {
+			e.End(c)
+		}
+
 		// Also checking if e.Rune() is ' ' is nice for code, but horrible for regular text files
 		if e.Rune() == '\t' {
-			e.pos.sx = e.FirstScreenPosition(e.DataY())
+			e.pos.sx = int(e.FirstScreenPosition(e.DataY()))
 		}
 
 		// Expand the line, then check if e.pos.sx falls on a tab character ("\t" is expanded to several tabs ie. "\t\t\t\t")
 		expandedRunes := []rune(strings.Replace(e.CurrentLine(), "\t", strings.Repeat("\t", e.spacesPerTab), -1))
 		if e.pos.sx < len(expandedRunes) && expandedRunes[e.pos.sx] == '\t' {
-			e.pos.sx = e.FirstScreenPosition(e.DataY())
+			e.pos.sx = int(e.FirstScreenPosition(e.DataY()))
 		}
 	}
 	return nil
@@ -1481,6 +1510,15 @@ func (e *Editor) AfterLineScreenContents() bool {
 	return e.pos.sx > e.LastScreenPosition(e.DataY())
 }
 
+// AfterScreenWidth checks if the current cursor position has moved after the terminal/canvas width
+func (e *Editor) AfterScreenWidth(c *vt100.Canvas) bool {
+	w := 80 // default width
+	if c != nil {
+		w = int(c.W())
+	}
+	return e.pos.sx >= w
+}
+
 // AfterLineScreenContentsPlusOne will check if the cursor is after the current line contents, with a margin of 1
 func (e *Editor) AfterLineScreenContentsPlusOne() bool {
 	return e.pos.sx > (e.LastScreenPosition(e.DataY()) + 1)
@@ -1521,17 +1559,17 @@ func (e *Editor) EmptyLine() bool {
 
 // AtStartOfTextLine returns true if the position is at the start of the text for this line
 func (e *Editor) AtStartOfTextLine() bool {
-	return e.pos.sx == e.FirstScreenPosition(e.DataY())
+	return uint(e.pos.sx) == e.FirstScreenPosition(e.DataY())
 }
 
 // BeforeStartOfTextLine returns true if the position is before the start of the text for this line
 func (e *Editor) BeforeStartOfTextLine() bool {
-	return e.pos.sx < e.FirstScreenPosition(e.DataY())
+	return uint(e.pos.sx) < e.FirstScreenPosition(e.DataY())
 }
 
 // AtOrBeforeStartOfTextLine returns true if the position is before or at the start of the text for this line
 func (e *Editor) AtOrBeforeStartOfTextLine() bool {
-	return e.pos.sx <= e.FirstScreenPosition(e.DataY())
+	return uint(e.pos.sx) <= e.FirstScreenPosition(e.DataY())
 }
 
 // GoTo will go to a given line index, counting from 0
@@ -1592,7 +1630,7 @@ func (e *Editor) GoTo(dataY LineIndex, c *vt100.Canvas, status *StatusBar) bool 
 	}
 
 	// The Y scrolling is done, move the X position according to the contents of the line
-	e.pos.SetX(c, e.FirstScreenPosition(e.DataY()))
+	e.pos.SetX(c, int(e.FirstScreenPosition(e.DataY())))
 
 	// Clear all status messages
 	if status != nil {
@@ -1705,7 +1743,7 @@ func (e *Editor) GoToPosition(c *vt100.Canvas, status *StatusBar, pos Position) 
 
 // GoToStartOfTextLine will go to the start of the non-whitespace text, for this line
 func (e *Editor) GoToStartOfTextLine(c *vt100.Canvas) {
-	e.pos.SetX(c, e.FirstScreenPosition(e.DataY()))
+	e.pos.SetX(c, int(e.FirstScreenPosition(e.DataY())))
 	e.redraw = true
 }
 
