@@ -117,6 +117,8 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 				e.syntaxHighlight = false
 				c = e.FullResetRedraw(c, status)
 				e.DrawLines(c, true, false)
+				e.redraw = true
+				e.redrawCursor = true
 			}
 		}
 	}
