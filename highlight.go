@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	controlRuneReplacement = '¿' // for displaying control sequence characters
+	controlRuneReplacement = '¿' // for displaying control sequence characters. Could also use: �
 )
 
 var (
