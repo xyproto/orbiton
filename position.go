@@ -56,7 +56,8 @@ func (p *Position) SetX(c *vt100.Canvas, x int) {
 	if x < w {
 		p.offsetX = 0
 	} else {
-		p.offsetX = x - w
+		p.offsetX = (x - w) + 1
+		p.sx -= p.offsetX
 	}
 }
 

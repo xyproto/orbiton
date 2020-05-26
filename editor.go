@@ -214,10 +214,20 @@ func (e *Editor) LastDataPosition(n LineIndex) int {
 // Can be negative, if the line is empty.
 func (e *Editor) LastScreenPosition(n LineIndex) int {
 	if e.DrawMode() {
-		return e.LastDataPosition(n) - e.pos.offsetX
+		return e.LastDataPosition(n)
 	}
 	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.spacesPerTab - 1))
 	return (e.LastDataPosition(n) + extraSpaceBecauseOfTabs) - e.pos.offsetX
+}
+
+// LastTextPosition returns the last X index for this line, regardless of horizontal scrolling.
+// Can be negative if the line is empty. Tabs are expanded.
+func (e *Editor) LastTextPosition(n LineIndex) int {
+	if e.DrawMode() {
+		return e.LastDataPosition(n)
+	}
+	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.spacesPerTab - 1))
+	return (e.LastDataPosition(n) + extraSpaceBecauseOfTabs)
 }
 
 // FirstScreenPosition returns the first X index for this line, that is not whitespace.
@@ -1079,7 +1089,7 @@ func (e *Editor) DataX() (int, error) {
 	runeCounter := 0
 	for _, r := range e.lines[dataY] {
 		// When we reached the correct screen position, use i as the data position
-		if screenCounter == e.pos.sx {
+		if screenCounter == (e.pos.sx + e.pos.offsetX) {
 			dataX = runeCounter
 			found = true
 			break
@@ -1195,14 +1205,14 @@ func (e *Editor) Home() {
 func (e *Editor) End(c *vt100.Canvas) {
 	y := e.DataY()
 	e.TrimRight(y)
-	x := e.LastScreenPosition(y) + 1
+	x := e.LastTextPosition(y) + 1
 	e.pos.SetX(c, x)
 	e.redraw = true
 }
 
 // AtEndOfLine returns true if the cursor is at exactly the last character of the line, not the one after
 func (e *Editor) AtEndOfLine() bool {
-	return e.pos.sx == e.LastScreenPosition(e.DataY())
+	return e.pos.sx + e.pos.offsetX == e.LastTextPosition(e.DataY())
 }
 
 // DownEnd will move down and then choose a "smart" X position
@@ -1323,11 +1333,17 @@ func (e *Editor) Prev(c *vt100.Canvas) error {
 	if x > 0 {
 		atTab = e.Get(x-1, e.DataY()) == '\t'
 	}
-	// If at a tab character, move a few more posisions
-	if atTab && !e.DrawMode() {
-		e.pos.sx -= e.spacesPerTab
+	if e.pos.sx == 0 && e.pos.offsetX > 0 {
+		// at left edge, but can scroll to the left
+		e.pos.offsetX--
+		e.redraw = true
 	} else {
-		e.pos.sx--
+		// If at a tab character, move a few more posisions
+		if atTab && !e.DrawMode() {
+			e.pos.sx -= e.spacesPerTab
+		} else {
+			e.pos.sx--
+		}
 	}
 	if e.pos.sx < 0 { // Did we move too far and there is no X offset?
 		// Undo the move

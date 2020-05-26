@@ -2,6 +2,8 @@
 
 ## Bug fixes
 
+- [ ] The editor functions relating to the end of the text, file and document needs more testing.
+- [ ] Fix rune insertion at the end of the terminal width.
 - [ ] Fix behavior of `ctrl-a` at the first line of the file.
 - [ ] Fix behavior of `ctrl-e` at the last line of the file.
 - [ ] Fix up arrow behavior.

@@ -697,30 +697,70 @@ Set NO_COLOR=1 to disable colors.
 				status.ClearAll(c)
 			}
 		case "←": // left arrow
-			if !e.DrawMode() {
-				e.Prev(c)
-				if e.AfterLineScreenContents() {
-					e.End(c)
-				}
-				e.SaveX(true)
-			} else {
-				// Draw mode
+			if e.DrawMode() {
 				e.pos.Left()
+				break
 			}
+			if e.pos.offsetX > 0 && e.pos.sx == 0 {
+				e.pos.offsetX--
+				e.redraw = true
+			} else {
+				e.pos.sx--
+			}
+
+			if e.pos.sx < 0 {
+				e.pos.sx = 0
+				e.Up(c, status)
+				e.End(c)
+				e.redraw = true
+			}
+
+			/*
+				if e.pos.sx == 0 && e.pos.offsetX > 0 {
+					// at left edge, but can scroll to the left
+					e.pos.offsetX--
+					e.redraw = true
+				} else if e.pos.sx == 0 {
+					// at left edge, can not scroll to the left
+					e.Up(c, status)
+					e.End(c)
+					e.redraw = true
+				} else {
+					// not at left edge, move to the left
+					//e.pos.sx--
+					e.Prev(c)
+					e.redraw = true
+					// and a safeguard
+					//if e.AfterLineScreenContents() {
+					//	e.End(c)
+					//}
+				}
+			*/
+			e.SaveX(true)
 			e.redrawCursor = true
 		case "→": // right arrow
-			if !e.DrawMode() {
-				if e.DataY() < LineIndex(e.Len()) {
-					e.Next(c)
-				}
-				if e.AfterLineScreenContents() {
-					e.End(c)
-				}
-				e.SaveX(true)
-			} else {
+			if e.DrawMode() {
 				// Draw mode
 				e.pos.Right(c)
+				break
 			}
+			if e.DataY() < LineIndex(e.Len()) {
+				e.Next(c)
+			}
+			if e.AfterScreenWidth(c) {
+				e.pos.offsetX++
+				e.redraw = true
+				e.pos.sx--
+				if e.pos.sx < 0 {
+					e.pos.sx = 0
+				}
+				if e.AfterLineScreenContents() {
+					e.Down(c, status)
+				}
+			} else if e.AfterLineScreenContents() {
+				e.End(c)
+			}
+			e.SaveX(true)
 			e.redrawCursor = true
 		case "↑": // up arrow
 			// Move the screen cursor
@@ -1197,12 +1237,15 @@ Set NO_COLOR=1 to disable colors.
 		case "c:5": // ctrl-e, end
 			// First check if we just moved to this line with the arrow keys
 			justMovedUpOrDown := previousKey == "↓" || previousKey == "↑"
+			if e.AtEndOfDocument() {
+				break
+			}
 			// If we didn't just move here, and are at the end of the line,
 			// move down one line and to the end, if not,
 			// just move to the end.
 			if !justMovedUpOrDown && e.AfterEndOfLine() {
 				e.Down(c, status)
-				e.End(c)
+				e.Home()
 			} else {
 				e.End(c)
 			}
