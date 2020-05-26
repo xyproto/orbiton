@@ -2,12 +2,20 @@
 
 ## Bug fixes
 
-- [ ] Implement horizontal scrolling.
+- [ ] Horizontal scrolling:
+	- [x] `ctrl-a`
+	- [x] `ctrl-e`
+	- [x] Regular movement with the right arrow.
+	- [ ] Right arrow after pressing `ctrl-e`.
+	- [ ] Right arrow at the end of the last line.
+	- [ ] Left arrow.
+	- [ ] Up arrow.
+	- [ ] Down arrow.
 
 ## Features I see myself using straight away
 
-- [ ] Convert to ISO-8859-1 in the background, when opening a file. If that results in fewer characters, use that.
 - [ ] File locking.
+- [ ] Detect ISO-8859-1 and convert the file to UTF-8 before opening.
 - [ ] Add one or more of these commands: insert file, regex search, update PKGBUILD file, hex editor,
       go to definition, rename symbol, find references and disassembly.
 - [ ] When pressing `ctrl-f` and then `return`, use the previous search word.
