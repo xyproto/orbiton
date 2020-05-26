@@ -64,6 +64,7 @@ To unset:
 ## Known bugs
 
 * When elongating a long line (one that is already longer than the terminal width), the line will break at an unexpected location.
+* The horizontal scrolling is a bit experimental right now.
 * The smart indentation is not always smart.
 
 ## Hotkeys
