@@ -63,7 +63,6 @@ To unset:
 
 ## Known bugs
 
-* Files with lines longer than the terminal width are not supported (resize the terminal to edit long lines).
 * When elongating a long line (one that is already longer than the terminal width), the line will break at an unexpected location.
 * The smart indentation is not always smart.
 
@@ -258,6 +257,6 @@ Pressing `ctrl-space` will render Markdown files to PDF using `pandoc` (as oppos
 
 ## General info
 
-* Version: 2.29.1
+* Version: 2.29.2
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
