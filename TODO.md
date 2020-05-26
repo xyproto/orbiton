@@ -2,6 +2,7 @@
 
 ## Bug fixes
 
+- [ ] Always catch the ctrl-c signal.
 - [ ] The editor functions relating to the end of the text, file and document needs more testing.
 - [ ] Fix rune insertion at the end of the terminal width.
 - [ ] Fix markdown syntax highlighting refresh when entering checkboxes.
@@ -10,9 +11,7 @@
 
 - [ ] File locking.
 - [ ] Detect ISO-8859-1 and convert the file to UTF-8 before opening.
-- [ ] Add one or more of these commands: insert file, regex search, update PKGBUILD file, hex editor,
-      go to definition, rename symbol, find references and disassembly.
-- [ ] When pressing `ctrl-f` and then `return`, use the previous search word.
+- [ ] New menu command: "insert file".
 - [ ] Spellcheck all comments that are in English. Highlight misspelled words. Make it possible to add/ignore words.
 - [ ] If `xclip` or `wl-clipboard` are not found when pasting, present a status message. Also check related env. vars.
 - [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.
@@ -24,6 +23,8 @@
 
 ## Features in general
 
+- [ ] Add one or more of these commands: regex search, hex editor,
+      go to definition, rename symbol, find references and disassembly.
 - [ ] Make it easy to make recordings of the editing process.
 - [ ] Syntax highlighting of `..`, `::`, `:asdfasdf:` and `^^^` in `.rst` files.
 - [ ] Be able to edit `.txt.gz` and `.1.gz` files.
