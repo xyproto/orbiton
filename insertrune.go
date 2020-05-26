@@ -17,6 +17,12 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		return
 	}
 
+	// Insert a regular space instead of a nonbreaking space.
+	// Nobody likes nonbreaking spaces.
+	if r == 0xc2a0 {
+		r = ' '
+	}
+
 	// --- Repaint, afterwards ---
 
 	e.changed = true
