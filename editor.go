@@ -1212,7 +1212,7 @@ func (e *Editor) End(c *vt100.Canvas) {
 
 // AtEndOfLine returns true if the cursor is at exactly the last character of the line, not the one after
 func (e *Editor) AtEndOfLine() bool {
-	return e.pos.sx + e.pos.offsetX == e.LastTextPosition(e.DataY())
+	return e.pos.sx+e.pos.offsetX == e.LastTextPosition(e.DataY())
 }
 
 // DownEnd will move down and then choose a "smart" X position

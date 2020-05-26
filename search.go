@@ -238,7 +238,7 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		doneCollectingLetters bool
 		initialLocation       = e.DataY().LineNumber()
 		pressedReturn         bool
-		index                 int = 1
+		searchHistoryIndex    int = 0
 	)
 	for !doneCollectingLetters {
 		key = tty.String()
@@ -265,28 +265,26 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 			if len(searchHistory) == 0 {
 				break
 			}
-			index--
-			if index < 0 {
+			searchHistoryIndex--
+			if searchHistoryIndex < 0 {
 				// wraparound
-				index = len(searchHistory) - 1
+				searchHistoryIndex = len(searchHistory) - 1
 			}
-			s = searchHistory[index]
+			s = searchHistory[searchHistoryIndex]
 			e.SetSearchTerm(c, status, s)
 
-			//status.ClearAll(c)
 			status.SetMessage(searchPrompt + " " + s)
-			//status.Show(c, e)
 			status.ShowNoTimeout(c, e)
 		case "↓": // next in the search history
 			if len(searchHistory) == 0 {
 				break
 			}
-			index++
-			if index >= len(searchHistory) {
+			searchHistoryIndex++
+			if searchHistoryIndex >= len(searchHistory) {
 				// wraparound
-				index = 0
+				searchHistoryIndex = 0
 			}
-			s = searchHistory[index]
+			s = searchHistory[searchHistoryIndex]
 			e.SetSearchTerm(c, status, s)
 
 			status.SetMessage(searchPrompt + " " + s)
@@ -308,10 +306,16 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 	if pressedReturn {
 		// Return to the first location before performing the actual search
 		e.GoToLineNumber(initialLocation, c, status, false)
-	}
 
-	if len(strings.TrimSpace(s)) > 0 {
-		searchHistory = append(searchHistory, s)
+		trimmedSearchString := strings.TrimSpace(s)
+		if len(trimmedSearchString) > 0 {
+			searchHistory = append(searchHistory, trimmedSearchString)
+			// ignore errors saving the search history, since it's not critical
+			SaveSearchHistory(expandUser(searchHistoryFilename), searchHistory)
+		} else if len(searchHistory) > 0 {
+			s = searchHistory[searchHistoryIndex]
+			e.SetSearchTerm(c, status, s)
+		}
 	}
 
 	// Perform the actual search
