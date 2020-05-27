@@ -59,6 +59,8 @@ func ExampleEditor_Next() {
 	// hello
 }
 
+/*
+
 func ExampleEditor_InsertString_wrap1() {
 	e := NewSimpleEditor(12)
 	e.InsertString(nil, "hello there")
@@ -185,3 +187,5 @@ func ExampleEditor_InsertString_wrap10() {
 	// Output:
 	// hdisturbanceello there
 }
+
+*/

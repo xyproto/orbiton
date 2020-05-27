@@ -23,7 +23,10 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	// TODO: Rewrite the InsertRune function
 	e.Insert(r)
 
-	wf := float64(c.Width())
+	wf := 80.0
+	if c != nil {
+		wf = float64(c.Width())
+	}
 	// Scroll right when reaching 95% of the terminal width
 	if e.pos.sx > int(wf*0.95) {
 		// scroll
