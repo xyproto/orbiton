@@ -107,12 +107,19 @@ func (sb *StatusBar) Clear(c *vt100.Canvas) {
 func (sb *StatusBar) ClearAll(c *vt100.Canvas) {
 	mut.Lock()
 	statusBeingShown = 0
+	// Clear the message
+	sb.msg = ""
+	// Not an error message
+	sb.isError = false
 	mut.Unlock()
-	sb.Clear(c)
 }
 
 // Show will draw a status message, then clear it after a certain delay
 func (sb *StatusBar) Show(c *vt100.Canvas, e *Editor) {
+	mut.Lock()
+	statusBeingShown++
+	mut.Unlock()
+
 	mut.RLock()
 	if sb.msg == "" {
 		mut.RUnlock()
@@ -122,10 +129,6 @@ func (sb *StatusBar) Show(c *vt100.Canvas, e *Editor) {
 	mut.RUnlock()
 
 	sb.Draw(c, offsetY)
-
-	mut.Lock()
-	statusBeingShown++
-	mut.Unlock()
 
 	go func() {
 		mut.RLock()
@@ -137,6 +140,15 @@ func (sb *StatusBar) Show(c *vt100.Canvas, e *Editor) {
 			sleepDuration *= 3
 		}
 		time.Sleep(sleepDuration)
+
+		mut.RLock()
+		// Has everyhing been cleared while sleeping?
+		if statusBeingShown <= 0 {
+			// Yes, so just quit
+			mut.RUnlock()
+			return
+		}
+		mut.RUnlock()
 
 		mut.Lock()
 		statusBeingShown--
