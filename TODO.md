@@ -2,40 +2,39 @@
 
 ## Bug fixes
 
-- [ ] Rewrite `insertRune` and the functionality for when pressing `return`, with regards to word wrap.
-- [ ] Paste at the end of a line may fail.
 - [ ] Always catch the ctrl-c signal.
-- [ ] Fix markdown syntax highlighting refresh when entering checkboxes.
 
 ## Features I see myself using straight away
 
+- [ ] New menu command: "insert file".
 - [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.
 - [ ] File locking.
-- [ ] New menu command: "insert file".
 - [ ] Spellcheck all comments that are in English. Highlight misspelled words. Make it possible to add/ignore words.
 - [ ] Should be able to open any binary file and save it again, without replacements. Add a hex edit mode.
 - [ ] Detect ISO-8859-1 and convert the file to UTF-8 before opening.
 - [ ] If `xclip` or `wl-clipboard` are not found when pasting, present a status message. Also check related env. vars.
-- [ ] Reduce memory usage.
 - [ ] Also format JSON documents with `ctrl-w`.
 - [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
 - [ ] Let the autocompletion also look at method definitions with matching variable names (ignoring types, for now).
 - [ ] Let the cut/copy/paste line state be part of the editor state, because of undo.
 
+## Low priority bug fixes
+
+- [ ] Fix markdown syntax highlighting refresh when entering checkboxes.
+- [ ] Rewrite `insertRune`. Improve word-wrap related functionality.
+- [ ] Also enable rainbow parenthesis for lines that ends with a single-line comment.
+
 ## Features in general
 
-- [ ] Add one or more of these commands: regex search, hex editor,
+- [ ] Add one or more of these commands: regex search,
       go to definition, rename symbol, find references and disassembly.
 - [ ] Make it easy to make recordings of the editing process.
 - [ ] Syntax highlighting of `..`, `::`, `:asdfasdf:` and `^^^` in `.rst` files.
 - [ ] Be able to edit `.txt.gz` and `.1.gz` files.
+- [ ] Reduce memory usage.
 - [ ] When in "SuggestMode", typing should start filtering the list.
 - [ ] Highlight links in Markdown (perhaps color `[` and `]` yellow).
 - [ ] Localization.
-
-## Bug fixes that might not be needed
-
-- [ ] Also enable rainbow parenthesis for lines that ends with a single-line comment.
 
 ## Features that might not be needed
 
