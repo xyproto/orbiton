@@ -93,7 +93,6 @@ To unset:
 * `ctrl-b` - Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
 * `ctrl-\` - Comment in or out a block of code.
 * `ctrl-r` - Render the current text as a PDF document.
-* `ctrl-~` - Toggle "ASCII draw mode". The keypress registers only in some terminal emulators.
 
 ## Updating PKGBUILD files
 
@@ -221,7 +220,6 @@ If the very first keypress after starting is `G` or `/`, it will trigger the fol
 
 * `/` - enter search-mode (same as when pressing `ctrl-f`)
 * `G` - go to the end of the file
-* `O` - ignore if the following key is uppercase and not 'K'
 
 The reason for adding these is to make using `o` easier to use for long-time vi/vim/neovim users.
 

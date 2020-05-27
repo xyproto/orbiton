@@ -97,7 +97,6 @@ esc        to redraw the screen and clear the last search
 ctrl-space to build Go, C++, Zig, V, Rust, Haskell, Markdown, Adoc or Sdoc
 ctrl-r     to render the current text to a PDF document
 ctrl-\     to toggle single-line comments for a block of code
-ctrl-~     to toggle "ASCII draw mode"
 
 See the man page for more information.
 
