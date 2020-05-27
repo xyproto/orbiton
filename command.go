@@ -43,6 +43,8 @@ func (e *Editor) UserCommand(c *vt100.Canvas, status *StatusBar, action string) 
 // Also returns the selected menu index (can be -1).
 func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, undo *Undo, lastMenuIndex int) int {
 
+	const insertFilename = "insert.txt"
+
 	syntaxToggleText := "Disable syntax highlighting"
 	if !e.syntaxHighlight {
 		syntaxToggleText = "Enable syntax highlighting"
@@ -52,9 +54,9 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		// These numbers must correspond with actionFunctions!
 		actionTitles = map[int]string{
 			0: "Save and quit",
-			1: "Sort the list of strings on the current line",
-			2: syntaxToggleText,
-			3: "Insert \"insert.file\" at the current line",
+			1: syntaxToggleText,
+			2: "Sort the list of strings on the current line",
+			3: "Insert \"" + insertFilename + "\" at the current line",
 		}
 		// These numbers must correspond with actionTitles!
 		// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file.
@@ -76,7 +78,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 				e.ToggleSyntaxHighlight()
 			},
 			3: func() { // insert file
-				if err := e.InsertFile(c, "insert.file"); err != nil {
+				if err := e.InsertFile(c, insertFilename); err != nil {
 					status.Clear(c)
 					status.SetErrorMessage(err.Error())
 					status.Show(c, e)
