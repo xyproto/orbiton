@@ -14,7 +14,7 @@ func (e *Editor) UserCommand(c *vt100.Canvas, status *StatusBar, action string) 
 	case "save":
 		status.ClearAll(c)
 		// Save the file
-		if err := e.Save(); err != nil {
+		if err := e.Save(c); err != nil {
 			status.SetMessage(err.Error())
 			status.Show(c, e)
 			break
@@ -27,19 +27,12 @@ func (e *Editor) UserCommand(c *vt100.Canvas, status *StatusBar, action string) 
 		// Status message
 		status.SetMessage("Saved " + e.filename)
 		status.Show(c, e)
+
+		e.pos.offsetX = 0
 		c.Draw()
 	case "quit":
 		e.quit = true        // indicate that the user wishes to quit
 		e.clearOnQuit = true // clear the terminal after quitting
-	case "toggledrawmode":
-		e.ToggleDrawMode()
-		statusMessage := "Text mode"
-		if e.DrawMode() {
-			statusMessage = "Draw mode"
-		}
-		status.Clear(c)
-		status.SetMessage(statusMessage)
-		status.Show(c, e)
 	case "sortstrings":
 		// sort the list of comma or space separated strings, either quoted with ", with ' or "bare"
 		e.SortStrings(c, status)
@@ -61,13 +54,11 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			0: "Save and quit",
 			1: "Sort the list of strings on the current line",
 			2: syntaxToggleText,
-			//3: "Scroll right 20 columns",
 		}
 		// These numbers must correspond with actionTitles!
 		// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file.
 		actionFunctions = map[int]func(){
 			//0: func() { e.UserCommand(c, status, "save") },
-			//0: func() { e.ToggleDrawMode() },
 			0: func() { // save and quit
 				e.UserCommand(c, status, "save")
 				e.UserCommand(c, status, "quit")
@@ -85,9 +76,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			2: func() { // toggle syntax highlighting
 				e.ToggleSyntaxHighlight()
 			},
-			/*3: func() { // scroll right 20 columns, for debugging
-				e.pos.offsetX += 20
-			},*/
 		}
 		extraDashes = false
 	)
