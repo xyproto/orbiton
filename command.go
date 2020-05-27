@@ -24,8 +24,6 @@ func (e *Editor) UserCommand(c *vt100.Canvas, status *StatusBar, action string) 
 		if err == nil { // no error
 			e.SaveLocation(absFilename, e.locationHistory)
 		}
-		// Save the current search history
-		SaveSearchHistory(expandUser(searchHistoryFilename), searchHistory)
 		// Status message
 		status.SetMessage("Saved " + e.filename)
 		status.Show(c, e)

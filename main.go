@@ -1724,9 +1724,6 @@ Set NO_COLOR=1 to disable colors.
 	// Save the current location in the location history and write it to file
 	e.SaveLocation(absFilename, e.locationHistory)
 
-	// Save the current search history
-	SaveSearchHistory(expandUser(searchHistoryFilename), searchHistory)
-
 	// Clear all status bar messages
 	status.ClearAll(c)
 
