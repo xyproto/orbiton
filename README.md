@@ -63,8 +63,7 @@ To unset:
 
 ## Known bugs
 
-* When elongating a long line (one that is already longer than the terminal width), the line will break at an unexpected location.
-* The horizontal scrolling is a bit experimental right now.
+* There may be remaining issue related to lines that are longer than the terminal width.
 * The smart indentation is not always smart.
 
 ## Hotkeys
@@ -256,6 +255,6 @@ Pressing `ctrl-space` will render Markdown files to PDF using `pandoc` (as oppos
 
 ## General info
 
-* Version: 2.29.2
+* Version: 2.29.3
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

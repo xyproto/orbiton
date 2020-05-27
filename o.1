@@ -1,6 +1,6 @@
 .\"             -*-Nroff-*-
 .\"
-.TH "o" 1 "26 May 2020" "" ""
+.TH "o" 1 "27 May 2020" "" ""
 .SH NAME
 o \- an editor
 .SH SYNOPSIS
@@ -33,6 +33,7 @@ displays brief usage information
   Format the current file with \fBgoimport\fP or \fBclang-format\fP, depending on the file extension.
   Zig, V, Rust (\fBrustfmt\fP), Haskell (\fBbrittany\fP) and Python (\fBautopep8\fP) are also supported.
   If in git mode, cycle the git interactive rebase keyword on the current line.
+  Word wrap regular text files.
 .sp
 .B ctrl-a
   Go to start of the text, then the start of the line and then the previous line.
@@ -105,7 +106,7 @@ displays brief usage information
   Build Haskell programs with `ghc -dynamic`.
   Build Arch Linux packages with `makepkg`.
 .sp
-  `o` will try to jump to the location where the error is, otherwise display "Success".
+  `o` will try to jump to the location where the error is and otherwise display "Success".
 .sp
 .B ctrl-\\\\
   Toggle single-line comments for a block of code.
@@ -123,12 +124,14 @@ If \fBXTERM_VERSION\fP is set (usually automatically by xterm), the "light" colo
 .sp
 I wanted to write a simple editor that only used VT100 terminal codes.
 .SH "SEE ALSO"
-.BR micro (1)
 .BR nano (1)
+.BR micro (1)
 .SH BUGS
-Lines longer than the terminal width are not handled gracefully.
+There may be remaining issues related to lines longer than the terminal width.
+.sp
+The smart indentation is not always smart.
 .SH VERSION
-2.29.2
+2.29.3
 .SH AUTHOR
 .B o
 was written by  Alexander F. Rødseth <xyproto@archlinux.org>
