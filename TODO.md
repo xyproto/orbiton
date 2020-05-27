@@ -2,7 +2,7 @@
 
 ## Bug fixes
 
-- [ ] Rewrite `insertRune` with lines longer than the terminal width in mind.
+- [ ] Rewrite `insertRune`.
 - [ ] Paste at the end of a line may fail.
 - [ ] Always catch the ctrl-c signal.
 - [ ] Fix markdown syntax highlighting refresh when entering checkboxes.
