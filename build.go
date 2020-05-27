@@ -47,7 +47,7 @@ func (e *Editor) exportScdoc(manFilename string) error {
 }
 
 // exportAdoc tries to export the current document as a manual page, using asciidoctor
-func (e *Editor) exportAdoc(manFilename string) error {
+func (e *Editor) exportAdoc(c *vt100.Canvas, manFilename string) error {
 
 	// TODO: Use a proper function for generating temporary files
 	tmpfn := "___o___.adoc"
@@ -58,7 +58,7 @@ func (e *Editor) exportAdoc(manFilename string) error {
 	// TODO: Write a SaveAs function for the Editor
 	oldFilename := e.filename
 	e.filename = tmpfn
-	err := e.Save()
+	err := e.Save(c)
 	if err != nil {
 		e.filename = oldFilename
 		return err
@@ -100,7 +100,7 @@ func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath
 	// Save to tmpfn
 	oldFilename := e.filename
 	e.filename = tmpfn
-	err := e.Save()
+	err := e.Save(c)
 	if err != nil {
 		e.filename = oldFilename
 		status.ClearAll(c)
@@ -151,7 +151,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 
 	// asciidoctor
 	if ext == ".adoc" {
-		if err := e.exportAdoc(manFilename); err != nil {
+		if err := e.exportAdoc(c, manFilename); err != nil {
 			return err.Error(), true, false
 		}
 		return "Saved " + manFilename, true, true
