@@ -333,8 +333,11 @@ Set NO_COLOR=1 to disable colors.
 	// Circular undo buffer with room for N actions
 	undo := NewUndo(8192)
 
-	// Resize handler
+	// Terminal resize handler
 	e.SetUpResizeHandler(c, status, tty)
+
+	// ctrl-c handler
+	e.SetUpTerminateHandler(c, status, tty)
 
 	tty.SetTimeout(2 * time.Millisecond)
 
@@ -1201,8 +1204,8 @@ Set NO_COLOR=1 to disable colors.
 
 			// Do not reset cut/copy/paste status
 
-			// First check if we just moved to this line with the arrow keys
-			justMovedUpOrDown := previousKey == "↓" || previousKey == "↑"
+			// First check if we just moved to this line with the arrow keys, or just cut a line
+			justMovedUpOrDown := previousKey == "↓" || previousKey == "↑" || previousKey == "c:24"
 			if e.AtEndOfDocument() {
 				break
 			}
