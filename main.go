@@ -616,6 +616,8 @@ Set NO_COLOR=1 to disable colors.
 			// Build or export the current file
 			statusMessage, performedAction, compiled := e.BuildOrExport(c, status, e.filename)
 
+			//logf("status message %s performed action %v compiled %v filename %s\n", statusMessage, performedAction, compiled, e.filename)
+
 			// Could an action be performed for this file extension?
 			if !performedAction {
 				status.ClearAll(c)
@@ -635,10 +637,10 @@ Set NO_COLOR=1 to disable colors.
 				}
 				status.ShowNoTimeout(c, e)
 			} else if performedAction && compiled {
-				status.ClearAll(c)
 				// Everything worked out
 				if statusMessage != "" {
 					// Got a status message (this may not be the case for build/export processes running in the background)
+					status.Clear(c)
 					status.SetMessage(statusMessage)
 					status.ShowNoTimeout(c, e)
 				}
