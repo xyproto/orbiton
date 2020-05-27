@@ -199,7 +199,7 @@ func (e *Editor) LastDataPosition(n LineIndex) int {
 // Can be negative, if the line is empty.
 func (e *Editor) LastScreenPosition(n LineIndex) int {
 	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.spacesPerTab - 1))
-	return (e.LastDataPosition(n) + extraSpaceBecauseOfTabs) - e.pos.offsetX
+	return (e.LastDataPosition(n) + extraSpaceBecauseOfTabs)
 }
 
 // LastTextPosition returns the last X index for this line, regardless of horizontal scrolling.
@@ -1999,4 +1999,22 @@ func (e *Editor) HorizontalScrollIfNeeded(c *vt100.Canvas) {
 		e.pos.sx -= e.pos.offsetX
 	}
 	e.redraw = true
+}
+
+// InsertFile inserts the contents of a file at the current location
+func (e *Editor) InsertFile(c *vt100.Canvas, filename string) error {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+
+	// Replace nonbreaking space with regular space
+	data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
+	// Replace DOS line endings with UNIX line endings
+	data = bytes.Replace(data, []byte{'\r', '\n'}, []byte{'\n'}, -1)
+	// Replace any remaining \r characters with \n
+	data = bytes.Replace(data, []byte{'\r'}, []byte{'\n'}, -1)
+
+	e.InsertString(c, strings.TrimSpace(string(data)))
+	return nil
 }
