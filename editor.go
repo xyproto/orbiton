@@ -1120,15 +1120,16 @@ func (e *Editor) SetRune(r rune) {
 	}
 }
 
-// nextLine will go to the start of the next line
-func (e *Editor) nextLine(y LineIndex, c *vt100.Canvas, status *StatusBar) {
+// NextLine will go to the start of the next line, with scrolling
+func (e *Editor) NextLine(y LineIndex, c *vt100.Canvas, status *StatusBar) {
 	e.pos.sx = 0
+	e.pos.offsetX = 0
 	e.GoTo(y+1, c, status)
 }
 
-// insertBelow will insert the given rune at the start of the line below,
+// InsertBelow will insert the given rune at the start of the line below,
 // starting a new line if required.
-func (e *Editor) insertBelow(y int, r rune) {
+func (e *Editor) InsertBelow(y int, r rune) {
 	if _, ok := e.lines[y+1]; !ok {
 		// If the next line does not exist, create one containing just "r"
 		e.lines[y+1] = []rune{r}
@@ -1141,9 +1142,9 @@ func (e *Editor) insertBelow(y int, r rune) {
 	}
 }
 
-// insertStringBelow will insert the given string at the start of the line below,
+// InsertStringBelow will insert the given string at the start of the line below,
 // starting a new line if required.
-func (e *Editor) insertStringBelow(y int, s string) {
+func (e *Editor) InsertStringBelow(y int, s string) {
 	if _, ok := e.lines[y+1]; !ok {
 		// If the next line does not exist, create one containing the string
 		e.lines[y+1] = []rune(s)
