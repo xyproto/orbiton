@@ -1279,6 +1279,12 @@ Set NO_COLOR=1 to disable colors.
 							break
 						}
 					}
+					if y < 0 || y >= len(e.lines) {
+						break
+					}
+					if x < 0 || x >= len(e.lines[y]) {
+						continue
+					}
 					if r := e.lines[y][x]; r == opening {
 						parcount--
 					} else if r == closing {
