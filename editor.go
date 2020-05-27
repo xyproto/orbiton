@@ -32,7 +32,6 @@ type Editor struct {
 	spacesPerTab       int                   // how many spaces per tab character
 	syntaxHighlight    bool                  // syntax highlighting
 	rainbowParenthesis bool                  // rainbow parenthesis
-	drawMode           bool                  // text or draw mode (for ASCII graphics)?
 	pos                Position              // the current cursor and scroll position
 	searchTerm         string                // the current search term, used when searching
 	stickySearchTerm   string                // for going to the next match with ctrl-n, unless esc has been pressed
@@ -62,7 +61,7 @@ type Editor struct {
 //    - multiline comment
 // * a syntax highlighting scheme
 // * a file mode
-func NewEditor(spacesPerTab int, syntaxHighlight, rainbowParenthesis, textEditMode bool, scrollSpeed int, fg, bg, searchFg, multiLineComment, multiLineString vt100.AttributeColor, scheme syntax.TextConfig, mode Mode) *Editor {
+func NewEditor(spacesPerTab int, syntaxHighlight, rainbowParenthesis bool, scrollSpeed int, fg, bg, searchFg, multiLineComment, multiLineString vt100.AttributeColor, scheme syntax.TextConfig, mode Mode) *Editor {
 	syntax.DefaultTextConfig = scheme
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
@@ -71,7 +70,6 @@ func NewEditor(spacesPerTab int, syntaxHighlight, rainbowParenthesis, textEditMo
 	e.spacesPerTab = spacesPerTab
 	e.syntaxHighlight = syntaxHighlight
 	e.rainbowParenthesis = rainbowParenthesis
-	e.drawMode = !textEditMode
 	p := NewPosition(scrollSpeed)
 	e.pos = *p
 	e.searchFg = searchFg
@@ -95,7 +93,7 @@ func NewEditor(spacesPerTab int, syntaxHighlight, rainbowParenthesis, textEditMo
 // search results magenta, use the default syntax highlighting scheme, don't use git mode and don't use markdown mode,
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
-	e := NewEditor(4, false, false, true, 1, vt100.White, vt100.Black, vt100.Magenta, vt100.Gray, vt100.Magenta, syntax.DefaultTextConfig, modeBlank)
+	e := NewEditor(4, false, false, 1, vt100.White, vt100.Black, vt100.Magenta, vt100.Gray, vt100.Magenta, syntax.DefaultTextConfig, modeBlank)
 	e.wordWrapAt = wordWrapLimit
 	return e
 }
@@ -109,16 +107,6 @@ func (e *Editor) CopyLines() map[int][]rune {
 		lines2[key] = runes2
 	}
 	return lines2
-}
-
-// DrawMode returns true if the editor is in "text edit mode" and the cursor should not float around
-func (e *Editor) DrawMode() bool {
-	return e.drawMode
-}
-
-// ToggleDrawMode toggles if the editor is in "text edit mode" or "ASCII graphics mode"
-func (e *Editor) ToggleDrawMode() {
-	e.drawMode = !e.drawMode
 }
 
 // Set will store a rune in the editor data, at the given data coordinates
@@ -195,10 +183,7 @@ func (e *Editor) ScreenLine(n int) string {
 			}
 			sb.WriteRune(r)
 		}
-		tabSpace := "\t"
-		if !e.DrawMode() {
-			tabSpace = strings.Repeat("\t", e.spacesPerTab)
-		}
+		tabSpace := strings.Repeat("\t", e.spacesPerTab)
 		return strings.Replace(sb.String(), "\t", tabSpace, -1)
 	}
 	return ""
@@ -213,9 +198,6 @@ func (e *Editor) LastDataPosition(n LineIndex) int {
 // LastScreenPosition returns the last X index for this line, for the screen (expands tabs)
 // Can be negative, if the line is empty.
 func (e *Editor) LastScreenPosition(n LineIndex) int {
-	if e.DrawMode() {
-		return e.LastDataPosition(n)
-	}
 	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.spacesPerTab - 1))
 	return (e.LastDataPosition(n) + extraSpaceBecauseOfTabs) - e.pos.offsetX
 }
@@ -223,9 +205,6 @@ func (e *Editor) LastScreenPosition(n LineIndex) int {
 // LastTextPosition returns the last X index for this line, regardless of horizontal scrolling.
 // Can be negative if the line is empty. Tabs are expanded.
 func (e *Editor) LastTextPosition(n LineIndex) int {
-	if e.DrawMode() {
-		return e.LastDataPosition(n)
-	}
 	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.spacesPerTab - 1))
 	return (e.LastDataPosition(n) + extraSpaceBecauseOfTabs)
 }
@@ -234,9 +213,6 @@ func (e *Editor) LastTextPosition(n LineIndex) int {
 // Does not deal with the X offset.
 func (e *Editor) FirstScreenPosition(n LineIndex) uint {
 	spacesPerTab := e.spacesPerTab
-	if e.DrawMode() {
-		spacesPerTab = 1
-	}
 	var counter uint
 	for _, r := range e.Line(n) {
 		if unicode.IsSpace(r) {
@@ -510,24 +486,22 @@ func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 	return mode, nil
 }
 
-// Save will try to save the current editor contents to file
-func (e *Editor) Save() error {
+// Save will try to save the current editor contents to file.
+// It needs a canvas in case trailing spaces are stripped and the cursor needs to move to the end.
+func (e *Editor) Save(c *vt100.Canvas) error {
 	var data []byte
-	if !e.drawMode {
-		// Strip trailing spaces on all lines
-		l := e.Len()
-		for i := 0; i < l; i++ {
-			e.TrimRight(LineIndex(i))
-		}
-		// Skip trailing newlines
-		data = bytes.TrimRightFunc([]byte(e.String()), unicode.IsSpace)
-		// Replace nonbreaking space with regular spaces
-		data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
-		// Add a final newline
-		data = append(data, '\n')
-	} else {
-		data = []byte(e.String())
+
+	// Strip trailing spaces on all lines
+	l := e.Len()
+	for i := 0; i < l; i++ {
+		e.TrimRight(LineIndex(i))
 	}
+	// Skip trailing newlines
+	data = bytes.TrimRightFunc([]byte(e.String()), unicode.IsSpace)
+	// Replace nonbreaking space with regular spaces
+	data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
+	// Add a final newline
+	data = append(data, '\n')
 
 	// Mark the data as "not changed"
 	e.changed = false
@@ -557,8 +531,9 @@ func (e *Editor) Save() error {
 	}
 
 	// Trailing spaces may be trimmed, so move to the end, if needed
-	if !e.drawMode && e.AfterLineScreenContents() {
-		e.End(nil)
+	if e.AfterLineScreenContents() {
+		e.End(c)
+		e.redraw = true
 	}
 
 	// All done
@@ -774,14 +749,16 @@ func (e *Editor) LastWord(y int) string {
 // word wrap length and a second part that is the overshooting part.
 // y is the line index (y position, counting from 0).
 // isSpace is true if a space has just been inserted on purpose at the current position.
-func (e *Editor) SplitOvershoot(index LineIndex, isSpace bool) ([]rune, []rune) {
+// returns true if there was a space at the split point.
+func (e *Editor) SplitOvershoot(index LineIndex, isSpace bool) ([]rune, []rune, bool) {
+	hasSpace := false
 
 	y := int(index)
 
 	// Maximum word length to not keep as one word
 	maxDistance := e.wordWrapAt / 2
 	if e.WithinLimit(index) {
-		return e.lines[y], make([]rune, 0)
+		return e.lines[y], make([]rune, 0), false
 	}
 	splitPosition := e.wordWrapAt
 	if isSpace {
@@ -799,6 +776,7 @@ func (e *Editor) SplitOvershoot(index LineIndex, isSpace bool) ([]rune, []rune) 
 		}
 		// Found a better position to split, at a nearby space?
 		if spacePosition != -1 {
+			hasSpace = true
 			distance := splitPosition - spacePosition
 			if distance > maxDistance {
 				// To far away, don't use this as a split point,
@@ -823,9 +801,10 @@ func (e *Editor) SplitOvershoot(index LineIndex, isSpace bool) ([]rune, []rune) 
 	// If the second part starts with a space, remove it
 	if len(second) > 0 && unicode.IsSpace(second[0]) {
 		second = second[1:]
+		hasSpace = true
 	}
 
-	return first, second
+	return first, second, hasSpace
 }
 
 // WrapAllLinesAt will word wrap all lines that are longer than n,
@@ -841,13 +820,18 @@ func (e *Editor) WrapAllLinesAt(n, maxOvershoot int) bool {
 		}
 		wrapped = true
 
-		first, second := e.SplitOvershoot(LineIndex(i), false)
+		first, second, spaceBetween := e.SplitOvershoot(LineIndex(i), false)
 
 		if len(first) > 0 && len(second) > 0 {
 
-			e.InsertLineBelowAt(LineIndex(i))
+			//if e.EOF {
+			//	e.InsertLineBelowAt(LineIndex(i))
+			//}
 			e.lines[i] = first
-			e.lines[i+1] = second
+			if spaceBetween {
+				second = append(second, ' ')
+			}
+			e.lines[i+1] = append(second, e.lines[i+1]...)
 
 			e.changed = true
 
@@ -1075,9 +1059,6 @@ func (e *Editor) SplitLine() bool {
 
 // DataX will return the X position in the data (as opposed to the X position in the viewport)
 func (e *Editor) DataX() (int, error) {
-	if e.drawMode {
-		return e.pos.sx, nil
-	}
 	// the y position in the data is the lines scrolled + current screen cursor Y position
 	dataY := e.pos.offsetY + e.pos.sy
 	// get the current line of text
@@ -1111,9 +1092,6 @@ func (e *Editor) DataX() (int, error) {
 
 // DataY will return the Y position in the data (as opposed to the Y position in the viewport)
 func (e *Editor) DataY() LineIndex {
-	if e.drawMode {
-		return LineIndex(e.pos.sy)
-	}
 	return LineIndex(e.pos.offsetY + e.pos.sy)
 }
 
@@ -1143,6 +1121,21 @@ func (e *Editor) insertBelow(y int, r rune) {
 	} else {
 		// The next line exists, but is of length 0, should not happen, just replace it
 		e.lines[y+1] = []rune{r}
+	}
+}
+
+// insertStringBelow will insert the given string at the start of the line below,
+// starting a new line if required.
+func (e *Editor) insertStringBelow(y int, s string) {
+	if _, ok := e.lines[y+1]; !ok {
+		// If the next line does not exist, create one containing the string
+		e.lines[y+1] = []rune(s)
+	} else if len(e.lines[y+1]) > 0 {
+		// If the next line is non-empty, insert the string at the start
+		e.lines[y+1] = append([]rune(s), e.lines[y+1][:]...)
+	} else {
+		// The next line exists, but is of length 0, should not happen, just replace it
+		e.lines[y+1] = []rune(s)
 	}
 }
 
@@ -1295,32 +1288,26 @@ func (e *Editor) UpEnd(c *vt100.Canvas) error {
 func (e *Editor) Next(c *vt100.Canvas) error {
 	// Ignore it if the position is out of bounds
 	atTab := e.Rune() == '\t'
-	if atTab && !e.DrawMode() {
+	if atTab {
 		e.pos.sx += e.spacesPerTab
 	} else {
 		e.pos.sx++
 	}
 	// Did we move too far on this line?
-	w := e.wordWrapAt
-	if c != nil {
-		w = int(c.W())
-	}
-	if (!e.DrawMode() && e.AfterLineScreenContentsPlusOne()) || (e.DrawMode() && e.pos.sx >= w) {
+	if e.AfterLineScreenContentsPlusOne() {
 		// Undo the move
-		if atTab && !e.DrawMode() {
+		if atTab {
 			e.pos.sx -= e.spacesPerTab
 		} else {
 			e.pos.sx--
 		}
 		// Move down
-		if !e.DrawMode() {
-			err := e.pos.Down(c)
-			if err != nil {
-				return err
-			}
-			// Move to the start of the line
-			e.pos.sx = 0
+		err := e.pos.Down(c)
+		if err != nil {
+			return err
 		}
+		// Move to the start of the line
+		e.pos.sx = 0
 	}
 	return nil
 }
@@ -1339,7 +1326,7 @@ func (e *Editor) Prev(c *vt100.Canvas) error {
 		e.redraw = true
 	} else {
 		// If at a tab character, move a few more posisions
-		if atTab && !e.DrawMode() {
+		if atTab {
 			e.pos.sx -= e.spacesPerTab
 		} else {
 			e.pos.sx--
@@ -1347,19 +1334,17 @@ func (e *Editor) Prev(c *vt100.Canvas) error {
 	}
 	if e.pos.sx < 0 { // Did we move too far and there is no X offset?
 		// Undo the move
-		if atTab && !e.DrawMode() {
+		if atTab {
 			e.pos.sx += e.spacesPerTab
 		} else {
 			e.pos.sx++
 		}
 		// Move up, and to the end of the line above, if in EOL mode
-		if !e.DrawMode() {
-			err := e.pos.Up()
-			if err != nil {
-				return err
-			}
-			e.End(c)
+		err := e.pos.Up()
+		if err != nil {
+			return err
 		}
+		e.End(c)
 	}
 	return nil
 }
@@ -1550,9 +1535,6 @@ func (e *Editor) WriteRune(c *vt100.Canvas) {
 // WriteTab writes spaces when there is a tab character, to the canvas
 func (e *Editor) WriteTab(c *vt100.Canvas) {
 	spacesPerTab := e.spacesPerTab
-	if e.DrawMode() {
-		spacesPerTab = 1
-	}
 	for x := e.pos.sx; x < e.pos.sx+spacesPerTab; x++ {
 		c.WriteRune(uint(x+e.pos.offsetX), uint(e.pos.sy), e.fg, e.bg, ' ')
 	}
@@ -1981,4 +1963,20 @@ func (e *Editor) ChopLine(line string, viewportWidth int) string {
 		screenLine = screenLine[:viewportWidth]
 	}
 	return screenLine
+}
+
+// HorizontalScrollIfNeeded will scroll along the X axis, if needed
+func (e *Editor) HorizontalScrollIfNeeded(c *vt100.Canvas) {
+	x := e.pos.sx
+	w := 80
+	if c != nil {
+		w = int(c.W())
+	}
+	if x < w {
+		e.pos.offsetX = 0
+	} else {
+		e.pos.offsetX = (x - w) + 1
+		e.pos.sx -= e.pos.offsetX
+	}
+	e.redraw = true
 }
