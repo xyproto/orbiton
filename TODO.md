@@ -20,6 +20,7 @@
 
 ## Low priority bug fixes
 
+- [ ] Ignore multiline comments within multiline comments.
 - [ ] Fix markdown syntax highlighting refresh when entering checkboxes.
 - [ ] Rewrite `insertRune`. Improve word-wrap related functionality.
 - [ ] Also enable rainbow parenthesis for lines that ends with a single-line comment.
