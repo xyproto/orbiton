@@ -200,6 +200,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							}
 
 						}
+						doneHighlighting = true
 						break
 					}
 					doneHighlighting = false
