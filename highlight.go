@@ -54,10 +54,7 @@ var (
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy int) error {
 	o := textoutput.NewTextOutput(true, true)
-	tabString := " "
-	if !e.DrawMode() {
-		tabString = strings.Repeat(" ", e.spacesPerTab)
-	}
+	tabString := strings.Repeat(" ", e.spacesPerTab)
 	w := int(c.Width())
 	if fromline >= toline {
 		return errors.New("fromline >= toline in WriteLines")
@@ -314,11 +311,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 					if letter == '\t' {
 						c.Write(uint(cx+counter), uint(cy)+uint(y), fg, e.bg, tabString)
-						if e.DrawMode() {
-							counter++
-						} else {
-							counter += e.spacesPerTab
-						}
+						counter += e.spacesPerTab
 					} else {
 						if unicode.IsControl(letter) { // letter < ' ' && letter != '\t' && letter != '\n' {
 							letter = controlRuneReplacement
