@@ -92,6 +92,7 @@ To unset:
 * `ctrl-b` - Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
 * `ctrl-\` - Comment in or out a block of code.
 * `ctrl-r` - Render the current text as a PDF document.
+* `ctrl-~` - Jump to a matching parenthesis.
 
 ## Updating PKGBUILD files
 

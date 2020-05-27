@@ -1,5 +1,9 @@
 # TODO
 
+## Bug fixes
+
+- [ ] Rainbow parentheses for Clojure. Don't color parentheses in comments.
+
 ## Features I see myself using straight away
 
 - [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.
