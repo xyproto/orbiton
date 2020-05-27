@@ -97,6 +97,7 @@ esc        to redraw the screen and clear the last search
 ctrl-space to build Go, C++, Zig, V, Rust, Haskell, Markdown, Adoc or Sdoc
 ctrl-r     to render the current text to a PDF document
 ctrl-\     to toggle single-line comments for a block of code
+ctrl-~     to jump to matching parenthesis
 
 See the man page for more information.
 
@@ -1230,7 +1231,69 @@ Set NO_COLOR=1 to disable colors.
 				e.redraw = true
 			}
 			e.redrawCursor = true
-		//case "c:30": // ctrl-~
+		case "c:30": // ctrl-~, jump to matching parenthesis or curly bracket
+			r := e.Rune()
+
+			// Find which opening and closing parenthesis/curly brackets to look for
+			opening := '('
+			closing := ')'
+			if r == '{' || r == '}' {
+				opening = '{'
+				closing = '}'
+			}
+
+			// Search either forwards or backwards to find a matching rune
+			switch r {
+			case '(': //, '{':
+				parcount := 0
+				for !e.AtOrAfterEndOfDocument() {
+					if r := e.Rune(); r == closing {
+						if parcount == 1 {
+							// FOUND, STOP
+							break
+						} else {
+							parcount--
+						}
+					} else if r == opening {
+						parcount++
+					}
+					e.Next(c)
+				}
+			case ')': //, '}':
+				parcount := 1
+				x := e.pos.sx
+				y := e.pos.sy
+				for {
+					x--
+					if x < 0 {
+						y--
+						if y < 0 {
+							break
+						}
+						x = len(e.lines[y]) - 1
+						if x < 0 {
+							continue
+						}
+						if y < 0 {
+							// no match
+							break
+						}
+					}
+					if r := e.lines[y][x]; r == opening {
+						parcount--
+					} else if r == closing {
+						parcount++
+					}
+					if parcount == 0 {
+						//countTabs := strings.Count(string(e.lines[y][:x+2]), "\t")
+						e.pos.sx = x //+ countTabs * (spacesPerTab-1)
+						e.pos.sy = y
+						break
+					}
+				}
+			}
+			e.redrawCursor = true
+			e.redraw = true
 		case "c:19": // ctrl-s, save
 			// TODO: Call a Save method directly, not via a string
 			e.UserCommand(c, status, "save")
