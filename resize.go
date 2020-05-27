@@ -27,5 +27,6 @@ func (e *Editor) SetUpResizeHandler(c *vt100.Canvas, status *StatusBar, tty *vt1
 			e.DrawLines(c, true, false)
 		}
 	}()
+
 	resizeMutex.Unlock()
 }
