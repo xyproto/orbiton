@@ -614,15 +614,15 @@ Set NO_COLOR=1 to disable colors.
 
 			// Could an action be performed for this file extension?
 			if !performedAction {
+				status.ClearAll(c)
 				// Building this file extension is not implemented yet.
 				// Just display the current time and word count.
 				statusMessage := fmt.Sprintf("%d words, %s", e.WordCount(), time.Now().Format("15:04")) // HH:MM
-				status.ClearAll(c)
 				status.SetMessage(statusMessage)
 				status.Show(c, e)
 			} else if performedAction && !compiled {
-				// Performed an action, but it did not work out
 				status.ClearAll(c)
+				// Performed an action, but it did not work out
 				if statusMessage != "" {
 					status.SetErrorMessage(statusMessage)
 				} else {
@@ -631,10 +631,10 @@ Set NO_COLOR=1 to disable colors.
 				}
 				status.ShowNoTimeout(c, e)
 			} else if performedAction && compiled {
+				status.ClearAll(c)
 				// Everything worked out
 				if statusMessage != "" {
 					// Got a status message (this may not be the case for build/export processes running in the background)
-					status.ClearAll(c)
 					status.SetMessage(statusMessage)
 					status.ShowNoTimeout(c, e)
 				}
