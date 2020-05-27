@@ -19,6 +19,7 @@
 
 ## Low priority bug fixes
 
+- [ ] Jumping from `)` and backwards sometimes ends up in a weird place. Fix.
 - [ ] Rewrite `insertRune`. Improve word-wrap related functionality.
 - [ ] Ignore multiline comments within multiline comments.
 - [ ] Fix markdown syntax highlighting refresh when entering checkboxes.
