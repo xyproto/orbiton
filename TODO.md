@@ -2,19 +2,20 @@
 
 ## Bug fixes
 
+- [ ] Rewrite `insertRune` with lines longer than the terminal width in mind.
+- [ ] Paste at the end of a line may fail.
 - [ ] Always catch the ctrl-c signal.
-- [ ] The editor functions relating to the end of the text, file and document needs more testing.
-- [ ] Fix rune insertion at the end of the terminal width.
 - [ ] Fix markdown syntax highlighting refresh when entering checkboxes.
 
 ## Features I see myself using straight away
 
+- [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.
 - [ ] File locking.
-- [ ] Detect ISO-8859-1 and convert the file to UTF-8 before opening.
 - [ ] New menu command: "insert file".
 - [ ] Spellcheck all comments that are in English. Highlight misspelled words. Make it possible to add/ignore words.
+- [ ] Should be able to open any binary file and save it again, without replacements. Add a hex edit mode.
+- [ ] Detect ISO-8859-1 and convert the file to UTF-8 before opening.
 - [ ] If `xclip` or `wl-clipboard` are not found when pasting, present a status message. Also check related env. vars.
-- [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.
 - [ ] Reduce memory usage.
 - [ ] Also format JSON documents with `ctrl-w`.
 - [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
