@@ -1204,7 +1204,7 @@ Set NO_COLOR=1 to disable colors.
 
 			// Do not reset cut/copy/paste status
 
-			// First check if we just moved to this line with the arrow keys, or just cut a line
+			// First check if we just moved to this line with the arrow keys, or just cut a line with ctrl-x
 			justMovedUpOrDown := previousKey == "↓" || previousKey == "↑" || previousKey == "c:24"
 			if e.AtEndOfDocument() {
 				break
