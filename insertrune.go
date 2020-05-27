@@ -11,23 +11,39 @@ import (
 func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	y := int(e.DataY())
 
-	// If it's not a word-wrap situation, just insert and return
-	if e.wordWrapAt == 0 || e.WithinLimit(LineIndex(y)) {
-		e.Insert(r)
-		return
-	}
-
 	// Insert a regular space instead of a nonbreaking space.
 	// Nobody likes nonbreaking spaces.
 	if r == 0xc2a0 {
 		r = ' '
 	}
 
-	// --- Repaint afterwards ---
-
+	// The document will be changed
 	e.changed = true
+
+	// --- Repaint afterwards ---
 	e.redrawCursor = true
 	e.redraw = true
+
+	// Disable word wrap completely, for now.
+	// TODO: Rewrite the InsertRune function
+	e.Insert(r)
+
+	wf := float64(c.Width())
+	// Scroll right when reaching 95% of the terminal width
+	if e.pos.sx > int(wf*0.95) {
+		// scroll
+		e.pos.offsetX++
+		e.pos.sx--
+	}
+	return
+
+	// If it's not a word-wrap situation, just insert and return
+	if e.wordWrapAt == 0 || e.WithinLimit(LineIndex(y)) {
+		e.Insert(r)
+		e.pos.offsetX++
+		e.pos.sx--
+		return
+	}
 
 	// --- Gather some facts ---
 
@@ -133,6 +149,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		// Go to the len(lastWord)-1 of the next line
 		e.GoTo(LineIndex(y+1), c, nil)
 		e.pos.sx = len(lastWord) - 1
+		e.pos.offsetX++
 	case isSpace && EOL:
 		// Space at the end of a long word
 		e.InsertLineBelowAt(LineIndex(y))
@@ -186,10 +203,13 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		// Go to the len(lastWord)-1 of the next line
 		e.GoTo(LineIndex(y+1), c, nil)
 		e.pos.sx = len(lastWord) - 1
+		e.pos.offsetX++
 	default:
 		e.Insert(r)
 		e.pos.offsetX++
 	}
 	e.TrimRight(LineIndex(y))
-	e.HorizontalScrollIfNeeded(c)
+
+	e.redraw = true
+	e.redrawCursor = true
 }

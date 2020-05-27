@@ -881,10 +881,12 @@ Set NO_COLOR=1 to disable colors.
 			fallthrough
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
 			c = e.FullResetRedraw(c, status)
+
 			// Reset the cut/copy/paste double-keypress detection
 			lastCopyY = -1
 			lastPasteY = -1
 			lastCutY = -1
+
 		case " ": // space
 			undo.Snapshot(e)
 			// Place a space
@@ -1171,6 +1173,9 @@ Set NO_COLOR=1 to disable colors.
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:1", "c:25": // ctrl-a, home (or ctrl-y for scrolling up in the st terminal)
+
+			// Do not reset cut/copy/paste status
+
 			// First check if we just moved to this line with the arrow keys
 			justMovedUpOrDown := previousKey == "↓" || previousKey == "↑"
 			// If at an empty line, go up one line
@@ -1193,6 +1198,9 @@ Set NO_COLOR=1 to disable colors.
 			e.redrawCursor = true
 			e.SaveX(true)
 		case "c:5": // ctrl-e, end
+
+			// Do not reset cut/copy/paste status
+
 			// First check if we just moved to this line with the arrow keys
 			justMovedUpOrDown := previousKey == "↓" || previousKey == "↑"
 			if e.AtEndOfDocument() {
@@ -1440,6 +1448,9 @@ Set NO_COLOR=1 to disable colors.
 			// Forget the cut and copy line state
 			lastCutY = -1
 			lastCopyY = -1
+
+			// Redraw after pasting
+			e.redraw = true
 
 			if lastPasteY != y { // Single line paste
 				lastPasteY = y

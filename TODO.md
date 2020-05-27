@@ -2,7 +2,7 @@
 
 ## Bug fixes
 
-- [ ] Rewrite `insertRune`.
+- [ ] Rewrite `insertRune` and the functionality for when pressing `return`, with regards to word wrap.
 - [ ] Paste at the end of a line may fail.
 - [ ] Always catch the ctrl-c signal.
 - [ ] Fix markdown syntax highlighting refresh when entering checkboxes.

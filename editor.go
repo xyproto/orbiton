@@ -531,7 +531,7 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 	}
 
 	// Trailing spaces may be trimmed, so move to the end, if needed
-	if e.AfterLineScreenContents() {
+	if e.AfterEndOfLine() {
 		e.End(c)
 		e.redraw = true
 	}
@@ -814,6 +814,10 @@ func (e *Editor) WrapAllLinesAt(n, maxOvershoot int) bool {
 	// This is not even called when the problematic insert behavior occurs
 
 	wrapped := false
+	insertedLines := 0
+
+	y := e.DataY()
+
 	for i := 0; i < e.Len(); i++ {
 		if e.WithinLimit(LineIndex(i)) {
 			continue
@@ -824,23 +828,36 @@ func (e *Editor) WrapAllLinesAt(n, maxOvershoot int) bool {
 
 		if len(first) > 0 && len(second) > 0 {
 
-			//if e.EOF {
-			//	e.InsertLineBelowAt(LineIndex(i))
-			//}
 			e.lines[i] = first
 			if spaceBetween {
 				second = append(second, ' ')
 			}
 			e.lines[i+1] = append(second, e.lines[i+1]...)
+			e.InsertLineBelowAt(LineIndex(i + 1))
+
+			// This isn't perfect, but it helps move the cursor somewhere in
+			// the vicinity of where the line was before word wrapping.
+			// TODO: Make the cursor placement exact.
+			if LineIndex(i) < y {
+				insertedLines++
+			}
 
 			e.changed = true
-
-			// Move the cursor as well, so that it is at the same line as before the word wrap
-			if LineIndex(i) < e.DataY() {
-				e.pos.sy++
-			}
 		}
 	}
+
+	// Move the cursor as well, after wrapping
+	if insertedLines > 0 {
+		e.pos.sy += insertedLines
+		if e.pos.sy < 0 {
+			e.pos.sy = 0
+		} else if e.pos.sy >= len(e.lines) {
+			e.pos.sy = len(e.lines) - 1
+		}
+		e.redraw = true
+		e.redrawCursor = true
+	}
+
 	return wrapped
 }
 
@@ -1723,8 +1740,11 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar) *vt100.Canv
 	vt100.Init()
 	newC := vt100.NewCanvas()
 	newC.ShowCursor()
-	if int(newC.Width()) < e.wordWrapAt {
-		e.wordWrapAt = int(newC.Width())
+	w := int(newC.Width())
+	if w < e.wordWrapAt {
+		e.wordWrapAt = w
+	} else if e.wordWrapAt < 80 && w >= 80 {
+		e.wordWrapAt = w
 	}
 	e.pos = savePos
 	e.redraw = true
