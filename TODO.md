@@ -1,12 +1,7 @@
 # TODO
 
-## Bug fixes
-
-- [ ] Always catch the ctrl-c signal.
-
 ## Features I see myself using straight away
 
-- [ ] New menu command: "insert file".
 - [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.
 - [ ] File locking.
 - [ ] Spellcheck all comments that are in English. Highlight misspelled words. Make it possible to add/ignore words.
@@ -20,13 +15,14 @@
 
 ## Low priority bug fixes
 
+- [ ] Rewrite `insertRune`. Improve word-wrap related functionality.
 - [ ] Ignore multiline comments within multiline comments.
 - [ ] Fix markdown syntax highlighting refresh when entering checkboxes.
-- [ ] Rewrite `insertRune`. Improve word-wrap related functionality.
 - [ ] Also enable rainbow parenthesis for lines that ends with a single-line comment.
 
 ## Features in general
 
+- [ ] Insert a custom file from the command menu.
 - [ ] Add one or more of these commands: regex search,
       go to definition, rename symbol, find references and disassembly.
 - [ ] Make it easy to make recordings of the editing process.
