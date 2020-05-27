@@ -54,6 +54,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			0: "Save and quit",
 			1: "Sort the list of strings on the current line",
 			2: syntaxToggleText,
+			3: "Insert \"insert.file\" at the current line",
 		}
 		// These numbers must correspond with actionTitles!
 		// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file.
@@ -65,16 +66,21 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			},
 			1: func() { // sort strings on the current line
 				undo.Snapshot(e)
-				err := e.SortStrings(c, status)
-				if err != nil {
+				if err := e.SortStrings(c, status); err != nil {
 					status.Clear(c)
 					status.SetErrorMessage(err.Error())
 					status.Show(c, e)
-					//return // from anonymous function
 				}
 			},
 			2: func() { // toggle syntax highlighting
 				e.ToggleSyntaxHighlight()
+			},
+			3: func() { // insert file
+				if err := e.InsertFile(c, "insert.file"); err != nil {
+					status.Clear(c)
+					status.SetErrorMessage(err.Error())
+					status.Show(c, e)
+				}
 			},
 		}
 		extraDashes = false
