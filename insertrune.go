@@ -23,7 +23,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		r = ' '
 	}
 
-	// --- Repaint, afterwards ---
+	// --- Repaint afterwards ---
 
 	e.changed = true
 	e.redrawCursor = true
@@ -59,15 +59,42 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 
 	switch {
 	case !EOL:
-		// The line is full. Move everything one line down and continue writing.
-		right := e.lines[y][x:]
-		e.lines[y] = e.lines[y][:x]
-		e.TrimRight(LineIndex(y))
-		e.insertBelow(y, r)
-		e.lines[y+1] = append([]rune{r}, right...)
-		// Go to the len(lastWord)-1 of the next line
-		e.GoTo(LineIndex(y+1), c, nil)
-		e.pos.sx = 0
+		// The line is full.
+		e.Insert(r)
+		e.pos.offsetX++
+
+		// TODO: Word wrap
+
+		/*
+			// Check if at least one line is longer than the word wrap limit first
+			// word wrap at the current width - 5, with an allowed overshoot of 5 runes
+			if e.WrapAllLinesAt(e.wordWrapAt-5, 5) {
+				e.redraw = true
+				e.redrawCursor = true
+			}
+		*/
+
+		// Word wrap the rest of the file
+		/*for y2 := y; y2 < len(e.lines); y2++ {
+			//if shortWord {
+			//	lastPos := len(e.lines[y2])-len(lastWord)
+			//	if lastPos > 0 {
+			//		e.lines[y2] = e.lines[y2][:lastPos]
+			//		e.insertStringBelow(y2, string(lastWord))
+			//	}
+			//} else {
+			var lastPart []rune
+			if len(e.lines[y2]) > 10 {
+				lastPart = e.lines[y2][len(e.lines[y2])-10:]
+				e.lines[y2] = e.lines[y2][:len(e.lines[y2])-len(lastPart)]
+				e.insertStringBelow(y2, string(lastPart))
+			} else {
+				break
+			}
+			//}
+			lastWord = []rune(strings.TrimSpace(e.LastWord(y2)))
+			shortWord = (len(string(lastWord)) < 10) && (len(string(lastWord)) < e.wordWrapAt)
+		}*/
 	case !isSpace && !atSpace && EOL:
 		// Pressing letters, producing a short word that overflows
 		lastWord = append(lastWord, r)
@@ -161,6 +188,8 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 		e.pos.sx = len(lastWord) - 1
 	default:
 		e.Insert(r)
+		e.pos.offsetX++
 	}
 	e.TrimRight(LineIndex(y))
+	e.HorizontalScrollIfNeeded(c)
 }
