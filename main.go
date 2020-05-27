@@ -54,7 +54,6 @@ func main() {
 		warningMessage string // used when loading or creating a file, for the initial status message
 
 		previousKey string // keep track of the previous key press
-		dropO       bool   // used for vi-compatible "O"-mode at start
 
 		lastCommandMenuIndex int // for the command menu
 	)
@@ -166,9 +165,6 @@ Set NO_COLOR=1 to disable colors.
 	c := vt100.NewCanvas()
 	c.ShowCursor()
 
-	// Prepare to use the text edit mode, as opposed to "ASCII draw mode"
-	textEditor := true
-
 	// How many lines to scroll at the time when using `ctrl-n` and `ctrl-p`
 	scrollSpeed := 10
 
@@ -176,7 +172,6 @@ Set NO_COLOR=1 to disable colors.
 	e := NewEditor(spacesPerTab,
 		syntaxHighlight,
 		rainbowParenthesis,
-		textEditor,
 		scrollSpeed,
 		defaultEditorForeground,
 		defaultEditorBackground,
@@ -299,7 +294,7 @@ Set NO_COLOR=1 to disable colors.
 		}
 
 		// Test save, to check if the file can be created and written, or not
-		if err := e.Save(); err != nil {
+		if err := e.Save(c); err != nil {
 			// Check if the new file can be saved before the user starts working on the file.
 			quitError(tty, err)
 		} else {
@@ -523,7 +518,7 @@ Set NO_COLOR=1 to disable colors.
 							// TODO: Implement e.SaveAs
 							oldFilename := e.filename
 							e.filename = tempFilename
-							err := e.Save()
+							err := e.Save(c)
 							e.filename = oldFilename
 
 							if err == nil {
@@ -604,7 +599,7 @@ Set NO_COLOR=1 to disable colors.
 
 			// Save the current file, but only if it has changed
 			if e.changed {
-				if err := e.Save(); err != nil {
+				if err := e.Save(c); err != nil {
 					status.ClearAll(c)
 					status.SetErrorMessage(err.Error())
 					status.Show(c, e)
@@ -697,10 +692,6 @@ Set NO_COLOR=1 to disable colors.
 				status.ClearAll(c)
 			}
 		case "←": // left arrow
-			if e.DrawMode() {
-				e.pos.Left()
-				break
-			}
 			if e.pos.offsetX > 0 && e.pos.sx == 0 {
 				e.pos.offsetX--
 				e.redraw = true
@@ -739,11 +730,6 @@ Set NO_COLOR=1 to disable colors.
 			e.SaveX(true)
 			e.redrawCursor = true
 		case "→": // right arrow
-			if e.DrawMode() {
-				// Draw mode
-				e.pos.Right(c)
-				break
-			}
 			if e.DataY() < LineIndex(e.Len()) {
 				e.Next(c)
 			}
@@ -764,71 +750,62 @@ Set NO_COLOR=1 to disable colors.
 			e.redrawCursor = true
 		case "↑": // up arrow
 			// Move the screen cursor
-			if !e.DrawMode() {
 
-				// TODO: Stay at the same X offset when moving up in the document?
-				if e.pos.offsetX > 0 {
-					e.pos.offsetX = 0
-				}
+			// TODO: Stay at the same X offset when moving up in the document?
+			if e.pos.offsetX > 0 {
+				e.pos.offsetX = 0
+			}
 
-				if e.DataY() > 0 {
-					// Move the position up in the current screen
-					if e.UpEnd(c) != nil {
-						// If below the top, scroll the contents up
-						if e.DataY() > 0 {
-							e.redraw = e.ScrollUp(c, status, 1)
-							e.pos.Down(c)
-							e.UpEnd(c)
-						}
-					}
-					// If the cursor is after the length of the current line, move it to the end of the current line
-					if e.AfterLineScreenContents() {
-						e.End(c)
+			if e.DataY() > 0 {
+				// Move the position up in the current screen
+				if e.UpEnd(c) != nil {
+					// If below the top, scroll the contents up
+					if e.DataY() > 0 {
+						e.redraw = e.ScrollUp(c, status, 1)
+						e.pos.Down(c)
+						e.UpEnd(c)
 					}
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
 				if e.AfterLineScreenContents() {
 					e.End(c)
 				}
-			} else {
-				e.pos.Up()
+			}
+			// If the cursor is after the length of the current line, move it to the end of the current line
+			if e.AfterLineScreenContents() {
+				e.End(c)
 			}
 			e.redrawCursor = true
 		case "↓": // down arrow
 
-			if !e.DrawMode() {
+			// TODO: Stay at the same X offset when moving down in the document?
+			if e.pos.offsetX > 0 {
+				e.pos.offsetX = 0
+			}
 
-				// TODO: Stay at the same X offset when moving down in the document?
-				if e.pos.offsetX > 0 {
-					e.pos.offsetX = 0
-				}
-
-				if e.DataY() < LineIndex(e.Len()) {
-					// Move the position down in the current screen
-					if e.DownEnd(c) != nil {
-						// If at the bottom, don't move down, but scroll the contents
-						// Output a helpful message
-						if !e.AfterEndOfDocument() {
-							e.redraw = e.ScrollDown(c, status, 1)
-							e.pos.Up()
-							e.DownEnd(c)
-						}
-					}
-					// If the cursor is after the length of the current line, move it to the end of the current line
-					if e.AfterLineScreenContents() {
-						e.End(c)
-						// Then move one step to the left
-						if strings.TrimSpace(e.CurrentLine()) != "" {
-							e.Prev(c)
-						}
+			if e.DataY() < LineIndex(e.Len()) {
+				// Move the position down in the current screen
+				if e.DownEnd(c) != nil {
+					// If at the bottom, don't move down, but scroll the contents
+					// Output a helpful message
+					if !e.AfterEndOfDocument() {
+						e.redraw = e.ScrollDown(c, status, 1)
+						e.pos.Up()
+						e.DownEnd(c)
 					}
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
 				if e.AfterLineScreenContents() {
 					e.End(c)
+					// Then move one step to the left
+					if strings.TrimSpace(e.CurrentLine()) != "" {
+						e.Prev(c)
+					}
 				}
-			} else {
-				e.pos.Down(c)
+			}
+			// If the cursor is after the length of the current line, move it to the end of the current line
+			if e.AfterLineScreenContents() {
+				e.End(c)
 			}
 			e.redrawCursor = true
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
@@ -856,7 +833,7 @@ Set NO_COLOR=1 to disable colors.
 					status.Show(c, e)
 				}
 				e.redrawCursor = true
-				if !e.DrawMode() && e.AfterLineScreenContents() {
+				if e.AfterLineScreenContents() {
 					e.End(c)
 				}
 			}
@@ -878,7 +855,7 @@ Set NO_COLOR=1 to disable colors.
 			} else {
 				e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
 				e.redrawCursor = true
-				if !e.DrawMode() && e.AfterLineScreenContents() {
+				if e.AfterLineScreenContents() {
 					e.End(c)
 				}
 			}
@@ -912,19 +889,11 @@ Set NO_COLOR=1 to disable colors.
 		case " ": // space
 			undo.Snapshot(e)
 			// Place a space
-			if !e.DrawMode() {
-				e.InsertRune(c, ' ')
-				e.redraw = true
-			} else {
-				e.SetRune(' ')
-			}
+			e.InsertRune(c, ' ')
+			e.redraw = true
 			e.WriteRune(c)
-			if e.DrawMode() {
-				e.redraw = true
-			} else {
-				// Move to the next position
-				e.Next(c)
-			}
+			// Move to the next position
+			e.Next(c)
 		case "c:13": // return
 
 			// Modify the paste double-keypress detection to allow for a manual return before pasting the rest
@@ -933,95 +902,89 @@ Set NO_COLOR=1 to disable colors.
 			}
 
 			undo.Snapshot(e)
-			if !e.DrawMode() {
-				e.TrimRight(e.DataY())
-				lineContents := e.CurrentLine()
-				trimmedLine := strings.TrimSpace(lineContents)
-				if e.pos.AtStartOfLine() {
-					// Insert a new line a the current y position, then shift the rest down.
-					e.InsertLineAbove()
-					// Also move the cursor to the start, since it's now on a new blank line.
-					e.pos.Down(c)
-					e.Home()
-				} else if e.AtOrBeforeStartOfTextLine() {
-					x := e.pos.ScreenX()
-					// Insert a new line a the current y position, then shift the rest down.
-					e.InsertLineAbove()
-					// Also move the cursor to the start, since it's now on a new blank line.
-					e.pos.Down(c)
-					e.pos.SetX(c, x)
-				} else if e.AtOrAfterEndOfLine() && e.AtLastLineOfDocument() {
 
-					// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
-					const alsoDedent = false
+			e.TrimRight(e.DataY())
+			lineContents := e.CurrentLine()
+			trimmedLine := strings.TrimSpace(lineContents)
+			if e.pos.AtStartOfLine() {
+				// Insert a new line a the current y position, then shift the rest down.
+				e.InsertLineAbove()
+				// Also move the cursor to the start, since it's now on a new blank line.
+				e.pos.Down(c)
+				e.Home()
+			} else if e.AtOrBeforeStartOfTextLine() {
+				x := e.pos.ScreenX()
+				// Insert a new line a the current y position, then shift the rest down.
+				e.InsertLineAbove()
+				// Also move the cursor to the start, since it's now on a new blank line.
+				e.pos.Down(c)
+				e.pos.SetX(c, x)
+			} else if e.AtOrAfterEndOfLine() && e.AtLastLineOfDocument() {
+
+				// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
+				const alsoDedent = false
+				leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
+
+				e.InsertLineBelow()
+				h := int(c.Height())
+				if e.pos.sy >= (h - 1) {
+					e.redraw = e.ScrollDown(c, status, 1)
+					e.redrawCursor = true
+				}
+				e.pos.Down(c)
+				e.Home()
+
+				// Insert the same leading whitespace for the new line, while moving to the right
+				e.InsertString(c, leadingWhitespace)
+
+			} else if e.AfterEndOfLine() {
+
+				// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
+				const alsoDedent = false
+				leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
+
+				e.InsertLineBelow()
+				e.Down(c, status)
+				e.Home()
+
+				// Insert the same leading whitespace for the new line, while moving to the right
+				e.InsertString(c, leadingWhitespace)
+			} else {
+				const alsoDedent = true
+
+				// Split the current line in two
+				if !e.SplitLine() {
+
+					// Grab the leading whitespace from the current line, and indent or dedent depending on the end of trimmedLine
 					leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
 
-					e.InsertLineBelow()
-					h := int(c.Height())
-					if e.pos.sy >= (h - 1) {
-						e.redraw = e.ScrollDown(c, status, 1)
-						e.redrawCursor = true
-					}
-					e.pos.Down(c)
-					e.Home()
-
-					// Insert the same leading whitespace for the new line, while moving to the right
-					e.InsertString(c, leadingWhitespace)
-
-				} else if e.AfterEndOfLine() {
-
-					// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
-					const alsoDedent = false
-					leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
-
+					// Insert a line below, then move down and to the start of it
 					e.InsertLineBelow()
 					e.Down(c, status)
 					e.Home()
 
 					// Insert the same leading whitespace for the new line, while moving to the right
 					e.InsertString(c, leadingWhitespace)
+
 				} else {
-					const alsoDedent = true
+					leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
 
-					// Split the current line in two
-					if !e.SplitLine() {
+					e.Down(c, status)
+					e.Home()
 
-						// Grab the leading whitespace from the current line, and indent or dedent depending on the end of trimmedLine
-						leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
-
-						// Insert a line below, then move down and to the start of it
-						e.InsertLineBelow()
-						e.Down(c, status)
-						e.Home()
-
-						// Insert the same leading whitespace for the new line, while moving to the right
-						e.InsertString(c, leadingWhitespace)
-
-					} else {
-						leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
-
-						e.Down(c, status)
-						e.Home()
-
-						// Insert the same leading whitespace for the new line, while moving to the right
-						e.InsertString(c, leadingWhitespace)
-					}
+					// Insert the same leading whitespace for the new line, while moving to the right
+					e.InsertString(c, leadingWhitespace)
 				}
-			} else {
-				if e.AtLastLineOfDocument() {
-					e.CreateLineIfMissing(e.DataY() + 1)
-				}
-				e.pos.Down(c)
 			}
 			e.redraw = true
 		case "c:8", "c:127": // ctrl-h or backspace
 			undo.Snapshot(e)
-			if !e.DrawMode() && e.EmptyLine() {
+			if e.EmptyLine() {
 				e.DeleteLine(e.DataY())
 				e.pos.Up()
 				e.TrimRight(e.DataY())
 				e.End(c)
-			} else if !e.DrawMode() && e.pos.AtStartOfLine() {
+			} else if e.pos.AtStartOfLine() {
 				if e.DataY() > 0 {
 					e.pos.Up()
 					e.End(c)
@@ -1044,7 +1007,7 @@ Set NO_COLOR=1 to disable colors.
 				// Type a blank
 				e.SetRune(' ')
 				e.WriteRune(c)
-				if !e.DrawMode() && !e.AtOrAfterEndOfLine() {
+				if !e.AtOrAfterEndOfLine() {
 					// Delete the blank
 					e.Delete()
 				}
@@ -1052,10 +1015,6 @@ Set NO_COLOR=1 to disable colors.
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:9": // tab
-			if e.DrawMode() {
-				// Do nothing
-				break
-			}
 			y := int(e.DataY())
 			r := e.Rune()
 			leftRune := e.LeftRune()
@@ -1261,11 +1220,9 @@ Set NO_COLOR=1 to disable colors.
 				e.redraw = true
 			}
 			e.redrawCursor = true
-		case "c:30": // ctrl-~, toggle draw mode
-			// TODO: Call a toggle method directly, not via a string?
-			e.UserCommand(c, status, "toggledrawmode")
+		//case "c:30": // ctrl-~
 		case "c:19": // ctrl-s, save
-			// TODO: Call a Save method directly, not via a string?
+			// TODO: Call a Save method directly, not via a string
 			e.UserCommand(c, status, "save")
 		case "c:21", "c:26": // ctrl-u or ctrl-z, undo (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state
@@ -1394,7 +1351,7 @@ Set NO_COLOR=1 to disable colors.
 
 			undo.Snapshot(e)
 			e.DeleteRestOfLine()
-			if !e.DrawMode() && e.EmptyRightTrimmedLine() {
+			if e.EmptyRightTrimmedLine() {
 				// Deleting the rest of the line cleared this line,
 				// so just remove it.
 				e.DeleteLine(e.DataY())
@@ -1606,46 +1563,12 @@ Set NO_COLOR=1 to disable colors.
 						break
 					}
 				}
-				if firstLetterSinceStart == "O" {
-					// If the first typed letter since starting this editor was 'O', and this is also uppercase,
-					// then disregard the initial 'O'. This is to help vim-users.
-					dropO = true
-					// Set the first letter since start to something that will not trigger this branch any more.
-					firstLetterSinceStart = "x"
-					// ignore the O
-					break
-				}
-				// If the previous letter was an "O" and this letter is lowercase, invoke vi-compatibility for a short moment
-				if dropO {
-					// This is a one-time operation
-					dropO = false
-					// Lowercase? Type the O, since it was meant to be typed.
-					if len([]rune(key)) > 0 && unicode.IsLower([]rune(key)[0]) {
-						e.Prev(c)
-						e.SetRune('O')
-						e.WriteRune(c)
-						e.Next(c)
-					} else if !e.DrawMode() {
-						// Was this a special case of "OK" as the first thing written?
-						if key == "K" {
-							e.InsertRune(c, 'O')
-							e.WriteRune(c)
-							e.Next(c)
-						}
-					}
-				}
 				// Type the letter that was pressed
 				if len([]rune(key)) > 0 {
-					if !e.DrawMode() {
-						// Insert a letter. This is what normally happens.
-						e.InsertRune(c, []rune(key)[0])
-						e.WriteRune(c)
-						e.Next(c)
-					} else {
-						// Replace this letter.
-						e.SetRune([]rune(key)[0])
-						e.WriteRune(c)
-					}
+					// Insert a letter. This is what normally happens.
+					e.InsertRune(c, []rune(key)[0])
+					e.WriteRune(c)
+					e.Next(c)
 					e.redraw = true
 				}
 			} else if len([]rune(key)) > 0 && unicode.IsGraphic([]rune(key)[0]) { // any other key that can be drawn
@@ -1673,13 +1596,9 @@ Set NO_COLOR=1 to disable colors.
 					}
 				}
 
-				if !e.DrawMode() {
-					e.InsertRune(c, []rune(key)[0])
-				} else {
-					e.SetRune([]rune(key)[0])
-				}
+				e.InsertRune(c, []rune(key)[0])
 				e.WriteRune(c)
-				if len(string(r)) > 0 && !e.DrawMode() {
+				if len(string(r)) > 0 {
 					// Move to the next position
 					e.Next(c)
 				}
