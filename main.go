@@ -1466,9 +1466,12 @@ Set NO_COLOR=1 to disable colors.
 						status.SetMessage("Copied 1 line (clipboard)")
 					}
 					status.Show(c, e)
+					// Go to the end of the line, for easy line duplication with ctrl-c, enter, ctrl-v,
+					// but only if the copied line is shorter than the terminal width.
+					if uint(len(trimmed)) < c.Width() {
+						e.End(c)
+					}
 				}
-				// Go to the end of the line, for easy line duplication with ctrl-c, enter, ctrl-v
-				e.End(c)
 			} else { // Multi line copy
 				// Pressed multiple times for this line number, copy the block of text starting from this line
 				s := e.Block(y)
