@@ -641,7 +641,7 @@ Set NO_COLOR=1 to disable colors.
 				// Everything worked out
 				if statusMessage != "" {
 					// Got a status message (this may not be the case for build/export processes running in the background)
-					status.Clear(c)
+					// NOTE: Do not clear the status message first here!
 					status.SetMessage(statusMessage)
 					status.ShowNoTimeout(c, e)
 				}
