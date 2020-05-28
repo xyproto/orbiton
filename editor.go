@@ -1161,6 +1161,10 @@ func (e *Editor) InsertStringBelow(y int, s string) {
 // This will also call e.WriteRune and e.Next, as needed.
 func (e *Editor) InsertString(c *vt100.Canvas, s string) {
 	for _, r := range s {
+		if r == '\n' {
+			e.InsertLineBelow()
+			continue
+		}
 		e.InsertRune(c, r)
 		e.WriteRune(c)
 		e.Next(c)

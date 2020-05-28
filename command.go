@@ -42,7 +42,7 @@ func (e *Editor) UserCommand(c *vt100.Canvas, status *StatusBar, action string) 
 // Also returns the selected menu index (can be -1).
 func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, undo *Undo, lastMenuIndex int) int {
 
-	const insertFilename = "insert.txt"
+	const insertFilename = "include.txt"
 
 	syntaxToggleText := "Disable syntax highlighting"
 	if !e.syntaxHighlight {
