@@ -3,10 +3,8 @@ package main
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/xyproto/vt100"
-	"github.com/xyproto/guessica"
 )
 
 // UserCommand performs an editor command, given an action string, like "save"
@@ -114,34 +112,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 				e.DrawLines(c, true, false)
 				e.redraw = true
 				e.redrawCursor = true
-			}
-		}
-	}
-
-	// Add an action for updating the source= line if this is a PKGBUILD file
-	if filepath.Base(e.filename) == "PKGBUILD" {
-		actionTitles[len(actionTitles)] = "Update PKGBUILD"
-		actionFunctions[len(actionFunctions)] = func() { // update the source= line
-
-			status.SetMessage("Finding new version and commit hash...")
-			status.ShowNoTimeout(c, e)
-
-			undo.Snapshot(e)
-			pkgverString, sourceString, err := guessica.GuessSourceString(e.String())
-			if err != nil {
-				status.Clear(c)
-				status.SetErrorMessage(err.Error())
-				status.Show(c, e)
-				return // from anonymous function
-			}
-
-			for i, runeLine := range e.lines {
-				line := string(runeLine)
-				if strings.HasPrefix(line, "source=") {
-					e.lines[i] = []rune(sourceString)
-				} else if strings.HasPrefix(line, "pkgver=") {
-					e.lines[i] = []rune(pkgverString)
-				}
 			}
 		}
 	}

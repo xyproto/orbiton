@@ -503,6 +503,7 @@ Set NO_COLOR=1 to disable colors.
 				exec.Command("brittany", "--write-mode=inplace"):                                  {".hs"},
 				exec.Command("autopep8", "-i", "--max-line-length", "120"):                        {".py"},
 				exec.Command("ocamlformat"):                                                       {".ml"},
+				exec.Command("guessica"):                                                          {"PKGBUILD"},
 			}
 			formatted := false
 		OUT:

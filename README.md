@@ -123,10 +123,11 @@ CXX can be downloaded here: [GitHub project page for CXX](https://github.com/xyp
 
 | File type | File extensions  | Build or export command                                           |
 |-----------|------------------|-------------------------------------------------------------------|
-| PKGBUILD  |                  | `makepkg`                                                         |
 | AsciiDoc  | `.adoc`          | `asciidoctor -b manpage` (writes to `out.1`)                      |
 | scdoc     | `.scd`, `.scdoc` | `scdoc` (writes to `out.1`)                                       |
 | Markdown  | `.md`            | `pandoc -N --toc -V geometry:a4paper` (writes to `$filename.pdf`) |
+
+If [`guessica`](https://github.com/xyproto/guessica) is installed, `PKGBUILD` files will be updated at the press of `ctrl-w`. The `guessica` utility tries to guess the latest project version, tag and git commit hash for a `PKGBUILD` file and may or may not succeed.
 
 ## Manual installation
 

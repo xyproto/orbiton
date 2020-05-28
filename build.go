@@ -185,7 +185,6 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			exec.Command("v", filename):                                     {".v"},
 			exec.Command("cargo", "build"):                                  {".rs"},
 			exec.Command("ghc", "-dynamic", filename):                       {".hs"},
-			exec.Command("makepkg"):                                         {"PKGBUILD"},
 			exec.Command("python", "-m", "py_compile", filename):            {".py"}, // Compile to .pyc
 			exec.Command("ocamlopt", "-o", defaultExecutableName, filename): {".ml"}, // OCaml
 		}
