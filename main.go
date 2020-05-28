@@ -1237,17 +1237,33 @@ Set NO_COLOR=1 to disable colors.
 		case "c:30": // ctrl-~, jump to matching parenthesis or curly bracket
 			r := e.Rune()
 
+			if e.AfterEndOfLine() {
+				e.Prev(c)
+				r = e.Rune()
+			}
+
 			// Find which opening and closing parenthesis/curly brackets to look for
-			opening := '('
-			closing := ')'
-			if r == '{' || r == '}' {
+			var opening, closing rune
+			switch r {
+			case '(', ')':
+				opening = '('
+				closing = ')'
+			case '{', '}':
 				opening = '{'
 				closing = '}'
+			case '[', ']':
+				opening = '['
+				closing = ']'
+			default:
+				status.Clear(c)
+				status.SetMessage("No matching (, ), [, ], { or }")
+				status.Show(c, e)
+				break
 			}
 
 			// Search either forwards or backwards to find a matching rune
 			switch r {
-			case '(': //, '{':
+			case '(', '{', '[':
 				parcount := 0
 				for !e.AtOrAfterEndOfDocument() {
 					if r := e.Rune(); r == closing {
@@ -1262,45 +1278,23 @@ Set NO_COLOR=1 to disable colors.
 					}
 					e.Next(c)
 				}
-			case ')': //, '}':
-				parcount := 1
-				x := e.pos.sx
-				y := e.pos.sy
-				for {
-					x--
-					if x < 0 {
-						y--
-						if y < 0 {
+			case ')', '}', ']':
+				parcount := 0
+				for !e.AtStartOfDocument() {
+					if r := e.Rune(); r == opening {
+						if parcount == 1 {
+							// FOUND, STOP
 							break
+						} else {
+							parcount--
 						}
-						x = len(e.lines[y]) - 1
-						if x < 0 {
-							continue
-						}
-						if y < 0 {
-							// no match
-							break
-						}
-					}
-					if y < 0 || y >= len(e.lines) {
-						break
-					}
-					if x < 0 || x >= len(e.lines[y]) {
-						continue
-					}
-					if r := e.lines[y][x]; r == opening {
-						parcount--
 					} else if r == closing {
 						parcount++
 					}
-					if parcount == 0 {
-						//countTabs := strings.Count(string(e.lines[y][:x+2]), "\t")
-						e.pos.sx = x //+ countTabs * (spacesPerTab-1)
-						e.pos.sy = y
-						break
-					}
+					e.Prev(c)
 				}
 			}
+
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:19": // ctrl-s, save
