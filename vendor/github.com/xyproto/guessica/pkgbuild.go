@@ -1,9 +1,9 @@
-package main
+package guessica
 
-// This file is mainly extracted from the "getver" project, for automatically finding the newest
+// This file is extracted from the "getver" project, for automatically finding the newest
 // version number for a given PKGBUILD file, by examining the corresponding web page.
 // It has also been modified to fetch the latest git commit for the latest git version tag.
-// TODO: Check if git can retrieve the newest tag, and use that.
+// This code is not particularly pretty and probably needs a good refactoring or two.
 
 import (
 	"errors"

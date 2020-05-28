@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/xyproto/vt100"
+	"github.com/xyproto/guessica"
 )
 
 // UserCommand performs an editor command, given an action string, like "save"
@@ -126,7 +127,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			status.ShowNoTimeout(c, e)
 
 			undo.Snapshot(e)
-			pkgverString, sourceString, err := GuessSourceString(e.String())
+			pkgverString, sourceString, err := guessica.GuessSourceString(e.String())
 			if err != nil {
 				status.Clear(c)
 				status.SetErrorMessage(err.Error())
