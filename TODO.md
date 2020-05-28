@@ -27,6 +27,7 @@
 
 ## Features in general
 
+- [ ] Introduce a type for screen cordinates, a type for screen coordinates + scroll offset, and another type for data coordinates.
 - [ ] Insert a custom file from the command menu.
 - [ ] Add one or more of these commands: regex search,
       go to definition, rename symbol, find references and disassembly.
