@@ -208,6 +208,7 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap, forward
 	if foundX != -1 {
 		tabs := strings.Count(e.Line(foundY), "\t")
 		e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
+		e.HorizontalScrollIfNeeded(c)
 	}
 
 	// Center and prepare to redraw
