@@ -986,7 +986,15 @@ Set NO_COLOR=1 to disable colors.
 			}
 			e.redraw = true
 		case "c:8", "c:127": // ctrl-h or backspace
+			// Just clear the search term, if there is an active search
+			if len(e.SearchTerm()) > 0 {
+				e.ClearSearchTerm()
+				e.redraw = true
+				e.redrawCursor = true
+				break
+			}
 			undo.Snapshot(e)
+			// Delete the character to the left
 			if e.EmptyLine() {
 				e.DeleteLine(e.DataY())
 				e.pos.Up()
