@@ -65,16 +65,16 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 				e.UserCommand(c, status, "save")
 				e.UserCommand(c, status, "quit")
 			},
-			1: func() { // sort strings on the current line
+			1: func() { // toggle syntax highlighting
+				e.ToggleSyntaxHighlight()
+			},
+			2: func() { // sort strings on the current line
 				undo.Snapshot(e)
 				if err := e.SortStrings(c, status); err != nil {
 					status.Clear(c)
 					status.SetErrorMessage(err.Error())
 					status.Show(c, e)
 				}
-			},
-			2: func() { // toggle syntax highlighting
-				e.ToggleSyntaxHighlight()
 			},
 			3: func() { // insert file
 				if err := e.InsertFile(c, insertFilename); err != nil {
