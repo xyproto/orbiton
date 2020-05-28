@@ -10,7 +10,7 @@ o*.p*
 test.*
 *.test
 *.fil
-*.txt
+insert.txt
 *.*.png
 .vagrant
 *.log
