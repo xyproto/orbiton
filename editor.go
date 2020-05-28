@@ -1163,6 +1163,7 @@ func (e *Editor) InsertString(c *vt100.Canvas, s string) {
 	for _, r := range s {
 		if r == '\n' {
 			e.InsertLineBelow()
+			e.Down(c, nil)
 			continue
 		}
 		e.InsertRune(c, r)
