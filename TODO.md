@@ -3,7 +3,7 @@
 ## Bug fixes
 
 - [ ] Rainbow parentheses for Clojure. Don't color parentheses in comments.
-- [ ] Jumping from `)` and backwards sometimes ends up in a weird place. Fix.
+- [ ] Search for strings in long lines, after the terminal width. (Then left arrow).
 
 ## Features I see myself using straight away
 
