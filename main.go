@@ -510,6 +510,12 @@ Set NO_COLOR=1 to disable colors.
 			for cmd, extensions := range format {
 				for _, ext := range extensions {
 					if strings.HasSuffix(e.filename, ext) {
+						if which(cmd.Path) == "" { // Does the formatting tool even exist?
+							status.ClearAll(c)
+							status.SetErrorMessage(cmd.Path + " is missing")
+							status.Show(c, e)
+							break OUT
+						}
 						// Use the temporary directory defined in TMPDIR, with fallback to /tmp
 						tempdir := os.Getenv("TMPDIR")
 						if tempdir == "" {
