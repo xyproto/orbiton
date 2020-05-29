@@ -516,6 +516,10 @@ Set NO_COLOR=1 to disable colors.
 							status.Show(c, e)
 							break OUT
 						}
+						utilityName := strings.Title(filepath.Base(cmd.Path))
+						status.Clear(c)
+						status.SetMessage("Calling " + utilityName)
+						status.Show(c, e)
 						// Use the temporary directory defined in TMPDIR, with fallback to /tmp
 						tempdir := os.Getenv("TMPDIR")
 						if tempdir == "" {
@@ -717,28 +721,6 @@ Set NO_COLOR=1 to disable colors.
 				e.End(c)
 				e.redraw = true
 			}
-
-			/*
-				if e.pos.sx == 0 && e.pos.offsetX > 0 {
-					// at left edge, but can scroll to the left
-					e.pos.offsetX--
-					e.redraw = true
-				} else if e.pos.sx == 0 {
-					// at left edge, can not scroll to the left
-					e.Up(c, status)
-					e.End(c)
-					e.redraw = true
-				} else {
-					// not at left edge, move to the left
-					//e.pos.sx--
-					e.Prev(c)
-					e.redraw = true
-					// and a safeguard
-					//if e.AfterLineScreenContents() {
-					//	e.End(c)
-					//}
-				}
-			*/
 			e.SaveX(true)
 			e.redrawCursor = true
 		case "→": // right arrow
