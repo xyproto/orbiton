@@ -1239,7 +1239,7 @@ Set NO_COLOR=1 to disable colors.
 			}
 
 			// Find which opening and closing parenthesis/curly brackets to look for
-			var opening, closing rune
+			opening, closing := rune(0), rune(0)
 			switch r {
 			case '(', ')':
 				opening = '('
@@ -1250,7 +1250,9 @@ Set NO_COLOR=1 to disable colors.
 			case '[', ']':
 				opening = '['
 				closing = ']'
-			default:
+			}
+
+			if opening == rune(0) {
 				status.Clear(c)
 				status.SetMessage("No matching (, ), [, ], { or }")
 				status.Show(c, e)
