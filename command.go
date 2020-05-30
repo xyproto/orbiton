@@ -56,7 +56,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			1: syntaxToggleText,
 			2: "Sort the list of strings on the current line",
 			3: "Insert \"" + insertFilename + "\" at the current line",
-			4: "Red/black theme (experimental)",
 		}
 		// These numbers must correspond with actionTitles!
 		// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file.
@@ -85,17 +84,21 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 					status.Show(c, e)
 				}
 			},
-			4: func() { // flame theme
-				e.setFlameTheme()
-				e.FullResetRedraw(c, status, true)
-			},
 		}
 		extraDashes = false
 	)
 
 	// Add the option to change the colors, for non-light themes (fg != black)
 	if !e.lightTheme { // Not a light theme
-		// TODO: Use a fixed order instead of a random order
+		// Add the "Red/Black text" menu item text and menu function
+		actionTitles[len(actionTitles)] = "Red/Black text"
+		actionFunctions[len(actionFunctions)] = func() {
+			e.setFlameTheme()
+			e.SetSyntaxHighlight(true)
+			e.FullResetRedraw(c, status, true)
+		}
+
+		// Add the Amber, Green and Blue theme options
 		colors := []vt100.AttributeColor{
 			vt100.Yellow,
 			vt100.LightGreen,
@@ -106,6 +109,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			"Green",
 			"Blue",
 		}
+
 		// Add menu items and menu functions for changing the text color
 		// while also turning off syntax highlighting.
 		for i, color := range colors {

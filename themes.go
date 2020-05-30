@@ -10,7 +10,7 @@ func (e *Editor) setLightTheme() {
 	e.lightTheme = true
 
 	e.fg = vt100.Black
-	e.bg = vt100.Gray
+	e.bg = vt100.White
 	e.searchFg = vt100.Red
 	e.gitColor = vt100.Blue
 	e.multiLineComment = vt100.Green
@@ -74,10 +74,10 @@ func (e *Editor) setFlameTheme() {
 	syntax.DefaultTextConfig.String = "white"
 	syntax.DefaultTextConfig.Keyword = "darkred"
 	syntax.DefaultTextConfig.Comment = "darkgray"
-	syntax.DefaultTextConfig.Type = "gray"
+	syntax.DefaultTextConfig.Type = "lightgray"
 	syntax.DefaultTextConfig.Literal = "darkred"
 	syntax.DefaultTextConfig.Punctuation = "white"
-	syntax.DefaultTextConfig.Plaintext = "gray"
+	syntax.DefaultTextConfig.Plaintext = "lightgray"
 	syntax.DefaultTextConfig.Tag = "darkred"
 	syntax.DefaultTextConfig.TextTag = "darkred"
 	syntax.DefaultTextConfig.TextAttrName = "darkred"
@@ -89,7 +89,7 @@ func (e *Editor) setFlameTheme() {
 	syntax.DefaultTextConfig.Class = "darkred"
 	syntax.DefaultTextConfig.Private = "white"
 	syntax.DefaultTextConfig.Protected = "white"
-	syntax.DefaultTextConfig.Public = "gray"
+	syntax.DefaultTextConfig.Public = "lightgray"
 	syntax.DefaultTextConfig.Whitespace = ""
 
 	// Markdown, switch light colors to darker ones
@@ -104,8 +104,8 @@ func (e *Editor) setFlameTheme() {
 	codeBlockColor = vt100.White
 
 	// Rainbow parentheses
-	rainbowParenColors = []vt100.AttributeColor{vt100.White, vt100.Red}
-	unmatchedParenColor = vt100.Gray
+	rainbowParenColors = []vt100.AttributeColor{vt100.LightBlue, vt100.Red, vt100.Gray}
+	unmatchedParenColor = vt100.White
 
 	// Command menu
 	menuTitleColor = vt100.Red
