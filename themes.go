@@ -64,16 +64,16 @@ func (e *Editor) setLightTheme() {
 func (e *Editor) setFlameTheme() {
 	e.lightTheme = false
 
-	e.fg = vt100.Default
-	e.bg = vt100.Default
+	e.fg = vt100.White
+	e.bg = vt100.Black
 	e.searchFg = vt100.Red
 	e.gitColor = vt100.Red
-	e.multiLineComment = vt100.Gray
+	e.multiLineComment = vt100.DarkGray
 	e.multiLineString = vt100.Red
 
 	syntax.DefaultTextConfig.String = "white"
 	syntax.DefaultTextConfig.Keyword = "darkred"
-	syntax.DefaultTextConfig.Comment = "gray"
+	syntax.DefaultTextConfig.Comment = "darkgray"
 	syntax.DefaultTextConfig.Type = "gray"
 	syntax.DefaultTextConfig.Literal = "darkred"
 	syntax.DefaultTextConfig.Punctuation = "white"
@@ -94,14 +94,14 @@ func (e *Editor) setFlameTheme() {
 
 	// Markdown, switch light colors to darker ones
 	headerTextColor = vt100.Red
-	textColor = vt100.Default
-	listTextColor = vt100.Default
+	textColor = vt100.LightGray
+	listTextColor = vt100.LightGray
 	imageColor = vt100.Red
 	boldColor = vt100.Red
 	xColor = vt100.Red
-	listCodeColor = vt100.Gray
-	codeColor = vt100.Gray
-	codeBlockColor = vt100.Gray
+	listCodeColor = vt100.White
+	codeColor = vt100.White
+	codeBlockColor = vt100.White
 
 	// Rainbow parentheses
 	rainbowParenColors = []vt100.AttributeColor{vt100.White, vt100.Red}
