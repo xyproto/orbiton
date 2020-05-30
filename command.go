@@ -91,7 +91,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 	// Add the option to change the colors, for non-light themes (fg != black)
 	if !e.lightTheme { // Not a light theme
 		// Add the "Red/Black text" menu item text and menu function
-		actionTitles[len(actionTitles)] = "Red/Black text"
+		actionTitles[len(actionTitles)] = "Red/black theme"
 		actionFunctions[len(actionFunctions)] = func() {
 			e.setFlameTheme()
 			e.SetSyntaxHighlight(true)
@@ -113,7 +113,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		// Add menu items and menu functions for changing the text color
 		// while also turning off syntax highlighting.
 		for i, color := range colors {
-			actionTitles[len(actionTitles)] = colorText[i] + " text"
+			actionTitles[len(actionTitles)] = colorText[i] + " theme"
 			color := color // per-loop copy of the color variable, since it's closed over
 			actionFunctions[len(actionFunctions)] = func() {
 				e.fg = color
