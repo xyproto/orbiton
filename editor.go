@@ -1402,8 +1402,59 @@ func (e *Editor) SaveX(regardless bool) {
 	}
 }
 
-// ScrollDown will scroll down the given amount of lines given in scrollSpeed
-func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int) bool {
+// ScrollDown will scroll down the given amount of lines given in scrollSpeed.
+func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int) {
+	h := int(c.H())
+	if scrollSpeed == 1 {
+
+		// Scroll down using a feature of the VT100 terminal, which is faster
+		vt100.Do("Scroll Down")
+
+		// Last y position in the canvas
+		canvasLastY := h - 1
+
+		// Retrieve the current editor scroll offset offset
+		mut.RLock()
+		offset := e.pos.offsetY
+		mut.RUnlock()
+
+		// Number of lines in the document
+		l := e.Len()
+
+		if offset >= l-canvasLastY {
+			// Update the final line
+			mut.RLock()
+			offsetY := e.pos.offsetY
+			e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
+			mut.RUnlock()
+
+			c.Draw()
+
+			e.redraw = false
+			e.redrawCursor = true
+
+			return
+		}
+
+		// Move the scroll offset by one
+		mut.Lock()
+		e.pos.offsetY++
+		mut.Unlock()
+
+		// Update the final line
+		mut.RLock()
+		offsetY := e.pos.offsetY
+		e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
+		mut.RUnlock()
+
+		c.Draw()
+
+		e.redraw = false
+		e.redrawCursor = true
+
+		return
+	}
+
 	// Find out if we can scroll scrollSpeed, or less
 	canScroll := scrollSpeed
 
@@ -1418,27 +1469,40 @@ func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int)
 	// Number of lines in the document
 	l := e.Len()
 
-	if offset >= e.Len()-canvasLastY {
-		c.Draw()
-		// Don't redraw
-		return false
-	}
+	if offset >= l-canvasLastY {
 
-	status.Clear(c)
+		// Update the final line
+		mut.RLock()
+		offsetY := e.pos.offsetY
+		e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
+		mut.RUnlock()
+
+		// Prepare to redraw
+		e.redraw = true
+		e.redrawCursor = true
+
+		return
+	}
 
 	if (offset + canScroll) >= (l - canvasLastY) {
 		// Almost at the bottom, we can scroll the remaining lines
 		canScroll = (l - canvasLastY) - offset
 	}
 
+	// Update the final line
+	mut.RLock()
+	offsetY := e.pos.offsetY
+	e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
+	mut.RUnlock()
+
 	// Move the scroll offset
 	mut.Lock()
-	e.pos.offsetX = 0
 	e.pos.offsetY += canScroll
 	mut.Unlock()
 
 	// Prepare to redraw
-	return true
+	e.redraw = true
+	e.redrawCursor = true
 }
 
 // ScrollUp will scroll down the given amount of lines given in scrollSpeed

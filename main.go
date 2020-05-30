@@ -782,11 +782,21 @@ Set NO_COLOR=1 to disable colors.
 				if e.DownEnd(c) != nil {
 					// If at the bottom, don't move down, but scroll the contents
 					// Output a helpful message
-					if !e.AfterEndOfDocument() {
-						e.redraw = e.ScrollDown(c, status, 1)
+					// if !e.AfterEndOfDocument() {
+					e.ScrollDown(c, status, 1)
+
+					// If eof is true, the end of file is reached
+					if e.AfterEndOfDocument() {
+						//status.Clear(c)
+
+						status.SetMessage("EOF")
+						status.Show(c, e)
+
 						e.pos.Up()
-						e.DownEnd(c)
+						//e.DownEnd(c)
 					}
+
+					break
 				}
 				// If the cursor is after the length of the current line, move it to the end of the current line
 				if e.AfterLineScreenContents() {
@@ -819,14 +829,13 @@ Set NO_COLOR=1 to disable colors.
 				}
 			} else {
 				// Scroll down
-				e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
-				// If e.redraw is false, the end of file is reached
-				if !e.redraw {
-					status.Clear(c)
+				e.ScrollDown(c, status, e.pos.scrollSpeed)
+				// If eof is true, the end of file is reached
+				if e.AfterEndOfDocument() {
+					//status.Clear(c)
 					status.SetMessage("EOF")
 					status.Show(c, e)
 				}
-				e.redrawCursor = true
 				if e.AfterLineScreenContents() {
 					e.End(c)
 				}
@@ -924,8 +933,7 @@ Set NO_COLOR=1 to disable colors.
 				e.InsertLineBelow()
 				h := int(c.Height())
 				if e.pos.sy >= (h - 1) {
-					e.redraw = e.ScrollDown(c, status, 1)
-					e.redrawCursor = true
+					e.ScrollDown(c, status, 1)
 				}
 				e.pos.Down(c)
 				e.Home()
