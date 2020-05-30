@@ -95,13 +95,18 @@ func detectEditorMode(filename string) (Mode, bool) {
 		}
 	}
 
-	// Check if we should enable syntax highlighting by default
-	syntaxHighlightingEnabled := (mode != modeBlank || ext != "") && mode != modeText
-
 	// TODO: Find all instances that checks if mode if modeBlank in the code, then introduce modeText
 	if mode == modeText {
 		mode = modeBlank
 	}
+
+	// If the mode is not set and the filename is all uppercase and no ".", use modeMarkdown
+	if mode == modeBlank && !strings.Contains(baseFilename, ".") && baseFilename == strings.ToUpper(baseFilename) {
+		mode = modeMarkdown
+	}
+
+	// Check if we should enable syntax highlighting by default
+	syntaxHighlightingEnabled := (mode != modeBlank || ext != "") && mode != modeText
 
 	return mode, syntaxHighlightingEnabled
 }
