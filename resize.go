@@ -22,9 +22,7 @@ func (e *Editor) SetUpResizeHandler(c *vt100.Canvas, status *StatusBar, tty *vt1
 	signal.Notify(sigChan, syscall.SIGWINCH)
 	go func() {
 		for range sigChan {
-			newCanvas := e.FullResetRedraw(c, status)
-			*c = *newCanvas
-			e.DrawLines(c, true, false)
+			e.FullResetRedraw(c, status, true)
 		}
 	}()
 

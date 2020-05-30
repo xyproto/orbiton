@@ -59,3 +59,58 @@ func (e *Editor) setLightTheme() {
 	menuHighlightColor = vt100.Red
 	menuSelectedColor = vt100.LightRed
 }
+
+// setFlameTheme sets a gray/red/orange/black/white theme, suitable for dark backgrounds
+func (e *Editor) setFlameTheme() {
+	e.lightTheme = false
+
+	e.fg = vt100.Default
+	e.bg = vt100.Default
+	e.searchFg = vt100.Red
+	e.gitColor = vt100.Red
+	e.multiLineComment = vt100.Gray
+	e.multiLineString = vt100.Red
+
+	syntax.DefaultTextConfig.String = "white"
+	syntax.DefaultTextConfig.Keyword = "darkred"
+	syntax.DefaultTextConfig.Comment = "gray"
+	syntax.DefaultTextConfig.Type = "gray"
+	syntax.DefaultTextConfig.Literal = "darkred"
+	syntax.DefaultTextConfig.Punctuation = "white"
+	syntax.DefaultTextConfig.Plaintext = "gray"
+	syntax.DefaultTextConfig.Tag = "darkred"
+	syntax.DefaultTextConfig.TextTag = "darkred"
+	syntax.DefaultTextConfig.TextAttrName = "darkred"
+	syntax.DefaultTextConfig.TextAttrValue = "darkred"
+	syntax.DefaultTextConfig.Decimal = "darkred"
+	syntax.DefaultTextConfig.AndOr = "darkred"
+	syntax.DefaultTextConfig.Dollar = "white"
+	syntax.DefaultTextConfig.Star = "white"
+	syntax.DefaultTextConfig.Class = "darkred"
+	syntax.DefaultTextConfig.Private = "white"
+	syntax.DefaultTextConfig.Protected = "white"
+	syntax.DefaultTextConfig.Public = "gray"
+	syntax.DefaultTextConfig.Whitespace = ""
+
+	// Markdown, switch light colors to darker ones
+	headerTextColor = vt100.Red
+	textColor = vt100.Default
+	listTextColor = vt100.Default
+	imageColor = vt100.Red
+	boldColor = vt100.Red
+	xColor = vt100.Red
+	listCodeColor = vt100.Gray
+	codeColor = vt100.Gray
+	codeBlockColor = vt100.Gray
+
+	// Rainbow parentheses
+	rainbowParenColors = []vt100.AttributeColor{vt100.White, vt100.Red}
+	unmatchedParenColor = vt100.Gray
+
+	// Command menu
+	menuTitleColor = vt100.Red
+	menuArrowColor = vt100.White
+	menuTextColor = vt100.White
+	menuHighlightColor = vt100.Yellow
+	menuSelectedColor = vt100.LightYellow
+}

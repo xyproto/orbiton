@@ -157,7 +157,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					// Handle single line comments starting with (* and ending with *)
 					trimmedLine = strings.TrimSpace(line)
 					if strings.HasPrefix(trimmedLine, "(*") && strings.HasSuffix(trimmedLine, "*)") {
-						coloredString = UnEscape(e.multiLineComment.Get(trimmedLine))
+						coloredString = UnEscape(e.multiLineComment.Start(trimmedLine))
 					} else {
 						// Regular highlight
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
@@ -167,7 +167,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					// Handle doc comments (starting with ///)
 					// and multiline strings (starting with \\)
 					if strings.HasPrefix(trimmedLine, "///") || strings.HasPrefix(trimmedLine, `\\`) {
-						coloredString = UnEscape(e.multiLineString.Get(trimmedLine))
+						coloredString = UnEscape(e.multiLineString.Start(trimmedLine))
 					} else {
 						// Regular highlight
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
@@ -180,7 +180,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					if strings.Count(trimmedLine, ";;") == 1 {
 						// Color the line with the same color as for multiLine comments
 						if strings.HasPrefix(trimmedLine, ";") {
-							coloredString = UnEscape(e.multiLineComment.Get(line))
+							coloredString = UnEscape(e.multiLineComment.Start(line))
 						} else if strings.Count(trimmedLine, ";;") == 1 {
 
 							parts := strings.SplitN(line, ";;", 2)
@@ -196,7 +196,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							if newTextWithTags, err := syntax.AsText([]byte(Escape(parts[0])), false); err != nil {
 								coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 							} else {
-								coloredString = UnEscape(o.DarkTags(string(newTextWithTags)) + e.multiLineComment.Get(";"+parts[1]))
+								coloredString = UnEscape(o.DarkTags(string(newTextWithTags)) + e.multiLineComment.Start(";"+parts[1]))
 							}
 
 						}
@@ -212,13 +212,13 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					if strings.Count(trimmedLine, "\"") == 1 {
 						// Color the line with the same color as for multiLine comments
 						if strings.HasPrefix(trimmedLine, "\"") {
-							coloredString = UnEscape(e.multiLineComment.Get(line))
+							coloredString = UnEscape(e.multiLineComment.Start(line))
 						} else {
 							parts := strings.SplitN(line, "\"", 2)
 							if newTextWithTags, err := syntax.AsText([]byte(Escape(parts[0])), false); err != nil {
 								coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 							} else {
-								coloredString = UnEscape(o.DarkTags(string(newTextWithTags)) + e.multiLineComment.Get("\""+parts[1]))
+								coloredString = UnEscape(o.DarkTags(string(newTextWithTags)) + e.multiLineComment.Start("\""+parts[1]))
 							}
 						}
 						break
@@ -240,16 +240,16 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					switch {
 					case e.mode == modePython && q.startedMultiLineString:
 						// Python docstring
-						coloredString = UnEscape(e.multiLineString.Get(line))
+						coloredString = UnEscape(e.multiLineString.Start(line))
 					case q.multiLineComment || q.stoppedMultiLineComment:
 						// A multi-line comment
-						coloredString = UnEscape(e.multiLineComment.Get(line))
+						coloredString = UnEscape(e.multiLineComment.Start(line))
 					case q.singleLineComment:
 						// A single line comment (the syntax module did the highlighting)
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					case !q.startedMultiLineString && q.backtick > 0:
 						// A multi-line string
-						coloredString = UnEscape(e.multiLineString.Get(line))
+						coloredString = UnEscape(e.multiLineString.Start(line))
 					default:
 						// Regular code
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
@@ -263,7 +263,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				if e.rainbowParenthesis && q.None() {
 					thisLineParCount := q.ParCount(trimmedLine, ignoreSingleQuotes)
 					parCountBeforeThisLine := q.parCount - thisLineParCount
-					if rainbowParen(&parCountBeforeThisLine, &charactersAndAttributes, singleLineCommentMarker, ignoreSingleQuotes) == errUnmatchedParenthesis {
+					if e.rainbowParen(&parCountBeforeThisLine, &charactersAndAttributes, singleLineCommentMarker, ignoreSingleQuotes) == errUnmatchedParenthesis {
 						// Don't mark the rest of the parenthesis as wrong, even though this one is
 						q.parCount = 0
 					}

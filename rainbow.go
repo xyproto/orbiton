@@ -22,14 +22,14 @@ var (
 
 // rainbowParen implements "rainbow parenthesis" which colors "(" and ")" according to how deep they are nested
 // pCount is the existing parenthesis count when reaching the start of this line
-func rainbowParen(parCount *int, chars *[]textoutput.CharAttribute, singleLineCommentMarker string, ignoreSingleQuotes bool) (err error) {
+func (e *Editor) rainbowParen(parCount *int, chars *[]textoutput.CharAttribute, singleLineCommentMarker string, ignoreSingleQuotes bool) (err error) {
 	var (
 		q            = NewQuoteState(singleLineCommentMarker)
 		prevPrevRune = '\n'
 
 		// CharAttribute has a rune "R" and a vt100.AttributeColor "A"
-		nextChar = textoutput.CharAttribute{R: '\n', A: defaultEditorBackground}
-		prevChar = textoutput.CharAttribute{R: '\n', A: defaultEditorBackground}
+		nextChar = textoutput.CharAttribute{R: '\n', A: e.bg}
+		prevChar = textoutput.CharAttribute{R: '\n', A: e.bg}
 
 		lastColor = rainbowParenColors[len(rainbowParenColors)-1]
 	)

@@ -1456,9 +1456,9 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 		// Status message
 		//status.SetMessage("Start of text")
 		//status.Show(c, p)
-		c.Draw()
-		// Don't redraw
-		return false
+		//c.Draw()
+		// Redraw
+		return true
 	}
 	status.Clear(c)
 	if offset-canScroll < 0 {
@@ -1736,7 +1736,7 @@ func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redraw bool) {
 }
 
 // FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
-func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar) *vt100.Canvas {
+func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines bool) {
 	savePos := e.pos
 	status.ClearAll(c)
 	e.SetSearchTerm(c, status, "")
@@ -1753,9 +1753,12 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar) *vt100.Canv
 		e.wordWrapAt = w
 	}
 	e.pos = savePos
+	if drawLines {
+		e.DrawLines(c, true, false)
+	}
 	e.redraw = true
 	e.redrawCursor = true
-	return newC
+	*c = *newC
 }
 
 // GoToPosition can go to the given position struct and use it as the new position

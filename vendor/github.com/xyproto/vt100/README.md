@@ -70,7 +70,7 @@ See `cmd/move` for a more advanced example, where a character can be moved aroun
 
 ### A small editor using `vt100`
 
-The `o` editor that uses `vt100` can be used for editing Go or C++ code, or for creating ASCII graphics. Quick installation:
+The `o` editor that uses `vt100` can be used for editing ie. Go, Bash or C++ code. Quick installation:
 
     go get -u github.com/xyproto/o
 

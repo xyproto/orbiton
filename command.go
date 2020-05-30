@@ -56,12 +56,14 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			1: syntaxToggleText,
 			2: "Sort the list of strings on the current line",
 			3: "Insert \"" + insertFilename + "\" at the current line",
+			4: "Red/black theme (experimental)",
 		}
 		// These numbers must correspond with actionTitles!
 		// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file.
 		actionFunctions = map[int]func(){
 			//0: func() { e.UserCommand(c, status, "save") },
 			0: func() { // save and quit
+				e.clearOnQuit = true
 				e.UserCommand(c, status, "save")
 				e.UserCommand(c, status, "quit")
 			},
@@ -82,6 +84,10 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 					status.SetErrorMessage(err.Error())
 					status.Show(c, e)
 				}
+			},
+			4: func() { // flame theme
+				e.setFlameTheme()
+				e.FullResetRedraw(c, status, true)
 			},
 		}
 		extraDashes = false
@@ -108,10 +114,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			actionFunctions[len(actionFunctions)] = func() {
 				e.fg = color
 				e.syntaxHighlight = false
-				c = e.FullResetRedraw(c, status)
-				e.DrawLines(c, true, false)
-				e.redraw = true
-				e.redrawCursor = true
+				e.FullResetRedraw(c, status, true)
 			}
 		}
 	}

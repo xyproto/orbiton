@@ -229,8 +229,8 @@ func (c *Canvas) Draw() {
 	defer c.mut.Unlock()
 	var (
 		lastfg, lastbg AttributeColor
-		ch             *Char
-		oldch          *Char
+		ch             Char
+		oldch          Char
 		all            strings.Builder
 	)
 	firstRun := 0 == len(c.oldchars)
@@ -238,9 +238,9 @@ func (c *Canvas) Draw() {
 
 	size := uint(c.w * c.h)
 	for index := uint(0); index < size; index++ {
-		ch = &((*c).chars[index])
+		ch = (*c).chars[index]
 		if !firstRun {
-			oldch = &((*c).oldchars[index])
+			oldch = (*c).oldchars[index]
 			if ch.fg.Equal(lastfg) && ch.bg.Equal(lastbg) && ch.fg.Equal(oldch.fg) && ch.bg.Equal(oldch.bg) && ch.s == oldch.s {
 				// One is not skippable, can not skip all
 				skipAll = false
@@ -295,7 +295,6 @@ func (c *Canvas) Draw() {
 		c.oldchars = make([]Char, len(c.chars))
 		copy(c.oldchars, c.chars)
 	}
-
 }
 
 func (c *Canvas) Redraw() {

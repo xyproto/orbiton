@@ -279,7 +279,7 @@ Set NO_COLOR=1 to disable colors.
 			// disable syntax highlighting, to make it clear that the text is red
 			e.syntaxHighlight = false
 			// do a full reset and redraw
-			c = e.FullResetRedraw(c, status)
+			e.FullResetRedraw(c, status, false)
 			// draw the editor lines again
 			e.DrawLines(c, false, true)
 			e.redraw = false
@@ -328,7 +328,7 @@ Set NO_COLOR=1 to disable colors.
 		e.syntaxHighlight = true
 		e.bg = defaultEditorBackground
 		// Now do a full reset/redraw
-		c = e.FullResetRedraw(c, status)
+		e.FullResetRedraw(c, status, false)
 	}
 
 	// Circular undo buffer with room for N actions
@@ -875,13 +875,12 @@ Set NO_COLOR=1 to disable colors.
 			// Now do a full reset/redraw
 			fallthrough
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
-			c = e.FullResetRedraw(c, status)
-
 			// Reset the cut/copy/paste double-keypress detection
 			lastCopyY = -1
 			lastPasteY = -1
 			lastCutY = -1
-
+			// Do a full clear and redraw
+			e.FullResetRedraw(c, status, true)
 		case " ": // space
 			undo.Snapshot(e)
 			// Place a space
