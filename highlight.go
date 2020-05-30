@@ -238,6 +238,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					//logf("%s -[ %d ]-->\n\t%s\n", trimmedLine, addedPar, q.String())
 
 					switch {
+					case e.mode == modePython && q.startedMultiLineString:
+						// Python docstring
+						coloredString = UnEscape(e.multiLineString.Get(line))
 					case q.multiLineComment || q.stoppedMultiLineComment:
 						// A multi-line comment
 						coloredString = UnEscape(e.multiLineComment.Get(line))

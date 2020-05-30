@@ -70,7 +70,13 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 			}
 		}
 	case '"':
-		if prevRune != '\\' {
+		if prevPrevRune == '"' && prevRune == '"' {
+			if q.None() {
+				q.startedMultiLineString = true
+			} else {
+				q.startedMultiLineString = false
+			}
+		} else if prevRune != '\\' {
 			if q.None() {
 				q.doubleQuote++
 			} else {
