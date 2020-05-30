@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/xyproto/vt100"
@@ -44,18 +45,14 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 
 	const insertFilename = "include.txt"
 
-	syntaxToggleText := "Disable syntax highlighting"
-	if !e.syntaxHighlight {
-		syntaxToggleText = "Enable syntax highlighting"
-	}
+	noColor := os.Getenv("NO_COLOR") != ""
 
 	var (
 		// These numbers must correspond with actionFunctions!
 		actionTitles = map[int]string{
 			0: "Save and quit",
-			1: syntaxToggleText,
-			2: "Sort the list of strings on the current line",
-			3: "Insert \"" + insertFilename + "\" at the current line",
+			1: "Sort the list of strings on the current line",
+			2: "Insert \"" + insertFilename + "\" at the current line",
 		}
 		// These numbers must correspond with actionTitles!
 		// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file.
@@ -66,10 +63,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 				e.UserCommand(c, status, "save")
 				e.UserCommand(c, status, "quit")
 			},
-			1: func() { // toggle syntax highlighting
-				e.ToggleSyntaxHighlight()
-			},
-			2: func() { // sort strings on the current line
+			1: func() { // sort strings on the current line
 				undo.Snapshot(e)
 				if err := e.SortStrings(c, status); err != nil {
 					status.Clear(c)
@@ -77,7 +71,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 					status.Show(c, e)
 				}
 			},
-			3: func() { // insert file
+			2: func() { // insert file
 				if err := e.InsertFile(c, insertFilename); err != nil {
 					status.Clear(c)
 					status.SetErrorMessage(err.Error())
@@ -88,8 +82,21 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		extraDashes = false
 	)
 
+	// Add the syntax highlighting toggle menu item
+	if !noColor {
+		syntaxToggleText := "Disable syntax highlighting"
+		if !e.syntaxHighlight {
+			syntaxToggleText = "Enable syntax highlighting"
+		}
+		actionTitles[len(actionTitles)] = syntaxToggleText
+		actionFunctions[len(actionFunctions)] = func() {
+			e.ToggleSyntaxHighlight()
+		}
+	}
+
 	// Add the option to change the colors, for non-light themes (fg != black)
-	if !e.lightTheme { // Not a light theme
+	if !e.lightTheme && !noColor { // Not a light theme and NO_COLOR is not set
+
 		// Add the "Red/Black text" menu item text and menu function
 		actionTitles[len(actionTitles)] = "Red/black theme"
 		actionFunctions[len(actionFunctions)] = func() {
