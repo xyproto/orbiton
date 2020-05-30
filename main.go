@@ -516,7 +516,7 @@ Set NO_COLOR=1 to disable colors.
 							status.Show(c, e)
 							break OUT
 						}
-						utilityName := strings.Title(filepath.Base(cmd.Path))
+						utilityName := filepath.Base(cmd.Path)
 						status.Clear(c)
 						status.SetMessage("Calling " + utilityName)
 						status.Show(c, e)
