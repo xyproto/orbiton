@@ -17,8 +17,8 @@ var (
 	menuTitleColor     = vt100.LightYellow
 	menuArrowColor     = vt100.Red
 	menuTextColor      = vt100.Gray
-	menuHighlightColor = vt100.Blue
-	menuSelectedColor  = vt100.LightBlue
+	menuHighlightColor = vt100.LightBlue
+	menuSelectedColor  = vt100.LightCyan
 
 	errNoLetter = errors.New("no letter")
 )
