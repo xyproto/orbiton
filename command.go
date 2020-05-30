@@ -117,6 +117,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			color := color // per-loop copy of the color variable, since it's closed over
 			actionFunctions[len(actionFunctions)] = func() {
 				e.fg = color
+				e.bg = vt100.BackgroundDefault // black background
 				e.syntaxHighlight = false
 				e.FullResetRedraw(c, status, true)
 			}

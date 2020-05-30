@@ -5,12 +5,47 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+var (
+	// Color scheme for the "text edit" mode
+	defaultEditorForeground       = vt100.LightGreen // for when syntax highlighting is not in use
+	defaultEditorBackground       = vt100.BackgroundDefault
+	defaultStatusForeground       = vt100.White
+	defaultStatusBackground       = vt100.BackgroundBlack
+	defaultStatusErrorForeground  = vt100.LightRed
+	defaultStatusErrorBackground  = vt100.BackgroundDefault
+	defaultEditorSearchHighlight  = vt100.LightMagenta
+	defaultEditorMultilineComment = vt100.Gray
+	defaultEditorMultilineString  = vt100.Magenta
+	defaultEditorHighlightTheme   = syntax.TextConfig{
+		String:        "lightyellow",
+		Keyword:       "lightred",
+		Comment:       "gray",
+		Type:          "lightblue",
+		Literal:       "lightgreen",
+		Punctuation:   "lightblue",
+		Plaintext:     "lightgreen",
+		Tag:           "lightgreen",
+		TextTag:       "lightgreen",
+		TextAttrName:  "lightgreen",
+		TextAttrValue: "lightgreen",
+		Decimal:       "white",
+		AndOr:         "lightyellow",
+		Dollar:        "lightred",
+		Star:          "lightyellow",
+		Class:         "lightred",
+		Private:       "darkred",
+		Protected:     "darkyellow",
+		Public:        "darkgreen",
+		Whitespace:    "",
+	}
+)
+
 // setLightTheme sets a theme suitable for white backgrounds
 func (e *Editor) setLightTheme() {
 	e.lightTheme = true
 
 	e.fg = vt100.Black
-	e.bg = vt100.White
+	e.bg = vt100.BackgroundDefault // BackgroundWhite
 	e.searchFg = vt100.Red
 	e.gitColor = vt100.Blue
 	e.multiLineComment = vt100.Green
@@ -65,7 +100,7 @@ func (e *Editor) setFlameTheme() {
 	e.lightTheme = false
 
 	e.fg = vt100.White
-	e.bg = vt100.Black
+	e.bg = vt100.BackgroundBlack // Gray background, as opposed to BackgroundDefault
 	e.searchFg = vt100.Red
 	e.gitColor = vt100.Red
 	e.multiLineComment = vt100.DarkGray
