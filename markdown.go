@@ -187,7 +187,7 @@ func markdownHighlight(line string, inCodeBlock, prevLineIsListItem bool) (strin
 	}
 
 	// A header line
-	if strings.HasPrefix(rest, "---") {
+	if strings.HasPrefix(rest, "---") || strings.HasPrefix(rest, "===") {
 		return headerTextColor.Get(line), true, false
 	}
 
@@ -231,9 +231,17 @@ func markdownHighlight(line string, inCodeBlock, prevLineIsListItem bool) (strin
 
 	// Color differently depending on the leading word
 	firstWord := words[0]
+	lastWord := words[len(words)-1]
 	switch firstWord {
 	case "#", "##", "###", "####", "#####", "######", "#######":
-		if len(words) > 1 {
+		if strings.HasSuffix(lastWord, "#") {
+			centerLen := len(rest) - (len(firstWord) + len(lastWord))
+			if centerLen > 0 {
+				centerText := rest[len(firstWord) : len(rest)-len(lastWord)]
+				return leadingSpace + headerBulletColor.Get(firstWord) + headerTextColor.Get(centerText) + headerBulletColor.Get(lastWord), true, false
+			}
+			return leadingSpace + headerBulletColor.Get(rest), true, false
+		} else if len(words) > 1 {
 			return leadingSpace + headerBulletColor.Get(firstWord) + " " + headerTextColor.Get(emphasis(quotedWordReplace(line[dataPos+len(firstWord)+1:], '`', headerTextColor, codeColor), headerTextColor, italicsColor, boldColor, strikeColor)), true, false // TODO: `
 		}
 		return leadingSpace + headerTextColor.Get(rest), true, false
