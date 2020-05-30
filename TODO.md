@@ -21,10 +21,15 @@
 
 ## Low priority bug fixes
 
+- [ ] Quotestate Process can not recognize triple runes, like the previous
+      previous rune is ", the previous rune is " and the current rune is ".
+      The wrong argumens are passed to the function. Figure out why.
 - [ ] Rewrite `insertRune`. Improve word-wrap related functionality.
 - [ ] Ignore multiline comments within multiline comments.
 - [ ] Fix markdown syntax highlighting refresh when entering checkboxes.
 - [ ] Also enable rainbow parenthesis for lines that ends with a single-line comment.
+- [ ] Markdown syntax highlighting should highlight item text the same until
+      either a blank line or a line with a list item prefix.
 
 ## Features in general
 
