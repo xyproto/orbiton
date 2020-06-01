@@ -7,6 +7,7 @@
 
 ## Features I see myself using straight away
 
+- [ ] Autocompletion of filenames if the previous rune is "/" and tab is pressed.
 - [ ] Insert `# vim: ts=2 sw=2 et:` at the bottom when `ctrl-space` is pressed in a PKGBUILD file. Or add a command menu option for this.
 - [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.
 - [ ] File locking.
