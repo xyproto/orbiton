@@ -4,9 +4,13 @@
 
 - [ ] Rainbow parentheses for Clojure. Don't color parentheses in comments.
 - [ ] Search for strings in long lines, after the terminal width. (Then left arrow).
+- [ ] When moving to the right after the end of a line, jump to the next line.
+- [ ] Fix syntax highlighting of alt/ctrl/super for Sway config files.
+- [ ] Fix syntax highlighting of #else (and #*) for shell files.
 
 ## Features I see myself using straight away
 
+- [ ] Let `ctrl-a` and `ctrl-e` only go to the start/end of lines, not move up and down.
 - [ ] Autocompletion of filenames if the previous rune is "/" and tab is pressed.
 - [ ] Insert `# vim: ts=2 sw=2 et:` at the bottom when `ctrl-space` is pressed in a PKGBUILD file. Or add a command menu option for this.
 - [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.
