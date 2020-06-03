@@ -40,6 +40,7 @@ func main() {
 		statusMode bool      // if information should be shown at the bottom
 
 		firstLetterSinceStart string
+		firstPasteAction      bool = true
 
 		spacesPerTab = 4 // default spaces per tab
 
@@ -1493,6 +1494,7 @@ Set NO_COLOR=1 to disable colors.
 				}
 			}
 		case "c:22": // ctrl-v, paste
+
 			// Try fetching the lines from the clipboard first
 			s, err := clipboard.ReadAll()
 			if err == nil { // no error
@@ -1507,7 +1509,25 @@ Set NO_COLOR=1 to disable colors.
 
 				// Split the text into lines and store it in "copyLines"
 				copyLines = strings.Split(s, "\n")
+			} else if firstPasteAction {
+				firstPasteAction = false
+				hasXclip := which("xclip") != ""
+				hasWclip := which("wl-clipboard") != ""
+				status.Clear(c)
+				if !hasXclip && !hasWclip {
+					status.SetErrorMessage("Either xclip or wl-clipboard are missing!")
+				} else if !hasXclip {
+					status.SetErrorMessage("The xclip utility is missing!")
+				} else if !hasWclip {
+					status.SetErrorMessage("The wl-clipboard utility is missing!")
+				}
+				status.Show(c, e)
+				break // Break instead of pasting from the internal buffer, but only the first time
+			} else {
+				status.Clear(c)
+				e.redrawCursor = true
 			}
+
 			// Now check if there is anything to paste
 			if len(copyLines) == 0 {
 				break
