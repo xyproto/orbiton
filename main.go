@@ -1512,14 +1512,14 @@ Set NO_COLOR=1 to disable colors.
 			} else if firstPasteAction {
 				firstPasteAction = false
 				hasXclip := which("xclip") != ""
-				hasWclip := which("wl-clipboard") != ""
+				hasWclip := which("wl-paste") != ""
 				status.Clear(c)
 				if !hasXclip && !hasWclip {
-					status.SetErrorMessage("Either xclip or wl-clipboard are missing!")
+					status.SetErrorMessage("Either xclip or wl-paste are missing!")
 				} else if !hasXclip {
 					status.SetErrorMessage("The xclip utility is missing!")
 				} else if !hasWclip {
-					status.SetErrorMessage("The wl-clipboard utility is missing!")
+					status.SetErrorMessage("The wl-paste utility is missing!")
 				}
 				status.Show(c, e)
 				break // Break instead of pasting from the internal buffer, but only the first time
