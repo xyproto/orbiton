@@ -1181,11 +1181,11 @@ Set NO_COLOR=1 to disable colors.
 			// First check if we just moved to this line with the arrow keys
 			justMovedUpOrDown := previousKey == "↓" || previousKey == "↑"
 			// If at an empty line, go up one line
-			if !justMovedUpOrDown && e.EmptyRightTrimmedLine() {
+			if !justMovedUpOrDown && e.EmptyRightTrimmedLine() && e.SearchTerm() == "" {
 				e.Up(c, status)
 				//e.GoToStartOfTextLine()
 				e.End(c)
-			} else if x, err := e.DataX(); err == nil && x == 0 && !justMovedUpOrDown {
+			} else if x, err := e.DataX(); err == nil && x == 0 && !justMovedUpOrDown && e.SearchTerm() == "" {
 				// If at the start of the line,
 				// go to the end of the previous line
 				e.Up(c, status)
@@ -1197,6 +1197,7 @@ Set NO_COLOR=1 to disable colors.
 				// If none of the above, go to the start of the text
 				e.GoToStartOfTextLine(c)
 			}
+
 			e.redrawCursor = true
 			e.SaveX(true)
 		case "c:5": // ctrl-e, end
@@ -1211,12 +1212,13 @@ Set NO_COLOR=1 to disable colors.
 			// If we didn't just move here, and are at the end of the line,
 			// move down one line and to the end, if not,
 			// just move to the end.
-			if !justMovedUpOrDown && e.AfterEndOfLine() {
+			if !justMovedUpOrDown && e.AfterEndOfLine() && e.SearchTerm() == "" {
 				e.Down(c, status)
 				e.Home()
 			} else {
 				e.End(c)
 			}
+
 			e.redrawCursor = true
 			e.SaveX(true)
 		case "c:4": // ctrl-d, delete
