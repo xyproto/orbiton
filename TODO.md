@@ -5,7 +5,6 @@
 - [ ] Rainbow parentheses for Clojure. Don't color parentheses in comments.
 - [ ] Try searching for strings in long lines, after the terminal width. Then press left arrow.
 - [ ] When moving to the right after the end of a line, jump to the next line.
-- [ ] Show an error if xclip or the utility for Wayland is not installed at cut/copy/paste.
 
 ## Features I see myself using straight away
 
