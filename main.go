@@ -725,6 +725,7 @@ Set NO_COLOR=1 to disable colors.
 			e.SaveX(true)
 			e.redrawCursor = true
 		case "→": // right arrow
+			// If on the last line or before, go to the next character
 			if e.DataY() < LineIndex(e.Len()) {
 				e.Next(c)
 			}
@@ -735,10 +736,10 @@ Set NO_COLOR=1 to disable colors.
 				if e.pos.sx < 0 {
 					e.pos.sx = 0
 				}
-				if e.AfterLineScreenContents() {
+				if e.AfterEndOfLine() {
 					e.Down(c, status)
 				}
-			} else if e.AfterLineScreenContents() {
+			} else if e.AfterEndOfLine() {
 				e.End(c)
 			}
 			e.SaveX(true)
@@ -1513,6 +1514,7 @@ Set NO_COLOR=1 to disable colors.
 				firstPasteAction = false
 				hasXclip := which("xclip") != ""
 				hasWclip := which("wl-paste") != ""
+				noBreak := false
 				status.Clear(c)
 				if !hasXclip && !hasWclip {
 					status.SetErrorMessage("Either xclip or wl-paste (wl-clipboard) are missing!")
@@ -1520,9 +1522,13 @@ Set NO_COLOR=1 to disable colors.
 					status.SetErrorMessage("The xclip utility is missing!")
 				} else if !hasWclip {
 					status.SetErrorMessage("The wl-paste utility (from wl-clipboard) is missing!")
+				} else {
+					noBreak = true
 				}
-				status.Show(c, e)
-				break // Break instead of pasting from the internal buffer, but only the first time
+				if !noBreak {
+					status.Show(c, e)
+					break // Break instead of pasting from the internal buffer, but only the first time
+				}
 			} else {
 				status.Clear(c)
 				e.redrawCursor = true
