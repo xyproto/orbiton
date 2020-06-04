@@ -2,9 +2,7 @@
 
 ## Bug fixes
 
-- [ ] Rainbow parentheses for Clojure. Don't color parentheses in comments.
-- [ ] Try searching for strings in long lines, after the terminal width. Then press left arrow.
-- [ ] When moving to the right after the end of a line, jump to the next line.
+- [ ] Pressing `ctrl-v` must sometimes be done twice to paste a single line.
 
 ## Features I see myself using straight away
 
@@ -23,6 +21,8 @@
 
 ## Low priority bug fixes
 
+- [ ] Don't color parentheses in comments.
+- [ ] Rainbow parentheses that span multiple lines, for Clojure, Emacs Lisp etc.
 - [ ] Quotestate Process can not recognize triple runes, like the previous
       previous rune is ", the previous rune is " and the current rune is ".
       The wrong argumens are passed to the function. Figure out why.
