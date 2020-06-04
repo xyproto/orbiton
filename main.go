@@ -722,6 +722,11 @@ Set NO_COLOR=1 to disable colors.
 				e.End(c)
 				e.redraw = true
 			}
+
+			if e.AfterEndOfLine() {
+				e.End(c)
+			}
+
 			e.SaveX(true)
 			e.redrawCursor = true
 		case "→": // right arrow
@@ -1495,6 +1500,8 @@ Set NO_COLOR=1 to disable colors.
 				}
 			}
 		case "c:22": // ctrl-v, paste
+
+			// This may only work for the same user, and not with sudo/su
 
 			// Try fetching the lines from the clipboard first
 			s, err := clipboard.ReadAll()
