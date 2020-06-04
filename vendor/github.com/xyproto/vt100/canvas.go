@@ -361,11 +361,17 @@ func (c *Canvas) WriteString(x, y uint, fg, bg AttributeColor, s string) {
 	c.mut.Lock()
 	chars := (*c).chars
 	counter := uint(0)
+	startpos := y*c.w + x
+	lchars := uint(len(chars))
 	for _, r := range s {
-		chars[y*c.w+x+counter].s = r
-		chars[y*c.w+x+counter].fg = fg
-		chars[y*c.w+x+counter].bg = bg.Background()
-		chars[y*c.w+x+counter].drawn = false
+		i := startpos + counter
+		if i >= lchars {
+			break
+		}
+		chars[i].s = r
+		chars[i].fg = fg
+		chars[i].bg = bg.Background()
+		chars[i].drawn = false
 		counter++
 	}
 	c.mut.Unlock()
