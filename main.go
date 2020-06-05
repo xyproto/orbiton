@@ -1663,7 +1663,9 @@ Set NO_COLOR=1 to disable colors.
 			// This was not the first pressed letter, continue handling this key in the default case
 			fallthrough
 		default:
+			//panic(fmt.Sprintf("PRESSED KEY: %v", []rune(key)))
 			if len([]rune(key)) > 0 && unicode.IsLetter([]rune(key)[0]) { // letter
+
 				undo.Snapshot(e)
 				// Check for if a special "first letter" has been pressed, which triggers vi-like behavior
 				if firstLetterSinceStart == "" {
@@ -1691,6 +1693,12 @@ Set NO_COLOR=1 to disable colors.
 				// Place *something*
 				r := []rune(key)[0]
 
+				if r == 160 {
+					// This is a nonbreaking space that may be inserted with altgr+space that is HORRIBLE.
+					// Set r to a regular space instead.
+					r = ' '
+				}
+
 				// "smart dedent"
 				if r == '}' || r == ']' || r == ')' {
 					lineContents := strings.TrimSpace(e.CurrentLine())
@@ -1710,7 +1718,7 @@ Set NO_COLOR=1 to disable colors.
 					}
 				}
 
-				e.InsertRune(c, []rune(key)[0])
+				e.InsertRune(c, r)
 				e.WriteRune(c)
 				if len(string(r)) > 0 {
 					// Move to the next position
