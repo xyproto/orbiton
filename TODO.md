@@ -3,17 +3,18 @@
 ## Bug fixes
 
 - [ ] Resizing the terminal requires a press on `Esc` afterwards.
-- [ ] Pressing `ctrl-v` to paste does not work across X/Wayland sessions. It would be nice to find a more general clipboard solution.
+- [ ] Some files with wide unicode symbols causes problems with the text flow.
 
 ## Features I see myself using straight away
 
+- [ ] File locking!
+- [ ] Pressing `ctrl-v` to paste does not work across X/Wayland sessions. It would be nice to find a more general clipboard solution.
 - [ ] Insert `# vim: ts=2 sw=2 et:` at the bottom when `ctrl-space` is pressed in a PKGBUILD file. Or add a command menu option for this.
 - [ ] Add guessica to the command menu.
 - [ ] For git commit text, highlight column 80 if the text crosses that boundry.
 - [ ] Autocompletion of filenames if the previous rune is "/" and tab is pressed.
 - [ ] Add word wrap with a custom line length to the command menu.
 - [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.
-- [ ] File locking.
 - [ ] Spellcheck all comments that are in English. Highlight misspelled words. Make it possible to add/ignore words.
 - [ ] Should be able to open any binary file and save it again, without replacements. Add a hex edit mode.
 - [ ] Detect ISO-8859-1 and convert the file to UTF-8 before opening.
