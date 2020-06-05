@@ -7,6 +7,7 @@
 ## Features I see myself using straight away
 
 - [ ] Add guessica to the command menu.
+- [ ] Add word wrap with a custom line length to the command menu.
 - [ ] Autocompletion of filenames if the previous rune is "/" and tab is pressed.
 - [ ] Insert `# vim: ts=2 sw=2 et:` at the bottom when `ctrl-space` is pressed in a PKGBUILD file. Or add a command menu option for this.
 - [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.
@@ -19,6 +20,7 @@
 - [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
 - [ ] Let the autocompletion also look at method definitions with matching variable names (ignoring types, for now).
 - [ ] Let the cut/copy/paste line state be part of the editor state, because of undo.
+- [ ] For git commit text, highlight column 80 if the text crosses that boundry.
 
 ## Low priority bug fixes
 
@@ -29,10 +31,9 @@
       The wrong argumens are passed to the function. Figure out why.
 - [ ] Rewrite `insertRune`. Improve word-wrap related functionality.
 - [ ] Ignore multiline comments within multiline comments.
-- [ ] Fix markdown syntax highlighting refresh when entering checkboxes.
+- [x] Fix markdown syntax highlighting refresh when entering checkboxes (was an altrgr+space issue).
 - [ ] Also enable rainbow parenthesis for lines that ends with a single-line comment.
-- [ ] Markdown syntax highlighting should highlight item text the same until
-      either a blank line or a line with a list item prefix.
+- [x] Markdown syntax highlighting should highlight item text the same until either a blank line or a line with a list item prefix.
 
 ## Features in general
 
