@@ -77,6 +77,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		counter = 0
 
 		line = e.Line(LineIndex(y + offsetY))
+		trimmedLine = strings.TrimSpace(line)
 		if strings.Contains(line, "\t") {
 			line = strings.Replace(line, "\t", tabString, -1)
 		}
@@ -111,9 +112,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					// If this is a list item, store true in "prevLineIsListItem"
 					prevLineIsListItem = isListItem(line)
 				case modeConfig, modeShell, modeCMake:
-					if strings.Contains(line, "/*") || strings.Contains(line, "*/") {
+					if strings.Contains(trimmedLine, "/*") || strings.Contains(trimmedLine, "*/") {
 						// No highlight
 						coloredString = line
+					} else if strings.HasPrefix(trimmedLine, "> ") {
+						// If there is a } underneath and typing }, don't dedent, keep it at the same level!
+						coloredString = UnEscape(e.multiLineString.Start(trimmedLine))
 					} else {
 						// Regular highlight + highlight yes and no in blue when using the default color scheme
 						// TODO: Modify (and rewrite) the syntax package instead.
