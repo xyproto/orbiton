@@ -2,7 +2,8 @@
 
 ## Bug fixes
 
-- [ ] Pressing `ctrl-v` must sometimes be done twice to paste a single line.
+- [ ] Pressing `ctrl-v` to paste does not work across X/Wayland sessions. It would be nice to find a more general clipboard solution.
+- [ ] Resizing the terminal requires a press on `Esc` afterwards.
 
 ## Features I see myself using straight away
 
