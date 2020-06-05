@@ -26,14 +26,14 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 	case modeCMake:
 		addKeywords = cmakeWords
 		delKeywords = append(delKeywords, []string{"build", "package"}...)
-	case modeShell:
-		delKeywords = []string{"float", "with", "exec", "long", "double", "no", "pass", "#else", "#endif", "ret", "super"}
-		fallthrough
 	case modeZig:
 		syntax.Keywords = make(map[string]struct{})
 		addKeywords = zigWords
+	case modeShell:
+		delKeywords = []string{"float", "with", "exec", "long", "double", "no", "pass", "#else", "#endif", "ret", "super"}
+		fallthrough // to the default case
 	default:
-		delKeywords = append(delKeywords, []string{"build", "package", "super"}...)
+		delKeywords = append(delKeywords, []string{"require", "build", "package", "super"}...)
 	}
 	// Add extra keywords that are to be syntax highlighted
 	for _, kw := range addKeywords {

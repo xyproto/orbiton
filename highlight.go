@@ -117,7 +117,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					} else {
 						// Regular highlight + highlight yes and no in blue when using the default color scheme
 						// TODO: Modify (and rewrite) the syntax package instead.
-						coloredString = UnEscape(o.DarkTags(strings.Replace(strings.Replace(string(textWithTags), "<lightgreen>yes<", "<yellow>yes<", -1), "<lightred>no<", "<yellow>no<", -1)))
+						coloredString = UnEscape(o.DarkTags(strings.Replace(strings.Replace(string(textWithTags), "<lightgreen>yes<", "<lightyellow>yes<", -1), "<lightred>no<", "<lightyellow>no<", -1)))
 					}
 				case modeStandardML, modeOCaml:
 					// Handle single line comments starting with (* and ending with *)
