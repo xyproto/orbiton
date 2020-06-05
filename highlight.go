@@ -115,8 +115,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// No highlight
 						coloredString = line
 					} else {
-						// Regular highlight
-						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
+						// Regular highlight + highlight yes and no in blue when using the default color scheme
+						// TODO: Modify (and rewrite) the syntax package instead.
+						coloredString = UnEscape(o.DarkTags(strings.Replace(strings.Replace(string(textWithTags), "<lightgreen>yes<", "<yellow>yes<", -1), "<lightred>no<", "<yellow>no<", -1)))
 					}
 				case modeStandardML, modeOCaml:
 					// Handle single line comments starting with (* and ending with *)
@@ -193,6 +194,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				default:
 					doneHighlighting = false
 				}
+
 				if !doneHighlighting {
 
 					// C, C++, Go, Rust etc
@@ -221,11 +223,17 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 				}
 
+				// Is this line a single line comment?
+				// TODO: Or a multiline comment that has started and ended?
+				// TODO: Use the q struct.
+				// This must come after q.Process in the if !doneHighlighting block above.
+				singleLineComment := strings.HasPrefix(trimmedLine, singleLineCommentMarker)
+
 				// Slice of runes and color attributes, while at the same time highlighting search terms
 				charactersAndAttributes := o.Extract(coloredString)
 
 				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
-				if e.rainbowParenthesis && q.None() {
+				if e.rainbowParenthesis && q.None() && !singleLineComment {
 					thisLineParCount := q.ParCount(trimmedLine, ignoreSingleQuotes)
 					parCountBeforeThisLine := q.parCount - thisLineParCount
 					if e.rainbowParen(&parCountBeforeThisLine, &charactersAndAttributes, singleLineCommentMarker, ignoreSingleQuotes) == errUnmatchedParenthesis {
