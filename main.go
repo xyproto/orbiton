@@ -1214,6 +1214,7 @@ Set NO_COLOR=1 to disable colors.
 			// First check if we just moved to this line with the arrow keys, or just cut a line with ctrl-x
 			justMovedUpOrDown := previousKey == "↓" || previousKey == "↑" || previousKey == "c:24"
 			if e.AtEndOfDocument() {
+				e.End(c)
 				break
 			}
 			// If we didn't just move here, and are at the end of the line,
