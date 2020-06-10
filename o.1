@@ -1,6 +1,6 @@
 .\"             -*-Nroff-*-
 .\"
-.TH "o" 1 "27 May 2020" "" ""
+.TH "o" 1 "10 Jun 2020" "" ""
 .SH NAME
 o \- an editor
 .SH SYNOPSIS
@@ -33,7 +33,6 @@ displays brief usage information
   Format the current file with \fBgoimport\fP or \fBclang-format\fP, depending on the file extension.
   Zig, V, Rust (\fBrustfmt\fP), Haskell (\fBbrittany\fP) and Python (\fBautopep8\fP) are also supported.
   If in git mode, cycle the git interactive rebase keyword on the current line.
-  Word wrap regular text files.
 .sp
 .B ctrl-a
   Go to start of the text, then the start of the line and then the previous line.
@@ -60,7 +59,7 @@ displays brief usage information
   Toggle syntax highlighting.
 .sp
 .B ctrl-o
-  Open the command menu, which is a list of actions that can be performed. The first item is always "Save and quit".
+  Open the command menu, which is a list of actions that can be performed. The first item is always "Save and quit", for ease of use.
   If editing a PKGBUILD file, there will be a menu option for updating the pkgver + source fields, that is mainly based on guessing.
 .sp
 .B ctrl-c
@@ -134,7 +133,7 @@ There may be remaining issues related to lines longer than the terminal width.
 .sp
 The smart indentation is not always smart.
 .SH VERSION
-2.29.5
+2.30.0
 .SH AUTHOR
 .B o
 was written by  Alexander F. Rødseth <xyproto@archlinux.org>
