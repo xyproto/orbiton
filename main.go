@@ -142,7 +142,6 @@ Set NO_COLOR=1 to disable colors.
 	mode, syntaxHighlight := detectEditorMode(filename)
 
 	adjustSyntaxHighlightingKeywords(mode)
-
 	// Additional per-mode considerations, before launching the editor
 	rainbowParenthesis := syntaxHighlight // rainbow parenthesis
 	switch mode {
@@ -310,6 +309,19 @@ Set NO_COLOR=1 to disable colors.
 	}
 
 	// The editing mode is decided at this point
+
+	// The shebang may have been for bash, make further adjustments
+	adjustSyntaxHighlightingKeywords(e.mode)
+
+	// Additional per-mode considerations, before launching the editor
+	switch e.mode {
+	case modeMakefile, modePython, modeCMake:
+		e.spacesPerTab = 4
+	case modeShell, modeConfig, modeHaskell, modeVim:
+		e.spacesPerTab = 2
+	case modeMarkdown, modeText, modeBlank:
+		e.rainbowParenthesis = false
+	}
 
 	// If we're editing a git commit message, add a newline and enable word-wrap at 80
 	if e.mode == modeGit {
