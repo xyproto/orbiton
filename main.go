@@ -633,7 +633,9 @@ Set NO_COLOR=1 to disable colors.
 				status.ClearAll(c)
 				// Building this file extension is not implemented yet.
 				// Just display the current time and word count.
-				statusMessage := fmt.Sprintf("%d words, %s", e.WordCount(), time.Now().Format("15:04")) // HH:MM
+				// TODO: status.ClearAll() should have cleared the status bar first, but this is not always true,
+				//       which is why the message is hackily surrounded by spaces. Fix.
+				statusMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
 				status.SetMessage(statusMessage)
 				status.Show(c, e)
 			} else if performedAction && !compiled {
