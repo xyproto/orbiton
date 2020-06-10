@@ -23,6 +23,7 @@ func (e *Editor) UserCommand(c *vt100.Canvas, status *StatusBar, action string) 
 		// Save the current location in the location history and write it to file
 		absFilename, err := filepath.Abs(e.filename)
 		if err == nil { // no error
+			absFilename = filepath.Clean(absFilename)
 			e.SaveLocation(absFilename, e.locationHistory)
 		}
 		// Status message

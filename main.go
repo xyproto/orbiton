@@ -353,6 +353,7 @@ Set NO_COLOR=1 to disable colors.
 		// This should never happen, just use the given filename
 		absFilename = e.filename
 	}
+	absFilename = filepath.Clean(absFilename)
 
 	if !(*forceFlag) && ProbablyAlreadyOpen(absFilename) {
 		quitError(tty, fmt.Errorf("\"%s\" is locked by another instance of o. Use -f to force open", absFilename))

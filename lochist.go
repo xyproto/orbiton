@@ -94,6 +94,7 @@ func LoadVimLocationHistory(vimInfoFilename string) map[string]LineNumber {
 				// Could not get the absolute path
 				continue
 			}
+			absFilename = filepath.Clean(absFilename)
 			locationHistory[absFilename] = LineNumber(lineNumber)
 		}
 	}
@@ -125,6 +126,7 @@ func FindInVimLocationHistory(vimInfoFilename, searchFilename string) (LineNumbe
 				// Could not get the absolute path
 				continue
 			}
+			absFilename = filepath.Clean(absFilename)
 			if absFilename == searchFilename {
 				return LineNumber(lineNumber), nil
 			}
@@ -390,6 +392,7 @@ func LoadEmacsLocationHistory(emacsPlacesFilename string) map[string]CharacterPo
 			// Could not get absolute path
 			continue
 		}
+		absFilename = filepath.Clean(absFilename)
 		locationHistory[absFilename] = CharacterPosition(charNumber)
 	}
 	return locationHistory
