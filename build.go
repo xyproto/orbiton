@@ -183,10 +183,11 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			exec.Command("cxx"):                                             {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
 			exec.Command("zig", "build"):                                    {".zig"},
 			exec.Command("v", filename):                                     {".v"},
-			exec.Command("cargo", "build"):                                  {".rs"},
-			exec.Command("ghc", "-dynamic", filename):                       {".hs"},
+			exec.Command("cargo", "build"):                                  {".rs"}, // Rust
+			exec.Command("ghc", "-dynamic", filename):                       {".hs"}, // Haskell
 			exec.Command("python", "-m", "py_compile", filename):            {".py"}, // Compile to .pyc
 			exec.Command("ocamlopt", "-o", defaultExecutableName, filename): {".ml"}, // OCaml
+			exec.Command("crystal", "build"):                                {".cr"},
 		}
 	)
 

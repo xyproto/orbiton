@@ -115,7 +115,8 @@ to attempt to update the `pkgver=` and `source=` fields. This may or may not wor
 | Zig                                             | `.zig`                                                    | yes           | `zig build`                      | `zig fmt $filename`                                               |
 | V                                               | `.v`                                                      | needs testing | `v build`                        | `v fmt $filename`                                                 |
 | Haskell                                         | `.hs`                                                     | yes           | `ghc -dynamic $filename`         | `brittany --write-mode=inplace $filename`                         |
-| Python                                          | `.py`                                                     | yes           | `python -m py_compile $filename` | `autopep8 -i --maxline-length 120`                                |
+| Python                                          | `.py`                                                     | yes           | `python -m py_compile $filename` | `autopep8 -i --maxline-length 120 $filename`                      |
+| Crystal                                         | `.cr`                                                     | needs testing | `crystal build $filename`        | `crystal tool format $filename`                                   |
 
 * `o` will try to jump to the location where the error is and otherwise display `Success`.
 * For regular text files, `ctrl-w` will word wrap the lines to a length of 99.
@@ -175,6 +176,10 @@ Python
 
 * `ctrl-space` only checks the syntax, without executing. This only requires `python` to be available.
 * For formatting the code with `ctrl-w`, `autopep8` must be installed.
+
+Crystal
+
+* For building and formatting Crystal code, only the `crystal` command is needed.
 
 ## List of optional runtime dependencies
 
