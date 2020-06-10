@@ -506,7 +506,6 @@ Set NO_COLOR=1 to disable colors.
 				exec.Command("ocamlformat"):                                                       {".ml"},
 				exec.Command("guessica"):                                                          {"PKGBUILD"},
 			}
-			formatted := false
 		OUT:
 			for cmd, extensions := range format {
 				for _, ext := range extensions {
@@ -581,7 +580,6 @@ Set NO_COLOR=1 to disable colors.
 									}
 									// Mark the data as changed, despite just having loaded a file
 									e.changed = true
-									formatted = true
 									e.redrawCursor = true
 								}
 								// Try to remove the temporary file regardless if "goimports -w" worked out or not
@@ -596,14 +594,7 @@ Set NO_COLOR=1 to disable colors.
 					}
 				}
 			}
-			if e.mode != modeGit && !formatted {
-				// Check if at least one line is longer than the word wrap limit first
-				// word wrap at the current width - 5, with an allowed overshoot of 5 runes
-				if e.WrapAllLinesAt(e.wordWrapAt-5, 5) {
-					e.redraw = true
-					e.redrawCursor = true
-				}
-			}
+
 			// Move the cursor if after the end of the line
 			if e.AtOrAfterEndOfLine() {
 				e.End(c)

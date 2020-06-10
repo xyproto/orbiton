@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/xyproto/vt100"
 )
@@ -36,6 +37,7 @@ func (e *Editor) UserCommand(c *vt100.Canvas, status *StatusBar, action string) 
 	case "sortstrings":
 		// sort the list of comma or space separated strings, either quoted with ", with ' or "bare"
 		e.SortStrings(c, status)
+	case "wordwrap":
 	}
 }
 
@@ -45,14 +47,20 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 
 	const insertFilename = "include.txt"
 
-	noColor := os.Getenv("NO_COLOR") != ""
+	wordWrapAt := e.wordWrapAt
+	if wordWrapAt == 0 {
+		wordWrapAt = 80
+	}
 
 	var (
+		noColor = os.Getenv("NO_COLOR") != ""
+
 		// These numbers must correspond with actionFunctions!
 		actionTitles = map[int]string{
 			0: "Save and quit",
 			1: "Sort the list of strings on the current line",
 			2: "Insert \"" + insertFilename + "\" at the current line",
+			3: "Word wrap at " + strconv.Itoa(wordWrapAt),
 		}
 		// These numbers must correspond with actionTitles!
 		// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file.
@@ -77,6 +85,17 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 					status.SetErrorMessage(err.Error())
 					status.Show(c, e)
 				}
+			},
+			3: func() { // word wrap
+				// word wrap at the current width - 5, with an allowed overshoot of 5 runes
+
+				tmpWrapAt := e.wordWrapAt
+				e.wordWrapAt = wordWrapAt
+				if e.WrapAllLinesAt(wordWrapAt-5, 5) {
+					e.redraw = true
+					e.redrawCursor = true
+				}
+				e.wordWrapAt = tmpWrapAt
 			},
 		}
 		extraDashes = false
