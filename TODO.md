@@ -5,13 +5,14 @@
 - [ ] Resizing the terminal requires a press on `Esc` afterwards.
 - [ ] Some files with wide unicode symbols causes problems with the text flow.
 - [ ] Adding blank lines at the bottom of the terminal does not make the editor scroll.
+- [ ] Arrow left just cycles.
+- [ ] Read `include.txt` from the directory of the current file.
+- [ ] Shell scripts with if/else/endif blocks that are commented out are highlighted wrong.
 
 ## Features I see myself using straight away
 
-- [x] File locking!
 - [ ] Pressing `ctrl-v` to paste does not work across X/Wayland sessions. It would be nice to find a more general clipboard solution.
 - [ ] Insert `# vim: ts=2 sw=2 et:` at the bottom when `ctrl-space` is pressed in a PKGBUILD file. Or add a command menu option for this.
-- [x] Add guessica to the command menu.
 - [ ] For git commit text, highlight column 80 if the text crosses that boundry.
 - [ ] Autocompletion of filenames if the previous rune is "/" and tab is pressed.
 - [ ] Add word wrap with a custom line length to the command menu.
