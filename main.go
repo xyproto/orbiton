@@ -1506,6 +1506,8 @@ Set NO_COLOR=1 to disable colors.
 			if err == nil { // no error
 				// Fix nonbreaking spaces first
 				s = strings.Replace(s, string([]byte{0xc2, 0xa0}), string([]byte{0x20}), -1)
+				// Fix annoying tildes
+				s = strings.Replace(s, string([]byte{0xcc, 0x88}), string([]byte{'~'}), -1)
 				// And \r\n
 				s = strings.Replace(s, string([]byte{'\r', '\n'}), string([]byte{'\n'}), -1)
 				// Then \r

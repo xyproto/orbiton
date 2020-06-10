@@ -10,6 +10,8 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	// Nobody likes nonbreaking spaces.
 	if r == 0xc2a0 {
 		r = ' '
+	} else if r == 0xcc88 {
+		r = '~'
 	}
 
 	// The document will be changed

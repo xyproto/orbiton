@@ -413,6 +413,8 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 
 	// Replace nonbreaking space with regular space
 	data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
+	// Fix annoying tilde
+	data = bytes.Replace(data, []byte{0xcc, 0x88}, []byte{'~'}, -1)
 	// Replace DOS line endings with UNIX line endings
 	data = bytes.Replace(data, []byte{'\r', '\n'}, []byte{'\n'}, -1)
 	// Replace any remaining \r characters with \n
@@ -500,6 +502,8 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 	data = bytes.TrimRightFunc([]byte(e.String()), unicode.IsSpace)
 	// Replace nonbreaking space with regular spaces
 	data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
+	// Fix annoying tilde
+	data = bytes.Replace(data, []byte{0xcc, 0x88}, []byte{'~'}, -1)
 	// Add a final newline
 	data = append(data, '\n')
 
@@ -2019,6 +2023,8 @@ func (e *Editor) InsertFile(c *vt100.Canvas, filename string) error {
 
 	// Replace nonbreaking space with regular space
 	data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
+	// Replace annoying tilde
+	data = bytes.Replace(data, []byte{0xcc, 0x88}, []byte{'~'}, -1)
 	// Replace DOS line endings with UNIX line endings
 	data = bytes.Replace(data, []byte{'\r', '\n'}, []byte{'\n'}, -1)
 	// Replace any remaining \r characters with \n
