@@ -30,6 +30,7 @@ func main() {
 
 		versionFlag = flag.Bool("version", false, "version information")
 		helpFlag    = flag.Bool("help", false, "quick overview of hotkeys")
+		forceFlag   = flag.Bool("f", false, "open even if already open")
 		cpuprofile  = flag.String("cpuprofile", "", "write cpu profile to `file`")
 		memprofile  = flag.String("memprofile", "", "write memory profile to `file`")
 
@@ -351,6 +352,10 @@ Set NO_COLOR=1 to disable colors.
 	if err != nil {
 		// This should never happen, just use the given filename
 		absFilename = e.filename
+	}
+
+	if !(*forceFlag) && ProbablyAlreadyOpen(absFilename) {
+		quitError(tty, fmt.Errorf("\"%s\" is locked by another instance of o. Use -f to force open", absFilename))
 	}
 
 	var (
