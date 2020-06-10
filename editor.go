@@ -2014,6 +2014,24 @@ func (e *Editor) HorizontalScrollIfNeeded(c *vt100.Canvas) {
 	e.redraw = true
 }
 
+// VerticalScrollIfNeeded will scroll along the X axis, if needed
+func (e *Editor) VerticalScrollIfNeeded(c *vt100.Canvas, status *StatusBar) {
+	y := e.pos.sy
+	h := 25
+	if c != nil {
+		h = int(c.H())
+	}
+	if y < h {
+		e.pos.offsetY = 0
+	} else {
+		//e.pos.offsetY = (y - h) + 1
+		//e.pos.sy -= e.pos.offsetY
+		e.redraw = e.ScrollDown(c, status, 1)
+	}
+	e.redrawCursor = true
+	//e.redraw = true
+}
+
 // InsertFile inserts the contents of a file at the current location
 func (e *Editor) InsertFile(c *vt100.Canvas, filename string) error {
 	data, err := ioutil.ReadFile(filename)
