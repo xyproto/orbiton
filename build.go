@@ -187,7 +187,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			exec.Command("ghc", "-dynamic", filename):                       {".hs"}, // Haskell
 			exec.Command("python", "-m", "py_compile", filename):            {".py"}, // Compile to .pyc
 			exec.Command("ocamlopt", "-o", defaultExecutableName, filename): {".ml"}, // OCaml
-			exec.Command("crystal", "build"):                                {".cr"},
+			exec.Command("crystal", "build", filename):                      {".cr"},
+			exec.Command("kotlinc", filename, "-include-runtime", "-d", defaultExecutableName+".jar"): {".kt"}, // Kotlin
 		}
 	)
 
