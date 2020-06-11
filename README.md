@@ -109,11 +109,10 @@ to attempt to update the `pkgver=` and `source=` fields. This may or may not wor
 |-------------------------------------------------|-----------------------------------------------------------|---------------|---------------------------------------------------|-------------------------------------------------------------------|
 | Go                                              | `.go`                                                     | yes           | `go build`                                        | `goimports -w -- $filename`                                       |
 | C++                                             | `.cpp`, `.cc`, `.cxx`, `.h`, `.hpp`, `.c++`, `.h++`, `.c` | yes           | `cxx`                                             | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
-| C++, if `BUILD.bazel` exists                    | `.cc`, `.h`                                               | needs testing | `bazel build`                                     | `clang-format -fallback-style=WebKit -style=file -i -- $filename` |
 | Rust                                            | `.rs`                                                     | yes           | `rustc $filename`                                 | `rustfmt $filename`                                               |
 | Rust, if `Cargo.toml` or `../Cargo.toml` exists | `.rs`                                                     | yes           | `cargo build`                                     | `rustfmt $filename`                                               |
 | Zig                                             | `.zig`                                                    | yes           | `zig build`                                       | `zig fmt $filename`                                               |
-| V                                               | `.v`                                                      | needs testing | `v build`                                         | `v fmt $filename`                                                 |
+| V                                               | `.v`                                                      | yes           | `v build`                                         | `v fmt $filename`                                                 |
 | Haskell                                         | `.hs`                                                     | yes           | `ghc -dynamic $filename`                          | `brittany --write-mode=inplace $filename`                         |
 | Python                                          | `.py`                                                     | yes           | `python -m py_compile $filename`                  | `autopep8 -i --maxline-length 120 $filename`                      |
 | Crystal                                         | `.cr`                                                     | yes           | `crystal build --no-color $filename`              | `crystal tool format $filename`                                   |
@@ -189,7 +188,6 @@ Crystal
 * [`cxx`](https://github.com/xyproto/cxx)
 * `g++` / `base-devel`
 * `clang-format`
-* `bazel`
 * `rustc`
 * `rustfmt`
 * `cargo`
