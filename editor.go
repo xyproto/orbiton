@@ -1741,8 +1741,8 @@ func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redraw bool) {
 
 // FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
 func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines bool) {
-	savePos := e.pos
 	status.ClearAll(c)
+	savePos := e.pos
 	e.SetSearchTerm(c, status, "")
 	vt100.Close()
 	vt100.Reset()
@@ -1760,9 +1760,25 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines b
 	if drawLines {
 		e.DrawLines(c, true, false)
 	}
+
+	// Assign the new canvas to the current canvas
+	*c = *newC
+
+	// TODO: Find out why the following lines are needed to properly handle the SIGWINCH resize signal
+	newC = vt100.NewCanvas()
+	newC.ShowCursor()
+	w = int(newC.Width())
+	if w < e.wordWrapAt {
+		e.wordWrapAt = w
+	} else if e.wordWrapAt < 80 && w >= 80 {
+		e.wordWrapAt = w
+	}
+	if drawLines {
+		e.DrawLines(c, true, false)
+	}
+
 	e.redraw = true
 	e.redrawCursor = true
-	*c = *newC
 }
 
 // GoToPosition can go to the given position struct and use it as the new position
