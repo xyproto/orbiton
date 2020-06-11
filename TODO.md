@@ -2,7 +2,6 @@
 
 ## Bug fixes
 
-- [ ] Resizing the terminal requires a press on `Esc` afterwards.
 - [ ] Some files with wide unicode symbols causes problems with the text flow.
 - [ ] Adding blank lines at the bottom of the terminal does not make the editor scroll.
 - [ ] Arrow left just cycles.
@@ -28,6 +27,8 @@
 
 ## Low priority bug fixes
 
+- [ ] Add `guessica` to the `ctrl-o` menu.
+- [ ] Let `guessica` also set `pkgrel=1` if there was a new version.
 - [ ] Rainbow parentheses that span multiple lines, for Clojure, Emacs Lisp etc.
 - [ ] Quotestate Process can not recognize triple runes, like the previous
       previous rune is ", the previous rune is " and the current rune is ".
