@@ -17,7 +17,9 @@ func (e *Editor) SetUpTerminateHandler(c *vt100.Canvas, status *StatusBar, tty *
 
 	signal.Notify(sigChan, syscall.SIGTERM)
 	go func() {
-		for range sigChan {
+		for {
+			// Block until the signal is received
+			<-sigChan
 			status.SetMessage("ctrl-c")
 			status.Show(c, e)
 		}
