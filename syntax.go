@@ -11,6 +11,8 @@ var (
 
 	// Based on /usr/share/nvim/runtime/syntax/zig.vim
 	zigWords = []string{"const", "var", "extern", "packed", "export", "pub", "noalias", "inline", "noinline", "comptime", "callconv", "volatile", "allowzero", "align", "linksection", "threadlocal", "struct", "enum", "union", "error", "break", "return", "continue", "asm", "defer", "errdefer", "unreachable", "try", "catch", "async", "nosuspend", "await", "suspend", "resume", "if", "else", "switch", "and", "or", "orelse", "while", "for", "null", "undefined", "fn", "usingnamespace", "test", "bool", "f16", "f32", "f64", "f128", "void", "noreturn", "type", "anyerror", "anyframe", "i0", "u0", "isize", "usize", "comptime_int", "comptime_float", "c_short", "c_ushort", "c_int", "c_uint", "c_long", "c_ulong", "c_longlong", "c_ulonglong", "c_longdouble", "c_void", "true", "false", "addWithOverflow", "as", "atomicLoad", "atomicStore", "bitCast", "breakpoint", "alignCast", "alignOf", "cDefine", "cImport", "cInclude", "cUndef", "canImplicitCast", "clz", "cmpxchgWeak", "cmpxchgStrong", "compileError", "compileLog", "ctz", "popCount", "divExact", "divFloor", "divTrunc", "embedFile", "export", "tagName", "TagType", "errorName", "call", "errorReturnTrace", "fence", "fieldParentPtr", "field", "unionInit", "frameAddress", "import", "newStackCall", "asyncCall", "intToPtr", "memcpy", "memset", "mod", "mulWithOverflow", "splat", "bitOffsetOf", "byteOffsetOf", "OpaqueType", "panic", "ptrCast", "ptrToInt", "rem", "returnAddress", "setCold", "Type", "shuffle", "setRuntimeSafety", "setEvalBranchQuota", "setFloatMode", "setGlobalLinkage", "setGlobalSection", "shlExact", "This", "hasDecl", "hasField", "shlWithOverflow", "shrExact", "sizeOf", "bitSizeOf", "sqrt", "byteSwap", "subWithOverflow", "intCast", "floatCast", "intToFloat", "floatToInt", "boolToInt", "errSetCast", "truncate", "typeInfo", "typeName", "TypeOf", "atomicRmw", "bytesToSlice", "sliceToBytes", "intToError", "errorToInt", "intToEnum", "enumToInt", "setAlignStack", "frame", "Frame", "frameSize", "bitReverse", "Vector", "sin", "cos", "exp", "exp2", "log", "log2", "log10", "fabs", "floor", "ceil", "trunc", "round"}
+
+	kotlinWords = []string{"as", "break", "class", "continue", "do", "else", "false", "for", "fun", "if", "in", "interface", "is", "null", "object", "package", "return", "super", "this", "throw", "true", "try", "typealias", "typeof", "val", "var", "when", "while"}
 )
 
 // adjustSyntaxHighlightingKeywords contains per-language adjustments to highlighting of keywords
@@ -29,6 +31,9 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 	case modeZig:
 		syntax.Keywords = make(map[string]struct{})
 		addKeywords = zigWords
+	case modeKotlin:
+		syntax.Keywords = make(map[string]struct{})
+		addKeywords = kotlinWords
 	case modeShell:
 		delKeywords = []string{"float", "with", "exec", "long", "double", "no", "pass", "#else", "#endif", "ret", "super"}
 		addKeywords = []string{"-f", "--force"}

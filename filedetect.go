@@ -24,6 +24,7 @@ const (
 	modeVim        // for Vim or NeoVim configuration, or .vim scripts
 	modeLisp       // for Common Lisp, Emacs Lisp and Clojure
 	modeZig        // for Zig
+	modeKotlin     // for Kotlin
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -90,6 +91,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeLisp
 		case ".zig", ".zir":
 			mode = modeZig
+		case ".kt", ".kts":
+			mode = modeKotlin
 		default:
 			mode = modeBlank
 		}
