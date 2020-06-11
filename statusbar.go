@@ -93,13 +93,12 @@ func (sb *StatusBar) Clear(c *vt100.Canvas) {
 	sb.isError = false
 	mut.Unlock()
 
+	// Then clear/redraw the bottom line
 	h := int(c.H())
-
 	mut.RLock()
 	offsetY := sb.editor.pos.OffsetY()
 	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
 	mut.RUnlock()
-
 	c.Draw()
 }
 
@@ -112,6 +111,14 @@ func (sb *StatusBar) ClearAll(c *vt100.Canvas) {
 	// Not an error message
 	sb.isError = false
 	mut.Unlock()
+
+	// Then clear/redraw the bottom line
+	h := int(c.H())
+	mut.RLock()
+	offsetY := sb.editor.pos.OffsetY()
+	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
+	mut.RUnlock()
+	c.Draw()
 }
 
 // Show will draw a status message, then clear it after a certain delay
