@@ -138,6 +138,8 @@ func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath
 // BuildOrExport will try to build the source code or export the document.
 // Returns a status message and then true if an action was performed and another true if compilation/testing worked out.
 func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename string) (string, bool, bool) {
+	status.Clear(c)
+
 	ext := filepath.Ext(filename)
 
 	// scdoc
@@ -187,7 +189,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			exec.Command("ghc", "-dynamic", filename):                       {".hs"}, // Haskell
 			exec.Command("python", "-m", "py_compile", filename):            {".py"}, // Compile to .pyc
 			exec.Command("ocamlopt", "-o", defaultExecutableName, filename): {".ml"}, // OCaml
-			exec.Command("crystal", "build", filename):                      {".cr"},
+			exec.Command("crystal", "build", "--no-color", filename):        {".cr"},
 			exec.Command("kotlinc", filename, "-include-runtime", "-d", defaultExecutableName+".jar"): {".kt"}, // Kotlin
 		}
 	)
@@ -263,6 +265,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 	errorMarker := "error:"
 	if testingInstead {
 		errorMarker = "FAIL:"
+	} else if ext == ".cr" {
+		errorMarker = "Error:"
 	}
 
 	// Did the command return a non-zero status code, or does the output contain "error:"?
@@ -280,9 +284,11 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		}
 
 		// Find the first error message
-		lines := strings.Split(string(output), "\n")
-
-		var prevLine string
+		var (
+			lines               = strings.Split(string(output), "\n")
+			prevLine            string
+			crystalLocationLine string
+		)
 		for _, line := range lines {
 			if ext == ".hs" {
 				if strings.Contains(prevLine, errorMarker) {
@@ -290,6 +296,15 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 						errorMessage = string([]rune(errorMessage)[2:])
 						break
 					}
+				}
+			} else if ext == ".cr" {
+				if strings.HasPrefix(line, "Error:") {
+					errorMessage = line[6:]
+					if len(crystalLocationLine) > 0 {
+						break
+					}
+				} else if strings.HasPrefix(line, "In ") {
+					crystalLocationLine = line
 				}
 			} else if strings.Contains(line, errorMarker) {
 				parts := strings.SplitN(line, errorMarker, 2)
@@ -304,11 +319,31 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			return errorMessage, true, false
 		}
 
+		if ext == ".cr" {
+			// Crystal has the location on a different line from the error message
+			fields := strings.Split(crystalLocationLine, ":")
+			if len(fields) != 3 {
+				return errorMessage, true, false
+			}
+			if y, err := strconv.Atoi(fields[1]); err == nil { // no error
+				foundY := LineIndex(y - 1)
+				e.redraw = e.GoTo(foundY, c, status)
+				e.redrawCursor = e.redraw
+				if x, err := strconv.Atoi(fields[2]); err == nil { // no error
+					foundX := x - 1
+					tabs := strings.Count(e.Line(foundY), "\t")
+					e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
+					e.Center(c)
+				}
+			}
+			return errorMessage, true, false
+		}
+
 		// NOTE: Don't return here even if errorMessage contains an error message
 
 		// Analyze all lines
 		for i, line := range lines {
-			// Go, C++ and Haskell
+			// Go, C++, Haskell, Kotlin and more
 			if strings.Count(line, ":") >= 3 {
 				fields := strings.SplitN(line, ":", 4)
 				baseErrorFilename := filepath.Base(fields[0])
@@ -327,9 +362,11 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 						foundX = x - 1
 					}
 					if foundX != -1 {
+
 						tabs := strings.Count(e.Line(foundY), "\t")
 						e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
 						e.Center(c)
+
 						// Use the error message as the status message
 						if len(fields) >= 4 {
 							if ext != ".hs" {

@@ -116,8 +116,8 @@ to attempt to update the `pkgver=` and `source=` fields. This may or may not wor
 | V                                               | `.v`                                                      | needs testing | `v build`                                         | `v fmt $filename`                                                 |
 | Haskell                                         | `.hs`                                                     | yes           | `ghc -dynamic $filename`                          | `brittany --write-mode=inplace $filename`                         |
 | Python                                          | `.py`                                                     | yes           | `python -m py_compile $filename`                  | `autopep8 -i --maxline-length 120 $filename`                      |
-| Crystal                                         | `.cr`                                                     | needs testing | `crystal build $filename`                         | `crystal tool format $filename`                                   |
-| Kotlin                                          | `.kt`                                                     | needs testing | `kotlinc $filename -include-runtime -d $name.jar` | `ktlint`                                                          |
+| Crystal                                         | `.cr`                                                     | yes           | `crystal build --no-color $filename`              | `crystal tool format $filename`                                   |
+| Kotlin                                          | `.kt`                                                     | yes           | `kotlinc $filename -include-runtime -d $name.jar` | `ktlint`                                                          |
 
 * `o` will try to jump to the location where the error is and otherwise display `Success`.
 * For regular text files, `ctrl-w` will word wrap the lines to a length of 99.
