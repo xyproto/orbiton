@@ -93,6 +93,10 @@ func (sb *StatusBar) Clear(c *vt100.Canvas) {
 	sb.isError = false
 	mut.Unlock()
 
+	if c == nil {
+		return
+	}
+
 	// Then clear/redraw the bottom line
 	h := int(c.H())
 	mut.RLock()
@@ -111,6 +115,10 @@ func (sb *StatusBar) ClearAll(c *vt100.Canvas) {
 	// Not an error message
 	sb.isError = false
 	mut.Unlock()
+
+	if c == nil {
+		return
+	}
 
 	// Then clear/redraw the bottom line
 	h := int(c.H())

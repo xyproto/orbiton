@@ -138,7 +138,9 @@ func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath
 // BuildOrExport will try to build the source code or export the document.
 // Returns a status message and then true if an action was performed and another true if compilation/testing worked out.
 func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename string) (string, bool, bool) {
-	status.Clear(c)
+	if status != nil {
+		status.Clear(c)
+	}
 
 	ext := filepath.Ext(filename)
 
