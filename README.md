@@ -29,20 +29,21 @@ To unset:
 ## Features and limitations
 
 * Loads up instantly.
-* Small executable size (around **500k**, when built with `gccgo` and compressed with `upx`).
-* Provides syntax highlighting for Go, C++, Markdown and Bash. Other files may also be highlighted (toggle with `ctrl-t`).
-* Rainbow parenthesis, if syntax highlighting is enabled.
+* Reasonable executable size (around 500k, when built with `gccgo` + `upx`).
 * Configuration-free, for better and for worse.
+* Provides syntax highlighting for Go, C++, Markdown, Bash and several other languages. There is generic syntax highlighting.
+* The syntax highlighting is instant.
+* Syntax highlighting can be toggled with `ctrl-t` and the `NO_COLOR` environment variable can be set to disable all colors.
+* Rainbow parentheses makes lines with many parentheses easier to read.
 * Limited to the VT100 standard, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`.
 * Compiles with either `go` or `gccgo`.
-* Tested with `st`, `urxvt` and `xfce4-terminal`.
-* Tested on Arch Linux and FreeBSD.
+* Tested with `st`, `urxvt`, `konsole` and `xfce4-terminal`.
+* Tested on Arch Linux, Debian and FreeBSD.
 * Loads faster than both `vim` and `emacs`.
 * Never asks before saving or quitting. Be careful!
 * Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
 * May provide smart indentation.
-* The syntax highlighting is instant.
 * Requires `/dev/tty` to be available.
 * `xclip` (for X) or `wl-clipboard` (for Wayland) must be installed if the system clipboard is to be used.
 * Only forward search. Press `ctrl-l` and press `return` to jump to the top before searching.
@@ -51,7 +52,6 @@ To unset:
 * The terminal needs to be resized to show the second half of lines that are longer than the terminal width.
 * If the filename is `COMMIT_EDITMSG`, the look and feel will be adjusted for git commit messages.
 * Supports `UTF-8`.
-* Respects the `NO_COLOR` environment variable (for disabling all colors).
 * Can render text to PDF.
 * Only UNIX-style line endings are supported (`\n`).
 * Will convert DOS/Windows line endings (`\r\n`) to UNIX line endings (just `\n`), whenever possible.
@@ -64,7 +64,7 @@ To unset:
 
 ## Known bugs
 
-* There may be remaining issue related to lines that are longer than the terminal width.
+* Some unicode runes may disrupt the text flow. This is generally not a problem, but becomes apparent when opening a non-text file.
 * The smart indentation is not always smart.
 
 ## Hotkeys
