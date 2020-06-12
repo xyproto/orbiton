@@ -2,7 +2,7 @@
 
 ## Bug fixes
 
-- [ ] Some files with wide unicode symbols causes problems with the text flow.
+- [ ] Some files with unusual unicode symbols may cause problems with the text flow.
 - [ ] Adding blank lines at the bottom of the terminal does not make the editor scroll.
 - [ ] Arrow left just cycles.
 - [ ] Read `include.txt` from the directory of the current file.
@@ -10,6 +10,7 @@
 
 ## Features I see myself using straight away
 
+- [ ] If `xcopy` or similar tool is not available, cut/copy/paste via a file.
 - [ ] Pressing `ctrl-v` to paste does not work across X/Wayland sessions. It would be nice to find a more general clipboard solution.
 - [ ] Insert `# vim: ts=2 sw=2 et:` at the bottom when `ctrl-space` is pressed in a PKGBUILD file. Or add a command menu option for this.
 - [ ] For git commit text, highlight column 80 if the text crosses that boundry.
