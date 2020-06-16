@@ -25,6 +25,7 @@ const (
 	modeLisp       // for Common Lisp, Emacs Lisp and Clojure
 	modeZig        // for Zig
 	modeKotlin     // for Kotlin
+	modeJava       // for Java
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -93,6 +94,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeZig
 		case ".kt", ".kts":
 			mode = modeKotlin
+		case ".java":
+			mode = modeJava
 		default:
 			mode = modeBlank
 		}

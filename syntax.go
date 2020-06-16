@@ -34,6 +34,8 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 	case modeKotlin:
 		syntax.Keywords = make(map[string]struct{})
 		addKeywords = kotlinWords
+	case modeJava:
+		addKeywords = []string{"package"}
 	case modeShell:
 		delKeywords = []string{"float", "with", "exec", "long", "double", "no", "pass", "#else", "#endif", "ret", "super"}
 		addKeywords = []string{"-f", "--force"}
