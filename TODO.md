@@ -10,6 +10,7 @@
 
 ## Features I see myself using straight away
 
+- [ ] Improve the built-in Markdown to PDF rendering using mandolyte/mdtopdf
 - [ ] If `xcopy` or similar tool is not available, cut/copy/paste via a file.
 - [ ] Pressing `ctrl-v` to paste does not work across X/Wayland sessions. It would be nice to find a more general clipboard solution.
 - [ ] Insert `# vim: ts=2 sw=2 et:` at the bottom when `ctrl-space` is pressed in a PKGBUILD file. Or add a command menu option for this.
