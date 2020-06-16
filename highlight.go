@@ -71,6 +71,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		line                  string
 		assemblyStyleComments = (e.mode == modeAssembly) || (e.mode == modeLisp)
 		prevLineIsListItem    bool
+		inListItem            bool
 	)
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y := LineIndex(0); y < numlines; y++ {
@@ -100,7 +101,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				case modeGit:
 					coloredString = e.gitHighlight(line)
 				case modeMarkdown:
-					if highlighted, ok, codeBlockFound := markdownHighlight(line, inCodeBlock, prevLineIsListItem); ok {
+					if highlighted, ok, codeBlockFound := markdownHighlight(line, inCodeBlock, prevLineIsListItem, &inListItem); ok {
 						coloredString = highlighted
 						if codeBlockFound {
 							inCodeBlock = !inCodeBlock

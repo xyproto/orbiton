@@ -144,7 +144,7 @@ func isListItem(line string) bool {
 }
 
 // markdownHighlight returns a VT100 colored line, a bool that is true if it worked out and a bool that is true if it's the start or stop of a block quote
-func markdownHighlight(line string, inCodeBlock, prevLineIsListItem bool) (string, bool, bool) {
+func markdownHighlight(line string, inCodeBlock, prevLineIsListItem bool, inListItem *bool) (string, bool, bool) {
 
 	dataPos := 0
 	for i, r := range line {
@@ -225,6 +225,7 @@ func markdownHighlight(line string, inCodeBlock, prevLineIsListItem bool) (strin
 	// Split the rest of the line into words
 	words := strings.Fields(rest)
 	if len(words) == 0 {
+		*inListItem = false
 		// Nothing to do here
 		return "", false, false
 	}
@@ -234,7 +235,7 @@ func markdownHighlight(line string, inCodeBlock, prevLineIsListItem bool) (strin
 	lastWord := words[len(words)-1]
 	switch firstWord {
 	case "#", "##", "###", "####", "#####", "######", "#######":
-		if strings.HasSuffix(lastWord, "#") {
+		if strings.HasSuffix(lastWord, "#") && strings.Contains(rest, " ") {
 			centerLen := len(rest) - (len(firstWord) + len(lastWord))
 			if centerLen > 0 {
 				centerText := rest[len(firstWord) : len(rest)-len(lastWord)]
@@ -247,7 +248,6 @@ func markdownHighlight(line string, inCodeBlock, prevLineIsListItem bool) (strin
 		return leadingSpace + headerTextColor.Get(rest), true, false
 	case "*", "-", "+", "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.", "10.": // ignore numbers over 10
 		if strings.HasPrefix(rest, "- [ ] ") || strings.HasPrefix(rest, "- [x] ") || strings.HasPrefix(rest, "- [X] ") {
-
 			return leadingSpace + listBulletColor.Get(rest[:1]) + " " + checkboxColor.Get(rest[2:3]) + xColor.Get(rest[3:4]) + checkboxColor.Get(rest[4:5]) + " " + emphasis(quotedWordReplace(line[dataPos+6:], '`', listTextColor, listCodeColor), listTextColor, italicsColor, boldColor, strikeColor), true, false
 		}
 		if len(words) > 1 {
@@ -261,8 +261,13 @@ func markdownHighlight(line string, inCodeBlock, prevLineIsListItem bool) (strin
 		return vt100.Red.Get(line), true, false
 	}
 
-	// A completely regular line of text that is also the Continuation of a list item
+	// TODO: Refactor the "in list item" functionality
 	if prevLineIsListItem {
+		*inListItem = true
+	}
+
+	// A completely regular line of text that is also the continuation of a list item
+	if *inListItem {
 		return emphasis(quotedWordReplace(line, '`', listTextColor, listCodeColor), listTextColor, italicsColor, boldColor, strikeColor), true, false
 	}
 
