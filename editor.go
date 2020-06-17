@@ -1351,7 +1351,7 @@ func (e *Editor) TabToTheLeft() bool {
 // Prev will move the cursor to the previous position in the contents
 func (e *Editor) Prev(c *vt100.Canvas) error {
 
-	atTab := e.TabToTheLeft()
+	atTab := e.TabToTheLeft() || (e.pos.sx <= e.spacesPerTab && e.Get(0, e.DataY()) == '\t')
 	if e.pos.sx == 0 && e.pos.offsetX > 0 {
 		// at left edge, but can scroll to the left
 		e.pos.offsetX--
