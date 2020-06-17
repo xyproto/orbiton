@@ -1478,19 +1478,24 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 	return true
 }
 
-// AtLastLineOfDocument is true if we're at the last line of the document (or beyond)
+// AtLastLineOfDocument is true if we're at the last line of the document
 func (e *Editor) AtLastLineOfDocument() bool {
-	return e.DataY() >= LineIndex(e.Len()-1)
+	return e.DataY() == LineIndex(e.Len()-1)
 }
 
-// AfterLastLineOfDocument is true if we're after the last line of the document (or beyond)
+// AfterLastLineOfDocument is true if we're after the last line of the document
 func (e *Editor) AfterLastLineOfDocument() bool {
 	return e.DataY() > LineIndex(e.Len()-1)
 }
 
+// AtOrAfterLastLineOfDocument is true if we're at or after the last line of the document
+func (e *Editor) AtOrAfterLastLineOfDocument() bool {
+	return e.DataY() >= LineIndex(e.Len()-1)
+}
+
 // AtOrAfterEndOfDocument is true if the cursor is at or after the end of the last line of the document
 func (e *Editor) AtOrAfterEndOfDocument() bool {
-	return e.AtLastLineOfDocument() && e.AtOrAfterEndOfLine()
+	return e.AtOrAfterLastLineOfDocument() && e.AtOrAfterEndOfLine()
 }
 
 // AfterEndOfDocument is true if the cursor is after the end of the last line of the document
