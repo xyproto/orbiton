@@ -10,6 +10,7 @@
 
 ## Features I see myself using straight away
 
+- [ ] Add a `ctrl-o` menu option to copy the build command that is used with `ctrl-space` to the clipboard.
 - [ ] Improve the built-in Markdown to PDF rendering using mandolyte/mdtopdf
 - [ ] If `xcopy` or similar tool is not available, cut/copy/paste via a file.
 - [ ] Pressing `ctrl-v` to paste does not work across X/Wayland sessions. It would be nice to find a more general clipboard solution.
