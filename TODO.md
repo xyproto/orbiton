@@ -2,9 +2,8 @@
 
 ## Bug fixes
 
+- [ ] Make dedent when typing `}` work again.
 - [ ] Some files with unusual unicode symbols may cause problems with the text flow.
-- [ ] Adding blank lines at the bottom of the terminal does not make the editor scroll.
-- [ ] Arrow left just cycles.
 - [ ] Read `include.txt` from the directory of the current file.
 - [ ] Shell scripts with if/else/endif blocks that are commented out are highlighted wrong.
 
