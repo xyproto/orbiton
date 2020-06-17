@@ -547,40 +547,27 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 // TrimRight will remove whitespace from the end of the given line number
 func (e *Editor) TrimRight(index LineIndex) {
 	n := int(index)
-	if _, ok := e.lines[n]; !ok {
-		return
-	}
-	lastIndex := len([]rune(e.lines[n])) - 1
-	// find the last non-space position
-	for x := lastIndex; x >= 0; x-- {
-		if !unicode.IsSpace(e.lines[n][x]) {
-			lastIndex = x
-			break
+	if line, ok := e.lines[n]; ok {
+
+		newRunes := []rune(strings.TrimRightFunc(string(line), unicode.IsSpace))
+		if string(newRunes) != string(line) {
+			e.lines[n] = newRunes
+			e.changed = true
 		}
+
 	}
-	// Remove the trailing spaces
-	e.lines[n] = e.lines[n][:(lastIndex + 1)]
-	e.changed = true
 }
 
 // TrimLeft will remove whitespace from the start of the given line number
 func (e *Editor) TrimLeft(index LineIndex) {
 	n := int(index)
-	if _, ok := e.lines[n]; !ok {
-		return
-	}
-	firstIndex := 0
-	lastIndex := len([]rune(e.lines[n])) - 1
-	// find the last non-space position
-	for x := 0; x <= lastIndex; x++ {
-		if !unicode.IsSpace(e.lines[n][x]) {
-			firstIndex = x
-			break
+	if line, ok := e.lines[n]; ok {
+		newRunes := []rune(strings.TrimLeftFunc(string(line), unicode.IsSpace))
+		if string(newRunes) != string(line) {
+			e.lines[n] = newRunes
+			e.changed = true
 		}
 	}
-	// Remove the leading spaces
-	e.lines[n] = e.lines[n][firstIndex:]
-	e.changed = true
 }
 
 // StripSingleLineComment will strip away trailing single-line comments.
