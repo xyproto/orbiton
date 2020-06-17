@@ -1500,12 +1500,12 @@ func (e *Editor) AtOrAfterLastLineOfDocument() bool {
 
 // AtOrAfterEndOfDocument is true if the cursor is at or after the end of the last line of the document
 func (e *Editor) AtOrAfterEndOfDocument() bool {
-	return e.AtOrAfterLastLineOfDocument() && e.AtOrAfterEndOfLine()
+	return (e.AtLastLineOfDocument() && e.AtOrAfterEndOfLine()) || e.AfterLastLineOfDocument()
 }
 
 // AfterEndOfDocument is true if the cursor is after the end of the last line of the document
 func (e *Editor) AfterEndOfDocument() bool {
-	return e.AfterLastLineOfDocument() && e.AtOrAfterEndOfLine()
+	return e.AfterLastLineOfDocument() // && e.AtOrAfterEndOfLine()
 }
 
 // AtEndOfDocument is true if the cursor is at the end of the last line of the document
@@ -1525,6 +1525,9 @@ func (e *Editor) AtLeftEdgeOfDocument() bool {
 
 // AtOrAfterEndOfLine returns true if the cursor is at or after the contents of this line
 func (e *Editor) AtOrAfterEndOfLine() bool {
+	if e.EmptyLine() {
+		return true
+	}
 	x, err := e.DataX()
 	if err != nil {
 		// After end of data
@@ -1535,6 +1538,9 @@ func (e *Editor) AtOrAfterEndOfLine() bool {
 
 // AfterEndOfLine returns true if the cursor is after the contents of this line
 func (e *Editor) AfterEndOfLine() bool {
+	if e.EmptyLine() {
+		return true
+	}
 	x, err := e.DataX()
 	if err != nil {
 		// After end of data
