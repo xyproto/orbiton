@@ -98,8 +98,9 @@ To unset:
 
 ## Updating PKGBUILD files
 
-When editing `PKGBUILD` files, the command menu (`ctrl-o`) will have an extra menu item named `Update PKGBUILD`. This action will use a combination of guesswork and online searching
-to attempt to update the `pkgver=` and `source=` fields. This may or may not work. Press `ctrl-u` or `ctrl-z` to undo, if the change is not as expected.
+When editing `PKGBUILD` files, it is possible to press `ctrl-w` to update the `pkgver=` and `source=` fields, by a combination of guesswork and online searching.
+
+[`guessica`](https://github.com/xyproto/guessica) is the utility that is used for performing the guesswork, and must be installed for this feature to work.
 
 ## Build and format
 
