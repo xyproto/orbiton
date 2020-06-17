@@ -1741,9 +1741,18 @@ Set NO_COLOR=1 to disable colors.
 					noDedent := foundCurlyBracketBelow || foundSquareBracketBelow || foundParenthesisBelow
 
 					if e.pos.sx > 0 && len(lineContents) == 0 && len(whitespaceInFront) > 0 && !noDedent {
+
 						// move one step left
-						e.Prev(c)
-						// trim trailing whitespace
+						atTab := e.TabToTheLeft() || (e.pos.sx <= e.spacesPerTab && e.Get(0, e.DataY()) == '\t')
+						if atTab {
+							e.pos.sx -= e.spacesPerTab
+						} else {
+							e.pos.sx--
+						}
+
+						//e.Prev(c)
+
+						// trim whitespace from this location
 						//e.TrimRight(e.DataY())
 					}
 				}
