@@ -525,6 +525,7 @@ Set NO_COLOR=1 to disable colors.
 				exec.Command("crystal", "tool", "format"):                                         {".cr"},
 				exec.Command("ktlint", "-F"):                                                      {".kt", ".kts"},
 				exec.Command("guessica"):                                                          {"PKGBUILD"},
+				exec.Command("google-java-format", "-i"):                                          {".java"},
 			}
 		OUT:
 			for cmd, extensions := range format {

@@ -179,6 +179,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		}
 	}
 
+	javaShellCommand := "mkdir -p _o_build/META-INF; javac -d ./_o_build *.java; cd _o_build; echo \"Main-Class: $(grep main ../*.java -B9999 | grep class | cut -d' ' -f2 | head -1)\" > META-INF/MANIFEST.MF; jar cmvf META-INF/MANIFEST.MF ../main.jar *.*; cd ..; rm -rf _o_build"
+
 	// Set up a few variables
 	var (
 		// Map from build command to a list of file extensions (or basenames for files without an extension)
@@ -192,7 +194,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			exec.Command("python", "-m", "py_compile", filename):            {".py"}, // Compile to .pyc
 			exec.Command("ocamlopt", "-o", defaultExecutableName, filename): {".ml"}, // OCaml
 			exec.Command("crystal", "build", "--no-color", filename):        {".cr"},
-			exec.Command("kotlinc", filename, "-include-runtime", "-d", defaultExecutableName+".jar"): {".kt"}, // Kotlin
+			exec.Command("kotlinc", filename, "-include-runtime", "-d", defaultExecutableName+".jar"): {".kt"},   // Kotlin, build a .jar
+			exec.Command("sh", "-c", javaShellCommand):                                                {".java"}, // Java, build a .jar
 		}
 	)
 
