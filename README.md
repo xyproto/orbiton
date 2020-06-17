@@ -118,6 +118,7 @@ to attempt to update the `pkgver=` and `source=` fields. This may or may not wor
 | Python                                          | `.py`                                                     | yes           | `python -m py_compile $filename`                  | `autopep8 -i --maxline-length 120 $filename`                      |
 | Crystal                                         | `.cr`                                                     | yes           | `crystal build --no-color $filename`              | `crystal tool format $filename`                                   |
 | Kotlin                                          | `.kt`                                                     | yes           | `kotlinc $filename -include-runtime -d $name.jar` | `ktlint`                                                          |
+| Java                                            | `.java`                                                   | needs testing | see below                                         | `google-java-format -i $filename`                                 |
 
 * `o` will try to jump to the location where the error is and otherwise display `Success`.
 * For regular text files, `ctrl-w` will word wrap the lines to a length of 99.
@@ -131,6 +132,20 @@ CXX can be downloaded here: [GitHub project page for CXX](https://github.com/xyp
 | Markdown  | `.md`            | `pandoc -N --toc -V geometry:a4paper` (writes to `$filename.pdf`) |
 
 If [`guessica`](https://github.com/xyproto/guessica) is installed, `PKGBUILD` files will be updated at the press of `ctrl-w`. The `guessica` utility tries to guess the latest project version, tag and git commit hash for a `PKGBUILD` file and may or may not succeed.
+
+## Java
+
+Since `kotlinc $filename -include-runtime -d` builds to a `.jar`, I though I should do the same for Java. The idea is to easily build a single file that has a `main` function.
+
+If you know an easier way to build a `.jar` file from `*.java`, please let me know by submitting a pull request. This is pretty verbose:
+
+    mkdir -p _o_build/META-INF
+    javac -d ./_o_build *.java
+    cd _o_build
+    echo \"Main-Class: $(grep main ../*.java -B9999 | grep class | cut -d' ' -f2 | head -1)\" > META-INF/MANIFEST.MF
+    jar cmvf META-INF/MANIFEST.MF ../main.jar *.*
+    cd ..
+    rm-rf _o_build
 
 ## Manual installation
 
