@@ -1006,6 +1006,7 @@ Set NO_COLOR=1 to disable colors.
 			e.redraw = true
 			e.redrawCursor = true
 		case "c:8", "c:127": // ctrl-h or backspace
+			//e.TrimRight(e.DataY())
 			// Just clear the search term, if there is an active search
 			if len(e.SearchTerm()) > 0 {
 				e.ClearSearchTerm()
@@ -1027,7 +1028,7 @@ Set NO_COLOR=1 to disable colors.
 					e.TrimRight(e.DataY())
 					e.Delete()
 				}
-			} else if (e.mode == modeShell || e.mode == modePython || e.mode == modeCMake) && e.AtStartOfTextLine() && len(e.LeadingWhitespace()) >= e.spacesPerTab {
+			} else if (e.mode == modeShell || e.mode == modePython || e.mode == modeCMake) && (e.EmptyLine() || e.AtStartOfTextLine()) && len(e.LeadingWhitespace()) >= e.spacesPerTab {
 				// Delete several spaces
 				for i := 0; i < e.spacesPerTab; i++ {
 					// Move back
@@ -1743,7 +1744,7 @@ Set NO_COLOR=1 to disable colors.
 						// move one step left
 						e.Prev(c)
 						// trim trailing whitespace
-						e.TrimRight(e.DataY())
+						//e.TrimRight(e.DataY())
 					}
 				}
 
