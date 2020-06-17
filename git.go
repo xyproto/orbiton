@@ -20,6 +20,8 @@ func (e *Editor) gitHighlight(line string) string {
 			coloredString = vt100.DarkGray.Get(parts[0]+"'") + vt100.LightGreen.Get(parts[1]) + vt100.DarkGray.Get("'"+parts[2])
 		} else if line == "# Changes to be committed:" {
 			coloredString = vt100.DarkGray.Get("# ") + vt100.LightBlue.Get("Changes to be committed:")
+		} else if line == "# Changes not staged for commit:" {
+			coloredString = vt100.DarkGray.Get("# ") + vt100.LightBlue.Get("Changes not staged for commit:")
 		} else if line == "# Untracked files:" {
 			coloredString = vt100.DarkGray.Get("# ") + vt100.LightBlue.Get("Untracked files:")
 		} else if strings.Contains(line, "new file:") {
