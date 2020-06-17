@@ -933,16 +933,22 @@ Set NO_COLOR=1 to disable colors.
 
 			undo.Snapshot(e)
 
-			e.TrimRight(e.DataY())
 			lineContents := e.CurrentLine()
 			trimmedLine := strings.TrimSpace(lineContents)
+
+			// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
+			const alsoDedent = false
+			leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
+
 			if e.pos.AtStartOfLine() && !e.AtOrAfterLastLineOfDocument() {
 				// Insert a new line a the current y position, then shift the rest down.
 				e.InsertLineAbove()
 				// Also move the cursor to the start, since it's now on a new blank line.
 				e.pos.Down(c)
 				e.Home()
-			} else if len(trimmedLine) > 0 && e.AtOrBeforeStartOfTextLine() {
+				// Insert the same leading whitespace for the new line, while moving to the right
+				//e.InsertString(c, leadingWhitespace)
+			} else if len(lineContents) > 0 && e.AtOrBeforeStartOfTextLine() {
 				x := e.pos.ScreenX()
 				// Insert a new line a the current y position, then shift the rest down.
 				e.InsertLineAbove()
@@ -950,10 +956,6 @@ Set NO_COLOR=1 to disable colors.
 				e.pos.Down(c)
 				e.pos.SetX(c, x)
 			} else if e.AtOrAfterEndOfLine() && e.AtOrAfterLastLineOfDocument() {
-
-				// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
-				const alsoDedent = false
-				leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
 
 				e.InsertLineBelow()
 				h := int(c.Height())
@@ -969,24 +971,18 @@ Set NO_COLOR=1 to disable colors.
 
 			} else if e.AtOrAfterEndOfLine() {
 
-				// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
-				const alsoDedent = false
-				leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
-
 				e.InsertLineBelow()
 				e.pos.Down(c)
 				e.Home()
 
 				// Insert the same leading whitespace for the new line, while moving to the right
 				e.InsertString(c, leadingWhitespace)
+
 			} else {
 				const alsoDedent = true
 
 				// Split the current line in two
 				if !e.SplitLine() {
-
-					// Grab the leading whitespace from the current line, and indent or dedent depending on the end of trimmedLine
-					leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
 
 					// Insert a line below, then move down and to the start of it
 					e.InsertLineBelow()
@@ -997,13 +993,13 @@ Set NO_COLOR=1 to disable colors.
 					e.InsertString(c, leadingWhitespace)
 
 				} else {
-					leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
 
 					e.pos.Down(c)
 					e.Home()
 
 					// Insert the same leading whitespace for the new line, while moving to the right
 					e.InsertString(c, leadingWhitespace)
+
 				}
 			}
 			e.redraw = true
