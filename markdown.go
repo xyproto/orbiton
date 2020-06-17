@@ -32,6 +32,27 @@ var (
 	xColor            = vt100.LightYellow // the x in the checkbox: [x]
 )
 
+// ToggleCheckboxCurrentLine will attempt to toggle the Markdown checkbox on the current line of the editor.
+// Returns true if toggled.
+func (e *Editor) ToggleCheckboxCurrentLine() bool {
+	// Toggle Markdown checkboxes
+	if line := e.CurrentLine(); hasAnyPrefixWord(strings.TrimSpace(line), checkboxPrefixes) {
+		if strings.Contains(line, "[ ]") {
+			e.SetLine(e.DataY(), strings.Replace(line, "[ ]", "[x]", 1))
+			e.redraw = true
+		} else if strings.Contains(line, "[x]") {
+			e.SetLine(e.DataY(), strings.Replace(line, "[x]", "[ ]", 1))
+			e.redraw = true
+		} else if strings.Contains(line, "[X]") {
+			e.SetLine(e.DataY(), strings.Replace(line, "[X]", "[ ]", 1))
+			e.redraw = true
+		}
+		e.redrawCursor = e.redraw
+		return true
+	}
+	return false
+}
+
 func runeCount(s string, r rune) int {
 	counter := 0
 	for _, e := range s {

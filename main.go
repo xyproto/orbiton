@@ -495,19 +495,8 @@ Set NO_COLOR=1 to disable colors.
 				break
 			}
 
-			// Toggle Markdown checkboxes
-			if line := e.CurrentLine(); e.mode == modeMarkdown && hasAnyPrefixWord(strings.TrimSpace(line), checkboxPrefixes) {
-				if strings.Contains(line, "[ ]") {
-					e.SetLine(e.DataY(), strings.Replace(line, "[ ]", "[x]", 1))
-					e.redraw = true
-				} else if strings.Contains(line, "[x]") {
-					e.SetLine(e.DataY(), strings.Replace(line, "[x]", "[ ]", 1))
-					e.redraw = true
-				} else if strings.Contains(line, "[X]") {
-					e.SetLine(e.DataY(), strings.Replace(line, "[X]", "[ ]", 1))
-					e.redraw = true
-				}
-				e.redrawCursor = e.redraw
+			if e.mode == modeMarkdown {
+				e.ToggleCheckboxCurrentLine()
 				break
 			}
 
@@ -623,6 +612,12 @@ Set NO_COLOR=1 to disable colors.
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
 		case "c:0": // ctrl-space, build source code to executable, convert to PDF or write to PNG, depending on the mode
+
+			if e.mode == modeMarkdown {
+				undo.Snapshot(e)
+				e.ToggleCheckboxCurrentLine()
+				break
+			}
 
 			// Save the current file, but only if it has changed
 			if e.changed {
