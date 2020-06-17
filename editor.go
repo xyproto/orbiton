@@ -1326,14 +1326,32 @@ func (e *Editor) Next(c *vt100.Canvas) error {
 	return nil
 }
 
+// LeftRune2 returns the rune to the left of the current position, or an error
+func (e *Editor) LeftRune2() (rune, error) {
+	x, err := e.DataX()
+	if err != nil {
+		return rune(0), err
+	}
+	x--
+	if x <= 0 {
+		return rune(0), errors.New("no runes to the left")
+	}
+	return e.Get(x, e.DataY()), nil
+}
+
+// TabToTheLeft returns true if there is a '\t' to the left of the current position
+func (e *Editor) TabToTheLeft() bool {
+	r, err := e.LeftRune2()
+	if err != nil {
+		return false
+	}
+	return r == '\t'
+}
+
 // Prev will move the cursor to the previous position in the contents
 func (e *Editor) Prev(c *vt100.Canvas) error {
-	atTab := false
-	// Ignore it if the position is out of bounds
-	x, _ := e.DataX()
-	if x > 0 {
-		atTab = e.Get(x-1, e.DataY()) == '\t'
-	}
+
+	atTab := e.TabToTheLeft()
 	if e.pos.sx == 0 && e.pos.offsetX > 0 {
 		// at left edge, but can scroll to the left
 		e.pos.offsetX--

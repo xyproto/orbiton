@@ -718,26 +718,44 @@ Set NO_COLOR=1 to disable colors.
 				status.ClearAll(c)
 			}
 		case "←": // left arrow
-			if e.pos.offsetX > 0 && e.pos.sx == 0 {
-				e.pos.offsetX--
-				e.redraw = true
-			} else {
-				e.pos.sx--
-			}
-
-			if e.pos.sx < 0 {
-				e.pos.sx = 0
+			// movement if there is horizontal scrolling
+			if e.pos.offsetX > 0 {
+				if e.pos.sx > 0 {
+					// Move one step left
+					if e.TabToTheLeft() {
+						e.pos.sx -= e.spacesPerTab
+					} else {
+						e.pos.sx--
+					}
+				} else {
+					// Scroll one step left
+					e.pos.offsetX--
+					e.redraw = true
+				}
+				e.SaveX(true)
+			} else if e.pos.sx > 0 {
+				// no horizontal scrolling going on
+				// Move one step left
+				if e.TabToTheLeft() {
+					e.pos.sx -= e.spacesPerTab
+				} else {
+					e.pos.sx--
+				}
+				e.SaveX(true)
+			} else if e.DataY() > 0 {
+				// no scrolling or movement to the left going on
 				e.Up(c, status)
 				e.End(c)
-				e.redraw = true
-			}
-
-			if e.AfterEndOfLine() {
-				e.End(c)
-			}
-
-			e.SaveX(true)
+				//e.redraw = true
+			} // else at the start of the document
 			e.redrawCursor = true
+			// Workaround for Konsole
+			if e.pos.sx <= 2 {
+				// Konsole prints "2H" here, but
+				// no other terminal emulator does that
+				e.redraw = true
+				e.redrawCursor = false
+			}
 		case "→": // right arrow
 			// If on the last line or before, go to the next character
 			if e.DataY() < LineIndex(e.Len()) {
@@ -791,6 +809,7 @@ Set NO_COLOR=1 to disable colors.
 			// TODO: Stay at the same X offset when moving down in the document?
 			if e.pos.offsetX > 0 {
 				e.pos.offsetX = 0
+
 			}
 
 			if e.DataY() < LineIndex(e.Len()) {
