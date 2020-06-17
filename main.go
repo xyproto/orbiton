@@ -955,7 +955,7 @@ Set NO_COLOR=1 to disable colors.
 				// Also move the cursor to the start, since it's now on a new blank line.
 				e.pos.Down(c)
 				e.pos.SetX(c, x)
-			} else if e.AtOrAfterEndOfLine() && e.AtOrAfterLastLineOfDocument() {
+			} else if e.AfterEndOfLine() && e.AtOrAfterLastLineOfDocument() {
 
 				e.InsertLineBelow()
 				h := int(c.Height())
@@ -969,7 +969,7 @@ Set NO_COLOR=1 to disable colors.
 				// Insert the same leading whitespace for the new line, while moving to the right
 				e.InsertString(c, leadingWhitespace)
 
-			} else if e.AtOrAfterEndOfLine() {
+			} else if e.AfterEndOfLine() {
 
 				e.InsertLineBelow()
 				e.pos.Down(c)
@@ -1002,7 +1002,9 @@ Set NO_COLOR=1 to disable colors.
 
 				}
 			}
+			e.SaveX(true)
 			e.redraw = true
+			e.redrawCursor = true
 		case "c:8", "c:127": // ctrl-h or backspace
 			// Just clear the search term, if there is an active search
 			if len(e.SearchTerm()) > 0 {
