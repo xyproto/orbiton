@@ -2,6 +2,7 @@
 
 ## Bug fixes
 
+- [ ] Return at the end of Markdown files creates new lines but does not scroll.
 - [ ] Make dedent when typing `}` work again.
 - [ ] Some files with unusual unicode symbols may cause problems with the text flow.
 - [ ] Read `include.txt` from the directory of the current file.
@@ -9,6 +10,7 @@
 
 ## Features I see myself using straight away
 
+- [ ] Add a `ctrl-o` menu option to copy the entire file to the clipboard.
 - [ ] Add a `ctrl-o` menu option to copy the build command that is used with `ctrl-space` to the clipboard.
 - [ ] Improve the built-in Markdown to PDF rendering using mandolyte/mdtopdf
 - [ ] If `xcopy` or similar tool is not available, cut/copy/paste via a file.
