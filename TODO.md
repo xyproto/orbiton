@@ -2,6 +2,7 @@
 
 ## Bug fixes
 
+- [ ] When pressing `ctrl-v` a second time on the same line, check if the contents are the same before starting mulitline paste.
 - [ ] Return at the end of Markdown files creates new lines but does not scroll.
 - [ ] Make dedent when typing `}` work again.
 - [ ] Some files with unusual unicode symbols may cause problems with the text flow.
