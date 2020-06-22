@@ -26,6 +26,7 @@ const (
 	modeZig        // for Zig
 	modeKotlin     // for Kotlin
 	modeJava       // for Java
+	modeHIDL       // for the Android-related Hardware Abstraction Layer Interface Definition Language
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -96,6 +97,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeKotlin
 		case ".java":
 			mode = modeJava
+		case ".hal":
+			mode = modeHIDL
 		default:
 			mode = modeBlank
 		}
