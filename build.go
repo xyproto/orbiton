@@ -179,7 +179,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		}
 	}
 
-	javaShellCommand := "mkdir -p _o_build/META-INF; javac -d ./_o_build *.java; cd _o_build; echo \"Main-Class: $(grep main ../*.java -B9999 | grep class | cut -d' ' -f2 | head -1)\" > META-INF/MANIFEST.MF; jar cmvf META-INF/MANIFEST.MF ../main.jar *.*; cd ..; rm -rf _o_build"
+	javaShellCommand := "javaFiles=$(find . -type f -name '*.java'); for f in $javaFiles; do grep -q 'static void main' \"$f\" && mainJavaFile=\"$f\"; done; className=$(grep -oP '(?<=class )[A-Z]+[a-z,A-Z,0-9]*' \"$mainJavaFile\" | head -1); packageName=$(grep -oP '(?<=package )[a-z,A-Z,0-9,.]*' \"$mainJavaFile\" | head -1); if [[ $packageName != \"\" ]]; then packageName=\"$packageName.\"; fi; mkdir -p _o_build/META-INF; javac -d _o_build $javaFiles; cd _o_build; echo \"Main-Class: $packageName$className\" > META-INF/MANIFEST.MF; classFiles=$(find . -type f -name '*.class'); jar cmf META-INF/MANIFEST.MF ../main.jar $classFiles; cd ..; rm -rf _o_build"
 
 	// Set up a few variables
 	var (
