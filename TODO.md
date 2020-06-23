@@ -1,11 +1,15 @@
 # TODO
 
-## Bug fixes
+## Primary bug fixes
+
+- [ ] Return at the end of files creates new lines but does not scroll.
+- [ ] File locking.
+
+## Secondary bug fixes
 
 - [ ] When pressing `ctrl-v` a second time on the same line, check if the contents are the same before starting mulitline paste.
-- [ ] Return at the end of Markdown files creates new lines but does not scroll.
 - [ ] Make dedent when typing `}` work again.
-- [ ] Some files with unusual unicode symbols may cause problems with the text flow.
+- [ ] Some files with unusual unicode symbols may cause problems with the text flow. See `testdata`.
 - [ ] Read `include.txt` from the directory of the current file.
 - [ ] Shell scripts with if/else/endif blocks that are commented out are highlighted wrong.
 
