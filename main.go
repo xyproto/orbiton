@@ -368,7 +368,7 @@ Set NO_COLOR=1 to disable colors.
 	absFilename = filepath.Clean(absFilename)
 
 	if !(*forceFlag) && ProbablyAlreadyOpen(absFilename) {
-		quitError(tty, fmt.Errorf("\"%s\" is locked by another instance of o. Use -f to force open", absFilename))
+		quitError(tty, fmt.Errorf("\"%s\" is probably locked by another instance of o. Use -f to force open", absFilename))
 	}
 
 	var (
