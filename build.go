@@ -111,9 +111,9 @@ func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath
 	e.filename = oldFilename
 
 	// TODO: Check if there are environment variables applicable to paper sizes
-
+	// TODO: -N is maybe not needed ?
+	pandocCommand := exec.Command(pandocPath, "-N", "-fmarkdown-implicit_figures", "--toc", "-V", "geometry:a4paper", "-V", "geometry:margin=.4in", "--highlight-style=espresso", "-o", pdfFilename, tmpfn)
 	// Run pandoc
-	pandocCommand := exec.Command(pandocPath, "-N", "--toc", "-V", "geometry:a4paper", "-o", pdfFilename, tmpfn)
 	if err = pandocCommand.Run(); err != nil {
 		_ = os.Remove(tmpfn) // Try removing the temporary filename if pandoc fails
 		status.ClearAll(c)
@@ -165,7 +165,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 	if pandocPath := which("pandoc"); e.mode == modeMarkdown && pandocPath != "" {
 		pdfFilename := strings.Replace(filepath.Base(filename), ".", "_", -1) + ".pdf"
 		// Export to PDF using pandoc, concurrently. The goroutine handles its own status messages.
-		e.mustExportPandoc(c, status, pandocPath, pdfFilename)
+		go e.mustExportPandoc(c, status, pandocPath, pdfFilename)
 		// TODO: Add a minimum of error detection. Perhaps wait just 20ms and check if the goroutine is still running.
 		return "", true, true // no message returned, the mustExportPandoc function handles it's own status output
 	}

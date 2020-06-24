@@ -644,11 +644,11 @@ Set NO_COLOR=1 to disable colors.
 			e.SearchMode(c, status, tty, true)
 		case "c:0": // ctrl-space, build source code to executable, convert to PDF or write to PNG, depending on the mode
 
-			if e.mode == modeMarkdown {
-				undo.Snapshot(e)
-				e.ToggleCheckboxCurrentLine()
-				break
-			}
+			// 			if e.mode == modeMarkdown {
+			// 			 	undo.Snapshot(e)
+			// 				e.ToggleCheckboxCurrentLine()
+			// 				break
+			// 			}
 
 			// Save the current file, but only if it has changed
 			if e.changed {
@@ -708,6 +708,17 @@ Set NO_COLOR=1 to disable colors.
 				e.redrawCursor = true
 				break
 			}
+
+			// Are we in markdown mode? If yes, use pandoc, if available.
+			// 			if pandocPath := which("pandoc"); e.mode == modeMarkdown && pandocPath != "" {
+			// 				pdfFilename := strings.Replace(filepath.Base(filename), ".", "_", -1) + ".pdf"
+			// 				// Export to PDF using pandoc, concurrently.
+			// 				// The goroutine handles its own status output.
+			// 				go e.mustExportPandoc(c, status, pandocPath, pdfFilename)
+			// 				e.redraw = true
+			// 				e.redrawCursor = true
+			// 				break
+			// 			}
 
 			// Save the current text to .pdf directly (without using pandoc)
 

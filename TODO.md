@@ -8,6 +8,7 @@
 
 ## Secondary bug fixes
 
+- [ ] Catch panics just to release the file locks.
 - [ ] Disallow typing in characters like the unusual `/` (altgr?), or handle them better.
 - [ ] Read `include.txt` from the directory of the current file.
 
