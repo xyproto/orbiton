@@ -370,16 +370,36 @@ Set NO_COLOR=1 to disable colors.
 	// Create a LockKeeper for keeping track of which files are being edited
 	lk := NewLockKeeper(expandUser(defaultLockFile))
 
-	// If the lock keeper does not have an overview already, that's fine. Ignore errors from lk.Load().
-	lk.Load()
+	var (
+		canUseLocks   = true
+		lockTimestamp time.Time
+	)
 
-	if *forceFlag {
-		// If -f is given, unlock the current file
-		lk.Unlock(absFilename)
-	} else {
-		if err := lk.Lock(absFilename); err != nil {
-			quitError(tty, fmt.Errorf("\"%s\" is locked by another instance of o. Use -f to unlock and force open", absFilename))
+	// If the lock keeper does not have an overview already, that's fine. Ignore errors from lk.Load().
+	if err := lk.Load(); err != nil {
+		// Could not load an existing lock overview, this might be the first run? Try saving.
+		if err := lk.Save(); err != nil {
+			// Could not save a lock overview. Can not use locks.
+			canUseLocks = false
 		}
+	}
+
+	if canUseLocks {
+		// Check if the lock should be forced
+		if *forceFlag {
+			// Lock and save, regardless of what the previous status is
+			lk.Lock(absFilename)
+			// TODO: If the file was already marked as locked, this is not strictly needed.
+			lk.Save()
+		} else {
+			// Lock the current file, if it's not already locked
+			if err := lk.Lock(absFilename); err != nil {
+				quitMessage(tty, fmt.Sprintf("\"%s\" is locked by another instance of o. Use -f to force open.", absFilename))
+			}
+			// Immediately save the lock file as a signal to other instances of the editor
+			lk.Save()
+		}
+		lockTimestamp = lk.GetTimestamp(absFilename)
 	}
 
 	var (
@@ -1810,9 +1830,25 @@ Set NO_COLOR=1 to disable colors.
 
 	} // end of main loop
 
-	// Unlock the current file and save the lock overview. Ignore errors because they are not critical.
-	lk.Unlock(absFilename)
-	lk.Save()
+	if canUseLocks {
+		// Start by loading the lock overview, just in case something has happened in the mean time
+		lk.Load()
+
+		// Check if the lock is unchanged
+		fileLockTimestamp := lk.GetTimestamp(absFilename)
+		lockUnchanged := lockTimestamp == fileLockTimestamp
+
+		// TODO: If the stored timestamp is older than uptime, unlock and save the lock overview
+
+		//var notime time.Time
+
+		if !(*forceFlag) || lockUnchanged {
+			// If the file has not been locked externally since this instance of the editor was loaded, don't
+			// Unlock the current file and save the lock overview. Ignore errors because they are not critical.
+			lk.Unlock(absFilename)
+			lk.Save()
+		}
+	}
 
 	// Save the current location in the location history and write it to file
 	e.SaveLocation(absFilename, e.locationHistory)

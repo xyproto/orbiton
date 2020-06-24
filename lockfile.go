@@ -33,6 +33,8 @@ func (lk *LockKeeper) Load() error {
 	}
 	defer f.Close()
 
+	f.Sync()
+
 	dec := gob.NewDecoder(f)
 	lockMap := make(map[string]time.Time)
 	err = dec.Decode(&lockMap)
@@ -62,6 +64,8 @@ func (lk *LockKeeper) Save() error {
 	lk.mut.RLock()
 	err = enc.Encode(lk.lockedFiles)
 	lk.mut.RUnlock()
+
+	f.Sync()
 
 	return err
 }
@@ -103,5 +107,17 @@ func (lk *LockKeeper) Unlock(filename string) error {
 	lk.mut.Lock()
 	delete(lk.lockedFiles, filename)
 	lk.mut.Unlock()
+
 	return nil
+}
+
+// GetTimestamp assumes that the file is locked. A blank timestamp may be returned if not.
+func (lk *LockKeeper) GetTimestamp(filename string) time.Time {
+	var timestamp time.Time
+
+	lk.mut.RLock()
+	timestamp = lk.lockedFiles[filename]
+	lk.mut.RUnlock()
+
+	return timestamp
 }
