@@ -23,7 +23,7 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 	var addKeywords, delKeywords []string
 	switch mode {
 	case modeGo:
-		addKeywords = []string{"fallthrough", "string", "print", "println", "range", "defer"}
+		addKeywords = []string{"go", "fallthrough", "string", "print", "println", "range", "defer"}
 		delKeywords = []string{"mut", "pass", "build", "None", "char", "get", "set"}
 	case modeLisp:
 		syntax.Keywords = make(map[string]struct{})
