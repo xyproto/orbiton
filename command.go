@@ -81,7 +81,8 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 				}
 			},
 			2: func() { // insert file
-				if err := e.InsertFile(c, insertFilename); err != nil {
+				editedFileDir := filepath.Dir(e.filename)
+				if err := e.InsertFile(c, filepath.Join(editedFileDir, insertFilename)); err != nil {
 					status.Clear(c)
 					status.SetErrorMessage(err.Error())
 					status.Show(c, e)
