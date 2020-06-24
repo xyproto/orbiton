@@ -2,10 +2,8 @@
 
 ## Primary bug fixes
 
-- [ ] Return at the end of files creates new lines but does not scroll.
-- [ ] File locking. Use a directory of lockfiles in `/.cache/o`.
-  - If the lock age is longer than uptime, remove the lock.
-  - `-f`  to remove lock and open the file anyways.
+- [x] Return at the end of files creates new lines but does not scroll.
+- [x] Make dedent when typing `}` work again.
 
 ## Secondary bug fixes
 
@@ -14,7 +12,6 @@
 - [ ] Some files with unusual unicode symbols may cause problems with the text flow. See `testdata`.
 - [ ] Read `include.txt` from the directory of the current file.
 - [ ] Shell scripts with if/else/endif blocks that are commented out are highlighted wrong.
-- [ ] Make dedent when typing `}` work again.
 
 ## Features I see myself using straight away
 
