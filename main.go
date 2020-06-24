@@ -394,12 +394,24 @@ Set NO_COLOR=1 to disable colors.
 		} else {
 			// Lock the current file, if it's not already locked
 			if err := lk.Lock(absFilename); err != nil {
-				quitMessage(tty, fmt.Sprintf("\"%s\" is locked by another instance of o. Use -f to force open.", absFilename))
+				// TODO: Write a message upon regular quit, so that this message does not appear if o should panic during development.
+				quitMessage(tty, fmt.Sprintf("\"%s\" is locked by another (possibly crashed) instance of o. Use -f to force open.", absFilename))
 			}
 			// Immediately save the lock file as a signal to other instances of the editor
 			lk.Save()
 		}
 		lockTimestamp = lk.GetTimestamp(absFilename)
+
+		// Set up a catch for panics, so that the current file can be unlocked
+		defer func() {
+			if x := recover(); x != nil {
+				// Unlock and save
+				lk.Unlock(absFilename)
+				lk.Save()
+				// Output the error message
+				quitMessage(tty, fmt.Sprintf("%v", x))
+			}
+		}()
 	}
 
 	var (
@@ -975,73 +987,57 @@ Set NO_COLOR=1 to disable colors.
 
 			undo.Snapshot(e)
 
-			lineContents := e.CurrentLine()
-			trimmedLine := strings.TrimSpace(lineContents)
+			var (
+				lineContents = e.CurrentLine()
+				trimmedLine  = strings.TrimSpace(lineContents)
 
-			// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
-			const alsoDedent = false
-			leadingWhitespace := e.smartIndentation(e.LeadingWhitespace(), trimmedLine, alsoDedent)
+				// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
+				leadingWhitespace = e.smartIndentation(e.LeadingWhitespace(), trimmedLine, true) // the last parameter is "also dedent"
 
-			if e.pos.AtStartOfLine() && !e.AtOrAfterLastLineOfDocument() {
-				// Insert a new line a the current y position, then shift the rest down.
-				e.InsertLineAbove()
-				// Also move the cursor to the start, since it's now on a new blank line.
-				e.pos.Down(c)
-				e.Home()
-				// Insert the same leading whitespace for the new line, while moving to the right
-				//e.InsertString(c, leadingWhitespace)
-			} else if len(lineContents) > 0 && e.AtOrBeforeStartOfTextLine() {
-				x := e.pos.ScreenX()
-				// Insert a new line a the current y position, then shift the rest down.
-				e.InsertLineAbove()
-				// Also move the cursor to the start, since it's now on a new blank line.
-				e.pos.Down(c)
-				e.pos.SetX(c, x)
-			} else if e.AfterEndOfLine() && e.AtOrAfterLastLineOfDocument() {
+				noHome = false
+				indent = false
+			)
 
+			switch {
+			case e.AtOrAfterEndOfDocument(): // This case must come first
+				e.InsertString(c, " ")
 				e.InsertLineBelow()
-				h := int(c.Height())
-				if e.pos.sy >= (h - 1) {
-					e.redraw = e.ScrollDown(c, status, 1)
-					e.redrawCursor = true
-				}
-				e.pos.Down(c)
-				e.Home()
-
-				// Insert the same leading whitespace for the new line, while moving to the right
-				e.InsertString(c, leadingWhitespace)
-
-			} else if e.AtOrAfterEndOfLine() {
-
+				//e.InsertString(c, "")
+			case e.AtOrAfterEndOfLine():
 				e.InsertLineBelow()
-				e.pos.Down(c)
-				e.Home()
-
-				// Insert the same leading whitespace for the new line, while moving to the right
-				e.InsertString(c, leadingWhitespace)
-
-			} else {
+				indent = true
+			case e.AtOrAfterLastLineOfDocument():
+				e.InsertLineBelow()
+			case e.pos.AtStartOfLine() || e.AtOrBeforeStartOfTextLine():
+				e.InsertLineAbove()
+				noHome = true
+			default:
 				// Split the current line in two
 				if !e.SplitLine() {
-
-					// Insert a line below, then move down and to the start of it
 					e.InsertLineBelow()
-					e.pos.Down(c)
-					e.Home()
-
-					// Insert the same leading whitespace for the new line, while moving to the right
-					e.InsertString(c, leadingWhitespace)
-
-				} else {
-
-					e.pos.Down(c)
-					e.Home()
-
-					// Insert the same leading whitespace for the new line, while moving to the right
-					e.InsertString(c, leadingWhitespace)
-
 				}
+
 			}
+			e.MakeConsistent()
+
+			e.pos.Down(c)
+
+			h := int(c.Height())
+			if e.pos.sy >= (h - 1) {
+				e.redraw = e.ScrollDown(c, status, 1)
+				e.redrawCursor = true
+			}
+
+			if !noHome {
+				e.Home()
+			}
+
+			if indent && len(leadingWhitespace) > 0 {
+				// Insert the same leading whitespace for the new line, while moving to the right
+				e.InsertString(c, leadingWhitespace)
+				e.GoToStartOfTextLine(c)
+			}
+
 			e.SaveX(true)
 			e.redraw = true
 			e.redrawCursor = true

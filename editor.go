@@ -1427,7 +1427,7 @@ func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int)
 	// Number of lines in the document
 	l := e.Len()
 
-	if offset >= e.Len()-canvasLastY {
+	if offset >= l-canvasLastY {
 		c.Draw()
 		// Don't redraw
 		return false

@@ -3,8 +3,8 @@
 ## Primary bug fixes
 
 - [ ] Make dedent when typing `}` work again.
+- [ ] Fix an issue with backspace not always removing the indentation to the left. Sometimes it removes just a single space.
 - [ ] When pressing `ctrl-v` a second time on the same line, check if the contents are the same before starting mulitline paste.
-- [ ] Catch panics just to release the file locks.
 - [ ] When moving on long lines, using the arrow keys, the cursor may be misplaced when typing letters.
 
 ## Secondary bug fixes
