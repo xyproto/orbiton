@@ -1000,7 +1000,7 @@ Set NO_COLOR=1 to disable colors.
 				// Insert the same leading whitespace for the new line, while moving to the right
 				e.InsertString(c, leadingWhitespace)
 
-			} else if e.AfterEndOfLine() {
+			} else if e.AtOrAfterEndOfLine() {
 
 				e.InsertLineBelow()
 				e.pos.Down(c)
