@@ -1,59 +1,107 @@
 package main
 
 import (
-	"net"
-	"strconv"
+	"encoding/gob"
+	"errors"
+	"os"
+	"path/filepath"
+	"sync"
 	"time"
 )
 
-// string2int tries its best to convert a string to a number from 1024 up to 65535
-func string2int(s string) int {
-	port := 1024
-	multiplier := 1.0
-	for _, r := range s {
-		port += int(float64(r) * multiplier)
-		multiplier += 0.1
-		if port >= 65535 {
-			port = 1024
-		}
-	}
-	return port
+const defaultLockFile = "~/.cache/o/lockfile.txt"
+
+// LockKeeper keeps track of which files are currently being edited by o
+type LockKeeper struct {
+	lockedFiles  map[string]time.Time // from filename to lockfilestamp
+	mut          *sync.RWMutex
+	lockFilename string
 }
 
-// canConnect tries to connect to the given host and port
-func canConnect(addr string) bool {
-	// connecting to addr
-	conn, err := net.DialTimeout("tcp", addr, time.Second*1.0)
+// NewLockKeeper takes an expanded path (not containing ~) to a lock file
+// and creates a new LockKeeper struct, without loading the given lock file.
+func NewLockKeeper(lockFilename string) *LockKeeper {
+	lockMap := make(map[string]time.Time)
+	return &LockKeeper{lockMap, &sync.RWMutex{}, lockFilename}
+}
+
+// Load loads the contents of the main lockfile
+func (lk *LockKeeper) Load() error {
+	f, err := os.Open(lk.lockFilename)
 	if err != nil {
-		// connection did not work out
-		return false
+		return err
 	}
-	// connection worked out
-	if conn != nil {
-		defer conn.Close()
-		return true
+	defer f.Close()
+
+	dec := gob.NewDecoder(f)
+	lockMap := make(map[string]time.Time)
+	err = dec.Decode(&lockMap)
+	if err != nil {
+		return err
 	}
-	// connected, but the connection is nil
-	// Should not happen.
-	return false
+	lk.mut.Lock()
+	lk.lockedFiles = lockMap
+	lk.mut.Unlock()
+	return nil
 }
 
-// ProbablyAlreadyOpen checks if it is likely that the given absolute filename is already open with o
-func ProbablyAlreadyOpen(absFilename string) bool {
-	fileLockPort := string2int(absFilename)
+// Save writes the contents of the main lockfile
+func (lk *LockKeeper) Save() error {
+	// First create the folder for the lock file overview, if needed
+	folderPath := filepath.Dir(lk.lockFilename)
+	os.MkdirAll(folderPath, os.ModePerm)
 
-	// Checking if we can connect to the fileLockPort for this absFilename
-	if canConnect(":" + strconv.Itoa(fileLockPort)) {
-		// yes, return
-		return true
+	f, err := os.OpenFile(lk.lockFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	enc := gob.NewEncoder(f)
+
+	lk.mut.RLock()
+	err = enc.Encode(lk.lockedFiles)
+	lk.mut.RUnlock()
+
+	return err
+}
+
+// Lock marks the given absolute filename as locked.
+// If the file is already locked, an error is returned.
+func (lk *LockKeeper) Lock(filename string) error {
+	var has bool
+	lk.mut.RLock()
+	_, has = lk.lockedFiles[filename]
+	lk.mut.RUnlock()
+
+	if has {
+		return errors.New("already locked: " + filename)
 	}
 
-	// Thanks https://rosettacode.org/wiki/Determine_if_only_one_instance_is_running#Port
-	// Serve on a port, to mark this absFilename as locked
-	_, err := net.Listen("tcp", ":"+strconv.Itoa(fileLockPort))
+	// Add the file to the map
+	lk.mut.Lock()
+	lk.lockedFiles[filename] = time.Now()
+	lk.mut.Unlock()
 
-	// If there was an error, the port is already taken
-	alreadyOpen := err != nil
+	return nil
+}
 
-	return alreadyOpen // Yes, other instances are probably running for this filename, the port could not be opened
+// Unlock marks the given absolute filename as unlocked.
+// If the file is already unlocked, an error is returned.
+func (lk *LockKeeper) Unlock(filename string) error {
+	var has bool
+	lk.mut.RLock()
+	_, has = lk.lockedFiles[filename]
+	lk.mut.RUnlock()
+
+	if !has {
+		// Callee can ignore this error if they want
+		return errors.New("already unlocked: " + filename)
+	}
+
+	// Remove the file from the map
+	lk.mut.Lock()
+	delete(lk.lockedFiles, filename)
+	lk.mut.Unlock()
+	return nil
 }

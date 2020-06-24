@@ -367,8 +367,19 @@ Set NO_COLOR=1 to disable colors.
 	}
 	absFilename = filepath.Clean(absFilename)
 
-	if !(*forceFlag) && ProbablyAlreadyOpen(absFilename) {
-		quitError(tty, fmt.Errorf("\"%s\" is probably locked by another instance of o. Use -f to force open", absFilename))
+	// Create a LockKeeper for keeping track of which files are being edited
+	lk := NewLockKeeper(expandUser(defaultLockFile))
+
+	// If the lock keeper does not have an overview already, that's fine. Ignore errors from lk.Load().
+	lk.Load()
+
+	if *forceFlag {
+		// If -f is given, unlock the current file
+		lk.Unlock(absFilename)
+	} else {
+		if err := lk.Lock(absFilename); err != nil {
+			quitError(tty, fmt.Errorf("\"%s\" is locked by another instance of o. Use -f to unlock and force open", absFilename))
+		}
 	}
 
 	var (
@@ -979,8 +990,6 @@ Set NO_COLOR=1 to disable colors.
 				e.InsertString(c, leadingWhitespace)
 
 			} else {
-				const alsoDedent = true
-
 				// Split the current line in two
 				if !e.SplitLine() {
 
@@ -1800,6 +1809,10 @@ Set NO_COLOR=1 to disable colors.
 		firstLetterSinceStart = "x"
 
 	} // end of main loop
+
+	// Unlock the current file and save the lock overview. Ignore errors because they are not critical.
+	lk.Unlock(absFilename)
+	lk.Save()
 
 	// Save the current location in the location history and write it to file
 	e.SaveLocation(absFilename, e.locationHistory)
