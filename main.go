@@ -389,7 +389,7 @@ Set NO_COLOR=1 to disable colors.
 		if *forceFlag {
 			// Lock and save, regardless of what the previous status is
 			lk.Lock(absFilename)
-			// TODO: If the file was already marked as locked, this is not strictly needed.
+			// TODO: If the file was already marked as locked, this is not strictly needed? The timestamp might be modified, though.
 			lk.Save()
 		} else {
 			// Lock the current file, if it's not already locked

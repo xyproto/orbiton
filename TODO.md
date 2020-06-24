@@ -2,16 +2,15 @@
 
 ## Primary bug fixes
 
-- [x] Return at the end of files creates new lines but does not scroll.
-- [x] Make dedent when typing `}` work again.
+- [ ] Return at the end of files creates new lines but does not scroll.
+- [ ] Make dedent when typing `}` work again.
+- [ ] Some files with unusual unicode symbols may cause problems with the text flow. See `testdata`.
+- [ ] When pressing `ctrl-v` a second time on the same line, check if the contents are the same before starting mulitline paste.
 
 ## Secondary bug fixes
 
-- [ ] When pressing `ctrl-v` a second time on the same line, check if the contents are the same before starting mulitline paste.
 - [ ] Disallow typing in characters like the unusual `/` (altgr?), or handle them better.
-- [ ] Some files with unusual unicode symbols may cause problems with the text flow. See `testdata`.
 - [ ] Read `include.txt` from the directory of the current file.
-- [ ] Shell scripts with if/else/endif blocks that are commented out are highlighted wrong.
 
 ## Features I see myself using straight away
 
@@ -36,6 +35,7 @@
 
 ## Low priority bug fixes
 
+- [ ] Shell scripts with if/else/endif blocks that are commented out are highlighted wrong.
 - [ ] Add `guessica` to the `ctrl-o` menu.
 - [ ] Let `guessica` also set `pkgrel=1` if there was a new version.
 - [ ] Rainbow parentheses that span multiple lines, for Clojure, Emacs Lisp etc.
