@@ -15,7 +15,7 @@ var (
 	kotlinWords = []string{"as", "break", "class", "continue", "do", "else", "false", "for", "fun", "if", "in", "interface", "is", "null", "object", "package", "return", "super", "this", "throw", "true", "try", "typealias", "typeof", "val", "var", "when", "while"}
 
 	// From https://source.android.com/devices/architecture/hidl
-	hidlKeywords = []string{"safe_union", "struct", "union", "enum", "typedef", "generates", "package", "interface", "extends", "import", "constexpr", "oneway"}
+	hidlWords = []string{"safe_union", "struct", "union", "enum", "typedef", "generates", "package", "interface", "extends", "import", "constexpr", "oneway"}
 )
 
 // adjustSyntaxHighlightingKeywords contains per-language adjustments to highlighting of keywords
@@ -39,6 +39,9 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 		addKeywords = kotlinWords
 	case modeJava:
 		addKeywords = []string{"package"}
+	case modeHIDL:
+		syntax.Keywords = make(map[string]struct{})
+		addKeywords = hidlWords
 	case modeShell:
 		delKeywords = []string{"float", "with", "exec", "long", "double", "no", "pass", "#else", "#endif", "ret", "super"}
 		addKeywords = []string{"-f", "--force"}
