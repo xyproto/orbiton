@@ -2,7 +2,6 @@
 
 ## Primary bug fixes
 
-- [ ] When typing text (.txt, .md etc), jump to the line below when reaching column 80. If in the middle of a word, move the word down as well. Make it possible to toggle off with ctrl-o.
 - [ ] Fix an issue with backspace not always removing the indentation to the left. Sometimes it removes just a single space.
 - [ ] When moving on long lines, using the arrow keys, the cursor may be misplaced when typing letters.
 

@@ -1753,8 +1753,8 @@ Set NO_COLOR=1 to disable colors.
 				if len([]rune(key)) > 0 {
 					// Insert a letter. This is what normally happens.
 					wrapped := e.InsertRune(c, []rune(key)[0])
-					e.WriteRune(c)
 					if !wrapped {
+						e.WriteRune(c)
 						e.Next(c)
 					}
 					e.redraw = true
@@ -1799,9 +1799,9 @@ Set NO_COLOR=1 to disable colors.
 					}
 				}
 
-				e.InsertRune(c, r)
+				wrapped := e.InsertRune(c, r)
 				e.WriteRune(c)
-				if len(string(r)) > 0 {
+				if !wrapped && len(string(r)) > 0 {
 					// Move to the next position
 					e.Next(c)
 				}

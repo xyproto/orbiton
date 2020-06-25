@@ -24,14 +24,16 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) bool {
 
 	// If wrapWhenTyping is enabled, check if we should wrap to the next line
 	if e.wrapWhenTyping && e.wrapWidth > 0 && e.pos.sx >= e.wrapWidth {
-		//if e.AtEndOfDocument() {
 		e.InsertLineBelow()
-		e.pos.Down(c)
+		e.pos.sy++
+		y := e.pos.sy
 		e.Home()
+		e.pos.sx = 0
 		if r != ' ' {
 			e.Insert(r)
-			e.Next(c)
+			e.pos.sx = 1
 		}
+		e.pos.sy = y
 
 		h := 80
 		if c != nil {
