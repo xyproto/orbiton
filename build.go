@@ -112,8 +112,9 @@ func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath
 
 	// TODO: Check if there are environment variables applicable to paper sizes
 	// TODO: -N is maybe not needed ?
-	pandocCommand := exec.Command(pandocPath, "-N", "-fmarkdown-implicit_figures", "--toc", "-V", "geometry:a4paper", "-V", "geometry:margin=.4in", "--highlight-style=espresso", "-o", pdfFilename, tmpfn)
+	pandocCommand := exec.Command(pandocPath, "-N", "-fmarkdown-implicit_figures", "--toc", "-V", "\"geometry:a4paper\"", "-V", "\"geometry:margin=.4in\"", "-o", pdfFilename, tmpfn)
 	// Run pandoc
+	//panic(pandocCommand)
 	if err = pandocCommand.Run(); err != nil {
 		_ = os.Remove(tmpfn) // Try removing the temporary filename if pandoc fails
 		status.ClearAll(c)
