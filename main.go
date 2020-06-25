@@ -394,7 +394,7 @@ Set NO_COLOR=1 to disable colors.
 		} else {
 			// Lock the current file, if it's not already locked
 			if err := lk.Lock(absFilename); err != nil {
-				quitMessage(tty, fmt.Sprintf("\"%s\" is locked by another instance of of this editor. Use -f to force open.", absFilename))
+				quitMessage(tty, fmt.Sprintf("\"%s\" is locked by another instance of of this editor (or it was abruptly closed). Use -f to force open.", absFilename))
 			}
 			// Immediately save the lock file as a signal to other instances of the editor
 			lk.Save()
