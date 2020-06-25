@@ -239,7 +239,7 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		doneCollectingLetters bool
 		initialLocation       = e.DataY().LineNumber()
 		pressedReturn         bool
-		searchHistoryIndex    int = 0
+		searchHistoryIndex    int
 	)
 	for !doneCollectingLetters {
 		key = tty.String()
