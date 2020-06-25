@@ -34,7 +34,7 @@ func (e *Editor) UserSave(c *vt100.Canvas, status *StatusBar) {
 
 // CommandMenu will display a menu with various commands that can be browsed with arrow up and arrow down
 // Also returns the selected menu index (can be -1).
-func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, undo *Undo, lastMenuIndex int) int {
+func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) int {
 
 	const insertFilename = "include.txt"
 
@@ -114,6 +114,21 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		actionTitles[len(actionTitles)] = syntaxToggleText
 		actionFunctions[len(actionFunctions)] = func() {
 			e.ToggleSyntaxHighlight()
+		}
+	}
+
+	// Add the unlock menu
+	// TODO: Detect if the current file is locked first
+	if forced {
+		actionTitles[len(actionTitles)] = "Unlock if locked"
+		actionFunctions[len(actionFunctions)] = func() {
+			absFilename, err := filepath.Abs(e.filename)
+			if err == nil { // OK, no problem
+				absFilename = filepath.Clean(absFilename)
+				lk.Load()
+				lk.Unlock(absFilename)
+				lk.Save()
+			}
 		}
 	}
 

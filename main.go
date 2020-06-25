@@ -766,7 +766,7 @@ Set NO_COLOR=1 to disable colors.
 			e.redrawCursor = true
 		case "c:15": // ctrl-o, launch the command menu
 			status.ClearAll(c)
-			lastCommandMenuIndex = e.CommandMenu(c, status, tty, undo, lastCommandMenuIndex)
+			lastCommandMenuIndex = e.CommandMenu(c, status, tty, undo, lastCommandMenuIndex, *forceFlag, lk)
 		case "c:7": // ctrl-g, status mode
 			statusMode = !statusMode
 			if statusMode {
