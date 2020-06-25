@@ -394,8 +394,7 @@ Set NO_COLOR=1 to disable colors.
 		} else {
 			// Lock the current file, if it's not already locked
 			if err := lk.Lock(absFilename); err != nil {
-				// TODO: Write a message upon regular quit, so that this message does not appear if o should panic during development.
-				quitMessage(tty, fmt.Sprintf("\"%s\" is locked by another (possibly crashed) instance of o. Use -f to force open.", absFilename))
+				quitMessage(tty, fmt.Sprintf("\"%s\" is locked by another instance of of this editor. Use -f to force open.", absFilename))
 			}
 			// Immediately save the lock file as a signal to other instances of the editor
 			lk.Save()
@@ -405,9 +404,12 @@ Set NO_COLOR=1 to disable colors.
 		// Set up a catch for panics, so that the current file can be unlocked
 		defer func() {
 			if x := recover(); x != nil {
-				// Unlock and save
+				// Unlock and save the lock file
 				lk.Unlock(absFilename)
 				lk.Save()
+				// Save the current file. The assumption is that it's better than not saving, if something crashes.
+				// TODO: Save to a crash file, then let the editor discover this when it starts.
+				e.Save(c)
 				// Output the error message
 				quitMessage(tty, fmt.Sprintf("%v", x))
 			}
