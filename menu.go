@@ -119,7 +119,7 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 			menu.SelectLast()
 			changed = true
 			resizeMut.Unlock()
-		case "c:27", "q", "c:3", "c:17": // ESC, q, ctrl-c or ctrl-q
+		case "c:27", "q", "c:3", "c:17", "c:15": // ESC, q, ctrl-c, ctrl-q or ctrl-o
 			running = false
 			changed = true
 		case " ", "c:13": // Space or Return
