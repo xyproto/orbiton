@@ -2,13 +2,14 @@
 
 ## Primary bug fixes
 
-- [ ] Make dedent when typing `}` work again.
+- [ ] When typing text (.txt, .md etc), jump to the line below when reaching column 80. If in the middle of a word, move the word down as well. Make it possible to toggle off with ctrl-o.
 - [ ] Fix an issue with backspace not always removing the indentation to the left. Sometimes it removes just a single space.
-- [ ] When pressing `ctrl-v` a second time on the same line, check if the contents are the same before starting mulitline paste.
 - [ ] When moving on long lines, using the arrow keys, the cursor may be misplaced when typing letters.
 
 ## Secondary bug fixes
 
+- [ ] When pressing `ctrl-v` a second time on the same line, check if the contents are the same before starting mulitline paste.
+- [ ] Make dedent when typing `}` work again.
 - [ ] Some files with unusual unicode symbols may cause problems with the text flow. See the `test` directory.
 - [ ] Disallow typing in characters like the unusual `/` (altgr?), or handle them better.
 - [ ] Read `include.txt` from the directory of the current file.
