@@ -48,9 +48,9 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 
 	const insertFilename = "include.txt"
 
-	wordWrapAt := e.wordWrapAt
-	if wordWrapAt == 0 {
-		wordWrapAt = 80
+	wrapWidth := e.wrapWidth
+	if wrapWidth == 0 {
+		wrapWidth = 80
 	}
 
 	var (
@@ -61,7 +61,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			0: "Save and quit",
 			1: "Sort the list of strings on the current line",
 			2: "Insert \"" + insertFilename + "\" at the current line",
-			3: "Word wrap at " + strconv.Itoa(wordWrapAt),
+			3: "Word wrap at " + strconv.Itoa(wrapWidth),
 		}
 		// These numbers must correspond with actionTitles!
 		// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file.
@@ -91,13 +91,13 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			3: func() { // word wrap
 				// word wrap at the current width - 5, with an allowed overshoot of 5 runes
 
-				tmpWrapAt := e.wordWrapAt
-				e.wordWrapAt = wordWrapAt
-				if e.WrapAllLinesAt(wordWrapAt-5, 5) {
+				tmpWrapAt := e.wrapWidth
+				e.wrapWidth = wrapWidth
+				if e.WrapAllLinesAt(wrapWidth-5, 5) {
 					e.redraw = true
 					e.redrawCursor = true
 				}
-				e.wordWrapAt = tmpWrapAt
+				e.wrapWidth = tmpWrapAt
 			},
 		}
 		extraDashes = false

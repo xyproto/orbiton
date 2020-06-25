@@ -194,8 +194,8 @@ Set NO_COLOR=1 to disable colors.
 	if !e.syntaxHighlight {
 		// Adjust the word wrap if the terminal is too narrow
 		w := int(c.Width())
-		if w < e.wordWrapAt {
-			e.wordWrapAt = w
+		if w < e.wrapWidth {
+			e.wrapWidth = w
 		}
 	}
 
@@ -333,7 +333,7 @@ Set NO_COLOR=1 to disable colors.
 		} else if e.EmptyLine() {
 			e.InsertLineBelow()
 		}
-		e.wordWrapAt = 80
+		e.wrapWidth = 80
 	}
 
 	// If the file starts with a hash bang, enable syntax highlighting
@@ -975,11 +975,13 @@ Set NO_COLOR=1 to disable colors.
 		case " ": // space
 			undo.Snapshot(e)
 			// Place a space
-			e.InsertRune(c, ' ')
+			wrapped := e.InsertRune(c, ' ')
+			if !wrapped {
+				e.WriteRune(c)
+				// Move to the next position
+				e.Next(c)
+			}
 			e.redraw = true
-			e.WriteRune(c)
-			// Move to the next position
-			e.Next(c)
 		case "c:13": // return
 
 			// Modify the paste double-keypress detection to allow for a manual return before pasting the rest
@@ -1750,9 +1752,11 @@ Set NO_COLOR=1 to disable colors.
 				// Type the letter that was pressed
 				if len([]rune(key)) > 0 {
 					// Insert a letter. This is what normally happens.
-					e.InsertRune(c, []rune(key)[0])
+					wrapped := e.InsertRune(c, []rune(key)[0])
 					e.WriteRune(c)
-					e.Next(c)
+					if !wrapped {
+						e.Next(c)
+					}
 					e.redraw = true
 				}
 			} else if len([]rune(key)) > 0 && unicode.IsGraphic([]rune(key)[0]) { // any other key that can be drawn

@@ -38,13 +38,14 @@ type Editor struct {
 	redraw             bool                  // if the contents should be redrawn in the next loop
 	redrawCursor       bool                  // if the cursor should be moved to the location it is supposed to be
 	lineBeforeSearch   LineIndex             // save the current line when jumping between search results
-	wordWrapAt         int                   // set to 80 or 100 to trigger word wrap when typing to that column
+	wrapWidth          int                   // set to 80 or 100 to trigger word wrap when typing to that column
 	mode               Mode                  // a filetype mode, like for git or markdown
 	filename           string                // the current filename
 	locationHistory    map[string]LineNumber // location history, for jumping to the last location when opening a file
 	quit               bool                  // for indicating if the user wants to end the editor session
 	clearOnQuit        bool                  // clear the terminal when quitting the editor, or not
-	lightTheme         bool                  // using a light theme? (the XTERM_VERSION environment variable is set)
+	wrapWhenTyping     bool
+	lightTheme         bool // using a light theme? (the XTERM_VERSION environment variable is set)
 	EditorColors
 }
 
@@ -75,16 +76,22 @@ func NewEditor(spacesPerTab int, syntaxHighlight, rainbowParenthesis bool, scrol
 	e.searchFg = searchFg
 	// If the file is not to be highlighted, set word wrap to 99 (0 to disable)
 	if !syntaxHighlight {
-		e.wordWrapAt = 99
+		e.wrapWidth = 99
+		e.wrapWhenTyping = true
 	}
 	if mode == modeGit {
 		// The subject should ideally be maximum 50 characters long, then the body of the
 		// git commit message can be 72 characters long. Because e-mail standards.
-		e.wordWrapAt = 72
+		e.wrapWidth = 72
+		e.wrapWhenTyping = true
+	} else if mode == modeMarkdown {
+		e.wrapWidth = 99
+		e.wrapWhenTyping = true
 	}
 	e.mode = mode
 	e.multiLineComment = multiLineComment
 	e.multiLineString = multiLineString
+
 	return e
 }
 
@@ -94,7 +101,8 @@ func NewEditor(spacesPerTab int, syntaxHighlight, rainbowParenthesis bool, scrol
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
 	e := NewEditor(4, false, false, 1, vt100.White, vt100.Black, vt100.Magenta, vt100.Gray, vt100.Magenta, syntax.DefaultTextConfig, modeBlank)
-	e.wordWrapAt = wordWrapLimit
+	e.wrapWidth = wordWrapLimit
+	e.wrapWhenTyping = true
 	return e
 }
 
@@ -722,7 +730,7 @@ func (e *Editor) MakeConsistent() {
 // WithinLimit will check if a line is within the word wrap limit,
 // given a Y position.
 func (e *Editor) WithinLimit(y LineIndex) bool {
-	return len(e.lines[int(y)]) < e.wordWrapAt
+	return len(e.lines[int(y)]) < e.wrapWidth
 }
 
 // LastWord will return the last word of a line,
@@ -747,11 +755,11 @@ func (e *Editor) SplitOvershoot(index LineIndex, isSpace bool) ([]rune, []rune, 
 	y := int(index)
 
 	// Maximum word length to not keep as one word
-	maxDistance := e.wordWrapAt / 2
+	maxDistance := e.wrapWidth / 2
 	if e.WithinLimit(index) {
 		return e.lines[y], make([]rune, 0), false
 	}
-	splitPosition := e.wordWrapAt
+	splitPosition := e.wrapWidth
 	if isSpace {
 		splitPosition, _ = e.DataX()
 	} else {
@@ -1433,7 +1441,9 @@ func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int)
 		return false
 	}
 
-	status.Clear(c)
+	if status != nil {
+		status.Clear(c)
+	}
 
 	if (offset + canScroll) >= (l - canvasLastY) {
 		// Almost at the bottom, we can scroll the remaining lines
@@ -1767,10 +1777,10 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines b
 	newC := vt100.NewCanvas()
 	newC.ShowCursor()
 	w := int(newC.Width())
-	if w < e.wordWrapAt {
-		e.wordWrapAt = w
-	} else if e.wordWrapAt < 80 && w >= 80 {
-		e.wordWrapAt = w
+	if w < e.wrapWidth {
+		e.wrapWidth = w
+	} else if e.wrapWidth < 80 && w >= 80 {
+		e.wrapWidth = w
 	}
 	e.pos = savePos
 	if drawLines {
@@ -1784,10 +1794,10 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines b
 	newC = vt100.NewCanvas()
 	newC.ShowCursor()
 	w = int(newC.Width())
-	if w < e.wordWrapAt {
-		e.wordWrapAt = w
-	} else if e.wordWrapAt < 80 && w >= 80 {
-		e.wordWrapAt = w
+	if w < e.wrapWidth {
+		e.wrapWidth = w
+	} else if e.wrapWidth < 80 && w >= 80 {
+		e.wrapWidth = w
 	}
 	if drawLines {
 		e.DrawLines(c, true, false)
