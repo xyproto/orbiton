@@ -5,7 +5,8 @@ import (
 )
 
 // InsertRune will insert a rune at the current data position, with word wrap
-func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
+// Returns true if the line was wrapped
+func (e *Editor) InsertRune(c *vt100.Canvas, r rune) bool {
 	// Insert a regular space instead of a nonbreaking space.
 	// Nobody likes nonbreaking spaces.
 	if r == 0xc2a0 {
@@ -17,22 +18,43 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) {
 	// The document will be changed
 	e.changed = true
 
-	// --- Repaint afterwards ---
+	// Repaint afterwards
 	e.redrawCursor = true
 	e.redraw = true
 
-	// Disable word wrap completely, for now.
-	// TODO: Rewrite the InsertRune function
+	// If wrapWhenTyping is enabled, check if we should wrap to the next line
+	if e.wrapWhenTyping && e.wrapWidth > 0 && e.pos.sx >= e.wrapWidth {
+		//if e.AtEndOfDocument() {
+		e.InsertLineBelow()
+		e.pos.Down(c)
+		e.Home()
+		if r != ' ' {
+			e.Insert(r)
+			e.Next(c)
+		}
+
+		h := 80
+		if c != nil {
+			h = int(c.Height())
+		}
+		if e.pos.sy >= (h - 1) {
+			e.ScrollDown(c, nil, 1)
+		}
+		return true
+	}
+
+	// A regular insert, no wrapping
 	e.Insert(r)
 
+	// Scroll right when reaching 95% of the terminal width
 	wf := 80.0
 	if c != nil {
 		wf = float64(c.Width())
 	}
-	// Scroll right when reaching 95% of the terminal width
 	if e.pos.sx > int(wf*0.95) {
 		// scroll
 		e.pos.offsetX++
 		e.pos.sx--
 	}
+	return false
 }
