@@ -9,37 +9,27 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// UserCommand performs an editor command, given an action string, like "save"
-func (e *Editor) UserCommand(c *vt100.Canvas, status *StatusBar, action string) {
-	switch action {
-	case "save":
-		status.ClearAll(c)
-		// Save the file
-		if err := e.Save(c); err != nil {
-			status.SetMessage(err.Error())
-			status.Show(c, e)
-			break
-		}
-		// Save the current location in the location history and write it to file
-		absFilename, err := filepath.Abs(e.filename)
-		if err == nil { // no error
-			absFilename = filepath.Clean(absFilename)
-			e.SaveLocation(absFilename, e.locationHistory)
-		}
-		// Status message
-		status.SetMessage("Saved " + e.filename)
+// UserSave saves the file and the location history
+func (e *Editor) UserSave(c *vt100.Canvas, status *StatusBar) {
+	status.ClearAll(c)
+	// Save the file
+	if err := e.Save(c); err != nil {
+		status.SetMessage(err.Error())
 		status.Show(c, e)
-
-		e.pos.offsetX = 0
-		c.Draw()
-	case "quit":
-		e.quit = true        // indicate that the user wishes to quit
-		e.clearOnQuit = true // clear the terminal after quitting
-	case "sortstrings":
-		// sort the list of comma or space separated strings, either quoted with ", with ' or "bare"
-		e.SortStrings(c, status)
-	case "wordwrap":
+		return
 	}
+	// Save the current location in the location history and write it to file
+	absFilename, err := filepath.Abs(e.filename)
+	if err == nil { // no error
+		absFilename = filepath.Clean(absFilename)
+		e.SaveLocation(absFilename, e.locationHistory)
+	}
+	// Status message
+	status.SetMessage("Saved " + e.filename)
+	status.Show(c, e)
+
+	e.pos.offsetX = 0
+	c.Draw()
 }
 
 // CommandMenu will display a menu with various commands that can be browsed with arrow up and arrow down
@@ -53,6 +43,11 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		wrapWidth = 80
 	}
 
+	wrapWhenTypingStatus := "off"
+	if e.wrapWhenTyping {
+		wrapWhenTypingStatus = "on"
+	}
+
 	var (
 		noColor = os.Getenv("NO_COLOR") != ""
 
@@ -62,15 +57,16 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			1: "Sort the list of strings on the current line",
 			2: "Insert \"" + insertFilename + "\" at the current line",
 			3: "Word wrap at " + strconv.Itoa(wrapWidth),
+			4: "Toggle word wrap when typing (currently " + wrapWhenTypingStatus + ")",
 		}
 		// These numbers must correspond with actionTitles!
 		// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file.
 		actionFunctions = map[int]func(){
-			//0: func() { e.UserCommand(c, status, "save") },
 			0: func() { // save and quit
 				e.clearOnQuit = true
-				e.UserCommand(c, status, "save")
-				e.UserCommand(c, status, "quit")
+				e.UserSave(c, status)
+				e.quit = true        // indicate that the user wishes to quit
+				e.clearOnQuit = true // clear the terminal after quitting
 			},
 			1: func() { // sort strings on the current line
 				undo.Snapshot(e)
@@ -98,6 +94,12 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 					e.redrawCursor = true
 				}
 				e.wrapWidth = tmpWrapAt
+			},
+			4: func() { // toggle word wrap when typing
+				e.wrapWhenTyping = !e.wrapWhenTyping
+				if e.wrapWidth == 0 {
+					e.wrapWidth = 79
+				}
 			},
 		}
 		extraDashes = false
