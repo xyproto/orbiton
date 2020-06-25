@@ -66,6 +66,7 @@ To unset:
 ## Known bugs
 
 * Some unicode runes may disrupt the text flow. This is generally not a problem, but becomes apparent when opening a non-text file.
+* The cursor may be misplaced when moving around on long lines and then inserting text.
 * The smart indentation is not always smart.
 
 ## Hotkeys
@@ -306,6 +307,6 @@ Pressing `ctrl-space` will render Markdown files to PDF using `pandoc` (as oppos
 
 ## General info
 
-* Version: 2.30.2
+* Version: 2.30.3
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
