@@ -106,6 +106,22 @@ func nextGitRebaseKeyword(line string) string {
 	return strings.Replace(line, first, next, 1)
 }
 
+// equalStringSlices checks if two given string slices are equal or not
+// returns true if they are equal
+func equalStringSlices(a, b []string) bool {
+	lena := len(a)
+	lenb := len(b)
+	if lena != lenb {
+		return false
+	}
+	for i := 0; i < lena; i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // logf, for quick "printf-style" debugging
 func logf(head string, tail ...interface{}) {
 	tmpdir := os.Getenv("TMPDIR")

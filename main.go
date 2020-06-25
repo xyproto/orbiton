@@ -21,7 +21,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const version = "o 2.30.2"
+const version = "o 2.30.3"
 
 func main() {
 	var (
@@ -36,9 +36,10 @@ func main() {
 
 		statusDuration = 2700 * time.Millisecond
 
-		copyLines  []string  // for the cut/copy/paste functionality
-		bookmark   *Position // for the bookmark/jump functionality
-		statusMode bool      // if information should be shown at the bottom
+		copyLines         []string  // for the cut/copy/paste functionality
+		previousCopyLines []string  // for checking if a paste is the same as last time
+		bookmark          *Position // for the bookmark/jump functionality
+		statusMode        bool      // if information should be shown at the bottom
 
 		firstLetterSinceStart string
 		firstPasteAction      bool = true
@@ -1614,6 +1615,14 @@ Set NO_COLOR=1 to disable colors.
 			if len(copyLines) == 0 {
 				break
 			}
+
+			// Now save the contents to "previousCopyLines" and check if they are the same first
+			if !equalStringSlices(copyLines, previousCopyLines) {
+				// Start with single-line paste if the contents are new
+				lastPasteY = -1
+			}
+			previousCopyLines = copyLines
+
 			// Prepare to paste
 			undo.Snapshot(e)
 			y := e.DataY()
