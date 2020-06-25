@@ -1,17 +1,12 @@
 # TODO
 
-## Primary bug fixes
+## Bug fixes
 
 - [ ] Fix an issue with backspace not always removing the indentation to the left. Sometimes it removes just a single space.
 - [ ] When moving on long lines, using the arrow keys, the cursor may be misplaced when typing letters.
-
-## Secondary bug fixes
-
-- [ ] When pressing `ctrl-v` a second time on the same line, check if the contents are the same before starting mulitline paste.
 - [ ] Make dedent when typing `}` work again.
 - [ ] Some files with unusual unicode symbols may cause problems with the text flow. See the `test` directory.
 - [ ] Disallow typing in characters like the unusual `/` (altgr?), or handle them better.
-- [ ] Read `include.txt` from the directory of the current file.
 
 ## Features I see myself using straight away
 
