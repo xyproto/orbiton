@@ -2,6 +2,8 @@
 
 ## Bug fixes
 
+- [ ] Pasting text with middle-click should paste more than the first character.
+- [ ] Return sometimes inserts an additional blank line, for long lines. Fix.
 - [ ] Fix an issue with backspace not always removing the indentation to the left. Sometimes it removes just a single space.
 - [ ] When moving on long lines, using the arrow keys, the cursor may be misplaced when typing letters.
 - [ ] Make dedent when typing `}` work again.
