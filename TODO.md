@@ -6,15 +6,15 @@
 - [ ] Return sometimes inserts an additional blank line, for long lines. Fix.
 - [ ] Fix an issue with backspace not always removing the indentation to the left. Sometimes it removes just a single space.
 - [ ] When moving on long lines, using the arrow keys, the cursor may be misplaced when typing letters.
-- [ ] Make dedent when typing `}` work again.
 - [ ] Some files with unusual unicode symbols may cause problems with the text flow. See the `test` directory.
 - [ ] Disallow typing in characters like the unusual `/` (altgr?), or handle them better.
 
 ## Features I see myself using straight away
 
+- [ ] Make dedent when typing `}` work again.
 - [ ] Add a `ctrl-o` menu option to copy the entire file to the clipboard.
 - [ ] Add a `ctrl-o` menu option to copy the build command that is used with `ctrl-space` to the clipboard.
-- [ ] Improve the built-in Markdown to PDF rendering using mandolyte/mdtopdf
+- [ ] Improve the built-in Markdown to PDF rendering using `mandolyte/mdtopdf`.
 - [ ] If `xcopy` or similar tool is not available, cut/copy/paste via a file.
 - [ ] Pressing `ctrl-v` to paste does not work across X/Wayland sessions. It would be nice to find a more general clipboard solution.
 - [ ] Insert `# vim: ts=2 sw=2 et:` at the bottom when `ctrl-space` is pressed in a PKGBUILD file. Or add a command menu option for this.
