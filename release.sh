@@ -19,8 +19,8 @@ echo '* NetBSD'
 GOOS=netbsd go build -mod=vendor -o $name.netbsd
 echo '* Linux ARM64'
 GOOS=linux GOARCH=arm64 go build -mod=vendor -o $name.linux_arm64
-echo '* RPI 2/3'
-GOOS=linux GOARCH=arm GOARM=6 go build -mod=vendor -o $name.rpi
+echo '* RPI 2/3/4'
+GOOS=linux GOARCH=arm GOARM=7 go build -mod=vendor -o $name.rpi
 echo '* Linux static w/ upx'
 CGO_ENABLED=0 GOOS=linux go build -mod=vendor -v -trimpath -ldflags "-s" -a -o $name.linux_static && upx $name.linux_static
 
