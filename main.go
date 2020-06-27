@@ -1012,6 +1012,7 @@ Set NO_COLOR=1 to disable colors.
 				e.InsertLineBelow()
 				indent = true
 			case e.AtOrAfterLastLineOfDocument():
+				e.InsertString(c, "")
 				e.InsertLineBelow()
 			case e.pos.AtStartOfLine() || e.AtOrBeforeStartOfTextLine():
 				e.InsertLineAbove()
