@@ -1005,9 +1005,8 @@ Set NO_COLOR=1 to disable colors.
 
 			switch {
 			case e.AtOrAfterEndOfDocument(): // This case must come first
-				e.InsertString(c, " ")
+				e.InsertString(c, "")
 				e.InsertLineBelow()
-				//e.InsertString(c, "")
 			case e.AtOrAfterEndOfLine():
 				e.InsertLineBelow()
 				indent = true
