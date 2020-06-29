@@ -43,9 +43,9 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		wrapWidth = 80
 	}
 
-	wrapWhenTypingStatus := "off"
+	wrapWhenTypingToggleText := "Enable word wrap when typing"
 	if e.wrapWhenTyping {
-		wrapWhenTypingStatus = "on"
+		wrapWhenTypingToggleText = "Disable word wrap when typing"
 	}
 
 	var (
@@ -54,10 +54,10 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		// These numbers must correspond with actionFunctions!
 		actionTitles = map[int]string{
 			0: "Save and quit",
-			1: "Sort the list of strings on the current line",
-			2: "Insert \"" + insertFilename + "\" at the current line",
-			3: "Word wrap at " + strconv.Itoa(wrapWidth),
-			4: "Toggle word wrap when typing (currently " + wrapWhenTypingStatus + ")",
+			1: wrapWhenTypingToggleText,
+			2: "Word wrap at " + strconv.Itoa(wrapWidth),
+			3: "Sort the list of strings on the current line",
+			4: "Insert \"" + insertFilename + "\" at the current line",
 		}
 		// These numbers must correspond with actionTitles!
 		// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file.
@@ -68,25 +68,14 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 				e.quit = true        // indicate that the user wishes to quit
 				e.clearOnQuit = true // clear the terminal after quitting
 			},
-			1: func() { // sort strings on the current line
-				undo.Snapshot(e)
-				if err := e.SortStrings(c, status); err != nil {
-					status.Clear(c)
-					status.SetErrorMessage(err.Error())
-					status.Show(c, e)
+			1: func() { // toggle word wrap when typing
+				e.wrapWhenTyping = !e.wrapWhenTyping
+				if e.wrapWidth == 0 {
+					e.wrapWidth = 79
 				}
 			},
-			2: func() { // insert file
-				editedFileDir := filepath.Dir(e.filename)
-				if err := e.InsertFile(c, filepath.Join(editedFileDir, insertFilename)); err != nil {
-					status.Clear(c)
-					status.SetErrorMessage(err.Error())
-					status.Show(c, e)
-				}
-			},
-			3: func() { // word wrap
+			2: func() { // word wrap
 				// word wrap at the current width - 5, with an allowed overshoot of 5 runes
-
 				tmpWrapAt := e.wrapWidth
 				e.wrapWidth = wrapWidth
 				if e.WrapAllLinesAt(wrapWidth-5, 5) {
@@ -95,10 +84,20 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 				}
 				e.wrapWidth = tmpWrapAt
 			},
-			4: func() { // toggle word wrap when typing
-				e.wrapWhenTyping = !e.wrapWhenTyping
-				if e.wrapWidth == 0 {
-					e.wrapWidth = 79
+			3: func() { // sort strings on the current line
+				undo.Snapshot(e)
+				if err := e.SortStrings(c, status); err != nil {
+					status.Clear(c)
+					status.SetErrorMessage(err.Error())
+					status.Show(c, e)
+				}
+			},
+			4: func() { // insert file
+				editedFileDir := filepath.Dir(e.filename)
+				if err := e.InsertFile(c, filepath.Join(editedFileDir, insertFilename)); err != nil {
+					status.Clear(c)
+					status.SetErrorMessage(err.Error())
+					status.Show(c, e)
 				}
 			},
 		}
