@@ -84,7 +84,10 @@ func NewEditor(spacesPerTab int, syntaxHighlight, rainbowParenthesis bool, scrol
 		// git commit message can be 72 characters long. Because e-mail standards.
 		e.wrapWidth = 72
 		e.wrapWhenTyping = true
-	} else if mode == modeMarkdown || mode == modeText || mode == modeBlank {
+	} else if mode == modeMarkdown {
+		e.wrapWidth = 99
+		e.wrapWhenTyping = false
+	} else if mode == modeText || mode == modeBlank {
 		e.wrapWidth = 99
 		e.wrapWhenTyping = true
 	}
