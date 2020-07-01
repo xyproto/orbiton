@@ -137,7 +137,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		// Add the "Red/Black text" menu item text and menu function
 		actionTitles[len(actionTitles)] = "Red/black theme"
 		actionFunctions[len(actionFunctions)] = func() {
-			e.setFlameTheme()
+			e.setRedBlackTheme()
 			e.SetSyntaxHighlight(true)
 			e.FullResetRedraw(c, status, true)
 		}

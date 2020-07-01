@@ -97,12 +97,12 @@ func (e *Editor) setLightTheme() {
 	menuSelectedColor = vt100.LightRed
 }
 
-// setFlameTheme sets a gray/red/orange/black/white theme, suitable for dark backgrounds
-func (e *Editor) setFlameTheme() {
+// setRedBlackTheme sets a red/black/gray theme
+func (e *Editor) setRedBlackTheme() {
 	e.lightTheme = false
 
 	e.fg = vt100.White
-	e.bg = vt100.BackgroundBlack // Gray background, as opposed to BackgroundDefault
+	e.bg = vt100.BackgroundBlack // Dark gray background, as opposed to BackgroundDefault
 	e.searchFg = vt100.Red
 	e.gitColor = vt100.Red
 	e.multiLineComment = vt100.DarkGray
@@ -110,19 +110,19 @@ func (e *Editor) setFlameTheme() {
 
 	syntax.DefaultTextConfig.String = "white"
 	syntax.DefaultTextConfig.Keyword = "darkred"
-	syntax.DefaultTextConfig.Comment = "darkgray"
-	syntax.DefaultTextConfig.Type = "lightgray"
-	syntax.DefaultTextConfig.Literal = "darkred"
-	syntax.DefaultTextConfig.Punctuation = "white"
+	syntax.DefaultTextConfig.Comment = "gray"
+	syntax.DefaultTextConfig.Type = "darkred"
+	syntax.DefaultTextConfig.Literal = "white"
+	syntax.DefaultTextConfig.Punctuation = "darkred"
 	syntax.DefaultTextConfig.Plaintext = "lightgray"
 	syntax.DefaultTextConfig.Tag = "darkred"
 	syntax.DefaultTextConfig.TextTag = "darkred"
 	syntax.DefaultTextConfig.TextAttrName = "darkred"
 	syntax.DefaultTextConfig.TextAttrValue = "darkred"
-	syntax.DefaultTextConfig.Decimal = "darkred"
+	syntax.DefaultTextConfig.Decimal = "white"
 	syntax.DefaultTextConfig.AndOr = "darkred"
 	syntax.DefaultTextConfig.Dollar = "white"
-	syntax.DefaultTextConfig.Star = "white"
+	syntax.DefaultTextConfig.Star = "darkred"
 	syntax.DefaultTextConfig.Class = "darkred"
 	syntax.DefaultTextConfig.Private = "white"
 	syntax.DefaultTextConfig.Protected = "white"
@@ -141,7 +141,7 @@ func (e *Editor) setFlameTheme() {
 	codeBlockColor = vt100.White
 
 	// Rainbow parentheses
-	rainbowParenColors = []vt100.AttributeColor{vt100.LightBlue, vt100.Red, vt100.Gray}
+	rainbowParenColors = []vt100.AttributeColor{vt100.Gray, vt100.White, vt100.Red}
 	unmatchedParenColor = vt100.White
 
 	// Command menu
