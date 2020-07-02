@@ -134,10 +134,18 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 	// Add the option to change the colors, for non-light themes (fg != black)
 	if !e.lightTheme && !noColor { // Not a light theme and NO_COLOR is not set
 
-		// Add the "Red/Black text" menu item text and menu function
+		// Add the "Red/Black theme" menu item text and menu function
 		actionTitles[len(actionTitles)] = "Red/black theme"
 		actionFunctions[len(actionFunctions)] = func() {
 			e.setRedBlackTheme()
+			e.SetSyntaxHighlight(true)
+			e.FullResetRedraw(c, status, true)
+		}
+
+		// Add the "Default theme" menu item text and menu function
+		actionTitles[len(actionTitles)] = "Default theme"
+		actionFunctions[len(actionFunctions)] = func() {
+			e.setDefaultTheme()
 			e.SetSyntaxHighlight(true)
 			e.FullResetRedraw(c, status, true)
 		}

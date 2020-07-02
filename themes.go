@@ -7,6 +7,8 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+// TODO: Don't put any theme colors in global variables. Introduce an EditorTheme struct.
+
 var (
 	// Color scheme for the "text edit" mode
 	defaultEditorForeground       = vt100.LightGreen // for when syntax highlighting is not in use
@@ -41,6 +43,74 @@ var (
 		Whitespace:    "",
 	}
 )
+
+// setDefaultTheme sets the default colors
+func (e *Editor) setDefaultTheme() {
+
+	e.lightTheme = false
+
+	e.fg = vt100.LightGreen // for when syntax highlighting is not in use
+	e.bg = vt100.BackgroundDefault
+
+	e.searchFg = vt100.LightMagenta
+	e.gitColor = vt100.LightGreen
+	e.multiLineComment = vt100.Gray
+	e.multiLineString = vt100.Magenta
+
+	syntax.DefaultTextConfig.String = "lightyellow"
+	syntax.DefaultTextConfig.Keyword = "lightred"
+	syntax.DefaultTextConfig.Comment = "gray"
+	syntax.DefaultTextConfig.Type = "lightblue"
+	syntax.DefaultTextConfig.Literal = "lightgreen"
+	syntax.DefaultTextConfig.Punctuation = "lightblue"
+	syntax.DefaultTextConfig.Plaintext = "lightgreen"
+	syntax.DefaultTextConfig.Tag = "lightgreen"
+	syntax.DefaultTextConfig.TextTag = "lightgreen"
+	syntax.DefaultTextConfig.TextAttrName = "lightgreen"
+	syntax.DefaultTextConfig.TextAttrValue = "lightgreen"
+	syntax.DefaultTextConfig.Decimal = "white"
+	syntax.DefaultTextConfig.AndOr = "lightyellow"
+	syntax.DefaultTextConfig.Dollar = "lightred"
+	syntax.DefaultTextConfig.Star = "lightyellow"
+	syntax.DefaultTextConfig.Class = "lightred"
+	syntax.DefaultTextConfig.Private = "darkred"
+	syntax.DefaultTextConfig.Protected = "darkyellow"
+	syntax.DefaultTextConfig.Public = "darkgreen"
+	syntax.DefaultTextConfig.Whitespace = ""
+
+	// Markdown
+	textColor = vt100.LightBlue
+	headerBulletColor = vt100.DarkGray
+	headerTextColor = vt100.LightGreen
+	listBulletColor = vt100.Red
+	listTextColor = vt100.LightCyan
+	listCodeColor = vt100.Default
+	codeColor = vt100.Default
+	codeBlockColor = vt100.Default
+	imageColor = vt100.LightYellow
+	linkColor = vt100.Magenta
+	quoteColor = vt100.Yellow
+	quoteTextColor = vt100.LightCyan
+	htmlColor = vt100.Default
+	commentColor = vt100.DarkGray
+	boldColor = vt100.LightYellow
+	italicsColor = vt100.White
+	strikeColor = vt100.DarkGray
+	tableColor = vt100.Blue
+	checkboxColor = vt100.Default
+	xColor = vt100.LightYellow
+
+	// Rainbow parentheses
+	rainbowParenColors = []vt100.AttributeColor{vt100.LightMagenta, vt100.LightRed, vt100.Yellow, vt100.LightYellow, vt100.LightGreen, vt100.LightBlue}
+	unmatchedParenColor = vt100.White
+
+	// Command menu
+	menuTitleColor = vt100.LightYellow
+	menuArrowColor = vt100.Red
+	menuTextColor = vt100.Gray
+	menuHighlightColor = vt100.LightBlue
+	menuSelectedColor = vt100.LightCyan
+}
 
 // setLightTheme sets a theme suitable for white backgrounds
 func (e *Editor) setLightTheme() {
@@ -100,14 +170,12 @@ func (e *Editor) setLightTheme() {
 // setRedBlackTheme sets a red/black/gray theme
 func (e *Editor) setRedBlackTheme() {
 	e.lightTheme = false
-
 	e.fg = vt100.White
 	e.bg = vt100.BackgroundBlack // Dark gray background, as opposed to BackgroundDefault
 	e.searchFg = vt100.Red
 	e.gitColor = vt100.Red
 	e.multiLineComment = vt100.DarkGray
 	e.multiLineString = vt100.Red
-
 	syntax.DefaultTextConfig.String = "white"
 	syntax.DefaultTextConfig.Keyword = "darkred"
 	syntax.DefaultTextConfig.Comment = "gray"
@@ -128,7 +196,6 @@ func (e *Editor) setRedBlackTheme() {
 	syntax.DefaultTextConfig.Protected = "white"
 	syntax.DefaultTextConfig.Public = "lightgray"
 	syntax.DefaultTextConfig.Whitespace = ""
-
 	// Markdown, switch light colors to darker ones
 	headerTextColor = vt100.Red
 	textColor = vt100.LightGray
@@ -139,11 +206,9 @@ func (e *Editor) setRedBlackTheme() {
 	listCodeColor = vt100.White
 	codeColor = vt100.White
 	codeBlockColor = vt100.White
-
 	// Rainbow parentheses
 	rainbowParenColors = []vt100.AttributeColor{vt100.Gray, vt100.White, vt100.Red}
 	unmatchedParenColor = vt100.White
-
 	// Command menu
 	menuTitleColor = vt100.Red
 	menuArrowColor = vt100.White
