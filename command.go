@@ -47,7 +47,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 	if c != nil {
 		w := int(c.Width())
 		if w < wrapWidth {
-			wrapWidth = w
+			wrapWidth = w - int(0.05 * float64(w))
 		}
 	}
 
