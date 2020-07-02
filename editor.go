@@ -2093,6 +2093,6 @@ func (e *Editor) InsertFile(c *vt100.Canvas, filename string) error {
 	// Replace any remaining \r characters with \n
 	data = bytes.Replace(data, []byte{'\r'}, []byte{'\n'}, -1)
 
-	e.InsertString(c, strings.TrimSpace(string(data)))
+	e.InsertString(c, strings.TrimRightFunc(string(data), unicode.IsSpace))
 	return nil
 }
