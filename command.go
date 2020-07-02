@@ -43,6 +43,14 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		wrapWidth = 80
 	}
 
+	// Let the menu item for wrapping words suggest the minimum of e.wrapWidth and the terminal width
+	if c != nil {
+		w := int(c.Width())
+		if w < wrapWidth {
+			wrapWidth = w
+		}
+	}
+
 	wrapWhenTypingToggleText := "Enable word wrap when typing"
 	if e.wrapWhenTyping {
 		wrapWhenTypingToggleText = "Disable word wrap when typing"
