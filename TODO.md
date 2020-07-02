@@ -2,6 +2,8 @@
 
 ## Bug fixes
 
+- [ ] Copy and paste does not work when using a terminal with a different user and no graphical environment.
+      Check if DISPLAY is set before using `xcopy`. Do a similar check for Wayland.
 - [ ] Pasting text with middle-click should paste more than the first character.
 - [ ] Return sometimes inserts an additional blank line, for long lines. Fix.
 - [ ] Fix an issue with backspace not always removing the indentation to the left. Sometimes it removes just a single space.
