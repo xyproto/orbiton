@@ -89,7 +89,7 @@ func NewEditor(spacesPerTab int, syntaxHighlight, rainbowParenthesis bool, scrol
 		e.wrapWhenTyping = false
 	} else if mode == modeText || mode == modeBlank {
 		e.wrapWidth = 99
-		e.wrapWhenTyping = true
+		e.wrapWhenTyping = false
 	}
 	e.mode = mode
 	e.multiLineComment = multiLineComment
