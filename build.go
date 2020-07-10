@@ -355,7 +355,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 				baseErrorFilename := filepath.Base(fields[0])
 				// Check if the filenames are matching, or if the error is in a different file
 				if baseErrorFilename != baseFilename {
-					return "In " + baseErrorFilename + "! " + strings.TrimSpace(fields[3]), true, false
+					return "In " + baseErrorFilename + ": " + strings.TrimSpace(fields[3]), true, false
 				}
 				// Go to Y:X, if available
 				var foundY LineIndex
