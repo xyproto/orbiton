@@ -59,6 +59,11 @@ func main() {
 		previousKey string // keep track of the previous key press
 
 		lastCommandMenuIndex int // for the command menu
+
+		bookmarkCounter int
+		portal          *Portal
+
+		key string // for the main loop
 	)
 
 	flag.Parse()
@@ -514,8 +519,6 @@ Set NO_COLOR=1 to disable colors.
 		vt100.SetXY(uint(x), uint(y))
 		e.redrawCursor = false
 	}
-
-	var key string
 
 	// This is the main loop for the editor
 	for !e.quit {
@@ -1685,7 +1688,14 @@ Set NO_COLOR=1 to disable colors.
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:2": // ctrl-b, bookmark, unbookmark or jump to bookmark
-			if bookmark == nil {
+			status.Clear(c)
+			bookmarkCounter++
+			if bookmarkCounter%3 == 0 {
+				status.SetMessage("Opening a portal at " + filename + ":" + e.LineNumber().String())
+				portal = &Portal{absFilename, e.LineNumber()}
+				portal.Save()
+				// Don't set bookmark to nil
+			} else if bookmark == nil {
 				// no bookmark, create a bookmark at the current line
 				bookmark = e.pos.Copy()
 				// TODO: Modify the statusbar implementation so that extra spaces are not needed here.
