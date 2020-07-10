@@ -1000,7 +1000,7 @@ Set NO_COLOR=1 to disable colors.
 				trimmedLine  = strings.TrimSpace(lineContents)
 
 				// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
-				leadingWhitespace = e.smartIndentation(e.LeadingWhitespace(), trimmedLine, true) // the last parameter is "also dedent"
+				leadingWhitespace = e.smartIndentation(e.LeadingWhitespace(), trimmedLine, false) // the last parameter is "also dedent"
 
 				noHome = false
 				indent = false
