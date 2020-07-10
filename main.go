@@ -60,8 +60,7 @@ func main() {
 
 		lastCommandMenuIndex int // for the command menu
 
-		bookmarkCounter int
-		portal          *Portal
+		bookmarkCounter int // for detecting a triple ctrl-b
 
 		key string // for the main loop
 	)
@@ -970,11 +969,12 @@ Set NO_COLOR=1 to disable colors.
 			// Now do a full reset/redraw
 			fallthrough
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
+			ClearPortal()
 			// Reset the cut/copy/paste double-keypress detection
 			lastCopyY = -1
 			lastPasteY = -1
 			lastCutY = -1
-			// Do a full clear and redraw
+			// Do a full clear and redraw + clear search term
 			e.FullResetRedraw(c, status, true)
 		case " ": // space
 			undo.Snapshot(e)
@@ -1572,6 +1572,39 @@ Set NO_COLOR=1 to disable colors.
 			}
 		case "c:22": // ctrl-v, paste
 
+			if portal, err := LoadPortal(); err == nil { // no error
+				undo.Snapshot(e)
+
+				status.Clear(c)
+
+				line, err := portal.PopLine()
+				if err != nil {
+					status.SetErrorMessage("Could not pop from the portal, closing it.")
+					status.Show(c, e)
+					ClearPortal()
+					break
+				}
+
+				status.SetMessage(fmt.Sprintf("Using portal at %s\n", portal))
+				status.Show(c, e)
+
+				if e.EmptyRightTrimmedLine() {
+					// If the line is empty, use the existing indentation before pasting
+					y := e.DataY()
+					e.SetLine(y, e.LeadingWhitespace()+strings.TrimSpace(line))
+				} else {
+					// If the line is not empty, insert the trimmed string
+					e.InsertString(c, strings.TrimSpace(line))
+				}
+
+				e.InsertLineBelow()
+				e.Down(c, nil) // no status message if the end of ducment is reached, there should always be a new line
+
+				e.redraw = true
+
+				break
+			} // errors with loading a portal are ignored
+
 			// This may only work for the same user, and not with sudo/su
 
 			// Try fetching the lines from the clipboard first
@@ -1650,6 +1683,7 @@ Set NO_COLOR=1 to disable colors.
 					// If the line is not empty, insert the trimmed string
 					e.InsertString(c, strings.TrimSpace(copyLines[0]))
 				}
+
 			} else { // Multi line paste (the rest of the lines)
 				// Pressed the second time for this line number, paste multiple lines without trimming
 				var (
@@ -1691,18 +1725,34 @@ Set NO_COLOR=1 to disable colors.
 			status.Clear(c)
 			bookmarkCounter++
 			if bookmarkCounter%3 == 0 {
-				status.SetMessage("Opening a portal at " + filename + ":" + e.LineNumber().String())
-				portal = &Portal{absFilename, e.LineNumber()}
-				portal.Save()
+				bookmarkCounter = 0
+				if err := (&Portal{absFilename, e.LineNumber()}).Save(); err != nil {
+					status.SetErrorMessage(err.Error())
+				} else {
+					status.SetMessage("Opened a portal at " + filename + ":" + e.LineNumber().String())
+				}
 				// Don't set bookmark to nil
-			} else if bookmark == nil {
+				status.Show(c, e)
+				//e.redraw = true
+				break
+			}
+			clearedPortal := ClearPortal() == nil
+			if bookmark == nil {
 				// no bookmark, create a bookmark at the current line
 				bookmark = e.pos.Copy()
 				// TODO: Modify the statusbar implementation so that extra spaces are not needed here.
-				status.SetMessage("  Bookmarked line " + e.LineNumber().String() + "  ")
+				s := "Bookmarked line " + e.LineNumber().String()
+				if clearedPortal {
+					s += " and closed the portal"
+				}
+				status.SetMessage("  " + s + "  ")
 			} else if bookmark.LineNumber() == e.LineNumber() {
 				// bookmarking the same line twice: remove the bookmark
-				status.SetMessage("Removed bookmark for line " + bookmark.LineNumber().String())
+				s := "Removed bookmark for line " + bookmark.LineNumber().String()
+				if clearedPortal {
+					s += " and closed the portal"
+				}
+				status.SetMessage(s)
 				bookmark = nil
 			} else {
 				// jumping to a bookmark
@@ -1712,7 +1762,11 @@ Set NO_COLOR=1 to disable colors.
 				e.DrawLines(c, true, false)
 				e.redraw = false
 				// Show the status message.
-				status.SetMessage("Jumped to bookmark at line " + e.LineNumber().String())
+				s := "Jumped to bookmark at line " + e.LineNumber().String()
+				if clearedPortal {
+					s += " and closed the portal"
+				}
+				status.SetMessage(s)
 			}
 			status.Show(c, e)
 			e.redrawCursor = true
