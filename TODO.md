@@ -13,9 +13,6 @@
 
 ## Features I see myself using straight away
 
-- [ ] Let `ctrl-b` three times open a portal.
-      When the portal is active, `ctrl-v` will pull one line of text from the portal, across files (and remove it from the other file).
-      If `esc` or `ctrl-b` is pressed, the portal closes.
 - [ ] Make dedent when typing `}` work again.
 - [ ] Add a `ctrl-o` menu option to copy the entire file to the clipboard.
 - [ ] Add a `ctrl-o` menu option to copy the build command that is used with `ctrl-space` to the clipboard.
