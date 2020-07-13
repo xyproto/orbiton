@@ -1142,7 +1142,7 @@ Set NO_COLOR=1 to disable colors.
 			if (!unicode.IsSpace(leftRune) || endsWithSpecial) && e.pos.sx > 0 && e.mode != modeBlank {
 				lineAbove := 1
 				if strings.TrimSpace(e.Line(LineIndex(y-lineAbove))) == "" {
-					// The line above is empty, use the indendation before the line above that
+					// The line above is empty, use the indentation before the line above that
 					lineAbove--
 				}
 				indexAbove := LineIndex(y - lineAbove)
@@ -1584,7 +1584,7 @@ Set NO_COLOR=1 to disable colors.
 				}
 
 				e.InsertLineBelow()
-				e.Down(c, nil) // no status message if the end of ducment is reached, there should always be a new line
+				e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
 
 				e.redraw = true
 
@@ -1699,7 +1699,7 @@ Set NO_COLOR=1 to disable colors.
 						skipFirstLineInsert = false
 					} else {
 						e.InsertLineBelow()
-						e.Down(c, nil) // no status message if the end of ducment is reached, there should always be a new line
+						e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
 					}
 					e.InsertString(c, line)
 				}

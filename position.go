@@ -66,12 +66,12 @@ func (p *Position) SetY(y int) {
 	p.sy = y
 }
 
-// SetOffsetX will set the screen X scolling offset
+// SetOffsetX will set the screen X scrolling offset
 func (p *Position) SetOffsetX(offsetX int) {
 	p.offsetX = offsetX
 }
 
-// SetOffsetY will set the screen Y scolling offset
+// SetOffsetY will set the screen Y scrolling offset
 func (p *Position) SetOffsetY(offsetY int) {
 	p.offsetY = offsetY
 }

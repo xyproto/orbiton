@@ -303,7 +303,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	go func() {
 
 		// Wait 4 * 4 milliseconds, while listening to the quit channel.
-		// This is to delay showing the progressbar until some time has passed.
+		// This is to delay showing the progress bar until some time has passed.
 		for i := 0; i < 4; i++ {
 			// Check if we should quit or wait
 			select {
@@ -422,7 +422,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 		return message, err
 	}
 
-	// Replace nonbreaking space with regular space
+	// Replace non-breaking space with regular space
 	data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
 	// Fix annoying tilde
 	data = bytes.Replace(data, []byte{0xcc, 0x88}, []byte{'~'}, -1)
@@ -511,7 +511,7 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 	}
 	// Skip trailing newlines
 	data = bytes.TrimRightFunc([]byte(e.String()), unicode.IsSpace)
-	// Replace nonbreaking space with regular spaces
+	// Replace non-breaking space with regular spaces
 	data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
 	// Fix annoying tilde
 	data = bytes.Replace(data, []byte{0xcc, 0x88}, []byte{'~'}, -1)
@@ -1368,7 +1368,7 @@ func (e *Editor) Prev(c *vt100.Canvas) error {
 		e.pos.offsetX--
 		e.redraw = true
 	} else {
-		// If at a tab character, move a few more posisions
+		// If at a tab character, move a few more positions
 		if atTab {
 			e.pos.sx -= e.spacesPerTab
 		} else {

@@ -193,7 +193,7 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 	// Clear the existing handler
 	signal.Reset(syscall.SIGWINCH)
 
-	// Restore the resize thandler
+	// Restore the resize handler
 	e.SetUpResizeHandler(c, status, tty)
 
 	return menu.Selected()

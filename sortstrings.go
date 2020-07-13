@@ -46,7 +46,7 @@ func (ws Words) Swap(i, j int) {
 // sortStrings tries to identify and sort a given list of strings in a string.
 // The strings are expected to be surrounded by either () or {},
 // or that the entire given string is a list of strings.
-// The strings may be space seprated or comma separated (consitently).
+// The strings may be space separated or comma separated (consistently).
 // The strings may be single quoted, double quoted or none (may be non-consistent).
 func sortStrings(line string) (string, error) {
 	trimmedLine := strings.TrimSpace(line)
@@ -194,7 +194,7 @@ func sortStrings(line string) (string, error) {
 // SortStrings tries to find and sort a list of strings on the current line.
 // The strings are expected to be surrounded by either () or {},
 // or that the entire given string is a list of strings.
-// The strings may be space seprated or comma separated (consitently).
+// The strings may be space separated or comma separated (consistently).
 // The strings may be single quoted, double quoted or none (may be non-consistent).
 func (e *Editor) SortStrings(c *vt100.Canvas, status *StatusBar) error {
 	// Sort the strings in the current line, return an error if there are problems

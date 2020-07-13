@@ -4,7 +4,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// MenuWidget represents a TUI widget for presting a menu with choices for the user
+// MenuWidget represents a TUI widget for presenting a menu with choices for the user
 type MenuWidget struct {
 	title          string               // title
 	w              uint                 // width

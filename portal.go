@@ -71,7 +71,7 @@ func (p *Portal) Save() error {
 	return os.Chmod(expandUser(portalFilename), 0666)
 }
 
-// String returns the current portal (filenane + linenumber) as a colon separated string
+// String returns the current portal (filename + line number) as a colon separated string
 func (p *Portal) String() string {
 	return filepath.Base(p.absFilename) + ":" + p.lineNumber.String()
 }

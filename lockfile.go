@@ -99,7 +99,7 @@ func (lk *LockKeeper) Unlock(filename string) error {
 	lk.mut.RUnlock()
 
 	if !has {
-		// Callee can ignore this error if they want
+		// Caller can ignore this error if they want
 		return errors.New("already unlocked: " + filename)
 	}
 

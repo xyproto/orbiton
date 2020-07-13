@@ -187,7 +187,8 @@ func (sb *StatusBar) Show(c *vt100.Canvas, e *Editor) {
 	c.Draw()
 }
 
-// ShowNoTimeout will draw a status message that will not be cleared after a certain timeout
+// ShowNoTimeout will draw a status message that will not be
+// cleared after a certain timeout.
 func (sb *StatusBar) ShowNoTimeout(c *vt100.Canvas, e *Editor) {
 	mut.RLock()
 	if sb.msg == "" {

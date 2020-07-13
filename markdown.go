@@ -144,7 +144,7 @@ func emphasis(line string, textColor, italicsColor, boldColor, strikeColor vt100
 	result = style(result, "**", textColor, boldColor)
 	result = style(result, "__", textColor, boldColor)
 	// For now, nested emphasis and italics are not supported, only bold and strikethrough
-	// TODO: Implement nexted emphasis and italics
+	// TODO: Implement nested emphasis and italics
 	//result = style(result, "*", textColor, italicsColor)
 	//result = style(result, "_", textColor, italicsColor)
 	return result
