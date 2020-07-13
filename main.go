@@ -1023,7 +1023,8 @@ Set NO_COLOR=1 to disable colors.
 				e.ClearSearchTerm()
 				e.redraw = true
 				e.redrawCursor = true
-				break
+				// Don't break, continue to delete to the left after clearing the search
+				//break
 			}
 			undo.Snapshot(e)
 			// Delete the character to the left
