@@ -1625,7 +1625,7 @@ Set NO_COLOR=1 to disable colors.
 				copyLines = strings.Split(s, "\n")
 			} else if firstPasteAction {
 				firstPasteAction = false
-				hasXclip := which("xclip") != ""
+				hasXclip := hasE("DISPLAY") && which("xclip") != ""
 				hasWclip := which("wl-paste") != ""
 				noBreak := false
 				status.Clear(c)
