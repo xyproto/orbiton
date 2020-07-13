@@ -87,10 +87,12 @@ func (sb *StatusBar) SetErrorMessage(msg string) {
 func (sb *StatusBar) Clear(c *vt100.Canvas) {
 	// Write all lines to the buffer
 	mut.Lock()
+
 	// Clear the message
 	sb.msg = ""
 	// Not an error message
 	sb.isError = false
+
 	mut.Unlock()
 
 	if c == nil {
@@ -172,7 +174,12 @@ func (sb *StatusBar) Show(c *vt100.Canvas, e *Editor) {
 		mut.RLock()
 		if statusBeingShown == 0 {
 			mut.RUnlock()
-			sb.Clear(c)
+			mut.Lock()
+			// Clear the message
+			sb.msg = ""
+			// Not an error message
+			sb.isError = false
+			mut.Unlock()
 		} else {
 			mut.RUnlock()
 		}
