@@ -25,6 +25,11 @@ func which(executable string) string {
 	return p
 }
 
+// hasE checks if the given environment variable is set
+func hasE(envVar string) bool {
+	return os.Getenv(envVar) != ""
+}
+
 // expandUser replaces a leading ~ or $HOME with the path
 // to the home directory of the current user
 func expandUser(path string) string {
