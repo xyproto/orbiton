@@ -61,7 +61,7 @@ To unset:
 * If interactive rebase is launched with `git rebase -i`, either `ctrl-r` or `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
 * When editing Markdown, checkboxes can be toggled with `ctrl-w`.
 * `o` makes it easy to write `"Hello, World!"` in one of many languages, then simply compile it with `ctrl-space`. The idea is that it should be very quick to write and compile a short program, without any hassle.
-* Unique feature: pressing `ctrl-b` three times opens a portal. `ctrl-v` in another file will then pop lines from the portal. This modifies both files! `esc` closes the portal.
+* Unique feature: pressing `ctrl-b` three times opens a portal. `ctrl-v` in another file will then copy lines from the portal. `esc` closes the portal.
 
 ## Known bugs
 
