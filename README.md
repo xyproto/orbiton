@@ -93,6 +93,7 @@ To unset:
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive.
 * `esc` - Redraw the screen and clear the last search.
 * `ctrl-b` - Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
+			 If pressed a third time: open a portal to where text can be pasted into other files.
 * `ctrl-\` - Comment in or out a block of code.
 * `ctrl-t` - Render the current text as a PDF document.
 * `ctrl-~` - Jump to a matching parenthesis.
@@ -307,6 +308,6 @@ Pressing `ctrl-space` will render Markdown files to PDF using `pandoc` (as oppos
 
 ## General info
 
-* Version: 2.30.3
+* Version: 2.31.0
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
