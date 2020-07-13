@@ -1010,7 +1010,7 @@ Set NO_COLOR=1 to disable colors.
 			case e.AtOrAfterEndOfDocument(): // This case must come first
 				e.InsertString(c, "")
 				e.InsertLineBelow()
-			case e.AtOrAfterEndOfLine():
+			case e.AfterEndOfLine():
 				e.InsertLineBelow()
 				indent = true
 			case e.AtOrAfterLastLineOfDocument():
