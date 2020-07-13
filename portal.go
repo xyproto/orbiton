@@ -31,6 +31,11 @@ func ClosePortal() error {
 	return os.Remove(expandUser(portalFilename))
 }
 
+// HasPortal checks if a portal is currently active
+func HasPortal() bool {
+	return exists(expandUser(portalFilename))
+}
+
 // LoadPortal will load a filename + line number from the portal.txt file
 func LoadPortal() (*Portal, error) {
 	data, err := ioutil.ReadFile(expandUser(portalFilename))

@@ -55,16 +55,18 @@ displays brief usage information
 .B ctrl-d
   Delete a single character.
 .sp
-.B ctrl-r
-  Toggle syntax highlighting.
-.sp
 .B ctrl-o
   Open the command menu, which is a list of actions that can be performed. The first item is always "Save and quit", for ease of use.
   If editing a PKGBUILD file, there will be a menu option for updating the pkgver + source fields, that is mainly based on guessing.
 .sp
+.B ctrl-t
+  Render the current document to a PDF file.
+  For "git interactive rebase" mode, cycle the rebase keywords.
+.sp
 .B ctrl-c
   Press twice to copy the current block of text (until a blank line or the end of the file).
   Press once to only copy the current line.
+  Also closes the portal.
 .sp
 .B ctrl-v
   Press twice to paste the copied text, untrimmed.
@@ -73,12 +75,11 @@ displays brief usage information
 .B ctrl-x
   Press twice to cut the current block of text (until a blank line or the end of the file).
   Press once to only cut the current line (or delete the line, if empty).
+  Also closes the portal.
 .sp
 .B ctrl-b
   Bookmark the current line. Press again to remove the bookmark.
   If a bookmark is set, and not on the bookmarked line, jump to the bookmark.
-  An additional press will open a portal, where text can be pulled from this file into another with the press of `ctrl-v`.
-  `esc` closes the portal.
 .sp
 .B ctrl-j
   Join lines.
@@ -115,8 +116,8 @@ displays brief usage information
 .B ctrl-\\\\
   Toggle single-line comments for a block of code.
 .sp
-.B ctrl-t
-  Render the current text as a PDF document.
+.B ctrl-r
+  Open or close a portal. Text can be pasted from the portal into another file with `ctrl-v`.
 .sp
 .SH "ENV"
 .sp

@@ -33,7 +33,7 @@ To unset:
 * Configuration-free, for better and for worse.
 * Provides syntax highlighting for Go, C++, Markdown, Bash and several other languages. There is generic syntax highlighting.
 * The syntax highlighting is instant.
-* Syntax highlighting can be toggled with `ctrl-t` and the `NO_COLOR` environment variable can be set to disable all colors.
+* The `NO_COLOR` environment variable can be set to disable all colors.
 * Rainbow parentheses makes lines with many parentheses easier to read.
 * Limited to the VT100 standard, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`.
 * Compiles with either `go` or `gccgo`.
@@ -61,7 +61,6 @@ To unset:
 * If interactive rebase is launched with `git rebase -i`, either `ctrl-r` or `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
 * When editing Markdown, checkboxes can be toggled with `ctrl-w`.
 * `o` makes it easy to write `"Hello, World!"` in one of many languages, then simply compile it with `ctrl-space`. The idea is that it should be very quick to write and compile a short program, without any hassle.
-* Unique feature: pressing `ctrl-b` three times opens a portal. `ctrl-v` in another file will then copy lines from the portal. `esc` closes the portal.
 
 ## Known bugs
 
@@ -71,8 +70,9 @@ To unset:
 
 ## Hotkeys
 
-* `ctrl-q` - Quit
-* `ctrl-s` - Save
+* `ctrl-s` - Save.
+* `ctrl-q` - Quit.
+* `ctrl-r` - Open or close a portal. Text can be pasted from the portal into another file with `ctrl-v`.
 * `ctrl-w` - Format the current file (see the table below).
 * `ctrl-a` - Go to start of text, then start of line and then to the previous line.
 * `ctrl-e` - Go to end of line and then to the next line.
@@ -81,8 +81,8 @@ To unset:
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
 * `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
 * `ctrl-d` - Delete a single character.
-* `ctrl-r` - Toggle syntax highlighting.
-* `ctrl-o` - Open a command menu with actions that can be performed. The first item is always "Save and quit".
+* `ctrl-t` - Render the current document to a PDF file.
+* `ctrl-o` - Open a command menu with actions that can be performed. The first menu item is always `Save and quit`.
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text (to the next blank line).
 * `ctrl-c` - Copy one line. Press twice to copy a block of text.
 * `ctrl-v` - Paste one trimmed line. Press twice to paste multiple untrimmed lines.
@@ -93,9 +93,7 @@ To unset:
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive.
 * `esc` - Redraw the screen and clear the last search.
 * `ctrl-b` - Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
-			 If pressed a third time: open a portal to where text can be pasted into other files.
 * `ctrl-\` - Comment in or out a block of code.
-* `ctrl-t` - Render the current text as a PDF document.
 * `ctrl-~` - Jump to a matching parenthesis.
 
 ## Updating PKGBUILD files

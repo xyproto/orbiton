@@ -20,8 +20,8 @@
 
 - [ ] Copy and paste does not work when using a terminal with a different user and no graphical environment. Add a way.
 - [ ] Check if Wayland is in use before using `wl-*`.
-- [ ] Add a `ctrl-o` menu option to copy the entire file to the clipboard.
-- [ ] Add a `ctrl-o` menu option to copy the build command that is used with `ctrl-space` to the clipboard.
+- [ ] Add a `ctrl-t` menu option to copy the entire file to the clipboard.
+- [ ] Add a `ctrl-t` menu option to copy the build command that is used with `ctrl-space` to the clipboard.
 - [ ] If `xclip` or similar tool is not available, cut/copy/paste via a file.
 - [ ] Pressing `ctrl-v` to paste does not work across X/Wayland sessions. It would be nice to find a more general clipboard solution.
 - [ ] Insert `# vim: ts=2 sw=2 et:` at the bottom when `ctrl-space` is pressed in a PKGBUILD file. Or add a command menu option for this.
@@ -41,7 +41,7 @@
 ## Low priority bug fixes
 
 - [ ] Shell scripts with if/else/endif blocks that are commented out are highlighted wrong.
-- [ ] Add `guessica` to the `ctrl-o` menu.
+- [ ] Add `guessica` to the `ctrl-t` menu.
 - [ ] Let `guessica` also set `pkgrel=1` if there was a new version.
 - [ ] Rainbow parentheses that span multiple lines, for Clojure, Emacs Lisp etc.
 - [ ] Quotestate Process can not recognize triple runes, like the previous

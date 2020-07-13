@@ -60,8 +60,6 @@ func main() {
 
 		lastCommandMenuIndex int // for the command menu
 
-		bookmarkCounter int // for detecting a triple ctrl-b
-
 		key string // for the main loop
 	)
 
@@ -77,8 +75,9 @@ func main() {
 		fmt.Print(`
 Hotkeys
 
-ctrl-q     to quit
 ctrl-s     to save
+ctrl-q     to quit
+ctrl-r     to open a portal so that this text can be pasted into another file with ctrl-v
 ctrl-w     for Zig, Rust, V and Go, format with the "... fmt" command
            for C++, format the current file with "clang-format"
            for markdown, toggle checkboxes
@@ -90,8 +89,9 @@ ctrl-p     to scroll up 10 lines or go to the previous match
 ctrl-k     to delete characters to the end of the line, then delete the line
 ctrl-g     to toggle filename/line/column/unicode/word count status display
 ctrl-d     to delete a single character
-ctrl-r     to toggle syntax highlighting
 ctrl-o     to open the command menu, where the first option is always "Save and quit"
+ctrl-t     to render the current document to PDF
+           for git interactive rebases, cycle the rebase keywords
 ctrl-c     to copy the current line, press twice to copy the current block
 ctrl-v     to paste one line, press twice to paste the rest
 ctrl-x     to cut the current line, press twice to cut the current block
@@ -102,7 +102,6 @@ ctrl-l     to jump to a specific line (or press return to jump to the top)
 ctrl-f     to find a string
 esc        to redraw the screen and clear the last search
 ctrl-space to build Go, C++, Zig, V, Rust, Haskell, Markdown, Adoc or Sdoc
-ctrl-t     to render the current text to a PDF document
 ctrl-\     to toggle single-line comments for a block of code
 ctrl-~     to jump to matching parenthesis
 
@@ -726,17 +725,6 @@ Set NO_COLOR=1 to disable colors.
 				break
 			}
 
-			// Are we in markdown mode? If yes, use pandoc, if available.
-			// 			if pandocPath := which("pandoc"); e.mode == modeMarkdown && pandocPath != "" {
-			// 				pdfFilename := strings.Replace(filepath.Base(filename), ".", "_", -1) + ".pdf"
-			// 				// Export to PDF using pandoc, concurrently.
-			// 				// The goroutine handles its own status output.
-			// 				go e.mustExportPandoc(c, status, pandocPath, pdfFilename)
-			// 				e.redraw = true
-			// 				e.redrawCursor = true
-			// 				break
-			// 			}
-
 			// Save the current text to .pdf directly (without using pandoc)
 
 			// Write to PDF in a goroutine
@@ -948,28 +936,7 @@ Set NO_COLOR=1 to disable colors.
 				}
 			}
 			// Additional way to clear the sticky search term, like with Esc
-		case "c:18": // ctrl-r, toggle syntax highlighting or use the next git interactive rebase keyword
-			if line := e.CurrentLine(); e.mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
-				undo.Snapshot(e)
-				newLine := nextGitRebaseKeyword(line)
-				e.SetLine(e.DataY(), newLine)
-				e.redraw = true
-				e.redrawCursor = true
-				break
-			}
-			// Regular syntax highlight toggle
-			e.ToggleSyntaxHighlight()
-			if e.syntaxHighlight {
-				e.bg = defaultEditorBackground
-			} else {
-				e.bg = vt100.BackgroundDefault
-			}
-			e.redraw = true
-			e.redrawCursor = true
-			// Now do a full reset/redraw
-			fallthrough
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
-			ClosePortal()
 			// Reset the cut/copy/paste double-keypress detection
 			lastCopyY = -1
 			lastPasteY = -1
@@ -1456,6 +1423,9 @@ Set NO_COLOR=1 to disable colors.
 				e.DeleteLine(e.DataY())
 				// Check if ctrl-x was pressed once or twice, for this line
 			} else if lastCutY != y { // Single line cut
+				// Also close the portal, if any
+				ClosePortal()
+
 				lastCutY = y
 				lastCopyY = -1
 				lastPasteY = -1
@@ -1469,6 +1439,9 @@ Set NO_COLOR=1 to disable colors.
 				lastCutY = y
 				lastCopyY = -1
 				lastPasteY = -1
+
+				// Also close the portal, if any
+				ClosePortal()
 
 				s := e.Block(y)
 				lines := strings.Split(s, "\n")
@@ -1528,6 +1501,9 @@ Set NO_COLOR=1 to disable colors.
 			singleLineCopy := lastCopyY != y
 			lastCopyY = y
 
+			// close the portal, if any
+			closedPortal := ClosePortal() == nil
+
 			if singleLineCopy { // Single line copy
 				// Pressed for the first time for this line number
 				trimmed := strings.TrimSpace(e.Line(y))
@@ -1535,13 +1511,16 @@ Set NO_COLOR=1 to disable colors.
 					// Copy the line to the internal clipboard
 					copyLines = []string{trimmed}
 					// Copy the line to the clipboard
-					if err := clipboard.WriteAll(strings.Join(copyLines, "\n")); err != nil {
-						// The copy did not work out, only copying internally
-						status.SetMessage("Copied 1 line")
-					} else {
-						// The copy operation worked out
-						status.SetMessage("Copied 1 line (clipboard)")
+					s := "Copied 1 line"
+					if err := clipboard.WriteAll(strings.Join(copyLines, "\n")); err == nil { // OK
+						// The copy operation worked out, using the clipboard
+						s += " from the clipboard"
 					}
+					// The portal was closed?
+					if closedPortal {
+						s += " and closed the portal"
+					}
+					status.SetMessage(s)
 					status.Show(c, e)
 					// Go to the end of the line, for easy line duplication with ctrl-c, enter, ctrl-v,
 					// but only if the copied line is shorter than the terminal width.
@@ -1727,37 +1706,30 @@ Set NO_COLOR=1 to disable colors.
 			// Prepare to redraw the text
 			e.redrawCursor = true
 			e.redraw = true
-		case "c:2": // ctrl-b, bookmark, unbookmark or jump to bookmark
+		case "c:18": // ctrl-r, to open or close a portal
 			status.Clear(c)
-			bookmarkCounter++
-			if bookmarkCounter%3 == 0 {
-				bookmarkCounter = 0
+			if HasPortal() {
+				status.SetMessage("Closing portal.")
+				ClosePortal()
+			} else {
 				if err := (&Portal{absFilename, e.LineNumber()}).Save(); err != nil {
 					status.SetErrorMessage(err.Error())
 				} else {
 					status.SetMessage("Opened a portal at " + filename + ":" + e.LineNumber().String())
 				}
-				// Don't set bookmark to nil
-				status.Show(c, e)
-				//e.redraw = true
-				break
 			}
-			clearedPortal := ClosePortal() == nil
+			status.Show(c, e)
+		case "c:2": // ctrl-b, bookmark, unbookmark or jump to bookmark
+			status.Clear(c)
 			if bookmark == nil {
 				// no bookmark, create a bookmark at the current line
 				bookmark = e.pos.Copy()
 				// TODO: Modify the statusbar implementation so that extra spaces are not needed here.
 				s := "Bookmarked line " + e.LineNumber().String()
-				if clearedPortal {
-					s += " and closed the portal"
-				}
 				status.SetMessage("  " + s + "  ")
 			} else if bookmark.LineNumber() == e.LineNumber() {
 				// bookmarking the same line twice: remove the bookmark
 				s := "Removed bookmark for line " + bookmark.LineNumber().String()
-				if clearedPortal {
-					s += " and closed the portal"
-				}
 				status.SetMessage(s)
 				bookmark = nil
 			} else {
@@ -1769,9 +1741,6 @@ Set NO_COLOR=1 to disable colors.
 				e.redraw = false
 				// Show the status message.
 				s := "Jumped to bookmark at line " + e.LineNumber().String()
-				if clearedPortal {
-					s += " and closed the portal"
-				}
 				status.SetMessage(s)
 			}
 			status.Show(c, e)
