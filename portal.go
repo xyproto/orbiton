@@ -62,29 +62,48 @@ func (p *Portal) String() string {
 }
 
 // PopLine removes (!) a line from the portal file, then removes that line
-func (p *Portal) PopLine() (string, error) {
+func (p *Portal) PopLine(removeLine bool) (string, error) {
 	data, err := ioutil.ReadFile(p.absFilename)
 	if err != nil {
 		return "", err
 	}
 	lines := strings.Split(string(data), "\n")
-	modifiedLines := make([]string, 0, len(lines)-1)
 	foundLine := ""
 	found := false
-	for i, line := range lines {
-		if LineIndex(i) == p.lineNumber.LineIndex() {
-			foundLine = line
-			found = true
-		} else {
-			modifiedLines = append(modifiedLines, line)
+	if removeLine {
+		modifiedLines := make([]string, 0, len(lines)-1)
+		for i, line := range lines {
+			if LineIndex(i) == p.lineNumber.LineIndex() {
+				foundLine = line
+				found = true
+			} else {
+				modifiedLines = append(modifiedLines, line)
+			}
 		}
-	}
-	if !found {
-		return "", errors.New("Could not pop line " + p.String())
-	}
-	data = []byte(strings.Join(modifiedLines, "\n"))
-	if err = ioutil.WriteFile(p.absFilename, data, 0600); err != nil {
-		return "", err
+		if !found {
+			return "", errors.New("Could not pop line " + p.String())
+		}
+		data = []byte(strings.Join(modifiedLines, "\n"))
+		if err = ioutil.WriteFile(p.absFilename, data, 0600); err != nil {
+			return "", err
+		}
+	} else {
+		for i, line := range lines {
+			if LineIndex(i) == p.lineNumber.LineIndex() {
+				foundLine = line
+				found = true
+				break
+			}
+		}
+		if !found {
+			return "", errors.New("Could not pop line " + p.String())
+		}
+		// Now move the line number +1
+		p.lineNumber++
+		// And save the new portal
+		if err := p.Save(); err != nil {
+			return foundLine, err
+		}
 	}
 	return foundLine, nil
 }

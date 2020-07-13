@@ -1577,7 +1577,7 @@ Set NO_COLOR=1 to disable colors.
 
 				status.Clear(c)
 
-				line, err := portal.PopLine()
+				line, err := portal.PopLine(false)
 				if err != nil {
 					status.SetErrorMessage("Could not pop from the portal, closing it.")
 					status.Show(c, e)
