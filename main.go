@@ -90,7 +90,7 @@ ctrl-p     to scroll up 10 lines or go to the previous match
 ctrl-k     to delete characters to the end of the line, then delete the line
 ctrl-g     to toggle filename/line/column/unicode/word count status display
 ctrl-d     to delete a single character
-ctrl-t     to toggle syntax highlighting
+ctrl-r     to toggle syntax highlighting
 ctrl-o     to open the command menu, where the first option is always "Save and quit"
 ctrl-c     to copy the current line, press twice to copy the current block
 ctrl-v     to paste one line, press twice to paste the rest
@@ -102,7 +102,7 @@ ctrl-l     to jump to a specific line (or press return to jump to the top)
 ctrl-f     to find a string
 esc        to redraw the screen and clear the last search
 ctrl-space to build Go, C++, Zig, V, Rust, Haskell, Markdown, Adoc or Sdoc
-ctrl-r     to render the current text to a PDF document
+ctrl-t     to render the current text to a PDF document
 ctrl-\     to toggle single-line comments for a block of code
 ctrl-~     to jump to matching parenthesis
 
@@ -714,7 +714,7 @@ Set NO_COLOR=1 to disable colors.
 					status.ShowNoTimeout(c, e)
 				}
 			}
-		case "c:18": // ctrl-r, render to PDF, or if in git mode, cycle rebase keywords
+		case "c:20": // ctrl-t, render to PDF, or if in git mode, cycle rebase keywords
 
 			// Are we in git mode?
 			if line := e.CurrentLine(); e.mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
@@ -948,7 +948,7 @@ Set NO_COLOR=1 to disable colors.
 				}
 			}
 			// Additional way to clear the sticky search term, like with Esc
-		case "c:20": // ctrl-t, toggle syntax highlighting or use the next git interactive rebase keyword
+		case "c:18": // ctrl-r, toggle syntax highlighting or use the next git interactive rebase keyword
 			if line := e.CurrentLine(); e.mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
 				undo.Snapshot(e)
 				newLine := nextGitRebaseKeyword(line)
