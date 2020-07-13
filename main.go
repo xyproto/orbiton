@@ -1505,6 +1505,7 @@ Set NO_COLOR=1 to disable colors.
 			closedPortal := ClosePortal() == nil
 
 			if singleLineCopy { // Single line copy
+				status.Clear(c)
 				// Pressed for the first time for this line number
 				trimmed := strings.TrimSpace(e.Line(y))
 				if trimmed != "" {
