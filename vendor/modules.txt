@@ -8,7 +8,8 @@ github.com/jung-kurt/gofpdf
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.12
 github.com/mattn/go-isatty
-# github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
+# github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
+## explicit
 github.com/mgutz/ansi
 # github.com/pkg/term v0.0.0-20200520122047-c3ffed290a03
 github.com/pkg/term
@@ -18,7 +19,7 @@ github.com/sourcegraph/annotate
 # github.com/xyproto/syntax v1.7.3
 ## explicit
 github.com/xyproto/syntax
-# github.com/xyproto/textoutput v1.12.1
+# github.com/xyproto/textoutput v1.12.2
 ## explicit
 github.com/xyproto/textoutput
 # github.com/xyproto/vt100 v1.8.6-0.20200604094357-c147666bb59b
