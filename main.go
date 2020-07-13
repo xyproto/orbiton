@@ -21,7 +21,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const version = "o 2.30.3"
+const version = "o 2.31.0"
 
 func main() {
 	var (
@@ -969,7 +969,7 @@ Set NO_COLOR=1 to disable colors.
 			// Now do a full reset/redraw
 			fallthrough
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
-			ClearPortal()
+			ClosePortal()
 			// Reset the cut/copy/paste double-keypress detection
 			lastCopyY = -1
 			lastPasteY = -1
@@ -1572,21 +1572,27 @@ Set NO_COLOR=1 to disable colors.
 			}
 		case "c:22": // ctrl-v, paste
 
+			var (
+				gotLineFromPortal bool
+				line              string
+			)
+
 			if portal, err := LoadPortal(); err == nil { // no error
-				undo.Snapshot(e)
-
+				line, err = portal.PopLine(false)
 				status.Clear(c)
-
-				line, err := portal.PopLine(false)
 				if err != nil {
-					status.SetErrorMessage("Could not pop from the portal, closing it.")
-					status.Show(c, e)
-					ClearPortal()
-					break
+					// status.SetErrorMessage("Could not copy text through the portal.")
+					status.SetErrorMessage(err.Error())
+					ClosePortal()
+				} else {
+					status.SetMessage(fmt.Sprintf("Using portal at %s\n", portal))
+					gotLineFromPortal = true
 				}
-
-				status.SetMessage(fmt.Sprintf("Using portal at %s\n", portal))
 				status.Show(c, e)
+			}
+			if gotLineFromPortal {
+
+				undo.Snapshot(e)
 
 				if e.EmptyRightTrimmedLine() {
 					// If the line is empty, use the existing indentation before pasting
@@ -1736,7 +1742,7 @@ Set NO_COLOR=1 to disable colors.
 				//e.redraw = true
 				break
 			}
-			clearedPortal := ClearPortal() == nil
+			clearedPortal := ClosePortal() == nil
 			if bookmark == nil {
 				// no bookmark, create a bookmark at the current line
 				bookmark = e.pos.Copy()

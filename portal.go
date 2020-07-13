@@ -10,8 +10,14 @@ import (
 	"strings"
 )
 
-const (
-	portalFilename = "~/.cache/o/portal.txt" // TODO: Use XDG_CACHE_HOME
+var (
+	portalFilename = func() string {
+		tmpdir := os.Getenv("TMPDIR")
+		if tmpdir == "" {
+			tmpdir = "/tmp"
+		}
+		return filepath.Join(tmpdir, "o_portal.txt")
+	}()
 )
 
 // Portal is a filename and a line number, for pulling text from
@@ -20,8 +26,8 @@ type Portal struct {
 	lineNumber  LineNumber
 }
 
-// ClearPortal will clear the portal by removing the portal file
-func ClearPortal() error {
+// ClosePortal will clear the portal by removing the portal file
+func ClosePortal() error {
 	return os.Remove(expandUser(portalFilename))
 }
 
@@ -53,7 +59,11 @@ func LoadPortal() (*Portal, error) {
 // Save will save the portal
 func (p *Portal) Save() error {
 	s := p.absFilename + "\n" + p.lineNumber.String() + "\n"
-	return ioutil.WriteFile(expandUser(portalFilename), []byte(s), 0600)
+	// Anyone can read this file
+	if err := ioutil.WriteFile(expandUser(portalFilename), []byte(s), 0600); err != nil {
+		return err
+	}
+	return os.Chmod(expandUser(portalFilename), 0666)
 }
 
 // String returns the current portal (filenane + linenumber) as a colon separated string
