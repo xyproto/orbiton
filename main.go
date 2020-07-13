@@ -31,8 +31,8 @@ func main() {
 		versionFlag = flag.Bool("version", false, "version information")
 		helpFlag    = flag.Bool("help", false, "quick overview of hotkeys")
 		forceFlag   = flag.Bool("f", false, "open even if already open")
-		cpuprofile  = flag.String("cpuprofile", "", "write cpu profile to `file`")
-		memprofile  = flag.String("memprofile", "", "write memory profile to `file`")
+		cpuProfile  = flag.String("cpuprofile", "", "write CPU profile to `file`")
+		memProfile  = flag.String("memprofile", "", "write memory profile to `file`")
 
 		statusDuration = 2700 * time.Millisecond
 
@@ -113,8 +113,8 @@ Set NO_COLOR=1 to disable colors.
 		return
 	}
 
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
+	if *cpuProfile != "" {
+		f, err := os.Create(*cpuProfile)
 		if err != nil {
 			log.Fatal("could not create CPU profile: ", err)
 		}
@@ -1926,8 +1926,8 @@ Set NO_COLOR=1 to disable colors.
 		fmt.Println()
 	}
 
-	if *memprofile != "" {
-		f, err := os.Create(*memprofile)
+	if *memProfile != "" {
+		f, err := os.Create(*memProfile)
 		if err != nil {
 			log.Fatal("could not create memory profile: ", err)
 		}

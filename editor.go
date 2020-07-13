@@ -451,10 +451,9 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	// Stop the spinner
 	quit <- true
 
-	datalines := bytes.Split(data, []byte{'\n'})
+	lines := strings.Split(string(data), "\n")
 	e.Clear()
-	for y, dataline := range datalines {
-		line := string(dataline)
+	for y, line := range lines {
 		counter := 0
 		for _, letter := range line {
 			e.Set(counter, LineIndex(y), letter)
@@ -483,10 +482,9 @@ func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 		return mode, err
 	}
 
-	datalines := bytes.Split(data, []byte{'\n'})
+	lines := strings.Split(string(data), "\n")
 	e.Clear()
-	for y, dataline := range datalines {
-		line := string(dataline)
+	for y, line := range lines {
 		counter := 0
 		for _, letter := range line {
 			e.Set(counter, LineIndex(y), letter)
@@ -667,8 +665,8 @@ func (e *Editor) DeleteLine(n LineIndex) {
 // Delete will delete a character at the given position
 func (e *Editor) Delete() {
 	y := int(e.DataY())
-	llen := len([]rune(e.lines[y]))
-	if _, ok := e.lines[y]; !ok || llen == 0 || (llen == 1 && unicode.IsSpace(e.lines[y][0])) {
+	lineLen := len([]rune(e.lines[y]))
+	if _, ok := e.lines[y]; !ok || lineLen == 0 || (lineLen == 1 && unicode.IsSpace(e.lines[y][0])) {
 		// All keys in the map that are > y should be shifted -1.
 		// This also overwrites e.lines[y].
 		e.DeleteLine(LineIndex(y))
