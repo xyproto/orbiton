@@ -1,10 +1,15 @@
 # TODO
 
+## Pri
+
+- [ ] Add tests for the smart indent feature: for pressing return, tab and space, especially in relation with `{` and `}`.
+- [ ] Cross user portals, possibly by using `TMPDIR/oportal.dat`.
+- [ ] Improve the built-in Markdown to PDF rendering using `mandolyte/mdtopdf`.
+- [ ] Paste with middle mouse click.
+
 ## Bug fixes
 
-- [ ] Copy and paste does not work when using a terminal with a different user and no graphical environment.
-- [ ] Check if Wayland is in use before using `wl-*`.
-- [ ] Pasting text with middle-click should paste more than the first character.
+- [ ] Make dedent when typing `}` work again.
 - [ ] Return sometimes inserts an additional blank line, for long lines. Fix.
 - [ ] Fix an issue with backspace not always removing the indentation to the left. Sometimes it removes just a single space.
 - [ ] When moving on long lines, using the arrow keys, the cursor may be misplaced when typing letters.
@@ -13,11 +18,11 @@
 
 ## Features I see myself using straight away
 
-- [ ] Make dedent when typing `}` work again.
+- [ ] Copy and paste does not work when using a terminal with a different user and no graphical environment. Add a way.
+- [ ] Check if Wayland is in use before using `wl-*`.
 - [ ] Add a `ctrl-o` menu option to copy the entire file to the clipboard.
 - [ ] Add a `ctrl-o` menu option to copy the build command that is used with `ctrl-space` to the clipboard.
-- [ ] Improve the built-in Markdown to PDF rendering using `mandolyte/mdtopdf`.
-- [ ] If `xcopy` or similar tool is not available, cut/copy/paste via a file.
+- [ ] If `xclip` or similar tool is not available, cut/copy/paste via a file.
 - [ ] Pressing `ctrl-v` to paste does not work across X/Wayland sessions. It would be nice to find a more general clipboard solution.
 - [ ] Insert `# vim: ts=2 sw=2 et:` at the bottom when `ctrl-space` is pressed in a PKGBUILD file. Or add a command menu option for this.
 - [ ] For git commit text, highlight column 80 if the text crosses that boundry.
