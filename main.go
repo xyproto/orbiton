@@ -659,12 +659,7 @@ Set NO_COLOR=1 to disable colors.
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
 		case "c:0": // ctrl-space, build source code to executable, convert to PDF or write to PNG, depending on the mode
-
-			// 			if e.mode == modeMarkdown {
-			// 			 	undo.Snapshot(e)
-			// 				e.ToggleCheckboxCurrentLine()
-			// 				break
-			// 			}
+			e.redraw = true
 
 			// Save the current file, but only if it has changed
 			if e.changed {
@@ -1841,11 +1836,6 @@ Set NO_COLOR=1 to disable colors.
 						} else {
 							e.pos.sx--
 						}
-
-						//e.Prev(c)
-
-						// trim whitespace from this location
-						//e.TrimRight(e.DataY())
 					}
 				}
 
