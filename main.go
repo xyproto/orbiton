@@ -1810,6 +1810,7 @@ Set NO_COLOR=1 to disable colors.
 				}
 			} else if len([]rune(key)) > 0 && unicode.IsGraphic([]rune(key)[0]) { // any other key that can be drawn
 				undo.Snapshot(e)
+				e.redraw = true
 
 				// Place *something*
 				r := []rune(key)[0]
@@ -1855,7 +1856,6 @@ Set NO_COLOR=1 to disable colors.
 					e.Next(c)
 				}
 				e.redrawCursor = true
-				e.redraw = true
 			}
 		}
 		previousKey = key
