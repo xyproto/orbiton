@@ -37,6 +37,11 @@ func NewStatusBar(fg, bg, errfg, errbg vt100.AttributeColor, editor *Editor, sho
 func (sb *StatusBar) Draw(c *vt100.Canvas, offsetY int) {
 	w := int(c.W())
 
+	// Shorten the status message if it's longer than the terminal width
+	if len(sb.msg) >= w {
+		sb.msg = sb.msg[:w-4] + "..."
+	}
+
 	if sb.IsError() {
 		mut.RLock()
 		c.Write(uint((w-len(sb.msg))/2), c.H()-1, sb.errfg, sb.errbg, sb.msg)
