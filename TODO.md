@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] If the error message is too wide for the terminal width, show a shorter error.
 - [ ] Add tests for the smart indent feature: for pressing return, tab and space, especially in relation with `{` and `}`.
 - [ ] Cross user portals, possibly by using `TMPDIR/oportal.dat`.
 - [ ] Improve the built-in Markdown to PDF rendering using `mandolyte/mdtopdf`.
