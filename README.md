@@ -46,12 +46,11 @@ To unset:
 * May provide smart indentation.
 * Requires `/dev/tty` to be available.
 * `xclip` (for X) or `wl-clipboard` (for Wayland) must be installed if the system clipboard is to be used.
-* Only forward search. Press `ctrl-l` and press `return` to jump to the top before searching.
 * May take a line number as the second argument, with an optional `+` prefix.
 * The text will be red if a loaded file is read-only.
 * The terminal needs to be resized to show the second half of lines that are longer than the terminal width.
 * If the filename is `COMMIT_EDITMSG`, the look and feel will be adjusted for git commit messages.
-* Supports `UTF-8`.
+* Supports `UTF-8`, but some runes may be displayed incorrectly.
 * Can render text to PDF.
 * Only UNIX-style line endings are supported (`\n`).
 * Will convert DOS/Windows line endings (`\r\n`) to UNIX line endings (just `\n`), whenever possible.
