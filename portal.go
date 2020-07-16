@@ -26,6 +26,16 @@ type Portal struct {
 	lineNumber  LineNumber
 }
 
+// NewPortal returns a new portal to this filename and line number,
+// but does not save the new portal. Use the Save() method for that.
+func (e *Editor) NewPortal() (*Portal, error) {
+	absFilename, err := e.AbsFilename()
+	if err != nil {
+		return nil, err
+	}
+	return &Portal{absFilename, e.LineNumber()}, nil
+}
+
 // ClosePortal will clear the portal by removing the portal file
 func ClosePortal() error {
 	return os.Remove(expandUser(portalFilename))

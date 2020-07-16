@@ -364,12 +364,11 @@ Set NO_COLOR=1 to disable colors.
 	previousY := 1
 
 	// Find the absolute path to this filename
-	absFilename, err := filepath.Abs(e.filename)
+	absFilename, err := e.AbsFilename()
 	if err != nil {
 		// This should never happen, just use the given filename
 		absFilename = e.filename
 	}
-	absFilename = filepath.Clean(absFilename)
 
 	// Create a LockKeeper for keeping track of which files are being edited
 	lk := NewLockKeeper(expandUser(defaultLockFile))
@@ -707,16 +706,6 @@ Set NO_COLOR=1 to disable colors.
 				}
 			}
 		case "c:20": // ctrl-t, render to PDF, or if in git mode, cycle rebase keywords
-
-			// Are we in git mode?
-			if line := e.CurrentLine(); e.mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
-				undo.Snapshot(e)
-				newLine := nextGitRebaseKeyword(line)
-				e.SetLine(e.DataY(), newLine)
-				e.redraw = true
-				e.redrawCursor = true
-				break
-			}
 
 			// Save the current text to .pdf directly (without using pandoc)
 
@@ -1702,16 +1691,35 @@ Set NO_COLOR=1 to disable colors.
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:18": // ctrl-r, to open or close a portal
+
+			// Are we in git mode?
+			if line := e.CurrentLine(); e.mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
+				undo.Snapshot(e)
+				newLine := nextGitRebaseKeyword(line)
+				e.SetLine(e.DataY(), newLine)
+				e.redraw = true
+				e.redrawCursor = true
+				break
+			}
+
+			// Deal with the portal
 			status.Clear(c)
 			if HasPortal() {
-				status.SetMessage("Closing portal.")
+				status.SetMessage("Closing portal")
 				ClosePortal()
 			} else {
-				if err := (&Portal{absFilename, e.LineNumber()}).Save(); err != nil {
+				portal, err := e.NewPortal()
+				if err != nil {
 					status.SetErrorMessage(err.Error())
-				} else {
-					status.SetMessage("Opened a portal at " + filename + ":" + e.LineNumber().String())
+					status.Show(c, e)
+					break
 				}
+				if err := portal.Save(); err != nil {
+					status.SetErrorMessage(err.Error())
+					status.Show(c, e)
+					break
+				}
+				status.SetMessage("Opening a portal at " + portal.String())
 			}
 			status.Show(c, e)
 		case "c:2": // ctrl-b, bookmark, unbookmark or jump to bookmark

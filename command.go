@@ -19,9 +19,7 @@ func (e *Editor) UserSave(c *vt100.Canvas, status *StatusBar) {
 		return
 	}
 	// Save the current location in the location history and write it to file
-	absFilename, err := filepath.Abs(e.filename)
-	if err == nil { // no error
-		absFilename = filepath.Clean(absFilename)
+	if absFilename, err := e.AbsFilename(); err == nil { // no error
 		e.SaveLocation(absFilename, e.locationHistory)
 	}
 	// Status message
@@ -129,12 +127,26 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 	if forced {
 		actionTitles[len(actionTitles)] = "Unlock if locked"
 		actionFunctions[len(actionFunctions)] = func() {
-			absFilename, err := filepath.Abs(e.filename)
-			if err == nil { // OK, no problem
-				absFilename = filepath.Clean(absFilename)
+			if absFilename, err := e.AbsFilename(); err == nil { // no issues
 				lk.Load()
 				lk.Unlock(absFilename)
 				lk.Save()
+			}
+		}
+	}
+
+	// Add the portal menu
+	if portal, err := LoadPortal(); err == nil { // no problems
+		actionTitles[len(actionTitles)] = "Close portal at " + portal.String()
+		actionFunctions[len(actionFunctions)] = func() {
+			ClosePortal()
+		}
+	} else {
+		// Could not close portal, try opening a new one
+		if portal, err := e.NewPortal(); err == nil { // no problems
+			actionTitles[len(actionTitles)] = "Open portal at " + portal.String()
+			actionFunctions[len(actionFunctions)] = func() {
+				portal.Save()
 			}
 		}
 	}

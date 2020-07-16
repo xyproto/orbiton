@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 	"unicode"
@@ -2093,4 +2094,14 @@ func (e *Editor) InsertFile(c *vt100.Canvas, filename string) error {
 
 	e.InsertString(c, strings.TrimRightFunc(string(data), unicode.IsSpace))
 	return nil
+}
+
+// AbsFilename returns the absolute filename for this editor,
+// cleaned with filepath.Clean.
+func (e *Editor) AbsFilename() (string, error) {
+	absFilename, err := filepath.Abs(e.filename)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Clean(absFilename), nil
 }
