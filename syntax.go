@@ -47,7 +47,7 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 		addKeywords = []string{"-f", "--force"}
 		fallthrough // to the default case
 	default:
-		delKeywords = append(delKeywords, []string{"require", "build", "package", "super"}...)
+		delKeywords = append(delKeywords, []string{"require", "build", "package", "super", "type"}...)
 	}
 	// Add extra keywords that are to be syntax highlighted
 	for _, kw := range addKeywords {
