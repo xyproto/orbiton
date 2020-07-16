@@ -1558,9 +1558,9 @@ Set NO_COLOR=1 to disable colors.
 				undo.Snapshot(e)
 
 				if e.EmptyRightTrimmedLine() {
-					// If the line is empty, use the existing indentation before pasting
+					// If the line is empty, replace with the string from the portal
 					y := e.DataY()
-					e.SetLine(y, e.LeadingWhitespace()+strings.TrimSpace(line))
+					e.SetLine(y, line)
 				} else {
 					// If the line is not empty, insert the trimmed string
 					e.InsertString(c, strings.TrimSpace(line))
