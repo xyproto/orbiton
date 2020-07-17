@@ -47,8 +47,7 @@ To unset:
 * Requires `/dev/tty` to be available.
 * `xclip` (for X) or `wl-clipboard` (for Wayland) must be installed if the system clipboard is to be used.
 * May take a line number as the second argument, with an optional `+` prefix.
-* The text will be red if a loaded file is read-only.
-* The terminal needs to be resized to show the second half of lines that are longer than the terminal width.
+* All the text will be red if a loaded file is read-only.
 * If the filename is `COMMIT_EDITMSG`, the look and feel will be adjusted for git commit messages.
 * Supports `UTF-8`, but some runes may be displayed incorrectly.
 * Can render text to PDF.
@@ -57,7 +56,7 @@ To unset:
 * Will replace non-breaking space (`0xc2 0xa0`) with a regular space (`0x20`) whenever possible.
 * Will jump to the last visited line when opening a recent file.
 * If tab completion on the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
-* If interactive rebase is launched with `git rebase -i`, either `ctrl-r` or `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
+* If interactive rebase is launched with `git rebase -i`, then either `ctrl-r` or `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
 * When editing Markdown, checkboxes can be toggled with `ctrl-w`.
 * `o` makes it easy to write `"Hello, World!"` in one of many languages, then simply compile it with `ctrl-space`. The idea is that it should be very quick to write and compile a short program, without any hassle.
 
