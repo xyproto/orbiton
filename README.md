@@ -63,7 +63,7 @@ To unset:
 ## Known bugs
 
 * Some unicode runes may disrupt the text flow. This is generally not a problem, but becomes apparent when opening a non-text file.
-* The cursor may be misplaced when moving around on long lines and then inserting text.
+* The cursor may be misplaced when moving around on lines longer than the terminal width and then inserting text.
 * The smart indentation is not always smart.
 
 ## Hotkeys
