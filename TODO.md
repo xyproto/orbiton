@@ -18,6 +18,7 @@
 
 ## Features I see myself using straight away
 
+- [ ] Highlight the part of git commit topics that are >= 80 characters long.
 - [ ] Copy and paste does not work when using a terminal with a different user and no graphical environment. Add a way.
 - [ ] Check if Wayland is in use before using `wl-*`.
 - [ ] Add a `ctrl-t` menu option to copy the entire file to the clipboard.
