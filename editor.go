@@ -869,18 +869,34 @@ func (e *Editor) InsertLineAbove() {
 	// Create new set of lines
 	lines2 := make(map[int][]rune)
 
-	// For each line in the old map, if at (y-1), insert a blank line
-	// (insert a blank line above)
-	for k, v := range e.lines {
-		if k < (y - 1) {
-			lines2[k] = v
-		} else if k == (y - 1) {
-			lines2[k] = v
-			lines2[k+1] = make([]rune, 0)
-		} else if k > (y - 1) {
+	// If at the first line, just add a line at the top
+	if y == 0 {
+
+		// Insert a blank line
+		lines2[0] = make([]rune, 0)
+		// Then insert all the other lines, shifted by 1
+		for k, v := range e.lines {
 			lines2[k+1] = v
 		}
+		y++
+
+	} else {
+
+		// For each line in the old map, if at (y-1), insert a blank line
+		// (insert a blank line above)
+		for k, v := range e.lines {
+			if k < (y - 1) {
+				lines2[k] = v
+			} else if k == (y - 1) {
+				lines2[k] = v
+				lines2[k+1] = make([]rune, 0)
+			} else if k > (y - 1) {
+				lines2[k+1] = v
+			}
+		}
+
 	}
+
 	// Use the new set of lines
 	e.lines = lines2
 
@@ -1493,6 +1509,11 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 	mut.Unlock()
 	// Prepare to redraw
 	return true
+}
+
+// AtFirstLineOfDocument is true if we're at the first line of the document
+func (e *Editor) AtFirstLineOfDocument() bool {
+	return e.DataY() == LineIndex(0)
 }
 
 // AtLastLineOfDocument is true if we're at the last line of the document
