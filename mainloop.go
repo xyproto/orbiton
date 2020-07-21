@@ -592,6 +592,8 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				}
 			}
 
+			e.redrawCursor = true
+
 			// Clear the current search term
 			e.ClearSearchTerm()
 
