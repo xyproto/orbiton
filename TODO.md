@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] The undo history is lost when switching between .cpp and .h with `ctrl-t`.
 - [ ] Add tests for the smart indent feature: for pressing return, tab and space, especially in relation with `{` and `}`.
 - [ ] Cross user portals, possibly by using `TMPDIR/oportal.dat`.
 - [ ] Improve the built-in Markdown to PDF rendering using `mandolyte/mdtopdf`.
