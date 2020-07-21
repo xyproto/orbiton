@@ -2149,7 +2149,7 @@ func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *
 		// Show the user message
 		if userMessage {
 			status.Clear(c)
-			status.SetErrorMessage(strings.Title(err.Error()))
+			status.SetErrorMessage(capitalize(err.Error()))
 			status.Show(c, e)
 		}
 	}
