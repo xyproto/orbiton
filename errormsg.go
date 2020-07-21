@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/xyproto/vt100"
 	"os"
+	"strings"
+
+	"github.com/xyproto/vt100"
 )
 
 func quitError(tty *vt100.TTY, err error) {
@@ -26,6 +28,7 @@ func quitMessage(tty *vt100.TTY, msg string) {
 	vt100.Clear()
 	vt100.Close()
 	fmt.Fprintln(os.Stderr, msg)
-	vt100.SetXY(uint(0), uint(1))
+	newLineCount := strings.Count(msg, "\n")
+	vt100.SetXY(uint(0), uint(newLineCount+1))
 	os.Exit(1)
 }

@@ -102,8 +102,8 @@ Set NO_COLOR=1 to disable colors.
 	// Set up the editor and run the main loop
 	userMessage, err := RunMainLoop(tty, filename, lineNumber, *forceFlag)
 	if err != nil {
-		if userMessage {
-			quitMessage(tty, capitalize(err.Error()))
+		if userMessage != "" {
+			quitMessage(tty, userMessage)
 		} else {
 			quitError(tty, err)
 		}

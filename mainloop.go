@@ -24,7 +24,7 @@ import (
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool) (userMessage bool, err error) {
+func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool) (userMessage string, err error) {
 	var (
 		// Record the time when the program starts
 		startTime = time.Now()
@@ -144,12 +144,12 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 		// TODO: Enter file-rename mode when opening a directory?
 		// Check if this is a directory
 		if fileInfo.IsDir() {
-			return false, errors.New(e.filename + " is a directory")
+			return "", errors.New(e.filename + " is a directory")
 		}
 
 		warningMessage, err = e.Load(c, tty, e.filename)
 		if err != nil {
-			return false, err
+			return "", err
 		}
 
 		if !e.Empty() {
@@ -214,7 +214,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 
 		// Prepare an empty file
 		if newMode, err := e.PrepareEmpty(c, tty, e.filename); err != nil {
-			return false, err
+			return "", err
 		} else if newMode != modeBlank {
 			e.mode = newMode
 		}
@@ -222,13 +222,13 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 		// Test save, to check if the file can be created and written, or not
 		if err := e.Save(c); err != nil {
 			// Check if the new file can be saved before the user starts working on the file.
-			return false, err
+			return "", err
 		}
 
 		// Creating a new empty file worked out fine, don't save it until the user saves it
 		if os.Remove(e.filename) != nil {
 			// This should never happen
-			return false, errors.New("could not remove an empty file that was just created: " + e.filename)
+			return "", errors.New("could not remove an empty file that was just created: " + e.filename)
 		}
 		createdNewFile = true
 	}
@@ -318,7 +318,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 		} else {
 			// Lock the current file, if it's not already locked
 			if err := lk.Lock(absFilename); err != nil {
-				return true, fmt.Errorf("the file is locked by another (possibly dead) instance of the editor. Try: o -f %s", filepath.Base(absFilename))
+				return fmt.Sprintf("Locked by another (possibly dead) instance of this editor.\nTry: o -f %s", filepath.Base(absFilename)), errors.New(absFilename + " is locked")
 			}
 			// Immediately save the lock file as a signal to other instances of the editor
 			lk.Save()
@@ -597,8 +597,6 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 					break
 				}
 			}
-
-			e.redrawCursor = true
 
 			// Clear the current search term
 			e.ClearSearchTerm()
@@ -1914,5 +1912,5 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 	}
 
 	// All done
-	return false, nil
+	return "", nil
 }

@@ -2147,9 +2147,9 @@ func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *
 		// Don't close this editor after all
 		e.quit = false
 		// Show the user message
-		if userMessage {
+		if userMessage != "" {
 			status.Clear(c)
-			status.SetErrorMessage(capitalize(err.Error()))
+			status.SetMessage(userMessage)
 			status.Show(c, e)
 		}
 	}
