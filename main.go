@@ -99,7 +99,8 @@ Set NO_COLOR=1 to disable colors.
 	}
 	defer tty.Close()
 
-	userMessage, err := OpenEditor(tty, filename, lineNumber, *forceFlag)
+	// Launch the editor (and run the main loop)
+	userMessage, err := LaunchEditor(tty, filename, lineNumber, *forceFlag)
 	if err != nil {
 		if userMessage {
 			quitMessage(tty, strings.Title(err.Error()))
@@ -108,6 +109,7 @@ Set NO_COLOR=1 to disable colors.
 		}
 	}
 
+	// Output memory profile information, if the flag is given
 	if *memProfile != "" {
 		f, err := os.Create(*memProfile)
 		if err != nil {

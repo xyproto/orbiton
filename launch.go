@@ -17,14 +17,14 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// OpenEditor will attempt to launch a new editor, given:
+// LaunchEditor will attempt to launch a new editor, given:
 // a *vt100.TTY struct
 // a filename to open
 // a LineNumber (may be 0 or -1)
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func OpenEditor(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool) (userMessage bool, err error) {
+func LaunchEditor(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool) (userMessage bool, err error) {
 	var (
 		// Record the time when the program starts
 		startTime = time.Now()
