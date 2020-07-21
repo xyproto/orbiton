@@ -56,6 +56,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 		lastCommandMenuIndex int // for the command menu
 
 		key string // for the main loop
+
 	)
 
 	// If the filename ends with "." and the file does not exist, assume this was an attempt at tab-completion gone wrong.
@@ -440,6 +441,11 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 		e.redrawCursor = false
 	}
 
+	var (
+		// Press ctrl-space twice to export Markdown to PDF with pandoc
+		markdownExportCounter = 0
+	)
+
 	// This is the main loop for the editor
 	for !e.quit {
 
@@ -597,8 +603,25 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			// Clear the current search term
 			e.ClearSearchTerm()
 
+			// Press ctrl-space twice for exporting Markdown to PDF
+			markdownSkipExport := false
+			if e.mode == modeMarkdown {
+				if markdownExportCounter%2 == 0 {
+					markdownExportCounter = 0
+					markdownSkipExport = true
+				}
+				markdownExportCounter++
+			}
+
 			// Build or export the current file
-			statusMessage, performedAction, compiled := e.BuildOrExport(c, status, e.filename)
+			var (
+				statusMessage   string
+				performedAction bool
+				compiled        bool
+			)
+			if !markdownSkipExport {
+				statusMessage, performedAction, compiled = e.BuildOrExport(c, status, e.filename)
+			}
 
 			//logf("status message %s performed action %v compiled %v filename %s\n", statusMessage, performedAction, compiled, e.filename)
 
