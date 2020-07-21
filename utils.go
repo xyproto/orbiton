@@ -127,14 +127,6 @@ func equalStringSlices(a, b []string) bool {
 	return true
 }
 
-// capitalize returns the string with the first letter capitalized
-func capitalize(s string) string {
-	if len(s) <= 1 {
-		return s
-	}
-	return strings.ToUpper(string(s[0])) + s[1:]
-}
-
 // logf, for quick "printf-style" debugging
 func logf(head string, tail ...interface{}) {
 	tmpdir := os.Getenv("TMPDIR")
