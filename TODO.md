@@ -18,6 +18,7 @@
 
 ## Features I see myself using straight away
 
+- [ ] Press `ctrl-space` in markdown files to see the clock and number of words. Press `ctrl-space` again to export with pandoc.
 - [ ] Highlight the line where a portal has been opened
 - [ ] Highlight the part of git commit topics that are >= 80 characters long.
 - [ ] Copy and paste does not work when using a terminal with a different user and no graphical environment. Add a way.
