@@ -631,7 +631,9 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 					status.ShowNoTimeout(c, e)
 				}
 			}
-		case "c:20": // ctrl-t, render to PDF, or if in git mode, cycle rebase keywords
+		case "c:20": // ctrl-t, render to PDF
+			// If in a C++ header file, switch to the corresponding
+			// C++ source file, and the other way around.
 
 			// Save the current file, but only if it has changed
 			if e.changed {
@@ -644,6 +646,32 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			}
 
 			e.redrawCursor = true
+
+			// If this is a C++ source file, try finding and opening the corresponding header file
+			if hasS([]string{".cpp", ".cc", ".c", ".cxx"}, filepath.Ext(e.filename)) {
+				// Check if there is a corresponding header file
+				if absFilename, err := e.AbsFilename(); err == nil { // no error
+					headerExtensions := []string{".h", ".hpp"}
+					if headerFilename, err := ExtFileSearch(absFilename, headerExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
+						// Switch to another file (without forcing it)
+						e.Switch(tty, c, status, lk, headerFilename, false)
+					}
+				}
+				break
+			}
+
+			// If this is a header file, present a menu option for open the corresponding source file
+			if hasS([]string{".h", ".hpp"}, filepath.Ext(e.filename)) {
+				// Check if there is a corresponding header file
+				if absFilename, err := e.AbsFilename(); err == nil { // no error
+					sourceExtensions := []string{".c", ".cpp", ".cxx", ".cc"}
+					if headerFilename, err := ExtFileSearch(absFilename, sourceExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
+						// Switch to another file (without forcing it)
+						e.Switch(tty, c, status, lk, headerFilename, false)
+					}
+				}
+				break
+			}
 
 			// Save the current text to .pdf directly (without using pandoc)
 
