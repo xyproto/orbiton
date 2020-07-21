@@ -2126,3 +2126,32 @@ func (e *Editor) AbsFilename() (string, error) {
 	}
 	return filepath.Clean(absFilename), nil
 }
+
+// Switch closes this editor and starts a new one, opening the given filename
+func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *LockKeeper, filenameToOpen string, forceOpen bool) error {
+	absFilename, err := e.AbsFilename()
+	if err != nil {
+		return err
+	}
+	// Unlock and save the lock file
+	lk.Unlock(absFilename)
+	lk.Save()
+	// Now open the header filename instead of the current file. Save the current file first.
+	e.Save(c)
+	// Save the current location in the location history and write it to file
+	e.SaveLocation(absFilename, e.locationHistory)
+	// Set up this editor to quit, then start a new one
+	e.quit = true
+	userMessage, err := OpenEditor(tty, filenameToOpen, LineNumber(0), forceOpen)
+	if err != nil {
+		// Don't close this editor after all
+		e.quit = false
+		// Show the user message
+		if userMessage {
+			status.Clear(c)
+			status.SetErrorMessage(strings.Title(err.Error()))
+			status.Show(c, e)
+		}
+	}
+	return err
+}

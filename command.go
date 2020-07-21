@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/xyproto/vt100"
 )
@@ -14,7 +15,7 @@ func (e *Editor) UserSave(c *vt100.Canvas, status *StatusBar) {
 	status.ClearAll(c)
 	// Save the file
 	if err := e.Save(c); err != nil {
-		status.SetMessage(err.Error())
+		status.SetErrorMessage(err.Error())
 		status.Show(c, e)
 		return
 	}
@@ -109,6 +110,39 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		}
 		extraDashes = false
 	)
+
+	// Don't search for a corresponding header/source file for longer than ~0.2 seconds
+	fileSearchMaxTime := 200 * time.Millisecond
+
+	// If this is a C++ source file, present a menu option for open the corresponding header file
+	if hasS([]string{".cpp", ".cc", ".c", ".cxx"}, filepath.Ext(e.filename)) {
+		// Check if there is a corresponding header file
+		if absFilename, err := e.AbsFilename(); err == nil { // no error
+			headerExtensions := []string{".h", ".hpp"}
+			if headerFilename, err := ExtFileSearch(absFilename, headerExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
+				actionTitles[len(actionTitles)] = "Open " + filepath.Base(headerFilename)
+				actionFunctions[len(actionFunctions)] = func() {
+					// Switch to another file (without forcing it)
+					e.Switch(tty, c, status, lk, headerFilename, false)
+				}
+			}
+		}
+	}
+
+	// If this is a header file, present a menu option for open the corresponding source file
+	if hasS([]string{".h", ".hpp"}, filepath.Ext(e.filename)) {
+		// Check if there is a corresponding header file
+		if absFilename, err := e.AbsFilename(); err == nil { // no error
+			sourceExtensions := []string{".c", ".cpp", ".cxx", ".cc"}
+			if headerFilename, err := ExtFileSearch(absFilename, sourceExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
+				actionTitles[len(actionTitles)] = "Open " + filepath.Base(headerFilename)
+				actionFunctions[len(actionFunctions)] = func() {
+					// Switch to another file (without forcing it)
+					e.Switch(tty, c, status, lk, headerFilename, false)
+				}
+			}
+		}
+	}
 
 	// Add the syntax highlighting toggle menu item
 	if !noColor {
