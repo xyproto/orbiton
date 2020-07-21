@@ -1262,6 +1262,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:19": // ctrl-s, save
+			e.redrawCursor = true
 			e.UserSave(c, status)
 		case "c:21", "c:26": // ctrl-u or ctrl-z, undo (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state
