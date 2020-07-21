@@ -17,14 +17,14 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// LaunchEditor will attempt to launch a new editor, given:
+// RunMainLoop will set up and run the main loop of the editor
 // a *vt100.TTY struct
 // a filename to open
 // a LineNumber (may be 0 or -1)
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func LaunchEditor(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool) (userMessage bool, err error) {
+func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool) (userMessage bool, err error) {
 	var (
 		// Record the time when the program starts
 		startTime = time.Now()
@@ -581,6 +581,7 @@ func LaunchEditor(tty *vt100.TTY, filename string, lineNumber LineNumber, forceF
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
 		case "c:0": // ctrl-space, build source code to executable, convert to PDF or write to PNG, depending on the mode
+
 			// Save the current file, but only if it has changed
 			if e.changed {
 				if err := e.Save(c); err != nil {
@@ -629,6 +630,18 @@ func LaunchEditor(tty *vt100.TTY, filename string, lineNumber LineNumber, forceF
 				}
 			}
 		case "c:20": // ctrl-t, render to PDF, or if in git mode, cycle rebase keywords
+
+			// Save the current file, but only if it has changed
+			if e.changed {
+				if err := e.Save(c); err != nil {
+					status.ClearAll(c)
+					status.SetErrorMessage(err.Error())
+					status.Show(c, e)
+					break
+				}
+			}
+
+			e.redrawCursor = true
 
 			// Save the current text to .pdf directly (without using pandoc)
 
