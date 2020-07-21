@@ -99,8 +99,8 @@ Set NO_COLOR=1 to disable colors.
 	}
 	defer tty.Close()
 
-	// Launch the editor (and run the main loop)
-	userMessage, err := LaunchEditor(tty, filename, lineNumber, *forceFlag)
+	// Set up the editor and run the main loop
+	userMessage, err := RunMainLoop(tty, filename, lineNumber, *forceFlag)
 	if err != nil {
 		if userMessage {
 			quitMessage(tty, strings.Title(err.Error()))

@@ -2142,7 +2142,7 @@ func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *
 	e.SaveLocation(absFilename, e.locationHistory)
 	// Set up this editor to quit, then start a new one
 	e.quit = true
-	userMessage, err := LaunchEditor(tty, filenameToOpen, LineNumber(0), forceOpen)
+	userMessage, err := RunMainLoop(tty, filenameToOpen, LineNumber(0), forceOpen)
 	if err != nil {
 		// Don't close this editor after all
 		e.quit = false
