@@ -7,6 +7,9 @@ import (
 	"time"
 )
 
+// Don't search for a corresponding header/source file for longer than ~0.2 seconds
+var fileSearchMaxTime = 200 * time.Millisecond
+
 // ExtFileSearch will search for a corresponding file, given a silce of extensions.
 // This is useful for ie. finding a corresponding .h file for a .c file.
 // The search starts in the current directory, then searches every parent directory in depth.

@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"time"
 
 	"github.com/xyproto/vt100"
 )
@@ -110,9 +109,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		}
 		extraDashes = false
 	)
-
-	// Don't search for a corresponding header/source file for longer than ~0.2 seconds
-	fileSearchMaxTime := 200 * time.Millisecond
 
 	// If this is a C++ source file, present a menu option for open the corresponding header file
 	if hasS([]string{".cpp", ".cc", ".c", ".cxx"}, filepath.Ext(e.filename)) {
