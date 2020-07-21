@@ -138,7 +138,7 @@ func LaunchEditor(tty *vt100.TTY, filename string, lineNumber LineNumber, forceF
 	e.redrawCursor = true
 
 	// Use os.Stat to check if the file exists, and load the file if it does
-	if fileInfo, err := os.Stat(e.filename); err == nil {
+	if fileInfo, err := os.Stat(e.filename); err == nil { // no issue
 
 		// TODO: Enter file-rename mode when opening a directory?
 		// Check if this is a directory
@@ -210,6 +210,7 @@ func LaunchEditor(tty *vt100.TTY, filename string, lineNumber LineNumber, forceF
 		}
 		testfile.Close()
 	} else {
+
 		// Prepare an empty file
 		if newMode, err := e.PrepareEmpty(c, tty, e.filename); err != nil {
 			return false, err
@@ -218,10 +219,11 @@ func LaunchEditor(tty *vt100.TTY, filename string, lineNumber LineNumber, forceF
 		}
 
 		// Test save, to check if the file can be created and written, or not
-		if err := e.Save(c); err == nil {
+		if err := e.Save(c); err != nil {
 			// Check if the new file can be saved before the user starts working on the file.
 			return false, err
 		}
+
 		// Creating a new empty file worked out fine, don't save it until the user saves it
 		if os.Remove(e.filename) != nil {
 			// This should never happen
