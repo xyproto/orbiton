@@ -18,6 +18,7 @@
 
 ## Features I see myself using straight away
 
+- [ ] Highlight the line where a portal has been opened
 - [ ] Highlight the part of git commit topics that are >= 80 characters long.
 - [ ] Copy and paste does not work when using a terminal with a different user and no graphical environment. Add a way.
 - [ ] Check if Wayland is in use before using `wl-*`.
