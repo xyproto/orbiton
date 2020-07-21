@@ -38,6 +38,7 @@ Hotkeys
 ctrl-s     to save
 ctrl-q     to quit
 ctrl-r     to open a portal so that this text can be pasted into another file with ctrl-v
+		   for git interactive rebases, cycle the rebase keywords
 ctrl-w     for Zig, Rust, V and Go, format with the "... fmt" command
            for C++, format the current file with "clang-format"
            for markdown, toggle checkboxes
@@ -51,7 +52,7 @@ ctrl-g     to toggle filename/line/column/unicode/word count status display
 ctrl-d     to delete a single character
 ctrl-o     to open the command menu, where the first option is always "Save and quit"
 ctrl-t     to render the current document to PDF
-           for git interactive rebases, cycle the rebase keywords
+           for C++, toggle between the header and implementation
 ctrl-c     to copy the current line, press twice to copy the current block
 ctrl-v     to paste one line, press twice to paste the rest
 ctrl-x     to cut the current line, press twice to cut the current block

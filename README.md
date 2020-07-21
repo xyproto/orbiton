@@ -59,6 +59,7 @@ To unset:
 * If interactive rebase is launched with `git rebase -i`, then either `ctrl-r` or `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
 * When editing Markdown, checkboxes can be toggled with `ctrl-w`.
 * `o` makes it easy to write `"Hello, World!"` in one of many languages, then simply compile it with `ctrl-space`. The idea is that it should be very quick to write and compile a short program, without any hassle.
+* `ctrl-t` can toggle between a C++ header and source file, if searching for the file in the parent directories is quick enough.
 
 ## Known bugs
 
@@ -71,6 +72,7 @@ To unset:
 * `ctrl-s` - Save.
 * `ctrl-q` - Quit.
 * `ctrl-r` - Open or close a portal. Text can be pasted from the portal into another file with `ctrl-v`.
+             For "git interactive rebase" mode, cycle the rebase keywords.
 * `ctrl-w` - Format the current file (see the table below).
 * `ctrl-a` - Go to start of text, then start of line and then to the previous line.
 * `ctrl-e` - Go to end of line and then to the next line.
@@ -79,7 +81,7 @@ To unset:
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
 * `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
 * `ctrl-d` - Delete a single character.
-* `ctrl-t` - Render the current document to a PDF file.
+* `ctrl-t` - Render the current document to a PDF file. For C++, toggle between header and implementation files.
 * `ctrl-o` - Open a command menu with actions that can be performed. The first menu item is always `Save and quit`.
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text (to the next blank line).
 * `ctrl-c` - Copy one line. Press twice to copy a block of text.
