@@ -42,6 +42,7 @@
 
 ## Low priority bug fixes
 
+- [ ] Rainbow parenthesis should be able to span multiple lines.
 - [ ] Shell scripts with if/else/endif blocks that are commented out are highlighted wrong.
 - [ ] Add `guessica` to the `ctrl-t` menu.
 - [ ] Let `guessica` also set `pkgrel=1` if there was a new version.
