@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -25,6 +24,12 @@ import (
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
 func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool) (userMessage string, err error) {
+
+	// Create a Canvas for drawing onto the terminal
+	vt100.Init()
+	c := vt100.NewCanvas()
+	c.ShowCursor()
+
 	var (
 		// Record the time when the program starts
 		startTime = time.Now()
@@ -59,17 +64,6 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 
 	)
 
-	// If the filename ends with "." and the file does not exist, assume this was an attempt at tab-completion gone wrong.
-	// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
-	if strings.HasSuffix(filename, ".") && !exists(filename) {
-		// Glob
-		matches, err := filepath.Glob(filename + "*")
-		if err == nil && len(matches) > 0 { // no error and at least 1 match
-			sort.Strings(matches)
-			filename = matches[0]
-		}
-	}
-
 	// mode is what would have been an enum in other languages, for signalling if this file should be in git mode, markdown mode etc
 	mode, syntaxHighlight := detectEditorMode(filename)
 
@@ -84,11 +78,6 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 	case modeMarkdown, modeText, modeBlank:
 		rainbowParenthesis = false
 	}
-
-	// Create a Canvas for drawing onto the terminal
-	vt100.Init()
-	c := vt100.NewCanvas()
-	c.ShowCursor()
 
 	// How many lines to scroll at the time when using `ctrl-n` and `ctrl-p`
 	scrollSpeed := 10
