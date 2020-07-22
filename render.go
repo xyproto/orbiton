@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -13,7 +12,7 @@ import (
 func (e *Editor) SavePDF(title, filename string) error {
 
 	// Check if the file exists
-	if _, err := os.Stat(filename); !os.IsNotExist(err) {
+	if exists(filename) {
 		return fmt.Errorf("%s already exists", filename)
 	}
 
