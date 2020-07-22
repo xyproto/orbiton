@@ -378,15 +378,15 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			// If in a C++ header file, switch to the corresponding
 			// C++ source file, and the other way around.
 
-			// 			// Save the current file, but only if it has changed
-			// 			if e.changed {
-			// 				if err := e.Save(c); err != nil {
-			// 					status.ClearAll(c)
-			// 					status.SetErrorMessage(err.Error())
-			// 					status.Show(c, e)
-			// 					break
-			// 				}
-			// 			}
+			// Save the current file, but only if it has changed
+			if e.changed {
+				if err := e.Save(c); err != nil {
+					status.ClearAll(c)
+					status.SetErrorMessage(err.Error())
+					status.Show(c, e)
+					break
+				}
+			}
 
 			e.redrawCursor = true
 
