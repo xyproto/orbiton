@@ -50,7 +50,7 @@ type Editor struct {
 	EditorColors
 }
 
-// NewEditor takes:
+// NewCustomEditor takes:
 // * the number of spaces per tab (typically 2, 4 or 8)
 // * if the text should be syntax highlighted
 // * if rainbow parenthesis should be enabled
@@ -63,7 +63,7 @@ type Editor struct {
 //    - multiline comment
 // * a syntax highlighting scheme
 // * a file mode
-func NewEditor(spacesPerTab int, syntaxHighlight, rainbowParenthesis bool, scrollSpeed int, fg, bg, searchFg, multiLineComment, multiLineString vt100.AttributeColor, scheme syntax.TextConfig, mode Mode) *Editor {
+func NewCustomEditor(spacesPerTab int, syntaxHighlight, rainbowParenthesis bool, scrollSpeed int, fg, bg, searchFg, multiLineComment, multiLineString vt100.AttributeColor, scheme syntax.TextConfig, mode Mode) *Editor {
 	syntax.DefaultTextConfig = scheme
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
@@ -104,7 +104,7 @@ func NewEditor(spacesPerTab int, syntaxHighlight, rainbowParenthesis bool, scrol
 // search results magenta, use the default syntax highlighting scheme, don't use git mode and don't use markdown mode,
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
-	e := NewEditor(4, false, false, 1, vt100.White, vt100.Black, vt100.Magenta, vt100.Gray, vt100.Magenta, syntax.DefaultTextConfig, modeBlank)
+	e := NewCustomEditor(4, false, false, 1, vt100.White, vt100.Black, vt100.Magenta, vt100.Gray, vt100.Magenta, syntax.DefaultTextConfig, modeBlank)
 	e.wrapWidth = wordWrapLimit
 	e.wrapWhenTyping = true
 	return e

@@ -68,6 +68,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 	mode, syntaxHighlight := detectEditorMode(filename)
 
 	adjustSyntaxHighlightingKeywords(mode)
+
 	// Additional per-mode considerations, before launching the editor
 	rainbowParenthesis := syntaxHighlight // rainbow parenthesis
 	switch mode {
@@ -83,7 +84,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 	scrollSpeed := 10
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
-	e := NewEditor(spacesPerTab,
+	e := NewCustomEditor(spacesPerTab,
 		syntaxHighlight,
 		rainbowParenthesis,
 		scrollSpeed,
