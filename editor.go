@@ -2134,8 +2134,9 @@ var (
 	switchUndoBackup *Undo = NewUndo(defaultUndoSize) // Save a copy of the undo stack when switching between files
 )
 
-// Switch closes this editor and starts a new one, opening the given filename
-// TODO: Just create a new Editor, don't create a whole new world
+// Switch replaces the current editor with a new Editor that opens the given file.
+// The undo stack is also swapped.
+// Only works for switching to one file, and then back again.
 func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *LockKeeper, filenameToOpen string, forceOpen bool) error {
 
 	absFilename, err := e.AbsFilename()
@@ -2149,8 +2150,6 @@ func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *
 	e.Save(c)
 	// Save the current location in the location history and write it to file
 	e.SaveLocation(absFilename, e.locationHistory)
-	// Set up this editor to quit, then start a new one
-	//e.quit = true
 
 	var (
 		e2            *Editor
@@ -2187,6 +2186,10 @@ func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *
 		status.Show(c, e)
 	}
 
+	// A "hard switch" using RunMainLoop:
+	//
+	//// Set up this editor to quit, then start a new one
+	//e.quit = true
 	// 	userMessage, err := RunMainLoop(tty, filenameToOpen, LineNumber(0), forceOpen)
 	// 	if err != nil {
 	// 		// Don't close this editor after all
