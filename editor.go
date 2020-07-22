@@ -1063,6 +1063,11 @@ func (e *Editor) SetLine(n LineIndex, s string) {
 	}
 }
 
+// SetCurrentLine will replace the current line with the given string
+func (e *Editor) SetCurrentLine(s string) {
+	e.SetLine(e.DataY(), s)
+}
+
 // SplitLine will, at the given position, split the line in two.
 // The right side of the contents is moved to a new line below.
 func (e *Editor) SplitLine() bool {
