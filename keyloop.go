@@ -654,15 +654,22 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			undo.Snapshot(e)
 
 			var (
-				lineContents = e.CurrentLine()
-				trimmedLine  = strings.TrimSpace(lineContents)
+				lineContents             = e.CurrentLine()
+				trimmedLine              = strings.TrimSpace(lineContents)
+				currentLeadingWhitespace = e.LeadingWhitespace()
 
 				// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
-				leadingWhitespace = e.smartIndentation(e.LeadingWhitespace(), trimmedLine, false) // the last parameter is "also dedent"
+				leadingWhitespace = e.smartIndentation(currentLeadingWhitespace, trimmedLine, false) // the last parameter is "also dedent"
 
 				noHome = false
-				indent = false
+				indent = true
 			)
+
+			if trimmedLine == "private:" || trimmedLine == "protected:" || trimmedLine == "public:" {
+				// De-indent the current line before moving on to the next
+				e.SetCurrentLine(trimmedLine)
+				leadingWhitespace = currentLeadingWhitespace
+			}
 
 			switch {
 			case e.AtOrAfterEndOfDocument(): // This case must come first
@@ -670,7 +677,6 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				e.InsertLineBelow()
 			case e.AfterEndOfLine():
 				e.InsertLineBelow()
-				indent = true
 			case !e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument():
 				e.InsertString(c, "")
 				e.InsertLineBelow()
@@ -682,6 +688,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				if !e.SplitLine() {
 					e.InsertLineBelow()
 				}
+				indent = false
 
 			}
 			e.MakeConsistent()
