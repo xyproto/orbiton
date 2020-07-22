@@ -2129,9 +2129,15 @@ func (e *Editor) AbsFilename() (string, error) {
 	return filepath.Clean(absFilename), nil
 }
 
+var (
+	switchBuffer     *Undo = NewUndo(1)               // Save the contents of one switch
+	switchUndoBackup *Undo = NewUndo(defaultUndoSize) // Save a copy of the undo stack when switching between files
+)
+
 // Switch closes this editor and starts a new one, opening the given filename
 // TODO: Just create a new Editor, don't create a whole new world
 func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *LockKeeper, filenameToOpen string, forceOpen bool) error {
+
 	absFilename, err := e.AbsFilename()
 	if err != nil {
 		return err
@@ -2144,17 +2150,55 @@ func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *
 	// Save the current location in the location history and write it to file
 	e.SaveLocation(absFilename, e.locationHistory)
 	// Set up this editor to quit, then start a new one
-	e.quit = true
-	userMessage, err := RunMainLoop(tty, filenameToOpen, LineNumber(0), forceOpen)
-	if err != nil {
-		// Don't close this editor after all
-		e.quit = false
-		// Show the user message
-		if userMessage != "" {
-			status.Clear(c)
-			status.SetMessage(userMessage)
-			status.Show(c, e)
+	//e.quit = true
+
+	var (
+		e2            *Editor
+		statusMessage string
+	)
+
+	if switchBuffer.Len() == 1 {
+		// Load the Editor from the switchBuffer if switchBuffer has length 1, then use that editor.
+		switchBuffer.Restore(e)
+		undo, switchUndoBackup = switchUndoBackup, undo
+	} else {
+		e2, statusMessage, err = NewEditor(tty, c, filenameToOpen, LineNumber(0))
+		if err == nil { // no issue
+			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
+			switchBuffer.Snapshot(e)
+
+			// Now use e2 as the current editor
+			*e = *e2
+			(*e).lines = (*e2).lines
+			(*e).pos = (*e2).pos
+
+		} else {
+			panic(err)
 		}
+		undo, switchUndoBackup = switchUndoBackup, undo
 	}
+
+	e.redraw = true
+	e.redrawCursor = true
+
+	if statusMessage != "" {
+		status.Clear(c)
+		status.SetMessage(statusMessage)
+		status.Show(c, e)
+	}
+
+	// 	userMessage, err := RunMainLoop(tty, filenameToOpen, LineNumber(0), forceOpen)
+	// 	if err != nil {
+	// 		// Don't close this editor after all
+	// 		e.quit = false
+	// 		// Show the user message
+	// 		if userMessage != "" {
+	// 			status.Clear(c)
+	// 			status.SetMessage(userMessage)
+	// 			status.Show(c, e)
+	// 		}
+
+	// 	}
+
 	return err
 }

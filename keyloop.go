@@ -16,9 +16,13 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+const (
+	defaultUndoSize = 8192
+)
+
 var (
 	// Circular undo buffer with room for N actions
-	undo = NewUndo(8192)
+	undo = NewUndo(defaultUndoSize)
 )
 
 // RunMainLoop will set up and run the main loop of the editor
@@ -374,15 +378,15 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			// If in a C++ header file, switch to the corresponding
 			// C++ source file, and the other way around.
 
-			// Save the current file, but only if it has changed
-			if e.changed {
-				if err := e.Save(c); err != nil {
-					status.ClearAll(c)
-					status.SetErrorMessage(err.Error())
-					status.Show(c, e)
-					break
-				}
-			}
+			// 			// Save the current file, but only if it has changed
+			// 			if e.changed {
+			// 				if err := e.Save(c); err != nil {
+			// 					status.ClearAll(c)
+			// 					status.SetErrorMessage(err.Error())
+			// 					status.Show(c, e)
+			// 					break
+			// 				}
+			// 			}
 
 			e.redrawCursor = true
 
@@ -420,7 +424,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				pdfFilename := strings.Replace(filepath.Base(e.filename), ".", "_", -1) + ".pdf"
 
 				// Show a status message while writing
-				status.SetMessage("Saving PDF...")
+				status.SetMessage("Writing " + pdfFilename + "...")
 				status.ShowNoTimeout(c, e)
 
 				// TODO: Only overwrite if the previous PDF file was also rendered by "o".
@@ -429,7 +433,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				if err := e.SavePDF(e.filename, pdfFilename); err != nil {
 					statusMessage = err.Error()
 				} else {
-					statusMessage = "Saved " + pdfFilename
+					statusMessage = "Wrote " + pdfFilename
 				}
 				// Show a status message after writing
 				status.ClearAll(c)

@@ -12,8 +12,9 @@ type Undo struct {
 	editorCopies         []Editor
 	editorLineCopies     []map[int][]rune
 	editorPositionCopies []Position
-	hasSomething         []bool
-	mut                  *sync.RWMutex
+	// TODO: hasSomething is not needed, fetch the key and check the bool instead
+	hasSomething []bool
+	mut          *sync.RWMutex
 }
 
 // NewUndo takes arguments that are only for initializing the undo buffers.
@@ -54,9 +55,11 @@ func (u *Undo) Restore(e *Editor) error {
 
 	// Restore the state from this index, if there is something there
 	if u.hasSomething[u.index] {
+
 		*e = u.editorCopies[u.index]
 		e.lines = u.editorLineCopies[u.index]
 		e.pos = u.editorPositionCopies[u.index]
+
 		return nil
 	}
 	return errors.New("no undo state at this index")
@@ -64,5 +67,11 @@ func (u *Undo) Restore(e *Editor) error {
 
 // Index will return the current undo index, in the undo buffers
 func (u *Undo) Index() int {
+	return u.index
+}
+
+// Len will return the current number of stored undo snapshots.
+// This is the same as the index int that points to the next free slot.
+func (u *Undo) Len() int {
 	return u.index
 }
