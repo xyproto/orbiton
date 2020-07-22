@@ -94,10 +94,9 @@ Set NO_COLOR=1 to disable colors.
 		os.Exit(1)
 	}
 
-	// If the filename ends with "." and the file does not exist, assume this was an attempt at tab-completion gone wrong.
-	// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
+	// If the filename ends with "." and the file does not exist, assume this was a result of tab-completion going wrong.
 	if strings.HasSuffix(filename, ".") && !exists(filename) {
-		// Glob
+		// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
 		matches, err := filepath.Glob(filename + "*")
 		if err == nil && len(matches) > 0 { // no error and at least 1 match
 			sort.Strings(matches)
@@ -105,7 +104,7 @@ Set NO_COLOR=1 to disable colors.
 		}
 	}
 
-	// Initialize the terminal
+	// Initialize the VT100 terminal
 	tty, err := vt100.NewTTY()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error: "+err.Error())
@@ -113,7 +112,7 @@ Set NO_COLOR=1 to disable colors.
 	}
 	defer tty.Close()
 
-	// Set up the editor and run the main loop
+	// Run the main editor loop
 	userMessage, err := RunMainLoop(tty, filename, lineNumber, *forceFlag)
 	if err != nil {
 		if userMessage != "" {

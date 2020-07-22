@@ -1790,9 +1790,11 @@ func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redraw bool) {
 
 // FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
 func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines bool) {
-	status.ClearAll(c)
+	if status != nil {
+		status.ClearAll(c)
+		e.SetSearchTerm(c, status, "")
+	}
 	savePos := e.pos
-	e.SetSearchTerm(c, status, "")
 	vt100.Close()
 	vt100.Reset()
 	vt100.Clear()
@@ -2128,6 +2130,7 @@ func (e *Editor) AbsFilename() (string, error) {
 }
 
 // Switch closes this editor and starts a new one, opening the given filename
+// TODO: Just create a new Editor, don't create a whole new world
 func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *LockKeeper, filenameToOpen string, forceOpen bool) error {
 	absFilename, err := e.AbsFilename()
 	if err != nil {
