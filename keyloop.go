@@ -688,8 +688,10 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				if !e.SplitLine() {
 					e.InsertLineBelow()
 				}
-				indent = false
-
+				// Indent the next line if at the end, not else
+				if !e.AfterEndOfLine() {
+					indent = false
+				}
 			}
 			e.MakeConsistent()
 
@@ -1499,7 +1501,8 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			}
 			// This was not the first pressed letter, continue handling this key in the default case
 			fallthrough
-		default:
+
+		default: // any other key
 			//panic(fmt.Sprintf("PRESSED KEY: %v", []rune(key)))
 			if len([]rune(key)) > 0 && unicode.IsLetter([]rune(key)[0]) { // letter
 
@@ -1568,7 +1571,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 							newLeadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-e.spacesPerTab]
 							e.pos.sx -= e.spacesPerTab
 						}
-						e.lines[int(e.DataY())] = []rune(newLeadingWhitespace)
+						e.SetCurrentLine(newLeadingWhitespace)
 					}
 				}
 
