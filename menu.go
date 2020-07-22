@@ -138,6 +138,10 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 			changed = true
 			resizeMut.Unlock()
 		default:
+			if len([]rune(key)) == 0 {
+				// this happens if pgup or pgdn is pressed
+				break
+			}
 			// Check if the key matches the first letter (A-Z, a-z) in the choices
 			r := []rune(key)[0]
 			if !(65 <= r && r <= 90) && !(97 <= r && r <= 122) {
