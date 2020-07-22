@@ -2,7 +2,6 @@
 
 ## Pri
 
-- [ ] The undo history is lost when switching between .cpp and .h with `ctrl-t`.
 - [ ] Add tests for the smart indent feature: for pressing return, tab and space, especially in relation with `{` and `}`.
 - [ ] Cross user portals, possibly by using `TMPDIR/oportal.dat`.
 - [ ] Improve the built-in Markdown to PDF rendering using `mandolyte/mdtopdf`.
@@ -19,6 +18,7 @@
 
 ## Features I see myself using straight away
 
+- [ ] In C++, `private:`, `protected:` and `public:` should be dedented.
 - [ ] Press `ctrl-space` in markdown files to see the clock and number of words. Press `ctrl-space` again to export with pandoc.
 - [ ] Highlight the line where a portal has been opened
 - [ ] Highlight the part of git commit topics that are >= 80 characters long.
