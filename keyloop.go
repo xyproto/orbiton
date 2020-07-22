@@ -16,6 +16,11 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+var (
+	// Circular undo buffer with room for N actions
+	undo = NewUndo(8192)
+)
+
 // RunMainLoop will set up and run the main loop of the editor
 // a *vt100.TTY struct
 // a filename to open
@@ -78,9 +83,6 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 	// Respect the NO_COLOR environment variable
 	e.respectNoColorEnvironmentVariable()
 	status.respectNoColorEnvironmentVariable()
-
-	// Circular undo buffer with room for N actions
-	undo := NewUndo(8192)
 
 	// Terminal resize handler
 	e.SetUpResizeHandler(c, status, tty)
