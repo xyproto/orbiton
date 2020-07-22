@@ -827,7 +827,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			// Enable auto indent if the extension is not "" and either:
 			// * The mode is set to Go and the position is not at the very start of the line (empty or not)
 			// * Syntax highlighting is enabled and the cursor is not at the start of the line (or before)
-			trimmedLine := strings.TrimSpace(e.Line(LineIndex(y)))
+			trimmedLine := strings.TrimSpace(e.CurrentLine())
 			//emptyLine := len(trimmedLine) == 0
 			//almostEmptyLine := len(trimmedLine) <= 1
 
@@ -868,11 +868,11 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 					}
 
 					// Smart-ish indentation
-					if !strings.HasPrefix(strippedLineAbove, "switch ") && (strings.HasPrefix(strippedLineAbove, "case ") ||
+					if !strings.HasPrefix(strippedLineAbove, "switch ") && (strings.HasPrefix(strippedLineAbove, "case ")) ||
 						strings.HasSuffix(strippedLineAbove, "{") || strings.HasSuffix(strippedLineAbove, "[") ||
 						strings.HasSuffix(strippedLineAbove, "(") || strings.HasSuffix(strippedLineAbove, ":") ||
 						strings.HasSuffix(strippedLineAbove, " \\") ||
-						strings.HasPrefix(strippedLineAbove, "if ")) {
+						strings.HasPrefix(strippedLineAbove, "if ") {
 						// Use one more indentation than the line above
 						newLeadingSpace = spaceAbove + oneIndentation
 					} else if ((len(spaceAbove) - len(oneIndentation)) > 0) && strings.HasSuffix(trimmedLine, "}") {
@@ -883,7 +883,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 						newLeadingSpace = spaceAbove
 					}
 
-					e.SetLine(LineIndex(y), newLeadingSpace+trimmedLine)
+					e.SetCurrentLine(newLeadingSpace + trimmedLine)
 					if e.AtOrAfterEndOfLine() {
 						e.End(c)
 					}
@@ -1541,24 +1541,34 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 
 				// "smart dedent"
 				if r == '}' || r == ']' || r == ')' {
-					lineContents := strings.TrimSpace(e.CurrentLine())
-					whitespaceInFront := e.LeadingWhitespace()
-					currentX, _ := e.DataX()
+
+					// Normally, dedent once, but there are exceptions
+
+					noContentHereAlready := len(strings.TrimSpace(e.CurrentLine())) == 0
+					leadingWhitespace := e.LeadingWhitespace()
 					nextLineContents := e.Line(e.DataY() + 1)
+
+					currentX := e.pos.sx
+
 					foundCurlyBracketBelow := currentX-1 == strings.Index(nextLineContents, "}")
 					foundSquareBracketBelow := currentX-1 == strings.Index(nextLineContents, "]")
 					foundParenthesisBelow := currentX-1 == strings.Index(nextLineContents, ")")
+
 					noDedent := foundCurlyBracketBelow || foundSquareBracketBelow || foundParenthesisBelow
 
-					if e.pos.sx > 0 && len(lineContents) == 0 && len(whitespaceInFront) > 0 && !noDedent {
+					//noDedent := similarLineBelow
 
-						// move one step left
-						atTab := e.TabToTheLeft() || (e.pos.sx <= e.spacesPerTab && e.Get(0, e.DataY()) == '\t')
-						if atTab {
+					// Okay, dedent this line by 1 indendation, if possible
+					if !noDedent && e.pos.sx > 0 && len(leadingWhitespace) > 0 && noContentHereAlready {
+						newLeadingWhitespace := leadingWhitespace
+						if strings.HasSuffix(leadingWhitespace, "\t") {
+							newLeadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-1]
 							e.pos.sx -= e.spacesPerTab
-						} else {
-							e.pos.sx--
+						} else if strings.HasSuffix(leadingWhitespace, strings.Repeat(" ", e.spacesPerTab)) {
+							newLeadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-e.spacesPerTab]
+							e.pos.sx -= e.spacesPerTab
 						}
+						e.lines[int(e.DataY())] = []rune(newLeadingWhitespace)
 					}
 				}
 
