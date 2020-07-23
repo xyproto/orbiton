@@ -229,12 +229,11 @@ func (e *Editor) FirstScreenPosition(n LineIndex) uint {
 		spacesPerTab = uint(e.spacesPerTab)
 	)
 	for _, r := range e.Line(n) {
-		switch r {
-		case '\t':
+		if r == '\t' {
 			counter += spacesPerTab
-		case ' ':
+		} else if r == ' ' {
 			counter++
-		default:
+		} else {
 			break
 		}
 	}
