@@ -14,9 +14,9 @@ func TestEditor(t *testing.T) {
 	}
 }
 
-func ExampleEditor_InsertString() {
+func ExampleEditor_InsertStringAndMove() {
 	e := NewSimpleEditor(80)
-	e.InsertString(nil, "hello")
+	e.InsertStringAndMove(nil, "hello")
 
 	fmt.Println(e)
 	// Output:
@@ -25,9 +25,9 @@ func ExampleEditor_InsertString() {
 
 func ExampleEditor_Home() {
 	e := NewSimpleEditor(80)
-	e.InsertString(nil, "llo")
+	e.InsertStringAndMove(nil, "llo")
 	e.Home()
-	e.InsertString(nil, "he")
+	e.InsertStringAndMove(nil, "he")
 
 	fmt.Println(e)
 	// Output:
@@ -36,11 +36,11 @@ func ExampleEditor_Home() {
 
 func ExampleEditor_End() {
 	e := NewSimpleEditor(80)
-	e.InsertString(nil, "el")
+	e.InsertStringAndMove(nil, "el")
 	e.Home()
 	e.InsertRune(nil, 'h')
 	e.End(nil)
-	e.InsertString(nil, "lo")
+	e.InsertStringAndMove(nil, "lo")
 
 	fmt.Println(e)
 	// Output:
@@ -49,7 +49,7 @@ func ExampleEditor_End() {
 
 func ExampleEditor_Next() {
 	e := NewSimpleEditor(80)
-	e.InsertString(nil, "hllo")
+	e.InsertStringAndMove(nil, "hllo")
 	e.Home()
 	e.Next(nil)
 	e.InsertRune(nil, 'e')
@@ -58,6 +58,21 @@ func ExampleEditor_Next() {
 	// Output:
 	// hello
 }
+
+// func ExampleEditor_Brackets() {
+// 	e := NewSimpleEditor(80)
+// 	e.InsertStringAndMove(nil, "if 1 + 1 == 3 {")
+// 	e.InsertRune(nil, '\n')
+// 	e.InsertRune(nil, '!')
+// 	e.InsertRune(nil, '\n')
+// 	e.InsertRune(nil, '}')
+// 	e.InsertRune(nil, '\n')
+// 	fmt.Println(e)
+// 	// Output:
+// 	// if 1 + 1 == 3 {
+// 	//     !
+// 	// }
+// }
 
 /*
 
