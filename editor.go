@@ -221,20 +221,20 @@ func (e *Editor) LastTextPosition(n LineIndex) int {
 	return (e.LastDataPosition(n) + extraSpaceBecauseOfTabs)
 }
 
-// FirstScreenPosition returns the first X index for this line, that is not whitespace.
+// FirstScreenPosition returns the first X index for this line, that is not '\t' or ' '.
 // Does not deal with the X offset.
 func (e *Editor) FirstScreenPosition(n LineIndex) uint {
-	spacesPerTab := e.spacesPerTab
-	var counter uint
+	var (
+		counter      uint
+		spacesPerTab = uint(e.spacesPerTab)
+	)
 	for _, r := range e.Line(n) {
-		if unicode.IsSpace(r) {
-			if r == '\t' {
-				counter += uint(spacesPerTab)
-			} else {
-				counter++
-			}
-			continue
-		} else {
+		switch r {
+		case '\t':
+			counter += spacesPerTab
+		case ' ':
+			counter++
+		default:
 			break
 		}
 	}
@@ -1179,9 +1179,9 @@ func (e *Editor) InsertStringBelow(y int, s string) {
 	}
 }
 
-// InsertString will insert a string at the current data position.
-// This will also call e.WriteRune and e.Next, as needed.
-func (e *Editor) InsertString(c *vt100.Canvas, s string) {
+// InsertStringAndMove will insert a string at the current data position
+// and possibly move down. This will also call e.WriteRune, e.Down and e.Next, as needed.
+func (e *Editor) InsertStringAndMove(c *vt100.Canvas, s string) {
 	for _, r := range s {
 		if r == '\n' {
 			e.InsertLineBelow()
@@ -2120,7 +2120,7 @@ func (e *Editor) InsertFile(c *vt100.Canvas, filename string) error {
 	// Replace any remaining \r characters with \n
 	data = bytes.Replace(data, []byte{'\r'}, []byte{'\n'}, -1)
 
-	e.InsertString(c, strings.TrimRightFunc(string(data), unicode.IsSpace))
+	e.InsertStringAndMove(c, strings.TrimRightFunc(string(data), unicode.IsSpace))
 	return nil
 }
 

@@ -673,12 +673,12 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 
 			switch {
 			case e.AtOrAfterEndOfDocument(): // This case must come first
-				e.InsertString(c, "")
+				e.InsertStringAndMove(c, "")
 				e.InsertLineBelow()
 			case e.AfterEndOfLine():
 				e.InsertLineBelow()
 			case !e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument():
-				e.InsertString(c, "")
+				e.InsertStringAndMove(c, "")
 				e.InsertLineBelow()
 			case e.pos.AtStartOfLine() || e.AtOrBeforeStartOfTextLine():
 				e.InsertLineAbove()
@@ -704,12 +704,19 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			}
 
 			if !noHome {
-				e.Home()
+				e.pos.sx = 0
+				//e.Home()
 			}
 
 			if indent && len(leadingWhitespace) > 0 {
-				// Insert the same leading whitespace for the new line, while moving to the right
-				e.InsertString(c, leadingWhitespace)
+				// If the leading whitespace starts with a tab and ends with a space, remove the final space
+				if strings.HasPrefix(leadingWhitespace, "\t") && strings.HasSuffix(leadingWhitespace, " ") {
+					leadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-1]
+					logf("cleaned leading whitespace: %v\n", []rune(leadingWhitespace))
+				}
+				// Insert the same leading whitespace for the new line
+				e.SetCurrentLine(leadingWhitespace)
+				// Go to the start of the text line, after the initial indentation
 				e.GoToStartOfTextLine(c)
 			}
 
@@ -821,7 +828,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 
 				if chosen != "" {
 					// Insert the chosen word
-					e.InsertString(c, chosen)
+					e.InsertStringAndMove(c, chosen)
 					break
 				}
 			}
@@ -1282,7 +1289,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 					e.SetLine(y, line)
 				} else {
 					// If the line is not empty, insert the trimmed string
-					e.InsertString(c, strings.TrimSpace(line))
+					e.InsertStringAndMove(c, strings.TrimSpace(line))
 				}
 
 				e.InsertLineBelow()
@@ -1369,7 +1376,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 					e.SetLine(y, e.LeadingWhitespace()+strings.TrimSpace(copyLines[0]))
 				} else {
 					// If the line is not empty, insert the trimmed string
-					e.InsertString(c, strings.TrimSpace(copyLines[0]))
+					e.InsertStringAndMove(c, strings.TrimSpace(copyLines[0]))
 				}
 
 			} else { // Multi line paste (the rest of the lines)
@@ -1403,7 +1410,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 						e.InsertLineBelow()
 						e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
 					}
-					e.InsertString(c, line)
+					e.InsertStringAndMove(c, line)
 				}
 			}
 			// Prepare to redraw the text
