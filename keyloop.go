@@ -665,6 +665,11 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				indent = true
 			)
 
+			// TODO: add and use something like "e.shouldAutoIndent" for these file types
+			if e.mode == modeMarkdown || e.mode == modeText || e.mode == modeBlank {
+				indent = false
+			}
+
 			if trimmedLine == "private:" || trimmedLine == "protected:" || trimmedLine == "public:" {
 				// De-indent the current line before moving on to the next
 				e.SetCurrentLine(trimmedLine)
