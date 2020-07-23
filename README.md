@@ -2,7 +2,7 @@
 
 `o` is a small and fast text editor that is limited to the VT100 standard.
 
-It's a good fit for writing git commit messages, using `EDITOR=o git commit`.
+It's a good fit for writing git commit messages (using `EDITOR=o git commit`), small programming projects and editing Markdown.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
