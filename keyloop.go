@@ -186,7 +186,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			// Cycle git rebase keywords
 			if line := e.CurrentLine(); e.mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
 				newLine := nextGitRebaseKeyword(line)
-				e.SetLine(e.DataY(), newLine)
+				e.SetCurrentLine(newLine)
 				e.redraw = true
 				e.redrawCursor = true
 				break
@@ -1295,8 +1295,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 
 				if e.EmptyRightTrimmedLine() {
 					// If the line is empty, replace with the string from the portal
-					y := e.DataY()
-					e.SetLine(y, line)
+					e.SetCurrentLine(line)
 				} else {
 					// If the line is not empty, insert the trimmed string
 					e.InsertStringAndMove(c, strings.TrimSpace(line))
@@ -1309,6 +1308,30 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 
 				break
 			} // errors with loading a portal are ignored
+
+			// Check if the clipboard file should be used instead
+			if e.clipboardFile != "" && exists(e.clipboardFile) {
+				line, err := PopLineFrom(e.clipboardFile, 0777)
+				status.Clear(c)
+				if err != nil {
+					status.SetErrorMessage(err.Error())
+					status.Show(c, e)
+					e.redrawCursor = true
+					break
+				} else {
+					undo.Snapshot(e)
+					if e.EmptyRightTrimmedLine() {
+						e.SetCurrentLine(line)
+					} else {
+						// If the line is not empty, insert the trimmed string
+						e.InsertStringAndMove(c, strings.TrimSpace(line))
+					}
+					e.InsertLineBelow()
+					e.Down(c, nil)
+					e.redraw = true
+					break
+				}
+			}
 
 			// This may only work for the same user, and not with sudo/su
 
@@ -1330,20 +1353,22 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				copyLines = strings.Split(s, "\n")
 			} else if firstPasteAction {
 				firstPasteAction = false
-				hasXclip := hasE("DISPLAY") && which("xclip") != ""
-				hasWclip := which("wl-paste") != ""
-				noBreak := false
+				missingUtility := false
+
 				status.Clear(c)
-				if !hasXclip && !hasWclip {
-					status.SetErrorMessage("Either xclip or wl-paste (wl-clipboard) are missing!")
-				} else if !hasXclip {
-					status.SetErrorMessage("The xclip utility is missing!")
-				} else if !hasWclip {
-					status.SetErrorMessage("The wl-paste utility (from wl-clipboard) is missing!")
+
+				if hasE("DISPLAY") { // X11
+					if which("xclip") == "" {
+						status.SetErrorMessage("The xclip utility is missing!")
+						missingUtility = true
+					}
 				} else {
-					noBreak = true
+					if which("wl-paste") == "" {
+						status.SetErrorMessage("The wl-paste utility (from wl-clipboard) is missing!")
+						missingUtility = true
+					}
 				}
-				if !noBreak {
+				if missingUtility {
 					status.Show(c, e)
 					break // Break instead of pasting from the internal buffer, but only the first time
 				}
@@ -1432,7 +1457,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			if line := e.CurrentLine(); e.mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
 				undo.Snapshot(e)
 				newLine := nextGitRebaseKeyword(line)
-				e.SetLine(e.DataY(), newLine)
+				e.SetCurrentLine(newLine)
 				e.redraw = true
 				e.redrawCursor = true
 				break
