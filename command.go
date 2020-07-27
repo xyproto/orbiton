@@ -151,19 +151,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		}
 	}
 
-	// Add the "clipboard file" menu item
-	if e.clipboardFile == "" {
-		actionTitles[len(actionTitles)] = "Use " + defaultClipboardFile + " instead of the clipboard"
-		actionFunctions[len(actionFunctions)] = func() {
-			e.clipboardFile = defaultClipboardFile
-		}
-	} else {
-		actionTitles[len(actionTitles)] = "Use the clipboard instead of  " + defaultClipboardFile
-		actionFunctions[len(actionFunctions)] = func() {
-			e.clipboardFile = ""
-		}
-	}
-
 	// Add the option to change the colors, for non-light themes (fg != black)
 	if !e.lightTheme && !noColor { // Not a light theme and NO_COLOR is not set
 
@@ -206,6 +193,19 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 				e.syntaxHighlight = false
 				e.FullResetRedraw(c, status, true)
 			}
+		}
+	}
+
+	// Add the "clipboard file" menu item
+	if e.clipboardFile == "" {
+		actionTitles[len(actionTitles)] = "Use " + defaultClipboardFile + " instead of the clipboard"
+		actionFunctions[len(actionFunctions)] = func() {
+			e.clipboardFile = defaultClipboardFile
+		}
+	} else {
+		actionTitles[len(actionTitles)] = "Use the clipboard instead of  " + defaultClipboardFile
+		actionFunctions[len(actionFunctions)] = func() {
+			e.clipboardFile = ""
 		}
 	}
 
