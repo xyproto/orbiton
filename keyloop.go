@@ -1223,6 +1223,21 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			// close the portal, if any
 			closedPortal := ClosePortal() == nil
 
+			// Check if the clipboard file should be used instead
+			if e.clipboardFile != "" {
+				trimmedLine := e.TrimmedLine()
+				err := PushLineTo(e.clipboardFile, trimmedLine, 0777)
+				status.Clear(c)
+				if err != nil {
+					status.SetErrorMessage(err.Error())
+				} else {
+					status.SetMessage("Pushed 1 line to clipboard file")
+				}
+				status.Show(c, e)
+				e.redrawCursor = true
+				break
+			}
+
 			if singleLineCopy { // Single line copy
 				status.Clear(c)
 				// Pressed for the first time for this line number
@@ -1319,6 +1334,8 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 					e.redrawCursor = true
 					break
 				} else {
+					status.SetMessage("Popped 1 line from clipboard file")
+					status.Show(c, e)
 					undo.Snapshot(e)
 					if e.EmptyRightTrimmedLine() {
 						e.SetCurrentLine(line)
