@@ -196,19 +196,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		}
 	}
 
-	// Add the "clipboard file" menu item
-	if e.clipboardFile == "" {
-		actionTitles[len(actionTitles)] = "Instead of the clipboard, use " + defaultClipboardFile
-		actionFunctions[len(actionFunctions)] = func() {
-			e.clipboardFile = defaultClipboardFile
-		}
-	} else {
-		actionTitles[len(actionTitles)] = "Use the clipboard instead of " + defaultClipboardFile
-		actionFunctions[len(actionFunctions)] = func() {
-			e.clipboardFile = ""
-		}
-	}
-
 	// Create a list of strings that are menu choices,
 	// while also creating a mapping from the menu index to a function.
 	menuChoices := make([]string, len(actionTitles))
