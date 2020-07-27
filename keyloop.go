@@ -1232,6 +1232,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 					status.SetErrorMessage(err.Error())
 				} else {
 					status.SetMessage("Pushed 1 line to clipboard file")
+					e.Down(c, nil)
 				}
 				status.Show(c, e)
 				e.redrawCursor = true

@@ -4,17 +4,18 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 // defaultClipboardFile is a string
 var defaultClipboardFile = func() string {
 	// Use the temporary directory defined in TMPDIR, with fallback to /tmp
-	var tempdir = os.Getenv("TMPDIR")
-	if len(tempdir) == 0 {
-		tempdir = "/tmp"
+	var clipdir = os.Getenv("TMPDIR")
+	if len(clipdir) == 0 {
+		clipdir = "/tmp"
 	}
-	return filepath.Join(tempdir, "clipboard")
+	return filepath.Join(clipdir, "clipboard")
 }()
 
 // PopLineFrom can pop a line from the top of a file.
@@ -53,10 +54,8 @@ func PopLineFrom(filename string, permissions os.FileMode) (string, error) {
 		return foundLine, err
 	}
 
-	// Make the file available to other users if permissions are given
-	if err := os.Chmod(filename, permissions); err != nil {
-		return foundLine, err
-	}
+	// Make a best effort on making the file available to other users
+	os.Chmod(filename, permissions)
 
 	return foundLine, nil
 
@@ -65,6 +64,10 @@ func PopLineFrom(filename string, permissions os.FileMode) (string, error) {
 // PushLineTo can push a line to the bottom of a file.
 // permissions can be ie. 0600
 func PushLineTo(filename, line string, permissions os.FileMode) error {
+
+	if len(strings.TrimSpace(line)) == 0 {
+		return errors.New("line is empty")
+	}
 
 	if !exists(filename) {
 		if _, err := os.Create(filename); err != nil {
@@ -87,10 +90,8 @@ func PushLineTo(filename, line string, permissions os.FileMode) error {
 		return err
 	}
 
-	// Make the file available to other users if permissions are given
-	if err := os.Chmod(filename, permissions); err != nil {
-		return err
-	}
+	// Make a best effort on making the file available to other users
+	os.Chmod(filename, permissions)
 
 	return nil
 }
