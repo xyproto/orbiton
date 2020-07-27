@@ -46,7 +46,7 @@ func PopLineFrom(filename string, permissions os.FileMode) (string, error) {
 
 }
 
-// PushLineTo can push a line to the top of a file.
+// PushLineTo can push a line to the bottom of a file.
 // permissions can be ie. 0600
 func PushLineTo(filename, line string, permissions os.FileMode) error {
 
@@ -56,11 +56,11 @@ func PushLineTo(filename, line string, permissions os.FileMode) error {
 	}
 	lines := strings.Split(string(data), "\n")
 
-	// Append all the lines from the file to the given line
-	modifiedLines := append([]string{line}, lines...)
+	// Append line to the top of the lines
+	lines = append(lines, line)
 
 	// Write the lines to file
-	data = []byte(strings.Join(modifiedLines, "\n"))
+	data = []byte(strings.Join(lines, "\n"))
 	if err = ioutil.WriteFile(filename, data, permissions); err != nil {
 		return err
 	}
