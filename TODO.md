@@ -2,48 +2,37 @@
 
 ## Pri
 
-- [ ] Add tests for the smart indent feature: for pressing return, tab and space, especially in relation with `{` and `}`.
-- [ ] Cross user portals, possibly by using `TMPDIR/oportal.dat`.
-- [ ] Improve the built-in Markdown to PDF rendering using `mandolyte/mdtopdf`.
 - [ ] Paste with middle mouse click.
-
-## Bug fixes
-
-- [ ] Make dedent when typing `}` work again.
-- [ ] Return sometimes inserts an additional blank line, for long lines. Fix.
-- [ ] Fix an issue with backspace not always removing the indentation to the left. Sometimes it removes just a single space.
+- [ ] Pressing return after a long line should create a new line and also scroll all the way to the left.
+- [ ] Fix text flow when encountering unusual unicode symbols. See the `test` directory.
 - [ ] When moving on long lines, using the arrow keys, the cursor may be misplaced when typing letters.
-- [ ] Some files with unusual unicode symbols may cause problems with the text flow. See the `test` directory.
-- [ ] Disallow typing in characters like the unusual `/` (altgr?), or handle them better.
 
 ## Features I see myself using straight away
 
-- [ ] In C++, `private:`, `protected:` and `public:` should be dedented.
-- [ ] Press `ctrl-space` in markdown files to see the clock and number of words. Press `ctrl-space` again to export with pandoc.
-- [ ] Highlight the line where a portal has been opened
+- [ ] Highlight the line where a portal has been opened.
 - [ ] Highlight the part of git commit topics that are >= 80 characters long.
-- [ ] Copy and paste does not work when using a terminal with a different user and no graphical environment. Add a way.
+- [ ] For git commit text, highlight column 80 if the text crosses that boundry.
 - [ ] Check if Wayland is in use before using `wl-*`.
-- [ ] Add a `ctrl-t` menu option to copy the entire file to the clipboard.
-- [ ] Add a `ctrl-t` menu option to copy the build command that is used with `ctrl-space` to the clipboard.
+- [ ] Add a command menu option to copy the entire file to the clipboard.
+- [ ] Add a command menu option to copy the build command to the clipboard.
 - [ ] If `xclip` or similar tool is not available, cut/copy/paste via a file.
 - [ ] Pressing `ctrl-v` to paste does not work across X/Wayland sessions. It would be nice to find a more general clipboard solution.
+- [ ] Let the cut/copy/paste line state be part of the editor state, because of undo.
 - [ ] Insert `# vim: ts=2 sw=2 et:` at the bottom when `ctrl-space` is pressed in a PKGBUILD file. Or add a command menu option for this.
-- [ ] For git commit text, highlight column 80 if the text crosses that boundry.
 - [ ] Autocompletion of filenames if the previous rune is "/" and tab is pressed.
 - [ ] Add word wrap with a custom line length to the command menu.
 - [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.
 - [ ] Spellcheck all comments that are in English. Highlight misspelled words. Make it possible to add/ignore words.
 - [ ] Should be able to open any binary file and save it again, without replacements. Add a hex edit mode.
 - [ ] Detect ISO-8859-1 and convert the file to UTF-8 before opening.
-- [ ] If `xclip` or `wl-clipboard` are not found when pasting, present a status message. Also check related env. vars.
 - [ ] Also format JSON documents with `ctrl-w`.
 - [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
 - [ ] Let the autocompletion also look at method definitions with matching variable names (ignoring types, for now).
-- [ ] Let the cut/copy/paste line state be part of the editor state, because of undo.
+- [ ] Cross user portals, possibly by using `TMPDIR/oportal.dat`.
 
 ## Low priority bug fixes
 
+- [ ] Add tests for the smart indent feature: for pressing return, tab and space, especially in relation with `{` and `}`.
 - [ ] Rainbow parenthesis should be able to span multiple lines.
 - [ ] Shell scripts with if/else/endif blocks that are commented out are highlighted wrong.
 - [ ] Add `guessica` to the `ctrl-t` menu.
