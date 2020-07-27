@@ -2,6 +2,8 @@
 
 ## Pri
 
+- [ ] Figure out why copy/paste is wonky on Wayland.
+- [ ] Figure out why a file saved by another user can not be read by Go in `/tmp`, but can be read with `cat`.
 - [ ] Paste with middle mouse click.
 - [ ] Pressing return after a long line should create a new line and also scroll all the way to the left.
 - [ ] Fix text flow when encountering unusual unicode symbols. See the `test` directory.
@@ -9,6 +11,7 @@
 
 ## Features I see myself using straight away
 
+- [ ] Command menu option for deleting the rest of the lines.
 - [ ] Highlight the line where a portal has been opened.
 - [ ] Highlight the part of git commit topics that are >= 80 characters long.
 - [ ] For git commit text, highlight column 80 if the text crosses that boundry.
