@@ -677,7 +677,10 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			}
 
 			switch {
-			case e.AtOrAfterEndOfDocument(): // This case must come first
+			case e.AtOrAfterLastLineOfDocument() && (e.AtStartOfLine() || e.AtOrBeforeStartOfTextLine()):
+				e.InsertLineAbove()
+				noHome = true
+			case e.AtOrAfterEndOfDocument():
 				e.InsertStringAndMove(c, "")
 				e.InsertLineBelow()
 			case e.AfterEndOfLine():
@@ -685,7 +688,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			case !e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument():
 				e.InsertStringAndMove(c, "")
 				e.InsertLineBelow()
-			case e.pos.AtStartOfLine() || e.AtOrBeforeStartOfTextLine():
+			case e.AtStartOfLine() || e.AtOrBeforeStartOfTextLine():
 				e.InsertLineAbove()
 				noHome = true
 			default:
@@ -745,7 +748,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				e.pos.Up()
 				e.TrimRight(e.DataY())
 				e.End(c)
-			} else if e.pos.AtStartOfLine() {
+			} else if e.AtStartOfLine() {
 				if e.DataY() > 0 {
 					e.pos.Up()
 					e.End(c)
