@@ -47,7 +47,6 @@ type Editor struct {
 	clearOnQuit        bool                  // clear the terminal when quitting the editor, or not
 	wrapWhenTyping     bool                  // wrap text at a certain limit when typing
 	lightTheme         bool                  // using a light theme? (the XTERM_VERSION environment variable is set)
-	clipboardFile      string                // normally empty, can be used instead of the system clipboard
 	EditorColors
 }
 
