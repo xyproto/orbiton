@@ -2225,3 +2225,8 @@ func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *
 
 	return err
 }
+
+// TrimmedLine returns the current line, trimmed in both ends
+func (e *Editor) TrimmedLine() string {
+	return strings.TrimSpace(e.CurrentLine())
+}
