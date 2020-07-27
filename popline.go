@@ -40,8 +40,14 @@ func PopLineFrom(filename string, permissions os.FileMode) (string, error) {
 
 	data = []byte(strings.Join(modifiedLines, "\n"))
 	if err = ioutil.WriteFile(filename, data, permissions); err != nil {
-		return "", err
+		return foundLine, err
 	}
+
+	// Make the file available to other users if permissions are given
+	if err := os.Chmod(filename, permissions); err != nil {
+		return foundLine, err
+	}
+
 	return foundLine, nil
 
 }
@@ -49,6 +55,12 @@ func PopLineFrom(filename string, permissions os.FileMode) (string, error) {
 // PushLineTo can push a line to the bottom of a file.
 // permissions can be ie. 0600
 func PushLineTo(filename, line string, permissions os.FileMode) error {
+
+	if !exists(filename) {
+		if _, err := os.Create(filename); err != nil {
+			return err
+		}
+	}
 
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -62,6 +74,11 @@ func PushLineTo(filename, line string, permissions os.FileMode) error {
 	// Write the lines to file
 	data = []byte(strings.Join(lines, "\n"))
 	if err = ioutil.WriteFile(filename, data, permissions); err != nil {
+		return err
+	}
+
+	// Make the file available to other users if permissions are given
+	if err := os.Chmod(filename, permissions); err != nil {
 		return err
 	}
 
