@@ -1945,7 +1945,7 @@ func (e *Editor) Center(c *vt100.Canvas) {
 
 // CommentOn will insert a comment marker (like # or //) in front of a line
 func (e *Editor) CommentOn(commentMarker string) {
-	e.SetLine(e.DataY(), commentMarker+" "+e.CurrentLine())
+	e.SetCurrentLine(commentMarker + " " + e.CurrentLine())
 }
 
 // CommentOff will remove "//" or "// " from the front of the line if "//" is given
@@ -1967,7 +1967,7 @@ func (e *Editor) CommentOff(commentMarker string) {
 		changed = true
 	}
 	if changed {
-		e.SetLine(e.DataY(), newContents)
+		e.SetCurrentLine(newContents)
 		// If the line was shortened and the cursor ended up after the line, move it
 		if e.AfterEndOfLine() {
 			e.End(nil)
