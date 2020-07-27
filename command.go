@@ -198,12 +198,12 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 
 	// Add the "clipboard file" menu item
 	if e.clipboardFile == "" {
-		actionTitles[len(actionTitles)] = "Use " + defaultClipboardFile + " instead of the clipboard"
+		actionTitles[len(actionTitles)] = "Instead of the clipboard, use " + defaultClipboardFile
 		actionFunctions[len(actionFunctions)] = func() {
 			e.clipboardFile = defaultClipboardFile
 		}
 	} else {
-		actionTitles[len(actionTitles)] = "Use the clipboard instead of  " + defaultClipboardFile
+		actionTitles[len(actionTitles)] = "Use the clipboard instead of " + defaultClipboardFile
 		actionFunctions[len(actionFunctions)] = func() {
 			e.clipboardFile = ""
 		}
