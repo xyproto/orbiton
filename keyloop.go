@@ -227,11 +227,13 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 						status.Clear(c)
 						status.SetMessage("Calling " + utilityName)
 						status.Show(c, e)
+
 						// Use the temporary directory defined in TMPDIR, with fallback to /tmp
 						tempdir := os.Getenv("TMPDIR")
 						if tempdir == "" {
 							tempdir = "/tmp"
 						}
+
 						if f, err := ioutil.TempFile(tempdir, "__o*"+ext); err == nil {
 							// no error, everything is fine
 							tempFilename := f.Name()

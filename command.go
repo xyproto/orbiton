@@ -122,7 +122,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		}
 	}
 
-	// Add the unlock menu
+	// Add the unlock menu item
 	// TODO: Detect if the current file is locked first
 	if forced {
 		actionTitles[len(actionTitles)] = "Unlock if locked"
@@ -135,7 +135,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		}
 	}
 
-	// Add the portal menu
+	// Add the portal menu item
 	if portal, err := LoadPortal(); err == nil { // no problems
 		actionTitles[len(actionTitles)] = "Close portal at " + portal.String()
 		actionFunctions[len(actionFunctions)] = func() {
@@ -148,6 +148,19 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			actionFunctions[len(actionFunctions)] = func() {
 				portal.Save()
 			}
+		}
+	}
+
+	// Add the "clipboard file" menu item
+	if e.clipboardFile == "" {
+		actionTitles[len(actionTitles)] = "Use " + defaultClipboardFile + " instead of the clipboard"
+		actionFunctions[len(actionFunctions)] = func() {
+			e.clipboardFile = defaultClipboardFile
+		}
+	} else {
+		actionTitles[len(actionTitles)] = "Use the clipboard instead of  " + defaultClipboardFile
+		actionFunctions[len(actionFunctions)] = func() {
+			e.clipboardFile = ""
 		}
 	}
 

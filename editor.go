@@ -16,6 +16,16 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+// defaultClipboardFile is a string
+var defaultClipboardFile = func() string {
+	// Use the temporary directory defined in TMPDIR, with fallback to /tmp
+	var tempdir = os.Getenv("TMPDIR")
+	if tempdir == "" {
+		tempdir = "/tmp"
+	}
+	return filepath.Join(tempdir, "clipboard")
+}()
+
 // EditorColors is a collection of a few selected colors, for setting up a new editor
 type EditorColors struct {
 	fg               vt100.AttributeColor // default foreground color
@@ -45,8 +55,9 @@ type Editor struct {
 	locationHistory    map[string]LineNumber // location history, for jumping to the last location when opening a file
 	quit               bool                  // for indicating if the user wants to end the editor session
 	clearOnQuit        bool                  // clear the terminal when quitting the editor, or not
-	wrapWhenTyping     bool
-	lightTheme         bool // using a light theme? (the XTERM_VERSION environment variable is set)
+	wrapWhenTyping     bool                  // wrap text at a certain limit when typing
+	lightTheme         bool                  // using a light theme? (the XTERM_VERSION environment variable is set)
+	clipboardFile      string                // normally empty, can be used instead of the system clipboard
 	EditorColors
 }
 
