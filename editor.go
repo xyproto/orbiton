@@ -451,19 +451,25 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	// Stop the spinner
 	quit <- true
 
-	lines := strings.Split(string(data), "\n")
-	e.Clear()
-	for y, line := range lines {
-		counter := 0
-		for _, letter := range line {
-			e.Set(counter, LineIndex(y), letter)
-			counter++
-		}
-	}
+	// Load the data
+	e.LoadBytes(data)
+
 	// Mark the data as "not changed"
 	e.changed = false
 
 	return message, nil
+}
+
+// LoadBytes replaces the current editor contents with the given bytes
+func (e *Editor) LoadBytes(data []byte) {
+	e.Clear()
+	for y, byteLine := range bytes.Split(data, []byte{'\n'}) {
+		for counter, letter := range string(byteLine) {
+			e.Set(counter, LineIndex(y), letter)
+		}
+	}
+	// Mark the data as "changed"
+	e.changed = true
 }
 
 // PrepareEmpty prepares an empty textual representation of a given filename.
