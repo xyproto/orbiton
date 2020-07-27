@@ -7,6 +7,16 @@ import (
 	"strings"
 )
 
+// defaultClipboardFile is a string
+var defaultClipboardFile = func() string {
+	// Use the temporary directory defined in TMPDIR, with fallback to /tmp
+	var tempdir = os.Getenv("TMPDIR")
+	if len(tempdir) == 0 {
+		tempdir = "/tmp"
+	}
+	return filepath.Join(tempdir, "clipboard")
+}()
+
 // PopLineFrom can pop a line from the top of a file.
 // This also modifies the file.
 // permissions can be ie. 0600

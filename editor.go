@@ -16,16 +16,6 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// defaultClipboardFile is a string
-var defaultClipboardFile = func() string {
-	// Use the temporary directory defined in TMPDIR, with fallback to /tmp
-	var tempdir = os.Getenv("TMPDIR")
-	if len(tempdir) == 0 {
-		tempdir = "/tmp"
-	}
-	return filepath.Join(tempdir, "clipboard")
-}()
-
 // EditorColors is a collection of a few selected colors, for setting up a new editor
 type EditorColors struct {
 	fg               vt100.AttributeColor // default foreground color
