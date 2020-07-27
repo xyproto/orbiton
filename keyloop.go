@@ -1326,6 +1326,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 
 			// Check if the clipboard file should be used instead
 			if e.clipboardFile != "" && exists(e.clipboardFile) {
+				undo.Snapshot(e)
 				line, err := PopLineFrom(e.clipboardFile, 0777)
 				status.Clear(c)
 				if err != nil {
