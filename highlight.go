@@ -26,7 +26,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	}
 	numlines := toline - fromline
 	offsetY := fromline
-	inCodeBlock := false // used when highlighting Markdown
+	inCodeBlock := false // used when highlighting Markdown or Python
 	// If in Markdown mode, figure out the current state of block quotes
 	if e.mode == modeMarkdown {
 		// Figure out if "fromline" is within a markdown code block or not
@@ -34,6 +34,16 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			// Check if the untrimmed line starts with ~~~ or ```
 			contents := e.Line(i)
 			if strings.HasPrefix(contents, "~~~") || strings.HasPrefix(contents, "```") {
+				// Toggle the flag for if we're in a code block or not
+				inCodeBlock = !inCodeBlock
+			}
+		}
+	} else if e.mode == modePython {
+		// Figure out if "fromline" is within a markdown code block or not
+		for i := LineIndex(0); i < fromline; i++ {
+			// Check if the untrimmed line starts with """ or '''
+			contents := e.Line(i)
+			if strings.HasPrefix(contents, "\"\"\"") || strings.HasPrefix(contents, "'''") {
 				// Toggle the flag for if we're in a code block or not
 				inCodeBlock = !inCodeBlock
 			}
@@ -112,8 +122,25 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 					// If this is a list item, store true in "prevLineIsListItem"
 					prevLineIsListItem = isListItem(line)
+				case modePython:
+					trimmedLine = strings.TrimSpace(line)
+					foundDockstringMarker := false
+					if strings.HasPrefix(trimmedLine, "\"\"\"") {
+						inCodeBlock = !inCodeBlock
+						foundDockstringMarker = true
+					} else if strings.HasSuffix(trimmedLine, "\"\"\"") {
+						inCodeBlock = !inCodeBlock
+						foundDockstringMarker = true
+					}
+					if inCodeBlock || foundDockstringMarker {
+						// Purple
+						coloredString = UnEscape(e.multiLineString.Start(trimmedLine))
+					} else {
+						// Regular highlight
+						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
+					}
 				case modeConfig, modeShell, modeCMake:
-					if strings.Contains(trimmedLine, "/*") || strings.Contains(trimmedLine, "*/") {
+					if strings.Contains(trimmedLine, "/*") || strings.HasSuffix(trimmedLine, "*/") {
 						// No highlight
 						coloredString = line
 					} else if strings.HasPrefix(trimmedLine, "> ") {
@@ -132,6 +159,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					} else {
 						// Regular highlight
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
+
 					}
 				case modeZig:
 					trimmedLine = strings.TrimSpace(line)
