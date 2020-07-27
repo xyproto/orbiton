@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	defaultUndoSize = 8192
+	defaultUndoSize = 8192 // number of undo actions possible to store in the circular buffer
 )
 
 var (
@@ -197,6 +197,25 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				break
 			}
 
+			// Format json
+			if strings.HasSuffix(e.filename, ".json") {
+				// TODO: Find a JSON formatter that does not need a JavaScript package like otto
+				var err error
+				jsonRaw := []byte(e.String())
+				//jsonRaw, err := jsonflib.Highlight([]byte(e.String()),
+				//jsonflib.HighlightFlags{Colorize: false, Verbose: false, Debug: false},
+				//)
+				if err != nil {
+					status.ClearAll(c)
+					status.SetErrorMessage(err.Error())
+					status.Show(c, e)
+					break
+				}
+				e.LoadBytes(jsonRaw)
+				e.redraw = true
+				break
+			}
+
 			// Not in git mode, format Go or C++ code with goimports or clang-format
 			// Map from formatting command to a list of file extensions
 			format := map[*exec.Cmd][]string{
@@ -218,9 +237,11 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				for _, ext := range extensions {
 					if strings.HasSuffix(e.filename, ext) {
 						if which(cmd.Path) == "" { // Does the formatting tool even exist?
+
 							status.ClearAll(c)
 							status.SetErrorMessage(cmd.Path + " is missing")
 							status.Show(c, e)
+
 							break OUT
 						}
 						utilityName := filepath.Base(cmd.Path)
