@@ -1555,6 +1555,11 @@ func (e *Editor) AtStartOfDocument() bool {
 	return e.pos.sy == 0 && e.pos.offsetY == 0
 }
 
+// AtStartOfLine is true if the cursor is a the start of the line
+func (e *Editor) AtStartOfLine() bool {
+	return e.pos.AtStartOfLine()
+}
+
 // AtLeftEdgeOfDocument is true if we're at the first column at the document
 func (e *Editor) AtLeftEdgeOfDocument() bool {
 	return e.pos.sx == 0 && e.pos.offsetX == 0
