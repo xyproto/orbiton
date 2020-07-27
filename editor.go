@@ -20,7 +20,7 @@ import (
 var defaultClipboardFile = func() string {
 	// Use the temporary directory defined in TMPDIR, with fallback to /tmp
 	var tempdir = os.Getenv("TMPDIR")
-	if tempdir == "" {
+	if len(tempdir) == 0 {
 		tempdir = "/tmp"
 	}
 	return filepath.Join(tempdir, "clipboard")
@@ -1646,9 +1646,14 @@ func (e *Editor) EmptyRightTrimmedLineBelow() bool {
 	return len(strings.TrimRightFunc(e.Line(e.DataY()+1), unicode.IsSpace)) == 0
 }
 
-// EmptyLine returns true if the line is completely empty, no whitespace or anything
+// EmptyLine returns true if the current line is completely empty, no whitespace or anything
 func (e *Editor) EmptyLine() bool {
-	return e.CurrentLine() == ""
+	return len(e.CurrentLine()) == 0
+}
+
+// EmptyTrimmedLine returns true if the current line (trimmed) is completely empty
+func (e *Editor) EmptyTrimmedLine() bool {
+	return len(e.TrimmedLine()) == 0
 }
 
 // AtStartOfTextLine returns true if the position is at the start of the text for this line
@@ -1977,7 +1982,7 @@ func (e *Editor) CommentOff(commentMarker string) {
 
 // CurrentLineCommented checks if the current trimmed line starts with "//", if "//" is given
 func (e *Editor) CurrentLineCommented(commentMarker string) bool {
-	return strings.HasPrefix(strings.TrimSpace(e.CurrentLine()), commentMarker)
+	return strings.HasPrefix(e.TrimmedLine(), commentMarker)
 }
 
 // ForEachLineInBlock will move the cursor and run the given function for

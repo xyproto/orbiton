@@ -567,7 +567,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				if e.AfterLineScreenContents() {
 					e.End(c)
 					// Then move one step to the left
-					if strings.TrimSpace(e.CurrentLine()) != "" {
+					if len(e.TrimmedLine()) > 0 {
 						e.Prev(c)
 					}
 				}
@@ -846,7 +846,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			// Enable auto indent if the extension is not "" and either:
 			// * The mode is set to Go and the position is not at the very start of the line (empty or not)
 			// * Syntax highlighting is enabled and the cursor is not at the start of the line (or before)
-			trimmedLine := strings.TrimSpace(e.CurrentLine())
+			trimmedLine := e.TrimmedLine()
 			//emptyLine := len(trimmedLine) == 0
 			//almostEmptyLine := len(trimmedLine) <= 1
 
@@ -1606,7 +1606,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 
 					// Normally, dedent once, but there are exceptions
 
-					noContentHereAlready := len(strings.TrimSpace(e.CurrentLine())) == 0
+					noContentHereAlready := len(e.TrimmedLine()) == 0
 					leadingWhitespace := e.LeadingWhitespace()
 					nextLineContents := e.Line(e.DataY() + 1)
 
