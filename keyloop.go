@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -60,6 +61,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 
 		key string // for the main loop
 
+		jsonFormatToggle bool // for toggling indentation or not when pressing ctrl-w for JSON
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -200,18 +202,35 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			// Format json
 			if strings.HasSuffix(e.filename, ".json") {
 				// TODO: Find a JSON formatter that does not need a JavaScript package like otto
-				var err error
-				jsonRaw := []byte(e.String())
-				//jsonRaw, err := jsonflib.Highlight([]byte(e.String()),
-				//jsonflib.HighlightFlags{Colorize: false, Verbose: false, Debug: false},
-				//)
+				var v interface{}
+
+				err := json.Unmarshal([]byte(e.String()), &v)
 				if err != nil {
 					status.ClearAll(c)
 					status.SetErrorMessage(err.Error())
 					status.Show(c, e)
 					break
 				}
-				e.LoadBytes(jsonRaw)
+
+				// Format the JSON bytes, first without indentation and then
+				// with indentation.
+				var indentedJSON []byte
+				if jsonFormatToggle {
+					indentedJSON, err = json.Marshal(v)
+					jsonFormatToggle = !jsonFormatToggle
+				} else {
+					indentationString := strings.Repeat(" ", e.spacesPerTab)
+					indentedJSON, err = json.MarshalIndent(v, "", indentationString)
+					jsonFormatToggle = !jsonFormatToggle
+				}
+				if err != nil {
+					status.ClearAll(c)
+					status.SetErrorMessage(err.Error())
+					status.Show(c, e)
+					break
+				}
+
+				e.LoadBytes(indentedJSON)
 				e.redraw = true
 				break
 			}
