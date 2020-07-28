@@ -197,6 +197,10 @@ Java
 * For building code with `ctrl-space`, `javac` and `jar` must be installed. A `.jar` file is created if the compilation succeeded.
 * For formatting code with `ctrl-w`, `google-java-format` must be installed.
 
+JSON
+
+* The JSON formatter is built-in.
+
 ## A note on Java
 
 Since `kotlinc $filename -include-runtime -d` builds to a `.jar`, I though I should do the same for Java. The idea is to easily build a single or a small collection of `.java` files, where one of the file has a `main` function.

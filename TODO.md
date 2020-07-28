@@ -28,7 +28,6 @@
 - [ ] Spellcheck all comments that are in English. Highlight misspelled words. Make it possible to add/ignore words.
 - [ ] Should be able to open any binary file and save it again, without replacements. Add a hex edit mode.
 - [ ] Detect ISO-8859-1 and convert the file to UTF-8 before opening.
-- [ ] Also format JSON documents with `ctrl-w`.
 - [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
 - [ ] Let the autocompletion also look at method definitions with matching variable names (ignoring types, for now).
 - [ ] Cross user portals, possibly by using `TMPDIR/oportal.dat`.
