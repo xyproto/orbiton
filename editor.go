@@ -464,7 +464,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 func (e *Editor) LoadBytes(data []byte) {
 	e.Clear()
 	for y, byteLine := range bytes.Split(data, []byte{'\n'}) {
-		for counter, letter := range string(byteLine) {
+		for counter, letter := range []rune(string(byteLine)) {
 			e.Set(counter, LineIndex(y), letter)
 		}
 	}
