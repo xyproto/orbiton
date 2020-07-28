@@ -1349,7 +1349,6 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				// Split the text into lines and store it in "copyLines"
 				copyLines = strings.Split(s, "\n")
 			} else if firstPasteAction {
-				firstPasteAction = false
 				missingUtility := false
 
 				status.Clear(c)
@@ -1365,7 +1364,8 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 						missingUtility = true
 					}
 				}
-				if missingUtility {
+				if missingUtility && firstPasteAction {
+					firstPasteAction = false
 					status.Show(c, e)
 					break // Break instead of pasting from the internal buffer, but only the first time
 				}
