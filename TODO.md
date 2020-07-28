@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] Use `wl-copy` for copy and cut. Use the same type of implementation as for `wl-paste`.
 - [ ] Figure out why copy/paste is wonky on Wayland.
 - [ ] Figure out why a file saved by another user can not be read by Go in `/tmp`, but can be read with `cat`.
 - [ ] Paste with middle mouse click.
