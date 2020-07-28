@@ -104,6 +104,15 @@ Set NO_COLOR=1 to disable colors.
 		}
 	}
 
+	// Set the terminal title, if TERM starts with konsole
+	if strings.HasPrefix(os.Getenv("TERM"), "konsole-") {
+		if absFilename, err := filepath.Abs(filename); err != nil {
+			fmt.Print("\033]30;" + filename + "\007")
+		} else {
+			fmt.Print("\033]30;" + absFilename + "\007")
+		}
+	}
+
 	// Initialize the VT100 terminal
 	tty, err := vt100.NewTTY()
 	if err != nil {
@@ -114,6 +123,13 @@ Set NO_COLOR=1 to disable colors.
 
 	// Run the main editor loop
 	userMessage, err := RunMainLoop(tty, filename, lineNumber, *forceFlag)
+
+	// Remove the terminal title, if TERM starts with konsole
+	if strings.HasPrefix(os.Getenv("TERM"), "konsole-") {
+		fmt.Print("\033]30;" + filepath.Base(os.Getenv("SHELL")) + "\007")
+	}
+
+	// Respond to the error returned from the main loop, if any
 	if err != nil {
 		if userMessage != "" {
 			quitMessage(tty, userMessage)
