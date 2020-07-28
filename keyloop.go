@@ -49,7 +49,8 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 		statusMode        bool      // if information should be shown at the bottom
 
 		firstLetterSinceStart string
-		firstPasteAction      bool = true
+		firstPasteAction      = true
+		firstCopyAction       = true
 
 		lastCopyY  LineIndex = -1 // used for keeping track if ctrl-c is pressed twice on the same line
 		lastPasteY LineIndex = -1 // used for keeping track if ctrl-v is pressed twice on the same line
@@ -1190,8 +1191,30 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				lastPasteY = -1
 				// Copy the line internally
 				copyLines = []string{line}
+
 				// Copy the line to the clipboard
-				_ = clipboard.WriteAll(line)
+				err = clipboard.WriteAll(line)
+				if err == nil {
+					// no issue
+				} else if firstCopyAction {
+					missingUtility := false
+
+					if hasE("DISPLAY") { // X11
+						if which("xclip") == "" {
+							status.SetErrorMessage("The xclip utility is missing!")
+							missingUtility = true
+						}
+					} else {
+						if which("wl-copy") == "" {
+							status.SetErrorMessage("The wl-copy utility (from wl-clipboard) is missing!")
+							missingUtility = true
+						}
+					}
+
+					// TODO
+					_ = missingUtility
+				}
+
 				// Delete the line
 				e.DeleteLine(y)
 			} else { // Multi line cut (add to the clipboard, since it's the second press)
@@ -1367,6 +1390,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 
 				// Split the text into lines and store it in "copyLines"
 				copyLines = strings.Split(s, "\n")
+
 			} else if firstPasteAction {
 				missingUtility := false
 
@@ -1383,6 +1407,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 						missingUtility = true
 					}
 				}
+
 				if missingUtility && firstPasteAction {
 					firstPasteAction = false
 					status.Show(c, e)
