@@ -27,6 +27,7 @@ const (
 	modeKotlin     // for Kotlin
 	modeJava       // for Java
 	modeHIDL       // for the Android-related Hardware Abstraction Layer Interface Definition Language
+	modeSQL        // for Structured Query Language
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -99,6 +100,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeJava
 		case ".hal":
 			mode = modeHIDL
+		case ".sql":
+			mode = modeSQL
 		default:
 			mode = modeBlank
 		}

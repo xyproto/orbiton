@@ -171,6 +171,15 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// Regular highlight
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					}
+				case modeSQL:
+					trimmedLine = strings.TrimSpace(line)
+					// Handle single line comments
+					if strings.HasPrefix(trimmedLine, "--") {
+						coloredString = UnEscape(e.multiLineComment.Start(trimmedLine))
+					} else {
+						// Regular highlight
+						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
+					}
 				case modeLisp:
 					q.singleQuote = 0
 

@@ -42,6 +42,8 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 	case modeHIDL:
 		syntax.Keywords = make(map[string]struct{})
 		addKeywords = hidlWords
+	case modeSQL:
+		addKeywords = []string{"NOT"}
 	case modeShell:
 		delKeywords = []string{"float", "with", "exec", "long", "double", "no", "pass", "#else", "#endif", "ret", "super"}
 		addKeywords = []string{"-f", "--force"}
@@ -73,6 +75,8 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "\""
 	case modeLisp:
 		return ";;"
+	case modeSQL:
+		return "--"
 	default:
 		return "//"
 	}
