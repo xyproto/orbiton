@@ -765,10 +765,12 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 					leadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-1]
 					logf("cleaned leading whitespace: %v\n", []rune(leadingWhitespace))
 				}
-				// Insert the same leading whitespace for the new line
-				e.SetCurrentLine(leadingWhitespace)
-				// Go to the start of the text line, after the initial indentation
-				e.GoToStartOfTextLine(c)
+				if !noHome {
+					// Insert the same leading whitespace for the new line
+					e.SetCurrentLine(leadingWhitespace)
+					// Then move to the start of the text
+					e.GoToStartOfTextLine(c)
+				}
 			}
 
 			e.SaveX(true)
