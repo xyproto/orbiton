@@ -2230,3 +2230,13 @@ func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *
 func (e *Editor) TrimmedLine() string {
 	return strings.TrimSpace(e.CurrentLine())
 }
+
+// LineContentsFromCursorPosition returns the rest of the line,
+// from the current cursor position, trimmed.
+func (e *Editor) LineContentsFromCursorPosition() string {
+	x, err := e.DataX()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(e.CurrentLine()[x:])
+}

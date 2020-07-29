@@ -767,7 +767,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				}
 				if !noHome {
 					// Insert the same leading whitespace for the new line
-					e.SetCurrentLine(leadingWhitespace)
+					e.SetCurrentLine(leadingWhitespace + e.LineContentsFromCursorPosition())
 					// Then move to the start of the text
 					e.GoToStartOfTextLine(c)
 				}
