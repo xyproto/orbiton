@@ -58,3 +58,21 @@ func ExampleEditor_Next() {
 	// Output:
 	// hello
 }
+
+func ExampleEditor_Comment() {
+	e := NewSimpleEditor(80)
+	e.mode = modeSQL
+
+	e.InsertStringAndMove(nil, "text -- comment")
+	e.Home()
+	e.Next(nil)
+	e.Next(nil)
+	e.Next(nil)
+	e.Next(nil)
+	e.InsertRune(nil, '\n')
+
+	fmt.Println(e)
+	// Output:
+	// text
+	//  -- comment
+}
