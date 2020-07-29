@@ -59,7 +59,7 @@ func ExampleEditor_Next() {
 	// hello
 }
 
-func ExampleEditor_Comment() {
+func ExampleEditor_InsertRune() {
 	e := NewSimpleEditor(80)
 	e.mode = modeSQL
 
