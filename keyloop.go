@@ -719,19 +719,24 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				leadingWhitespace = currentLeadingWhitespace
 			}
 
+			//onlyOneLine := e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument()
+			//middleOfText := !e.AtOrBeforeStartOfTextLine() && !e.AtOrAfterEndOfLine()
+
+			// TODO: Collect the criterias that trigger the same behavior
+
 			switch {
 			case e.AtOrAfterLastLineOfDocument() && (e.AtStartOfLine() || e.AtOrBeforeStartOfTextLine()):
 				e.InsertLineAbove()
 				noHome = true
-			case e.AtOrAfterEndOfDocument():
+			case e.AtOrAfterEndOfDocument() && (!e.AtStartOfLine() && !e.AtOrAfterEndOfLine()):
 				e.InsertStringAndMove(c, "")
 				e.InsertLineBelow()
 			case e.AfterEndOfLine():
 				e.InsertLineBelow()
-			case !e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument():
+			case !e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument() && (e.AtStartOfLine() || e.AtOrAfterEndOfLine()):
 				e.InsertStringAndMove(c, "")
 				e.InsertLineBelow()
-			case e.AtStartOfLine() || e.AtOrBeforeStartOfTextLine():
+			case e.AtOrBeforeStartOfTextLine():
 				e.InsertLineAbove()
 				noHome = true
 			default:
