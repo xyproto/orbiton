@@ -19,7 +19,7 @@ github.com/sourcegraph/annotate
 # github.com/xyproto/syntax v1.7.3
 ## explicit
 github.com/xyproto/syntax
-# github.com/xyproto/termtitle v1.0.0
+# github.com/xyproto/termtitle v1.1.0
 ## explicit
 github.com/xyproto/termtitle
 # github.com/xyproto/textoutput v1.12.2

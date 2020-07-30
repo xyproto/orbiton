@@ -25,8 +25,8 @@ github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d/go.mod h1:Udh
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/xyproto/syntax v1.7.3 h1:joAIWW67UuS58+mArppHEnOfQ+IEK87IIdwp09rgSwk=
 github.com/xyproto/syntax v1.7.3/go.mod h1:N7fdGZNGUQbQF0ieU6ww4lCebA80bbYsz9ysD4+a6Hc=
-github.com/xyproto/termtitle v1.0.0 h1:nDT2UVpm230GesZAEW6e+01ddHBVvvmtZIuqfvGimWE=
-github.com/xyproto/termtitle v1.0.0/go.mod h1:CAejmMSnz9Zze7g65yIjFH+5OeCHrjHaUYYmvzKT+Hg=
+github.com/xyproto/termtitle v1.1.0 h1:/vYw7mf2rfh4a7uPfmA6uD5Egti1wXmDpKYGT7dkR5M=
+github.com/xyproto/termtitle v1.1.0/go.mod h1:CAejmMSnz9Zze7g65yIjFH+5OeCHrjHaUYYmvzKT+Hg=
 github.com/xyproto/textoutput v1.12.0 h1:9e9JHeigjDUGkyNYdb+mU5CVxi2gEd91FoxrFnCJHT0=
 github.com/xyproto/textoutput v1.12.0/go.mod h1:7gHUVNJjTYzjRsc3S54W8hCcjB96C+/ug/mLus9nBjc=
 github.com/xyproto/textoutput v1.12.2 h1:YN4jWc4tjx42xWCwS5NYBJ9Bj3wH7wZrZNL3qZs/eJs=

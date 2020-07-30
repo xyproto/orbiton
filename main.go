@@ -107,9 +107,9 @@ Set NO_COLOR=1 to disable colors.
 
 	// Set the terminal title, if the current terminal emulator supports it
 	if absFilename, err := filepath.Abs(filename); err != nil {
-		termtitle.SetTitle(filename)
+		termtitle.MustSet(filename)
 	} else {
-		termtitle.SetTitle(absFilename)
+		termtitle.MustSet(absFilename)
 	}
 
 	// Initialize the VT100 terminal
@@ -125,7 +125,7 @@ Set NO_COLOR=1 to disable colors.
 
 	// Remove the terminal title, if the current terminal emulator supports it
 	shellName := filepath.Base(os.Getenv("SHELL"))
-	termtitle.SetTitle(shellName)
+	termtitle.MustSet(shellName)
 
 	// Respond to the error returned from the main loop, if any
 	if err != nil {
