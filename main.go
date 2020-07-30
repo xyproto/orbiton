@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/xyproto/termtitle"
 	"github.com/xyproto/vt100"
 )
 
@@ -104,13 +105,11 @@ Set NO_COLOR=1 to disable colors.
 		}
 	}
 
-	// Set the terminal title, if TERM starts with konsole
-	if strings.HasPrefix(os.Getenv("TERM"), "konsole-") {
-		if absFilename, err := filepath.Abs(filename); err != nil {
-			fmt.Print("\033]30;" + filename + "\007")
-		} else {
-			fmt.Print("\033]30;" + absFilename + "\007")
-		}
+	// Set the terminal title, if the current terminal emulator supports it
+	if absFilename, err := filepath.Abs(filename); err != nil {
+		termtitle.SetTitle(filename)
+	} else {
+		termtitle.SetTitle(absFilename)
 	}
 
 	// Initialize the VT100 terminal
@@ -124,10 +123,9 @@ Set NO_COLOR=1 to disable colors.
 	// Run the main editor loop
 	userMessage, err := RunMainLoop(tty, filename, lineNumber, *forceFlag)
 
-	// Remove the terminal title, if TERM starts with konsole
-	if strings.HasPrefix(os.Getenv("TERM"), "konsole-") {
-		fmt.Print("\033]30;" + filepath.Base(os.Getenv("SHELL")) + "\007")
-	}
+	// Remove the terminal title, if the current terminal emulator supports it
+	shellName := filepath.Base(os.Getenv("SHELL"))
+	termtitle.SetTitle(shellName)
 
 	// Respond to the error returned from the main loop, if any
 	if err != nil {

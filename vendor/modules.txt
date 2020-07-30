@@ -11,27 +11,24 @@ github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 ## explicit
 github.com/mgutz/ansi
-# github.com/miolini/jsonf v0.0.0-20160708004310-4a3ddddc29a9
-## explicit
 # github.com/pkg/term v0.0.0-20200520122047-c3ffed290a03
 github.com/pkg/term
 github.com/pkg/term/termios
-# github.com/robertkrimen/otto v0.0.0-20191219234010-c382bd3c16ff
-## explicit
 # github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d
 github.com/sourcegraph/annotate
 # github.com/xyproto/syntax v1.7.3
 ## explicit
 github.com/xyproto/syntax
+# github.com/xyproto/termtitle v1.0.0
+## explicit
+github.com/xyproto/termtitle
 # github.com/xyproto/textoutput v1.12.2
 ## explicit
 github.com/xyproto/textoutput
 # github.com/xyproto/vt100 v1.8.6-0.20200604094357-c147666bb59b
 ## explicit
 github.com/xyproto/vt100
-# golang.org/x/sys v0.0.0-20200727154430-2d971f7391a4
+# golang.org/x/sys v0.0.0-20200728102440-3e129f6d46b1
 ## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
-# gopkg.in/sourcemap.v1 v1.0.5
-## explicit
