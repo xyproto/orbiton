@@ -722,7 +722,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			//onlyOneLine := e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument()
 			//middleOfText := !e.AtOrBeforeStartOfTextLine() && !e.AtOrAfterEndOfLine()
 
-			// TODO: Collect the criterias that trigger the same behavior
+			// TODO: Collect the criteria that trigger the same behavior
 
 			switch {
 			case e.AtOrAfterLastLineOfDocument() && (e.AtStartOfLine() || e.AtOrBeforeStartOfTextLine()):
