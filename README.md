@@ -63,6 +63,7 @@ To unset:
 * When editing Markdown, checkboxes can be toggled with `ctrl-w`.
 * `o` makes it easy to write `"Hello, World!"` in one of many languages, then simply compile it with `ctrl-space`. The idea is that it should be very quick to write and compile a short program, without any hassle.
 * `ctrl-t` can toggle between a C++ header and source file, if searching for the file in the parent directories is quick enough.
+* If the editor executable is named to `red`, the default theme will be red/white/gray.
 
 ## Known bugs
 
