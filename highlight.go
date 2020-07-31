@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"unicode"
 
 	"github.com/xyproto/syntax"
@@ -12,12 +13,17 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const (
-	controlRuneReplacement = '¿' // for displaying control sequence characters. Could also use: �
-)
+const controlRuneReplacement = '¿' // for displaying control sequence characters. Could also use: �
+
+var writeLinesMutex sync.RWMutex
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy int) error {
+
+	// Only one call to WriteLines at the time, thank you
+	writeLinesMutex.Lock()
+	defer writeLinesMutex.Unlock()
+
 	o := textoutput.NewTextOutput(true, true)
 	tabString := strings.Repeat(" ", e.spacesPerTab)
 	w := int(c.Width())
