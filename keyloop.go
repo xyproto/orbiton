@@ -1705,17 +1705,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 		x := e.pos.ScreenX()
 		y := e.pos.ScreenY()
 		if e.redrawCursor || x != previousX || y != previousY {
-			if x > previousX && y == previousY {
-				vt100.Right(uint(x - previousX))
-			} else if x == previousX && y > previousY {
-				vt100.Down(uint(y - previousY))
-			} else if x < previousX && y == previousY {
-				vt100.Left(uint(previousX - x))
-			} else if x == previousX && y < previousY {
-				vt100.Up(uint(previousY - y))
-			} else {
-				vt100.SetXY(uint(x), uint(y))
-			}
+			vt100.SetXY(uint(x), uint(y))
 			e.redrawCursor = false
 		}
 		previousX = x
