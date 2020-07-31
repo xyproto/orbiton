@@ -120,8 +120,11 @@ Set NO_COLOR=1 to disable colors.
 	}
 	defer tty.Close()
 
+	// If the editor executable has been named "red", use the red/gray theme by default
+	redBlackTheme := filepath.Base(os.Args[0]) == "red"
+
 	// Run the main editor loop
-	userMessage, err := RunMainLoop(tty, filename, lineNumber, *forceFlag)
+	userMessage, err := RunMainLoop(tty, filename, lineNumber, *forceFlag, redBlackTheme)
 
 	// Remove the terminal title, if the current terminal emulator supports it
 	shellName := filepath.Base(os.Getenv("SHELL"))

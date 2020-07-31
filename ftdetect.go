@@ -28,6 +28,8 @@ const (
 	modeJava       // for Java
 	modeHIDL       // for the Android-related Hardware Abstraction Layer Interface Definition Language
 	modeSQL        // for Structured Query Language
+	modeOak        // for Oak source files
+	modeRust       // for Rust source files
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -102,6 +104,10 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeHIDL
 		case ".sql":
 			mode = modeSQL
+		case ".ok":
+			mode = modeOak
+		case ".rs":
+			mode = modeRust
 		default:
 			mode = modeBlank
 		}
