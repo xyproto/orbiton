@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] When running the `red` editor, don't draw the other theme first.
 - [ ] Don't redraw everything when just moving the cursor around.
 - [ ] Don't color `#` as a comment when editing Go code.
 - [ ] Use `wl-copy` for copy and cut. Use the same type of implementation as for `wl-paste`.
