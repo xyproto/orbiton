@@ -33,7 +33,7 @@ var (
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool) (userMessage string, err error) {
+func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag, redBlackTheme bool) (userMessage string, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt100.Init()
@@ -85,6 +85,13 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 	if e.mode == modeGit {
 		status.fg = vt100.LightBlue
 		status.bg = vt100.BackgroundDefault
+	}
+
+	// Use the red/black theme, if redBlackTheme is true
+	if redBlackTheme {
+		e.setRedBlackTheme()
+		e.SetSyntaxHighlight(true)
+		e.FullResetRedraw(c, status, true)
 	}
 
 	// Respect the NO_COLOR environment variable
@@ -1698,7 +1705,17 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 		x := e.pos.ScreenX()
 		y := e.pos.ScreenY()
 		if e.redrawCursor || x != previousX || y != previousY {
-			vt100.SetXY(uint(x), uint(y))
+			if x > previousX && y == previousY {
+				vt100.Right(uint(x - previousX))
+			} else if x == previousX && y > previousY {
+				vt100.Down(uint(y - previousY))
+			} else if x < previousX && y == previousY {
+				vt100.Left(uint(previousX - x))
+			} else if x == previousX && y < previousY {
+				vt100.Up(uint(previousY - y))
+			} else {
+				vt100.SetXY(uint(x), uint(y))
+			}
 			e.redrawCursor = false
 		}
 		previousX = x
