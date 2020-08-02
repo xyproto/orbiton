@@ -71,3 +71,16 @@ func Example_sortStrings_4() {
 	// o a 'f' g 'e' b "c" d 'q' h
 	// a b "c" d 'e' 'f' g h o 'q'
 }
+
+func Example_sortStrings_5() {
+	inputString := `addKeywords = []string{"z", "--force", "-f", "cmake", "configure", "fdisk", "gdisk", "install", "make", "mv", "ninja", "rm", "rmdir"}`
+	fmt.Println(inputString)
+	sorted, err := sortStrings(inputString)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(sorted)
+	// Output:
+	// inputString := `addKeywords = []string{"z", "--force", "-f", "cmake", "configure", "fdisk", "gdisk", "install", "make", "mv", "ninja", "rm", "rmdir"}`
+	// inputString := `addKeywords = []string{"--force", "-f", "cmake", "configure", "fdisk", "gdisk", "install", "make", "mv", "ninja", "rm", "rmdir", "z"}`
+}
