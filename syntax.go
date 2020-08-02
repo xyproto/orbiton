@@ -50,8 +50,8 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 	case modeRust:
 		addKeywords = []string{"fn"}
 	case modeShell:
-		delKeywords = []string{"float", "with", "exec", "long", "double", "no", "pass", "#else", "#endif", "ret", "super"}
-		addKeywords = []string{"-f", "--force"}
+		delKeywords = []string{"float", "with", "exec", "long", "double", "no", "pass", "#else", "#endif", "ret", "super", "default", "var"}
+		addKeywords = []string{"--force", "-f", "cmake", "configure", "fdisk", "gdisk", "install", "make", "mv", "ninja", "rm", "rmdir"}
 		fallthrough // to the default case
 	default:
 		delKeywords = append(delKeywords, []string{"require", "build", "package", "super", "type"}...)
