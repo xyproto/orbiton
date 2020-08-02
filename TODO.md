@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] Find out why the string list sorting command can't sort the strings in syntax.go.
 - [ ] When running the `red` editor, don't draw the other theme first.
 - [ ] Don't redraw everything when just moving the cursor around.
 - [ ] Don't color `#` as a comment when editing Go code.
