@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] Syntax highlight **`word`** correctly in Markdown.
 - [ ] Find out why the string list sorting command can't sort the strings in syntax.go.
 - [ ] When running the `red` editor, don't draw the other theme first.
 - [ ] Don't redraw everything when just moving the cursor around.
