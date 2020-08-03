@@ -75,8 +75,11 @@ func quotedWordReplace(line string, quote rune, regular, quoted vt100.AttributeC
 		s := make([]rune, 0, len(line)*2)
 		// Start by setting the color to the regular one
 		s = append(s, []rune(regular.String())...)
-		for _, r := range line {
-			if r == quote {
+		var prevR, nextR rune
+		runes := []rune(line)
+		for i, r := range runes {
+			// Look for quotes, but also handle **`asdf`** and __`asdf`__
+			if r == quote && prevR != '*' && nextR != '*' && prevR != '_' && nextR != '_' {
 				inQuote = !inQuote
 				if inQuote {
 					s = append(s, []rune(vt100.Stop())...)
@@ -91,6 +94,11 @@ func quotedWordReplace(line string, quote rune, regular, quoted vt100.AttributeC
 				}
 			}
 			s = append(s, r)
+			prevR = r                 // the previous r, for the next round
+			nextR = r                 // default value, in case the next rune can not be fetched
+			if (i + 2) < len(runes) { // + 2 since it must look 1 head for the next round
+				nextR = []rune(line)[i+2]
+			}
 		}
 		// End by turning the color off
 		s = append(s, []rune(vt100.Stop())...)
