@@ -81,6 +81,6 @@ func Example_sortStrings_5() {
 	}
 	fmt.Println(sorted)
 	// Output:
-	// inputString := `addKeywords = []string{"z", "--force", "-f", "cmake", "configure", "fdisk", "gdisk", "install", "make", "mv", "ninja", "rm", "rmdir"}`
-	// inputString := `addKeywords = []string{"--force", "-f", "cmake", "configure", "fdisk", "gdisk", "install", "make", "mv", "ninja", "rm", "rmdir", "z"}`
+	// addKeywords = []string{"z", "--force", "-f", "cmake", "configure", "fdisk", "gdisk", "install", "make", "mv", "ninja", "rm", "rmdir"}
+	// addKeywords = []string{"--force", "-f", "cmake", "configure", "fdisk", "gdisk", "install", "make", "mv", "ninja", "rm", "rmdir", "z"}
 }

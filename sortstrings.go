@@ -127,7 +127,8 @@ func sortStrings(line string) (string, error) {
 	}
 
 	// Are we dealing with comma-separated or space-separated strings?
-	commaSeparated := commaCount > spaceCount
+	// TODO: This will not work if the strings contains spaces
+	commaSeparated := commaCount >= spaceCount
 
 	// Split the string into a []string
 	var fields []string
@@ -141,20 +142,29 @@ func sortStrings(line string) (string, error) {
 	words := make(Words, len(fields))
 	for i, field := range fields {
 		trimmedElement := strings.TrimSpace(field)
+		// Remove the trailing comma after the word, if any
+		if strings.HasSuffix(trimmedElement, ",") {
+			trimmedElement = strings.TrimSpace(trimmedElement[:len(trimmedElement)-1])
+		}
 		var w Word
 		// Prepare a Word struct, depending on how this trimmed element is quoted
 		if strings.HasPrefix(trimmedElement, "'") && strings.HasSuffix(trimmedElement, "'") {
 			w.s = trimmedElement[1 : len(trimmedElement)-1]
 			w.singleQuoted = true
+			//fmt.Println("SINGLE QUOTED:", w.s)
 		} else if strings.HasPrefix(trimmedElement, "\"") && strings.HasSuffix(trimmedElement, "\"") {
 			w.s = trimmedElement[1 : len(trimmedElement)-1]
 			w.doubleQuoted = true
+			//fmt.Println("DOUBLE QUOTED:", w.s)
 		} else {
 			w.s = trimmedElement
+			//fmt.Println("NOT QUOTED:", w.s)
 		}
 		// Save the Word
 		words[i] = w
 	}
+
+	//fmt.Println("WORDS", words)
 
 	// Sort the Words
 	sort.Sort(words)
