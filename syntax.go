@@ -17,8 +17,7 @@ var (
 	// From https://source.android.com/devices/architecture/hidl
 	hidlWords = []string{"safe_union", "struct", "union", "enum", "typedef", "generates", "package", "interface", "extends", "import", "constexpr", "oneway"}
 
-	luaWords = []string{"and", "break", "do", "else", "elseif", "end", "false", "for", "function", "goto", "if", "in","local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while"}
-
+	luaWords = []string{"and", "break", "do", "else", "elseif", "end", "false", "for", "function", "goto", "if", "in", "local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while"}
 )
 
 // adjustSyntaxHighlightingKeywords contains per-language adjustments to highlighting of keywords

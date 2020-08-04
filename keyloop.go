@@ -258,6 +258,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				exec.Command("ktlint", "-F"):                                                      {".kt", ".kts"},
 				exec.Command("guessica"):                                                          {"PKGBUILD"},
 				exec.Command("google-java-format", "-i"):                                          {".java"},
+				exec.Command("lua-format", "-i", "--column-limit=120", "--indent-width=2", "--no-use-tab"): {".lua"},
 			}
 		OUT:
 			for cmd, extensions := range format {

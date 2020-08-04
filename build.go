@@ -197,6 +197,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			exec.Command("crystal", "build", "--no-color", filename):        {".cr"},
 			exec.Command("kotlinc", filename, "-include-runtime", "-d", defaultExecutableName+".jar"): {".kt"},   // Kotlin, build a .jar
 			exec.Command("sh", "-c", javaShellCommand):                                                {".java"}, // Java, build a .jar
+			exec.Command("luac", filename):                                                            {".lua"},
 		}
 	)
 
@@ -312,6 +313,22 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 				} else if strings.HasPrefix(line, "In ") {
 					crystalLocationLine = line
 				}
+			} else if ext == ".lua" {
+				if strings.Contains(line, " error near ") && strings.Count(line, ":") >= 3 {
+					parts := strings.SplitN(line, ":", 4)
+					errorMessage = parts[3]
+					if i, err := strconv.Atoi(parts[2]); err == nil {
+						foundY := LineIndex(i - 1)
+						e.redraw = e.GoTo(foundY, c, status)
+						e.redrawCursor = e.redraw
+					}
+					baseErrorFilename := filepath.Base(parts[1])
+					if baseErrorFilename != baseFilename {
+						return "In " + baseErrorFilename + ": " + errorMessage, true, false
+					}
+					return errorMessage, true, false
+				}
+				break
 			} else if strings.Contains(line, errorMarker) {
 				parts := strings.SplitN(line, errorMarker, 2)
 				errorMessage = strings.TrimSpace(parts[1])
@@ -332,6 +349,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 				return errorMessage, true, false
 			}
 			if y, err := strconv.Atoi(fields[1]); err == nil { // no error
+
 				foundY := LineIndex(y - 1)
 				e.redraw = e.GoTo(foundY, c, status)
 				e.redrawCursor = e.redraw
@@ -341,6 +359,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 					e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
 					e.Center(c)
 				}
+
 			}
 			return errorMessage, true, false
 		}
