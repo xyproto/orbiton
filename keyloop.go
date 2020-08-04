@@ -730,6 +730,8 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			//onlyOneLine := e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument()
 			//middleOfText := !e.AtOrBeforeStartOfTextLine() && !e.AtOrAfterEndOfLine()
 
+			scrollBack := false
+
 			// TODO: Collect the criteria that trigger the same behavior
 
 			switch {
@@ -739,11 +741,14 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			case e.AtOrAfterEndOfDocument() && (!e.AtStartOfLine() && !e.AtOrAfterEndOfLine()):
 				e.InsertStringAndMove(c, "")
 				e.InsertLineBelow()
+				scrollBack = true
 			case e.AfterEndOfLine():
 				e.InsertLineBelow()
+				scrollBack = true
 			case !e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument() && (e.AtStartOfLine() || e.AtOrAfterEndOfLine()):
 				e.InsertStringAndMove(c, "")
 				e.InsertLineBelow()
+				scrollBack = true
 			case e.AtOrBeforeStartOfTextLine():
 				e.InsertLineAbove()
 				noHome = true
@@ -751,6 +756,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				// Split the current line in two
 				if !e.SplitLine() {
 					e.InsertLineBelow()
+					scrollBack = true
 				}
 				// Indent the next line if at the end, not else
 				if !e.AfterEndOfLine() {
@@ -770,6 +776,9 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			if !noHome {
 				e.pos.sx = 0
 				//e.Home()
+				if scrollBack {
+					e.pos.SetX(c, 0)
+				}
 			}
 
 			if indent && len(leadingWhitespace) > 0 {
