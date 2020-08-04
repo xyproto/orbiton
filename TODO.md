@@ -2,6 +2,13 @@
 
 ## Pri
 
+- [ ] Paste with middle mouse button.
+- [ ] Auto-detect tabs/spaces when opening a file.
+- [ ] Open text files with Chinese/Japanese/Korean characters without breaking the text flow.
+
+## Bugs/new features/issues
+
+- [ ] When the editor executable is `list`, just list the contents and exit?
 - [ ] Find out why the string list sorting command can't sort the strings in syntax.go.
 - [ ] When running the `red` editor, don't draw the other theme first.
 - [ ] Don't redraw everything when just moving the cursor around.
@@ -13,9 +20,6 @@
 - [ ] Pressing return after a long line should create a new line and also scroll all the way to the left.
 - [ ] Fix text flow when encountering unusual unicode symbols. See the `test` directory.
 - [ ] When moving on long lines, using the arrow keys, the cursor may be misplaced when typing letters.
-
-## Features I see myself using straight away
-
 - [ ] Command menu option for deleting the rest of the lines.
 - [ ] Highlight the line where a portal has been opened.
 - [ ] Highlight the part of git commit topics that are >= 80 characters long.
@@ -36,24 +40,18 @@
 - [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
 - [ ] Let the autocompletion also look at method definitions with matching variable names (ignoring types, for now).
 - [ ] Cross user portals, possibly by using `TMPDIR/oportal.dat`.
-
-## Low priority bug fixes
-
 - [ ] Add tests for the smart indent feature: for pressing return, tab and space, especially in relation with `{` and `}`.
 - [ ] Rainbow parenthesis should be able to span multiple lines.
 - [ ] Shell scripts with if/else/endif blocks that are commented out are highlighted wrong.
 - [ ] Add `guessica` to the `ctrl-t` menu.
 - [ ] Let `guessica` also set `pkgrel=1` if there was a new version.
-- [ ] Rainbow parentheses that span multiple lines, for Clojure, Emacs Lisp etc.
+- [ ] Rainbow parentheses should span multiple lines, for Clojure, Emacs Lisp etc.
 - [ ] Quotestate Process can not recognize triple runes, like the previous
       previous rune is ", the previous rune is " and the current rune is ".
       The wrong argumens are passed to the function. Figure out why.
 - [ ] Rewrite `insertRune`. Improve word-wrap related functionality.
 - [ ] Ignore multiline comments within multiline comments.
 - [ ] Also enable rainbow parenthesis for lines that ends with a single-line comment.
-
-## Features in general
-
 - [ ] Introduce a type for screen cordinates, a type for screen coordinates + scroll offset, and another type for data coordinates.
 - [ ] Insert a custom file from the command menu.
 - [ ] Add one or more of these commands: regex search,
@@ -65,9 +63,6 @@
 - [ ] When in "SuggestMode", typing should start filtering the list.
 - [ ] Highlight links in Markdown (perhaps color `[` and `]` yellow).
 - [ ] Localization.
-
-## Features that might not be needed
-
 - [ ] If typing "dd" at the start or end of a line, delete it.
 - [ ] If typing ":wq" at the start or end of a line, remove the text, save and quit.
 - [ ] If typing ":w" at the start or end of a line, remove the text and save.
@@ -78,9 +73,6 @@
       * Display all bytes as a grid of "0xff" style fields, with the string representation to the right.
       * This might be better solved by having a separate hex editor?
 - [ ] Replace and/or rewrite the syntax highlighting system.
-
-## Smart (too smart?) features
-
 - [ ] Plugins. When there's `txt2something` and `something2txt`, o should be able to edit "something" files in general.
       This could be used for hex editing, editing ELF files etc.
 - [ ] Tab in the middle of a line, especially on a `|` character, could insert spaces until the `|` alignes with the `|` above, if applicable
@@ -92,11 +84,6 @@
 - [ ] `ctrl-f` and then `return` could jump to a location at least 10 lines away that has been most visited within the last 10
       minutes.
 - [ ] If over a certain percentage of the characters are not unicode.Graphics, enter binary mode.
-
-## Refactoring
-
 - [ ] Extract the functionality for searching a MessagePack file to a `mpgrep` utility, that has a `-B` flag (like `grep`).
-
-## Unsorted
 
 Nothing here.
