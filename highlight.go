@@ -177,7 +177,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// Regular highlight
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					}
-				case modeSQL:
+				case modeSQL, modeLua:
 					trimmedLine = strings.TrimSpace(line)
 					// Handle single line comments
 					if strings.HasPrefix(trimmedLine, "--") {

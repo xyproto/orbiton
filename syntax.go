@@ -16,6 +16,9 @@ var (
 
 	// From https://source.android.com/devices/architecture/hidl
 	hidlWords = []string{"safe_union", "struct", "union", "enum", "typedef", "generates", "package", "interface", "extends", "import", "constexpr", "oneway"}
+
+	luaWords = []string{"and", "break", "do", "else", "elseif", "end", "false", "for", "function", "goto", "if", "in","local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while"}
+
 )
 
 // adjustSyntaxHighlightingKeywords contains per-language adjustments to highlighting of keywords
@@ -49,6 +52,9 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 		addKeywords = []string{"fn"}
 	case modeRust:
 		addKeywords = []string{"fn"}
+	case modeLua:
+		syntax.Keywords = make(map[string]struct{})
+		addKeywords = luaWords
 	case modeShell:
 		delKeywords = []string{"float", "with", "exec", "long", "double", "no", "pass", "#else", "#endif", "ret", "super", "default", "var"}
 		addKeywords = []string{"--force", "-f", "cmake", "configure", "fdisk", "gdisk", "install", "make", "mv", "ninja", "rm", "rmdir"}

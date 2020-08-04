@@ -30,6 +30,7 @@ const (
 	modeSQL        // for Structured Query Language
 	modeOak        // for Oak source files
 	modeRust       // for Rust source files
+	modeLua        // for Lua source files
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -108,6 +109,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeOak
 		case ".rs":
 			mode = modeRust
+		case ".lua":
+			mode = modeLua
 		default:
 			mode = modeBlank
 		}
