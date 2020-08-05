@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -30,6 +31,59 @@ func (e *Editor) UserSave(c *vt100.Canvas, status *StatusBar) {
 	c.Draw()
 }
 
+// Actions is a list of action titles and a list of action functions.
+// The key is an int that is the same for both.
+type Actions struct {
+	actionTitles    map[int]string
+	actionFunctions map[int]func()
+}
+
+// NewActions2 will create a new Actions struct
+func NewActions() *Actions {
+	var a Actions
+	a.actionTitles = make(map[int]string)
+	a.actionFunctions = make(map[int]func())
+	return &a
+}
+
+// NewActions2 will create a new Actions struct, while
+// intializing it with the given slices of titles and functions
+func NewActions2(actionTitles []string, actionFunctions []func()) (*Actions, error) {
+	a := NewActions()
+	if len(actionTitles) != len(actionFunctions) {
+		return nil, errors.New("length of action titles and action functions differ")
+	}
+	for i, title := range actionTitles {
+		a.actionTitles[i] = title
+		a.actionFunctions[i] = actionFunctions[i]
+	}
+	return a, nil
+}
+
+// Add will add an action title and an action function
+func (a *Actions) Add(title string, f func()) {
+	i := len(a.actionTitles)
+	a.actionTitles[i] = title
+	a.actionFunctions[i] = f
+}
+
+// MenuChoices will return a string that lists the titles of
+// the available actions.
+func (a *Actions) MenuChoices() []string {
+	// Create a list of strings that are menu choices,
+	// while also creating a mapping from the menu index to a function.
+	menuChoices := make([]string, len(a.actionTitles))
+	for i, description := range a.actionTitles {
+		menuChoices[i] = fmt.Sprintf("[%d] %s", i, description)
+	}
+	return menuChoices
+}
+
+// Perform will call the given function index
+func (a *Actions) Perform(index int) {
+	a.actionFunctions[index]()
+}
+
 // CommandMenu will display a menu with various commands that can be browsed with arrow up and arrow down
 // Also returns the selected menu index (can be -1).
 func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) int {
@@ -55,32 +109,34 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 	}
 
 	var (
-		noColor = os.Getenv("NO_COLOR") != ""
+		noColor     = os.Getenv("NO_COLOR") != ""
+		extraDashes = false
+	)
 
-		// These numbers must correspond with actionFunctions!
-		actionTitles = map[int]string{
-			0: "Save and quit",
-			1: wrapWhenTypingToggleText,
-			2: "Word wrap at " + strconv.Itoa(wrapWidth),
-			3: "Sort the list of strings on the current line",
-			4: "Insert \"" + insertFilename + "\" at the current line",
-		}
-		// These numbers must correspond with actionTitles!
-		// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file.
-		actionFunctions = map[int]func(){
-			0: func() { // save and quit
+	// Add intial menu titles and actions
+	// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file!
+	actions, err := NewActions2(
+		[]string{
+			"Save and quit",
+			wrapWhenTypingToggleText,
+			"Word wrap at " + strconv.Itoa(wrapWidth),
+			"Sort the list of strings on the current line",
+			"Insert \"" + insertFilename + "\" at the current line",
+		},
+		[]func(){
+			func() { // save and quit
 				e.clearOnQuit = true
 				e.UserSave(c, status)
 				e.quit = true        // indicate that the user wishes to quit
 				e.clearOnQuit = true // clear the terminal after quitting
 			},
-			1: func() { // toggle word wrap when typing
+			func() { // toggle word wrap when typing
 				e.wrapWhenTyping = !e.wrapWhenTyping
 				if e.wrapWidth == 0 {
 					e.wrapWidth = 79
 				}
 			},
-			2: func() { // word wrap
+			func() { // word wrap
 				// word wrap at the current width - 5, with an allowed overshoot of 5 runes
 				tmpWrapAt := e.wrapWidth
 				e.wrapWidth = wrapWidth
@@ -90,7 +146,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 				}
 				e.wrapWidth = tmpWrapAt
 			},
-			3: func() { // sort strings on the current line
+			func() { // sort strings on the current line
 				undo.Snapshot(e)
 				if err := e.SortStrings(c, status); err != nil {
 					status.Clear(c)
@@ -98,7 +154,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 					status.Show(c, e)
 				}
 			},
-			4: func() { // insert file
+			func() { // insert file
 				editedFileDir := filepath.Dir(e.filename)
 				if err := e.InsertFile(c, filepath.Join(editedFileDir, insertFilename)); err != nil {
 					status.Clear(c)
@@ -106,9 +162,13 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 					status.Show(c, e)
 				}
 			},
-		}
-		extraDashes = false
+		},
 	)
+	if err != nil {
+		// If this happens, menu actions and menu functions are not added properly
+		// and it should fail hard, so that this can be fixed.
+		panic(err)
+	}
 
 	// Add the syntax highlighting toggle menu item
 	if !noColor {
@@ -116,38 +176,34 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		if !e.syntaxHighlight {
 			syntaxToggleText = "Enable syntax highlighting"
 		}
-		actionTitles[len(actionTitles)] = syntaxToggleText
-		actionFunctions[len(actionFunctions)] = func() {
+		actions.Add(syntaxToggleText, func() {
 			e.ToggleSyntaxHighlight()
-		}
+		})
 	}
 
 	// Add the unlock menu item
 	// TODO: Detect if the current file is locked first
 	if forced {
-		actionTitles[len(actionTitles)] = "Unlock if locked"
-		actionFunctions[len(actionFunctions)] = func() {
+		actions.Add("Unlock if locked", func() {
 			if absFilename, err := e.AbsFilename(); err == nil { // no issues
 				lk.Load()
 				lk.Unlock(absFilename)
 				lk.Save()
 			}
-		}
+		})
 	}
 
 	// Add the portal menu item
 	if portal, err := LoadPortal(); err == nil { // no problems
-		actionTitles[len(actionTitles)] = "Close portal at " + portal.String()
-		actionFunctions[len(actionFunctions)] = func() {
+		actions.Add("Close portal at "+portal.String(), func() {
 			ClosePortal()
-		}
+		})
 	} else {
 		// Could not close portal, try opening a new one
 		if portal, err := e.NewPortal(); err == nil { // no problems
-			actionTitles[len(actionTitles)] = "Open portal at " + portal.String()
-			actionFunctions[len(actionFunctions)] = func() {
+			actions.Add("Open portal at "+portal.String(), func() {
 				portal.Save()
-			}
+			})
 		}
 	}
 
@@ -155,20 +211,25 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 	if !e.lightTheme && !noColor { // Not a light theme and NO_COLOR is not set
 
 		// Add the "Red/Black theme" menu item text and menu function
-		actionTitles[len(actionTitles)] = "Red/black theme"
-		actionFunctions[len(actionFunctions)] = func() {
+		actions.Add("Red/black theme", func() {
 			e.setRedBlackTheme()
 			e.SetSyntaxHighlight(true)
 			e.FullResetRedraw(c, status, true)
-		}
+		})
 
 		// Add the "Default theme" menu item text and menu function
-		actionTitles[len(actionTitles)] = "Default theme"
-		actionFunctions[len(actionFunctions)] = func() {
+		actions.Add("Default theme", func() {
 			e.setDefaultTheme()
 			e.SetSyntaxHighlight(true)
 			e.FullResetRedraw(c, status, true)
-		}
+		})
+
+		// Add the "Light Theme" menu item text and menu function
+		actions.Add("Light theme", func() {
+			e.setLightTheme()
+			e.SetSyntaxHighlight(true)
+			e.FullResetRedraw(c, status, true)
+		})
 
 		// Add the Amber, Green and Blue theme options
 		colors := []vt100.AttributeColor{
@@ -185,23 +246,17 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		// Add menu items and menu functions for changing the text color
 		// while also turning off syntax highlighting.
 		for i, color := range colors {
-			actionTitles[len(actionTitles)] = colorText[i] + " theme"
 			color := color // per-loop copy of the color variable, since it's closed over
-			actionFunctions[len(actionFunctions)] = func() {
+			actions.Add(colorText[i]+" theme", func() {
 				e.fg = color
 				e.bg = vt100.BackgroundDefault // black background
 				e.syntaxHighlight = false
 				e.FullResetRedraw(c, status, true)
-			}
+			})
 		}
 	}
 
-	// Create a list of strings that are menu choices,
-	// while also creating a mapping from the menu index to a function.
-	menuChoices := make([]string, len(actionTitles))
-	for i, description := range actionTitles {
-		menuChoices[i] = fmt.Sprintf("[%d] %s", i, description)
-	}
+	menuChoices := actions.MenuChoices()
 
 	// Launch a generic menu
 	useMenuIndex := 0
@@ -224,8 +279,8 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		return selected
 	}
 
-	// Perform the selected command (call the function from the functionMap above)
-	actionFunctions[selected]()
+	// Perform the selected action by passing the function index
+	actions.Perform(selected)
 
 	// Redraw editor
 	e.redraw = true
