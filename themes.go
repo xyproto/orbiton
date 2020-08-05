@@ -99,6 +99,7 @@ func (e *Editor) setDefaultTheme() {
 	tableColor = vt100.Blue
 	checkboxColor = vt100.Default
 	xColor = vt100.LightYellow
+	tableBackground = e.bg
 
 	// Rainbow parentheses
 	rainbowParenColors = []vt100.AttributeColor{vt100.LightMagenta, vt100.LightRed, vt100.Yellow, vt100.LightYellow, vt100.LightGreen, vt100.LightBlue}
@@ -154,6 +155,7 @@ func (e *Editor) setLightTheme() {
 	listCodeColor = vt100.Red
 	codeColor = vt100.Red
 	codeBlockColor = vt100.Red
+	tableBackground = e.bg
 
 	// Rainbow parentheses
 	rainbowParenColors = []vt100.AttributeColor{vt100.Magenta, vt100.Black, vt100.Blue, vt100.Green}
@@ -196,6 +198,7 @@ func (e *Editor) setRedBlackTheme() {
 	syntax.DefaultTextConfig.Protected = "white"
 	syntax.DefaultTextConfig.Public = "lightgray"
 	syntax.DefaultTextConfig.Whitespace = ""
+
 	// Markdown, switch light colors to darker ones
 	headerTextColor = vt100.Red
 	textColor = vt100.LightGray
@@ -206,9 +209,13 @@ func (e *Editor) setRedBlackTheme() {
 	listCodeColor = vt100.White
 	codeColor = vt100.White
 	codeBlockColor = vt100.White
+	tableBackground = vt100.BackgroundBlack
+	tableBackground = e.bg
+
 	// Rainbow parentheses
 	rainbowParenColors = []vt100.AttributeColor{vt100.Gray, vt100.White, vt100.Red}
 	unmatchedParenColor = vt100.White
+
 	// Command menu
 	menuTitleColor = vt100.Red
 	menuArrowColor = vt100.White

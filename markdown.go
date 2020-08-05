@@ -30,6 +30,7 @@ var (
 	tableColor        = vt100.Blue
 	checkboxColor     = vt100.Default     // a Markdown checkbox: [ ], [x] or [X]
 	xColor            = vt100.LightYellow // the x in the checkbox: [x]
+	tableBackground   = vt100.BackgroundDefault
 )
 
 // ToggleCheckboxCurrentLine will attempt to toggle the Markdown checkbox on the current line of the editor.
@@ -246,9 +247,9 @@ func markdownHighlight(line string, inCodeBlock, prevLineIsListItem bool, inList
 	// Table
 	if strings.HasPrefix(rest, "|") || strings.HasSuffix(rest, "|") {
 		if strings.HasPrefix(line, "|-") {
-			return tableColor.String() + line + vt100.NoColor(), true, false
+			return tableColor.String() + line + tableBackground.String(), true, false
 		}
-		return strings.Replace(line, "|", tableColor.String()+"|"+vt100.NoColor(), -1), true, false
+		return strings.Replace(line, "|", tableColor.String()+"|"+tableBackground.String(), -1), true, false
 	}
 
 	// Split the rest of the line into words
