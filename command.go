@@ -38,7 +38,7 @@ type Actions struct {
 	actionFunctions map[int]func()
 }
 
-// NewActions2 will create a new Actions struct
+// NewAction will create a new Actions struct
 func NewActions() *Actions {
 	var a Actions
 	a.actionTitles = make(map[int]string)
