@@ -3,12 +3,13 @@
 ## Pri
 
 - [ ] Paste with middle mouse button.
-- [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] Open text files with Chinese/Japanese/Korean characters without breaking the text flow.
 - [ ] When pressing return at almost the end of a very long line, move the cursor correctly afterwards.
 
 ## Bugs/new features/issues
 
+- [ ] Auto-detect tabs/spaces when opening a file.
+- [ ] Hash strings (like sha256 hash sums), could be colored light yellow and dark yellow for every 2 characters
 - [ ] When the editor executable is `list`, just list the contents and exit?
 - [ ] Find out why the string list sorting command can't sort the strings in syntax.go.
 - [ ] When running the `red` editor, don't draw the other theme first.
@@ -17,11 +18,9 @@
 - [ ] Use `wl-copy` for copy and cut. Use the same type of implementation as for `wl-paste`.
 - [ ] Figure out why copy/paste is wonky on Wayland.
 - [ ] Figure out why a file saved by another user can not be read by Go in `/tmp`, but can be read with `cat`.
-- [ ] Paste with middle mouse click.
-- [ ] Pressing return after a long line should create a new line and also scroll all the way to the left.
-- [ ] Fix text flow when encountering unusual unicode symbols. See the `test` directory.
 - [ ] When moving on long lines, using the arrow keys, the cursor may be misplaced when typing letters.
-- [ ] Command menu option for deleting the rest of the lines.
+- [ ] Command menu option for deleting the rest of the file.
+- [ ] A menu option for recording simple vim-style keypresses, then a keypress for playing it back.
 - [ ] Highlight the line where a portal has been opened.
 - [ ] Highlight the part of git commit topics that are >= 80 characters long.
 - [ ] For git commit text, highlight column 80 if the text crosses that boundry.
