@@ -276,7 +276,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 	errorMarker := "error:"
 	if testingInstead {
 		errorMarker = "FAIL:"
-	} else if e.mode == modeCrystal {
+	} else if e.mode == modeCrystal || e.mode == modeObjectPascal {
 		errorMarker = "Error:"
 	}
 
@@ -317,15 +317,54 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 				} else if strings.HasPrefix(line, "In ") {
 					crystalLocationLine = line
 				}
+			} else if e.mode == modeObjectPascal {
+				errorMessage = ""
+				if strings.Contains(line, " Error: ") {
+					pos := strings.Index(line, " Error: ")
+					errorMessage = line[pos+8:]
+				} else if strings.Contains(line, " Fatal: ") {
+					pos := strings.Index(line, " Fatal: ")
+					errorMessage = line[pos+8:]
+				}
+				if len(errorMessage) > 0 {
+					parts := strings.SplitN(line, "(", 2)
+					errorFilename, rest := parts[0], parts[1]
+					baseErrorFilename := filepath.Base(errorFilename)
+					parts = strings.SplitN(rest, ",", 2)
+					lineNumberString, rest := parts[0], parts[1]
+					parts = strings.SplitN(rest, ")", 2)
+					lineColumnString, rest := parts[0], parts[1]
+
+					// Move to (x, y), line number first and then column number
+					if i, err := strconv.Atoi(lineNumberString); err == nil {
+						foundY := LineIndex(i - 1)
+						e.redraw = e.GoTo(foundY, c, status)
+						e.redrawCursor = e.redraw
+						if x, err := strconv.Atoi(lineColumnString); err == nil { // no error
+							foundX := x - 1
+							tabs := strings.Count(e.Line(foundY), "\t")
+							e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
+							e.Center(c)
+						}
+					}
+
+					// Return the error message
+					if baseErrorFilename != baseFilename {
+						return "In " + baseErrorFilename + ": " + errorMessage, true, false
+					}
+					return errorMessage, true, false
+				}
 			} else if e.mode == modeLua {
 				if strings.Contains(line, " error near ") && strings.Count(line, ":") >= 3 {
 					parts := strings.SplitN(line, ":", 4)
 					errorMessage = parts[3]
+
 					if i, err := strconv.Atoi(parts[2]); err == nil {
 						foundY := LineIndex(i - 1)
 						e.redraw = e.GoTo(foundY, c, status)
 						e.redrawCursor = e.redraw
 					}
+
 					baseErrorFilename := filepath.Base(parts[1])
 					if baseErrorFilename != baseFilename {
 						return "In " + baseErrorFilename + ": " + errorMessage, true, false
@@ -357,6 +396,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 				foundY := LineIndex(y - 1)
 				e.redraw = e.GoTo(foundY, c, status)
 				e.redrawCursor = e.redraw
+
 				if x, err := strconv.Atoi(fields[2]); err == nil { // no error
 					foundX := x - 1
 					tabs := strings.Count(e.Line(foundY), "\t")

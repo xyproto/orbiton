@@ -183,7 +183,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	switch e.mode {
 	case modeMakefile, modePython, modeCMake, modeJava, modeKotlin:
 		e.spacesPerTab = 4
-	case modeShell, modeConfig, modeHaskell, modeVim, modeLua:
+	case modeShell, modeConfig, modeHaskell, modeVim, modeLua, modeObjectPascal:
 		e.spacesPerTab = 2
 	case modeMarkdown, modeText, modeBlank:
 		e.rainbowParenthesis = false
