@@ -5,32 +5,37 @@ import (
 	"strings"
 )
 
+// Supporting PHP and Perl are non-goals.
+
 const (
 	// Mode "enum"
-	modeBlank      = iota
-	modeGit        // for git commits and interactive rebases
-	modeMarkdown   // for Markdown (and asciidoctor and rst files)
-	modeMakefile   // for Makefiles
-	modeShell      // for shell scripts and PKGBUILD files
-	modeConfig     // for yml, toml, and ini files etc
-	modeAssembly   // for Assembly files
-	modeGo         // for Go source files
-	modeHaskell    // for Haskell source files
-	modeOCaml      // for OCaml source files
-	modeStandardML // for Standard ML source files
-	modePython     // for Python source files
-	modeText       // for plain text documents
-	modeCMake      // for CMake files
-	modeVim        // for Vim or NeoVim configuration, or .vim scripts
-	modeLisp       // for Common Lisp, Emacs Lisp and Clojure
-	modeZig        // for Zig
-	modeKotlin     // for Kotlin
-	modeJava       // for Java
-	modeHIDL       // for the Android-related Hardware Abstraction Layer Interface Definition Language
-	modeSQL        // for Structured Query Language
-	modeOak        // for Oak source files
-	modeRust       // for Rust source files
-	modeLua        // for Lua source files
+	modeBlank        = iota
+	modeGit          // for git commits and interactive rebases
+	modeMarkdown     // for Markdown (and asciidoctor and rst files)
+	modeMakefile     // for Makefiles
+	modeShell        // for shell scripts and PKGBUILD files
+	modeConfig       // for yml, toml, and ini files etc
+	modeAssembly     // for Assembly files
+	modeGo           // for Go
+	modeHaskell      // for Haskell
+	modeOCaml        // for OCaml
+	modeStandardML   // for Standard ML
+	modePython       // for Python
+	modeText         // for plain text documents
+	modeCMake        // for CMake files
+	modeVim          // for Vim or NeoVim configuration, or .vim scripts
+	modeLisp         // for Common Lisp, Emacs Lisp and Clojure
+	modeZig          // for Zig
+	modeKotlin       // for Kotlin
+	modeJava         // for Java
+	modeHIDL         // for the Android-related Hardware Abstraction Layer Interface Definition Language
+	modeSQL          // for Structured Query Language
+	modeOak          // for Oak
+	modeRust         // for Rust
+	modeLua          // for Lua
+	modeCrystal      // for Crystal
+	modeNim          // for Nim
+	modeObjectPascal // for Object Pascal and Delphi
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -111,6 +116,12 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeRust
 		case ".lua":
 			mode = modeLua
+		case ".cr":
+			mode = modeCrystal
+		case ".nim":
+			mode = modeNim
+		case ".pas", ".pp", ".lpr":
+			mode = modeObjectPascal
 		default:
 			mode = modeBlank
 		}

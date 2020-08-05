@@ -171,33 +171,37 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		return "", true, true // no message returned, the mustExportPandoc function handles it's own status output
 	}
 
-	defaultExecutableName := "main" // If the current directory name is not found
+	exeFirstName := "main" // If the current directory name is not found
 
-	// Find a suitable default executable name (only used with OCaml)
-	if ext == ".ml" {
+	// Find a suitable default executable first name
+	if e.mode == modeOCaml || e.mode == modeKotlin || e.mode == modeLua {
 		if curdir, err := os.Getwd(); err == nil { // no error
-			defaultExecutableName = filepath.Base(curdir)
+			exeFirstName = filepath.Base(curdir)
 		}
 	}
 
 	javaShellCommand := "javaFiles=$(find . -type f -name '*.java'); for f in $javaFiles; do grep -q 'static void main' \"$f\" && mainJavaFile=\"$f\"; done; className=$(grep -oP '(?<=class )[A-Z]+[a-z,A-Z,0-9]*' \"$mainJavaFile\" | head -1); packageName=$(grep -oP '(?<=package )[a-z,A-Z,0-9,.]*' \"$mainJavaFile\" | head -1); if [[ $packageName != \"\" ]]; then packageName=\"$packageName.\"; fi; mkdir -p _o_build/META-INF; javac -d _o_build $javaFiles; cd _o_build; echo \"Main-Class: $packageName$className\" > META-INF/MANIFEST.MF; classFiles=$(find . -type f -name '*.class'); jar cmf META-INF/MANIFEST.MF ../main.jar $classFiles; cd ..; rm -rf _o_build"
 
+	// TODO: Change the map to not use file extensions, but rather rely on the modes from ftdetect.go
+
 	// Set up a few variables
 	var (
 		// Map from build command to a list of file extensions (or basenames for files without an extension)
 		build = map[*exec.Cmd][]string{
-			exec.Command("go", "build"):                                     {".go"},
-			exec.Command("cxx"):                                             {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
-			exec.Command("zig", "build"):                                    {".zig"},
-			exec.Command("v", filename):                                     {".v"},
-			exec.Command("cargo", "build"):                                  {".rs"}, // Rust
-			exec.Command("ghc", "-dynamic", filename):                       {".hs"}, // Haskell
-			exec.Command("python", "-m", "py_compile", filename):            {".py"}, // Compile to .pyc
-			exec.Command("ocamlopt", "-o", defaultExecutableName, filename): {".ml"}, // OCaml
-			exec.Command("crystal", "build", "--no-color", filename):        {".cr"},
-			exec.Command("kotlinc", filename, "-include-runtime", "-d", defaultExecutableName+".jar"): {".kt"},   // Kotlin, build a .jar
-			exec.Command("sh", "-c", javaShellCommand):                                                {".java"}, // Java, build a .jar
-			exec.Command("luac", filename):                                                            {".lua"},
+			exec.Command("go", "build"):                                                      {".go"},                                                     // Go
+			exec.Command("cxx"):                                                              {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"}, // C++ and C
+			exec.Command("zig", "build"):                                                     {".zig"},                                                    // Zig
+			exec.Command("v", filename):                                                      {".v"},                                                      // V
+			exec.Command("cargo", "build"):                                                   {".rs"},                                                     // Rust
+			exec.Command("ghc", "-dynamic", filename):                                        {".hs"},                                                     // Haskell
+			exec.Command("python", "-m", "py_compile", filename):                             {".py"},                                                     // Python, compile to .pyc
+			exec.Command("ocamlopt", "-o", exeFirstName, filename):                           {".ml"},                                                     // OCaml
+			exec.Command("crystal", "build", "--no-color", filename):                         {".cr"},                                                     // Crystal
+			exec.Command("kotlinc", filename, "-include-runtime", "-d", exeFirstName+".jar"): {".kt"},                                                     // Kotlin, build a .jar file
+			exec.Command("sh", "-c", javaShellCommand):                                       {".java"},                                                   // Java, build a .jar file
+			exec.Command("luac", "-o", exeFirstName+".out", filename):                        {".lua"},                                                    // Lua, build an .out file
+			exec.Command("nim", "c", filename):                                               {".nim"},                                                    // Nim
+			exec.Command("fpc", filename):                                                    {".pp", ".pas", ".lpr"},                                     // Object Pascal / Delphi
 		}
 	)
 
@@ -227,7 +231,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 	)
 
 	// Special per-language considerations
-	if ext == ".rs" && (!exists("Cargo.toml") && !exists("../Cargo.toml")) {
+	if e.mode == modeRust && (!exists("Cargo.toml") && !exists("../Cargo.toml")) {
 		// Use rustc instead of cargo if Cargo.toml is missing and the extension is .rs
 		if which("rustc") != "" {
 			cmd = exec.Command("rustc", filename)
@@ -237,7 +241,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		if which("bazel") != "" {
 			cmd = exec.Command("bazel", "build")
 		}
-	} else if ext == ".zig" && !exists("build.zig") {
+	} else if e.mode == modeZig && !exists("build.zig") {
 		// Just build the current file
 		if which("zig") != "" {
 			cmd = exec.Command("zig", "build-exe", "-lc", filename)
@@ -272,7 +276,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 	errorMarker := "error:"
 	if testingInstead {
 		errorMarker = "FAIL:"
-	} else if ext == ".cr" {
+	} else if e.mode == modeCrystal {
 		errorMarker = "Error:"
 	}
 
@@ -297,14 +301,14 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			crystalLocationLine string
 		)
 		for _, line := range lines {
-			if ext == ".hs" {
+			if e.mode == modeHaskell {
 				if strings.Contains(prevLine, errorMarker) {
 					if errorMessage = strings.TrimSpace(line); strings.HasPrefix(errorMessage, "• ") {
 						errorMessage = string([]rune(errorMessage)[2:])
 						break
 					}
 				}
-			} else if ext == ".cr" {
+			} else if e.mode == modeCrystal {
 				if strings.HasPrefix(line, "Error:") {
 					errorMessage = line[6:]
 					if len(crystalLocationLine) > 0 {
@@ -313,7 +317,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 				} else if strings.HasPrefix(line, "In ") {
 					crystalLocationLine = line
 				}
-			} else if ext == ".lua" {
+			} else if e.mode == modeLua {
 				if strings.Contains(line, " error near ") && strings.Count(line, ":") >= 3 {
 					parts := strings.SplitN(line, ":", 4)
 					errorMessage = parts[3]
@@ -342,7 +346,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			return errorMessage, true, false
 		}
 
-		if ext == ".cr" {
+		if e.mode == modeCrystal {
 			// Crystal has the location on a different line from the error message
 			fields := strings.Split(crystalLocationLine, ":")
 			if len(fields) != 3 {

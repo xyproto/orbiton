@@ -75,7 +75,7 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 // comment for the current language mode the editor is in.
 func (e *Editor) SingleLineCommentMarker() string {
 	switch e.mode {
-	case modeShell, modePython, modeCMake, modeConfig:
+	case modeShell, modePython, modeCMake, modeConfig, modeCrystal, modeNim:
 		return "#"
 	case modeAssembly:
 		return ";"
