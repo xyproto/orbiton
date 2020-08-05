@@ -756,8 +756,8 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				// Split the current line in two
 				if !e.SplitLine() {
 					e.InsertLineBelow()
-					scrollBack = true
 				}
+				scrollBack = true
 				// Indent the next line if at the end, not else
 				if !e.AfterEndOfLine() {
 					indent = false

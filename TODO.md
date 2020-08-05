@@ -4,7 +4,6 @@
 
 - [ ] Paste with middle mouse button.
 - [ ] Open text files with Chinese/Japanese/Korean characters without breaking the text flow.
-- [ ] When pressing return at almost the end of a very long line, move the cursor correctly afterwards.
 
 ## Bugs/new features/issues
 
