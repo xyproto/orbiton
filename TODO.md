@@ -4,10 +4,11 @@
 
 - [ ] Paste with middle mouse button.
 - [ ] Open text files with Chinese/Japanese/Korean characters without breaking the text flow.
-
-## Bugs/new features/issues
-
 - [ ] Auto-detect tabs/spaces when opening a file.
+- [ ] When moving on long lines, using the arrow keys, the cursor may be misplaced when typing letters.
+
+## Bugs/features/issues
+
 - [ ] Hash strings (like sha256 hash sums), could be colored light yellow and dark yellow for every 2 characters
 - [ ] When the editor executable is `list`, just list the contents and exit?
 - [ ] Find out why the string list sorting command can't sort the strings in syntax.go.
@@ -17,7 +18,6 @@
 - [ ] Use `wl-copy` for copy and cut. Use the same type of implementation as for `wl-paste`.
 - [ ] Figure out why copy/paste is wonky on Wayland.
 - [ ] Figure out why a file saved by another user can not be read by Go in `/tmp`, but can be read with `cat`.
-- [ ] When moving on long lines, using the arrow keys, the cursor may be misplaced when typing letters.
 - [ ] Command menu option for deleting the rest of the file.
 - [ ] A menu option for recording simple vim-style keypresses, then a keypress for playing it back.
 - [ ] Highlight the line where a portal has been opened.
