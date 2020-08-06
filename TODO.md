@@ -3,9 +3,10 @@
 ## Pri
 
 - [ ] Paste with middle mouse button.
-- [ ] Open text files with Chinese/Japanese/Korean characters without breaking the text flow.
-- [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] When moving on long lines, using the arrow keys, the cursor may be misplaced when typing letters.
+- [ ] Be able to open and edit large text files (60M+).
+- [ ] Auto-detect tabs/spaces when opening a file.
+- [ ] Open text files with Chinese/Japanese/Korean characters without breaking the text flow.
 
 ## Bugs/features/issues
 
