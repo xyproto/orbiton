@@ -29,6 +29,14 @@ To unset:
 
     git config --global --unset core.editor
 
+## Innovative features that I have not seen in any other editor
+
+* Smart cursor movement, trying to maintain the X position when moving up and down.
+* Press `ctrl-v` once to paste one line, press `ctrl-v` again to paste the rest.
+* Open or close a portal with `ctrl-r`. If a portal is open, paste across files with `ctrl-v`.
+* Cycle git rebase keywords with `ctrl-r`, when in an interactive git rebase session.
+* Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages (for simple projects).
+
 ## Features and limitations
 
 * Loads up instantly.
@@ -93,7 +101,7 @@ To unset:
 * `ctrl-space` - Build (see table below)
 * `ctrl-j` - Join lines (or jump to the bookmark, if set).
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
-* `ctrl-l` - Jump to a specific line number. Followes by `return` to jump to the top. If at the top, press `return` to jump to the bottom.
+* `ctrl-l` - Jump to a specific line number. Follows by `return` to jump to the top. If at the top, press `return` to jump to the bottom.
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive.
 * `esc` - Redraw the screen and clear the last search.
 * `ctrl-b` - Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
