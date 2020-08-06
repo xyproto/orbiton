@@ -273,6 +273,9 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 							break OUT
 						}
 						utilityName := filepath.Base(cmd.Path)
+						if utilityName == "guessica" {
+							utilityName = "Guessica" // it's a pun
+						}
 						status.Clear(c)
 						status.SetMessage("Calling " + utilityName)
 						status.Show(c, e)
