@@ -550,7 +550,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			}
 		case "→": // right arrow
 			// If on the last line or before, go to the next character
-			if e.DataY() < LineIndex(e.Len()) {
+			if e.DataY() <= LineIndex(e.Len()) {
 				e.Next(c)
 			}
 			if e.AfterScreenWidth(c) {
