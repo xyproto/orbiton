@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] Fix the `editor.Delete()` method, so that `ctrl-d` also works for very long lines.
 - [ ] Abstract the editor, so that sending in keypresses and examining the result
       can be tested.
 - [ ] Paste with middle mouse button.
