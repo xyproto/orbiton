@@ -121,12 +121,12 @@ func (e *Editor) setLightTheme() {
 	e.bg = vt100.BackgroundDefault // BackgroundWhite
 	e.searchFg = vt100.Red
 	e.gitColor = vt100.Blue
-	e.multiLineComment = vt100.Green
+	e.multiLineComment = vt100.Gray
 	e.multiLineString = vt100.Red
 
 	syntax.DefaultTextConfig.String = "red"
 	syntax.DefaultTextConfig.Keyword = "blue"
-	syntax.DefaultTextConfig.Comment = "darkgreen"
+	syntax.DefaultTextConfig.Comment = "gray"
 	syntax.DefaultTextConfig.Type = "blue"
 	syntax.DefaultTextConfig.Literal = "darkcyan"
 	syntax.DefaultTextConfig.Punctuation = "black"
@@ -171,32 +171,33 @@ func (e *Editor) setLightTheme() {
 
 // setRedBlackTheme sets a red/black/gray theme
 func (e *Editor) setRedBlackTheme() {
+	// NOTE: Dark gray may not be visible with light terminal emulator themes
 	e.lightTheme = false
-	e.fg = vt100.White
+	e.fg = vt100.LightGray
 	e.bg = vt100.BackgroundBlack // Dark gray background, as opposed to BackgroundDefault
 	e.searchFg = vt100.Red
 	e.gitColor = vt100.Red
 	e.multiLineComment = vt100.DarkGray
-	e.multiLineString = vt100.Red
-	syntax.DefaultTextConfig.String = "white"
+	e.multiLineString = vt100.LightGray
+	syntax.DefaultTextConfig.String = "lightwhite"
 	syntax.DefaultTextConfig.Keyword = "darkred"
-	syntax.DefaultTextConfig.Comment = "gray"
+	syntax.DefaultTextConfig.Comment = "darkgray"
 	syntax.DefaultTextConfig.Type = "darkred"
-	syntax.DefaultTextConfig.Literal = "white"
+	syntax.DefaultTextConfig.Literal = "lightgray"
 	syntax.DefaultTextConfig.Punctuation = "darkred"
 	syntax.DefaultTextConfig.Plaintext = "lightgray"
 	syntax.DefaultTextConfig.Tag = "darkred"
 	syntax.DefaultTextConfig.TextTag = "darkred"
 	syntax.DefaultTextConfig.TextAttrName = "darkred"
 	syntax.DefaultTextConfig.TextAttrValue = "darkred"
-	syntax.DefaultTextConfig.Decimal = "white"
+	syntax.DefaultTextConfig.Decimal = "lightwhite"
 	syntax.DefaultTextConfig.AndOr = "darkred"
-	syntax.DefaultTextConfig.Dollar = "white"
-	syntax.DefaultTextConfig.Star = "darkred"
+	syntax.DefaultTextConfig.Dollar = "lightwhite"
+	syntax.DefaultTextConfig.Star = "lightwhite"
 	syntax.DefaultTextConfig.Class = "darkred"
-	syntax.DefaultTextConfig.Private = "white"
-	syntax.DefaultTextConfig.Protected = "white"
-	syntax.DefaultTextConfig.Public = "lightgray"
+	syntax.DefaultTextConfig.Private = "lightgray"
+	syntax.DefaultTextConfig.Protected = "lightgray"
+	syntax.DefaultTextConfig.Public = "lightwhite"
 	syntax.DefaultTextConfig.Whitespace = ""
 
 	// Markdown, switch light colors to darker ones
@@ -213,7 +214,7 @@ func (e *Editor) setRedBlackTheme() {
 	tableBackground = e.bg
 
 	// Rainbow parentheses
-	rainbowParenColors = []vt100.AttributeColor{vt100.Gray, vt100.White, vt100.Red}
+	rainbowParenColors = []vt100.AttributeColor{vt100.LightGray, vt100.White, vt100.Red}
 	unmatchedParenColor = vt100.White
 
 	// Command menu
