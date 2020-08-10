@@ -2,6 +2,8 @@
 
 ## Pri
 
+- [ ] Abstract the editor, so that sending in keypresses and examining the result
+      can be tested.
 - [ ] Paste with middle mouse button.
 - [ ] Be able to open and edit large text files (60M+).
 - [ ] Fix opening `test/first_line_missing.txt` (unusual unicode symbol).
