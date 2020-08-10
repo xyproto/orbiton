@@ -463,12 +463,25 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 // LoadBytes replaces the current editor contents with the given bytes
 func (e *Editor) LoadBytes(data []byte) {
 	e.Clear()
-	for y, byteLine := range bytes.Split(data, []byte{'\n'}) {
-		for counter, letter := range []rune(string(byteLine)) {
-			e.Set(counter, LineIndex(y), letter)
-		}
+
+	byteLines := bytes.Split(data, []byte{'\n'})
+
+	// If the last line is empty, skip it
+	if len(byteLines) > 0 && len(byteLines[len(byteLines)-1]) == 0 {
+		byteLines = byteLines[:len(byteLines)-1]
 	}
-	// Mark the data as "changed"
+
+	// One allocation for all the lines
+	e.lines = make(map[int][]rune, len(byteLines))
+
+	for y, byteLine := range byteLines {
+		e.lines[y] = []rune(string(byteLine))
+		//for counter, letter := range []rune(string(byteLine)) {
+		//	e.Set(counter, LineIndex(y), letter)
+		//}
+	}
+
+	// Mark the editor contents as "changed"
 	e.changed = true
 }
 
