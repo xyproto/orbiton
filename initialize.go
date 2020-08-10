@@ -210,9 +210,9 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		e.FullResetRedraw(c, nil, false)
 	}
 
-	// Use a light theme if XTERM_VERSION is set,
+	// Use a light theme if XTERM_VERSION or TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
 	// because $COLORFGBG is "15;0" even though the background is white.
-	if os.Getenv("XTERM_VERSION") != "" {
+	if hasE("XTERM_VERSION") || os.Getenv("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
 		e.setLightTheme()
 	}
 
