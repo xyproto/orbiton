@@ -670,26 +670,25 @@ func (e *Editor) DeleteLine(n LineIndex) {
 
 // Delete will delete a character at the given position
 func (e *Editor) Delete() {
-	y := e.LineIndex()
-	//y := int(e.DataY())
-	lineLen := len([]rune(e.lines[int(y)]))
-	if _, ok := e.lines[int(y)]; !ok || lineLen == 0 || (lineLen == 1 && unicode.IsSpace(e.lines[int(y)][0])) {
+	y := int(e.DataY())
+	lineLen := len([]rune(e.lines[y]))
+	if _, ok := e.lines[y]; !ok || lineLen == 0 || (lineLen == 1 && unicode.IsSpace(e.lines[y][0])) {
 		// All keys in the map that are > y should be shifted -1.
 		// This also overwrites e.lines[y].
-		e.DeleteLine(y)
+		e.DeleteLine(LineIndex(y))
 		e.changed = true
 		return
 	}
-	if e.AtEndOfLine() {
-		// on the last rune, just drop it
-		l := len(e.lines[int(y)])
-		e.lines[int(y)] = e.lines[int(y)][:l-1]
+	x, err := e.DataX()
+	if err != nil || x > len([]rune(e.lines[y]))-1 {
+		// on the last index, just use every element but x
+		e.lines[y] = e.lines[y][:x]
 		// check if the next line exists
-		if _, ok := e.lines[int(y)+1]; ok {
+		if _, ok := e.lines[y+1]; ok {
 			// then add the contents of the next line, if available
-			nextLine, ok := e.lines[int(y)+1]
+			nextLine, ok := e.lines[y+1]
 			if ok && len([]rune(nextLine)) > 0 {
-				e.lines[int(y)] = append(e.lines[int(y)], nextLine...)
+				e.lines[y] = append(e.lines[y], nextLine...)
 				// then delete the next line
 				e.DeleteLine(LineIndex(y + 1))
 			}
@@ -697,15 +696,8 @@ func (e *Editor) Delete() {
 		e.changed = true
 		return
 	}
-
-	x, err := e.DataX()
-	if err != nil {
-		// Invalid character, can't delete this
-		return
-	}
-
 	// Delete just this character
-	e.lines[int(y)] = append(e.lines[int(y)][:x], e.lines[int(y)][x+1:]...)
+	e.lines[y] = append(e.lines[y][:x], e.lines[y][x+1:]...)
 
 	e.changed = true
 
