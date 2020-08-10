@@ -448,11 +448,11 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	//logf("ENCODING: %s\n", "UTF-8")
 	//}
 
-	// Stop the spinner
-	quit <- true
-
 	// Load the data
 	e.LoadBytes(data)
+
+	// Stop the spinner
+	quit <- true
 
 	// Mark the data as "not changed"
 	e.changed = false
