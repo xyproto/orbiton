@@ -2,12 +2,12 @@
 
 ## Pri
 
-- [ ] Fix opening `test/first_line_missing.txt` (unusual unicode symbol).
 - [ ] Paste with middle mouse button.
-- [ ] When moving on long lines, using the arrow keys, the cursor may be misplaced when typing letters.
 - [ ] Be able to open and edit large text files (60M+).
+- [ ] Fix opening `test/first_line_missing.txt` (unusual unicode symbol).
 - [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] Open text files with Chinese/Japanese/Korean characters without breaking the text flow.
+- [ ] `ctrl-j` does not seem to do anything if pressed at the end of a long line.
 
 ## Bugs/features/issues
 
