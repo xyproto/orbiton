@@ -104,7 +104,7 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeZig
 		case ".kt", ".kts":
 			mode = modeKotlin
-		case ".java":
+		case ".java", ".gradle":
 			mode = modeJava
 		case ".hal":
 			mode = modeHIDL
