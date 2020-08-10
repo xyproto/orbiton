@@ -38,7 +38,7 @@ type Actions struct {
 	actionFunctions map[int]func()
 }
 
-// NewAction will create a new Actions struct
+// NewActions will create a new Actions struct
 func NewActions() *Actions {
 	var a Actions
 	a.actionTitles = make(map[int]string)
@@ -207,19 +207,19 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		}
 	}
 
+	// Add the "Default theme" menu item text and menu function
+	actions.Add("Default theme", func() {
+		e.setDefaultTheme()
+		e.SetSyntaxHighlight(true)
+		e.FullResetRedraw(c, status, true)
+	})
+
 	// Add the option to change the colors, for non-light themes (fg != black)
 	if !e.lightTheme && !noColor { // Not a light theme and NO_COLOR is not set
 
 		// Add the "Red/Black theme" menu item text and menu function
 		actions.Add("Red/black theme", func() {
 			e.setRedBlackTheme()
-			e.SetSyntaxHighlight(true)
-			e.FullResetRedraw(c, status, true)
-		})
-
-		// Add the "Default theme" menu item text and menu function
-		actions.Add("Default theme", func() {
-			e.setDefaultTheme()
 			e.SetSyntaxHighlight(true)
 			e.FullResetRedraw(c, status, true)
 		})
