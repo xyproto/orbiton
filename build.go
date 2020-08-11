@@ -488,5 +488,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			}
 		}
 	}
+	if e.mode == modePython {
+		return "Syntax OK", true, true
+	}
 	return "Success", true, true
 }
