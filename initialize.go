@@ -216,6 +216,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		e.setLightTheme()
 	}
 
+	e.noColor = hasE("NO_COLOR")
+
 	// Find the absolute path to this filename
 	absFilename, err := e.AbsFilename()
 	if err != nil {

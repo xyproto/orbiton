@@ -47,6 +47,7 @@ type Editor struct {
 	clearOnQuit        bool                  // clear the terminal when quitting the editor, or not
 	wrapWhenTyping     bool                  // wrap text at a certain limit when typing
 	lightTheme         bool                  // using a light theme? (the XTERM_VERSION environment variable is set)
+	noColor            bool
 	EditorColors
 }
 
@@ -334,8 +335,6 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 		o := textoutput.NewTextOutput(true, true)
 		vt100.ShowCursor(false)
 
-		noColor := os.Getenv("NO_COLOR") != ""
-
 		var counter uint
 
 		// Start the spinner
@@ -348,7 +347,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 				vt100.SetXY(x, y)
 				s := ""
 				// Switch between 12 different ASCII images
-				if noColor {
+				if e.noColor {
 					switch counter % 12 {
 					case 0:
 						s = "| C · · |"

@@ -128,15 +128,14 @@ func equalStringSlices(a, b []string) bool {
 	return true
 }
 
-// isASCII checks if a string contains only ASCII characters
-// Thanks peterSO @ stackoverflow
-func isASCII(s string) bool {
+// containsNonASCII checks if a string contains a non-ASCII character
+func containsNonASCII(s string) bool {
 	for i := 0; i < len(s); i++ {
 		if s[i] > unicode.MaxASCII {
-			return false
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 // logf, for quick "printf-style" debugging
