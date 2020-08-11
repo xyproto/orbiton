@@ -29,13 +29,14 @@ To unset:
 
     git config --global --unset core.editor
 
-## Innovative features that I have not seen in any other editor
+## Unique features that I have not seen in any other editor
 
 * Smart cursor movement, trying to maintain the X position when moving up and down.
 * Press `ctrl-v` once to paste one line, press `ctrl-v` again to paste the rest.
-* Open or close a portal with `ctrl-r`. If a portal is open, paste across files with `ctrl-v`.
+* Press `ctrl-c` once to copy one line, press `ctrl-v` again to copy until the next blank line.
+* Open or close a portal with `ctrl-r`. If a portal is open, paste across files (or within the same file) with `ctrl-v`.
+* Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages (suitable for smaller projects and quick edits).
 * Cycle git rebase keywords with `ctrl-r`, when in an interactive git rebase session.
-* Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages (for simple projects).
 
 ## Features and limitations
 
@@ -44,7 +45,7 @@ To unset:
 * Configuration-free, for better and for worse.
 * Provides syntax highlighting for Go, C++, Markdown, Bash and several other languages. There is generic syntax highlighting.
 * The syntax highlighting is instant.
-* The `NO_COLOR` environment variable can be set to disable all colors.
+* The [`NO_COLOR`](https://no-color.org) environment variable can be set to disable all colors.
 * Rainbow parentheses makes lines with many parentheses easier to read.
 * Limited to the VT100 standard, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`.
 * Compiles with either `go` or `gccgo`.
