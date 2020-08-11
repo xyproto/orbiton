@@ -37,6 +37,7 @@ To unset:
 * Open or close a portal with `ctrl-r`. If a portal is open, paste across files (or within the same file) with `ctrl-v`.
 * Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages (suitable for smaller projects and quick edits).
 * Cycle git rebase keywords with `ctrl-r`, when in an interactive git rebase session.
+* Multiple uses of `ctrl-l`: Enter a number to jump to a line or press `return` to jump to the top. Press `ctrl-l` and `return` again to jump to the end.
 
 ## Features and limitations
 
@@ -76,7 +77,7 @@ To unset:
 
 ## Known bugs
 
-* Some unicode runes may disrupt the text flow. This is generally not a problem, but becomes apparent when opening a non-text file.
+* Some unicode runes may disrupt the text flow. This is generally not a problem, but becomes apparent when opening a non-text file or a file with text in many languages.
 * The cursor may be misplaced when moving around on lines longer than the terminal width and then inserting or deleting text.
 * The smart indentation is not always smart.
 
