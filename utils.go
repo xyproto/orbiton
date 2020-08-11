@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"unicode"
 )
 
 // exists checks if the given path exists
@@ -121,6 +122,17 @@ func equalStringSlices(a, b []string) bool {
 	}
 	for i := 0; i < lena; i++ {
 		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// isASCII checks if a string contains only ASCII characters
+// Thanks peterSO @ stackoverflow
+func isASCII(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] > unicode.MaxASCII {
 			return false
 		}
 	}
