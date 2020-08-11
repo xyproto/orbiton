@@ -325,6 +325,6 @@ Pressing `ctrl-space` twice will render Markdown files to PDF using `pandoc` (as
 
 ## General info
 
-* Version: 2.32.2
+* Version: 2.32.3
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
