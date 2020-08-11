@@ -363,6 +363,7 @@ func (c *Canvas) WriteString(x, y uint, fg, bg AttributeColor, s string) {
 	counter := uint(0)
 	startpos := y*c.w + x
 	lchars := uint(len(chars))
+	bgb := bg.Background()
 	for _, r := range s {
 		i := startpos + counter
 		if i >= lchars {
@@ -370,7 +371,7 @@ func (c *Canvas) WriteString(x, y uint, fg, bg AttributeColor, s string) {
 		}
 		chars[i].s = r
 		chars[i].fg = fg
-		chars[i].bg = bg.Background()
+		chars[i].bg = bgb
 		chars[i].drawn = false
 		counter++
 	}
@@ -390,11 +391,33 @@ func (c *Canvas) WriteRune(x, y uint, fg, bg AttributeColor, r rune) {
 		return
 	}
 	index := y*c.w + x
+
 	c.mut.Lock()
 	chars := (*c).chars
 	chars[index].s = r
 	chars[index].fg = fg
 	chars[index].bg = bg.Background()
+	chars[index].drawn = false
+	c.mut.Unlock()
+}
+
+// WriteRuneB will write a colored rune to the canvas
+// This is the same as WriteRuneB, but bg.Background() has already been called on
+// the background attribute.
+func (c *Canvas) WriteRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
+	if x < 0 || y < 0 {
+		return
+	}
+	if x >= c.w || y >= c.h {
+		return
+	}
+	index := y*c.w + x
+
+	c.mut.Lock()
+	chars := (*c).chars
+	chars[index].s = r
+	chars[index].fg = fg
+	chars[index].bg = bgb
 	chars[index].drawn = false
 	c.mut.Unlock()
 }
