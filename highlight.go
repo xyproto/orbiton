@@ -95,6 +95,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 		line = e.Line(LineIndex(y + offsetY))
 		trimmedLine = strings.TrimSpace(line)
+
 		if strings.Contains(line, "\t") {
 			line = strings.Replace(line, "\t", tabString, -1)
 		}
@@ -338,7 +339,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						c.Write(uint(cx+counter), uint(cy)+uint(y), fg, e.bg, tabString)
 						counter += e.spacesPerTab
 					} else {
-						if unicode.IsControl(letter) { // letter < ' ' && letter != '\t' && letter != '\n' {
+						//if letter < ' ' && letter != '\t' && letter != '\n' {
+						if unicode.IsControl(letter) {
 							letter = controlRuneReplacement
 						}
 						c.WriteRune(uint(cx+counter), uint(cy)+uint(y), fg, e.bg, letter)

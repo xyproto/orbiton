@@ -474,11 +474,9 @@ func (e *Editor) LoadBytes(data []byte) {
 	// One allocation for all the lines
 	e.lines = make(map[int][]rune, len(byteLines))
 
+	// Place the lines into the editor
 	for y, byteLine := range byteLines {
 		e.lines[y] = []rune(string(byteLine))
-		//for counter, letter := range []rune(string(byteLine)) {
-		//	e.Set(counter, LineIndex(y), letter)
-		//}
 	}
 
 	// Mark the editor contents as "changed"
