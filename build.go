@@ -334,6 +334,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 					lineNumberString, rest := parts[0], parts[1]
 					parts = strings.SplitN(rest, ")", 2)
 					lineColumnString, rest := parts[0], parts[1]
+					errorMessage = rest
 
 					// Move to (x, y), line number first and then column number
 					if i, err := strconv.Atoi(lineNumberString); err == nil {
