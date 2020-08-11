@@ -2089,7 +2089,7 @@ func (e *Editor) ChopLine(line string, viewportWidth int) string {
 		screenLine = line[e.pos.offsetX:]
 	}
 	// Shorten the screen line to account for the terminal width
-	if len([]rune(screenLine)) >= viewportWidth {
+	if len(string(screenLine)) >= viewportWidth {
 		screenLine = screenLine[:viewportWidth]
 	}
 	return screenLine
