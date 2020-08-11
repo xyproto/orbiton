@@ -28,7 +28,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 	o := textoutput.NewTextOutput(true, true)
 	tabString := strings.Repeat(" ", e.spacesPerTab)
-	w := int(c.Width())
+	w := c.Width()
+	//h := c.Height()
 	if fromline >= toline {
 		return errors.New("fromline >= toline in WriteLines")
 	}
@@ -87,19 +88,23 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	}
 	// q should now contain the current quote state
 	var (
-		counter               int
+		lineRuneCount         uint
+		lineStringCount       uint
 		line                  string
 		assemblyStyleComments = (e.mode == modeAssembly) || (e.mode == modeLisp)
 		prevLineIsListItem    bool
 		inListItem            bool
 		screenLine            string
-		//redrawCursor          bool
 	)
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y := LineIndex(0); y < numlines; y++ {
-		counter = 0 // per line rune counter, for drawing spaces afterwards
+		lineRuneCount = 0   // per line rune counter, for drawing spaces afterwards (does not handle wide runes)
+		lineStringCount = 0 // per line string counter, for drawing spaces afterwards (handles wide runes)
 
 		line = e.Line(LineIndex(y + offsetY))
+
+		line = strings.TrimRightFunc(line, unicode.IsSpace)
+
 		trimmedLine = strings.TrimSpace(line)
 
 		if strings.Contains(line, "\t") {
@@ -115,10 +120,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			// textWithTags must be unescaped if there is not an error.
 			if textWithTags, err := syntax.AsText([]byte(Escape(line)), assemblyStyleComments); err != nil {
 				// Only output the line up to the width of the canvas
-				screenLine = e.ChopLine(line, w)
+				screenLine = e.ChopLine(line, int(w))
 				// TODO: Check if just "fmt.Print" works here, for several terminal emulators
 				fmt.Println(screenLine)
-				counter += len([]rune(screenLine))
+				lineRuneCount += uint(len([]rune(screenLine)))
+				lineStringCount += uint(len(screenLine))
 			} else {
 				var (
 					// Color and unescape
@@ -349,31 +355,47 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						}
 					}
 					if letter == '\t' {
-						c.Write(uint(cx+counter), uint(cy)+uint(y), fg, e.bg, tabString)
-						counter += e.spacesPerTab
+						c.Write(uint(cx)+lineRuneCount, uint(cy)+uint(y), fg, e.bg, tabString)
+						lineRuneCount += uint(e.spacesPerTab)
+						lineStringCount += uint(e.spacesPerTab)
 					} else {
 						//logf(string(letter))
 						if unicode.IsControl(letter) {
 							letter = controlRuneReplacement
 						}
-						//logf("(%d, %d) %c\n", uint(cx+counter), uint(cy)+uint(y), letter)
-						c.WriteRuneB(uint(cx+counter), uint(cy)+uint(y), fg, bg, letter)
-						counter++
+						c.WriteRuneB(uint(cx)+lineRuneCount, uint(cy)+uint(y), fg, bg, letter)
+						lineRuneCount++                              // 1 rune
+						lineStringCount += uint(len(string(letter))) // 1 rune, expanded
 					}
 				}
 			}
 		} else {
 			// Output a regular line, scrolled to the current e.pos.offsetX
-			screenLine = e.ChopLine(line, w)
-			c.Write(uint(cx+counter), uint(cy)+uint(y), e.fg, e.bg, screenLine)
-			counter += len([]rune(screenLine))
+			screenLine = e.ChopLine(line, int(w))
+			c.Write(uint(cx)+lineRuneCount, uint(cy)+uint(y), e.fg, e.bg, screenLine)
+			lineRuneCount += uint(len([]rune(screenLine))) // rune count
+			lineStringCount += uint(len(screenLine))       // string length, not rune length
 
 		}
+
+		yp := uint(cy) + uint(y)
+		xp := uint(0)
+
+		// NOTE: Work in progress
+
+		// TODO: This number must be sent into the WriteRune function and stored per line in the canvas!
+		//       This way, the canvas can go the start of the line for every line with a runeLengthDiff > 0.
+		//runeLengthDiff := int(lineStringCount) - int(lineRuneCount)
 
 		// Fill the rest of the line on the canvas with "blanks"
-		for x := counter; x < w; x++ {
-			c.WriteRuneB(uint(cx+x), uint(cy)+uint(y), e.fg, bg, ' ')
+		for x := lineRuneCount; x < (w - 1); x++ {
+			xp = uint(cx) + x
+			r := ' '
+			//lineNumber := strconv.Itoa(runeLengthDiff)
+			//r = []rune(lineNumber)[len([]rune(lineNumber))-1]
+			c.WriteRuneB(xp, yp, e.fg, bg, r)
 		}
+		c.WriteRuneB(xp, yp, e.fg, e.bg, '\n')
 	}
 
 	return nil
