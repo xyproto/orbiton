@@ -2,22 +2,22 @@
 
 ## Pri
 
-- [ ] Fix the `editor.Delete()` method, so that `ctrl-d` also works for very long lines.
-- [ ] Abstract the editor, so that sending in keypresses and examining the result
-      can be tested.
 - [ ] Paste with middle mouse button.
-- [ ] Be able to open and edit large text files (60M+).
-- [ ] Fix opening `test/first_line_missing.txt` (unusual unicode symbol).
-- [ ] Auto-detect tabs/spaces when opening a file.
-- [ ] Open text files with Chinese/Japanese/Korean characters without breaking the text flow.
-- [ ] `ctrl-j` does not seem to do anything if pressed at the end of a long line.
+- [ ] Abstract the editor, so that sending in keypresses and examining the result can be tested.
 
 ## Bugs/features/issues
 
+- [ ] `o test/superfrog.py` then `ctrl-space` says "Success". Fix.
+- [ ] Fix the `editor.Delete()` method, so that `ctrl-d` also works for very long lines.
+- [ ] Be able to open and edit large text files (60M+).
+- [x] Fix opening `test/first_line_missing.txt` (unusual unicode symbol).
+- [ ] Auto-detect tabs/spaces when opening a file.
+- [ ] Open text files with Chinese/Japanese/Korean characters without breaking the text flow.
+- [ ] `ctrl-j` does not seem to do anything if pressed at the end of a long line.
 - [ ] When pressing `ctrl-space` the first time, have a timeout before registering as a double press.
 - [ ] Hash strings (like sha256 hash sums), could be colored light yellow and dark yellow for every 2 characters
 - [ ] When the editor executable is `list`, just list the contents and exit?
-- [ ] Find out why the string list sorting command can't sort the strings in syntax.go.
+- [x] Find out why the string list sorting command can't sort the strings in syntax.go.
 - [ ] When running the `red` editor, don't draw the other theme first.
 - [ ] Don't redraw everything when just moving the cursor around.
 - [ ] Don't color `#` as a comment when editing Go code.
