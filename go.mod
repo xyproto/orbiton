@@ -9,5 +9,5 @@ require (
 	github.com/xyproto/syntax v1.7.3
 	github.com/xyproto/termtitle v1.1.0
 	github.com/xyproto/textoutput v1.12.2
-	github.com/xyproto/vt100 v1.8.6-0.20200811084012-a08ca1fc2c8f
+	github.com/xyproto/vt100 v1.8.6-0.20200811131900-46b7cbcbc73c
 )
