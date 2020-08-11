@@ -208,7 +208,7 @@ func (e *Editor) setRedBlackTheme() {
 	listCodeColor = vt100.White
 	codeColor = vt100.White
 	codeBlockColor = vt100.White
-	tableBackground = vt100.BackgroundBlack
+	tableColor = vt100.White
 	tableBackground = e.bg
 
 	// Rainbow parentheses
