@@ -14,6 +14,7 @@
 
 ## Bugs/features/issues
 
+- [ ] When pressing `ctrl-space` the first time, have a timeout before registering as a double press.
 - [ ] Hash strings (like sha256 hash sums), could be colored light yellow and dark yellow for every 2 characters
 - [ ] When the editor executable is `list`, just list the contents and exit?
 - [ ] Find out why the string list sorting command can't sort the strings in syntax.go.
