@@ -25,7 +25,7 @@ github.com/xyproto/termtitle
 # github.com/xyproto/textoutput v1.12.2
 ## explicit
 github.com/xyproto/textoutput
-# github.com/xyproto/vt100 v1.8.6
+# github.com/xyproto/vt100 v1.8.7-0.20200811184013-1c2ef2e081cd
 ## explicit
 github.com/xyproto/vt100
 # golang.org/x/sys v0.0.0-20200810151505-1b9f1253b3ed
