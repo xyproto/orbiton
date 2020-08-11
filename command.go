@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strconv"
 
@@ -108,10 +107,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		wrapWhenTypingToggleText = "Disable word wrap when typing"
 	}
 
-	var (
-		noColor     = os.Getenv("NO_COLOR") != ""
-		extraDashes = false
-	)
+	var extraDashes = false
 
 	// Add intial menu titles and actions
 	// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file!
@@ -171,7 +167,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 	}
 
 	// Add the syntax highlighting toggle menu item
-	if !noColor {
+	if !e.noColor {
 		syntaxToggleText := "Disable syntax highlighting"
 		if !e.syntaxHighlight {
 			syntaxToggleText = "Enable syntax highlighting"
@@ -215,7 +211,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 	})
 
 	// Add the option to change the colors, for non-light themes (fg != black)
-	if !e.lightTheme && !noColor { // Not a light theme and NO_COLOR is not set
+	if !e.lightTheme && !e.noColor { // Not a light theme and NO_COLOR is not set
 
 		// Add the "Red/Black theme" menu item text and menu function
 		actions.Add("Red/black theme", func() {

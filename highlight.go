@@ -37,6 +37,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	offsetY := fromline
 	inCodeBlock := false // used when highlighting Markdown or Python
 
+	expandedRunes := false // used when encountering runes that take up more than 1 space
+
 	//logf("numlines: %d offsetY %d\n", numlines, offsetY)
 
 	// If in Markdown mode, figure out the current state of block quotes
@@ -385,7 +387,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 		// TODO: This number must be sent into the WriteRune function and stored per line in the canvas!
 		//       This way, the canvas can go the start of the line for every line with a runeLengthDiff > 0.
-		//runeLengthDiff := int(lineStringCount) - int(lineRuneCount)
+		runeLengthDiff := int(lineStringCount) - int(lineRuneCount)
+		if runeLengthDiff > 2 {
+			expandedRunes = true
+
+		}
 
 		// Fill the rest of the line on the canvas with "blanks"
 		for x := lineRuneCount; x < (w - 1); x++ {
@@ -396,6 +402,15 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			c.WriteRuneB(xp, yp, e.fg, bg, r)
 		}
 		c.WriteRuneB(xp, yp, e.fg, e.bg, '\n')
+	}
+
+	if expandedRunes {
+		// This is only marginally better than what already existed.
+		// It places the text at the start of the lines, but it's slooow and pretty glitchy.
+		// TODO: Write something that is great at laying out unicode runes, then build on that.
+		c.SetRunewise(true)
+		e.redraw = true
+		e.redrawCursor = true
 	}
 
 	return nil
