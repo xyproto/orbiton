@@ -8,6 +8,8 @@ import (
 
 func ExampleEditor_BuildOrExport_goError() {
 	e := NewSimpleEditor(80)
+	e.mode, _ = detectEditorMode("err.go")
+
 	os.Chdir("test")
 	// The rename is so that "err.go" is not picked up by the CI tests
 	os.Rename("err_go", "err.go")
@@ -21,11 +23,13 @@ func ExampleEditor_BuildOrExport_goError() {
 
 func TestBuildOrExport(t *testing.T) {
 	e := NewSimpleEditor(80)
+	e.mode, _ = detectEditorMode("err.rs")
+
 	os.Chdir("test")
 	_, performedAction, compiledOK := e.BuildOrExport(nil, nil, "err.rs")
 	os.Chdir("..")
 
-	//fmt.Printf("%s [performed action: %v] [compiled OK: %v]\n", s, performedAction, compiledOK)
+	// fmt.Printf("%s [performed action: %v] [compiled OK: %v]\n", s, performedAction, compiledOK)
 
 	if which("rustc") != "" {
 		//fmt.Println(s)
@@ -50,6 +54,8 @@ func TestBuildOrExport(t *testing.T) {
 
 func ExampleEditor_BuildOrExport_goTest() {
 	e := NewSimpleEditor(80)
+	e.mode, _ = detectEditorMode("err.go")
+
 	os.Chdir("test")
 	// The rename is so that "err.go" is not picked up by the CI tests
 	os.Rename("err_test_go", "err_test.go")
