@@ -37,7 +37,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	offsetY := fromline
 	inCodeBlock := false // used when highlighting Markdown or Python
 
-	expandedRunes := false // used when encountering runes that take up more than 1 space
+	expandedRunes := false // used for detecting wide unicode symbols
 
 	//logf("numlines: %d offsetY %d\n", numlines, offsetY)
 
@@ -390,7 +390,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		runeLengthDiff := int(lineStringCount) - int(lineRuneCount)
 		if runeLengthDiff > 2 {
 			expandedRunes = true
-
 		}
 
 		// Fill the rest of the line on the canvas with "blanks"
@@ -405,12 +404,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	}
 
 	if expandedRunes {
-		// This is only marginally better than what already existed.
-		// It places the text at the start of the lines, but it's slooow and pretty glitchy.
+		return errors.New("unsupported unicode text")
 		// TODO: Write something that is great at laying out unicode runes, then build on that.
-		c.SetRunewise(true)
-		e.redraw = true
-		e.redrawCursor = true
 	}
 
 	return nil

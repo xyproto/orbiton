@@ -1803,19 +1803,21 @@ func (e *Editor) StatusMessage() string {
 }
 
 // DrawLines will draw a screen full of lines on the given canvas
-func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redraw bool) {
+func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redraw bool) error {
+	var err error
 	h := int(c.Height())
 	if respectOffset {
 		offsetY := e.pos.OffsetY()
-		e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
+		err = e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
 	} else {
-		e.WriteLines(c, LineIndex(0), LineIndex(h), 0, 0)
+		err = e.WriteLines(c, LineIndex(0), LineIndex(h), 0, 0)
 	}
 	if redraw {
 		c.Redraw()
 	} else {
 		c.Draw()
 	}
+	return err
 }
 
 // FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
