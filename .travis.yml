@@ -1,4 +1,4 @@
-language: go
+language: go rust
 
 go:
   - "1.10"
