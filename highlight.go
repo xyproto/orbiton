@@ -400,7 +400,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			//r = []rune(lineNumber)[len([]rune(lineNumber))-1]
 			c.WriteRuneB(xp, yp, e.fg, bg, r)
 		}
-		c.WriteRuneB(xp, yp, e.fg, e.bg, '\n')
+		//c.WriteRuneB(xp, yp, e.fg, e.bg, '\n')
 	}
 
 	if expandedRunes {
