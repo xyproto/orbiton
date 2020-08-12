@@ -393,7 +393,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		}
 
 		// Fill the rest of the line on the canvas with "blanks"
-		for x := lineRuneCount; x < (w - 1); x++ {
+		for x := lineRuneCount; x < w; x++ {
 			xp = uint(cx) + x
 			r := ' '
 			//lineNumber := strconv.Itoa(runeLengthDiff)
