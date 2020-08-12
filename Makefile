@@ -2,9 +2,10 @@
 
 PREFIX ?= /usr
 MANDIR ?= "$(PREFIX)/share/man/man1"
+GOBUILD := $(shell test $$(go version | tr ' ' '\n' | head -3 | tail -1 | tr '.' '\n' | tail -1) -le 12 && echo GO111MODULES=on go build -v || echo go build -mod=vendor -v)
 
 o:
-	GO111MODULES=on go build -mod=vendor -v
+	$(GOBUILD)
 
 o.1.gz: o.1
 	gzip -k -v o.1
