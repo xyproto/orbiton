@@ -21,3 +21,5 @@ manpage.1
 *_go.pdf
 favicon.*
 __pycache__/
+o.1.gz
+include.txt
