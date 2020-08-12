@@ -987,7 +987,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 
 			undo.Snapshot(e)
 			switch e.mode {
-			case modeShell, modePython, modeCMake:
+			case modeShell, modePython, modeCMake, modeConfig:
 				for i := 0; i < e.spacesPerTab; i++ {
 					e.InsertRune(c, ' ')
 					// Write the spaces that represent the tab to the canvas
