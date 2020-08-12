@@ -4,7 +4,7 @@ PREFIX ?= /usr
 MANDIR ?= "$(PREFIX)/share/man/man1"
 
 o:
-	go build -mod=vendor -v
+	GO111MODULES=on go build -mod=vendor -v
 
 o.1.gz: o.1
 	gzip -k -v o.1
