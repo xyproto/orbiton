@@ -573,13 +573,11 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 func (e *Editor) TrimRight(index LineIndex) {
 	n := int(index)
 	if line, ok := e.lines[n]; ok {
-
 		newRunes := []rune(strings.TrimRightFunc(string(line), unicode.IsSpace))
 		if string(newRunes) != string(line) {
 			e.lines[n] = newRunes
 			e.changed = true
 		}
-
 	}
 }
 
