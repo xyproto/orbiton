@@ -945,8 +945,10 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 						oneIndentation    string
 					)
 
+					// TODO: Don't switch on mode here, but check e.spacesPerTab
+					//       and/or introduce a setting just for spaces vs tabs
 					switch e.mode {
-					case modeShell, modePython, modeCMake:
+					case modeShell, modePython, modeCMake, modeConfig:
 						// If this is a shell script, use 2 spaces (or however many spaces are defined in e.spacesPerTab)
 						oneIndentation = strings.Repeat(" ", e.spacesPerTab)
 					default:
