@@ -29,7 +29,9 @@ To unset:
 
     git config --global --unset core.editor
 
-## Unique features that I have not seen in any other editor
+## Features that are unique to `o`
+
+These features are unique to `o`, as far as I am aware:
 
 * Smart cursor movement, trying to maintain the X position when moving up and down.
 * Press `ctrl-v` once to paste one line, press `ctrl-v` again to paste the rest.
@@ -39,7 +41,7 @@ To unset:
 * Cycle git rebase keywords with `ctrl-r`, when in an interactive git rebase session.
 * Multiple uses of `ctrl-l`: Enter a number to jump to a line or press `return` to jump to the top. Press `ctrl-l` and `return` again to jump to the end.
 
-## Features and limitations
+## Other features and limitations
 
 * Loads up instantly.
 * Reasonable executable size (around 500k, when built with `gccgo` + `upx`).
@@ -77,7 +79,7 @@ To unset:
 
 ## Known bugs
 
-* Some unicode runes may disrupt the text flow. This is generally not a problem, but becomes apparent when opening a non-text file or a file with text in many languages.
+* Some unicode runes may disrupt the text flow. This is generally not a problem for editing code and configuration files, but may be an issue when editing files that contains text in many languages.
 * The cursor may be misplaced when moving around on lines longer than the terminal width and then inserting or deleting text.
 * The smart indentation is not always smart.
 
