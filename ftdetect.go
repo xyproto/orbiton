@@ -36,6 +36,7 @@ const (
 	modeCrystal      // for Crystal
 	modeNim          // for Nim
 	modeObjectPascal // for Object Pascal and Delphi
+	modeBat          // for DOS batch files
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -123,6 +124,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeNim
 		case ".pas", ".pp", ".lpr":
 			mode = modeObjectPascal
+		case ".bat":
+			mode = modeBat
 		default:
 			mode = modeBlank
 		}

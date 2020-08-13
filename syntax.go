@@ -85,6 +85,8 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "\""
 	case modeLisp:
 		return ";;"
+	case modeBat:
+		return "@rem" // or rem or just ":" ...
 	default:
 		return "//"
 	}

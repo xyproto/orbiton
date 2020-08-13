@@ -197,10 +197,20 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// Regular highlight
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					}
+				case modeBat:
+					trimmedLine = strings.TrimSpace(line)
+					// In DOS batch files, ":" can be used both for labels and for single-line comments
+					if strings.HasPrefix(trimmedLine, "@rem") || strings.HasPrefix(trimmedLine, "rem") || strings.HasPrefix(trimmedLine, ":") {
+						// Handle single line comments
+						coloredString = UnEscape(e.multiLineComment.Start(line))
+					} else {
+						// Regular highlight
+						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
+					}
 				case modeSQL, modeLua:
 					trimmedLine = strings.TrimSpace(line)
-					// Handle single line comments
 					if strings.HasPrefix(trimmedLine, "--") {
+						// Handle single line comments
 						coloredString = UnEscape(e.multiLineComment.Start(line))
 					} else {
 						// Regular highlight
