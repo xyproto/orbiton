@@ -113,7 +113,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			line = strings.Replace(line, "\t", tabString, -1)
 		}
 
-		screenLine = line
+		//screenLine = line
 
 		//redrawCursor = containsNonASCII(line)
 
@@ -390,8 +390,10 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 		}
 
-		yp := uint(cy) + uint(y)
-		xp := uint(0)
+		var (
+			xp uint
+			yp = uint(cy) + uint(y)
+		)
 
 		// NOTE: Work in progress
 
