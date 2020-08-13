@@ -46,7 +46,7 @@ func NewActions() *Actions {
 }
 
 // NewActions2 will create a new Actions struct, while
-// intializing it with the given slices of titles and functions
+// initializing it with the given slices of titles and functions
 func NewActions2(actionTitles []string, actionFunctions []func()) (*Actions, error) {
 	a := NewActions()
 	if len(actionTitles) != len(actionFunctions) {
@@ -109,7 +109,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 
 	var extraDashes = false
 
-	// Add intial menu titles and actions
+	// Add initial menu titles and actions
 	// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file!
 	actions, err := NewActions2(
 		[]string{
