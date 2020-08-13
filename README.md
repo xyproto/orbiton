@@ -35,8 +35,8 @@ These features are unique to `o`, as far as I am aware:
 
 * Smart cursor movement, trying to maintain the X position when moving up and down.
 * Press `ctrl-v` once to paste one line, press `ctrl-v` again to paste the rest.
-* Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy until the next blank line.
-* Open or close a portal with `ctrl-r`. While a portal is open, paste across files (or within the same file) with `ctrl-v`.
+* Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy a block of text (until the next blank line).
+* Open or close a portal with `ctrl-r`. While a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
 * Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages (suitable for smaller projects and quick edits).
 * Cycle git rebase keywords with `ctrl-r`, when in an interactive git rebase session.
 * Multiple uses of `ctrl-l`: Enter a number to jump to a line or press `return` to jump to the top. Press `ctrl-l` and `return` again to jump to the bottom.
