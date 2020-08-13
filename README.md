@@ -1,6 +1,6 @@
 # o [![Build Status](https://travis-ci.com/xyproto/o.svg?branch=master)](https://travis-ci.com/xyproto/o) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/o/master/LICENSE)
 
-`o` is a text editor that is limited to the VT100 standard. It launches instantly and syntax highlights code instantly.
+`o` is a text editor that is limited to the VT100 standard. It has general syntax highlighting and launches instantly. 
 
 It's a good fit for:
 * Editing git commit messages (using `EDITOR=o git commit`).
