@@ -3,7 +3,7 @@
 `o` is a text editor that is limited to the VT100 standard. It has general syntax highlighting and launches instantly.
 
 <p align="center>
-  <img src="img/o.svg" alt="o"/>
+  <img src="https://raw.githubusercontent.com/xyproto/o/master/img/o.svg" alt="o"/>
 </p>
 
 It's a good fit for:
