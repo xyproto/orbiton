@@ -130,6 +130,9 @@ Set NO_COLOR=1 to disable colors.
 	shellName := filepath.Base(os.Getenv("SHELL"))
 	termtitle.MustSet(shellName)
 
+	// Clear the current color attribute
+	fmt.Print(vt100.Stop())
+
 	// Respond to the error returned from the main loop, if any
 	if err != nil {
 		if userMessage != "" {
