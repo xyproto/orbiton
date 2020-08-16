@@ -788,7 +788,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				// If the leading whitespace starts with a tab and ends with a space, remove the final space
 				if strings.HasPrefix(leadingWhitespace, "\t") && strings.HasSuffix(leadingWhitespace, " ") {
 					leadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-1]
-					logf("cleaned leading whitespace: %v\n", []rune(leadingWhitespace))
+					//logf("cleaned leading whitespace: %v\n", []rune(leadingWhitespace))
 				}
 				if !noHome {
 					// Insert the same leading whitespace for the new line
