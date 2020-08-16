@@ -227,7 +227,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 					indentedJSON, err = json.Marshal(v)
 					jsonFormatToggle = !jsonFormatToggle
 				} else {
-					indentationString := strings.Repeat(" ", e.spacesPerTab)
+					indentationString := strings.Repeat(" ", e.tabs.spacesPerTab)
 					indentedJSON, err = json.MarshalIndent(v, "", indentationString)
 					jsonFormatToggle = !jsonFormatToggle
 				}
@@ -325,7 +325,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 											}
 											if foundX != -1 {
 												tabs := strings.Count(e.Line(LineIndex(foundY)), "\t")
-												e.pos.sx = foundX + (tabs * (e.spacesPerTab - 1))
+												e.pos.sx = foundX + (tabs * (e.tabs.spacesPerTab - 1))
 												e.Center(c)
 											}
 										}
@@ -515,7 +515,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				if e.pos.sx > 0 {
 					// Move one step left
 					if e.TabToTheLeft() {
-						e.pos.sx -= e.spacesPerTab
+						e.pos.sx -= e.tabs.spacesPerTab
 					} else {
 						e.pos.sx--
 					}
@@ -529,7 +529,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				// no horizontal scrolling going on
 				// Move one step left
 				if e.TabToTheLeft() {
-					e.pos.sx -= e.spacesPerTab
+					e.pos.sx -= e.tabs.spacesPerTab
 				} else {
 					e.pos.sx--
 				}
@@ -825,9 +825,9 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 					e.TrimRight(e.DataY())
 					e.Delete()
 				}
-			} else if (e.mode == modeShell || e.mode == modePython || e.mode == modeCMake) && (e.EmptyLine() || e.AtStartOfTextLine()) && len(e.LeadingWhitespace()) >= e.spacesPerTab {
+			} else if (e.mode == modeShell || e.mode == modePython || e.mode == modeCMake) && (e.EmptyLine() || e.AtStartOfTextLine()) && len(e.LeadingWhitespace()) >= e.tabs.spacesPerTab {
 				// Delete several spaces
-				for i := 0; i < e.spacesPerTab; i++ {
+				for i := 0; i < e.tabs.spacesPerTab; i++ {
 					// Move back
 					e.Prev(c)
 					// Type a blank
@@ -950,7 +950,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 					switch e.mode {
 					case modeShell, modePython, modeCMake, modeConfig:
 						// If this is a shell script, use 2 spaces (or however many spaces are defined in e.spacesPerTab)
-						oneIndentation = strings.Repeat(" ", e.spacesPerTab)
+						oneIndentation = strings.Repeat(" ", e.tabs.spacesPerTab)
 					default:
 						// For anything else, use real tabs
 						oneIndentation = "\t"
@@ -988,7 +988,7 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			undo.Snapshot(e)
 			switch e.mode {
 			case modeShell, modePython, modeCMake, modeConfig:
-				for i := 0; i < e.spacesPerTab; i++ {
+				for i := 0; i < e.tabs.spacesPerTab; i++ {
 					e.InsertRune(c, ' ')
 					// Write the spaces that represent the tab to the canvas
 					e.WriteTab(c)
@@ -1678,10 +1678,10 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 						newLeadingWhitespace := leadingWhitespace
 						if strings.HasSuffix(leadingWhitespace, "\t") {
 							newLeadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-1]
-							e.pos.sx -= e.spacesPerTab
-						} else if strings.HasSuffix(leadingWhitespace, strings.Repeat(" ", e.spacesPerTab)) {
-							newLeadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-e.spacesPerTab]
-							e.pos.sx -= e.spacesPerTab
+							e.pos.sx -= e.tabs.spacesPerTab
+						} else if strings.HasSuffix(leadingWhitespace, strings.Repeat(" ", e.tabs.spacesPerTab)) {
+							newLeadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-e.tabs.spacesPerTab]
+							e.pos.sx -= e.tabs.spacesPerTab
 						}
 						e.SetCurrentLine(newLeadingWhitespace)
 					}

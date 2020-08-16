@@ -11,17 +11,36 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+// TabsSpaces contains all info needed about tabs and spaces for a file
+type TabsSpaces struct {
+	spacesPerTab int
+	tabs         bool
+}
+
+const (
+	TABS   = true
+	SPACES = false
+)
+
+// String returns the string for one indentation
+func (ts TabsSpaces) String() string {
+	if ts.tabs == TABS {
+		return "\t"
+	}
+	return strings.Repeat(" ", ts.spacesPerTab)
+}
+
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message and an error type
 func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber LineNumber) (*Editor, string, error) {
 
 	var (
 		startTime          = time.Now()
-		createdNewFile     bool   // used for indicating that a new file was created
-		readOnly           bool   // used for indicating that a loaded file is read-only
-		spacesPerTab       = 4    // default spaces per tab
-		scrollSpeed        = 10   // number of lines to scroll when using `ctrl-n` and `ctrl-p`
-		statusMessage      string // used when loading or creating a file, for the initial status message
+		createdNewFile     bool                  // used for indicating that a new file was created
+		readOnly           bool                  // used for indicating that a loaded file is read-only
+		tabsSpaces         = TabsSpaces{4, TABS} // default spaces per tab
+		scrollSpeed        = 10                  // number of lines to scroll when using `ctrl-n` and `ctrl-p`
+		statusMessage      string                // used when loading or creating a file, for the initial status message
 		found              bool
 		recordedLineNumber LineNumber
 		err                error
@@ -36,15 +55,15 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	rainbowParenthesis := syntaxHighlight // rainbow parenthesis
 	switch mode {
 	case modeMakefile, modePython, modeCMake:
-		spacesPerTab = 4
+		tabsSpaces.spacesPerTab = 4
 	case modeShell, modeConfig, modeHaskell, modeVim:
-		spacesPerTab = 2
+		tabsSpaces.spacesPerTab = 2
 	case modeMarkdown, modeText, modeBlank:
 		rainbowParenthesis = false
 	}
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
-	e := NewCustomEditor(spacesPerTab,
+	e := NewCustomEditor(tabsSpaces,
 		syntaxHighlight,
 		rainbowParenthesis,
 		scrollSpeed,
@@ -182,9 +201,9 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	// Additional per-mode considerations, before launching the editor
 	switch e.mode {
 	case modeMakefile, modePython, modeCMake, modeJava, modeKotlin:
-		e.spacesPerTab = 4
+		e.tabs = TabsSpaces{4, SPACES}
 	case modeShell, modeConfig, modeHaskell, modeVim, modeLua, modeObjectPascal:
-		e.spacesPerTab = 2
+		e.tabs = TabsSpaces{2, SPACES}
 	case modeMarkdown, modeText, modeBlank:
 		e.rainbowParenthesis = false
 	}

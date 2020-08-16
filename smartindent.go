@@ -12,8 +12,8 @@ func (e *Editor) smartIndentation(leadingWhitespace, trimmedLine string, alsoDed
 		(strings.HasSuffix(trimmedLine, "(") || strings.HasSuffix(trimmedLine, "{") || strings.HasSuffix(trimmedLine, "[") ||
 			strings.HasSuffix(trimmedLine, ":")) {
 		switch e.mode {
-		case modeShell, modePython, modeCMake:
-			leadingWhitespace += strings.Repeat(" ", e.spacesPerTab)
+		case modeShell, modePython, modeCMake, modeConfig, modeHaskell, modeLua:
+			leadingWhitespace += strings.Repeat(" ", e.tabs.spacesPerTab)
 		default:
 			leadingWhitespace += "\t"
 		}
@@ -25,7 +25,7 @@ func (e *Editor) smartIndentation(leadingWhitespace, trimmedLine string, alsoDed
 			indentation := "\t"
 			switch e.mode {
 			case modeShell, modePython, modeCMake:
-				indentation = strings.Repeat(" ", e.spacesPerTab)
+				indentation = strings.Repeat(" ", e.tabs.spacesPerTab)
 			}
 			if len(leadingWhitespace) > len(indentation) {
 				leadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-len(indentation)]
