@@ -2,6 +2,8 @@
 
 ## Pri
 
+- [ ] Auto-detect tabs/spaces when opening a file.
+- [ ] End of line behavior for arrow down differs from arrow up.
 - [ ] Paste with middle mouse button.
 - [ ] Abstract the editor, so that sending in keypresses and examining the result can be tested.
 - [ ] Better support for multi-byte unicode runes.
@@ -11,7 +13,6 @@
 - [ ] Jump to error when building with `ctrl-space` and `cargo`.
 - [ ] Fix the `editor.Delete()` method, so that `ctrl-d` also works for very long lines.
 - [ ] Be able to open and edit large text files (60M+).
-- [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] Open text files with Chinese/Japanese/Korean characters without breaking the text flow.
 - [ ] `ctrl-j` does not seem to do anything if pressed at the end of a long line.
 - [ ] When pressing `ctrl-space` the first time, have a timeout before registering as a double press.
