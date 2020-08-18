@@ -2,16 +2,17 @@
 
 ## Pri
 
+- [ ] Opening a read-only file in the Linux terminal displays different red colors when moving to the bottom.
 - [ ] Better support for multi-byte unicode runes.
 - [ ] Auto-detect tabs/spaces when opening a file.
-- [ ] Paste with middle mouse button.
-- [ ] Abstract the editor, so that sending in keypresses and examining the result can be tested.
-- [ ] Opening a read-only file in the Linux terminal displays different red colors when moving to the bottom.
+- [ ] Paste with middle mouse button (or support multiple clipboards when pasting, detect the latest).
 
 ## Bugs/features/issues
 
-- [ ] When changing a file from tabs to spaces, or the other way around, also modify indentations after comment markers.
+- [ ] Extract the features that are used in `vt100` and create a more optimized `vetehundreh` package.
 - [ ] Jump to error when building with `ctrl-space` and `cargo`.
+- [ ] Abstract the editor, so that sending in keypresses and examining the result can be tested.
+- [ ] When changing a file from tabs to spaces, or the other way around, also modify indentations after comment markers.
 - [ ] Fix the `editor.Delete()` method, so that `ctrl-d` also works for very long lines.
 - [ ] Be able to open and edit large text files (60M+).
 - [ ] Open text files with Chinese/Japanese/Korean characters without breaking the text flow.
@@ -19,7 +20,7 @@
 - [ ] When pressing `ctrl-space` the first time, have a timeout before registering as a double press.
 - [ ] Hash strings (like sha256 hash sums), could be colored light yellow and dark yellow for every 2 characters
 - [ ] When the editor executable is `list`, just list the contents and exit?
-- [ ] When running the `red` editor, don't draw the other theme first.
+- [ ] When running the `red` editor, don't draw the other theme first for a split second.
 - [ ] Don't redraw everything when just moving the cursor around.
 - [ ] Don't color `#` as a comment when editing Go code.
 - [ ] Use `wl-copy` for copy and cut. Use the same type of implementation as for `wl-paste`.
