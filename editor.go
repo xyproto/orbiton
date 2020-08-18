@@ -533,12 +533,18 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 	data = append(data, '\n')
 
 	// Use spaces instead of tabs, for some file types
-	// TODO: Only replace tabs at the beginning of the lines
+	// TODO: Replace multiple tabs (only at the beginning of lines)
+
+	// NOTE: This is a hack, that can only replace 3 levels deep
 	switch e.mode {
 	case modeMakefile, modePython, modeCMake, modeJava, modeKotlin:
-		data = bytes.Replace(data, []byte{'\t'}, []byte{' ', ' ', ' ', ' '}, -1)
+		data = bytes.Replace(data, []byte{'\n', '\t', '\t', '\t'}, []byte{'\n', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, -1)
+		data = bytes.Replace(data, []byte{'\n', '\t', '\t'}, []byte{'\n', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, -1)
+		data = bytes.Replace(data, []byte{'\n', '\t'}, []byte{'\n', ' ', ' ', ' ', ' '}, -1)
 	case modeShell, modeConfig, modeHaskell, modeVim, modeLua, modeObjectPascal:
-		data = bytes.Replace(data, []byte{'\t'}, []byte{' ', ' '}, -1)
+		data = bytes.Replace(data, []byte{'\n', '\t', '\t', '\t'}, []byte{'\n', ' ', ' ', ' ', ' ', ' ', ' '}, -1)
+		data = bytes.Replace(data, []byte{'\n', '\t', '\t'}, []byte{'\n', ' ', ' ', ' ', ' '}, -1)
+		data = bytes.Replace(data, []byte{'\n', '\t'}, []byte{'\n', ' ', ' '}, -1)
 	}
 
 	// Mark the data as "not changed"
