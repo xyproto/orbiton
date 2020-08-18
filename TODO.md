@@ -2,11 +2,10 @@
 
 ## Pri
 
+- [ ] Better support for multi-byte unicode runes.
 - [ ] Auto-detect tabs/spaces when opening a file.
-- [ ] End of line behavior for arrow down differs from arrow up.
 - [ ] Paste with middle mouse button.
 - [ ] Abstract the editor, so that sending in keypresses and examining the result can be tested.
-- [ ] Better support for multi-byte unicode runes.
 - [ ] Opening a read-only file in the Linux terminal displays different red colors when moving to the bottom.
 
 ## Bugs/features/issues
