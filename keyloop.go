@@ -594,6 +594,11 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			// If the cursor is after the length of the current line, move it to the end of the current line
 			if e.AfterLineScreenContents() {
 				e.End(c)
+
+				// Then, if the rune to the left is '}', move one step to the left
+				if r := e.LeftRune(); r == '}' {
+					e.Prev(c)
+				}
 			}
 			e.redrawCursor = true
 		case "↓": // down arrow
@@ -601,7 +606,6 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 			// TODO: Stay at the same X offset when moving down in the document?
 			if e.pos.offsetX > 0 {
 				e.pos.offsetX = 0
-
 			}
 
 			if e.DataY() < LineIndex(e.Len()) {
@@ -618,8 +622,9 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 				// If the cursor is after the length of the current line, move it to the end of the current line
 				if e.AfterLineScreenContents() {
 					e.End(c)
-					// Then move one step to the left
-					if len(e.TrimmedLine()) > 0 {
+
+					// Then, if the rune to the left is '}', move one step to the left
+					if r := e.LeftRune(); r == '}' {
 						e.Prev(c)
 					}
 				}
