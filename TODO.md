@@ -7,6 +7,7 @@
 - [ ] Paste with middle mouse button.
 - [ ] Abstract the editor, so that sending in keypresses and examining the result can be tested.
 - [ ] Better support for multi-byte unicode runes.
+- [ ] Opening a read-only file in the Linux terminal displays different red colors when moving to the bottom.
 
 ## Bugs/features/issues
 
