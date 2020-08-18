@@ -10,6 +10,7 @@
 
 ## Bugs/features/issues
 
+- [ ] When changing a file from tabs to spaces, or the other way around, also modify indentations after comment markers.
 - [ ] Jump to error when building with `ctrl-space` and `cargo`.
 - [ ] Fix the `editor.Delete()` method, so that `ctrl-d` also works for very long lines.
 - [ ] Be able to open and edit large text files (60M+).
