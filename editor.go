@@ -537,7 +537,7 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 
 	// NOTE: This is a hack, that can only replace 3 levels deep
 	switch e.mode {
-	case modeMakefile, modePython, modeCMake, modeJava, modeKotlin:
+	case modePython, modeCMake, modeJava, modeKotlin:
 		data = bytes.Replace(data, []byte{'\n', '\t', '\t', '\t'}, []byte{'\n', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, -1)
 		data = bytes.Replace(data, []byte{'\n', '\t', '\t'}, []byte{'\n', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, -1)
 		data = bytes.Replace(data, []byte{'\n', '\t'}, []byte{'\n', ' ', ' ', ' ', ' '}, -1)
