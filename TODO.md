@@ -9,6 +9,7 @@
 
 ## Bugs/features/issues
 
+- [ ] Highlight this shell script line correctly: `for txt in third_party/*.txt; do`
 - [ ] Extract the features that are used in `vt100` and create a more optimized `vetehundreh` package.
 - [ ] Jump to error when building with `ctrl-space` and `cargo`.
 - [ ] Abstract the editor, so that sending in keypresses and examining the result can be tested.
