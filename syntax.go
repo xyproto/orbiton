@@ -36,6 +36,8 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 	case modeZig:
 		syntax.Keywords = make(map[string]struct{})
 		addKeywords = zigWords
+	case modeVim:
+		addKeywords = []string{"call", "echo", "elseif", "endfunction", "map", "nmap", "redraw"}
 	case modeKotlin:
 		syntax.Keywords = make(map[string]struct{})
 		addKeywords = kotlinWords
