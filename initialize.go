@@ -160,7 +160,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 			// can not open the file for writing
 			readOnly = true
 			// set the color to red when in read-only mode
-			e.fg = vt100.Red
+			e.fg = vt100.LightRed
 			// disable syntax highlighting, to make it clear that the text is red
 			e.syntaxHighlight = false
 			// do a full reset and redraw, but without the statusbar (set to nil)
