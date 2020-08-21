@@ -9,6 +9,7 @@
 
 ## Bugs/features/issues
 
+- [ ] If kotlin-native is in the path, build executables with ctrl-space.
 - [ ] Highlight this shell script line correctly: `for txt in third_party/*.txt; do`
 - [ ] Extract the features that are used in `vt100` and create a more optimized `vetehundreh` package.
 - [ ] Jump to error when building with `ctrl-space` and `cargo`.
