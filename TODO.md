@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] Indentation in Markdown is weird wrt. spaces/tabs. Fix.
 - [ ] Opening a read-only file in the Linux terminal displays different red colors when moving to the bottom.
 - [ ] Better support for multi-byte unicode runes.
 - [ ] Auto-detect tabs/spaces when opening a file.
