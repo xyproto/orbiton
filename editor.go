@@ -532,12 +532,10 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 	// Add a final newline
 	data = append(data, '\n')
 
-	// TODO: Replace multiple tabs (only at the beginning of lines)
-	// NOTE #1: This is only temporary, until auto-detection of tabs/spaces is in place!
-	// NOTE #2: This is a hack, that can only replace 3 levels deep
-	// Use spaces instead of tabs, for some file types
+	// NOTE: This is only temporary, until auto-detection of tabs/spaces is in place!
+	//       This is a hack, that can only replace 3 levels deep
 	switch e.mode {
-	case modePython, modeCMake, modeJava, modeKotlin:
+	case modePython, modeCMake, modeJava, modeKotlin, modeMarkdown:
 		data = bytes.Replace(data, []byte{'\n', '\t', '\t', '\t'}, []byte{'\n', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, -1)
 		data = bytes.Replace(data, []byte{'\n', '\t', '\t'}, []byte{'\n', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, -1)
 		data = bytes.Replace(data, []byte{'\n', '\t'}, []byte{'\n', ' ', ' ', ' ', ' '}, -1)
