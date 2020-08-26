@@ -105,7 +105,7 @@ func NewCustomEditor(tabsSpaces TabsSpaces, syntaxHighlight, rainbowParenthesis 
 // search results magenta, use the default syntax highlighting scheme, don't use git mode and don't use markdown mode,
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
-	e := NewCustomEditor(TabsSpaces{4, TABS}, false, false, 1, vt100.White, vt100.Black, vt100.Magenta, vt100.Gray, vt100.Magenta, syntax.DefaultTextConfig, modeBlank)
+	e := NewCustomEditor(TabsSpaces{4, true}, false, false, 1, vt100.White, vt100.Black, vt100.Magenta, vt100.Gray, vt100.Magenta, syntax.DefaultTextConfig, modeBlank)
 	e.wrapWidth = wordWrapLimit
 	e.wrapWhenTyping = true
 	return e

@@ -26,14 +26,14 @@ var (
 	undo = NewUndo(defaultUndoSize)
 )
 
-// RunMainLoop will set up and run the main loop of the editor
+// Loop will set up and run the main loop of the editor
 // a *vt100.TTY struct
 // a filename to open
 // a LineNumber (may be 0 or -1)
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag, redBlackTheme bool) (userMessage string, err error) {
+func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool, useTheme Theme) (userMessage string, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt100.Init()
@@ -87,11 +87,19 @@ func RunMainLoop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFl
 		status.bg = vt100.BackgroundDefault
 	}
 
-	// Use the red/black theme, if redBlackTheme is true
-	if redBlackTheme {
+	// Use the selected theme
+	switch useTheme {
+	case redBlackTheme:
 		e.setRedBlackTheme()
 		e.SetSyntaxHighlight(true)
 		e.FullResetRedraw(c, status, true)
+	case lightTheme:
+		e.setLightTheme()
+		e.SetSyntaxHighlight(true)
+		e.FullResetRedraw(c, status, true)
+	case defaultTheme:
+		fallthrough
+	default:
 	}
 
 	// Respect the NO_COLOR environment variable

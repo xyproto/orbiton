@@ -21,6 +21,7 @@ o.1.gz: o.1
 
 install: o o.1.gz
 	install -Dm755 o "$(DESTDIR)$(PREFIX)/bin/o"
+	ln -fs "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/light"
 	ln -fs "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/red"
 	install -Dm644 o.1.gz "$(DESTDIR)$(MANDIR)/o.1.gz"
 

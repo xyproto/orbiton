@@ -15,7 +15,16 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const version = "o 2.32.5"
+const (
+	version = "o 2.32.5"
+
+	defaultTheme Theme = iota
+	redBlackTheme
+	lightTheme
+)
+
+// Theme is an "enum" type
+type Theme int
 
 func main() {
 	var (
@@ -121,10 +130,15 @@ Set NO_COLOR=1 to disable colors.
 	defer tty.Close()
 
 	// If the editor executable has been named "red", use the red/gray theme by default
-	redBlackTheme := filepath.Base(os.Args[0]) == "red"
+	useTheme := defaultTheme
+	if filepath.Base(os.Args[0]) == "red" {
+		useTheme = redBlackTheme
+	} else if filepath.Base(os.Args[0]) == "light" {
+		useTheme = lightTheme
+	}
 
 	// Run the main editor loop
-	userMessage, err := RunMainLoop(tty, filename, lineNumber, *forceFlag, redBlackTheme)
+	userMessage, err := Loop(tty, filename, lineNumber, *forceFlag, useTheme)
 
 	// Remove the terminal title, if the current terminal emulator supports it
 	shellName := filepath.Base(os.Getenv("SHELL"))
