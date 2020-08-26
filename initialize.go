@@ -14,17 +14,12 @@ import (
 // TabsSpaces contains all info needed about tabs and spaces for a file
 type TabsSpaces struct {
 	spacesPerTab int
-	tabs         bool
+	tabs         bool // tabs, or spaces?
 }
-
-const (
-	TABS   = true
-	SPACES = false
-)
 
 // String returns the string for one indentation
 func (ts TabsSpaces) String() string {
-	if ts.tabs == TABS {
+	if ts.tabs {
 		return "\t"
 	}
 	return strings.Repeat(" ", ts.spacesPerTab)
@@ -38,7 +33,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		startTime          = time.Now()
 		createdNewFile     bool                  // used for indicating that a new file was created
 		readOnly           bool                  // used for indicating that a loaded file is read-only
-		tabsSpaces         = TabsSpaces{4, TABS} // default spaces per tab
+		tabsSpaces         = TabsSpaces{4, true} // default spaces per tab
 		scrollSpeed        = 10                  // number of lines to scroll when using `ctrl-n` and `ctrl-p`
 		statusMessage      string                // used when loading or creating a file, for the initial status message
 		found              bool
@@ -201,9 +196,9 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	// Additional per-mode considerations, before launching the editor
 	switch e.mode {
 	case modeMakefile, modePython, modeCMake, modeJava, modeKotlin:
-		e.tabs = TabsSpaces{4, SPACES}
+		e.tabs = TabsSpaces{4, false}
 	case modeShell, modeConfig, modeHaskell, modeVim, modeLua, modeObjectPascal:
-		e.tabs = TabsSpaces{2, SPACES}
+		e.tabs = TabsSpaces{2, false}
 	case modeMarkdown, modeText, modeBlank:
 		e.rainbowParenthesis = false
 	}
