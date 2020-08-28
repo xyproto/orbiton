@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] When sorting 'case "asdf", "bsdf", "csdf":', don't remove the commas.
 - [ ] Don't redraw lines if a theme is set when starting.
 - [ ] Indentation in Markdown is weird wrt. spaces/tabs. Fix.
 - [ ] Opening a read-only file in the Linux terminal displays different red colors when moving to the bottom.
