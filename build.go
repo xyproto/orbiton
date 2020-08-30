@@ -228,6 +228,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		cmd                   = foundCommand // shorthand
 		progressStatusMessage = "Building"
 		testingInstead        bool
+		kotlinNative          bool
 	)
 
 	// Special per-language considerations
@@ -253,6 +254,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		}
 		progressStatusMessage = "Testing"
 		testingInstead = true
+	} else if e.mode == modeKotlin && which("kotlinc-native") != "" {
+		kotlinNative = true
+		cmd = exec.Command("kotlinc-native", "-nowarn", "-opt", "-Xallocator=mimalloc", "-produce", "program", "-linker-option", "--as-needed", filename, "-o", exeFirstName)
 	}
 
 	// Display a status message with no timeout, about what is currently being done
@@ -265,10 +269,22 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 	// Run the command and fetch the combined output from stderr and stdout.
 	// Ignore the status code / error, only look at the output.
 	output, err := cmd.CombinedOutput()
+	//panic(cmd.String() + "OUTPUT: " + string(output))
 
-	if err != nil && len(bytes.TrimSpace(output)) == 0 {
+	outputString := string(bytes.TrimSpace(output))
+
+	if err != nil && len(outputString) > 0 {
+		outputLines := strings.Split(outputString, "\n")
+		lastLine := outputLines[len(outputLines)-1]
+		return "Error: " + lastLine, false, false
+	} else if err != nil {
 		// Could not run, and there was no output. Perhaps the executable is missing?
 		return "Error: no output", false, false
+	}
+
+	if kotlinNative && exists(exeFirstName+".kexe") {
+		//panic("rename " + exeFirstName + ".kexe" + " -> " + exeFirstName)
+		os.Rename(exeFirstName+".kexe", exeFirstName)
 	}
 
 	// NOTE: Don't do anything with the output and err variables here, let the if below handle it.
