@@ -138,7 +138,7 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-w` to update the `p
 | Haskell                                         | `.hs`                                                     | yes           | `ghc -dynamic $filename`                          | `brittany --write-mode=inplace $filename`                                                                      |
 | Python                                          | `.py`                                                     | yes           | `python -m py_compile $filename`                  | `autopep8 -i --maxline-length 120 $filename`                                                                   |
 | Crystal                                         | `.cr`                                                     | yes           | `crystal build --no-color $filename`              | `crystal tool format $filename`                                                                                |
-| Kotlin                                          | `.kt`                                                     | yes           | `kotlinc $filename -include-runtime -d $name.jar` | `ktlint`                                                                                                       |
+| Kotlin                                          | `.kt`                                                     | yes           | `kotlinc-native -nowarn -opt -Xallocator=mimalloc -produce program -linker-option '--as-needed' $filename` | `ktlint`                                              |
 | Java                                            | `.java`                                                   | yes           | `javac` + `jar`, see details below                | `google-java-format -i $filename`                                                                              |
 | Lua                                             | `.lua`                                                    | yes           | `luac`                                            | `lua-format -i --no-keep-simple-function-one-line --column-limit=120 --indent-width=2 --no-use-tab $filename`  |
 | Object Pascal                                   | `.pas`, `.pp`, `.lpr`                                     | yes           | `fpc`                                             | WIP                                                                                                            |
@@ -146,6 +146,7 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-w` to update the `p
 
 * `o` will try to jump to the location where the error is and otherwise display `Success`.
 * For regular text files, `ctrl-w` will word wrap the lines to a length of 99.
+* If `kotlinc-native` is not available, this build command will be used instead: `kotlinc $filename -include-runtime -d $name.jar`
 
 CXX can be downloaded here: [GitHub project page for CXX](https://github.com/xyproto/cxx).
 
