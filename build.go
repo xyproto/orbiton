@@ -273,11 +273,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 
 	outputString := string(bytes.TrimSpace(output))
 
-	if err != nil && len(outputString) > 0 {
-		outputLines := strings.Split(outputString, "\n")
-		lastLine := outputLines[len(outputLines)-1]
-		return "Error: " + lastLine, false, false
-	} else if err != nil {
+	if err != nil && len(outputString) == 0 {
 		// Could not run, and there was no output. Perhaps the executable is missing?
 		return "Error: no output", false, false
 	}
@@ -507,5 +503,13 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 	if e.mode == modePython {
 		return "Syntax OK", true, true
 	}
+
+	// Could not interpret the error message, return the last line of the output
+	if err != nil && len(outputString) > 0 {
+		outputLines := strings.Split(outputString, "\n")
+		lastLine := outputLines[len(outputLines)-1]
+		return "Error: " + lastLine, false, false
+	}
+
 	return "Success", true, true
 }
