@@ -180,7 +180,7 @@ func (e *Editor) setRedBlackTheme() {
 	syntax.DefaultTextConfig.String = "lightwhite"
 	syntax.DefaultTextConfig.Keyword = "darkred"
 	syntax.DefaultTextConfig.Comment = "darkgray"
-	syntax.DefaultTextConfig.Type = "darkred"
+	syntax.DefaultTextConfig.Type = "white"
 	syntax.DefaultTextConfig.Literal = "lightgray"
 	syntax.DefaultTextConfig.Punctuation = "darkred"
 	syntax.DefaultTextConfig.Plaintext = "lightgray"
