@@ -533,16 +533,15 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 	data = append(data, '\n')
 
 	// NOTE: This is only temporary, until auto-detection of tabs/spaces is in place!
-	//       This is a hack, that can only replace 3 levels deep
+	//       This is a hack, that can only replace 10 levels deep.
 	switch e.mode {
-	case modePython, modeCMake, modeJava, modeKotlin, modeMarkdown:
-		data = bytes.Replace(data, []byte{'\n', '\t', '\t', '\t'}, []byte{'\n', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, -1)
-		data = bytes.Replace(data, []byte{'\n', '\t', '\t'}, []byte{'\n', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, -1)
-		data = bytes.Replace(data, []byte{'\n', '\t'}, []byte{'\n', ' ', ' ', ' ', ' '}, -1)
-	case modeShell, modeConfig, modeHaskell, modeVim, modeLua, modeObjectPascal:
-		data = bytes.Replace(data, []byte{'\n', '\t', '\t', '\t'}, []byte{'\n', ' ', ' ', ' ', ' ', ' ', ' '}, -1)
-		data = bytes.Replace(data, []byte{'\n', '\t', '\t'}, []byte{'\n', ' ', ' ', ' ', ' '}, -1)
-		data = bytes.Replace(data, []byte{'\n', '\t'}, []byte{'\n', ' ', ' '}, -1)
+	case modePython, modeCMake, modeJava, modeKotlin, modeShell, modeConfig, modeHaskell,
+		modeVim, modeLua, modeObjectPascal:
+		for level := 10; level > 0; level-- {
+			fromString := "\n" + strings.Repeat("\t", level)
+			toString := "\n" + strings.Repeat(" ", level*e.tabs.spacesPerTab)
+			data = bytes.ReplaceAll(data, []byte(fromString), []byte(toString))
+		}
 	}
 
 	// Mark the data as "not changed"
