@@ -31,8 +31,8 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 		syntax.Keywords = make(map[string]struct{})
 		addKeywords = emacsWords
 	case modeCMake:
-		addKeywords = cmakeWords
 		delKeywords = append(delKeywords, []string{"build", "package"}...)
+		addKeywords = cmakeWords
 	case modeZig:
 		syntax.Keywords = make(map[string]struct{})
 		addKeywords = zigWords
@@ -49,10 +49,11 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 	case modeSQL:
 		addKeywords = []string{"NOT"}
 	case modeOak:
+		addKeywords = []string{"fn"}
 		delKeywords = []string{"from", "new", "print"}
-		addKeywords = []string{"fn"}
 	case modeRust:
-		addKeywords = []string{"fn"}
+		addKeywords = []string{"fn", "mod", "panic!"}
+		delKeywords = []string{"next", "build"}
 	case modeLua:
 		syntax.Keywords = make(map[string]struct{})
 		addKeywords = luaWords
