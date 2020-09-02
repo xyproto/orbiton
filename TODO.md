@@ -2,19 +2,18 @@
 
 ## Pri
 
-- [ ] When sorting 'case "asdf", "bsdf", "csdf":', don't remove the commas.
-- [ ] Don't redraw lines if a theme is set when starting.
-- [ ] Indentation in Markdown is weird wrt. spaces/tabs. Fix.
-- [ ] Opening a read-only file in the Linux terminal displays different red colors when moving to the bottom.
-- [ ] Better support for multi-byte unicode runes.
 - [ ] Auto-detect tabs/spaces when opening a file.
-- [ ] Paste with middle mouse button (or support multiple clipboards when pasting, detect the latest).
+- [ ] Better support for multi-byte unicode runes.
+- [ ] Paste with middle mouse button (or support multiple clipboards when pasting, detect the latest changed).
 
 ## Bugs/features/issues
 
-- [ ] If kotlin-native is in the path, build executables with ctrl-space.
+- [ ] When sorting 'case "asdf", "bsdf", "csdf":', don't remove the commas.
+- [ ] Don't redraw lines if a theme is set when starting.
+- [ ] Indentation in Markdown is weird wrt. spaces/tabs. Fix. Keep inline code in mind.
+- [ ] Opening a read-only file in the Linux terminal displays different red colors when moving to the bottom.
 - [ ] Highlight this shell script line correctly: `for txt in third_party/*.txt; do`
-- [ ] Extract the features that are used in `vt100` and create a more optimized `vetehundreh` package.
+- [ ] Extract the features that are used in `vt100` and create a more optimized package.
 - [ ] Jump to error when building with `ctrl-space` and `cargo`.
 - [ ] Abstract the editor, so that sending in keypresses and examining the result can be tested.
 - [ ] When changing a file from tabs to spaces, or the other way around, also modify indentations after comment markers.
