@@ -540,7 +540,7 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 		for level := 10; level > 0; level-- {
 			fromString := "\n" + strings.Repeat("\t", level)
 			toString := "\n" + strings.Repeat(" ", level*e.tabs.spacesPerTab)
-			data = bytes.ReplaceAll(data, []byte(fromString), []byte(toString))
+			data = bytes.Replace(data, []byte(fromString), []byte(toString), -1)
 		}
 	}
 
