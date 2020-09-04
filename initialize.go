@@ -123,6 +123,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 				case "bash", "fish", "zsh", "tcsh", "ksh", "sh", "ash":
 					e.mode = modeShell
 				}
+			} else if strings.HasPrefix(firstLine, "#") {
+				e.firstLineHash = true
 			}
 			// If more lines start with "# " than "// " or "/* ", and mode is blank,
 			// set the mode to modeConfig and enable syntax highlighting.

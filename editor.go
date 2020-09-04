@@ -47,7 +47,8 @@ type Editor struct {
 	clearOnQuit        bool                  // clear the terminal when quitting the editor, or not
 	wrapWhenTyping     bool                  // wrap text at a certain limit when typing
 	lightTheme         bool                  // using a light theme? (the XTERM_VERSION environment variable is set)
-	noColor            bool
+	noColor            bool                  // should no color be used?
+	firstLineHash      bool                  // is the first line starting with "#"?
 	EditorColors
 }
 

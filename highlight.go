@@ -93,7 +93,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		lineRuneCount         uint
 		lineStringCount       uint
 		line                  string
-		assemblyStyleComments = (e.mode == modeAssembly) || (e.mode == modeLisp)
+		assemblyStyleComments = ((e.mode == modeAssembly) || (e.mode == modeLisp)) && !e.firstLineHash
 		prevLineIsListItem    bool
 		inListItem            bool
 		screenLine            string
