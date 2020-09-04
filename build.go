@@ -287,7 +287,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 
 	errorMarker := "error:"
 	if testingInstead {
-		errorMarker = "FAIL:"
+		errorMarker = ": "
 	} else if e.mode == modeCrystal || e.mode == modeObjectPascal {
 		errorMarker = "Error:"
 	}
@@ -298,6 +298,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		// This is not for Go, since the word "error:" may not appear when there are errors
 
 		errorMessage := "Build error"
+		if testingInstead {
+			errorMessage = "Test error"
+		}
 
 		if e.mode == modePython {
 			if errorLine, errorMessage := ParsePythonError(string(output), filepath.Base(filename)); errorLine != -1 {
@@ -388,6 +391,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			} else if strings.Contains(line, errorMarker) {
 				parts := strings.SplitN(line, errorMarker, 2)
 				errorMessage = strings.TrimSpace(parts[1])
+				if testingInstead {
+					e.redrawCursor = true
+				}
 				break
 			}
 			prevLine = line
