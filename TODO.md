@@ -8,6 +8,7 @@
 
 ## Bugs/features/issues
 
+- [ ] If opening non-existing lowercase filename "a" and "a.go" and "a_test.go" exists, open "a.go".
 - [ ] When sorting 'case "asdf", "bsdf", "csdf":', don't remove the commas.
 - [ ] Don't redraw lines if a theme is set when starting.
 - [ ] Indentation in Markdown is weird wrt. spaces/tabs. Fix. Keep inline code in mind.
