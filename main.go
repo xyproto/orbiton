@@ -109,6 +109,16 @@ Set NO_COLOR=1 to disable colors.
 		// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
 		matches, err := filepath.Glob(filename + "*")
 		if err == nil && len(matches) > 0 { // no error and at least 1 match
+			// Use the first match of the sorted results
+			sort.Strings(matches)
+			filename = matches[0]
+		}
+	} else if !strings.Contains(filename, ".") && isLower(filename) && !exists(filename) {
+		// The filename has no ".", is written in lowercase and it does not exist,
+		// but more than one file that starts with the filename  exists. Assume tab-completion failed.
+		matches, err := filepath.Glob(filename + "*")
+		if err == nil && len(matches) > 1 { // no error and more than 1 match
+			// Use the first match of the sorted results
 			sort.Strings(matches)
 			filename = matches[0]
 		}

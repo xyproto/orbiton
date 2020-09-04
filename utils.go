@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"unicode"
 )
 
 // exists checks if the given path exists
@@ -83,6 +84,17 @@ func equalStringSlices(a, b []string) bool {
 	}
 	for i := 0; i < lena; i++ {
 		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// isLower checks if all letters in a string are lowercase
+// thanks: https://stackoverflow.com/a/59293875/131264
+func isLower(s string) bool {
+	for _, r := range s {
+		if unicode.IsLetter(r) && !unicode.IsLower(r) {
 			return false
 		}
 	}
