@@ -8,9 +8,9 @@
 
 ## Bugs/features/issues
 
-- [x] If opening non-existing lowercase filename "a" and "a.go" and "a_test.go" exists, open "a.go".
+- [ ] When saving and stripping whitespace, strip the current line, but indent if an empty line was indented.
+- [ ] Don't redraw lines for a split second when starting with a non-default theme.
 - [ ] When sorting 'case "asdf", "bsdf", "csdf":', don't remove the commas.
-- [ ] Don't redraw lines if a theme is set when starting.
 - [ ] Indentation in Markdown is weird wrt. spaces/tabs. Fix. Keep inline code in mind.
 - [ ] Opening a read-only file in the Linux terminal displays different red colors when moving to the bottom.
 - [ ] Highlight this shell script line correctly: `for txt in third_party/*.txt; do`
