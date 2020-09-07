@@ -48,6 +48,8 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 		addKeywords = hidlWords
 	case modeSQL:
 		addKeywords = []string{"NOT"}
+	case modeConfig:
+		delKeywords = []string{"install"}
 	case modeOak:
 		addKeywords = []string{"fn"}
 		delKeywords = []string{"from", "new", "print"}
