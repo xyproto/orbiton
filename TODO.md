@@ -8,6 +8,7 @@
 
 ## Bugs/features/issues
 
+- [ ] // within a ` block should not be recognized
 - [ ] When saving and stripping whitespace, strip the current line, but indent if an empty line was indented.
 - [ ] Don't redraw lines for a split second when starting with a non-default theme.
 - [ ] When sorting 'case "asdf", "bsdf", "csdf":', don't remove the commas.
