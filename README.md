@@ -323,7 +323,7 @@ fo somefile.cpp 123
 
 ## Easter eggs
 
-Pressing `ctrl-space` twice will render Markdown files to PDF using `pandoc` (as opposed to `ctrl-r`, which will save the text directly to a PDF, without using `pandoc`).
+Press `ctrl-space` twice to render Markdown files to PDF using `pandoc` (while `ctrl-t` will save the text directly to PDF, without using `pandoc`).
 
 ## Suggested settings
 
