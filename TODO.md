@@ -8,6 +8,7 @@
 
 ## Bugs/features/issues
 
+- [ ] If within a single line comment, don't let `:` cause indentation on the next line.
 - [ ] // within a ` block should not be recognized
 - [ ] When saving and stripping whitespace, strip the current line, but indent if an empty line was indented.
 - [ ] Don't redraw lines for a split second when starting with a non-default theme.
