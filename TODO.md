@@ -8,6 +8,16 @@
 
 ## Bugs/features/issues
 
+- [ ] Create a Go package for detecting:
+      * Language (specifically C++98 for instance)
+      * Language family (C-like, ML-like etc)
+      * tabs, spaces, indentations, mixed tabs/spaces
+      * clang style, so that the same style may be used?
+      * emacs tag
+      * vim tag
+      * what else?
+      * then translate this to a struct
+      * also think about how this can be skipped is the file is enormous and should be read in block-by-block
 - [ ] If within a single line comment, don't let `:` cause indentation on the next line.
 - [ ] // within a ` block should not be recognized
 - [ ] When saving and stripping whitespace, strip the current line, but indent if an empty line was indented.
