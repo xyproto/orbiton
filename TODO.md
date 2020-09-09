@@ -8,6 +8,7 @@
 
 ## Bugs/features/issues
 
+- [ ] When sorting 'case "asdf", "bsdf", "csdf":', don't remove the commas.
 - [ ] Create a Go package for detecting:
       * Language (specifically C++98 for instance)
       * Language family (C-like, ML-like etc)
@@ -18,11 +19,9 @@
       * what else?
       * then translate this to a struct
       * also think about how this can be skipped is the file is enormous and should be read in block-by-block
-- [ ] If within a single line comment, don't let `:` cause indentation on the next line.
 - [ ] // within a ` block should not be recognized
 - [ ] When saving and stripping whitespace, strip the current line, but indent if an empty line was indented.
 - [ ] Don't redraw lines for a split second when starting with a non-default theme.
-- [ ] When sorting 'case "asdf", "bsdf", "csdf":', don't remove the commas.
 - [ ] Indentation in Markdown is weird wrt. spaces/tabs. Fix. Keep inline code in mind.
 - [ ] Opening a read-only file in the Linux terminal displays different red colors when moving to the bottom.
 - [ ] Highlight this shell script line correctly: `for txt in third_party/*.txt; do`

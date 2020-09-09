@@ -37,6 +37,7 @@ const (
 	modeNim          // for Nim
 	modeObjectPascal // for Object Pascal and Delphi
 	modeBat          // for DOS batch files
+	modeCpp          // for C++
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -94,6 +95,10 @@ func detectEditorMode(filename string) (Mode, bool) {
 		case ".md":
 			// Markdown mode
 			mode = modeMarkdown
+		case ".cpp", ".cc", ".c++", ".cxx", ".hpp", ".h":
+			// C++ mode
+			// TODO: Find a way to discover is a .h file is most likely to be C or C++
+			mode = modeCpp
 		case ".adoc", ".rst", ".scdoc", ".scd":
 			// Markdown-like syntax highlighting
 			// TODO: Introduce a separate mode for these.
