@@ -142,7 +142,7 @@ Set NO_COLOR=1 to disable colors.
 	// If the editor executable has been named "red", use the red/gray theme by default
 	// Also use the red/gray theme if $SHELL is /bin/csh (typically BSD)
 	useTheme := defaultTheme
-	if filepath.Base(os.Args[0]) == "red" || os.Getenv("SHELL") == "/bin/csh" {
+	if filepath.Base(os.Args[0]) == "red" || (os.Getenv("SHELL") == "/bin/csh" && os.Getenv("TERM") != "xterm") {
 		useTheme = redBlackTheme
 	} else if filepath.Base(os.Args[0]) == "light" {
 		useTheme = lightTheme
