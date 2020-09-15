@@ -92,11 +92,11 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 	case redBlackTheme:
 		e.setRedBlackTheme()
 		e.SetSyntaxHighlight(true)
-		e.FullResetRedraw(c, status, true)
+		//e.FullResetRedraw(c, status, true)
 	case lightTheme:
 		e.setLightTheme()
 		e.SetSyntaxHighlight(true)
-		e.FullResetRedraw(c, status, true)
+		//e.FullResetRedraw(c, status, true)
 	case defaultTheme:
 		fallthrough
 	default:
@@ -167,6 +167,12 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 			}
 		}()
 	}
+
+	// do a full reset and redraw, but without the statusbar (set to nil)
+	e.FullResetRedraw(c, nil, false)
+	// draw the editor lines
+	e.DrawLines(c, false, true)
+	e.redraw = false
 
 	// Display the status message
 	status.SetMessage(statusMessage)

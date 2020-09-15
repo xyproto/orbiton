@@ -160,11 +160,13 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 			e.fg = vt100.LightRed
 			// disable syntax highlighting, to make it clear that the text is red
 			e.syntaxHighlight = false
+
 			// do a full reset and redraw, but without the statusbar (set to nil)
-			e.FullResetRedraw(c, nil, false)
+			//e.FullResetRedraw(c, nil, false)
 			// draw the editor lines again
-			e.DrawLines(c, false, true)
-			e.redraw = false
+			//e.DrawLines(c, false, true)
+			//e.redraw = false
+
 		}
 		testfile.Close()
 	} else {
@@ -223,13 +225,15 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		e.syntaxHighlight = true
 		e.bg = defaultEditorBackground
 		// Now do a full reset/redraw
-		e.FullResetRedraw(c, nil, false)
+		//e.FullResetRedraw(c, nil, false)
 	}
 
 	// Use a light theme if XTERM_VERSION or TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
 	// because $COLORFGBG is "15;0" even though the background is white.
 	if hasE("XTERM_VERSION") || os.Getenv("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
 		e.setLightTheme()
+	} else if os.Getenv("SHELL") == "/bin/csh" { // This is likely to be a FreeBSD-like setup
+		e.setRedBlackTheme()
 	}
 
 	e.noColor = hasE("NO_COLOR")
