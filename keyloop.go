@@ -169,8 +169,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 	// Do a full reset and redraw, but without the statusbar (set to nil)
 	e.FullResetRedraw(c, nil, false)
 
-	// Draw the editor lines
-	e.DrawLines(c, false, true)
+	// Draw the editor lines, respect the offset (true) and redraw (true)
+	e.DrawLines(c, true, true)
 	e.redraw = false
 
 	// Display the status message
