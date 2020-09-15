@@ -160,13 +160,6 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 			e.fg = vt100.LightRed
 			// disable syntax highlighting, to make it clear that the text is red
 			e.syntaxHighlight = false
-
-			// do a full reset and redraw, but without the statusbar (set to nil)
-			//e.FullResetRedraw(c, nil, false)
-			// draw the editor lines again
-			//e.DrawLines(c, false, true)
-			//e.redraw = false
-
 		}
 		testfile.Close()
 	} else {
@@ -224,8 +217,6 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		// Enable styntax highlighting and redraw
 		e.syntaxHighlight = true
 		e.bg = defaultEditorBackground
-		// Now do a full reset/redraw
-		//e.FullResetRedraw(c, nil, false)
 	}
 
 	// Use a light theme if XTERM_VERSION or TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
