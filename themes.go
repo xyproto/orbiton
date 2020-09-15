@@ -213,7 +213,7 @@ func (e *Editor) setRedBlackTheme() {
 
 	// Rainbow parentheses
 	rainbowParenColors = []vt100.AttributeColor{vt100.LightGray, vt100.White, vt100.Red}
-	unmatchedParenColor = vt100.White
+	unmatchedParenColor = vt100.LightCyan
 
 	// Command menu
 	menuTitleColor = vt100.Red
