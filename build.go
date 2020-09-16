@@ -278,7 +278,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		// TODO: Also add checks for other executables
 		switch {
 		case e.mode == modeZig && which("zig") == "":
-			errorMessage ="Error: the Zig compiler is not installed"
+			errorMessage = "Error: the Zig compiler is not installed"
 		}
 		// Could not run, and there was no output. Perhaps the executable is missing?
 		return errorMessage, true, false
