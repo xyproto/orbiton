@@ -274,8 +274,14 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 	outputString := string(bytes.TrimSpace(output))
 
 	if err != nil && len(outputString) == 0 {
+		errorMessage := "Error: no output"
+		// TODO: Also add checks for other executables
+		switch {
+		case e.mode == modeZig && which("zig") == "":
+			errorMessage ="Error: the Zig compiler is not installed"
+		}
 		// Could not run, and there was no output. Perhaps the executable is missing?
-		return "Error: no output", false, false
+		return errorMessage, true, false
 	}
 
 	if kotlinNative && exists(exeFirstName+".kexe") {
@@ -290,6 +296,16 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		errorMarker = ": "
 	} else if e.mode == modeCrystal || e.mode == modeObjectPascal {
 		errorMarker = "Error:"
+	}
+
+	if e.mode == modeZig && bytes.Contains(output, []byte("nrecognized glibc version")) {
+		byteLines := bytes.Split(output, []byte("\n"))
+		fields := strings.Split(string(byteLines[0]), ":")
+		errorMessage := "Error: unrecognized glibc version"
+		if len(fields) > 1 {
+			errorMessage += ": " + strings.TrimSpace(fields[1])
+		}
+		return errorMessage, true, false
 	}
 
 	// Did the command return a non-zero status code, or does the output contain "error:"?
