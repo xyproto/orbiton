@@ -448,7 +448,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		// Analyze all lines
 		for i, line := range lines {
 			// Go, C++, Haskell, Kotlin and more
-			if strings.Count(line, ":") >= 3 {
+			if strings.Count(line, ":") >= 3 && strings.Contains(line, "error:") {
 				fields := strings.SplitN(line, ":", 4)
 				baseErrorFilename := filepath.Base(fields[0])
 				// Check if the filenames are matching, or if the error is in a different file
