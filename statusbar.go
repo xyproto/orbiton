@@ -61,7 +61,14 @@ func (sb *StatusBar) Draw(c *vt100.Canvas, offsetY int) {
 // A couple of spaces are added as padding.
 func (sb *StatusBar) SetMessage(msg string) {
 	mut.Lock()
-	sb.msg = "    " + msg + "    "
+
+	if len(msg)%2== 0 {
+		sb.msg = "     "
+	} else {
+		sb.msg = "    "
+	}
+	sb.msg += msg + "    "
+
 	sb.isError = false
 	mut.Unlock()
 }
@@ -82,7 +89,14 @@ func (sb *StatusBar) IsError() bool {
 // to make the message appear also after jumping around in the text.
 func (sb *StatusBar) SetErrorMessage(msg string) {
 	mut.Lock()
-	sb.msg = "    " + msg + "    "
+
+	if len(msg)%2== 0 {
+		sb.msg = "     "
+	} else {
+		sb.msg = "    "
+	}
+	sb.msg += msg + "    "
+
 	sb.isError = true
 	mut.Unlock()
 }
