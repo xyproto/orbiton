@@ -308,8 +308,15 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		return errorMessage, true, false
 	}
 
-	if e.mode == modeGo && bytes.Contains(output, []byte("undefined")) {
-		errorMarker = "undefined"
+	if e.mode == modeGo {
+		switch {
+			case bytes.Contains(output, []byte(": undefined")):
+				errorMarker = "undefined"
+			case bytes.Contains(output, []byte(": error")):
+				errorMarker = "error"
+			case bytes.Count(output, []byte(":")) >= 2:
+				errorMarker = ":"
+		}
 	}
 
 	// Did the command return a non-zero status code, or does the output contain "error:"?
@@ -407,6 +414,10 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 					}
 					return errorMessage, true, false
 				}
+				break
+			} else if e.mode == modeGo && errorMarker == ":" && strings.Count(line, ":") >= 2 {
+				parts := strings.SplitN(line, ":", 2)
+				errorMessage = strings.Join(parts[2:], ":")
 				break
 			} else if strings.Contains(line, errorMarker) {
 				parts := strings.SplitN(line, errorMarker, 2)
