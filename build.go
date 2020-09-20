@@ -310,12 +310,12 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 
 	if e.mode == modeGo {
 		switch {
-			case bytes.Contains(output, []byte(": undefined")):
-				errorMarker = "undefined"
-			case bytes.Contains(output, []byte(": error")):
-				errorMarker = "error"
-			case bytes.Count(output, []byte(":")) >= 2:
-				errorMarker = ":"
+		case bytes.Contains(output, []byte(": undefined")):
+			errorMarker = "undefined"
+		case bytes.Contains(output, []byte(": error")):
+			errorMarker = "error"
+		case bytes.Count(output, []byte(":")) >= 2:
+			errorMarker = ":"
 		}
 	}
 
