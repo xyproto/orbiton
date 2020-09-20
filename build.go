@@ -308,6 +308,10 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		return errorMessage, true, false
 	}
 
+	if e.mode == modeGo && bytes.Contains(output, []byte("undefined")) {
+		errorMarker = "undefined"
+	}
+
 	// Did the command return a non-zero status code, or does the output contain "error:"?
 	if err != nil || bytes.Contains(output, []byte(errorMarker)) { // failed tests also end up here
 
@@ -406,7 +410,11 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 				break
 			} else if strings.Contains(line, errorMarker) {
 				parts := strings.SplitN(line, errorMarker, 2)
-				errorMessage = strings.TrimSpace(parts[1])
+				if errorMarker == "undefined" {
+					errorMessage = errorMarker + strings.TrimSpace(parts[1])
+				} else {
+					errorMessage = strings.TrimSpace(parts[1])
+				}
 				if testingInstead {
 					e.redrawCursor = true
 				}
@@ -448,7 +456,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		// Analyze all lines
 		for i, line := range lines {
 			// Go, C++, Haskell, Kotlin and more
-			if strings.Count(line, ":") >= 3 && strings.Contains(line, "error:") {
+			if strings.Count(line, ":") >= 3 && (strings.Contains(line, "error:") || strings.Contains(line, errorMarker)) {
 				fields := strings.SplitN(line, ":", 4)
 				baseErrorFilename := filepath.Base(fields[0])
 				// Check if the filenames are matching, or if the error is in a different file

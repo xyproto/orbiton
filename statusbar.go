@@ -62,7 +62,7 @@ func (sb *StatusBar) Draw(c *vt100.Canvas, offsetY int) {
 func (sb *StatusBar) SetMessage(msg string) {
 	mut.Lock()
 
-	if len(msg)%2== 0 {
+	if len(msg)%2 == 0 {
 		sb.msg = "     "
 	} else {
 		sb.msg = "    "
@@ -90,7 +90,7 @@ func (sb *StatusBar) IsError() bool {
 func (sb *StatusBar) SetErrorMessage(msg string) {
 	mut.Lock()
 
-	if len(msg)%2== 0 {
+	if len(msg)%2 == 0 {
 		sb.msg = "     "
 	} else {
 		sb.msg = "    "
