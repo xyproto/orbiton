@@ -124,11 +124,13 @@ Set NO_COLOR=1 to disable colors.
 		}
 	}
 
-	// Set the terminal title, if the current terminal emulator supports it
-	if absFilename, err := filepath.Abs(filename); err != nil {
-		termtitle.MustSet(filename)
-	} else {
-		termtitle.MustSet(absFilename)
+	// Set the terminal title, if the current terminal emulator supports it, and NO_COLOR is not set
+	if !hasE("NO_COLOR") {
+		if absFilename, err := filepath.Abs(filename); err != nil {
+			termtitle.MustSet(filename)
+		} else {
+			termtitle.MustSet(absFilename)
+		}
 	}
 
 	// Initialize the VT100 terminal
@@ -152,8 +154,11 @@ Set NO_COLOR=1 to disable colors.
 	userMessage, err := Loop(tty, filename, lineNumber, *forceFlag, useTheme)
 
 	// Remove the terminal title, if the current terminal emulator supports it
-	shellName := filepath.Base(os.Getenv("SHELL"))
-	termtitle.MustSet(shellName)
+	// and if NO_COLOR is not set.
+	if !hasE("NO_COLOR") {
+		shellName := filepath.Base(os.Getenv("SHELL"))
+		termtitle.MustSet(shellName)
+	}
 
 	// Clear the current color attribute
 	fmt.Print(vt100.Stop())
