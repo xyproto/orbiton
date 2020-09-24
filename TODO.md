@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] Improve error detecton when running Go tests with ctrl-space.
 - [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] Better support for multi-byte unicode runes.
 - [ ] Paste with middle mouse button (or support multiple clipboards when pasting, detect the latest changed).
