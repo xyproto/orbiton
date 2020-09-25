@@ -250,7 +250,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 	} else if strings.HasSuffix(filename, "_test.go") {
 		// If it's a test-file, run the test instead of building
 		if which("go") != "" {
-			cmd = exec.Command("go", "test")
+			cmd = exec.Command("go", "test", "-failfast")
 		}
 		progressStatusMessage = "Testing"
 		testingInstead = true
