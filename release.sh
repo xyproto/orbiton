@@ -3,7 +3,7 @@
 # Create release tarballs/zip for 64-bit linux, BSD and Plan9 + 64-bit ARM + raspberry pi 2/3
 #
 name=o
-version=$(grep -i version main.go | head -1 | cut -d' ' -f5 | cut -d'"' -f1)
+version=$(grep -i version main.go | head -1 | cut -d' ' -f4 | cut -d'"' -f1)
 echo "Version $version"
 echo 'Compiling...'
 export GOARCH=amd64
