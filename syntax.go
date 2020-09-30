@@ -84,7 +84,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "#"
 	case modeAssembly:
 		return ";"
-	case modeHaskell, modeSQL, modeLua:
+	case modeHaskell, modeSQL, modeLua, modeAda:
 		return "--"
 	case modeVim:
 		return "\""
