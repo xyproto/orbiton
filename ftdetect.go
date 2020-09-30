@@ -38,6 +38,7 @@ const (
 	modeObjectPascal // for Object Pascal and Delphi
 	modeBat          // for DOS batch files
 	modeCpp          // for C++
+	modeAda          // For Ada
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -131,6 +132,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeObjectPascal
 		case ".bat":
 			mode = modeBat
+		case ".adp", ".gdr":
+			mode = modeAda
 		default:
 			mode = modeBlank
 		}
