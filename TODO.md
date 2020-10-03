@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] Stop text from jumping around in some terminal emulators. Look at the [kilo](https://github.com/antirez/kilo) VT100 related source code.
 - [ ] Improve error detecton when running Go tests with ctrl-space.
 - [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] Better support for multi-byte unicode runes.
