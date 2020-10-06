@@ -1833,16 +1833,17 @@ func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redraw bool) error {
 
 // FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
 func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines bool) {
-	resizeMutex.Lock()
 	if status != nil {
 		status.ClearAll(c)
 		e.SetSearchTerm(c, status, "")
 	}
 	savePos := e.pos
+
 	vt100.Close()
 	vt100.Reset()
 	vt100.Clear()
 	vt100.Init()
+
 	newC := vt100.NewCanvas()
 	newC.ShowCursor()
 	w := int(newC.Width())
@@ -1852,6 +1853,7 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines b
 		e.wrapWidth = w
 	}
 	e.pos = savePos
+
 	if drawLines {
 		e.DrawLines(c, true, false)
 	}
@@ -1860,6 +1862,7 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines b
 	*c = *newC
 
 	// TODO: Find out why the following lines are needed to properly handle the SIGWINCH resize signal
+
 	newC = vt100.NewCanvas()
 	newC.ShowCursor()
 	w = int(newC.Width())
@@ -1868,13 +1871,13 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines b
 	} else if e.wrapWidth < 80 && w >= 80 {
 		e.wrapWidth = w
 	}
+
 	if drawLines {
 		e.DrawLines(c, true, false)
 	}
 
 	e.redraw = true
 	e.redrawCursor = true
-	resizeMutex.Unlock()
 }
 
 // GoToPosition can go to the given position struct and use it as the new position

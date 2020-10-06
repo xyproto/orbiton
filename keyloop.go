@@ -843,7 +843,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 					e.TrimRight(e.DataY())
 					e.Delete()
 				}
-			// TODO: Extract this check
+				// TODO: Extract this check
 			} else if (e.mode == modeShell || e.mode == modePython || e.mode == modeCMake || e.mode == modeHaskell || e.mode == modeLua || e.mode == modeCpp || e.mode == modeZig || e.mode == modeAda) && (e.EmptyLine() || e.AtStartOfTextLine()) && len(e.LeadingWhitespace()) >= e.tabs.spacesPerTab {
 				// Delete several spaces
 				for i := 0; i < e.tabs.spacesPerTab; i++ {
