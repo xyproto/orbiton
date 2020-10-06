@@ -1833,6 +1833,7 @@ func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redraw bool) error {
 
 // FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
 func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines bool) {
+	resizeMutex.Lock()
 	if status != nil {
 		status.ClearAll(c)
 		e.SetSearchTerm(c, status, "")
@@ -1873,6 +1874,7 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines b
 
 	e.redraw = true
 	e.redrawCursor = true
+	resizeMutex.Unlock()
 }
 
 // GoToPosition can go to the given position struct and use it as the new position

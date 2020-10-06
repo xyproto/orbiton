@@ -20,13 +20,16 @@ func (e *Editor) SetUpResizeHandler(c *vt100.Canvas, status *StatusBar, tty *vt1
 	signal.Reset(syscall.SIGWINCH)
 
 	signal.Notify(sigChan, syscall.SIGWINCH)
+	resizeMutex.Unlock()
+
 	go func() {
 		for {
 			// Block until SIGWINCH signal is received
+			resizeMutex.Lock()
 			<-sigChan
+			resizeMutex.Unlock()
+
 			e.FullResetRedraw(c, status, true)
 		}
 	}()
-
-	resizeMutex.Unlock()
 }
