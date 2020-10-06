@@ -110,5 +110,3 @@
       minutes.
 - [ ] If over a certain percentage of the characters are not unicode.Graphics, enter binary mode.
 - [ ] Extract the functionality for searching a MessagePack file to a `mpgrep` utility, that has a `-B` flag (like `grep`).
-
-Nothing here.
