@@ -56,7 +56,7 @@ These features are unique to `o`, as far as I am aware:
 * Rainbow parentheses makes lines with many parentheses easier to read.
 * Limited to the VT100 standard, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`.
 * Compiles with either `go` or `gccgo`.
-* Tested with `st`, `urxvt`, `konsole` and `xfce4-terminal`.
+* Tested with `st`, `alacritty`, `urxvt`, `konsole` and `xfce4-terminal`.
 * Tested on Arch Linux, Debian and FreeBSD.
 * Loads faster than both `vim` and `emacs`.
 * Never asks before saving or quitting. Be careful!
