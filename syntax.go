@@ -55,7 +55,7 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 		delKeywords = []string{"from", "new", "print"}
 	case modeRust:
 		addKeywords = []string{"fn", "mod", "out", "panic"}
-		delKeywords = []string{"next", "build"}
+		delKeywords = []string{"next", "build", "end", "done"}
 	case modeLua:
 		syntax.Keywords = make(map[string]struct{})
 		addKeywords = luaWords
