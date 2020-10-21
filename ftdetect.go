@@ -68,7 +68,7 @@ func detectEditorMode(filename string) (Mode, bool) {
 		mode = modeGit
 	case ext == ".vimrc" || ext == ".vim" || ext == ".nvim":
 		mode = modeVim
-	case baseFilename == "Makefile" || baseFilename == "makefile" || baseFilename == "GNUmakefile":
+	case strings.HasPrefix(baseFilename, "Makefile") || strings.HasPrefix(baseFilename, "makefile") || baseFilename == "GNUmakefile":
 		// NOTE: This one MUST come before the ext == "" check below!
 		mode = modeMakefile
 	case strings.HasSuffix(filename, ".git/config") || ext == ".ini" || ext == ".cfg" || ext == ".conf" || ext == ".service" || ext == ".target" || ext == ".socket" || strings.HasPrefix(ext, "rc"):
