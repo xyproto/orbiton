@@ -3,8 +3,12 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/xyproto/vt100"
 )
@@ -164,6 +168,76 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		// If this happens, menu actions and menu functions are not added properly
 		// and it should fail hard, so that this can be fixed.
 		panic(err)
+	}
+
+	if strings.HasSuffix(e.filename, "PKGBUILD") {
+		actions.Add("Call Guessica", func() {
+			cmd := exec.Command("guessica", "PKGBUILD")
+			status.Clear(c)
+			status.SetMessage("Calling Guessica")
+			status.Show(c, e)
+
+			// Use the temporary directory defined in TMPDIR, with fallback to /tmp
+			tempdir := os.Getenv("TMPDIR")
+			if tempdir == "" {
+				tempdir = "/tmp"
+			}
+
+			tempFilename := ""
+
+			var err error
+			if f, err := ioutil.TempFile(tempdir, "__o*"+"guessica"); err == nil {
+				// no error, everything is fine
+				tempFilename = f.Name()
+				// TODO: Implement e.SaveAs
+				oldFilename := e.filename
+				e.filename = tempFilename
+				err = e.Save(c)
+				e.filename = oldFilename
+			}
+			if err != nil {
+				status.SetErrorMessage(err.Error())
+				status.Show(c, e)
+				return
+			}
+
+			if tempFilename == "" {
+				status.SetErrorMessage("Could not create a temporary file")
+				status.Show(c, e)
+				return
+			}
+
+			// Add the filename of the temporary file to the command
+			cmd.Args = append(cmd.Args, tempFilename)
+
+			// Show the status message to the user right now
+			status.Draw(c, e.pos.offsetY)
+			// Call guessica, which may take a little while
+			output, err := cmd.CombinedOutput()
+
+			if err != nil {
+				errorMessage := strings.TrimSpace(string(output))
+				if strings.Count(errorMessage, "\n") > 0 {
+					errorMessage = strings.TrimSpace(strings.SplitN(errorMessage, "\n", 2)[0])
+				}
+				if errorMessage == "" {
+					status.SetErrorMessage("Failed to format code")
+				} else {
+					status.SetErrorMessage("Failed to format code: " + errorMessage)
+				}
+				status.Show(c, e)
+			} else {
+				if _, err := e.Load(c, tty, tempFilename); err != nil {
+					status.ClearAll(c)
+					status.SetMessage(err.Error())
+					status.Show(c, e)
+				}
+				// Mark the data as changed, despite just having loaded a file
+				e.changed = true
+				e.redrawCursor = true
+
+			}
+		})
 	}
 
 	// Add the syntax highlighting toggle menu item

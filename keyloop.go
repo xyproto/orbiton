@@ -267,7 +267,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 				exec.Command("ocamlformat"):                                                       {".ml"},
 				exec.Command("crystal", "tool", "format"):                                         {".cr"},
 				exec.Command("ktlint", "-F"):                                                      {".kt", ".kts"},
-				exec.Command("guessica"):                                                          {"PKGBUILD"},
 				exec.Command("google-java-format", "-i"):                                          {".java"},
 				exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"): {".lua"},
 			}
@@ -284,9 +283,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 							break OUT
 						}
 						utilityName := filepath.Base(cmd.Path)
-						if utilityName == "guessica" {
-							utilityName = "Guessica" // it's a pun
-						}
+
 						status.Clear(c)
 						status.SetMessage("Calling " + utilityName)
 						status.Show(c, e)
