@@ -42,50 +42,53 @@ These features are unique to `o`, as far as I am aware:
 * Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy a block of text (until the next blank line).
 * Open or close a portal with `ctrl-r`. While a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
 * Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages (suitable for smaller projects and quick edits).
-* Cycle git rebase keywords with `ctrl-r`, when in an interactive git rebase session.
+* Cycle git rebase keywords with `ctrl-w` or `ctrl-r`, when in an interactive git rebase session.
 * Multiple uses of `ctrl-l`: Enter a number to jump to a line or press `return` to jump to the top. Press `ctrl-l` and `return` again to jump to the bottom.
+* All the text will be red if a loaded file is read-only.
+* If tab completion on the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
 
 ## Other features and limitations
 
 * Loads up instantly.
-* Reasonable executable size (around 500k, when built with `gccgo` + `upx`).
 * Configuration-free, for better and for worse.
+* Can render text to PDF.
+* Compile `"Hello, World"` in many popular programming languages simply by pressing `ctrl-space`.
+* `ctrl-t` can jump between a C++ header and source file.
 * Provides syntax highlighting for Go, C++, Markdown, Bash and several other languages. There is generic syntax highlighting.
 * The syntax highlighting is instant.
+* Will jump to the last visited line when opening a recent file.
+* Is provided as a single self-contained executable.
+* Tested with `alacritty`, `st`, `urxvt`, `konsole` and `xfce4-terminal`.
+* Tested on Arch Linux, Debian and FreeBSD.
+* Loads faster than both `vim` and `emacs`.
+* Never asks before saving or quitting. Be careful!
 * The [`NO_COLOR`](https://no-color.org) environment variable can be set to disable all colors.
 * Rainbow parentheses makes lines with many parentheses easier to read.
 * Limited to the VT100 standard, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`.
 * Compiles with either `go` or `gccgo`.
-* Tested with `st`, `alacritty`, `urxvt`, `konsole` and `xfce4-terminal`.
-* Tested on Arch Linux, Debian and FreeBSD.
-* Loads faster than both `vim` and `emacs`.
-* Never asks before saving or quitting. Be careful!
 * Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
 * May provide smart indentation.
 * Requires `/dev/tty` to be available.
-* `xclip` (for X) or `wl-clipboard` (for Wayland) must be installed if the system clipboard is to be used.
+* `xclip` (for X) or `wl-clipboard` (for Wayland) must be installed if the system clipboard should be used.
 * May take a line number as the second argument, with an optional `+` prefix.
-* All the text will be red if a loaded file is read-only.
 * If the filename is `COMMIT_EDITMSG`, the look and feel will be adjusted for git commit messages.
 * Supports `UTF-8`, but some runes may be displayed incorrectly.
-* Can render text to PDF.
 * Only UNIX-style line endings are supported (`\n`).
 * Will convert DOS/Windows line endings (`\r\n`) to UNIX line endings (just `\n`), whenever possible.
 * Will replace non-breaking space (`0xc2 0xa0`) with a regular space (`0x20`) whenever possible.
-* Will jump to the last visited line when opening a recent file.
-* If tab completion on the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
-* If interactive rebase is launched with `git rebase -i`, then either `ctrl-r` or `ctrl-w` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
+* If interactive rebase is launched with `git rebase -i`, then either `ctrl-w` or `ctrl-r` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
 * When editing Markdown, checkboxes can be toggled with `ctrl-w`.
-* `o` makes it easy to write `"Hello, World!"` in one of many languages, then simply compile it with `ctrl-space`. The idea is that it should be very quick to write and compile a short program, without any hassle.
-* `ctrl-t` can toggle between a C++ header and source file, if searching for the file in the parent directories is quick enough.
-* If the editor executable is named to `red`, the default theme will be red/white/gray.
+* If the editor executable renamed to `red` (or have a symlink with that name), the default theme will be red/white/gray.
+* If the editor executable renamed to `light` (or have a symlink with that name), the default theme will be suitable for light backgrounds.
 
 ## Known bugs
 
 * Some unicode runes may disrupt the text flow. This is generally not a problem for editing code and configuration files, but may be an issue when editing files that contains text in many languages.
 * The cursor may be misplaced when moving around on lines longer than the terminal width and then inserting or deleting text.
+* When `o` is busy performing an operation, pressing `ctrl-s` may lock the terminal. This behavior can be turned off in some terminal emulators. Press `ctrl-q` to unlock the terminal again (together with the unfortunate risk of quitting `o`).
 * The smart indentation is not always smart.
+* `alacritty 0.5.0` has a bug that can make Alacritty crash when using `o`. Use `alacritty 0.6.0` or later to avoid this.
 
 ## Hotkeys
 
