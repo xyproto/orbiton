@@ -63,6 +63,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 		key string // for the main loop
 
 		jsonFormatToggle bool // for toggling indentation or not when pressing ctrl-w for JSON
+
+		markdownSkipExport = true // for skipping the first ctrl-space keypress
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -186,10 +188,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 		vt100.SetXY(uint(x), uint(y))
 		e.redrawCursor = false
 	}
-
-	var (
-		markdownExportCounter = 0 // Press ctrl-space twice to export Markdown to PDF with pandoc
-	)
 
 	// This is the main loop for the editor
 	for !e.quit {
@@ -390,15 +388,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 			// Clear the current search term
 			e.ClearSearchTerm()
 
-			// Press ctrl-space twice for exporting Markdown to PDF
-			markdownSkipExport := false
-			if e.mode == modeMarkdown {
-				if markdownExportCounter%2 == 0 {
-					markdownExportCounter = 0
-					markdownSkipExport = true
-				}
-				markdownExportCounter++
-			}
+			// Press ctrl-space twice the first time the PDF should be exported to Markdown,
+			// to avvoid the first accidental ctrl-space key press.
 
 			// Build or export the current file
 			var (
@@ -406,7 +397,13 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 				performedAction bool
 				compiled        bool
 			)
-			if !markdownSkipExport {
+
+			if e.mode == modeMarkdown && markdownSkipExport {
+				// Do nothing, but don't skip the next one
+				markdownSkipExport = false
+				// } else if e.mode == modeMarkdown && !markdownSkipExport{
+				// statusMessage, performedAction, compiled = e.BuildOrExport(c, status, e.filename)
+			} else {
 				statusMessage, performedAction, compiled = e.BuildOrExport(c, status, e.filename)
 			}
 
