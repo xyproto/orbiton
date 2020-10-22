@@ -185,8 +185,11 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 
 			tempFilename := ""
 
-			var err error
-			if f, err := ioutil.TempFile(tempdir, "__o*"+"guessica"); err == nil {
+			var (
+				f   *os.File
+				err error
+			)
+			if f, err = ioutil.TempFile(tempdir, "__o*"+"guessica"); err == nil {
 				// no error, everything is fine
 				tempFilename = f.Name()
 				// TODO: Implement e.SaveAs
