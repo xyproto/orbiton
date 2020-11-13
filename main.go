@@ -122,6 +122,14 @@ Set NO_COLOR=1 to disable colors.
 			sort.Strings(matches)
 			filename = matches[0]
 		}
+	} else if !exists(filename) {
+		// Also match "PKGBUILD" if just "Pk" was entered
+		matches, err := filepath.Glob(strings.ToTitle(filename) + "*")
+		if err == nil && len(matches) >= 1 { // no error and at least 1 match
+			// Use the first match of the sorted results
+			sort.Strings(matches)
+			filename = matches[0]
+		}
 	}
 
 	// Set the terminal title, if the current terminal emulator supports it, and NO_COLOR is not set
