@@ -48,9 +48,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 		bookmark          *Position // for the bookmark/jump functionality
 		statusMode        bool      // if information should be shown at the bottom
 
-		firstLetterSinceStart string
-		firstPasteAction      = true
-		firstCopyAction       = true
+		firstPasteAction = true
+		firstCopyAction  = true
 
 		lastCopyY  LineIndex = -1 // used for keeping track if ctrl-c is pressed twice on the same line
 		lastPasteY LineIndex = -1 // used for keeping track if ctrl-v is pressed twice on the same line
@@ -1615,35 +1614,12 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 			}
 			e.redrawCursor = true
 
-		case "/": // check if this is was the first pressed letter or not
-			if firstLetterSinceStart == "" {
-				// Set the first letter since start to something that will not trigger this branch any more.
-				firstLetterSinceStart = "x"
-				// If the first typed letter since starting this editor was '/', go straight to search mode.
-				e.SearchMode(c, status, tty, true)
-				// Case handled
-				break
-			}
-			// This was not the first pressed letter, continue handling this key in the default case
-			fallthrough
-
 		default: // any other key
 			//panic(fmt.Sprintf("PRESSED KEY: %v", []rune(key)))
 			if len([]rune(key)) > 0 && unicode.IsLetter([]rune(key)[0]) { // letter
 
 				undo.Snapshot(e)
-				// Check for if a special "first letter" has been pressed, which triggers vi-like behavior
-				if firstLetterSinceStart == "" {
-					firstLetterSinceStart = key
-					// If the first pressed key is "G" and this is not git mode, then invoke vi-compatible behavior and jump to the end
-					if key == "G" && (e.mode != modeGit) {
-						// Go to the end of the document
-						e.redraw = e.GoToLineNumber(LineNumber(e.Len()), c, status, true)
-						e.redrawCursor = true
-						firstLetterSinceStart = "x"
-						break
-					}
-				}
+
 				// Type the letter that was pressed
 				if len([]rune(key)) > 0 {
 					// Insert a letter. This is what normally happens.
@@ -1738,8 +1714,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 		}
 		previousX = x
 		previousY = y
-		// The first letter was not O or /, which invokes special vi-compatible behavior
-		firstLetterSinceStart = "x"
 
 	} // end of main loop
 
