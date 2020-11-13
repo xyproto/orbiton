@@ -295,15 +295,6 @@ These four ways of opening `file.txt` at line `7` are supported:
 
 This also means that filenames containing `+` or `:`, and then followed by a number, are not supported.
 
-## The first keypress
-
-If the very first keypress after starting is `G` or `/`, it will trigger the following vi-compatible behavior:
-
-* `/` - enter search-mode (same as when pressing `ctrl-f`)
-* `G` - go to the end of the file
-
-The reason for adding these is to make using `o` easier to use for long-time vi/vim/neovim users.
-
 ## Spinner
 
 When loading files that are large or from a slow disk, an animated spinner will appear. The loading operation can be interrupted by pressing `esc`, `q` or `ctrl-q`.
