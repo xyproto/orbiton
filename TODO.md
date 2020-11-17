@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] Stop using github.com/pkg/term, it has issues for GOOS=freebsd.
 - [ ] When ctrl-s at the end of a long line, don't trim space for that line. Test.
 - [ ] Stop text from jumping around in some terminal emulators. Look at the [kilo](https://github.com/antirez/kilo) VT100 related source code.
 - [ ] Improve error detecton when running Go tests with ctrl-space.
