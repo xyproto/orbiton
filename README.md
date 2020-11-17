@@ -1,14 +1,16 @@
+![o](img/o128x128.png)
 
 [![Build Status](https://travis-ci.com/xyproto/o.svg?branch=master)](https://travis-ci.com/xyproto/o) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/o/master/LICENSE)
 
-![o](img/o128x128.png)
-
 `o` is a text editor that is limited to the VT100 standard. It has general syntax highlighting and launches instantly.
 
-It's a good fit for:
+It might be a good fit for:
+
 * Editing git commit messages (using `EDITOR=o git commit`).
-* Editing Markdown.
-* Quickly editing a file when programming.
+* Editing Markdown, and exporting to PDF.
+* Learning up and coming programming languages, like Zig or Rust.
+* Editing files deep within a Go or C++ project.
+* Writing applications in Go.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
