@@ -1,5 +1,5 @@
 <p align="center" width="256px">
-  <img src="img/o.svg" alt="o" />
+  <img src="img/o256x256.png" alt="o" />
 </p>
 
 # o [![Build Status](https://travis-ci.com/xyproto/o.svg?branch=master)](https://travis-ci.com/xyproto/o) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/o/master/LICENSE)
