@@ -38,6 +38,7 @@ const (
 	modeObjectPascal // for Object Pascal and Delphi
 	modeBat          // for DOS batch files
 	modeCpp          // for C++
+	modeC            // for C
 	modeAda          // For Ada
 )
 
@@ -100,6 +101,9 @@ func detectEditorMode(filename string) (Mode, bool) {
 			// C++ mode
 			// TODO: Find a way to discover is a .h file is most likely to be C or C++
 			mode = modeCpp
+		case ".c":
+			// C mode
+			mode = modeC
 		case ".adoc", ".rst", ".scdoc", ".scd":
 			// Markdown-like syntax highlighting
 			// TODO: Introduce a separate mode for these.
