@@ -51,7 +51,7 @@ func detectEditorMode(filename string) (Mode, bool) {
 
 	// A list of the most common configuration filenames that does not have an extension
 	var (
-		configFilenames = []string{"fstab", "config", "BUILD", "WORKSPACE", "passwd", "group", "environment", "shadow", "gshadow", "hostname", "hosts", "issue"}
+		configFilenames = []string{"fstab", "config", "BUILD", "WORKSPACE", "passwd", "group", "environment", "shadow", "gshadow", "hostname", "hosts", "issue", "mirrorlist"}
 		mode            Mode
 	)
 
