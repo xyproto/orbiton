@@ -89,15 +89,17 @@ These features are unique to `o`, as far as I am aware:
 * Some unicode runes may disrupt the text flow. This is generally not a problem for editing code and configuration files, but may be an issue when editing files that contains text in many languages.
 * The cursor may be misplaced when moving around on lines longer than the terminal width and then inserting or deleting text.
 * When `o` is busy performing an operation, pressing `ctrl-s` may lock the terminal. This behavior can be turned off in some terminal emulators. Press `ctrl-q` to unlock the terminal again (together with the unfortunate risk of quitting `o`).
+* `o` may have issues with large files (of several MB+). For normal text files or source code files, this is a non-issue.
 * The smart indentation is not always smart.
 * `alacritty 0.5.0` has a bug that can make Alacritty crash when using `o`. Use `alacritty 0.6.0` or later to avoid this.
+* Scrolling quickly with the arrow keys can be a jumpy experience, in some terminal emulators (works fine in `alacritty`). Use `ctrl-n` and `ctrl-p` instead if this is an issue and press `esc` if you need to repaint the text.
 
 ## Hotkeys
 
 * `ctrl-s` - Save.
 * `ctrl-q` - Quit.
 * `ctrl-r` - Open or close a portal. Text can be pasted from the portal into another file with `ctrl-v`.
-             For "git interactive rebase" mode, cycle the rebase keywords.
+             For "git interactive rebase" mode (`git rebase -i`), this will cycle the rebase keywords.
 * `ctrl-w` - Format the current file (see the table below).
 * `ctrl-a` - Go to start of text, then start of line and then to the previous line.
 * `ctrl-e` - Go to end of line and then to the next line.
@@ -319,9 +321,13 @@ fo somefile.cpp 123
 
 ## Easter eggs
 
-Press `ctrl-space` twice to render Markdown files to PDF using `pandoc` (while `ctrl-t` will save the text directly to PDF, without using `pandoc`).
+Press `ctrl-space` **twice** to render Markdown files to PDF using `pandoc` (`ctrl-t` will save the text directly to PDF, without using `pandoc`).
 
 ## Suggested settings
+
+### Alacritty
+
+* Try the `JetBrains Mono NL` font.
 
 ### Konsole
 
