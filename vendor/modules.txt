@@ -12,8 +12,7 @@ github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 ## explicit
 github.com/mgutz/ansi
-# github.com/pkg/term v1.1.0
-## explicit
+# github.com/pkg/term v0.0.0-20200520122047-c3ffed290a03
 github.com/pkg/term
 github.com/pkg/term/termios
 # github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d
@@ -30,7 +29,7 @@ github.com/xyproto/textoutput
 # github.com/xyproto/vt100 v1.8.7-0.20200811184013-1c2ef2e081cd
 ## explicit
 github.com/xyproto/vt100
-# golang.org/x/sys v0.0.0-20201116194326-cc9327a14d48
+# golang.org/x/sys v0.0.0-20201119102817-f84b799fce68
 ## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
