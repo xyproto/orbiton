@@ -90,9 +90,10 @@ These features are unique to `o`, as far as I am aware:
 * The cursor may be misplaced when moving around on lines longer than the terminal width and then inserting or deleting text.
 * When `o` is busy performing an operation, pressing `ctrl-s` may lock the terminal. This behavior can be turned off in some terminal emulators. Press `ctrl-q` to unlock the terminal again (together with the unfortunate risk of quitting `o`).
 * `o` may have issues with large files (of several MB+). For normal text files or source code files, this is a non-issue.
-* The smart indentation is not always smart.
+* Middle-click pasting (instead of pasting with `ctrl-v`) may have issues with only pasting the first character.
 * `alacritty 0.5.0` has a bug that can make Alacritty crash when using `o`. Use `alacritty 0.6.0` or later to avoid this.
 * Scrolling quickly with the arrow keys can be a jumpy experience, in some terminal emulators (works fine in `alacritty`). Use `ctrl-n` and `ctrl-p` instead if this is an issue and press `esc` if you need to repaint the text.
+* The smart indentation is not always smart.
 
 ## Hotkeys
 
