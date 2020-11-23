@@ -8,7 +8,7 @@ It might be a good fit for:
 
 * Editing git commit messages (using `EDITOR=o git commit`).
 * Editing Markdown, and exporting to PDF.
-* Learning up and coming programming languages, like Zig or Rust.
+* Learning "up and coming" programming languages, like Zig or Rust.
 * Editing files deep within a Go or C++ project.
 * Writing applications in Go.
 
@@ -38,15 +38,16 @@ To unset:
 
 These features are unique to `o`, as far as I am aware:
 
-* Smart cursor movement, trying to maintain the X position when moving up and down.
+* Smart cursor movement, trying to maintain the X position when moving up and down, across short and long lines.
 * Press `ctrl-v` once to paste one line, press `ctrl-v` again to paste the rest.
-* Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy a block of text (until the next blank line).
-* Open or close a portal with `ctrl-r`. While a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
-* Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages (suitable for smaller projects and quick edits).
-* Cycle git rebase keywords with `ctrl-w` or `ctrl-r`, when in an interactive git rebase session.
-* Multiple uses of `ctrl-l`: Enter a number to jump to a line or press `return` to jump to the top. Press `ctrl-l` and `return` again to jump to the bottom.
-* All the text will be red if a loaded file is read-only.
-* If tab completion on the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
+* Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy the rest (until a blank line).
+* Open or close a portal with `ctrl-r`. When a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
+* Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages.
+* Press `ctrl-w` to toggle the checkmark in `- [ ] TODO item` boxes in Markdown.
+* Cycle git rebase keywords with `ctrl-r`, when in an interactive git rebase session.
+* Jump to a line with multiple uses of `ctrl-l`. Enter a number to jump to a line or just press `return` to jump to the top. Press `ctrl-l` and `return` to jump to the bottom.
+* All text will be red if the loaded file is read-only.
+* If tab completion in the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
 
 ## Other features and limitations
 
