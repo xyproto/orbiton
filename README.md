@@ -45,7 +45,7 @@ These features are unique to `o`, as far as I am aware:
 * Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages.
 * Press `ctrl-w` to toggle the checkmark in `- [ ] TODO item` boxes in Markdown.
 * Cycle git rebase keywords with `ctrl-r`, when in an interactive git rebase session.
-* Jump to a line with multiple uses of `ctrl-l`. Enter a number to jump to a line or just press `return` to jump to the top. Press `ctrl-l` and `return` to jump to the bottom.
+* Jump to a line with `ctrl-l`. Either enter a number to jump to a line or just press `return` to jump to the top. Press `ctrl-l` and `return` again to jump to the bottom.
 * All text will be red if the loaded file is read-only.
 * If tab completion in the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
 
