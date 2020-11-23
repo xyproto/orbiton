@@ -17,6 +17,9 @@ echo '* FreeBSD'
 GOOS=freebsd go build -mod=vendor -o $name.freebsd
 echo '* NetBSD'
 GOOS=netbsd go build -mod=vendor -o $name.netbsd
+# OpenBSD support: https://github.com/pkg/term/issues/27
+#echo '* OpenBSD'
+#GOOS=openbsd go build -mod=vendor -o $name.openbsd
 echo '* Linux ARM64'
 GOOS=linux GOARCH=arm64 go build -mod=vendor -o $name.linux_arm64
 echo '* RPI 2/3/4'
