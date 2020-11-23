@@ -43,7 +43,7 @@ These features are unique to `o`, as far as I am aware:
 * Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy the rest (until a blank line).
 * Open or close a portal with `ctrl-r`. When a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
 * Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages.
-* Press `ctrl-w` to toggle the checkmark in `- [ ] TODO item` boxes in Markdown.
+* Press `ctrl-w` to toggle the checkmark in `- [ ] TODO item` boxes in Markdown.
 * Cycle git rebase keywords with `ctrl-r`, when in an interactive git rebase session.
 * Jump to a line with multiple uses of `ctrl-l`. Enter a number to jump to a line or just press `return` to jump to the top. Press `ctrl-l` and `return` to jump to the bottom.
 * All text will be red if the loaded file is read-only.
@@ -145,7 +145,8 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-w` to update the `p
 | Haskell                                         | `.hs`                                                     | yes           | `ghc -dynamic $filename`                          | `brittany --write-mode=inplace $filename`                                                                      |
 | Python                                          | `.py`                                                     | yes           | `python -m py_compile $filename`                  | `autopep8 -i --maxline-length 120 $filename`                                                                   |
 | Crystal                                         | `.cr`                                                     | yes           | `crystal build --no-color $filename`              | `crystal tool format $filename`                                                                                |
-| Kotlin                                          | `.kt`                                                     | yes           | `kotlinc-native -nowarn -opt -Xallocator=mimalloc -produce program -linker-option '--as-needed' $filename` | `ktlint`                                              |
+| Kotlin                                          | `.kt`                                                     | yes           | `kotlinc $filename -include-runtime -d`           | `ktlint`                                                                                                       |
+| Kotlin, if `kotlinc-native` is installed        | `.kt`                                                     | yes           | `kotlinc-native -nowarn -opt -Xallocator=mimalloc -produce program -linker-option '--as-needed' $filename` | `ktlint`                                              |
 | Java                                            | `.java`                                                   | yes           | `javac` + `jar`, see details below                | `google-java-format -i $filename`                                                                              |
 | Lua                                             | `.lua`                                                    | yes           | `luac`                                            | `lua-format -i --no-keep-simple-function-one-line --column-limit=120 --indent-width=2 --no-use-tab $filename`  |
 | Object Pascal                                   | `.pas`, `.pp`, `.lpr`                                     | yes           | `fpc`                                             | WIP                                                                                                            |
