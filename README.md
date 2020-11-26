@@ -153,6 +153,9 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-w` to update the `p
 | Object Pascal                                   | `.pas`, `.pp`, `.lpr`                                     | yes           | `fpc`                                             | WIP                                                                                                            |
 | Nim                                             | `.nim`                                                    | WIP           | `nim c`                                           | WIP                                                                                                            |
 
+| Markup language | File extensions | Jump to error | Format command ($filename is a temporary file) |
+| HTML | `.htm`, `.html`, `.pongo2`, `.po`, `.jinja2`, `.j2` | no | `tidy -q -c -i -utf8 --show-errors 0 --show-warnings no --tidy-mark no --force-output yes -m` |
+
 * `o` will try to jump to the location where the error is and otherwise display `Success`.
 * For regular text files, `ctrl-w` will word wrap the lines to a length of 99.
 * If `kotlinc-native` is not available, this build command will be used instead: `kotlinc $filename -include-runtime -d $name.jar`
