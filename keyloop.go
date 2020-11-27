@@ -268,7 +268,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 				exec.Command("ktlint", "-F"):                                                      {".kt", ".kts"},
 				exec.Command("google-java-format", "-i"):                                          {".java"},
 				exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"):                   {".lua"},
-				exec.Command("tidy", "-q", "-c", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "--force-output", "yes", "-m"): {".html", ".htm", ".po2", ".pongo2", ".j2", ".jinja2"},
+				exec.Command("tidy", "-w", "120", "-q", "-c", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "--force-output", "yes", "-m"): {".html", ".htm", ".po2", ".pongo2", ".j2", ".jinja2"},
 			}
 		OUT:
 			for cmd, extensions := range format {
