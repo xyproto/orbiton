@@ -136,7 +136,7 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeObjectPascal
 		case ".bat":
 			mode = modeBat
-		case ".adp", ".gdr":
+		case ".adb", ".gpr", ".ads", ".ada":
 			mode = modeAda
 		default:
 			mode = modeBlank
