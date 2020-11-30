@@ -26,7 +26,7 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 	switch mode {
 	case modeGo:
 		addKeywords = []string{"defer", "fallthrough", "go", "print", "println", "range", "string"}
-		delKeywords = []string{"None", "build", "char", "get", "include", "mut", "pass", "set", "template", "when"}
+		delKeywords = []string{"None", "build", "char", "get", "include", "mut", "pass", "set", "template", "then", "when"}
 	case modeLisp:
 		syntax.Keywords = make(map[string]struct{})
 		addKeywords = emacsWords
@@ -60,7 +60,7 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 		syntax.Keywords = make(map[string]struct{})
 		addKeywords = luaWords
 	case modeShell:
-		addKeywords = []string{"--force", "-f", "cmake", "configure", "fdisk", "gdisk", "make", "mv", "ninja", "rm", "rmdir", "for", "in", "do"}
+		addKeywords = []string{"--force", "-f", "cmake", "configure", "do", "fdisk", "for", "gdisk", "in", "make", "mv", "ninja", "rm", "rmdir"}
 		delKeywords = []string{"#else", "#endif", "default", "double", "exec", "float", "install", "long", "no", "pass", "ret", "super", "var", "with"}
 		fallthrough // to the default case
 	default:
