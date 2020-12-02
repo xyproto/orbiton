@@ -13,7 +13,11 @@
 
 ## Bugs/features/issues
 
-- [ ] When sorting 'case "asdf", "bsdf", "csdf":', don't remove the commas.
+- [ ] When `} is the last character of a file, sometimes pressing enter right before it does not work.
+- [ ] When moving far to the right of a long line, `ctrl-k` sometimes cuts from the wrong place.
+- [ ] `-- ` comments in Ada are not recognized.
+- [ ] Links in Markdown documents are not always recognized.
+- [ ] Indentation in Rust is sometimes wonky.
 - [ ] Create a Go package for detecting:
       * Language (specifically C++98 for instance)
       * Language family (C-like, ML-like etc)
