@@ -1381,6 +1381,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 			}
 		case "c:22": // ctrl-v, paste
 
+			// Save the file right before pasting, just in case wl-paste stops
+			e.UserSave(c, status)
+
 			var (
 				gotLineFromPortal bool
 				line              string
