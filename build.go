@@ -235,7 +235,13 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 	if e.mode == modeRust && (!exists("Cargo.toml") && !exists("../Cargo.toml")) {
 		// Use rustc instead of cargo if Cargo.toml is missing and the extension is .rs
 		if which("rustc") != "" {
-			cmd = exec.Command("rustc", filename)
+			baseDirName := exeFirstName
+			absFilename, err := filepath.Abs(filename)
+			if err == nil { // success
+				dirName := filepath.Dir(absFilename)
+				baseDirName = filepath.Base(dirName)
+			}
+			cmd = exec.Command("rustc", filename, "-o", baseDirName)
 		}
 	} else if (ext == ".cc" || ext == ".h") && exists("BUILD.bazel") {
 		// Google-style C++ + Bazel projects
