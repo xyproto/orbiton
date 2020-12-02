@@ -13,6 +13,7 @@
 
 ## Bugs/features/issues
 
+- [ ] If there are four lines: not comment, comment, not comment, comment, let ctrl+/ behave differently.
 - [ ] When `} is the last character of a file, sometimes pressing enter right before it does not work.
 - [ ] When moving far to the right of a long line, `ctrl-k` sometimes cuts from the wrong place.
 - [ ] `-- ` comments in Ada are not recognized.
