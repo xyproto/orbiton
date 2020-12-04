@@ -8,15 +8,15 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/xyproto/env"
 )
 
 var (
 	portalFilename = func() string {
-		tmpdir := os.Getenv("TMPDIR")
-		if tmpdir == "" {
-			tmpdir = "/tmp"
-		}
-		return filepath.Join(tmpdir, "o_portal.txt")
+		tmpdir := env.Str("TMPDIR", "/tmp")
+		filename := env.Str("LOGNAME", "o") + "_portal.txt"
+		return filepath.Join(tmpdir, filename)
 	}()
 )
 
