@@ -12,8 +12,7 @@ github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 ## explicit
 github.com/mgutz/ansi
-# github.com/pkg/term v1.1.0
-## explicit
+# github.com/pkg/term v0.0.0-20200520122047-c3ffed290a03
 github.com/pkg/term
 github.com/pkg/term/termios
 # github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d
