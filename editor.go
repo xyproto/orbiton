@@ -567,7 +567,8 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 	}
 
 	// "chmod +x" or "chmod -x". This is needed after saving the file, in order to toggle the executable bit.
-	if shebang {
+	// rust source may start with something like "#![feature(core_intrinsics)]", so avoid that.
+	if shebang && e.mode != modeRust {
 		// Call Chmod, but ignore errors (since this is just a bonus and not critical)
 		os.Chmod(e.filename, fileMode)
 	}
