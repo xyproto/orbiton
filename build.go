@@ -197,7 +197,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			exec.Command("python", "-m", "py_compile", filename):                             {".py"},                                                     // Python, compile to .pyc
 			exec.Command("ocamlopt", "-o", exeFirstName, filename):                           {".ml"},                                                     // OCaml
 			exec.Command("crystal", "build", "--no-color", filename):                         {".cr"},                                                     // Crystal
-			exec.Command("kotlinc", filename, "-include-runtime", "-d", exeFirstName+".jar"): {".kt"},                                                     // Kotlin, build a .jar file
+			exec.Command("kotlinc", filename, "-include-runtime", "-d", exeFirstName+".jar"): {".kt", ".kts"},                                                     // Kotlin, build a .jar file
 			exec.Command("sh", "-c", javaShellCommand):                                       {".java"},                                                   // Java, build a .jar file
 			exec.Command("luac", "-o", exeFirstName+".out", filename):                        {".lua"},                                                    // Lua, build an .out file
 			exec.Command("nim", "c", filename):                                               {".nim"},                                                    // Nim
