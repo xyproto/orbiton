@@ -9,8 +9,9 @@ It might be a good fit for:
 * Editing git commit messages (using `EDITOR=o git commit`).
 * Editing Markdown, and exporting to PDF.
 * Learning "up and coming" programming languages, like Zig or Rust.
-* Editing files deep within a Go or C++ project.
-* Writing applications in Go.
+* Editing files deep within larger Go or C++ projects.
+* Solving Advent of Code tasks.
+* Writing and maintaining to-do lists and project documentation in Markdown.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
