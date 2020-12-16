@@ -259,7 +259,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			}
 			if strings.Contains(sourceCode, "SDL2/SDL.h") {
 				// TODO: This is a hack. Write more general library detection.
-				cmd = exec.Command("zig", "build-exe", "-lc", "-lsdl2", filename)
+				cmd = exec.Command("zig", "build-exe", "-lc", "-lSDL2", filename)
 			} else {
 				cmd = exec.Command("zig", "build-exe", "-lc", filename)
 			}
