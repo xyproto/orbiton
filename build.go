@@ -242,6 +242,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 				dirName := filepath.Dir(absFilename)
 				baseDirName = filepath.Base(dirName)
 			}
+
 			cmd = exec.Command("rustc", filename, "-o", baseDirName)
 		}
 	} else if (ext == ".cc" || ext == ".h") && exists("BUILD.bazel") {
@@ -252,6 +253,12 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 	} else if e.mode == modeZig && !exists("build.zig") {
 		// Just build the current file
 		if which("zig") != "" {
+			baseDirName := exeFirstName
+			absFilename, err := filepath.Abs(filename)
+			if err == nil { // success
+				dirName := filepath.Dir(absFilename)
+				baseDirName = filepath.Base(dirName)
+			}
 			sourceCode := ""
 			sourceData, err := ioutil.ReadFile(filename)
 			if err == nil { // success
@@ -259,9 +266,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			}
 			if strings.Contains(sourceCode, "SDL2/SDL.h") {
 				// TODO: This is a hack. Write more general library detection.
-				cmd = exec.Command("zig", "build-exe", "-lc", "-lSDL2", filename)
+				cmd = exec.Command("zig", "build-exe", "-lc", "-lSDL2", filename, "--name", baseDirName)
 			} else {
-				cmd = exec.Command("zig", "build-exe", "-lc", filename)
+				cmd = exec.Command("zig", "build-exe", "-lc", filename, "--name", baseDirName)
 			}
 		}
 	} else if strings.HasSuffix(filename, "_test.go") {
