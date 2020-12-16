@@ -513,7 +513,13 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 			e.redrawCursor = true
 		case "c:15": // ctrl-o, launch the command menu
 			status.ClearAll(c)
+			undo.Snapshot(e)
+			undoBackup := undo
 			lastCommandMenuIndex = e.CommandMenu(c, status, tty, undo, lastCommandMenuIndex, forceFlag, lk)
+			undo = undoBackup
+			if e.AfterEndOfLine() {
+				e.End(c)
+			}
 		case "c:7": // ctrl-g, status mode
 			statusMode = !statusMode
 			if statusMode {
