@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -251,7 +252,17 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 	} else if e.mode == modeZig && !exists("build.zig") {
 		// Just build the current file
 		if which("zig") != "" {
-			cmd = exec.Command("zig", "build-exe", "-lc", filename)
+			sourceCode := ""
+			sourceData, err := ioutil.ReadFile(filename)
+			if err == nil { // success
+				sourceCode = string(sourceData)
+			}
+			if strings.Contains(sourceCode, "SDL2/SDL.h") {
+				// TODO: This is a hack. Write more general library detection.
+				cmd = exec.Command("zig", "build-exe", "-lc", "-lsdl2", filename)
+			} else {
+				cmd = exec.Command("zig", "build-exe", "-lc", filename)
+			}
 		}
 	} else if strings.HasSuffix(filename, "_test.go") {
 		// If it's a test-file, run the test instead of building
