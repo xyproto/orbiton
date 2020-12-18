@@ -39,7 +39,8 @@ const (
 	modeBat          // for DOS batch files
 	modeCpp          // for C++
 	modeC            // for C
-	modeAda          // For Ada
+	modeAda          // for Ada
+	modeHTML         // for HTML
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -138,6 +139,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeBat
 		case ".adb", ".gpr", ".ads", ".ada":
 			mode = modeAda
+		case ".htm", ".html":
+			mode = modeHTML
 		default:
 			mode = modeBlank
 		}

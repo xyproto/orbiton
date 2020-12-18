@@ -203,6 +203,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			exec.Command("luac", "-o", exeFirstName+".out", filename):                        {".lua"},                                                    // Lua, build an .out file
 			exec.Command("nim", "c", filename):                                               {".nim"},                                                    // Nim
 			exec.Command("fpc", filename):                                                    {".pp", ".pas", ".lpr"},                                     // Object Pascal / Delphi
+			exec.Command("xdg-open", filename):                                               {".htm", ".html"},                                           // Display HTML in the browser
 		}
 	)
 
@@ -231,6 +232,10 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		testingInstead        bool
 		kotlinNative          bool
 	)
+
+	if e.mode == modeHTML {
+		progressStatusMessage = "Displaying"
+	}
 
 	// Special per-language considerations
 	if e.mode == modeRust && (!exists("Cargo.toml") && !exists("../Cargo.toml")) {
@@ -341,6 +346,10 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		case bytes.Count(output, []byte(":")) >= 2:
 			errorMarker = ":"
 		}
+	}
+
+	if err == nil && e.mode == modeHTML {
+		return "Success", true, true
 	}
 
 	// Did the command return a non-zero status code, or does the output contain "error:"?
