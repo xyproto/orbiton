@@ -88,8 +88,7 @@ These features are unique to `o`, as far as I am aware:
 ## Known bugs
 
 * Some unicode runes may disrupt the text flow. This is generally not a problem for editing code and configuration files, but may be an issue when editing files that contains text in many languages.
-* The cursor may be misplaced when moving around on lines longer than the terminal width and then inserting or deleting text.
-* When `o` is busy performing an operation, pressing `ctrl-s` may lock the terminal. This behavior can be turned off in some terminal emulators. Press `ctrl-q` to unlock the terminal again (together with the unfortunate risk of quitting `o`).
+* For some terminal emulators, if `o` is busy performing an operation, pressing `ctrl-s` may lock the terminal. Some terminal emulators, like `konsole`, can be configured to turn off this behavior. Press `ctrl-q` to unlock the terminal again (together with the unfortunate risk of quitting `o`). You can also use the `ctrl-o` menu for saving and quitting.
 * `o` may have issues with large files (of several MB+). For normal text files or source code files, this is a non-issue.
 * Middle-click pasting (instead of pasting with `ctrl-v`) may have issues with only pasting the first character.
 * `alacritty 0.5.0` has a bug that can make Alacritty crash when using `o`. Use `alacritty 0.6.0` or later to avoid this.
