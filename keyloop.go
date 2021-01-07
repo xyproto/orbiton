@@ -1595,13 +1595,13 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				status.SetMessage(s)
 				bookmark = nil
 			} else {
-				// jumping to a bookmark
 				undo.Snapshot(e)
+				// Go to the saved bookmark position
 				e.GoToPosition(c, status, *bookmark)
 				// Do the redraw manually before showing the status message
 				e.DrawLines(c, true, false)
 				e.redraw = false
-				// Show the status message.
+				// Show the status message
 				s := "Jumped to bookmark at line " + e.LineNumber().String()
 				status.SetMessage(s)
 			}
