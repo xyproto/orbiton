@@ -112,3 +112,8 @@ func (p *Position) AtStartOfTheLine() bool {
 func (p *Position) LineNumber() LineNumber {
 	return LineIndex(p.offsetY + p.sy).LineNumber()
 }
+
+// ColNumber returns the current column number this Position is at
+func (p *Position) ColNumber() ColNumber {
+	return ColIndex(p.offsetX + p.sx).ColNumber()
+}
