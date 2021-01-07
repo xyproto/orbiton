@@ -564,7 +564,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				// Konsole prints "2H" here, but
 				// no other terminal emulator does that
 				e.redraw = true
-				e.redrawCursor = false
 			}
 		case "→": // right arrow
 			// If on the last line or before, go to the next character
