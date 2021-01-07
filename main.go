@@ -98,7 +98,7 @@ Set NO_COLOR=1 to disable colors.
 		defer pprof.StopCPUProfile()
 	}
 
-	filename, lineNumber := FilenameAndLineNumber(flag.Arg(0), flag.Arg(1))
+	filename, lineNumber, colNumber := FilenameAndLineNumberAndColNumber(flag.Arg(0), flag.Arg(1), flag.Arg(2))
 	if filename == "" {
 		fmt.Fprintln(os.Stderr, "Need a filename.")
 		os.Exit(1)
@@ -159,7 +159,7 @@ Set NO_COLOR=1 to disable colors.
 	}
 
 	// Run the main editor loop
-	userMessage, err := Loop(tty, filename, lineNumber, *forceFlag, useTheme)
+	userMessage, err := Loop(tty, filename, lineNumber, colNumber, *forceFlag, useTheme)
 
 	// Remove the terminal title, if the current terminal emulator supports it
 	// and if NO_COLOR is not set.

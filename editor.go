@@ -1772,6 +1772,34 @@ func (e *Editor) GoToLineNumber(lineNumber LineNumber, c *vt100.Canvas, status *
 	return redraw
 }
 
+// GoToLineNumberAndCol will go to a given line number and column number, but counting from 1, not from 0!
+func (e *Editor) GoToLineNumberAndCol(lineNumber LineNumber, colNumber ColNumber, c *vt100.Canvas, status *StatusBar, center bool) bool {
+	if colNumber < 1 {
+		colNumber = 1
+	}
+	if lineNumber < 1 {
+		lineNumber = 1
+	}
+	xIndex := colNumber.ColIndex()
+	yIndex := lineNumber.LineIndex()
+
+	// Go to the correct line
+	redraw := e.GoTo(yIndex, c, status)
+
+	// Go to the correct column as well
+	tabs := strings.Count(e.Line(yIndex), "\t")
+	newScreenX := int(xIndex) + (tabs * (e.tabs.spacesPerTab - 1))
+	if e.pos.sx != newScreenX {
+		redraw = true
+	}
+	e.pos.sx = newScreenX
+
+	if redraw && center {
+		e.Center(c)
+	}
+	return redraw
+}
+
 // Up tried to move the cursor up, and also scroll
 func (e *Editor) Up(c *vt100.Canvas, status *StatusBar) {
 	e.GoTo(e.DataY()-1, c, status)
@@ -2210,7 +2238,7 @@ func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *
 		switchBuffer.Restore(e)
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
-		e2, statusMessage, err = NewEditor(tty, c, filenameToOpen, LineNumber(0))
+		e2, statusMessage, err = NewEditor(tty, c, filenameToOpen, LineNumber(0), ColNumber(0))
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)

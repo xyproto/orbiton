@@ -33,7 +33,7 @@ var (
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool, useTheme Theme) (userMessage string, err error) {
+func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, useTheme Theme) (userMessage string, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt100.Init()
@@ -67,7 +67,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, forceFlag bool
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
-	e, statusMessage, err := NewEditor(tty, c, filename, lineNumber)
+	e, statusMessage, err := NewEditor(tty, c, filename, lineNumber, colNumber)
 	if err != nil {
 		return "", err
 	}
