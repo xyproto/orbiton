@@ -519,6 +519,9 @@ func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 func (e *Editor) Save(c *vt100.Canvas) error {
 	var data []byte
 
+	// Save the current position
+	bookmark := e.pos.Copy()
+
 	// Strip trailing spaces on all lines
 	l := e.Len()
 	for i := 0; i < l; i++ {
@@ -574,9 +577,15 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 	}
 
 	// Trailing spaces may be trimmed, so move to the end, if needed
-	if e.AfterEndOfLine() {
-		e.End(c)
-		e.redraw = true
+	if e.changed {
+		e.GoToPosition(c, nil, *bookmark)
+		if e.AfterEndOfLine() {
+			e.EndNoTrim(c)
+		}
+		// Do the redraw manually before showing the status message
+		e.DrawLines(c, true, false)
+		e.redraw = false
+		e.redrawCursor = true
 	}
 
 	// All done
@@ -1275,6 +1284,13 @@ func (e *Editor) End(c *vt100.Canvas) {
 	e.redraw = true
 }
 
+// EndNoTrim will move the cursor to the position right after the end of the current line contents
+func (e *Editor) EndNoTrim(c *vt100.Canvas) {
+	x := e.LastTextPosition(e.DataY()) + 1
+	e.pos.SetX(c, x)
+	e.redraw = true
+}
+
 // AtEndOfLine returns true if the cursor is at exactly the last character of the line, not the one after
 func (e *Editor) AtEndOfLine() bool {
 	return e.pos.sx+e.pos.offsetX == e.LastTextPosition(e.DataY())
@@ -1837,15 +1853,21 @@ func (e *Editor) LineIndex() LineIndex {
 	return e.DataY()
 }
 
-// ColumnNumber will return the current column number (data x index + 1)
-func (e *Editor) ColumnNumber() int {
+// ColNumber will return the current column number (data x index + 1)
+func (e *Editor) ColNumber() ColNumber {
 	x, _ := e.DataX()
-	return x + 1
+	return ColNumber(x + 1)
+}
+
+// ColIndex will return the current column index (data x index)
+func (e *Editor) ColIndex() ColIndex {
+	x, _ := e.DataX()
+	return ColIndex(x)
 }
 
 // StatusMessage returns a status message, intended for being displayed at the bottom
 func (e *Editor) StatusMessage() string {
-	return fmt.Sprintf("line %d col %d rune %U words %d", e.LineNumber(), e.ColumnNumber(), e.Rune(), e.WordCount())
+	return fmt.Sprintf("line %d col %d rune %U words %d", e.LineNumber(), e.ColNumber(), e.Rune(), e.WordCount())
 }
 
 // DrawLines will draw a screen full of lines on the given canvas
