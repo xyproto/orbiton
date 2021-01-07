@@ -98,9 +98,14 @@ func (p *Position) Down(c *vt100.Canvas) error {
 	return nil
 }
 
-// AtStartOfLine returns true if the position is at the very start of the line, regardless of whitespace
-func (p *Position) AtStartOfLine() bool {
+// AtStartOfScreenLine returns true if the position is at the very start of the line, regardless of whitespace and scrolling
+func (p *Position) AtStartOfScreenLine() bool {
 	return p.sx == 0
+}
+
+// AtStartOfTheLine returns true if the position is at the very start of the line, and the line is not scrolled
+func (p *Position) AtStartOfTheLine() bool {
+	return p.sx == 0 && p.offsetX == 0
 }
 
 // LineNumber returns the current line number this Position is at

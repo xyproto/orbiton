@@ -1583,12 +1583,18 @@ func (e *Editor) AtStartOfDocument() bool {
 	return e.pos.sy == 0 && e.pos.offsetY == 0
 }
 
-// AtStartOfLine is true if the cursor is a the start of the line
-func (e *Editor) AtStartOfLine() bool {
-	return e.pos.AtStartOfLine()
+// AtStartOfScreenLine is true if the cursor is a the start of the screen line.
+// The line may be scrolled all the way to the end, and the cursor moved to the left of the screen, for instance.
+func (e *Editor) AtStartOfScreenLine() bool {
+	return e.pos.AtStartOfScreenLine()
 }
 
-// AtLeftEdgeOfDocument is true if we're at the first column at the document
+// AtStartOfTheLine is true if the cursor is a the start of the screen line, and the line is not scrolled.
+func (e *Editor) AtStartOfTheLine() bool {
+	return e.pos.AtStartOfTheLine()
+}
+
+// AtLeftEdgeOfDocument is true if we're at the first column at the document. Same as AtStarOfTheLine.
 func (e *Editor) AtLeftEdgeOfDocument() bool {
 	return e.pos.sx == 0 && e.pos.offsetX == 0
 }
@@ -1673,18 +1679,18 @@ func (e *Editor) EmptyTrimmedLine() bool {
 	return len(e.TrimmedLine()) == 0
 }
 
-// AtStartOfTextLine returns true if the position is at the start of the text for this line
-func (e *Editor) AtStartOfTextLine() bool {
+// AtStartOfTextScreenLine returns true if the position is at the start of the text for this screen line
+func (e *Editor) AtStartOfTextScreenLine() bool {
 	return uint(e.pos.sx) == e.FirstScreenPosition(e.DataY())
 }
 
-// BeforeStartOfTextLine returns true if the position is before the start of the text for this line
-func (e *Editor) BeforeStartOfTextLine() bool {
+// BeforeStartOfTextScreenLine returns true if the position is before the start of the text for this screen line
+func (e *Editor) BeforeStartOfTextScreenLine() bool {
 	return uint(e.pos.sx) < e.FirstScreenPosition(e.DataY())
 }
 
-// AtOrBeforeStartOfTextLine returns true if the position is before or at the start of the text for this line
-func (e *Editor) AtOrBeforeStartOfTextLine() bool {
+// AtOrBeforeStartOfTextScreenLine returns true if the position is before or at the start of the text for this screen line
+func (e *Editor) AtOrBeforeStartOfTextScreenLine() bool {
 	return uint(e.pos.sx) <= e.FirstScreenPosition(e.DataY())
 }
 

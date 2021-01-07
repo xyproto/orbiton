@@ -760,21 +760,21 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// TODO: Collect the criteria that trigger the same behavior
 
 			switch {
-			case e.AtOrAfterLastLineOfDocument() && (e.AtStartOfLine() || e.AtOrBeforeStartOfTextLine()):
+			case e.AtOrAfterLastLineOfDocument() && (e.AtStartOfTheLine() || e.AtOrBeforeStartOfTextScreenLine()):
 				e.InsertLineAbove()
 				noHome = true
-			case e.AtOrAfterEndOfDocument() && (!e.AtStartOfLine() && !e.AtOrAfterEndOfLine()):
+			case e.AtOrAfterEndOfDocument() && (!e.AtStartOfTheLine() && !e.AtOrAfterEndOfLine()):
 				e.InsertStringAndMove(c, "")
 				e.InsertLineBelow()
 				scrollBack = true
 			case e.AfterEndOfLine():
 				e.InsertLineBelow()
 				scrollBack = true
-			case !e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument() && (e.AtStartOfLine() || e.AtOrAfterEndOfLine()):
+			case !e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument() && (e.AtStartOfTheLine() || e.AtOrAfterEndOfLine()):
 				e.InsertStringAndMove(c, "")
 				e.InsertLineBelow()
 				scrollBack = true
-			case e.AtOrBeforeStartOfTextLine():
+			case e.AtStartOfTheLine():
 				e.InsertLineAbove()
 				noHome = true
 			default:
@@ -840,15 +840,17 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				e.pos.Up()
 				e.TrimRight(e.DataY())
 				e.End(c)
-			} else if e.AtStartOfLine() {
+			} else if e.AtStartOfTheLine() { // at the start of the screen line, the line may be scrolled
+				// remove the rest of the current line and move to the last letter of the line above
+				// before deleting it
 				if e.DataY() > 0 {
 					e.pos.Up()
-					e.End(c)
 					e.TrimRight(e.DataY())
+					e.End(c)
 					e.Delete()
 				}
 				// TODO: Extract this check
-			} else if (e.mode == modeShell || e.mode == modePython || e.mode == modeCMake || e.mode == modeHaskell || e.mode == modeAda || e.mode == modeLua || e.mode == modeC || e.mode == modeCpp || e.mode == modeZig) && (e.EmptyLine() || e.AtStartOfTextLine()) && len(e.LeadingWhitespace()) >= e.tabs.spacesPerTab {
+			} else if (e.mode == modeShell || e.mode == modePython || e.mode == modeCMake || e.mode == modeHaskell || e.mode == modeAda || e.mode == modeLua || e.mode == modeC || e.mode == modeCpp || e.mode == modeZig) && (e.EmptyLine() || e.AtStartOfTextScreenLine()) && len(e.LeadingWhitespace()) >= e.tabs.spacesPerTab {
 				// Delete several spaces
 				for i := 0; i < e.tabs.spacesPerTab; i++ {
 					// Move back
@@ -1046,8 +1048,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				// go to the end of the previous line
 				e.Up(c, status)
 				e.End(c)
-			} else if e.AtStartOfTextLine() {
-				// If at the start of the text, go to the start of the line
+			} else if e.AtStartOfTextScreenLine() {
+				// If at the start of the text for this scroll position, go to the start of the line
 				e.Home()
 			} else {
 				// If none of the above, go to the start of the text
