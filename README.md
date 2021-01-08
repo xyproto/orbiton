@@ -7,7 +7,8 @@
 It might be a good fit for:
 
 * Editing git commit messages (using `EDITOR=o git commit`).
-* Editing Markdown, and exporting to PDF.
+* Editing `README.md` and `TODO.md` files.
+* Write Markdown files and then export to PDF.
 * Learning "up and coming" programming languages, like Zig or Rust.
 * Editing files deep within larger Go or C++ projects.
 * Solving Advent of Code tasks.
