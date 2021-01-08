@@ -2,17 +2,19 @@
 
 ## Pri
 
-- [ ] Add a `-b` and a `--build` flag that will attempt to build the given file + output the command.
-- [ ] Stop using github.com/pkg/term, it has issues for GOOS=freebsd.
-- [ ] When ctrl-s at the end of a long line, don't trim space for that line. Test.
-- [ ] Stop text from jumping around in some terminal emulators. Look at the [kilo](https://github.com/antirez/kilo) VT100 related source code.
-- [ ] Improve error detecton when running Go tests with ctrl-space.
+- [ ] Improve error parsing when running `go test` with ctrl-space.
+- [ ] Add a `-b` and a `--build` flag that will output the build command that would have been used for the given filename.
+- [ ] Stop using `github.com/pkg/term`, it has issues for GOOS=freebsd.
+- [ ] Stop text from jumping around in some terminal emulators (Konsole?). Look at the [kilo](https://github.com/antirez/kilo) VT100 related source code.
 - [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] Better support for multi-byte unicode runes.
-- [ ] Paste with middle mouse button (or support multiple clipboards when pasting, detect the latest changed).
+- [ ] When starting o, hash sum the clipboards it can find. When pasting, use the latest changed clipboard. If nothing changed, use the one for Wayland or X11, depending on environment variables.
+- [ ] Paste with middle mouse button.
 
 ## Bugs/features/issues
 
+- [ ] Refactor the code to handle a line as a Line struct/object that has these markers: start of line, start of text, start of scroll view, end of scroll view, end of text, one after end of text, end of line including whitespace
+- [ ] Inherit from the Line struct (with interfaces+types+methods) by adding per-language markers: start of block, end of block, indentation compared to the line above, dedentation compared to the line above
 - [ ] If there are four lines: not comment, comment, not comment, comment, let ctrl+/ behave differently.
 - [ ] When `} is the last character of a file, sometimes pressing enter right before it does not work.
 - [ ] When moving far to the right of a long line, `ctrl-k` sometimes cuts from the wrong place.
@@ -30,19 +32,15 @@
       * then translate this to a struct
       * also think about how this can be skipped is the file is enormous and should be read in block-by-block
 - [ ] // within a ` block should not be recognized
-- [ ] When saving and stripping whitespace, strip the current line, but indent if an empty line was indented.
 - [ ] Don't redraw lines for a split second when starting with a non-default theme.
-- [ ] Indentation in Markdown is weird wrt. spaces/tabs. Fix. Keep inline code in mind.
 - [ ] Opening a read-only file in the Linux terminal displays different red colors when moving to the bottom.
 - [ ] Highlight this shell script line correctly: `for txt in third_party/*.txt; do`
 - [ ] Extract the features that are used in `vt100` and create a more optimized package.
 - [ ] Jump to error when building with `ctrl-space` and `cargo`.
 - [ ] Abstract the editor, so that sending in keypresses and examining the result can be tested.
 - [ ] When changing a file from tabs to spaces, or the other way around, also modify indentations after comment markers.
-- [ ] Fix the `editor.Delete()` method, so that `ctrl-d` also works for very long lines.
 - [ ] Be able to open and edit large text files (60M+).
 - [ ] Open text files with Chinese/Japanese/Korean characters without breaking the text flow.
-- [ ] `ctrl-j` does not seem to do anything if pressed at the end of a long line.
 - [ ] When pressing `ctrl-space` the first time, have a timeout before registering as a double press.
 - [ ] Hash strings (like sha256 hash sums), could be colored light yellow and dark yellow for every 2 characters
 - [ ] When the editor executable is `list`, just list the contents and exit?
@@ -54,16 +52,12 @@
 - [ ] Figure out why a file saved by another user can not be read by Go in `/tmp`, but can be read with `cat`.
 - [ ] Command menu option for deleting the rest of the file.
 - [ ] A menu option for recording simple vim-style keypresses, then a keypress for playing it back.
-- [ ] Highlight the line where a portal has been opened.
-- [ ] Highlight the part of git commit topics that are >= 80 characters long.
-- [ ] For git commit text, highlight column 80 if the text crosses that boundry.
-- [ ] Check if Wayland is in use before using `wl-*`.
+- [ ] Check if Wayland is in use (env var) before using `wl-*`.
 - [ ] Add a command menu option to copy the entire file to the clipboard.
 - [ ] Add a command menu option to copy the build command to the clipboard.
 - [ ] If `xclip` or similar tool is not available, cut/copy/paste via a file.
 - [ ] Pressing `ctrl-v` to paste does not work across X/Wayland sessions. It would be nice to find a more general clipboard solution.
 - [ ] Let the cut/copy/paste line state be part of the editor state, because of undo.
-- [ ] Insert `# vim: ts=2 sw=2 et:` at the bottom when `ctrl-space` is pressed in a PKGBUILD file. Or add a command menu option for this.
 - [ ] Autocompletion of filenames if the previous rune is "/" and tab is pressed.
 - [ ] Add word wrap with a custom line length to the command menu.
 - [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently.
@@ -72,13 +66,11 @@
 - [ ] Detect ISO-8859-1 and convert the file to UTF-8 before opening.
 - [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
 - [ ] Let the autocompletion also look at method definitions with matching variable names (ignoring types, for now).
-- [ ] Cross user portals, possibly by using `TMPDIR/oportal.dat`.
+- [ ] Cross user portals? Possibly by using `TMPDIR/oportal.dat`.
 - [ ] Add tests for the smart indent feature: for pressing return, tab and space, especially in relation with `{` and `}`.
-- [ ] Rainbow parenthesis should be able to span multiple lines.
+- [ ] Rainbow parenthesis should be able to span multiple lines, especially for Clojure, Common Lisp, Scheme and Emacs Lisp.
 - [ ] Shell scripts with if/else/endif blocks that are commented out are highlighted wrong.
-- [ ] Add `guessica` to the `ctrl-t` menu.
 - [ ] Let `guessica` also set `pkgrel=1` if there was a new version.
-- [ ] Rainbow parentheses should span multiple lines, for Clojure, Emacs Lisp etc.
 - [ ] Quotestate Process can not recognize triple runes, like the previous
       previous rune is ", the previous rune is " and the current rune is ".
       The wrong argumens are passed to the function. Figure out why.
