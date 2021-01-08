@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -166,10 +167,21 @@ func isListItem(line string) bool {
 	if len(fields) == 0 {
 		return false
 	}
-	switch fields[0] {
-	case "*", "-", "+", "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.", "10.": // ignore numbers over 10
+	firstWord := fields[0]
+
+	// Check if this is a regular list item
+	switch firstWord {
+	case "*", "-", "+":
 		return true
 	}
+
+	// Check if this is a numbered list item
+	if strings.HasSuffix(firstWord, ".") {
+		if _, err := strconv.Atoi(firstWord[:len(firstWord)-1]); err == nil { // success
+			return true
+		}
+	}
+
 	return false
 }
 
@@ -200,7 +212,7 @@ func markdownHighlight(line string, inCodeBlock, prevLineIsListItem bool, inList
 		return codeBlockColor.Get(line), true, false
 	}
 
-	if leadingSpace == "    " && !strings.HasPrefix(rest, "*") && !strings.HasPrefix(rest, "-") {
+	if leadingSpace == "    " && !strings.HasPrefix(rest, "*") && !strings.HasPrefix(rest, "-") && !prevLineIsListItem {
 		// Four leading spaces means a quoted line
 		// Also assume it's not a quote if it starts with "*" or "-"
 		return codeColor.Get(line), true, false
@@ -263,8 +275,9 @@ func markdownHighlight(line string, inCodeBlock, prevLineIsListItem bool, inList
 	// Color differently depending on the leading word
 	firstWord := words[0]
 	lastWord := words[len(words)-1]
-	switch firstWord {
-	case "#", "##", "###", "####", "#####", "######", "#######":
+
+	switch {
+	case consistsOf(firstWord, '#', []rune{'.', ' '}):
 		if strings.HasSuffix(lastWord, "#") && strings.Contains(rest, " ") {
 			centerLen := len(rest) - (len(firstWord) + len(lastWord))
 			if centerLen > 0 {
@@ -276,7 +289,7 @@ func markdownHighlight(line string, inCodeBlock, prevLineIsListItem bool, inList
 			return leadingSpace + headerBulletColor.Get(firstWord) + " " + headerTextColor.Get(emphasis(quotedWordReplace(line[dataPos+len(firstWord)+1:], '`', headerTextColor, codeColor), headerTextColor, italicsColor, boldColor, strikeColor)), true, false // TODO: `
 		}
 		return leadingSpace + headerTextColor.Get(rest), true, false
-	case "*", "-", "+", "1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.", "10.": // ignore numbers over 10
+	case isListItem(line):
 		if strings.HasPrefix(rest, "- [ ] ") || strings.HasPrefix(rest, "- [x] ") || strings.HasPrefix(rest, "- [X] ") {
 			return leadingSpace + listBulletColor.Get(rest[:1]) + " " + checkboxColor.Get(rest[2:3]) + xColor.Get(rest[3:4]) + checkboxColor.Get(rest[4:5]) + " " + emphasis(quotedWordReplace(line[dataPos+6:], '`', listTextColor, listCodeColor), listTextColor, italicsColor, boldColor, strikeColor), true, false
 		}

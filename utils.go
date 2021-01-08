@@ -101,8 +101,27 @@ func isLower(s string) bool {
 	return true
 }
 
+// Check if the given string only consists of the given rune,
+// ignoring the other given runes.
+func consistsOf(s string, e rune, ignore []rune) bool {
+OUTER_LOOP:
+	for _, r := range s {
+		for _, x := range ignore {
+			if r == x {
+				continue OUTER_LOOP
+			}
+		}
+		if r != e {
+			//logf("CONSISTS OF: %s, %s, %s: FALSE\n", s, string(e), string(ignore))
+			return false
+		}
+	}
+	//logf("CONSISTS OF: %s, %s, %s: TRUE\n", s, string(e), string(ignore))
+	return true
+}
+
 // logf, for quick "printf-style" debugging
-func logf(head string, tail ...interface{}) {
+func logf(format string, args ...interface{}) {
 	tmpdir := os.Getenv("TMPDIR")
 	if tmpdir == "" {
 		tmpdir = "/tmp"
@@ -115,7 +134,7 @@ func logf(head string, tail ...interface{}) {
 			log.Fatalln(err)
 		}
 	}
-	f.WriteString(fmt.Sprintf(head, tail...))
+	f.WriteString(fmt.Sprintf(format, args...))
 	f.Sync()
 	f.Close()
 }
