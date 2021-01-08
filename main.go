@@ -49,11 +49,11 @@ Hotkeys
 
 ctrl-s     to save
 ctrl-q     to quit
-ctrl-r     to open a portal so that this text can be pasted into another file with ctrl-v
-		   for git interactive rebases, cycle the rebase keywords
+ctrl-r     to open a portal so that this text can be pasted into another file
 ctrl-w     for Zig, Rust, V and Go, format with the "... fmt" command
            for C++, format the current file with "clang-format"
-           for markdown, toggle checkboxes
+           for HTML, format the file with "tidy", for Python: "autopep8"
+           for Markdown, toggle checkboxes
            for git interactive rebases, cycle the rebase keywords
 ctrl-a     go to start of line, then start of text and then the previous line
 ctrl-e     go to end of line and then the next line
