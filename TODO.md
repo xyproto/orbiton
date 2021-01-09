@@ -13,6 +13,7 @@
 
 ## Bugs/features/issues
 
+- [ ] Skip `os.Stat` and `Glob` if they take to long, and just open the file directly (they are needed for smart filename completion).
 - [ ] Refactor the code to handle a line as a Line struct/object that has these markers: start of line, start of text, start of scroll view, end of scroll view, end of text, one after end of text, end of line including whitespace
 - [ ] Inherit from the Line struct (with interfaces+types+methods) by adding per-language markers: start of block, end of block, indentation compared to the line above, dedentation compared to the line above
 - [ ] If there are four lines: not comment, comment, not comment, comment, let ctrl+/ behave differently.
