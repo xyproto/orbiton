@@ -269,11 +269,16 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			if err == nil { // success
 				sourceCode = string(sourceData)
 			}
+			cmd = exec.Command("zig", "build-exe", "-lc", filename, "--name", baseDirName, "--cache-dir", expandUser("~/.cache/o/zig"))
+			// TODO: Find a better way than this
 			if strings.Contains(sourceCode, "SDL2/SDL.h") {
-				// TODO: This is a hack. Write more general library detection.
-				cmd = exec.Command("zig", "build-exe", "-lc", "-lSDL2", filename, "--name", baseDirName, "--cache-dir", expandUser("~/.cache/o/zig"))
-			} else {
-				cmd = exec.Command("zig", "build-exe", "-lc", filename, "--name", baseDirName, "--cache-dir", expandUser("~/.cache/o/zig"))
+				cmd.Args = append(cmd.Args, "-lSDL2")
+			}
+			if strings.Contains(sourceCode, "gmp.h") {
+				cmd.Args = append(cmd.Args, "-lgmp")
+			}
+			if strings.Contains(sourceCode, "glfw") {
+				cmd.Args = append(cmd.Args, "-lglfw")
 			}
 		}
 	} else if strings.HasSuffix(filename, "_test.go") {
