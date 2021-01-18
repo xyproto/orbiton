@@ -204,6 +204,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			exec.Command("nim", "c", filename):                                               {".nim"},                                                    // Nim
 			exec.Command("fpc", filename):                                                    {".pp", ".pas", ".lpr"},                                     // Object Pascal / Delphi
 			exec.Command("xdg-open", filename):                                               {".htm", ".html"},                                           // Display HTML in the browser
+			exec.Command("odin", "build", filename):                                          {".odin"},
 		}
 	)
 
@@ -351,9 +352,12 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		case bytes.Count(output, []byte(":")) >= 2:
 			errorMarker = ":"
 		}
-	}
-
-	if err == nil && e.mode == modeHTML {
+	} else if e.mode == modeOdin {
+		switch {
+		case bytes.Contains(output, []byte(") ")):
+			errorMarker = ") "
+		}
+	} else if err == nil && e.mode == modeHTML {
 		return "Success", true, true
 	}
 
@@ -396,6 +400,39 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 					}
 				} else if strings.HasPrefix(line, "In ") {
 					crystalLocationLine = line
+				}
+			} else if e.mode == modeOdin {
+				errorMessage = ""
+				if strings.Contains(line, errorMarker) {
+					whereAndWhat := strings.SplitN(line, errorMarker, 2)
+					where := whereAndWhat[0]
+					errorMessage = whereAndWhat[1]
+					filenameAndLoc := strings.SplitN(where, "(", 2)
+					errorFilename := filenameAndLoc[0]
+					baseErrorFilename := filepath.Base(errorFilename)
+					loc := filenameAndLoc[1]
+					locCol := strings.SplitN(loc, ":", 2)
+					lineNumberString := locCol[0]
+					lineColumnString := locCol[1]
+
+					// Move to (x, y), line number first and then column number
+					if i, err := strconv.Atoi(lineNumberString); err == nil {
+						foundY := LineIndex(i - 1)
+						e.redraw = e.GoTo(foundY, c, status)
+						e.redrawCursor = e.redraw
+						if x, err := strconv.Atoi(lineColumnString); err == nil { // no error
+							foundX := x - 1
+							tabs := strings.Count(e.Line(foundY), "\t")
+							e.pos.sx = foundX + (tabs * (e.tabs.spacesPerTab - 1))
+							e.Center(c)
+						}
+					}
+
+					// Return the error message
+					if baseErrorFilename != baseFilename {
+						return "In " + baseErrorFilename + ": " + errorMessage, true, false
+					}
+					return errorMessage, true, false
 				}
 			} else if e.mode == modeObjectPascal {
 				errorMessage = ""

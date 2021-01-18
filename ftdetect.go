@@ -41,6 +41,7 @@ const (
 	modeC            // for C
 	modeAda          // for Ada
 	modeHTML         // for HTML
+	modeOdin         // for Odin
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -87,6 +88,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeAssembly
 		case ".go":
 			mode = modeGo
+		case ".odin":
+			mode = modeOdin
 		case ".hs":
 			mode = modeHaskell
 		case ".sml":
