@@ -7,7 +7,6 @@ o*.p*
 *.swp
 *.tmp
 *~
-test.*
 *.test
 *.fil
 insert.txt

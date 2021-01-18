@@ -1,6 +1,6 @@
 ![o](img/o128x128.png)
 
-[![Build Status](https://travis-ci.com/xyproto/o.svg?branch=main)](https://travis-ci.com/xyproto/o) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/o/main/LICENSE)
+![Build](https://github.com/xyproto/o/workflows/Build/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/o/main/LICENSE)
 
 `o` is a text editor that is limited to the VT100 standard. It has general syntax highlighting and launches instantly.
 
@@ -153,6 +153,7 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-w` to update the `p
 | Lua                                             | `.lua`                                                    | yes           | `luac`                                            | `lua-format -i --no-keep-simple-function-one-line --column-limit=120 --indent-width=2 --no-use-tab $filename`  |
 | Object Pascal                                   | `.pas`, `.pp`, `.lpr`                                     | yes           | `fpc`                                             | WIP                                                                                                            |
 | Nim                                             | `.nim`                                                    | WIP           | `nim c`                                           | WIP                                                                                                            |
+| Odin                                            | `.odin`                                                   | yes           | `odin build`                                      | N/A                                                                                                            |
 
 | Markup language | File extensions | Jump to error | Format command ($filename is a temporary file) |
 | HTML | `.htm`, `.html` | no | `tidy -w 120 -q -c -i -utf8 --show-errors 0 --show-warnings no --tidy-mark no --force-output yes -m` |
