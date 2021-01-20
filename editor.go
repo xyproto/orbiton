@@ -522,6 +522,8 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 	// Save the current position
 	bookmark := e.pos.Copy()
 
+	e.Home()
+
 	// Strip trailing spaces on all lines
 	l := e.Len()
 	for i := 0; i < l; i++ {
