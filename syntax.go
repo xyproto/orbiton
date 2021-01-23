@@ -41,6 +41,7 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 	case modeKotlin:
 		syntax.Keywords = make(map[string]struct{})
 		addKeywords = kotlinWords
+		delKeywords = []string{"it"}
 	case modeJava:
 		addKeywords = []string{"package"}
 	case modeHIDL:
