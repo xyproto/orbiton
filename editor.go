@@ -576,6 +576,7 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 	if shebang && e.mode != modeRust {
 		// Call Chmod, but ignore errors (since this is just a bonus and not critical)
 		os.Chmod(e.filename, fileMode)
+		e.SetSyntaxHighlight(true)
 	}
 
 	// Trailing spaces may be trimmed, so move to the end, if needed
