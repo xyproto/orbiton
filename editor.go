@@ -522,13 +522,18 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 	// Save the current position
 	bookmark := e.pos.Copy()
 
-	e.Home()
-
 	// Strip trailing spaces on all lines
 	l := e.Len()
+	changed := false
 	for i := 0; i < l; i++ {
-		e.TrimRight(LineIndex(i))
+		if e.TrimRight(LineIndex(i)) {
+			changed = true
+		}
 	}
+	if changed {
+		e.Home()
+	}
+
 	// Skip trailing newlines
 	data = bytes.TrimRightFunc([]byte(e.String()), unicode.IsSpace)
 	// Replace non-breaking space with regular spaces
@@ -596,27 +601,35 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 }
 
 // TrimRight will remove whitespace from the end of the given line number
-func (e *Editor) TrimRight(index LineIndex) {
+// Returns true if the line was trimmed
+func (e *Editor) TrimRight(index LineIndex) bool {
+	changed := false
 	n := int(index)
 	if line, ok := e.lines[n]; ok {
 		newRunes := []rune(strings.TrimRightFunc(string(line), unicode.IsSpace))
+		// TODO: Just compare lengths instead of contents?
 		if string(newRunes) != string(line) {
 			e.lines[n] = newRunes
-			e.changed = true
+			changed = true
 		}
 	}
+	return changed
 }
 
 // TrimLeft will remove whitespace from the start of the given line number
-func (e *Editor) TrimLeft(index LineIndex) {
+// Returns true if the line was trimmed
+func (e *Editor) TrimLeft(index LineIndex) bool {
+	changed := false
 	n := int(index)
 	if line, ok := e.lines[n]; ok {
 		newRunes := []rune(strings.TrimLeftFunc(string(line), unicode.IsSpace))
+		// TODO: Just compare lengths instead of contents?
 		if string(newRunes) != string(line) {
 			e.lines[n] = newRunes
-			e.changed = true
+			changed = true
 		}
 	}
+	return changed
 }
 
 // StripSingleLineComment will strip away trailing single-line comments.
