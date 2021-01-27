@@ -309,6 +309,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 								// Add the filename of the temporary file to the command
 								cmd.Args = append(cmd.Args, tempFilename)
 
+								// Save the command in a temporary file
+								saveCommand(cmd)
+
 								// Format the temporary file
 								output, err := cmd.CombinedOutput()
 
