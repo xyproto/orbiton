@@ -36,6 +36,9 @@ func (e *Editor) exportScdoc(manFilename string) error {
 	scdoc.Stdout = manpageFile
 	scdoc.Stderr = &errBuf
 
+	// Save the command in a temporary file
+	saveCommand(scdoc)
+
 	// Run scdoc
 	if err := scdoc.Run(); err != nil {
 		errorMessage := strings.TrimSpace(errBuf.String())
@@ -96,6 +99,9 @@ func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath
 		return // from goroutine
 	}
 
+	// The reason for writing to a temporary file is to be able to export without saving
+	// the currently edited file.
+
 	// TODO: Write a SaveAs function for the Editor
 
 	// Save to tmpfn
@@ -111,9 +117,20 @@ func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath
 	}
 	e.filename = oldFilename
 
-	// TODO: Check if there are environment variables applicable to paper sizes
-	// TODO: -N is maybe not needed ?
-	pandocCommand := exec.Command(pandocPath, "-N", "-fmarkdown-implicit_figures", "--toc", "-V", "\"geometry:a4paper\"", "-V", "\"geometry:margin=.4in\"", "-o", pdfFilename, tmpfn)
+	// Check if the PAPERSIZE environment variable is set
+	geometry := "a4"
+	if papersize := os.Getenv("PAPERSIZE"); papersize != "" {
+		geometry = papersize
+	}
+
+	pandocCommand := exec.Command(pandocPath, "-fmarkdown-implicit_figures", "--toc", "-V", "\"geometry:"+geometry+"\"", "-V", "\"geometry:margin=2cm\"", "--pdf-engine=xelatex", "-o", pdfFilename, oldFilename)
+
+	// Save the command in a temporary file, using the current filename
+	saveCommand(pandocCommand)
+
+	// Use the temporary filename for the last argument, now that the command has been saved
+	pandocCommand.Args[len(pandocCommand.Args)-1] = tmpfn
+
 	// Run pandoc
 	//panic(pandocCommand)
 	if err = pandocCommand.Run(); err != nil {
@@ -300,6 +317,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		status.SetMessage(progressStatusMessage)
 		status.ShowNoTimeout(c, e)
 	}
+
+	// Save the command in a temporary file
+	saveCommand(cmd)
 
 	// Run the command and fetch the combined output from stderr and stdout.
 	// Ignore the status code / error, only look at the output.
