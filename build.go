@@ -81,79 +81,6 @@ func (e *Editor) exportAdoc(c *vt100.Canvas, manFilename string) error {
 	return nil
 }
 
-// mustExportPandoc returns nothing, but can be used concurrently.
-// This takes a bit longer than the other export types, which is why this one is different.
-func (e *Editor) mustExportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath, pdfFilename string) {
-	status.ClearAll(c)
-	status.SetMessage("Exporting to PDF using Pandoc...")
-	status.ShowNoTimeout(c, e)
-
-	// TODO: Use a proper function for generating temporary files
-	tmpfn := "___o___.md"
-
-	// Check if the temporary file already exists
-	if exists(tmpfn) {
-		status.ClearAll(c)
-		status.SetErrorMessage(tmpfn + " already exists, please remove it")
-		status.Show(c, e)
-		return // from goroutine
-	}
-
-	// The reason for writing to a temporary file is to be able to export without saving
-	// the currently edited file.
-
-	// TODO: Write a SaveAs function for the Editor
-
-	// Save to tmpfn
-	oldFilename := e.filename
-	e.filename = tmpfn
-	err := e.Save(c)
-	if err != nil {
-		e.filename = oldFilename
-		status.ClearAll(c)
-		status.SetErrorMessage(err.Error())
-		status.Show(c, e)
-		return // from goroutine
-	}
-	e.filename = oldFilename
-
-	// Check if the PAPERSIZE environment variable is set
-	geometry := "a4"
-	if papersize := os.Getenv("PAPERSIZE"); papersize != "" {
-		geometry = papersize
-	}
-
-	pandocCommand := exec.Command(pandocPath, "-fmarkdown-implicit_figures", "--toc", "-V", "\"geometry:"+geometry+"\"", "-V", "\"geometry:margin=2cm\"", "--pdf-engine=xelatex", "-o", pdfFilename, oldFilename)
-
-	// Save the command in a temporary file, using the current filename
-	saveCommand(pandocCommand)
-
-	// Use the temporary filename for the last argument, now that the command has been saved
-	pandocCommand.Args[len(pandocCommand.Args)-1] = tmpfn
-
-	// Run pandoc
-	//panic(pandocCommand)
-	if err = pandocCommand.Run(); err != nil {
-		_ = os.Remove(tmpfn) // Try removing the temporary filename if pandoc fails
-		status.ClearAll(c)
-		status.SetErrorMessage(err.Error())
-		status.Show(c, e)
-		return // from goroutine
-	}
-
-	// Remove the temporary file
-	if err = os.Remove(tmpfn); err != nil {
-		status.ClearAll(c)
-		status.SetMessage(err.Error())
-		status.Show(c, e)
-		return // from goroutine
-	}
-
-	status.ClearAll(c)
-	status.SetMessage("Saved " + pdfFilename)
-	status.ShowNoTimeout(c, e)
-}
-
 // BuildOrExport will try to build the source code or export the document.
 // Returns a status message and then true if an action was performed and another true if compilation/testing worked out.
 func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename string) (string, bool, bool) {
@@ -183,8 +110,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 	// pandoc
 	if pandocPath := which("pandoc"); e.mode == modeMarkdown && pandocPath != "" {
 		pdfFilename := strings.Replace(filepath.Base(filename), ".", "_", -1) + ".pdf"
-		// Export to PDF using pandoc, concurrently. The goroutine handles its own status messages.
-		go e.mustExportPandoc(c, status, pandocPath, pdfFilename)
+		// Export to PDF using pandoc. The function handles its own status messages.
+		// TODO: Don't ignore the error
+		_ = e.exportPandoc(c, status, pandocPath, pdfFilename)
 		// TODO: Add a minimum of error detection. Perhaps wait just 20ms and check if the goroutine is still running.
 		return "", true, true // no message returned, the mustExportPandoc function handles it's own status output
 	}
