@@ -1,68 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/xyproto/vt100"
 )
 
-// render PDF from Markdown using pandoc
-func (e *Editor) exportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath, pdfFilename string) error {
-	// This function used to be concurrent. There are some leftovers from this that could be refactored away.
-
-	status.ClearAll(c)
-	status.SetMessage("Exporting to PDF using Pandoc...")
-	status.ShowNoTimeout(c, e)
-
-	// The reason for writing to a temporary file is to be able to export without saving
-	// the currently edited file.
-
-	// Use the temporary directory defined in TMPDIR, with fallback to /tmp
-	tempdir := os.Getenv("TMPDIR")
-	if tempdir == "" {
-		tempdir = "/tmp"
-	}
-
-	tempTexFilename := ""
-	tf, err := ioutil.TempFile(tempdir, "__o*.tex")
-	if err != nil {
-		return err
-	}
-	tempTexFilename = tf.Name()
-
-	tempFilename := ""
-	f, err := ioutil.TempFile(tempdir, "__o*.md")
-	if err != nil {
-		return err
-	}
-	tempFilename = f.Name()
-
-	// TODO: Write a SaveAs function for the Editor
-
-	// Save to tmpfn
-	oldFilename := e.filename
-	e.filename = tempFilename
-	err = e.Save(c)
-	if err != nil {
-		e.filename = oldFilename
-		status.ClearAll(c)
-		status.SetErrorMessage(err.Error())
-		status.Show(c, e)
-		return err
-	}
-	e.filename = oldFilename
-
-	// Check if the PAPERSIZE environment variable is set
-	papersize := "a4"
-	if papersizeEnv := os.Getenv("PAPERSIZE"); papersizeEnv != "" {
-		papersize = papersizeEnv
-	}
-
-	pandocCommand := exec.Command(pandocPath, "-fmarkdown-implicit_figures", "--toc", "-Vgeometry:left=1cm,top=1cm,right=1cm,bottom=2cm", "-Vpapersize:"+papersize, "-Vfontsize=12pt", "--pdf-engine=xelatex", "-o", pdfFilename, oldFilename)
-
-	const listingsSetupTex = `% https://tex.stackexchange.com/a/179956/5116
+const (
+	pandocTexFilename = "~/.config/o/pandoc.tex"
+	listingsSetupTex  = `% https://tex.stackexchange.com/a/179956/5116
 \usepackage{xcolor}
 \lstset{
     basicstyle=\ttfamily,
@@ -86,15 +36,72 @@ func (e *Editor) exportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath, pd
     showlines=true,
 }
 `
+)
 
-	// TODO: Use a better temporary filename
-	err = ioutil.WriteFile(tempTexFilename, []byte(listingsSetupTex), 0644)
+// exportPandoc will render PDF from Markdown using pandoc
+func (e *Editor) exportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath, pdfFilename string) error {
+	// This function used to be concurrent. There are some leftovers from this that could be refactored away.
+
+	status.ClearAll(c)
+	status.SetMessage("Exporting to PDF using Pandoc...")
+	status.ShowNoTimeout(c, e)
+
+	// The reason for writing to a temporary file is to be able to export without saving
+	// the currently edited file.
+
+	// Use the temporary directory defined in TMPDIR, with fallback to /tmp
+	tempdir := os.Getenv("TMPDIR")
+	if tempdir == "" {
+		tempdir = "/tmp"
+	}
+
+	tempFilename := ""
+	f, err := ioutil.TempFile(tempdir, "_o*.md")
 	if err != nil {
 		return err
 	}
+	defer os.Remove(tempFilename)
+	tempFilename = f.Name()
+
+	// TODO: Implement a SaveAs function
+
+	// Save to tmpfn
+	oldFilename := e.filename
+	e.filename = tempFilename
+	err = e.Save(c)
+	if err != nil {
+		e.filename = oldFilename
+		status.ClearAll(c)
+		status.SetErrorMessage(err.Error())
+		status.Show(c, e)
+		return err
+	}
+	e.filename = oldFilename
+
+	// Check if the PAPERSIZE environment variable is set. Default to A4.
+	papersize := "a4"
+	if papersizeEnv := os.Getenv("PAPERSIZE"); papersizeEnv != "" {
+		papersize = papersizeEnv
+	}
+
+	pandocCommand := exec.Command(pandocPath, "-fmarkdown-implicit_figures", "--toc", "-Vgeometry:left=1cm,top=1cm,right=1cm,bottom=2cm", "-Vpapersize:"+papersize, "-Vfontsize=12pt", "--pdf-engine=xelatex", "-o", pdfFilename, oldFilename)
+
+	// Write the Pandoc Tex style file, for configuring the listings package, if it does not already exist
+	if !exists(expandUser(pandocTexFilename)) {
+		// First create the folder, if needed, in a best effort attempt
+		folderPath := filepath.Dir(expandUser(pandocTexFilename))
+		os.MkdirAll(folderPath, os.ModePerm)
+		// Write the Pandoc Tex style file
+		err = ioutil.WriteFile(expandUser(pandocTexFilename), []byte(listingsSetupTex), 0644)
+		if err != nil {
+			status.SetErrorMessage("Could not write " + pandocTexFilename + ": " + err.Error())
+			status.Show(c, e)
+			return err
+		}
+	}
 
 	// use the listings package
-	pandocCommand.Args = append(pandocCommand.Args, "--listings", "-H"+tempTexFilename)
+	pandocCommand.Args = append(pandocCommand.Args, "--listings", "-H"+expandUser(pandocTexFilename))
 
 	// add output and input filenames
 	pandocCommand.Args = append(pandocCommand.Args, "-o"+pdfFilename, oldFilename)
@@ -105,27 +112,20 @@ func (e *Editor) exportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath, pd
 	// Use the temporary filename for the last argument, now that the command has been saved
 	pandocCommand.Args[len(pandocCommand.Args)-1] = tempFilename
 
-	if err = pandocCommand.Run(); err != nil {
-		_ = os.Remove(tempFilename) // Try removing the temporary filename if pandoc fails
+	if output, err := pandocCommand.CombinedOutput(); err != nil {
 		status.ClearAll(c)
-		status.SetErrorMessage(err.Error())
-		status.Show(c, e)
-		return err
-	}
 
-	// Remove the temporary file
-	if err = os.Remove(tempFilename); err != nil {
-		status.ClearAll(c)
-		status.SetMessage(err.Error())
-		status.Show(c, e)
-		return err
-	}
+		// The program was executed, but failed
+		outputByteLines := bytes.Split(bytes.TrimSpace(output), []byte{'\n'})
+		errorMessage := string(outputByteLines[len(outputByteLines)-1])
 
-	// Remove the temporary tex file
-	if err = os.Remove(tempTexFilename); err != nil {
-		status.ClearAll(c)
-		status.SetMessage(err.Error())
+		if len(errorMessage) == 0 {
+			errorMessage = err.Error()
+		}
+
+		status.SetErrorMessage(errorMessage)
 		status.Show(c, e)
+
 		return err
 	}
 
