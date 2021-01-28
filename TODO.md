@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] If a file is locked, unlock with `ctrl-s`, even if there are no new changes.
 - [ ] Improve error parsing when running `go test` with ctrl-space.
 - [ ] Add a `-b` and a `--build` flag that will output the build command that would have been used for the given filename.
 - [ ] Stop using `github.com/pkg/term`, it has issues for GOOS=freebsd.
