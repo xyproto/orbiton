@@ -85,6 +85,7 @@ These features are unique to `o`, as far as I am aware:
 * When editing Markdown, checkboxes can be toggled with `ctrl-w`.
 * If the editor executable renamed to `red` (or have a symlink with that name), the default theme will be red/white/gray.
 * If the editor executable renamed to `light` (or have a symlink with that name), the default theme will be suitable for light backgrounds.
+* Want to quickly convert Markdown to PDF and have pandoc installed? Try `o filename.md`, press `ctrl-space` twice and quit with `ctrl-q`.
 
 ## Known bugs
 
@@ -283,6 +284,7 @@ rm -rf _o_build
 * `javac`
 * `jar`
 * `google-java-format`
+* `pandoc`
 
 ## Size
 
@@ -330,15 +332,19 @@ fo somefile.cpp 123
 
 Press `ctrl-space` **twice** to render Markdown files to PDF using `pandoc` (`ctrl-t` will save the text directly to PDF, without using `pandoc`).
 
+If the `PAPERSIZE` environment variable is set to ie. `a4` or `letter`, it will be respected when exporting from Markdown to PDF using pandoc, at the press of `ctrl-space`.
+
+The `--pdf-engine=xelatex` and `--listings` flags are used, so `xelatex` and the `listings` package needs to be available. A standard installation of LaTeX and Pandoc should provide both.
+
 ## Suggested settings
 
-### Alacritty
+These should work well together with `o`:
 
 * Try the `JetBrains Mono NL` font.
 
 ### Konsole
 
-* Try the `Breeze` color scheme (but with a black background) and the wonderful (and open source) `JetBrains Mono NL` font.
+* Try the `Breeze` color scheme (but with a black background). It should work well together with `o`.
 * Untick the `Flow control` option in the profile settings, to ensure that `ctrl-s` will never freeze the terminal.
 
 ## General info
