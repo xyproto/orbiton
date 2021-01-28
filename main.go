@@ -100,7 +100,7 @@ Set NO_COLOR=1 to disable colors.
 
 	filename, lineNumber, colNumber := FilenameAndLineNumberAndColNumber(flag.Arg(0), flag.Arg(1), flag.Arg(2))
 	if filename == "" {
-		fmt.Fprintln(os.Stderr, "Need a filename.")
+		fmt.Fprintln(os.Stderr, "please provide a filename")
 		os.Exit(1)
 	}
 
