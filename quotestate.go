@@ -104,6 +104,10 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 		if prevRune == '/' && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
 			q.multiLineComment = true
 		}
+	case '-': // support for HTML-style and XML-style multi-line comments
+		if prevRune == '!' && prevPrevRune == '<' && q.None() {
+			q.multiLineComment = true
+		}
 	case []rune(q.singleLineCommentMarker)[0]:
 		// TODO: Simplify by checking q.None() first, and assuming that the len of the marker is > 1 if it's not 1 since it's not 0
 		if !q.multiLineComment && !q.singleLineComment && !q.startedMultiLineString {
@@ -128,7 +132,12 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 		// r == '/'
 		fallthrough
 	case '/': // support C-style multi-line comments
-		if prevRune == '*' && !q.None() {
+		if prevRune == '*' {
+			q.stoppedMultiLineComment = true
+			q.multiLineComment = false
+		}
+	case '>': // support HTML-style and XML-style multi-line comments
+		if prevRune == '-' {
 			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
 		}

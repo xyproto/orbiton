@@ -179,7 +179,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		kotlinNative          bool
 	)
 
-	if e.mode == modeHTML {
+	if e.mode == modeHTML || e.mode == modeXML {
 		progressStatusMessage = "Displaying"
 	}
 
@@ -305,7 +305,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		case bytes.Contains(output, []byte(") ")):
 			errorMarker = ") "
 		}
-	} else if err == nil && e.mode == modeHTML {
+	} else if err == nil && (e.mode == modeHTML || e.mode == modeXML) {
 		return "Success", true, true
 	}
 

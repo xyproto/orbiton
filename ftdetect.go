@@ -42,6 +42,7 @@ const (
 	modeAda          // for Ada
 	modeHTML         // for HTML
 	modeOdin         // for Odin
+	modeXML          // for XML
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -144,6 +145,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeAda
 		case ".htm", ".html":
 			mode = modeHTML
+		case ".xml":
+			mode = modeXML
 		default:
 			mode = modeBlank
 		}
