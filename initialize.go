@@ -27,7 +27,7 @@ func (ts TabsSpaces) String() string {
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message and an error type
-func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber LineNumber, colNumber ColNumber) (*Editor, string, error) {
+func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber LineNumber, colNumber ColNumber, theme Theme) (*Editor, string, error) {
 
 	var (
 		startTime          = time.Now()
@@ -70,7 +70,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		defaultEditorMultilineComment,
 		defaultEditorMultilineString,
 		defaultEditorHighlightTheme,
-		mode)
+		mode,
+		theme)
 
 	// For non-highlighted files, adjust the word wrap
 	if !e.syntaxHighlight {

@@ -65,7 +65,7 @@ type Editor struct {
 //    - multiline comment
 // * a syntax highlighting scheme
 // * a file mode
-func NewCustomEditor(tabsSpaces TabsSpaces, syntaxHighlight, rainbowParenthesis bool, scrollSpeed int, fg, bg, searchFg, multiLineComment, multiLineString vt100.AttributeColor, scheme syntax.TextConfig, mode Mode) *Editor {
+func NewCustomEditor(tabsSpaces TabsSpaces, syntaxHighlight, rainbowParenthesis bool, scrollSpeed int, fg, bg, searchFg, multiLineComment, multiLineString vt100.AttributeColor, scheme syntax.TextConfig, mode Mode, theme Theme) *Editor {
 	syntax.DefaultTextConfig = scheme
 	e := &Editor{}
 	e.lines = make(map[int][]rune)
@@ -98,6 +98,19 @@ func NewCustomEditor(tabsSpaces TabsSpaces, syntaxHighlight, rainbowParenthesis 
 	e.multiLineComment = multiLineComment
 	e.multiLineString = multiLineString
 
+	// Check if NO_COLOR is set
+	e.respectNoColorEnvironmentVariable()
+
+	// Check if a specific theme is set
+	switch theme {
+	case redBlackTheme:
+		e.setRedBlackTheme()
+	case lightTheme:
+		e.setLightTheme()
+	case defaultTheme:
+		break
+	}
+
 	return e
 }
 
@@ -106,7 +119,7 @@ func NewCustomEditor(tabsSpaces TabsSpaces, syntaxHighlight, rainbowParenthesis 
 // search results magenta, use the default syntax highlighting scheme, don't use git mode and don't use markdown mode,
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
-	e := NewCustomEditor(TabsSpaces{4, true}, false, false, 1, vt100.White, vt100.Black, vt100.Magenta, vt100.Gray, vt100.Magenta, syntax.DefaultTextConfig, modeBlank)
+	e := NewCustomEditor(TabsSpaces{4, true}, false, false, 1, vt100.White, vt100.Black, vt100.Magenta, vt100.Gray, vt100.Magenta, syntax.DefaultTextConfig, modeBlank, defaultTheme)
 	e.wrapWidth = wordWrapLimit
 	e.wrapWhenTyping = true
 	return e
@@ -2282,7 +2295,7 @@ func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *
 		switchBuffer.Restore(e)
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
-		e2, statusMessage, err = NewEditor(tty, c, filenameToOpen, LineNumber(0), ColNumber(0))
+		e2, statusMessage, err = NewEditor(tty, c, filenameToOpen, LineNumber(0), ColNumber(0), defaultTheme)
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)

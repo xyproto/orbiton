@@ -67,7 +67,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
-	e, statusMessage, err := NewEditor(tty, c, filename, lineNumber, colNumber)
+	e, statusMessage, err := NewEditor(tty, c, filename, lineNumber, colNumber, useTheme)
 	if err != nil {
 		return "", err
 	}
