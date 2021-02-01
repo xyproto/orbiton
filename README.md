@@ -128,9 +128,9 @@ These features are unique to `o`, as far as I am aware:
 
 ## Updating PKGBUILD files
 
-When editing `PKGBUILD` files, it is possible to press `ctrl-w` to update the `pkgver=` and `source=` fields, by a combination of guesswork and online searching.
+When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call Guessica` to update the `pkgver=` and `source=` fields, by a combination of guesswork and online searching.
 
-[`guessica`](https://github.com/xyproto/guessica) is the utility that is used for performing the guesswork, and must be installed for this feature to work.
+[`guessica`](https://github.com/xyproto/guessica) must be installed for this feature to work.
 
 ## Build and format
 
