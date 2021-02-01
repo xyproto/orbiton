@@ -9,40 +9,41 @@ import (
 
 const (
 	// Mode "enum"
-	modeBlank        = iota
-	modeGit          // for git commits and interactive rebases
-	modeMarkdown     // for Markdown (and asciidoctor and rst files)
-	modeMakefile     // for Makefiles
-	modeShell        // for shell scripts and PKGBUILD files
-	modeConfig       // for yml, toml, and ini files etc
-	modeAssembly     // for Assembly files
-	modeGo           // for Go
-	modeHaskell      // for Haskell
-	modeOCaml        // for OCaml
-	modeStandardML   // for Standard ML
-	modePython       // for Python
-	modeText         // for plain text documents
-	modeCMake        // for CMake files
-	modeVim          // for Vim or NeoVim configuration, or .vim scripts
-	modeLisp         // for Common Lisp, Emacs Lisp and Clojure
-	modeZig          // for Zig
-	modeKotlin       // for Kotlin
-	modeJava         // for Java
-	modeHIDL         // for the Android-related Hardware Abstraction Layer Interface Definition Language
-	modeSQL          // for Structured Query Language
-	modeOak          // for Oak
-	modeRust         // for Rust
-	modeLua          // for Lua
-	modeCrystal      // for Crystal
-	modeNim          // for Nim
-	modeObjectPascal // for Object Pascal and Delphi
-	modeBat          // for DOS batch files
-	modeCpp          // for C++
-	modeC            // for C
-	modeAda          // for Ada
-	modeHTML         // for HTML
-	modeOdin         // for Odin
-	modeXML          // for XML
+	modeBlank          = iota
+	modeGit            // for git commits and interactive rebases
+	modeMarkdown       // for Markdown (and asciidoctor and rst files)
+	modeMakefile       // for Makefiles
+	modeShell          // for shell scripts and PKGBUILD files
+	modeConfig         // for yml, toml, and ini files etc
+	modeAssembly       // for Assembly files
+	modeGo             // for Go
+	modeHaskell        // for Haskell
+	modeOCaml          // for OCaml
+	modeStandardML     // for Standard ML
+	modePython         // for Python
+	modeText           // for plain text documents
+	modeCMake          // for CMake files
+	modeVim            // for Vim or NeoVim configuration, or .vim scripts
+	modeLisp           // for Common Lisp, Emacs Lisp and Clojure
+	modeZig            // for Zig
+	modeKotlin         // for Kotlin
+	modeJava           // for Java
+	modeHIDL           // for the Android-related Hardware Abstraction Layer Interface Definition Language
+	modeSQL            // for Structured Query Language
+	modeOak            // for Oak
+	modeRust           // for Rust
+	modeLua            // for Lua
+	modeCrystal        // for Crystal
+	modeNim            // for Nim
+	modeObjectPascal   // for Object Pascal and Delphi
+	modeBat            // for DOS batch files
+	modeCpp            // for C++
+	modeC              // for C
+	modeAda            // for Ada
+	modeHTML           // for HTML
+	modeOdin           // for Odin
+	modeXML            // for XML
+	modePolicyLanguage // for SE Linux configuration files
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -77,7 +78,7 @@ func detectEditorMode(filename string) (Mode, bool) {
 		mode = modeMakefile
 	case strings.HasSuffix(filename, ".git/config") || ext == ".ini" || ext == ".cfg" || ext == ".conf" || ext == ".service" || ext == ".target" || ext == ".socket" || strings.HasPrefix(ext, "rc"):
 		fallthrough
-	case ext == ".yml" || ext == ".toml" || ext == ".ini" || strings.HasSuffix(filename, ".git/config") || (ext == "" && (strings.HasSuffix(baseFilename, "file") || strings.HasSuffix(baseFilename, "rc") || hasS(configFilenames, baseFilename))):
+	case ext == ".yml" || ext == ".toml" || ext == ".ini" || ext == ".bp" || strings.HasSuffix(filename, ".git/config") || (ext == "" && (strings.HasSuffix(baseFilename, "file") || strings.HasSuffix(baseFilename, "rc") || hasS(configFilenames, baseFilename))):
 		mode = modeConfig
 	case ext == ".sh" || ext == ".ksh" || ext == ".tcsh" || ext == ".bash" || ext == ".zsh" || ext == ".local" || ext == ".profile" || baseFilename == "PKGBUILD" || (strings.HasPrefix(baseFilename, ".") && strings.Contains(baseFilename, "sh")): // This last part covers .bashrc, .zshrc etc
 		mode = modeShell
@@ -147,6 +148,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeHTML
 		case ".xml":
 			mode = modeXML
+		case ".te":
+			mode = modePolicyLanguage
 		default:
 			mode = modeBlank
 		}
