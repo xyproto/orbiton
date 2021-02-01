@@ -179,7 +179,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	// because $COLORFGBG is "15;0" even though the background is white.
 	if hasE("XTERM_VERSION") || os.Getenv("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
 		e.setLightTheme()
-	} else if shell := os.Getenv("SHELL"); shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin") { // This is likely to be FreeBSD or OpenBSD
+		// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
+	} else if shell := os.Getenv("SHELL"); (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && filepath.Base(os.Args[0]) != "default" {
 		e.setRedBlackTheme()
 	}
 

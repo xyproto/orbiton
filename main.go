@@ -156,6 +156,8 @@ Set NO_COLOR=1 to disable colors.
 		useTheme = redBlackTheme
 	} else if filepath.Base(os.Args[0]) == "light" {
 		useTheme = lightTheme
+	} else if filepath.Base(os.Args[0]) == "default" {
+		useTheme = defaultTheme
 	}
 
 	// Run the main editor loop
