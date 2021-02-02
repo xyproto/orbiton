@@ -18,6 +18,9 @@ func (e *Editor) checkContents() {
 		case "bash", "fish", "zsh", "tcsh", "ksh", "sh", "ash":
 			e.mode = modeShell
 		}
+	} else if strings.HasPrefix(firstLine, "# $") {
+		// Most likely a csh script on FreeBSD
+		e.mode = modeShell
 	} else if strings.HasPrefix(firstLine, "#") {
 		e.firstLineHash = true
 	}
