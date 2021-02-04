@@ -14,6 +14,7 @@
 
 ## Bugs/features/issues
 
+- [ ] Press `ctrl-l` twice to run a linter.
 - [ ] A /*comment*/ in the middle of a code line in C++ makes most of the line gray.
 - [ ] Skip `os.Stat` and `Glob` if they take to long, and just open the file directly (they are needed for smart filename completion).
 - [ ] Refactor the code to handle a line as a Line struct/object that has these markers: start of line, start of text, start of scroll view, end of scroll view, end of text, one after end of text, end of line including whitespace
