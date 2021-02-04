@@ -66,6 +66,9 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 	case modeLua:
 		syntax.Keywords = make(map[string]struct{})
 		addKeywords = luaWords
+	case modeNroff:
+		syntax.Keywords = make(map[string]struct{})
+		addKeywords = []string{"B", "BR", "PP", "SH", "TP", "fB", "fP"}
 	case modeShell:
 		addKeywords = []string{"--force", "-f", "cmake", "configure", "do", "fdisk", "for", "gdisk", "in", "make", "mv", "ninja", "rm", "rmdir", "while"}
 		delKeywords = []string{"#else", "#endif", "default", "double", "exec", "float", "install", "long", "no", "pass", "ret", "super", "var", "with"}
@@ -99,6 +102,8 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return ";;"
 	case modeBat:
 		return "@rem" // or rem or just ":" ...
+	case modeNroff:
+		return `.\"`
 	default:
 		return "//"
 	}

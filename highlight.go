@@ -216,6 +216,15 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// Regular highlight
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					}
+				case modeNroff:
+					trimmedLine = strings.TrimSpace(line)
+					if strings.HasPrefix(trimmedLine, `.\"`) {
+						// Handle single line comments
+						coloredString = UnEscape(e.multiLineComment.Start(line))
+					} else {
+						// Regular highlight
+						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
+					}
 				case modeLisp:
 					q.singleQuote = 0
 					// Special case for Lisp single-line comments

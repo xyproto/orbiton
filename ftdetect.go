@@ -44,6 +44,7 @@ const (
 	modeOdin           // for Odin
 	modeXML            // for XML
 	modePolicyLanguage // for SE Linux configuration files
+	modeNroff          // for man pages
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -150,6 +151,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeXML
 		case ".te":
 			mode = modePolicyLanguage
+		case ".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8":
+			mode = modeNroff
 		default:
 			mode = modeBlank
 		}
