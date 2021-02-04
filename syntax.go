@@ -68,7 +68,8 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 		addKeywords = luaWords
 	case modeNroff:
 		syntax.Keywords = make(map[string]struct{})
-		addKeywords = []string{"B", "BR", "PP", "SH", "TP", "fB", "fP"}
+		delKeywords = []string{"class"}
+		addKeywords = []string{"B", "BR", "PP", "SH", "TP", "fB", "fP", "RB", "TH", "IR", "IP", "fI", "fR"}
 	case modeShell:
 		addKeywords = []string{"--force", "-f", "cmake", "configure", "do", "fdisk", "for", "gdisk", "in", "make", "mv", "ninja", "rm", "rmdir", "while"}
 		delKeywords = []string{"#else", "#endif", "default", "double", "exec", "float", "install", "long", "no", "pass", "ret", "super", "var", "with"}
