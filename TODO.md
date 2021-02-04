@@ -14,6 +14,7 @@
 
 ## Bugs/features/issues
 
+- [ ] Don't highlight regular text in Nroff files.
 - [ ] Press `ctrl-l` twice to run a linter.
 - [ ] A /*comment*/ in the middle of a code line in C++ makes most of the line gray.
 - [ ] Skip `os.Stat` and `Glob` if they take to long, and just open the file directly (they are needed for smart filename completion).
