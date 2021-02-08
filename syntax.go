@@ -75,6 +75,7 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 		delKeywords = []string{"#else", "#endif", "default", "double", "exec", "float", "install", "long", "no", "pass", "ret", "super", "var", "with"}
 		fallthrough // to the default case
 	default:
+		addKeywords = []string{"ifeq", "ifneq"}
 		delKeywords = append(delKeywords, []string{"require", "build", "package", "super", "type", "set"}...)
 	}
 	// Add extra keywords that are to be syntax highlighted
