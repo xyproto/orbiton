@@ -218,7 +218,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			}
 
 			// Format json
-			if strings.HasSuffix(e.filename, ".json") {
+			if strings.HasSuffix(e.filename, ".json") || strings.HasSuffix(e.filename, ".ipynb") {
 				// TODO: Find a JSON formatter that does not need a JavaScript package like otto
 				var v interface{}
 
