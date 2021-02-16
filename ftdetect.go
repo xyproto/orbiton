@@ -158,9 +158,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 		}
 	}
 
-	// TODO: Find all instances that checks if mode if modeBlank in the code, then introduce modeText
 	if mode == modeText {
-		mode = modeBlank
+		mode = modeMarkdown
 	}
 
 	// If the mode is not set and the filename is all uppercase and no ".", use modeMarkdown
