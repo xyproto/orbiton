@@ -157,7 +157,7 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 | Odin                                            | `.odin`                                                   | yes           | `odin build`                                      | N/A                                                                                                            |
 
 | Markup language | File extensions | Jump to error | Format command ($filename is a temporary file) |
-| HTML | `.htm`, `.html` | no | `tidy -w 120 -q -c -i -utf8 --show-errors 0 --show-warnings no --tidy-mark no --force-output yes -m` |
+| HTML | `.htm`, `.html` | no | `tidy -w 120 -q -i -utf8 --show-errors 0 --show-warnings no --tidy-mark no --force-output yes -ashtml -omit no -xml no -m -c` |
 
 * `o` will try to jump to the location where the error is and otherwise display `Success`.
 * For regular text files, `ctrl-w` will word wrap the lines to a length of 99.
