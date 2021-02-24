@@ -543,9 +543,6 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 			changed = true
 		}
 	}
-	if changed {
-		e.Home()
-	}
 
 	// Skip trailing newlines
 	data = bytes.TrimRightFunc([]byte(e.String()), unicode.IsSpace)
@@ -597,8 +594,10 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 		e.SetSyntaxHighlight(true)
 	}
 
+	e.redrawCursor = true
+
 	// Trailing spaces may be trimmed, so move to the end, if needed
-	if e.changed {
+	if changed {
 		e.GoToPosition(c, nil, *bookmark)
 		if e.AfterEndOfLine() {
 			e.EndNoTrim(c)
@@ -606,7 +605,6 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 		// Do the redraw manually before showing the status message
 		e.DrawLines(c, true, false)
 		e.redraw = false
-		e.redrawCursor = true
 	}
 
 	// All done

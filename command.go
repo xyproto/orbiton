@@ -17,23 +17,22 @@ const lastCommandFile = "~/.cache/o/last_command.sh"
 
 // UserSave saves the file and the location history
 func (e *Editor) UserSave(c *vt100.Canvas, status *StatusBar) {
-	status.ClearAll(c)
 	// Save the file
 	if err := e.Save(c); err != nil {
 		status.SetErrorMessage(err.Error())
 		status.Show(c, e)
 		return
 	}
+
 	// Save the current location in the location history and write it to file
 	if absFilename, err := e.AbsFilename(); err == nil { // no error
 		e.SaveLocation(absFilename, e.locationHistory)
 	}
+
 	// Status message
+	status.Clear(c)
 	status.SetMessage("Saved " + e.filename)
 	status.Show(c, e)
-
-	e.pos.offsetX = 0
-	c.Draw()
 }
 
 // Actions is a list of action titles and a list of action functions.

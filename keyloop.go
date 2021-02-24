@@ -267,9 +267,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				exec.Command("crystal", "tool", "format"):                                         {".cr"},
 				exec.Command("ktlint", "-F"):                                                      {".kt", ".kts"},
 				exec.Command("google-java-format", "-i"):                                          {".java"},
-				exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"):                                                        {".lua"},
+				exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"):                                                                        {".lua"},
 				exec.Command("tidy", "-w", "120", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "--force-output", "yes", "-ashtml", "-omit", "no", "-xml", "no", "-m", "-c"): {".html", ".htm"},
-				exec.Command("tidy", "-w", "80", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "-xml", "-m"):                                                 {".xml"},
+				exec.Command("tidy", "-w", "80", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "-xml", "-m"):                                                                 {".xml"},
 			}
 		OUT:
 			for cmd, extensions := range format {
@@ -1160,7 +1160,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:19": // ctrl-s, save
-			e.redrawCursor = true
 			e.UserSave(c, status)
 		case "c:21", "c:26": // ctrl-u or ctrl-z, undo (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state
