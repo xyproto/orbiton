@@ -885,7 +885,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			ext := filepath.Ext(e.filename)
 
 			// Tab completion of words for Go
-			if word := e.LettersBeforeCursor(); e.mode != modeBlank && !unicode.IsLetter(r) && len(word) > 0 {
+			if word := e.LettersBeforeCursor(); e.mode != modeBlank && leftRune != '.' && !unicode.IsLetter(r) && len(word) > 0 {
 				found := false
 				expandedWord := ""
 				for kw := range syntax.Keywords {
@@ -908,7 +908,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					break
 				}
 
-			} else if word := e.LettersBeforeCursor(); leftRune == '.' && !unicode.IsLetter(r) && e.mode != modeBlank && len(word) > 0 {
+				// Tab completion after a '.'
+			} else if word := e.LettersBeforeCursor(); e.mode != modeBlank && leftRune == '.' && !unicode.IsLetter(r) && len(word) > 0 {
 				// Now the preceding word before the "." has been found
 
 				// Grep all files in this directory with the same extension as the currently edited file
