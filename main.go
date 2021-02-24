@@ -50,6 +50,7 @@ Hotkeys
 ctrl-s     to save
 ctrl-q     to quit
 ctrl-r     to open a portal so that this text can be pasted into another file
+ctrl-space to build Go, C++, Zig, V, Rust, Haskell, Markdown, Adoc or Sdoc
 ctrl-w     for Zig, Rust, V and Go, format with the "... fmt" command
            for C++, format the current file with "clang-format"
            for HTML, format the file with "tidy", for Python: "autopep8"
@@ -71,12 +72,11 @@ ctrl-x     to cut the current line, press twice to cut the current block
 ctrl-b     to toggle a bookmark for the current line, or jump to a bookmark
 ctrl-j     to join lines
 ctrl-u     to undo (ctrl-z is also possible, but may background the application)
-ctrl-l     to jump to a specific line (or press return to jump to the top)
+ctrl-l     to jump to a specific line (press return to jump to the top or bottom)
 ctrl-f     to find a string
-esc        to redraw the screen and clear the last search
-ctrl-space to build Go, C++, Zig, V, Rust, Haskell, Markdown, Adoc or Sdoc
 ctrl-\     to toggle single-line comments for a block of code
 ctrl-~     to jump to matching parenthesis
+esc        to redraw the screen and clear the last search
 
 See the man page for more information.
 
