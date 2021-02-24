@@ -2353,9 +2353,8 @@ func (e *Editor) LineContentsFromCursorPosition() string {
 	return strings.TrimSpace(e.CurrentLine()[x:])
 }
 
-// Current dot word returns the word right left to the "." that the cursor is currently at,
-// if any.
-func (e *Editor) CurrentDotWord() string {
+// LettersBeforeCursor returns the current word up until the cursor (for autocompletion)
+func (e *Editor) LettersBeforeCursor() string {
 	y := int(e.DataY())
 	runes, ok := e.lines[y]
 	if !ok {
@@ -2365,64 +2364,19 @@ func (e *Editor) CurrentDotWord() string {
 	// Either find x or use the last index of the line
 	x, err := e.DataX()
 	if err != nil {
-		x = len(runes) - 1
+		x = len(runes)
 	}
-	if x <= 0 {
-		// This should never happen
-		return ""
-	}
+
 	var word []rune
 
-	// Loop from the current location (at the ".") and to the left on the current line
+	// Loop from the position before the current one and then leftwards on the current line
 	for i := x - 1; i >= 0; i-- {
-		r := e.lines[y][i]
-		if r == '.' {
-			continue
-		}
+		r := runes[i]
 		if !unicode.IsLetter(r) {
 			break
 		}
 		// Gather the letters in reverse
 		word = append([]rune{r}, word...)
-	}
-	if len(word) == 0 {
-		// No word before the current "."
-		return ""
-	}
-	return string(word)
-}
-
-// CurrentWord returns the word the cursor is currently at
-func (e *Editor) CurrentWord() string {
-	y := int(e.DataY())
-	runes, ok := e.lines[y]
-	if !ok {
-		// This should never happen
-		return ""
-	}
-	// Either find x or use the last index of the line
-	x, err := e.DataX()
-	if err != nil {
-		x = len(runes) - 1
-	}
-	if x <= 0 {
-		// This should never happen
-		return ""
-	}
-	var word []rune
-
-	// Loop from the current location and to the left on the current line
-	for i := x; i >= 0; i-- {
-		r := e.lines[y][i]
-		if !unicode.IsLetter(r) {
-			break
-		}
-		// Gather the letters in reverse
-		word = append([]rune{r}, word...)
-	}
-	if len(word) == 0 {
-		// No word before and at the current rune
-		return ""
 	}
 	return string(word)
 }

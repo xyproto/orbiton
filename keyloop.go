@@ -14,6 +14,7 @@ import (
 	"unicode"
 
 	"github.com/atotto/clipboard"
+	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
 )
 
@@ -882,51 +883,37 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			r := e.Rune()
 			leftRune := e.LeftRune()
 			ext := filepath.Ext(e.filename)
-			if leftRune == '.' && !unicode.IsLetter(r) && e.mode != modeBlank {
-				// Autocompletion
-				undo.Snapshot(e)
 
-				runes, ok := e.lines[y]
-				if !ok {
-					// This should never happen
-					break
-				}
-
-				// Either find x or use the last index of the line
-				x, err := e.DataX()
-				if err != nil {
-					x = len(runes) - 1
-				}
-
-				if x <= 0 {
-					// This should never happen
-					break
-				}
-
-				word := make([]rune, 0)
-				// Loop from the current location (at the ".") and to the left in the current line
-				for i := x - 1; i >= 0; i-- {
-					r := e.lines[y][i]
-					if r == '.' {
-						continue
+			// Tab completion of words for Go
+			if word := e.LettersBeforeCursor(); e.mode != modeBlank && !unicode.IsLetter(r) && len(word) > 0 {
+				found := false
+				expandedWord := ""
+				for kw := range syntax.Keywords {
+					if strings.HasPrefix(kw, word) {
+						if !found || (len(kw) < len(expandedWord)) && (len(expandedWord) > 0) {
+							expandedWord = kw
+							found = true
+						}
 					}
-					if !unicode.IsLetter(r) {
-						break
-					}
-					// Gather the letters in reverse
-					word = append([]rune{r}, word...)
 				}
 
-				if len(word) == 0 {
-					// No word before ".", nothing to complete
+				// Found a suitable keyword to expand to? Insert the rest of the string.
+				if found {
+					toInsert := strings.TrimPrefix(expandedWord, word)
+					undo.Snapshot(e)
+					e.redrawCursor = true
+					e.redraw = true
+					// Insert the part of expandedWord that comes after the current word
+					e.InsertStringAndMove(c, toInsert)
 					break
 				}
 
+			} else if word := e.LettersBeforeCursor(); leftRune == '.' && !unicode.IsLetter(r) && e.mode != modeBlank && len(word) > 0 {
 				// Now the preceding word before the "." has been found
 
 				// Grep all files in this directory with the same extension as the currently edited file
 				// for what could follow the word and a "."
-				suggestions := corpus(string(word), "*"+ext)
+				suggestions := corpus(word, "*"+ext)
 
 				// Choose a suggestion (tab cycles to the next suggestion)
 				chosen := e.SuggestMode(c, status, tty, suggestions)
@@ -934,6 +921,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				e.redraw = true
 
 				if chosen != "" {
+					undo.Snapshot(e)
 					// Insert the chosen word
 					e.InsertStringAndMove(c, chosen)
 					break
