@@ -2,11 +2,11 @@
 
 ## Pri
 
+- [ ] Autocompletion with Tab. Start with Go.
+- [ ] Support Delve. Introduce a Debug mode.
 - [ ] If a file is locked, unlock with `ctrl-s`, even if there are no new changes.
 - [ ] Improve error parsing when running `go test` with ctrl-space.
-- [ ] Add a `-b` and a `--build` flag that will output the build command that would have been used for the given filename.
-- [ ] Stop using `github.com/pkg/term`, it has issues for GOOS=freebsd.
-- [ ] Stop text from jumping around in some terminal emulators (Konsole?). Look at the [kilo](https://github.com/antirez/kilo) VT100 related source code.
+- [ ] Draw inspiration from [kilo](https://github.com/antirez/kilo).
 - [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] Better support for multi-byte unicode runes.
 - [ ] When starting o, hash sum the clipboards it can find. When pasting, use the latest changed clipboard. If nothing changed, use the one for Wayland or X11, depending on environment variables.
@@ -15,7 +15,7 @@
 ## Bugs/features/issues
 
 - [ ] Don't highlight regular text in Nroff files.
-- [ ] Press `ctrl-l` twice to run a linter.
+- [ ] Press `ctrl-l` twice to run a linter?
 - [ ] A /*comment*/ in the middle of a code line in C++ makes most of the line gray.
 - [ ] Skip `os.Stat` and `Glob` if they take to long, and just open the file directly (they are needed for smart filename completion).
 - [ ] Refactor the code to handle a line as a Line struct/object that has these markers: start of line, start of text, start of scroll view, end of scroll view, end of text, one after end of text, end of line including whitespace
