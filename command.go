@@ -383,6 +383,6 @@ func saveCommand(cmd *exec.Cmd) error {
 	defer f.Close()
 
 	// Write the contents, ignore the number of written bytes
-	_, err = f.WriteString("#!/bin/sh\n" + cmd.String() + "\n")
+	_, err = f.WriteString(fmt.Sprintf("#!/bin/sh\n%s\n", cmd))
 	return err
 }
