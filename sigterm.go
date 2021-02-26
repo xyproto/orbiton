@@ -20,6 +20,10 @@ func (e *Editor) SetUpTerminateHandler(c *vt100.Canvas, status *StatusBar, tty *
 		for {
 			// Block until the signal is received
 			<-sigChan
+
+			// Quickly save the file
+			e.UserSave(c, status)
+
 			status.SetMessage("ctrl-c")
 			status.Show(c, e)
 		}
