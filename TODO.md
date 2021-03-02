@@ -2,15 +2,15 @@
 
 ## Pri
 
-- [ ] Autocompletion with Tab. Start with Go.
+- [ ] Paste with middle mouse button.
+- [ ] If lines are removed, let the active bookmark stay at the same line.
+- [x] Autocompletion with Tab. Start with Go.
 - [ ] Support Delve. Introduce a Debug mode.
-- [ ] If a file is locked, unlock with `ctrl-s`, even if there are no new changes.
-- [ ] Improve error parsing when running `go test` with ctrl-space.
+- [ ] Fix output parsing when running `go test` with ctrl-space.
 - [ ] Draw inspiration from [kilo](https://github.com/antirez/kilo).
 - [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] Better support for multi-byte unicode runes.
 - [ ] When starting o, hash sum the clipboards it can find. When pasting, use the latest changed clipboard. If nothing changed, use the one for Wayland or X11, depending on environment variables.
-- [ ] Paste with middle mouse button.
 
 ## Bugs/features/issues
 
