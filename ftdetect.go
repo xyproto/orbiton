@@ -45,6 +45,7 @@ const (
 	modeXML            // for XML
 	modePolicyLanguage // for SE Linux configuration files
 	modeNroff          // for man pages
+	modeScala          // for Scala
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -153,6 +154,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modePolicyLanguage
 		case ".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8":
 			mode = modeNroff
+		case ".scala":
+			mode = modeScala
 		default:
 			mode = modeBlank
 		}
