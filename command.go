@@ -382,7 +382,10 @@ func saveCommand(cmd *exec.Cmd) error {
 	}
 	defer f.Close()
 
+	// Strip the leading /usr/bin/sh -c command, if present
+	commandString := strings.TrimPrefix(cmd.String(), "/usr/bin/sh -c ")
+
 	// Write the contents, ignore the number of written bytes
-	_, err = f.WriteString(fmt.Sprintf("#!/bin/sh\n%s\n", cmd))
+	_, err = f.WriteString(fmt.Sprintf("#!/bin/sh\n%s\n", commandString))
 	return err
 }
