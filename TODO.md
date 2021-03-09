@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] After a keyword in a comment, don't disable the comment highlight color for the rest of the line
 - [ ] Paste with middle mouse button.
 - [ ] If lines are removed, let the active bookmark stay at the same line.
 - [x] Autocompletion with Tab. Start with Go.
