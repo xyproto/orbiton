@@ -151,6 +151,7 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 | Kotlin                                          | `.kt`                                                     | yes           | `kotlinc $filename -include-runtime -d`           | `ktlint`                                                                                                       |
 | Kotlin, if `kotlinc-native` is installed        | `.kt`                                                     | yes           | `kotlinc-native -nowarn -opt -Xallocator=mimalloc -produce program -linker-option '--as-needed' $filename` | `ktlint`                                              |
 | Java                                            | `.java`                                                   | yes           | `javac` + `jar`, see details below                | `google-java-format -i $filename`                                                                              |
+| Scala                                           | `.scala`                                                  | yes           | `scalac` + `jar`, see details below               | WIP                                                                              |
 | Lua                                             | `.lua`                                                    | yes           | `luac`                                            | `lua-format -i --no-keep-simple-function-one-line --column-limit=120 --indent-width=2 --no-use-tab $filename`  |
 | Object Pascal                                   | `.pas`, `.pp`, `.lpr`                                     | yes           | `fpc`                                             | WIP                                                                                                            |
 | Nim                                             | `.nim`                                                    | WIP           | `nim c`                                           | WIP                                                                                                            |
@@ -233,11 +234,17 @@ Java
 * For building code with `ctrl-space`, `javac` and `jar` must be installed. A `.jar` file is created if the compilation succeeded.
 * For formatting code with `ctrl-w`, `google-java-format` must be installed.
 
+Scala
+
+* For building code with `ctrl-space`, `scalac` and `jar` must be installed. A `.jar` file is created if the compilation succeeded.
+* The jar file can be executed with `java -jar main.jar`. Use `scalac -d main.jar MyFile.scala` if you want to produce a jar that can be executed with `scala main.jar`.
+* For formatting code with `ctrl-w`, `scalafmt` must be installed.
+
 JSON
 
 * The JSON formatter is built-in.
 
-## A note on Java
+## A note on Java and Scala
 
 Since `kotlinc $filename -include-runtime -d` builds to a `.jar`, I though I should do the same for Java. The idea is to easily build a single or a small collection of `.java` files, where one of the file has a `main` function.
 
@@ -262,6 +269,32 @@ jar cmf META-INF/MANIFEST.MF ../main.jar $classFiles
 cd ..
 rm -rf _o_build
 ```
+
+For Scala, I'm using this code, to produce a `main.jar` file that can be run directly with `java -jar main.jar`:
+
+```sh
+#!/bin/sh
+scalaFiles=$(find . -type f -name '*.scala')
+for f in $scalaFiles; do
+  grep -q 'def main' "$f" && mainScalaFile="$f"
+  grep -q ' extends App ' "$f" && mainScalaFile="$f"
+done
+objectName=$(grep -oP '(?<=object )[A-Z]+[a-z,A-Z,0-9]*' "$mainScalaFile" | head -1);
+packageName=$(grep -oP '(?<=package )[a-z,A-Z,0-9,.]*' "$mainScalaFile" | head -1);
+if [[ $packageName != "" ]]; then
+  packageName="$packageName."
+fi
+mkdir -p _o_build/META-INF
+scalac -d _o_build $scalaFiles
+cd _o_build
+echo -e "Main-Class: $packageName$objectName\nClass-Path: /usr/share/scala/lib/scala-library.jar" > META-INF/MANIFEST.MF
+classFiles=$(find . -type f -name '*.class')
+jar cmf META-INF/MANIFEST.MF ../main.jar $classFiles
+cd ..
+rm -rf _o_build
+```
+
+If `/usr/share/scala/lib/scala-library.jar` is not found `scalac -d run_with_scala.jar` is used instead. This file can only be run with the `scala` command.
 
 ## List of optional runtime dependencies
 
