@@ -63,7 +63,8 @@ ctrl-p     to scroll up 10 lines or go to the previous match
 ctrl-k     to delete characters to the end of the line, then delete the line
 ctrl-g     to toggle filename/line/column/unicode/word count status display
 ctrl-d     to delete a single character
-ctrl-o     to open the command menu, where the first option is always "Save and quit"
+ctrl-o     to open the command menu, where the first option is always
+           "Save and quit"
 ctrl-t     to render the current document to PDF
            for C++, toggle between the header and implementation
 ctrl-c     to copy the current line, press twice to copy the current block
