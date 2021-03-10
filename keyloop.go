@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -254,6 +253,23 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				break
 			}
 
+			baseFilename := filepath.Base(e.filename)
+			if baseFilename == "fstab" {
+				cmd := exec.Command("fstabfmt", "-i")
+				if which(cmd.Path) == "" { // Does the formatting tool even exist?
+					status.ClearAll(c)
+					status.SetErrorMessage(cmd.Path + " is missing")
+					status.Show(c, e)
+					break
+				}
+				if err := e.formatWithUtility(c, tty, status, cmd, baseFilename); err != nil {
+					status.ClearAll(c)
+					status.SetMessage(err.Error())
+					status.Show(c, e)
+				}
+				break
+			}
+
 			// Not in git mode, format Go or C++ code with goimports or clang-format
 			// Map from formatting command to a list of file extensions
 			format := map[*exec.Cmd][]string{
@@ -277,98 +293,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			for cmd, extensions := range format {
 				for _, ext := range extensions {
 					if strings.HasSuffix(e.filename, ext) {
-						if which(cmd.Path) == "" { // Does the formatting tool even exist?
-
+						if err := e.formatWithUtility(c, tty, status, cmd, ext); err != nil {
 							status.ClearAll(c)
-							status.SetErrorMessage(cmd.Path + " is missing")
+							status.SetMessage(err.Error())
 							status.Show(c, e)
-
-							break OUT
-						}
-						utilityName := filepath.Base(cmd.Path)
-
-						status.Clear(c)
-						status.SetMessage("Calling " + utilityName)
-						status.Show(c, e)
-
-						// Use the temporary directory defined in TMPDIR, with fallback to /tmp
-						tempdir := os.Getenv("TMPDIR")
-						if tempdir == "" {
-							tempdir = "/tmp"
-						}
-
-						if f, err := ioutil.TempFile(tempdir, "__o*"+ext); err == nil {
-							// no error, everything is fine
-							tempFilename := f.Name()
-
-							// TODO: Implement e.SaveAs
-							oldFilename := e.filename
-							e.filename = tempFilename
-							err := e.Save(c)
-							e.filename = oldFilename
-
-							if err == nil {
-								// Add the filename of the temporary file to the command
-								cmd.Args = append(cmd.Args, tempFilename)
-
-								// Save the command in a temporary file
-								saveCommand(cmd)
-
-								// Format the temporary file
-								output, err := cmd.CombinedOutput()
-
-								// Ignore errors if the command is "tidy" and tidy exists
-								ignoreErrors := strings.HasSuffix(cmd.Path, "tidy") && which("tidy") != ""
-
-								if err != nil && !ignoreErrors {
-									// Only grab the first error message
-									errorMessage := strings.TrimSpace(string(output))
-									if strings.Count(errorMessage, "\n") > 0 {
-										errorMessage = strings.TrimSpace(strings.SplitN(errorMessage, "\n", 2)[0])
-									}
-									if errorMessage == "" {
-										status.SetErrorMessage("Failed to format code")
-									} else {
-										status.SetErrorMessage("Failed to format code: " + errorMessage)
-									}
-									if strings.Count(errorMessage, ":") >= 3 {
-										fields := strings.Split(errorMessage, ":")
-										// Go To Y:X, if available
-										var foundY int
-										if y, err := strconv.Atoi(fields[1]); err == nil { // no error
-											foundY = y - 1
-											e.redraw = e.GoTo(LineIndex(foundY), c, status)
-											foundX := -1
-											if x, err := strconv.Atoi(fields[2]); err == nil { // no error
-												foundX = x - 1
-											}
-											if foundX != -1 {
-												tabs := strings.Count(e.Line(LineIndex(foundY)), "\t")
-												e.pos.sx = foundX + (tabs * (e.tabs.spacesPerTab - 1))
-												e.Center(c)
-											}
-										}
-										e.redrawCursor = true
-									}
-									status.Show(c, e)
-									break OUT
-								} else {
-									if _, err := e.Load(c, tty, tempFilename); err != nil {
-										status.ClearAll(c)
-										status.SetMessage(err.Error())
-										status.Show(c, e)
-									}
-									// Mark the data as changed, despite just having loaded a file
-									e.changed = true
-									e.redrawCursor = true
-								}
-								// Try to remove the temporary file regardless if "goimports -w" worked out or not
-								_ = os.Remove(tempFilename)
-							}
-							// Try to close the file. f.Close() checks if f is nil before closing.
-							_ = f.Close()
-							e.redraw = true
-							e.redrawCursor = true
 						}
 						break OUT
 					}

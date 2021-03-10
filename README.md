@@ -157,6 +157,8 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 | Nim                                             | `.nim`                                                    | WIP           | `nim c`                                           | WIP                                                                                                            |
 | Odin                                            | `.odin`                                                   | yes           | `odin build`                                      | N/A                                                                                                            |
 
+`/etc/fstab` files are also supported, and can be formatted with `ctrl-w` if [`fstabfmt`](https://github.com/xyproto/fstabfmt) is installed.
+
 | Markup language | File extensions | Jump to error | Format command ($filename is a temporary file) |
 | HTML | `.htm`, `.html` | no | `tidy -w 120 -q -i -utf8 --show-errors 0 --show-warnings no --tidy-mark no --force-output yes -ashtml -omit no -xml no -m -c` |
 
@@ -243,6 +245,10 @@ Scala
 JSON
 
 * The JSON formatter is built-in.
+
+fstab
+
+* For formatting `fstab` files (usually `/etc/fstab`) with `ctrl-w`, [`fstabfmt`](https://github.com/xyproto/fstabfmt) must be installed.
 
 ## A note on Java and Scala
 
