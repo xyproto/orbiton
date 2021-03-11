@@ -12,6 +12,7 @@
 - [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] Better support for multi-byte unicode runes.
 - [ ] When starting o, hash sum the clipboards it can find. When pasting, use the latest changed clipboard. If nothing changed, use the one for Wayland or X11, depending on environment variables.
+- [ ] When editing a file that then is deleted, `ctrl-s` should maybe create the file again? Or save it to `/tmp` or `~/.cache/o`?
 
 ## Bugs/features/issues
 
