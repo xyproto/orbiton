@@ -1,12 +1,18 @@
-# termtitle
+# Terminal Title
 
 Change the title if the currently running terminal emulator supports it.
 
-Currently only supports `konsole` and `gnome-terminal`.
+## Currently supported terminal emulators
 
-Example use:
+* `konsole`
+* `alacritty`
+* `gnome-terminal`
 
-~~~
+For unsupported terminal emulators, the `MustSet` function will try the same terminal codes as for `gnome-terminal`.
+
+## Example use
+
+~~~go
 package main
 
 import (
@@ -18,7 +24,23 @@ func main() {
 }
 ~~~
 
+## Terminal codes
+
+For `konsole` a working string seems to be:
+
+    \033]0;TITLE\a
+
+While for `gnome-terminal`, this one works:
+
+    \033]30;TITLE\007
+
+For `alacritty`, this seems to work:
+
+    \033]2;TITLE\007
+
+`TITLE` is the title that will be set.
+
 ## General info
 
-* Version: 1.1.0
+* Version: 1.2.0
 * License: MIT

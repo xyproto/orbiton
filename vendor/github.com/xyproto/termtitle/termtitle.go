@@ -17,7 +17,9 @@ func hasE(envVar string) bool {
 func TitleString(title string) (string, error) {
 	// This is possibly the widest supported string for setting the title
 	formatString := "\033]0;%s\a"
-	if hasE("KONSOLE_VERSION") { // konsole?
+	if hasE("ALACRITTY_LOG") { // alacritty?
+		formatString = "\033]2;%s\007"
+	} else if hasE("KONSOLE_VERSION") { // konsole?
 		formatString = "\033]30;%s\007"
 	} else if hasE("GNOME_TERMINAL_SERVICE") { // gnome-terminal?
 		// ok

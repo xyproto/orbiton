@@ -1,4 +1,4 @@
-# github.com/atotto/clipboard v0.1.2
+# github.com/atotto/clipboard v0.1.4
 ## explicit
 github.com/atotto/clipboard
 # github.com/jung-kurt/gofpdf v1.16.2
@@ -12,7 +12,7 @@ github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 ## explicit
 github.com/mgutz/ansi
-# github.com/pkg/term v1.2.0-beta.1
+# github.com/pkg/term v1.2.0-beta.2
 ## explicit
 github.com/pkg/term
 github.com/pkg/term/termios
@@ -24,7 +24,7 @@ github.com/xyproto/env
 # github.com/xyproto/syntax v1.7.3
 ## explicit
 github.com/xyproto/syntax
-# github.com/xyproto/termtitle v1.1.0
+# github.com/xyproto/termtitle v1.2.0
 ## explicit
 github.com/xyproto/termtitle
 # github.com/xyproto/textoutput v1.12.2
@@ -33,7 +33,7 @@ github.com/xyproto/textoutput
 # github.com/xyproto/vt100 v1.8.7-0.20200811184013-1c2ef2e081cd
 ## explicit
 github.com/xyproto/vt100
-# golang.org/x/sys v0.0.0-20210112080510-489259a85091
+# golang.org/x/sys v0.0.0-20210309074719-68d13333faf2
 ## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
