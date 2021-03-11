@@ -58,9 +58,9 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 				}
 				var retErr error
 				if errorMessage == "" {
-					retErr = errors.New("Failed to format code")
+					retErr = errors.New("failed to format code")
 				} else {
-					retErr = errors.New("Failed to format code: " + errorMessage)
+					retErr = errors.New("failed to format code: " + errorMessage)
 				}
 				if strings.Count(errorMessage, ":") >= 3 {
 					fields := strings.Split(errorMessage, ":")
