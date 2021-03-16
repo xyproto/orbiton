@@ -120,6 +120,32 @@ OUTER_LOOP:
 	return true
 }
 
+// aBinDirectory will check if the given filename is in one of these directories:
+// /bin, /sbin, /usr/bin, /usr/sbin, /usr/local/bin, /usr/local/sbin, ~/.bin, ~/bin, ~/.local/bin
+func aBinDirectory(filename string) bool {
+	p, err := filepath.Abs(filepath.Dir(filename))
+	if err != nil {
+		return false
+	}
+
+	home := os.Getenv("HOME")
+	if len(home) == 0 {
+		username := os.Getenv("LOGNAME")
+		if len(username) == 0 {
+			return false
+		}
+		home = "/home/" + username
+	}
+
+	switch p {
+	case "/bin", "/sbin", "/usr/bin", "/usr/sbin", "/usr/local/bin", "/usr/local/sbin":
+		return true
+	case filepath.Join(home, ".bin"), filepath.Join(home, "bin"), filepath.Join("local/bin"):
+		return true
+	}
+	return false
+}
+
 // logf, for quick "printf-style" debugging
 func logf(format string, args ...interface{}) {
 	tmpdir := os.Getenv("TMPDIR")
