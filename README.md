@@ -86,6 +86,7 @@ These features are unique to `o`, as far as I am aware:
 * If the editor executable renamed to `red` (or have a symlink with that name), the default theme will be red/white/gray.
 * If the editor executable renamed to `light` (or have a symlink with that name), the default theme will be suitable for light backgrounds.
 * Want to quickly convert Markdown to PDF and have pandoc installed? Try `o filename.md`, press `ctrl-space` twice and quit with `ctrl-q`.
+* `o` is written mostly in `o`, with some use of NeoViM at the beginning.
 
 ## Known bugs
 
@@ -94,7 +95,6 @@ These features are unique to `o`, as far as I am aware:
 * For some terminal emulators, if `o` is busy performing an operation, pressing `ctrl-s` may lock the terminal. Some terminal emulators, like `konsole`, can be configured to turn off this behavior. Press `ctrl-q` to unlock the terminal again (together with the unfortunate risk of quitting `o`). You can also use the `ctrl-o` menu for saving and quitting.
 * `o` may have issues with large files (of several MB+). For normal text files or source code files, this is a non-issue.
 * Middle-click pasting (instead of pasting with `ctrl-v`) may have issues with only pasting the first character.
-* `alacritty 0.5.0` has a bug that can make Alacritty crash when using `o`. Use `alacritty 0.6.0` or later to avoid this.
 * The smart indentation is not always smart.
 
 ## Hotkeys
