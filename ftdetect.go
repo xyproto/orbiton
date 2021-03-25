@@ -178,3 +178,87 @@ func detectEditorMode(filename string) (Mode, bool) {
 
 	return mode, syntaxHighlightingEnabled
 }
+
+// Return a short lowercase string representing the current editor mode
+func (e *Editor) Mode() string {
+	switch e.mode {
+	case modeBlank:
+		return "-"
+	case modeGit:
+		return "Git"
+	case modeMarkdown:
+		return "Markdown"
+	case modeMakefile:
+		return "Make"
+	case modeShell:
+		return "Shell"
+	case modeConfig:
+		return "Configuration"
+	case modeAssembly:
+		return "Assembly"
+	case modeGo:
+		return "Go"
+	case modeHaskell:
+		return "Haskell"
+	case modeOCaml:
+		return "Ocaml"
+	case modeStandardML:
+		return "Standard ML"
+	case modePython:
+		return "Python"
+	case modeText:
+		return "Text"
+	case modeCMake:
+		return "Cmake"
+	case modeVim:
+		return "ViM"
+	case modeLisp:
+		return "Lisp"
+	case modeZig:
+		return "Zig"
+	case modeKotlin:
+		return "Kotlin"
+	case modeJava:
+		return "Java"
+	case modeHIDL:
+		return "HIDL"
+	case modeSQL:
+		return "SQL"
+	case modeOak:
+		return "Oak"
+	case modeRust:
+		return "Rust"
+	case modeLua:
+		return "Lua"
+	case modeCrystal:
+		return "Crystal"
+	case modeNim:
+		return "Nim"
+	case modeObjectPascal:
+		return "Pas"
+	case modeBat:
+		return "Bat"
+	case modeCpp:
+		return "C++"
+	case modeC:
+		return "C"
+	case modeAda:
+		return "Ada"
+	case modeHTML:
+		return "HTML"
+	case modeOdin:
+		return "Odin"
+	case modeXML:
+		return "XML"
+	case modePolicyLanguage:
+		return "SELinux"
+	case modeNroff:
+		return "Man"
+	case modeScala:
+		return "Scala"
+	case modeJSON:
+		return "JSON"
+	default:
+		return "?"
+	}
+}

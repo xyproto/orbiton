@@ -1897,7 +1897,7 @@ func (e *Editor) ColIndex() ColIndex {
 
 // StatusMessage returns a status message, intended for being displayed at the bottom
 func (e *Editor) StatusMessage() string {
-	return fmt.Sprintf("line %d col %d rune %U words %d", e.LineNumber(), e.ColNumber(), e.Rune(), e.WordCount())
+	return fmt.Sprintf("line %d col %d rune %U words %d [%s]", e.LineNumber(), e.ColNumber(), e.Rune(), e.WordCount(), e.Mode())
 }
 
 // DrawLines will draw a screen full of lines on the given canvas
