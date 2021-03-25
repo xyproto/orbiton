@@ -27,7 +27,7 @@ func (e *Editor) checkContents() {
 	foundFirstContent := false
 	// If more lines start with "# " than "// " or "/* ", and mode is blank,
 	// set the mode to modeConfig and enable syntax highlighting.
-	if e.mode == modeBlank {
+	if e.mode == modeBlank || e.mode == modeConfig {
 		hashComment := 0
 		slashComment := 0
 		for _, line := range strings.Split(e.String(), "\n") {
