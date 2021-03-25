@@ -46,6 +46,7 @@ const (
 	modePolicyLanguage // for SE Linux configuration files
 	modeNroff          // for man pages
 	modeScala          // for Scala
+	modeJSON           // for JSON and iPython notebooks
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -156,6 +157,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeNroff
 		case ".scala":
 			mode = modeScala
+		case ".json", ".ipynb":
+			mode = modeJSON
 		default:
 			mode = modeBlank
 		}

@@ -24,6 +24,7 @@ func (e *Editor) checkContents() {
 	} else if strings.HasPrefix(firstLine, "#") {
 		e.firstLineHash = true
 	}
+	foundFirstContent := false
 	// If more lines start with "# " than "// " or "/* ", and mode is blank,
 	// set the mode to modeConfig and enable syntax highlighting.
 	if e.mode == modeBlank {
@@ -34,6 +35,12 @@ func (e *Editor) checkContents() {
 				hashComment++
 			} else if strings.HasPrefix(line, "/") { // Count all lines starting with "/" as a comment, for this purpose
 				slashComment++
+			}
+			if trimmedLine := strings.TrimSpace(line); !foundFirstContent && !strings.HasPrefix(trimmedLine, "//") && len(trimmedLine) > 0 {
+				foundFirstContent = true
+				if trimmedLine == "{" { // first found content is {, assume JSON
+					e.mode = modeJSON
+				}
 			}
 		}
 		if hashComment > slashComment {
@@ -54,7 +61,7 @@ func (e *Editor) adjustTabsAndSpaces() {
 	switch e.mode {
 	case modeMakefile, modePython, modeCMake, modeJava, modeKotlin, modeZig, modeScala:
 		e.tabs = TabsSpaces{4, false}
-	case modeShell, modeConfig, modeHaskell, modeVim, modeLua, modeObjectPascal:
+	case modeShell, modeConfig, modeHaskell, modeVim, modeLua, modeObjectPascal, modeJSON:
 		e.tabs = TabsSpaces{2, false}
 	case modeAda:
 		e.tabs = TabsSpaces{3, false}

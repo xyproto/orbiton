@@ -60,7 +60,7 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 		addKeywords = policyLanguageWords
 	case modeSQL:
 		addKeywords = []string{"NOT"}
-	case modeConfig:
+	case modeConfig, modeJSON:
 		delKeywords = []string{"install"}
 	case modeOak:
 		addKeywords = []string{"fn"}
