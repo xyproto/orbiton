@@ -24,7 +24,7 @@ var (
 // pCount is the existing parenthesis count when reaching the start of this line
 func (e *Editor) rainbowParen(parCount *int, chars *[]textoutput.CharAttribute, singleLineCommentMarker string, ignoreSingleQuotes bool) (err error) {
 	var (
-		q            = NewQuoteState(singleLineCommentMarker)
+		q            = NewQuoteState(singleLineCommentMarker, e.mode)
 		prevPrevRune = '\n'
 
 		// CharAttribute has a rune "R" and a vt100.AttributeColor "A"

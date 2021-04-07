@@ -17,12 +17,14 @@ type QuoteState struct {
 	startedMultiLineString  bool
 	stoppedMultiLineComment bool
 	parCount                int // Parenthesis count
+	mode                    Mode
 }
 
 // NewQuoteState takes a singleLineCommentMarker (such as "//" or "#") and returns a pointer to a new QuoteState struct
-func NewQuoteState(singleLineCommentMarker string) *QuoteState {
+func NewQuoteState(singleLineCommentMarker string, mode Mode) *QuoteState {
 	var q QuoteState
 	q.singleLineCommentMarker = singleLineCommentMarker
+	q.mode = mode
 	return &q
 }
 
@@ -136,11 +138,6 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
 		}
-	case '>': // support HTML-style and XML-style multi-line comments
-		if prevRune == '-' {
-			q.stoppedMultiLineComment = true
-			q.multiLineComment = false
-		}
 	case '(':
 		if q.None() {
 			q.parCount++
@@ -148,6 +145,11 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 	case ')':
 		if q.None() {
 			q.parCount--
+		}
+	case '>': // support HTML-style and XML-style multi-line comments
+		if prevRune == '-' && (q.mode == modeHTML || q.mode == modeXML) {
+			q.stoppedMultiLineComment = true
+			q.multiLineComment = false
 		}
 	}
 }

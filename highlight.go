@@ -66,7 +66,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	var (
 		trimmedLine             string
 		singleLineCommentMarker = e.SingleLineCommentMarker()
-		q                       = NewQuoteState(singleLineCommentMarker)
+		q                       = NewQuoteState(singleLineCommentMarker, e.mode)
 		ignoreSingleQuotes      = e.mode == modeLisp
 	)
 	// First loop from 0 up to to offset to figure out if we are already in a multiLine comment or a multiLine string at the current line
