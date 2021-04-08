@@ -86,7 +86,7 @@ displays brief usage information
   Join lines.
 .sp
 .B ctrl-u
-  Undo (`ctrl-z` is also possible, but may background the application).
+  Undo (\fBctrl-z\P is also possible, but may background the application).
 .sp
 .B ctrl-l
   Jump to a specific line number. Press return to jump to the top.
@@ -133,9 +133,16 @@ I wanted to write a simple editor that only used VT100 terminal codes.
 .SH "SEE ALSO"
 .BR nano (1)
 .BR micro (1)
-.SH BUGS
-There may be issues with editing lines longer than the terminal width.
-Files with wide unicode runes may be displayed incorrectly.
+.SH KNOWN BUGS
+In some terminal emulators, scrolling quickly up or down with the arrow keys can make the text jump around (it works fine in \fBalacritty\fP). Scroll up and down with \fBctrl-n\fP and \fBctrl-p\fP instead to avoid this. Press \fBesc\fP to repaint the text, if needed.
+.sp
+Some unicode runes may disrupt the text flow. This is generally not a problem for editing code and configuration files, but may be an issue when editing files that contains text in many languages.
+.sp
+For some terminal emulators, if \fBo\fP is busy performing an operation, pressing \fBctrl-s\fP may lock the terminal. Some terminal emulators, like \fBkonsole\fP, can be configured to turn off this behavior. Press \fBctrl-q\fP to unlock the terminal again (together with the unfortunate risk of quitting \fBo\fP). You can also use the \fBctrl-o\fP menu for saving and quitting.
+.sp
+\fBo\fP may have issues with large files (of several MB+). For normal text files or source code files, this is a non-issue.
+.sp
+Middle-click pasting (instead of pasting with \fBctrl-v\fP) may have issues with only pasting the first character.
 .sp
 The smart indentation is not always smart.
 .SH VERSION
