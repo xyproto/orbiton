@@ -293,7 +293,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					case e.mode == modePython && q.startedMultiLineString:
 						// Python docstring
 						coloredString = UnEscape(e.multiLineString.Start(line))
-					case q.multiLineComment || q.stoppedMultiLineComment:
+					case (e.mode == modeC || e.mode == modeCpp) && !strings.HasPrefix(strings.TrimSpace(line), "/*") && strings.Count(line, "*/") == 1:
+						// color off after -> and before e.fg is key for the color not to blink when scrolling
+						coloredString = UnEscape(strings.Replace(o.DarkTags(strings.Replace(string(textWithTags), "*/", "*/<off>"+e.fg.String(), -1)), "/*", e.multiLineComment.String()+"/*", -1))
+						// coloredString = UnEscape(strings.Replace(o.DarkTags(strings.Replace(line, "*/", "*/<off>"+e.fg.String(), -1)), "/*", e.multiLineComment.String()+"/*", -1))
+					case q.multiLineComment || q.stoppedMultiLineComment && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\""):
 						// A multi-line comment
 						coloredString = UnEscape(e.multiLineComment.Start(line))
 					case q.singleLineComment:
@@ -302,7 +306,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					case !q.startedMultiLineString && q.backtick > 0:
 						// A multi-line string
 						coloredString = UnEscape(e.multiLineString.Start(line))
-					case (e.mode != modeHTML || e.mode != modeXML) && strings.Contains(line, "->"):
+					case (e.mode != modeHTML && e.mode != modeXML) && strings.Contains(line, "->"):
 						// Pointer arrow
 						kwc := syntax.DefaultTextConfig.Keyword
 						// color off after -> and before e.fg is key for the color not to blink when scrolling
