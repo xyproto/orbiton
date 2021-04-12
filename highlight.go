@@ -185,7 +185,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					} else {
 						// Regular highlight
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
-
 					}
 				case modeZig:
 					trimmedLine = strings.TrimSpace(line)
@@ -303,6 +302,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					case !q.startedMultiLineString && q.backtick > 0:
 						// A multi-line string
 						coloredString = UnEscape(e.multiLineString.Start(line))
+					case (e.mode != modeHTML || e.mode != modeXML) && strings.Contains(line, "->"):
+						// Pointer arrow
+						kwc := syntax.DefaultTextConfig.Keyword
+						// color off after -> and before e.fg is key for the color not to blink when scrolling
+						coloredString = UnEscape(o.DarkTags(strings.Replace(line, "->", "<"+kwc+">-><off>"+e.fg.String(), -1)))
 					default:
 						// Regular code
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
