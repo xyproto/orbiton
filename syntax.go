@@ -76,7 +76,7 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 		delKeywords = []string{"class"}
 		addKeywords = []string{"B", "BR", "PP", "SH", "TP", "fB", "fP", "RB", "TH", "IR", "IP", "fI", "fR"}
 	case modeShell:
-		addKeywords = []string{"--force", "-f", "cmake", "configure", "do", "fdisk", "for", "gdisk", "in", "make", "mv", "ninja", "rm", "rmdir", "while"}
+		addKeywords = []string{"--force", "-f", "cmake", "configure", "do", "fdisk", "for", "gdisk", "in", "make", "mv", "ninja", "rm", "rmdir", "setopt", "while"}
 		delKeywords = []string{"#else", "#endif", "default", "double", "exec", "float", "install", "long", "no", "pass", "ret", "super", "var", "with"}
 		fallthrough // to the default case
 	default:
