@@ -5,12 +5,10 @@ github.com/atotto/clipboard
 ## explicit
 github.com/jung-kurt/gofpdf
 # github.com/mattn/go-colorable v0.1.8
-## explicit
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.12
 github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
-## explicit
 github.com/mgutz/ansi
 # github.com/pkg/term v1.2.0-beta.2
 ## explicit
