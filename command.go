@@ -366,6 +366,13 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 	return selected
 }
 
+// getCommand takes an *exec.Cmd and returns the command
+// it represents, but with "/usr/bin/sh -c " trimmed away.
+func getCommand(cmd *exec.Cmd) string {
+	s := cmd.Path + strings.Join(cmd.Args[1:], " ")
+	return strings.TrimPrefix(s, "/usr/bin/sh -c ")
+}
+
 // Save the command to a temporary file, given an exec.Cmd struct
 func saveCommand(cmd *exec.Cmd) error {
 
@@ -383,7 +390,7 @@ func saveCommand(cmd *exec.Cmd) error {
 	defer f.Close()
 
 	// Strip the leading /usr/bin/sh -c command, if present
-	commandString := strings.TrimPrefix(cmd.String(), "/usr/bin/sh -c ")
+	commandString := getCommand(cmd)
 
 	// Write the contents, ignore the number of written bytes
 	_, err = f.WriteString(fmt.Sprintf("#!/bin/sh\n%s\n", commandString))
