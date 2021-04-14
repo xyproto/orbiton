@@ -375,16 +375,21 @@ If the `PAPERSIZE` environment variable is set to ie. `a4` or `letter`, it will 
 
 The `--pdf-engine=xelatex` and `--listings` flags are used, so `xelatex` and the `listings` package needs to be available. A standard installation of LaTeX and Pandoc should provide both.
 
-## Suggested settings
+## Font, color and terminal settings
 
 These should work well together with `o`:
 
-* Try the `JetBrains Mono NL` font.
+### Font
 
-### Konsole
+* Try `JetBrains Mono NL`.
 
-* Try the `Breeze` color scheme (but with a black background). It should work well together with `o`.
-* Untick the `Flow control` option in the profile settings, to ensure that `ctrl-s` will never freeze the terminal.
+### Color
+
+* Try the `Breeze` color scheme (but with a black background).
+
+### Terminal settings
+
+* In Konsole, untick the `Flow control` option in the profile settings, to ensure that `ctrl-s` will never freeze the terminal.
 
 ## General info
 
