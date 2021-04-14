@@ -52,6 +52,12 @@ type Editor struct {
 	EditorColors
 }
 
+// Used when switching between a .c or .cpp file to the corresponding .h file
+var (
+	switchBuffer     *Undo = NewUndo(1)               // Save the contents of one switch
+	switchUndoBackup *Undo = NewUndo(defaultUndoSize) // Save a copy of the undo stack when switching between files
+)
+
 // NewCustomEditor takes:
 // * the number of spaces per tab (typically 2, 4 or 8)
 // * if the text should be syntax highlighted
@@ -2245,16 +2251,10 @@ func (e *Editor) AbsFilename() (string, error) {
 	return filepath.Clean(absFilename), nil
 }
 
-var (
-	switchBuffer     *Undo = NewUndo(1)               // Save the contents of one switch
-	switchUndoBackup *Undo = NewUndo(defaultUndoSize) // Save a copy of the undo stack when switching between files
-)
-
 // Switch replaces the current editor with a new Editor that opens the given file.
 // The undo stack is also swapped.
 // Only works for switching to one file, and then back again.
 func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *LockKeeper, filenameToOpen string, forceOpen bool) error {
-
 	absFilename, err := e.AbsFilename()
 	if err != nil {
 		return err
@@ -2301,23 +2301,6 @@ func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *
 		status.SetMessage(statusMessage)
 		status.Show(c, e)
 	}
-
-	// A "hard switch" using RunMainLoop:
-	//
-	//// Set up this editor to quit, then start a new one
-	//e.quit = true
-	// 	userMessage, err := RunMainLoop(tty, filenameToOpen, LineNumber(0), forceOpen)
-	// 	if err != nil {
-	// 		// Don't close this editor after all
-	// 		e.quit = false
-	// 		// Show the user message
-	// 		if userMessage != "" {
-	// 			status.Clear(c)
-	// 			status.SetMessage(userMessage)
-	// 			status.Show(c, e)
-	// 		}
-
-	// 	}
 
 	return err
 }
