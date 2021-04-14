@@ -351,7 +351,44 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 
 		var counter uint
 
+		var pacmanNoColor = []string{
+			"| C · · |",
+			"|  C· · |",
+			"|   C · |",
+			"|    C· |",
+			"|     C |",
+			"|      C|",
+			"| · · Ɔ |",
+			"| · ·Ɔ  |",
+			"| · Ɔ   |",
+			"| ·Ɔ    |",
+			"| Ɔ     |",
+			"|Ɔ· · · |",
+		}
+
+		var pacmanColor = []string{
+			"<red>| <yellow>C<blue> · ·</blue> <red>|<off>",
+			"<red>| <blue> <yellow>C<blue>· · <red>|<off>",
+			"<red>| <blue>  <yellow>C<blue> · <red>|<off>",
+			"<red>| <blue>   <yellow>C<blue>· <red>|<off>",
+			"<red>| <blue>    <yellow>C <red>|<off>",
+			"<red>| <blue>     <yellow>C<red>|<off>",
+			"<red>| <blue>· · <yellow>Ɔ <red>|<off>",
+			"<red>| <blue>· ·<yellow>Ɔ<blue>  <red>|<off>",
+			"<red>| <blue>· <yellow>Ɔ <blue>  <red>|<off>",
+			"<red>| <blue>·<yellow>Ɔ<blue>    <red>|<off>",
+			"<red>| <yellow>Ɔ <blue>    <red>|<off>",
+			"<red>|<yellow>Ɔ<blue>· · · <red>|<off>",
+		}
+
 		// Start the spinner
+
+		var spinnerAnimation []string
+		if e.noColor {
+			spinnerAnimation = pacmanNoColor
+		} else {
+			spinnerAnimation = pacmanColor
+		}
 		for {
 			select {
 			case <-quit:
@@ -359,68 +396,12 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 				return
 			default:
 				vt100.SetXY(x, y)
-				s := ""
-				// Switch between 12 different ASCII images
-				if e.noColor {
-					switch counter % 12 {
-					case 0:
-						s = "| C · · |"
-					case 1:
-						s = "|  C· · |"
-					case 2:
-						s = "|   C · |"
-					case 3:
-						s = "|    C· |"
-					case 4:
-						s = "|     C |"
-					case 5:
-						s = "|      C|"
-					case 6:
-						s = "| · · Ɔ |"
-					case 7:
-						s = "| · ·Ɔ  |"
-					case 8:
-						s = "| · Ɔ   |"
-					case 9:
-						s = "| ·Ɔ    |"
-					case 10:
-						s = "| Ɔ     |"
-					case 11:
-						s = "|Ɔ· · · |"
-					}
-				} else {
-					switch counter % 12 {
-					case 0:
-						s = "<red>| <yellow>C<blue> · ·</blue> <red>|<off>"
-					case 1:
-						s = "<red>| <blue> <yellow>C<blue>· · <red>|<off>"
-					case 2:
-						s = "<red>| <blue>  <yellow>C<blue> · <red>|<off>"
-					case 3:
-						s = "<red>| <blue>   <yellow>C<blue>· <red>|<off>"
-					case 4:
-						s = "<red>| <blue>    <yellow>C <red>|<off>"
-					case 5:
-						s = "<red>| <blue>     <yellow>C<red>|<off>"
-					case 6:
-						s = "<red>| <blue>· · <yellow>Ɔ <red>|<off>"
-					case 7:
-						s = "<red>| <blue>· ·<yellow>Ɔ<blue>  <red>|<off>"
-					case 8:
-						s = "<red>| <blue>· <yellow>Ɔ <blue>  <red>|<off>"
-					case 9:
-						s = "<red>| <blue>·<yellow>Ɔ<blue>    <red>|<off>"
-					case 10:
-						s = "<red>| <yellow>Ɔ <blue>    <red>|<off>"
-					case 11:
-						s = "<red>|<yellow>Ɔ<blue>· · · <red>|<off>"
-					}
-				}
-				o.Print(s)
+				// Iterate over the 12 different ASCII images as the counter increases
+				o.Print(spinnerAnimation[counter%12])
 				counter++
 				// Wait for a key press (also sleeps just a bit)
 				switch tty.Key() {
-				case 27, 113, 17: // esc, q or ctrl-q
+				case 27, 113, 17, 3: // esc, q, ctrl-q or ctrl-c
 					vt100.ShowCursor(true)
 					quitMessage(tty, "reading "+filename+": stopped by user")
 				}
