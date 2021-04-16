@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/xyproto/env"
 	"github.com/xyproto/termtitle"
 	"github.com/xyproto/vt100"
 )
@@ -163,7 +164,7 @@ Set NO_COLOR=1 to disable colors.
 	// Remove the terminal title, if the current terminal emulator supports it
 	// and if NO_COLOR is not set.
 	if !hasE("NO_COLOR") {
-		shellName := filepath.Base(os.Getenv("SHELL"))
+		shellName := filepath.Base(env.Str("SHELL", "/bin/sh"))
 		termtitle.MustSet(shellName)
 	}
 

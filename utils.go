@@ -8,7 +8,12 @@ import (
 	"path/filepath"
 	"strings"
 	"unicode"
+
+	"github.com/xyproto/env"
 )
+
+// Read the HOME environment variable and default to /home/$LOGNAME if it isn't set
+var homeDir = env.Str("HOME", "/home/"+os.Getenv("LOGNAME"))
 
 // exists checks if the given path exists
 func exists(path string) bool {
@@ -36,9 +41,9 @@ func hasE(envVar string) bool {
 func expandUser(path string) string {
 	// this is a simpler (and Linux/UNIX only) alternative to using os.UserHomeDir (which requires Go 1.12 or later)
 	if strings.HasPrefix(path, "~") {
-		path = strings.Replace(path, "~", os.Getenv("HOME"), 1)
+		path = strings.Replace(path, "~", homeDir, 1)
 	} else if strings.HasPrefix(path, "$HOME") {
-		path = strings.Replace(path, "$HOME", os.Getenv("HOME"), 1)
+		path = strings.Replace(path, "$HOME", homeDir, 1)
 	}
 	return path
 }
@@ -128,19 +133,10 @@ func aBinDirectory(filename string) bool {
 		return false
 	}
 
-	home := os.Getenv("HOME")
-	if len(home) == 0 {
-		username := os.Getenv("LOGNAME")
-		if len(username) == 0 {
-			return false
-		}
-		home = "/home/" + username
-	}
-
 	switch p {
 	case "/bin", "/sbin", "/usr/bin", "/usr/sbin", "/usr/local/bin", "/usr/local/sbin":
 		return true
-	case filepath.Join(home, ".bin"), filepath.Join(home, "bin"), filepath.Join("local/bin"):
+	case filepath.Join(homeDir, ".bin"), filepath.Join(homeDir, "bin"), filepath.Join("local/bin"):
 		return true
 	}
 	return false

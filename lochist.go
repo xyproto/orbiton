@@ -9,14 +9,19 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/xyproto/env"
 )
 
 const (
-	locationHistoryFilename      = "~/.cache/o/locations.txt" // TODO: Use XDG_CACHE_HOME
 	vimLocationHistoryFilename   = "~/.viminfo"
 	emacsLocationHistoryFilename = "~/.emacs.d/places"
-	nvimLocationHistoryFilename  = "~/.local/share/nvim/shada/main.shada" // TODO: Use XDG_DATA_HOME
 	maxLocationHistoryEntries    = 1024
+)
+
+var (
+	locationHistoryFilename     = env.Str("XDG_CACHE_HOME", "~/.cache") + "/o/locations.txt"
+	nvimLocationHistoryFilename = env.Str("XDG_DATA_HOME", "~/local/share") + "/nvim/shada/main.shada"
 )
 
 // LoadLocationHistory will attempt to load the per-absolute-filename recording of which line is active.

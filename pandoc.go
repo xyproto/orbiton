@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/xyproto/env"
 	"github.com/xyproto/vt100"
 )
 
@@ -50,10 +51,7 @@ func (e *Editor) exportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath, pd
 	// the currently edited file.
 
 	// Use the temporary directory defined in TMPDIR, with fallback to /tmp
-	tempdir := os.Getenv("TMPDIR")
-	if tempdir == "" {
-		tempdir = "/tmp"
-	}
+	tempdir := env.Str("TMPDIR", "/tmp")
 
 	tempFilename := ""
 	f, err := ioutil.TempFile(tempdir, "_o*.md")
@@ -78,11 +76,8 @@ func (e *Editor) exportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath, pd
 	}
 	e.filename = oldFilename
 
-	// Check if the PAPERSIZE environment variable is set. Default to A4.
-	papersize := "a4"
-	if papersizeEnv := os.Getenv("PAPERSIZE"); papersizeEnv != "" {
-		papersize = papersizeEnv
-	}
+	// Check if the PAPERSIZE environment variable is set. Default to "a4".
+	papersize := env.Str("PAPERSIZE", "a4")
 
 	pandocCommand := exec.Command(pandocPath, "-fmarkdown-implicit_figures", "--toc", "-Vgeometry:left=1cm,top=1cm,right=1cm,bottom=2cm", "-Vpapersize:"+papersize, "-Vfontsize=12pt", "--pdf-engine=xelatex", "-o", pdfFilename, oldFilename)
 

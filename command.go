@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/xyproto/env"
 	"github.com/xyproto/vt100"
 )
 
@@ -179,10 +180,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			status.Show(c, e)
 
 			// Use the temporary directory defined in TMPDIR, with fallback to /tmp
-			tempdir := os.Getenv("TMPDIR")
-			if tempdir == "" {
-				tempdir = "/tmp"
-			}
+			tempdir := env.Str("TMPDIR", "/tmp")
 
 			tempFilename := ""
 

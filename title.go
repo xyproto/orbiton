@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"path/filepath"
 )
 
@@ -13,7 +12,7 @@ func generateTitle(filename string) string {
 		return filepath.Base(filename)
 	}
 	// First try to find the relative path to the home directory
-	relPath, err := filepath.Rel(os.Getenv("HOME"), absPath)
+	relPath, err := filepath.Rel(homeDir, absPath)
 	if err != nil {
 		// If the relative directory to $HOME could not be found, then just use the base filename
 		return filepath.Base(filename)

@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/xyproto/env"
 	"github.com/xyproto/vt100"
 )
 
@@ -22,10 +23,7 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	status.Show(c, e)
 
 	// Use the temporary directory defined in TMPDIR, with fallback to /tmp
-	tempdir := os.Getenv("TMPDIR")
-	if tempdir == "" {
-		tempdir = "/tmp"
-	}
+	tempdir := env.Str("TMPDIR", "/tmp")
 
 	if f, err := ioutil.TempFile(tempdir, "__o*"+extOrBaseFilename); err == nil {
 		// no error, everything is fine
