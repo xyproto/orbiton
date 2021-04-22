@@ -23,6 +23,8 @@ func (e *Editor) checkContents() {
 		e.mode = modeShell
 	} else if strings.HasPrefix(firstLine, "#") {
 		e.firstLineHash = true
+	} else if strings.HasPrefix(firstLine, "<?xml ") {
+		e.mode = modeXML
 	}
 	foundFirstContent := false
 	// If more lines start with "# " than "// " or "/* ", and mode is blank,
