@@ -23,6 +23,8 @@ var (
 	luaWords = []string{"and", "break", "do", "else", "elseif", "end", "false", "for", "function", "goto", "if", "in", "local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while"}
 
 	scalaWords = []string{"abstract", "case", "catch", "class", "def", "do", "else", "extends", "false", "final", "finally", "for", "forSome", "if", "implicit", "import", "lazy", "match", "new", "null", "object", "override", "package", "private", "protected", "return", "sealed", "super", "this", "throw", "trait", "try", "true", "type", "val", "var", "while", "with", "yield"}
+
+	battlestarWords = []string{"fun", "loop", "loopwrite"}
 )
 
 // adjustSyntaxHighlightingKeywords contains per-language adjustments to highlighting of keywords
@@ -32,6 +34,9 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 	case modeGo, modeOdin:
 		addKeywords = []string{"defer", "fallthrough", "go", "print", "println", "range", "string"}
 		delKeywords = []string{"None", "build", "char", "fi", "get", "include", "let", "mut", "pass", "redo", "rescue", "ret", "retry", "set", "template", "then", "when", "where"}
+	case modeBattlestar:
+		syntax.Keywords = make(map[string]struct{})
+		addKeywords = battlestarWords
 	case modeLisp:
 		syntax.Keywords = make(map[string]struct{})
 		addKeywords = emacsWords

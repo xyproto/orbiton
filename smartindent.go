@@ -12,7 +12,7 @@ func (e *Editor) smartIndentation(leadingWhitespace, trimmedLine string, alsoDed
 		(strings.HasSuffix(trimmedLine, "(") || strings.HasSuffix(trimmedLine, "{") || strings.HasSuffix(trimmedLine, "[") ||
 			strings.HasSuffix(trimmedLine, ":")) && !strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()) {
 		switch e.mode {
-		case modeShell, modePython, modeCMake, modeConfig, modeHaskell, modeLua, modeC, modeCpp, modeZig, modeAda, modeJSON:
+		case modeShell, modePython, modeCMake, modeConfig, modeHaskell, modeLua, modeC, modeCpp, modeZig, modeBattlestar, modeAda, modeJSON:
 			leadingWhitespace += strings.Repeat(" ", e.tabs.spacesPerTab)
 		default:
 			leadingWhitespace += "\t"
@@ -24,7 +24,7 @@ func (e *Editor) smartIndentation(leadingWhitespace, trimmedLine string, alsoDed
 			(strings.HasSuffix(trimmedLine, ")") || strings.HasSuffix(trimmedLine, "}") || strings.HasSuffix(trimmedLine, "]")) {
 			indentation := "\t"
 			switch e.mode {
-			case modeShell, modePython, modeCMake, modeConfig, modeHaskell, modeLua, modeC, modeCpp, modeZig, modeAda, modeJSON:
+			case modeShell, modePython, modeCMake, modeConfig, modeHaskell, modeLua, modeC, modeCpp, modeZig, modeBattlestar, modeAda, modeJSON:
 				indentation = strings.Repeat(" ", e.tabs.spacesPerTab)
 			}
 			if len(leadingWhitespace) > len(indentation) {

@@ -543,7 +543,7 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 	// NOTE: This is only temporary, until auto-detection of tabs/spaces is in place!
 	//       This is a hack, that can only replace 10 levels deep.
 	switch e.mode {
-	case modePython, modeCMake, modeJava, modeKotlin, modeShell, modeConfig, modeHaskell,
+	case modePython, modeBattlestar, modeCMake, modeJava, modeKotlin, modeShell, modeConfig, modeHaskell,
 		modeVim, modeObjectPascal, modeZig, modeLua, modeC, modeCpp, modeAda, modeScala, modeJSON:
 		for level := 10; level > 0; level-- {
 			fromString := "\n" + strings.Repeat("\t", level)

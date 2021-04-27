@@ -47,6 +47,7 @@ const (
 	modeNroff          // for man pages
 	modeScala          // for Scala
 	modeJSON           // for JSON and iPython notebooks
+	modeBattlestar     // for Battlestar
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -106,6 +107,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 		case ".md":
 			// Markdown mode
 			mode = modeMarkdown
+		case ".bts":
+			mode = modeBattlestar
 		case ".cpp", ".cc", ".c++", ".cxx", ".hpp", ".h":
 			// C++ mode
 			// TODO: Find a way to discover is a .h file is most likely to be C or C++

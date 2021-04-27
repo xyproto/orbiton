@@ -61,7 +61,7 @@ func (e *Editor) checkContents() {
 func (e *Editor) adjustTabsAndSpaces() {
 	// Additional per-mode considerations, before launching the editor
 	switch e.mode {
-	case modeMakefile, modePython, modeCMake, modeJava, modeKotlin, modeZig, modeScala:
+	case modeMakefile, modePython, modeCMake, modeJava, modeKotlin, modeZig, modeBattlestar, modeScala:
 		e.tabs = TabsSpaces{4, false}
 	case modeShell, modeConfig, modeHaskell, modeVim, modeLua, modeObjectPascal, modeJSON:
 		e.tabs = TabsSpaces{2, false}
