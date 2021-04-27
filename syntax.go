@@ -24,7 +24,7 @@ var (
 
 	scalaWords = []string{"abstract", "case", "catch", "class", "def", "do", "else", "extends", "false", "final", "finally", "for", "forSome", "if", "implicit", "import", "lazy", "match", "new", "null", "object", "override", "package", "private", "protected", "return", "sealed", "super", "this", "throw", "trait", "try", "true", "type", "val", "var", "while", "with", "yield"}
 
-	battlestarWords = []string{"fun", "loop", "loopwrite"}
+	battlestarWords = []string{"a", "address", "asm", "b", "bootable", "break", "c", "call", "chr", "const", "continue", "counter", "d", "end", "exit", "extern", "fun", "funparam", "halt", "int", "len", "loop", "loopwrite", "mem", "membyte", "memdouble", "memword", "noret", "print", "rawloop", "read", "readbyte", "readdouble", "readword", "ret", "syscall", "sysparam", "use", "value", "var", "write"}
 )
 
 // adjustSyntaxHighlightingKeywords contains per-language adjustments to highlighting of keywords
