@@ -2,7 +2,8 @@
 
 ## Pri
 
-- [ ] Highlight /* */ comments on the same line as code in C correctly
+- [ ] '://' should not be interpreted as starting a single-line comment. It's very likely to be an URL.
+- [x] Highlight /* */ comments on the same line as code in C correctly
 - [ ] After a keyword in a comment, don't disable the comment highlight color for the rest of the line
 - [ ] Paste with middle mouse button.
 - [ ] If lines are removed, let the active bookmark stay at the same line.
