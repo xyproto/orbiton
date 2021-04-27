@@ -317,20 +317,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 				}
 
-				// OK
-				//panic(coloredString)
-
-				// Is this line a single line comment?
-				// TODO: Or a multiline comment that has started and ended?
-				// TODO: Use the q struct.
-				// This must come after q.Process in the if !doneHighlighting block above.
-				singleLineComment := strings.HasPrefix(trimmedLine, singleLineCommentMarker)
-
 				// Slice of runes and color attributes, while at the same time highlighting search terms
 				runesAndAttributes := o.Extract(coloredString)
 
 				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
-				if e.rainbowParenthesis && q.None() && !singleLineComment {
+				if e.rainbowParenthesis && q.None() && !q.singleLineComment {
 					thisLineParCount := q.ParCount(trimmedLine, ignoreSingleQuotes)
 					parCountBeforeThisLine := q.parCount - thisLineParCount
 					if e.rainbowParen(&parCountBeforeThisLine, &runesAndAttributes, singleLineCommentMarker, ignoreSingleQuotes) == errUnmatchedParenthesis {

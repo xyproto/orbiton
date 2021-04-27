@@ -60,6 +60,13 @@ func (q *QuoteState) String() string {
 
 // ProcessRune is for processing single runes
 func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuotes bool) {
+	sr := []rune(q.singleLineCommentMarker)
+	if len(sr) == 0 {
+		// This should never happen
+		return
+	}
+	firstRuneInSingleLineCommentMarker := sr[0]
+	lastRuneInSingleLineCommentMarker := sr[len(sr)-1]
 	switch r {
 	case '`':
 		if q.None() {
@@ -110,13 +117,13 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 		if prevRune == '!' && prevPrevRune == '<' && q.None() {
 			q.multiLineComment = true
 		}
-	case []rune(q.singleLineCommentMarker)[0]:
+	case lastRuneInSingleLineCommentMarker:
 		// TODO: Simplify by checking q.None() first, and assuming that the len of the marker is > 1 if it's not 1 since it's not 0
-		if !q.multiLineComment && !q.singleLineComment && !q.startedMultiLineString {
+		if !q.multiLineComment && !q.singleLineComment && !q.startedMultiLineString && prevPrevRune != ':' {
 			switch {
 			case len(q.singleLineCommentMarker) == 1:
 				fallthrough
-			case len(q.singleLineCommentMarker) > 1 && prevRune == []rune(q.singleLineCommentMarker)[1]:
+			case len(q.singleLineCommentMarker) > 1 && prevRune == firstRuneInSingleLineCommentMarker:
 				q.singleLineComment = true
 				q.startedMultiLineString = false
 				q.stoppedMultiLineComment = false
