@@ -167,8 +167,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		}()
 	}
 
-	vt100.Clear()
-
 	// Do a full reset and redraw, but without the statusbar (set to nil)
 	e.FullResetRedraw(c, nil, false)
 
