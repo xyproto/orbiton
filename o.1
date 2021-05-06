@@ -1,6 +1,6 @@
 .\"             -*-Nroff-*-
 .\"
-.TH "o" 1 "27 Apr 2021" "o" "User Commands"
+.TH "o" 1 "6 May 2021" "o" "User Commands"
 .SH NAME
 o \- an editor
 .SH SYNOPSIS
@@ -108,6 +108,9 @@ displays brief usage information
   Build Rust programs with `cargo build` or `rustc`.
   Build Haskell programs with `ghc -dynamic`.
   Build Arch Linux packages with `makepkg`.
+  Build C# programs with `csc -nologo -unsafe`.
+.sp
+  The last used external command by `o` can be found in `~/.cache/o/last_command.sh`.
 .sp
 .B ctrl-~
   Jump to a matching parenthesis, curly bracket or square bracket.
@@ -146,7 +149,7 @@ Middle-click pasting (instead of pasting with \fBctrl-v\fP) may have issues with
 .sp
 The smart indentation is not always smart.
 .SH VERSION
-2.36.1
+2.37.0
 .SH AUTHOR
 .B o
 was written by Alexander F. Rødseth <xyproto@archlinux.org>

@@ -394,6 +394,6 @@ These should work well together with `o`:
 
 ## General info
 
-* Version: 2.36.1
+* Version: 2.37.0
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
