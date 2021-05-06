@@ -48,6 +48,7 @@ const (
 	modeScala          // for Scala
 	modeJSON           // for JSON and iPython notebooks
 	modeBattlestar     // for Battlestar
+	modeCS             // for C#
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -116,6 +117,9 @@ func detectEditorMode(filename string) (Mode, bool) {
 		case ".c":
 			// C mode
 			mode = modeC
+		case ".cs":
+			// C# mode
+			mode = modeCS
 		case ".adoc", ".rst", ".scdoc", ".scd":
 			// Markdown-like syntax highlighting
 			// TODO: Introduce a separate mode for these.
@@ -261,6 +265,10 @@ func (e *Editor) Mode() string {
 		return "Scala"
 	case modeJSON:
 		return "JSON"
+	case modeBattlestar:
+		return "Battlestar"
+	case modeCS:
+		return "C#"
 	default:
 		return "?"
 	}

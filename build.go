@@ -159,7 +159,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 			exec.Command("nim", "c", filename):                                               {".nim"},                                                    // Nim
 			exec.Command("fpc", filename):                                                    {".pp", ".pas", ".lpr"},                                     // Object Pascal / Delphi
 			exec.Command("xdg-open", filename):                                               {".htm", ".html"},                                           // Display HTML in the browser
-			exec.Command("odin", "build", filename):                                          {".odin"},
+			exec.Command("odin", "build", filename):                                          {".odin"},                                                   // Odin
+			exec.Command("csc", "-nologo", "-unsafe", filename):                              {".cs"},                                                     // C#
 		}
 	)
 
@@ -289,6 +290,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		errorMarker = ": "
 	} else if e.mode == modeCrystal || e.mode == modeObjectPascal {
 		errorMarker = "Error:"
+	} else if e.mode == modeCS {
+		errorMarker = ": error "
 	}
 
 	if e.mode == modeZig && bytes.Contains(output, []byte("nrecognized glibc version")) {
@@ -392,13 +395,16 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 					}
 					return errorMessage, true, false
 				}
-			} else if e.mode == modeObjectPascal {
+			} else if e.mode == modeObjectPascal || e.mode == modeCS {
 				errorMessage = ""
 				if strings.Contains(line, " Error: ") {
 					pos := strings.Index(line, " Error: ")
 					errorMessage = line[pos+8:]
 				} else if strings.Contains(line, " Fatal: ") {
 					pos := strings.Index(line, " Fatal: ")
+					errorMessage = line[pos+8:]
+				} else if strings.Contains(line, ": error ") {
+					pos := strings.Index(line, ": error ")
 					errorMessage = line[pos+8:]
 				}
 				if len(errorMessage) > 0 {
@@ -410,6 +416,12 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 					parts = strings.SplitN(rest, ")", 2)
 					lineColumnString, rest := parts[0], parts[1]
 					errorMessage = rest
+					if e.mode == modeCS {
+						if strings.Count(rest, ":") == 2 {
+							parts := strings.SplitN(rest, ":", 3)
+							errorMessage = parts[2]
+						}
+					}
 
 					// Move to (x, y), line number first and then column number
 					if i, err := strconv.Atoi(lineNumberString); err == nil {

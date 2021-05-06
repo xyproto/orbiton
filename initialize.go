@@ -49,7 +49,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	// Additional per-mode considerations, before launching the editor
 	rainbowParenthesis := syntaxHighlight // rainbow parenthesis
 	switch mode {
-	case modeMakefile, modePython, modeCMake, modeC, modeCpp, modeZig, modeBattlestar:
+	case modeMakefile, modePython, modeCMake, modeC, modeCpp, modeZig, modeBattlestar, modeCS:
 		tabsSpaces.spacesPerTab = 4
 	case modeAda:
 		tabsSpaces.spacesPerTab = 3

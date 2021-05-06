@@ -784,7 +784,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					e.Delete()
 				}
 				// TODO: Extract this check
-			} else if (e.mode == modeShell || e.mode == modePython || e.mode == modeCMake || e.mode == modeHaskell || e.mode == modeAda || e.mode == modeLua || e.mode == modeC || e.mode == modeBattlestar || e.mode == modeCpp || e.mode == modeZig) && (e.EmptyLine() || e.AtStartOfTheLine()) && len(e.LeadingWhitespace()) >= e.tabs.spacesPerTab {
+			} else if (e.mode == modeShell || e.mode == modePython || e.mode == modeCMake || e.mode == modeHaskell || e.mode == modeAda || e.mode == modeLua || e.mode == modeC || e.mode == modeBattlestar || e.mode == modeCpp || e.mode == modeZig || e.mode == modeCS) && (e.EmptyLine() || e.AtStartOfTheLine()) && len(e.LeadingWhitespace()) >= e.tabs.spacesPerTab {
 				// Delete several spaces
 				for i := 0; i < e.tabs.spacesPerTab; i++ {
 					// Move back

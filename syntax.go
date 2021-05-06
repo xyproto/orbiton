@@ -25,6 +25,8 @@ var (
 	scalaWords = []string{"abstract", "case", "catch", "class", "def", "do", "else", "extends", "false", "final", "finally", "for", "forSome", "if", "implicit", "import", "lazy", "match", "new", "null", "object", "override", "package", "private", "protected", "return", "sealed", "super", "this", "throw", "trait", "try", "true", "type", "val", "var", "while", "with", "yield"}
 
 	battlestarWords = []string{"address", "asm", "bootable", "break", "call", "chr", "const", "continue", "counter", "end", "exit", "extern", "fun", "funparam", "halt", "int", "len", "loop", "loopwrite", "mem", "membyte", "memdouble", "memword", "noret", "print", "rawloop", "read", "readbyte", "readdouble", "readword", "ret", "syscall", "sysparam", "use", "value", "var", "write"}
+
+	csWords = []string{"abstract", "As", "base", "bool", "Boolean", "break", "Byte", "byte", "case", "catch", "Char", "char", "checked", "class", "const", "continue", "Decimal", "decimal", "default", "delegate", "do", "Double", "double", "dynamic", "else", "enum", "event", "explicit", "Extern", "false", "finally", "fixed", "float", "for", "foreach", "Goto", "if", "implicit", "in", "int", "Int16", "Int32", "Int64", "interface", "internal", "IntPtr", "is", "lock", "long", "namespace", "new", "nint", "nuint", "null", "Object", "object", "operator", "out", "override", "params", "private", "protected", "public", "readonly", "ref", "return", "sbyte", "sealed", "Short", "short", "Single", "sizeof", "stackalloc", "static", "String", "string", "struct", "switch", "This", "throw", "true", "try", "typeof", "uint", "UInt16", "UInt32", "UInt64", "UIntPtr", "ulong", "unchecked", "unsafe", "ushort", "using", "virtual", "void", "volatile", "While"}
 )
 
 // adjustSyntaxHighlightingKeywords contains per-language adjustments to highlighting of keywords
@@ -80,6 +82,9 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 		syntax.Keywords = make(map[string]struct{})
 		delKeywords = []string{"class"}
 		addKeywords = []string{"B", "BR", "PP", "SH", "TP", "fB", "fP", "RB", "TH", "IR", "IP", "fI", "fR"}
+	case modeCS:
+		syntax.Keywords = make(map[string]struct{})
+		addKeywords = csWords
 	case modeShell:
 		addKeywords = []string{"--force", "-f", "cmake", "configure", "do", "fdisk", "for", "gdisk", "in", "make", "mv", "ninja", "rm", "rmdir", "setopt", "while"}
 		delKeywords = []string{"#else", "#endif", "default", "double", "exec", "float", "install", "long", "no", "pass", "ret", "super", "var", "with"}
