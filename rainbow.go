@@ -22,7 +22,7 @@ var (
 
 // rainbowParen implements "rainbow parenthesis" which colors "(" and ")" according to how deep they are nested
 // pCount is the existing parenthesis count when reaching the start of this line
-func (e *Editor) rainbowParen(parCount *int, chars *[]textoutput.CharAttribute, singleLineCommentMarker string, ignoreSingleQuotes bool) (err error) {
+func (e *Editor) rainbowParen(parCount, braCount *int, chars *[]textoutput.CharAttribute, singleLineCommentMarker string, ignoreSingleQuotes bool) (err error) {
 	var (
 		q            = NewQuoteState(singleLineCommentMarker, e.mode)
 		prevPrevRune = '\n'
@@ -35,9 +35,11 @@ func (e *Editor) rainbowParen(parCount *int, chars *[]textoutput.CharAttribute, 
 	)
 
 	// Initialize the quote state parenthesis count with the one that is for the beginning of this line, in the current document
-	q.parCount = *parCount
+	q.parCount = *parCount // parenthesis count
+	q.braCount = *braCount // bracket count
 
 	for i, char := range *chars {
+
 		q.ProcessRune(char.R, prevChar.R, prevPrevRune, ignoreSingleQuotes)
 		prevPrevRune = prevChar.R
 
@@ -60,35 +62,42 @@ func (e *Editor) rainbowParen(parCount *int, chars *[]textoutput.CharAttribute, 
 
 		// Count parenthesis
 		*parCount = q.parCount
+		// Count square brackets
+		*braCount = q.braCount
 
-		opening := false
-		if char.R == '(' {
-			opening = true
-		} else if char.R == ')' {
-			// opening is already set to false, for this case
-			// opening = false
-		} else {
-			// Not an opening or closing parenthesis
+		openingP := false // parenthesis
+		openingB := false // bracket
+		switch char.R {
+		case '(':
+			openingP = true
+		case '[':
+			openingB = true
+		case ')':
+		// openingP is already set to false, for this case
+		// openingP = false
+		case ']':
+			// Don't continue the loop, continue below
+		default:
+			// Not an opening or closing parenthesis or square bracket
 			continue
 		}
 
-		if *parCount < 0 {
-			// Too many closing parenthesis!
+		if *parCount < 0 || *braCount < 0 {
+			// Too many closing parenthesis or brackets!
 			char.A = unmatchedParenColor
 			err = errUnmatchedParenthesis
-		} else if opening {
+		} else if openingB || openingP {
 			// Select a color, using modulo
 			// Select another color if it's the same as the text that follows
-			selected := (*parCount) % len(rainbowParenColors)
+			selected := (*braCount + *parCount) % len(rainbowParenColors)
 			char.A = rainbowParenColors[selected]
-
 			// If the character before ( or ) are ' ' or '\t' OR the index is 0, color it with the last color in rainbowParenColors
-			if prevChar.R == ' ' || prevChar.R == '\t' || i == 0 {
+			if !openingB && (prevChar.R == ' ' || prevChar.R == '\t' || i == 0) {
 				char.A = lastColor
 			} else {
 				// Loop until a color that is not the same as the color of the next character is selected
 				// (and the next rune is not blank or end of line)
-				for (char.A.Equal(nextChar.A) && nextChar.R != ' ' && nextChar.R != '\t' && nextChar.R != '(' && nextChar.R != ')') || (char.A.Equal(prevChar.A) && prevChar.R != ' ' && prevChar.R != '\t' && prevChar.R != '(' && prevChar.R != ')') {
+				for (char.A.Equal(nextChar.A) && nextChar.R != ' ' && nextChar.R != '\t' && nextChar.R != '(' && nextChar.R != ')' && nextChar.R != '[' && nextChar.R != ']') || (char.A.Equal(prevChar.A) && prevChar.R != ' ' && prevChar.R != '\t' && prevChar.R != '(' && prevChar.R != ')' && prevChar.R != '[' && prevChar.R != ']') {
 					selected++
 					if selected >= len(rainbowParenColors) {
 						selected = 0

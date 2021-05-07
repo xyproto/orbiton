@@ -17,6 +17,7 @@ type QuoteState struct {
 	startedMultiLineString  bool
 	stoppedMultiLineComment bool
 	parCount                int // Parenthesis count
+	braCount                int // Square bracket count
 	mode                    Mode
 }
 
@@ -153,6 +154,14 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 		if q.None() {
 			q.parCount--
 		}
+	case '[':
+		if q.None() {
+			q.braCount++
+		}
+	case ']':
+		if q.None() {
+			q.braCount--
+		}
 	case '>': // support HTML-style and XML-style multi-line comments
 		if prevRune == '-' && (q.mode == modeHTML || q.mode == modeXML) {
 			q.stoppedMultiLineComment = true
@@ -177,11 +186,13 @@ func (q *QuoteState) Process(line string, ignoreSingleQuotes bool) (rune, rune) 
 	return prevRune, prevPrevRune
 }
 
-// ParCount will count the parenthesis for a single line, while skipping comments and multiline strings
+// ParBraCount will count the parenthesis and square brackets for a single line
+// while skipping comments and multiline strings
 // and without modifying the QuoteState.
-func (q *QuoteState) ParCount(line string, ignoreSingleQuotes bool) int {
+func (q *QuoteState) ParBraCount(line string, ignoreSingleQuotes bool) (int, int) {
 	qCopy := *q
 	qCopy.parCount = 0
+	qCopy.braCount = 0
 	qCopy.Process(line, ignoreSingleQuotes)
-	return qCopy.parCount
+	return qCopy.parCount, qCopy.braCount
 }

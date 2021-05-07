@@ -318,11 +318,13 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
 				if e.rainbowParenthesis && q.None() && !q.singleLineComment {
-					thisLineParCount := q.ParCount(trimmedLine, ignoreSingleQuotes)
+					thisLineParCount, thisLineBraCount := q.ParBraCount(trimmedLine, ignoreSingleQuotes)
 					parCountBeforeThisLine := q.parCount - thisLineParCount
-					if e.rainbowParen(&parCountBeforeThisLine, &runesAndAttributes, singleLineCommentMarker, ignoreSingleQuotes) == errUnmatchedParenthesis {
+					braCountBeforeThisLine := q.braCount - thisLineBraCount
+					if e.rainbowParen(&parCountBeforeThisLine, &braCountBeforeThisLine, &runesAndAttributes, singleLineCommentMarker, ignoreSingleQuotes) == errUnmatchedParenthesis {
 						// Don't mark the rest of the parenthesis as wrong, even though this one is
 						q.parCount = 0
+						q.braCount = 0
 					}
 				}
 
