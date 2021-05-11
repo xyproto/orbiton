@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	version = "o 2.37.0"
+	VersionString = "o 2.37.1"
 
 	defaultTheme Theme = iota
 	redBlackTheme
@@ -39,12 +39,12 @@ func main() {
 	flag.Parse()
 
 	if *versionFlag {
-		fmt.Println(version)
+		fmt.Println(VersionString)
 		return
 	}
 
 	if *helpFlag {
-		fmt.Println(version + " - simple and limited text editor")
+		fmt.Println(VersionString + " - simple and limited text editor")
 		fmt.Print(`
 Hotkeys
 
