@@ -120,7 +120,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 		}
 	case lastRuneInSingleLineCommentMarker:
 		// TODO: Simplify by checking q.None() first, and assuming that the len of the marker is > 1 if it's not 1 since it's not 0
-		if !q.multiLineComment && !q.singleLineComment && !q.startedMultiLineString && prevPrevRune != ':' {
+		if !q.multiLineComment && !q.singleLineComment && !q.startedMultiLineString && prevPrevRune != ':' && q.doubleQuote == 0 && q.singleQuote == 0 && q.backtick == 0 {
 			switch {
 			case len(q.singleLineCommentMarker) == 1:
 				fallthrough
