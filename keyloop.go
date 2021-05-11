@@ -698,7 +698,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			case e.AtOrAfterLastLineOfDocument() && (e.AtStartOfTheLine() || e.AtOrBeforeStartOfTextScreenLine()):
 				e.InsertLineAbove()
 				noHome = true
-			case e.AtOrAfterEndOfDocument() && (!e.AtStartOfTheLine() && !e.AtOrAfterEndOfLine()):
+			case e.AtOrAfterEndOfDocument() && !e.AtStartOfTheLine() && !e.AtOrAfterEndOfLine():
 				e.InsertStringAndMove(c, "")
 				e.InsertLineBelow()
 				scrollBack = true
@@ -707,7 +707,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				scrollBack = true
 			case !e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument() && (e.AtStartOfTheLine() || e.AtOrAfterEndOfLine()):
 				e.InsertStringAndMove(c, "")
-				e.InsertLineBelow()
 				scrollBack = true
 			case e.AtStartOfTheLine():
 				e.InsertLineAbove()
@@ -725,12 +724,16 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			}
 			e.MakeConsistent()
 
-			e.pos.Down(c)
-
 			h := int(c.Height())
-			if e.pos.sy >= (h - 1) {
+			if e.pos.sy > (h - 1) {
+				e.pos.Down(c)
 				e.redraw = e.ScrollDown(c, status, 1)
 				e.redrawCursor = true
+			} else if e.pos.sy == (h - 1) {
+				e.redraw = e.ScrollDown(c, status, 1)
+				e.redrawCursor = true
+			} else {
+				e.pos.Down(c)
 			}
 
 			if !noHome {
