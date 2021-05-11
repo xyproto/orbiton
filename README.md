@@ -45,8 +45,8 @@ These features are unique to `o`, as far as I am aware:
 * Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy the rest (until a blank line).
 * Open or close a portal with `ctrl-r`. When a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
 * Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages.
-* Press `ctrl-w` to toggle the checkmark in `- [ ] TODO item` boxes in Markdown.
-* Cycle git rebase keywords with `ctrl-r`, when in an interactive git rebase session.
+* Press `ctrl-w` to toggle the check mark in `- [ ] TODO item` boxes in Markdown.
+* Cycle git rebase keywords with `ctrl-r`, when an interactive git rebase session is in progress.
 * Jump to a line with `ctrl-l`. Either enter a number to jump to a line or just press `return` to jump to the top. Press `ctrl-l` and `return` again to jump to the bottom.
 * All text will be red if the loaded file is read-only.
 * If tab completion in the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
@@ -86,7 +86,7 @@ These features are unique to `o`, as far as I am aware:
 * If the editor executable renamed to `red` (or have a symlink with that name), the default theme will be red/white/gray.
 * If the editor executable renamed to `light` (or have a symlink with that name), the default theme will be suitable for light backgrounds.
 * Want to quickly convert Markdown to PDF and have pandoc installed? Try `o filename.md`, press `ctrl-space` twice and quit with `ctrl-q`.
-* `o` is written mostly in `o`, with some use of NeoViM at the beginning.
+* `o` is written mostly in `o`, with some use of Neovim at the beginning.
 
 ## Known bugs
 
