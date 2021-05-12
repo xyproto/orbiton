@@ -293,10 +293,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					case e.mode == modePython && q.startedMultiLineString:
 						// Python docstring
 						coloredString = UnEscape(e.multiLineString.Start(line))
-					case !strings.HasPrefix(trimmedLine, "/*") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//") && strings.Count(trimmedLine, "/*") == 1 && strings.HasSuffix(trimmedLine, "*/"): // A special case for "line /* comment */"
-						coloredString = UnEscape(o.DarkTags(strings.Replace(line, "/*", e.multiLineComment.String()+"/*", 1)))
+					//case !q.multiLineComment && !strings.HasPrefix(trimmedLine, "/*") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//") && strings.Count(trimmedLine, "/*") == strings.Count(trimmedLine, "*/"): // A special case for "line /* comment */ asdf /* comment */"
+					//	coloredString = UnEscape(o.DarkTags(strings.Replace(strings.Replace(line, "*/", "*/"+vt100.Blue.String(), -1), "/*", vt100.Magenta.String()+"/*", -1) + "<off>"))
 					case (q.multiLineComment || q.stoppedMultiLineComment) && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
 						// In the middle of a multi-line comment
+						coloredString = UnEscape(e.multiLineComment.Start(line))
+					case !q.multiLineComment && (strings.HasPrefix(trimmedLine, "#if") || strings.HasPrefix(trimmedLine, "#else") || strings.HasPrefix(trimmedLine, "#elseif") || strings.HasPrefix(trimmedLine, "#endif") || strings.HasPrefix(trimmedLine, "#define")):
 						coloredString = UnEscape(e.multiLineComment.Start(line))
 					case q.singleLineComment || q.stoppedMultiLineComment:
 						// A single line comment (the syntax module did the highlighting)
