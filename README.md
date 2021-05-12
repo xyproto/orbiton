@@ -111,7 +111,7 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
 * `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
 * `ctrl-d` - Delete a single character.
-* `ctrl-t` - Render the current document to a PDF file. For C++, toggle between header and implementation files.
+* `ctrl-t` - For C and C++: jump between the current header and source file. For other file types, render the current document to a PDF file.
 * `ctrl-o` - Open a command menu with actions that can be performed. The first menu item is always `Save and quit`.
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text (to the next blank line).
 * `ctrl-c` - Copy one line. Press twice to copy a block of text.
