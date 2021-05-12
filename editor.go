@@ -321,15 +321,14 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	// Start a spinner, in a short while
 	quitChan, spinnerWasShown := Spinner(c, tty, fmt.Sprintf("Reading %s... ", filename), fmt.Sprintf("reading %s: stopped by user", filename), e.noColor)
 
-	if spinnerWasShown {
-		e.slowDisk = true
-	}
-
 	// Read the file and check if it could be read
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return message, err
 	}
+
+	// If enough time passed so that the spinner was shown by now, enter "slow disk mode" where fewer disk-related I/O operations will be performed
+	e.slowDisk = spinnerWasShown
 
 	// Replace non-breaking space with regular space
 	data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
@@ -425,7 +424,7 @@ func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 
 // Save will try to save the current editor contents to file.
 // It needs a canvas in case trailing spaces are stripped and the cursor needs to move to the end.
-func (e *Editor) Save(c *vt100.Canvas) error {
+func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	var data []byte
 
 	// Save the current position
@@ -480,6 +479,9 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 		fileMode = 0755
 	}
 
+	// Start a spinner, in a short while
+	quitChan, _ := Spinner(c, tty, fmt.Sprintf("Saving %s... ", e.filename), fmt.Sprintf("saving %s: stopped by user", e.filename), e.noColor)
+
 	// Save the file and return any errors
 	if err := ioutil.WriteFile(e.filename, data, fileMode); err != nil {
 		return err
@@ -492,6 +494,9 @@ func (e *Editor) Save(c *vt100.Canvas) error {
 		os.Chmod(e.filename, fileMode)
 		e.SetSyntaxHighlight(true)
 	}
+
+	// Stop the spinner
+	quitChan <- true
 
 	e.redrawCursor = true
 
@@ -2163,7 +2168,7 @@ func (e *Editor) AbsFilename() (string, error) {
 // Switch replaces the current editor with a new Editor that opens the given file.
 // The undo stack is also swapped.
 // Only works for switching to one file, and then back again.
-func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *LockKeeper, filenameToOpen string, forceOpen bool) error {
+func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *LockKeeper, filenameToOpen string, forceOpen bool) error {
 	absFilename, err := e.AbsFilename()
 	if err != nil {
 		return err
@@ -2172,7 +2177,7 @@ func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *
 	lk.Unlock(absFilename)
 	lk.Save()
 	// Now open the header filename instead of the current file. Save the current file first.
-	e.Save(c)
+	e.Save(c, tty)
 	// Save the current location in the location history and write it to file
 	if !e.slowDisk {
 		e.SaveLocation(absFilename, e.locationHistory)

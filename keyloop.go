@@ -106,10 +106,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	status.respectNoColorEnvironmentVariable()
 
 	// Terminal resize handler
-	e.SetUpResizeHandler(c, status, tty)
+	e.SetUpResizeHandler(c, tty, status)
 
 	// ctrl-c handler
-	e.SetUpTerminateHandler(c, status, tty)
+	e.SetUpTerminateHandler(c, tty, status)
 
 	tty.SetTimeout(2 * time.Millisecond)
 
@@ -159,7 +159,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 				// Save the current file. The assumption is that it's better than not saving, if something crashes.
 				// TODO: Save to a crash file, then let the editor discover this when it starts.
-				e.Save(c)
+				e.Save(c, tty)
 
 				// Output the error message
 				quitMessage(tty, fmt.Sprintf("%v", x))
@@ -314,7 +314,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 			// Save the current file, but only if it has changed
 			if e.changed {
-				if err := e.Save(c); err != nil {
+				if err := e.Save(c, tty); err != nil {
 					status.ClearAll(c)
 					status.SetErrorMessage(err.Error())
 					status.Show(c, e)
@@ -341,7 +341,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				// } else if e.mode == modeMarkdown && !markdownSkipExport{
 				// statusMessage, performedAction, compiled = e.BuildOrExport(c, status, e.filename)
 			} else {
-				statusMessage, performedAction, compiled = e.BuildOrExport(c, status, e.filename)
+				statusMessage, performedAction, compiled = e.BuildOrExport(c, tty, status, e.filename)
 			}
 
 			//logf("status message %s performed action %v compiled %v filename %s\n", statusMessage, performedAction, compiled, e.filename)
@@ -381,7 +381,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 			// Save the current file, but only if it has changed
 			if e.changed {
-				if err := e.Save(c); err != nil {
+				if err := e.Save(c, tty); err != nil {
 					status.ClearAll(c)
 					status.SetErrorMessage(err.Error())
 					status.Show(c, e)
@@ -398,7 +398,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					headerExtensions := []string{".h", ".hpp"}
 					if headerFilename, err := ExtFileSearch(absFilename, headerExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
 						// Switch to another file (without forcing it)
-						e.Switch(tty, c, status, lk, headerFilename, false)
+						e.Switch(c, tty, status, lk, headerFilename, false)
 					}
 				}
 				break
@@ -411,7 +411,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					sourceExtensions := []string{".c", ".cpp", ".cxx", ".cc"}
 					if headerFilename, err := ExtFileSearch(absFilename, sourceExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
 						// Switch to another file (without forcing it)
-						e.Switch(tty, c, status, lk, headerFilename, false)
+						e.Switch(c, tty, status, lk, headerFilename, false)
 					}
 				}
 				break
@@ -450,7 +450,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			status.ClearAll(c)
 			undo.Snapshot(e)
 			undoBackup := undo
-			lastCommandMenuIndex = e.CommandMenu(c, status, tty, undo, lastCommandMenuIndex, forceFlag, lk)
+			lastCommandMenuIndex = e.CommandMenu(c, tty, status, undo, lastCommandMenuIndex, forceFlag, lk)
 			undo = undoBackup
 			if e.AfterEndOfLine() {
 				e.End(c)
@@ -1082,7 +1082,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:19": // ctrl-s, save
-			e.UserSave(c, status)
+			e.UserSave(c, tty, status)
 		case "c:21", "c:26": // ctrl-u or ctrl-z, undo (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state
 			lastCutY = -1
@@ -1314,7 +1314,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		case "c:22": // ctrl-v, paste
 
 			// Save the file right before pasting, just in case wl-paste stops
-			e.UserSave(c, status)
+			e.UserSave(c, tty, status)
 
 			var (
 				gotLineFromPortal bool

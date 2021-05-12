@@ -9,7 +9,7 @@ import (
 )
 
 // SetUpTerminateHandler sets up a signal handler for when ctrl-c is pressed
-func (e *Editor) SetUpTerminateHandler(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
+func (e *Editor) SetUpTerminateHandler(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
 	sigChan := make(chan os.Signal, 1)
 
 	// Clear any previous terminate handlers
@@ -22,7 +22,7 @@ func (e *Editor) SetUpTerminateHandler(c *vt100.Canvas, status *StatusBar, tty *
 			<-sigChan
 
 			// Quickly save the file
-			e.UserSave(c, status)
+			e.UserSave(c, tty, status)
 
 			status.SetMessage("ctrl-c")
 			status.Show(c, e)

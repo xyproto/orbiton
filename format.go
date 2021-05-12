@@ -32,7 +32,7 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		// TODO: Implement e.SaveAs
 		oldFilename := e.filename
 		e.filename = tempFilename
-		err := e.Save(c)
+		err := e.Save(c, tty)
 		e.filename = oldFilename
 
 		if err == nil {

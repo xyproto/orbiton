@@ -9,7 +9,7 @@ import (
 )
 
 // SetUpResizeHandler sets up a signal handler for when the terminal is resized
-func (e *Editor) SetUpResizeHandler(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
+func (e *Editor) SetUpResizeHandler(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
 	sigChan := make(chan os.Signal, 1)
 
 	// Clear any previous resize handlers

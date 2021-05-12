@@ -137,7 +137,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		}
 
 		// Test save, to check if the file can be created and written, or not
-		if err := e.Save(c); err != nil {
+		if err := e.Save(c, tty); err != nil {
 			// Check if the new file can be saved before the user starts working on the file.
 			return nil, "", err
 		}

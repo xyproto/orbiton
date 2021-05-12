@@ -51,7 +51,7 @@ func (e *Editor) exportScdoc(manFilename string) error {
 }
 
 // exportAdoc tries to export the current document as a manual page, using asciidoctor
-func (e *Editor) exportAdoc(c *vt100.Canvas, manFilename string) error {
+func (e *Editor) exportAdoc(c *vt100.Canvas, tty *vt100.TTY, manFilename string) error {
 
 	// TODO: Use a proper function for generating temporary files
 	tmpfn := "___o___.adoc"
@@ -62,7 +62,7 @@ func (e *Editor) exportAdoc(c *vt100.Canvas, manFilename string) error {
 	// TODO: Write a SaveAs function for the Editor
 	oldFilename := e.filename
 	e.filename = tmpfn
-	err := e.Save(c)
+	err := e.Save(c, tty)
 	if err != nil {
 		e.filename = oldFilename
 		return err
@@ -83,7 +83,7 @@ func (e *Editor) exportAdoc(c *vt100.Canvas, manFilename string) error {
 
 // BuildOrExport will try to build the source code or export the document.
 // Returns a status message and then true if an action was performed and another true if compilation/testing worked out.
-func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename string) (string, bool, bool) {
+func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filename string) (string, bool, bool) {
 	if status != nil {
 		status.Clear(c)
 	}
@@ -101,7 +101,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 
 	// asciidoctor
 	if ext == ".adoc" {
-		if err := e.exportAdoc(c, manFilename); err != nil {
+		if err := e.exportAdoc(c, tty, manFilename); err != nil {
 			return err.Error(), true, false
 		}
 		return "Saved " + manFilename, true, true
@@ -112,7 +112,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, status *StatusBar, filename stri
 		pdfFilename := strings.Replace(filepath.Base(filename), ".", "_", -1) + ".pdf"
 		// Export to PDF using pandoc. The function handles its own status messages.
 		// TODO: Don't ignore the error
-		_ = e.exportPandoc(c, status, pandocPath, pdfFilename)
+		_ = e.exportPandoc(c, tty, status, pandocPath, pdfFilename)
 		// TODO: Add a minimum of error detection. Perhaps wait just 20ms and check if the goroutine is still running.
 		return "", true, true // no message returned, the mustExportPandoc function handles it's own status output
 	}

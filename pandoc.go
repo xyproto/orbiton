@@ -40,7 +40,7 @@ const (
 )
 
 // exportPandoc will render PDF from Markdown using pandoc
-func (e *Editor) exportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath, pdfFilename string) error {
+func (e *Editor) exportPandoc(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, pandocPath, pdfFilename string) error {
 	// This function used to be concurrent. There are some leftovers from this that could be refactored away.
 
 	status.ClearAll(c)
@@ -66,7 +66,7 @@ func (e *Editor) exportPandoc(c *vt100.Canvas, status *StatusBar, pandocPath, pd
 	// Save to tmpfn
 	oldFilename := e.filename
 	e.filename = tempFilename
-	err = e.Save(c)
+	err = e.Save(c, tty)
 	if err != nil {
 		e.filename = oldFilename
 		status.ClearAll(c)

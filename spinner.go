@@ -42,10 +42,11 @@ var pacmanColor = []string{
 // If the spinner is aborted, the qmsg string is displayed.
 // Returns a quit channel (chan bool) together with a bool that indicates if the spinner was shown or not.
 // The spinner is shown asynchronously.
+// "true" must be sent to the quit channel once whatever operating that the spinner is spinning for is completed.
 func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, noColor bool) (chan bool, bool) {
 	var (
-		quit            = make(chan bool)
-		spinnerWasShown bool
+		quit                = make(chan bool)
+		spinnerWasActivated bool
 	)
 	go func() {
 		// Wait 4 * 4 milliseconds, while listening to the quit channel.
@@ -61,7 +62,14 @@ func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, noColor bool) (
 			}
 		}
 
-		spinnerWasShown = true
+		spinnerWasActivated = true
+
+		// If c or tty are nil, use the silent spinner
+		if (c == nil) || (tty == nil) {
+			// Wait for a true on the quit channel, then return
+			<-quit
+			return
+		}
 
 		var (
 			// Find a good start location
@@ -115,5 +123,5 @@ func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, noColor bool) (
 
 		}
 	}()
-	return quit, spinnerWasShown
+	return quit, spinnerWasActivated
 }

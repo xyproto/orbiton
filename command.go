@@ -17,9 +17,9 @@ import (
 const lastCommandFile = "~/.cache/o/last_command.sh"
 
 // UserSave saves the file and the location history
-func (e *Editor) UserSave(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) UserSave(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
 	// Save the file
-	if err := e.Save(c); err != nil {
+	if err := e.Save(c, tty); err != nil {
 		status.SetErrorMessage(err.Error())
 		status.Show(c, e)
 		return
@@ -93,7 +93,7 @@ func (a *Actions) Perform(index int) {
 
 // CommandMenu will display a menu with various commands that can be browsed with arrow up and arrow down
 // Also returns the selected menu index (can be -1).
-func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) int {
+func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) int {
 
 	const insertFilename = "include.txt"
 
@@ -130,7 +130,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 		[]func(){
 			func() { // save and quit
 				e.clearOnQuit = true
-				e.UserSave(c, status)
+				e.UserSave(c, tty, status)
 				e.quit = true        // indicate that the user wishes to quit
 				e.clearOnQuit = true // clear the terminal after quitting
 			},
@@ -196,7 +196,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 				// TODO: Implement e.SaveAs
 				oldFilename := e.filename
 				e.filename = tempFilename
-				err = e.Save(c)
+				err = e.Save(c, tty)
 				e.filename = oldFilename
 			}
 			if err != nil {
