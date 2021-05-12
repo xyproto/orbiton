@@ -293,7 +293,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					case e.mode == modePython && q.startedMultiLineString:
 						// Python docstring
 						coloredString = UnEscape(e.multiLineString.Start(line))
-					case q.multiLineComment || q.stoppedMultiLineComment && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\""):
+					case q.multiLineComment || q.stoppedMultiLineComment && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
 						// A multi-line comment
 						coloredString = UnEscape(e.multiLineComment.Start(line))
 					case q.singleLineComment || q.stoppedMultiLineComment:
