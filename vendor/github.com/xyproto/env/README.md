@@ -31,8 +31,14 @@ Only the first optional value is used, if the environment variable value is empt
 
 `AsBool` can be used to interpret a string value as either `true` or `false`. Examples of `true` values are "yes" and "1".
 
+### func Has
+
+`func Has(s string) bool`
+
+`Has` return true if the given environment variable name is non-empty.
+
 ## General info
 
-* Version: 1.0.0
+* Version: 1.1.0
 * License: MIT
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
