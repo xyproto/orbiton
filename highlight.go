@@ -293,8 +293,10 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					case e.mode == modePython && q.startedMultiLineString:
 						// Python docstring
 						coloredString = UnEscape(e.multiLineString.Start(line))
-					case q.multiLineComment || q.stoppedMultiLineComment && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
-						// A multi-line comment
+					case !strings.HasPrefix(trimmedLine, "/*") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//") && strings.Count(trimmedLine, "/*") == 1 && strings.HasSuffix(trimmedLine, "*/"): // A special case for "line /* comment */"
+						coloredString = UnEscape(o.DarkTags(strings.Replace(line, "/*", e.multiLineComment.String()+"/*", 1)))
+					case (q.multiLineComment || q.stoppedMultiLineComment) && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
+						// In the middle of a multi-line comment
 						coloredString = UnEscape(e.multiLineComment.Start(line))
 					case q.singleLineComment || q.stoppedMultiLineComment:
 						// A single line comment (the syntax module did the highlighting)
