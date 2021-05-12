@@ -15,6 +15,7 @@ import (
 
 var (
 	errNoSuitableBuildCommand = errors.New("no suitable build command")
+	zigCacheDir               = expandUser("~/.cache/o/zig")
 )
 
 // exportScdoc tries to export the current document as a manual page, using scdoc
@@ -226,7 +227,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			if err == nil { // success
 				sourceCode = string(sourceData)
 			}
-			cmd = exec.Command("zig", "build-exe", "-lc", filename, "--name", baseDirName, "--cache-dir", expandUser("~/.cache/o/zig"))
+			cmd = exec.Command("zig", "build-exe", "-lc", filename, "--name", baseDirName, "--cache-dir", zigCacheDir)
 			// TODO: Find a better way than this
 			if strings.Contains(sourceCode, "SDL2/SDL.h") {
 				cmd.Args = append(cmd.Args, "-lSDL2")

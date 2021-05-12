@@ -81,13 +81,15 @@ func (e *Editor) exportPandoc(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar
 
 	pandocCommand := exec.Command(pandocPath, "-fmarkdown-implicit_figures", "--toc", "-Vgeometry:left=1cm,top=1cm,right=1cm,bottom=2cm", "-Vpapersize:"+papersize, "-Vfontsize=12pt", "--pdf-engine=xelatex", "-o", pdfFilename, oldFilename)
 
+	expandedTexFilename := expandUser(pandocTexFilename)
+
 	// Write the Pandoc Tex style file, for configuring the listings package, if it does not already exist
-	if !exists(expandUser(pandocTexFilename)) {
+	if !exists(expandedTexFilename) {
 		// First create the folder, if needed, in a best effort attempt
-		folderPath := filepath.Dir(expandUser(pandocTexFilename))
+		folderPath := filepath.Dir(expandedTexFilename)
 		os.MkdirAll(folderPath, os.ModePerm)
 		// Write the Pandoc Tex style file
-		err = ioutil.WriteFile(expandUser(pandocTexFilename), []byte(listingsSetupTex), 0644)
+		err = ioutil.WriteFile(expandedTexFilename, []byte(listingsSetupTex), 0644)
 		if err != nil {
 			status.SetErrorMessage("Could not write " + pandocTexFilename + ": " + err.Error())
 			status.Show(c, e)
@@ -96,7 +98,7 @@ func (e *Editor) exportPandoc(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar
 	}
 
 	// use the listings package
-	pandocCommand.Args = append(pandocCommand.Args, "--listings", "-H"+expandUser(pandocTexFilename))
+	pandocCommand.Args = append(pandocCommand.Args, "--listings", "-H"+expandedTexFilename)
 
 	// add output and input filenames
 	pandocCommand.Args = append(pandocCommand.Args, "-o"+pdfFilename, oldFilename)

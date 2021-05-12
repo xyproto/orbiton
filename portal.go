@@ -12,13 +12,7 @@ import (
 	"github.com/xyproto/env"
 )
 
-var (
-	portalFilename = func() string {
-		tmpdir := env.Str("TMPDIR", "/tmp")
-		filename := env.Str("LOGNAME", "o") + "_portal.txt"
-		return filepath.Join(tmpdir, filename)
-	}()
-)
+var portalFilename = expandUser(filepath.Join(env.Str("TMPDIR", "/tmp"), env.Str("LOGNAME", "o")+"_portal.txt"))
 
 // Portal is a filename and a line number, for pulling text from
 type Portal struct {
@@ -38,17 +32,17 @@ func (e *Editor) NewPortal() (*Portal, error) {
 
 // ClosePortal will clear the portal by removing the portal file
 func ClosePortal() error {
-	return os.Remove(expandUser(portalFilename))
+	return os.Remove(portalFilename)
 }
 
 // HasPortal checks if a portal is currently active
 func HasPortal() bool {
-	return exists(expandUser(portalFilename))
+	return exists(portalFilename)
 }
 
 // LoadPortal will load a filename + line number from the portal.txt file
 func LoadPortal() (*Portal, error) {
-	data, err := ioutil.ReadFile(expandUser(portalFilename))
+	data, err := ioutil.ReadFile(portalFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -75,10 +69,10 @@ func LoadPortal() (*Portal, error) {
 func (p *Portal) Save() error {
 	s := p.absFilename + "\n" + p.lineNumber.String() + "\n"
 	// Anyone can read this file
-	if err := ioutil.WriteFile(expandUser(portalFilename), []byte(s), 0600); err != nil {
+	if err := ioutil.WriteFile(portalFilename, []byte(s), 0600); err != nil {
 		return err
 	}
-	return os.Chmod(expandUser(portalFilename), 0666)
+	return os.Chmod(portalFilename, 0666)
 }
 
 // String returns the current portal (filename + line number) as a colon separated string

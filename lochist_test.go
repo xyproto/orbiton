@@ -8,11 +8,11 @@ import (
 )
 
 func TestVimInfo(t *testing.T) {
-	LoadVimLocationHistory(expandUser(vimLocationHistoryFilename))
+	LoadVimLocationHistory(vimLocationHistoryFilename)
 }
 
 func TestEmacsPlaces(t *testing.T) {
-	LoadEmacsLocationHistory(expandUser(emacsLocationHistoryFilename))
+	LoadEmacsLocationHistory(emacsLocationHistoryFilename)
 }
 
 func TestNeoVimMsgPack(t *testing.T) {
@@ -24,7 +24,7 @@ func TestNeoVimMsgPack(t *testing.T) {
 	if err != nil {
 		t.Fail()
 	}
-	line, err := FindInNvimLocationHistory(expandUser(nvimLocationHistoryFilename), searchFilename)
+	line, err := FindInNvimLocationHistory(nvimLocationHistoryFilename, searchFilename)
 	if err != nil {
 		// main.go might not be in the neovim location history, this is fine
 		fmt.Println(err)

@@ -7,11 +7,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/xyproto/env"
 	"github.com/xyproto/vt100"
 )
 
 var (
-	searchHistoryFilename = "~/.cache/o/search.txt" // TODO: Use XDG_CACHE_HOME
+	searchHistoryFilename = filepath.Join(expandUser(env.Str("XDG_CACHE_HOME", "~/.cache")), "o/search.txt")
 	searchHistory         = []string{}
 	errNoSearchMatch      = errors.New("no search match")
 )
@@ -313,7 +314,7 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 			searchHistory = append(searchHistory, trimmedSearchString)
 			// ignore errors saving the search history, since it's not critical
 			if !e.slowDisk {
-				SaveSearchHistory(expandUser(searchHistoryFilename), searchHistory)
+				SaveSearchHistory(searchHistoryFilename, searchHistory)
 			}
 		} else if len(searchHistory) > 0 {
 			s = searchHistory[searchHistoryIndex]

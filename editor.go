@@ -2170,9 +2170,7 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 	// Now open the header filename instead of the current file. Save the current file first.
 	e.Save(c, tty)
 	// Save the current location in the location history and write it to file
-	if !e.slowDisk {
-		e.SaveLocation(absFilename, e.locationHistory)
-	}
+	e.SaveLocation(absFilename, e.locationHistory)
 
 	var (
 		e2            *Editor

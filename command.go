@@ -14,7 +14,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const lastCommandFile = "~/.cache/o/last_command.sh"
+var lastCommandFile = expandUser("~/.cache/o/last_command.sh")
 
 // UserSave saves the file and the location history
 func (e *Editor) UserSave(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
@@ -26,10 +26,8 @@ func (e *Editor) UserSave(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
 	}
 
 	// Save the current location in the location history and write it to file
-	if !e.slowDisk {
-		if absFilename, err := e.AbsFilename(); err == nil { // no error
-			e.SaveLocation(absFilename, e.locationHistory)
-		}
+	if absFilename, err := e.AbsFilename(); err == nil { // no error
+		e.SaveLocation(absFilename, e.locationHistory)
 	}
 
 	// Status message
@@ -376,7 +374,7 @@ func getCommand(cmd *exec.Cmd) string {
 // Save the command to a temporary file, given an exec.Cmd struct
 func saveCommand(cmd *exec.Cmd) error {
 
-	p := expandUser(lastCommandFile)
+	p := lastCommandFile
 
 	// First create the folder for the lock file overview, if needed
 	folderPath := filepath.Dir(p)

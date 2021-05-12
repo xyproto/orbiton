@@ -135,7 +135,7 @@ Set NO_COLOR=1 to disable colors.
 	}
 
 	// Set the terminal title, if the current terminal emulator supports it, and NO_COLOR is not set
-	if !hasE("NO_COLOR") {
+	if !env.Bool("NO_COLOR") {
 		termtitle.MustSet(generateTitle(filename))
 	}
 
@@ -163,7 +163,7 @@ Set NO_COLOR=1 to disable colors.
 
 	// Remove the terminal title, if the current terminal emulator supports it
 	// and if NO_COLOR is not set.
-	if !hasE("NO_COLOR") {
+	if !env.Bool("NO_COLOR") {
 		shellName := filepath.Base(env.Str("SHELL", "/bin/sh"))
 		termtitle.MustSet(shellName)
 	}

@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const defaultLockFile = "~/.cache/o/lockfile.txt"
+var defaultLockFile = expandUser("~/.cache/o/lockfile.txt")
 
 // LockKeeper keeps track of which files are currently being edited by o
 type LockKeeper struct {

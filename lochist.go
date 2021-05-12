@@ -13,15 +13,13 @@ import (
 	"github.com/xyproto/env"
 )
 
-const (
-	vimLocationHistoryFilename   = "~/.viminfo"
-	emacsLocationHistoryFilename = "~/.emacs.d/places"
-	maxLocationHistoryEntries    = 1024
-)
+const maxLocationHistoryEntries = 1024
 
 var (
-	locationHistoryFilename     = env.Str("XDG_CACHE_HOME", "~/.cache") + "/o/locations.txt"
-	nvimLocationHistoryFilename = env.Str("XDG_DATA_HOME", "~/.local/share") + "/nvim/shada/main.shada"
+	vimLocationHistoryFilename   = expandUser("~/.viminfo")
+	emacsLocationHistoryFilename = expandUser("~/.emacs.d/places")
+	locationHistoryFilename      = filepath.Join(expandUser(env.Str("XDG_CACHE_HOME", "~/.cache")), "/o/locations.txt")
+	nvimLocationHistoryFilename  = filepath.Join(expandUser(env.Str("XDG_DATA_HOME", "~/.local/share")), "/nvim/shada/main.shada")
 )
 
 // LoadLocationHistory will attempt to load the per-absolute-filename recording of which line is active.
@@ -429,5 +427,5 @@ func (e *Editor) SaveLocation(absFilename string, locationHistory map[string]Lin
 	// Save the current line location
 	locationHistory[absFilename] = e.LineNumber()
 	// Save the location history and return the error, if any
-	return SaveLocationHistory(locationHistory, expandUser(locationHistoryFilename))
+	return SaveLocationHistory(locationHistory, locationHistoryFilename)
 }
