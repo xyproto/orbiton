@@ -8,11 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 	"unicode"
 
 	"github.com/xyproto/syntax"
-	"github.com/xyproto/textoutput"
 	"github.com/xyproto/vt100"
 )
 
@@ -49,6 +47,7 @@ type Editor struct {
 	lightTheme         bool                  // using a light theme? (the XTERM_VERSION environment variable is set)
 	noColor            bool                  // should no color be used?
 	firstLineHash      bool                  // is the first line starting with "#"?
+	slowDisk           bool                  // are the disk read/write operations slow?
 	EditorColors
 }
 
@@ -320,101 +319,11 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	var message string
 
 	// Start a spinner, in a short while
-	quit := make(chan bool)
-	go func() {
+	quitChan, spinnerWasShown := Spinner(c, tty, fmt.Sprintf("Reading %s... ", filename), fmt.Sprintf("reading %s: stopped by user", filename), e.noColor)
 
-		// Wait 4 * 4 milliseconds, while listening to the quit channel.
-		// This is to delay showing the progress bar until some time has passed.
-		for i := 0; i < 4; i++ {
-			// Check if we should quit or wait
-			select {
-			case <-quit:
-				return
-			default:
-				// Wait a tiny bit
-				time.Sleep(4 * time.Millisecond)
-			}
-		}
-
-		w := int(c.Width())
-		h := int(c.Height())
-
-		// Find a good start location
-		x := uint(w / 7)
-		y := uint(h / 7)
-
-		// Move the cursor there and write a message
-		vt100.SetXY(x, y)
-		msg := vt100.White.Get(fmt.Sprintf("Reading %s... ", filename))
-		fmt.Print(msg)
-
-		// Store the position after the message
-		x += uint(len(msg)) + 1
-
-		// Prepare to output colored text
-		o := textoutput.NewTextOutput(true, true)
-		vt100.ShowCursor(false)
-
-		var counter uint
-
-		var pacmanNoColor = []string{
-			"| C · · |",
-			"|  C· · |",
-			"|   C · |",
-			"|    C· |",
-			"|     C |",
-			"|      C|",
-			"| · · Ɔ |",
-			"| · ·Ɔ  |",
-			"| · Ɔ   |",
-			"| ·Ɔ    |",
-			"| Ɔ     |",
-			"|Ɔ· · · |",
-		}
-
-		var pacmanColor = []string{
-			"<red>| <yellow>C<blue> · ·</blue> <red>|<off>",
-			"<red>| <blue> <yellow>C<blue>· · <red>|<off>",
-			"<red>| <blue>  <yellow>C<blue> · <red>|<off>",
-			"<red>| <blue>   <yellow>C<blue>· <red>|<off>",
-			"<red>| <blue>    <yellow>C <red>|<off>",
-			"<red>| <blue>     <yellow>C<red>|<off>",
-			"<red>| <blue>· · <yellow>Ɔ <red>|<off>",
-			"<red>| <blue>· ·<yellow>Ɔ<blue>  <red>|<off>",
-			"<red>| <blue>· <yellow>Ɔ <blue>  <red>|<off>",
-			"<red>| <blue>·<yellow>Ɔ<blue>    <red>|<off>",
-			"<red>| <yellow>Ɔ <blue>    <red>|<off>",
-			"<red>|<yellow>Ɔ<blue>· · · <red>|<off>",
-		}
-
-		// Start the spinner
-
-		var spinnerAnimation []string
-		if e.noColor {
-			spinnerAnimation = pacmanNoColor
-		} else {
-			spinnerAnimation = pacmanColor
-		}
-		for {
-			select {
-			case <-quit:
-				vt100.ShowCursor(true)
-				return
-			default:
-				vt100.SetXY(x, y)
-				// Iterate over the 12 different ASCII images as the counter increases
-				o.Print(spinnerAnimation[counter%12])
-				counter++
-				// Wait for a key press (also sleeps just a bit)
-				switch tty.Key() {
-				case 27, 113, 17, 3: // esc, q, ctrl-q or ctrl-c
-					vt100.ShowCursor(true)
-					quitMessage(tty, "reading "+filename+": stopped by user")
-				}
-			}
-
-		}
-	}()
+	if spinnerWasShown {
+		e.slowDisk = true
+	}
 
 	// Read the file and check if it could be read
 	data, err := ioutil.ReadFile(filename)
@@ -452,7 +361,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	e.LoadBytes(data)
 
 	// Stop the spinner
-	quit <- true
+	quitChan <- true
 
 	// Mark the data as "not changed"
 	e.changed = false
@@ -2265,7 +2174,9 @@ func (e *Editor) Switch(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, lk *
 	// Now open the header filename instead of the current file. Save the current file first.
 	e.Save(c)
 	// Save the current location in the location history and write it to file
-	e.SaveLocation(absFilename, e.locationHistory)
+	if !e.slowDisk {
+		e.SaveLocation(absFilename, e.locationHistory)
+	}
 
 	var (
 		e2            *Editor

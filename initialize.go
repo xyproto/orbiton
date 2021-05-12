@@ -114,17 +114,19 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 			e.checkContents()
 		}
 
-		// Test write, to check if the file can be written or not
-		testfile, err := os.OpenFile(e.filename, os.O_WRONLY, 0664)
-		if err != nil {
-			// can not open the file for writing
-			readOnly = true
-			// set the color to red when in read-only mode
-			e.fg = vt100.LightRed
-			// disable syntax highlighting, to make it clear that the text is red
-			e.syntaxHighlight = false
+		if !e.slowDisk {
+			// Test write, to check if the file can be written or not
+			testfile, err := os.OpenFile(e.filename, os.O_WRONLY, 0664)
+			if err != nil {
+				// can not open the file for writing
+				readOnly = true
+				// set the color to red when in read-only mode
+				e.fg = vt100.LightRed
+				// disable syntax highlighting, to make it clear that the text is red
+				e.syntaxHighlight = false
+			}
+			testfile.Close()
 		}
-		testfile.Close()
 	} else {
 
 		// Prepare an empty file
@@ -193,14 +195,16 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		absFilename = e.filename
 	}
 
-	// Load the location history. This will be saved again later. Errors are ignored.
-	e.locationHistory, err = LoadLocationHistory(expandUser(locationHistoryFilename))
-	if err == nil { // no error
-		recordedLineNumber, found = e.locationHistory[absFilename]
-	}
+	if !e.slowDisk {
+		// Load the location history. This will be saved again later. Errors are ignored.
+		e.locationHistory, err = LoadLocationHistory(expandUser(locationHistoryFilename))
+		if err == nil { // no error
+			recordedLineNumber, found = e.locationHistory[absFilename]
+		}
 
-	// Load the search history. This will be saved again later. Errors are ignored.
-	searchHistory, _ = LoadSearchHistory(expandUser(searchHistoryFilename))
+		// Load the search history. This will be saved again later. Errors are ignored.
+		searchHistory, _ = LoadSearchHistory(expandUser(searchHistoryFilename))
+	}
 
 	// Jump to the correct line number
 	switch {
@@ -239,7 +243,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		e.redraw = false
 	}
 
-	// Make sure the location history isn't empty
+	// Make sure the location history isn't empty (the search history can be empty, it's just a string slice)
 	if e.locationHistory == nil {
 		e.locationHistory = make(map[string]LineNumber, 1)
 		e.locationHistory[absFilename] = lineNumber

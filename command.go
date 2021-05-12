@@ -26,8 +26,10 @@ func (e *Editor) UserSave(c *vt100.Canvas, status *StatusBar) {
 	}
 
 	// Save the current location in the location history and write it to file
-	if absFilename, err := e.AbsFilename(); err == nil { // no error
-		e.SaveLocation(absFilename, e.locationHistory)
+	if !e.slowDisk {
+		if absFilename, err := e.AbsFilename(); err == nil { // no error
+			e.SaveLocation(absFilename, e.locationHistory)
+		}
 	}
 
 	// Status message

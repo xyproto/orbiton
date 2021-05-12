@@ -312,7 +312,9 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		if len(trimmedSearchString) > 0 {
 			searchHistory = append(searchHistory, trimmedSearchString)
 			// ignore errors saving the search history, since it's not critical
-			SaveSearchHistory(expandUser(searchHistoryFilename), searchHistory)
+			if !e.slowDisk {
+				SaveSearchHistory(expandUser(searchHistoryFilename), searchHistory)
+			}
 		} else if len(searchHistory) > 0 {
 			s = searchHistory[searchHistoryIndex]
 			e.SetSearchTerm(c, status, s)
