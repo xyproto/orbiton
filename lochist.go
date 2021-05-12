@@ -21,7 +21,7 @@ const (
 
 var (
 	locationHistoryFilename     = env.Str("XDG_CACHE_HOME", "~/.cache") + "/o/locations.txt"
-	nvimLocationHistoryFilename = env.Str("XDG_DATA_HOME", "~/local/share") + "/nvim/shada/main.shada"
+	nvimLocationHistoryFilename = env.Str("XDG_DATA_HOME", "~/.local/share") + "/nvim/shada/main.shada"
 )
 
 // LoadLocationHistory will attempt to load the per-absolute-filename recording of which line is active.
