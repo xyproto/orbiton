@@ -149,6 +149,7 @@ func (e *Editor) setLightTheme() {
 	listTextColor = vt100.Default
 	imageColor = vt100.Green
 	boldColor = vt100.Blue
+	italicsColor = vt100.Blue
 	xColor = vt100.Blue
 	listCodeColor = vt100.Red
 	codeColor = vt100.Red
@@ -204,6 +205,7 @@ func (e *Editor) setRedBlackTheme() {
 	listTextColor = vt100.LightGray
 	imageColor = vt100.Red
 	boldColor = vt100.Red
+	italicsColor = vt100.White
 	xColor = vt100.Red
 	listCodeColor = vt100.White
 	codeColor = vt100.White
