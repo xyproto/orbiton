@@ -2,25 +2,24 @@
 
 ## Pri
 
+- [ ] Also show a spinner when saving the file.
+- [ ] Better support for multi-byte unicode runes.
+- [ ] If loading the first file from disk is slow, enter "slow disk mode" and skip examining Emacs and ViM files for the last visited location in that file.
+- [ ] Embed fstabfmt.
+
+## Bugs/features/issues
+
 - [ ] '://' should not be interpreted as starting a single-line comment. It's very likely to be an URL.
-- [x] Highlight /* */ comments on the same line as code in C correctly
-- [ ] After a keyword in a comment, don't disable the comment highlight color for the rest of the line
 - [ ] Paste with middle mouse button.
 - [ ] If lines are removed, let the active bookmark stay at the same line.
-- [x] Autocompletion with Tab. Start with Go.
 - [ ] Support Delve. Introduce a Debug mode.
 - [ ] Fix output parsing when running `go test` with ctrl-space.
 - [ ] Draw inspiration from [kilo](https://github.com/antirez/kilo).
 - [ ] Auto-detect tabs/spaces when opening a file.
-- [ ] Better support for multi-byte unicode runes.
 - [ ] When starting o, hash sum the clipboards it can find. When pasting, use the latest changed clipboard. If nothing changed, use the one for Wayland or X11, depending on environment variables.
 - [ ] When editing a file that then is deleted, `ctrl-s` should maybe create the file again? Or save it to `/tmp` or `~/.cache/o`?
-
-## Bugs/features/issues
-
 - [ ] Don't highlight regular text in Nroff files.
 - [ ] Press `ctrl-l` twice to run a linter?
-- [ ] A /*comment*/ in the middle of a code line in C++ makes most of the line gray.
 - [ ] Skip `os.Stat` and `Glob` if they take to long, and just open the file directly (they are needed for smart filename completion).
 - [ ] Refactor the code to handle a line as a Line struct/object that has these markers: start of line, start of text, start of scroll view, end of scroll view, end of text, one after end of text, end of line including whitespace
 - [ ] Inherit from the Line struct (with interfaces+types+methods) by adding per-language markers: start of block, end of block, indentation compared to the line above, dedentation compared to the line above
@@ -41,7 +40,6 @@
       * then translate this to a struct
       * also think about how this can be skipped is the file is enormous and should be read in block-by-block
 - [ ] // within a ` block should not be recognized
-- [ ] Don't redraw lines for a split second when starting with a non-default theme.
 - [ ] Opening a read-only file in the Linux terminal displays different red colors when moving to the bottom.
 - [ ] Highlight this shell script line correctly: `for txt in third_party/*.txt; do`
 - [ ] Extract the features that are used in `vt100` and create a more optimized package.
