@@ -92,7 +92,7 @@ func (e *Editor) rainbowParen(parCount, braCount *int, chars *[]textoutput.CharA
 			selected := (*braCount + *parCount) % len(rainbowParenColors)
 			char.A = rainbowParenColors[selected]
 			// If the character before ( or ) are ' ' or '\t' OR the index is 0, color it with the last color in rainbowParenColors
-			if !openingB && (prevChar.R == ' ' || prevChar.R == '\t' || i == 0) {
+			if prevChar.R == ' ' || prevChar.R == '\t' || i == 0 {
 				char.A = lastColor
 			} else {
 				// Loop until a color that is not the same as the color of the next character is selected
