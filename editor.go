@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/xyproto/syntax"
@@ -47,7 +48,7 @@ type Editor struct {
 	lightTheme         bool                  // using a light theme? (the XTERM_VERSION environment variable is set)
 	noColor            bool                  // should no color be used?
 	firstLineHash      bool                  // is the first line starting with "#"?
-	slowDisk           bool                  // are the disk read/write operations slow?
+	slowDisk           bool                  // are the disk read/write operations slow (measured when loading the file)
 	EditorColors
 }
 
@@ -319,7 +320,9 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	var message string
 
 	// Start a spinner, in a short while
-	quitChan, spinnerWasShown := Spinner(c, tty, fmt.Sprintf("Reading %s... ", filename), fmt.Sprintf("reading %s: stopped by user", filename), e.noColor)
+	quitChan := Spinner(c, tty, fmt.Sprintf("Reading %s... ", filename), fmt.Sprintf("reading %s: stopped by user", filename), e.noColor)
+
+	start := time.Now()
 
 	// Read the file and check if it could be read
 	data, err := ioutil.ReadFile(filename)
@@ -328,7 +331,9 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	}
 
 	// If enough time passed so that the spinner was shown by now, enter "slow disk mode" where fewer disk-related I/O operations will be performed
-	e.slowDisk = spinnerWasShown
+	e.slowDisk = time.Since(start) > 500*time.Millisecond
+
+	// Opinonated replacements follows:
 
 	// Replace non-breaking space with regular space
 	data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
@@ -338,23 +343,6 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	data = bytes.Replace(data, []byte{'\r', '\n'}, []byte{'\n'}, -1)
 	// Replace any remaining \r characters with \n
 	data = bytes.Replace(data, []byte{'\r'}, []byte{'\n'}, -1)
-
-	// NOTE: Converting from ISO-8859-1 this way completely distorts the file when saving again!
-	// Check if decoding from ISO-8859-1 gives fewer replacement runes (0xfffd or �)
-	//utf8string := string(data)
-	//latin1decoder := charmap.ISO8859_1.NewDecoder()
-	//if utf8stringDecodedFromLatin1, err := latin1decoder.String(utf8string); err == nil { // Success
-	//logf("ENCODING: %s\n", "ISO-8859-1")
-	// Are there fewer replacement runes (0xfffd)? If yes, assume the text was ISO-8859-1 encoded.
-	//latin1questions := bytes.Count([]byte(utf8stringDecodedFromLatin1), []byte{0xff, 0xfd})
-	//utf8questions := bytes.Count(data, []byte{0xff, 0xfd})
-	//panic(fmt.Sprintf("utf8 questions: %d, latin1 questions: %d\n", utf8questions, latin1questions))
-	//if latin1questions < utf8questions {
-	//data = []byte(utf8stringDecodedFromLatin1)
-	//}
-	//} else {
-	//logf("ENCODING: %s\n", "UTF-8")
-	//}
 
 	// Load the data
 	e.LoadBytes(data)
@@ -374,13 +362,16 @@ func (e *Editor) LoadBytes(data []byte) {
 
 	byteLines := bytes.Split(data, []byte{'\n'})
 
+	lb := len(byteLines)
+
 	// If the last line is empty, skip it
-	if len(byteLines) > 0 && len(byteLines[len(byteLines)-1]) == 0 {
-		byteLines = byteLines[:len(byteLines)-1]
+	if len(byteLines) > 0 && len(byteLines[lb-1]) == 0 {
+		byteLines = byteLines[:lb-1]
+		lb--
 	}
 
 	// One allocation for all the lines
-	e.lines = make(map[int][]rune, len(byteLines))
+	e.lines = make(map[int][]rune, lb)
 
 	// Place the lines into the editor
 	for y, byteLine := range byteLines {
@@ -480,7 +471,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	}
 
 	// Start a spinner, in a short while
-	quitChan, _ := Spinner(c, tty, fmt.Sprintf("Saving %s... ", e.filename), fmt.Sprintf("saving %s: stopped by user", e.filename), e.noColor)
+	quitChan := Spinner(c, tty, fmt.Sprintf("Saving %s... ", e.filename), fmt.Sprintf("saving %s: stopped by user", e.filename), e.noColor)
 
 	// Save the file and return any errors
 	if err := ioutil.WriteFile(e.filename, data, fileMode); err != nil {
