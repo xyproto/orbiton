@@ -40,21 +40,18 @@ var pacmanColor = []string{
 
 // Spinner waits a bit, then displays a spinner together with the given message string (msg).
 // If the spinner is aborted, the qmsg string is displayed.
-// Returns a quit channel (chan bool) together with a bool that indicates if the spinner was shown or not.
+// Returns a quit channel (chan bool).
 // The spinner is shown asynchronously.
 // "true" must be sent to the quit channel once whatever operating that the spinner is spinning for is completed.
-func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, noColor bool) (chan bool, bool) {
-	var (
-		quit                = make(chan bool)
-		spinnerWasActivated bool
-	)
+func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, noColor bool) chan bool {
+	quitChan := make(chan bool)
 	go func() {
 		// Wait 4 * 4 milliseconds, while listening to the quit channel.
 		// This is to delay showing the progress bar until some time has passed.
 		for i := 0; i < 4; i++ {
 			// Check if we should quit or wait
 			select {
-			case <-quit:
+			case <-quitChan:
 				return
 			default:
 				// Wait a tiny bit
@@ -62,12 +59,10 @@ func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, noColor bool) (
 			}
 		}
 
-		spinnerWasActivated = true
-
 		// If c or tty are nil, use the silent spinner
 		if (c == nil) || (tty == nil) {
 			// Wait for a true on the quit channel, then return
-			<-quit
+			<-quitChan
 			return
 		}
 
@@ -107,7 +102,7 @@ func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, noColor bool) (
 		// Start the spinner
 		for {
 			select {
-			case <-quit:
+			case <-quitChan:
 				return
 			default:
 				vt100.SetXY(x, y)
@@ -123,5 +118,5 @@ func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, noColor bool) (
 
 		}
 	}()
-	return quit, spinnerWasActivated
+	return quitChan
 }
