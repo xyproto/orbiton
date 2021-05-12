@@ -307,11 +307,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// A multi-line string
 						coloredString = UnEscape(e.multiLineString.Get(line))
 					case (e.mode != modeHTML && e.mode != modeXML) && strings.Contains(line, "->"):
-						// Pointer arrow
-						kwc := syntax.DefaultTextConfig.Keyword
-						// color off after -> and before e.fg is key for the color not to blink when scrolling
-						coloredString = UnEscape(o.DarkTags(e.arrowReplace(string(textWithTags), kwc)))
-						//coloredString = UnEscape(o.DarkTags(strings.Replace(line, "->", "<"+kwc+">-><off>"+e.fg.String(), -1)))
+						// NOTE that if two color tags are placed after each other, they may cause blinking. Remember to turn <off> each color.
+						coloredString = UnEscape(o.DarkTags(arrowReplace(string(textWithTags))))
 					default:
 						// Regular code
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
