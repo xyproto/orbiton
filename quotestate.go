@@ -8,17 +8,19 @@ import "fmt"
 // Multiline comments (/* ... */) are special.
 // This could be a flag int instead
 type QuoteState struct {
-	singleQuote             int
-	doubleQuote             int
-	backtick                int
-	multiLineComment        bool
-	singleLineComment       bool
-	singleLineCommentMarker string
-	startedMultiLineString  bool
-	stoppedMultiLineComment bool
-	parCount                int // Parenthesis count
-	braCount                int // Square bracket count
-	mode                    Mode
+	singleQuote               int
+	doubleQuote               int
+	backtick                  int
+	multiLineComment          bool
+	singleLineComment         bool
+	singleLineCommentMarker   string
+	startedMultiLineString    bool
+	startedMultiLineComment   bool
+	stoppedMultiLineComment   bool
+	containsMultiLineComments bool
+	parCount                  int // Parenthesis count
+	braCount                  int // Square bracket count
+	mode                      Mode
 }
 
 // NewQuoteState takes a singleLineCommentMarker (such as "//" or "#") and returns a pointer to a new QuoteState struct
@@ -113,10 +115,12 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 	case '*': // support C-style and multi-line comments
 		if prevRune == '/' && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
 			q.multiLineComment = true
+			q.startedMultiLineComment = true
 		}
 	case '-': // support for HTML-style and XML-style multi-line comments
 		if prevRune == '!' && prevPrevRune == '<' && q.None() {
 			q.multiLineComment = true
+			q.startedMultiLineComment = true
 		}
 	case lastRuneInSingleLineCommentMarker:
 		// TODO: Simplify by checking q.None() first, and assuming that the len of the marker is > 1 if it's not 1 since it's not 0
@@ -145,6 +149,10 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 		if prevRune == '*' {
 			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
+			if q.startedMultiLineComment {
+				q.containsMultiLineComments = true
+			}
+
 		}
 	case '(':
 		if q.None() {
@@ -166,6 +174,9 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 		if prevRune == '-' && (q.mode == modeHTML || q.mode == modeXML) {
 			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
+			if q.startedMultiLineComment {
+				q.containsMultiLineComments = true
+			}
 		}
 	}
 }
@@ -176,6 +187,7 @@ func (q *QuoteState) Process(line string, ignoreSingleQuotes bool) (rune, rune) 
 	q.singleLineComment = false
 	q.startedMultiLineString = false
 	q.stoppedMultiLineComment = false
+	q.containsMultiLineComments = false
 	prevRune := '\n'
 	prevPrevRune := '\n'
 	for _, r := range line {
