@@ -1179,7 +1179,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				} else if firstCopyAction {
 					missingUtility := false
 
-					if env.Bool("DISPLAY") { // X11
+					if env.Has("DISPLAY") { // X11
 						if which("xclip") == "" {
 							status.SetErrorMessage("The xclip utility is missing!")
 							missingUtility = true
@@ -1379,7 +1379,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 				status.Clear(c)
 
-				if env.Bool("DISPLAY") { // X11
+				if env.Has("DISPLAY") { // X11
 					if which("xclip") == "" {
 						status.SetErrorMessage("The xclip utility is missing!")
 						missingUtility = true
