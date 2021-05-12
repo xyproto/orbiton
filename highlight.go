@@ -113,10 +113,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			line = strings.Replace(line, "\t", tabString, -1)
 		}
 
-		//screenLine = line
-
-		//redrawCursor = containsNonASCII(line)
-
 		if e.syntaxHighlight && !e.noColor {
 			// Output a syntax highlighted line. Escape any tags in the input line.
 			// textWithTags must be unescaped if there is not an error.
@@ -292,20 +288,24 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					switch {
 					case e.mode == modePython && q.startedMultiLineString:
 						// Python docstring
-						coloredString = UnEscape(e.multiLineString.Start(line))
-					//case !q.multiLineComment && !strings.HasPrefix(trimmedLine, "/*") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//") && strings.Count(trimmedLine, "/*") == strings.Count(trimmedLine, "*/"): // A special case for "line /* comment */ asdf /* comment */"
-					//	coloredString = UnEscape(o.DarkTags(strings.Replace(strings.Replace(line, "*/", "*/"+vt100.Blue.String(), -1), "/*", vt100.Magenta.String()+"/*", -1) + "<off>"))
+						coloredString = UnEscape(e.multiLineString.Get(line))
+					case strings.HasSuffix(trimmedLine, "*/") && !strings.Contains(trimmedLine, "/*"):
+						coloredString = UnEscape(e.multiLineComment.Get(line))
+					case strings.LastIndex(trimmedLine, "/*") > strings.LastIndex(trimmedLine, "*/"):
+						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
+					case q.containsMultiLineComments:
+						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					case (q.multiLineComment || q.stoppedMultiLineComment) && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
 						// In the middle of a multi-line comment
-						coloredString = UnEscape(e.multiLineComment.Start(line))
-					case !q.multiLineComment && (strings.HasPrefix(trimmedLine, "#if") || strings.HasPrefix(trimmedLine, "#else") || strings.HasPrefix(trimmedLine, "#elseif") || strings.HasPrefix(trimmedLine, "#endif") || strings.HasPrefix(trimmedLine, "#define")):
-						coloredString = UnEscape(e.multiLineComment.Start(line))
+						coloredString = UnEscape(e.multiLineComment.Get(line))
+					case !q.multiLineComment && (strings.HasPrefix(trimmedLine, "#if") || strings.HasPrefix(trimmedLine, "#else") || strings.HasPrefix(trimmedLine, "#elseif") || strings.HasPrefix(trimmedLine, "#endif") || strings.HasPrefix(trimmedLine, "#define") || strings.HasPrefix(trimmedLine, "#pragma")):
+						coloredString = UnEscape(e.multiLineString.Get(line))
 					case q.singleLineComment || q.stoppedMultiLineComment:
 						// A single line comment (the syntax module did the highlighting)
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
 					case !q.startedMultiLineString && q.backtick > 0:
 						// A multi-line string
-						coloredString = UnEscape(e.multiLineString.Start(line))
+						coloredString = UnEscape(e.multiLineString.Get(line))
 					case (e.mode != modeHTML && e.mode != modeXML) && strings.Contains(line, "->"):
 						// Pointer arrow
 						kwc := syntax.DefaultTextConfig.Keyword
