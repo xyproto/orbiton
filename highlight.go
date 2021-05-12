@@ -289,6 +289,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					case e.mode == modePython && q.startedMultiLineString:
 						// Python docstring
 						coloredString = UnEscape(e.multiLineString.Get(line))
+					case !q.multiLineComment && (strings.HasPrefix(trimmedLine, "#if") || strings.HasPrefix(trimmedLine, "#else") || strings.HasPrefix(trimmedLine, "#elseif") || strings.HasPrefix(trimmedLine, "#endif") || strings.HasPrefix(trimmedLine, "#define") || strings.HasPrefix(trimmedLine, "#pragma")):
+						coloredString = UnEscape(e.multiLineString.Get(line))
 					case strings.HasSuffix(trimmedLine, "*/") && !strings.Contains(trimmedLine, "/*"):
 						coloredString = UnEscape(e.multiLineComment.Get(line))
 					case strings.LastIndex(trimmedLine, "/*") > strings.LastIndex(trimmedLine, "*/"):
@@ -298,8 +300,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					case (q.multiLineComment || q.stoppedMultiLineComment) && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
 						// In the middle of a multi-line comment
 						coloredString = UnEscape(e.multiLineComment.Get(line))
-					case !q.multiLineComment && (strings.HasPrefix(trimmedLine, "#if") || strings.HasPrefix(trimmedLine, "#else") || strings.HasPrefix(trimmedLine, "#elseif") || strings.HasPrefix(trimmedLine, "#endif") || strings.HasPrefix(trimmedLine, "#define") || strings.HasPrefix(trimmedLine, "#pragma")):
-						coloredString = UnEscape(e.multiLineString.Get(line))
 					case q.singleLineComment || q.stoppedMultiLineComment:
 						// A single line comment (the syntax module did the highlighting)
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
@@ -310,7 +310,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// Pointer arrow
 						kwc := syntax.DefaultTextConfig.Keyword
 						// color off after -> and before e.fg is key for the color not to blink when scrolling
-						coloredString = UnEscape(o.DarkTags(strings.Replace(line, "->", "<"+kwc+">-><off>"+e.fg.String(), -1)))
+						coloredString = UnEscape(o.DarkTags(e.arrowReplace(string(textWithTags), kwc)))
+						//coloredString = UnEscape(o.DarkTags(strings.Replace(line, "->", "<"+kwc+">-><off>"+e.fg.String(), -1)))
 					default:
 						// Regular code
 						coloredString = UnEscape(o.DarkTags(string(textWithTags)))
