@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/xyproto/env"
 	"github.com/xyproto/vt100"
 )
 
@@ -179,14 +180,14 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 
 	// Use a light theme if XTERM_VERSION or TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
 	// because $COLORFGBG is "15;0" even though the background is white.
-	if hasE("XTERM_VERSION") || os.Getenv("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
+	if env.Bool("XTERM_VERSION") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
 		e.setLightTheme()
 		// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
 	} else if shell := os.Getenv("SHELL"); (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && filepath.Base(os.Args[0]) != "default" {
 		e.setRedBlackTheme()
 	}
 
-	e.noColor = hasE("NO_COLOR")
+	e.noColor = env.Bool("NO_COLOR")
 
 	// Find the absolute path to this filename
 	absFilename, err := e.AbsFilename()
@@ -196,15 +197,13 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	}
 
 	// Load the location history. This will be saved again later. Errors are ignored.
-	e.locationHistory, err = LoadLocationHistory(expandUser(locationHistoryFilename))
+	e.locationHistory, err = LoadLocationHistory(locationHistoryFilename)
 	if err == nil { // no error
 		recordedLineNumber, found = e.locationHistory[absFilename]
 	}
 
-	if !e.slowDisk {
-		// Load the search history. This will be saved again later. Errors are ignored.
-		searchHistory, _ = LoadSearchHistory(expandUser(searchHistoryFilename))
-	}
+	// Load the search history. This will be saved again later. Errors are ignored.
+	searchHistory, _ = LoadSearchHistory(searchHistoryFilename)
 
 	// Jump to the correct line number
 	switch {
@@ -218,20 +217,16 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		e.redrawCursor = true
 	case lineNumber == 0 && e.mode != modeGit:
 		// Load the o location history, if a line number was not given on the command line (and if available)
-		if !found && !e.slowDisk {
+		if !found {
 			// Try to load the NeoVim location history, then
-			recordedLineNumber, err = FindInNvimLocationHistory(expandUser(nvimLocationHistoryFilename), absFilename)
+			recordedLineNumber, err = FindInNvimLocationHistory(nvimLocationHistoryFilename, absFilename)
 			found = err == nil
 		}
-		if !found && !e.slowDisk {
+		if !found {
 			// Try to load the ViM location history, then
-			recordedLineNumber, err = FindInVimLocationHistory(expandUser(vimLocationHistoryFilename), absFilename)
+			recordedLineNumber, err = FindInVimLocationHistory(vimLocationHistoryFilename, absFilename)
 			found = err == nil
 		}
-		//if !found && !e.slowDisk {
-		//recordedLineNumber, err := LoadEmacsLocationHistory(expandUser(emacsLocationHistoryFilename), absFilename)
-		//found = err == nil
-		//}
 		// Check if an existing line number was found
 		if found {
 			lineNumber = recordedLineNumber

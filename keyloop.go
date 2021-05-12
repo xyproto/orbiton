@@ -13,6 +13,7 @@ import (
 	"unicode"
 
 	"github.com/atotto/clipboard"
+	"github.com/xyproto/env"
 	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
 )
@@ -117,7 +118,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	previousY := 1
 
 	// Create a LockKeeper for keeping track of which files are being edited
-	lk := NewLockKeeper(expandUser(defaultLockFile))
+	lk := NewLockKeeper(defaultLockFile)
 
 	var (
 		canUseLocks   = true
@@ -1178,7 +1179,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				} else if firstCopyAction {
 					missingUtility := false
 
-					if hasE("DISPLAY") { // X11
+					if env.Bool("DISPLAY") { // X11
 						if which("xclip") == "" {
 							status.SetErrorMessage("The xclip utility is missing!")
 							missingUtility = true
@@ -1378,7 +1379,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 				status.Clear(c)
 
-				if hasE("DISPLAY") { // X11
+				if env.Bool("DISPLAY") { // X11
 					if which("xclip") == "" {
 						status.SetErrorMessage("The xclip utility is missing!")
 						missingUtility = true
@@ -1679,9 +1680,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	}
 
 	// Save the current location in the location history and write it to file
-	if !e.slowDisk {
-		e.SaveLocation(absFilename, e.locationHistory)
-	}
+	e.SaveLocation(absFilename, e.locationHistory)
 
 	// Clear all status bar messages
 	status.ClearAll(c)

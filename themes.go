@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/xyproto/env"
 	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
 )
@@ -226,7 +227,7 @@ func (e *Editor) setRedBlackTheme() {
 }
 
 func (e *Editor) respectNoColorEnvironmentVariable() {
-	e.noColor = hasE("NO_COLOR")
+	e.noColor = env.Bool("NO_COLOR")
 	if e.noColor {
 		e.fg = vt100.Default
 		e.bg = vt100.BackgroundDefault
@@ -272,7 +273,7 @@ func (e *Editor) respectNoColorEnvironmentVariable() {
 }
 
 func (status *StatusBar) respectNoColorEnvironmentVariable() {
-	if hasE("NO_COLOR") {
+	if env.Bool("NO_COLOR") {
 		status.fg = vt100.Default
 		status.bg = vt100.BackgroundDefault
 	}
