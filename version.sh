@@ -15,7 +15,7 @@ echo "Setting the version to $VERSION"
 
 # Set the version in various files
 setconf README.md '* Version' $VERSION
-setconf main.go VersionString "\"o "$VERSION"\""
+setconf main.go versionString "\"o "$VERSION"\""
 
 # Update the date and version in the man page
 d=$(LC_ALL=C date +'%d %b %Y')
