@@ -115,7 +115,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 			e.checkContents()
 		}
 
-		if !e.slowDisk {
+		if !e.slowLoad {
 			// Test write, to check if the file can be written or not
 			testfile, err := os.OpenFile(e.filename, os.O_WRONLY, 0664)
 			if err != nil {
@@ -202,8 +202,10 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		recordedLineNumber, found = e.locationHistory[absFilename]
 	}
 
-	// Load the search history. This will be saved again later. Errors are ignored.
-	searchHistory, _ = LoadSearchHistory(searchHistoryFilename)
+	if !e.slowLoad {
+		// Load the search history. This will be saved again later. Errors are ignored.
+		searchHistory, _ = LoadSearchHistory(searchHistoryFilename)
+	}
 
 	// Jump to the correct line number
 	switch {
@@ -217,12 +219,12 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		e.redrawCursor = true
 	case lineNumber == 0 && e.mode != modeGit:
 		// Load the o location history, if a line number was not given on the command line (and if available)
-		if !found {
+		if !found && !e.slowLoad {
 			// Try to load the NeoVim location history, then
 			recordedLineNumber, err = FindInNvimLocationHistory(nvimLocationHistoryFilename, absFilename)
 			found = err == nil
 		}
-		if !found {
+		if !found && !e.slowLoad {
 			// Try to load the ViM location history, then
 			recordedLineNumber, err = FindInVimLocationHistory(vimLocationHistoryFilename, absFilename)
 			found = err == nil

@@ -48,7 +48,7 @@ type Editor struct {
 	lightTheme         bool                  // using a light theme? (the XTERM_VERSION environment variable is set)
 	noColor            bool                  // should no color be used?
 	firstLineHash      bool                  // is the first line starting with "#"?
-	slowDisk           bool                  // are the disk read/write operations slow (measured when loading the file)
+	slowLoad           bool                  // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
 	EditorColors
 }
 
@@ -331,7 +331,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	}
 
 	// If enough time passed so that the spinner was shown by now, enter "slow disk mode" where fewer disk-related I/O operations will be performed
-	e.slowDisk = time.Since(start) > 500*time.Millisecond
+	e.slowLoad = time.Since(start) > 400*time.Millisecond
 
 	// Opinonated replacements follows:
 
