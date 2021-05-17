@@ -161,6 +161,7 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 `/etc/fstab` files are also supported, and can be formatted with `ctrl-w` if [`fstabfmt`](https://github.com/xyproto/fstabfmt) is installed.
 
 | Markup language | File extensions | Jump to error | Format command ($filename is a temporary file) |
+|----|----|----|----|
 | HTML | `.htm`, `.html` | no | `tidy -w 120 -q -i -utf8 --show-errors 0 --show-warnings no --tidy-mark no --force-output yes -ashtml -omit no -xml no -m -c` |
 
 * `o` will try to jump to the location where the error is and otherwise display `Success`.
