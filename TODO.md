@@ -2,13 +2,12 @@
 
 ## Pri
 
-- [ ] Also show a spinner when saving the file.
+- [ ] Fix the handling of multiline comments in Python.
 - [ ] Better support for multi-byte unicode runes.
-- [ ] If loading the first file from disk is slow, enter "slow disk mode" and skip examining Emacs and ViM files for the last visited location in that file.
-- [ ] Embed fstabfmt.
 
 ## Bugs/features/issues
 
+- [ ] Embed fstabfmt.
 - [ ] '://' should not be interpreted as starting a single-line comment. It's very likely to be an URL.
 - [ ] Paste with middle mouse button.
 - [ ] If lines are removed, let the active bookmark stay at the same line.
