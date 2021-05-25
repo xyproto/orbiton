@@ -2,6 +2,8 @@
 
 ## Pri
 
+- [ ] #-comments containing /* or */ should still be marked as single-line comments
+- [ ] Fix behavior when TERM=linux
 - [ ] Fix the handling of multiline comments in Python.
 - [ ] Better support for multi-byte unicode runes.
 
