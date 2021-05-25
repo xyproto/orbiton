@@ -83,11 +83,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 		}
 	case '"':
 		if prevPrevRune == '"' && prevRune == '"' {
-			if q.None() {
-				q.startedMultiLineString = true
-			} else {
-				q.startedMultiLineString = false
-			}
+			q.startedMultiLineString = q.None()
 		} else if prevRune != '\\' {
 			if q.None() {
 				q.doubleQuote++
@@ -100,7 +96,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 		}
 	case '\'':
 		if prevRune != '\\' {
-			if ignoreSingleQuotes {
+			if ignoreSingleQuotes || q.mode == modeLisp {
 				return
 			}
 			if q.None() {
