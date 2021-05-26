@@ -33,7 +33,6 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	var (
 		startTime          = time.Now()
 		createdNewFile     bool                  // used for indicating that a new file was created
-		readOnly           bool                  // used for indicating that a loaded file is read-only
 		tabsSpaces         = TabsSpaces{4, true} // default spaces per tab
 		scrollSpeed        = 10                  // number of lines to scroll when using `ctrl-n` and `ctrl-p`
 		statusMessage      string                // used when loading or creating a file, for the initial status message
@@ -120,7 +119,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 			testfile, err := os.OpenFile(e.filename, os.O_WRONLY, 0664)
 			if err != nil {
 				// can not open the file for writing
-				readOnly = true
+				e.readOnly = true
 				// set the color to red when in read-only mode
 				e.fg = vt100.LightRed
 				// disable syntax highlighting, to make it clear that the text is red
@@ -172,7 +171,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	}
 
 	// If the file starts with a hash bang, enable syntax highlighting
-	if strings.HasPrefix(strings.TrimSpace(e.Line(0)), "#!") {
+	if strings.HasPrefix(strings.TrimSpace(e.Line(0)), "#!") && !e.readOnly {
 		// Enable styntax highlighting and redraw
 		e.syntaxHighlight = true
 		e.bg = defaultEditorBackground
@@ -180,11 +179,13 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 
 	// Use a light theme if XTERM_VERSION or TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
 	// because $COLORFGBG is "15;0" even though the background is white.
-	if env.Has("XTERM_VERSION") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
-		e.setLightTheme()
-		// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
-	} else if shell := env.Str("SHELL"); (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && filepath.Base(os.Args[0]) != "default" {
-		e.setRedBlackTheme()
+	if !e.readOnly {
+		if env.Has("XTERM_VERSION") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
+			e.setLightTheme()
+			// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
+		} else if shell := env.Str("SHELL"); (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && filepath.Base(os.Args[0]) != "default" {
+			e.setRedBlackTheme()
+		}
 	}
 
 	e.noColor = env.Bool("NO_COLOR")
@@ -268,7 +269,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		statusMessage = "New " + e.filename
 	} else if e.Empty() {
 		statusMessage = "Loaded empty file: " + e.filename + warningMessage
-		if readOnly {
+		if e.readOnly {
 			statusMessage += " (read only)"
 		}
 	} else {
@@ -278,7 +279,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		} else {
 			statusMessage = fmt.Sprintf("Loaded %s%s", e.filename, warningMessage)
 		}
-		if readOnly {
+		if e.readOnly {
 			statusMessage += " (read only)"
 		}
 	}

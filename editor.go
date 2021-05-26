@@ -49,6 +49,7 @@ type Editor struct {
 	noColor            bool                  // should no color be used?
 	firstLineHash      bool                  // is the first line starting with "#"?
 	slowLoad           bool                  // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
+	readOnly           bool                  // is the file read-only when initializing o?
 	EditorColors
 }
 
@@ -480,7 +481,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 
 	// "chmod +x" or "chmod -x". This is needed after saving the file, in order to toggle the executable bit.
 	// rust source may start with something like "#![feature(core_intrinsics)]", so avoid that.
-	if shebang && e.mode != modeRust {
+	if shebang && e.mode != modeRust && !e.readOnly {
 		// Call Chmod, but ignore errors (since this is just a bonus and not critical)
 		os.Chmod(e.filename, fileMode)
 		e.SetSyntaxHighlight(true)
