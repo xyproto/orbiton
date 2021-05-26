@@ -2,18 +2,17 @@
 
 ## Pri
 
-- [ ] #-comments containing /* or */ should still be marked as single-line comments
-- [ ] Fix behavior when TERM=linux
 - [ ] Fix the handling of multiline comments in Python.
 - [ ] Better support for multi-byte unicode runes.
+- [ ] Fix syntax highlighting of 'tokens in Clojure.
+- [ ] If lines are removed, let the active bookmark stay at the same line.
 
 ## Bugs/features/issues
 
-- [ ] Embed fstabfmt.
 - [ ] '://' should not be interpreted as starting a single-line comment. It's very likely to be an URL.
-- [ ] Paste with middle mouse button.
-- [ ] If lines are removed, let the active bookmark stay at the same line.
 - [ ] Support Delve. Introduce a Debug mode.
+- [ ] Embed fstabfmt.
+- [ ] Paste with middle mouse button.
 - [ ] Fix output parsing when running `go test` with ctrl-space.
 - [ ] Draw inspiration from [kilo](https://github.com/antirez/kilo).
 - [ ] Auto-detect tabs/spaces when opening a file.
