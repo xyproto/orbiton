@@ -53,7 +53,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		tabsSpaces.spacesPerTab = 4
 	case modeAda:
 		tabsSpaces.spacesPerTab = 3
-	case modeShell, modeConfig, modeHaskell, modeVim, modeJSON:
+	case modeShell, modeConfig, modeHaskell, modeVim, modeJSON, modeHTML, modeXML:
 		tabsSpaces.spacesPerTab = 2
 	case modeMarkdown, modeText, modeBlank:
 		rainbowParenthesis = false

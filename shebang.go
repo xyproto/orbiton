@@ -63,7 +63,7 @@ func (e *Editor) adjustTabsAndSpaces() {
 	switch e.mode {
 	case modeMakefile, modePython, modeCMake, modeJava, modeKotlin, modeZig, modeBattlestar, modeScala, modeCS:
 		e.tabs = TabsSpaces{4, false}
-	case modeShell, modeConfig, modeHaskell, modeVim, modeLua, modeObjectPascal, modeJSON:
+	case modeShell, modeConfig, modeHaskell, modeVim, modeLua, modeObjectPascal, modeJSON, modeHTML, modeXML:
 		e.tabs = TabsSpaces{2, false}
 	case modeAda:
 		e.tabs = TabsSpaces{3, false}

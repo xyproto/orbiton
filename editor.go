@@ -444,7 +444,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	//       This is a hack, that can only replace 10 levels deep.
 	switch e.mode {
 	case modePython, modeBattlestar, modeCMake, modeJava, modeKotlin, modeShell, modeConfig, modeHaskell,
-		modeVim, modeObjectPascal, modeZig, modeLua, modeC, modeCpp, modeAda, modeScala, modeJSON, modeCS:
+		modeVim, modeObjectPascal, modeZig, modeLua, modeC, modeCpp, modeAda, modeScala, modeJSON, modeCS, modeXML, modeHTML:
 		for level := 10; level > 0; level-- {
 			fromString := "\n" + strings.Repeat("\t", level)
 			toString := "\n" + strings.Repeat(" ", level*e.tabs.spacesPerTab)
