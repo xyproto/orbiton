@@ -82,7 +82,7 @@ These features are unique to `o`, as far as I am aware:
 * Will replace non-breaking space (`0xc2 0xa0`) with a regular space (`0x20`) whenever possible.
 * If interactive rebase is launched with `git rebase -i`, then either `ctrl-w` or `ctrl-r` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
 * When editing Markdown, checkboxes can be toggled with `ctrl-w`.
-* If the editor executable renamed to `red` (or have a symlink with that name), the default theme will be red/white/gray.
+* If the editor executable renamed to `ro` (or have a symlink with that name), the default theme will be red/white/gray.
 * If the editor executable renamed to `light` (or have a symlink with that name), the default theme will be suitable for light backgrounds.
 * Want to quickly convert Markdown to PDF and have pandoc installed? Try `o filename.md`, press `ctrl-space` twice and quit with `ctrl-q`.
 * Press `ctrl-w` to toggle the check mark in `- [ ] TODO item` boxes in Markdown.
