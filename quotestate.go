@@ -109,7 +109,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 			}
 		}
 	case '*': // support C-style and multi-line comments
-		if prevRune == '/' && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
+		if firstRuneInSingleLineCommentMarker != '#' && prevRune == '/' && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
 		}
@@ -142,7 +142,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 		// r == '/'
 		fallthrough
 	case '/': // support C-style multi-line comments
-		if prevRune == '*' {
+		if firstRuneInSingleLineCommentMarker != '#' && prevRune == '*' {
 			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
 			if q.startedMultiLineComment {
