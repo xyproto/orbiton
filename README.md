@@ -398,3 +398,7 @@ These should work well together with `o`:
 * Version: 2.37.3
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
+
+## Stargzers over time
+
+[![Stargazers over time](https://starchart.cc/xyproto/o.svg)](https://starchart.cc/xyproto/o)
