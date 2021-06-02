@@ -367,7 +367,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 // getCommand takes an *exec.Cmd and returns the command
 // it represents, but with "/usr/bin/sh -c " trimmed away.
 func getCommand(cmd *exec.Cmd) string {
-	s := cmd.Path + strings.Join(cmd.Args[1:], " ")
+	s := cmd.Path + " " + strings.Join(cmd.Args[1:], " ")
 	return strings.TrimPrefix(s, "/usr/bin/sh -c ")
 }
 
