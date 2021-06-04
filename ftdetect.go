@@ -49,6 +49,8 @@ const (
 	modeJSON           // for JSON and iPython notebooks
 	modeBattlestar     // for Battlestar
 	modeCS             // for C#
+	modeJavaScript     // for JavaScript
+	modeTypeScript     // for TypeScript
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -166,6 +168,10 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeScala
 		case ".json", ".ipynb":
 			mode = modeJSON
+		case ".js":
+			mode = modeJavaScript
+		case ".ts":
+			mode = modeTypeScript
 		default:
 			mode = modeBlank
 		}
@@ -269,6 +275,10 @@ func (e *Editor) Mode() string {
 		return "Battlestar"
 	case modeCS:
 		return "C#"
+	case modeTypeScript:
+		return "TypeScript"
+	case modeJavaScript:
+		return "JavaScript"
 	default:
 		return "?"
 	}
