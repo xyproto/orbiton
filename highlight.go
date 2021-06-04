@@ -108,11 +108,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 		line = strings.TrimRightFunc(line, unicode.IsSpace)
 
-		trimmedLine = strings.TrimSpace(line)
+		// already trimmed right, just trim left
+		trimmedLine = strings.TrimLeftFunc(line, unicode.IsSpace)
 
-		if strings.Contains(line, "\t") {
-			line = strings.Replace(line, "\t", tabString, -1)
-		}
+		// expand tabs
+		line = strings.Replace(line, "\t", tabString, -1)
 
 		if e.syntaxHighlight && !e.noColor {
 			// Output a syntax highlighted line. Escape any tags in the input line.
