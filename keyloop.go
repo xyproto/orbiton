@@ -735,6 +735,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				found := false
 				expandedWord := ""
 				for kw := range syntax.Keywords {
+					if len(kw) < 3 {
+						// skip too short suggestions
+						continue
+					}
 					if strings.HasPrefix(kw, word) {
 						if !found || (len(kw) < len(expandedWord)) && (len(expandedWord) > 0) {
 							expandedWord = kw
@@ -776,6 +780,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					e.InsertStringAndMove(c, chosen)
 					break
 				}
+
 			}
 
 			// Enable auto indent if the extension is not "" and either:
