@@ -310,26 +310,27 @@ If `/usr/share/scala/lib/scala-library.jar` is not found `scalac -d run_with_sca
 
 ## List of optional runtime dependencies
 
-* `go` / `golang`
-* `goimports`
+* `autopep8`
+* `brittany`
+* `cargo`
+* `clang-format`
 * [`cxx`](https://github.com/xyproto/cxx)
 * `g++` / `base-devel`
-* `clang-format`
-* `rustc`
-* `rustfmt`
-* `cargo`
-* `zig`
-* `v`
 * `ghc`
-* `brittany`
-* `python`
-* `autopep8`
+* `go` / `golang`
+* `goimports`
+* `google-java-format`
+* `jar`
+* `javac`
 * `kotlin`
 * `ktlint`
-* `javac`
-* `jar`
-* `google-java-format`
 * `pandoc`
+* `prettify`
+* `python`
+* `rustc`
+* `rustfmt`
+* `v`
+* `zig`
 
 ## Size
 
