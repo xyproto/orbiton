@@ -36,11 +36,11 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	rainbowParenthesis := syntaxHighlight // rainbow parenthesis
 	switch mode {
 	case modeMakefile, modePython, modeCMake, modeC, modeCpp, modeZig, modeBattlestar, modeCS:
-		tabsSpaces.spacesPerTab = 4
+		tabsSpaces.perTab = 4
 	case modeAda:
-		tabsSpaces.spacesPerTab = 3
+		tabsSpaces.perTab = 3
 	case modeShell, modeConfig, modeHaskell, modeVim, modeJSON, modeHTML, modeXML:
-		tabsSpaces.spacesPerTab = 2
+		tabsSpaces.perTab = 2
 	case modeMarkdown, modeText, modeBlank:
 		rainbowParenthesis = false
 	}
@@ -142,7 +142,12 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	adjustSyntaxHighlightingKeywords(e.mode)
 
 	// Additional per-mode considerations, before launching the editor
-	e.adjustTabsAndSpaces()
+	e.tabsSpaces = TabsSpacesFromMode(e.mode)
+
+	switch e.mode {
+	case modeMarkdown, modeText, modeBlank:
+		e.rainbowParenthesis = false
+	}
 
 	// If we're editing a git commit message, add a newline and enable word-wrap at 80
 	if e.mode == modeGit {

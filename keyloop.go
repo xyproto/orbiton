@@ -382,7 +382,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				if e.pos.sx > 0 {
 					// Move one step left
 					if e.TabToTheLeft() {
-						e.pos.sx -= e.tabs.spacesPerTab
+						e.pos.sx -= e.tabsSpaces.perTab
 					} else {
 						e.pos.sx--
 					}
@@ -396,7 +396,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				// no horizontal scrolling going on
 				// Move one step left
 				if e.TabToTheLeft() {
-					e.pos.sx -= e.tabs.spacesPerTab
+					e.pos.sx -= e.tabsSpaces.perTab
 				} else {
 					e.pos.sx--
 				}
@@ -701,10 +701,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					e.End(c)
 					e.Delete()
 				}
-				// TODO: Extract this check
-			} else if (e.mode == modeShell || e.mode == modePython || e.mode == modeCMake || e.mode == modeHaskell || e.mode == modeAda || e.mode == modeLua || e.mode == modeC || e.mode == modeBattlestar || e.mode == modeCpp || e.mode == modeZig || e.mode == modeCS) && (e.EmptyLine() || e.AtStartOfTheLine()) && len(e.LeadingWhitespace()) >= e.tabs.spacesPerTab {
+			} else if Spaces(e.mode) && (e.EmptyLine() || e.AtStartOfTheLine()) && len(e.LeadingWhitespace()) >= e.tabsSpaces.perTab {
 				// Delete several spaces
-				for i := 0; i < e.tabs.spacesPerTab; i++ {
+				for i := 0; i < e.tabsSpaces.perTab; i++ {
 					// Move back
 					e.Prev(c)
 					// Type a blank
@@ -815,7 +814,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					switch e.mode {
 					case modeShell, modePython, modeCMake, modeConfig:
 						// If this is a shell script, use 2 spaces (or however many spaces are defined in e.spacesPerTab)
-						oneIndentation = strings.Repeat(" ", e.tabs.spacesPerTab)
+						oneIndentation = strings.Repeat(" ", e.tabsSpaces.perTab)
 					default:
 						// For anything else, use real tabs
 						oneIndentation = "\t"
@@ -853,7 +852,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			undo.Snapshot(e)
 			switch e.mode {
 			case modeShell, modePython, modeCMake, modeConfig:
-				for i := 0; i < e.tabs.spacesPerTab; i++ {
+				for i := 0; i < e.tabsSpaces.perTab; i++ {
 					e.InsertRune(c, ' ')
 					// Write the spaces that represent the tab to the canvas
 					e.WriteTab(c)
@@ -1522,10 +1521,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						newLeadingWhitespace := leadingWhitespace
 						if strings.HasSuffix(leadingWhitespace, "\t") {
 							newLeadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-1]
-							e.pos.sx -= e.tabs.spacesPerTab
-						} else if strings.HasSuffix(leadingWhitespace, strings.Repeat(" ", e.tabs.spacesPerTab)) {
-							newLeadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-e.tabs.spacesPerTab]
-							e.pos.sx -= e.tabs.spacesPerTab
+							e.pos.sx -= e.tabsSpaces.perTab
+						} else if strings.HasSuffix(leadingWhitespace, strings.Repeat(" ", e.tabsSpaces.perTab)) {
+							newLeadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-e.tabsSpaces.perTab]
+							e.pos.sx -= e.tabsSpaces.perTab
 						}
 						e.SetCurrentLine(newLeadingWhitespace)
 					}

@@ -11,22 +11,13 @@ func (e *Editor) smartIndentation(leadingWhitespace, trimmedLine string, alsoDed
 	if len(trimmedLine) > 0 &&
 		(strings.HasSuffix(trimmedLine, "(") || strings.HasSuffix(trimmedLine, "{") || strings.HasSuffix(trimmedLine, "[") ||
 			strings.HasSuffix(trimmedLine, ":")) && !strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()) {
-		switch e.mode {
-		case modeShell, modePython, modeCMake, modeConfig, modeHaskell, modeLua, modeC, modeCpp, modeZig, modeBattlestar, modeAda, modeJSON, modeHTML, modeXML, modeCS:
-			leadingWhitespace += strings.Repeat(" ", e.tabs.spacesPerTab)
-		default:
-			leadingWhitespace += "\t"
-		}
+		leadingWhitespace += e.tabsSpaces.String()
 	}
 	if alsoDedent {
 		// "smart dedentation", subtract one indentation from the line above
 		if len(trimmedLine) > 0 &&
 			(strings.HasSuffix(trimmedLine, ")") || strings.HasSuffix(trimmedLine, "}") || strings.HasSuffix(trimmedLine, "]")) {
-			indentation := "\t"
-			switch e.mode {
-			case modeShell, modePython, modeCMake, modeConfig, modeHaskell, modeLua, modeC, modeCpp, modeZig, modeBattlestar, modeAda, modeJSON, modeCS, modeXML, modeHTML:
-				indentation = strings.Repeat(" ", e.tabs.spacesPerTab)
-			}
+			indentation := e.tabsSpaces.String()
 			if len(leadingWhitespace) > len(indentation) {
 				leadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-len(indentation)]
 			}

@@ -28,7 +28,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	// Convert the background color to a background color code
 	bg := e.bg.Background()
 
-	tabString := strings.Repeat(" ", e.tabs.spacesPerTab)
+	tabString := strings.Repeat(" ", e.tabsSpaces.perTab)
 	w := c.Width()
 	//h := c.Height()
 	if fromline >= toline {
@@ -377,8 +377,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 					if letter == '\t' {
 						c.Write(uint(cx)+lineRuneCount, uint(cy)+uint(y), fg, e.bg, tabString)
-						lineRuneCount += uint(e.tabs.spacesPerTab)
-						lineStringCount += uint(e.tabs.spacesPerTab)
+						lineRuneCount += uint(e.tabsSpaces.perTab)
+						lineStringCount += uint(e.tabsSpaces.perTab)
 					} else {
 						//logf(string(letter))
 						if unicode.IsControl(letter) {

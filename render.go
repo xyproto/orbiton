@@ -23,7 +23,7 @@ func (e *Editor) SavePDF(title, filename string) error {
 	for i := 0; i < e.Len(); i++ {
 		line := e.Line(LineIndex(i))
 		// Expand tabs for each line
-		sb.WriteString(strings.Replace(line, "\t", strings.Repeat(" ", e.tabs.spacesPerTab), -1) + "\n")
+		sb.WriteString(strings.Replace(line, "\t", strings.Repeat(" ", e.tabsSpaces.perTab), -1) + "\n")
 		// Count the maximum line length
 		if len(line) > maxLineLength {
 			maxLineLength = len(line)
