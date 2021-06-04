@@ -474,8 +474,13 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 
 	// Save the file and return any errors
 	if err := ioutil.WriteFile(e.filename, data, fileMode); err != nil {
+		// Stop the spinner and return
+		quitChan <- true
 		return err
 	}
+
+	// Apparently, this file isn't read-only, since saving went fine
+	e.readOnly = false
 
 	// "chmod +x" or "chmod -x". This is needed after saving the file, in order to toggle the executable bit.
 	// rust source may start with something like "#![feature(core_intrinsics)]", so avoid that.
