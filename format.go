@@ -14,6 +14,27 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+// Map from formatting command to a list of file extensions
+var format = map[*exec.Cmd][]string{
+	exec.Command("goimports", "-w", "--"):                                             {".go"},
+	exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
+	exec.Command("zig", "fmt"):                                                        {".zig"},
+	exec.Command("v", "fmt"):                                                          {".v"},
+	exec.Command("rustfmt"):                                                           {".rs"},
+	exec.Command("brittany", "--write-mode=inplace"):                                  {".hs"},
+	exec.Command("autopep8", "-i", "--max-line-length", "120"):                        {".py"},
+	exec.Command("ocamlformat"):                                                       {".ml"},
+	exec.Command("crystal", "tool", "format"):                                         {".cr"},
+	exec.Command("ktlint", "-F"):                                                      {".kt", ".kts"},
+	exec.Command("google-java-format", "-i"):                                          {".java"},
+	exec.Command("scalafmt"):                                                          {".scala"},
+	exec.Command("astyle", "--mode=cs"):                                               {".cs"},
+	exec.Command("prettier", "--tab-width", "4", "-w"):                                {".js"},
+	exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"):                                                                        {".lua"},
+	exec.Command("tidy", "-w", "80", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "-xml", "-m"):                                                                 {".xml"},
+	exec.Command("tidy", "-w", "120", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "--force-output", "yes", "-ashtml", "-omit", "no", "-xml", "no", "-m", "-c"): {".html", ".htm"},
+}
+
 func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, cmd *exec.Cmd, extOrBaseFilename string) error {
 	if which(cmd.Path) == "" { // Does the formatting tool even exist?
 		return errors.New(cmd.Path + " is missing")
@@ -156,25 +177,7 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 	}
 
 	// Not in git mode, format Go or C++ code with goimports or clang-format
-	// Map from formatting command to a list of file extensions
-	format := map[*exec.Cmd][]string{
-		exec.Command("goimports", "-w", "--"):                                             {".go"},
-		exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
-		exec.Command("zig", "fmt"):                                                        {".zig"},
-		exec.Command("v", "fmt"):                                                          {".v"},
-		exec.Command("rustfmt"):                                                           {".rs"},
-		exec.Command("brittany", "--write-mode=inplace"):                                  {".hs"},
-		exec.Command("autopep8", "-i", "--max-line-length", "120"):                        {".py"},
-		exec.Command("ocamlformat"):                                                       {".ml"},
-		exec.Command("crystal", "tool", "format"):                                         {".cr"},
-		exec.Command("ktlint", "-F"):                                                      {".kt", ".kts"},
-		exec.Command("google-java-format", "-i"):                                          {".java"},
-		exec.Command("scalafmt"):                                                          {".scala"},
-		exec.Command("astyle", "--mode=cs"):                                               {".cs"},
-		exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"):                                                                        {".lua"},
-		exec.Command("tidy", "-w", "80", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "-xml", "-m"):                                                                 {".xml"},
-		exec.Command("tidy", "-w", "120", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "--force-output", "yes", "-ashtml", "-omit", "no", "-xml", "no", "-m", "-c"): {".html", ".htm"},
-	}
+
 OUT:
 	for cmd, extensions := range format {
 		for _, ext := range extensions {
