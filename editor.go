@@ -2138,17 +2138,8 @@ func (e *Editor) InsertFile(c *vt100.Canvas, filename string) error {
 	if err != nil {
 		return err
 	}
-
-	// Replace nonbreaking space with regular space
-	data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
-	// Replace annoying tilde
-	data = bytes.Replace(data, []byte{0xcc, 0x88}, []byte{'~'}, -1)
-	// Replace DOS line endings with UNIX line endings
-	data = bytes.Replace(data, []byte{'\r', '\n'}, []byte{'\n'}, -1)
-	// Replace any remaining \r characters with \n
-	data = bytes.Replace(data, []byte{'\r'}, []byte{'\n'}, -1)
-
-	e.InsertStringAndMove(c, strings.TrimRightFunc(string(data), unicode.IsSpace))
+	s := opinionatedStringReplacer.Replace(strings.TrimRightFunc(string(data), unicode.IsSpace))
+	e.InsertStringAndMove(c, s)
 	return nil
 }
 

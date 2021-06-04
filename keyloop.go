@@ -25,6 +25,17 @@ var (
 	undo = NewUndo(defaultUndoSize)
 )
 
+// Fix nonbreaking spaces, annoying tildes, \r\n and \r
+var opinionatedStringReplacer = strings.NewReplacer(
+	string([]byte{0xc2, 0xa0}), string([]byte{0x20}),
+	// Fix annoying tildes
+	string([]byte{0xcc, 0x88}), string([]byte{'~'}),
+	// And \r\n
+	string([]byte{'\r', '\n'}), string([]byte{'\n'}),
+	// Then \r
+	string([]byte{'\r'}), string([]byte{'\n'}),
+)
+
 // Loop will set up and run the main loop of the editor
 // a *vt100.TTY struct
 // a filename to open
@@ -1280,20 +1291,12 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// Try fetching the lines from the clipboard first
 			s, err := clipboard.ReadAll()
 			if err == nil { // no error
-				// Fix nonbreaking spaces first
-				s = strings.Replace(s, string([]byte{0xc2, 0xa0}), string([]byte{0x20}), -1)
-				// Fix annoying tildes
-				s = strings.Replace(s, string([]byte{0xcc, 0x88}), string([]byte{'~'}), -1)
-				// And \r\n
-				s = strings.Replace(s, string([]byte{'\r', '\n'}), string([]byte{'\n'}), -1)
-				// Then \r
-				s = strings.Replace(s, string([]byte{'\r'}), string([]byte{'\n'}), -1)
+
+				// Make the replacements, then
+				// plit the text into lines and store it in "copyLines"
+				copyLines = strings.Split(opinionatedStringReplacer.Replace(s), "\n")
 
 				// Note that control characters are not replaced, they are just not printed.
-
-				// Split the text into lines and store it in "copyLines"
-				copyLines = strings.Split(s, "\n")
-
 			} else if firstPasteAction {
 				missingUtility := false
 
