@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -98,4 +99,94 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		e.redrawCursor = true
 	}
 	return nil
+}
+
+func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, jsonFormatToggle *bool) {
+	// Format JSON
+	if e.mode == modeJSON {
+		// TODO: Find a JSON formatter that does not need a JavaScript package like otto
+		var v interface{}
+
+		err := json.Unmarshal([]byte(e.String()), &v)
+		if err != nil {
+			status.ClearAll(c)
+			status.SetErrorMessage(err.Error())
+			status.Show(c, e)
+			return
+		}
+
+		// Format the JSON bytes, first without indentation and then
+		// with indentation.
+		var indentedJSON []byte
+		if *jsonFormatToggle {
+			indentedJSON, err = json.Marshal(v)
+			*jsonFormatToggle = false
+		} else {
+			indentationString := strings.Repeat(" ", e.tabs.spacesPerTab)
+			indentedJSON, err = json.MarshalIndent(v, "", indentationString)
+			*jsonFormatToggle = true
+		}
+		if err != nil {
+			status.ClearAll(c)
+			status.SetErrorMessage(err.Error())
+			status.Show(c, e)
+			return
+		}
+
+		e.LoadBytes(indentedJSON)
+		e.redraw = true
+		return
+	}
+
+	baseFilename := filepath.Base(e.filename)
+	if baseFilename == "fstab" {
+		cmd := exec.Command("fstabfmt", "-i")
+		if which(cmd.Path) == "" { // Does the formatting tool even exist?
+			status.ClearAll(c)
+			status.SetErrorMessage(cmd.Path + " is missing")
+			status.Show(c, e)
+			return
+		}
+		if err := e.formatWithUtility(c, tty, status, cmd, baseFilename); err != nil {
+			status.ClearAll(c)
+			status.SetMessage(err.Error())
+			status.Show(c, e)
+		}
+		return
+	}
+
+	// Not in git mode, format Go or C++ code with goimports or clang-format
+	// Map from formatting command to a list of file extensions
+	format := map[*exec.Cmd][]string{
+		exec.Command("goimports", "-w", "--"):                                             {".go"},
+		exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
+		exec.Command("zig", "fmt"):                                                        {".zig"},
+		exec.Command("v", "fmt"):                                                          {".v"},
+		exec.Command("rustfmt"):                                                           {".rs"},
+		exec.Command("brittany", "--write-mode=inplace"):                                  {".hs"},
+		exec.Command("autopep8", "-i", "--max-line-length", "120"):                        {".py"},
+		exec.Command("ocamlformat"):                                                       {".ml"},
+		exec.Command("crystal", "tool", "format"):                                         {".cr"},
+		exec.Command("ktlint", "-F"):                                                      {".kt", ".kts"},
+		exec.Command("google-java-format", "-i"):                                          {".java"},
+		exec.Command("scalafmt"):                                                          {".scala"},
+		exec.Command("astyle", "--mode=cs"):                                               {".cs"},
+		exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"):                                                                        {".lua"},
+		exec.Command("tidy", "-w", "80", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "-xml", "-m"):                                                                 {".xml"},
+		exec.Command("tidy", "-w", "120", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "--force-output", "yes", "-ashtml", "-omit", "no", "-xml", "no", "-m", "-c"): {".html", ".htm"},
+	}
+OUT:
+	for cmd, extensions := range format {
+		for _, ext := range extensions {
+			if strings.HasSuffix(e.filename, ext) {
+				if err := e.formatWithUtility(c, tty, status, cmd, ext); err != nil {
+					status.ClearAll(c)
+					status.SetMessage(err.Error())
+					status.Show(c, e)
+				}
+				break OUT
+			}
+		}
+	}
+
 }
