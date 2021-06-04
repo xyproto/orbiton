@@ -156,8 +156,8 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 | Object Pascal                                   | `.pas`, `.pp`, `.lpr`                                     | yes           | `fpc`                                             | WIP                                                                                                            |
 | Nim                                             | `.nim`                                                    | WIP           | `nim c`                                           | WIP                                                                                                            |
 | Odin                                            | `.odin`                                                   | yes           | `odin build`                                      | N/A                                                                                                            |
-| C#                                              | `.cs`                                                     | yes           | `csc -nologo -unsafe $filename`                   | `astyle -mode=cs main.cs`                                                                                      |
-| JavaScript                                      | `.js`                                                     | WIP            |                                                   | WIP                                                                                                           |
+| C#                                              | `.cs`                                                     | yes           | `csc -nologo -unsafe $filename`                   | `astyle -mode=cs main.cs`                                                                              |
+| JavaScript                                      | `.js`                                                     | WIP            |                                                   | `prettier --tab-width 4 -w $filename`                                                                         |
 | TypeScript                                      | `.ts`                                                     | WIP            |                                                   | WIP                                                                                                           |
 
 `/etc/fstab` files are also supported, and can be formatted with `ctrl-w` if [`fstabfmt`](https://github.com/xyproto/fstabfmt) is installed.
@@ -251,6 +251,10 @@ JSON
 fstab
 
 * For formatting `fstab` files (usually `/etc/fstab`) with `ctrl-w`, [`fstabfmt`](https://github.com/xyproto/fstabfmt) must be installed.
+
+JavaScript
+
+* For formatting JavaScript code with , `prettier` must be installed.
 
 ## A note on Java and Scala
 
