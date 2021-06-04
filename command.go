@@ -174,7 +174,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 
 	if strings.HasSuffix(e.filename, "PKGBUILD") {
 		actions.Add("Call Guessica", func() {
-			cmd := exec.Command("guessica", "PKGBUILD")
+			cmd := exec.Command("guessica", "-i", "PKGBUILD")
 			status.Clear(c)
 			status.SetMessage("Calling Guessica")
 			status.Show(c, e)
