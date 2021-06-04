@@ -130,7 +130,7 @@ These features are unique to `o`, as far as I am aware:
 
 When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call Guessica` to update the `pkgver=` and `source=` fields, by a combination of guesswork and online searching.
 
-[`guessica`](https://github.com/xyproto/guessica) must be installed for this feature to work.
+* Guessica is also available as a standalone utility: [`guessica`](https://github.com/xyproto/guessica).
 
 ## Build and format
 
@@ -175,8 +175,6 @@ CXX can be downloaded here: [GitHub project page for CXX](https://github.com/xyp
 | AsciiDoc  | `.adoc`          | `asciidoctor -b manpage` (writes to `out.1`)                      |
 | scdoc     | `.scd`, `.scdoc` | `scdoc` (writes to `out.1`)                                       |
 | Markdown  | `.md`            | `pandoc -N --toc -V geometry:a4paper` (writes to `$filename.pdf`) |
-
-If [`guessica`](https://github.com/xyproto/guessica) is installed, `PKGBUILD` files will be updated at the press of `ctrl-w`. The `guessica` utility tries to guess the latest project version, tag and git commit hash for a `PKGBUILD` file and may or may not succeed.
 
 ## Manual installation
 
