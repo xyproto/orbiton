@@ -10,10 +10,12 @@ type TabsSpaces struct {
 
 var defaultTabsSpaces = TabsSpaces{4, false}
 
+// modeBlank
 var languageIndentation = map[TabsSpaces][]Mode{
-	{4, true}: {modeBattlestar, modeC, modeCMake, modeCS, modeCpp, modeJSON, modeJava, modeJavaScript, modeKotlin, modeMakefile, modePython, modeScala, modeTypeScript, modeZig},
-	{3, true}: {modeAda}, // Ada is unusual
-	{2, true}: {modeConfig, modeHTML, modeHaskell, modeJSON, modeLua, modeObjectPascal, modeShell, modeVim, modeXML},
+	{4, false}: {modeC, modeGo, modeHIDL, modeLisp, modeMakefile, modeNroff, modeOCaml, modeRust, modeStandardML}, // Tabs
+	{2, true}:  {modeAssembly, modeConfig, modeHTML, modeHaskell, modeJSON, modeLua, modeObjectPascal, modeOdin, modePolicyLanguage, modeShell, modeVim, modeVim, modeXML},
+	{3, true}:  {modeAda}, // Ada is special
+	{4, true}:  {modeBat, modeBattlestar, modeCMake, modeCS, modeCpp, modeCrystal, modeGit, modeJSON, modeJava, modeJavaScript, modeKotlin, modeLua, modeMakefile, modeMarkdown, modeNim, modeOak, modePython, modeSQL, modeScala, modeText, modeTypeScript, modeZig},
 }
 
 // Spaces checks if the given mode should use tabs or spaces.
