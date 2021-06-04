@@ -758,6 +758,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			} else if word := e.LettersOrDotBeforeCursor(); e.mode != modeBlank && leftRune == '.' && !unicode.IsLetter(r) && len(word) > 0 {
 				// Now the preceding word before the "." has been found
 
+				// Trim the trailing ".", if needed
+				word = strings.TrimSuffix(strings.TrimSpace(word), ".")
+
 				// Grep all files in this directory with the same extension as the currently edited file
 				// for what could follow the word and a "."
 				suggestions := corpus(word, "*"+ext)
