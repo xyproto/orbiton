@@ -14,13 +14,13 @@ var pacmanNoColor = []string{
 	"|   C · |",
 	"|    C· |",
 	"|     C |",
-	"|      C|",
+	"|      ¤|",
 	"| · · Ɔ |",
 	"| · ·Ɔ  |",
 	"| · Ɔ   |",
 	"| ·Ɔ    |",
 	"| Ɔ     |",
-	"|Ɔ· · · |",
+	"|¤· · · |",
 }
 
 var pacmanColor = []string{
@@ -29,13 +29,13 @@ var pacmanColor = []string{
 	"<red>| <blue>  <yellow>C<blue> · <red>|<off>",
 	"<red>| <blue>   <yellow>C<blue>· <red>|<off>",
 	"<red>| <blue>    <yellow>C <red>|<off>",
-	"<red>| <blue>     <yellow>C<red>|<off>",
+	"<red>| <blue>     <yellow>¤<red>|<off>",
 	"<red>| <blue>· · <yellow>Ɔ <red>|<off>",
 	"<red>| <blue>· ·<yellow>Ɔ<blue>  <red>|<off>",
 	"<red>| <blue>· <yellow>Ɔ <blue>  <red>|<off>",
 	"<red>| <blue>·<yellow>Ɔ<blue>    <red>|<off>",
 	"<red>| <yellow>Ɔ <blue>    <red>|<off>",
-	"<red>|<yellow>Ɔ<blue>· · · <red>|<off>",
+	"<red>|<yellow>¤<blue>· · · <red>|<off>",
 }
 
 // Spinner waits a bit, then displays a spinner together with the given message string (msg).
