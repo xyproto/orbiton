@@ -2258,3 +2258,32 @@ func (e *Editor) LettersBeforeCursor() string {
 	}
 	return string(word)
 }
+
+// LettersOrDotBeforeCursor returns the current word up until the cursor (for autocompletion).
+// Will also include ".".
+func (e *Editor) LettersOrDotBeforeCursor() string {
+	y := int(e.DataY())
+	runes, ok := e.lines[y]
+	if !ok {
+		// This should never happen
+		return ""
+	}
+	// Either find x or use the last index of the line
+	x, err := e.DataX()
+	if err != nil {
+		x = len(runes)
+	}
+
+	var word []rune
+
+	// Loop from the position before the current one and then leftwards on the current line
+	for i := x - 1; i >= 0; i-- {
+		r := runes[i]
+		if !(r == '.' || unicode.IsLetter(r)) {
+			break
+		}
+		// Gather the letters in reverse
+		word = append([]rune{r}, word...)
+	}
+	return string(word)
+}

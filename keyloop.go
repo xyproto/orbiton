@@ -755,7 +755,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				}
 
 				// Tab completion after a '.'
-			} else if word := e.LettersBeforeCursor(); e.mode != modeBlank && leftRune == '.' && !unicode.IsLetter(r) && len(word) > 0 {
+			} else if word := e.LettersOrDotBeforeCursor(); e.mode != modeBlank && leftRune == '.' && !unicode.IsLetter(r) && len(word) > 0 {
 				// Now the preceding word before the "." has been found
 
 				// Grep all files in this directory with the same extension as the currently edited file
