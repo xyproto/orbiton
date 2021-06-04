@@ -11,6 +11,6 @@ func arrowReplace(s string) string {
 	arrowColor := syntax.DefaultTextConfig.Class
 	fieldColor := syntax.DefaultTextConfig.Protected
 	s = strings.Replace(s, ">-<", "><off><"+arrowColor+">-<", -1)
-	s = strings.Replace(s, ">"+escapedGreaterThan, "><off><"+arrowColor+">"+escapedGreaterThan+"<off><"+fieldColor+">", -1)
+	s = strings.Replace(s, ">"+Escape(">"), "><off><"+arrowColor+">"+Escape(">")+"<off><"+fieldColor+">", -1)
 	return s
 }
