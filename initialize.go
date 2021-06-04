@@ -12,20 +12,6 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// TabsSpaces contains all info needed about tabs and spaces for a file
-type TabsSpaces struct {
-	spacesPerTab int
-	tabs         bool // tabs, or spaces?
-}
-
-// String returns the string for one indentation
-func (ts TabsSpaces) String() string {
-	if ts.tabs {
-		return "\t"
-	}
-	return strings.Repeat(" ", ts.spacesPerTab)
-}
-
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message and an error type
 func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber LineNumber, colNumber ColNumber, theme Theme) (*Editor, string, error) {
