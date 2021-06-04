@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/xyproto/env"
+	"github.com/xyproto/guessica"
 	"github.com/xyproto/vt100"
 )
 
@@ -174,7 +175,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 
 	if strings.HasSuffix(e.filename, "PKGBUILD") {
 		actions.Add("Call Guessica", func() {
-			cmd := exec.Command("guessica", "-i", "PKGBUILD")
 			status.Clear(c)
 			status.SetMessage("Calling Guessica")
 			status.Show(c, e)
@@ -209,28 +209,14 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				return
 			}
 
-			// Add the filename of the temporary file to the command
-			cmd.Args = append(cmd.Args, tempFilename)
-
 			// Show the status message to the user right now
 			status.Draw(c, e.pos.offsetY)
 
-			// Save the command in temporary file
-			saveCommand(cmd)
-
 			// Call Guessica, which may take a little while
-			output, err := cmd.CombinedOutput()
+			err = guessica.UpdateFile(tempFilename)
 
 			if err != nil {
-				errorMessage := strings.TrimSpace(string(output))
-				if strings.Count(errorMessage, "\n") > 0 {
-					errorMessage = strings.TrimSpace(strings.SplitN(errorMessage, "\n", 2)[0])
-				}
-				if errorMessage == "" {
-					status.SetErrorMessage("Failed to format code")
-				} else {
-					status.SetErrorMessage("Failed to format code: " + errorMessage)
-				}
+				status.SetErrorMessage("Failed to update PKGBUILD: " + err.Error())
 				status.Show(c, e)
 			} else {
 				if _, err := e.Load(c, tty, tempFilename); err != nil {
