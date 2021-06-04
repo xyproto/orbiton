@@ -328,6 +328,8 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	// Read the file and check if it could be read
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
+		// Stop the spinner and return
+		quitChan <- true
 		return message, err
 	}
 
