@@ -12,8 +12,8 @@ var defaultTabsSpaces = TabsSpaces{4, false}
 
 // modeBlank
 var languageIndentation = map[TabsSpaces][]Mode{
-	{4, false}: {modeC, modeGo, modeHIDL, modeLisp, modeMakefile, modeNroff, modeOCaml, modeRust, modeStandardML}, // Tabs
-	{2, true}:  {modeAssembly, modeConfig, modeHTML, modeHaskell, modeJSON, modeLua, modeObjectPascal, modeOdin, modePolicyLanguage, modeShell, modeVim, modeVim, modeXML},
+	{4, false}: {modeC, modeGo, modeHIDL, modeLisp, modeMakefile, modeNroff, modeOCaml, modeOdin, modeRust, modeStandardML}, // Tabs
+	{2, true}:  {modeAssembly, modeConfig, modeHTML, modeHaskell, modeJSON, modeLua, modeObjectPascal, modePolicyLanguage, modeShell, modeVim, modeVim, modeXML},
 	{3, true}:  {modeAda}, // Ada is special
 	{4, true}:  {modeBat, modeBattlestar, modeCMake, modeCS, modeCpp, modeCrystal, modeGit, modeJSON, modeJava, modeJavaScript, modeKotlin, modeLua, modeMakefile, modeMarkdown, modeNim, modeOak, modePython, modeSQL, modeScala, modeText, modeTypeScript, modeZig},
 }
