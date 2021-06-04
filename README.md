@@ -157,6 +157,8 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 | Nim                                             | `.nim`                                                    | WIP           | `nim c`                                           | WIP                                                                                                            |
 | Odin                                            | `.odin`                                                   | yes           | `odin build`                                      | N/A                                                                                                            |
 | C#                                              | `.cs`                                                     | yes           | `csc -nologo -unsafe $filename`                   | `astyle -mode=cs main.cs`                                                                                      |
+| JavaScript                                      | `.js`                                                     | WIP            |                                                   | WIP                                                                                                           |
+| TypeScript                                      | `.ts`                                                     | WIP            |                                                   | WIP                                                                                                           |
 
 `/etc/fstab` files are also supported, and can be formatted with `ctrl-w` if [`fstabfmt`](https://github.com/xyproto/fstabfmt) is installed.
 
