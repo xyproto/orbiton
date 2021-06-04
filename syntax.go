@@ -35,7 +35,7 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 	switch mode {
 	case modeGo, modeOdin:
 		addKeywords = []string{"defer", "fallthrough", "go", "print", "println", "range", "string"}
-		delKeywords = []string{"None", "build", "char", "fi", "get", "include", "let", "mut", "pass", "redo", "rescue", "ret", "retry", "set", "template", "then", "when", "where"}
+		delKeywords = []string{"None", "build", "char", "fi", "get", "include", "let", "mut", "pass", "redo", "rescue", "ret", "retry", "set", "template", "then", "when", "where", "die", "def", "def"}
 	case modeBattlestar:
 		syntax.Keywords = make(map[string]struct{})
 		addKeywords = battlestarWords
