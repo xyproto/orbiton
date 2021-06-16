@@ -25,17 +25,6 @@ var (
 	undo = NewUndo(defaultUndoSize)
 )
 
-// Fix nonbreaking spaces, annoying tildes, \r\n and \r
-var opinionatedStringReplacer = strings.NewReplacer(
-	string([]byte{0xc2, 0xa0}), string([]byte{0x20}),
-	// Fix annoying tildes
-	string([]byte{0xcc, 0x88}), string([]byte{'~'}),
-	// And \r\n
-	string([]byte{'\r', '\n'}), string([]byte{'\n'}),
-	// Then \r
-	string([]byte{'\r'}), string([]byte{'\n'}),
-)
-
 // Loop will set up and run the main loop of the editor
 // a *vt100.TTY struct
 // a filename to open
@@ -1292,8 +1281,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			s, err := clipboard.ReadAll()
 			if err == nil { // no error
 
-				// Make the replacements, then
-				// plit the text into lines and store it in "copyLines"
+				// Make the replacements, then split the text into lines and store it in "copyLines"
 				copyLines = strings.Split(opinionatedStringReplacer.Replace(s), "\n")
 
 				// Note that control characters are not replaced, they are just not printed.

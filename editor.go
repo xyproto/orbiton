@@ -336,16 +336,8 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	// If enough time passed so that the spinner was shown by now, enter "slow disk mode" where fewer disk-related I/O operations will be performed
 	e.slowLoad = time.Since(start) > 400*time.Millisecond
 
-	// Opinonated replacements follows:
-
-	// Replace non-breaking space with regular space
-	data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
-	// Fix annoying tilde
-	data = bytes.Replace(data, []byte{0xcc, 0x88}, []byte{'~'}, -1)
-	// Replace DOS line endings with UNIX line endings
-	data = bytes.Replace(data, []byte{'\r', '\n'}, []byte{'\n'}, -1)
-	// Replace any remaining \r characters with \n
-	data = bytes.Replace(data, []byte{'\r'}, []byte{'\n'}, -1)
+	// Opinonated replacements
+	data = opinionatedByteReplacer(data)
 
 	// Load the data
 	e.LoadBytes(data)
@@ -419,7 +411,6 @@ func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 // Save will try to save the current editor contents to file.
 // It needs a canvas in case trailing spaces are stripped and the cursor needs to move to the end.
 func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
-	var data []byte
 
 	// Save the current position
 	bookmark := e.pos.Copy()
@@ -433,14 +424,11 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		}
 	}
 
-	// Skip trailing newlines
-	data = bytes.TrimRightFunc([]byte(e.String()), unicode.IsSpace)
-	// Replace non-breaking space with regular spaces
-	data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
-	// Fix annoying tilde
-	data = bytes.Replace(data, []byte{0xcc, 0x88}, []byte{'~'}, -1)
-	// Add a final newline
-	data = append(data, '\n')
+	// Trim away trailing whitespace
+	s := strings.TrimRightFunc(e.String(), unicode.IsSpace)
+
+	// Make additional replacements, and add a final newline
+	s = opinionatedStringReplacer.Replace(s) + "\n"
 
 	// TODO: Auto-detect tabs/spaces instead of per-language assumptions
 	if Spaces(e.mode) {
@@ -448,16 +436,16 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		for level := 10; level > 0; level-- {
 			fromString := "\n" + strings.Repeat("\t", level)
 			toString := "\n" + strings.Repeat(" ", level*e.tabsSpaces.perTab)
-			data = bytes.Replace(data, []byte(fromString), []byte(toString), -1)
+			s = strings.Replace(s, fromString, toString, -1)
 		}
 	}
 
-	// Mark the data as "not changed"
-	e.changed = false
-
 	// Should the file be saved with the executable bit enabled?
 	// (Does it either start with a shebang or reside in a common bin directory like /usr/bin?)
-	shebang := bytes.HasPrefix(data, []byte{'#', '!'}) || aBinDirectory(e.filename)
+	shebang := aBinDirectory(e.filename) || strings.HasPrefix(s, "#!")
+
+	// Mark the data as "not changed"
+	e.changed = false
 
 	// Default file mode (0644 for regular files, 0755 for executable files)
 	var fileMode os.FileMode = 0644
@@ -475,7 +463,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	quitChan := Spinner(c, tty, fmt.Sprintf("Saving %s... ", e.filename), fmt.Sprintf("saving %s: stopped by user", e.filename), e.noColor, 200*time.Millisecond)
 
 	// Save the file and return any errors
-	if err := ioutil.WriteFile(e.filename, data, fileMode); err != nil {
+	if err := ioutil.WriteFile(e.filename, []byte(s), fileMode); err != nil {
 		// Stop the spinner and return
 		quitChan <- true
 		return err
