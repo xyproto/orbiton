@@ -43,19 +43,20 @@ var pacmanColor = []string{
 // Returns a quit channel (chan bool).
 // The spinner is shown asynchronously.
 // "true" must be sent to the quit channel once whatever operating that the spinner is spinning for is completed.
-func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, noColor bool) chan bool {
+func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, noColor bool, startIn time.Duration) chan bool {
 	quitChan := make(chan bool)
 	go func() {
-		// Wait 4 * 4 milliseconds, while listening to the quit channel.
-		// This is to delay showing the progress bar until some time has passed.
-		for i := 0; i < 4; i++ {
+		// Divide the startIn time into 5, then wait while listening to the quitChan
+		// If the quitChan does not receive anything by then, show the spinner
+		const N = 50
+		for i := 0; i < N; i++ {
 			// Check if we should quit or wait
 			select {
 			case <-quitChan:
 				return
 			default:
 				// Wait a tiny bit
-				time.Sleep(4 * time.Millisecond)
+				time.Sleep(startIn / N)
 			}
 		}
 

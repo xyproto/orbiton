@@ -321,7 +321,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	var message string
 
 	// Start a spinner, in a short while
-	quitChan := Spinner(c, tty, fmt.Sprintf("Reading %s... ", filename), fmt.Sprintf("reading %s: stopped by user", filename), e.noColor)
+	quitChan := Spinner(c, tty, fmt.Sprintf("Reading %s... ", filename), fmt.Sprintf("reading %s: stopped by user", filename), e.noColor, 100*time.Millisecond)
 
 	start := time.Now()
 
@@ -472,7 +472,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	}
 
 	// Start a spinner, in a short while
-	quitChan := Spinner(c, tty, fmt.Sprintf("Saving %s... ", e.filename), fmt.Sprintf("saving %s: stopped by user", e.filename), e.noColor)
+	quitChan := Spinner(c, tty, fmt.Sprintf("Saving %s... ", e.filename), fmt.Sprintf("saving %s: stopped by user", e.filename), e.noColor, 200*time.Millisecond)
 
 	// Save the file and return any errors
 	if err := ioutil.WriteFile(e.filename, data, fileMode); err != nil {
