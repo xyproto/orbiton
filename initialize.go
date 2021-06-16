@@ -18,9 +18,9 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 
 	var (
 		startTime          = time.Now()
-		createdNewFile     bool                // used for indicating that a new file was created
-		scrollSpeed        = 10                // number of lines to scroll when using `ctrl-n` and `ctrl-p`
-		statusMessage      string              // used when loading or creating a file, for the initial status message
+		createdNewFile     bool   // used for indicating that a new file was created
+		scrollSpeed        = 10   // number of lines to scroll when using `ctrl-n` and `ctrl-p`
+		statusMessage      string // used when loading or creating a file, for the initial status message
 		found              bool
 		recordedLineNumber LineNumber
 		err                error
