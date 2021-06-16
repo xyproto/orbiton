@@ -321,7 +321,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	var message string
 
 	// Start a spinner, in a short while
-	quitChan := Spinner(c, tty, fmt.Sprintf("Reading %s... ", filename), fmt.Sprintf("reading %s: stopped by user", filename), e.noColor, 100*time.Millisecond)
+	quitChan := Spinner(c, tty, fmt.Sprintf("Reading %s... ", filename), fmt.Sprintf("reading %s: stopped by user", filename), e.noColor, 200*time.Millisecond)
 
 	start := time.Now()
 
