@@ -8,7 +8,7 @@ type TabsSpaces struct {
 	spaces bool // use spaces, or tabs?
 }
 
-var defaultTabsSpaces = TabsSpaces{4, false}
+var defaultTabsSpaces = TabsSpaces{4, true}
 
 // modeBlank
 var languageIndentation = map[TabsSpaces][]Mode{
