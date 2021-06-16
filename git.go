@@ -73,11 +73,12 @@ func (e *Editor) gitHighlight(line string) string {
 			coloredString = vt100.DarkGray.Get("#") + vt100.LightYellow.Get(parts[0]) + vt100.DarkGray.Get(":") + filenameColor.Get(parts[1])
 		} else if strings.Contains(line, "renamed:") {
 			parts := strings.SplitN(line[1:], ":", 2)
+			coloredString = vt100.DarkGray.Get("#") + vt100.LightYellow.Get(parts[0]) + vt100.DarkGray.Get(":")
 			if strings.Contains(parts[1], "->") {
 				filenames := strings.SplitN(parts[1], "->", 2)
-				coloredString = vt100.DarkGray.Get("#") + vt100.LightYellow.Get(parts[0]) + vt100.DarkGray.Get(":") + renameColor.Get(filenames[0]) + vt100.White.Get("->") + renameColor.Get(filenames[1])
+				coloredString += renameColor.Get(filenames[0]) + vt100.White.Get("->") + renameColor.Get(filenames[1])
 			} else {
-				coloredString = vt100.DarkGray.Get("#") + vt100.LightYellow.Get(parts[0]) + vt100.DarkGray.Get(":") + filenameColor.Get(parts[1])
+				coloredString += filenameColor.Get(parts[1])
 			}
 		} else if fields := strings.Fields(line); strings.HasPrefix(line, "# Rebase ") && len(fields) >= 5 && strings.Contains(fields[2], "..") {
 			textColor := vt100.LightGray
