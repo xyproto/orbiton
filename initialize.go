@@ -19,7 +19,6 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	var (
 		startTime          = time.Now()
 		createdNewFile     bool                // used for indicating that a new file was created
-		tabsSpaces         = defaultTabsSpaces // default spaces per tab
 		scrollSpeed        = 10                // number of lines to scroll when using `ctrl-n` and `ctrl-p`
 		statusMessage      string              // used when loading or creating a file, for the initial status message
 		found              bool
@@ -29,8 +28,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 
 	// mode is what would have been an enum in other languages, for signalling if this file should be in git mode, markdown mode etc
 	mode, syntaxHighlight := detectEditorMode(filename)
-
 	adjustSyntaxHighlightingKeywords(mode)
+	tabsSpaces := TabsSpacesFromMode(mode)
 
 	// Additional per-mode considerations, before launching the editor
 	rainbowParenthesis := syntaxHighlight // rainbow parenthesis
@@ -38,8 +37,6 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	case modeMarkdown, modeText, modeBlank:
 		rainbowParenthesis = false
 	}
-
-	tabsSpaces = TabsSpacesFromMode(mode)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
 	e := NewCustomEditor(tabsSpaces,
