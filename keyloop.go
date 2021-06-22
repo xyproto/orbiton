@@ -211,6 +211,19 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				break
 			}
 
+			if e.Empty() {
+				// Empty file, nothing to format, insert a program template, if available
+				if err := e.InsertTemplateProgram(c); err != nil {
+					status.ClearAll(c)
+					status.SetMessage("nothing to format and no template available")
+					status.Show(c, e)
+				} else {
+					e.redraw = true
+					e.redrawCursor = true
+				}
+				break
+			}
+
 			if e.mode == modeMarkdown {
 				e.ToggleCheckboxCurrentLine()
 				break
@@ -225,6 +238,14 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
 		case "c:0": // ctrl-space, build source code to executable, convert to PDF or write to PNG, depending on the mode
+
+			if e.Empty() {
+				// Empty file, nothing to build
+				status.ClearAll(c)
+				status.SetErrorMessage("Nothing to build")
+				status.Show(c, e)
+				break
+			}
 
 			// Save the current file, but only if it has changed
 			if e.changed {
