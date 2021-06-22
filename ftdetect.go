@@ -192,9 +192,9 @@ func detectEditorMode(filename string) (Mode, bool) {
 	return mode, syntaxHighlightingEnabled
 }
 
-// Mode will return a short lowercase string representing the current editor mode
-func (e *Editor) Mode() string {
-	switch e.mode {
+// String will return a short lowercase string representing the given editor mode
+func (mode Mode) String() string {
+	switch mode {
 	case modeBlank:
 		return "-"
 	case modeGit:
