@@ -15,20 +15,25 @@ type TemplateProgram struct {
 }
 
 var templatePrograms = map[Mode]TemplateProgram{
-	modeGo: TemplateProgram{
+	modeGo: {
 		"package main\n\nimport (\n\t\"fmt\"\n)\n\nfunc main() {\n\tfmt.Println(\"Hello, World!\")\n}\n",
 		2,
 		13,
 	},
-	modeC: TemplateProgram{
+	modeC: {
 		"#include <stdio.h>\n#include <stdlib.h>\n\nint main(int argc, char* argv[])\n{\n\tprintf(\"Hello, World!\");\n\treturn EXIT_SUCCESS;\n}\n",
 		3,
 		8,
 	},
-	modeCpp: TemplateProgram{
+	modeCpp: {
 		"#include <cstdlib>\n#include <iostream>\n#include <string>\n\nusing namespace std::string_literals;\n\nint main(int argc, char** argv)\n{\n    std::cout << \"Hello, World!\"s << std::endl;\n    return EXIT_SUCCESS;\n}\n",
 		3,
 		14,
+	},
+	modeOdin: {
+		"package main\n\nimport \"core:fmt\"\n\nmain :: proc() {\n    fmt.println(\"Hello, World!\");\n}\n",
+		2,
+		13,
 	},
 }
 
