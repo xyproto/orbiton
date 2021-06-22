@@ -21,7 +21,7 @@ var templatePrograms = map[Mode]TemplateProgram{
 		13,
 	},
 	modeC: TemplateProgram{
-		"#include <stdio.h>\n#include <stdlib.h>\n\nint main(int argc, char *argv[])\n{\n\tprintf(\"Hello, World!\");\n\treturn EXIT_SUCCESS;\n}\n",
+		"#include <stdio.h>\n#include <stdlib.h>\n\nint main(int argc, char* argv[])\n{\n\tprintf(\"Hello, World!\");\n\treturn EXIT_SUCCESS;\n}\n",
 		3,
 		8,
 	},
