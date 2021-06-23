@@ -96,7 +96,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 		}
 	case '\'':
 		if prevRune != '\\' {
-			if ignoreSingleQuotes || q.mode == modeLisp {
+			if ignoreSingleQuotes || q.mode == modeLisp || q.mode == modeClojure {
 				return
 			}
 			if q.None() {

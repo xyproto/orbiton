@@ -24,7 +24,8 @@ const (
 	modeText           // for plain text documents
 	modeCMake          // for CMake files
 	modeVim            // for Vim or NeoVim configuration, or .vim scripts
-	modeLisp           // for Common Lisp, Emacs Lisp and Clojure
+	modeClojure        // for Clojure
+	modeLisp           // for Common Lisp and Emacs Lisp
 	modeZig            // for Zig
 	modeKotlin         // for Kotlin
 	modeJava           // for Java
@@ -128,7 +129,9 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeMarkdown
 		case ".txt", ".text", ".nfo", ".diz":
 			mode = modeText
-		case ".lsp", ".emacs", ".el", ".elisp", ".clojure", ".clj", ".lisp", ".cl", ".l":
+		case ".clj", ".clojure", "cljs":
+			mode = modeClojure
+		case ".lsp", ".emacs", ".el", ".elisp", ".lisp", ".cl", ".l":
 			mode = modeLisp
 		case ".zig", ".zir":
 			mode = modeZig
@@ -225,6 +228,8 @@ func (mode Mode) String() string {
 		return "Cmake"
 	case modeVim:
 		return "ViM"
+	case modeClojure:
+		return "Clojure"
 	case modeLisp:
 		return "Lisp"
 	case modeZig:

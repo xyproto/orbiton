@@ -68,7 +68,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		trimmedLine             string
 		singleLineCommentMarker = e.SingleLineCommentMarker()
 		q                       = NewQuoteState(singleLineCommentMarker, e.mode)
-		ignoreSingleQuotes      = e.mode == modeLisp
+		ignoreSingleQuotes      = (e.mode == modeLisp) || (e.mode == modeClojure)
 	)
 	// First loop from 0 up to to offset to figure out if we are already in a multiLine comment or a multiLine string at the current line
 	for i := LineIndex(0); i < offsetY; i++ {
@@ -94,7 +94,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		lineRuneCount         uint
 		lineStringCount       uint
 		line                  string
-		assemblyStyleComments = ((e.mode == modeAssembly) || (e.mode == modeLisp)) && !e.firstLineHash
+		assemblyStyleComments = ((e.mode == modeAssembly) || (e.mode == modeLisp) || (e.mode == modeClojure)) && !e.firstLineHash
 		prevLineIsListItem    bool
 		inListItem            bool
 		screenLine            string
@@ -221,7 +221,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// Regular highlight
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
 					}
-				case modeLisp:
+				case modeLisp, modeClojure:
 					q.singleQuote = 0
 					// Special case for Lisp single-line comments
 					trimmedLine = strings.TrimSpace(line)
