@@ -35,6 +35,16 @@ var templatePrograms = map[Mode]TemplateProgram{
 		2,
 		13,
 	},
+	modeScala: {
+		"object Hello {\n\tdef main(args: Array[String]) = {\n\t\tprintln(\"Hello, World!\")\n\t}\n}\n",
+		3,
+		9,
+	},
+	modeClojure: {
+		"(ns example.hello\n  (:gen-class))\n\n(defn hello-world []\n  (println \"Hello, World!\"))\n\n(hello-world)\n",
+		3,
+		10,
+	},
 }
 
 // HasTemplateProgram checks if a template is available for the current
