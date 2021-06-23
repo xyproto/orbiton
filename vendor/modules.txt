@@ -7,7 +7,6 @@ github.com/jung-kurt/gofpdf
 # github.com/mattn/go-colorable v0.1.8
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.13
-## explicit
 github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 github.com/mgutz/ansi
@@ -29,13 +28,12 @@ github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.2.0
 ## explicit
 github.com/xyproto/termtitle
-# github.com/xyproto/textoutput v1.12.6
+# github.com/xyproto/textoutput v1.12.9
 ## explicit
 github.com/xyproto/textoutput
 # github.com/xyproto/vt100 v1.9.2
 ## explicit
 github.com/xyproto/vt100
 # golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
-## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix

@@ -37,8 +37,8 @@ github.com/xyproto/syntax v1.7.3/go.mod h1:N7fdGZNGUQbQF0ieU6ww4lCebA80bbYsz9ysD
 github.com/xyproto/termtitle v1.2.0 h1:kUHpDo+r3+LBnAzmJBVPWH0/yLR2JxNPrqplFz1q9/8=
 github.com/xyproto/termtitle v1.2.0/go.mod h1:CAejmMSnz9Zze7g65yIjFH+5OeCHrjHaUYYmvzKT+Hg=
 github.com/xyproto/textoutput v1.12.0/go.mod h1:7gHUVNJjTYzjRsc3S54W8hCcjB96C+/ug/mLus9nBjc=
-github.com/xyproto/textoutput v1.12.6 h1:O0lXKEMgF5Kz/N01ppz5bwbOpVNyjE0Gpc93q3qpuRk=
-github.com/xyproto/textoutput v1.12.6/go.mod h1:Je6M67ppjMena/LCIXcPPavFf2wgtGtu/eAkxCBh1Kc=
+github.com/xyproto/textoutput v1.12.9 h1:BGfKc132B2Id75g0AyP3Yt9Hu5OqI2fvU4+LTSxCWn4=
+github.com/xyproto/textoutput v1.12.9/go.mod h1:y+BHS5mSQbvVhKvfLA3WrbIPXp6jdSzBzlOW4wKhxCk=
 github.com/xyproto/vt100 v1.8.5/go.mod h1:8ni0+pphJABRAZOoyxY9yD0QQxkia4PjKNFiMQStrT4=
 github.com/xyproto/vt100 v1.9.2 h1:/MxDPZ9SS+sZyQDGYcz1eoMKmLAqLyIX8S2UtinRE6c=
 github.com/xyproto/vt100 v1.9.2/go.mod h1:y0cFmXmrWnCMpdB7vUgSu8g+24Hqv9vPm/aq7+M2034=
@@ -48,7 +48,6 @@ golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20200523222454-059865788121/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200909081042-eff7692f9009/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210426230700-d19ff857e887/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20210503080704-8803ae5d1324/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210616094352-59db8d763f22 h1:RqytpXGR1iVNX7psjB3ff8y7sNFinVFvkx1c8SjBkio=
 golang.org/x/sys v0.0.0-20210616094352-59db8d763f22/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
