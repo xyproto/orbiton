@@ -6,6 +6,7 @@
 - [ ] Better support for multi-byte unicode runes.
 - [ ] Fix syntax highlighting of 'tokens in Clojure.
 - [ ] If lines are removed, let the active bookmark stay at the same line.
+- [ ] ctrl-w for C# using astyle fails the second time. More filenames are added to the command line. Figure out why.
 
 ## Bugs/features/issues
 
