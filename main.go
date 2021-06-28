@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	versionString = "o 2.39.1"
+	versionString = "o 2.39.2"
 
 	defaultTheme Theme = iota
 	redBlackTheme
