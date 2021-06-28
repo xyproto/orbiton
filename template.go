@@ -50,6 +50,16 @@ var templatePrograms = map[Mode]TemplateProgram{
 		20,
 		8,
 	},
+	modePython: {
+		"#!/usr/bin/env python\n# -*- coding: utf-8 -*-\n\ndef main():\n    print(\"Hello, World!\")\n\n\nif __name__ == \"__main__\":\n    main()\n",
+		5,
+		7,
+	},
+	modeZig: {
+		"const std = @import(\"std\");\n\npub fn main() !void {\n    const stdout = std.io.getStdOut().writer();\n    try stdout.print(\"Hello, World!\\n\", .{});\n}\n",
+		2,
+		18,
+	},
 }
 
 // HasTemplateProgram checks if a template is available for the current
