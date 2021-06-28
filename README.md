@@ -135,7 +135,7 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 ## Build and format
 
 * At the press of `ctrl-space`, `o` will try to build or export the current file.
-* At the press of `ctrl-w`, `o` will try to format the current file, in an opinionated way.
+* At the press of `ctrl-w`, `o` will try to format the current file, in an opinionated way. If the current file is empty, template text may be inserted.
 
 | Programming language                            | File extensions                                           | Jump to error | Build command                                     | Format command ($filename is a temporary file)                                                                 |
 |-------------------------------------------------|-----------------------------------------------------------|---------------|---------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
