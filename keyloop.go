@@ -709,7 +709,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			undo.Snapshot(e)
 			// Delete the character to the left
 			if e.EmptyLine() {
-				e.DeleteLine(e.DataY())
+				e.DeleteCurrentLineMoveBookmark(bookmark)
 				e.pos.Up()
 				e.TrimRight(e.DataY())
 				e.End(c)
@@ -1101,7 +1101,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			if len(strings.TrimSpace(line)) == 0 {
 				// Nothing to cut, just remove the current line
 				e.Home()
-				e.DeleteLine(e.DataY())
+				e.DeleteCurrentLineMoveBookmark(bookmark)
 				// Check if ctrl-x was pressed once or twice, for this line
 			} else if lastCutY != y { // Single line cut
 				// Also close the portal, if any
@@ -1137,7 +1137,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				}
 
 				// Delete the line
-				e.DeleteLine(y)
+				e.DeleteLineMoveBookmark(y, bookmark)
 			} else { // Multi line cut (add to the clipboard, since it's the second press)
 				lastCutY = y
 				lastCopyY = -1
@@ -1158,7 +1158,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				_ = clipboard.WriteAll(s)
 				// Delete the corresponding number of lines
 				for range lines {
-					e.DeleteLine(y)
+					e.DeleteLineMoveBookmark(y, bookmark)
 				}
 			}
 			// Go to the end of the current line
@@ -1179,18 +1179,30 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			lastCutY = -1
 
 			undo.Snapshot(e)
+
+			existingBookmarkAfterThisLine := bookmark != nil && bookmark.LineNumber() > e.LineNumber()
+			removedLine := false
+
 			e.DeleteRestOfLine()
 			if e.EmptyRightTrimmedLine() {
 				// Deleting the rest of the line cleared this line,
 				// so just remove it.
-				e.DeleteLine(e.DataY())
+				e.DeleteCurrentLineMoveBookmark(bookmark)
 				// Then go to the end of the line, if needed
 				if e.AfterEndOfLine() {
 					e.End(c)
 				}
+				removedLine = true
 			}
+
 			// TODO: Is this one needed/useful?
 			vt100.Do("Erase End of Line")
+
+			// Move the bookmark one line up, if a line was removed before that position
+			if existingBookmarkAfterThisLine && removedLine {
+				bookmark.DecY()
+			}
+
 			e.redraw = true
 			e.redrawCursor = true
 		case "c:3": // ctrl-c, copy the stripped contents of the current line
@@ -1471,10 +1483,11 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				status.Show(c, e)
 			} else {
 				undo.Snapshot(e)
+
 				nextLineIndex := e.DataY() + 1
 				if e.EmptyRightTrimmedLineBelow() {
 					// Just delete the line below if it's empty
-					e.DeleteLine(nextLineIndex)
+					e.DeleteLineMoveBookmark(nextLineIndex, bookmark)
 				} else {
 					// Join the line below with this line. Also add a space in between.
 					e.TrimLeft(nextLineIndex) // this is unproblematic, even at the end of the document
@@ -1484,10 +1497,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					e.Next(c)
 					e.Delete()
 				}
+
 				e.redraw = true
 			}
 			e.redrawCursor = true
-
 		default: // any other key
 			//panic(fmt.Sprintf("PRESSED KEY: %v", []rune(key)))
 			if len([]rune(key)) > 0 && unicode.IsLetter([]rune(key)[0]) { // letter

@@ -615,6 +615,20 @@ func (e *Editor) DeleteLine(n LineIndex) {
 	e.MakeConsistent()
 }
 
+// DeleteLineMoveBookmark will delete the given line index and also move the bookmark if it's after n
+func (e *Editor) DeleteLineMoveBookmark(n LineIndex, bookmark *Position) {
+	if bookmark != nil && bookmark.LineNumber() > n.LineNumber() {
+		bookmark.DecY()
+	}
+	e.DeleteLine(n)
+}
+
+// DeleteCurrentLineMoveBookmark will delete the current line and also move the bookmark one up
+// if it's after the current line.
+func (e *Editor) DeleteCurrentLineMoveBookmark(bookmark *Position) {
+	e.DeleteLineMoveBookmark(e.DataY(), bookmark)
+}
+
 // Delete will delete a character at the given position
 func (e *Editor) Delete() {
 	y := int(e.DataY())

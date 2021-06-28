@@ -66,6 +66,27 @@ func (p *Position) SetY(y int) {
 	p.sy = y
 }
 
+// DecY will decrease Y by 1
+func (p *Position) DecY() {
+	p.sy--
+	if p.sy < 0 {
+		p.sy = 0
+	}
+}
+
+// IncY will increase Y by 1
+func (p *Position) IncY(c *vt100.Canvas) {
+	h := 25 // default height
+	if c != nil {
+		h = int(c.H())
+	}
+
+	p.sy++
+	if p.sy > (h - 1) {
+		p.sy = (h - 1)
+	}
+}
+
 // SetOffsetX will set the screen X scrolling offset
 func (p *Position) SetOffsetX(offsetX int) {
 	p.offsetX = offsetX

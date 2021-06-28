@@ -2,7 +2,6 @@
 
 ## Pri
 
-- [ ] If lines are removed, let the active bookmark stay at the same line.
 - [ ] Fix the handling of multiline comments in Python.
 - [ ] Better support for multi-byte unicode runes.
 - [ ] Fix syntax highlighting of 'tokens in Clojure.
