@@ -129,6 +129,11 @@ func (p *Position) AtStartOfTheLine() bool {
 	return p.sx == 0 && p.offsetX == 0
 }
 
+// LineIndex returns the current line index this position is at
+func (p *Position) LineIndex() LineIndex {
+	return LineIndex(p.offsetY + p.sy)
+}
+
 // LineNumber returns the current line number this Position is at
 func (p *Position) LineNumber() LineNumber {
 	return LineIndex(p.offsetY + p.sy).LineNumber()
