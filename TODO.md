@@ -9,6 +9,7 @@
 
 ## Bugs/features/issues
 
+- [ ] When sorting comma-separated strings that do not start with (, [ or {, make sure to keep the same trailing comma status.
 - [ ] '://' should not be interpreted as starting a single-line comment. It's very likely to be an URL.
 - [ ] Support Delve. Introduce a Debug mode.
 - [ ] Embed fstabfmt.
