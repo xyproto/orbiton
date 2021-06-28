@@ -5,7 +5,8 @@ import (
 	"strings"
 )
 
-// Fix nonbreaking spaces, annoying tildes, \r\n and \r
+// opinionatedStringReplacer is a Replacer that can be used for fixing
+// nonbreaking spaces, annoying tildes, \r\n and \r
 var opinionatedStringReplacer = strings.NewReplacer(
 	// Replace non-breaking space with regular space
 	string([]byte{0xc2, 0xa0}), string([]byte{0x20}),
@@ -17,7 +18,8 @@ var opinionatedStringReplacer = strings.NewReplacer(
 	string([]byte{'\r'}), string([]byte{'\n'}),
 )
 
-// opinionatedByteReplacer will fix nonbreaking spaces, annoying tildes, \r\n and \r
+// opinionatedByteReplacer takes a slice of bytes and can be used for fixing
+// nonbreaking spaces, annoying tildes, \r\n and \r
 func opinionatedByteReplacer(data []byte) []byte {
 	// Replace non-breaking space with regular space
 	data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
