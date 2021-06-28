@@ -379,7 +379,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 					// Move to (x, y), line number first and then column number
 					if i, err := strconv.Atoi(lineNumberString); err == nil {
-						foundY := LineIndex(i - 1)
+						foundY := LineIndex(i)
 						e.redraw = e.GoTo(foundY, c, status)
 						e.redrawCursor = e.redraw
 						if x, err := strconv.Atoi(lineColumnString); err == nil { // no error
