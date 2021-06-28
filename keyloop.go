@@ -1180,9 +1180,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 			undo.Snapshot(e)
 
-			existingBookmarkAfterThisLine := bookmark != nil && bookmark.LineNumber() > e.LineNumber()
-			removedLine := false
-
 			e.DeleteRestOfLine()
 			if e.EmptyRightTrimmedLine() {
 				// Deleting the rest of the line cleared this line,
@@ -1192,16 +1189,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				if e.AfterEndOfLine() {
 					e.End(c)
 				}
-				removedLine = true
 			}
 
 			// TODO: Is this one needed/useful?
 			vt100.Do("Erase End of Line")
-
-			// Move the bookmark one line up, if a line was removed before that position
-			if existingBookmarkAfterThisLine && removedLine {
-				bookmark.DecY()
-			}
 
 			e.redraw = true
 			e.redrawCursor = true
