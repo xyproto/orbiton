@@ -18,9 +18,10 @@ func generateTitle(filename string) string {
 		return filepath.Base(filename)
 	}
 	title := filepath.Join("~", relPath)
-	// If the relative directory path is too long, just use the base filename
-	if len(title) >= 30 {
-		title = filepath.Base(filename)
+	// If the relative directory path is short enough, use that
+	if len(title) < 30 {
+		return title
 	}
-	return title
+	// Just use the base filename
+	return filepath.Base(filename)
 }
