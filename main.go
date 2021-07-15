@@ -136,7 +136,7 @@ Set NO_COLOR=1 to disable colors.
 
 	// Set the terminal title, if the current terminal emulator supports it, and NO_COLOR is not set
 	if !env.Bool("NO_COLOR") {
-		termtitle.MustSet(generateTitle(filename))
+		termtitle.MustSet(termtitle.GenerateTitle(filename))
 	}
 
 	// Initialize the VT100 terminal
