@@ -2,10 +2,11 @@
 
 ## Pri
 
+- [ ] Also highlight hexadecimal numbers.
 - [ ] Fix the handling of multiline comments in Python.
 - [ ] Better support for multi-byte unicode runes.
-- [ ] Fix syntax highlighting of 'tokens in Clojure.
-- [ ] ctrl-w for C# using astyle fails the second time. More filenames are added to the command line. Figure out why.
+- [ ] Fix syntax highlighting of `'tokens` in Clojure.
+- [ ] ctrl-w for C# using `astyle` fails the second time. More filenames are added to the command line. Figure out why.
 
 ## Bugs/features/issues
 
