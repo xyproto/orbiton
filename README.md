@@ -137,7 +137,7 @@ These features are unique to `o`, as far as I am aware:
 
 When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call Guessica` to update the `pkgver=` and `source=` fields, by a combination of guesswork and online searching.
 
-* Guessica is also available as a standalone utility: [`guessica`](https://github.com/xyproto/guessica).
+* The Guessica package update utility is available here: [`guessica`](https://github.com/xyproto/guessica).
 
 ## Build and format
 
@@ -164,8 +164,8 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 | Nim                                             | `.nim`                                                    | WIP           | `nim c`                                           | WIP                                                                                                            |
 | Odin                                            | `.odin`                                                   | yes           | `odin build`                                      | N/A                                                                                                            |
 | C#                                              | `.cs`                                                     | yes           | `csc -nologo -unsafe $filename`                   | `astyle -mode=cs main.cs`                                                                              |
-| JavaScript                                      | `.js`                                                     | WIP            |                                                   | `prettier --tab-width 4 -w $filename`                                                                         |
-| TypeScript                                      | `.ts`                                                     | WIP            |                                                   | WIP                                                                                                           |
+| JavaScript                                      | `.js`                                                     | WIP           |                                                   | `prettier --tab-width 4 -w $filename`                                                                         |
+| TypeScript                                      | `.ts`                                                     | WIP           |                                                   | WIP                                                                                                           |
 
 `/etc/fstab` files are also supported, and can be formatted with `ctrl-w` if [`fstabfmt`](https://github.com/xyproto/fstabfmt) is installed.
 
