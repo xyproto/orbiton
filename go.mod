@@ -9,7 +9,7 @@ require (
 	github.com/xyproto/env v1.1.0
 	github.com/xyproto/guessica v1.1.0
 	github.com/xyproto/syntax v1.7.3
-	github.com/xyproto/termtitle v1.2.0
+	github.com/xyproto/termtitle v1.3.0
 	github.com/xyproto/textoutput v1.12.9
 	github.com/xyproto/vt100 v1.9.2
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect

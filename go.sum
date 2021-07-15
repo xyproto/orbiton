@@ -34,8 +34,8 @@ github.com/xyproto/guessica v1.1.0 h1:u//yWmEiW1En0kNHcj4rT1HADOqz47SNR/qx6D9s40
 github.com/xyproto/guessica v1.1.0/go.mod h1:ZC0dOFJO4zuo3+9AaUQ741wCMlKmGERhIQLDYSBIInE=
 github.com/xyproto/syntax v1.7.3 h1:joAIWW67UuS58+mArppHEnOfQ+IEK87IIdwp09rgSwk=
 github.com/xyproto/syntax v1.7.3/go.mod h1:N7fdGZNGUQbQF0ieU6ww4lCebA80bbYsz9ysD4+a6Hc=
-github.com/xyproto/termtitle v1.2.0 h1:kUHpDo+r3+LBnAzmJBVPWH0/yLR2JxNPrqplFz1q9/8=
-github.com/xyproto/termtitle v1.2.0/go.mod h1:CAejmMSnz9Zze7g65yIjFH+5OeCHrjHaUYYmvzKT+Hg=
+github.com/xyproto/termtitle v1.3.0 h1:MAEVEd9LhAotOkwl3u0VUNlqbpD6oIoQRxv5kd9X5yc=
+github.com/xyproto/termtitle v1.3.0/go.mod h1:eOG8x1Kc7/osN0X27aibWhmt5cqu+rUF0Pij8JgWR7Q=
 github.com/xyproto/textoutput v1.12.0/go.mod h1:7gHUVNJjTYzjRsc3S54W8hCcjB96C+/ug/mLus9nBjc=
 github.com/xyproto/textoutput v1.12.9 h1:BGfKc132B2Id75g0AyP3Yt9Hu5OqI2fvU4+LTSxCWn4=
 github.com/xyproto/textoutput v1.12.9/go.mod h1:y+BHS5mSQbvVhKvfLA3WrbIPXp6jdSzBzlOW4wKhxCk=
