@@ -52,3 +52,8 @@ func (ts TabsSpaces) String() string {
 	}
 	return strings.Repeat(" ", ts.perTab)
 }
+
+// WSLen will count the length of the given whitespace string, in terms of spaces
+func (ts TabsSpaces) WSLen(whitespaceString string) int {
+	return strings.Count(whitespaceString, "\t")*ts.perTab + strings.Count(whitespaceString, " ")
+}
