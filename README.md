@@ -59,18 +59,17 @@ These features are unique to `o`, as far as I am aware:
 
 ## Other features and limitations
 
-* Loads up instantly.
-* Configuration-free, for better and for worse.
-* Can render text to PDF.
-* Compile `"Hello, World"` in many popular programming languages simply by pressing `ctrl-space`.
-* `ctrl-t` can jump between a C++ header and source file.
-* Provides syntax highlighting for Go, C++, Markdown, Bash and several other languages. There is generic syntax highlighting.
 * The syntax highlighting is instant.
+* Can compile `"Hello, World"` in many popular programming languages simply by pressing `ctrl-space`.
+* Configuration-free, for better and for worse.
+* `ctrl-t` can jump between a C++ header and source file.
+* Provides syntax highlighting for Go, C++, Markdown, Bash and several other languages. There is generic syntax highlighting built-in.
 * Will jump to the last visited line when opening a recent file.
 * Is provided as a single self-contained executable.
+* Loads faster than both `vim` and `emacs`.
+* Can render text to PDF.
 * Tested with `alacritty`, `st`, `urxvt`, `konsole` and `xfce4-terminal`.
 * Tested on Arch Linux, Debian and FreeBSD.
-* Loads faster than both `vim` and `emacs`.
 * Never asks before saving or quitting. Be careful!
 * The [`NO_COLOR`](https://no-color.org) environment variable can be set to disable all colors.
 * Rainbow parentheses makes lines with many parentheses easier to read.
