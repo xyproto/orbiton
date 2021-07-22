@@ -722,7 +722,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					e.End(c)
 					e.Delete()
 				}
-			} else if Spaces(e.mode) && (e.EmptyLine() || e.AtStartOfTheLine()) && len(e.LeadingWhitespace()) >= e.tabsSpaces.perTab {
+			} else if e.tabsSpaces.spaces && (e.EmptyLine() || e.AtStartOfTheLine()) && e.tabsSpaces.WSLen(e.LeadingWhitespace()) >= e.tabsSpaces.perTab {
 				// Delete several spaces
 				for i := 0; i < e.tabsSpaces.perTab; i++ {
 					// Move back
@@ -835,19 +835,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						spaceAbove        = e.LeadingWhitespaceAt(indexAbove)
 						strippedLineAbove = e.StripSingleLineComment(strings.TrimSpace(e.Line(indexAbove)))
 						newLeadingSpace   string
-						oneIndentation    string
 					)
 
-					// TODO: Don't switch on mode here, but check e.spacesPerTab
-					//       and/or introduce a setting just for spaces vs tabs
-					switch e.mode {
-					case modeShell, modePython, modeCMake, modeConfig:
-						// If this is a shell script, use 2 spaces (or however many spaces are defined in e.spacesPerTab)
-						oneIndentation = strings.Repeat(" ", e.tabsSpaces.perTab)
-					default:
-						// For anything else, use real tabs
-						oneIndentation = "\t"
-					}
+					oneIndentation := e.tabsSpaces.String()
 
 					// Smart-ish indentation
 					if !strings.HasPrefix(strippedLineAbove, "switch ") && (strings.HasPrefix(strippedLineAbove, "case ")) ||
@@ -879,8 +869,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			}
 
 			undo.Snapshot(e)
-			switch e.mode {
-			case modeShell, modePython, modeCMake, modeConfig:
+			if e.tabsSpaces.spaces {
 				for i := 0; i < e.tabsSpaces.perTab; i++ {
 					e.InsertRune(c, ' ')
 					// Write the spaces that represent the tab to the canvas
@@ -888,7 +877,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					// Move to the next position
 					e.Next(c)
 				}
-			default:
+			} else {
 				// Insert a tab character to the file
 				e.InsertRune(c, '\t')
 				// Write the spaces that represent the tab to the canvas
