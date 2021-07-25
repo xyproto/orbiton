@@ -43,6 +43,12 @@ To unset:
 
     git config --global --unset core.editor
 
+## Using `o` for viewing man pages
+
+For `zsh` or `bash`, try using:
+
+	export MANPAGER=o
+
 ## Unique features
 
 These features are unique to `o`, as far as I am aware:
