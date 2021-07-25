@@ -32,16 +32,24 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 	lineIsSectionHeader := false
 	normal := e.fg
 
+	foundSynopsis := false
+	foundSectionAfterSynopsis := false
+
 	line = handleManPageEscape(line)
 	trimmedLine := strings.TrimSpace(line)
 	hasWords := HasWords(trimmedLine)
 
 	if !(prevLineIsBlank || prevLineIsSectionHeader) && strings.HasSuffix(trimmedLine, ")") && !strings.Contains(trimmedLine, ",") && (strings.HasPrefix(trimmedLine, programName) || firstLetterIsUpper(line)) { // top header or footer
 		coloredString = commentColor.Get(line)
-	} else if strings.ToUpper(trimmedLine) == trimmedLine && !strings.HasPrefix(trimmedLine, "-") && hasWords { // a sub-section header
+	} else if strings.ToUpper(trimmedLine) == trimmedLine && !strings.HasPrefix(trimmedLine, "-") && hasWords && !strings.HasPrefix(line, " ") { // a sub-section header
+		if trimmedLine == "SYNOPSIS" {
+			foundSynopsis = true
+		} else if foundSynopsis {
+			foundSectionAfterSynopsis = true
+		}
 		coloredString = manSectionColor.Get(line)
 		lineIsSectionHeader = true
-	} else if (prevLineIsBlank || prevLineIsSectionHeader) && (strings.HasPrefix(trimmedLine, "-") || strings.HasPrefix(trimmedLine, "[-") || strings.HasPrefix(trimmedLine, "[[-")) { // a flag or parameter
+	} else if strings.HasPrefix(trimmedLine, "-") || strings.HasPrefix(trimmedLine, "[-") || strings.HasPrefix(trimmedLine, "[[-") && !foundSectionAfterSynopsis { // a flag or parameter
 		var rs []rune
 		rs = append(rs, []rune(textColor.String())...)
 		inFlag := false
@@ -86,10 +94,17 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 		coloredString = italicsColor.Get(line)
 	} else if !hasWords { // the line has no words
 		coloredString = italicsColor.Get(line)
-	} else if strings.HasSuffix(trimmedLine, "]") && strings.Contains(trimmedLine, "[") { // synopsis
+	} else if strings.Contains(trimmedLine, "[") && !foundSectionAfterSynopsis { // synopsis
 		parts := strings.SplitN(line, "[", 2)
-		inBrackets := parts[1][:len(parts[1])-1]
-		coloredString = manSynopsisColor.Get(parts[0]) + commentColor.Get("[") + italicsColor.Get(inBrackets) + commentColor.Get("]")
+		if strings.HasSuffix(trimmedLine, "]") {
+			inBrackets := parts[1][:len(parts[1])-1]
+			coloredString = manSynopsisColor.Get(parts[0]) + commentColor.Get("[") + italicsColor.Get(inBrackets)
+			coloredString += commentColor.Get("]")
+		} else {
+			coloredString = manSynopsisColor.Get(parts[0]) + commentColor.Get("[") + italicsColor.Get(parts[1])
+		}
+	} else if specialRatio(trimmedLine) > 0.3 { // a lot of special characters
+		coloredString = italicsColor.Get(line)
 	} else if strings.Contains(trimmedLine, "(") && strings.Contains(trimmedLine, ")") { // regular text with paranthesis
 		var rs []rune
 		rs = append(rs, []rune(normal.String())...)
