@@ -110,6 +110,10 @@ func (e *Editor) setDefaultTheme() {
 	menuTextColor = vt100.Gray
 	menuHighlightColor = vt100.LightBlue
 	menuSelectedColor = vt100.LightCyan
+
+	// Man pages
+	manSectionColor = vt100.LightRed
+	manSynopsisColor = vt100.LightYellow
 }
 
 // setLightTheme sets a theme suitable for white backgrounds
@@ -167,6 +171,10 @@ func (e *Editor) setLightTheme() {
 	menuTextColor = vt100.Black
 	menuHighlightColor = vt100.Red
 	menuSelectedColor = vt100.LightRed
+
+	// Man pages
+	manSectionColor = vt100.Red
+	manSynopsisColor = vt100.Blue
 }
 
 // setRedBlackTheme sets a red/black/gray theme
@@ -224,6 +232,10 @@ func (e *Editor) setRedBlackTheme() {
 	menuTextColor = vt100.White
 	menuHighlightColor = vt100.Yellow
 	menuSelectedColor = vt100.LightYellow
+
+	// Man pages
+	manSectionColor = vt100.Red
+	manSynopsisColor = vt100.White
 }
 
 func (e *Editor) respectNoColorEnvironmentVariable() {

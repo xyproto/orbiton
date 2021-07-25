@@ -133,6 +133,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				switch e.mode {
 				case modeGit:
 					coloredString = e.gitHighlight(line)
+				case modeManPage:
+					coloredString = e.manPageHighlight(line)
 				case modeMarkdown:
 					if highlighted, ok, codeBlockFound := markdownHighlight(line, inCodeBlock, prevLineIsListItem, &inListItem); ok {
 						coloredString = highlighted

@@ -45,13 +45,14 @@ const (
 	modeOdin           // for Odin
 	modeXML            // for XML
 	modePolicyLanguage // for SE Linux configuration files
-	modeNroff          // for man pages
+	modeNroff          // for editing man pages
 	modeScala          // for Scala
 	modeJSON           // for JSON and iPython notebooks
 	modeBattlestar     // for Battlestar
 	modeCS             // for C#
 	modeJavaScript     // for JavaScript
 	modeTypeScript     // for TypeScript
+	modeManPage        // for viewing man pages
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -271,7 +272,7 @@ func (mode Mode) String() string {
 	case modePolicyLanguage:
 		return "SELinux"
 	case modeNroff:
-		return "Man"
+		return "Nroff"
 	case modeScala:
 		return "Scala"
 	case modeJSON:
@@ -284,6 +285,8 @@ func (mode Mode) String() string {
 		return "TypeScript"
 	case modeJavaScript:
 		return "JavaScript"
+	case modeManPage:
+		return "Man"
 	default:
 		return "?"
 	}

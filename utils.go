@@ -137,6 +137,15 @@ func aBinDirectory(filename string) bool {
 	return false
 }
 
+// hexDigit checks if the given rune is 0-9, a-f, A-F or x
+func hexDigit(r rune) bool {
+	switch r {
+	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'x', 'A', 'a', 'B', 'b', 'C', 'c', 'D', 'd', 'E', 'e', 'F', 'f':
+		return true
+	}
+	return false
+}
+
 // logf, for quick "printf-style" debugging
 func logf(format string, args ...interface{}) {
 	tmpdir := os.Getenv("TMPDIR")

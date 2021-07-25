@@ -78,6 +78,8 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 		clearKeywords()
 		delKeywords = []string{"class"}
 		addKeywords = []string{"B", "BR", "PP", "SH", "TP", "fB", "fP", "RB", "TH", "IR", "IP", "fI", "fR"}
+	case modeManPage:
+		clearKeywords()
 	case modeOak:
 		addKeywords = []string{"fn"}
 		delKeywords = []string{"from", "new", "print"}
