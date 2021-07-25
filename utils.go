@@ -146,6 +146,15 @@ func hexDigit(r rune) bool {
 	return false
 }
 
+// firstLetterIsUpper checks if the first letter of the given string is uppercase
+func firstLetterIsUpper(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	r := []rune(s)[0]
+	return unicode.IsUpper(r)
+}
+
 // logf, for quick "printf-style" debugging
 func logf(format string, args ...interface{}) {
 	tmpdir := os.Getenv("TMPDIR")

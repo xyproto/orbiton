@@ -96,6 +96,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		line                  string
 		assemblyStyleComments = ((e.mode == modeAssembly) || (e.mode == modeLisp) || (e.mode == modeClojure)) && !e.firstLineHash
 		prevLineIsListItem    bool
+		prevLineIsBlank       bool
 		inListItem            bool
 		screenLine            string
 	)
@@ -134,7 +135,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				case modeGit:
 					coloredString = e.gitHighlight(line)
 				case modeManPage:
-					coloredString = e.manPageHighlight(line)
+					coloredString = e.manPageHighlight(line, prevLineIsBlank)
+					prevLineIsBlank = len(trimmedLine) == 0
 				case modeMarkdown:
 					if highlighted, ok, codeBlockFound := markdownHighlight(line, inCodeBlock, prevLineIsListItem, &inListItem); ok {
 						coloredString = highlighted
