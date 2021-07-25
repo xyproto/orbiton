@@ -68,8 +68,8 @@ func (e *Editor) manPageHighlight(line string) string {
 		inNum := false
 		lineRunes := []rune(line)
 		for i, r := range lineRunes {
-			nextIsNum := ((i + 1) < len(lineRunes)) && unicode.IsDigit(lineRunes[i+1])
-			if r == '(' && nextIsNum {
+			nextIsDigit := ((i + 1) < len(lineRunes)) && unicode.IsDigit(lineRunes[i+1])
+			if r == '(' && nextIsDigit {
 				inNum = true
 				rs = append(rs, []rune(vt100.Stop()+commentColor.String())...)
 				rs = append(rs, r)
@@ -89,14 +89,20 @@ func (e *Editor) manPageHighlight(line string) string {
 		var rs []rune
 		rs = append(rs, []rune(e.fg.String())...)
 		inDigits := false
+		inWord := false
 		for _, r := range line {
-			if unicode.IsDigit(r) && !inDigits {
+			if unicode.IsLetter(r) && !inWord {
+				inWord = true
+			} else if inWord && !unicode.IsLetter(r) && !hexDigit(r) {
+				inWord = false
+			}
+			if !inWord && unicode.IsDigit(r) && !inDigits {
 				inDigits = true
 				rs = append(rs, []rune(vt100.Stop()+italicsColor.String())...)
 				rs = append(rs, r)
 			} else if hexDigit(r) && inDigits {
 				rs = append(rs, r)
-			} else if inDigits {
+			} else if !inWord && inDigits {
 				inDigits = false
 				rs = append(rs, []rune(vt100.Stop()+e.fg.String())...)
 				rs = append(rs, r)
