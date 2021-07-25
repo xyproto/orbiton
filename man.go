@@ -27,17 +27,23 @@ func handleManPageEscape(s string) string {
 	return string(lineRunes)
 }
 
-func (e *Editor) manPageHighlight(line string, prevLineIsBlank bool) string {
+func (e *Editor) manPageHighlight(line string, prevLineIsBlank, prevLineIsSectionHeader bool) (string, bool) {
 	var coloredString string
+
+	lineIsSectionHeader := false
 
 	line = handleManPageEscape(line)
 
 	trimmedLine := strings.TrimSpace(line)
+	hasWords := HasWords(trimmedLine)
 	if strings.HasSuffix(trimmedLine, ")") && !strings.Contains(trimmedLine, ",") && firstLetterIsUpper(line) { // top header or footer
 		coloredString = commentColor.Get(line)
-	} else if strings.ToUpper(trimmedLine) == trimmedLine && !strings.HasPrefix(trimmedLine, "-") { // a sub-section header
+	} else if strings.ToUpper(trimmedLine) == trimmedLine && !strings.HasPrefix(trimmedLine, "-") && hasWords { // a sub-section header
 		coloredString = manSectionColor.Get(line)
-	} else if prevLineIsBlank && strings.HasPrefix(trimmedLine, "-") || strings.HasPrefix(trimmedLine, "[-") || strings.HasPrefix(trimmedLine, "[[-") { // a flag or parameter
+		lineIsSectionHeader = true
+	} else if oneWordNoSpaces(trimmedLine) && (prevLineIsBlank || prevLineIsSectionHeader) {
+		coloredString = manSynopsisColor.Get(line)
+	} else if prevLineIsBlank && (strings.HasPrefix(trimmedLine, "-") || strings.HasPrefix(trimmedLine, "[-") || strings.HasPrefix(trimmedLine, "[[-")) { // a flag or parameter
 		var rs []rune
 		rs = append(rs, []rune(textColor.String())...)
 		inFlag := false
@@ -70,6 +76,8 @@ func (e *Editor) manPageHighlight(line string, prevLineIsBlank bool) string {
 		}
 		rs = append(rs, []rune(vt100.Stop())...)
 		coloredString = string(rs)
+	} else if !hasWords { // the line has no words
+		coloredString = italicsColor.Get(line)
 	} else if strings.HasSuffix(trimmedLine, "]") && strings.Contains(trimmedLine, "[") { // synopsis
 		parts := strings.SplitN(line, "[", 2)
 		inBrackets := parts[1][:len(parts[1])-1]
@@ -125,5 +133,5 @@ func (e *Editor) manPageHighlight(line string, prevLineIsBlank bool) string {
 		rs = append(rs, []rune(vt100.Stop())...)
 		coloredString = string(rs)
 	}
-	return coloredString
+	return coloredString, lineIsSectionHeader
 }

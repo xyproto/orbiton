@@ -91,14 +91,15 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	}
 	// q should now contain the current quote state
 	var (
-		lineRuneCount         uint
-		lineStringCount       uint
-		line                  string
-		assemblyStyleComments = ((e.mode == modeAssembly) || (e.mode == modeLisp) || (e.mode == modeClojure)) && !e.firstLineHash
-		prevLineIsListItem    bool
-		prevLineIsBlank       bool
-		inListItem            bool
-		screenLine            string
+		lineRuneCount           uint
+		lineStringCount         uint
+		line                    string
+		assemblyStyleComments   = ((e.mode == modeAssembly) || (e.mode == modeLisp) || (e.mode == modeClojure)) && !e.firstLineHash
+		prevLineIsListItem      bool
+		prevLineIsBlank         bool
+		prevLineIsSectionHeader bool
+		inListItem              bool
+		screenLine              string
 	)
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y := LineIndex(0); y < numlines; y++ {
@@ -135,7 +136,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				case modeGit:
 					coloredString = e.gitHighlight(line)
 				case modeManPage:
-					coloredString = e.manPageHighlight(line, prevLineIsBlank)
+					cs, sh := e.manPageHighlight(line, prevLineIsBlank, prevLineIsSectionHeader)
+					coloredString = cs
+					prevLineIsSectionHeader = sh
 					prevLineIsBlank = len(trimmedLine) == 0
 				case modeMarkdown:
 					if highlighted, ok, codeBlockFound := markdownHighlight(line, inCodeBlock, prevLineIsListItem, &inListItem); ok {

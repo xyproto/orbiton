@@ -155,6 +155,43 @@ func firstLetterIsUpper(s string) bool {
 	return unicode.IsUpper(r)
 }
 
+// HasWords checks if a range of more than one letter is found
+func HasWords(s string) bool {
+	letterCount := 0
+	for _, r := range s {
+		if unicode.IsLetter(r) {
+			letterCount++
+		} else {
+			letterCount = 0
+		}
+		if letterCount > 1 {
+			return true
+		}
+	}
+	return false
+}
+
+func oneWordNoSpaces(s string) bool {
+	letterCount := 0
+	wordCount := 0
+	for _, r := range s {
+		if unicode.IsLetter(r) {
+			letterCount++
+		} else if r == ' ' {
+			return false
+		} else {
+			if letterCount > 1 {
+				wordCount++
+				if wordCount > 1 {
+					return false
+				}
+			}
+			letterCount = 0
+		}
+	}
+	return true
+}
+
 // logf, for quick "printf-style" debugging
 func logf(format string, args ...interface{}) {
 	tmpdir := os.Getenv("TMPDIR")
