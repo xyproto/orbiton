@@ -175,7 +175,7 @@ func oneWordNoSpaces(s string) bool {
 	letterCount := 0
 	wordCount := 0
 	for _, r := range s {
-		if unicode.IsLetter(r) {
+		if unicode.IsLetter(r) || r == '.' || r == '?' || r == '!' || r == '_' || r == ':' || r == '/' {
 			letterCount++
 		} else if r == ' ' {
 			return false
@@ -190,6 +190,10 @@ func oneWordNoSpaces(s string) bool {
 		}
 	}
 	return true
+}
+
+func oneField(s string) bool {
+	return len(strings.Fields(s)) == 1
 }
 
 // logf, for quick "printf-style" debugging
