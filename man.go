@@ -88,10 +88,12 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 		}
 		rs = append(rs, []rune(vt100.Stop())...)
 		coloredString = string(rs)
-	} else if (prevLineIsBlank || prevLineIsSectionHeader) && oneWordNoSpaces(trimmedLine) && !strings.Contains(trimmedLine, "=") {
+	} else if (prevLineIsBlank || prevLineIsSectionHeader) && oneWordNoSpaces(trimmedLine) && !strings.Contains(trimmedLine, "=") && foundSectionAfterSynopsis {
 		coloredString = manSynopsisColor.Get(line)
 	} else if strings.Contains(trimmedLine, "://") && oneField(trimmedLine) { // URL
 		coloredString = italicsColor.Get(line)
+	} else if (strings.Contains(trimmedLine, "/") || strings.Contains(trimmedLine, "$")) && oneField(trimmedLine) { // filename?
+		coloredString = textColor.Get(line)
 	} else if !hasWords { // the line has no words
 		coloredString = italicsColor.Get(line)
 	} else if strings.Contains(trimmedLine, "[") && !foundSectionAfterSynopsis { // synopsis
@@ -103,8 +105,6 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 		} else {
 			coloredString = manSynopsisColor.Get(parts[0]) + commentColor.Get("[") + italicsColor.Get(parts[1])
 		}
-	} else if specialRatio(trimmedLine) > 0.4 { // a lot of special characters
-		coloredString = italicsColor.Get(line)
 	} else if strings.Contains(trimmedLine, "(") && strings.Contains(trimmedLine, ")") { // regular text with paranthesis
 		var rs []rune
 		rs = append(rs, []rune(normal.String())...)

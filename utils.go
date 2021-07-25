@@ -196,23 +196,6 @@ func oneField(s string) bool {
 	return len(strings.Fields(s)) == 1
 }
 
-// The ratio of special letters in a string
-// non-special letters are unicode.IsSpace or unicode.IsLetter
-func specialRatio(s string) float64 {
-	counter := 0
-	specialCounter := 0
-	for _, r := range s {
-		if !unicode.IsSpace(r) && !unicode.IsLetter(r) {
-			specialCounter++
-		}
-		counter++
-	}
-	if counter == 0 {
-		return 0.0
-	}
-	return float64(specialCounter) / float64(counter)
-}
-
 // logf, for quick "printf-style" debugging
 func logf(format string, args ...interface{}) {
 	tmpdir := os.Getenv("TMPDIR")
