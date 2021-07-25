@@ -100,6 +100,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		prevLineIsSectionHeader bool
 		inListItem              bool
 		screenLine              string
+		programName             string
 	)
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y := LineIndex(0); y < numlines; y++ {
@@ -136,7 +137,14 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				case modeGit:
 					coloredString = e.gitHighlight(line)
 				case modeManPage:
-					cs, sh := e.manPageHighlight(line, prevLineIsBlank, prevLineIsSectionHeader)
+					if y == 0 {
+						// Get the first word that consists only of letters, and use that as the man page program name
+						fields := strings.FieldsFunc(trimmedLine, func(c rune) bool { return !unicode.IsLetter(c) })
+						if len(fields) > 0 {
+							programName = fields[0]
+						}
+					}
+					cs, sh := e.manPageHighlight(line, programName, prevLineIsBlank, prevLineIsSectionHeader)
 					coloredString = cs
 					prevLineIsSectionHeader = sh
 					prevLineIsBlank = len(trimmedLine) == 0

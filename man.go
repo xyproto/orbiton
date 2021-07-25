@@ -29,7 +29,7 @@ func handleManPageEscape(s string) string {
 	return string(lineRunes)
 }
 
-func (e *Editor) manPageHighlight(line string, prevLineIsBlank, prevLineIsSectionHeader bool) (string, bool) {
+func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, prevLineIsSectionHeader bool) (string, bool) {
 	var coloredString string
 
 	lineIsSectionHeader := false
@@ -39,7 +39,7 @@ func (e *Editor) manPageHighlight(line string, prevLineIsBlank, prevLineIsSectio
 	trimmedLine := strings.TrimSpace(line)
 	hasWords := HasWords(trimmedLine)
 
-	if strings.HasSuffix(trimmedLine, ")") && !strings.Contains(trimmedLine, ",") && firstLetterIsUpper(line) { // top header or footer
+	if strings.HasSuffix(trimmedLine, ")") && !strings.Contains(trimmedLine, ",") && (strings.HasPrefix(trimmedLine, programName) || firstLetterIsUpper(line)) { // top header or footer
 		coloredString = commentColor.Get(line)
 	} else if strings.ToUpper(trimmedLine) == trimmedLine && !strings.HasPrefix(trimmedLine, "-") && hasWords { // a sub-section header
 		coloredString = manSectionColor.Get(line)
