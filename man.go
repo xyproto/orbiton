@@ -14,14 +14,11 @@ var (
 
 func handleManPageEscape(s string) string {
 	var lineRunes []rune
-	skipNext := false
 	for _, r := range s {
 		if r == 0x8 {
-			skipNext = true
-			continue
-		}
-		if skipNext {
-			skipNext = false
+			// Encountered ^H
+			// Pop the last appended rune and continue
+			lineRunes = lineRunes[:len(lineRunes)-1]
 			continue
 		}
 		lineRunes = append(lineRunes, r)
@@ -39,35 +36,38 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 	trimmedLine := strings.TrimSpace(line)
 	hasWords := HasWords(trimmedLine)
 
-	if strings.HasSuffix(trimmedLine, ")") && !strings.Contains(trimmedLine, ",") && (strings.HasPrefix(trimmedLine, programName) || firstLetterIsUpper(line)) { // top header or footer
+	if !(prevLineIsBlank || prevLineIsSectionHeader) && strings.HasSuffix(trimmedLine, ")") && !strings.Contains(trimmedLine, ",") && (strings.HasPrefix(trimmedLine, programName) || firstLetterIsUpper(line)) { // top header or footer
 		coloredString = commentColor.Get(line)
 	} else if strings.ToUpper(trimmedLine) == trimmedLine && !strings.HasPrefix(trimmedLine, "-") && hasWords { // a sub-section header
 		coloredString = manSectionColor.Get(line)
 		lineIsSectionHeader = true
-	} else if (prevLineIsBlank || prevLineIsSectionHeader) && oneWordNoSpaces(trimmedLine) && !strings.Contains(trimmedLine, "=") {
-		coloredString = manSynopsisColor.Get(line)
 	} else if (prevLineIsBlank || prevLineIsSectionHeader) && (strings.HasPrefix(trimmedLine, "-") || strings.HasPrefix(trimmedLine, "[-") || strings.HasPrefix(trimmedLine, "[[-")) { // a flag or parameter
 		var rs []rune
 		rs = append(rs, []rune(textColor.String())...)
 		inFlag := false
 		spaceCount := 0
+		foundLetter := false
+		prevR := ' '
 		for _, r := range line {
+			if !foundLetter && unicode.IsLetter(r) {
+				foundLetter = true
+			}
 			if r == ' ' {
 				spaceCount++
 			} else {
 				spaceCount = 0
 			}
-			if (r == '-' || r == '[') && !inFlag {
+			if prevR == ' ' && (r == '-' || r == '[') && !inFlag {
 				inFlag = true
 				rs = append(rs, []rune(vt100.Stop()+headerBulletColor.String())...)
 				rs = append(rs, r)
-			} else if (r == '-' || r == '[') && inFlag {
+			} else if prevR == ' ' && (r == '-' || r == '[') && inFlag {
 				rs = append(rs, r)
 			} else if inFlag { // Color the rest of the flag text in the textColor color (LightBlue)
 				inFlag = false
 				rs = append(rs, []rune(vt100.Stop()+textColor.String())...)
 				rs = append(rs, r)
-			} else if spaceCount > 2 { // Color the rest of the line in the foreground color (LightGreen)
+			} else if foundLetter && spaceCount > 2 { // Color the rest of the line in the foreground color (LightGreen)
 				rs = append(rs, []rune(vt100.Stop()+normal.String())...)
 				rs = append(rs, r)
 			} else if r == ']' || r == '_' { // Color the rest of the line in the comment color (DarkGray)
@@ -76,9 +76,12 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 			} else {
 				rs = append(rs, r)
 			}
+			prevR = r
 		}
 		rs = append(rs, []rune(vt100.Stop())...)
 		coloredString = string(rs)
+	} else if (prevLineIsBlank || prevLineIsSectionHeader) && oneWordNoSpaces(trimmedLine) && !strings.Contains(trimmedLine, "=") {
+		coloredString = manSynopsisColor.Get(line)
 	} else if strings.Contains(trimmedLine, "://") && oneField(trimmedLine) { // URL
 		coloredString = italicsColor.Get(line)
 	} else if !hasWords { // the line has no words
