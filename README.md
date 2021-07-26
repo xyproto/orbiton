@@ -270,9 +270,9 @@ JavaScript
 
 ## A note on Java and Scala
 
-Since `kotlinc $filename -include-runtime -d` builds to a `.jar`, I though I should do the same for Java. The idea is to easily build a single or a small collection of `.java` files, where one of the file has a `main` function.
+Since `kotlinc $filename -include-runtime -d` builds to a `.jar`, I though I should do the same for Java. The idea is to easily compile a single or a small collection of `.java` files, where one of the file has a `main` function.
 
-If you know an easier way to build a `.jar` file from `*.java` without using something like gradle, please let me know by submitting a pull request. This is pretty verbose...
+If you know about an easier way to build a `.jar` file from `*.java`, without using something like gradle, please let me know by submitting a pull request. This is pretty verbose...
 
 ```sh
 javaFiles=$(find . -type f -name '*.java')
@@ -327,6 +327,7 @@ If `/usr/share/scala/lib/scala-library.jar` is not found `scalac -d run_with_sca
 * `cargo`
 * `clang-format`
 * [`cxx`](https://github.com/xyproto/cxx)
+* [`fstabfmt`](https://github.com/xyproto/fstabfmt)
 * `g++` / `base-devel`
 * `ghc`
 * `go` / `golang`
