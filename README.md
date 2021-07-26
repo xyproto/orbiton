@@ -72,7 +72,7 @@ These features are unique to `o`, as far as I am aware:
 * Provides syntax highlighting for Go, C++, Markdown, Bash and several other languages. There is generic syntax highlighting built-in.
 * Will jump to the last visited line when opening a recent file.
 * Is provided as a single self-contained executable.
-* Loads faster than both `vim` and `emacs`.
+* Loads faster than both `vim` and `emacs`, for small files.
 * Can render text to PDF.
 * Tested with `alacritty`, `st`, `urxvt`, `konsole` and `xfce4-terminal`.
 * Tested on Arch Linux, Debian and FreeBSD.
@@ -94,11 +94,11 @@ These features are unique to `o`, as far as I am aware:
 * Will replace non-breaking space (`0xc2 0xa0`) with a regular space (`0x20`) whenever possible.
 * If interactive rebase is launched with `git rebase -i`, then either `ctrl-w` or `ctrl-r` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
 * When editing Markdown, checkboxes can be toggled with `ctrl-w`.
-* If the editor executable renamed to `ro` (or have a symlink with that name), the default theme will be red/white/gray.
-* If the editor executable renamed to `light` (or have a symlink with that name), the default theme will be suitable for light backgrounds.
+* If the editor executable is renamed to `ro` (or have a symlink with that name), the default theme will be red/black.
+* If the editor executable is renamed to `light` (or have a symlink with that name), the default theme will be suitable for light backgrounds.
 * Want to quickly convert Markdown to PDF and have pandoc installed? Try `o filename.md`, press `ctrl-space` twice and quit with `ctrl-q`.
 * Press `ctrl-w` to toggle the check mark in `- [ ] TODO item` boxes in Markdown.
-* `o` is written mostly in `o`, with some use of NeoVim at the beginning.
+* `o` is written mostly in `o`, with some use of NeoVim for the initial development.
 
 ## Known bugs
 
