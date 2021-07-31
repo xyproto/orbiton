@@ -39,7 +39,7 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 	trimmedLine := strings.TrimSpace(line)
 	hasWords := HasWords(trimmedLine)
 
-	if !(prevLineIsBlank || prevLineIsSectionHeader) && strings.HasSuffix(trimmedLine, ")") && !strings.Contains(trimmedLine, ",") && (strings.HasPrefix(trimmedLine, programName) || firstLetterIsUpper(line)) { // top header or footer
+	if !(prevLineIsBlank || prevLineIsSectionHeader) && strings.Count(trimmedLine, ")") == 2 && strings.Count(trimmedLine, "(") == 2 && strings.HasSuffix(trimmedLine, ")") && !strings.Contains(trimmedLine, ",") && (strings.HasPrefix(trimmedLine, programName) || firstLetterIsUpper(line)) { // top header or footer
 		coloredString = commentColor.Get(line)
 	} else if strings.ToUpper(trimmedLine) == trimmedLine && !strings.HasPrefix(trimmedLine, "-") && hasWords && !strings.HasPrefix(line, " ") { // a sub-section header
 		if trimmedLine == "SYNOPSIS" {
@@ -57,7 +57,7 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 		foundLetter := false
 		prevR := ' '
 		for _, r := range line {
-			if !foundLetter && unicode.IsLetter(r) {
+			if !foundLetter && (unicode.IsLetter(r) || r == '_') {
 				foundLetter = true
 			}
 			if r == ' ' {
@@ -65,11 +65,11 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 			} else {
 				spaceCount = 0
 			}
-			if prevR == ' ' && (r == '-' || r == '[') && !inFlag {
+			if prevR == ' ' && (r == '-' || r == '[' || r == '_') && !inFlag {
 				inFlag = true
 				rs = append(rs, []rune(vt100.Stop()+headerBulletColor.String())...)
 				rs = append(rs, r)
-			} else if prevR == ' ' && (r == '-' || r == '[') && inFlag {
+			} else if prevR == ' ' && (r == '-' || r == '[' || r == '_') && inFlag {
 				rs = append(rs, r)
 			} else if inFlag { // Color the rest of the flag text in the textColor color (LightBlue)
 				inFlag = false
@@ -78,7 +78,7 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 			} else if foundLetter && spaceCount > 2 { // Color the rest of the line in the foreground color (LightGreen)
 				rs = append(rs, []rune(vt100.Stop()+normal.String())...)
 				rs = append(rs, r)
-			} else if r == ']' || r == '_' { // Color the rest of the line in the comment color (DarkGray)
+			} else if r == ']' { // Color the rest of the line in the comment color (DarkGray)
 				rs = append(rs, []rune(vt100.Stop()+commentColor.String())...)
 				rs = append(rs, r)
 			} else {
@@ -118,7 +118,7 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 				rs = append(rs, []rune(vt100.Stop()+commentColor.String())...)
 				rs = append(rs, r)
 				rs = append(rs, []rune(vt100.Stop()+manSectionColor.String())...)
-			} else if r == ')' && inNum {
+			} else if inNum && !nextIsDigit {
 				inNum = false
 				rs = append(rs, []rune(vt100.Stop()+commentColor.String())...)
 				rs = append(rs, r)
@@ -152,7 +152,7 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 		inWord := false
 		hasAlpha := strings.Contains(trimmedLine, "@")
 		for _, r := range line {
-			if unicode.IsLetter(r) && !inWord {
+			if (unicode.IsLetter(r) || r == '_') && !inWord {
 				inWord = true
 			} else if inWord && !unicode.IsLetter(r) && !hexDigit(r) {
 				inWord = false
