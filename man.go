@@ -92,13 +92,12 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 		coloredString = manSynopsisColor.Get(line)
 	} else if strings.Contains(trimmedLine, "://") && oneField(trimmedLine) { // URL
 		coloredString = italicsColor.Get(line)
-	} else if (strings.Contains(trimmedLine, "/") || strings.Contains(trimmedLine, "$")) && oneField(trimmedLine) { // filename?
-		coloredString = textColor.Get(line)
-	} else if !hasWords { // the line has no words
-		coloredString = italicsColor.Get(line)
-	} else if strings.Contains(trimmedLine, "[") && !foundSectionAfterSynopsis { // synopsis
+	} else if strings.Contains(trimmedLine, "[") && !foundSectionAfterSynopsis && !strings.Contains(trimmedLine, ".") { // synopsis
 		parts := strings.SplitN(line, "[", 2)
-		if strings.HasSuffix(trimmedLine, "]") {
+		trimmedParts := strings.SplitN(trimmedLine, "[", 2)
+		if strings.Count(trimmedParts[0], " ") > 2 {
+			coloredString = normal.Get(line)
+		} else if strings.HasSuffix(trimmedLine, "]") {
 			inBrackets := parts[1][:len(parts[1])-1]
 			coloredString = manSynopsisColor.Get(parts[0]) + commentColor.Get("[") + italicsColor.Get(inBrackets)
 			coloredString += commentColor.Get("]")
@@ -109,9 +108,11 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 		var rs []rune
 		rs = append(rs, []rune(normal.String())...)
 		inNum := false
+		inUpper := false
 		lineRunes := []rune(line)
 		for i, r := range lineRunes {
 			nextIsDigit := ((i + 1) < len(lineRunes)) && unicode.IsDigit(lineRunes[i+1])
+			nextIsUpper := ((i + 1) < len(lineRunes)) && unicode.IsUpper(lineRunes[i+1])
 			if r == '(' && nextIsDigit {
 				inNum = true
 				rs = append(rs, []rune(vt100.Stop()+commentColor.String())...)
@@ -122,12 +123,28 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 				rs = append(rs, []rune(vt100.Stop()+commentColor.String())...)
 				rs = append(rs, r)
 				rs = append(rs, []rune(vt100.Stop()+normal.String())...)
+			} else if unicode.IsUpper(r) && nextIsUpper {
+				inUpper = true
+				rs = append(rs, []rune(vt100.Stop()+textColor.String())...)
+				rs = append(rs, r)
+				rs = append(rs, []rune(vt100.Stop()+normal.String())...)
+			} else if inUpper && !nextIsUpper {
+				inUpper = false
+				rs = append(rs, []rune(vt100.Stop()+textColor.String())...)
+				rs = append(rs, r)
+				rs = append(rs, []rune(vt100.Stop()+normal.String())...)
+			} else if unicode.IsUpper(r) && nextIsUpper {
+				rs = append(rs, []rune(vt100.Stop()+textColor.String())...)
+				rs = append(rs, r)
+				rs = append(rs, []rune(vt100.Stop()+normal.String())...)
 			} else {
 				rs = append(rs, r)
 			}
 		}
 		rs = append(rs, []rune(vt100.Stop())...)
 		coloredString = string(rs)
+	} else if allUpper(trimmedLine) || ((prevLineIsBlank || prevLineIsSectionHeader) && oneField(trimmedLine) && !strings.HasSuffix(trimmedLine, ".")) { // filename? command?
+		coloredString = textColor.Get(line)
 	} else { // regular text, but highlight numbers (and hex numbers, if the number starts with a digit) + highlight "@"
 		var rs []rune
 		rs = append(rs, []rune(normal.String())...)

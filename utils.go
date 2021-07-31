@@ -196,6 +196,15 @@ func oneField(s string) bool {
 	return len(strings.Fields(s)) == 1
 }
 
+func allUpper(s string) bool {
+	for _, r := range s {
+		if !unicode.IsUpper(r) && unicode.IsLetter(r) {
+			return false
+		}
+	}
+	return true
+}
+
 // logf, for quick "printf-style" debugging
 func logf(format string, args ...interface{}) {
 	tmpdir := os.Getenv("TMPDIR")
