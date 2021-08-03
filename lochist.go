@@ -18,8 +18,9 @@ const maxLocationHistoryEntries = 1024
 var (
 	vimLocationHistoryFilename   = expandUser("~/.viminfo")
 	emacsLocationHistoryFilename = expandUser("~/.emacs.d/places")
-	locationHistoryFilename      = filepath.Join(expandUser(env.Str("XDG_CACHE_HOME", "~/.cache")), "/o/locations.txt")
-	nvimLocationHistoryFilename  = filepath.Join(expandUser(env.Str("XDG_DATA_HOME", "~/.local/share")), "/nvim/shada/main.shada")
+	userCacheDir                 = expandUser(env.Str("XDG_CACHE_HOME", "~/.cache"))
+	locationHistoryFilename      = filepath.Join(userCacheDir, "o/locations.txt")
+	nvimLocationHistoryFilename  = filepath.Join(expandUser(env.Str("XDG_DATA_HOME", "~/.local/share")), "nvim/shada/main.shada")
 )
 
 // LoadLocationHistory will attempt to load the per-absolute-filename recording of which line is active.

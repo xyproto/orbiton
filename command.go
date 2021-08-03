@@ -15,7 +15,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-var lastCommandFile = expandUser("~/.cache/o/last_command.sh")
+var lastCommandFile = filepath.Join(userCacheDir, "o/last_command.sh")
 
 // UserSave saves the file and the location history
 func (e *Editor) UserSave(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {

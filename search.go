@@ -7,12 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/xyproto/env"
 	"github.com/xyproto/vt100"
 )
 
 var (
-	searchHistoryFilename = filepath.Join(expandUser(env.Str("XDG_CACHE_HOME", "~/.cache")), "o/search.txt")
+	searchHistoryFilename = filepath.Join(userCacheDir, "o/search.txt")
 	searchHistory         = []string{}
 	errNoSearchMatch      = errors.New("no search match")
 )

@@ -15,7 +15,7 @@ import (
 
 var (
 	errNoSuitableBuildCommand = errors.New("no suitable build command")
-	zigCacheDir               = expandUser("~/.cache/o/zig")
+	zigCacheDir               = filepath.Join(userCacheDir, "o/zig")
 )
 
 // exportScdoc tries to export the current document as a manual page, using scdoc

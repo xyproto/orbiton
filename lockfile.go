@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var defaultLockFile = expandUser("~/.cache/o/lockfile.txt")
+var defaultLockFile = filepath.Join(userCacheDir, "o/lockfile.txt")
 
 // LockKeeper keeps track of which files are currently being edited by o
 type LockKeeper struct {
