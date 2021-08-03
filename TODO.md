@@ -7,6 +7,7 @@
 - [ ] Better support for multi-byte unicode runes.
 - [ ] Fix syntax highlighting of `'tokens` in Clojure.
 - [ ] ctrl-w for C# using `astyle` fails the second time. More filenames are added to the command line. Figure out why.
+- [ ] Highlighting some elements in man pages are a bit wonky. Consider if implementing a proper parser is worth it.
 
 ## Bugs/features/issues
 
