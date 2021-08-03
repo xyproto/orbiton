@@ -10,4 +10,8 @@ Compile with [cxx](https://github.com/xyproto/cxx):
 
 Install with, for instance:
 
-    sudo install -Dm755 og /usr/bin/og
+    sudo install -Dm755 og /usr/bin/gui
+
+The font can be set with the `GUI_FONT` environment variable, like this:
+
+    export GUI_FONT="iosevka 16"

@@ -1,15 +1,19 @@
 #include <cstdio>
 #include <filesystem>
 #include <iostream>
+#include <signal.h>
 #include <string>
+#include <unistd.h>
 #include <vte/vte.h>
 
 /*
- * A terminal emulator only for runnin o.
+ * A terminal emulator only for running o.
  * Inspired by: https://vincent.bernat.ch/en/blog/2017-write-own-terminal
  */
 
 using namespace std::string_literals;
+
+static GPid child_pid = -1;
 
 // new_window creates and returns a Gtk window.
 // The given title is used as the window title.
@@ -20,16 +24,20 @@ auto new_window(std::string const& title)
     return window;
 }
 
-// new_color parses the given string and returns a GdkRGBA struct
-// which must be freed after use.
-auto new_color(std::string const& c)
+void signal_and_quit()
 {
-    auto colorstruct = (GdkRGBA*)malloc(sizeof(GdkRGBA));
-    gdk_rgba_parse(colorstruct, c.c_str());
-    return colorstruct;
+    if (child_pid != -1) {
+        // This lets o save the file and then quit
+        kill(child_pid, SIGTERM);
+    }
+    gtk_main_quit();
 }
 
-void eof() { std::cout << "bye" << std::endl; }
+void wait_and_quit()
+{
+    sleep(1);
+    gtk_main_quit();
+}
 
 int main(int argc, char* argv[])
 {
@@ -38,7 +46,11 @@ int main(int argc, char* argv[])
 
     // Open README.md by default, if no filename is given
     auto filename = "README.md"s;
-    if (argc > 1) {
+    auto flag = ""s;
+    if (argc > 2) {
+        flag = argv[1];
+        filename = argv[2];
+    } else if (argc > 1) {
         filename = argv[1];
     }
 
@@ -77,10 +89,16 @@ int main(int argc, char* argv[])
     }
 
     // Build an array of strings, which is the command to be run
-    const char* command[3];
+    const char* command[4];
     command[0] = found.c_str();
-    command[1] = filename.c_str();
-    command[2] = nullptr;
+    if (flag == "") {
+        command[1] = filename.c_str();
+        command[2] = nullptr;
+    } else {
+        command[1] = flag.c_str();
+        command[2] = filename.c_str();
+        command[3] = nullptr;
+    }
 
     // Check if the executable is executable
     const auto perm = status(command[0]).permissions();
@@ -98,23 +116,60 @@ int main(int argc, char* argv[])
         nullptr, // environment
         (GSpawnFlags)0, // spawn flags
         nullptr, nullptr, // child setup
-        nullptr, // child PID
+        &child_pid, // child PID
         nullptr, nullptr);
 #pragma GCC diagnostic pop
 
-    // Set background color to 95% opaque black
-    auto black = new_color("rgba(0, 0, 0, 0.95)"s);
-    vte_terminal_set_color_background(VTE_TERMINAL(terminal), black);
-    free(black);
+    // std::cout << "PID " << child_pid << std::endl;
 
-    // Set foreground color
-    //auto green = new_color("chartreuse"s);
-    //vte_terminal_set_color_foreground(VTE_TERMINAL(terminal), green);
-    //free(green);
+    const auto fg = GdkRGBA { 0.9, 0.9, 0.9, 1.0 };
+    const auto bg = GdkRGBA { 0.1, 0.1, 0.1, 1.0 };
+
+    const auto pal_size = 16;
+    const auto pal = (GdkRGBA*)malloc(sizeof(GdkRGBA) * pal_size);
+
+    // Inspired by the mterm color scheme
+    pal[0] = { 0.28, 0.30, 0.37, 1.0 };
+    pal[1] = { 0.79, 0.43, 0.46, 1.0 };
+    pal[2] = { 0.68, 0.79, 0.59, 1.0 };
+    pal[3] = { 0.97, 0.84, 0.59, 1.0 };
+    pal[4] = { 0.55, 0.68, 0.80, 1.0 };
+    pal[5] = { 0.70, 0.55, 0.67, 1.0 };
+    pal[6] = { 0.58, 0.80, 0.86, 1.0 };
+    pal[7] = { 0.94, 0.96, 0.99, 1.0 };
+    pal[8] = { 0.34, 0.38, 0.46, 1.0 };
+    pal[9] = { 0.79, 0.43, 0.46, 1.0 };
+    pal[10] = { 0.68, 0.80, 0.59, 1.0 };
+    pal[11] = { 0.97, 0.84, 0.59, 1.0 };
+    pal[12] = { 0.55, 0.68, 0.90, 1.0 };
+    pal[13] = { 0.75, 0.60, 0.72, 1.0 };
+    pal[14] = { 0.61, 0.78, 0.78, 1.0 };
+    pal[15] = { 0.90, 0.91, 0.93, 1.0 };
+
+    vte_terminal_set_colors(VTE_TERMINAL(terminal), &fg, &bg, pal, 16);
+
+    // Set cursor block color
+    const auto cb = GdkRGBA { 0.3, 0.7, 0.6, 0.9 };
+    vte_terminal_set_color_cursor(VTE_TERMINAL(terminal), &cb);
+
+    // Set cursor block text color
+    const auto ct = GdkRGBA { 0.0, 0.0, 0.0, 0.9 };
+    vte_terminal_set_color_cursor_foreground(VTE_TERMINAL(terminal), &ct);
 
     // Set font
-    auto font_desc = pango_font_description_from_string("terminus 14");
-    vte_terminal_set_font(VTE_TERMINAL(terminal), font_desc);
+    const char* font_desc_str = std::getenv("GUI_FONT");
+    if (font_desc_str == nullptr) {
+        font_desc_str = "terminus 10"s.c_str(); // the default font
+    }
+    vte_terminal_set_font(
+        VTE_TERMINAL(terminal), pango_font_description_from_string(font_desc_str));
+
+    // Config
+    vte_terminal_set_scrollback_lines(VTE_TERMINAL(terminal), 0);
+    vte_terminal_set_scroll_on_output(VTE_TERMINAL(terminal), FALSE);
+    vte_terminal_set_scroll_on_keystroke(VTE_TERMINAL(terminal), FALSE);
+    vte_terminal_set_mouse_autohide(VTE_TERMINAL(terminal), TRUE);
+    vte_terminal_set_allow_hyperlink(VTE_TERMINAL(terminal), TRUE);
 
     // Set cursor shape to BLOCK
     vte_terminal_set_cursor_shape(VTE_TERMINAL(terminal), VTE_CURSOR_SHAPE_BLOCK);
@@ -123,9 +178,8 @@ int main(int argc, char* argv[])
     vte_terminal_set_cursor_blink_mode(VTE_TERMINAL(terminal), VTE_CURSOR_BLINK_OFF);
 
     // Connect some signals
-    g_signal_connect(window, "delete-event", gtk_main_quit, nullptr);
-    g_signal_connect(terminal, "child-exited", gtk_main_quit, nullptr);
-    g_signal_connect(terminal, "eof", eof, nullptr);
+    g_signal_connect(window, "delete-event", wait_and_quit, nullptr);
+    g_signal_connect(terminal, "child-exited", signal_and_quit, nullptr);
 
     // Add the terminal to the window
     gtk_container_add(GTK_CONTAINER(window), terminal);

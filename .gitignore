@@ -25,4 +25,5 @@ red
 light
 default
 og/og
-og/*.o
+gui/gui
+*.o
