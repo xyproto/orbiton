@@ -24,3 +24,5 @@ include.txt
 red
 light
 default
+og/og
+og/*.o
