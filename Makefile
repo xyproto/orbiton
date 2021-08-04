@@ -1,4 +1,4 @@
-.PHONY: clean install gui
+.PHONY: clean install gui gui-install
 
 PREFIX ?= /usr
 MANDIR ?= $(PREFIX)/share/man/man1
@@ -23,7 +23,7 @@ o: $(SRCFILES)
 gui: gui/gui
 
 gui/gui: gui/main.cpp
-	$(CXX) gui/main.cpp -o gui/gui $(CXXFLAGS)
+	$(CXX) "$<" -o "$@" $(CXXFLAGS)
 
 o.1.gz: o.1
 	gzip -f -k o.1
@@ -32,8 +32,12 @@ install: o o.1.gz
 	install -Dm755 o "$(DESTDIR)$(PREFIX)/bin/o"
 	install -Dm644 o.1.gz "$(DESTDIR)$(MANDIR)/o.1.gz"
 
+gui-install: install-gui
+
 install-gui: gui/gui
 	install -Dm755 gui/gui "$(DESTDIR)$(PREFIX)/bin/gui"
+	install -Dm644 gui/gui.desktop "$(DESTDIR)$(PREFIX)/share/applications/gui.desktop"
+	install -Dm644 img/gui.png "$(DESTDIR)$(PREFIX)/share/pixmaps/gui.png"
 
 clean:
 	-rm -f o o.1.gz gui/gui
