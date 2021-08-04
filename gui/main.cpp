@@ -44,8 +44,8 @@ int main(int argc, char* argv[])
     // Initialize Gtk, the window and the terminal
     gtk_init(&argc, &argv);
 
-    // Open README.md by default, if no filename is given
-    auto filename = "README.md"s;
+    // Open TODO.md by default, if no filename is given
+    auto filename = "TODO.md"s;
     auto flag = ""s;
     if (argc > 2) {
         flag = argv[1];
