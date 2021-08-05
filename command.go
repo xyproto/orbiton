@@ -233,7 +233,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	}
 
 	// Add the syntax highlighting toggle menu item
-	if !e.noColor {
+	if !envNoColor {
 		syntaxToggleText := "Disable syntax highlighting"
 		if !e.syntaxHighlight {
 			syntaxToggleText = "Enable syntax highlighting"
@@ -272,24 +272,24 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	// Add the "Default theme" menu item text and menu function
 	actions.Add("Default theme", func() {
 		e.setDefaultTheme()
-		e.SetSyntaxHighlight(true)
+		e.syntaxHighlight = true
 		e.FullResetRedraw(c, status, true)
 	})
 
 	// Add the option to change the colors, for non-light themes (fg != black)
-	if !e.lightTheme && !e.noColor { // Not a light theme and NO_COLOR is not set
+	if !e.Light && !envNoColor { // Not a light theme and NO_COLOR is not set
 
 		// Add the "Red/Black theme" menu item text and menu function
 		actions.Add("Red/black theme", func() {
 			e.setRedBlackTheme()
-			e.SetSyntaxHighlight(true)
+			e.syntaxHighlight = true
 			e.FullResetRedraw(c, status, true)
 		})
 
 		// Add the "Light Theme" menu item text and menu function
 		actions.Add("Light theme", func() {
 			e.setLightTheme()
-			e.SetSyntaxHighlight(true)
+			e.syntaxHighlight = true
 			e.FullResetRedraw(c, status, true)
 		})
 
@@ -310,8 +310,8 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		for i, color := range colors {
 			color := color // per-loop copy of the color variable, since it's closed over
 			actions.Add(colorText[i]+" theme", func() {
-				e.fg = color
-				e.bg = vt100.BackgroundDefault // black background
+				e.Foreground = color
+				e.Background = vt100.BackgroundDefault // black background
 				e.syntaxHighlight = false
 				e.FullResetRedraw(c, status, true)
 			})

@@ -14,7 +14,7 @@ import (
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message and an error type
-func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber LineNumber, colNumber ColNumber, theme Theme) (*Editor, string, error) {
+func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight bool) (*Editor, string, error) {
 
 	var (
 		startTime          = time.Now()
@@ -28,7 +28,9 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 
 	// mode is what would have been an enum in other languages, for signalling if this file should be in git mode, markdown mode etc
 	mode, syntaxHighlight := detectEditorMode(filename)
-	adjustSyntaxHighlightingKeywords(mode)
+	syntaxHighlight = syntaxHighlight && origSyntaxHighlight
+
+	adjustSyntaxHighlightingKeywords(mode) // no theme changes, just language detection and keyword configuration
 	tabsSpaces := TabsSpacesFromMode(mode)
 
 	// Additional per-mode considerations, before launching the editor
@@ -40,17 +42,11 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
 	e := NewCustomEditor(tabsSpaces,
-		syntaxHighlight,
 		rainbowParenthesis,
 		scrollSpeed,
-		defaultEditorForeground,
-		defaultEditorBackground,
-		defaultEditorSearchHighlight,
-		defaultEditorMultilineComment,
-		defaultEditorMultilineString,
-		defaultEditorHighlightTheme,
 		mode,
-		theme)
+		theme,
+		syntaxHighlight)
 
 	// For non-highlighted files, adjust the word wrap
 	if !e.syntaxHighlight {
@@ -100,7 +96,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 				// can not open the file for writing
 				e.readOnly = true
 				// set the color to red when in read-only mode
-				e.fg = vt100.LightRed
+				e.Foreground = vt100.LightRed
 				// disable syntax highlighting, to make it clear that the text is red
 				e.syntaxHighlight = false
 			}
@@ -144,7 +140,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 
 	// If we're editing a git commit message, add a newline and enable word-wrap at 80
 	if e.mode == modeGit {
-		e.gitColor = vt100.LightGreen
+		e.Git = vt100.LightGreen
 
 		if filepath.Base(e.filename) == "MERGE_MSG" {
 			e.InsertLineBelow()
@@ -156,9 +152,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 
 	// If the file starts with a hash bang, enable syntax highlighting
 	if strings.HasPrefix(strings.TrimSpace(e.Line(0)), "#!") && !e.readOnly {
-		// Enable styntax highlighting and redraw
+		// Enable syntax highlighting and redraw
 		e.syntaxHighlight = true
-		e.bg = defaultEditorBackground
 	}
 
 	// Use a light theme if XTERM_VERSION or TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
@@ -171,8 +166,6 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 			e.setRedBlackTheme()
 		}
 	}
-
-	e.noColor = env.Bool("NO_COLOR")
 
 	// Find the absolute path to this filename
 	absFilename, err := e.AbsFilename()

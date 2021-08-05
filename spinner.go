@@ -43,7 +43,7 @@ var pacmanColor = []string{
 // Returns a quit channel (chan bool).
 // The spinner is shown asynchronously.
 // "true" must be sent to the quit channel once whatever operating that the spinner is spinning for is completed.
-func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, noColor bool, startIn time.Duration) chan bool {
+func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, startIn time.Duration, textColor vt100.AttributeColor) chan bool {
 	quitChan := make(chan bool)
 	go func() {
 		// Divide the startIn time into 5, then wait while listening to the quitChan
@@ -72,8 +72,8 @@ func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, noColor bool, s
 			x = uint(int(c.Width()) / 7)
 			y = uint(int(c.Height()) / 7)
 
-			// Get the terminal codes for coloring the given user message the same as italics in Markdown
-			msg = italicsColor.Get(umsg)
+			// Get the terminal codes for coloring the given user message
+			msg = textColor.Get(umsg)
 		)
 
 		// Move the cursor there and write a message
@@ -94,7 +94,7 @@ func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, noColor bool, s
 		vt100.ShowCursor(false)
 		defer vt100.ShowCursor(true)
 
-		if noColor {
+		if envNoColor {
 			spinnerAnimation = pacmanNoColor
 		} else {
 			spinnerAnimation = pacmanColor

@@ -90,7 +90,7 @@ func (e *Editor) gitHighlight(line string) string {
 	} else if fields := strings.Fields(line); len(fields) >= 3 && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
 		coloredString = vt100.Red.Get(fields[0]) + " " + vt100.LightBlue.Get(fields[1]) + " " + vt100.LightGray.Get(strings.Join(fields[2:], " "))
 	} else {
-		coloredString = e.gitColor.Get(line)
+		coloredString = e.Git.Get(line)
 	}
 	return coloredString
 }

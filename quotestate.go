@@ -5,7 +5,7 @@ import "fmt"
 // QuoteState keeps track of if we're within a multi-line comment, single quotes, double quotes or multi-line quotes.
 // Single line comments are not kept track of in the same way, they can be detected just by checking the current line.
 // If one of the ints are > 0, the other ints should not be added to.
-// Multiline comments (/* ... */) are special.
+// MultiLine comments (/* ... */) are special.
 // This could be a flag int instead
 type QuoteState struct {
 	singleQuote               int

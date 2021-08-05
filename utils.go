@@ -204,6 +204,17 @@ func allLower(s string) bool {
 	return true
 }
 
+// runeCount counts the instances of r in the given string
+func runeCount(s string, r rune) int {
+	counter := 0
+	for _, e := range s {
+		if e == r {
+			counter++
+		}
+	}
+	return counter
+}
+
 // logf, for quick "printf-style" debugging
 func logf(format string, args ...interface{}) {
 	tmpdir := os.Getenv("TMPDIR")

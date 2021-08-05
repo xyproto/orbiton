@@ -23,7 +23,7 @@ import (
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, useTheme Theme) (userMessage string, err error) {
+func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight bool) (userMessage string, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt100.Init()
@@ -57,7 +57,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
-	e, statusMessage, err := NewEditor(tty, c, filename, lineNumber, colNumber, useTheme)
+	e, statusMessage, err := NewEditor(tty, c, filename, lineNumber, colNumber, theme, syntaxHighlight)
 	if err != nil {
 		return "", err
 	}
@@ -69,31 +69,16 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		absFilename = e.filename
 	}
 
-	// Prepare a status bar
-	status := NewStatusBar(defaultStatusForeground, defaultStatusBackground, defaultStatusErrorForeground, defaultStatusErrorBackground, e, statusDuration)
-
 	// Modify the status bar theme if editing git
 	if e.mode == modeGit {
-		status.fg = vt100.LightBlue
-		status.bg = vt100.BackgroundDefault
+		e.StatusForeground = vt100.LightBlue
+		e.StatusBackground = vt100.BackgroundDefault
 	}
 
-	// Use the selected theme
-	switch useTheme {
-	case redBlackTheme:
-		e.setRedBlackTheme()
-		e.SetSyntaxHighlight(true)
-	case lightTheme:
-		e.setLightTheme()
-		e.SetSyntaxHighlight(true)
-	case defaultTheme:
-		fallthrough
-	default:
-	}
+	// Prepare a status bar
+	status := NewStatusBar(e.StatusForeground, e.StatusBackground, e.StatusErrorForeground, e.StatusErrorBackground, e, statusDuration)
 
-	// Respect the NO_COLOR environment variable
-	e.respectNoColorEnvironmentVariable()
-	status.respectNoColorEnvironmentVariable()
+	e.SetTheme(e.Theme)
 
 	// Terminal resize handler
 	e.SetUpResizeHandler(c, tty, status)

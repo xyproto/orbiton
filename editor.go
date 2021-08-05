@@ -11,19 +11,8 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
 )
-
-// EditorColors is a collection of a few selected colors, for setting up a new editor
-type EditorColors struct {
-	fg               vt100.AttributeColor // default foreground color
-	bg               vt100.AttributeColor // default background color
-	searchFg         vt100.AttributeColor // search highlight color
-	gitColor         vt100.AttributeColor // git commit message color
-	multiLineComment vt100.AttributeColor // color for multiLine comments
-	multiLineString  vt100.AttributeColor // colo for multiLine strings
-}
 
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
@@ -45,12 +34,10 @@ type Editor struct {
 	quit               bool                  // for indicating if the user wants to end the editor session
 	clearOnQuit        bool                  // clear the terminal when quitting the editor, or not
 	wrapWhenTyping     bool                  // wrap text at a certain limit when typing
-	lightTheme         bool                  // using a light theme? (the XTERM_VERSION environment variable is set)
-	noColor            bool                  // should no color be used?
 	firstLineHash      bool                  // is the first line starting with "#"?
 	slowLoad           bool                  // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
 	readOnly           bool                  // is the file read-only when initializing o?
-	EditorColors
+	Theme                                    // editor theme, embedded struct
 }
 
 // NewCustomEditor takes:
@@ -66,20 +53,17 @@ type Editor struct {
 //    - multiline comment
 // * a syntax highlighting scheme
 // * a file mode
-func NewCustomEditor(tabsSpaces TabsSpaces, syntaxHighlight, rainbowParenthesis bool, scrollSpeed int, fg, bg, searchFg, multiLineComment, multiLineString vt100.AttributeColor, scheme syntax.TextConfig, mode Mode, theme Theme) *Editor {
-	syntax.DefaultTextConfig = scheme
+func NewCustomEditor(tabsSpaces TabsSpaces, rainbowParenthesis bool, scrollSpeed int, mode Mode, theme Theme, syntaxHighlight bool) *Editor {
 	e := &Editor{}
+	e.SetTheme(theme)
 	e.lines = make(map[int][]rune)
-	e.fg = fg
-	e.bg = bg
 	e.tabsSpaces = tabsSpaces
 	e.syntaxHighlight = syntaxHighlight
 	e.rainbowParenthesis = rainbowParenthesis
 	p := NewPosition(scrollSpeed)
 	e.pos = *p
-	e.searchFg = searchFg
 	// If the file is not to be highlighted, set word wrap to 99 (0 to disable)
-	if !syntaxHighlight {
+	if e.syntaxHighlight {
 		e.wrapWidth = 99
 		e.wrapWhenTyping = true
 	}
@@ -96,22 +80,6 @@ func NewCustomEditor(tabsSpaces TabsSpaces, syntaxHighlight, rainbowParenthesis 
 		e.wrapWhenTyping = false
 	}
 	e.mode = mode
-	e.multiLineComment = multiLineComment
-	e.multiLineString = multiLineString
-
-	// Check if NO_COLOR is set
-	e.respectNoColorEnvironmentVariable()
-
-	// Check if a specific theme is set
-	switch theme {
-	case redBlackTheme:
-		e.setRedBlackTheme()
-	case lightTheme:
-		e.setLightTheme()
-	case defaultTheme:
-		break
-	}
-
 	return e
 }
 
@@ -120,7 +88,8 @@ func NewCustomEditor(tabsSpaces TabsSpaces, syntaxHighlight, rainbowParenthesis 
 // search results magenta, use the default syntax highlighting scheme, don't use git mode and don't use markdown mode,
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
-	e := NewCustomEditor(defaultTabsSpaces, false, false, 1, vt100.White, vt100.Black, vt100.Magenta, vt100.Gray, vt100.Magenta, syntax.DefaultTextConfig, modeBlank, defaultTheme)
+	t := NewDefaultTheme()
+	e := NewCustomEditor(defaultTabsSpaces, false, 1, modeBlank, t, false)
 	e.wrapWidth = wordWrapLimit
 	e.wrapWhenTyping = true
 	return e
@@ -315,7 +284,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	var message string
 
 	// Start a spinner, in a short while
-	quitChan := Spinner(c, tty, fmt.Sprintf("Reading %s... ", filename), fmt.Sprintf("reading %s: stopped by user", filename), e.noColor, 200*time.Millisecond)
+	quitChan := Spinner(c, tty, fmt.Sprintf("Reading %s... ", filename), fmt.Sprintf("reading %s: stopped by user", filename), 200*time.Millisecond, e.ItalicsColor)
 
 	start := time.Now()
 
@@ -454,7 +423,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	}
 
 	// Start a spinner, in a short while
-	quitChan := Spinner(c, tty, fmt.Sprintf("Saving %s... ", e.filename), fmt.Sprintf("saving %s: stopped by user", e.filename), e.noColor, 200*time.Millisecond)
+	quitChan := Spinner(c, tty, fmt.Sprintf("Saving %s... ", e.filename), fmt.Sprintf("saving %s: stopped by user", e.filename), 200*time.Millisecond, e.ItalicsColor)
 
 	// Save the file and return any errors
 	if err := ioutil.WriteFile(e.filename, []byte(s), fileMode); err != nil {
@@ -471,7 +440,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	if shebang && e.mode != modeRust && !e.readOnly {
 		// Call Chmod, but ignore errors (since this is just a bonus and not critical)
 		os.Chmod(e.filename, fileMode)
-		e.SetSyntaxHighlight(true)
+		e.syntaxHighlight = true
 	}
 
 	// Stop the spinner
@@ -980,8 +949,8 @@ func (e *Editor) CreateLineIfMissing(n LineIndex) {
 // SetColors will set the current editor theme (foreground, background).
 // The background color should be a background attribute (like vt100.BackgroundBlue).
 func (e *Editor) SetColors(fg, bg vt100.AttributeColor) {
-	e.fg = fg
-	e.bg = bg
+	e.Foreground = fg
+	e.Background = bg
 }
 
 // WordCount returns the number of spaces in the text + 1
@@ -992,11 +961,6 @@ func (e *Editor) WordCount() int {
 // ToggleSyntaxHighlight toggles syntax highlighting
 func (e *Editor) ToggleSyntaxHighlight() {
 	e.syntaxHighlight = !e.syntaxHighlight
-}
-
-// SetSyntaxHighlight enables or disables syntax highlighting
-func (e *Editor) SetSyntaxHighlight(syntaxHighlight bool) {
-	e.syntaxHighlight = syntaxHighlight
 }
 
 // ToggleRainbow toggles rainbow parenthesis
@@ -1587,7 +1551,7 @@ func (e *Editor) AfterLineScreenContentsPlusOne() bool {
 // WriteRune writes the current rune to the given canvas
 func (e *Editor) WriteRune(c *vt100.Canvas) {
 	if c != nil {
-		c.WriteRune(uint(e.pos.sx+e.pos.offsetX), uint(e.pos.sy), e.fg, e.bg, e.Rune())
+		c.WriteRune(uint(e.pos.sx+e.pos.offsetX), uint(e.pos.sy), e.Foreground, e.Background, e.Rune())
 	}
 }
 
@@ -1595,7 +1559,7 @@ func (e *Editor) WriteRune(c *vt100.Canvas) {
 func (e *Editor) WriteTab(c *vt100.Canvas) {
 	spacesPerTab := e.tabsSpaces.perTab
 	for x := e.pos.sx; x < e.pos.sx+spacesPerTab; x++ {
-		c.WriteRune(uint(x+e.pos.offsetX), uint(e.pos.sy), e.fg, e.bg, ' ')
+		c.WriteRune(uint(x+e.pos.offsetX), uint(e.pos.sy), e.Foreground, e.Background, ' ')
 	}
 }
 
@@ -2175,7 +2139,7 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		switchBuffer.Restore(e)
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
-		e2, statusMessage, err = NewEditor(tty, c, filenameToOpen, LineNumber(0), ColNumber(0), defaultTheme)
+		e2, statusMessage, err = NewEditor(tty, c, filenameToOpen, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight)
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)

@@ -6,287 +6,351 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// TODO: Don't put any theme colors in global variables. Introduce an EditorTheme struct.
+var envNoColor = env.Bool("NO_COLOR")
 
-var (
-	// Color scheme for the "text edit" mode
-	defaultEditorForeground       = vt100.LightGreen // for when syntax highlighting is not in use
-	defaultEditorBackground       = vt100.BackgroundDefault
-	defaultStatusForeground       = vt100.White
-	defaultStatusBackground       = vt100.BackgroundBlack
-	defaultStatusErrorForeground  = vt100.LightRed
-	defaultStatusErrorBackground  = vt100.BackgroundDefault
-	defaultEditorSearchHighlight  = vt100.LightMagenta
-	defaultEditorMultilineComment = vt100.Gray
-	defaultEditorMultilineString  = vt100.Magenta
-	defaultEditorHighlightTheme   = syntax.TextConfig{
-		String:        "lightyellow",
-		Keyword:       "lightred",
-		Comment:       "gray",
-		Type:          "lightblue",
-		Literal:       "lightgreen",
-		Punctuation:   "lightblue",
-		Plaintext:     "lightgreen",
-		Tag:           "lightgreen",
-		TextTag:       "lightgreen",
-		TextAttrName:  "lightgreen",
-		TextAttrValue: "lightgreen",
-		Decimal:       "white",
-		AndOr:         "lightyellow",
-		Dollar:        "lightred",
-		Star:          "lightyellow",
-		Class:         "lightred",
-		Private:       "darkred",
-		Protected:     "darkyellow",
-		Public:        "darkgreen",
-		Whitespace:    "",
+// Theme contains iformation about:
+// * If the theme is light or dark
+// * If syntax highlighting should be enabled
+// * If no colors should be used
+// * Colors for all the textual elements
+type Theme struct {
+	Light bool
+	Foreground, Background,
+	StatusForeground, StatusBackground,
+	StatusErrorForeground, StatusErrorBackground,
+	SearchHighlight, MultiLineComment, MultiLineString,
+	Git vt100.AttributeColor
+	String, Keyword, Comment, Type, Literal, Punctuation, Plaintext, Tag, TextTag, TextAttrName, TextAttrValue,
+	Decimal, AndOr, Dollar, Star, Class, Private, Protected, Public, Whitespace string
+	RainbowParenColors []vt100.AttributeColor
+	MarkdownTextColor, HeaderBulletColor, HeaderTextColor, ListBulletColor, ListTextColor,
+	ListCodeColor, CodeColor, CodeBlockColor, ImageColor, LinkColor, QuoteColor, QuoteTextColor,
+	HTMLColor, CommentColor, BoldColor, ItalicsColor, StrikeColor, TableColor, CheckboxColor,
+	XColor, TableBackground, UnmatchedParenColor, MenuTitleColor, MenuArrowColor, MenuTextColor,
+	MenuHighlightColor, MenuSelectedColor, ManSectionColor, ManSynopsisColor vt100.AttributeColor
+}
+
+// NewDefaultTheme creates a new default Theme struct
+func NewDefaultTheme() Theme {
+	return Theme{
+		Light:                 false,
+		Foreground:            vt100.LightBlue,
+		Background:            vt100.BackgroundDefault,
+		StatusForeground:      vt100.White,
+		StatusBackground:      vt100.BackgroundBlack,
+		StatusErrorForeground: vt100.LightRed,
+		StatusErrorBackground: vt100.BackgroundDefault,
+		SearchHighlight:       vt100.LightMagenta,
+		MultiLineComment:      vt100.Gray,
+		MultiLineString:       vt100.Magenta,
+		Git:                   vt100.LightGreen,
+		String:                "lightyellow",
+		Keyword:               "lightred",
+		Comment:               "gray",
+		Type:                  "lightblue",
+		Literal:               "lightgreen",
+		Punctuation:           "lightblue",
+		Plaintext:             "lightgreen",
+		Tag:                   "lightgreen",
+		TextTag:               "lightgreen",
+		TextAttrName:          "lightgreen",
+		TextAttrValue:         "lightgreen",
+		Decimal:               "white",
+		AndOr:                 "lightyellow",
+		Dollar:                "lightred",
+		Star:                  "lightyellow",
+		Class:                 "lightred",
+		Private:               "darkred",
+		Protected:             "darkyellow",
+		Public:                "darkgreen",
+		Whitespace:            "",
+		RainbowParenColors:    []vt100.AttributeColor{vt100.LightMagenta, vt100.LightRed, vt100.Yellow, vt100.LightYellow, vt100.LightGreen, vt100.LightBlue},
+		MarkdownTextColor:     vt100.LightBlue,
+		HeaderBulletColor:     vt100.DarkGray,
+		HeaderTextColor:       vt100.LightGreen,
+		ListBulletColor:       vt100.Red,
+		ListTextColor:         vt100.LightCyan,
+		ListCodeColor:         vt100.Default,
+		CodeColor:             vt100.Default,
+		CodeBlockColor:        vt100.Default,
+		ImageColor:            vt100.LightYellow,
+		LinkColor:             vt100.Magenta,
+		QuoteColor:            vt100.Yellow,
+		QuoteTextColor:        vt100.LightCyan,
+		HTMLColor:             vt100.Default,
+		CommentColor:          vt100.DarkGray,
+		BoldColor:             vt100.LightYellow,
+		ItalicsColor:          vt100.White,
+		StrikeColor:           vt100.DarkGray,
+		TableColor:            vt100.Blue,
+		CheckboxColor:         vt100.Default,
+		XColor:                vt100.LightYellow,
+		TableBackground:       vt100.BackgroundDefault,
+		UnmatchedParenColor:   vt100.White,
+		MenuTitleColor:        vt100.LightYellow,
+		MenuArrowColor:        vt100.Red,
+		MenuTextColor:         vt100.Gray,
+		MenuHighlightColor:    vt100.LightBlue,
+		MenuSelectedColor:     vt100.LightCyan,
+		ManSectionColor:       vt100.LightRed,
+		ManSynopsisColor:      vt100.LightYellow,
 	}
-)
+}
+
+// NewRedBlackTheme creates a new red/black/gray/white Theme struct
+func NewRedBlackTheme() Theme {
+	// NOTE: Dark gray may not be visible with light terminal emulator themes
+	return Theme{
+		Light:                 false,
+		Foreground:            vt100.LightGray,
+		Background:            vt100.BackgroundBlack, // Dark gray background, as opposed to vt100.BackgroundDefault
+		StatusForeground:      vt100.White,
+		StatusBackground:      vt100.BackgroundBlack,
+		StatusErrorForeground: vt100.LightRed,
+		StatusErrorBackground: vt100.BackgroundDefault,
+		SearchHighlight:       vt100.Red,
+		MultiLineComment:      vt100.DarkGray,
+		MultiLineString:       vt100.LightGray,
+		Git:                   vt100.LightGreen,
+		String:                "lightwhite",
+		Keyword:               "darkred",
+		Comment:               "darkgray",
+		Type:                  "white",
+		Literal:               "lightgray",
+		Punctuation:           "darkred",
+		Plaintext:             "lightgray",
+		Tag:                   "darkred",
+		TextTag:               "darkred",
+		TextAttrName:          "darkred",
+		TextAttrValue:         "darkred",
+		Decimal:               "lightwhite",
+		AndOr:                 "darkred",
+		Dollar:                "lightwhite",
+		Star:                  "lightwhite",
+		Class:                 "darkred",
+		Private:               "lightgray",
+		Protected:             "lightgray",
+		Public:                "lightwhite",
+		Whitespace:            "",
+		RainbowParenColors:    []vt100.AttributeColor{vt100.LightGray, vt100.White, vt100.Red},
+		MarkdownTextColor:     vt100.LightGray,
+		HeaderBulletColor:     vt100.DarkGray,
+		HeaderTextColor:       vt100.Red,
+		ListBulletColor:       vt100.Red,
+		ListTextColor:         vt100.LightGray,
+		ListCodeColor:         vt100.Default,
+		CodeColor:             vt100.White,
+		CodeBlockColor:        vt100.White,
+		ImageColor:            vt100.Red,
+		LinkColor:             vt100.Magenta,
+		QuoteColor:            vt100.White,
+		QuoteTextColor:        vt100.LightGray,
+		HTMLColor:             vt100.Default,
+		CommentColor:          vt100.DarkGray,
+		BoldColor:             vt100.Red,
+		ItalicsColor:          vt100.White,
+		StrikeColor:           vt100.DarkGray,
+		TableColor:            vt100.White,
+		CheckboxColor:         vt100.Default,
+		XColor:                vt100.Red,
+		TableBackground:       vt100.BackgroundBlack, // Dark gray background, as opposed to vt100.BackgroundDefault
+		UnmatchedParenColor:   vt100.LightCyan,       // To really stand out
+		MenuTitleColor:        vt100.Red,
+		MenuArrowColor:        vt100.White,
+		MenuTextColor:         vt100.White,
+		MenuHighlightColor:    vt100.Yellow,
+		MenuSelectedColor:     vt100.LightYellow,
+		ManSectionColor:       vt100.Red,
+		ManSynopsisColor:      vt100.White,
+	}
+}
+
+// NewLightTheme creates a theme that is suitable for light xterm terminal emulator sessions
+func NewLightTheme() Theme {
+	return Theme{
+		Light:                 true,
+		Foreground:            vt100.Black,
+		Background:            vt100.BackgroundDefault,
+		StatusForeground:      vt100.White,
+		StatusBackground:      vt100.BackgroundBlack,
+		StatusErrorForeground: vt100.LightRed,
+		StatusErrorBackground: vt100.BackgroundDefault,
+		SearchHighlight:       vt100.Red,
+		MultiLineComment:      vt100.Gray,
+		MultiLineString:       vt100.Red,
+		Git:                   vt100.Blue,
+		String:                "red",
+		Keyword:               "blue",
+		Comment:               "gray",
+		Type:                  "blue",
+		Literal:               "darkcyan",
+		Punctuation:           "black",
+		Plaintext:             "black",
+		Tag:                   "black",
+		TextTag:               "black",
+		TextAttrName:          "black",
+		TextAttrValue:         "black",
+		Decimal:               "darkcyan",
+		AndOr:                 "black",
+		Dollar:                "red",
+		Star:                  "black",
+		Class:                 "blue",
+		Private:               "black",
+		Protected:             "black",
+		Public:                "black",
+		Whitespace:            "",
+		RainbowParenColors:    []vt100.AttributeColor{vt100.Magenta, vt100.Black, vt100.Blue, vt100.Green},
+		MarkdownTextColor:     vt100.Default,
+		HeaderBulletColor:     vt100.DarkGray,
+		HeaderTextColor:       vt100.Blue,
+		ListBulletColor:       vt100.Red,
+		ListTextColor:         vt100.Default,
+		ListCodeColor:         vt100.Red,
+		CodeColor:             vt100.Red,
+		CodeBlockColor:        vt100.Red,
+		ImageColor:            vt100.Green,
+		LinkColor:             vt100.Magenta,
+		QuoteColor:            vt100.Yellow,
+		QuoteTextColor:        vt100.LightCyan,
+		HTMLColor:             vt100.Default,
+		CommentColor:          vt100.DarkGray,
+		BoldColor:             vt100.Blue,
+		ItalicsColor:          vt100.Blue,
+		StrikeColor:           vt100.DarkGray,
+		TableColor:            vt100.Blue,
+		CheckboxColor:         vt100.Default,
+		XColor:                vt100.Blue,
+		TableBackground:       vt100.BackgroundDefault,
+		UnmatchedParenColor:   vt100.Red,
+		MenuTitleColor:        vt100.Blue,
+		MenuArrowColor:        vt100.Red,
+		MenuTextColor:         vt100.Black,
+		MenuHighlightColor:    vt100.Red,
+		MenuSelectedColor:     vt100.LightRed,
+		ManSectionColor:       vt100.Red,
+		ManSynopsisColor:      vt100.Blue,
+	}
+}
+
+// NewNoColorTheme creates a new theme without colors or syntax highlighting
+func NewNoColorTheme() Theme {
+	return Theme{
+		Light:                 false,
+		Foreground:            vt100.Default,
+		Background:            vt100.BackgroundDefault,
+		StatusForeground:      vt100.White,
+		StatusBackground:      vt100.BackgroundBlack,
+		StatusErrorForeground: vt100.White,
+		StatusErrorBackground: vt100.BackgroundDefault,
+		SearchHighlight:       vt100.Default,
+		MultiLineComment:      vt100.Default,
+		MultiLineString:       vt100.Default,
+		Git:                   vt100.White,
+		String:                "",
+		Keyword:               "",
+		Comment:               "",
+		Type:                  "",
+		Literal:               "",
+		Punctuation:           "",
+		Plaintext:             "",
+		Tag:                   "",
+		TextTag:               "",
+		TextAttrName:          "",
+		TextAttrValue:         "",
+		Decimal:               "",
+		AndOr:                 "",
+		Dollar:                "",
+		Star:                  "",
+		Class:                 "",
+		Private:               "",
+		Protected:             "",
+		Public:                "",
+		Whitespace:            "",
+		RainbowParenColors:    []vt100.AttributeColor{vt100.Gray},
+		MarkdownTextColor:     vt100.Default,
+		HeaderBulletColor:     vt100.Default,
+		HeaderTextColor:       vt100.Default,
+		ListBulletColor:       vt100.Default,
+		ListTextColor:         vt100.Default,
+		ListCodeColor:         vt100.Default,
+		CodeColor:             vt100.Default,
+		CodeBlockColor:        vt100.Default,
+		ImageColor:            vt100.Default,
+		LinkColor:             vt100.Default,
+		QuoteColor:            vt100.Default,
+		QuoteTextColor:        vt100.Default,
+		HTMLColor:             vt100.Default,
+		CommentColor:          vt100.Default,
+		BoldColor:             vt100.Default,
+		ItalicsColor:          vt100.Default,
+		StrikeColor:           vt100.Default,
+		TableColor:            vt100.Default,
+		CheckboxColor:         vt100.Default,
+		XColor:                vt100.White,
+		TableBackground:       vt100.BackgroundDefault,
+		UnmatchedParenColor:   vt100.White,
+		MenuTitleColor:        vt100.White,
+		MenuArrowColor:        vt100.White,
+		MenuTextColor:         vt100.Gray,
+		MenuHighlightColor:    vt100.White,
+		MenuSelectedColor:     vt100.Black,
+		ManSectionColor:       vt100.White,
+		ManSynopsisColor:      vt100.White,
+	}
+}
+
+// TextConfig returns a TextConfig struct that can be used for settings
+// the syntax highlighting colors in the public TextConfig variable that is
+// exported from the syntax package.
+func (t Theme) TextConfig() *syntax.TextConfig {
+	return &syntax.TextConfig{
+		String:        t.String,
+		Keyword:       t.Keyword,
+		Comment:       t.Comment,
+		Type:          t.Type,
+		Literal:       t.Literal,
+		Punctuation:   t.Punctuation,
+		Plaintext:     t.Plaintext,
+		Tag:           t.Tag,
+		TextTag:       t.TextTag,
+		TextAttrName:  t.TextAttrName,
+		TextAttrValue: t.TextAttrValue,
+		Decimal:       t.Decimal,
+		AndOr:         t.AndOr,
+		Dollar:        t.Dollar,
+		Star:          t.Star,
+		Class:         t.Class,
+		Private:       t.Private,
+		Protected:     t.Protected,
+		Public:        t.Public,
+		Whitespace:    t.Whitespace,
+	}
+}
+
+// SetTheme assigns the given theme to the Editor,
+// and also configures syntax highlighting by setting syntax.DefaultTextConfig.
+// Light/dark, syntax highlighting and no color information is also set.
+// Respect the NO_COLOR environment variable. May set e.NoSyntaxHighlight to true.
+func (e *Editor) SetTheme(t Theme) {
+	if envNoColor {
+		t = NewNoColorTheme()
+		e.syntaxHighlight = false
+	}
+	e.Theme = t
+	syntax.DefaultTextConfig = *(t.TextConfig())
+}
 
 // setDefaultTheme sets the default colors
 func (e *Editor) setDefaultTheme() {
-
-	e.lightTheme = false
-
-	e.fg = vt100.LightGreen // for when syntax highlighting is not in use
-	e.bg = vt100.BackgroundDefault
-
-	e.searchFg = vt100.LightMagenta
-	e.gitColor = vt100.LightGreen
-	e.multiLineComment = vt100.Gray
-	e.multiLineString = vt100.Magenta
-
-	syntax.DefaultTextConfig.String = "lightyellow"
-	syntax.DefaultTextConfig.Keyword = "lightred"
-	syntax.DefaultTextConfig.Comment = "gray"
-	syntax.DefaultTextConfig.Type = "lightblue"
-	syntax.DefaultTextConfig.Literal = "lightgreen"
-	syntax.DefaultTextConfig.Punctuation = "lightblue"
-	syntax.DefaultTextConfig.Plaintext = "lightgreen"
-	syntax.DefaultTextConfig.Tag = "lightgreen"
-	syntax.DefaultTextConfig.TextTag = "lightgreen"
-	syntax.DefaultTextConfig.TextAttrName = "lightgreen"
-	syntax.DefaultTextConfig.TextAttrValue = "lightgreen"
-	syntax.DefaultTextConfig.Decimal = "white"
-	syntax.DefaultTextConfig.AndOr = "lightyellow"
-	syntax.DefaultTextConfig.Dollar = "lightred"
-	syntax.DefaultTextConfig.Star = "lightyellow"
-	syntax.DefaultTextConfig.Class = "lightred"
-	syntax.DefaultTextConfig.Private = "darkred"
-	syntax.DefaultTextConfig.Protected = "darkyellow"
-	syntax.DefaultTextConfig.Public = "darkgreen"
-	syntax.DefaultTextConfig.Whitespace = ""
-
-	// Markdown
-	textColor = vt100.LightBlue
-	headerBulletColor = vt100.DarkGray
-	headerTextColor = vt100.LightGreen
-	listBulletColor = vt100.Red
-	listTextColor = vt100.LightCyan
-	listCodeColor = vt100.Default
-	codeColor = vt100.Default
-	codeBlockColor = vt100.Default
-	imageColor = vt100.LightYellow
-	linkColor = vt100.Magenta
-	quoteColor = vt100.Yellow
-	quoteTextColor = vt100.LightCyan
-	htmlColor = vt100.Default
-	commentColor = vt100.DarkGray
-	boldColor = vt100.LightYellow
-	italicsColor = vt100.White
-	strikeColor = vt100.DarkGray
-	tableColor = vt100.Blue
-	checkboxColor = vt100.Default
-	xColor = vt100.LightYellow
-	tableBackground = e.bg
-
-	// Rainbow parentheses
-	rainbowParenColors = []vt100.AttributeColor{vt100.LightMagenta, vt100.LightRed, vt100.Yellow, vt100.LightYellow, vt100.LightGreen, vt100.LightBlue}
-	unmatchedParenColor = vt100.White
-
-	// Command menu
-	menuTitleColor = vt100.LightYellow
-	menuArrowColor = vt100.Red
-	menuTextColor = vt100.Gray
-	menuHighlightColor = vt100.LightBlue
-	menuSelectedColor = vt100.LightCyan
-
-	// Man pages
-	manSectionColor = vt100.LightRed
-	manSynopsisColor = vt100.LightYellow
+	e.SetTheme(NewDefaultTheme())
 }
 
-// setLightTheme sets a theme suitable for white backgrounds
+// setLightTheme sets the light theme suitable for xterm
 func (e *Editor) setLightTheme() {
-	e.lightTheme = true
-
-	e.fg = vt100.Black
-	e.bg = vt100.BackgroundDefault // BackgroundWhite
-	e.searchFg = vt100.Red
-	e.gitColor = vt100.Blue
-	e.multiLineComment = vt100.Gray
-	e.multiLineString = vt100.Red
-
-	syntax.DefaultTextConfig.String = "red"
-	syntax.DefaultTextConfig.Keyword = "blue"
-	syntax.DefaultTextConfig.Comment = "gray"
-	syntax.DefaultTextConfig.Type = "blue"
-	syntax.DefaultTextConfig.Literal = "darkcyan"
-	syntax.DefaultTextConfig.Punctuation = "black"
-	syntax.DefaultTextConfig.Plaintext = "black"
-	syntax.DefaultTextConfig.Tag = "black"
-	syntax.DefaultTextConfig.TextTag = "black"
-	syntax.DefaultTextConfig.TextAttrName = "black"
-	syntax.DefaultTextConfig.TextAttrValue = "black"
-	syntax.DefaultTextConfig.Decimal = "darkcyan"
-	syntax.DefaultTextConfig.AndOr = "black"
-	syntax.DefaultTextConfig.Dollar = "red"
-	syntax.DefaultTextConfig.Star = "black"
-	syntax.DefaultTextConfig.Class = "blue"
-	syntax.DefaultTextConfig.Private = "black"
-	syntax.DefaultTextConfig.Protected = "black"
-	syntax.DefaultTextConfig.Public = "black"
-	syntax.DefaultTextConfig.Whitespace = ""
-
-	// Markdown, switch light colors to darker ones
-	headerTextColor = vt100.Blue
-	textColor = vt100.Default
-	listTextColor = vt100.Default
-	imageColor = vt100.Green
-	boldColor = vt100.Blue
-	italicsColor = vt100.Blue
-	xColor = vt100.Blue
-	listCodeColor = vt100.Red
-	codeColor = vt100.Red
-	codeBlockColor = vt100.Red
-	tableBackground = e.bg
-
-	// Rainbow parentheses
-	rainbowParenColors = []vt100.AttributeColor{vt100.Magenta, vt100.Black, vt100.Blue, vt100.Green}
-	unmatchedParenColor = vt100.Red
-
-	// Command menu
-	menuTitleColor = vt100.Blue
-	menuArrowColor = vt100.Red
-	menuTextColor = vt100.Black
-	menuHighlightColor = vt100.Red
-	menuSelectedColor = vt100.LightRed
-
-	// Man pages
-	manSectionColor = vt100.Red
-	manSynopsisColor = vt100.Blue
+	e.SetTheme(NewLightTheme())
 }
 
 // setRedBlackTheme sets a red/black/gray theme
 func (e *Editor) setRedBlackTheme() {
-	// NOTE: Dark gray may not be visible with light terminal emulator themes
-	e.lightTheme = false
-	e.fg = vt100.LightGray
-	e.bg = vt100.BackgroundBlack // Dark gray background, as opposed to BackgroundDefault
-	e.searchFg = vt100.Red
-	e.gitColor = vt100.Red
-	e.multiLineComment = vt100.DarkGray
-	e.multiLineString = vt100.LightGray
-	syntax.DefaultTextConfig.String = "lightwhite"
-	syntax.DefaultTextConfig.Keyword = "darkred"
-	syntax.DefaultTextConfig.Comment = "darkgray"
-	syntax.DefaultTextConfig.Type = "white"
-	syntax.DefaultTextConfig.Literal = "lightgray"
-	syntax.DefaultTextConfig.Punctuation = "darkred"
-	syntax.DefaultTextConfig.Plaintext = "lightgray"
-	syntax.DefaultTextConfig.Tag = "darkred"
-	syntax.DefaultTextConfig.TextTag = "darkred"
-	syntax.DefaultTextConfig.TextAttrName = "darkred"
-	syntax.DefaultTextConfig.TextAttrValue = "darkred"
-	syntax.DefaultTextConfig.Decimal = "lightwhite"
-	syntax.DefaultTextConfig.AndOr = "darkred"
-	syntax.DefaultTextConfig.Dollar = "lightwhite"
-	syntax.DefaultTextConfig.Star = "lightwhite"
-	syntax.DefaultTextConfig.Class = "darkred"
-	syntax.DefaultTextConfig.Private = "lightgray"
-	syntax.DefaultTextConfig.Protected = "lightgray"
-	syntax.DefaultTextConfig.Public = "lightwhite"
-	syntax.DefaultTextConfig.Whitespace = ""
-
-	// Markdown, switch light colors to darker ones
-	headerTextColor = vt100.Red
-	textColor = vt100.LightGray
-	listTextColor = vt100.LightGray
-	imageColor = vt100.Red
-	boldColor = vt100.Red
-	italicsColor = vt100.White
-	xColor = vt100.Red
-	listCodeColor = vt100.White
-	codeColor = vt100.White
-	codeBlockColor = vt100.White
-	tableColor = vt100.White
-	tableBackground = e.bg
-
-	// Rainbow parentheses
-	rainbowParenColors = []vt100.AttributeColor{vt100.LightGray, vt100.White, vt100.Red}
-	unmatchedParenColor = vt100.LightCyan
-
-	// Command menu
-	menuTitleColor = vt100.Red
-	menuArrowColor = vt100.White
-	menuTextColor = vt100.White
-	menuHighlightColor = vt100.Yellow
-	menuSelectedColor = vt100.LightYellow
-
-	// Man pages
-	manSectionColor = vt100.Red
-	manSynopsisColor = vt100.White
-}
-
-func (e *Editor) respectNoColorEnvironmentVariable() {
-	e.noColor = env.Bool("NO_COLOR")
-	if e.noColor {
-		e.fg = vt100.Default
-		e.bg = vt100.BackgroundDefault
-
-		// The following is not strictly needed, since the text will be black and white just by setting e.fg and e.bg above
-		e.searchFg = vt100.Default
-		e.gitColor = vt100.Default
-		e.multiLineComment = vt100.Default
-		e.multiLineString = vt100.Default
-
-		syntax.DefaultTextConfig.String = ""
-		syntax.DefaultTextConfig.Keyword = ""
-		syntax.DefaultTextConfig.Comment = ""
-		syntax.DefaultTextConfig.Type = ""
-		syntax.DefaultTextConfig.Literal = ""
-		syntax.DefaultTextConfig.Punctuation = ""
-		syntax.DefaultTextConfig.Plaintext = ""
-		syntax.DefaultTextConfig.Tag = ""
-		syntax.DefaultTextConfig.TextTag = ""
-		syntax.DefaultTextConfig.TextAttrName = ""
-		syntax.DefaultTextConfig.TextAttrValue = ""
-		syntax.DefaultTextConfig.Decimal = ""
-		syntax.DefaultTextConfig.AndOr = ""
-		syntax.DefaultTextConfig.Dollar = ""
-		syntax.DefaultTextConfig.Star = ""
-		syntax.DefaultTextConfig.Class = ""
-		syntax.DefaultTextConfig.Private = ""
-		syntax.DefaultTextConfig.Protected = ""
-		syntax.DefaultTextConfig.Public = ""
-		syntax.DefaultTextConfig.Whitespace = ""
-
-		// Rainbow parentheses
-		rainbowParenColors = []vt100.AttributeColor{vt100.Gray}
-		unmatchedParenColor = vt100.White
-
-		// Command menu
-		menuTitleColor = vt100.White
-		menuArrowColor = vt100.White
-		menuTextColor = vt100.Gray
-		menuHighlightColor = vt100.White
-		menuSelectedColor = vt100.Black
-	}
-}
-
-func (status *StatusBar) respectNoColorEnvironmentVariable() {
-	if env.Bool("NO_COLOR") {
-		status.fg = vt100.Default
-		status.bg = vt100.BackgroundDefault
-	}
+	e.SetTheme(NewRedBlackTheme())
 }

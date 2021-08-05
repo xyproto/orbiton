@@ -18,14 +18,7 @@ import (
 
 const (
 	versionString = "o 2.41.0"
-
-	defaultTheme Theme = iota
-	redBlackTheme
-	lightTheme
 )
-
-// Theme is an "enum" type
-type Theme int
 
 func main() {
 	var (
@@ -149,18 +142,21 @@ Set NO_COLOR=1 to disable colors.
 
 	// If the editor executable has been named "red", use the red/gray theme by default
 	// Also use the red/gray theme if $SHELL is /bin/csh (typically BSD)
-	useTheme := defaultTheme
+	theme := NewDefaultTheme()
+	syntaxHighlight := true
 	switch filepath.Base(os.Args[0]) {
 	case "red", "ro":
-		useTheme = redBlackTheme
+		theme = NewRedBlackTheme()
 	case "light":
-		useTheme = lightTheme
-	case "default":
-		useTheme = defaultTheme
+		theme = NewLightTheme()
+	}
+	if envNoColor {
+		theme = NewNoColorTheme()
+		syntaxHighlight = false
 	}
 
 	// Run the main editor loop
-	userMessage, err := Loop(tty, filename, lineNumber, colNumber, *forceFlag, useTheme)
+	userMessage, err := Loop(tty, filename, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight)
 
 	// Remove the terminal title, if the current terminal emulator supports it
 	// and if NO_COLOR is not set.

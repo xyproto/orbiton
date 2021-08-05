@@ -47,7 +47,7 @@ To unset:
 
 For `zsh` or `bash`, try using:
 
-	export MANPAGER=o
+    export MANPAGER=o
 
 ## Unique features
 

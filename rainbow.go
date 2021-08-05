@@ -28,8 +28,8 @@ func (e *Editor) rainbowParen(parCount, braCount *int, chars *[]textoutput.CharA
 		prevPrevRune = '\n'
 
 		// CharAttribute has a rune "R" and a vt100.AttributeColor "A"
-		nextChar = textoutput.CharAttribute{R: '\n', A: e.bg}
-		prevChar = textoutput.CharAttribute{R: '\n', A: e.bg}
+		nextChar = textoutput.CharAttribute{R: '\n', A: e.Background}
+		prevChar = textoutput.CharAttribute{R: '\n', A: e.Background}
 
 		lastColor = rainbowParenColors[len(rainbowParenColors)-1]
 	)

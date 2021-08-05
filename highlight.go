@@ -26,7 +26,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	defer writeLinesMutex.Unlock()
 
 	// Convert the background color to a background color code
-	bg := e.bg.Background()
+	bg := e.Background.Background()
 
 	tabString := strings.Repeat(" ", e.tabsSpaces.perTab)
 	w := c.Width()
@@ -117,7 +117,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		// expand tabs
 		line = strings.Replace(line, "\t", tabString, -1)
 
-		if e.syntaxHighlight && !e.noColor {
+		if e.syntaxHighlight && !envNoColor {
 			// Output a syntax highlighted line. Escape any tags in the input line.
 			// textWithTags must be unescaped if there is not an error.
 			if textWithTags, err := syntax.AsText([]byte(Escape(line)), assemblyStyleComments); err != nil {
@@ -149,7 +149,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					prevLineIsSectionHeader = sh
 					prevLineIsBlank = len(trimmedLine) == 0
 				case modeMarkdown:
-					if highlighted, ok, codeBlockFound := markdownHighlight(line, inCodeBlock, prevLineIsListItem, &inListItem); ok {
+					if highlighted, ok, codeBlockFound := e.markdownHighlight(line, inCodeBlock, prevLineIsListItem, &inListItem); ok {
 						coloredString = highlighted
 						if codeBlockFound {
 							inCodeBlock = !inCodeBlock
@@ -172,7 +172,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 					if inCodeBlock || foundDockstringMarker {
 						// Purple
-						coloredString = UnEscape(e.multiLineString.Start(trimmedLine))
+						coloredString = UnEscape(e.MultiLineString.Start(trimmedLine))
 					} else {
 						// Regular highlight
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
@@ -183,7 +183,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						coloredString = line
 					} else if strings.HasPrefix(trimmedLine, "> ") {
 						// If there is a } underneath and typing }, don't dedent, keep it at the same level!
-						coloredString = UnEscape(e.multiLineString.Start(trimmedLine))
+						coloredString = UnEscape(e.MultiLineString.Start(trimmedLine))
 					} else {
 						// Regular highlight + highlight yes and no in blue when using the default color scheme
 						// TODO: Modify (and rewrite) the syntax package instead.
@@ -193,7 +193,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					// Handle single line comments starting with (* and ending with *)
 					trimmedLine = strings.TrimSpace(line)
 					if strings.HasPrefix(trimmedLine, "(*") && strings.HasSuffix(trimmedLine, "*)") {
-						coloredString = UnEscape(e.multiLineComment.Start(trimmedLine))
+						coloredString = UnEscape(e.MultiLineComment.Start(trimmedLine))
 					} else {
 						// Regular highlight
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
@@ -203,7 +203,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					// Handle doc comments (starting with ///)
 					// and multiline strings (starting with \\)
 					if strings.HasPrefix(trimmedLine, "///") || strings.HasPrefix(trimmedLine, `\\`) {
-						coloredString = UnEscape(e.multiLineString.Start(trimmedLine))
+						coloredString = UnEscape(e.MultiLineString.Start(trimmedLine))
 					} else {
 						// Regular highlight
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
@@ -213,7 +213,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					// In DOS batch files, ":" can be used both for labels and for single-line comments
 					if strings.HasPrefix(trimmedLine, "@rem") || strings.HasPrefix(trimmedLine, "rem") || strings.HasPrefix(trimmedLine, ":") {
 						// Handle single line comments
-						coloredString = UnEscape(e.multiLineComment.Start(line))
+						coloredString = UnEscape(e.MultiLineComment.Start(line))
 					} else {
 						// Regular highlight
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
@@ -222,7 +222,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					trimmedLine = strings.TrimSpace(line)
 					if strings.HasPrefix(trimmedLine, "--") {
 						// Handle single line comments
-						coloredString = UnEscape(e.multiLineComment.Start(line))
+						coloredString = UnEscape(e.MultiLineComment.Start(line))
 					} else {
 						// Regular highlight
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
@@ -231,7 +231,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					trimmedLine = strings.TrimSpace(line)
 					if strings.HasPrefix(trimmedLine, `.\"`) {
 						// Handle single line comments
-						coloredString = UnEscape(e.multiLineComment.Start(line))
+						coloredString = UnEscape(e.MultiLineComment.Start(line))
 					} else {
 						// Regular highlight
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
@@ -243,14 +243,14 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					if strings.Count(trimmedLine, ";;") == 1 {
 						// Color the line with the same color as for multiLine comments
 						if strings.HasPrefix(trimmedLine, ";") {
-							coloredString = UnEscape(e.multiLineComment.Start(line))
+							coloredString = UnEscape(e.MultiLineComment.Start(line))
 						} else if strings.Count(trimmedLine, ";;") == 1 {
 
 							parts := strings.SplitN(line, ";;", 2)
 							if newTextWithTags, err := syntax.AsText([]byte(Escape(parts[0])), false); err != nil {
 								coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
 							} else {
-								coloredString = UnEscape(tout.DarkTags(string(newTextWithTags)) + e.multiLineComment.Get(";;"+parts[1]))
+								coloredString = UnEscape(tout.DarkTags(string(newTextWithTags)) + e.MultiLineComment.Get(";;"+parts[1]))
 							}
 
 						} else if strings.Count(trimmedLine, ";") == 1 {
@@ -259,7 +259,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							if newTextWithTags, err := syntax.AsText([]byte(Escape(parts[0])), false); err != nil {
 								coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
 							} else {
-								coloredString = UnEscape(tout.DarkTags(string(newTextWithTags)) + e.multiLineComment.Start(";"+parts[1]))
+								coloredString = UnEscape(tout.DarkTags(string(newTextWithTags)) + e.MultiLineComment.Start(";"+parts[1]))
 							}
 
 						}
@@ -273,13 +273,13 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					if strings.Count(trimmedLine, "\"") == 1 {
 						// Color the line with the same color as for multiLine comments
 						if strings.HasPrefix(trimmedLine, "\"") {
-							coloredString = UnEscape(e.multiLineComment.Start(line))
+							coloredString = UnEscape(e.MultiLineComment.Start(line))
 						} else {
 							parts := strings.SplitN(line, "\"", 2)
 							if newTextWithTags, err := syntax.AsText([]byte(Escape(parts[0])), false); err != nil {
 								coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
 							} else {
-								coloredString = UnEscape(tout.DarkTags(string(newTextWithTags)) + e.multiLineComment.Start("\""+parts[1]))
+								coloredString = UnEscape(tout.DarkTags(string(newTextWithTags)) + e.MultiLineComment.Start("\""+parts[1]))
 							}
 						}
 						break
@@ -304,24 +304,24 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					switch {
 					case e.mode == modePython && q.startedMultiLineString:
 						// Python docstring
-						coloredString = UnEscape(e.multiLineString.Get(line))
+						coloredString = UnEscape(e.MultiLineString.Get(line))
 					case !q.multiLineComment && (strings.HasPrefix(trimmedLine, "#if") || strings.HasPrefix(trimmedLine, "#else") || strings.HasPrefix(trimmedLine, "#elseif") || strings.HasPrefix(trimmedLine, "#endif") || strings.HasPrefix(trimmedLine, "#define") || strings.HasPrefix(trimmedLine, "#pragma")):
-						coloredString = UnEscape(e.multiLineString.Get(line))
+						coloredString = UnEscape(e.MultiLineString.Get(line))
 					case !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*/") && !strings.Contains(trimmedLine, "/*"):
-						coloredString = UnEscape(e.multiLineComment.Get(line))
+						coloredString = UnEscape(e.MultiLineComment.Get(line))
 					case !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "/*") > strings.LastIndex(trimmedLine, "*/"):
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
 					case q.containsMultiLineComments:
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
 					case !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && (q.multiLineComment || q.stoppedMultiLineComment) && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
 						// In the middle of a multi-line comment
-						coloredString = UnEscape(e.multiLineComment.Get(line))
+						coloredString = UnEscape(e.MultiLineComment.Get(line))
 					case q.singleLineComment || q.stoppedMultiLineComment:
 						// A single line comment (the syntax module did the highlighting)
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
 					case !q.startedMultiLineString && q.backtick > 0:
 						// A multi-line string
-						coloredString = UnEscape(e.multiLineString.Get(line))
+						coloredString = UnEscape(e.MultiLineString.Get(line))
 					case (e.mode != modeHTML && e.mode != modeXML) && strings.Contains(line, "->"):
 						// NOTE that if two color tags are placed after each other, they may cause blinking. Remember to turn <off> each color.
 						coloredString = UnEscape(tout.DarkTags(arrowReplace(string(textWithTags))))
@@ -360,11 +360,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					letter := ra.R
 					fg := ra.A
 					if letter == ' ' {
-						fg = e.fg
+						fg = e.Foreground
 					}
 					if matchForAnotherN > 0 {
 						// Coloring an already found match
-						fg = e.searchFg
+						fg = e.SearchHighlight
 						matchForAnotherN--
 					} else if len(e.searchTerm) > 0 && letter == searchTermRunes[0] {
 						// Potential search highlight match
@@ -386,12 +386,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						}
 						// match?
 						if match {
-							fg = e.searchFg
+							fg = e.SearchHighlight
 							matchForAnotherN = length - 1
 						}
 					}
 					if letter == '\t' {
-						c.Write(uint(cx)+lineRuneCount, uint(cy)+uint(y), fg, e.bg, tabString)
+						c.Write(uint(cx)+lineRuneCount, uint(cy)+uint(y), fg, e.Background, tabString)
 						lineRuneCount += uint(e.tabsSpaces.perTab)
 						lineStringCount += uint(e.tabsSpaces.perTab)
 					} else {
@@ -408,7 +408,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		} else {
 			// Output a regular line, scrolled to the current e.pos.offsetX
 			screenLine = e.ChopLine(line, int(w))
-			c.Write(uint(cx)+lineRuneCount, uint(cy)+uint(y), e.fg, e.bg, screenLine)
+			c.Write(uint(cx)+lineRuneCount, uint(cy)+uint(y), e.Foreground, e.Background, screenLine)
 			lineRuneCount += uint(len([]rune(screenLine))) // rune count
 			lineStringCount += uint(len(screenLine))       // string length, not rune length
 
@@ -434,7 +434,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			r := ' '
 			//lineNumber := strconv.Itoa(runeLengthDiff)
 			//r = []rune(lineNumber)[len([]rune(lineNumber))-1]
-			c.WriteRuneB(xp, yp, e.fg, bg, r)
+			c.WriteRuneB(xp, yp, e.Foreground, bg, r)
 		}
 		//c.WriteRuneB(xp, yp, e.fg, e.bg, '\n')
 	}
