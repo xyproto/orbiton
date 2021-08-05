@@ -78,23 +78,11 @@ func filterS(sl []string, f func(string) bool) []string {
 // returns true if they are equal
 func equalStringSlices(a, b []string) bool {
 	lena := len(a)
-	lenb := len(b)
-	if lena != lenb {
+	if lena != len(b) {
 		return false
 	}
 	for i := 0; i < lena; i++ {
 		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
-// isLower checks if all letters in a string are lowercase
-// thanks: https://stackoverflow.com/a/59293875/131264
-func isLower(s string) bool {
-	for _, r := range s {
-		if unicode.IsLetter(r) && !unicode.IsLower(r) {
 			return false
 		}
 	}
@@ -140,7 +128,7 @@ func aBinDirectory(filename string) bool {
 // hexDigit checks if the given rune is 0-9, a-f, A-F or x
 func hexDigit(r rune) bool {
 	switch r {
-	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'x', 'A', 'a', 'B', 'b', 'C', 'c', 'D', 'd', 'E', 'e', 'F', 'f':
+	case 'x', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'a', 'B', 'b', 'C', 'c', 'D', 'd', 'E', 'e', 'F', 'f':
 		return true
 	}
 	return false
@@ -196,9 +184,20 @@ func oneField(s string) bool {
 	return len(strings.Fields(s)) == 1
 }
 
+// allUpper checks if all letters in a string are uppercase
 func allUpper(s string) bool {
 	for _, r := range s {
 		if !unicode.IsUpper(r) && unicode.IsLetter(r) {
+			return false
+		}
+	}
+	return true
+}
+
+// allLower checks if all letters in a string are lowercase
+func allLower(s string) bool {
+	for _, r := range s {
+		if unicode.IsLetter(r) && !unicode.IsLower(r) {
 			return false
 		}
 	}

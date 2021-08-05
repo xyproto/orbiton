@@ -115,7 +115,7 @@ Set NO_COLOR=1 to disable colors.
 			sort.Strings(matches)
 			filename = matches[0]
 		}
-	} else if !strings.Contains(filename, ".") && isLower(filename) && !exists(filename) {
+	} else if !strings.Contains(filename, ".") && allLower(filename) && !exists(filename) {
 		// The filename has no ".", is written in lowercase and it does not exist,
 		// but more than one file that starts with the filename  exists. Assume tab-completion failed.
 		matches, err := filepath.Glob(filename + "*")
