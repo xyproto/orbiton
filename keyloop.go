@@ -16,15 +16,6 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const (
-	defaultUndoSize = 8192 // number of undo actions possible to store in the circular buffer
-)
-
-var (
-	// Circular undo buffer with room for N actions
-	undo = NewUndo(defaultUndoSize)
-)
-
 // Loop will set up and run the main loop of the editor
 // a *vt100.TTY struct
 // a filename to open

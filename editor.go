@@ -53,12 +53,6 @@ type Editor struct {
 	EditorColors
 }
 
-// Used when switching between a .c or .cpp file to the corresponding .h file
-var (
-	switchBuffer     *Undo = NewUndo(1)               // Save the contents of one switch
-	switchUndoBackup *Undo = NewUndo(defaultUndoSize) // Save a copy of the undo stack when switching between files
-)
-
 // NewCustomEditor takes:
 // * the number of spaces per tab (typically 2, 4 or 8)
 // * if the text should be syntax highlighted
