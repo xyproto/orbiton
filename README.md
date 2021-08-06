@@ -9,7 +9,7 @@ It might be a good fit for:
 * Editing git commit messages (using `EDITOR=o git commit`).
 * Editing `README.md` and `TODO.md` files.
 * Write Markdown files and then export to PDF.
-* Learning "up and coming" programming languages, like Zig or Rust.
+* Learning up and coming programming languages, like Zig or Rust.
 * Editing files deep within larger Go or C++ projects.
 * Solving Advent of Code tasks.
 * Writing and maintaining to-do lists and project documentation in Markdown.
@@ -79,7 +79,7 @@ These features are unique to `o`, as far as I am aware:
 * Never asks before saving or quitting. Be careful!
 * The [`NO_COLOR`](https://no-color.org) environment variable can be set to disable all colors.
 * Rainbow parentheses makes lines with many parentheses easier to read.
-* Limited to the VT100 standard, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`.
+* Limited to VT100, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`.
 * Compiles with either `go` or `gccgo`.
 * Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
