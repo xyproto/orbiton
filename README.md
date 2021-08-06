@@ -418,6 +418,6 @@ These should work well together with `o`:
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
 
-## Stargzers over time
+## Popularity curve
 
 [![Stargazers over time](https://starchart.cc/xyproto/o.svg)](https://starchart.cc/xyproto/o)
