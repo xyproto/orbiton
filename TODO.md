@@ -8,6 +8,8 @@
 - [ ] Fix syntax highlighting of `'tokens` in Clojure.
 - [ ] ctrl-w for C# using `astyle` fails the second time. More filenames are added to the command line. Figure out why.
 - [ ] Highlighting some elements in man pages are a bit wonky. Consider if implementing a proper parser is worth it.
+- [ ] Add support for catching a signal and then redraw.
+- [ ] Let the GUI application send that signal at window resize.
 
 ## Bugs/features/issues
 
