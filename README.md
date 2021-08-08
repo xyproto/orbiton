@@ -16,6 +16,12 @@ It might be a good fit for:
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
+## Screenshot
+
+Screenshot of the VTK GUI application that can be found in the `gui` directory, running the `o` editor:
+
+![screenshot](img/screenshot2021.png)
+
 ## Packaging status
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/o-editor.svg)](https://repology.org/project/o-editor/versions) [![Packaging status](https://repology.org/badge/vertical-allrepos/o.svg)](https://repology.org/project/o/versions)
