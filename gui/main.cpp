@@ -15,15 +15,6 @@ using namespace std::string_literals;
 
 static GPid child_pid = -1;
 
-// new_window creates and returns a Gtk window.
-// The given title is used as the window title.
-auto new_window(std::string const& title)
-{
-    auto window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window), title.c_str());
-    return window;
-}
-
 void signal_and_quit()
 {
     if (child_pid != -1) {
@@ -44,18 +35,40 @@ int main(int argc, char* argv[])
     // Initialize Gtk, the window and the terminal
     gtk_init(&argc, &argv);
 
+    // Create a new window and terminal
+    auto window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    auto terminal = vte_terminal_new();
+
     // Open TODO.md by default, if no filename is given
     auto filename = "TODO.md"s;
+
+    // Gather flags and filename arguments
+    bool givenFilename = false;
     auto flag = ""s;
     if (argc > 2) {
         flag = argv[1];
         filename = argv[2];
+        givenFilename = true;
     } else if (argc > 1) {
         filename = argv[1];
+        givenFilename = true;
     }
 
-    auto window = new_window(filename);
-    auto terminal = vte_terminal_new();
+    // Show the file chooser dialog, if no filename was given
+    if (!givenFilename) {
+        auto dialog = gtk_file_chooser_dialog_new("Open File", GTK_WINDOW(window),
+            GTK_FILE_CHOOSER_ACTION_OPEN, "Cancel", GTK_RESPONSE_CANCEL, "Open",
+            GTK_RESPONSE_ACCEPT, nullptr);
+        if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+            char* selectedFilename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+            filename = std::string(selectedFilename);
+            g_free(selectedFilename);
+        }
+        gtk_widget_destroy(dialog);
+    }
+
+    // Set the Window title
+    gtk_window_set_title(GTK_WINDOW(window), filename.c_str());
 
     using std::filesystem::exists;
     using std::filesystem::path;
@@ -92,8 +105,9 @@ int main(int argc, char* argv[])
     const char* command[4];
     command[0] = found.c_str();
     if (flag == "") {
-        command[1] = filename.c_str();
-        command[2] = nullptr;
+        command[1] = "-f";
+        command[2] = filename.c_str();
+        command[3] = nullptr;
     } else {
         command[1] = flag.c_str();
         command[2] = filename.c_str();
