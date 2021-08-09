@@ -1,7 +1,9 @@
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <signal.h>
+#include <streambuf>
 #include <string>
 #include <unistd.h>
 #include <vte/vte.h>
@@ -29,6 +31,49 @@ void wait_and_quit()
 {
     sleep(0.5);
     gtk_main_quit();
+}
+
+bool file_contains(const std::string lock_filename, const std::string x)
+{
+    // Open the lock file, using the given lock_filename
+    std::ifstream t(lock_filename);
+    std::string contents;
+    t.seekg(0, std::ios::end);
+    contents.reserve(t.tellg());
+    t.seekg(0, std::ios::beg);
+    contents.assign((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+    // Check if the file contents contains the given string x
+    return contents.find(x) != std::string::npos;
+}
+
+// Return the contents of an environment variable, but
+// if the contents are empty, return the given default value.
+std::string env_str(std::string env_name, std::string default_value)
+{
+    char* e = std::getenv(env_name.c_str());
+    if (e == nullptr) {
+        return default_value;
+    }
+    return std::string(e);
+}
+
+// is_locked checks if the given filename is found in either
+// ~/.cache/o/lockfile.txt or $XDG_CACHE_DIR/o/lockefile.txt.
+bool is_locked(std::string filename)
+{
+    using std::filesystem::exists;
+    using std::filesystem::path;
+    path xdg_cache_dir(env_str("XDG_CACHE_DIR"s, "."s));
+    path home_dir(env_str("HOME"s, "."s));
+    path xdg_cache_lockfile = xdg_cache_dir / path("o/lockfile.txt"s);
+    path home_lockfile = home_dir / path(".cache/o/lockfile.txt"s);
+    if (exists(xdg_cache_lockfile)) {
+        return file_contains(xdg_cache_lockfile, filename);
+    }
+    if (exists(home_lockfile)) {
+        return file_contains(home_lockfile, filename);
+    }
+    return false;
 }
 
 int main(int argc, char* argv[])
@@ -106,9 +151,14 @@ int main(int argc, char* argv[])
     const char* command[4];
     command[0] = found.c_str();
     if (flag == "") {
-        command[1] = "-f";
-        command[2] = filename.c_str();
-        command[3] = nullptr;
+        if (is_locked(filename)) {
+            command[1] = "-f";
+            command[2] = filename.c_str();
+            command[3] = nullptr;
+        } else {
+            command[1] = filename.c_str();
+            command[2] = nullptr;
+        }
     } else {
         command[1] = flag.c_str();
         command[2] = filename.c_str();
