@@ -3,36 +3,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 100 100">
   <defs>
     <style type="text/css">
-      @import url('https://fonts.googleapis.com/css?family=Kelly+Slab');
+      @import url('https://fonts.googleapis.com/css?family=Faster+One');
     </style>
   </defs>
 
-<rect x="2.75"
-  y="2.75"
-  rx="10.5"
-  ry="10.5"
-  width="94.5"
-  height="94.5"
+<rect x="1.75"
+  y="1.75"
+  rx="50"
+  ry="50"
+  width="96.5"
+  height="96.5"
   fill="black"></rect>
 
 <text x="50"
   y="50"
-  dx="-2.5"
-  dy="2"
-  fill="lightgreen"
-  font-size="45"
-  font-family="Kelly Slab"
+  dx="6.5"
+  dy="-3"
+  fill="#d00"
+  font-size="83"
+  font-family="Faster One"
   font-weight=""
   text-anchor="middle"
-  dominant-baseline="central">GUI</text>
+  dominant-baseline="central">O</text>
 
-<rect x="2.75"
-  y="2.75"
-  rx="10.5"
-  ry="10.5"
-  width="94.5"
-  height="94.5"
+<rect x="1.75"
+  y="1.75"
+  rx="50"
+  ry="50"
+  width="96.5"
+  height="96.5"
   fill-opacity="0"
-  stroke="#555"
-  stroke-width="5.5"></rect>
+  stroke="black"
+  stroke-width="3.5"></rect>
 </svg>
