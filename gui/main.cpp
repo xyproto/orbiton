@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
     // Show the file chooser dialog, if no filename was given
     if (!givenFilename) {
         auto dialog = gtk_file_chooser_dialog_new("Open File", GTK_WINDOW(window),
-            GTK_FILE_CHOOSER_ACTION_OPEN, "Cancel", GTK_RESPONSE_CANCEL, "Open",
+            GTK_FILE_CHOOSER_ACTION_OPEN, "_Cancel", GTK_RESPONSE_CANCEL, "_Open",
             GTK_RESPONSE_ACCEPT, nullptr);
         if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
             char* selectedFilename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
