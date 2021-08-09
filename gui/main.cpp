@@ -18,15 +18,16 @@ static GPid child_pid = -1;
 void signal_and_quit()
 {
     if (child_pid != -1) {
-        // This lets o save the file and then quit
+        // This lets o save the file and then sleep a tiny bit, then quit
         kill(child_pid, SIGTERM);
+        sleep(0.5);
     }
     gtk_main_quit();
 }
 
 void wait_and_quit()
 {
-    sleep(1);
+    sleep(0.5);
     gtk_main_quit();
 }
 
