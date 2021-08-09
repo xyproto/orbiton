@@ -76,10 +76,7 @@ func (e *Editor) exportAdoc(c *vt100.Canvas, tty *vt100.TTY, manFilename string)
 		_ = os.Remove(tmpfn) // Try removing the temporary filename if pandoc fails
 		return err
 	}
-	if err = os.Remove(tmpfn); err != nil {
-		return err
-	}
-	return nil
+	return os.Remove(tmpfn)
 }
 
 // BuildOrExport will try to build the source code or export the document.
