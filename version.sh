@@ -4,7 +4,7 @@
 #
 
 # The current version goes here, as the default value
-VERSION=${1:-'2.41.1'}
+VERSION=${1:-'2.41.2'}
 
 if [ -z "$1" ]; then
   echo "The current version is $VERSION, pass the new version as the first argument if you wish to change it"
