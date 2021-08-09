@@ -23,9 +23,13 @@ static bool force_enable = false; // was the file locked, so that the -f flag wa
 void signal_and_quit()
 {
     if (child_pid != -1) {
-        // If force was NOT enabled (since the file was already locked at start),
-        // unlock the file by sending an unlock signal (USR1)
-        kill(child_pid, SIGUSR1);
+        if (!force_enable) {
+            // If force was used at start, don't unlock the file.
+            // Only unlock the file if force was not used at start.
+            // Unlock the file by sending an unlock signal (USR1)
+            kill(child_pid, SIGUSR1);
+            sleep(0.5);
+        }
         // This lets o save the file and then sleep a tiny bit, then quit the parent
         kill(child_pid, SIGTERM);
         sleep(0.5);
@@ -35,6 +39,13 @@ void signal_and_quit()
 
 void wait_and_quit()
 {
+    if (child_pid != -1 && !force_enable) {
+        // If force was used at start, don't unlock the file.
+        // Only unlock the file if force was not used at start.
+        // Unlock the file by sending an unlock signal (USR1)
+        kill(child_pid, SIGUSR1);
+        sleep(0.5);
+    }
     sleep(0.5);
     gtk_main_quit();
 }
