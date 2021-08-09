@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <signal.h>
+#include <stdlib.h>
 #include <streambuf>
 #include <string>
 #include <unistd.h>
@@ -15,12 +16,17 @@
 
 using namespace std::string_literals;
 
-static GPid child_pid = -1;
+static GPid child_pid = -1; // PID of the child process, the o editor, or -1
+
+static bool force_enable = false; // was the file locked, so that the -f flag was used?
 
 void signal_and_quit()
 {
     if (child_pid != -1) {
-        // This lets o save the file and then sleep a tiny bit, then quit
+        // If force was NOT enabled (since the file was already locked at start),
+        // unlock the file by sending an unlock signal (USR1)
+        kill(child_pid, SIGUSR1);
+        // This lets o save the file and then sleep a tiny bit, then quit the parent
         kill(child_pid, SIGTERM);
         sleep(0.5);
     }
@@ -85,8 +91,8 @@ int main(int argc, char* argv[])
     auto window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     auto terminal = vte_terminal_new();
 
-    // Open TODO.md by default, if no filename is given
-    auto filename = "TODO.md"s;
+    // The file to edit
+    std::string filename;
 
     // Gather flags and filename arguments
     bool givenFilename = false;
@@ -109,12 +115,20 @@ int main(int argc, char* argv[])
             char* selectedFilename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
             filename = std::string(selectedFilename);
             g_free(selectedFilename);
+        } else {
+            // Did not get GTK_RESPONSE_ACCEPT, just end the program here
+            // gtk_widget_destroy(dialog);
+            // gtk_main_quit();
+            return EXIT_FAILURE;
         }
         gtk_widget_destroy(dialog);
     }
 
     // Set the Window title
     gtk_window_set_title(GTK_WINDOW(window), filename.c_str());
+
+    // Set the default Window size
+    // gtk_window_set_default_size(GTK_WINDOW(window), 800, 600);
 
     using std::filesystem::exists;
     using std::filesystem::path;
@@ -152,6 +166,7 @@ int main(int argc, char* argv[])
     command[0] = found.c_str();
     if (flag == "") {
         if (is_locked(filename)) {
+            force_enable = true;
             command[1] = "-f";
             command[2] = filename.c_str();
             command[3] = nullptr;
@@ -243,6 +258,7 @@ int main(int argc, char* argv[])
     vte_terminal_set_cursor_blink_mode(VTE_TERMINAL(terminal), VTE_CURSOR_BLINK_OFF);
 
     // Connect some signals
+    g_signal_connect(window, "destroy", wait_and_quit, nullptr);
     g_signal_connect(window, "delete-event", wait_and_quit, nullptr);
     g_signal_connect(terminal, "child-exited", signal_and_quit, nullptr);
 
