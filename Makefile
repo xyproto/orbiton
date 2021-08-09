@@ -37,7 +37,7 @@ gui-install: install-gui
 install-gui: gui/gui
 	install -Dm755 gui/gui "$(DESTDIR)$(PREFIX)/bin/gui"
 	install -Dm644 gui/gui.desktop "$(DESTDIR)$(PREFIX)/share/applications/gui.desktop"
-	install -Dm644 img/gui.png "$(DESTDIR)$(PREFIX)/share/pixmaps/gui.png"
+	install -Dm644 img/icon_48x48.png "$(DESTDIR)$(PREFIX)/share/pixmaps/gui.png"
 
 clean:
 	-rm -f o o.1.gz gui/gui
