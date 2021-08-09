@@ -16,6 +16,9 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+// Create a LockKeeper for keeping track of which files are being edited
+var fileLock = NewLockKeeper(defaultLockFile)
+
 // Loop will set up and run the main loop of the editor
 // a *vt100.TTY struct
 // a filename to open
@@ -84,15 +87,12 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	e.SetUpResizeHandler(c, tty, status)
 
 	// ctrl-c handler
-	e.SetUpTerminateHandler(c, tty, status)
+	e.SetUpSignalHandlers(c, tty, status, absFilename)
 
 	tty.SetTimeout(2 * time.Millisecond)
 
 	previousX := 1
 	previousY := 1
-
-	// Create a LockKeeper for keeping track of which files are being edited
-	lk := NewLockKeeper(defaultLockFile)
 
 	var (
 		canUseLocks   = true
@@ -100,9 +100,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	)
 
 	// If the lock keeper does not have an overview already, that's fine. Ignore errors from lk.Load().
-	if err := lk.Load(); err != nil {
+	if err := fileLock.Load(); err != nil {
 		// Could not load an existing lock overview, this might be the first run? Try saving.
-		if err := lk.Save(); err != nil {
+		if err := fileLock.Save(); err != nil {
 			// Could not save a lock overview. Can not use locks.
 			canUseLocks = false
 		}
@@ -112,25 +112,25 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		// Check if the lock should be forced (also force when running git commit, becase it is likely that o was killed in that case)
 		if forceFlag || filepath.Base(absFilename) == "COMMIT_EDITMSG" || env.Bool("O_FORCE") {
 			// Lock and save, regardless of what the previous status is
-			lk.Lock(absFilename)
+			fileLock.Lock(absFilename)
 			// TODO: If the file was already marked as locked, this is not strictly needed? The timestamp might be modified, though.
-			lk.Save()
+			fileLock.Save()
 		} else {
 			// Lock the current file, if it's not already locked
-			if err := lk.Lock(absFilename); err != nil {
+			if err := fileLock.Lock(absFilename); err != nil {
 				return fmt.Sprintf("Locked by another (possibly dead) instance of this editor.\nTry: o -f %s", filepath.Base(absFilename)), errors.New(absFilename + " is locked")
 			}
 			// Immediately save the lock file as a signal to other instances of the editor
-			lk.Save()
+			fileLock.Save()
 		}
-		lockTimestamp = lk.GetTimestamp(absFilename)
+		lockTimestamp = fileLock.GetTimestamp(absFilename)
 
 		// Set up a catch for panics, so that the current file can be unlocked
 		defer func() {
 			if x := recover(); x != nil {
 				// Unlock and save the lock file
-				lk.Unlock(absFilename)
-				lk.Save()
+				fileLock.Unlock(absFilename)
+				fileLock.Save()
 
 				// Save the current file. The assumption is that it's better than not saving, if something crashes.
 				// TODO: Save to a crash file, then let the editor discover this when it starts.
@@ -309,7 +309,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					headerExtensions := []string{".h", ".hpp"}
 					if headerFilename, err := ExtFileSearch(absFilename, headerExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
 						// Switch to another file (without forcing it)
-						e.Switch(c, tty, status, lk, headerFilename, false)
+						e.Switch(c, tty, status, fileLock, headerFilename, false)
 					}
 				}
 				break
@@ -322,7 +322,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					sourceExtensions := []string{".c", ".cpp", ".cxx", ".cc"}
 					if headerFilename, err := ExtFileSearch(absFilename, sourceExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
 						// Switch to another file (without forcing it)
-						e.Switch(c, tty, status, lk, headerFilename, false)
+						e.Switch(c, tty, status, fileLock, headerFilename, false)
 					}
 				}
 				break
@@ -361,7 +361,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			status.ClearAll(c)
 			undo.Snapshot(e)
 			undoBackup := undo
-			lastCommandMenuIndex = e.CommandMenu(c, tty, status, undo, lastCommandMenuIndex, forceFlag, lk)
+			lastCommandMenuIndex = e.CommandMenu(c, tty, status, undo, lastCommandMenuIndex,
+				forceFlag,
+				fileLock)
 			undo = undoBackup
 			if e.AfterEndOfLine() {
 				e.End(c)
@@ -1562,10 +1564,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 	if canUseLocks {
 		// Start by loading the lock overview, just in case something has happened in the mean time
-		lk.Load()
+		fileLock.Load()
 
 		// Check if the lock is unchanged
-		fileLockTimestamp := lk.GetTimestamp(absFilename)
+		fileLockTimestamp := fileLock.GetTimestamp(absFilename)
 		lockUnchanged := lockTimestamp == fileLockTimestamp
 
 		// TODO: If the stored timestamp is older than uptime, unlock and save the lock overview
@@ -1575,8 +1577,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		if !forceFlag || lockUnchanged {
 			// If the file has not been locked externally since this instance of the editor was loaded, don't
 			// Unlock the current file and save the lock overview. Ignore errors because they are not critical.
-			lk.Unlock(absFilename)
-			lk.Save()
+			fileLock.Unlock(absFilename)
+			fileLock.Save()
 		}
 	}
 
