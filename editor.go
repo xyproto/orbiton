@@ -65,7 +65,7 @@ func NewCustomEditor(tabsSpaces TabsSpaces, rainbowParenthesis bool, scrollSpeed
 	// If the file is not to be highlighted, set word wrap to 99 (0 to disable)
 	if e.syntaxHighlight {
 		e.wrapWidth = 99
-		e.wrapWhenTyping = true
+		e.wrapWhenTyping = false
 	}
 	if mode == modeGit {
 		// The subject should ideally be maximum 50 characters long, then the body of the
