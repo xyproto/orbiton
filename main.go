@@ -128,7 +128,7 @@ Set NO_COLOR=1 to disable colors.
 	}
 
 	// Set the terminal title, if the current terminal emulator supports it, and NO_COLOR is not set
-	if !env.Bool("NO_COLOR") {
+	if !envNoColor {
 		termtitle.MustSet(termtitle.GenerateTitle(filename))
 	}
 
@@ -144,23 +144,23 @@ Set NO_COLOR=1 to disable colors.
 	// Also use the red/gray theme if $SHELL is /bin/csh (typically BSD)
 	theme := NewDefaultTheme()
 	syntaxHighlight := true
-	switch filepath.Base(os.Args[0]) {
-	case "red", "ro":
-		theme = NewRedBlackTheme()
-	case "light":
-		theme = NewLightTheme()
-	}
 	if envNoColor {
 		theme = NewNoColorTheme()
 		syntaxHighlight = false
+	} else {
+		executableName := filepath.Base(os.Args[0])
+		if strings.HasPrefix(executableName, "r") { // red, ro, rb, rt etc
+			theme = NewRedBlackTheme()
+		} else if strings.HasPrefix(executableName, "l") { // light, lo etc
+			theme = NewLightTheme()
+		}
 	}
-
 	// Run the main editor loop
 	userMessage, err := Loop(tty, filename, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight)
 
 	// Remove the terminal title, if the current terminal emulator supports it
 	// and if NO_COLOR is not set.
-	if !env.Bool("NO_COLOR") {
+	if !envNoColor {
 		shellName := filepath.Base(env.Str("SHELL", "/bin/sh"))
 		termtitle.MustSet(shellName)
 	}
