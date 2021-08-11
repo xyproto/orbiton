@@ -69,9 +69,9 @@ func (e *Editor) ClearStickySearchTerm() {
 // x, y is returned.
 func (e *Editor) forwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex) {
 	var (
-		s      string    = e.SearchTerm()
-		foundX int       = -1
-		foundY LineIndex = -1
+		s      = e.SearchTerm()
+		foundX = -1
+		foundY = LineIndex(-1)
 	)
 	if s == "" {
 		// Return -1, -1 if no search term is set
@@ -113,11 +113,11 @@ func (e *Editor) forwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex)
 // startIndex is expected to be larger than stopIndex
 func (e *Editor) backwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex) {
 	var (
-		s      string    = e.SearchTerm()
-		foundX int       = -1
-		foundY LineIndex = -1
+		s      = e.SearchTerm()
+		foundX = -1
+		foundY = LineIndex(-1)
 	)
-	if s == "" {
+	if len(s) == 0 {
 		// Return -1, -1 if no search term is set
 		return foundX, foundY
 	}

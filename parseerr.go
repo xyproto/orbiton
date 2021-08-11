@@ -9,11 +9,11 @@ import (
 // If no error message is found, -1 and an empty string will be returned.
 func ParsePythonError(msg, filename string) (int, string) {
 	var (
-		foundLineNumber bool        // ... ", line N"
-		foundHat        bool        // ^
-		errorMessage    string      // Typically after "SyntaxError: "
-		lineNumber      int    = -1 // The line number with the Python error, if any
-		err             error       // Only used within the loop below
+		foundLineNumber bool   // ... ", line N"
+		foundHat        bool   // ^
+		errorMessage    string // Typically after "SyntaxError: "
+		lineNumber      = -1   // The line number with the Python error, if any
+		err             error  // Only used within the loop below
 	)
 	for _, line := range strings.Split(msg, "\n") {
 		if foundHat && strings.Contains(line, ": ") {

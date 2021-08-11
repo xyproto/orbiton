@@ -32,10 +32,10 @@ var (
 
 	// Save the contents of one switch.
 	// Used when switching between a .c or .cpp file to the corresponding .h file.
-	switchBuffer *Undo = NewUndo(1, defaultUndoMemory)
+	switchBuffer = NewUndo(1, defaultUndoMemory)
 
 	// Save a copy of the undo stack when switching between files
-	switchUndoBackup *Undo = NewUndo(defaultUndoCount, defaultUndoMemory)
+	switchUndoBackup = NewUndo(defaultUndoCount, defaultUndoMemory)
 )
 
 // NewUndo takes arguments that are only for initializing the undo buffers.
@@ -45,7 +45,7 @@ func NewUndo(size int, maxMemoryUse uint64) *Undo {
 }
 
 func lineMapMemoryFootprint(m map[int][]rune) uint64 {
-	var sum uint64 = 0
+	var sum uint64
 	for _, v := range m {
 		sum += uint64(cap(v))
 	}

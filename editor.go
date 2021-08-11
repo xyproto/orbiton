@@ -1861,7 +1861,7 @@ func (e *Editor) GoToNextParagraph(c *vt100.Canvas, status *StatusBar) bool {
 // GoToPrevParagraph will jump to the previous line that has a blank line below it, if possible
 // Returns true if the editor should be redrawn
 func (e *Editor) GoToPrevParagraph(c *vt100.Canvas, status *StatusBar) bool {
-	var lastFoundBlankLine LineIndex = LineIndex(e.Len())
+	var lastFoundBlankLine = LineIndex(e.Len())
 	for i := e.DataY() - 1; i >= 0; i-- {
 		// Check if this is a blank line
 		if len(strings.TrimSpace(e.Line(i))) == 0 {
