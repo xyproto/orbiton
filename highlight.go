@@ -101,6 +101,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		inListItem              bool
 		screenLine              string
 		programName             string
+		cw                      = c.Width()
 	)
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y := LineIndex(0); y < numlines; y++ {
@@ -399,9 +400,13 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						if unicode.IsControl(letter) {
 							letter = controlRuneReplacement
 						}
-						c.WriteRuneB(uint(cx)+lineRuneCount, uint(cy)+uint(y), fg, bg, letter)
-						lineRuneCount++                              // 1 rune
-						lineStringCount += uint(len(string(letter))) // 1 rune, expanded
+						tx := uint(cx) + lineRuneCount
+						ty := uint(cy) + uint(y)
+						if tx < cw {
+							c.WriteRuneB(tx, ty, fg, bg, letter)
+							lineRuneCount++                              // 1 rune
+							lineStringCount += uint(len(string(letter))) // 1 rune, expanded
+						}
 					}
 				}
 			}
