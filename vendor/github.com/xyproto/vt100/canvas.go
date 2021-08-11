@@ -40,6 +40,10 @@ func NewCanvas() *Canvas {
 		c.h = 25
 	}
 	c.chars = make([]ColorRune, c.w*c.h)
+	for i := 0; i < len(c.chars); i++ {
+		c.chars[i].fg = Default
+		c.chars[i].bg = DefaultBackground
+	}
 	c.oldchars = make([]ColorRune, 0)
 	c.mut = &sync.RWMutex{}
 	c.cursorVisible = false
@@ -59,24 +63,26 @@ func (c *Canvas) Copy() Canvas {
 	l := len(c.chars)
 	chars2 := make([]ColorRune, l)
 	for i, cr := range c.chars {
-		var cr2 ColorRune
-		cr2.fg = cr.fg
-		cr2.bg = cr.bg
-		cr2.r = cr.r
-		cr2.drawn = cr.drawn
-		chars2[i] = cr
+		cr2 := ColorRune{
+			fg:    cr.fg,
+			bg:    cr.bg,
+			r:     cr.r,
+			drawn: cr.drawn,
+		}
+		chars2[i] = cr2
 	}
 	c.mut.RUnlock()
 	c2.chars = chars2
 	oldchars2 := make([]ColorRune, l)
 	c.mut.RLock()
 	for i, cr := range c.oldchars {
-		var cr2 ColorRune
-		cr2.fg = cr.fg
-		cr2.bg = cr.bg
-		cr2.r = cr.r
-		cr2.drawn = cr.drawn
-		oldchars2[i] = cr
+		cr2 := ColorRune{
+			fg:    cr.fg,
+			bg:    cr.bg,
+			r:     cr.r,
+			drawn: cr.drawn,
+		}
+		oldchars2[i] = cr2
 	}
 	c2.cursorVisible = c.cursorVisible
 	c2.lineWrap = c.lineWrap
@@ -251,10 +257,11 @@ func (c *Canvas) SetRunewise(b bool) {
 func (c *Canvas) Draw() {
 
 	var (
-		lastfg, lastbg AttributeColor
-		cr             ColorRune
-		oldcr          ColorRune
-		sb             strings.Builder
+		lastfg = Default // AttributeColor
+		lastbg = Default // AttributeColor
+		cr     ColorRune
+		oldcr  ColorRune
+		sb     strings.Builder
 	)
 
 	// NOTE: If too many runes are written to the screen, the contents will scroll up,
@@ -478,13 +485,19 @@ func (c *Canvas) WriteRune(x, y uint, fg, bg AttributeColor, r rune) {
 // WriteRuneB will write a colored rune to the canvas
 // This is the same as WriteRuneB, but bg.Background() has already been called on
 // the background attribute.
+// The x and y must be within range (x < c.w and y < c.h)
 func (c *Canvas) WriteRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
+
+	// Disabled for performance reasons
 	//if x < 0 || y < 0 {
 	//	return
 	//}
-	if x >= c.w || y >= c.h {
-		return
-	}
+
+	// Disabled for performance reasons
+	//if x >= c.w || y >= c.h {
+	//return
+	//}
+
 	index := y*c.w + x
 
 	c.mut.Lock()

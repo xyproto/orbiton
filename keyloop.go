@@ -137,7 +137,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				e.Save(c, tty)
 
 				// Output the error message
-				quitMessage(tty, fmt.Sprintf("%v", x))
+				quitMessageWithStack(tty, fmt.Sprintf("%v", x))
 			}
 		}()
 	}

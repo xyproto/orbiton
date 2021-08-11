@@ -68,6 +68,7 @@ var (
 
 	// Default colors (usually gray)
 	Default           = NewAttributeColor("39")
+	DefaultBackground = NewAttributeColor("49")
 	BackgroundDefault = NewAttributeColor("49")
 
 	// Lookup tables
@@ -374,14 +375,11 @@ func TrueColor(fg color.Color, text string) string {
 }
 
 // Equal checks if two colors have the same attributes, in the same order.
+// The values that are being compared must have at least 1 byte in them.
 func (ac AttributeColor) Equal(other AttributeColor) bool {
-	la := len(ac)
-	lo := len(other)
-	if la == 2 && lo == 2 {
-		return ac[0] == other[0] && ac[1] == other[1]
-	}
-	if la == 1 && lo == 1 {
-		return ac[0] == other[0]
+	// The length check is removed for performance reasons
+	if ac[0] != other[0] {
+		return false
 	}
 	return bytes.Equal(ac, other)
 }
