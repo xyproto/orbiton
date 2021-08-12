@@ -2,7 +2,7 @@
 
 This is a GUI for o, written in C++, using the VTE library.
 
-Tested with VTK 2.91 on Arch Linux.
+Tested with VTE 2.91 on Arch Linux.
 
 ## Build
 
