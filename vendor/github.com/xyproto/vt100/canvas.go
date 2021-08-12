@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"unicode"
 )
 
 type ColorRune struct {
@@ -263,6 +264,10 @@ func (c *Canvas) Draw() {
 		oldcr  ColorRune
 		sb     strings.Builder
 	)
+	cr.fg = Default
+	cr.bg = Default
+	oldcr.fg = Default
+	oldcr.bg = Default
 
 	// NOTE: If too many runes are written to the screen, the contents will scroll up,
 	// and it will appear like the first line(s) are lost!
@@ -278,27 +283,24 @@ func (c *Canvas) Draw() {
 		cr = (*c).chars[index]
 		if !firstRun {
 			oldcr = (*c).oldchars[index]
-			if cr.fg.Equal(lastfg) && cr.bg.Equal(lastbg) && cr.fg.Equal(oldcr.fg) && cr.bg.Equal(oldcr.bg) && cr.r == oldcr.r {
+			if cr.fg.Equal(lastfg) && cr.fg.Equal(oldcr.fg) && cr.bg.Equal(lastbg) && cr.bg.Equal(oldcr.bg) && cr.r == oldcr.r {
 				// One is not skippable, can not skip all
 				skipAll = false
 			}
 		}
-		// Write this character
-		if cr.r < 32 || len(string(cr.r)) == 0 {
-			// Only output a color code if it's different from the last character, or it's the first one
-			if (index == 0) || !lastfg.Equal(cr.fg) || !lastbg.Equal(cr.bg) {
-				sb.WriteString(cr.fg.Combine(cr.bg).String())
-			}
-			// Write a blank
-			sb.WriteRune(' ')
-		} else {
-			// Only output a color code if it's different from the last character, or it's the first one
-			if (index == 0) || !lastfg.Equal(cr.fg) || !lastbg.Equal(cr.bg) {
-				sb.WriteString(cr.fg.Combine(cr.bg).String())
-			}
-			// Write the character
-			sb.WriteRune(cr.r)
+
+		// Only output a color code if it's different from the last character, or it's the first one
+		if (index == 0) || !lastfg.Equal(cr.fg) || !lastbg.Equal(cr.bg) {
+			sb.WriteString(cr.fg.Combine(cr.bg).String())
 		}
+
+		// Write the character
+		if unicode.IsGraphic(cr.r) {
+			sb.WriteRune(cr.r)
+		} else {
+			sb.WriteRune(' ')
+		}
+
 		lastfg = cr.fg
 		lastbg = cr.bg
 	}

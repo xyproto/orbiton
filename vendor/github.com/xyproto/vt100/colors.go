@@ -1,7 +1,6 @@
 package vt100
 
 import (
-	"bytes"
 	"fmt"
 	"image/color"
 	"os"
@@ -376,10 +375,19 @@ func TrueColor(fg color.Color, text string) string {
 
 // Equal checks if two colors have the same attributes, in the same order.
 // The values that are being compared must have at least 1 byte in them.
-func (ac AttributeColor) Equal(other AttributeColor) bool {
-	// The length check is removed for performance reasons
-	if ac[0] != other[0] {
+func (ac *AttributeColor) Equal(other AttributeColor) bool {
+	lac := len(*ac)
+	lao := len(other)
+	if lac == 0 && lao == 0 {
+		return true
+	} else if lac != lao {
 		return false
 	}
-	return bytes.Equal(ac, other)
+	// len(ac) == len(other) from this point on
+	for i := 0; i < lac; i++ {
+		if (*ac)[i] != other[i] {
+			return false
+		}
+	}
+	return true
 }
