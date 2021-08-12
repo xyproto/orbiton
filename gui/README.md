@@ -4,25 +4,21 @@ This is a GUI for o, written in C++, using the VTE library.
 
 Tested with VTE 2.91 on Arch Linux.
 
-## Build
+## Building
 
-Compile with [cxx](https://github.com/xyproto/cxx):
+If `o` and [`cxx`](https://github.com/xyproto/cxx) are installed, running `o main.cpp` and then pressing `ctrl+space` is enough to build the GUI application.
 
-    cxx
-
-Or use the `Makefile` in the parent directory:
+Alternatively, use the `Makefile` in the parent directory:
 
     make gui
 
-## Install
+## Installation
 
-Install with, for instance:
+### Linux
 
-    sudo install -Dm755 og /usr/bin/gui
+In the parent directory, run:
 
-Or, for Linux, use the `Makefile` in the parent directory:
-
-    make install-gui
+    make gui-install
 
 ## Font configuration
 
