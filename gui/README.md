@@ -24,4 +24,10 @@ In the parent directory, run:
 
 The font can be set via the `GUI_FONT` environment variable, like this:
 
-    export GUI_FONT="iosevka 16"
+    export GUI_FONT="Iosevka 16"
+
+Or this:
+
+    export GUI_FONT="Terminus 10"
+
+The default font is `JetBrainsMonoNL 10`.

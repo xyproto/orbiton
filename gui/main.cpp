@@ -93,6 +93,60 @@ bool is_locked(std::string filename)
     return false;
 }
 
+// hasFontFamily checks if a font family for the given
+// Pango font description string exists on the system
+bool hasFontFamily(const char* font_desc_str)
+{
+    auto chosen_font_description = pango_font_description_from_string(font_desc_str);
+    const char* chosen_font_family = pango_font_description_get_family(chosen_font_description);
+    std::string chosen_font_family_str = std::string(chosen_font_family);
+    // List font families, thanks https://gist.github.com/raimue/634213828f7ff86b9a6f4698ed488d85
+    PangoFontFamily** families;
+    int n_families;
+    auto fontmap = pango_cairo_font_map_get_default();
+    pango_font_map_list_families(fontmap, &families, &n_families);
+    // printf("There are %d families\n", n_families);
+    for (int n = 0; n < n_families; n++) {
+        // Convert to a description and back, then to a std::string
+        const char* x_family_name = pango_font_family_get_name(families[n]);
+        const char* x_font_family
+            = pango_font_description_get_family(pango_font_description_from_string(x_family_name));
+        std::string x_font_family_str = std::string(x_font_family);
+        // Compare the two strings, but skip spaces and compare letters case-insensitively
+        bool equal = true;
+        size_t i2 = 0;
+        for (size_t i = 0; i < chosen_font_family_str.length(); i++) {
+            if (i2 >= x_font_family_str.length()) {
+                equal = false;
+                break;
+            }
+            if (chosen_font_family_str.at(i) == ' ') {
+                continue;
+            }
+            if (x_font_family_str.at(i2) == ' ') {
+                i2++;
+                i--;
+                continue;
+            }
+            if (tolower(chosen_font_family_str.at(i)) != tolower(x_font_family_str.at(i2))) {
+                equal = false;
+                break;
+            }
+            i2++;
+        }
+        if (equal) {
+            if (families != nullptr) {
+                g_free(families);
+            }
+            return true;
+        }
+    }
+    if (families != nullptr) {
+        g_free(families);
+    }
+    return false;
+}
+
 int main(int argc, char* argv[])
 {
     // Initialize Gtk, the window and the terminal
@@ -249,11 +303,26 @@ int main(int argc, char* argv[])
 
     // Set font
     const char* font_desc_str = std::getenv("GUI_FONT");
+
+    // Set a default font if GUI_FONT is not specified
     if (font_desc_str == nullptr) {
-        font_desc_str = "terminus 10"s.c_str(); // the default font
+        font_desc_str = "JetBrainsMonoNL 10";
     }
-    vte_terminal_set_font(
-        VTE_TERMINAL(terminal), pango_font_description_from_string(font_desc_str));
+
+    // Try to find a usable font
+    // TODO: Only fetch the list of installed font families once, not one per hasFontFamily call
+    if (!hasFontFamily(font_desc_str)) {
+        font_desc_str = "terminus 10";
+    }
+    if (!hasFontFamily(font_desc_str)) {
+        font_desc_str = "monospace 10";
+    }
+    if (!hasFontFamily(font_desc_str)) {
+        font_desc_str = "courier 10";
+    }
+
+    auto chosen_font_description = pango_font_description_from_string(font_desc_str);
+    vte_terminal_set_font(VTE_TERMINAL(terminal), chosen_font_description);
 
     // Config
     vte_terminal_set_scrollback_lines(VTE_TERMINAL(terminal), 0);
