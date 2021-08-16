@@ -9,7 +9,7 @@ It might be a good fit for:
 * Editing git commit messages (using `EDITOR=o git commit`).
 * Editing `README.md` and `TODO.md` files.
 * Write Markdown files and then export to PDF.
-* Learning up and coming programming languages, like Zig or Rust.
+* Learning programming languages, like Rust or Zig.
 * Editing files deep within larger Go or C++ projects.
 * Solving Advent of Code tasks.
 * Writing and maintaining to-do lists and project documentation in Markdown.
