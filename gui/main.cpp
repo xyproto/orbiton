@@ -17,7 +17,6 @@
 using namespace std::string_literals;
 
 static GPid child_pid = -1; // PID of the child process, the o editor, or -1
-
 static bool force_enable = false; // was the file locked, so that the -f flag was used?
 
 void signal_and_quit()
@@ -48,6 +47,91 @@ void wait_and_quit()
     }
     sleep(0.5);
     gtk_main_quit();
+}
+
+gboolean key_pressed(GtkWidget* widget, GdkEventKey* event, gpointer user_data)
+{
+    switch (event->keyval) {
+    case GDK_KEY_Page_Up:
+        // Send ctrl+p instead
+        event->keyval = GDK_KEY_P;
+        event->state = GDK_CONTROL_MASK;
+        break;
+    case GDK_KEY_Page_Down:
+        // Send ctrl+n instead
+        event->keyval = GDK_KEY_N;
+        event->state = GDK_CONTROL_MASK;
+        break;
+    case GDK_KEY_Home:
+        // Send ctrl+a instead
+        event->keyval = GDK_KEY_A;
+        event->state = GDK_CONTROL_MASK;
+        break;
+    case GDK_KEY_End:
+        // Send ctrl+e instead
+        event->keyval = GDK_KEY_E;
+        event->state = GDK_CONTROL_MASK;
+        break;
+    case GDK_KEY_Delete:
+        if (event->state == GDK_SHIFT_MASK) { // shift + delete, cut
+            // Send ctrl+x instead
+            event->keyval = GDK_KEY_X;
+            event->state = GDK_CONTROL_MASK;
+        } else {
+            // Send ctrl+d instead
+            event->keyval = GDK_KEY_D;
+            event->state = GDK_CONTROL_MASK;
+        }
+        break;
+    case GDK_KEY_Insert:
+        if (event->state == GDK_SHIFT_MASK) { // shift + insert, paste
+            // Send ctrl+v instead
+            event->keyval = GDK_KEY_V;
+            event->state = GDK_CONTROL_MASK;
+        } else if (event->state == GDK_CONTROL_MASK) { // ctrl + insert, copy
+            // Send ctrl+c instead
+            event->keyval = GDK_KEY_C;
+            event->state = GDK_CONTROL_MASK;
+        } else {
+            // Send return instead
+            event->keyval = GDK_KEY_Return;
+        }
+        break;
+    case GDK_KEY_F1:
+        // Send ctrl+o instead, to show the menu
+        event->keyval = GDK_KEY_O;
+        event->state = GDK_CONTROL_MASK;
+        break;
+    case GDK_KEY_F2:
+        // Send ctrl+s instead, to save
+        event->keyval = GDK_KEY_S;
+        event->state = GDK_CONTROL_MASK;
+        break;
+    case GDK_KEY_F3:
+        // Send ctrl+f instead, to find text
+        event->keyval = GDK_KEY_F;
+        event->state = GDK_CONTROL_MASK;
+        break;
+    case GDK_KEY_F4:
+        // Send ctrl+t instead, to toggle between C or C++ header/source files
+        event->keyval = GDK_KEY_T;
+        event->state = GDK_CONTROL_MASK;
+        break;
+
+        // F5 to F8 can be used for debugging!
+
+    case GDK_KEY_F10:
+        // Send ctrl+q instead, to quit
+        event->keyval = GDK_KEY_Q;
+        event->state = GDK_CONTROL_MASK;
+        break;
+    case GDK_KEY_F12:
+        // Send ctrl+r instead, to open/close a portal
+        event->keyval = GDK_KEY_R;
+        event->state = GDK_CONTROL_MASK;
+        break;
+    }
+    return false; // keypress is not handled to completion here
 }
 
 bool file_contains(const std::string lock_filename, const std::string x)
@@ -341,6 +425,7 @@ int main(int argc, char* argv[])
     g_signal_connect(window, "destroy", wait_and_quit, nullptr);
     g_signal_connect(window, "delete-event", wait_and_quit, nullptr);
     g_signal_connect(terminal, "child-exited", signal_and_quit, nullptr);
+    g_signal_connect(window, "key-press-event", G_CALLBACK(key_pressed), nullptr);
 
     // Add the terminal to the window
     gtk_container_add(GTK_CONTAINER(window), terminal);
