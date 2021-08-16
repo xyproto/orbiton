@@ -19,6 +19,8 @@ using namespace std::string_literals;
 static GPid child_pid = -1; // PID of the child process, the o editor, or -1
 static bool force_enable = false; // was the file locked, so that the -f flag was used?
 
+const gdouble font_scale_step = 0.05;
+
 void signal_and_quit()
 {
     if (child_pid != -1) {
@@ -130,7 +132,26 @@ gboolean key_pressed(GtkWidget* widget, GdkEventKey* event, gpointer user_data)
         event->keyval = GDK_KEY_R;
         event->state = GDK_CONTROL_MASK;
         break;
+    case GDK_KEY_plus:
+    case GDK_KEY_KP_Add:
+        // Increase the font scale, if ctrl was held
+        if (event->state == GDK_CONTROL_MASK) {
+            gdouble scale = vte_terminal_get_font_scale(VTE_TERMINAL(widget));
+            vte_terminal_set_font_scale(VTE_TERMINAL(widget), scale + font_scale_step);
+            return true; // keypress is handled to completion
+        }
+        break;
+    case GDK_KEY_minus:
+    case GDK_KEY_KP_Subtract:
+        // Decrease the font scale, if ctrl was held
+        if (event->state == GDK_CONTROL_MASK) {
+            gdouble scale = vte_terminal_get_font_scale(VTE_TERMINAL(widget));
+            vte_terminal_set_font_scale(VTE_TERMINAL(widget), scale - font_scale_step);
+            return true; // keypress is handled to completion
+        }
+        break;
     }
+
     return false; // keypress is not handled to completion here
 }
 
@@ -426,7 +447,7 @@ int main(int argc, char* argv[])
     g_signal_connect(window, "destroy", wait_and_quit, nullptr);
     g_signal_connect(window, "delete-event", wait_and_quit, nullptr);
     g_signal_connect(terminal, "child-exited", signal_and_quit, nullptr);
-    g_signal_connect(window, "key-press-event", G_CALLBACK(key_pressed), nullptr);
+    g_signal_connect(terminal, "key-press-event", G_CALLBACK(key_pressed), nullptr);
 
     // Add the terminal to the window
     gtk_container_add(GTK_CONTAINER(window), terminal);
