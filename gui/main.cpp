@@ -395,15 +395,14 @@ int main(int argc, char* argv[])
     }
 
     // Try to find a usable font
-    // TODO: Only fetch the list of installed font families once, not one per hasFontFamily call
     if (!hasFontFamily(font_desc_str)) {
-        font_desc_str = "terminus 10";
-    }
-    if (!hasFontFamily(font_desc_str)) {
-        font_desc_str = "monospace 10";
-    }
-    if (!hasFontFamily(font_desc_str)) {
-        font_desc_str = "courier 10";
+        font_desc_str = "Iosevka 12";
+    } else if (!hasFontFamily(font_desc_str)) {
+        font_desc_str = "Terminus 10";
+    } else if (!hasFontFamily(font_desc_str)) {
+        font_desc_str = "Monospace 10";
+    } else if (!hasFontFamily(font_desc_str)) {
+        font_desc_str = "Courier 10";
     }
 
     auto chosen_font_description = pango_font_description_from_string(font_desc_str);
