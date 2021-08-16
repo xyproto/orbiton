@@ -184,7 +184,8 @@ bool hasFontFamily(const char* font_desc_str)
     auto chosen_font_description = pango_font_description_from_string(font_desc_str);
     const char* chosen_font_family = pango_font_description_get_family(chosen_font_description);
     std::string chosen_font_family_str = std::string(chosen_font_family);
-    // List font families, thanks https://gist.github.com/raimue/634213828f7ff86b9a6f4698ed488d85
+    // List font families, thanks
+    // https://gist.github.com/raimue/634213828f7ff86b9a6f4698ed488d85
     PangoFontFamily** families;
     int n_families;
     auto fontmap = pango_cairo_font_map_get_default();
@@ -237,8 +238,8 @@ int main(int argc, char* argv[])
     gtk_init(&argc, &argv);
 
     // Create a new window and terminal
-    auto window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    auto terminal = vte_terminal_new();
+    const auto window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    const auto terminal = vte_terminal_new();
 
     // The file to edit
     std::string filename;
