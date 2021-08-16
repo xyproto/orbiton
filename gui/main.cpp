@@ -134,21 +134,20 @@ gboolean key_pressed(GtkWidget* widget, GdkEventKey* event, gpointer user_data)
     return false; // keypress is not handled to completion here
 }
 
-bool file_contains(const std::string lock_filename, const std::string x)
+// file_contains checks if the given filename contains the given string x
+bool file_contains(const std::string filename, const std::string x)
 {
-    // Open the lock file, using the given lock_filename
-    std::ifstream t(lock_filename);
+    std::ifstream t(filename);
     std::string contents;
     t.seekg(0, std::ios::end);
     contents.reserve(t.tellg());
     t.seekg(0, std::ios::beg);
     contents.assign((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-    // Check if the file contents contains the given string x
     return contents.find(x) != std::string::npos;
 }
 
-// Return the contents of an environment variable, but
-// if the contents are empty, return the given default value.
+// env_str return the contents of an environment variable,
+// but if the contents are empty, the default value is returned.
 std::string env_str(std::string env_name, std::string default_value)
 {
     char* e = std::getenv(env_name.c_str());
@@ -177,9 +176,9 @@ bool is_locked(std::string filename)
     return false;
 }
 
-// hasFontFamily checks if a font family for the given
-// Pango font description string exists on the system
-bool hasFontFamily(const char* font_desc_str)
+// has_font_family checks if a font family for the given
+// Pango font description string exists on the system.
+bool has_font_family(const char* font_desc_str)
 {
     auto chosen_font_description = pango_font_description_from_string(font_desc_str);
     const char* chosen_font_family = pango_font_description_get_family(chosen_font_description);
@@ -190,13 +189,14 @@ bool hasFontFamily(const char* font_desc_str)
     int n_families;
     auto fontmap = pango_cairo_font_map_get_default();
     pango_font_map_list_families(fontmap, &families, &n_families);
-    // printf("There are %d families\n", n_families);
+
     for (int n = 0; n < n_families; n++) {
         // Convert to a description and back, then to a std::string
         const char* x_family_name = pango_font_family_get_name(families[n]);
         const char* x_font_family
             = pango_font_description_get_family(pango_font_description_from_string(x_family_name));
         std::string x_font_family_str = std::string(x_font_family);
+
         // Compare the two strings, but skip spaces and compare letters case-insensitively
         bool equal = true;
         size_t i2 = 0;
@@ -219,6 +219,7 @@ bool hasFontFamily(const char* font_desc_str)
             }
             i2++;
         }
+
         if (equal) {
             if (families != nullptr) {
                 g_free(families);
@@ -395,13 +396,13 @@ int main(int argc, char* argv[])
     }
 
     // Try to find a usable font
-    if (!hasFontFamily(font_desc_str)) {
+    if (!has_font_family(font_desc_str)) {
         font_desc_str = "Iosevka 12";
-    } else if (!hasFontFamily(font_desc_str)) {
+    } else if (!has_font_family(font_desc_str)) {
         font_desc_str = "Terminus 10";
-    } else if (!hasFontFamily(font_desc_str)) {
+    } else if (!has_font_family(font_desc_str)) {
         font_desc_str = "Monospace 10";
-    } else if (!hasFontFamily(font_desc_str)) {
+    } else if (!has_font_family(font_desc_str)) {
         font_desc_str = "Courier 10";
     }
 
