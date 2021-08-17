@@ -1,4 +1,4 @@
-# Hai
+# Ko
 
 This is a GUI for o, written in C++, using the VTE library.
 
@@ -22,12 +22,14 @@ In the parent directory, run:
 
 ## Font configuration
 
-The font can be set via the `HAI_FONT` environment variable, like this:
+The font can be set via the `KO_FONT` environment variable, like this:
 
-    export HAI_FONT="Iosevka 16"
+    export KO_FONT="Iosevka 12"
 
 Or this:
 
-    export HAI_FONT="Terminus 10"
+    export KO_FONT="Terminus 10"
 
 The default font is `JetBrainsMonoNL 10`.
+
+The string is a Pango font description string.
