@@ -1,4 +1,4 @@
-# The o GUI
+# Hai
 
 This is a GUI for o, written in C++, using the VTE library.
 
@@ -22,12 +22,12 @@ In the parent directory, run:
 
 ## Font configuration
 
-The font can be set via the `GUI_FONT` environment variable, like this:
+The font can be set via the `HAI_FONT` environment variable, like this:
 
-    export GUI_FONT="Iosevka 16"
+    export HAI_FONT="Iosevka 16"
 
 Or this:
 
-    export GUI_FONT="Terminus 10"
+    export HAI_FONT="Terminus 10"
 
 The default font is `JetBrainsMonoNL 10`.

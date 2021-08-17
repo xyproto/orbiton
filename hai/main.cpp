@@ -409,9 +409,9 @@ int main(int argc, char* argv[])
     vte_terminal_set_color_cursor_foreground(VTE_TERMINAL(terminal), &ct);
 
     // Set font
-    const char* font_desc_str = std::getenv("GUI_FONT");
+    const char* font_desc_str = std::getenv("HAI_FONT");
 
-    // Set a default font if GUI_FONT is not specified
+    // Set a default font if an environment variable is not specified
     if (font_desc_str == nullptr) {
         font_desc_str = "JetBrainsMonoNL 10";
     }

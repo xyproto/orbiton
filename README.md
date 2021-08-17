@@ -18,7 +18,7 @@ For a more feature complete editor that is also written in Go, check out [micro]
 
 ## Screenshot
 
-Screenshot of the VTE GUI application that can be found in the `gui` directory, running the `o` editor:
+Screenshot of the VTE GUI application that can be found in the `hai` directory, running the `o` editor:
 
 ![screenshot](img/screenshot2021.png)
 

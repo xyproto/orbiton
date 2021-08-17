@@ -1,7 +1,4 @@
 o
-hai
-HAI
-hai.*
 o*.p*
 *.bak
 *.swp
@@ -24,6 +21,5 @@ include.txt
 red
 light
 default
-og/og
-gui/gui
 *.o
+hai/hai
