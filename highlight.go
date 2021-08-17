@@ -47,21 +47,33 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		// Figure out if "fromline" is within a markdown code block or not
 		for i := LineIndex(0); i < fromline; i++ {
 			// Check if the untrimmed line starts with ~~~ or ```
-			contents := e.Line(i)
-			if strings.HasPrefix(contents, "~~~") || strings.HasPrefix(contents, "```") {
+			line := e.Line(i)
+			if strings.HasPrefix(line, "~~~") || strings.HasPrefix(line, "```") {
 				// Toggle the flag for if we're in a code block or not
 				inCodeBlock = !inCodeBlock
 			}
+			// Note that code blocks in Markdown normally starts or ends with ~~~ or ``` as
+			// the first thing happening on the line, so it's not important to check the trimmed line.
 		}
 	} else if e.mode == modePython {
 		// Figure out if "fromline" is within a markdown code block or not
 		for i := LineIndex(0); i < fromline; i++ {
-			// Check if the untrimmed line starts with """ or '''
-			contents := e.Line(i)
-			if strings.HasPrefix(contents, "\"\"\"") || strings.HasPrefix(contents, "'''") {
+			// Check if the trimmed line starts with """ or '''
+			line := e.Line(i)
+			trimmedLine := strings.TrimSpace(line)
+
+			if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") {
+				inCodeBlock = false
+			} else if strings.HasPrefix(trimmedLine, "'''") && strings.HasSuffix(trimmedLine, "'''") {
+				inCodeBlock = false
+			} else if strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''") {
 				// Toggle the flag for if we're in a code block or not
 				inCodeBlock = !inCodeBlock
+			} else if strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''") {
+				// Toggle the flag for if we're in a code block or not
+				inCodeBlock = false
 			}
+
 		}
 	}
 	var (
@@ -163,17 +175,27 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					prevLineIsListItem = isListItem(line)
 				case modePython:
 					trimmedLine = strings.TrimSpace(line)
-					foundDockstringMarker := false
-					if strings.HasPrefix(trimmedLine, "\"\"\"") {
+					foundDocstringMarker := false
+
+					if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") {
+						inCodeBlock = false
+						foundDocstringMarker = true
+					} else if strings.HasPrefix(trimmedLine, "'''") && strings.HasSuffix(trimmedLine, "'''") {
+						inCodeBlock = false
+						foundDocstringMarker = true
+					} else if strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''") {
+						// Toggle the flag for if we're in a code block or not
 						inCodeBlock = !inCodeBlock
-						foundDockstringMarker = true
-					} else if strings.HasSuffix(trimmedLine, "\"\"\"") {
-						inCodeBlock = !inCodeBlock
-						foundDockstringMarker = true
+						foundDocstringMarker = true
+					} else if strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''") {
+						// Toggle the flag for if we're in a code block or not
+						inCodeBlock = false
+						foundDocstringMarker = true
 					}
-					if inCodeBlock || foundDockstringMarker {
+
+					if inCodeBlock || foundDocstringMarker {
 						// Purple
-						coloredString = UnEscape(e.MultiLineString.Start(trimmedLine))
+						coloredString = UnEscape(e.MultiLineString.Start(line))
 					} else {
 						// Regular highlight
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
