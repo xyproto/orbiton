@@ -1,4 +1,4 @@
-.PHONY: clean install gui gui-install install-gui hai hai-install
+.PHONY: clean install gui gui-install install-gui ko ko-install
 
 PREFIX ?= /usr
 MANDIR ?= $(PREFIX)/share/man/man1
@@ -20,9 +20,10 @@ GOBUILD := $(shell test $$(go version | tr ' ' '\n' | head -3 | tail -1 | tr '.'
 o: $(SRCFILES)
 	$(GOBUILD)
 
-hai: hai/hai
+gui: ko
+ko: ko/ko
 
-hai/hai: hai/main.cpp
+ko/ko: ko/main.cpp
 	$(CXX) "$<" -o "$@" $(CXXFLAGS)
 
 o.1.gz: o.1
@@ -32,14 +33,14 @@ install: o o.1.gz
 	install -Dm755 o "$(DESTDIR)$(PREFIX)/bin/o"
 	install -Dm644 o.1.gz "$(DESTDIR)$(MANDIR)/o.1.gz"
 
-gui-install: install-hai
-install-gui: install-hai
-hai-install: install-hai
+gui-install: install-ko
+install-gui: install-ko
+ko-install: install-ko
 
-install-hai: hai/hai
-	install -Dm755 hai/hai "$(DESTDIR)$(PREFIX)/bin/hai"
-	install -Dm644 hai/hai.desktop "$(DESTDIR)$(PREFIX)/share/applications/hai.desktop"
-	install -Dm644 img/icon_48x48.png "$(DESTDIR)$(PREFIX)/share/pixmaps/hai.png"
+install-ko: ko/ko
+	install -Dm755 ko/ko "$(DESTDIR)$(PREFIX)/bin/ko"
+	install -Dm644 ko/ko.desktop "$(DESTDIR)$(PREFIX)/share/applications/ko.desktop"
+	install -Dm644 img/icon_48x48.png "$(DESTDIR)$(PREFIX)/share/pixmaps/ko.png"
 
 clean:
-	-rm -f o o.1.gz hai/hai
+	-rm -f o o.1.gz ko/ko

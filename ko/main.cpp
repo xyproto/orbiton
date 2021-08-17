@@ -409,7 +409,7 @@ int main(int argc, char* argv[])
     vte_terminal_set_color_cursor_foreground(VTE_TERMINAL(terminal), &ct);
 
     // Set font
-    const char* font_desc_str = std::getenv("HAI_FONT");
+    const char* font_desc_str = std::getenv("KO_FONT");
 
     // Set a default font if an environment variable is not specified
     if (font_desc_str == nullptr) {
