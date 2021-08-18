@@ -36,7 +36,7 @@ var format = map[*exec.Cmd][]string{
 	exec.Command("tidy", "-w", "120", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "--force-output", "yes", "-ashtml", "-omit", "no", "-xml", "no", "-m", "-c"): {".html", ".htm"},
 }
 
-func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, cmd *exec.Cmd, extOrBaseFilename string) error {
+func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, cmd exec.Cmd, extOrBaseFilename string) error {
 	if which(cmd.Path) == "" { // Does the formatting tool even exist?
 		return errors.New(cmd.Path + " is missing")
 	}
@@ -48,9 +48,11 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	// Use the temporary directory defined in TMPDIR, with fallback to /tmp
 	tempdir := env.Str("TMPDIR", "/tmp")
 
-	if f, err := ioutil.TempFile(tempdir, "__o*"+extOrBaseFilename); err == nil {
+	if f, err := ioutil.TempFile(tempdir, "o.*"+extOrBaseFilename); err == nil {
 		// no error, everything is fine
 		tempFilename := f.Name()
+		defer os.Remove(tempFilename)
+		defer f.Close()
 
 		// TODO: Implement e.SaveAs
 		oldFilename := e.filename
@@ -63,7 +65,7 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			cmd.Args = append(cmd.Args, tempFilename)
 
 			// Save the command in a temporary file
-			saveCommand(cmd)
+			saveCommand(&cmd)
 
 			// Format the temporary file
 			output, err := cmd.CombinedOutput()
@@ -74,6 +76,10 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			if err != nil && !ignoreErrors {
 				// Only grab the first error message
 				errorMessage := strings.TrimSpace(string(output))
+				if errorMessage == "" && err != nil {
+					errorMessage = err.Error()
+				}
+				logf("%s\n", errorMessage)
 				if strings.Count(errorMessage, "\n") > 0 {
 					errorMessage = strings.TrimSpace(strings.SplitN(errorMessage, "\n", 2)[0])
 				}
@@ -111,12 +117,8 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			// Mark the data as changed, despite just having loaded a file
 			e.changed = true
 			e.redrawCursor = true
-
-			// Try to remove the temporary file regardless if "goimports -w" worked out or not
-			_ = os.Remove(tempFilename)
 		}
 		// Try to close the file. f.Close() checks if f is nil before closing.
-		_ = f.Close()
 		e.redraw = true
 		e.redrawCursor = true
 	}
@@ -169,7 +171,7 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 			status.Show(c, e)
 			return
 		}
-		if err := e.formatWithUtility(c, tty, status, cmd, baseFilename); err != nil {
+		if err := e.formatWithUtility(c, tty, status, *cmd, baseFilename); err != nil {
 			status.ClearAll(c)
 			status.SetMessage(err.Error())
 			status.Show(c, e)
@@ -183,7 +185,7 @@ OUT:
 	for cmd, extensions := range format {
 		for _, ext := range extensions {
 			if strings.HasSuffix(e.filename, ext) {
-				if err := e.formatWithUtility(c, tty, status, cmd, ext); err != nil {
+				if err := e.formatWithUtility(c, tty, status, *cmd, ext); err != nil {
 					status.ClearAll(c)
 					status.SetMessage(err.Error())
 					status.Show(c, e)
