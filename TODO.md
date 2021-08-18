@@ -6,10 +6,7 @@
 - [ ] Fix the handling of multiline comments in Python.
 - [ ] Better support for multi-byte unicode runes.
 - [ ] Fix syntax highlighting of `'tokens` in Clojure.
-- [ ] ctrl-w for C# using `astyle` fails the second time. More filenames are added to the command line. Figure out why.
 - [ ] Highlighting some elements in man pages are a bit wonky. Consider if implementing a proper parser is worth it.
-- [ ] Add support for catching a signal and then redraw.
-- [ ] Let the GUI application send that signal at window resize.
 
 ## Bugs/features/issues
 
@@ -24,7 +21,6 @@
 - [ ] When starting o, hash sum the clipboards it can find. When pasting, use the latest changed clipboard. If nothing changed, use the one for Wayland or X11, depending on environment variables.
 - [ ] When editing a file that then is deleted, `ctrl-s` should maybe create the file again? Or save it to `/tmp` or `~/.cache/o`?
 - [ ] Don't highlight regular text in Nroff files.
-- [ ] Press `ctrl-l` twice to run a linter?
 - [ ] Skip `os.Stat` and `Glob` if they take to long, and just open the file directly (they are needed for smart filename completion).
 - [ ] Refactor the code to handle a line as a Line struct/object that has these markers: start of line, start of text, start of scroll view, end of scroll view, end of text, one after end of text, end of line including whitespace
 - [ ] Inherit from the Line struct (with interfaces+types+methods) by adding per-language markers: start of block, end of block, indentation compared to the line above, dedentation compared to the line above
