@@ -36,6 +36,7 @@ var format = map[*exec.Cmd][]string{
 	exec.Command("tidy", "-w", "120", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "--force-output", "yes", "-ashtml", "-omit", "no", "-xml", "no", "-m", "-c"): {".html", ".htm"},
 }
 
+// Using exec.Cmd instead of *exec.Cmd is on purpose, to get a new cmd.stdout and cmd.stdin every time.
 func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, cmd exec.Cmd, extOrBaseFilename string) error {
 	if which(cmd.Path) == "" { // Does the formatting tool even exist?
 		return errors.New(cmd.Path + " is missing")
