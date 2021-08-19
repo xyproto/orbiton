@@ -164,18 +164,20 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 	// Check if one of the build commands are applicable for this filename
 	baseFilename := filepath.Base(filename)
-	var foundCommand *exec.Cmd
+	var foundCommand exec.Cmd // exec.Cmd instead of *exec.Cmd, on purpose, to get a new stdin and stdout every time
+	found := false
 	for command, exts := range build {
 		for _, ext := range exts {
 			if strings.HasSuffix(filename, ext) || baseFilename == ext {
-				foundCommand = command
+				foundCommand = *command
+				found = true
 				// TODO: also check that the executable in the command exists
 			}
 		}
 	}
 
 	// Can not export nor compile, nothing more to do
-	if foundCommand == nil {
+	if !found {
 		return errNoSuitableBuildCommand.Error(), false, false
 	}
 
@@ -203,12 +205,12 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 				baseDirName = filepath.Base(dirName)
 			}
 
-			cmd = exec.Command("rustc", filename, "-o", baseDirName)
+			cmd = *exec.Command("rustc", filename, "-o", baseDirName)
 		}
 	} else if (ext == ".cc" || ext == ".h") && exists("BUILD.bazel") {
 		// Google-style C++ + Bazel projects
 		if which("bazel") != "" {
-			cmd = exec.Command("bazel", "build")
+			cmd = *exec.Command("bazel", "build")
 		}
 	} else if e.mode == modeZig && !exists("build.zig") {
 		// Just build the current file
@@ -224,7 +226,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			if err == nil { // success
 				sourceCode = string(sourceData)
 			}
-			cmd = exec.Command("zig", "build-exe", "-lc", filename, "--name", baseDirName, "--cache-dir", zigCacheDir)
+			cmd = *exec.Command("zig", "build-exe", "-lc", filename, "--name", baseDirName, "--cache-dir", zigCacheDir)
 			// TODO: Find a better way than this
 			if strings.Contains(sourceCode, "SDL2/SDL.h") {
 				cmd.Args = append(cmd.Args, "-lSDL2")
@@ -239,13 +241,13 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	} else if strings.HasSuffix(filename, "_test.go") {
 		// If it's a test-file, run the test instead of building
 		if which("go") != "" {
-			cmd = exec.Command("go", "test", "-failfast")
+			cmd = *exec.Command("go", "test", "-failfast")
 		}
 		progressStatusMessage = "Testing"
 		testingInstead = true
 	} else if e.mode == modeKotlin && which("kotlinc-native") != "" {
 		kotlinNative = true
-		cmd = exec.Command("kotlinc-native", "-nowarn", "-opt", "-Xallocator=mimalloc", "-produce", "program", "-linker-option", "--as-needed", filename, "-o", exeFirstName)
+		cmd = *exec.Command("kotlinc-native", "-nowarn", "-opt", "-Xallocator=mimalloc", "-produce", "program", "-linker-option", "--as-needed", filename, "-o", exeFirstName)
 	}
 
 	// Display a status message with no timeout, about what is currently being done
@@ -256,7 +258,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	}
 
 	// Save the command in a temporary file
-	saveCommand(cmd)
+	saveCommand(&cmd)
 
 	// Run the command and fetch the combined output from stderr and stdout.
 	// Ignore the status code / error, only look at the output.
