@@ -18,7 +18,7 @@ For a more feature complete editor that is also written in Go, check out [micro]
 
 ## Screenshot
 
-Screenshot of the VTE GUI application that can be found in the `hai` directory, running the `o` editor:
+Screenshot of the VTE GUI application that can be found in the `ko` directory, running the `o` editor:
 
 ![screenshot](img/screenshot2021.png)
 
@@ -402,21 +402,11 @@ If the `PAPERSIZE` environment variable is set to ie. `a4` or `letter`, it will 
 
 The `--pdf-engine=xelatex` and `--listings` flags are used, so `xelatex` and the `listings` package needs to be available. A standard installation of LaTeX and Pandoc should provide both.
 
-## Font, color and terminal settings
+## Terminal settings
 
-These should work well together with `o`:
+### Konsole
 
-### Font
-
-* Try `JetBrains Mono NL`.
-
-### Color
-
-* Try the `Breeze` color scheme (but with a black background).
-
-### Terminal settings
-
-* In Konsole, untick the `Flow control` option in the profile settings, to ensure that `ctrl-s` will never freeze the terminal.
+* Untick the `Flow control` option in the profile settings, to ensure that `ctrl-s` will never freeze the terminal.
 
 ## General info
 
