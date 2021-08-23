@@ -53,6 +53,7 @@ const (
 	modeJavaScript     // for JavaScript
 	modeTypeScript     // for TypeScript
 	modeManPage        // for viewing man pages
+	modeAmber          // for Amber templates
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -97,6 +98,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 		switch ext {
 		case ".asm", ".S", ".s", ".inc":
 			mode = modeAssembly
+		case ".amber":
+			mode = modeAmber
 		case ".go":
 			mode = modeGo
 		case ".odin":
@@ -287,6 +290,8 @@ func (mode Mode) String() string {
 		return "JavaScript"
 	case modeManPage:
 		return "Man"
+	case modeAmber:
+		return "Amber"
 	default:
 		return "?"
 	}

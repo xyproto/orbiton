@@ -250,6 +250,15 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// Regular highlight
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
 					}
+				case modeAmber:
+					trimmedLine = strings.TrimSpace(line)
+					if strings.HasPrefix(trimmedLine, "!!") {
+						// Handle single line comments
+						coloredString = UnEscape(e.MultiLineComment.Start(line))
+					} else {
+						// Regular highlight
+						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
+					}
 				case modeNroff:
 					trimmedLine = strings.TrimSpace(line)
 					if strings.HasPrefix(trimmedLine, `.\"`) {

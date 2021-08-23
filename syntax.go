@@ -138,6 +138,8 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "@rem" // or rem or just ":" ...
 	case modeNroff:
 		return `.\"`
+	case modeAmber:
+		return "!!"
 	default:
 		return "//"
 	}
