@@ -413,7 +413,7 @@ int main(int argc, char* argv[])
 
     // Set a default font if an environment variable is not specified
     if (font_desc_str == nullptr) {
-        font_desc_str = "JetBrainsMonoNL 10";
+        font_desc_str = "JetBrainsMonoNL 12";
     }
 
     // Try to find a usable font
