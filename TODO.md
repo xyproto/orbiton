@@ -2,8 +2,8 @@
 
 ## Pri
 
+- [ ] Don't highlight /* in shell scripts like comments.
 - [ ] Also highlight hexadecimal numbers.
-- [ ] Fix the handling of multiline comments in Python.
 - [ ] Better support for multi-byte unicode runes.
 - [ ] Fix syntax highlighting of `'tokens` in Clojure.
 - [ ] Highlighting some elements in man pages are a bit wonky. Consider if implementing a proper parser is worth it.
