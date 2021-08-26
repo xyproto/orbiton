@@ -310,6 +310,13 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			errorMarker = "undefined"
 		case bytes.Contains(output, []byte(": error")):
 			errorMarker = "error"
+		case bytes.Contains(output, []byte("go: cannot find main module")):
+			errorMessage := "no main module, try go mod init"
+			return errorMessage, true, false
+		case bytes.Contains(output, []byte("go: ")):
+			byteLines := bytes.SplitN(output[4:], []byte("\n"), 2)
+			errorMessage := "error: " + string(byteLines[0])
+			return errorMessage, true, false
 		case bytes.Count(output, []byte(":")) >= 2:
 			errorMarker = ":"
 		}
