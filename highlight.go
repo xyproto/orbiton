@@ -30,20 +30,20 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 	tabString := strings.Repeat(" ", e.tabsSpaces.perTab)
 	w := c.Width()
-	//h := c.Height()
 	if fromline >= toline {
 		return errors.New("fromline >= toline in WriteLines")
 	}
-	numlines := toline - fromline // Number of lines available on the canvas for drawing
+	numLinesToDraw := toline - fromline // Number of lines available on the canvas for drawing
 	offsetY := fromline
-	inCodeBlock := false // used when highlighting Markdown or Python
 
+	inCodeBlock := false   // used when highlighting Markdown or Python
 	expandedRunes := false // used for detecting wide unicode symbols
 
 	//logf("numlines: %d offsetY %d\n", numlines, offsetY)
 
+	switch e.mode {
 	// If in Markdown mode, figure out the current state of block quotes
-	if e.mode == modeMarkdown {
+	case modeMarkdown:
 		// Figure out if "fromline" is within a markdown code block or not
 		for i := LineIndex(0); i < fromline; i++ {
 			// Check if the untrimmed line starts with ~~~ or ```
@@ -55,7 +55,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			// Note that code blocks in Markdown normally starts or ends with ~~~ or ``` as
 			// the first thing happening on the line, so it's not important to check the trimmed line.
 		}
-	} else if e.mode == modePython {
+	case modePython:
 		// Figure out if "fromline" is within a markdown code block or not
 		for i := LineIndex(0); i < fromline; i++ {
 			// Check if the trimmed line starts with """ or '''
@@ -76,6 +76,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 		}
 	}
+
 	var (
 		trimmedLine             string
 		singleLineCommentMarker = e.SingleLineCommentMarker()
@@ -116,7 +117,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		cw                      = c.Width()
 	)
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
-	for y := LineIndex(0); y < numlines; y++ {
+	for y := LineIndex(0); y < numLinesToDraw; y++ {
 		lineRuneCount = 0   // per line rune counter, for drawing spaces afterwards (does not handle wide runes)
 		lineStringCount = 0 // per line string counter, for drawing spaces afterwards (handles wide runes)
 

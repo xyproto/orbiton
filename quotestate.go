@@ -64,12 +64,13 @@ func (q *QuoteState) String() string {
 // ProcessRune is for processing single runes
 func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuotes bool) {
 	sr := []rune(q.singleLineCommentMarker)
-	if len(sr) == 0 {
+	lensr := len(sr)
+	if lensr == 0 {
 		// This should never happen
 		return
 	}
 	firstRuneInSingleLineCommentMarker := sr[0]
-	lastRuneInSingleLineCommentMarker := sr[len(sr)-1]
+	lastRuneInSingleLineCommentMarker := sr[lensr-1]
 	switch r {
 	case '`':
 		if q.None() {
