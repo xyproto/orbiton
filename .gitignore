@@ -24,3 +24,5 @@ redblack
 *.tmp
 .vagrant
 .vscode/
+ocpu
+omem
