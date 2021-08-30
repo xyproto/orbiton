@@ -80,9 +80,14 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	var (
 		trimmedLine             string
 		singleLineCommentMarker = e.SingleLineCommentMarker()
-		q                       = NewQuoteState(singleLineCommentMarker, e.mode)
 		ignoreSingleQuotes      = (e.mode == modeLisp) || (e.mode == modeClojure)
 	)
+
+	q, err := NewQuoteState(singleLineCommentMarker, e.mode, ignoreSingleQuotes)
+	if err != nil {
+		return err
+	}
+
 	// First loop from 0 up to to offset to figure out if we are already in a multiLine comment or a multiLine string at the current line
 	for i := LineIndex(0); i < offsetY; i++ {
 		trimmedLine = strings.TrimSpace(e.Line(LineIndex(i)))
@@ -100,7 +105,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 		// Have a trimmed line. Want to know: the current state of which quotes, comments or strings we are in.
 		// Solution, have a state struct!
-		q.Process(trimmedLine, ignoreSingleQuotes)
+		q.Process(trimmedLine)
 	}
 	// q should now contain the current quote state
 	var (
@@ -330,7 +335,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					// C, C++, Go, Rust etc
 
 					trimmedLine = strings.TrimSpace(line)
-					q.Process(trimmedLine, ignoreSingleQuotes)
+					q.Process(trimmedLine)
 
 					//logf("%s -[ %d ]-->\n\t%s\n", trimmedLine, addedPar, q.String())
 
@@ -369,7 +374,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
 				if e.rainbowParenthesis && q.None() && !q.singleLineComment {
-					thisLineParCount, thisLineBraCount := q.ParBraCount(trimmedLine, ignoreSingleQuotes)
+					thisLineParCount, thisLineBraCount := q.ParBraCount(trimmedLine)
 					parCountBeforeThisLine := q.parCount - thisLineParCount
 					braCountBeforeThisLine := q.braCount - thisLineBraCount
 					if e.rainbowParen(&parCountBeforeThisLine, &braCountBeforeThisLine, &runesAndAttributes, singleLineCommentMarker, ignoreSingleQuotes) == errUnmatchedParenthesis {

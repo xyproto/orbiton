@@ -24,7 +24,6 @@ var (
 // pCount is the existing parenthesis count when reaching the start of this line
 func (e *Editor) rainbowParen(parCount, braCount *int, chars *[]textoutput.CharAttribute, singleLineCommentMarker string, ignoreSingleQuotes bool) (err error) {
 	var (
-		q            = NewQuoteState(singleLineCommentMarker, e.mode)
 		prevPrevRune = '\n'
 
 		// CharAttribute has a rune "R" and a vt100.AttributeColor "A"
@@ -34,13 +33,18 @@ func (e *Editor) rainbowParen(parCount, braCount *int, chars *[]textoutput.CharA
 		lastColor = rainbowParenColors[len(rainbowParenColors)-1]
 	)
 
+	q, qerr := NewQuoteState(singleLineCommentMarker, e.mode, ignoreSingleQuotes)
+	if qerr != nil {
+		return qerr
+	}
+
 	// Initialize the quote state parenthesis count with the one that is for the beginning of this line, in the current document
 	q.parCount = *parCount // parenthesis count
 	q.braCount = *braCount // bracket count
 
 	for i, char := range *chars {
 
-		q.ProcessRune(char.R, prevChar.R, prevPrevRune, ignoreSingleQuotes)
+		q.ProcessRune(char.R, prevChar.R, prevPrevRune)
 		prevPrevRune = prevChar.R
 
 		if !q.None() {

@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // QuoteState keeps track of if we're within a multi-line comment, single quotes, double quotes or multi-line quotes.
 // Single line comments are not kept track of in the same way, they can be detected just by checking the current line.
@@ -8,27 +11,39 @@ import "fmt"
 // MultiLine comments (/* ... */) are special.
 // This could be a flag int instead
 type QuoteState struct {
-	singleQuote               int
-	doubleQuote               int
-	backtick                  int
-	multiLineComment          bool
-	singleLineComment         bool
-	singleLineCommentMarker   string
-	startedMultiLineString    bool
-	startedMultiLineComment   bool
-	stoppedMultiLineComment   bool
-	containsMultiLineComments bool
-	parCount                  int // Parenthesis count
-	braCount                  int // Square bracket count
-	mode                      Mode
+	singleQuote                        int
+	doubleQuote                        int
+	backtick                           int
+	multiLineComment                   bool
+	singleLineComment                  bool
+	singleLineCommentMarker            string
+	singleLineCommentMarkerRunes       []rune
+	firstRuneInSingleLineCommentMarker rune
+	lastRuneInSingleLineCommentMarker  rune
+	startedMultiLineString             bool
+	startedMultiLineComment            bool
+	stoppedMultiLineComment            bool
+	containsMultiLineComments          bool
+	parCount                           int // Parenthesis count
+	braCount                           int // Square bracket count
+	mode                               Mode
+	ignoreSingleQuotes                 bool
 }
 
 // NewQuoteState takes a singleLineCommentMarker (such as "//" or "#") and returns a pointer to a new QuoteState struct
-func NewQuoteState(singleLineCommentMarker string, mode Mode) *QuoteState {
+func NewQuoteState(singleLineCommentMarker string, mode Mode, ignoreSingleQuotes bool) (*QuoteState, error) {
 	var q QuoteState
 	q.singleLineCommentMarker = singleLineCommentMarker
+	q.singleLineCommentMarkerRunes = []rune(singleLineCommentMarker)
+	lensr := len(q.singleLineCommentMarkerRunes)
+	if lensr == 0 {
+		return nil, errors.New("single line comment marker is empty")
+	}
+	q.firstRuneInSingleLineCommentMarker = q.singleLineCommentMarkerRunes[0]
+	q.lastRuneInSingleLineCommentMarker = q.singleLineCommentMarkerRunes[lensr-1]
 	q.mode = mode
-	return &q
+	q.ignoreSingleQuotes = ignoreSingleQuotes
+	return &q, nil
 }
 
 // None returns true if we're not within ', "", `, /* ... */ or a single-line quote right now
@@ -62,15 +77,7 @@ func (q *QuoteState) String() string {
 }
 
 // ProcessRune is for processing single runes
-func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuotes bool) {
-	sr := []rune(q.singleLineCommentMarker)
-	lensr := len(sr)
-	if lensr == 0 {
-		// This should never happen
-		return
-	}
-	firstRuneInSingleLineCommentMarker := sr[0]
-	lastRuneInSingleLineCommentMarker := sr[lensr-1]
+func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 	switch r {
 	case '`':
 		if q.None() {
@@ -97,7 +104,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 		}
 	case '\'':
 		if prevRune != '\\' {
-			if ignoreSingleQuotes || q.mode == modeLisp || q.mode == modeClojure {
+			if q.ignoreSingleQuotes || q.mode == modeLisp || q.mode == modeClojure {
 				return
 			}
 			if q.None() {
@@ -110,7 +117,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 			}
 		}
 	case '*': // support C-style and multi-line comments
-		if firstRuneInSingleLineCommentMarker != '#' && prevRune == '/' && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
+		if q.firstRuneInSingleLineCommentMarker != '#' && prevRune == '/' && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
 		}
@@ -119,13 +126,13 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
 		}
-	case lastRuneInSingleLineCommentMarker:
+	case q.lastRuneInSingleLineCommentMarker:
 		// TODO: Simplify by checking q.None() first, and assuming that the len of the marker is > 1 if it's not 1 since it's not 0
 		if !q.multiLineComment && !q.singleLineComment && !q.startedMultiLineString && prevPrevRune != ':' && q.doubleQuote == 0 && q.singleQuote == 0 && q.backtick == 0 {
 			switch {
-			case len(q.singleLineCommentMarker) == 1:
+			case len(q.singleLineCommentMarkerRunes) == 1:
 				fallthrough
-			case len(q.singleLineCommentMarker) > 1 && prevRune == firstRuneInSingleLineCommentMarker:
+			case len(q.singleLineCommentMarkerRunes) > 1 && prevRune == q.firstRuneInSingleLineCommentMarker:
 				q.singleLineComment = true
 				q.startedMultiLineString = false
 				q.stoppedMultiLineComment = false
@@ -143,7 +150,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 		// r == '/'
 		fallthrough
 	case '/': // support C-style multi-line comments
-		if firstRuneInSingleLineCommentMarker != '#' && prevRune == '*' {
+		if q.firstRuneInSingleLineCommentMarker != '#' && prevRune == '*' {
 			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
 			if q.startedMultiLineComment {
@@ -180,7 +187,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune, ignoreSingleQuo
 
 // Process takes a line of text and modifies the current quote state accordingly,
 // depending on which runes are encountered.
-func (q *QuoteState) Process(line string, ignoreSingleQuotes bool) (rune, rune) {
+func (q *QuoteState) Process(line string) (rune, rune) {
 	q.singleLineComment = false
 	q.startedMultiLineString = false
 	q.stoppedMultiLineComment = false
@@ -188,7 +195,7 @@ func (q *QuoteState) Process(line string, ignoreSingleQuotes bool) (rune, rune) 
 	prevRune := '\n'
 	prevPrevRune := '\n'
 	for _, r := range line {
-		q.ProcessRune(r, prevRune, prevPrevRune, ignoreSingleQuotes)
+		q.ProcessRune(r, prevRune, prevPrevRune)
 		prevPrevRune = prevRune
 		prevRune = r
 	}
@@ -198,10 +205,10 @@ func (q *QuoteState) Process(line string, ignoreSingleQuotes bool) (rune, rune) 
 // ParBraCount will count the parenthesis and square brackets for a single line
 // while skipping comments and multiline strings
 // and without modifying the QuoteState.
-func (q *QuoteState) ParBraCount(line string, ignoreSingleQuotes bool) (int, int) {
+func (q *QuoteState) ParBraCount(line string) (int, int) {
 	qCopy := *q
 	qCopy.parCount = 0
 	qCopy.braCount = 0
-	qCopy.Process(line, ignoreSingleQuotes)
+	qCopy.Process(line)
 	return qCopy.parCount, qCopy.braCount
 }
