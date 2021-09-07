@@ -27,6 +27,11 @@ var templatePrograms = map[Mode]TemplateProgram{
 		3,
 		8,
 	},
+	modeD: {
+		"module main;\n\nimport std.stdio;\n\nvoid main(string[] args) {\n    writeln(\"Hello, World!\");\n}\n",
+		1,
+		2,
+	},
 	modeCpp: {
 		"#include <cstdlib>\n#include <iostream>\n#include <string>\n\nusing namespace std::string_literals;\n\nint main(int argc, char** argv)\n{\n    std::cout << \"Hello, World!\"s << std::endl;\n    return EXIT_SUCCESS;\n}\n",
 		3,

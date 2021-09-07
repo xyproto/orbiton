@@ -156,6 +156,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			exec.Command("luac", "-o", exeFirstName+".out", filename):                        {".lua"},                                                    // Lua, build an .out file
 			exec.Command("nim", "c", filename):                                               {".nim"},                                                    // Nim
 			exec.Command("fpc", filename):                                                    {".pp", ".pas", ".lpr"},                                     // Object Pascal / Delphi
+			exec.Command("gdc", "-o", exeFirstName, filename):                                {".d"},                                                      // D
 			exec.Command("xdg-open", filename):                                               {".htm", ".html"},                                           // Display HTML in the browser
 			exec.Command("odin", "build", filename):                                          {".odin"},                                                   // Odin
 			exec.Command("csc", "-nologo", "-unsafe", filename):                              {".cs"},                                                     // C#
