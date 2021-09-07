@@ -54,6 +54,8 @@ const (
 	modeTypeScript     // for TypeScript
 	modeManPage        // for viewing man pages
 	modeAmber          // for Amber templates
+	modeBazel          // for Bazel and Starlark
+	modeD              // for D
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -92,6 +94,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 		mode = modeConfig
 	case ext == ".sh" || ext == ".ksh" || ext == ".tcsh" || ext == ".bash" || ext == ".zsh" || ext == ".local" || ext == ".profile" || baseFilename == "PKGBUILD" || (strings.HasPrefix(baseFilename, ".") && strings.Contains(baseFilename, "sh")): // This last part covers .bashrc, .zshrc etc
 		mode = modeShell
+	case ext == ".bzl" || baseFilename == "BUILD" || baseFilename == "WORKSPACE":
+		mode = modeBazel
 	case baseFilename == "CMakeLists.txt" || ext == ".cmake":
 		mode = modeCMake
 	default:
@@ -124,6 +128,9 @@ func detectEditorMode(filename string) (Mode, bool) {
 		case ".c":
 			// C mode
 			mode = modeC
+		case ".d":
+			// D mode
+			mode = modeD
 		case ".cs":
 			// C# mode
 			mode = modeCS
@@ -292,6 +299,10 @@ func (mode Mode) String() string {
 		return "Man"
 	case modeAmber:
 		return "Amber"
+	case modeBazel:
+		return "Bazel"
+	case modeD:
+		return "D"
 	default:
 		return "?"
 	}
