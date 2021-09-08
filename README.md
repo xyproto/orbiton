@@ -80,7 +80,7 @@ These features are unique to `o`, as far as I am aware:
 * Is provided as a single self-contained executable.
 * Loads faster than both `vim` and `emacs`, for small files.
 * Can render text to PDF.
-* Tested with `alacritty`, `st`, `urxvt`, `konsole` and `xfce4-terminal`.
+* Tested with `alacritty`, `st`, `urxvt`, `konsole`, `zutty` and `xfce4-terminal`.
 * Tested on Arch Linux, Debian and FreeBSD.
 * Never asks before saving or quitting. Be careful!
 * The [`NO_COLOR`](https://no-color.org) environment variable can be set to disable all colors.
@@ -99,8 +99,8 @@ These features are unique to `o`, as far as I am aware:
 * Will convert DOS/Windows line endings (`\r\n`) to UNIX line endings (just `\n`), whenever possible.
 * Will replace non-breaking space (`0xc2 0xa0`) with a regular space (`0x20`) whenever possible.
 * If interactive rebase is launched with `git rebase -i`, then either `ctrl-w` or `ctrl-r` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
-* If the editor executable is renamed to `ro` (or have a symlink with that name), the default theme will be red/black.
-* If the editor executable is renamed to `light` (or have a symlink with that name), the default theme will be suitable for light backgrounds.
+* If the editor executable is renamed to a word starting with `r` (or have a symlink with that name), the default theme will be red/black.
+* If the editor executable is renamed to a word starting with `l` (or have a symlink with that name), the default theme will be suitable for light backgrounds.
 * Want to quickly convert Markdown to PDF and have pandoc installed? Try `o filename.md`, press `ctrl-space` twice and quit with `ctrl-q`.
 * Press `ctrl-w` to toggle the check mark in `- [ ] TODO item` boxes in Markdown.
 * `o` is written mostly in `o`, with some use of NeoVim for the initial development.
@@ -174,9 +174,10 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 | Object Pascal                                   | `.pas`, `.pp`, `.lpr`                                     | yes           | `fpc`                                             | WIP                                                                                                            |
 | Nim                                             | `.nim`                                                    | WIP           | `nim c`                                           | WIP                                                                                                            |
 | Odin                                            | `.odin`                                                   | yes           | `odin build`                                      | N/A                                                                                                            |
-| C#                                              | `.cs`                                                     | yes           | `csc -nologo -unsafe $filename`                   | `astyle -mode=cs main.cs`                                                                              |
-| JavaScript                                      | `.js`                                                     | WIP           |                                                   | `prettier --tab-width 4 -w $filename`                                                                         |
-| TypeScript                                      | `.ts`                                                     | WIP           |                                                   | WIP                                                                                                           |
+| C#                                              | `.cs`                                                     | yes           | `csc -nologo -unsafe $filename`                   | `astyle -mode=cs main.cs`                                                                                      |
+| JavaScript                                      | `.js`                                                     | WIP           |                                                   | `prettier --tab-width 4 -w $filename`                                                                          |
+| TypeScript                                      | `.ts`                                                     | WIP           |                                                   | WIP                                                                                                            |
+| D                                               | `.d`                                                      | yes           | `gdc $filename`                                   | WIP                                                                                                            |
 
 `/etc/fstab` files are also supported, and can be formatted with `ctrl-w` if [`fstabfmt`](https://github.com/xyproto/fstabfmt) is installed.
 
