@@ -20,7 +20,7 @@ For a more feature complete editor that is also written in Go, check out [micro]
 
 Screenshot of the VTE GUI application that can be found in the `ko` directory, running the `o` editor:
 
-![screenshot](img/screenshot2021.png)
+![screenshot](img/screenshot2021sept.png)
 
 ## Packaging status
 
