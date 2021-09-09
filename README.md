@@ -108,11 +108,11 @@ These features are unique to `o`, as far as I am aware:
 
 ## Known bugs
 
-* In some terminal emulators, scrolling quickly up or down with the arrow keys can make the text jump around (it works fine in `alacritty`). Scroll up and down with `ctrl-n` and `ctrl-p` instead to avoid this. Press `esc` to repaint the text, if needed.
-* Some unicode runes may disrupt the text flow. This is generally not a problem for editing code and configuration files, but may be an issue when editing files that contains text in many languages.
+* Using tmux `tmux` and resizing the terminal emulator window may trigger text rendering issues. Try pressing `esc` to redraw the text.
 * For some terminal emulators, if `o` is busy performing an operation, pressing `ctrl-s` may lock the terminal. Some terminal emulators, like `konsole`, can be configured to turn off this behavior. Press `ctrl-q` to unlock the terminal again (together with the unfortunate risk of quitting `o`). You can also use the `ctrl-o` menu for saving and quitting.
+* Some unicode runes may disrupt the text flow. This is generally not a problem for editing code and configuration files, but may be an issue when editing files that contains text in many languages.
 * `o` may have issues with large files (of several MB+). For normal text files or source code files, this is a non-issue.
-* Middle-click pasting (instead of pasting with `ctrl-v`) may have issues with only pasting the first character.
+* Middle-click pasting (instead of pasting with `ctrl-v`) may only paste the first character.
 * The smart indentation is not always smart.
 
 ## Hotkeys
