@@ -306,10 +306,10 @@ int main(int argc, char* argv[])
     // Set the default Window size
     // gtk_window_set_default_size(GTK_WINDOW(window), 800, 600);
 
-    using std::filesystem::exists;
-    using std::filesystem::path;
-    using std::filesystem::perms;
-    using std::filesystem::status;
+    using fs::exists;
+    using fs::path;
+    using fs::perms;
+    using fs::status;
 
     // Search for the o executable in $PATH
     // Thanks https://stackoverflow.com/a/14571264
