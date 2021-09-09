@@ -22,13 +22,13 @@ In the parent directory, run:
 
 ## Font configuration
 
-The font can be set via the `KO_FONT` environment variable, like this:
+The font can be set via the `O_FONT` environment variable, like this:
 
-    export KO_FONT="Iosevka 12"
+    export O_FONT="Iosevka 12"
 
-Or this:
+Or like this:
 
-    export KO_FONT="Terminus 10"
+    export O_FONT="Terminus 10"
 
 The default font is `JetBrainsMonoNL 10`.
 

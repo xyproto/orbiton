@@ -389,16 +389,16 @@ int main(int argc, char* argv[])
         bg = GdkRGBA { 1.0, 1.0, 0.8, 1.0 };
 
         // Inspired by the mterm color scheme, but inverted, and with a light yellow background
-        pal[0] = { 0.98, 0.98, 0.98, 1.0 };  // inverted almost white
-        pal[1] = { 0.21, 0.66, 0.64, 1.0 };  // inverted red, used for the "private" keyword
-        pal[2] = { 0.32, 0.21, 0.41, 1.0 };  // inverted green
-        pal[3] = { 0.03, 0.16, 0.41, 1.0 };  // inverted yellow
-        pal[4] = { 0.45, 0.32, 0.20, 1.0 };  // inverted blue
-        pal[5] = { 0.30, 0.45, 0.33, 1.0 };  // inverted magenta
-        pal[6] = { 0.42, 0.20, 0.14, 1.0 };  // inverted cyan
-        pal[7] = { 0.40, 0.40, 0.40, 1.0 };  // inverted light gray
-        pal[8] = { 0.30, 0.30, 0.30, 1.0 };  // inverted dark gray
-        pal[9] = { 0.08, 0.70, 0.70, 1.0 };  // inverted light red, used for keywords
+        pal[0] = { 0.98, 0.98, 0.98, 1.0 }; // inverted almost white
+        pal[1] = { 0.21, 0.66, 0.64, 1.0 }; // inverted red, used for the "private" keyword
+        pal[2] = { 0.32, 0.21, 0.41, 1.0 }; // inverted green
+        pal[3] = { 0.03, 0.16, 0.41, 1.0 }; // inverted yellow
+        pal[4] = { 0.45, 0.32, 0.20, 1.0 }; // inverted blue
+        pal[5] = { 0.30, 0.45, 0.33, 1.0 }; // inverted magenta
+        pal[6] = { 0.42, 0.20, 0.14, 1.0 }; // inverted cyan
+        pal[7] = { 0.40, 0.40, 0.40, 1.0 }; // inverted light gray
+        pal[8] = { 0.30, 0.30, 0.30, 1.0 }; // inverted dark gray
+        pal[9] = { 0.08, 0.70, 0.70, 1.0 }; // inverted light red, used for keywords
         pal[10] = { 0.32, 0.20, 0.41, 1.0 }; // inverted light green
         pal[11] = { 0.03, 0.16, 0.41, 1.0 }; // inverted light yellow
         pal[12] = { 0.45, 0.32, 0.10, 1.0 }; // inverted light blue
@@ -437,23 +437,33 @@ int main(int argc, char* argv[])
     const auto ct = GdkRGBA { 0.0, 0.0, 0.0, 0.9 };
     vte_terminal_set_color_cursor_foreground(VTE_TERMINAL(terminal), &ct);
 
-    // Set font
-    const char* font_desc_str = std::getenv("KO_FONT");
+    // Get the O_FONT environment variable, or nullptr
+    const char* font_desc_str = std::getenv("O_FONT");
 
-    // Set a default font if an environment variable is not specified
+    // Also check if KO_FONT is set, if O_FONT was not set
+    if (font_desc_str == nullptr) {
+        font_desc_str = std::getenv("KO_FONT");
+    }
+
+    // Set a default font if no environment variable was specified
     if (font_desc_str == nullptr) {
         font_desc_str = "JetBrainsMonoNL 12";
     }
 
-    // Try to find a usable font
+    // Check if the currently configured font can be found
     if (!has_font_family(font_desc_str)) {
+        // If not, try to find a usable font
         font_desc_str = "Iosevka 12";
-    } else if (!has_font_family(font_desc_str)) {
-        font_desc_str = "Terminus 10";
-    } else if (!has_font_family(font_desc_str)) {
-        font_desc_str = "Monospace 10";
-    } else if (!has_font_family(font_desc_str)) {
-        font_desc_str = "Courier 10";
+        if (!has_font_family(font_desc_str)) {
+            font_desc_str = "Terminus 10";
+            if (!has_font_family(font_desc_str)) {
+                font_desc_str = "Monospace 10";
+                if (!has_font_family(font_desc_str)) {
+                    // Final font family fallback
+                    font_desc_str = "Courier 10";
+                }
+            }
+        }
     }
 
     auto chosen_font_description = pango_font_description_from_string(font_desc_str);
