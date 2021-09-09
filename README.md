@@ -263,6 +263,10 @@ Scala
 * The jar file can be executed with `java -jar main.jar`. Use `scalac -d main.jar MyFile.scala` if you want to produce a jar that can be executed with `scala main.jar`.
 * For formatting code with `ctrl-w`, `scalafmt` must be installed.
 
+D
+
+* For building code with `ctrl-space`, `gdc` must be available.
+
 JSON
 
 * The JSON formatter is built-in.
@@ -336,6 +340,7 @@ If `/usr/share/scala/lib/scala-library.jar` is not found `scalac -d run_with_sca
 * [`cxx`](https://github.com/xyproto/cxx)
 * [`fstabfmt`](https://github.com/xyproto/fstabfmt)
 * `g++` / `base-devel`
+* `gdc`
 * `ghc`
 * `go` / `golang`
 * `goimports`
@@ -408,12 +413,12 @@ The `--pdf-engine=xelatex` and `--listings` flags are used, so `xelatex` and the
 
 * Untick the `Flow control` option in the profile settings, to ensure that `ctrl-s` will never freeze the terminal.
 
+## Stars
+
+[![Stargazers over time](https://starchart.cc/xyproto/o.svg)](https://starchart.cc/xyproto/o)
+
 ## General info
 
 * Version: 2.43.1
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
-
-## Popularity curve
-
-[![Stargazers over time](https://starchart.cc/xyproto/o.svg)](https://starchart.cc/xyproto/o)
