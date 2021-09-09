@@ -8,6 +8,7 @@
 #include <string>
 #include <unistd.h>
 #include <vte/vte.h>
+#include "fs.h"
 
 /*
  * A terminal emulator only for running o.
@@ -182,8 +183,8 @@ std::string env_str(std::string env_name, std::string default_value)
 // ~/.cache/o/lockfile.txt or $XDG_CACHE_DIR/o/lockefile.txt.
 bool is_locked(std::string filename)
 {
-    using std::filesystem::exists;
-    using std::filesystem::path;
+    using fs::exists;
+    using fs::path;
     path xdg_cache_dir(env_str("XDG_CACHE_DIR"s, "."s));
     path home_dir(env_str("HOME"s, "."s));
     path xdg_cache_lockfile = xdg_cache_dir / path("o/lockfile.txt"s);
