@@ -173,6 +173,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		case "c:17": // ctrl-q, quit
 			e.quit = true
 		case "c:23": // ctrl-w, format (or if in git mode, cycle interactive rebase keywords)
+
 			undo.Snapshot(e)
 
 			// Clear the search term
