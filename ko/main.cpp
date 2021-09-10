@@ -279,6 +279,12 @@ int main(int argc, char* argv[])
         givenFilename = true;
     }
 
+    if (flag == "-r"s) {
+        // TODO: Write a headless editor engine that can talk over network
+        //std::cout << "REMOTE"s << std::endl;
+        flag = ""s;
+    }
+
     // Check if the executable starts with "l", if yes, use light mode
     bool lightMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'l';
 
