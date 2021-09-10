@@ -598,6 +598,23 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				// De-indent the current line before moving on to the next
 				e.SetCurrentLine(trimmedLine)
 				leadingWhitespace = currentLeadingWhitespace
+			} else if e.mode == modeC || e.mode == modeCpp || e.mode == modeZig || e.mode == modeRust || e.mode == modeJava || e.mode == modeJavaScript || e.mode == modeKotlin || e.mode == modeD {
+				// Add missing parenthesis for "if ... {", "for", "while" and "when" for C-like languages
+				for _, kw := range []string{"for", "foreach", "foreach_reverse", "if", "switch", "when", "while", "while let"} {
+					if strings.HasPrefix(trimmedLine, kw+" ") && !strings.HasPrefix(trimmedLine, kw+" (") {
+						if strings.HasSuffix(trimmedLine, " {") {
+							// Add ( and ), keep the final "{"
+							e.SetCurrentLine(currentLeadingWhitespace + kw + " (" + trimmedLine[len(kw)+1:len(trimmedLine)-2] + ") {")
+							e.pos.sx += 2
+						} else if !strings.HasSuffix(trimmedLine, ")") {
+							// Add ( and ), there is no final "{"
+							e.SetCurrentLine(currentLeadingWhitespace + kw + " (" + trimmedLine[len(kw)+1:] + ")")
+							e.pos.sx += 2
+							indent = true
+							leadingWhitespace = e.tabsSpaces.String() + currentLeadingWhitespace
+						}
+					}
+				}
 			}
 
 			//onlyOneLine := e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument()
