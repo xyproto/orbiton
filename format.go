@@ -80,7 +80,6 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 				if errorMessage == "" && err != nil {
 					errorMessage = err.Error()
 				}
-				logf("%s\n", errorMessage)
 				if strings.Count(errorMessage, "\n") > 0 {
 					errorMessage = strings.TrimSpace(strings.SplitN(errorMessage, "\n", 2)[0])
 				}
@@ -127,6 +126,7 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 }
 
 func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, jsonFormatToggle *bool) {
+
 	// Format JSON
 	if e.mode == modeJSON {
 		// TODO: Find a JSON formatter that does not need a JavaScript package like otto
