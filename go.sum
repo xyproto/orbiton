@@ -29,8 +29,8 @@ github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d h1:yKm7XZV6j9
 github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d/go.mod h1:UdhH50NIW0fCiwBSr0co2m7BnFLdv4fQTgdqdJTHFeE=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/urfave/cli/v2 v2.2.0/go.mod h1:SE9GqnLQmjVa0iPEY0f1w3ygNIYcIJ0OKPMoW2caLfQ=
-github.com/xyproto/benchmarked v0.2.0 h1:OIFLZ4p2POpYZXlInS+a61lQbQNRLI1U28ItKY1g3Ig=
-github.com/xyproto/benchmarked v0.2.0/go.mod h1:4H4a1k1EsFmliut59gNc8RO2N2IIhl74XqfW0AVjWbk=
+github.com/xyproto/benchmarked v0.3.0 h1:IQoapveDysT8kyBf2SvTl1AygsO9ewkrhiTDRB3w/04=
+github.com/xyproto/benchmarked v0.3.0/go.mod h1:4H4a1k1EsFmliut59gNc8RO2N2IIhl74XqfW0AVjWbk=
 github.com/xyproto/env v1.1.0 h1:W2cGFeBNNwxwAGG9vuVdF2ub9fm73zoyl2W+xEmnIow=
 github.com/xyproto/env v1.1.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
 github.com/xyproto/guessica v1.1.0 h1:u//yWmEiW1En0kNHcj4rT1HADOqz47SNR/qx6D9s40g=
@@ -44,8 +44,8 @@ github.com/xyproto/textoutput v1.12.10-0.20210803190129-b3f0f5b63cef h1:GaLP5t2T
 github.com/xyproto/textoutput v1.12.10-0.20210803190129-b3f0f5b63cef/go.mod h1:3zEJqdPBSLu9vxqL0asPgk1v5/WCwB5ev2n1WYuk9+w=
 github.com/xyproto/vt100 v1.8.5/go.mod h1:8ni0+pphJABRAZOoyxY9yD0QQxkia4PjKNFiMQStrT4=
 github.com/xyproto/vt100 v1.9.2/go.mod h1:y0cFmXmrWnCMpdB7vUgSu8g+24Hqv9vPm/aq7+M2034=
-github.com/xyproto/vt100 v1.9.6 h1:hKDo1JPj467QwU3w428vrIHcUxzjrguMeoWOy+DmKzA=
-github.com/xyproto/vt100 v1.9.6/go.mod h1:FxkAX6iePKmpADp8KAapN+6WT70YmYrxGRjj4QmcqGE=
+github.com/xyproto/vt100 v1.9.7 h1:UcexdTeL4mR3STJYk2hGw/PvchwAm24a7UfWUBemXmY=
+github.com/xyproto/vt100 v1.9.7/go.mod h1:t/IvPrlAQcXL4/Xvusodh7ChQKRD+/Y+LLot869K2VE=
 golang.org/x/image v0.0.0-20190910094157-69e4b8554b2a/go.mod h1:FeLwcggjj3mMvU+oOTbSwawSJRM1uh48EjtB4UJZlP0=
 golang.org/x/sys v0.0.0-20200116001909-b77594299b42/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=

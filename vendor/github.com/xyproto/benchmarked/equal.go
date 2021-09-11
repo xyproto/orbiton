@@ -5,7 +5,7 @@ import (
 )
 
 // Equal checks if two slices of bytes are equal
-var Equal = equal10 // overall best equal function
+var Equal = equal33 // overall best equal function
 
 func examineCenter(start, stop int, a, b *[]byte, wg *sync.WaitGroup, differ *bool) {
 	if start == stop {
@@ -706,4 +706,26 @@ func equal32(a, b []byte) bool {
 		return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3] && a[4] == b[4] && a[5] == b[5] && a[6] == b[6]
 	}
 	return string(a[7:]) == string(b[7:])
+}
+
+func equal33(a, b []byte) bool {
+	switch len(a) {
+	case 0:
+		return len(b) == 0
+	case len(b):
+		return !(string(a) != string(b))
+	default:
+		return false
+	}
+}
+
+func equal34(a, b []byte) bool {
+	switch len(a) {
+	case 0:
+		return len(b) == 0
+	case len(b):
+		return !(string(a[1:]) != string(b[1:]))
+	default:
+		return false
+	}
 }
