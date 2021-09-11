@@ -29,8 +29,8 @@ github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d h1:yKm7XZV6j9
 github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d/go.mod h1:UdhH50NIW0fCiwBSr0co2m7BnFLdv4fQTgdqdJTHFeE=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/urfave/cli/v2 v2.2.0/go.mod h1:SE9GqnLQmjVa0iPEY0f1w3ygNIYcIJ0OKPMoW2caLfQ=
-github.com/xyproto/benchmarked v0.1.0 h1:PyudZkGP/cSrOvRqpFC6ThpMTZn+ztv+8FhaGfnT2zc=
-github.com/xyproto/benchmarked v0.1.0/go.mod h1:4H4a1k1EsFmliut59gNc8RO2N2IIhl74XqfW0AVjWbk=
+github.com/xyproto/benchmarked v0.2.0 h1:OIFLZ4p2POpYZXlInS+a61lQbQNRLI1U28ItKY1g3Ig=
+github.com/xyproto/benchmarked v0.2.0/go.mod h1:4H4a1k1EsFmliut59gNc8RO2N2IIhl74XqfW0AVjWbk=
 github.com/xyproto/env v1.1.0 h1:W2cGFeBNNwxwAGG9vuVdF2ub9fm73zoyl2W+xEmnIow=
 github.com/xyproto/env v1.1.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
 github.com/xyproto/guessica v1.1.0 h1:u//yWmEiW1En0kNHcj4rT1HADOqz47SNR/qx6D9s40g=
@@ -44,8 +44,8 @@ github.com/xyproto/textoutput v1.12.10-0.20210803190129-b3f0f5b63cef h1:GaLP5t2T
 github.com/xyproto/textoutput v1.12.10-0.20210803190129-b3f0f5b63cef/go.mod h1:3zEJqdPBSLu9vxqL0asPgk1v5/WCwB5ev2n1WYuk9+w=
 github.com/xyproto/vt100 v1.8.5/go.mod h1:8ni0+pphJABRAZOoyxY9yD0QQxkia4PjKNFiMQStrT4=
 github.com/xyproto/vt100 v1.9.2/go.mod h1:y0cFmXmrWnCMpdB7vUgSu8g+24Hqv9vPm/aq7+M2034=
-github.com/xyproto/vt100 v1.9.5 h1:5W7JGaISQRX/C09IWuAZd7ij2pqVYienVJ7xG5HdziY=
-github.com/xyproto/vt100 v1.9.5/go.mod h1:g6qLR/sut12QFVBZNDv9qAsUJvRhF2kKU8Fr697LgvM=
+github.com/xyproto/vt100 v1.9.6 h1:hKDo1JPj467QwU3w428vrIHcUxzjrguMeoWOy+DmKzA=
+github.com/xyproto/vt100 v1.9.6/go.mod h1:FxkAX6iePKmpADp8KAapN+6WT70YmYrxGRjj4QmcqGE=
 golang.org/x/image v0.0.0-20190910094157-69e4b8554b2a/go.mod h1:FeLwcggjj3mMvU+oOTbSwawSJRM1uh48EjtB4UJZlP0=
 golang.org/x/sys v0.0.0-20200116001909-b77594299b42/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
@@ -53,9 +53,8 @@ golang.org/x/sys v0.0.0-20200523222454-059865788121/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20200909081042-eff7692f9009/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210426230700-d19ff857e887/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
-golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
-golang.org/x/sys v0.0.0-20210906170528-6f6e22806c34 h1:GkvMjFtXUmahfDtashnc1mnrCtuBVcwse5QV2lUk/tI=
-golang.org/x/sys v0.0.0-20210906170528-6f6e22806c34/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0 h1:xrCZDmdtoloIiooiA9q0OQb9r8HejIHYoHGhGCe1pGg=
+golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
