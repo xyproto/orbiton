@@ -68,7 +68,7 @@ These features are unique to `o`, as far as I am aware:
 * Jump to a line with `ctrl-l`. Either enter a number to jump to a line or just press `return` to jump to the top. Press `ctrl-l` and `return` again to jump to the bottom.
 * All text will be red if the loaded file is read-only.
 * If tab completion in the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
-* Parentheses are added automatically to `if`, `for`, `while` (etc) statements when return is pressed. This is only for C-like languages and if the expression has no opening parenthesis.
+* Missing parentheses are added to `if`, `for`, `while` (etc) statements after return is pressed. This is only for C-like languages.
 
 ## Other features and limitations
 
@@ -109,7 +109,7 @@ These features are unique to `o`, as far as I am aware:
 
 ## Known bugs
 
-* Using tmux `tmux` and resizing the terminal emulator window may trigger text rendering issues. Try pressing `esc` to redraw the text.
+* Using `tmux` and resizing the terminal emulator window may trigger text rendering issues. Try pressing `esc` to redraw the text.
 * For some terminal emulators, if `o` is busy performing an operation, pressing `ctrl-s` may lock the terminal. Some terminal emulators, like `konsole`, can be configured to turn off this behavior. Press `ctrl-q` to unlock the terminal again (together with the unfortunate risk of quitting `o`). You can also use the `ctrl-o` menu for saving and quitting.
 * Some unicode runes may disrupt the text flow. This is generally not a problem for editing code and configuration files, but may be an issue when editing files that contains text in many languages.
 * `o` may have issues with large files (of several MB+). For normal text files or source code files, this is a non-issue.
