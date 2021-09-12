@@ -5,17 +5,16 @@ import (
 	"strings"
 )
 
-// Supporting PHP and Perl are non-goals.
-
 const (
-	// Mode "enum"
+	// Mode "enum" values
 	modeBlank          = iota
 	modeGit            // for git commits and interactive rebases
 	modeMarkdown       // for Markdown (and asciidoctor and rst files)
 	modeMakefile       // for Makefiles
 	modeShell          // for shell scripts and PKGBUILD files
 	modeConfig         // for yml, toml, and ini files etc
-	modeAssembly       // for Assembly files
+	modeAssembly       // for Assembly
+	modeGoAssembly     // for Go-style Assembly
 	modeGo             // for Go
 	modeHaskell        // for Haskell
 	modeOCaml          // for OCaml
@@ -100,8 +99,10 @@ func detectEditorMode(filename string) (Mode, bool) {
 		mode = modeCMake
 	default:
 		switch ext {
-		case ".asm", ".S", ".s", ".inc":
+		case ".asm", ".S", ".inc":
 			mode = modeAssembly
+		case ".s": // TODO: check if the mid-dot is present
+			mode = modeGoAssembly
 		case ".amber":
 			mode = modeAmber
 		case ".go":
@@ -223,6 +224,8 @@ func (mode Mode) String() string {
 		return "Configuration"
 	case modeAssembly:
 		return "Assembly"
+	case modeGoAssembly:
+		return "Go-style Assembly"
 	case modeGo:
 		return "Go"
 	case modeHaskell:

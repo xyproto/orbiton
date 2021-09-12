@@ -109,9 +109,10 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	}
 	// q should now contain the current quote state
 	var (
-		lineRuneCount           uint
-		lineStringCount         uint
-		line                    string
+		lineRuneCount   uint
+		lineStringCount uint
+		line            string
+		// TODO: look into if assemblyStyleComments is really needed. Some use ";", some use ";;".
 		assemblyStyleComments   = ((e.mode == modeAssembly) || (e.mode == modeLisp) || (e.mode == modeClojure)) && !e.firstLineHash
 		prevLineIsListItem      bool
 		prevLineIsBlank         bool
