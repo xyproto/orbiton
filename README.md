@@ -28,9 +28,9 @@ Screenshot of the VTE GUI application that can be found in the `ko` directory, r
 
 ## Quick start
 
-You can install `o` with Go 1.10 or later:
+With Go 1.17, `o` can be installed in this way:
 
-    go get -u github.com/xyproto/o
+    go install github.com/xyproto/o@latest
 
 Alternatively, download and install a [release version](https://github.com/xyproto/o/releases). For example, for Raspberry Pi 2, 3 or 4 running Linux:
 
