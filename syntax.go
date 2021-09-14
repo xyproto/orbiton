@@ -113,7 +113,7 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 	case modeGoAssembly:
 		// Only highlight some words, to make them stand out
 		clearKeywords()
-		addKeywords = []string{"INT", "JMP", "RET", "SYSCALL", "#else", "#endif", "#if", "#ifdef", "#ifndef", "int", "jmp", "ret", "syscall"}
+		addKeywords = []string{"#else", "#endif", "#if", "#ifdef", "#ifndef", "CALL", "INT", "JMP", "LEAVE", "RET", "SYSCALL", "call", "int", "jmp", "leave", "ret", "syscall"}
 	case modeShell:
 		addKeywords = []string{"--force", "-f", "cmake", "configure", "do", "fdisk", "for", "gdisk", "in", "make", "mv", "ninja", "rm", "rmdir", "setopt", "while"}
 		delKeywords = []string{"#else", "#endif", "default", "double", "exec", "float", "install", "long", "no", "pass", "ret", "super", "var", "with"}
