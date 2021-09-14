@@ -99,10 +99,11 @@ func detectEditorMode(filename string) (Mode, bool) {
 		mode = modeCMake
 	default:
 		switch ext {
-		case ".asm", ".S", ".inc":
+		case ".s", ".S", ".asm", ".inc":
+			// Go-style assembly (modeGoAssembly) is enabled if a mid-dot is discovered
 			mode = modeAssembly
-		case ".s": // TODO: check if the mid-dot is present
-			mode = modeGoAssembly
+		//case ".s":
+		//mode = modeGoAssembly
 		case ".amber":
 			mode = modeAmber
 		case ".go":

@@ -51,6 +51,10 @@ func (e *Editor) checkContents() {
 			e.mode = modeConfig
 			e.syntaxHighlight = true
 		}
+	} else if e.mode == modeAssembly {
+		if strings.Contains(e.String(), "·") { // Go-style assembly mid dot
+			e.mode = modeGoAssembly
+		}
 	}
 	// If the mode is modeOCaml and there are no ";;" strings, switch to Standard ML
 	if e.mode == modeOCaml {
