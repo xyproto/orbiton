@@ -8,8 +8,9 @@ require (
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/xyproto/env v1.1.0
 	github.com/xyproto/guessica v1.1.0
-	github.com/xyproto/syntax v1.7.3
+	github.com/xyproto/syntax v1.8.0
 	github.com/xyproto/termtitle v1.3.0
 	github.com/xyproto/textoutput v1.12.10-0.20210803190129-b3f0f5b63cef
 	github.com/xyproto/vt100 v1.9.8
+	golang.org/x/sys v0.0.0-20210915083310-ed5796bab164 // indirect
 )

@@ -39,6 +39,7 @@ const (
 	Public
 	Protected
 	Dollar
+	AssemblyEnd
 )
 
 //go:generate gostringer -type=Kind
@@ -72,6 +73,7 @@ type TextConfig struct {
 	Private       string
 	Public        string
 	Protected     string
+	AssemblyEnd   string
 }
 
 // TextPrinter implements Printer interface and is used to produce
@@ -119,6 +121,8 @@ func (c TextConfig) GetClass(kind Kind) string {
 		return c.Private
 	case Protected:
 		return c.Protected
+	case AssemblyEnd:
+		return c.AssemblyEnd
 	}
 	return ""
 }
@@ -198,6 +202,7 @@ var DefaultTextConfig = TextConfig{
 	Private:       "red",
 	Public:        "red",
 	Protected:     "red",
+	AssemblyEnd:   "lightyellow",
 }
 
 func Print(s *scanner.Scanner, w io.Writer, p Printer, assemblyMode bool) error {
@@ -304,6 +309,8 @@ func tokenKind(tok rune, tokText string, inSingleLineComment *bool, assemblyMode
 			return Protected
 		case "class":
 			return Class
+		case "JMP", "jmp", "LEAVE", "leave", "RET", "ret", "CALL", "call":
+			return AssemblyEnd
 		}
 		if r, _ := utf8.DecodeRuneInString(tokText); unicode.IsUpper(r) {
 			return Type
