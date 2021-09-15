@@ -748,7 +748,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			ext := filepath.Ext(e.filename)
 
 			// Tab completion of words for Go
-			if word := e.LettersBeforeCursor(); e.mode != modeBlank && leftRune != '.' && !unicode.IsLetter(r) && len(word) > 0 {
+			if word := e.LettersBeforeCursor(); e.mode != modeBlank && e.mode != modeGoAssembly && leftRune != '.' && !unicode.IsLetter(r) && len(word) > 0 {
 				found := false
 				expandedWord := ""
 				for kw := range syntax.Keywords {
@@ -776,7 +776,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				}
 
 				// Tab completion after a '.'
-			} else if word := e.LettersOrDotBeforeCursor(); e.mode != modeBlank && leftRune == '.' && !unicode.IsLetter(r) && len(word) > 0 {
+			} else if word := e.LettersOrDotBeforeCursor(); e.mode != modeBlank && e.mode != modeGoAssembly && leftRune == '.' && !unicode.IsLetter(r) && len(word) > 0 {
 				// Now the preceding word before the "." has been found
 
 				// Trim the trailing ".", if needed
