@@ -258,7 +258,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	// Add the portal menu item
 	if portal, err := LoadPortal(); err == nil { // no problems
 		actions.Add("Close portal at "+portal.String(), func() {
-			ClosePortal()
+			ClosePortal(e)
 		})
 	} else {
 		// Could not close portal, try opening a new one

@@ -1090,7 +1090,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				// Check if ctrl-x was pressed once or twice, for this line
 			} else if lastCutY != y { // Single line cut
 				// Also close the portal, if any
-				ClosePortal()
+				ClosePortal(e)
 
 				lastCutY = y
 				lastCopyY = -1
@@ -1129,7 +1129,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				lastPasteY = -1
 
 				// Also close the portal, if any
-				ClosePortal()
+				ClosePortal(e)
 
 				s := e.Block(y)
 				lines := strings.Split(s, "\n")
@@ -1193,7 +1193,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			lastCopyY = y
 
 			// close the portal, if any
-			closedPortal := ClosePortal() == nil
+			closedPortal := ClosePortal(e) == nil
 
 			if singleLineCopy { // Single line copy
 				status.Clear(c)
@@ -1243,26 +1243,25 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			}
 		case "c:22": // ctrl-v, paste
 
-			// Save the file right before pasting, just in case wl-paste stops
-			e.UserSave(c, tty, status)
-
 			var (
 				gotLineFromPortal bool
 				line              string
 			)
 
 			if portal, err := LoadPortal(); err == nil { // no error
-				line, err = portal.PopLine(false)
+				line, err = portal.PopLine(e, false) // pop the line, but don't remove it from the source file
 				status.Clear(c)
 				if err != nil {
 					// status.SetErrorMessage("Could not copy text through the portal.")
 					status.SetErrorMessage(err.Error())
-					ClosePortal()
+					ClosePortal(e)
 				} else {
 					status.SetMessage(fmt.Sprintf("Using portal at %s\n", portal))
 					gotLineFromPortal = true
 				}
 				status.Show(c, e)
+			} else { // no portal, save the current file, just in case wl-paste stops responding
+				e.UserSave(c, tty, status)
 			}
 			if gotLineFromPortal {
 
@@ -1411,13 +1410,17 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			status.Clear(c)
 			if HasPortal() {
 				status.SetMessage("Closing portal")
-				ClosePortal()
+				ClosePortal(e)
 			} else {
 				portal, err := e.NewPortal()
 				if err != nil {
 					status.SetErrorMessage(err.Error())
 					status.Show(c, e)
 					break
+				}
+				// Portals in the same file is a special case, since lines may move around when pasting
+				if portal.SameFile(e) {
+					e.sameFilePortal = portal
 				}
 				if err := portal.Save(); err != nil {
 					status.SetErrorMessage(err.Error())

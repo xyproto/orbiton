@@ -37,6 +37,7 @@ type Editor struct {
 	firstLineHash      bool                  // is the first line starting with "#"?
 	slowLoad           bool                  // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
 	readOnly           bool                  // is the file read-only when initializing o?
+	sameFilePortal     *Portal               // a portal that points to the same file
 	Theme                                    // editor theme, embedded struct
 }
 
@@ -793,7 +794,13 @@ func (e *Editor) WrapAllLinesAt(n, maxOvershoot int) bool {
 
 // InsertLineAbove will attempt to insert a new line above the current position
 func (e *Editor) InsertLineAbove() {
-	y := int(e.DataY())
+	lineIndex := e.DataY()
+
+	if e.sameFilePortal != nil {
+		e.sameFilePortal.NewLineInserted(lineIndex)
+	}
+
+	y := int(lineIndex)
 
 	// Create new set of lines
 	lines2 := make(map[int][]rune)
@@ -845,7 +852,11 @@ func (e *Editor) InsertLineAbove() {
 
 // InsertLineBelow will attempt to insert a new line below the current position
 func (e *Editor) InsertLineBelow() {
-	e.InsertLineBelowAt(e.DataY())
+	lineIndex := e.DataY()
+	if e.sameFilePortal != nil {
+		e.sameFilePortal.NewLineInserted(lineIndex)
+	}
+	e.InsertLineBelowAt(lineIndex)
 }
 
 // InsertLineBelowAt will attempt to insert a new line below the given y position

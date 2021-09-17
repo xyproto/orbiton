@@ -30,8 +30,30 @@ func (e *Editor) NewPortal() (*Portal, error) {
 	return &Portal{absFilename, e.LineNumber()}, nil
 }
 
+// SameFile checks if the portal exist in the same file as the editor is editing
+func (p *Portal) SameFile(e *Editor) bool {
+	absFilename, err := e.AbsFilename()
+	if err != nil {
+		return false
+	}
+	return absFilename == p.absFilename
+}
+
+// MoveDown is useful when using portals within the same file.
+func (p *Portal) MoveDown() {
+	// PopLine handles overflows.
+	p.lineNumber++
+}
+
+// MoveUp is useful when using portals within the same file.
+func (p *Portal) MoveUp() {
+	// PopLine handles overflows.
+	p.lineNumber--
+}
+
 // ClosePortal will clear the portal by removing the portal file
-func ClosePortal() error {
+func ClosePortal(e *Editor) error {
+	e.sameFilePortal = nil
 	return os.Remove(portalFilename)
 }
 
@@ -65,6 +87,16 @@ func LoadPortal() (*Portal, error) {
 	return &Portal{absFilename, lineNumber}, nil
 }
 
+// LineIndex returns the current line index that the portal points to
+func (p *Portal) LineIndex() LineIndex {
+	return p.lineNumber.LineIndex()
+}
+
+// LineNumber returns the current line number that the portal points to
+func (p *Portal) LineNumber() LineNumber {
+	return p.lineNumber
+}
+
 // Save will save the portal
 func (p *Portal) Save() error {
 	s := p.absFilename + "\n" + p.lineNumber.String() + "\n"
@@ -80,8 +112,24 @@ func (p *Portal) String() string {
 	return filepath.Base(p.absFilename) + ":" + p.lineNumber.String()
 }
 
+// NewLineInserted reacts when the editor inserts a new line in the same file,
+// and moves the portal source one line down, if needed.
+func (p *Portal) NewLineInserted(y LineIndex) {
+	if y < p.LineIndex() {
+		p.MoveDown()
+	}
+}
+
 // PopLine removes (!) a line from the portal file, then removes that line
-func (p *Portal) PopLine(removeLine bool) (string, error) {
+func (p *Portal) PopLine(e *Editor, removeLine bool) (string, error) {
+	// popping a line from the same file is a special case
+	if p == e.sameFilePortal {
+		if removeLine {
+			return "", errors.New("not implemented") // not implemented and currently not in use
+		}
+		// The line moving is done by the editor InsertAbove and InsertBelow functions
+		return e.Line(p.LineIndex()), nil
+	}
 	data, err := ioutil.ReadFile(p.absFilename)
 	if err != nil {
 		return "", err
