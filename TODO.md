@@ -8,6 +8,7 @@
 
 ## Bugs/features/issues
 
+- [ ] Re-enable cross-user portals?
 - [ ] Don't highlight /* in shell scripts like comments.
 - [ ] Also highlight hexadecimal numbers.
 - [ ] Better support for multi-byte unicode runes.
