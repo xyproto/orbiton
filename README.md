@@ -55,6 +55,8 @@ For `zsh` or `bash`, try using:
 
     export MANPAGER=o
 
+Note that the man page syntax highlighting is currently a bit rudimentary, and is a work in progress.
+
 ## Unique features
 
 These features are unique to `o`, as far as I am aware:
