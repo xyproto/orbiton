@@ -2,14 +2,16 @@
 
 ## Pri
 
+- [ ] Auto-detect tabs/spaces when opening a file.
+- [ ] Don't complain about the mid-dot or other unicode symbols that can be displayed in the space of 1 charater.
+
+## Bugs/features/issues
+
 - [ ] Don't highlight /* in shell scripts like comments.
 - [ ] Also highlight hexadecimal numbers.
 - [ ] Better support for multi-byte unicode runes.
 - [ ] Fix syntax highlighting of `'tokens` in Clojure.
 - [ ] Highlighting some elements in man pages are a bit wonky. Consider if implementing a proper parser is worth it.
-
-## Bugs/features/issues
-
 - [ ] When sorting comma-separated strings that do not start with (, [ or {, make sure to keep the same trailing comma status.
 - [ ] '://' should not be interpreted as starting a single-line comment. It's very likely to be an URL.
 - [ ] Support Delve. Introduce a Debug mode.
@@ -17,7 +19,6 @@
 - [ ] Paste with middle mouse button.
 - [ ] Fix output parsing when running `go test` with ctrl-space.
 - [ ] Draw inspiration from [kilo](https://github.com/antirez/kilo).
-- [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] When starting o, hash sum the clipboards it can find. When pasting, use the latest changed clipboard. If nothing changed, use the one for Wayland or X11, depending on environment variables.
 - [ ] When editing a file that then is deleted, `ctrl-s` should maybe create the file again? Or save it to `/tmp` or `~/.cache/o`?
 - [ ] Don't highlight regular text in Nroff files.
