@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] Rewrite the man page syntax highlighting, for when viewing manpages.
 - [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] Don't complain about the mid-dot or other unicode symbols that can be displayed in the space of 1 charater.
 
