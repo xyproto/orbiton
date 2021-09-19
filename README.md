@@ -51,11 +51,15 @@ To unset:
 
 ## Using `o` for viewing man pages
 
-For `zsh` or `bash`, try using:
+Viewing man pages with `o` is currently an experimental feature, and the syntax highlighting is a bit rudimentary.
+
+It is possible to try out this feature with `o` by using:
 
     export MANPAGER=o
 
-Note that the man page syntax highlighting is currently a bit rudimentary, and is a work in progress.
+Using `less` to view man pages is probably a better choice, for now:
+
+    export MANPAGER='less -s -M +Gg'
 
 ## Unique features
 
