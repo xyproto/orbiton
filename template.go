@@ -67,6 +67,11 @@ var templatePrograms = map[Mode]TemplateProgram{
 		2,
 		18,
 	},
+	modeCrystal: {
+		"puts \"Hello, World!\"",
+		1,
+		6,
+	},
 }
 
 // HasTemplateProgram checks if a template is available for the current
