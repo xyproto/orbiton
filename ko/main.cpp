@@ -1,3 +1,4 @@
+#include "fs.h"
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -8,7 +9,6 @@
 #include <string>
 #include <unistd.h>
 #include <vte/vte.h>
-#include "fs.h"
 
 /*
  * A terminal emulator only for running o.
@@ -111,8 +111,8 @@ gboolean key_pressed(GtkWidget* widget, GdkEventKey* event, gpointer user_data)
         event->state = GDK_CONTROL_MASK;
         break;
     case GDK_KEY_F3:
-        // Send ctrl+f instead, to find text
-        event->keyval = GDK_KEY_F;
+        // Send ctrl+n instead, to find next, if a search is ongoing
+        event->keyval = GDK_KEY_N;
         event->state = GDK_CONTROL_MASK;
         break;
     case GDK_KEY_F4:
@@ -281,7 +281,7 @@ int main(int argc, char* argv[])
 
     if (flag == "-r"s) {
         // TODO: Write a headless editor engine that can talk over network
-        //std::cout << "REMOTE"s << std::endl;
+        // std::cout << "REMOTE"s << std::endl;
         flag = ""s;
     }
 
