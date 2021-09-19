@@ -599,7 +599,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				// De-indent the current line before moving on to the next
 				e.SetCurrentLine(trimmedLine)
 				leadingWhitespace = currentLeadingWhitespace
-			} else if e.mode == modeC || e.mode == modeCpp || e.mode == modeZig || e.mode == modeRust || e.mode == modeJava || e.mode == modeJavaScript || e.mode == modeKotlin || e.mode == modeD {
+			} else if e.mode == modeC || e.mode == modeCpp || e.mode == modeZig || e.mode == modeRust || e.mode == modeJava || e.mode == modeJavaScript || e.mode == modeKotlin || e.mode == modeTypeScript || e.mode == modeD {
 				// Add missing parenthesis for "if ... {", "for", "while" and "when" for C-like languages
 				for _, kw := range []string{"for", "foreach", "foreach_reverse", "if", "switch", "when", "while", "while let"} {
 					if strings.HasPrefix(trimmedLine, kw+" ") && !strings.HasPrefix(trimmedLine, kw+" (") {

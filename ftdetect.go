@@ -23,6 +23,7 @@ const (
 	modeText           // for plain text documents
 	modeCMake          // for CMake files
 	modeVim            // for Vim or NeoVim configuration, or .vim scripts
+	modeV              // the V programming language
 	modeClojure        // for Clojure
 	modeLisp           // for Common Lisp and Emacs Lisp
 	modeZig            // for Zig
@@ -148,6 +149,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeLisp
 		case ".zig", ".zir":
 			mode = modeZig
+		case ".v":
+			mode = modeV
 		case ".kt", ".kts":
 			mode = modeKotlin
 		case ".java", ".gradle":
@@ -307,6 +310,8 @@ func (mode Mode) String() string {
 		return "Bazel"
 	case modeD:
 		return "D"
+	case modeV:
+		return "V"
 	default:
 		return "?"
 	}

@@ -17,7 +17,7 @@ var languageIndentation = map[TabsSpaces][]Mode{
 	// Languages that use spaces (from the opinionated point of view of o)
 	{2, true}: {modeAmber, modeAssembly, modeClojure, modeConfig, modeHTML, modeHaskell, modeJSON, modeLua, modeObjectPascal, modePolicyLanguage, modeShell, modeVim, modeVim, modeXML},
 	{3, true}: {modeAda}, // Ada is special
-	{4, true}: {modeBat, modeBattlestar, modeCMake, modeCS, modeCpp, modeCrystal, modeGit, modeJSON, modeJava, modeJavaScript, modeKotlin, modeLua, modeMarkdown, modeNim, modeOak, modePython, modeSQL, modeScala, modeText, modeTypeScript, modeZig},
+	{4, true}: {modeBat, modeBattlestar, modeCMake, modeCS, modeCpp, modeCrystal, modeGit, modeJSON, modeJava, modeJavaScript, modeKotlin, modeLua, modeMarkdown, modeNim, modeOak, modePython, modeSQL, modeScala, modeText, modeTypeScript, modeV, modeZig},
 }
 
 // Spaces checks if the given mode should use tabs or spaces.
