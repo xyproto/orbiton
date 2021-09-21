@@ -276,7 +276,7 @@ D
 
 JSON
 
-* The JSON formatter is built-in.
+* The JSON formatter is built-in. Note that for some files it may reorganize items in an undesireable order, so don't save the file if the result is unexpected.
 
 fstab
 
