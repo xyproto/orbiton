@@ -603,6 +603,11 @@ int main(int argc, char* argv[])
     // Add the terminal to the window
     gtk_container_add(GTK_CONTAINER(window), terminal);
 
+    // Silence command line errors and warnings from Gtk.
+    // This g_warning call in gdk_event_get_device spams stderr if not:
+    // https://code.woboq.org/gtk/gtk/gdk/gdkevents.c.html#1666
+    fclose(stderr);
+
     // Show the window and run the Gtk event loop
     gtk_widget_show_all(window);
     gtk_main();
