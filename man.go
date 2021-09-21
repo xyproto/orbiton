@@ -106,7 +106,7 @@ func (e *Editor) manPageHighlight(line, programName string) string {
 				rs = append(rs, []rune(off+normal.String())...)
 				rs = append(rs, r)
 			} else if !inWord && (r == '*' || r == '$' || r == '%' || r == '!' || r == '/' || r == '=' || r == '-') {
-				rs = append(rs, []rune(off+vt100.LightWhite.String())...)
+				rs = append(rs, []rune(off+vt100.White.String())...)
 				rs = append(rs, r)
 			} else if r == '@' { // color @ gray and the rest of the string white
 				rs = append(rs, []rune(off+e.CommentColor.String())...)
