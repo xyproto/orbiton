@@ -115,8 +115,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		// TODO: look into if assemblyStyleComments is really needed. Some use ";", some use ";;".
 		assemblyStyleComments   = ((e.mode == modeAssembly) || (e.mode == modeLisp) || (e.mode == modeClojure)) && !e.firstLineHash
 		prevLineIsListItem      bool
-		prevLineIsBlank         bool
-		prevLineIsSectionHeader bool
 		inListItem              bool
 		screenLine              string
 		programName             string
@@ -164,10 +162,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							programName = fields[0]
 						}
 					}
-					cs, sh := e.manPageHighlight(line, programName, prevLineIsBlank, prevLineIsSectionHeader)
+					cs := e.manPageHighlight(line, programName)
 					coloredString = cs
-					prevLineIsSectionHeader = sh
-					prevLineIsBlank = len(trimmedLine) == 0
 				case modeMarkdown:
 					if highlighted, ok, codeBlockFound := e.markdownHighlight(line, inCodeBlock, prevLineIsListItem, &inListItem); ok {
 						coloredString = highlighted

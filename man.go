@@ -21,31 +21,21 @@ func handleManPageEscape(s string) string {
 	return string(lineRunes)
 }
 
-func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, prevLineIsSectionHeader bool) (string, bool) {
+func (e *Editor) manPageHighlight(line, programName string) string {
 	var coloredString string
 
-	lineIsSectionHeader := false
 	normal := e.Foreground
 	off := vt100.Stop()
-
-	foundSynopsis := false
-	foundSectionAfterSynopsis := false
 
 	line = handleManPageEscape(line)
 	trimmedLine := strings.TrimSpace(line)
 	hasWords := HasWords(trimmedLine)
 
-	if !(prevLineIsBlank || prevLineIsSectionHeader) && strings.Count(trimmedLine, ")") == 2 && strings.Count(trimmedLine, "(") == 2 && strings.HasSuffix(trimmedLine, ")") && !strings.Contains(trimmedLine, ",") && (strings.HasPrefix(trimmedLine, programName) || firstLetterIsUpper(line)) { // top header or footer
+	if strings.Count(trimmedLine, "  ") > 10 { // first and last line
 		coloredString = e.CommentColor.Get(line)
 	} else if strings.ToUpper(trimmedLine) == trimmedLine && !strings.HasPrefix(trimmedLine, "-") && hasWords && !strings.HasPrefix(line, " ") { // a sub-section header
-		if trimmedLine == "SYNOPSIS" {
-			foundSynopsis = true
-		} else if foundSynopsis {
-			foundSectionAfterSynopsis = true
-		}
 		coloredString = e.ManSectionColor.Get(line)
-		lineIsSectionHeader = true
-	} else if strings.HasPrefix(trimmedLine, "-") || strings.HasPrefix(trimmedLine, "[-") || strings.HasPrefix(trimmedLine, "[[-") && !foundSectionAfterSynopsis { // a flag or parameter
+	} else if strings.HasPrefix(trimmedLine, "-") { // a flag or parameter
 		var rs []rune
 		rs = append(rs, []rune(e.MarkdownTextColor.String())...)
 		inFlag := false
@@ -84,62 +74,7 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 		}
 		rs = append(rs, []rune(off)...)
 		coloredString = string(rs)
-	} else if (prevLineIsBlank || prevLineIsSectionHeader) && oneWordNoSpaces(trimmedLine) && !strings.Contains(trimmedLine, "=") && foundSectionAfterSynopsis {
-		coloredString = e.ManSynopsisColor.Get(line)
-	} else if strings.Contains(trimmedLine, "://") && oneField(trimmedLine) { // URL
-		coloredString = e.ItalicsColor.Get(line)
-	} else if strings.Contains(trimmedLine, "[") && !foundSectionAfterSynopsis && !strings.Contains(trimmedLine, ".") { // synopsis
-		parts := strings.SplitN(line, "[", 2)
-		trimmedParts := strings.SplitN(trimmedLine, "[", 2)
-		if strings.Count(trimmedParts[0], " ") > 2 {
-			coloredString = normal.Get(line)
-		} else if strings.HasSuffix(trimmedLine, "]") {
-			inBrackets := parts[1][:len(parts[1])-1]
-			coloredString = e.ManSynopsisColor.Get(parts[0]) + e.CommentColor.Get("[") + e.ItalicsColor.Get(inBrackets)
-			coloredString += e.CommentColor.Get("]")
-		} else {
-			coloredString = e.ManSynopsisColor.Get(parts[0]) + e.CommentColor.Get("[") + e.ItalicsColor.Get(parts[1])
-		}
-	} else if strings.Contains(trimmedLine, "(") && strings.Contains(trimmedLine, ")") { // regular text with paranthesis
-		var rs []rune
-		rs = append(rs, []rune(normal.String())...)
-		inNum := false
-		inUpper := false
-		lineRunes := []rune(line)
-		for i, r := range lineRunes {
-			nextIsDigit := ((i + 1) < len(lineRunes)) && unicode.IsDigit(lineRunes[i+1])
-			nextIsUpper := ((i + 1) < len(lineRunes)) && unicode.IsUpper(lineRunes[i+1])
-			if r == '(' && nextIsDigit {
-				inNum = true
-				rs = append(rs, []rune(off+e.CommentColor.String())...)
-				rs = append(rs, r)
-				rs = append(rs, []rune(off+e.ManSectionColor.String())...)
-			} else if inNum && !nextIsDigit {
-				inNum = false
-				rs = append(rs, []rune(off+e.CommentColor.String())...)
-				rs = append(rs, r)
-				rs = append(rs, []rune(off+normal.String())...)
-			} else if unicode.IsUpper(r) && nextIsUpper {
-				inUpper = true
-				rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
-				rs = append(rs, r)
-				rs = append(rs, []rune(off+normal.String())...)
-			} else if inUpper && !nextIsUpper {
-				inUpper = false
-				rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
-				rs = append(rs, r)
-				rs = append(rs, []rune(off+normal.String())...)
-			} else if unicode.IsUpper(r) && nextIsUpper {
-				rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
-				rs = append(rs, r)
-				rs = append(rs, []rune(off+normal.String())...)
-			} else {
-				rs = append(rs, r)
-			}
-		}
-		rs = append(rs, []rune(off)...)
-		coloredString = string(rs)
-	} else if allUpper(trimmedLine) || ((prevLineIsBlank || prevLineIsSectionHeader) && oneField(trimmedLine) && !strings.HasSuffix(trimmedLine, ".")) { // filename? command?
+	} else if allUpper(trimmedLine) { //|| (oneField(trimmedLine) && !strings.HasSuffix(trimmedLine, ".")) { // filename? command?
 		coloredString = e.MarkdownTextColor.Get(line)
 	} else { // regular text, but highlight numbers (and hex numbers, if the number starts with a digit) + highlight "@"
 		var rs []rune
@@ -147,11 +82,18 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 		inDigits := false
 		inWord := false
 		hasAlpha := strings.Contains(trimmedLine, "@")
+		inAngles := false
+		//prevRune := ' '
 		for _, r := range line {
 			if (unicode.IsLetter(r) || r == '_') && !inWord {
 				inWord = true
 			} else if inWord && !unicode.IsLetter(r) && !hexDigit(r) {
 				inWord = false
+			}
+			if !inAngles && r == '<' {
+				inAngles = true
+			} else if inAngles && r == '>' {
+				inAngles = false
 			}
 			if !inWord && unicode.IsDigit(r) && !inDigits {
 				inDigits = true
@@ -162,6 +104,9 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 			} else if !inWord && inDigits {
 				inDigits = false
 				rs = append(rs, []rune(off+normal.String())...)
+				rs = append(rs, r)
+			} else if !inWord && (r == '*' || r == '$' || r == '%' || r == '!' || r == '/' || r == '=' || r == '-') {
+				rs = append(rs, []rune(off+vt100.LightWhite.String())...)
 				rs = append(rs, r)
 			} else if r == '@' { // color @ gray and the rest of the string white
 				rs = append(rs, []rune(off+e.CommentColor.String())...)
@@ -175,12 +120,22 @@ func (e *Editor) manPageHighlight(line, programName string, prevLineIsBlank, pre
 				rs = append(rs, []rune(off+e.CommentColor.String())...)
 				rs = append(rs, r)
 				rs = append(rs, []rune(off+normal.String())...)
+			} else if inAngles || r == '>' {
+				rs = append(rs, []rune(off+e.ItalicsColor.String())...)
+				rs = append(rs, r)
+			} else if inWord && unicode.IsUpper(r) {
+				rs = append(rs, []rune(off+vt100.Yellow.String())...)
+				rs = append(rs, r)
+			} else if !inWord || !unicode.IsUpper(r) {
+				rs = append(rs, []rune(off+vt100.Green.String())...)
+				rs = append(rs, r)
 			} else {
 				rs = append(rs, r)
 			}
+			//prevRune = r
 		}
 		rs = append(rs, []rune(off)...)
 		coloredString = string(rs)
 	}
-	return coloredString, lineIsSectionHeader
+	return coloredString
 }
