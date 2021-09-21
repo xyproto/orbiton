@@ -52,8 +52,32 @@ void wait_and_quit()
     gtk_main_quit();
 }
 
+// Synthesized keypress events
+static GdkEvent* esc_event = nullptr;
 static GdkEvent* ctrl_p_event = nullptr;
 static GdkEvent* ctrl_n_event = nullptr;
+
+// Synthesize an escape keypress if it has not been created,
+// then send the event.
+static gboolean send_escape_keypress(GtkWidget* widget)
+{
+    if (esc_event == nullptr) {
+        esc_event = gdk_event_new(GDK_KEY_PRESS);
+        if (esc_event == nullptr) {
+            // ERROR: Can not allocate memory
+            return false;
+        }
+        esc_event->key.keyval = GDK_KEY_Escape;
+        esc_event->key.window = gtk_widget_get_window(widget);
+        esc_event->key.length = 1;
+        esc_event->key.send_event = true;
+        esc_event->key.time = GDK_CURRENT_TIME;
+        //esc_event->key.state = GDK_CONTROL_MASK;
+    }
+    // Send the event
+    gtk_main_do_event(esc_event);
+    return true; // keypress was handled
+}
 
 // Synthesize a ctrl+p keypress if it has not been created,
 // then send the event.
@@ -71,11 +95,6 @@ static gboolean send_scroll_up_keypress(GtkWidget* widget)
         ctrl_p_event->key.send_event = true;
         ctrl_p_event->key.time = GDK_CURRENT_TIME;
         ctrl_p_event->key.state = GDK_CONTROL_MASK;
-        // Try to set a device to avoid the warning
-        //auto display = gdk_display_get_default();
-        //auto seat = gdk_display_get_default_seat(display);
-        //auto device = gdk_seat_get_keyboard(seat);
-        //ctrl_p_event->button.device = device;
     }
     // Send the event
     gtk_main_do_event(ctrl_p_event);
@@ -98,15 +117,31 @@ static gboolean send_scroll_down_keypress(GtkWidget* widget)
         ctrl_n_event->key.send_event = true;
         ctrl_n_event->key.time = GDK_CURRENT_TIME;
         ctrl_n_event->key.state = GDK_CONTROL_MASK;
-        // Try to set a device to avoid the warning
-        //auto display = gdk_display_get_default();
-        //auto seat = gdk_display_get_default_seat(display);
-        //auto device = gdk_seat_get_keyboard(seat);
-        //ctrl_n_event->button.device = device;
     }
     // Send the event
     gtk_main_do_event(ctrl_n_event);
     return true; // keypress was handled
+}
+
+// mouse_clicked only receives and handles some mouse button events.
+// Right mouse button and some special mouse buttons are received and handled.
+gboolean mouse_clicked(GtkWidget* widget, GdkEventButton* event, gpointer data)
+{
+
+    if (event->button == 3) {
+        // right mouse button
+        return send_escape_keypress(widget);
+    }
+    if (event->button == 9) {
+        // special button forward
+        return send_scroll_up_keypress(widget);
+    }
+    if (event->button == 8) {
+        // special button back
+        return send_scroll_down_keypress(widget);
+    }
+    return false;
+    ;
 }
 
 gboolean mouse_scrolled(GtkWidget* widget, GdkEventScroll* event)
@@ -563,6 +598,7 @@ int main(int argc, char* argv[])
     g_signal_connect(terminal, "child-exited", signal_and_quit, nullptr);
     g_signal_connect(terminal, "key-press-event", G_CALLBACK(key_pressed), nullptr);
     g_signal_connect(window, "scroll-event", G_CALLBACK(mouse_scrolled), nullptr);
+    g_signal_connect(window, "button-press-event", G_CALLBACK(mouse_clicked), nullptr);
 
     // Add the terminal to the window
     gtk_container_add(GTK_CONTAINER(window), terminal);
