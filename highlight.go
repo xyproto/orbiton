@@ -113,12 +113,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		lineStringCount uint
 		line            string
 		// TODO: look into if assemblyStyleComments is really needed. Some use ";", some use ";;".
-		assemblyStyleComments   = ((e.mode == modeAssembly) || (e.mode == modeLisp) || (e.mode == modeClojure)) && !e.firstLineHash
-		prevLineIsListItem      bool
-		inListItem              bool
-		screenLine              string
-		programName             string
-		cw                      = c.Width()
+		assemblyStyleComments = ((e.mode == modeAssembly) || (e.mode == modeLisp) || (e.mode == modeClojure)) && !e.firstLineHash
+		prevLineIsListItem    bool
+		inListItem            bool
+		screenLine            string
+		programName           string
+		cw                    = c.Width()
 	)
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y := LineIndex(0); y < numLinesToDraw; y++ {
