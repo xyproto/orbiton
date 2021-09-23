@@ -47,6 +47,11 @@ var templatePrograms = map[Mode]TemplateProgram{
 		13,
 		2,
 	},
+	modeKotlin: {
+		"fun main() {\n    println(\"Hello, World!\")\n}\n",
+		9,
+		2,
+	},
 	modeObjectPascal: {
 		"program Hello;\nconst\n  greeting = 'Hello, World!';\nbegin\n  writeln(greeting);\nend.\n",
 		12,
