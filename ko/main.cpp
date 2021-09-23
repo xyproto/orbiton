@@ -53,29 +53,29 @@ void wait_and_quit()
 }
 
 // Synthesized keypress events
-static GdkEvent* esc_event = nullptr;
+static GdkEvent* ctrl_v_event = nullptr;
 static GdkEvent* ctrl_p_event = nullptr;
 static GdkEvent* ctrl_n_event = nullptr;
 
-// Synthesize an escape keypress if it has not been created,
+// Synthesize an ctrl+v keypress if it has not been created,
 // then send the event.
-static gboolean send_escape_keypress(GtkWidget* widget)
+static gboolean send_ctrl_v_keypress(GtkWidget* widget)
 {
-    if (esc_event == nullptr) {
-        esc_event = gdk_event_new(GDK_KEY_PRESS);
-        if (esc_event == nullptr) {
+    if (ctrl_v_event == nullptr) {
+        ctrl_v_event = gdk_event_new(GDK_KEY_PRESS);
+        if (ctrl_v_event == nullptr) {
             // ERROR: Can not allocate memory
             return false;
         }
-        esc_event->key.keyval = GDK_KEY_Escape;
-        esc_event->key.window = gtk_widget_get_window(widget);
-        esc_event->key.length = 1;
-        esc_event->key.send_event = true;
-        esc_event->key.time = GDK_CURRENT_TIME;
-        //esc_event->key.state = GDK_CONTROL_MASK;
+        ctrl_v_event->key.keyval = GDK_KEY_v;
+        ctrl_v_event->key.window = gtk_widget_get_window(widget);
+        ctrl_v_event->key.length = 1;
+        ctrl_v_event->key.send_event = true;
+        ctrl_v_event->key.time = GDK_CURRENT_TIME;
+        ctrl_v_event->key.state = GDK_CONTROL_MASK;
     }
     // Send the event
-    gtk_main_do_event(esc_event);
+    gtk_main_do_event(ctrl_v_event);
     return true; // keypress was handled
 }
 
@@ -129,19 +129,18 @@ gboolean mouse_clicked(GtkWidget* widget, GdkEventButton* event, gpointer data)
 {
 
     if (event->button == 3) {
-        // right mouse button
-        return send_escape_keypress(widget);
+        // right mouse button, pastes with ctrl+v
+        return send_ctrl_v_keypress(widget);
     }
     if (event->button == 9) {
-        // special button forward
+        // special button forward, scrolls up (or to the previous search result) with ctrl+p
         return send_scroll_up_keypress(widget);
     }
     if (event->button == 8) {
-        // special button back
+        // special button back, scrolls down (or to the next search result) with ctrl+n
         return send_scroll_down_keypress(widget);
     }
     return false;
-    ;
 }
 
 gboolean mouse_scrolled(GtkWidget* widget, GdkEventScroll* event)
