@@ -146,6 +146,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			exec.Command("zig", "build"):                                                     {".zig"},                                                    // Zig
 			exec.Command("v", filename):                                                      {".v"},                                                      // V
 			exec.Command("cargo", "build"):                                                   {".rs"},                                                     // Rust
+			exec.Command("lein", "uberjar"):                                                  {".clj", ".cljs", ".clojure"},                               // Clojure
 			exec.Command("ghc", "-dynamic", filename):                                        {".hs"},                                                     // Haskell
 			exec.Command("python", "-m", "py_compile", filename):                             {".py"},                                                     // Python, compile to .pyc
 			exec.Command("ocamlopt", "-o", exeFirstName, filename):                           {".ml"},                                                     // OCaml
@@ -208,6 +209,10 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 			cmd = *exec.Command("rustc", filename, "-o", baseDirName)
 		}
+	} else if e.mode == modeClojure && !exists("project.clj") && exists("../project.clj") {
+		cmd.Path = filepath.Clean(filepath.Join(filepath.Dir(filename), ".."))
+	} else if e.mode == modeClojure && !exists("project.clj") && !exists("../project.clj") && exists("../project.clj") {
+		cmd.Path = filepath.Clean(filepath.Join(filepath.Dir(filename), "..", ".."))
 	} else if (ext == ".cc" || ext == ".h") && exists("BUILD.bazel") {
 		// Google-style C++ + Bazel projects
 		if which("bazel") != "" {
