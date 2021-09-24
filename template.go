@@ -37,6 +37,11 @@ var templatePrograms = map[Mode]TemplateProgram{
 		6,
 		5,
 	},
+	modeCS: {
+		"using System;\n\nclass Greeter {\n    public static void Main(string[] args) {\n        Console.WriteLine(\"Hello, World!\");\n    }\n}\n",
+		19,
+		3,
+	},
 	modeD: {
 		"module main;\n\nimport std.stdio;\n\nvoid main(string[] args) {\n    writeln(\"Hello, World!\");\n}\n",
 		2,
@@ -47,10 +52,35 @@ var templatePrograms = map[Mode]TemplateProgram{
 		13,
 		2,
 	},
+	modeJava: {
+		"class Greeter {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}\n",
+		20,
+		3,
+	},
+	modeJavaScript: {
+		"console.log('Hello, World!');\n",
+		13,
+		1,
+	},
+	modeHaskell: {
+		"main :: IO ()\nmain = putStrLn \"Hello, World!\"\n",
+		17,
+		1,
+	},
 	modeKotlin: {
 		"fun main() {\n    println(\"Hello, World!\")\n}\n",
 		9,
 		2,
+	},
+	modeLua: {
+		"print(\"Hello, World!\")\n",
+		7,
+		1,
+	},
+	modeNim: {
+		"echo \"Hello, World!\"\n",
+		6,
+		1,
 	},
 	modeObjectPascal: {
 		"program Hello;\nconst\n  greeting = 'Hello, World!';\nbegin\n  writeln(greeting);\nend.\n",
@@ -81,6 +111,11 @@ var templatePrograms = map[Mode]TemplateProgram{
 		"# Maintainer: " + strings.Title(env.Str("LOGNAME", "name")) + " <" + env.Str("EMAIL", "email") + ">\n\npkgname=\npkgver=1.0.0\npkgrel=1\npkgdesc='Example application'\narch=(x86_64)\nurl='https://github.com/example/application'\nlicense=(BSD3)\nmakedepends=(git go)\nsource=(\"git+$url#commit=asdf\") # tag: v1.0.0\nb2sums=(SKIP)\n\nbuild() {\n  cd $pkgname\n  go build -v -mod=vendor -buildmode=pie -trimpath -ldflags=\"-s -w -extldflags \\\"${LDFLAGS}\\\"\"\n}\n\npackage() {\n  install -Dm755 $pkgname/$pkgname \"$pkgdir/usr/bin/$pkgname\"\n  install -Dm644 $pkgname/LICENSE \"$pkgdir/usr/share/licenses/$pkgname/LICENSE\"\n}\n",
 		8,
 		20,
+	},
+	modeTypeScript: {
+		"console.log('Hello, World!');\n",
+		13,
+		1,
 	},
 	modeV: {
 		"fn main() {\n    name := 'World'\n    println('Hello, $name!')\n}\n",
