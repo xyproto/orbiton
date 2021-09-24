@@ -1260,8 +1260,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					gotLineFromPortal = true
 				}
 				status.Show(c, e)
-			} else { // no portal, save the current file, just in case wl-paste stops responding
-				e.UserSave(c, tty, status)
+			//} else { // no portal
+				// wl-paste can stop responding, but saving when pasting causes more problems than it solves
+				//e.UserSave(c, tty, status)
 			}
 			if gotLineFromPortal {
 
