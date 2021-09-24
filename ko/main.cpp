@@ -490,7 +490,7 @@ int main(int argc, char* argv[])
     const auto pal = (GdkRGBA*)malloc(sizeof(GdkRGBA) * pal_size);
 
     auto fg = GdkRGBA { 0.9, 0.9, 0.9, 1.0 };
-    auto bg = GdkRGBA { 1.0, 1.0, 1.0, 1.0 };
+    auto bg = GdkRGBA { 0.07, 0.07, 0.07, 1.0 };
     auto cb = GdkRGBA { 0.3, 0.7, 0.6, 0.9 }; // cursor block color
 
     if (lightMode) {
