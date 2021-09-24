@@ -185,6 +185,7 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 | JavaScript                                      | `.js`                                                     | WIP           |                                                   | `prettier --tab-width 4 -w $filename`                                                                          |
 | TypeScript                                      | `.ts`                                                     | WIP           |                                                   | WIP                                                                                                            |
 | D                                               | `.d`                                                      | yes           | `gdc $filename`                                   | WIP                                                                                                            |
+| Clojure                                         | `.clj`, `.cljs`, `.clojure`                               | WIP           | `lein uberjar`                                    | WIP                                                                                                            |
 
 `/etc/fstab` files are also supported, and can be formatted with `ctrl-w` if [`fstabfmt`](https://github.com/xyproto/fstabfmt) is installed.
 
