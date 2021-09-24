@@ -159,31 +159,6 @@ func HasWords(s string) bool {
 	return false
 }
 
-func oneWordNoSpaces(s string) bool {
-	letterCount := 0
-	wordCount := 0
-	for _, r := range s {
-		if unicode.IsLetter(r) || r == '.' || r == '?' || r == '!' || r == '_' || r == ':' || r == '/' {
-			letterCount++
-		} else if r == ' ' {
-			return false
-		} else {
-			if letterCount > 1 {
-				wordCount++
-				if wordCount > 1 {
-					return false
-				}
-			}
-			letterCount = 0
-		}
-	}
-	return true
-}
-
-func oneField(s string) bool {
-	return len(strings.Fields(s)) == 1
-}
-
 // allUpper checks if all letters in a string are uppercase
 func allUpper(s string) bool {
 	for _, r := range s {
