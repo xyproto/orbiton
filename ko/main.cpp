@@ -425,7 +425,7 @@ int main(int argc, char* argv[])
     char* dup = strdup(getenv("PATH"));
     char* s = dup;
     char* p = nullptr;
-    path found { "o"s }; // name of executable to search for, may be mutated
+    path found { "o"s }; // name of executable to search for, can be symlink
     do {
         p = strchr(s, ':');
         if (p != nullptr) {
@@ -490,30 +490,31 @@ int main(int argc, char* argv[])
     const auto pal = (GdkRGBA*)malloc(sizeof(GdkRGBA) * pal_size);
 
     auto fg = GdkRGBA { 0.9, 0.9, 0.9, 1.0 };
-    auto bg = GdkRGBA { 0.1, 0.1, 0.1, 1.0 };
+    auto bg = GdkRGBA { 1.0, 1.0, 1.0, 1.0 };
+    auto cb = GdkRGBA { 0.3, 0.7, 0.6, 0.9 }; // cursor block color
 
     if (lightMode) {
 
-        fg = GdkRGBA { 0.02, 0.02, 0.02, 1.0 };
-        bg = GdkRGBA { 1.0, 1.0, 0.8, 1.0 };
+        fg = GdkRGBA { 0.01, 0.01, 0.01, 1.0 }; // dark foreground
+        bg = GdkRGBA { 1.0, 1.0, 1.0, 1.0 }; // light background
+        cb = GdkRGBA { 0.2, 0.2, 0.2, 0.9 }; // cursor block color
 
-        // Inspired by the mterm color scheme, but inverted, and with a light yellow background
-        pal[0] = { 0.98, 0.98, 0.98, 1.0 }; // inverted almost white
-        pal[1] = { 0.21, 0.66, 0.64, 1.0 }; // inverted red, used for the "private" keyword
-        pal[2] = { 0.32, 0.21, 0.41, 1.0 }; // inverted green
-        pal[3] = { 0.03, 0.16, 0.41, 1.0 }; // inverted yellow
-        pal[4] = { 0.45, 0.32, 0.20, 1.0 }; // inverted blue
-        pal[5] = { 0.30, 0.45, 0.33, 1.0 }; // inverted magenta
-        pal[6] = { 0.42, 0.20, 0.14, 1.0 }; // inverted cyan
-        pal[7] = { 0.40, 0.40, 0.40, 1.0 }; // inverted light gray
-        pal[8] = { 0.30, 0.30, 0.30, 1.0 }; // inverted dark gray
-        pal[9] = { 0.08, 0.70, 0.70, 1.0 }; // inverted light red, used for keywords
-        pal[10] = { 0.32, 0.20, 0.41, 1.0 }; // inverted light green
-        pal[11] = { 0.03, 0.16, 0.41, 1.0 }; // inverted light yellow
-        pal[12] = { 0.45, 0.32, 0.10, 1.0 }; // inverted light blue
-        pal[13] = { 0.25, 0.40, 0.28, 1.0 }; // inverted light magenta
-        pal[14] = { 0.39, 0.22, 0.22, 1.0 }; // inverted light cyan
-        pal[15] = { 0.10, 0.09, 0.07, 1.0 }; // inverted white
+        pal[0] = { 0.0, 0.0, 0.0, 1.0 }; // black
+        pal[1] = { 0.65, 0.14, 0.16, 1.0 }; // red, used for the "private" keyword
+        pal[2] = { 0.0, 0.2, 0.05, 1.0 }; // green
+        pal[3] = { 0.3, 0.3, 0.0, 1.0 }; // yellow
+        pal[4] = { 0.04, 0.04, 0.25, 1.0 }; // blue
+        pal[5] = { 0.5, 0.1, 0.4, 1.0 }; // magenta
+        pal[6] = { 0.05, 0.2, 0.2, 1.0 }; // cyan
+        pal[7] = { 0.6, 0.05, 0.05, 1.0 }; // light gray (now red)
+        pal[8] = { 0.05, 0.05, 0.05, 1.0 }; // dark gray
+        pal[9] = { 0.5, 0.05, 0.05, 1.0 }; // light red, used for keywords
+        pal[10] = { 0.0, 0.0, 0.5, 1.0 }; // light green (now blue)
+        pal[11] = { 0.0, 0.55, 0.55, 1.0 }; // light yellow (now cyan)
+        pal[12] = { 0.05, 0.05, 0.4, 1.0 }; // light blue
+        pal[13] = { 0.7, 0.1, 0.6, 1.0 }; // light magenta
+        pal[14] = { 0.02, 0.45, 0.45, 1.0 }; // light cyan
+        pal[15] = { 0.8, 0.8, 0.8, 1.0 }; // white
 
     } else {
 
@@ -538,8 +539,6 @@ int main(int argc, char* argv[])
 
     vte_terminal_set_colors(VTE_TERMINAL(terminal), &fg, &bg, pal, 16);
 
-    // Set cursor block color
-    const auto cb = GdkRGBA { 0.3, 0.7, 0.6, 0.9 };
     vte_terminal_set_color_cursor(VTE_TERMINAL(terminal), &cb);
 
     // Set cursor block text color
