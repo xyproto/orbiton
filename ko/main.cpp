@@ -507,7 +507,7 @@ int main(int argc, char* argv[])
         pal[5] = { 0.5, 0.1, 0.4, 1.0 }; // magenta
         pal[6] = { 0.05, 0.2, 0.2, 1.0 }; // cyan
         pal[7] = { 0.6, 0.05, 0.05, 1.0 }; // light gray (now red)
-        pal[8] = { 0.05, 0.05, 0.05, 1.0 }; // dark gray
+        pal[8] = { 0.05, 0.6, 0.05, 1.0 }; // dark gray (now green)
         pal[9] = { 0.5, 0.05, 0.05, 1.0 }; // light red, used for keywords
         pal[10] = { 0.0, 0.0, 0.5, 1.0 }; // light green (now blue)
         pal[11] = { 0.0, 0.55, 0.55, 1.0 }; // light yellow (now cyan)
