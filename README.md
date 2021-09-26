@@ -49,15 +49,13 @@ To unset:
 
     git config --global --unset core.editor
 
-## Using `o` for viewing man pages
+## Viewing man pages
 
-Viewing man pages with `o` is currently an experimental feature, and the syntax highlighting is a bit rudimentary.
-
-It is possible to try out this feature with `o` by using:
+By setting the `MANPAGER` environment variable, it's possible to use `o` for viewing man pages, for example with:
 
     export MANPAGER=o
 
-Using `less` to view man pages is probably a better choice, for now:
+An alternative to viewing man pages in `o` is to use `less`, for example with:
 
     export MANPAGER='less -s -M +Gg'
 
