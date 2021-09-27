@@ -22,15 +22,15 @@ func handleManPageEscape(s string) string {
 }
 
 func (e *Editor) manPageHighlight(line, programName string) string {
-	var coloredString string
-
-	normal := e.Foreground
-	off := vt100.Stop()
-
 	line = handleManPageEscape(line)
-	trimmedLine := strings.TrimSpace(line)
-	hasWords := HasWords(trimmedLine)
-	innerSpaceCount := strings.Count(trimmedLine, " ")
+	var (
+		coloredString   string
+		normal          = e.Foreground
+		off             = vt100.Stop()
+		trimmedLine     = strings.TrimSpace(line)
+		hasWords        = HasWords(trimmedLine)
+		innerSpaceCount = strings.Count(trimmedLine, " ")
+	)
 
 	if strings.Count(trimmedLine, "  ") > 10 { // first and last line
 		coloredString = e.CommentColor.Get(line)
