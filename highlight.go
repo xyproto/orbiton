@@ -445,6 +445,10 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				}
 			}
 		} else {
+			// Man pages are special
+			if e.mode == modeManPage {
+				line = handleManPageEscape(line)
+			}
 			// Output a regular line, scrolled to the current e.pos.offsetX
 			screenLine = e.ChopLine(line, int(w))
 			c.Write(uint(cx)+lineRuneCount, uint(cy)+uint(y), e.Foreground, e.Background, screenLine)
