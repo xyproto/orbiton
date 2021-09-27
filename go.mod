@@ -7,6 +7,7 @@ require (
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/mattn/go-colorable v0.1.10 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/rivo/uniseg v0.2.0
 	github.com/xyproto/env v1.1.0
 	github.com/xyproto/guessica v1.1.0
 	github.com/xyproto/syntax v1.8.0

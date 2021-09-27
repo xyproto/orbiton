@@ -7,6 +7,7 @@ import (
 	"sync"
 	"unicode"
 
+	"github.com/rivo/uniseg"
 	"github.com/xyproto/syntax"
 	"github.com/xyproto/textoutput"
 	"github.com/xyproto/vt100"
@@ -109,9 +110,10 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	}
 	// q should now contain the current quote state
 	var (
-		lineRuneCount   uint
-		lineStringCount uint
-		line            string
+		lineRuneCount     uint
+		lineGraphemeCount uint
+		lineStringCount   uint
+		line              string
 		// TODO: look into if assemblyStyleComments is really needed. Some use ";", some use ";;".
 		assemblyStyleComments = ((e.mode == modeAssembly) || (e.mode == modeLisp) || (e.mode == modeClojure)) && !e.firstLineHash
 		prevLineIsListItem    bool
@@ -131,6 +133,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 		// already trimmed right, just trim left
 		trimmedLine = strings.TrimLeftFunc(line, unicode.IsSpace)
+
+		lineGraphemeCount = uint(uniseg.GraphemeClusterCount(trimmedLine))
 
 		// expand tabs
 		line = strings.Replace(line, "\t", tabString, -1)
@@ -466,8 +470,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 		// TODO: This number must be sent into the WriteRune function and stored per line in the canvas!
 		//       This way, the canvas can go the start of the line for every line with a runeLengthDiff > 0.
-		runeLengthDiff := int(lineStringCount) - int(lineRuneCount)
-		if runeLengthDiff > 2 {
+
+		//runeLengthDiff := int(lineStringCount) - int(lineRuneCount)
+		if graphemeLengthDiff := int(lineRuneCount) - int(lineGraphemeCount); !expandedRunes && graphemeLengthDiff > 3 {
 			expandedRunes = true
 		}
 
