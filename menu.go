@@ -13,15 +13,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-var (
-	menuTitleColor     = vt100.LightYellow
-	menuArrowColor     = vt100.Red
-	menuTextColor      = vt100.Gray
-	menuHighlightColor = vt100.LightBlue
-	menuSelectedColor  = vt100.LightCyan
-
-	errNoLetter = errors.New("no letter")
-)
+var errNoLetter = errors.New("no letter")
 
 // getLetter returns the Nth letter in a given string, as lowercase. Ignores numbers, special characters, whitespace etc.
 func getLetter(s string, pos int) (rune, error) {
