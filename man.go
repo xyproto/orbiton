@@ -30,6 +30,7 @@ func (e *Editor) manPageHighlight(line, programName string) string {
 	line = handleManPageEscape(line)
 	trimmedLine := strings.TrimSpace(line)
 	hasWords := HasWords(trimmedLine)
+	innerSpaceCount := strings.Count(trimmedLine, " ")
 
 	if strings.Count(trimmedLine, "  ") > 10 { // first and last line
 		coloredString = e.CommentColor.Get(line)
@@ -48,12 +49,15 @@ func (e *Editor) manPageHighlight(line, programName string) string {
 			}
 			if r == ' ' {
 				spaceCount++
+				if innerSpaceCount > 8 {
+					inFlag = false
+				}
 			} else {
 				spaceCount = 0
 			}
-			if prevR == ' ' && (r == '-' || r == '[' || r == '_') && !inFlag {
+			if r != ' ' && prevR == ' ' && (r == '-' || r == '[' || r == '_') && !inFlag {
 				inFlag = true
-				rs = append(rs, []rune(off+e.HeaderBulletColor.String())...)
+				rs = append(rs, []rune(off+vt100.White.String())...)
 				rs = append(rs, r)
 			} else if prevR == ' ' && (r == '-' || r == '[' || r == '_') && inFlag {
 				rs = append(rs, r)
@@ -83,8 +87,8 @@ func (e *Editor) manPageHighlight(line, programName string) string {
 		inWord := false
 		hasAlpha := strings.Contains(trimmedLine, "@")
 		inAngles := false
-		//prevRune := ' '
-		for _, r := range line {
+		lineRunes := []rune(line)
+		for i, r := range line {
 			if (unicode.IsLetter(r) || r == '_') && !inWord {
 				inWord = true
 			} else if inWord && !unicode.IsLetter(r) && !hexDigit(r) {
@@ -99,7 +103,7 @@ func (e *Editor) manPageHighlight(line, programName string) string {
 				inDigits = true
 				rs = append(rs, []rune(off+e.ItalicsColor.String())...)
 				rs = append(rs, r)
-			} else if hexDigit(r) && inDigits {
+			} else if inDigits && hexDigit(r) {
 				rs = append(rs, r)
 			} else if !inWord && inDigits {
 				inDigits = false
@@ -123,11 +127,19 @@ func (e *Editor) manPageHighlight(line, programName string) string {
 			} else if inAngles || r == '>' {
 				rs = append(rs, []rune(off+e.ItalicsColor.String())...)
 				rs = append(rs, r)
+			} else if inWord && unicode.IsUpper(r) && (i+1 < len(lineRunes)) {
+				nextRune := lineRunes[i+1]
+				if unicode.IsUpper(nextRune) || !unicode.IsLetter(nextRune) {
+					rs = append(rs, []rune(off+vt100.Yellow.String())...)
+				} else {
+					rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
+				}
+				rs = append(rs, r)
 			} else if inWord && unicode.IsUpper(r) {
 				rs = append(rs, []rune(off+vt100.Yellow.String())...)
 				rs = append(rs, r)
 			} else if !inWord || !unicode.IsUpper(r) {
-				rs = append(rs, []rune(off+vt100.Green.String())...)
+				rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
 				rs = append(rs, r)
 			} else {
 				rs = append(rs, r)
