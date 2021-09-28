@@ -490,7 +490,7 @@ int main(int argc, char* argv[])
     const auto pal = (GdkRGBA*)malloc(sizeof(GdkRGBA) * pal_size);
 
     auto fg = GdkRGBA { 0.9, 0.9, 0.9, 1.0 };
-    auto bg = GdkRGBA { 0.07, 0.07, 0.07, 1.0 };
+    auto bg = GdkRGBA { 0.0, 0.0, 0.0, 1.0 };
     auto cb = GdkRGBA { 0.3, 0.7, 0.6, 0.9 }; // cursor block color
 
     if (lightMode) {
@@ -500,20 +500,21 @@ int main(int argc, char* argv[])
         cb = GdkRGBA { 0.2, 0.2, 0.2, 0.9 }; // cursor block color
 
         pal[0] = { 0.0, 0.0, 0.0, 1.0 }; // black
-        pal[1] = { 0.65, 0.14, 0.16, 1.0 }; // red, used for the "private" keyword
+        pal[1] = { 0.65, 0.14, 0.16, 1.0 }; // red, used for the "private" keyword (OK)
         pal[2] = { 0.0, 0.2, 0.05, 1.0 }; // green
         pal[3] = { 0.3, 0.3, 0.0, 1.0 }; // yellow
         pal[4] = { 0.04, 0.04, 0.25, 1.0 }; // blue
-        pal[5] = { 0.5, 0.1, 0.4, 1.0 }; // magenta
+        pal[5] = { 0.5, 0.1, 0.1, 1.0 }; // magenta (now red)
         pal[6] = { 0.05, 0.2, 0.2, 1.0 }; // cyan
-        pal[7] = { 0.6, 0.05, 0.05, 1.0 }; // light gray (now red)
-        pal[8] = { 0.05, 0.6, 0.05, 1.0 }; // dark gray (now green)
-        pal[9] = { 0.5, 0.05, 0.05, 1.0 }; // light red, used for keywords
+        pal[7] = { 0.0, 0.45, 0.45, 1.0 }; // light gray (now cyan) (used for numbers)
+        pal[8] = { 0.02, 0.4, 0.02, 1.0 }; // dark gray (now green, used for comments)
+        pal[9] = { 0.6, 0.05, 0.05, 1.0 }; // light red (used for keywords)
         pal[10] = { 0.0, 0.0, 0.5, 1.0 }; // light green (now blue)
-        pal[11] = { 0.0, 0.55, 0.55, 1.0 }; // light yellow (now cyan)
+        pal[11]
+            = { 0.4, 0.02, 0.3, 1.0 }; // light yellow (now magenta, used for strings and stars)
         pal[12] = { 0.05, 0.05, 0.4, 1.0 }; // light blue
-        pal[13] = { 0.7, 0.1, 0.6, 1.0 }; // light magenta
-        pal[14] = { 0.02, 0.45, 0.45, 1.0 }; // light cyan
+        pal[13] = { 0.02, 0.45, 0.45, 1.0 }; // light cyan (not used much)
+        pal[14] = { 0.7, 0.1, 0.6, 1.0 }; // light magenta (not used much)
         pal[15] = { 0.8, 0.8, 0.8, 1.0 }; // white
 
     } else {
