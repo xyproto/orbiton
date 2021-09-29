@@ -29,6 +29,32 @@ func getLetter(s string, pos int) (rune, error) {
 	return rune(0), errNoLetter
 }
 
+// selectionLetterForChoices loops through the choices and finds a unique letter (possibly the first one in the choice text),
+// that can be used later for selecting that choice. The returned map maps from the letter to the choice index.
+// choices where no appropriate letter were found are skipped. q is ignored, because it's reserved for "quit".
+// Only the first 5 letters of each choice are considered.
+func selectionLettersForChoices(choices []string) map[rune]uint {
+	// TODO: Find the next item starting with this letter, with wraparound
+	// Select the item that starts with this letter, if possible. Try the first, then the second, etc, up to 7
+	selectionLetterMap := make(map[rune]uint)
+	for index, choice := range choices {
+		for pos := 0; pos < 7; pos++ {
+			letter, err := getLetter(choice, pos)
+			if err == nil {
+				_, exists := selectionLetterMap[letter]
+				// If the letter is not already stored in the keymap, and it's not q
+				if !exists && (letter != 'q') {
+					selectionLetterMap[letter] = uint(index)
+					// Found a letter for this choice, move on
+					break
+				}
+			}
+		}
+		// Did not find a letter for this choice, move on
+	}
+	return selectionLetterMap
+}
+
 // Menu starts a loop where keypresses are handled. When a choice is made, a number is returned.
 // -1 is "no choice", 0 and up is which choice were selected.
 // initialMenuIndex is the choice that should be highlighted when displaying the choices.
@@ -38,13 +64,14 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 	signal.Reset(syscall.SIGWINCH)
 
 	var (
-		selectedDelay = 100 * time.Millisecond
-		c             = vt100.NewCanvas()
-		resizeMut     = &sync.RWMutex{} // used when the terminal is resized
-		menu          = NewMenuWidget(title, choices, titleColor, arrowColor, textColor, highlightColor, selectedColor, c.W(), c.H(), extraDashes)
-		sigChan       = make(chan os.Signal, 1)
-		running       = true
-		changed       = true
+		selectionLetterMap = selectionLettersForChoices(choices)
+		selectedDelay      = 100 * time.Millisecond
+		c                  = vt100.NewCanvas()
+		resizeMut          = &sync.RWMutex{} // used when the terminal is resized
+		menu               = NewMenuWidget(title, choices, titleColor, arrowColor, textColor, highlightColor, selectedColor, c.W(), c.H(), extraDashes, selectionLetterMap)
+		sigChan            = make(chan os.Signal, 1)
+		running            = true
+		changed            = true
 	)
 
 	// Set up a new resize handler
@@ -139,28 +166,8 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 			if !(65 <= r && r <= 90) && !(97 <= r && r <= 122) {
 				break
 			}
-
-			// TODO: Find the next item starting with this letter, with wraparound
-			// Select the item that starts with this letter, if possible. Try the first, then the second, etc, up to 5
-			keymap := make(map[rune]int)
-			for index, choice := range choices {
-				for pos := 0; pos < 5; pos++ {
-					letter, err := getLetter(choice, pos)
-					if err == nil {
-						_, exists := keymap[letter]
-						// If the letter is not already stored in the keymap, and it's not q
-						if !exists && (letter != 113) {
-							keymap[letter] = index
-							// Found a letter for this choice, move on
-							break
-						}
-					}
-				}
-				// Did not find a letter for this choice, move on
-			}
-
 			// Choose the index for the letter that was pressed and found in the keymap, if found
-			for letter, index := range keymap {
+			for letter, index := range selectionLetterMap {
 				if letter == r {
 					resizeMut.Lock()
 					menu.SelectIndex(uint(index))
