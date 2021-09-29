@@ -307,26 +307,26 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 	forward := true // forward search
 	wrap := true    // with wraparound
 
-	// A special case, search backwards for the start of a function
+	// A special case, search backwards to the start of the function (or to "main")
 	if s == "f" {
 		switch e.mode {
 		case modeClojure:
-			s = "defn"
+			s = "defn "
 		case modeCrystal, modeNim, modePython, modeScala:
-			s = "def"
+			s = "def "
 		case modeGo:
-			s = "func"
+			s = "func "
 		case modeKotlin:
-			s = "fun"
+			s = "fun "
 		case modeJavaScript, modeLua, modeShell, modeTypeScript:
-			s = "function"
+			s = "function "
 		case modeOdin:
-			s = "proc()"
+			s = "proc() "
 		case modeRust, modeV, modeZig:
-			s = "fn"
-
+			s = "fn "
+		default:
+			s = "main"
 		}
-		s += " "
 		forward = false
 	}
 
