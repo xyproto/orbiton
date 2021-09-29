@@ -302,6 +302,34 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		}
 	}
 	status.ClearAll(c)
+
+	// Search settings
+	forward := true // forward search
+	wrap := true    // with wraparound
+
+	// A special case, search backwards for the start of a function
+	if s == "f" {
+		switch e.mode {
+		case modeClojure:
+			s = "defn"
+		case modeCrystal, modeNim, modePython, modeScala:
+			s = "def"
+		case modeGo:
+			s = "func"
+		case modeKotlin:
+			s = "fun"
+		case modeJavaScript, modeLua, modeShell, modeTypeScript:
+			s = "function"
+		case modeOdin:
+			s = "proc()"
+		case modeRust, modeV, modeZig:
+			s = "fn"
+
+		}
+		s += " "
+		forward = false
+	}
+
 	e.SetSearchTerm(c, status, s)
 
 	if pressedReturn {
@@ -322,8 +350,6 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 	}
 
 	// Perform the actual search
-	wrap := true    // with wraparound
-	forward := true // forward search
 	if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
 		// If no match was found, and return was not pressed, try again from the top
 		//e.redraw = e.GoToLineNumber(1, c, status, true)
