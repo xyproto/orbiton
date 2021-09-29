@@ -1129,6 +1129,16 @@ func (e *Editor) InsertStringAndMove(c *vt100.Canvas, s string) {
 	}
 }
 
+// InsertString will insert a string without newlines at the current data position.
+// his will also call e.WriteRune and e.Next, as needed.
+func (e *Editor) InsertString(c *vt100.Canvas, s string) {
+	for _, r := range s {
+		e.InsertRune(c, r)
+		e.WriteRune(c)
+		e.Next(c)
+	}
+}
+
 // Rune will get the rune at the current data position
 func (e *Editor) Rune() rune {
 	x, err := e.DataX()

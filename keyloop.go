@@ -362,12 +362,14 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			status.ClearAll(c)
 			undo.Snapshot(e)
 			undoBackup := undo
-			lastCommandMenuIndex = e.CommandMenu(c, tty, status, undo, lastCommandMenuIndex,
-				forceFlag,
-				fileLock)
+			var addSpace bool
+			lastCommandMenuIndex, addSpace = e.CommandMenu(c, tty, status, undo, lastCommandMenuIndex, forceFlag, fileLock)
 			undo = undoBackup
 			if e.AfterEndOfLine() {
 				e.End(c)
+			}
+			if addSpace {
+				e.InsertString(c, " ")
 			}
 		case "c:7": // ctrl-g, status mode
 			statusMode = !statusMode

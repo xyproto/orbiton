@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/xyproto/env"
 	"github.com/xyproto/guessica"
@@ -90,9 +91,9 @@ func (a *Actions) Perform(index int) {
 	a.actionFunctions[index]()
 }
 
-// CommandMenu will display a menu with various commands that can be browsed with arrow up and arrow down
-// Also returns the selected menu index (can be -1).
-func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) int {
+// CommandMenu will display a menu with various commands that can be browsed with arrow up and arrow down.
+// Also returns the selected menu index (can be -1), and if a space should be added to the text editor after the return.
+func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) (int, bool) {
 
 	const insertFilename = "include.txt"
 
@@ -114,7 +115,10 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		wrapWhenTypingToggleText = "Disable word wrap when typing"
 	}
 
-	var extraDashes = false
+	var (
+		extraDashes         bool
+		addSpaceAfterReturn bool
+	)
 
 	// Add initial menu titles and actions
 	// Remember to add "undo.Snapshot(e)" in front of function calls that may modify the current file!
@@ -125,6 +129,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			"Word wrap at " + strconv.Itoa(wrapWidth),
 			"Sort the list of strings on the current line",
 			"Insert \"" + insertFilename + "\" at the current line",
+			"Insert the current date", // in the RFC 3339 format
 		},
 		[]func(){
 			func() { // save and quit
@@ -164,6 +169,12 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 					status.SetErrorMessage(err.Error())
 					status.Show(c, e)
 				}
+			},
+			func() { // insert current date
+				// note that if a space is added after the string here, it will be stripped when the command menu disappears
+				dateString := time.Now().Format(time.RFC3339)[:10]
+				e.InsertString(c, dateString)
+				addSpaceAfterReturn = true
 			},
 		},
 	)
@@ -338,7 +349,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 
 		// Do not immediately redraw the editor
 		e.redraw = false
-		return selected
+		return selected, addSpaceAfterReturn
 	}
 
 	// Perform the selected action by passing the function index
@@ -347,7 +358,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	// Redraw editor
 	e.redraw = true
 	e.redrawCursor = true
-	return selected
+	return selected, addSpaceAfterReturn
 }
 
 // getCommand takes an *exec.Cmd and returns the command
