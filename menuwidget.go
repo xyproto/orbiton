@@ -112,8 +112,8 @@ func (m *MenuWidget) Draw(c *vt100.Canvas) {
 			if x < 2 {
 				c.PlotColor(uint(m.marginLeft+int(x)), uint(m.marginTop+int(y)+titleHeight), m.arrowColor, r)
 			} else if y < 10 && afterLeftBracket && beforeRightBracket {
-				// color the 0-9 number differrently (in the arrow color)
-				c.PlotColor(uint(m.marginLeft+int(x)), uint(m.marginTop+int(y)+titleHeight), m.arrowColor, r)
+				// color the 0-9 number differrently (in the title color)
+				c.PlotColor(uint(m.marginLeft+int(x)), uint(m.marginTop+int(y)+titleHeight), m.titleColor, r)
 			} else if y == m.y {
 				c.PlotColor(uint(m.marginLeft+int(x)), uint(m.marginTop+int(y)+titleHeight), m.highlightColor, r)
 			} else if !highlightedAccelerator && unicode.ToLower(r) == selectionLetter {
