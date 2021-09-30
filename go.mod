@@ -11,5 +11,5 @@ require (
 	github.com/xyproto/syntax v1.8.0
 	github.com/xyproto/termtitle v1.3.0
 	github.com/xyproto/textoutput v1.12.10-0.20210803190129-b3f0f5b63cef
-	github.com/xyproto/vt100 v1.9.8
+	github.com/xyproto/vt100 v1.9.9-0.20210930131511-594a40cfc193
 )
