@@ -425,6 +425,6 @@ The `--pdf-engine=xelatex` and `--listings` flags are used, so `xelatex` and the
 
 ## General info
 
-* Version: 2.44.0
+* Version: 2.44.1
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
