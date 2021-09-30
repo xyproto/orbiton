@@ -57,7 +57,7 @@ func (e *Editor) manPageHighlight(line, programName string) string {
 			}
 			if r != ' ' && prevR == ' ' && (r == '-' || r == '[' || r == '_') && !inFlag {
 				inFlag = true
-				rs = append(rs, []rune(off+vt100.White.String())...)
+				rs = append(rs, []rune(off+e.MenuArrowColor.String())...)
 				rs = append(rs, r)
 			} else if prevR == ' ' && (r == '-' || r == '[' || r == '_') && inFlag {
 				rs = append(rs, r)
@@ -78,7 +78,7 @@ func (e *Editor) manPageHighlight(line, programName string) string {
 		}
 		rs = append(rs, []rune(off)...)
 		coloredString = string(rs)
-	} else if allUpper(trimmedLine) { //|| (oneField(trimmedLine) && !strings.HasSuffix(trimmedLine, ".")) { // filename? command?
+	} else if allUpper(trimmedLine) {
 		coloredString = e.MarkdownTextColor.Get(line)
 	} else { // regular text, but highlight numbers (and hex numbers, if the number starts with a digit) + highlight "@"
 		var rs []rune
@@ -110,7 +110,7 @@ func (e *Editor) manPageHighlight(line, programName string) string {
 				rs = append(rs, []rune(off+normal.String())...)
 				rs = append(rs, r)
 			} else if !inWord && (r == '*' || r == '$' || r == '%' || r == '!' || r == '/' || r == '=' || r == '-') {
-				rs = append(rs, []rune(off+vt100.White.String())...)
+				rs = append(rs, []rune(off+e.MenuArrowColor.String())...)
 				rs = append(rs, r)
 			} else if r == '@' { // color @ gray and the rest of the string white
 				rs = append(rs, []rune(off+e.CommentColor.String())...)
@@ -130,13 +130,13 @@ func (e *Editor) manPageHighlight(line, programName string) string {
 			} else if inWord && unicode.IsUpper(r) && (i+1 < len(lineRunes)) {
 				nextRune := lineRunes[i+1]
 				if unicode.IsUpper(nextRune) || !unicode.IsLetter(nextRune) {
-					rs = append(rs, []rune(off+vt100.Yellow.String())...)
+					rs = append(rs, []rune(off+e.ImageColor.String())...)
 				} else {
 					rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
 				}
 				rs = append(rs, r)
 			} else if inWord && unicode.IsUpper(r) {
-				rs = append(rs, []rune(off+vt100.Yellow.String())...)
+				rs = append(rs, []rune(off+e.ImageColor.String())...)
 				rs = append(rs, r)
 			} else if !inWord || !unicode.IsUpper(r) {
 				rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
@@ -144,7 +144,6 @@ func (e *Editor) manPageHighlight(line, programName string) string {
 			} else {
 				rs = append(rs, r)
 			}
-			//prevRune = r
 		}
 		rs = append(rs, []rune(off)...)
 		coloredString = string(rs)
