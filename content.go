@@ -25,7 +25,7 @@ func (e *Editor) checkContents() {
 		e.firstLineHash = true
 	} else if strings.HasPrefix(firstLine, "<?xml ") {
 		e.mode = modeXML
-	} else if strings.Count(strings.TrimSpace(firstLine), " ") > 10 && strings.HasSuffix(firstLine, ")") {
+	} else if !strings.HasPrefix(firstLine, "//") && !strings.HasPrefix(firstLine, "#") && strings.Count(strings.TrimSpace(firstLine), " ") > 10 && strings.HasSuffix(firstLine, ")") {
 		e.mode = modeManPage
 	}
 	foundFirstContent := false
