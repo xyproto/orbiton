@@ -266,7 +266,7 @@ func (e *Editor) markdownHighlight(line string, inCodeBlock, prevLineIsListItem 
 
 	// Leading hash without a space afterwards?
 	if strings.HasPrefix(line, "#") && !strings.HasPrefix(line, "# ") {
-		return vt100.Red.Get(line), true, false
+		return e.MenuArrowColor.Get(line), true, false
 	}
 
 	// TODO: Refactor the "in list item" functionality
