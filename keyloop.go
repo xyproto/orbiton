@@ -816,7 +816,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// * the rune to the left is not a blank character or the line ends with {, (, [ or :
 			// * and also if it the cursor is not to the very left
 			// * and also if this is not a text file or a blank file
-			if (!unicode.IsSpace(leftRune) || endsWithSpecial) && e.pos.sx > 0 && e.mode != modeBlank && e.mode != modeGoAssembly && e.mode != modeAssembly {
+			noSmartIndentation := e.mode == modeGoAssembly || e.mode == modePerl || e.mode == modeAssembly || e.mode == modeBlank
+			if (!unicode.IsSpace(leftRune) || endsWithSpecial) && e.pos.sx > 0 && !noSmartIndentation {
 				lineAbove := 1
 				if strings.TrimSpace(e.Line(LineIndex(y-lineAbove))) == "" {
 					// The line above is empty, use the indentation before the line above that
