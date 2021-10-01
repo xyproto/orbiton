@@ -25,6 +25,8 @@ func (e *Editor) checkContents() {
 		e.firstLineHash = true
 	} else if strings.HasPrefix(firstLine, "<?xml ") {
 		e.mode = modeXML
+	} else if strings.Contains(firstLine, "-*- nroff -*-") {
+		e.mode = modeNroff
 	} else if !strings.HasPrefix(firstLine, "//") && !strings.HasPrefix(firstLine, "#") && strings.Count(strings.TrimSpace(firstLine), " ") > 10 && strings.HasSuffix(firstLine, ")") {
 		e.mode = modeManPage
 	}
