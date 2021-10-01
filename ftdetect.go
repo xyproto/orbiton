@@ -56,6 +56,7 @@ const (
 	modeAmber          // for Amber templates
 	modeBazel          // for Bazel and Starlark
 	modeD              // for D
+	modePerl           // for Perl
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -119,6 +120,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeOCaml // or standard ML, if the file does not contain ";;"
 		case ".py":
 			mode = modePython
+		case ".pl":
+			mode = modePerl
 		case ".md":
 			// Markdown mode
 			mode = modeMarkdown
@@ -284,6 +287,8 @@ func (mode Mode) String() string {
 		return "HTML"
 	case modeOdin:
 		return "Odin"
+	case modePerl:
+		return "Perl"
 	case modeXML:
 		return "XML"
 	case modePolicyLanguage:

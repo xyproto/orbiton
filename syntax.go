@@ -152,6 +152,8 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return `.\"`
 	case modeAmber:
 		return "!!"
+	case modePerl:
+		return "%"
 	default:
 		return "//"
 	}
