@@ -261,5 +261,11 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		}
 	}
 
+	// If SSH_TTY or TMUX is set, redraw everything and then display the status message
+	if env.Bool("SSH_TTY") || env.Bool("TMUX") || strings.Contains(env.Str("TERMCAP"), "|screen.") {
+		e.redraw = true
+		e.statusAfterRedraw = statusMessage
+	}
+
 	return e, statusMessage, nil
 }

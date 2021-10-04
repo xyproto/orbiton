@@ -38,6 +38,7 @@ type Editor struct {
 	slowLoad           bool                  // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
 	readOnly           bool                  // is the file read-only when initializing o?
 	sameFilePortal     *Portal               // a portal that points to the same file
+	statusAfterRedraw  string                // status message to be shown after the editor is redrawn and e.redraw is reset
 	Theme                                    // editor theme, embedded struct
 }
 

@@ -149,9 +149,11 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	e.DrawLines(c, true, true)
 	e.redraw = false
 
-	// Display the status message
-	status.SetMessage(statusMessage)
-	status.Show(c, e)
+	if e.statusAfterRedraw == "" {
+		// Display the status message
+		status.SetMessage(statusMessage)
+		status.Show(c, e)
+	}
 
 	// Redraw the cursor, if needed
 	if e.redrawCursor {
@@ -1565,6 +1567,15 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		} else if e.Changed() {
 			c.Draw()
 		}
+
+		// Show a status message after redrawing, if statusAfterRedraw is set
+		if e.statusAfterRedraw != "" {
+			// Display the status message
+			status.SetMessage(e.statusAfterRedraw)
+			status.Show(c, e)
+			e.statusAfterRedraw = ""
+		}
+
 		// Drawing status messages should come after redrawing, but before cursor positioning
 		if statusMode {
 			status.ShowLineColWordCount(c, e, e.filename)
