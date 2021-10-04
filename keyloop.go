@@ -1570,6 +1570,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 		// Show a status message after redrawing, if statusAfterRedraw is set
 		if e.statusAfterRedraw != "" {
+			e.DrawLines(c, true, false)
 			// Display the status message
 			status.SetMessage(e.statusAfterRedraw)
 			status.Show(c, e)
