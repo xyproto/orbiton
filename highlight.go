@@ -162,7 +162,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							programName = fields[0]
 						}
 					}
-					cs := e.manPageHighlight(line, programName)
+					cs := e.manPageHighlight(line, programName, y == 0, y+1 == numLinesToDraw)
 					coloredString = cs
 				case modeMarkdown:
 					if highlighted, ok, codeBlockFound := e.markdownHighlight(line, inCodeBlock, prevLineIsListItem, &inListItem); ok {

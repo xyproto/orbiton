@@ -21,7 +21,7 @@ func handleManPageEscape(s string) string {
 	return string(lineRunes)
 }
 
-func (e *Editor) manPageHighlight(line, programName string) string {
+func (e *Editor) manPageHighlight(line, programName string, firstLine, lastLine bool) string {
 	line = handleManPageEscape(line)
 	var (
 		coloredString   string
@@ -32,7 +32,7 @@ func (e *Editor) manPageHighlight(line, programName string) string {
 		innerSpaceCount = strings.Count(trimmedLine, " ")
 	)
 
-	if strings.Count(trimmedLine, "  ") > 10 { // first and last line
+	if strings.Count(trimmedLine, "  ") > 10 && (firstLine || lastLine) { // first and last line
 		coloredString = e.CommentColor.Get(line)
 	} else if strings.ToUpper(trimmedLine) == trimmedLine && !strings.HasPrefix(trimmedLine, "-") && hasWords && !strings.HasPrefix(line, " ") { // a sub-section header
 		coloredString = e.ManSectionColor.Get(line)
