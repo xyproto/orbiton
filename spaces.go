@@ -13,7 +13,7 @@ var defaultTabsSpaces = TabsSpaces{4, true}
 // modeBlank
 var languageIndentation = map[TabsSpaces][]Mode{
 	// Languages that use tabs (from the opinionated point of view of o)
-	{4, false}: {modeC, modeGo, modeGoAssembly, modeHIDL, modeLisp, modeMakefile, modeManPage, modeNroff, modeOCaml, modeOdin, modeRust, modeStandardML}, // Tabs
+	{4, false}: {modeC, modeGo, modeGoAssembly, modeHIDL, modeLisp, modeM4, modeMakefile, modeManPage, modeNroff, modeOCaml, modeOdin, modeRust, modeStandardML}, // Tabs
 	// Languages that use spaces (from the opinionated point of view of o)
 	{2, true}: {modeAmber, modeAssembly, modeClojure, modeConfig, modeHTML, modeHaskell, modeJSON, modeLua, modeObjectPascal, modePerl, modePolicyLanguage, modeShell, modeVim, modeVim, modeXML},
 	{3, true}: {modeAda}, // Ada is special

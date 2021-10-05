@@ -57,6 +57,7 @@ const (
 	modeBazel          // for Bazel and Starlark
 	modeD              // for D
 	modePerl           // for Perl
+	modeM4             // for M4 macros
 )
 
 // Mode is a per-filetype mode, like for Markdown
@@ -116,6 +117,8 @@ func detectEditorMode(filename string) (Mode, bool) {
 			mode = modeHaskell
 		case ".sml":
 			mode = modeStandardML
+		case ".m4":
+			mode = modeM4
 		case ".ml":
 			mode = modeOCaml // or standard ML, if the file does not contain ";;"
 		case ".py":
@@ -317,6 +320,8 @@ func (mode Mode) String() string {
 		return "D"
 	case modeV:
 		return "V"
+	case modeM4:
+		return "M4"
 	default:
 		return "?"
 	}
