@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"testing"
+
+	"github.com/xyproto/mode"
 )
 
 func TestEditor(t *testing.T) {
@@ -61,7 +63,7 @@ func ExampleEditor_Next() {
 
 func ExampleEditor_InsertRune() {
 	e := NewSimpleEditor(80)
-	e.mode = modeSQL
+	e.mode = mode.SQL
 
 	e.InsertStringAndMove(nil, "text -- comment")
 	e.Home()

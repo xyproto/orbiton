@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
 
@@ -106,7 +107,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	}
 
 	// pandoc
-	if pandocPath := which("pandoc"); e.mode == modeMarkdown && pandocPath != "" {
+	if pandocPath := which("pandoc"); e.mode == mode.Markdown && pandocPath != "" {
 		pdfFilename := strings.Replace(filepath.Base(filename), ".", "_", -1) + ".pdf"
 		// Export to PDF using pandoc. The function handles its own status messages.
 		// TODO: Don't ignore the error
@@ -118,7 +119,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	exeFirstName := "main" // If the current directory name is not found
 
 	// Find a suitable default executable first name
-	if e.mode == modeOCaml || e.mode == modeKotlin || e.mode == modeLua {
+	if e.mode == mode.OCaml || e.mode == mode.Kotlin || e.mode == mode.Lua {
 		if curdir, err := os.Getwd(); err == nil { // no error
 			exeFirstName = filepath.Base(curdir)
 		}
@@ -192,12 +193,12 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		kotlinNative          bool
 	)
 
-	if e.mode == modeHTML || e.mode == modeXML {
+	if e.mode == mode.HTML || e.mode == mode.XML {
 		progressStatusMessage = "Displaying"
 	}
 
 	// Special per-language considerations
-	if e.mode == modeRust && (!exists("Cargo.toml") && !exists("../Cargo.toml")) {
+	if e.mode == mode.Rust && (!exists("Cargo.toml") && !exists("../Cargo.toml")) {
 		// Use rustc instead of cargo if Cargo.toml is missing and the extension is .rs
 		if which("rustc") != "" {
 			baseDirName := exeFirstName
@@ -209,16 +210,16 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 			cmd = *exec.Command("rustc", filename, "-o", baseDirName)
 		}
-	} else if e.mode == modeClojure && !exists("project.clj") && exists("../project.clj") {
+	} else if e.mode == mode.Clojure && !exists("project.clj") && exists("../project.clj") {
 		cmd.Path = filepath.Clean(filepath.Join(filepath.Dir(filename), ".."))
-	} else if e.mode == modeClojure && !exists("project.clj") && !exists("../project.clj") && exists("../project.clj") {
+	} else if e.mode == mode.Clojure && !exists("project.clj") && !exists("../project.clj") && exists("../project.clj") {
 		cmd.Path = filepath.Clean(filepath.Join(filepath.Dir(filename), "..", ".."))
 	} else if (ext == ".cc" || ext == ".h") && exists("BUILD.bazel") {
 		// Google-style C++ + Bazel projects
 		if which("bazel") != "" {
 			cmd = *exec.Command("bazel", "build")
 		}
-	} else if e.mode == modeZig && !exists("build.zig") {
+	} else if e.mode == mode.Zig && !exists("build.zig") {
 		// Just build the current file
 		if which("zig") != "" {
 			baseDirName := exeFirstName
@@ -251,7 +252,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		}
 		progressStatusMessage = "Testing"
 		testingInstead = true
-	} else if e.mode == modeKotlin && which("kotlinc-native") != "" {
+	} else if e.mode == mode.Kotlin && which("kotlinc-native") != "" {
 		kotlinNative = true
 		cmd = *exec.Command("kotlinc-native", "-nowarn", "-opt", "-Xallocator=mimalloc", "-produce", "program", "-linker-option", "--as-needed", filename, "-o", exeFirstName)
 	}
@@ -277,7 +278,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		errorMessage := "Error: no output"
 		// TODO: Also add checks for other executables
 		switch {
-		case e.mode == modeZig && which("zig") == "":
+		case e.mode == mode.Zig && which("zig") == "":
 			errorMessage = "Error: the Zig compiler is not installed"
 		}
 		// Could not run, and there was no output. Perhaps the executable is missing?
@@ -294,13 +295,13 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	errorMarker := "error:"
 	if testingInstead {
 		errorMarker = ": "
-	} else if e.mode == modeCrystal || e.mode == modeObjectPascal {
+	} else if e.mode == mode.Crystal || e.mode == mode.ObjectPascal {
 		errorMarker = "Error:"
-	} else if e.mode == modeCS {
+	} else if e.mode == mode.CS {
 		errorMarker = ": error "
 	}
 
-	if e.mode == modeZig && bytes.Contains(output, []byte("nrecognized glibc version")) {
+	if e.mode == mode.Zig && bytes.Contains(output, []byte("nrecognized glibc version")) {
 		byteLines := bytes.Split(output, []byte("\n"))
 		fields := strings.Split(string(byteLines[0]), ":")
 		errorMessage := "Error: unrecognized glibc version"
@@ -310,7 +311,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		return errorMessage, true, false
 	}
 
-	if e.mode == modeGo {
+	if e.mode == mode.Go {
 		switch {
 		case bytes.Contains(output, []byte(": undefined")):
 			errorMarker = "undefined"
@@ -326,12 +327,12 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		case bytes.Count(output, []byte(":")) >= 2:
 			errorMarker = ":"
 		}
-	} else if e.mode == modeOdin {
+	} else if e.mode == mode.Odin {
 		switch {
 		case bytes.Contains(output, []byte(") ")):
 			errorMarker = ") "
 		}
-	} else if err == nil && (e.mode == modeHTML || e.mode == modeXML) {
+	} else if err == nil && (e.mode == mode.HTML || e.mode == mode.XML) {
 		return "Success", true, true
 	}
 
@@ -345,7 +346,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			errorMessage = "Test error"
 		}
 
-		if e.mode == modePython {
+		if e.mode == mode.Python {
 			if errorLine, errorMessage := ParsePythonError(string(output), filepath.Base(filename)); errorLine != -1 {
 				e.redraw = e.GoTo(LineIndex(errorLine-1), c, status)
 				return "Error: " + errorMessage, true, false
@@ -359,14 +360,14 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			crystalLocationLine string
 		)
 		for _, line := range lines {
-			if e.mode == modeHaskell {
+			if e.mode == mode.Haskell {
 				if strings.Contains(prevLine, errorMarker) {
 					if errorMessage = strings.TrimSpace(line); strings.HasPrefix(errorMessage, "• ") {
 						errorMessage = string([]rune(errorMessage)[2:])
 						break
 					}
 				}
-			} else if e.mode == modeCrystal {
+			} else if e.mode == mode.Crystal {
 				if strings.HasPrefix(line, "Error:") {
 					errorMessage = line[6:]
 					if len(crystalLocationLine) > 0 {
@@ -375,7 +376,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 				} else if strings.HasPrefix(line, "In ") {
 					crystalLocationLine = line
 				}
-			} else if e.mode == modeOdin {
+			} else if e.mode == mode.Odin {
 				errorMessage = ""
 				if strings.Contains(line, errorMarker) {
 					whereAndWhat := strings.SplitN(line, errorMarker, 2)
@@ -397,7 +398,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 						if x, err := strconv.Atoi(lineColumnString); err == nil { // no error
 							foundX := x - 1
 							tabs := strings.Count(e.Line(foundY), "\t")
-							e.pos.sx = foundX + (tabs * (e.tabsSpaces.perTab - 1))
+							e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
 							e.Center(c)
 						}
 					}
@@ -408,7 +409,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					}
 					return errorMessage, true, false
 				}
-			} else if e.mode == modeObjectPascal || e.mode == modeCS {
+			} else if e.mode == mode.ObjectPascal || e.mode == mode.CS {
 				errorMessage = ""
 				if strings.Contains(line, " Error: ") {
 					pos := strings.Index(line, " Error: ")
@@ -429,7 +430,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					parts = strings.SplitN(rest, ")", 2)
 					lineColumnString, rest := parts[0], parts[1]
 					errorMessage = rest
-					if e.mode == modeCS {
+					if e.mode == mode.CS {
 						if strings.Count(rest, ":") == 2 {
 							parts := strings.SplitN(rest, ":", 3)
 							errorMessage = parts[2]
@@ -444,7 +445,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 						if x, err := strconv.Atoi(lineColumnString); err == nil { // no error
 							foundX := x - 1
 							tabs := strings.Count(e.Line(foundY), "\t")
-							e.pos.sx = foundX + (tabs * (e.tabsSpaces.perTab - 1))
+							e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
 							e.Center(c)
 						}
 					}
@@ -455,7 +456,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					}
 					return errorMessage, true, false
 				}
-			} else if e.mode == modeLua {
+			} else if e.mode == mode.Lua {
 				if strings.Contains(line, " error near ") && strings.Count(line, ":") >= 3 {
 					parts := strings.SplitN(line, ":", 4)
 					errorMessage = parts[3]
@@ -473,7 +474,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					return errorMessage, true, false
 				}
 				break
-			} else if e.mode == modeGo && errorMarker == ":" && strings.Count(line, ":") >= 2 {
+			} else if e.mode == mode.Go && errorMarker == ":" && strings.Count(line, ":") >= 2 {
 				parts := strings.SplitN(line, ":", 2)
 				errorMessage = strings.Join(parts[2:], ":")
 				break
@@ -497,7 +498,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			return errorMessage, true, false
 		}
 
-		if e.mode == modeCrystal {
+		if e.mode == mode.Crystal {
 			// Crystal has the location on a different line from the error message
 			fields := strings.Split(crystalLocationLine, ":")
 			if len(fields) != 3 {
@@ -512,7 +513,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 				if x, err := strconv.Atoi(fields[2]); err == nil { // no error
 					foundX := x - 1
 					tabs := strings.Count(e.Line(foundY), "\t")
-					e.pos.sx = foundX + (tabs * (e.tabsSpaces.perTab - 1))
+					e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
 					e.Center(c)
 				}
 
@@ -545,7 +546,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					if foundX != -1 {
 
 						tabs := strings.Count(e.Line(foundY), "\t")
-						e.pos.sx = foundX + (tabs * (e.tabsSpaces.perTab - 1))
+						e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
 						e.Center(c)
 
 						// Use the error message as the status message
@@ -584,7 +585,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 						}
 						if foundX != -1 {
 							tabs := strings.Count(e.Line(foundY), "\t")
-							e.pos.sx = foundX + (tabs * (e.tabsSpaces.perTab - 1))
+							e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
 							e.Center(c)
 							// Use the error message as the status message
 							if errorMessage != "" {
@@ -599,7 +600,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			}
 		}
 	}
-	if e.mode == modePython {
+	if e.mode == mode.Python {
 		return "Syntax OK", true, true
 	}
 

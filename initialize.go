@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/xyproto/env"
+	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
 
@@ -27,16 +28,18 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	)
 
 	// mode is what would have been an enum in other languages, for signalling if this file should be in git mode, markdown mode etc
-	mode, syntaxHighlight := detectEditorMode(filename)
-	syntaxHighlight = syntaxHighlight && origSyntaxHighlight
+	m := mode.Detect(filename)
 
-	adjustSyntaxHighlightingKeywords(mode) // no theme changes, just language detection and keyword configuration
-	tabsSpaces := TabsSpacesFromMode(mode)
+	syntaxHighlight := origSyntaxHighlight && m != mode.Text && (m != mode.Blank || filepath.Ext(filepath.Base(filename)) != "")
+
+	adjustSyntaxHighlightingKeywords(m) // no theme changes, just language detection and keyword configuration
+
+	tabsSpaces := m.TabsSpaces()
 
 	// Additional per-mode considerations, before launching the editor
 	rainbowParenthesis := syntaxHighlight // rainbow parenthesis
-	switch mode {
-	case modeMarkdown, modeText, modeBlank:
+	switch m {
+	case mode.Markdown, mode.Text, mode.Blank:
 		rainbowParenthesis = false
 	}
 
@@ -44,7 +47,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	e := NewCustomEditor(tabsSpaces,
 		rainbowParenthesis,
 		scrollSpeed,
-		mode,
+		m,
 		theme,
 		syntaxHighlight)
 
@@ -61,7 +64,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	e.filename = filename
 
 	// Per file mode editor adjustments
-	if e.mode == modeGit {
+	if e.mode == mode.Git {
 		e.clearOnQuit = true
 	}
 
@@ -86,7 +89,15 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		}
 
 		if !e.Empty() {
-			e.checkContents()
+			firstLine := e.Line(0)
+			logf("File is not empty: %s. First line: %s\n", filename, firstLine)
+			if m, found := mode.DetectFromContents(e.mode, firstLine, e.String); found && m != mode.Blank {
+				logf("Setting mode: %s\n", m.String())
+				e.mode = m
+			}
+			if e.mode == mode.Config {
+				e.syntaxHighlight = true
+			}
 		}
 
 		if !e.slowLoad {
@@ -107,7 +118,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		// Prepare an empty file
 		if newMode, err := e.PrepareEmpty(c, tty, e.filename); err != nil {
 			return nil, "", err
-		} else if newMode != modeBlank {
+		} else if newMode != mode.Blank {
 			e.mode = newMode
 		}
 
@@ -131,15 +142,15 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	adjustSyntaxHighlightingKeywords(e.mode)
 
 	// Additional per-mode considerations, before launching the editor
-	e.tabsSpaces = TabsSpacesFromMode(e.mode)
+	e.tabsSpaces = m.TabsSpaces()
 
 	switch e.mode {
-	case modeMarkdown, modeText, modeBlank:
+	case mode.Markdown, mode.Text, mode.Blank:
 		e.rainbowParenthesis = false
 	}
 
 	// If we're editing a git commit message, add a newline and enable word-wrap at 80
-	if e.mode == modeGit {
+	if e.mode == mode.Git {
 		e.Git = vt100.LightGreen
 
 		if filepath.Base(e.filename) == "MERGE_MSG" {
@@ -195,7 +206,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		}
 		e.redraw = true
 		e.redrawCursor = true
-	case lineNumber == 0 && e.mode != modeGit:
+	case lineNumber == 0 && e.mode != mode.Git:
 		// Load the o location history, if a line number was not given on the command line (and if available)
 		if !found && !e.slowLoad {
 			// Try to load the NeoVim location history, then

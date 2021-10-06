@@ -1,7 +1,10 @@
 package main
 
 // TODO: Use a different syntax highlighting package, with support for many different programming languages
-import "github.com/xyproto/syntax"
+import (
+	"github.com/xyproto/mode"
+	"github.com/xyproto/syntax"
+)
 
 var (
 	battlestarWords = []string{"address", "asm", "bootable", "break", "call", "chr", "const", "continue", "counter", "end", "exit", "extern", "fun", "funparam", "halt", "int", "len", "loop", "loopwrite", "mem", "membyte", "memdouble", "memword", "noret", "print", "rawloop", "read", "readbyte", "readdouble", "readword", "ret", "syscall", "sysparam", "use", "value", "var", "write"}
@@ -41,80 +44,80 @@ func clearKeywords() {
 }
 
 // adjustSyntaxHighlightingKeywords contains per-language adjustments to highlighting of keywords
-func adjustSyntaxHighlightingKeywords(mode Mode) {
+func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	var addKeywords, delKeywords []string
-	switch mode {
-	case modeBattlestar:
+	switch m {
+	case mode.Battlestar:
 		clearKeywords()
 		addKeywords = battlestarWords
-	case modeClojure:
+	case mode.Clojure:
 		clearKeywords()
 		addKeywords = clojureWords
-	case modeCMake:
+	case mode.CMake:
 		delKeywords = append(delKeywords, []string{"build", "package"}...)
 		addKeywords = cmakeWords
-	case modeConfig:
+	case mode.Config:
 		delKeywords = []string{"install"}
-	case modeD:
+	case mode.D:
 		clearKeywords()
 		addKeywords = dWords
-	case modeCS:
+	case mode.CS:
 		clearKeywords()
 		addKeywords = csWords
-	case modeGo:
+	case mode.Go:
 		addKeywords = []string{"defer", "fallthrough", "go", "print", "println", "range", "rune", "string"}
 		delKeywords = []string{"None", "build", "char", "def", "def", "die", "fi", "get", "in", "include", "is", "let", "mut", "next", "no", "pass", "redo", "rescue", "ret", "retry", "set", "template", "then", "this", "when", "where", "while", "yes"}
-	case modeHIDL:
+	case mode.HIDL:
 		clearKeywords()
 		addKeywords = hidlWords
-	case modeJava:
+	case mode.Java:
 		addKeywords = []string{"package"}
-	case modeJSON:
+	case mode.JSON:
 		delKeywords = []string{"install"}
-	case modeKotlin:
+	case mode.Kotlin:
 		clearKeywords()
 		addKeywords = kotlinWords
-	case modeLisp:
+	case mode.Lisp:
 		clearKeywords()
 		addKeywords = emacsWords
-	case modeLua:
+	case mode.Lua:
 		clearKeywords()
 		addKeywords = luaWords
-	case modeNroff:
+	case mode.Nroff:
 		clearKeywords()
 		delKeywords = []string{"class"}
 		addKeywords = []string{"B", "BR", "PP", "SH", "TP", "fB", "fP", "RB", "TH", "IR", "IP", "fI", "fR"}
-	case modeManPage:
+	case mode.ManPage:
 		clearKeywords()
-	case modeOak:
+	case mode.Oak:
 		addKeywords = []string{"fn"}
 		delKeywords = []string{"from", "new", "print"}
-	case modePython:
+	case mode.Python:
 		delKeywords = []string{"fn"}
-	case modeOdin:
+	case mode.Odin:
 		clearKeywords()
 		addKeywords = odinWords
-	case modePolicyLanguage: // SE Linux
+	case mode.PolicyLanguage: // SE Linux
 		clearKeywords()
 		addKeywords = policyLanguageWords
-	case modeRust:
+	case mode.Rust:
 		addKeywords = []string{"assert_eq", "fn", "impl", "loop", "mod", "out", "panic", "usize", "i64", "i32", "i16", "u64", "u32", "u16", "String", "char"}
 		delKeywords = []string{"build", "done", "end", "next", "int64", "uint64", "int32", "uint32", "int16", "uint16", "int", "get", "print", "last"}
-	case modeScala:
+	case mode.Scala:
 		clearKeywords()
 		addKeywords = scalaWords
-	case modeSQL:
+	case mode.SQL:
 		addKeywords = []string{"NOT"}
-	case modeVim:
+	case mode.Vim:
 		addKeywords = []string{"call", "echo", "elseif", "endfunction", "map", "nmap", "redraw"}
-	case modeZig:
+	case mode.Zig:
 		clearKeywords()
 		addKeywords = zigWords
-	case modeGoAssembly:
+	case mode.GoAssembly:
 		// Only highlight some words, to make them stand out
 		clearKeywords()
 		addKeywords = []string{"INT", "SYSCALL", "int", "syscall"}
-	case modeShell:
+	case mode.Shell:
 		addKeywords = []string{"--force", "-f", "cmake", "configure", "do", "fdisk", "for", "gdisk", "in", "make", "mv", "ninja", "rm", "rmdir", "setopt", "while"}
 		delKeywords = []string{"#else", "#endif", "default", "double", "exec", "float", "install", "long", "no", "pass", "ret", "super", "var", "with"}
 		fallthrough // to the default case
@@ -136,25 +139,25 @@ func adjustSyntaxHighlightingKeywords(mode Mode) {
 // comment for the current language mode the editor is in.
 func (e *Editor) SingleLineCommentMarker() string {
 	switch e.mode {
-	case modeShell, modePython, modeCMake, modeConfig, modeCrystal, modeNim, modePolicyLanguage, modeBazel:
+	case mode.Shell, mode.Python, mode.CMake, mode.Config, mode.Crystal, mode.Nim, mode.PolicyLanguage, mode.Bazel:
 		return "#"
-	case modeAssembly:
+	case mode.Assembly:
 		return ";"
-	case modeHaskell, modeSQL, modeLua, modeAda:
+	case mode.Haskell, mode.SQL, mode.Lua, mode.Ada:
 		return "--"
-	case modeVim:
+	case mode.Vim:
 		return "\""
-	case modeClojure, modeLisp:
+	case mode.Clojure, mode.Lisp:
 		return ";;"
-	case modeBat:
+	case mode.Bat:
 		return "@rem" // or rem or just ":" ...
-	case modeNroff:
+	case mode.Nroff:
 		return `.\"`
-	case modeAmber:
+	case mode.Amber:
 		return "!!"
-	case modePerl:
+	case mode.Perl:
 		return "%"
-	case modeM4:
+	case mode.M4:
 		return "dnl"
 	default:
 		return "//"

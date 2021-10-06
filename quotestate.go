@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
+
+	"github.com/xyproto/mode"
 )
 
 // QuoteState keeps track of if we're within a multi-line comment, single quotes, double quotes or multi-line quotes.
@@ -26,12 +28,12 @@ type QuoteState struct {
 	containsMultiLineComments          bool
 	parCount                           int // Parenthesis count
 	braCount                           int // Square bracket count
-	mode                               Mode
+	mode                               mode.Mode
 	ignoreSingleQuotes                 bool
 }
 
 // NewQuoteState takes a singleLineCommentMarker (such as "//" or "#") and returns a pointer to a new QuoteState struct
-func NewQuoteState(singleLineCommentMarker string, mode Mode, ignoreSingleQuotes bool) (*QuoteState, error) {
+func NewQuoteState(singleLineCommentMarker string, m mode.Mode, ignoreSingleQuotes bool) (*QuoteState, error) {
 	var q QuoteState
 	q.singleLineCommentMarker = singleLineCommentMarker
 	q.singleLineCommentMarkerRunes = []rune(singleLineCommentMarker)
@@ -41,7 +43,7 @@ func NewQuoteState(singleLineCommentMarker string, mode Mode, ignoreSingleQuotes
 	}
 	q.firstRuneInSingleLineCommentMarker = q.singleLineCommentMarkerRunes[0]
 	q.lastRuneInSingleLineCommentMarker = q.singleLineCommentMarkerRunes[lensr-1]
-	q.mode = mode
+	q.mode = m
 	q.ignoreSingleQuotes = ignoreSingleQuotes
 	return &q, nil
 }
@@ -104,7 +106,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 		}
 	case '\'':
 		if prevRune != '\\' {
-			if q.ignoreSingleQuotes || q.mode == modeLisp || q.mode == modeClojure {
+			if q.ignoreSingleQuotes || q.mode == mode.Lisp || q.mode == mode.Clojure {
 				return
 			}
 			if q.None() {
@@ -175,7 +177,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			q.braCount--
 		}
 	case '>': // support HTML-style and XML-style multi-line comments
-		if prevRune == '-' && (q.mode == modeHTML || q.mode == modeXML) {
+		if prevRune == '-' && (q.mode == mode.HTML || q.mode == mode.XML) {
 			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
 			if q.startedMultiLineComment {

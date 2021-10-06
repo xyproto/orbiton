@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
 
@@ -207,7 +208,7 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap, forward
 	e.redraw = e.GoTo(foundY, c, status)
 	if foundX != -1 {
 		tabs := strings.Count(e.Line(foundY), "\t")
-		e.pos.sx = foundX + (tabs * (e.tabsSpaces.perTab - 1))
+		e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
 		e.HorizontalScrollIfNeeded(c)
 	}
 
@@ -310,19 +311,19 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 	// A special case, search backwards to the start of the function (or to "main")
 	if s == "f" {
 		switch e.mode {
-		case modeClojure:
+		case mode.Clojure:
 			s = "defn "
-		case modeCrystal, modeNim, modePython, modeScala:
+		case mode.Crystal, mode.Nim, mode.Python, mode.Scala:
 			s = "def "
-		case modeGo:
+		case mode.Go:
 			s = "func "
-		case modeKotlin:
+		case mode.Kotlin:
 			s = "fun "
-		case modeJavaScript, modeLua, modeShell, modeTypeScript:
+		case mode.JavaScript, mode.Lua, mode.Shell, mode.TypeScript:
 			s = "function "
-		case modeOdin:
+		case mode.Odin:
 			s = "proc() "
-		case modeRust, modeV, modeZig:
+		case mode.Rust, mode.V, mode.Zig:
 			s = "fn "
 		default:
 			s = "main"

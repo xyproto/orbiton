@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/xyproto/mode"
 )
 
 func ExampleEditor_BuildOrExport_goError() {
 	e := NewSimpleEditor(80)
-	e.mode, _ = detectEditorMode("err.go")
+	e.mode = mode.Detect("err.go")
 
 	os.Chdir("test")
 	// The rename is so that "err.go" is not picked up by the CI tests
@@ -23,7 +25,7 @@ func ExampleEditor_BuildOrExport_goError() {
 
 func TestBuildOrExport(t *testing.T) {
 	e := NewSimpleEditor(80)
-	e.mode, _ = detectEditorMode("err.rs")
+	e.mode = mode.Detect("err.rs")
 
 	os.Chdir("test")
 	_, performedAction, compiledOK := e.BuildOrExport(nil, nil, nil, "err.rs")
@@ -54,7 +56,7 @@ func TestBuildOrExport(t *testing.T) {
 
 func ExampleEditor_BuildOrExport_goTest() {
 	e := NewSimpleEditor(80)
-	e.mode, _ = detectEditorMode("err.go")
+	e.mode = mode.Detect("err.go")
 
 	os.Chdir("test")
 	// The rename is so that "err.go" is not picked up by the CI tests

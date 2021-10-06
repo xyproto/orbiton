@@ -12,6 +12,7 @@ import (
 
 	"github.com/atotto/clipboard"
 	"github.com/xyproto/env"
+	"github.com/xyproto/mode"
 	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
 )
@@ -74,7 +75,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	}
 
 	// Modify the status bar theme if editing git
-	if e.mode == modeGit {
+	if e.mode == mode.Git {
 		e.StatusForeground = vt100.LightBlue
 		e.StatusBackground = vt100.BackgroundDefault
 	}
@@ -183,7 +184,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			e.ClearSearchTerm()
 
 			// Cycle git rebase keywords
-			if line := e.CurrentLine(); e.mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
+			if line := e.CurrentLine(); e.mode == mode.Git && hasAnyPrefixWord(line, gitRebasePrefixes) {
 				newLine := nextGitRebaseKeyword(line)
 				e.SetCurrentLine(newLine)
 				e.redraw = true
@@ -204,7 +205,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				break
 			}
 
-			if e.mode == modeMarkdown {
+			if e.mode == mode.Markdown {
 				e.ToggleCheckboxCurrentLine()
 				break
 			}
@@ -250,7 +251,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				compiled        bool
 			)
 
-			if e.mode == modeMarkdown && markdownSkipExport {
+			if e.mode == mode.Markdown && markdownSkipExport {
 				// Do nothing, but don't skip the next one
 				markdownSkipExport = false
 				// } else if e.mode == modeMarkdown && !markdownSkipExport{
@@ -387,7 +388,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				if e.pos.sx > 0 {
 					// Move one step left
 					if e.TabToTheLeft() {
-						e.pos.sx -= e.tabsSpaces.perTab
+						e.pos.sx -= e.tabsSpaces.PerTab
 					} else {
 						e.pos.sx--
 					}
@@ -401,7 +402,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				// no horizontal scrolling going on
 				// Move one step left
 				if e.TabToTheLeft() {
-					e.pos.sx -= e.tabsSpaces.perTab
+					e.pos.sx -= e.tabsSpaces.PerTab
 				} else {
 					e.pos.sx--
 				}
@@ -596,7 +597,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			)
 
 			// TODO: add and use something like "e.shouldAutoIndent" for these file types
-			if e.mode == modeMarkdown || e.mode == modeText || e.mode == modeBlank {
+			if e.mode == mode.Markdown || e.mode == mode.Text || e.mode == mode.Blank {
 				indent = false
 			}
 
@@ -604,7 +605,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				// De-indent the current line before moving on to the next
 				e.SetCurrentLine(trimmedLine)
 				leadingWhitespace = currentLeadingWhitespace
-			} else if e.mode == modeC || e.mode == modeCpp || e.mode == modeZig || e.mode == modeRust || e.mode == modeJava || e.mode == modeJavaScript || e.mode == modeKotlin || e.mode == modeTypeScript || e.mode == modeD {
+			} else if e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.Zig || e.mode == mode.Rust || e.mode == mode.Java || e.mode == mode.JavaScript || e.mode == mode.Kotlin || e.mode == mode.TypeScript || e.mode == mode.D {
 				// Add missing parenthesis for "if ... {", "} else if", "} elif", "for", "while" and "when" for C-like languages
 				for _, kw := range []string{"for", "foreach", "foreach_reverse", "if", "switch", "when", "while", "while let", "} else if", "} elif"} {
 					if strings.HasPrefix(trimmedLine, kw+" ") && !strings.HasPrefix(trimmedLine, kw+" (") {
@@ -723,9 +724,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					e.End(c)
 					e.Delete()
 				}
-			} else if e.tabsSpaces.spaces && (e.EmptyLine() || e.AtStartOfTheLine()) && e.tabsSpaces.WSLen(e.LeadingWhitespace()) >= e.tabsSpaces.perTab {
+			} else if e.tabsSpaces.Spaces && (e.EmptyLine() || e.AtStartOfTheLine()) && e.tabsSpaces.WSLen(e.LeadingWhitespace()) >= e.tabsSpaces.PerTab {
 				// Delete several spaces
-				for i := 0; i < e.tabsSpaces.perTab; i++ {
+				for i := 0; i < e.tabsSpaces.PerTab; i++ {
 					// Move back
 					e.Prev(c)
 					// Type a blank
@@ -753,7 +754,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			ext := filepath.Ext(e.filename)
 
 			// Tab completion of words for Go
-			if word := e.LettersBeforeCursor(); e.mode != modeBlank && e.mode != modeGoAssembly && leftRune != '.' && !unicode.IsLetter(r) && len(word) > 0 {
+			if word := e.LettersBeforeCursor(); e.mode != mode.Blank && e.mode != mode.GoAssembly && e.mode != mode.Assembly && leftRune != '.' && !unicode.IsLetter(r) && len(word) > 0 {
 				found := false
 				expandedWord := ""
 				for kw := range syntax.Keywords {
@@ -781,7 +782,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				}
 
 				// Tab completion after a '.'
-			} else if word := e.LettersOrDotBeforeCursor(); e.mode != modeBlank && e.mode != modeGoAssembly && leftRune == '.' && !unicode.IsLetter(r) && len(word) > 0 {
+			} else if word := e.LettersOrDotBeforeCursor(); e.mode != mode.Blank && e.mode != mode.GoAssembly && e.mode != mode.Assembly && leftRune == '.' && !unicode.IsLetter(r) && len(word) > 0 {
 				// Now the preceding word before the "." has been found
 
 				// Trim the trailing ".", if needed
@@ -819,7 +820,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// * the rune to the left is not a blank character or the line ends with {, (, [ or :
 			// * and also if it the cursor is not to the very left
 			// * and also if this is not a text file or a blank file
-			noSmartIndentation := e.mode == modeGoAssembly || e.mode == modePerl || e.mode == modeAssembly || e.mode == modeBlank
+			noSmartIndentation := e.mode == mode.GoAssembly || e.mode == mode.Perl || e.mode == mode.Assembly || e.mode == mode.Blank
 			if (!unicode.IsSpace(leftRune) || endsWithSpecial) && e.pos.sx > 0 && !noSmartIndentation {
 				lineAbove := 1
 				if strings.TrimSpace(e.Line(LineIndex(y-lineAbove))) == "" {
@@ -871,8 +872,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			}
 
 			undo.Snapshot(e)
-			if e.tabsSpaces.spaces {
-				for i := 0; i < e.tabsSpaces.perTab; i++ {
+			if e.tabsSpaces.Spaces {
+				for i := 0; i < e.tabsSpaces.PerTab; i++ {
 					e.InsertRune(c, ' ')
 					// Write the spaces that represent the tab to the canvas
 					e.WriteTab(c)
@@ -1401,7 +1402,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		case "c:18": // ctrl-r, to open or close a portal
 
 			// Are we in git mode?
-			if line := e.CurrentLine(); e.mode == modeGit && hasAnyPrefixWord(line, gitRebasePrefixes) {
+			if line := e.CurrentLine(); e.mode == mode.Git && hasAnyPrefixWord(line, gitRebasePrefixes) {
 				undo.Snapshot(e)
 				newLine := nextGitRebaseKeyword(line)
 				e.SetCurrentLine(newLine)
@@ -1560,10 +1561,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						newLeadingWhitespace := leadingWhitespace
 						if strings.HasSuffix(leadingWhitespace, "\t") {
 							newLeadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-1]
-							e.pos.sx -= e.tabsSpaces.perTab
-						} else if strings.HasSuffix(leadingWhitespace, strings.Repeat(" ", e.tabsSpaces.perTab)) {
-							newLeadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-e.tabsSpaces.perTab]
-							e.pos.sx -= e.tabsSpaces.perTab
+							e.pos.sx -= e.tabsSpaces.PerTab
+						} else if strings.HasSuffix(leadingWhitespace, strings.Repeat(" ", e.tabsSpaces.PerTab)) {
+							newLeadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-e.tabsSpaces.PerTab]
+							e.pos.sx -= e.tabsSpaces.PerTab
 						}
 						e.SetCurrentLine(newLeadingWhitespace)
 					}

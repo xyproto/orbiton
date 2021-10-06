@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/xyproto/env"
+	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
 
@@ -102,7 +103,7 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 						}
 						if foundX != -1 {
 							tabs := strings.Count(e.Line(LineIndex(foundY)), "\t")
-							e.pos.sx = foundX + (tabs * (e.tabsSpaces.perTab - 1))
+							e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
 							e.Center(c)
 						}
 					}
@@ -128,7 +129,7 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, jsonFormatToggle *bool) {
 
 	// Format JSON
-	if e.mode == modeJSON {
+	if e.mode == mode.JSON {
 		// TODO: Find a JSON formatter that does not need a JavaScript package like otto
 		var v interface{}
 
@@ -147,7 +148,7 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 			indentedJSON, err = json.Marshal(v)
 			*jsonFormatToggle = false
 		} else {
-			indentationString := strings.Repeat(" ", e.tabsSpaces.perTab)
+			indentationString := strings.Repeat(" ", e.tabsSpaces.PerTab)
 			indentedJSON, err = json.MarshalIndent(v, "", indentationString)
 			*jsonFormatToggle = true
 		}

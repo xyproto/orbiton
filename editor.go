@@ -11,6 +11,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
 
@@ -18,7 +19,7 @@ import (
 type Editor struct {
 	lines              map[int][]rune        // the contents of the current document
 	changed            bool                  // has the contents changed, since last save?
-	tabsSpaces         TabsSpaces            // spaces or tabs, and how many spaces per tab character
+	tabsSpaces         mode.TabsSpaces       // spaces or tabs, and how many spaces per tab character
 	syntaxHighlight    bool                  // syntax highlighting
 	rainbowParenthesis bool                  // rainbow parenthesis
 	pos                Position              // the current cursor and scroll position
@@ -28,13 +29,12 @@ type Editor struct {
 	redrawCursor       bool                  // if the cursor should be moved to the location it is supposed to be
 	lineBeforeSearch   LineIndex             // save the current line when jumping between search results
 	wrapWidth          int                   // set to 80 or 100 to trigger word wrap when typing to that column
-	mode               Mode                  // a filetype mode, like for git or markdown
+	mode               mode.Mode             // a filetype mode, like for git or markdown
 	filename           string                // the current filename
 	locationHistory    map[string]LineNumber // location history, for jumping to the last location when opening a file
 	quit               bool                  // for indicating if the user wants to end the editor session
 	clearOnQuit        bool                  // clear the terminal when quitting the editor, or not
 	wrapWhenTyping     bool                  // wrap text at a certain limit when typing
-	firstLineHash      bool                  // is the first line starting with "#"?
 	slowLoad           bool                  // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
 	readOnly           bool                  // is the file read-only when initializing o?
 	sameFilePortal     *Portal               // a portal that points to the same file
@@ -56,7 +56,7 @@ type Editor struct {
 //    - multiline comment
 // * a syntax highlighting scheme
 // * a file mode
-func NewCustomEditor(tabsSpaces TabsSpaces, rainbowParenthesis bool, scrollSpeed int, mode Mode, theme Theme, syntaxHighlight bool) *Editor {
+func NewCustomEditor(tabsSpaces mode.TabsSpaces, rainbowParenthesis bool, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight bool) *Editor {
 	e := &Editor{}
 	e.SetTheme(theme)
 	e.lines = make(map[int][]rune)
@@ -70,19 +70,17 @@ func NewCustomEditor(tabsSpaces TabsSpaces, rainbowParenthesis bool, scrollSpeed
 		e.wrapWidth = 99
 		e.wrapWhenTyping = false
 	}
-	if mode == modeGit {
+	switch m {
+	case mode.Git:
 		// The subject should ideally be maximum 50 characters long, then the body of the
 		// git commit message can be 72 characters long. Because e-mail standards.
 		e.wrapWidth = 72
 		e.wrapWhenTyping = true
-	} else if mode == modeMarkdown {
-		e.wrapWidth = 99
-		e.wrapWhenTyping = false
-	} else if mode == modeText || mode == modeBlank {
+	case mode.Markdown, mode.Text, mode.Blank:
 		e.wrapWidth = 99
 		e.wrapWhenTyping = false
 	}
-	e.mode = mode
+	e.mode = m
 	return e
 }
 
@@ -92,7 +90,7 @@ func NewCustomEditor(tabsSpaces TabsSpaces, rainbowParenthesis bool, scrollSpeed
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
 	t := NewDefaultTheme()
-	e := NewCustomEditor(defaultTabsSpaces, false, 1, modeBlank, t, false)
+	e := NewCustomEditor(mode.DefaultTabsSpaces, false, 1, mode.Blank, t, false)
 	e.wrapWidth = wordWrapLimit
 	e.wrapWhenTyping = true
 	return e
@@ -183,7 +181,7 @@ func (e *Editor) ScreenLine(n int) string {
 			}
 			sb.WriteRune(r)
 		}
-		tabSpace := strings.Repeat("\t", e.tabsSpaces.perTab)
+		tabSpace := strings.Repeat("\t", e.tabsSpaces.PerTab)
 		return strings.Replace(sb.String(), "\t", tabSpace, -1)
 	}
 	return ""
@@ -198,14 +196,14 @@ func (e *Editor) LastDataPosition(n LineIndex) int {
 // LastScreenPosition returns the last X index for this line, for the screen (expands tabs)
 // Can be negative, if the line is empty.
 func (e *Editor) LastScreenPosition(n LineIndex) int {
-	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.tabsSpaces.perTab - 1))
+	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.tabsSpaces.PerTab - 1))
 	return (e.LastDataPosition(n) + extraSpaceBecauseOfTabs)
 }
 
 // LastTextPosition returns the last X index for this line, regardless of horizontal scrolling.
 // Can be negative if the line is empty. Tabs are expanded.
 func (e *Editor) LastTextPosition(n LineIndex) int {
-	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.tabsSpaces.perTab - 1))
+	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.tabsSpaces.PerTab - 1))
 	return (e.LastDataPosition(n) + extraSpaceBecauseOfTabs)
 }
 
@@ -214,7 +212,7 @@ func (e *Editor) LastTextPosition(n LineIndex) int {
 func (e *Editor) FirstScreenPosition(n LineIndex) uint {
 	var (
 		counter      uint
-		spacesPerTab = uint(e.tabsSpaces.perTab)
+		spacesPerTab = uint(e.tabsSpaces.PerTab)
 	)
 	for _, r := range e.Line(n) {
 		if r == '\t' {
@@ -347,16 +345,16 @@ func (e *Editor) LoadBytes(data []byte) {
 // If it's an image, there will be text placeholders for pixels.
 // If it's anything else, it will just be blank.
 // Returns an editor mode and an error type.
-func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) (Mode, error) {
+func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) (mode.Mode, error) {
 	var (
-		mode Mode = modeBlank
+		m    mode.Mode = mode.Blank
 		data []byte
 		err  error
 	)
 
 	// Check if the data could be prepared
 	if err != nil {
-		return mode, err
+		return m, err
 	}
 
 	lines := strings.Split(string(data), "\n")
@@ -371,7 +369,7 @@ func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 	// Mark the data as "not changed"
 	e.changed = false
 
-	return mode, nil
+	return m, nil
 }
 
 // Save will try to save the current editor contents to file.
@@ -397,11 +395,11 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	s = opinionatedStringReplacer.Replace(s) + "\n"
 
 	// TODO: Auto-detect tabs/spaces instead of per-language assumptions
-	if Spaces(e.mode) {
+	if e.mode.Spaces() {
 		// NOTE: This is a hack, that can only replace 10 levels deep.
 		for level := 10; level > 0; level-- {
 			fromString := "\n" + strings.Repeat("\t", level)
-			toString := "\n" + strings.Repeat(" ", level*e.tabsSpaces.perTab)
+			toString := "\n" + strings.Repeat(" ", level*e.tabsSpaces.PerTab)
 			s = strings.Replace(s, fromString, toString, -1)
 		}
 	}
@@ -440,7 +438,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 
 	// "chmod +x" or "chmod -x". This is needed after saving the file, in order to toggle the executable bit.
 	// rust source may start with something like "#![feature(core_intrinsics)]", so avoid that.
-	if shebang && e.mode != modeRust && !e.readOnly {
+	if shebang && e.mode != mode.Rust && !e.readOnly {
 		// Call Chmod, but ignore errors (since this is just a bonus and not critical)
 		os.Chmod(e.filename, fileMode)
 		e.syntaxHighlight = true
@@ -1053,7 +1051,7 @@ func (e *Editor) DataX() (int, error) {
 		}
 		// Increase the counter, based on the current rune
 		if r == '\t' {
-			screenCounter += e.tabsSpaces.perTab
+			screenCounter += e.tabsSpaces.PerTab
 		} else {
 			screenCounter++
 		}
@@ -1239,7 +1237,7 @@ func (e *Editor) DownEnd(c *vt100.Canvas) error {
 		}
 
 		// Expand the line, then check if e.pos.sx falls on a tab character ("\t" is expanded to several tabs ie. "\t\t\t\t")
-		expandedRunes := []rune(strings.Replace(line, "\t", strings.Repeat("\t", e.tabsSpaces.perTab), -1))
+		expandedRunes := []rune(strings.Replace(line, "\t", strings.Repeat("\t", e.tabsSpaces.PerTab), -1))
 		if e.pos.sx < len(expandedRunes) && expandedRunes[e.pos.sx] == '\t' {
 			e.pos.sx = int(e.FirstScreenPosition(e.DataY()))
 		}
@@ -1275,7 +1273,7 @@ func (e *Editor) UpEnd(c *vt100.Canvas) error {
 		}
 
 		// Expand the line, then check if e.pos.sx falls on a tab character ("\t" is expanded to several tabs ie. "\t\t\t\t")
-		expandedRunes := []rune(strings.Replace(e.CurrentLine(), "\t", strings.Repeat("\t", e.tabsSpaces.perTab), -1))
+		expandedRunes := []rune(strings.Replace(e.CurrentLine(), "\t", strings.Repeat("\t", e.tabsSpaces.PerTab), -1))
 		if e.pos.sx < len(expandedRunes) && expandedRunes[e.pos.sx] == '\t' {
 			e.pos.sx = int(e.FirstScreenPosition(e.DataY()))
 		}
@@ -1288,7 +1286,7 @@ func (e *Editor) Next(c *vt100.Canvas) error {
 	// Ignore it if the position is out of bounds
 	atTab := e.Rune() == '\t'
 	if atTab {
-		e.pos.sx += e.tabsSpaces.perTab
+		e.pos.sx += e.tabsSpaces.PerTab
 	} else {
 		e.pos.sx++
 	}
@@ -1296,7 +1294,7 @@ func (e *Editor) Next(c *vt100.Canvas) error {
 	if e.AfterLineScreenContentsPlusOne() {
 		// Undo the move
 		if atTab {
-			e.pos.sx -= e.tabsSpaces.perTab
+			e.pos.sx -= e.tabsSpaces.PerTab
 		} else {
 			e.pos.sx--
 		}
@@ -1336,7 +1334,7 @@ func (e *Editor) TabToTheLeft() bool {
 // Prev will move the cursor to the previous position in the contents
 func (e *Editor) Prev(c *vt100.Canvas) error {
 
-	atTab := e.TabToTheLeft() || (e.pos.sx <= e.tabsSpaces.perTab && e.Get(0, e.DataY()) == '\t')
+	atTab := e.TabToTheLeft() || (e.pos.sx <= e.tabsSpaces.PerTab && e.Get(0, e.DataY()) == '\t')
 	if e.pos.sx == 0 && e.pos.offsetX > 0 {
 		// at left edge, but can scroll to the left
 		e.pos.offsetX--
@@ -1344,7 +1342,7 @@ func (e *Editor) Prev(c *vt100.Canvas) error {
 	} else {
 		// If at a tab character, move a few more positions
 		if atTab {
-			e.pos.sx -= e.tabsSpaces.perTab
+			e.pos.sx -= e.tabsSpaces.PerTab
 		} else {
 			e.pos.sx--
 		}
@@ -1352,7 +1350,7 @@ func (e *Editor) Prev(c *vt100.Canvas) error {
 	if e.pos.sx < 0 { // Did we move too far and there is no X offset?
 		// Undo the move
 		if atTab {
-			e.pos.sx += e.tabsSpaces.perTab
+			e.pos.sx += e.tabsSpaces.PerTab
 		} else {
 			e.pos.sx++
 		}
@@ -1580,7 +1578,7 @@ func (e *Editor) WriteRune(c *vt100.Canvas) {
 
 // WriteTab writes spaces when there is a tab character, to the canvas
 func (e *Editor) WriteTab(c *vt100.Canvas) {
-	spacesPerTab := e.tabsSpaces.perTab
+	spacesPerTab := e.tabsSpaces.PerTab
 	for x := e.pos.sx; x < e.pos.sx+spacesPerTab; x++ {
 		c.WriteRune(uint(x+e.pos.offsetX), uint(e.pos.sy), e.Foreground, e.Background, ' ')
 	}
@@ -1721,7 +1719,7 @@ func (e *Editor) GoToLineNumberAndCol(lineNumber LineNumber, colNumber ColNumber
 
 	// Go to the correct column as well
 	tabs := strings.Count(e.Line(yIndex), "\t")
-	newScreenX := int(xIndex) + (tabs * (e.tabsSpaces.perTab - 1))
+	newScreenX := int(xIndex) + (tabs * (e.tabsSpaces.PerTab - 1))
 	if e.pos.sx != newScreenX {
 		redraw = true
 	}
