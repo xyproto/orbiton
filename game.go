@@ -17,10 +17,9 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// Every editor should include a small game, right?
+// There is tradition for including silly little games in editors, so here goes.
 
 const (
-	pelletRune      = 'a'
 	bobRuneLarge    = 'O'
 	bobRuneSmall    = 'o'
 	evilGobblerRune = '€'
@@ -29,21 +28,21 @@ const (
 	gobblerDeadRune = 'T'
 	bobWonRune      = 'Y'
 	bobLostRune     = 'n'
+	pelletRune      = '¤'
 )
 
 var (
-	highScoreFile = filepath.Join(userCacheDir, "o/highscore.txt")
-
-	bobColor         = vt100.LightCyan
-	bobWonColor      = vt100.LightCyan
-	bobLostColor     = vt100.LightCyan
+	highScoreFile    = filepath.Join(userCacheDir, "o/highscore.txt")
+	bobColor         = vt100.White
+	bobWonColor      = vt100.Green
+	bobLostColor     = vt100.Red
 	evilGobblerColor = vt100.LightRed
-	gobblerColor     = vt100.Green
+	gobblerColor     = vt100.LightGreen
 	gobblerDeadColor = vt100.DarkGray
 	bubbleColor      = vt100.LightMagenta
 	pelletColor1     = vt100.LightBlue
-	pelletColor2     = vt100.White
-	statusTextColor  = vt100.Yellow
+	pelletColor2     = vt100.LightCyan
+	statusTextColor  = vt100.LightYellow
 )
 
 type Bob struct {
@@ -54,11 +53,11 @@ type Bob struct {
 }
 
 func NewBob(c *vt100.Canvas) *Bob {
-	//var startingWidth = int(c.W())
+	var startingWidth = int(c.W())
 	return &Bob{
-		x:     5,
+		x:     startingWidth / 20,
 		y:     10,
-		oldx:  5,
+		oldx:  startingWidth / 20,
 		oldy:  10,
 		state: bobRuneSmall,
 		color: bobColor,
@@ -148,7 +147,7 @@ func NewPellet(x, y, vx, vy int) *Pellet {
 		oldy:    y,
 		vx:      vx,
 		vy:      vy,
-		state:   '·',
+		state:   pelletRune,
 		color:   pelletColor1,
 		stopped: false,
 		removed: false,
@@ -261,19 +260,20 @@ type Bubble struct {
 	color      vt100.AttributeColor // foreground color
 }
 
-func NewEnemies(n int) []*Bubble {
-	enemies := make([]*Bubble, n)
-	for i := range enemies {
-		enemies[i] = NewBubble()
+func NewBubbles(c *vt100.Canvas, n int) []*Bubble {
+	bubbles := make([]*Bubble, n)
+	for i := range bubbles {
+		bubbles[i] = NewBubble(c)
 	}
-	return enemies
+	return bubbles
 }
 
-func NewBubble() *Bubble {
+func NewBubble(c *vt100.Canvas) *Bubble {
+	startingWidth := int(c.W())
 	return &Bubble{
-		x:     10,
+		x:     startingWidth / 5,
 		y:     10,
-		oldx:  10,
+		oldx:  startingWidth / 5,
 		oldy:  10,
 		state: bubbleRune,
 		color: bubbleColor,
@@ -282,52 +282,6 @@ func NewBubble() *Bubble {
 
 func (b *Bubble) Draw(c *vt100.Canvas) {
 	c.PlotColor(uint(b.x), uint(b.y), b.color, b.state)
-}
-
-func (b *Bubble) Right(c *vt100.Canvas) bool {
-	oldx := b.x
-	b.x++
-	if b.x >= int(c.W()) {
-		b.x--
-		return false
-	}
-	b.oldx = oldx
-	b.oldy = b.y
-	return true
-}
-
-func (b *Bubble) Left(c *vt100.Canvas) bool {
-	oldx := b.x
-	if b.x-1 < 0 {
-		return false
-	}
-	b.x--
-	b.oldx = oldx
-	b.oldy = b.y
-	return true
-}
-
-func (b *Bubble) Up(c *vt100.Canvas) bool {
-	oldy := b.y
-	if b.y-1 < 0 {
-		return false
-	}
-	b.y--
-	b.oldx = b.x
-	b.oldy = oldy
-	return true
-}
-
-func (b *Bubble) Down(c *vt100.Canvas) bool {
-	oldy := b.y
-	b.y++
-	if b.y >= int(c.H()) {
-		b.y--
-		return false
-	}
-	b.oldx = b.x
-	b.oldy = oldy
-	return true
 }
 
 // Terminal was resized
@@ -340,7 +294,7 @@ func (b *Bubble) Next(c *vt100.Canvas, bob *Bob) bool {
 	b.oldx = b.x
 	b.oldy = b.y
 
-	// Now try to move the bubble intelligently, given the position of bob
+	// Now try to move the bubble "intelligently", given the position of the evil gobbler
 
 	d := distance(bob.x, b.x, bob.y, b.y)
 	if d > 10 {
@@ -399,14 +353,12 @@ func (b *Bubble) HitSomething(c *vt100.Canvas) bool {
 }
 
 type EvilGobbler struct {
-	x, y            int                  // current position
-	oldx, oldy      int                  // previous position
-	state           rune                 // looks
-	color           vt100.AttributeColor // foreground color
-	hunting         *Gobbler             // current gobbler to hunt
-	huntingDistance float64              // how far to closest gobbler
-	counter         uint
-	shot            bool
+	x, y       int                  // current position
+	oldx, oldy int                  // previous position
+	state      rune                 // looks
+	color      vt100.AttributeColor // foreground color
+	counter    uint
+	shot       bool
 }
 
 func NewEvilGobbler(c *vt100.Canvas) *EvilGobbler {
@@ -551,7 +503,7 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets []*Pellet, bob *Bob) bool {
 
 	} else {
 
-		if g.hunting == nil || g.hunting.removed == true {
+		if g.hunting == nil || g.hunting.removed {
 			var minDistance = 99999.9
 			var closestPellet *Pellet
 			for _, b := range pellets {
@@ -705,7 +657,7 @@ func Game() error {
 		evilGobbler = NewEvilGobbler(c)
 		gobblers    = NewGobblers(c, 10)
 		pellets     = make([]*Pellet, 0)
-		enemies     = NewEnemies(7)
+		bubbles     = NewBubbles(c, 7)
 		score       = uint(0)
 	)
 
@@ -727,7 +679,7 @@ func Game() error {
 			for _, pellet := range pellets {
 				pellet.Resize()
 			}
-			for _, bubble := range enemies {
+			for _, bubble := range bubbles {
 				bubble.Resize()
 			}
 			for _, gobbler := range gobblers {
@@ -765,7 +717,7 @@ func Game() error {
 		for _, pellet := range pellets {
 			pellet.Draw(c)
 		}
-		for _, bubble := range enemies {
+		for _, bubble := range bubbles {
 			bubble.Draw(c)
 		}
 		evilGobbler.Draw(c)
@@ -833,7 +785,7 @@ func Game() error {
 			for _, pellet := range pellets {
 				pellet.Next(c, evilGobbler)
 			}
-			for _, bubble := range enemies {
+			for _, bubble := range bubbles {
 				bubble.Next(c, bob)
 			}
 			for _, gobbler := range gobblers {
@@ -852,7 +804,7 @@ func Game() error {
 		for _, pellet := range pellets {
 			c.Plot(uint(pellet.oldx), uint(pellet.oldy), ' ')
 		}
-		for _, bubble := range enemies {
+		for _, bubble := range bubbles {
 			c.Plot(uint(bubble.oldx), uint(bubble.oldy), ' ')
 		}
 		for _, gobbler := range gobblers {
