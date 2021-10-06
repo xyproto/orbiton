@@ -8,8 +8,9 @@ import (
 // and a function that can return the entire contents of the file as a string,
 // which will only be called if needed.
 // Based on the contents, a Mode is detected and returned.
-func DetectFromContents(firstLine string, getAllText func() string) Mode {
+func DetectFromContents(firstLine string, getAllText func() string) (Mode, bool) {
 	var m Mode
+	found := false
 	if strings.HasPrefix(firstLine, "#!") { // The line starts with a shebang
 		words := strings.Split(firstLine, " ")
 		lastWord := words[len(words)-1]
@@ -20,18 +21,24 @@ func DetectFromContents(firstLine string, getAllText func() string) Mode {
 		switch lastWord {
 		case "python":
 			m = Python
+			found = true
 		case "bash", "fish", "zsh", "tcsh", "ksh", "sh", "ash":
 			m = Shell
+			found = true
 		}
 	} else if strings.HasPrefix(firstLine, "# $") {
 		// Most likely a csh script on FreeBSD
 		m = Shell
+		found = true
 	} else if strings.HasPrefix(firstLine, "<?xml ") {
 		m = XML
+		found = true
 	} else if strings.Contains(firstLine, "-*- nroff -*-") {
 		m = Nroff
+		found = true
 	} else if !strings.HasPrefix(firstLine, "//") && !strings.HasPrefix(firstLine, "#") && strings.Count(strings.TrimSpace(firstLine), " ") > 10 && strings.HasSuffix(firstLine, ")") {
 		m = ManPage
+		found = true
 	}
 	foundFirstContent := false
 	// If more lines start with "# " than "// " or "/* ", and mode is blank,
@@ -49,22 +56,26 @@ func DetectFromContents(firstLine string, getAllText func() string) Mode {
 				foundFirstContent = true
 				if trimmedLine == "{" { // first found content is {, assume JSON
 					m = JSON
+					found = true
 				}
 			}
 		}
 		if hashComment > slashComment {
 			m = Config
+			found = true
 		}
 	} else if m == Assembly {
 		if strings.Contains(getAllText(), "·") { // Go-style assembly mid dot
 			m = GoAssembly
+			found = true
 		}
 	}
 	// If the mode is modeOCaml and there are no ";;" strings, switch to Standard ML
 	if m == OCaml {
 		if !strings.Contains(getAllText(), ";;") {
 			m = StandardML
+			found = true
 		}
 	}
-	return m
+	return m, found
 }

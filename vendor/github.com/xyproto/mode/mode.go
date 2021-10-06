@@ -64,8 +64,7 @@ const (
 )
 
 // Detect looks at the filename and tries to guess what could be an appropriate editor mode.
-// This mainly affects syntax highlighting (which can be toggled with ctrl-t) and indentation.
-func Detect(filename string) (Mode, bool) {
+func Detect(filename string) Mode {
 
 	// A list of the most common configuration filenames that does not have an extension
 	var (
@@ -211,10 +210,7 @@ func Detect(filename string) (Mode, bool) {
 		mode = Markdown
 	}
 
-	// Check if we should enable syntax highlighting by default
-	syntaxHighlightingEnabled := (mode != Blank || ext != "") && mode != Text
-
-	return mode, syntaxHighlightingEnabled
+	return mode
 }
 
 // String will return a short lowercase string representing the given editor mode
