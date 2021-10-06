@@ -90,9 +90,9 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 
 		if !e.Empty() {
 			firstLine := e.Line(0)
-			logf("File is not empty: %s. First line: %s\n", filename, firstLine)
+			//logf("File is not empty: %s. First line: %s\n", filename, firstLine)
 			if m, found := mode.DetectFromContents(e.mode, firstLine, e.String); found && m != mode.Blank {
-				logf("Setting mode: %s\n", m.String())
+				//logf("Setting mode: %s\n", m.String())
 				e.mode = m
 			}
 			if e.mode == mode.Config {
