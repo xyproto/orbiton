@@ -184,6 +184,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		panic(err)
 	}
 
+	// Special menu option for PKGBUILD files
 	if strings.HasSuffix(e.filename, "PKGBUILD") {
 		actions.Add("Call Guessica", func() {
 			status.Clear(c)
@@ -243,6 +244,23 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		})
 	}
 
+	// Debug mode on/off
+	if e.debugMode {
+		actions.Add("End debug mode", func() {
+			status.Clear(c)
+			status.SetMessage("Debug mode disabled")
+			status.Show(c, e)
+			e.debugMode = false
+		})
+	} else {
+		actions.Add("Debug mode", func() {
+			status.Clear(c)
+			status.SetMessage("Debug mode enabled")
+			status.Show(c, e)
+			e.debugMode = true
+		})
+	}
+
 	// Add the syntax highlighting toggle menu item
 	if !envNoColor {
 		syntaxToggleText := "Disable syntax highlighting"
@@ -280,8 +298,8 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		}
 	}
 
-	// Add the "Default theme" menu item text and menu function
-	actions.Add("Default theme", func() {
+	// Add the "Use the default theme" menu item text and menu function
+	actions.Add("Use the default theme", func() {
 		e.setDefaultTheme()
 		e.syntaxHighlight = true
 		e.FullResetRedraw(c, status, true)

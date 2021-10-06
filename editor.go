@@ -39,6 +39,7 @@ type Editor struct {
 	readOnly           bool                  // is the file read-only when initializing o?
 	sameFilePortal     *Portal               // a portal that points to the same file
 	statusAfterRedraw  string                // status message to be shown after the editor is redrawn and e.redraw is reset
+	debugMode          bool                  // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
 	Theme                                    // editor theme, embedded struct
 }
 
