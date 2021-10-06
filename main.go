@@ -93,6 +93,23 @@ Set NO_COLOR=1 to disable colors.
 		defer pprof.StopCPUProfile()
 	}
 
+	// Check if the executable starts with "g" or "f"
+	var executableName string
+	if len(os.Args) > 0 {
+		executableName = filepath.Base(os.Args[0])
+		if len(executableName) > 0 {
+			switch executableName[0] {
+			case 'f', 'g': // game or feeding-game
+				if err := Game(); err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					os.Exit(1)
+				} else {
+					return
+				}
+			}
+		}
+	}
+
 	filename, lineNumber, colNumber := FilenameAndLineNumberAndColNumber(flag.Arg(0), flag.Arg(1), flag.Arg(2))
 	if filename == "" {
 		fmt.Fprintln(os.Stderr, "please provide a filename")
@@ -132,14 +149,6 @@ Set NO_COLOR=1 to disable colors.
 		termtitle.MustSet(termtitle.GenerateTitle(filename))
 	}
 
-	// Initialize the VT100 terminal
-	tty, err := vt100.NewTTY()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "error: "+err.Error())
-		os.Exit(1)
-	}
-	defer tty.Close()
-
 	// If the editor executable has been named "red", use the red/gray theme by default
 	// Also use the red/gray theme if $SHELL is /bin/csh (typically BSD)
 	theme := NewDefaultTheme()
@@ -148,13 +157,25 @@ Set NO_COLOR=1 to disable colors.
 		theme = NewNoColorTheme()
 		syntaxHighlight = false
 	} else {
-		executableName := filepath.Base(os.Args[0])
-		if strings.HasPrefix(executableName, "r") { // red, ro, rb, rt etc
-			theme = NewRedBlackTheme()
-		} else if strings.HasPrefix(executableName, "l") { // light, lo etc
-			theme = NewLightTheme()
+		// Check if the executable starts with "r" or "l"
+		if len(executableName) > 0 {
+			switch executableName[0] {
+			case 'r': // red, ro, rb, rt etc
+				theme = NewRedBlackTheme()
+			case 'l': // light, lo etc
+				theme = NewLightTheme()
+			}
 		}
 	}
+
+	// Initialize the VT100 terminal
+	tty, err := vt100.NewTTY()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error: "+err.Error())
+		os.Exit(1)
+	}
+	defer tty.Close()
+
 	// Run the main editor loop
 	userMessage, err := Loop(tty, filename, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight)
 
