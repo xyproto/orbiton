@@ -8,7 +8,7 @@ import (
 	"github.com/jung-kurt/gofpdf"
 )
 
-// SavePDF can save the text as a PDF. It's pretty experimental.
+// SavePDF can save the text as a PDF document. It's pretty experimental.
 func (e *Editor) SavePDF(title, filename string) error {
 
 	// Check if the file exists
