@@ -23,7 +23,10 @@ github.com/xyproto/env
 # github.com/xyproto/guessica v1.1.0
 ## explicit
 github.com/xyproto/guessica
-# github.com/xyproto/syntax v1.8.0
+# github.com/xyproto/mode v0.1.1
+## explicit
+github.com/xyproto/mode
+# github.com/xyproto/syntax v1.10.2
 ## explicit
 github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.3.0
