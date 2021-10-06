@@ -23,7 +23,7 @@ github.com/xyproto/env
 # github.com/xyproto/guessica v1.1.0
 ## explicit
 github.com/xyproto/guessica
-# github.com/xyproto/mode v0.2.1
+# github.com/xyproto/mode v0.3.0
 ## explicit
 github.com/xyproto/mode
 # github.com/xyproto/syntax v1.10.2

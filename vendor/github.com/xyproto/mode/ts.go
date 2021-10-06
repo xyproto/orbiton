@@ -10,6 +10,7 @@ type TabsSpaces struct {
 	Spaces bool // use spaces, or tabs?
 }
 
+// DefaultTabsSpaces is the default setting: 4 spaces
 var DefaultTabsSpaces = TabsSpaces{4, true}
 
 var languageIndentation = map[TabsSpaces][]Mode{
