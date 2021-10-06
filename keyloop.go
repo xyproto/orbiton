@@ -39,6 +39,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		copyLines         []string  // for the cut/copy/paste functionality
 		previousCopyLines []string  // for checking if a paste is the same as last time
 		bookmark          *Position // for the bookmark/jump functionality
+		breakpoint        *Position // for the breakpoint/jump functionality in debug mode
 		statusMode        bool      // if information should be shown at the bottom
 
 		firstPasteAction = true
@@ -1433,29 +1434,52 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				status.SetMessage("Opening a portal at " + portal.String())
 			}
 			status.Show(c, e)
-		case "c:2": // ctrl-b, bookmark, unbookmark or jump to bookmark
+		case "c:2": // ctrl-b, bookmark, unbookmark or jump to bookmark, toggle breakpoint if in debug mode
 			status.Clear(c)
-			if bookmark == nil {
-				// no bookmark, create a bookmark at the current line
-				bookmark = e.pos.Copy()
-				// TODO: Modify the statusbar implementation so that extra spaces are not needed here.
-				s := "Bookmarked line " + e.LineNumber().String()
-				status.SetMessage("  " + s + "  ")
-			} else if bookmark.LineNumber() == e.LineNumber() {
-				// bookmarking the same line twice: remove the bookmark
-				s := "Removed bookmark for line " + bookmark.LineNumber().String()
-				status.SetMessage(s)
-				bookmark = nil
+			if e.debugMode {
+				if breakpoint == nil {
+					breakpoint = e.pos.Copy()
+					s := "Placed breakpoint at line " + e.LineNumber().String()
+					status.SetMessage("  " + s + "  ")
+				} else if breakpoint.LineNumber() == e.LineNumber() {
+					// setting a breakpoint at the same line twice: remove the breakpoint
+					s := "Removed breakpoint at line " + breakpoint.LineNumber().String()
+					status.SetMessage(s)
+					breakpoint = nil
+				} else {
+					undo.Snapshot(e)
+					// Go to the breakpoint position
+					e.GoToPosition(c, status, *breakpoint)
+					// Do the redraw manually before showing the status message
+					e.DrawLines(c, true, false)
+					e.redraw = false
+					// SHow the status message
+					s := "Jumped to breakpoint at line " + e.LineNumber().String()
+					status.SetMessage(s)
+				}
 			} else {
-				undo.Snapshot(e)
-				// Go to the saved bookmark position
-				e.GoToPosition(c, status, *bookmark)
-				// Do the redraw manually before showing the status message
-				e.DrawLines(c, true, false)
-				e.redraw = false
-				// Show the status message
-				s := "Jumped to bookmark at line " + e.LineNumber().String()
-				status.SetMessage(s)
+				if bookmark == nil {
+					// no bookmark, create a bookmark at the current line
+					bookmark = e.pos.Copy()
+					// TODO: Modify the statusbar implementation so that extra spaces are not needed here.
+					s := "Bookmarked line " + e.LineNumber().String()
+					status.SetMessage("  " + s + "  ")
+				} else if bookmark.LineNumber() == e.LineNumber() {
+					// bookmarking the same line twice: remove the bookmark
+					s := "Removed bookmark for line " + bookmark.LineNumber().String()
+					status.SetMessage(s)
+					bookmark = nil
+				} else {
+					undo.Snapshot(e)
+					// Go to the saved bookmark position
+					e.GoToPosition(c, status, *bookmark)
+					// Do the redraw manually before showing the status message
+					e.DrawLines(c, true, false)
+					e.redraw = false
+					// Show the status message
+					s := "Jumped to bookmark at line " + e.LineNumber().String()
+					status.SetMessage(s)
+				}
 			}
 			status.Show(c, e)
 			e.redrawCursor = true
