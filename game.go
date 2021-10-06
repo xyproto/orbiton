@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -17,14 +18,14 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// There is tradition for including silly little games in editors, so here goes.
+// There is a tradition for including silly little games in editors, so here goes:
 
 const (
 	bobRuneLarge    = 'O'
 	bobRuneSmall    = 'o'
 	evilGobblerRune = '€'
 	bubbleRune      = '°'
-	gobblerRune     = '@'
+	gobblerRune     = '#'
 	gobblerDeadRune = 'T'
 	bobWonRune      = 'Y'
 	bobLostRune     = 'n'
@@ -32,17 +33,21 @@ const (
 )
 
 var (
-	highScoreFile    = filepath.Join(userCacheDir, "o/highscore.txt")
-	bobColor         = vt100.White
-	bobWonColor      = vt100.Green
-	bobLostColor     = vt100.Red
-	evilGobblerColor = vt100.LightRed
-	gobblerColor     = vt100.LightGreen
-	gobblerDeadColor = vt100.DarkGray
-	bubbleColor      = vt100.LightMagenta
-	pelletColor1     = vt100.LightBlue
-	pelletColor2     = vt100.LightCyan
-	statusTextColor  = vt100.LightYellow
+	highScoreFile = filepath.Join(userCacheDir, "o/highscore.txt")
+
+	bobColor             = vt100.Black
+	bobWonColor          = vt100.Green
+	bobLostColor         = vt100.Red
+	evilGobblerColor     = vt100.LightRed
+	gobblerColor         = vt100.Yellow
+	gobblerDeadColor     = vt100.DarkGray
+	bubbleColor          = vt100.Magenta
+	pelletColor1         = vt100.White
+	pelletColor2         = vt100.Black
+	statusTextColor      = vt100.Red
+	statusTextBackground = vt100.Black
+	resizeColor          = vt100.LightMagenta
+	bgColor              = vt100.Cyan
 )
 
 type Bob struct {
@@ -126,7 +131,7 @@ func (b *Bob) Down(c *vt100.Canvas) bool {
 
 // Terminal was resized
 func (b *Bob) Resize() {
-	b.color = vt100.LightMagenta
+	b.color = resizeColor
 }
 
 type Pellet struct {
@@ -286,7 +291,7 @@ func (b *Bubble) Draw(c *vt100.Canvas) {
 
 // Terminal was resized
 func (b *Bubble) Resize() {
-	b.color = vt100.LightMagenta
+	b.color = resizeColor
 }
 
 // Next moves the object to the next position, and returns true if it moved
@@ -443,7 +448,7 @@ func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers []*Gobbler, bob *Bob) bool 
 
 // Terminal was resized
 func (e *EvilGobbler) Resize() {
-	e.color = vt100.White
+	e.color = resizeColor
 }
 
 type Gobbler struct {
@@ -591,7 +596,7 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets []*Pellet, bob *Bob) bool {
 
 // Terminal was resized
 func (g *Gobbler) Resize() {
-	g.color = vt100.White
+	g.color = resizeColor
 }
 
 func abs(a int) int {
@@ -634,13 +639,29 @@ func loadHighScore() (uint, error) {
 }
 
 func Game() error {
-	rand.Seed(time.Now().UnixNano())
+	if envNoColor {
+		bobColor = vt100.White
+		bobWonColor = vt100.LightGray
+		bobLostColor = vt100.DarkGray
+		evilGobblerColor = vt100.White
+		gobblerColor = vt100.LightGray
+		gobblerDeadColor = vt100.DarkGray
+		bubbleColor = vt100.DarkGray
+		pelletColor1 = vt100.White
+		pelletColor2 = vt100.White
+		statusTextColor = vt100.LightGray
+		resizeColor = vt100.White
+		bgColor = vt100.DefaultBackground
+	}
+
+	startTime := time.Now()
+	rand.Seed(startTime.UnixNano())
 
 	// Try loading the highscore from the file, but ignore any errors
 	highScore, _ := loadHighScore()
 
 	c := vt100.NewCanvas()
-	//c.FillBackground(vt100.Blue)
+	c.FillBackground(bgColor)
 
 	tty, err := vt100.NewTTY()
 	if err != nil {
@@ -725,7 +746,30 @@ func Game() error {
 			gobbler.Draw(c)
 		}
 		bob.Draw(c)
-		c.Write(5, 1, statusTextColor, vt100.BackgroundDefault, statusText)
+		centerStatus := "Feeding Game"
+		rightStatus := time.Now().Format(time.RFC3339)[:10] // TODO: Use a second counter since the game started instead
+		statusLineLength := int(c.W())
+		statusLine := " " + statusText
+
+		if statusLineLength-(len(" "+statusText)+len(rightStatus+" ")) > (len(rightStatus+" ") + len(centerStatus)) {
+			paddingLength := statusLineLength - (len(" "+statusText) + len(centerStatus) + len(rightStatus+" "))
+			centerLeftLength := int(math.Floor(float64(paddingLength) / 2.0))
+			centerRightLength := int(math.Ceil(float64(paddingLength) / 2.0))
+			statusLine += strings.Repeat(" ", centerLeftLength) // padding left of center
+			statusLine += centerStatus
+			statusLine += strings.Repeat(" ", centerRightLength) // padding right of center
+			statusLine += rightStatus + " "
+		} else if statusLineLength-len(" "+statusText) > len(rightStatus+" ") {
+			paddingLength := statusLineLength - (len(" "+statusText) + len(rightStatus+" "))
+			statusLine += strings.Repeat(" ", paddingLength) // center padding
+			statusLine += rightStatus + " "
+
+		} else {
+			paddingLength := statusLineLength - len(" "+statusText)
+			statusLine += strings.Repeat("-", paddingLength)
+		}
+
+		c.Write(0, 0, statusTextColor, statusTextBackground, statusLine)
 		resizeMut.RUnlock()
 
 		//vt100.Clear()
@@ -764,19 +808,23 @@ func Game() error {
 			resizeMut.Lock()
 			moved = bob.Left(c)
 			resizeMut.Unlock()
+		case 113: // q
+			dx := 1
+			dy := 1
+			// Fire eight new pellets
+			pellets = append(pellets, NewPellet(bob.x+dx, bob.y+dx, dx, dy))
+			pellets = append(pellets, NewPellet(bob.x-dx, bob.y+dy, -dx, dy))
+			pellets = append(pellets, NewPellet(bob.x+dx, bob.y-dy, dx, -dy))
+			pellets = append(pellets, NewPellet(bob.x-dx, bob.y-dy, -dx, -dy))
+			pellets = append(pellets, NewPellet(bob.x+dx, bob.y, dx, 0))
+			pellets = append(pellets, NewPellet(bob.x-dx, bob.y, -dx, 0))
+			pellets = append(pellets, NewPellet(bob.x, bob.y-dy, 0, -dy))
+			pellets = append(pellets, NewPellet(bob.x, bob.y-dy, 0, -dy))
 		case 27: // ESC
 			running = false
 		case 32: // Space
-			// Check if the place to the right is available
-			r, err := c.At(uint(bob.x+1), uint(bob.y))
-			if err != nil {
-				// No free place to the right
-				break
-			}
-			if r == rune(0) || r == ' ' {
-				// Fire a new pellet
-				pellets = append(pellets, NewPellet(bob.x, bob.y, bob.x-bob.oldx, bob.y-bob.oldy))
-			}
+			// Fire a new pellet
+			pellets = append(pellets, NewPellet(bob.x, bob.y, bob.x-bob.oldx, bob.y-bob.oldy))
 		}
 
 		if !paused {
@@ -834,6 +882,7 @@ func Game() error {
 			}
 			// evilGobbler.counter
 			if gobblersAlive {
+				//statusText = fmt.Sprintf(",.---===[ Feeding Game, %s ]===---.   ::: Score: %d :::", dateString, score)
 				statusText = fmt.Sprintf("Score: %d", score)
 			} else if evilGobbler.shot {
 				paused = true
