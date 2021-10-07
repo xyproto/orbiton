@@ -25,7 +25,7 @@ const (
 	bobRuneSmall    = 'o'
 	evilGobblerRune = '€'
 	bubbleRune      = '°'
-	gobblerRune     = '#'
+	gobblerRune     = 'G'
 	gobblerDeadRune = 'T'
 	bobWonRune      = 'Y'
 	bobLostRune     = 'n'
@@ -35,19 +35,19 @@ const (
 var (
 	highScoreFile = filepath.Join(userCacheDir, "o/highscore.txt")
 
-	bobColor             = vt100.Black
-	bobWonColor          = vt100.Green
+	bobColor             = vt100.LightYellow
+	bobWonColor          = vt100.LightGreen
 	bobLostColor         = vt100.Red
 	evilGobblerColor     = vt100.LightRed
 	gobblerColor         = vt100.Yellow
 	gobblerDeadColor     = vt100.DarkGray
 	bubbleColor          = vt100.Magenta
 	pelletColor1         = vt100.White
-	pelletColor2         = vt100.Black
-	statusTextColor      = vt100.Red
-	statusTextBackground = vt100.Black
+	pelletColor2         = vt100.LightBlue
+	statusTextColor      = vt100.Black
+	statusTextBackground = vt100.Cyan
 	resizeColor          = vt100.LightMagenta
-	bgColor              = vt100.Cyan
+	bgColor              = vt100.DefaultBackground
 )
 
 type Bob struct {
@@ -108,7 +108,7 @@ func (b *Bob) Left(c *vt100.Canvas) bool {
 
 func (b *Bob) Up(c *vt100.Canvas) bool {
 	oldy := b.y
-	if b.y-1 < 0 {
+	if b.y-1 <= 0 {
 		return false
 	}
 	b.y--
@@ -221,7 +221,7 @@ func (b *Pellet) Next(c *vt100.Canvas, e *EvilGobbler) bool {
 	if b.y >= int(c.H()) {
 		b.y -= b.vy
 		return false
-	} else if b.y < 0 {
+	} else if b.y <= 0 {
 		b.y -= b.vy
 		return false
 	}
@@ -425,7 +425,7 @@ func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers []*Gobbler, bob *Bob) bool 
 		}
 
 		if !hunting.dead && huntingDistance < 1.8 || (hunting.x == e.x && hunting.y == e.y) {
-			hunting.dead = true
+			(*hunting).dead = true
 			e.counter++
 			hunting = nil
 		}
@@ -439,7 +439,7 @@ func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers []*Gobbler, bob *Bob) bool 
 
 	if e.y > int(c.H()) {
 		e.y = e.oldy
-	} else if e.y < 0 {
+	} else if e.y <= 0 {
 		e.y = e.oldy
 	}
 
@@ -541,7 +541,7 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets []*Pellet, bob *Bob) bool {
 					xspeed = 3
 					yspeed = 2
 				} else if g.huntingDistance > 10 {
-					xspeed = 2 + rand.Intn(2)
+					xspeed = 2 + rand.Intn(1)
 					yspeed = 2
 				}
 			} else {
@@ -551,7 +551,7 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets []*Pellet, bob *Bob) bool {
 					yspeed = 3
 				} else if g.huntingDistance > 10 {
 					xspeed = 2
-					yspeed = 2 + rand.Intn(2)
+					yspeed = 2 + rand.Intn(1)
 				}
 			}
 
@@ -587,7 +587,7 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets []*Pellet, bob *Bob) bool {
 
 	if g.y > int(c.H()) {
 		g.y = g.oldy
-	} else if g.y < 0 {
+	} else if g.y <= 0 {
 		g.y = g.oldy
 	}
 
@@ -716,17 +716,18 @@ func Game() error {
 	defer vt100.Close()
 
 	// The loop time that is aimed for
-	loopDuration := time.Millisecond * 10
-	start := time.Now()
-
-	running := true
-	paused := false
-	var statusText string
+	var (
+		loopDuration  = time.Millisecond * 10
+		start         = time.Now()
+		running       = true
+		paused        bool
+		statusText    string
+		key           int
+		gobblersAlive int
+	)
 
 	// Don't output keypress terminal codes on the screen
 	tty.NoBlock()
-
-	var key int
 
 	for running {
 
@@ -746,12 +747,12 @@ func Game() error {
 			gobbler.Draw(c)
 		}
 		bob.Draw(c)
-		centerStatus := "Feeding Game"
-		rightStatus := time.Now().Format(time.RFC3339)[:10] // TODO: Use a second counter since the game started instead
+		centerStatus := "Feed the gobblers"
+		rightStatus := fmt.Sprintf("%d alive", gobblersAlive)
 		statusLineLength := int(c.W())
 		statusLine := " " + statusText
 
-		if statusLineLength-(len(" "+statusText)+len(rightStatus+" ")) > (len(rightStatus+" ") + len(centerStatus)) {
+		if !paused && statusLineLength-(len(" "+statusText)+len(rightStatus+" ")) > (len(rightStatus+" ")+len(centerStatus)) {
 			paddingLength := statusLineLength - (len(" "+statusText) + len(centerStatus) + len(rightStatus+" "))
 			centerLeftLength := int(math.Floor(float64(paddingLength) / 2.0))
 			centerRightLength := int(math.Ceil(float64(paddingLength) / 2.0))
@@ -763,7 +764,6 @@ func Game() error {
 			paddingLength := statusLineLength - (len(" "+statusText) + len(rightStatus+" "))
 			statusLine += strings.Repeat(" ", paddingLength) // center padding
 			statusLine += rightStatus + " "
-
 		} else {
 			paddingLength := statusLineLength - len(" "+statusText)
 			statusLine += strings.Repeat("-", paddingLength)
@@ -872,17 +872,15 @@ func Game() error {
 			}
 			pellets = filteredPellets
 
-			gobblersAlive := false
+			gobblersAlive = 0
 			for _, gobbler := range gobblers {
 				score += gobbler.counter
 				(*gobbler).counter = 0
 				if !gobbler.dead {
-					gobblersAlive = true
+					gobblersAlive++
 				}
 			}
-			// evilGobbler.counter
-			if gobblersAlive {
-				//statusText = fmt.Sprintf(",.---===[ Feeding Game, %s ]===---.   ::: Score: %d :::", dateString, score)
+			if gobblersAlive > 0 {
 				statusText = fmt.Sprintf("Score: %d", score)
 			} else if evilGobbler.shot {
 				paused = true
