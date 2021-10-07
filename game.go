@@ -383,7 +383,7 @@ func NewEvilGobbler(c *vt100.Canvas) *EvilGobbler {
 		counter:         0,
 		shot:            false,
 		hunting:         nil,
-		huntingDistance: 9999.9,
+		huntingDistance: 0.0,
 	}
 }
 
@@ -395,10 +395,10 @@ func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers *[]*Gobbler, bob *Bob) bool
 	e.oldx = e.x
 	e.oldy = e.y
 
-	minDistance := 99999.9
+	minDistance := 0.0
 	found := false
-	for i, b := range *gobblers {
-		if d := distance(b.x, e.x, b.y, e.y); !b.dead && d <= minDistance {
+	for i, g := range *gobblers {
+		if d := distance(g.x, e.x, g.y, e.y); !g.dead && (d < minDistance || minDistance == 0.0) {
 			e.hunting = (*gobblers)[i]
 			minDistance = d
 			found = true
@@ -497,14 +497,11 @@ func (g *Gobbler) Draw(c *vt100.Canvas) {
 }
 
 func (g *Gobbler) Next(c *vt100.Canvas, pellets *[]*Pellet, bob *Bob) bool {
-	if g.dead {
-		g.state = gobblerDeadRune
-		g.color = gobblerDeadColor
-		return true
-	}
-
 	g.oldx = g.x
 	g.oldy = g.y
+
+	xspeed := 1
+	yspeed := 1
 
 	// Move to the nearest pellet and eat it
 	if len(*pellets) == 0 {
@@ -515,11 +512,13 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets *[]*Pellet, bob *Bob) bool {
 	} else {
 
 		if g.hunting == nil || g.hunting.removed {
-			p := ((*pellets)[0])
-			var minDistance = distance(p.x, g.x, p.y, g.y)
+			var minDistance = 0.0
 			var closestPellet *Pellet
+
+			// TODO: Hunt a random pellet that is not already hunted instead of the closest
+
 			for i, b := range *pellets {
-				if d := distance(b.x, g.x, b.y, g.y); !b.removed && d <= minDistance {
+				if d := distance(b.x, g.x, b.y, g.y); !b.removed && (minDistance == 0.0 || d < minDistance) {
 					closestPellet = (*pellets)[i]
 					minDistance = d
 				}
@@ -538,9 +537,6 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets *[]*Pellet, bob *Bob) bool {
 			g.y += rand.Intn(5) - 2
 
 		} else {
-
-			xspeed := 1
-			yspeed := 1
 
 			if abs(g.hunting.x-g.x) >= abs(g.hunting.y-g.y) {
 				// Longer away along x than along y
@@ -588,15 +584,15 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets *[]*Pellet, bob *Bob) bool {
 	}
 
 	if g.x > int(c.W()) {
-		g.x = g.oldx
+		g.x -= xspeed
 	} else if g.x < 0 {
-		g.x = g.oldx
+		g.x += xspeed
 	}
 
 	if g.y > int(c.H()) {
-		g.y = g.oldy
+		g.y -= yspeed
 	} else if g.y <= 0 {
-		g.y = g.oldy
+		g.y += yspeed
 	}
 
 	return (g.x != g.oldx || g.y != g.oldy)
@@ -853,7 +849,6 @@ func Game() error {
 			}
 			resizeMut.Unlock()
 		}
-
 		// Erase all previous positions not occupied by current items
 		c.Plot(uint(bob.oldx), uint(bob.oldy), ' ')
 		c.Plot(uint(evilGobbler.oldx), uint(evilGobbler.oldy), ' ')
@@ -886,6 +881,9 @@ func Game() error {
 				gobbler.counter = 0
 				if !gobbler.dead {
 					gobblersAlive++
+				} else {
+					gobbler.state = gobblerDeadRune
+					gobbler.color = gobblerDeadColor
 				}
 			}
 			if gobblersAlive > 0 {
