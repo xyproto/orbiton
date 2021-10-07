@@ -42,10 +42,9 @@ var (
 	gobblerColor         = vt100.Yellow
 	gobblerDeadColor     = vt100.DarkGray
 	bubbleColor          = vt100.Magenta
-	pelletColor1         = vt100.White
-	pelletColor2         = vt100.LightBlue
+	pelletColor          = vt100.LightGreen
 	statusTextColor      = vt100.Black
-	statusTextBackground = vt100.Cyan
+	statusTextBackground = vt100.Blue
 	resizeColor          = vt100.LightMagenta
 	bgColor              = vt100.DefaultBackground
 )
@@ -153,29 +152,9 @@ func NewPellet(x, y, vx, vy int) *Pellet {
 		vx:      vx,
 		vy:      vy,
 		state:   pelletRune,
-		color:   pelletColor1,
+		color:   pelletColor,
 		stopped: false,
 		removed: false,
-	}
-}
-
-func (b *Pellet) ToggleColor() {
-	c1 := pelletColor1
-	c2 := pelletColor2
-	if b.color.Equal(c1) {
-		b.color = c2
-	} else {
-		b.color = c1
-	}
-}
-
-func (b *Pellet) ToggleState() {
-	const up = '×'
-	const down = '-'
-	if b.state == up {
-		b.state = down
-	} else {
-		b.state = up
 	}
 }
 
@@ -186,15 +165,12 @@ func (b *Pellet) Draw(c *vt100.Canvas) {
 // Next moves the object to the next position, and returns true if it moved
 func (b *Pellet) Next(c *vt100.Canvas, e *EvilGobbler) bool {
 	if b.stopped {
-		b.ToggleColor()
 		return false
 	}
 	if b.x-b.vx < 0 {
-		b.ToggleColor()
 		return false
 	}
 	if b.y-b.vy < 0 {
-		b.ToggleColor()
 		return false
 	}
 	b.oldx = b.x
@@ -647,8 +623,7 @@ func Game() error {
 		gobblerColor = vt100.LightGray
 		gobblerDeadColor = vt100.DarkGray
 		bubbleColor = vt100.DarkGray
-		pelletColor1 = vt100.White
-		pelletColor2 = vt100.White
+		pelletColor = vt100.White
 		statusTextColor = vt100.LightGray
 		resizeColor = vt100.White
 		bgColor = vt100.DefaultBackground
