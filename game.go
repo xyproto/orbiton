@@ -32,6 +32,9 @@ const (
 	pelletRune      = '¤'
 )
 
+// TODO: Refactor
+// TODO: Fix the "search and find" behavior
+
 var (
 	highScoreFile = filepath.Join(userCacheDir, "o/highscore.txt")
 
@@ -42,9 +45,10 @@ var (
 	gobblerColor         = vt100.Yellow
 	gobblerDeadColor     = vt100.DarkGray
 	bubbleColor          = vt100.Magenta
-	pelletColor          = vt100.LightGreen
+	pelletColor1         = vt100.LightGreen
+	pelletColor2         = vt100.Green
 	statusTextColor      = vt100.Black
-	statusTextBackground = vt100.Blue
+	statusTextBackground = vt100.Cyan
 	resizeColor          = vt100.LightMagenta
 	bgColor              = vt100.DefaultBackground
 )
@@ -134,27 +138,49 @@ func (b *Bob) Resize() {
 }
 
 type Pellet struct {
-	x, y       int                  // current position
-	oldx, oldy int                  // previous position
-	vx, vy     int                  // velocity
-	state      rune                 // looks
-	color      vt100.AttributeColor // foreground color
-	stopped    bool                 // is the movement stopped?
-	removed    bool                 // to be removed
+	x, y        int                  // current position
+	oldx, oldy  int                  // previous position
+	vx, vy      int                  // velocity
+	state       rune                 // looks
+	color       vt100.AttributeColor // foreground color
+	stopped     bool                 // is the movement stopped?
+	removed     bool                 // to be removed
+	lifeCounter int
 }
 
 func NewPellet(x, y, vx, vy int) *Pellet {
 	return &Pellet{
-		x:       x,
-		y:       y,
-		oldx:    x,
-		oldy:    y,
-		vx:      vx,
-		vy:      vy,
-		state:   pelletRune,
-		color:   pelletColor,
-		stopped: false,
-		removed: false,
+		x:           x,
+		y:           y,
+		oldx:        x,
+		oldy:        y,
+		vx:          vx,
+		vy:          vy,
+		state:       pelletRune,
+		color:       pelletColor1,
+		stopped:     false,
+		removed:     false,
+		lifeCounter: 0,
+	}
+}
+
+func (b *Pellet) ToggleColor() {
+	c1 := pelletColor1
+	c2 := pelletColor2
+	if b.color.Equal(c1) {
+		b.color = c2
+	} else {
+		b.color = c1
+	}
+}
+
+func (b *Pellet) ToggleState() {
+	const up = '×'
+	const down = '-'
+	if b.state == up {
+		b.state = down
+	} else {
+		b.state = up
 	}
 }
 
@@ -165,14 +191,18 @@ func (b *Pellet) Draw(c *vt100.Canvas) {
 // Next moves the object to the next position, and returns true if it moved
 func (b *Pellet) Next(c *vt100.Canvas, e *EvilGobbler) bool {
 	if b.stopped {
+		b.ToggleColor()
 		return false
 	}
 	if b.x-b.vx < 0 {
+		b.ToggleColor()
 		return false
 	}
 	if b.y-b.vy < 0 {
+		b.ToggleColor()
 		return false
 	}
+
 	b.oldx = b.x
 	b.oldy = b.y
 	b.x += b.vx
@@ -187,10 +217,7 @@ func (b *Pellet) Next(c *vt100.Canvas, e *EvilGobbler) bool {
 		b.y = b.oldy
 		return false
 	}
-	if b.x >= int(c.W()) {
-		b.x -= b.vx
-		return false
-	} else if b.x < 0 {
+	if b.x >= int(c.W()) || b.x < 0 {
 		b.x -= b.vx
 		return false
 	}
@@ -334,25 +361,29 @@ func (b *Bubble) HitSomething(c *vt100.Canvas) bool {
 }
 
 type EvilGobbler struct {
-	x, y       int                  // current position
-	oldx, oldy int                  // previous position
-	state      rune                 // looks
-	color      vt100.AttributeColor // foreground color
-	counter    uint
-	shot       bool
+	x, y            int                  // current position
+	oldx, oldy      int                  // previous position
+	state           rune                 // looks
+	color           vt100.AttributeColor // foreground color
+	counter         uint
+	shot            bool
+	hunting         *Gobbler
+	huntingDistance float64
 }
 
 func NewEvilGobbler(c *vt100.Canvas) *EvilGobbler {
 	var startingWidth = int(c.W())
 	return &EvilGobbler{
-		x:       startingWidth/2 + 5,
-		y:       01,
-		oldx:    startingWidth/2 + 5,
-		oldy:    10,
-		state:   evilGobblerRune,
-		color:   evilGobblerColor,
-		counter: 0,
-		shot:    false,
+		x:               startingWidth/2 + 5,
+		y:               01,
+		oldx:            startingWidth/2 + 5,
+		oldy:            10,
+		state:           evilGobblerRune,
+		color:           evilGobblerColor,
+		counter:         0,
+		shot:            false,
+		hunting:         nil,
+		huntingDistance: 9999.9,
 	}
 }
 
@@ -360,21 +391,24 @@ func (e *EvilGobbler) Draw(c *vt100.Canvas) {
 	c.PlotColor(uint(e.x), uint(e.y), e.color, e.state)
 }
 
-func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers []*Gobbler, bob *Bob) bool {
+func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers *[]*Gobbler, bob *Bob) bool {
 	e.oldx = e.x
 	e.oldy = e.y
 
-	var hunting *Gobbler
-	var huntingDistance = 99999.9
-
-	for _, b := range gobblers {
-		if d := distance(b.x, e.x, b.y, e.y); !b.dead && d <= huntingDistance {
-			hunting = b
-			huntingDistance = d
+	minDistance := 99999.9
+	found := false
+	for i, b := range *gobblers {
+		if d := distance(b.x, e.x, b.y, e.y); !b.dead && d <= minDistance {
+			e.hunting = (*gobblers)[i]
+			minDistance = d
+			found = true
 		}
 	}
+	if found {
+		e.huntingDistance = minDistance
+	}
 
-	if hunting == nil {
+	if e.hunting == nil {
 
 		e.x += rand.Intn(3) - 1
 		e.y += rand.Intn(3) - 1
@@ -384,26 +418,22 @@ func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers []*Gobbler, bob *Bob) bool 
 		xspeed := 1
 		yspeed := 1
 
-		if e.x < hunting.x {
+		if e.x < e.hunting.x {
 			e.x += xspeed
-		} else if e.x > hunting.x {
+		} else if e.x > e.hunting.x {
 			e.x -= xspeed
 		}
-		if e.y < hunting.y {
+		if e.y < e.hunting.y {
 			e.y += yspeed
-		} else if e.y > hunting.y {
+		} else if e.y > e.hunting.y {
 			e.y -= yspeed
 		}
 
-		if distance(bob.x, e.x, bob.y, e.y) < 3 {
-			e.x = e.oldx + (rand.Intn(5) - 2)
-			e.y = e.oldy + (rand.Intn(5) - 2)
-		}
-
-		if !hunting.dead && huntingDistance < 1.8 || (hunting.x == e.x && hunting.y == e.y) {
-			(*hunting).dead = true
+		if !e.hunting.dead && e.huntingDistance < 1.8 || (e.hunting.x == e.x && e.hunting.y == e.y) {
+			e.hunting.dead = true
 			e.counter++
-			hunting = nil
+			e.hunting = nil
+			e.huntingDistance = 9999.9
 		}
 	}
 
@@ -466,7 +496,7 @@ func (g *Gobbler) Draw(c *vt100.Canvas) {
 	c.PlotColor(uint(g.x), uint(g.y), g.color, g.state)
 }
 
-func (g *Gobbler) Next(c *vt100.Canvas, pellets []*Pellet, bob *Bob) bool {
+func (g *Gobbler) Next(c *vt100.Canvas, pellets *[]*Pellet, bob *Bob) bool {
 	if g.dead {
 		g.state = gobblerDeadRune
 		g.color = gobblerDeadColor
@@ -477,7 +507,7 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets []*Pellet, bob *Bob) bool {
 	g.oldy = g.y
 
 	// Move to the nearest pellet and eat it
-	if len(pellets) == 0 {
+	if len(*pellets) == 0 {
 
 		g.x += rand.Intn(5) - 2
 		g.y += rand.Intn(5) - 2
@@ -485,11 +515,12 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets []*Pellet, bob *Bob) bool {
 	} else {
 
 		if g.hunting == nil || g.hunting.removed {
-			var minDistance = 99999.9
+			p := ((*pellets)[0])
+			var minDistance = distance(p.x, g.x, p.y, g.y)
 			var closestPellet *Pellet
-			for _, b := range pellets {
+			for i, b := range *pellets {
 				if d := distance(b.x, g.x, b.y, g.y); !b.removed && d <= minDistance {
-					closestPellet = b
+					closestPellet = (*pellets)[i]
 					minDistance = d
 				}
 			}
@@ -513,19 +544,19 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets []*Pellet, bob *Bob) bool {
 
 			if abs(g.hunting.x-g.x) >= abs(g.hunting.y-g.y) {
 				// Longer away along x than along y
-				if g.huntingDistance > 20 {
+				if g.huntingDistance > 10 {
 					xspeed = 3
 					yspeed = 2
-				} else if g.huntingDistance > 10 {
+				} else if g.huntingDistance > 5 {
 					xspeed = 2 + rand.Intn(1)
 					yspeed = 2
 				}
 			} else {
 				// Longer away along x than along y
-				if g.huntingDistance > 20 {
+				if g.huntingDistance > 10 {
 					xspeed = 2
 					yspeed = 3
-				} else if g.huntingDistance > 10 {
+				} else if g.huntingDistance > 5 {
 					xspeed = 2
 					yspeed = 2 + rand.Intn(1)
 				}
@@ -542,7 +573,7 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets []*Pellet, bob *Bob) bool {
 				g.y -= yspeed
 			}
 
-			if distance(bob.x, g.x, bob.y, g.y) < 15 {
+			if distance(bob.x, g.x, bob.y, g.y) < 4 {
 				g.x = g.oldx + (rand.Intn(3) - 1)
 				g.y = g.oldy + (rand.Intn(3) - 1)
 			}
@@ -551,6 +582,7 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets []*Pellet, bob *Bob) bool {
 				g.hunting.removed = true
 				g.counter++
 				g.hunting = nil
+				g.huntingDistance = 9999.9
 			}
 		}
 	}
@@ -623,7 +655,8 @@ func Game() error {
 		gobblerColor = vt100.LightGray
 		gobblerDeadColor = vt100.DarkGray
 		bubbleColor = vt100.DarkGray
-		pelletColor = vt100.White
+		pelletColor1 = vt100.White
+		pelletColor2 = vt100.White
 		statusTextColor = vt100.LightGray
 		resizeColor = vt100.White
 		bgColor = vt100.DefaultBackground
@@ -812,9 +845,9 @@ func Game() error {
 				bubble.Next(c, bob)
 			}
 			for _, gobbler := range gobblers {
-				gobbler.Next(c, pellets, bob)
+				gobbler.Next(c, &pellets, bob)
 			}
-			evilGobbler.Next(c, gobblers, bob)
+			evilGobbler.Next(c, &gobblers, bob)
 			if moved {
 				bob.ToggleState()
 			}
@@ -850,14 +883,14 @@ func Game() error {
 			gobblersAlive = 0
 			for _, gobbler := range gobblers {
 				score += gobbler.counter
-				(*gobbler).counter = 0
+				gobbler.counter = 0
 				if !gobbler.dead {
 					gobblersAlive++
 				}
 			}
 			if gobblersAlive > 0 {
 				statusText = fmt.Sprintf("Score: %d", score)
-			} else if evilGobbler.shot {
+			} else if gobblersAlive > 0 && evilGobbler.shot {
 				paused = true
 				statusText = "You won!"
 
