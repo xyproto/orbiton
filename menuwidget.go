@@ -1,7 +1,6 @@
 package main
 
 import (
-	"strings"
 	"unicode"
 
 	"github.com/xyproto/vt100"
@@ -100,34 +99,32 @@ func (m *MenuWidget) Draw(c *vt100.Canvas) {
 		highlightedAccelerator := false
 		afterLeftBracket := false
 		beforeRightBracket := true
-		if !strings.HasSuffix(m.choices[y], "invisible") {
-			for x := uint(0); x < m.w; x++ {
-				r := '-'
-				if x < uint(len([]rune(itemString))) {
-					r = []rune(itemString)[x]
-				} else if !m.extraDashes {
-					break
-				}
-				if r == ']' {
-					beforeRightBracket = false
-				}
-				if x < 2 {
-					c.PlotColor(uint(m.marginLeft+int(x)), uint(m.marginTop+int(y)+titleHeight), m.arrowColor, r)
-				} else if y < 10 && afterLeftBracket && beforeRightBracket {
-					// color the 0-9 number differrently (in the title color)
-					c.PlotColor(uint(m.marginLeft+int(x)), uint(m.marginTop+int(y)+titleHeight), m.titleColor, r)
-				} else if y == m.y {
-					c.PlotColor(uint(m.marginLeft+int(x)), uint(m.marginTop+int(y)+titleHeight), m.highlightColor, r)
-				} else if !highlightedAccelerator && unicode.ToLower(r) == selectionLetter {
-					// color the accelerator letter differently (in the arrow color)
-					c.PlotColor(uint(m.marginLeft+int(x)), uint(m.marginTop+int(y)+titleHeight), m.arrowColor, r)
-					highlightedAccelerator = true
-				} else {
-					c.PlotColor(uint(m.marginLeft+int(x)), uint(m.marginTop+int(y)+titleHeight), m.textColor, r)
-				}
-				if r == '[' {
-					afterLeftBracket = true
-				}
+		for x := uint(0); x < m.w; x++ {
+			r := '-'
+			if x < uint(len([]rune(itemString))) {
+				r = []rune(itemString)[x]
+			} else if !m.extraDashes {
+				break
+			}
+			if r == ']' {
+				beforeRightBracket = false
+			}
+			if x < 2 {
+				c.PlotColor(uint(m.marginLeft+int(x)), uint(m.marginTop+int(y)+titleHeight), m.arrowColor, r)
+			} else if y < 10 && afterLeftBracket && beforeRightBracket {
+				// color the 0-9 number differrently (in the title color)
+				c.PlotColor(uint(m.marginLeft+int(x)), uint(m.marginTop+int(y)+titleHeight), m.titleColor, r)
+			} else if y == m.y {
+				c.PlotColor(uint(m.marginLeft+int(x)), uint(m.marginTop+int(y)+titleHeight), m.highlightColor, r)
+			} else if !highlightedAccelerator && unicode.ToLower(r) == selectionLetter {
+				// color the accelerator letter differently (in the arrow color)
+				c.PlotColor(uint(m.marginLeft+int(x)), uint(m.marginTop+int(y)+titleHeight), m.arrowColor, r)
+				highlightedAccelerator = true
+			} else {
+				c.PlotColor(uint(m.marginLeft+int(x)), uint(m.marginTop+int(y)+titleHeight), m.textColor, r)
+			}
+			if r == '[' {
+				afterLeftBracket = true
 			}
 		}
 	}

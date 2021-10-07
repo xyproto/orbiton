@@ -347,7 +347,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		}
 	}
 
-	actions.Add("Feeding game - invisible", func() {
+	actions.Add("Feed the gobblers", func() {
 		if err := Game(); err != nil {
 			status.SetErrorMessage(err.Error())
 			status.Show(c, e)
