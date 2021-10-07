@@ -32,9 +32,6 @@ const (
 	pelletRune      = '¤'
 )
 
-// TODO: Refactor
-// TODO: Fix the "search and find" behavior
-
 var (
 	highScoreFile = filepath.Join(userCacheDir, "o/highscore.txt")
 
@@ -48,7 +45,7 @@ var (
 	pelletColor1         = vt100.LightGreen
 	pelletColor2         = vt100.Green
 	statusTextColor      = vt100.Black
-	statusTextBackground = vt100.Cyan
+	statusTextBackground = vt100.Blue
 	resizeColor          = vt100.LightMagenta
 	bgColor              = vt100.DefaultBackground
 )
@@ -497,6 +494,10 @@ func (g *Gobbler) Draw(c *vt100.Canvas) {
 }
 
 func (g *Gobbler) Next(c *vt100.Canvas, pellets *[]*Pellet, bob *Bob) bool {
+	if g.dead {
+		return false
+	}
+
 	g.oldx = g.x
 	g.oldy = g.y
 
