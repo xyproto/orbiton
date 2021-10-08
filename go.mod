@@ -4,7 +4,10 @@ go 1.14
 
 require (
 	github.com/atotto/clipboard v0.1.4
+	github.com/creack/pty v1.1.16 // indirect
+	github.com/cyrus-and/gdb v0.0.0-20180213171718-0306a029f42f
 	github.com/jung-kurt/gofpdf v1.16.2
+	github.com/kr/pty v1.1.8 // indirect
 	github.com/xyproto/env v1.1.0
 	github.com/xyproto/guessica v1.1.0
 	github.com/xyproto/mode v0.3.1
