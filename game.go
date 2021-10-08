@@ -686,7 +686,8 @@ func Game() (bool, error) {
 
 	tty, err := vt100.NewTTY()
 	if err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, "error: "+err.Error())
+		os.Exit(1)
 	}
 	defer tty.Close()
 
