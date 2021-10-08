@@ -21,7 +21,10 @@ func (e *Editor) SetUpResizeHandler(c *vt100.Canvas, tty *vt100.TTY, status *Sta
 			// Block until SIGWINCH signal is received
 			<-sigChan
 
-			e.FullResetRedraw(c, status, true)
+			drawLines := true
+			extraJump := false
+			resized := true
+			e.FullResetRedraw(c, status, drawLines, extraJump, resized)
 		}
 	}()
 }

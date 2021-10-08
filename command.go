@@ -302,7 +302,11 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	actions.Add("Use the default theme", func() {
 		e.setDefaultTheme()
 		e.syntaxHighlight = true
-		e.FullResetRedraw(c, status, true)
+
+		drawLines := true
+		extraJump := false
+		resized := false
+		e.FullResetRedraw(c, status, drawLines, extraJump, resized)
 	})
 
 	// Add the option to change the colors, for non-light themes (fg != black)
@@ -312,14 +316,22 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		actions.Add("Red/black theme", func() {
 			e.setRedBlackTheme()
 			e.syntaxHighlight = true
-			e.FullResetRedraw(c, status, true)
+
+			drawLines := true
+			extraJump := false
+			resized := false
+			e.FullResetRedraw(c, status, drawLines, extraJump, resized)
+
 		})
 
 		// Add the "Light Theme" menu item text and menu function
 		actions.Add("Light theme", func() {
 			e.setLightTheme()
 			e.syntaxHighlight = true
-			e.FullResetRedraw(c, status, true)
+			drawLines := true
+			extraJump := false
+			resized := false
+			e.FullResetRedraw(c, status, drawLines, extraJump, resized)
 		})
 
 		// Add the Amber, Green and Blue theme options
@@ -342,7 +354,10 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				e.Foreground = color
 				e.Background = vt100.BackgroundDefault // black background
 				e.syntaxHighlight = false
-				e.FullResetRedraw(c, status, true)
+				drawLines := true
+				extraJump := false
+				resized := false
+				e.FullResetRedraw(c, status, drawLines, extraJump, resized)
 			})
 		}
 	}

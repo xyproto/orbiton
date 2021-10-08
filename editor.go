@@ -39,9 +39,12 @@ type Editor struct {
 	slowLoad           bool                  // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
 	readOnly           bool                  // is the file read-only when initializing o?
 	sameFilePortal     *Portal               // a portal that points to the same file
-	statusAfterRedraw  string                // status message to be shown after the editor is redrawn and e.redraw is reset
+	sshMode            bool                  // is o used over ssh, tmux or screen, in a way that usually requires extra redrawing?
 	debugMode          bool                  // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
+	statusMode         bool                  // display a status line at all times at the bottom of the screen
 	gdb                *gdb.Gdb              // connection to gdb, if debugMode is enabled
+	previousX          int                   // previous cursor position
+	previousY          int                   // previous cursor position
 	Theme                                    // editor theme, embedded struct
 }
 
@@ -458,7 +461,9 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 			e.EndNoTrim(c)
 		}
 		// Do the redraw manually before showing the status message
-		e.DrawLines(c, true, false)
+		respectOffset := true
+		redrawCanvas := false
+		e.DrawLines(c, respectOffset, redrawCanvas)
 		e.redraw = false
 	}
 
@@ -1779,73 +1784,6 @@ func (e *Editor) ColIndex() ColIndex {
 // StatusMessage returns a status message, intended for being displayed at the bottom
 func (e *Editor) StatusMessage() string {
 	return fmt.Sprintf("line %d col %d rune %U words %d [%s]", e.LineNumber(), e.ColNumber(), e.Rune(), e.WordCount(), e.mode)
-}
-
-// DrawLines will draw a screen full of lines on the given canvas
-func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redraw bool) error {
-	var err error
-	h := int(c.Height())
-	if respectOffset {
-		offsetY := e.pos.OffsetY()
-		err = e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
-	} else {
-		err = e.WriteLines(c, LineIndex(0), LineIndex(h), 0, 0)
-	}
-	if redraw {
-		c.Redraw()
-	} else {
-		c.Draw()
-	}
-	return err
-}
-
-// FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
-func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines bool) {
-	if status != nil {
-		status.ClearAll(c)
-		e.SetSearchTerm(c, status, "")
-	}
-	savePos := e.pos
-
-	vt100.Close()
-	vt100.Reset()
-	vt100.Clear()
-	vt100.Init()
-
-	newC := vt100.NewCanvas()
-	newC.ShowCursor()
-	w := int(newC.Width())
-	if w < e.wrapWidth {
-		e.wrapWidth = w
-	} else if e.wrapWidth < 80 && w >= 80 {
-		e.wrapWidth = w
-	}
-	e.pos = savePos
-
-	if drawLines {
-		e.DrawLines(c, true, false)
-	}
-
-	// Assign the new canvas to the current canvas
-	*c = *newC
-
-	// TODO: Find out why the following lines are needed to properly handle the SIGWINCH resize signal
-
-	newC = vt100.NewCanvas()
-	newC.ShowCursor()
-	w = int(newC.Width())
-	if w < e.wrapWidth {
-		e.wrapWidth = w
-	} else if e.wrapWidth < 80 && w >= 80 {
-		e.wrapWidth = w
-	}
-
-	if drawLines {
-		e.DrawLines(c, true, false)
-	}
-
-	e.redraw = true
-	e.redrawCursor = true
 }
 
 // GoToPosition can go to the given position struct and use it as the new position

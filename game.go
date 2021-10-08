@@ -691,6 +691,8 @@ func Game() (bool, error) {
 	}
 	defer tty.Close()
 
+	tty.SetTimeout(2 * time.Millisecond)
+
 	// Mutex used when the terminal is resized
 	resizeMut := &sync.RWMutex{}
 

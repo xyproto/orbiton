@@ -94,10 +94,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	// ctrl-c handler
 	e.SetUpSignalHandlers(c, tty, status, absFilename)
 
-	tty.SetTimeout(2 * time.Millisecond)
+	e.previousX = 1
+	e.previousY = 1
 
-	previousX := 1
-	previousY := 1
+	tty.SetTimeout(2 * time.Millisecond)
 
 	var (
 		canUseLocks   = true
@@ -147,28 +147,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		}()
 	}
 
-	// Do a full reset and redraw, but without the statusbar (set to nil)
-	e.FullResetRedraw(c, nil, false)
-
-	// Draw the editor lines, respect the offset (true) and redraw (true)
-	e.DrawLines(c, true, true)
-	e.redraw = false
-
-	if e.statusAfterRedraw == "" {
-		// Display the status message
-		status.SetMessage(statusMessage)
-		status.Show(c, e)
-	}
-
-	// Redraw the cursor, if needed
-	if e.redrawCursor {
-		x := e.pos.ScreenX()
-		y := e.pos.ScreenY()
-		previousX = x
-		previousY = y
-		vt100.SetXY(uint(x), uint(y))
-		e.redrawCursor = false
-	}
+	status.SetMessage(statusMessage)
+	e.InitialRedraw(c, status)
 
 	// This is the main loop for the editor
 	for !e.quit {
@@ -427,8 +407,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				e.InsertString(c, " ")
 			}
 		case "c:7": // ctrl-g, status mode
-			statusMode = !statusMode
-			if statusMode {
+			e.statusMode = !e.statusMode
+			if e.statusMode {
 				status.ShowLineColWordCount(c, e, e.filename)
 			} else {
 				status.ClearAll(c)
@@ -614,8 +594,11 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			lastCopyY = -1
 			lastPasteY = -1
 			lastCutY = -1
-			// Do a full clear and redraw + clear search term
-			e.FullResetRedraw(c, status, true)
+			// Do a full clear and redraw + clear search term + jump
+			drawLines := true
+			extraJump := true
+			resized := false
+			e.FullResetRedraw(c, status, drawLines, extraJump, resized)
 		case " ": // space
 			undo.Snapshot(e)
 			// Place a space
@@ -1635,40 +1618,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		if statusMode && e.redrawCursor {
 			status.ClearAll(c)
 		}
-		// Redraw, if needed
-		if e.redraw {
-			// Draw the editor lines on the canvas, respecting the offset
-			e.DrawLines(c, true, false)
-			e.redraw = false
-		} else if e.Changed() {
-			c.Draw()
-		}
 
-		// Show a status message after redrawing, if statusAfterRedraw is set
-		if e.statusAfterRedraw != "" {
-			e.DrawLines(c, true, false)
-			// Display the status message
-			status.SetMessage(e.statusAfterRedraw)
-			status.Show(c, e)
-			e.statusAfterRedraw = ""
-		}
-
-		// Drawing status messages should come after redrawing, but before cursor positioning
-		if statusMode {
-			status.ShowLineColWordCount(c, e, e.filename)
-		} else if status.IsError() {
-			// Show the status message
-			status.Show(c, e)
-		}
-		// Position the cursor
-		x := e.pos.ScreenX()
-		y := e.pos.ScreenY()
-		if e.redrawCursor || x != previousX || y != previousY {
-			vt100.SetXY(uint(x), uint(y))
-			e.redrawCursor = false
-		}
-		previousX = x
-		previousY = y
+		e.RedrawAtEndOfKeyLoop(c, status, statusMessage)
 
 	} // end of main loop
 
