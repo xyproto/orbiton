@@ -246,9 +246,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 			// Build or export the current file
 			var (
-				statusMessage   string
-				performedAction bool
-				compiled        bool
+				statusMessage    string
+				performedAction  bool
+				compiled         bool
+				outputExecutable string
 			)
 
 			if e.mode == mode.Markdown && markdownSkipExport {
@@ -257,7 +258,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				// } else if e.mode == modeMarkdown && !markdownSkipExport{
 				// statusMessage, performedAction, compiled = e.BuildOrExport(c, status, e.filename)
 			} else {
-				statusMessage, performedAction, compiled = e.BuildOrExport(c, tty, status, e.filename)
+				statusMessage, performedAction, compiled, outputExecutable = e.BuildOrExport(c, tty, status, e.filename)
 			}
 
 			//logf("status message %s performed action %v compiled %v filename %s\n", statusMessage, performedAction, compiled, e.filename)
@@ -288,6 +289,12 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					// Got a status message (this may not be the case for build/export processes running in the background)
 					// NOTE: Do not clear the status message first here!
 					status.SetMessage(statusMessage)
+					status.ShowNoTimeout(c, e)
+				}
+				if e.debugMode {
+					// TODO: gdb.Send, ref README.md at https://github.com/cyrus-and/gdb
+					status.ClearAll(c)
+					status.SetMessage("EXE: " + outputExecutable)
 					status.ShowNoTimeout(c, e)
 				}
 			}
