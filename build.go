@@ -19,70 +19,10 @@ var (
 	zigCacheDir               = filepath.Join(userCacheDir, "o/zig")
 )
 
-// exportScdoc tries to export the current document as a manual page, using scdoc
-func (e *Editor) exportScdoc(manFilename string) error {
-	scdoc := exec.Command("scdoc")
-
-	// Place the current contents in a buffer, and feed it to stdin to the command
-	var buf bytes.Buffer
-	buf.WriteString(e.String())
-	scdoc.Stdin = &buf
-
-	// Create a new file and use it as stdout
-	manpageFile, err := os.Create(manFilename)
-	if err != nil {
-		return err
-	}
-
-	var errBuf bytes.Buffer
-	scdoc.Stdout = manpageFile
-	scdoc.Stderr = &errBuf
-
-	// Save the command in a temporary file
-	saveCommand(scdoc)
-
-	// Run scdoc
-	if err := scdoc.Run(); err != nil {
-		errorMessage := strings.TrimSpace(errBuf.String())
-		if len(errorMessage) > 0 {
-			return errors.New(errorMessage)
-		}
-		return err
-	}
-	return nil
-}
-
-// exportAdoc tries to export the current document as a manual page, using asciidoctor
-func (e *Editor) exportAdoc(c *vt100.Canvas, tty *vt100.TTY, manFilename string) error {
-
-	// TODO: Use a proper function for generating temporary files
-	tmpfn := "___o___.adoc"
-	if exists(tmpfn) {
-		return errors.New(tmpfn + " already exists, please remove it")
-	}
-
-	// TODO: Write a SaveAs function for the Editor
-	oldFilename := e.filename
-	e.filename = tmpfn
-	err := e.Save(c, tty)
-	if err != nil {
-		e.filename = oldFilename
-		return err
-	}
-	e.filename = oldFilename
-
-	// Run asciidoctor
-	adocCommand := exec.Command("asciidoctor", "-b", "manpage", "-o", manFilename, tmpfn)
-	if err = adocCommand.Run(); err != nil {
-		_ = os.Remove(tmpfn) // Try removing the temporary filename if pandoc fails
-		return err
-	}
-	return os.Remove(tmpfn)
-}
-
 // BuildOrExport will try to build the source code or export the document.
 // Returns a status message and then true if an action was performed and another true if compilation/testing worked out.
-func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filename string) (string, bool, bool) {
+// Will also return the executable output file, if available after compilation.
+func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filename string) (string, bool, bool, string) {
 	if status != nil {
 		status.Clear(c)
 	}
@@ -93,17 +33,17 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	manFilename := "out.1"
 	if ext == ".scd" || ext == ".scdoc" {
 		if err := e.exportScdoc(manFilename); err != nil {
-			return err.Error(), true, false
+			return err.Error(), true, false, ""
 		}
-		return "Saved " + manFilename, true, true
+		return "Saved " + manFilename, true, true, manFilename
 	}
 
 	// asciidoctor
 	if ext == ".adoc" {
 		if err := e.exportAdoc(c, tty, manFilename); err != nil {
-			return err.Error(), true, false
+			return err.Error(), true, false, ""
 		}
-		return "Saved " + manFilename, true, true
+		return "Saved " + manFilename, true, true, manFilename
 	}
 
 	// pandoc
@@ -113,7 +53,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		// TODO: Don't ignore the error
 		_ = e.exportPandoc(c, tty, status, pandocPath, pdfFilename)
 		// TODO: Add a minimum of error detection. Perhaps wait just 20ms and check if the goroutine is still running.
-		return "", true, true // no message returned, the mustExportPandoc function handles it's own status output
+		return "", true, true, "" // no message returned, the mustExportPandoc function handles it's own status output
 	}
 
 	exeFirstName := "main" // If the current directory name is not found
@@ -181,7 +121,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 	// Can not export nor compile, nothing more to do
 	if !found {
-		return errNoSuitableBuildCommand.Error(), false, false
+		return errNoSuitableBuildCommand.Error(), false, false, ""
 	}
 
 	// --- Compilation ---
@@ -282,7 +222,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			errorMessage = "Error: the Zig compiler is not installed"
 		}
 		// Could not run, and there was no output. Perhaps the executable is missing?
-		return errorMessage, true, false
+		return errorMessage, true, false, ""
 	}
 
 	if kotlinNative && exists(exeFirstName+".kexe") {
@@ -308,7 +248,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		if len(fields) > 1 {
 			errorMessage += ": " + strings.TrimSpace(fields[1])
 		}
-		return errorMessage, true, false
+		return errorMessage, true, false, ""
 	}
 
 	if e.mode == mode.Go {
@@ -319,11 +259,11 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			errorMarker = "error"
 		case bytes.Contains(output, []byte("go: cannot find main module")):
 			errorMessage := "no main module, try go mod init"
-			return errorMessage, true, false
+			return errorMessage, true, false, ""
 		case bytes.Contains(output, []byte("go: ")):
 			byteLines := bytes.SplitN(output[4:], []byte("\n"), 2)
 			errorMessage := "error: " + string(byteLines[0])
-			return errorMessage, true, false
+			return errorMessage, true, false, ""
 		case bytes.Count(output, []byte(":")) >= 2:
 			errorMarker = ":"
 		}
@@ -333,7 +273,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			errorMarker = ") "
 		}
 	} else if err == nil && (e.mode == mode.HTML || e.mode == mode.XML) {
-		return "Success", true, true
+		return "Success", true, true, ""
 	}
 
 	// Did the command return a non-zero status code, or does the output contain "error:"?
@@ -349,7 +289,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		if e.mode == mode.Python {
 			if errorLine, errorMessage := ParsePythonError(string(output), filepath.Base(filename)); errorLine != -1 {
 				e.redraw = e.GoTo(LineIndex(errorLine-1), c, status)
-				return "Error: " + errorMessage, true, false
+				return "Error: " + errorMessage, true, false, ""
 			}
 		}
 
@@ -405,9 +345,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 					// Return the error message
 					if baseErrorFilename != baseFilename {
-						return "In " + baseErrorFilename + ": " + errorMessage, true, false
+						return "In " + baseErrorFilename + ": " + errorMessage, true, false, ""
 					}
-					return errorMessage, true, false
+					return errorMessage, true, false, ""
 				}
 			} else if e.mode == mode.ObjectPascal || e.mode == mode.CS {
 				errorMessage = ""
@@ -452,9 +392,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 					// Return the error message
 					if baseErrorFilename != baseFilename {
-						return "In " + baseErrorFilename + ": " + errorMessage, true, false
+						return "In " + baseErrorFilename + ": " + errorMessage, true, false, ""
 					}
-					return errorMessage, true, false
+					return errorMessage, true, false, ""
 				}
 			} else if e.mode == mode.Lua {
 				if strings.Contains(line, " error near ") && strings.Count(line, ":") >= 3 {
@@ -469,9 +409,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 					baseErrorFilename := filepath.Base(parts[1])
 					if baseErrorFilename != baseFilename {
-						return "In " + baseErrorFilename + ": " + errorMessage, true, false
+						return "In " + baseErrorFilename + ": " + errorMessage, true, false, ""
 					}
-					return errorMessage, true, false
+					return errorMessage, true, false, ""
 				}
 				break
 			} else if e.mode == mode.Go && errorMarker == ":" && strings.Count(line, ":") >= 2 {
@@ -495,14 +435,14 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 		if testingInstead {
 			errorMessage = "Test failed: " + errorMessage
-			return errorMessage, true, false
+			return errorMessage, true, false, ""
 		}
 
 		if e.mode == mode.Crystal {
 			// Crystal has the location on a different line from the error message
 			fields := strings.Split(crystalLocationLine, ":")
 			if len(fields) != 3 {
-				return errorMessage, true, false
+				return errorMessage, true, false, ""
 			}
 			if y, err := strconv.Atoi(fields[1]); err == nil { // no error
 
@@ -518,7 +458,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 				}
 
 			}
-			return errorMessage, true, false
+			return errorMessage, true, false, ""
 		}
 
 		// NOTE: Don't return here even if errorMessage contains an error message
@@ -531,7 +471,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 				baseErrorFilename := filepath.Base(fields[0])
 				// Check if the filenames are matching, or if the error is in a different file
 				if baseErrorFilename != baseFilename {
-					return "In " + baseErrorFilename + ": " + strings.TrimSpace(fields[3]), true, false
+					return "In " + baseErrorFilename + ": " + strings.TrimSpace(fields[3]), true, false, ""
 				}
 				// Go to Y:X, if available
 				var foundY LineIndex
@@ -552,13 +492,13 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 						// Use the error message as the status message
 						if len(fields) >= 4 {
 							if ext != ".hs" {
-								return strings.Join(fields[3:], " "), true, false
+								return strings.Join(fields[3:], " "), true, false, ""
 							}
-							return errorMessage, true, false
+							return errorMessage, true, false, ""
 						}
 					}
 				}
-				return errorMessage, true, false
+				return errorMessage, true, false, ""
 			} else if (i > 0) && i < (len(lines)-1) {
 				// Rust
 				if msgLine := lines[i-1]; strings.Contains(line, " --> ") && strings.Count(line, ":") == 2 && strings.Count(msgLine, ":") >= 1 {
@@ -568,7 +508,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					filenameFields := strings.SplitN(locationFields[0], " --> ", 2) // [0] is fine, already checked for " ---> "
 					errorFilename := strings.TrimSpace(filenameFields[1])           // [1] is fine
 					if filename != errorFilename {
-						return "Error in " + errorFilename + ": " + errorMessage, true, false
+						return "Error in " + errorFilename + ": " + errorMessage, true, false, ""
 					}
 					errorY := locationFields[1]
 					errorX := locationFields[2]
@@ -589,7 +529,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 							e.Center(c)
 							// Use the error message as the status message
 							if errorMessage != "" {
-								return errorMessage, true, false
+								return errorMessage, true, false, ""
 							}
 						}
 					}
@@ -601,15 +541,15 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		}
 	}
 	if e.mode == mode.Python {
-		return "Syntax OK", true, true
+		return "Syntax OK", true, true, ""
 	}
 
 	// Could not interpret the error message, return the last line of the output
 	if err != nil && len(outputString) > 0 {
 		outputLines := strings.Split(outputString, "\n")
 		lastLine := outputLines[len(outputLines)-1]
-		return "Error: " + lastLine, false, false
+		return "Error: " + lastLine, false, false, ""
 	}
 
-	return "Success", true, true
+	return "Success", true, true, exeFirstName
 }
