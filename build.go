@@ -137,16 +137,17 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		progressStatusMessage = "Displaying"
 	}
 
+	baseDirName := exeFirstName
+	absFilename, err := filepath.Abs(filename)
+	if err == nil { // success
+		dirName := filepath.Dir(absFilename)
+		baseDirName = filepath.Base(dirName)
+	}
+
 	// Special per-language considerations
 	if e.mode == mode.Rust && (!exists("Cargo.toml") && !exists("../Cargo.toml")) {
 		// Use rustc instead of cargo if Cargo.toml is missing and the extension is .rs
 		if which("rustc") != "" {
-			baseDirName := exeFirstName
-			absFilename, err := filepath.Abs(filename)
-			if err == nil { // success
-				dirName := filepath.Dir(absFilename)
-				baseDirName = filepath.Base(dirName)
-			}
 
 			cmd = *exec.Command("rustc", filename, "-o", baseDirName)
 		}
@@ -162,12 +163,6 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	} else if e.mode == mode.Zig && !exists("build.zig") {
 		// Just build the current file
 		if which("zig") != "" {
-			baseDirName := exeFirstName
-			absFilename, err := filepath.Abs(filename)
-			if err == nil { // success
-				dirName := filepath.Dir(absFilename)
-				baseDirName = filepath.Base(dirName)
-			}
 			sourceCode := ""
 			sourceData, err := ioutil.ReadFile(filename)
 			if err == nil { // success
@@ -551,5 +546,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		return "Error: " + lastLine, false, false, ""
 	}
 
+	if !exists(exeFirstName) && exists(baseDirName) {
+		return "Success", true, true, baseDirName
+	}
 	return "Success", true, true, exeFirstName
 }
