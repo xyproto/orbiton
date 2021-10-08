@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cyrus-and/gdb"
 	"github.com/xyproto/env"
 	"github.com/xyproto/guessica"
 	"github.com/xyproto/vt100"
@@ -254,10 +255,20 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		})
 	} else {
 		actions.Add("Debug mode", func() {
+
+			gdb, err := gdb.New(nil)
+			if err != nil {
+				status.ClearAll(c)
+				status.SetMessage(err.Error())
+				status.Show(c, e)
+				return
+			}
+
 			status.Clear(c)
 			status.SetMessage("Debug mode enabled")
 			status.Show(c, e)
 			e.debugMode = true
+			e.gdb = gdb
 		})
 	}
 
