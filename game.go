@@ -50,6 +50,7 @@ var (
 	bgColor              = vt100.DefaultBackground
 )
 
+// Bob represents the player
 type Bob struct {
 	x, y       int                  // current position
 	oldx, oldy int                  // previous position
@@ -57,8 +58,8 @@ type Bob struct {
 	color      vt100.AttributeColor // foreground color
 }
 
-func NewBob(c *vt100.Canvas) *Bob {
-	var startingWidth = int(c.W())
+// NewBob creates a new Bob struct
+func NewBob(startingWidth int) *Bob {
 	return &Bob{
 		x:     startingWidth / 20,
 		y:     10,
@@ -69,6 +70,7 @@ func NewBob(c *vt100.Canvas) *Bob {
 	}
 }
 
+// ToggleState changes the look of Bob as he moves
 func (b *Bob) ToggleState() {
 	const up = bobRuneLarge
 	const down = bobRuneSmall
@@ -79,10 +81,12 @@ func (b *Bob) ToggleState() {
 	}
 }
 
+// Draw is called when Bob should be drawn on the canvas
 func (b *Bob) Draw(c *vt100.Canvas) {
 	c.PlotColor(uint(b.x), uint(b.y), b.color, b.state)
 }
 
+// Right is called when Bob should move right
 func (b *Bob) Right(c *vt100.Canvas) bool {
 	oldx := b.x
 	b.x++
@@ -95,6 +99,7 @@ func (b *Bob) Right(c *vt100.Canvas) bool {
 	return true
 }
 
+// Left is called when Bob should move left
 func (b *Bob) Left(c *vt100.Canvas) bool {
 	oldx := b.x
 	if b.x-1 < 0 {
@@ -106,6 +111,7 @@ func (b *Bob) Left(c *vt100.Canvas) bool {
 	return true
 }
 
+// Up is called when Bob should move up
 func (b *Bob) Up(c *vt100.Canvas) bool {
 	oldy := b.y
 	if b.y-1 <= 0 {
@@ -117,6 +123,7 @@ func (b *Bob) Up(c *vt100.Canvas) bool {
 	return true
 }
 
+// Down is called when Bob should move down
 func (b *Bob) Down(c *vt100.Canvas) bool {
 	oldy := b.y
 	b.y++
@@ -129,11 +136,12 @@ func (b *Bob) Down(c *vt100.Canvas) bool {
 	return true
 }
 
-// Terminal was resized
+// Resize is called when the terminal is resized
 func (b *Bob) Resize() {
 	b.color = resizeColor
 }
 
+// Pellet represents a pellet that can both feed Gobblers and hit the EvilGobbler
 type Pellet struct {
 	x, y        int                  // current position
 	oldx, oldy  int                  // previous position
@@ -145,6 +153,7 @@ type Pellet struct {
 	lifeCounter int
 }
 
+// NewPellet creates a new Pellet struct, with position and speed
 func NewPellet(x, y, vx, vy int) *Pellet {
 	return &Pellet{
 		x:           x,
@@ -161,6 +170,7 @@ func NewPellet(x, y, vx, vy int) *Pellet {
 	}
 }
 
+// ToggleColor will alternate the colors for this Pellet
 func (b *Pellet) ToggleColor() {
 	c1 := pelletColor1
 	c2 := pelletColor2
@@ -171,22 +181,14 @@ func (b *Pellet) ToggleColor() {
 	}
 }
 
-func (b *Pellet) ToggleState() {
-	const up = '×'
-	const down = '-'
-	if b.state == up {
-		b.state = down
-	} else {
-		b.state = up
-	}
-}
-
+// Draw draws the Pellet on the canvas
 func (b *Pellet) Draw(c *vt100.Canvas) {
 	c.PlotColor(uint(b.x), uint(b.y), b.color, b.state)
 }
 
 // Next moves the object to the next position, and returns true if it moved
 func (b *Pellet) Next(c *vt100.Canvas, e *EvilGobbler) bool {
+
 	if b.stopped {
 		b.ToggleColor()
 		return false
@@ -202,6 +204,7 @@ func (b *Pellet) Next(c *vt100.Canvas, e *EvilGobbler) bool {
 
 	b.oldx = b.x
 	b.oldy = b.y
+
 	b.x += b.vx
 	b.y += b.vy
 
@@ -228,12 +231,14 @@ func (b *Pellet) Next(c *vt100.Canvas, e *EvilGobbler) bool {
 	return true
 }
 
+// Stop is called when the pellet should stop moving
 func (b *Pellet) Stop() {
 	b.vx = 0
 	b.vy = 0
 	b.stopped = true
 }
 
+// HitSomething is called when the pellet hits something
 func (b *Pellet) HitSomething(c *vt100.Canvas) bool {
 	r, err := c.At(uint(b.x), uint(b.y))
 	if err != nil {
@@ -253,11 +258,12 @@ func (b *Pellet) HitSomething(c *vt100.Canvas) bool {
 	return false
 }
 
-// Terminal was resized
+// Resize is called when the terminal is resized
 func (b *Pellet) Resize() {
 	b.stopped = false
 }
 
+// Bubble represents a bubble character that is in the way
 type Bubble struct {
 	x, y       int                  // current position
 	oldx, oldy int                  // previous position
@@ -265,16 +271,17 @@ type Bubble struct {
 	color      vt100.AttributeColor // foreground color
 }
 
-func NewBubbles(c *vt100.Canvas, n int) []*Bubble {
+// NewBubbles creates n new Bubble structs
+func NewBubbles(startingWidth int, n int) []*Bubble {
 	bubbles := make([]*Bubble, n)
 	for i := range bubbles {
-		bubbles[i] = NewBubble(c)
+		bubbles[i] = NewBubble(startingWidth)
 	}
 	return bubbles
 }
 
-func NewBubble(c *vt100.Canvas) *Bubble {
-	startingWidth := int(c.W())
+// NewBubble creates a new Bubble struct
+func NewBubble(startingWidth int) *Bubble {
 	return &Bubble{
 		x:     startingWidth / 5,
 		y:     10,
@@ -285,11 +292,12 @@ func NewBubble(c *vt100.Canvas) *Bubble {
 	}
 }
 
+// Draw draws the Bubble on the canvas
 func (b *Bubble) Draw(c *vt100.Canvas) {
 	c.PlotColor(uint(b.x), uint(b.y), b.color, b.state)
 }
 
-// Terminal was resized
+// Resize is called when the terminal is resized
 func (b *Bubble) Resize() {
 	b.color = resizeColor
 }
@@ -348,6 +356,7 @@ func (b *Bubble) Next(c *vt100.Canvas, bob *Bob) bool {
 	return b.x != b.oldx || b.y != b.oldy
 }
 
+// HitSomething is called if the Bubble hits another character
 func (b *Bubble) HitSomething(c *vt100.Canvas) bool {
 	r, err := c.At(uint(b.x), uint(b.y))
 	if err != nil {
@@ -357,6 +366,7 @@ func (b *Bubble) HitSomething(c *vt100.Canvas) bool {
 	return r != rune(0) && r != ' '
 }
 
+// EvilGobbler is a character that hunts Gobblers
 type EvilGobbler struct {
 	x, y            int                  // current position
 	oldx, oldy      int                  // previous position
@@ -368,8 +378,9 @@ type EvilGobbler struct {
 	huntingDistance float64
 }
 
-func NewEvilGobbler(c *vt100.Canvas) *EvilGobbler {
-	var startingWidth = int(c.W())
+// NewEvilGobbler creates an EvilGobbler struct.
+// startingWidth is the initial width of the canvas.
+func NewEvilGobbler(startingWidth int) *EvilGobbler {
 	return &EvilGobbler{
 		x:               startingWidth/2 + 5,
 		y:               01,
@@ -384,10 +395,12 @@ func NewEvilGobbler(c *vt100.Canvas) *EvilGobbler {
 	}
 }
 
+// Draw will draw the EvilGobbler on the canvas
 func (e *EvilGobbler) Draw(c *vt100.Canvas) {
 	c.PlotColor(uint(e.x), uint(e.y), e.color, e.state)
 }
 
+// Next will make the next EvilGobbler move
 func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers *[]*Gobbler, bob *Bob) bool {
 	e.oldx = e.x
 	e.oldy = e.y
@@ -449,11 +462,12 @@ func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers *[]*Gobbler, bob *Bob) bool
 	return (e.x != e.oldx || e.y != e.oldy)
 }
 
-// Terminal was resized
+// Resize is called when the terminal is resized
 func (e *EvilGobbler) Resize() {
 	e.color = resizeColor
 }
 
+// Gobbler represents a character that can move around and eat pellets
 type Gobbler struct {
 	x, y            int                  // current position
 	oldx, oldy      int                  // previous position
@@ -465,8 +479,8 @@ type Gobbler struct {
 	dead            bool
 }
 
-func NewGobbler(c *vt100.Canvas) *Gobbler {
-	var startingWidth = int(c.W())
+// NewGobbler creates a new Gobbler struct
+func NewGobbler(startingWidth int) *Gobbler {
 	return &Gobbler{
 		x:               startingWidth / 2,
 		y:               10,
@@ -481,18 +495,21 @@ func NewGobbler(c *vt100.Canvas) *Gobbler {
 	}
 }
 
-func NewGobblers(c *vt100.Canvas, n int) []*Gobbler {
+// NewGobblers creates n new Gobbler structs
+func NewGobblers(startingWidth int, n int) []*Gobbler {
 	gobblers := make([]*Gobbler, n)
 	for i := range gobblers {
-		gobblers[i] = NewGobbler(c)
+		gobblers[i] = NewGobbler(startingWidth)
 	}
 	return gobblers
 }
 
+// Draw draws the current Gobbler on the canvas
 func (g *Gobbler) Draw(c *vt100.Canvas) {
 	c.PlotColor(uint(g.x), uint(g.y), g.color, g.state)
 }
 
+// Next is called when the next move should be made
 func (g *Gobbler) Next(c *vt100.Canvas, pellets *[]*Pellet, bob *Bob) bool {
 	if g.dead {
 		return false
@@ -599,22 +616,14 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets *[]*Pellet, bob *Bob) bool {
 	return (g.x != g.oldx || g.y != g.oldy)
 }
 
-// Terminal was resized
+// Resize is called when the terminal is resized
 func (g *Gobbler) Resize() {
 	g.color = resizeColor
 }
 
-func abs(a int) int {
-	if a >= 0 {
-		return a
-	}
-	return -a
-}
-
-func distance(x1, x2, y1, y2 int) float64 {
-	return math.Sqrt((float64(x1)*float64(x1) - float64(x2)*float64(x2)) + (float64(y1)*float64(y1) - float64(y2)*float64(y2)))
-}
-
+// saveHighScore will save the given high score to a file,
+// creating a new file if needed and overwriting the existing highscore
+// if it's already there.
 func saveHighScore(highScore uint) error {
 	// First create the folders, if needed
 	folderPath := filepath.Dir(highScoreFile)
@@ -630,6 +639,8 @@ func saveHighScore(highScore uint) error {
 	return err
 }
 
+// loadHighScore will load the current high score from the highScoreFile,
+// if possible.
 func loadHighScore() (uint, error) {
 	data, err := ioutil.ReadFile(highScoreFile)
 	if err != nil {
@@ -643,7 +654,8 @@ func loadHighScore() (uint, error) {
 	return uint(highScore), nil
 }
 
-func Game() error {
+// Game starts the game and returns true if ctrl-q was pressed
+func Game() (bool, error) {
 	if envNoColor {
 		bobColor = vt100.White
 		bobWonColor = vt100.LightGray
@@ -654,9 +666,13 @@ func Game() error {
 		bubbleColor = vt100.DarkGray
 		pelletColor1 = vt100.White
 		pelletColor2 = vt100.White
-		statusTextColor = vt100.LightGray
+		statusTextColor = vt100.Black
+		statusTextBackground = vt100.LightGray
 		resizeColor = vt100.White
 		bgColor = vt100.DefaultBackground
+	} else {
+		statusTextBackground = vt100.Blue
+		bobColor = vt100.LightYellow
 	}
 
 	startTime := time.Now()
@@ -678,13 +694,14 @@ func Game() error {
 	resizeMut := &sync.RWMutex{}
 
 	var (
-		bob         = NewBob(c)
-		sigChan     = make(chan os.Signal, 1)
-		evilGobbler = NewEvilGobbler(c)
-		gobblers    = NewGobblers(c, 10)
-		pellets     = make([]*Pellet, 0)
-		bubbles     = NewBubbles(c, 7)
-		score       = uint(0)
+		sigChan       = make(chan os.Signal, 1)
+		startingWidth = int(c.W())
+		bob           = NewBob(startingWidth)
+		evilGobbler   = NewEvilGobbler(startingWidth)
+		gobblers      = NewGobblers(startingWidth, 10)
+		pellets       = make([]*Pellet, 0)
+		bubbles       = NewBubbles(startingWidth, 20)
+		score         = uint(0)
 	)
 
 	signal.Notify(sigChan, syscall.SIGWINCH)
@@ -827,6 +844,8 @@ func Game() error {
 			pellets = append(pellets, NewPellet(bob.x, bob.y-dy, 0, -dy))
 		case 27: // ESC
 			running = false
+		case 17: // ctrl-q
+			return true, nil
 		case 32: // Space
 			// Fire a new pellet
 			pellets = append(pellets, NewPellet(bob.x, bob.y, bob.x-bob.oldx, bob.y-bob.oldy))
@@ -895,7 +914,11 @@ func Game() error {
 
 				// The player can still move around bob
 				bob.state = bobWonRune
-				bob.color = bobWonColor
+
+				if !envNoColor {
+					bob.color = bobWonColor
+					statusTextBackground = bobWonColor
+				}
 
 				if score > highScore {
 					statusText = fmt.Sprintf("You won! New highscore: %d", score)
@@ -909,7 +932,11 @@ func Game() error {
 
 				// The player can still move around bob
 				bob.state = bobLostRune
-				bob.color = bobLostColor
+
+				if !envNoColor {
+					bob.color = bobLostColor
+					statusTextBackground = bobLostColor
+				}
 
 				if score > highScore {
 					statusText = fmt.Sprintf("Game over! New highscore: %d", score)
@@ -920,5 +947,5 @@ func Game() error {
 			}
 		}
 	}
-	return nil
+	return false, nil
 }

@@ -100,7 +100,7 @@ Set NO_COLOR=1 to disable colors.
 		if len(executableName) > 0 {
 			switch executableName[0] {
 			case 'f', 'g': // game or feeding-game
-				if err := Game(); err != nil {
+				if _, err := Game(); err != nil {
 					fmt.Fprintln(os.Stderr, err)
 					os.Exit(1)
 				} else {

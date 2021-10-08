@@ -348,10 +348,12 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	}
 
 	actions.Add("Feed the gobblers", func() {
-		if err := Game(); err != nil {
+		if ctrlQ, err := Game(); err != nil {
 			status.SetErrorMessage(err.Error())
 			status.Show(c, e)
-			return
+		} else if ctrlQ {
+			// Quit the program
+			e.quit = true
 		}
 	})
 
