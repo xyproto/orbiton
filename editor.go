@@ -2052,7 +2052,12 @@ func (e *Editor) ToggleCommentBlock(c *vt100.Canvas) {
 	// Check if most lines are commented out
 	mostLinesAreComments := commentCounter >= (downCounter / 2)
 
-	if mostLinesAreComments {
+	// Handle the single-line case differently
+	if downCounter == 1 && commentCounter == 0 {
+		e.CommentOn(commentMarker)
+	} else if downCounter == 1 && commentCounter == 1 {
+		e.CommentOff(commentMarker)
+	} else if mostLinesAreComments {
 		e.ForEachLineInBlock(c, e.CommentOff, commentMarker)
 	} else {
 		e.ForEachLineInBlock(c, e.CommentOn, commentMarker)
