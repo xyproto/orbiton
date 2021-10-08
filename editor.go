@@ -2259,3 +2259,9 @@ func (e *Editor) LettersOrDotBeforeCursor() string {
 	}
 	return string(word)
 }
+
+// LastLineNumber returns the last line number (not line index) of the current file
+func (e *Editor) LastLineNumber() LineNumber {
+	// The last line (by line number, not by index, e.Len() returns an index which is why there is no -1)
+	return LineNumber(e.Len())
+}
