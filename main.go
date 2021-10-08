@@ -99,7 +99,8 @@ Set NO_COLOR=1 to disable colors.
 		executableName = filepath.Base(os.Args[0])
 		if len(executableName) > 0 {
 			switch executableName[0] {
-			case 'f', 'g': // game or feeding-game
+			case 'f', 'g':
+				// Start the game
 				if _, err := Game(); err != nil {
 					fmt.Fprintln(os.Stderr, err)
 					os.Exit(1)
@@ -177,6 +178,7 @@ Set NO_COLOR=1 to disable colors.
 	defer tty.Close()
 
 	// Run the main editor loop
+
 	userMessage, err := Loop(tty, filename, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight)
 
 	// Remove the terminal title, if the current terminal emulator supports it
