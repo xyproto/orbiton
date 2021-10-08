@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -179,6 +180,23 @@ func runeCount(s string, r rune) int {
 		}
 	}
 	return counter
+}
+
+// abs returns the absolute value of the given int
+func abs(a int) int {
+	if a < 0 {
+		return -a
+	}
+	return a
+}
+
+// distance returns the distance between two points
+func distance(x1, x2, y1, y2 int) float64 {
+	x1f := float64(x1)
+	x2f := float64(x2)
+	y1f := float64(y1)
+	y2f := float64(y2)
+	return math.Sqrt((x1f*x1f - x2f*x2f) + (y1f*y1f - y2f*y2f))
 }
 
 // logf, for quick "printf-style" debugging
