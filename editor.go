@@ -11,6 +11,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/cyrus-and/gdb"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
@@ -40,6 +41,7 @@ type Editor struct {
 	sameFilePortal     *Portal               // a portal that points to the same file
 	statusAfterRedraw  string                // status message to be shown after the editor is redrawn and e.redraw is reset
 	debugMode          bool                  // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
+	gdb                *gdb.Gdb              // connection to gdb, if debugMode is enabled
 	Theme                                    // editor theme, embedded struct
 }
 
