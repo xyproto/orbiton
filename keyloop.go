@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -11,6 +13,7 @@ import (
 	"unicode"
 
 	"github.com/atotto/clipboard"
+	"github.com/cyrus-and/gdb"
 	"github.com/xyproto/env"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/syntax"
@@ -241,6 +244,18 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// Clear the current search term
 			e.ClearSearchTerm()
 
+			// ctrl-space was pressed a second time, while in debug mode
+			if e.debugMode && e.gdb != nil {
+				status.ClearAll(c)
+				status.SetMessage("step")
+				status.Show(c, e)
+				// Go to the next step in the program
+				e.gdb.Send("step")
+				// continue is also available
+				// see: https://sourceware.org/gdb/onlinedocs/gdb/GDB_002fMI.html
+				break
+			}
+
 			// Press ctrl-space twice the first time the PDF should be exported to Markdown,
 			// to avvoid the first accidental ctrl-space key press.
 
@@ -292,10 +307,39 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					status.ShowNoTimeout(c, e)
 				}
 				if e.debugMode {
-					// TODO: gdb.Send, ref README.md at https://github.com/cyrus-and/gdb
-					status.ClearAll(c)
-					status.SetMessage("EXE: " + outputExecutable)
-					status.ShowNoTimeout(c, e)
+					// Try to start a new gdb session
+					if e.gdb == nil {
+						e.gdb, err = gdb.New(func(notification map[string]interface{}) {
+							notificationText, err := json.Marshal(notification)
+							if err != nil {
+								log.Fatal(err)
+							}
+							logf("%s\n", notificationText)
+						})
+						if err != nil {
+							status.ClearAll(c)
+							status.SetErrorMessage(err.Error())
+							status.Show(c, e)
+							return
+						}
+						if e.gdb == nil {
+							status.ClearAll(c)
+							status.SetErrorMessage("could not start gdb")
+							status.Show(c, e)
+							return
+						}
+						defer e.gdb.Exit()
+						// Load the executable file
+						e.gdb.Send("file-exec-file", outputExecutable)
+						// Set the breakpoint, if it has been set with ctrl-b
+						if breakpoint != nil {
+							e.gdb.Send("break-insert", fmt.Sprintf("%s:%d", absFilename, breakpoint.LineNumber()))
+						}
+						// Start from the top
+						e.gdb.Send("exec-run", "--start")
+						// Ready
+						break
+					}
 				}
 			}
 		case "c:20": // ctrl-t, render to PDF
