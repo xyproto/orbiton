@@ -22,9 +22,8 @@ func (e *Editor) SetUpResizeHandler(c *vt100.Canvas, tty *vt100.TTY, status *Sta
 			<-sigChan
 
 			drawLines := true
-			extraJump := false
 			resized := true
-			e.FullResetRedraw(c, status, drawLines, extraJump, resized)
+			e.FullResetRedraw(c, status, drawLines, resized)
 		}
 	}()
 }

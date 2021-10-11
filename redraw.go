@@ -5,12 +5,12 @@ import (
 )
 
 // FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
-func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, extraJump, resized bool) {
+func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, resized bool) {
 
 	savePos := e.pos
 
 	currentLineNumber := e.LineNumber()
-	if extraJump {
+	if e.sshMode {
 		// TODO: Figure out why this helps doing a full redraw when o is used over ssh
 		e.GoToLineNumber(e.LastLineNumber(), c, nil, true)
 	}
@@ -34,7 +34,11 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 		e.wrapWidth = w
 	}
 	if drawLines {
-		e.DrawLines(c, true, false)
+		if e.sshMode {
+			e.DrawLines(c, true, true)
+		} else {
+			e.DrawLines(c, true, false)
+		}
 	}
 	// Assign the new canvas to the current canvas
 	*c = *newC
@@ -51,18 +55,23 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 	}
 
 	if drawLines {
-		e.DrawLines(c, true, false)
+		e.DrawLines(c, true, true)
 	}
 
-	if extraJump {
+	if e.sshMode {
 		// TODO: Figure out why this helps doing a full redraw when o is used over ssh
 		// Go to the line we were at
-		e.GoToLineNumber(currentLineNumber, c, nil, true)
+		e.redraw = e.ScrollDown(c, nil, e.pos.scrollSpeed)
+		e.redraw = e.ScrollUp(c, nil, e.pos.scrollSpeed)
+		e.GoToLineNumber(currentLineNumber, c, nil, resized)
+		e.redraw = true
+		e.redrawCursor = true
+	} else {
+		e.redraw = false
+		e.redrawCursor = false
 	}
 
 	e.pos = savePos
-	e.redraw = true
-	e.redrawCursor = true
 }
 
 // RedrawIfNeeded will redraw the text on the canvas if e.redraw is set
@@ -114,21 +123,23 @@ func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redrawCanvas bool) er
 
 // InitialRedraw is called right before the main loop is started
 func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
-	// Draw the editor lines, respect the offset (true) and redraw (true)
-	e.RedrawIfNeeded(c)
 
 	// Check if an extra reset is needed
 	if e.sshMode {
 		drawLines := true
-		extraJump := true
 		resized := true
-		e.FullResetRedraw(c, status, drawLines, extraJump, resized)
-		e.redrawCursor = true
-		e.redraw = true
+		e.FullResetRedraw(c, status, drawLines, resized)
+	} else {
+		// Draw the editor lines, respect the offset (true) and redraw (true)
+		e.RedrawIfNeeded(c)
 	}
 
 	// Display the status message
-	status.Show(c, e)
+	if e.statusMode {
+		status.ShowLineColWordCount(c, e, e.filename)
+	} else if status.IsError() {
+		status.Show(c, e)
+	}
 
 	e.RepositionCursorIfNeeded()
 }
@@ -139,7 +150,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, status
 	// Redraw, if needed
 	if e.redraw {
 		// Draw the editor lines on the canvas, respecting the offset
-		e.DrawLines(c, true, e.sshMode)
+		e.DrawLines(c, true, true)
 		e.redraw = false
 	} else if e.Changed() {
 		c.Draw()

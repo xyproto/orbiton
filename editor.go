@@ -1422,11 +1422,9 @@ func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int)
 		// Don't redraw
 		return false
 	}
-
 	if status != nil {
 		status.Clear(c)
 	}
-
 	if (offset + canScroll) >= (l - canvasLastY) {
 		// Almost at the bottom, we can scroll the remaining lines
 		canScroll = (l - canvasLastY) - offset
@@ -1461,7 +1459,9 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 		// Redraw
 		return true
 	}
-	status.Clear(c)
+	if status != nil {
+		status.Clear(c)
+	}
 	if offset-canScroll < 0 {
 		// Almost at the top, we can scroll the remaining lines
 		canScroll = offset

@@ -596,9 +596,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			lastCutY = -1
 			// Do a full clear and redraw + clear search term + jump
 			drawLines := true
-			extraJump := true
 			resized := false
-			e.FullResetRedraw(c, status, drawLines, extraJump, resized)
+			e.FullResetRedraw(c, status, drawLines, resized)
 		case " ": // space
 			undo.Snapshot(e)
 			// Place a space
