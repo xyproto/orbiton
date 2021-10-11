@@ -358,15 +358,19 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		}
 	}
 
-	actions.Add("Feed the gobblers", func() {
-		if ctrlQ, err := Game(); err != nil {
-			status.SetErrorMessage(err.Error())
-			status.Show(c, e)
-		} else if ctrlQ {
-			// Quit the program
-			e.quit = true
-		}
-	})
+	// Only display the game option if "amber" has been selected as the color scheme
+	if e.Foreground.Equal(vt100.Yellow) {
+		// A silly little game
+		actions.Add("Feed the gobblers", func() {
+			if ctrlQ, err := Game(); err != nil {
+				status.SetErrorMessage(err.Error())
+				status.Show(c, e)
+			} else if ctrlQ {
+				// Quit the program
+				e.quit = true
+			}
+		})
+	}
 
 	menuChoices := actions.MenuChoices()
 
