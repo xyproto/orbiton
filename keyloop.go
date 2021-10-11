@@ -147,7 +147,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		}()
 	}
 
-	//status.SetMessage(statusMessage)
+	// Draw everything once, with slightly different behavior if used over ssh
 	e.InitialRedraw(c, status, &statusMessage)
 
 	// This is the main loop for the editor
@@ -1613,11 +1613,13 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			}
 		}
 		previousKey = key
+
 		// Clear status, if needed
 		if statusMode && e.redrawCursor {
 			status.ClearAll(c)
 		}
 
+		// Draw and/or redraw everything, with slightly different behavior over ssh
 		e.RedrawAtEndOfKeyLoop(c, status, &statusMessage)
 
 	} // end of main loop
