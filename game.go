@@ -656,6 +656,7 @@ func loadHighScore() (uint, error) {
 
 // Game starts the game and returns true if ctrl-q was pressed
 func Game() (bool, error) {
+retry:
 	if envNoColor {
 		bobColor = vt100.White
 		bobWonColor = vt100.LightGray
@@ -833,6 +834,8 @@ func Game() (bool, error) {
 			resizeMut.Lock()
 			moved = bob.Left(c)
 			resizeMut.Unlock()
+		case 114: // r
+			goto retry
 		case 113: // q
 			dx := 1
 			dy := 1
@@ -927,7 +930,7 @@ func Game() (bool, error) {
 					statusText = fmt.Sprintf("You won! New highscore: %d", score)
 					saveHighScore(score)
 				} else if score > 0 {
-					statusText = fmt.Sprintf("You won! Score: %d", score)
+					statusText = fmt.Sprintf("You won! Score: %d - press r to retry", score)
 				}
 			} else {
 				paused = true
@@ -945,7 +948,7 @@ func Game() (bool, error) {
 					statusText = fmt.Sprintf("Game over! New highscore: %d", score)
 					saveHighScore(score)
 				} else if score > 0 {
-					statusText = fmt.Sprintf("Game over! Score: %d", score)
+					statusText = fmt.Sprintf("Game over! Score: %d - press r to retry", score)
 				}
 			}
 		}
