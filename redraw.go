@@ -9,12 +9,6 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 
 	savePos := e.pos
 
-	currentLineNumber := e.LineNumber()
-	if e.sshMode {
-		// TODO: Figure out why this helps doing a full redraw when o is used over ssh
-		e.GoToLineNumber(e.LastLineNumber(), c, nil, true)
-	}
-
 	if status != nil {
 		status.ClearAll(c)
 		e.SetSearchTerm(c, status, "")
@@ -34,11 +28,7 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 		e.wrapWidth = w
 	}
 	if drawLines {
-		if e.sshMode {
-			e.DrawLines(c, true, true)
-		} else {
-			e.DrawLines(c, true, false)
-		}
+		e.DrawLines(c, true, e.sshMode)
 	}
 	// Assign the new canvas to the current canvas
 	*c = *newC
@@ -55,15 +45,14 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 	}
 
 	if drawLines {
-		e.DrawLines(c, true, true)
+		e.DrawLines(c, true, e.sshMode)
 	}
 
 	if e.sshMode {
 		// TODO: Figure out why this helps doing a full redraw when o is used over ssh
 		// Go to the line we were at
-		e.redraw = e.ScrollDown(c, nil, e.pos.scrollSpeed)
-		e.redraw = e.ScrollUp(c, nil, e.pos.scrollSpeed)
-		e.GoToLineNumber(currentLineNumber, c, nil, resized)
+		e.ScrollUp(c, nil, e.pos.scrollSpeed)
+		e.ScrollDown(c, nil, e.pos.scrollSpeed)
 		e.redraw = true
 		e.redrawCursor = true
 	} else {
@@ -78,7 +67,7 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 func (e *Editor) RedrawIfNeeded(c *vt100.Canvas) {
 	if e.redraw {
 		respectOffset := true
-		redrawCanvas := true
+		redrawCanvas := e.sshMode
 		e.DrawLines(c, respectOffset, redrawCanvas)
 		e.redraw = false
 	}
