@@ -111,7 +111,7 @@ func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redrawCanvas bool) er
 }
 
 // InitialRedraw is called right before the main loop is started
-func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar, statusMessage *string) {
 
 	// Check if an extra reset is needed
 	if e.sshMode {
@@ -130,11 +130,18 @@ func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 		status.Show(c, e)
 	}
 
+	if *statusMessage != "" {
+		status.Clear(c)
+		status.SetMessage(*statusMessage)
+		status.Show(c, e)
+		*statusMessage = ""
+	}
+
 	e.RepositionCursorIfNeeded()
 }
 
 // RedrawAtEndOfKeyLoop is called after each main loop
-func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, statusMessage string) {
+func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, statusMessage *string) {
 
 	// Redraw, if needed
 	if e.redraw {
@@ -153,6 +160,14 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, status
 		status.Show(c, e)
 	}
 
+	if *statusMessage != "" {
+		status.Clear(c)
+		status.SetMessage(*statusMessage)
+		status.Show(c, e)
+		*statusMessage = ""
+	}
+
 	// Position the cursor
 	e.RepositionCursorIfNeeded()
+
 }

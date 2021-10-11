@@ -147,8 +147,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		}()
 	}
 
-	status.SetMessage(statusMessage)
-	e.InitialRedraw(c, status)
+	//status.SetMessage(statusMessage)
+	e.InitialRedraw(c, status, &statusMessage)
 
 	// This is the main loop for the editor
 	for !e.quit {
@@ -1618,7 +1618,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			status.ClearAll(c)
 		}
 
-		e.RedrawAtEndOfKeyLoop(c, status, statusMessage)
+		e.RedrawAtEndOfKeyLoop(c, status, &statusMessage)
 
 	} // end of main loop
 
