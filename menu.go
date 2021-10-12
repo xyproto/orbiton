@@ -182,23 +182,31 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 			}
 		}
 
-		// Konami code
+		// Konami code collector
 		if len([]rune(key)) == 1 {
 			collectedString += key
 			// pop a letter in front of the collected string if it's too long
 			if len(collectedString) > len(konami) {
-				collectedString = collectedString[1:]
+				runes := []rune(collectedString)
+				collectedString = string(runes[1:])
 			}
 		}
+		// Was it the konami code?
 		if collectedString == konami {
-			// Start the game and then quit entirely if ctrl-q was pressed
-			if _, err := Game(); err != nil {
+			collectedString = ""
+			// Start the game
+			if ctrlq, err := Game(); err != nil {
+				// This should never happen
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
+			} else if ctrlq {
+				// ctrl-q was pressed, quit entirely
+				running = false
+				e.quit = true
 			} else {
+				// The game ended, return from the menu
 				running = false
 				changed = true
-				break
 			}
 		}
 
