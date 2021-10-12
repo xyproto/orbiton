@@ -3,7 +3,7 @@
 ## Pri
 
 - [ ] If a line in a man page starts with the man page name and then " -", and the line is all lowercase, it's likely to be a command example.
-- [ ] Don't complain about the mid-dot or other unicode symbols that can be displayed in the space of 1 charater.
+- [ ] Don't complain about the mid-dot or other unicode symbols that can be displayed in the space of 1 character.
 - [ ] Auto-detect tabs/spaces when opening a file.
 
 ## Bugs/features/issues
@@ -76,7 +76,7 @@
 - [ ] Should be able to open any binary file and save it again, without replacements. Add a hex edit mode.
 - [ ] Detect ISO-8859-1 and convert the file to UTF-8 before opening.
 - [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
-- [ ] Let the autocompletion also look at method definitions with matching variable names (ignoring types, for now).
+- [ ] Let the auto-completion also look at method definitions with matching variable names (ignoring types, for now).
 - [ ] Cross user portals? Possibly by using `TMPDIR/oportal.dat`.
 - [ ] Add tests for the smart indent feature: for pressing return, tab and space, especially in relation with `{` and `}`.
 - [ ] Rainbow parenthesis should be able to span multiple lines, especially for Clojure, Common Lisp, Scheme and Emacs Lisp.
@@ -84,11 +84,11 @@
 - [ ] Let `guessica` also set `pkgrel=1` if there was a new version.
 - [ ] Quotestate Process can not recognize triple runes, like the previous
       previous rune is ", the previous rune is " and the current rune is ".
-      The wrong argumens are passed to the function. Figure out why.
+      The wrong arguments are passed to the function. Figure out why.
 - [ ] Rewrite `insertRune`. Improve word-wrap related functionality.
 - [ ] Ignore multiline comments within multiline comments.
 - [ ] Also enable rainbow parenthesis for lines that ends with a single-line comment.
-- [ ] Introduce a type for screen cordinates, a type for screen coordinates + scroll offset, and another type for data coordinates.
+- [ ] Introduce a type for screen coordinates, a type for screen coordinates + scroll offset, and another type for data coordinates.
 - [ ] Insert a custom file from the command menu.
 - [ ] Add one or more of these commands: regex search,
       go to definition, rename symbol, find references and disassembly.
@@ -111,7 +111,7 @@
 - [ ] Replace and/or rewrite the syntax highlighting system.
 - [ ] Plugins. When there's `txt2something` and `something2txt`, o should be able to edit "something" files in general.
       This could be used for hex editing, editing ELF files etc.
-- [ ] Tab in the middle of a line, especially on a `|` character, could insert spaces until the `|` alignes with the `|` above, if applicable
+- [ ] Tab in the middle of a line, especially on a `|` character, could insert spaces until the `|` aligns with the `|` above, if applicable
       (For Markdown tables).
 - [ ] Smarter indentation for `}`. There are still a few cases where it's not too smart.
       Perhaps use the logic for tab-indenting for when dedenting `}`?
