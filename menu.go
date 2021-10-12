@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
@@ -12,6 +13,8 @@ import (
 
 	"github.com/xyproto/vt100"
 )
+
+const konami = "↑↑↓↓←→←→ba"
 
 var errNoLetter = errors.New("no letter")
 
@@ -102,6 +105,8 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 	// Set the initial menu index
 	menu.SelectIndex(uint(initialMenuIndex))
 
+	var collectedString string
+
 	for running {
 
 		// Draw elements in their new positions
@@ -174,6 +179,26 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 					changed = true
 					resizeMut.Unlock()
 				}
+			}
+		}
+
+		// Konami code
+		if len([]rune(key)) == 1 {
+			collectedString += key
+			// pop a letter in front of the collected string if it's too long
+			if len(collectedString) > len(konami) {
+				collectedString = collectedString[1:]
+			}
+		}
+		if collectedString == konami {
+			// Start the game and then quit entirely if ctrl-q was pressed
+			if _, err := Game(); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			} else {
+				running = false
+				changed = true
+				break
 			}
 		}
 
