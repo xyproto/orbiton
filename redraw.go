@@ -167,7 +167,5 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, status
 		*statusMessage = ""
 	}
 
-	// Position the cursor
 	e.RepositionCursorIfNeeded()
-
 }
