@@ -2,8 +2,10 @@
 
 ## Pri
 
+- [ ] When pressing ctrl-g or F12 and there's a filename under the cursor that exists, go to that file.
+- [ ] When pressing ctrl-g on a function that is declared in a file in the same directory, go to that file and function definition.
 - [ ] If a line in a man page starts with the man page name and then " -", and the line is all lowercase, it's likely to be a command example.
-- [ ] Don't complain about the mid-dot or other unicode symbols that can be displayed in the space of 1 character.
+- [ ] Don't complain about the mid-dot or other unicode symbols that can be displayed in the space of 1 character. Use the unicode width module.
 - [ ] Auto-detect tabs/spaces when opening a file.
 
 ## Bugs/features/issues
