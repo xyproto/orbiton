@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] Let ctrl-home and ctrl-home go to the beginning and end of the file, in Ko.
 - [ ] When pressing ctrl-g or F12 and there's a filename under the cursor that exists, go to that file.
 - [ ] When pressing ctrl-g on a function that is declared in a file in the same directory, go to that file and function definition.
 - [ ] If a line in a man page starts with the man page name and then " -", and the line is all lowercase, it's likely to be a command example.
