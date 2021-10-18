@@ -413,6 +413,8 @@ If the `PAPERSIZE` environment variable is set to ie. `a4` or `letter`, it will 
 
 The `--pdf-engine=xelatex` and `--listings` flags are used, so `xelatex` and the `listings` package needs to be available. A standard installation of LaTeX and Pandoc should provide both.
 
+Also try the Konami code in the `ctrl-o` menu for a silly little game.
+
 ## Terminal settings
 
 ### Konsole
