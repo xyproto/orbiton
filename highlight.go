@@ -323,9 +323,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					doneHighlighting = false
 				}
 
-				// Looks good so far
-				//panic(line + coloredString)
-
 				if !doneHighlighting {
 
 					// C, C++, Go, Rust etc
@@ -429,7 +426,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						lineRuneCount += uint(e.tabsSpaces.PerTab)
 						lineStringCount += uint(e.tabsSpaces.PerTab)
 					} else {
-						//logf(string(letter))
 						if unicode.IsControl(letter) {
 							letter = controlRuneReplacement
 						}
@@ -474,8 +470,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		for x := lineRuneCount; x < w; x++ {
 			xp = uint(cx) + x
 			r := ' '
-			//lineNumber := strconv.Itoa(runeLengthDiff)
-			//r = []rune(lineNumber)[len([]rune(lineNumber))-1]
 			c.WriteRuneB(xp, yp, e.Foreground, bg, r)
 		}
 		//c.WriteRuneB(xp, yp, e.fg, e.bg, '\n')
