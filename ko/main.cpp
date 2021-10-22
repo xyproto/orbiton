@@ -56,6 +56,10 @@ void wait_and_quit()
 static GdkEvent* ctrl_v_event = nullptr;
 static GdkEvent* ctrl_p_event = nullptr;
 static GdkEvent* ctrl_n_event = nullptr;
+static GdkEvent* ctrl_l_event = nullptr;
+static GdkEvent* return_key_event = nullptr;
+static GdkEvent* zero_key_event = nullptr;
+static GdkEvent* e_key_event = nullptr;
 
 // Synthesize an ctrl+v keypress if it has not been created,
 // then send the event.
@@ -123,11 +127,98 @@ static gboolean send_scroll_down_keypress(GtkWidget* widget)
     return true; // keypress was handled
 }
 
+// Synthesize a ctrl+l keypress if it has not been created,
+// then send the event.
+static gboolean send_ctrl_l(GtkWidget* widget)
+{
+    if (ctrl_l_event == nullptr) {
+        ctrl_l_event = gdk_event_new(GDK_KEY_PRESS);
+        if (ctrl_l_event == nullptr) {
+            // ERROR: Can not allocate memory
+            return false;
+        }
+        ctrl_l_event->key.keyval = GDK_KEY_l;
+        ctrl_l_event->key.window = gtk_widget_get_window(widget);
+        ctrl_l_event->key.length = 1;
+        ctrl_l_event->key.send_event = true;
+        ctrl_l_event->key.time = GDK_CURRENT_TIME;
+        ctrl_l_event->key.state = GDK_CONTROL_MASK;
+    }
+    // Send the event
+    gtk_main_do_event(ctrl_l_event);
+    return true; // keypress was handled
+}
+
+// Synthesize a return keypress if it has not been created,
+// then send the event.
+static gboolean send_return(GtkWidget* widget)
+{
+    if (return_key_event == nullptr) {
+        return_key_event = gdk_event_new(GDK_KEY_PRESS);
+        if (return_key_event == nullptr) {
+            // ERROR: Can not allocate memory
+            return false;
+        }
+        return_key_event->key.keyval = GDK_KEY_Return;
+        return_key_event->key.window = gtk_widget_get_window(widget);
+        return_key_event->key.length = 1;
+        return_key_event->key.send_event = true;
+        return_key_event->key.time = GDK_CURRENT_TIME;
+        return_key_event->key.state = 0; //GDK_CONTROL_MASK;
+    }
+    // Send the event
+    gtk_main_do_event(return_key_event);
+    return true; // keypress was handled
+}
+
+// Synthesize a 0 keypress if it has not been created,
+// then send the event.
+static gboolean send_zero(GtkWidget* widget)
+{
+    if (zero_key_event == nullptr) {
+        zero_key_event = gdk_event_new(GDK_KEY_PRESS);
+        if (zero_key_event == nullptr) {
+            // ERROR: Can not allocate memory
+            return false;
+        }
+        zero_key_event->key.keyval = GDK_KEY_0;
+        zero_key_event->key.window = gtk_widget_get_window(widget);
+        zero_key_event->key.length = 1;
+        zero_key_event->key.send_event = true;
+        zero_key_event->key.time = GDK_CURRENT_TIME;
+        zero_key_event->key.state = 0; //GDK_CONTROL_MASK;
+    }
+    // Send the event
+    gtk_main_do_event(zero_key_event);
+    return true; // keypress was handled
+}
+
+// Synthesize an "e" keypress if it has not been created,
+// then send the event.
+static gboolean send_e(GtkWidget* widget)
+{
+    if (e_key_event == nullptr) {
+        e_key_event = gdk_event_new(GDK_KEY_PRESS);
+        if (e_key_event == nullptr) {
+            // ERROR: Can not allocate memory
+            return false;
+        }
+        e_key_event->key.keyval = GDK_KEY_e;
+        e_key_event->key.window = gtk_widget_get_window(widget);
+        e_key_event->key.length = 1;
+        e_key_event->key.send_event = true;
+        e_key_event->key.time = GDK_CURRENT_TIME;
+        e_key_event->key.state = 0; //GDK_CONTROL_MASK;
+    }
+    // Send the event
+    gtk_main_do_event(e_key_event);
+    return true; // keypress was handled
+}
+
 // mouse_clicked only receives and handles some mouse button events.
 // Right mouse button and some special mouse buttons are received and handled.
 gboolean mouse_clicked(GtkWidget* widget, GdkEventButton* event, gpointer data)
 {
-
     if (event->button == 3) {
         // right mouse button, pastes with ctrl+v
         return send_ctrl_v_keypress(widget);
@@ -168,14 +259,32 @@ gboolean key_pressed(GtkWidget* widget, GdkEventKey* event, gpointer user_data)
         event->state = GDK_CONTROL_MASK;
         break;
     case GDK_KEY_Home:
-        // Send ctrl+a instead
-        event->keyval = GDK_KEY_A;
-        event->state = GDK_CONTROL_MASK;
+        if (event->state == GDK_CONTROL_MASK) { // was ctrl+home pressed
+            // Send ctrl+l, 0 and then finally send Return, to go to the top
+            send_ctrl_l(widget);
+            send_zero(widget);
+            sleep(1.0);
+            event->keyval = GDK_KEY_Return;
+            event->state = 0;
+        } else { // was home pressed, but without ctrl?
+            // Send ctrl+a instead
+            event->keyval = GDK_KEY_A;
+            event->state = GDK_CONTROL_MASK;
+        }
         break;
     case GDK_KEY_End:
+        if (event->state == GDK_CONTROL_MASK) { // was ctrl+home pressed
+            // Send ctrl+l, 0, Return, ctrl+l, Return, to go to the bottom
+            send_ctrl_l(widget);
+            send_e(widget);
+            sleep(1.0);
+            event->keyval = GDK_KEY_Return;
+            event->state = 0;
+        } else { // was end pressed, but without ctrl?
         // Send ctrl+e instead
         event->keyval = GDK_KEY_E;
         event->state = GDK_CONTROL_MASK;
+    }
         break;
     case GDK_KEY_Delete:
         if (event->state == GDK_SHIFT_MASK) { // shift + delete, cut
