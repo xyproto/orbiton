@@ -151,7 +151,7 @@ func isListItem(line string) bool {
 }
 
 // markdownHighlight returns a VT100 colored line, a bool that is true if it worked out and a bool that is true if it's the start or stop of a block quote
-func (e *Editor) markdownHighlight(line string, inCodeBlock, prevLineIsListItem, prevPrevLineIsListItem bool, inListItem *bool) (string, bool, bool) {
+func (e *Editor) markdownHighlight(line string, inCodeBlock bool, listItemRecord []bool, inListItem *bool) (string, bool, bool) {
 
 	dataPos := 0
 	for i, r := range line {
@@ -177,7 +177,16 @@ func (e *Editor) markdownHighlight(line string, inCodeBlock, prevLineIsListItem,
 		return e.CodeBlockColor.Get(line), true, false
 	}
 
-	if leadingSpace == "    " && !strings.HasPrefix(rest, "*") && !strings.HasPrefix(rest, "-") && !prevLineIsListItem && !prevPrevLineIsListItem {
+	// N is the number of lines to highlight with the same color for each numbered point or bullet point in a list
+	N := 3
+	prevNisListItem := false
+	for i := len(listItemRecord) - 1; i > (len(listItemRecord) - N); i-- {
+		if i >= 0 && listItemRecord[i] {
+			prevNisListItem = true
+		}
+	}
+
+	if leadingSpace == "    " && !strings.HasPrefix(rest, "*") && !strings.HasPrefix(rest, "-") && !prevNisListItem {
 		// Four leading spaces means a quoted line
 		// Also assume it's not a quote if it starts with "*" or "-"
 		return e.CodeColor.Get(line), true, false
@@ -269,8 +278,7 @@ func (e *Editor) markdownHighlight(line string, inCodeBlock, prevLineIsListItem,
 		return e.MenuArrowColor.Get(line), true, false
 	}
 
-	// TODO: Refactor the "in list item" functionality
-	if prevLineIsListItem || prevPrevLineIsListItem {
+	if prevNisListItem {
 		*inListItem = true
 	}
 
