@@ -110,14 +110,15 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	}
 	// q should now contain the current quote state
 	var (
-		lineRuneCount      uint
-		lineStringCount    uint
-		line               string
-		prevLineIsListItem bool
-		inListItem         bool
-		screenLine         string
-		programName        string
-		cw                 = c.Width()
+		lineRuneCount          uint
+		lineStringCount        uint
+		line                   string
+		prevLineIsListItem     bool
+		prevPrevLineIsListItem bool
+		inListItem             bool
+		screenLine             string
+		programName            string
+		cw                     = c.Width()
 	)
 	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y := LineIndex(0); y < numLinesToDraw; y++ {
@@ -164,7 +165,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					cs := e.manPageHighlight(line, programName, y == 0, y+1 == numLinesToDraw)
 					coloredString = cs
 				case mode.Markdown:
-					if highlighted, ok, codeBlockFound := e.markdownHighlight(line, inCodeBlock, prevLineIsListItem, &inListItem); ok {
+					if highlighted, ok, codeBlockFound := e.markdownHighlight(line, inCodeBlock, prevLineIsListItem, prevPrevLineIsListItem, &inListItem); ok {
 						coloredString = highlighted
 						if codeBlockFound {
 							inCodeBlock = !inCodeBlock
@@ -174,6 +175,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
 					}
 					// If this is a list item, store true in "prevLineIsListItem"
+					prevPrevLineIsListItem = prevLineIsListItem
 					prevLineIsListItem = isListItem(line)
 				case mode.Python:
 					trimmedLine = strings.TrimSpace(line)
