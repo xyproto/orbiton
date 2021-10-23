@@ -49,6 +49,8 @@ func clearKeywords() {
 func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	var addKeywords, delKeywords []string
 	switch m {
+	case mode.Ada:
+		addKeywords = []string{"constant", "loop", "procedure", "project"}
 	case mode.Assembly:
 		clearKeywords()
 		addKeywords = asmWords
