@@ -1076,6 +1076,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			cancel := false
 			doneCollectingDigits := false
 			goToEnd := false
+			goToTop := false
 			for !doneCollectingDigits {
 				numkey := tty.String()
 				switch numkey {
@@ -1089,15 +1090,18 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						status.SetMessage("Go to line number: " + lns)
 						status.ShowNoTimeout(c, e)
 					}
+				case "t": // top of file
+					doneCollectingDigits = true
+					goToTop = true
 				case "e": // end of file
 					doneCollectingDigits = true
 					goToEnd = true
 				case "↑", "↓": // up arrow or down arrow
-					fallthrough
+					fallthrough // cancel
 				case "c:27", "c:17": // esc or ctrl-q
 					cancel = true
 					lns = ""
-					fallthrough
+					fallthrough // done
 				case "c:13": // return
 					doneCollectingDigits = true
 				}
@@ -1106,7 +1110,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				e.ClearSearchTerm()
 			}
 			status.ClearAll(c)
-			if goToEnd {
+			if goToTop {
+				// Go to the first line (by line number, not by index)
+				e.redraw = e.GoToLineNumber(1, c, status, true)
+			} else if goToEnd {
 				// Go to the last line (by line number, not by index, e.Len() returns an index which is why there is no -1)
 				e.redraw = e.GoToLineNumber(LineNumber(e.Len()), c, status, true)
 			} else if lns == "" && !cancel {
