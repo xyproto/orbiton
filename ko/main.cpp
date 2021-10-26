@@ -58,7 +58,7 @@ static GdkEvent* ctrl_p_event = nullptr;
 static GdkEvent* ctrl_n_event = nullptr;
 static GdkEvent* ctrl_l_event = nullptr;
 static GdkEvent* return_key_event = nullptr;
-static GdkEvent* zero_key_event = nullptr;
+static GdkEvent* t_key_event = nullptr;
 static GdkEvent* e_key_event = nullptr;
 
 // Synthesize an ctrl+v keypress if it has not been created,
@@ -171,25 +171,25 @@ static gboolean send_return(GtkWidget* widget)
     return true; // keypress was handled
 }
 
-// Synthesize a 0 keypress if it has not been created,
+// Synthesize a t keypress if it has not been created,
 // then send the event.
-static gboolean send_zero(GtkWidget* widget)
+static gboolean send_t(GtkWidget* widget)
 {
-    if (zero_key_event == nullptr) {
-        zero_key_event = gdk_event_new(GDK_KEY_PRESS);
-        if (zero_key_event == nullptr) {
+    if (t_key_event == nullptr) {
+        t_key_event = gdk_event_new(GDK_KEY_PRESS);
+        if (t_key_event == nullptr) {
             // ERROR: Can not allocate memory
             return false;
         }
-        zero_key_event->key.keyval = GDK_KEY_0;
-        zero_key_event->key.window = gtk_widget_get_window(widget);
-        zero_key_event->key.length = 1;
-        zero_key_event->key.send_event = true;
-        zero_key_event->key.time = GDK_CURRENT_TIME;
-        zero_key_event->key.state = 0; //GDK_CONTROL_MASK;
+        t_key_event->key.keyval = GDK_KEY_T;
+        t_key_event->key.window = gtk_widget_get_window(widget);
+        t_key_event->key.length = 1;
+        t_key_event->key.send_event = true;
+        t_key_event->key.time = GDK_CURRENT_TIME;
+        t_key_event->key.state = 0; //GDK_CONTROL_MASK;
     }
     // Send the event
-    gtk_main_do_event(zero_key_event);
+    gtk_main_do_event(t_key_event);
     return true; // keypress was handled
 }
 
@@ -259,13 +259,13 @@ gboolean key_pressed(GtkWidget* widget, GdkEventKey* event, gpointer user_data)
         event->state = GDK_CONTROL_MASK;
         break;
     case GDK_KEY_Home:
-        if (event->state == GDK_CONTROL_MASK) { // was ctrl+home pressed
-            // Send ctrl+l, 0 and then finally send Return, to go to the top
+        if (event->state == GDK_CONTROL_MASK) { // ctrl + home
+            // Send ctrl+l,return, toggle between top and end
+            // TODO: talk directly with o instead
             send_ctrl_l(widget);
-            send_zero(widget);
             sleep(1.0);
-            event->keyval = GDK_KEY_Return;
-            event->state = 0;
+            send_return(widget);
+            return true;
         } else { // was home pressed, but without ctrl?
             // Send ctrl+a instead
             event->keyval = GDK_KEY_A;
@@ -273,18 +273,18 @@ gboolean key_pressed(GtkWidget* widget, GdkEventKey* event, gpointer user_data)
         }
         break;
     case GDK_KEY_End:
-        if (event->state == GDK_CONTROL_MASK) { // was ctrl+home pressed
-            // Send ctrl+l, 0, Return, ctrl+l, Return, to go to the bottom
+        if (event->state == GDK_CONTROL_MASK) { // ctrl + end
+            // Send ctrl+l,return, toggle between top and end
+            // TODO: talk directly with o instead
             send_ctrl_l(widget);
-            send_e(widget);
             sleep(1.0);
-            event->keyval = GDK_KEY_Return;
-            event->state = 0;
+            send_return(widget);
+            return true;
         } else { // was end pressed, but without ctrl?
-        // Send ctrl+e instead
-        event->keyval = GDK_KEY_E;
-        event->state = GDK_CONTROL_MASK;
-    }
+            // Send ctrl+e instead
+            event->keyval = GDK_KEY_E;
+            event->state = GDK_CONTROL_MASK;
+        }
         break;
     case GDK_KEY_Delete:
         if (event->state == GDK_SHIFT_MASK) { // shift + delete, cut
