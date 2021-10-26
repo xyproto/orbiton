@@ -2,6 +2,8 @@
 
 ## Pri
 
+- [ ] Let `ctrl-space` compile C and C++ programs with debug flags if debug mode is enabled.
+- [ ] Be able to run a C program until the breakpoint and then enter gdb with the source file loaded.
 - [ ] When pressing ctrl-g or F12 and there's a filename under the cursor that exists, go to that file.
 - [ ] When pressing ctrl-g on a function that is declared in a file in the same directory, go to that file and function definition.
 - [ ] If a line in a man page starts with the man page name and then " -", and the line is all lowercase, it's likely to be a command example.
@@ -10,6 +12,7 @@
 
 ## Bugs/features/issues
 
+- [ ] Don't let single-line comments at the end of lines disable rainbow parentheses.
 - [ ] Re-enable cross-user portals?
 - [ ] Don't highlight /* in shell scripts like comments.
 - [ ] Also highlight hexadecimal numbers.
@@ -30,7 +33,7 @@
 - [ ] Refactor the code to handle a line as a Line struct/object that has these markers: start of line, start of text, start of scroll view, end of scroll view, end of text, one after end of text, end of line including whitespace
 - [ ] Inherit from the Line struct (with interfaces+types+methods) by adding per-language markers: start of block, end of block, indentation compared to the line above, dedentation compared to the line above
 - [ ] If there are four lines: not comment, comment, not comment, comment, let ctrl+/ behave differently.
-- [ ] When `} is the last character of a file, sometimes pressing enter right before it does not work.
+- [ ] When `}` is the last character of a file, sometimes pressing enter right before it does not work.
 - [ ] When moving far to the right of a long line, `ctrl-k` sometimes cuts from the wrong place.
 - [ ] `-- ` comments in Ada are not recognized.
 - [ ] Links in Markdown documents are not always recognized.
