@@ -1919,10 +1919,16 @@ func (e *Editor) CurrentLineCommented(commentMarker string) bool {
 // Also takes a string that will be passed on to the function.
 func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func(string), commentMarker string) {
 	downCounter := 0
-	for !e.EmptyRightTrimmedLine() && !e.AtOrAfterEndOfDocument() {
+	for !e.EmptyRightTrimmedLine() {
 		f(commentMarker)
+		if e.AtOrAfterEndOfDocument() {
+			break
+		}
 		e.Down(c, nil)
 		downCounter++
+		if downCounter > 100 { // safeguard
+			break
+		}
 	}
 	// Go up again
 	for i := downCounter; i > 0; i-- {
@@ -1975,12 +1981,18 @@ func (e *Editor) ToggleCommentBlock(c *vt100.Canvas) {
 	)
 
 	// Count the commented lines in this block while going down
-	for !e.EmptyRightTrimmedLine() && !e.AtOrAfterEndOfDocument() {
+	for !e.EmptyRightTrimmedLine() {
 		if e.CurrentLineCommented(commentMarker) {
 			commentCounter++
 		}
+		if e.AtOrAfterEndOfDocument() {
+			break
+		}
 		e.Down(c, nil)
 		downCounter++
+		if downCounter > 100 { // safeguard
+			break
+		}
 	}
 	// Go up again
 	for i := downCounter; i > 0; i-- {
