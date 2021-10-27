@@ -81,3 +81,25 @@ func DurationSeconds(envName string, defaultValue int64) time.Duration {
 	}
 	return time.Duration(i64) * time.Second
 }
+
+// DurationMinutes interprets the environment variable value as minutes
+// and returns a time.Duration. The given default number is interpreted
+// as the number of minutes.
+func DurationMinutes(envName string, defaultValue int64) time.Duration {
+	i64, err := strconv.ParseInt(Str(envName), 10, 64)
+	if err != nil {
+		return time.Duration(defaultValue) * time.Minute
+	}
+	return time.Duration(i64) * time.Minute
+}
+
+// DurationHours interprets the environment variable value as hours
+// and returns a time.Duration. The given default number is interpreted
+// as the number of hours.
+func DurationHours(envName string, defaultValue int64) time.Duration {
+	i64, err := strconv.ParseInt(Str(envName), 10, 64)
+	if err != nil {
+		return time.Duration(defaultValue) * time.Hour
+	}
+	return time.Duration(i64) * time.Hour
+}
