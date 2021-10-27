@@ -2,6 +2,7 @@
 
 ## Pri
 
+- [ ] Fix the ctrl-\ behavior when commenting out a block at the end of a file.
 - [ ] Let `ctrl-space` compile C and C++ programs with debug flags if debug mode is enabled.
 - [ ] Be able to run a C program until the breakpoint and then enter gdb with the source file loaded.
 - [ ] When pressing ctrl-g or F12 and there's a filename under the cursor that exists, go to that file.
