@@ -58,8 +58,6 @@ static GdkEvent* ctrl_p_event = nullptr;
 static GdkEvent* ctrl_n_event = nullptr;
 static GdkEvent* ctrl_l_event = nullptr;
 static GdkEvent* return_key_event = nullptr;
-static GdkEvent* t_key_event = nullptr;
-static GdkEvent* e_key_event = nullptr;
 
 // Synthesize an ctrl+v keypress if it has not been created,
 // then send the event.
@@ -164,54 +162,10 @@ static gboolean send_return(GtkWidget* widget)
         return_key_event->key.length = 1;
         return_key_event->key.send_event = true;
         return_key_event->key.time = GDK_CURRENT_TIME;
-        return_key_event->key.state = 0; //GDK_CONTROL_MASK;
+        return_key_event->key.state = 0; // GDK_CONTROL_MASK;
     }
     // Send the event
     gtk_main_do_event(return_key_event);
-    return true; // keypress was handled
-}
-
-// Synthesize a t keypress if it has not been created,
-// then send the event.
-static gboolean send_t(GtkWidget* widget)
-{
-    if (t_key_event == nullptr) {
-        t_key_event = gdk_event_new(GDK_KEY_PRESS);
-        if (t_key_event == nullptr) {
-            // ERROR: Can not allocate memory
-            return false;
-        }
-        t_key_event->key.keyval = GDK_KEY_T;
-        t_key_event->key.window = gtk_widget_get_window(widget);
-        t_key_event->key.length = 1;
-        t_key_event->key.send_event = true;
-        t_key_event->key.time = GDK_CURRENT_TIME;
-        t_key_event->key.state = 0; //GDK_CONTROL_MASK;
-    }
-    // Send the event
-    gtk_main_do_event(t_key_event);
-    return true; // keypress was handled
-}
-
-// Synthesize an "e" keypress if it has not been created,
-// then send the event.
-static gboolean send_e(GtkWidget* widget)
-{
-    if (e_key_event == nullptr) {
-        e_key_event = gdk_event_new(GDK_KEY_PRESS);
-        if (e_key_event == nullptr) {
-            // ERROR: Can not allocate memory
-            return false;
-        }
-        e_key_event->key.keyval = GDK_KEY_e;
-        e_key_event->key.window = gtk_widget_get_window(widget);
-        e_key_event->key.length = 1;
-        e_key_event->key.send_event = true;
-        e_key_event->key.time = GDK_CURRENT_TIME;
-        e_key_event->key.state = 0; //GDK_CONTROL_MASK;
-    }
-    // Send the event
-    gtk_main_do_event(e_key_event);
     return true; // keypress was handled
 }
 
