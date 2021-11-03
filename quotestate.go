@@ -119,7 +119,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			}
 		}
 	case '*': // support C-style, StandardML-style and multi-line comments
-		if q.firstRuneInSingleLineCommentMarker != '#' && (prevRune == '/' || prevRune == '(') && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
+		if q.firstRuneInSingleLineCommentMarker != '#' && (prevRune == '/' || (q.mode == mode.StandardML && prevRune == '(')) && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
 		}
