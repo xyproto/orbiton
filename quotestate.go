@@ -118,8 +118,8 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 				}
 			}
 		}
-	case '*': // support C-style and multi-line comments
-		if q.firstRuneInSingleLineCommentMarker != '#' && prevRune == '/' && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
+	case '*': // support C-style, StandardML-style and multi-line comments
+		if q.firstRuneInSingleLineCommentMarker != '#' && (prevRune == '/' || prevRune == '(') && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
 		}
@@ -161,7 +161,13 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 
 		}
 	case '(':
-		if q.None() {
+		if q.mode == mode.StandardML && prevRune == '*' {
+			q.stoppedMultiLineComment = true
+			q.multiLineComment = false
+			if q.startedMultiLineComment {
+				q.containsMultiLineComments = true
+			}
+		} else if q.None() {
 			q.parCount++
 		}
 	case ')':

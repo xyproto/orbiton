@@ -39,6 +39,9 @@ var (
 
 	// The D programming language
 	dWords = []string{"abstract", "alias", "align", "asm", "assert", "auto", "body", "bool", "break", "byte", "case", "cast", "catch", "cdouble", "cent", "cfloat", "char", "class", "const", "continue", "creal", "dchar", "debug", "default", "delegate", "delete", "deprecated", "do", "double", "else", "enum", "export", "extern", "false", "__FILE__", "__FILE_FULL_PATH__", "final", "finally", "float", "for", "foreach", "foreach_reverse", "__FUNCTION__", "function", "goto", "__gshared", "idouble", "if", "ifloat", "immutable", "import", "in", "inout", "int", "interface", "invariant", "ireal", "is", "lazy", "__LINE__", "long", "macro", "mixin", "__MODULE__", "module", "new", "nothrow", "null", "out", "override", "package", "__parameters", "pragma", "__PRETTY_FUNCTION__", "private", "protected", "public", "pure", "real", "ref", "return", "scope", "shared", "short", "static", "struct", "super", "switch", "synchronized", "template", "this", "throw", "__traits", "true", "try", "typeid", "typeof", "ubyte", "ucent", "uint", "ulong", "union", "unittest", "ushort", "__vector", "version", "void", "wchar", "while", "with"}
+
+	// Standard ML
+	smlWords = []string{"abstype", "and", "andalso", "as", "case", "do", "datatype", "else", "end", "eqtype", "exception", "fn", "fun", "functor", "handle", "if", "in", "include", "infix", "infixr", "let", "local", "nonfix", "of", "op", "open", "orelse", "raise", "rec", "sharing", "sig", "signature", "struct", "structure", "then", "type", "val", "where", "with", "withtype", "while"}
 )
 
 func clearKeywords() {
@@ -113,6 +116,9 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.Scala:
 		clearKeywords()
 		addKeywords = scalaWords
+	case mode.StandardML:
+		clearKeywords()
+		addKeywords = smlWords
 	case mode.SQL:
 		addKeywords = []string{"NOT"}
 	case mode.Vim:
@@ -166,6 +172,9 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "%"
 	case mode.M4:
 		return "dnl"
+	case mode.StandardML:
+		// not applicable, return something that is unlikely to appear at the beginning of a line
+		return ";;"
 	default:
 		return "//"
 	}
