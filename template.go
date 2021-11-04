@@ -118,6 +118,11 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		8,
 		20,
 	},
+	mode.StandardML: {
+		"let\n  val name = \"World\"\nin\n  map (fn x => (print (\"Hello, \" ^ x ^ \"!\\n\"))) [name]\nend;",
+		22,
+		1,
+	},
 	mode.TypeScript: {
 		"console.log('Hello, World!');\n",
 		13,
