@@ -534,6 +534,9 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+    // Unset the DISPLAY environment variable, which affects the behavior of "o"
+    setenv("KO", "1", true);
+
     // Spawn a terminal
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
