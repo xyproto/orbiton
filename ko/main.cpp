@@ -534,7 +534,7 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    // Unset the DISPLAY environment variable, which affects the behavior of "o"
+    // Set the DISPLAY environment variable, which affects the behavior of "o"
     setenv("KO", "1", true);
 
     // Spawn a terminal
