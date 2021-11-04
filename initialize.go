@@ -175,7 +175,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	// TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
 	// because $COLORFGBG is "15;0" even though the background is white.
 	if !e.readOnly {
-		if (env.Has("XTERM_VERSION") && !env.Bool("KO")) || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
+		if (env.Has("XTERM_VERSION") && !env.Bool("KO") && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
 			e.setLightTheme()
 			// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
 		} else if shell := env.Str("SHELL"); (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && filepath.Base(os.Args[0]) != "default" {
