@@ -27,6 +27,7 @@ const (
 	Zig            // Zig
 	Kotlin         // Kotlin
 	Java           // Java
+	Gradle         // Gradle
 	HIDL           // the Android-related Hardware Abstraction Layer Interface Definition Language
 	SQL            // Structured Query Language
 	Oak            // Oak
@@ -103,6 +104,8 @@ func (mode Mode) String() string {
 		return "Kotlin"
 	case Java:
 		return "Java"
+	case Gradle:
+		return "Gradle"
 	case HIDL:
 		return "HIDL"
 	case SQL:

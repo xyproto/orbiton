@@ -100,8 +100,10 @@ func Detect(filename string) Mode {
 			mode = V
 		case ".kt", ".kts":
 			mode = Kotlin
-		case ".java", ".gradle":
+		case ".java":
 			mode = Java
+		case ".gradle":
+			mode = Gradle
 		case ".hal":
 			mode = HIDL
 		case ".sql":

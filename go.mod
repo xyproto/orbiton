@@ -10,10 +10,10 @@ require (
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/xyproto/env v1.7.0
 	github.com/xyproto/guessica v1.1.0
-	github.com/xyproto/mode v0.3.1
+	github.com/xyproto/mode v0.3.2-0.20211104143257-2c48451c0b3c
 	github.com/xyproto/syntax v1.10.2
 	github.com/xyproto/termtitle v1.3.0
 	github.com/xyproto/textoutput v1.12.10
 	github.com/xyproto/vt100 v1.9.9
-	golang.org/x/sys v0.0.0-20211025201205-69cdffdb9359 // indirect
+	golang.org/x/sys v0.0.0-20211103235746-7861aae1554b // indirect
 )
