@@ -8,7 +8,7 @@ require (
 	github.com/cyrus-and/gdb v0.0.0-20180213171718-0306a029f42f
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/kr/pty v1.1.8 // indirect
-	github.com/xyproto/env v1.4.0
+	github.com/xyproto/env v1.7.0
 	github.com/xyproto/guessica v1.1.0
 	github.com/xyproto/mode v0.3.1
 	github.com/xyproto/syntax v1.10.2

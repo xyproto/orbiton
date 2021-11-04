@@ -36,8 +36,8 @@ github.com/urfave/cli/v2 v2.2.0/go.mod h1:SE9GqnLQmjVa0iPEY0f1w3ygNIYcIJ0OKPMoW2
 github.com/xyproto/benchmarked v0.3.0 h1:IQoapveDysT8kyBf2SvTl1AygsO9ewkrhiTDRB3w/04=
 github.com/xyproto/benchmarked v0.3.0/go.mod h1:4H4a1k1EsFmliut59gNc8RO2N2IIhl74XqfW0AVjWbk=
 github.com/xyproto/env v1.1.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
-github.com/xyproto/env v1.4.0 h1:l6n4bZdMV2b2+M7kAhRpJPxJQr5ofzFXvBXx09GXmI8=
-github.com/xyproto/env v1.4.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
+github.com/xyproto/env v1.7.0 h1:TJHxvnXyBTomn7e/U2wLIiGn2oq0g83+b2F6jo5Hh0g=
+github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
 github.com/xyproto/guessica v1.1.0 h1:u//yWmEiW1En0kNHcj4rT1HADOqz47SNR/qx6D9s40g=
 github.com/xyproto/guessica v1.1.0/go.mod h1:ZC0dOFJO4zuo3+9AaUQ741wCMlKmGERhIQLDYSBIInE=
 github.com/xyproto/mode v0.1.1/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=

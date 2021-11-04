@@ -26,7 +26,7 @@ github.com/pkg/term/termios
 github.com/sourcegraph/annotate
 # github.com/xyproto/benchmarked v0.3.0
 github.com/xyproto/benchmarked
-# github.com/xyproto/env v1.4.0
+# github.com/xyproto/env v1.7.0
 ## explicit
 github.com/xyproto/env
 # github.com/xyproto/guessica v1.1.0

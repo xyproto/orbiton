@@ -13,9 +13,6 @@ import (
 	"github.com/xyproto/env"
 )
 
-// Read the HOME environment variable and default to /home/$LOGNAME if it isn't set
-var homeDir = env.Str("HOME", "/home/"+os.Getenv("LOGNAME"))
-
 // exists checks if the given path exists
 func exists(path string) bool {
 	_, err := os.Stat(path)
@@ -30,18 +27,6 @@ func which(executable string) string {
 		return ""
 	}
 	return p
-}
-
-// expandUser replaces a leading ~ or $HOME with the path
-// to the home directory of the current user
-func expandUser(path string) string {
-	// this is a simpler (and Linux/UNIX only) alternative to using os.UserHomeDir (which requires Go 1.12 or later)
-	if strings.HasPrefix(path, "~") {
-		path = strings.Replace(path, "~", homeDir, 1)
-	} else if strings.HasPrefix(path, "$HOME") {
-		path = strings.Replace(path, "$HOME", homeDir, 1)
-	}
-	return path
 }
 
 // hasAnyPrefixWord checks if the given line is prefixed with any one of the given words
@@ -116,10 +101,12 @@ func aBinDirectory(filename string) bool {
 	if err != nil {
 		return false
 	}
-
 	switch p {
 	case "/bin", "/sbin", "/usr/bin", "/usr/sbin", "/usr/local/bin", "/usr/local/sbin":
 		return true
+	}
+	homeDir := env.HomeDir()
+	switch p {
 	case filepath.Join(homeDir, ".bin"), filepath.Join(homeDir, "bin"), filepath.Join("local/bin"):
 		return true
 	}
@@ -201,10 +188,7 @@ func distance(x1, x2, y1, y2 int) float64 {
 
 // logf, for quick "printf-style" debugging
 func logf(format string, args ...interface{}) {
-	tmpdir := os.Getenv("TMPDIR")
-	if tmpdir == "" {
-		tmpdir = "/tmp"
-	}
+	tmpdir := env.Str("TMPDIR", "/tmp")
 	logfilename := filepath.Join(tmpdir, "o.log")
 	f, err := os.OpenFile(logfilename, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {

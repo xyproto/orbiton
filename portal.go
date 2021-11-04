@@ -12,7 +12,7 @@ import (
 	"github.com/xyproto/env"
 )
 
-var portalFilename = expandUser(filepath.Join(env.Str("TMPDIR", "/tmp"), env.Str("LOGNAME", "o")+"_portal.txt"))
+var portalFilename = env.ExpandUser(filepath.Join(env.Str("TMPDIR", "/tmp"), env.Str("LOGNAME", "o")+"_portal.txt"))
 
 // Portal is a filename and a line number, for pulling text from
 type Portal struct {
