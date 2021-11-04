@@ -118,8 +118,14 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 				}
 			}
 		}
-	case '*': // support C-style, StandardML-style and multi-line comments
-		if q.firstRuneInSingleLineCommentMarker != '#' && (prevRune == '/' || (q.mode == mode.StandardML && prevRune == '(')) && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
+	case '*': // support multi-line comments
+		if q.firstRuneInSingleLineCommentMarker != '#' && prevRune == '/' && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
+			// C-style
+			q.multiLineComment = true
+			q.startedMultiLineComment = true
+		} else if (q.mode == mode.StandardML || q.mode == mode.OCaml) && prevRune == '(' && q.None() {
+			// Standard ML
+			q.parCount-- // Not a parenthesis start after all, but the start of a multiline comment
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
 		}
@@ -158,20 +164,19 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			if q.startedMultiLineComment {
 				q.containsMultiLineComments = true
 			}
-
 		}
 	case '(':
-		if q.mode == mode.StandardML && prevRune == '*' {
+		if q.None() {
+			q.parCount++
+		}
+	case ')':
+		if (q.mode == mode.StandardML || q.mode == mode.OCaml) && prevRune == '*' {
 			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
 			if q.startedMultiLineComment {
 				q.containsMultiLineComments = true
 			}
 		} else if q.None() {
-			q.parCount++
-		}
-	case ')':
-		if q.None() {
 			q.parCount--
 		}
 	case '[':

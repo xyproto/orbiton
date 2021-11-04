@@ -214,15 +214,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// TODO: Modify (and rewrite) the syntax package instead.
 						coloredString = UnEscape(tout.DarkTags(strings.Replace(strings.Replace(string(textWithTags), "<lightgreen>yes<", "<lightyellow>yes<", -1), "<lightred>no<", "<lightyellow>no<", -1)))
 					}
-				case mode.StandardML, mode.OCaml:
-					// Handle single line comments starting with (* and ending with *)
-					trimmedLine = strings.TrimSpace(line)
-					if strings.HasPrefix(trimmedLine, "(*") && strings.HasSuffix(trimmedLine, "*)") {
-						coloredString = UnEscape(e.MultiLineComment.Start(trimmedLine))
-					} else {
-						// Regular highlight
-						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
-					}
 				case mode.Zig:
 					trimmedLine = strings.TrimSpace(line)
 					// Handle doc comments (starting with ///)
@@ -260,6 +251,15 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					} else {
 						// Regular highlight
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
+					}
+				case mode.StandardML, mode.OCaml:
+					trimmedLine = strings.TrimSpace(line)
+					if strings.HasPrefix(trimmedLine, "(*") && strings.HasSuffix(trimmedLine, "*)") {
+						coloredString = UnEscape(e.MultiLineComment.Start(line))
+					} else {
+						doneHighlighting = false
+						break
+						//coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
 					}
 				case mode.Nroff:
 					trimmedLine = strings.TrimSpace(line)
@@ -340,11 +340,15 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						coloredString = UnEscape(e.MultiLineString.Get(line))
 					case !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*/") && !strings.Contains(trimmedLine, "/*"):
 						coloredString = UnEscape(e.MultiLineComment.Get(line))
+					case (e.mode == mode.StandardML || e.mode == mode.OCaml) && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*)") && !strings.Contains(trimmedLine, "(*"):
+						coloredString = UnEscape(e.MultiLineComment.Get(line))
 					case !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "/*") > strings.LastIndex(trimmedLine, "*/"):
+						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
+					case (e.mode == mode.StandardML || e.mode == mode.OCaml) && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "(*") > strings.LastIndex(trimmedLine, "*)"):
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
 					case q.containsMultiLineComments:
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
-					case !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && (q.multiLineComment || q.stoppedMultiLineComment) && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
+					case !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && (q.multiLineComment || q.stoppedMultiLineComment) && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.Contains(line, "\"(*") && !strings.Contains(line, "*)\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
 						// In the middle of a multi-line comment
 						coloredString = UnEscape(e.MultiLineComment.Get(line))
 					case q.singleLineComment || q.stoppedMultiLineComment:
@@ -359,6 +363,21 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					default:
 						// Regular code
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
+					}
+
+					// Take an extra pass on coloring the -> arrow, even if it's in a comment
+					if (e.mode != mode.HTML && e.mode != mode.XML) && strings.Contains(line, "->") {
+						arrowIndex := strings.Index(line, "->")
+						if i := strings.Index(line, "//"); i != -1 && i < arrowIndex {
+							// arrow is after comment marker, do nothing
+						} else if i := strings.Index(line, "/*"); i != -1 && i < arrowIndex {
+							// arrow is after comment marker, do nothing
+						} else if i := strings.Index(line, "(*"); i != -1 && i < arrowIndex {
+							// arrow is after comment marker, do nothing
+						} else {
+							// arrow is before comment marker, color the arrow
+							coloredString = UnEscape(tout.DarkTags(arrowReplace(string(textWithTags))))
+						}
 					}
 				}
 

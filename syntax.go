@@ -172,9 +172,9 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "%"
 	case mode.M4:
 		return "dnl"
-	case mode.StandardML:
+	case mode.StandardML, mode.OCaml:
 		// not applicable, return something that is unlikely to appear at the beginning of a line
-		return ";;"
+		return "--"
 	default:
 		return "//"
 	}
