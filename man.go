@@ -24,7 +24,6 @@ func handleManPageEscape(s string) string {
 func (e *Editor) manPageHighlight(line, programName string, firstLine, lastLine bool) string {
 	line = handleManPageEscape(line)
 	var (
-		coloredString   string
 		normal          = e.Foreground
 		off             = vt100.Stop()
 		trimmedLine     = strings.TrimSpace(line)
@@ -33,9 +32,9 @@ func (e *Editor) manPageHighlight(line, programName string, firstLine, lastLine 
 	)
 
 	if strings.Count(trimmedLine, "  ") > 10 && (firstLine || lastLine) { // first and last line
-		coloredString = e.CommentColor.Get(line)
+		return e.CommentColor.Get(line)
 	} else if strings.ToUpper(trimmedLine) == trimmedLine && !strings.HasPrefix(trimmedLine, "-") && hasWords && !strings.HasPrefix(line, " ") { // a sub-section header
-		coloredString = e.ManSectionColor.Get(line)
+		return e.ManSectionColor.Get(line)
 	} else if strings.HasPrefix(trimmedLine, "-") { // a flag or parameter
 		var rs []rune
 		rs = append(rs, []rune(e.MarkdownTextColor.String())...)
@@ -44,6 +43,11 @@ func (e *Editor) manPageHighlight(line, programName string, firstLine, lastLine 
 		foundLetter := false
 		prevR := ' '
 		for _, r := range line {
+			if strings.HasPrefix(trimmedLine, "-") && strings.Count(line, "-") >= 1 && strings.Count(trimmedLine, " ") <= 1 {
+				// One or two command line options, color them differently
+				return e.MenuArrowColor.Get(line)
+			}
+
 			if !foundLetter && (unicode.IsLetter(r) || r == '_') {
 				foundLetter = true
 			}
@@ -55,11 +59,12 @@ func (e *Editor) manPageHighlight(line, programName string, firstLine, lastLine 
 			} else {
 				spaceCount = 0
 			}
-			if r != ' ' && prevR == ' ' && (r == '-' || r == '[' || r == '_') && !inFlag {
+
+			if r != ' ' && (prevR == ' ' || prevR == '-') && (r == '-' || r == '[' || r == '_') && (prevR == '-' || !inFlag) {
 				inFlag = true
 				rs = append(rs, []rune(off+e.MenuArrowColor.String())...)
 				rs = append(rs, r)
-			} else if prevR == ' ' && (r == '-' || r == '[' || r == '_') && inFlag {
+			} else if (prevR == ' ' || prevR == '-') && (r == '-' || r == '[' || r == ']' || r == '_') && inFlag {
 				rs = append(rs, r)
 			} else if inFlag { // Color the rest of the flag text in the textColor color (LightBlue)
 				inFlag = false
@@ -77,9 +82,9 @@ func (e *Editor) manPageHighlight(line, programName string, firstLine, lastLine 
 			prevR = r
 		}
 		rs = append(rs, []rune(off)...)
-		coloredString = string(rs)
+		return string(rs)
 	} else if allUpper(trimmedLine) {
-		coloredString = e.MarkdownTextColor.Get(line)
+		return e.MarkdownTextColor.Get(line)
 	} else { // regular text, but highlight numbers (and hex numbers, if the number starts with a digit) + highlight "@"
 		var rs []rune
 		rs = append(rs, []rune(normal.String())...)
@@ -146,7 +151,6 @@ func (e *Editor) manPageHighlight(line, programName string, firstLine, lastLine 
 			}
 		}
 		rs = append(rs, []rune(off)...)
-		coloredString = string(rs)
+		return string(rs)
 	}
-	return coloredString
 }
