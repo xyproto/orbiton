@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -16,7 +17,16 @@ import (
 
 const konami = "↑↑↓↓←→←→ba"
 
-var errNoLetter = errors.New("no letter")
+var (
+	errNoLetter = errors.New("no letter")
+	smallWords  = []string{"a", "and", "at", "by", "in", "is", "let", "of", "or", "the", "to"}
+)
+
+// StringAndPosition is used to store a string and a position within that string
+type StringAndPosition struct {
+	s   string
+	pos uint
+}
 
 // getLetter returns the Nth letter in a given string, as lowercase. Ignores numbers, special characters, whitespace etc.
 func getLetter(s string, pos int) (rune, error) {
@@ -32,22 +42,60 @@ func getLetter(s string, pos int) (rune, error) {
 	return rune(0), errNoLetter
 }
 
+// Check if the position pos points to a letter in a small word like "to", "at" or "the".
+func inSmallWordOrSpace(s string, pos int) bool {
+	var (
+		stopAtNextSpace bool
+		wordRunes       []rune
+	)
+	for i, r := range s {
+		if i == pos {
+			if r == ' ' {
+				// The given position is at a space
+				return true
+			}
+			// We have reached the target position, continue collecting letters of this word until the next space
+			stopAtNextSpace = true
+		}
+		if r == ' ' {
+			if stopAtNextSpace {
+				// Done collecting the current word
+				break
+			}
+			// Start collecting the next word
+			wordRunes = []rune{}
+		} else {
+			wordRunes = append(wordRunes, r)
+		}
+	}
+	word := strings.ToLower(string(wordRunes))
+	for _, smallWord := range smallWords {
+		if word == smallWord {
+			return true
+		}
+	}
+	return false
+}
+
 // selectionLetterForChoices loops through the choices and finds a unique letter (possibly the first one in the choice text),
 // that can be used later for selecting that choice. The returned map maps from the letter to the choice index.
 // choices where no appropriate letter were found are skipped. q is ignored, because it's reserved for "quit".
-// Only the first 5 letters of each choice are considered.
-func selectionLettersForChoices(choices []string) map[rune]uint {
+// Only the first 10 letters of each choice are considered.
+func selectionLettersForChoices(choices []string) map[rune]*StringAndPosition {
 	// TODO: Find the next item starting with this letter, with wraparound
-	// Select the item that starts with this letter, if possible. Try the first, then the second, etc, up to 7
-	selectionLetterMap := make(map[rune]uint)
+	// Select the item that starts with this letter, if possible. Try the first, then the second, etc, up to 10
+	selectionLetterMap := make(map[rune]*StringAndPosition)
 	for index, choice := range choices {
-		for pos := 0; pos < 7; pos++ {
+		for pos := 0; pos < 10; pos++ {
 			letter, err := getLetter(choice, pos)
 			if err == nil {
 				_, exists := selectionLetterMap[letter]
-				// If the letter is not already stored in the keymap, and it's not q
-				if !exists && (letter != 'q') {
-					selectionLetterMap[letter] = uint(index)
+				// If the letter is not already stored in the keymap, and it's not q,
+				// and it's not in a small word like "at" or "to"
+				if !exists && (letter != 'q') && !inSmallWordOrSpace(choice, index) {
+					//fmt.Printf("Using %s [%d] for %s\n", string(letter), index, choice)
+					// Use this letter!
+					selectionLetterMap[letter] = &StringAndPosition{choice, uint(index)}
 					// Found a letter for this choice, move on
 					break
 				}
@@ -172,10 +220,10 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 				break
 			}
 			// Choose the index for the letter that was pressed and found in the keymap, if found
-			for letter, index := range selectionLetterMap {
+			for letter, stringAndPosition := range selectionLetterMap {
 				if letter == r {
 					resizeMut.Lock()
-					menu.SelectIndex(uint(index))
+					menu.SelectIndex(stringAndPosition.pos)
 					changed = true
 					resizeMut.Unlock()
 				}

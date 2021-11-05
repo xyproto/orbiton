@@ -8,26 +8,26 @@ import (
 
 // MenuWidget represents a TUI widget for presenting a menu with choices for the user
 type MenuWidget struct {
-	title              string               // title
-	w                  uint                 // width
-	h                  uint                 // height (number of menu items)
-	y                  uint                 // current position
-	oldy               uint                 // previous position
-	marginLeft         int                  // margin, may be negative?
-	marginTop          int                  // margin, may be negative?
-	choices            []string             // a slice of menu items
-	selected           int                  // the index o the currently selected item
-	extraDashes        bool                 // add "---" after each menu item?
-	titleColor         vt100.AttributeColor // title color (above the choices)
-	arrowColor         vt100.AttributeColor // arrow color (before each menu choice)
-	textColor          vt100.AttributeColor // text color (the choices that are not highlighted)
-	highlightColor     vt100.AttributeColor // highlight color (the choice that will be selected if return is pressed)
-	selectedColor      vt100.AttributeColor // selected color (the choice that has been selected after return has been pressed)
-	selectionLetterMap map[rune]uint        // used for knowing which accelerator letter of each choice should be drawn in a different color (not all choices may have a suitable letter)
+	title              string                      // title
+	w                  uint                        // width
+	h                  uint                        // height (number of menu items)
+	y                  uint                        // current position
+	oldy               uint                        // previous position
+	marginLeft         int                         // margin, may be negative?
+	marginTop          int                         // margin, may be negative?
+	choices            []string                    // a slice of menu items
+	selected           int                         // the index o the currently selected item
+	extraDashes        bool                        // add "---" after each menu item?
+	titleColor         vt100.AttributeColor        // title color (above the choices)
+	arrowColor         vt100.AttributeColor        // arrow color (before each menu choice)
+	textColor          vt100.AttributeColor        // text color (the choices that are not highlighted)
+	highlightColor     vt100.AttributeColor        // highlight color (the choice that will be selected if return is pressed)
+	selectedColor      vt100.AttributeColor        // selected color (the choice that has been selected after return has been pressed)
+	selectionLetterMap map[rune]*StringAndPosition // used for knowing which accelerator letter of each choice should be drawn in a different color (not all choices may have a suitable letter)
 }
 
 // NewMenuWidget creates a new MenuWidget
-func NewMenuWidget(title string, choices []string, titleColor, arrowColor, textColor, highlightColor, selectedColor vt100.AttributeColor, canvasWidth, canvasHeight uint, extraDashes bool, selectionLetterMap map[rune]uint) *MenuWidget {
+func NewMenuWidget(title string, choices []string, titleColor, arrowColor, textColor, highlightColor, selectedColor vt100.AttributeColor, canvasWidth, canvasHeight uint, extraDashes bool, selectionLetterMap map[rune]*StringAndPosition) *MenuWidget {
 	maxlen := uint(0)
 	for _, choice := range choices {
 		if uint(len(choice)) > uint(maxlen) {
@@ -83,7 +83,7 @@ func (m *MenuWidget) Draw(c *vt100.Canvas) {
 		var selectionLetter rune
 		if y < ulenChoices {
 			for letter, choiceIndex := range m.selectionLetterMap {
-				if choiceIndex == y {
+				if m.choices[y] == choiceIndex.s && choiceIndex.pos == y {
 					selectionLetter = letter
 				}
 			}
