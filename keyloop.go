@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -60,8 +59,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		key string // for the main loop
 
 		jsonFormatToggle bool // for toggling indentation or not when pressing ctrl-w for JSON
-
-		markdownSkipExport = true // for skipping the first ctrl-space keypress
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -201,7 +198,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			}
 		case "c:6": // ctrl-f, search for a string
 			e.SearchMode(c, status, tty, true)
-		case "c:0": // ctrl-space, build source code to executable, convert to PDF or write to PNG, depending on the mode
+		case "c:0": // ctrl-space, build source code to executable, or export, depending on the mode
 
 			if e.Empty() {
 				// Empty file, nothing to build
@@ -224,7 +221,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// Clear the current search term
 			e.ClearSearchTerm()
 
-			// ctrl-space was pressed a second time, while in debug mode
+			// ctrl-space was pressed while in debug mode
 			if e.debugMode && e.gdb != nil {
 				status.ClearAll(c)
 				status.SetMessage("step")
@@ -236,7 +233,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				break
 			}
 
-			// Press ctrl-space twice the first time the PDF should be exported to Markdown,
+			// Press ctrl-space twice the first time the Markdown file should be exported to PDF
 			// to avvoid the first accidental ctrl-space key press.
 
 			// Build or export the current file
@@ -247,14 +244,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				outputExecutable string
 			)
 
-			if e.mode == mode.Markdown && markdownSkipExport {
-				// Do nothing, but don't skip the next one
-				markdownSkipExport = false
-				// } else if e.mode == modeMarkdown && !markdownSkipExport{
-				// statusMessage, performedAction, compiled = e.BuildOrExport(c, status, e.filename)
-			} else {
-				statusMessage, performedAction, compiled, outputExecutable = e.BuildOrExport(c, tty, status, e.filename)
-			}
+			// The last argument is if the command should run in the background or not
+			statusMessage, performedAction, compiled, outputExecutable = e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
 
 			//logf("status message %s performed action %v compiled %v filename %s\n", statusMessage, performedAction, compiled, e.filename)
 
@@ -322,7 +313,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					}
 				}
 			}
-		case "c:20": // ctrl-t, render to PDF
+		case "c:20": // ctrl-t, jump to code
 			// If in a C++ header file, switch to the corresponding
 			// C++ source file, and the other way around.
 
@@ -364,30 +355,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				break
 			}
 
-			// Save the current text to .pdf directly (without using pandoc)
+			status.ClearAll(c)
+			status.SetErrorMessage("No code to jump to")
+			status.Show(c, e)
 
-			// Write to PDF in a goroutine
-			go func() {
-
-				pdfFilename := strings.Replace(filepath.Base(e.filename), ".", "_", -1) + ".pdf"
-
-				// Show a status message while writing
-				status.SetMessage("Writing " + pdfFilename + "...")
-				status.ShowNoTimeout(c, e)
-
-				// TODO: Only overwrite if the previous PDF file was also rendered by "o".
-				_ = os.Remove(pdfFilename)
-				// Write the file
-				if err := e.SavePDF(e.filename, pdfFilename); err != nil {
-					statusMessage = err.Error()
-				} else {
-					statusMessage = "Wrote " + pdfFilename
-				}
-				// Show a status message after writing
-				status.ClearAll(c)
-				status.SetMessage(statusMessage)
-				status.Show(c, e)
-			}()
 		case "c:28": // ctrl-\, toggle comment for this block
 			undo.Snapshot(e)
 			e.ToggleCommentBlock(c)

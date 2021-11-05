@@ -44,7 +44,7 @@ func (e *Editor) exportPandoc(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar
 	// This function used to be concurrent. There are some leftovers from this that could be refactored away.
 
 	status.ClearAll(c)
-	status.SetMessage("Exporting to PDF using Pandoc...")
+	status.SetMessage("Rendering to PDF using Pandoc...")
 	status.ShowNoTimeout(c, e)
 
 	// The reason for writing to a temporary file is to be able to export without saving

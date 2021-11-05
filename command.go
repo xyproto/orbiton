@@ -13,6 +13,7 @@ import (
 
 	"github.com/xyproto/env"
 	"github.com/xyproto/guessica"
+	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
 
@@ -296,6 +297,64 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				portal.Save()
 			})
 		}
+	}
+
+	// Render to PDF using the gofpdf package
+	actions.Add("Render to PDF", func() {
+
+		// Write to PDF in a goroutine
+		pdfFilename := strings.Replace(filepath.Base(e.filename), ".", "_", -1) + ".pdf"
+
+		// Show a status message while writing
+		status.SetMessage("Writing " + pdfFilename + "...")
+		status.ShowNoTimeout(c, e)
+
+		statusMessage := ""
+
+		// TODO: Only overwrite if the previous PDF file was also rendered by "o".
+		_ = os.Remove(pdfFilename)
+		// Write the file
+		if err := e.SavePDF(e.filename, pdfFilename); err != nil {
+			statusMessage = err.Error()
+		} else {
+			statusMessage = "Wrote " + pdfFilename
+		}
+		// Show a status message after writing
+		status.ClearAll(c)
+		status.SetMessage(statusMessage)
+		status.ShowNoTimeout(c, e)
+	})
+
+	// Render to PDF using pandoc
+	if e.mode == mode.Markdown && which("pandoc") != "" {
+		actions.Add("Render to PDF using pandoc", func() {
+			go func() {
+				pandocMutex.Lock()
+				// The last argument is if pandoc should run in the background or not
+				statusMessage, performedAction, compiled, _ := e.BuildOrExport(c, tty, status, e.filename, false)
+				// Could an action be performed for this file extension?
+				if !performedAction {
+					status.SetErrorMessage("Could not render to PDF with pandoc")
+				} else if performedAction && !compiled {
+					status.ClearAll(c)
+					// Performed an action, but it did not work out
+					if statusMessage != "" {
+						status.SetErrorMessage(statusMessage)
+					} else {
+						status.SetErrorMessage("Rendering failed")
+					}
+				} else if performedAction && compiled {
+					// Everything worked out
+					if statusMessage != "" {
+						// Got a status message (this may not be the case for build/export processes running in the background)
+						// NOTE: Do not clear the status message first here!
+						status.SetMessage(statusMessage)
+					}
+				}
+				status.ShowNoTimeout(c, e)
+				pandocMutex.Unlock()
+			}()
+		})
 	}
 
 	// Add the "Use the default theme" menu item text and menu function
