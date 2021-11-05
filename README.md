@@ -28,7 +28,7 @@ Screenshot of the VTE GUI application that can be found in the `ko` directory, r
 
 ## Quick start
 
-With Go 1.17, `o` can be installed in this way:
+With Go 1.17 or later, `o` can be installed like this:
 
     go install github.com/xyproto/o@latest
 
