@@ -386,7 +386,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
 				// TODO: Figure out why some parantheses in some comments are still highlighted
-				if e.mode != mode.Git && e.rainbowParenthesis && q.None() && !q.singleLineComment {
+				if e.mode != mode.Git && e.rainbowParenthesis && q.None() && !q.singleLineComment && !q.stoppedMultiLineComment {
 					thisLineParCount, thisLineBraCount := q.ParBraCount(trimmedLine)
 					parCountBeforeThisLine := q.parCount - thisLineParCount
 					braCountBeforeThisLine := q.braCount - thisLineBraCount
