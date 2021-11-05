@@ -51,11 +51,11 @@ To unset:
 
 ## Viewing man pages
 
-By setting the `MANPAGER` environment variable, it's possible to use `o` for viewing man pages, for example with:
+By setting the `MANPAGER` environment variable, it's possible to use `o` for viewing man pages:
 
     export MANPAGER=o
 
-An alternative to viewing man pages in `o` is to use `less`, for example with:
+An alternative to viewing man pages in `o` is to use `less`:
 
     export MANPAGER='less -s -M +Gg'
 
