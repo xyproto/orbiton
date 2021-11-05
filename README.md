@@ -13,6 +13,7 @@ It might be a good fit for:
 * Editing files deep within larger Go or C++ projects.
 * Solving Advent of Code tasks.
 * Writing and maintaining to-do lists and project documentation in Markdown.
+* Testing if your favorite package manager can handle one-letter package names.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
