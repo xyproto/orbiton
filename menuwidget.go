@@ -23,11 +23,11 @@ type MenuWidget struct {
 	textColor          vt100.AttributeColor        // text color (the choices that are not highlighted)
 	highlightColor     vt100.AttributeColor        // highlight color (the choice that will be selected if return is pressed)
 	selectedColor      vt100.AttributeColor        // selected color (the choice that has been selected after return has been pressed)
-	selectionLetterMap map[rune]*StringAndPosition // used for knowing which accelerator letter of each choice should be drawn in a different color (not all choices may have a suitable letter)
+	selectionLetterMap map[string]*RuneAndPosition // used for knowing which accelerator letter of each choice should be drawn in a different color (not all choices may have a suitable letter)
 }
 
 // NewMenuWidget creates a new MenuWidget
-func NewMenuWidget(title string, choices []string, titleColor, arrowColor, textColor, highlightColor, selectedColor vt100.AttributeColor, canvasWidth, canvasHeight uint, extraDashes bool, selectionLetterMap map[rune]*StringAndPosition) *MenuWidget {
+func NewMenuWidget(title string, choices []string, titleColor, arrowColor, textColor, highlightColor, selectedColor vt100.AttributeColor, canvasWidth, canvasHeight uint, extraDashes bool, selectionLetterMap map[string]*RuneAndPosition) *MenuWidget {
 	maxlen := uint(0)
 	for _, choice := range choices {
 		if uint(len(choice)) > uint(maxlen) {
@@ -82,9 +82,9 @@ func (m *MenuWidget) Draw(c *vt100.Canvas) {
 		var itemString string
 		var selectionLetter rune
 		if y < ulenChoices {
-			for letter, choiceIndex := range m.selectionLetterMap {
-				if m.choices[y] == choiceIndex.s && choiceIndex.pos == y {
-					selectionLetter = letter
+			for choiceString, runeAndPosition := range m.selectionLetterMap {
+				if m.choices[y] == choiceString && y == runeAndPosition.pos {
+					selectionLetter = runeAndPosition.r
 				}
 			}
 			prefix := "   "
