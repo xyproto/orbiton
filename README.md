@@ -402,21 +402,25 @@ This shell function works in `zsh` and `bash` and may be useful for both searchi
 fo() { find . -type f -wholename "*$1" -exec /usr/bin/o {} $2 \;; }
 ```
 
+Take care not to use too general terms.
+
 Example use:
 
 ```sh
 fo somefile.cpp 123
 ```
 
+## Pandoc
+
+About using pandoc to export from Markdown to PDF:
+
+* If the `PAPERSIZE` environment variable is set to ie. `a4` or `letter`, it will be respected when exporting from Markdown to PDF using pandoc, at the press of `ctrl-space`.
+* The `--pdf-engine=xelatex` and `--listings` flags are used, so `xelatex` and the `listings` package needs to be available. A standard installation of LaTeX and Pandoc should provide both.
+* `Export to PDF with pandoc` will only appear on the `ctrl-o` menu when editing a Markdown file and `pandoc` is found in the `$PATH`.
+
 ## Easter eggs
 
-Press `ctrl-space` **twice** to render Markdown files to PDF using `pandoc` (`ctrl-t` will save the text directly to PDF, without using `pandoc`).
-
-If the `PAPERSIZE` environment variable is set to ie. `a4` or `letter`, it will be respected when exporting from Markdown to PDF using pandoc, at the press of `ctrl-space`.
-
-The `--pdf-engine=xelatex` and `--listings` flags are used, so `xelatex` and the `listings` package needs to be available. A standard installation of LaTeX and Pandoc should provide both.
-
-Also try the Konami code in the `ctrl-o` menu for a silly little game.
+Try pressing the Konami code while in the `ctrl-o` menu to play a silly little game.
 
 ## Terminal settings
 

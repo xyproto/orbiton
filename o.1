@@ -60,7 +60,6 @@ displays brief usage information
   If editing a PKGBUILD file, there will be a menu option for updating the pkgver + source fields, that is mainly based on guessing.
 .sp
 .B ctrl-t
-  Render the current document to a PDF file.
   When editing a C++ header file, switch to the corresponding implementation if the file search is quick enough,
   and the other way around.
 .sp
@@ -98,17 +97,30 @@ displays brief usage information
   Redraw the screen and clear the last search.
 .sp
 .B ctrl-space
-  Build Go programs with `go build`.
+  Build Go programs with `go`.
   Build C++ programs with `cxx`.
+  Build Rust programs with `cargo` or `rustc`.
+  Build Zig programs with `zig`.
+  Build Haskell programs with `ghc`.
+  Check Python programs with `python -m py_compile`.
+  Build Crystal programs with `crystal`.
+  Build Kotlin programs with `kotlinc`,
+    or `kotlinc-native` if available.
+  Build Java programs with `javac` and `jar`.
+  Build Scala programs with `scalac`.
+  Build Lua programs with `luac`.
+  Build Object Pascal programs with `fpc`.
+  Build Nim programs with `nim`.
+  Build Odin programs with `odin`.
+  Build V programs with `v`.
+  Build C# programs with `csc -nollogo -unsafe`.
+  Build D programs with `gdc`.
+  Build Standard ML programs with `mlton`.
+  Build OCaml programs with `ocamlopt`.
   Export Markdown to PDF using `pandoc`.
   Export scdoc files to man using `scdoc`.
   Export asciidoctor files to man using `asciidoctor`.
-  Build Zig programs with `zig build`.
-  Build V programs with `v`.
-  Build Rust programs with `cargo build` or `rustc`.
-  Build Haskell programs with `ghc -dynamic`.
   Build Arch Linux packages with `makepkg`.
-  Build C# programs with `csc -nologo -unsafe`.
 .sp
   The last used external command by `o` can be found in `~/.cache/o/last_command.sh`.
 .sp
