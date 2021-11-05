@@ -59,7 +59,6 @@
 
 ## Syntax highlighting
 
-- [ ] If a line in a man page starts with the man page name and then " -", and the line is all lowercase, it's likely to be a command example.
 - [ ] Don't let single-line comments at the end of lines disable rainbow parentheses.
 - [ ] Don't highlight /* in shell scripts like comments.
 - [ ] Also highlight hexadecimal numbers.
