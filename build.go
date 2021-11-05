@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
@@ -17,12 +18,13 @@ import (
 var (
 	errNoSuitableBuildCommand = errors.New("no suitable build command")
 	zigCacheDir               = filepath.Join(userCacheDir, "o/zig")
+	pandocMutex               sync.RWMutex
 )
 
 // BuildOrExport will try to build the source code or export the document.
 // Returns a status message and then true if an action was performed and another true if compilation/testing worked out.
 // Will also return the executable output file, if available after compilation.
-func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filename string) (string, bool, bool, string) {
+func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filename string, background bool) (string, bool, bool, string) {
 	if status != nil {
 		status.Clear(c)
 	}
@@ -51,7 +53,15 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		pdfFilename := strings.Replace(filepath.Base(filename), ".", "_", -1) + ".pdf"
 		// Export to PDF using pandoc. The function handles its own status messages.
 		// TODO: Don't ignore the error
-		_ = e.exportPandoc(c, tty, status, pandocPath, pdfFilename)
+		if background {
+			go func() {
+				pandocMutex.Lock()
+				_ = e.exportPandoc(c, tty, status, pandocPath, pdfFilename)
+				pandocMutex.Unlock()
+			}()
+		} else {
+			_ = e.exportPandoc(c, tty, status, pandocPath, pdfFilename)
+		}
 		// TODO: Add a minimum of error detection. Perhaps wait just 20ms and check if the goroutine is still running.
 		return "", true, true, "" // no message returned, the mustExportPandoc function handles it's own status output
 	}
