@@ -385,7 +385,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				runesAndAttributes := tout.Extract(coloredString)
 
 				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
-				if e.rainbowParenthesis && q.None() && !q.singleLineComment {
+				// TODO: Figure out why some parantheses in some comments are still highlighted
+				if e.mode != mode.Git && e.rainbowParenthesis && q.None() && !q.singleLineComment {
 					thisLineParCount, thisLineBraCount := q.ParBraCount(trimmedLine)
 					parCountBeforeThisLine := q.parCount - thisLineParCount
 					braCountBeforeThisLine := q.braCount - thisLineBraCount
