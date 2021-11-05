@@ -106,7 +106,7 @@ These features are unique to `o`, as far as I am aware:
 * If interactive rebase is launched with `git rebase -i`, then either `ctrl-w` or `ctrl-r` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
 * If the editor executable is renamed to a word starting with `r` (or have a symlink with that name), the default theme will be red/black.
 * If the editor executable is renamed to a word starting with `l` (or have a symlink with that name), the default theme will be suitable for light backgrounds.
-* Want to quickly convert Markdown to PDF and have pandoc installed? Try `o filename.md`, press `ctrl-space` twice and quit with `ctrl-q`.
+* Want to quickly convert Markdown to PDF and have pandoc installed? Try `o filename.md`, press `ctrl-space` and quit with `ctrl-q`.
 * Press `ctrl-w` to toggle the check mark in `- [ ] TODO item` boxes in Markdown.
 * `o` is written mostly in `o`, with some use of NeoVim for the initial development.
 * The default syntax highlighting theme aims to be as pretty as possible with less than 16 colors, but it mainly aims for clarity. It should be easy to spot a keyword, number, string or a stray parenthesis.
