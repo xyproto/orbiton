@@ -412,15 +412,15 @@ fo somefile.cpp 123
 
 ## Pandoc
 
-About using pandoc to export from Markdown to PDF:
+When using `pandoc` to export from Markdown to PDF:
 
 * If the `PAPERSIZE` environment variable is set to ie. `a4` or `letter`, it will be respected when exporting from Markdown to PDF using pandoc, at the press of `ctrl-space`.
 * The `--pdf-engine=xelatex` and `--listings` flags are used, so `xelatex` and the `listings` package needs to be available. A standard installation of LaTeX and Pandoc should provide both.
-* `Export to PDF with pandoc` will only appear on the `ctrl-o` menu when editing a Markdown file and `pandoc` is found in the `$PATH`.
+* `Export to PDF with pandoc` will only appear on the `ctrl-o` menu when editing a Markdown file and `pandoc` is installed.
 
-## Easter eggs
+## Easter egg
 
-Try pressing the Konami code while in the `ctrl-o` menu to play a silly little game.
+Try using the Konami code while in the `ctrl-o` menu to start a silly little game about feeding creatures with pellets before they are eaten.
 
 ## Terminal settings
 
