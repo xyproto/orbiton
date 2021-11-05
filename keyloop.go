@@ -356,7 +356,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			}
 
 			status.ClearAll(c)
-			status.SetErrorMessage("No code to jump to")
+			status.SetErrorMessage("Nothing to jump to")
 			status.Show(c, e)
 
 		case "c:28": // ctrl-\, toggle comment for this block
