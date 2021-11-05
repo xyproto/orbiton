@@ -524,6 +524,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					status.Show(c, e)
 				}
 			} else {
+
 				// Scroll down
 				e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
 				// If e.redraw is false, the end of file is reached
@@ -536,6 +537,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				if e.AfterLineScreenContents() {
 					e.End(c)
 				}
+
 			}
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term
 			e.UseStickySearchTerm()
@@ -558,6 +560,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				if e.AfterLineScreenContents() {
 					e.End(c)
 				}
+
 			}
 			// Additional way to clear the sticky search term, like with Esc
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
@@ -570,6 +573,25 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			resized := false
 			e.FullResetRedraw(c, status, drawLines, resized)
 		case " ": // space
+
+			// Scroll down if a man page is being viewed, or if the editor is read-only
+			if e.mode == mode.ManPage || e.readOnly {
+				// Scroll down at double scroll speed
+				e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed*2)
+				// If e.redraw is false, the end of file is reached
+				if !e.redraw {
+					status.Clear(c)
+					status.SetMessage("EOF")
+					status.Show(c, e)
+				}
+				e.redrawCursor = true
+				if e.AfterLineScreenContents() {
+					e.End(c)
+				}
+				break
+			}
+
+			// Regular behavior, take an undo snapshot and insert a space
 			undo.Snapshot(e)
 			// Place a space
 			wrapped := e.InsertRune(c, ' ')
@@ -580,6 +602,25 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			}
 			e.redraw = true
 		case "c:13": // return
+
+			// Scroll down if a man page is being viewed, or if the editor is read-only
+			if e.mode == mode.ManPage || e.readOnly {
+				// Scroll down at double scroll speed
+				e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed*2)
+				// If e.redraw is false, the end of file is reached
+				if !e.redraw {
+					status.Clear(c)
+					status.SetMessage("EOF")
+					status.Show(c, e)
+				}
+				e.redrawCursor = true
+				if e.AfterLineScreenContents() {
+					e.End(c)
+				}
+				break
+			}
+
+			// Regular behavior
 
 			// Modify the paste double-keypress detection to allow for a manual return before pasting the rest
 			if lastPasteY != -1 && previousKey != "c:13" {
@@ -703,7 +744,18 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			e.redraw = true
 			e.redrawCursor = true
 		case "c:8", "c:127": // ctrl-h or backspace
-			//e.TrimRight(e.DataY())
+
+			// Scroll up if a man page is being viewed, or if the editor is read-only
+			if e.mode == mode.ManPage || e.readOnly {
+				// Scroll up at double speed
+				e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed*2)
+				e.redrawCursor = true
+				if e.AfterLineScreenContents() {
+					e.End(c)
+				}
+				break
+			}
+
 			// Just clear the search term, if there is an active search
 			if len(e.SearchTerm()) > 0 {
 				e.ClearSearchTerm()
