@@ -425,8 +425,18 @@ Try the Konami code while in the `ctrl-o` menu to start a silly little game abou
 
 ## Recommended symlinks
 
-For starting `o` with the light theme: `ln -sf /usr/bin/o /usr/bin/lighted`
-For starting `o` with the red/black theme: `ln -sf /usr/bin/o /usr/bin/redblack`
+* For starting `o` with the light theme: `ln -sf /usr/bin/o /usr/bin/lighted`.
+* For starting `o` with the red/black theme: `ln -sf /usr/bin/o /usr/bin/redblack`.
+
+## The GUI frontend `ko`
+
+Build:
+
+    make
+
+Install:
+
+    make gui-install
 
 ## Terminal settings
 
