@@ -369,14 +369,14 @@ If `/usr/share/scala/lib/scala-library.jar` is not found `scalac -d run_with_sca
 
 ## Size
 
-* The `o` executable is only **508k** when built with GCC 9.3 (for 64-bit Linux) and compressed with `upx`.
+* The `o` executable is only **989k** when built with GCC 11.1.0 (for 64-bit Linux) and compressed with `upx`.
 * This isn't as small as [e3](https://sites.google.com/site/e3editor/), an editor written in assembly (which is **234k**), but it's reasonably lean.
 
 One way of building with `gccgo` and `upx`:
 
     go build -mod=vendor -gccgoflags '-Os -s' && upx o
 
-It's **5.2M** when built with Go 1.14 and no particular build flags are given.
+It's **9.5M** when built with Go 1.17 and no particular build flags are given.
 
 ## Jumping to a specific line when opening a file
 
