@@ -35,7 +35,7 @@ With Go 1.17 or later, `o` can be installed like this:
 
 Alternatively, download and install a [release version](https://github.com/xyproto/o/releases). For example, for Raspberry Pi 2, 3 or 4 running Linux:
 
-    curl -sL 'https://github.com/xyproto/o/releases/download/2.44.1/o-2.44.1-rpi.tar.xz' | tar JxC /tmp && sudo install -Dm755 /tmp/o-2.44.1-rpi/o /usr/bin/o && sudo install -Dm644 /tmp/o-2.44.1-rpi/o.1.gz /usr/share/man/man1/o.1.gz
+    curl -sL 'https://github.com/xyproto/o/releases/download/2.45.0/o-2.45.0-rpi.tar.xz' | tar JxC /tmp && sudo install -Dm755 /tmp/o-2.45.0-rpi/o /usr/bin/o && sudo install -Dm644 /tmp/o-2.45.0-rpi/o.1.gz /usr/share/man/man1/o.1.gz
 
 * Remember to use `tar zxC` if the release file for your platform ends with `.tar.gz`.
 * The `sudo install` commands may be slightly different for FreeBSD and NetBSD.
@@ -435,6 +435,6 @@ Try using the Konami code while in the `ctrl-o` menu to start a silly little gam
 
 ## General info
 
-* Version: 2.44.1
+* Version: 2.45.0
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
