@@ -421,7 +421,12 @@ When using `pandoc` to export from Markdown to PDF:
 
 ## Easter egg
 
-Try using the Konami code while in the `ctrl-o` menu to start a silly little game about feeding creatures with pellets before they are eaten.
+Try the Konami code while in the `ctrl-o` menu to start a silly little game about feeding creatures with pellets before they are eaten.
+
+## Recommended symlinks
+
+For starting `o` with the light theme: `ln -sf /usr/bin/o /usr/bin/lighted`
+For starting `o` with the red/black theme: `ln -sf /usr/bin/o /usr/bin/redblack`
 
 ## Terminal settings
 
