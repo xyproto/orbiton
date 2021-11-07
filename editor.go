@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -287,19 +288,43 @@ func (e *Editor) Clear() {
 // Load will try to load a file. The file is assumed to be checked to already exist.
 // Returns a warning message (possibly empty) and an error type
 func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string, error) {
-	var message string
+	var (
+		message string
+		data    []byte
+		err     error
+	)
 
 	// Start a spinner, in a short while
 	quitChan := Spinner(c, tty, fmt.Sprintf("Reading %s... ", filename), fmt.Sprintf("reading %s: stopped by user", filename), 200*time.Millisecond, e.ItalicsColor)
 
+	defer func() {
+		// Stop the spinner
+		quitChan <- true
+	}()
+
 	start := time.Now()
 
-	// Read the file and check if it could be read
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		// Stop the spinner and return
-		quitChan <- true
-		return message, err
+	// Check if the file extension is ".class" and if "jad" is installed
+	if filepath.Ext(filename) == ".class" && which("jad") != "" {
+		jadCommand := exec.Command("jad", "-b", "-dead", "-f", "-ff", "-o", "-p", "-s", "-space", ".decompiled.java", filename)
+		saveCommand(jadCommand)
+		output, err := jadCommand.Output() // ignore warnings on stderr
+		if err != nil {
+			// Return with a message
+			return "Could not run jad", err
+		}
+		e.mode = mode.Java
+		e.filename = filename[:len(filename)-len(".class")] + ".decompiled.java"
+		data = []byte(output)
+		if err := ioutil.WriteFile(e.filename, data, 0600); err != nil {
+			return "Could not save file", err
+		}
+	} else {
+		// Read the file and check if it could be read
+		data, err = ioutil.ReadFile(filename)
+		if err != nil {
+			return message, err
+		}
 	}
 
 	// If enough time passed so that the spinner was shown by now, enter "slow disk mode" where fewer disk-related I/O operations will be performed
@@ -310,9 +335,6 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 
 	// Load the data
 	e.LoadBytes(data)
-
-	// Stop the spinner
-	quitChan <- true
 
 	// Mark the data as "not changed"
 	e.changed = false
