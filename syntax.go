@@ -132,7 +132,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		addKeywords = []string{"INT", "SYSCALL", "int", "syscall"}
 	case mode.Shell:
 		addKeywords = []string{"--force", "-f", "cmake", "configure", "do", "fdisk", "for", "gdisk", "in", "make", "mv", "ninja", "rm", "rmdir", "setopt", "while"}
-		delKeywords = []string{"#else", "#endif", "default", "double", "exec", "float", "install", "long", "no", "pass", "ret", "super", "var", "with"}
+		delKeywords = []string{"#else", "#endif", "default", "double", "exec", "float", "fn", "install", "long", "no", "pass", "ret", "super", "var", "with"}
 		fallthrough // to the default case
 	default:
 		addKeywords = append(addKeywords, []string{"ifeq", "ifneq"}...)
