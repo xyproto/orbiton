@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -306,18 +305,8 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 
 	// Check if the file extension is ".class" and if "jad" is installed
 	if filepath.Ext(filename) == ".class" && which("jad") != "" {
-		jadCommand := exec.Command("jad", "-b", "-dead", "-f", "-ff", "-o", "-p", "-s", "-space", ".decompiled.java", filename)
-		saveCommand(jadCommand)
-		output, err := jadCommand.Output() // ignore warnings on stderr
-		if err != nil {
-			// Return with a message
+		if data, err = e.LoadClass(filename); err != nil {
 			return "Could not run jad", err
-		}
-		e.mode = mode.Java
-		e.filename = filename[:len(filename)-len(".class")] + ".decompiled.java"
-		data = []byte(output)
-		if err := ioutil.WriteFile(e.filename, data, 0600); err != nil {
-			return "Could not save file", err
 		}
 	} else {
 		// Read the file and check if it could be read
