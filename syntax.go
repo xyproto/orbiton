@@ -76,7 +76,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		addKeywords = csWords
 	case mode.Go:
 		addKeywords = []string{"defer", "fallthrough", "go", "print", "println", "range", "rune", "string"}
-		delKeywords = []string{"None", "build", "char", "def", "def", "die", "fi", "get", "in", "include", "is", "let", "mut", "next", "no", "pass", "redo", "rescue", "ret", "retry", "set", "template", "then", "this", "when", "where", "while", "yes"}
+		delKeywords = []string{"None", "build", "char", "def", "def", "die", "fi", "from", "get", "in", "include", "is", "let", "mut", "next", "no", "pass", "redo", "rescue", "ret", "retry", "set", "template", "then", "this", "when", "where", "while", "yes"}
 	case mode.HIDL:
 		clearKeywords()
 		addKeywords = hidlWords
