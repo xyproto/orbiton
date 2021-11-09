@@ -2,6 +2,7 @@ package mode
 
 import (
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -149,9 +150,18 @@ func Detect(filename string) Mode {
 		mode = Markdown
 	}
 
-	// If the mode is not set and the filename is all uppercase and no ".", use modeMarkdown
-	if mode == Blank && !strings.Contains(baseFilename, ".") && baseFilename == strings.ToUpper(baseFilename) {
-		mode = Markdown
+	// If the mode is not set, and there is no extensions
+	if mode == Blank && !strings.Contains(baseFilename, ".") {
+		if baseFilename == strings.ToUpper(baseFilename) {
+			// If the filename is all uppercase and no ".", use mode.Markdown
+			mode = Markdown
+		} else if len(baseFilename) > 2 && baseFilename[2] == '-' {
+			// Could it be a rule-file, that starts with ie. "90-" ?
+			if _, err := strconv.Atoi(baseFilename[:2]); err == nil { // success
+				// Yes, assume this is a configuration file
+				mode = Config
+			}
+		}
 	}
 
 	return mode

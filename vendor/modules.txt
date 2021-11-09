@@ -32,7 +32,7 @@ github.com/xyproto/env
 # github.com/xyproto/guessica v1.1.0
 ## explicit
 github.com/xyproto/guessica
-# github.com/xyproto/mode v0.3.2-0.20211104143257-2c48451c0b3c
+# github.com/xyproto/mode v0.3.2-0.20211109180829-8553737d5882
 ## explicit
 github.com/xyproto/mode
 # github.com/xyproto/syntax v1.10.2
@@ -47,7 +47,7 @@ github.com/xyproto/textoutput
 # github.com/xyproto/vt100 v1.9.9
 ## explicit
 github.com/xyproto/vt100
-# golang.org/x/sys v0.0.0-20211103235746-7861aae1554b
+# golang.org/x/sys v0.0.0-20211109065445-02f5c0300f6e
 ## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
