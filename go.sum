@@ -43,6 +43,10 @@ github.com/xyproto/guessica v1.1.0/go.mod h1:ZC0dOFJO4zuo3+9AaUQ741wCMlKmGERhIQL
 github.com/xyproto/mode v0.1.1/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/mode v0.3.2-0.20211109180829-8553737d5882 h1:zhyFhZcdmZIc8/W26BEsWB69F5QCNE1QbITKrikK/cQ=
 github.com/xyproto/mode v0.3.2-0.20211109180829-8553737d5882/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
+github.com/xyproto/mode v0.3.2-0.20211109181313-688afd485c10 h1:+Vj5ShQ/u0jcratcr0Xf51IBWDfN0qt0G8ug+IvKiEY=
+github.com/xyproto/mode v0.3.2-0.20211109181313-688afd485c10/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
+github.com/xyproto/mode v0.3.2-0.20211109181542-02341152cdf1 h1:s8ZYFUZW+XrtVzdTSYHEeRTyQjgo+yjfVY0l8B9nAFI=
+github.com/xyproto/mode v0.3.2-0.20211109181542-02341152cdf1/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/syntax v1.10.2 h1:YBeomNUXoNOSYn6tCgN/iyIfEwJhRRwQtEs7FXY1Pjg=
 github.com/xyproto/syntax v1.10.2/go.mod h1:J6iQa8rioRu2c6tRADhk8WXEjvtWtEKrBjvkmkYJdrg=
 github.com/xyproto/termtitle v1.3.0 h1:MAEVEd9LhAotOkwl3u0VUNlqbpD6oIoQRxv5kd9X5yc=

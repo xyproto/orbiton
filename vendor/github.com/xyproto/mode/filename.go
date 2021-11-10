@@ -158,8 +158,8 @@ func Detect(filename string) Mode {
 		} else if len(baseFilename) > 2 && baseFilename[2] == '-' {
 			// Could it be a rule-file, that starts with ie. "90-" ?
 			if _, err := strconv.Atoi(baseFilename[:2]); err == nil { // success
-				// Yes, assume this is a configuration file
-				mode = Config
+				// Yes, assume this is a shell-like configuration file
+				mode = Shell
 			}
 		}
 	}
