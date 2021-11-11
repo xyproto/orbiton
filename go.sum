@@ -41,10 +41,6 @@ github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shx
 github.com/xyproto/guessica v1.1.0 h1:u//yWmEiW1En0kNHcj4rT1HADOqz47SNR/qx6D9s40g=
 github.com/xyproto/guessica v1.1.0/go.mod h1:ZC0dOFJO4zuo3+9AaUQ741wCMlKmGERhIQLDYSBIInE=
 github.com/xyproto/mode v0.1.1/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
-github.com/xyproto/mode v0.3.2-0.20211109180829-8553737d5882 h1:zhyFhZcdmZIc8/W26BEsWB69F5QCNE1QbITKrikK/cQ=
-github.com/xyproto/mode v0.3.2-0.20211109180829-8553737d5882/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
-github.com/xyproto/mode v0.3.2-0.20211109181313-688afd485c10 h1:+Vj5ShQ/u0jcratcr0Xf51IBWDfN0qt0G8ug+IvKiEY=
-github.com/xyproto/mode v0.3.2-0.20211109181313-688afd485c10/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/mode v0.3.2-0.20211109181542-02341152cdf1 h1:s8ZYFUZW+XrtVzdTSYHEeRTyQjgo+yjfVY0l8B9nAFI=
 github.com/xyproto/mode v0.3.2-0.20211109181542-02341152cdf1/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/syntax v1.10.2 h1:YBeomNUXoNOSYn6tCgN/iyIfEwJhRRwQtEs7FXY1Pjg=
@@ -64,8 +60,8 @@ golang.org/x/sys v0.0.0-20200909081042-eff7692f9009/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
-golang.org/x/sys v0.0.0-20211109065445-02f5c0300f6e h1:i6Vklmyu+fZMFYpum+sR4ZWABGW7MyIxfJZXYvcnbns=
-golang.org/x/sys v0.0.0-20211109065445-02f5c0300f6e/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20211110154304-99a53858aa08 h1:WecRHqgE09JBkh/584XIE6PMz5KKE/vER4izNUi30AQ=
+golang.org/x/sys v0.0.0-20211110154304-99a53858aa08/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
