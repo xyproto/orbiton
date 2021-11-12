@@ -82,6 +82,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		addKeywords = hidlWords
 	case mode.Java:
 		addKeywords = []string{"package"}
+		delKeywords = []string{"local"}
 	case mode.JSON:
 		delKeywords = []string{"install"}
 	case mode.Kotlin:
