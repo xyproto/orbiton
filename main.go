@@ -116,8 +116,8 @@ Set NO_COLOR=1 to disable colors.
 		os.Exit(1)
 	}
 
-	// If the filename ends with "." and the file does not exist, assume this was a result of tab-completion going wrong.
 	if strings.HasSuffix(filename, ".") && !exists(filename) {
+		// If the filename ends with "." and the file does not exist, assume this was a result of tab-completion going wrong.
 		// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
 		matches, err := filepath.Glob(filename + "*")
 		if err == nil && len(matches) > 0 { // no error and at least 1 match
@@ -177,7 +177,6 @@ Set NO_COLOR=1 to disable colors.
 	defer tty.Close()
 
 	// Run the main editor loop
-
 	userMessage, err := Loop(tty, filename, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight)
 
 	// Remove the terminal title, if the current terminal emulator supports it

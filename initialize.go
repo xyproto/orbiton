@@ -25,12 +25,14 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		found              bool
 		recordedLineNumber LineNumber
 		err                error
+		baseFilename       = filepath.Base(filename)
+		readOnly           bool
 	)
 
 	// mode is what would have been an enum in other languages, for signalling if this file should be in git mode, markdown mode etc
 	m := mode.Detect(filename)
 
-	syntaxHighlight := origSyntaxHighlight && m != mode.Text && (m != mode.Blank || filepath.Ext(filepath.Base(filename)) != "")
+	syntaxHighlight := origSyntaxHighlight && m != mode.Text && (m != mode.Blank || filepath.Ext(baseFilename) != "")
 
 	adjustSyntaxHighlightingKeywords(m) // no theme changes, just language detection and keyword configuration
 
@@ -41,6 +43,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	switch m {
 	case mode.Markdown, mode.Text, mode.Blank:
 		rainbowParenthesis = false
+	case mode.ManPage:
+		readOnly = true
 	}
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -51,6 +55,10 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		theme,
 		syntaxHighlight)
 
+	if readOnly {
+		e.readOnly = true
+	}
+
 	// For non-highlighted files, adjust the word wrap
 	if !e.syntaxHighlight {
 		// Adjust the word wrap if the terminal is too narrow
@@ -60,21 +68,23 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		}
 	}
 
-	// Set the editor filename
-	e.filename = filename
-
-	// Per file mode editor adjustments
-	if e.mode == mode.Git {
+	// Minor adjustments for some file types
+	switch e.mode {
+	case mode.Git:
+		e.clearOnQuit = true
+	case mode.ManPage:
 		e.clearOnQuit = true
 	}
+
+	// Set the editor filename
+	e.filename = filename
 
 	// We wish to redraw the canvas and reposition the cursor
 	e.redraw = true
 	e.redrawCursor = true
 
-	var warningMessage string
-
 	// Use os.Stat to check if the file exists, and load the file if it does
+	var warningMessage string
 	if fileInfo, err := os.Stat(e.filename); err == nil { // no issue
 
 		// TODO: Enter file-rename mode when opening a directory?

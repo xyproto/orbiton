@@ -74,10 +74,13 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		absFilename = e.filename
 	}
 
-	// Modify the status bar theme if editing git
-	if e.mode == mode.Git {
+	// Minor adjustments to some modes
+	switch e.mode {
+	case mode.Git:
 		e.StatusForeground = vt100.LightBlue
 		e.StatusBackground = vt100.BackgroundDefault
+	case mode.ManPage:
+		e.readOnly = true
 	}
 
 	// Prepare a status bar
@@ -575,7 +578,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		case " ": // space
 
 			// Scroll down if a man page is being viewed, or if the editor is read-only
-			if e.mode == mode.ManPage || e.readOnly {
+			if e.readOnly {
 				// Scroll down at double scroll speed
 				e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed*2)
 				// If e.redraw is false, the end of file is reached
@@ -604,7 +607,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		case "c:13": // return
 
 			// Scroll down if a man page is being viewed, or if the editor is read-only
-			if e.mode == mode.ManPage || e.readOnly {
+			if e.readOnly {
 				// Scroll down at double scroll speed
 				e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed*2)
 				// If e.redraw is false, the end of file is reached
@@ -746,7 +749,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		case "c:8", "c:127": // ctrl-h or backspace
 
 			// Scroll up if a man page is being viewed, or if the editor is read-only
-			if e.mode == mode.ManPage || e.readOnly {
+			if e.readOnly {
 				// Scroll up at double speed
 				e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed*2)
 				e.redrawCursor = true
