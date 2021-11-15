@@ -65,7 +65,7 @@ func NewDefaultTheme() Theme {
 		Public:                "darkgreen",
 		Whitespace:            "",
 		AssemblyEnd:           "cyan",
-		RainbowParenColors:    []vt100.AttributeColor{vt100.LightMagenta, vt100.LightRed, vt100.Yellow, vt100.LightYellow, vt100.LightGreen, vt100.LightBlue},
+		RainbowParenColors:    []vt100.AttributeColor{vt100.LightMagenta, vt100.LightRed, vt100.Yellow, vt100.LightYellow, vt100.LightGreen, vt100.LightBlue, vt100.Red},
 		MarkdownTextColor:     vt100.LightBlue,
 		HeaderBulletColor:     vt100.DarkGray,
 		HeaderTextColor:       vt100.LightGreen,
