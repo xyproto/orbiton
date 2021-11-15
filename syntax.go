@@ -64,7 +64,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		clearKeywords()
 		addKeywords = clojureWords
 	case mode.CMake:
-		delKeywords = append(delKeywords, []string{"build", "package"}...)
+		delKeywords = append(delKeywords, "build", "package")
 		addKeywords = cmakeWords
 	case mode.Config:
 		delKeywords = []string{"install"}
@@ -80,9 +80,13 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.HIDL:
 		clearKeywords()
 		addKeywords = hidlWords
+	case mode.AIDL:
+		addKeywords = append(addKeywords, "interface")
+		addKeywords = append(addKeywords, hidlWords...)
+		fallthrough // to Java
 	case mode.Java:
-		addKeywords = []string{"package"}
-		delKeywords = []string{"local"}
+		addKeywords = append(addKeywords, "package")
+		delKeywords = append(delKeywords, "add", "local", "sub")
 	case mode.JSON:
 		delKeywords = []string{"install"}
 	case mode.Kotlin:
@@ -136,8 +140,8 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		delKeywords = []string{"#else", "#endif", "default", "double", "exec", "float", "fn", "install", "long", "no", "pass", "ret", "super", "var", "with"}
 		fallthrough // to the default case
 	default:
-		addKeywords = append(addKeywords, []string{"ifeq", "ifneq", "endif"}...)
-		delKeywords = append(delKeywords, []string{"require", "build", "package", "super", "type", "set"}...)
+		addKeywords = append(addKeywords, "ifeq", "ifneq", "endif")
+		delKeywords = append(delKeywords, "require", "build", "package", "super", "type", "set")
 	}
 	// Add extra keywords that are to be syntax highlighted
 	for _, kw := range addKeywords {
