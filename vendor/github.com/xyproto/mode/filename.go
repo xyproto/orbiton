@@ -107,6 +107,8 @@ func Detect(filename string) Mode {
 			mode = Gradle
 		case ".hal":
 			mode = HIDL
+		case ".aidl":
+			mode = AIDL
 		case ".sql":
 			mode = SQL
 		case ".ok":

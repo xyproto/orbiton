@@ -28,7 +28,8 @@ const (
 	Kotlin         // Kotlin
 	Java           // Java
 	Gradle         // Gradle
-	HIDL           // the Android-related Hardware Abstraction Layer Interface Definition Language
+	HIDL           // Android-related: Hardware Abstraction Layer Interface Definition Language
+	AIDL           // Android-related: Android Interface Definition Language
 	SQL            // Structured Query Language
 	Oak            // Oak
 	Rust           // Rust
@@ -108,6 +109,8 @@ func (mode Mode) String() string {
 		return "Gradle"
 	case HIDL:
 		return "HIDL"
+	case AIDL:
+		return "AIDL"
 	case SQL:
 		return "SQL"
 	case Oak:

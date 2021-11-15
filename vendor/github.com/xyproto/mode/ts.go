@@ -15,7 +15,7 @@ var DefaultTabsSpaces = TabsSpaces{4, true}
 
 var languageIndentation = map[TabsSpaces][]Mode{
 	// Languages that use tabs (from the opinionated point of view of this package)
-	{4, false}: {C, Go, GoAssembly, HIDL, Lisp, M4, Makefile, ManPage, Nroff, OCaml, Odin, Rust}, // Tabs
+	{4, false}: {AIDL, C, Go, GoAssembly, HIDL, Lisp, M4, Makefile, ManPage, Nroff, OCaml, Odin, Rust}, // Tabs
 	// Languages that use spaces (from the opinionated point of view of this package)
 	{2, true}: {Amber, Assembly, Clojure, Config, HTML, Haskell, JSON, Lua, ObjectPascal, Perl, PolicyLanguage, Shell, StandardML, Vim, Vim, XML},
 	{3, true}: {Ada}, // Ada is special
