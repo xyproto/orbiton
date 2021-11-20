@@ -310,7 +310,9 @@ func tokenKind(tok rune, tokText string, inSingleLineComment *bool, m mode.Mode)
 		case "class":
 			return Class
 		case "JMP", "jmp", "LEAVE", "leave", "RET", "ret", "CALL", "call":
-			return AssemblyEnd
+			if m == mode.Assembly || m == mode.GoAssembly {
+				return AssemblyEnd
+			}
 		}
 		if r, _ := utf8.DecodeRuneInString(tokText); unicode.IsUpper(r) {
 			return Type
