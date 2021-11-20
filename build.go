@@ -140,7 +140,6 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	var (
 		cmd                   = foundCommand // shorthand
 		progressStatusMessage = "Building"
-		testingInstead        bool
 		kotlinNative          bool
 	)
 
@@ -191,13 +190,6 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 				cmd.Args = append(cmd.Args, "-lglfw")
 			}
 		}
-	} else if strings.HasSuffix(filename, "_test.go") {
-		// If it's a test-file, run the test instead of building
-		if which("go") != "" {
-			cmd = *exec.Command("go", "test", "-failfast")
-		}
-		progressStatusMessage = "Testing"
-		testingInstead = true
 	} else if e.mode == mode.Kotlin && which("kotlinc-native") != "" {
 		kotlinNative = true
 		cmd = *exec.Command("kotlinc-native", "-nowarn", "-opt", "-Xallocator=mimalloc", "-produce", "program", "-linker-option", "--as-needed", filename, "-o", exeFirstName)
@@ -239,9 +231,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	// NOTE: Don't do anything with the output and err variables here, let the if below handle it.
 
 	errorMarker := "error:"
-	if testingInstead {
-		errorMarker = ": "
-	} else if e.mode == mode.Crystal || e.mode == mode.ObjectPascal || e.mode == mode.StandardML {
+	if e.mode == mode.Crystal || e.mode == mode.ObjectPascal || e.mode == mode.StandardML {
 		errorMarker = "Error:"
 	} else if e.mode == mode.CS {
 		errorMarker = ": error "
@@ -288,9 +278,6 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		// This is not for Go, since the word "error:" may not appear when there are errors
 
 		errorMessage := "Build error"
-		if testingInstead {
-			errorMessage = "Test error"
-		}
 
 		if e.mode == mode.Python {
 			if errorLine, errorMessage := ParsePythonError(string(output), filepath.Base(filename)); errorLine != -1 {
@@ -462,17 +449,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 				} else {
 					errorMessage = strings.TrimSpace(parts[1])
 				}
-				if testingInstead {
-					e.redrawCursor = true
-				}
 				break
 			}
 			prevLine = line
-		}
-
-		if testingInstead {
-			errorMessage = "Test failed: " + errorMessage
-			return errorMessage, true, false, ""
 		}
 
 		if e.mode == mode.Crystal {
