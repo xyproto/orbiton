@@ -221,7 +221,7 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap, forward
 }
 
 // SearchMode will enter the interactive "search mode" where the user can type in a string and then press return to search
-func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, clear bool, statusTextAfterRedraw *string) {
+func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, clear bool, statusTextAfterRedraw *string, undo *Undo) {
 	var (
 		searchPrompt       = "Search:"
 		previousSearch     string
@@ -348,6 +348,7 @@ AGAIN:
 		searchPrompt = "Replace:"
 		goto AGAIN
 	} else if pressedTab && previousSearch != "" { // search text -> tab -> replace text- > tab
+		undo.Snapshot(e)
 		// replace once
 		searchFor := previousSearch
 		replaceWith := s
@@ -357,6 +358,7 @@ AGAIN:
 		e.redraw = true
 		return
 	} else if pressedReturn && previousSearch != "" { // search text -> tab -> replace text -> return
+		undo.Snapshot(e)
 		// replace all
 		searchFor := previousSearch
 		replaceWith := s

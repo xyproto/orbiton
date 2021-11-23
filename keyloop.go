@@ -200,7 +200,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				e.End(c)
 			}
 		case "c:6": // ctrl-f, search for a string
-			e.SearchMode(c, status, tty, true, &statusMessage)
+			e.SearchMode(c, status, tty, true, &statusMessage, undo)
 		case "c:0": // ctrl-space, build source code to executable, or export, depending on the mode
 
 			if e.Empty() {
