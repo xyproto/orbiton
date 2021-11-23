@@ -67,7 +67,7 @@ ctrl-b     to toggle a bookmark for the current line, or jump to a bookmark
 ctrl-j     to join lines
 ctrl-u     to undo (ctrl-z is also possible, but may background the application)
 ctrl-l     to jump to a specific line (press return to jump to the top or bottom)
-ctrl-f     to find a string
+ctrl-f     to find a string, press tab after the text to search and replace
 ctrl-\     to toggle single-line comments for a block of code
 ctrl-~     to jump to matching parenthesis
 esc        to redraw the screen and clear the last search
