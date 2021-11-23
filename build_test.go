@@ -53,18 +53,3 @@ func TestBuildOrExport(t *testing.T) {
 		}
 	}
 }
-
-func ExampleEditor_BuildOrExport_goTest() {
-	e := NewSimpleEditor(80)
-	e.mode = mode.Detect("err.go")
-
-	os.Chdir("test")
-	// The rename is so that "err.go" is not picked up by the CI tests
-	os.Rename("err_test_go", "err_test.go")
-	s, performedAction, compiledOK, outputExecutable := e.BuildOrExport(nil, nil, nil, "err_test.go", false)
-	os.Rename("err_test.go", "err_test_go")
-	os.Chdir("..")
-	fmt.Printf("%s [performed action: %v] [compiled OK: %v] %s\n", s, performedAction, compiledOK, outputExecutable)
-	// Output:
-	// Test failed: TestTest (0.00s) [performed action: true] [compiled OK: false]
-}
