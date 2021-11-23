@@ -221,8 +221,19 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap, forward
 }
 
 // SearchMode will enter the interactive "search mode" where the user can type in a string and then press return to search
-func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, clear bool) {
-	const searchPrompt = "Search:"
+func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, clear bool, statusTextAfterRedraw *string) {
+	var (
+		searchPrompt       = "Search:"
+		previousSearch     string
+		key                string
+		initialLocation    = e.DataY().LineNumber()
+		searchHistoryIndex int
+	)
+
+AGAIN:
+	doneCollectingLetters := false
+	pressedReturn := false
+	pressedTab := false
 	if clear {
 		// Clear the previous search
 		e.SetSearchTerm(c, status, "")
@@ -235,30 +246,28 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		status.SetMessage(searchPrompt + " " + s)
 	}
 	status.ShowNoTimeout(c, e)
-	var (
-		key                   string
-		doneCollectingLetters bool
-		initialLocation       = e.DataY().LineNumber()
-		pressedReturn         bool
-		searchHistoryIndex    int
-	)
 	for !doneCollectingLetters {
 		key = tty.String()
 		switch key {
 		case "c:127": // backspace
 			if len(s) > 0 {
 				s = s[:len(s)-1]
-				e.SetSearchTerm(c, status, s)
+				if previousSearch == "" {
+					e.SetSearchTerm(c, status, s)
+				}
 				e.GoToLineNumber(initialLocation, c, status, false)
-
-				//status.ClearAll(c)
 				status.SetMessage(searchPrompt + " " + s)
-				//status.Show(c, e)
 				status.ShowNoTimeout(c, e)
 			}
 		case "c:27", "c:17": // esc or ctrl-q
 			s = ""
-			e.SetSearchTerm(c, status, s)
+			if previousSearch == "" {
+				e.SetSearchTerm(c, status, s)
+			}
+			doneCollectingLetters = true
+		case "c:9": // tab
+			// collect letters again, this time for the replace term
+			pressedTab = true
 			doneCollectingLetters = true
 		case "c:13": // return
 			pressedReturn = true
@@ -273,8 +282,9 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 				searchHistoryIndex = len(searchHistory) - 1
 			}
 			s = searchHistory[searchHistoryIndex]
-			e.SetSearchTerm(c, status, s)
-
+			if previousSearch == "" {
+				e.SetSearchTerm(c, status, s)
+			}
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
 		case "↓": // next in the search history
@@ -287,18 +297,19 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 				searchHistoryIndex = 0
 			}
 			s = searchHistory[searchHistoryIndex]
-			e.SetSearchTerm(c, status, s)
-
+			if previousSearch == "" {
+				e.SetSearchTerm(c, status, s)
+			}
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
 		default:
 			if key != "" && !strings.HasPrefix(key, "c:") {
 				s += key
-				e.SetSearchTerm(c, status, s)
-
+				if previousSearch == "" {
+					e.SetSearchTerm(c, status, s)
+				}
 				status.SetMessage(searchPrompt + " " + s)
 				status.ShowNoTimeout(c, e)
-
 			}
 		}
 	}
@@ -331,12 +342,36 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		forward = false
 	}
 
+	if pressedTab && previousSearch == "" { // search text -> tab
+		// got the search text, now gather the replace text
+		previousSearch = e.searchTerm
+		searchPrompt = "Replace:"
+		goto AGAIN
+	} else if pressedTab && previousSearch != "" { // search text -> tab -> replace text- > tab
+		// replace once
+		searchFor := previousSearch
+		replaceWith := s
+		replaced := strings.Replace(e.String(), searchFor, replaceWith, 1)
+		e.LoadBytes([]byte(replaced))
+		*statusTextAfterRedraw = "Replaced " + searchFor + " with " + replaceWith + " once"
+		e.redraw = true
+		return
+	} else if pressedReturn && previousSearch != "" { // search text -> tab -> replace text -> return
+		// replace all
+		searchFor := previousSearch
+		replaceWith := s
+		replaced := strings.ReplaceAll(e.String(), searchFor, replaceWith)
+		e.LoadBytes([]byte(replaced))
+		*statusTextAfterRedraw = "Replaced all " + searchFor + " with " + replaceWith
+		e.redraw = true
+		return
+	}
+
 	e.SetSearchTerm(c, status, s)
 
 	if pressedReturn {
 		// Return to the first location before performing the actual search
 		e.GoToLineNumber(initialLocation, c, status, false)
-
 		trimmedSearchString := strings.TrimSpace(s)
 		if len(trimmedSearchString) > 0 {
 			searchHistory = append(searchHistory, trimmedSearchString)
@@ -350,21 +385,24 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		}
 	}
 
-	// Perform the actual search
-	if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
-		// If no match was found, and return was not pressed, try again from the top
-		//e.redraw = e.GoToLineNumber(1, c, status, true)
-		//err = e.GoToNextMatch(c, status)
-		if err == errNoSearchMatch {
-			if wrap {
-				status.SetMessage(s + " not found")
-			} else {
-				status.SetMessage(s + " not found from here")
+	if previousSearch == "" {
+		// Perform the actual search
+		if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
+			// If no match was found, and return was not pressed, try again from the top
+			//e.redraw = e.GoToLineNumber(1, c, status, true)
+			//err = e.GoToNextMatch(c, status)
+			if err == errNoSearchMatch {
+				if wrap {
+					status.SetMessage(s + " not found")
+				} else {
+					status.SetMessage(s + " not found from here")
+				}
+				status.ShowNoTimeout(c, e)
 			}
-			status.ShowNoTimeout(c, e)
 		}
+		e.Center(c)
 	}
-	e.Center(c)
+
 }
 
 // LoadSearchHistory will load a list of strings from the given filename
