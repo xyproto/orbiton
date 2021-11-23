@@ -56,10 +56,11 @@ type Bob struct {
 	oldx, oldy int                  // previous position
 	state      rune                 // looks
 	color      vt100.AttributeColor // foreground color
+	w, h       float64
 }
 
 // NewBob creates a new Bob struct
-func NewBob(startingWidth int) *Bob {
+func NewBob(c *vt100.Canvas, startingWidth int) *Bob {
 	return &Bob{
 		x:     startingWidth / 20,
 		y:     10,
@@ -67,6 +68,8 @@ func NewBob(startingWidth int) *Bob {
 		oldy:  10,
 		state: bobRuneSmall,
 		color: bobColor,
+		w:     float64(c.W()),
+		h:     float64(c.H()),
 	}
 }
 
@@ -90,7 +93,7 @@ func (b *Bob) Draw(c *vt100.Canvas) {
 func (b *Bob) Right(c *vt100.Canvas) bool {
 	oldx := b.x
 	b.x++
-	if b.x >= int(c.W()) {
+	if b.x >= int(b.w) {
 		b.x--
 		return false
 	}
@@ -137,8 +140,10 @@ func (b *Bob) Down(c *vt100.Canvas) bool {
 }
 
 // Resize is called when the terminal is resized
-func (b *Bob) Resize() {
+func (b *Bob) Resize(c *vt100.Canvas) {
 	b.color = resizeColor
+	b.w = float64(c.W())
+	b.h = float64(c.H())
 }
 
 // Pellet represents a pellet that can both feed Gobblers and hit the EvilGobbler
@@ -151,10 +156,11 @@ type Pellet struct {
 	stopped     bool                 // is the movement stopped?
 	removed     bool                 // to be removed
 	lifeCounter int
+	w, h        float64
 }
 
 // NewPellet creates a new Pellet struct, with position and speed
-func NewPellet(x, y, vx, vy int) *Pellet {
+func NewPellet(c *vt100.Canvas, x, y, vx, vy int) *Pellet {
 	return &Pellet{
 		x:           x,
 		y:           y,
@@ -167,6 +173,8 @@ func NewPellet(x, y, vx, vy int) *Pellet {
 		stopped:     false,
 		removed:     false,
 		lifeCounter: 0,
+		w:           float64(c.W()),
+		h:           float64(c.H()),
 	}
 }
 
@@ -217,7 +225,7 @@ func (b *Pellet) Next(c *vt100.Canvas, e *EvilGobbler) bool {
 		b.y = b.oldy
 		return false
 	}
-	if b.x >= int(c.W()) || b.x < 0 {
+	if b.x >= int(b.w) || b.x < 0 {
 		b.x -= b.vx
 		return false
 	}
@@ -259,8 +267,10 @@ func (b *Pellet) HitSomething(c *vt100.Canvas) bool {
 }
 
 // Resize is called when the terminal is resized
-func (b *Pellet) Resize() {
+func (b *Pellet) Resize(c *vt100.Canvas) {
 	b.stopped = false
+	b.w = float64(c.W())
+	b.h = float64(c.H())
 }
 
 // Bubble represents a bubble character that is in the way
@@ -269,19 +279,20 @@ type Bubble struct {
 	oldx, oldy int                  // previous position
 	state      rune                 // looks
 	color      vt100.AttributeColor // foreground color
+	w, h       float64
 }
 
 // NewBubbles creates n new Bubble structs
-func NewBubbles(startingWidth int, n int) []*Bubble {
+func NewBubbles(c *vt100.Canvas, startingWidth int, n int) []*Bubble {
 	bubbles := make([]*Bubble, n)
 	for i := range bubbles {
-		bubbles[i] = NewBubble(startingWidth)
+		bubbles[i] = NewBubble(c, startingWidth)
 	}
 	return bubbles
 }
 
 // NewBubble creates a new Bubble struct
-func NewBubble(startingWidth int) *Bubble {
+func NewBubble(c *vt100.Canvas, startingWidth int) *Bubble {
 	return &Bubble{
 		x:     startingWidth / 5,
 		y:     10,
@@ -289,6 +300,8 @@ func NewBubble(startingWidth int) *Bubble {
 		oldy:  10,
 		state: bubbleRune,
 		color: bubbleColor,
+		w:     float64(c.W()),
+		h:     float64(c.H()),
 	}
 }
 
@@ -298,8 +311,10 @@ func (b *Bubble) Draw(c *vt100.Canvas) {
 }
 
 // Resize is called when the terminal is resized
-func (b *Bubble) Resize() {
+func (b *Bubble) Resize(c *vt100.Canvas) {
 	b.color = resizeColor
+	b.w = float64(c.W())
+	b.h = float64(c.H())
 }
 
 // Next moves the object to the next position, and returns true if it moved
@@ -342,7 +357,7 @@ func (b *Bubble) Next(c *vt100.Canvas, bob *Bob) bool {
 		return false
 	}
 
-	if b.x >= int(c.W()) {
+	if b.x >= int(b.w) {
 		b.x = b.oldx
 	} else if b.x <= 0 {
 		b.x = b.oldx
@@ -376,11 +391,12 @@ type EvilGobbler struct {
 	shot            bool
 	hunting         *Gobbler
 	huntingDistance float64
+	w, h            float64
 }
 
 // NewEvilGobbler creates an EvilGobbler struct.
 // startingWidth is the initial width of the canvas.
-func NewEvilGobbler(startingWidth int) *EvilGobbler {
+func NewEvilGobbler(c *vt100.Canvas, startingWidth int) *EvilGobbler {
 	return &EvilGobbler{
 		x:               startingWidth/2 + 5,
 		y:               01,
@@ -392,6 +408,8 @@ func NewEvilGobbler(startingWidth int) *EvilGobbler {
 		shot:            false,
 		hunting:         nil,
 		huntingDistance: 0.0,
+		w:               float64(c.W()),
+		h:               float64(c.H()),
 	}
 }
 
@@ -447,7 +465,7 @@ func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers *[]*Gobbler, bob *Bob) bool
 		}
 	}
 
-	if e.x > int(c.W()) {
+	if e.x > int(e.w) {
 		e.x = e.oldx
 	} else if e.x < 0 {
 		e.x = e.oldx
@@ -459,12 +477,24 @@ func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers *[]*Gobbler, bob *Bob) bool
 		e.y = e.oldy
 	}
 
+	if e.x <= int(e.w*0.2) && e.y >= int(e.h*0.8) {
+		// Close to the lower left corner
+		e.x++
+		e.y--
+	} else if e.x <= int(e.w*0.2) && e.y <= int(e.h*0.2) {
+		// Close to the upper left corner
+		e.x++
+		e.y++
+	}
+
 	return (e.x != e.oldx || e.y != e.oldy)
 }
 
 // Resize is called when the terminal is resized
-func (e *EvilGobbler) Resize() {
+func (e *EvilGobbler) Resize(c *vt100.Canvas) {
 	e.color = resizeColor
+	e.w = float64(c.W())
+	e.h = float64(c.H())
 }
 
 // Gobbler represents a character that can move around and eat pellets
@@ -477,10 +507,11 @@ type Gobbler struct {
 	huntingDistance float64              // how far to closest pellet
 	counter         uint
 	dead            bool
+	w, h            float64
 }
 
 // NewGobbler creates a new Gobbler struct
-func NewGobbler(startingWidth int) *Gobbler {
+func NewGobbler(c *vt100.Canvas, startingWidth int) *Gobbler {
 	return &Gobbler{
 		x:               startingWidth / 2,
 		y:               10,
@@ -492,14 +523,16 @@ func NewGobbler(startingWidth int) *Gobbler {
 		huntingDistance: 0,
 		counter:         0,
 		dead:            false,
+		w:               float64(c.W()),
+		h:               float64(c.H()),
 	}
 }
 
 // NewGobblers creates n new Gobbler structs
-func NewGobblers(startingWidth int, n int) []*Gobbler {
+func NewGobblers(c *vt100.Canvas, startingWidth int, n int) []*Gobbler {
 	gobblers := make([]*Gobbler, n)
 	for i := range gobblers {
-		gobblers[i] = NewGobbler(startingWidth)
+		gobblers[i] = NewGobbler(c, startingWidth)
 	}
 	return gobblers
 }
@@ -601,7 +634,7 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets *[]*Pellet, bob *Bob) bool {
 		}
 	}
 
-	if g.x > int(c.W()) {
+	if g.x > int(g.w) {
 		g.x -= xspeed
 	} else if g.x < 0 {
 		g.x += xspeed
@@ -613,12 +646,24 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets *[]*Pellet, bob *Bob) bool {
 		g.y += yspeed
 	}
 
+	if g.x <= int(g.w*0.2) && g.y >= int(g.h*0.8) {
+		// Close to the lower left corner
+		g.x++
+		g.y--
+	} else if g.x <= int(g.w*0.2) && g.y <= int(g.h*0.2) {
+		// Close to the upper left corner
+		g.x++
+		g.y++
+	}
+
 	return (g.x != g.oldx || g.y != g.oldy)
 }
 
 // Resize is called when the terminal is resized
-func (g *Gobbler) Resize() {
+func (g *Gobbler) Resize(c *vt100.Canvas) {
 	g.color = resizeColor
+	g.w = float64(c.W())
+	g.h = float64(c.H())
 }
 
 // saveHighScore will save the given high score to a file,
@@ -700,11 +745,11 @@ retry:
 	var (
 		sigChan       = make(chan os.Signal, 1)
 		startingWidth = int(c.W())
-		bob           = NewBob(startingWidth)
-		evilGobbler   = NewEvilGobbler(startingWidth)
-		gobblers      = NewGobblers(startingWidth, 10)
+		bob           = NewBob(c, startingWidth)
+		evilGobbler   = NewEvilGobbler(c, startingWidth)
+		gobblers      = NewGobblers(c, startingWidth, 10)
 		pellets       = make([]*Pellet, 0)
-		bubbles       = NewBubbles(startingWidth, 20)
+		bubbles       = NewBubbles(c, startingWidth, 20)
 		score         = uint(0)
 	)
 
@@ -724,16 +769,16 @@ retry:
 			// Inform all elements that the terminal was resized
 			// TODO: Use a slice of interfaces that can contain all elements
 			for _, pellet := range pellets {
-				pellet.Resize()
+				pellet.Resize(c)
 			}
 			for _, bubble := range bubbles {
-				bubble.Resize()
+				bubble.Resize(c)
 			}
 			for _, gobbler := range gobblers {
-				gobbler.Resize()
+				gobbler.Resize(c)
 			}
-			bob.Resize()
-			evilGobbler.Resize()
+			bob.Resize(c)
+			evilGobbler.Resize(c)
 			resizeMut.Unlock()
 		}
 	}()
@@ -840,21 +885,21 @@ retry:
 			dx := 1
 			dy := 1
 			// Fire eight new pellets
-			pellets = append(pellets, NewPellet(bob.x+dx, bob.y+dx, dx, dy))
-			pellets = append(pellets, NewPellet(bob.x-dx, bob.y+dy, -dx, dy))
-			pellets = append(pellets, NewPellet(bob.x+dx, bob.y-dy, dx, -dy))
-			pellets = append(pellets, NewPellet(bob.x-dx, bob.y-dy, -dx, -dy))
-			pellets = append(pellets, NewPellet(bob.x+dx, bob.y, dx, 0))
-			pellets = append(pellets, NewPellet(bob.x-dx, bob.y, -dx, 0))
-			pellets = append(pellets, NewPellet(bob.x, bob.y-dy, 0, -dy))
-			pellets = append(pellets, NewPellet(bob.x, bob.y-dy, 0, -dy))
+			pellets = append(pellets, NewPellet(c, bob.x+dx, bob.y+dx, dx, dy))
+			pellets = append(pellets, NewPellet(c, bob.x-dx, bob.y+dy, -dx, dy))
+			pellets = append(pellets, NewPellet(c, bob.x+dx, bob.y-dy, dx, -dy))
+			pellets = append(pellets, NewPellet(c, bob.x-dx, bob.y-dy, -dx, -dy))
+			pellets = append(pellets, NewPellet(c, bob.x+dx, bob.y, dx, 0))
+			pellets = append(pellets, NewPellet(c, bob.x-dx, bob.y, -dx, 0))
+			pellets = append(pellets, NewPellet(c, bob.x, bob.y-dy, 0, -dy))
+			pellets = append(pellets, NewPellet(c, bob.x, bob.y-dy, 0, -dy))
 		case 27: // ESC
 			running = false
 		case 17: // ctrl-q
 			return true, nil
 		case 32: // Space
 			// Fire a new pellet
-			pellets = append(pellets, NewPellet(bob.x, bob.y, bob.x-bob.oldx, bob.y-bob.oldy))
+			pellets = append(pellets, NewPellet(c, bob.x, bob.y, bob.x-bob.oldx, bob.y-bob.oldy))
 		}
 
 		if !paused {
