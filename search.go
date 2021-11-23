@@ -345,7 +345,7 @@ AGAIN:
 	if pressedTab && previousSearch == "" { // search text -> tab
 		// got the search text, now gather the replace text
 		previousSearch = e.searchTerm
-		searchPrompt = "Replace:"
+		searchPrompt = "Replace with:"
 		goto AGAIN
 	} else if pressedTab && previousSearch != "" { // search text -> tab -> replace text- > tab
 		undo.Snapshot(e)
@@ -354,7 +354,7 @@ AGAIN:
 		replaceWith := s
 		replaced := strings.Replace(e.String(), searchFor, replaceWith, 1)
 		e.LoadBytes([]byte(replaced))
-		*statusTextAfterRedraw = "Replaced " + searchFor + " with " + replaceWith + " once"
+		*statusTextAfterRedraw = "Replaced " + searchFor + " with " + replaceWith + ", once"
 		e.redraw = true
 		return
 	} else if pressedReturn && previousSearch != "" { // search text -> tab -> replace text -> return
@@ -364,7 +364,7 @@ AGAIN:
 		replaceWith := s
 		replaced := strings.ReplaceAll(e.String(), searchFor, replaceWith)
 		e.LoadBytes([]byte(replaced))
-		*statusTextAfterRedraw = "Replaced all " + searchFor + " with " + replaceWith
+		*statusTextAfterRedraw = "Replaced all instances of " + searchFor + " with " + replaceWith
 		e.redraw = true
 		return
 	}
