@@ -1227,10 +1227,12 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				copyLines = append(copyLines, lines...)
 				s = strings.Join(copyLines, "\n")
 				// Place the block of text in the clipboard
-				_ = clipboard.WriteAll(s)
-				// Delete the corresponding number of lines
-				for range lines {
-					e.DeleteLineMoveBookmark(y, bookmark)
+				err := clipboard.WriteAll(s)
+				if err == nil {
+					// Delete the corresponding number of lines
+					for range lines {
+						e.DeleteLineMoveBookmark(y, bookmark)
+					}
 				}
 			}
 			// Go to the end of the current line
