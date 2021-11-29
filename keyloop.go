@@ -1192,14 +1192,14 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				} else if firstCopyAction {
 					missingUtility := false
 
-					if env.Has("DISPLAY") { // X11
-						if which("xclip") == "" {
-							status.SetErrorMessage("The xclip utility is missing!")
+					if env.Has("WAYLAND_DISPLAY") { // Wayland
+						if which("wl-copy") == "" {
+							status.SetErrorMessage("The wl-copy utility (from wl-clipboard) is missing!")
 							missingUtility = true
 						}
 					} else {
-						if which("wl-copy") == "" {
-							status.SetErrorMessage("The wl-copy utility (from wl-clipboard) is missing!")
+						if which("xclip") == "" {
+							status.SetErrorMessage("The xclip utility is missing!")
 							missingUtility = true
 						}
 					}
@@ -1385,14 +1385,14 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 				status.Clear(c)
 
-				if env.Has("DISPLAY") { // X11
-					if which("xclip") == "" {
-						status.SetErrorMessage("The xclip utility is missing!")
+				if env.Has("WAYLAND_DISPLAY") { // Wayland
+					if which("wl-paste") == "" {
+						status.SetErrorMessage("The wl-paste utility (from wl-clipboard) is missing!")
 						missingUtility = true
 					}
 				} else {
-					if which("wl-paste") == "" {
-						status.SetErrorMessage("The wl-paste utility (from wl-clipboard) is missing!")
+					if which("xclip") == "" {
+						status.SetErrorMessage("The xclip utility is missing!")
 						missingUtility = true
 					}
 				}
