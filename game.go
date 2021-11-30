@@ -477,16 +477,6 @@ func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers *[]*Gobbler, bob *Bob) bool
 		e.y = e.oldy
 	}
 
-	if e.x <= int(e.w*0.2) && e.y >= int(e.h*0.8) {
-		// Close to the lower left corner
-		e.x++
-		e.y--
-	} else if e.x <= int(e.w*0.2) && e.y <= int(e.h*0.2) {
-		// Close to the upper left corner
-		e.x++
-		e.y++
-	}
-
 	return (e.x != e.oldx || e.y != e.oldy)
 }
 
@@ -584,8 +574,8 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets *[]*Pellet, bob *Bob) bool {
 
 		if g.hunting == nil {
 
-			g.x += rand.Intn(5) - 2
-			g.y += rand.Intn(5) - 2
+			g.x += rand.Intn(3) - 1
+			g.y += rand.Intn(3) - 1
 
 		} else {
 
@@ -635,25 +625,29 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets *[]*Pellet, bob *Bob) bool {
 	}
 
 	if g.x > int(g.w) {
+		g.x = int(g.w) - 1
 		g.x -= xspeed
 	} else if g.x < 0 {
+		g.x = 0
 		g.x += xspeed
 	}
 
-	if g.y > int(c.H()) {
+	if g.y > int(g.h) {
+		g.y = int(g.h) - 1
 		g.y -= yspeed
 	} else if g.y <= 0 {
+		g.y = 0
 		g.y += yspeed
 	}
 
-	if g.x <= int(g.w*0.2) && g.y >= int(g.h*0.8) {
+	if g.x <= 2 && g.y >= (int(g.h)-2) {
 		// Close to the lower left corner
-		g.x++
-		g.y--
-	} else if g.x <= int(g.w*0.2) && g.y <= int(g.h*0.2) {
+		g.x = int(g.w) - 1 // teleport!
+		g.y = 0            // teleport!
+	} else if g.x <= 2 && g.y <= 2 {
 		// Close to the upper left corner
-		g.x++
-		g.y++
+		g.x = int(g.w) - 1 // teleport!
+		g.y = int(g.h) - 1 // teleport
 	}
 
 	return (g.x != g.oldx || g.y != g.oldy)
