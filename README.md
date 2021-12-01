@@ -360,6 +360,7 @@ If `/usr/share/scala/lib/scala-library.jar` is not found `scalac -d run_with_sca
 * `go` - for compiling Go code
 * `go-tools` - for formatting Go code and handling imports with `goimports`
 * `google-java-format` - for formatting Java code
+* `jad` - decompile `.class` files on the fly when opening them with `o`
 * `java-environment` - for compiling Java code and creating `.jar` files with `javac` and `jar`
 * `kotlin` - for compiling Kotlin
 * `ktlint` - for formatting Kotlin code
