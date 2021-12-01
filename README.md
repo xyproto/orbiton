@@ -463,6 +463,6 @@ Install:
 
 ## General info
 
-* Version: 2.45.0
+* Version: 2.46.0
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
