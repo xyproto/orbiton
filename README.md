@@ -343,29 +343,42 @@ If `/usr/share/scala/lib/scala-library.jar` is not found `scalac -d run_with_sca
 
 ## List of optional runtime dependencies
 
-* `autopep8`
-* `brittany`
-* `cargo`
-* `clang-format`
-* [`cxx`](https://github.com/xyproto/cxx)
-* [`fstabfmt`](https://github.com/xyproto/fstabfmt)
-* `g++` / `base-devel`
-* `gdc`
-* `ghc`
-* `go` / `golang`
-* `goimports`
-* `google-java-format`
-* `jar`
-* `javac`
-* `kotlin`
-* `ktlint`
-* `pandoc`
-* `prettify`
-* `python`
-* `rustc`
-* `rustfmt`
-* `v`
-* `zig`
+* `asciidoctor` - for writing man pages
+* `astyle` - for formatting C# code
+* `autopep8` - for formatting Python code
+* `brittany` - for formatting Haskell code
+* `cargo` - for compiling Rust
+* `clang` - for formatting C++ code with `clang-format`
+* `clojure` - for compiling Clojure
+* `crystal` - for compiling Crystal
+* [`cxx`](https://github.com/xyproto/cxx) - for compiling C++
+* `fpc` - for compiling Object Pascal
+* [`fstabfmt`](https://github.com/xyproto/fstabfmt) - for formatting `/etc/fstab`
+* `g++` - for compiling C++ code
+* `gdc` - for compiling D code
+* `ghc` - for compiling Haskell code
+* `go` - for compiling Go code
+* `go-tools` - for formatting Go code and handling imports with `goimports`
+* `google-java-format` - for formatting Java code
+* `java-environment` - for compiling Java code and creating `.jar` files with `javac` and `jar`
+* `kotlin` - for compiling Kotlin
+* `ktlint` - for formatting Kotlin code
+* `lua` - for compiling Lua to bytecode
+* `lua-format` - for formatting Lua code
+* `mlton` - for compiling Standard ML
+* `mono` - for compiling C# code
+* `ocaml` - for compiling and formatting OCaml code
+* `odin` - for compiling Odin
+* `pandoc` - for exporting Markdown to PDF
+* `prettier` - for formatting JavaScript, TypeScript and CSS
+* `python` - for compiling Python to bytecode
+* `rustc` - for compiling Rust
+* `rustfmt` - for formatting Rust
+* `scala` - for compiling Scala
+* `sdoc` - for writing man pages
+* `tidy` - for formatting HTML
+* `v` - for compiling and formatting V code
+* `zig` - for compiling and formatting Zig code
 
 ## Size
 
