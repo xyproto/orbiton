@@ -274,8 +274,8 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	}
 
 	// Add the unlock menu item
-	// TODO: Detect if the current file is locked first
 	if forced {
+		// TODO: Detect if file is locked first
 		actions.Add("Unlock if locked", func() {
 			if absFilename, err := e.AbsFilename(); err == nil { // no issues
 				lk.Load()
@@ -283,20 +283,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				lk.Save()
 			}
 		})
-	}
-
-	// Add the portal menu item
-	if portal, err := LoadPortal(); err == nil { // no problems
-		actions.Add("Close portal at "+portal.String(), func() {
-			ClosePortal(e)
-		})
-	} else {
-		// Could not close portal, try opening a new one
-		if portal, err := e.NewPortal(); err == nil { // no problems
-			actions.Add("Open portal at "+portal.String(), func() {
-				portal.Save()
-			})
-		}
 	}
 
 	// Render to PDF using the gofpdf package
@@ -425,7 +411,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		useMenuIndex = lastMenuIndex
 	}
 
-	selected := e.Menu(status, tty, "Select an action", menuChoices, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes)
+	selected := e.Menu(status, tty, "Menu", menuChoices, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes)
 
 	// Redraw the editor contents
 	//e.DrawLines(c, true, false)
