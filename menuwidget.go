@@ -38,9 +38,9 @@ func NewMenuWidget(title string, choices []string, titleColor, arrowColor, textC
 	if int(canvasWidth)-(int(maxlen)+marginLeft) <= 0 {
 		marginLeft = 0
 	}
-	marginTop := 10
-	if int(canvasHeight)-(len(choices)+marginTop) <= 10 {
-		marginTop = 4
+	marginTop := 8
+	if int(canvasHeight)-(len(choices)+marginTop) <= 8 {
+		marginTop = 2
 	} else if int(canvasHeight)-(len(choices)+marginTop) <= 0 {
 		marginTop = 0
 	}
