@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/xyproto/env"
@@ -18,6 +19,11 @@ type TemplateProgram struct {
 }
 
 var templatePrograms = map[mode.Mode]TemplateProgram{
+	mode.Agda: {
+		"module FILENAME where\n\nopen import Agda.Builtin.IO using (IO)\nopen import Agda.Builtin.Unit using (⊤)\nopen import Agda.Builtin.String using (String)\n\npostulate putStrLn : String → IO ⊤\n{-# FOREIGN GHC import qualified Data.Text as T #-}\n{-# COMPILE GHC putStrLn = putStrLn . T.unpack #-}\n\nmain : IO ⊤\nmain = putStrLn \"Hello, World!\"\n",
+		17,
+		1,
+	},
 	mode.C: {
 		"#include <stdio.h>\n#include <stdlib.h>\n\nint main(int argc, char* argv[])\n{\n\tprintf(\"%s\\n\", \"Hello, World!\");\n\treturn EXIT_SUCCESS;\n}\n",
 		8,
@@ -147,6 +153,14 @@ func (e *Editor) HasTemplateProgram() bool {
 	return found
 }
 
+// BaseFilenameWithoutExtension returns the base filename, without the extension
+// For instance, "/some/where/main.c" becomes just "main".
+func (e *Editor) BaseFilenameWithoutExtension() string {
+	baseFilename := filepath.Base(e.filename)
+	ext := filepath.Ext(baseFilename)
+	return strings.TrimSuffix(baseFilename, ext)
+}
+
 // InsertTemplateProgram will insert a template program at the current cursor position,
 // if available. It will then reposition the cursor at an appropriate place in the template.
 func (e *Editor) InsertTemplateProgram(c *vt100.Canvas) error {
@@ -154,6 +168,9 @@ func (e *Editor) InsertTemplateProgram(c *vt100.Canvas) error {
 	if !found {
 		return fmt.Errorf("could not find a template program for %s", e.mode)
 	}
+
+	// Replace FILENAME with the base filename without extension, introduced because of Agda.
+	prog.text = strings.ReplaceAll(prog.text, "FILENAME", e.BaseFilenameWithoutExtension())
 
 	// Insert the template program
 	e.InsertStringAndMove(c, prog.text)
