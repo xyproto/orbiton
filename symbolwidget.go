@@ -16,17 +16,14 @@ type SymbolWidget struct {
 	marginLeft     int                  // margin, may be negative?
 	marginTop      int                  // margin, may be negative?
 	choices        [][]string           // a slice of a slice of menu items
-	selectedX      int                  // the index o the currently selected item
-	selectedY      int                  // the index o the currently selected item
 	titleColor     vt100.AttributeColor // title color (above the choices)
-	arrowColor     vt100.AttributeColor // arrow color (before each menu choice)
 	textColor      vt100.AttributeColor // text color (the choices that are not highlighted)
-	highlightColor vt100.AttributeColor // highlight color (the choice that will be selected if return is pressed)
-	selectedColor  vt100.AttributeColor // selected color (the choice that has been selected after return has been pressed)
+	highlightColor vt100.AttributeColor // selected color (the choice that has been selected after return has been pressed)
+	bgColor        vt100.AttributeColor // background color
 }
 
 // NewSymbolWidget creates a new SymbolWidget
-func NewSymbolWidget(title string, choices [][]string, titleColor, arrowColor, textColor, highlightColor, selectedColor vt100.AttributeColor, canvasWidth, canvasHeight uint) *SymbolWidget {
+func NewSymbolWidget(title string, choices [][]string, titleColor, textColor, highlightColor, bgColor vt100.AttributeColor, canvasWidth, canvasHeight uint) *SymbolWidget {
 	maxlen := uint(0)
 	for _, choice := range choices {
 		if uint(len(choice)) > uint(maxlen) {
@@ -54,19 +51,16 @@ func NewSymbolWidget(title string, choices [][]string, titleColor, arrowColor, t
 		marginLeft:     marginLeft,
 		marginTop:      marginTop,
 		choices:        choices,
-		selectedX:      -1,
-		selectedY:      -1,
 		titleColor:     titleColor,
-		arrowColor:     arrowColor,
 		textColor:      textColor,
 		highlightColor: highlightColor,
-		selectedColor:  selectedColor,
+		bgColor:        bgColor,
 	}
 }
 
 // Selected returns the currently selected item
 func (sw *SymbolWidget) Selected() (int, int) {
-	return sw.selectedX, sw.selectedY
+	return int(sw.x), int(sw.y)
 }
 
 // Draw will draw this menu widget on the given canvas
@@ -77,39 +71,25 @@ func (sw *SymbolWidget) Draw(c *vt100.Canvas) {
 		c.PlotColor(uint(sw.marginLeft+x), uint(sw.marginTop), sw.titleColor, r)
 	}
 	// Draw the menu entries, with various colors
-	//ulenChoicesY := uint(len(sw.choices))
-	for y := uint(0); y < sw.h; y++ {
-		//ulenChoicesX := uint(len(sw.choices[y]))
-		for x := uint(0); x < sw.w; x++ {
-			if int(y) == sw.selectedY && int(x) == sw.selectedX {
-				c.PlotColor(uint(sw.marginLeft+int(x)), uint(sw.marginTop+int(y)+titleHeight), sw.highlightColor, '0')
+	for y := 0; y < len(sw.choices); y++ {
+		row := sw.choices[y]
+		for x := 0; x < len(row); x++ {
+			symbol := sw.choices[y][x]
+			if y == int(sw.y) && x == int(sw.x) {
+				c.Write(uint(sw.marginLeft+x*2), uint(sw.marginTop+y*2+titleHeight), sw.highlightColor, sw.bgColor, symbol)
 			} else {
-				c.PlotColor(uint(sw.marginLeft+int(x)), uint(sw.marginTop+int(y)+titleHeight), sw.arrowColor, '0')
+				c.Write(uint(sw.marginLeft+x*2), uint(sw.marginTop+y*2+titleHeight), sw.textColor, sw.bgColor, symbol)
 			}
 		}
+
 	}
-}
-
-// SelectDraw will draw the currently highlighted menu choices with the selected color.
-// This is used after a menu item has been selected.
-func (sw *SymbolWidget) SelectDraw(c *vt100.Canvas) {
-	old := sw.highlightColor
-	sw.highlightColor = sw.selectedColor
-	sw.Draw(c)
-	sw.highlightColor = old
-}
-
-// Select will select the currently highlighted menu option
-func (sw *SymbolWidget) Select() {
-	sw.selectedX = int(sw.x)
-	sw.selectedY = int(sw.y)
 }
 
 // Up will move the highlight up (with wrap-around)
 func (sw *SymbolWidget) Up(c *vt100.Canvas) bool {
 	sw.oldy = sw.y
 	if sw.y <= 0 {
-		sw.y = sw.h - 1
+		sw.y = uint(len(sw.choices)) - 1
 	} else {
 		sw.y--
 	}
@@ -120,7 +100,8 @@ func (sw *SymbolWidget) Up(c *vt100.Canvas) bool {
 func (sw *SymbolWidget) Left(c *vt100.Canvas) bool {
 	sw.oldx = sw.x
 	if sw.x <= 0 {
-		sw.x = sw.w - 1
+		row := sw.choices[sw.y]
+		sw.x = uint(len(row)) - 1
 	} else {
 		sw.x--
 	}
@@ -131,7 +112,7 @@ func (sw *SymbolWidget) Left(c *vt100.Canvas) bool {
 func (sw *SymbolWidget) Down(c *vt100.Canvas) bool {
 	sw.oldy = sw.y
 	sw.y++
-	if sw.y >= sw.h {
+	if sw.y >= uint(len(sw.choices)) {
 		sw.y = 0
 	}
 	return true
@@ -141,7 +122,8 @@ func (sw *SymbolWidget) Down(c *vt100.Canvas) bool {
 func (sw *SymbolWidget) Right(c *vt100.Canvas) bool {
 	sw.oldx = sw.x
 	sw.x++
-	if sw.x >= sw.w {
+	row := sw.choices[sw.y]
+	if sw.x >= uint(len(row)) {
 		sw.x = 0
 	}
 	return true
