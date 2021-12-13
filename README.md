@@ -188,6 +188,7 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 | Clojure                                         | `.clj`, `.cljs`, `.clojure`                               | WIP           | `lein uberjar`                                    | WIP                                                                                                            |
 | Standard ML                                     | `.sml`                                                    | yes           | `mlton`                                           | WIP                                                                                                            |
 | OCaml                                           | `.ml`                                                     | WIP           | `ocamlopt -o $executable $filename`               | WIP                                                                                                            |
+| Agda                                            | `.agda`                                                   | yes           | `agda -c $filename`                               | N/A                                                                                                            |
 
 `/etc/fstab` files are also supported, and can be formatted with `ctrl-w` if [`fstabfmt`](https://github.com/xyproto/fstabfmt) is installed.
 
@@ -343,6 +344,7 @@ If `/usr/share/scala/lib/scala-library.jar` is not found `scalac -d run_with_sca
 
 ## List of optional runtime dependencies
 
+* `agda` - for compiling Agda code
 * `asciidoctor` - for writing man pages
 * `astyle` - for formatting C# code
 * `autopep8` - for formatting Python code
