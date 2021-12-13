@@ -316,9 +316,17 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					}
 				}
 			}
-		case "c:20": // ctrl-t, jump to code
+		case "c:20": // ctrl-t, jump to code (or insert symbol, for Agda)
 			// If in a C++ header file, switch to the corresponding
 			// C++ source file, and the other way around.
+
+			// If it's Agda, then insert a symbol
+			// TODO: Show a 2d menu for selecting a symbol
+			if e.mode == mode.Agda {
+				e.InsertString(c, "⊤")
+				e.redraw = true
+				break
+			}
 
 			// Save the current file, but only if it has changed
 			if e.changed {
