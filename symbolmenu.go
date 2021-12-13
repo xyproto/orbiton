@@ -12,7 +12,7 @@ import (
 
 // SymbolMenu starts a loop where keypresses are handled. When a choice is made, a number is returned.
 // x and y are returned. -1,-1 is "no choice", 0,0 is the top left index.
-func (e *Editor) SymbolMenu(status *StatusBar, tty *vt100.TTY, title string, choices [][]string, titleColor, textColor, highlightColor vt100.AttributeColor) (int, int) {
+func (e *Editor) SymbolMenu(status *StatusBar, tty *vt100.TTY, title string, choices [][]string, titleColor, textColor, highlightColor vt100.AttributeColor) (int, int, bool) {
 
 	// Clear the existing handler
 	signal.Reset(syscall.SIGWINCH)
@@ -24,6 +24,7 @@ func (e *Editor) SymbolMenu(status *StatusBar, tty *vt100.TTY, title string, cho
 		sigChan    = make(chan os.Signal, 1)
 		running    = true
 		changed    = true
+		cancel     = false
 	)
 
 	// Set up a new resize handler
@@ -102,6 +103,7 @@ func (e *Editor) SymbolMenu(status *StatusBar, tty *vt100.TTY, title string, cho
 		case "c:27", "q", "c:3", "c:17", "c:15": // ESC, q, ctrl-c, ctrl-q or ctrl-o
 			running = false
 			changed = true
+			cancel = true
 		case " ", "c:13": // Space or Return
 			running = false
 			changed = true
@@ -109,7 +111,7 @@ func (e *Editor) SymbolMenu(status *StatusBar, tty *vt100.TTY, title string, cho
 			for y := 0; y < len(choices); y++ {
 				for x := 0; x < len(choices[y]); x++ {
 					if choices[y][x] == "ℕ" {
-						return x, y
+						return x, y, false
 					}
 				}
 			}
@@ -117,7 +119,7 @@ func (e *Editor) SymbolMenu(status *StatusBar, tty *vt100.TTY, title string, cho
 			for y := 0; y < len(choices); y++ {
 				for x := 0; x < len(choices[y]); x++ {
 					if choices[y][x] == "⊤" {
-						return x, y
+						return x, y, false
 					}
 				}
 			}
@@ -145,5 +147,6 @@ func (e *Editor) SymbolMenu(status *StatusBar, tty *vt100.TTY, title string, cho
 	// Restore the resize handler
 	e.SetUpResizeHandler(c, tty, status)
 
-	return symbolMenu.Selected()
+	x, y := symbolMenu.Selected()
+	return x, y, cancel
 }

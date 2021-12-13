@@ -331,8 +331,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				}
 			}
 
+			e.redrawCursor = true
+
 			if hasS([]string{".cpp", ".cc", ".c", ".cxx"}, filepath.Ext(e.filename)) { // jump from source to header file
-				e.redrawCursor = true
 				// If this is a C++ source file, try finding and opening the corresponding header file
 				// Check if there is a corresponding header file
 				if absFilename, err := e.AbsFilename(); err == nil { // no error
@@ -347,7 +348,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				status.SetErrorMessage("No corresponding header file")
 				status.Show(c, e)
 			} else if hasS([]string{".h", ".hpp"}, filepath.Ext(e.filename)) { // jump from header to source file
-				e.redrawCursor = true
 				// If this is a header file, present a menu option for open the corresponding source file
 				// Check if there is a corresponding header file
 				if absFilename, err := e.AbsFilename(); err == nil { // no error
@@ -362,17 +362,20 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				status.SetErrorMessage("No corresponding source file")
 				status.Show(c, e)
 			} else { // insert symbol
+				e.redraw = true
 				menuChoices := agdaSymbols
 				selectedSymbol := "¤"
-				selectedX, selectedY := e.SymbolMenu(status, tty, "Insert symbol", menuChoices, e.MenuTitleColor, e.MenuTextColor, e.MenuArrowColor)
-				if selectedY < len(menuChoices) {
-					row := menuChoices[selectedY]
-					if selectedX < len(row) {
-						selectedSymbol = menuChoices[selectedY][selectedX]
+				selectedX, selectedY, cancel := e.SymbolMenu(status, tty, "Insert symbol", menuChoices, e.MenuTitleColor, e.MenuTextColor, e.MenuArrowColor)
+				if !cancel {
+					undo.Snapshot(e)
+					if selectedY < len(menuChoices) {
+						row := menuChoices[selectedY]
+						if selectedX < len(row) {
+							selectedSymbol = menuChoices[selectedY][selectedX]
+						}
 					}
+					e.InsertString(c, selectedSymbol)
 				}
-				e.InsertString(c, selectedSymbol)
-				e.redraw = true
 			}
 		case "c:28": // ctrl-\, toggle comment for this block
 			undo.Snapshot(e)
