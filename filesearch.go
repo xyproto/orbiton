@@ -4,13 +4,14 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
 // Don't search for a corresponding header/source file for longer than ~0.5 seconds
 var fileSearchMaxTime = 500 * time.Millisecond
 
-// ExtFileSearch will search for a corresponding file, given a silce of extensions.
+// ExtFileSearch will search for a corresponding file, given a slice of extensions.
 // This is useful for ie. finding a corresponding .h file for a .c file.
 // The search starts in the current directory, then searches every parent directory in depth.
 // TODO: Search sibling and parent directories named "include" first, then search the rest.
@@ -22,6 +23,15 @@ func ExtFileSearch(absCppFilename string, headerExtensions []string, maxTime tim
 		return "", errors.New("filename has no extension: " + cppBasename)
 	}
 	firstName := cppBasename[:len(cppBasename)-len(ext)]
+
+	// First search the same path as the given filename, without using Walk
+	withoutExt := strings.TrimSuffix(absCppFilename, ext)
+	for _, hext := range headerExtensions {
+		if exists(withoutExt + hext) {
+			return withoutExt + hext, nil
+		}
+	}
+
 	var headerNames []string
 	for _, ext := range headerExtensions {
 		headerNames = append(headerNames, firstName+ext)
