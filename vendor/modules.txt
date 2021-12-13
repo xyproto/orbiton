@@ -25,8 +25,6 @@ github.com/pkg/term
 github.com/pkg/term/termios
 # github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d
 github.com/sourcegraph/annotate
-# github.com/xyproto/benchmarked v0.3.0
-github.com/xyproto/benchmarked
 # github.com/xyproto/env v1.7.0
 ## explicit
 github.com/xyproto/env
@@ -45,7 +43,7 @@ github.com/xyproto/termtitle
 # github.com/xyproto/textoutput v1.12.10
 ## explicit
 github.com/xyproto/textoutput
-# github.com/xyproto/vt100 v1.9.9
+# github.com/xyproto/vt100 v1.9.12
 ## explicit
 github.com/xyproto/vt100
 # golang.org/x/sys v0.0.0-20211210111614-af8b64212486
