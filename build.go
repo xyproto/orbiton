@@ -113,6 +113,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			exec.Command("odin", "build", filename):                                          {".odin"},                                                   // Odin
 			exec.Command("csc", "-nologo", "-unsafe", filename):                              {".cs"},                                                     // C#
 			exec.Command("mlton", filename):                                                  {".sml"},
+			exec.Command("agda", "-c", filename):                                             {".agda"},
 		}
 	)
 
