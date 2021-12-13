@@ -333,11 +333,11 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 			e.redrawCursor = true
 
-			if hasS([]string{".cpp", ".cc", ".c", ".cxx"}, filepath.Ext(e.filename)) { // jump from source to header file
+			if hasS([]string{".cpp", ".cc", ".c", ".cxx", ".c++"}, filepath.Ext(e.filename)) { // jump from source to header file
 				// If this is a C++ source file, try finding and opening the corresponding header file
 				// Check if there is a corresponding header file
 				if absFilename, err := e.AbsFilename(); err == nil { // no error
-					headerExtensions := []string{".h", ".hpp"}
+					headerExtensions := []string{".h", ".hpp", ".h++"}
 					if headerFilename, err := ExtFileSearch(absFilename, headerExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
 						// Switch to another file (without forcing it)
 						e.Switch(c, tty, status, fileLock, headerFilename, false)
@@ -347,11 +347,11 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				status.ClearAll(c)
 				status.SetErrorMessage("No corresponding header file")
 				status.Show(c, e)
-			} else if hasS([]string{".h", ".hpp"}, filepath.Ext(e.filename)) { // jump from header to source file
+			} else if hasS([]string{".h", ".hpp", ".h++"}, filepath.Ext(e.filename)) { // jump from header to source file
 				// If this is a header file, present a menu option for open the corresponding source file
 				// Check if there is a corresponding header file
 				if absFilename, err := e.AbsFilename(); err == nil { // no error
-					sourceExtensions := []string{".c", ".cpp", ".cxx", ".cc"}
+					sourceExtensions := []string{".c", ".cpp", ".cxx", ".cc", ".c++"}
 					if headerFilename, err := ExtFileSearch(absFilename, sourceExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
 						// Switch to another file (without forcing it)
 						e.Switch(c, tty, status, fileLock, headerFilename, false)
