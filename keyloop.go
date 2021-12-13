@@ -316,26 +316,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					}
 				}
 			}
-		case "c:20": // ctrl-t, jump to code (or insert symbol, for Agda)
+		case "c:20": // ctrl-t, jump to header/source, or insert symbol
 			// If in a C++ header file, switch to the corresponding
 			// C++ source file, and the other way around.
-
-			// If it's Agda, then insert a symbol
-			// TODO: Show a 2d menu for selecting a symbol
-			if e.mode == mode.Agda {
-				menuChoices := agdaSymbols
-				selectedSymbol := "¤"
-				selectedX, selectedY := e.SymbolMenu(status, tty, "Insert symbol", menuChoices, e.MenuTitleColor, e.MenuTextColor, e.MenuArrowColor)
-				if selectedY < len(menuChoices) {
-					row := menuChoices[selectedY]
-					if selectedX < len(row) {
-						selectedSymbol = menuChoices[selectedY][selectedX]
-					}
-				}
-				e.InsertString(c, selectedSymbol)
-				e.redraw = true
-				break
-			}
+			// If not, insert a symbol.
 
 			// Save the current file, but only if it has changed
 			if e.changed {
@@ -347,38 +331,49 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				}
 			}
 
-			e.redrawCursor = true
-
-			// If this is a C++ source file, try finding and opening the corresponding header file
-			if hasS([]string{".cpp", ".cc", ".c", ".cxx"}, filepath.Ext(e.filename)) {
+			if hasS([]string{".cpp", ".cc", ".c", ".cxx"}, filepath.Ext(e.filename)) { // jump from source to header file
+				e.redrawCursor = true
+				// If this is a C++ source file, try finding and opening the corresponding header file
 				// Check if there is a corresponding header file
 				if absFilename, err := e.AbsFilename(); err == nil { // no error
 					headerExtensions := []string{".h", ".hpp"}
 					if headerFilename, err := ExtFileSearch(absFilename, headerExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
 						// Switch to another file (without forcing it)
 						e.Switch(c, tty, status, fileLock, headerFilename, false)
+						break
 					}
 				}
-				break
-			}
-
-			// If this is a header file, present a menu option for open the corresponding source file
-			if hasS([]string{".h", ".hpp"}, filepath.Ext(e.filename)) {
+				status.ClearAll(c)
+				status.SetErrorMessage("No corresponding header file")
+				status.Show(c, e)
+			} else if hasS([]string{".h", ".hpp"}, filepath.Ext(e.filename)) { // jump from header to source file
+				e.redrawCursor = true
+				// If this is a header file, present a menu option for open the corresponding source file
 				// Check if there is a corresponding header file
 				if absFilename, err := e.AbsFilename(); err == nil { // no error
 					sourceExtensions := []string{".c", ".cpp", ".cxx", ".cc"}
 					if headerFilename, err := ExtFileSearch(absFilename, sourceExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
 						// Switch to another file (without forcing it)
 						e.Switch(c, tty, status, fileLock, headerFilename, false)
+						break
 					}
 				}
-				break
+				status.ClearAll(c)
+				status.SetErrorMessage("No corresponding source file")
+				status.Show(c, e)
+			} else { // insert symbol
+				menuChoices := agdaSymbols
+				selectedSymbol := "¤"
+				selectedX, selectedY := e.SymbolMenu(status, tty, "Insert symbol", menuChoices, e.MenuTitleColor, e.MenuTextColor, e.MenuArrowColor)
+				if selectedY < len(menuChoices) {
+					row := menuChoices[selectedY]
+					if selectedX < len(row) {
+						selectedSymbol = menuChoices[selectedY][selectedX]
+					}
+				}
+				e.InsertString(c, selectedSymbol)
+				e.redraw = true
 			}
-
-			status.ClearAll(c)
-			status.SetErrorMessage("Nothing to jump to")
-			status.Show(c, e)
-
 		case "c:28": // ctrl-\, toggle comment for this block
 			undo.Snapshot(e)
 			e.ToggleCommentBlock(c)
