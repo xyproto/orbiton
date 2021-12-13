@@ -236,6 +236,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		errorMarker = "Error:"
 	} else if e.mode == mode.CS {
 		errorMarker = ": error "
+	} else if e.mode == mode.Agda {
+		errorMarker = ","
 	}
 
 	if e.mode == mode.Zig && bytes.Contains(output, []byte("nrecognized glibc version")) {
@@ -284,6 +286,35 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			if errorLine, errorMessage := ParsePythonError(string(output), filepath.Base(filename)); errorLine != -1 {
 				e.redraw = e.GoTo(LineIndex(errorLine-1), c, status)
 				return "Error: " + errorMessage, true, false, ""
+			}
+		} else if e.mode == mode.Agda {
+			lines := strings.Split(string(output), "\n")
+			if len(lines) >= 4 {
+				fileAndLocation := lines[1]
+				errorMessage := strings.TrimSpace(lines[2]) + " " + strings.TrimSpace(lines[3])
+				if strings.Contains(fileAndLocation, ":") && strings.Contains(fileAndLocation, ",") && strings.Contains(fileAndLocation, "-") {
+					fields := strings.SplitN(fileAndLocation, ":", 2)
+					//filename := fields[0]
+					lineAndCol := fields[1]
+					fields = strings.SplitN(lineAndCol, ",", 2)
+					lineNumberString := fields[0] // not index
+					colRange := fields[1]
+					fields = strings.SplitN(colRange, "-", 2)
+					lineColumnString := fields[0] // not index
+					// Move to (x, y), line number first and then column number
+					if i, err := strconv.Atoi(lineNumberString); err == nil {
+						foundY := LineIndex(i - 1)
+						e.redraw = e.GoTo(foundY, c, status)
+						e.redrawCursor = e.redraw
+						if x, err := strconv.Atoi(lineColumnString); err == nil { // no error
+							foundX := x - 1
+							tabs := strings.Count(e.Line(foundY), "\t")
+							e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
+							e.Center(c)
+						}
+					}
+					return errorMessage, true, false, ""
+				}
 			}
 		}
 
