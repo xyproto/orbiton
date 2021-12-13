@@ -105,6 +105,22 @@ func (e *Editor) SymbolMenu(status *StatusBar, tty *vt100.TTY, title string, cho
 		case " ", "c:13": // Space or Return
 			running = false
 			changed = true
+		case "n": // handy shortcut
+			for y := 0; y < len(choices); y++ {
+				for x := 0; x < len(choices[y]); x++ {
+					if choices[y][x] == "ℕ" {
+						return x, y
+					}
+				}
+			}
+		case "t": // handy shortcut
+			for y := 0; y < len(choices); y++ {
+				for x := 0; x < len(choices[y]); x++ {
+					if choices[y][x] == "⊤" {
+						return x, y
+					}
+				}
+			}
 		case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9": // 0 .. 9
 			number, err := strconv.Atoi(key)
 			if err != nil {
@@ -114,11 +130,6 @@ func (e *Editor) SymbolMenu(status *StatusBar, tty *vt100.TTY, title string, cho
 			symbolMenu.SelectIndex(0, uint(number))
 			changed = true
 			resizeMut.Unlock()
-		default:
-			if len([]rune(key)) == 0 {
-				// this happens if pgup or pgdn is pressed
-				break
-			}
 		}
 
 		// If the menu was changed, draw the canvas
