@@ -323,12 +323,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// If it's Agda, then insert a symbol
 			// TODO: Show a 2d menu for selecting a symbol
 			if e.mode == mode.Agda {
-				menuChoices := [][]string{
-					{"a", "b", "c"},
-					{"d", "e", "f"},
-					{"g", "h", "⊤"},
-				}
-				selectedSymbol := "?"
+				menuChoices := agdaSymbols
+				selectedSymbol := "¤"
 				selectedX, selectedY := e.SymbolMenu(status, tty, "Insert symbol", menuChoices, e.MenuTitleColor, e.MenuTextColor, e.MenuArrowColor)
 				if selectedY < len(menuChoices) {
 					row := menuChoices[selectedY]

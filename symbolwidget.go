@@ -76,9 +76,9 @@ func (sw *SymbolWidget) Draw(c *vt100.Canvas) {
 		for x := 0; x < len(row); x++ {
 			symbol := sw.choices[y][x]
 			if y == int(sw.y) && x == int(sw.x) {
-				c.Write(uint(sw.marginLeft+x*2), uint(sw.marginTop+y*2+titleHeight), sw.highlightColor, sw.bgColor, symbol)
+				c.Write(uint(sw.marginLeft+x*2), uint(sw.marginTop+y+titleHeight), sw.highlightColor, sw.bgColor, symbol)
 			} else {
-				c.Write(uint(sw.marginLeft+x*2), uint(sw.marginTop+y*2+titleHeight), sw.textColor, sw.bgColor, symbol)
+				c.Write(uint(sw.marginLeft+x*2), uint(sw.marginTop+y+titleHeight), sw.textColor, sw.bgColor, symbol)
 			}
 		}
 
@@ -93,10 +93,14 @@ func (sw *SymbolWidget) Up(c *vt100.Canvas) bool {
 	} else {
 		sw.y--
 	}
+	row := sw.choices[sw.y]
+	if sw.x > uint(len(row)) {
+		sw.x = uint(len(row) - 1)
+	}
 	return true
 }
 
-// Up will move the highlight left (with wrap-around)
+// Left will move the highlight left (with wrap-around)
 func (sw *SymbolWidget) Left(c *vt100.Canvas) bool {
 	sw.oldx = sw.x
 	if sw.x <= 0 {
@@ -115,10 +119,14 @@ func (sw *SymbolWidget) Down(c *vt100.Canvas) bool {
 	if sw.y >= uint(len(sw.choices)) {
 		sw.y = 0
 	}
+	row := sw.choices[sw.y]
+	if sw.x > uint(len(row)) {
+		sw.x = uint(len(row) - 1)
+	}
 	return true
 }
 
-// Down will move the highlight right (with wrap-around)
+// Right will move the highlight right (with wrap-around)
 func (sw *SymbolWidget) Right(c *vt100.Canvas) bool {
 	sw.oldx = sw.x
 	sw.x++

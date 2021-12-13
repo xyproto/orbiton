@@ -62,7 +62,6 @@ func (e *Editor) SymbolMenu(status *StatusBar, tty *vt100.TTY, title string, cho
 			resizeMut.RLock()
 			symbolMenu.Draw(c)
 			resizeMut.RUnlock()
-
 			// Update the canvas
 			c.Draw()
 		}
@@ -80,12 +79,12 @@ func (e *Editor) SymbolMenu(status *StatusBar, tty *vt100.TTY, title string, cho
 			symbolMenu.Left(c)
 			changed = true
 			resizeMut.Unlock()
-		case "↓", "c:14": // Down, right or ctrl-n
+		case "↓", "c:14": // Down or ctrl-n
 			resizeMut.Lock()
 			symbolMenu.Down(c)
 			changed = true
 			resizeMut.Unlock()
-		case "→": // Down, right or ctrl-n
+		case "→": // Right
 			resizeMut.Lock()
 			symbolMenu.Right(c)
 			changed = true
