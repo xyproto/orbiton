@@ -11,7 +11,7 @@ require (
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/xyproto/env v1.7.0
 	github.com/xyproto/guessica v1.1.0
-	github.com/xyproto/mode v0.3.2-0.20211115121805-da41b2c7708c
+	github.com/xyproto/mode v0.3.2
 	github.com/xyproto/syntax v1.10.3-0.20211120130712-ca482ff0125a
 	github.com/xyproto/termtitle v1.5.0
 	github.com/xyproto/textoutput v1.12.10

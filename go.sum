@@ -41,8 +41,8 @@ github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shx
 github.com/xyproto/guessica v1.1.0 h1:u//yWmEiW1En0kNHcj4rT1HADOqz47SNR/qx6D9s40g=
 github.com/xyproto/guessica v1.1.0/go.mod h1:ZC0dOFJO4zuo3+9AaUQ741wCMlKmGERhIQLDYSBIInE=
 github.com/xyproto/mode v0.3.1/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
-github.com/xyproto/mode v0.3.2-0.20211115121805-da41b2c7708c h1:wXS0NjmGHM3NJwQqA82W47AC8PVweAJF0O5TcEpIGpQ=
-github.com/xyproto/mode v0.3.2-0.20211115121805-da41b2c7708c/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
+github.com/xyproto/mode v0.3.2 h1:vg3+zM2oZeqvDtVOw4mINhCHHzZj4j6vtCn2XVG+5/0=
+github.com/xyproto/mode v0.3.2/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/syntax v1.10.3-0.20211120130712-ca482ff0125a h1:b6KL70P52FEBqaWAu9C0WYSxmRSPEeNdPpuP+S/LgTQ=
 github.com/xyproto/syntax v1.10.3-0.20211120130712-ca482ff0125a/go.mod h1:az5of0pdjx1U0nXv1Te2czJWRJ44O3DEtxRgaNhx8yM=
 github.com/xyproto/termtitle v1.5.0 h1:1MwdLT5YEGJ/He76NIdeajPN9GxIpbfaMfM1FtkMF34=

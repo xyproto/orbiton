@@ -55,8 +55,10 @@ func Detect(filename string) Mode {
 			mode = Go
 		case ".odin":
 			mode = Odin
-		case ".hs":
+		case ".hs", ".hts":
 			mode = Haskell
+		case ".agda":
+			mode = Agda
 		case ".sml":
 			mode = StandardML
 		case ".m4":

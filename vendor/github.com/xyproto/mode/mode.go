@@ -58,6 +58,7 @@ const (
 	D              // D
 	Perl           // Perl
 	M4             // M4 macros
+	Agda           // Agda
 )
 
 // String will return a short lowercase string representing the given editor mode
@@ -169,6 +170,8 @@ func (mode Mode) String() string {
 		return "V"
 	case M4:
 		return "M4"
+	case Agda:
+		return "Agda"
 	default:
 		return "?"
 	}
