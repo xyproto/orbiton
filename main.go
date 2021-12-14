@@ -59,7 +59,8 @@ ctrl-g     to toggle filename/line/column/unicode/word count status display
 ctrl-d     to delete a single character
 ctrl-o     to open the command menu, where the first option is always
            "Save and quit"
-ctrl-t     for C++, toggle between the header and implementation
+ctrl-t     for C++, toggle between the header and implementation,
+           for Agda and other programming languages, insert a symbol.
 ctrl-c     to copy the current line, press twice to copy the current block
 ctrl-v     to paste one line, press twice to paste the rest
 ctrl-x     to cut the current line, press twice to cut the current block
