@@ -16,5 +16,5 @@ require (
 	github.com/xyproto/termtitle v1.5.0
 	github.com/xyproto/textoutput v1.12.10
 	github.com/xyproto/vt100 v1.9.12
-	golang.org/x/sys v0.0.0-20211210111614-af8b64212486 // indirect
+	golang.org/x/sys v0.0.0-20211213223007-03aa0b5f6827 // indirect
 )
