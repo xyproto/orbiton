@@ -343,6 +343,12 @@ rm -rf _o_build
 
 If `/usr/share/scala/lib/scala-library.jar` is not found `scalac -d run_with_scala.jar` is used instead. This file can only be run with the `scala` command.
 
+## A note about Agda
+
+* After pressing `ctrl-t` to insert a symbol:
+  * Pressing `t` is a shortcut for inserting `⊤`.
+  * Pressing `n` is a shortcut for inserting `ℕ`.
+
 ## List of optional runtime dependencies
 
 * `agda` - for compiling Agda code
