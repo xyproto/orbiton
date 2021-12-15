@@ -404,12 +404,12 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		}
 	}
 
-	actions.Add("Kill find", func() {
-		if err := runShell("pkill find"); err != nil {
-			status.Clear(c)
-			status.SetMessage(err.Error())
-			status.Show(c, e)
-		}
+	actions.Add("Kill find and quit without saving", func() {
+		runShell("pkill find")
+		e.clearOnQuit = true
+		//e.UserSave(c, tty, status)
+		e.quit = true        // indicate that the user wishes to quit
+		e.clearOnQuit = true // clear the terminal after quitting
 	})
 
 	menuChoices := actions.MenuChoices()
