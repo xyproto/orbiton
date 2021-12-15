@@ -29,6 +29,15 @@ func which(executable string) string {
 	return p
 }
 
+// runShell runs a command in a shell
+func runShell(shellCommand string) error {
+	cmd := exec.Command("sh", "-c", shellCommand)
+	if _, err := cmd.CombinedOutput(); err != nil {
+		return err
+	}
+	return nil
+}
+
 // hasAnyPrefixWord checks if the given line is prefixed with any one of the given words
 func hasAnyPrefixWord(line string, wordList []string) bool {
 	for _, word := range wordList {

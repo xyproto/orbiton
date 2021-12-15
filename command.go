@@ -283,6 +283,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				lk.Save()
 			}
 		})
+
 	}
 
 	// Render to PDF using the gofpdf package
@@ -402,6 +403,14 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			})
 		}
 	}
+
+	actions.Add("Kill find", func() {
+		if err := runShell("pkill find"); err != nil {
+			status.Clear(c)
+			status.SetMessage(err.Error())
+			status.Show(c, e)
+		}
+	})
 
 	menuChoices := actions.MenuChoices()
 
