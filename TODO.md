@@ -59,6 +59,7 @@
 
 ## Syntax highlighting
 
+- [ ] Check that the right theme is loaded under `uxterm`.
 - [ ] Don't let single-line comments at the end of lines disable rainbow parentheses.
 - [ ] Don't highlight /* in shell scripts like comments.
 - [ ] Also highlight hexadecimal numbers.
