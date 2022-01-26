@@ -120,7 +120,6 @@ These features are unique to `o`, as far as I am aware:
 * `o` may have issues with large files (of several MB+). For normal text files or source code files, this is a non-issue.
 * Using backspace near the end of lines that are longer than the terminal width may cause the cursor to jump.
 * Middle-click pasting (instead of pasting with `ctrl-v`) may only paste the first character.
-* The insert symbol menu is functional, but the layout is skewed.
 * The smart indentation is not always smart.
 
 ## Hotkeys
