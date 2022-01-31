@@ -76,7 +76,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		addKeywords = csWords
 	case mode.Go:
 		addKeywords = []string{"defer", "error", "fallthrough", "go", "print", "println", "range", "rune", "string"}
-		delKeywords = []string{"None", "build", "char", "def", "def", "die", "done", "fi", "final", "finally", "from", "get", "in", "include", "is", "let", "mut", "next", "no", "pass", "redo", "rescue", "ret", "retry", "set", "template", "then", "this", "when", "where", "while", "yes"}
+		delKeywords = []string{"None", "build", "char", "def", "def", "die", "done", "fi", "final", "finally", "from", "get", "in", "include", "is", "last", "let", "mut", "next", "no", "pass", "redo", "rescue", "ret", "retry", "set", "template", "then", "this", "when", "where", "while", "yes"}
 	case mode.HIDL:
 		clearKeywords()
 		addKeywords = hidlWords
@@ -182,6 +182,8 @@ func (e *Editor) SingleLineCommentMarker() string {
 	case mode.StandardML, mode.OCaml:
 		// not applicable, return something that is unlikely to appear at the beginning of a line
 		return "--"
+	case mode.Basic:
+		return "'"
 	default:
 		return "//"
 	}
