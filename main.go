@@ -10,6 +10,7 @@ import (
 	"runtime/pprof"
 	"sort"
 	"strings"
+	"syscall"
 
 	"github.com/xyproto/env"
 	"github.com/xyproto/termtitle"
@@ -178,7 +179,14 @@ Set NO_COLOR=1 to disable colors.
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, err := Loop(tty, filename, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight)
+	userMessage, err, stopParent := Loop(tty, filename, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight)
+
+	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
+	if stopParent {
+		defer func() {
+			syscall.Kill(os.Getppid(), syscall.SIGQUIT)
+		}()
+	}
 
 	// Remove the terminal title, if the current terminal emulator supports it
 	// and if NO_COLOR is not set.

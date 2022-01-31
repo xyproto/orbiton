@@ -29,7 +29,7 @@ var fileLock = NewLockKeeper(defaultLockFile)
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight bool) (userMessage string, err error) {
+func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight bool) (userMessage string, err error, stopParent bool) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt100.Init()
@@ -62,7 +62,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
 	e, statusMessage, err := NewEditor(tty, c, filename, lineNumber, colNumber, theme, syntaxHighlight)
 	if err != nil {
-		return "", err
+		return "", err, false
 	}
 
 	// Find the absolute path to this filename
@@ -121,7 +121,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		} else {
 			// Lock the current file, if it's not already locked
 			if err := fileLock.Lock(absFilename); err != nil {
-				return fmt.Sprintf("Locked by another (possibly dead) instance of this editor.\nTry: o -f %s", filepath.Base(absFilename)), errors.New(absFilename + " is locked")
+				return fmt.Sprintf("Locked by another (possibly dead) instance of this editor.\nTry: o -f %s", filepath.Base(absFilename)), errors.New(absFilename + " is locked"), false
 			}
 			// Immediately save the lock file as a signal to other instances of the editor
 			fileLock.Save()
@@ -1774,5 +1774,5 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	}
 
 	// All done
-	return "", nil
+	return "", nil, e.stopParentOnQuit
 }

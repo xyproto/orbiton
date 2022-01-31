@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/xyproto/env"
@@ -405,8 +404,8 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		}
 	}
 
-	actions.Add("SIGKILL parent and quit without saving", func() {
-		syscall.Kill(os.Getppid(), syscall.SIGKILL)
+	actions.Add("Stop parent and quit without saving", func() {
+		e.stopParentOnQuit = true
 		e.clearOnQuit = true
 		e.quit = true        // indicate that the user wishes to quit
 		e.clearOnQuit = true // clear the terminal after quitting

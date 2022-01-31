@@ -35,6 +35,7 @@ type Editor struct {
 	locationHistory    map[string]LineNumber // location history, for jumping to the last location when opening a file
 	quit               bool                  // for indicating if the user wants to end the editor session
 	clearOnQuit        bool                  // clear the terminal when quitting the editor, or not
+	stopParentOnQuit   bool                  // send SIGQUIT to the parent PID when qutting
 	wrapWhenTyping     bool                  // wrap text at a certain limit when typing
 	slowLoad           bool                  // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
 	readOnly           bool                  // is the file read-only when initializing o?
