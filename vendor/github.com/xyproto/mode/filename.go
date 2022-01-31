@@ -125,6 +125,8 @@ func Detect(filename string) Mode {
 			mode = Nim
 		case ".pas", ".pp", ".lpr":
 			mode = ObjectPascal
+		case ".bas", ".module", ".frm", ".cls", ".ctl", ".vbp", ".vbg", ".form", ".gambas":
+			mode = Basic
 		case ".bat":
 			mode = Bat
 		case ".adb", ".gpr", ".ads", ".ada":
