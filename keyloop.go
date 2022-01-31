@@ -52,15 +52,11 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		lastPasteY LineIndex = -1 // used for keeping track if ctrl-v is pressed twice on the same line
 		lastCutY   LineIndex = -1 // used for keeping track if ctrl-x is pressed twice on the same line
 
-		previousKey string // keep track of the previous key press
-
-		lastCommandMenuIndex int // for the command menu
-
-		key string // for the main loop
-
-		jsonFormatToggle bool // for toggling indentation or not when pressing ctrl-w for JSON
-
-		playBackMacroCount int // number of times the macro should be played back, right now
+		previousKey          string // keep track of the previous key press
+		lastCommandMenuIndex int    // for the command menu
+		key                  string // for the main loop
+		jsonFormatToggle     bool   // for toggling indentation or not when pressing ctrl-w for JSON
+		playBackMacroCount   int    // number of times the macro should be played back, right now
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -158,8 +154,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		if e.macro == nil || (playBackMacroCount == 0 && !e.macro.Recording) {
 			// Read the next key in the regular way
 			key = tty.String()
+			undo.IgnoreSnapshots(false)
 		} else {
 			if e.macro.Recording {
+				undo.IgnoreSnapshots(true)
 				// Read and record the next key
 				key = tty.String()
 				if key != "c:20" { // ctrl-t
@@ -167,6 +165,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					e.macro.Add(key)
 				}
 			} else if playBackMacroCount > 0 {
+				undo.IgnoreSnapshots(true)
 				key = e.macro.Next()
 				if key == "" || key == "c:20" { // ctrl-t
 					e.macro.Home()
@@ -401,6 +400,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				// then ask for the number of repetitions to play it back when it's pressed after that,
 				// then clear the macro when esc is pressed.
 			} else if e.macro == nil {
+				undo.Snapshot(e)
+				undo.IgnoreSnapshots(true)
 				status.Clear(c)
 				status.SetMessage("Recording macro")
 				status.Show(c, e)
@@ -408,24 +409,30 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				e.macro.Recording = true
 				playBackMacroCount = 0
 			} else if e.macro.Recording { // && e.macro != nil
+				e.macro.Recording = false
+				undo.IgnoreSnapshots(true)
+				playBackMacroCount = 0
 				status.Clear(c)
 				if macroLen := e.macro.Len(); macroLen == 0 {
 					status.SetMessage("No steps were recorded")
+					e.macro = nil
 				} else if macroLen < 10 {
 					status.SetMessage("Recorded " + strings.Join(e.macro.KeyPresses, " "))
 				} else {
 					status.SetMessage(fmt.Sprintf("Recorded %d steps", macroLen))
 				}
 				status.Show(c, e)
-				e.macro.Recording = false
-				playBackMacroCount = 0
 			} else if playBackMacroCount > 0 {
+				undo.IgnoreSnapshots(false)
 				status.Clear(c)
 				status.SetMessage("Stopped macro") // stop macro playback
 				status.Show(c, e)
 				playBackMacroCount = 0
 				e.macro.Home()
-			} else { // && e.macro != nil && playBackMacroCount == 0
+			} else { // && e.macro != nil && playBackMacroCount == 0 // start macro playback
+				undo.IgnoreSnapshots(false)
+				undo.Snapshot(e)
+				status.ClearAll(c)
 				// Play back the macro, once
 				playBackMacroCount = 1
 			}

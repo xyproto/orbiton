@@ -16,6 +16,7 @@ type Undo struct {
 	editorPositionCopies []Position
 	mut                  *sync.RWMutex
 	maxMemoryUse         uint64 // can be <= 0 to not check for memory use
+	ignoreSnapshots      bool   // used when playing back macros
 }
 
 const (
@@ -41,7 +42,12 @@ var (
 // NewUndo takes arguments that are only for initializing the undo buffers.
 // The *Position and *vt100.Canvas is used only as a default values for the elements in the undo buffers.
 func NewUndo(size int, maxMemoryUse uint64) *Undo {
-	return &Undo{0, size, make([]Editor, size), make([]map[int][]rune, size), make([]Position, size), &sync.RWMutex{}, maxMemoryUse}
+	return &Undo{0, size, make([]Editor, size), make([]map[int][]rune, size), make([]Position, size), &sync.RWMutex{}, maxMemoryUse, false}
+}
+
+// IgnoreSnapshots is used when playing back macros, to snapshot the macro playback as a whole instead
+func (u *Undo) IgnoreSnapshots(b bool) {
+	u.ignoreSnapshots = b
 }
 
 func lineMapMemoryFootprint(m map[int][]rune) uint64 {
@@ -70,6 +76,10 @@ func (u *Undo) MemoryFootprint() uint64 {
 
 // Snapshot will store a snapshot, and move to the next position in the circular buffer
 func (u *Undo) Snapshot(e *Editor) {
+	if u.ignoreSnapshots {
+		return
+	}
+
 	u.mut.Lock()
 	defer u.mut.Unlock()
 

@@ -25,16 +25,11 @@ func (m *Macro) Add(keyPress string) {
 
 // Next returns the next keypress when playing back a macro, or an empty string
 func (m *Macro) Next() string {
-	keyPressCount := len(m.KeyPresses)
-	if keyPressCount == 0 {
+	if kc := len(m.KeyPresses); kc == 0 || m.index >= kc {
 		return ""
 	}
-	if m.index >= keyPressCount {
-		return ""
-	}
-	s := m.KeyPresses[m.index]
-	m.index++
-	return s
+	defer func() { m.index++ }()
+	return m.KeyPresses[m.index]
 }
 
 // Home moves the current keypress index back to 0, for playing back the macro again
