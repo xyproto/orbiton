@@ -59,6 +59,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		key string // for the main loop
 
 		jsonFormatToggle bool // for toggling indentation or not when pressing ctrl-w for JSON
+
+		playBackMacroCount int // number of times the macro should be played back, right now
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -153,8 +155,27 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	// This is the main loop for the editor
 	for !e.quit {
 
-		// Read the next key
-		key = tty.String()
+		if e.macro == nil || (playBackMacroCount == 0 && !e.macro.Recording) {
+			// Read the next key in the regular way
+			key = tty.String()
+		} else {
+			if e.macro.Recording {
+				// Read and record the next key
+				key = tty.String()
+				if key != "c:20" { // ctrl-t
+					// But never record the macro toggle button
+					e.macro.Add(key)
+				}
+			} else if playBackMacroCount > 0 {
+				key = e.macro.Next()
+				if key == "" || key == "c:20" { // ctrl-t
+					e.macro.Home()
+					playBackMacroCount--
+					// No more macro keys. Read the next key.
+					key = tty.String()
+				}
+			}
+		}
 
 		switch key {
 		case "c:17": // ctrl-q, quit
@@ -361,7 +382,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				status.ClearAll(c)
 				status.SetErrorMessage("No corresponding source file")
 				status.Show(c, e)
-			} else { // insert symbol
+			} else if e.mode == mode.Agda { // insert symbol
 				e.redraw = true
 				menuChoices := agdaSymbols
 				selectedSymbol := "¤"
@@ -376,6 +397,37 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					}
 					e.InsertString(c, selectedSymbol)
 				}
+				// Start recording a macro, then stop the recording when ctrl-t is pressed again,
+				// then ask for the number of repetitions to play it back when it's pressed after that,
+				// then clear the macro when esc is pressed.
+			} else if e.macro == nil {
+				status.Clear(c)
+				status.SetMessage("Recording macro")
+				status.Show(c, e)
+				e.macro = NewMacro()
+				e.macro.Recording = true
+				playBackMacroCount = 0
+			} else if e.macro.Recording { // && e.macro != nil
+				status.Clear(c)
+				if macroLen := e.macro.Len(); macroLen == 0 {
+					status.SetMessage("No steps were recorded")
+				} else if macroLen < 10 {
+					status.SetMessage("Recorded " + strings.Join(e.macro.KeyPresses, " "))
+				} else {
+					status.SetMessage(fmt.Sprintf("Recorded %d steps", macroLen))
+				}
+				status.Show(c, e)
+				e.macro.Recording = false
+				playBackMacroCount = 0
+			} else if playBackMacroCount > 0 {
+				status.Clear(c)
+				status.SetMessage("Stopped macro") // stop macro playback
+				status.Show(c, e)
+				playBackMacroCount = 0
+				e.macro.Home()
+			} else { // && e.macro != nil && playBackMacroCount == 0
+				// Play back the macro, once
+				playBackMacroCount = 1
 			}
 		case "c:28": // ctrl-\, toggle comment for this block
 			undo.Snapshot(e)
@@ -590,6 +642,14 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			drawLines := true
 			resized := false
 			e.FullResetRedraw(c, status, drawLines, resized)
+			if e.macro != nil || playBackMacroCount > 0 {
+				// Stop the playback
+				playBackMacroCount = 0
+				// Clear the macro
+				e.macro = nil
+				// Show a message after the redraw
+				statusMessage = "Macro cleared"
+			}
 		case " ": // space
 
 			// Scroll down if a man page is being viewed, or if the editor is read-only

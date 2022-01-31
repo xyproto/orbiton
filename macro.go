@@ -1,0 +1,59 @@
+package main
+
+import (
+	"errors"
+)
+
+// Macro represents a series of keypresses that can be played back later
+type Macro struct {
+	index      int // current position, when playing back
+	KeyPresses []string
+	Recording  bool
+}
+
+// NewMacro creates a new Macro struct
+func NewMacro() *Macro {
+	var m Macro
+	m.KeyPresses = make([]string, 0)
+	return &m
+}
+
+// Add adds a keypress to this macro, when recording
+func (m *Macro) Add(keyPress string) {
+	m.KeyPresses = append(m.KeyPresses, keyPress)
+}
+
+// Next returns the next keypress when playing back a macro, or an empty string
+func (m *Macro) Next() string {
+	keyPressCount := len(m.KeyPresses)
+	if keyPressCount == 0 {
+		return ""
+	}
+	if m.index >= keyPressCount {
+		return ""
+	}
+	s := m.KeyPresses[m.index]
+	m.index++
+	return s
+}
+
+// Home moves the current keypress index back to 0, for playing back the macro again
+func (m *Macro) Home() {
+	m.index = 0
+}
+
+// Len returns the number of keypresses in this macro
+func (m *Macro) Len() int {
+	return len(m.KeyPresses)
+}
+
+// Pop will pop the last keypress off the stack
+func (m *Macro) Pop() (string, error) {
+	l := len(m.KeyPresses)
+	if l > 0 {
+		last := m.KeyPresses[l-1]
+		m.KeyPresses = m.KeyPresses[:l-1]
+		return last, nil
+	}
+	return "", errors.New("no more items")
+}

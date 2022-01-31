@@ -45,6 +45,7 @@ type Editor struct {
 	gdb                *gdb.Gdb              // connection to gdb, if debugMode is enabled
 	previousX          int                   // previous cursor position
 	previousY          int                   // previous cursor position
+	macro              *Macro                // the contents of the current macro (will be cleared when esc is pressed)
 	Theme                                    // editor theme, embedded struct
 }
 
