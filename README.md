@@ -136,12 +136,13 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
 * `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
 * `ctrl-d` - Delete a single character.
-* `ctrl-t` - For C and C++: jump between the current header and source file. For other file types, render the current document to a PDF file.
+* `ctrl-t` - For C and C++: jump between the current header and source file. For Agda, insert a symbol.
+             For the rest, record and play back keypresses. Press escape to clear the current macro.
 * `ctrl-o` - Open a command menu with actions that can be performed. The first menu item is always `Save and quit`.
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text (to the next blank line).
 * `ctrl-c` - Copy one line. Press twice to copy a block of text.
 * `ctrl-v` - Paste one trimmed line. Press twice to paste multiple untrimmed lines.
-* `ctrl-space` - Build (see table below)
+* `ctrl-space` - Build program, render to PDF or export to man page (see table below).
 * `ctrl-j` - Join lines (or jump to the bookmark, if set).
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
 * `ctrl-l` - Jump to a specific line number. Follows by `return` to jump to the top. If at the top, press `return` to jump to the bottom.

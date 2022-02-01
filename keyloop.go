@@ -336,10 +336,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					}
 				}
 			}
-		case "c:20": // ctrl-t, jump to header/source, or insert symbol
-			// If in a C++ header file, switch to the corresponding
-			// C++ source file, and the other way around.
-			// If not, insert a symbol.
+		case "c:20": // ctrl-t
+		    // for C or C++: jump to header/source, or insert symbol
+		    // for Agda: insert symbol
+		    // for the rest: record and play back macros
 
 			// Save the current file, but only if it has changed
 			if e.changed {
