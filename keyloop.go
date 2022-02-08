@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -1176,9 +1177,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				status.SetMessage("Nothing more to undo")
 				status.Show(c, e)
 			}
-		case "c:12": // ctrl-l, go to line number
+		case "c:12": // ctrl-l, go to line number or percentage
 			status.ClearAll(c)
-			status.SetMessage("Go to line number:")
+			status.SetMessage("Go to line number or percentage:")
 			status.ShowNoTimeout(c, e)
 			lns := ""
 			cancel := false
@@ -1189,14 +1190,14 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			for !doneCollectingDigits {
 				numkey := tty.String()
 				switch numkey {
-				case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9": // 0 .. 9
+				case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "%", ".", ",": // 0..9 + %,.
 					lns += numkey // string('0' + (numkey - 48))
-					status.SetMessage("Go to line number: " + lns)
+					status.SetMessage("Go to line number or percentage: " + lns)
 					status.ShowNoTimeout(c, e)
 				case "c:8", "c:127": // ctrl-h or backspace
 					if len(lns) > 0 {
 						lns = lns[:len(lns)-1]
-						status.SetMessage("Go to line number: " + lns)
+						status.SetMessage("Go to line number or percentage: " + lns)
 						status.ShowNoTimeout(c, e)
 					}
 				case "b", "t": // top of file
@@ -1238,6 +1239,17 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				} else {
 					// Go to the last line
 					e.redraw = e.GoToLineNumber(LineNumber(e.Len()), c, status, true)
+				}
+			} else if strings.HasSuffix(lns, "%") {
+				// Go to the specified percentage
+				if percentageInt, err := strconv.Atoi(lns[:len(lns)-1]); err == nil { // no error {
+					lineIndex := int(math.Round(float64(e.Len()) * float64(percentageInt) * 0.01))
+					e.redraw = e.GoToLineNumber(LineNumber(lineIndex), c, status, true)
+				}
+			} else if strings.Count(lns, ".") == 1 || strings.Count(lns, ",") == 1 {
+				if percentageFloat, err := strconv.ParseFloat(strings.ReplaceAll(lns, ",", "."), 64); err == nil { // no error
+					lineIndex := int(math.Round(float64(e.Len()) * percentageFloat))
+					e.redraw = e.GoToLineNumber(LineNumber(lineIndex), c, status, true)
 				}
 			} else {
 				// Go to the specified line
