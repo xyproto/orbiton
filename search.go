@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -360,11 +362,17 @@ AGAIN:
 	} else if pressedReturn && previousSearch != "" { // search text -> tab -> replace text -> return
 		undo.Snapshot(e)
 		// replace all
-		searchFor := previousSearch
-		replaceWith := s
-		replaced := strings.ReplaceAll(e.String(), searchFor, replaceWith)
-		e.LoadBytes([]byte(replaced))
-		*statusTextAfterRedraw = "Replaced all instances of " + searchFor + " with " + replaceWith
+		searchForBytes := []byte(previousSearch)
+		replaceWithBytes := []byte(s)
+		allBytes := []byte(e.String())
+		instanceCount := bytes.Count(allBytes, searchForBytes)
+		allReplaced := bytes.ReplaceAll(allBytes, searchForBytes, replaceWithBytes)
+		e.LoadBytes(allReplaced)
+		extraS := ""
+		if instanceCount != 1 {
+			extraS = "s"
+		}
+		*statusTextAfterRedraw = fmt.Sprintf("Replaced %d instance%s of %s with %s", instanceCount, extraS, searchForBytes, replaceWithBytes)
 		e.redraw = true
 		return
 	}
