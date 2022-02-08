@@ -67,7 +67,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		delKeywords = append(delKeywords, "build", "package")
 		addKeywords = cmakeWords
 	case mode.Config:
-		delKeywords = []string{"install"}
+		delKeywords = []string{"auto", "install"}
 	case mode.D:
 		clearKeywords()
 		addKeywords = dWords
