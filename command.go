@@ -247,7 +247,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 
 	// Debug mode on/off
 	if e.debugMode {
-		actions.Add("End debug mode", func() {
+		actions.Add("Exit debug mode", func() {
 			status.Clear(c)
 			status.SetMessage("Debug mode disabled")
 			status.Show(c, e)
@@ -369,7 +369,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		})
 
 		// Add the "Light Theme" menu item text and menu function
-		actions.Add("Light theme", func() {
+		actions.Add("Light background theme", func() {
 			e.setLightTheme()
 			e.syntaxHighlight = true
 			drawLines := true
