@@ -678,11 +678,20 @@ int main(int argc, char* argv[])
     gtk_main();
 
     // Free static objects
-    if (ctrl_n_event != nullptr) {
-        gdk_event_free(ctrl_n_event);
+    if (ctrl_v_event != nullptr) {
+        gdk_event_free(ctrl_v_event);
     }
     if (ctrl_p_event != nullptr) {
         gdk_event_free(ctrl_p_event);
+    }
+    if (ctrl_n_event != nullptr) {
+        gdk_event_free(ctrl_n_event);
+    }
+    if (ctrl_l_event != nullptr) {
+        gdk_event_free(ctrl_l_event);
+    }
+    if (return_key_event != nullptr) {
+        gdk_event_free(return_key_event);
     }
 
     return EXIT_SUCCESS;
