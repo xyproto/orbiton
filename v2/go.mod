@@ -12,9 +12,9 @@ require (
 	github.com/xyproto/env v1.7.0
 	github.com/xyproto/guessica v1.1.0
 	github.com/xyproto/mode v0.4.0
-	github.com/xyproto/syntax v1.10.3-0.20211120130712-ca482ff0125a
+	github.com/xyproto/syntax v1.10.3-0.20220120083832-56954220f766
 	github.com/xyproto/termtitle v1.5.0
 	github.com/xyproto/textoutput v1.12.10
 	github.com/xyproto/vt100 v1.9.12
-	golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27 // indirect
+	golang.org/x/sys v0.0.0-20220207234003-57398862261d // indirect
 )
