@@ -5,8 +5,8 @@ github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d h1:yKm7XZV6j9
 github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d/go.mod h1:UdhH50NIW0fCiwBSr0co2m7BnFLdv4fQTgdqdJTHFeE=
 github.com/xyproto/benchmarked v0.3.0 h1:IQoapveDysT8kyBf2SvTl1AygsO9ewkrhiTDRB3w/04=
 github.com/xyproto/benchmarked v0.3.0/go.mod h1:4H4a1k1EsFmliut59gNc8RO2N2IIhl74XqfW0AVjWbk=
-github.com/xyproto/mode v0.3.1 h1:dZnwr8ReVfLDJRc3JdVwioxUf2hVIjqbq9gxWBAKuzQ=
-github.com/xyproto/mode v0.3.1/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
+github.com/xyproto/mode v0.3.2 h1:vg3+zM2oZeqvDtVOw4mINhCHHzZj4j6vtCn2XVG+5/0=
+github.com/xyproto/mode v0.3.2/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/textoutput v1.12.0 h1:9e9JHeigjDUGkyNYdb+mU5CVxi2gEd91FoxrFnCJHT0=
 github.com/xyproto/textoutput v1.12.0/go.mod h1:7gHUVNJjTYzjRsc3S54W8hCcjB96C+/ug/mLus9nBjc=
 github.com/xyproto/vt100 v1.8.5/go.mod h1:8ni0+pphJABRAZOoyxY9yD0QQxkia4PjKNFiMQStrT4=
