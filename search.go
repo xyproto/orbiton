@@ -364,15 +364,26 @@ AGAIN:
 		// replace all
 		searchForBytes := []byte(previousSearch)
 		replaceWithBytes := []byte(s)
+		// check if we're searching and replacing an unicode character, like "U+0047" or "u+0000"
+		if r, err := runeFromUBytes(searchForBytes); err == nil { // success
+			searchForBytes = []byte(string(r))
+		}
+		if r, err := runeFromUBytes(replaceWithBytes); err == nil { // success
+			replaceWithBytes = []byte(string(r))
+		}
+		// perform the replacements, and count the number of instances
 		allBytes := []byte(e.String())
 		instanceCount := bytes.Count(allBytes, searchForBytes)
 		allReplaced := bytes.ReplaceAll(allBytes, searchForBytes, replaceWithBytes)
+		// replace the contents
 		e.LoadBytes(allReplaced)
+		// build a status message
 		extraS := ""
 		if instanceCount != 1 {
 			extraS = "s"
 		}
-		*statusTextAfterRedraw = fmt.Sprintf("Replaced %d instance%s of %s with %s", instanceCount, extraS, searchForBytes, replaceWithBytes)
+		*statusTextAfterRedraw = fmt.Sprintf("Replaced %d instance%s of %s with %s", instanceCount, extraS, previousSearch, s)
+		// make sure to redraw after returning
 		e.redraw = true
 		return
 	}

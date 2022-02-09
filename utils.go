@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"log"
 	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -184,6 +187,19 @@ func distance(x1, x2, y1, y2 int) float64 {
 	y1f := float64(y1)
 	y2f := float64(y2)
 	return math.Sqrt((x1f*x1f - x2f*x2f) + (y1f*y1f - y2f*y2f))
+}
+
+// runeFromUBytes returns a rune from a byte slice on the form "U+0000"
+func runeFromUBytes(bs []byte) (rune, error) {
+	if !bytes.HasPrefix(bs, []byte("U+")) && !bytes.HasPrefix(bs, []byte("u+")) {
+		return rune(0), errors.New("not a rune on the form U+0000 or u+0000")
+	}
+	numberString := string(bs[2:])
+	unicodeNumber, err := strconv.ParseUint(numberString, 16, 64)
+	if err != nil {
+		return rune(0), err
+	}
+	return rune(unicodeNumber), nil
 }
 
 // logf, for quick "printf-style" debugging
