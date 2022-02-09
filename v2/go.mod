@@ -1,4 +1,4 @@
-module github.com/xyproto/o
+module github.com/xyproto/o/v2
 
 go 1.14
 
