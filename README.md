@@ -74,6 +74,8 @@ These features are unique to `o`, as far as I am aware:
 * All text will be red if the loaded file is read-only.
 * If tab completion in the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
 * For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
+* Search and replace by entering a search term (or unicode rune on the form `u+0000`), pressing `tab` entering the replacement string or rune, and then pressing `return`.
+* When jumping to a specific line or percentage (ie. `50%`) of a file with `ctrl-l`, jumping to a fraction (ie. `0.5`) is also supported.
 
 ## Other features and limitations
 
