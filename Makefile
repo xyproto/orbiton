@@ -11,8 +11,7 @@ CXXFLAGS ?= -O2 -pipe -fPIC -fno-plt -fstack-protector-strong -Wall -Wshadow -Wp
 CXXFLAGS += $(shell pkg-config --cflags --libs vte-2.91)
 
 o: $(SRCFILES)
-	cd v2 && $(GOBUILD)
-	@mv v2/o o
+	$(GOBUILD)
 
 gui: ko
 ko: ko/ko
