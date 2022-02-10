@@ -415,7 +415,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				playBackMacroCount = 0
 				status.Clear(c)
 				if macroLen := e.macro.Len(); macroLen == 0 {
-					status.SetMessage("No steps were recorded")
+					status.SetMessage("Stopped recording")
 					e.macro = nil
 				} else if macroLen < 10 {
 					status.SetMessage("Recorded " + strings.Join(e.macro.KeyPresses, " "))
