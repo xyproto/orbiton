@@ -204,8 +204,8 @@ func runeFromUBytes(bs []byte) (rune, error) {
 
 // logf, for quick "printf-style" debugging
 func logf(format string, args ...interface{}) {
-	tmpdir := env.Str("TMPDIR", "/tmp")
-	logfilename := filepath.Join(tmpdir, "o.log")
+	tempDir := env.Dir("TMPDIR", "/tmp")
+	logfilename := filepath.Join(tempDir, "o.log")
 	f, err := os.OpenFile(logfilename, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		f, err = os.Create(logfilename)
