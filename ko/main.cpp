@@ -420,6 +420,26 @@ bool has_font_family(const char* font_desc_str)
     return false;
 }
 
+void free_key_events()
+{
+    // Free static objects
+    if (ctrl_v_event != nullptr) {
+        gdk_event_free(ctrl_v_event);
+    }
+    if (ctrl_p_event != nullptr) {
+        gdk_event_free(ctrl_p_event);
+    }
+    if (ctrl_n_event != nullptr) {
+        gdk_event_free(ctrl_n_event);
+    }
+    if (ctrl_l_event != nullptr) {
+        gdk_event_free(ctrl_l_event);
+    }
+    if (return_key_event != nullptr) {
+        gdk_event_free(return_key_event);
+    }
+}
+
 int main(int argc, char* argv[])
 {
     // Initialize Gtk, the window and the terminal
@@ -677,22 +697,7 @@ int main(int argc, char* argv[])
     gtk_widget_show_all(window);
     gtk_main();
 
-    // Free static objects
-    if (ctrl_v_event != nullptr) {
-        gdk_event_free(ctrl_v_event);
-    }
-    if (ctrl_p_event != nullptr) {
-        gdk_event_free(ctrl_p_event);
-    }
-    if (ctrl_n_event != nullptr) {
-        gdk_event_free(ctrl_n_event);
-    }
-    if (ctrl_l_event != nullptr) {
-        gdk_event_free(ctrl_l_event);
-    }
-    if (return_key_event != nullptr) {
-        gdk_event_free(return_key_event);
-    }
+    free_key_events();
 
     return EXIT_SUCCESS;
 }
