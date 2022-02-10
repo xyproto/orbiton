@@ -1,7 +1,10 @@
-#!/bin/bash
+#!/bin/bash -e
 filename=${1:-main.go}
-rm -f o.log*
+find -name "o.log*" -exec rm -v -- {} \;
 export GORACE="halt_on_error=1 log_path=$PWD/o.log"
-go build -race && ./o "$filename"
+cd v2
+go build -v -race -o ../o
+cd ..
+./o -- "$filename"
 reset
-bat o.log*
+find -name "o.log*" -exec bat -- {} \;
