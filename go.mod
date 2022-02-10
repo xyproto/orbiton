@@ -1,4 +1,4 @@
-module github.com/xyproto/o
+module github.com/xyproto/o/v2
 
 go 1.14
 
@@ -16,5 +16,5 @@ require (
 	github.com/xyproto/termtitle v1.5.0
 	github.com/xyproto/textoutput v1.12.10
 	github.com/xyproto/vt100 v1.9.12
-	golang.org/x/sys v0.0.0-20220207234003-57398862261d // indirect
+	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
 )
