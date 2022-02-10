@@ -11,9 +11,13 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+var (
+	userConfigDir     = env.Dir("XDG_CONFIG_HOME", "~/.config")
+	pandocTexFilename = filepath.Join(userConfigDir, "o/pandoc.tex")
+)
+
 const (
-	pandocTexFilename = "~/.config/o/pandoc.tex"
-	listingsSetupTex  = `% https://tex.stackexchange.com/a/179956/5116
+	listingsSetupTex = `% https://tex.stackexchange.com/a/179956/5116
 \usepackage{xcolor}
 \lstset{
     basicstyle=\ttfamily,
@@ -51,10 +55,10 @@ func (e *Editor) exportPandoc(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar
 	// the currently edited file.
 
 	// Use the temporary directory defined in TMPDIR, with fallback to /tmp
-	tempdir := env.Str("TMPDIR", "/tmp")
+	tempDir := env.Dir("TMPDIR", "/tmp")
 
 	tempFilename := ""
-	f, err := ioutil.TempFile(tempdir, "_o*.md")
+	f, err := ioutil.TempFile(tempDir, "_o*.md")
 	if err != nil {
 		return err
 	}
