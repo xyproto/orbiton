@@ -42,6 +42,7 @@
 
 ## Saving and loading
 
+- [ ] When editing a man page, make it possible to toggle between the man page and the man page view mode.
 - [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] When editing a file that then is deleted, `ctrl-s` should maybe create the file again?
       Or save it to `/tmp` or `~/.cache/o`? Or copy it to the clipboard?
