@@ -475,6 +475,6 @@ Install:
 
 ## General info
 
-* Version: 2.48.2
+* Version: 2.48.3
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
