@@ -180,7 +180,7 @@ Set NO_COLOR=1 to disable colors.
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, err, stopParent := Loop(tty, filename, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight)
+	userMessage, stopParent, err := Loop(tty, filename, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {
