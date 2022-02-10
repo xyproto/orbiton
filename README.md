@@ -64,6 +64,7 @@ An alternative to viewing man pages in `o` is to use `less`:
 
 These features are unique to `o`, as far as I am aware:
 
+* If the loaded file is read-only, all text will be red by default.
 * Smart cursor movement, trying to maintain the X position when moving up and down, across short and long lines.
 * Press `ctrl-v` once to paste one line, press `ctrl-v` again to paste the rest.
 * Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy the rest (until a blank line).
