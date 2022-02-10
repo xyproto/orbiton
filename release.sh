@@ -2,6 +2,7 @@
 #
 # Create release tarballs/zip for 64-bit linux, BSD and Plan9 + 64-bit ARM + raspberry pi 2/3
 #
+cd v2
 name=o
 version=$(grep -i version main.go | head -1 | cut -d' ' -f4 | cut -d'"' -f1)
 echo "Version $version"
@@ -31,10 +32,10 @@ CGO_ENABLED=0 GOOS=linux go build -mod=vendor -v -trimpath -ldflags "-s" -a -o $
 for p in linux linux_arm64 rpi linux_static; do
   echo "Compressing $name-$version.$p.tar.xz"
   mkdir "$name-$version-$p"
-  cp $name.1 "$name-$version-$p/"
+  cp ../$name.1 "$name-$version-$p/"
   gzip "$name-$version-$p/$name.1"
   cp $name.$p "$name-$version-$p/$name"
-  cp LICENSE "$name-$version-$p/"
+  cp ../LICENSE "$name-$version-$p/"
   tar Jcf "$name-$version-$p.tar.xz" "$name-$version-$p/"
   rm -r "$name-$version-$p"
   rm $name.$p
@@ -44,11 +45,15 @@ done
 for p in macos freebsd netbsd; do
   echo "Compressing $name-$version.$p.tar.gz"
   mkdir "$name-$version-$p"
-  cp $name.1 "$name-$version-$p/"
+  cp ../$name.1 "$name-$version-$p/"
   gzip "$name-$version-$p/$name.1"
   cp $name.$p "$name-$version-$p/$name"
-  cp LICENSE "$name-$version-$p/"
+  cp ../LICENSE "$name-$version-$p/"
   tar zcf "$name-$version-$p.tar.gz" "$name-$version-$p/"
   rm -r "$name-$version-$p"
   rm $name.$p
 done
+cd ..
+
+mkdir -p release
+mv -v v2/$name-$version* release
