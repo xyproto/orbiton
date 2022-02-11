@@ -435,7 +435,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							}
 							counter++
 						}
-						// match?
 						if match {
 							fg = e.SearchHighlight
 							matchForAnotherN = length - 1
@@ -469,7 +468,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			c.Write(uint(cx)+lineRuneCount, uint(cy)+uint(y), e.Foreground, e.Background, screenLine)
 			lineRuneCount += uint(len([]rune(screenLine))) // rune count
 			lineStringCount += uint(len(screenLine))       // string length, not rune length
-
 		}
 
 		var (
