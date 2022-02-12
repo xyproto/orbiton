@@ -420,9 +420,9 @@ bool has_font_family(const char* font_desc_str)
     return false;
 }
 
+// free_key_events will call gdk_event_free on the allocated static events
 void free_key_events()
 {
-    // Free static objects
     if (ctrl_v_event != nullptr) {
         gdk_event_free(ctrl_v_event);
     }
