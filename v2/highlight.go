@@ -458,7 +458,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 				}
 			}
-		} else {
+		} else { // no syntax highlighting
 			// Man pages are special
 			if e.mode == mode.ManPage {
 				line = handleManPageEscape(line)
