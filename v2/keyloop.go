@@ -257,6 +257,24 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				break
 			}
 
+			// ctrl-space was pressed while in Nroff mode
+			if e.mode == mode.Nroff {
+				// TODO: Make this render the man page like if MANPAGER=o was used
+				e.mode = mode.ManPage
+				e.syntaxHighlight = true
+				//e.LoadBytes([]byte(e.String()))
+				e.redraw = true
+				e.redrawCursor = true
+				break
+			} else if e.mode == mode.ManPage {
+				e.mode = mode.Nroff
+				//e.syntaxHighlight = true
+				//e.LoadBytes([]byte(e.String()))
+				e.redraw = true
+				e.redrawCursor = true
+				break
+			}
+
 			// Press ctrl-space twice the first time the Markdown file should be exported to PDF
 			// to avvoid the first accidental ctrl-space key press.
 
@@ -736,7 +754,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				// De-indent the current line before moving on to the next
 				e.SetCurrentLine(trimmedLine)
 				leadingWhitespace = currentLeadingWhitespace
-			} else if e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.Zig || e.mode == mode.Rust || e.mode == mode.Java || e.mode == mode.JavaScript || e.mode == mode.Kotlin || e.mode == mode.TypeScript || e.mode == mode.D {
+			} else if e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.Zig || e.mode == mode.Java || e.mode == mode.JavaScript || e.mode == mode.Kotlin || e.mode == mode.TypeScript || e.mode == mode.D {
 				// Add missing parenthesis for "if ... {", "} else if", "} elif", "for", "while" and "when" for C-like languages
 				for _, kw := range []string{"for", "foreach", "foreach_reverse", "if", "switch", "when", "while", "while let", "} else if", "} elif"} {
 					if strings.HasPrefix(trimmedLine, kw+" ") && !strings.HasPrefix(trimmedLine, kw+" (") {
