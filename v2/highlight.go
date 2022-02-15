@@ -202,7 +202,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// Regular highlight
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
 					}
-				case mode.Config, mode.Shell, mode.CMake, mode.JSON:
+				case mode.Config, mode.CMake, mode.JSON:
 					if !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && (strings.Contains(trimmedLine, "/*") || strings.HasSuffix(trimmedLine, "*/")) {
 						// No highlight
 						coloredString = line
