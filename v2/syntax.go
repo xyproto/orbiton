@@ -137,9 +137,12 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		// Only highlight some words, to make them stand out
 		clearKeywords()
 		addKeywords = []string{"db", "dd", "dw", "int", "resb", "resd", "resw", "section", "syscall"}
-	case mode.Shell:
+	case mode.Makefile, mode.Shell:
 		addKeywords = []string{"--force", "-f", "checkout", "clean", "cmake", "configure", "dd", "do", "doas", "endif", "fdisk", "for", "gdisk", "in", "make", "mv", "ninja", "rm", "rmdir", "setopt", "su", "sudo", "while"}
-		delKeywords = []string{"#else", "#endif", "as", "default", "double", "exec", "finally", "float", "fn", "generic", "get", "install", "long", "new", "no", "pass", "property", "ret", "super", "template", "var", "with"}
+		delKeywords = []string{"#else", "#endif", "as", "default", "double", "exec", "finally", "float", "fn", "generic", "get", "long", "new", "no", "pass", "property", "ret", "super", "template", "var", "with"}
+		if m == mode.Shell { // Only for shell scripts, not for Makefiles
+			delKeywords = append(delKeywords, "install")
+		}
 		fallthrough // to the default case
 	default:
 		addKeywords = append(addKeywords, "endif", "ifeq", "ifneq")
@@ -159,11 +162,11 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 // comment for the current language mode the editor is in.
 func (e *Editor) SingleLineCommentMarker() string {
 	switch e.mode {
-	case mode.Shell, mode.Python, mode.CMake, mode.Config, mode.Crystal, mode.Nim, mode.PolicyLanguage, mode.Bazel:
+	case mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.Makefile, mode.Nim, mode.PolicyLanguage, mode.Python, mode.Shell:
 		return "#"
 	case mode.Assembly:
 		return ";"
-	case mode.Haskell, mode.SQL, mode.Lua, mode.Ada, mode.Agda:
+	case mode.Ada, mode.Agda, mode.Haskell, mode.Lua, mode.SQL:
 		return "--"
 	case mode.Vim:
 		return "\""
@@ -179,7 +182,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "%"
 	case mode.M4:
 		return "dnl"
-	case mode.StandardML, mode.OCaml:
+	case mode.OCaml, mode.StandardML:
 		// not applicable, return something that is unlikely to appear at the beginning of a line
 		return "--"
 	case mode.Basic:
