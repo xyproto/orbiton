@@ -1,5 +1,24 @@
 # TODO
 
+## Saving and loading
+
+- [ ] When opening a binary file / unrecognized encoding, do no replacements when saving.
+- [ ] When editing a man page, make it possible to toggle between the man page and the man page view mode.
+- [ ] Auto-detect tabs/spaces when opening a file.
+- [ ] When editing a file that then is deleted, `ctrl-s` should maybe create the file again?
+      Or save it to `/tmp` or `~/.cache/o`? Or copy it to the clipboard?
+- [ ] Be able to open and edit large text files (60M+).
+- [ ] Should be able to open any binary file and save it again, without replacements. Add a hex edit mode.
+- [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
+- [ ] Introduce a hexedit mode that will:
+      * Not load the entire file into memory.
+      * Display all bytes as a grid of "0xff" style fields, with the string representation to the right.
+      * This might be better solved by having a separate hex editor?
+- [ ] Be able to edit `.txt.gz` and `.1.gz` files.
+- [ ] Plugins. When there's `txt2something` and `something2txt`, o should be able to edit "something" files in general.
+      This could be used for hex editing, editing ELF files etc.
+- [ ] When the editor executable is `list`, just list the contents and exit?
+
 ## Building and testing programs
 
 - [ ] Jump to error when building with `ctrl-space` and `cargo`.
@@ -39,24 +58,6 @@
 
 - [ ] Let the auto-completion also look at method definitions with matching variable names (ignoring types, for now).
 - [ ] Autocompletion of filenames if the previous rune is "/" and tab is pressed.
-
-## Saving and loading
-
-- [ ] When editing a man page, make it possible to toggle between the man page and the man page view mode.
-- [ ] Auto-detect tabs/spaces when opening a file.
-- [ ] When editing a file that then is deleted, `ctrl-s` should maybe create the file again?
-      Or save it to `/tmp` or `~/.cache/o`? Or copy it to the clipboard?
-- [ ] Be able to open and edit large text files (60M+).
-- [ ] Should be able to open any binary file and save it again, without replacements. Add a hex edit mode.
-- [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
-- [ ] Introduce a hexedit mode that will:
-      * Not load the entire file into memory.
-      * Display all bytes as a grid of "0xff" style fields, with the string representation to the right.
-      * This might be better solved by having a separate hex editor?
-- [ ] Be able to edit `.txt.gz` and `.1.gz` files.
-- [ ] Plugins. When there's `txt2something` and `something2txt`, o should be able to edit "something" files in general.
-      This could be used for hex editing, editing ELF files etc.
-- [ ] When the editor executable is `list`, just list the contents and exit?
 
 ## Syntax highlighting
 
@@ -166,3 +167,7 @@
 - [ ] Abstract the editor, so that sending in keypresses and examining the result can be tested.
 - [ ] Rewrite `insertRune`. Improve word-wrap related functionality.
 - [ ] Introduce a type for screen coordinates, a type for screen coordinates + scroll offset, and another type for data coordinates.
+
+## Built-in game
+
+- [ ] Two pellets next to each other should combine.
