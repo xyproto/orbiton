@@ -118,8 +118,8 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		clearKeywords()
 		addKeywords = policyLanguageWords
 	case mode.Rust:
-		addKeywords = []string{"assert_eq", "fn", "impl", "loop", "mod", "out", "panic", "usize", "i64", "i32", "i16", "u64", "u32", "u16", "String", "char"}
-		delKeywords = []string{"build", "done", "end", "next", "int64", "uint64", "int32", "uint32", "int16", "uint16", "int", "get", "print", "last"}
+		addKeywords = []string{"String", "assert_eq", "char", "fn", "i16", "i32", "i64", "impl", "loop", "mod", "out", "panic", "u16", "u32", "u64", "usize"}
+		delKeywords = []string{"build", "done", "end", "get", "int", "int16", "int32", "int64", "last", "next", "print", "uint16", "uint32", "uint64"}
 	case mode.Scala:
 		clearKeywords()
 		addKeywords = scalaWords
@@ -136,13 +136,13 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.GoAssembly:
 		// Only highlight some words, to make them stand out
 		clearKeywords()
-		addKeywords = []string{"int", "section", "syscall", "resb", "resw", "resd", "dd", "db", "dw"}
+		addKeywords = []string{"db", "dd", "dw", "int", "resb", "resd", "resw", "section", "syscall"}
 	case mode.Shell:
 		addKeywords = []string{"--force", "-f", "checkout", "clean", "cmake", "configure", "dd", "do", "doas", "endif", "fdisk", "for", "gdisk", "in", "make", "mv", "ninja", "rm", "rmdir", "setopt", "su", "sudo", "while"}
-		delKeywords = []string{"#else", "#endif", "default", "double", "exec", "finally", "float", "fn", "generic", "get", "install", "long", "new", "no", "pass", "property", "ret", "super", "template", "var", "with"}
+		delKeywords = []string{"#else", "#endif", "as", "default", "double", "exec", "finally", "float", "fn", "generic", "get", "install", "long", "new", "no", "pass", "property", "ret", "super", "template", "var", "with"}
 		fallthrough // to the default case
 	default:
-		addKeywords = append(addKeywords, "ifeq", "ifneq", "endif")
+		addKeywords = append(addKeywords, "endif", "ifeq", "ifneq")
 		delKeywords = append(delKeywords, "require", "build", "package", "super", "type", "set")
 	}
 	// Add extra keywords that are to be syntax highlighted
