@@ -865,9 +865,11 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				e.ClearSearchTerm()
 				e.redraw = true
 				e.redrawCursor = true
-				// Don't break, continue to delete to the left after clearing the search
+				// Don't break, continue to delete to the left after clearing the search,
+				// since Esc can be used to only clear the search.
 				//break
 			}
+
 			undo.Snapshot(e)
 			// Delete the character to the left
 			if e.EmptyLine() {
