@@ -588,7 +588,7 @@ int main(int argc, char* argv[])
         pal[0] = { 0.0, 0.0, 0.0, 1.0 }; // black
         pal[1] = { 0.65, 0.14, 0.16, 1.0 }; // red, used for the "private" keyword (OK)
         pal[2] = { 0.0, 0.2, 0.05, 1.0 }; // green
-        pal[3] = { 0.3, 0.3, 0.0, 1.0 }; // yellow
+        pal[3] = { 0.7, 0.44, 0.1, 1.0 }; // yellow
         pal[4] = { 0.04, 0.04, 0.25, 1.0 }; // blue
         pal[5] = { 0.5, 0.1, 0.1, 1.0 }; // magenta (now red)
         pal[6] = { 0.05, 0.2, 0.2, 1.0 }; // cyan
@@ -609,7 +609,7 @@ int main(int argc, char* argv[])
         pal[0] = { 0.23, 0.25, 0.32, 1.0 }; // black
         pal[1] = { 0.79, 0.34, 0.36, 1.0 }; // red, used for the "private" keyword
         pal[2] = { 0.68, 0.79, 0.59, 1.0 }; // green
-        pal[3] = { 0.97, 0.84, 0.59, 1.0 }; // yellow
+        pal[3] = { 0.87, 0.74, 0.49, 1.0 }; // yellow
         pal[4] = { 0.55, 0.68, 0.80, 1.0 }; // blue
         pal[5] = { 0.70, 0.55, 0.67, 1.0 }; // magenta
         pal[6] = { 0.58, 0.80, 0.86, 1.0 }; // cyan
@@ -617,7 +617,7 @@ int main(int argc, char* argv[])
         pal[8] = { 0.34, 0.38, 0.46, 1.0 }; // dark gray
         pal[9] = { 0.92, 0.30, 0.30, 1.0 }; // light red, used for keywords
         pal[10] = { 0.68, 0.80, 0.59, 1.0 }; // light green
-        pal[11] = { 0.97, 0.84, 0.59, 1.0 }; // light yellow
+        pal[11] = { 1.00, 0.90, 0.65, 1.0 }; // light yellow
         pal[12] = { 0.55, 0.68, 0.90, 1.0 }; // light blue
         pal[13] = { 0.75, 0.60, 0.72, 1.0 }; // light magenta
         pal[14] = { 0.61, 0.78, 0.78, 1.0 }; // light cyan
