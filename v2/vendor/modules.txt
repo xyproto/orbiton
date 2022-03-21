@@ -38,7 +38,7 @@ github.com/xyproto/guessica
 # github.com/xyproto/mode v0.4.0
 ## explicit; go 1.14
 github.com/xyproto/mode
-# github.com/xyproto/syntax v1.10.2
+# github.com/xyproto/syntax v1.10.4
 ## explicit; go 1.14
 github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.5.0

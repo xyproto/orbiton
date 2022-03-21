@@ -118,8 +118,9 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		clearKeywords()
 		addKeywords = policyLanguageWords
 	case mode.Rust:
-		addKeywords = []string{"String", "as", "assert_eq", "char", "fn", "i16", "i32", "i64", "i8", "impl", "loop", "mod", "out", "panic", "u16", "u32", "u64", "u8", "usize"}
-		delKeywords = []string{"build", "byte", "done", "end", "get", "int", "int16", "int32", "int64", "last", "map", "next", "pass", "print", "uint16", "uint32", "uint64", "var"}
+		addKeywords = []string{"String", "assert_eq", "char", "fn", "i16", "i32", "i64", "i8", "impl", "loop", "mod", "out", "panic", "u16", "u32", "u64", "u8", "usize"}
+		// "as" and "mut" are treated as special cases in the syntax package
+		delKeywords = []string{"as", "build", "byte", "done", "end", "get", "int", "int16", "int32", "int64", "last", "map", "mut", "next", "pass", "print", "uint16", "uint32", "uint64", "var"}
 	case mode.Scala:
 		clearKeywords()
 		addKeywords = scalaWords

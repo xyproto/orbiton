@@ -9,7 +9,7 @@ require (
 	github.com/xyproto/env v1.7.0
 	github.com/xyproto/guessica v1.1.0
 	github.com/xyproto/mode v0.4.0
-	github.com/xyproto/syntax v1.10.2
+	github.com/xyproto/syntax v1.10.4
 	github.com/xyproto/termtitle v1.5.0
 	github.com/xyproto/textoutput v1.12.10
 	github.com/xyproto/vt100 v1.9.12

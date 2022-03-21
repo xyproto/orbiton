@@ -41,6 +41,7 @@ const (
 	Protected
 	Dollar
 	AssemblyEnd
+	Mut
 )
 
 //go:generate gostringer -type=Kind
@@ -75,6 +76,7 @@ type TextConfig struct {
 	Public        string
 	Protected     string
 	AssemblyEnd   string
+	Mut           string
 }
 
 // TextPrinter implements Printer interface and is used to produce
@@ -124,6 +126,8 @@ func (c TextConfig) GetClass(kind Kind) string {
 		return c.Protected
 	case AssemblyEnd:
 		return c.AssemblyEnd
+	case Mut:
+		return c.Mut
 	}
 	return ""
 }
@@ -204,6 +208,7 @@ var DefaultTextConfig = TextConfig{
 	Public:        "red",
 	Protected:     "red",
 	AssemblyEnd:   "lightyellow",
+	Mut:           "magenta",
 }
 
 func Print(s *scanner.Scanner, w io.Writer, p Printer, m mode.Mode) error {
@@ -279,21 +284,35 @@ func NewScannerReader(src io.Reader) *scanner.Scanner {
 }
 
 func tokenKind(tok rune, tokText string, inSingleLineComment *bool, m mode.Mode) Kind {
+
 	// Check if we are in a bash-style single line comment
 	if (m == mode.Assembly && tok == ';') || (m != mode.Assembly && m != mode.GoAssembly && m != mode.Clojure && m != mode.Lisp && m != mode.C && m != mode.Cpp && tok == '#') {
 		*inSingleLineComment = true
 	} else if tok == '\n' {
 		*inSingleLineComment = false
 	}
+
 	// Check if this is #include or #define
 	if (m == mode.C || m == mode.Cpp) && (tokText == "include" || tokText == "define" || tokText == "ifdef" || tokText == "ifndef" || tokText == "endif" || tokText == "else") {
 		*inSingleLineComment = false
 		return Keyword
 	}
+
 	// If we are, return the Comment kind
 	if *inSingleLineComment {
 		return Comment
 	}
+
+	// Check if this is the "as" or "mut" keyword, for Rust
+	if m == mode.Rust {
+		switch tokText {
+		case "as":
+			return Type // re-use color
+		case "mut":
+			return Mut
+		}
+	}
+
 	// If not, do the regular switch
 	switch tok {
 	case scanner.Ident:
@@ -310,7 +329,9 @@ func tokenKind(tok rune, tokText string, inSingleLineComment *bool, m mode.Mode)
 		case "class":
 			return Class
 		case "JMP", "jmp", "LEAVE", "leave", "RET", "ret", "CALL", "call":
-			return AssemblyEnd
+			if m == mode.Assembly || m == mode.GoAssembly {
+				return AssemblyEnd
+			}
 		}
 		if r, _ := utf8.DecodeRuneInString(tokText); unicode.IsUpper(r) {
 			return Type

@@ -21,7 +21,7 @@ type Theme struct {
 	SearchHighlight, MultiLineComment, MultiLineString,
 	Git vt100.AttributeColor
 	String, Keyword, Comment, Type, Literal, Punctuation, Plaintext, Tag, TextTag, TextAttrName, TextAttrValue,
-	Decimal, AndOr, Dollar, Star, Class, Private, Protected, Public, Whitespace, AssemblyEnd string
+	Decimal, AndOr, Dollar, Star, Class, Private, Protected, Public, Whitespace, AssemblyEnd, Mut string
 	RainbowParenColors []vt100.AttributeColor
 	MarkdownTextColor, HeaderBulletColor, HeaderTextColor, ListBulletColor, ListTextColor,
 	ListCodeColor, CodeColor, CodeBlockColor, ImageColor, LinkColor, QuoteColor, QuoteTextColor,
@@ -65,6 +65,7 @@ func NewDefaultTheme() Theme {
 		Public:                "darkgreen",
 		Whitespace:            "",
 		AssemblyEnd:           "cyan",
+		Mut:                   "darkyellow",
 		RainbowParenColors:    []vt100.AttributeColor{vt100.LightMagenta, vt100.LightRed, vt100.Yellow, vt100.LightYellow, vt100.LightGreen, vt100.LightBlue, vt100.Red},
 		MarkdownTextColor:     vt100.LightBlue,
 		HeaderBulletColor:     vt100.DarkGray,
@@ -134,6 +135,7 @@ func NewRedBlackTheme() Theme {
 		Public:                "lightwhite",
 		Whitespace:            "",
 		AssemblyEnd:           "darkred",
+		Mut:                   "lightgray",
 		RainbowParenColors:    []vt100.AttributeColor{vt100.LightGray, vt100.White, vt100.Red},
 		MarkdownTextColor:     vt100.LightGray,
 		HeaderBulletColor:     vt100.DarkGray,
@@ -202,6 +204,7 @@ func NewLightTheme() Theme {
 		Public:                "black",
 		Whitespace:            "",
 		AssemblyEnd:           "red",
+		Mut:                   "black",
 		RainbowParenColors:    []vt100.AttributeColor{vt100.Magenta, vt100.Black, vt100.Blue, vt100.Green},
 		MarkdownTextColor:     vt100.Default,
 		HeaderBulletColor:     vt100.DarkGray,
@@ -270,6 +273,7 @@ func NewNoColorTheme() Theme {
 		Public:                "",
 		Whitespace:            "",
 		AssemblyEnd:           "",
+		Mut:                   "",
 		RainbowParenColors:    []vt100.AttributeColor{vt100.Gray},
 		MarkdownTextColor:     vt100.Default,
 		HeaderBulletColor:     vt100.Default,
@@ -329,6 +333,7 @@ func (t Theme) TextConfig() *syntax.TextConfig {
 		Public:        t.Public,
 		Whitespace:    t.Whitespace,
 		AssemblyEnd:   t.AssemblyEnd,
+		Mut:           t.Mut,
 	}
 }
 
