@@ -44,6 +44,7 @@ type Editor struct {
 	debugMode          bool                  // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
 	statusMode         bool                  // display a status line at all times at the bottom of the screen
 	gdb                *gdb.Gdb              // connection to gdb, if debugMode is enabled
+	breakpoint         *Position             // for the breakpoint/jump functionality in debug mode
 	previousX          int                   // previous cursor position
 	previousY          int                   // previous cursor position
 	macro              *Macro                // the contents of the current macro (will be cleared when esc is pressed)

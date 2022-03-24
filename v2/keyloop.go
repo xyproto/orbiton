@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"path/filepath"
 	"strconv"
@@ -13,7 +11,6 @@ import (
 	"unicode"
 
 	"github.com/atotto/clipboard"
-	"github.com/cyrus-and/gdb"
 	"github.com/xyproto/env"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/syntax"
@@ -43,7 +40,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		copyLines         []string  // for the cut/copy/paste functionality
 		previousCopyLines []string  // for checking if a paste is the same as last time
 		bookmark          *Position // for the bookmark/jump functionality
-		breakpoint        *Position // for the breakpoint/jump functionality in debug mode
 		statusMode        bool      // if information should be shown at the bottom
 
 		firstPasteAction = true
@@ -246,16 +242,16 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			e.ClearSearchTerm()
 
 			// ctrl-space was pressed while in debug mode
-			if e.debugMode && e.gdb != nil {
-				status.ClearAll(c)
-				status.SetMessage("step")
-				status.Show(c, e)
-				// Go to the next step in the program
-				e.gdb.Send("step")
-				// continue is also available
-				// see: https://sourceware.org/gdb/onlinedocs/gdb/GDB_002fMI.html
-				break
-			}
+			// 			if e.debugMode && e.gdb != nil {
+			// 				status.ClearAll(c)
+			// 				status.SetMessage("gdb step")
+			// 				status.Show(c, e)
+			// 				// Go to the next step in the program
+			// 				e.gdb.Send("step")
+			// 				// continue is also available
+			// 				// see: https://sourceware.org/gdb/onlinedocs/gdb/GDB_002fMI.html
+			// 				break
+			// 			}
 
 			// ctrl-space was pressed while in Nroff mode
 			if e.mode == mode.Nroff {
@@ -320,39 +316,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					status.ShowNoTimeout(c, e)
 				}
 				if e.debugMode {
-					// Try to start a new gdb session
-					if e.gdb == nil {
-						e.gdb, err = gdb.New(func(notification map[string]interface{}) {
-							notificationText, err := json.Marshal(notification)
-							if err != nil {
-								log.Fatal(err)
-							}
-							logf("%s\n", notificationText)
-						})
-						if err != nil {
-							status.ClearAll(c)
-							status.SetErrorMessage(err.Error())
-							status.Show(c, e)
-							return
-						}
-						if e.gdb == nil {
-							status.ClearAll(c)
-							status.SetErrorMessage("could not start gdb")
-							status.Show(c, e)
-							return
-						}
-						defer e.gdb.Exit()
-						// Load the executable file
-						e.gdb.Send("file-exec-file", outputExecutable)
-						// Set the breakpoint, if it has been set with ctrl-b
-						if breakpoint != nil {
-							e.gdb.Send("break-insert", fmt.Sprintf("%s:%d", absFilename, breakpoint.LineNumber()))
-						}
-						// Start from the top
-						e.gdb.Send("exec-run", "--start")
-						// Ready
-						break
-					}
+					e.StartGDB(c, status, absFilename, outputExecutable)
+					break
 				}
 			}
 		case "c:20": // ctrl-t
@@ -1617,19 +1582,19 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		case "c:2": // ctrl-b, bookmark, unbookmark or jump to bookmark, toggle breakpoint if in debug mode
 			status.Clear(c)
 			if e.debugMode {
-				if breakpoint == nil {
-					breakpoint = e.pos.Copy()
+				if e.breakpoint == nil {
+					e.breakpoint = e.pos.Copy()
 					s := "Placed breakpoint at line " + e.LineNumber().String()
 					status.SetMessage("  " + s + "  ")
-				} else if breakpoint.LineNumber() == e.LineNumber() {
+				} else if e.breakpoint.LineNumber() == e.LineNumber() {
 					// setting a breakpoint at the same line twice: remove the breakpoint
-					s := "Removed breakpoint at line " + breakpoint.LineNumber().String()
+					s := "Removed breakpoint at line " + e.breakpoint.LineNumber().String()
 					status.SetMessage(s)
-					breakpoint = nil
+					e.breakpoint = nil
 				} else {
 					undo.Snapshot(e)
 					// Go to the breakpoint position
-					e.GoToPosition(c, status, *breakpoint)
+					e.GoToPosition(c, status, *e.breakpoint)
 					// Do the redraw manually before showing the status message
 					e.DrawLines(c, true, false)
 					e.redraw = false
