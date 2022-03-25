@@ -32,6 +32,7 @@ var format = map[*exec.Cmd][]string{
 	exec.Command("astyle", "--mode=cs"):                                               {".cs"},
 	exec.Command("prettier", "--tab-width", "4", "-w"):                                {".js", ".ts"},
 	exec.Command("prettier", "--tab-width", "2", "-w"):                                {".css"},
+	exec.Command("shfmt", "-s", "-w", "-i", "2", "-bn", "-ci", "-sr", "-kp"):          {".sh", ".bash", "PKGBUILD"},
 	exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"):                                                                                                 {".lua"},
 	exec.Command("tidy", "-w", "80", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "-xml", "-m"):                                                                                          {".xml"},
 	exec.Command("tidy", "-w", "120", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "--hide-endtags", "yes", "--force-output", "yes", "-ashtml", "-omit", "no", "-xml", "no", "-m", "-c"): {".html", ".htm"},
