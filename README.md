@@ -147,7 +147,7 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-space` - Build program, render to PDF or export to man page (see table below).
 * `ctrl-j` - Join lines (or jump to the bookmark, if set).
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
-* `ctrl-l` - Jump to a specific line number. Follows by `return` to jump to the top. If at the top, press `return` to jump to the bottom.
+* `ctrl-l` - Jump to a specific line number. Press `return` to jump to the top. If at the top, press `return` to jump to the bottom.
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive. Press tab instead of return to search and replace.
 * `esc` - Redraw the screen and clear the last search.
 * `ctrl-b` - Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
