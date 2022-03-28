@@ -45,18 +45,12 @@ func (e *Editor) StartGDB(c *vt100.Canvas, status *StatusBar, absFilename, outpu
 		e.gdb.Send("break-insert", fmt.Sprintf("%s:%d", absFilename, e.breakpoint.LineNumber()))
 	}
 
-	// Start from the top
-	e.gdb.Send("exec-run", "--start")
+	go func() {
+		// Start from the top
+		e.gdb.Send("exec-run", "--start")
+	}()
 
-	//fmt.Println("success 1")
-
+	//logf("%s\n", "not dead")
 	//e.gdb.Exit()
-
-	//fmt.Println("success 2")
-
 	//e.gdb = nil
-
-	//fmt.Println("success 3")
-
-	// Ready
 }
