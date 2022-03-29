@@ -38,6 +38,9 @@ github.com/xyproto/guessica
 # github.com/xyproto/mode v0.4.0
 ## explicit; go 1.14
 github.com/xyproto/mode
+# github.com/xyproto/stringpainter v0.0.0-20210318111459-c4b128af0cc2
+## explicit; go 1.13
+github.com/xyproto/stringpainter
 # github.com/xyproto/syntax v1.10.4
 ## explicit; go 1.14
 github.com/xyproto/syntax

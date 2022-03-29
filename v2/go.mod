@@ -9,6 +9,7 @@ require (
 	github.com/xyproto/env v1.7.0
 	github.com/xyproto/guessica v1.1.0
 	github.com/xyproto/mode v0.4.0
+	github.com/xyproto/stringpainter v0.0.0-20210318111459-c4b128af0cc2
 	github.com/xyproto/syntax v1.10.4
 	github.com/xyproto/termtitle v1.5.0
 	github.com/xyproto/textoutput v1.12.10
