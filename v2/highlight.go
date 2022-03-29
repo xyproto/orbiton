@@ -270,6 +270,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// Regular highlight
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
 					}
+				case mode.Log:
+					coloredString = stringpainter.Colorize(line)
 				case mode.Lisp, mode.Clojure:
 					q.singleQuote = 0
 					// Special case for Lisp single-line comments

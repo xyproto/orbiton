@@ -60,6 +60,7 @@ const (
 	M4             // M4 macros
 	Agda           // Agda
 	Basic          // FreeBasic, Gambas 3
+	Log            // All sorts of log files
 )
 
 // String will return a short lowercase string representing the given editor mode
@@ -175,6 +176,8 @@ func (mode Mode) String() string {
 		return "Agda"
 	case Basic:
 		return "Basic"
+	case Log:
+		return "Log"
 	default:
 		return "?"
 	}

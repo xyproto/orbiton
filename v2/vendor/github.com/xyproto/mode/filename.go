@@ -147,6 +147,8 @@ func Detect(filename string) Mode {
 			mode = JavaScript
 		case ".ts":
 			mode = TypeScript
+		case ".log":
+			mode = Log
 		default:
 			mode = Blank
 		}
