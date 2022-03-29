@@ -241,17 +241,28 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// Clear the current search term
 			e.ClearSearchTerm()
 
-			// ctrl-space was pressed while in debug mode
-			// 			if e.debugMode && e.gdb != nil {
-			// 				status.ClearAll(c)
-			// 				status.SetMessage("gdb step")
-			// 				status.Show(c, e)
-			// 				// Go to the next step in the program
-			// 				e.gdb.Send("step")
-			// 				// continue is also available
-			// 				// see: https://sourceware.org/gdb/onlinedocs/gdb/GDB_002fMI.html
-			// 				break
-			// 			}
+			// Continue stepping
+			if e.debugMode && e.gdb != nil {
+				status.SetMessage("step")
+				status.Show(c, e)
+
+				logf("%s\n", "Stepping forward...")
+				// continue stepping
+				s, err := e.DebugContinue()
+				if err != nil {
+					logf("could not continue: %s\n", s)
+				} else {
+					logf("%s", "could continue\n")
+				}
+				// Log the current position
+				s, err = e.DebugFrame()
+				if err != nil {
+					logf("could not get frame: %s\n", s)
+				} else {
+					logf("could get frame: %s\n", s)
+				}
+				break
+			}
 
 			// ctrl-space was pressed while in Nroff mode
 			if e.mode == mode.Nroff {
@@ -308,16 +319,26 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				}
 				status.ShowNoTimeout(c, e)
 			} else if performedAction && compiled {
+				// ctrl-space was pressed while in debug mode, and without a debug session running
+				if e.debugMode && e.gdb == nil {
+					// Start GDB execution from the top
+					logf("Compiled and started gdb for %s and %s\n", absFilename, outputExecutable)
+					s, err := e.DebugStart(c, status, absFilename, outputExecutable)
+					if err != nil || e.gdb == nil {
+						logf("gdb was NOT started: %s\n", s)
+						status.SetMessage("could not start gdb")
+					} else {
+						logf("gdb was started: %s\n", s)
+						status.SetMessage("started gdb")
+					}
+					break
+				}
 				// Everything worked out
 				if statusMessage != "" {
 					// Got a status message (this may not be the case for build/export processes running in the background)
 					// NOTE: Do not clear the status message first here!
 					status.SetMessage(statusMessage)
 					status.ShowNoTimeout(c, e)
-				}
-				if e.debugMode {
-					e.StartGDB(c, status, absFilename, outputExecutable)
-					break
 				}
 			}
 		case "c:20": // ctrl-t
