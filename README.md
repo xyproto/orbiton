@@ -215,7 +215,7 @@ CXX can be downloaded here: [GitHub project page for CXX](https://github.com/xyp
 
 This is a brand new feature and needs more testing.
 
-* If `gdb` is installed, it's possible to select "Debug mode" from the `ctrl-o` menu and step through a program with `ctrl-space`, or set a breakpoint with `ctrl-b` and continue with `ctrl-space`.
+* If `gdb` is installed, it's possible to select "Debug mode" from the `ctrl-o` menu and then build and step through a program with `ctrl-space`, or set a breakpoint with `ctrl-b` and continue with `ctrl-space`.
 * Messages printed to stdout are displayed as a status message when that line is reached.
 * An indication of which line the program is at has not yet been added, and is a work in progress.
 * There are status messages indicating when the debug session is started and ended.
