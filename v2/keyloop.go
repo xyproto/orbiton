@@ -1512,10 +1512,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 				status.Clear(c)
 
-				if env.Has("WAYLAND_DISPLAY") && which("wl-paste") == "" { // Wayland
+				if env.Has("WAYLAND_DISPLAY") && which("wl-paste") == "" { // Wayland + wl-paste not found
 					status.SetErrorMessage("The wl-paste utility (from wl-clipboard) is missing!")
 					missingUtility = true
-				} else if env.Has("DISPLAY") && which("xclip") == "" {
+				} else if env.Has("DISPLAY") && which("xclip") == "" { // X + xclip not found
 					status.SetErrorMessage("The xclip utility is missing!")
 					missingUtility = true
 				}
