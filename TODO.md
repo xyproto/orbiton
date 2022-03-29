@@ -1,5 +1,11 @@
 # TODO
 
+## Building and testing programs
+
+- [ ] Indicate which line the program is at when running in a debug session.
+- [ ] Jump to error when building with `ctrl-space` and `cargo`.
+- [ ] Fix output parsing when running `go test` with ctrl-space.
+
 ## Saving and loading
 
 - [ ] When opening a binary file / unrecognized encoding, do no replacements when saving.
@@ -18,11 +24,6 @@
 - [ ] Plugins. When there's `txt2something` and `something2txt`, o should be able to edit "something" files in general.
       This could be used for hex editing, editing ELF files etc.
 - [ ] When the editor executable is `list`, just list the contents and exit?
-
-## Building and testing programs
-
-- [ ] Jump to error when building with `ctrl-space` and `cargo`.
-- [ ] Fix output parsing when running `go test` with ctrl-space.
 
 ## Code navigation
 
