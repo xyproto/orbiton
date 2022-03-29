@@ -523,6 +523,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		// Analyze all lines
 		for i, line := range lines {
 			// Go, C++, Haskell, Kotlin and more
+			if strings.Contains(line, "fatal error") {
+				return line, true, false, ""
+			}
 			if strings.Count(line, ":") >= 3 && (strings.Contains(line, "error:") || strings.Contains(line, errorMarker)) {
 				fields := strings.SplitN(line, ":", 4)
 				baseErrorFilename := filepath.Base(fields[0])
@@ -612,12 +615,12 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	fullPathExe1 := filepath.Join(sourceDir, exeFirstName)
 	fullPathExe2 := filepath.Join(sourceDir, sourceDirName)
 
+	// TODO: Make more educated guesses for cargo and other build systems where the executable ends up elsewhere
 	if exists(fullPathExe1) {
 		return "Success", true, true, exeFirstName
 	} else if exists(fullPathExe2) {
 		return "Success", true, true, sourceDirName
 	}
 
-	// TODO: Make more educated guesses for cargo and other build systems where the executable ends up elsewhere
-	return "Success", true, true, exeFirstName
+	return "Could not compile", true, true, ""
 }
