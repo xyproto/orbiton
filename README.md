@@ -70,7 +70,7 @@ These features are unique to `o`, as far as I am aware:
 * Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy the rest (until a blank line).
 * Open or close a portal with `ctrl-r`. When a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
 * Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages.
-* Cycle git rebase keywords with `ctrl-r`, when an interactive git rebase session is in progress.
+* Cycle git rebase keywords with `ctrl-r` or `ctrl-w`, when an interactive git rebase session is in progress.
 * Jump to a line with `ctrl-l`. Either enter a number to jump to a line or just press `return` to jump to the top. Press `ctrl-l` and `return` again to jump to the bottom.
 * If tab completion in the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
 * For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
@@ -87,7 +87,7 @@ These features are unique to `o`, as far as I am aware:
 * Will jump to the last visited line when opening a recent file.
 * Is provided as a single self-contained executable.
 * Loads faster than both `vim` and `emacs`, for small files.
-* Can render text to PDF.
+* Can render text to PDF either by itself or by using `pandoc`.
 * Tested with `alacritty`, `st`, `urxvt`, `konsole`, `zutty` and `xfce4-terminal`.
 * Tested on Arch Linux, Debian and FreeBSD.
 * Never asks before saving or quitting. Be careful!
@@ -121,6 +121,7 @@ These features are unique to `o`, as far as I am aware:
 * Some unicode runes may disrupt the text flow. This is generally not a problem for editing code and configuration files, but may be an issue when editing files that contains text in many languages.
 * `o` may have issues with large files (of several MB+). For normal text files or source code files, this is a non-issue.
 * Using backspace near the end of lines that are longer than the terminal width may cause the cursor to jump.
+* Using `ctrl-\` to comment or uncomment code at the very last line of a file may result in odd behavior.
 * Middle-click pasting (instead of pasting with `ctrl-v`) may only paste the first character.
 * The smart indentation is not always smart.
 
