@@ -17,7 +17,10 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-var lastCommandFile = filepath.Join(userCacheDir, "o/last_command.sh")
+var (
+	lastCommandFile = filepath.Join(userCacheDir, "o/last_command.sh")
+	foundGDB        = which("gdb") != ""
+)
 
 // UserSave saves the file and the location history
 func (e *Editor) UserSave(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
@@ -245,21 +248,23 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		})
 	}
 
-	// Debug mode on/off
-	if e.debugMode {
-		actions.Add("Exit debug mode", func() {
-			status.Clear(c)
-			status.SetMessage("Debug mode disabled")
-			status.Show(c, e)
-			e.debugMode = false
-		})
-	} else {
-		actions.Add("Debug mode", func() {
-			e.debugMode = true
-			status.Clear(c)
-			status.SetMessage("Debug mode enabled")
-			status.Show(c, e)
-		})
+	// Debug mode on/off, if gdb is found
+	if foundGDB {
+		if e.debugMode {
+			actions.Add("Exit debug mode", func() {
+				status.Clear(c)
+				status.SetMessage("Debug mode disabled")
+				status.Show(c, e)
+				e.debugMode = false
+			})
+		} else {
+			actions.Add("Debug mode for C and C++", func() {
+				e.debugMode = true
+				status.Clear(c)
+				status.SetMessage("Debug mode enabled")
+				status.Show(c, e)
+			})
+		}
 	}
 
 	// Add the syntax highlighting toggle menu item
