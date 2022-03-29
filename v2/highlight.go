@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	"github.com/xyproto/mode"
+	"github.com/xyproto/stringpainter"
 	"github.com/xyproto/syntax"
 	"github.com/xyproto/textoutput"
 	"github.com/xyproto/vt100"
