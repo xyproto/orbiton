@@ -150,7 +150,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	)
 
 	if e.debugMode {
-		progressStatusMessage = "Debug build"
+		progressStatusMessage = ""
 	}
 
 	if e.mode == mode.HTML || e.mode == mode.XML {

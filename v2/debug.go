@@ -9,20 +9,15 @@ import (
 	"path/filepath"
 
 	"github.com/cyrus-and/gdb"
-	"github.com/xyproto/vt100"
 )
 
 var gdbOutput bytes.Buffer
 
 // DebugStart will start a new debug session, using gdb.
 // Will end the existing session first if e.gdb != nil.
-func (e *Editor) DebugStart(c *vt100.Canvas, status *StatusBar, sourceFilename, executableFilename string) (string, error) {
-
+func (e *Editor) DebugStart(sourceFilename, executableFilename string) (string, error) {
 	// End any existing sessions
-	if e.gdb != nil {
-		e.gdb.Exit()
-		e.gdb = nil
-	}
+	e.DebugEnd()
 
 	// Change directory to the sourcefile, temporarily
 	curDir, err := os.Getwd()
@@ -33,9 +28,6 @@ func (e *Editor) DebugStart(c *vt100.Canvas, status *StatusBar, sourceFilename, 
 		}
 		defer os.Chdir(curDir)
 	}
-
-	cd2, _ := os.Getwd()
-	logf("CURRENT DIRECTORY: %s\n", cd2)
 
 	// Start a new gdb session
 	e.gdb, err = gdb.New(nil)
@@ -48,21 +40,10 @@ func (e *Editor) DebugStart(c *vt100.Canvas, status *StatusBar, sourceFilename, 
 		return "", errors.New("could not start gdb even though err == nil")
 	}
 
-	// 	// Set the source directory
-	// 	sourceDir := filepath.Dir(sourceFilename)
-	// 	if retvalMap, err := e.gdb.CheckedSend("dir", sourceDir); err != nil {
-	// 		return fmt.Sprintf("%v", retvalMap), err
-	// 	}
-
 	// Load the executable file
 	if retvalMap, err := e.gdb.CheckedSend("file-exec-and-symbols", executableFilename); err != nil {
 		return fmt.Sprintf("%v", retvalMap), err
 	}
-
-	// 	// Load the source file
-	// 	if retvalMap, err := e.gdb.CheckedSend("file", filepath.Base(sourceFilename)); err != nil {
-	// 		return fmt.Sprintf("%v", retvalMap), err
-	// 	}
 
 	// Pass in arguments
 	//e.gdb.Send("exec-arguments", "--version")
@@ -77,45 +58,42 @@ func (e *Editor) DebugStart(c *vt100.Canvas, status *StatusBar, sourceFilename, 
 	// Start from the top, in a goroutine
 	//go func() {
 	if _, err := e.gdb.CheckedSend("exec-run", "--start"); err != nil {
-		status.SetMessage("Could not exec-run with gdb")
-		status.Show(c, e)
-		logf("could not exec-run: %s\n", err)
-		logf("gdb stdout: %s\n", gdbOutput.String())
+		//logf("could not exec-run: %s\n", err)
 		return gdbOutput.String(), err
 	}
-	status.SetMessage("Could exec-run with gdb")
-	status.Show(c, e)
+
+	//logf("%s\n", "could exec-run")
 	//logf("gdb stdout: %s\n", gdbOutput.String())
-	//}()
 
 	return "started gdb", nil
 }
 
 // DebugContinue will continue the execution to the next breakpoint or to the end.
-// e.gdb must not be nil.
+// e.gdb must not be nil. Returns whatever was outputted to gdb stdout.
 func (e *Editor) DebugContinue() (string, error) {
-	retvalMap, err := e.gdb.CheckedSend("exec-continue")
+	_, err := e.gdb.CheckedSend("exec-continue")
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%v", retvalMap), nil
+	return gdbOutput.String(), nil
 }
 
 // DebugStep will continue the execution by stepping to the next line.
-// e.gdb must not be nil.
+// e.gdb must not be nil. Returns whatever was outputted to gdb stdout.
 func (e *Editor) DebugStep() (string, error) {
-	retvalMap, err := e.gdb.CheckedSend("exec-step")
+	_, err := e.gdb.CheckedSend("exec-step")
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%v", retvalMap), nil
+	return gdbOutput.String(), nil
 }
 
-// DebugFrame will return the current gdb frame as a string
-func (e *Editor) DebugFrame() (string, error) {
-	retvalMap, err := e.gdb.CheckedSend("frame")
-	if err != nil {
-		return "", err
+// DebugEnd will end the current gdb session
+func (e *Editor) DebugEnd() {
+	if e.gdb != nil {
+		e.gdb.Exit()
 	}
-	return fmt.Sprintf("%v", retvalMap), nil
+	e.gdb = nil
+	// Clear any existing output
+	gdbOutput.Reset()
 }
