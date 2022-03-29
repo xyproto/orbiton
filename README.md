@@ -474,6 +474,10 @@ Install:
 
     make gui-install
 
+Installing a symlink for launching `ko` with a light theme:
+
+    ln -sf /usr/bin/ko /usr/bin/lo
+
 ## Terminal settings
 
 ### Konsole
