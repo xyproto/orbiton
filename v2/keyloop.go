@@ -241,27 +241,50 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// Clear the current search term
 			e.ClearSearchTerm()
 
-			// Continue stepping
+			// debug stepping
 			if e.debugMode && e.gdb != nil {
-				status.SetMessage("step")
-				status.Show(c, e)
+				// If we have a breakpoint, continue to it
+				if e.breakpoint != nil { // exists
+					status.SetMessage("continue")
+					status.Show(c, e)
+					logf("%s\n", "Continuing forward...")
+					// continue stepping
+					s, err := e.DebugContinue()
+					if err != nil {
+						logf("could not continue: %s\n", s)
+					} else {
+						logf("%s", "could continue\n")
+					}
+					// Log the current position
+					s, err = e.DebugFrame()
+					if err != nil {
+						logf("could not get frame: %s\n", s)
+					} else {
+						logf("could get frame: %s\n", s)
+					}
+					break
 
-				logf("%s\n", "Stepping forward...")
-				// continue stepping
-				s, err := e.DebugContinue()
-				if err != nil {
-					logf("could not continue: %s\n", s)
-				} else {
-					logf("%s", "could continue\n")
+				} else { // if not, make one step
+					status.SetMessage("step")
+					status.Show(c, e)
+					logf("%s\n", "Stepping forward...")
+					// continue stepping
+					s, err := e.DebugStep()
+					if err != nil {
+						logf("could not step: %s\n", s)
+					} else {
+						logf("%s", "could step\n")
+					}
+					// Log the current position
+					s, err = e.DebugFrame()
+					if err != nil {
+						logf("could not get frame: %s\n", s)
+					} else {
+						logf("could get frame: %s\n", s)
+					}
+					break
+
 				}
-				// Log the current position
-				s, err = e.DebugFrame()
-				if err != nil {
-					logf("could not get frame: %s\n", s)
-				} else {
-					logf("could get frame: %s\n", s)
-				}
-				break
 			}
 
 			// ctrl-space was pressed while in Nroff mode
@@ -319,26 +342,40 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				}
 				status.ShowNoTimeout(c, e)
 			} else if performedAction && compiled {
-				// ctrl-space was pressed while in debug mode, and without a debug session running
-				if e.debugMode && e.gdb == nil {
-					// Start GDB execution from the top
-					logf("Compiled and started gdb for %s and %s\n", absFilename, outputExecutable)
-					s, err := e.DebugStart(c, status, absFilename, outputExecutable)
-					if err != nil || e.gdb == nil {
-						logf("gdb was NOT started: %s\n", s)
-						status.SetMessage("could not start gdb")
-					} else {
-						logf("gdb was started: %s\n", s)
-						status.SetMessage("started gdb")
-					}
-					break
-				}
 				// Everything worked out
 				if statusMessage != "" {
 					// Got a status message (this may not be the case for build/export processes running in the background)
 					// NOTE: Do not clear the status message first here!
 					status.SetMessage(statusMessage)
 					status.ShowNoTimeout(c, e)
+				}
+
+				// ctrl-space was pressed while in debug mode, and without a debug session running
+				if e.debugMode && e.gdb == nil {
+					status.ClearAll(c)
+
+					// Find the full path to the compiled executable, and check that it exists
+					outputExecutableAbsPath := filepath.Join(filepath.Dir(absFilename), outputExecutable)
+
+					if !exists(outputExecutableAbsPath) {
+						logf("Could not find %s\n", outputExecutableAbsPath)
+						status.SetMessage("could not find " + outputExecutableAbsPath)
+						status.ShowNoTimeout(c, e)
+						break
+					}
+
+					// Start GDB execution from the top
+					logf("Compiled and started gdb for %s and %s\n", absFilename, outputExecutableAbsPath)
+					s, err := e.DebugStart(c, status, absFilename, outputExecutableAbsPath)
+					if err != nil || e.gdb == nil {
+						logf("debug session not started: %s: %s\n", s, err)
+						status.SetMessage("issues starting the debug session")
+					} else {
+						logf("debug sessions started: %s\n", s)
+						status.SetMessage("started debug session")
+					}
+					status.Show(c, e)
+					break
 				}
 			}
 		case "c:20": // ctrl-t

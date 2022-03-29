@@ -117,6 +117,11 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		}
 	)
 
+	// Compile differently when in debug mode, for some file extensions
+	if e.debugMode {
+		build[exec.Command("cxx", "debug")] = []string{".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"} // C++ and C
+	}
+
 	// Check if one of the build commands are applicable for this filename
 	baseFilename := filepath.Base(filename)
 	var foundCommand exec.Cmd // exec.Cmd instead of *exec.Cmd, on purpose, to get a new stdin and stdout every time
@@ -144,16 +149,20 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		kotlinNative          bool
 	)
 
+	if e.debugMode {
+		progressStatusMessage = "Debug build"
+	}
+
 	if e.mode == mode.HTML || e.mode == mode.XML {
 		progressStatusMessage = "Displaying"
 	}
 
-	baseDirName := exeFirstName
 	absFilename, err := filepath.Abs(filename)
-	if err == nil { // success
-		dirName := filepath.Dir(absFilename)
-		baseDirName = filepath.Base(dirName)
+	if err != nil {
+		return err.Error(), true, false, ""
 	}
+	sourceDir := filepath.Dir(absFilename)
+	baseDirName := filepath.Base(sourceDir)
 
 	// Special per-language considerations
 	if e.mode == mode.Rust && (!exists("Cargo.toml") && !exists("../Cargo.toml")) {
@@ -599,8 +608,16 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		return "Error: " + lastLine, false, false, ""
 	}
 
-	if !exists(exeFirstName) && exists(baseDirName) {
-		return "Success", true, true, baseDirName
+	sourceDirName := filepath.Base(sourceDir)
+	fullPathExe1 := filepath.Join(sourceDir, exeFirstName)
+	fullPathExe2 := filepath.Join(sourceDir, sourceDirName)
+
+	if exists(fullPathExe1) {
+		return "Success", true, true, exeFirstName
+	} else if exists(fullPathExe2) {
+		return "Success", true, true, sourceDirName
 	}
+
+	// TODO: Make more educated guesses for cargo and other build systems where the executable ends up elsewhere
 	return "Success", true, true, exeFirstName
 }
