@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/cyrus-and/gdb"
+	"github.com/xyproto/gdb"
 )
 
 var (

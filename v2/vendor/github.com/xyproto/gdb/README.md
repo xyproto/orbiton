@@ -1,5 +1,6 @@
-gdb
-===
+# gdb
+
+NOTE: This is a fork of github.com/cyrus-and/gdb.
 
 Package `gdb` provides a convenient way to interact with the GDB/MI
 interface. The methods offered by this module are very low level, the main goals
@@ -26,35 +27,30 @@ Example
 package main
 
 import (
-	"fmt"
-	"github.com/cyrus-and/gdb"
-	"io"
-	"os"
+    "fmt"
+    "github.com/xyproto/gdb"
+    "io"
+    "os"
 )
 
 func main() {
-	// start a new instance and pipe the target output to stdout
-	gdb, _ := gdb.New(nil)
-	go io.Copy(os.Stdout, gdb)
+    // start a new instance and pipe the target output to stdout
+    gdb, _ := gdb.New(nil)
+    go io.Copy(os.Stdout, gdb)
 
-	// evaluate an expression
-	gdb.Send("var-create", "x", "@", "40 + 2")
-	fmt.Println(gdb.Send("var-evaluate-expression", "x"))
+    // evaluate an expression
+    gdb.Send("var-create", "x", "@", "40 + 2")
+    fmt.Println(gdb.Send("var-evaluate-expression", "x"))
 
-	// load and run a program
-	gdb.Send("file-exec-file", "wc")
-	gdb.Send("exec-arguments", "-w")
-	gdb.Write([]byte("This sentence has five words.\n\x04")) // EOT
-	gdb.Send("exec-run")
+    // load and run a program
+    gdb.Send("file-exec-file", "wc")
+    gdb.Send("exec-arguments", "-w")
+    gdb.Write([]byte("This sentence has five words.\n\x04")) // EOT
+    gdb.Send("exec-run")
 
-	gdb.Exit()
+    gdb.Exit()
 }
 ```
-
-Installation
-------------
-
-    go get github.com/cyrus-and/gdb
 
 Documentation
 -------------
@@ -149,3 +145,5 @@ Resources
 [gdb-on-mac]: http://sourceware.org/gdb/wiki/BuildingOnDarwin
 [pty]: https://github.com/kr/pty
 [gdb-mi]: https://sourceware.org/gdb/onlinedocs/gdb/GDB_002fMI.html
+
+* Version: 1.0.0
