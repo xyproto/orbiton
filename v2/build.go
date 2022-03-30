@@ -167,9 +167,12 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	// Special per-language considerations
 	if e.mode == mode.Rust && (!exists("Cargo.toml") && !exists("../Cargo.toml")) {
 		// Use rustc instead of cargo if Cargo.toml is missing and the extension is .rs
-		if which("rustc") != "" {
-
-			cmd = *exec.Command("rustc", filename, "-o", baseDirName)
+		if rustcExecutable := which("rustc"); rustcExecutable != "" {
+			if e.debugMode {
+				cmd = *exec.Command(rustcExecutable, absFilename, "-g", "-o", filepath.Join(sourceDir, baseDirName))
+			} else {
+				cmd = *exec.Command(rustcExecutable, absFilename, "-o", filepath.Join(sourceDir, baseDirName))
+			}
 		}
 	} else if e.mode == mode.Clojure && !exists("project.clj") && exists("../project.clj") {
 		cmd.Path = filepath.Clean(filepath.Join(filepath.Dir(filename), ".."))

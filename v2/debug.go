@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strconv"
 
 	"github.com/xyproto/gdb"
@@ -20,7 +19,10 @@ var (
 
 // DebugStart will start a new debug session, using gdb.
 // Will end the existing session first if e.gdb != nil.
-func (e *Editor) DebugStart(sourceFilename, executableFilename string) (string, error) {
+func (e *Editor) DebugStart(directory, sourceBaseFilename, executableBaseFilename string) (string, error) {
+
+	//logf("debug: dir %s, src %s, exe %s\n", directory, sourceBaseFilename, executableBaseFilename)
+
 	// End any existing sessions
 	e.DebugEnd()
 
@@ -28,16 +30,16 @@ func (e *Editor) DebugStart(sourceFilename, executableFilename string) (string, 
 	var err error
 	originalDirectory, err = os.Getwd()
 	if err == nil { // cd success
-		err = os.Chdir(filepath.Dir(sourceFilename))
+		err = os.Chdir(directory)
 		if err != nil {
-			return "", errors.New("could not change directory to " + filepath.Dir(sourceFilename))
+			return "", errors.New("could not change directory to " + directory)
 		}
 	}
 
-	// Use gdb-rust if we are debugging Rust
-	gdbExecutable := "gdb"
+	// Use rust-gdb if we are debugging Rust
+	gdbExecutable := which("gdb")
 	if e.mode == mode.Rust {
-		gdbExecutable = "gdb-rust"
+		gdbExecutable = which("rust-gdb")
 	}
 
 	// Start a new gdb session
@@ -71,7 +73,7 @@ func (e *Editor) DebugStart(sourceFilename, executableFilename string) (string, 
 	go io.Copy(&gdbOutput, e.gdb)
 
 	// Load the executable file
-	if retvalMap, err := e.gdb.CheckedSend("file-exec-and-symbols", executableFilename); err != nil {
+	if retvalMap, err := e.gdb.CheckedSend("file-exec-and-symbols", executableBaseFilename); err != nil {
 		return fmt.Sprintf("%v", retvalMap), err
 	}
 
@@ -80,7 +82,7 @@ func (e *Editor) DebugStart(sourceFilename, executableFilename string) (string, 
 
 	// Pass the breakpoint, if it has been set with ctrl-b
 	if e.breakpoint != nil {
-		if retvalMap, err := e.gdb.CheckedSend("break-insert", fmt.Sprintf("%s:%d", sourceFilename, e.breakpoint.LineNumber())); err != nil {
+		if retvalMap, err := e.gdb.CheckedSend("break-insert", fmt.Sprintf("%s:%d", sourceBaseFilename, e.breakpoint.LineNumber())); err != nil {
 			return fmt.Sprintf("%v", retvalMap), err
 		}
 	}

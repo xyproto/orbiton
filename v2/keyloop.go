@@ -354,7 +354,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					status.ClearAll(c)
 
 					// Find the full path to the compiled executable, and check that it exists
-					outputExecutableAbsPath := filepath.Join(filepath.Dir(absFilename), outputExecutable)
+					outputExecutableAbsPath := filepath.Join(filepath.Dir(absFilename), filepath.Base(outputExecutable))
 					if !exists(outputExecutableAbsPath) {
 						status.SetMessage("Could not find " + outputExecutableAbsPath)
 						status.ShowNoTimeout(c, e)
@@ -362,7 +362,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					}
 
 					// Start GDB execution from the top
-					msg, err := e.DebugStart(absFilename, outputExecutableAbsPath)
+					msg, err := e.DebugStart(filepath.Dir(absFilename), filepath.Base(absFilename), filepath.Base(outputExecutableAbsPath))
 					if err != nil || e.gdb == nil {
 						status.ClearAll(c)
 						status.SetErrorMessage("Could not start debugging: " + msg + ", " + err.Error())
