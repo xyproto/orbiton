@@ -622,5 +622,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		return "Success", true, true, sourceDirName
 	}
 
-	return "Could not compile", true, true, ""
+	// TODO: Make the checks above more definite, and make them per mode, not per extension.
+	//       This is really only "maybe success".
+	return "Success", true, true, ""
 }
