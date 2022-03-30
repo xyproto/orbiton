@@ -1,12 +1,11 @@
 package gdb
 
 import (
+	"github.com/kr/pty"
 	"io"
 	"os"
 	"os/exec"
 	"sync"
-
-	"github.com/kr/pty"
 )
 
 // Gdb represents a GDB instance. It implements the ReadWriter interface to
@@ -34,6 +33,11 @@ type Gdb struct {
 // callback used to deliver to the client the asynchronous notifications sent by
 // GDB. It returns a pointer to the newly created instance handled or an error.
 func New(onNotification NotificationCallback) (*Gdb, error) {
+	return NewCustom("gdb", onNotification)
+}
+
+// Like New, but allows to specify the GDB executable path.
+func NewCustom(gdbPath string, onNotification NotificationCallback) (*Gdb, error) {
 	// open a new terminal (master and slave) for the target program, they are
 	// both saved so that they are nore garbage collected after this function
 	// ends
@@ -43,7 +47,7 @@ func New(onNotification NotificationCallback) (*Gdb, error) {
 	}
 
 	// create GDB command
-	cmd := []string{"gdb", "--nx", "--quiet", "--interpreter=mi2", "--tty", pts.Name()}
+	cmd := []string{gdbPath, "--nx", "--quiet", "--interpreter=mi2", "--tty", pts.Name()}
 	gdb, err := NewCmd(cmd, onNotification)
 
 	if err != nil {
@@ -58,40 +62,10 @@ func New(onNotification NotificationCallback) (*Gdb, error) {
 	return gdb, nil
 }
 
-// NewCustom creates and starts a new GDB instance. onNotification if not nil is the
-// callback used to deliver to the client the asynchronous notifications sent by
-// GDB. It returns a pointer to the newly created instance handled or an error.
-// executable is the name of or path to a custom gdb executable.
-func NewCustom(executable string, onNotification NotificationCallback) (*Gdb, error) {
-	// open a new terminal (master and slave) for the target program, they are
-	// both saved so that they are nore garbage collected after this function
-	// ends
-	ptm, pts, err := pty.Open()
-	if err != nil {
-		return nil, err
-	}
-
-	// create GDB command
-	cmd := []string{executable, "--nx", "--quiet", "--interpreter=mi2", "--tty", pts.Name()}
-	gdb, err := NewCmd(cmd, onNotification)
-
-	if err != nil {
-		ptm.Close()
-		pts.Close()
-		return nil, err
-	}
-
-	gdb.ptm = ptm
-	gdb.pts = pts
-
-	return gdb, nil
-}
-
-// NewCmd creates a new GDB instance like New, but allows explicitely
-// passing the gdb command to run (including all arguments). cmd is a
-// which is passed as-is to exec.Command, so the first element should be
-// the command to run, and the remaining elements should each contain a
-// single argument.
+// NewCmd creates a new GDB instance like New, but allows explicitely passing
+// the gdb command to run (including all arguments). cmd is passed as-is to
+// exec.Command, so the first element should be the command to run, and the
+// remaining elements should each contain a single argument.
 func NewCmd(cmd []string, onNotification NotificationCallback) (*Gdb, error) {
 	gdb := Gdb{onNotification: onNotification}
 

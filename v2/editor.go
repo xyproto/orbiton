@@ -11,7 +11,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/xyproto/gdb"
+	"github.com/cyrus-and/gdb"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )

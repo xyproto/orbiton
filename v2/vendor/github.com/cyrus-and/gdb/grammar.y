@@ -1,5 +1,4 @@
 // -*- go -*-
-//go:generate go tool yacc -o grammar.go grammar.y
 %{
     package gdb
 

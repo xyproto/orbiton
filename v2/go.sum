@@ -6,7 +6,8 @@ github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d/go.mod h1:ma
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
 github.com/creack/pty v1.1.18 h1:n56/Zwd5o6whRC5PMGretI4IdRLlmBXYNjScPaBgsbY=
 github.com/creack/pty v1.1.18/go.mod h1:MOBLtS5ELjhRRrroQr9kyvTxUAFNvYEK993ew/Vr4O4=
-github.com/cyrus-and/gdb v0.0.0-20180213171718-0306a029f42f/go.mod h1:9K120i9a8gTrRiYUpFXiLMBNH3yFnNs8J66+FWOtPYE=
+github.com/cyrus-and/gdb v0.0.0-20220330125739-a4dd9a2c7c49 h1:UhrzVfSepg+uSRrI4Up8ncKOSVO6158bFADUhN99PeY=
+github.com/cyrus-and/gdb v0.0.0-20220330125739-a4dd9a2c7c49/go.mod h1:wyNWmFg5S+hlh6zOWj3iRW+TQ3NeSmOzgYZNKOtANhc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/jung-kurt/gofpdf v1.0.0/go.mod h1:7Id9E/uU8ce6rXgefFLlgrJj/GYY22cpxn+r32jIOes=
 github.com/jung-kurt/gofpdf v1.16.2 h1:jgbatWHfRlPYiK85qgevsZTHviWXKwB1TTiKdz5PtRc=
@@ -36,8 +37,6 @@ github.com/urfave/cli/v2 v2.2.0/go.mod h1:SE9GqnLQmjVa0iPEY0f1w3ygNIYcIJ0OKPMoW2
 github.com/xyproto/benchmarked v0.3.0/go.mod h1:4H4a1k1EsFmliut59gNc8RO2N2IIhl74XqfW0AVjWbk=
 github.com/xyproto/env v1.7.0 h1:TJHxvnXyBTomn7e/U2wLIiGn2oq0g83+b2F6jo5Hh0g=
 github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
-github.com/xyproto/gdb v1.0.0 h1:9u7PiP3y6GEv1FduinBgmMwPfx80zmJduZlda+V0Mgs=
-github.com/xyproto/gdb v1.0.0/go.mod h1:DxhyR/IGv8Lfz6Kq1vjlF8xELQDmlFHoz9kIcYWG+Mk=
 github.com/xyproto/guessica v1.1.0 h1:u//yWmEiW1En0kNHcj4rT1HADOqz47SNR/qx6D9s40g=
 github.com/xyproto/guessica v1.1.0/go.mod h1:ZC0dOFJO4zuo3+9AaUQ741wCMlKmGERhIQLDYSBIInE=
 github.com/xyproto/mode v0.4.1 h1:zphXoimXeU9jeWNPBWnYXbni+zBUccEvkuECXPzzhNs=
