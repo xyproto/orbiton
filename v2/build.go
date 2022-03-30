@@ -94,7 +94,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		build = map[*exec.Cmd][]string{
 			exec.Command("go", "build"):                                                      {".go"},                                                     // Go
 			exec.Command("cxx"):                                                              {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"}, // C++ and C
-			exec.Command("zig", "build"):                                                     {".zig"},                                                    // Zig
+			exec.Command("zig", "build", "-O", "ReleaseSafe"):                                {".zig"},                                                    // Zig
 			exec.Command("v", filename):                                                      {".v"},                                                      // V
 			exec.Command("cargo", "build"):                                                   {".rs"},                                                     // Rust
 			exec.Command("lein", "uberjar"):                                                  {".clj", ".cljs", ".clojure"},                               // Clojure
@@ -120,6 +120,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	// Compile differently when in debug mode, for some file extensions
 	if e.debugMode {
 		build[exec.Command("cxx", "debug")] = []string{".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"} // C++ and C
+		build[exec.Command("zig", "build", "-O", "Debug")] = []string{".zig"}                                     // Zig
 	}
 
 	// Check if one of the build commands are applicable for this filename
@@ -188,7 +189,10 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			if err == nil { // success
 				sourceCode = string(sourceData)
 			}
-			cmd = *exec.Command("zig", "build-exe", "-lc", filename, "--name", baseDirName, "--cache-dir", zigCacheDir)
+			cmd = *exec.Command("zig", "build-exe", "-O", "ReleaseSafe", "-lc", filename, "--name", baseDirName, "--cache-dir", zigCacheDir)
+			if e.debugMode {
+				cmd = *exec.Command("zig", "build-exe", "-O", "Debug", "-lc", filename, "--name", baseDirName, "--cache-dir", zigCacheDir)
+			}
 			// TODO: Find a better way than this
 			if strings.Contains(sourceCode, "SDL2/SDL.h") {
 				cmd.Args = append(cmd.Args, "-lSDL2")

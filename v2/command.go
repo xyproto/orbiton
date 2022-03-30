@@ -260,7 +260,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				e.DebugEnd()
 			})
 		} else {
-			actions.Add("Debug mode for C and C++", func() {
+			actions.Add("Debug mode for C, C++ and Zig", func() {
 				status.Clear(c)
 				status.SetMessage("Debug mode enabled")
 				status.Show(c, e)
