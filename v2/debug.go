@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/xyproto/gdb"
+	"github.com/xyproto/mode"
 )
 
 var (
@@ -33,8 +34,14 @@ func (e *Editor) DebugStart(sourceFilename, executableFilename string) (string, 
 		}
 	}
 
+	// Use gdb-rust if we are debugging Rust
+	gdbExecutable := "gdb"
+	if e.mode == mode.Rust {
+		gdbExecutable = "gdb-rust"
+	}
+
 	// Start a new gdb session
-	e.gdb, err = gdb.New(func(notification map[string]interface{}) {
+	e.gdb, err = gdb.NewCustom(gdbExecutable, func(notification map[string]interface{}) {
 		// Handle messages from gdb, including frames that contains line numbers
 		if payload, ok := notification["payload"]; ok && notification["type"] == "exec" {
 			if payloadMap, ok := payload.(map[string]interface{}); ok {
