@@ -249,18 +249,18 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					gdbOutput, err := e.DebugContinue()
 					status.ClearAll(c)
 					if err != nil {
-						status.SetMessage("End of session")
 						e.DebugEnd()
+						status.SetMessage("Done")
+						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
 					} else {
 						if gdbOutput != "" {
 							status.SetMessage(gdbOutput)
 						} else {
-							status.SetMessage("Continued")
+							status.SetMessage("Continue")
 						}
 					}
 					status.Show(c, e)
-					// TODO: Move to the current line.
-					// Examine payload.frame.line that is returned to the onNotification function that is passed to gdb.New
+					e.redrawCursor = true
 					break
 
 				} else { // if not, make one step
@@ -268,18 +268,18 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					gdbOutput, err := e.DebugStep()
 					status.ClearAll(c)
 					if err != nil {
-						status.SetMessage("End of session")
 						e.DebugEnd()
+						status.SetMessage("Done")
+						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
 					} else {
 						if gdbOutput != "" {
 							status.SetMessage(gdbOutput)
 						} else {
-							status.SetMessage("Stepped")
+							status.SetMessage("Step")
 						}
 					}
 					status.Show(c, e)
-					// TODO: Move to the current line.
-					// Examine payload.frame.line that is returned to the onNotification function that is passed to gdb.New
+					e.redrawCursor = true
 					break
 
 				}
@@ -369,15 +369,15 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						status.ShowNoTimeout(c, e)
 					} else {
 						status.ClearAll(c)
+						e.GoToLineNumber(1, nil, nil, true)
 						if e.breakpoint == nil {
 							status.SetMessage("Debug session started")
 						} else {
 							status.SetMessage("Debug session started. Breakpoint at line " + e.breakpoint.LineNumber().String() + ".")
 						}
 						status.ShowNoTimeout(c, e)
-
 					}
-					break
+					e.redrawCursor = true
 				}
 
 			}
