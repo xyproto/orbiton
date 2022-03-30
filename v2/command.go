@@ -256,13 +256,15 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				status.SetMessage("Debug mode disabled")
 				status.Show(c, e)
 				e.debugMode = false
+				// Also end the gdb session if there is one in progress
+				e.DebugEnd()
 			})
 		} else {
 			actions.Add("Debug mode for C and C++", func() {
-				e.debugMode = true
 				status.Clear(c)
 				status.SetMessage("Debug mode enabled")
 				status.Show(c, e)
+				e.debugMode = true
 			})
 		}
 	}
