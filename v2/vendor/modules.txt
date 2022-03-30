@@ -53,7 +53,7 @@ github.com/xyproto/textoutput
 # github.com/xyproto/vt100 v1.9.12
 ## explicit; go 1.10
 github.com/xyproto/vt100
-# golang.org/x/sys v0.0.0-20220328115105-d36c6a25d886
+# golang.org/x/sys v0.0.0-20220330033206-e17cdc41300f
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
