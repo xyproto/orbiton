@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/atotto/clipboard v0.1.4
-	github.com/cyrus-and/gdb v0.0.0-20220330125739-a4dd9a2c7c49
+	github.com/cyrus-and/gdb v0.0.0-20220330132204-7fbd38827ecc
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/xyproto/env v1.7.0
 	github.com/xyproto/guessica v1.1.0

@@ -6,8 +6,8 @@ github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d/go.mod h1:ma
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
 github.com/creack/pty v1.1.18 h1:n56/Zwd5o6whRC5PMGretI4IdRLlmBXYNjScPaBgsbY=
 github.com/creack/pty v1.1.18/go.mod h1:MOBLtS5ELjhRRrroQr9kyvTxUAFNvYEK993ew/Vr4O4=
-github.com/cyrus-and/gdb v0.0.0-20220330125739-a4dd9a2c7c49 h1:UhrzVfSepg+uSRrI4Up8ncKOSVO6158bFADUhN99PeY=
-github.com/cyrus-and/gdb v0.0.0-20220330125739-a4dd9a2c7c49/go.mod h1:wyNWmFg5S+hlh6zOWj3iRW+TQ3NeSmOzgYZNKOtANhc=
+github.com/cyrus-and/gdb v0.0.0-20220330132204-7fbd38827ecc h1:RTTSk53fQrGw4EW7EdxEF+RY165q+BPFjybo8jakTOQ=
+github.com/cyrus-and/gdb v0.0.0-20220330132204-7fbd38827ecc/go.mod h1:wyNWmFg5S+hlh6zOWj3iRW+TQ3NeSmOzgYZNKOtANhc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/jung-kurt/gofpdf v1.0.0/go.mod h1:7Id9E/uU8ce6rXgefFLlgrJj/GYY22cpxn+r32jIOes=
 github.com/jung-kurt/gofpdf v1.16.2 h1:jgbatWHfRlPYiK85qgevsZTHviWXKwB1TTiKdz5PtRc=
