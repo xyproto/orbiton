@@ -361,6 +361,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						break
 					}
 
+					status.SetMessage("Starting gdb...")
+					status.ShowNoTimeout(c, e)
+
 					// Start GDB execution from the top
 					msg, err := e.DebugStart(filepath.Dir(absFilename), filepath.Base(absFilename), filepath.Base(outputExecutableAbsPath))
 					if err != nil || e.gdb == nil {
@@ -371,9 +374,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						status.ClearAll(c)
 						e.GoToLineNumber(1, nil, nil, true)
 						if e.breakpoint == nil {
-							status.SetMessage("Debug session started")
+							status.SetMessage("Started a debug session")
 						} else {
-							status.SetMessage("Debug session started. Breakpoint at line " + e.breakpoint.LineNumber().String() + ".")
+							status.SetMessage("Started a debug sessions. Breakpoint at line " + e.breakpoint.LineNumber().String() + ".")
 						}
 						status.ShowNoTimeout(c, e)
 					}
