@@ -142,7 +142,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		}
 		// Use gcc directly
 		if e.debugMode {
-			cmd = exec.Command("gcc", "-o", exeFilename, "-std=C18", "-Og", "-g", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-D_GNU_SOURCE", sourceFilename)
+			cmd = exec.Command("gcc", "-o", exeFilename, "-std=C18", "-Og", "-g", "-pipe", "-D_GNU_SOURCE", sourceFilename)
 			cmd.Dir = sourceDir
 			return cmd, exeExists, nil
 		}
@@ -163,7 +163,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		}
 		// Use g++ directly
 		if e.debugMode {
-			cmd = exec.Command("g++", "-o", exeFilename, "-std=c++2b", "-Og", "-g", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename)
+			cmd = exec.Command("g++", "-o", exeFilename, "-std=c++2b", "-Og", "-g", "-pipe", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename)
 			cmd.Dir = sourceDir
 			return cmd, exeExists, nil
 		}
@@ -311,7 +311,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		}
 		// No result
 	}
-	return nil, nothingIsFine, errors.New("No build command for mode: " + e.mode.String())
+	return nil, nothingIsFine, errNoSuitableBuildCommand //errors.New("No build command for " + e.mode.String() + " files")
 }
 
 // BuildOrExport will try to build the source code or export the document.
@@ -378,7 +378,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			// the exportPandoc function handles it's own status output
 			return pdfFilename, nil
 		}
-		return "", errors.New("Could not find pandoc")
+		return "", errors.New("could not find pandoc")
 	}
 
 	// The immediate builds are done, time to build a exec.Cmd, run it and analyze the output
@@ -832,8 +832,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	}
 
 	if ok, what := compilationProducedSomething(); ok {
+		// Returns the built executable, or exported file
 		return what, nil
-	} else {
-		return "", errors.New("could not compile, found no result")
 	}
+
+	return "", errors.New("could not compile, found no output")
 }
