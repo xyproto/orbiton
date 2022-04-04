@@ -585,7 +585,7 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets *[]*Pellet, bob *Bob) bool {
 					xspeed = 3
 					yspeed = 2
 				} else if g.huntingDistance > 5 {
-					xspeed = 2 + rand.Intn(1)
+					xspeed = 2 + rand.Intn(2)
 					yspeed = 2
 				}
 			} else {
@@ -595,7 +595,7 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets *[]*Pellet, bob *Bob) bool {
 					yspeed = 3
 				} else if g.huntingDistance > 5 {
 					xspeed = 2
-					yspeed = 2 + rand.Intn(1)
+					yspeed = 2 + rand.Intn(2)
 				}
 			}
 
