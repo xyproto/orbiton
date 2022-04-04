@@ -317,8 +317,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// The last argument is if the command should run in the background or not
 			buildStatusMessage, performedAction, compiled, outputExecutable = e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
 
-			statusMessage = buildStatusMessage
-
 			//logf("status message %s performed action %v compiled %v filename %s\n", statusMessage, performedAction, compiled, e.filename)
 
 			// Could an action be performed for this file extension?
@@ -333,6 +331,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					//       which is why the message is hackily surrounded by spaces. Fix.
 					statsMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
 					status.SetMessage(statsMessage)
+					statusMessage = statsMessage
 				}
 				status.Show(c, e)
 			} else if performedAction && !compiled {
@@ -353,6 +352,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					//status.ClearAll(c)
 					status.SetMessage(buildStatusMessage)
 					status.Show(c, e)
+					// success
+					statusMessage = buildStatusMessage
 				}
 
 				// ctrl-space was pressed while in debug mode, and without a debug session running
@@ -385,6 +386,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 							status.SetMessage("Started a debug sessions. Breakpoint at line " + e.breakpoint.LineNumber().String() + ".")
 						}
 						status.ShowNoTimeout(c, e)
+						statusMessage = buildStatusMessage
 					}
 				}
 
