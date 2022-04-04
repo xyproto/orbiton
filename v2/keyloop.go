@@ -308,20 +308,22 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 			// Build or export the current file
 			var (
-				statusMessage    string
-				performedAction  bool
-				compiled         bool
-				outputExecutable string
+				buildStatusMessage string
+				performedAction    bool
+				compiled           bool
+				outputExecutable   string
 			)
 
 			// The last argument is if the command should run in the background or not
-			statusMessage, performedAction, compiled, outputExecutable = e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
+			buildStatusMessage, performedAction, compiled, outputExecutable = e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
+
+			statusMessage = buildStatusMessage
 
 			//logf("status message %s performed action %v compiled %v filename %s\n", statusMessage, performedAction, compiled, e.filename)
 
 			// Could an action be performed for this file extension?
 			if !performedAction {
-				status.ClearAll(c)
+				//status.ClearAll(c)
 				if e.debugMode {
 					status.SetMessage("Compilation of this file type has not been implemented")
 				} else {
@@ -329,15 +331,15 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					// Just display the current time and word count.
 					// TODO: status.ClearAll() should have cleared the status bar first, but this is not always true,
 					//       which is why the message is hackily surrounded by spaces. Fix.
-					statusMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
-					status.SetMessage(statusMessage)
+					statsMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
+					status.SetMessage(statsMessage)
 				}
 				status.Show(c, e)
 			} else if performedAction && !compiled {
-				status.ClearAll(c)
+				//status.ClearAll(c)
 				// Performed an action, but it did not work out
-				if statusMessage != "" {
-					status.SetErrorMessage(statusMessage)
+				if buildStatusMessage != "" {
+					status.SetErrorMessage(buildStatusMessage)
 				} else {
 					// This should never happen, failed compilations should return a message
 					status.SetErrorMessage("Compilation failed")
@@ -345,12 +347,12 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				status.ShowNoTimeout(c, e)
 			} else if performedAction && compiled {
 				// Everything worked out
-				if statusMessage != "" {
+				if buildStatusMessage != "" {
 					// Got a status message (this may not be the case for build/export processes running in the background)
 					// NOTE: Do not clear the status message first here!
 					//status.ClearAll(c)
-					status.SetMessage(statusMessage)
-					status.ShowNoTimeout(c, e)
+					status.SetMessage(buildStatusMessage)
+					status.Show(c, e)
 				}
 
 				// ctrl-space was pressed while in debug mode, and without a debug session running
@@ -360,7 +362,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					// Find the full path to the compiled executable, and check that it exists
 					outputExecutableAbsPath := filepath.Join(filepath.Dir(absFilename), filepath.Base(outputExecutable))
 					if !exists(outputExecutableAbsPath) {
-						status.SetMessage("Could not find " + outputExecutableAbsPath)
+						status.SetErrorMessage("Could not find " + outputExecutableAbsPath)
 						status.ShowNoTimeout(c, e)
 						break
 					}
@@ -384,8 +386,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						}
 						status.ShowNoTimeout(c, e)
 					}
-					e.redrawCursor = true
 				}
+
+				e.redrawCursor = true
 			}
 		case "c:20": // ctrl-t
 			// for C or C++: jump to header/source, or insert symbol
