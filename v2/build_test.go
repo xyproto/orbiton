@@ -15,12 +15,12 @@ func ExampleEditor_BuildOrExport_goError() {
 	os.Chdir("test")
 	// The rename is so that "err.go" is not picked up by the CI tests
 	os.Rename("err_go", "err.go")
-	s, performedAction, compiledOK, outputExecutable := e.BuildOrExport(nil, nil, nil, "err.go", false)
+	outputExecutable, err := e.BuildOrExport(nil, nil, nil, "err.go", false)
 	os.Rename("err.go", "err_go")
 	os.Chdir("..")
-	fmt.Printf("%s [performed action: %v] [compiled OK: %v] %s\n", s, performedAction, compiledOK, outputExecutable)
+	fmt.Printf("err.go [compilation error: %v] %s\n", err, outputExecutable)
 	// Output:
-	// undefined: asdfasdf [performed action: true] [compiled OK: false]
+	// err.go [compilation error:  undefined: asdfasdf]
 }
 
 func TestBuildOrExport(t *testing.T) {
@@ -28,27 +28,20 @@ func TestBuildOrExport(t *testing.T) {
 	e.mode = mode.Detect("err.rs")
 
 	os.Chdir("test")
-	_, performedAction, compiledOK, _ := e.BuildOrExport(nil, nil, nil, "err.rs", false)
+	_, err := e.BuildOrExport(nil, nil, nil, "err.rs", false)
+
 	os.Chdir("..")
 
-	// fmt.Printf("%s [performed action: %v] [compiled OK: %v]\n", s, performedAction, compiledOK)
+	//fmt.Printf("err.rs [compilation error: %v] %s\n", err, outputExecutable)
 
 	if which("rustc") != "" {
-		//fmt.Println(s)
-		if !performedAction {
+		//fmt.Println(err)
+		if err == nil { // expected to fail, fail on success
 			t.Fail()
 		}
-		if compiledOK {
-			t.Fail()
-		}
-
 	} else {
-		//fmt.Println(s)
-		// silent compiler
-		if performedAction {
-			t.Fail()
-		}
-		if compiledOK {
+		//fmt.Println(err)
+		if err == nil { // expected to fail, fail on success
 			t.Fail()
 		}
 	}
