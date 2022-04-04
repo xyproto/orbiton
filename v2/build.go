@@ -119,7 +119,12 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		if which("kotlinc-native") != "" {
 			cmd = exec.Command("kotlinc-native", "-nowarn", "-opt", "-Xallocator=mimalloc", "-produce", "program", "-linker-option", "--as-needed", sourceFilename, "-o", exeFirstName)
 			cmd.Dir = sourceDir
-			return cmd, exeExists, nil
+			return cmd, func() (bool, string) {
+				if exists(filepath.Join(sourceDir, exeFirstName+".kexe")) {
+					return true, exeFirstName + ".kexe"
+				}
+				return exists(filepath.Join(sourceDir, exeFirstName)), exeFirstName
+			}, nil
 		}
 		jarFilename := exeFirstName + ".jar"
 		cmd = exec.Command("kotlinc", sourceFilename, "-include-runtime", "-d", jarFilename)
@@ -393,8 +398,6 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		return "", errNoSuitableBuildCommand
 	}
 
-	kotlinNative := strings.HasSuffix(cmd.Path, "kotlinc-native")
-
 	// Display a status message with no timeout, about what is currently being done
 	if status != nil {
 		var progressStatusMessage string
@@ -452,7 +455,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		}
 	}
 
-	if kotlinNative && exists(exeFirstName+".kexe") {
+	if usingKotlinNative := strings.HasSuffix(cmd.Path, "kotlinc-native"); usingKotlinNative && exists(exeFirstName+".kexe") {
 		//panic("rename " + exeFirstName + ".kexe" + " -> " + exeFirstName)
 		os.Rename(exeFirstName+".kexe", exeFirstName)
 	}
