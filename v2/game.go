@@ -33,7 +33,7 @@ const (
 )
 
 var (
-	highScoreFile = filepath.Join(userCacheDir, "o/highscore.txt")
+	highScoreFile = filepath.Join(userCacheDir, "o", "highscore.txt")
 
 	bobColor             = vt100.LightYellow
 	bobWonColor          = vt100.LightGreen

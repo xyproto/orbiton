@@ -110,7 +110,7 @@ func aBinDirectory(filename string) bool {
 	}
 	homeDir := env.HomeDir()
 	switch p {
-	case filepath.Join(homeDir, ".bin"), filepath.Join(homeDir, "bin"), filepath.Join("local/bin"):
+	case filepath.Join(homeDir, ".bin"), filepath.Join(homeDir, "bin"), filepath.Join("local", "bin"):
 		return true
 	}
 	return false

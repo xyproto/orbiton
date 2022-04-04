@@ -19,8 +19,8 @@ var (
 	vimLocationHistoryFilename   = env.ExpandUser("~/.viminfo")
 	emacsLocationHistoryFilename = env.ExpandUser("~/.emacs.d/places")
 	userCacheDir                 = env.Dir("XDG_CACHE_HOME", "~/.cache")
-	locationHistoryFilename      = filepath.Join(userCacheDir, "o/locations.txt")
-	nvimLocationHistoryFilename  = filepath.Join(env.Dir("XDG_DATA_HOME", "~/.local/share"), "nvim/shada/main.shada")
+	locationHistoryFilename      = filepath.Join(userCacheDir, "o", "locations.txt")
+	nvimLocationHistoryFilename  = filepath.Join(env.Dir("XDG_DATA_HOME", "~/.local/share"), "nvim", "shada", "main.shada")
 )
 
 // LoadLocationHistory will attempt to load the per-absolute-filename recording of which line is active.

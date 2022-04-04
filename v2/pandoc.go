@@ -13,7 +13,7 @@ import (
 
 var (
 	userConfigDir     = env.Dir("XDG_CONFIG_HOME", "~/.config")
-	pandocTexFilename = filepath.Join(userConfigDir, "o/pandoc.tex")
+	pandocTexFilename = filepath.Join(userConfigDir, "o", "pandoc.tex")
 )
 
 const (

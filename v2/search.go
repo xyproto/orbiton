@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	searchHistoryFilename = filepath.Join(userCacheDir, "o/search.txt")
+	searchHistoryFilename = filepath.Join(userCacheDir, "o", "search.txt")
 	searchHistory         = []string{}
 	errNoSearchMatch      = errors.New("no search match")
 )

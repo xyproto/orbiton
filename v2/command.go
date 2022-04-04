@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	lastCommandFile = filepath.Join(userCacheDir, "o/last_command.sh")
+	lastCommandFile = filepath.Join(userCacheDir, "o", "last_command.sh")
 	foundGDB        = which("gdb") != ""
 )
 
