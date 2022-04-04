@@ -325,25 +325,10 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			go func() {
 				pandocMutex.Lock()
 				// The last argument is if pandoc should run in the background or not
-				statusMessage, performedAction, compiled, _ := e.BuildOrExport(c, tty, status, e.filename, false)
+				_, err := e.BuildOrExport(c, tty, status, e.filename, false)
 				// Could an action be performed for this file extension?
-				if !performedAction {
-					status.SetErrorMessage("Could not render to PDF with pandoc")
-				} else if performedAction && !compiled {
-					status.ClearAll(c)
-					// Performed an action, but it did not work out
-					if statusMessage != "" {
-						status.SetErrorMessage(statusMessage)
-					} else {
-						status.SetErrorMessage("Rendering failed")
-					}
-				} else if performedAction && compiled {
-					// Everything worked out
-					if statusMessage != "" {
-						// Got a status message (this may not be the case for build/export processes running in the background)
-						// NOTE: Do not clear the status message first here!
-						status.SetMessage(statusMessage)
-					}
+				if err != nil {
+					status.SetErrorMessage(err.Error())
 				}
 				status.ShowNoTimeout(c, e)
 				pandocMutex.Unlock()

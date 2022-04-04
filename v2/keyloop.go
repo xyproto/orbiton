@@ -315,7 +315,18 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			)
 
 			// The last argument is if the command should run in the background or not
-			buildStatusMessage, performedAction, compiled, outputExecutable = e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
+			outputExecutable, err = e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
+			if err != nil {
+				status.ClearAll(c)
+				status.SetErrorMessage(err.Error())
+				status.ShowNoTimeout(c, e)
+			} else {
+				statusMessage = "Success"
+				//status.ClearAll(c)
+				//status.SetMessage("Success")
+				//status.Show(c, e)
+			}
+			break
 
 			//logf("status message %s performed action %v compiled %v filename %s\n", statusMessage, performedAction, compiled, e.filename)
 
@@ -323,7 +334,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			if !performedAction {
 				//status.ClearAll(c)
 				if e.debugMode {
-					status.SetMessage("Compilation of this file type has not been implemented")
+					status.SetMessage(buildStatusMessage)
+					statusMessage = buildStatusMessage
 				} else {
 					// Building this file extension is not implemented yet.
 					// Just display the current time and word count.
