@@ -36,6 +36,7 @@ var format = map[*exec.Cmd][]string{
 	exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"):                                                                                                 {".lua"},
 	exec.Command("tidy", "-w", "80", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "-xml", "-m"):                                                                                          {".xml"},
 	exec.Command("tidy", "-w", "120", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "--hide-endtags", "yes", "--force-output", "yes", "-ashtml", "-omit", "no", "-xml", "no", "-m", "-c"): {".html", ".htm"},
+	exec.Command("/usr/bin/vendor_perl/perltidy", "-se", "-b", "-i=2", "-ole=unix", "-bt=2", "-pt=2", "-sbt=2", "-ce"):                                                                                                               {".pl"},
 }
 
 // Using exec.Cmd instead of *exec.Cmd is on purpose, to get a new cmd.stdout and cmd.stdin every time.
@@ -75,6 +76,18 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 
 			// Ignore errors if the command is "tidy" and tidy exists
 			ignoreErrors := strings.HasSuffix(cmd.Path, "tidy") && which("tidy") != ""
+
+			// Perl may place executables in /usr/bin/vendor_perl
+			if e.mode == mode.Perl {
+				// Use perltidy from the PATH if /usr/bin/vendor_perl/perltidy does not exists
+				if cmd.Path == "/usr/bin/vendor_perl/perltidy" && !exists("/usr/bin/vendor_perl/perltidy") {
+					perltidyPath := which("perltidy")
+					if perltidyPath == "" {
+						return errors.New("perltidy is missing")
+					}
+					cmd.Path = perltidyPath
+				}
+			}
 
 			if err != nil && !ignoreErrors {
 				// Only grab the first error message
