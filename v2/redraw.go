@@ -156,15 +156,17 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, status
 	if e.statusMode {
 		status.ShowLineColWordCount(c, e, e.filename)
 	} else if status.IsError() {
-		// Show the status message
-		status.Show(c, e)
+		// Show the status message, if *statusMessage is not set
+		if *statusMessage == "" {
+			status.Show(c, e)
+		}
 	}
 
 	if *statusMessage != "" {
 		status.Clear(c)
 		status.SetMessage(*statusMessage)
-		status.Show(c, e)
 		*statusMessage = ""
+		status.Show(c, e)
 	}
 
 	e.RepositionCursorIfNeeded()
