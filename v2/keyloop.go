@@ -322,12 +322,16 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// Could an action be performed for this file extension?
 			if !performedAction {
 				status.ClearAll(c)
-				// Building this file extension is not implemented yet.
-				// Just display the current time and word count.
-				// TODO: status.ClearAll() should have cleared the status bar first, but this is not always true,
-				//       which is why the message is hackily surrounded by spaces. Fix.
-				statusMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
-				status.SetMessage(statusMessage)
+				if e.debugMode {
+					status.SetMessage("Compilation of this file type has not been implemented")
+				} else {
+					// Building this file extension is not implemented yet.
+					// Just display the current time and word count.
+					// TODO: status.ClearAll() should have cleared the status bar first, but this is not always true,
+					//       which is why the message is hackily surrounded by spaces. Fix.
+					statusMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
+					status.SetMessage(statusMessage)
+				}
 				status.Show(c, e)
 			} else if performedAction && !compiled {
 				status.ClearAll(c)
@@ -382,7 +386,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					}
 					e.redrawCursor = true
 				}
-
 			}
 		case "c:20": // ctrl-t
 			// for C or C++: jump to header/source, or insert symbol

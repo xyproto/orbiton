@@ -21,177 +21,150 @@ var (
 	pandocMutex               sync.RWMutex
 )
 
-// BuildOrExport will try to build the source code or export the document.
-// Returns a status message and then true if an action was performed and another true if compilation/testing worked out.
-// Will also return the executable output file, if available after compilation.
-func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filename string, background bool) (string, bool, bool, string) {
-	if status != nil {
-		status.Clear(c)
-	}
+type producedSomethingFunc func() (bool, string)
 
-	ext := filepath.Ext(filename)
-
-	// scdoc
-	manFilename := "out.1"
-	if ext == ".scd" || ext == ".scdoc" {
-		if err := e.exportScdoc(manFilename); err != nil {
-			return err.Error(), true, false, ""
-		}
-		return "Saved " + manFilename, true, true, manFilename
-	}
-
-	// asciidoctor
-	if ext == ".adoc" {
-		if err := e.exportAdoc(c, tty, manFilename); err != nil {
-			return err.Error(), true, false, ""
-		}
-		return "Saved " + manFilename, true, true, manFilename
-	}
-
-	// pandoc
-	if pandocPath := which("pandoc"); e.mode == mode.Markdown && pandocPath != "" {
-		pdfFilename := strings.Replace(filepath.Base(filename), ".", "_", -1) + ".pdf"
-		// Export to PDF using pandoc. The function handles its own status messages.
-		// TODO: Don't ignore the error
-		if background {
-			go func() {
-				pandocMutex.Lock()
-				_ = e.exportPandoc(c, tty, status, pandocPath, pdfFilename)
-				pandocMutex.Unlock()
-			}()
-		} else {
-			_ = e.exportPandoc(c, tty, status, pandocPath, pdfFilename)
-		}
-		// TODO: Add a minimum of error detection. Perhaps wait just 20ms and check if the goroutine is still running.
-		return "", true, true, "" // no message returned, the mustExportPandoc function handles it's own status output
-	}
-
-	exeFirstName := "main" // If the current directory name is not found
+// exeName tries to find a suitable name for the executable, given a source filename
+// For instance, "main" or the name of the directory holding the source filename.
+func (e *Editor) exeName(filename string) string {
+	exeFirstName := "main" // The default name
+	sourceDirectory := filepath.Dir(filename)
 
 	// Find a suitable default executable first name
-	if e.mode == mode.OCaml || e.mode == mode.Kotlin || e.mode == mode.Lua {
-		if curdir, err := os.Getwd(); err == nil { // no error
-			exeFirstName = filepath.Base(curdir)
+	switch e.mode {
+	case mode.OCaml, mode.Kotlin, mode.Lua, mode.Assembly, mode.Rust, mode.Zig:
+		sourceDirectoryName := filepath.Base(sourceDirectory)
+		if sourceDirectoryName == "build" {
+			parentDirectory := filepath.Dir(sourceDirectory)
+			return filepath.Base(parentDirectory)
 		}
+		return sourceDirectoryName
 	}
 
-	javaShellCommand := "javaFiles=$(find . -type f -name '*.java'); for f in $javaFiles; do grep -q 'static void main' \"$f\" && mainJavaFile=\"$f\"; done; className=$(grep -oP '(?<=class )[A-Z]+[a-z,A-Z,0-9]*' \"$mainJavaFile\" | head -1); packageName=$(grep -oP '(?<=package )[a-z,A-Z,0-9,.]*' \"$mainJavaFile\" | head -1); if [[ $packageName != \"\" ]]; then packageName=\"$packageName.\"; fi; mkdir -p _o_build/META-INF; javac -d _o_build $javaFiles; cd _o_build; echo \"Main-Class: $packageName$className\" > META-INF/MANIFEST.MF; classFiles=$(find . -type f -name '*.class'); jar cmf META-INF/MANIFEST.MF ../main.jar $classFiles; cd ..; rm -rf _o_build"
+	return exeFirstName
+}
 
-	scalaShellCommand := "scalaFiles=$(find . -type f -name '*.scala'); for f in $scalaFiles; do grep -q 'def main' \"$f\" && mainScalaFile=\"$f\"; grep -q ' extends App ' \"$f\" && mainScalaFile=\"$f\"; done; objectName=$(grep -oP '(?<=object )[A-Z]+[a-z,A-Z,0-9]*' \"$mainScalaFile\" | head -1); packageName=$(grep -oP '(?<=package )[a-z,A-Z,0-9,.]*' \"$mainScalaFile\" | head -1); if [[ $packageName != \"\" ]]; then packageName=\"$packageName.\"; fi; mkdir -p _o_build/META-INF; scalac -d _o_build $scalaFiles; cd _o_build; echo -e \"Main-Class: $packageName$objectName\\nClass-Path: /usr/share/scala/lib/scala-library.jar\" > META-INF/MANIFEST.MF; classFiles=$(find . -type f -name '*.class'); jar cmf META-INF/MANIFEST.MF ../main.jar $classFiles; cd ..; rm -rf _o_build"
+// GenerateBuildCommand will generate a command for building the given filename (or for displaying HTML)
+// Returns a command, a function for checking if the build was a success and possibly an error
+func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, producedSomethingFunc, error) {
+	var cmd *exec.Cmd
 
-	// Compile directly to jar with scalac if /usr/share/scala/lib/scala-library.jar is not found
-	if !exists("/usr/share/scala/lib/scala-library.jar") {
-		scalaShellCommand = "scalac -d run_with_scala.jar $(find . -type f -name '*.scala')"
+	everythingIsFine := func() (bool, string) {
+		return true, "everything"
 	}
 
-	// For building a .jar file that can not be run with "java -jar main.jar" but with "scala main.jar": scalac -jar main.jar Hello.scala
-
-	// TODO: Change the map to not use file extensions, but rather rely on the modes from ftdetect.go
-
-	// Set up a few variables
-	var (
-		// Map from build command to a list of file extensions (or basenames for files without an extension)
-		build = map[*exec.Cmd][]string{
-			exec.Command("go", "build"):                                                      {".go"},                                                     // Go
-			exec.Command("cxx"):                                                              {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"}, // C++ and C
-			exec.Command("zig", "build"):                                                     {".zig"},                                                    // Zig
-			exec.Command("v", filename):                                                      {".v"},                                                      // V
-			exec.Command("cargo", "build"):                                                   {".rs"},                                                     // Rust
-			exec.Command("lein", "uberjar"):                                                  {".clj", ".cljs", ".clojure"},                               // Clojure
-			exec.Command("ghc", "-dynamic", filename):                                        {".hs"},                                                     // Haskell
-			exec.Command("python", "-m", "py_compile", filename):                             {".py"},                                                     // Python, compile to .pyc
-			exec.Command("ocamlopt", "-o", exeFirstName, filename):                           {".ml"},                                                     // OCaml
-			exec.Command("crystal", "build", "--no-color", filename):                         {".cr"},                                                     // Crystal
-			exec.Command("kotlinc", filename, "-include-runtime", "-d", exeFirstName+".jar"): {".kt", ".kts"},                                             // Kotlin, build a .jar file
-			exec.Command("sh", "-c", scalaShellCommand):                                      {".scala"},                                                  // Scala, build a .jar file
-			exec.Command("sh", "-c", javaShellCommand):                                       {".java"},                                                   // Java, build a .jar file
-			exec.Command("luac", "-o", exeFirstName+".out", filename):                        {".lua"},                                                    // Lua, build an .out file
-			exec.Command("nim", "c", filename):                                               {".nim"},                                                    // Nim
-			exec.Command("fpc", filename):                                                    {".pp", ".pas", ".lpr"},                                     // Object Pascal / Delphi
-			exec.Command("gdc", "-o", exeFirstName, filename):                                {".d"},                                                      // D
-			exec.Command("xdg-open", filename):                                               {".htm", ".html"},                                           // Display HTML in the browser
-			exec.Command("odin", "build", filename):                                          {".odin"},                                                   // Odin
-			exec.Command("csc", "-nologo", "-unsafe", filename):                              {".cs"},                                                     // C#
-			exec.Command("mlton", filename):                                                  {".sml"},
-			exec.Command("agda", "-c", filename):                                             {".agda"},
-		}
-	)
-
-	// Compile differently when in debug mode, for some file extensions
-	if e.debugMode {
-		build[exec.Command("cxx", "debug")] = []string{".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"} // C++ and C
+	nothingIsFine := func() (bool, string) {
+		return false, "nothing"
 	}
 
-	// Check if one of the build commands are applicable for this filename
-	baseFilename := filepath.Base(filename)
-	var foundCommand exec.Cmd // exec.Cmd instead of *exec.Cmd, on purpose, to get a new stdin and stdout every time
-	found := false
-	for command, exts := range build {
-		for _, ext := range exts {
-			if strings.HasSuffix(filename, ext) || baseFilename == ext {
-				foundCommand = *command
-				found = true
-				// TODO: also check that the executable in the command exists
-			}
-		}
-	}
-
-	// Can not export nor compile, nothing more to do
-	if !found {
-		return errNoSuitableBuildCommand.Error(), false, false, ""
-	}
-
-	// --- Compilation ---
-
-	var (
-		cmd                   = foundCommand // shorthand
-		progressStatusMessage = "Building"
-		kotlinNative          bool
-	)
-
-	if e.debugMode {
-		progressStatusMessage = ""
-	}
-
-	if e.mode == mode.HTML || e.mode == mode.XML {
-		progressStatusMessage = "Displaying"
-	}
-
-	absFilename, err := filepath.Abs(filename)
+	// Find the absolute path to the source file
+	sourceFilename, err := filepath.Abs(filename)
 	if err != nil {
-		return err.Error(), true, false, ""
+		return cmd, nothingIsFine, err
 	}
-	sourceDir := filepath.Dir(absFilename)
-	baseDirName := filepath.Base(sourceDir)
 
-	// Special per-language considerations
-	if e.mode == mode.Rust && (!exists("Cargo.toml") && !exists("../Cargo.toml")) {
-		// Use rustc instead of cargo if Cargo.toml is missing and the extension is .rs
-		if rustcExecutable := which("rustc"); rustcExecutable != "" {
+	// Set up a few basic variables about the given source file
+	var (
+		//baseFilename = filepath.Base(sourceFilename)
+		sourceDir      = filepath.Dir(sourceFilename)
+		parentDir      = filepath.Clean(filepath.Join(sourceDir, ".."))
+		grandParentDir = filepath.Clean(filepath.Join(sourceDir, "..", ".."))
+		//baseDir      = filepath.Base(sourceDir)
+		exeFirstName = e.exeName(sourceFilename)
+		exeFilename  = filepath.Join(sourceDir, exeFirstName)
+	)
+
+	exeExists := func() (bool, string) {
+		return exists(filepath.Join(sourceDir, exeFirstName)), exeFirstName
+	}
+
+	exeOrMainExists := func() (bool, string) {
+		if exists(filepath.Join(sourceDir, exeFirstName)) {
+			return true, exeFirstName
+		}
+		return exists(filepath.Join(sourceDir, "main")), "main"
+	}
+
+	switch e.mode {
+	case mode.Java: // build a .jar file
+		jarFilename := "main.jar"
+		javaShellCommand := "javaFiles=$(find . -type f -name '*.java'); for f in $javaFiles; do grep -q 'static void main' \"$f\" && mainJavaFile=\"$f\"; done; className=$(grep -oP '(?<=class )[A-Z]+[a-z,A-Z,0-9]*' \"$mainJavaFile\" | head -1); packageName=$(grep -oP '(?<=package )[a-z,A-Z,0-9,.]*' \"$mainJavaFile\" | head -1); if [[ $packageName != \"\" ]]; then packageName=\"$packageName.\"; fi; mkdir -p _o_build/META-INF; javac -d _o_build $javaFiles; cd _o_build; echo \"Main-Class: $packageName$className\" > META-INF/MANIFEST.MF; classFiles=$(find . -type f -name '*.class'); jar cmf META-INF/MANIFEST.MF ../" + jarFilename + " $classFiles; cd ..; rm -rf _o_build"
+		cmd = exec.Command("sh", "-c", javaShellCommand)
+		cmd.Dir = sourceDir
+		return cmd, func() (bool, string) {
+			return exists(filepath.Join(sourceDir, jarFilename)), jarFilename
+		}, nil
+	case mode.Scala:
+		jarFilename := "main.jar"
+		// For building a .jar file that can not be run with "java -jar main.jar" but with "scala main.jar": scalac -jar main.jar Hello.scala
+		scalaShellCommand := "scalaFiles=$(find . -type f -name '*.scala'); for f in $scalaFiles; do grep -q 'def main' \"$f\" && mainScalaFile=\"$f\"; grep -q ' extends App ' \"$f\" && mainScalaFile=\"$f\"; done; objectName=$(grep -oP '(?<=object )[A-Z]+[a-z,A-Z,0-9]*' \"$mainScalaFile\" | head -1); packageName=$(grep -oP '(?<=package )[a-z,A-Z,0-9,.]*' \"$mainScalaFile\" | head -1); if [[ $packageName != \"\" ]]; then packageName=\"$packageName.\"; fi; mkdir -p _o_build/META-INF; scalac -d _o_build $scalaFiles; cd _o_build; echo -e \"Main-Class: $packageName$objectName\\nClass-Path: /usr/share/scala/lib/scala-library.jar\" > META-INF/MANIFEST.MF; classFiles=$(find . -type f -name '*.class'); jar cmf META-INF/MANIFEST.MF ../" + jarFilename + " $classFiles; cd ..; rm -rf _o_build"
+		// Compile directly to jar with scalac if /usr/share/scala/lib/scala-library.jar is not found
+		if !exists("/usr/share/scala/lib/scala-library.jar") {
+			scalaShellCommand = "scalac -d run_with_scala.jar $(find . -type f -name '*.scala')"
+		}
+		cmd = exec.Command("sh", "-c", scalaShellCommand)
+		cmd.Dir = sourceDir
+		return cmd, func() (bool, string) {
+			return exists(filepath.Join(sourceDir, jarFilename)), jarFilename
+		}, nil
+	case mode.Kotlin:
+		if which("kotlinc-native") != "" {
+			cmd = exec.Command("kotlinc-native", "-nowarn", "-opt", "-Xallocator=mimalloc", "-produce", "program", "-linker-option", "--as-needed", sourceFilename, "-o", exeFirstName)
+			cmd.Dir = sourceDir
+			return cmd, exeExists, nil
+
+		}
+		jarFilename := exeFirstName + ".jar"
+		cmd = exec.Command("kotlinc", sourceFilename, "-include-runtime", "-d", jarFilename)
+		cmd.Dir = sourceDir
+		return cmd, func() (bool, string) {
+			return exists(filepath.Join(sourceDir, jarFilename)), jarFilename
+		}, nil
+	case mode.Go:
+		cmd := exec.Command("go", "build")
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
+	case mode.C:
+		if which("cxx") != "" {
+			cmd = exec.Command("cxx")
 			if e.debugMode {
-				cmd = *exec.Command(rustcExecutable, absFilename, "-g", "-o", filepath.Join(sourceDir, baseDirName))
-			} else {
-				cmd = *exec.Command(rustcExecutable, absFilename, "-o", filepath.Join(sourceDir, baseDirName))
+				cmd.Args = append(cmd.Args, "debug")
 			}
+			return cmd, exeOrMainExists, nil
 		}
-	} else if e.mode == mode.Clojure && !exists("project.clj") && exists("../project.clj") {
-		cmd.Path = filepath.Clean(filepath.Join(filepath.Dir(filename), ".."))
-	} else if e.mode == mode.Clojure && !exists("project.clj") && !exists("../project.clj") && exists("../project.clj") {
-		cmd.Path = filepath.Clean(filepath.Join(filepath.Dir(filename), "..", ".."))
-	} else if (ext == ".cc" || ext == ".h") && exists("BUILD.bazel") {
-		// Google-style C++ + Bazel projects
-		if which("bazel") != "" {
-			cmd = *exec.Command("bazel", "build")
+		// Use gcc directly
+		if e.debugMode {
+			return exec.Command("gcc", "-o", exeFilename, "-std=C18", "-Og", "-g", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-D_GNU_SOURCE", sourceFilename), exeExists, nil
 		}
-	} else if e.mode == mode.Zig && !exists("build.zig") {
-		// Just build the current file
+		return exec.Command("gcc", "-o", exeFilename, "-std=C18", "-O2", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-D_GNU_SOURCE", sourceFilename), exeExists, nil
+	case mode.Cpp:
+		if exists("BUILD.bazel") && which("bazel") != "" { // Google-style C++ + Bazel projects if
+			return exec.Command("bazel", "build"), everythingIsFine, nil
+		}
+		if which("cxx") != "" {
+			cmd = exec.Command("cxx")
+			if e.debugMode {
+				cmd.Args = append(cmd.Args, "debug")
+			}
+			return cmd, exeOrMainExists, nil
+		}
+		// Use g++ directly
+		if e.debugMode {
+			return exec.Command("g++", "-o", exeFilename, "-std=c++2b", "-Og", "-g", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename), exeExists, nil
+		}
+		return exec.Command("g++", "-o", exeFilename, "-std=c++2b", "-O2", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename), exeExists, nil
+	case mode.Zig:
 		if which("zig") != "" {
+			if exists("build.zig") {
+				return exec.Command("zig", "build"), everythingIsFine, nil
+			}
+			// Just build the current file
 			sourceCode := ""
 			sourceData, err := ioutil.ReadFile(filename)
 			if err == nil { // success
 				sourceCode = string(sourceData)
 			}
-			cmd = *exec.Command("zig", "build-exe", "-lc", filename, "--name", baseDirName, "--cache-dir", zigCacheDir)
+			cmd = exec.Command("zig", "build-exe", "-lc", filename, "--name", exeFirstName, "--cache-dir", zigCacheDir)
+			cmd.Dir = sourceDir
 			// TODO: Find a better way than this
 			if strings.Contains(sourceCode, "SDL2/SDL.h") {
 				cmd.Args = append(cmd.Args, "-lSDL2")
@@ -202,26 +175,207 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			if strings.Contains(sourceCode, "glfw") {
 				cmd.Args = append(cmd.Args, "-lglfw")
 			}
+			return cmd, exeExists, nil
 		}
-	} else if e.mode == mode.Kotlin && which("kotlinc-native") != "" {
-		kotlinNative = true
-		cmd = *exec.Command("kotlinc-native", "-nowarn", "-opt", "-Xallocator=mimalloc", "-produce", "program", "-linker-option", "--as-needed", filename, "-o", exeFirstName)
+		// No result
+	case mode.V:
+		return exec.Command("v", sourceFilename), exeOrMainExists, nil
+	case mode.Rust:
+		if exists("Cargo.toml") {
+			return exec.Command("cargo", "build"), everythingIsFine, nil
+		}
+		if exists(filepath.Join(parentDir, "Cargo.toml")) {
+			cmd = exec.Command("cargo", "build")
+			cmd.Dir = parentDir
+			return cmd, everythingIsFine, nil
+		}
+		// Use rustc instead of cargo if Cargo.toml is missing
+		if rustcExecutable := which("rustc"); rustcExecutable != "" {
+			if e.debugMode {
+				cmd = exec.Command(rustcExecutable, sourceFilename, "-g", "-o", exeFilename)
+			} else {
+				cmd = exec.Command(rustcExecutable, sourceFilename, "-o", exeFilename)
+			}
+			return cmd, exeExists, nil
+		}
+		// No result
+	case mode.Clojure:
+		cmd = exec.Command("lein", "uberjar") //                       {".clj", ".cljs", ".clojure"}, // Clojure
+		projectFileExists := exists("project.clj")
+		parentProjectFileExists := exists("../project.clj")
+		grandParentProjectFileExists := exists("../../project.clj")
+		if !projectFileExists && parentProjectFileExists {
+			cmd.Dir = parentDir
+		} else if !projectFileExists && !parentProjectFileExists && grandParentProjectFileExists {
+			cmd.Dir = grandParentDir
+		}
+		return cmd, everythingIsFine, nil
+	case mode.Haskell:
+		return exec.Command("ghc", "-dynamic", sourceFilename), everythingIsFine, nil //                                        {".hs"},                       // Haskell
+	case mode.Python:
+		return exec.Command("python", "-m", "py_compile", sourceFilename), everythingIsFine, nil //                             {".py"},                 // Python, compile to .pyc
+	case mode.OCaml:
+		return exec.Command("ocamlopt", "-o", exeFirstName, sourceFilename), exeExists, nil //                           {".ml"},                 // OCaml
+	case mode.Crystal:
+		return exec.Command("crystal", "build", "--no-color", sourceFilename), everythingIsFine, nil //                         {".cr"},                 // Crystal
+	case mode.Lua:
+		return exec.Command("luac", "-o", exeFirstName+".out", sourceFilename), everythingIsFine, nil //        {".lua"},                // Lua, build an .out file
+	case mode.Nim:
+		return exec.Command("nim", "c", sourceFilename), everythingIsFine, nil //                               {".nim"},                // Nim
+	case mode.ObjectPascal:
+		return exec.Command("fpc", sourceFilename), everythingIsFine, nil //                                    {".pp", ".pas", ".lpr"}, // Object Pascal / Delphi
+	case mode.D:
+		return exec.Command("gdc", "-o", exeFirstName, sourceFilename), exeExists, nil //                {".d"},                  // D
+	case mode.HTML:
+		return exec.Command("xdg-open", sourceFilename), everythingIsFine, nil //                               {".htm", ".html"},       // Display HTML in the browser
+	case mode.Odin:
+		return exec.Command("odin", "build", sourceFilename), everythingIsFine, nil //                          {".odin"}, // Odin
+	case mode.CS:
+		return exec.Command("csc", "-nologo", "-unsafe", sourceFilename), everythingIsFine, nil //              {".cs"},   // C#
+	case mode.StandardML:
+		return exec.Command("mlton", sourceFilename), everythingIsFine, nil //                                  {".sml"},
+	case mode.Agda:
+		return exec.Command("agda", "-c", sourceFilename), everythingIsFine, nil //                             {".agda"},
+	case mode.Assembly:
+		objFilename := exeFilename + ".o"
+		if which("yasm") != "" { // use yasm
+			cmd = exec.Command("yasm", "-f", "elf64", "-o", objFilename, sourceFilename) // {".asm", ".s", ".S"},
+			if e.debugMode {
+				cmd.Args = append(cmd.Args, "-g", "dwarf2")
+			}
+			return cmd, func() (bool, string) {
+				return exists(objFilename), objFilename
+			}, nil
+		}
+		if which("nasm") != "" { // use nasm
+			cmd = exec.Command("nasm", "-f", "elf64", "-o", objFilename, sourceFilename)
+			if e.debugMode {
+				cmd.Args = append(cmd.Args, "-g")
+			}
+			return cmd, func() (bool, string) {
+				return exists(objFilename), objFilename
+			}, nil
+		}
+		// No result
 	}
+	return nil, nothingIsFine, errors.New("Could not find build command for mode: " + e.mode.String())
+}
+
+// BuildOrExport will try to build the source code or export the document.
+// Returns a status message and then true if an action was performed and another true if compilation/testing worked out.
+// Will also return the executable output file, if available after compilation.
+func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filename string, background bool) (string, bool, bool, string) {
+	// Clear the status message, if we have a status bar
+	if status != nil {
+		status.Clear(c)
+	}
+
+	// Find the absolute path to the source file
+	sourceFilename, err := filepath.Abs(filename)
+	if err != nil {
+		return err.Error(), true, false, ""
+	}
+
+	// Set up a few basic variables about the given source file
+	var (
+		baseFilename = filepath.Base(sourceFilename)
+		sourceDir    = filepath.Dir(sourceFilename)
+		//baseDir      = filepath.Base(sourceDir)
+		exeFirstName = e.exeName(sourceFilename)
+		exeFilename  = filepath.Join(sourceDir, exeFirstName)
+		ext          = filepath.Ext(sourceFilename)
+	)
+
+	// Get a few simple cases out of the way first, by filename extension
+	switch ext {
+	case ".scd", ".scdoc": // scdoc
+		manFilename := "out.1"
+		if err := e.exportScdoc(manFilename); err != nil {
+			return err.Error(), true, false, ""
+		}
+		return "Saved " + manFilename, true, true, manFilename
+	case ".adoc": // asciidoctor
+		manFilename := "out.1"
+		if err := e.exportAdoc(c, tty, manFilename); err != nil {
+			return err.Error(), true, false, ""
+		}
+		return "Saved " + manFilename, true, true, manFilename
+	}
+
+	// Get a few simple cases out of the way first, by editor mode
+	switch e.mode {
+	case mode.Markdown:
+		// pandoc
+		if pandocPath := which("pandoc"); pandocPath != "" {
+			pdfFilename := strings.Replace(filepath.Base(sourceFilename), ".", "_", -1) + ".pdf"
+			// Export to PDF using pandoc. The function handles its own status messages.
+			// TODO: Don't ignore the error
+			if background {
+				go func() {
+					pandocMutex.Lock()
+					_ = e.exportPandoc(c, tty, status, pandocPath, pdfFilename)
+					pandocMutex.Unlock()
+				}()
+			} else {
+				_ = e.exportPandoc(c, tty, status, pandocPath, pdfFilename)
+			}
+			// TODO: Add a minimum of error detection. Perhaps wait just 20ms and check if the goroutine is still running.
+			return "", true, true, "" // no message returned, the mustExportPandoc function handles it's own status output
+		}
+	}
+
+	// The immediate builds are done, time to build a exec.Cmd, run it and analyze the output
+
+	cmd, compilationProducedSomething, err := e.GenerateBuildCommand(filename)
+	if err != nil {
+		return err.Error(), true, false, ""
+	}
+
+	// Check that the resulting cmd.Path executable exists
+	if which(cmd.Path) == "" {
+		return errNoSuitableBuildCommand.Error(), false, false, ""
+	}
+
+	// --- Compilation ---
+
+	kotlinNative := strings.HasSuffix(cmd.Path, "kotlinc-native")
 
 	// Display a status message with no timeout, about what is currently being done
 	if status != nil {
-		status.ClearAll(c)
+		var progressStatusMessage string
+		if e.mode == mode.HTML || e.mode == mode.XML {
+			progressStatusMessage = "Displaying"
+		} else if !e.debugMode {
+			progressStatusMessage = "Building"
+		}
+		//status.ClearAll(c)
 		status.SetMessage(progressStatusMessage)
 		status.ShowNoTimeout(c, e)
 	}
 
 	// Save the command in a temporary file
-	saveCommand(&cmd)
+	saveCommand(cmd)
 
 	// Run the command and fetch the combined output from stderr and stdout.
 	// Ignore the status code / error, only look at the output.
 	output, err := cmd.CombinedOutput()
-	//panic(cmd.String() + "OUTPUT: " + string(output))
+
+	// Also perform linking, if needed
+	if objFilename := exeFilename + ".o"; e.mode == mode.Assembly && exists(objFilename) {
+		exeFirstName := e.exeName(sourceFilename)
+		linkerCmd := exec.Command("gcc", objFilename, "-o", exeFirstName)
+		linkerCmd.Dir = sourceDir
+		if e.debugMode {
+			linkerCmd.Args = append(linkerCmd.Args, "-g")
+		}
+		var linkerOutput []byte
+		linkerOutput, err = linkerCmd.CombinedOutput()
+		if err != nil {
+			output = append(output, '\n')
+			output = append(output, linkerOutput...)
+		}
+		os.Remove(objFilename)
+	}
 
 	outputString := string(bytes.TrimSpace(output))
 
@@ -614,18 +768,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		return "Error: " + lastLine, false, false, ""
 	}
 
-	sourceDirName := filepath.Base(sourceDir)
-	fullPathExe1 := filepath.Join(sourceDir, exeFirstName)
-	fullPathExe2 := filepath.Join(sourceDir, sourceDirName)
-
-	// TODO: Make more educated guesses for cargo and other build systems where the executable ends up elsewhere
-	if exists(fullPathExe1) {
-		return "Success", true, true, exeFirstName
-	} else if exists(fullPathExe2) {
-		return "Success", true, true, sourceDirName
+	if ok, what := compilationProducedSomething(); ok {
+		return "Success", true, true, what
 	}
 
-	// TODO: Make the checks above more definite, and make them per mode, not per extension.
-	//       This is really only "maybe success".
-	return "Success", true, true, ""
+	return "Could not compile", true, false, ""
 }
