@@ -104,6 +104,11 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		13,
 		2,
 	},
+	mode.Perl: {
+		"#!/usr/bin/env perl\n\nuse strict;\nuse utf8;\nuse warnings;\n\nbinmode(\\*STDOUT, \":utf8\");\nbinmode(\\*STDIN,  \":utf8\");\nbinmode(\\*STDERR, \":utf8\");\n\nsub main {\n  print(\"Hello, World!\\n\");\n}\n\nmain();\n",
+		7,
+		4,
+	},
 	mode.Python: {
 		"#!/usr/bin/env python\n# -*- coding: utf-8 -*-\n\ndef main():\n    print(\"Hello, World!\")\n\n\nif __name__ == \"__main__\":\n    main()\n",
 		7,
