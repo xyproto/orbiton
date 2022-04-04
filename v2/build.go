@@ -17,11 +17,9 @@ import (
 
 var (
 	errNoSuitableBuildCommand = errors.New("no suitable build command")
-	zigCacheDir               = filepath.Join(userCacheDir, "o/zig")
+	zigCacheDir               = filepath.Join(userCacheDir, "o", "zig")
 	pandocMutex               sync.RWMutex
 )
-
-type producedSomethingFunc func() (bool, string)
 
 // exeName tries to find a suitable name for the executable, given a source filename
 // For instance, "main" or the name of the directory holding the source filename.
@@ -44,8 +42,9 @@ func (e *Editor) exeName(filename string) string {
 }
 
 // GenerateBuildCommand will generate a command for building the given filename (or for displaying HTML)
-// Returns a command, a function for checking if the build was a success and possibly an error
-func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, producedSomethingFunc, error) {
+// If there are no errors, a exec.Cmd is returned together with a function that can tell if the build
+// produced an executable, together with the executable name,
+func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool, string), error) {
 	var cmd *exec.Cmd
 
 	everythingIsFine := func() (bool, string) {
@@ -322,6 +321,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			// TODO: Add a minimum of error detection. Perhaps wait just 20ms and check if the goroutine is still running.
 			return "", true, true, "" // no message returned, the mustExportPandoc function handles it's own status output
 		}
+		return "Could not find pandoc", false, false, ""
 	}
 
 	// The immediate builds are done, time to build a exec.Cmd, run it and analyze the output
@@ -348,7 +348,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		} else if !e.debugMode {
 			progressStatusMessage = "Building"
 		}
-		//status.ClearAll(c)
+		status.ClearAll(c)
 		status.SetMessage(progressStatusMessage)
 		status.ShowNoTimeout(c, e)
 	}
