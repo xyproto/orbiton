@@ -2,6 +2,7 @@ package main
 
 import (
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -71,6 +72,14 @@ func (sb *StatusBar) SetMessage(msg string) {
 
 	sb.isError = false
 	mut.Unlock()
+}
+
+// Message trims and returns the currently set status bar message
+func (sb *StatusBar) Message() string {
+	mut.RLock()
+	s := strings.TrimSpace(sb.msg)
+	mut.RUnlock()
+	return s
 }
 
 // IsError returns true if the error message to be shown is an error message
