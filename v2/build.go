@@ -23,17 +23,19 @@ var (
 
 // exeName tries to find a suitable name for the executable, given a source filename
 // For instance, "main" or the name of the directory holding the source filename.
-func (e *Editor) exeName(filename string) string {
-	exeFirstName := "main" // The default name
-	sourceDirectory := filepath.Dir(filename)
+func (e *Editor) exeName(sourceFilename string) string {
+	var (
+		exeFirstName = "main" // The default name
+		sourceDir    = filepath.Dir(sourceFilename)
+		parentDir    = filepath.Clean(filepath.Join(sourceDir, ".."))
+	)
 
 	// Find a suitable default executable first name
 	switch e.mode {
 	case mode.OCaml, mode.Kotlin, mode.Lua, mode.Assembly, mode.Rust, mode.Zig:
-		sourceDirectoryName := filepath.Base(sourceDirectory)
+		sourceDirectoryName := filepath.Base(sourceDir)
 		if sourceDirectoryName == "build" {
-			parentDirectory := filepath.Dir(sourceDirectory)
-			return filepath.Base(parentDirectory)
+			return filepath.Base(parentDir)
 		}
 		return sourceDirectoryName
 	}
@@ -76,6 +78,16 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		return exists(filepath.Join(sourceDir, exeFirstName)), exeFirstName
 	}
 
+	exeBaseNameOrMainExists := func() (bool, string) {
+		if exists(filepath.Join(sourceDir, exeFirstName)) {
+			return true, exeFirstName
+		}
+		if baseDirName := filepath.Base(sourceDir); exists(filepath.Join(sourceDir, baseDirName)) {
+			return true, baseDirName
+		}
+		return exists(filepath.Join(sourceDir, "main")), "main"
+	}
+
 	exeOrMainExists := func() (bool, string) {
 		if exists(filepath.Join(sourceDir, exeFirstName)) {
 			return true, exeFirstName
@@ -110,7 +122,6 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			cmd = exec.Command("kotlinc-native", "-nowarn", "-opt", "-Xallocator=mimalloc", "-produce", "program", "-linker-option", "--as-needed", sourceFilename, "-o", exeFirstName)
 			cmd.Dir = sourceDir
 			return cmd, exeExists, nil
-
 		}
 		jarFilename := exeFirstName + ".jar"
 		cmd = exec.Command("kotlinc", sourceFilename, "-include-runtime", "-d", jarFilename)
@@ -125,36 +136,48 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 	case mode.C:
 		if which("cxx") != "" {
 			cmd = exec.Command("cxx")
+			cmd.Dir = sourceDir
 			if e.debugMode {
 				cmd.Args = append(cmd.Args, "debug")
 			}
-			return cmd, exeOrMainExists, nil
+			return cmd, exeBaseNameOrMainExists, nil
 		}
 		// Use gcc directly
 		if e.debugMode {
-			return exec.Command("gcc", "-o", exeFilename, "-std=C18", "-Og", "-g", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-D_GNU_SOURCE", sourceFilename), exeExists, nil
+			cmd = exec.Command("gcc", "-o", exeFilename, "-std=C18", "-Og", "-g", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-D_GNU_SOURCE", sourceFilename)
+			cmd.Dir = sourceDir
+			return cmd, exeExists, nil
 		}
-		return exec.Command("gcc", "-o", exeFilename, "-std=C18", "-O2", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-D_GNU_SOURCE", sourceFilename), exeExists, nil
+		cmd = exec.Command("gcc", "-o", exeFilename, "-std=C18", "-O2", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-D_GNU_SOURCE", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, exeExists, nil
 	case mode.Cpp:
 		if exists("BUILD.bazel") && which("bazel") != "" { // Google-style C++ + Bazel projects if
 			return exec.Command("bazel", "build"), everythingIsFine, nil
 		}
 		if which("cxx") != "" {
 			cmd = exec.Command("cxx")
+			cmd.Dir = sourceDir
 			if e.debugMode {
 				cmd.Args = append(cmd.Args, "debug")
 			}
-			return cmd, exeOrMainExists, nil
+			return cmd, exeBaseNameOrMainExists, nil
 		}
 		// Use g++ directly
 		if e.debugMode {
-			return exec.Command("g++", "-o", exeFilename, "-std=c++2b", "-Og", "-g", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename), exeExists, nil
+			cmd = exec.Command("g++", "-o", exeFilename, "-std=c++2b", "-Og", "-g", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename)
+			cmd.Dir = sourceDir
+			return cmd, exeExists, nil
 		}
-		return exec.Command("g++", "-o", exeFilename, "-std=c++2b", "-O2", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename), exeExists, nil
+		cmd = exec.Command("g++", "-o", exeFilename, "-std=c++2b", "-O2", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, exeExists, nil
 	case mode.Zig:
 		if which("zig") != "" {
 			if exists("build.zig") {
-				return exec.Command("zig", "build"), everythingIsFine, nil
+				cmd = exec.Command("zig", "build")
+				cmd.Dir = sourceDir
+				return cmd, everythingIsFine, nil
 			}
 			// Just build the current file
 			sourceCode := ""
@@ -178,10 +201,14 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		}
 		// No result
 	case mode.V:
-		return exec.Command("v", sourceFilename), exeOrMainExists, nil
+		cmd = exec.Command("v", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, exeOrMainExists, nil
 	case mode.Rust:
 		if exists("Cargo.toml") {
-			return exec.Command("cargo", "build"), everythingIsFine, nil
+			cmd = exec.Command("cargo", "build")
+			cmd.Dir = sourceDir
+			return cmd, everythingIsFine, nil
 		}
 		if exists(filepath.Join(parentDir, "Cargo.toml")) {
 			cmd = exec.Command("cargo", "build")
@@ -195,14 +222,16 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			} else {
 				cmd = exec.Command(rustcExecutable, sourceFilename, "-o", exeFilename)
 			}
+			cmd.Dir = sourceDir
 			return cmd, exeExists, nil
 		}
 		// No result
 	case mode.Clojure:
-		cmd = exec.Command("lein", "uberjar") //                       {".clj", ".cljs", ".clojure"}, // Clojure
+		cmd = exec.Command("lein", "uberjar")
 		projectFileExists := exists("project.clj")
 		parentProjectFileExists := exists("../project.clj")
 		grandParentProjectFileExists := exists("../../project.clj")
+		cmd.Dir = sourceDir
 		if !projectFileExists && parentProjectFileExists {
 			cmd.Dir = parentDir
 		} else if !projectFileExists && !parentProjectFileExists && grandParentProjectFileExists {
@@ -210,31 +239,57 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		}
 		return cmd, everythingIsFine, nil
 	case mode.Haskell:
-		return exec.Command("ghc", "-dynamic", sourceFilename), everythingIsFine, nil //                                        {".hs"},                       // Haskell
+		cmd = exec.Command("ghc", "-dynamic", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Python:
-		return exec.Command("python", "-m", "py_compile", sourceFilename), everythingIsFine, nil //                             {".py"},                 // Python, compile to .pyc
+		cmd = exec.Command("python", "-m", "py_compile", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.OCaml:
-		return exec.Command("ocamlopt", "-o", exeFirstName, sourceFilename), exeExists, nil //                           {".ml"},                 // OCaml
+		cmd = exec.Command("ocamlopt", "-o", exeFirstName, sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, exeExists, nil
 	case mode.Crystal:
-		return exec.Command("crystal", "build", "--no-color", sourceFilename), everythingIsFine, nil //                         {".cr"},                 // Crystal
+		cmd = exec.Command("crystal", "build", "--no-color", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Lua:
-		return exec.Command("luac", "-o", exeFirstName+".out", sourceFilename), everythingIsFine, nil //        {".lua"},                // Lua, build an .out file
+		cmd = exec.Command("luac", "-o", exeFirstName+".out", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Nim:
-		return exec.Command("nim", "c", sourceFilename), everythingIsFine, nil //                               {".nim"},                // Nim
+		cmd = exec.Command("nim", "c", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.ObjectPascal:
-		return exec.Command("fpc", sourceFilename), everythingIsFine, nil //                                    {".pp", ".pas", ".lpr"}, // Object Pascal / Delphi
+		cmd = exec.Command("fpc", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.D:
-		return exec.Command("gdc", "-o", exeFirstName, sourceFilename), exeExists, nil //                {".d"},                  // D
+		cmd = exec.Command("gdc", "-o", exeFirstName, sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, exeExists, nil
 	case mode.HTML:
-		return exec.Command("xdg-open", sourceFilename), everythingIsFine, nil //                               {".htm", ".html"},       // Display HTML in the browser
+		cmd = exec.Command("xdg-open", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Odin:
-		return exec.Command("odin", "build", sourceFilename), everythingIsFine, nil //                          {".odin"}, // Odin
+		cmd = exec.Command("odin", "build", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.CS:
-		return exec.Command("csc", "-nologo", "-unsafe", sourceFilename), everythingIsFine, nil //              {".cs"},   // C#
+		cmd = exec.Command("csc", "-nologo", "-unsafe", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.StandardML:
-		return exec.Command("mlton", sourceFilename), everythingIsFine, nil //                                  {".sml"},
+		cmd = exec.Command("mlton", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Agda:
-		return exec.Command("agda", "-c", sourceFilename), everythingIsFine, nil //                             {".agda"},
+		cmd = exec.Command("agda", "-c", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Assembly:
 		objFilename := exeFilename + ".o"
 		if which("yasm") != "" { // use yasm
@@ -243,7 +298,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 				cmd.Args = append(cmd.Args, "-g", "dwarf2")
 			}
 			return cmd, func() (bool, string) {
-				return exists(objFilename), objFilename
+				return exists(filepath.Join(sourceDir, objFilename)), objFilename
 			}, nil
 		}
 		if which("nasm") != "" { // use nasm
@@ -252,12 +307,12 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 				cmd.Args = append(cmd.Args, "-g")
 			}
 			return cmd, func() (bool, string) {
-				return exists(objFilename), objFilename
+				return exists(filepath.Join(sourceDir, objFilename)), objFilename
 			}, nil
 		}
 		// No result
 	}
-	return nil, nothingIsFine, errors.New("Could not find build command for mode: " + e.mode.String())
+	return nil, nothingIsFine, errors.New("No build command for mode: " + e.mode.String())
 }
 
 // BuildOrExport will try to build the source code or export the document.
