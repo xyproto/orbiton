@@ -68,8 +68,8 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		sourceDir      = filepath.Dir(sourceFilename)
 		parentDir      = filepath.Clean(filepath.Join(sourceDir, ".."))
 		grandParentDir = filepath.Clean(filepath.Join(sourceDir, "..", ".."))
-		exeFirstName = e.exeName(sourceFilename)
-		exeFilename  = filepath.Join(sourceDir, exeFirstName)
+		exeFirstName   = e.exeName(sourceFilename)
+		exeFilename    = filepath.Join(sourceDir, exeFirstName)
 	)
 
 	exeExists := func() (bool, string) {
@@ -179,11 +179,12 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			}
 			// Just build the current file
 			sourceCode := ""
-			sourceData, err := ioutil.ReadFile(filename)
+			sourceData, err := ioutil.ReadFile(sourceFilename)
 			if err == nil { // success
 				sourceCode = string(sourceData)
 			}
-			cmd = exec.Command("zig", "build-exe", "-lc", filename, "--name", exeFirstName, "--cache-dir", zigCacheDir)
+
+			cmd = exec.Command("zig", "build-exe", "-lc", sourceFilename, "--name", exeFirstName, "--cache-dir", zigCacheDir)
 			cmd.Dir = sourceDir
 			// TODO: Find a better way than this
 			if strings.Contains(sourceCode, "SDL2/SDL.h") {
@@ -382,7 +383,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 	// The immediate builds are done, time to build a exec.Cmd, run it and analyze the output
 
-	cmd, compilationProducedSomething, err := e.GenerateBuildCommand(filename)
+	cmd, compilationProducedSomething, err := e.GenerateBuildCommand(sourceFilename)
 	if err != nil {
 		return "", err
 	}
