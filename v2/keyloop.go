@@ -238,16 +238,12 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				}
 			}
 
-			// Clear the current search term
-			e.ClearSearchTerm()
-
 			// debug stepping
 			if e.debugMode && e.gdb != nil {
 				// If we have a breakpoint, continue to it
 				if e.breakpoint != nil { // exists
 					// continue forward to the end or to the next breakpoint
 					gdbOutput, err := e.DebugContinue()
-					status.ClearAll(c)
 					if err != nil {
 						e.DebugEnd()
 						status.SetMessage("Done")
@@ -259,14 +255,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 							status.SetMessage("Continue")
 						}
 					}
-					status.Show(c, e)
-					e.redrawCursor = true
-					break
-
 				} else { // if not, make one step
 					// step forward to the next line
 					gdbOutput, err := e.DebugStep()
-					status.ClearAll(c)
 					if err != nil {
 						e.DebugEnd()
 						status.SetMessage("Done")
@@ -278,12 +269,19 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 							status.SetMessage("Step")
 						}
 					}
-					status.Show(c, e)
-					e.redrawCursor = true
-					break
-
 				}
+				e.redrawCursor = true
+
+				// Redraw and use the triggered status message instead of Show
+				e.redraw = true
+				statusMessage = status.Message()
+				status.ClearAll(c)
+				break
 			}
+
+			// Clear the current search term, but don't redraw if there are status messages
+			e.ClearSearchTerm()
+			e.redraw = false
 
 			// ctrl-space was pressed while in Nroff mode
 			if e.mode == mode.Nroff {
@@ -307,103 +305,83 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// to avvoid the first accidental ctrl-space key press.
 
 			// Build or export the current file
-			var (
-				buildStatusMessage string
-				performedAction    bool
-				compiled           bool
-				outputExecutable   string
-			)
-
 			// The last argument is if the command should run in the background or not
-			outputExecutable, err = e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
-			if err != nil {
-				status.ClearAll(c)
+			outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
+
+			// All clear when it comes to status messages and redrawing
+			status.ClearAll(c)
+
+			if err != nil && err != errNoSuitableBuildCommand {
+				// Error while building
 				status.SetErrorMessage(err.Error())
 				status.ShowNoTimeout(c, e)
-			} else {
-				statusMessage = "Success"
-				//status.ClearAll(c)
-				//status.SetMessage("Success")
-				//status.Show(c, e)
+				break
 			}
-			break
 
-			//logf("status message %s performed action %v compiled %v filename %s\n", statusMessage, performedAction, compiled, e.filename)
-
-			// Could an action be performed for this file extension?
-			if !performedAction {
+			// Was no suitable compilation or export command found?
+			if err == errNoSuitableBuildCommand {
 				//status.ClearAll(c)
 				if e.debugMode {
-					status.SetMessage(buildStatusMessage)
-					statusMessage = buildStatusMessage
+					// Both in debug mode and can not find a command to build this file with.
+					status.SetErrorMessage(err.Error())
+					status.ShowNoTimeout(c, e)
+					break
+				}
+				// Building this file extension is not implemented yet.
+				// Just display the current time and word count.
+				// TODO: status.ClearAll() should have cleared the status bar first, but this is not always true,
+				//       which is why the message is hackily surrounded by spaces. Fix.
+				statsMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
+				status.SetMessage(statsMessage)
+				status.Show(c, e)
+				break
+			}
+
+			// --- success ---
+
+			//statusMessage = "Success"
+
+			// ctrl-space was pressed while in debug mode, and without a debug session running
+			if e.debugMode && e.gdb == nil {
+
+				// Find the full path to the compiled executable, and check that it exists
+				outputExecutableClean := filepath.Clean(filepath.Join(filepath.Dir(absFilename), outputExecutable))
+				if !exists(outputExecutableClean) {
+					status.ClearAll(c)
+					status.SetErrorMessage("Could not find " + outputExecutableClean)
+					status.ShowNoTimeout(c, e)
+					e.debugMode = false
+					break
+				}
+
+				status.SetMessage("Starting gdb...")
+				status.Show(c, e)
+
+				// Start GDB execution from the top
+				msg, err := e.DebugStart(filepath.Dir(absFilename), filepath.Base(absFilename), outputExecutable)
+				if err != nil || e.gdb == nil {
+					status.ClearAll(c)
+					status.SetErrorMessage("Could not start debugging: " + msg + ", " + err.Error())
+					status.ShowNoTimeout(c, e)
+					break
+				}
+
+				e.GoToLineNumber(1, nil, nil, true)
+
+				status.ClearAll(c)
+				if e.breakpoint == nil {
+					status.SetMessage("Started a debug session")
 				} else {
-					// Building this file extension is not implemented yet.
-					// Just display the current time and word count.
-					// TODO: status.ClearAll() should have cleared the status bar first, but this is not always true,
-					//       which is why the message is hackily surrounded by spaces. Fix.
-					statsMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
-					status.SetMessage(statsMessage)
-					statusMessage = statsMessage
+					status.SetMessage("Started a debug sessions. Breakpoint at line " + e.breakpoint.LineNumber().String() + ".")
 				}
 				status.Show(c, e)
-			} else if performedAction && !compiled {
-				//status.ClearAll(c)
-				// Performed an action, but it did not work out
-				if buildStatusMessage != "" {
-					status.SetErrorMessage(buildStatusMessage)
-				} else {
-					// This should never happen, failed compilations should return a message
-					status.SetErrorMessage("Compilation failed")
-				}
-				status.ShowNoTimeout(c, e)
-			} else if performedAction && compiled {
-				// Everything worked out
-				if buildStatusMessage != "" {
-					// Got a status message (this may not be the case for build/export processes running in the background)
-					// NOTE: Do not clear the status message first here!
-					//status.ClearAll(c)
-					status.SetMessage(buildStatusMessage)
-					status.Show(c, e)
-					// success
-					statusMessage = buildStatusMessage
-				}
-
-				// ctrl-space was pressed while in debug mode, and without a debug session running
-				if e.debugMode && e.gdb == nil {
-					status.ClearAll(c)
-
-					// Find the full path to the compiled executable, and check that it exists
-					outputExecutableAbsPath := filepath.Join(filepath.Dir(absFilename), filepath.Base(outputExecutable))
-					if !exists(outputExecutableAbsPath) {
-						status.SetErrorMessage("Could not find " + outputExecutableAbsPath)
-						status.ShowNoTimeout(c, e)
-						break
-					}
-
-					status.SetMessage("Starting gdb...")
-					status.ShowNoTimeout(c, e)
-
-					// Start GDB execution from the top
-					msg, err := e.DebugStart(filepath.Dir(absFilename), filepath.Base(absFilename), filepath.Base(outputExecutableAbsPath))
-					if err != nil || e.gdb == nil {
-						status.ClearAll(c)
-						status.SetErrorMessage("Could not start debugging: " + msg + ", " + err.Error())
-						status.ShowNoTimeout(c, e)
-					} else {
-						status.ClearAll(c)
-						e.GoToLineNumber(1, nil, nil, true)
-						if e.breakpoint == nil {
-							status.SetMessage("Started a debug session")
-						} else {
-							status.SetMessage("Started a debug sessions. Breakpoint at line " + e.breakpoint.LineNumber().String() + ".")
-						}
-						status.ShowNoTimeout(c, e)
-						statusMessage = buildStatusMessage
-					}
-				}
-
-				e.redrawCursor = true
+				break
 			}
+
+			// Regular success, no debug mode
+			status.SetMessage("Success")
+			status.Show(c, e)
+
 		case "c:20": // ctrl-t
 			// for C or C++: jump to header/source, or insert symbol
 			// for Agda: insert symbol
