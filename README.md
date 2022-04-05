@@ -484,6 +484,6 @@ Installing a symlink for launching `ko` with a light theme:
 
 ## General info
 
-* Version: 2.49.0
+* Version: 2.49.1
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
