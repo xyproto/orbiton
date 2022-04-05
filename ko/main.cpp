@@ -285,12 +285,11 @@ gboolean key_pressed(GtkWidget* widget, GdkEventKey* event, gpointer user_data)
         event->keyval = GDK_KEY_T;
         event->state = GDK_CONTROL_MASK;
         break;
-
-        // F5 to F8 can be used for debugging!
-
+    // F5 to F8 could be used for debugging!
     case GDK_KEY_F10:
-        // Send ctrl+q instead, to quit
-        event->keyval = GDK_KEY_Q;
+        // Send ctrl+o, to give users the option of saving and quitting
+        // F10 is too easy to press by accident to be bound to ctrl+q directly
+        event->keyval = GDK_KEY_O;
         event->state = GDK_CONTROL_MASK;
         break;
     case GDK_KEY_F12:
