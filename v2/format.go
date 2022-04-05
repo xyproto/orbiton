@@ -45,8 +45,10 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		return errors.New(cmd.Path + " is missing")
 	}
 
-	utilityName := filepath.Base(cmd.Path)
-	status.SetMessage("Calling " + utilityName)
+	//utilityName := filepath.Base(cmd.Path)
+	//status.SetMessage("Formatting with " + utilityName)
+	//status.SetMessage("Calling " + utilityName)
+	status.SetMessage("Format")
 	status.Show(c, e)
 
 	// Use the temporary directory defined in TMPDIR, with fallback to /tmp

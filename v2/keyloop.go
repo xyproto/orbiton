@@ -57,7 +57,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
-	e, statusMessage, err := NewEditor(tty, c, filename, lineNumber, colNumber, theme, syntaxHighlight)
+	e, statusMessageAfterRedraw, err := NewEditor(tty, c, filename, lineNumber, colNumber, theme, syntaxHighlight)
 	if err != nil {
 		return "", false, err
 	}
@@ -143,7 +143,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	}
 
 	// Draw everything once, with slightly different behavior if used over ssh
-	e.InitialRedraw(c, status, &statusMessage)
+	e.InitialRedraw(c, status, &statusMessageAfterRedraw)
 
 	// This is the main loop for the editor
 	for !e.quit {
@@ -176,7 +176,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		switch key {
 		case "c:17": // ctrl-q, quit
 			e.quit = true
-		case "c:23": // ctrl-w, format (or if in git mode, cycle interactive rebase keywords)
+		case "c:23": // ctrl-w, format or insert template (or if in git mode, cycle interactive rebase keywords)
 
 			undo.Snapshot(e)
 
@@ -210,14 +210,20 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				break
 			}
 
+			status.ClearAll(c)
 			e.formatCode(c, tty, status, &jsonFormatToggle)
 
 			// Move the cursor if after the end of the line
 			if e.AtOrAfterEndOfLine() {
 				e.End(c)
 			}
+
+			// Keep the message on screen for 1 second, despite e.redraw being set.
+			// This is only to have a minimum amount of display time for the message.
+			status.HoldMessage(c, &statusMessageAfterRedraw, 250*time.Millisecond)
+
 		case "c:6": // ctrl-f, search for a string
-			e.SearchMode(c, status, tty, true, &statusMessage, undo)
+			e.SearchMode(c, status, tty, true, &statusMessageAfterRedraw, undo)
 		case "c:0": // ctrl-space, build source code to executable, or export, depending on the mode
 
 			if e.Empty() {
@@ -276,9 +282,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				e.redrawCursor = true
 
 				// Redraw and use the triggered status message instead of Show
-				//e.redraw = true
-				statusMessage = status.Message()
-				//status.ClearAll(c)
+				statusMessageAfterRedraw = status.Message()
+
 				break
 			}
 
@@ -704,7 +709,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				// Clear the macro
 				e.macro = nil
 				// Show a message after the redraw
-				statusMessage = "Macro cleared"
+				statusMessageAfterRedraw = "Macro cleared"
 			}
 		case " ": // space
 
@@ -1796,7 +1801,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		}
 
 		// Draw and/or redraw everything, with slightly different behavior over ssh
-		e.RedrawAtEndOfKeyLoop(c, status, &statusMessage)
+		e.RedrawAtEndOfKeyLoop(c, status, &statusMessageAfterRedraw)
 
 	} // end of main loop
 
