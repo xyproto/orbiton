@@ -35,7 +35,7 @@ echo '* No OS RISC-V static'
 GOOS=noos CGO_ENABLED=0 GOARCH=riscv go build -mod=vendor -trimpath -ldflags "-s" -a -o $name.noos_riscv_static
 
 # Compress the Linux releases with xz
-for p in linux linux_rpi234 linux_amd64_static linux_arm64_static linux_armv6_static linux_armv7_static noos_riscv_static; do
+for p in linux_amd64 linux_rpi234 linux_amd64_static linux_arm64_static linux_armv6_static linux_armv7_static noos_riscv_static; do
   echo "Compressing $name-$version.$p.tar.xz"
   mkdir "$name-$version-$p"
   cp ../$name.1 "$name-$version-$p/"
