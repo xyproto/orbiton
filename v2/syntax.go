@@ -110,7 +110,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		addKeywords = []string{"fn"}
 		delKeywords = []string{"from", "new", "print"}
 	case mode.Python:
-		delKeywords = []string{"fn"}
+		delKeywords = []string{"append", "fn", "get", "package", "print"}
 	case mode.Odin:
 		clearKeywords()
 		addKeywords = odinWords
