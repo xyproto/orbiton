@@ -203,19 +203,34 @@ func runeFromUBytes(bs []byte) (rune, error) {
 }
 
 // logf, for quick "printf-style" debugging
+// Will call log.Fatalln if there are problems!
 func logf(format string, args ...interface{}) {
 	tempDir := env.Dir("TMPDIR", "/tmp")
-	logfilename := filepath.Join(tempDir, "o.log")
-	f, err := os.OpenFile(logfilename, os.O_APPEND|os.O_WRONLY, 0644)
+	logFilename := filepath.Join(tempDir, "o.log")
+	err := flogf(logFilename, format, args...)
 	if err != nil {
-		f, err = os.Create(logfilename)
+		log.Fatalln(err)
+	}
+}
+
+// flogf, for logging to a file with a fprintf-style function
+func flogf(logfile, format string, args ...interface{}) error {
+	f, err := os.OpenFile(logfile, os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		f, err = os.Create(logfile)
 		if err != nil {
-			log.Fatalln(err)
+			return err
 		}
 	}
-	f.WriteString(fmt.Sprintf(format, args...))
-	f.Sync()
-	f.Close()
+	_, err = f.WriteString(fmt.Sprintf(format, args...))
+	if err != nil {
+		return err
+	}
+	err = f.Sync()
+	if err != nil {
+		return err
+	}
+	return f.Close()
 }
 
 // Silence the "logf is unused" message by staticcheck

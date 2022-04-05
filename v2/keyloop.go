@@ -357,8 +357,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					break
 				}
 
-				status.SetMessage("Starting gdb...")
-				status.Show(c, e)
+				//status.SetMessage("Starting gdb...")
+				//status.Show(c, e)
 
 				// Start GDB execution from the top
 				msg, err := e.DebugStart(filepath.Dir(absFilename), filepath.Base(absFilename), outputExecutable)

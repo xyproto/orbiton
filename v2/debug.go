@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/cyrus-and/gdb"
@@ -15,13 +16,14 @@ import (
 var (
 	gdbOutput         bytes.Buffer
 	originalDirectory string
+	gdbLogFile        = filepath.Join(userCacheDir, "o", "gdb.log")
 )
 
 // DebugStart will start a new debug session, using gdb.
 // Will end the existing session first if e.gdb != nil.
-func (e *Editor) DebugStart(directory, sourceBaseFilename, executableBaseFilename string) (string, error) {
+func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilename string) (string, error) {
 
-	//logf("debug: dir %s, src %s, exe %s\n", directory, sourceBaseFilename, executableBaseFilename)
+	flogf(gdbLogFile, "[gdb] dir %s, src %s, exe %s\n", sourceDir, sourceBaseFilename, executableBaseFilename)
 
 	// End any existing sessions
 	e.DebugEnd()
@@ -30,9 +32,9 @@ func (e *Editor) DebugStart(directory, sourceBaseFilename, executableBaseFilenam
 	var err error
 	originalDirectory, err = os.Getwd()
 	if err == nil { // cd success
-		err = os.Chdir(directory)
+		err = os.Chdir(sourceDir)
 		if err != nil {
-			return "", errors.New("could not change directory to " + directory)
+			return "", errors.New("could not change directory to " + sourceDir)
 		}
 	}
 
@@ -44,6 +46,8 @@ func (e *Editor) DebugStart(directory, sourceBaseFilename, executableBaseFilenam
 		gdbExecutable = which("gdb")
 	}
 
+	flogf(gdbLogFile, "[gdb] starting %s: ", gdbExecutable)
+
 	// Start a new gdb session
 	e.gdb, err = gdb.NewCustom(gdbExecutable, func(notification map[string]interface{}) {
 		// Handle messages from gdb, including frames that contains line numbers
@@ -51,6 +55,7 @@ func (e *Editor) DebugStart(directory, sourceBaseFilename, executableBaseFilenam
 			if payloadMap, ok := payload.(map[string]interface{}); ok {
 				if frame, ok := payloadMap["frame"]; ok {
 					if frameMap, ok := frame.(map[string]interface{}); ok {
+						flogf(gdbLogFile, "[gdb] frame: %v\n", frameMap)
 						if lineNumberString, ok := frameMap["line"].(string); ok {
 							if lineNumber, err := strconv.Atoi(lineNumberString); err == nil { // success
 								// Got a line number, send the editor there, without any status messages
@@ -62,14 +67,16 @@ func (e *Editor) DebugStart(directory, sourceBaseFilename, executableBaseFilenam
 			}
 		}
 	})
-
 	if err != nil {
 		e.gdb = nil
+		flogf(gdbLogFile, "%s\n", "fail")
 		return "", err
 	}
 	if e.gdb == nil {
+		flogf(gdbLogFile, "%s\n", "fail")
 		return "", errors.New("gdb.New returned no error, but e.gdb is nil")
 	}
+	flogf(gdbLogFile, "%s\n", "ok")
 
 	// Handle output to stdout (and stderr?) from programs that are being debugged
 	go io.Copy(&gdbOutput, e.gdb)
@@ -112,17 +119,12 @@ func (e *Editor) DebugContinue() (string, error) {
 // DebugStep will continue the execution by stepping to the next line.
 // e.gdb must not be nil. Returns whatever was outputted to gdb stdout.
 func (e *Editor) DebugStep() (string, error) {
-	//logf("%s\n", "[step] start")
-	//logf("%s\n", "[step] sending exec-step")
 	_, err := e.gdb.CheckedSend("exec-step")
 	if err != nil {
 		return "", err
 	}
-	//logf("[step] got %v and no error\n", retval)
 	output := gdbOutput.String()
-	//logf("[step] got GDB output: %s\n", output)
 	gdbOutput.Reset()
-	//logf("[step] end, returning output: %s\n", output)
 	return output, nil
 }
 
@@ -138,4 +140,5 @@ func (e *Editor) DebugEnd() {
 	if originalDirectory != "" {
 		os.Chdir(originalDirectory)
 	}
+	flogf(gdbLogFile, "[gdb] stopped")
 }

@@ -147,11 +147,11 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		}
 		// Use gcc directly
 		if e.debugMode {
-			cmd = exec.Command("gcc", "-o", exeFilename, "-std=C18", "-Og", "-g", "-pipe", "-D_GNU_SOURCE", sourceFilename)
+			cmd = exec.Command("gcc", "-o", exeFilename, "-Og", "-g", "-pipe", "-D_GNU_SOURCE", sourceFilename)
 			cmd.Dir = sourceDir
 			return cmd, exeExists, nil
 		}
-		cmd = exec.Command("gcc", "-o", exeFilename, "-std=C18", "-O2", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-D_GNU_SOURCE", sourceFilename)
+		cmd = exec.Command("gcc", "-o", exeFilename, "-O2", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-D_GNU_SOURCE", sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, exeExists, nil
 	case mode.Cpp:
@@ -168,11 +168,11 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		}
 		// Use g++ directly
 		if e.debugMode {
-			cmd = exec.Command("g++", "-o", exeFilename, "-std=c++2b", "-Og", "-g", "-pipe", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename)
+			cmd = exec.Command("g++", "-o", exeFilename, "-Og", "-g", "-pipe", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename)
 			cmd.Dir = sourceDir
 			return cmd, exeExists, nil
 		}
-		cmd = exec.Command("g++", "-o", exeFilename, "-std=c++2b", "-O2", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename)
+		cmd = exec.Command("g++", "-o", exeFilename, "-O2", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, exeExists, nil
 	case mode.Zig:
