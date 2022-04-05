@@ -10,8 +10,6 @@ echo 'Compiling...'
 export GOARCH=amd64
 echo '* Linux'
 GOOS=linux go build -mod=vendor -o $name.linux_amd64
-#echo '* Plan9'
-#GOOS=plan9 go build -mod=vendor -o $name.plan9
 echo '* macOS'
 GOOS=darwin go build -mod=vendor -o $name.macos_amd64
 echo '* FreeBSD'
@@ -31,11 +29,11 @@ echo '* Linux armv6 static'
 GOOS=linux CGO_ENABLED=0 GOARCH=arm GOARM=6 go build -mod=vendor -trimpath -ldflags "-s" -a -o $name.linux_armv6_static
 echo '* Linux armv7 static'
 GOOS=linux CGO_ENABLED=0 GOARCH=arm GOARM=7 go build -mod=vendor -trimpath -ldflags "-s" -a -o $name.linux_armv7_static
-echo '* No OS RISC-V static'
-GOOS=noos CGO_ENABLED=0 GOARCH=riscv go build -mod=vendor -trimpath -ldflags "-s" -a -o $name.noos_riscv_static
+echo '* Darwin arm64 static'
+GOOS=darwin CGO_ENABLED=0 GOARCH=arm64 go build -mod=vendor -trimpath -ldflags "-s" -a -o $name.darwin_arm64_static
 
 # Compress the Linux releases with xz
-for p in linux_amd64 linux_rpi234 linux_amd64_static linux_arm64_static linux_armv6_static linux_armv7_static noos_riscv_static; do
+for p in linux_amd64 linux_rpi234 linux_amd64_static linux_arm64_static linux_armv6_static linux_armv7_static darwin_arm64_static; do
   echo "Compressing $name-$version.$p.tar.xz"
   mkdir "$name-$version-$p"
   cp ../$name.1 "$name-$version-$p/"
