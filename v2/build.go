@@ -295,24 +295,27 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.Assembly:
-		objFilename := exeFilename + ".o"
-		if which("yasm") != "" { // use yasm
-			cmd = exec.Command("yasm", "-f", "elf64", "-o", objFilename, sourceFilename)
+		objFullFilename := exeFilename + ".o"
+		objCheckFunc := func() (bool, string) {
+			// Note that returning the full path as the second argument instead of only the base name
+			// is only done for mode.Assembly. It's treated differently further down when linking.
+			return exists(objFullFilename), objFullFilename
+		}
+		// try to use yasm
+		if which("yasm") != "" {
+			cmd = exec.Command("yasm", "-f", "elf64", "-o", objFullFilename, sourceFilename)
 			if e.debugMode {
 				cmd.Args = append(cmd.Args, "-g", "dwarf2")
 			}
-			return cmd, func() (bool, string) {
-				return exists(filepath.Join(sourceDir, objFilename)), objFilename
-			}, nil
+			return cmd, objCheckFunc, nil
 		}
+		// then try to use nasm
 		if which("nasm") != "" { // use nasm
-			cmd = exec.Command("nasm", "-f", "elf64", "-o", objFilename, sourceFilename)
+			cmd = exec.Command("nasm", "-f", "elf64", "-o", objFullFilename, sourceFilename)
 			if e.debugMode {
 				cmd.Args = append(cmd.Args, "-g")
 			}
-			return cmd, func() (bool, string) {
-				return exists(filepath.Join(sourceDir, objFilename)), objFilename
-			}, nil
+			return cmd, objCheckFunc, nil
 		}
 		// No result
 	}
@@ -437,8 +440,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	}
 
 	// Also perform linking, if needed
-	if objFilename := filepath.Join(sourceDir, exeFilename+".o"); e.mode == mode.Assembly && exists(objFilename) {
-		linkerCmd := exec.Command("gcc", objFilename, "-o", exeFirstName)
+	if ok, objFullFilename := compilationProducedSomething(); e.mode == mode.Assembly && ok {
+		linkerCmd := exec.Command("ld", "-o", exeFilename, objFullFilename)
 		linkerCmd.Dir = sourceDir
 		if e.debugMode {
 			linkerCmd.Args = append(linkerCmd.Args, "-g")
@@ -448,10 +451,12 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		if err != nil {
 			output = append(output, '\n')
 			output = append(output, linkerOutput...)
+		} else {
+			os.Remove(objFullFilename)
 		}
-		os.Remove(objFilename)
+		// Replace the result check function
 		compilationProducedSomething = func() (bool, string) {
-			return exists(objFilename), filepath.Join(sourceDir, exeFirstName)
+			return exists(exeFilename), exeFirstName
 		}
 	}
 
@@ -839,5 +844,6 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		return what, nil
 	}
 
-	return "", errors.New("could not compile, found no output")
+	// TODO: Find ways to make the error message more informative
+	return "", errors.New("could not compile")
 }
