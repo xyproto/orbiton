@@ -276,9 +276,11 @@ func (sb *StatusBar) ShowLineColWordCount(c *vt100.Canvas, e *Editor, filename s
 // variable that will be used in keyloop.go, after redrawing.
 // TODO: Move statusMessageAfterRedaw somewhere else, perhaps into Editor.
 func (sb *StatusBar) HoldMessage(c *vt100.Canvas, statusMessageAfterRedraw *string, dur time.Duration) {
-	*statusMessageAfterRedraw = sb.msg
-	go func() {
-		time.Sleep(dur)
-		sb.ClearAll(c)
-	}()
+	if strings.TrimSpace(sb.msg) != "" {
+		*statusMessageAfterRedraw = sb.msg
+		go func() {
+			time.Sleep(dur)
+			sb.ClearAll(c)
+		}()
+	}
 }
