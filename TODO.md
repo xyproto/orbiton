@@ -2,7 +2,7 @@
 
 ## Building and testing programs
 
-- [ ] Indicate which line the program is at when running in a debug session.
+- [ ] Add a small window with watches in the upper right area when stepping in debug mode.
 - [ ] Jump to error when building with `ctrl-space` and `cargo`.
 - [ ] Fix output parsing when running `go test` with ctrl-space.
 
