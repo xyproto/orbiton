@@ -8,7 +8,7 @@ require (
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/xyproto/env v1.7.0
 	github.com/xyproto/guessica v1.1.0
-	github.com/xyproto/mode v0.4.1
+	github.com/xyproto/mode v0.4.2
 	github.com/xyproto/stringpainter v1.0.0
 	github.com/xyproto/syntax v1.10.5
 	github.com/xyproto/termtitle v1.5.0
