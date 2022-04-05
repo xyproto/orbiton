@@ -240,10 +240,12 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 			// debug stepping
 			if e.debugMode && e.gdb != nil {
+				status.ClearAll(c)
 				// If we have a breakpoint, continue to it
 				if e.breakpoint != nil { // exists
 					// continue forward to the end or to the next breakpoint
 					gdbOutput, err := e.DebugContinue()
+					//logf("[continue] gdb output: %s\n", gdbOutput)
 					if err != nil {
 						e.DebugEnd()
 						status.SetMessage("Done")
@@ -258,6 +260,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				} else { // if not, make one step
 					// step forward to the next line
 					gdbOutput, err := e.DebugStep()
+					//logf("[step] gdb output: %s\n", gdbOutput)
 					if err != nil {
 						e.DebugEnd()
 						status.SetMessage("Done")
@@ -273,9 +276,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				e.redrawCursor = true
 
 				// Redraw and use the triggered status message instead of Show
-				e.redraw = true
+				//e.redraw = true
 				statusMessage = status.Message()
-				status.ClearAll(c)
+				//status.ClearAll(c)
 				break
 			}
 
