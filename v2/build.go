@@ -147,11 +147,11 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		}
 		// Use gcc directly
 		if e.debugMode {
-			cmd = exec.Command("gcc", "-o", exeFilename, "-Og", "-g", "-pipe", "-D_GNU_SOURCE", sourceFilename)
+			cmd = exec.Command("gcc", "-o", exeFilename, "-Og", "-g", "-pipe", "-D_BSD_SOURCE", sourceFilename)
 			cmd.Dir = sourceDir
 			return cmd, exeExists, nil
 		}
-		cmd = exec.Command("gcc", "-o", exeFilename, "-O2", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-D_GNU_SOURCE", sourceFilename)
+		cmd = exec.Command("gcc", "-o", exeFilename, "-O2", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-D_BSD_SOURCE", sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, exeExists, nil
 	case mode.Cpp:
