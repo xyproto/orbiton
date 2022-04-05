@@ -37,9 +37,11 @@ func (e *Editor) DebugStart(directory, sourceBaseFilename, executableBaseFilenam
 	}
 
 	// Use rust-gdb if we are debugging Rust
-	gdbExecutable := which("gdb")
+	var gdbExecutable string
 	if e.mode == mode.Rust {
-		gdbExecutable = which("rust-gdb")
+		gdbExecutable = which("rust-db")
+	} else {
+		gdbExecutable = which("gdb")
 	}
 
 	// Start a new gdb session
@@ -87,7 +89,7 @@ func (e *Editor) DebugStart(directory, sourceBaseFilename, executableBaseFilenam
 		}
 	}
 
-	// Start from the top, in a goroutine
+	// Start from the top
 	if _, err := e.gdb.CheckedSend("exec-run", "--start"); err != nil {
 		return gdbOutput.String(), err
 	}
@@ -110,12 +112,17 @@ func (e *Editor) DebugContinue() (string, error) {
 // DebugStep will continue the execution by stepping to the next line.
 // e.gdb must not be nil. Returns whatever was outputted to gdb stdout.
 func (e *Editor) DebugStep() (string, error) {
+	//logf("%s\n", "[step] start")
+	//logf("%s\n", "[step] sending exec-step")
 	_, err := e.gdb.CheckedSend("exec-step")
 	if err != nil {
 		return "", err
 	}
+	//logf("[step] got %v and no error\n", retval)
 	output := gdbOutput.String()
+	//logf("[step] got GDB output: %s\n", output)
 	gdbOutput.Reset()
+	//logf("[step] end, returning output: %s\n", output)
 	return output, nil
 }
 
