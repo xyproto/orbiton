@@ -35,7 +35,7 @@ With Go 1.17 or later, `o` can be installed like this:
 
 Alternatively, download and install a [release version](https://github.com/xyproto/o/releases). For example, for Raspberry Pi 2, 3 or 4 running Linux:
 
-    curl -sL 'https://github.com/xyproto/o/releases/download/2.48.3/o-2.48.3-rpi.tar.xz' | tar JxC /tmp && sudo install -Dm755 /tmp/o-2.48.3-rpi/o /usr/bin/o && sudo install -Dm644 /tmp/o-2.48.3-rpi/o.1.gz /usr/share/man/man1/o.1.gz
+    curl -sL 'https://github.com/xyproto/o/releases/download/2.49.0/o-2.49.0-rpi.tar.xz' | tar JxC /tmp && sudo install -Dm755 /tmp/o-2.49.0-rpi/o /usr/bin/o && sudo install -Dm644 /tmp/o-2.49.0-rpi/o.1.gz /usr/share/man/man1/o.1.gz
 
 * Remember to use `tar zxC` if the release file for your platform ends with `.tar.gz`.
 * The `sudo install` commands may be slightly different for FreeBSD and NetBSD.
