@@ -1,9 +1,7 @@
-# .github/workflows/release.yaml
-
+name: Release
 on:
   release:
     types: [created]
-
 jobs:
   releases-matrix:
     name: Release Go Binary
