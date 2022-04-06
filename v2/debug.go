@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
+
+	//"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -17,19 +18,20 @@ import (
 )
 
 var (
-	gdbOutput             bytes.Buffer
-	originalDirectory     string
-	gdbLogFile            = filepath.Join(userCacheDir, "o", "gdb.log")
+	gdbOutput         bytes.Buffer
+	originalDirectory string
+	//gdbLogFile            = filepath.Join(userCacheDir, "o", "gdb.log")
 	gdbConsole            strings.Builder
 	watchMap              = make(map[string]string)
 	lastSeenWatchVariable string
+	prevLineNumber        = -1
 )
 
 // DebugStart will start a new debug session, using gdb.
 // Will end the existing session first if e.gdb != nil.
 func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilename string) (string, error) {
 
-	flogf(gdbLogFile, "[gdb] dir %s, src %s, exe %s\n", sourceDir, sourceBaseFilename, executableBaseFilename)
+	//flogf(gdbLogFile, "[gdb] dir %s, src %s, exe %s\n", sourceDir, sourceBaseFilename, executableBaseFilename)
 
 	// End any existing sessions
 	e.DebugEnd()
@@ -52,7 +54,7 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 		gdbExecutable = which("gdb")
 	}
 
-	flogf(gdbLogFile, "[gdb] starting %s: ", gdbExecutable)
+	//flogf(gdbLogFile, "[gdb] starting %s: ", gdbExecutable)
 
 	// Start a new gdb session
 	e.gdb, err = gdb.NewCustom(gdbExecutable, func(notification map[string]interface{}) {
@@ -61,11 +63,14 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 			if payloadMap, ok := payload.(map[string]interface{}); ok {
 				if frame, ok := payloadMap["frame"]; ok {
 					if frameMap, ok := frame.(map[string]interface{}); ok {
-						flogf(gdbLogFile, "[gdb] frame: %v\n", frameMap)
+						//flogf(gdbLogFile, "[gdb] frame: %v\n", frameMap)
 						if lineNumberString, ok := frameMap["line"].(string); ok {
 							if lineNumber, err := strconv.Atoi(lineNumberString); err == nil { // success
 								// Got a line number, send the editor there, without any status messages
-								e.GoToLineNumber(LineNumber(lineNumber), nil, nil, true)
+								if prevLineNumber != -1 {
+									e.GoToLineNumber(LineNumber(prevLineNumber), nil, nil, true)
+								}
+								prevLineNumber = lineNumber
 							}
 						}
 					}
@@ -75,20 +80,20 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 			if s, ok := payload.(string); ok {
 				gdbConsole.WriteString(s)
 			}
-		} else {
-			flogf(gdbLogFile, "[gdb] notification: %v\n", notification)
+			//} else {
+			//flogf(gdbLogFile, "[gdb] notification: %v\n", notification)
 		}
 	})
 	if err != nil {
 		e.gdb = nil
-		flogf(gdbLogFile, "%s\n", "fail")
+		//flogf(gdbLogFile, "%s\n", "fail")
 		return "", err
 	}
 	if e.gdb == nil {
-		flogf(gdbLogFile, "%s\n", "fail")
+		//flogf(gdbLogFile, "%s\n", "fail")
 		return "", errors.New("gdb.New returned no error, but e.gdb is nil")
 	}
-	flogf(gdbLogFile, "%s\n", "ok")
+	//flogf(gdbLogFile, "%s\n", "ok")
 
 	// Handle output to stdout (and stderr?) from programs that are being debugged
 	go io.Copy(&gdbOutput, e.gdb)
@@ -167,18 +172,17 @@ func (e *Editor) DebugStep() (string, error) {
 			}
 		}
 	}
-
 	return output, nil
 }
 
-// DebugRegisterNames will show the register names
+// DebugRegisterNames will return all register names
 func (e *Editor) DebugRegisterNames() ([]string, error) {
 	if e.gdb == nil {
 		return []string{}, errors.New("gdb must be running")
 	}
 	notification, err := e.gdb.CheckedSend("data-list-register-names")
 	if err != nil {
-		flogf(gdbLogFile, "[gdb] data-list-register-names error: %s\n", err.Error())
+		//flogf(gdbLogFile, "[gdb] data-list-register-names error: %s\n", err.Error())
 		return []string{}, err
 	}
 	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
@@ -200,17 +204,108 @@ func (e *Editor) DebugRegisterNames() ([]string, error) {
 	return []string{}, errors.New("could not find the register names in the payload returned from gdb")
 }
 
-// DebugRegisters will return a map of all register names and values
-func (e *Editor) DebugRegisters() (map[string]string, error) {
+// DebugChangedRegisters will return a list of all changed register numbers
+func (e *Editor) DebugChangedRegisters() ([]int, error) {
+	// Then get the register values
+	notification, err := e.gdb.CheckedSend("data-list-changed-registers")
+	if err != nil {
+		//flogf(gdbLogFile, "[gdb] data-list-changed-registers error: %s\n", err.Error())
+		return []int{}, err
+	}
+	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
+		if payloadMap, ok := payload.(map[string]interface{}); ok {
+			//flogf(gdbLogFile, "[gdb] changed reg payload: %v\n", payloadMap)
+			if registerInterfaces, ok := payloadMap["changed-registers"].([]interface{}); ok {
+				changedRegisters := make([]int, len(registerInterfaces))
+				for _, registerNumberString := range registerInterfaces {
+					registerNumber, err := strconv.Atoi(registerNumberString.(string))
+					if err != nil {
+						return []int{}, err
+					}
+					changedRegisters = append(changedRegisters, registerNumber)
+					//flogf(gdbLogFile, "[gdb] regnum %v %T\n", registerNumber, registerNumber)
+				}
+				return changedRegisters, nil
+			}
+		}
+	}
+	//flogf(gdbLogFile, "[gdb] data-list-register-values %v\n", registers)
+	return []int{}, errors.New("could not find the register values in the payload returned from gdb")
+}
+
+// DebugChangedRegisterMap returns a map of all registers that were changed the last step, and their values
+func (e *Editor) DebugChangedRegisterMap() (map[string]string, error) {
 	// First get the names of the registers
 	names, err := e.DebugRegisterNames()
 	if err != nil {
 		return nil, err
 	}
-	// Then get the register values
+	// Then get the changed register IDs
+	changedRegisters, err := e.DebugChangedRegisters()
+	if err != nil {
+		return nil, err
+	}
+	// Then get the register IDs, then use them to get the register names and values
 	notification, err := e.gdb.CheckedSend("data-list-register-values", "--skip-unavailable", "x")
 	if err != nil {
-		flogf(gdbLogFile, "[gdb] data-list-register-values error: %s\n", err.Error())
+		//flogf(gdbLogFile, "[gdb] data-list-register-values error: %s\n", err.Error())
+		return nil, err
+	}
+	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
+		if payloadMap, ok := payload.(map[string]interface{}); ok {
+			if registerValues, ok := payloadMap["register-values"]; ok {
+				if registerSlice, ok := registerValues.([]interface{}); ok {
+					registers := make(map[string]string, len(names))
+					for _, singleRegisterMap := range registerSlice {
+						if registerMap, ok := singleRegisterMap.(map[string]interface{}); ok {
+							numberString, ok := registerMap["number"].(string)
+							if !ok {
+								return nil, errors.New("could not convert \"number\" interface to string")
+							}
+							registerNumber, err := strconv.Atoi(numberString)
+							if err != nil {
+								return nil, err
+							}
+							thisRegisterWasChanged := false
+							for _, changedRegisterNumber := range changedRegisters {
+								if changedRegisterNumber == registerNumber {
+									thisRegisterWasChanged = true
+									break
+								}
+							}
+							if !thisRegisterWasChanged {
+								// Continue to the next one in the list of all available registers
+								continue
+							}
+							value, ok := registerMap["value"].(string)
+							if !ok {
+								return nil, errors.New("could not convert \"value\" interface to string")
+							}
+							registerName := names[registerNumber]
+							registers[registerName] = value
+							//flogf(gdbLogFile, "[gdb] data-list-register-values: %s %s\n", registerName, value)
+						}
+					}
+					return registers, nil
+				}
+			}
+		}
+	}
+	//flogf(gdbLogFile, "[gdb] data-list-register-values %v\n", registers)
+	return nil, errors.New("could not find the register values in the payload returned from gdb")
+}
+
+// DebugRegisterMap will return a map of all register names and values
+func (e *Editor) DebugRegisterMap() (map[string]string, error) {
+	// First get the names of the registers
+	names, err := e.DebugRegisterNames()
+	if err != nil {
+		return nil, err
+	}
+	// Then get the register IDs, then use them to get the register names and values
+	notification, err := e.gdb.CheckedSend("data-list-register-values", "--skip-unavailable", "x")
+	if err != nil {
+		//flogf(gdbLogFile, "[gdb] data-list-register-values error: %s\n", err.Error())
 		return nil, err
 	}
 	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
@@ -246,26 +341,6 @@ func (e *Editor) DebugRegisters() (map[string]string, error) {
 	return nil, errors.New("could not find the register values in the payload returned from gdb")
 }
 
-// DebugChangedRegisters will return a list of all changed register numbers
-func (e *Editor) DebugChangedRegisters() ([]int, error) {
-	// Then get the register values
-	notification, err := e.gdb.CheckedSend("data-list-changed-registers")
-	if err != nil {
-		flogf(gdbLogFile, "[gdb] data-list-changed-registers error: %s\n", err.Error())
-		return []int{}, err
-	}
-	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
-		if payloadMap, ok := payload.(map[string]interface{}); ok {
-			flogf(gdbLogFile, "[gdb] changed reg payload: %v\n", payloadMap)
-			if registerNumbers, ok := payloadMap["changed-registers"]; ok {
-				flogf(gdbLogFile, "[gdb] changed reg: %v\n", registerNumbers)
-			}
-		}
-	}
-	//flogf(gdbLogFile, "[gdb] data-list-register-values %v\n", registers)
-	return []int{}, errors.New("could not find the register values in the payload returned from gdb")
-}
-
 // DebugEnd will end the current gdb session
 func (e *Editor) DebugEnd() {
 	if e.gdb != nil {
@@ -281,21 +356,22 @@ func (e *Editor) DebugEnd() {
 	if originalDirectory != "" {
 		os.Chdir(originalDirectory)
 	}
-	flogf(gdbLogFile, "[gdb] %s\n", "stopped")
+	prevLineNumber = -1
+	//flogf(gdbLogFile, "[gdb] %s\n", "stopped")
 }
 
 // AddWatch will add a watchpoint / watch expression to gdb
 func (e *Editor) AddWatch(expression string) (string, error) {
 	var output string
 	if e.gdb != nil {
-		flogf(gdbLogFile, "[gdb] adding watch: %s\n", expression)
+		//flogf(gdbLogFile, "[gdb] adding watch: %s\n", expression)
 		_, err := e.gdb.CheckedSend("break-watch", "-a", expression)
 		if err != nil {
 			return "", err
 		}
 		output = gdbOutput.String()
 		gdbOutput.Reset()
-		flogf(gdbLogFile, "[gdb] output after adding watch: %s\n", output)
+		//flogf(gdbLogFile, "[gdb] output after adding watch: %s\n", output)
 	}
 	watchMap[expression] = "?"
 
@@ -332,8 +408,9 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 		helpSlice := []string{
 			"ctrl-space to step",
 			"ctrl-w to add a watch",
-			"",
-			"gdb log: " + prettyPath(gdbLogFile),
+			"ctrl-r to toggle the register view",
+			//"",
+			//"gdb log: " + prettyPath(gdbLogFile),
 		}
 		// Draw the help text
 		e.DrawList(c, listBox, helpSlice, -1)
@@ -384,13 +461,30 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 
 // DrawRegisters will draw a box with the current register values in the lower right
 func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
+	if e.showRegisters == 2 {
+		// Don't draw anything
+		return nil
+	}
+	filterWeirdRegisters := e.showRegisters != 1
 
 	// First create a box the size of the entire canvas
 	canvasBox := NewCanvasBox(c)
 
 	// Window is the background box that will be drawn in the upper right
 	lowerRightBox := NewBox()
-	lowerRightBox.LowerRightPlacement(canvasBox)
+
+	var title string
+	if filterWeirdRegisters {
+		title = "Changed registers"
+		// narrow box
+		lowerRightBox.LowerRightPlacement(canvasBox)
+		e.redraw = true
+	} else {
+		title = "All changed registers"
+		// wide box
+		lowerRightBox.LowerPlacement(canvasBox)
+		e.redraw = true
+	}
 
 	// Then create a list box
 	listBox := NewBox()
@@ -402,39 +496,43 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 	// Draw the background box and title
 	e.DrawBox(bt, c, lowerRightBox, true)
 
-	e.DrawTitle(c, lowerRightBox, "Registers")
+	e.DrawTitle(c, lowerRightBox, title)
 
 	if e.gdb != nil {
 
-		allRegisters, err := e.DebugRegisters()
+		allChangedRegisters, err := e.DebugChangedRegisterMap()
 		if err != nil {
 			return err
 		}
 
-		// 		allChangedRegisters, err := e.ChangedRegisters()
-		// 		if err != nil {
-		// 			return err
-		// 		}
-
 		var regSlice []string
-		for reg, value := range allRegisters {
-			registryNameWithDigit := false
-			for _, digit := range []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"} {
-				if strings.Contains(reg, digit) {
-					registryNameWithDigit = true
+
+		if filterWeirdRegisters {
+			for reg, value := range allChangedRegisters {
+				registryNameWithDigit := false
+				for _, digit := range []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"} {
+					if strings.Contains(reg, digit) {
+						registryNameWithDigit = true
+					}
+				}
+				spaceInValue := strings.Contains(value, " ")
+				// Skip registers with numbers in their names, like "ymm12", for now
+				if !registryNameWithDigit && !spaceInValue {
+					regSlice = append(regSlice, reg+": "+value)
 				}
 			}
-			spaceInValue := strings.Contains(value, " ")
-			// Skip registers with numbers in their names, like "ymm12", for now
-			if !registryNameWithDigit && !spaceInValue {
+		} else {
+			for reg, value := range allChangedRegisters {
 				regSlice = append(regSlice, reg+": "+value)
 			}
 		}
 
 		sort.Strings(regSlice)
 
-		// Cutoff the slice by how high it is
-		regSlice = regSlice[:listBox.H]
+		// Cutoff the slice by how high it is, if it's too long
+		if len(regSlice) > listBox.H {
+			regSlice = regSlice[:listBox.H]
+		}
 
 		// Draw the registers without numbers
 		e.DrawList(c, listBox, regSlice, -1)
