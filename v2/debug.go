@@ -439,7 +439,7 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 		helpSlice := []string{
 			"ctrl-space to step",
 			"ctrl-w to add a watch",
-			"ctrl-r to toggle the register view",
+			//"ctrl-r to toggle the register view",
 			//"",
 			//"gdb log: " + prettyPath(gdbLogFile),
 		}
