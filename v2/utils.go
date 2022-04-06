@@ -236,19 +236,6 @@ func flogf(logfile, format string, args ...interface{}) error {
 	return f.Close()
 }
 
-// prettyPath replaces the home directory with ~
-func prettyPath(p string) string {
-	s, err := filepath.Abs(p)
-	if err != nil {
-		return p
-	}
-	home := env.HomeDir()
-	if strings.HasPrefix(s, home) {
-		s = strings.Replace(s, home, "~", 1)
-	}
-	return s
-}
-
 // repeatRune can repeat a rune, n number of times.
 // Returns an empty string if memory can not be allocated within append.
 func repeatRune(r rune, n uint) string {
