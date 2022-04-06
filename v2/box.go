@@ -85,9 +85,9 @@ func (b *Box) LowerRightPlacement(container *Box) {
 	w := float64(container.W)
 	h := float64(container.H)
 	b.X = int(w * 0.6)
-	b.Y = int(h * 0.5)
+	b.Y = int(h * 0.4)
 	b.W = int(w * 0.3)
-	b.H = int(h * 0.4)
+	b.H = int(h * 0.5)
 }
 
 // Say will output text at the given coordinates, with the configured theme
