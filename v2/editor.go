@@ -48,6 +48,7 @@ type Editor struct {
 	previousX          int                   // previous cursor position
 	previousY          int                   // previous cursor position
 	macro              *Macro                // the contents of the current macro (will be cleared when esc is pressed)
+	showRegisters      int                   // show no register box, show changed registers, show all changed registers
 	Theme                                    // editor theme, embedded struct
 }
 
