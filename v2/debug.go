@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -74,6 +75,8 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 			if s, ok := payload.(string); ok {
 				gdbConsole.WriteString(s)
 			}
+		} else {
+			flogf(gdbLogFile, "[gdb] notification: %v\n", notification)
 		}
 	})
 	if err != nil {
@@ -166,6 +169,101 @@ func (e *Editor) DebugStep() (string, error) {
 	}
 
 	return output, nil
+}
+
+// DebugRegisterNames will show the register names
+func (e *Editor) DebugRegisterNames() ([]string, error) {
+	if e.gdb == nil {
+		return []string{}, errors.New("gdb must be running")
+	}
+	notification, err := e.gdb.CheckedSend("data-list-register-names")
+	if err != nil {
+		flogf(gdbLogFile, "[gdb] data-list-register-names error: %s\n", err.Error())
+		return []string{}, err
+	}
+	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
+		if payloadMap, ok := payload.(map[string]interface{}); ok {
+			if registerNames, ok := payloadMap["register-names"]; ok {
+				if registerSlice, ok := registerNames.([]interface{}); ok {
+					registerStringSlice := make([]string, len(registerSlice))
+					for i, interfaceValue := range registerSlice {
+						if s, ok := interfaceValue.(string); ok {
+							registerStringSlice[i] = s
+						}
+					}
+					//flogf(gdbLogFile, "[gdb] data-list-register-names: %s\n", strings.Join(registerStringSlice, ","))
+					return registerStringSlice, nil
+				}
+			}
+		}
+	}
+	return []string{}, errors.New("could not find the register names in the payload returned from gdb")
+}
+
+// DebugRegisters will return a map of all register names and values
+func (e *Editor) DebugRegisters() (map[string]string, error) {
+	// First get the names of the registers
+	names, err := e.DebugRegisterNames()
+	if err != nil {
+		return nil, err
+	}
+	// Then get the register values
+	notification, err := e.gdb.CheckedSend("data-list-register-values", "--skip-unavailable", "x")
+	if err != nil {
+		flogf(gdbLogFile, "[gdb] data-list-register-values error: %s\n", err.Error())
+		return nil, err
+	}
+	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
+		if payloadMap, ok := payload.(map[string]interface{}); ok {
+			if registerValues, ok := payloadMap["register-values"]; ok {
+				if registerSlice, ok := registerValues.([]interface{}); ok {
+					registers := make(map[string]string, len(names))
+					for _, singleRegisterMap := range registerSlice {
+						if registerMap, ok := singleRegisterMap.(map[string]interface{}); ok {
+							numberString, ok := registerMap["number"].(string)
+							if !ok {
+								return nil, errors.New("could not convert \"number\" interface to string")
+							}
+							registerNumber, err := strconv.Atoi(numberString)
+							if err != nil {
+								return nil, err
+							}
+							value, ok := registerMap["value"].(string)
+							if !ok {
+								return nil, errors.New("could not convert \"value\" interface to string")
+							}
+							registerName := names[registerNumber]
+							registers[registerName] = value
+							//flogf(gdbLogFile, "[gdb] data-list-register-values: %s %s\n", registerName, value)
+						}
+					}
+					return registers, nil
+				}
+			}
+		}
+	}
+	//flogf(gdbLogFile, "[gdb] data-list-register-values %v\n", registers)
+	return nil, errors.New("could not find the register values in the payload returned from gdb")
+}
+
+// DebugChangedRegisters will return a list of all changed register numbers
+func (e *Editor) DebugChangedRegisters() ([]int, error) {
+	// Then get the register values
+	notification, err := e.gdb.CheckedSend("data-list-changed-registers")
+	if err != nil {
+		flogf(gdbLogFile, "[gdb] data-list-changed-registers error: %s\n", err.Error())
+		return []int{}, err
+	}
+	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
+		if payloadMap, ok := payload.(map[string]interface{}); ok {
+			flogf(gdbLogFile, "[gdb] changed reg payload: %v\n", payloadMap)
+			if registerNumbers, ok := payloadMap["changed-registers"]; ok {
+				flogf(gdbLogFile, "[gdb] changed reg: %v\n", registerNumbers)
+			}
+		}
+	}
+	//flogf(gdbLogFile, "[gdb] data-list-register-values %v\n", registers)
+	return []int{}, errors.New("could not find the register values in the payload returned from gdb")
 }
 
 // DebugEnd will end the current gdb session
@@ -282,4 +380,76 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 		y := e.pos.ScreenY()
 		vt100.SetXY(uint(x), uint(y))
 	}
+}
+
+// DrawRegisters will draw a box with the current register values in the lower right
+func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
+
+	// First create a box the size of the entire canvas
+	canvasBox := NewCanvasBox(c)
+
+	// Window is the background box that will be drawn in the upper right
+	lowerRightBox := NewBox()
+	lowerRightBox.LowerRightPlacement(canvasBox)
+
+	// Then create a list box
+	listBox := NewBox()
+	listBox.FillWithMargins(lowerRightBox, 2)
+
+	// Get the current theme for the register box
+	bt := NewBoxTheme()
+
+	// Draw the background box and title
+	e.DrawBox(bt, c, lowerRightBox, true)
+
+	e.DrawTitle(c, lowerRightBox, "Registers")
+
+	if e.gdb != nil {
+
+		allRegisters, err := e.DebugRegisters()
+		if err != nil {
+			return err
+		}
+
+		// 		allChangedRegisters, err := e.ChangedRegisters()
+		// 		if err != nil {
+		// 			return err
+		// 		}
+
+		var regSlice []string
+		for reg, value := range allRegisters {
+			registryNameWithDigit := false
+			for _, digit := range []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"} {
+				if strings.Contains(reg, digit) {
+					registryNameWithDigit = true
+				}
+			}
+			spaceInValue := strings.Contains(value, " ")
+			// Skip registers with numbers in their names, like "ymm12", for now
+			if !registryNameWithDigit && !spaceInValue {
+				regSlice = append(regSlice, reg+": "+value)
+			}
+		}
+
+		sort.Strings(regSlice)
+
+		// Cutoff the slice by how high it is
+		regSlice = regSlice[:listBox.H]
+
+		// Draw the registers without numbers
+		e.DrawList(c, listBox, regSlice, -1)
+
+	}
+
+	// Blit
+	c.Draw()
+
+	// Reposition the cursor
+	if repositionCursor {
+		x := e.pos.ScreenX()
+		y := e.pos.ScreenY()
+		vt100.SetXY(uint(x), uint(y))
+	}
+
+	return nil
 }

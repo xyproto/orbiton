@@ -1601,6 +1601,12 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			e.redraw = true
 		case "c:18": // ctrl-r, to open or close a portal
 
+			// Are we in debug mode
+			if e.debugMode {
+				// TODO: Toggle if registers should be drawn
+				break
+			}
+
 			// Are we in git mode?
 			if line := e.CurrentLine(); e.mode == mode.Git && hasAnyPrefixWord(line, gitRebasePrefixes) {
 				undo.Snapshot(e)
@@ -1791,7 +1797,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 		// Also draw the watches, if debug mode is enabled // and a debug session is in progress
 		if e.debugMode { // && e.gdb != nil {
-			e.DrawWatches(c, true) // also reposition cursor
+			e.DrawRegisters(c, false) // don't reposition cursor
+			e.DrawWatches(c, true)    // also reposition cursor
 		}
 
 	} // end of main loop

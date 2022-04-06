@@ -80,6 +80,16 @@ func (b *Box) UpperRightPlacement(container *Box) {
 	b.H = int(h * 0.2)
 }
 
+// LowerRightPlacement will place a box in the lower right corner of a container, like a little window
+func (b *Box) LowerRightPlacement(container *Box) {
+	w := float64(container.W)
+	h := float64(container.H)
+	b.X = int(w * 0.6)
+	b.Y = int(h * 0.5)
+	b.W = int(w * 0.3)
+	b.H = int(h * 0.4)
+}
+
 // Say will output text at the given coordinates, with the configured theme
 func (e *Editor) Say(c *vt100.Canvas, x, y int, text string) {
 	c.Write(uint(x), uint(y), e.BoxTextColor, e.BoxBackground, text)
