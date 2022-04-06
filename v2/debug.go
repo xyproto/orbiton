@@ -140,10 +140,10 @@ func (e *Editor) DebugContinue() (string, error) {
 	return output, nil
 }
 
-// DebugNextInstruction will continue the execution by stepping to the next instruction.
+// DebugNext will continue the execution by stepping to the next instruction.
 // e.gdb must not be nil. Returns whatever was outputted to gdb stdout.
-func (e *Editor) DebugNextInstruction() (string, error) {
-	_, err := e.gdb.CheckedSend("exec-next-instruction")
+func (e *Editor) DebugNext() (string, error) {
+	_, err := e.gdb.CheckedSend("exec-next")
 	if err != nil {
 		return "", err
 	}

@@ -281,7 +281,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					// step forward to the next line
 					// gdbOutput contains the collected stdout from the program being debugged
 					//gdbOutput, err := e.DebugStep()
-					_, err := e.DebugNextInstruction()
+					_, err := e.DebugNext()
 					if err != nil {
 						e.DebugEnd()
 						status.SetMessage("Done")
