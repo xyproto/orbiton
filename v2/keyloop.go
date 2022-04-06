@@ -279,17 +279,19 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					}
 				} else { // if not, make one step
 					// step forward to the next line
-					gdbOutput, err := e.DebugStep()
+					// gdbOutput contains the collected stdout from the program being debugged
+					//gdbOutput, err := e.DebugStep()
+					_, err := e.DebugStep()
 					if err != nil {
 						e.DebugEnd()
 						status.SetMessage("Done")
 						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
 					} else {
-						if gdbOutput != "" {
-							status.SetMessage(gdbOutput)
-						} else {
-							status.SetMessage("Step")
-						}
+						//if gdbOutput != "" {
+						//status.SetMessage(gdbOutput) // gdbOutput
+						//} else {
+						status.SetMessage("Step")
+						//}
 					}
 				}
 				e.redrawCursor = true
@@ -1603,7 +1605,11 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 			// Are we in debug mode
 			if e.debugMode {
-				// TODO: Toggle if registers should be drawn
+				// e.showRegisters has three states, 0,1,2
+				e.showRegisters++
+				if e.showRegisters > 2 {
+					e.showRegisters = 0
+				}
 				break
 			}
 
