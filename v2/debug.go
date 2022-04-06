@@ -140,6 +140,39 @@ func (e *Editor) DebugContinue() (string, error) {
 	return output, nil
 }
 
+// DebugNextInstruction will continue the execution by stepping to the next instruction.
+// e.gdb must not be nil. Returns whatever was outputted to gdb stdout.
+func (e *Editor) DebugNextInstruction() (string, error) {
+	_, err := e.gdb.CheckedSend("exec-next-instruction")
+	if err != nil {
+		return "", err
+	}
+	output := gdbOutput.String()
+	gdbOutput.Reset()
+	consoleString := strings.TrimSpace(gdbConsole.String())
+	gdbConsole.Reset()
+	// Interpret consoleString and extract the new variable names and values,
+	// for variables there are watchpoints for.
+	if consoleString != "" {
+		var varName string
+		var varValue string
+		for _, line := range strings.Split(consoleString, "\n") {
+			if strings.Contains(line, "watchpoint") && strings.Contains(line, ":") {
+				fields := strings.SplitN(line, ":", 2)
+				varName = strings.TrimSpace(fields[1])
+			} else if varName != "" && strings.HasPrefix(line, "New value =") {
+				fields := strings.SplitN(line, "=", 2)
+				varValue = strings.TrimSpace(fields[1])
+				watchMap[varName] = varValue
+				lastSeenWatchVariable = varName
+				varName = ""
+				varValue = ""
+			}
+		}
+	}
+	return output, nil
+}
+
 // DebugStep will continue the execution by stepping to the next line.
 // e.gdb must not be nil. Returns whatever was outputted to gdb stdout.
 func (e *Editor) DebugStep() (string, error) {
@@ -149,10 +182,8 @@ func (e *Editor) DebugStep() (string, error) {
 	}
 	output := gdbOutput.String()
 	gdbOutput.Reset()
-
 	consoleString := strings.TrimSpace(gdbConsole.String())
 	gdbConsole.Reset()
-
 	// Interpret consoleString and extract the new variable names and values,
 	// for variables there are watchpoints for.
 	if consoleString != "" {
