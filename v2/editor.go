@@ -2236,3 +2236,83 @@ func (e *Editor) LastLineNumber() LineNumber {
 	// The last line (by line number, not by index, e.Len() returns an index which is why there is no -1)
 	return LineNumber(e.Len())
 }
+
+// UserInput asks the user to enter text, then collects the letters. No history.
+func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, title string) (string, bool) {
+	status.ClearAll(c)
+	status.SetMessage(title + ":")
+	status.ShowNoTimeout(c, e)
+	cancel := false
+	doneCollectingLetters := false
+	entered := ""
+	for !doneCollectingLetters {
+		if e.debugMode {
+			e.DrawWatches(c, false) // don't reposition cursor
+		}
+		pressed := tty.String()
+		switch pressed {
+		case "c:8", "c:127": // ctrl-h or backspace
+			if len(entered) > 0 {
+				entered = entered[:len(entered)-1]
+				status.SetMessage(title + ": " + entered)
+				status.ShowNoTimeout(c, e)
+			}
+		case "↑", "↓": // up arrow or down arrow
+			fallthrough // cancel
+		case "c:27", "c:17": // esc or ctrl-q
+			cancel = true
+			entered = ""
+			fallthrough // done
+		case "c:13": // return
+			doneCollectingLetters = true
+		default:
+			entered += pressed
+			status.SetMessage(title + ": " + entered)
+			status.ShowNoTimeout(c, e)
+		}
+	}
+	status.ClearAll(c)
+	return entered, !cancel
+}
+
+// StartDebugSession builds and then connects to gdb
+func (e *Editor) StartDebugSession(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, optionalOutputExecutable string) error {
+	absFilename, err := e.AbsFilename()
+	if err != nil {
+		return err
+	}
+
+	var outputExecutable string
+	if optionalOutputExecutable == "" {
+		outputExecutable, err = e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
+		if err != nil {
+			return err
+		}
+	} else {
+		outputExecutable = optionalOutputExecutable
+	}
+
+	outputExecutableClean := filepath.Clean(filepath.Join(filepath.Dir(absFilename), outputExecutable))
+	if !exists(outputExecutableClean) {
+		e.debugMode = false
+		return errors.New("could not find " + outputExecutableClean)
+	}
+
+	// Start GDB execution from the top
+	msg, err := e.DebugStart(filepath.Dir(absFilename), filepath.Base(absFilename), outputExecutable)
+	if err != nil || e.gdb == nil {
+		return errors.New("could not start debugging: " + msg + ", " + err.Error())
+	}
+
+	e.GoToLineNumber(1, nil, nil, true)
+
+	status.ClearAll(c)
+	if e.breakpoint == nil {
+		status.SetMessage("Running")
+	} else {
+		status.SetMessage("Running. Breakpoint at line " + e.breakpoint.LineNumber().String() + ".")
+	}
+	status.Show(c, e)
+
+	return nil
+}

@@ -183,6 +183,20 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// Clear the search term
 			e.ClearSearchTerm()
 
+			// Add a watch
+			if e.debugMode {
+				// Ask the user to type in a watch expression
+				if expression, ok := e.UserInput(c, tty, status, "Variable name to watch"); ok {
+					if _, err := e.AddWatch(expression); err != nil {
+						status.ClearAll(c)
+						status.SetErrorMessage(err.Error())
+						status.ShowNoTimeout(c, e)
+						break
+					}
+				}
+				break
+			}
+
 			// Cycle git rebase keywords
 			if line := e.CurrentLine(); e.mode == mode.Git && hasAnyPrefixWord(line, gitRebasePrefixes) {
 				newLine := nextGitRebaseKeyword(line)
@@ -266,7 +280,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				} else { // if not, make one step
 					// step forward to the next line
 					gdbOutput, err := e.DebugStep()
-					//logf("[step] gdb output: %s\n", gdbOutput)
 					if err != nil {
 						e.DebugEnd()
 						status.SetMessage("Done")
@@ -351,38 +364,11 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 			// ctrl-space was pressed while in debug mode, and without a debug session running
 			if e.debugMode && e.gdb == nil {
-
-				// Find the full path to the compiled executable, and check that it exists
-				outputExecutableClean := filepath.Clean(filepath.Join(filepath.Dir(absFilename), outputExecutable))
-				if !exists(outputExecutableClean) {
+				if err := e.StartDebugSession(c, tty, status, outputExecutable); err != nil {
 					status.ClearAll(c)
-					status.SetErrorMessage("Could not find " + outputExecutableClean)
+					status.SetErrorMessage(err.Error())
 					status.ShowNoTimeout(c, e)
-					e.debugMode = false
-					break
 				}
-
-				//status.SetMessage("Starting gdb...")
-				//status.Show(c, e)
-
-				// Start GDB execution from the top
-				msg, err := e.DebugStart(filepath.Dir(absFilename), filepath.Base(absFilename), outputExecutable)
-				if err != nil || e.gdb == nil {
-					status.ClearAll(c)
-					status.SetErrorMessage("Could not start debugging: " + msg + ", " + err.Error())
-					status.ShowNoTimeout(c, e)
-					break
-				}
-
-				e.GoToLineNumber(1, nil, nil, true)
-
-				status.ClearAll(c)
-				if e.breakpoint == nil {
-					status.SetMessage("Started a debug session")
-				} else {
-					status.SetMessage("Started a debug sessions. Breakpoint at line " + e.breakpoint.LineNumber().String() + ".")
-				}
-				status.Show(c, e)
 				break
 			}
 
@@ -1802,6 +1788,11 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 		// Draw and/or redraw everything, with slightly different behavior over ssh
 		e.RedrawAtEndOfKeyLoop(c, status, &statusMessageAfterRedraw)
+
+		// Also draw the watches, if debug mode is enabled // and a debug session is in progress
+		if e.debugMode { // && e.gdb != nil {
+			e.DrawWatches(c, true) // also reposition cursor
+		}
 
 	} // end of main loop
 

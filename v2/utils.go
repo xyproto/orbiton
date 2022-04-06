@@ -213,6 +213,9 @@ func logf(format string, args ...interface{}) {
 	}
 }
 
+// Silence the "logf is unused" message by staticcheck
+var _ = logf
+
 // flogf, for logging to a file with a fprintf-style function
 func flogf(logfile, format string, args ...interface{}) error {
 	f, err := os.OpenFile(logfile, os.O_APPEND|os.O_WRONLY, 0644)
@@ -233,5 +236,51 @@ func flogf(logfile, format string, args ...interface{}) error {
 	return f.Close()
 }
 
-// Silence the "logf is unused" message by staticcheck
-var _ = logf
+// prettyPath replaces the home directory with ~
+func prettyPath(p string) string {
+	s, err := filepath.Abs(p)
+	if err != nil {
+		return p
+	}
+	home := env.HomeDir()
+	if strings.HasPrefix(s, home) {
+		s = strings.Replace(s, home, "~", 1)
+	}
+	return s
+}
+
+// repeatRune can repeat a rune, n number of times.
+// Returns an empty string if memory can not be allocated within append.
+func repeatRune(r rune, n uint) string {
+	var sb strings.Builder
+	for i := uint(0); i < n; i++ {
+		_, err := sb.WriteRune(r)
+		if err != nil {
+			// In the unlikely event that append inside WriteRune won't work
+			return ""
+		}
+	}
+	return sb.String()
+}
+
+// splitStrip will split a string on any newline: \n, \r or \r\n
+// and also remove empty lines and trim away whitespace.
+func splitTrim(s string) []string {
+	s = strings.Replace(s, "\r", "\n", -1)
+	s = strings.Replace(s, "\r\n", "\n", -1)
+	return filterS(mapS(strings.Split(s, "\n"), strings.TrimSpace), nonempty)
+}
+
+// mapS will apply the function f to each element in the given slice
+func mapS(sl []string, f func(string) string) []string {
+	result := make([]string, len(sl))
+	for i, s := range sl {
+		result[i] = f(s)
+	}
+	return result
+}
+
+// nonempty will check if a string is not empty
+func nonempty(s string) bool {
+	return s != ""
+}

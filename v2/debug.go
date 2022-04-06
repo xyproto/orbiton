@@ -8,15 +8,20 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/cyrus-and/gdb"
 	"github.com/xyproto/mode"
+	"github.com/xyproto/vt100"
 )
 
 var (
-	gdbOutput         bytes.Buffer
-	originalDirectory string
-	gdbLogFile        = filepath.Join(userCacheDir, "o", "gdb.log")
+	gdbOutput             bytes.Buffer
+	originalDirectory     string
+	gdbLogFile            = filepath.Join(userCacheDir, "o", "gdb.log")
+	gdbConsole            strings.Builder
+	watchMap              = make(map[string]string)
+	lastSeenWatchVariable string
 )
 
 // DebugStart will start a new debug session, using gdb.
@@ -65,6 +70,10 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 					}
 				}
 			}
+		} else if payload, ok := notification["payload"]; ok && notification["type"] == "console" {
+			if s, ok := payload.(string); ok {
+				gdbConsole.WriteString(s)
+			}
 		}
 	})
 	if err != nil {
@@ -98,7 +107,14 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 
 	// Start from the top
 	if _, err := e.gdb.CheckedSend("exec-run", "--start"); err != nil {
-		return gdbOutput.String(), err
+		output := gdbOutput.String()
+		gdbOutput.Reset()
+		return output, err
+	}
+
+	// Add any existing watches
+	for varName := range watchMap {
+		e.AddWatch(varName)
 	}
 
 	return "started gdb", nil
@@ -125,6 +141,30 @@ func (e *Editor) DebugStep() (string, error) {
 	}
 	output := gdbOutput.String()
 	gdbOutput.Reset()
+
+	consoleString := strings.TrimSpace(gdbConsole.String())
+	gdbConsole.Reset()
+
+	// Interpret consoleString and extract the new variable names and values,
+	// for variables there are watchpoints for.
+	if consoleString != "" {
+		var varName string
+		var varValue string
+		for _, line := range strings.Split(consoleString, "\n") {
+			if strings.Contains(line, "watchpoint") && strings.Contains(line, ":") {
+				fields := strings.SplitN(line, ":", 2)
+				varName = strings.TrimSpace(fields[1])
+			} else if varName != "" && strings.HasPrefix(line, "New value =") {
+				fields := strings.SplitN(line, "=", 2)
+				varValue = strings.TrimSpace(fields[1])
+				watchMap[varName] = varValue
+				lastSeenWatchVariable = varName
+				varName = ""
+				varValue = ""
+			}
+		}
+	}
+
 	return output, nil
 }
 
@@ -136,9 +176,110 @@ func (e *Editor) DebugEnd() {
 	e.gdb = nil
 	// Clear any existing output
 	gdbOutput.Reset()
+	gdbConsole.Reset()
+	// Clear the last seen variable
+	lastSeenWatchVariable = ""
 	// Also change to the original directory
 	if originalDirectory != "" {
 		os.Chdir(originalDirectory)
 	}
-	flogf(gdbLogFile, "[gdb] stopped")
+	flogf(gdbLogFile, "[gdb] %s\n", "stopped")
+}
+
+// AddWatch will add a watchpoint / watch expression to gdb
+func (e *Editor) AddWatch(expression string) (string, error) {
+	var output string
+	if e.gdb != nil {
+		flogf(gdbLogFile, "[gdb] adding watch: %s\n", expression)
+		_, err := e.gdb.CheckedSend("break-watch", "-a", expression)
+		if err != nil {
+			return "", err
+		}
+		output = gdbOutput.String()
+		gdbOutput.Reset()
+		flogf(gdbLogFile, "[gdb] output after adding watch: %s\n", output)
+	}
+	watchMap[expression] = "?"
+
+	// Don't set this, the variable watch has not been seen yet
+	// lastSeenWatchVariable = expression
+
+	return output, nil
+}
+
+// DrawWatches will draw a box with the current watch expressions and values in the upper right
+func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
+	// First create a box the size of the entire canvas
+	canvasBox := NewCanvasBox(c)
+
+	// Window is the background box that will be drawn in the upper right
+	upperRightBox := NewBox()
+	upperRightBox.UpperRightPlacement(canvasBox)
+
+	// Then create a list box
+	listBox := NewBox()
+	listBox.FillWithMargins(upperRightBox, 2)
+
+	// Get the current theme for the watch box
+	bt := NewBoxTheme()
+
+	// Draw the background box and title
+	e.DrawBox(bt, c, upperRightBox, true)
+
+	title := "Running"
+	if e.gdb == nil {
+		title = "Not running"
+	}
+	if len(watchMap) == 0 {
+		helpSlice := []string{
+			"ctrl-space to step",
+			"ctrl-w to add a watch",
+			"",
+			"gdb log: " + prettyPath(gdbLogFile),
+		}
+		// Draw the help text
+		e.DrawList(c, listBox, helpSlice, -1)
+	} else {
+		overview := []string{}
+		foundLastSeen := false
+
+		// First add the last seen variable, at the top of the list
+		for k, v := range watchMap {
+			if k == lastSeenWatchVariable {
+				overview = append(overview, k+": "+v)
+				foundLastSeen = true
+				break
+			}
+		}
+
+		// Then add the rest
+		for k, v := range watchMap {
+			if k == lastSeenWatchVariable {
+				// Already added
+				continue
+			}
+			overview = append(overview, k+": "+v)
+		}
+
+		// Highlight the top item if a debug session is active, and it was changed during this session
+		if foundLastSeen && e.gdb != nil {
+			// Draw the list of watches, where the last changed one is highlighted (and at the top)
+			e.DrawList(c, listBox, overview, 0)
+		} else {
+			// Draw the list of watches, with no highlights
+			e.DrawList(c, listBox, overview, -1)
+		}
+	}
+
+	e.DrawTitle(c, upperRightBox, title)
+
+	// Blit
+	c.Draw()
+
+	// Reposition the cursor
+	if repositionCursor {
+		x := e.pos.ScreenX()
+		y := e.pos.ScreenY()
+		vt100.SetXY(uint(x), uint(y))
+	}
 }

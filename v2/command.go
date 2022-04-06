@@ -131,7 +131,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			"Save and quit",
 			wrapWhenTypingToggleText,
 			"Word wrap at " + strconv.Itoa(wrapWidth),
-			"Sort the list of strings on the current line",
+			"Sort strings on the current line",
 			"Insert \"" + insertFilename + "\" at the current line",
 			"Insert the current date", // in the RFC 3339 format
 		},
@@ -248,8 +248,8 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		})
 	}
 
-	// Debug mode on/off, if gdb is found
-	if foundGDB {
+	// Debug mode on/off, if gdb is found and the mode is tested
+	if foundGDB && e.mode == mode.Assembly || e.mode == mode.C || e.mode == mode.Cpp {
 		if e.debugMode {
 			actions.Add("Exit debug mode", func() {
 				status.Clear(c)
@@ -260,7 +260,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				e.DebugEnd()
 			})
 		} else {
-			actions.Add("Debug mode for Assembly, C and C++", func() {
+			actions.Add("Debug mode", func() {
 				status.Clear(c)
 				status.SetMessage("Debug mode enabled")
 				status.Show(c, e)

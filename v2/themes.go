@@ -27,7 +27,8 @@ type Theme struct {
 	ListCodeColor, CodeColor, CodeBlockColor, ImageColor, LinkColor, QuoteColor, QuoteTextColor,
 	HTMLColor, CommentColor, BoldColor, ItalicsColor, StrikeColor, TableColor, CheckboxColor,
 	XColor, TableBackground, UnmatchedParenColor, MenuTitleColor, MenuArrowColor, MenuTextColor,
-	MenuHighlightColor, MenuSelectedColor, ManSectionColor, ManSynopsisColor vt100.AttributeColor
+	MenuHighlightColor, MenuSelectedColor, ManSectionColor, ManSynopsisColor,
+	BoxTextColor, BoxBackground, BoxHighlight vt100.AttributeColor
 }
 
 // NewDefaultTheme creates a new default Theme struct
@@ -96,6 +97,9 @@ func NewDefaultTheme() Theme {
 		MenuSelectedColor:     vt100.LightCyan,
 		ManSectionColor:       vt100.LightRed,
 		ManSynopsisColor:      vt100.LightYellow,
+		BoxTextColor:          vt100.Black,
+		BoxBackground:         vt100.BackgroundBlue,
+		BoxHighlight:          vt100.LightYellow,
 	}
 }
 
@@ -166,6 +170,9 @@ func NewRedBlackTheme() Theme {
 		MenuSelectedColor:     vt100.LightYellow,
 		ManSectionColor:       vt100.Red,
 		ManSynopsisColor:      vt100.White,
+		BoxTextColor:          vt100.Black,
+		BoxBackground:         vt100.BackgroundGray,
+		BoxHighlight:          vt100.Red,
 	}
 }
 
@@ -235,6 +242,9 @@ func NewLightTheme() Theme {
 		MenuSelectedColor:     vt100.LightRed,
 		ManSectionColor:       vt100.Red,
 		ManSynopsisColor:      vt100.Blue,
+		BoxTextColor:          vt100.Black,
+		BoxBackground:         vt100.BackgroundGray,
+		BoxHighlight:          vt100.Red,
 	}
 }
 
@@ -304,6 +314,9 @@ func NewNoColorTheme() Theme {
 		MenuSelectedColor:     vt100.Black,
 		ManSectionColor:       vt100.White,
 		ManSynopsisColor:      vt100.White,
+		BoxTextColor:          vt100.Black,
+		BoxBackground:         vt100.BackgroundGray,
+		BoxHighlight:          vt100.Black,
 	}
 }
 
