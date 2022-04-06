@@ -141,7 +141,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			cmd = exec.Command("cxx")
 			cmd.Dir = sourceDir
 			if e.debugMode {
-				cmd.Args = append(cmd.Args, "debug")
+				cmd.Args = append(cmd.Args, "debugnosan")
 			}
 			return cmd, exeBaseNameOrMainExists, nil
 		}
@@ -162,7 +162,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			cmd = exec.Command("cxx")
 			cmd.Dir = sourceDir
 			if e.debugMode {
-				cmd.Args = append(cmd.Args, "debug")
+				cmd.Args = append(cmd.Args, "debugnosan")
 			}
 			return cmd, exeBaseNameOrMainExists, nil
 		}
