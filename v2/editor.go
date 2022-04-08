@@ -12,7 +12,7 @@ import (
 	"unicode"
 
 	"github.com/cyrus-and/gdb"
-	"github.com/xyproto/bin"
+	"github.com/xyproto/binary"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
@@ -321,7 +321,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 			return message, err
 		}
 		// Check if it's a binary file or a text file
-		if e.binaryFile = bin.BinaryData(data); e.binaryFile {
+		if e.binaryFile = binary.Data(data); e.binaryFile {
 			e.mode = mode.Blank
 		}
 	}

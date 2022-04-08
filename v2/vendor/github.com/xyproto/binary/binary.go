@@ -1,4 +1,4 @@
-package bin
+package binary
 
 import (
 	"bytes"
@@ -17,9 +17,9 @@ func probablyBinaryData(b []byte) bool {
 	return !utf8.ValidString(string(b))
 }
 
-// BinaryFile tries to determine if the given filename is a binary file by reading the first, last
+// File tries to determine if the given filename is a binary file by reading the first, last
 // and middle 24 bytes, then using the probablyBinaryData function on each of them in turn.
-func BinaryFile(filename string) (bool, error) {
+func File(filename string) (bool, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return false, err
@@ -106,9 +106,9 @@ func BinaryFile(filename string) (bool, error) {
 	return false, nil
 }
 
-// BinaryData tries to determine if the given data is binary by examining the first, last
+// Data tries to determine if the given data is binary by examining the first, last
 // and middle 24 bytes, then using the probablyBinaryData function on each of them in turn.
-func BinaryData(data []byte) bool {
+func Data(data []byte) bool {
 	l := len(data)
 	switch {
 	case l == 0:
