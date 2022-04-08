@@ -132,15 +132,14 @@ func (sb *StatusBar) Clear(c *vt100.Canvas) error {
 	h := int(c.H())
 	mut.RLock()
 	offsetY := sb.editor.pos.OffsetY()
-	err = sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
+	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
 	mut.RUnlock()
 	c.Draw()
 	return err
 }
 
 // ClearAll will clear all status messages
-func (sb *StatusBar) ClearAll(c *vt100.Canvas) error {
-	var err error
+func (sb *StatusBar) ClearAll(c *vt100.Canvas) {
 	mut.Lock()
 	statusBeingShown = 0
 	// Clear the message
@@ -150,18 +149,16 @@ func (sb *StatusBar) ClearAll(c *vt100.Canvas) error {
 	mut.Unlock()
 
 	if c == nil {
-		return nil
+		return
 	}
 
 	// Then clear/redraw the bottom line
 	h := int(c.H())
 	mut.RLock()
 	offsetY := sb.editor.pos.OffsetY()
-	err = sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
+	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
 	mut.RUnlock()
 	c.Draw()
-
-	return err
 }
 
 // Show will draw a status message, then clear it after a certain delay

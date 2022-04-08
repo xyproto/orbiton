@@ -256,9 +256,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	// Redraw the TUI, if needed
 	if e.redraw {
 		e.Center(c)
-		if err := e.DrawLines(c, true, false); err != nil {
-			warningMessage += " (" + err.Error() + ")"
-		}
+		e.DrawLines(c, true, false)
 		e.redraw = false
 	}
 

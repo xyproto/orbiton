@@ -93,21 +93,19 @@ func (e *Editor) RepositionCursorIfNeeded() {
 }
 
 // DrawLines will draw a screen full of lines on the given canvas
-func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redrawCanvas bool) error {
-	var err error
+func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redrawCanvas bool) {
 	h := int(c.Height())
 	if respectOffset {
 		offsetY := e.pos.OffsetY()
-		err = e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
+		e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
 	} else {
-		err = e.WriteLines(c, LineIndex(0), LineIndex(h), 0, 0)
+		e.WriteLines(c, LineIndex(0), LineIndex(h), 0, 0)
 	}
 	if redrawCanvas {
 		c.Redraw()
 	} else {
 		c.Draw()
 	}
-	return err
 }
 
 // InitialRedraw is called right before the main loop is started

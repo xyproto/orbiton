@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -21,7 +20,7 @@ var writeLinesMutex sync.RWMutex
 var tout = textoutput.NewTextOutput(true, true)
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
-func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy int) error {
+func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy int) {
 
 	// Only one call to WriteLines at the time, thank you
 	writeLinesMutex.Lock()
@@ -33,13 +32,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	tabString := strings.Repeat(" ", e.tabsSpaces.PerTab)
 	w := c.Width()
 	if fromline >= toline {
-		return errors.New("fromline >= toline in WriteLines")
+		return //errors.New("fromline >= toline in WriteLines")
 	}
 	numLinesToDraw := toline - fromline // Number of lines available on the canvas for drawing
 	offsetY := fromline
 
-	inCodeBlock := false   // used when highlighting Markdown or Python
-	expandedRunes := false // used for detecting wide unicode symbols
+	inCodeBlock := false // used when highlighting Markdown or Python
 
 	//logf("numlines: %d offsetY %d\n", numlines, offsetY)
 
@@ -87,7 +85,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 	q, err := NewQuoteState(singleLineCommentMarker, e.mode, ignoreSingleQuotes)
 	if err != nil {
-		return err
+		return // err
 	}
 
 	// First loop from 0 up to to offset to figure out if we are already in a multiLine comment or a multiLine string at the current line
@@ -478,15 +476,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			yp = uint(cy) + uint(y)
 		)
 
-		// NOTE: Work in progress
-
-		// TODO: This number must be sent into the WriteRune function and stored per line in the canvas!
-		//       This way, the canvas can go the start of the line for every line with a runeLengthDiff > 0.
-		runeLengthDiff := int(lineStringCount) - int(lineRuneCount)
-		if runeLengthDiff > 2 {
-			expandedRunes = true
-		}
-
 		// Fill the rest of the line on the canvas with "blanks"
 		for x := lineRuneCount; x < w; x++ {
 			xp = uint(cx) + x
@@ -495,13 +484,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		}
 		//c.WriteRuneB(xp, yp, e.fg, e.bg, '\n')
 	}
-
-	if expandedRunes {
-		return errors.New("unsupported unicode text")
-		// TODO: Write something that is great at laying out unicode runes, then build on that.
-	}
-
-	return nil
 }
 
 // Syntax highlight pointer arrows in C and C++
