@@ -443,8 +443,10 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		data = []byte(s)
 	}
 
-	// Mark the data as "not changed"
-	e.changed = false
+	// Mark the data as "not changed" if it's not a binary file
+	if !e.binaryFile {
+		e.changed = false
+	}
 
 	// Default file mode (0644 for regular files, 0755 for executable files)
 	var fileMode os.FileMode = 0644
@@ -458,29 +460,34 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		fileMode = 0755
 	}
 
-	// Start a spinner, in a short while
-	quitChan := Spinner(c, tty, fmt.Sprintf("Saving %s... ", e.filename), fmt.Sprintf("saving %s: stopped by user", e.filename), 200*time.Millisecond, e.ItalicsColor)
+	// Unless it's a binary file and no changes has been made, save the data
+	if !(e.binaryFile && !e.changed) {
 
-	// Save the file and return any errors
-	if err := ioutil.WriteFile(e.filename, data, fileMode); err != nil {
-		// Stop the spinner and return
+		// Start a spinner, in a short while
+		quitChan := Spinner(c, tty, fmt.Sprintf("Saving %s... ", e.filename), fmt.Sprintf("saving %s: stopped by user", e.filename), 200*time.Millisecond, e.ItalicsColor)
+
+		// Save the file and return any errors
+		if err := ioutil.WriteFile(e.filename, data, fileMode); err != nil {
+			// Stop the spinner and return
+			quitChan <- true
+			return err
+		}
+
+		// This file should not be considered read-only, since saving went fine
+		e.readOnly = false
+
+		// "chmod +x" or "chmod -x". This is needed after saving the file, in order to toggle the executable bit.
+		// rust source may start with something like "#![feature(core_intrinsics)]", so avoid that.
+		if shebang && e.mode != mode.Rust && !e.readOnly {
+			// Call Chmod, but ignore errors (since this is just a bonus and not critical)
+			os.Chmod(e.filename, fileMode)
+			e.syntaxHighlight = true
+		}
+
+		// Stop the spinner
 		quitChan <- true
-		return err
+
 	}
-
-	// Apparently, this file isn't read-only, since saving went fine
-	e.readOnly = false
-
-	// "chmod +x" or "chmod -x". This is needed after saving the file, in order to toggle the executable bit.
-	// rust source may start with something like "#![feature(core_intrinsics)]", so avoid that.
-	if shebang && e.mode != mode.Rust && !e.readOnly {
-		// Call Chmod, but ignore errors (since this is just a bonus and not critical)
-		os.Chmod(e.filename, fileMode)
-		e.syntaxHighlight = true
-	}
-
-	// Stop the spinner
-	quitChan <- true
 
 	e.redrawCursor = true
 
