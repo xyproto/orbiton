@@ -8,6 +8,7 @@
 
 ## Saving and loading
 
+- [ ] Detect that no changes has been made before saving a binary file.
 - [ ] When opening a binary file / unrecognized encoding, do no replacements when saving.
 - [ ] When editing a man page, make it possible to toggle between the man page and the man page view mode.
 - [ ] Auto-detect tabs/spaces when opening a file.
@@ -110,12 +111,9 @@
 ## Encoding
 
 - [ ] Detect ISO-8859-1 and convert the file to UTF-8 before opening.
-- [ ] Don't complain about the mid-dot or other unicode symbols that can be displayed in the space of 1 character. Use the unicode width module.
-- [ ] Better support for multi-byte unicode runes.
 - [ ] Open text files with Chinese/Japanese/Korean characters without breaking the text flow.
 - [ ] Quotestate Process can not recognize triple runes, like the previous previous rune is ", the previous rune is " and the current rune is ".
       The wrong arguments are passed to the function. Figure out why.
-- [ ] If over a certain percentage of the characters are not unicode.Graphics, enter binary mode.
 
 ## Command menu
 
@@ -132,6 +130,7 @@
 
 ## External programs
 
+- [ ] Let rendering with `pandoc` have a spinner, since it can take a little while.
 - [ ] Let `guessica` also set `pkgrel=1` if there was a new version.
 - [ ] Embed fstabfmt.
 - [ ] Extract the functionality for searching a MessagePack file to a `mpgrep` utility, that has a `-B` flag (like `grep`).
