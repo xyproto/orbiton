@@ -45,9 +45,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		firstPasteAction = true
 		firstCopyAction  = true
 
-		lastCopyY  LineIndex = -1 // used for keeping track if ctrl-c is pressed twice on the same line
-		lastPasteY LineIndex = -1 // used for keeping track if ctrl-v is pressed twice on the same line
-		lastCutY   LineIndex = -1 // used for keeping track if ctrl-x is pressed twice on the same line
+		lastCopyY  LineIndex = -1 // used for keeping track if ctrl-c has been pressed twice on the same line
+		lastPasteY LineIndex = -1 // used for keeping track if ctrl-v has been pressed twice on the same line
+		lastCutY   LineIndex = -1 // used for keeping track if ctrl-x has been pressed twice on the same line
 
 		previousKey          string // keep track of the previous key press
 		lastCommandMenuIndex int    // for the command menu
@@ -109,7 +109,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	}
 
 	if canUseLocks {
-		// Check if the lock should be forced (also force when running git commit, becase it is likely that o was killed in that case)
+		// Check if the lock should be forced (also force when running git commit, because it is likely that o was killed in that case)
 		if forceFlag || filepath.Base(absFilename) == "COMMIT_EDITMSG" || env.Bool("O_FORCE") {
 			// Lock and save, regardless of what the previous status is
 			fileLock.Lock(absFilename)
@@ -325,7 +325,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			}
 
 			// Press ctrl-space twice the first time the Markdown file should be exported to PDF
-			// to avvoid the first accidental ctrl-space key press.
+			// to avoid the first accidental ctrl-space key press.
 
 			// Build or export the current file
 			// The last argument is if the command should run in the background or not
@@ -1666,7 +1666,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					// Do the redraw manually before showing the status message
 					e.DrawLines(c, true, false)
 					e.redraw = false
-					// SHow the status message
+					// Show the status message
 					s := "Jumped to breakpoint at line " + e.LineNumber().String()
 					status.SetMessage(s)
 				}
@@ -1768,7 +1768,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 					//noDedent := similarLineBelow
 
-					// Okay, dedent this line by 1 indendation, if possible
+					// Okay, dedent this line by 1 indentation, if possible
 					if !noDedent && e.pos.sx > 0 && len(leadingWhitespace) > 0 && noContentHereAlready {
 						newLeadingWhitespace := leadingWhitespace
 						if strings.HasSuffix(leadingWhitespace, "\t") {
