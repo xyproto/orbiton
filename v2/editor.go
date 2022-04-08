@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	"github.com/cyrus-and/gdb"
+	"github.com/xyproto/bin"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
@@ -49,6 +50,7 @@ type Editor struct {
 	previousY          int                   // previous cursor position
 	macro              *Macro                // the contents of the current macro (will be cleared when esc is pressed)
 	showRegisters      int                   // show no register box, show changed registers, show all changed registers
+	binaryFile         bool                  // is this a binary file, or a text file?
 	Theme                                    // editor theme, embedded struct
 }
 
@@ -318,13 +320,20 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 		if err != nil {
 			return message, err
 		}
+		// Check if it's a binary file or a text file
+		e.binaryFile = bin.BinaryData(data)
+		if e.binaryFile {
+			e.mode = mode.Blank
+		}
 	}
 
 	// If enough time passed so that the spinner was shown by now, enter "slow disk mode" where fewer disk-related I/O operations will be performed
 	e.slowLoad = time.Since(start) > 400*time.Millisecond
 
-	// Opinonated replacements
-	data = opinionatedByteReplacer(data)
+	// Opinonated replacements, but not fir binary files
+	if !e.binaryFile {
+		data = opinionatedByteReplacer(data)
+	}
 
 	// Load the data
 	e.LoadBytes(data)
@@ -395,38 +404,45 @@ func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) 
 // Save will try to save the current editor contents to file.
 // It needs a canvas in case trailing spaces are stripped and the cursor needs to move to the end.
 func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
-
-	// Save the current position
-	bookmark := e.pos.Copy()
-
-	// Strip trailing spaces on all lines
-	l := e.Len()
-	changed := false
-	for i := 0; i < l; i++ {
-		if e.TrimRight(LineIndex(i)) {
-			changed = true
+	var (
+		bookmark = e.pos.Copy() // Save the current position
+		changed  bool
+		shebang  bool
+		data     []byte
+	)
+	if e.binaryFile {
+		data = []byte(e.String())
+	} else {
+		// Strip trailing spaces on all lines
+		l := e.Len()
+		for i := 0; i < l; i++ {
+			if e.TrimRight(LineIndex(i)) {
+				changed = true
+			}
 		}
-	}
 
-	// Trim away trailing whitespace
-	s := strings.TrimRightFunc(e.String(), unicode.IsSpace)
+		// Trim away trailing whitespace
+		s := strings.TrimRightFunc(e.String(), unicode.IsSpace)
 
-	// Make additional replacements, and add a final newline
-	s = opinionatedStringReplacer.Replace(s) + "\n"
+		// Make additional replacements, and add a final newline
+		s = opinionatedStringReplacer.Replace(s) + "\n"
 
-	// TODO: Auto-detect tabs/spaces instead of per-language assumptions
-	if e.mode.Spaces() {
-		// NOTE: This is a hack, that can only replace 10 levels deep.
-		for level := 10; level > 0; level-- {
-			fromString := "\n" + strings.Repeat("\t", level)
-			toString := "\n" + strings.Repeat(" ", level*e.tabsSpaces.PerTab)
-			s = strings.Replace(s, fromString, toString, -1)
+		// TODO: Auto-detect tabs/spaces instead of per-language assumptions
+		if e.mode.Spaces() {
+			// NOTE: This is a hack, that can only replace 10 levels deep.
+			for level := 10; level > 0; level-- {
+				fromString := "\n" + strings.Repeat("\t", level)
+				toString := "\n" + strings.Repeat(" ", level*e.tabsSpaces.PerTab)
+				s = strings.Replace(s, fromString, toString, -1)
+			}
 		}
-	}
 
-	// Should the file be saved with the executable bit enabled?
-	// (Does it either start with a shebang or reside in a common bin directory like /usr/bin?)
-	shebang := aBinDirectory(e.filename) || strings.HasPrefix(s, "#!")
+		// Should the file be saved with the executable bit enabled?
+		// (Does it either start with a shebang or reside in a common bin directory like /usr/bin?)
+		shebang = aBinDirectory(e.filename) || strings.HasPrefix(s, "#!")
+
+		data = []byte(s)
+	}
 
 	// Mark the data as "not changed"
 	e.changed = false
@@ -447,7 +463,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	quitChan := Spinner(c, tty, fmt.Sprintf("Saving %s... ", e.filename), fmt.Sprintf("saving %s: stopped by user", e.filename), 200*time.Millisecond, e.ItalicsColor)
 
 	// Save the file and return any errors
-	if err := ioutil.WriteFile(e.filename, []byte(s), fileMode); err != nil {
+	if err := ioutil.WriteFile(e.filename, data, fileMode); err != nil {
 		// Stop the spinner and return
 		quitChan <- true
 		return err
