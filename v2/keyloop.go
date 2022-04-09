@@ -184,7 +184,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			e.ClearSearchTerm()
 
 			// Add a watch
-			if e.debugMode {
+			if e.debugMode { // AddWatch will start a new gdb session if needed
 				// Ask the user to type in a watch expression
 				if expression, ok := e.UserInput(c, tty, status, "Variable name to watch"); ok {
 					if _, err := e.AddWatch(expression); err != nil {
@@ -278,20 +278,13 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						}
 					}
 				} else { // if not, make one step
-					// step forward to the next line
-					// gdbOutput contains the collected stdout from the program being debugged
-					//gdbOutput, err := e.DebugStep()
 					_, err := e.DebugNext()
 					if err != nil {
 						e.DebugEnd()
-						status.SetMessage("Done")
+						status.SetMessage("Done: " + err.Error())
 						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
 					} else {
-						//if gdbOutput != "" {
-						//status.SetMessage(gdbOutput) // gdbOutput
-						//} else {
-						status.SetMessage("Next instruction")
-						//}
+						status.SetMessage("Next")
 					}
 				}
 				e.redrawCursor = true
@@ -382,6 +375,20 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// for C or C++: jump to header/source, or insert symbol
 			// for Agda: insert symbol
 			// for the rest: record and play back macros
+			// debug mode: next insTruction
+
+			if e.debugMode && e.gdb != nil {
+				_, err := e.DebugNextInstruction()
+				if err != nil {
+					e.DebugEnd()
+					status.SetMessage("Done: " + err.Error())
+					e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
+				} else {
+					status.SetMessage("Next instruction")
+				}
+				status.Show(c, e)
+				break
+			}
 
 			// Save the current file, but only if it has changed
 			if e.changed {
@@ -1200,7 +1207,24 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 			e.redrawCursor = true
 			e.redraw = true
-		case "c:19": // ctrl-s, save
+		case "c:19": // ctrl-s, save (or step, if in debug mode)
+			if e.debugMode {
+				if e.gdb != nil {
+					_, err := e.DebugStep()
+					if err != nil {
+						e.DebugEnd()
+						status.SetMessage("Done: " + err.Error())
+						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
+					} else {
+						status.SetMessage("Step")
+					}
+				} else {
+					status.SetMessage("No session")
+				}
+				status.Show(c, e)
+				break
+			}
+
 			e.UserSave(c, tty, status)
 		case "c:21", "c:26": // ctrl-u or ctrl-z, undo (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state
@@ -1652,6 +1676,11 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			if e.debugMode {
 				if e.breakpoint == nil {
 					e.breakpoint = e.pos.Copy()
+					_, err := e.DebugActivateBreakpoint(filepath.Base(e.filename))
+					if err != nil {
+						status.SetErrorMessage(err.Error())
+						break
+					}
 					s := "Placed breakpoint at line " + e.LineNumber().String()
 					status.SetMessage("  " + s + "  ")
 				} else if e.breakpoint.LineNumber() == e.LineNumber() {
@@ -1802,7 +1831,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		e.RedrawAtEndOfKeyLoop(c, status, &statusMessageAfterRedraw)
 
 		// Also draw the watches, if debug mode is enabled // and a debug session is in progress
-		if e.debugMode { // && e.gdb != nil {
+		if e.debugMode {
 			e.DrawRegisters(c, false) // don't reposition cursor
 			e.DrawWatches(c, true)    // also reposition cursor
 		}
