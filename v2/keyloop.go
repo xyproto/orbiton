@@ -640,17 +640,17 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			e.redrawCursor = true
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
 
-			// If in Debug mode, let ctrl-n mean "next"
+			// If in Debug mode, let ctrl-n mean "next instruction"
 			if e.debugMode {
 				if e.gdb != nil {
 					status.ClearAll(c)
-					_, err := e.DebugNext()
+					_, err := e.DebugNextInstruction()
 					if err != nil {
 						e.DebugEnd()
 						status.SetMessage(err.Error())
 						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
 					} else {
-						status.SetMessage("Next")
+						status.SetMessage("Next instruction")
 					}
 					statusMessageAfterRedraw = status.Message()
 					//status.Show(c, e)
@@ -1875,8 +1875,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 		// Also draw the watches, if debug mode is enabled // and a debug session is in progress
 		if e.debugMode {
-			e.DrawRegisters(c, false) // don't reposition cursor
-			e.DrawWatches(c, true)    // also reposition cursor
+			e.DrawRegisters(c, false)   // don't reposition cursor
+			e.DrawWatches(c, false)     // don't reposition cursor
+			e.DrawInstructions(c, true) // also reposition cursor
 		}
 
 	} // end of main loop
