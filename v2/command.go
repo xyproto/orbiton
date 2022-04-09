@@ -249,7 +249,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	}
 
 	// Debug mode on/off, if gdb is found and the mode is tested
-	if foundGDB && e.mode == mode.Assembly || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.Rust {
+	if foundGDB && e.usingGDBMightWork() {
 		if e.debugMode {
 			actions.Add("Exit debug mode", func() {
 				status.Clear(c)
@@ -261,6 +261,10 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			})
 		} else {
 			actions.Add("Debug mode", func() {
+				// Save the file when entering debug mode, since gdb may crash for some languages
+				// TODO: Identify which languages work poorly together with gdb
+				e.UserSave(c, tty, status)
+
 				status.Clear(c)
 				status.SetMessage("Debug mode enabled")
 				status.Show(c, e)
