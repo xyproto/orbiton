@@ -90,6 +90,16 @@ func (b *Box) LowerRightPlacement(container *Box) {
 	b.H = int(h * 0.5)
 }
 
+// EvenLowerRightPlacement will place the box even lower
+func (b *Box) EvenLowerRightPlacement(container *Box) {
+	w := float64(container.W)
+	h := float64(container.H)
+	b.X = int(w * 0.3)
+	b.Y = int(h * 0.92)
+	b.W = int(w * 0.6)
+	b.H = int(h * 0.08)
+}
+
 // LowerPlacement will place a box in the lower right corner of a container, like a little window
 func (b *Box) LowerPlacement(container *Box) {
 	w := float64(container.W)
