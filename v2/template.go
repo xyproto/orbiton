@@ -51,8 +51,8 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 	},
 	mode.D: {
 		"module main;\n\nimport std.stdio;\n\nvoid main(string[] args) {\n    writeln(\"Hello, World!\");\n}\n",
+		9,
 		2,
-		1,
 	},
 	mode.Go: {
 		"package main\n\nimport (\n\t\"fmt\"\n)\n\nfunc main() {\n\tfmt.Println(\"Hello, World!\")\n}\n",
