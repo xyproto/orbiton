@@ -237,6 +237,26 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			status.HoldMessage(c, &statusMessageAfterRedraw, 250*time.Millisecond)
 
 		case "c:6": // ctrl-f, search for a string
+
+			// If in Debug mode, let ctrl-f mean "finish"
+			if e.debugMode {
+				if e.gdb == nil {
+					statusMessageAfterRedraw = "Not running"
+					break
+				}
+				status.ClearAll(c)
+				_, err := e.DebugFinish()
+				if err != nil {
+					e.DebugEnd()
+					status.SetMessage(err.Error())
+					e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
+				} else {
+					status.SetMessage("Finish")
+				}
+				statusMessageAfterRedraw = status.Message()
+				break
+			}
+
 			e.SearchMode(c, status, tty, true, &statusMessageAfterRedraw, undo)
 		case "c:0": // ctrl-space, build source code to executable, or export, depending on the mode
 
@@ -278,13 +298,13 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						}
 					}
 				} else { // if not, make one step
-					_, err := e.DebugNext()
+					_, err := e.DebugStep()
 					if err != nil {
 						e.DebugEnd()
-						status.SetMessage("Done: " + err.Error())
+						status.SetMessage(err.Error())
 						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
 					} else {
-						status.SetMessage("Next")
+						status.SetMessage("Step")
 					}
 				}
 				e.redrawCursor = true
@@ -323,17 +343,14 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// Build or export the current file
 			// The last argument is if the command should run in the background or not
 			outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
-
 			// All clear when it comes to status messages and redrawing
 			status.ClearAll(c)
-
 			if err != nil && err != errNoSuitableBuildCommand {
 				// Error while building
 				status.SetErrorMessage(err.Error())
 				status.ShowNoTimeout(c, e)
 				break
 			}
-
 			// Was no suitable compilation or export command found?
 			if err == errNoSuitableBuildCommand {
 				//status.ClearAll(c)
@@ -359,7 +376,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 			// ctrl-space was pressed while in debug mode, and without a debug session running
 			if e.debugMode && e.gdb == nil {
-				if err := e.StartDebugSession(c, tty, status, outputExecutable); err != nil {
+				if err := e.DebugStartSession(c, tty, status, outputExecutable); err != nil {
 					status.ClearAll(c)
 					status.SetErrorMessage(err.Error())
 					status.ShowNoTimeout(c, e)
@@ -376,19 +393,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// for Agda: insert symbol
 			// for the rest: record and play back macros
 			// debug mode: next insTruction
-
-			if e.debugMode && e.gdb != nil {
-				_, err := e.DebugNextInstruction()
-				if err != nil {
-					e.DebugEnd()
-					status.SetMessage("Done: " + err.Error())
-					e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
-				} else {
-					status.SetMessage("Next instruction")
-				}
-				status.Show(c, e)
-				break
-			}
 
 			// Save the current file, but only if it has changed
 			if e.changed {
@@ -635,6 +639,62 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			}
 			e.redrawCursor = true
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
+
+			// If in Debug mode, let ctrl-n mean "next"
+			if e.debugMode {
+				if e.gdb != nil {
+					status.ClearAll(c)
+					_, err := e.DebugNext()
+					if err != nil {
+						e.DebugEnd()
+						status.SetMessage(err.Error())
+						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
+					} else {
+						status.SetMessage("Next")
+					}
+					statusMessageAfterRedraw = status.Message()
+					//status.Show(c, e)
+					break
+				} else { // e.gdb == nil
+					// Build or export the current file
+					// The last argument is if the command should run in the background or not
+					outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
+					// All clear when it comes to status messages and redrawing
+					status.ClearAll(c)
+					if err != nil && err != errNoSuitableBuildCommand {
+						// Error while building
+						status.SetErrorMessage(err.Error())
+						status.ShowNoTimeout(c, e)
+						break
+					}
+					// Was no suitable compilation or export command found?
+					if err == errNoSuitableBuildCommand {
+						//status.ClearAll(c)
+						if e.debugMode {
+							// Both in debug mode and can not find a command to build this file with.
+							status.SetErrorMessage(err.Error())
+							status.ShowNoTimeout(c, e)
+							break
+						}
+						// Building this file extension is not implemented yet.
+						// Just display the current time and word count.
+						// TODO: status.ClearAll() should have cleared the status bar first, but this is not always true,
+						//       which is why the message is hackily surrounded by spaces. Fix.
+						statsMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
+						status.SetMessage(statsMessage)
+						status.Show(c, e)
+						break
+					}
+					// Start debugging
+					if err := e.DebugStartSession(c, tty, status, outputExecutable); err != nil {
+						status.ClearAll(c)
+						status.SetErrorMessage(err.Error())
+						status.ShowNoTimeout(c, e)
+					}
+					break
+				}
+			}
+
 			e.UseStickySearchTerm()
 			if e.SearchTerm() != "" {
 				// Go to next match
@@ -1208,23 +1268,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:19": // ctrl-s, save (or step, if in debug mode)
-			if e.debugMode {
-				if e.gdb != nil {
-					_, err := e.DebugStep()
-					if err != nil {
-						e.DebugEnd()
-						status.SetMessage("Done: " + err.Error())
-						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
-					} else {
-						status.SetMessage("Step")
-					}
-				} else {
-					status.SetMessage("No session")
-				}
-				status.Show(c, e)
-				break
-			}
-
 			e.UserSave(c, tty, status)
 		case "c:21", "c:26": // ctrl-u or ctrl-z, undo (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state
@@ -1629,10 +1672,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 			// Are we in debug mode
 			if e.debugMode {
-				// e.showRegisters has three states, 0,1,2
+				// e.showRegisters has three states, 0 (SmallRegisterWindow), 1 (LargeRegisterWindow) and 2 (NoRegisterWindow)
 				e.showRegisters++
-				if e.showRegisters > 2 {
-					e.showRegisters = 0
+				if e.showRegisters > noRegisterWindow {
+					e.showRegisters = smallRegisterWindow
 				}
 				break
 			}

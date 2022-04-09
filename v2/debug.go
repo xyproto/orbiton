@@ -27,6 +27,12 @@ var (
 	prevLineNumber        = -1
 )
 
+const (
+	smallRegisterWindow = iota
+	largeRegisterWindow
+	noRegisterWindow
+)
+
 // DebugActivateBreakpoint sends break-insert to gdb together with the breakpoint in e.breakpoint, if available
 func (e *Editor) DebugActivateBreakpoint(sourceBaseFilename string) (string, error) {
 	if e.breakpoint != nil {
@@ -60,7 +66,7 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 	// Use rust-gdb if we are debugging Rust
 	var gdbExecutable string
 	if e.mode == mode.Rust {
-		gdbExecutable = which("rust-db")
+		gdbExecutable = which("rust-gdb")
 	} else {
 		gdbExecutable = which("gdb")
 	}
@@ -221,6 +227,39 @@ func (e *Editor) DebugNextInstruction() (string, error) {
 // e.gdb must not be nil. Returns whatever was outputted to gdb stdout.
 func (e *Editor) DebugStep() (string, error) {
 	_, err := e.gdb.CheckedSend("exec-step")
+	if err != nil {
+		return "", err
+	}
+	output := gdbOutput.String()
+	gdbOutput.Reset()
+	consoleString := strings.TrimSpace(gdbConsole.String())
+	gdbConsole.Reset()
+	// Interpret consoleString and extract the new variable names and values,
+	// for variables there are watchpoints for.
+	if consoleString != "" {
+		var varName string
+		var varValue string
+		for _, line := range strings.Split(consoleString, "\n") {
+			if strings.Contains(line, "watchpoint") && strings.Contains(line, ":") {
+				fields := strings.SplitN(line, ":", 2)
+				varName = strings.TrimSpace(fields[1])
+			} else if varName != "" && strings.HasPrefix(line, "New value =") {
+				fields := strings.SplitN(line, "=", 2)
+				varValue = strings.TrimSpace(fields[1])
+				watchMap[varName] = varValue
+				lastSeenWatchVariable = varName
+				varName = ""
+				varValue = ""
+			}
+		}
+	}
+	return output, nil
+}
+
+// DebugFinish will "step out".
+// e.gdb must not be nil. Returns whatever was outputted to gdb stdout.
+func (e *Editor) DebugFinish() (string, error) {
+	_, err := e.gdb.CheckedSend("exec-finish")
 	if err != nil {
 		return "", err
 	}
@@ -536,11 +575,11 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 
 // DrawRegisters will draw a box with the current register values in the lower right
 func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
-	if e.showRegisters == 2 {
+	if e.showRegisters == noRegisterWindow {
 		// Don't draw anything
 		return nil
 	}
-	filterWeirdRegisters := e.showRegisters != 1
+	filterWeirdRegisters := e.showRegisters != largeRegisterWindow
 
 	// First create a box the size of the entire canvas
 	canvasBox := NewCanvasBox(c)

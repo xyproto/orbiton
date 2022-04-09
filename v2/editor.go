@@ -2299,8 +2299,8 @@ func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, t
 	return entered, !cancel
 }
 
-// StartDebugSession builds and then connects to gdb
-func (e *Editor) StartDebugSession(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, optionalOutputExecutable string) error {
+// DebugStartSession builds and then connects to gdb
+func (e *Editor) DebugStartSession(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, optionalOutputExecutable string) error {
 	absFilename, err := e.AbsFilename()
 	if err != nil {
 		return err
@@ -2325,7 +2325,10 @@ func (e *Editor) StartDebugSession(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	// Start GDB execution from the top
 	msg, err := e.DebugStart(filepath.Dir(absFilename), filepath.Base(absFilename), outputExecutable)
 	if err != nil || e.gdb == nil {
-		return errors.New("could not start debugging: " + msg + ", " + err.Error())
+		if msg != "" {
+			return errors.New("could not start debugging: " + msg + ", " + err.Error())
+		}
+		return errors.New("could not start debugging: " + err.Error())
 	}
 
 	e.GoToLineNumber(1, nil, nil, true)

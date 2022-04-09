@@ -249,7 +249,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	}
 
 	// Debug mode on/off, if gdb is found and the mode is tested
-	if foundGDB && e.mode == mode.Assembly || e.mode == mode.C || e.mode == mode.Cpp {
+	if foundGDB && e.mode == mode.Assembly || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.Rust {
 		if e.debugMode {
 			actions.Add("Exit debug mode", func() {
 				status.Clear(c)

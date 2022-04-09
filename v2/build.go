@@ -209,13 +209,16 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd.Dir = sourceDir
 		return cmd, exeOrMainExists, nil
 	case mode.Rust:
+		if e.debugMode {
+			cmd = exec.Command("cargo", "build", "-C", "incremental", "--profile", "dev")
+		} else {
+			cmd = exec.Command("cargo", "build", "-C", "incremental", "--profile", "release")
+		}
 		if exists("Cargo.toml") {
-			cmd = exec.Command("cargo", "build")
 			cmd.Dir = sourceDir
 			return cmd, everythingIsFine, nil
 		}
 		if exists(filepath.Join(parentDir, "Cargo.toml")) {
-			cmd = exec.Command("cargo", "build")
 			cmd.Dir = parentDir
 			return cmd, everythingIsFine, nil
 		}
