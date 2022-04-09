@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	//"path/filepath"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -17,20 +17,20 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-var (
-	gdbOutput         bytes.Buffer
-	originalDirectory string
-	//gdbLogFile            = filepath.Join(userCacheDir, "o", "gdb.log")
-	gdbConsole            strings.Builder
-	watchMap              = make(map[string]string)
-	lastSeenWatchVariable string
-	prevLineNumber        = -1
-)
-
 const (
 	smallRegisterWindow = iota
 	largeRegisterWindow
 	noRegisterWindow
+)
+
+var (
+	gdbOutput             bytes.Buffer
+	originalDirectory     string
+	gdbLogFile            = filepath.Join(userCacheDir, "o", "gdb.log")
+	gdbConsole            strings.Builder
+	watchMap              = make(map[string]string)
+	lastSeenWatchVariable string
+	showInstructionPane   bool
 )
 
 // DebugActivateBreakpoint sends break-insert to gdb together with the breakpoint in e.breakpoint, if available
@@ -48,7 +48,7 @@ func (e *Editor) DebugActivateBreakpoint(sourceBaseFilename string) (string, err
 // Will end the existing session first if e.gdb != nil.
 func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilename string) (string, error) {
 
-	//flogf(gdbLogFile, "[gdb] dir %s, src %s, exe %s\n", sourceDir, sourceBaseFilename, executableBaseFilename)
+	flogf(gdbLogFile, "[gdb] dir %s, src %s, exe %s\n", sourceDir, sourceBaseFilename, executableBaseFilename)
 
 	// End any existing sessions
 	e.DebugEnd()
@@ -80,14 +80,12 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 			if payloadMap, ok := payload.(map[string]interface{}); ok {
 				if frame, ok := payloadMap["frame"]; ok {
 					if frameMap, ok := frame.(map[string]interface{}); ok {
-						//flogf(gdbLogFile, "[gdb] frame: %v\n", frameMap)
+						flogf(gdbLogFile, "[gdb] frame: %v\n", frameMap)
 						if lineNumberString, ok := frameMap["line"].(string); ok {
 							if lineNumber, err := strconv.Atoi(lineNumberString); err == nil { // success
+								// TODO: Fetch a different line number?
 								// Got a line number, send the editor there, without any status messages
-								if prevLineNumber != -1 {
-									e.GoToLineNumber(LineNumber(prevLineNumber), nil, nil, true)
-								}
-								prevLineNumber = lineNumber
+								e.GoToLineNumber(LineNumber(lineNumber), nil, nil, true)
 							}
 						}
 					}
@@ -193,6 +191,7 @@ func (e *Editor) DebugNext() (string, error) {
 // DebugNextInstruction will continue the execution by stepping to the next instruction.
 // e.gdb must not be nil. Returns whatever was outputted to gdb stdout.
 func (e *Editor) DebugNextInstruction() (string, error) {
+	showInstructionPane = true
 	_, err := e.gdb.CheckedSend("exec-next-instruction")
 	if err != nil {
 		return "", err
@@ -347,6 +346,39 @@ func (e *Editor) DebugChangedRegisters() ([]int, error) {
 	return []int{}, errors.New("could not find the register values in the payload returned from gdb")
 }
 
+// DebugDisassemble will return the next N assembly instructions
+func (e *Editor) DebugDisassemble(n int) ([]string, error) {
+	// Then get the register values
+	notification, err := e.gdb.CheckedSend("data-disassemble -s $pc -e \"$pc + 20\" -- 0")
+	if err != nil {
+		//flogf(gdbLogFile, "[gdb] data-disassemble error: %s\n", err.Error())
+		return []string{}, err
+	}
+	result := []string{}
+	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
+		if payloadMap, ok := payload.(map[string]interface{}); ok {
+			//flogf(gdbLogFile, "[gdb] disasm payload: %v\n", payloadMap)
+			if asmDisSlice, ok := payloadMap["asm_insns"].([]interface{}); ok {
+				for i, asmDis := range asmDisSlice {
+					//flogf(gdbLogFile, "[gdb] disasm asm %d: %v %T\n", i, asmDis, asmDis)
+					if asmMap, ok := asmDis.(map[string]interface{}); ok {
+						instruction := asmMap["inst"]
+						result = append(result, instruction.(string))
+					}
+					// Only collect n asm statements
+					if i >= n {
+						//flogf(gdbLogFile, "[gdb] result %v\n", result)
+						break
+					}
+				}
+				return result, nil
+			}
+		}
+	}
+	//flogf(gdbLogFile, "[gdb] disasm result: %v\n", result)
+	return []string{}, errors.New("could not get disasm from gdb")
+}
+
 // DebugChangedRegisterMap returns a map of all registers that were changed the last step, and their values
 func (e *Editor) DebugChangedRegisterMap() (map[string]string, error) {
 	// First get the names of the registers
@@ -470,7 +502,6 @@ func (e *Editor) DebugEnd() {
 	if originalDirectory != "" {
 		os.Chdir(originalDirectory)
 	}
-	prevLineNumber = -1
 	//flogf(gdbLogFile, "[gdb] %s\n", "stopped")
 }
 
@@ -520,11 +551,11 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 	}
 	if len(watchMap) == 0 {
 		helpSlice := []string{
-			"ctrl-space to step",
-			"ctrl-w to add a watch",
-			//"ctrl-r to toggle the register view",
-			//"",
-			//"gdb log: " + prettyPath(gdbLogFile),
+			"ctrl-space : step",
+			"ctrl-w     : add a watch",
+			"ctrl-n     : next instruction",
+			"ctrl-f     : finish (step out)",
+			"ctrl-r     : reg. pane layout",
 		}
 		// Draw the help text
 		e.DrawList(c, listBox, helpSlice, -1)
@@ -664,4 +695,83 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 	}
 
 	return nil
+}
+
+// DrawInstructions will draw a box with the current instructions
+func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error {
+
+	if showInstructionPane {
+
+		// First create a box the size of the entire canvas
+		canvasBox := NewCanvasBox(c)
+
+		// Window is the background box that will be drawn in the upper right
+		centerBox := NewBox()
+
+		centerBox.EvenLowerRightPlacement(canvasBox)
+		e.redraw = true
+
+		// Then create a list box
+		listBox := NewBox()
+		listBox.FillWithMargins(centerBox, 1)
+
+		// Get the current theme for the register box
+		bt := NewBoxTheme()
+
+		title := "Instructions"
+
+		// Draw the background box and title
+		e.DrawBox(bt, c, centerBox, true)
+		e.DrawTitle(c, centerBox, title)
+
+		if e.gdb != nil {
+
+			numberOfInstructionsToFetch := 3
+			instructions, err := e.DebugDisassemble(numberOfInstructionsToFetch)
+			if err != nil {
+				return err
+			}
+
+			// Cutoff the slice by how high it is, if it's too long
+			if len(instructions) > listBox.H {
+				instructions = instructions[:listBox.H]
+			}
+
+			// Draw the registers without numbers
+			e.DrawList(c, listBox, instructions, -1)
+
+		}
+
+		// Blit
+		c.Draw()
+
+	}
+
+	// Reposition the cursor
+	if repositionCursor {
+		x := e.pos.ScreenX()
+		y := e.pos.ScreenY()
+		vt100.SetXY(uint(x), uint(y))
+	}
+
+	return nil
+}
+
+func (e *Editor) usingGDBMightWork() bool {
+	switch e.mode {
+	case mode.Blank, mode.Git, mode.Markdown, mode.Makefile, mode.Shell, mode.Config, mode.Python, mode.Text, mode.CMake, mode.Vim, mode.Clojure, mode.Lisp, mode.Kotlin, mode.Java, mode.Gradle, mode.HIDL, mode.AIDL, mode.SQL, mode.Oak, mode.Lua, mode.Bat, mode.HTML, mode.XML, mode.PolicyLanguage, mode.Nroff, mode.Scala, mode.JSON, mode.CS, mode.JavaScript, mode.TypeScript, mode.ManPage, mode.Amber, mode.Bazel, mode.Perl, mode.M4, mode.Basic, mode.Log:
+		// Nope
+		return false
+	case mode.Zig:
+		// Could maybe have worked, but it didn't
+		return false
+	case mode.GoAssembly, mode.Go, mode.Haskell, mode.OCaml, mode.StandardML, mode.Assembly, mode.V, mode.Crystal, mode.Nim, mode.ObjectPascal, mode.Cpp, mode.Ada, mode.Odin, mode.Battlestar, mode.D, mode.Agda:
+		// Maybe, but needs testing
+		return true
+	case mode.Rust, mode.C:
+		// Yes, tested
+		return true
+	}
+	// Unrecognized, assume that gdb might work with it?
+	return true
 }
