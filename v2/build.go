@@ -274,7 +274,11 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.D:
-		cmd = exec.Command("gdc", "-o", exeFirstName, sourceFilename)
+		if e.debugMode {
+			cmd = exec.Command("gdc", "-O0", "-g", "-o", exeFirstName, sourceFilename)
+		} else {
+			cmd = exec.Command("gdc", "-o", exeFirstName, sourceFilename)
+		}
 		cmd.Dir = sourceDir
 		return cmd, exeExists, nil
 	case mode.HTML:
