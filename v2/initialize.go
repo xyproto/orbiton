@@ -189,6 +189,12 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		} else if shell := env.Str("SHELL"); (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && filepath.Base(os.Args[0]) != "default" {
 			// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
 			e.setRedBlackTheme()
+		} else if r, g, b, err := vt100.GetBackgroundColor(tty); err == nil { // success
+			// Check combined value of r, g and b (0..1), and if it's larger than 2
+			// (a bit arbitrary, but should work for most cases)
+			if r+g+b > 2 {
+				e.setLightTheme()
+			}
 		}
 	}
 
