@@ -20,6 +20,8 @@ using namespace std::string_literals;
 static GPid child_pid = -1; // PID of the child process, the o editor, or -1
 static bool force_enable = false; // was the file locked, so that the -f flag was used?
 
+static GtkWidget* terminal;
+
 const gdouble font_scale_step = 0.05;
 
 void signal_and_quit()
@@ -50,6 +52,22 @@ void wait_and_quit()
     }
     sleep(0.5);
     gtk_main_quit();
+}
+
+// trigger_redraw will trigger a terminal resize event when the window is focused (SIGWINCH)
+void trigger_redraw()
+{
+    // vte_terminal_set_size(VTE_TERMINAL(terminal), -1, -1);
+    if (child_pid != -1) {
+        kill(child_pid, SIGWINCH);
+    }
+}
+
+gboolean focus_changed(GtkWidget* widget, GdkEventFocus* event)
+{
+    // printf("GOT EVENT TYPE %d\n", event->type);
+    trigger_redraw();
+    return true; // event was handled
 }
 
 // Synthesized keypress events
@@ -446,7 +464,7 @@ int main(int argc, char* argv[])
 
     // Create a new window and terminal
     const auto window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    const auto terminal = vte_terminal_new();
+    terminal = vte_terminal_new();
 
     // The file to edit
     std::string filename;
@@ -683,6 +701,7 @@ int main(int argc, char* argv[])
     g_signal_connect(terminal, "key-press-event", G_CALLBACK(key_pressed), nullptr);
     g_signal_connect(window, "scroll-event", G_CALLBACK(mouse_scrolled), nullptr);
     g_signal_connect(window, "button-press-event", G_CALLBACK(mouse_clicked), nullptr);
+    g_signal_connect(window, "focus-in-event", G_CALLBACK(focus_changed), nullptr);
 
     // Add the terminal to the window
     gtk_container_add(GTK_CONTAINER(window), terminal);
@@ -694,6 +713,8 @@ int main(int argc, char* argv[])
 
     // Show the window and run the Gtk event loop
     gtk_widget_show_all(window);
+
+    // Run the main loop
     gtk_main();
 
     free_key_events();
