@@ -144,8 +144,8 @@ func (e *Editor) SymbolMenu(status *StatusBar, tty *vt100.TTY, title string, cho
 	// Clear the existing handler
 	signal.Reset(syscall.SIGWINCH)
 
-	// Restore the resize handler
-	e.SetUpResizeHandler(c, tty, status)
+	// Restore the signal handlers
+	e.SetUpSignalHandlers(c, tty, status)
 
 	x, y := symbolMenu.Selected()
 	return x, y, cancel

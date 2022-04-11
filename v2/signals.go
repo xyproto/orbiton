@@ -3,22 +3,23 @@ package main
 import (
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/xyproto/vt100"
 )
 
 // SetUpSignalHandlers sets up a signal handler for when ctrl-c is pressed (SIGTERM),
-// and also for when SIGUSR1 is received.
-func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, absFilename string) {
+// and also for when SIGUSR1 or SIGWINCH is received.
+func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
 
 	sigChan := make(chan os.Signal, 1)
 
-	// Clear any previous terminate or USR1 handlers
-	signal.Reset(syscall.SIGTERM, syscall.SIGUSR1)
+	// Clear any previous terminate or USR handlers
+	signal.Reset(syscall.SIGTERM, syscall.SIGUSR1, syscall.SIGWINCH)
 
 	// Set up notifications
-	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGUSR1)
+	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGUSR1, syscall.SIGWINCH)
 
 	go func() {
 		for {
@@ -33,8 +34,18 @@ func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *St
 				status.Show(c, e)
 			case syscall.SIGUSR1:
 				// Unlock the file
-				fileLock.Unlock(absFilename)
+				if absFilename, err := filepath.Abs(e.filename); err != nil {
+					// Just unlock the non-absolute filename
+					fileLock.Unlock(e.filename)
+				} else {
+					fileLock.Unlock(absFilename)
+				}
 				fileLock.Save()
+			case syscall.SIGWINCH:
+				// Full redraw, like if Esc was pressed
+				drawLines := true
+				resized := true
+				e.FullResetRedraw(c, status, drawLines, resized)
 			}
 		}
 	}()

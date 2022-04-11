@@ -286,11 +286,8 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 		time.Sleep(selectedDelay)
 	}
 
-	// Clear the existing handler
-	signal.Reset(syscall.SIGWINCH)
-
 	// Restore the resize handler
-	e.SetUpResizeHandler(c, tty, status)
+	e.SetUpSignalHandlers(c, tty, status)
 
 	return menu.Selected()
 }

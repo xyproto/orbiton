@@ -83,11 +83,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 	e.SetTheme(e.Theme)
 
-	// Terminal resize handler
-	e.SetUpResizeHandler(c, tty, status)
-
-	// ctrl-c handler
-	e.SetUpSignalHandlers(c, tty, status, absFilename)
+	// ctrl-c, USR1 and terminal resize handlers
+	e.SetUpSignalHandlers(c, tty, status)
 
 	e.previousX = 1
 	e.previousY = 1
