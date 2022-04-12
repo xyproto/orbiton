@@ -63,10 +63,11 @@ void trigger_redraw()
     }
 }
 
-gboolean focus_changed(GtkWidget* widget, GdkEventFocus* event)
+gboolean size_changed(GtkWidget* widget, GtkAllocation* allocation, void* data)
 {
-    // printf("GOT EVENT TYPE %d\n", event->type);
+    //printf("new size %dx%d\n", allocation->width, allocation->height);
     trigger_redraw();
+    gtk_widget_show(widget);
     return true; // event was handled
 }
 
@@ -701,7 +702,7 @@ int main(int argc, char* argv[])
     g_signal_connect(terminal, "key-press-event", G_CALLBACK(key_pressed), nullptr);
     g_signal_connect(window, "scroll-event", G_CALLBACK(mouse_scrolled), nullptr);
     g_signal_connect(window, "button-press-event", G_CALLBACK(mouse_clicked), nullptr);
-    g_signal_connect(window, "focus-in-event", G_CALLBACK(focus_changed), nullptr);
+    g_signal_connect(window, "size-allocate", G_CALLBACK(size_changed), nullptr);
 
     // Add the terminal to the window
     gtk_container_add(GTK_CONTAINER(window), terminal);
