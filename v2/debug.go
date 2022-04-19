@@ -144,26 +144,19 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 }
 
 // DebugContinue will continue the execution to the next breakpoint or to the end.
-// e.gdb must not be nil. Returns whatever was outputted to gdb stdout.
-func (e *Editor) DebugContinue() (string, error) {
+// e.gdb must not be nil.
+func (e *Editor) DebugContinue() error {
 	_, err := e.gdb.CheckedSend("exec-continue")
-	if err != nil {
-		return "", err
-	}
-	output := gdbOutput.String()
-	gdbOutput.Reset()
-	return output, nil
+	return err
 }
 
 // DebugNext will continue the execution by stepping to the next line.
-// e.gdb must not be nil. Returns whatever was outputted to gdb stdout.
-func (e *Editor) DebugNext() (string, error) {
+// e.gdb must not be nil.
+func (e *Editor) DebugNext() error {
 	_, err := e.gdb.CheckedSend("exec-next")
 	if err != nil {
-		return "", err
+		return err
 	}
-	output := gdbOutput.String()
-	gdbOutput.Reset()
 	consoleString := strings.TrimSpace(gdbConsole.String())
 	gdbConsole.Reset()
 	// Interpret consoleString and extract the new variable names and values,
@@ -185,19 +178,17 @@ func (e *Editor) DebugNext() (string, error) {
 			}
 		}
 	}
-	return output, nil
+	return nil
 }
 
 // DebugNextInstruction will continue the execution by stepping to the next instruction.
-// e.gdb must not be nil. Returns whatever was outputted to gdb stdout.
-func (e *Editor) DebugNextInstruction() (string, error) {
+// e.gdb must not be nil.
+func (e *Editor) DebugNextInstruction() error {
 	showInstructionPane = true
 	_, err := e.gdb.CheckedSend("exec-next-instruction")
 	if err != nil {
-		return "", err
+		return err
 	}
-	output := gdbOutput.String()
-	gdbOutput.Reset()
 	consoleString := strings.TrimSpace(gdbConsole.String())
 	gdbConsole.Reset()
 	// Interpret consoleString and extract the new variable names and values,
@@ -219,18 +210,16 @@ func (e *Editor) DebugNextInstruction() (string, error) {
 			}
 		}
 	}
-	return output, nil
+	return nil
 }
 
 // DebugStep will continue the execution by stepping.
-// e.gdb must not be nil. Returns whatever was outputted to gdb stdout.
-func (e *Editor) DebugStep() (string, error) {
+// e.gdb must not be nil.
+func (e *Editor) DebugStep() error {
 	_, err := e.gdb.CheckedSend("exec-step")
 	if err != nil {
-		return "", err
+		return err
 	}
-	output := gdbOutput.String()
-	gdbOutput.Reset()
 	consoleString := strings.TrimSpace(gdbConsole.String())
 	gdbConsole.Reset()
 	// Interpret consoleString and extract the new variable names and values,
@@ -252,7 +241,7 @@ func (e *Editor) DebugStep() (string, error) {
 			}
 		}
 	}
-	return output, nil
+	return nil
 }
 
 // DebugFinish will "step out".
@@ -537,9 +526,17 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 	upperRightBox := NewBox()
 	upperRightBox.UpperRightPlacement(canvasBox, minWidth)
 
+	w := int(c.Width())
+	h := int(c.Height())
+
 	// Then create a list box
 	listBox := NewBox()
-	listBox.FillWithMargins(upperRightBox, 2)
+
+	if h < 35 {
+		listBox.FillWithMargins(upperRightBox, 2, 1)
+	} else {
+		listBox.FillWithMargins(upperRightBox, 2, 2)
+	}
 
 	// Get the current theme for the watch box
 	bt := NewBoxTheme()
@@ -553,23 +550,28 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 	}
 	if len(watchMap) == 0 {
 		// Draw the help text, if the screen is wide enough
-		if c.Width() > 120 {
+		if w > 120 {
 			helpSlice := []string{
 				"ctrl-space : step",
-				"ctrl-w     : add a watch",
 				"ctrl-n     : next instruction",
 				"ctrl-f     : finish (step out)",
+				"ctrl-w     : add a watch",
 				"ctrl-r     : reg. pane layout",
 			}
+			if h < 32 {
+				helpSlice = helpSlice[:3]
+			}
 			e.DrawList(c, listBox, helpSlice, -1)
-
-		} else if c.Width() > 100 {
+		} else if w > 80 {
 			narrowHelpSlice := []string{
 				"ctrl-space: step",
-				"ctrl-w: add watch",
 				"ctrl-n: next inst.",
 				"ctrl-f: step out",
+				"ctrl-w: add watch",
 				"ctrl-r: reg. pane",
+			}
+			if h < 32 {
+				narrowHelpSlice = narrowHelpSlice[:3]
 			}
 			e.DrawList(c, listBox, narrowHelpSlice, -1)
 		}
@@ -649,7 +651,7 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 
 	// Then create a list box
 	listBox := NewBox()
-	listBox.FillWithMargins(lowerRightBox, 2)
+	listBox.FillWithMargins(lowerRightBox, 2, 2)
 
 	// Get the current theme for the register box
 	bt := NewBoxTheme()
@@ -731,7 +733,7 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 
 		// Then create a list box
 		listBox := NewBox()
-		listBox.FillWithMargins(centerBox, 1)
+		listBox.FillWithMargins(centerBox, 1, 1)
 
 		// Get the current theme for the register box
 		bt := NewBoxTheme()
@@ -792,4 +794,49 @@ func (e *Editor) usingGDBMightWork() bool {
 	}
 	// Unrecognized, assume that gdb might work with it?
 	return true
+}
+
+// DrawStandardOutput will draw a pane with the 5 last lines of the collected stdoutput from GDB
+func (e *Editor) DrawStandardOutput(c *vt100.Canvas, repositionCursor bool) {
+
+	// First create a box the size of the entire canvas
+	canvasBox := NewCanvasBox(c)
+
+	minWidth := 32
+
+	lowerLeftBox := NewBox()
+	lowerLeftBox.LowerLeftPlacement(canvasBox, minWidth)
+
+	// Then create a list box
+	listBox := NewBox()
+	listBox.FillWithMargins(lowerLeftBox, 2, 2)
+
+	// Get the current theme for the watch box
+	bt := NewBoxTheme()
+
+	// Draw the background box and title
+	e.DrawBox(bt, c, lowerLeftBox, true)
+
+	e.DrawTitle(c, lowerLeftBox, "Output")
+
+	// Gather the GDB stdout so far
+	collectedGDBOutput := gdbOutput.String()
+
+	// Get the last 5 lines, and create a string slice
+	lines := strings.Split(collectedGDBOutput, "\n")
+	if l := len(lines); l > 5 {
+		lines = lines[l-5:]
+	}
+
+	e.DrawList(c, listBox, lines, -1)
+
+	// Blit
+	c.Draw()
+
+	// Reposition the cursor
+	if repositionCursor {
+		x := e.pos.ScreenX()
+		y := e.pos.ScreenY()
+		vt100.SetXY(uint(x), uint(y))
+	}
 }

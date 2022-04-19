@@ -62,12 +62,12 @@ func (b *Box) Fill(container *Box) {
 
 // FillWithMargins will place a Box inside a given container, with the given margins.
 // Margins are given in number of characters.
-func (b *Box) FillWithMargins(container *Box, margins int) {
+func (b *Box) FillWithMargins(container *Box, xmargins, ymargins int) {
 	b.Fill(container)
-	b.X += margins
-	b.Y += margins
-	b.W -= margins * 2
-	b.H -= margins * 2
+	b.X += xmargins
+	b.Y += ymargins
+	b.W -= xmargins * 2
+	b.H -= ymargins * 2
 }
 
 // UpperRightPlacement will place a box in the upper right corner of a container, like a little window
@@ -80,7 +80,10 @@ func (b *Box) UpperRightPlacement(container *Box, minWidth int) {
 	if b.W < minWidth {
 		b.W = minWidth
 	}
-	b.H = int(h * 0.2)
+	b.H = int(h * 0.25)
+	if (b.X + b.W) >= int(w) {
+		b.W = int(w) - b.X
+	}
 }
 
 // LowerRightPlacement will place a box in the lower right corner of a container, like a little window
@@ -94,6 +97,25 @@ func (b *Box) LowerRightPlacement(container *Box, minWidth int) {
 		b.W = minWidth
 	}
 	b.H = int(h * 0.5)
+	if (b.X + b.W) >= int(w) {
+		b.W = int(w) - b.X
+	}
+}
+
+// LowerLeftPlacement will place a box in the lower left corner of a container, like a little window
+func (b *Box) LowerLeftPlacement(container *Box, minWidth int) {
+	w := float64(container.W)
+	h := float64(container.H)
+	b.X = int(w * 0.2)
+	b.Y = int(h * 0.4)
+	b.W = int(w * 0.5)
+	if b.W < minWidth {
+		b.W = minWidth
+	}
+	b.H = int(h * 0.4)
+	if (b.X + b.W) >= int(w) {
+		b.W = int(w) - b.X
+	}
 }
 
 // EvenLowerRightPlacement will place the box even lower
@@ -107,6 +129,9 @@ func (b *Box) EvenLowerRightPlacement(container *Box, minWidth int) {
 		b.W = minWidth
 	}
 	b.H = int(h * 0.08)
+	if (b.X + b.W) >= int(w) {
+		b.W = int(w) - b.X
+	}
 }
 
 // LowerPlacement will place a box in the lower right corner of a container, like a little window
@@ -120,6 +145,9 @@ func (b *Box) LowerPlacement(container *Box, minWidth int) {
 		b.W = minWidth
 	}
 	b.H = int(h * 0.7)
+	if (b.X + b.W) >= int(w) {
+		b.W = int(w) - b.X
+	}
 }
 
 // Say will output text at the given coordinates, with the configured theme
