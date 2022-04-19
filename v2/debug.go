@@ -800,7 +800,7 @@ func (e *Editor) usingGDBMightWork() bool {
 		// Could maybe have worked, but it didn't
 		return false
 	case mode.GoAssembly, mode.Go, mode.Haskell, mode.OCaml, mode.StandardML, mode.Assembly, mode.V, mode.Crystal, mode.Nim, mode.ObjectPascal, mode.Cpp, mode.Ada, mode.Odin, mode.Battlestar, mode.D, mode.Agda:
-		// Maybe, but needs testing
+		// Maybe, but needs testing!
 		return true
 	case mode.Rust, mode.C:
 		// Yes, tested
