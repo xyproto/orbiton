@@ -542,15 +542,19 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 	}
 
 	// Get the current theme for the watch box
-	bt := NewBoxTheme()
-
-	// Draw the background box and title
-	e.DrawBox(bt, c, upperRightBox, &e.BoxBackground)
+	bt := e.NewBoxTheme()
 
 	title := "Running"
+	bt.Background = &e.DebugRunningBackground
+
 	if e.gdb == nil {
-		title = "Not running"
+		title = "Stopped"
+		bt.Background = &e.DebugStoppedBackground
 	}
+
+	// Draw the background box and title
+	e.DrawBox(bt, c, upperRightBox)
+
 	if len(watchMap) == 0 {
 		// Draw the help text, if the screen is wide enough
 		if w > 120 {
@@ -564,7 +568,7 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 			if h < 32 {
 				helpSlice = helpSlice[:3]
 			}
-			e.DrawList(c, listBox, helpSlice, -1)
+			e.DrawList(bt, c, listBox, helpSlice, -1)
 		} else if w > 80 {
 			narrowHelpSlice := []string{
 				"ctrl-space: step",
@@ -576,7 +580,7 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 			if h < 32 {
 				narrowHelpSlice = narrowHelpSlice[:3]
 			}
-			e.DrawList(c, listBox, narrowHelpSlice, -1)
+			e.DrawList(bt, c, listBox, narrowHelpSlice, -1)
 		}
 	} else {
 		overview := []string{}
@@ -603,14 +607,14 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 		// Highlight the top item if a debug session is active, and it was changed during this session
 		if foundLastSeen && e.gdb != nil {
 			// Draw the list of watches, where the last changed one is highlighted (and at the top)
-			e.DrawList(c, listBox, overview, 0)
+			e.DrawList(bt, c, listBox, overview, 0)
 		} else {
 			// Draw the list of watches, with no highlights
-			e.DrawList(c, listBox, overview, -1)
+			e.DrawList(bt, c, listBox, overview, -1)
 		}
 	}
 
-	e.DrawTitle(c, upperRightBox, title)
+	e.DrawTitle(bt, c, upperRightBox, title)
 
 	// Blit
 	c.Draw()
@@ -625,7 +629,7 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 
 // DrawRegisters will draw a box with the current register values in the lower right
 func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
-	if e.debugShowRegisters == noRegisterWindow {
+	if e.debugShowRegisters == noRegisterWindow || e.gdb == nil {
 		// Don't draw anything
 		return nil
 	}
@@ -661,12 +665,13 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 	listBox.FillWithMargins(lowerRightBox, 2, 2)
 
 	// Get the current theme for the register box
-	bt := NewBoxTheme()
+	bt := e.NewBoxTheme()
+	bt.Background = &e.DebugRegistersBackground
 
 	// Draw the background box and title
-	e.DrawBox(bt, c, lowerRightBox, &e.BoxBackground)
+	e.DrawBox(bt, c, lowerRightBox)
 
-	e.DrawTitle(c, lowerRightBox, title)
+	e.DrawTitle(bt, c, lowerRightBox, title)
 
 	if e.gdb != nil {
 
@@ -705,7 +710,7 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 		}
 
 		// Draw the registers without numbers
-		e.DrawList(c, listBox, regSlice, -1)
+		e.DrawList(bt, c, listBox, regSlice, -1)
 
 	}
 
@@ -725,7 +730,7 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 // DrawInstructions will draw a box with the current instructions
 func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error {
 
-	if showInstructionPane {
+	if showInstructionPane && e.gdb != nil {
 
 		// First create a box the size of the entire canvas
 		canvasBox := NewCanvasBox(c)
@@ -743,13 +748,15 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 		listBox.FillWithMargins(centerBox, 1, 1)
 
 		// Get the current theme for the register box
-		bt := NewBoxTheme()
+		bt := e.NewBoxTheme()
+		bt.Text = &e.DebugInstructionsForeground
+		bt.Background = &e.DebugInstructionsBackground
 
-		title := "Instructions"
+		title := "Next instructions"
 
 		// Draw the background box and title
-		e.DrawBox(bt, c, centerBox, &e.BoxBackground)
-		e.DrawTitle(c, centerBox, title)
+		e.DrawBox(bt, c, centerBox)
+		e.DrawTitle(bt, c, centerBox, title)
 
 		if e.gdb != nil {
 
@@ -765,7 +772,7 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 			}
 
 			// Draw the registers without numbers
-			e.DrawList(c, listBox, instructions, -1)
+			e.DrawList(bt, c, listBox, instructions, -1)
 
 		}
 
@@ -807,7 +814,7 @@ func (e *Editor) usingGDBMightWork() bool {
 func (e *Editor) DrawOutput(c *vt100.Canvas, repositionCursor bool) {
 
 	// Check if the output pane should be shown or not
-	if e.debugHideOutput {
+	if e.debugHideOutput || e.gdb == nil {
 		return
 	}
 
@@ -834,13 +841,14 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, repositionCursor bool) {
 		listBox := NewBox()
 		listBox.FillWithMargins(lowerLeftBox, 2, 2)
 
-		// Get the current theme for the watch box
-		bt := NewBoxTheme()
+		// Get the current theme for the stdout box
+		bt := e.NewBoxTheme()
+		bt.Background = &e.DebugOutputBackground
+		bt.UpperEdge = bt.LowerEdge
 
-		// Draw the background box and title
-		e.DrawBox(bt, c, lowerLeftBox, &e.BoxBackground)
+		e.DrawBox(bt, c, lowerLeftBox)
 
-		e.DrawTitle(c, lowerLeftBox, title)
+		e.DrawTitle(bt, c, lowerLeftBox, title)
 
 		// Get the last 5 lines, and create a string slice
 		lines := strings.Split(collectedGDBOutput, "\n")
@@ -848,7 +856,7 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, repositionCursor bool) {
 			lines = lines[l-5:]
 		}
 
-		e.DrawList(c, listBox, lines, -1)
+		e.DrawList(bt, c, listBox, lines, -1)
 
 		// Blit
 		c.Draw()

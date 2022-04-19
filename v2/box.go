@@ -14,7 +14,8 @@ type Box struct {
 
 // BoxTheme contains the runes used to draw boxes
 type BoxTheme struct {
-	TL, TR, BL, BR, VL, VR, HT, HB rune
+	TL, TR, BL, BR, VL, VR, HT, HB                                rune
+	Foreground, Background, Text, Highlight, UpperEdge, LowerEdge *vt100.AttributeColor
 }
 
 // NewBox creates a new box/container
@@ -22,18 +23,29 @@ func NewBox() *Box {
 	return &Box{0, 0, 0, 0}
 }
 
-// NewBoxTheme creates a new theme/style for a box/container
-func NewBoxTheme() *BoxTheme {
+// NewCustomBoxTheme creates a new theme/style for a box/container
+func NewCustomBoxTheme(foreground, background, text, highlight, upperEdge, lowerEdge *vt100.AttributeColor) *BoxTheme {
 	return &BoxTheme{
-		TL: '╭', // top left
-		TR: '╮', // top right
-		BL: '╰', // bottom left
-		BR: '╯', // bottom right
-		VL: '│', // vertical line, left side
-		VR: '│', // vertical line, right side
-		HT: '─', // horizontal line
-		HB: '─', // horizontal bottom line
+		TL:         '╭', // top left
+		TR:         '╮', // top right
+		BL:         '╰', // bottom left
+		BR:         '╯', // bottom right
+		VL:         '│', // vertical line, left side
+		VR:         '│', // vertical line, right side
+		HT:         '─', // horizontal line
+		HB:         '─', // horizontal bottom line
+		Foreground: foreground,
+		Background: background,
+		Text:       text,
+		Highlight:  highlight,
+		UpperEdge:  upperEdge,
+		LowerEdge:  lowerEdge,
 	}
+}
+
+// NewBoxTheme creates a new theme/style for a box/container, based on the editor theme
+func (e *Editor) NewBoxTheme() *BoxTheme {
+	return NewCustomBoxTheme(&e.Foreground, &e.BoxBackground, &e.BoxTextColor, &e.BoxHighlight, &e.BoxUpperEdge, &e.BoxTextColor)
 }
 
 // NewCanvasBox creates a new box/container for the entire canvas/screen
@@ -122,12 +134,12 @@ func (b *Box) EvenLowerRightPlacement(container *Box, minWidth int) {
 	w := float64(container.W)
 	h := float64(container.H)
 	b.X = int(w * 0.3)
-	b.Y = int(h * 0.85)
+	b.Y = int(h * 0.83)
 	b.W = int(w * 0.6)
 	if b.W < minWidth {
 		b.W = minWidth
 	}
-	b.H = int(h * 0.15)
+	b.H = int(h * 0.18)
 	if (b.X + b.W) >= int(w) {
 		b.W = int(w) - b.X
 	}
@@ -150,36 +162,39 @@ func (b *Box) LowerPlacement(container *Box, minWidth int) {
 }
 
 // Say will output text at the given coordinates, with the configured theme
-func (e *Editor) Say(c *vt100.Canvas, x, y int, text string) {
-	c.Write(uint(x), uint(y), e.BoxTextColor, e.BoxBackground, text)
+func (e *Editor) Say(bt *BoxTheme, c *vt100.Canvas, x, y int, text string) {
+	c.Write(uint(x), uint(y), *bt.Text, *bt.Background, text)
 }
 
 // DrawBox can draw a box using "text graphics".
 // The given Box struct defines the size and placement.
 // If extrude is True, the box looks a bit more like it's sticking out.
 // bg is expected to be a background color, for instance e.BoxBackground.
-func (e *Editor) DrawBox(t *BoxTheme, c *vt100.Canvas, r *Box, bg *vt100.AttributeColor) *Box {
-	x := uint(r.X)
-	y := uint(r.Y)
-	width := uint(r.W)
-	height := uint(r.H)
-	FG1 := e.StatusForeground
-	FG2 := e.BoxTextColor
-	c.WriteRune(x, y, FG1, *bg, t.TL)
+func (e *Editor) DrawBox(bt *BoxTheme, c *vt100.Canvas, r *Box) *Box {
+	var (
+		bg     = bt.Background
+		FG1    = bt.UpperEdge
+		FG2    = bt.LowerEdge
+		x      = uint(r.X)
+		y      = uint(r.Y)
+		width  = uint(r.W)
+		height = uint(r.H)
+	)
+	c.WriteRune(x, y, *FG1, *bg, bt.TL)
 	for i := x + 1; i < x+(width-1); i++ {
-		c.WriteRune(i, y, FG1, *bg, t.HT)
+		c.WriteRune(i, y, *FG1, *bg, bt.HT)
 	}
-	c.WriteRune(x+width-1, y, FG1, *bg, t.TR)
+	c.WriteRune(x+width-1, y, *FG1, *bg, bt.TR)
 	for i := y + 1; i < y+height; i++ {
-		c.WriteRune(x, i, FG1, *bg, t.VL)
-		c.Write(x+1, i, FG1, *bg, repeatRune(' ', width-2))
-		c.WriteRune(x+width-1, i, FG2, *bg, t.VR)
+		c.WriteRune(x, i, *FG1, *bg, bt.VL)
+		c.Write(x+1, i, *FG1, *bg, repeatRune(' ', width-2))
+		c.WriteRune(x+width-1, i, *FG2, *bg, bt.VR)
 	}
-	c.WriteRune(x, y+height-1, FG1, *bg, t.BL)
+	c.WriteRune(x, y+height-1, *FG1, *bg, bt.BL)
 	for i := x + 1; i < x+(width-1); i++ {
-		c.WriteRune(i, y+height-1, FG2, *bg, t.HB)
+		c.WriteRune(i, y+height-1, *FG2, *bg, bt.HB)
 	}
-	c.WriteRune(x+width-1, y+height-1, FG2, *bg, t.BR)
+	c.WriteRune(x+width-1, y+height-1, *FG2, *bg, bt.BR)
 	return &Box{int(x), int(y), int(width), int(height)}
 }
 
@@ -187,26 +202,31 @@ func (e *Editor) DrawBox(t *BoxTheme, c *vt100.Canvas, r *Box, bg *vt100.Attribu
 // Takes a list of strings to be listed and an int that represents
 // which item is currently selected. Does not scroll or wrap.
 // Set selected to -1 to skip highlighting one of the items.
-func (e *Editor) DrawList(c *vt100.Canvas, r *Box, items []string, selected int) {
+func (e *Editor) DrawList(bt *BoxTheme, c *vt100.Canvas, r *Box, items []string, selected int) {
+	x := uint(r.X)
 	for i, s := range items {
-		color := e.BoxTextColor
+		y := uint(r.Y + i)
 		if i == selected {
-			color = e.BoxHighlight
+			c.Write(x, y, *bt.Highlight, *bt.Background, s)
+		} else {
+			c.Write(x, y, *bt.Text, *bt.Background, s)
 		}
-		c.Write(uint(r.X), uint(r.Y+i), color, e.BoxBackground, s)
 	}
 }
 
 // DrawTitle draws a title at the top of a box, not exactly centered
-func (e *Editor) DrawTitle(c *vt100.Canvas, r *Box, title string) {
+func (e *Editor) DrawTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title string) {
 	titleWithSpaces := " " + title + " "
-	e.Say(c, r.X+(r.W-len(titleWithSpaces))/2, r.Y, titleWithSpaces)
+	tmp := bt.Text
+	bt.Text = bt.UpperEdge
+	e.Say(bt, c, r.X+(r.W-len(titleWithSpaces))/2, r.Y, titleWithSpaces)
+	bt.Text = tmp
 }
 
 // DrawRaw can output a multiline string at the given coordinates.
 // Uses the default background color.
 // Returns the final y coordinate after drawing.
-func (e *Editor) DrawRaw(c *vt100.Canvas, x, y int, text string) int {
+func (e *Editor) DrawRaw(r *BoxTheme, c *vt100.Canvas, x, y int, text string) int {
 	var i int
 	for i, line := range splitTrim(text) {
 		c.Write(uint(x), uint(y+i), e.Foreground, e.BoxBackground, line)

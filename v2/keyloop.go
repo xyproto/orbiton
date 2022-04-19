@@ -649,7 +649,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						}
 						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
 					} else {
-						status.SetMessage("Next instruction")
+						status.SetMessage("Next instruction") // Next instruction
 					}
 					statusMessageAfterRedraw = status.Message()
 					//status.Show(c, e)
