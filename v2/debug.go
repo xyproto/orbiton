@@ -531,9 +531,11 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 	// First create a box the size of the entire canvas
 	canvasBox := NewCanvasBox(c)
 
+	minWidth := 32
+
 	// Window is the background box that will be drawn in the upper right
 	upperRightBox := NewBox()
-	upperRightBox.UpperRightPlacement(canvasBox)
+	upperRightBox.UpperRightPlacement(canvasBox, minWidth)
 
 	// Then create a list box
 	listBox := NewBox()
@@ -550,15 +552,27 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 		title = "Not running"
 	}
 	if len(watchMap) == 0 {
-		helpSlice := []string{
-			"ctrl-space : step",
-			"ctrl-w     : add a watch",
-			"ctrl-n     : next instruction",
-			"ctrl-f     : finish (step out)",
-			"ctrl-r     : reg. pane layout",
+		// Draw the help text, if the screen is wide enough
+		if c.Width() > 120 {
+			helpSlice := []string{
+				"ctrl-space : step",
+				"ctrl-w     : add a watch",
+				"ctrl-n     : next instruction",
+				"ctrl-f     : finish (step out)",
+				"ctrl-r     : reg. pane layout",
+			}
+			e.DrawList(c, listBox, helpSlice, -1)
+
+		} else if c.Width() > 100 {
+			narrowHelpSlice := []string{
+				"ctrl-space: step",
+				"ctrl-w: add watch",
+				"ctrl-n: next inst.",
+				"ctrl-f: step out",
+				"ctrl-r: reg. pane",
+			}
+			e.DrawList(c, listBox, narrowHelpSlice, -1)
 		}
-		// Draw the help text
-		e.DrawList(c, listBox, helpSlice, -1)
 	} else {
 		overview := []string{}
 		foundLastSeen := false
@@ -618,16 +632,18 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 	// Window is the background box that will be drawn in the upper right
 	lowerRightBox := NewBox()
 
+	minWidth := 32
+
 	var title string
 	if filterWeirdRegisters {
 		title = "Changed registers"
 		// narrow box
-		lowerRightBox.LowerRightPlacement(canvasBox)
+		lowerRightBox.LowerRightPlacement(canvasBox, minWidth)
 		e.redraw = true
 	} else {
 		title = "All changed registers"
 		// wide box
-		lowerRightBox.LowerPlacement(canvasBox)
+		lowerRightBox.LowerPlacement(canvasBox, 100)
 		e.redraw = true
 	}
 
@@ -708,7 +724,9 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 		// Window is the background box that will be drawn in the upper right
 		centerBox := NewBox()
 
-		centerBox.EvenLowerRightPlacement(canvasBox)
+		minWidth := 32
+
+		centerBox.EvenLowerRightPlacement(canvasBox, minWidth)
 		e.redraw = true
 
 		// Then create a list box

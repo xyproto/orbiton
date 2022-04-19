@@ -71,42 +71,54 @@ func (b *Box) FillWithMargins(container *Box, margins int) {
 }
 
 // UpperRightPlacement will place a box in the upper right corner of a container, like a little window
-func (b *Box) UpperRightPlacement(container *Box) {
+func (b *Box) UpperRightPlacement(container *Box, minWidth int) {
 	w := float64(container.W)
 	h := float64(container.H)
 	b.X = int(w * 0.6)
 	b.Y = int(h * 0.1)
 	b.W = int(w * 0.3)
+	if b.W < minWidth {
+		b.W = minWidth
+	}
 	b.H = int(h * 0.2)
 }
 
 // LowerRightPlacement will place a box in the lower right corner of a container, like a little window
-func (b *Box) LowerRightPlacement(container *Box) {
+func (b *Box) LowerRightPlacement(container *Box, minWidth int) {
 	w := float64(container.W)
 	h := float64(container.H)
 	b.X = int(w * 0.6)
 	b.Y = int(h * 0.4)
 	b.W = int(w * 0.3)
+	if b.W < minWidth {
+		b.W = minWidth
+	}
 	b.H = int(h * 0.5)
 }
 
 // EvenLowerRightPlacement will place the box even lower
-func (b *Box) EvenLowerRightPlacement(container *Box) {
+func (b *Box) EvenLowerRightPlacement(container *Box, minWidth int) {
 	w := float64(container.W)
 	h := float64(container.H)
 	b.X = int(w * 0.3)
 	b.Y = int(h * 0.92)
 	b.W = int(w * 0.6)
+	if b.W < minWidth {
+		b.W = minWidth
+	}
 	b.H = int(h * 0.08)
 }
 
 // LowerPlacement will place a box in the lower right corner of a container, like a little window
-func (b *Box) LowerPlacement(container *Box) {
+func (b *Box) LowerPlacement(container *Box, minWidth int) {
 	w := float64(container.W)
 	h := float64(container.H)
 	b.X = int(w * 0.1)
 	b.Y = int(h * 0.3)
 	b.W = int(w * 0.8)
+	if b.W < minWidth {
+		b.W = minWidth
+	}
 	b.H = int(h * 0.7)
 }
 
