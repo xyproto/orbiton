@@ -157,30 +157,29 @@ func (e *Editor) Say(c *vt100.Canvas, x, y int, text string) {
 // DrawBox can draw a box using "text graphics".
 // The given Box struct defines the size and placement.
 // If extrude is True, the box looks a bit more like it's sticking out.
-func (e *Editor) DrawBox(t *BoxTheme, c *vt100.Canvas, r *Box) *Box {
+// bg is expected to be a background color, for instance e.BoxBackground.
+func (e *Editor) DrawBox(t *BoxTheme, c *vt100.Canvas, r *Box, bg *vt100.AttributeColor) *Box {
 	x := uint(r.X)
 	y := uint(r.Y)
 	width := uint(r.W)
 	height := uint(r.H)
 	FG1 := e.StatusForeground
 	FG2 := e.BoxTextColor
-	c.WriteRune(x, y, FG1, e.BoxBackground, t.TL)
-	//c.Write(x+1, y, FG1, e.BoxBackground, RepeatRune(t.HT, width-2))
+	c.WriteRune(x, y, FG1, *bg, t.TL)
 	for i := x + 1; i < x+(width-1); i++ {
-		c.WriteRune(i, y, FG1, e.BoxBackground, t.HT)
+		c.WriteRune(i, y, FG1, *bg, t.HT)
 	}
-	c.WriteRune(x+width-1, y, FG1, e.BoxBackground, t.TR)
+	c.WriteRune(x+width-1, y, FG1, *bg, t.TR)
 	for i := y + 1; i < y+height; i++ {
-		c.WriteRune(x, i, FG1, e.BoxBackground, t.VL)
-		c.Write(x+1, i, FG1, e.BoxBackground, repeatRune(' ', width-2))
-		c.WriteRune(x+width-1, i, FG2, e.BoxBackground, t.VR)
+		c.WriteRune(x, i, FG1, *bg, t.VL)
+		c.Write(x+1, i, FG1, *bg, repeatRune(' ', width-2))
+		c.WriteRune(x+width-1, i, FG2, *bg, t.VR)
 	}
-	c.WriteRune(x, y+height-1, FG1, e.BoxBackground, t.BL)
+	c.WriteRune(x, y+height-1, FG1, *bg, t.BL)
 	for i := x + 1; i < x+(width-1); i++ {
-		c.WriteRune(i, y+height-1, FG2, e.BoxBackground, t.HB)
+		c.WriteRune(i, y+height-1, FG2, *bg, t.HB)
 	}
-	//c.Write(x+1, y+height-1, FG2, e.BoxBackground, RepeatRune(t.HB, width-2))
-	c.WriteRune(x+width-1, y+height-1, FG2, e.BoxBackground, t.BR)
+	c.WriteRune(x+width-1, y+height-1, FG2, *bg, t.BR)
 	return &Box{int(x), int(y), int(width), int(height)}
 }
 
