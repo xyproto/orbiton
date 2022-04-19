@@ -281,21 +281,16 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				// If we have a breakpoint, continue to it
 				if e.breakpoint != nil { // exists
 					// continue forward to the end or to the next breakpoint
-					gdbOutput, err := e.DebugContinue()
-					//logf("[continue] gdb output: %s\n", gdbOutput)
-					if err != nil {
+					if err := e.DebugContinue(); err != nil {
+						//logf("[continue] gdb output: %s\n", gdbOutput)
 						e.DebugEnd()
 						status.SetMessage("Done")
 						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
 					} else {
-						if gdbOutput != "" {
-							status.SetMessage(gdbOutput)
-						} else {
-							status.SetMessage("Continue")
-						}
+						status.SetMessage("Continue")
 					}
 				} else { // if not, make one step
-					_, err := e.DebugStep()
+					err := e.DebugStep()
 					if err != nil {
 						e.DebugEnd()
 						if errorMessage := err.Error(); strings.Contains(errorMessage, "is not being run") {
@@ -645,8 +640,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			if e.debugMode {
 				if e.gdb != nil {
 					status.ClearAll(c)
-					_, err := e.DebugNextInstruction()
-					if err != nil {
+					if err := e.DebugNextInstruction(); err != nil {
 						e.DebugEnd()
 						status.SetMessage(err.Error())
 						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
