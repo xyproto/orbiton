@@ -135,7 +135,7 @@ func (b *Box) EvenLowerRightPlacement(container *Box, minWidth int) {
 	h := float64(container.H)
 	b.X = int(w * 0.3)
 	b.Y = int(h * 0.83)
-	b.W = int(w * 0.6)
+	b.W = int(w * 0.62)
 	if b.W < minWidth {
 		b.W = minWidth
 	}
