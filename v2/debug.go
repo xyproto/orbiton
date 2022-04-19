@@ -24,13 +24,14 @@ const (
 )
 
 var (
-	gdbOutput             bytes.Buffer
 	originalDirectory     string
 	gdbLogFile            = filepath.Join(userCacheDir, "o", "gdb.log")
 	gdbConsole            strings.Builder
 	watchMap              = make(map[string]string)
 	lastSeenWatchVariable string
 	showInstructionPane   bool
+	gdbOutput             bytes.Buffer
+	lastGDBOutputLength   int
 )
 
 // DebugActivateBreakpoint sends break-insert to gdb together with the breakpoint in e.breakpoint, if available
@@ -487,6 +488,8 @@ func (e *Editor) DebugEnd() {
 	gdbConsole.Reset()
 	// Clear the last seen variable
 	lastSeenWatchVariable = ""
+	// Clear the previous GDB stdout buffer length
+	lastGDBOutputLength = 0
 	// Also change to the original directory
 	if originalDirectory != "" {
 		os.Chdir(originalDirectory)
@@ -542,7 +545,7 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 	bt := NewBoxTheme()
 
 	// Draw the background box and title
-	e.DrawBox(bt, c, upperRightBox)
+	e.DrawBox(bt, c, upperRightBox, &e.BoxBackground)
 
 	title := "Running"
 	if e.gdb == nil {
@@ -661,7 +664,7 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 	bt := NewBoxTheme()
 
 	// Draw the background box and title
-	e.DrawBox(bt, c, lowerRightBox)
+	e.DrawBox(bt, c, lowerRightBox, &e.BoxBackground)
 
 	e.DrawTitle(c, lowerRightBox, title)
 
@@ -745,7 +748,7 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 		title := "Instructions"
 
 		// Draw the background box and title
-		e.DrawBox(bt, c, centerBox)
+		e.DrawBox(bt, c, centerBox, &e.BoxBackground)
 		e.DrawTitle(c, centerBox, title)
 
 		if e.gdb != nil {
@@ -808,10 +811,13 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, repositionCursor bool) {
 		return
 	}
 
+	const title = "stdout buffer"
+
 	// Gather the GDB stdout so far
 	collectedGDBOutput := strings.TrimSpace(gdbOutput.String())
 
-	if len(collectedGDBOutput) > 0 {
+	if l := len(collectedGDBOutput); l > 0 && l != lastGDBOutputLength {
+		lastGDBOutputLength = l
 
 		// First create a box the size of the entire canvas
 		canvasBox := NewCanvasBox(c)
@@ -832,9 +838,9 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, repositionCursor bool) {
 		bt := NewBoxTheme()
 
 		// Draw the background box and title
-		e.DrawBox(bt, c, lowerLeftBox)
+		e.DrawBox(bt, c, lowerLeftBox, &e.BoxBackground)
 
-		e.DrawTitle(c, lowerLeftBox, "Output")
+		e.DrawTitle(c, lowerLeftBox, title)
 
 		// Get the last 5 lines, and create a string slice
 		lines := strings.Split(collectedGDBOutput, "\n")
