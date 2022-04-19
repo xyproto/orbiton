@@ -642,7 +642,11 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					status.ClearAll(c)
 					if err := e.DebugNextInstruction(); err != nil {
 						e.DebugEnd()
-						status.SetMessage(err.Error())
+						if errorMessage := err.Error(); strings.Contains(errorMessage, "is not being run") {
+							status.SetMessage("Done stepping")
+						} else {
+							status.SetMessage(errorMessage)
+						}
 						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
 					} else {
 						status.SetMessage("Next instruction")
@@ -1668,9 +1672,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// Are we in debug mode
 			if e.debugMode {
 				// e.showRegisters has three states, 0 (SmallRegisterWindow), 1 (LargeRegisterWindow) and 2 (NoRegisterWindow)
-				e.showRegisters++
-				if e.showRegisters > noRegisterWindow {
-					e.showRegisters = smallRegisterWindow
+				e.debugShowRegisters++
+				if e.debugShowRegisters > noRegisterWindow {
+					e.debugShowRegisters = smallRegisterWindow
 				}
 				break
 			}
@@ -1872,6 +1876,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		if e.debugMode {
 			e.DrawRegisters(c, false)   // don't reposition cursor
 			e.DrawWatches(c, false)     // don't reposition cursor
+			e.DrawOutput(c, false)      // don't reposition cursor
 			e.DrawInstructions(c, true) // also reposition cursor
 		}
 

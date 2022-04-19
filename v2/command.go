@@ -273,6 +273,21 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		}
 	}
 
+	if e.debugMode {
+		hasOutputData := len(strings.TrimSpace(gdbOutput.String())) > 0
+		if hasOutputData {
+			if e.debugHideOutput {
+				actions.Add("Show output pane", func() {
+					e.debugHideOutput = true
+				})
+			} else {
+				actions.Add("Hide output pane", func() {
+					e.debugHideOutput = true
+				})
+			}
+		}
+	}
+
 	// Add the syntax highlighting toggle menu item
 	if !envNoColor {
 		syntaxToggleText := "Disable syntax highlighting"

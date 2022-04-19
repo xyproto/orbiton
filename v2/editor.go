@@ -49,7 +49,8 @@ type Editor struct {
 	previousX          int                   // previous cursor position
 	previousY          int                   // previous cursor position
 	macro              *Macro                // the contents of the current macro (will be cleared when esc is pressed)
-	showRegisters      int                   // show no register box, show changed registers, show all changed registers
+	debugShowRegisters int                   // show no register box, show changed registers, show all changed registers
+	debugHideOutput    bool                  // hide the GDB stdout pane when in debug mode?
 	binaryFile         bool                  // is this a binary file, or a text file?
 	Theme                                    // editor theme, embedded struct
 }
@@ -2273,6 +2274,7 @@ func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, t
 			e.DrawRegisters(c, false)    // don't reposition cursor
 			e.DrawWatches(c, false)      // don't reposition cursor
 			e.DrawInstructions(c, false) // don't reposition cursor
+			e.DrawOutput(c, false)       // don't reposition cursor
 		}
 		pressed := tty.String()
 		switch pressed {

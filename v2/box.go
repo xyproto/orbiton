@@ -24,7 +24,6 @@ func NewBox() *Box {
 
 // NewBoxTheme creates a new theme/style for a box/container
 func NewBoxTheme() *BoxTheme {
-	// TODO: Respect the color settings from in theme.go
 	return &BoxTheme{
 		TL: '╭', // top left
 		TR: '╮', // top right
@@ -96,7 +95,7 @@ func (b *Box) LowerRightPlacement(container *Box, minWidth int) {
 	if b.W < minWidth {
 		b.W = minWidth
 	}
-	b.H = int(h * 0.5)
+	b.H = int(h * 0.45)
 	if (b.X + b.W) >= int(w) {
 		b.W = int(w) - b.X
 	}
@@ -106,13 +105,13 @@ func (b *Box) LowerRightPlacement(container *Box, minWidth int) {
 func (b *Box) LowerLeftPlacement(container *Box, minWidth int) {
 	w := float64(container.W)
 	h := float64(container.H)
-	b.X = int(w * 0.2)
+	b.X = int(w * 0.05)
 	b.Y = int(h * 0.4)
 	b.W = int(w * 0.5)
 	if b.W < minWidth {
 		b.W = minWidth
 	}
-	b.H = int(h * 0.4)
+	b.H = int(h * 0.45)
 	if (b.X + b.W) >= int(w) {
 		b.W = int(w) - b.X
 	}
@@ -123,12 +122,12 @@ func (b *Box) EvenLowerRightPlacement(container *Box, minWidth int) {
 	w := float64(container.W)
 	h := float64(container.H)
 	b.X = int(w * 0.3)
-	b.Y = int(h * 0.92)
+	b.Y = int(h * 0.85)
 	b.W = int(w * 0.6)
 	if b.W < minWidth {
 		b.W = minWidth
 	}
-	b.H = int(h * 0.08)
+	b.H = int(h * 0.15)
 	if (b.X + b.W) >= int(w) {
 		b.W = int(w) - b.X
 	}
@@ -158,17 +157,13 @@ func (e *Editor) Say(c *vt100.Canvas, x, y int, text string) {
 // DrawBox can draw a box using "text graphics".
 // The given Box struct defines the size and placement.
 // If extrude is True, the box looks a bit more like it's sticking out.
-func (e *Editor) DrawBox(t *BoxTheme, c *vt100.Canvas, r *Box, extrude bool) *Box {
+func (e *Editor) DrawBox(t *BoxTheme, c *vt100.Canvas, r *Box) *Box {
 	x := uint(r.X)
 	y := uint(r.Y)
 	width := uint(r.W)
 	height := uint(r.H)
 	FG1 := e.StatusForeground
 	FG2 := e.BoxTextColor
-	if !extrude {
-		FG1 = e.BoxTextColor
-		FG2 = e.StatusForeground
-	}
 	c.WriteRune(x, y, FG1, e.BoxBackground, t.TL)
 	//c.Write(x+1, y, FG1, e.BoxBackground, RepeatRune(t.HT, width-2))
 	for i := x + 1; i < x+(width-1); i++ {

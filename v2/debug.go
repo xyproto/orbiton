@@ -542,7 +542,7 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 	bt := NewBoxTheme()
 
 	// Draw the background box and title
-	e.DrawBox(bt, c, upperRightBox, true)
+	e.DrawBox(bt, c, upperRightBox)
 
 	title := "Running"
 	if e.gdb == nil {
@@ -622,11 +622,11 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 
 // DrawRegisters will draw a box with the current register values in the lower right
 func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
-	if e.showRegisters == noRegisterWindow {
+	if e.debugShowRegisters == noRegisterWindow {
 		// Don't draw anything
 		return nil
 	}
-	filterWeirdRegisters := e.showRegisters != largeRegisterWindow
+	filterWeirdRegisters := e.debugShowRegisters != largeRegisterWindow
 
 	// First create a box the size of the entire canvas
 	canvasBox := NewCanvasBox(c)
@@ -641,6 +641,10 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 		title = "Changed registers"
 		// narrow box
 		lowerRightBox.LowerRightPlacement(canvasBox, minWidth)
+		if showInstructionPane {
+			lowerRightBox.H = int(float64(lowerRightBox.H) * 0.9)
+		}
+
 		e.redraw = true
 	} else {
 		title = "All changed registers"
@@ -657,7 +661,7 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 	bt := NewBoxTheme()
 
 	// Draw the background box and title
-	e.DrawBox(bt, c, lowerRightBox, true)
+	e.DrawBox(bt, c, lowerRightBox)
 
 	e.DrawTitle(c, lowerRightBox, title)
 
@@ -741,7 +745,7 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 		title := "Instructions"
 
 		// Draw the background box and title
-		e.DrawBox(bt, c, centerBox, true)
+		e.DrawBox(bt, c, centerBox)
 		e.DrawTitle(c, centerBox, title)
 
 		if e.gdb != nil {
@@ -796,42 +800,54 @@ func (e *Editor) usingGDBMightWork() bool {
 	return true
 }
 
-// DrawStandardOutput will draw a pane with the 5 last lines of the collected stdoutput from GDB
-func (e *Editor) DrawStandardOutput(c *vt100.Canvas, repositionCursor bool) {
+// DrawOutput will draw a pane with the 5 last lines of the collected stdoutput from GDB
+func (e *Editor) DrawOutput(c *vt100.Canvas, repositionCursor bool) {
 
-	// First create a box the size of the entire canvas
-	canvasBox := NewCanvasBox(c)
-
-	minWidth := 32
-
-	lowerLeftBox := NewBox()
-	lowerLeftBox.LowerLeftPlacement(canvasBox, minWidth)
-
-	// Then create a list box
-	listBox := NewBox()
-	listBox.FillWithMargins(lowerLeftBox, 2, 2)
-
-	// Get the current theme for the watch box
-	bt := NewBoxTheme()
-
-	// Draw the background box and title
-	e.DrawBox(bt, c, lowerLeftBox, true)
-
-	e.DrawTitle(c, lowerLeftBox, "Output")
-
-	// Gather the GDB stdout so far
-	collectedGDBOutput := gdbOutput.String()
-
-	// Get the last 5 lines, and create a string slice
-	lines := strings.Split(collectedGDBOutput, "\n")
-	if l := len(lines); l > 5 {
-		lines = lines[l-5:]
+	// Check if the output pane should be shown or not
+	if e.debugHideOutput {
+		return
 	}
 
-	e.DrawList(c, listBox, lines, -1)
+	// Gather the GDB stdout so far
+	collectedGDBOutput := strings.TrimSpace(gdbOutput.String())
 
-	// Blit
-	c.Draw()
+	if len(collectedGDBOutput) > 0 {
+
+		// First create a box the size of the entire canvas
+		canvasBox := NewCanvasBox(c)
+
+		minWidth := 32
+
+		lowerLeftBox := NewBox()
+		lowerLeftBox.LowerLeftPlacement(canvasBox, minWidth)
+		if showInstructionPane {
+			lowerLeftBox.H = int(float64(lowerLeftBox.H) * 0.9)
+		}
+
+		// Then create a list box
+		listBox := NewBox()
+		listBox.FillWithMargins(lowerLeftBox, 2, 2)
+
+		// Get the current theme for the watch box
+		bt := NewBoxTheme()
+
+		// Draw the background box and title
+		e.DrawBox(bt, c, lowerLeftBox)
+
+		e.DrawTitle(c, lowerLeftBox, "Output")
+
+		// Get the last 5 lines, and create a string slice
+		lines := strings.Split(collectedGDBOutput, "\n")
+		if l := len(lines); l > 5 {
+			lines = lines[l-5:]
+		}
+
+		e.DrawList(c, listBox, lines, -1)
+
+		// Blit
+		c.Draw()
+
+	}
 
 	// Reposition the cursor
 	if repositionCursor {

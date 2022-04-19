@@ -147,7 +147,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		}
 		// Use gcc directly
 		if e.debugMode {
-			cmd = exec.Command("gcc", "-o", exeFilename, "-O0", "-g", "-pipe", "-D_BSD_SOURCE", sourceFilename)
+			cmd = exec.Command("gcc", "-o", exeFilename, "-Og", "-g", "-pipe", "-D_BSD_SOURCE", sourceFilename)
 			cmd.Dir = sourceDir
 			return cmd, exeExists, nil
 		}
@@ -168,7 +168,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		}
 		// Use g++ directly
 		if e.debugMode {
-			cmd = exec.Command("g++", "-o", exeFilename, "-O0", "-g", "-pipe", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename)
+			cmd = exec.Command("g++", "-o", exeFilename, "-Og", "-g", "-pipe", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename)
 			cmd.Dir = sourceDir
 			return cmd, exeExists, nil
 		}
@@ -275,7 +275,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		return cmd, everythingIsFine, nil
 	case mode.D:
 		if e.debugMode {
-			cmd = exec.Command("gdc", "-O0", "-g", "-o", exeFirstName, sourceFilename)
+			cmd = exec.Command("gdc", "-Og", "-g", "-o", exeFirstName, sourceFilename)
 		} else {
 			cmd = exec.Command("gdc", "-o", exeFirstName, sourceFilename)
 		}
