@@ -15,6 +15,8 @@ import (
 	"github.com/cyrus-and/gdb"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
+
+	"github.com/ianlancetaylor/demangle"
 )
 
 const (
@@ -771,8 +773,26 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 				instructions = instructions[:listBox.H]
 			}
 
+			demangledLines := []string{}
+			for _, line := range instructions {
+				demangledLine := line
+				for _, word := range strings.Fields(line) {
+					word = strings.TrimSpace(word)
+					if strings.HasPrefix(word, "<") && strings.HasSuffix(word, ">") {
+						word = strings.TrimSpace(word[1 : len(word)-1])
+					}
+					// This modification is needed for demangle to accept the symbol syntax
+					modifiedWord := strings.Replace(word, "E+", "E.", 1)
+					if demangledWord, err := demangle.ToString(modifiedWord); err == nil { // success
+						//logf("%s -> %s\n", word, demangledWord)
+						demangledLine = strings.ReplaceAll(demangledLine, word, demangledWord)
+					}
+				}
+				demangledLines = append(demangledLines, demangledLine)
+			}
+
 			// Draw the registers without numbers
-			e.DrawList(bt, c, listBox, instructions, -1)
+			e.DrawList(bt, c, listBox, demangledLines, -1)
 
 		}
 
