@@ -131,6 +131,14 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 		}
 	}
 
+	// Assembly specific
+	if e.mode == mode.Assembly {
+		e.gdb.Send("break-insert", "-t", "1")
+	}
+
+	// Set the disassembly style
+	e.gdb.Send("gdb-set", "disassembly-flavor", "intel")
+
 	// Start from the top
 	if _, err := e.gdb.CheckedSend("exec-run", "--start"); err != nil {
 		output := gdbOutput.String()
@@ -751,14 +759,14 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 
 		// Get the current theme for the register box
 		bt := e.NewBoxTheme()
-		bt.Text = &e.DebugInstructionsForeground
+		//bt.Text = &e.DebugInstructionsForeground
 		bt.Background = &e.DebugInstructionsBackground
 
 		title := "Next instructions"
 
 		if e.gdb != nil {
 
-			numberOfInstructionsToFetch := 3
+			numberOfInstructionsToFetch := 5
 			instructions, err := e.DebugDisassemble(numberOfInstructionsToFetch)
 			if err != nil {
 				return err
@@ -800,8 +808,8 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 			// Draw the background box
 			e.DrawBox(bt, c, centerBox)
 
-			// Draw the registers without numbers
-			e.DrawList(bt, c, listBox, demangledLines, -1)
+			// Draw the registers without numbers, highlighting the first one
+			e.DrawList(bt, c, listBox, demangledLines, 0)
 
 		} else {
 
@@ -855,7 +863,7 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, repositionCursor bool) {
 		return
 	}
 
-	const title = "stdout buffer"
+	const title = "stdout"
 
 	// Gather the GDB stdout so far
 	collectedGDBOutput := strings.TrimSpace(gdbOutput.String())
