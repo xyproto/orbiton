@@ -756,10 +756,6 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 
 		title := "Next instructions"
 
-		// Draw the background box and title
-		e.DrawBox(bt, c, centerBox)
-		e.DrawTitle(bt, c, centerBox, title)
-
 		if e.gdb != nil {
 
 			numberOfInstructionsToFetch := 3
@@ -774,27 +770,48 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 			}
 
 			demangledLines := []string{}
+			maxLen := 0
 			for _, line := range instructions {
 				demangledLine := line
 				for _, word := range strings.Fields(line) {
-					word = strings.TrimSpace(word)
+					word := strings.TrimSpace(word)
+					modifiedWord := word // maybe modified word
 					if strings.HasPrefix(word, "<") && strings.HasSuffix(word, ">") {
 						word = strings.TrimSpace(word[1 : len(word)-1])
+						// This modification is needed for demangle to accept the symbol syntax
+						modifiedWord = strings.Replace(word, "E+", "E.", 1)
 					}
-					// This modification is needed for demangle to accept the symbol syntax
-					modifiedWord := strings.Replace(word, "E+", "E.", 1)
 					if demangledWord, err := demangle.ToString(modifiedWord); err == nil { // success
 						//logf("%s -> %s\n", word, demangledWord)
 						demangledLine = strings.ReplaceAll(demangledLine, word, demangledWord)
 					}
 				}
+				if len(demangledLine) > maxLen {
+					maxLen = len(demangledLine)
+				}
 				demangledLines = append(demangledLines, demangledLine)
 			}
+
+			// Adjust the box width, if needed
+			if (centerBox.W - 4) < maxLen {
+				centerBox.W = maxLen + 4
+			}
+
+			// Draw the background box
+			e.DrawBox(bt, c, centerBox)
 
 			// Draw the registers without numbers
 			e.DrawList(bt, c, listBox, demangledLines, -1)
 
+		} else {
+
+			// Just draw the background box
+			e.DrawBox(bt, c, centerBox)
+
 		}
+
+		// Draw the title
+		e.DrawTitle(bt, c, centerBox, title)
 
 		// Blit
 		c.Draw()
