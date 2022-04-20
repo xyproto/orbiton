@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/atotto/clipboard v0.1.4
 	github.com/cyrus-and/gdb v0.0.0-20220330132204-7fbd38827ecc
+	github.com/ianlancetaylor/demangle v0.0.0-20220319035150-800ac71e25c2
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/xyproto/binary v1.3.0
 	github.com/xyproto/env v1.7.0
