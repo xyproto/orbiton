@@ -34,6 +34,8 @@ var (
 	showInstructionPane   bool
 	gdbOutput             bytes.Buffer
 	lastGDBOutputLength   int
+	runningComplete       bool
+	errGDBStopped         = errors.New("gdb is not being run") // must contain "is not being run"
 )
 
 // DebugActivateBreakpoint sends break-insert to gdb together with the breakpoint in e.breakpoint, if available
@@ -79,27 +81,39 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 	// Start a new gdb session
 	e.gdb, err = gdb.NewCustom(gdbExecutable, func(notification map[string]interface{}) {
 		// Handle messages from gdb, including frames that contains line numbers
-		if payload, ok := notification["payload"]; ok && notification["type"] == "exec" {
-			if payloadMap, ok := payload.(map[string]interface{}); ok {
-				if frame, ok := payloadMap["frame"]; ok {
-					if frameMap, ok := frame.(map[string]interface{}); ok {
-						flogf(gdbLogFile, "[gdb] frame: %v\n", frameMap)
-						if lineNumberString, ok := frameMap["line"].(string); ok {
-							if lineNumber, err := strconv.Atoi(lineNumberString); err == nil { // success
-								// TODO: Fetch a different line number?
-								// Got a line number, send the editor there, without any status messages
-								e.GoToLineNumber(LineNumber(lineNumber), nil, nil, true)
+		if payload, ok := notification["payload"]; ok {
+			switch notification["type"] {
+			case "exec":
+				if payloadMap, ok := payload.(map[string]interface{}); ok {
+					if frame, ok := payloadMap["frame"]; ok {
+						if frameMap, ok := frame.(map[string]interface{}); ok {
+							flogf(gdbLogFile, "[gdb] frame: %v\n", frameMap)
+							if lineNumberString, ok := frameMap["line"].(string); ok {
+								if lineNumber, err := strconv.Atoi(lineNumberString); err == nil { // success
+									// TODO: Fetch a different line number?
+									// Got a line number, send the editor there, without any status messages
+									e.GoToLineNumber(LineNumber(lineNumber), nil, nil, true)
+								}
 							}
 						}
 					}
 				}
+			case "console":
+				// output on stdout
+				if s, ok := payload.(string); ok {
+					gdbConsole.WriteString(s)
+				}
+			case "notify":
+				// notifications about events that are happening
+				if notification["class"] == "thread-group-exited" {
+					// gdb is done running
+					runningComplete = true
+				}
+			default:
+				//logf("[gdb] unrecognized notification: %v\n", notification)
 			}
-		} else if payload, ok := notification["payload"]; ok && notification["type"] == "console" {
-			if s, ok := payload.(string); ok {
-				gdbConsole.WriteString(s)
-			}
-			//} else {
-			//flogf(gdbLogFile, "[gdb] notification: %v\n", notification)
+		} else {
+			//logf("[gdb] callback without payload: %v\n", notification)
 		}
 	})
 	if err != nil {
@@ -195,6 +209,11 @@ func (e *Editor) DebugNext() error {
 // DebugNextInstruction will continue the execution by stepping to the next instruction.
 // e.gdb must not be nil.
 func (e *Editor) DebugNextInstruction() error {
+	if runningComplete {
+		e.DebugEnd()
+		return errGDBStopped
+	}
+
 	showInstructionPane = true
 	_, err := e.gdb.CheckedSend("exec-next-instruction")
 	if err != nil {
@@ -227,6 +246,11 @@ func (e *Editor) DebugNextInstruction() error {
 // DebugStep will continue the execution by stepping.
 // e.gdb must not be nil.
 func (e *Editor) DebugStep() error {
+	if runningComplete {
+		e.DebugEnd()
+		return errGDBStopped
+	}
+
 	_, err := e.gdb.CheckedSend("exec-step")
 	if err != nil {
 		return err
@@ -257,13 +281,18 @@ func (e *Editor) DebugStep() error {
 
 // DebugFinish will "step out".
 // e.gdb must not be nil. Returns whatever was outputted to gdb stdout.
-func (e *Editor) DebugFinish() (string, error) {
+func (e *Editor) DebugFinish() error {
+	if runningComplete {
+		e.DebugEnd()
+		return errGDBStopped
+	}
+
 	_, err := e.gdb.CheckedSend("exec-finish")
 	if err != nil {
-		return "", err
+		return err
 	}
-	output := gdbOutput.String()
-	gdbOutput.Reset()
+	//output := gdbOutput.String()
+	//gdbOutput.Reset()
 	consoleString := strings.TrimSpace(gdbConsole.String())
 	gdbConsole.Reset()
 	// Interpret consoleString and extract the new variable names and values,
@@ -285,7 +314,7 @@ func (e *Editor) DebugFinish() (string, error) {
 			}
 		}
 	}
-	return output, nil
+	return nil
 }
 
 // DebugRegisterNames will return all register names
@@ -505,6 +534,7 @@ func (e *Editor) DebugEnd() {
 		os.Chdir(originalDirectory)
 	}
 	//flogf(gdbLogFile, "[gdb] %s\n", "stopped")
+	runningComplete = false
 }
 
 // AddWatch will add a watchpoint / watch expression to gdb
