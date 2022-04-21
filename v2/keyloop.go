@@ -242,8 +242,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					break
 				}
 				status.ClearAll(c)
-				_, err := e.DebugFinish()
-				if err != nil {
+				if err := e.DebugFinish(); err != nil {
 					e.DebugEnd()
 					status.SetMessage(err.Error())
 					e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
@@ -298,6 +297,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						} else {
 							status.SetMessage(errorMessage)
 						}
+						// Go to the end
 						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
 					} else {
 						status.SetMessage("Step")
