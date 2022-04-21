@@ -2,6 +2,7 @@
 
 ## Building and testing programs
 
+- [ ] Fix the behavior when stepping to the next instruction for the last line of an Assembly program.
 - [ ] Add a small window with watches in the upper right area when stepping in debug mode.
 - [ ] Jump to error when building with `ctrl-space` and `cargo`.
 - [ ] Fix output parsing when running `go test` with ctrl-space.
