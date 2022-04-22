@@ -291,10 +291,14 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				} else { // if not, make one step
 					err := e.DebugStep()
 					if err != nil {
-						e.DebugEnd()
 						if errorMessage := err.Error(); strings.Contains(errorMessage, "is not being run") {
+							e.DebugEnd()
 							status.SetMessage("Done stepping")
+						} else if err == errProgramStopped {
+							e.DebugEnd()
+							status.SetMessage("Program stopped")
 						} else {
+							e.DebugEnd()
 							status.SetMessage(errorMessage)
 						}
 						// Go to the end
@@ -640,19 +644,26 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			if e.debugMode {
 				if e.gdb != nil {
 					status.ClearAll(c)
+
 					if err := e.DebugNextInstruction(); err != nil {
 						e.DebugEnd()
 						if errorMessage := err.Error(); strings.Contains(errorMessage, "is not being run") {
+							e.DebugEnd()
 							status.SetMessage("Done stepping")
+						} else if err == errProgramStopped {
+							e.DebugEnd()
+							status.SetMessage("Program stopped")
 						} else {
 							status.SetMessage(errorMessage)
 						}
-						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
+						// Go to next line
+						e.Down(c, status)
 					} else {
 						status.SetMessage("Next instruction") // Next instruction
 					}
 					statusMessageAfterRedraw = status.Message()
 					//status.Show(c, e)
+
 					break
 				} else { // e.gdb == nil
 					// Build or export the current file
@@ -701,10 +712,11 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				forward := true
 				if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
 					status.Clear(c)
+					msg := e.SearchTerm() + " not found"
 					if wrap {
-						status.SetMessage(e.SearchTerm() + " not found")
+						status.SetMessage(msg)
 					} else {
-						status.SetMessage(e.SearchTerm() + " not found from here")
+						status.SetMessage(msg + " from here")
 					}
 					status.Show(c, e)
 				}
@@ -732,10 +744,11 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				forward := false
 				if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
 					status.Clear(c)
+					msg := e.SearchTerm() + " not found"
 					if wrap {
-						status.SetMessage(e.SearchTerm() + " not found")
+						status.SetMessage(msg)
 					} else {
-						status.SetMessage(e.SearchTerm() + " not found from here")
+						status.SetMessage(msg + " from here")
 					}
 					status.Show(c, e)
 				}

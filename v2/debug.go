@@ -6,17 +6,15 @@ import (
 	"fmt"
 	"io"
 	"os"
-
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/cyrus-and/gdb"
+	"github.com/ianlancetaylor/demangle"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
-
-	"github.com/ianlancetaylor/demangle"
 )
 
 const (
@@ -34,8 +32,8 @@ var (
 	showInstructionPane   bool
 	gdbOutput             bytes.Buffer
 	lastGDBOutputLength   int
-	runningComplete       bool
-	errGDBStopped         = errors.New("gdb is not being run") // must contain "is not being run"
+	errProgramStopped     = errors.New("program stopped") // must contain "program stopped"
+	programRunning        bool
 )
 
 // DebugActivateBreakpoint sends break-insert to gdb together with the breakpoint in e.breakpoint, if available
@@ -51,7 +49,7 @@ func (e *Editor) DebugActivateBreakpoint(sourceBaseFilename string) (string, err
 
 // DebugStart will start a new debug session, using gdb.
 // Will end the existing session first if e.gdb != nil.
-func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilename string) (string, error) {
+func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilename string, doneFunc func()) (string, error) {
 
 	flogf(gdbLogFile, "[gdb] dir %s, src %s, exe %s\n", sourceDir, sourceBaseFilename, executableBaseFilename)
 
@@ -107,7 +105,9 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 				// notifications about events that are happening
 				if notification["class"] == "thread-group-exited" {
 					// gdb is done running
-					runningComplete = true
+					programRunning = false
+					//status.SetMessage("Program stopped")
+					doneFunc()
 				}
 			default:
 				//logf("[gdb] unrecognized notification: %v\n", notification)
@@ -165,6 +165,8 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 		e.AddWatch(varName)
 	}
 
+	programRunning = true
+
 	return "started gdb", nil
 }
 
@@ -203,17 +205,15 @@ func (e *Editor) DebugNext() error {
 			}
 		}
 	}
+	if !programRunning {
+		return errProgramStopped
+	}
 	return nil
 }
 
 // DebugNextInstruction will continue the execution by stepping to the next instruction.
 // e.gdb must not be nil.
 func (e *Editor) DebugNextInstruction() error {
-	if runningComplete {
-		e.DebugEnd()
-		return errGDBStopped
-	}
-
 	showInstructionPane = true
 	_, err := e.gdb.CheckedSend("exec-next-instruction")
 	if err != nil {
@@ -240,17 +240,15 @@ func (e *Editor) DebugNextInstruction() error {
 			}
 		}
 	}
+	if !programRunning {
+		return errProgramStopped
+	}
 	return nil
 }
 
 // DebugStep will continue the execution by stepping.
 // e.gdb must not be nil.
 func (e *Editor) DebugStep() error {
-	if runningComplete {
-		e.DebugEnd()
-		return errGDBStopped
-	}
-
 	_, err := e.gdb.CheckedSend("exec-step")
 	if err != nil {
 		return err
@@ -276,17 +274,15 @@ func (e *Editor) DebugStep() error {
 			}
 		}
 	}
+	if !programRunning {
+		return errProgramStopped
+	}
 	return nil
 }
 
 // DebugFinish will "step out".
 // e.gdb must not be nil. Returns whatever was outputted to gdb stdout.
 func (e *Editor) DebugFinish() error {
-	if runningComplete {
-		e.DebugEnd()
-		return errGDBStopped
-	}
-
 	_, err := e.gdb.CheckedSend("exec-finish")
 	if err != nil {
 		return err
@@ -313,6 +309,9 @@ func (e *Editor) DebugFinish() error {
 				varValue = ""
 			}
 		}
+	}
+	if !programRunning {
+		return errProgramStopped
 	}
 	return nil
 }
@@ -533,8 +532,14 @@ func (e *Editor) DebugEnd() {
 	if originalDirectory != "" {
 		os.Chdir(originalDirectory)
 	}
+
+	programRunning = false
+
 	//flogf(gdbLogFile, "[gdb] %s\n", "stopped")
-	runningComplete = false
+}
+
+func (e *Editor) DebugProgramRunning() bool {
+	return programRunning
 }
 
 // AddWatch will add a watchpoint / watch expression to gdb
