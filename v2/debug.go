@@ -180,6 +180,9 @@ func (e *Editor) DebugContinue() error {
 // DebugNext will continue the execution by stepping to the next line.
 // e.gdb must not be nil.
 func (e *Editor) DebugNext() error {
+	if !programRunning {
+		return errProgramStopped
+	}
 	_, err := e.gdb.CheckedSend("exec-next")
 	if err != nil {
 		return err
@@ -214,6 +217,9 @@ func (e *Editor) DebugNext() error {
 // DebugNextInstruction will continue the execution by stepping to the next instruction.
 // e.gdb must not be nil.
 func (e *Editor) DebugNextInstruction() error {
+	if !programRunning {
+		return errProgramStopped
+	}
 	showInstructionPane = true
 	_, err := e.gdb.CheckedSend("exec-next-instruction")
 	if err != nil {
@@ -249,6 +255,9 @@ func (e *Editor) DebugNextInstruction() error {
 // DebugStep will continue the execution by stepping.
 // e.gdb must not be nil.
 func (e *Editor) DebugStep() error {
+	if !programRunning {
+		return errProgramStopped
+	}
 	_, err := e.gdb.CheckedSend("exec-step")
 	if err != nil {
 		return err
@@ -538,10 +547,6 @@ func (e *Editor) DebugEnd() {
 	//flogf(gdbLogFile, "[gdb] %s\n", "stopped")
 }
 
-func (e *Editor) DebugProgramRunning() bool {
-	return programRunning
-}
-
 // AddWatch will add a watchpoint / watch expression to gdb
 func (e *Editor) AddWatch(expression string) (string, error) {
 	var output string
@@ -592,7 +597,7 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 	title := "Running"
 	bt.Background = &e.DebugRunningBackground
 
-	if e.gdb == nil {
+	if !programRunning {
 		title = "Stopped"
 		bt.Background = &e.DebugStoppedBackground
 	}

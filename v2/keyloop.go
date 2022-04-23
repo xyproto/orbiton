@@ -643,8 +643,6 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// If in Debug mode, let ctrl-n mean "next instruction"
 			if e.debugMode {
 				if e.gdb != nil {
-					status.ClearAll(c)
-
 					if err := e.DebugNextInstruction(); err != nil {
 						e.DebugEnd()
 						if errorMessage := err.Error(); strings.Contains(errorMessage, "is not being run") {
@@ -661,9 +659,12 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					} else {
 						status.SetMessage("Next instruction") // Next instruction
 					}
+					// TODO: Figure out why there is no "Program stopped" message when the program has stopped
+					status.ClearAll(c)
 					statusMessageAfterRedraw = status.Message()
+					e.redraw = true
+					e.redrawCursor = true
 					//status.Show(c, e)
-
 					break
 				} else { // e.gdb == nil
 					// Build or export the current file
