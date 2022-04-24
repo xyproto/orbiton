@@ -862,6 +862,9 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 			// Draw the background box
 			e.DrawBox(bt, c, centerBox)
 
+			// Position the list box
+			listBox.FillWithMargins(centerBox, 1, 1)
+
 			// Draw the registers without numbers, highlighting the first one
 			e.DrawList(bt, c, listBox, demangledLines, 0)
 
