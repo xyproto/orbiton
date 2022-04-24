@@ -276,6 +276,14 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 			// debug stepping
 			if e.debugMode && e.gdb != nil {
+				if !programRunning {
+					e.DebugEnd()
+					status.SetMessage("Program stopped")
+					e.redrawCursor = true
+					e.redraw = true
+					statusMessageAfterRedraw = status.Message()
+					break
+				}
 				status.ClearAll(c)
 				// If we have a breakpoint, continue to it
 				if e.breakpoint != nil { // exists
@@ -643,28 +651,36 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// If in Debug mode, let ctrl-n mean "next instruction"
 			if e.debugMode {
 				if e.gdb != nil {
-					if err := e.DebugNextInstruction(); err != nil {
+					if !programRunning {
 						e.DebugEnd()
+						status.SetMessage("Program stopped")
+						e.redrawCursor = true
+						e.redraw = true
+						statusMessageAfterRedraw = status.Message()
+						break
+					}
+
+					if err := e.DebugNextInstruction(); err != nil {
 						if errorMessage := err.Error(); strings.Contains(errorMessage, "is not being run") {
 							e.DebugEnd()
-							status.SetMessage("Done stepping")
+							status.SetMessage("Could not start GDB")
 						} else if err == errProgramStopped {
 							e.DebugEnd()
-							status.SetMessage("Program stopped")
-						} else {
+							status.SetMessage("Program stopped, could not step")
+						} else { // got an unrecognized error
+							e.DebugEnd()
 							status.SetMessage(errorMessage)
 						}
-						// Go to next line
-						e.Down(c, status)
 					} else {
-						status.SetMessage("Next instruction") // Next instruction
+						if !programRunning {
+							e.DebugEnd()
+							status.SetMessage("Program stopped when stepping") // Next instruction
+						} else {
+							status.SetMessage("Next instruction") // Next instruction
+						}
 					}
-					// TODO: Figure out why there is no "Program stopped" message when the program has stopped
-					status.ClearAll(c)
-					statusMessageAfterRedraw = status.Message()
-					e.redraw = true
 					e.redrawCursor = true
-					//status.Show(c, e)
+					statusMessageAfterRedraw = status.Message()
 					break
 				} else { // e.gdb == nil
 					// Build or export the current file

@@ -808,7 +808,16 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 
 			numberOfInstructionsToFetch := 5
 			instructions, err := e.DebugDisassemble(numberOfInstructionsToFetch)
-			if err != nil {
+			if err != nil { // We end up here if the program is done running, when stepping
+				// Reposition the cursor, but at the next line
+				if repositionCursor {
+					x := e.pos.ScreenX()
+					y := e.pos.ScreenY()
+					vt100.SetXY(uint(x), uint(y))
+				}
+				if err.Error() == "No registers." {
+					programRunning = false
+				}
 				return err
 			}
 
