@@ -845,6 +845,11 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 				centerBox.W = maxLen + 4
 			}
 
+			// If the box reaches the bottom, move it up one step
+			if (centerBox.Y + centerBox.H) >= int(c.H()-1) {
+				centerBox.Y--
+			}
+
 			// Draw the background box
 			e.DrawBox(bt, c, centerBox)
 
