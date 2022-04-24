@@ -2,23 +2,19 @@
 
 ## Building and testing programs
 
-- [ ] Fix the behavior when stepping to the next instruction for the last line of an Assembly program.
-- [ ] Add a small window with watches in the upper right area when stepping in debug mode.
-- [ ] Jump to error when building with `ctrl-space` and `cargo`.
 - [ ] Fix output parsing when running `go test` with ctrl-space.
+- [ ] Jump to error when building with `ctrl-space` and `cargo`.
 
 ## Saving and loading
 
-- [ ] Detect that no changes has been made before saving a binary file.
 - [ ] When opening a binary file / unrecognized encoding, do no replacements when saving.
 - [ ] When editing a man page, make it possible to toggle between the man page and the man page view mode.
 - [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] When editing a file that then is deleted, `ctrl-s` should maybe create the file again?
       Or save it to `/tmp` or `~/.cache/o`? Or copy it to the clipboard?
 - [ ] Be able to open and edit large text files (60M+).
-- [ ] Should be able to open any binary file and save it again, without replacements. Add a hex edit mode.
 - [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
-- [ ] Introduce a hexedit mode that will:
+- [ ] Introduce a hexedit mode for binary files that will:
       * Not load the entire file into memory.
       * Display all bytes as a grid of "0xff" style fields, with the string representation to the right.
       * This might be better solved by having a separate hex editor?
@@ -29,8 +25,8 @@
 
 ## Code navigation
 
-- [ ] When pressing ctrl-g or F12 and there's a filename under the cursor that exists, go to that file.
-- [ ] When pressing ctrl-g on a function that is declared in a file in the same directory, go to that file and function definition.
+- [ ] When pressing `ctrl-g` or `F12` and there's a filename under the cursor that exists, go to that file.
+- [ ] When pressing `ctrl-g` on a function that is declared in a file in the same directory, go to that file and function definition.
 - [ ] `ctrl-f` and then `return` could jump to a location at least 10 lines away that has been most visited within the last 10 minutes.
 
 ## Code editing
