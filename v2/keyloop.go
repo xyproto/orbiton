@@ -175,9 +175,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			if e.debugMode {
 				e.debugMode = false
 				e.DebugEnd()
-				status.Clear(c)
-				status.SetMessage("Debug mode disabled")
-				status.Show(c, e)
+				statusMessageAfterRedraw = "Debug mode ended"
 				break
 			}
 			// When not in debug mode, quit the application
