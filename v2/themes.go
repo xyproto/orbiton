@@ -128,7 +128,7 @@ func NewRedBlackTheme() Theme {
 		MultiLineComment:            vt100.DarkGray,
 		MultiLineString:             vt100.LightGray,
 		Git:                         vt100.LightGreen,
-		String:                      "darkred",
+		String:                      "white",
 		Keyword:                     "darkred",
 		Comment:                     "darkgray",
 		Type:                        "white",
