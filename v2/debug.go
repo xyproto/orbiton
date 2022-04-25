@@ -766,7 +766,7 @@ func (e *Editor) DrawFlags(c *vt100.Canvas, repositionCursor bool) {
 
 	for i, flag := range changedFlags {
 		if i > 0 {
-			c.Write(x, y, e.StatusForeground, bg, "|")
+			c.Write(x, y, e.DebugInstructionsForeground, bg, "|")
 			x++
 		}
 		c.Write(x, y, fg, bg, flag)
