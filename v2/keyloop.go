@@ -171,7 +171,16 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		}
 
 		switch key {
-		case "c:17": // ctrl-q, quit
+		case "c:17": // ctrl-q, quit, or end debug mode
+			if e.debugMode {
+				e.debugMode = false
+				e.DebugEnd()
+				status.Clear(c)
+				status.SetMessage("Debug mode disabled")
+				status.Show(c, e)
+				break
+			}
+			// When not in debug mode, quit the application
 			e.quit = true
 		case "c:23": // ctrl-w, format or insert template (or if in git mode, cycle interactive rebase keywords)
 
