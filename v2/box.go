@@ -222,14 +222,3 @@ func (e *Editor) DrawTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title string) 
 	e.Say(bt, c, r.X+(r.W-len(titleWithSpaces))/2, r.Y, titleWithSpaces)
 	bt.Text = tmp
 }
-
-// DrawRaw can output a multiline string at the given coordinates.
-// Uses the default background color.
-// Returns the final y coordinate after drawing.
-func (e *Editor) DrawRaw(r *BoxTheme, c *vt100.Canvas, x, y int, text string) int {
-	var i int
-	for i, line := range splitTrim(text) {
-		c.Write(uint(x), uint(y+i), e.Foreground, e.BoxBackground, line)
-	}
-	return y + i
-}
