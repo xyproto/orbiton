@@ -236,6 +236,28 @@ func flogf(logfile, format string, args ...interface{}) error {
 	return f.Close()
 }
 
+// // pplogf, for pretty print logging to a file, using
+// // import "github.com/k0kubun/pp/v3"
+// func pplogf(format string, args ...interface{}) error {
+// 	tempDir := env.Dir("TMPDIR", "/tmp")
+// 	logFilename := filepath.Join(tempDir, "o.log")
+// 	f, err := os.OpenFile(logFilename, os.O_APPEND|os.O_WRONLY, 0644)
+// 	if err != nil {
+// 		f, err = os.Create(logFilename)
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
+// 	prettyPrinter := pp.New()
+// 	prettyPrinter.SetOutput(f)
+// 	prettyPrinter.Printf(format, args...)
+// 	err = f.Sync()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return f.Close()
+// }
+
 // repeatRune can repeat a rune, n number of times.
 // Returns an empty string if memory can not be allocated within append.
 func repeatRune(r rune, n uint) string {
