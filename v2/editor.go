@@ -2327,14 +2327,9 @@ func (e *Editor) DebugStartSession(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 
 	// Start GDB execution from the top
 	msg, err := e.DebugStart(filepath.Dir(absFilename), filepath.Base(absFilename), outputExecutable, func() {
-		// TODO: This place is reached, but the line number and status messages does not reflect this. Fix.
-
 		// This happens when the program running under GDB is done running.
-
-		//logf("%s\n", "DONE!")
-		//e.Down(c, status)
-		//e.redraw = true
-		//e.redrawCursor = true
+		programRunning = false
+		status.ShowAfterRedraw("Execution complete")
 	})
 	if err != nil || e.gdb == nil {
 		if msg != "" {
