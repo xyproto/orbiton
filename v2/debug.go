@@ -112,8 +112,8 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 			default:
 				//logf("[gdb] unrecognized notification: %v\n", notification)
 			}
-		} else {
-			//logf("[gdb] callback without payload: %v\n", notification)
+			//} else {
+			//    logf("[gdb] callback without payload: %v\n", notification)
 		}
 	})
 	if err != nil {
@@ -585,11 +585,11 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 	// Then create a list box
 	listBox := NewBox()
 
+	marginY := 2
 	if h < 35 {
-		listBox.FillWithMargins(upperRightBox, 2, 1)
-	} else {
-		listBox.FillWithMargins(upperRightBox, 2, 2)
+		marginY = 1
 	}
+	listBox.FillWithMargins(upperRightBox, 2, marginY)
 
 	// Get the current theme for the watch box
 	bt := e.NewBoxTheme()
@@ -602,9 +602,15 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 		bt.Background = &e.DebugStoppedBackground
 	}
 
-	// Draw the background box and title
+	// Draw the background box
 	e.DrawBox(bt, c, upperRightBox)
 
+	// Find the available space to draw help text in the upperRightBox
+	availableHeight := (listBox.H - marginY) - 1
+	if availableHeight < 2 {
+		// Draw at least two rows of help text, no matter what
+		availableHeight = 2
+	}
 	if len(watchMap) == 0 {
 		// Draw the help text, if the screen is wide enough
 		if w > 120 {
@@ -614,9 +620,10 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 				"ctrl-f     : finish (step out)",
 				"ctrl-w     : add a watch",
 				"ctrl-r     : reg. pane layout",
+				"ctrl-q     : quit debug mode",
 			}
 			if h < 32 {
-				helpSlice = helpSlice[:3]
+				helpSlice = helpSlice[:availableHeight]
 			}
 			e.DrawList(bt, c, listBox, helpSlice, -1)
 		} else if w > 80 {
@@ -626,9 +633,10 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 				"ctrl-f: step out",
 				"ctrl-w: add watch",
 				"ctrl-r: reg. pane",
+				"ctrl-q: quit debug",
 			}
 			if h < 32 {
-				narrowHelpSlice = narrowHelpSlice[:3]
+				narrowHelpSlice = narrowHelpSlice[:availableHeight]
 			}
 			e.DrawList(bt, c, listBox, narrowHelpSlice, -1)
 		}
@@ -664,6 +672,19 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 		}
 	}
 
+	// 	// Debug title
+	// 	if e.gdb != nil {
+	// 		if retvalMap, err := e.gdb.CheckedSend("gdb-print", "$eflags"); err != nil {
+	// 			for str, ifc := range retvalMap {
+	// 				title = fmt.Sprintf("%v (%T)", str, str)
+	// 				break
+	// 			}
+	// 		} else {
+	// 			title = err.Error()
+	// 		}
+	// 	}
+
+	// Draw the title
 	e.DrawTitle(bt, c, upperRightBox, title)
 
 	// Blit
@@ -756,7 +777,9 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 
 		// Cutoff the slice by how high it is, if it's too long
 		if len(regSlice) > listBox.H {
-			regSlice = regSlice[:listBox.H]
+			if listBox.H > 0 {
+				regSlice = regSlice[:listBox.H]
+			}
 		}
 
 		// Draw the registers without numbers
@@ -823,7 +846,9 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 
 			// Cutoff the slice by how high it is, if it's too long
 			if len(instructions) > listBox.H {
-				instructions = instructions[:listBox.H]
+				if listBox.H > 0 {
+					instructions = instructions[:listBox.H]
+				}
 			}
 
 			demangledLines := []string{}
