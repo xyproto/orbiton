@@ -271,25 +271,3 @@ func repeatRune(r rune, n uint) string {
 	}
 	return sb.String()
 }
-
-// splitStrip will split a string on any newline: \n, \r or \r\n
-// and also remove empty lines and trim away whitespace.
-func splitTrim(s string) []string {
-	s = strings.Replace(s, "\r", "\n", -1)
-	s = strings.Replace(s, "\r\n", "\n", -1)
-	return filterS(mapS(strings.Split(s, "\n"), strings.TrimSpace), nonempty)
-}
-
-// mapS will apply the function f to each element in the given slice
-func mapS(sl []string, f func(string) string) []string {
-	result := make([]string, len(sl))
-	for i, s := range sl {
-		result[i] = f(s)
-	}
-	return result
-}
-
-// nonempty will check if a string is not empty
-func nonempty(s string) bool {
-	return s != ""
-}
