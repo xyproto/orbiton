@@ -2271,8 +2271,8 @@ func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, t
 	entered := ""
 	for !doneCollectingLetters {
 		if e.debugMode {
-			e.DrawRegisters(c, false)    // don't reposition cursor
 			e.DrawWatches(c, false)      // don't reposition cursor
+			e.DrawRegisters(c, false)    // don't reposition cursor
 			e.DrawInstructions(c, false) // don't reposition cursor
 			e.DrawFlags(c, false)        // don't reposition cursor
 			e.DrawOutput(c, false)       // don't reposition cursor

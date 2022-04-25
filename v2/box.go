@@ -102,7 +102,7 @@ func (b *Box) LowerRightPlacement(container *Box, minWidth int) {
 	w := float64(container.W)
 	h := float64(container.H)
 	b.X = int(w * 0.6)
-	b.Y = int(h * 0.4)
+	b.Y = int(h * 0.37)
 	b.W = int(w * 0.3)
 	if b.W < minWidth {
 		b.W = minWidth
@@ -118,7 +118,7 @@ func (b *Box) LowerLeftPlacement(container *Box, minWidth int) {
 	w := float64(container.W)
 	h := float64(container.H)
 	b.X = int(w * 0.05)
-	b.Y = int(h * 0.4)
+	b.Y = int(h * 0.37)
 	b.W = int(w * 0.5)
 	if b.W < minWidth {
 		b.W = minWidth

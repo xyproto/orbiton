@@ -1909,8 +1909,8 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 
 		// Also draw the watches, if debug mode is enabled // and a debug session is in progress
 		if e.debugMode {
-			e.DrawRegisters(c, false)    // don't reposition cursor
 			e.DrawWatches(c, false)      // don't reposition cursor
+			e.DrawRegisters(c, false)    // don't reposition cursor
 			e.DrawOutput(c, false)       // don't reposition cursor
 			e.DrawInstructions(c, false) // don't reposition cursor
 			e.DrawFlags(c, true)         // also reposition cursor
