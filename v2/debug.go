@@ -34,6 +34,7 @@ var (
 	lastGDBOutputLength   int
 	errProgramStopped     = errors.New("program stopped") // must contain "program stopped"
 	programRunning        bool
+	prevFlags             []string
 )
 
 // DebugActivateBreakpoint sends break-insert to gdb together with the breakpoint in e.breakpoint, if available
@@ -173,7 +174,17 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 // DebugContinue will continue the execution to the next breakpoint or to the end.
 // e.gdb must not be nil.
 func (e *Editor) DebugContinue() error {
+	if !programRunning {
+		return errProgramStopped
+	}
 	_, err := e.gdb.CheckedSend("exec-continue")
+	return err
+}
+
+// DebugRun will run the current program.
+// e.gdb must not be nil.
+func (e *Editor) DebugRun() error {
+	_, err := e.gdb.CheckedSend("exec-run")
 	return err
 }
 
@@ -183,8 +194,7 @@ func (e *Editor) DebugNext() error {
 	if !programRunning {
 		return errProgramStopped
 	}
-	_, err := e.gdb.CheckedSend("exec-next")
-	if err != nil {
+	if _, err := e.gdb.CheckedSend("exec-next"); err != nil {
 		return err
 	}
 	consoleString := strings.TrimSpace(gdbConsole.String())
@@ -258,8 +268,7 @@ func (e *Editor) DebugStep() error {
 	if !programRunning {
 		return errProgramStopped
 	}
-	_, err := e.gdb.CheckedSend("exec-step")
-	if err != nil {
+	if _, err := e.gdb.CheckedSend("exec-step"); err != nil {
 		return err
 	}
 	consoleString := strings.TrimSpace(gdbConsole.String())
@@ -267,8 +276,7 @@ func (e *Editor) DebugStep() error {
 	// Interpret consoleString and extract the new variable names and values,
 	// for variables there are watchpoints for.
 	if consoleString != "" {
-		var varName string
-		var varValue string
+		var varName, varValue string
 		for _, line := range strings.Split(consoleString, "\n") {
 			if strings.Contains(line, "watchpoint") && strings.Contains(line, ":") {
 				fields := strings.SplitN(line, ":", 2)
@@ -296,8 +304,6 @@ func (e *Editor) DebugFinish() error {
 	if err != nil {
 		return err
 	}
-	//output := gdbOutput.String()
-	//gdbOutput.Reset()
 	consoleString := strings.TrimSpace(gdbConsole.String())
 	gdbConsole.Reset()
 	// Interpret consoleString and extract the new variable names and values,
@@ -338,6 +344,7 @@ func (e *Editor) DebugRegisterNames() ([]string, error) {
 	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
 		if payloadMap, ok := payload.(map[string]interface{}); ok {
 			if registerNames, ok := payloadMap["register-names"]; ok {
+
 				if registerSlice, ok := registerNames.([]interface{}); ok {
 					registerStringSlice := make([]string, len(registerSlice))
 					for i, interfaceValue := range registerSlice {
@@ -348,6 +355,7 @@ func (e *Editor) DebugRegisterNames() ([]string, error) {
 					//flogf(gdbLogFile, "[gdb] data-list-register-names: %s\n", strings.Join(registerStringSlice, ","))
 					return registerStringSlice, nil
 				}
+
 			}
 		}
 	}
@@ -618,9 +626,9 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 				"ctrl-space : step",
 				"ctrl-n     : next instruction",
 				"ctrl-f     : finish (step out)",
+				"ctrl-r     : run to end",
 				"ctrl-w     : add a watch",
-				"ctrl-r     : reg. pane layout",
-				"ctrl-q     : quit debug mode",
+				"ctrl-p     : reg. pane layout",
 			}
 			if h < 32 {
 				helpSlice = helpSlice[:availableHeight]
@@ -631,9 +639,9 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 				"ctrl-space: step",
 				"ctrl-n: next inst.",
 				"ctrl-f: step out",
+				"ctrl-r: run to end",
 				"ctrl-w: add watch",
-				"ctrl-r: reg. pane",
-				"ctrl-q: quit debug",
+				"ctrl-p: reg. pane",
 			}
 			if h < 32 {
 				narrowHelpSlice = narrowHelpSlice[:availableHeight]
@@ -672,17 +680,34 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 		}
 	}
 
-	// 	// Debug title
-	// 	if e.gdb != nil {
-	// 		if retvalMap, err := e.gdb.CheckedSend("gdb-print", "$eflags"); err != nil {
-	// 			for str, ifc := range retvalMap {
-	// 				title = fmt.Sprintf("%v (%T)", str, str)
-	// 				break
-	// 			}
-	// 		} else {
-	// 			title = err.Error()
-	// 		}
-	// 	}
+	// Fetch the value of the machine flags (zero flag, carry etc)
+	if e.gdb != nil { // && e.mode == mode.Assembly || e.mode == mode.GoAssembly {
+		// data-evalutate-expression is the same as print, output and call in gdb
+		if notification, err := e.gdb.CheckedSend("data-evaluate-expression", "$eflags"); err == nil {
+			if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
+				if payloadMap, ok := payload.(map[string]interface{}); ok {
+					if flagNames, ok := payloadMap["value"]; ok {
+						if flagNamesString, ok := flagNames.(string); ok {
+							flagNamesString = strings.TrimPrefix(flagNamesString, "[ ")
+							flagNamesString = strings.TrimSuffix(flagNamesString, " ]")
+							flags := strings.Split(flagNamesString, " ")
+
+							// Find which flags changed since last step
+							changedFlags := []string{}
+							for _, flag := range flags {
+								if !hasS(prevFlags, flag) {
+									changedFlags = append(changedFlags, flag)
+								}
+							}
+
+							e.DrawFlags(c, changedFlags)
+							prevFlags = flags
+						}
+					}
+				}
+			}
+		}
+	}
 
 	// Draw the title
 	e.DrawTitle(bt, c, upperRightBox, title)
@@ -695,6 +720,44 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 		x := e.pos.ScreenX()
 		y := e.pos.ScreenY()
 		vt100.SetXY(uint(x), uint(y))
+	}
+}
+
+// DrawFlags will draw the currently set flags (like zero, carry etc) at the bottom right
+func (e *Editor) DrawFlags(c *vt100.Canvas, flags []string) {
+	if len(flags) == 0 {
+		return
+	}
+
+	const title = "Changed flags:"
+
+	lastWidthIndex := int(c.W() - 1)
+	lastHeightIndex := int(c.H() - 1)
+
+	// Length of all flags, joined with no space in between
+	textLength := len(title + " " + strings.Join(flags, ""))
+
+	// The left side margin, if the text is adjusted to the right
+	x := uint(lastWidthIndex - textLength)
+
+	// The bottom line
+	y := uint(lastHeightIndex)
+
+	// Title colors
+	fg := e.StatusForeground
+	bg := e.StatusBackground
+
+	// Draw the title
+	c.Write(x, y, fg, bg, title+" ")
+	x += uint(len(title)) + 1
+
+	// Flag colors
+	fg = e.StatusErrorForeground
+	bg = e.StatusErrorBackground
+
+	for _, flag := range flags {
+		c.Write(x, y, fg, bg, flag)
+		x += uint(len(flag))
 	}
 }
 
