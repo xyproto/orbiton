@@ -109,7 +109,7 @@ func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redrawCanvas bool) {
 }
 
 // InitialRedraw is called right before the main loop is started
-func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar, statusMessage *string) {
+func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 
 	// Check if an extra reset is needed
 	if e.sshMode {
@@ -128,18 +128,18 @@ func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar, statusMessage
 		status.Show(c, e)
 	}
 
-	if *statusMessage != "" {
+	if status.messageAfterRedraw != "" {
 		status.Clear(c)
-		status.SetMessage(*statusMessage)
+		status.SetMessage(status.messageAfterRedraw)
 		status.Show(c, e)
-		*statusMessage = ""
+		status.messageAfterRedraw = ""
 	}
 
 	e.RepositionCursorIfNeeded()
 }
 
 // RedrawAtEndOfKeyLoop is called after each main loop
-func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, statusMessage *string) {
+func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar) {
 
 	// Redraw, if needed
 	if e.redraw {
@@ -155,15 +155,15 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, status
 		status.ShowLineColWordCount(c, e, e.filename)
 	} else if status.IsError() {
 		// Show the status message, if *statusMessage is not set
-		if *statusMessage == "" {
+		if status.messageAfterRedraw == "" {
 			status.Show(c, e)
 		}
 	}
 
-	if *statusMessage != "" {
+	if status.messageAfterRedraw != "" {
 		status.Clear(c)
-		status.SetMessage(*statusMessage)
-		*statusMessage = ""
+		status.SetMessage(status.messageAfterRedraw)
+		status.messageAfterRedraw = ""
 		status.Show(c, e)
 	}
 

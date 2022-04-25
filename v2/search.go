@@ -223,7 +223,7 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap, forward
 }
 
 // SearchMode will enter the interactive "search mode" where the user can type in a string and then press return to search
-func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, clear bool, statusTextAfterRedraw *string, undo *Undo) {
+func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, clear bool, undo *Undo) {
 	var (
 		searchPrompt       = "Search:"
 		previousSearch     string
@@ -356,7 +356,7 @@ AGAIN:
 		replaceWith := s
 		replaced := strings.Replace(e.String(), searchFor, replaceWith, 1)
 		e.LoadBytes([]byte(replaced))
-		*statusTextAfterRedraw = "Replaced " + searchFor + " with " + replaceWith + ", once"
+		status.messageAfterRedraw = "Replaced " + searchFor + " with " + replaceWith + ", once"
 		e.redraw = true
 		return
 	} else if pressedReturn && previousSearch != "" { // search text -> tab -> replace text -> return
@@ -382,7 +382,7 @@ AGAIN:
 		if instanceCount != 1 {
 			extraS = "s"
 		}
-		*statusTextAfterRedraw = fmt.Sprintf("Replaced %d instance%s of %s with %s", instanceCount, extraS, previousSearch, s)
+		status.messageAfterRedraw = fmt.Sprintf("Replaced %d instance%s of %s with %s", instanceCount, extraS, previousSearch, s)
 		// make sure to redraw after returning
 		e.redraw = true
 		return

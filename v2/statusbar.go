@@ -13,15 +13,16 @@ var mut *sync.RWMutex
 
 // StatusBar represents the little status field that can appear at the bottom of the screen
 type StatusBar struct {
-	msg     string               // status message
-	fg      vt100.AttributeColor // draw foreground color
-	bg      vt100.AttributeColor // draw background color
-	errfg   vt100.AttributeColor // error foreground color
-	errbg   vt100.AttributeColor // error background color
-	editor  *Editor              // an editor struct (for getting the colors when clearing the status)
-	show    time.Duration        // show the message for how long before clearing
-	offsetY int                  // scroll offset
-	isError bool                 // is this an error message that should be shown after redraw?
+	msg                string               // status message
+	fg                 vt100.AttributeColor // draw foreground color
+	bg                 vt100.AttributeColor // draw background color
+	errfg              vt100.AttributeColor // error foreground color
+	errbg              vt100.AttributeColor // error background color
+	editor             *Editor              // an editor struct (for getting the colors when clearing the status)
+	show               time.Duration        // show the message for how long before clearing
+	offsetY            int                  // scroll offset
+	isError            bool                 // is this an error message that should be shown after redraw?
+	messageAfterRedraw string               // a message to be drawn and cleared AFTER the redraw
 }
 
 // Used for keeping track of how many status messages are lined up to be cleared
@@ -29,9 +30,9 @@ var statusBeingShown int
 
 // NewStatusBar takes a foreground color, background color, foreground color for clearing,
 // background color for clearing and a duration for how long to display status messages.
-func NewStatusBar(fg, bg, errfg, errbg vt100.AttributeColor, editor *Editor, show time.Duration) *StatusBar {
+func NewStatusBar(fg, bg, errfg, errbg vt100.AttributeColor, editor *Editor, show time.Duration, initialMessageAfterRedraw string) *StatusBar {
 	mut = &sync.RWMutex{}
-	return &StatusBar{"", fg, bg, errfg, errbg, editor, show, 0, false}
+	return &StatusBar{"", fg, bg, errfg, errbg, editor, show, 0, false, initialMessageAfterRedraw}
 }
 
 // Draw will draw the status bar to the canvas
@@ -271,13 +272,17 @@ func (sb *StatusBar) ShowLineColWordCount(c *vt100.Canvas, e *Editor, filename s
 // HoldMessage can be used to let a status message survive on screen for N seconds,
 // even if e.redraw has been set. statusMessageAfterRedraw is a pointer to the one-off
 // variable that will be used in keyloop.go, after redrawing.
-// TODO: Move statusMessageAfterRedaw somewhere else, perhaps into Editor.
-func (sb *StatusBar) HoldMessage(c *vt100.Canvas, statusMessageAfterRedraw *string, dur time.Duration) {
+func (sb *StatusBar) HoldMessage(c *vt100.Canvas, dur time.Duration) {
 	if strings.TrimSpace(sb.msg) != "" {
-		*statusMessageAfterRedraw = sb.msg
+		sb.messageAfterRedraw = sb.msg
 		go func() {
 			time.Sleep(dur)
 			sb.ClearAll(c)
 		}()
 	}
+}
+
+// ShowAfterRedraw prepares a status bar message that will be shown after redraw
+func (sb *StatusBar) ShowAfterRedraw(message string) {
+	sb.messageAfterRedraw = message
 }
