@@ -2274,6 +2274,7 @@ func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, t
 			e.DrawRegisters(c, false)    // don't reposition cursor
 			e.DrawWatches(c, false)      // don't reposition cursor
 			e.DrawInstructions(c, false) // don't reposition cursor
+			e.DrawFlags(c, false)        // don't reposition cursor
 			e.DrawOutput(c, false)       // don't reposition cursor
 		}
 		pressed := tty.String()
@@ -2330,6 +2331,8 @@ func (e *Editor) DebugStartSession(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		// This happens when the program running under GDB is done running.
 		programRunning = false
 		status.ShowAfterRedraw("Execution complete")
+		e.redraw = true
+		e.redrawCursor = true
 	})
 	if err != nil || e.gdb == nil {
 		if msg != "" {

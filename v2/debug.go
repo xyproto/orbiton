@@ -107,7 +107,6 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 				if notification["class"] == "thread-group-exited" {
 					// gdb is done running
 					programRunning = false
-					//status.SetMessage("Program stopped")
 					doneFunc()
 				}
 			default:
@@ -309,8 +308,7 @@ func (e *Editor) DebugFinish() error {
 	// Interpret consoleString and extract the new variable names and values,
 	// for variables there are watchpoints for.
 	if consoleString != "" {
-		var varName string
-		var varValue string
+		var varName, varValue string
 		for _, line := range strings.Split(consoleString, "\n") {
 			if strings.Contains(line, "watchpoint") && strings.Contains(line, ":") {
 				fields := strings.SplitN(line, ":", 2)
@@ -680,35 +678,6 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 		}
 	}
 
-	// Fetch the value of the machine flags (zero flag, carry etc)
-	if e.gdb != nil { // && e.mode == mode.Assembly || e.mode == mode.GoAssembly {
-		// data-evalutate-expression is the same as print, output and call in gdb
-		if notification, err := e.gdb.CheckedSend("data-evaluate-expression", "$eflags"); err == nil {
-			if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
-				if payloadMap, ok := payload.(map[string]interface{}); ok {
-					if flagNames, ok := payloadMap["value"]; ok {
-						if flagNamesString, ok := flagNames.(string); ok {
-							flagNamesString = strings.TrimPrefix(flagNamesString, "[ ")
-							flagNamesString = strings.TrimSuffix(flagNamesString, " ]")
-							flags := strings.Split(flagNamesString, " ")
-
-							// Find which flags changed since last step
-							changedFlags := []string{}
-							for _, flag := range flags {
-								if !hasS(prevFlags, flag) {
-									changedFlags = append(changedFlags, flag)
-								}
-							}
-
-							e.DrawFlags(c, changedFlags)
-							prevFlags = flags
-						}
-					}
-				}
-			}
-		}
-	}
-
 	// Draw the title
 	e.DrawTitle(bt, c, upperRightBox, title)
 
@@ -721,11 +690,51 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 		y := e.pos.ScreenY()
 		vt100.SetXY(uint(x), uint(y))
 	}
+
 }
 
 // DrawFlags will draw the currently set flags (like zero, carry etc) at the bottom right
-func (e *Editor) DrawFlags(c *vt100.Canvas, flags []string) {
-	if len(flags) == 0 {
+func (e *Editor) DrawFlags(c *vt100.Canvas, repositionCursor bool) {
+
+	if e.gdb == nil {
+		return
+	}
+
+	defer func() {
+		// Reposition the cursor
+		if repositionCursor {
+			x := e.pos.ScreenX()
+			y := e.pos.ScreenY()
+			vt100.SetXY(uint(x), uint(y))
+		}
+	}()
+
+	changedFlags := []string{}
+
+	// Fetch the value of the machine flags (zero flag, carry etc)
+	// data-evalutate-expression is the same as print, output and call in gdb
+	if notification, err := e.gdb.CheckedSend("data-evaluate-expression", "$eflags"); err == nil {
+		if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
+			if payloadMap, ok := payload.(map[string]interface{}); ok {
+				if flagNames, ok := payloadMap["value"]; ok {
+					if flagNamesString, ok := flagNames.(string); ok {
+						flagNamesString = strings.TrimPrefix(flagNamesString, "[ ")
+						flagNamesString = strings.TrimSuffix(flagNamesString, " ]")
+						flags := strings.Split(flagNamesString, " ")
+						// Find which flags changed since last step
+						for _, flag := range flags {
+							if !hasS(prevFlags, flag) {
+								changedFlags = append(changedFlags, flag)
+							}
+						}
+						prevFlags = flags
+					}
+				}
+			}
+		}
+	}
+
+	if len(changedFlags) == 0 {
 		return
 	}
 
@@ -734,8 +743,8 @@ func (e *Editor) DrawFlags(c *vt100.Canvas, flags []string) {
 	lastWidthIndex := int(c.W() - 1)
 	lastHeightIndex := int(c.H() - 1)
 
-	// Length of all flags, joined with no space in between
-	textLength := len(title + " " + strings.Join(flags, ""))
+	// Length of all flags, joined with a "|" in between
+	textLength := len(title + " " + strings.Join(changedFlags, "|"))
 
 	// The left side margin, if the text is adjusted to the right
 	x := uint(lastWidthIndex - textLength)
@@ -755,10 +764,17 @@ func (e *Editor) DrawFlags(c *vt100.Canvas, flags []string) {
 	fg = e.StatusErrorForeground
 	bg = e.StatusErrorBackground
 
-	for _, flag := range flags {
+	for i, flag := range changedFlags {
+		if i > 0 {
+			c.Write(x, y, e.StatusForeground, bg, "|")
+			x++
+		}
 		c.Write(x, y, fg, bg, flag)
 		x += uint(len(flag))
 	}
+
+	// Blit
+	c.Draw()
 }
 
 // DrawRegisters will draw a box with the current register values in the lower right
@@ -853,18 +869,20 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 	// Blit
 	c.Draw()
 
-	// Reposition the cursor
-	if repositionCursor {
-		x := e.pos.ScreenX()
-		y := e.pos.ScreenY()
-		vt100.SetXY(uint(x), uint(y))
-	}
-
 	return nil
 }
 
 // DrawInstructions will draw a box with the current instructions
 func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error {
+
+	defer func() {
+		// Reposition the cursor
+		if repositionCursor {
+			x := e.pos.ScreenX()
+			y := e.pos.ScreenY()
+			vt100.SetXY(uint(x), uint(y))
+		}
+	}()
 
 	if showInstructionPane && e.gdb != nil {
 
@@ -895,12 +913,6 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 			numberOfInstructionsToFetch := 5
 			instructions, err := e.DebugDisassemble(numberOfInstructionsToFetch)
 			if err != nil { // We end up here if the program is done running, when stepping
-				// Reposition the cursor, but at the next line
-				if repositionCursor {
-					x := e.pos.ScreenX()
-					y := e.pos.ScreenY()
-					vt100.SetXY(uint(x), uint(y))
-				}
 				if err.Error() == "No registers." {
 					programRunning = false
 				}
