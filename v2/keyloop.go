@@ -171,14 +171,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 		}
 
 		switch key {
-		case "c:17": // ctrl-q, quit, or end debug mode
-			if e.debugMode {
-				e.debugMode = false
-				e.DebugEnd()
-				status.ShowAfterRedraw("Debug mode ended")
-				break
-			}
-			// When not in debug mode, quit the application
+		case "c:17": // ctrl-q, quit
 			e.quit = true
 		case "c:23": // ctrl-w, format or insert template (or if in git mode, cycle interactive rebase keywords)
 
@@ -760,7 +753,17 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 				}
 
 			}
-		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term
+		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
+
+			if e.debugMode {
+				// e.showRegisters has three states, 0 (SmallRegisterWindow), 1 (LargeRegisterWindow) and 2 (NoRegisterWindow)
+				e.debugShowRegisters++
+				if e.debugShowRegisters > noRegisterWindow {
+					e.debugShowRegisters = smallRegisterWindow
+				}
+				break
+			}
+
 			e.UseStickySearchTerm()
 			if e.SearchTerm() != "" {
 				// Go to previous match
@@ -1704,15 +1707,10 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 			// Prepare to redraw the text
 			e.redrawCursor = true
 			e.redraw = true
-		case "c:18": // ctrl-r, to open or close a portal
+		case "c:18": // ctrl-r, to open or close a portal. In debug mode, continue running the program.
 
-			// Are we in debug mode
 			if e.debugMode {
-				// e.showRegisters has three states, 0 (SmallRegisterWindow), 1 (LargeRegisterWindow) and 2 (NoRegisterWindow)
-				e.debugShowRegisters++
-				if e.debugShowRegisters > noRegisterWindow {
-					e.debugShowRegisters = smallRegisterWindow
-				}
+				e.DebugContinue()
 				break
 			}
 
