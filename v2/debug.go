@@ -1084,6 +1084,8 @@ func (e *Editor) DebugStartSession(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	if optionalOutputExecutable == "" {
 		outputExecutable, err = e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
 		if err != nil {
+			e.debugMode = false
+			e.redrawCursor = true
 			return err
 		}
 	} else {
@@ -1093,6 +1095,7 @@ func (e *Editor) DebugStartSession(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	outputExecutableClean := filepath.Clean(filepath.Join(filepath.Dir(absFilename), outputExecutable))
 	if !exists(outputExecutableClean) {
 		e.debugMode = false
+		e.redrawCursor = true
 		return errors.New("could not find " + outputExecutableClean)
 	}
 
@@ -1105,10 +1108,12 @@ func (e *Editor) DebugStartSession(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		e.redrawCursor = true
 	})
 	if err != nil || e.gdb == nil {
+		e.redrawCursor = true
 		if msg != "" {
-			return errors.New("could not start debugging: " + msg + ", " + err.Error())
+			msg += ", "
 		}
-		return errors.New("could not start debugging: " + err.Error())
+		msg += err.Error()
+		return errors.New("could not start debugging: " + msg)
 	}
 
 	e.GoToLineNumber(1, nil, nil, true)
