@@ -938,9 +938,12 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 						// This modification is needed for demangle to accept the symbol syntax
 						modifiedWord = strings.Replace(word, "E+", "E.", 1)
 					}
+					modifiedWord = strings.TrimSuffix(modifiedWord, "@plt")
 					if demangledWord, err := demangle.ToString(modifiedWord); err == nil { // success
-						//logf("%s -> %s\n", word, demangledWord)
+						//logf("%s -> %s\n", modifiedWord, demangledWord)
 						demangledLine = strings.ReplaceAll(demangledLine, word, demangledWord)
+						//} else {
+						//logf("could not demangle: %s\n", modifiedWord)
 					}
 				}
 				if len(demangledLine) > maxLen {
@@ -952,6 +955,11 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 			// Adjust the box width, if needed
 			if (centerBox.W - 4) < maxLen {
 				centerBox.W = maxLen + 4
+			}
+
+			if w := int(c.W()-1); (centerBox.X + centerBox.W) >= w {
+				centerBox.X = 0
+				centerBox.W = w
 			}
 
 			// If the box reaches the bottom, move it up one step
