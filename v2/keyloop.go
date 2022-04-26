@@ -388,6 +388,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 					status.ClearAll(c)
 					status.SetErrorMessage(err.Error())
 					status.ShowNoTimeout(c, e)
+					e.redrawCursor = true
 				}
 				break
 			}
@@ -692,6 +693,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						// Error while building
 						status.SetErrorMessage(err.Error())
 						status.ShowNoTimeout(c, e)
+						e.debugMode = false
+						e.redrawCursor = true
+						e.redraw = true
 						break
 					}
 					// Was no suitable compilation or export command found?
@@ -701,6 +705,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 							// Both in debug mode and can not find a command to build this file with.
 							status.SetErrorMessage(err.Error())
 							status.ShowNoTimeout(c, e)
+							e.debugMode = false
+							e.redrawCursor = true
+							e.redraw = true
 							break
 						}
 						// Building this file extension is not implemented yet.
@@ -710,6 +717,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						statsMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
 						status.SetMessage(statsMessage)
 						status.Show(c, e)
+						e.redrawCursor = true
 						break
 					}
 					// Start debugging
@@ -717,6 +725,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						status.ClearAll(c)
 						status.SetErrorMessage(err.Error())
 						status.ShowNoTimeout(c, e)
+						e.redrawCursor = true
 					}
 					break
 				}
