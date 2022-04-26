@@ -4,11 +4,12 @@
 
 - [ ] Fix output parsing when running `go test` with ctrl-space.
 - [ ] Jump to error when building with `ctrl-space` and `cargo`.
-- [x] When switching register pane layout with `ctrl-p`, save the contents of the old pane and use that.
+- [ ] When switching register pane layout with `ctrl-p`, save the contents of the old pane and use that.
+- [ ] Make it possible to send custom commands to `gdb` with `ctrl-g` when in debug mode.
+- [x] Make it possible to step through Go programs as well.
 
 ## Saving and loading
 
-- [ ] When opening a binary file / unrecognized encoding, do no replacements when saving.
 - [ ] When editing a man page, make it possible to toggle between the man page and the man page view mode.
 - [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] When editing a file that then is deleted, `ctrl-s` should maybe create the file again?
@@ -47,12 +48,6 @@
 - [ ] If joining a line that starts with a single-line comment with a line below that also starts with a single line comment,
       remove the extra comment marker.
 - [ ] When in "SuggestMode", typing should start filtering the list.
-
-## Debugging
-
-- [ ] Let `ctrl-space` compile C and C++ programs with debug flags if debug mode is enabled.
-- [ ] Be able to run a C program until the breakpoint and then enter gdb with the source file loaded.
-- [ ] Support Delve. Introduce a Debug mode.
 
 ## Autocompletion
 
