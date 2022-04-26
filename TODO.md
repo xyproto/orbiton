@@ -1,9 +1,10 @@
 # TODO
 
-## Building and testing programs
+## Building, debugging and testing programs
 
 - [ ] Fix output parsing when running `go test` with ctrl-space.
 - [ ] Jump to error when building with `ctrl-space` and `cargo`.
+- [x] When switching register pane layout with `ctrl-p`, save the contents of the old pane and use that.
 
 ## Saving and loading
 
