@@ -43,8 +43,8 @@ github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shx
 github.com/xyproto/guessica v1.1.0 h1:u//yWmEiW1En0kNHcj4rT1HADOqz47SNR/qx6D9s40g=
 github.com/xyproto/guessica v1.1.0/go.mod h1:ZC0dOFJO4zuo3+9AaUQ741wCMlKmGERhIQLDYSBIInE=
 github.com/xyproto/mode v0.4.1/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
-github.com/xyproto/mode v0.4.2 h1:FAMvsa6wobxGCZjl8N17dezV620nU3e+vERWTNgEbiI=
-github.com/xyproto/mode v0.4.2/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
+github.com/xyproto/mode v0.4.3 h1:TI4jhCGyLWGTEnuGFY5QcpKAREWqOqWjvSS8tR1hBZY=
+github.com/xyproto/mode v0.4.3/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/stringpainter v1.0.0 h1:fw86p5y+PQ/TnzN/u56iEwRPHChcaDGUSaZQVA9I5xA=
 github.com/xyproto/stringpainter v1.0.0/go.mod h1:Uz/9PJmEJ2efkJDdCSg6Zt0iu/pmJ45rCfbqLShSOfs=
 github.com/xyproto/syntax v1.10.5 h1:OlOZHqOLNV5Gwo7sjQSDJMB9uXBqnfShHtTir3aPGFY=

@@ -6,12 +6,14 @@ import (
 
 // SimpleDetect tries to return a Mode given a string of file contents
 func SimpleDetect(contents string) Mode {
-	firstLine := ""
+	firstLine := contents
 	if strings.Contains(contents, "\n") {
 		firstLine = strings.Split(contents, "\n")[0]
 	}
-	m, found := DetectFromContents(Blank, firstLine, func() string { return contents })
-	if found {
+	if len(firstLine) > 100 { // just look at the first 100, if it's one long line
+		firstLine = firstLine[:100]
+	}
+	if m, found := DetectFromContents(Blank, firstLine, func() string { return contents }); found {
 		return m
 	}
 	return Blank
@@ -23,9 +25,8 @@ func SimpleDetect(contents string) Mode {
 // Based on the contents, a Mode is detected and returned.
 // Pass inn mode.Blank as the initial Mode if that is the best guess so far.
 func DetectFromContents(initial Mode, firstLine string, allTextFunc func() string) (Mode, bool) {
+	var found, notConfig bool
 	m := initial
-	found := false
-	notConfig := false
 	if strings.HasPrefix(firstLine, "#!") { // The line starts with a shebang
 		words := strings.Split(firstLine, " ")
 		lastWord := words[len(words)-1]
@@ -36,7 +37,7 @@ func DetectFromContents(initial Mode, firstLine string, allTextFunc func() strin
 		switch lastWord {
 		case "python":
 			return Python, true
-		case "bash", "fish", "zsh", "tcsh", "ksh", "sh", "ash":
+		case "ash", "bash", "fish", "ksh", "sh", "tcsh", "zsh":
 			return Shell, true
 		}
 		notConfig = true
