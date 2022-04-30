@@ -957,7 +957,7 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 				centerBox.W = maxLen + 4
 			}
 
-			if w := int(c.W()-1); (centerBox.X + centerBox.W) >= w {
+			if w := int(c.W() - 1); (centerBox.X + centerBox.W) >= w {
 				centerBox.X = 0
 				centerBox.W = w
 			}
