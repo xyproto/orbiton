@@ -14,8 +14,20 @@ type Box struct {
 
 // BoxTheme contains the runes used to draw boxes
 type BoxTheme struct {
-	TL, TR, BL, BR, VL, VR, HT, HB                                rune
-	Foreground, Background, Text, Highlight, UpperEdge, LowerEdge *vt100.AttributeColor
+	LowerEdge  *vt100.AttributeColor
+	UpperEdge  *vt100.AttributeColor
+	Highlight  *vt100.AttributeColor
+	Text       *vt100.AttributeColor
+	Background *vt100.AttributeColor
+	Foreground *vt100.AttributeColor
+	HB         rune
+	HT         rune
+	VR         rune
+	VL         rune
+	BR         rune
+	BL         rune
+	TR         rune
+	TL         rune
 }
 
 // NewBox creates a new box/container

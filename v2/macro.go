@@ -6,8 +6,8 @@ import (
 
 // Macro represents a series of keypresses that can be played back later
 type Macro struct {
-	index      int // current position, when playing back
 	KeyPresses []string
+	index      int // current position, when playing back
 	Recording  bool
 }
 

@@ -9,12 +9,12 @@ import (
 
 // Undo is a struct that can store several states of the editor and position
 type Undo struct {
-	index                int
-	size                 int
+	mut                  *sync.RWMutex
 	editorCopies         []Editor
 	editorLineCopies     []map[int][]rune
 	editorPositionCopies []Position
-	mut                  *sync.RWMutex
+	index                int
+	size                 int
 	maxMemoryUse         uint64 // can be <= 0 to not check for memory use
 	ignoreSnapshots      bool   // used when playing back macros
 }
@@ -42,7 +42,7 @@ var (
 // NewUndo takes arguments that are only for initializing the undo buffers.
 // The *Position and *vt100.Canvas is used only as a default values for the elements in the undo buffers.
 func NewUndo(size int, maxMemoryUse uint64) *Undo {
-	return &Undo{0, size, make([]Editor, size), make([]map[int][]rune, size), make([]Position, size), &sync.RWMutex{}, maxMemoryUse, false}
+	return &Undo{&sync.RWMutex{}, make([]Editor, size), make([]map[int][]rune, size), make([]Position, size), 0, size, maxMemoryUse, false}
 }
 
 // IgnoreSnapshots is used when playing back macros, to snapshot the macro playback as a whole instead

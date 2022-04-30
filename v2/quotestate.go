@@ -13,22 +13,22 @@ import (
 // MultiLine comments (/* ... */) are special.
 // This could be a flag int instead
 type QuoteState struct {
-	singleQuote                        int
-	doubleQuote                        int
-	backtick                           int
-	multiLineComment                   bool
-	singleLineComment                  bool
 	singleLineCommentMarker            string
 	singleLineCommentMarkerRunes       []rune
+	doubleQuote                        int
+	backtick                           int
+	mode                               mode.Mode
+	braCount                           int // square bracket count
+	parCount                           int // parenthesis count
+	singleQuote                        int
 	firstRuneInSingleLineCommentMarker rune
 	lastRuneInSingleLineCommentMarker  rune
-	startedMultiLineString             bool
 	startedMultiLineComment            bool
 	stoppedMultiLineComment            bool
 	containsMultiLineComments          bool
-	parCount                           int // Parenthesis count
-	braCount                           int // Square bracket count
-	mode                               mode.Mode
+	startedMultiLineString             bool
+	singleLineComment                  bool
+	multiLineComment                   bool
 	ignoreSingleQuotes                 bool
 }
 

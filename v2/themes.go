@@ -14,24 +14,79 @@ var envNoColor = env.Bool("NO_COLOR")
 // * If no colors should be used
 // * Colors for all the textual elements
 type Theme struct {
-	Light bool
-	Foreground, Background,
-	StatusForeground, StatusBackground,
-	StatusErrorForeground, StatusErrorBackground,
-	SearchHighlight, MultiLineComment, MultiLineString,
-	Git vt100.AttributeColor
-	String, Keyword, Comment, Type, Literal, Punctuation, Plaintext, Tag, TextTag, TextAttrName, TextAttrValue,
-	Decimal, AndOr, Dollar, Star, Class, Private, Protected, Public, Whitespace, AssemblyEnd, Mut string
-	RainbowParenColors []vt100.AttributeColor
-	MarkdownTextColor, HeaderBulletColor, HeaderTextColor, ListBulletColor, ListTextColor,
-	ListCodeColor, CodeColor, CodeBlockColor, ImageColor, LinkColor, QuoteColor, QuoteTextColor,
-	HTMLColor, CommentColor, BoldColor, ItalicsColor, StrikeColor, TableColor, CheckboxColor,
-	XColor, TableBackground, UnmatchedParenColor, MenuTitleColor, MenuArrowColor, MenuTextColor,
-	MenuHighlightColor, MenuSelectedColor, ManSectionColor, ManSynopsisColor,
-	BoxTextColor, BoxBackground, BoxHighlight,
-	DebugRunningBackground, DebugStoppedBackground, DebugRegistersBackground,
-	DebugOutputBackground, DebugInstructionsForeground,
-	DebugInstructionsBackground, BoxUpperEdge vt100.AttributeColor
+	Decimal                     string
+	Mut                         string
+	AssemblyEnd                 string
+	Whitespace                  string
+	Public                      string
+	Protected                   string
+	Private                     string
+	Class                       string
+	Star                        string
+	Tag                         string
+	Dollar                      string
+	String                      string
+	Keyword                     string
+	Comment                     string
+	Type                        string
+	Literal                     string
+	Punctuation                 string
+	Plaintext                   string
+	AndOr                       string
+	TextTag                     string
+	TextAttrName                string
+	TextAttrValue               string
+	MultiLineString             vt100.AttributeColor
+	DebugInstructionsBackground vt100.AttributeColor
+	Git                         vt100.AttributeColor
+	MultiLineComment            vt100.AttributeColor
+	SearchHighlight             vt100.AttributeColor
+	StatusErrorBackground       vt100.AttributeColor
+	StatusErrorForeground       vt100.AttributeColor
+	StatusBackground            vt100.AttributeColor
+	StatusForeground            vt100.AttributeColor
+	Background                  vt100.AttributeColor
+	Foreground                  vt100.AttributeColor
+	RainbowParenColors          []vt100.AttributeColor
+	MarkdownTextColor           vt100.AttributeColor
+	HeaderBulletColor           vt100.AttributeColor
+	HeaderTextColor             vt100.AttributeColor
+	ListBulletColor             vt100.AttributeColor
+	ListTextColor               vt100.AttributeColor
+	ListCodeColor               vt100.AttributeColor
+	CodeColor                   vt100.AttributeColor
+	CodeBlockColor              vt100.AttributeColor
+	ImageColor                  vt100.AttributeColor
+	LinkColor                   vt100.AttributeColor
+	QuoteColor                  vt100.AttributeColor
+	QuoteTextColor              vt100.AttributeColor
+	HTMLColor                   vt100.AttributeColor
+	CommentColor                vt100.AttributeColor
+	BoldColor                   vt100.AttributeColor
+	ItalicsColor                vt100.AttributeColor
+	StrikeColor                 vt100.AttributeColor
+	TableColor                  vt100.AttributeColor
+	CheckboxColor               vt100.AttributeColor
+	XColor                      vt100.AttributeColor
+	TableBackground             vt100.AttributeColor
+	UnmatchedParenColor         vt100.AttributeColor
+	MenuTitleColor              vt100.AttributeColor
+	MenuArrowColor              vt100.AttributeColor
+	MenuTextColor               vt100.AttributeColor
+	MenuHighlightColor          vt100.AttributeColor
+	MenuSelectedColor           vt100.AttributeColor
+	ManSectionColor             vt100.AttributeColor
+	ManSynopsisColor            vt100.AttributeColor
+	BoxTextColor                vt100.AttributeColor
+	BoxBackground               vt100.AttributeColor
+	BoxHighlight                vt100.AttributeColor
+	DebugRunningBackground      vt100.AttributeColor
+	DebugStoppedBackground      vt100.AttributeColor
+	DebugRegistersBackground    vt100.AttributeColor
+	DebugOutputBackground       vt100.AttributeColor
+	DebugInstructionsForeground vt100.AttributeColor
+	BoxUpperEdge                vt100.AttributeColor
+	Light                       bool
 }
 
 // NewDefaultTheme creates a new default Theme struct
