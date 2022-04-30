@@ -482,14 +482,17 @@ int main(int argc, char* argv[])
         givenFilename = true;
     }
 
+
+    // Check if the executable starts with "l", if yes, use light mode
+    bool lightMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'l';
     if (flag == "-r"s) {
         // TODO: Write a headless editor engine that can talk over network
         // std::cout << "REMOTE"s << std::endl;
         flag = ""s;
+    } else if (flag == "-l"s) {
+        lightMode = true;
+        flag = ""s;
     }
-
-    // Check if the executable starts with "l", if yes, use light mode
-    bool lightMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'l';
 
     // Show the file chooser dialog, if no filename was given
     if (!givenFilename) {
