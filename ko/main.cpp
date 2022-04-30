@@ -484,6 +484,8 @@ int main(int argc, char* argv[])
 
     // Check if the executable starts with "l", if yes, use light mode
     bool lightMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'l';
+
+    // Check if -r (red/black color theme) or -l (light color theme) are given
     bool redBlackMode = false;
     if (flag == "-r"s) {
         redBlackMode = true;
@@ -577,6 +579,7 @@ int main(int argc, char* argv[])
     // Set the KO environment variable, which affects the behavior of "o"
     setenv("KO", "1", true);
 
+    // Setting SHELL to /bin/csh uses the red/black theme...
     if (!lightMode && redBlackMode) {
         setenv("SHELL", "/bin/csh", true);
     }
