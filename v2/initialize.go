@@ -99,11 +99,18 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		}
 
 		if !e.Empty() {
-			firstLine := e.Line(0)
-			// Use the detected file mode, if the file mode is not already detected from the filename
-			if m, found := mode.DetectFromContents(e.mode, firstLine, e.String); found && m == mode.Blank {
-				e.mode = m
+			// Detect the file mode if the current editor mode is blank
+			if e.mode == mode.Blank {
+				firstLine := e.Line(0)
+				// The first 100 bytes are enough when trying to detect the contents
+				if len(firstLine) > 100 {
+					firstLine = firstLine[:100]
+				}
+				if m, found := mode.DetectFromContents(e.mode, firstLine, e.String); found {
+					e.mode = m
+				}
 			}
+			// Specifically enable syntax highlighting if the opened file is a configuration file
 			if e.mode == mode.Config {
 				e.syntaxHighlight = true
 			}
