@@ -34,6 +34,7 @@ install-ko: ko/ko
 	install -Dm755 ko/ko "$(DESTDIR)$(PREFIX)/bin/ko"
 	install -Dm644 ko/odark.desktop "$(DESTDIR)$(PREFIX)/share/applications/odark.desktop"
 	install -Dm644 ko/olight.desktop "$(DESTDIR)$(PREFIX)/share/applications/olight.desktop"
+	install -Dm644 ko/oredblack.desktop "$(DESTDIR)$(PREFIX)/share/applications/oredblack.desktop"
 	install -Dm644 img/icon_48x48.png "$(DESTDIR)$(PREFIX)/share/pixmaps/ko.png"
 
 clean:

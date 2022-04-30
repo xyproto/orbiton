@@ -65,7 +65,7 @@ void trigger_redraw()
 
 gboolean size_changed(GtkWidget* widget, GtkAllocation* allocation, void* data)
 {
-    //printf("new size %dx%d\n", allocation->width, allocation->height);
+    // printf("new size %dx%d\n", allocation->width, allocation->height);
     trigger_redraw();
     gtk_widget_show(widget);
     return true; // event was handled
@@ -482,12 +482,11 @@ int main(int argc, char* argv[])
         givenFilename = true;
     }
 
-
     // Check if the executable starts with "l", if yes, use light mode
     bool lightMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'l';
+    bool redBlackMode = false;
     if (flag == "-r"s) {
-        // TODO: Write a headless editor engine that can talk over network
-        // std::cout << "REMOTE"s << std::endl;
+        redBlackMode = true;
         flag = ""s;
     } else if (flag == "-l"s) {
         lightMode = true;
@@ -577,6 +576,10 @@ int main(int argc, char* argv[])
 
     // Set the KO environment variable, which affects the behavior of "o"
     setenv("KO", "1", true);
+
+    if (!lightMode && redBlackMode) {
+        setenv("SHELL", "/bin/csh", true);
+    }
 
     // Spawn a terminal
 #pragma GCC diagnostic push
