@@ -996,13 +996,6 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 
 	}
 
-	// Reposition the cursor
-	if repositionCursor {
-		x := e.pos.ScreenX()
-		y := e.pos.ScreenY()
-		vt100.SetXY(uint(x), uint(y))
-	}
-
 	return nil
 }
 
