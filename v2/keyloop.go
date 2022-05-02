@@ -664,11 +664,9 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						if errorMessage := err.Error(); strings.Contains(errorMessage, "is not being run") {
 							e.DebugEnd()
 							status.SetMessage("Could not start GDB")
-							e.redrawCursor = true
 						} else if err == errProgramStopped {
 							e.DebugEnd()
 							status.SetMessage("Program stopped, could not step")
-							e.redrawCursor = true
 						} else { // got an unrecognized error
 							e.DebugEnd()
 							status.SetMessage(errorMessage)
@@ -677,11 +675,11 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 						if !programRunning {
 							e.DebugEnd()
 							status.SetMessage("Program stopped when stepping") // Next instruction
-							e.redrawCursor = true
 						} else {
 							status.SetMessage("Next instruction") // Next instruction
 						}
 					}
+					e.redrawCursor = true
 					status.ShowAfterRedraw(status.Message())
 					break
 				} else { // e.gdb == nil
