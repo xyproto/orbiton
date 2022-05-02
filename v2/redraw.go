@@ -141,10 +141,12 @@ func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 // RedrawAtEndOfKeyLoop is called after each main loop
 func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar) {
 
+	redrawCanvas := !e.debugMode
+
 	// Redraw, if needed
 	if e.redraw {
 		// Draw the editor lines on the canvas, respecting the offset
-		e.DrawLines(c, true, true)
+		e.DrawLines(c, true, redrawCanvas)
 		e.redraw = false
 	} else if e.Changed() {
 		c.Draw()

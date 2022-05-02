@@ -24,18 +24,18 @@ const (
 )
 
 var (
-	originalDirectory     string
-	gdbLogFile            = filepath.Join(userCacheDir, "o", "gdb.log")
-	gdbConsole            strings.Builder
-	watchMap              = make(map[string]string)
-	lastSeenWatchVariable string
-	showInstructionPane   bool
-	gdbOutput             bytes.Buffer
-	lastGDBOutputLength   int
-	errProgramStopped     = errors.New("program stopped") // must contain "program stopped"
-	programRunning        bool
-	prevFlags             []string
-	longInstructionBox    bool
+	originalDirectory        string
+	gdbLogFile               = filepath.Join(userCacheDir, "o", "gdb.log")
+	gdbConsole               strings.Builder
+	watchMap                 = make(map[string]string)
+	lastSeenWatchVariable    string
+	showInstructionPane      bool
+	gdbOutput                bytes.Buffer
+	lastGDBOutputLength      int
+	errProgramStopped        = errors.New("program stopped") // must contain "program stopped"
+	programRunning           bool
+	prevFlags                []string
+	longInstructionPaneWidth int // should the instruction pane be extra wide, if so, how wide?
 )
 
 // DebugActivateBreakpoint sends break-insert to gdb together with the breakpoint in e.breakpoint, if available
@@ -549,7 +549,7 @@ func (e *Editor) DebugEnd() {
 		os.Chdir(originalDirectory)
 	}
 	programRunning = false
-	longInstructionBox = false
+	longInstructionPaneWidth = 0
 	//flogf(gdbLogFile, "[gdb] %s\n", "stopped")
 }
 
@@ -958,10 +958,13 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 			}
 
 			// Should the box cover the entire width?
-			if w := int(c.W() - 1); longInstructionBox || (centerBox.X+centerBox.W) >= w {
+			if longInstructionPaneWidth > 0 {
+				centerBox.X = 0
+				centerBox.W = longInstructionPaneWidth
+			} else if w := int(c.W() - 1); (centerBox.X + centerBox.W) >= w {
 				centerBox.X = 0
 				centerBox.W = w
-				longInstructionBox = true
+				longInstructionPaneWidth = w
 			}
 
 			// If the box reaches the bottom, move it up one step
