@@ -35,7 +35,7 @@ var (
 	errProgramStopped     = errors.New("program stopped") // must contain "program stopped"
 	programRunning        bool
 	prevFlags             []string
-	longBox               bool
+	longInstructionBox    bool
 )
 
 // DebugActivateBreakpoint sends break-insert to gdb together with the breakpoint in e.breakpoint, if available
@@ -548,11 +548,8 @@ func (e *Editor) DebugEnd() {
 	if originalDirectory != "" {
 		os.Chdir(originalDirectory)
 	}
-
 	programRunning = false
-
-	longBox = false
-
+	longInstructionBox = false
 	//flogf(gdbLogFile, "[gdb] %s\n", "stopped")
 }
 
@@ -961,10 +958,10 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 			}
 
 			// Should the box cover the entire width?
-			if w := int(c.W() - 1); longBox || (centerBox.X+centerBox.W) >= w {
+			if w := int(c.W() - 1); longInstructionBox || (centerBox.X+centerBox.W) >= w {
 				centerBox.X = 0
 				centerBox.W = w
-				longBox = true
+				longInstructionBox = true
 			}
 
 			// If the box reaches the bottom, move it up one step
