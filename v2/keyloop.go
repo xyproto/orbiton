@@ -27,7 +27,7 @@ var fileLock = NewLockKeeper(defaultLockFile)
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight bool) (userMessage string, stopParent bool, err error) {
+func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight bool) (userMessage string, stopParent bool, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt100.Init()
@@ -57,7 +57,7 @@ func Loop(tty *vt100.TTY, filename string, lineNumber LineNumber, colNumber ColN
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
-	e, messageAfterRedraw, err := NewEditor(tty, c, filename, lineNumber, colNumber, theme, syntaxHighlight)
+	e, messageAfterRedraw, err := NewEditor(tty, c, fnod, lineNumber, colNumber, theme, syntaxHighlight)
 	if err != nil {
 		return "", false, err
 	}

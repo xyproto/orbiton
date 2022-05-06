@@ -293,15 +293,14 @@ func (e *Editor) Clear() {
 
 // Load will try to load a file. The file is assumed to be checked to already exist.
 // Returns a warning message (possibly empty) and an error type
-func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string, error) {
+func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnod FilenameOrData) (string, error) {
 	var (
 		message string
-		data    []byte
 		err     error
 	)
 
 	// Start a spinner, in a short while
-	quitChan := Spinner(c, tty, fmt.Sprintf("Reading %s... ", filename), fmt.Sprintf("reading %s: stopped by user", filename), 200*time.Millisecond, e.ItalicsColor)
+	quitChan := Spinner(c, tty, fmt.Sprintf("Reading %s... ", fnod.filename), fmt.Sprintf("reading %s: stopped by user", fnod.filename), 200*time.Millisecond, e.ItalicsColor)
 
 	// Stop the spinner at the end of the function
 	defer func() {
@@ -311,18 +310,20 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 	start := time.Now()
 
 	// Check if the file extension is ".class" and if "jad" is installed
-	if filepath.Ext(filename) == ".class" && which("jad") != "" {
-		if data, err = e.LoadClass(filename); err != nil {
+	if filepath.Ext(fnod.filename) == ".class" && which("jad") != "" && fnod.Empty() {
+		if fnod.data, err = e.LoadClass(fnod.filename); err != nil {
 			return "Could not run jad", err
 		}
 	} else {
 		// Read the file and check if it could be read
-		data, err = ioutil.ReadFile(filename)
-		if err != nil {
-			return message, err
+		if fnod.Empty() {
+			fnod.data, err = ioutil.ReadFile(fnod.filename)
+			if err != nil {
+				return message, err
+			}
 		}
 		// Check if it's a binary file or a text file
-		if e.binaryFile = binary.Data(data); e.binaryFile {
+		if e.binaryFile = binary.Data(fnod.data); e.binaryFile {
 			e.mode = mode.Blank
 		}
 	}
@@ -332,11 +333,13 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, filename string) (string,
 
 	// Opinionated replacements, but not for binary files
 	if !e.binaryFile {
-		data = opinionatedByteReplacer(data)
+		fnod.data = opinionatedByteReplacer(fnod.data)
 	}
 
+	//logf("Loading: %s\n", string(fnod.data))
+
 	// Load the data
-	e.LoadBytes(data)
+	e.LoadBytes(fnod.data)
 
 	// Mark the data as "not changed"
 	e.changed = false
@@ -2155,7 +2158,8 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		switchBuffer.Restore(e)
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
-		e2, statusMessage, err = NewEditor(tty, c, filenameToOpen, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight)
+		fnod := FilenameOrData{filenameToOpen, []byte{}}
+		e2, statusMessage, err = NewEditor(tty, c, fnod, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight)
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)

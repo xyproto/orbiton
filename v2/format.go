@@ -126,7 +126,7 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 				return retErr
 			}
 
-			if _, err := e.Load(c, tty, tempFilename); err != nil {
+			if _, err := e.Load(c, tty, FilenameOrData{tempFilename, []byte{}}); err != nil {
 				return err
 			}
 			// Mark the data as changed, despite just having loaded a file

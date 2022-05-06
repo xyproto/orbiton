@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -10,7 +11,9 @@ import (
 	"runtime/pprof"
 	"sort"
 	"strings"
+	"sync"
 	"syscall"
+	"time"
 
 	"github.com/xyproto/env"
 	"github.com/xyproto/termtitle"
@@ -98,63 +101,118 @@ Set NO_COLOR=1 to disable colors.
 	// Check if the executable starts with "g" or "f"
 	var executableName string
 	if len(os.Args) > 0 {
-		executableName = filepath.Base(os.Args[0])
-		if len(executableName) > 0 {
-			switch executableName[0] {
-			case 'f', 'g':
-				// Start the game
-				if _, err := Game(); err != nil {
-					fmt.Fprintln(os.Stderr, err)
-					os.Exit(1)
-				} else {
-					return
+		executableName = filepath.Base(os.Args[0]) // if os.Args[0] is empty, executableName will be "."
+		switch executableName[0] {
+		case 'f', 'g':
+			// Start the game
+			if _, err := Game(); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+			return
+		}
+	}
+
+	var (
+		err            error
+		filenameOrData FilenameOrData
+	)
+
+	// Should we check if data is given on stdin?
+	readFromStdin := (len(os.Args) == 2 && (os.Args[1] == "-" || os.Args[1] == "/dev/stdin"))
+	if readFromStdin {
+		data, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "could not read from stdin")
+			os.Exit(1)
+		}
+		os.Stdin.Close()
+		if len(data) > 0 {
+			filenameOrData.data = data
+			filenameOrData.filename = "-"
+		}
+	} else if maybeReadFromStdin := len(os.Args) == 1; maybeReadFromStdin {
+
+		// TODO: Have a better plan for when something is streamed slowly on stdin, with no "-" or "/dev/stdin" given
+		//       Ideally, o should start and data should start being added to the file as it streams in.
+
+		// Start reading from stdin in the background, while waiting for up to 200 ms
+		var data []byte
+		var mut sync.RWMutex
+		var err error
+		go func() {
+			mut.Lock()
+			data, err = ioutil.ReadAll(os.Stdin)
+			mut.Unlock()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "could not read from stdin")
+				os.Exit(1)
+			}
+		}()
+		time.Sleep(200 * time.Millisecond)
+		os.Stdin.Close()
+		if len(data) > 0 {
+			filenameOrData.data = data
+			filenameOrData.filename = "-"
+		}
+	}
+
+	// reading from stdin is over
+
+	filename, lineNumber, colNumber := FilenameAndLineNumberAndColNumber(flag.Arg(0), flag.Arg(1), flag.Arg(2))
+	if len(filenameOrData.data) == 0 {
+		filenameOrData.filename = filename
+		if filenameOrData.filename == "" {
+			fmt.Fprintln(os.Stderr, "please provide a filename")
+			os.Exit(1)
+		}
+
+		// If the filename starts with "~", then expand it
+		filenameOrData.ExpandUser()
+
+		fileExists := exists(filenameOrData.filename)
+
+		if fileExists {
+			if strings.HasSuffix(filenameOrData.filename, ".") {
+				// If the filename ends with "." and the file does not exist, assume this was a result of tab-completion going wrong.
+				// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
+				matches, err := filepath.Glob(filenameOrData.filename + "*")
+				if err == nil && len(matches) > 0 { // no error and at least 1 match
+					// Use the first match of the sorted results
+					sort.Strings(matches)
+					filenameOrData.filename = matches[0]
+				}
+			} else if !strings.Contains(filenameOrData.filename, ".") && allLower(filenameOrData.filename) {
+				// The filename has no ".", is written in lowercase and it does not exist,
+				// but more than one file that starts with the filename  exists. Assume tab-completion failed.
+				matches, err := filepath.Glob(filenameOrData.filename + "*")
+				if err == nil && len(matches) > 1 { // no error and more than 1 match
+					// Use the first match of the sorted results
+					sort.Strings(matches)
+					filenameOrData.filename = matches[0]
+				}
+			} else {
+				// Also match "PKGBUILD" if just "Pk" was entered
+				matches, err := filepath.Glob(strings.ToTitle(filenameOrData.filename) + "*")
+				if err == nil && len(matches) >= 1 { // no error and at least 1 match
+					// Use the first match of the sorted results
+					sort.Strings(matches)
+					filenameOrData.filename = matches[0]
 				}
 			}
 		}
 	}
 
-	filename, lineNumber, colNumber := FilenameAndLineNumberAndColNumber(flag.Arg(0), flag.Arg(1), flag.Arg(2))
-	if filename == "" {
-		fmt.Fprintln(os.Stderr, "please provide a filename")
-		os.Exit(1)
-	}
-
-	// If the filename starts with "~", then expand it
-	if strings.HasPrefix(filename, "~") {
-		filename = env.ExpandUser(filename)
-	}
-
-	if strings.HasSuffix(filename, ".") && !exists(filename) {
-		// If the filename ends with "." and the file does not exist, assume this was a result of tab-completion going wrong.
-		// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
-		matches, err := filepath.Glob(filename + "*")
-		if err == nil && len(matches) > 0 { // no error and at least 1 match
-			// Use the first match of the sorted results
-			sort.Strings(matches)
-			filename = matches[0]
-		}
-	} else if !strings.Contains(filename, ".") && allLower(filename) && !exists(filename) {
-		// The filename has no ".", is written in lowercase and it does not exist,
-		// but more than one file that starts with the filename  exists. Assume tab-completion failed.
-		matches, err := filepath.Glob(filename + "*")
-		if err == nil && len(matches) > 1 { // no error and more than 1 match
-			// Use the first match of the sorted results
-			sort.Strings(matches)
-			filename = matches[0]
-		}
-	} else if !exists(filename) {
-		// Also match "PKGBUILD" if just "Pk" was entered
-		matches, err := filepath.Glob(strings.ToTitle(filename) + "*")
-		if err == nil && len(matches) >= 1 { // no error and at least 1 match
-			// Use the first match of the sorted results
-			sort.Strings(matches)
-			filename = matches[0]
-		}
-	}
-
 	// Set the terminal title, if the current terminal emulator supports it, and NO_COLOR is not set
 	if !envNoColor {
-		termtitle.MustSet(termtitle.GenerateTitle(filename))
+		title := "?"
+		if len(filenameOrData.data) > 0 {
+			title = "stdin"
+		} else if len(filenameOrData.filename) > 0 {
+			title = filenameOrData.filename
+		}
+		termtitle.MustSet(termtitle.GenerateTitle(title))
+		//logf("title: %s, data: %s, empty: %v\n", title, bytes.TrimSpace(filenameOrData.data), filenameOrData.Empty())
 	}
 
 	// If the editor executable has been named "red", use the red/gray theme by default
@@ -185,7 +243,7 @@ Set NO_COLOR=1 to disable colors.
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, stopParent, err := Loop(tty, filename, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight)
+	userMessage, stopParent, err := Loop(tty, filenameOrData, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {

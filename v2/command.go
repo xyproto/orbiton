@@ -235,7 +235,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				status.SetErrorMessage("Failed to update PKGBUILD: " + err.Error())
 				status.Show(c, e)
 			} else {
-				if _, err := e.Load(c, tty, tempFilename); err != nil {
+				if _, err := e.Load(c, tty, FilenameOrData{tempFilename, []byte{}}); err != nil {
 					status.ClearAll(c)
 					status.SetMessage(err.Error())
 					status.Show(c, e)

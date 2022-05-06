@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -15,7 +16,7 @@ import (
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message and an error type
-func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight bool) (*Editor, string, error) {
+func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight bool) (*Editor, string, error) {
 
 	var (
 		startTime          = time.Now()
@@ -25,14 +26,20 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		found              bool
 		recordedLineNumber LineNumber
 		err                error
-		baseFilename       = filepath.Base(filename)
 		readOnly           bool
 	)
 
 	// mode is what would have been an enum in other languages, for signalling if this file should be in git mode, markdown mode etc
-	m := mode.Detect(filename)
-
-	syntaxHighlight := origSyntaxHighlight && m != mode.Text && (m != mode.Blank || filepath.Ext(baseFilename) != "")
+	var m mode.Mode
+	var syntaxHighlight bool
+	if fnod.Empty() {
+		m = mode.Detect(fnod.filename)
+		baseFilename := filepath.Base(fnod.filename)
+		syntaxHighlight = origSyntaxHighlight && m != mode.Text && (m != mode.Blank || filepath.Ext(baseFilename) != "")
+	} else {
+		m = mode.SimpleDetect(string(fnod.data))
+		syntaxHighlight = origSyntaxHighlight && m != mode.Text && m != mode.Blank
+	}
 
 	adjustSyntaxHighlightingKeywords(m) // no theme changes, just language detection and keyword configuration
 
@@ -77,7 +84,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 	}
 
 	// Set the editor filename
-	e.filename = filename
+	e.filename = fnod.filename
 
 	// We wish to redraw the canvas and reposition the cursor
 	e.redraw = true
@@ -85,7 +92,43 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 
 	// Use os.Stat to check if the file exists, and load the file if it does
 	var warningMessage string
-	if fileInfo, err := os.Stat(e.filename); err == nil { // no issue
+
+	if !fnod.Empty() { // we have data from stdin
+
+		warningMessage, err = e.Load(c, tty, fnod)
+		if err != nil {
+			return nil, "", err
+		}
+
+		// Detect the file mode if the current editor mode is blank
+		if e.mode == mode.Blank {
+
+			byteLines := bytes.Split(fnod.data, []byte{'\n'})
+			firstLine := ""
+			if len(byteLines) > 0 {
+				firstLine = string(byteLines[0])
+			}
+
+			stringContentFunc := func() string {
+				return string(fnod.data)
+			}
+
+			// The first 100 bytes are enough when trying to detect the contents
+			if len(firstLine) > 100 {
+				firstLine = firstLine[:100]
+			}
+			if m, found := mode.DetectFromContents(e.mode, firstLine, stringContentFunc); found {
+				e.mode = m
+			}
+
+		}
+
+		// Specifically enable syntax highlighting if the opened file is a configuration file
+		if e.mode == mode.Config {
+			e.syntaxHighlight = true
+		}
+
+	} else if fileInfo, err := os.Stat(e.filename); err == nil { // no issue
 
 		// TODO: Enter file-rename mode when opening a directory?
 		// Check if this is a directory
@@ -93,7 +136,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 			return nil, "", errors.New(e.filename + " is a directory")
 		}
 
-		warningMessage, err = e.Load(c, tty, e.filename)
+		warningMessage, err = e.Load(c, tty, fnod)
 		if err != nil {
 			return nil, "", err
 		}
@@ -287,10 +330,18 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, filename string, lineNumber Line
 		}
 	} else {
 		// If startup is slow (> 100 ms), display the startup time in the status bar
-		if startupMilliseconds >= 100 {
-			statusMessage = fmt.Sprintf("Loaded %s%s (%dms)", e.filename, warningMessage, startupMilliseconds)
+		if e.filename == "-" {
+			if startupMilliseconds >= 100 {
+				statusMessage = fmt.Sprintf("Read from stdin%s (%dms)", warningMessage, startupMilliseconds)
+			} else {
+				statusMessage = fmt.Sprintf("Read from stdin%s", warningMessage)
+			}
 		} else {
-			statusMessage = fmt.Sprintf("Loaded %s%s", e.filename, warningMessage)
+			if startupMilliseconds >= 100 {
+				statusMessage = fmt.Sprintf("Loaded %s%s (%dms)", e.filename, warningMessage, startupMilliseconds)
+			} else {
+				statusMessage = fmt.Sprintf("Loaded %s%s", e.filename, warningMessage)
+			}
 		}
 		if e.readOnly {
 			statusMessage += " (read only)"
