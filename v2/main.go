@@ -11,9 +11,7 @@ import (
 	"runtime/pprof"
 	"sort"
 	"strings"
-	"sync"
 	"syscall"
-	"time"
 
 	"github.com/xyproto/env"
 	"github.com/xyproto/termtitle"
@@ -120,44 +118,21 @@ Set NO_COLOR=1 to disable colors.
 
 	// Should we check if data is given on stdin?
 	readFromStdin := (len(os.Args) == 2 && (os.Args[1] == "-" || os.Args[1] == "/dev/stdin"))
-	if readFromStdin {
+	maybeReadFromStdin := len(os.Args) == 1
+	if readFromStdin || maybeReadFromStdin {
+		// TODO: Use a spinner?
 		data, err := ioutil.ReadAll(os.Stdin)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "could not read from stdin")
 			os.Exit(1)
 		}
-		os.Stdin.Close()
-		if len(data) > 0 {
-			filenameOrData.data = data
-			filenameOrData.filename = "-"
-		}
-	} else if maybeReadFromStdin := len(os.Args) == 1; maybeReadFromStdin {
-
-		// TODO: Have a better plan for when something is streamed slowly on stdin, with no "-" or "/dev/stdin" given
-		//       Ideally, o should start and data should start being added to the file as it streams in.
-
-		// Start reading from stdin in the background, while waiting for up to 200 ms
-		var data []byte
-		var mut sync.RWMutex
-		var err error
-		go func() {
-			mut.Lock()
-			data, err = ioutil.ReadAll(os.Stdin)
-			mut.Unlock()
-			if err != nil {
-				fmt.Fprintln(os.Stderr, "could not read from stdin")
-				os.Exit(1)
-			}
-		}()
-		time.Sleep(200 * time.Millisecond)
+		// Now stop reading further from stdin
 		os.Stdin.Close()
 		if len(data) > 0 {
 			filenameOrData.data = data
 			filenameOrData.filename = "-"
 		}
 	}
-
-	// reading from stdin is over
 
 	filename, lineNumber, colNumber := FilenameAndLineNumberAndColNumber(flag.Arg(0), flag.Arg(1), flag.Arg(2))
 	if len(filenameOrData.data) == 0 {
