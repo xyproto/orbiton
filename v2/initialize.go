@@ -27,11 +27,10 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 		recordedLineNumber LineNumber
 		err                error
 		readOnly           bool
+		m                  mode.Mode // mode is what would have been an enum in other languages, for signalling if this file should be in git mode, markdown mode etc
+		syntaxHighlight    bool
 	)
 
-	// mode is what would have been an enum in other languages, for signalling if this file should be in git mode, markdown mode etc
-	var m mode.Mode
-	var syntaxHighlight bool
 	if fnod.Empty() {
 		m = mode.Detect(fnod.filename)
 		baseFilename := filepath.Base(fnod.filename)
