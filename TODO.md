@@ -6,10 +6,11 @@
 - [ ] Jump to error when building with `ctrl-space` and `cargo`.
 - [ ] When switching register pane layout with `ctrl-p`, save the contents of the old pane and use that.
 - [ ] Make it possible to send custom commands to `gdb` with `ctrl-g` when in debug mode.
-- [x] Make it possible to step through Go programs as well.
+- [ ] Make it possible to step through Go programs as well.
 
 ## Saving and loading
 
+- [ ] Show a spinner when reading a lot of data from stdin.
 - [ ] When editing a man page, make it possible to toggle between the man page and the man page view mode.
 - [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] When editing a file that then is deleted, `ctrl-s` should maybe create the file again?
@@ -33,11 +34,11 @@
 
 ## Code editing
 
+- [ ] When moving far to the right of a long line, `ctrl-k` sometimes cuts from the wrong place.
 - [ ] When commenting out a block, move comment markers closer to the beginning of the text.
 - [ ] When sorting comma-separated strings that do not start with (, [ or {, make sure to keep the same trailing comma status.
 - [ ] When `}` is the last character of a file, sometimes pressing enter right before it does not work.
 - [ ] If there are four lines: not comment, comment, not comment, comment, let ctrl+/ behave differently.
-- [ ] When moving far to the right of a long line, `ctrl-k` sometimes cuts from the wrong place.
 - [ ] Indentation in Rust is sometimes wonky.
 - [ ] Fix the ctrl-\ behavior when commenting out a block at the end of a file.
 - [ ] When changing a file from tabs to spaces, or the other way around, also modify indentations after comment markers.
