@@ -797,6 +797,13 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 			}
 			// Additional way to clear the sticky search term, like with Esc
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
+			// Exit debug mode, if active
+			if e.debugMode {
+				e.DebugEnd()
+				e.debugMode = false
+				status.ShowAfterRedraw("Normal mode")
+				break
+			}
 			// Reset the cut/copy/paste double-keypress detection
 			lastCopyY = -1
 			lastPasteY = -1

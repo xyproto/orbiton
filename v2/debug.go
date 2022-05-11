@@ -531,7 +531,7 @@ func (e *Editor) DebugRegisterMap() (map[string]string, error) {
 	return nil, errors.New("could not find the register values in the payload returned from gdb")
 }
 
-// DebugEnd will end the current gdb session
+// DebugEnd will end the current gdb session, but not set debugMode to false
 func (e *Editor) DebugEnd() {
 	if e.gdb != nil {
 		e.gdb.Exit()
