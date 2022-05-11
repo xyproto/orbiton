@@ -258,6 +258,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				e.debugMode = false
 				// Also end the gdb session if there is one in progress
 				e.DebugEnd()
+				status.ShowAfterRedraw("Normal mode")
 			})
 		} else {
 			actions.Add("Debug mode", func() {
