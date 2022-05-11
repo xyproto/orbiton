@@ -17,11 +17,15 @@ It might be a good fit for:
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
-## Screenshot
+## Screenshots
 
 Screenshot of the VTE GUI application that can be found in the `ko` directory, running the `o` editor:
 
 ![screenshot](img/screenshot2021sept.png)
+
+Stepping through the assembly instructions of a Rust program by entering debug mode with `ctrl-o` and stepping with `ctrl-n`:
+
+![debug rust](img/2022-05-11_debug_rust.png)
 
 ## Packaging status
 
