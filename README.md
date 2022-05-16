@@ -23,7 +23,7 @@ Screenshot of the VTE GUI application that can be found in the `ko` directory, r
 
 ![screenshot](img/screenshot2021sept.png)
 
-Stepping through the assembly instructions of a Rust program by entering debug mode with `ctrl-o` and stepping with `ctrl-n`:
+Stepping through the assembly instructions of a Rust program by entering debug mode with the `ctrl-o` menu and then stepping with `ctrl-n`:
 
 ![debug rust](img/2022-05-11_debug_rust.png)
 
