@@ -169,6 +169,10 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 		if q.None() {
 			q.parCount++
 		}
+	case ';':
+		if q.mode == mode.Clojure && prevRune == ';' {
+			q.singleLineComment = true
+		}
 	case ')':
 		if (q.mode == mode.StandardML || q.mode == mode.OCaml) && prevRune == '*' {
 			q.stoppedMultiLineComment = true

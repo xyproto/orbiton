@@ -275,11 +275,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					q.singleQuote = 0
 					// Special case for Lisp single-line comments
 					trimmedLine = strings.TrimSpace(line)
-					if strings.Count(trimmedLine, ";;") == 1 {
+					if doubleSemiCount := strings.Count(trimmedLine, ";;"); doubleSemiCount > 0 {
 						// Color the line with the same color as for multiLine comments
 						if strings.HasPrefix(trimmedLine, ";") {
 							coloredString = UnEscape(e.MultiLineComment.Start(line))
-						} else if strings.Count(trimmedLine, ";;") == 1 {
+						} else if doubleSemiCount == 1 {
 
 							parts := strings.SplitN(line, ";;", 2)
 							if newTextWithTags, err := syntax.AsText([]byte(Escape(parts[0])), e.mode); err != nil {
