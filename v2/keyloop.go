@@ -676,7 +676,8 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 							e.DebugEnd()
 							status.SetMessage("Program stopped when stepping") // Next instruction
 						} else {
-							status.SetMessage("Next instruction") // Next instruction
+							// Don't show a status message per instruction/step when pressing ctrl-n
+							break
 						}
 					}
 					e.redrawCursor = true
