@@ -7,7 +7,7 @@ github.com/creack/pty
 # github.com/cyrus-and/gdb v0.0.0-20220330132204-7fbd38827ecc
 ## explicit; go 1.18
 github.com/cyrus-and/gdb
-# github.com/ianlancetaylor/demangle v0.0.0-20220319035150-800ac71e25c2
+# github.com/ianlancetaylor/demangle v0.0.0-20220517205856-0058ec4f073c
 ## explicit; go 1.12
 github.com/ianlancetaylor/demangle
 # github.com/jung-kurt/gofpdf v1.16.2
@@ -59,7 +59,7 @@ github.com/xyproto/textoutput
 # github.com/xyproto/vt100 v1.10.2
 ## explicit; go 1.10
 github.com/xyproto/vt100
-# golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a
+# golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
