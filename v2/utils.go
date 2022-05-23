@@ -52,6 +52,12 @@ func hasS(sl []string, s string) bool {
 	return false
 }
 
+// hasKey checks if the given string map contains the given key
+func hasKey(m map[string]string, key string) bool {
+	_, found := m[key]
+	return found
+}
+
 // filterS returns all strings that makes the function f return true
 func filterS(sl []string, f func(string) bool) []string {
 	var results []string
