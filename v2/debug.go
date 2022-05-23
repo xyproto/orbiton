@@ -435,6 +435,7 @@ func (e *Editor) DebugChangedRegisterMap() (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	// Then get the register IDs, then use them to get the register names and values
 	notification, err := e.gdb.CheckedSend("data-list-register-values", "--skip-unavailable", "x")
 	if err != nil {
@@ -476,6 +477,46 @@ func (e *Editor) DebugChangedRegisterMap() (map[string]string, error) {
 							//flogf(gdbLogFile, "[gdb] data-list-register-values: %s %s\n", registerName, value)
 						}
 					}
+
+					// TODO:
+					// If rax, eax, ax and al all changed, then it depends on the value which registers should be shown.
+					// For instance, if al changed but not ah, not the high bytes of eax and not the high bytes of rax,
+					// then only al should be shown. But if the highest bit of rax is changed, only rax should be shown.
+					// This requires the values of the registers to be kept somewhere, then compare.
+
+					// 					reg8byte := []string{"rax", "rcx", "rdx", "rbx", "rsi", "rdi", "rsp", "rbp", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"}
+					// 					reg4byte := []string{"eax", "ecx", "edx", "ebx", "esi", "edi", "esp", "ebp", "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d"}
+					// 					reg2byte := []string{"ax", "cx", "dx", "bx", "si", "di", "sp", "bp", "r8w", "r9w", "r10w", "r11w", "r12w", "r13w", "r14w", "r15w"}
+					// 					reg1byteH := []string{"ah", "ch", "dh", "bh", "sil", "dil", "spl", "bpl", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"}
+					// 					reg1byteL := []string{"al", "cl", "dl", "bl", "sil", "dil", "spl", "bpl", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"}
+					// 					// If ie. "rax" is present, filter out "eax", "ax", "ah" and "al"
+					// 					for i, r8b := range reg8byte {
+					// 						if hasKey(registers, r8b) {
+					// 							delete(registers, reg4byte[i])
+					// 							delete(registers, reg2byte[i])
+					// 							delete(registers, reg1byteH[i])
+					// 							delete(registers, reg1byteL[i])
+					// 						}
+					// 					}
+					// 					// If ie. "eax" is present, filter out "ax", "ah" and "al"
+					// 					for i, r4b := range reg4byte {
+					// 						if hasKey(registers, r4b) {
+					// 							delete(registers, reg2byte[i])
+					// 							delete(registers, reg1byteH[i])
+					// 							delete(registers, reg1byteL[i])
+					// 						}
+					// 					}
+					// 					// If ie. "ax" is present, filter out "ah" and "al"
+					// 					for i, r2b := range reg2byte {
+					// 						if hasKey(registers, r2b) {
+					// 							delete(registers, reg1byteH[i])
+					// 							delete(registers, reg1byteL[i])
+					// 						}
+					// 					}
+
+					// Filter out "eflags" since it's covered by the status in the lower right corner
+					delete(registers, "eflags")
+
 					return registers, nil
 				}
 			}
