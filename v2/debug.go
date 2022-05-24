@@ -36,6 +36,7 @@ var (
 	programRunning           bool
 	prevFlags                []string
 	longInstructionPaneWidth int // should the instruction pane be extra wide, if so, how wide?
+	previousRegisterValues   map[string]string
 )
 
 // DebugActivateBreakpoint sends break-insert to gdb together with the breakpoint in e.breakpoint, if available
@@ -473,49 +474,112 @@ func (e *Editor) DebugChangedRegisterMap() (map[string]string, error) {
 								return nil, errors.New("could not convert \"value\" interface to string")
 							}
 							registerName := names[registerNumber]
-							registers[registerName] = value
+							if hasKey(previousRegisterValues, registerName) && previousRegisterValues[registerName] == value {
+								// don't add
+							} else {
+								registers[registerName] = value
+							}
 							//flogf(gdbLogFile, "[gdb] data-list-register-values: %s %s\n", registerName, value)
 						}
 					}
 
-					// TODO:
-					// If rax, eax, ax and al all changed, then it depends on the value which registers should be shown.
-					// For instance, if al changed but not ah, not the high bytes of eax and not the high bytes of rax,
-					// then only al should be shown. But if the highest bit of rax is changed, only rax should be shown.
-					// This requires the values of the registers to be kept somewhere, then compare.
+					reg8byte := []string{"rax", "rcx", "rdx", "rbx", "rsi", "rdi", "rsp", "rbp", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"}
+					reg4byte := []string{"eax", "ecx", "edx", "ebx", "esi", "edi", "esp", "ebp", "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d"}
+					reg2byte := []string{"ax", "cx", "dx", "bx", "si", "di", "sp", "bp", "r8w", "r9w", "r10w", "r11w", "r12w", "r13w", "r14w", "r15w"}
+					reg1byteL := []string{"al", "cl", "dl", "bl", "sil", "dil", "spl", "bpl", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"}
+					reg1byteH := []string{"ah", "ch", "dh", "bh", "sil", "dil", "spl", "bpl", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"}
 
-					// 					reg8byte := []string{"rax", "rcx", "rdx", "rbx", "rsi", "rdi", "rsp", "rbp", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"}
-					// 					reg4byte := []string{"eax", "ecx", "edx", "ebx", "esi", "edi", "esp", "ebp", "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d"}
-					// 					reg2byte := []string{"ax", "cx", "dx", "bx", "si", "di", "sp", "bp", "r8w", "r9w", "r10w", "r11w", "r12w", "r13w", "r14w", "r15w"}
-					// 					reg1byteH := []string{"ah", "ch", "dh", "bh", "sil", "dil", "spl", "bpl", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"}
-					// 					reg1byteL := []string{"al", "cl", "dl", "bl", "sil", "dil", "spl", "bpl", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"}
-					// 					// If ie. "rax" is present, filter out "eax", "ax", "ah" and "al"
-					// 					for i, r8b := range reg8byte {
-					// 						if hasKey(registers, r8b) {
-					// 							delete(registers, reg4byte[i])
-					// 							delete(registers, reg2byte[i])
-					// 							delete(registers, reg1byteH[i])
-					// 							delete(registers, reg1byteL[i])
-					// 						}
-					// 					}
-					// 					// If ie. "eax" is present, filter out "ax", "ah" and "al"
-					// 					for i, r4b := range reg4byte {
-					// 						if hasKey(registers, r4b) {
-					// 							delete(registers, reg2byte[i])
-					// 							delete(registers, reg1byteH[i])
-					// 							delete(registers, reg1byteL[i])
-					// 						}
-					// 					}
-					// 					// If ie. "ax" is present, filter out "ah" and "al"
-					// 					for i, r2b := range reg2byte {
-					// 						if hasKey(registers, r2b) {
-					// 							delete(registers, reg1byteH[i])
-					// 							delete(registers, reg1byteL[i])
-					// 						}
-					// 					}
+					allWideRegisters := []string{}
+					for _, x := range reg8byte {
+						allWideRegisters = append(allWideRegisters, x)
+					}
+					for _, x := range reg4byte {
+						allWideRegisters = append(allWideRegisters, x)
+					}
+					for _, x := range reg2byte {
+						allWideRegisters = append(allWideRegisters, x)
+					}
+
+					// TODO: Highlight the changed part of the register?
+
+					// If only the right half of ie. rax has changed, delete rax from the list
+					// If only the right half of ie. eax has changed, delete eax from the list
+					// If only the right half of ie. ax has changed, delete ax from the list
+					// But always keep al and ah
+					for _, regName := range allWideRegisters {
+						if hasKey(registers, regName) && previousRegisterValues != nil && hasKey(previousRegisterValues, regName) {
+							byteLength := 1
+							if hasS(reg8byte, regName) {
+								byteLength = 12
+							} else if hasS(reg4byte, regName) {
+								byteLength = 8
+							} else if hasS(reg2byte, regName) {
+								byteLength = 4
+							}
+
+							oldValue := strings.TrimPrefix(previousRegisterValues[regName], "0x")
+							newValue := strings.TrimPrefix(registers[regName], "0x")
+
+							for len(oldValue) < byteLength {
+								oldValue = "0" + oldValue
+							}
+							for len(newValue) < byteLength {
+								newValue = "0" + newValue
+							}
+
+							equalCountFromLeft := 0
+							for i := 0; i < byteLength; i++ {
+								if []rune(newValue)[i] == []rune(oldValue)[i] {
+									equalCountFromLeft++
+								} else {
+									break // the run of changes stopped here
+								}
+							}
+
+							halfLength := byteLength / 2
+
+							logf("from %s to %s, equalCountFromLeft %d, delete? %v\n", oldValue, newValue, equalCountFromLeft, equalCountFromLeft >= halfLength)
+
+							if equalCountFromLeft >= halfLength {
+								delete(registers, regName)
+							}
+						} else if hasKey(registers, regName) && previousRegisterValues != nil && !hasKey(previousRegisterValues, regName) {
+							// Removing sub-registers goes here
+							// If ie. "rax" is present, filter out "eax", "ax", "ah" and "al"
+							for i, r8b := range reg8byte {
+								if hasKey(registers, r8b) {
+									delete(registers, reg4byte[i])
+									delete(registers, reg2byte[i])
+									delete(registers, reg1byteL[i])
+									delete(registers, reg1byteH[i])
+								}
+							}
+							// If ie. "eax" is present, filter out "ax", "ah" and "al"
+							for i, r4b := range reg4byte {
+								if hasKey(registers, r4b) {
+									delete(registers, reg2byte[i])
+									delete(registers, reg1byteL[i])
+									delete(registers, reg1byteH[i])
+								}
+							}
+							// If ie. "ax" is present, filter out "ah" and "al"
+							for i, r2b := range reg2byte {
+								if hasKey(registers, r2b) {
+									delete(registers, reg1byteL[i])
+									delete(registers, reg1byteH[i])
+								}
+							}
+						}
+					}
 
 					// Filter out "eflags" since it's covered by the status in the lower right corner
 					delete(registers, "eflags")
+
+					// Make a copy of all changed registers and values and store them in previousRegisterValues
+					previousRegisterValues = make(map[string]string, len(registers))
+					for k, v := range registers {
+						previousRegisterValues[k] = v
+					}
 
 					return registers, nil
 				}
