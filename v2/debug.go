@@ -489,85 +489,87 @@ func (e *Editor) DebugChangedRegisterMap() (map[string]string, error) {
 					reg1byteL := []string{"al", "cl", "dl", "bl", "sil", "dil", "spl", "bpl", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"}
 					reg1byteH := []string{"ah", "ch", "dh", "bh", "sil", "dil", "spl", "bpl", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"}
 
-					allWideRegisters := []string{}
-					for _, x := range reg8byte {
-						allWideRegisters = append(allWideRegisters, x)
-					}
-					for _, x := range reg4byte {
-						allWideRegisters = append(allWideRegisters, x)
-					}
-					for _, x := range reg2byte {
-						allWideRegisters = append(allWideRegisters, x)
-					}
-
-					// TODO: Highlight the changed part of the register?
-
 					// If only the right half of ie. rax has changed, delete rax from the list
 					// If only the right half of ie. eax has changed, delete eax from the list
 					// If only the right half of ie. ax has changed, delete ax from the list
 					// But always keep al and ah
-					for _, regName := range allWideRegisters {
-						if hasKey(registers, regName) && previousRegisterValues != nil && hasKey(previousRegisterValues, regName) {
-							byteLength := 1
-							if hasS(reg8byte, regName) {
-								byteLength = 12
-							} else if hasS(reg4byte, regName) {
-								byteLength = 8
-							} else if hasS(reg2byte, regName) {
-								byteLength = 4
-							}
 
-							oldValue := strings.TrimPrefix(previousRegisterValues[regName], "0x")
-							newValue := strings.TrimPrefix(registers[regName], "0x")
+					// TODO: Think this throught a bit better!
 
-							for len(oldValue) < byteLength {
-								oldValue = "0" + oldValue
-							}
-							for len(newValue) < byteLength {
-								newValue = "0" + newValue
-							}
+					filterRegisters := e.debugShowRegisters != largeRegisterWindow
+					if filterRegisters {
+						for _, regSlice := range [][]string{reg8byte, reg4byte, reg2byte} {
 
-							equalCountFromLeft := 0
-							for i := 0; i < byteLength; i++ {
-								if []rune(newValue)[i] == []rune(oldValue)[i] {
-									equalCountFromLeft++
-								} else {
-									break // the run of changes stopped here
+							for _, regName := range regSlice {
+								if !hasKey(registers, regName) {
+									continue
 								}
-							}
 
-							halfLength := byteLength / 2
+								if previousRegisterValues != nil && !hasKey(previousRegisterValues, regName) {
+									// Removing sub-registers goes here
+									// If ie. "rax" is present, filter out "eax", "ax", "ah" and "al"
+									for i, r8b := range reg8byte {
+										if hasKey(registers, r8b) {
+											delete(registers, reg4byte[i])
+											delete(registers, reg2byte[i])
+											delete(registers, reg1byteL[i])
+											delete(registers, reg1byteH[i])
+										}
+									}
+									// If ie. "eax" is present, filter out "ax", "ah" and "al"
+									for i, r4b := range reg4byte {
+										if hasKey(registers, r4b) {
+											delete(registers, reg2byte[i])
+											delete(registers, reg1byteL[i])
+											delete(registers, reg1byteH[i])
+										}
+									}
+									// If ie. "ax" is present, filter out "ah" and "al"
+									for i, r2b := range reg2byte {
+										if hasKey(registers, r2b) {
+											delete(registers, reg1byteL[i])
+											delete(registers, reg1byteH[i])
+										}
+									}
+									break
+								}
 
-							logf("from %s to %s, equalCountFromLeft %d, delete? %v\n", oldValue, newValue, equalCountFromLeft, equalCountFromLeft >= halfLength)
+								hexLength := 1
+								if hasS(reg8byte, regName) {
+									hexLength = 16
+								} else if hasS(reg4byte, regName) {
+									hexLength = 8
+								} else if hasS(reg2byte, regName) {
+									hexLength = 4
+								}
 
-							if equalCountFromLeft >= halfLength {
-								delete(registers, regName)
-							}
-						} else if hasKey(registers, regName) && previousRegisterValues != nil && !hasKey(previousRegisterValues, regName) {
-							// Removing sub-registers goes here
-							// If ie. "rax" is present, filter out "eax", "ax", "ah" and "al"
-							for i, r8b := range reg8byte {
-								if hasKey(registers, r8b) {
-									delete(registers, reg4byte[i])
-									delete(registers, reg2byte[i])
-									delete(registers, reg1byteL[i])
-									delete(registers, reg1byteH[i])
+								oldValue := strings.TrimPrefix(previousRegisterValues[regName], "0x")
+								newValue := strings.TrimPrefix(registers[regName], "0x")
+
+								for len(oldValue) < hexLength {
+									oldValue = "0" + oldValue
 								}
-							}
-							// If ie. "eax" is present, filter out "ax", "ah" and "al"
-							for i, r4b := range reg4byte {
-								if hasKey(registers, r4b) {
-									delete(registers, reg2byte[i])
-									delete(registers, reg1byteL[i])
-									delete(registers, reg1byteH[i])
+								for len(newValue) < hexLength {
+									newValue = "0" + newValue
 								}
-							}
-							// If ie. "ax" is present, filter out "ah" and "al"
-							for i, r2b := range reg2byte {
-								if hasKey(registers, r2b) {
-									delete(registers, reg1byteL[i])
-									delete(registers, reg1byteH[i])
+
+								registers[regName] = "0x" + newValue
+
+								equalCountFromLeft := 0
+								for i := 0; i < hexLength; i++ {
+									if []rune(newValue)[i] == []rune(oldValue)[i] {
+										equalCountFromLeft++
+									} else {
+										break // the run of changes stopped here
+									}
 								}
+
+								halfHexLength := hexLength / 2
+
+								if equalCountFromLeft >= halfHexLength {
+									delete(registers, regName)
+								}
+
 							}
 						}
 					}
