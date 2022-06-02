@@ -36,7 +36,6 @@ var (
 	programRunning           bool
 	prevFlags                []string
 	longInstructionPaneWidth int // should the instruction pane be extra wide, if so, how wide?
-	previousRegisterValues   map[string]string
 )
 
 // DebugActivateBreakpoint sends break-insert to gdb together with the breakpoint in e.breakpoint, if available
@@ -474,11 +473,7 @@ func (e *Editor) DebugChangedRegisterMap() (map[string]string, error) {
 								return nil, errors.New("could not convert \"value\" interface to string")
 							}
 							registerName := names[registerNumber]
-							if hasKey(previousRegisterValues, registerName) && previousRegisterValues[registerName] == value {
-								// don't add
-							} else {
-								registers[registerName] = value
-							}
+							registers[registerName] = value
 							//flogf(gdbLogFile, "[gdb] data-list-register-values: %s %s\n", registerName, value)
 						}
 					}
@@ -505,69 +500,30 @@ func (e *Editor) DebugChangedRegisterMap() (map[string]string, error) {
 									continue
 								}
 
-								if previousRegisterValues != nil && !hasKey(previousRegisterValues, regName) {
-									// Removing sub-registers goes here
-									// If ie. "rax" is present, filter out "eax", "ax", "ah" and "al"
-									for i, r8b := range reg8byte {
-										if hasKey(registers, r8b) {
-											delete(registers, reg4byte[i])
-											delete(registers, reg2byte[i])
-											delete(registers, reg1byteL[i])
-											delete(registers, reg1byteH[i])
-										}
-									}
-									// If ie. "eax" is present, filter out "ax", "ah" and "al"
-									for i, r4b := range reg4byte {
-										if hasKey(registers, r4b) {
-											delete(registers, reg2byte[i])
-											delete(registers, reg1byteL[i])
-											delete(registers, reg1byteH[i])
-										}
-									}
-									// If ie. "ax" is present, filter out "ah" and "al"
-									for i, r2b := range reg2byte {
-										if hasKey(registers, r2b) {
-											delete(registers, reg1byteL[i])
-											delete(registers, reg1byteH[i])
-										}
-									}
-									break
-								}
-
-								hexLength := 1
-								if hasS(reg8byte, regName) {
-									hexLength = 16
-								} else if hasS(reg4byte, regName) {
-									hexLength = 8
-								} else if hasS(reg2byte, regName) {
-									hexLength = 4
-								}
-
-								oldValue := strings.TrimPrefix(previousRegisterValues[regName], "0x")
-								newValue := strings.TrimPrefix(registers[regName], "0x")
-
-								for len(oldValue) < hexLength {
-									oldValue = "0" + oldValue
-								}
-								for len(newValue) < hexLength {
-									newValue = "0" + newValue
-								}
-
-								registers[regName] = "0x" + newValue
-
-								equalCountFromLeft := 0
-								for i := 0; i < hexLength; i++ {
-									if []rune(newValue)[i] == []rune(oldValue)[i] {
-										equalCountFromLeft++
-									} else {
-										break // the run of changes stopped here
+								// Removing sub-registers goes here
+								// If ie. "rax" is present, filter out "eax", "ax", "ah" and "al"
+								for i, r8b := range reg8byte {
+									if hasKey(registers, r8b) {
+										delete(registers, reg4byte[i])
+										delete(registers, reg2byte[i])
+										delete(registers, reg1byteL[i])
+										delete(registers, reg1byteH[i])
 									}
 								}
-
-								halfHexLength := hexLength / 2
-
-								if equalCountFromLeft >= halfHexLength {
-									delete(registers, regName)
+								// If ie. "eax" is present, filter out "ax", "ah" and "al"
+								for i, r4b := range reg4byte {
+									if hasKey(registers, r4b) {
+										delete(registers, reg2byte[i])
+										delete(registers, reg1byteL[i])
+										delete(registers, reg1byteH[i])
+									}
+								}
+								// If ie. "ax" is present, filter out "ah" and "al"
+								for i, r2b := range reg2byte {
+									if hasKey(registers, r2b) {
+										delete(registers, reg1byteL[i])
+										delete(registers, reg1byteH[i])
+									}
 								}
 
 							}
@@ -576,12 +532,6 @@ func (e *Editor) DebugChangedRegisterMap() (map[string]string, error) {
 
 					// Filter out "eflags" since it's covered by the status in the lower right corner
 					delete(registers, "eflags")
-
-					// Make a copy of all changed registers and values and store them in previousRegisterValues
-					previousRegisterValues = make(map[string]string, len(registers))
-					for k, v := range registers {
-						previousRegisterValues[k] = v
-					}
 
 					return registers, nil
 				}
