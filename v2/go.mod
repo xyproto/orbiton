@@ -12,7 +12,7 @@ require (
 	github.com/xyproto/guessica v1.1.0
 	github.com/xyproto/mode v0.4.3
 	github.com/xyproto/stringpainter v1.0.0
-	github.com/xyproto/syntax v1.10.5
+	github.com/xyproto/syntax v1.10.6-0.20220605211022-db58eb5e589f
 	github.com/xyproto/termtitle v1.5.0
 	github.com/xyproto/textoutput v1.13.0
 	github.com/xyproto/vt100 v1.10.2

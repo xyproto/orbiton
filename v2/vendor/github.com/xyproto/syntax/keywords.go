@@ -132,6 +132,7 @@ var Keywords = map[string]struct{}{
 	"reinterpret_cast": {},
 	"require":          {},
 	"rescue":           {},
+	"ret":              {},
 	"retry":            {},
 	"return":           {},
 	"self":             {},
@@ -186,5 +187,4 @@ var Keywords = map[string]struct{}{
 	"#include":         {},
 	"#else":            {},
 	"#pragma":          {},
-	"ret":              {},
 }
