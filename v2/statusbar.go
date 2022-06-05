@@ -111,6 +111,11 @@ func (sb *StatusBar) SetErrorMessage(msg string) {
 	mut.Unlock()
 }
 
+// SetError is for setting the error message
+func (sb *StatusBar) SetError(err error) {
+	sb.SetErrorMessage(err.Error())
+}
+
 // Clear will set the message to nothing and then use the editor contents
 // to remove the status bar field at the bottom of the editor.
 func (sb *StatusBar) Clear(c *vt100.Canvas) error {
