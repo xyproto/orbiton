@@ -183,14 +183,14 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				addSpaceAfterReturn = true
 			},
 			func() { // copy file to clipboard
-				status.Clear(c)
 				// Write all contents to the clipboard
 				if err := clipboard.WriteAll(e.String()); err != nil {
+					status.Clear(c)
 					status.SetError(err)
+					status.Show(c, e)
 				} else {
-					status.SetMessage("Copied all text to the clipboard")
+					status.ShowAfterRedraw("Copied all text")
 				}
-				status.Show(c, e)
 			},
 		},
 	)
@@ -369,64 +369,40 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		})
 	}
 
-	// Add the "Use the default theme" menu item text and menu function
-	actions.Add("Use the default theme", func() {
-		e.setDefaultTheme()
-		e.syntaxHighlight = true
-
-		drawLines := true
-		resized := false
-		e.FullResetRedraw(c, status, drawLines, resized)
-	})
-
-	// Add the option to change the colors, for non-light themes (fg != black)
-	if !e.Light && !envNoColor { // Not a light theme and NO_COLOR is not set
-
-		// Add the "Red/Black theme" menu item text and menu function
-		actions.Add("Red/black theme", func() {
-			e.setRedBlackTheme()
-			e.syntaxHighlight = true
-
-			drawLines := true
-			resized := false
-			e.FullResetRedraw(c, status, drawLines, resized)
-
-		})
-
-		// Add the "Light Theme" menu item text and menu function
-		actions.Add("Light background theme", func() {
-			e.setLightTheme()
-			e.syntaxHighlight = true
-			drawLines := true
-			resized := false
-			e.FullResetRedraw(c, status, drawLines, resized)
-		})
-
-		// Add the Amber, Green and Blue theme options
-		colors := []vt100.AttributeColor{
-			vt100.Yellow,
-			vt100.LightGreen,
-			vt100.LightBlue,
-		}
-		colorText := []string{
-			"Amber",
-			"Green",
-			"Blue",
-		}
-
-		// Add menu items and menu functions for changing the text color
-		// while also turning off syntax highlighting.
-		for i, color := range colors {
-			color := color // per-loop copy of the color variable, since it's closed over
-			actions.Add(colorText[i]+" theme", func() {
-				e.Foreground = color
+	// Unless NO_COLOR is set to 1, add an option for selecting a theme
+	if !envNoColor {
+		actions.Add("Change theme", func() {
+			menuChoices := []string{"Default", "Light background", "Red/black", "Amber", "Green", "Blue"}
+			useMenuIndex := 0
+			switch e.Menu(status, tty, "Select color theme", menuChoices, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes) {
+			case 0: // default
+				e.setDefaultTheme()
+				e.syntaxHighlight = true
+			case 1: // light background
+				e.setLightTheme()
+				e.syntaxHighlight = true
+			case 2: // red and black
+				e.setRedBlackTheme()
+				e.syntaxHighlight = true
+			case 3: // amber
+				e.Foreground = vt100.Yellow
 				e.Background = vt100.BackgroundDefault // black background
 				e.syntaxHighlight = false
-				drawLines := true
-				resized := false
-				e.FullResetRedraw(c, status, drawLines, resized)
-			})
-		}
+			case 4: // green
+				e.Foreground = vt100.LightGreen
+				e.Background = vt100.BackgroundDefault // black background
+				e.syntaxHighlight = false
+			case 5: // blue
+				e.Foreground = vt100.LightBlue
+				e.Background = vt100.BackgroundDefault // black background
+				e.syntaxHighlight = false
+			default:
+				return
+			}
+			drawLines := true
+			resized := false
+			e.FullResetRedraw(c, status, drawLines, resized)
+		})
 	}
 
 	actions.Add("Stop parent and quit without saving", func() {
