@@ -186,7 +186,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 				if expression, ok := e.UserInput(c, tty, status, "Variable name to watch"); ok {
 					if _, err := e.AddWatch(expression); err != nil {
 						status.ClearAll(c)
-						status.SetErrorMessage(err.Error())
+						status.SetError(err)
 						status.ShowNoTimeout(c, e)
 						break
 					}
@@ -268,7 +268,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 			if e.changed {
 				if err := e.Save(c, tty); err != nil {
 					status.ClearAll(c)
-					status.SetErrorMessage(err.Error())
+					status.SetError(err)
 					status.Show(c, e)
 					break
 				}
@@ -355,7 +355,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 			status.ClearAll(c)
 			if err != nil && err != errNoSuitableBuildCommand {
 				// Error while building
-				status.SetErrorMessage(err.Error())
+				status.SetError(err)
 				status.ShowNoTimeout(c, e)
 				break
 			}
@@ -364,7 +364,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 				//status.ClearAll(c)
 				if e.debugMode {
 					// Both in debug mode and can not find a command to build this file with.
-					status.SetErrorMessage(err.Error())
+					status.SetError(err)
 					status.ShowNoTimeout(c, e)
 					break
 				}
@@ -386,7 +386,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 			if e.debugMode && e.gdb == nil {
 				if err := e.DebugStartSession(c, tty, status, outputExecutable); err != nil {
 					status.ClearAll(c)
-					status.SetErrorMessage(err.Error())
+					status.SetError(err)
 					status.ShowNoTimeout(c, e)
 					e.redrawCursor = true
 				}
@@ -407,7 +407,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 			if e.changed {
 				if err := e.Save(c, tty); err != nil {
 					status.ClearAll(c)
-					status.SetErrorMessage(err.Error())
+					status.SetError(err)
 					status.Show(c, e)
 					break
 				}
@@ -691,7 +691,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 					status.ClearAll(c)
 					if err != nil && err != errNoSuitableBuildCommand {
 						// Error while building
-						status.SetErrorMessage(err.Error())
+						status.SetError(err)
 						status.ShowNoTimeout(c, e)
 						e.debugMode = false
 						e.redrawCursor = true
@@ -703,7 +703,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 						//status.ClearAll(c)
 						if e.debugMode {
 							// Both in debug mode and can not find a command to build this file with.
-							status.SetErrorMessage(err.Error())
+							status.SetError(err)
 							status.ShowNoTimeout(c, e)
 							e.debugMode = false
 							e.redrawCursor = true
@@ -723,7 +723,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 					// Start debugging
 					if err := e.DebugStartSession(c, tty, status, outputExecutable); err != nil {
 						status.ClearAll(c)
-						status.SetErrorMessage(err.Error())
+						status.SetError(err)
 						status.ShowNoTimeout(c, e)
 						e.redrawCursor = true
 					}
@@ -1588,7 +1588,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 				status.Clear(c)
 				if err != nil {
 					// status.SetErrorMessage("Could not copy text through the portal.")
-					status.SetErrorMessage(err.Error())
+					status.SetError(err)
 					ClosePortal(e)
 				} else {
 					status.SetMessage(fmt.Sprintf("Using portal at %s\n", portal))
@@ -1748,7 +1748,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 			} else {
 				portal, err := e.NewPortal()
 				if err != nil {
-					status.SetErrorMessage(err.Error())
+					status.SetError(err)
 					status.Show(c, e)
 					break
 				}
@@ -1757,7 +1757,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 					e.sameFilePortal = portal
 				}
 				if err := portal.Save(); err != nil {
-					status.SetErrorMessage(err.Error())
+					status.SetError(err)
 					status.Show(c, e)
 					break
 				}
@@ -1771,7 +1771,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 					e.breakpoint = e.pos.Copy()
 					_, err := e.DebugActivateBreakpoint(filepath.Base(e.filename))
 					if err != nil {
-						status.SetErrorMessage(err.Error())
+						status.SetError(err)
 						break
 					}
 					s := "Placed breakpoint at line " + e.LineNumber().String()

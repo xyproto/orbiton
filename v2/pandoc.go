@@ -74,7 +74,7 @@ func (e *Editor) exportPandoc(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar
 	if err != nil {
 		e.filename = oldFilename
 		status.ClearAll(c)
-		status.SetErrorMessage(err.Error())
+		status.SetError(err)
 		status.Show(c, e)
 		return err
 	}

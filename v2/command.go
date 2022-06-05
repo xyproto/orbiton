@@ -27,7 +27,7 @@ var (
 func (e *Editor) UserSave(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
 	// Save the file
 	if err := e.Save(c, tty); err != nil {
-		status.SetErrorMessage(err.Error())
+		status.SetError(err)
 		status.Show(c, e)
 		return
 	}
@@ -172,7 +172,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				editedFileDir := filepath.Dir(e.filename)
 				if err := e.InsertFile(c, filepath.Join(editedFileDir, insertFilename)); err != nil {
 					status.Clear(c)
-					status.SetErrorMessage(err.Error())
+					status.SetError(err)
 					status.Show(c, e)
 				}
 			},
@@ -224,7 +224,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				e.filename = oldFilename
 			}
 			if err != nil {
-				status.SetErrorMessage(err.Error())
+				status.SetError(err)
 				status.Show(c, e)
 				return
 			}
@@ -359,7 +359,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				_, err := e.BuildOrExport(c, tty, status, e.filename, false)
 				// Could an action be performed for this file extension?
 				if err != nil {
-					status.SetErrorMessage(err.Error())
+					status.SetError(err)
 				}
 				status.ShowNoTimeout(c, e)
 				pandocMutex.Unlock()
