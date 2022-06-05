@@ -135,7 +135,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			"Sort strings on the current line",
 			"Insert \"" + insertFilename + "\" at the current line",
 			"Insert the current date", // in the RFC 3339 format
-			"Copy file to clipboard",
+			"Copy text to clipboard",
 		},
 		[]func(){
 			func() { // save and quit
@@ -183,12 +183,14 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				addSpaceAfterReturn = true
 			},
 			func() { // copy file to clipboard
+				status.Clear(c)
 				// Write all contents to the clipboard
 				if err := clipboard.WriteAll(e.String()); err != nil {
-					status.Clear(c)
 					status.SetError(err)
-					status.Show(c, e)
+				} else {
+					status.SetMessage("Copied all text to the clipboard")
 				}
+				status.Show(c, e)
 			},
 		},
 	)
