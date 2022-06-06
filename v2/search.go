@@ -332,11 +332,11 @@ AGAIN:
 			s = "func "
 		case mode.Kotlin:
 			s = "fun "
-		case mode.JavaScript, mode.Lua, mode.Shell, mode.TypeScript:
+		case mode.Jakt, mode.JavaScript, mode.Lua, mode.Shell, mode.TypeScript:
 			s = "function "
 		case mode.Odin:
 			s = "proc() "
-		case mode.Rust, mode.V, mode.Zig:
+		case mode.Hare, mode.Rust, mode.V, mode.Zig:
 			s = "fn "
 		default:
 			s = "main"

@@ -41,13 +41,13 @@ github.com/xyproto/env
 # github.com/xyproto/guessica v1.1.0
 ## explicit; go 1.14
 github.com/xyproto/guessica
-# github.com/xyproto/mode v0.4.3
+# github.com/xyproto/mode v0.4.4
 ## explicit; go 1.14
 github.com/xyproto/mode
 # github.com/xyproto/stringpainter v1.0.0
 ## explicit; go 1.13
 github.com/xyproto/stringpainter
-# github.com/xyproto/syntax v1.10.6-0.20220605211022-db58eb5e589f
+# github.com/xyproto/syntax v1.10.6
 ## explicit; go 1.14
 github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.5.0

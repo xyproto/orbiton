@@ -57,6 +57,10 @@ func Detect(filename string) Mode {
 			mode = Go
 		case ".odin":
 			mode = Odin
+		case ".ha":
+			mode = Hare
+		case ".jakt":
+			mode = Jakt
 		case ".hs", ".hts":
 			mode = Haskell
 		case ".agda":

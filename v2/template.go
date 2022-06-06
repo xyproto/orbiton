@@ -64,6 +64,11 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		4,
 		9,
 	},
+	mode.Jakt: {
+		"// JAKT",
+		1,
+		1,
+	},
 	mode.Java: {
 		"class Greeter {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}\n",
 		20,
@@ -72,6 +77,11 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 	mode.JavaScript: {
 		"console.log('Hello, World!');\n",
 		13,
+		1,
+	},
+	mode.Hare: {
+		"// HARE",
+		1,
 		1,
 	},
 	mode.Haskell: {

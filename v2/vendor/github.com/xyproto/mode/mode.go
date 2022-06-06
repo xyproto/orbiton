@@ -43,6 +43,8 @@ const (
 	Ada            // Ada
 	HTML           // HTML
 	Odin           // Odin
+	Hare           // Hare
+	Jakt           // Jakt
 	XML            // XML
 	PolicyLanguage // SE Linux configuration files
 	Nroff          // editing man pages
@@ -140,6 +142,10 @@ func (mode Mode) String() string {
 		return "HTML"
 	case Odin:
 		return "Odin"
+	case Hare:
+		return "Hare"
+	case Jakt:
+		return "Jakt"
 	case Perl:
 		return "Perl"
 	case XML:

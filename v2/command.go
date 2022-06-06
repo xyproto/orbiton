@@ -136,7 +136,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			"Sort strings on the current line",
 			"Insert \"" + insertFilename + "\" at the current line",
 			"Insert the current date", // in the RFC 3339 format
-			"Copy text to clipboard",
 		},
 		[]func(){
 			func() { // save and quit
@@ -182,16 +181,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				dateString := time.Now().Format(time.RFC3339)[:10]
 				e.InsertString(c, dateString)
 				addSpaceAfterReturn = true
-			},
-			func() { // copy file to clipboard
-				// Write all contents to the clipboard
-				if err := clipboard.WriteAll(e.String()); err != nil {
-					status.Clear(c)
-					status.SetError(err)
-					status.Show(c, e)
-				} else {
-					status.ShowAfterRedraw("Copied all text")
-				}
 			},
 		},
 	)
@@ -260,6 +249,18 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			}
 		})
 	}
+
+	// Copy all the text to the clipboard, if possible
+	actions.Add("Copy text to clipboard", func() { // copy file to clipboard
+		// Write all contents to the clipboard
+		if err := clipboard.WriteAll(e.String()); err != nil {
+			status.Clear(c)
+			status.SetError(err)
+			status.Show(c, e)
+		} else {
+			status.ShowAfterRedraw("Copied all text")
+		}
+	})
 
 	// Debug mode on/off, if gdb is found and the mode is tested
 	if foundGDB && e.usingGDBMightWork() {
