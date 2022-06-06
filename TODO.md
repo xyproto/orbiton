@@ -7,6 +7,7 @@
 - [ ] When switching register pane layout with `ctrl-p`, save the contents of the old pane and use that.
 - [ ] Make it possible to send custom commands to `gdb` with `ctrl-g` when in debug mode.
 - [ ] Make it possible to step through Go programs as well.
+- [ ] Buld Hare, Jakt and Prolog programs with ctrl-space.
 
 ## Saving and loading
 
@@ -112,9 +113,7 @@
 ## Command menu
 
 - [ ] Command menu option for deleting the rest of the file.
-- [ ] A menu option for recording simple vim-style keypresses, then a keypress for playing it back.
 - [ ] Add word wrap with a custom line length to the command menu.
-- [ ] Insert a custom file from the command menu.
 - [ ] Add one or more of these commands: regex search, go to definition, rename symbol, find references and disassembly.
 - [ ] Make it easy to make recordings of the editing process.
 
@@ -126,7 +125,7 @@
 
 - [ ] Let rendering with `pandoc` have a spinner, since it can take a little while.
 - [ ] Let `guessica` also set `pkgrel=1` if there was a new version.
-- [ ] Embed fstabfmt.
+- [ ] Embed `fstabfmt`.
 - [ ] Extract the functionality for searching a MessagePack file to a `mpgrep` utility, that has a `-B` flag (like `grep`).
 - [ ] Draw inspiration from [kilo](https://github.com/antirez/kilo).
 
