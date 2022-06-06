@@ -65,9 +65,9 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		9,
 	},
 	mode.Jakt: {
-		"// JAKT",
-		1,
-		1,
+		"function main() {\n    println(\"Hello, World!\")\n}\n",
+		9,
+		2,
 	},
 	mode.Java: {
 		"class Greeter {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}\n",
@@ -80,9 +80,9 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		1,
 	},
 	mode.Hare: {
-		"// HARE",
-		1,
-		1,
+		"use fmt;\n\nexport fn main() void = {\n	fmt::println(\"Hello, World!\")!;\n};\n",
+		14,
+		2,
 	},
 	mode.Haskell: {
 		"main :: IO ()\nmain = putStrLn \"Hello, World!\"\n",
