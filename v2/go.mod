@@ -14,8 +14,8 @@ require (
 	github.com/xyproto/stringpainter v1.0.0
 	github.com/xyproto/syntax v1.10.6-0.20220605211022-db58eb5e589f
 	github.com/xyproto/termtitle v1.5.0
-	github.com/xyproto/textoutput v1.13.0
-	github.com/xyproto/vt100 v1.10.2
+	github.com/xyproto/textoutput v1.14.0
+	github.com/xyproto/vt100 v1.10.3
 )
 
 require (
