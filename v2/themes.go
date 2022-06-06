@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	envNoColor = env.Bool("NO_COLOR")
-	allThemes  = []string{"Default", "Light background", "Red/black", "Amber", "Green", "Blue", "No color"}
+	envNoColor             = env.Bool("NO_COLOR")
+	allThemes              = []string{"Default", "Light background", "Red/black", "Amber", "Green", "Blue", "No color"}
+	initialLightBackground *bool
 )
 
 // Theme contains iformation about:
@@ -361,8 +362,8 @@ func NewBlueTheme() Theme {
 	return t
 }
 
-// NewNoColorTheme creates a new theme without colors or syntax highlighting
-func NewNoColorTheme() Theme {
+// NewNoColorDarkBackgroundTheme creates a new theme without colors or syntax highlighting
+func NewNoColorDarkBackgroundTheme() Theme {
 	return Theme{
 		Name:                        "No color",
 		Light:                       false,
@@ -441,6 +442,86 @@ func NewNoColorTheme() Theme {
 	}
 }
 
+// NewNoColorLightBackgroundTheme creates a new theme without colors or syntax highlighting
+func NewNoColorLightBackgroundTheme() Theme {
+	return Theme{
+		Name:                        "No color",
+		Light:                       true,
+		Foreground:                  vt100.Default,
+		Background:                  vt100.BackgroundDefault,
+		StatusForeground:            vt100.Black,
+		StatusBackground:            vt100.BackgroundWhite,
+		StatusErrorForeground:       vt100.Black,
+		StatusErrorBackground:       vt100.BackgroundDefault,
+		SearchHighlight:             vt100.Default,
+		MultiLineComment:            vt100.Default,
+		MultiLineString:             vt100.Default,
+		Git:                         vt100.Black,
+		String:                      "",
+		Keyword:                     "",
+		Comment:                     "",
+		Type:                        "",
+		Literal:                     "",
+		Punctuation:                 "",
+		Plaintext:                   "",
+		Tag:                         "",
+		TextTag:                     "",
+		TextAttrName:                "",
+		TextAttrValue:               "",
+		Decimal:                     "",
+		AndOr:                       "",
+		Dollar:                      "",
+		Star:                        "",
+		Class:                       "",
+		Private:                     "",
+		Protected:                   "",
+		Public:                      "",
+		Whitespace:                  "",
+		AssemblyEnd:                 "",
+		Mut:                         "",
+		RainbowParenColors:          []vt100.AttributeColor{vt100.Gray},
+		MarkdownTextColor:           vt100.Default,
+		HeaderBulletColor:           vt100.Default,
+		HeaderTextColor:             vt100.Default,
+		ListBulletColor:             vt100.Default,
+		ListTextColor:               vt100.Default,
+		ListCodeColor:               vt100.Default,
+		CodeColor:                   vt100.Default,
+		CodeBlockColor:              vt100.Default,
+		ImageColor:                  vt100.Default,
+		LinkColor:                   vt100.Default,
+		QuoteColor:                  vt100.Default,
+		QuoteTextColor:              vt100.Default,
+		HTMLColor:                   vt100.Default,
+		CommentColor:                vt100.Default,
+		BoldColor:                   vt100.Default,
+		ItalicsColor:                vt100.Default,
+		StrikeColor:                 vt100.Default,
+		TableColor:                  vt100.Default,
+		CheckboxColor:               vt100.Default,
+		XColor:                      vt100.Black,
+		TableBackground:             vt100.BackgroundDefault,
+		UnmatchedParenColor:         vt100.Black,
+		MenuTitleColor:              vt100.Black,
+		MenuArrowColor:              vt100.Black,
+		MenuTextColor:               vt100.Gray,
+		MenuHighlightColor:          vt100.Black,
+		MenuSelectedColor:           vt100.White,
+		ManSectionColor:             vt100.Black,
+		ManSynopsisColor:            vt100.Black,
+		BoxTextColor:                vt100.White,
+		BoxBackground:               vt100.BackgroundGray,
+		BoxHighlight:                vt100.White,
+		DebugRunningBackground:      vt100.BackgroundGray,
+		DebugStoppedBackground:      vt100.BackgroundGray,
+		DebugRegistersBackground:    vt100.BackgroundGray,
+		DebugOutputBackground:       vt100.BackgroundGray,
+		DebugInstructionsForeground: vt100.White,
+		DebugInstructionsBackground: vt100.BackgroundGray,
+		BoxUpperEdge:                vt100.White,
+	}
+}
+
 // TextConfig returns a TextConfig struct that can be used for settings
 // the syntax highlighting colors in the public TextConfig variable that is
 // exported from the syntax package.
@@ -477,7 +558,11 @@ func (t Theme) TextConfig() *syntax.TextConfig {
 // Respect the NO_COLOR environment variable. May set e.NoSyntaxHighlight to true.
 func (e *Editor) SetTheme(t Theme) {
 	if envNoColor {
-		t = NewNoColorTheme()
+		if initialLightBackground != nil && *initialLightBackground {
+			t = NewNoColorLightBackgroundTheme()
+		} else {
+			t = NewNoColorDarkBackgroundTheme()
+		}
 		e.syntaxHighlight = false
 	}
 	e.Theme = t
@@ -486,16 +571,28 @@ func (e *Editor) SetTheme(t Theme) {
 
 // setDefaultTheme sets the default colors
 func (e *Editor) setDefaultTheme() {
+	if initialLightBackground == nil {
+		b := false
+		initialLightBackground = &b
+	}
 	e.SetTheme(NewDefaultTheme())
 }
 
 // setLightTheme sets the light theme suitable for xterm
 func (e *Editor) setLightTheme() {
+	if initialLightBackground == nil {
+		b := true
+		initialLightBackground = &b
+	}
 	e.SetTheme(NewLightTheme())
 }
 
 // setRedBlackTheme sets a red/black/gray theme
 func (e *Editor) setRedBlackTheme() {
+	if initialLightBackground == nil {
+		b := false
+		initialLightBackground = &b
+	}
 	e.SetTheme(NewRedBlackTheme())
 }
 

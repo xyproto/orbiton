@@ -195,7 +195,7 @@ Set NO_COLOR=1 to disable colors.
 	theme := NewDefaultTheme()
 	syntaxHighlight := true
 	if envNoColor {
-		theme = NewNoColorTheme()
+		theme = NewNoColorDarkBackgroundTheme()
 		syntaxHighlight = false
 	} else {
 		// Check if the executable starts with "r" or "l"

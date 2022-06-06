@@ -21,6 +21,7 @@ import (
 var (
 	lastCommandFile = filepath.Join(userCacheDir, "o", "last_command.sh")
 	foundGDB        = which("gdb") != ""
+	changedTheme    bool // has the theme been changed manually after the editor was started?
 )
 
 // UserSave saves the file and the location history
@@ -369,7 +370,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		})
 	}
 
-	if !envNoColor {
+	if !envNoColor || changedTheme {
 		// Add an option for selecting a theme
 		actions.Add("Change theme", func() {
 			menuChoices := allThemes
@@ -384,29 +385,36 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				envNoColor = false
 				e.setDefaultTheme()
 				e.syntaxHighlight = true
+				changedTheme = true
 			case 1: // light background
 				envNoColor = false
 				e.setLightTheme()
 				e.syntaxHighlight = true
+				changedTheme = true
 			case 2: // red and black
 				envNoColor = false
 				e.setRedBlackTheme()
 				e.syntaxHighlight = true
+				changedTheme = true
 			case 3: // amber
 				envNoColor = false
 				e.setAmberTheme()
 				e.syntaxHighlight = false
+				changedTheme = true
 			case 4: // green
 				envNoColor = false
 				e.setGreenTheme()
 				e.syntaxHighlight = false
+				changedTheme = true
 			case 5: // blue
 				envNoColor = false
 				e.setBlueTheme()
 				e.syntaxHighlight = false
+				changedTheme = true
 			case 6: // no color
 				envNoColor = true
 				e.setDefaultTheme()
+				changedTheme = true
 			default:
 				return
 			}
