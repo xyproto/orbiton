@@ -6,7 +6,10 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-var envNoColor = env.Bool("NO_COLOR")
+var (
+	envNoColor = env.Bool("NO_COLOR")
+	allThemes  = []string{"Default", "Light background", "Red/black", "Amber", "Green", "Blue", "No color"}
+)
 
 // Theme contains iformation about:
 // * If the theme is light or dark
@@ -14,6 +17,7 @@ var envNoColor = env.Bool("NO_COLOR")
 // * If no colors should be used
 // * Colors for all the textual elements
 type Theme struct {
+	Name                        string
 	Decimal                     string
 	Mut                         string
 	AssemblyEnd                 string
@@ -92,6 +96,7 @@ type Theme struct {
 // NewDefaultTheme creates a new default Theme struct
 func NewDefaultTheme() Theme {
 	return Theme{
+		Name:                        "Default",
 		Light:                       false,
 		Foreground:                  vt100.LightBlue,
 		Background:                  vt100.BackgroundDefault,
@@ -172,6 +177,7 @@ func NewDefaultTheme() Theme {
 func NewRedBlackTheme() Theme {
 	// NOTE: Dark gray may not be visible with light terminal emulator themes
 	return Theme{
+		Name:                        "Red/black",
 		Light:                       false,
 		Foreground:                  vt100.LightGray,
 		Background:                  vt100.BackgroundBlack, // Dark gray background, as opposed to vt100.BackgroundDefault
@@ -251,6 +257,7 @@ func NewRedBlackTheme() Theme {
 // NewLightTheme creates a theme that is suitable for light xterm terminal emulator sessions
 func NewLightTheme() Theme {
 	return Theme{
+		Name:                        "Light",
 		Light:                       true,
 		Foreground:                  vt100.Black,
 		Background:                  vt100.BackgroundDefault,
@@ -327,9 +334,37 @@ func NewLightTheme() Theme {
 	}
 }
 
+// NewAmberTheme returns a theme where all text is amber / yellow
+func NewAmberTheme() Theme {
+	t := NewDefaultTheme()
+	t.Name = "Amber"
+	t.Foreground = vt100.Yellow
+	t.Background = vt100.BackgroundDefault // black background
+	return t
+}
+
+// NewGreenTheme returns a theme where all text is green
+func NewGreenTheme() Theme {
+	t := NewDefaultTheme()
+	t.Name = "Green"
+	t.Foreground = vt100.LightGreen
+	t.Background = vt100.BackgroundDefault // black background
+	return t
+}
+
+// NewBlueTheme returns a theme where all text is blue
+func NewBlueTheme() Theme {
+	t := NewDefaultTheme()
+	t.Name = "Blue"
+	t.Foreground = vt100.LightBlue
+	t.Background = vt100.BackgroundDefault // black background
+	return t
+}
+
 // NewNoColorTheme creates a new theme without colors or syntax highlighting
 func NewNoColorTheme() Theme {
 	return Theme{
+		Name:                        "No color",
 		Light:                       false,
 		Foreground:                  vt100.Default,
 		Background:                  vt100.BackgroundDefault,
@@ -462,4 +497,19 @@ func (e *Editor) setLightTheme() {
 // setRedBlackTheme sets a red/black/gray theme
 func (e *Editor) setRedBlackTheme() {
 	e.SetTheme(NewRedBlackTheme())
+}
+
+// setAmberTheme sets an amber theme
+func (e *Editor) setAmberTheme() {
+	e.SetTheme(NewAmberTheme())
+}
+
+// setGreenTheme sets a green theme
+func (e *Editor) setGreenTheme() {
+	e.SetTheme(NewGreenTheme())
+}
+
+// setBlueTheme sets a blue theme
+func (e *Editor) setBlueTheme() {
+	e.SetTheme(NewBlueTheme())
 }

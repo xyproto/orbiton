@@ -369,41 +369,50 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		})
 	}
 
-	// Unless NO_COLOR is set to 1, add an option for selecting a theme
-	if !envNoColor {
-		actions.Add("Change theme", func() {
-			menuChoices := []string{"Default", "Light background", "Red/black", "Amber", "Green", "Blue"}
-			useMenuIndex := 0
-			switch e.Menu(status, tty, "Select color theme", menuChoices, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes) {
-			case 0: // default
-				e.setDefaultTheme()
-				e.syntaxHighlight = true
-			case 1: // light background
-				e.setLightTheme()
-				e.syntaxHighlight = true
-			case 2: // red and black
-				e.setRedBlackTheme()
-				e.syntaxHighlight = true
-			case 3: // amber
-				e.Foreground = vt100.Yellow
-				e.Background = vt100.BackgroundDefault // black background
-				e.syntaxHighlight = false
-			case 4: // green
-				e.Foreground = vt100.LightGreen
-				e.Background = vt100.BackgroundDefault // black background
-				e.syntaxHighlight = false
-			case 5: // blue
-				e.Foreground = vt100.LightBlue
-				e.Background = vt100.BackgroundDefault // black background
-				e.syntaxHighlight = false
-			default:
-				return
+	// Add an option for selecting a theme
+	actions.Add("Change theme", func() {
+		menuChoices := allThemes
+		useMenuIndex := 0
+		for i, menuChoiceText := range menuChoices {
+			if menuChoiceText == e.Theme.Name {
+				useMenuIndex = i
 			}
-			drawLines := true
-			resized := false
-			e.FullResetRedraw(c, status, drawLines, resized)
-		})
-	}
+		}
+		switch e.Menu(status, tty, "Select color theme", menuChoices, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes) {
+		case 0: // default
+			envNoColor = false
+			e.setDefaultTheme()
+			e.syntaxHighlight = true
+		case 1: // light background
+			envNoColor = false
+			e.setLightTheme()
+			e.syntaxHighlight = true
+		case 2: // red and black
+			envNoColor = false
+			e.setRedBlackTheme()
+			e.syntaxHighlight = true
+		case 3: // amber
+			envNoColor = false
+			e.setAmberTheme()
+			e.syntaxHighlight = false
+		case 4: // green
+			envNoColor = false
+			e.setGreenTheme()
+			e.syntaxHighlight = false
+		case 5: // blue
+			envNoColor = false
+			e.setBlueTheme()
+			e.syntaxHighlight = false
+		case 6: // no color
+			envNoColor = true
+			e.setDefaultTheme()
+		default:
+			return
+		}
+		drawLines := true
+		resized := false
+		e.FullResetRedraw(c, status, drawLines, resized)
+	})
 
 	actions.Add("Stop parent and quit without saving", func() {
 		e.stopParentOnQuit = true
