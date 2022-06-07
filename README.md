@@ -197,6 +197,8 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 | Standard ML                                     | `.sml`                                                    | yes           | `mlton`                                           | WIP                                                                                                            |
 | OCaml                                           | `.ml`                                                     | WIP           | `ocamlopt -o $executable $filename`               | WIP                                                                                                            |
 | Agda                                            | `.agda`                                                   | yes           | `agda -c $filename`                               | N/A                                                                                                            |
+| Hare                                            | `.ha`                                                     | yes           | `hare build`                                      | N/A                                                                                                            |
+| Jakt                                            | `.jakt`                                                   | WIP           | WIP                                               | WIP                                                                                                            |
 
 `/etc/fstab` files are also supported, and can be formatted with `ctrl-w` if [`fstabfmt`](https://github.com/xyproto/fstabfmt) is installed.
 

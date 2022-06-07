@@ -136,6 +136,10 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd := exec.Command("go", "build")
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
+	case mode.Hare:
+		cmd := exec.Command("hare", "build")
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.C:
 		if which("cxx") != "" {
 			cmd = exec.Command("cxx")
@@ -483,6 +487,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		errorMarker = ","
 	}
 
+	// Check if the error marker should be changed
+
 	if e.mode == mode.Zig && bytes.Contains(output, []byte("nrecognized glibc version")) {
 		byteLines := bytes.Split(output, []byte("\n"))
 		fields := strings.Split(string(byteLines[0]), ":")
@@ -612,6 +618,54 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 				} else if strings.HasPrefix(line, "In ") {
 					crystalLocationLine = line
 				}
+			} else if e.mode == mode.Hare {
+				errorMessage = ""
+				if strings.Contains(line, errorMarker) && strings.Contains(line, " at ") {
+					descriptionFields := strings.SplitN(line, " at ", 2)
+					errorMessage = descriptionFields[0]
+					if strings.Contains(errorMessage, "error:") {
+						fields := strings.SplitN(errorMessage, "error:", 2)
+						errorMessage = fields[1]
+					}
+					filenameAndError := descriptionFields[1]
+					filenameAndLoc := ""
+					if strings.Contains(filenameAndError, ", ") {
+						fields := strings.SplitN(filenameAndError, ", ", 2)
+						filenameAndLoc = fields[0]
+						errorMessage += ": " + fields[1]
+					}
+					fields := strings.SplitN(filenameAndLoc, ":", 3)
+					errorFilename := fields[0]
+					baseErrorFilename := filepath.Base(errorFilename)
+					lineNumberString := fields[1]
+					lineColumnString := fields[2]
+
+					e.MoveToNumber(c, status, lineNumberString, lineColumnString)
+
+					// Return the error message
+					if baseErrorFilename != baseFilename {
+						return "", errors.New("in " + baseErrorFilename + ": " + errorMessage)
+					}
+					return "", errors.New(errorMessage)
+
+				} else if strings.HasPrefix(line, "Error ") {
+					fields := strings.Split(line[6:], ":")
+					if len(fields) >= 4 {
+						errorFilename := fields[0]
+						baseErrorFilename := filepath.Base(errorFilename)
+						lineNumberString := fields[1]
+						lineColumnString := fields[2]
+						errorMessage := fields[3]
+
+						e.MoveToNumber(c, status, lineNumberString, lineColumnString)
+
+						// Return the error message
+						if baseErrorFilename != baseFilename {
+							return "", errors.New("in " + baseErrorFilename + ": " + errorMessage)
+						}
+						return "", errors.New(errorMessage)
+					}
+				}
 			} else if e.mode == mode.Odin {
 				errorMessage = ""
 				if strings.Contains(line, errorMarker) {
@@ -626,18 +680,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					lineNumberString := locCol[0]
 					lineColumnString := locCol[1]
 
-					// Move to (x, y), line number first and then column number
-					if i, err := strconv.Atoi(lineNumberString); err == nil {
-						foundY := LineIndex(i)
-						e.redraw = e.GoTo(foundY, c, status)
-						e.redrawCursor = e.redraw
-						if x, err := strconv.Atoi(lineColumnString); err == nil { // no error
-							foundX := x - 1
-							tabs := strings.Count(e.Line(foundY), "\t")
-							e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
-							e.Center(c)
-						}
-					}
+					e.MoveToIndex(c, status, lineNumberString, lineColumnString)
 
 					// Return the error message
 					if baseErrorFilename != baseFilename {
