@@ -124,7 +124,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
 		} else if (q.mode == mode.StandardML || q.mode == mode.OCaml) && prevRune == '(' && q.None() {
-			// Standard ML
+			// Standard ML or OCaml
 			q.parCount-- // Not a parenthesis start after all, but the start of a multiline comment
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
@@ -158,7 +158,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 		// r == '/'
 		fallthrough
 	case '/': // support C-style multi-line comments
-		if q.firstRuneInSingleLineCommentMarker != '#' && prevRune == '*' {
+		if q.mode != mode.Shell && q.mode != mode.Makefile && q.firstRuneInSingleLineCommentMarker != '#' && prevRune == '*' {
 			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
 			if q.startedMultiLineComment {
