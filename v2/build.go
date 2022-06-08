@@ -18,6 +18,7 @@ import (
 var (
 	errNoSuitableBuildCommand = errors.New("no suitable build command")
 	zigCacheDir               = filepath.Join(userCacheDir, "o", "zig")
+	pyCachePrefix             = filepath.Join(userCacheDir, "o", "python")
 	pandocMutex               sync.RWMutex
 )
 
@@ -255,6 +256,11 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		return cmd, everythingIsFine, nil
 	case mode.Python:
 		cmd = exec.Command("python", "-m", "py_compile", sourceFilename)
+		cmd.Env = append(cmd.Env, "PYTHONUTF8=1")
+		if !exists(pyCachePrefix) {
+			os.MkdirAll(pyCachePrefix, 0700)
+		}
+		cmd.Env = append(cmd.Env, "PYTHONPYCACHEPREFIX="+pyCachePrefix)
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.OCaml:
@@ -479,7 +485,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	// NOTE: Don't do anything with the output and err variables here, let the if below handle it.
 
 	errorMarker := "error:"
-	if e.mode == mode.Crystal || e.mode == mode.ObjectPascal || e.mode == mode.StandardML {
+	if e.mode == mode.Crystal || e.mode == mode.ObjectPascal || e.mode == mode.StandardML || e.mode == mode.Python {
 		errorMarker = "Error:"
 	} else if e.mode == mode.CS {
 		errorMarker = ": error "
@@ -532,6 +538,11 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			if errorLine, errorMessage := ParsePythonError(string(output), filepath.Base(filename)); errorLine != -1 {
 				e.redraw = e.GoTo(LineIndex(errorLine-1), c, status)
 				return "", errors.New(errorMessage)
+			} else {
+				// This should never happen, the error message should be handled by ParsePythonError!
+				lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+				lastLine := lines[len(lines)-1]
+				return "", errors.New(lastLine)
 			}
 		} else if e.mode == mode.Agda {
 			lines := strings.Split(string(output), "\n")
