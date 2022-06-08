@@ -11,6 +11,7 @@
 
 ## Saving and loading
 
+- [ ] When "somefile.go" and "somefile_test.go" exists, and only "somefile" is given, load "somefile.go".
 - [ ] Show a spinner when reading a lot of data from stdin.
 - [ ] When editing a man page, make it possible to toggle between the man page and the man page view mode.
 - [ ] Auto-detect tabs/spaces when opening a file.
