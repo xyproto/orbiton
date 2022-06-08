@@ -2329,6 +2329,20 @@ func (e *Editor) MoveToNumber(c *vt100.Canvas, status *StatusBar, lineNumber, li
 	return nil
 }
 
+// MoveToLineColumnNumber will try to move to the given line number + column number (given as ints)
+func (e *Editor) MoveToLineColumnNumber(c *vt100.Canvas, status *StatusBar, lineNumber, lineColumn int) error {
+	// Move to (x, y), line number first and then column number
+	foundY := LineNumber(lineNumber)
+	e.redraw = e.GoTo(foundY.LineIndex(), c, status)
+	e.redrawCursor = e.redraw
+	x := lineColumn
+	foundX := x - 1
+	tabs := strings.Count(e.Line(foundY.LineIndex()), "\t")
+	e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
+	e.Center(c)
+	return nil
+}
+
 // MoveToIndex will try to move to the given line index + column index (given as strings)
 func (e *Editor) MoveToIndex(c *vt100.Canvas, status *StatusBar, lineIndex, lineColumnIndex string) error {
 	// Move to (x, y), line number first and then column number
@@ -2341,7 +2355,11 @@ func (e *Editor) MoveToIndex(c *vt100.Canvas, status *StatusBar, lineIndex, line
 			tabs := strings.Count(e.Line(foundY), "\t")
 			e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
 			e.Center(c)
+		} else {
+			return err
 		}
+	} else {
+		return err
 	}
 	return nil
 }

@@ -41,9 +41,12 @@ NameError: name 'quiet' is not defined
 `
 
 func TestParsePythonError(t *testing.T) {
-	lineNumber, errorMessage := ParsePythonError(pyerror, "main.py")
+	lineNumber, columnNumber, errorMessage := ParsePythonError(pyerror, "main.py")
 	if lineNumber != 8 {
-		t.Fail()
+		t.Fatalf("line number should be 8, but is %d\n", lineNumber)
+	}
+	if columnNumber != 7 {
+		t.Fatalf("column number should be 7, but is %d\n", columnNumber)
 	}
 	if errorMessage != "invalid syntax" {
 		t.Fail()

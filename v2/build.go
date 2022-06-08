@@ -535,15 +535,14 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		errorMessage := "Build error"
 
 		if e.mode == mode.Python {
-			if errorLine, errorMessage := ParsePythonError(string(output), filepath.Base(filename)); errorLine != -1 {
-				e.redraw = e.GoTo(LineIndex(errorLine-1), c, status)
+			if errorLine, errorColumn, errorMessage := ParsePythonError(string(output), filepath.Base(filename)); errorLine != -1 {
+				e.MoveToLineColumnNumber(c, status, errorLine, errorColumn)
 				return "", errors.New(errorMessage)
-			} else {
-				// This should never happen, the error message should be handled by ParsePythonError!
-				lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-				lastLine := lines[len(lines)-1]
-				return "", errors.New(lastLine)
 			}
+			// This should never happen, the error message should be handled by ParsePythonError!
+			lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+			lastLine := lines[len(lines)-1]
+			return "", errors.New(lastLine)
 		} else if e.mode == mode.Agda {
 			lines := strings.Split(string(output), "\n")
 			if len(lines) >= 4 {
@@ -558,18 +557,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					colRange := fields[1]
 					fields = strings.SplitN(colRange, "-", 2)
 					lineColumnString := fields[0] // not index
-					// Move to (x, y), line number first and then column number
-					if i, err := strconv.Atoi(lineNumberString); err == nil {
-						foundY := LineIndex(i - 1)
-						e.redraw = e.GoTo(foundY, c, status)
-						e.redrawCursor = e.redraw
-						if x, err := strconv.Atoi(lineColumnString); err == nil { // no error
-							foundX := x - 1
-							tabs := strings.Count(e.Line(foundY), "\t")
-							e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
-							e.Center(c)
-						}
-					}
+
+					e.MoveToNumber(c, status, lineNumberString, lineColumnString)
+
 					return "", errors.New(errorMessage)
 				}
 			}
