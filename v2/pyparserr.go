@@ -40,6 +40,17 @@ func ParsePythonError(msg, filename string) (int, int, string) {
 				continue
 			}
 			foundLineNumber = true
+		} else if strippedLine := strings.TrimSpace(line); strings.Contains(line, "("+filename+", ") && strings.Contains(line, "Error: ") {
+			fields := strings.SplitN(strippedLine, "Error: ", 2)
+			errorMessageFileAndLine := fields[1]
+			fields = strings.SplitN(errorMessageFileAndLine, "("+filename+", ", 2)
+			errorMessage = fields[0]
+			lineNumberString := fields[1]
+			lineNumberString = strings.TrimPrefix(lineNumberString, "line ")
+			lineNumberString = strings.TrimSuffix(lineNumberString, ")")
+			if n, err := strconv.Atoi(lineNumberString); err == nil {
+				lineNumber = n
+			}
 		}
 	}
 
