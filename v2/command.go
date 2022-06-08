@@ -251,14 +251,14 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	}
 
 	// Copy all the text to the clipboard, if possible
-	actions.Add("Copy text to clipboard", func() { // copy file to clipboard
+	actions.Add("Copy everything to clipboard", func() { // copy file to clipboard
 		// Write all contents to the clipboard
 		if err := clipboard.WriteAll(e.String()); err != nil {
 			status.Clear(c)
 			status.SetError(err)
 			status.Show(c, e)
 		} else {
-			status.ShowAfterRedraw("Copied all text")
+			status.ShowAfterRedraw("Copied everything")
 		}
 	})
 
@@ -314,6 +314,39 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			e.ToggleSyntaxHighlight()
 		})
 	}
+
+	// Delete the rest of the file
+	actions.Add("Delete the rest of the file", func() { // copy file to clipboard
+
+		prepareFunction := func() {
+			// Prepare to delete all lines from this one and out
+			undo.Snapshot(e)
+			// Also close the portal, if any
+			ClosePortal(e)
+			// Mark the file as changed
+			e.changed = true
+		}
+
+		// Get the current index and remove the rest of the lines
+		currentLineIndex := int(e.DataY())
+
+		for y := range e.lines {
+			if y >= currentLineIndex {
+				// Run the prepareFunction, but only once, if there was changes to be made
+				if prepareFunction != nil {
+					prepareFunction()
+					prepareFunction = nil
+				}
+				delete(e.lines, y)
+			}
+		}
+
+		if e.changed {
+			e.MakeConsistent()
+			e.redraw = true
+			e.redrawCursor = true
+		}
+	})
 
 	// Add the unlock menu item
 	if forced {
