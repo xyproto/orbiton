@@ -2330,7 +2330,7 @@ func (e *Editor) MoveToNumber(c *vt100.Canvas, status *StatusBar, lineNumber, li
 }
 
 // MoveToLineColumnNumber will try to move to the given line number + column number (given as ints)
-func (e *Editor) MoveToLineColumnNumber(c *vt100.Canvas, status *StatusBar, lineNumber, lineColumn int) error {
+func (e *Editor) MoveToLineColumnNumber(c *vt100.Canvas, status *StatusBar, lineNumber, lineColumn int, ignoreIndentation bool) error {
 	// Move to (x, y), line number first and then column number
 	foundY := LineNumber(lineNumber)
 	e.redraw = e.GoTo(foundY.LineIndex(), c, status)
@@ -2339,6 +2339,9 @@ func (e *Editor) MoveToLineColumnNumber(c *vt100.Canvas, status *StatusBar, line
 	foundX := x - 1
 	tabs := strings.Count(e.Line(foundY.LineIndex()), "\t")
 	e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
+	if ignoreIndentation {
+		e.pos.sx += len(e.LeadingWhitespace())
+	}
 	e.Center(c)
 	return nil
 }

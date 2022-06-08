@@ -21,10 +21,11 @@ func ParsePythonError(msg, filename string) (int, int, string) {
 			errorMessage = strings.SplitN(line, ": ", 2)[1]
 			// break since this is usually the end of the approximately 5 line error message from Python
 			break
-		} else if foundLineNumber {
-			if hatPos := strings.Index(line, "^"); hatPos != -1 {
+		} else if foundLineNumber && len(line) > 4 {
+			// de-indent the line before finding the hat column number
+			if hatPos := strings.Index(line[4:], "^"); hatPos != -1 {
 				foundHat = true
-				// this is the column number (not index)
+				// this is the column number (not index),
 				columnNumber = hatPos + 1
 			} else {
 				continue

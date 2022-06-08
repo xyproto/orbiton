@@ -536,7 +536,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 		if e.mode == mode.Python {
 			if errorLine, errorColumn, errorMessage := ParsePythonError(string(output), filepath.Base(filename)); errorLine != -1 {
-				e.MoveToLineColumnNumber(c, status, errorLine, errorColumn)
+				ignoreIndentation := true
+				e.MoveToLineColumnNumber(c, status, errorLine, errorColumn, ignoreIndentation)
 				return "", errors.New(errorMessage)
 			}
 			// This should never happen, the error message should be handled by ParsePythonError!

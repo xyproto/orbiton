@@ -45,8 +45,8 @@ func TestParsePythonError(t *testing.T) {
 	if lineNumber != 8 {
 		t.Fatalf("line number should be 8, but is %d\n", lineNumber)
 	}
-	if columnNumber != 7 {
-		t.Fatalf("column number should be 7, but is %d\n", columnNumber)
+	if columnNumber != 3 {
+		t.Fatalf("column number should be 3, but is %d\n", columnNumber)
 	}
 	if errorMessage != "invalid syntax" {
 		t.Fail()
