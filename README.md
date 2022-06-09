@@ -87,6 +87,7 @@ These features are unique to `o`, as far as I am aware:
 * Can compile `"Hello, World"` in many popular programming languages simply by pressing `ctrl-space`.
 * Configuration-free, for better and for worse.
 * `ctrl-t` can jump between a C++ header and source file.
+* Can only edit one file at the time, by design.
 * Provides syntax highlighting for Go, C++, Markdown, Bash and several other languages. There is generic syntax highlighting built-in.
 * Will jump to the last visited line when opening a recent file.
 * Is provided as a single self-contained executable.
