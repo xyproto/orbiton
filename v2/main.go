@@ -118,8 +118,7 @@ Set NO_COLOR=1 to disable colors.
 
 	// Should we check if data is given on stdin?
 	readFromStdin := (len(os.Args) == 2 && (os.Args[1] == "-" || os.Args[1] == "/dev/stdin"))
-	maybeReadFromStdin := len(os.Args) == 1
-	if readFromStdin || maybeReadFromStdin {
+	if readFromStdin {
 		// TODO: Use a spinner?
 		data, err := ioutil.ReadAll(os.Stdin)
 		if err != nil {
