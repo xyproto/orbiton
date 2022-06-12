@@ -23,6 +23,8 @@ GOARM=6 "${GOBUILD[@]}" $name.linux_armv6_static
 echo '* Linux armv7 (RPI 2/3/4)'
 GOARM=7 "${GOBUILD[@]}" $name.linux_armv7_static
 unset GOARM
+echo '* Linux riscv64'
+GOARCH=riscv64 "${GOBUILD[@]}" $name.linux_riscv64_static
 
 echo '* macOS x86_64'
 export GOOS=darwin
@@ -61,7 +63,9 @@ GOARM=7 "${GOBUILD[@]}" $name.netbsd_armv7_static
 # OpenBSD (and Plan9) did not compile: https://github.com/pkg/term/issues/27
 
 # Compress the Linux releases with xz
-for p in linux_x86_64_static linux_aarch64_static linux_armv6_static linux_armv7_static
+for p in \
+  linux_x86_64_static linux_aarch64_static linux_armv6_static \
+  linux_armv7_static linux_riscv64_static
 do
   echo "Compressing $name-$version.$p.tar.xz"
   mkdir "$name-$version-$p"
@@ -76,9 +80,10 @@ done
 
 # Compress the other tarballs with gz
 for p in \
-macos_x86_64_static macos_aarch64_static \
-freebsd_x86_64_static freebsd_aarch64_static freebsd_armv6_static freebsd_armv7_static \
-netbsd_x86_64_static netbsd_aarch64_static netbsd_armv6_static netbsd_armv7_static
+  macos_x86_64_static macos_aarch64_static \
+  freebsd_x86_64_static freebsd_aarch64_static freebsd_armv6_static \
+  freebsd_armv7_static netbsd_x86_64_static netbsd_aarch64_static \
+  netbsd_armv6_static netbsd_armv7_static
 do
   echo "Compressing $name-$version.$p.tar.gz"
   mkdir "$name-$version-$p"
