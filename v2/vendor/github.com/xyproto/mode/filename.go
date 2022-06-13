@@ -46,115 +46,117 @@ func Detect(filename string) Mode {
 		mode = ManPage
 	default:
 		switch ext {
-		case ".s", ".S", ".asm", ".inc":
-			// Go-style assembly (modeGoAssembly) is enabled if a mid-dot is discovered
-			mode = Assembly
-		//case ".s":
-		//mode = GoAssembly
-		case ".amber":
-			mode = Amber
-		case ".go":
-			mode = Go
-		case ".odin":
-			mode = Odin
-		case ".ha":
-			mode = Hare
-		case ".jakt":
-			mode = Jakt
-		case ".hs", ".hts":
-			mode = Haskell
-		case ".agda":
-			mode = Agda
-		case ".sml":
-			mode = StandardML
-		case ".m4":
-			mode = M4
-		case ".ml":
-			mode = OCaml // or standard ML, if the file does not contain ";;"
-		case ".py":
-			mode = Python
-		case ".pl":
-			mode = Perl
-		case ".md":
-			// Markdown mode
-			mode = Markdown
-		case ".bts":
-			mode = Battlestar
-		case ".cpp", ".cc", ".c++", ".cxx", ".hpp", ".h":
-			// C++ mode
-			// TODO: Find a way to discover is a .h file is most likely to be C or C++
-			mode = Cpp
-		case ".c":
-			// C mode
-			mode = C
-		case ".d":
-			// D mode
-			mode = D
-		case ".cs":
-			// C# mode
-			mode = CS
+		case ".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8":
+			mode = Nroff
+		case ".adb", ".gpr", ".ads", ".ada":
+			mode = Ada
 		case ".adoc", ".rst", ".scdoc", ".scd":
 			// Markdown-like syntax highlighting
 			// TODO: Introduce a separate mode for these.
 			mode = Markdown
-		case ".txt", ".text", ".nfo", ".diz":
-			mode = Text
-		case ".clj", ".clojure", "cljs":
-			mode = Clojure
-		case ".lsp", ".emacs", ".el", ".elisp", ".lisp", ".cl", ".l":
-			mode = Lisp
-		case ".zig", ".zir":
-			mode = Zig
-		case ".v":
-			mode = V
-		case ".kt", ".kts":
-			mode = Kotlin
-		case ".java":
-			mode = Java
-		case ".gradle":
-			mode = Gradle
-		case ".hal":
-			mode = HIDL
 		case ".aidl":
 			mode = AIDL
-		case ".sql":
-			mode = SQL
-		case ".ok":
-			mode = Oak
-		case ".rs":
-			mode = Rust
-		case ".lua":
-			mode = Lua
-		case ".cr":
-			mode = Crystal
-		case ".nim":
-			mode = Nim
-		case ".pas", ".pp", ".lpr":
-			mode = ObjectPascal
+		case ".agda":
+			mode = Agda
+		case ".amber":
+			mode = Amber
 		case ".bas", ".module", ".frm", ".cls", ".ctl", ".vbp", ".vbg", ".form", ".gambas":
 			mode = Basic
 		case ".bat":
 			mode = Bat
-		case ".adb", ".gpr", ".ads", ".ada":
-			mode = Ada
+		case ".bts":
+			mode = Battlestar
+		case ".c":
+			// C mode
+			mode = C
+		case ".cpp", ".cc", ".c++", ".cxx", ".hpp", ".h":
+			// C++ mode
+			// TODO: Find a way to discover is a .h file is most likely to be C or C++
+			mode = Cpp
+		case ".clj", ".clojure", "cljs":
+			mode = Clojure
+		case ".cs":
+			// C# mode
+			mode = CS
+		case ".cl", ".el", ".elisp", ".emacs", ".l", ".lisp", ".lsp":
+			mode = Lisp
+		case ".cr":
+			mode = Crystal
+		case ".d":
+			// D mode
+			mode = D
+		case ".erl":
+			mode = Erlang
+		case ".go":
+			mode = Go
+		case ".gradle":
+			mode = Gradle
+		case ".ha":
+			mode = Hare
+		case ".hal":
+			mode = HIDL
+		case ".hs", ".hts":
+			mode = Haskell
 		case ".htm", ".html":
 			mode = HTML
-		case ".xml":
-			mode = XML
-		case ".te":
-			mode = PolicyLanguage
-		case ".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8":
-			mode = Nroff
-		case ".scala":
-			mode = Scala
-		case ".json", ".ipynb":
-			mode = JSON
+		case ".jakt":
+			mode = Jakt
+		case ".java":
+			mode = Java
 		case ".js":
 			mode = JavaScript
-		case ".ts":
-			mode = TypeScript
+		case ".json", ".ipynb":
+			mode = JSON
+		case ".kt", ".kts":
+			mode = Kotlin
 		case ".log":
 			mode = Log
+		case ".lua":
+			mode = Lua
+		case ".m4":
+			mode = M4
+		case ".md":
+			// Markdown mode
+			mode = Markdown
+		case ".ml":
+			mode = OCaml // or standard ML, if the file does not contain ";;"
+		case ".nim":
+			mode = Nim
+		case ".odin":
+			mode = Odin
+		case ".ok":
+			mode = Oak
+		case ".pas", ".pp", ".lpr":
+			mode = ObjectPascal
+		case ".pl":
+			mode = Perl
+		case ".py":
+			mode = Python
+		case ".rs":
+			mode = Rust
+		case ".s", ".S", ".asm", ".inc":
+			// Go-style assembly (modeGoAssembly) is enabled if a mid-dot is discovered
+			mode = Assembly
+		case ".scala":
+			mode = Scala
+		case ".sml":
+			mode = StandardML
+		case ".sql":
+			mode = SQL
+		case ".te":
+			mode = PolicyLanguage
+		case ".tl":
+			mode = Teal
+		case ".ts":
+			mode = TypeScript
+		case ".txt", ".text", ".nfo", ".diz":
+			mode = Text
+		case ".v":
+			mode = V
+		case ".xml":
+			mode = XML
+		case ".zig", ".zir":
+			mode = Zig
 		default:
 			mode = Blank
 		}

@@ -35,9 +35,10 @@ const (
 	Rust           // Rust
 	Lua            // Lua
 	Crystal        // Crystal
+	Erlang         // Erlang
 	Nim            // Nim
 	ObjectPascal   // Object Pascal and Delphi
-	Bat            // DOS batch files
+	Bat            // DOS and Windows batch files
 	Cpp            // C++
 	C              // C
 	Ada            // Ada
@@ -63,13 +64,18 @@ const (
 	Agda           // Agda
 	Basic          // FreeBasic, Gambas 3
 	Log            // All sorts of log files
+	Teal           // Teal
 )
 
 // String will return a short lowercase string representing the given editor mode
 func (mode Mode) String() string {
+	// TODO: Sort the cases alphabetically
+	// TODO: Add a test that makes sure every mode has a string
 	switch mode {
 	case Blank:
 		return "-"
+	case Teal:
+		return "Teal"
 	case Git:
 		return "Git"
 	case Markdown:
@@ -126,6 +132,8 @@ func (mode Mode) String() string {
 		return "Lua"
 	case Crystal:
 		return "Crystal"
+	case Erlang:
+		return "Erlang"
 	case Nim:
 		return "Nim"
 	case ObjectPascal:
