@@ -128,8 +128,8 @@ func Detect(filename string) Mode {
 			mode = Oak
 		case ".pas", ".pp", ".lpr":
 			mode = ObjectPascal
-		case ".pl":
-			mode = Perl
+		case ".pl", ".pro":
+			mode = Prolog
 		case ".py":
 			mode = Python
 		case ".rs":

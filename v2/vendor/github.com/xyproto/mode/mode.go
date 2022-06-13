@@ -60,6 +60,7 @@ const (
 	Bazel          // Bazel and Starlark
 	D              // D
 	Perl           // Perl
+	Prolog         // Prolog
 	M4             // M4 macros
 	Agda           // Agda
 	Basic          // FreeBasic, Gambas 3
@@ -156,6 +157,8 @@ func (mode Mode) String() string {
 		return "Jakt"
 	case Perl:
 		return "Perl"
+	case Prolog:
+		return "Prolog"
 	case XML:
 		return "XML"
 	case PolicyLanguage:

@@ -35,9 +35,11 @@ func DetectFromContents(initial Mode, firstLine string, allTextFunc func() strin
 			lastWord = words[len(words)-1]
 		}
 		switch lastWord {
+		case "perl":
+			return Perl, true
 		case "python":
 			return Python, true
-		case "ash", "bash", "fish", "ksh", "sh", "tcsh", "zsh":
+		case "ash", "bash", "fish", "ksh", "oil", "sh", "tcsh", "zsh": // TODO: support Fish and Oil with their own file modes
 			return Shell, true
 		}
 		notConfig = true
