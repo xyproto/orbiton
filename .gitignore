@@ -36,3 +36,4 @@ release/
 *.tmp
 *.bak
 *~
+*.beam
