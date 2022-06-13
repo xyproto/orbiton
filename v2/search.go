@@ -341,6 +341,9 @@ AGAIN:
 		case mode.Erlang:
 			// This is not "the definition of a function" in Erlang, but should work for many cases
 			s = " ->"
+		case mode.Prolog:
+			// This is not "the definition of a function" in Prolog, but should work for many cases
+			s = " :-"
 		default:
 			s = "main"
 		}

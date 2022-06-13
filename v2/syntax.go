@@ -189,7 +189,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return `.\"`
 	case mode.Amber:
 		return "!!"
-	case mode.Perl:
+	case mode.Perl, mode.Prolog:
 		return "%"
 	case mode.M4:
 		return "dnl"
