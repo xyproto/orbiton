@@ -2,12 +2,14 @@
 
 ## Building, debugging and testing programs
 
+- [ ] Jump to error for Erlang.
 - [ ] Fix output parsing when running `go test` with ctrl-space.
 - [ ] Jump to error when building with `ctrl-space` and `cargo`.
 - [ ] When switching register pane layout with `ctrl-p`, save the contents of the old pane and use that.
 - [ ] Make it possible to send custom commands to `gdb` with `ctrl-g` when in debug mode.
 - [ ] Make it possible to step through Go programs as well.
-- [ ] Buld Hare, Jakt and Prolog programs with ctrl-space.
+- [ ] Buld Jakt and Prolog programs with ctrl-space.
+- [ ] Support for Prolog.
 
 ## Saving and loading
 
