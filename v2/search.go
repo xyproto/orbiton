@@ -338,6 +338,9 @@ AGAIN:
 			s = "proc() "
 		case mode.Hare, mode.Rust, mode.V, mode.Zig:
 			s = "fn "
+		case mode.Erlang:
+			// This is not "the definition of a function" in Erlang, but should work for many cases
+			s = " ->"
 		default:
 			s = "main"
 		}

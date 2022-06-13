@@ -54,6 +54,11 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		9,
 		2,
 	},
+	mode.Erlang: {
+		"-module(hello).\n-export([hello_world/0]).\n\nhello_world() -> io:fwrite(\"hello, world\\n\").\n",
+		29,
+		2,
+	},
 	mode.Go: {
 		"package main\n\nimport (\n\t\"fmt\"\n)\n\nfunc main() {\n\tfmt.Println(\"Hello, World!\")\n}\n",
 		13,
@@ -95,6 +100,11 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		2,
 	},
 	mode.Lua: {
+		"print(\"Hello, World!\")\n",
+		7,
+		1,
+	},
+	mode.Teal: {
 		"print(\"Hello, World!\")\n",
 		7,
 		1,

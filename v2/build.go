@@ -271,6 +271,10 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd = exec.Command("crystal", "build", "--no-color", sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
+	case mode.Erlang:
+		cmd = exec.Command("erlc", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Lua:
 		cmd = exec.Command("luac", "-o", exeFirstName+".out", sourceFilename)
 		cmd.Dir = sourceDir

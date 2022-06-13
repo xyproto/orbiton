@@ -1058,16 +1058,16 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 
 func (e *Editor) usingGDBMightWork() bool {
 	switch e.mode {
-	case mode.Blank, mode.Git, mode.Markdown, mode.Makefile, mode.Shell, mode.Config, mode.Python, mode.Text, mode.CMake, mode.Vim, mode.Clojure, mode.Lisp, mode.Kotlin, mode.Java, mode.Gradle, mode.HIDL, mode.AIDL, mode.SQL, mode.Oak, mode.Lua, mode.Bat, mode.HTML, mode.XML, mode.PolicyLanguage, mode.Nroff, mode.Scala, mode.JSON, mode.CS, mode.JavaScript, mode.TypeScript, mode.ManPage, mode.Amber, mode.Bazel, mode.Perl, mode.M4, mode.Basic, mode.Log:
+	case mode.AIDL, mode.Amber, mode.Basic, mode.Bat, mode.Bazel, mode.Blank, mode.CMake, mode.CS, mode.Clojure, mode.Config, mode.Erlang, mode.Git, mode.Gradle, mode.HIDL, mode.HTML, mode.JSON, mode.Java, mode.JavaScript, mode.Kotlin, mode.Lisp, mode.Log, mode.Lua, mode.M4, mode.Makefile, mode.ManPage, mode.Markdown, mode.Nroff, mode.Oak, mode.Perl, mode.PolicyLanguage, mode.Python, mode.SQL, mode.Scala, mode.Shell, mode.Teal, mode.Text, mode.TypeScript, mode.Vim, mode.XML:
 		// Nope
 		return false
 	case mode.Zig:
 		// Could maybe have worked, but it didn't
 		return false
-	case mode.GoAssembly, mode.Go, mode.Haskell, mode.OCaml, mode.StandardML, mode.Assembly, mode.V, mode.Crystal, mode.Nim, mode.ObjectPascal, mode.Cpp, mode.Ada, mode.Odin, mode.Battlestar, mode.D, mode.Agda:
+	case mode.Ada, mode.Agda, mode.Assembly, mode.Battlestar, mode.Cpp, mode.Crystal, mode.D, mode.Go, mode.GoAssembly, mode.Haskell, mode.Nim, mode.OCaml, mode.ObjectPascal, mode.Odin, mode.StandardML, mode.V:
 		// Maybe, but needs testing!
 		return true
-	case mode.Rust, mode.C:
+	case mode.C, mode.Rust:
 		// Yes, tested
 		return true
 	}

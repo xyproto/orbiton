@@ -43,6 +43,9 @@ var (
 
 	// Standard ML
 	smlWords = []string{"abstype", "and", "andalso", "as", "case", "do", "datatype", "else", "end", "eqtype", "exception", "fn", "fun", "functor", "handle", "if", "in", "include", "infix", "infixr", "let", "local", "nonfix", "of", "op", "open", "orelse", "raise", "rec", "sharing", "sig", "signature", "struct", "structure", "then", "type", "val", "where", "with", "withtype", "while"}
+
+	// Erlang
+	erlangWords = []string{"after", "and", "andalso", "band", "begin", "bnot", "bor", "bsl", "bsr", "bxor", "case", "catch", "cond", "div", "end", "fun", "if", "let", "not", "of", "or", "orelse", "receive", "rem", "try", "when", "xor"}
 )
 
 func clearKeywords() {
@@ -69,12 +72,15 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		addKeywords = cmakeWords
 	case mode.Config:
 		delKeywords = []string{"auto", "install"}
-	case mode.D:
-		clearKeywords()
-		addKeywords = dWords
 	case mode.CS:
 		clearKeywords()
 		addKeywords = csWords
+	case mode.D:
+		clearKeywords()
+		addKeywords = dWords
+	case mode.Erlang:
+		clearKeywords()
+		addKeywords = erlangWords
 	case mode.Go:
 		addKeywords = []string{"defer", "error", "fallthrough", "go", "print", "println", "range", "rune", "string"}
 		delKeywords = []string{"None", "assert", "auto", "build", "char", "def", "def", "del", "die", "done", "fi", "final", "finally", "fn", "from", "get", "in", "include", "is", "last", "let", "match", "mut", "next", "no", "pass", "redo", "rescue", "ret", "retry", "set", "template", "then", "this", "when", "where", "while", "yes"}
@@ -84,7 +90,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.AIDL:
 		addKeywords = append(addKeywords, "interface")
 		addKeywords = append(addKeywords, hidlWords...)
-		fallthrough // to Java
+		fallthrough // continue to mode.Java
 	case mode.Java:
 		addKeywords = append(addKeywords, "package")
 		delKeywords = append(delKeywords, "add", "in", "local", "sub")
@@ -96,6 +102,9 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.Lisp:
 		clearKeywords()
 		addKeywords = emacsWords
+	case mode.Teal:
+		// use the same keywords as Lua, for now
+		fallthrough // continue to mode.Lua
 	case mode.Lua:
 		clearKeywords()
 		addKeywords = luaWords
@@ -145,7 +154,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		if m == mode.Shell { // Only for shell scripts, not for Makefiles
 			delKeywords = append(delKeywords, "install")
 		}
-		fallthrough // to the default case
+		fallthrough // continue to the default case
 	default:
 		addKeywords = append(addKeywords, "endif", "ifeq", "ifneq")
 		delKeywords = append(delKeywords, "build", "done", "package", "require", "set", "super", "type")
@@ -168,7 +177,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "#"
 	case mode.Assembly:
 		return ";"
-	case mode.Ada, mode.Agda, mode.Haskell, mode.Lua, mode.SQL:
+	case mode.Ada, mode.Agda, mode.Haskell, mode.Lua, mode.SQL, mode.Teal:
 		return "--"
 	case mode.Vim:
 		return "\""
