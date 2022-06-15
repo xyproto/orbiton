@@ -155,16 +155,10 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
 * `ctrl-l` - Jump to a specific line number. Press `return` to jump to the top. If at the top, press `return` to jump to the bottom.
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive. Press tab instead of return to search and replace.
-* `esc` - Redraw the screen and clear the last search.
 * `ctrl-b` - Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
 * `ctrl-\` - Comment in or out a block of code.
 * `ctrl-~` - Jump to a matching parenthesis.
-
-## Updating PKGBUILD files
-
-When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call Guessica` to update the `pkgver=` and `source=` fields, by a combination of guesswork and online searching.
-
-* The Guessica package update utility is available here: [`guessica`](https://github.com/xyproto/guessica).
+* `esc` - Redraw everything and clear the last search.
 
 ## Build and format
 
@@ -362,6 +356,10 @@ rm -rf _o_build
 ```
 
 If `/usr/share/scala/lib/scala-library.jar` is not found `scalac -d run_with_scala.jar` is used instead. This file can only be run with the `scala` command.
+
+## Updating PKGBUILD files
+
+When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call Guessica` to update the `pkgver=` and `source=` fields, by a combination of guesswork and online searching. This functionality depends on the [Guessica](https://github.com/xyproto/guessica) package update utility.
 
 ## List of optional runtime dependencies
 
