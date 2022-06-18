@@ -134,6 +134,8 @@ Set NO_COLOR=1 to disable colors.
 	}
 
 	filename, lineNumber, colNumber := FilenameAndLineNumberAndColNumber(flag.Arg(0), flag.Arg(1), flag.Arg(2))
+
+	// Check if the given filename contains something
 	if len(filenameOrData.data) == 0 {
 		filenameOrData.filename = filename
 		if filenameOrData.filename == "" {
@@ -144,9 +146,8 @@ Set NO_COLOR=1 to disable colors.
 		// If the filename starts with "~", then expand it
 		filenameOrData.ExpandUser()
 
-		fileExists := exists(filenameOrData.filename)
-
-		if fileExists {
+		// Check if the given filename exists
+		if !exists(filenameOrData.filename) {
 			if strings.HasSuffix(filenameOrData.filename, ".") {
 				// If the filename ends with "." and the file does not exist, assume this was a result of tab-completion going wrong.
 				// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
