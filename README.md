@@ -14,6 +14,7 @@ It might be a good fit for:
 * Solving Advent of Code tasks.
 * Writing and maintaining to-do lists and project documentation in Markdown.
 * Testing if your favorite package manager can handle one-letter package names.
+* Being the only editor you need, in a pinch, since it only need a terminal emulator that supports VT100 and has a built-in man page viewer.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
