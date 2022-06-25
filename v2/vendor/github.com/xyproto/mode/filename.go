@@ -11,7 +11,7 @@ func Detect(filename string) Mode {
 
 	// A list of the most common configuration filenames that does not have an extension
 	var (
-		configFilenames = []string{"fstab", "config", "BUILD", "WORKSPACE", "passwd", "group", "environment", "shadow", "gshadow", "hostname", "hosts", "issue", "mirrorlist"}
+		configFilenames = []string{"BUILD", "WORKSPACE", "config", "environment", "fstab", "group", "gshadow", "hostname", "hosts", "issue", "mirrorlist", "passwd", "shadow"}
 		mode            Mode
 	)
 
@@ -36,7 +36,7 @@ func Detect(filename string) Mode {
 		fallthrough
 	case ext == ".yml" || ext == ".toml" || ext == ".ini" || ext == ".bp" || ext == ".rule" || strings.HasSuffix(filename, ".git/config") || (ext == "" && (strings.HasSuffix(baseFilename, "file") || strings.HasSuffix(baseFilename, "rc") || hasS(configFilenames, baseFilename))):
 		mode = Config
-	case ext == ".sh" || ext == ".ksh" || ext == ".tcsh" || ext == ".bash" || ext == ".zsh" || ext == ".local" || ext == ".profile" || baseFilename == "PKGBUILD" || (strings.HasPrefix(baseFilename, ".") && strings.Contains(baseFilename, "sh")): // This last part covers .bashrc, .zshrc etc
+	case ext == ".sh" || ext == ".install" || ext == ".ksh" || ext == ".tcsh" || ext == ".bash" || ext == ".zsh" || ext == ".local" || ext == ".profile" || baseFilename == "PKGBUILD" || (strings.HasPrefix(baseFilename, ".") && strings.Contains(baseFilename, "sh")): // This last part covers .bashrc, .zshrc etc
 		mode = Shell
 	case ext == ".bzl" || baseFilename == "BUILD" || baseFilename == "WORKSPACE":
 		mode = Bazel

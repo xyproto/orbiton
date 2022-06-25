@@ -33,11 +33,11 @@ type Gdb struct {
 // callback used to deliver to the client the asynchronous notifications sent by
 // GDB. It returns a pointer to the newly created instance handled or an error.
 func New(onNotification NotificationCallback) (*Gdb, error) {
-	return NewCustom("gdb", onNotification)
+	return NewCustom([]string{"gdb"}, onNotification)
 }
 
-// Like New, but allows to specify the GDB executable path.
-func NewCustom(gdbPath string, onNotification NotificationCallback) (*Gdb, error) {
+// Like New, but allows to specify the GDB executable path and arguments.
+func NewCustom(gdbCmd []string, onNotification NotificationCallback) (*Gdb, error) {
 	// open a new terminal (master and slave) for the target program, they are
 	// both saved so that they are nore garbage collected after this function
 	// ends
@@ -47,8 +47,8 @@ func NewCustom(gdbPath string, onNotification NotificationCallback) (*Gdb, error
 	}
 
 	// create GDB command
-	cmd := []string{gdbPath, "--nx", "--quiet", "--interpreter=mi2", "--tty", pts.Name()}
-	gdb, err := NewCmd(cmd, onNotification)
+	gdbCmd = append(gdbCmd, "--nx", "--quiet", "--interpreter=mi2", "--tty", pts.Name())
+	gdb, err := NewCmd(gdbCmd, onNotification)
 
 	if err != nil {
 		ptm.Close()
