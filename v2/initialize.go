@@ -48,7 +48,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 	// Additional per-mode considerations, before launching the editor
 	rainbowParenthesis := syntaxHighlight // rainbow parenthesis
 	switch m {
-	case mode.Markdown, mode.Text, mode.Blank:
+	case mode.Blank, mode.Doc, mode.Email, mode.Markdown, mode.Text:
 		rainbowParenthesis = false
 	case mode.ManPage:
 		readOnly = true
@@ -77,9 +77,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 
 	// Minor adjustments for some file types
 	switch e.mode {
-	case mode.Git:
-		e.clearOnQuit = true
-	case mode.ManPage:
+	case mode.Email, mode.Git, mode.ManPage:
 		e.clearOnQuit = true
 	}
 
@@ -208,20 +206,25 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 	e.tabsSpaces = m.TabsSpaces()
 
 	switch e.mode {
-	case mode.Markdown, mode.Text, mode.Blank:
+	case mode.Blank, mode.Doc, mode.Email, mode.Markdown, mode.Text:
 		e.rainbowParenthesis = false
 	}
 
-	// If we're editing a git commit message, add a newline and enable word-wrap at 80
+	// If we're editing a git commit message, add a newline and enable word-wrap at 72
 	if e.mode == mode.Git {
 		e.Git = vt100.LightGreen
-
 		if filepath.Base(e.filename) == "MERGE_MSG" {
 			e.InsertLineBelow()
 		} else if e.EmptyLine() {
 			e.InsertLineBelow()
 		}
-		e.wrapWidth = 80
+		// TODO: Are these two needed, or covered by NewCustomEditor?
+		e.wrapWidth = 72
+		e.wrapWhenTyping = true
+	} else if e.mode == mode.Email {
+		// TODO: Are these two needed, or covered by NewCustomEditor?
+		e.wrapWidth = 72
+		e.wrapWhenTyping = true
 	}
 
 	// If the file starts with a hash bang, enable syntax highlighting
@@ -284,7 +287,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 		}
 		e.redraw = true
 		e.redrawCursor = true
-	case lineNumber == 0 && e.mode != mode.Git:
+	case lineNumber == 0 && e.mode != mode.Git && e.mode != mode.Email:
 		// Load the o location history, if a line number was not given on the command line (and if available)
 		if !found && !e.slowLoad {
 			// Try to load the NeoVim location history, then
