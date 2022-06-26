@@ -1843,22 +1843,23 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 			}
 			e.redrawCursor = true
 		default: // any other key
+			keyRunes := []rune(key)
 			//panic(fmt.Sprintf("PRESSED KEY: %v", []rune(key)))
-			if len([]rune(key)) > 0 && unicode.IsLetter([]rune(key)[0]) { // letter
+			if len(keyRunes) > 0 && unicode.IsLetter(keyRunes[0]) { // letter
 
 				undo.Snapshot(e)
 
-				// Type the letter that was pressed
-				if len([]rune(key)) > 0 {
+				// Type in the letters that were pressed
+				for _, r := range keyRunes {
 					// Insert a letter. This is what normally happens.
-					wrapped := e.InsertRune(c, []rune(key)[0])
+					wrapped := e.InsertRune(c, r)
 					if !wrapped {
 						e.WriteRune(c)
 						e.Next(c)
 					}
 					e.redraw = true
 				}
-			} else if len([]rune(key)) > 0 && unicode.IsGraphic([]rune(key)[0]) { // any other key that can be drawn
+			} else if len(keyRunes) > 0 && unicode.IsGraphic(keyRunes[0]) { // any other key that can be drawn
 				undo.Snapshot(e)
 				e.redraw = true
 
