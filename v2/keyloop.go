@@ -1864,7 +1864,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 				e.redraw = true
 
 				// Place *something*
-				r := []rune(key)[0]
+				r := keyRunes[0]
 
 				if r == 160 {
 					// This is a nonbreaking space that may be inserted with altgr+space that is HORRIBLE.
