@@ -433,42 +433,41 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 					useMenuIndex = i
 				}
 			}
+			changedTheme = true
 			switch e.Menu(status, tty, "Select color theme", menuChoices, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes) {
 			case 0: // default
 				envNoColor = false
 				e.setDefaultTheme()
 				e.syntaxHighlight = true
-				changedTheme = true
-			case 1: // light background
-				envNoColor = false
-				e.setLightTheme()
-				e.syntaxHighlight = true
-				changedTheme = true
-			case 2: // red and black
+			case 1: // red and black
 				envNoColor = false
 				e.setRedBlackTheme()
 				e.syntaxHighlight = true
-				changedTheme = true
-			case 3: // amber
+			case 2: // light background
+				envNoColor = false
+				e.setLightTheme()
+				e.syntaxHighlight = true
+			case 3: // "borland", on light background
+				envNoColor = false
+				e.setBorlandTheme()
+				e.syntaxHighlight = true
+			case 4: // amber
 				envNoColor = false
 				e.setAmberTheme()
 				e.syntaxHighlight = false
-				changedTheme = true
-			case 4: // green
+			case 5: // green
 				envNoColor = false
 				e.setGreenTheme()
 				e.syntaxHighlight = false
-				changedTheme = true
-			case 5: // blue
+			case 6: // blue
 				envNoColor = false
 				e.setBlueTheme()
 				e.syntaxHighlight = false
-				changedTheme = true
-			case 6: // no color
+			case 7: // no color
 				envNoColor = true
 				e.setDefaultTheme()
-				changedTheme = true
 			default:
+				changedTheme = false
 				return
 			}
 			drawLines := true

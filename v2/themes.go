@@ -8,7 +8,7 @@ import (
 
 var (
 	envNoColor             = env.Bool("NO_COLOR")
-	allThemes              = []string{"Default", "Light background", "Red/black", "Amber", "Green", "Blue", "No color"}
+	allThemes              = []string{"Default", "Red/black", "For light backgrounds", "\"Borland\" for light backgrounds", "Amber", "Green", "Blue", "No color"}
 	initialLightBackground *bool
 )
 
@@ -252,6 +252,86 @@ func NewRedBlackTheme() Theme {
 		DebugInstructionsForeground: vt100.Red,
 		DebugInstructionsBackground: vt100.BackgroundGray,
 		BoxUpperEdge:                vt100.Black,
+	}
+}
+
+// NewBorlandTheme creates a new blue/gray/yellow Theme struct, for light backgrounds
+func NewBorlandTheme() Theme {
+	return Theme{
+		Name:                        "Borland",
+		Light:                       true,
+		Foreground:                  vt100.White,
+		Background:                  vt100.BackgroundBlue,
+		StatusForeground:            vt100.White,
+		StatusBackground:            vt100.BackgroundGray,
+		StatusErrorForeground:       vt100.White,
+		StatusErrorBackground:       vt100.BackgroundRed,
+		SearchHighlight:             vt100.LightRed,
+		MultiLineComment:            vt100.Gray,
+		MultiLineString:             vt100.LightYellow,
+		Git:                         vt100.White,
+		String:                      "lightyellow",
+		Keyword:                     "lightcyan",
+		Comment:                     "lightgray",
+		Type:                        "white",
+		Literal:                     "white",
+		Punctuation:                 "white",
+		Plaintext:                   "white",
+		Tag:                         "white",
+		TextTag:                     "white",
+		TextAttrName:                "white",
+		TextAttrValue:               "white",
+		Decimal:                     "white",
+		AndOr:                       "lightyellow",
+		Dollar:                      "lightred",
+		Star:                        "lightred",
+		Class:                       "lightcyan",
+		Private:                     "lightcyan",
+		Protected:                   "lightyellow",
+		Public:                      "white",
+		Whitespace:                  "",
+		AssemblyEnd:                 "lightcyan",
+		Mut:                         "lightyellow",
+		RainbowParenColors:          []vt100.AttributeColor{vt100.LightCyan, vt100.LightYellow, vt100.LightGreen, vt100.White},
+		MarkdownTextColor:           vt100.White,
+		HeaderBulletColor:           vt100.LightGray,
+		HeaderTextColor:             vt100.White,
+		ListBulletColor:             vt100.LightCyan,
+		ListTextColor:               vt100.LightCyan,
+		ListCodeColor:               vt100.White,
+		CodeColor:                   vt100.White,
+		CodeBlockColor:              vt100.White,
+		ImageColor:                  vt100.LightYellow,
+		LinkColor:                   vt100.LightYellow,
+		QuoteColor:                  vt100.LightYellow,
+		QuoteTextColor:              vt100.LightCyan,
+		HTMLColor:                   vt100.White,
+		CommentColor:                vt100.LightGray,
+		BoldColor:                   vt100.LightYellow,
+		ItalicsColor:                vt100.White,
+		StrikeColor:                 vt100.LightGray,
+		TableColor:                  vt100.White,
+		CheckboxColor:               vt100.White,
+		XColor:                      vt100.LightYellow,
+		TableBackground:             vt100.BackgroundBlue,
+		UnmatchedParenColor:         vt100.White,
+		MenuTitleColor:              vt100.LightBlue,
+		MenuArrowColor:              vt100.LightRed,
+		MenuTextColor:               vt100.Black,
+		MenuHighlightColor:          vt100.LightMagenta,
+		MenuSelectedColor:           vt100.LightRed,
+		ManSectionColor:             vt100.LightBlue,
+		ManSynopsisColor:            vt100.LightBlue,
+		BoxTextColor:                vt100.Black,
+		BoxBackground:               vt100.BackgroundGray,
+		BoxHighlight:                vt100.LightYellow,
+		DebugRunningBackground:      vt100.BackgroundGray,
+		DebugStoppedBackground:      vt100.BackgroundMagenta,
+		DebugRegistersBackground:    vt100.BackgroundMagenta,
+		DebugOutputBackground:       vt100.BackgroundYellow,
+		DebugInstructionsForeground: vt100.LightYellow,
+		DebugInstructionsBackground: vt100.BackgroundCyan,
+		BoxUpperEdge:                vt100.White,
 	}
 }
 
@@ -594,6 +674,15 @@ func (e *Editor) setRedBlackTheme() {
 		initialLightBackground = &b
 	}
 	e.SetTheme(NewRedBlackTheme())
+}
+
+// setBorlandTheme sets a blue/yellow/gray theme, for light backgrounds
+func (e *Editor) setBorlandTheme() {
+	if initialLightBackground == nil {
+		b := false
+		initialLightBackground = &b
+	}
+	e.SetTheme(NewBorlandTheme())
 }
 
 // setAmberTheme sets an amber theme
