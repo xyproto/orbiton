@@ -44,7 +44,6 @@
 - [ ] When `}` is the last character of a file, sometimes pressing enter right before it does not work.
 - [ ] If there are four lines: not comment, comment, not comment, comment, let ctrl+/ behave differently.
 - [ ] Indentation in Rust is sometimes wonky.
-- [ ] Fix the ctrl-\ behavior when commenting out a block at the end of a file.
 - [ ] When changing a file from tabs to spaces, or the other way around, also modify indentations after comment markers.
 - [ ] Tab in the middle of a line, especially on a `|` character, could insert spaces until the `|` aligns with the `|` above,
       if applicable (For Markdown tables).

@@ -1669,20 +1669,21 @@ func (e *Editor) AtOrBeforeStartOfTextScreenLine() bool {
 }
 
 // GoTo will go to a given line index, counting from 0
-// Returns true if the editor should be redrawn
 // status is used for clearing status bar messages and can be nil
-func (e *Editor) GoTo(dataY LineIndex, c *vt100.Canvas, status *StatusBar) bool {
+// Returns true if the editor should be redrawn
+// The second returned bool is if the end has been reached
+func (e *Editor) GoTo(dataY LineIndex, c *vt100.Canvas, status *StatusBar) (bool, bool) {
 	if dataY == e.DataY() {
 		// Already at the correct line, but still trigger a redraw
-		return true
+		return true, false
 	}
-	reachedEnd := false
+	reachedTheEnd := false
 	// Out of bounds checking for y
 	if dataY < 0 {
 		dataY = 0
 	} else if dataY >= LineIndex(e.Len()) {
 		dataY = LineIndex(e.Len() - 1)
-		reachedEnd = true
+		reachedTheEnd = true
 	}
 
 	h := 25
@@ -1708,7 +1709,7 @@ func (e *Editor) GoTo(dataY LineIndex, c *vt100.Canvas, status *StatusBar) bool 
 		if e.pos.sy < 0 {
 			e.pos.sy = 0
 		}
-	} else if reachedEnd {
+	} else if reachedTheEnd {
 		// To the end of the text
 		e.pos.offsetY = e.Len() - h
 		e.pos.sy = h - 1
@@ -1736,8 +1737,8 @@ func (e *Editor) GoTo(dataY LineIndex, c *vt100.Canvas, status *StatusBar) bool 
 	// Trigger cursor redraw
 	e.redrawCursor = true
 
-	// Should also redraw the text
-	return true
+	// Should also redraw the text, and has the end been reached?
+	return true, reachedTheEnd
 }
 
 // GoToLineNumber will go to a given line number, but counting from 1, not from 0!
@@ -1745,7 +1746,7 @@ func (e *Editor) GoToLineNumber(lineNumber LineNumber, c *vt100.Canvas, status *
 	if lineNumber < 1 {
 		lineNumber = 1
 	}
-	redraw := e.GoTo(lineNumber.LineIndex(), c, status)
+	redraw, _ := e.GoTo(lineNumber.LineIndex(), c, status)
 	if redraw && center {
 		e.Center(c)
 	}
@@ -1764,7 +1765,7 @@ func (e *Editor) GoToLineNumberAndCol(lineNumber LineNumber, colNumber ColNumber
 	yIndex := lineNumber.LineIndex()
 
 	// Go to the correct line
-	redraw := e.GoTo(yIndex, c, status)
+	redraw, _ := e.GoTo(yIndex, c, status)
 
 	// Go to the correct column as well
 	tabs := strings.Count(e.Line(yIndex), "\t")
@@ -1787,8 +1788,10 @@ func (e *Editor) Up(c *vt100.Canvas, status *StatusBar) {
 
 // Down tries to move the cursor down, and also scroll
 // status is used for clearing status bar messages and can be nil
-func (e *Editor) Down(c *vt100.Canvas, status *StatusBar) {
-	e.GoTo(e.DataY()+1, c, status)
+// returns true if the end is reached
+func (e *Editor) Down(c *vt100.Canvas, status *StatusBar) bool {
+	_, reachedTheEnd := e.GoTo(e.DataY()+1, c, status)
+	return reachedTheEnd
 }
 
 // LeadingWhitespace returns the leading whitespace for this line
@@ -1831,7 +1834,7 @@ func (e *Editor) StatusMessage() string {
 // GoToPosition can go to the given position struct and use it as the new position
 func (e *Editor) GoToPosition(c *vt100.Canvas, status *StatusBar, pos Position) {
 	e.pos = pos
-	e.redraw = e.GoTo(e.DataY(), c, status)
+	e.redraw, _ = e.GoTo(e.DataY(), c, status)
 	e.redrawCursor = true
 }
 
@@ -1842,8 +1845,8 @@ func (e *Editor) GoToStartOfTextLine(c *vt100.Canvas) {
 }
 
 // GoToNextParagraph will jump to the next line that has a blank line above it, if possible
-// Returns true if the editor should be redrawn
-func (e *Editor) GoToNextParagraph(c *vt100.Canvas, status *StatusBar) bool {
+// Returns true if the editor should be redrawn, and true if the end has been reached
+func (e *Editor) GoToNextParagraph(c *vt100.Canvas, status *StatusBar) (bool, bool) {
 	var lastFoundBlankLine LineIndex = -1
 	l := e.Len()
 	for i := e.DataY() + 1; i < LineIndex(l); i++ {
@@ -1858,12 +1861,12 @@ func (e *Editor) GoToNextParagraph(c *vt100.Canvas, status *StatusBar) bool {
 			}
 		}
 	}
-	return false
+	return false, false
 }
 
 // GoToPrevParagraph will jump to the previous line that has a blank line below it, if possible
-// Returns true if the editor should be redrawn
-func (e *Editor) GoToPrevParagraph(c *vt100.Canvas, status *StatusBar) bool {
+// Returns true if the editor should be redrawn, and true if the end has been reached
+func (e *Editor) GoToPrevParagraph(c *vt100.Canvas, status *StatusBar) (bool, bool) {
 	var lastFoundBlankLine = LineIndex(e.Len())
 	for i := e.DataY() - 1; i >= 0; i-- {
 		// Check if this is a blank line
@@ -1877,7 +1880,7 @@ func (e *Editor) GoToPrevParagraph(c *vt100.Canvas, status *StatusBar) bool {
 			}
 		}
 	}
-	return false
+	return false, false
 }
 
 // Center will scroll the contents so that the line with the cursor ends up in the center of the screen
@@ -1966,9 +1969,11 @@ func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func(string), commentMark
 		if e.AtOrAfterEndOfDocument() {
 			break
 		}
-		e.Down(c, nil)
+		if e.Down(c, nil) { // reached the end
+			break
+		}
 		downCounter++
-		if downCounter > 100 { // safeguard
+		if downCounter > 10 { // safeguard
 			break
 		}
 	}
@@ -2030,9 +2035,12 @@ func (e *Editor) ToggleCommentBlock(c *vt100.Canvas) {
 		if e.AtOrAfterEndOfDocument() {
 			break
 		}
-		e.Down(c, nil)
+		if e.Down(c, nil) { // reached the end
+			break
+		}
+		// TODO: Remove the safeguard
 		downCounter++
-		if downCounter > 100 { // safeguard
+		if downCounter > 10 { // safeguard at the end of the document
 			break
 		}
 	}
@@ -2313,7 +2321,7 @@ func (e *Editor) MoveToNumber(c *vt100.Canvas, status *StatusBar, lineNumber, li
 	// Move to (x, y), line number first and then column number
 	if i, err := strconv.Atoi(lineNumber); err == nil {
 		foundY := LineNumber(i)
-		e.redraw = e.GoTo(foundY.LineIndex(), c, status)
+		e.redraw, _ = e.GoTo(foundY.LineIndex(), c, status)
 		e.redrawCursor = e.redraw
 		if x, err := strconv.Atoi(lineColumn); err == nil { // no error
 			foundX := x - 1
@@ -2333,7 +2341,7 @@ func (e *Editor) MoveToNumber(c *vt100.Canvas, status *StatusBar, lineNumber, li
 func (e *Editor) MoveToLineColumnNumber(c *vt100.Canvas, status *StatusBar, lineNumber, lineColumn int, ignoreIndentation bool) error {
 	// Move to (x, y), line number first and then column number
 	foundY := LineNumber(lineNumber)
-	e.redraw = e.GoTo(foundY.LineIndex(), c, status)
+	e.redraw, _ = e.GoTo(foundY.LineIndex(), c, status)
 	e.redrawCursor = e.redraw
 	x := lineColumn
 	foundX := x - 1
@@ -2351,7 +2359,7 @@ func (e *Editor) MoveToIndex(c *vt100.Canvas, status *StatusBar, lineIndex, line
 	// Move to (x, y), line number first and then column number
 	if i, err := strconv.Atoi(lineIndex); err == nil {
 		foundY := LineIndex(i)
-		e.redraw = e.GoTo(foundY, c, status)
+		e.redraw, _ = e.GoTo(foundY, c, status)
 		e.redrawCursor = e.redraw
 		if x, err := strconv.Atoi(lineColumnIndex); err == nil { // no error
 			foundX := x - 1
