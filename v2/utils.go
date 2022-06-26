@@ -277,3 +277,18 @@ func repeatRune(r rune, n uint) string {
 	}
 	return sb.String()
 }
+
+// capitalizeWords can change "john bob" to "John Bob"
+func capitalizeWords(s string) string {
+	words := strings.Fields(s)
+	var newWords []string
+	for _, word := range words {
+		if len(word) > 1 {
+			capitalizedWord := strings.ToUpper(string(word[0])) + word[1:]
+			newWords = append(newWords, capitalizedWord)
+		} else {
+			newWords = append(newWords, word)
+		}
+	}
+	return strings.Join(newWords, " ")
+}
