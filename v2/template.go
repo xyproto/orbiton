@@ -54,6 +54,11 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		9,
 		2,
 	},
+	mode.Email: {
+		"Hello ,\n\nBest regards,\n" + getFullName() + "\n",
+		6,
+		5,
+	},
 	mode.Erlang: {
 		"-module(hello).\n-export([hello_world/0]).\n\nhello_world() -> io:fwrite(\"hello, world\\n\").\n",
 		29,
@@ -145,7 +150,7 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		3,
 	},
 	mode.Shell: {
-		"# Maintainer: " + env.Str("LOGNAME", "name") + " <" + env.Str("EMAIL", "email") + ">\n\npkgname=\npkgver=1.0.0\npkgrel=1\npkgdesc='Example application'\narch=(x86_64)\nurl='https://github.com/example/application'\nlicense=(BSD3)\nmakedepends=(git go)\nsource=(\"git+$url#commit=asdf\") # tag: v1.0.0\nb2sums=(SKIP)\n\nbuild() {\n  cd $pkgname\n  go build -v -mod=vendor -buildmode=pie -trimpath -ldflags=\"-s -w -extldflags \\\"${LDFLAGS}\\\"\"\n}\n\npackage() {\n  install -Dm755 $pkgname/$pkgname \"$pkgdir/usr/bin/$pkgname\"\n  install -Dm644 $pkgname/LICENSE \"$pkgdir/usr/share/licenses/$pkgname/LICENSE\"\n}\n",
+		"# Maintainer: " + getFullName() + " <" + env.Str("EMAIL", "email") + ">\n\npkgname=\npkgver=1.0.0\npkgrel=1\npkgdesc='Example application'\narch=(x86_64)\nurl='https://github.com/example/application'\nlicense=(BSD3)\nmakedepends=(git go)\nsource=(\"git+$url#commit=asdf\") # tag: v1.0.0\nb2sums=(SKIP)\n\nbuild() {\n  cd $pkgname\n  go build -v -mod=vendor -buildmode=pie -trimpath -ldflags=\"-s -w -extldflags \\\"${LDFLAGS}\\\"\"\n}\n\npackage() {\n  install -Dm755 $pkgname/$pkgname \"$pkgdir/usr/bin/$pkgname\"\n  install -Dm644 $pkgname/LICENSE \"$pkgdir/usr/share/licenses/$pkgname/LICENSE\"\n}\n",
 		8,
 		20,
 	},
