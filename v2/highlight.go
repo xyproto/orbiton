@@ -150,7 +150,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					doneHighlighting = true
 				)
 				switch e.mode {
-				case mode.Git:
+				case mode.Email, mode.Git:
 					coloredString = e.gitHighlight(line)
 				case mode.ManPage:
 					if y == 0 {
