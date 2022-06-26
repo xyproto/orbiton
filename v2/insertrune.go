@@ -22,8 +22,18 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) bool {
 	e.redrawCursor = true
 	e.redraw = true
 
+	// Wrap a bit before the limit if the inserted rune is a space?
+	limit := e.wrapWidth
+	if r == ' ' {
+		// This is how long a word can be before being broken,
+		// and it "eats from" the right margin, so it needs to be balanced.
+		// TODO: Use an established method of word wrapping / breaking lines.
+		limit -= 5
+	}
+
 	// If wrapWhenTyping is enabled, check if we should wrap to the next line
-	if e.wrapWhenTyping && e.wrapWidth > 0 && e.pos.sx >= e.wrapWidth {
+	if e.wrapWhenTyping && e.wrapWidth > 0 && e.pos.sx >= limit {
+
 		e.InsertLineBelow()
 		e.pos.sy++
 		y := e.pos.sy
@@ -42,6 +52,11 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) bool {
 		if e.pos.sy >= (h - 1) {
 			e.ScrollDown(c, nil, 1)
 		}
+
+		e.Center(c)
+		e.redraw = true
+		e.redrawCursor = true
+
 		return true
 	}
 
