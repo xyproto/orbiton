@@ -4,68 +4,69 @@ package mode
 type Mode int
 
 const (
-	// Mode "enum" values
-	Blank          = iota
-	Git            // Git commits and interactive rebases
-	Markdown       // Markdown (and asciidoctor and rst files)
-	Makefile       // Makefiles
-	Shell          // Shell scripts and PKGBUILD files
-	Config         // Config like yaml, yml, toml, and ini files
-	Assembly       // Assembly
-	GoAssembly     // Go-style Assembly
-	Go             // Go
-	Haskell        // Haskell
-	OCaml          // OCaml
-	StandardML     // Standard ML
-	Python         // Python
-	Text           // plain text documents
-	CMake          // CMake files
-	Vim            // Vim or NeoVim configuration, or .vim scripts
-	V              // V programming language
-	Clojure        // Clojure
-	Lisp           // Common Lisp and Emacs Lisp
-	Zig            // Zig
-	Kotlin         // Kotlin
-	Java           // Java
-	Gradle         // Gradle
-	HIDL           // Android-related: Hardware Abstraction Layer Interface Definition Language
-	AIDL           // Android-related: Android Interface Definition Language
-	SQL            // Structured Query Language
-	Oak            // Oak
-	Rust           // Rust
-	Lua            // Lua
-	Crystal        // Crystal
-	Erlang         // Erlang
-	Nim            // Nim
-	ObjectPascal   // Object Pascal and Delphi
-	Bat            // DOS and Windows batch files
-	Cpp            // C++
-	C              // C
-	Ada            // Ada
-	HTML           // HTML
-	Odin           // Odin
-	Hare           // Hare
-	Jakt           // Jakt
-	XML            // XML
-	PolicyLanguage // SE Linux configuration files
-	Nroff          // editing man pages
-	Scala          // Scala
-	JSON           // JSON and iPython notebooks
-	Battlestar     // Battlestar
-	CS             // C#
-	JavaScript     // JavaScript
-	TypeScript     // TypeScript
-	ManPage        // viewing man pages
-	Amber          // Amber templates
-	Bazel          // Bazel and Starlark
-	D              // D
-	Perl           // Perl
-	Prolog         // Prolog
-	M4             // M4 macros
-	Agda           // Agda
-	Basic          // FreeBasic, Gambas 3
-	Log            // All sorts of log files
-	Teal           // Teal
+	Blank          = iota // No file mode found
+	Git                   // Git commits and interactive rebases
+	Markdown              // Markdown
+	Doc                   // asciidoctor, rst files, sdoc etc
+	Makefile              // Makefiles
+	Shell                 // Shell scripts and PKGBUILD files
+	Config                // Config like yaml, yml, toml, and ini files
+	Assembly              // Assembly
+	GoAssembly            // Go-style Assembly
+	Go                    // Go
+	Haskell               // Haskell
+	OCaml                 // OCaml
+	StandardML            // Standard ML
+	Python                // Python
+	Text                  // plain text documents
+	CMake                 // CMake files
+	Vim                   // Vim or NeoVim configuration, or .vim scripts
+	V                     // V programming language
+	Clojure               // Clojure
+	Lisp                  // Common Lisp and Emacs Lisp
+	Zig                   // Zig
+	Kotlin                // Kotlin
+	Java                  // Java
+	Gradle                // Gradle
+	HIDL                  // Android-related: Hardware Abstraction Layer Interface Definition Language
+	AIDL                  // Android-related: Android Interface Definition Language
+	SQL                   // Structured Query Language
+	Oak                   // Oak
+	Rust                  // Rust
+	Lua                   // Lua
+	Crystal               // Crystal
+	Erlang                // Erlang
+	Nim                   // Nim
+	ObjectPascal          // Object Pascal and Delphi
+	Bat                   // DOS and Windows batch files
+	Cpp                   // C++
+	C                     // C
+	Ada                   // Ada
+	HTML                  // HTML
+	Odin                  // Odin
+	Hare                  // Hare
+	Jakt                  // Jakt
+	XML                   // XML
+	PolicyLanguage        // SE Linux configuration files
+	Nroff                 // editing man pages
+	Scala                 // Scala
+	JSON                  // JSON and iPython notebooks
+	Battlestar            // Battlestar
+	CS                    // C#
+	JavaScript            // JavaScript
+	TypeScript            // TypeScript
+	ManPage               // viewing man pages
+	Amber                 // Amber templates
+	Bazel                 // Bazel and Starlark
+	D                     // D
+	Perl                  // Perl
+	Prolog                // Prolog
+	M4                    // M4 macros
+	Agda                  // Agda
+	Basic                 // FreeBasic, Gambas 3
+	Log                   // All sorts of log files
+	Teal                  // Teal
+	Email                 // For using o with ie. Mutt
 )
 
 // String will return a short lowercase string representing the given editor mode
@@ -195,6 +196,10 @@ func (mode Mode) String() string {
 		return "Basic"
 	case Log:
 		return "Log"
+	case Email:
+		return "E-mail"
+	case Doc:
+		return "Document"
 	default:
 		return "?"
 	}

@@ -42,18 +42,18 @@ func Detect(filename string) Mode {
 		mode = Bazel
 	case baseFilename == "CMakeLists.txt" || ext == ".cmake":
 		mode = CMake
-	case strings.HasPrefix(baseFilename, "man.") && len(ext) > 4: // ex: /tmp/man.0asdfadf
+	case strings.HasPrefix(baseFilename, "man.") && len(ext) > 4: // ie.: /tmp/man.0asdfadf
 		mode = ManPage
+	case strings.HasPrefix(baseFilename, "mutt-"): // ie.: /tmp/mutt-hostname-0000-0000-00000000000000000
+		mode = Email
 	default:
 		switch ext {
-		case ".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8":
+		case ".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8": // not .9
 			mode = Nroff
 		case ".adb", ".gpr", ".ads", ".ada":
 			mode = Ada
 		case ".adoc", ".rst", ".scdoc", ".scd":
-			// Markdown-like syntax highlighting
-			// TODO: Introduce a separate mode for these.
-			mode = Markdown
+			mode = Doc
 		case ".aidl":
 			mode = AIDL
 		case ".agda":
