@@ -24,6 +24,21 @@ var (
 	changedTheme    bool // has the theme been changed manually after the editor was started?
 )
 
+// Actions is a list of action titles and a list of action functions.
+// The key is an int that is the same for both.
+type Actions struct {
+	actionTitles    map[int]string
+	actionFunctions map[int]func()
+}
+
+// NewActions will create a new Actions struct
+func NewActions() *Actions {
+	var a Actions
+	a.actionTitles = make(map[int]string)
+	a.actionFunctions = make(map[int]func())
+	return &a
+}
+
 // UserSave saves the file and the location history
 func (e *Editor) UserSave(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
 	// Save the file
@@ -42,21 +57,6 @@ func (e *Editor) UserSave(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
 	status.Clear(c)
 	status.SetMessage("Saved " + e.filename)
 	status.Show(c, e)
-}
-
-// Actions is a list of action titles and a list of action functions.
-// The key is an int that is the same for both.
-type Actions struct {
-	actionTitles    map[int]string
-	actionFunctions map[int]func()
-}
-
-// NewActions will create a new Actions struct
-func NewActions() *Actions {
-	var a Actions
-	a.actionTitles = make(map[int]string)
-	a.actionFunctions = make(map[int]func())
-	return &a
 }
 
 // NewActions2 will create a new Actions struct, while
@@ -97,6 +97,20 @@ func (a *Actions) Perform(index int) {
 	a.actionFunctions[index]()
 }
 
+// wrapNow is a helper function for changing the word wrap width
+func (e *Editor) WrapNow(n int) int {
+	wrapWidth := n
+	// word wrap at the current width - 5, with an allowed overshoot of 5 runes
+	tmpWrapAt := e.wrapWidth
+	e.wrapWidth = wrapWidth
+	if e.WrapAllLinesAt(wrapWidth-5, 5) {
+		e.redraw = true
+		e.redrawCursor = true
+	}
+	e.wrapWidth = tmpWrapAt
+	return wrapWidth
+}
+
 // CommandMenu will display a menu with various commands that can be browsed with arrow up and arrow down.
 // Also returns the selected menu index (can be -1), and if a space should be added to the text editor after the return.
 func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) (int, bool) {
@@ -116,11 +130,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		}
 	}
 
-	wrapWhenTypingToggleText := "Enable word wrap when typing"
-	if e.wrapWhenTyping {
-		wrapWhenTypingToggleText = "Disable word wrap when typing"
-	}
-
 	var (
 		extraDashes         bool
 		addSpaceAfterReturn bool
@@ -131,8 +140,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	actions, err := NewActions2(
 		[]string{
 			"Save and quit",
-			wrapWhenTypingToggleText,
-			"Word wrap at " + strconv.Itoa(wrapWidth),
 			"Sort strings on the current line",
 			"Insert \"" + insertFilename + "\" at the current line",
 			"Insert the current date", // in the RFC 3339 format
@@ -143,22 +150,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				e.UserSave(c, tty, status)
 				e.quit = true        // indicate that the user wishes to quit
 				e.clearOnQuit = true // clear the terminal after quitting
-			},
-			func() { // toggle word wrap when typing
-				e.wrapWhenTyping = !e.wrapWhenTyping
-				if e.wrapWidth == 0 {
-					e.wrapWidth = 79
-				}
-			},
-			func() { // word wrap
-				// word wrap at the current width - 5, with an allowed overshoot of 5 runes
-				tmpWrapAt := e.wrapWidth
-				e.wrapWidth = wrapWidth
-				if e.WrapAllLinesAt(wrapWidth-5, 5) {
-					e.redraw = true
-					e.redrawCursor = true
-				}
-				e.wrapWidth = tmpWrapAt
 			},
 			func() { // sort strings on the current line
 				undo.Snapshot(e)
@@ -188,6 +179,48 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		// If this happens, menu actions and menu functions are not added properly
 		// and it should fail hard, so that this can be fixed.
 		panic(err)
+	}
+
+	// Word wrap at a custom width + enable word wrap when typing
+	actions.Add("Word wrap at...", func() {
+		if wordWrapString, ok := e.UserInput(c, tty, status, fmt.Sprintf("Word wrap at [%d]", wrapWidth)); ok {
+			if strings.TrimSpace(wordWrapString) == "" {
+				wrapWidth = e.WrapNow(wrapWidth)
+				e.wrapWhenTyping = true
+				status.Clear(c)
+				status.SetMessage(fmt.Sprintf("Word wrap at %d", wrapWidth))
+				status.Show(c, e)
+			} else {
+				if ww, err := strconv.Atoi(wordWrapString); err != nil {
+					status.Clear(c)
+					status.SetError(err)
+					status.Show(c, e)
+				} else {
+					wrapWidth = e.WrapNow(ww)
+					e.wrapWhenTyping = true
+					status.Clear(c)
+					status.SetMessage(fmt.Sprintf("Word wrap at %d", wrapWidth))
+					status.Show(c, e)
+				}
+			}
+		}
+	})
+
+	// Disable or enable word wrap when typing
+	if e.wrapWhenTyping {
+		actions.Add("Disable word wrap when typing", func() {
+			e.wrapWhenTyping = false
+			if e.wrapWidth == 0 {
+				e.wrapWidth = wrapWidth
+			}
+		})
+	} else {
+		actions.Add("Enable word wrap when typing", func() {
+			e.wrapWhenTyping = true
+			if e.wrapWidth == 0 {
+				e.wrapWidth = wrapWidth
+			}
+		})
 	}
 
 	// Special menu option for PKGBUILD files
