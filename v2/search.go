@@ -31,7 +31,7 @@ func (e *Editor) SetSearchTerm(c *vt100.Canvas, status *StatusBar, s string) {
 		if strings.Contains(e.Line(y), s) {
 			// Found an instance, scroll there
 			// GoTo returns true if the screen should be redrawn
-			redraw := e.GoTo(y, c, status)
+			redraw, _ := e.GoTo(y, c, status)
 			if redraw {
 				e.Center(c)
 			}
@@ -207,7 +207,7 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap, forward
 	}
 
 	// Go to the found match
-	e.redraw = e.GoTo(foundY, c, status)
+	e.redraw, _ = e.GoTo(foundY, c, status)
 	if foundX != -1 {
 		tabs := strings.Count(e.Line(foundY), "\t")
 		e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))

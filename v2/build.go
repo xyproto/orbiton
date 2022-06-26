@@ -600,7 +600,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 								// Move to (x, y), line number first and then column number
 								if i, err := strconv.Atoi(lineNumberString); err == nil {
 									foundY := LineIndex(i - 1)
-									e.redraw = e.GoTo(foundY, c, status)
+									e.redraw, _ = e.GoTo(foundY, c, status)
 									e.redrawCursor = e.redraw
 									if x, err := strconv.Atoi(lineColumnString); err == nil { // no error
 										foundX := x - 1
@@ -725,7 +725,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					// Move to (x, y), line number first and then column number
 					if i, err := strconv.Atoi(lineNumberString); err == nil {
 						foundY := LineIndex(i - 1)
-						e.redraw = e.GoTo(foundY, c, status)
+						e.redraw, _ = e.GoTo(foundY, c, status)
 						e.redrawCursor = e.redraw
 						if x, err := strconv.Atoi(lineColumnString); err == nil { // no error
 							foundX := x - 1
@@ -748,7 +748,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 					if i, err := strconv.Atoi(parts[2]); err == nil {
 						foundY := LineIndex(i - 1)
-						e.redraw = e.GoTo(foundY, c, status)
+						e.redraw, _ = e.GoTo(foundY, c, status)
 						e.redrawCursor = e.redraw
 					}
 
@@ -784,7 +784,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			if y, err := strconv.Atoi(fields[1]); err == nil { // no error
 
 				foundY := LineIndex(y - 1)
-				e.redraw = e.GoTo(foundY, c, status)
+				e.redraw, _ = e.GoTo(foundY, c, status)
 				e.redrawCursor = e.redraw
 
 				if x, err := strconv.Atoi(fields[2]); err == nil { // no error
@@ -817,7 +817,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 				var foundY LineIndex
 				if y, err := strconv.Atoi(fields[1]); err == nil { // no error
 					foundY = LineIndex(y - 1)
-					e.redraw = e.GoTo(foundY, c, status)
+					e.redraw, _ = e.GoTo(foundY, c, status)
 					e.redrawCursor = e.redraw
 					foundX := -1
 					if x, err := strconv.Atoi(fields[2]); err == nil { // no error
@@ -857,7 +857,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					var foundY LineIndex
 					if y, err := strconv.Atoi(errorY); err == nil { // no error
 						foundY = LineIndex(y - 1)
-						e.redraw = e.GoTo(foundY, c, status)
+						e.redraw, _ = e.GoTo(foundY, c, status)
 						e.redrawCursor = e.redraw
 						foundX := -1
 						if x, err := strconv.Atoi(errorX); err == nil { // no error

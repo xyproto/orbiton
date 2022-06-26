@@ -110,7 +110,7 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 					var foundY int
 					if y, err := strconv.Atoi(fields[1]); err == nil { // no error
 						foundY = y - 1
-						e.redraw = e.GoTo(LineIndex(foundY), c, status)
+						e.redraw, _ = e.GoTo(LineIndex(foundY), c, status)
 						foundX := -1
 						if x, err := strconv.Atoi(fields[2]); err == nil { // no error
 							foundX = x - 1
