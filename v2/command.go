@@ -97,20 +97,6 @@ func (a *Actions) Perform(index int) {
 	a.actionFunctions[index]()
 }
 
-// wrapNow is a helper function for changing the word wrap width
-func (e *Editor) WrapNow(n int) int {
-	wrapWidth := n
-	// word wrap at the current width - 5, with an allowed overshoot of 5 runes
-	tmpWrapAt := e.wrapWidth
-	e.wrapWidth = wrapWidth
-	if e.WrapAllLinesAt(wrapWidth-5, 5) {
-		e.redraw = true
-		e.redrawCursor = true
-	}
-	e.wrapWidth = tmpWrapAt
-	return wrapWidth
-}
-
 // CommandMenu will display a menu with various commands that can be browsed with arrow up and arrow down.
 // Also returns the selected menu index (can be -1), and if a space should be added to the text editor after the return.
 func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) (int, bool) {
@@ -185,7 +171,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	actions.Add("Word wrap at...", func() {
 		if wordWrapString, ok := e.UserInput(c, tty, status, fmt.Sprintf("Word wrap at [%d]", wrapWidth)); ok {
 			if strings.TrimSpace(wordWrapString) == "" {
-				wrapWidth = e.WrapNow(wrapWidth)
+				e.WrapNow(wrapWidth)
 				e.wrapWhenTyping = true
 				status.Clear(c)
 				status.SetMessage(fmt.Sprintf("Word wrap at %d", wrapWidth))
@@ -196,7 +182,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 					status.SetError(err)
 					status.Show(c, e)
 				} else {
-					wrapWidth = e.WrapNow(ww)
+					e.WrapNow(ww)
 					e.wrapWhenTyping = true
 					status.Clear(c)
 					status.SetMessage(fmt.Sprintf("Word wrap at %d", wrapWidth))

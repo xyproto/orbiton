@@ -787,11 +787,8 @@ func (e *Editor) SplitOvershoot(index LineIndex, isSpace bool) ([]rune, []rune, 
 	return first, second, hasSpace
 }
 
-// WrapAllLinesAt will word wrap all lines that are longer than n,
-// with a maximum overshoot of too long words (measured in runes) of maxOvershoot.
-// Returns true if any lines were wrapped.
-func (e *Editor) WrapAllLinesAt(n, maxOvershoot int) bool {
-	// This is not even called when the problematic insert behavior occurs
+// WrapAllLines will word wrap all lines that are longer than e.wrapWidth
+func (e *Editor) WrapAllLines() bool {
 
 	wrapped := false
 	insertedLines := 0
@@ -838,7 +835,20 @@ func (e *Editor) WrapAllLinesAt(n, maxOvershoot int) bool {
 		e.redrawCursor = true
 	}
 
+	// This appears to be needed as well
+	e.MakeConsistent()
+
 	return wrapped
+}
+
+// WrapNow is a helper function for changing the word wrap width,
+// while also wrapping all lines
+func (e *Editor) WrapNow(wrapWith int) {
+	e.wrapWidth = wrapWith
+	if e.WrapAllLines() {
+		e.redraw = true
+		e.redrawCursor = true
+	}
 }
 
 // InsertLineAbove will attempt to insert a new line above the current position
