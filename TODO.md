@@ -52,28 +52,24 @@
 - [ ] If joining a line that starts with a single-line comment with a line below that also starts with a single line comment,
       remove the extra comment marker.
 - [ ] When in "SuggestMode", typing should start filtering the list.
+- [ ] Introduce the concept of soft and hard breaks, to keep track of where lines were broken automatically and be able to reflow the text.
 
 ## Autocompletion
 
-- [ ] Let the auto-completion also look at method definitions with matching variable names (ignoring types, for now).
-- [ ] Autocompletion of filenames if the previous rune is "/" and tab is pressed.
+- [ ] Let the auto completion also look at method definitions with matching variable names (ignoring types, for now).
+- [ ] Auto completion of filenames if the previous rune is "/" and tab is pressed.
 
 ## Syntax highlighting
 
-- [ ] If the executable link is "edit", use a Borland-like theme.
 - [ ] Check that the right theme is loaded under `uxterm`.
 - [ ] Don't let single-line comments at the end of lines disable rainbow parentheses.
-- [ ] Don't highlight /* in shell scripts like comments.
 - [ ] Also highlight hexadecimal numbers.
 - [ ] Fix syntax highlighting of `'tokens` in Clojure.
-- [ ] '://' should not be interpreted as starting a single-line comment. It's very likely to be an URL.
 - [ ] Don't highlight regular text in Nroff files.
 - [ ] `-- ` comments in Ada are not recognized.
 - [ ] Links in Markdown documents are not always recognized.
 - [ ] // within a ` block should not be recognized
 - [ ] Opening a read-only file in the Linux terminal displays different red colors when moving to the bottom.
-- [ ] Highlight this shell script line correctly: `for txt in third_party/*.txt; do`
-- [ ] Don't color `#` as a comment when editing Go code.
 - [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently!
 - [ ] Rainbow parenthesis should be able to span multiple lines, especially for Clojure, Common Lisp, Scheme and Emacs Lisp.
 - [ ] Hash strings (like sha256 hash sums), could be colored light yellow and dark yellow for every 2 characters
