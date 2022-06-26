@@ -84,12 +84,12 @@ func NewCustomEditor(tabsSpaces mode.TabsSpaces, rainbowParenthesis bool, scroll
 		e.wrapWhenTyping = false
 	}
 	switch m {
-	case mode.Git:
+	case mode.Email, mode.Git:
 		// The subject should ideally be maximum 50 characters long, then the body of the
 		// git commit message can be 72 characters long. Because e-mail standards.
 		e.wrapWidth = 72
 		e.wrapWhenTyping = true
-	case mode.Markdown, mode.Text, mode.Blank:
+	case mode.Blank, mode.Doc, mode.Markdown, mode.Text:
 		e.wrapWidth = 99
 		e.wrapWhenTyping = false
 	}

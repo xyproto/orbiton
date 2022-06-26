@@ -388,7 +388,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	})
 
 	// Render to PDF using pandoc
-	if e.mode == mode.Markdown && which("pandoc") != "" {
+	if (e.mode == mode.Markdown || e.mode == mode.Doc) && which("pandoc") != "" {
 		actions.Add("Render to PDF using pandoc", func() {
 			go func() {
 				pandocMutex.Lock()

@@ -71,7 +71,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 
 	// Minor adjustments to some modes
 	switch e.mode {
-	case mode.Git:
+	case mode.Email, mode.Git:
 		e.StatusForeground = vt100.LightBlue
 		e.StatusBackground = vt100.BackgroundDefault
 	case mode.ManPage:

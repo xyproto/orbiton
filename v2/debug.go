@@ -69,17 +69,17 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 	}
 
 	// Use rust-gdb if we are debugging Rust
-	var gdbExecutable string
+	var gdbPath string
 	if e.mode == mode.Rust {
-		gdbExecutable = which("rust-gdb")
+		gdbPath = which("rust-gdb")
 	} else {
-		gdbExecutable = which("gdb")
+		gdbPath = which("gdb")
 	}
 
 	//flogf(gdbLogFile, "[gdb] starting %s: ", gdbExecutable)
 
 	// Start a new gdb session
-	e.gdb, err = gdb.NewCustom(gdbExecutable, func(notification map[string]interface{}) {
+	e.gdb, err = gdb.NewCustom([]string{gdbPath}, func(notification map[string]interface{}) {
 		// Handle messages from gdb, including frames that contains line numbers
 		if payload, ok := notification["payload"]; ok {
 			switch notification["type"] {
@@ -1058,7 +1058,7 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 
 func (e *Editor) usingGDBMightWork() bool {
 	switch e.mode {
-	case mode.AIDL, mode.Amber, mode.Basic, mode.Bat, mode.Bazel, mode.Blank, mode.CMake, mode.CS, mode.Clojure, mode.Config, mode.Erlang, mode.Git, mode.Gradle, mode.HIDL, mode.HTML, mode.JSON, mode.Java, mode.JavaScript, mode.Kotlin, mode.Lisp, mode.Log, mode.Lua, mode.M4, mode.Makefile, mode.ManPage, mode.Markdown, mode.Nroff, mode.Oak, mode.Perl, mode.PolicyLanguage, mode.Python, mode.SQL, mode.Scala, mode.Shell, mode.Teal, mode.Text, mode.TypeScript, mode.Vim, mode.XML:
+	case mode.AIDL, mode.Amber, mode.Basic, mode.Bat, mode.Bazel, mode.Blank, mode.CMake, mode.CS, mode.Clojure, mode.Config, mode.Doc, mode.Email, mode.Erlang, mode.Git, mode.Gradle, mode.HIDL, mode.HTML, mode.JSON, mode.Java, mode.JavaScript, mode.Kotlin, mode.Lisp, mode.Log, mode.Lua, mode.M4, mode.Makefile, mode.ManPage, mode.Markdown, mode.Nroff, mode.Oak, mode.Perl, mode.PolicyLanguage, mode.Python, mode.SQL, mode.Scala, mode.Shell, mode.Teal, mode.Text, mode.TypeScript, mode.Vim, mode.XML:
 		// Nope
 		return false
 	case mode.Zig:

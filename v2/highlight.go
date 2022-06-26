@@ -37,13 +37,13 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	numLinesToDraw := toline - fromline // Number of lines available on the canvas for drawing
 	offsetY := fromline
 
-	inCodeBlock := false // used when highlighting Markdown or Python
+	inCodeBlock := false // used when highlighting Doc, Markdown or Python
 
 	//logf("numlines: %d offsetY %d\n", numlines, offsetY)
 
 	switch e.mode {
 	// If in Markdown mode, figure out the current state of block quotes
-	case mode.Markdown:
+	case mode.Doc, mode.Markdown:
 		// Figure out if "fromline" is within a markdown code block or not
 		for i := LineIndex(0); i < fromline; i++ {
 			// Check if the untrimmed line starts with ~~~ or ```
@@ -162,7 +162,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 					cs := e.manPageHighlight(line, programName, y == 0, y+1 == numLinesToDraw)
 					coloredString = cs
-				case mode.Markdown:
+				case mode.Doc, mode.Markdown:
 					if highlighted, ok, codeBlockFound := e.markdownHighlight(line, inCodeBlock, listItemRecord, &inListItem); ok {
 						coloredString = highlighted
 						if codeBlockFound {

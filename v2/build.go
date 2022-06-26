@@ -391,7 +391,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 	// Get a few simple cases out of the way first, by editor mode
 	switch e.mode {
-	case mode.Markdown:
+	case mode.Markdown, mode.Doc:
 		// pandoc
 		if pandocPath := which("pandoc"); pandocPath != "" {
 			pdfFilename := strings.Replace(filepath.Base(sourceFilename), ".", "_", -1) + ".pdf"
