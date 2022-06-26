@@ -78,9 +78,9 @@ func NewCustomEditor(tabsSpaces mode.TabsSpaces, rainbowParenthesis bool, scroll
 	e.rainbowParenthesis = rainbowParenthesis
 	p := NewPosition(scrollSpeed)
 	e.pos = *p
-	// If the file is not to be highlighted, set word wrap to 99 (0 to disable)
+	// If the file is not to be highlighted, set word wrap to 79 (0 to disable)
 	if e.syntaxHighlight {
-		e.wrapWidth = 99
+		e.wrapWidth = 79
 		e.wrapWhenTyping = false
 	}
 	switch m {
@@ -90,7 +90,7 @@ func NewCustomEditor(tabsSpaces mode.TabsSpaces, rainbowParenthesis bool, scroll
 		e.wrapWidth = 72
 		e.wrapWhenTyping = true
 	case mode.Blank, mode.Doc, mode.Markdown, mode.Text:
-		e.wrapWidth = 99
+		e.wrapWidth = 79
 		e.wrapWhenTyping = false
 	}
 	e.mode = m
