@@ -198,15 +198,18 @@ Set NO_COLOR=1 to disable colors.
 		theme = NewNoColorDarkBackgroundTheme()
 		syntaxHighlight = false
 	} else {
-		// Check if the executable starts with "r", "l" or "e"
+		// Check if the executable starts with a specific letter
 		if len(executableName) > 0 {
 			switch executableName[0] {
 			case 'b', 'e': // bo, borland, ed, edit etc.
 				theme = NewBorlandTheme()
+				specificLetter = true
 			case 'l': // lo, light etc.
 				theme = NewLightTheme()
+				specificLetter = true
 			case 'r': // rb, ro, rt, red etc.
 				theme = NewRedBlackTheme()
+				specificLetter = true
 			}
 		}
 	}

@@ -15,6 +15,8 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+var specificLetter bool // did the editor executable start with a specific letter, or just "o"?
+
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message and an error type
 func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight bool) (*Editor, string, error) {
@@ -236,7 +238,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 	// Use a light theme if XTERM_VERSION (and not running with "ko") or
 	// TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
 	// because $COLORFGBG is "15;0" even though the background is white.
-	if !e.readOnly {
+	if !e.readOnly && !specificLetter {
 		if (env.Has("XTERM_VERSION") && !env.Bool("KO") && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
 			e.setLightTheme()
 		} else if shell := env.Str("SHELL"); (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && filepath.Base(os.Args[0]) != "default" {

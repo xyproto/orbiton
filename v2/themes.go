@@ -262,9 +262,9 @@ func NewBorlandTheme() Theme {
 		Light:                       true,
 		Foreground:                  vt100.White,
 		Background:                  vt100.BackgroundBlue,
-		StatusForeground:            vt100.White,
-		StatusBackground:            vt100.BackgroundGray,
-		StatusErrorForeground:       vt100.White,
+		StatusForeground:            vt100.Black,
+		StatusBackground:            vt100.BackgroundCyan,
+		StatusErrorForeground:       vt100.Black,
 		StatusErrorBackground:       vt100.BackgroundRed,
 		SearchHighlight:             vt100.LightRed,
 		MultiLineComment:            vt100.Gray,
@@ -679,7 +679,7 @@ func (e *Editor) setRedBlackTheme() {
 // setBorlandTheme sets a blue/yellow/gray theme, for light backgrounds
 func (e *Editor) setBorlandTheme() {
 	if initialLightBackground == nil {
-		b := false
+		b := true
 		initialLightBackground = &b
 	}
 	e.SetTheme(NewBorlandTheme())
