@@ -6,9 +6,10 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+// TODO: Restructure how themes are stored, so that it's easier to list all themes that works with a dark background or all that works with a light background, ref. initialLightBackground
+
 var (
 	envNoColor             = env.Bool("NO_COLOR")
-	allThemes              = []string{"Default", "Red & black", "VS, for light backgrounds", "Blue Edit", "Blue Edit, for light backgrounds", "Amber Mono", "Green Mono", "Blue Mono", "No color"}
 	initialLightBackground *bool
 )
 
@@ -261,7 +262,7 @@ func NewLightEditTheme() Theme {
 	return Theme{
 		Name:                        "Edit light",
 		Light:                       true,
-		StatusMode:                  true,
+		StatusMode:                  false,
 		Foreground:                  vt100.White,
 		Background:                  vt100.BackgroundBlue,
 		StatusForeground:            vt100.Black,
@@ -342,7 +343,7 @@ func NewDarkEditTheme() Theme {
 	return Theme{
 		Name:                        "Edit dark",
 		Light:                       false,
-		StatusMode:                  true,
+		StatusMode:                  false,
 		Foreground:                  vt100.White,
 		Background:                  vt100.BackgroundBlue,
 		StatusForeground:            vt100.White,
@@ -739,7 +740,6 @@ func (e *Editor) setDefaultTheme() {
 		b := false
 		initialLightBackground = &b
 	}
-	e.statusMode = false
 	e.SetTheme(NewDefaultTheme())
 }
 
@@ -749,7 +749,6 @@ func (e *Editor) setLightTheme() {
 		b := true
 		initialLightBackground = &b
 	}
-	e.statusMode = false
 	e.SetTheme(NewLightTheme())
 }
 
@@ -759,8 +758,19 @@ func (e *Editor) setRedBlackTheme() {
 		b := false
 		initialLightBackground = &b
 	}
-	e.statusMode = false
 	e.SetTheme(NewRedBlackTheme())
+}
+
+// setEditTheme sets a blue/yellow/gray theme, for light or dark backgrounds
+func (e *Editor) setEditTheme() {
+	if initialLightBackground == nil {
+		b := true
+		initialLightBackground = &b
+	} else if *initialLightBackground {
+		e.SetTheme(NewLightEditTheme())
+	} else {
+		e.SetTheme(NewDarkEditTheme())
+	}
 }
 
 // setLightEditTheme sets a blue/yellow/gray theme, for light backgrounds
@@ -769,18 +779,7 @@ func (e *Editor) setLightEditTheme() {
 		b := true
 		initialLightBackground = &b
 	}
-	e.statusMode = true
 	e.SetTheme(NewLightEditTheme())
-}
-
-// setDarkEditTheme sets a blue/yellow/gray theme, for dark backgrounds
-func (e *Editor) setDarkEditTheme() {
-	if initialLightBackground == nil {
-		b := false
-		initialLightBackground = &b
-	}
-	e.statusMode = true
-	e.SetTheme(NewDarkEditTheme())
 }
 
 // setAmberTheme sets an amber theme
