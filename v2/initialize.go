@@ -15,7 +15,10 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-var specificLetter bool // did the editor executable start with a specific letter, or just "o"?
+var (
+	specificLetter bool // did the editor executable start with a specific letter, or just "o"?
+	editTheme      bool // does the theme has both a dark and a light version?
+)
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message and an error type
@@ -58,11 +61,11 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
 	e := NewCustomEditor(tabsSpaces,
-		rainbowParenthesis,
 		scrollSpeed,
 		m,
 		theme,
-		syntaxHighlight)
+		syntaxHighlight,
+		rainbowParenthesis)
 
 	if readOnly {
 		e.readOnly = true
@@ -238,9 +241,13 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 	// Use a light theme if XTERM_VERSION (and not running with "ko") or
 	// TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
 	// because $COLORFGBG is "15;0" even though the background is white.
-	if !e.readOnly && !specificLetter {
+	if !e.readOnly && (!specificLetter || editTheme) {
 		if (env.Has("XTERM_VERSION") && !env.Bool("KO") && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
-			e.setLightTheme()
+			if editTheme {
+				e.setLightEditTheme()
+			} else {
+				e.setLightTheme()
+			}
 		} else if shell := env.Str("SHELL"); (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && filepath.Base(os.Args[0]) != "default" {
 			// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
 			e.setRedBlackTheme()
@@ -249,14 +256,22 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 			backgroundColor := fields[len(fields)-1]
 			// 10 (light green), 11 (yellow), 12 (light blue), 13 (light purple), 14 (light cyan) or white
 			if backgroundColorNumber, err := strconv.Atoi(backgroundColor); err == nil && backgroundColorNumber >= 10 {
-				e.setLightTheme()
+				if editTheme {
+					e.setLightEditTheme()
+				} else {
+					e.setLightTheme()
+				}
 			}
 		} else if r, g, b, err := vt100.GetBackgroundColor(tty); err == nil { // success
 			// r, g, b is the background color from the current terminal emulator, if available
 			// Check combined value of r, g and b (0..1), and if it's larger than 2
 			// (a bit arbitrary, but should work for most cases)
 			if r+g+b > 2 {
-				e.setLightTheme()
+				if editTheme {
+					e.setLightEditTheme()
+				} else {
+					e.setLightTheme()
+				}
 			}
 		}
 	}
