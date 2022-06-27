@@ -69,7 +69,7 @@ type Editor struct {
 //    - multiline comment
 // * a syntax highlighting scheme
 // * a file mode
-func NewCustomEditor(tabsSpaces mode.TabsSpaces, rainbowParenthesis bool, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight bool) *Editor {
+func NewCustomEditor(tabsSpaces mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight, rainbowParenthesis bool) *Editor {
 	e := &Editor{}
 	e.SetTheme(theme)
 	e.lines = make(map[int][]rune)
@@ -103,7 +103,7 @@ func NewCustomEditor(tabsSpaces mode.TabsSpaces, rainbowParenthesis bool, scroll
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
 	t := NewDefaultTheme()
-	e := NewCustomEditor(mode.DefaultTabsSpaces, false, 1, mode.Blank, t, false)
+	e := NewCustomEditor(mode.DefaultTabsSpaces, 1, mode.Blank, t, false, false)
 	e.wrapWidth = wordWrapLimit
 	e.wrapWhenTyping = true
 	return e
