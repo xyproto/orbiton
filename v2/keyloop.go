@@ -40,7 +40,6 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 		copyLines         []string  // for the cut/copy/paste functionality
 		previousCopyLines []string  // for checking if a paste is the same as last time
 		bookmark          *Position // for the bookmark/jump functionality
-		statusMode        bool      // if information should be shown at the bottom
 
 		firstPasteAction = true
 		firstCopyAction  = true
@@ -1917,7 +1916,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 		previousKey = key
 
 		// Clear status, if needed
-		if statusMode && e.redrawCursor {
+		if e.statusMode && e.redrawCursor {
 			status.ClearAll(c)
 		}
 
