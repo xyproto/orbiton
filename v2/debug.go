@@ -36,6 +36,8 @@ var (
 	programRunning           bool
 	prevFlags                []string
 	longInstructionPaneWidth int // should the instruction pane be extra wide, if so, how wide?
+	gdbPathRust              *string
+	gdbPathRegular           *string
 )
 
 // DebugActivateBreakpoint sends break-insert to gdb together with the breakpoint in e.breakpoint, if available
@@ -68,13 +70,8 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 		}
 	}
 
-	// Use rust-gdb if we are debugging Rust
-	var gdbPath string
-	if e.mode == mode.Rust {
-		gdbPath = which("rust-gdb")
-	} else {
-		gdbPath = which("gdb")
-	}
+	// Find the path to either "rust-gdb" or "gdb", depending on the mode
+	gdbPath := e.findGDB()
 
 	//flogf(gdbLogFile, "[gdb] starting %s: ", gdbExecutable)
 
@@ -1189,4 +1186,24 @@ func (e *Editor) DebugStartSession(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	}
 	status.Show(c, e)
 	return nil
+}
+
+// findGDB will find "rust-gdb" for mode.Rust or "gdb" for other
+// modes, but in a memoized way to avoid more than one lookup of each.
+func (e *Editor) findGDB() string {
+	// Use rust-gdb if we are debugging Rust
+	if e.mode == mode.Rust {
+		if gdbPathRust == nil {
+			path := which("rust-gdb")
+			gdbPathRust = &path
+			return path
+		}
+		return *gdbPathRust
+	}
+	if gdbPathRegular == nil {
+		path := which("gdb")
+		gdbPathRegular = &path
+		return path
+	}
+	return *gdbPathRegular
 }
