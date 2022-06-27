@@ -8,7 +8,7 @@ import (
 
 var (
 	envNoColor             = env.Bool("NO_COLOR")
-	allThemes              = []string{"Default", "Red/black", "For light backgrounds", "\"Borland\" for light backgrounds", "Amber", "Green", "Blue", "No color"}
+	allThemes              = []string{"Default", "Red & black", "VS, for light backgrounds", "Blue Edit", "Blue Edit, for light backgrounds", "Amber Mono", "Green Mono", "Blue Mono", "No color"}
 	initialLightBackground *bool
 )
 
@@ -92,6 +92,7 @@ type Theme struct {
 	DebugInstructionsForeground vt100.AttributeColor
 	BoxUpperEdge                vt100.AttributeColor
 	Light                       bool
+	StatusMode                  bool
 }
 
 // NewDefaultTheme creates a new default Theme struct
@@ -255,11 +256,12 @@ func NewRedBlackTheme() Theme {
 	}
 }
 
-// NewBorlandTheme creates a new blue/gray/yellow Theme struct, for light backgrounds
-func NewBorlandTheme() Theme {
+// NewLightEditTheme creates a new blue/gray/yellow Theme struct, for light backgrounds
+func NewLightEditTheme() Theme {
 	return Theme{
-		Name:                        "Borland",
+		Name:                        "Edit light",
 		Light:                       true,
+		StatusMode:                  true,
 		Foreground:                  vt100.White,
 		Background:                  vt100.BackgroundBlue,
 		StatusForeground:            vt100.Black,
@@ -318,7 +320,7 @@ func NewBorlandTheme() Theme {
 		MenuTitleColor:              vt100.LightBlue,
 		MenuArrowColor:              vt100.LightRed,
 		MenuTextColor:               vt100.Black,
-		MenuHighlightColor:          vt100.LightMagenta,
+		MenuHighlightColor:          vt100.Blue,
 		MenuSelectedColor:           vt100.LightRed,
 		ManSectionColor:             vt100.LightBlue,
 		ManSynopsisColor:            vt100.LightBlue,
@@ -331,6 +333,87 @@ func NewBorlandTheme() Theme {
 		DebugOutputBackground:       vt100.BackgroundYellow,
 		DebugInstructionsForeground: vt100.LightYellow,
 		DebugInstructionsBackground: vt100.BackgroundCyan,
+		BoxUpperEdge:                vt100.White,
+	}
+}
+
+// NewDarkEditTheme creates a new blue/gray/yellow Theme struct, for light backgrounds
+func NewDarkEditTheme() Theme {
+	return Theme{
+		Name:                        "Edit dark",
+		Light:                       false,
+		StatusMode:                  true,
+		Foreground:                  vt100.White,
+		Background:                  vt100.BackgroundBlue,
+		StatusForeground:            vt100.White,
+		StatusBackground:            vt100.BackgroundCyan,
+		StatusErrorForeground:       vt100.Red,
+		StatusErrorBackground:       vt100.BackgroundCyan,
+		SearchHighlight:             vt100.Red,
+		MultiLineComment:            vt100.LightGray,
+		MultiLineString:             vt100.LightYellow,
+		Git:                         vt100.White,
+		String:                      "lightyellow",
+		Keyword:                     "white",
+		Comment:                     "lightgray",
+		Type:                        "white",
+		Literal:                     "white",
+		Punctuation:                 "white",
+		Plaintext:                   "white",
+		Tag:                         "white",
+		TextTag:                     "white",
+		TextAttrName:                "white",
+		TextAttrValue:               "white",
+		Decimal:                     "lightyellow",
+		AndOr:                       "white",
+		Dollar:                      "lightyellow",
+		Star:                        "lightyellow",
+		Class:                       "white",
+		Private:                     "white",
+		Protected:                   "white",
+		Public:                      "white",
+		Whitespace:                  "",
+		AssemblyEnd:                 "white",
+		Mut:                         "lightyellow",
+		RainbowParenColors:          []vt100.AttributeColor{vt100.White, vt100.LightYellow},
+		MarkdownTextColor:           vt100.White,
+		HeaderBulletColor:           vt100.DarkGray,
+		HeaderTextColor:             vt100.LightYellow,
+		ListBulletColor:             vt100.DarkGray,
+		ListTextColor:               vt100.White,
+		ListCodeColor:               vt100.White,
+		CodeColor:                   vt100.White,
+		CodeBlockColor:              vt100.White,
+		ImageColor:                  vt100.LightYellow,
+		LinkColor:                   vt100.LightYellow,
+		QuoteColor:                  vt100.White,
+		QuoteTextColor:              vt100.White,
+		HTMLColor:                   vt100.LightYellow,
+		CommentColor:                vt100.White,
+		BoldColor:                   vt100.LightYellow,
+		ItalicsColor:                vt100.White,
+		StrikeColor:                 vt100.White,
+		TableColor:                  vt100.White,
+		CheckboxColor:               vt100.White,
+		XColor:                      vt100.LightYellow,
+		TableBackground:             vt100.BackgroundBlue,
+		UnmatchedParenColor:         vt100.LightRed,
+		MenuTitleColor:              vt100.LightYellow,
+		MenuArrowColor:              vt100.White,
+		MenuTextColor:               vt100.White,
+		MenuHighlightColor:          vt100.LightYellow,
+		MenuSelectedColor:           vt100.White,
+		ManSectionColor:             vt100.LightYellow,
+		ManSynopsisColor:            vt100.White,
+		BoxTextColor:                vt100.White,
+		BoxBackground:               vt100.White,
+		BoxHighlight:                vt100.White,
+		DebugRunningBackground:      vt100.BackgroundGray,
+		DebugStoppedBackground:      vt100.BackgroundGray,
+		DebugRegistersBackground:    vt100.BackgroundGray,
+		DebugOutputBackground:       vt100.BackgroundGray,
+		DebugInstructionsForeground: vt100.LightYellow,
+		DebugInstructionsBackground: vt100.BackgroundGray,
 		BoxUpperEdge:                vt100.White,
 	}
 }
@@ -646,6 +729,7 @@ func (e *Editor) SetTheme(t Theme) {
 		e.syntaxHighlight = false
 	}
 	e.Theme = t
+	e.statusMode = t.StatusMode
 	syntax.DefaultTextConfig = *(t.TextConfig())
 }
 
@@ -655,6 +739,7 @@ func (e *Editor) setDefaultTheme() {
 		b := false
 		initialLightBackground = &b
 	}
+	e.statusMode = false
 	e.SetTheme(NewDefaultTheme())
 }
 
@@ -664,6 +749,7 @@ func (e *Editor) setLightTheme() {
 		b := true
 		initialLightBackground = &b
 	}
+	e.statusMode = false
 	e.SetTheme(NewLightTheme())
 }
 
@@ -673,16 +759,28 @@ func (e *Editor) setRedBlackTheme() {
 		b := false
 		initialLightBackground = &b
 	}
+	e.statusMode = false
 	e.SetTheme(NewRedBlackTheme())
 }
 
-// setBorlandTheme sets a blue/yellow/gray theme, for light backgrounds
-func (e *Editor) setBorlandTheme() {
+// setLightEditTheme sets a blue/yellow/gray theme, for light backgrounds
+func (e *Editor) setLightEditTheme() {
 	if initialLightBackground == nil {
 		b := true
 		initialLightBackground = &b
 	}
-	e.SetTheme(NewBorlandTheme())
+	e.statusMode = true
+	e.SetTheme(NewLightEditTheme())
+}
+
+// setDarkEditTheme sets a blue/yellow/gray theme, for dark backgrounds
+func (e *Editor) setDarkEditTheme() {
+	if initialLightBackground == nil {
+		b := false
+		initialLightBackground = &b
+	}
+	e.statusMode = true
+	e.SetTheme(NewDarkEditTheme())
 }
 
 // setAmberTheme sets an amber theme

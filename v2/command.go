@@ -447,23 +447,27 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				envNoColor = false
 				e.setLightTheme()
 				e.syntaxHighlight = true
-			case 3: // "borland", on light background
+			case 3: // dark edit
 				envNoColor = false
-				e.setBorlandTheme()
+				e.setDarkEditTheme()
 				e.syntaxHighlight = true
-			case 4: // amber
+			case 4: // light edit
+				envNoColor = false
+				e.setLightEditTheme()
+				e.syntaxHighlight = true
+			case 5: // amber
 				envNoColor = false
 				e.setAmberTheme()
 				e.syntaxHighlight = false
-			case 5: // green
+			case 6: // green
 				envNoColor = false
 				e.setGreenTheme()
 				e.syntaxHighlight = false
-			case 6: // blue
+			case 7: // blue
 				envNoColor = false
 				e.setBlueTheme()
 				e.syntaxHighlight = false
-			case 7: // no color
+			case 8: // no color
 				envNoColor = true
 				e.setDefaultTheme()
 			default:
