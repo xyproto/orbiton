@@ -20,7 +20,7 @@ var languageIndentation = map[TabsSpaces][]Mode{
 	// Languages that use spaces (from the opinionated point of view of this package)
 	{2, true}: {Agda, Amber, Assembly, Clojure, Config, Erlang, HTML, Haskell, JSON, Lua, ObjectPascal, Perl, PolicyLanguage, Shell, StandardML, Teal, Vim, Vim, XML},
 	{3, true}: {Ada, Prolog}, // Ada and Prolog are special
-	{4, true}: {Bat, Basic, Battlestar, CMake, CS, Cpp, Crystal, Doc, Email, Git, JSON, Jakt, Java, JavaScript, Kotlin, Markdown, Nim, Oak, Python, SQL, Scala, Text, TypeScript, V, Zig},
+	{4, true}: {Bat, Basic, Battlestar, CMake, CS, Cpp, Crystal, Doc, Email, Git, JSON, Jakt, Java, JavaScript, Kotlin, Markdown, Nim, Oak, Python, SQL, Scala, Terra, Text, TypeScript, V, Zig},
 }
 
 // Spaces returns true if spaces should be used for the current mode

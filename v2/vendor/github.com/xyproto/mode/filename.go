@@ -143,6 +143,8 @@ func Detect(filename string) Mode {
 			mode = StandardML
 		case ".sql":
 			mode = SQL
+		case ".t":
+			mode = Terra
 		case ".te":
 			mode = PolicyLanguage
 		case ".tl":

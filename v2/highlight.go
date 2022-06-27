@@ -233,7 +233,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// Regular highlight
 						coloredString = UnEscape(tout.DarkTags(string(textWithTags)))
 					}
-				case mode.Ada, mode.Agda, mode.Haskell, mode.Lua, mode.SQL, mode.Teal: // not for OCaml and Standard ML
+				case mode.Ada, mode.Agda, mode.Haskell, mode.Lua, mode.SQL, mode.Teal, mode.Terra: // not for OCaml and Standard ML
 					trimmedLine = strings.TrimSpace(line)
 					if strings.HasPrefix(trimmedLine, "--") {
 						// Handle single line comments

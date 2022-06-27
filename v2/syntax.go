@@ -102,9 +102,8 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.Lisp:
 		clearKeywords()
 		addKeywords = emacsWords
-	case mode.Teal:
-		// use the same keywords as Lua, for now
-		fallthrough // continue to mode.Lua
+	case mode.Teal, mode.Terra:
+		fallthrough // continue to mode.Lua, for now
 	case mode.Lua:
 		clearKeywords()
 		addKeywords = luaWords
@@ -177,7 +176,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "#"
 	case mode.Assembly:
 		return ";"
-	case mode.Ada, mode.Agda, mode.Haskell, mode.Lua, mode.SQL, mode.Teal:
+	case mode.Ada, mode.Agda, mode.Haskell, mode.Lua, mode.SQL, mode.Teal, mode.Terra:
 		return "--"
 	case mode.Vim:
 		return "\""

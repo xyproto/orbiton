@@ -334,6 +334,8 @@ AGAIN:
 			s = "fun "
 		case mode.Jakt, mode.JavaScript, mode.Lua, mode.Shell, mode.TypeScript:
 			s = "function "
+		case mode.Terra:
+			s = "terra "
 		case mode.Odin:
 			s = "proc() "
 		case mode.Hare, mode.Rust, mode.V, mode.Zig:

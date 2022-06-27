@@ -33,7 +33,7 @@ func (e *Editor) exeName(sourceFilename string) string {
 
 	// Find a suitable default executable first name
 	switch e.mode {
-	case mode.OCaml, mode.Kotlin, mode.Lua, mode.Assembly, mode.Rust, mode.Zig:
+	case mode.Assembly, mode.Kotlin, mode.Lua, mode.OCaml, mode.Rust, mode.Terra, mode.Zig:
 		sourceDirectoryName := filepath.Base(sourceDir)
 		if sourceDirectoryName == "build" {
 			return filepath.Base(parentDir)
