@@ -20,8 +20,8 @@ import (
 
 var (
 	lastCommandFile = filepath.Join(userCacheDir, "o", "last_command.sh")
-	foundGDB        = which("gdb") != ""
 	changedTheme    bool // has the theme been changed manually after the editor was started?
+	themeChoices    = []string{"Default", "Red & black", "VS", "Blue Edit", "Amber Mono", "Green Mono", "Blue Mono", "No color"}
 )
 
 // Actions is a list of action titles and a list of action functions.
@@ -281,6 +281,9 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		}
 	})
 
+	// Find the path to either "rust-gdb" or "gdb", depending on the mode, then check if it's there
+	foundGDB := e.findGDB() != ""
+
 	// Debug mode on/off, if gdb is found and the mode is tested
 	if foundGDB && e.usingGDBMightWork() {
 		if e.debugMode {
@@ -426,7 +429,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	if !envNoColor || changedTheme {
 		// Add an option for selecting a theme
 		actions.Add("Change theme", func() {
-			menuChoices := allThemes
+			menuChoices := themeChoices
 			useMenuIndex := 0
 			for i, menuChoiceText := range menuChoices {
 				if menuChoiceText == e.Theme.Name {
@@ -435,39 +438,35 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			}
 			changedTheme = true
 			switch e.Menu(status, tty, "Select color theme", menuChoices, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes) {
-			case 0: // default
+			case 0: // Default
 				envNoColor = false
 				e.setDefaultTheme()
 				e.syntaxHighlight = true
-			case 1: // red and black
+			case 1: // Red & black
 				envNoColor = false
 				e.setRedBlackTheme()
 				e.syntaxHighlight = true
-			case 2: // light background
+			case 2: // VS
 				envNoColor = false
 				e.setLightTheme()
 				e.syntaxHighlight = true
-			case 3: // dark edit
+			case 3: // Blue Edit
 				envNoColor = false
-				e.setDarkEditTheme()
+				e.setEditTheme()
 				e.syntaxHighlight = true
-			case 4: // light edit
-				envNoColor = false
-				e.setLightEditTheme()
-				e.syntaxHighlight = true
-			case 5: // amber
+			case 4: // Amber Mono
 				envNoColor = false
 				e.setAmberTheme()
 				e.syntaxHighlight = false
-			case 6: // green
+			case 5: // Green Mono
 				envNoColor = false
 				e.setGreenTheme()
 				e.syntaxHighlight = false
-			case 7: // blue
+			case 6: // Blue Mono
 				envNoColor = false
 				e.setBlueTheme()
 				e.syntaxHighlight = false
-			case 8: // no color
+			case 7: // No color
 				envNoColor = true
 				e.setDefaultTheme()
 			default:
