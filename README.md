@@ -358,6 +358,16 @@ rm -rf _o_build
 
 If `/usr/share/scala/lib/scala-library.jar` is not found `scalac -d run_with_scala.jar` is used instead. This file can only be run with the `scala` command.
 
+## Agda
+
+`ctrl-t` brings up a menu with a selection of special symbols.
+
+There are also these shortcuts:
+
+  * Insert `⊤` by pressing `ctrl-t` and then `t`.
+  * Insert `ℕ` by pressing `ctrl-t` and then `n`.
+
+
 ## Updating PKGBUILD files
 
 When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call Guessica` to update the `pkgver=` and `source=` fields, by a combination of guesswork and online searching. This functionality depends on the [Guessica](https://github.com/xyproto/guessica) package update utility.
