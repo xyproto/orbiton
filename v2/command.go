@@ -281,6 +281,19 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		}
 	})
 
+	// Disable or enable the tag-expanding behavior when typing in HTML or XML
+	if e.mode == mode.HTML || e.mode == mode.XML {
+		if e.tagExpandMode {
+			actions.Add("Disable tag expansion when typing", func() {
+				e.tagExpandMode = false
+			})
+		} else {
+			actions.Add("Enable tag expansion when typing", func() {
+				e.tagExpandMode = true
+			})
+		}
+	}
+
 	// Find the path to either "rust-gdb" or "gdb", depending on the mode, then check if it's there
 	foundGDB := e.findGDB() != ""
 

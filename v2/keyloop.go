@@ -915,6 +915,48 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 						}
 					}
 				}
+			} else if (e.mode == mode.XML || e.mode == mode.HTML) && e.tagExpandMode && trimmedLine != "" && !strings.Contains(trimmedLine, "<") && !strings.Contains(trimmedLine, ">") && strings.ToLower(trimmedLine) == trimmedLine {
+				// Words one a line without < or >? Expand into <tag asdf> above and </tag> below.
+				words := strings.Fields(trimmedLine)
+				tagName := words[0]                                     // must be at least one word
+				if len(words) == 1 || strings.Contains(words[1], "=") { // the second word after the tag name needs to be ie. x=42 or href=...
+					above := "<" + trimmedLine + ">"
+					if tagName == "img" && !strings.Contains(trimmedLine, "alt=") && strings.Contains(trimmedLine, "src=") {
+						// Pick out the image URI from the "src=" declaration
+						imageURI := ""
+						for _, word := range strings.Fields(trimmedLine) {
+							if strings.HasPrefix(word, "src=") {
+								imageURI = strings.SplitN(word, "=", 2)[1]
+								imageURI = strings.TrimPrefix(imageURI, "\"")
+								imageURI = strings.TrimSuffix(imageURI, "\"")
+								imageURI = strings.TrimPrefix(imageURI, "'")
+								imageURI = strings.TrimSuffix(imageURI, "'")
+								break
+							}
+						}
+						// If we got something that looks like and image URI, use the description before "." and capitalize it,
+						// then use that as the default "alt=" declaration.
+						if strings.Contains(imageURI, ".") {
+							imageName := capitalizeWords(strings.TrimSuffix(imageURI, filepath.Ext(imageURI)))
+							above = "<" + trimmedLine + " alt=\"" + imageName + "\">"
+						}
+					}
+					// Now replace the current line
+					e.SetCurrentLine(currentLeadingWhitespace + above)
+					e.End(c)
+					// And insert a line below
+					e.InsertLineBelow()
+					// Then if it's not an img tag, insert the closing tag below the current line
+					if tagName != "img" {
+						e.pos.sy++
+						below := "</" + tagName + ">"
+						e.SetCurrentLine(currentLeadingWhitespace + below)
+						e.pos.sy--
+						e.pos.sx += 2
+						indent = true
+						leadingWhitespace = e.tabsSpaces.String() + currentLeadingWhitespace
+					}
+				}
 			}
 
 			//onlyOneLine := e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument()
