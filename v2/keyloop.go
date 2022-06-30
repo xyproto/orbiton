@@ -918,8 +918,10 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 			} else if (e.mode == mode.XML || e.mode == mode.HTML) && e.tagExpandMode && trimmedLine != "" && !strings.Contains(trimmedLine, "<") && !strings.Contains(trimmedLine, ">") && strings.ToLower(trimmedLine) == trimmedLine {
 				// Words one a line without < or >? Expand into <tag asdf> above and </tag> below.
 				words := strings.Fields(trimmedLine)
-				tagName := words[0]                                     // must be at least one word
-				if len(words) == 1 || strings.Contains(words[1], "=") { // the second word after the tag name needs to be ie. x=42 or href=...
+				tagName := words[0] // must be at least one word
+				// the second word after the tag name needs to be ie. x=42 or href=...,
+				// and the tag name must only contain letters a-z A-Z
+				if (len(words) == 1 || strings.Contains(words[1], "=")) && onlyAZaz(tagName) {
 					above := "<" + trimmedLine + ">"
 					if tagName == "img" && !strings.Contains(trimmedLine, "alt=") && strings.Contains(trimmedLine, "src=") {
 						// Pick out the image URI from the "src=" declaration
