@@ -1,12 +1,27 @@
 package main
 
 import (
+	_ "embed"
+	"encoding/json"
+	"log"
+
 	"github.com/xyproto/env"
 	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
 )
 
-// TODO: Restructure how themes are stored, so that it's easier to list all themes that works with a dark background or all that works with a light background, ref. initialLightBackground
+var (
+	themes []Theme
+	//go:embed themes.json
+	themeJSON []byte
+)
+
+func init() {
+	// Unmarshal the embedded theme data
+	if err := json.Unmarshal(themeJSON, &themes); err != nil {
+		log.Fatalln(err)
+	}
+}
 
 var (
 	envNoColor             = env.Bool("NO_COLOR")
@@ -19,81 +34,81 @@ var (
 // * If no colors should be used
 // * Colors for all the textual elements
 type Theme struct {
-	Name                        string
-	Light                       bool
-	Decimal                     string
-	Mut                         string
-	AssemblyEnd                 string
-	Whitespace                  string
-	Public                      string
-	Protected                   string
-	Private                     string
-	Class                       string
-	Star                        string
-	Tag                         string
-	Dollar                      string
-	String                      string
-	Keyword                     string
-	Comment                     string
-	Type                        string
-	Literal                     string
-	Punctuation                 string
-	Plaintext                   string
-	AndOr                       string
-	TextTag                     string
-	TextAttrName                string
-	TextAttrValue               string
-	MultiLineString             vt100.AttributeColor
-	DebugInstructionsBackground vt100.AttributeColor
-	Git                         vt100.AttributeColor
-	MultiLineComment            vt100.AttributeColor
-	SearchHighlight             vt100.AttributeColor
-	StatusErrorBackground       vt100.AttributeColor
-	StatusErrorForeground       vt100.AttributeColor
-	StatusBackground            vt100.AttributeColor
-	StatusForeground            vt100.AttributeColor
-	Background                  vt100.AttributeColor
-	Foreground                  vt100.AttributeColor
-	RainbowParenColors          []vt100.AttributeColor
-	MarkdownTextColor           vt100.AttributeColor
-	HeaderBulletColor           vt100.AttributeColor
-	HeaderTextColor             vt100.AttributeColor
-	ListBulletColor             vt100.AttributeColor
-	ListTextColor               vt100.AttributeColor
-	ListCodeColor               vt100.AttributeColor
-	CodeColor                   vt100.AttributeColor
-	CodeBlockColor              vt100.AttributeColor
-	ImageColor                  vt100.AttributeColor
-	LinkColor                   vt100.AttributeColor
-	QuoteColor                  vt100.AttributeColor
-	QuoteTextColor              vt100.AttributeColor
-	HTMLColor                   vt100.AttributeColor
-	CommentColor                vt100.AttributeColor
-	BoldColor                   vt100.AttributeColor
-	ItalicsColor                vt100.AttributeColor
-	StrikeColor                 vt100.AttributeColor
-	TableColor                  vt100.AttributeColor
-	CheckboxColor               vt100.AttributeColor
-	XColor                      vt100.AttributeColor
-	TableBackground             vt100.AttributeColor
-	UnmatchedParenColor         vt100.AttributeColor
-	MenuTitleColor              vt100.AttributeColor
-	MenuArrowColor              vt100.AttributeColor
-	MenuTextColor               vt100.AttributeColor
-	MenuHighlightColor          vt100.AttributeColor
-	MenuSelectedColor           vt100.AttributeColor
-	ManSectionColor             vt100.AttributeColor
-	ManSynopsisColor            vt100.AttributeColor
-	BoxTextColor                vt100.AttributeColor
-	BoxBackground               vt100.AttributeColor
-	BoxHighlight                vt100.AttributeColor
-	DebugRunningBackground      vt100.AttributeColor
-	DebugStoppedBackground      vt100.AttributeColor
-	DebugRegistersBackground    vt100.AttributeColor
-	DebugOutputBackground       vt100.AttributeColor
-	DebugInstructionsForeground vt100.AttributeColor
-	BoxUpperEdge                vt100.AttributeColor
-	StatusMode                  bool
+	Name                        string                 `json:"name"`
+	Light                       bool                   `json:"light"`
+	Decimal                     string                 `json:"decimal"`
+	Mut                         string                 `json:"mut"`
+	AssemblyEnd                 string                 `json:"assemblyend"`
+	Whitespace                  string                 `json:"whitespace"`
+	Public                      string                 `json:"public"`
+	Protected                   string                 `json:"protected"`
+	Private                     string                 `json:"private"`
+	Class                       string                 `json:"class"`
+	Star                        string                 `json:"star"`
+	Tag                         string                 `json:"tag"`
+	Dollar                      string                 `json:"dollar"`
+	String                      string                 `json:"string"`
+	Keyword                     string                 `json:"keyword"`
+	Comment                     string                 `json:"comment"`
+	Type                        string                 `json:"type"`
+	Literal                     string                 `json:"literal"`
+	Punctuation                 string                 `json:"punctuation"`
+	Plaintext                   string                 `json:"plaintext"`
+	AndOr                       string                 `json:"andor"`
+	TextTag                     string                 `json:"texttag"`
+	TextAttrName                string                 `json:"textattrname"`
+	TextAttrValue               string                 `json:"textattrvalue"`
+	MultiLineString             vt100.AttributeColor   `json:"multilinestring"`
+	DebugInstructionsBackground vt100.AttributeColor   `json:"debuginstructionsbackground"`
+	Git                         vt100.AttributeColor   `json:"git"`
+	MultiLineComment            vt100.AttributeColor   `json:"multilinecomment"`
+	SearchHighlight             vt100.AttributeColor   `json:"searchhighlight"`
+	StatusErrorBackground       vt100.AttributeColor   `json:"statuserrorbackground"`
+	StatusErrorForeground       vt100.AttributeColor   `json:"statuserrorforeground"`
+	StatusBackground            vt100.AttributeColor   `json:"statusbackground"`
+	StatusForeground            vt100.AttributeColor   `json:"statusforeground"`
+	Background                  vt100.AttributeColor   `json:"background"`
+	Foreground                  vt100.AttributeColor   `json:"foreground"`
+	RainbowParenColors          []vt100.AttributeColor `json:"rainbowparencolors"`
+	MarkdownTextColor           vt100.AttributeColor   `json:"markdowntextcolor"`
+	HeaderBulletColor           vt100.AttributeColor   `json:"headerbulletcolor"`
+	HeaderTextColor             vt100.AttributeColor   `json:"headertextcolor"`
+	ListBulletColor             vt100.AttributeColor   `json:"listbulletcolor"`
+	ListTextColor               vt100.AttributeColor   `json:"listtextcolor"`
+	ListCodeColor               vt100.AttributeColor   `json:"listcodecolor"`
+	CodeColor                   vt100.AttributeColor   `json:"codecolor"`
+	CodeBlockColor              vt100.AttributeColor   `json:"codeblockcolor"`
+	ImageColor                  vt100.AttributeColor   `json:"imagecolor"`
+	LinkColor                   vt100.AttributeColor   `json:"linkcolor"`
+	QuoteColor                  vt100.AttributeColor   `json:"quotecolor"`
+	QuoteTextColor              vt100.AttributeColor   `json:"quotetextcolor"`
+	HTMLColor                   vt100.AttributeColor   `json:"htmlcolor"`
+	CommentColor                vt100.AttributeColor   `json:"commentcolor"`
+	BoldColor                   vt100.AttributeColor   `json:"boldcolor"`
+	ItalicsColor                vt100.AttributeColor   `json:"italicscolor"`
+	StrikeColor                 vt100.AttributeColor   `json:"strikecolor"`
+	TableColor                  vt100.AttributeColor   `json:"tablecolor"`
+	CheckboxColor               vt100.AttributeColor   `json:"checkboxcolor"`
+	XColor                      vt100.AttributeColor   `json:"xcolor"`
+	TableBackground             vt100.AttributeColor   `json:"tablebackground"`
+	UnmatchedParenColor         vt100.AttributeColor   `json:"unmatchedparencolor"`
+	MenuTitleColor              vt100.AttributeColor   `json:"menutitlecolor"`
+	MenuArrowColor              vt100.AttributeColor   `json:"menuarrowcolor"`
+	MenuTextColor               vt100.AttributeColor   `json:"menutextcolor"`
+	MenuHighlightColor          vt100.AttributeColor   `json:"menuhighlightcolor"`
+	MenuSelectedColor           vt100.AttributeColor   `json:"menuselectedcolor"`
+	ManSectionColor             vt100.AttributeColor   `json:"mansectioncolor"`
+	ManSynopsisColor            vt100.AttributeColor   `json:"mansynopsiscolor"`
+	BoxTextColor                vt100.AttributeColor   `json:"boxtextcolor"`
+	BoxBackground               vt100.AttributeColor   `json:"boxbackground"`
+	BoxHighlight                vt100.AttributeColor   `json:"boxhighlight"`
+	DebugRunningBackground      vt100.AttributeColor   `json:"debugrunningbackground"`
+	DebugStoppedBackground      vt100.AttributeColor   `json:"debugstoppedbackground"`
+	DebugRegistersBackground    vt100.AttributeColor   `json:"debugregistersbackground"`
+	DebugOutputBackground       vt100.AttributeColor   `json:"debugoutputbackground"`
+	DebugInstructionsForeground vt100.AttributeColor   `json:"debuginstructionsforeground"`
+	BoxUpperEdge                vt100.AttributeColor   `json:"boxupperedge"`
+	StatusMode                  bool                   `json:"statusmode"`
 }
 
 // NewDefaultTheme creates a new default Theme struct
