@@ -21,7 +21,7 @@ import (
 var (
 	lastCommandFile = filepath.Join(userCacheDir, "o", "last_command.sh")
 	changedTheme    bool // has the theme been changed manually after the editor was started?
-	themeChoices    = []string{"Default", "Red & black", "VS", "Blue Edit", "Amber Mono", "Green Mono", "Blue Mono", "No color"}
+	themeChoices    = []string{"Default", "Red & black", "VS", "Blue Bliss", "Amber Mono", "Green Mono", "Blue Mono", "No color"}
 )
 
 // Actions is a list of action titles and a list of action functions.
@@ -461,11 +461,11 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				e.syntaxHighlight = true
 			case 2: // VS
 				envNoColor = false
-				e.setLightTheme()
+				e.setVSTheme()
 				e.syntaxHighlight = true
-			case 3: // Blue Edit
+			case 3: // Blue Bliss
 				envNoColor = false
-				e.setEditTheme()
+				e.setBlueBlissTheme()
 				e.syntaxHighlight = true
 			case 4: // Amber Mono
 				envNoColor = false
