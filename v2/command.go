@@ -445,7 +445,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			menuChoices := themeChoices
 			useMenuIndex := 0
 			for i, menuChoiceText := range menuChoices {
-				if menuChoiceText == e.Theme.Name {
+				if strings.HasPrefix(e.Theme.Name, menuChoiceText) {
 					useMenuIndex = i
 				}
 			}

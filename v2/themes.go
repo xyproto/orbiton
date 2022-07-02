@@ -20,6 +20,7 @@ var (
 // * Colors for all the textual elements
 type Theme struct {
 	Name                        string
+	Light                       bool
 	Decimal                     string
 	Mut                         string
 	AssemblyEnd                 string
@@ -92,76 +93,74 @@ type Theme struct {
 	DebugOutputBackground       vt100.AttributeColor
 	DebugInstructionsForeground vt100.AttributeColor
 	BoxUpperEdge                vt100.AttributeColor
-	Light                       bool
 	StatusMode                  bool
 }
 
 // NewDefaultTheme creates a new default Theme struct
 func NewDefaultTheme() Theme {
 	return Theme{
-		Name:                  "Default",
-		Light:                 false,
-		Foreground:            vt100.LightBlue,
-		Background:            vt100.BackgroundDefault,
-		StatusForeground:      vt100.White,
-		StatusBackground:      vt100.BackgroundBlack,
-		StatusErrorForeground: vt100.LightRed,
-		StatusErrorBackground: vt100.BackgroundDefault,
-		SearchHighlight:       vt100.LightMagenta,
-		MultiLineComment:      vt100.Gray,
-		MultiLineString:       vt100.Magenta,
-		Git:                   vt100.LightGreen,
-		String:                "lightyellow",
-		Keyword:               "lightred",
-		Comment:               "gray",
-		Type:                  "lightblue",
-		Literal:               "lightgreen",
-		Punctuation:           "lightblue",
-		Plaintext:             "lightgreen",
-		Tag:                   "lightgreen",
-		TextTag:               "lightgreen",
-		TextAttrName:          "lightgreen",
-		TextAttrValue:         "lightgreen",
-		Decimal:               "white",
-		AndOr:                 "lightyellow",
-		Dollar:                "lightred",
-		Star:                  "lightyellow",
-		Class:                 "lightred",
-		Private:               "darkred",
-		Protected:             "darkyellow",
-		Public:                "darkgreen",
-		Whitespace:            "",
-		AssemblyEnd:           "cyan",
-		Mut:                   "darkyellow",
-		RainbowParenColors:    []vt100.AttributeColor{vt100.LightMagenta, vt100.LightRed, vt100.Yellow, vt100.LightYellow, vt100.LightGreen, vt100.LightBlue, vt100.Red},
-		MarkdownTextColor:     vt100.LightBlue,
-		HeaderBulletColor:     vt100.DarkGray,
-		HeaderTextColor:       vt100.LightGreen,
-		ListBulletColor:       vt100.Red,
-		ListTextColor:         vt100.LightCyan,
-		ListCodeColor:         vt100.Default,
-		CodeColor:             vt100.Default,
-		CodeBlockColor:        vt100.Default,
-		ImageColor:            vt100.LightYellow,
-		LinkColor:             vt100.Magenta,
-		QuoteColor:            vt100.Yellow,
-		QuoteTextColor:        vt100.LightCyan,
-		HTMLColor:             vt100.Default,
-		CommentColor:          vt100.DarkGray,
-		BoldColor:             vt100.LightYellow,
-		ItalicsColor:          vt100.White,
-		StrikeColor:           vt100.DarkGray,
-		TableColor:            vt100.Blue,
-		CheckboxColor:         vt100.Default,
-		XColor:                vt100.LightYellow,
-		TableBackground:       vt100.BackgroundDefault,
-		UnmatchedParenColor:   vt100.White,
-		MenuTitleColor:        vt100.LightYellow,
-		MenuArrowColor:        vt100.Red,
-		MenuTextColor:         vt100.Gray,
-		MenuHighlightColor:    vt100.LightBlue,
-		MenuSelectedColor:     vt100.LightCyan,
-
+		Name:                        "Default",
+		Light:                       false,
+		Foreground:                  vt100.LightBlue,
+		Background:                  vt100.BackgroundDefault,
+		StatusForeground:            vt100.White,
+		StatusBackground:            vt100.BackgroundBlack,
+		StatusErrorForeground:       vt100.LightRed,
+		StatusErrorBackground:       vt100.BackgroundDefault,
+		SearchHighlight:             vt100.LightMagenta,
+		MultiLineComment:            vt100.Gray,
+		MultiLineString:             vt100.Magenta,
+		Git:                         vt100.LightGreen,
+		String:                      "lightyellow",
+		Keyword:                     "lightred",
+		Comment:                     "gray",
+		Type:                        "lightblue",
+		Literal:                     "lightgreen",
+		Punctuation:                 "lightblue",
+		Plaintext:                   "lightgreen",
+		Tag:                         "lightgreen",
+		TextTag:                     "lightgreen",
+		TextAttrName:                "lightgreen",
+		TextAttrValue:               "lightgreen",
+		Decimal:                     "white",
+		AndOr:                       "lightyellow",
+		Dollar:                      "lightred",
+		Star:                        "lightyellow",
+		Class:                       "lightred",
+		Private:                     "darkred",
+		Protected:                   "darkyellow",
+		Public:                      "darkgreen",
+		Whitespace:                  "",
+		AssemblyEnd:                 "cyan",
+		Mut:                         "darkyellow",
+		RainbowParenColors:          []vt100.AttributeColor{vt100.LightMagenta, vt100.LightRed, vt100.Yellow, vt100.LightYellow, vt100.LightGreen, vt100.LightBlue, vt100.Red},
+		MarkdownTextColor:           vt100.LightBlue,
+		HeaderBulletColor:           vt100.DarkGray,
+		HeaderTextColor:             vt100.LightGreen,
+		ListBulletColor:             vt100.Red,
+		ListTextColor:               vt100.LightCyan,
+		ListCodeColor:               vt100.Default,
+		CodeColor:                   vt100.Default,
+		CodeBlockColor:              vt100.Default,
+		ImageColor:                  vt100.LightYellow,
+		LinkColor:                   vt100.Magenta,
+		QuoteColor:                  vt100.Yellow,
+		QuoteTextColor:              vt100.LightCyan,
+		HTMLColor:                   vt100.Default,
+		CommentColor:                vt100.DarkGray,
+		BoldColor:                   vt100.LightYellow,
+		ItalicsColor:                vt100.White,
+		StrikeColor:                 vt100.DarkGray,
+		TableColor:                  vt100.Blue,
+		CheckboxColor:               vt100.Default,
+		XColor:                      vt100.LightYellow,
+		TableBackground:             vt100.BackgroundDefault,
+		UnmatchedParenColor:         vt100.White,
+		MenuTitleColor:              vt100.LightYellow,
+		MenuArrowColor:              vt100.Red,
+		MenuTextColor:               vt100.Gray,
+		MenuHighlightColor:          vt100.LightBlue,
+		MenuSelectedColor:           vt100.LightCyan,
 		ManSectionColor:             vt100.LightRed,
 		ManSynopsisColor:            vt100.LightYellow,
 		BoxTextColor:                vt100.Black,
@@ -181,7 +180,7 @@ func NewDefaultTheme() Theme {
 func NewRedBlackTheme() Theme {
 	// NOTE: Dark gray may not be visible with light terminal emulator themes
 	return Theme{
-		Name:                        "Red/black",
+		Name:                        "Red & black",
 		Light:                       false,
 		Foreground:                  vt100.LightGray,
 		Background:                  vt100.BackgroundBlack, // Dark gray background, as opposed to vt100.BackgroundDefault
@@ -583,7 +582,7 @@ func NewDarkVSTheme() Theme {
 // NewAmberTheme returns a theme where all text is amber / yellow
 func NewAmberTheme() Theme {
 	t := NewDefaultTheme()
-	t.Name = "Amber"
+	t.Name = "Amber Mono"
 	t.Foreground = vt100.Yellow
 	t.Background = vt100.BackgroundDefault // black background
 	return t
@@ -592,7 +591,7 @@ func NewAmberTheme() Theme {
 // NewGreenTheme returns a theme where all text is green
 func NewGreenTheme() Theme {
 	t := NewDefaultTheme()
-	t.Name = "Green"
+	t.Name = "Green Mono"
 	t.Foreground = vt100.LightGreen
 	t.Background = vt100.BackgroundDefault // black background
 	return t
@@ -601,7 +600,7 @@ func NewGreenTheme() Theme {
 // NewBlueTheme returns a theme where all text is blue
 func NewBlueTheme() Theme {
 	t := NewDefaultTheme()
-	t.Name = "Blue"
+	t.Name = "Blue Mono"
 	t.Foreground = vt100.LightBlue
 	t.Background = vt100.BackgroundDefault // black background
 	return t
