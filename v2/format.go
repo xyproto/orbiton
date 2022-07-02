@@ -150,8 +150,7 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 		err := json.Unmarshal([]byte(e.String()), &v)
 		if err != nil {
 			status.ClearAll(c)
-			status.SetError(err)
-			status.Show(c, e)
+			status.ShowErrorAfterRedraw(err)
 			return
 		}
 
@@ -168,8 +167,7 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 		}
 		if err != nil {
 			status.ClearAll(c)
-			status.SetError(err)
-			status.Show(c, e)
+			status.ShowErrorAfterRedraw(err)
 			return
 		}
 

@@ -295,3 +295,8 @@ func (sb *StatusBar) HoldMessage(c *vt100.Canvas, dur time.Duration) {
 func (sb *StatusBar) ShowAfterRedraw(message string) {
 	sb.messageAfterRedraw = message
 }
+
+// ShowErrorAfterRedraw prepares a status bar message that will be shown after redraw
+func (sb *StatusBar) ShowErrorAfterRedraw(err error) {
+	sb.messageAfterRedraw = err.Error()
+}
