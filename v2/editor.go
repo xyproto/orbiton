@@ -45,7 +45,7 @@ type Editor struct {
 	sshMode            bool                  // is o used over ssh, tmux or screen, in a way that usually requires extra redrawing?
 	debugMode          bool                  // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
 	statusMode         bool                  // display a status line at all times at the bottom of the screen
-	tagExpandMode      bool                  // used for XML and HTML
+	noExpandTags       bool                  // used for XML and HTML
 	gdb                *gdb.Gdb              // connection to gdb, if debugMode is enabled
 	breakpoint         *Position             // for the breakpoint/jump functionality in debug mode
 	previousX          int                   // previous cursor position
@@ -77,9 +77,6 @@ func NewCustomEditor(tabsSpaces mode.TabsSpaces, scrollSpeed int, m mode.Mode, t
 	e.tabsSpaces = tabsSpaces
 	e.syntaxHighlight = syntaxHighlight
 	e.rainbowParenthesis = rainbowParenthesis
-	if m == mode.HTML || m == mode.XML {
-		e.tagExpandMode = true
-	}
 	p := NewPosition(scrollSpeed)
 	e.pos = *p
 	// If the file is not to be highlighted, set word wrap to 79 (0 to disable)

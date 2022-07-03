@@ -915,7 +915,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 						}
 					}
 				}
-			} else if (e.mode == mode.XML || e.mode == mode.HTML) && e.tagExpandMode && trimmedLine != "" && !strings.Contains(trimmedLine, "<") && !strings.Contains(trimmedLine, ">") && strings.ToLower(trimmedLine) == trimmedLine {
+			} else if (e.mode == mode.XML || e.mode == mode.HTML) && !e.noExpandTags && trimmedLine != "" && !strings.Contains(trimmedLine, "<") && !strings.Contains(trimmedLine, ">") && strings.ToLower(string(trimmedLine[0])) == string(trimmedLine[0]) {
 				// Words one a line without < or >? Expand into <tag asdf> above and </tag> below.
 				words := strings.Fields(trimmedLine)
 				tagName := words[0] // must be at least one word
