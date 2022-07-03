@@ -46,6 +46,8 @@ func Detect(filename string) Mode {
 		mode = ManPage
 	case strings.HasPrefix(baseFilename, "mutt-"): // ie.: /tmp/mutt-hostname-0000-0000-00000000000000000
 		mode = Email
+	case strings.HasSuffix(baseFilename, "Log.txt"): // ie. MinecraftLog.txt
+		mode = Log
 	default:
 		switch ext {
 		case ".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8": // not .9
