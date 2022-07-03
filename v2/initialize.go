@@ -244,7 +244,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 	if !e.readOnly && (!specificLetter || editTheme) {
 		if (env.Has("XTERM_VERSION") && !env.Bool("KO") && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
 			if editTheme {
-				e.setLightBlueBlissTheme()
+				e.setLightBlueEditTheme()
 			} else {
 				e.setLightVSTheme()
 			}
@@ -257,7 +257,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 			// 10 (light green), 11 (yellow), 12 (light blue), 13 (light purple), 14 (light cyan) or white
 			if backgroundColorNumber, err := strconv.Atoi(backgroundColor); err == nil && backgroundColorNumber >= 10 {
 				if editTheme {
-					e.setLightBlueBlissTheme()
+					e.setLightBlueEditTheme()
 				} else {
 					e.setLightVSTheme()
 				}
@@ -268,7 +268,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 			// (a bit arbitrary, but should work for most cases)
 			if r+g+b > 2 {
 				if editTheme {
-					e.setLightBlueBlissTheme()
+					e.setLightBlueEditTheme()
 				} else {
 					e.setLightVSTheme()
 				}

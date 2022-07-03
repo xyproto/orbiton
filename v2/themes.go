@@ -257,10 +257,10 @@ func NewRedBlackTheme() Theme {
 	}
 }
 
-// NewLightBlueBlissTheme creates a new blue/gray/yellow Theme struct, for light backgrounds
-func NewLightBlueBlissTheme() Theme {
+// NewLightBlueEditTheme creates a new blue/gray/yellow Theme struct, for light backgrounds
+func NewLightBlueEditTheme() Theme {
 	return Theme{
-		Name:                        "Blue Bliss Light",
+		Name:                        "Blue Edit Light",
 		Light:                       true,
 		StatusMode:                  false,
 		Foreground:                  vt100.White,
@@ -338,25 +338,25 @@ func NewLightBlueBlissTheme() Theme {
 	}
 }
 
-// NewDarkBlueBlissTheme creates a new blue/gray/yellow Theme struct, for light backgrounds
-func NewDarkBlueBlissTheme() Theme {
+// NewDarkBlueEditTheme creates a new blue/gray/yellow Theme struct, for light backgrounds
+func NewDarkBlueEditTheme() Theme {
 	return Theme{
-		Name:                        "Blue Bliss Dark",
+		Name:                        "Blue Edit Dark",
 		Light:                       false,
-		StatusMode:                  false,
-		Foreground:                  vt100.White,
+		StatusMode:                  true,
+		Foreground:                  vt100.LightYellow,
 		Background:                  vt100.BackgroundBlue,
 		StatusForeground:            vt100.White,
 		StatusBackground:            vt100.BackgroundCyan,
 		StatusErrorForeground:       vt100.Red,
 		StatusErrorBackground:       vt100.BackgroundCyan,
 		SearchHighlight:             vt100.Red,
-		MultiLineComment:            vt100.LightGray,
-		MultiLineString:             vt100.LightYellow,
+		MultiLineComment:            vt100.DarkGray,
+		MultiLineString:             vt100.White,
 		Git:                         vt100.White,
 		String:                      "lightyellow",
-		Keyword:                     "white",
-		Comment:                     "lightgray",
+		Keyword:                     "lightyellow",
+		Comment:                     "darkgray",
 		Type:                        "white",
 		Literal:                     "white",
 		Punctuation:                 "white",
@@ -379,43 +379,43 @@ func NewDarkBlueBlissTheme() Theme {
 		RainbowParenColors:          []vt100.AttributeColor{vt100.White, vt100.LightYellow},
 		MarkdownTextColor:           vt100.White,
 		HeaderBulletColor:           vt100.DarkGray,
-		HeaderTextColor:             vt100.LightYellow,
+		HeaderTextColor:             vt100.White,
 		ListBulletColor:             vt100.DarkGray,
 		ListTextColor:               vt100.White,
 		ListCodeColor:               vt100.White,
-		CodeColor:                   vt100.White,
-		CodeBlockColor:              vt100.White,
-		ImageColor:                  vt100.LightYellow,
-		LinkColor:                   vt100.LightYellow,
-		QuoteColor:                  vt100.White,
-		QuoteTextColor:              vt100.White,
-		HTMLColor:                   vt100.LightYellow,
-		CommentColor:                vt100.White,
-		BoldColor:                   vt100.LightYellow,
-		ItalicsColor:                vt100.White,
-		StrikeColor:                 vt100.White,
-		TableColor:                  vt100.White,
+		CodeColor:                   vt100.LightYellow,
+		CodeBlockColor:              vt100.LightYellow,
+		ImageColor:                  vt100.White,
+		LinkColor:                   vt100.White,
+		QuoteColor:                  vt100.LightYellow,
+		QuoteTextColor:              vt100.LightYellow,
+		HTMLColor:                   vt100.White,
+		CommentColor:                vt100.LightYellow,
+		BoldColor:                   vt100.White,
+		ItalicsColor:                vt100.LightYellow,
+		StrikeColor:                 vt100.LightYellow,
+		TableColor:                  vt100.LightYellow,
 		CheckboxColor:               vt100.White,
-		XColor:                      vt100.LightYellow,
+		XColor:                      vt100.White,
 		TableBackground:             vt100.BackgroundBlue,
 		UnmatchedParenColor:         vt100.LightRed,
 		MenuTitleColor:              vt100.LightCyan,
-		MenuArrowColor:              vt100.White,
+		MenuArrowColor:              vt100.LightYellow,
 		MenuTextColor:               vt100.White,
 		MenuHighlightColor:          vt100.LightCyan,
-		MenuSelectedColor:           vt100.White,
-		ManSectionColor:             vt100.LightYellow,
-		ManSynopsisColor:            vt100.White,
-		BoxTextColor:                vt100.White,
-		BoxBackground:               vt100.White,
-		BoxHighlight:                vt100.White,
+		MenuSelectedColor:           vt100.LightYellow,
+		ManSectionColor:             vt100.White,
+		ManSynopsisColor:            vt100.LightYellow,
+		BoxTextColor:                vt100.LightYellow,
+		BoxBackground:               vt100.LightYellow,
+		BoxHighlight:                vt100.LightYellow,
 		DebugRunningBackground:      vt100.BackgroundGray,
 		DebugStoppedBackground:      vt100.BackgroundGray,
 		DebugRegistersBackground:    vt100.BackgroundGray,
 		DebugOutputBackground:       vt100.BackgroundGray,
-		DebugInstructionsForeground: vt100.LightYellow,
+		DebugInstructionsForeground: vt100.White,
 		DebugInstructionsBackground: vt100.BackgroundGray,
-		BoxUpperEdge:                vt100.White,
+		BoxUpperEdge:                vt100.LightYellow,
 	}
 }
 
@@ -504,78 +504,78 @@ func NewDarkVSTheme() Theme {
 	return Theme{
 		Name:                        "VS Dark",
 		Light:                       false,
-		Foreground:                  vt100.White,
-		Background:                  vt100.BackgroundBlack,
-		StatusForeground:            vt100.Black,
-		StatusBackground:            vt100.BackgroundGray,
-		StatusErrorForeground:       vt100.Red,
-		StatusErrorBackground:       vt100.BackgroundGray,
-		SearchHighlight:             vt100.LightRed,
-		MultiLineComment:            vt100.DarkGray,
-		MultiLineString:             vt100.Magenta,
-		Git:                         vt100.LightBlue,
-		String:                      "magenta",
-		Keyword:                     "lightblue",
-		Comment:                     "darkgray",
-		Type:                        "lightblue",
-		Literal:                     "magenta",
-		Punctuation:                 "white",
-		Plaintext:                   "white",
-		Tag:                         "white",
-		TextTag:                     "white",
-		TextAttrName:                "white",
-		TextAttrValue:               "white",
-		Decimal:                     "lightcyan",
-		AndOr:                       "white",
-		Dollar:                      "magenta",
-		Star:                        "white",
-		Class:                       "lightblue",
-		Private:                     "white",
-		Protected:                   "white",
-		Public:                      "white",
+		Foreground:                  vt100.Black,
+		Background:                  vt100.BackgroundWhite,
+		StatusForeground:            vt100.White,
+		StatusBackground:            vt100.BackgroundWhite,
+		StatusErrorForeground:       vt100.LightRed,
+		StatusErrorBackground:       vt100.BackgroundWhite,
+		SearchHighlight:             vt100.Red,
+		MultiLineComment:            vt100.Gray,
+		MultiLineString:             vt100.Red,
+		Git:                         vt100.Blue,
+		String:                      "red",
+		Keyword:                     "blue",
+		Comment:                     "gray",
+		Type:                        "blue",
+		Literal:                     "darkcyan",
+		Punctuation:                 "black",
+		Plaintext:                   "black",
+		Tag:                         "black",
+		TextTag:                     "black",
+		TextAttrName:                "black",
+		TextAttrValue:               "black",
+		Decimal:                     "darkcyan",
+		AndOr:                       "black",
+		Dollar:                      "red",
+		Star:                        "black",
+		Class:                       "blue",
+		Private:                     "black",
+		Protected:                   "black",
+		Public:                      "black",
 		Whitespace:                  "",
-		AssemblyEnd:                 "magenta",
-		Mut:                         "white",
-		RainbowParenColors:          []vt100.AttributeColor{vt100.LightCyan, vt100.White, vt100.LightBlue, vt100.LightMagenta},
-		MarkdownTextColor:           vt100.White,
-		HeaderBulletColor:           vt100.LightGray,
-		HeaderTextColor:             vt100.LightCyan,
-		ListBulletColor:             vt100.LightMagenta,
-		ListTextColor:               vt100.White,
-		ListCodeColor:               vt100.LightMagenta,
-		CodeColor:                   vt100.LightMagenta,
-		CodeBlockColor:              vt100.LightMagenta,
-		ImageColor:                  vt100.LightYellow,
-		LinkColor:                   vt100.LightRed,
-		QuoteColor:                  vt100.LightYellow,
-		QuoteTextColor:              vt100.Magenta,
-		HTMLColor:                   vt100.White,
-		CommentColor:                vt100.LightGray,
-		BoldColor:                   vt100.LightCyan,
-		ItalicsColor:                vt100.LightCyan,
-		StrikeColor:                 vt100.LightGray,
-		TableColor:                  vt100.LightCyan,
-		CheckboxColor:               vt100.White,
-		XColor:                      vt100.LightBlue,
+		AssemblyEnd:                 "red",
+		Mut:                         "black",
+		RainbowParenColors:          []vt100.AttributeColor{vt100.Magenta, vt100.Black, vt100.Blue, vt100.Green},
+		MarkdownTextColor:           vt100.Default,
+		HeaderBulletColor:           vt100.DarkGray,
+		HeaderTextColor:             vt100.Blue,
+		ListBulletColor:             vt100.Red,
+		ListTextColor:               vt100.Default,
+		ListCodeColor:               vt100.Red,
+		CodeColor:                   vt100.Red,
+		CodeBlockColor:              vt100.Red,
+		ImageColor:                  vt100.Green,
+		LinkColor:                   vt100.Magenta,
+		QuoteColor:                  vt100.Yellow,
+		QuoteTextColor:              vt100.LightCyan,
+		HTMLColor:                   vt100.Default,
+		CommentColor:                vt100.DarkGray,
+		BoldColor:                   vt100.Blue,
+		ItalicsColor:                vt100.Blue,
+		StrikeColor:                 vt100.DarkGray,
+		TableColor:                  vt100.Blue,
+		CheckboxColor:               vt100.Default,
+		XColor:                      vt100.Blue,
 		TableBackground:             vt100.BackgroundDefault,
-		UnmatchedParenColor:         vt100.LightRed,
-		MenuTitleColor:              vt100.LightBlue,
-		MenuArrowColor:              vt100.LightMagenta,
-		MenuTextColor:               vt100.White,
-		MenuHighlightColor:          vt100.LightMagenta,
-		MenuSelectedColor:           vt100.Cyan,
-		ManSectionColor:             vt100.LightMagenta,
-		ManSynopsisColor:            vt100.LightCyan,
-		BoxTextColor:                vt100.White,
+		UnmatchedParenColor:         vt100.Red,
+		MenuTitleColor:              vt100.Blue,
+		MenuArrowColor:              vt100.Red,
+		MenuTextColor:               vt100.Black,
+		MenuHighlightColor:          vt100.Red,
+		MenuSelectedColor:           vt100.LightRed,
+		ManSectionColor:             vt100.Red,
+		ManSynopsisColor:            vt100.Blue,
+		BoxTextColor:                vt100.Black,
 		BoxBackground:               vt100.BackgroundGray,
-		BoxHighlight:                vt100.LightMagenta,
-		DebugRunningBackground:      vt100.BackgroundMagenta,
+		BoxHighlight:                vt100.Red,
+		DebugRunningBackground:      vt100.BackgroundCyan,
 		DebugStoppedBackground:      vt100.BackgroundDefault,
 		DebugRegistersBackground:    vt100.BackgroundGray,
 		DebugOutputBackground:       vt100.BackgroundGray,
-		DebugInstructionsForeground: vt100.White,
+		DebugInstructionsForeground: vt100.Black,
 		DebugInstructionsBackground: vt100.BackgroundGray,
-		BoxUpperEdge:                vt100.White,
+		BoxUpperEdge:                vt100.Black,
 	}
 }
 
@@ -816,19 +816,12 @@ func (e *Editor) SetTheme(t Theme) {
 
 // setDefaultTheme sets the default colors
 func (e *Editor) setDefaultTheme() {
-	if initialLightBackground == nil {
-		b := false
-		initialLightBackground = &b
-	}
 	e.SetTheme(NewDefaultTheme())
 }
 
 // setVSTheme sets the VS theme
 func (e *Editor) setVSTheme() {
-	if initialLightBackground == nil {
-		b := true
-		initialLightBackground = &b
-	} else if *initialLightBackground {
+	if initialLightBackground != nil && *initialLightBackground {
 		e.SetTheme(NewLightVSTheme())
 	} else {
 		e.SetTheme(NewDarkVSTheme())
@@ -837,41 +830,26 @@ func (e *Editor) setVSTheme() {
 
 // setLightVSTheme sets the light theme suitable for xterm
 func (e *Editor) setLightVSTheme() {
-	if initialLightBackground == nil {
-		b := true
-		initialLightBackground = &b
-	}
 	e.SetTheme(NewLightVSTheme())
 }
 
 // setRedBlackTheme sets a red/black/gray theme
 func (e *Editor) setRedBlackTheme() {
-	if initialLightBackground == nil {
-		b := false
-		initialLightBackground = &b
-	}
 	e.SetTheme(NewRedBlackTheme())
 }
 
-// setBlueBlissTheme sets a blue/yellow/gray theme, for light or dark backgrounds
-func (e *Editor) setBlueBlissTheme() {
-	if initialLightBackground == nil {
-		b := true
-		initialLightBackground = &b
-	} else if *initialLightBackground {
-		e.SetTheme(NewLightBlueBlissTheme())
+// setBlueEditTheme sets a blue/yellow/gray theme, for light or dark backgrounds
+func (e *Editor) setBlueEditTheme() {
+	if initialLightBackground != nil && *initialLightBackground {
+		e.SetTheme(NewLightBlueEditTheme())
 	} else {
-		e.SetTheme(NewDarkBlueBlissTheme())
+		e.SetTheme(NewDarkBlueEditTheme())
 	}
 }
 
-// setLightBlueBlissTheme sets a blue/yellow/gray theme, for light backgrounds
-func (e *Editor) setLightBlueBlissTheme() {
-	if initialLightBackground == nil {
-		b := true
-		initialLightBackground = &b
-	}
-	e.SetTheme(NewLightBlueBlissTheme())
+// setLightBlueEditTheme sets a blue/yellow/gray theme, for light backgrounds
+func (e *Editor) setLightBlueEditTheme() {
+	e.SetTheme(NewLightBlueEditTheme())
 }
 
 // setAmberTheme sets an amber theme

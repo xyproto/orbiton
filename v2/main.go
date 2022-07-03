@@ -202,7 +202,7 @@ Set NO_COLOR=1 to disable colors.
 		if len(executableName) > 0 {
 			switch executableName[0] {
 			case 'b', 'e': // bo, borland, ed, edit etc.
-				theme = NewDarkBlueBlissTheme()
+				theme = NewDarkBlueEditTheme()
 				// TODO: Later, when specificLetter is examined, use either NewEditLightTheme or NewEditDarkTheme
 				specificLetter = true
 				editTheme = true

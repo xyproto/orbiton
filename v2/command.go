@@ -21,7 +21,7 @@ import (
 var (
 	lastCommandFile = filepath.Join(userCacheDir, "o", "last_command.sh")
 	changedTheme    bool // has the theme been changed manually after the editor was started?
-	themeChoices    = []string{"Default", "Red & black", "VS", "Blue Bliss", "Amber Mono", "Green Mono", "Blue Mono", "No color"}
+	themeChoices    = []string{"Default", "Red & black", "VS", "Blue Edit", "Amber Mono", "Green Mono", "Blue Mono", "No color"}
 )
 
 // Actions is a list of action titles and a list of action functions.
@@ -450,7 +450,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				}
 			}
 			changedTheme = true
-			switch e.Menu(status, tty, "Select color theme", menuChoices, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes) {
+			switch e.Menu(status, tty, "Select color theme", menuChoices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes) {
 			case 0: // Default
 				envNoColor = false
 				e.setDefaultTheme()
@@ -463,9 +463,9 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				envNoColor = false
 				e.setVSTheme()
 				e.syntaxHighlight = true
-			case 3: // Blue Bliss
+			case 3: // Blue Edit
 				envNoColor = false
-				e.setBlueBlissTheme()
+				e.setBlueEditTheme()
 				e.syntaxHighlight = true
 			case 4: // Amber Mono
 				envNoColor = false
@@ -507,7 +507,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		useMenuIndex = lastMenuIndex
 	}
 
-	selected := e.Menu(status, tty, "Menu", menuChoices, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes)
+	selected := e.Menu(status, tty, "Menu", menuChoices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes)
 
 	// Redraw the editor contents
 	//e.DrawLines(c, true, false)

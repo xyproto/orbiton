@@ -121,7 +121,7 @@ func selectionLettersForChoices(choices []string) map[string]*RuneAndPosition {
 // Menu starts a loop where keypresses are handled. When a choice is made, a number is returned.
 // -1 is "no choice", 0 and up is which choice were selected.
 // initialMenuIndex is the choice that should be highlighted when displaying the choices.
-func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices []string, titleColor, arrowColor, textColor, highlightColor, selectedColor vt100.AttributeColor, initialMenuIndex int, extraDashes bool) int {
+func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices []string, bgColor, titleColor, arrowColor, textColor, highlightColor, selectedColor vt100.AttributeColor, initialMenuIndex int, extraDashes bool) int {
 
 	// Clear the existing handler
 	signal.Reset(syscall.SIGWINCH)
@@ -160,6 +160,7 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 
 	vt100.Clear()
 	vt100.Reset()
+	c.FillBackground(bgColor)
 	c.Redraw()
 
 	// Set the initial menu index

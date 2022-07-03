@@ -47,7 +47,7 @@ var (
 	statusTextColor      = vt100.Black
 	statusTextBackground = vt100.Blue
 	resizeColor          = vt100.LightMagenta
-	bgColor              = vt100.DefaultBackground
+	gameBackgroundColor  = vt100.DefaultBackground
 )
 
 // Bob represents the player
@@ -709,7 +709,7 @@ retry:
 		statusTextColor = vt100.Black
 		statusTextBackground = vt100.LightGray
 		resizeColor = vt100.White
-		bgColor = vt100.DefaultBackground
+		gameBackgroundColor = vt100.DefaultBackground
 	} else {
 		statusTextBackground = vt100.Blue
 		bobColor = vt100.LightYellow
@@ -722,7 +722,7 @@ retry:
 	highScore, _ := loadHighScore()
 
 	c := vt100.NewCanvas()
-	c.FillBackground(bgColor)
+	c.FillBackground(gameBackgroundColor)
 
 	tty, err := vt100.NewTTY()
 	if err != nil {
