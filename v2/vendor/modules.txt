@@ -41,7 +41,7 @@ github.com/xyproto/env
 # github.com/xyproto/guessica v1.1.0
 ## explicit; go 1.14
 github.com/xyproto/guessica
-# github.com/xyproto/mode v0.4.11
+# github.com/xyproto/mode v0.4.12
 ## explicit; go 1.14
 github.com/xyproto/mode
 # github.com/xyproto/stringpainter v1.0.0
@@ -59,7 +59,7 @@ github.com/xyproto/textoutput
 # github.com/xyproto/vt100 v1.10.4
 ## explicit; go 1.10
 github.com/xyproto/vt100
-# golang.org/x/sys v0.0.0-20220702020025-31831981b65f
+# golang.org/x/sys v0.0.0-20220704084225-05e143d24a9e
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix

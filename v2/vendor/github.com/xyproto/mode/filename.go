@@ -134,6 +134,8 @@ func Detect(filename string) Mode {
 			mode = Prolog
 		case ".py":
 			mode = Python
+		case ".r":
+			mode = R
 		case ".rs":
 			mode = Rust
 		case ".s", ".S", ".asm", ".inc":

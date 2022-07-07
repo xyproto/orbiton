@@ -55,6 +55,7 @@ const (
 	PolicyLanguage        // SE Linux configuration files
 	Prolog                // Prolog
 	Python                // Python
+	R                     // R
 	Rust                  // Rust
 	SQL                   // Structured Query Language
 	Scala                 // Scala
@@ -177,6 +178,8 @@ func (mode Mode) String() string {
 		return "Prolog"
 	case Python:
 		return "Python"
+	case R:
+		return "R"
 	case Rust:
 		return "Rust"
 	case Scala:
