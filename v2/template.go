@@ -139,6 +139,11 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		7,
 		5,
 	},
+	mode.R: {
+		"print(\"Hello, World!\", quote=FALSE)",
+		7,
+		1,
+	},
 	mode.Rust: {
 		"fn main() {\n    println!(\"Hello, World!\");\n}\n",
 		10,
