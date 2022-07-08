@@ -14,7 +14,7 @@ It might be a good fit for:
 * Solving Advent of Code tasks.
 * Writing and maintaining to-do lists and project documentation in Markdown.
 * Testing if your favorite package manager can handle single-letter package names.
-* Being part of live ISO images, since it supports VT100, is small and self-contained, has a built-in man page viewer and can be used with [`fstabfmt`](https://github.com/xyproto/fstabfmt).
+* Being part of live ISO images, since it supports VT100, is small and self-contained, has a built-in man page viewer, can be used for viewing logs or ie. edit `/etc/fstab`.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
@@ -40,7 +40,7 @@ With Go 1.17 or later, `o` can be installed like this:
 
 Alternatively, download and install a [release version](https://github.com/xyproto/o/releases). For example, for Raspberry Pi 2, 3 or 4 running Linux:
 
-    curl -sL 'https://github.com/xyproto/o/releases/download/2.51.0/o-2.51.0-linux_armv7_static.tar.xz' | tar JxC /tmp && sudo install -Dm755 /tmp/o-2.51.0-linux_armv7_static/o /usr/bin/o && sudo install -Dm644 /tmp/o-2.51.0-linux_armv7_static/o.1.gz /usr/share/man/man1/o.1.gz
+    curl -sL 'https://github.com/xyproto/o/releases/download/2.53.0/o-2.53.0-linux_armv7_static.tar.xz' | tar JxC /tmp && sudo install -Dm755 /tmp/o-2.53.0-linux_armv7_static/o /usr/bin/o && sudo install -Dm644 /tmp/o-2.53.0-linux_armv7_static/o.1.gz /usr/share/man/man1/o.1.gz
 
 * Remember to use `tar zxC` if the release file for your platform ends with `.tar.gz`.
 * The `sudo install` commands may be slightly different for FreeBSD and NetBSD.
