@@ -13,7 +13,7 @@ It might be a good fit for:
 * Editing files deep within larger Go or C++ projects.
 * Solving Advent of Code tasks.
 * Writing and maintaining to-do lists and project documentation in Markdown.
-* Testing if your favorite package manager can handle one-letter package names.
+* Testing if your favorite package manager can handle single-letter package names.
 * Being part of live ISO images, since it supports VT100, is small and self-contained, has a built-in man page viewer and can be used with [`fstabfmt`](https://github.com/xyproto/fstabfmt).
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
