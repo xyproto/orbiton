@@ -386,6 +386,15 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				// Extract a slice of runes and color attributes
 				runesAndAttributes := tout.Extract(coloredString)
 
+				// Also handle things like ZALGO HE COMES which contains unicode "mark" runes
+				// TODO: Also handle all languages in v2/test/problematic.desktop
+				for k, v := range runesAndAttributes {
+					if unicode.IsMark(v.R) {
+						// Replace the "unprintable" (for a terminal emulator) characters
+						runesAndAttributes[k].R = controlRuneReplacement
+					}
+				}
+
 				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
 				// TODO: Figure out why some parantheses in some comments are still highlighted
 				if e.mode != mode.Git && e.rainbowParenthesis && q.None() && !q.singleLineComment && !q.stoppedMultiLineComment {
@@ -478,6 +487,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		yp := uint(cy) + uint(y)
 		xp := uint(cx + lineRuneCount)
 		c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', cw-uint(lineRuneCount))
+
 	}
 }
 
