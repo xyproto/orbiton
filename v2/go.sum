@@ -57,8 +57,9 @@ github.com/xyproto/textoutput v1.14.1/go.mod h1:KinUKPtW2pJxD8SbxToMixUaJbtqRhSO
 github.com/xyproto/vt100 v1.8.5/go.mod h1:8ni0+pphJABRAZOoyxY9yD0QQxkia4PjKNFiMQStrT4=
 github.com/xyproto/vt100 v1.9.8/go.mod h1:ExY2YeEedHIb8ng0LG0nv0pgO4prm3KFRnPcTVMF/is=
 github.com/xyproto/vt100 v1.9.12/go.mod h1:b0qTpewCw1TQdPH/V2djiI4YdMpfXrxTNi75ri6s0ZI=
-github.com/xyproto/vt100 v1.10.4 h1:YYxkTt9iLzTv2OZI2P5++Qmrw3hwEMiKQD3Ww6qlDYg=
 github.com/xyproto/vt100 v1.10.4/go.mod h1:GTrdAbDl0c1TYMjR2EoehGn3QyVwACjhSlAS2wdH45k=
+github.com/xyproto/vt100 v1.11.0 h1:g8jyvSrAgAlxhxcUsAjTY9IDE5WHv4MjQQmSLESCx5g=
+github.com/xyproto/vt100 v1.11.0/go.mod h1:GTrdAbDl0c1TYMjR2EoehGn3QyVwACjhSlAS2wdH45k=
 golang.org/x/image v0.0.0-20190910094157-69e4b8554b2a/go.mod h1:FeLwcggjj3mMvU+oOTbSwawSJRM1uh48EjtB4UJZlP0=
 golang.org/x/net v0.0.0-20220325170049-de3da57026de/go.mod h1:CfG3xpIq0wQ8r1q4Su4UZFWDARRcnwPjda9FqA0JpMk=
 golang.org/x/sys v0.0.0-20200523222454-059865788121/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
@@ -71,8 +72,8 @@ golang.org/x/sys v0.0.0-20211004093028-2c5d950f24ef/go.mod h1:oPkhp1MJrh7nUepCBc
 golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220328115105-d36c6a25d886/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
-golang.org/x/sys v0.0.0-20220712014510-0a85c31ab51e h1:NHvCuwuS43lGnYhten69ZWqi2QOj/CiDNcKbVqwVoew=
-golang.org/x/sys v0.0.0-20220712014510-0a85c31ab51e/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 h1:0A+M6Uqn+Eje4kHMK80dtF3JCXC4ykBgQG4Fe06QRhQ=
+golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.0.0-20210927222741-03fcf44c2211/go.mod h1:jbD1KX2456YbFQfuXm/mYQcufACuNUgVhRMnK/tPxf8=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.7/go.mod h1:u+2+/6zg+i71rQMx5EYifcz6MCKuco9NR6JIITiCfzQ=
