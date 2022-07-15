@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/cyrus-and/gdb"
 	"github.com/xyproto/binary"
@@ -203,7 +204,7 @@ func (e *Editor) ScreenLine(n int) string {
 // LastDataPosition returns the last X index for this line, for the data (does not expand tabs)
 // Can be negative, if the line is empty.
 func (e *Editor) LastDataPosition(n LineIndex) int {
-	return len([]rune(e.Line(n))) - 1
+	return utf8.RuneCountInString(e.Line(n)) - 1
 }
 
 // LastScreenPosition returns the last X index for this line, for the screen (expands tabs)
@@ -574,11 +575,14 @@ func (e *Editor) DeleteRestOfLine() {
 	if v == nil {
 		e.lines[y] = make([]rune, 0)
 	}
-	if x > len([]rune(e.lines[y])) {
+	if x > len(e.lines[y]) {
 		return
 	}
 	e.lines[y] = e.lines[y][:x]
 	e.changed = true
+
+	// Make sure no lines are nil
+	e.MakeConsistent()
 }
 
 // DeleteLine will delete the given line index
@@ -645,7 +649,7 @@ func (e *Editor) DeleteCurrentLineMoveBookmark(bookmark *Position) {
 // Delete will delete a character at the given position
 func (e *Editor) Delete() {
 	y := int(e.DataY())
-	lineLen := len([]rune(e.lines[y]))
+	lineLen := len(e.lines[y])
 	if _, ok := e.lines[y]; !ok || lineLen == 0 || (lineLen == 1 && unicode.IsSpace(e.lines[y][0])) {
 		// All keys in the map that are > y should be shifted -1.
 		// This also overwrites e.lines[y].
@@ -654,14 +658,14 @@ func (e *Editor) Delete() {
 		return
 	}
 	x, err := e.DataX()
-	if err != nil || x > len([]rune(e.lines[y]))-1 {
+	if err != nil || x > len(e.lines[y])-1 {
 		// on the last index, just use every element but x
 		e.lines[y] = e.lines[y][:x]
 		// check if the next line exists
 		if _, ok := e.lines[y+1]; ok {
 			// then add the contents of the next line, if available
 			nextLine, ok := e.lines[y+1]
-			if ok && len([]rune(nextLine)) > 0 {
+			if ok && len(nextLine) > 0 {
 				e.lines[y] = append(e.lines[y], nextLine...)
 				// then delete the next line
 				e.DeleteLine(LineIndex(y + 1))
@@ -672,7 +676,6 @@ func (e *Editor) Delete() {
 	}
 	// Delete just this character
 	e.lines[y] = append(e.lines[y][:x], e.lines[y][x+1:]...)
-
 	e.changed = true
 
 	// Make sure no lines are nil
@@ -900,7 +903,7 @@ func (e *Editor) InsertLineAbove() {
 
 	// Skip trailing newlines after this line
 	for i := len(e.lines); i > y; i-- {
-		if len([]rune(e.lines[i])) == 0 {
+		if len(e.lines[i]) == 0 {
 			delete(e.lines, i)
 		} else {
 			break
@@ -952,7 +955,7 @@ func (e *Editor) InsertLineBelowAt(index LineIndex) {
 
 	// Skip trailing newlines after this line
 	for i := len(e.lines); i > y; i-- {
-		if len([]rune(e.lines[i])) == 0 {
+		if len(e.lines[i]) == 0 {
 			delete(e.lines, i)
 		} else {
 			break
@@ -983,7 +986,7 @@ func (e *Editor) Insert(r rune) {
 		e.lines[y] = []rune{r}
 		return
 	}
-	if len([]rune(e.lines[y])) < x {
+	if len(e.lines[y]) < x {
 		// Can only insert in the existing block of text
 		return
 	}
@@ -2086,7 +2089,7 @@ func (e *Editor) NewLine(c *vt100.Canvas, status *StatusBar) {
 func (e *Editor) ChopLine(line string, viewportWidth int) string {
 	var screenLine string
 	// Shorten the screen line to account for the X offset
-	if len([]rune(line)) > e.pos.offsetX {
+	if utf8.RuneCountInString(line) > e.pos.offsetX {
 		screenLine = line[e.pos.offsetX:]
 	}
 	// Shorten the screen line to account for the terminal width

@@ -383,7 +383,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 				}
 
-				// Slice of runes and color attributes, while at the same time highlighting search terms
+				// Extract a slice of runes and color attributes
 				runesAndAttributes := tout.Extract(coloredString)
 
 				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
@@ -421,7 +421,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						matchForAnotherN--
 					} else if len(e.searchTerm) > 0 && letter == searchTermRunes[0] {
 						// Potential search highlight match
-						length := len([]rune(e.searchTerm))
+						length := utf8.RuneCountInString(e.searchTerm)
 						counter := 0
 						match := true
 						for i := runeIndex; i < (runeIndex + length); i++ {
