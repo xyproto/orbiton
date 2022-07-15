@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"strings"
-	"sync"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/xyproto/mode"
 	"github.com/xyproto/stringpainter"
@@ -19,22 +19,17 @@ const (
 )
 
 var (
-	tout            = textoutput.NewTextOutput(true, true)
-	writeLinesMutex sync.RWMutex
+	tout = textoutput.NewTextOutput(true, true)
 )
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy int) {
 
-	// Only one call to WriteLines at the time, thank you
-	//writeLinesMutex.Lock()
-	//defer writeLinesMutex.Unlock()
-
 	// Convert the background color to a background color code
 	bg := e.Background.Background()
 
 	tabString := strings.Repeat(" ", e.tabsSpaces.PerTab)
-	w := c.Width()
+	cw := c.Width()
 	if fromline >= toline {
 		return //errors.New("fromline >= toline in WriteLines")
 	}
@@ -112,17 +107,18 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		q.Process(trimmedLine)
 	}
 	// q should now contain the current quote state
+
 	var (
-		lineRuneCount   uint
+		lineRuneCount   int
 		lineStringCount uint
 		line            string
 		listItemRecord  []bool
 		inListItem      bool
 		screenLine      string
 		programName     string
-		cw              = c.Width()
 	)
-	// Then loop from 0 to numlines (used as y+offset in the loop) to draw the text
+
+	// Loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y := LineIndex(0); y < numLinesToDraw; y++ {
 		lineRuneCount = 0   // per line rune counter, for drawing spaces afterwards (does not handle wide runes)
 		lineStringCount = 0 // per line string counter, for drawing spaces afterwards (handles wide runes)
@@ -142,10 +138,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			// textWithTags must be unescaped if there is not an error.
 			if textWithTags, err := syntax.AsText([]byte(Escape(line)), e.mode); err != nil {
 				// Only output the line up to the width of the canvas
-				screenLine = e.ChopLine(line, int(w))
+				screenLine = e.ChopLine(line, int(cw))
 				// TODO: Check if just "fmt.Print" works here, for several terminal emulators
 				fmt.Println(screenLine)
-				lineRuneCount += uint(len([]rune(screenLine)))
+				lineRuneCount += utf8.RuneCountInString(screenLine)
+				//lineRuneCount += uint(len([]rune(screenLine)))
 				lineStringCount += uint(len(screenLine))
 			} else {
 				var (
@@ -446,14 +443,14 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						}
 					}
 					if letter == '\t' {
-						c.Write(uint(cx)+lineRuneCount, uint(cy)+uint(y), fg, e.Background, tabString)
-						lineRuneCount += uint(e.tabsSpaces.PerTab)
+						c.Write(uint(cx+lineRuneCount), uint(cy)+uint(y), fg, e.Background, tabString)
+						lineRuneCount += e.tabsSpaces.PerTab
 						lineStringCount += uint(e.tabsSpaces.PerTab)
 					} else {
 						if unicode.IsControl(letter) {
 							letter = controlRuneReplacement
 						}
-						tx := uint(cx) + lineRuneCount
+						tx := uint(cx + lineRuneCount)
 						ty := uint(cy) + uint(y)
 						if tx < cw {
 							c.WriteRuneB(tx, ty, fg, bg, letter)
@@ -469,16 +466,18 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				line = handleManPageEscape(line)
 			}
 			// Output a regular line, scrolled to the current e.pos.offsetX
-			screenLine = e.ChopLine(line, int(w))
-			c.Write(uint(cx)+lineRuneCount, uint(cy)+uint(y), e.Foreground, e.Background, screenLine)
-			lineRuneCount += uint(len([]rune(screenLine))) // rune count
-			lineStringCount += uint(len(screenLine))       // string length, not rune length
+			screenLine = e.ChopLine(line, int(cw))
+			c.Write(uint(cx+lineRuneCount), uint(cy)+uint(y), e.Foreground, e.Background, screenLine)
+			lineRuneCount += utf8.RuneCountInString(screenLine) // rune count
+			//lineRuneCount += uint(len([]rune(screenLine))) // rune count
+			lineStringCount += uint(len(screenLine)) // string length, not rune length
 		}
 
 		// Fill the rest of the line on the canvas with "blanks"
+		// TODO: This may draw the wrong number of blanks, since lineRuneCount should really be the number of visible glyphs at this point
 		yp := uint(cy) + uint(y)
-		xp := uint(cx) + lineRuneCount
-		c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', w-lineRuneCount)
+		xp := uint(cx + lineRuneCount)
+		c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', cw-uint(lineRuneCount))
 	}
 }
 
