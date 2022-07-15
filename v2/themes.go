@@ -19,8 +19,8 @@ var (
 // * If no colors should be used
 // * Colors for all the textual elements
 type Theme struct {
+	TextAttrValue               string
 	Name                        string
-	Light                       bool
 	Decimal                     string
 	Mut                         string
 	AssemblyEnd                 string
@@ -42,7 +42,7 @@ type Theme struct {
 	AndOr                       string
 	TextTag                     string
 	TextAttrName                string
-	TextAttrValue               string
+	HeaderBulletColor           vt100.AttributeColor
 	MultiLineString             vt100.AttributeColor
 	DebugInstructionsBackground vt100.AttributeColor
 	Git                         vt100.AttributeColor
@@ -56,7 +56,7 @@ type Theme struct {
 	Foreground                  vt100.AttributeColor
 	RainbowParenColors          []vt100.AttributeColor
 	MarkdownTextColor           vt100.AttributeColor
-	HeaderBulletColor           vt100.AttributeColor
+	BoxUpperEdge                vt100.AttributeColor
 	HeaderTextColor             vt100.AttributeColor
 	ListBulletColor             vt100.AttributeColor
 	ListTextColor               vt100.AttributeColor
@@ -75,7 +75,7 @@ type Theme struct {
 	TableColor                  vt100.AttributeColor
 	CheckboxColor               vt100.AttributeColor
 	XColor                      vt100.AttributeColor
-	TableBackground             vt100.AttributeColor
+	DebugInstructionsForeground vt100.AttributeColor
 	UnmatchedParenColor         vt100.AttributeColor
 	MenuTitleColor              vt100.AttributeColor
 	MenuArrowColor              vt100.AttributeColor
@@ -91,9 +91,9 @@ type Theme struct {
 	DebugStoppedBackground      vt100.AttributeColor
 	DebugRegistersBackground    vt100.AttributeColor
 	DebugOutputBackground       vt100.AttributeColor
-	DebugInstructionsForeground vt100.AttributeColor
-	BoxUpperEdge                vt100.AttributeColor
+	TableBackground             vt100.AttributeColor
 	StatusMode                  bool
+	Light                       bool
 }
 
 // NewDefaultTheme creates a new default Theme struct
