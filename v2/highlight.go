@@ -13,18 +13,22 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const controlRuneReplacement = '¿' // for displaying control sequence characters. Could also use: �
+const (
+	blankRune              = ' '
+	controlRuneReplacement = '¿' // for displaying control sequence characters. Could also use: �
+)
 
-var writeLinesMutex sync.RWMutex
-
-var tout = textoutput.NewTextOutput(true, true)
+var (
+	tout            = textoutput.NewTextOutput(true, true)
+	writeLinesMutex sync.RWMutex
+)
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy int) {
 
 	// Only one call to WriteLines at the time, thank you
-	writeLinesMutex.Lock()
-	defer writeLinesMutex.Unlock()
+	//writeLinesMutex.Lock()
+	//defer writeLinesMutex.Unlock()
 
 	// Convert the background color to a background color code
 	bg := e.Background.Background()
@@ -471,18 +475,10 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			lineStringCount += uint(len(screenLine))       // string length, not rune length
 		}
 
-		var (
-			xp uint
-			yp = uint(cy) + uint(y)
-		)
-
 		// Fill the rest of the line on the canvas with "blanks"
-		for x := lineRuneCount; x < w; x++ {
-			xp = uint(cx) + x
-			r := ' '
-			c.WriteRuneB(xp, yp, e.Foreground, bg, r)
-		}
-		//c.WriteRuneB(xp, yp, e.fg, e.bg, '\n')
+		yp := uint(cy) + uint(y)
+		xp := uint(cx) + lineRuneCount
+		c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', w-lineRuneCount)
 	}
 }
 
