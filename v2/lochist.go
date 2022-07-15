@@ -16,6 +16,7 @@ import (
 const maxLocationHistoryEntries = 1024
 
 var (
+	locationHistory              map[string]LineNumber // per filename location history, for jumping to the last location when opening a file
 	vimLocationHistoryFilename   = env.ExpandUser("~/.viminfo")
 	emacsLocationHistoryFilename = env.ExpandUser("~/.emacs.d/places")
 	userCacheDir                 = env.Dir("XDG_CACHE_HOME", "~/.cache")

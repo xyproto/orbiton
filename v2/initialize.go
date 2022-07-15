@@ -284,9 +284,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 	}
 
 	// Load the location history. This will be saved again later. Errors are ignored.
-	e.locationHistory, err = LoadLocationHistory(locationHistoryFilename)
-	if err == nil { // no error
-		recordedLineNumber, found = e.locationHistory[absFilename]
+	if locationHistory, err = LoadLocationHistory(locationHistoryFilename); err == nil { // success
+		recordedLineNumber, found = locationHistory[absFilename]
 	}
 
 	if !e.slowLoad {
@@ -332,9 +331,9 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 	}
 
 	// Make sure the location history isn't empty (the search history can be empty, it's just a string slice)
-	if e.locationHistory == nil {
-		e.locationHistory = make(map[string]LineNumber, 1)
-		e.locationHistory[absFilename] = lineNumber
+	if locationHistory == nil {
+		locationHistory = make(map[string]LineNumber, 1)
+		locationHistory[absFilename] = lineNumber
 	}
 
 	// Redraw the TUI, if needed

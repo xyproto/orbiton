@@ -50,7 +50,7 @@ func (e *Editor) UserSave(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
 
 	// Save the current location in the location history and write it to file
 	if absFilename, err := e.AbsFilename(); err == nil { // no error
-		e.SaveLocation(absFilename, e.locationHistory)
+		e.SaveLocation(absFilename, locationHistory)
 	}
 
 	// Status message

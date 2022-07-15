@@ -1999,7 +1999,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 	}
 
 	// Save the current location in the location history and write it to file
-	e.SaveLocation(absFilename, e.locationHistory)
+	e.SaveLocation(absFilename, locationHistory)
 
 	// Clear all status bar messages
 	status.ClearAll(c)
