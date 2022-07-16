@@ -500,6 +500,6 @@ Installing a symlink for launching `ko` with a light theme:
 
 ## General info
 
-* Version: 2.53.0
+* Version: 2.54.0
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
