@@ -21,12 +21,13 @@ const (
 
 var (
 	tout      = textoutput.NewTextOutput(true, true)
-	resizeMut sync.RWMutex // used when the terminal is resized
+	resizeMut sync.RWMutex // locked when the terminal emulator is being resized
 )
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy int) {
 
+	// If the terminal emulator is being resized, then wait a bit
 	resizeMut.Lock()
 	defer resizeMut.Unlock()
 
