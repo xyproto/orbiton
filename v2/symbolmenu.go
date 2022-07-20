@@ -4,7 +4,6 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"sync"
 	"syscall"
 
 	"github.com/xyproto/vt100"
@@ -19,7 +18,6 @@ func (e *Editor) SymbolMenu(status *StatusBar, tty *vt100.TTY, title string, cho
 
 	var (
 		c          = vt100.NewCanvas()
-		resizeMut  = &sync.RWMutex{} // used when the terminal is resized
 		symbolMenu = NewSymbolWidget(title, choices, titleColor, textColor, highlightColor, e.Background, c.W(), c.H())
 		sigChan    = make(chan os.Signal, 1)
 		running    = true

@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -732,9 +731,6 @@ retry:
 	defer tty.Close()
 
 	tty.SetTimeout(2 * time.Millisecond)
-
-	// Mutex used when the terminal is resized
-	resizeMut := &sync.RWMutex{}
 
 	var (
 		sigChan       = make(chan os.Signal, 1)

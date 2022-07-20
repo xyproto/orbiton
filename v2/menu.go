@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 	"unicode"
@@ -130,7 +129,6 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 		selectionLetterMap = selectionLettersForChoices(choices)
 		selectedDelay      = 100 * time.Millisecond
 		c                  = vt100.NewCanvas()
-		resizeMut          = &sync.RWMutex{} // used when the terminal is resized
 		menu               = NewMenuWidget(title, choices, titleColor, arrowColor, textColor, highlightColor, selectedColor, c.W(), c.H(), extraDashes, selectionLetterMap)
 		sigChan            = make(chan os.Signal, 1)
 		running            = true

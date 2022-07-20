@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"unicode"
 	"unicode/utf8"
 
@@ -19,11 +20,15 @@ const (
 )
 
 var (
-	tout = textoutput.NewTextOutput(true, true)
+	tout      = textoutput.NewTextOutput(true, true)
+	resizeMut sync.RWMutex // used when the terminal is resized
 )
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy int) {
+
+	resizeMut.Lock()
+	defer resizeMut.Unlock()
 
 	// Convert the background color to a background color code
 	bg := e.Background.Background()
