@@ -22,7 +22,7 @@ var (
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message and an error type
-func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight bool) (*Editor, string, error) {
+func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor bool) (*Editor, string, error) {
 
 	var (
 		startTime          = time.Now()
@@ -262,11 +262,11 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 					e.setLightVSTheme()
 				}
 			}
-		} else if r, g, b, err := vt100.GetBackgroundColor(tty); err == nil { // success
+		} else if discoverBGColor {
 			// r, g, b is the background color from the current terminal emulator, if available
-			// Check combined value of r, g and b (0..1), and if it's larger than 2
+			// Checke if the combined value of r, g and b (0..1) is larger than 2
 			// (a bit arbitrary, but should work for most cases)
-			if r+g+b > 2 {
+			if r, g, b, err := vt100.GetBackgroundColor(tty); err == nil && r+g+b > 2 { // success and the background is not dark
 				if editTheme {
 					e.setLightBlueEditTheme()
 				} else {

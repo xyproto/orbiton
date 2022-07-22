@@ -2158,10 +2158,14 @@ func (e *Editor) AbsFilename() (string, error) {
 // The undo stack is also swapped.
 // Only works for switching to one file, and then back again.
 func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *LockKeeper, filenameToOpen string, forceOpen bool) error {
+
 	absFilename, err := e.AbsFilename()
 	if err != nil {
 		return err
 	}
+
+	// About to switch from absFilename to filenameToOpen
+
 	// Unlock and save the lock file
 	lk.Unlock(absFilename)
 	lk.Save()
@@ -2181,7 +2185,7 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
 		fnod := FilenameOrData{filenameToOpen, []byte{}}
-		e2, statusMessage, err = NewEditor(tty, c, fnod, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight)
+		e2, statusMessage, err = NewEditor(tty, c, fnod, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false)
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)
@@ -2190,8 +2194,9 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 			*e = *e2
 			(*e).lines = (*e2).lines
 			(*e).pos = (*e2).pos
-
 		} else {
+			logf("While switching from %s to %s\n", absFilename, filenameToOpen)
+			logf("got error: %s\n", err)
 			panic(err)
 		}
 		undo, switchUndoBackup = switchUndoBackup, undo

@@ -56,7 +56,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
-	e, messageAfterRedraw, err := NewEditor(tty, c, fnod, lineNumber, colNumber, theme, syntaxHighlight)
+	e, messageAfterRedraw, err := NewEditor(tty, c, fnod, lineNumber, colNumber, theme, syntaxHighlight, true)
 	if err != nil {
 		return "", false, err
 	}
@@ -414,7 +414,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 
 			e.redrawCursor = true
 
-			if hasS([]string{".cpp", ".cc", ".c", ".cxx", ".c++"}, filepath.Ext(e.filename)) { // jump from source to header file
+			if (e.mode == mode.C || e.mode == mode.Cpp) && hasS([]string{".cpp", ".cc", ".c", ".cxx", ".c++"}, filepath.Ext(e.filename)) { // jump from source to header file
 				// If this is a C++ source file, try finding and opening the corresponding header file
 				// Check if there is a corresponding header file
 				if absFilename, err := e.AbsFilename(); err == nil { // no error
@@ -428,7 +428,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 				status.ClearAll(c)
 				status.SetErrorMessage("No corresponding header file")
 				status.Show(c, e)
-			} else if hasS([]string{".h", ".hpp", ".h++"}, filepath.Ext(e.filename)) { // jump from header to source file
+			} else if (e.mode == mode.C || e.mode == mode.Cpp) && hasS([]string{".h", ".hpp", ".h++"}, filepath.Ext(e.filename)) { // jump from header to source file
 				// If this is a header file, present a menu option for open the corresponding source file
 				// Check if there is a corresponding header file
 				if absFilename, err := e.AbsFilename(); err == nil { // no error
