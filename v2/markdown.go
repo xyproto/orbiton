@@ -178,8 +178,7 @@ func (e *Editor) markdownHighlight(line string, inCodeBlock bool, listItemRecord
 	}
 
 	// N is the number of lines to highlight with the same color for each numbered point or bullet point in a list
-	// Opinion: List items longer than 4 lines should often be a paragraph rather than a list item.
-	N := 4
+	N := 3
 	prevNisListItem := false
 	for i := len(listItemRecord) - 1; i > (len(listItemRecord) - N); i-- {
 		if i >= 0 && listItemRecord[i] {
