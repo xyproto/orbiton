@@ -106,6 +106,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		}
 
 		// Detect the file mode if the current editor mode is blank, or Prolog (since it could be Perl)
+		// Markdown is set by default for some files.
 		if e.mode == mode.Blank || e.mode == mode.Prolog || (e.mode == mode.Markdown && ext != ".md") {
 
 			byteLines := bytes.SplitN(fnord.data, []byte{'\n'}, 2)
@@ -148,6 +149,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 
 		if !e.Empty() {
 			// Detect the file mode if the current editor mode is blank (or Prolog, since it could be Perl)
+			// Markdown is set by default for some files.
 			if e.mode == mode.Blank || e.mode == mode.Prolog || (e.mode == mode.Markdown && ext != ".md") {
 				firstLine := e.Line(0)
 				// The first 100 bytes are enough when trying to detect the contents
@@ -232,6 +234,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		// TODO: Are these two needed, or covered by NewCustomEditor?
 		e.wrapWidth = 72
 		e.wrapWhenTyping = true
+		e.GoToEnd(c, nil)
 	}
 
 	// If the file starts with a hash bang, enable syntax highlighting

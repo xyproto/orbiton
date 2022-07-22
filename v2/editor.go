@@ -2393,3 +2393,19 @@ func (e *Editor) MoveToIndex(c *vt100.Canvas, status *StatusBar, lineIndex, line
 	}
 	return nil
 }
+
+// GoToTop jumps and scrolls to the top of the file
+func (e *Editor) GoToTop(c *vt100.Canvas, status *StatusBar) {
+	e.redraw = e.GoToLineNumber(1, c, status, true)
+}
+
+// GoToMiddle jumps and scrolls to the middle of the file
+func (e *Editor) GoToMiddle(c *vt100.Canvas, status *StatusBar) {
+	e.GoToLineNumber(LineNumber(e.Len()/2), c, status, true)
+}
+
+// GoToEnd jumps and scrolls to the end of the file
+func (e *Editor) GoToEnd(c *vt100.Canvas, status *StatusBar) {
+	// Go to the last line (by line number, not by index, e.Len() returns an index which is why there is no -1)
+	e.redraw = e.GoToLineNumber(LineNumber(e.Len()), c, status, true)
+}

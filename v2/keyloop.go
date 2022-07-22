@@ -244,7 +244,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				if err := e.DebugFinish(); err != nil {
 					e.DebugEnd()
 					status.SetMessage(err.Error())
-					e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
+					e.GoToEnd(c, nil)
 				} else {
 					status.SetMessage("Finish")
 				}
@@ -291,7 +291,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						//logf("[continue] gdb output: %s\n", gdbOutput)
 						e.DebugEnd()
 						status.SetMessage("Done")
-						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
+						e.GoToEnd(nil, nil)
 					} else {
 						status.SetMessage("Continue")
 					}
@@ -308,8 +308,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 							e.DebugEnd()
 							status.SetMessage(errorMessage)
 						}
-						// Go to the end
-						e.GoToLineNumber(LineNumber(e.Len()), nil, nil, true)
+						// Go to the end, no status message
+						e.GoToEnd(c, nil)
 					} else {
 						status.SetMessage("Step")
 					}
@@ -1432,21 +1432,19 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 			status.ClearAll(c)
 			if goToTop {
-				// Go to the first line (by line number, not by index)
-				e.redraw = e.GoToLineNumber(1, c, status, true)
+				e.GoToTop(c, status)
 			} else if goToCenter {
 				// Go to the center line
-				e.GoToLineNumber(LineNumber(e.Len()/2), c, status, true)
+				e.GoToMiddle(c, status)
 			} else if goToEnd {
-				// Go to the last line (by line number, not by index, e.Len() returns an index which is why there is no -1)
-				e.redraw = e.GoToLineNumber(LineNumber(e.Len()), c, status, true)
+				e.GoToEnd(c, status)
 			} else if lns == "" && !cancel {
 				if e.DataY() > 0 {
-					// If not at the top, go to the first line (by line number, not by index)
-					e.redraw = e.GoToLineNumber(1, c, status, true)
+					// If not already at the top, go there
+					e.GoToTop(c, status)
 				} else {
 					// Go to the last line
-					e.redraw = e.GoToLineNumber(LineNumber(e.Len()), c, status, true)
+					e.GoToEnd(c, status)
 				}
 			} else if strings.HasSuffix(lns, "%") {
 				// Go to the specified percentage

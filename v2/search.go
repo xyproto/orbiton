@@ -418,7 +418,7 @@ AGAIN:
 		// Perform the actual search
 		if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
 			// If no match was found, and return was not pressed, try again from the top
-			//e.redraw = e.GoToLineNumber(1, c, status, true)
+			//e.GoToTop(c, status)
 			//err = e.GoToNextMatch(c, status)
 			if err == errNoSearchMatch {
 				if wrap {

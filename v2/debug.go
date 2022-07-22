@@ -1176,7 +1176,7 @@ func (e *Editor) DebugStartSession(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		return errors.New("could not start debugging: " + msg)
 	}
 
-	e.GoToLineNumber(1, nil, nil, true)
+	e.GoToTop(c, nil)
 
 	status.ClearAll(c)
 	if e.breakpoint == nil {
