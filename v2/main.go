@@ -13,8 +13,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/xyproto/env"
-	"github.com/xyproto/termtitle"
 	"github.com/xyproto/vt100"
 )
 
@@ -113,7 +111,7 @@ Set NO_COLOR=1 to disable colors.
 
 	var (
 		err            error
-		filenameOrData FilenameOrData
+		fnord FilenameOrData
 	)
 
 	// Should we check if data is given on stdin?
@@ -128,67 +126,58 @@ Set NO_COLOR=1 to disable colors.
 		// Now stop reading further from stdin
 		os.Stdin.Close()
 		if len(data) > 0 {
-			filenameOrData.data = data
-			filenameOrData.filename = "-"
+			fnord.data = data
+			fnord.filename = "-"
 		}
 	}
 
 	filename, lineNumber, colNumber := FilenameAndLineNumberAndColNumber(flag.Arg(0), flag.Arg(1), flag.Arg(2))
 
 	// Check if the given filename contains something
-	if len(filenameOrData.data) == 0 {
-		filenameOrData.filename = filename
-		if filenameOrData.filename == "" {
+	if fnord.Empty() {
+		fnord.filename = filename
+		if fnord.filename == "" {
 			fmt.Fprintln(os.Stderr, "please provide a filename")
 			os.Exit(1)
 		}
 
 		// If the filename starts with "~", then expand it
-		filenameOrData.ExpandUser()
+		fnord.ExpandUser()
 
 		// Check if the given filename exists
-		if !exists(filenameOrData.filename) {
-			if strings.HasSuffix(filenameOrData.filename, ".") {
+		if !exists(fnord.filename) {
+			if strings.HasSuffix(fnord.filename, ".") {
 				// If the filename ends with "." and the file does not exist, assume this was a result of tab-completion going wrong.
 				// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
-				matches, err := filepath.Glob(filenameOrData.filename + "*")
+				matches, err := filepath.Glob(fnord.filename + "*")
 				if err == nil && len(matches) > 0 { // no error and at least 1 match
 					// Use the first match of the sorted results
 					sort.Strings(matches)
-					filenameOrData.filename = matches[0]
+					fnord.filename = matches[0]
 				}
-			} else if !strings.Contains(filenameOrData.filename, ".") && allLower(filenameOrData.filename) {
+			} else if !strings.Contains(fnord.filename, ".") && allLower(fnord.filename) {
 				// The filename has no ".", is written in lowercase and it does not exist,
 				// but more than one file that starts with the filename  exists. Assume tab-completion failed.
-				matches, err := filepath.Glob(filenameOrData.filename + "*")
+				matches, err := filepath.Glob(fnord.filename + "*")
 				if err == nil && len(matches) > 1 { // no error and more than 1 match
 					// Use the first match of the sorted results
 					sort.Strings(matches)
-					filenameOrData.filename = matches[0]
+					fnord.filename = matches[0]
 				}
 			} else {
 				// Also match "PKGBUILD" if just "Pk" was entered
-				matches, err := filepath.Glob(strings.ToTitle(filenameOrData.filename) + "*")
+				matches, err := filepath.Glob(strings.ToTitle(fnord.filename) + "*")
 				if err == nil && len(matches) >= 1 { // no error and at least 1 match
 					// Use the first match of the sorted results
 					sort.Strings(matches)
-					filenameOrData.filename = matches[0]
+					fnord.filename = matches[0]
 				}
 			}
 		}
 	}
 
 	// Set the terminal title, if the current terminal emulator supports it, and NO_COLOR is not set
-	if !envNoColor {
-		title := "?"
-		if len(filenameOrData.data) > 0 {
-			title = "stdin"
-		} else if len(filenameOrData.filename) > 0 {
-			title = filenameOrData.filename
-		}
-		termtitle.MustSet(termtitle.GenerateTitle(title))
-		//logf("title: %s, data: %s, empty: %v\n", title, bytes.TrimSpace(filenameOrData.data), filenameOrData.Empty())
-	}
+	fnord.SetTitle()
 
 	// If the editor executable has been named "red", use the red/gray theme by default
 	// Also use the red/gray theme if $SHELL is /bin/csh (typically BSD)
@@ -225,7 +214,7 @@ Set NO_COLOR=1 to disable colors.
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, stopParent, err := Loop(tty, filenameOrData, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight)
+	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {
@@ -236,10 +225,7 @@ Set NO_COLOR=1 to disable colors.
 
 	// Remove the terminal title, if the current terminal emulator supports it
 	// and if NO_COLOR is not set.
-	if !envNoColor {
-		shellName := filepath.Base(env.Str("SHELL", "/bin/sh"))
-		termtitle.MustSet(shellName)
-	}
+	NoTitle()
 
 	// Clear the current color attribute
 	fmt.Print(vt100.Stop())
