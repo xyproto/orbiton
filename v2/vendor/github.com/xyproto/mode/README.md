@@ -6,4 +6,4 @@
 ### General info
 
 * License: BSD-3
-* Version: 0.4.12
+* Version: 0.5.0
