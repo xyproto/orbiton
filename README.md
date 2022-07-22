@@ -168,7 +168,6 @@ These features are unique to `o`, as far as I am aware:
 
 | Programming language                            | File extensions                                           | Jump to error | Build command                                     | Format command ($filename is a temporary file)                                                                 |
 |-------------------------------------------------|-----------------------------------------------------------|---------------|---------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-
 | Ada                                             | `.ada`                                                    | WIP           | WIP                                               | WIP                                                                                                            |
 | Agda                                            | `.agda`                                                   | yes           | `agda -c $filename`                               | N/A                                                                                                            |
 | C and C++                                       | `.cpp`, `.cc`, `.cxx`, `.h`, `.hpp`, `.c++`, `.h++`, `.c` | yes           | `cxx`                                             | `clang-format -fallback-style=WebKit -style=file -i -- $filename`                                              |
