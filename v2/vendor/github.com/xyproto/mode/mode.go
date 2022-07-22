@@ -56,6 +56,7 @@ const (
 	Prolog                // Prolog
 	Python                // Python
 	R                     // R
+	ReStructured          // reStructuredText
 	Rust                  // Rust
 	SQL                   // Structured Query Language
 	Scala                 // Scala
@@ -180,6 +181,8 @@ func (mode Mode) String() string {
 		return "Python"
 	case R:
 		return "R"
+	case ReStructured:
+		return "reStructuredText"
 	case Rust:
 		return "Rust"
 	case Scala:

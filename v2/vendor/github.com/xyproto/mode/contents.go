@@ -41,6 +41,7 @@ func SimpleDetectBytes(contents []byte) Mode {
 // which will only be called if needed.
 // Based on the contents, a Mode is detected and returned.
 // Pass inn mode.Blank as the initial Mode if that is the best guess so far.
+// Returns true if a mode is found.
 // TODO: Create a generic function that handles both strings and bytes instead of maintaining both.
 func DetectFromContents(initial Mode, firstLine string, allTextFunc func() string) (Mode, bool) {
 	var found, notConfig bool
@@ -73,17 +74,25 @@ func DetectFromContents(initial Mode, firstLine string, allTextFunc func() strin
 	}
 	// If more lines start with "# " than "// " or "/* ", and mode is blank,
 	// set the mode to modeConfig and enable syntax highlighting.
-	if !notConfig && (m == Blank || m == Config) {
+	// If more than one line is just "::"  or starts with "[source" and ends with "]", assume reStructuredText
+	if !notConfig && (m == Blank || m == Config || m == Markdown) {
 		foundFirstContent := false
 		hashComment := 0
 		slashComment := 0
+		reStructuredTextMarkers := 0
 		for _, line := range strings.Split(allTextFunc(), "\n") {
 			if strings.HasPrefix(line, "# ") {
 				hashComment++
 			} else if strings.HasPrefix(line, "/") { // Count all lines starting with "/" as a comment, for this purpose
 				slashComment++
 			}
-			if trimmedLine := strings.TrimSpace(line); !foundFirstContent && !strings.HasPrefix(trimmedLine, "//") && len(trimmedLine) > 0 {
+			trimmedLine := strings.TrimSpace(line)
+			if trimmedLine == "::" || strings.HasPrefix(trimmedLine, ".. ") || strings.HasPrefix(trimmedLine, "[source,") {
+				reStructuredTextMarkers++
+				if reStructuredTextMarkers == 2 {
+					return ReStructured, true
+				}
+			} else if !foundFirstContent && !strings.HasPrefix(trimmedLine, "//") && len(trimmedLine) > 0 {
 				foundFirstContent = true
 				if trimmedLine == "{" { // first found content is {, assume JSON
 					m = JSON
@@ -113,6 +122,7 @@ func DetectFromContents(initial Mode, firstLine string, allTextFunc func() strin
 // which will only be called if needed.
 // Based on the contents, a Mode is detected and returned.
 // Pass inn mode.Blank as the initial Mode if that is the best guess so far.
+// Returns true if a mode is found.
 // TODO: Create a generic function that handles both strings and bytes instead of maintaining both.
 func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() []byte) (Mode, bool) {
 	var found, notConfig bool
@@ -150,17 +160,24 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 	}
 	// If more lines start with "# " than "// " or "/* ", and mode is blank,
 	// set the mode to modeConfig and enable syntax highlighting.
-	if !notConfig && (m == Blank || m == Config) {
+	if !notConfig && (m == Blank || m == Config || m == Markdown) {
 		foundFirstContent := false
 		hashComment := 0
 		slashComment := 0
+		reStructuredTextMarkers := 0
 		for _, line := range bytes.Split(allBytesFunc(), []byte("\n")) {
 			if bytes.HasPrefix(line, []byte("# ")) {
 				hashComment++
 			} else if bytes.HasPrefix(line, []byte("/")) { // Count all lines starting with "/" as a comment, for this purpose
 				slashComment++
 			}
-			if trimmedLine := bytes.TrimSpace(line); !foundFirstContent && !bytes.HasPrefix(trimmedLine, []byte("//")) && len(trimmedLine) > 0 {
+			trimmedLine := bytes.TrimSpace(line)
+			if len(trimmedLine) > 1 && (trimmedLine[0] == byte(':') && trimmedLine[1] == byte(':')) || bytes.HasPrefix(trimmedLine, []byte(".. ")) || bytes.HasPrefix(trimmedLine, []byte("[source,")) {
+				reStructuredTextMarkers++
+				if reStructuredTextMarkers == 2 {
+					return ReStructured, true
+				}
+			} else if !foundFirstContent && !bytes.HasPrefix(trimmedLine, []byte("//")) && len(trimmedLine) > 0 {
 				foundFirstContent = true
 				if len(trimmedLine) == 1 && trimmedLine[0] == byte('{') { // first found content is {, assume JSON
 					m = JSON

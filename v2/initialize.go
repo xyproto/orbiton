@@ -104,7 +104,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		}
 
 		// Detect the file mode if the current editor mode is blank, or Prolog (since it could be Perl)
-		if e.mode == mode.Blank || e.mode == mode.Prolog {
+		if e.mode == mode.Blank || e.mode == mode.Prolog || e.mode == mode.Markdown {
 
 			byteLines := bytes.SplitN(fnord.data, []byte{'\n'}, 2)
 			var firstLine []byte
@@ -146,7 +146,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 
 		if !e.Empty() {
 			// Detect the file mode if the current editor mode is blank (or Prolog, since it could be Perl)
-			if e.mode == mode.Blank || e.mode == mode.Prolog {
+			if e.mode == mode.Blank || e.mode == mode.Prolog || e.mode == mode.Markdown {
 				firstLine := e.Line(0)
 				// The first 100 bytes are enough when trying to detect the contents
 				if len(firstLine) > 100 {

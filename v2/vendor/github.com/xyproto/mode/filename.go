@@ -54,7 +54,7 @@ func Detect(filename string) Mode {
 			mode = Nroff
 		case ".adb", ".gpr", ".ads", ".ada":
 			mode = Ada
-		case ".adoc", ".rst", ".scdoc", ".scd":
+		case ".adoc", ".scdoc", ".scd":
 			mode = Doc
 		case ".aidl":
 			mode = AIDL
@@ -138,6 +138,8 @@ func Detect(filename string) Mode {
 			mode = R
 		case ".rs":
 			mode = Rust
+		case ".rst":
+			mode = ReStructured // reStructuredText
 		case ".s", ".S", ".asm", ".inc":
 			// Go-style assembly (modeGoAssembly) is enabled if a mid-dot is discovered
 			mode = Assembly
