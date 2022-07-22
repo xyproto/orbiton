@@ -22,7 +22,7 @@ var (
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message and an error type
-func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor bool) (*Editor, string, error) {
+func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor bool) (*Editor, string, error) {
 
 	var (
 		startTime          = time.Now()
@@ -37,12 +37,12 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 		syntaxHighlight    bool
 	)
 
-	if fnod.Empty() {
-		m = mode.Detect(fnod.filename)
-		baseFilename := filepath.Base(fnod.filename)
+	if fnord.Empty() {
+		m = mode.Detect(fnord.filename)
+		baseFilename := filepath.Base(fnord.filename)
 		syntaxHighlight = origSyntaxHighlight && m != mode.Text && (m != mode.Blank || filepath.Ext(baseFilename) != "")
 	} else {
-		m = mode.SimpleDetect(string(fnod.data))
+		m = mode.SimpleDetectBytes(fnord.data)
 		syntaxHighlight = origSyntaxHighlight && m != mode.Text && m != mode.Blank
 	}
 
@@ -87,7 +87,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 	}
 
 	// Set the editor filename
-	e.filename = fnod.filename
+	e.filename = fnord.filename
 
 	// We wish to redraw the canvas and reposition the cursor
 	e.redraw = true
@@ -96,9 +96,9 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 	// Use os.Stat to check if the file exists, and load the file if it does
 	var warningMessage string
 
-	if !fnod.Empty() { // we have data from stdin
+	if !fnord.Empty() { // we have data from stdin
 
-		warningMessage, err = e.Load(c, tty, fnod)
+		warningMessage, err = e.Load(c, tty, fnord)
 		if err != nil {
 			return nil, "", err
 		}
@@ -106,21 +106,21 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 		// Detect the file mode if the current editor mode is blank, or Prolog (since it could be Perl)
 		if e.mode == mode.Blank || e.mode == mode.Prolog {
 
-			byteLines := bytes.Split(fnod.data, []byte{'\n'})
-			firstLine := ""
+			byteLines := bytes.SplitN(fnord.data, []byte{'\n'}, 2)
+			var firstLine []byte
 			if len(byteLines) > 0 {
-				firstLine = string(byteLines[0])
+				firstLine = byteLines[0]
 			}
 
-			stringContentFunc := func() string {
-				return string(fnod.data)
+			contentFunc := func() []byte {
+				return fnord.data
 			}
 
 			// The first 100 bytes are enough when trying to detect the contents
 			if len(firstLine) > 100 {
 				firstLine = firstLine[:100]
 			}
-			if m, found := mode.DetectFromContents(e.mode, firstLine, stringContentFunc); found {
+			if m, found := mode.DetectFromContentBytes(e.mode, firstLine, contentFunc); found {
 				e.mode = m
 			}
 
@@ -139,7 +139,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnod FilenameOrData, lineNumber 
 			return nil, "", errors.New(e.filename + " is a directory")
 		}
 
-		warningMessage, err = e.Load(c, tty, fnod)
+		warningMessage, err = e.Load(c, tty, fnord)
 		if err != nil {
 			return nil, "", err
 		}
