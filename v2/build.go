@@ -213,6 +213,10 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd = exec.Command("v", sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, exeOrMainExists, nil
+	case mode.Garnet:
+		cmd = exec.Command("garnetc", "-o", exeFirstName, sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, exeExists, nil
 	case mode.Rust:
 		if e.debugMode {
 			cmd = exec.Command("cargo", "build", "-C", "incremental", "--profile", "dev")
