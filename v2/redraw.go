@@ -6,13 +6,14 @@ import (
 
 // FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
 func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, resized bool) {
-
 	savePos := e.pos
 
 	if status != nil {
 		status.ClearAll(c)
 		e.SetSearchTerm(c, status, "")
 	}
+
+	resizeMut.Lock()
 
 	vt100.Close()
 	vt100.Reset()
@@ -22,11 +23,15 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 	newC := vt100.NewCanvas()
 	newC.ShowCursor()
 	w := int(newC.Width())
+
+	resizeMut.Unlock()
+
 	if w < e.wrapWidth {
 		e.wrapWidth = w
 	} else if e.wrapWidth < 80 && w >= 80 {
 		e.wrapWidth = w
 	}
+
 	if drawLines {
 		e.DrawLines(c, true, e.sshMode)
 	}
@@ -35,9 +40,14 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 
 	// TODO: Find out why the following lines are needed to properly handle the SIGWINCH resize signal
 
+	resizeMut.Lock()
+
 	newC = vt100.NewCanvas()
 	newC.ShowCursor()
 	w = int(newC.Width())
+
+	resizeMut.Unlock()
+
 	if w < e.wrapWidth {
 		e.wrapWidth = w
 	} else if e.wrapWidth < 80 && w >= 80 {
