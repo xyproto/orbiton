@@ -199,6 +199,8 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "--"
 	case mode.Basic:
 		return "'"
+	case mode.Email:
+		return "GIT:"
 	default:
 		return "//"
 	}
