@@ -154,7 +154,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 			delKeywords = append(delKeywords, "install")
 		}
 	case mode.C, mode.Cpp:
-		addKeywords = []string{"int8_t", "uint8_t", "int16_t", "uint16_t", "int32_t", "uint32_t", "int64_t", "uint64_r", "size_t"}
+		addKeywords = []string{"int8_t", "uint8_t", "int16_t", "uint16_t", "int32_t", "uint32_t", "int64_t", "uint64_t", "size_t"}
 		fallthrough // Continue to the default
 	default:
 		addKeywords = append(addKeywords, "endif", "ifeq", "ifneq")
