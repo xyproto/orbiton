@@ -43,6 +43,16 @@ func hasAnyPrefixWord(line string, wordList []string) bool {
 	return false
 }
 
+// hasAnyPrefix checks if the given line is prefixed with any one of the given strings
+func hasAnyPrefix(line string, stringList []string) bool {
+	for _, s := range stringList {
+		if strings.HasPrefix(line, s) {
+			return true
+		}
+	}
+	return false
+}
+
 // hasS checks if the given string slice contains the given string
 func hasS(sl []string, s string) bool {
 	for _, e := range sl {
