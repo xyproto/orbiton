@@ -22,7 +22,7 @@ const (
 	Cpp                   // C++
 	Crystal               // Crystal
 	D                     // D
-	Doc                   // asciidoctor, rst files, sdoc etc
+	Doc                   // asciidoctor, sdoc etc
 	Email                 // For using o with ie. Mutt
 	Erlang                // Erlang
 	Git                   // Git commits and interactive rebases

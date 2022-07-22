@@ -10,7 +10,7 @@ require (
 	github.com/xyproto/binary v1.3.0
 	github.com/xyproto/env v1.7.0
 	github.com/xyproto/guessica v1.1.0
-	github.com/xyproto/mode v0.5.2
+	github.com/xyproto/mode v0.5.3
 	github.com/xyproto/stringpainter v1.0.0
 	github.com/xyproto/syntax v1.10.6
 	github.com/xyproto/termtitle v1.5.0
@@ -26,5 +26,5 @@ require (
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
-	golang.org/x/sys v0.0.0-20220721230656-c6bc011c0c49 // indirect
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
 )
