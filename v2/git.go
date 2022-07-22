@@ -89,6 +89,27 @@ func (e *Editor) gitHighlight(line string) string {
 		} else {
 			coloredString = vt100.DarkGray.Get(line)
 		}
+	} else if strings.HasPrefix(line, "GIT:") {
+		coloredString = vt100.DarkGray.Get(line)
+	} else if strings.HasPrefix(line, "From ") && strings.Contains(line, "#") {
+		parts := strings.SplitN(line, "#", 2)
+		// Also syntax highlight the e-mail address
+		if strings.Contains(parts[0], "<") && strings.Contains(parts[0], ">") {
+			parts1 := strings.SplitN(parts[0], "<", 2)
+			parts2 := strings.SplitN(parts1[1], ">", 2)
+			coloredString = vt100.LightBlue.Get(parts1[0][:5]) + vt100.White.Get(parts1[0][5:]) + vt100.Red.Get("<") + vt100.LightYellow.Get(parts2[0]) + vt100.Red.Get(">") + vt100.White.Get(parts2[1]) + vt100.DarkGray.Get("#"+parts[1])
+		} else {
+			coloredString = vt100.LightCyan.Get(parts[0]) + vt100.DarkGray.Get("#"+parts[1])
+		}
+	} else if hasAnyPrefix(line, []string{"From:", "To:", "Cc:", "Bcc:", "Subject:", "Date:", "Message-Id:", "X-Mailer:", "MIME-Version:", "Content-Type:", "Content-Transfer-Encoding:", "Reply-To:", "In-Reply-To:"}) {
+		parts := strings.SplitN(line, ":", 2)
+		if strings.Contains(parts[1], "<") && strings.Contains(parts[1], ">") {
+			parts1 := strings.SplitN(parts[1], "<", 2)
+			parts2 := strings.SplitN(parts1[1], ">", 2)
+			coloredString = vt100.LightBlue.Get(parts[0]+":") + parts1[0] + vt100.Red.Get("<") + vt100.LightYellow.Get(parts2[0]) + vt100.Red.Get(">") + vt100.White.Get(parts2[1])
+		} else {
+			coloredString = vt100.LightBlue.Get(parts[0]+":") + vt100.LightYellow.Get(parts[1])
+		}
 	} else if fields := strings.Fields(line); len(fields) >= 3 && hasAnyPrefixWord(line, []string{"p", "pick", "r", "reword", "e", "edit", "s", "squash", "f", "fixup", "x", "exec", "b", "break", "d", "drop", "l", "label", "t", "reset", "m", "merge"}) {
 		coloredString = vt100.Red.Get(fields[0]) + " " + vt100.LightBlue.Get(fields[1]) + " " + vt100.LightGray.Get(strings.Join(fields[2:], " "))
 	} else {
