@@ -34,25 +34,26 @@ func (fnord *FilenameOrData) String() string {
 	return string(fnord.data)
 }
 
+// SetTitle sets an approperiate terminal emulator title, unless NO_COLOR is set
 func (fnord *FilenameOrData) SetTitle() {
-	// Set the terminal title, if the current terminal emulator supports it, and NO_COLOR is not set
-	if !envNoColor {
-		title := "?"
-		if fnord.length > 0 {
-			title = "stdin"
-		} else if fnord.filename != "" {
-			title = fnord.filename
-		}
-		// Set the title
-		termtitle.MustSet(termtitle.GenerateTitle(title))
+	if envNoColor {
+		return
 	}
+	title := "?"
+	if fnord.length > 0 {
+		title = "stdin"
+	} else if fnord.filename != "" {
+		title = fnord.filename
+	}
+	termtitle.MustSet(termtitle.GenerateTitle(title))
 }
 
+// NoTitle will remove the filename title by setting the shell name as the title,
+// if NO_COLOR is not set and the terminal emulator supports it.
 func NoTitle() {
-	// Remove the terminal title, if the current terminal emulator supports it
-	// and if NO_COLOR is not set.
-	if !envNoColor {
-		shellName := filepath.Base(env.Str("SHELL", "/bin/sh"))
-		termtitle.MustSet(shellName)
+	if envNoColor {
+		return
 	}
+	shellName := filepath.Base(env.Str("SHELL", "/bin/sh"))
+	termtitle.MustSet(shellName)
 }
