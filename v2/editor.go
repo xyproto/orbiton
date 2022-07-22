@@ -295,14 +295,14 @@ func (e *Editor) Clear() {
 
 // Load will try to load a file. The file is assumed to be checked to already exist.
 // Returns a warning message (possibly empty) and an error type
-func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnod FilenameOrData) (string, error) {
+func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (string, error) {
 	var (
 		message string
 		err     error
 	)
 
 	// Start a spinner, in a short while
-	quitChan := Spinner(c, tty, fmt.Sprintf("Reading %s... ", fnod.filename), fmt.Sprintf("reading %s: stopped by user", fnod.filename), 200*time.Millisecond, e.ItalicsColor)
+	quitChan := Spinner(c, tty, fmt.Sprintf("Reading %s... ", fnord.filename), fmt.Sprintf("reading %s: stopped by user", fnord.filename), 200*time.Millisecond, e.ItalicsColor)
 
 	// Stop the spinner at the end of the function
 	defer func() {
@@ -312,20 +312,23 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnod FilenameOrData) (str
 	start := time.Now()
 
 	// Check if the file extension is ".class" and if "jad" is installed
-	if filepath.Ext(fnod.filename) == ".class" && which("jad") != "" && fnod.Empty() {
-		if fnod.data, err = e.LoadClass(fnod.filename); err != nil {
+	if filepath.Ext(fnord.filename) == ".class" && which("jad") != "" && fnord.Empty() {
+		if fnord.data, err = e.LoadClass(fnord.filename); err != nil {
 			return "Could not run jad", err
 		}
 	} else {
 		// Read the file and check if it could be read
-		if fnod.Empty() {
-			fnod.data, err = ioutil.ReadFile(fnod.filename)
+		if fnord.Empty() {
+			// TODO: Read in the data in a way the returns the byte count
+			//       and use that instead of len(fnord.data)
+			fnord.data, err = ioutil.ReadFile(fnord.filename)
+			fnord.length = uint64(len(fnord.data))
 			if err != nil {
 				return message, err
 			}
 		}
 		// Check if it's a binary file or a text file
-		if e.binaryFile = binary.Data(fnod.data); e.binaryFile {
+		if e.binaryFile = binary.Data(fnord.data); e.binaryFile {
 			e.mode = mode.Blank
 		}
 	}
@@ -335,13 +338,13 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnod FilenameOrData) (str
 
 	// Opinionated replacements, but not for binary files
 	if !e.binaryFile {
-		fnod.data = opinionatedByteReplacer(fnod.data)
+		fnord.data = opinionatedByteReplacer(fnord.data)
 	}
 
-	//logf("Loading: %s\n", string(fnod.data))
+	//logf("Loading: %s\n", string(fnord.data))
 
 	// Load the data
-	e.LoadBytes(fnod.data)
+	e.LoadBytes(fnord.data)
 
 	// Mark the data as "not changed"
 	e.changed = false
@@ -2184,8 +2187,8 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		switchBuffer.Restore(e)
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
-		fnod := FilenameOrData{filenameToOpen, []byte{}}
-		e2, statusMessage, err = NewEditor(tty, c, fnod, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false)
+		fnord := FilenameOrData{filenameToOpen, []byte{}, 0}
+		e2, statusMessage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false)
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)
@@ -2195,21 +2198,19 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 			(*e).lines = (*e2).lines
 			(*e).pos = (*e2).pos
 		} else {
-			logf("While switching from %s to %s\n", absFilename, filenameToOpen)
-			logf("got error: %s\n", err)
+			// logf("While switching from %s to %s, got error: %s\n", absFilename, filenameToOpen, err)
 			panic(err)
 		}
+		fnord.SetTitle()
 		undo, switchUndoBackup = switchUndoBackup, undo
+	}
+
+	if statusMessage != "" {
+		status.SetMessageAfterRedraw(statusMessage)
 	}
 
 	e.redraw = true
 	e.redrawCursor = true
-
-	if statusMessage != "" {
-		status.Clear(c)
-		status.SetMessage(statusMessage)
-		status.Show(c, e)
-	}
 
 	return err
 }
