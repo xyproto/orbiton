@@ -25,6 +25,7 @@ const (
 	Doc                   // asciidoctor, sdoc etc
 	Email                 // For using o with ie. Mutt
 	Erlang                // Erlang
+	Garnet                // Garnet
 	Git                   // Git commits and interactive rebases
 	Go                    // Go
 	GoAssembly            // Go-style Assembly
@@ -119,6 +120,8 @@ func (mode Mode) String() string {
 		return "E-mail"
 	case Erlang:
 		return "Erlang"
+	case Garnet:
+		return "Garnet"
 	case Git:
 		return "Git"
 	case GoAssembly:

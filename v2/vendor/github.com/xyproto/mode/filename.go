@@ -89,6 +89,8 @@ func Detect(filename string) Mode {
 			mode = D
 		case ".erl":
 			mode = Erlang
+		case ".gt":
+			mode = Garnet
 		case ".go":
 			mode = Go
 		case ".gradle":
