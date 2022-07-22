@@ -6,6 +6,7 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/xyproto/textoutput"
 	"github.com/xyproto/vt100"
 )
 
@@ -16,7 +17,7 @@ func quitError(tty *vt100.TTY, err error) {
 	vt100.Reset()
 	vt100.Clear()
 	vt100.Close()
-	fmt.Fprintln(os.Stderr, "error: "+err.Error())
+	textoutput.NewTextOutput(true, true).Err(err.Error())
 	vt100.SetXY(uint(0), uint(1))
 	os.Exit(1)
 }
