@@ -64,6 +64,11 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		29,
 		2,
 	},
+	mode.Garnet: {
+		"fn main(): {} =\n    __println(42)\nend\n",
+		10,
+		2,
+	},
 	mode.Go: {
 		"package main\n\nimport (\n\t\"fmt\"\n)\n\nfunc main() {\n\tfmt.Println(\"Hello, World!\")\n}\n",
 		13,

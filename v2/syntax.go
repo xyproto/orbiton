@@ -126,10 +126,13 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.PolicyLanguage: // SE Linux
 		clearKeywords()
 		addKeywords = policyLanguageWords
-	case mode.Hare, mode.Jakt, mode.Rust: // Originally only for Rust, split up as needed
+	case mode.Garnet, mode.Hare, mode.Jakt, mode.Rust: // Originally only for Rust, split up as needed
 		addKeywords = []string{"String", "assert_eq", "char", "fn", "i16", "i32", "i64", "i8", "impl", "loop", "mod", "out", "panic", "u16", "u32", "u64", "u8", "usize"}
 		// "as" and "mut" are treated as special cases in the syntax package
-		delKeywords = []string{"as", "build", "byte", "done", "end", "get", "int", "int16", "int32", "int64", "last", "map", "mut", "next", "pass", "print", "uint16", "uint32", "uint64", "var"}
+		delKeywords = []string{"as", "build", "byte", "done", "get", "int", "int16", "int32", "int64", "last", "map", "mut", "next", "pass", "print", "uint16", "uint32", "uint64", "var"}
+		if m != mode.Garnet {
+			delKeywords = append(delKeywords, "end")
+		}
 	case mode.Scala:
 		clearKeywords()
 		addKeywords = scalaWords
@@ -178,7 +181,10 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "#"
 	case mode.Assembly:
 		return ";"
-	case mode.Ada, mode.Agda, mode.Haskell, mode.Lua, mode.SQL, mode.Teal, mode.Terra:
+	case mode.OCaml, mode.StandardML:
+		// not applicable, just return something that is unlikely to appear at the beginning of a line
+		fallthrough
+	case mode.Ada, mode.Agda, mode.Garnet, mode.Haskell, mode.Lua, mode.SQL, mode.Teal, mode.Terra:
 		return "--"
 	case mode.Vim:
 		return "\""
@@ -194,9 +200,6 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "%"
 	case mode.M4:
 		return "dnl"
-	case mode.OCaml, mode.StandardML:
-		// not applicable, return something that is unlikely to appear at the beginning of a line
-		return "--"
 	case mode.Basic:
 		return "'"
 	case mode.Email:
