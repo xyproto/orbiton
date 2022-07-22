@@ -474,7 +474,8 @@ Try the Konami code while in the `ctrl-o` menu to start a silly little game abou
 ## Recommended symlinks
 
 * For starting `o` with the light theme: `ln -sf /usr/bin/o /usr/bin/lighted`.
-* For starting `o` with the red/black theme: `ln -sf /usr/bin/o /usr/bin/redblack`.
+* For starting `o` with the red & black theme: `ln -sf /usr/bin/o /usr/bin/redblack`.
+* For starting `o` with the blue theme: `ln -sf /usr/bin/o /usr/bin/edit`.
 
 ## The GUI frontend `ko`
 
@@ -489,6 +490,10 @@ Install:
 Installing a symlink for launching `ko` with a light theme:
 
     ln -sf /usr/bin/ko /usr/bin/lo
+
+Known issues:
+
+* If `ko` is launched under a tiling window manager, pressing `esc` after starting it might be needed in order to redraw the text.
 
 ## Terminal settings
 
