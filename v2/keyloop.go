@@ -27,7 +27,7 @@ var fileLock = NewLockKeeper(defaultLockFile)
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight bool) (userMessage string, stopParent bool, err error) {
+func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight bool) (userMessage string, stopParent bool, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt100.Init()
@@ -56,7 +56,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
-	e, messageAfterRedraw, err := NewEditor(tty, c, fnod, lineNumber, colNumber, theme, syntaxHighlight, true)
+	e, messageAfterRedraw, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true)
 	if err != nil {
 		return "", false, err
 	}
@@ -237,7 +237,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 			// If in Debug mode, let ctrl-f mean "finish"
 			if e.debugMode {
 				if e.gdb == nil {
-					status.ShowAfterRedraw("Not running")
+					status.SetMessageAfterRedraw("Not running")
 					break
 				}
 				status.ClearAll(c)
@@ -248,7 +248,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 				} else {
 					status.SetMessage("Finish")
 				}
-				status.ShowAfterRedraw(status.Message())
+				status.SetMessageAfterRedraw(status.Message())
 				break
 			}
 
@@ -280,7 +280,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 					status.SetMessage("Program stopped")
 					e.redrawCursor = true
 					e.redraw = true
-					status.ShowAfterRedraw(status.Message())
+					status.SetMessageAfterRedraw(status.Message())
 					break
 				}
 				status.ClearAll(c)
@@ -317,7 +317,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 				e.redrawCursor = true
 
 				// Redraw and use the triggered status message instead of Show
-				status.ShowAfterRedraw(status.Message())
+				status.SetMessageAfterRedraw(status.Message())
 
 				break
 			}
@@ -654,7 +654,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 					if !programRunning {
 						e.DebugEnd()
 						status.SetMessage("Program stopped")
-						status.ShowAfterRedraw(status.Message())
+						status.SetMessageAfterRedraw(status.Message())
 						e.redraw = true
 						e.redrawCursor = true
 						break
@@ -680,7 +680,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 						}
 					}
 					e.redrawCursor = true
-					status.ShowAfterRedraw(status.Message())
+					status.SetMessageAfterRedraw(status.Message())
 					break
 				} else { // e.gdb == nil
 					// Build or export the current file
@@ -801,7 +801,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 			if e.debugMode {
 				e.DebugEnd()
 				e.debugMode = false
-				status.ShowAfterRedraw("Normal mode")
+				status.SetMessageAfterRedraw("Normal mode")
 				break
 			}
 			// Reset the cut/copy/paste double-keypress detection
@@ -818,7 +818,7 @@ func Loop(tty *vt100.TTY, fnod FilenameOrData, lineNumber LineNumber, colNumber 
 				// Clear the macro
 				e.macro = nil
 				// Show a message after the redraw
-				status.ShowAfterRedraw("Macro cleared")
+				status.SetMessageAfterRedraw("Macro cleared")
 			}
 		case " ": // space
 

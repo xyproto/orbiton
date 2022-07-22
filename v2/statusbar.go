@@ -291,8 +291,8 @@ func (sb *StatusBar) HoldMessage(c *vt100.Canvas, dur time.Duration) {
 	}
 }
 
-// ShowAfterRedraw prepares a status bar message that will be shown after redraw
-func (sb *StatusBar) ShowAfterRedraw(message string) {
+// SetMessageAfterRedraw prepares a status bar message that will be shown after redraw
+func (sb *StatusBar) SetMessageAfterRedraw(message string) {
 	sb.messageAfterRedraw = message
 }
 

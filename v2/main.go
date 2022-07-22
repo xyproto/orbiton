@@ -110,7 +110,7 @@ Set NO_COLOR=1 to disable colors.
 	}
 
 	var (
-		err            error
+		err   error
 		fnord FilenameOrData
 	)
 

@@ -256,7 +256,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				status.SetErrorMessage("Failed to update PKGBUILD: " + err.Error())
 				status.Show(c, e)
 			} else {
-				if _, err := e.Load(c, tty, FilenameOrData{tempFilename, []byte{}}); err != nil {
+				if _, err := e.Load(c, tty, FilenameOrData{tempFilename, []byte{}, 0}); err != nil {
 					status.ClearAll(c)
 					status.SetMessage(err.Error())
 					status.Show(c, e)
@@ -277,7 +277,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			status.SetError(err)
 			status.Show(c, e)
 		} else {
-			status.ShowAfterRedraw("Copied everything")
+			status.SetMessageAfterRedraw("Copied everything")
 		}
 	})
 
@@ -307,7 +307,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				e.debugMode = false
 				// Also end the gdb session if there is one in progress
 				e.DebugEnd()
-				status.ShowAfterRedraw("Normal mode")
+				status.SetMessageAfterRedraw("Normal mode")
 			})
 		} else {
 			actions.Add("Debug mode", func() {

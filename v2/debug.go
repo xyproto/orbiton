@@ -1163,7 +1163,7 @@ func (e *Editor) DebugStartSession(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	msg, err := e.DebugStart(filepath.Dir(absFilename), filepath.Base(absFilename), outputExecutable, func() {
 		// This happens when the program running under GDB is done running.
 		programRunning = false
-		status.ShowAfterRedraw("Execution complete")
+		status.SetMessageAfterRedraw("Execution complete")
 		e.redraw = true
 		e.redrawCursor = true
 	})
