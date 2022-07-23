@@ -94,6 +94,9 @@ func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, startIn time.Du
 		vt100.ShowCursor(false)
 		defer vt100.ShowCursor(true)
 
+		// Echo off
+		vt100.EchoOff()
+
 		if envNoColor {
 			spinnerAnimation = pacmanNoColor
 		} else {

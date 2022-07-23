@@ -22,6 +22,7 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 
 	newC := vt100.NewCanvas()
 	newC.ShowCursor()
+	vt100.EchoOff()
 	w := int(newC.Width())
 
 	resizeMut.Unlock()
@@ -44,6 +45,7 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 
 	newC = vt100.NewCanvas()
 	newC.ShowCursor()
+	vt100.EchoOff()
 	w = int(newC.Width())
 
 	resizeMut.Unlock()

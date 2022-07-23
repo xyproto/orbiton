@@ -33,6 +33,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	vt100.Init()
 	c := vt100.NewCanvas()
 	c.ShowCursor()
+	vt100.EchoOff()
 
 	var (
 		statusDuration = 2700 * time.Millisecond
