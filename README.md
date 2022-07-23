@@ -491,10 +491,6 @@ Installing a symlink for launching `ko` with a light theme:
 
     ln -sf /usr/bin/ko /usr/bin/lo
 
-Known issues:
-
-* If `ko` is launched under a tiling window manager, pressing `esc` after starting it might be needed in order to redraw the text.
-
 ## Terminal settings
 
 ### Konsole

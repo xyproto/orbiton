@@ -63,6 +63,15 @@ void trigger_redraw()
     }
 }
 
+void signal_handler(int signal_num)
+{
+    // If we are here, it means we received a USR1 signal
+    // This means that o is ready to resize.
+    // Answer by sending SIGWINCH to o (the child_pid), to make it
+    // resize itself according to the current VTE terminal size:
+    trigger_redraw();
+}
+
 gboolean size_changed(GtkWidget* widget, GtkAllocation* allocation, void* data)
 {
     // printf("new size %dx%d\n", allocation->width, allocation->height);
@@ -712,6 +721,8 @@ int main(int argc, char* argv[])
     g_signal_connect(window, "scroll-event", G_CALLBACK(mouse_scrolled), nullptr);
     g_signal_connect(window, "button-press-event", G_CALLBACK(mouse_clicked), nullptr);
     g_signal_connect(window, "size-allocate", G_CALLBACK(size_changed), nullptr);
+
+    signal(SIGUSR1, signal_handler); // o sends USR1 when it is ready
 
     // Add the terminal to the window
     gtk_container_add(GTK_CONTAINER(window), terminal);

@@ -1,9 +1,5 @@
 # TODO
 
-## GUI
-
-- [ ] Send SIGWINCH to the o PID from ko, after the program has started, possibly by a timer function.
-
 ## Building, debugging and testing programs
 
 - [ ] Jump to error for Erlang.
