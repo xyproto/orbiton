@@ -65,7 +65,7 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		2,
 	},
 	mode.Garnet: {
-		"fn main(): {} =\n    __println(42)\nend\n",
+		"fn main(): {} =\n    __print_str(\"Hello, World!\")\nend\n",
 		10,
 		2,
 	},
