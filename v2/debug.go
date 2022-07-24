@@ -808,7 +808,7 @@ func (e *Editor) DrawFlags(c *vt100.Canvas, repositionCursor bool) {
 
 	// Title colors
 	fg := e.StatusForeground
-	bg := e.StatusBackground
+	bg := e.DebugOutputBackground
 
 	// Draw the title
 	c.Write(x, y, fg, bg, title+" ")
