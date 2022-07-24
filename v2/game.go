@@ -774,6 +774,7 @@ retry:
 	}()
 
 	vt100.Init()
+	vt100.EchoOff()
 	defer vt100.Close()
 
 	// The loop time that is aimed for
