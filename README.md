@@ -473,23 +473,37 @@ Try the Konami code while in the `ctrl-o` menu to start a silly little game abou
 
 ## Recommended symlinks
 
-* For starting `o` with the light theme: `ln -sf /usr/bin/o /usr/bin/lighted`.
-* For starting `o` with the red & black theme: `ln -sf /usr/bin/o /usr/bin/redblack`.
-* For starting `o` with the blue theme: `ln -sf /usr/bin/o /usr/bin/edit`.
+* For starting `o` with the _Light VS_ theme: `ln -sf /usr/bin/o /usr/bin/lighted`.
+* For starting `o` with the _Red & black_ theme: `ln -sf /usr/bin/o /usr/bin/redblack`.
+* For starting `o` with the _Blue Edit_ theme: `ln -sf /usr/bin/o /usr/bin/edit`.
 
 ## The GUI frontend `ko`
 
 Build:
 
-    make
+    make ko
 
-Install:
+Install (`sudo`, if needed):
 
-    make gui-install
+    make ko-install
 
 Installing a symlink for launching `ko` with a light theme:
 
     ln -sf /usr/bin/ko /usr/bin/lo
+
+## OpenBSD installation instructions
+
+Install dependencies (use `doas` if needed):
+
+    add_pkg git gmake go vte3
+
+Build both the editor `o` and the GUI frontend `ko`:
+
+    gmake CXX="clang++ -w" o ko
+
+Install both executables, a man page, an icon and a desktop shortcut file (use `doas` if needed`):
+
+    PREFIX=/usr/local gmake install ko-install
 
 ## Terminal settings
 
