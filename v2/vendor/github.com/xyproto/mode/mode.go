@@ -43,7 +43,7 @@ const (
 	Log                   // All sorts of log files
 	Lua                   // Lua
 	M4                    // M4 macros
-	Makefile              // Makefiles
+	Make                  // Makefiles
 	ManPage               // viewing man pages
 	Markdown              // Markdown
 	Nim                   // Nim
@@ -156,7 +156,7 @@ func (mode Mode) String() string {
 		return "Lua"
 	case M4:
 		return "M4"
-	case Makefile:
+	case Make:
 		return "Make"
 	case ManPage:
 		return "Man"
