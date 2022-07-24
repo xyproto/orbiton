@@ -150,7 +150,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		// Only highlight some words, to make them stand out
 		clearKeywords()
 		addKeywords = []string{"db", "dd", "dw", "int", "resb", "resd", "resw", "section", "syscall"}
-	case mode.Makefile, mode.Shell:
+	case mode.Make, mode.Shell:
 		addKeywords = []string{"--force", "-f", "checkout", "clean", "cmake", "configure", "dd", "do", "doas", "done", "endif", "exec", "fdisk", "for", "gdisk", "ifeq", "ifneq", "in", "make", "mv", "ninja", "rm", "rmdir", "setopt", "su", "sudo", "while"}
 		delKeywords = []string{"#else", "#endif", "as", "build", "default", "double", "exec", "finally", "float", "fn", "generic", "get", "long", "new", "no", "package", "pass", "property", "require", "ret", "set", "super", "super", "template", "type", "var", "with"}
 		if m == mode.Shell { // Only for shell scripts, not for Makefiles
@@ -177,7 +177,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 // comment for the current language mode the editor is in.
 func (e *Editor) SingleLineCommentMarker() string {
 	switch e.mode {
-	case mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.Makefile, mode.Nim, mode.PolicyLanguage, mode.Python, mode.Shell:
+	case mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.Make, mode.Nim, mode.PolicyLanguage, mode.Python, mode.Shell:
 		return "#"
 	case mode.Assembly:
 		return ";"

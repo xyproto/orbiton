@@ -126,7 +126,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 	escapeFunction := Escape
 	unEscapeFunction := UnEscape
-	if e.mode == mode.Makefile || e.mode == mode.Shell {
+	if e.mode == mode.Make || e.mode == mode.Shell {
 		escapeFunction = ShEscape
 		unEscapeFunction = ShUnEscape
 	}
@@ -353,17 +353,17 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
 					case !q.multiLineComment && (strings.HasPrefix(trimmedLine, "#if") || strings.HasPrefix(trimmedLine, "#else") || strings.HasPrefix(trimmedLine, "#elseif") || strings.HasPrefix(trimmedLine, "#endif") || strings.HasPrefix(trimmedLine, "#define") || strings.HasPrefix(trimmedLine, "#pragma")):
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
-					case e.mode != mode.Shell && e.mode != mode.Makefile && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*/") && !strings.Contains(trimmedLine, "/*"):
+					case e.mode != mode.Shell && e.mode != mode.Make && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*/") && !strings.Contains(trimmedLine, "/*"):
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
 					case (e.mode == mode.StandardML || e.mode == mode.OCaml) && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*)") && !strings.Contains(trimmedLine, "(*"):
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
-					case e.mode != mode.Shell && e.mode != mode.Makefile && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "/*") > strings.LastIndex(trimmedLine, "*/"):
+					case e.mode != mode.Shell && e.mode != mode.Make && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "/*") > strings.LastIndex(trimmedLine, "*/"):
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case (e.mode == mode.StandardML || e.mode == mode.OCaml) && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "(*") > strings.LastIndex(trimmedLine, "*)"):
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case q.containsMultiLineComments:
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
-					case e.mode != mode.Shell && e.mode != mode.Makefile && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && (q.multiLineComment || q.stoppedMultiLineComment) && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.Contains(line, "\"(*") && !strings.Contains(line, "*)\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
+					case e.mode != mode.Shell && e.mode != mode.Make && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && (q.multiLineComment || q.stoppedMultiLineComment) && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.Contains(line, "\"(*") && !strings.Contains(line, "*)\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
 						// In the middle of a multi-line comment
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
 					case q.singleLineComment || q.stoppedMultiLineComment:
