@@ -152,7 +152,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		addKeywords = []string{"db", "dd", "dw", "int", "resb", "resd", "resw", "section", "syscall"}
 	case mode.Make, mode.Shell:
 		addKeywords = []string{"--force", "-f", "checkout", "clean", "cmake", "configure", "dd", "do", "doas", "done", "endif", "exec", "fdisk", "for", "gdisk", "ifeq", "ifneq", "in", "make", "mv", "ninja", "rm", "rmdir", "setopt", "su", "sudo", "while"}
-		delKeywords = []string{"#else", "#endif", "as", "build", "default", "double", "exec", "finally", "float", "fn", "generic", "get", "long", "new", "no", "package", "pass", "property", "require", "ret", "set", "super", "super", "template", "type", "var", "with"}
+		delKeywords = []string{"#else", "#endif", "as", "build", "default", "double", "exec", "finally", "float", "fn", "generic", "get", "long", "new", "no", "package", "pass", "print", "property", "require", "ret", "set", "super", "super", "template", "type", "var", "with"}
 		if m == mode.Shell { // Only for shell scripts, not for Makefiles
 			delKeywords = append(delKeywords, "install")
 		}
