@@ -247,13 +247,14 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	// TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
 	// because $COLORFGBG is "15;0" even though the background is white.
 	if !e.readOnly && (!specificLetter || editTheme) {
-		if (env.Has("XTERM_VERSION") && !env.Bool("KO") && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
+		inKO := env.Bool("KO")
+		if (env.Has("XTERM_VERSION") && !inKO && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
 			if editTheme {
 				e.setLightBlueEditTheme()
 			} else {
 				e.setLightVSTheme()
 			}
-		} else if shell := env.Str("SHELL"); (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && filepath.Base(os.Args[0]) != "default" {
+		} else if shell := env.Str("SHELL"); (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && !inKO && filepath.Base(os.Args[0]) != "default" {
 			// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
 			e.setRedBlackTheme()
 		} else if colorString := env.Str("COLORFGBG"); strings.Contains(colorString, ";") {
