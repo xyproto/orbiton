@@ -1,5 +1,9 @@
 # TODO
 
+## General
+
+- [ ] Go through this file and remove all completed TODO items.
+
 ## Building, debugging and testing programs
 
 - [ ] Jump to error for Erlang.
