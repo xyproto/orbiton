@@ -1022,13 +1022,6 @@ func (e *Editor) CreateLineIfMissing(n LineIndex) {
 	}
 }
 
-// SetColors will set the current editor theme (foreground, background).
-// The background color should be a background attribute (like vt100.BackgroundBlue).
-func (e *Editor) SetColors(fg, bg vt100.AttributeColor) {
-	e.Foreground = fg
-	e.Background = bg
-}
-
 // WordCount returns the number of spaces in the text + 1
 func (e *Editor) WordCount() int {
 	return len(strings.Fields(e.String()))

@@ -246,19 +246,6 @@ func (sb *StatusBar) ShowNoTimeout(c *vt100.Canvas, e *Editor) {
 	c.Draw()
 }
 
-// SetColors can be used for setting a color theme for the status bar field
-// bg should be a background attribute, like vt100.BackgroundBlue.
-func (sb *StatusBar) SetColors(fg, bg vt100.AttributeColor) {
-	if envNoColor {
-		fg = vt100.Default
-		bg = vt100.BackgroundDefault
-	}
-	mut.Lock()
-	sb.fg = fg
-	sb.bg = bg
-	mut.Unlock()
-}
-
 // ShowWordCount displays a status message with only the current word count
 func (sb *StatusBar) ShowWordCount(c *vt100.Canvas, e *Editor) {
 	wordCountString := strconv.Itoa(e.WordCount())
