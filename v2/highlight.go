@@ -402,8 +402,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				}
 
 				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
-				// TODO: Figure out why some parantheses in some comments are still highlighted
-				if e.mode != mode.Git && e.rainbowParenthesis && q.None() && !q.singleLineComment && !q.stoppedMultiLineComment {
+				if e.mode != mode.Git && e.mode != mode.Email && e.rainbowParenthesis && q.None() && !q.singleLineComment && !q.stoppedMultiLineComment {
 					thisLineParCount, thisLineBraCount := q.ParBraCount(trimmedLine)
 					parCountBeforeThisLine := q.parCount - thisLineParCount
 					braCountBeforeThisLine := q.braCount - thisLineBraCount
@@ -484,7 +483,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			screenLine = e.ChopLine(line, int(cw))
 			c.Write(uint(cx+lineRuneCount), uint(cy)+uint(y), e.Foreground, e.Background, screenLine)
 			lineRuneCount += utf8.RuneCountInString(screenLine) // rune count
-			//lineRuneCount += uint(len([]rune(screenLine))) // rune count
 			lineStringCount += uint(len(screenLine)) // string length, not rune length
 		}
 
