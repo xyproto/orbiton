@@ -682,6 +682,7 @@ int main(int argc, char* argv[])
     }
 
     // Check if the currently configured font can be found
+    // TODO: Iterate over a strings to check for instead of this pyramid
     if (!has_font_family(font_desc_str)) {
         // If not, try to find a usable font
         font_desc_str = "Iosevka 12";
