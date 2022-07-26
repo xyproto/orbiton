@@ -22,10 +22,11 @@ func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *St
 	// Set up notifications
 	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGUSR1, syscall.SIGWINCH)
 
-	// Send a USR1 signal to the parent process if "KO" is set,
-	// to signal that "o is ready".
+	// Send a SIGWINCH signal to the parent process if "KO" is set,
+	// to signal that "o is ready" to resize. The "ko" GUI will then
+	// send SIGWINCH back, which will trigger FullResetRedraw in the case below.
 	if env.Bool("KO") {
-		syscall.Kill(os.Getppid(), syscall.SIGUSR1)
+		syscall.Kill(os.Getppid(), syscall.SIGWINCH)
 	}
 
 	go func() {

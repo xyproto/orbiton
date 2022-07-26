@@ -65,10 +65,10 @@ void trigger_redraw()
 
 void signal_handler(int signal_num)
 {
-    // If we are here, it means we received a USR1 signal
+    // If we are here, it means we received a SIGWINCH signal from o.
     // This means that o is ready to resize.
     // Answer by sending SIGWINCH to o (the child_pid), to make it
-    // resize itself according to the current VTE terminal size:
+    // resize itself according to the current VTE terminal size.
     trigger_redraw();
 }
 
@@ -723,7 +723,7 @@ int main(int argc, char* argv[])
     g_signal_connect(window, "button-press-event", G_CALLBACK(mouse_clicked), nullptr);
     g_signal_connect(window, "size-allocate", G_CALLBACK(size_changed), nullptr);
 
-    signal(SIGUSR1, signal_handler); // o sends USR1 when it is ready
+    signal(SIGWINCH, signal_handler); // o sends SIGWINCH when it is ready to resize
 
     // Add the terminal to the window
     gtk_container_add(GTK_CONTAINER(window), terminal);
