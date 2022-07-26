@@ -65,7 +65,8 @@
 
 ## Syntax highlighting
 
-- [ ] Let a struct for a Theme contain both the light and the dark version, if there are two
+- [ ] Let `<<EOF` be considered the start of a multiline string in Shell, and `EOF` the end.
+- [ ] Let a struct for a Theme contain both the light and the dark version, if there are two.
 - [ ] Check that the right theme is loaded under `uxterm`.
 - [ ] Don't let single-line comments at the end of lines disable rainbow parentheses.
 - [ ] Also highlight hexadecimal numbers.
