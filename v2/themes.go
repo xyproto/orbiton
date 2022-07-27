@@ -365,7 +365,7 @@ func NewDarkBlueEditTheme() Theme {
 		TextTag:                     "white",
 		TextAttrName:                "white",
 		TextAttrValue:               "white",
-		Decimal:                     "lightmagenta",
+		Decimal:                     "lightgreen",
 		AndOr:                       "white",
 		Dollar:                      "lightyellow",
 		Star:                        "lightyellow",
