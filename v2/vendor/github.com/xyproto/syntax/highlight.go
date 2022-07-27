@@ -21,27 +21,28 @@ type Kind uint8
 // A set of supported highlighting kinds
 const (
 	Whitespace Kind = iota
-	String
-	Keyword
+	AndOr
+	AssemblyEnd
+	Class
 	Comment
-	Type
+	Decimal
+	Dollar
 	Literal
-	Punctuation
+	Keyword
+	Mut
 	Plaintext
+	Private
+	Protected
+	Public
+	Punctuation
+	Self
+	Star
+	String
 	Tag
-	TextTag
 	TextAttrName
 	TextAttrValue
-	Decimal
-	AndOr
-	Star
-	Class
-	Private
-	Public
-	Protected
-	Dollar
-	AssemblyEnd
-	Mut
+	TextTag
+	Type
 )
 
 //go:generate gostringer -type=Kind
@@ -55,28 +56,29 @@ type Printer interface {
 // TextConfig holds the Text class configuration to be used by annotators when
 // highlighting code.
 type TextConfig struct {
-	String        string
-	Keyword       string
+	AndOr         string
+	AssemblyEnd   string
+	Class         string
 	Comment       string
-	Type          string
+	Decimal       string
+	Dollar        string
+	Keyword       string
 	Literal       string
-	Punctuation   string
+	Mut           string
 	Plaintext     string
+	Private       string
+	Protected     string
+	Public        string
+	Punctuation   string
+	Self          string
+	Star          string
+	String        string
 	Tag           string
-	TextTag       string
 	TextAttrName  string
 	TextAttrValue string
-	Decimal       string
-	AndOr         string
-	Dollar        string
-	Star          string
+	TextTag       string
+	Type          string
 	Whitespace    string
-	Class         string
-	Private       string
-	Public        string
-	Protected     string
-	AssemblyEnd   string
-	Mut           string
 }
 
 // TextPrinter implements Printer interface and is used to produce
@@ -116,6 +118,8 @@ func (c TextConfig) GetClass(kind Kind) string {
 		return c.Dollar
 	case Star:
 		return c.Star
+	case Self:
+		return c.Self
 	case Class:
 		return c.Class
 	case Public:
@@ -187,28 +191,29 @@ type Option func(options *TextConfig)
 // DefaultTextConfig provides class names that match the color names of
 // textoutput tags: https://github.com/xyproto/textoutput
 var DefaultTextConfig = TextConfig{
-	String:        "lightwhite",
-	Keyword:       "red",
+	AndOr:         "red",
+	AssemblyEnd:   "lightyellow",
+	Class:         "white",
 	Comment:       "darkgray",
-	Type:          "white",
+	Decimal:       "red",
+	Dollar:        "white",
+	Keyword:       "red",
 	Literal:       "white",
-	Punctuation:   "red",
+	Mut:           "magenta",
 	Plaintext:     "white",
+	Private:       "red",
+	Protected:     "red",
+	Public:        "red",
+	Punctuation:   "red",
+	Self:          "magenta",
+	Star:          "white",
+	String:        "lightwhite",
 	Tag:           "white",
-	TextTag:       "white",
 	TextAttrName:  "white",
 	TextAttrValue: "white",
-	Decimal:       "red",
-	AndOr:         "red",
-	Dollar:        "white",
-	Star:          "white",
+	TextTag:       "white",
+	Type:          "white",
 	Whitespace:    "",
-	Class:         "white",
-	Private:       "red",
-	Public:        "red",
-	Protected:     "red",
-	AssemblyEnd:   "lightyellow",
-	Mut:           "magenta",
 }
 
 func Print(s *scanner.Scanner, w io.Writer, p Printer, m mode.Mode) error {
@@ -311,6 +316,11 @@ func tokenKind(tok rune, tokText string, inSingleLineComment *bool, m mode.Mode)
 		case "mut":
 			return Mut
 		}
+	}
+
+	// Check if this is the "self" keyword, for Python
+	if m == mode.Python && tokText == "self" {
+		return Self
 	}
 
 	// If not, do the regular switch
