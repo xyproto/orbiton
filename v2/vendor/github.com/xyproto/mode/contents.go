@@ -73,6 +73,9 @@ func DetectFromContents(initial Mode, firstLine string, allTextFunc func() strin
 		return ManPage, true
 	} else if strings.HasPrefix(firstLine, "From ") && strings.HasSuffix(firstLine, "# This line is ignored.") {
 		return Email, true
+	} else if strings.HasPrefix(firstLine, "\" ") {
+		// The first line starts with '" ', assume ViM script
+		return Vim, true
 	}
 	// If more lines start with "# " than "// " or "/* ", and mode is blank,
 	// set the mode to modeConfig and enable syntax highlighting.
@@ -159,6 +162,9 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 		return Nroff, true
 	} else if !bytes.HasPrefix(firstLine, []byte("//")) && !bytes.HasPrefix(firstLine, []byte("#")) && bytes.Count(bytes.TrimSpace(firstLine), []byte(" ")) > 10 && bytes.HasSuffix(firstLine, []byte(")")) {
 		return ManPage, true
+	} else if bytes.HasPrefix(firstLine, []byte("\" ")) {
+		// The first line starts with '" ', assume ViM script
+		return Vim, true
 	}
 	// If more lines start with "# " than "// " or "/* ", and mode is blank,
 	// set the mode to modeConfig and enable syntax highlighting.
