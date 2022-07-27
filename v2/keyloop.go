@@ -798,6 +798,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 			// Additional way to clear the sticky search term, like with Esc
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
+			// If o is used as a man page viewer, exit at the press of esc
+			if e.mode == mode.ManPage {
+				e.clearOnQuit = false
+				e.quit = true
+				break
+			}
 			// Exit debug mode, if active
 			if e.debugMode {
 				e.DebugEnd()
