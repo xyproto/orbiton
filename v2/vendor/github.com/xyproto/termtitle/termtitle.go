@@ -29,6 +29,8 @@ func TitleString(title string) (string, error) {
 		formatString = "\033]30;%s\007"
 	} else if hasE("GNOME_TERMINAL_SERVICE") { // gnome-terminal?
 		// ok
+	} else if hasE("ZUTTY_VERSION") { // zutty?
+		return "", errors.New("this terminal emulator currently does not support changing the title")
 	} else {
 		return "", errors.New("found no supported terminal emulator")
 	}

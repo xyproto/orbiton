@@ -50,7 +50,7 @@ github.com/xyproto/stringpainter
 # github.com/xyproto/syntax v1.10.7
 ## explicit; go 1.14
 github.com/xyproto/syntax
-# github.com/xyproto/termtitle v1.5.0
+# github.com/xyproto/termtitle v1.5.1
 ## explicit; go 1.11
 github.com/xyproto/termtitle
 # github.com/xyproto/textoutput v1.14.1
@@ -59,7 +59,7 @@ github.com/xyproto/textoutput
 # github.com/xyproto/vt100 v1.11.0
 ## explicit; go 1.10
 github.com/xyproto/vt100
-# golang.org/x/sys v0.0.0-20220727055044-e65921a090b8
+# golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
