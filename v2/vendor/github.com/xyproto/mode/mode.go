@@ -101,7 +101,7 @@ func (mode Mode) String() string {
 	case Clojure:
 		return "Clojure"
 	case CMake:
-		return "Cmake"
+		return "CMake"
 	case Config:
 		return "Configuration"
 	case Cpp:
