@@ -117,10 +117,11 @@
 
 ## Command menu
 
-- [ ] Command menu option for deleting the rest of the file.
-- [ ] Add word wrap with a custom line length to the command menu.
+- [ ] Let Esc followed by ":" bring up a ctrl-o menu that also has a place to type commands like "wq".
+- [x] Command menu option for deleting the rest of the file.
+- [x] Add word wrap with a custom line length to the command menu.
 - [ ] Add one or more of these commands: regex search, go to definition, rename symbol, find references and disassembly.
-- [ ] Make it easy to make recordings of the editing process.
+- [ ] Make it easy to make recordings of the editing process (can already use asciinema?).
 
 ## Localization
 
