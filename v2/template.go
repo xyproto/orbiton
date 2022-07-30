@@ -164,10 +164,16 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		8,
 		20,
 	},
+	// This one is a bit more elaborate than strictly needed
 	mode.StandardML: {
 		"let\n  val name = \"World\"\nin\n  map (fn x => (print (\"Hello, \" ^ x ^ \"!\\n\"))) [name]\nend;",
 		22,
 		1,
+	},
+	mode.OCaml: {
+		"print_string \"Hello world!\\n\"",
+		14,
+		2,
 	},
 	mode.TypeScript: {
 		"console.log('Hello, World!');\n",
