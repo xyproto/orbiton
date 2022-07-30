@@ -45,7 +45,7 @@ func (fnord *FilenameOrData) SetTitle() {
 	} else if fnord.filename != "" {
 		title = fnord.filename
 	}
-	termtitle.MustSet(termtitle.GenerateTitle(title))
+	termtitle.Set(termtitle.GenerateTitle(title))
 }
 
 // NoTitle will remove the filename title by setting the shell name as the title,
@@ -55,5 +55,5 @@ func NoTitle() {
 		return
 	}
 	shellName := filepath.Base(env.Str("SHELL", "/bin/sh"))
-	termtitle.MustSet(shellName)
+	termtitle.Set(shellName)
 }
