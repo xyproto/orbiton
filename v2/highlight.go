@@ -252,6 +252,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					if strings.HasPrefix(trimmedLine, "--") {
 						// Handle single line comments
 						coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
+					} else if strings.Contains(trimmedLine, "->") {
+						coloredString = unEscapeFunction(tout.DarkTags(e.ArrowReplace(string(textWithTags))))
 					} else {
 						// Regular highlight
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
@@ -269,6 +271,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					trimmedLine = strings.TrimSpace(line)
 					if strings.HasPrefix(trimmedLine, "(*") && strings.HasSuffix(trimmedLine, "*)") {
 						coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
+					} else if strings.Contains(trimmedLine, "->") {
+						coloredString = unEscapeFunction(tout.DarkTags(e.ArrowReplace(string(textWithTags))))
 					} else {
 						doneHighlighting = false
 						break
@@ -374,7 +378,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
 					case (e.mode != mode.HTML && e.mode != mode.XML) && strings.Contains(line, "->"):
 						// NOTE that if two color tags are placed after each other, they may cause blinking. Remember to turn <off> each color.
-						coloredString = unEscapeFunction(tout.DarkTags(arrowReplace(string(textWithTags))))
+						coloredString = unEscapeFunction(tout.DarkTags(e.ArrowReplace(string(textWithTags))))
 					default:
 						// Regular code
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
@@ -391,7 +395,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							// arrow is after comment marker, do nothing
 						} else {
 							// arrow is before comment marker, color the arrow
-							coloredString = unEscapeFunction(tout.DarkTags(arrowReplace(string(textWithTags))))
+							coloredString = unEscapeFunction(tout.DarkTags(e.ArrowReplace(string(textWithTags))))
 						}
 					}
 				}
@@ -502,9 +506,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	}
 }
 
-// Syntax highlight pointer arrows in C and C++
-func arrowReplace(s string) string {
-	arrowColor := syntax.DefaultTextConfig.Class
+// ArrowReplace can syntax highlight pointer arrows in C and C++ and function arrows in other languages
+func (e *Editor) ArrowReplace(s string) string {
+	arrowColor := e.Star
+	if e.mode == mode.C || e.mode == mode.Cpp {
+		arrowColor = syntax.DefaultTextConfig.Class
+	}
 	fieldColor := syntax.DefaultTextConfig.Protected
 	s = strings.Replace(s, ">-<", "><off><"+arrowColor+">-<", -1)
 	s = strings.Replace(s, ">"+Escape(">"), "><off><"+arrowColor+">"+Escape(">")+"<off><"+fieldColor+">", -1)
