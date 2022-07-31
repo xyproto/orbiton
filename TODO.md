@@ -5,7 +5,8 @@
 - [ ] Create a Terminal type that implement the context.Context interface, then pass that to functions that
       would otherwise take both a `vt100.Canvas`, `vt100.TTY` and a `StatusBar`.
 - [ ] Go through this file and remove all completed TODO items.
-- [ ] Document that double-pressing `esc` to type in commands is a possibility.
+- [ ] Document that double-pressing `esc` to type in commands is a possibility,
+      and that `!sort` can sort a block of text.
 
 ## Building, debugging and testing programs
 
