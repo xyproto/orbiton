@@ -2433,6 +2433,31 @@ func (e *Editor) SortBlock(c *vt100.Canvas, status *StatusBar, bookmark *Positio
 	e.GoTo(y, c, status)
 }
 
+// ReplaceBlock replaces the current block with the given string, if possible
+func (e *Editor) ReplaceBlock(c *vt100.Canvas, status *StatusBar, bookmark *Position, s string) {
+	if e.CurrentLine() == "" {
+		status.SetErrorMessage("no block of lines at current cursor position")
+		return
+	}
+	y := e.LineIndex()
+	lines := strings.Split(s, "\n")
+	if len(lines) == 0 {
+		status.SetErrorMessage("no block of lines to sort")
+		return
+	}
+	// Remove the last empty line, if it's there
+	addEmptyLine := false
+	if lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
+		addEmptyLine = true
+	}
+	e.GoTo(y, c, status)
+	e.DeleteBlock(bookmark)
+	e.GoTo(y, c, status)
+	e.InsertBlock(c, lines, addEmptyLine)
+	e.GoTo(y, c, status)
+}
+
 // DeleteBlock will deletes a block of lines at the current position
 func (e *Editor) DeleteBlock(bookmark *Position) {
 	s := e.Block(e.LineIndex())
