@@ -370,12 +370,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
 					case (e.mode == mode.StandardML || e.mode == mode.OCaml) && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*)") && !strings.Contains(trimmedLine, "(*"):
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
-					case q.multiLineComment || q.singleLineComment || q.stoppedMultiLineComment:
+					case e.mode == mode.Elm && (q.multiLineComment || q.singleLineComment || q.stoppedMultiLineComment):
 						// A single line comment (the syntax module did the highlighting)
 						//coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
 					//case q.multiLineComment || q.stoppedMultiLineComment:
-						//coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
+					//coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
 					case e.mode != mode.Shell && e.mode != mode.Make && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "/*") > strings.LastIndex(trimmedLine, "*/"):
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case (e.mode == mode.StandardML || e.mode == mode.OCaml) && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "(*") > strings.LastIndex(trimmedLine, "*)"):
@@ -384,7 +384,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case e.mode != mode.Shell && e.mode != mode.Make && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && (q.multiLineComment || q.stoppedMultiLineComment) && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.Contains(line, "\"(*") && !strings.Contains(line, "*)\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
 						// In the middle of a multi-line comment
-						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
+						//coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
+						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
+					case q.singleLineComment || q.stoppedMultiLineComment:
+						// A single line comment (the syntax module did the highlighting)
+						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case !q.startedMultiLineString && q.backtick > 0:
 						// A multi-line string
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
@@ -403,7 +407,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							// arrow is after comment marker, do nothing
 						} else if i := strings.Index(line, "/*"); i != -1 && i < arrowIndex {
 							// arrow is after comment marker, do nothing
-						} else if i := strings.Index(line, "(*"); i != -1 && i < arrowIndex {
+						} else if i := strings.Index(line, "(*"); (e.mode == mode.StandardML || e.mode == mode.OCaml || e.mode == mode.Haskell) && i != -1 && i < arrowIndex {
+							// arrow is after comment marker, do nothing
+						} else if i := strings.Index(line, "{-"); e.mode == mode.Elm && i != -1 && i < arrowIndex {
 							// arrow is after comment marker, do nothing
 						} else {
 							// arrow is before comment marker, color the arrow
