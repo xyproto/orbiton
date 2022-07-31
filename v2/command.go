@@ -132,7 +132,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		},
 		[]func(){
 			func() { // save and quit
-				e.clearOnQuit = true
 				e.UserSave(c, tty, status)
 				e.quit = true        // indicate that the user wishes to quit
 				e.clearOnQuit = true // clear the terminal after quitting
@@ -513,12 +512,10 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	//e.DrawLines(c, true, false)
 
 	if selected < 0 {
-		// Output the selected item text
-		status.SetMessage("No action taken")
-		status.Show(c, e)
-
-		// Do not immediately redraw the editor
-		e.redraw = false
+		// Esc was pressed, or an item was otherwise not selected.
+		// Trigger a redraw and return.
+		e.redraw = true
+		e.redrawCursor = true
 		return selected, addSpaceAfterReturn
 	}
 
