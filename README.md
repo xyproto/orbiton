@@ -226,9 +226,7 @@ This is a brand new feature and needs more testing.
 * There are status messages indicating when the debug session is started and ended.
 * Therefore `o` is not only an editor, but also an integrated development environment (IDE).
 
-## Manual installation
-
-On Linux:
+## Manual installation on Linux
 
     git clone https://github.com/xyproto/o
     cd o
@@ -236,6 +234,20 @@ On Linux:
     sudo install -Dm755 o /usr/bin/o
     gzip o.1
     sudo install -Dm644 o.1.gz /usr/share/man/man1/o.1.gz
+
+## OpenBSD installation instructions
+
+Install dependencies (use `doas` if needed):
+
+    add_pkg git gmake go vte3
+
+Build both the editor `o` and the GUI frontend `ko`:
+
+    gmake CXX="clang++ -w" o ko
+
+*Install both executables, a man page, an icon and a desktop shortcut file (use `doas` if needed`):
+
+    PREFIX=/usr/local gmake install ko-install
 
 ## Dependencies
 
@@ -483,27 +495,13 @@ Build:
 
     make ko
 
-Install (`sudo`, if needed):
+Install (use `sudo`, if needed):
 
     make ko-install
 
 Installing a symlink for launching `ko` with a light theme:
 
     ln -sf /usr/bin/ko /usr/bin/lo
-
-## OpenBSD installation instructions
-
-Install dependencies (use `doas` if needed):
-
-    add_pkg git gmake go vte3
-
-Build both the editor `o` and the GUI frontend `ko`:
-
-    gmake CXX="clang++ -w" o ko
-
-Install both executables, a man page, an icon and a desktop shortcut file (use `doas` if needed`):
-
-    PREFIX=/usr/local gmake install ko-install
 
 ## Terminal settings
 
