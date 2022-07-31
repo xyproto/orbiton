@@ -144,7 +144,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.Scala:
 		clearKeywords()
 		addKeywords = scalaWords
-	case mode.StandardML:
+	case mode.Elm, mode.StandardML:
 		clearKeywords()
 		addKeywords = smlWords
 	case mode.SQL:
@@ -189,7 +189,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "#"
 	case mode.Assembly:
 		return ";"
-	case mode.OCaml, mode.StandardML:
+	case mode.Elm, mode.OCaml, mode.StandardML:
 		// not applicable, just return something that is unlikely to appear at the beginning of a line
 		fallthrough
 	case mode.Ada, mode.Agda, mode.Garnet, mode.Haskell, mode.Lua, mode.SQL, mode.Teal, mode.Terra:

@@ -123,8 +123,11 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			// C-style
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
-		} else if (q.mode == mode.StandardML || q.mode == mode.OCaml) && prevRune == '(' && q.None() {
-			// Standard ML or OCaml
+		} else if (q.mode == mode.StandardML || q.mode == mode.OCaml || q.mode == mode.Haskell) && prevRune == '(' && q.None() {
+			q.parCount-- // Not a parenthesis start after all, but the start of a multiline comment
+			q.multiLineComment = true
+			q.startedMultiLineComment = true
+		} else if (q.mode == mode.Elm) && prevRune == '{' && q.None() {
 			q.parCount-- // Not a parenthesis start after all, but the start of a multiline comment
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
@@ -174,7 +177,13 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			q.singleLineComment = true
 		}
 	case ')':
-		if (q.mode == mode.StandardML || q.mode == mode.OCaml) && prevRune == '*' {
+		if (q.mode == mode.StandardML || q.mode == mode.OCaml || q.mode == mode.Haskell) && prevRune == '*' {
+			q.stoppedMultiLineComment = true
+			q.multiLineComment = false
+			if q.startedMultiLineComment {
+				q.containsMultiLineComments = true
+			}
+		} else if q.mode == mode.Elm && prevRune == '-' {
 			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
 			if q.startedMultiLineComment {
