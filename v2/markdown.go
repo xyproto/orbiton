@@ -267,8 +267,24 @@ func (e *Editor) markdownHighlight(line string, inCodeBlock bool, listItemRecord
 	firstWord := words[0]
 	lastWord := words[len(words)-1]
 
-	switch {
-	case consistsOf(firstWord, '#', []rune{'.', ' '}):
+	// A list item that is a link on a single line, possibly with some text after the link
+	if bracketPos := strings.Index(rest, "["); (firstWord == "-" || firstWord == "*") && bracketPos < 4 && strings.Count(rest, "](") >= 1 && strings.Count(rest, ")") >= 1 {
+		// First comes the leading space and rest[:bracketPos], then comes "[" and then....
+		twoParts := strings.SplitN(rest[bracketPos+1:], "](", 2)
+		if len(twoParts) == 2 {
+			lastParts := strings.SplitN(twoParts[1], ")", 2)
+			if len(lastParts) == 2 {
+				bulletColor := e.ListTextColor
+				labelColor := e.ImageColor
+				linkColor := e.CommentColor
+				bracketColor := e.ListBulletColor
+				// Then comes twoParts[0] and "](" and twoParts[1]
+				return leadingSpace + bulletColor.Get(rest[:bracketPos]) + bracketColor.Get("[") + labelColor.Get(twoParts[0]) + bracketColor.Get("]") + e.CommentColor.Get("(") + linkColor.Get(lastParts[0]) + e.CommentColor.Get(")") + e.ListTextColor.Get(lastParts[1]), true, false
+			}
+		}
+	}
+
+	if consistsOf(firstWord, '#', []rune{'.', ' '}) {
 		if strings.HasSuffix(lastWord, "#") && strings.Contains(rest, " ") {
 			centerLen := len(rest) - (len(firstWord) + len(lastWord))
 			if centerLen > 0 {
@@ -280,7 +296,9 @@ func (e *Editor) markdownHighlight(line string, inCodeBlock bool, listItemRecord
 			return leadingSpace + e.HeaderBulletColor.Get(firstWord) + " " + e.HeaderTextColor.Get(emphasis(quotedWordReplace(line[dataPos+len(firstWord)+1:], '`', e.HeaderTextColor, e.CodeColor), e.HeaderTextColor, e.ItalicsColor, e.BoldColor, e.StrikeColor)), true, false // TODO: `
 		}
 		return leadingSpace + e.HeaderTextColor.Get(rest), true, false
-	case isListItem(line):
+	}
+
+	if isListItem(line) {
 		if strings.HasPrefix(rest, "- [ ] ") || strings.HasPrefix(rest, "- [x] ") || strings.HasPrefix(rest, "- [X] ") {
 			return leadingSpace + e.ListBulletColor.Get(rest[:1]) + " " + e.CheckboxColor.Get(rest[2:3]) + e.XColor.Get(rest[3:4]) + e.CheckboxColor.Get(rest[4:5]) + " " + emphasis(quotedWordReplace(line[dataPos+6:], '`', e.ListTextColor, e.ListCodeColor), e.ListTextColor, e.ItalicsColor, e.BoldColor, e.StrikeColor), true, false
 		}
