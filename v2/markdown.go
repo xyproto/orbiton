@@ -274,10 +274,10 @@ func (e *Editor) markdownHighlight(line string, inCodeBlock bool, listItemRecord
 		if len(twoParts) == 2 {
 			lastParts := strings.SplitN(twoParts[1], ")", 2)
 			if len(lastParts) == 2 {
-				bulletColor := e.ListTextColor
-				labelColor := e.ImageColor
+				bulletColor := e.ListBulletColor
+				labelColor := e.CodeColor
 				linkColor := e.CommentColor
-				bracketColor := e.ListBulletColor
+				bracketColor := e.Foreground
 				// Then comes twoParts[0] and "](" and twoParts[1]
 				return leadingSpace + bulletColor.Get(rest[:bracketPos]) + bracketColor.Get("[") + labelColor.Get(twoParts[0]) + bracketColor.Get("]") + e.CommentColor.Get("(") + linkColor.Get(lastParts[0]) + e.CommentColor.Get(")") + e.ListTextColor.Get(lastParts[1]), true, false
 			}
