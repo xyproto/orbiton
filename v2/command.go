@@ -93,6 +93,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 				return
 			}
 
+			undo.Snapshot(e)
 			e.ReplaceBlock(c, status, bookmark, outputString)
 		}, nil
 	}
