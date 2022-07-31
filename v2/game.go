@@ -196,6 +196,13 @@ func (b *Pellet) Draw(c *vt100.Canvas) {
 // Next moves the object to the next position, and returns true if it moved
 func (b *Pellet) Next(c *vt100.Canvas, e *EvilGobbler) bool {
 
+	b.lifeCounter++
+	if b.lifeCounter > 20 {
+		b.removed = true
+		b.ToggleColor()
+		return false
+	}
+
 	if b.stopped {
 		b.ToggleColor()
 		return false
@@ -889,8 +896,15 @@ retry:
 		case 17: // ctrl-q
 			return true, nil
 		case 32: // Space
-			// Fire a new pellet
-			pellets = append(pellets, NewPellet(c, bob.x, bob.y, bob.x-bob.oldx, bob.y-bob.oldy))
+			if !paused {
+				// Fire a new pellet
+				pellets = append(pellets, NewPellet(c, bob.x, bob.y, bob.x-bob.oldx, bob.y-bob.oldy))
+			} else {
+				// Progress the pellets, just for entertainment
+				for _, pellet := range pellets {
+					pellet.Next(c, evilGobbler)
+				}
+			}
 		}
 
 		if !paused {
@@ -924,18 +938,18 @@ retry:
 			c.Plot(uint(gobbler.oldx), uint(gobbler.oldy), ' ')
 		}
 
-		if !paused {
-
-			// Clean up removed pellets
-			filteredPellets := make([]*Pellet, 0, len(pellets))
-			for _, pellet := range pellets {
-				if !pellet.removed {
-					filteredPellets = append(filteredPellets, pellet)
-				} else {
-					c.Plot(uint(pellet.x), uint(pellet.y), ' ')
-				}
+		// Clean up removed pellets
+		filteredPellets := make([]*Pellet, 0, len(pellets))
+		for _, pellet := range pellets {
+			if !pellet.removed {
+				filteredPellets = append(filteredPellets, pellet)
+			} else {
+				c.Plot(uint(pellet.x), uint(pellet.y), ' ')
 			}
-			pellets = filteredPellets
+		}
+		pellets = filteredPellets
+
+		if !paused {
 
 			gobblersAlive = 0
 			for _, gobbler := range gobblers {
