@@ -2,11 +2,7 @@
 
 ## General
 
-- [ ] Create a Terminal type that implement the context.Context interface, then pass that to functions that
-      would otherwise take both a `vt100.Canvas`, `vt100.TTY` and a `StatusBar`.
 - [ ] Go through this file and remove all completed TODO items.
-- [ ] Document that double-pressing `esc` to type in commands is a possibility,
-      and that `!sort` can sort a block of text.
 
 ## Building, debugging and testing programs
 
@@ -94,6 +90,7 @@
 ## Documentation
 
 - [ ] Replace ` in o.1 with \b.
+- [ ] Document that double-pressing `esc` to type in commands is a possibility, and that `!sort` can sort a block of text.
 
 ## Cut, copy, paste and portals
 
@@ -170,6 +167,8 @@
 - [ ] Abstract the editor, so that sending in keypresses and examining the result can be tested.
 - [ ] Rewrite `insertRune`. Improve word-wrap related functionality.
 - [ ] Introduce a type for screen coordinates, a type for screen coordinates + scroll offset, and another type for data coordinates.
+- [ ] Create a Terminal type that implement the context.Context interface, then pass that to functions that
+      would otherwise take both a `vt100.Canvas`, `vt100.TTY` and a `StatusBar`.
 
 ## Built-in game
 
