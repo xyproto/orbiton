@@ -267,7 +267,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// Regular highlight
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					}
-				case mode.Elm, mode.OCaml, mode.StandardML:
+				case mode.OCaml, mode.StandardML:
 					trimmedLine = strings.TrimSpace(line)
 					if strings.HasPrefix(trimmedLine, "(*") && strings.HasSuffix(trimmedLine, "*)") {
 						coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
@@ -276,7 +276,16 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					} else {
 						doneHighlighting = false
 						break
-						//coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
+					}
+				case mode.Elm:
+					trimmedLine = strings.TrimSpace(line)
+					if strings.HasPrefix(trimmedLine, "{-") && strings.HasSuffix(trimmedLine, "-}") {
+						coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
+					} else if strings.Contains(trimmedLine, "->") {
+						coloredString = unEscapeFunction(tout.DarkTags(e.ArrowReplace(string(textWithTags))))
+					} else {
+						doneHighlighting = false
+						break
 					}
 				case mode.Nroff:
 					trimmedLine = strings.TrimSpace(line)

@@ -136,6 +136,9 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 		if q.mode != mode.Shell && q.mode != mode.Make && prevRune == '!' && prevPrevRune == '<' && q.None() {
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
+		} else if q.mode == mode.Elm && prevRune == '{' {
+			q.multiLineComment = true
+			q.startedMultiLineComment = true
 		}
 	case q.lastRuneInSingleLineCommentMarker:
 		// TODO: Simplify by checking q.None() first, and assuming that the len of the marker is > 1 if it's not 1 since it's not 0
@@ -183,14 +186,16 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			if q.startedMultiLineComment {
 				q.containsMultiLineComments = true
 			}
-		} else if q.mode == mode.Elm && prevRune == '-' {
+		} else if q.None() {
+			q.parCount--
+		}
+	case '}':
+		if q.mode == mode.Elm && prevRune == '-' {
 			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
 			if q.startedMultiLineComment {
 				q.containsMultiLineComments = true
 			}
-		} else if q.None() {
-			q.parCount--
 		}
 	case '[':
 		if q.None() {
