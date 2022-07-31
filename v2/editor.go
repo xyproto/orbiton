@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -2401,4 +2402,74 @@ func (e *Editor) GoToMiddle(c *vt100.Canvas, status *StatusBar) {
 func (e *Editor) GoToEnd(c *vt100.Canvas, status *StatusBar) {
 	// Go to the last line (by line number, not by index, e.Len() returns an index which is why there is no -1)
 	e.redraw = e.GoToLineNumber(LineNumber(e.Len()), c, status, true)
+}
+
+// SortBlock sorts the a block of lines, at the current position
+func (e *Editor) SortBlock(c *vt100.Canvas, status *StatusBar, bookmark *Position) {
+	if e.CurrentLine() == "" {
+		status.SetErrorMessage("no block of lines at current cursor position")
+		return
+	}
+	y := e.LineIndex()
+	s := e.Block(y)
+	var lines sort.StringSlice
+	lines = strings.Split(s, "\n")
+	if len(lines) == 0 {
+		status.SetErrorMessage("no block of lines to sort")
+		return
+	}
+	// Remove the last empty line, if it's there
+	addEmptyLine := false
+	if lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
+		addEmptyLine = true
+	}
+	lines.Sort()
+	e.GoTo(y, c, status)
+	e.DeleteBlock(bookmark)
+	e.GoTo(y, c, status)
+	e.InsertBlock(c, lines, addEmptyLine)
+	e.GoTo(y, c, status)
+}
+
+// DeleteBlock will deletes a block of lines at the current position
+func (e *Editor) DeleteBlock(bookmark *Position) {
+	s := e.Block(e.LineIndex())
+	lines := strings.Split(s, "\n")
+	if len(lines) == 0 {
+		// Need at least 1 line to be able to cut "the rest" after the first line has been cut
+		return
+	}
+	for range lines {
+		e.DeleteLineMoveBookmark(e.LineIndex(), bookmark)
+	}
+}
+
+// InsertBlock will insert multiple lines at the current position, without trimming
+// If addEmptyLine is true, an empty line will be added at the end
+func (e *Editor) InsertBlock(c *vt100.Canvas, addLines []string, addEmptyLine bool) {
+	e.InsertLineAbove()
+	// copyLines contains the lines to be pasted, and they are > 1
+	// the first line is skipped since that was already pasted when ctrl-v was pressed the first time
+	lastIndex := len(addLines[1:]) - 1
+	// If the first line has been pasted, and return has been pressed, paste the rest of the lines differently
+	skipFirstLineInsert := e.EmptyRightTrimmedLine()
+	// Insert the lines
+	for i, line := range addLines {
+		if i == lastIndex && len(strings.TrimSpace(line)) == 0 {
+			// If the last line is blank, skip it
+			break
+		}
+		if skipFirstLineInsert {
+			skipFirstLineInsert = false
+		} else {
+			e.InsertLineBelow()
+			e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
+		}
+		e.InsertStringAndMove(c, line)
+	}
+	if addEmptyLine {
+		e.InsertLineBelow()
+		e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
+	}
 }
