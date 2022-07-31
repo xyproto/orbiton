@@ -817,7 +817,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// TODO: Show a REPL in a nicely drawn box instead of this simple command interface
 				//       The REPL can have colors, tab-completion, a command history and single-letter commands
 				if command, ok := e.UserInput(c, tty, status, "Command"); ok {
-					if err := e.CommandPrompt(c, tty, status, bookmark, command); err != nil {
+					if err := e.RunCommand(c, tty, status, bookmark, command); err != nil {
 						status.SetErrorMessage(err.Error())
 					}
 				} else {
