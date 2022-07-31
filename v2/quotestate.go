@@ -27,7 +27,7 @@ type QuoteState struct {
 	stoppedMultiLineComment            bool
 	containsMultiLineComments          bool
 	startedMultiLineString             bool
-	singleLineComment                  bool
+	hasSingleLineComment               bool
 	multiLineComment                   bool
 	ignoreSingleQuotes                 bool
 }
@@ -50,32 +50,32 @@ func NewQuoteState(singleLineCommentMarker string, m mode.Mode, ignoreSingleQuot
 
 // None returns true if we're not within ', "", `, /* ... */ or a single-line quote right now
 func (q *QuoteState) None() bool {
-	return q.singleQuote == 0 && q.doubleQuote == 0 && q.backtick == 0 && !q.multiLineComment && !q.singleLineComment
+	return q.singleQuote == 0 && q.doubleQuote == 0 && q.backtick == 0 && !q.multiLineComment && !q.hasSingleLineComment
 }
 
 // OnlyBacktick returns true if we're only within a ` quote
 func (q *QuoteState) OnlyBacktick() bool {
-	return q.singleQuote == 0 && q.doubleQuote == 0 && q.backtick > 0 && !q.multiLineComment && !q.singleLineComment
+	return q.singleQuote == 0 && q.doubleQuote == 0 && q.backtick > 0 && !q.multiLineComment && !q.hasSingleLineComment
 }
 
 // OnlySingleQuote returns true if we're only within a ' quote
 func (q *QuoteState) OnlySingleQuote() bool {
-	return q.singleQuote > 0 && q.doubleQuote == 0 && q.backtick == 0 && !q.multiLineComment && !q.singleLineComment
+	return q.singleQuote > 0 && q.doubleQuote == 0 && q.backtick == 0 && !q.multiLineComment && !q.hasSingleLineComment
 }
 
 // OnlyDoubleQuote returns true if we're only within a " quote
 func (q *QuoteState) OnlyDoubleQuote() bool {
-	return q.singleQuote == 0 && q.doubleQuote > 0 && q.backtick == 0 && !q.multiLineComment && !q.singleLineComment
+	return q.singleQuote == 0 && q.doubleQuote > 0 && q.backtick == 0 && !q.multiLineComment && !q.hasSingleLineComment
 }
 
 // OnlyMultiLineComment returns true if we're only within a multi-line comment
 func (q *QuoteState) OnlyMultiLineComment() bool {
-	return q.singleQuote == 0 && q.doubleQuote == 0 && q.backtick == 0 && q.multiLineComment && !q.singleLineComment
+	return q.singleQuote == 0 && q.doubleQuote == 0 && q.backtick == 0 && q.multiLineComment && !q.hasSingleLineComment
 }
 
 // String returns info about the current quote state
 func (q *QuoteState) String() string {
-	return fmt.Sprintf("singleQuote=%v doubleQuote=%v backtick=%v multiLineComment=%v singleLineComment=%v startedMultiLineString=%v\n", q.singleQuote, q.doubleQuote, q.backtick, q.multiLineComment, q.singleLineComment, q.startedMultiLineString)
+	return fmt.Sprintf("singleQuote=%v doubleQuote=%v backtick=%v multiLineComment=%v singleLineComment=%v startedMultiLineString=%v\n", q.singleQuote, q.doubleQuote, q.backtick, q.multiLineComment, q.hasSingleLineComment, q.startedMultiLineString)
 }
 
 // ProcessRune is for processing single runes
@@ -142,12 +142,12 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 		}
 	case q.lastRuneInSingleLineCommentMarker:
 		// TODO: Simplify by checking q.None() first, and assuming that the len of the marker is > 1 if it's not 1 since it's not 0
-		if !q.multiLineComment && !q.singleLineComment && !q.startedMultiLineString && prevPrevRune != ':' && q.doubleQuote == 0 && q.singleQuote == 0 && q.backtick == 0 {
+		if !q.multiLineComment && !q.hasSingleLineComment && !q.startedMultiLineString && prevPrevRune != ':' && q.doubleQuote == 0 && q.singleQuote == 0 && q.backtick == 0 {
 			switch {
 			case len(q.singleLineCommentMarkerRunes) == 1:
 				fallthrough
 			case q.mode != mode.Shell && q.mode != mode.Make && len(q.singleLineCommentMarkerRunes) > 1 && prevRune == q.firstRuneInSingleLineCommentMarker:
-				q.singleLineComment = true
+				q.hasSingleLineComment = true
 				q.startedMultiLineString = false
 				q.stoppedMultiLineComment = false
 				q.multiLineComment = false
@@ -177,7 +177,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 		}
 	case ';':
 		if q.mode == mode.Clojure && prevRune == ';' {
-			q.singleLineComment = true
+			q.hasSingleLineComment = true
 		}
 	case ')':
 		if (q.mode == mode.StandardML || q.mode == mode.OCaml || q.mode == mode.Haskell) && prevRune == '*' {
@@ -219,7 +219,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 // Process takes a line of text and modifies the current quote state accordingly,
 // depending on which runes are encountered.
 func (q *QuoteState) Process(line string) (rune, rune) {
-	q.singleLineComment = false
+	q.hasSingleLineComment = false
 	q.startedMultiLineString = false
 	q.stoppedMultiLineComment = false
 	q.containsMultiLineComments = false

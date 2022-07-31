@@ -99,7 +99,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 		// Special case for ViM
 		if e.mode == mode.Vim && strings.HasPrefix(trimmedLine, "\"") {
-			q.singleLineComment = true
+			q.hasSingleLineComment = true
 			q.startedMultiLineString = false
 			q.stoppedMultiLineComment = false
 			q.backtick = 0
@@ -267,7 +267,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// Regular highlight
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					}
-				case mode.OCaml, mode.StandardML:
+				case mode.StandardML, mode.OCaml:
 					trimmedLine = strings.TrimSpace(line)
 					if strings.HasPrefix(trimmedLine, "(*") && strings.HasSuffix(trimmedLine, "*)") {
 						coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
@@ -368,25 +368,22 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
 					case e.mode != mode.Shell && e.mode != mode.Make && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*/") && !strings.Contains(trimmedLine, "/*"):
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
-					case (e.mode == mode.StandardML || e.mode == mode.OCaml) && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*)") && !strings.Contains(trimmedLine, "(*"):
+					case (e.mode == mode.StandardML || e.mode == mode.OCaml) && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*)") && !strings.Contains(trimmedLine, "(*") || q.multiLineComment:
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
-					case e.mode == mode.Elm && (q.multiLineComment || q.singleLineComment || q.stoppedMultiLineComment):
-						// A single line comment (the syntax module did the highlighting)
-						//coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
+					case e.mode == mode.Elm && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "-}") && !strings.Contains(trimmedLine, "{-") || q.multiLineComment:
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
-					//case q.multiLineComment || q.stoppedMultiLineComment:
-					//coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
 					case e.mode != mode.Shell && e.mode != mode.Make && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "/*") > strings.LastIndex(trimmedLine, "*/"):
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case (e.mode == mode.StandardML || e.mode == mode.OCaml) && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "(*") > strings.LastIndex(trimmedLine, "*)"):
+						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
+					case e.mode == mode.Elm && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "{-") > strings.LastIndex(trimmedLine, "-}"):
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case q.containsMultiLineComments:
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case e.mode != mode.Shell && e.mode != mode.Make && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && (q.multiLineComment || q.stoppedMultiLineComment) && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.Contains(line, "\"(*") && !strings.Contains(line, "*)\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
 						// In the middle of a multi-line comment
-						//coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
-						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
-					case q.singleLineComment || q.stoppedMultiLineComment:
+						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
+					case q.hasSingleLineComment || q.stoppedMultiLineComment:
 						// A single line comment (the syntax module did the highlighting)
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case !q.startedMultiLineString && q.backtick > 0:
@@ -407,7 +404,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							// arrow is after comment marker, do nothing
 						} else if i := strings.Index(line, "/*"); i != -1 && i < arrowIndex {
 							// arrow is after comment marker, do nothing
-						} else if i := strings.Index(line, "(*"); (e.mode == mode.StandardML || e.mode == mode.OCaml || e.mode == mode.Haskell) && i != -1 && i < arrowIndex {
+						} else if i := strings.Index(line, "(*"); (e.mode == mode.OCaml || e.mode == mode.StandardML || e.mode == mode.Haskell) && i != -1 && i < arrowIndex {
 							// arrow is after comment marker, do nothing
 						} else if i := strings.Index(line, "{-"); e.mode == mode.Elm && i != -1 && i < arrowIndex {
 							// arrow is after comment marker, do nothing
@@ -431,7 +428,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				}
 
 				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
-				if e.mode != mode.Git && e.mode != mode.Email && e.rainbowParenthesis && q.None() && !q.singleLineComment && !q.stoppedMultiLineComment {
+				if e.mode != mode.Git && e.mode != mode.Email && e.rainbowParenthesis && q.None() && !q.hasSingleLineComment && !q.stoppedMultiLineComment {
 					thisLineParCount, thisLineBraCount := q.ParBraCount(trimmedLine)
 					parCountBeforeThisLine := q.parCount - thisLineParCount
 					braCountBeforeThisLine := q.braCount - thisLineBraCount
