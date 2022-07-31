@@ -49,6 +49,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		lastPasteY LineIndex = -1 // used for keeping track if ctrl-v has been pressed twice on the same line
 		lastCutY   LineIndex = -1 // used for keeping track if ctrl-x has been pressed twice on the same line
 
+		clearPreviousKey     bool   // for clearing the last pressed key, for exiting modes that also reads keys
 		previousKey          string // keep track of the previous key press
 		lastCommandMenuIndex int    // for the command menu
 		key                  string // for the main loop
@@ -811,6 +812,21 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.SetMessageAfterRedraw("Normal mode")
 				break
 			}
+			// Enter command mode, if Esc was pressed twice
+			if previousKey == "c:27" {
+				// TODO: Show a REPL in a nicely drawn box instead of this simple command interface
+				//       The REPL can have colors, tab-completion, a command history and single-letter commands
+				if command, ok := e.UserInput(c, tty, status, "Command"); ok {
+					if err := e.CommandPrompt(c, tty, status, bookmark, command); err != nil {
+						status.SetErrorMessage(err.Error())
+					}
+				} else {
+					e.redrawCursor = true
+				}
+				// Make it possible to press Esc to quit UserInput and then require 2 presses to toggle again
+				clearPreviousKey = true
+				break
+			}
 			// Reset the cut/copy/paste double-keypress detection
 			lastCopyY = -1
 			lastPasteY = -1
@@ -1167,8 +1183,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// * The mode is set to Go and the position is not at the very start of the line (empty or not)
 			// * Syntax highlighting is enabled and the cursor is not at the start of the line (or before)
 			trimmedLine := e.TrimmedLine()
-			//emptyLine := len(trimmedLine) == 0
-			//almostEmptyLine := len(trimmedLine) <= 1
 
 			// Check if a line that is more than just a '{', '(', '[' or ':' ends with one of those
 			endsWithSpecial := len(trimmedLine) > 1 && r == '{' || r == '(' || r == '[' || r == ':'
@@ -1516,7 +1530,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 				s := e.Block(y)
 				lines := strings.Split(s, "\n")
-				if len(lines) < 1 {
+				if len(lines) == 0 {
 					// Need at least 1 line to be able to cut "the rest" after the first line has been cut
 					break
 				}
@@ -1753,7 +1767,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					skipFirstLineInsert = true
 				}
 
-				// The paste the rest of the lines, also untrimmed
+				// Then paste the rest of the lines, also untrimmed
 				for i, line := range copyLines[1:] {
 					if i == lastIndex && len(strings.TrimSpace(line)) == 0 {
 						// If the last line is blank, skip it
@@ -1962,7 +1976,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.redrawCursor = true
 			}
 		}
-		previousKey = key
+		if clearPreviousKey {
+			previousKey = ""
+			clearPreviousKey = false
+		} else {
+			previousKey = key
+		}
 
 		// Clear status, if needed
 		if e.statusMode && e.redrawCursor {
