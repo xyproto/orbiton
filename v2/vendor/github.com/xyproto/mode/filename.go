@@ -87,6 +87,10 @@ func Detect(filename string) Mode {
 		case ".d":
 			// D mode
 			mode = D
+		case ".elm":
+			mode = Elm
+		case ".eml":
+			mode = Email
 		case ".erl":
 			mode = Erlang
 		case ".gt":

@@ -24,6 +24,7 @@ const (
 	D                     // D
 	Doc                   // asciidoctor, sdoc etc
 	Email                 // For using o with ie. Mutt
+	Elm                   // Elm
 	Erlang                // Erlang
 	Garnet                // Garnet
 	Git                   // Git commits and interactive rebases
@@ -116,6 +117,8 @@ func (mode Mode) String() string {
 		return "Document"
 	case D:
 		return "D"
+	case Elm:
+		return "Elm"
 	case Email:
 		return "E-mail"
 	case Erlang:
