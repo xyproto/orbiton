@@ -840,7 +840,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.macro = nil
 				// Show a message after the redraw
 				status.SetMessageAfterRedraw("Macro cleared")
+				break
 			}
+			e.redraw = true
+			e.redrawCursor = true
 		case " ": // space
 
 			// Scroll down if a man page is being viewed, or if the editor is read-only
