@@ -56,6 +56,7 @@ type Editor struct {
 	debugHideOutput    bool            //  hide the GDB stdout pane when in debug mode?
 	binaryFile         bool            //  is this a binary file, or a text file?
 	wrapWhenTyping     bool            //  wrap text at a certain limit when typing
+	addSpace           bool            // add a space to the editor, once
 }
 
 // NewCustomEditor takes:

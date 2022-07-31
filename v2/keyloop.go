@@ -508,15 +508,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			status.ClearAll(c)
 			undo.Snapshot(e)
 			undoBackup := undo
-			var addSpace bool
-			lastCommandMenuIndex, addSpace = e.CommandMenu(c, tty, status, undo, lastCommandMenuIndex, forceFlag, fileLock)
+			lastCommandMenuIndex = e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
 			undo = undoBackup
 			if e.AfterEndOfLine() {
 				e.End(c)
 			}
-			if addSpace {
-				e.InsertString(c, " ")
-			}
+
 		case "c:7": // ctrl-g, status mode
 			e.statusMode = !e.statusMode
 			if e.statusMode {
@@ -816,8 +813,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if previousKey == "c:27" {
 				// TODO: Show a REPL in a nicely drawn box instead of this simple command interface
 				//       The REPL can have colors, tab-completion, a command history and single-letter commands
-				if command, ok := e.UserInput(c, tty, status, "Command"); ok {
-					if err := e.RunCommand(c, tty, status, bookmark, command); err != nil {
+				if commandString, ok := e.UserInput(c, tty, status, "Command"); ok {
+					args := strings.Split(strings.TrimSpace(commandString), " ")
+					if err := e.RunCommand(c, tty, status, bookmark, undo, args...); err != nil {
 						status.SetErrorMessage(err.Error())
 					}
 				} else {
@@ -1975,6 +1973,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 				e.redrawCursor = true
 			}
+		}
+		if e.addSpace {
+			e.InsertString(c, " ")
+			e.addSpace = false
 		}
 		if clearPreviousKey {
 			previousKey = ""
