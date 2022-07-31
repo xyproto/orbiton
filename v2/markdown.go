@@ -268,7 +268,7 @@ func (e *Editor) markdownHighlight(line string, inCodeBlock bool, listItemRecord
 	lastWord := words[len(words)-1]
 
 	// A list item that is a link on a single line, possibly with some text after the link
-	if bracketPos := strings.Index(rest, "["); (firstWord == "-" || firstWord == "*") && bracketPos < 4 && strings.Count(rest, "](") >= 1 && strings.Count(rest, ")") >= 1 {
+	if bracketPos := strings.Index(rest, "["); (firstWord == "-" || firstWord == "*") && bracketPos < 4 && strings.Count(rest, "](") >= 1 && strings.Count(rest, ")") >= 1 && strings.Index(rest, "]") != bracketPos+2 {
 		// First comes the leading space and rest[:bracketPos], then comes "[" and then....
 		twoParts := strings.SplitN(rest[bracketPos+1:], "](", 2)
 		if len(twoParts) == 2 {
