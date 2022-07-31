@@ -3,10 +3,13 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/atotto/clipboard"
 	"github.com/xyproto/vt100"
 )
 
@@ -19,9 +22,34 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 
 	trimmedCommand := strings.TrimPrefix(strings.TrimSpace(args[0]), ":")
 
-	// Argument checks
+	if strings.HasPrefix(trimmedCommand, "!") {
+		return func() {
+			cmd := exec.Command(trimmedCommand[1:])
+			if len(args) > 1 {
+				cmd.Args = args[1:]
+			}
+			// Now run shelCommand with the current block of lines as input
+			stdin, err := cmd.StdinPipe()
+			if err != nil {
+				panic(err)
+			}
+			go func() {
+				defer stdin.Close()
+				io.WriteString(stdin, e.Block(e.LineIndex()))
+			}()
+
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				panic(err)
+			}
+
+			e.ReplaceBlock(c, status, bookmark, string(out))
+		}, nil
+	}
+
+	// Argument checks, remember to use all available aliases
 	switch trimmedCommand {
-	case "insertfile":
+	case "if", "i", "insertfile", "insert", "insertf":
 		if len(args) != 2 {
 			return nil, fmt.Errorf("%s requires a filename as the second argument", trimmedCommand)
 		}
@@ -32,7 +60,9 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	}
 
 	const (
-		help = iota
+		nothing = iota
+		copyall
+		help
 		insertdate
 		insertfile
 		quit
@@ -46,18 +76,29 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 
 	// Define args and corresponding functions
 	var commandLookup = map[int]func(){
+		copyall: func() { // copy all contents to the clipboard
+			if err := clipboard.WriteAll(e.String()); err != nil {
+				status.Clear(c)
+				status.SetError(err)
+				status.Show(c, e)
+			} else {
+				status.SetMessageAfterRedraw("Copied everything")
+			}
+		},
 		help: func() { // display an informative status message
 			// TODO: Draw the same type of box that is used in debug mode, listing all possible commands
 			status.SetMessageAfterRedraw(":wq, s, save, sq, savequit, q, quit, h, help, sort, v, version")
 		},
-		insertdate: func() {
+		insertdate: func() { // insert te current date
 			undo.Snapshot(e)
-			// note that if a space is added after the string here, it will be stripped when the command menu disappears
+			// If a space is added after the string here, it will be stripped when the command menu disappears.
+			// This is why e.addSpace is used. There is probably a better way than using the addSpace variable.
+			// TODO: Find a way to not use e.addSpace
 			dateString := time.Now().Format(time.RFC3339)[:10]
 			e.InsertString(c, dateString)
 			e.addSpace = true
 		},
-		insertfile: func() {
+		insertfile: func() { // insert a file
 			undo.Snapshot(e)
 			editedFileDir := filepath.Dir(e.filename)
 			if err := e.InsertFile(c, filepath.Join(editedFileDir, strings.TrimSpace(args[1]))); err != nil {
@@ -102,6 +143,8 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	// Helpful command aliases that can also handle some typos and abbreviations
 	var functionID int
 	switch trimmedCommand {
+	case "copyall", "copya":
+		functionID = copyall
 	case "qs", "byes", "cus", "exitsave", "quitandsave", "quitsave", "qw", "saq", "saveandquit", "saveexit", "saveq", "savequit", "savq", "sq", "wq":
 		functionID = savequit
 	case "s", "sa", "sav", "save", "w", "ww":
