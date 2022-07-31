@@ -5,6 +5,6 @@ export GORACE="halt_on_error=1 log_path=$PWD/o.log"
 cd v2
 go build -v -race -o ../o
 cd ..
-./o -- "$filename"
+./o -f -- "$filename"
 reset
 find -name "o.log*" -exec bat -- {} \;
