@@ -127,7 +127,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			q.parCount-- // Not a parenthesis start after all, but the start of a multiline comment
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
-		} else if (q.mode == mode.Elm) && prevRune == '{' && q.None() {
+		} else if (q.mode == mode.Elm || q.mode == mode.Haskell) && prevRune == '{' && q.None() {
 			q.parCount-- // Not a parenthesis start after all, but the start of a multiline comment
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
@@ -136,7 +136,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 		if q.mode != mode.Shell && q.mode != mode.Make && prevRune == '!' && prevPrevRune == '<' && q.None() {
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
-		} else if q.mode == mode.Elm && prevRune == '{' {
+		} else if (q.mode == mode.Elm || q.mode == mode.Haskell) && prevRune == '{' {
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
 		}
@@ -190,7 +190,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			q.parCount--
 		}
 	case '}':
-		if q.mode == mode.Elm && prevRune == '-' {
+		if (q.mode == mode.Elm || q.mode == mode.Haskell) && prevRune == '-' {
 			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
 			if q.startedMultiLineComment {
