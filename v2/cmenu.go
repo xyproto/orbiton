@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/atotto/clipboard"
 	"github.com/xyproto/env"
 	"github.com/xyproto/guessica"
 	"github.com/xyproto/mode"
@@ -108,6 +107,7 @@ func (a *Actions) AddCommand(e *Editor, c *vt100.Canvas, tty *vt100.TTY, status 
 
 // CommandMenu will display a menu with various commands that can be browsed with arrow up and arrow down.
 // Also returns the selected menu index (can be -1), and if a space should be added to the text editor after the return.
+// TODO: Figure out why this function needs an undo argument and can't use the regular one
 func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) int {
 
 	const insertFilename = "include.txt"
@@ -131,6 +131,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	)
 
 	// TODO: Create a string->[]string map from title to command, then add them
+	// TODO: Add the 6 first arguments to a context struct instead
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Save and quit", "savequitclear")
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Sort strings on the current line", "sortwords")
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert \""+insertFilename+"\" at the current line", "insertfile", insertFilename)
@@ -238,17 +239,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		})
 	}
 
-	// Copy all the text to the clipboard, if possible
-	actions.Add("Copy everything to clipboard", func() { // copy file to clipboard
-		// Write all contents to the clipboard
-		if err := clipboard.WriteAll(e.String()); err != nil {
-			status.Clear(c)
-			status.SetError(err)
-			status.Show(c, e)
-		} else {
-			status.SetMessageAfterRedraw("Copied everything")
-		}
-	})
+	actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy everything to clipboard", "copyall")
 
 	// Disable or enable the tag-expanding behavior when typing in HTML or XML
 	if e.mode == mode.HTML || e.mode == mode.XML {
