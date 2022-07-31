@@ -19,7 +19,7 @@ func (e *Editor) CommandPrompt(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		e.quit = true
 	case "h", "hh", "help":
 		// TODO: Draw the same type of box that is used in debug mode, listing all possible commands
-		status.SetMessageAfterRedraw("w, save, wq, savequit, q, quit, h, help, v, version")
+		status.SetMessageAfterRedraw("s, save, sq, savequit, q, quit, h, help, v, version, sort")
 	case "v", "vv", "version":
 		status.SetMessageAfterRedraw(versionString)
 	case "sort":
