@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -13,6 +14,8 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+const commandTimeout = 10 * time.Second
+
 // CommandToFunction takes an editor command as a string (with optional arguments) and returns a function that
 // takes no arguments and performs the suggested action, like "save". Some functions may take an undo snapshot first.
 func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo, args ...string) (func(), error) {
@@ -24,26 +27,73 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 
 	if strings.HasPrefix(trimmedCommand, "!") {
 		return func() {
+
 			cmd := exec.Command(trimmedCommand[1:])
 			if len(args) > 1 {
 				cmd.Args = args[1:]
 			}
-			// Now run shelCommand with the current block of lines as input
+
+			// Now run the cmd with the current block of lines as input
 			stdin, err := cmd.StdinPipe()
 			if err != nil {
-				panic(err)
+				status.Clear(c)
+				status.SetError(err)
+				status.Show(c, e)
+				return
 			}
 			go func() {
 				defer stdin.Close()
 				io.WriteString(stdin, e.Block(e.LineIndex()))
 			}()
 
-			out, err := cmd.CombinedOutput()
+			// Gather the output in the same way as CombinedOutput and Run
+			var buf bytes.Buffer
+			cmd.Stdout = &buf
+			cmd.Stderr = &buf
+			err = cmd.Start()
 			if err != nil {
-				panic(err)
+				status.Clear(c)
+				status.SetError(err)
+				status.Show(c, e)
+				return
 			}
 
-			e.ReplaceBlock(c, status, bookmark, string(out))
+			outputString := ""
+
+			// Create a completion channel, thanks
+			// https://medium.com/@vCabbage/go-timeout-commands-with-os-exec-commandcontext-ba0c861ed738
+			done := make(chan error)
+			go func() { done <- cmd.Wait() }()
+
+			// Start a timer
+			timeout := time.After(commandTimeout)
+
+			// Check if the timeout channel or done channel receives something first
+			select {
+			case <-timeout:
+				cmd.Process.Kill()
+				status.Clear(c)
+				status.SetErrorMessage("command timed out")
+				status.Show(c, e)
+				return
+			case err := <-done:
+				outputString = buf.String()
+				if err != nil {
+					status.Clear(c)
+					status.SetErrorMessage("non zero exit code:" + err.Error())
+					status.Show(c, e)
+					return
+				}
+			}
+
+			if outputString == "" {
+				status.Clear(c)
+				status.SetErrorMessage("no output")
+				status.Show(c, e)
+				return
+			}
+
+			e.ReplaceBlock(c, status, bookmark, outputString)
 		}, nil
 	}
 
