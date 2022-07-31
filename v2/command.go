@@ -80,7 +80,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 				outputString = buf.String()
 				if err != nil {
 					status.Clear(c)
-					status.SetErrorMessage("non zero exit code:" + err.Error())
+					status.SetErrorMessage(cmd.String() + ": " + err.Error())
 					status.Show(c, e)
 					return
 				}
