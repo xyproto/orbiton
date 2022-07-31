@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/xyproto/vt100"
 )
 
 // CommandPrompt takes a command string and performs and action (like "save" or "quit")
 func (e *Editor) CommandPrompt(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, command string) error {
-	switch command {
+	switch strings.TrimPrefix(command, ":") {
 	case "wq", "sq", "saveandquit", "savequit", "quitsave", "quitandsave", "qw", "qs":
 		e.quit = true
 		fallthrough
