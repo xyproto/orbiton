@@ -116,8 +116,9 @@ Set NO_COLOR=1 to disable colors.
 		colNumber  ColNumber  = 0
 	)
 
-	// Should we check if data is given on stdin?
-	readFromStdin := (len(os.Args) == 2 && (os.Args[1] == "-" || os.Args[1] == "/dev/stdin")) || dataOnStdin()
+	stdinFilename := len(os.Args) == 1 || (len(os.Args) == 2 && (os.Args[1] == "-" || os.Args[1] == "/dev/stdin"))
+	// If no regular filename is given, check if data is ready at stdin
+	readFromStdin := stdinFilename && dataReadyOnStdin()
 	if readFromStdin {
 		// TODO: Use a spinner?
 		data, err := ioutil.ReadAll(os.Stdin)

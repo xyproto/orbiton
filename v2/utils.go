@@ -347,8 +347,8 @@ func onlyAZaz(s string) bool {
 	return true
 }
 
-// dataOnStdin checks if data is ready on stdin
-func dataOnStdin() bool {
+// dataReadyOnStdin checks if data is ready on stdin
+func dataReadyOnStdin() bool {
 	fileInfo, err := os.Stdin.Stat()
 	if err != nil {
 		return false
