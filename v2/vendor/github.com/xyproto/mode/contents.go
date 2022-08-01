@@ -11,8 +11,8 @@ func SimpleDetect(contents string) Mode {
 	if strings.Contains(contents, "\n") {
 		firstLine = strings.SplitN(contents, "\n", 2)[0]
 	}
-	if len(firstLine) > 100 { // just look at the first 100, if it's one long line
-		firstLine = firstLine[:100]
+	if len(firstLine) > 255 { // just look at the first 255, if it's one long line
+		firstLine = firstLine[:255]
 	}
 	if m, found := DetectFromContents(Blank, firstLine, func() string { return contents }); found {
 		return m
@@ -27,8 +27,8 @@ func SimpleDetectBytes(contents []byte) Mode {
 	if bytes.Contains(contents, nl) {
 		firstLine = bytes.SplitN(contents, nl, 2)[0]
 	}
-	if len(firstLine) > 100 { // just look at the first 100, if it's one long line
-		firstLine = firstLine[:100]
+	if len(firstLine) > 255 { // just look at the first 255, if it's one long line
+		firstLine = firstLine[:255]
 	}
 	if m, found := DetectFromContentBytes(Blank, firstLine, func() []byte { return contents }); found {
 		return m
@@ -76,6 +76,17 @@ func DetectFromContents(initial Mode, firstLine string, allTextFunc func() strin
 	} else if strings.HasPrefix(firstLine, "\" ") {
 		// The first line starts with '" ', assume ViM script
 		return Vim, true
+	}
+	// Man page detection (two equal words at the start and end of the line, and both have "(" and ")")
+	if m == Blank {
+		fields := strings.Fields(strings.TrimSpace(firstLine))
+		if len(fields) > 2 {
+			firstWord := fields[0]
+			lastWord := fields[len(fields)-1]
+			if firstWord == lastWord && strings.Count(firstWord, "(") == 1 && strings.Count(firstWord, ")") == 1 {
+				return ManPage, true
+			}
+		}
 	}
 	// If more lines start with "# " than "// " or "/* ", and mode is blank,
 	// set the mode to modeConfig and enable syntax highlighting.
