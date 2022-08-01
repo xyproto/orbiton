@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/atotto/clipboard"
+	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
 
@@ -112,6 +113,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 
 	const (
 		nothing = iota
+		build
 		copyall
 		help
 		insertdate
@@ -127,6 +129,37 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 
 	// Define args and corresponding functions
 	var commandLookup = map[int]func(){
+		build: func() { // build
+			if e.Empty() {
+				// Empty file, nothing to build
+				status.ClearAll(c)
+				status.SetErrorMessage("Nothing to build")
+				status.Show(c, e)
+				return
+			}
+			// Save the current file, but only if it has changed
+			if e.changed {
+				if err := e.Save(c, tty); err != nil {
+					status.ClearAll(c)
+					status.SetError(err)
+					status.Show(c, e)
+					return
+				}
+			}
+			// Build or export the current file
+			// The last argument is if the command should run in the background or not
+			outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
+			// All clear when it comes to status messages and redrawing
+			status.ClearAll(c)
+			if err != nil {
+				status.SetError(err)
+				status.ShowNoTimeout(c, e)
+				return
+			}
+			// --- Success ---
+			status.SetMessage("Success, built " + outputExecutable)
+			status.Show(c, e)
+		},
 		copyall: func() { // copy all contents to the clipboard
 			if err := clipboard.WriteAll(e.String()); err != nil {
 				status.Clear(c)
@@ -138,7 +171,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		},
 		help: func() { // display an informative status message
 			// TODO: Draw the same type of box that is used in debug mode, listing all possible commands
-			status.SetMessageAfterRedraw(":wq, s, save, sq, savequit, q, quit, h, help, sort, v, version")
+			status.SetMessageAfterRedraw("sq, wq, savequit, s, save, q, quit, h, help, sort, v, version, date, insertfile [filename], build")
 		},
 		insertdate: func() { // insert te current date
 			undo.Snapshot(e)
@@ -206,7 +239,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		functionID = help
 	case "if", "i", "insertfile", "insert", "insertf":
 		functionID = insertfile
-	case "insertdate", "insertd", "id", "date":
+	case "insertdate", "insertd", "id", "date", "d":
 		functionID = insertdate
 	case "v", "ver", "vv", "version":
 		functionID = version
@@ -214,6 +247,8 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		functionID = sortblock
 	case "sortstrings", "sortw", "sortwords", "sow", "ss", "sw", "sortfields", "sf":
 		functionID = sortstrings
+	case "build", "b", "bu", "bui":
+		functionID = build
 	default:
 		return nil, fmt.Errorf("unknown command: %s", args[0])
 	}
@@ -234,4 +269,22 @@ func (e *Editor) RunCommand(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 	}
 	f()
 	return nil
+}
+
+// CommandPrompt shows and handles user input that is interpreted as internal commands,
+// or external commands if they start with "!"
+func (e *Editor) CommandPrompt(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo) {
+	// The spaces are intentional, to stop the shorter strings from always kicking in before
+	// the longer ones can be typed.
+	quickList := []string{":wq", "wq", "sq", ":q", ":w ", "q ", "s ", "w ", "d ", "b "}
+	// TODO: Show a REPL in a nicely drawn box instead of this simple command interface
+	//       The REPL can have colors, tab-completion, a command history and single-letter commands
+	if commandString, ok := e.UserInput(c, tty, status, "Command", quickList); ok {
+		args := strings.Split(strings.TrimSpace(commandString), " ")
+		if err := e.RunCommand(c, tty, status, bookmark, undo, args...); err != nil {
+			status.SetErrorMessage(err.Error())
+		}
+	} else {
+		e.redrawCursor = true
+	}
 }
