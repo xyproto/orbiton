@@ -118,6 +118,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		help
 		insertdate
 		insertfile
+		inserttime
 		quit
 		save
 		savequit
@@ -173,11 +174,10 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			// TODO: Draw the same type of box that is used in debug mode, listing all possible commands
 			status.SetMessageAfterRedraw("sq, wq, savequit, s, save, q, quit, h, help, sort, v, version, date, insertfile [filename], build")
 		},
-		insertdate: func() { // insert te current date
+		insertdate: func() { // insert the current date
 			undo.Snapshot(e)
-			// If a space is added after the string here, it will be stripped when the command menu disappears.
-			// This is why e.addSpace is used. There is probably a better way than using the addSpace variable.
-			// TODO: Find a way to not use e.addSpace
+			// If a space is added after the string here, instead of using e.addSpace,
+			// it will be stripped when the command menu disappears.
 			dateString := time.Now().Format(time.RFC3339)[:10]
 			e.InsertString(c, dateString)
 			e.addSpace = true
@@ -190,6 +190,14 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 				status.SetError(err)
 				status.Show(c, e)
 			}
+		},
+		inserttime: func() { // insert the current time
+			undo.Snapshot(e)
+			// If a space is added after the string here, instead of using e.addSpace,
+			// it will be stripped when the command menu disappears.
+			timeString := time.Now().Format("15:04") // HH:MM
+			e.InsertString(c, timeString)
+			e.addSpace = true
 		},
 		save: func() { // save the current file
 			e.UserSave(c, tty, status)
@@ -241,6 +249,8 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		functionID = insertfile
 	case "insertdate", "insertd", "id", "date", "d":
 		functionID = insertdate
+	case "inserttime", "time", "t", "ti", "tim":
+		functionID = inserttime
 	case "v", "ver", "vv", "version":
 		functionID = version
 	case "sb", "so", "sor", "sort":
