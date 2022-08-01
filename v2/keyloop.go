@@ -49,12 +49,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		lastPasteY LineIndex = -1 // used for keeping track if ctrl-v has been pressed twice on the same line
 		lastCutY   LineIndex = -1 // used for keeping track if ctrl-x has been pressed twice on the same line
 
-		clearPreviousKey     bool   // for clearing the last pressed key, for exiting modes that also reads keys
-		previousKey          string // keep track of the previous key press
-		lastCommandMenuIndex int    // for the command menu
-		key                  string // for the main loop
-		jsonFormatToggle     bool   // for toggling indentation or not when pressing ctrl-w for JSON
-		playBackMacroCount   int    // number of times the macro should be played back, right now
+		clearKeyHistory      bool              // for clearing the last pressed key, for exiting modes that also reads keys
+		kh                   = NewKeyHistory() // keep track of the previous key presses
+		lastCommandMenuIndex int               // for the command menu
+		key                  string            // for the main loop
+		jsonFormatToggle     bool              // for toggling indentation or not when pressing ctrl-w for JSON
+		playBackMacroCount   int               // number of times the macro should be played back, right now
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -184,7 +184,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Add a watch
 			if e.debugMode { // AddWatch will start a new gdb session if needed
 				// Ask the user to type in a watch expression
-				if expression, ok := e.UserInput(c, tty, status, "Variable name to watch"); ok {
+				if expression, ok := e.UserInput(c, tty, status, "Variable name to watch", []string{}); ok {
 					if _, err := e.AddWatch(expression); err != nil {
 						status.ClearAll(c)
 						status.SetError(err)
@@ -522,6 +522,16 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.ClearAll(c)
 			}
 		case "←": // left arrow
+
+			// Check if it's a special case
+			if kh.SpecialArrowKeypressWith("←") {
+				// Ask the user for a command and run it
+				e.CommandPrompt(c, tty, status, bookmark, undo)
+				// It's important to reset the key history after hitting this combo
+				clearKeyHistory = true
+				break
+			}
+
 			// movement if there is horizontal scrolling
 			if e.pos.offsetX > 0 {
 				if e.pos.sx > 0 {
@@ -560,6 +570,16 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.redraw = true
 			}
 		case "→": // right arrow
+
+			// Check if it's a special case
+			if kh.SpecialArrowKeypressWith("→") {
+				// Ask the user for a command and run it
+				e.CommandPrompt(c, tty, status, bookmark, undo)
+				// It's important to reset the key history after hitting this combo
+				clearKeyHistory = true
+				break
+			}
+
 			// If on the last line or before, go to the next character
 			if e.DataY() <= LineIndex(e.Len()) {
 				e.Next(c)
@@ -580,7 +600,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.SaveX(true)
 			e.redrawCursor = true
 		case "↑": // up arrow
-			// Move the screen cursor
+
+			// Check if it's a special case
+			if kh.SpecialArrowKeypressWith("↑") {
+				// Ask the user for a command and run it
+				e.CommandPrompt(c, tty, status, bookmark, undo)
+				// It's important to reset the key history after hitting this combo
+				clearKeyHistory = true
+				break
+			}
 
 			// TODO: Stay at the same X offset when moving up in the document?
 			if e.pos.offsetX > 0 {
@@ -613,6 +641,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 			e.redrawCursor = true
 		case "↓": // down arrow
+
+			// Check if it's a special case
+			if kh.SpecialArrowKeypressWith("↓") {
+				// Ask the user for a command and run it
+				e.CommandPrompt(c, tty, status, bookmark, undo)
+				// It's important to reset the key history after hitting this combo
+				clearKeyHistory = true
+				break
+			}
 
 			// TODO: Stay at the same X offset when moving down in the document?
 			if e.pos.offsetX > 0 {
@@ -809,22 +846,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.SetMessageAfterRedraw("Normal mode")
 				break
 			}
-			// Enter command mode, if Esc was pressed twice
-			if previousKey == "c:27" {
-				// TODO: Show a REPL in a nicely drawn box instead of this simple command interface
-				//       The REPL can have colors, tab-completion, a command history and single-letter commands
-				if commandString, ok := e.UserInput(c, tty, status, "Command"); ok {
-					args := strings.Split(strings.TrimSpace(commandString), " ")
-					if err := e.RunCommand(c, tty, status, bookmark, undo, args...); err != nil {
-						status.SetErrorMessage(err.Error())
-					}
-				} else {
-					e.redrawCursor = true
-				}
-				// Make it possible to press Esc to quit UserInput and then require 2 presses to toggle again
-				clearPreviousKey = true
-				break
-			}
 			// Reset the cut/copy/paste double-keypress detection
 			lastCopyY = -1
 			lastPasteY = -1
@@ -895,7 +916,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Regular behavior
 
 			// Modify the paste double-keypress detection to allow for a manual return before pasting the rest
-			if lastPasteY != -1 && previousKey != "c:13" {
+			if lastPasteY != -1 && kh.Prev() != "c:13" {
 				lastPasteY++
 			}
 
@@ -1269,7 +1290,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Do not reset cut/copy/paste status
 
 			// First check if we just moved to this line with the arrow keys
-			justMovedUpOrDown := previousKey == "↓" || previousKey == "↑"
+			justMovedUpOrDown := kh.PrevIs("↓") || kh.PrevIs("↑")
 			// If at an empty line, go up one line
 			if !justMovedUpOrDown && e.EmptyRightTrimmedLine() && e.SearchTerm() == "" {
 				e.Up(c, status)
@@ -1295,7 +1316,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Do not reset cut/copy/paste status
 
 			// First check if we just moved to this line with the arrow keys, or just cut a line with ctrl-x
-			justMovedUpOrDown := previousKey == "↓" || previousKey == "↑" || previousKey == "c:24"
+			justMovedUpOrDown := kh.PrevIs("↓") || kh.PrevIs("↑") || kh.PrevIs("c:24")
 			if e.AtEndOfDocument() {
 				e.End(c)
 				break
@@ -1760,7 +1781,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					skipFirstLineInsert bool
 				)
 
-				if previousKey != "c:13" {
+				if kh.Prev() != "c:13" {
 					// Start by pasting (and overwriting) an untrimmed version of this line,
 					// if the previous key was not return.
 					e.SetLine(y, copyLines[0])
@@ -1981,11 +2002,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.InsertString(c, " ")
 			e.addSpace = false
 		}
-		if clearPreviousKey {
-			previousKey = ""
-			clearPreviousKey = false
+
+		// Clear the key history, if needed
+		if clearKeyHistory {
+			kh.Clear()
+			clearKeyHistory = false
 		} else {
-			previousKey = key
+			kh.Push(key)
 		}
 
 		// Clear status, if needed
