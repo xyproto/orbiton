@@ -5,10 +5,12 @@ import "time"
 // Keypress combo time limit
 const keypressComboTimeLimit = 300 * time.Millisecond
 
-// KeyHistory represents the last 3 keypresses, and when they were pressed
+// KeyHistory represents the last 3 keypresses, when they were pressed
+// and where they were pressed.
 type KeyHistory struct {
-	keys [3]string
-	t    [3]time.Time
+	keys  [3]string
+	t     [3]time.Time
+	where [3]*Position
 }
 
 // NewKeyHistory creates a new KeyHistory struct
@@ -20,13 +22,19 @@ func NewKeyHistory() *KeyHistory {
 // at the end of the history.
 // The oldest keypress is pushed out.
 // The time is also registered.
-func (kh *KeyHistory) Push(key string) {
+func (kh *KeyHistory) Push(key string, pos *Position) {
+	// Move 1 to 0
 	kh.keys[0] = kh.keys[1]
 	kh.t[0] = kh.t[1]
+	kh.where[0] = kh.where[1]
+	// Move 2 to 1
 	kh.keys[1] = kh.keys[2]
 	kh.t[1] = kh.t[2]
+	kh.where[1] = kh.where[2]
+	// Set a new 2
 	kh.keys[2] = key
 	kh.t[2] = time.Now()
+	kh.where[2] = pos
 }
 
 // Prev returns the last pressed key
@@ -132,15 +140,17 @@ func (kh *KeyHistory) SpecialArrowKeypress() bool {
 
 // SpecialArrowKeypressWith is like SpecialArrowKeypress, but also considers
 // the given extraKeypress as if it was the last one pressed.
-func (kh *KeyHistory) SpecialArrowKeypressWith(extraKeypress string) bool {
+// Returns the position of the first keypress in the combo once a combo is detected.
+// Can return a nil position.
+func (kh *KeyHistory) SpecialArrowKeypressWith(extraKeypress string) (bool, *Position) {
 	// Push the extra keypress temporarily
 	khb := *kh
-	kh.Push(extraKeypress)
+	kh.Push(extraKeypress, nil)
 	defer func() {
 		*kh = khb
 	}()
 	// Check if the special keypress was pressed (3 arrow keys in a row, any arrow key goes)
-	return kh.OnlyInAndAllDiffer("↑", "→", "←", "↓") && kh.AllWithin(keypressComboTimeLimit)
+	return kh.OnlyInAndAllDiffer("↑", "→", "←", "↓") && kh.AllWithin(keypressComboTimeLimit), kh.where[0]
 }
 
 // String returns the last keypresses as a string, with the oldest one first

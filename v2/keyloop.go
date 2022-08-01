@@ -504,7 +504,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "←": // left arrow
 
 			// Check if it's a special case
-			if kh.SpecialArrowKeypressWith("←") {
+			if ok, position := kh.SpecialArrowKeypressWith("←"); ok {
+				e.GoToPosition(c, status, *position)
 				// Ask the user for a command and run it
 				e.CommandPrompt(c, tty, status, bookmark, undo)
 				// It's important to reset the key history after hitting this combo
@@ -552,7 +553,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "→": // right arrow
 
 			// Check if it's a special case
-			if kh.SpecialArrowKeypressWith("→") {
+			if ok, position := kh.SpecialArrowKeypressWith("→"); ok {
+				e.GoToPosition(c, status, *position)
 				// Ask the user for a command and run it
 				e.CommandPrompt(c, tty, status, bookmark, undo)
 				// It's important to reset the key history after hitting this combo
@@ -582,7 +584,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "↑": // up arrow
 
 			// Check if it's a special case
-			if kh.SpecialArrowKeypressWith("↑") {
+			if ok, position := kh.SpecialArrowKeypressWith("↑"); ok {
+				e.GoToPosition(c, status, *position)
 				// Ask the user for a command and run it
 				e.CommandPrompt(c, tty, status, bookmark, undo)
 				// It's important to reset the key history after hitting this combo
@@ -623,7 +626,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "↓": // down arrow
 
 			// Check if it's a special case
-			if kh.SpecialArrowKeypressWith("↓") {
+			if ok, position := kh.SpecialArrowKeypressWith("↓"); ok {
+				e.GoToPosition(c, status, *position)
 				// Ask the user for a command and run it
 				e.CommandPrompt(c, tty, status, bookmark, undo)
 				// It's important to reset the key history after hitting this combo
@@ -1850,6 +1854,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					// Go to the breakpoint position
 					e.GoToPosition(c, status, *e.breakpoint)
 					// Do the redraw manually before showing the status message
+					// TODO: Just use status.SetMessageAfterRedraw instead?
 					e.DrawLines(c, true, false)
 					e.redraw = false
 					// Show the status message
@@ -1988,7 +1993,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			kh.Clear()
 			clearKeyHistory = false
 		} else {
-			kh.Push(key)
+			kh.Push(key, e.pos.Copy())
 		}
 
 		// Clear status, if needed

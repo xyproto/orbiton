@@ -10,12 +10,12 @@ func TestKeyHistory(t *testing.T) {
 	if kh.Prev() != "" || kh.PrevPrev() != "" {
 		log.Fatalln(kh.String())
 	}
-	kh.Push("a")
-	kh.Push("b")
+	kh.Push("a", nil)
+	kh.Push("b", nil)
 	if kh.PrevPrev() != "a" || kh.Prev() != "b" {
 		log.Fatalln(kh.String())
 	}
-	kh.Push("c")
+	kh.Push("c", nil)
 	if kh.PrevPrev() != "b" || kh.Prev() != "c" {
 		log.Fatalln(kh.String())
 	}
