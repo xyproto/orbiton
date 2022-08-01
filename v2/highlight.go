@@ -25,24 +25,22 @@ var (
 )
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
-func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy int) {
+func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy uint) {
+
+	bg := e.Background.Background()
+	tabString := strings.Repeat(" ", e.tabsSpaces.PerTab)
+	inCodeBlock := false // used when highlighting Doc, Markdown or Python
 
 	// If the terminal emulator is being resized, then wait a bit
 	resizeMut.Lock()
 	defer resizeMut.Unlock()
 
-	// Convert the background color to a background color code
-	bg := e.Background.Background()
-
-	tabString := strings.Repeat(" ", e.tabsSpaces.PerTab)
 	cw := c.Width()
 	if fromline >= toline {
 		return //errors.New("fromline >= toline in WriteLines")
 	}
 	numLinesToDraw := toline - fromline // Number of lines available on the canvas for drawing
 	offsetY := fromline
-
-	inCodeBlock := false // used when highlighting Doc, Markdown or Python
 
 	//logf("numlines: %d offsetY %d\n", numlines, offsetY)
 
@@ -115,7 +113,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	// q should now contain the current quote state
 
 	var (
-		lineRuneCount   int
+		lineRuneCount   uint
 		lineStringCount uint
 		line            string
 		listItemRecord  []bool
@@ -154,8 +152,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				screenLine = e.ChopLine(line, int(cw))
 				// TODO: Check if just "fmt.Print" works here, for several terminal emulators
 				fmt.Println(screenLine)
-				lineRuneCount += utf8.RuneCountInString(screenLine)
-				//lineRuneCount += uint(len([]rune(screenLine)))
+				lineRuneCount += uint(utf8.RuneCountInString(screenLine))
 				lineStringCount += uint(len(screenLine))
 			} else {
 				var (
@@ -366,7 +363,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					case e.mode == mode.Python && q.startedMultiLineString:
 						// Python docstring
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
-					case !q.multiLineComment && (strings.HasPrefix(trimmedLine, "#if") || strings.HasPrefix(trimmedLine, "#else") || strings.HasPrefix(trimmedLine, "#elseif") || strings.HasPrefix(trimmedLine, "#endif") || strings.HasPrefix(trimmedLine, "#define") || strings.HasPrefix(trimmedLine, "#pragma")):
+					case (e.mode == mode.Cpp || e.mode == mode.C || e.mode == mode.Make) && !q.multiLineComment && (strings.HasPrefix(trimmedLine, "#if") || strings.HasPrefix(trimmedLine, "#else") || strings.HasPrefix(trimmedLine, "#elseif") || strings.HasPrefix(trimmedLine, "#endif") || strings.HasPrefix(trimmedLine, "#define") || strings.HasPrefix(trimmedLine, "#pragma")):
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
 					case e.mode != mode.Shell && e.mode != mode.Make && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*/") && !strings.Contains(trimmedLine, "/*"):
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
@@ -391,7 +388,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					case !q.startedMultiLineString && q.backtick > 0:
 						// A multi-line string
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
-					case (e.mode != mode.HTML && e.mode != mode.XML) && strings.Contains(line, "->"):
+					case (e.mode != mode.HTML && e.mode != mode.XML && e.mode != mode.Markdown && e.mode != mode.Make && e.mode != mode.Blank) && strings.Contains(line, "->"):
 						// NOTE that if two color tags are placed after each other, they may cause blinking. Remember to turn <off> each color.
 						coloredString = unEscapeFunction(tout.DarkTags(e.ArrowReplace(string(textWithTags))))
 					default:
@@ -400,7 +397,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 
 					// Take an extra pass on coloring the -> arrow, even if it's in a comment
-					if (e.mode != mode.HTML && e.mode != mode.XML) && strings.Contains(line, "->") {
+					if (e.mode != mode.HTML && e.mode != mode.XML && e.mode != mode.Markdown && e.mode != mode.Blank && e.mode != mode.Config) && strings.Contains(line, "->") {
 						arrowIndex := strings.Index(line, "->")
 						if i := strings.Index(line, "//"); i != -1 && i < arrowIndex {
 							// arrow is after comment marker, do nothing
@@ -485,15 +482,15 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						}
 					}
 					if letter == '\t' {
-						c.Write(uint(cx+lineRuneCount), uint(cy)+uint(y), fg, e.Background, tabString)
-						lineRuneCount += e.tabsSpaces.PerTab
+						c.Write(cx+lineRuneCount, cy+uint(y), fg, e.Background, tabString)
+						lineRuneCount += uint(e.tabsSpaces.PerTab)
 						lineStringCount += uint(e.tabsSpaces.PerTab)
 					} else {
 						if unicode.IsControl(letter) {
 							letter = controlRuneReplacement
 						}
-						tx := uint(cx + lineRuneCount)
-						ty := uint(cy) + uint(y)
+						tx := cx + lineRuneCount
+						ty := cy + uint(y)
 						if tx < cw {
 							c.WriteRuneB(tx, ty, fg, bg, letter)
 							lineRuneCount++                              // 1 rune
@@ -509,16 +506,16 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			}
 			// Output a regular line, scrolled to the current e.pos.offsetX
 			screenLine = e.ChopLine(line, int(cw))
-			c.Write(uint(cx+lineRuneCount), uint(cy)+uint(y), e.Foreground, e.Background, screenLine)
-			lineRuneCount += utf8.RuneCountInString(screenLine) // rune count
-			lineStringCount += uint(len(screenLine))            // string length, not rune length
+			c.Write(cx+lineRuneCount, cy+uint(y), e.Foreground, e.Background, screenLine)
+			lineRuneCount += uint(utf8.RuneCountInString(screenLine)) // rune count
+			lineStringCount += uint(len(screenLine))                  // string length, not rune length
 		}
 
 		// Fill the rest of the line on the canvas with "blanks"
 		// TODO: This may draw the wrong number of blanks, since lineRuneCount should really be the number of visible glyphs at this point
-		yp := uint(cy) + uint(y)
-		xp := uint(cx + lineRuneCount)
-		c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', cw-uint(lineRuneCount))
+		yp := cy + uint(y)
+		xp := cx + lineRuneCount
+		c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', cw-lineRuneCount)
 
 	}
 }
