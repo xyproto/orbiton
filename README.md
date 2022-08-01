@@ -464,7 +464,7 @@ This shell function works in `zsh` and `bash` and may be useful for both searchi
 fo() { find . -type f -wholename "*$1" -exec /usr/bin/o {} $2 \;; }
 ```
 
-If too many files are found, it is possible to stop opening them by selecting `Kill find` from the `ctrl-o` menu in `o`, which will execute `pkill find`.
+If too many files are found, it is possible to stop opening them by selecting `Kill find` from the `ctrl-o` menu in `o`, which will execute the equivalent of `pkill find`.
 
 Example use:
 
