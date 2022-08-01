@@ -128,8 +128,6 @@ These features are unique to `o`, as far as I am aware:
 * Some unicode runes may disrupt the text flow. This is generally not a problem for editing code and configuration files, but may be an issue when editing files that contains text in many languages.
 * `o` may have issues with large files (of several MB+). For normal text files or source code files, this is a non-issue.
 * Using backspace near the end of lines that are longer than the terminal width may cause the cursor to jump.
-* When viewing man pages using `MANPAGER=o`, the contents are rendered wrong if the terminal width is too wide.
-* Using `ctrl-\` to comment or uncomment code at the very last line of a file may result in odd behavior.
 * Middle-click pasting (instead of pasting with `ctrl-v`) may only paste the first character.
 * The smart indentation is not always smart.
 
