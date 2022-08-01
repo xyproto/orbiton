@@ -354,34 +354,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
 			// All clear when it comes to status messages and redrawing
 			status.ClearAll(c)
-			if err != nil && err != errNoSuitableBuildCommand {
+			if err != nil {
 				// Error while building
 				status.SetError(err)
 				status.ShowNoTimeout(c, e)
 				break
 			}
-			// Was no suitable compilation or export command found?
-			if err == errNoSuitableBuildCommand {
-				//status.ClearAll(c)
-				if e.debugMode {
-					// Both in debug mode and can not find a command to build this file with.
-					status.SetError(err)
-					status.ShowNoTimeout(c, e)
-					break
-				}
-				// Building this file extension is not implemented yet.
-				// Just display the current time and word count.
-				// TODO: status.ClearAll() should have cleared the status bar first, but this is not always true,
-				//       which is why the message is hackily surrounded by spaces. Fix.
-				statsMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
-				status.SetMessage(statsMessage)
-				status.Show(c, e)
-				break
-			}
 
 			// --- success ---
-
-			//statusMessage = "Success"
 
 			// ctrl-space was pressed while in debug mode, and without a debug session running
 			if e.debugMode && e.gdb == nil {
