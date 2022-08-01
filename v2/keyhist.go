@@ -2,6 +2,9 @@ package main
 
 import "time"
 
+// Keypress combo time limit
+const keypressComboTimeLimit = 300 * time.Millisecond
+
 // KeyHistory represents the last 3 keypresses, and when they were pressed
 type KeyHistory struct {
 	keys [3]string
@@ -124,15 +127,12 @@ func (kh *KeyHistory) AllWithin(dur time.Duration) bool {
 // Also, the keypresses must happen within a fixed amount of time, so that only rapid
 // successions are registered.
 func (kh *KeyHistory) SpecialArrowKeypress() bool {
-	timeLimit := 400 * time.Millisecond // half a second
-	return kh.OnlyInAndAllDiffer("↑", "→", "←", "↓") && kh.AllWithin(timeLimit)
+	return kh.OnlyInAndAllDiffer("↑", "→", "←", "↓") && kh.AllWithin(keypressComboTimeLimit)
 }
 
 // SpecialArrowKeypressWith is like SpecialArrowKeypress, but also considers
 // the given extraKeypress as if it was the last one pressed.
 func (kh *KeyHistory) SpecialArrowKeypressWith(extraKeypress string) bool {
-	// Keypress combo time limit
-	timeLimit := 400 * time.Millisecond
 	// Push the extra keypress temporarily
 	khb := *kh
 	kh.Push(extraKeypress)
@@ -140,7 +140,7 @@ func (kh *KeyHistory) SpecialArrowKeypressWith(extraKeypress string) bool {
 		*kh = khb
 	}()
 	// Check if the special keypress was pressed (3 arrow keys in a row, any arrow key goes)
-	return kh.OnlyInAndAllDiffer("↑", "→", "←", "↓") && kh.AllWithin(timeLimit)
+	return kh.OnlyInAndAllDiffer("↑", "→", "←", "↓") && kh.AllWithin(keypressComboTimeLimit)
 }
 
 // String returns the last keypresses as a string, with the oldest one first
