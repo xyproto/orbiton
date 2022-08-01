@@ -109,25 +109,25 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		// Markdown is set by default for some files.
 		// This corresponds to the check below, and both needs to be updated in sync.
 		if e.mode == mode.Blank || e.mode == mode.Prolog || e.mode == mode.Config || e.mode == mode.Markdown {
-
-			byteLines := bytes.SplitN(fnord.data, []byte{'\n'}, 2)
 			var firstLine []byte
+			byteLines := bytes.SplitN(fnord.data, []byte{'\n'}, 2)
+
 			if len(byteLines) > 0 {
 				firstLine = byteLines[0]
-			}
-
-			contentFunc := func() []byte {
-				return fnord.data
+			} else {
+				firstLine = fnord.data
 			}
 
 			// The first 100 bytes are enough when trying to detect the contents
 			if len(firstLine) > 100 {
 				firstLine = firstLine[:100]
 			}
-			if m, found := mode.DetectFromContentBytes(e.mode, firstLine, contentFunc); found {
+
+			// fnord.data is is wrapped in a function, since some types of data may be streamed
+			// if the first line is not enough to determine the content type.
+			if m, found := mode.DetectFromContentBytes(e.mode, firstLine, func() []byte { return fnord.data }); found {
 				e.mode = m
 			}
-
 		}
 
 		// Specifically enable syntax highlighting if the opened file is a configuration file
@@ -365,7 +365,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		}
 	} else {
 		// If startup is slow (> 100 ms), display the startup time in the status bar
-		if e.filename == "-" {
+		if e.filename == "-" || e.filename == "/dev/stdin" {
 			if startupMilliseconds >= 100 {
 				statusMessage = fmt.Sprintf("Read from stdin%s (%dms)", warningMessage, startupMilliseconds)
 			} else {
