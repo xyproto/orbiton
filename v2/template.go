@@ -215,6 +215,17 @@ func (e *Editor) InsertTemplateProgram(c *vt100.Canvas) error {
 		return fmt.Errorf("could not find a template program for %s", e.mode)
 	}
 
+	baseFilenameWithoutExt := e.BaseFilenameWithoutExtension()
+
+	// If the mode is Go and this is a test file, insert a test template instead
+	if e.mode == mode.Go && strings.HasSuffix(baseFilenameWithoutExt, "_test") {
+		prog = TemplateProgram{
+			"package main\n\nimport (\n\t\"testing\"\n)\n\nfunc TestSomething(t *testing.T) {\n\tt.Fail()\n}\n",
+			7,
+			2,
+		}
+	}
+
 	// Replace FILENAME with the base filename without extension, introduced because of Agda.
 	prog.text = strings.ReplaceAll(prog.text, "FILENAME", e.BaseFilenameWithoutExtension())
 
