@@ -1849,6 +1849,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					undo.Snapshot(e)
 					// Go to the breakpoint position
 					e.GoToPosition(c, status, *e.breakpoint)
+					// TODO: Just use status.SetMessageAfterRedraw instead?
 					// Do the redraw manually before showing the status message
 					e.DrawLines(c, true, false)
 					e.redraw = false
@@ -1872,6 +1873,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					undo.Snapshot(e)
 					// Go to the saved bookmark position
 					e.GoToPosition(c, status, *bookmark)
+					// TODO: Just use status.SetMessageAfterRedraw instead?
 					// Do the redraw manually before showing the status message
 					e.DrawLines(c, true, false)
 					e.redraw = false
