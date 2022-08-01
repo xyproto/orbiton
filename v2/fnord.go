@@ -40,7 +40,7 @@ func (fnord *FilenameOrData) SetTitle() {
 		return
 	}
 	title := "?"
-	if fnord.length > 0 {
+	if fnord.filename == "-" {
 		title = "stdin"
 	} else if fnord.filename != "" {
 		title = fnord.filename
