@@ -93,7 +93,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	tty.SetTimeout(2 * time.Millisecond)
 
 	var (
-		canUseLocks   = true
+		canUseLocks   = fnord.filename != "-" && fnord.filename != "/dev/stdin"
 		lockTimestamp time.Time
 	)
 
