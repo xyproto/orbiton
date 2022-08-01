@@ -120,13 +120,14 @@ These features are unique to `o`, as far as I am aware:
 * `o` is written mostly in `o`, with some use of NeoVim for the initial development.
 * The default syntax highlighting theme aims to be as pretty as possible with less than 16 colors, but it mainly aims for clarity. It should be easy to spot a keyword, number, string or a stray parenthesis.
 
-## Known bugs
+## Known issues
 
 * Using `tmux` and resizing the terminal emulator window may trigger text rendering issues. Try pressing `esc` to redraw the text.
 * For some terminal emulators, if `o` is busy performing an operation, pressing `ctrl-s` may lock the terminal. Some terminal emulators, like `konsole`, can be configured to turn off this behavior. Press `ctrl-q` to unlock the terminal again (together with the unfortunate risk of quitting `o`). You can also use the `ctrl-o` menu for saving and quitting.
 * Some unicode runes may disrupt the text flow. This is generally not a problem for editing code and configuration files, but may be an issue when editing files that contains text in many languages.
 * `o` may have issues with large files (of several MB+). For normal text files or source code files, this is a non-issue.
 * Using backspace near the end of lines that are longer than the terminal width may cause the cursor to jump.
+* When viewing man pages using `MANPAGER=o`, the contents are rendered wrong if the terminal width is too wide.
 * Using `ctrl-\` to comment or uncomment code at the very last line of a file may result in odd behavior.
 * Middle-click pasting (instead of pasting with `ctrl-v`) may only paste the first character.
 * The smart indentation is not always smart.
