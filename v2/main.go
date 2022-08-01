@@ -110,12 +110,14 @@ Set NO_COLOR=1 to disable colors.
 	}
 
 	var (
-		err   error
-		fnord FilenameOrData
+		err        error
+		fnord      FilenameOrData
+		lineNumber LineNumber = 0
+		colNumber  ColNumber  = 0
 	)
 
 	// Should we check if data is given on stdin?
-	readFromStdin := (len(os.Args) == 2 && (os.Args[1] == "-" || os.Args[1] == "/dev/stdin"))
+	readFromStdin := (len(os.Args) == 2 && (os.Args[1] == "-" || os.Args[1] == "/dev/stdin")) || dataOnStdin()
 	if readFromStdin {
 		// TODO: Use a spinner?
 		data, err := ioutil.ReadAll(os.Stdin)
@@ -125,17 +127,17 @@ Set NO_COLOR=1 to disable colors.
 		}
 		// Now stop reading further from stdin
 		os.Stdin.Close()
-		if len(data) > 0 {
-			fnord.data = data
+		if lendata := len(data); lendata > 0 {
 			fnord.filename = "-"
+			fnord.data = data
+			fnord.length = uint64(lendata)
 		}
+	} else {
+		fnord.filename, lineNumber, colNumber = FilenameAndLineNumberAndColNumber(flag.Arg(0), flag.Arg(1), flag.Arg(2))
 	}
-
-	filename, lineNumber, colNumber := FilenameAndLineNumberAndColNumber(flag.Arg(0), flag.Arg(1), flag.Arg(2))
 
 	// Check if the given filename contains something
 	if fnord.Empty() {
-		fnord.filename = filename
 		if fnord.filename == "" {
 			fmt.Fprintln(os.Stderr, "please provide a filename")
 			os.Exit(1)
