@@ -111,14 +111,16 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		if e.mode == mode.Blank || e.mode == mode.Prolog || e.mode == mode.Config || e.mode == mode.Markdown {
 			var firstLine []byte
 			byteLines := bytes.SplitN(fnord.data, []byte{'\n'}, 2)
-
 			if len(byteLines) > 0 {
 				firstLine = byteLines[0]
 			} else {
 				firstLine = fnord.data
 			}
 
-			// The first 100 bytes are enough when trying to detect the contents
+			// If the first line is too long, shorten it a bit.
+			// A length of 100 should be enough to detect the contents.
+			// If not, th rest of the data can be read through the anonymous
+			// function given to DetectFromContentBytes.
 			if len(firstLine) > 100 {
 				firstLine = firstLine[:100]
 			}
@@ -162,7 +164,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 					e.mode = m
 				}
 			}
-			// Specifically enable syntax highlighting if the opened file is a configuration file
+			// Specifically enable syntax highlighting if the opened file is a configuration file or a Man page
 			if e.mode == mode.Config {
 				e.syntaxHighlight = true
 			}
