@@ -171,8 +171,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							programName = fields[0]
 						}
 					}
-					cs := e.manPageHighlight(line, programName, y == 0, y+1 == numLinesToDraw)
-					coloredString = cs
+					coloredString = e.manPageHighlight(line, programName, y == 0, y+1 == numLinesToDraw)
 				case mode.Doc, mode.Markdown:
 					if highlighted, ok, codeBlockFound := e.markdownHighlight(line, inCodeBlock, listItemRecord, &inListItem); ok {
 						coloredString = highlighted
