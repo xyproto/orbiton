@@ -90,7 +90,7 @@
 ## Documentation
 
 - [ ] Replace ` in o.1 with \b.
-- [ ] Document that double-pressing `esc` to type in commands is a possibility, and that `!sort` can sort a block of text.
+- [ ] Document that pressing the arrow keys in rapid succession and typing in `!sort` can sort a block of text with the external `sort` command.
 
 ## Cut, copy, paste and portals
 
@@ -118,7 +118,7 @@
 
 ## Command menu
 
-- [ ] Let Esc followed by ":" bring up a ctrl-o menu that also has a place to type commands like "wq".
+- [x] Let a quick succession of arrow keys bring up a prompt where one can type ":wq", "wq" or "sq" to save and quit.
 - [x] Command menu option for deleting the rest of the file.
 - [x] Add word wrap with a custom line length to the command menu.
 - [ ] Add one or more of these commands: regex search, go to definition, rename symbol, find references and disassembly.
