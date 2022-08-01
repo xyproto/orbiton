@@ -370,7 +370,8 @@ cd ..
 rm -rf _o_build
 ```
 
-If `/usr/share/scala/lib/scala-library.jar` is not found `scalac -d run_with_scala.jar` is used instead. This file can only be run with the `scala` command.
+* If `/usr/share/scala/lib/scala-library.jar` is not found `scalac -d run_with_scala.jar` is used instead.
+* If `scala-library.jar` was not found, then the resulting `jar` file will `scala` to run.
 
 ## Agda
 
