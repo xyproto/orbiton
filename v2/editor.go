@@ -2408,7 +2408,7 @@ func (e *Editor) GoToEnd(c *vt100.Canvas, status *StatusBar) {
 // SortBlock sorts the a block of lines, at the current position
 func (e *Editor) SortBlock(c *vt100.Canvas, status *StatusBar, bookmark *Position) {
 	if e.CurrentLine() == "" {
-		status.SetErrorMessage("no block of lines starts at the current position")
+		status.SetErrorMessage("no text block at the current position")
 		return
 	}
 	y := e.LineIndex()
@@ -2416,7 +2416,7 @@ func (e *Editor) SortBlock(c *vt100.Canvas, status *StatusBar, bookmark *Positio
 	var lines sort.StringSlice
 	lines = strings.Split(s, "\n")
 	if len(lines) == 0 {
-		status.SetErrorMessage("no block of lines to sort")
+		status.SetErrorMessage("no text block to sort")
 		return
 	}
 	// Remove the last empty line, if it's there
@@ -2436,13 +2436,13 @@ func (e *Editor) SortBlock(c *vt100.Canvas, status *StatusBar, bookmark *Positio
 // ReplaceBlock replaces the current block with the given string, if possible
 func (e *Editor) ReplaceBlock(c *vt100.Canvas, status *StatusBar, bookmark *Position, s string) {
 	if e.CurrentLine() == "" {
-		status.SetErrorMessage("no block of lines starts at the current position")
+		status.SetErrorMessage("no text block at the current position")
 		return
 	}
 	y := e.LineIndex()
 	lines := strings.Split(s, "\n")
 	if len(lines) == 0 {
-		status.SetErrorMessage("no block of lines to replace")
+		status.SetErrorMessage("no text block to replace")
 		return
 	}
 	// Remove the last empty line, if it's there
