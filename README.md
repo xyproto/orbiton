@@ -81,6 +81,7 @@ These features are unique to `o`, as far as I am aware:
 * For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
 * Search and replace by entering a search term (or unicode rune on the form `u+0000`), pressing `tab` entering the replacement string or rune, and then pressing `return`.
 * When jumping to a specific line or percentage (ie. `50%`) of a file with `ctrl-l`, jumping to a fraction (ie. `0.5`) is also supported.
+* Pressing the arrow keys in rapid succession brings up the quick prompt. Typing in `wq` then saves and quits. This method avoids "emacs pinky finger pain" that is often caused by using the `ctrl` key too often.
 
 ## Other features and limitations
 
