@@ -14,7 +14,7 @@ It might be a good fit for:
 * Solving Advent of Code tasks.
 * Writing and maintaining to-do lists and project documentation in Markdown.
 * Testing if your favorite package manager can handle single-letter package names.
-* Being part of live ISO images, since it supports VT100, is small and self-contained, has a built-in man page viewer, can be used for viewing logs or ie. edit `/etc/fstab`.
+* Being on a live image for a Linux distro or BSD, since it supports VT100, is small and self-contained, has a built-in man page viewer, can be used for editing `/etc/fstab` and viewing logs.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
