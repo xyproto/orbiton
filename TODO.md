@@ -145,6 +145,8 @@
 - [ ] Skip `os.Stat` and `Glob` if they take to long, and just open the file directly (they are needed for smart filename completion).
 - [ ] Extract the features that are used in `vt100` and create a more optimized package.
 - [ ] Reduce memory usage.
+- [ ] In xyproto/mode, don't limit the first line length to 255 to increase performance.
+      This just leads to man pages not being detected if the first line is longer than 255 characters, if the terminal is very wide.
 
 ## Refactoring
 
