@@ -251,7 +251,7 @@ AGAIN:
 	for !doneCollectingLetters {
 		key = tty.String()
 		switch key {
-		case "c:127": // backspace
+		case "c:8", "c:127": // ctrl-h or backspace
 			if len(s) > 0 {
 				s = s[:len(s)-1]
 				if previousSearch == "" {
