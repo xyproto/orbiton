@@ -34,6 +34,9 @@ var (
 	// Lua
 	luaWords = []string{"and", "break", "do", "else", "elseif", "end", "false", "for", "function", "goto", "if", "in", "local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while"}
 
+	// OCaml
+	ocamlWords = []string{"and", "as", "assert", "asr", "begin", "class", "constraint", "do", "done", "downto", "else", "end", "exception", "external", "false", "for", "fun", "function", "functor", "if", "in", "include", "inherit", "initializer", "land", "lazy", "let", "lor", "lsl", "lsr", "lxor", "match", "method", "mod", "module", "mutable", "new", "nonrec", "object", "of", "open", "or", "private", "rec", "sig", "struct", "then", "to", "true", "try", "type", "val", "virtual", "when", "while", "with"}
+
 	// Odin
 	odinWords = []string{"align_of", "auto_cast", "bit_field", "bit_set", "break", "case", "cast", "const", "context", "continue", "defer", "distinct", "do", "do", "dynamic", "else", "enum", "fallthrough", "for", "foreign", "if", "import", "in", "inline", "macro", "map", "no_inline", "notin", "offset_of", "opaque", "package", "proc", "return", "size_of", "struct", "switch", "transmute", "type_of", "union", "using", "when"}
 
@@ -144,6 +147,9 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.Scala:
 		clearKeywords()
 		addKeywords = scalaWords
+	case mode.OCaml:
+		clearKeywords()
+		addKeywords = ocamlWords
 	case mode.Elm, mode.StandardML:
 		clearKeywords()
 		addKeywords = smlWords
