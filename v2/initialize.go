@@ -171,7 +171,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		}
 
 		if !e.slowLoad {
-			// Test write, to check if the file can be written or not
+			// Test open, to check if the file can be written or not
 			testfile, err := os.OpenFile(e.filename, os.O_WRONLY, 0664)
 			if err != nil {
 				// can not open the file for writing
