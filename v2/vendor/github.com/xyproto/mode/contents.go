@@ -96,7 +96,9 @@ func DetectFromContents(initial Mode, firstLine string, allTextFunc func() strin
 		hashComment := 0
 		slashComment := 0
 		reStructuredTextMarkers := 0
-		for _, line := range strings.Split(allTextFunc(), "\n") {
+		configMarkers := 0
+		lines := strings.Split(allTextFunc(), "\n")
+		for _, line := range lines {
 			if strings.HasPrefix(line, "# ") {
 				hashComment++
 			} else if strings.HasPrefix(line, "/") { // Count all lines starting with "/" as a comment, for this purpose
@@ -115,8 +117,16 @@ func DetectFromContents(initial Mode, firstLine string, allTextFunc func() strin
 					found = true
 				}
 			}
+			if strings.Contains(trimmedLine, "(") || strings.Contains(trimmedLine, ")") || strings.Contains(trimmedLine, "=") {
+				// Might be a configuration file if most of the lines have (, ) or =
+				configMarkers++
+			}
 		}
 		if hashComment > slashComment {
+			return Config, true
+		}
+		// Are "most of the lines" containing (, ) or = ?
+		if (float64(configMarkers) / float64(len(lines))) > 0.7 {
 			return Config, true
 		}
 	}
@@ -184,7 +194,9 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 		hashComment := 0
 		slashComment := 0
 		reStructuredTextMarkers := 0
-		for _, line := range bytes.Split(allBytesFunc(), []byte("\n")) {
+		byteLines := bytes.Split(allBytesFunc(), []byte("\n"))
+		configMarkers := 0
+		for _, line := range byteLines {
 			if bytes.HasPrefix(line, []byte("# ")) {
 				hashComment++
 			} else if bytes.HasPrefix(line, []byte("/")) { // Count all lines starting with "/" as a comment, for this purpose
@@ -203,8 +215,16 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 					found = true
 				}
 			}
+			if bytes.Contains(trimmedLine, []byte("(")) || bytes.Contains(trimmedLine, []byte(")")) || bytes.Contains(trimmedLine, []byte("=")) {
+				// Might be a configuration file if most of the lines have (, ) or =
+				configMarkers++
+			}
 		}
 		if hashComment > slashComment {
+			return Config, true
+		}
+		// Are "most of the lines" containing (, ) or = ?
+		if (float64(configMarkers) / float64(len(byteLines))) > 0.7 {
 			return Config, true
 		}
 	}
