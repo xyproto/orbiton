@@ -8,7 +8,8 @@ import (
 
 var gitRebasePrefixes = []string{"p", "pick", "f", "fixup", "r", "reword", "d", "drop", "e", "edit", "s", "squash", "x", "exec", "b", "break", "l", "label", "t", "reset", "m", "merge"}
 
-// nextGitRebaseKeywords takes the first word and increase it to the next git rebase keyword
+// nextGitRebaseKeyword will use the first word in the given line,
+// and replace it with the next git rebase keyword (as ordered in gitRebasePrefixes)
 func nextGitRebaseKeyword(line string) string {
 	var (
 		cycle1 = filterS(gitRebasePrefixes, func(s string) bool { return len(s) > 1 })
