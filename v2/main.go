@@ -112,8 +112,8 @@ Set NO_COLOR=1 to disable colors.
 	var (
 		err        error
 		fnord      FilenameOrData
-		lineNumber LineNumber = 0
-		colNumber  ColNumber  = 0
+		lineNumber LineNumber
+		colNumber  ColNumber
 	)
 
 	stdinFilename := len(os.Args) == 1 || (len(os.Args) == 2 && (os.Args[1] == "-" || os.Args[1] == "/dev/stdin"))
