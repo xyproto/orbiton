@@ -66,10 +66,11 @@ type Editor struct {
 // * if text edit mode is enabled (as opposed to "ASCII draw mode")
 // * the current scroll speed, in lines
 // * the following colors:
-//    - text foreground
-//    - text background
-//    - search highlight
-//    - multiline comment
+//   - text foreground
+//   - text background
+//   - search highlight
+//   - multiline comment
+//
 // * a syntax highlighting scheme
 // * a file mode
 func NewCustomEditor(tabsSpaces mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight, rainbowParenthesis bool) *Editor {
