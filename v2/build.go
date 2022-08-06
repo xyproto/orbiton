@@ -71,6 +71,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		grandParentDir = filepath.Clean(filepath.Join(sourceDir, "..", ".."))
 		exeFirstName   = e.exeName(sourceFilename)
 		exeFilename    = filepath.Join(sourceDir, exeFirstName)
+		jarFilename    = exeFirstName + ".jar"
 	)
 
 	exeExists := func() (bool, string) {
@@ -96,7 +97,6 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 
 	switch e.mode {
 	case mode.Java: // build a .jar file
-		jarFilename := "main.jar"
 		javaShellCommand := "javaFiles=$(find . -type f -name '*.java'); for f in $javaFiles; do grep -q 'static void main' \"$f\" && mainJavaFile=\"$f\"; done; className=$(grep -oP '(?<=class )[A-Z]+[a-z,A-Z,0-9]*' \"$mainJavaFile\" | head -1); packageName=$(grep -oP '(?<=package )[a-z,A-Z,0-9,.]*' \"$mainJavaFile\" | head -1); if [[ $packageName != \"\" ]]; then packageName=\"$packageName.\"; fi; mkdir -p _o_build/META-INF; javac -d _o_build $javaFiles; cd _o_build; echo \"Main-Class: $packageName$className\" > META-INF/MANIFEST.MF; classFiles=$(find . -type f -name '*.class'); jar cmf META-INF/MANIFEST.MF ../" + jarFilename + " $classFiles; cd ..; rm -rf _o_build"
 		cmd = exec.Command("sh", "-c", javaShellCommand)
 		cmd.Dir = sourceDir
@@ -104,7 +104,6 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			return exists(filepath.Join(sourceDir, jarFilename)), jarFilename
 		}, nil
 	case mode.Scala:
-		jarFilename := "main.jar"
 		// For building a .jar file that can not be run with "java -jar main.jar" but with "scala main.jar": scalac -jar main.jar Hello.scala
 		scalaShellCommand := "scalaFiles=$(find . -type f -name '*.scala'); for f in $scalaFiles; do grep -q 'def main' \"$f\" && mainScalaFile=\"$f\"; grep -q ' extends App ' \"$f\" && mainScalaFile=\"$f\"; done; objectName=$(grep -oP '(?<=object )[A-Z]+[a-z,A-Z,0-9]*' \"$mainScalaFile\" | head -1); packageName=$(grep -oP '(?<=package )[a-z,A-Z,0-9,.]*' \"$mainScalaFile\" | head -1); if [[ $packageName != \"\" ]]; then packageName=\"$packageName.\"; fi; mkdir -p _o_build/META-INF; scalac -d _o_build $scalaFiles; cd _o_build; echo -e \"Main-Class: $packageName$objectName\\nClass-Path: /usr/share/scala/lib/scala-library.jar\" > META-INF/MANIFEST.MF; classFiles=$(find . -type f -name '*.class'); jar cmf META-INF/MANIFEST.MF ../" + jarFilename + " $classFiles; cd ..; rm -rf _o_build"
 		// Compile directly to jar with scalac if /usr/share/scala/lib/scala-library.jar is not found
@@ -127,7 +126,6 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 				return exists(filepath.Join(sourceDir, exeFirstName)), exeFirstName
 			}, nil
 		}
-		jarFilename := exeFirstName + ".jar"
 		cmd = exec.Command("kotlinc", sourceFilename, "-include-runtime", "-d", jarFilename)
 		cmd.Dir = sourceDir
 		return cmd, func() (bool, string) {
