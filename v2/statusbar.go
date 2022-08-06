@@ -40,7 +40,7 @@ func (sb *StatusBar) Draw(c *vt100.Canvas, offsetY int) {
 	w := int(c.W())
 
 	// Shorten the status message if it's longer than the terminal width
-	if len(sb.msg) >= w {
+	if len(sb.msg) >= w && w > 4 {
 		sb.msg = sb.msg[:w-4] + "..."
 	}
 
