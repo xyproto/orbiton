@@ -20,7 +20,7 @@ var languageIndentation = map[TabsSpaces][]Mode{
 	{4, true}: {Bat, Basic, Battlestar, CMake, CS, Cpp, Crystal, Doc, Elm, Email, Garnet, Git, JSON, Jakt, Java, JavaScript, Kotlin, Markdown, Nim, Oak, Python, R, SQL, Scala, Terra, Text, TypeScript, V, Zig},
 	// Languages that use tabs (from the opinionated point of view of this package)
 	{4, false}: {AIDL, C, Go, GoAssembly, HIDL, Lisp, M4, Make, ManPage, Nroff, OCaml, Odin, Rust}, // Tabs
-	{8, true}:  {Hare},                                                                             // Hare is special
+	{8, true}:  {Hare, Ivy},                                                                        // Hare and Ivy are special
 }
 
 // Spaces returns true if spaces should be used for the current mode

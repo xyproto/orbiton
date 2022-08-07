@@ -35,6 +35,7 @@ const (
 	HTML                  // HTML
 	Hare                  // Hare
 	Haskell               // Haskell
+	Ivy                   // Ivy
 	JSON                  // JSON and iPython notebooks
 	Jakt                  // Jakt
 	Java                  // Java
@@ -141,6 +142,8 @@ func (mode Mode) String() string {
 		return "HIDL"
 	case HTML:
 		return "HTML"
+	case Ivy:
+		return "Ivy"
 	case Jakt:
 		return "Jakt"
 	case Java:

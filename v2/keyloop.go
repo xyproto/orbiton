@@ -439,9 +439,25 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 					e.InsertString(c, selectedSymbol)
 				}
-				// Start recording a macro, then stop the recording when ctrl-t is pressed again,
-				// then ask for the number of repetitions to play it back when it's pressed after that,
-				// then clear the macro when esc is pressed.
+			} else if e.mode == mode.Ivy { // insert symbol
+				e.redraw = true
+				menuChoices := ivySymbols
+				selectedSymbol := "×"
+				selectedX, selectedY, cancel := e.SymbolMenu(status, tty, "Insert symbol", menuChoices, e.MenuTitleColor, e.MenuTextColor, e.MenuArrowColor)
+				if !cancel {
+					undo.Snapshot(e)
+					if selectedY < len(menuChoices) {
+						row := menuChoices[selectedY]
+						if selectedX < len(row) {
+							selectedSymbol = menuChoices[selectedY][selectedX]
+						}
+					}
+					e.InsertString(c, selectedSymbol)
+				}
+
+			// Start recording a macro, then stop the recording when ctrl-t is pressed again,
+			// then ask for the number of repetitions to play it back when it's pressed after that,
+			// then clear the macro when esc is pressed.
 			} else if e.macro == nil {
 				undo.Snapshot(e)
 				undo.IgnoreSnapshots(true)
@@ -1914,6 +1930,19 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if len(keyRunes) > 0 && unicode.IsLetter(keyRunes[0]) { // letter
 
 				undo.Snapshot(e)
+
+				if e.mode == mode.Go { // TODO: And e.onlyValidCode
+					if e.Empty() {
+						r := keyRunes[0]
+						// Only "/" or "p" is allowed
+						if r != 'p' && r != '/' {
+							status.Clear(c)
+							status.SetMessage("Not valid Go: " + string(r))
+							status.Show(c, e)
+							break
+						}
+					}
+				}
 
 				// Type in the letters that were pressed
 				for _, r := range keyRunes {

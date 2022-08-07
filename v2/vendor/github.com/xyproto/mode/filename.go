@@ -107,6 +107,8 @@ func Detect(filename string) Mode {
 			mode = Haskell
 		case ".htm", ".html":
 			mode = HTML
+		case ".ivy":
+			mode = Ivy
 		case ".jakt":
 			mode = Jakt
 		case ".java":
