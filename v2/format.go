@@ -144,8 +144,7 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 
 	// Format JSON
 	if e.mode == mode.JSON {
-		// TODO: Find a JSON formatter that does not need a JavaScript package like otto
-		var v interface{}
+		var v any
 
 		err := json.Unmarshal([]byte(e.String()), &v)
 		if err != nil {
