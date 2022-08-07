@@ -455,9 +455,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.InsertString(c, selectedSymbol)
 				}
 
-			// Start recording a macro, then stop the recording when ctrl-t is pressed again,
-			// then ask for the number of repetitions to play it back when it's pressed after that,
-			// then clear the macro when esc is pressed.
+				// Start recording a macro, then stop the recording when ctrl-t is pressed again,
+				// then ask for the number of repetitions to play it back when it's pressed after that,
+				// then clear the macro when esc is pressed.
 			} else if e.macro == nil {
 				undo.Snapshot(e)
 				undo.IgnoreSnapshots(true)
