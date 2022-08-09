@@ -97,6 +97,8 @@ func Detect(filename string) Mode {
 			mode = Garnet
 		case ".go":
 			mode = Go
+		case ".glsl":
+			mode = Shader
 		case ".gradle":
 			mode = Gradle
 		case ".ha":

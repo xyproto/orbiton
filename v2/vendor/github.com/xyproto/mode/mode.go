@@ -61,10 +61,11 @@ const (
 	R                     // R
 	ReStructured          // reStructuredText
 	Rust                  // Rust
-	SQL                   // Structured Query Language
 	Scala                 // Scala
+	Shader                // GLSL Shader
 	Shell                 // Shell scripts and PKGBUILD files
 	StandardML            // Standard ML
+	SQL                   // Structured Query Language
 	Teal                  // Teal
 	Terra                 // Terra
 	Text                  // plain text documents
@@ -196,6 +197,8 @@ func (mode Mode) String() string {
 		return "Rust"
 	case Scala:
 		return "Scala"
+	case Shader:
+		return "Shader"
 	case Shell:
 		return "Shell"
 	case SQL:
