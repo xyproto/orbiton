@@ -19,6 +19,7 @@ func Detect(filename string) Mode {
 	ext := filepath.Ext(baseFilename)
 
 	// Check if we should be in a particular mode for a particular type of file
+	// TODO: Create a hash map to look up many of the extensions
 	switch {
 	case baseFilename == "COMMIT_EDITMSG" ||
 		baseFilename == "MERGE_MSG" ||
@@ -71,6 +72,9 @@ func Detect(filename string) Mode {
 		case ".c":
 			// C mode
 			mode = C
+		case ".cm":
+			// Standard ML project file
+			mode = StandardML
 		case ".cpp", ".cc", ".c++", ".cxx", ".hpp", ".h":
 			// C++ mode
 			// TODO: Find a way to discover is a .h file is most likely to be C or C++
@@ -155,7 +159,7 @@ func Detect(filename string) Mode {
 			mode = Assembly
 		case ".scala":
 			mode = Scala
-		case ".sml":
+		case ".fun", ".sml":
 			mode = StandardML
 		case ".sql":
 			mode = SQL

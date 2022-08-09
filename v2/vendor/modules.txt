@@ -41,7 +41,7 @@ github.com/xyproto/env
 # github.com/xyproto/guessica v1.1.0
 ## explicit; go 1.14
 github.com/xyproto/guessica
-# github.com/xyproto/mode v0.6.8
+# github.com/xyproto/mode v0.6.10
 ## explicit; go 1.14
 github.com/xyproto/mode
 # github.com/xyproto/stringpainter v1.0.0
