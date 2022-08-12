@@ -199,7 +199,7 @@ Set NO_COLOR=1 to disable colors.
 				// TODO: Later, when specificLetter is examined, use either NewEditLightTheme or NewEditDarkTheme
 				specificLetter = true
 				editTheme = true
-			case 'l': // lo, light etc.
+			case 'l', 'v': // lo, light, lighted, vs etc.
 				theme = NewDarkVSTheme()
 				specificLetter = true
 			case 'r': // rb, ro, rt, red etc.
