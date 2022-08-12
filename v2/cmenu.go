@@ -140,7 +140,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 
 	// Word wrap at a custom width + enable word wrap when typing
 	actions.Add("Word wrap at...", func() {
-		if wordWrapString, ok := e.UserInput(c, tty, status, fmt.Sprintf("Word wrap at [%d]", wrapWidth), []string{}); ok {
+		if wordWrapString, ok := e.UserInput(c, tty, status, fmt.Sprintf("Word wrap at [%d]", wrapWidth), []string{}, false); ok {
 			if strings.TrimSpace(wordWrapString) == "" {
 				e.WrapNow(wrapWidth)
 				e.wrapWhenTyping = true

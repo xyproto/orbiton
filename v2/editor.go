@@ -2290,7 +2290,7 @@ func (e *Editor) LastLineNumber() LineNumber {
 }
 
 // UserInput asks the user to enter text, then collects the letters. No history.
-func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, title string, quickList []string) (string, bool) {
+func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, title string, quickList []string, arrowsAreCountedAsLetters bool) (string, bool) {
 	status.ClearAll(c)
 	status.SetMessage(title + ":")
 	status.ShowNoTimeout(c, e)
@@ -2316,6 +2316,15 @@ func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, t
 		case "←", "→": // left arrow or right arrow
 			fallthrough // cancel
 		case "↑", "↓": // up arrow or down arrow
+			if arrowsAreCountedAsLetters {
+				entered += pressed
+				status.SetMessage(title + ": " + entered)
+				status.ShowNoTimeout(c, e)
+			}
+			// Is this a special quick command, where return is not needed, like "wq"?
+			if hasS(quickList, entered) {
+				break
+			}
 			fallthrough // cancel
 		case "c:27", "c:17": // esc or ctrl-q
 			cancel = true

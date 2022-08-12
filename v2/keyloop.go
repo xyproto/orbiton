@@ -184,7 +184,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Add a watch
 			if e.debugMode { // AddWatch will start a new gdb session if needed
 				// Ask the user to type in a watch expression
-				if expression, ok := e.UserInput(c, tty, status, "Variable name to watch", []string{}); ok {
+				if expression, ok := e.UserInput(c, tty, status, "Variable name to watch", []string{}, false); ok {
 					if _, err := e.AddWatch(expression); err != nil {
 						status.ClearAll(c)
 						status.SetError(err)
