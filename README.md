@@ -81,7 +81,7 @@ These features are unique to `o`, as far as I am aware:
 * For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
 * Search and replace by entering a search term (or unicode rune on the form `u+0000`), pressing `tab` entering the replacement string or rune, and then pressing `return`.
 * When jumping to a specific line or percentage (ie. `50%`) of a file with `ctrl-l`, jumping to a fraction (ie. `0.5`) is also supported.
-* Pressing the arrow keys in rapid succession brings up the quick prompt. Typing in `wq` then saves and quits. This method avoids "emacs pinky finger pain" that is often caused by using the `ctrl` key too often.
+* `right, down, left` in quick succession followed by `up` to just quit, `down` to save and quit or a command. This is handy to avoid pinky finger pain (the `emacs pinky`).
 
 ## Other features and limitations
 
@@ -160,6 +160,7 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-\` - Comment in or out a block of code.
 * `ctrl-~` - Jump to a matching parenthesis.
 * `esc` - Redraw everything and clear the last search.
+* `right, down, left` in quick succession followed by `up` to just quit or `down` to save and quit. This is handy to avoid pinky finger pain (the `emacs pinky`).
 
 ## Build and format
 
