@@ -1,3 +1,4 @@
+// main is the main package for the o editor
 package main
 
 import (
