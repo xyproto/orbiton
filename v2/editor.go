@@ -1936,7 +1936,11 @@ func (e *Editor) Center(c *vt100.Canvas) {
 
 // CommentOn will insert a comment marker (like # or //) in front of a line
 func (e *Editor) CommentOn(commentMarker string) {
-	e.SetCurrentLine(commentMarker + " " + e.CurrentLine())
+	space := " "
+	if e.mode == mode.Config { // For config files, assume things will be toggled in and out, without a space
+		space = ""
+	}
+	e.SetCurrentLine(commentMarker + space + e.CurrentLine())
 }
 
 // CommentOff will remove "//" or "// " from the front of the line if "//" is given
