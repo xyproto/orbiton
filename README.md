@@ -81,7 +81,7 @@ These features are unique to `o`, as far as I am aware:
 * For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
 * Search and replace by entering a search term (or unicode rune on the form `u+0000`), pressing `tab` entering the replacement string or rune, and then pressing `return`.
 * When jumping to a specific line or percentage (ie. `50%`) of a file with `ctrl-l`, jumping to a fraction (ie. `0.5`) is also supported.
-* `right, down, left` in quick succession followed by `up` to just quit, `down` to save and quit or a command. This is handy to avoid pinky finger pain (the `emacs pinky`).
+* Press `right, down, left` or `left, down, right` in quick succession followed by `up` to just quit, `down` to save and quit or type in a command. This is handy to avoid pinky finger pain (the `emacs pinky`).
 
 ## Other features and limitations
 
