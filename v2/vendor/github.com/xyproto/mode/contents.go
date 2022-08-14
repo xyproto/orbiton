@@ -53,11 +53,13 @@ func DetectFromContents(initial Mode, firstLine string, allTextFunc func() strin
 			words = strings.Split(lastWord, "/")
 			lastWord = words[len(words)-1]
 		}
+		// check for "python", "python2.7", "python3" etc
+		if strings.HasPrefix(lastWord, "python") {
+			return Python, true
+		}
 		switch lastWord {
 		case "perl":
 			return Perl, true
-		case "python":
-			return Python, true
 		case "ash", "bash", "fish", "ksh", "oil", "sh", "tcsh", "zsh": // TODO: support Fish and Oil with their own file modes
 			return Shell, true
 		}
