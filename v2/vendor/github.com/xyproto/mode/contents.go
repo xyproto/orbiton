@@ -164,7 +164,7 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 		if len(lastWord) > 1 {
 			if lastWord[0] == 'p' && lastWord[1] == 'e' && string(lastWord) == "perl" { // perl
 				return Perl, true
-			} else if lastWord[0] == 'p' && lastWord[1] == 'y' && string(lastWord) == "python" { // python
+			} else if lastWord[0] == 'p' && lastWord[1] == 'y' && strings.HasPrefix(string(lastWord), "python") { // check for "python", "python2.7", "python3" etc
 				return Python, true
 			} else {
 				switch string(lastWord) {
