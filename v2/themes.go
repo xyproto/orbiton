@@ -534,7 +534,7 @@ func NewDarkVSTheme() Theme {
 		Decimal:                     "darkcyan",
 		AndOr:                       "black",
 		Dollar:                      "red",
-		Star:                        "black",
+		Star:                        "red",
 		Self:                        "darkcyan",
 		Class:                       "blue",
 		Private:                     "black",
