@@ -36,4 +36,4 @@ install-ko: ko/ko
 	install -Dm644 img/icon_48x48.png "$(DESTDIR)$(PREFIX)/share/pixmaps/ko.png"
 
 clean:
-	-rm -f o o.1.gz ko/ko
+	-rm -f o v2/o o.1.gz ko/ko
