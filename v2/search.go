@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -436,7 +435,7 @@ AGAIN:
 
 // LoadSearchHistory will load a list of strings from the given filename
 func LoadSearchHistory(filename string) ([]string, error) {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return []string{}, err
 	}
@@ -456,5 +455,5 @@ func SaveSearchHistory(filename string, list []string) error {
 
 	// Then save the data, with strict permissions
 	data := []byte(strings.Join(list, "\n"))
-	return ioutil.WriteFile(filename, data, 0600)
+	return os.WriteFile(filename, data, 0600)
 }

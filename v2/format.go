@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -52,7 +51,7 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	// Use the temporary directory defined in TMPDIR, with fallback to /tmp
 	tempdir := env.Dir("TMPDIR", "/tmp")
 
-	if f, err := ioutil.TempFile(tempdir, "o.*"+extOrBaseFilename); err == nil {
+	if f, err := os.CreateTemp(tempdir, "o.*"+extOrBaseFilename); err == nil {
 		// no error, everything is fine
 		tempFilename := f.Name()
 		defer os.Remove(tempFilename)

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 
@@ -23,7 +23,7 @@ func corpus(searchword, glob string) []string {
 	var data []byte
 	var highestCount int
 	for _, filename := range filenames {
-		data, err = ioutil.ReadFile(filename)
+		data, err = os.ReadFile(filename)
 		if err != nil {
 			continue
 		}

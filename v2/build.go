@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -187,7 +186,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			}
 			// Just build the current file
 			sourceCode := ""
-			sourceData, err := ioutil.ReadFile(sourceFilename)
+			sourceData, err := os.ReadFile(sourceFilename)
 			if err == nil { // success
 				sourceCode = string(sourceData)
 			}

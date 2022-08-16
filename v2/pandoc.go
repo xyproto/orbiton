@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -58,7 +57,7 @@ func (e *Editor) exportPandoc(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar
 	tempDir := env.Dir("TMPDIR", "/tmp")
 
 	tempFilename := ""
-	f, err := ioutil.TempFile(tempDir, "_o*.md")
+	f, err := os.CreateTemp(tempDir, "_o*.md")
 	if err != nil {
 		return err
 	}
@@ -93,7 +92,7 @@ func (e *Editor) exportPandoc(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar
 		folderPath := filepath.Dir(expandedTexFilename)
 		os.MkdirAll(folderPath, os.ModePerm)
 		// Write the Pandoc Tex style file
-		err = ioutil.WriteFile(expandedTexFilename, []byte(listingsSetupTex), 0644)
+		err = os.WriteFile(expandedTexFilename, []byte(listingsSetupTex), 0644)
 		if err != nil {
 			status.SetErrorMessage("Could not write " + pandocTexFilename + ": " + err.Error())
 			status.Show(c, e)

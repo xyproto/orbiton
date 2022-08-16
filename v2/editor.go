@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -324,7 +323,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (st
 		if fnord.Empty() {
 			// TODO: Read in the data in a way the returns the byte count
 			//       and use that instead of len(fnord.data)
-			fnord.data, err = ioutil.ReadFile(fnord.filename)
+			fnord.data, err = os.ReadFile(fnord.filename)
 			fnord.length = uint64(len(fnord.data))
 			if err != nil {
 				return message, err
@@ -479,7 +478,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		quitChan := Spinner(c, tty, fmt.Sprintf("Saving %s... ", e.filename), fmt.Sprintf("saving %s: stopped by user", e.filename), 200*time.Millisecond, e.ItalicsColor)
 
 		// Save the file and return any errors
-		if err := ioutil.WriteFile(e.filename, data, fileMode); err != nil {
+		if err := os.WriteFile(e.filename, data, fileMode); err != nil {
 			// Stop the spinner and return
 			quitChan <- true
 			return err
@@ -2138,7 +2137,7 @@ func (e *Editor) VerticalScrollIfNeeded(c *vt100.Canvas, status *StatusBar) {
 
 // InsertFile inserts the contents of a file at the current location
 func (e *Editor) InsertFile(c *vt100.Canvas, filename string) error {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}

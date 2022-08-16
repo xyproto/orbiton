@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 	"os/exec"
 
 	"github.com/xyproto/mode"
@@ -24,7 +24,7 @@ func (e *Editor) LoadClass(filename string) ([]byte, error) {
 	// Remove "java.lang." qualifiers that are not needed
 	data := bytes.ReplaceAll(output, []byte("java.lang."), []byte{})
 
-	if err := ioutil.WriteFile(e.filename, data, 0644); err != nil {
+	if err := os.WriteFile(e.filename, data, 0644); err != nil {
 		return data, err
 	}
 	return data, nil

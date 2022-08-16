@@ -4,7 +4,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -122,7 +122,7 @@ Set NO_COLOR=1 to disable colors.
 	readFromStdin := stdinFilename && dataReadyOnStdin()
 	if readFromStdin {
 		// TODO: Use a spinner?
-		data, err := ioutil.ReadAll(os.Stdin)
+		data, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "could not read from stdin")
 			os.Exit(1)

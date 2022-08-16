@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -64,7 +63,7 @@ func HasPortal() bool {
 
 // LoadPortal will load a filename + line number from the portal.txt file
 func LoadPortal() (*Portal, error) {
-	data, err := ioutil.ReadFile(portalFilename)
+	data, err := os.ReadFile(portalFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +100,7 @@ func (p *Portal) LineNumber() LineNumber {
 func (p *Portal) Save() error {
 	s := p.absFilename + "\n" + p.lineNumber.String() + "\n"
 	// Anyone can read this file
-	if err := ioutil.WriteFile(portalFilename, []byte(s), 0600); err != nil {
+	if err := os.WriteFile(portalFilename, []byte(s), 0600); err != nil {
 		return err
 	}
 	return os.Chmod(portalFilename, 0666)
@@ -130,7 +129,7 @@ func (p *Portal) PopLine(e *Editor, removeLine bool) (string, error) {
 		// The line moving is done by the editor InsertAbove and InsertBelow functions
 		return e.Line(p.LineIndex()), nil
 	}
-	data, err := ioutil.ReadFile(p.absFilename)
+	data, err := os.ReadFile(p.absFilename)
 	if err != nil {
 		return "", err
 	}
@@ -151,7 +150,7 @@ func (p *Portal) PopLine(e *Editor, removeLine bool) (string, error) {
 			return "", errors.New("Could not pop line " + p.String())
 		}
 		data = []byte(strings.Join(modifiedLines, "\n"))
-		if err = ioutil.WriteFile(p.absFilename, data, 0600); err != nil {
+		if err = os.WriteFile(p.absFilename, data, 0600); err != nil {
 			return "", err
 		}
 	} else {

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -311,7 +310,7 @@ func getFullName() (fullName string) {
 	// Then look for ~/.gitconfig
 	gitConfigFilename := env.ExpandUser("~/.gitconfig")
 	if exists(gitConfigFilename) {
-		data, err := ioutil.ReadFile(gitConfigFilename)
+		data, err := os.ReadFile(gitConfigFilename)
 		if err != nil {
 			return fullName
 		}

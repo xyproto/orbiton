@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"math/rand"
 	"os"
@@ -687,7 +686,7 @@ func saveHighScore(highScore uint) error {
 // loadHighScore will load the current high score from the highScoreFile,
 // if possible.
 func loadHighScore() (uint, error) {
-	data, err := ioutil.ReadFile(highScoreFile)
+	data, err := os.ReadFile(highScoreFile)
 	if err != nil {
 		return 0, err
 	}
