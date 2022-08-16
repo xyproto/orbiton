@@ -488,8 +488,8 @@ Try the Konami code while in the `ctrl-o` menu to start a silly little game abou
 
 ## Recommended symlinks
 
-* For starting `o` with the _Blue Edit_ theme: `ln -sf /usr/bin/o /usr/bin/edit`.
 * For starting `o` with the _Light VS_ theme: `ln -sf /usr/bin/o /usr/bin/vs`.
+* For starting `o` with the _Blue Edit_ theme: `ln -sf /usr/bin/o /usr/bin/edit`.
 * For starting `o` with the _Red & black_ theme: `ln -sf /usr/bin/o /usr/bin/redblack`.
 
 ## The GUI frontend `ko`
