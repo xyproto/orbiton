@@ -142,7 +142,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		trimmedLine = strings.TrimLeftFunc(line, unicode.IsSpace)
 
 		// expand tabs
-		line = strings.Replace(line, "\t", tabString, -1)
+		line = strings.ReplaceAll(line, "\t", tabString)
 
 		if e.syntaxHighlight && !envNoColor {
 			// Output a syntax highlighted line. Escape any tags in the input line.
@@ -221,11 +221,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					} else if strings.Contains(trimmedLine, ":"+singleLineCommentMarker) {
 						// If the line contains "://", then don't let the syntax package highlight it as a comment, by removing the gray color
 						stringWithTags := strings.ReplaceAll(strings.ReplaceAll(string(textWithTags), "<"+e.Comment+">", "<"+e.Plaintext+">"), "</"+e.Comment+">", "</"+e.Plaintext+">")
-						coloredString = unEscapeFunction(tout.DarkTags(strings.Replace(strings.Replace(stringWithTags, "<lightgreen>yes<", "<lightyellow>yes<", -1), "<lightred>no<", "<lightyellow>no<", -1)))
+						coloredString = unEscapeFunction(tout.DarkTags(strings.ReplaceAll(strings.ReplaceAll(stringWithTags, "<lightgreen>yes<", "<lightyellow>yes<"), "<lightred>no<", "<lightyellow>no<")))
 					} else {
 						// Regular highlight + highlight yes and no in blue when using the default color scheme
 						// TODO: Modify (and rewrite) the syntax package instead.
-						coloredString = unEscapeFunction(tout.DarkTags(strings.Replace(strings.Replace(string(textWithTags), "<lightgreen>yes<", "<lightyellow>yes<", -1), "<lightred>no<", "<lightyellow>no<", -1)))
+						coloredString = unEscapeFunction(tout.DarkTags(strings.ReplaceAll(strings.ReplaceAll(string(textWithTags), "<lightgreen>yes<", "<lightyellow>yes<"), "<lightred>no<", "<lightyellow>no<")))
 					}
 				case mode.Zig:
 					trimmedLine = strings.TrimSpace(line)
@@ -530,7 +530,6 @@ func (e *Editor) ArrowReplace(s string) string {
 		arrowColor = syntax.DefaultTextConfig.Class
 	}
 	fieldColor := syntax.DefaultTextConfig.Protected
-	s = strings.Replace(s, ">-<", "><off><"+arrowColor+">-<", -1)
-	s = strings.Replace(s, ">"+Escape(">"), "><off><"+arrowColor+">"+Escape(">")+"<off><"+fieldColor+">", -1)
-	return s
+	s = strings.ReplaceAll(s, ">-<", "><off><"+arrowColor+">-<")
+	return strings.ReplaceAll(s, ">"+Escape(">"), "><off><"+arrowColor+">"+Escape(">")+"<off><"+fieldColor+">")
 }

@@ -22,12 +22,11 @@ var opinionatedStringReplacer = strings.NewReplacer(
 // nonbreaking spaces, annoying tildes, \r\n and \r
 func opinionatedByteReplacer(data []byte) []byte {
 	// Replace non-breaking space with regular space
-	data = bytes.Replace(data, []byte{0xc2, 0xa0}, []byte{0x20}, -1)
+	data = bytes.ReplaceAll(data, []byte{0xc2, 0xa0}, []byte{0x20})
 	// Fix annoying tilde
-	data = bytes.Replace(data, []byte{0xcc, 0x88}, []byte{'~'}, -1)
+	data = bytes.ReplaceAll(data, []byte{0xcc, 0x88}, []byte{'~'})
 	// Replace DOS line endings with UNIX line endings
-	data = bytes.Replace(data, []byte{'\r', '\n'}, []byte{'\n'}, -1)
+	data = bytes.ReplaceAll(data, []byte{'\r', '\n'}, []byte{'\n'})
 	// Replace any remaining \r characters with \n
-	data = bytes.Replace(data, []byte{'\r'}, []byte{'\n'}, -1)
-	return data
+	return bytes.ReplaceAll(data, []byte{'\r'}, []byte{'\n'})
 }

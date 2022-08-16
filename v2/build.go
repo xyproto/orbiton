@@ -396,7 +396,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	case mode.Markdown, mode.Doc:
 		// pandoc
 		if pandocPath := which("pandoc"); pandocPath != "" {
-			pdfFilename := strings.Replace(filepath.Base(sourceFilename), ".", "_", -1) + ".pdf"
+			pdfFilename := strings.ReplaceAll(filepath.Base(sourceFilename), ".", "_") + ".pdf"
 			if background {
 				go func() {
 					pandocMutex.Lock()

@@ -252,7 +252,7 @@ func (e *Editor) markdownHighlight(line string, inCodeBlock bool, listItemRecord
 		if strings.HasPrefix(line, "|-") {
 			return e.TableColor.String() + line + e.TableBackground.String(), true, false
 		}
-		return strings.Replace(line, "|", e.TableColor.String()+"|"+e.TableBackground.String(), -1), true, false
+		return strings.ReplaceAll(line, "|", e.TableColor.String()+"|"+e.TableBackground.String()), true, false
 	}
 
 	// Split the rest of the line into words

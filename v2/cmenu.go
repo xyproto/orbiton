@@ -361,7 +361,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	actions.Add("Render to PDF", func() {
 
 		// Write to PDF in a goroutine
-		pdfFilename := strings.Replace(filepath.Base(e.filename), ".", "_", -1) + ".pdf"
+		pdfFilename := strings.ReplaceAll(filepath.Base(e.filename), ".", "_") + ".pdf"
 
 		// Show a status message while writing
 		status.SetMessage("Writing " + pdfFilename + "...")

@@ -199,7 +199,7 @@ func (e *Editor) ScreenLine(n int) string {
 			sb.WriteRune(r)
 		}
 		tabSpace := strings.Repeat("\t", e.tabsSpaces.PerTab)
-		return strings.Replace(sb.String(), "\t", tabSpace, -1)
+		return strings.ReplaceAll(sb.String(), "\t", tabSpace)
 	}
 	return ""
 }
@@ -444,7 +444,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 			for level := 10; level > 0; level-- {
 				fromString := "\n" + strings.Repeat("\t", level)
 				toString := "\n" + strings.Repeat(" ", level*e.tabsSpaces.PerTab)
-				s = strings.Replace(s, fromString, toString, -1)
+				s = strings.ReplaceAll(s, fromString, toString)
 			}
 		}
 
@@ -1298,7 +1298,7 @@ func (e *Editor) DownEnd(c *vt100.Canvas) error {
 		}
 
 		// Expand the line, then check if e.pos.sx falls on a tab character ("\t" is expanded to several tabs ie. "\t\t\t\t")
-		expandedRunes := []rune(strings.Replace(line, "\t", strings.Repeat("\t", e.tabsSpaces.PerTab), -1))
+		expandedRunes := []rune(strings.ReplaceAll(line, "\t", strings.Repeat("\t", e.tabsSpaces.PerTab)))
 		if e.pos.sx < len(expandedRunes) && expandedRunes[e.pos.sx] == '\t' {
 			e.pos.sx = int(e.FirstScreenPosition(e.DataY()))
 		}
@@ -1334,7 +1334,7 @@ func (e *Editor) UpEnd(c *vt100.Canvas) error {
 		}
 
 		// Expand the line, then check if e.pos.sx falls on a tab character ("\t" is expanded to several tabs ie. "\t\t\t\t")
-		expandedRunes := []rune(strings.Replace(e.CurrentLine(), "\t", strings.Repeat("\t", e.tabsSpaces.PerTab), -1))
+		expandedRunes := []rune(strings.ReplaceAll(e.CurrentLine(), "\t", strings.Repeat("\t", e.tabsSpaces.PerTab)))
 		if e.pos.sx < len(expandedRunes) && expandedRunes[e.pos.sx] == '\t' {
 			e.pos.sx = int(e.FirstScreenPosition(e.DataY()))
 		}
