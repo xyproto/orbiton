@@ -32,10 +32,6 @@ type Visitor struct {
 	fn  string
 }
 
-type Field struct {
-	name string
-}
-
 func (v *Visitor) Visit(node ast.Node) ast.Visitor {
 	if node == nil {
 		return nil
@@ -46,11 +42,7 @@ func (v *Visitor) Visit(node ast.Node) ast.Visitor {
 		if !ok {
 			return v
 		}
-		fname := noname
-		if x.Name != nil {
-			fname = x.Name.Name
-		}
-		fname = x.Name.Name
+		fname := x.Name.Name
 		if v.pos < x.Pos() || v.pos > x.End() {
 			return nil
 		}
@@ -124,7 +116,7 @@ func GetIfErr(types []ast.Expr) (string, error) {
 		}
 		ts := TypeString(t)
 		if ts == "bool" {
-			sb.WriteString(`false`)
+			sb.WriteString("false")
 			continue
 		}
 		if ts == "error" {
@@ -136,7 +128,15 @@ func GetIfErr(types []ast.Expr) (string, error) {
 			continue
 		}
 		if ts == "interface{}" {
-			sb.WriteString(`nil`)
+			sb.WriteString("nil")
+			continue
+		}
+		if ts == "time.Time" {
+			sb.WriteString("time.Time{}")
+			continue
+		}
+		if ts == "time.Duration" {
+			sb.WriteString("time.Duration(0)")
 			continue
 		}
 		if _, ok := isNum[ts]; ok {
@@ -160,7 +160,7 @@ func GetIfErr(types []ast.Expr) (string, error) {
 			continue
 		}
 		// treat it as an interface when type name has "."
-		if strings.Index(ts, ".") >= 0 {
+		if strings.Contains(ts, ".") {
 			sb.WriteString("nil")
 			continue
 		}
