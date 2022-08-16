@@ -26,7 +26,7 @@ var format = map[*exec.Cmd][]string{
 	exec.Command("ocamlformat"):                                                       {".ml"},
 	exec.Command("crystal", "tool", "format"):                                         {".cr"},
 	exec.Command("ktlint", "-F"):                                                      {".kt", ".kts"},
-	exec.Command("google-java-format", "-i"):                                          {".java"},
+	exec.Command("google-java-format", "-a", "-i"):                                    {".java"},
 	exec.Command("scalafmt"):                                                          {".scala"},
 	exec.Command("astyle", "--mode=cs"):                                               {".cs"},
 	exec.Command("prettier", "--tab-width", "4", "-w"):                                {".js", ".ts"},
