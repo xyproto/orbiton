@@ -41,6 +41,9 @@ github.com/xyproto/env
 # github.com/xyproto/guessica v1.1.0
 ## explicit; go 1.14
 github.com/xyproto/guessica
+# github.com/xyproto/iferr v1.0.0
+## explicit; go 1.19
+github.com/xyproto/iferr
 # github.com/xyproto/mode v0.6.12
 ## explicit; go 1.14
 github.com/xyproto/mode
