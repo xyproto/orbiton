@@ -82,6 +82,7 @@ These features are unique to `o`, as far as I am aware:
 * Search and replace by entering a search term (or unicode rune on the form `u+0000`), pressing `tab` entering the replacement string or rune, and then pressing `return`.
 * When jumping to a specific line or percentage (ie. `50%`) of a file with `ctrl-l`, jumping to a fraction (ie. `0.5`) is also supported.
 * Press `right, down, left` or `left, down, right` in a rapid succession followed by `up` to just quit, `down` to save and quit or type in a command. This shortcut is handy to avoid [the emacs pinky](http://xahlee.info/emacs/emacs/emacs_pinky.html).
+* Type `iferr` on a single line in a Go program and press `return` to insert a suitable `if err != nil { return ... }` block, based on [koron/iferr](https://github.com/koron/iferr).
 
 ## Other features and limitations
 

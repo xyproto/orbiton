@@ -289,6 +289,28 @@ func (e *Editor) String() string {
 	return sb.String()
 }
 
+// ContentsAndReverseSearchPrefix returns the contents of the editor,
+// and also the LineNumber of the given string, searching for the prefix backwards from the current position.
+// Also returns true if the given string was found. Used for the "iferr" feature in keyloop.go.
+func (e *Editor) ContentsAndReverseSearchPrefix(prefix string) (string, LineIndex, bool) {
+	currentLineIndex := e.LineIndex()
+	foundLineIndex := currentLineIndex
+	foundIt := false
+	var sb strings.Builder
+	l := e.Len()
+	for i := 0; i < l; i++ {
+		lineIndex := LineIndex(i)
+		line := e.Line(lineIndex)
+		if lineIndex <= currentLineIndex && strings.HasPrefix(strings.TrimSpace(line), prefix) {
+			// Found it, and it's above the currentLineIndex
+			foundLineIndex = lineIndex
+			foundIt = true
+		}
+		sb.WriteString(line + "\n")
+	}
+	return sb.String(), foundLineIndex, foundIt
+}
+
 // Clear removes all data from the editor
 func (e *Editor) Clear() {
 	e.lines = make(map[int][]rune)

@@ -12,6 +12,7 @@ import (
 
 	"github.com/atotto/clipboard"
 	"github.com/xyproto/env"
+	"github.com/xyproto/iferr"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
@@ -956,6 +957,34 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						}
 					}
 				}
+			} else if e.mode == mode.Go && trimmedLine == "iferr" {
+				oneIndentation := e.tabsSpaces.String()
+				// default "if err != nil" block if iferr.IfErr can not find a more suitable one
+				ifErrBlock := "if err != nil {\n" + oneIndentation + "return nil, err\n" + "}\n"
+				// search backwards for "func ", return the full contents, the resulting line index and if it was found
+				contents, functionLineIndex, found := e.ContentsAndReverseSearchPrefix("func ")
+				if found {
+					// count the bytes from the start to the end of the "func " line, since this is what iferr.IfErr uses
+					byteCount := 0
+					for i := LineIndex(0); i <= functionLineIndex; i++ {
+						byteCount += len(e.Line(i))
+					}
+					// fetch a suitable "if err != nil" block for the current function signature
+					if generatedIfErrBlock, err := iferr.IfErr([]byte(contents), byteCount); err != nil {
+						logf("could not generate iferrblock: %s\n", err)
+					} else {
+						ifErrBlock = generatedIfErrBlock
+					}
+				}
+				// insert the block of text
+				for i, line := range strings.Split(strings.TrimSpace(ifErrBlock), "\n") {
+					if i != 0 {
+						e.InsertLineBelow()
+						e.pos.sy++
+					}
+					e.SetCurrentLine(currentLeadingWhitespace + line)
+				}
+				e.End(c)
 			} else if (e.mode == mode.XML || e.mode == mode.HTML) && !e.noExpandTags && trimmedLine != "" && !strings.Contains(trimmedLine, "<") && !strings.Contains(trimmedLine, ">") && strings.ToLower(string(trimmedLine[0])) == string(trimmedLine[0]) {
 				// Words one a line without < or >? Expand into <tag asdf> above and </tag> below.
 				words := strings.Fields(trimmedLine)
