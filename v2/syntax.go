@@ -103,7 +103,8 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		addKeywords = append(addKeywords, hidlWords...)
 		fallthrough // continue to mode.Java
 	case mode.Java:
-		addKeywords = append(addKeywords, "package")
+		// err is useful to highlight System.err.println vs System.out.println
+		addKeywords = append(addKeywords, "err", "package")
 		delKeywords = append(delKeywords, "add", "get", "in", "local", "sub")
 	case mode.JSON:
 		delKeywords = []string{"install"}
