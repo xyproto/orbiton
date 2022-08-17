@@ -286,7 +286,7 @@ func (e *Editor) RunCommand(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 func (e *Editor) CommandPrompt(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo) {
 	// The spaces are intentional, to stop the shorter strings from always kicking in before
 	// the longer ones can be typed.
-	quickList := []string{":wq", "wq", "sq", ":q", "q", ":w ", "s ", "w ", "d", "b", "↓" } // "↑"
+	quickList := []string{":wq", "wq", "sq", ":q", "q", ":w ", "s ", "w ", "d", "b", "↓"} // "↑"
 	// TODO: Show a REPL in a nicely drawn box instead of this simple command interface
 	//       The REPL can have colors, tab-completion, a command history and single-letter commands
 	if commandString, ok := e.UserInput(c, tty, status, "o", quickList, true); ok {
