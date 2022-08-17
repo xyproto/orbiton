@@ -509,12 +509,17 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		// This file should not be considered read-only, since saving went fine
 		e.readOnly = false
 
+		// TODO: Consider the previous fileMode of the file when doing chmod +x instead of just setting 0755 or 0644
+
 		// "chmod +x" or "chmod -x". This is needed after saving the file, in order to toggle the executable bit.
 		// rust source may start with something like "#![feature(core_intrinsics)]", so avoid that.
 		if shebang && e.mode != mode.Rust && e.mode != mode.Python && !e.readOnly {
 			// Call Chmod, but ignore errors (since this is just a bonus and not critical)
 			os.Chmod(e.filename, fileMode)
 			e.syntaxHighlight = true
+		} else if e.mode == mode.Make {
+			fileMode = 0644
+			os.Chmod(e.filename, fileMode)
 		}
 
 		// Stop the spinner
