@@ -104,7 +104,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		fallthrough // continue to mode.Java
 	case mode.Java:
 		addKeywords = append(addKeywords, "package")
-		delKeywords = append(delKeywords, "add", "get", "in", "local", "sub")
+		delKeywords = append(delKeywords, "add", "bool", "get", "in", "local", "sub")
 	case mode.JSON:
 		delKeywords = []string{"install"}
 	case mode.Kotlin:
