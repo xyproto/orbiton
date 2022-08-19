@@ -3,7 +3,7 @@ package main
 import "time"
 
 // Keypress combo time limit
-const keypressComboTimeLimit = 300 * time.Millisecond
+const keypressComboTimeLimit = 120 * time.Millisecond
 
 // KeyHistory represents the last 3 keypresses, and when they were pressed
 type KeyHistory struct {
