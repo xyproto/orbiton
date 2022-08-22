@@ -44,40 +44,40 @@ Hotkeys
 
 ctrl-s     to save
 ctrl-q     to quit
-ctrl-r     to open a portal so that this text can be pasted into another file
+ctrl-o     to open the command menu, where the first option is always
+           "Save and quit"
+ctrl-r     to open a portal so that text can be pasted into another file with ctrl-v
 ctrl-space to compile programs, render MD to PDF or export adoc/sdoc as man
 ctrl-w     for Zig, Rust, V and Go, format with the "... fmt" command
            for C++, format the current file with "clang-format"
            for HTML, format the file with "tidy", for Python: "autopep8"
            for Markdown, toggle checkboxes
            for git interactive rebases, cycle the rebase keywords
+ctrl-g     to toggle filename/line/column/unicode/word count status display
 ctrl-a     go to start of line, then start of text and then the previous line
 ctrl-e     go to end of line and then the next line
 ctrl-n     to scroll down 10 lines or go to the next match if a search is active
 ctrl-p     to scroll up 10 lines or go to the previous match
 ctrl-k     to delete characters to the end of the line, then delete the line
-ctrl-g     to toggle filename/line/column/unicode/word count status display
+ctrl-j     to join lines
 ctrl-d     to delete a single character
-ctrl-o     to open the command menu, where the first option is always
-           "Save and quit"
 ctrl-t     for C and C++, toggle between the header and implementation,
            for Agda, insert a symbol,
-           for the rest, record and play back macros.
+           for the rest, record and then play back a macro
 ctrl-c     to copy the current line, press twice to copy the current block
 ctrl-v     to paste one line, press twice to paste the rest
 ctrl-x     to cut the current line, press twice to cut the current block
 ctrl-b     to toggle a bookmark for the current line, or jump to a bookmark
-ctrl-j     to join lines
 ctrl-u     to undo (ctrl-z is also possible, but may background the application)
 ctrl-l     to jump to a specific line (press return to jump to the top or bottom)
-ctrl-f     to find a string, press tab after the text to search and replace
+ctrl-f     to find a string, press Tab after the text to search and replace
 ctrl-\     to toggle single-line comments for a block of code
 ctrl-~     to jump to matching parenthesis
 esc        to redraw the screen and clear the last search
 
-See the man page for more information.
-
 Set NO_COLOR=1 to disable colors.
+
+See the man page for more information.
 
 `)
 		return
