@@ -178,7 +178,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		fallthrough // Continue to the default
 	default:
 		addKeywords = append(addKeywords, "endif", "ifeq", "ifneq")
-		delKeywords = append(delKeywords, "build", "done", "package", "require", "set", "super", "type")
+		delKeywords = append(delKeywords, "build", "done", "package", "require", "set", "super", "type", "when")
 	}
 	// Add extra keywords that are to be syntax highlighted
 	for _, kw := range addKeywords {
