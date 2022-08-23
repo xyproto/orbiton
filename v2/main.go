@@ -44,8 +44,7 @@ Hotkeys
 
 ctrl-s     to save
 ctrl-q     to quit
-ctrl-o     to open the command menu, where the first option is always
-           "Save and quit"
+ctrl-o     to open the command menu
 ctrl-r     to open a portal so that text can be pasted into another file with ctrl-v
 ctrl-space to compile programs, render MD to PDF or export adoc/sdoc as man
 ctrl-w     for Zig, Rust, V and Go, format with the "... fmt" command

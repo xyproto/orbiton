@@ -148,7 +148,7 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - For C and C++: jump between the current header and source file. For Agda and Ivy, insert a symbol.
              For the rest, record and play back keypresses. Press escape to clear the current macro.
-* `ctrl-o` - Open a command menu with actions that can be performed. The first menu item is always `Save and quit`.
+* `ctrl-o` - Open a command menu with actions that can be performed.
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text (to the next blank line).
 * `ctrl-c` - Copy one line. Press twice to copy a block of text.
 * `ctrl-v` - Paste one trimmed line. Press twice to paste multiple untrimmed lines.
