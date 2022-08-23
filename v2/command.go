@@ -235,14 +235,12 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	// Helpful command aliases that can also handle some typos and abbreviations
 	var functionID int
 	switch trimmedCommand {
-	case "copyall", "copya":
-		functionID = copyall
-	case "qs", "byes", "cus", "exitsave", "quitandsave", "quitsave", "qw", "saq", "saveandquit", "saveexit", "saveq", "savequit", "savq", "sq", "wq", "↑":
-		functionID = savequit
-	case "s", "sa", "sav", "save", "w", "ww", "↓":
-		functionID = save
 	case "bye", "cu", "ee", "exit", "q", "qq", "qu", "qui", "quit":
 		functionID = quit
+	case "build", "b", "bu", "bui":
+		functionID = build
+	case "copyall", "copya":
+		functionID = copyall
 	case "h", "he", "hh", "hel", "help":
 		functionID = help
 	case "if", "i", "insertfile", "insert", "insertf":
@@ -251,14 +249,18 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		functionID = insertdate
 	case "inserttime", "time", "t", "ti", "tim":
 		functionID = inserttime
-	case "v", "ver", "vv", "version":
-		functionID = version
+	case "qs", "byes", "cus", "exitsave", "quitandsave", "quitsave", "qw", "saq", "saveandquit", "saveexit", "saveq", "savequit", "savq", "sq", "wq", "↑":
+		functionID = savequit
+	case "s", "sa", "sav", "save", "w", "ww", "↓":
+		functionID = save
 	case "sb", "so", "sor", "sort":
 		functionID = sortblock
 	case "sortstrings", "sortw", "sortwords", "sow", "ss", "sw", "sortfields", "sf":
 		functionID = sortstrings
-	case "build", "b", "bu", "bui":
-		functionID = build
+	case "sqc", "savequitclear":
+		functionID = savequitclear
+	case "v", "ver", "vv", "version":
+		functionID = version
 	default:
 		return nil, fmt.Errorf("unknown command: %s", args[0])
 	}
@@ -286,7 +288,7 @@ func (e *Editor) RunCommand(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 func (e *Editor) CommandPrompt(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo) {
 	// The spaces are intentional, to stop the shorter strings from always kicking in before
 	// the longer ones can be typed.
-	quickList := []string{":wq", "wq", "sq", ":q", "q", ":w ", "s ", "w ", "d", "b", "↑", "↓"}
+	quickList := []string{":wq", "wq", "sq", "sqc", ":q", "q", ":w ", "s ", "w ", "d", "b", "↑", "↓"}
 	// TODO: Show a REPL in a nicely drawn box instead of this simple command interface
 	//       The REPL can have colors, tab-completion, a command history and single-letter commands
 	if commandString, ok := e.UserInput(c, tty, status, "o", quickList, true); ok {
