@@ -66,22 +66,19 @@
 ## Syntax highlighting
 
 - [ ] Let `<<EOF` be considered the start of a multiline string in Shell, and `EOF` the end.
-- [ ] Let a struct for a Theme contain both the light and the dark version, if there are two.
+- [x] Let a struct for a Theme contain both the light and the dark version, if there are two.
 - [ ] Check that the right theme is loaded under `uxterm`.
 - [ ] Don't let single-line comments at the end of lines disable rainbow parentheses.
 - [ ] Also highlight hexadecimal numbers.
 - [ ] Fix syntax highlighting of `'tokens` in Clojure.
 - [ ] Don't highlight regular text in Nroff files.
-- [ ] `-- ` comments in Ada are not recognized.
-- [ ] Links in Markdown documents are not always recognized.
+- [ ] `-- ` comments in Ada should be recognized.
 - [ ] // within a ` block should not be recognized
-- [ ] Opening a read-only file in the Linux terminal displays different red colors when moving to the bottom.
+- [ ] Opening a read-only file in the Linux terminal should not display different red colors when moving to the bottom.
 - [ ] If a word over N letters is typed 1 letter differently from all the other instances in the current file: color it differently!
 - [ ] Rainbow parenthesis should be able to span multiple lines, especially for Clojure, Common Lisp, Scheme and Emacs Lisp.
 - [ ] Hash strings (like sha256 hash sums), could be colored light yellow and dark yellow for every 2 characters
-- [ ] When viewing man pages, stop the file from being possible to edit, but use the default color theme.
 - [ ] Spellcheck all comments that are in English. Highlight misspelled words. Make it possible to add/ignore words.
-- [ ] Shell scripts with if/else/endif blocks that are commented out are highlighted wrong.
 - [ ] Ignore multiline comments within multiline comments.
 - [ ] Also enable rainbow parenthesis for lines that ends with a single-line comment.
 - [ ] Syntax highlighting of `..`, `::`, `:asdfasdf:` and `^^^` in `.rst` files.
@@ -94,6 +91,7 @@
 
 ## Cut, copy, paste and portals
 
+- [ ] Make it possible to double press `ctrl-c` again, to also copy the next block of text.
 - [ ] Let `ctrl-t` take a line and move it through the portal?
 - [ ] GUI: Look into the clipboard functions for VTE and if they can be used for mouse copy + paste.
 - [ ] Re-enable cross-user portals?
@@ -118,9 +116,6 @@
 
 ## Command menu
 
-- [x] Let a quick succession of arrow keys bring up a prompt where one can type ":wq", "wq" or "sq" to save and quit.
-- [x] Command menu option for deleting the rest of the file.
-- [x] Add word wrap with a custom line length to the command menu.
 - [ ] Add one or more of these commands: regex search, go to definition, rename symbol, find references and disassembly.
 - [ ] Make it easy to make recordings of the editing process (can already use asciinema?).
 
@@ -144,9 +139,7 @@
 
 - [ ] Skip `os.Stat` and `Glob` if they take to long, and just open the file directly (they are needed for smart filename completion).
 - [ ] Extract the features that are used in `vt100` and create a more optimized package.
-- [ ] Reduce memory usage.
-- [ ] In xyproto/mode, don't limit the first line length to 255 to increase performance.
-      This just leads to man pages not being detected if the first line is longer than 255 characters, if the terminal is very wide.
+- [ ] Reduce memory usage even further.
 
 ## Refactoring
 
@@ -166,7 +159,7 @@
       * what else?
       * then translate this to a struct
       * also think about how this can be skipped is the file is enormous and should be read in block-by-block
-- [ ] Abstract the editor, so that sending in keypresses and examining the result can be tested.
+- [ ] Abstract the editor, so that sending in keypresses and examining the result can be tested with Go tests.
 - [ ] Rewrite `insertRune`. Improve word-wrap related functionality.
 - [ ] Introduce a type for screen coordinates, a type for screen coordinates + scroll offset, and another type for data coordinates.
 - [ ] Create a Terminal type that implement the context.Context interface, then pass that to functions that
