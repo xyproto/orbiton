@@ -98,6 +98,7 @@ func (a *Actions) Perform(index int) {
 func (a *Actions) AddCommand(e *Editor, c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo, title string, args ...string) error {
 	f, err := e.CommandToFunction(c, tty, status, bookmark, undo, args...)
 	if err != nil {
+		//panic(err)
 		return err
 	}
 	a.Add(title, f)
