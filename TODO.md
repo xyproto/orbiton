@@ -126,7 +126,7 @@
 ## External programs
 
 - [ ] Let rendering with `pandoc` have a spinner, since it can take a little while.
-- [ ] Let `guessica` also set `pkgrel=1` if there was a new version.
+- [x] Let `guessica` also set `pkgrel=1` if there was a new version.
 - [ ] Embed `fstabfmt`.
 - [ ] Extract the functionality for searching a MessagePack file to a `mpgrep` utility, that has a `-B` flag (like `grep`).
 - [ ] Draw inspiration from [kilo](https://github.com/antirez/kilo).
