@@ -160,6 +160,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.Zig:
 		clearKeywords()
 		addKeywords = zigWords
+		delKeywords = []string{"log"}
 	case mode.GoAssembly:
 		// Only highlight some words, to make them stand out
 		clearKeywords()
