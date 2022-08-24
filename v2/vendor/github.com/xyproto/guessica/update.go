@@ -1,7 +1,7 @@
 package guessica
 
 import (
-	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -10,7 +10,7 @@ var SpecificSites = []string{"github.com", "gitlab.com", "sr.ht"}
 
 // UpdateFile will try to update the version in a given PKGBUILD filename
 func UpdateFile(filename string) error {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}
@@ -27,11 +27,15 @@ func UpdateFile(filename string) error {
 		}
 	}
 
+	// NOTE: the guessica utility uses its own code for this!
+
 	// Build the new PKGBUILD contents
 	var sb strings.Builder
 	for _, line := range strings.Split(pkgbuildContents, "\n") {
 		if strings.HasPrefix(line, "pkgver=") {
 			sb.WriteString("pkgver=" + ver + "\n")
+		} else if strings.HasPrefix(line, "pkgrel=") {
+			sb.WriteString("pkgrel=1\n")
 		} else if strings.HasPrefix(line, "source=") {
 			sb.WriteString(sourceLine + "\n")
 		} else {
@@ -39,5 +43,5 @@ func UpdateFile(filename string) error {
 		}
 	}
 	// Write changes
-	return ioutil.WriteFile(filename, []byte(strings.TrimSpace(sb.String())), 0664)
+	return os.WriteFile(filename, []byte(strings.TrimSpace(sb.String())), 0664)
 }

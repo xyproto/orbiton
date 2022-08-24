@@ -70,9 +70,7 @@ func GuessSourceString(pkgbuildContents, commonGitServer string) (string, string
 			if strings.Contains(sourceURL, "#") {
 				sourceURL = strings.SplitN(sourceURL, "#", 2)[0]
 			}
-			if strings.HasSuffix(sourceURL, ".git") {
-				sourceURL = sourceURL[:len(sourceURL)-4]
-			}
+			sourceURL = strings.TrimSuffix(sourceURL, ".git")
 			getverURL := sourceURL
 			if strings.HasSuffix(getverURL, "/") {
 				getverURL += "releases/latest"
@@ -102,9 +100,7 @@ func GuessSourceString(pkgbuildContents, commonGitServer string) (string, string
 	} else if strings.HasPrefix(url, "https://") {
 		shortURL = url[8:]
 	}
-	if strings.HasSuffix(shortURL, "releases/latest") {
-		shortURL = shortURL[:len(shortURL)-len("releases/latest")]
-	}
+	shortURL = strings.TrimSuffix(shortURL, "releases/latest")
 
 	gotCommit := ""
 

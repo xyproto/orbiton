@@ -14,7 +14,7 @@ Update a `PKGBUILD` file by guessing the latest version number and finding the l
 
 ### Detect the latest version
 
-	guessica PKGBUILD
+    guessica PKGBUILD
 
 ### Detect the latest version and write the changes back to the PKGBUILD
 
@@ -26,6 +26,10 @@ The `pkgver` and `source` arrays will be guessed by searching the project webpag
 
 ## General info
 
-* Version: 1.1.0
-* License: MIT
+* Version: 1.1.1
+* License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
+
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/xyproto/guessica.svg)](https://starchart.cc/xyproto/guessica)
