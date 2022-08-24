@@ -38,7 +38,7 @@ github.com/xyproto/binary
 # github.com/xyproto/env v1.7.0
 ## explicit; go 1.15
 github.com/xyproto/env
-# github.com/xyproto/guessica v1.1.1
+# github.com/xyproto/guessica v1.1.2
 ## explicit; go 1.18
 github.com/xyproto/guessica
 # github.com/xyproto/iferr v1.1.0
