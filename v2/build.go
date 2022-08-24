@@ -216,9 +216,9 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		return cmd, exeExists, nil
 	case mode.Rust:
 		if e.debugMode {
-			cmd = exec.Command("cargo", "build", "-C", "incremental", "--profile", "dev")
+			cmd = exec.Command("cargo", "build", "--profile", "dev")
 		} else {
-			cmd = exec.Command("cargo", "build", "-C", "incremental", "--profile", "release")
+			cmd = exec.Command("cargo", "build", "--profile", "release")
 		}
 		if exists("Cargo.toml") {
 			cmd.Dir = sourceDir
