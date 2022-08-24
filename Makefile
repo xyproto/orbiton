@@ -4,7 +4,7 @@ PREFIX ?= /usr
 MANDIR ?= "$(PREFIX)/share/man/man1"
 GOBUILD := $(shell test $$(go version | tr ' ' '\n' | head -3 | tail -1 | tr '.' '\n' | head -2 | tail -1) -le 12 2>/dev/null && echo GO111MODULES=on go build -v || echo go build -mod=vendor -v)
 
-SRCFILES := $(wildcard v2/*.go)
+SRCFILES := $(wildcard go.* v2/*.go)
 
 CXX ?= g++
 CXXFLAGS ?= -O2 -pipe -fPIC -fno-plt -fstack-protector-strong -Wall -Wshadow -Wpedantic -Wno-parentheses -Wfatal-errors -Wvla -Wignored-qualifiers -pthread -Wl,--as-needed
