@@ -154,26 +154,35 @@ See the man page for more information.
 				// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
 				matches, err := filepath.Glob(fnord.filename + "*")
 				if err == nil && len(matches) > 0 { // no error and at least 1 match
-					// Use the first match of the sorted results
-					sort.Strings(matches)
-					fnord.filename = matches[0]
+					// Use the first non-binary match of the sorted results
+					matches = removeBinaryFiles(matches)
+					if len(matches) > 0 {
+						sort.Strings(matches)
+						fnord.filename = matches[0]
+					}
 				}
 			} else if !strings.Contains(fnord.filename, ".") && allLower(fnord.filename) {
 				// The filename has no ".", is written in lowercase and it does not exist,
 				// but more than one file that starts with the filename  exists. Assume tab-completion failed.
 				matches, err := filepath.Glob(fnord.filename + "*")
 				if err == nil && len(matches) > 1 { // no error and more than 1 match
-					// Use the first match of the sorted results
-					sort.Strings(matches)
-					fnord.filename = matches[0]
+					// Use the first non-binary match of the sorted results
+					matches = removeBinaryFiles(matches)
+					if len(matches) > 0 {
+						sort.Strings(matches)
+						fnord.filename = matches[0]
+					}
 				}
 			} else {
 				// Also match "PKGBUILD" if just "Pk" was entered
 				matches, err := filepath.Glob(strings.ToTitle(fnord.filename) + "*")
 				if err == nil && len(matches) >= 1 { // no error and at least 1 match
-					// Use the first match of the sorted results
-					sort.Strings(matches)
-					fnord.filename = matches[0]
+					// Use the first non-binary match of the sorted results
+					matches = removeBinaryFiles(matches)
+					if len(matches) > 0 {
+						sort.Strings(matches)
+						fnord.filename = matches[0]
+					}
 				}
 			}
 		}

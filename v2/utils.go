@@ -13,6 +13,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/xyproto/binary"
 	"github.com/xyproto/env"
 )
 
@@ -353,4 +354,15 @@ func dataReadyOnStdin() bool {
 		return false
 	}
 	return !(fileInfo.Mode()&os.ModeNamedPipe == 0)
+}
+
+// removeBinaryFiles filters out files that are either binary or can not be read from the given slice
+func removeBinaryFiles(filenames []string) []string {
+	var nonBinaryFilenames []string
+	for _, filename := range filenames {
+		if isBinary, err := binary.File(filename); !isBinary && err == nil {
+			nonBinaryFilenames = append(nonBinaryFilenames, filename)
+		}
+	}
+	return nonBinaryFilenames
 }
