@@ -353,9 +353,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		e.redraw = false
 	}
 
-	// Record the startup duration, in milliseconds
-	//startupMilliseconds := time.Since(startTime).Milliseconds() // Go 1.11 and above only
-	startupMilliseconds := int64(time.Since(startTime)) / 1e6
+	// If SSH_TTY or TMUX is set, redraw everything and then display the status message
+	e.sshMode = env.Str("SSH_TTY") != "" || env.Str("TMUX") != "" || strings.Contains(env.Str("TERMCAP"), "|screen.")
 
 	// Craft an appropriate status message
 	if createdNewFile {
@@ -368,25 +367,27 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	} else {
 		// If startup is slow (> 100 ms), display the startup time in the status bar
 		if e.filename == "-" || e.filename == "/dev/stdin" {
-			if startupMilliseconds >= 100 {
-				statusMessage = fmt.Sprintf("Read from stdin%s (%dms)", warningMessage, startupMilliseconds)
-			} else {
-				statusMessage = fmt.Sprintf("Read from stdin%s", warningMessage)
-			}
+			statusMessage += "Read from stdin"
 		} else {
-			if startupMilliseconds >= 100 {
-				statusMessage = fmt.Sprintf("Loaded %s%s (%dms)", e.filename, warningMessage, startupMilliseconds)
-			} else {
-				statusMessage = fmt.Sprintf("Loaded %s%s", e.filename, warningMessage)
-			}
+			statusMessage += "Loaded " + e.filename
+		}
+		if e.binaryFile {
+			statusMessage += " (binary)"
+		}
+
+		// Take not of the startup duration, in milliseconds
+		startupMilliseconds := time.Since(startTime).Milliseconds()
+
+		if startupMilliseconds > 100 {
+			statusMessage += fmt.Sprintf(" (%dms)", startupMilliseconds)
+		}
+		if warningMessage != "" {
+			statusMessage += warningMessage
 		}
 		if e.readOnly {
 			statusMessage += " (read only)"
 		}
 	}
-
-	// If SSH_TTY or TMUX is set, redraw everything and then display the status message
-	e.sshMode = env.Str("SSH_TTY") != "" || env.Str("TMUX") != "" || strings.Contains(env.Str("TERMCAP"), "|screen.")
 
 	return e, statusMessage, nil
 }
