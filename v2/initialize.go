@@ -163,8 +163,6 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 				return nil, "", errors.New("could not remove an empty file that was just created: " + e.filename)
 			}
 			createdNewFile = true
-
-			//return nil, "", err
 		}
 
 		if !e.Empty() {
