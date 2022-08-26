@@ -137,17 +137,34 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			e.syntaxHighlight = true
 		}
 
-	} else if fileInfo, err := os.Stat(e.filename); err == nil { // no issue
+	} else {
 
-		// TODO: Enter file-rename mode when opening a directory?
-		// Check if this is a directory
-		if fileInfo.IsDir() {
-			return nil, "", errors.New(e.filename + " is a directory")
-		}
+		// This is possibly a directory, or an attempt to create a new and empty file
 
 		warningMessage, err = e.Load(c, tty, fnord)
 		if err != nil {
-			return nil, "", err
+
+			// Could not load a file, this is possibly a directory
+
+			// Prepare an empty file
+			if newMode, err := e.PrepareEmpty(c, tty, e.filename); err != nil {
+				return nil, "", err
+			} else if newMode != mode.Blank {
+				e.mode = newMode
+			}
+			// Test save, to check if the file can be created and written, or not
+			if err := e.Save(c, tty); err != nil {
+				// Check if the new file can be saved before the user starts working on the file.
+				return nil, "", err
+			}
+			// Creating a new empty file worked out fine, don't save it until the user saves it
+			if os.Remove(e.filename) != nil {
+				// This should never happen
+				return nil, "", errors.New("could not remove an empty file that was just created: " + e.filename)
+			}
+			createdNewFile = true
+
+			//return nil, "", err
 		}
 
 		if !e.Empty() {
@@ -187,27 +204,6 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			}
 			testfile.Close()
 		}
-	} else {
-
-		// Prepare an empty file
-		if newMode, err := e.PrepareEmpty(c, tty, e.filename); err != nil {
-			return nil, "", err
-		} else if newMode != mode.Blank {
-			e.mode = newMode
-		}
-
-		// Test save, to check if the file can be created and written, or not
-		if err := e.Save(c, tty); err != nil {
-			// Check if the new file can be saved before the user starts working on the file.
-			return nil, "", err
-		}
-
-		// Creating a new empty file worked out fine, don't save it until the user saves it
-		if os.Remove(e.filename) != nil {
-			// This should never happen
-			return nil, "", errors.New("could not remove an empty file that was just created: " + e.filename)
-		}
-		createdNewFile = true
 	}
 
 	// The editing mode is decided at this point
