@@ -517,7 +517,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 			// Call Chmod, but ignore errors (since this is just a bonus and not critical)
 			os.Chmod(e.filename, fileMode)
 			e.syntaxHighlight = true
-		} else if e.mode == mode.Make {
+		} else if e.mode == mode.Make || e.mode == mode.Markdown || filepath.Base(e.filename) == "PKGBUILD" {
 			fileMode = 0644
 			os.Chmod(e.filename, fileMode)
 		}
