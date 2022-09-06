@@ -164,6 +164,7 @@
 - [ ] Introduce a type for screen coordinates, a type for screen coordinates + scroll offset, and another type for data coordinates.
 - [ ] Create a Terminal type that implement the context.Context interface, then pass that to functions that
       would otherwise take both a `vt100.Canvas`, `vt100.TTY` and a `StatusBar`.
+- [ ] Consider switching over to `github.com/creack/pty`, for better multi-platform support.
 
 ## Built-in game
 
