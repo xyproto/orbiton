@@ -46,7 +46,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 	switch e.mode {
 	// If in Markdown mode, figure out the current state of block quotes
-	case mode.Doc, mode.Markdown:
+	case mode.Doc, mode.Markdown, mode.ReStructured:
 		// Figure out if "fromline" is within a markdown code block or not
 		for i := LineIndex(0); i < fromline; i++ {
 			// Check if the untrimmed line starts with ~~~ or ```
@@ -172,7 +172,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						}
 					}
 					coloredString = e.manPageHighlight(line, programName, y == 0, y+1 == numLinesToDraw)
-				case mode.Doc, mode.Markdown:
+				case mode.Doc, mode.Markdown, mode.ReStructured:
 					if highlighted, ok, codeBlockFound := e.markdownHighlight(line, inCodeBlock, listItemRecord, &inListItem); ok {
 						coloredString = highlighted
 						if codeBlockFound {
@@ -230,7 +230,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				case mode.Zig:
 					trimmedLine = strings.TrimSpace(line)
 					// Handle doc comments (starting with ///)
-					// and multiline strings (starting with \\)
+					// and multi-line strings (starting with \\)
 					if strings.HasPrefix(trimmedLine, "///") || strings.HasPrefix(trimmedLine, `\\`) {
 						coloredString = unEscapeFunction(e.MultiLineString.Start(trimmedLine))
 					} else {

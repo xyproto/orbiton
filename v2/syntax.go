@@ -206,6 +206,8 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "--"
 	case mode.Vim:
 		return "\""
+	case mode.ReStructured:
+		return "["
 	case mode.Clojure, mode.Lisp:
 		return ";;"
 	case mode.Bat:

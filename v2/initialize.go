@@ -55,7 +55,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	// Additional per-mode considerations, before launching the editor
 	rainbowParenthesis := syntaxHighlight // rainbow parenthesis
 	switch m {
-	case mode.Blank, mode.Doc, mode.Email, mode.Markdown, mode.Text:
+	case mode.Blank, mode.Doc, mode.Email, mode.Markdown, mode.Text, mode.ReStructured:
 		rainbowParenthesis = false
 	case mode.ManPage:
 		readOnly = true
@@ -219,7 +219,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	e.tabsSpaces = m.TabsSpaces()
 
 	switch e.mode {
-	case mode.Blank, mode.Doc, mode.Email, mode.Markdown, mode.Text:
+	case mode.Blank, mode.Doc, mode.Email, mode.Markdown, mode.Text, mode.ReStructured:
 		e.rainbowParenthesis = false
 	}
 

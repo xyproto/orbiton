@@ -68,7 +68,7 @@ type Editor struct {
 //   - text foreground
 //   - text background
 //   - search highlight
-//   - multiline comment
+//   - multi-line comment
 //
 // * a syntax highlighting scheme
 // * a file mode
@@ -92,7 +92,7 @@ func NewCustomEditor(tabsSpaces mode.TabsSpaces, scrollSpeed int, m mode.Mode, t
 		// git commit message can be 72 characters long. Because e-mail standards.
 		e.wrapWidth = 72
 		e.wrapWhenTyping = true
-	case mode.Blank, mode.Doc, mode.Markdown, mode.Text:
+	case mode.Blank, mode.Doc, mode.Markdown, mode.Text, mode.ReStructured:
 		e.wrapWidth = 79
 		e.wrapWhenTyping = false
 	}
@@ -517,7 +517,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 			// Call Chmod, but ignore errors (since this is just a bonus and not critical)
 			os.Chmod(e.filename, fileMode)
 			e.syntaxHighlight = true
-		} else if e.mode == mode.Make || e.mode == mode.Markdown || filepath.Base(e.filename) == "PKGBUILD" {
+		} else if e.mode == mode.Make || e.mode == mode.Markdown || e.mode == mode.Doc || e.mode == mode.ReStructured || filepath.Base(e.filename) == "PKGBUILD" {
 			fileMode = 0644
 			os.Chmod(e.filename, fileMode)
 		}
