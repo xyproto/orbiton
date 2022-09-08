@@ -124,11 +124,11 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
 		} else if (q.mode == mode.StandardML || q.mode == mode.OCaml || q.mode == mode.Haskell) && prevRune == '(' && q.None() {
-			q.parCount-- // Not a parenthesis start after all, but the start of a multiline comment
+			q.parCount-- // Not a parenthesis start after all, but the start of a multi-line comment
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
 		} else if (q.mode == mode.Elm || q.mode == mode.Haskell) && prevRune == '{' && q.None() {
-			q.parCount-- // Not a parenthesis start after all, but the start of a multiline comment
+			q.parCount-- // Not a parenthesis start after all, but the start of a multi-line comment
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
 		}
@@ -234,7 +234,7 @@ func (q *QuoteState) Process(line string) (rune, rune) {
 }
 
 // ParBraCount will count the parenthesis and square brackets for a single line
-// while skipping comments and multiline strings
+// while skipping comments and multi-line strings
 // and without modifying the QuoteState.
 func (q *QuoteState) ParBraCount(line string) (int, int) {
 	qCopy := *q
