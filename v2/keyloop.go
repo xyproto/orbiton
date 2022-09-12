@@ -1625,7 +1625,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.redraw = true
 			e.redrawCursor = true
-		case "c:3": // ctrl-c, copy the stripped contents of the current line
+		case "c:3": // ctrl-c, copy the stripped contents of the current line (and save, because ctrl-c twice may interrupt!)
+			e.Save(c, tty)
+
 			y := e.DataY()
 
 			// Forget the cut and paste line state
