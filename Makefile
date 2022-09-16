@@ -1,4 +1,4 @@
-.PHONY: clean install gui gui-install install-gui ko ko-install
+.PHONY: clean install gui gui-install install-gui ko ko-install o
 
 PREFIX ?= /usr
 MANDIR ?= "$(PREFIX)/share/man/man1"
