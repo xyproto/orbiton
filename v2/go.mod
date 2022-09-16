@@ -11,7 +11,7 @@ require (
 	github.com/xyproto/env v1.7.0
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
-	github.com/xyproto/mode v0.6.12
+	github.com/xyproto/mode v0.6.13
 	github.com/xyproto/stringpainter v1.0.0
 	github.com/xyproto/syntax v1.10.7
 	github.com/xyproto/termtitle v1.5.1
@@ -27,5 +27,5 @@ require (
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
-	golang.org/x/sys v0.0.0-20220909162455-aba9fc2a8ff2 // indirect
+	golang.org/x/sys v0.0.0-20220915200043-7b5979e65e41 // indirect
 )

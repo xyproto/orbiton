@@ -109,7 +109,7 @@ func Detect(filename string) Mode {
 			mode = Hare
 		case ".hal":
 			mode = HIDL
-		case ".hs", ".hts":
+		case ".hs", ".hts", ".cabal":
 			mode = Haskell
 		case ".htm", ".html":
 			mode = HTML
