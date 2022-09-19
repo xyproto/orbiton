@@ -37,6 +37,7 @@ const (
 	Punctuation
 	Self
 	Star
+	Static
 	String
 	Tag
 	TextAttrName
@@ -72,6 +73,7 @@ type TextConfig struct {
 	Punctuation   string
 	Self          string
 	Star          string
+	Static        string
 	String        string
 	Tag           string
 	TextAttrName  string
@@ -118,6 +120,8 @@ func (c TextConfig) GetClass(kind Kind) string {
 		return c.Dollar
 	case Star:
 		return c.Star
+	case Static:
+		return c.Static
 	case Self:
 		return c.Self
 	case Class:
@@ -207,6 +211,7 @@ var DefaultTextConfig = TextConfig{
 	Punctuation:   "red",
 	Self:          "magenta",
 	Star:          "white",
+	Static:        "lightyellow",
 	String:        "lightwhite",
 	Tag:           "white",
 	TextAttrName:  "white",
@@ -338,6 +343,8 @@ func tokenKind(tok rune, tokText string, inSingleLineComment *bool, m mode.Mode)
 			return Protected
 		case "class":
 			return Class
+		case "static":
+			return Static
 		case "JMP", "jmp", "LEAVE", "leave", "RET", "ret", "CALL", "call":
 			if m == mode.Assembly || m == mode.GoAssembly {
 				return AssemblyEnd

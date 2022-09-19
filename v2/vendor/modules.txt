@@ -35,7 +35,7 @@ github.com/sourcegraph/annotate
 # github.com/xyproto/binary v1.3.0
 ## explicit; go 1.18
 github.com/xyproto/binary
-# github.com/xyproto/env v1.7.0
+# github.com/xyproto/env v1.8.0
 ## explicit; go 1.15
 github.com/xyproto/env
 # github.com/xyproto/guessica v1.1.2
@@ -50,7 +50,7 @@ github.com/xyproto/mode
 # github.com/xyproto/stringpainter v1.0.0
 ## explicit; go 1.13
 github.com/xyproto/stringpainter
-# github.com/xyproto/syntax v1.10.7
+# github.com/xyproto/syntax v1.10.8
 ## explicit; go 1.14
 github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.5.1
@@ -62,6 +62,6 @@ github.com/xyproto/textoutput
 # github.com/xyproto/vt100 v1.11.3
 ## explicit; go 1.10
 github.com/xyproto/vt100
-# golang.org/x/sys v0.0.0-20220915200043-7b5979e65e41
+# golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8
 ## explicit; go 1.17
 golang.org/x/sys/unix
