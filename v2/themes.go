@@ -848,6 +848,17 @@ func (e *Editor) setVSTheme() {
 	}
 }
 
+// setNoColorTheme sets the NoColor theme, and considers the background color
+func (e *Editor) setNoColorTheme() {
+	if initialLightBackground != nil && *initialLightBackground {
+		e.Theme = NewNoColorLightBackgroundTheme()
+	} else {
+		e.Theme = NewNoColorDarkBackgroundTheme()
+	}
+	e.statusMode = e.Theme.StatusMode
+	syntax.DefaultTextConfig = *(e.Theme.TextConfig())
+}
+
 // setLightVSTheme sets the light theme suitable for xterm
 func (e *Editor) setLightVSTheme() {
 	e.SetTheme(NewLightVSTheme())

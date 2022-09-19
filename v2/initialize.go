@@ -253,6 +253,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	if !e.readOnly && (!specificLetter || editTheme) {
 		inKO := env.Bool("KO")
 		if (env.Has("XTERM_VERSION") && !inKO && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
+			b := true
+			initialLightBackground = &b
 			if editTheme {
 				e.setLightBlueEditTheme()
 			} else {
@@ -266,6 +268,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			backgroundColor := fields[len(fields)-1]
 			// 10 (light green), 11 (yellow), 12 (light blue), 13 (light purple), 14 (light cyan) or white
 			if backgroundColorNumber, err := strconv.Atoi(backgroundColor); err == nil && backgroundColorNumber >= 10 {
+				b := true
+				initialLightBackground = &b
 				if editTheme {
 					e.setLightBlueEditTheme()
 				} else {
@@ -277,6 +281,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			// Checke if the combined value of r, g and b (0..1) is larger than 2
 			// (a bit arbitrary, but should work for most cases)
 			if r, g, b, err := vt100.GetBackgroundColor(tty); err == nil && r+g+b > 2 { // success and the background is not dark
+				b := true
+				initialLightBackground = &b
 				if editTheme {
 					e.setLightBlueEditTheme()
 				} else {

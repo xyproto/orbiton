@@ -442,7 +442,8 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				e.syntaxHighlight = false
 			case 7: // No color
 				envNoColor = true
-				e.setDefaultTheme()
+				e.setNoColorTheme()
+				e.syntaxHighlight = false
 			default:
 				changedTheme = false
 				return
