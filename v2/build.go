@@ -132,6 +132,12 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		}, nil
 	case mode.Go:
 		cmd := exec.Command("go", "build")
+		if strings.HasSuffix(sourceFilename, "_test.go") {
+			// go test run a test that does not exist in order to build just the tests
+			// thanks @cespare at github
+			// https://github.com/golang/go/issues/15513#issuecomment-216410016
+			cmd = exec.Command("go", "test", "-run", "xxxxxxx")
+		}
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.Hare:
