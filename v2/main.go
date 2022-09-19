@@ -207,11 +207,14 @@ See the man page for more information.
 				// TODO: Later, when specificLetter is examined, use either NewEditLightTheme or NewEditDarkTheme
 				specificLetter = true
 				editTheme = true
-			case 'l', 'v': // lo, light, lighted, vs etc.
+			case 'l', 'v': // lo, light, vs, vscode etc.
 				theme = NewDarkVSTheme()
 				specificLetter = true
 			case 'r': // rb, ro, rt, red etc.
 				theme = NewRedBlackTheme()
+				specificLetter = true
+			case 's': // s, sw, synthwave etc.
+				theme = NewSynthwaveTheme()
 				specificLetter = true
 			}
 		}
