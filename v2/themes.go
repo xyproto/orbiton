@@ -30,6 +30,7 @@ type Theme struct {
 	Private                     string
 	Class                       string
 	Star                        string
+	Static                      string
 	Self                        string
 	Tag                         string
 	Dollar                      string
@@ -127,6 +128,7 @@ func NewDefaultTheme() Theme {
 		AndOr:                       "lightyellow",
 		Dollar:                      "lightred",
 		Star:                        "lightyellow",
+		Static:                      "lightyellow",
 		Self:                        "white",
 		Class:                       "lightred",
 		Private:                     "darkred",
@@ -209,6 +211,7 @@ func NewRedBlackTheme() Theme {
 		AndOr:                       "darkred",
 		Dollar:                      "white",
 		Star:                        "white",
+		Static:                      "white",
 		Self:                        "white",
 		Class:                       "darkred",
 		Private:                     "lightgray",
@@ -291,6 +294,7 @@ func NewLightBlueEditTheme() Theme {
 		AndOr:                       "lightyellow",
 		Dollar:                      "lightred",
 		Star:                        "lightred",
+		Static:                      "lightred",
 		Self:                        "lightyellow",
 		Class:                       "lightcyan",
 		Private:                     "lightcyan",
@@ -373,6 +377,7 @@ func NewDarkBlueEditTheme() Theme {
 		AndOr:                       "white",
 		Dollar:                      "lightyellow",
 		Star:                        "lightyellow",
+		Static:                      "lightyellow",
 		Self:                        "lightgreen",
 		Class:                       "white",
 		Private:                     "white",
@@ -454,6 +459,7 @@ func NewLightVSTheme() Theme {
 		AndOr:                       "black",
 		Dollar:                      "red",
 		Star:                        "black",
+		Static:                      "black",
 		Self:                        "darkcyan",
 		Class:                       "blue",
 		Private:                     "black",
@@ -535,6 +541,7 @@ func NewDarkVSTheme() Theme {
 		AndOr:                       "black",
 		Dollar:                      "red",
 		Star:                        "red",
+		Static:                      "red",
 		Self:                        "darkcyan",
 		Class:                       "blue",
 		Private:                     "black",
@@ -643,6 +650,7 @@ func NewNoColorDarkBackgroundTheme() Theme {
 		AndOr:                       "",
 		Dollar:                      "",
 		Star:                        "",
+		Static:                      "",
 		Self:                        "",
 		Class:                       "",
 		Private:                     "",
@@ -724,6 +732,7 @@ func NewNoColorLightBackgroundTheme() Theme {
 		AndOr:                       "",
 		Dollar:                      "",
 		Star:                        "",
+		Static:                      "",
 		Self:                        "",
 		Class:                       "",
 		Private:                     "",
@@ -795,6 +804,7 @@ func (t Theme) TextConfig() *syntax.TextConfig {
 		AndOr:         t.AndOr,
 		Dollar:        t.Dollar,
 		Star:          t.Star,
+		Static:        t.Static,
 		Self:          t.Self,
 		Class:         t.Class,
 		Private:       t.Private,

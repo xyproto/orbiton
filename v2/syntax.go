@@ -176,7 +176,8 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		fallthrough // Continue to C/C++ and then to the default
 	case mode.C, mode.Cpp:
 		addKeywords = append(addKeywords, "int8_t", "uint8_t", "int16_t", "uint16_t", "int32_t", "uint32_t", "int64_t", "uint64_t", "size_t")
-		fallthrough // Continue to the default
+		delKeywords = append(delKeywords, "static") // static is treated separately, as a special keyword
+		fallthrough                                 // Continue to the default
 	default:
 		addKeywords = append(addKeywords, "endif", "ifeq", "ifneq")
 		delKeywords = append(delKeywords, "build", "done", "package", "require", "set", "super", "type", "when")
