@@ -1368,7 +1368,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.redraw = true
 			}
 			e.redrawCursor = true
-		case "c:30": // ctrl-~, jump to matching parenthesis or curly bracket
+		case "c:29", "c:30": // ctrl-~, jump to matching parenthesis or curly bracket
 			r := e.Rune()
 
 			if e.AfterEndOfLine() {
