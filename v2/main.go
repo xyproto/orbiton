@@ -5,11 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
-	"runtime"
-	"runtime/pprof"
 	"sort"
 	"strings"
 	"syscall"
@@ -26,8 +23,6 @@ func main() {
 		versionFlag = flag.Bool("version", false, "version information")
 		helpFlag    = flag.Bool("help", false, "quick overview of hotkeys")
 		forceFlag   = flag.Bool("f", false, "open even if already open")
-		cpuProfile  = flag.String("cpuprofile", "", "write CPU profile to `file`")
-		memProfile  = flag.String("memprofile", "", "write memory profile to `file`")
 	)
 
 	flag.Parse()
@@ -82,17 +77,7 @@ See the man page for more information.
 		return
 	}
 
-	if *cpuProfile != "" {
-		f, err := os.Create(*cpuProfile)
-		if err != nil {
-			log.Fatal("could not create CPU profile: ", err)
-		}
-		defer f.Close() // error handling omitted for example
-		if err := pprof.StartCPUProfile(f); err != nil {
-			log.Fatal("could not start CPU profile: ", err)
-		}
-		defer pprof.StopCPUProfile()
-	}
+	traceStart() // if building with -tags trace
 
 	// Check if the executable starts with "g" or "f"
 	var executableName string
@@ -254,16 +239,5 @@ See the man page for more information.
 		}
 	}
 
-	// Output memory profile information, if the flag is given
-	if *memProfile != "" {
-		f, err := os.Create(*memProfile)
-		if err != nil {
-			log.Fatal("could not create memory profile: ", err)
-		}
-		defer f.Close() // error handling omitted for example
-		runtime.GC()    // get up-to-date statistics
-		if err := pprof.WriteHeapProfile(f); err != nil {
-			log.Fatal("could not write memory profile: ", err)
-		}
-	}
+	traceComplete() // if building with -tags trace
 }

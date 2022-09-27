@@ -37,3 +37,4 @@ release/
 *.bak
 *~
 *.beam
+fgtrace.json
