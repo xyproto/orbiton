@@ -1,3 +1,6 @@
+# github.com/DataDog/gostackparse v0.6.0
+## explicit; go 1.16
+github.com/DataDog/gostackparse
 # github.com/atotto/clipboard v0.1.4
 ## explicit
 github.com/atotto/clipboard
@@ -7,6 +10,10 @@ github.com/creack/pty
 # github.com/cyrus-and/gdb v0.0.0-20220625165517-e10bcab384bb
 ## explicit; go 1.18
 github.com/cyrus-and/gdb
+# github.com/felixge/fgtrace v0.2.0
+## explicit; go 1.18
+github.com/felixge/fgtrace
+github.com/felixge/fgtrace/internal
 # github.com/ianlancetaylor/demangle v0.0.0-20220517205856-0058ec4f073c
 ## explicit; go 1.12
 github.com/ianlancetaylor/demangle
@@ -62,6 +69,6 @@ github.com/xyproto/textoutput
 # github.com/xyproto/vt100 v1.11.3
 ## explicit; go 1.10
 github.com/xyproto/vt100
-# golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8
+# golang.org/x/sys v0.0.0-20220926163933-8cfa568d3c25
 ## explicit; go 1.17
 golang.org/x/sys/unix
