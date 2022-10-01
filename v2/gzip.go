@@ -12,6 +12,7 @@ func withoutGZ(filename string) string {
 	return strings.TrimSuffix(filename, ".gz")
 }
 
+// gUnzipData uncompressed gzip data
 func gUnzipData(data []byte) ([]byte, error) {
 	var (
 		b    = bytes.NewBuffer(data)
@@ -29,6 +30,7 @@ func gUnzipData(data []byte) ([]byte, error) {
 	return resB.Bytes(), nil
 }
 
+// gZipData compresses data with gzip
 func gZipData(data []byte) ([]byte, error) {
 	var (
 		b  bytes.Buffer
