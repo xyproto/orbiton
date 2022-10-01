@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"math"
 	"os"
@@ -365,4 +366,43 @@ func removeBinaryFiles(filenames []string) []string {
 		}
 	}
 	return nonBinaryFilenames
+}
+
+// withoutGZ removes the trailing ".gz" suffix
+func withoutGZ(filename string) string {
+	return strings.TrimSuffix(filename, ".gz")
+}
+
+// ReadFileAndSize in one go.
+// Based on the os.ReadFile function.
+// This function should not be used for reading files in /proc.
+func ReadFileAndSize(filename string) ([]byte, uint64, error) {
+	var size64 uint64
+
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, size64, err
+	}
+	defer f.Close()
+
+	if info, err := f.Stat(); err == nil {
+		size64 = uint64(info.Size())
+	}
+	size64++ // one byte for final read at EOF
+
+	data := make([]byte, 0, size64)
+	for {
+		if len(data) >= cap(data) {
+			d := append(data[:cap(data)], 0)
+			data = d[:len(data)]
+		}
+		n, err := f.Read(data[len(data):cap(data)])
+		data = data[:len(data)+n]
+		if err != nil {
+			if err == io.EOF {
+				err = nil
+			}
+			return data, size64, err
+		}
+	}
 }

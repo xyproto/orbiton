@@ -343,10 +343,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (st
 	} else {
 		// Read the file and check if it could be read
 		if fnord.Empty() {
-			// TODO: Read in the data in a way the returns the byte count
-			//       and use that instead of len(fnord.data)
-			fnord.data, err = os.ReadFile(fnord.filename)
-			fnord.length = uint64(len(fnord.data))
+			fnord.data, fnord.length, err = ReadFileAndSize(fnord.filename)
 			if err != nil {
 				return message, err
 			}
