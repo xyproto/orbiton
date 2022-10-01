@@ -41,7 +41,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	ext := filepath.Ext(baseFilename)
 
 	if fnord.Empty() {
-		m = mode.Detect(fnord.filename) // Note that mode.Detect can check for the full path, like /etc/fstab
+		m = mode.Detect(withoutGZ(fnord.filename)) // Note that mode.Detect can check for the full path, like /etc/fstab
 		syntaxHighlight = origSyntaxHighlight && m != mode.Text && (m != mode.Blank || ext != "")
 	} else {
 		m = mode.SimpleDetectBytes(fnord.data)
