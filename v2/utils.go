@@ -368,14 +368,10 @@ func removeBinaryFiles(filenames []string) []string {
 	return nonBinaryFilenames
 }
 
-// withoutGZ removes the trailing ".gz" suffix
-func withoutGZ(filename string) string {
-	return strings.TrimSuffix(filename, ".gz")
-}
-
 // ReadFileAndSize in one go.
 // Based on the os.ReadFile function.
 // This function should not be used for reading files in /proc.
+// Also supports .gz files.
 func ReadFileAndSize(filename string) ([]byte, uint64, error) {
 	var size64 uint64
 
@@ -401,6 +397,13 @@ func ReadFileAndSize(filename string) ([]byte, uint64, error) {
 		if err != nil {
 			if err == io.EOF {
 				err = nil
+			}
+			if strings.HasSuffix(filename, ".gz") {
+				extractedData, err := gUnzipData(data)
+				if err != nil {
+					return nil, size64, err
+				}
+				return extractedData, uint64(len(extractedData)), nil
 			}
 			return data, size64, err
 		}
