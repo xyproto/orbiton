@@ -496,6 +496,16 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		// Start a spinner, in a short while
 		quitChan := Spinner(c, tty, fmt.Sprintf("Saving %s... ", e.filename), fmt.Sprintf("saving %s: stopped by user", e.filename), 200*time.Millisecond, e.ItalicsColor)
 
+		// Prepare gzipped data
+		if strings.HasSuffix(e.filename, ".gz") {
+			var err error
+			data, err = gZipData(data)
+			if err != nil {
+				quitChan <- true
+				return err
+			}
+		}
+
 		// Save the file and return any errors
 		if err := os.WriteFile(e.filename, data, fileMode); err != nil {
 			// Stop the spinner and return
