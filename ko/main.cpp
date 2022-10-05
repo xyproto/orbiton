@@ -494,13 +494,23 @@ int main(int argc, char* argv[])
     // Check if the executable starts with "l", if yes, use light mode
     bool lightMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'l';
 
-    // Check if -r (red/black color theme) or -l (light color theme) are given
     bool redBlackMode = false;
-    if (flag == "-r"s) {
+    bool synthWaveMode = false;
+    bool vsMode = false;
+
+    // Check if -r (red/black color theme), -l (light color theme) or -s (synthwave theme) are
+    // given
+    if (flag == "-l"s) {
+        lightMode = true;
+        flag = ""s;
+    } else if (flag == "-r"s) {
         redBlackMode = true;
         flag = ""s;
-    } else if (flag == "-l"s) {
-        lightMode = true;
+    } else if (flag == "-s"s) {
+        synthWaveMode = true;
+        flag = ""s;
+    } else if (flag == "-v"s) {
+        vsMode = true;
         flag = ""s;
     }
 
@@ -590,7 +600,11 @@ int main(int argc, char* argv[])
 
     // Setting SHELL to /bin/csh uses the red/black theme...
     if (!lightMode && redBlackMode) {
-        setenv("SHELL", "/bin/csh", true);
+        setenv("THEME", "redblack", true);
+    } else if (!lightMode && synthWaveMode) {
+        setenv("THEME", "synthwave", true);
+    } else if (!lightMode && vsMode) {
+        setenv("THEME", "vs", true);
     }
 
     // Spawn a terminal

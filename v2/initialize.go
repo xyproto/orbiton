@@ -276,6 +276,22 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 					e.setLightVSTheme()
 				}
 			}
+		} else if env.Str("THEME") == "redblack" {
+			b := false
+			initialLightBackground = &b
+			e.setRedBlackTheme()
+		} else if env.Str("THEME") == "synthwave" {
+			b := false
+			initialLightBackground = &b
+			e.setSynthwaveTheme()
+		} else if env.Str("THEME") == "blueedit" {
+			b := false
+			initialLightBackground = &b
+			e.setBlueEditTheme()
+		} else if env.Str("THEME") == "vs" {
+			b := false
+			initialLightBackground = &b
+			e.setVSTheme()
 		} else if discoverBGColor {
 			// r, g, b is the background color from the current terminal emulator, if available
 			// Checke if the combined value of r, g and b (0..1) is larger than 2
