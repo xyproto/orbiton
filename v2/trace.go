@@ -25,7 +25,6 @@ func init() {
 }
 
 func traceStart() {
-	panic("trace start: " + *cpuProfileFilename)
 	// Output CPU profile information, if a filename is given
 	if *cpuProfileFilename != "" {
 		f, err := os.Create(*cpuProfileFilename)
