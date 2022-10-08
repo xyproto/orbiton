@@ -28,6 +28,10 @@ Stepping through the assembly instructions of a Rust program by entering debug m
 
 ![debug rust](img/2022-05-11_debug_rust.png)
 
+Editing a C source file in `ko` using the "synthwave" theme:
+
+![synthwave theme](img/2022-10-08_synthwave_theme.png)
+
 ## Packaging status
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/o-editor.svg)](https://repology.org/project/o-editor/versions) [![Packaging status](https://repology.org/badge/vertical-allrepos/o.svg)](https://repology.org/project/o/versions)
