@@ -69,10 +69,25 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		10,
 		2,
 	},
+	mode.GDScript: { // WIP
+		"extends Node\n\nexport var x = 42\nvar y = 64\n\nfunc _ready():\n\ty = 96\n\nfunc _process(delta):\n\ty = 128\n\n",
+		6,
+		5,
+	},
 	mode.Go: {
 		"package main\n\nimport (\n\t\"fmt\"\n)\n\nfunc main() {\n\tfmt.Println(\"Hello, World!\")\n}\n",
 		13,
 		2,
+	},
+	mode.Hare: {
+		"use fmt;\n\nexport fn main() void = {\n	fmt::println(\"Hello, World!\")!;\n};\n",
+		14,
+		2,
+	},
+	mode.Haskell: {
+		"main :: IO ()\nmain = putStrLn \"Hello, World!\"\n",
+		17,
+		1,
 	},
 	mode.HTML: {
 		"<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <title>Hello</title>\n    <meta name=\"description\" content=\"Hello\">\n    <link rel=\"shortcut icon\" href=\"https://www.iconsdb.com/icons/download/orange/teapot-16.png\">\n    <link rel=\"stylesheet\" href=\"https://unpkg.com/@picocss/pico@latest/css/pico.classless.min.css\">\n  </head>\n  <body>\n    <header>\n      <hgroup>\n        <h1>Greetings</h1>\n        <h2>About to greet <code>the world</code></h2>\n      </hgroup>\n    </header>\n    <main>\n      <section id=\"hello\">\n        <h2>Hello, World!</h2>\n        Task completed.\n      </section>\n    </main>\n    <footer>\n      All done.\n    </footer>\n  </body>\n</html>\n",
@@ -94,27 +109,12 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		13,
 		1,
 	},
-	mode.Hare: {
-		"use fmt;\n\nexport fn main() void = {\n	fmt::println(\"Hello, World!\")!;\n};\n",
-		14,
-		2,
-	},
-	mode.Haskell: {
-		"main :: IO ()\nmain = putStrLn \"Hello, World!\"\n",
-		17,
-		1,
-	},
 	mode.Kotlin: {
 		"fun main() {\n    println(\"Hello, World!\")\n}\n",
 		9,
 		2,
 	},
 	mode.Lua: {
-		"print(\"Hello, World!\")\n",
-		7,
-		1,
-	},
-	mode.Teal: {
 		"print(\"Hello, World!\")\n",
 		7,
 		1,
@@ -128,6 +128,11 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		"program Hello;\nconst\n  greeting = 'Hello, World!';\nbegin\n  writeln(greeting);\nend.\n",
 		12,
 		4,
+	},
+	mode.OCaml: {
+		"print_string \"Hello world!\\n\"",
+		14,
+		2,
 	},
 	mode.Odin: {
 		"package main\n\nimport \"core:fmt\"\n\nmain :: proc() {\n    fmt.println(\"Hello, World!\");\n}\n",
@@ -170,10 +175,10 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		22,
 		1,
 	},
-	mode.OCaml: {
-		"print_string \"Hello world!\\n\"",
-		14,
-		2,
+	mode.Teal: {
+		"print(\"Hello, World!\")\n",
+		7,
+		1,
 	},
 	mode.TypeScript: {
 		"console.log('Hello, World!');\n",
