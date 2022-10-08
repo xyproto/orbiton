@@ -242,7 +242,7 @@ func NewSynthwaveTheme() Theme {
 		CheckboxColor:               vt100.Default,
 		XColor:                      vt100.LightGray,
 		TableBackground:             vt100.BackgroundDefault,
-		UnmatchedParenColor:         vt100.White,
+		UnmatchedParenColor:         vt100.LightRed, // to really stand out
 		MenuTitleColor:              vt100.LightGray,
 		MenuArrowColor:              vt100.Magenta,
 		MenuTextColor:               vt100.Gray,

@@ -10,9 +10,6 @@ import (
 var (
 	colorSlice = make([]vt100.AttributeColor, 0) // to be pushed to and popped from
 
-	// the color for unmatched parenthesis
-	unmatchedParenColor = vt100.White
-
 	errUnmatchedParenthesis = errors.New("unmatched parenthesis")
 )
 
@@ -41,6 +38,8 @@ func (e *Editor) rainbowParen(parCount, braCount *int, chars *[]textoutput.CharA
 	// Initialize the quote state parenthesis count with the one that is for the beginning of this line, in the current document
 	q.parCount = *parCount // parenthesis count
 	q.braCount = *braCount // bracket count
+
+	unmatchedParenColor := e.UnmatchedParenColor
 
 	for i, char := range *chars {
 
