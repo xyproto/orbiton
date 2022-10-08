@@ -27,6 +27,7 @@ const (
 	Elm                   // Elm
 	Erlang                // Erlang
 	Garnet                // Garnet
+	GDScript              // Godot Script
 	Git                   // Git commits and interactive rebases
 	Go                    // Go
 	GoAssembly            // Go-style Assembly
@@ -127,6 +128,8 @@ func (mode Mode) String() string {
 		return "Erlang"
 	case Garnet:
 		return "Garnet"
+	case GDScript:
+		return "Godot Script"
 	case Git:
 		return "Git"
 	case GoAssembly:

@@ -97,6 +97,8 @@ func Detect(filename string) Mode {
 			mode = Email
 		case ".erl":
 			mode = Erlang
+		case ".gd":
+			mode = GDScript
 		case ".gt":
 			mode = Garnet
 		case ".go":
