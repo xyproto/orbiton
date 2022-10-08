@@ -327,7 +327,7 @@ AGAIN:
 			s = "defn "
 		case mode.Crystal, mode.Nim, mode.Python, mode.Scala:
 			s = "def "
-		case mode.Go:
+		case mode.GDScript, mode.Go:
 			s = "func "
 		case mode.Kotlin:
 			s = "fun "

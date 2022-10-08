@@ -25,6 +25,9 @@ var (
 	// Elisp
 	emacsWords = []string{"add-to-list", "defconst", "defun", "defvar", "if", "lambda", "let", "load", "nil", "require", "setq", "when"} // this should do it
 
+	// GDScript
+	gdscriptWords = []string{"as", "assert", "break", "breakpoint", "class", "class_name", "const", "continue", "elif", "else", "enum", "export", "extends", "for", "func", "if", "INF", "is", "master", "mastersync", "match", "NAN", "onready", "pass", "PI", "preload", "puppet", "puppetsync", "remote", "remotesync", "return", "self", "setget", "signal", "static", "TAU", "tool", "var", "while", "yield"}
+
 	// Hardware Interface Description Language. Keywords from https://source.android.com/devices/architecture/hidl
 	hidlWords = []string{"constexpr", "enum", "extends", "generates", "import", "interface", "oneway", "package", "safe_union", "struct", "typedef", "union"}
 
@@ -92,6 +95,9 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.Erlang:
 		clearKeywords()
 		addKeywords = erlangWords
+	case mode.GDScript:
+		clearKeywords()
+		addKeywords = gdscriptWords
 	case mode.Go:
 		addKeywords = []string{"defer", "error", "fallthrough", "go", "print", "println", "range", "rune", "string", "uint", "uint8", "uint16", "uint32", "uint64"}
 		delKeywords = []string{"False", "None", "True", "assert", "auto", "build", "char", "def", "def", "del", "die", "done", "end", "fi", "final", "finally", "fn", "from", "get", "in", "include", "is", "last", "let", "match", "mut", "next", "no", "pass", "redo", "rescue", "ret", "retry", "set", "template", "then", "this", "when", "where", "while", "yes"}
@@ -196,35 +202,35 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 // comment for the current language mode the editor is in.
 func (e *Editor) SingleLineCommentMarker() string {
 	switch e.mode {
-	case mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.Make, mode.Nim, mode.PolicyLanguage, mode.Python, mode.Shell:
-		return "#"
+	case mode.Amber:
+		return "!!"
 	case mode.Assembly:
 		return ";"
+	case mode.Basic:
+		return "'"
+	case mode.Bat:
+		return "@rem" // or rem or just ":" ...
+	case mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.GDScript, mode.Make, mode.Nim, mode.PolicyLanguage, mode.Python, mode.Shell:
+		return "#"
+	case mode.Clojure, mode.Lisp:
+		return ";;"
+	case mode.Email:
+		return "GIT:"
 	case mode.Elm, mode.OCaml, mode.StandardML:
 		// not applicable, just return something that is unlikely to appear at the beginning of a line
 		fallthrough
 	case mode.Ada, mode.Agda, mode.Garnet, mode.Haskell, mode.Lua, mode.SQL, mode.Teal, mode.Terra:
 		return "--"
-	case mode.Vim:
-		return "\""
-	case mode.ReStructured:
-		return "["
-	case mode.Clojure, mode.Lisp:
-		return ";;"
-	case mode.Bat:
-		return "@rem" // or rem or just ":" ...
-	case mode.Nroff:
-		return `.\"`
-	case mode.Amber:
-		return "!!"
-	case mode.Perl, mode.Prolog:
-		return "%"
 	case mode.M4:
 		return "dnl"
-	case mode.Basic:
-		return "'"
-	case mode.Email:
-		return "GIT:"
+	case mode.Nroff:
+		return `.\"`
+	case mode.Perl, mode.Prolog:
+		return "%"
+	case mode.ReStructured:
+		return "["
+	case mode.Vim:
+		return "\""
 	default:
 		return "//"
 	}
