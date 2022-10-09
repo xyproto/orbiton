@@ -35,8 +35,8 @@ func NewBox() *Box {
 	return &Box{0, 0, 0, 0}
 }
 
-// NewCustomBoxTheme creates a new theme/style for a box/container
-func NewCustomBoxTheme(foreground, background, text, highlight, upperEdge, lowerEdge *vt100.AttributeColor) *BoxTheme {
+// NewBoxTheme creates a new theme/style for a box/container, based on the editor theme
+func (e *Editor) NewBoxTheme() *BoxTheme {
 	return &BoxTheme{
 		TL:         '╭', // top left
 		TR:         '╮', // top right
@@ -46,18 +46,13 @@ func NewCustomBoxTheme(foreground, background, text, highlight, upperEdge, lower
 		VR:         '│', // vertical line, right side
 		HT:         '─', // horizontal line
 		HB:         '─', // horizontal bottom line
-		Foreground: foreground,
-		Background: background,
-		Text:       text,
-		Highlight:  highlight,
-		UpperEdge:  upperEdge,
-		LowerEdge:  lowerEdge,
+		Foreground: &e.Foreground,
+		Background: &e.BoxBackground,
+		Text:       &e.BoxTextColor,
+		Highlight:  &e.BoxHighlight,
+		UpperEdge:  &e.BoxUpperEdge,
+		LowerEdge:  &e.BoxTextColor,
 	}
-}
-
-// NewBoxTheme creates a new theme/style for a box/container, based on the editor theme
-func (e *Editor) NewBoxTheme() *BoxTheme {
-	return NewCustomBoxTheme(&e.Foreground, &e.BoxBackground, &e.BoxTextColor, &e.BoxHighlight, &e.BoxUpperEdge, &e.BoxTextColor)
 }
 
 // NewCanvasBox creates a new box/container for the entire canvas/screen
