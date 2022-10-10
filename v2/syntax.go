@@ -131,7 +131,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.ManPage:
 		clearKeywords()
 	case mode.ObjectPascal:
-		addKeywords = []string{"do", "downto", "function", "nil", "procedure", "program", "then", "to", "uses"}
+		addKeywords = []string{"AND", "Array", "Boolean", "Byte", "CASE", "CONST", "Char", "DO", "ELSE", "FOR", "FUNCTION", "IF", "Integer", "LABEL", "NOT", "OF", "PROCEDURE", "PROGRAM", "Pointer", "RECORD", "REPEAT", "Repeat", "String", "THEN", "TO", "TYPE", "Text", "UNTIL", "USES", "VAR", "Word", "do", "downto", "function", "nil", "of", "procedure", "program", "then", "to", "uses"}
 	case mode.Oak:
 		addKeywords = []string{"fn"}
 		delKeywords = []string{"from", "new", "print"}
