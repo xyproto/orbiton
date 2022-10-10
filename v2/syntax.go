@@ -225,6 +225,8 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "dnl"
 	case mode.Nroff:
 		return `.\"`
+	case mode.ObjectPascal:
+		return "{"
 	case mode.Perl, mode.Prolog:
 		return "%"
 	case mode.ReStructured:

@@ -132,6 +132,11 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
 		}
+	case '{':
+		if q.mode == mode.ObjectPascal && q.None() {
+			q.multiLineComment = true
+			q.startedMultiLineComment = true
+		}
 	case '-': // support for HTML-style and XML-style multi-line comments
 		if q.mode != mode.Shell && q.mode != mode.Make && prevRune == '!' && prevPrevRune == '<' && q.None() {
 			q.multiLineComment = true
@@ -191,6 +196,12 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 		}
 	case '}':
 		if (q.mode == mode.Elm || q.mode == mode.Haskell) && prevRune == '-' {
+			q.stoppedMultiLineComment = true
+			q.multiLineComment = false
+			if q.startedMultiLineComment {
+				q.containsMultiLineComments = true
+			}
+		} else if q.mode == mode.ObjectPascal {
 			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
 			if q.startedMultiLineComment {
