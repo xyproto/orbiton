@@ -239,7 +239,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		})
 	}
 
-	actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy everything to clipboard", "copyall")
+	actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy all text to the clipboard", "copyall")
 
 	// Disable or enable the tag-expanding behavior when typing in HTML or XML
 	if e.mode == mode.HTML || e.mode == mode.XML {
