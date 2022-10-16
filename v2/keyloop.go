@@ -1441,13 +1441,16 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redraw = true
 		case "c:19": // ctrl-s, save (or step, if in debug mode)
 			e.UserSave(c, tty, status)
-		case "c:31": // ctrl-_, go to definition or function
-			// TODO: Add bookmark and go to definition.
-			// TODO: Add a menu item for showing an alphabetical list of all functions
-			//       in the current directory, and being able to jump there.
+		case "c:31": // ctrl-_, go to definition
+			// First bookmark the current position
+			bookmark = e.pos.Copy()
+			s := "Bookmarked line " + e.LineNumber().String()
+			status.SetMessage("  " + s + "  ")
+			// TODO: Also bookmark the filename
+			// Then get the word under the cursor
 			word := e.WordAtCursor()
-
-			status.SetMessage("word at cursor: " + word)
+			// TODO: Implement go to definition or filename
+			status.SetMessage("Current word: " + word)
 			status.Show(c, e)
 		case "c:21", "c:26": // ctrl-u or ctrl-z (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state
