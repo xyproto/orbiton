@@ -491,28 +491,11 @@ int main(int argc, char* argv[])
         givenFilename = true;
     }
 
-    // Check if the executable starts with "l", if yes, use light mode
+    // Check if the executable starts with "l", "r", "s" or "v"
     bool lightMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'l';
-
-    bool redBlackMode = false;
-    bool synthWaveMode = false;
-    bool vsMode = false;
-
-    // Check if -r (red/black color theme), -l (light color theme) or -s (synthwave theme) are
-    // given
-    if (flag == "-l"s) {
-        lightMode = true;
-        flag = ""s;
-    } else if (flag == "-r"s) {
-        redBlackMode = true;
-        flag = ""s;
-    } else if (flag == "-s"s) {
-        synthWaveMode = true;
-        flag = ""s;
-    } else if (flag == "-v"s) {
-        vsMode = true;
-        flag = ""s;
-    }
+    bool redBlackMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'r';
+    bool synthWaveMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 's';
+    bool vsMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'v';
 
     // Show the file chooser dialog, if no filename was given
     if (!givenFilename) {
