@@ -217,6 +217,10 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 
 	// Additional per-mode considerations, before launching the editor
 	e.tabsSpaces = m.TabsSpaces()
+	if e.detectedTabs != nil {
+		detectedTabs := *(e.detectedTabs)
+		e.tabsSpaces.Spaces = !detectedTabs
+	}
 
 	switch e.mode {
 	case mode.Blank, mode.Doc, mode.Email, mode.Markdown, mode.Text, mode.ReStructured:

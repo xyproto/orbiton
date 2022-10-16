@@ -21,42 +21,43 @@ import (
 
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
-	macro              *Macro          //  the contents of the current macro (will be cleared when esc is pressed)
-	breakpoint         *Position       //  for the breakpoint/jump functionality in debug mode
-	gdb                *gdb.Gdb        //  connection to gdb, if debugMode is enabled
-	sameFilePortal     *Portal         //  a portal that points to the same file
-	lines              map[int][]rune  //  the contents of the current document
-	filename           string          //  the current filename
-	searchTerm         string          //  the current search term, used when searching
-	stickySearchTerm   string          //  used when going to the next match with ctrl-n, unless esc has been pressed
-	Theme                              //  editor theme, embedded struct
-	pos                Position        //  the current cursor and scroll position
-	tabsSpaces         mode.TabsSpaces //  spaces or tabs, and how many spaces per tab character
-	wrapWidth          int             //  set to ie. 80 or 100 to trigger word wrap when typing to that column
-	mode               mode.Mode       //  a filetype mode, like for git, markdown or various programming languages
-	debugShowRegisters int             //  show no register box, show changed registers, show all changed registers
-	previousY          int             //  previous cursor position
-	previousX          int             //  previous cursor position
-	lineBeforeSearch   LineIndex       //  save the current line number before jumping between search results
-	redrawCursor       bool            //  if the cursor should be moved to the location it is supposed to be
-	slowLoad           bool            //  was the initial file slow to load? (might be an indication of a slow disk or USB stick)
-	readOnly           bool            //  is the file read-only when initializing o?
-	rainbowParenthesis bool            //  rainbow parenthesis
-	sshMode            bool            //  is o used over ssh, tmux or screen, in a way that usually requires extra redrawing?
-	debugMode          bool            //  in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
-	statusMode         bool            //  display a status line at all times at the bottom of the screen
-	noExpandTags       bool            //  used for XML and HTML
-	syntaxHighlight    bool            //  syntax highlighting
-	stopParentOnQuit   bool            //  send SIGQUIT to the parent PID when quitting
-	clearOnQuit        bool            //  clear the terminal when quitting the editor, or not
-	quit               bool            //  for indicating if the user wants to end the editor session
-	changed            bool            //  has the contents changed, since last save?
-	redraw             bool            //  if the contents should be redrawn in the next loop
-	debugHideOutput    bool            //  hide the GDB stdout pane when in debug mode?
-	binaryFile         bool            //  is this a binary file, or a text file?
-	wrapWhenTyping     bool            //  wrap text at a certain limit when typing
+	macro              *Macro          // the contents of the current macro (will be cleared when esc is pressed)
+	breakpoint         *Position       // for the breakpoint/jump functionality in debug mode
+	gdb                *gdb.Gdb        // connection to gdb, if debugMode is enabled
+	sameFilePortal     *Portal         // a portal that points to the same file
+	lines              map[int][]rune  // the contents of the current document
+	filename           string          // the current filename
+	searchTerm         string          // the current search term, used when searching
+	stickySearchTerm   string          // used when going to the next match with ctrl-n, unless esc has been pressed
+	Theme                              // editor theme, embedded struct
+	pos                Position        // the current cursor and scroll position
+	tabsSpaces         mode.TabsSpaces // spaces or tabs, and how many spaces per tab character
+	wrapWidth          int             // set to ie. 80 or 100 to trigger word wrap when typing to that column
+	mode               mode.Mode       // a filetype mode, like for git, markdown or various programming languages
+	debugShowRegisters int             // show no register box, show changed registers, show all changed registers
+	previousY          int             // previous cursor position
+	previousX          int             // previous cursor position
+	lineBeforeSearch   LineIndex       // save the current line number before jumping between search results
+	redrawCursor       bool            // if the cursor should be moved to the location it is supposed to be
+	slowLoad           bool            // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
+	readOnly           bool            // is the file read-only when initializing o?
+	rainbowParenthesis bool            // rainbow parenthesis
+	sshMode            bool            // is o used over ssh, tmux or screen, in a way that usually requires extra redrawing?
+	debugMode          bool            // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
+	statusMode         bool            // display a status line at all times at the bottom of the screen
+	noExpandTags       bool            // used for XML and HTML
+	syntaxHighlight    bool            // syntax highlighting
+	stopParentOnQuit   bool            // send SIGQUIT to the parent PID when quitting
+	clearOnQuit        bool            // clear the terminal when quitting the editor, or not
+	quit               bool            // for indicating if the user wants to end the editor session
+	changed            bool            // has the contents changed, since last save?
+	redraw             bool            // if the contents should be redrawn in the next loop
+	debugHideOutput    bool            // hide the GDB stdout pane when in debug mode?
+	binaryFile         bool            // is this a binary file, or a text file?
+	wrapWhenTyping     bool            // wrap text at a certain limit when typing
 	addSpace           bool            // add a space to the editor, once
 	debugStepInto      bool            // when stepping to the next instruction, step into instead of over
+	detectedTabs       *bool           // were tab or space indentations detected when loading the data?
 }
 
 // NewCustomEditor takes:
@@ -363,8 +364,6 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (st
 		fnord.data = opinionatedByteReplacer(fnord.data)
 	}
 
-	//logf("Loading: %s\n", string(fnord.data))
-
 	// Load the data
 	e.LoadBytes(fnord.data)
 
@@ -392,19 +391,26 @@ func (e *Editor) LoadBytes(data []byte) {
 	e.lines = make(map[int][]rune, lb)
 
 	// Place the lines into the editor, while counting tab indentations
-	var line string
-	var tabIndentCounter uint64
+	var (
+		line               string
+		tabIndentCounter   uint64
+		spaceIndentCounter uint64
+	)
 	for y, byteLine := range byteLines {
 		line = string(byteLine)
 		if strings.HasPrefix(line, "\t") {
 			tabIndentCounter++
+		} else if strings.HasPrefix(line, "  ") { // assume that two spaces is the smallest space indentation
+			spaceIndentCounter++
 		}
 		e.lines[y] = []rune(line)
 	}
 
-	// Check if the "tab indent per line" ratio is larger than 10%.
-	if (float64(tabIndentCounter) / float64(lb)) > 0.1 {
-		e.tabsSpaces.Spaces = false
+	// Check if there are more tab indentations that space indentations
+	if tabIndentCounter > 0 || spaceIndentCounter > 0 {
+		var detectedTabs = tabIndentCounter > spaceIndentCounter
+		e.detectedTabs = &detectedTabs
+		e.tabsSpaces.Spaces = !detectedTabs
 	}
 
 	// Mark the editor contents as "changed"
@@ -1885,11 +1891,11 @@ func (e *Editor) ColIndex() ColIndex {
 
 // StatusMessage returns a status message, intended for being displayed at the bottom
 func (e *Editor) StatusMessage() string {
-	tabs := " spaces"
+	indentations := " spaces"
 	if !e.tabsSpaces.Spaces {
-		tabs = " tabs"
+		indentations = " tabs"
 	}
-	return fmt.Sprintf("line %d col %d rune %U words %d [%s]%s", e.LineNumber(), e.ColNumber(), e.Rune(), e.WordCount(), e.mode, tabs)
+	return fmt.Sprintf("line %d col %d rune %U words %d [%s]%s", e.LineNumber(), e.ColNumber(), e.Rune(), e.WordCount(), e.mode, indentations)
 }
 
 // GoToPosition can go to the given position struct and use it as the new position
