@@ -3,6 +3,7 @@
 ## General
 
 - [ ] Go through this file and remove all completed TODO items.
+- [ ] Add a menu option for listing all function signatures in a file, and being able to jump to any one of them.
 
 ## Building, debugging and testing programs
 
