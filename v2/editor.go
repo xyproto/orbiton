@@ -2264,6 +2264,62 @@ func (e *Editor) LineContentsFromCursorPosition() string {
 	return strings.TrimSpace(e.CurrentLine()[x:])
 }
 
+// WordAtCursor returns the current word under the cursor, or an empty string.
+// The word may contain numbers or dashes, but not spaces or special characters.
+func (e *Editor) WordAtCursor() string {
+	y := int(e.DataY())
+	runes, ok := e.lines[y]
+	if !ok {
+		// This should never happen
+		return ""
+	}
+
+	// Check if there are letters on the current line
+	if len(runes) == 0 {
+		return ""
+	}
+
+	// Either find x or use the last index of the line
+	x, err := e.DataX()
+	if err != nil {
+		x = len(runes)
+	}
+
+	qualifies := func(r rune) bool {
+		return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_'
+	}
+
+	// Check if the cursor is at a word
+	if !qualifies(runes[x]) {
+		return ""
+	}
+
+	// Find the first letter of the word (or the start of the line)
+	firstLetterIndex := 0
+	for i := x; i >= 0; i-- {
+		r := runes[i]
+		if !qualifies(r) {
+			break
+		}
+		firstLetterIndex = i
+	}
+
+	// Loop from the first letter of the word, to the first non-letter.
+	// Gather the letters.
+	var word []rune
+	for i := firstLetterIndex; i < len(runes); i++ {
+		r := runes[i]
+		if !qualifies(r) {
+			break
+		}
+		// Gather the letters
+		word = append(word, r)
+	}
+
+	// Return the word
+	return string(word)
+}
+
 // LettersBeforeCursor returns the current word up until the cursor (for autocompletion)
 func (e *Editor) LettersBeforeCursor() string {
 	y := int(e.DataY())
@@ -2289,6 +2345,8 @@ func (e *Editor) LettersBeforeCursor() string {
 		// Gather the letters in reverse
 		word = append([]rune{r}, word...)
 	}
+
+	// Return the letters as a string
 	return string(word)
 }
 

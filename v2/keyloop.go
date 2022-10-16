@@ -1445,7 +1445,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// TODO: Add bookmark and go to definition.
 			// TODO: Add a menu item for showing an alphabetical list of all functions
 			//       in the current directory, and being able to jump there.
-			status.SetMessage("TO IMPLEMENT: add bookmark and go to definition")
+			word := e.WordAtCursor()
+
+			status.SetMessage("word at cursor: " + word)
 			status.Show(c, e)
 		case "c:21", "c:26": // ctrl-u or ctrl-z (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state
