@@ -491,11 +491,12 @@ int main(int argc, char* argv[])
         givenFilename = true;
     }
 
-    // Check if the executable starts with "l", "r", "s" or "v"
+    // Check if the executable starts with "l", "r", "s", "v" or "b"
     bool lightMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'l';
     bool redBlackMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'r';
     bool synthWaveMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 's';
     bool vsMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'v';
+    bool blueEditMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'b';
 
     // Show the file chooser dialog, if no filename was given
     if (!givenFilename) {
@@ -588,6 +589,8 @@ int main(int argc, char* argv[])
         setenv("THEME", "synthwave", true);
     } else if (!lightMode && vsMode) {
         setenv("THEME", "vs", true);
+    } else if (!lightMode && blueEditMode) {
+        setenv("THEME", "blueedit", true);
     }
 
     // Spawn a terminal
