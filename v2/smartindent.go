@@ -11,13 +11,13 @@ func (e *Editor) smartIndentation(leadingWhitespace, trimmedLine string, alsoDed
 	if len(trimmedLine) > 0 &&
 		(strings.HasSuffix(trimmedLine, "(") || strings.HasSuffix(trimmedLine, "{") || strings.HasSuffix(trimmedLine, "[") ||
 			strings.HasSuffix(trimmedLine, ":")) && !strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()) {
-		leadingWhitespace += e.tabsSpaces.String()
+		leadingWhitespace += e.indentation.String()
 	}
 	if alsoDedent {
 		// "smart dedentation", subtract one indentation from the line above
 		if len(trimmedLine) > 0 &&
 			(strings.HasSuffix(trimmedLine, ")") || strings.HasSuffix(trimmedLine, "}") || strings.HasSuffix(trimmedLine, "]")) {
-			indentation := e.tabsSpaces.String()
+			indentation := e.indentation.String()
 			if len(leadingWhitespace) > len(indentation) {
 				leadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-len(indentation)]
 			}

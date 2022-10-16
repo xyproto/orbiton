@@ -534,7 +534,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				if e.pos.sx > 0 {
 					// Move one step left
 					if e.TabToTheLeft() {
-						e.pos.sx -= e.tabsSpaces.PerTab
+						e.pos.sx -= e.indentation.PerTab
 					} else {
 						e.pos.sx--
 					}
@@ -548,7 +548,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// no horizontal scrolling going on
 				// Move one step left
 				if e.TabToTheLeft() {
-					e.pos.sx -= e.tabsSpaces.PerTab
+					e.pos.sx -= e.indentation.PerTab
 				} else {
 					e.pos.sx--
 				}
@@ -953,12 +953,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 							e.SetCurrentLine(currentLeadingWhitespace + kw + " (" + trimmedLine[len(kw)+1:] + ")")
 							e.pos.sx += 2
 							indent = true
-							leadingWhitespace = e.tabsSpaces.String() + currentLeadingWhitespace
+							leadingWhitespace = e.indentation.String() + currentLeadingWhitespace
 						}
 					}
 				}
 			} else if e.mode == mode.Go && trimmedLine == "iferr" {
-				oneIndentation := e.tabsSpaces.String()
+				oneIndentation := e.indentation.String()
 				// default "if err != nil" block if iferr.IfErr can not find a more suitable one
 				ifErrBlock := "if err != nil {\n" + oneIndentation + "return nil, err\n" + "}\n"
 				// search backwards for "func ", return the full contents, the resulting line index and if it was found
@@ -1026,7 +1026,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.pos.sy--
 						e.pos.sx += 2
 						indent = true
-						leadingWhitespace = e.tabsSpaces.String() + currentLeadingWhitespace
+						leadingWhitespace = e.indentation.String() + currentLeadingWhitespace
 					}
 				}
 			}
@@ -1144,9 +1144,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.End(c)
 					e.Delete()
 				}
-			} else if e.tabsSpaces.Spaces && (e.EmptyLine() || e.AtStartOfTheLine()) && e.tabsSpaces.WSLen(e.LeadingWhitespace()) >= e.tabsSpaces.PerTab {
+			} else if e.indentation.Spaces && (e.EmptyLine() || e.AtStartOfTheLine()) && e.indentation.WSLen(e.LeadingWhitespace()) >= e.indentation.PerTab {
 				// Delete several spaces
-				for i := 0; i < e.tabsSpaces.PerTab; i++ {
+				for i := 0; i < e.indentation.PerTab; i++ {
 					// Move back
 					e.Prev(c)
 					// Type a blank
@@ -1264,7 +1264,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						newLeadingSpace   string
 					)
 
-					oneIndentation := e.tabsSpaces.String()
+					oneIndentation := e.indentation.String()
 
 					// Smart-ish indentation
 					if !strings.HasPrefix(strippedLineAbove, "switch ") && (strings.HasPrefix(strippedLineAbove, "case ")) ||
@@ -1296,8 +1296,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			undo.Snapshot(e)
-			if e.tabsSpaces.Spaces {
-				for i := 0; i < e.tabsSpaces.PerTab; i++ {
+			if e.indentation.Spaces {
+				for i := 0; i < e.indentation.PerTab; i++ {
 					e.InsertRune(c, ' ')
 					// Write the spaces that represent the tab to the canvas
 					e.WriteTab(c)
@@ -2039,10 +2039,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						newLeadingWhitespace := leadingWhitespace
 						if strings.HasSuffix(leadingWhitespace, "\t") {
 							newLeadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-1]
-							e.pos.sx -= e.tabsSpaces.PerTab
-						} else if strings.HasSuffix(leadingWhitespace, strings.Repeat(" ", e.tabsSpaces.PerTab)) {
-							newLeadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-e.tabsSpaces.PerTab]
-							e.pos.sx -= e.tabsSpaces.PerTab
+							e.pos.sx -= e.indentation.PerTab
+						} else if strings.HasSuffix(leadingWhitespace, strings.Repeat(" ", e.indentation.PerTab)) {
+							newLeadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-e.indentation.PerTab]
+							e.pos.sx -= e.indentation.PerTab
 						}
 						e.SetCurrentLine(newLeadingWhitespace)
 					}

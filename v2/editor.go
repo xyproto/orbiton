@@ -31,7 +31,7 @@ type Editor struct {
 	stickySearchTerm   string          // used when going to the next match with ctrl-n, unless esc has been pressed
 	Theme                              // editor theme, embedded struct
 	pos                Position        // the current cursor and scroll position
-	tabsSpaces         mode.TabsSpaces // spaces or tabs, and how many spaces per tab character
+	indentation        mode.TabsSpaces // spaces or tabs, and how many spaces per tab character
 	wrapWidth          int             // set to ie. 80 or 100 to trigger word wrap when typing to that column
 	mode               mode.Mode       // a filetype mode, like for git, markdown or various programming languages
 	debugShowRegisters int             // show no register box, show changed registers, show all changed registers
@@ -74,11 +74,11 @@ type Editor struct {
 //
 // * a syntax highlighting scheme
 // * a file mode
-func NewCustomEditor(tabsSpaces mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight, rainbowParenthesis bool) *Editor {
+func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight, rainbowParenthesis bool) *Editor {
 	e := &Editor{}
 	e.SetTheme(theme)
 	e.lines = make(map[int][]rune)
-	e.tabsSpaces = tabsSpaces
+	e.indentation = indentation
 	e.syntaxHighlight = syntaxHighlight
 	e.rainbowParenthesis = rainbowParenthesis
 	p := NewPosition(scrollSpeed)
@@ -199,7 +199,7 @@ func (e *Editor) ScreenLine(n int) string {
 			}
 			sb.WriteRune(r)
 		}
-		tabSpace := strings.Repeat("\t", e.tabsSpaces.PerTab)
+		tabSpace := strings.Repeat("\t", e.indentation.PerTab)
 		return strings.ReplaceAll(sb.String(), "\t", tabSpace)
 	}
 	return ""
@@ -214,14 +214,14 @@ func (e *Editor) LastDataPosition(n LineIndex) int {
 // LastScreenPosition returns the last X index for this line, for the screen (expands tabs)
 // Can be negative, if the line is empty.
 func (e *Editor) LastScreenPosition(n LineIndex) int {
-	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.tabsSpaces.PerTab - 1))
+	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.indentation.PerTab - 1))
 	return (e.LastDataPosition(n) + extraSpaceBecauseOfTabs)
 }
 
 // LastTextPosition returns the last X index for this line, regardless of horizontal scrolling.
 // Can be negative if the line is empty. Tabs are expanded.
 func (e *Editor) LastTextPosition(n LineIndex) int {
-	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.tabsSpaces.PerTab - 1))
+	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.indentation.PerTab - 1))
 	return (e.LastDataPosition(n) + extraSpaceBecauseOfTabs)
 }
 
@@ -230,7 +230,7 @@ func (e *Editor) LastTextPosition(n LineIndex) int {
 func (e *Editor) FirstScreenPosition(n LineIndex) uint {
 	var (
 		counter      uint
-		spacesPerTab = uint(e.tabsSpaces.PerTab)
+		spacesPerTab = uint(e.indentation.PerTab)
 	)
 	for _, r := range e.Line(n) {
 		if r == '\t' {
@@ -410,7 +410,7 @@ func (e *Editor) LoadBytes(data []byte) {
 		// Check if there were more tab indentations than space indentations
 		var detectedTabs = tabIndentCounter > spaceIndentCounter
 		e.detectedTabs = &detectedTabs
-		e.tabsSpaces.Spaces = !detectedTabs
+		e.indentation.Spaces = !detectedTabs
 	}
 
 	// Mark the editor contents as "changed"
@@ -479,7 +479,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 			// NOTE: This is a hack, that can only replace 10 levels deep.
 			for level := 10; level > 0; level-- {
 				fromString := "\n" + strings.Repeat("\t", level)
-				toString := "\n" + strings.Repeat(" ", level*e.tabsSpaces.PerTab)
+				toString := "\n" + strings.Repeat(" ", level*e.indentation.PerTab)
 				s = strings.ReplaceAll(s, fromString, toString)
 			}
 		}
@@ -1163,7 +1163,7 @@ func (e *Editor) DataX() (int, error) {
 		}
 		// Increase the counter, based on the current rune
 		if r == '\t' {
-			screenCounter += e.tabsSpaces.PerTab
+			screenCounter += e.indentation.PerTab
 		} else {
 			screenCounter++
 		}
@@ -1349,7 +1349,7 @@ func (e *Editor) DownEnd(c *vt100.Canvas) error {
 		}
 
 		// Expand the line, then check if e.pos.sx falls on a tab character ("\t" is expanded to several tabs ie. "\t\t\t\t")
-		expandedRunes := []rune(strings.ReplaceAll(line, "\t", strings.Repeat("\t", e.tabsSpaces.PerTab)))
+		expandedRunes := []rune(strings.ReplaceAll(line, "\t", strings.Repeat("\t", e.indentation.PerTab)))
 		if e.pos.sx < len(expandedRunes) && expandedRunes[e.pos.sx] == '\t' {
 			e.pos.sx = int(e.FirstScreenPosition(e.DataY()))
 		}
@@ -1385,7 +1385,7 @@ func (e *Editor) UpEnd(c *vt100.Canvas) error {
 		}
 
 		// Expand the line, then check if e.pos.sx falls on a tab character ("\t" is expanded to several tabs ie. "\t\t\t\t")
-		expandedRunes := []rune(strings.ReplaceAll(e.CurrentLine(), "\t", strings.Repeat("\t", e.tabsSpaces.PerTab)))
+		expandedRunes := []rune(strings.ReplaceAll(e.CurrentLine(), "\t", strings.Repeat("\t", e.indentation.PerTab)))
 		if e.pos.sx < len(expandedRunes) && expandedRunes[e.pos.sx] == '\t' {
 			e.pos.sx = int(e.FirstScreenPosition(e.DataY()))
 		}
@@ -1398,7 +1398,7 @@ func (e *Editor) Next(c *vt100.Canvas) error {
 	// Ignore it if the position is out of bounds
 	atTab := e.Rune() == '\t'
 	if atTab {
-		e.pos.sx += e.tabsSpaces.PerTab
+		e.pos.sx += e.indentation.PerTab
 	} else {
 		e.pos.sx++
 	}
@@ -1406,7 +1406,7 @@ func (e *Editor) Next(c *vt100.Canvas) error {
 	if e.AfterLineScreenContentsPlusOne() {
 		// Undo the move
 		if atTab {
-			e.pos.sx -= e.tabsSpaces.PerTab
+			e.pos.sx -= e.indentation.PerTab
 		} else {
 			e.pos.sx--
 		}
@@ -1446,7 +1446,7 @@ func (e *Editor) TabToTheLeft() bool {
 // Prev will move the cursor to the previous position in the contents
 func (e *Editor) Prev(c *vt100.Canvas) error {
 
-	atTab := e.TabToTheLeft() || (e.pos.sx <= e.tabsSpaces.PerTab && e.Get(0, e.DataY()) == '\t')
+	atTab := e.TabToTheLeft() || (e.pos.sx <= e.indentation.PerTab && e.Get(0, e.DataY()) == '\t')
 	if e.pos.sx == 0 && e.pos.offsetX > 0 {
 		// at left edge, but can scroll to the left
 		e.pos.offsetX--
@@ -1454,7 +1454,7 @@ func (e *Editor) Prev(c *vt100.Canvas) error {
 	} else {
 		// If at a tab character, move a few more positions
 		if atTab {
-			e.pos.sx -= e.tabsSpaces.PerTab
+			e.pos.sx -= e.indentation.PerTab
 		} else {
 			e.pos.sx--
 		}
@@ -1462,7 +1462,7 @@ func (e *Editor) Prev(c *vt100.Canvas) error {
 	if e.pos.sx < 0 { // Did we move too far and there is no X offset?
 		// Undo the move
 		if atTab {
-			e.pos.sx += e.tabsSpaces.PerTab
+			e.pos.sx += e.indentation.PerTab
 		} else {
 			e.pos.sx++
 		}
@@ -1690,7 +1690,7 @@ func (e *Editor) WriteRune(c *vt100.Canvas) {
 
 // WriteTab writes spaces when there is a tab character, to the canvas
 func (e *Editor) WriteTab(c *vt100.Canvas) {
-	spacesPerTab := e.tabsSpaces.PerTab
+	spacesPerTab := e.indentation.PerTab
 	for x := e.pos.sx; x < e.pos.sx+spacesPerTab; x++ {
 		c.WriteRune(uint(x+e.pos.offsetX), uint(e.pos.sy), e.Foreground, e.Background, ' ')
 	}
@@ -1832,7 +1832,7 @@ func (e *Editor) GoToLineNumberAndCol(lineNumber LineNumber, colNumber ColNumber
 
 	// Go to the correct column as well
 	tabs := strings.Count(e.Line(yIndex), "\t")
-	newScreenX := int(xIndex) + (tabs * (e.tabsSpaces.PerTab - 1))
+	newScreenX := int(xIndex) + (tabs * (e.indentation.PerTab - 1))
 	if e.pos.sx != newScreenX {
 		redraw = true
 	}
@@ -1892,7 +1892,7 @@ func (e *Editor) ColIndex() ColIndex {
 // StatusMessage returns a status message, intended for being displayed at the bottom
 func (e *Editor) StatusMessage() string {
 	indentations := " spaces"
-	if !e.tabsSpaces.Spaces {
+	if !e.indentation.Spaces {
 		indentations = " tabs"
 	}
 	return fmt.Sprintf("line %d col %d rune %U words %d [%s]%s", e.LineNumber(), e.ColNumber(), e.Rune(), e.WordCount(), e.mode, indentations)
@@ -2481,7 +2481,7 @@ func (e *Editor) MoveToNumber(c *vt100.Canvas, status *StatusBar, lineNumber, li
 		if x, err := strconv.Atoi(lineColumn); err == nil { // no error
 			foundX := x - 1
 			tabs := strings.Count(e.Line(foundY.LineIndex()), "\t")
-			e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
+			e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
 			e.Center(c)
 		} else {
 			return err
@@ -2501,7 +2501,7 @@ func (e *Editor) MoveToLineColumnNumber(c *vt100.Canvas, status *StatusBar, line
 	x := lineColumn
 	foundX := x - 1
 	tabs := strings.Count(e.Line(foundY.LineIndex()), "\t")
-	e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
+	e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
 	if ignoreIndentation {
 		e.pos.sx += len(e.LeadingWhitespace())
 	}
@@ -2519,7 +2519,7 @@ func (e *Editor) MoveToIndex(c *vt100.Canvas, status *StatusBar, lineIndex, line
 		if x, err := strconv.Atoi(lineColumnIndex); err == nil { // no error
 			foundX := x - 1
 			tabs := strings.Count(e.Line(foundY), "\t")
-			e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
+			e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
 			e.Center(c)
 		} else {
 			return err

@@ -50,7 +50,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 
 	adjustSyntaxHighlightingKeywords(m) // no theme changes, just language detection and keyword configuration
 
-	tabsSpaces := m.TabsSpaces()
+	indentation := m.TabsSpaces()
 
 	// Additional per-mode considerations, before launching the editor
 	rainbowParenthesis := syntaxHighlight // rainbow parenthesis
@@ -62,7 +62,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	}
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
-	e := NewCustomEditor(tabsSpaces,
+	e := NewCustomEditor(indentation,
 		scrollSpeed,
 		m,
 		theme,
@@ -216,10 +216,10 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	adjustSyntaxHighlightingKeywords(e.mode)
 
 	// Additional per-mode considerations, before launching the editor
-	e.tabsSpaces = m.TabsSpaces()
+	e.indentation = m.TabsSpaces()
 	if e.detectedTabs != nil {
 		detectedTabs := *(e.detectedTabs)
-		e.tabsSpaces.Spaces = !detectedTabs
+		e.indentation.Spaces = !detectedTabs
 	}
 
 	switch e.mode {

@@ -612,7 +612,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 									if x, err := strconv.Atoi(lineColumnString); err == nil { // no error
 										foundX := x - 1
 										tabs := strings.Count(e.Line(foundY), "\t")
-										e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
+										e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
 										e.Center(c)
 									}
 								}
@@ -737,7 +737,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 						if x, err := strconv.Atoi(lineColumnString); err == nil { // no error
 							foundX := x - 1
 							tabs := strings.Count(e.Line(foundY), "\t")
-							e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
+							e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
 							e.Center(c)
 						}
 					}
@@ -797,7 +797,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 				if x, err := strconv.Atoi(fields[2]); err == nil { // no error
 					foundX := x - 1
 					tabs := strings.Count(e.Line(foundY), "\t")
-					e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
+					e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
 					e.Center(c)
 				}
 
@@ -833,7 +833,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					if foundX != -1 {
 
 						tabs := strings.Count(e.Line(foundY), "\t")
-						e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
+						e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
 						e.Center(c)
 
 						// Use the error message as the status message
@@ -872,7 +872,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 						}
 						if foundX != -1 {
 							tabs := strings.Count(e.Line(foundY), "\t")
-							e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
+							e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
 							e.Center(c)
 							// Use the error message as the status message
 							if errorMessage != "" {

@@ -28,7 +28,7 @@ var (
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy uint) {
 
 	bg := e.Background.Background()
-	tabString := strings.Repeat(" ", e.tabsSpaces.PerTab)
+	tabString := strings.Repeat(" ", e.indentation.PerTab)
 	inCodeBlock := false // used when highlighting Doc, Markdown or Python
 
 	// If the terminal emulator is being resized, then wait a bit
@@ -486,8 +486,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 					if letter == '\t' {
 						c.Write(cx+lineRuneCount, cy+uint(y), fg, e.Background, tabString)
-						lineRuneCount += uint(e.tabsSpaces.PerTab)
-						lineStringCount += uint(e.tabsSpaces.PerTab)
+						lineRuneCount += uint(e.indentation.PerTab)
+						lineStringCount += uint(e.indentation.PerTab)
 					} else {
 						if unicode.IsControl(letter) {
 							letter = controlRuneReplacement

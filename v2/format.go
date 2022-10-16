@@ -116,7 +116,7 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 						}
 						if foundX != -1 {
 							tabs := strings.Count(e.Line(LineIndex(foundY)), "\t")
-							e.pos.sx = foundX + (tabs * (e.tabsSpaces.PerTab - 1))
+							e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
 							e.Center(c)
 						}
 					}
@@ -159,7 +159,7 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 			indentedJSON, err = json.Marshal(v)
 			*jsonFormatToggle = false
 		} else {
-			indentationString := strings.Repeat(" ", e.tabsSpaces.PerTab)
+			indentationString := strings.Repeat(" ", e.indentation.PerTab)
 			indentedJSON, err = json.MarshalIndent(v, "", indentationString)
 			*jsonFormatToggle = true
 		}
