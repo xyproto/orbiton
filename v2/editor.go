@@ -406,8 +406,8 @@ func (e *Editor) LoadBytes(data []byte) {
 		e.lines[y] = []rune(line)
 	}
 
-	// Check if there are more tab indentations that space indentations
 	if tabIndentCounter > 0 || spaceIndentCounter > 0 {
+		// Check if there were more tab indentations than space indentations
 		var detectedTabs = tabIndentCounter > spaceIndentCounter
 		e.detectedTabs = &detectedTabs
 		e.tabsSpaces.Spaces = !detectedTabs
