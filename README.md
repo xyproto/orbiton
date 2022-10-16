@@ -44,7 +44,7 @@ With Go 1.18 or later, `o` can be installed like this:
 
 Alternatively, download and install a [release version](https://github.com/xyproto/o/releases). For example, for Raspberry Pi 2, 3 or 4 running Linux:
 
-    curl -sL 'https://github.com/xyproto/o/releases/download/2.56.0/o-2.56.0-linux_armv7_static.tar.xz' | tar JxC /tmp && sudo install -Dm755 /tmp/o-2.56.0-linux_armv7_static/o /usr/bin/o && sudo install -Dm644 /tmp/o-2.56.0-linux_armv7_static/o.1.gz /usr/share/man/man1/o.1.gz
+    curl -sL 'https://github.com/xyproto/o/releases/download/2.57.0/o-2.57.0-linux_armv7_static.tar.xz' | tar JxC /tmp && sudo install -Dm755 /tmp/o-2.57.0-linux_armv7_static/o /usr/bin/o && sudo install -Dm644 /tmp/o-2.57.0-linux_armv7_static/o.1.gz /usr/share/man/man1/o.1.gz
 
 * Remember to use `tar zxC` if the release file for your platform ends with `.tar.gz`.
 * The `sudo install` commands may be slightly different for FreeBSD and NetBSD.
@@ -523,6 +523,6 @@ Installing a symlink for launching `ko` with a light theme:
 
 ## General info
 
-* Version: 2.56.0
+* Version: 2.57.0
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

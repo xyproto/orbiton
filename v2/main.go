@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	versionString = "o 2.56.0"
+	versionString = "o 2.57.0"
 )
 
 func main() {
