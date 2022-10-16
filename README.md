@@ -493,9 +493,23 @@ Try the Konami code while in the `ctrl-o` menu to start a silly little game abou
 
 ## Recommended symlinks
 
-* For starting `o` with the _Light VS_ theme: `ln -sf /usr/bin/o /usr/bin/vs`.
-* For starting `o` with the _Blue Edit_ theme: `ln -sf /usr/bin/o /usr/bin/edit`.
+* For starting `ko` with the _Light_ theme: `ln -sf /usr/bin/ko /usr/bin/lo`.
+
 * For starting `o` with the _Red & black_ theme: `ln -sf /usr/bin/o /usr/bin/redblack`.
+* For starting `ko` with the _Red & black_ theme: `ln -sf /usr/bin/ko /usr/bin/redblacko`.
+
+* For starting `o` with the _Synthwave_ theme: `ln -sf /usr/bin/o /usr/bin/sw`.
+* For starting `ko` with the _Synthwave_ theme: `ln -sf /usr/bin/ko /usr/bin/swo`.
+
+* For starting `o` with the _Blue Edit_ theme: `ln -sf /usr/bin/o /usr/bin/edith`.
+* For starting `ko` with the _Blue Edit_ theme: `ln -sf /usr/bin/ko /usr/bin/edito`.
+
+* For starting `o` with the _Light VS_ theme: `ln -sf /usr/bin/o /usr/bin/vs`.
+* For starting `ko` with the _Light VS_ theme: `ln -sf /usr/bin/ko /usr/bin/vso`.
+
+## The `THEME` environment variable
+
+This is not needed if the symlinks above are used, but it is possible to ie. `export THEME=synthwave` to let `o` and `ko` use the Synthwave theme.
 
 ## The GUI frontend `ko`
 
@@ -506,10 +520,6 @@ Build:
 Install (use `sudo`, if needed):
 
     make ko-install
-
-Installing a symlink for launching `ko` with a light theme:
-
-    ln -sf /usr/bin/ko /usr/bin/lo
 
 ## Terminal settings
 
