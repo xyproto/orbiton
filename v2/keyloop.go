@@ -1441,15 +1441,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redraw = true
 		case "c:19": // ctrl-s, save (or step, if in debug mode)
 			e.UserSave(c, tty, status)
-		case "c:31": // ctrl-_
-			// batch behavior, like removing the quotes around numbers for this block of lines, but how?
-			// multiple cursors? popping up a window with a python script? a sed script?
-			// replaying all keypresses for this line on the next line?
-			// Python is a good choice for this kind of thing, perhaps start with a script that loops over all
-			// lines in this block and then just outputs the same?
-			// Or run tests instead of building? Debug mode? What do people need to do often? Format and use ctrl-w for closing?
-			// Show a window for choosing a file? Git-related behavior?
-			status.SetMessage("to implement: batch behavior")
+		case "c:31": // ctrl-_, go to definition or function
+			// TODO: Add bookmark and go to definition.
+			// TODO: Add a menu item for showing an alphabetical list of all functions
+			//       in the current directory, and being able to jump there.
+			status.SetMessage("TO IMPLEMENT: add bookmark and go to definition")
 			status.Show(c, e)
 		case "c:21", "c:26": // ctrl-u or ctrl-z (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state
