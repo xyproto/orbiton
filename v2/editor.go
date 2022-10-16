@@ -2286,7 +2286,7 @@ func (e *Editor) WordAtCursor() string {
 	}
 
 	qualifies := func(r rune) bool {
-		return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_'
+		return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_' || r == '.'
 	}
 
 	// Check if the cursor is at a word
@@ -2334,12 +2334,16 @@ func (e *Editor) LettersBeforeCursor() string {
 		x = len(runes)
 	}
 
-	var word []rune
+	qualifies := func(r rune) bool {
+		return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_'
+	}
 
-	// Loop from the position before the current one and then leftwards on the current line
+	// Loop from the position before the current one and then leftwards on the current line.
+	// Gather the letters.
+	var word []rune
 	for i := x - 1; i >= 0; i-- {
 		r := runes[i]
-		if !unicode.IsLetter(r) {
+		if !qualifies(r) {
 			break
 		}
 		// Gather the letters in reverse
@@ -2365,12 +2369,16 @@ func (e *Editor) LettersOrDotBeforeCursor() string {
 		x = len(runes)
 	}
 
-	var word []rune
+	qualifies := func(r rune) bool {
+		return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_' || r == '.'
+	}
 
-	// Loop from the position before the current one and then leftwards on the current line
+	// Loop from the position before the current one and then leftwards on the current line.
+	// Gather the letters.
+	var word []rune
 	for i := x - 1; i >= 0; i-- {
 		r := runes[i]
-		if !(r == '.' || unicode.IsLetter(r)) {
+		if !qualifies(r) {
 			break
 		}
 		// Gather the letters in reverse
