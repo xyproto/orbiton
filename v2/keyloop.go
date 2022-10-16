@@ -1167,7 +1167,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 			e.redrawCursor = true
 			e.redraw = true
-		case "c:9": // tab
+		case "c:9": // tab or ctrl-i
+
+			if e.debugMode {
+				e.debugStepInto = !e.debugStepInto
+				break
+			}
+
 			y := int(e.DataY())
 			r := e.Rune()
 			leftRune := e.LeftRune()

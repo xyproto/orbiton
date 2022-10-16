@@ -191,7 +191,11 @@ func (e *Editor) DebugNext() error {
 	if !programRunning {
 		return errProgramStopped
 	}
-	if _, err := e.gdb.CheckedSend("exec-next"); err != nil {
+	gdbMI := "exec-next"
+	if e.debugStepInto {
+		gdbMI = "exec-step"
+	}
+	if _, err := e.gdb.CheckedSend(gdbMI); err != nil {
 		return err
 	}
 	consoleString := strings.TrimSpace(gdbConsole.String())
@@ -228,7 +232,11 @@ func (e *Editor) DebugNextInstruction() error {
 		return errProgramStopped
 	}
 	showInstructionPane = true
-	_, err := e.gdb.CheckedSend("exec-next-instruction")
+	gdbMI := "exec-next-instruction"
+	if e.debugStepInto {
+		gdbMI = "exec-step-instruction"
+	}
+	_, err := e.gdb.CheckedSend(gdbMI)
 	if err != nil {
 		return err
 	}
@@ -681,6 +689,11 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 				"ctrl-r     : run to end",
 				"ctrl-w     : add a watch",
 				"ctrl-p     : reg. pane layout",
+				"ctrl-i     : toggle step into",
+			}
+			if e.debugStepInto {
+				helpSlice[0] = "ctrl-space : step into"
+				helpSlice[1] = "ctrl-n     : next instruction (step into)"
 			}
 			if h < 32 {
 				helpSlice = helpSlice[:availableHeight]
@@ -694,6 +707,11 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 				"ctrl-r: run to end",
 				"ctrl-w: add watch",
 				"ctrl-p: reg. pane",
+				"ctrl-i: toggle into",
+			}
+			if e.debugStepInto {
+				narrowHelpSlice[0] = "ctrl-space: step into"
+				narrowHelpSlice[1] = "ctrl-n: into n. inst."
 			}
 			if h < 32 {
 				narrowHelpSlice = narrowHelpSlice[:availableHeight]

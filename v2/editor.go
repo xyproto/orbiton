@@ -56,6 +56,7 @@ type Editor struct {
 	binaryFile         bool            //  is this a binary file, or a text file?
 	wrapWhenTyping     bool            //  wrap text at a certain limit when typing
 	addSpace           bool            // add a space to the editor, once
+	debugStepInto      bool            // when stepping to the next instruction, step into instead of over
 }
 
 // NewCustomEditor takes:
