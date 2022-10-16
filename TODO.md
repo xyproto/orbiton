@@ -3,7 +3,6 @@
 ## General
 
 - [ ] Go through this file and remove all completed TODO items.
-- [ ] Add a menu option for listing all function signatures in a file, and being able to jump to any one of them.
 
 ## Building, debugging and testing programs
 
@@ -66,8 +65,9 @@
 
 ## Syntax highlighting
 
+- [ ] When viewing man pages, respect the current theme.
 - [ ] Let `<<EOF` be considered the start of a multiline string in Shell, and `EOF` the end.
-- [x] Let a struct for a Theme contain both the light and the dark version, if there are two.
+- [ ] Let a struct for a Theme contain both the light and the dark version, if there are two.
 - [ ] Check that the right theme is loaded under `uxterm`.
 - [ ] Don't let single-line comments at the end of lines disable rainbow parentheses.
 - [ ] Also highlight hexadecimal numbers.
@@ -117,6 +117,7 @@
 
 ## Command menu
 
+- [ ] Add a menu option for listing all functions in the current directory, alphabetically, and be able to jump to any one of them.
 - [ ] Add one or more of these commands: regex search, go to definition, rename symbol, find references and disassembly.
 - [ ] Make it easy to make recordings of the editing process (can already use asciinema?).
 
