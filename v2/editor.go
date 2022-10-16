@@ -391,9 +391,20 @@ func (e *Editor) LoadBytes(data []byte) {
 	// One allocation for all the lines
 	e.lines = make(map[int][]rune, lb)
 
-	// Place the lines into the editor
+	// Place the lines into the editor, while counting tab indentations
+	var line string
+	var tabIndentCounter uint64
 	for y, byteLine := range byteLines {
-		e.lines[y] = []rune(string(byteLine))
+		line = string(byteLine)
+		if strings.HasPrefix(line, "\t") {
+			tabIndentCounter++
+		}
+		e.lines[y] = []rune(line)
+	}
+
+	// Check if the "tab indent per line" ratio is larger than 10%.
+	if (float64(tabIndentCounter) / float64(lb)) > 0.1 {
+		e.tabsSpaces.Spaces = false
 	}
 
 	// Mark the editor contents as "changed"
@@ -1874,7 +1885,11 @@ func (e *Editor) ColIndex() ColIndex {
 
 // StatusMessage returns a status message, intended for being displayed at the bottom
 func (e *Editor) StatusMessage() string {
-	return fmt.Sprintf("line %d col %d rune %U words %d [%s]", e.LineNumber(), e.ColNumber(), e.Rune(), e.WordCount(), e.mode)
+	tabs := " spaces"
+	if !e.tabsSpaces.Spaces {
+		tabs = " tabs"
+	}
+	return fmt.Sprintf("line %d col %d rune %U words %d [%s]%s", e.LineNumber(), e.ColNumber(), e.Rune(), e.WordCount(), e.mode, tabs)
 }
 
 // GoToPosition can go to the given position struct and use it as the new position
