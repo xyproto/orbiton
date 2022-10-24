@@ -20,7 +20,7 @@ For a more feature complete editor that is also written in Go, check out [micro]
 
 ## Screenshots
 
-Screenshot of the VTE GUI application that can be found in the `ko` directory, running the `o` editor:
+Screenshot of the VTE GUI application that can be found in the `og` directory, running the `o` editor:
 
 ![screenshot](img/screenshot2021sept.png)
 
@@ -28,7 +28,7 @@ Stepping through the assembly instructions of a Rust program by entering debug m
 
 ![debug rust](img/2022-05-11_debug_rust.png)
 
-Editing a C source file in `ko` using the "synthwave" theme:
+Editing a C source file in `og` using the "synthwave" theme:
 
 ![synthwave theme](img/2022-10-08_synthwave_theme.png)
 
@@ -248,13 +248,13 @@ Install dependencies (use `doas` if needed):
 
     add_pkg git gmake go vte3
 
-Build both the editor `o` and the GUI frontend `ko`:
+Build both the editor `o` and the GUI frontend `og`:
 
-    gmake CXX="clang++ -w" o ko
+    gmake CXX="clang++ -w" o og
 
 *Install both executables, a man page, an icon and a desktop shortcut file (use `doas` if needed`):
 
-    PREFIX=/usr/local gmake install ko-install
+    PREFIX=/usr/local gmake install og-install
 
 ## Dependencies
 
@@ -493,33 +493,34 @@ Try the Konami code while in the `ctrl-o` menu to start a silly little game abou
 
 ## Recommended symlinks
 
-* For starting `ko` with the _Light_ theme: `ln -sf /usr/bin/ko /usr/bin/lo`.
+* For starting `o` with the _Light_ theme: `ln -sf /usr/bin/o /usr/bin/li`.
+* For starting the GUI version of `o` with the _Light_ theme: `ln -sf /usr/bin/o /usr/bin/lig`.
 
 * For starting `o` with the _Red & black_ theme: `ln -sf /usr/bin/o /usr/bin/redblack`.
-* For starting `ko` with the _Red & black_ theme: `ln -sf /usr/bin/ko /usr/bin/redblacko`.
+* For starting the GUI version of `o` with the _Red & black_ theme: `ln -sf /usr/bin/ko /usr/bin/redblackg`.
 
 * For starting `o` with the _Synthwave_ theme: `ln -sf /usr/bin/o /usr/bin/sw`.
-* For starting `ko` with the _Synthwave_ theme: `ln -sf /usr/bin/ko /usr/bin/swo`.
+* For starting the GUI version of `o` with the _Synthwave_ theme: `ln -sf /usr/bin/ko /usr/bin/swg`.
 
-* For starting `o` with the _Blue Edit_ theme: `ln -sf /usr/bin/o /usr/bin/edith`.
-* For starting `ko` with the _Blue Edit_ theme: `ln -sf /usr/bin/ko /usr/bin/edito`.
+* For starting `o` with the _Blue Edit_ theme: `ln -sf /usr/bin/o /usr/bin/edi`.
+* For starting the GUI version of `o` with the _Blue Edit_ theme: `ln -sf /usr/bin/ko /usr/bin/edig`.
 
 * For starting `o` with the _Light VS_ theme: `ln -sf /usr/bin/o /usr/bin/vs`.
-* For starting `ko` with the _Light VS_ theme: `ln -sf /usr/bin/ko /usr/bin/vso`.
+* For starting the GUI version of `o` with the _Light VS_ theme: `ln -sf /usr/bin/ko /usr/bin/vsg`.
 
 ## The `THEME` environment variable
 
-This is not needed if the symlinks above are used, but it is possible to ie. `export THEME=synthwave` to let `o` and `ko` use the Synthwave theme.
+This is not needed if the symlinks above are used, but it is possible to ie. `export THEME=synthwave` to let `o` and `og` use the Synthwave theme.
 
-## The GUI frontend `ko`
+## The GUI frontend `og`
 
 Build:
 
-    make ko
+    make og
 
 Install (use `sudo`, if needed):
 
-    make ko-install
+    make og-install
 
 ## Terminal settings
 

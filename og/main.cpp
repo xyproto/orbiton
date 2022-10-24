@@ -579,8 +579,8 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    // Set the KO environment variable, which affects the behavior of "o"
-    setenv("KO", "1", true);
+    // Set the OG environment variable, which affects the behavior of "o"
+    setenv("OG", "1", true);
 
     // Setting SHELL to /bin/csh uses the red/black theme...
     if (!lightMode && redBlackMode) {
@@ -671,7 +671,12 @@ int main(int argc, char* argv[])
     // Get the O_FONT environment variable, or nullptr
     const char* font_desc_str = std::getenv("O_FONT");
 
-    // Also check if KO_FONT is set, if O_FONT was not set
+    // Also check if OG_FONT is set, if O_FONT was not set
+    if (font_desc_str == nullptr) {
+        font_desc_str = std::getenv("OG_FONT");
+    }
+
+    // Also check if KO_FONT is set, if no environment variable was specified
     if (font_desc_str == nullptr) {
         font_desc_str = std::getenv("KO_FONT");
     }

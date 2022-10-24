@@ -1,4 +1,4 @@
-# Ko
+# OG - the "o" GUI
 
 This is a GUI for o, written in C++, using the VTE library.
 

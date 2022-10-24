@@ -251,11 +251,11 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		e.syntaxHighlight = true
 	}
 
-	// Use a light theme if XTERM_VERSION (and not running with "ko") or
+	// Use a light theme if XTERM_VERSION (and not running with "og") or
 	// TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
 	// because $COLORFGBG is "15;0" even though the background is white.
 	if !e.readOnly && (!specificLetter || editTheme) {
-		inKO := env.Bool("KO")
+		inOG := env.Bool("OG")
 		if env.Str("THEME") == "redblack" {
 			b := false
 			initialLightBackground = &b
@@ -272,7 +272,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			b := false
 			initialLightBackground = &b
 			e.setVSTheme()
-		} else if (env.Has("XTERM_VERSION") && !inKO && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
+		} else if (env.Has("XTERM_VERSION") && !inOG && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
 			b := true
 			initialLightBackground = &b
 			if editTheme {
@@ -280,7 +280,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			} else {
 				e.setLightVSTheme()
 			}
-		} else if shell := env.Str("SHELL"); (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && !inKO && filepath.Base(os.Args[0]) != "default" {
+		} else if shell := env.Str("SHELL"); (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && !inOG && filepath.Base(os.Args[0]) != "default" {
 			// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
 			e.setRedBlackTheme()
 		} else if colorString := env.Str("COLORFGBG"); strings.Contains(colorString, ";") {
