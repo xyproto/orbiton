@@ -601,7 +601,7 @@ func NewDarkVSTheme() Theme {
 		Light:                       false,
 		Foreground:                  vt100.Black,
 		Background:                  vt100.BackgroundWhite,
-		StatusForeground:            vt100.Black,
+		StatusForeground:            vt100.White,
 		StatusBackground:            vt100.BackgroundBlue,
 		StatusErrorForeground:       vt100.Red,
 		StatusErrorBackground:       vt100.BackgroundCyan,
