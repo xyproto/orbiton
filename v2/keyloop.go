@@ -1671,7 +1671,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					s := "Copied 1 line"
 					if err := clipboard.WriteAll(strings.Join(copyLines, "\n")); err == nil { // OK
 						// The copy operation worked out, using the clipboard
-						s += " from the clipboard"
+						s += " to the clipboard"
 					}
 					// The portal was closed?
 					if closedPortal {
