@@ -99,6 +99,7 @@ func DetectFromContents(initial Mode, firstLine string, allTextFunc func() strin
 		slashComment := 0
 		reStructuredTextMarkers := 0
 		configMarkers := 0
+		markdownMarkers := 0
 		lines := strings.Split(allTextFunc(), "\n")
 		for _, line := range lines {
 			if strings.HasPrefix(line, "# ") {
@@ -118,11 +119,16 @@ func DetectFromContents(initial Mode, firstLine string, allTextFunc func() strin
 					m = JSON
 					found = true
 				}
+			} else if strings.Contains(trimmedLine, "====") || strings.Contains(trimmedLine, "----") {
+				markdownMarkers++
 			}
 			if strings.Contains(trimmedLine, "(") || strings.Contains(trimmedLine, ")") || strings.Contains(trimmedLine, "=") {
 				// Might be a configuration file if most of the lines have (, ) or =
 				configMarkers++
 			}
+		}
+		if markdownMarkers > 3 {
+			return Markdown, true
 		}
 		if hashComment > slashComment {
 			return Config, true
