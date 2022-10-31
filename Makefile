@@ -24,8 +24,10 @@ o.1.gz: o.1
 	gzip -f -k o.1
 
 install: o o.1.gz
-	install -Dm755 o "$(DESTDIR)$(PREFIX)/bin/o"
-	install -Dm644 o.1.gz "$(DESTDIR)$(MANDIR)/o.1.gz"
+	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
+	install -m755 o "$(DESTDIR)$(PREFIX)/bin/o"
+	mkdir -p "$(DESTDIR)$(MANDIR)/bin"
+	install -m644 o.1.gz "$(DESTDIR)$(MANDIR)/o.1.gz"
 
 gui-install: install-og
 install-gui: install-og
@@ -33,9 +35,13 @@ ko-install: install-og
 install-ko: install-og
 og-install: install-og
 
+# using mkdir -p instead of install -D, to make it macOS friendly
 install-og: og/og
-	install -Dm755 og/og "$(DESTDIR)$(PREFIX)/bin/og"
-	install -Dm644 og/og.desktop "$(DESTDIR)$(PREFIX)/share/applications/og.desktop"
+	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
+	install -m755 og/og "$(DESTDIR)$(PREFIX)/bin/og"
+	mkdir -p "$(DESTDIR)$(PREFIX)/share/applications"
+	install -m644 og/og.desktop "$(DESTDIR)$(PREFIX)/share/applications/og.desktop"
+	mkdir -p "$(DESTDIR)$(PREFIX)/share/pixmaps"
 	install -Dm644 img/icon_48x48.png "$(DESTDIR)$(PREFIX)/share/pixmaps/og.png"
 
 clean:
