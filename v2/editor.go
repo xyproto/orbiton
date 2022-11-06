@@ -496,6 +496,9 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		e.changed = false
 	}
 
+	// Shell scripts that contains the word "source" typically needs to be sourced and should not be "chmod +x"-ed
+	containsTheWordSource := bytes.Contains(data, []byte("source"))
+
 	// Default file mode (0644 for regular files, 0755 for executable files)
 	var fileMode os.FileMode = 0644
 
@@ -503,8 +506,8 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	// to toggle the executable bit on or off. This is only for files that start with "#!".
 	// Also, if the file is in one of the common bin directories, like "/usr/bin", then assume that it
 	// is supposed to be executable.
-	if shebang && e.syntaxHighlight {
-		// This is both a script file and the syntax highlight is enabled.
+	if shebang && e.syntaxHighlight && !containsTheWordSource {
+		// This is a script file, syntax highlighting is enabled and it does not contain the word "source"
 		fileMode = 0755
 	}
 
