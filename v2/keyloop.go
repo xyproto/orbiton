@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -1766,6 +1767,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					missingUtility = true
 				} else if env.Has("DISPLAY") && which("xclip") == "" { // X + xclip not found
 					status.SetErrorMessage("The xclip utility is missing!")
+					missingUtility = true
+				} else if runtime.GOOS == "darwin" && which("pbcopy") == "" { // pbcopy is missing, on macOS
+					status.SetErrorMessage("The pbcopy utility is missing!")
 					missingUtility = true
 				}
 
