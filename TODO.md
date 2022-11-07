@@ -92,6 +92,7 @@
 
 ## Cut, copy, paste and portals
 
+- [ ] Support pbcopy/pbpaste (`echo asdf | pbcopy -Prefer txt` and `echo $(pbpaste -Prefer txt)`).
 - [ ] Make it possible to double press `ctrl-c` again, to also copy the next block of text.
 - [ ] Let `ctrl-t` take a line and move it through the portal?
 - [ ] GUI: Look into the clipboard functions for VTE and if they can be used for mouse copy + paste.
