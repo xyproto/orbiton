@@ -394,7 +394,7 @@ There are also these shortcuts:
 
 ## Updating PKGBUILD files
 
-When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call Guessica` to update the `pkgver=` and `source=` fields, by a combination of guesswork and online searching. This functionality depends on the [Guessica](https://github.com/xyproto/guessica) package update utility.
+When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call Guessica` to update the `pkgver=` and `source=` fields, by a combination of guesswork and online searching. This functionality depends on the [Guessica](https://github.com/xyproto/guessica) package update utility being installed, and will only work for some `PKGBUILD` files.
 
 ## List of optional runtime dependencies
 
