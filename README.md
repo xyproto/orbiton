@@ -510,10 +510,6 @@ Try the Konami code while in the `ctrl-o` menu to start a silly little game abou
 * For starting `o` with the _Light VS_ theme: `ln -sf /usr/bin/o /usr/bin/vs`.
 * For starting the GUI version of `o` with the _Light VS_ theme: `ln -sf /usr/bin/ko /usr/bin/vsg`.
 
-## The `THEME` environment variable
-
-This is not needed if the symlinks above are used, but it is possible to ie. `export THEME=synthwave` to let `o` and `og` use the Synthwave theme.
-
 ## The GUI frontend `og`
 
 Build:
