@@ -238,10 +238,11 @@ This is a brand new feature and needs more testing.
 
     git clone https://github.com/xyproto/o
     cd o
-    make
-    sudo install -Dm755 o /usr/bin/o
-    gzip o.1
-    sudo install -Dm644 o.1.gz /usr/share/man/man1/o.1.gz
+    make && sudo make install
+
+And optionally:
+
+    make gui && sudo make gui-install
 
 ## OpenBSD installation instructions
 
