@@ -105,13 +105,13 @@ These features are unique to `o`, as far as I am aware:
 * Never asks before saving or quitting. Be careful!
 * The [`NO_COLOR`](https://no-color.org) environment variable can be set to disable all colors.
 * Rainbow parentheses makes lines with many parentheses easier to read.
-* Limited to VT100, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`.
+* Limited to VT100, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`. And for browsing up and down, `ctrl-n` and `ctrl-p` must be used. `PgUp` and `PgDn` can be used with the GUI frontend, but are not recognized by VT100.
 * Compiles with either `go` or `gccgo`.
 * Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
 * May provide smart indentation.
 * Requires that `/dev/tty` is available.
-* `xclip` (for X) or `wl-clipboard` (for Wayland) must be installed if the system clipboard should be used.
+* `xclip` (for X) or `wl-clipboard` (for Wayland) must be installed if the system clipboard should be used. `pbcopy` (macOS) is a work in progress.
 * May take a line number as the second argument, with an optional `+` or `:` prefix.
 * If the filename is `COMMIT_EDITMSG`, the look and feel will be adjusted for git commit messages.
 * Supports `UTF-8`, but some runes may be displayed incorrectly.
@@ -121,6 +121,7 @@ These features are unique to `o`, as far as I am aware:
 * If interactive rebase is launched with `git rebase -i`, then either `ctrl-w` or `ctrl-r` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
 * If the editor executable is renamed to a word starting with `r` (or have a symlink with that name), the default theme will be red/black.
 * If the editor executable is renamed to a word starting with `l` (or have a symlink with that name), the default theme will be suitable for light backgrounds.
+* If the editor executable is renamed to a word starting with `s` (or have a symlink with that name), the default theme will be the "synthwave" theme.
 * Want to quickly convert Markdown to PDF and have pandoc installed? Try `o filename.md`, press `ctrl-space` and quit with `ctrl-q`.
 * Press `ctrl-w` to toggle the check mark in `- [ ] TODO item` boxes in Markdown.
 * `o` is written mostly in `o`, with some use of NeoVim for the initial development.
