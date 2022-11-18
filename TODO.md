@@ -3,6 +3,7 @@
 ## General
 
 - [ ] Go through this file and remove all completed TODO items.
+- [ ] Add a table editor for Markdown
 
 ## Building, debugging and testing programs
 
@@ -113,8 +114,7 @@
 
 - [ ] Detect ISO-8859-1 and convert the file to UTF-8 before opening.
 - [ ] Open text files with Chinese/Japanese/Korean characters without breaking the text flow.
-- [ ] Quotestate Process can not recognize triple runes, like the previous previous rune is ", the previous rune is " and the current rune is ".
-      The wrong arguments are passed to the function. Figure out why.
+- [ ] Quotestate Process can not recognize triple runes, like the previous previous rune is ", the previous rune is " and the current rune is ". The wrong arguments are passed to the function. Figure out why.
 
 ## Command menu
 
@@ -129,7 +129,6 @@
 ## External programs
 
 - [ ] Let rendering with `pandoc` have a spinner, since it can take a little while.
-- [x] Let `guessica` also set `pkgrel=1` if there was a new version.
 - [ ] Embed `fstabfmt`.
 - [ ] Extract the functionality for searching a MessagePack file to a `mpgrep` utility, that has a `-B` flag (like `grep`).
 - [ ] Draw inspiration from [kilo](https://github.com/antirez/kilo).
