@@ -3,7 +3,8 @@
 ## General
 
 - [ ] Go through this file and remove all completed TODO items.
-- [ ] Add a table editor for Markdown
+- [ ] Add a table editor for Markdown.
+- [ ] If Esc is pressed repeatedly (>=4 times in a row), open the `ctrl-o` menu.
 
 ## Building, debugging and testing programs
 
