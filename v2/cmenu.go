@@ -457,6 +457,30 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		})
 	}
 
+// 	actions.Add("Syntax mode", func() {
+// 		// Build the menu choices
+// 		menuChoices := make([]string, 0)
+// 		for modeCounter := 0; modeCounter < 4096; modeCounter++ {
+// 			m := mode.Mode(modeCounter)
+// 			name := m.String()
+// 			if name == "-" { // Blank
+// 				menuChoices = append(menuChoices, "None")
+// 			} else if name != "?" && name != "" { // One of the other modes
+// 				menuChoices = append(menuChoices, name)
+// 			} else {
+// 				break
+// 			}
+// 		}
+// 		// Find which index to use
+// 		useMenuIndex := int(e.mode)
+// 		// Display the menu
+// 		selectedMode := e.Menu(status, tty, "Syntax mode", menuChoices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes)
+// 		e.mode = mode.Mode(selectedMode)
+// 		drawLines := true
+// 		resized := false
+// 		e.FullResetRedraw(c, status, drawLines, resized)
+// 	})
+
 	actions.Add("Stop parent and quit without saving", func() {
 		e.stopParentOnQuit = true
 		e.clearOnQuit = true
