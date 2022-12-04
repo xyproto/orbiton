@@ -5,7 +5,6 @@
 - [ ] Go through this file and remove all completed TODO items.
 - [ ] Add a table editor for Markdown.
 - [ ] If Esc is pressed repeatedly (>=4 times in a row), open the `ctrl-o` menu.
-- [ ] If `ctrl-space` is pressed two times within a short while, then build and also run the program, then display the output in the middle of the screen.
 
 ## Building, debugging and testing programs
 
