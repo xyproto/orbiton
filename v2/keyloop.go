@@ -407,11 +407,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// All clear when it comes to status messages and redrawing
 				status.ClearAll(c)
 				if err != nil {
+					// There was an error, so don't run after building after all
+					e.runAfterBuild = false
 					// Error while building
 					status.SetError(err)
 					status.ShowNoTimeout(c, e)
 					return // return from goroutine
 				}
+				// Not building any more
+				e.building = false
 
 				// --- success ---
 
