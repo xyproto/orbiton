@@ -351,20 +351,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Press ctrl-space twice the first time the Markdown file should be exported to PDF
 			// to avoid the first accidental ctrl-space key press.
 
-			// Run after building, for some modes (starting with just Kotlin)
+			// Run after building, for some modes
 			if e.building && !e.runAfterBuild {
-				switch e.mode {
-				case mode.Kotlin:
+				if e.CanRun() {
 					status.ClearAll(c)
 					e.DrawOutput(c, 20, "", "Building and running...", e.DebugRegistersBackground)
 					e.runAfterBuild = true
-				default:
-					if e.mode == mode.Markdown {
-						status.SetMessage("Already exporting")
-					} else {
-						status.SetMessage("Already building")
-					}
-					status.Show(c, e)
 				}
 				break
 			} else if e.building && e.runAfterBuild {
@@ -379,19 +371,17 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.building = false
 					if e.runAfterBuild {
 						e.runAfterBuild = false
-						switch e.mode {
-						case mode.Kotlin:
-							output, err := e.Run(c, tty, status, e.filename)
-							if err != nil {
-								status.SetError(err)
-								status.Show(c, e)
-								return // from goroutine
-							}
-							e.DrawOutput(c, 20, "Last 20 lines from stdout", output, e.DebugRunningBackground) // also reposition cursor after drawing
-						default:
-							status.SetMessage("Not implemented: running " + e.mode.String())
+						output, err := e.Run(c, tty, status, e.filename)
+						if err != nil {
+							status.SetError(err)
 							status.Show(c, e)
+							return // from goroutine
 						}
+						title := "Last 20 lines from stdout"
+						if strings.Count(output, "\n") <= 19 {
+							title = "stdout"
+						}
+						e.DrawOutput(c, 20, title, output, e.DebugRunningBackground) // also reposition cursor after drawing
 					}
 				}()
 

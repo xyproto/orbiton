@@ -10,6 +10,15 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+// CanRun checks if the current file mode supports running executables after building
+func (e *Editor) CanRun() bool {
+	switch e.mode {
+	case mode.Kotlin, mode.Go, mode.Rust:
+		return true
+	}
+	return false
+}
+
 // Run will attempt to run the corresponding output executable, given a source filename.
 // This assumes that the BuildOrExport function has been successfully run first.
 func (e *Editor) Run(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filename string) (string, error) {
@@ -23,6 +32,13 @@ func (e *Editor) Run(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filenam
 	switch e.mode {
 	case mode.Kotlin:
 		cmd = exec.Command("java", "-jar", strings.Replace(filename, ".kt", ".jar", 1))
+		cmd.Dir = sourceDir
+	case mode.Go:
+		cmd = exec.Command("go", "run", filename)
+		cmd.Dir = sourceDir
+	case mode.Rust:
+		exeName := filepath.Join(sourceDir, e.exeName(filename))
+		cmd = exec.Command(exeName)
 		cmd.Dir = sourceDir
 	default:
 		return "", errors.New("run: not implemented for " + e.mode.String())
@@ -54,6 +70,9 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutpu
 	if title == "" {
 		lowerLeftBox.H = 5
 	}
+
+	lowerLeftBox.Y -= 5
+	lowerLeftBox.H += 2
 
 	// Then create a list box
 	listBox := NewBox()
