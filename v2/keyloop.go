@@ -1610,8 +1610,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// Copy the line internally
 				copyLines = []string{line}
 
-				// Copy the line to the clipboard
-				err = clipboard.WriteAll(line)
+				var err error
+				if runtime.GOOS == "darwin" {
+					// Copy the line to the clipboard
+					err = pbcopy(line)
+				} else {
+					// Copy the line to the clipboard
+					err = clipboard.WriteAll(line)
+				}
 				if err == nil {
 					// no issue
 				} else if firstCopyAction {
@@ -1619,6 +1625,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						status.SetErrorMessage("The wl-copy utility (from wl-clipboard) is missing!")
 					} else if env.Has("DISPLAY") && which("xclip") == "" {
 						status.SetErrorMessage("The xclip utility is missing!")
+					} else if runtime.GOOS == "darwin" && which("pbcopy") == "" { // pbcopy is missing, on macOS
+						status.SetErrorMessage("The pbcopy utility is missing!")
 					}
 				}
 
@@ -1640,8 +1648,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 				copyLines = append(copyLines, lines...)
 				s = strings.Join(copyLines, "\n")
+
 				// Place the block of text in the clipboard
-				_ = clipboard.WriteAll(s)
+				if runtime.GOOS == "darwin" {
+					pbcopy(s)
+				} else {
+					_ = clipboard.WriteAll(s)
+				}
+
 				// Delete the corresponding number of lines
 				for range lines {
 					e.DeleteLineMoveBookmark(y, bookmark)
@@ -1709,7 +1723,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					copyLines = []string{trimmed}
 					// Copy the line to the clipboard
 					s := "Copied 1 line"
-					if err := clipboard.WriteAll(strings.Join(copyLines, "\n")); err == nil { // OK
+					var err error
+					if runtime.GOOS == "darwin" {
+						err = pbcopy(strings.Join(copyLines, "\n"))
+					} else {
+						err = clipboard.WriteAll(strings.Join(copyLines, "\n"))
+					}
+					if err == nil { // OK
 						// The copy operation worked out, using the clipboard
 						s += " to the clipboard"
 					}
@@ -1737,7 +1757,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						plural = "s"
 					}
 					// Place the block of text in the clipboard
-					err := clipboard.WriteAll(s)
+					if runtime.GOOS == "darwin" {
+						err = pbcopy(s)
+					} else {
+						err = clipboard.WriteAll(s)
+					}
 					if err != nil {
 						status.SetMessage(fmt.Sprintf("Copied %d line%s", lineCount, plural))
 					} else {
@@ -1789,7 +1813,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// This may only work for the same user, and not with sudo/su
 
 			// Try fetching the lines from the clipboard first
-			s, err := clipboard.ReadAll()
+			var s string
+
+			var err error
+			if runtime.GOOS == "darwin" {
+				s, err = pbpaste()
+			} else {
+				s, err = clipboard.ReadAll()
+			}
+
 			if err == nil { // no error
 
 				// Make the replacements, then split the text into lines and store it in "copyLines"
@@ -1807,8 +1839,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				} else if env.Has("DISPLAY") && which("xclip") == "" { // X + xclip not found
 					status.SetErrorMessage("The xclip utility is missing!")
 					missingUtility = true
-				} else if runtime.GOOS == "darwin" && which("pbcopy") == "" { // pbcopy is missing, on macOS
-					status.SetErrorMessage("The pbcopy utility is missing!")
+				} else if runtime.GOOS == "darwin" && which("pbpaste") == "" { // pbcopy is missing, on macOS
+					status.SetErrorMessage("The pbpaste utility is missing!")
 					missingUtility = true
 				}
 
