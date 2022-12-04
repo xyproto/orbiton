@@ -59,6 +59,7 @@ type Editor struct {
 	debugStepInto      bool            // when stepping to the next instruction, step into instead of over
 	detectedTabs       *bool           // were tab or space indentations detected when loading the data?
 	building           bool            // currently buildig code or exporting to a file?
+	runAfterBuild      bool            // run the application after building?
 }
 
 // NewCustomEditor takes:

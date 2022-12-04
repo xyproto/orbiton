@@ -351,16 +351,55 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Press ctrl-space twice the first time the Markdown file should be exported to PDF
 			// to avoid the first accidental ctrl-space key press.
 
-			if e.building {
-				status.SetMessage("Already building")
+			// Run after building, for some modes (starting with just Kotlin)
+			if e.building && !e.runAfterBuild {
+				switch e.mode {
+				case mode.Kotlin:
+					status.SetMessage("Build + run")
+					e.runAfterBuild = true
+				default:
+					if e.mode == mode.Markdown {
+						status.SetMessage("Already exporting")
+					} else {
+						status.SetMessage("Already building")
+					}
+				}
 				status.Show(c, e)
+				break
+			} else if e.building && e.runAfterBuild {
+				// do nothing when ctrl-space is pressed more than 2 times when building
 				break
 			}
 
 			// Not building anything right now
 			go func() {
 				e.building = true
-				defer func() { e.building = false }()
+				defer func() {
+					e.building = false
+					if e.runAfterBuild {
+						e.runAfterBuild = false
+						switch e.mode {
+						case mode.Kotlin:
+							output, err := e.Run(c, tty, status, e.filename)
+							if err != nil {
+								status.SetError(err)
+								status.Show(c, e)
+								return // from goroutine
+							}
+							lines := strings.Split(output, "\n")
+							lastLine := ""
+							for _, line := range lines {
+								if trimmedLine := strings.TrimSpace(line); trimmedLine != "" {
+									lastLine = trimmedLine
+								}
+							}
+							status.SetMessage("Last line of output: " + lastLine)
+						default:
+							status.SetMessage("Not implemented: running " + e.mode.String())
+						}
+						status.Show(c, e)
+					}
+				}()
 
 				// Build or export the current file
 				// The last argument is if the command should run in the background or not
