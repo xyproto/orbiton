@@ -58,6 +58,7 @@ type Editor struct {
 	addSpace           bool            // add a space to the editor, once
 	debugStepInto      bool            // when stepping to the next instruction, step into instead of over
 	detectedTabs       *bool           // were tab or space indentations detected when loading the data?
+	building           bool            // currently buildig code or exporting to a file?
 }
 
 // NewCustomEditor takes:

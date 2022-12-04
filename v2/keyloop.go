@@ -351,34 +351,46 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Press ctrl-space twice the first time the Markdown file should be exported to PDF
 			// to avoid the first accidental ctrl-space key press.
 
-			// Build or export the current file
-			// The last argument is if the command should run in the background or not
-			outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
-			// All clear when it comes to status messages and redrawing
-			status.ClearAll(c)
-			if err != nil {
-				// Error while building
-				status.SetError(err)
-				status.ShowNoTimeout(c, e)
+			if e.building {
+				status.SetMessage("Already building")
+				status.Show(c, e)
 				break
 			}
 
-			// --- success ---
+			// Not building anything right now
+			go func() {
+				e.building = true
+				defer func() { e.building = false }()
 
-			// ctrl-space was pressed while in debug mode, and without a debug session running
-			if e.debugMode && e.gdb == nil {
-				if err := e.DebugStartSession(c, tty, status, outputExecutable); err != nil {
-					status.ClearAll(c)
+				// Build or export the current file
+				// The last argument is if the command should run in the background or not
+				outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
+				// All clear when it comes to status messages and redrawing
+				status.ClearAll(c)
+				if err != nil {
+					// Error while building
 					status.SetError(err)
 					status.ShowNoTimeout(c, e)
-					e.redrawCursor = true
+					return // return from goroutine
 				}
-				break
-			}
 
-			// Regular success, no debug mode
-			status.SetMessage("Success")
-			status.Show(c, e)
+				// --- success ---
+
+				// ctrl-space was pressed while in debug mode, and without a debug session running
+				if e.debugMode && e.gdb == nil {
+					if err := e.DebugStartSession(c, tty, status, outputExecutable); err != nil {
+						status.ClearAll(c)
+						status.SetError(err)
+						status.ShowNoTimeout(c, e)
+						e.redrawCursor = true
+					}
+					return // return from goroutine
+				}
+
+				// Regular success, no debug mode
+				status.SetMessage("Success")
+				status.Show(c, e)
+			}()
 
 		case "c:20": // ctrl-t
 			// for C or C++: jump to header/source, or insert symbol
