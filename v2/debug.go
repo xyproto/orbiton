@@ -1090,8 +1090,8 @@ func (e *Editor) usingGDBMightWork() bool {
 	return true
 }
 
-// DrawOutput will draw a pane with the 5 last lines of the collected stdoutput from GDB
-func (e *Editor) DrawOutput(c *vt100.Canvas, repositionCursor bool) {
+// DrawGDBOutput will draw a pane with the 5 last lines of the collected stdoutput from GDB
+func (e *Editor) DrawGDBOutput(c *vt100.Canvas, repositionCursor bool) {
 
 	// Check if the output pane should be shown or not
 	if e.debugHideOutput || e.gdb == nil {

@@ -2433,7 +2433,7 @@ func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, t
 			e.DrawRegisters(c, false)    // don't reposition cursor
 			e.DrawInstructions(c, false) // don't reposition cursor
 			e.DrawFlags(c, false)        // don't reposition cursor
-			e.DrawOutput(c, false)       // don't reposition cursor
+			e.DrawGDBOutput(c, false)    // don't reposition cursor
 		}
 		pressed := tty.String()
 		switch pressed {

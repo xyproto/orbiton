@@ -355,7 +355,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if e.building && !e.runAfterBuild {
 				switch e.mode {
 				case mode.Kotlin:
-					status.SetMessage("Build + run")
+					status.ClearAll(c)
+					e.DrawOutput(c, 20, "", "Building and running...", e.DebugRegistersBackground)
 					e.runAfterBuild = true
 				default:
 					if e.mode == mode.Markdown {
@@ -363,8 +364,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					} else {
 						status.SetMessage("Already building")
 					}
+					status.Show(c, e)
 				}
-				status.Show(c, e)
 				break
 			} else if e.building && e.runAfterBuild {
 				// do nothing when ctrl-space is pressed more than 2 times when building
@@ -386,18 +387,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 								status.Show(c, e)
 								return // from goroutine
 							}
-							lines := strings.Split(output, "\n")
-							lastLine := ""
-							for _, line := range lines {
-								if trimmedLine := strings.TrimSpace(line); trimmedLine != "" {
-									lastLine = trimmedLine
-								}
-							}
-							status.SetMessage("Last line of output: " + lastLine)
+							e.DrawOutput(c, 20, "Last 20 lines from stdout", output, e.DebugRunningBackground) // also reposition cursor after drawing
 						default:
 							status.SetMessage("Not implemented: running " + e.mode.String())
+							status.Show(c, e)
 						}
-						status.Show(c, e)
 					}
 				}()
 
@@ -435,7 +429,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.Show(c, e)
 			}()
 
-		case "c:20": // ctrl-t
+		case "c:20": // ctrl-tV
 			// for C or C++: jump to header/source, or insert symbol
 			// for Agda: insert symbol
 			// for the rest: record and play back macros
@@ -2143,7 +2137,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		if e.debugMode {
 			e.DrawWatches(c, false)      // don't reposition cursor
 			e.DrawRegisters(c, false)    // don't reposition cursor
-			e.DrawOutput(c, false)       // don't reposition cursor
+			e.DrawGDBOutput(c, false)    // don't reposition cursor
 			e.DrawInstructions(c, false) // don't reposition cursor
 			e.DrawFlags(c, true)         // also reposition cursor
 		}
