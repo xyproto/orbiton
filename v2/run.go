@@ -31,7 +31,8 @@ func (e *Editor) Run(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filenam
 
 	switch e.mode {
 	case mode.Kotlin:
-		cmd = exec.Command("java", "-jar", strings.Replace(filename, ".kt", ".jar", 1))
+		jarName := e.exeName(sourceFilename) + ".jar"
+		cmd = exec.Command("java", "-jar", jarName)
 		cmd.Dir = sourceDir
 	case mode.Go:
 		cmd = exec.Command("go", "run", filename)
