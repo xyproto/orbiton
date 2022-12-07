@@ -372,11 +372,16 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					if e.runAfterBuild {
 						e.runAfterBuild = false
 
+						doneRunning := false
 						go func() {
-							e.DrawOutput(c, 20, "", "Done building. Running...", e.DebugStoppedBackground, true)
+							time.Sleep(500 * time.Millisecond)
+							if !doneRunning {
+								e.DrawOutput(c, 20, "", "Done building. Running...", e.DebugStoppedBackground, true)
+							}
 						}()
 
 						output, err := e.Run(c, tty, status, e.filename)
+						doneRunning = true
 						if err != nil {
 							status.SetError(err)
 							status.Show(c, e)
