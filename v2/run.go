@@ -55,7 +55,21 @@ func (e *Editor) Run(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filenam
 
 // DrawOutput will draw a pane with the 5 last lines of the given output
 func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutput string, backgroundColor vt100.AttributeColor, repositionCursorAfterDrawing bool) {
-	const minWidth = 32
+	var minWidth = 32
+
+	// Get the last maxLine lines, and create a string slice
+	lines := strings.Split(collectedOutput, "\n")
+	if l := len(lines); l > maxLines {
+		lines = lines[l-maxLines:]
+	}
+	for _, line := range lines {
+		if len(line) > minWidth {
+			minWidth = len(line) + 5
+		}
+	}
+	if minWidth > 79 {
+		minWidth = 79
+	}
 
 	// First create a box the size of the entire canvas
 	canvasBox := NewCanvasBox(c)
@@ -83,12 +97,6 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutpu
 
 	if title != "" {
 		e.DrawTitle(bt, c, lowerLeftBox, title)
-	}
-
-	// Get the last 5 lines, and create a string slice
-	lines := strings.Split(collectedOutput, "\n")
-	if l := len(lines); l > maxLines {
-		lines = lines[l-maxLines:]
 	}
 
 	e.DrawList(bt, c, listBox, lines, -1)
