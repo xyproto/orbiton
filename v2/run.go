@@ -54,12 +54,7 @@ func (e *Editor) Run(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filenam
 }
 
 // DrawOutput will draw a pane with the 5 last lines of the given output
-func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutput string, backgroundColor vt100.AttributeColor) {
-
-	// repositioning the cursor should only happen after the last widget has been drawn,
-	// see the use of DrawGDBOutput for examples.
-	const repositionCursorAfterDrawing = true
-
+func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutput string, backgroundColor vt100.AttributeColor, repositionCursorAfterDrawing bool) {
 	const minWidth = 32
 
 	// First create a box the size of the entire canvas

@@ -355,7 +355,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if e.building && !e.runAfterBuild {
 				if e.CanRun() {
 					status.ClearAll(c)
-					e.DrawOutput(c, 20, "", "Building and running...", e.DebugRegistersBackground)
+					e.DrawOutput(c, 20, "", "Building and running...", e.DebugRegistersBackground, true)
 					e.runAfterBuild = true
 				}
 				break
@@ -371,6 +371,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.building = false
 					if e.runAfterBuild {
 						e.runAfterBuild = false
+
+						go func() {
+							e.DrawOutput(c, 20, "", "Done building. Running...", e.DebugStoppedBackground, true)
+						}()
+
 						output, err := e.Run(c, tty, status, e.filename)
 						if err != nil {
 							status.SetError(err)
@@ -381,7 +386,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						if strings.Count(output, "\n") <= 19 {
 							title = "stdout"
 						}
-						e.DrawOutput(c, 20, title, output, e.DebugRunningBackground) // also reposition cursor after drawing
+
+						e.DrawOutput(c, 20, title, output, e.DebugRunningBackground, true) // also reposition cursor after drawing
 					}
 				}()
 
