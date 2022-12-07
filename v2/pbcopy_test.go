@@ -1,10 +1,14 @@
 package main
 
 import (
+	"runtime"
 	"testing"
 )
 
-func Testpbcopy(t *testing.T) {
+func TestPBcopy(t *testing.T) {
+	if runtime.GOOS != "darwin" {
+		return
+	}
 	const oString = "ost"
 	originalString, err := pbpaste()
 	if err != nil {
