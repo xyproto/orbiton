@@ -382,9 +382,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 							status.Show(c, e)
 							return // from goroutine
 						}
-						title := "Last 20 lines from stdout"
+						title := "Last 20 lines of output"
 						if strings.Count(output, "\n") <= 19 {
-							title = "stdout"
+							title = "Program output"
 						}
 
 						e.DrawOutput(c, 20, title, output, e.DebugRunningBackground, true) // also reposition cursor after drawing
