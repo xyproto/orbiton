@@ -86,14 +86,27 @@ func (e *Editor) manPageHighlight(line, programName string, firstLine, lastLine 
 	} else if allUpper(trimmedLine) {
 		return e.MarkdownTextColor.Get(line)
 	} else { // regular text, but highlight numbers (and hex numbers, if the number starts with a digit) + highlight "@"
-		var rs []rune
+		var (
+			rs       []rune
+			prevRune rune
+			inDigits bool
+			inWord   bool
+			inAngles bool
+			nextRune rune
+		)
+
 		rs = append(rs, []rune(normal.String())...)
-		inDigits := false
-		inWord := false
 		hasAlpha := strings.Contains(trimmedLine, "@")
-		inAngles := false
 		lineRunes := []rune(line)
+
 		for i, r := range line {
+
+			if (i + 1) < len(lineRunes) {
+				nextRune = lineRunes[i+1]
+			} else {
+				nextRune = ' '
+			}
+
 			if (unicode.IsLetter(r) || r == '_') && !inWord {
 				inWord = true
 			} else if inWord && !unicode.IsLetter(r) && !hexDigit(r) {
@@ -132,9 +145,17 @@ func (e *Editor) manPageHighlight(line, programName string, firstLine, lastLine 
 			} else if inAngles || r == '>' {
 				rs = append(rs, []rune(off+e.ItalicsColor.String())...)
 				rs = append(rs, r)
-			} else if inWord && unicode.IsUpper(r) && (i+1 < len(lineRunes)) {
-				nextRune := lineRunes[i+1]
-				if unicode.IsUpper(nextRune) || !unicode.IsLetter(nextRune) {
+			} else if inWord && unicode.IsUpper(prevRune) && ((unicode.IsUpper(r) && unicode.IsLetter(nextRune)) || (unicode.IsLower(r) && unicode.IsUpper(prevRune) && !unicode.IsLetter(nextRune))) {
+				if unicode.IsUpper(r) {
+					// This is for the leading and trailing letter of uppercase words
+					rs = append(rs, []rune(off+e.ImageColor.String())...)
+				} else {
+					rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
+				}
+				rs = append(rs, r)
+			} else if inWord && (unicode.IsUpper(r) || (unicode.IsUpper(prevRune) && unicode.IsLetter(r))) {
+				if !unicode.IsLower(r) && (((unicode.IsUpper(nextRune) || nextRune == ' ') && unicode.IsLetter(prevRune)) || unicode.IsUpper(nextRune) || !unicode.IsLetter(nextRune)) {
+					// This is for the center letters of uppercase words
 					rs = append(rs, []rune(off+e.ImageColor.String())...)
 				} else {
 					rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
@@ -149,6 +170,7 @@ func (e *Editor) manPageHighlight(line, programName string, firstLine, lastLine 
 			} else {
 				rs = append(rs, r)
 			}
+			prevRune = r
 		}
 		rs = append(rs, []rune(off)...)
 		return string(rs)
