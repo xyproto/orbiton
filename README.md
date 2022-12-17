@@ -161,7 +161,7 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-j` - Join lines (or jump to the bookmark, if set).
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
 * `ctrl-l` - Jump to a specific line number. Press `return` to jump to the top. If at the top, press `return` to jump to the bottom.
-* `ctrl-f` - Search for a string. The search wraps around and is case sensitive. Press tab instead of return to search and replace.
+* `ctrl-f` - Search for a string. The search wraps around and is case sensitive. Press `tab` instead of `return` to search and replace.
 * `ctrl-b` - Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
 * `ctrl-\` - Comment in or out a block of code.
 * `ctrl-~` - Jump to a matching parenthesis.
@@ -170,8 +170,8 @@ These features are unique to `o`, as far as I am aware:
 
 ## Build and format
 
-* At the press of `ctrl-space`, `o` will try to build or export the current file.
-* At the press of `ctrl-w`, `o` will try to format the current file, in an opinionated way. If the current file is empty, template text may be inserted.
+* Press of `ctrl-space` to build or export the current file.
+* Press `ctrl-w` to format the current file, in an opinionated way. If the current file is empty, a "Hello, World!" template will be inserted, for some file extensions. 
 
 | Programming language                            | File extensions                                           | Jump to error | Build command                                     | Format command ($filename is a temporary file)                                                                 |
 |-------------------------------------------------|-----------------------------------------------------------|---------------|---------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
