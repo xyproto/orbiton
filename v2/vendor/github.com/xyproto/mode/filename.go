@@ -125,6 +125,8 @@ func Detect(filename string) Mode {
 			mode = JavaScript
 		case ".json", ".ipynb":
 			mode = JSON
+		case ".kk":
+			mode = Koka
 		case ".kt", ".kts":
 			mode = Kotlin
 		case ".log":

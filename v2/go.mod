@@ -12,7 +12,7 @@ require (
 	github.com/xyproto/env v1.8.0
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
-	github.com/xyproto/mode v0.6.16
+	github.com/xyproto/mode v0.6.17
 	github.com/xyproto/stringpainter v1.0.0
 	github.com/xyproto/syntax v1.10.8
 	github.com/xyproto/termtitle v1.5.1

@@ -41,6 +41,7 @@ const (
 	Jakt                  // Jakt
 	Java                  // Java
 	JavaScript            // JavaScript
+	Koka                  // Koka
 	Kotlin                // Kotlin
 	Lisp                  // Common Lisp and Emacs Lisp
 	Log                   // All sorts of log files
@@ -156,6 +157,8 @@ func (mode Mode) String() string {
 		return "JavaScript"
 	case JSON:
 		return "JSON"
+	case Koka:
+		return "Koka"
 	case Kotlin:
 		return "Kotlin"
 	case Lisp:
