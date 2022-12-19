@@ -16,8 +16,9 @@ import (
 
 var (
 	errNoSuitableBuildCommand = errors.New("no suitable build command")
-	zigCacheDir               = filepath.Join(userCacheDir, "o", "zig")
+	kokaBuildDir              = filepath.Join(userCacheDir, "o", "koka")
 	pyCachePrefix             = filepath.Join(userCacheDir, "o", "python")
+	zigCacheDir               = filepath.Join(userCacheDir, "o", "zig")
 	pandocMutex               sync.RWMutex
 )
 
@@ -307,7 +308,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.Koka:
-		cmd = exec.Command("koka", sourceFilename)
+		cmd = exec.Command("koka", "--builddir", kokaBuildDir, "-o", exeFirstName, sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.Odin:
@@ -492,9 +493,16 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		}
 	}
 
+	// Special considerations for Kotlin Native
 	if usingKotlinNative := strings.HasSuffix(cmd.Path, "kotlinc-native"); usingKotlinNative && exists(exeFirstName+".kexe") {
 		//panic("rename " + exeFirstName + ".kexe" + " -> " + exeFirstName)
 		os.Rename(exeFirstName+".kexe", exeFirstName)
+	}
+
+	// Special considerations for Koka
+	if e.mode == mode.Koka && exists(exeFirstName) {
+		// chmod +x
+		os.Chmod(exeFirstName, 0755)
 	}
 
 	// NOTE: Don't do anything with the output and err variables here, let the if below handle it.
