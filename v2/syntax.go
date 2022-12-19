@@ -31,6 +31,9 @@ var (
 	// Hardware Interface Description Language. Keywords from https://source.android.com/devices/architecture/hidl
 	hidlWords = []string{"constexpr", "enum", "extends", "generates", "import", "interface", "oneway", "package", "safe_union", "struct", "typedef", "union"}
 
+	// Koka
+	kokaWords = []string{"abstract", "alias", "as", "behind", "break", "c", "co", "con", "continue", "cs", "ctl", "effect", "elif", "else", "exists", "extend", "extern", "file", "final", "finally", "fn", "forall", "fun", "handle", "handler", "if", "import", "in", "infix", "infixl", "infixr", "initially", "inline", "interface", "js", "linear", "mask", "match", "module", "named", "noinline", "open", "override", "pub", "raw", "rec", "reference", "return", "some", "struct", "then", "type", "unsafe", "val", "value", "var", "with"}
+
 	// Kotlin
 	kotlinWords = []string{"as", "break", "catch", "class", "continue", "do", "else", "false", "for", "fun", "if", "import", "in", "interface", "is", "null", "object", "override", "package", "return", "super", "this", "throw", "true", "try", "typealias", "typeof", "val", "var", "when", "while"}
 
@@ -115,6 +118,9 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		delKeywords = append(delKeywords, "add", "bool", "get", "in", "local", "sub")
 	case mode.JSON:
 		delKeywords = []string{"install"}
+	case mode.Koka:
+		clearKeywords()
+		addKeywords = kotlinWords
 	case mode.Kotlin:
 		clearKeywords()
 		addKeywords = kotlinWords

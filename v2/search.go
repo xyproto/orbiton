@@ -331,7 +331,7 @@ AGAIN:
 			s = "func "
 		case mode.Kotlin:
 			s = "fun "
-		case mode.Jakt, mode.JavaScript, mode.Lua, mode.Shell, mode.TypeScript:
+		case mode.Jakt, mode.JavaScript, mode.Koka, mode.Lua, mode.Shell, mode.TypeScript:
 			s = "function "
 		case mode.Terra:
 			s = "terra "

@@ -306,6 +306,10 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd = exec.Command("xdg-open", sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
+	case mode.Koka:
+		cmd = exec.Command("koka", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Odin:
 		cmd = exec.Command("odin", "build", sourceFilename)
 		cmd.Dir = sourceDir
