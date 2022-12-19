@@ -109,6 +109,11 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		13,
 		1,
 	},
+	mode.Koka: {
+		"fun main() {\n  println(\"Hello, World!\")\n}\n",
+		9,
+		2,
+	},
 	mode.Kotlin: {
 		"fun main() {\n    println(\"Hello, World!\")\n}\n",
 		9,
