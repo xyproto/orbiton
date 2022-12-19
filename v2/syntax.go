@@ -99,7 +99,9 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		clearKeywords()
 		addKeywords = gdscriptWords
 	case mode.Go:
-		addKeywords = []string{"defer", "error", "fallthrough", "go", "print", "println", "range", "rune", "string", "uint", "uint8", "uint16", "uint32", "uint64"}
+		// TODO: Add all Go keywords as a var up above
+		//clearKeywords()
+		addKeywords = []string{"defer", "error", "fallthrough", "func", "go", "import", "package", "print", "println", "range", "rune", "string", "uint", "uint16", "uint32", "uint64", "uint8"}
 		delKeywords = []string{"False", "None", "True", "assert", "auto", "build", "char", "class", "def", "def", "del", "die", "done", "end", "fi", "final", "finally", "fn", "from", "get", "in", "include", "is", "last", "let", "match", "mut", "next", "no", "pass", "redo", "rescue", "ret", "retry", "set", "template", "then", "this", "when", "where", "while", "yes"}
 	case mode.HIDL:
 		clearKeywords()
