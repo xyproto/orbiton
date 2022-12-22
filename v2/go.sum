@@ -53,8 +53,8 @@ github.com/xyproto/guessica v1.1.2/go.mod h1:084aWqVDuOYOMVly0NHHLecAPScmGEZTLxm
 github.com/xyproto/iferr v1.1.0 h1:+5OZVuzb7ups88Yq2Bio1ygCCVdilTpW+9qUZpdhGAg=
 github.com/xyproto/iferr v1.1.0/go.mod h1:En+YVd+aRA+/q3LKqQ+EmsmbWKdgzBwUPE5C4bUfiqA=
 github.com/xyproto/mode v0.4.4/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
-github.com/xyproto/mode v0.6.17 h1:rmd1xk7eokv7V6yQEbVpxoG1ijp8nB2A/AQDid8brKA=
-github.com/xyproto/mode v0.6.17/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
+github.com/xyproto/mode v0.6.18 h1:XLBjlCWew0if2S+AOKLPDCTgi2mnfLPj/5yFJPSqJQY=
+github.com/xyproto/mode v0.6.18/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/stringpainter v1.0.0 h1:fw86p5y+PQ/TnzN/u56iEwRPHChcaDGUSaZQVA9I5xA=
 github.com/xyproto/stringpainter v1.0.0/go.mod h1:Uz/9PJmEJ2efkJDdCSg6Zt0iu/pmJ45rCfbqLShSOfs=
 github.com/xyproto/syntax v1.10.8 h1:s2ZJRk1IgwtX3k9wqawWkISFL1YEl7miCeAtkN9zl+k=

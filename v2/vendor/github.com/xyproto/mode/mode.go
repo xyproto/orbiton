@@ -32,6 +32,7 @@ const (
 	Go                    // Go
 	GoAssembly            // Go-style Assembly
 	Gradle                // Gradle
+	Haxe                  // Haxe: .hx and .hxml files
 	HIDL                  // Android-related: Hardware Abstraction Layer Interface Definition Language
 	HTML                  // HTML
 	Hare                  // Hare
@@ -143,6 +144,8 @@ func (mode Mode) String() string {
 		return "Hare"
 	case Haskell:
 		return "Haskell"
+	case Haxe:
+		return "Haxe"
 	case HIDL:
 		return "HIDL"
 	case HTML:
