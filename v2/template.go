@@ -79,6 +79,11 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		13,
 		2,
 	},
+	mode.Haxe: {
+        "class Main {\n    static public function main():Void {\n        trace(\"Hello, World!\");\n    }\n}",
+		7,
+		2,
+	},
 	mode.Hare: {
 		"use fmt;\n\nexport fn main() void = {\n	fmt::println(\"Hello, World!\")!;\n};\n",
 		14,
