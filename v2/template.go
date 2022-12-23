@@ -80,7 +80,7 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		2,
 	},
 	mode.Haxe: {
-        "class Main {\n    static public function main():Void {\n        trace(\"Hello, World!\");\n    }\n}",
+		"class Main {\n    static public function main():Void {\n        trace(\"Hello, World!\");\n    }\n}",
 		7,
 		2,
 	},
