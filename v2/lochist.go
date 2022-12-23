@@ -421,6 +421,10 @@ func SaveLocationHistory(locationHistory map[string]LineNumber, configFile strin
 // SaveLocation takes a filename (which includes the absolute path) and a map which contains
 // an overview of which files were at which line location.
 func (e *Editor) SaveLocation(absFilename string, locationHistory map[string]LineNumber) error {
+	if baseFilename := filepath.Base(absFilename); strings.HasPrefix(baseFilename, "tmp.") {
+		// Not storing location info for /tmp/tmp.* files
+		return nil
+	}
 	if len(locationHistory) > maxLocationHistoryEntries {
 		// Cull the history
 		locationHistory = make(map[string]LineNumber, 1)
