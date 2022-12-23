@@ -44,14 +44,15 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		return errors.New(cmd.Path + " is missing")
 	}
 
-	//utilityName := filepath.Base(cmd.Path)
-	//status.SetMessage("Calling " + utilityName)
-	//status.Show(c, e)
+	tempFirstName := "o"
+	if e.mode == mode.Kotlin {
+		tempFirstName = "O"
+	}
 
 	// Use the temporary directory defined in TMPDIR, with fallback to /tmp
-	tempdir := env.Dir("TMPDIR", "/tmp")
+	tempDir := env.Dir("TMPDIR", "/tmp")
 
-	if f, err := os.CreateTemp(tempdir, "o.*"+extOrBaseFilename); err == nil {
+	if f, err := os.CreateTemp(tempDir, tempFirstName+".*"+extOrBaseFilename); err == nil {
 		// no error, everything is fine
 		tempFilename := f.Name()
 		defer os.Remove(tempFilename)
