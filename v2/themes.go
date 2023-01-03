@@ -230,7 +230,7 @@ func NewSynthwaveTheme() Theme {
 		CodeColor:                   vt100.Default,
 		CodeBlockColor:              vt100.Default,
 		ImageColor:                  vt100.LightGray,
-		LinkColor:                   vt100.Red,
+		LinkColor:                   vt100.LightMagenta,
 		QuoteColor:                  vt100.Gray,
 		QuoteTextColor:              vt100.LightCyan,
 		HTMLColor:                   vt100.Default,
@@ -434,7 +434,7 @@ func NewDarkBlueEditTheme() Theme {
 	return Theme{
 		Name:                        "Blue Edit Dark",
 		Light:                       false,
-		StatusMode:                  true,
+		StatusMode:                  false,
 		Foreground:                  vt100.LightYellow,
 		Background:                  vt100.BackgroundBlue,
 		StatusForeground:            vt100.White,
