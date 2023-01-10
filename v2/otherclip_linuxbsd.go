@@ -1,4 +1,4 @@
-// go:build unix
+//go:build linux || freebsd || netbsd || openbsd
 
 package main
 
