@@ -1782,14 +1782,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 			}
 		case "c:22": // ctrl-v, paste
-
-			var (
-				gotLineFromPortal bool
-				line              string
-			)
-
 			if portal, err := LoadPortal(); err == nil { // no error
-				line, err = portal.PopLine(e, false) // pop the line, but don't remove it from the source file
+				var gotLineFromPortal bool
+				line, err := portal.PopLine(e, false) // pop the line, but don't remove it from the source file
 				status.Clear(c)
 				if err != nil {
 					// status.SetErrorMessage("Could not copy text through the portal.")
@@ -1800,26 +1795,27 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					gotLineFromPortal = true
 				}
 				status.Show(c, e)
+
+				if gotLineFromPortal {
+
+					undo.Snapshot(e)
+
+					if e.EmptyRightTrimmedLine() {
+						// If the line is empty, replace with the string from the portal
+						e.SetCurrentLine(line)
+					} else {
+						// If the line is not empty, insert the trimmed string
+						e.InsertStringAndMove(c, strings.TrimSpace(line))
+					}
+
+					e.InsertLineBelow()
+					e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
+
+					e.redraw = true
+
+					break
+				} // errors with loading a portal are ignored
 			}
-			if gotLineFromPortal {
-
-				undo.Snapshot(e)
-
-				if e.EmptyRightTrimmedLine() {
-					// If the line is empty, replace with the string from the portal
-					e.SetCurrentLine(line)
-				} else {
-					// If the line is not empty, insert the trimmed string
-					e.InsertStringAndMove(c, strings.TrimSpace(line))
-				}
-
-				e.InsertLineBelow()
-				e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
-
-				e.redraw = true
-
-				break
-			} // errors with loading a portal are ignored
 
 			// This may only work for the same user, and not with sudo/su
 
@@ -1830,7 +1826,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if runtime.GOOS == "darwin" {
 				s, err = pbpaste()
 			} else {
+				// Read the clipboard, for other platforms
 				s, err = clipboard.ReadAll()
+				if err == nil && strings.TrimSpace(s) == "" {
+					// Try the other clipboard (primary vs non-primary)
+					clipboard.Primary = !clipboard.Primary
+					s, err = clipboard.ReadAll()
+					clipboard.Primary = !clipboard.Primary
+				}
 			}
 
 			if err == nil { // no error
