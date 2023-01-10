@@ -57,7 +57,7 @@ github.com/xyproto/mode
 # github.com/xyproto/stringpainter v1.0.0
 ## explicit; go 1.13
 github.com/xyproto/stringpainter
-# github.com/xyproto/syntax v1.10.8
+# github.com/xyproto/syntax v1.10.9
 ## explicit; go 1.14
 github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.5.1

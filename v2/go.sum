@@ -53,13 +53,12 @@ github.com/xyproto/guessica v1.1.2 h1:GP2jniCjE5DLeU0ZBbl9cS4gRXAyk/0lev0dh6Uqrf
 github.com/xyproto/guessica v1.1.2/go.mod h1:084aWqVDuOYOMVly0NHHLecAPScmGEZTLxm/+Ny49GE=
 github.com/xyproto/iferr v1.1.0 h1:+5OZVuzb7ups88Yq2Bio1ygCCVdilTpW+9qUZpdhGAg=
 github.com/xyproto/iferr v1.1.0/go.mod h1:En+YVd+aRA+/q3LKqQ+EmsmbWKdgzBwUPE5C4bUfiqA=
-github.com/xyproto/mode v0.4.4/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/mode v0.6.18 h1:XLBjlCWew0if2S+AOKLPDCTgi2mnfLPj/5yFJPSqJQY=
 github.com/xyproto/mode v0.6.18/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/stringpainter v1.0.0 h1:fw86p5y+PQ/TnzN/u56iEwRPHChcaDGUSaZQVA9I5xA=
 github.com/xyproto/stringpainter v1.0.0/go.mod h1:Uz/9PJmEJ2efkJDdCSg6Zt0iu/pmJ45rCfbqLShSOfs=
-github.com/xyproto/syntax v1.10.8 h1:s2ZJRk1IgwtX3k9wqawWkISFL1YEl7miCeAtkN9zl+k=
-github.com/xyproto/syntax v1.10.8/go.mod h1:ZBpOkCBA//QTqLb394W6goMdEvNG7pkLi1HLqKRMVko=
+github.com/xyproto/syntax v1.10.9 h1:rZ6rlD/4odMgeSV/wDbwr9Vllcs3R8shrwEBsQSH3UY=
+github.com/xyproto/syntax v1.10.9/go.mod h1:dhgw9EjQKHotxsu0uD+cpUhK9UHl1RGFmInCCAKArxQ=
 github.com/xyproto/termtitle v1.5.1 h1:L1I+6juzNQk+BsoPCYw2c+3unEv4pxQqcyIoO9Xb3qc=
 github.com/xyproto/termtitle v1.5.1/go.mod h1:U+yMnuL9ENDJy9+OCDEiEx01b7Uk6Zu6g1O22xY/rvQ=
 github.com/xyproto/textoutput v1.12.0/go.mod h1:7gHUVNJjTYzjRsc3S54W8hCcjB96C+/ug/mLus9nBjc=

@@ -199,7 +199,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		delKeywords = append(delKeywords, "static") // static is treated separately, as a special keyword
 		fallthrough                                 // Continue to the default
 	default:
-		addKeywords = append(addKeywords, "endif", "ifeq", "ifneq")
+		addKeywords = append(addKeywords, "elif", "endif", "ifeq", "ifneq")
 		delKeywords = append(delKeywords, "build", "done", "package", "require", "set", "super", "type", "when")
 	}
 	// Add extra keywords that are to be syntax highlighted
