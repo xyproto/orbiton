@@ -1829,10 +1829,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// Read the clipboard, for other platforms
 				s, err = clipboard.ReadAll()
 				if err == nil && strings.TrimSpace(s) == "" {
-					// Try the other clipboard (primary vs non-primary)
-					clipboard.Primary = !clipboard.Primary
-					s, err = clipboard.ReadAll()
-					clipboard.Primary = !clipboard.Primary
+					s, err = getOtherClipboardContents()
 				}
 			}
 
