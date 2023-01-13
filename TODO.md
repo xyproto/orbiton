@@ -41,6 +41,7 @@
 - [ ] When pressing `ctrl-g` or `F12` and there's a filename under the cursor that exists, go to that file.
 - [ ] When pressing `ctrl-g` on a function that is declared in a file in the same directory, go to that file and function definition.
 - [ ] `ctrl-f` and then `return` could jump to a location at least 10 lines away that has been most visited within the last 10 minutes.
+- [ ] `ctrl-f` twice should search for the current word.
 
 ## Code editing
 
