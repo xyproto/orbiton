@@ -65,7 +65,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			line := e.Line(i)
 			trimmedLine := strings.TrimSpace(line)
 
-			if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") {
+			if trimmedLine == "\"\"\"" || trimmedLine == "'''" {
+				inCodeBlock = !inCodeBlock
+			} else if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") {
 				inCodeBlock = false
 			} else if strings.HasPrefix(trimmedLine, "'''") && strings.HasSuffix(trimmedLine, "'''") {
 				inCodeBlock = false
