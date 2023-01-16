@@ -171,7 +171,7 @@ These features are unique to `o`, as far as I am aware:
 ## Build and format
 
 * Press of `ctrl-space` to build or export the current file.
-* Press `ctrl-w` to format the current file, in an opinionated way. If the current file is empty, a "Hello, World!" template will be inserted, for some file extensions. 
+* Press `ctrl-w` to format the current file, in an opinionated way. If the current file is empty, a "Hello, World!" template will be inserted, for some file extensions.
 
 | Programming language                            | File extensions                                           | Jump to error | Build command                                     | Format command ($filename is a temporary file)                                                                 |
 |-------------------------------------------------|-----------------------------------------------------------|---------------|---------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
@@ -499,16 +499,16 @@ Try the Konami code while in the `ctrl-o` menu to start a silly little game abou
 * For starting the GUI version of `o` with the _Light_ theme: `ln -sf /usr/bin/o /usr/bin/lig`.
 
 * For starting `o` with the _Red & black_ theme: `ln -sf /usr/bin/o /usr/bin/redblack`.
-* For starting the GUI version of `o` with the _Red & black_ theme: `ln -sf /usr/bin/ko /usr/bin/redblackg`.
+* For starting the GUI version of `o` with the _Red & black_ theme: `ln -sf /usr/bin/og /usr/bin/redblackg`.
 
 * For starting `o` with the _Synthwave_ theme: `ln -sf /usr/bin/o /usr/bin/sw`.
-* For starting the GUI version of `o` with the _Synthwave_ theme: `ln -sf /usr/bin/ko /usr/bin/swg`.
+* For starting the GUI version of `o` with the _Synthwave_ theme: `ln -sf /usr/bin/og /usr/bin/swg`.
 
 * For starting `o` with the _Blue Edit_ theme: `ln -sf /usr/bin/o /usr/bin/edi`.
-* For starting the GUI version of `o` with the _Blue Edit_ theme: `ln -sf /usr/bin/ko /usr/bin/edig`.
+* For starting the GUI version of `o` with the _Blue Edit_ theme: `ln -sf /usr/bin/og /usr/bin/edig`.
 
 * For starting `o` with the _Light VS_ theme: `ln -sf /usr/bin/o /usr/bin/vs`.
-* For starting the GUI version of `o` with the _Light VS_ theme: `ln -sf /usr/bin/ko /usr/bin/vsg`.
+* For starting the GUI version of `o` with the _Light VS_ theme: `ln -sf /usr/bin/og /usr/bin/vsg`.
 
 ## The GUI frontend `og`
 
