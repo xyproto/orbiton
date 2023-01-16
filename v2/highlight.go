@@ -405,7 +405,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 
 					// Take an extra pass on coloring the -> arrow, even if it's in a comment
-					if (e.mode != mode.HTML && e.mode != mode.XML && e.mode != mode.Markdown && e.mode != mode.Blank && e.mode != mode.Config) && strings.Contains(line, "->") {
+					if (e.mode != mode.HTML && e.mode != mode.XML && e.mode != mode.Markdown && e.mode != mode.Blank && e.mode != mode.Config && e.mode != mode.Shell) && strings.Contains(line, "->") {
 						arrowIndex := strings.Index(line, "->")
 						if i := strings.Index(line, "//"); i != -1 && i < arrowIndex {
 							// arrow is after comment marker, do nothing
