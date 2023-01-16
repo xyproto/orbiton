@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -13,10 +12,14 @@ import (
 // CanRun checks if the current file mode supports running executables after building
 func (e *Editor) CanRun() bool {
 	switch e.mode {
-	case mode.Kotlin, mode.Go, mode.Rust:
-		return true
+	case mode.Blank, mode.AIDL, mode.Amber, mode.Bazel, mode.Config, mode.Doc, mode.Email, mode.Git, mode.HIDL, mode.HTML, mode.JSON, mode.Log, mode.M4, mode.ManPage, mode.Markdown, mode.Nroff, mode.PolicyLanguage, mode.ReStructured, mode.Shader, mode.SQL, mode.Text, mode.XML:
+		return false
+	case mode.Shell: // don't run, because it's not a good idea
+		return false
+	case mode.Zig: // TODO: Find out why running Zig programs is problematic, terminal emulator wise
+		return false
 	}
-	return false
+	return true
 }
 
 // Run will attempt to run the corresponding output executable, given a source filename.
@@ -28,21 +31,26 @@ func (e *Editor) Run(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filenam
 	}
 	sourceDir := filepath.Dir(sourceFilename)
 	var cmd *exec.Cmd
+	cmd.Dir = sourceDir
 
 	switch e.mode {
+	case mode.CMake:
+		cmd = exec.Command("cmake", "-B", "build", "-D", "CMAKE_BUILD_TYPE=Debug", "-S", sourceDir)
 	case mode.Kotlin:
 		jarName := e.exeName(sourceFilename) + ".jar"
 		cmd = exec.Command("java", "-jar", jarName)
-		cmd.Dir = sourceDir
 	case mode.Go:
 		cmd = exec.Command("go", "run", filename)
-		cmd.Dir = sourceDir
-	case mode.Rust:
+	case mode.Lua:
+		cmd = exec.Command("lua", sourceFilename)
+	case mode.Make:
+		cmd = exec.Command("make")
+
+	case mode.Python:
+		cmd = exec.Command("python", sourceFilename)
+	default:
 		exeName := filepath.Join(sourceDir, e.exeName(filename))
 		cmd = exec.Command(exeName)
-		cmd.Dir = sourceDir
-	default:
-		return "", errors.New("run: not implemented for " + e.mode.String())
 	}
 
 	output, err := cmd.CombinedOutput()
