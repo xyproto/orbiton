@@ -65,16 +65,16 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			line := e.Line(i)
 			trimmedLine := strings.TrimSpace(line)
 
-			if trimmedLine == "\"\"\"" || trimmedLine == "'''" {
+			if trimmedLine == "\"\"\"" || trimmedLine == "'''" { // only 3 letters
 				inCodeBlock = !inCodeBlock
-			} else if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") {
+			} else if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") { // this could be 6 letters or more
 				inCodeBlock = false
-			} else if strings.HasPrefix(trimmedLine, "'''") && strings.HasSuffix(trimmedLine, "'''") {
+			} else if strings.HasPrefix(trimmedLine, "'''") && strings.HasSuffix(trimmedLine, "'''") { // this could be 6 letters or more
 				inCodeBlock = false
-			} else if strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''") {
+			} else if strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''") { // this is more than 3 letters
 				// Toggle the flag for if we're in a code block or not
-				inCodeBlock = !inCodeBlock
-			} else if strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''") {
+				inCodeBlock = true
+			} else if strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''") { // this is more than 3 letters
 				// Toggle the flag for if we're in a code block or not
 				inCodeBlock = false
 			}
@@ -190,17 +190,20 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					trimmedLine = strings.TrimSpace(line)
 					foundDocstringMarker := false
 
-					if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") {
-						inCodeBlock = false
-						foundDocstringMarker = true
-					} else if strings.HasPrefix(trimmedLine, "'''") && strings.HasSuffix(trimmedLine, "'''") {
-						inCodeBlock = false
-						foundDocstringMarker = true
-					} else if strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''") {
-						// Toggle the flag for if we're in a code block or not
+					if trimmedLine == "\"\"\"" || trimmedLine == "'''" { // only 3 letters
 						inCodeBlock = !inCodeBlock
 						foundDocstringMarker = true
-					} else if strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''") {
+					} else if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") { // this could be 6 letters or more
+						inCodeBlock = false
+						foundDocstringMarker = true
+					} else if strings.HasPrefix(trimmedLine, "'''") && strings.HasSuffix(trimmedLine, "'''") { // this could be 6 letters or more
+						inCodeBlock = false
+						foundDocstringMarker = true
+					} else if strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''") { // this is more than 3 letters
+						// Toggle the flag for if we're in a code block or not
+						inCodeBlock = true
+						foundDocstringMarker = true
+					} else if strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''") { // this is more than 3 letters
 						// Toggle the flag for if we're in a code block or not
 						inCodeBlock = false
 						foundDocstringMarker = true
