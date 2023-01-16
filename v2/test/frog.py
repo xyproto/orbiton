@@ -17,6 +17,18 @@ except ImportError:
     pass
 
 
+def a():
+    """Test comment 1"""
+    print("a")
+
+
+def b():
+    """
+    Test comment 2
+    """
+    print("b")
+
+
 class List:
 
     def __init__(self, screen, top, left, width, height, itemlist, selectednr, fg, bg, fontsize=32, fontface="superfrog.ttf"):
@@ -259,7 +271,7 @@ class MenuProgram:
             self.menu.lselect(text)
 
             self.r.set(self.menu.rmenu(), 0)
-            #self.r = List(self.screen, top=10, left=10 + self.rwidth, width=self.rwidth, height=self.height - 20, itemlist=self.menu.rmenu(), selectednr=0, fg=self.fg, bg=self.bg)
+            # self.r = List(self.screen, top=10, left=10 + self.rwidth, width=self.rwidth, height=self.height - 20, itemlist=self.menu.rmenu(), selectednr=0, fg=self.fg, bg=self.bg)
 
             self.active = self.r
         else:
