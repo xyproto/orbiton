@@ -19,7 +19,7 @@ var opinionatedStringReplacer = strings.NewReplacer(
 	string([]byte{'\r'}), string([]byte{'\n'}),
 )
 
-// opinionatedByteReplacer takes a slice of bytes and can be used for fixing
+// opinionatedByteReplacer is a bytereplacer that can be used for fixing
 // nonbreaking spaces, annoying tildes, \r\n and \r
 var opinionatedByteReplacer = bytereplacer.New(
 	// Replace non-breaking space with regular space
