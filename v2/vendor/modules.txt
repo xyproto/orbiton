@@ -69,6 +69,9 @@ github.com/xyproto/textoutput
 # github.com/xyproto/vt100 v1.11.3
 ## explicit; go 1.10
 github.com/xyproto/vt100
+# go4.org v0.0.0-20201209231011-d4a079459e60
+## explicit; go 1.13
+go4.org/bytereplacer
 # golang.org/x/sys v0.4.0
 ## explicit; go 1.17
 golang.org/x/sys/unix

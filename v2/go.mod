@@ -18,6 +18,7 @@ require (
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/textoutput v1.14.1
 	github.com/xyproto/vt100 v1.11.3
+	go4.org v0.0.0-20201209231011-d4a079459e60
 )
 
 require (
