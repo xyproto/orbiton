@@ -1,8 +1,9 @@
 package main
 
 import (
-	"bytes"
 	"strings"
+
+	"go4.org/bytereplacer"
 )
 
 // opinionatedStringReplacer is a Replacer that can be used for fixing
@@ -20,13 +21,13 @@ var opinionatedStringReplacer = strings.NewReplacer(
 
 // opinionatedByteReplacer takes a slice of bytes and can be used for fixing
 // nonbreaking spaces, annoying tildes, \r\n and \r
-func opinionatedByteReplacer(data []byte) []byte {
+var opinionatedByteReplacer = bytereplacer.New(
 	// Replace non-breaking space with regular space
-	data = bytes.ReplaceAll(data, []byte{0xc2, 0xa0}, []byte{0x20})
+	string([]byte{0xc2, 0xa0}), string([]byte{0x20}),
 	// Fix annoying tilde
-	data = bytes.ReplaceAll(data, []byte{0xcc, 0x88}, []byte{'~'})
+	string([]byte{0xcc, 0x88}), string([]byte{'~'}),
 	// Replace DOS line endings with UNIX line endings
-	data = bytes.ReplaceAll(data, []byte{'\r', '\n'}, []byte{'\n'})
+	string([]byte{'\r', '\n'}), string([]byte{'\n'}),
 	// Replace any remaining \r characters with \n
-	return bytes.ReplaceAll(data, []byte{'\r'}, []byte{'\n'})
-}
+	string([]byte{'\r'}), string([]byte{'\n'}),
+)

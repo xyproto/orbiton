@@ -363,7 +363,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (st
 
 	// Opinionated replacements, but not for binary files
 	if !e.binaryFile {
-		fnord.data = opinionatedByteReplacer(fnord.data)
+		fnord.data = opinionatedByteReplacer.Replace(fnord.data)
 	}
 
 	// Load the data
