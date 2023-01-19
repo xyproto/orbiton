@@ -126,7 +126,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		delKeywords = []string{"install"}
 	case mode.Koka:
 		clearKeywords()
-		addKeywords = kotlinWords
+		addKeywords = kokaWords
 	case mode.Kotlin:
 		clearKeywords()
 		addKeywords = kotlinWords
