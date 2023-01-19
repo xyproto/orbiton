@@ -979,7 +979,7 @@ retry:
 					statusText = fmt.Sprintf("You won! New highscore: %d", score)
 					saveHighScore(score)
 				} else if score > 0 {
-					statusText = fmt.Sprintf("You won! Score: %d - press r to retry", score)
+					statusText = fmt.Sprintf("You won! Score: %d", score)
 				}
 			} else {
 				paused = true
@@ -994,7 +994,7 @@ retry:
 				}
 
 				if score > highScore {
-					statusText = fmt.Sprintf("Game over! New highscore: %d", score)
+					statusText = fmt.Sprintf("Game over! New highscore: %d - press r to retry", score)
 					saveHighScore(score)
 				} else if score > 0 {
 					statusText = fmt.Sprintf("Game over! Score: %d - press r to retry", score)
