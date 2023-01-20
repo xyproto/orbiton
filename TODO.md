@@ -6,6 +6,12 @@
 - [ ] Add a table editor for Markdown.
 - [ ] If Esc is pressed repeatedly (>=4 times in a row), open the `ctrl-o` menu.
 
+## AI
+
+- [ ] Support either GPT-J, GPT-Neo or ChatGPT. At a minimum, make it possible to auto-generate commit messages.
+- [ ] Make it possible to generate the rest of a function, just by typing in a comment and a function signature,
+      for instance by pressing "tab" at the end of a function signature.
+
 ## Building, debugging and testing programs
 
 - [ ] Jump to error for Erlang.
@@ -58,8 +64,9 @@
       Perhaps use the logic for tab-indenting for when dedenting `}`?
 - [ ] If joining a line that starts with a single-line comment with a line below that also starts with a single line comment,
       remove the extra comment marker.
-- [ ] When in "SuggestMode", typing should start filtering the list.
+- [ ] When in `SuggestMode`, typing should start filtering the list.
 - [ ] Introduce the concept of soft and hard breaks, to keep track of where lines were broken automatically and be able to reflow the text.
+- [ ] Sort lines in a less opaque and unusual way than `left,up,right` `sort` `return`.
 
 ## Autocompletion
 
