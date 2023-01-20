@@ -84,7 +84,7 @@ These features are unique to `o`, as far as I am aware:
 * When jumping to a specific line or percentage (ie. `50%`) of a file with `ctrl-l`, jumping to a fraction (ie. `0.5`) is also supported.
 * If tab completion in the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
 * Search by pressing `ctrl-f`, entering text and pressing `return`. Replace by pressing `tab` instead of `return`, then enter the replacement text and press `return`. Searching for unicode runes on the form `u+0000` is also supported.
-* Press `right, down, left` or `left, down, right` in a rapid succession followed by `down` to save, `up` to save and quit or type in a command. This shortcut is handy to avoid [the emacs pinky](http://xahlee.info/emacs/emacs/emacs_pinky.html).
+* Press `right, down, left` or `left, down, right` in a rapid succession followed by `down` to save or `up` to save and quit.  The only purpose of this unusual shortcut is to avoid [the emacs pinky](http://xahlee.info/emacs/emacs/emacs_pinky.html).
 * Type `iferr` on a single line in a Go program and press `return` to insert a suitable `if err != nil { return ... }` block, based on [koron/iferr](https://github.com/koron/iferr).
 * For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
 
