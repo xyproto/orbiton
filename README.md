@@ -491,24 +491,35 @@ When using `pandoc` to export from Markdown to PDF:
 
 ## Easter egg
 
-Try the Konami code while in the `ctrl-o` menu to start a silly little game about feeding creatures with pellets before they are eaten.
+Try the Konami code while in the `ctrl-o` menu to start a silly little game about feeding creatures with pellets before they are eaten. It's also possible to add a symlink for starting it directly: `ln -sf /usr/bin/o /usr/bin/feedgame`.
 
 ## Recommended symlinks
 
-* For starting `o` with the _Light_ theme: `ln -sf /usr/bin/o /usr/bin/li`.
-* For starting the GUI version of `o` with the _Light_ theme: `ln -sf /usr/bin/o /usr/bin/lig`.
+```sh
+# For starting o with the Light theme
+ln -sf /usr/bin/o /usr/bin/li
+# For starting o with the Red/Black theme
+ln -sf /usr/bin/o /usr/bin/redblack
+# For starting o with the Synthwave theme
+ln -sf /usr/bin/o /usr/bin/sw
+# For starting o with the Blue Edit theme
+ln -sf /usr/bin/o /usr/bin/edi
+# For starting o with the Light VS theme
+ln -sf /usr/bin/o /usr/bin/vs
+```
 
-* For starting `o` with the _Red & black_ theme: `ln -sf /usr/bin/o /usr/bin/redblack`.
-* For starting the GUI version of `o` with the _Red & black_ theme: `ln -sf /usr/bin/og /usr/bin/redblackg`.
-
-* For starting `o` with the _Synthwave_ theme: `ln -sf /usr/bin/o /usr/bin/sw`.
-* For starting the GUI version of `o` with the _Synthwave_ theme: `ln -sf /usr/bin/og /usr/bin/swg`.
-
-* For starting `o` with the _Blue Edit_ theme: `ln -sf /usr/bin/o /usr/bin/edi`.
-* For starting the GUI version of `o` with the _Blue Edit_ theme: `ln -sf /usr/bin/og /usr/bin/edig`.
-
-* For starting `o` with the _Light VS_ theme: `ln -sf /usr/bin/o /usr/bin/vs`.
-* For starting the GUI version of `o` with the _Light VS_ theme: `ln -sf /usr/bin/og /usr/bin/vsg`.
+```sh
+# For starting the GUI version of o with the Light theme
+ln -sf /usr/bin/og /usr/bin/lig
+# For starting the GUI version of o with the Red/Black theme
+ln -sf /usr/bin/og /usr/bin/redblackg
+# For starting the GUI version of o with the Synthwave theme
+ln -sf /usr/bin/og /usr/bin/swg
+# For starting the GUI version of o with the Blue Edit theme
+ln -sf /usr/bin/og /usr/bin/edig
+# For starting the GUI version of o with the Light VS theme
+ln -sf /usr/bin/og /usr/bin/vsg
+```
 
 ## The GUI frontend `og`
 
