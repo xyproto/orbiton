@@ -256,19 +256,20 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	// because $COLORFGBG is "15;0" even though the background is white.
 	if !e.readOnly && (!specificLetter || editTheme) {
 		inOG := env.Bool("OG")
-		if env.Str("THEME") == "redblack" {
+		themeEnv := env.Str("THEME")
+		if themeEnv == "redblack" {
 			b := false
 			initialLightBackground = &b
 			e.setRedBlackTheme()
-		} else if env.Str("THEME") == "synthwave" {
+		} else if themeEnv == "synthwave" {
 			b := false
 			initialLightBackground = &b
 			e.setSynthwaveTheme()
-		} else if env.Str("THEME") == "blueedit" {
+		} else if themeEnv == "blueedit" {
 			b := false
 			initialLightBackground = &b
 			e.setBlueEditTheme()
-		} else if env.Str("THEME") == "vs" {
+		} else if themeEnv == "vs" {
 			b := false
 			initialLightBackground = &b
 			e.setVSTheme()
