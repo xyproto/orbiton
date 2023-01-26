@@ -166,7 +166,6 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-\` - Comment in or out a block of code.
 * `ctrl-~` - Jump to a matching parenthesis.
 * `esc` - Redraw everything and clear the last search.
-* `right, down, left` in quick succession followed by `up` to just quit or `down` to save and quit. This is handy to avoid pinky finger pain (the `emacs pinky`).
 
 ## Build and format
 
@@ -489,9 +488,10 @@ When using `pandoc` to export from Markdown to PDF:
 * The `--pdf-engine=xelatex` and `--listings` flags are used, so `xelatex` and the `listings` package needs to be available. A standard installation of LaTeX and Pandoc should provide both.
 * `Render to PDF with pandoc` will only appear on the `ctrl-o` menu when editing a Markdown file and `pandoc` is installed.
 
-## Easter egg
+## Easter eggs
 
-Try the Konami code while in the `ctrl-o` menu to start a silly little game about feeding creatures with pellets before they are eaten. It's also possible to add a symlink for starting it directly: `ln -sf /usr/bin/o /usr/bin/feedgame`.
+* Press the Konami code keys while in the `ctrl-o` menu to start a silly little game about feeding creatures with pellets before they are eaten. Alternatively, create a symlink for starting it directly with ie.: `ln -sf /usr/bin/o /usr/bin/feedgame`.
+* Press `right, down, left` in _quick_ succession followed by either `up` to quit or `down` to save _and_ quit. This can be useful for avoiding the painful "emacs pinky".
 
 ## Recommended symlinks
 
