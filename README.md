@@ -231,7 +231,6 @@ This is a brand new feature and needs more testing.
 * Messages printed to stdout are displayed as a status message when that line is reached.
 * An indication of which line the program is at has not yet been added, and is a work in progress.
 * There are status messages indicating when the debug session is started and ended.
-* Therefore `o` is not only an editor, but also an integrated development environment (IDE).
 
 ## Manual installation on Linux
 
@@ -242,6 +241,8 @@ This is a brand new feature and needs more testing.
 And optionally:
 
     make gui && sudo make gui-install
+
+It is also possible to install the symlinks that are suggested further down in this document.
 
 ## OpenBSD installation instructions
 
@@ -256,6 +257,8 @@ Build both the editor `o` and the GUI frontend `og`:
 *Install both executables, a man page, an icon and a desktop shortcut file (use `doas` if needed`):
 
     PREFIX=/usr/local gmake install og-install
+
+It is also possible to install the symlinks that are suggested further down in this document.
 
 ## Dependencies
 
@@ -389,7 +392,6 @@ There are also these shortcuts:
 
   * Insert `⊤` by pressing `ctrl-t` and then `t`.
   * Insert `ℕ` by pressing `ctrl-t` and then `n`.
-
 
 ## Updating PKGBUILD files
 
