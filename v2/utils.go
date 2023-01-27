@@ -409,3 +409,12 @@ func ReadFileAndSize(filename string) ([]byte, uint64, error) {
 		}
 	}
 }
+
+// lastEntryIsNot checks that the last entry of xs is not the given x
+func lastEntryIsNot(xs []string, x string) bool {
+	l := len(xs)
+	if l == 0 {
+		return true
+	}
+	return xs[l-1] != x
+}

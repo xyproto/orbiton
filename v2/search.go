@@ -402,7 +402,9 @@ AGAIN:
 		e.GoToLineNumber(initialLocation, c, status, false)
 		trimmedSearchString := strings.TrimSpace(s)
 		if len(trimmedSearchString) > 0 {
-			searchHistory = append(searchHistory, trimmedSearchString)
+			if lastEntryIsNot(searchHistory, trimmedSearchString) {
+				searchHistory = append(searchHistory, trimmedSearchString)
+			}
 			// ignore errors saving the search history, since it's not critical
 			if !e.slowLoad {
 				SaveSearchHistory(searchHistoryFilename, searchHistory)
