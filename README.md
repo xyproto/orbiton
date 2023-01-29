@@ -107,7 +107,7 @@ These features are unique to `o`, as far as I am aware:
 * Must be given a filename at start.
 * May provide smart indentation.
 * Requires that `/dev/tty` is available.
-* `xclip` (for X) or `wl-clipboard` (for Wayland) must be installed if the system clipboard should be used. `pbcopy` (macOS) is a work in progress.
+* `xclip` (for X), `wl-clipboard` (for Wayland) or `pbcopy` for macOS must be installed for using the system clipboard.
 * May take a line number as the second argument, with an optional `+` or `:` prefix.
 * If the filename is `COMMIT_EDITMSG`, the look and feel will be adjusted for git commit messages.
 * Supports `UTF-8`, but some runes may be displayed incorrectly.
