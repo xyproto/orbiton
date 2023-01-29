@@ -76,7 +76,7 @@ These features are unique to `o`, as far as I am aware:
 * Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy the rest (until a blank line).
 * Open or close a portal with `ctrl-r`. When a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
 * Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages.
-* Cycle git rebase keywords with `ctrl-r` or `ctrl-w`, when an interactive git rebase session is in progress.
+* Cycle git rebase keywords with `ctrl-r`, when an interactive git rebase session is in progress.
 * Jump to a line with `ctrl-l`. Either enter a number to jump to a line or just press `return` to jump to the top. Press `ctrl-l` and `return` again to jump to the bottom.
 * When jumping to a specific line or percentage (ie. `50%`) of a file with `ctrl-l`, jumping to a fraction (ie. `0.5`) is also supported.
 * If tab completion in the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
