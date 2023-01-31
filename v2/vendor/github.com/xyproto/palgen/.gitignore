@@ -1,0 +1,36 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+cmd/png16/png16
+cmd/png256/png256
+cmd/png2gpl/png2gpl
+cmd/png2act/png2act
+cmd/png2png/png2png
+
+cmd/png2act/*.act
+cmd/png2gpl/burn.gpl
+
+testdata/*.gpl
+
+internal/burn/burn
+internal/general/general
+internal/plan9/plan9
+internal/websafe/websafe
+internal/burn/*.png
+internal/general/*.png
+internal/plan9/*.png
+internal/websafe/*.png
+internal/burn/burn.gpl
+internal/general/burn.gpl
+internal/plan9/plan9.gpl
+internal/websafe/websafe.gpl

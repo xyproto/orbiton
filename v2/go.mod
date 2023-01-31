@@ -9,6 +9,7 @@ require (
 	github.com/ianlancetaylor/demangle v0.0.0-20220517205856-0058ec4f073c
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/xyproto/binary v1.3.0
+	github.com/xyproto/carveimg v1.2.3
 	github.com/xyproto/env v1.8.0
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
@@ -19,16 +20,19 @@ require (
 	github.com/xyproto/textoutput v1.14.1
 	github.com/xyproto/vt100 v1.11.3
 	go4.org v0.0.0-20201209231011-d4a079459e60
+	golang.org/x/image v0.3.0
 )
 
 require (
 	github.com/DataDog/gostackparse v0.6.0 // indirect
 	github.com/creack/pty v1.1.18 // indirect
 	github.com/kr/pty v1.1.8 // indirect
+	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
+	github.com/xyproto/palgen v1.2.0 // indirect
 	golang.org/x/sys v0.4.0 // indirect
 )
