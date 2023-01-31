@@ -40,13 +40,11 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	baseFilename := filepath.Base(fnord.filename)
 	ext := filepath.Ext(baseFilename)
 
-	switch ext {
-	case ".GIF", ".JPEG", ".JPG", ".PNG", ".gif", ".jpeg", ".jpg", ".png":
+	// Check if the given filename is an image
+	switch strings.ToLower(ext) {
+	case ".png", ".jpg", ".jpeg", ".ico", ".gif", ".bmp":
 		const waitForKeypress = true
-		if err := displayImage(c, fnord.filename, waitForKeypress); err != nil {
-			return nil, "", true, err
-		}
-		return nil, "", true, nil
+		return nil, "", true, displayImage(c, fnord.filename, waitForKeypress)
 	}
 
 	if fnord.Empty() {
