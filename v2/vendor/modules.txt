@@ -26,6 +26,12 @@ github.com/jsummers/gobmp
 # github.com/jung-kurt/gofpdf v1.16.2
 ## explicit; go 1.12
 github.com/jung-kurt/gofpdf
+# github.com/kolesa-team/go-webp v1.0.2
+## explicit; go 1.10
+github.com/kolesa-team/go-webp/decoder
+github.com/kolesa-team/go-webp/encoder
+github.com/kolesa-team/go-webp/utils
+github.com/kolesa-team/go-webp/webp
 # github.com/kr/pty v1.1.8
 ## explicit; go 1.12
 github.com/kr/pty
@@ -51,7 +57,7 @@ github.com/sourcegraph/annotate
 # github.com/xyproto/binary v1.3.0
 ## explicit; go 1.18
 github.com/xyproto/binary
-# github.com/xyproto/carveimg v1.3.0
+# github.com/xyproto/carveimg v1.3.1
 ## explicit; go 1.18
 github.com/xyproto/carveimg
 # github.com/xyproto/env v1.8.0

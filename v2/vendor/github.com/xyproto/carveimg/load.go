@@ -11,6 +11,8 @@ import (
 
 	ico "github.com/biessek/golang-ico"
 	bmp "github.com/jsummers/gobmp"
+	"github.com/kolesa-team/go-webp/decoder"
+	"github.com/kolesa-team/go-webp/webp"
 )
 
 // LoadImage loads an image and converts it to *image.NRGBA.
@@ -35,6 +37,8 @@ func LoadImage(filename string) (*image.NRGBA, error) {
 		img, err = gif.Decode(f)
 	case ".bmp":
 		img, err = bmp.Decode(f)
+	case ".webp":
+		img, err := webp.Decode(f, &decoder.Options{})
 	}
 	if err != nil {
 		return nil, err
