@@ -122,8 +122,8 @@ github.com/xyproto/benchmarked v0.3.0/go.mod h1:4H4a1k1EsFmliut59gNc8RO2N2IIhl74
 github.com/xyproto/binary v1.3.0 h1:RCICHqn81T+vxNdEBQvQ8iZ3Qt44AgMHag4IZgeFXbU=
 github.com/xyproto/binary v1.3.0/go.mod h1:0bRi3JImoPWOFfM7yPYzNVyLZXYGQTBwdNRPs4m3+qQ=
 github.com/xyproto/burnpal v0.0.0-20191014130824-80030bc13096/go.mod h1:j3S/tDDOEkIChz0sWDqO3zXOgIjz/6nhuc+JrmZNLnA=
-github.com/xyproto/carveimg v1.3.1 h1:PglybRjxV//L7fTe6jiOQEESj9GZ5/3ef2lVW2O80dA=
-github.com/xyproto/carveimg v1.3.1/go.mod h1:K+E3WLrqkIQFlw9gVAKQgfLutusigZFoy5fbn9rCBOw=
+github.com/xyproto/carveimg v1.3.2 h1:902nGI4cxGLbDmwFVdYg4PVS6ctjACGfy7KV4MwShhU=
+github.com/xyproto/carveimg v1.3.2/go.mod h1:K+E3WLrqkIQFlw9gVAKQgfLutusigZFoy5fbn9rCBOw=
 github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
 github.com/xyproto/env v1.8.0 h1:W8H7zyB+wpJjvJ4mXtN6c6yeMH+qSQ1n0JiW0z3P9v4=
 github.com/xyproto/env v1.8.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=

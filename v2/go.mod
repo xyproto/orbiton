@@ -9,7 +9,7 @@ require (
 	github.com/ianlancetaylor/demangle v0.0.0-20220517205856-0058ec4f073c
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/xyproto/binary v1.3.0
-	github.com/xyproto/carveimg v1.3.1
+	github.com/xyproto/carveimg v1.3.2
 	github.com/xyproto/env v1.8.0
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0

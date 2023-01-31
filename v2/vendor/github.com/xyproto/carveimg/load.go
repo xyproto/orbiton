@@ -38,7 +38,7 @@ func LoadImage(filename string) (*image.NRGBA, error) {
 	case ".bmp":
 		img, err = bmp.Decode(f)
 	case ".webp":
-		img, err := webp.Decode(f, &decoder.Options{})
+		img, err = webp.Decode(f, &decoder.Options{})
 	}
 	if err != nil {
 		return nil, err
