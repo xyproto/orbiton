@@ -60,9 +60,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
-	e, messageAfterRedraw, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true)
+	e, messageAfterRedraw, displayedImage, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true)
 	if err != nil {
 		return "", false, err
+	} else if displayedImage {
+		// A special case for if an image was displayed instead of a file being opened
+		return "", false, nil
 	}
 
 	// Find the absolute path to this filename

@@ -2238,8 +2238,9 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 	e.SaveLocation(absFilename, locationHistory)
 
 	var (
-		e2            *Editor
-		statusMessage string
+		e2             *Editor
+		statusMessage  string
+		displayedImage bool
 	)
 
 	if switchBuffer.Len() == 1 {
@@ -2248,7 +2249,7 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
 		fnord := FilenameOrData{filenameToOpen, []byte{}, 0}
-		e2, statusMessage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false)
+		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false)
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)
@@ -2257,6 +2258,8 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 			*e = *e2
 			(*e).lines = (*e2).lines
 			(*e).pos = (*e2).pos
+		} else if displayedImage {
+			panic("displayed an image while switching from one Editor struct to another")
 		} else {
 			// logf("While switching from %s to %s, got error: %s\n", absFilename, filenameToOpen, err)
 			panic(err)

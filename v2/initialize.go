@@ -21,8 +21,8 @@ var (
 )
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
-// Returns an Editor, a status message and an error type
-func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor bool) (*Editor, string, error) {
+// Returns an Editor, a status message for the user, a bool that is true if an image was displayed instead and the finally an error type.
+func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor bool) (*Editor, string, bool, error) {
 
 	var (
 		startTime          = time.Now()
@@ -39,6 +39,15 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 
 	baseFilename := filepath.Base(fnord.filename)
 	ext := filepath.Ext(baseFilename)
+
+	switch ext {
+	case ".GIF", ".JPEG", ".JPG", ".PNG", ".gif", ".jpeg", ".jpg", ".png":
+		const waitForKeypress = true
+		if err := displayImage(c, fnord.filename, waitForKeypress); err != nil {
+			return nil, "", true, err
+		}
+		return nil, "", true, nil
+	}
 
 	if fnord.Empty() {
 		m = mode.Detect(withoutGZ(fnord.filename)) // Note that mode.Detect can check for the full path, like /etc/fstab
@@ -102,7 +111,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 
 		warningMessage, err = e.Load(c, tty, fnord)
 		if err != nil {
-			return nil, "", err
+			return nil, "", false, err
 		}
 
 		// Detect the file mode if the current editor mode is blank, or Prolog (since it could be Perl)
@@ -142,12 +151,12 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		// TODO: Enter file-rename mode when opening a directory?
 		// Check if this is a directory
 		if fileInfo.IsDir() {
-			return nil, "", errors.New(e.filename + " is a directory")
+			return nil, "", false, errors.New(e.filename + " is a directory")
 		}
 
 		warningMessage, err = e.Load(c, tty, fnord)
 		if err != nil {
-			return nil, "", err
+			return nil, "", false, err
 		}
 
 		if !e.Empty() {
@@ -191,7 +200,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 
 		// Prepare an empty file
 		if newMode, err := e.PrepareEmpty(c, tty, e.filename); err != nil {
-			return nil, "", err
+			return nil, "", false, err
 		} else if newMode != mode.Blank {
 			e.mode = newMode
 		}
@@ -199,13 +208,13 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		// Test save, to check if the file can be created and written, or not
 		if err := e.Save(c, tty); err != nil {
 			// Check if the new file can be saved before the user starts working on the file.
-			return nil, "", err
+			return nil, "", false, err
 		}
 
 		// Creating a new empty file worked out fine, don't save it until the user saves it
 		if os.Remove(e.filename) != nil {
 			// This should never happen
-			return nil, "", errors.New("could not remove an empty file that was just created: " + e.filename)
+			return nil, "", false, errors.New("could not remove an empty file that was just created: " + e.filename)
 		}
 		createdNewFile = true
 	}
@@ -416,5 +425,5 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		}
 	}
 
-	return e, statusMessage, nil
+	return e, statusMessage, false, nil
 }
