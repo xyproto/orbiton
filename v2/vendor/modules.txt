@@ -4,6 +4,9 @@ github.com/DataDog/gostackparse
 # github.com/atotto/clipboard v0.1.4
 ## explicit
 github.com/atotto/clipboard
+# github.com/biessek/golang-ico v0.0.0-20180326222316-d348d9ea4670
+## explicit
+github.com/biessek/golang-ico
 # github.com/creack/pty v1.1.18
 ## explicit; go 1.13
 github.com/creack/pty
@@ -17,6 +20,9 @@ github.com/felixge/fgtrace/internal
 # github.com/ianlancetaylor/demangle v0.0.0-20220517205856-0058ec4f073c
 ## explicit; go 1.12
 github.com/ianlancetaylor/demangle
+# github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e
+## explicit
+github.com/jsummers/gobmp
 # github.com/jung-kurt/gofpdf v1.16.2
 ## explicit; go 1.12
 github.com/jung-kurt/gofpdf
@@ -45,7 +51,7 @@ github.com/sourcegraph/annotate
 # github.com/xyproto/binary v1.3.0
 ## explicit; go 1.18
 github.com/xyproto/binary
-# github.com/xyproto/carveimg v1.2.3
+# github.com/xyproto/carveimg v1.3.0
 ## explicit; go 1.18
 github.com/xyproto/carveimg
 # github.com/xyproto/env v1.8.0

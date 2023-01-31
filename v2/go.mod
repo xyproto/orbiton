@@ -9,7 +9,7 @@ require (
 	github.com/ianlancetaylor/demangle v0.0.0-20220517205856-0058ec4f073c
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/xyproto/binary v1.3.0
-	github.com/xyproto/carveimg v1.2.3
+	github.com/xyproto/carveimg v1.3.0
 	github.com/xyproto/env v1.8.0
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
@@ -25,7 +25,9 @@ require (
 
 require (
 	github.com/DataDog/gostackparse v0.6.0 // indirect
+	github.com/biessek/golang-ico v0.0.0-20180326222316-d348d9ea4670 // indirect
 	github.com/creack/pty v1.1.18 // indirect
+	github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
