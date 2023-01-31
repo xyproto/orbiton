@@ -83,6 +83,7 @@ These features are unique to `o`, as far as I am aware:
 * Search by pressing `ctrl-f`, entering text and pressing `return`. Replace by pressing `tab` instead of `return`, then enter the replacement text and press `return`. Searching for unicode runes on the form `u+0000` is also supported.
 * Type `iferr` on a single line in a Go program and press `return` to insert a suitable `if err != nil { return ... }` block, based on [koron/iferr](https://github.com/koron/iferr).
 * For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
+* Preview `.png`, `.jpg`, `.jpeg`, `.gif`, `.ico`, `.bmp` or `.webp` images directly on the terminal, using up to 16 colors.
 
 ## Other features and limitations
 
