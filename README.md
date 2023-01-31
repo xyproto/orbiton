@@ -328,7 +328,7 @@ JavaScript
 
 * For formatting JavaScript code with , `prettier` must be installed.
 
-## A note on Java and Scala
+## Java
 
 Since `kotlinc $filename -include-runtime -d` builds to a `.jar`, I though I should do the same for Java. The idea is to easily compile a single or a small collection of `.java` files, where one of the file has a `main` function.
 
@@ -353,6 +353,8 @@ jar cmf META-INF/MANIFEST.MF ../main.jar $classFiles
 cd ..
 rm -rf _o_build
 ```
+
+### Scala
 
 For Scala, I'm using this code, to produce a `main.jar` file that can be run directly with `java -jar main.jar`:
 
@@ -379,7 +381,7 @@ rm -rf _o_build
 ```
 
 * If `/usr/share/scala/lib/scala-library.jar` is not found `scalac -d run_with_scala.jar` is used instead.
-* If `scala-library.jar` was not found, then the resulting `jar` file will `scala` to run.
+* If `scala-library.jar` was not found, then the resulting `jar` file will need `scala` to run.
 
 ## Agda
 
