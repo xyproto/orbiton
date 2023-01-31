@@ -59,11 +59,15 @@ func displayImage(c *vt100.Canvas, filename string, waitForKeypress bool) error 
 	}
 
 	// Output the filename on top of the image
-	baseFilename := filepath.Base(filename)
-	c.Write(uint((width-len(baseFilename))/2), 0, vt100.Red, vt100.BackgroundGray, baseFilename)
+	title := " " + filepath.Base(filename) + " "
+	c.Write(uint((width-len(title))/2), uint(height-1), vt100.Black, vt100.BackgroundGray, title)
 
 	// Draw the contents of the canvas to the screen
 	c.Draw()
+
+	// Hide the cursor
+	vt100.ShowCursor(false)
+	defer vt100.ShowCursor(true)
 
 	if waitForKeypress {
 		// Wait for a keypress
