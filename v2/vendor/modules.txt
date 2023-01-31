@@ -7,6 +7,9 @@ github.com/atotto/clipboard
 # github.com/biessek/golang-ico v0.0.0-20180326222316-d348d9ea4670
 ## explicit
 github.com/biessek/golang-ico
+# github.com/chai2010/webp v1.1.1
+## explicit; go 1.17
+github.com/chai2010/webp
 # github.com/creack/pty v1.1.18
 ## explicit; go 1.13
 github.com/creack/pty
@@ -26,12 +29,6 @@ github.com/jsummers/gobmp
 # github.com/jung-kurt/gofpdf v1.16.2
 ## explicit; go 1.12
 github.com/jung-kurt/gofpdf
-# github.com/kolesa-team/go-webp v1.0.2
-## explicit; go 1.10
-github.com/kolesa-team/go-webp/decoder
-github.com/kolesa-team/go-webp/encoder
-github.com/kolesa-team/go-webp/utils
-github.com/kolesa-team/go-webp/webp
 # github.com/kr/pty v1.1.8
 ## explicit; go 1.12
 github.com/kr/pty
@@ -57,7 +54,7 @@ github.com/sourcegraph/annotate
 # github.com/xyproto/binary v1.3.0
 ## explicit; go 1.18
 github.com/xyproto/binary
-# github.com/xyproto/carveimg v1.3.2
+# github.com/xyproto/carveimg v1.3.3
 ## explicit; go 1.18
 github.com/xyproto/carveimg
 # github.com/xyproto/env v1.8.0

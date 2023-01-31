@@ -1,0 +1,12 @@
+language: go
+
+go:
+  - 1.5
+  - 1.6
+  - 1.11
+  - 1.12
+  - 1.17
+  - tip
+
+before_script:
+  - go get -d golang.org/x/image/webp
