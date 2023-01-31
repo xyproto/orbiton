@@ -35,7 +35,7 @@ func displayImage(c *vt100.Canvas, filename string, waitForKeypress bool) error 
 		return errors.New("the width of the given image is 0")
 	}
 
-	ratio := (float64(imageHeight) / float64(imageWidth)) * 2.0 // terminal "pixels" are a bit narrow, so multiply by 2
+	ratio := (float64(imageHeight) / float64(imageWidth)) * 4.0 // terminal "pixels" are a bit narrow, so multiply by 4.0
 	if ratio == 0 {
 		return errors.New("the ratio of the given image is 0")
 	}
