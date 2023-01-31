@@ -98,7 +98,7 @@ These features are unique to `o`, as far as I am aware:
 * Loads faster than both `vim` and `emacs`, for small files.
 * Can render text to PDF either by itself or by using `pandoc`.
 * Tested with `alacritty`, `st`, `urxvt`, `konsole`, `zutty`, `xterm` and `xfce4-terminal`.
-* Tested on Arch Linux, Debian and FreeBSD.
+* Tested on Arch Linux, Debian, FreeBSD and OpenBSD.
 * Never asks before saving or quitting. Be careful!
 * The [`NO_COLOR`](https://no-color.org) environment variable can be set to disable all colors.
 * Rainbow parentheses makes lines with many parentheses easier to read.
