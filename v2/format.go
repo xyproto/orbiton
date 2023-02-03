@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/xyproto/env"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
@@ -48,9 +47,6 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	if e.mode == mode.Kotlin {
 		tempFirstName = "O"
 	}
-
-	// Use the temporary directory defined in TMPDIR, with fallback to /tmp
-	tempDir := env.Dir("TMPDIR", "/tmp")
 
 	if f, err := os.CreateTemp(tempDir, tempFirstName+".*"+extOrBaseFilename); err == nil {
 		// no error, everything is fine

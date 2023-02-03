@@ -223,7 +223,6 @@ func runeFromUBytes(bs []byte) (rune, error) {
 // logf, for quick "printf-style" debugging
 // Will call log.Fatalln if there are problems!
 func logf(format string, args ...any) {
-	tempDir := env.Dir("TMPDIR", "/tmp")
 	logFilename := filepath.Join(tempDir, "o.log")
 	err := flogf(logFilename, format, args...)
 	if err != nil {
@@ -257,7 +256,6 @@ func flogf(logfile, format string, args ...any) error {
 // // pplogf, for pretty print logging to a file, using
 // // import "github.com/k0kubun/pp/v3"
 // func pplogf(format string, args ...any) error {
-// 	tempDir := env.Dir("TMPDIR", "/tmp")
 // 	logFilename := filepath.Join(tempDir, "o.log")
 // 	f, err := os.OpenFile(logFilename, os.O_APPEND|os.O_WRONLY, 0644)
 // 	if err != nil {

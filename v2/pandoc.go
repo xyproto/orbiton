@@ -53,9 +53,6 @@ func (e *Editor) exportPandoc(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar
 	// The reason for writing to a temporary file is to be able to export without saving
 	// the currently edited file.
 
-	// Use the temporary directory defined in TMPDIR, with fallback to /tmp
-	tempDir := env.Dir("TMPDIR", "/tmp")
-
 	tempFilename := ""
 	f, err := os.CreateTemp(tempDir, "_o*.md")
 	if err != nil {

@@ -16,8 +16,10 @@ import (
 )
 
 var (
-	specificLetter bool // did the editor executable start with a specific letter, or just "o"?
-	editTheme      bool // does the theme has both a dark and a light version?
+	specificLetter bool             // did the editor executable start with a specific letter, or just "o"?
+	editTheme      bool             // does the theme has both a dark and a light version?
+	inVTEGUI       = env.Bool("OG") // is o running within the VTE GUI application?
+	tempDir        = env.Dir("TMPDIR", "/tmp")
 )
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
@@ -262,7 +264,6 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	// TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
 	// because $COLORFGBG is "15;0" even though the background is white.
 	if !e.readOnly && (!specificLetter || editTheme) {
-		inOG := env.Bool("OG")
 		themeEnv := env.Str("THEME")
 		if themeEnv == "redblack" {
 			b := false
@@ -280,7 +281,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			b := false
 			initialLightBackground = &b
 			e.setVSTheme()
-		} else if (env.Has("XTERM_VERSION") && !inOG && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
+		} else if (env.Has("XTERM_VERSION") && !inVTEGUI && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
 			b := true
 			initialLightBackground = &b
 			if editTheme {
@@ -288,7 +289,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			} else {
 				e.setLightVSTheme()
 			}
-		} else if shell := env.Str("SHELL"); (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && !inOG && filepath.Base(os.Args[0]) != "default" {
+		} else if shell := env.Str("SHELL"); (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && !inVTEGUI && filepath.Base(os.Args[0]) != "default" {
 			// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
 			e.setRedBlackTheme()
 		} else if colorString := env.Str("COLORFGBG"); strings.Contains(colorString, ";") {

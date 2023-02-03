@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/xyproto/env"
 	"github.com/xyproto/vt100"
 )
 
@@ -21,7 +20,7 @@ func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *St
 	// Send a SIGWINCH signal to the parent process if "OG" is set,
 	// to signal that "o is ready" to resize. The "og" GUI will then
 	// send SIGWINCH back, which will trigger FullResetRedraw in the case below.
-	if env.Bool("OG") {
+	if inVTEGUI {
 		// Clear any previous terminate or USR handlers
 		signal.Reset(syscall.SIGTERM, syscall.SIGUSR1, syscall.SIGWINCH)
 		// Set up notifications
