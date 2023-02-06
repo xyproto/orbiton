@@ -720,9 +720,6 @@ retry:
 		bobColor = vt100.LightYellow
 	}
 
-	startTime := time.Now()
-	rand.Seed(startTime.UnixNano())
-
 	// Try loading the highscore from the file, but ignore any errors
 	highScore, _ := loadHighScore()
 
