@@ -140,7 +140,7 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 
 	// Format JSON
 	if e.mode == mode.JSON {
-		var v any
+		var v interface{}
 
 		err := json.Unmarshal([]byte(e.String()), &v)
 		if err != nil {
