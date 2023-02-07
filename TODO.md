@@ -71,10 +71,12 @@
 - [ ] Introduce the concept of soft and hard breaks, to keep track of where lines were broken automatically and be able to reflow the text.
 - [ ] Sort lines in a less opaque and unusual way than `left,up,right` `sort` `return`.
 
-## Autocompletion
+## Autocompletion and AI generated code
 
+- [ ] Add a way to generate git commit messages with ChatGPT
 - [ ] Let the auto completion also look at method definitions with matching variable names (ignoring types, for now).
 - [ ] Auto completion of filenames if the previous rune is "/" and tab is pressed.
+- [ ] When generating code with ChatGPT, also send a list of function signatures and constants for the current file (+ header file).
 
 ## Syntax highlighting
 
