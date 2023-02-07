@@ -897,6 +897,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.SetMessageAfterRedraw("Normal mode")
 				break
 			}
+			// Stop the call to ChatGPT, if it is running
+			continueGeneratingTokens.Store(false)
 			// Reset the cut/copy/paste double-keypress detection
 			lastCopyY = -1
 			lastPasteY = -1
@@ -990,10 +992,35 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				indent = false
 			}
 
+			triggerWordsForAI := []string{"Write", "Generate", "Create", "write", "generate", "create", "!"}
+			shouldUseAI := false
+			for _, triggerWord := range triggerWordsForAI {
+				if strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()+" "+triggerWord+" ") {
+					shouldUseAI = true
+					break
+				} else if strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()+triggerWord+" ") {
+					shouldUseAI = true
+					break
+				} else if e.SingleLineCommentMarker() != "!" && strings.HasPrefix(trimmedLine, "!") {
+					shouldUseAI = true
+					break
+				}
+			}
+
 			if trimmedLine == "private:" || trimmedLine == "protected:" || trimmedLine == "public:" {
 				// De-indent the current line before moving on to the next
 				e.SetCurrentLine(trimmedLine)
 				leadingWhitespace = currentLeadingWhitespace
+			} else if shouldUseAI && apiKey != "" {
+				// Generate code by using ChatGPT
+				var chatPrompt = strings.TrimPrefix(trimmedLine, e.SingleLineCommentMarker())
+				if e.ProgrammingLanguage() {
+					chatPrompt += ". Write it in " + e.mode.String() + " and include comments where it makes sense. The code should be concise, correct and expertly created."
+				} else if e.mode != mode.Blank {
+					chatPrompt += ". Write it in " + e.mode.String() + ". It should be expertly written, concise and correct."
+				}
+				go e.GenerateCode(c, status, bookmark, chatPrompt)
+				break
 			} else if e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.Shader || e.mode == mode.Zig || e.mode == mode.Java || e.mode == mode.JavaScript || e.mode == mode.Kotlin || e.mode == mode.TypeScript || e.mode == mode.D || e.mode == mode.Hare || e.mode == mode.Jakt {
 				// Add missing parenthesis for "if ... {", "} else if", "} elif", "for", "while" and "when" for C-like languages
 				for _, kw := range []string{"for", "foreach", "foreach_reverse", "if", "switch", "when", "while", "while let", "} else if", "} elif"} {
