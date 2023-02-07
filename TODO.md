@@ -78,6 +78,7 @@
 
 ## Syntax highlighting
 
+- [ ] Fix syntax highlighting of `(* ... *)` comments at the end of a line in OCaml.
 - [ ] When viewing man pages, respect the current theme.
 - [ ] Let `<<EOF` be considered the start of a multiline string in Shell, and `EOF` the end.
 - [ ] Let a struct for a Theme contain both the light and the dark version, if there are two.
