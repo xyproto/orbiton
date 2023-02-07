@@ -331,7 +331,7 @@ JavaScript
 
 ## Java
 
-Since `kotlinc $filename -include-runtime -d` builds to a `.jar`, I though I should do the same for Java. The idea is to easily compile a single or a small collection of `.java` files, where one of the file has a `main` function.
+Since `kotlinc $filename -include-runtime -d` builds to a `.jar`, I though I should do the same for Java. The idea is to easily compile a single or a small collection of `.java` files, where one of the files has a `main` function.
 
 If you know about an easier way to build a `.jar` file from `*.java`, without using something like gradle, please let me know by submitting a pull request. This is pretty verbose...
 
@@ -357,7 +357,7 @@ rm -rf _o_build
 
 ### Scala
 
-For Scala, I'm using this code, to produce a `main.jar` file that can be run directly with `java -jar main.jar`:
+For Scala, this is the code that is used to produce a `main.jar` file that can be run directly with `java -jar main.jar`:
 
 ```sh
 #!/bin/sh
