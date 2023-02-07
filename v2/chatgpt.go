@@ -59,16 +59,18 @@ func GenerateTokens(apiKey, prompt string, n int, newToken func(string)) error {
 
 // GenerateCode will try to generate and insert text at the corrent position in the editor, given a ChatGPT prompt
 func (e *Editor) GenerateCode(c *vt100.Canvas, status *StatusBar, bookmark *Position, chatPrompt string) {
+	prompt := strings.TrimSpace(strings.TrimSuffix(chatPrompt, "!"))
+
 	status.ClearAll(c)
 	status.SetMessage("Generating code...")
 	status.Show(c, e)
 
 	currentLeadingWhitespace := e.LeadingWhitespace()
 
-	approximateAmountOfPromptTokens := len(strings.Fields(chatPrompt))
+	approximateAmountOfPromptTokens := len(strings.Fields(prompt))
 
 	// TODO: Find an exact way to find the number of tokens in the prompt, from a ChatGPT point of view
-	maxTokens := 4097 - int(float64(approximateAmountOfPromptTokens)*1.2) // The user can press Esc when there are enough tokens
+	maxTokens := 4097 - (approximateAmountOfPromptTokens + 100) // The user can press Esc when there are enough tokens
 	if maxTokens < 1 {
 		status.SetErrorMessage("GTPChat request is too long")
 		return
@@ -78,7 +80,7 @@ func (e *Editor) GenerateCode(c *vt100.Canvas, status *StatusBar, bookmark *Posi
 	first := true
 	var generatedLine string
 
-	if err := GenerateTokens(apiKey, chatPrompt, maxTokens, func(word string) {
+	if err := GenerateTokens(apiKey, prompt, maxTokens, func(word string) {
 		generatedLine += word
 		if strings.HasSuffix(generatedLine, "\n") {
 			e.SetCurrentLine(currentLeadingWhitespace + e.AIFixups(generatedLine))
@@ -108,7 +110,12 @@ func (e *Editor) GenerateCode(c *vt100.Canvas, status *StatusBar, bookmark *Posi
 	e.End(c)
 
 	if continueGeneratingTokens {
-		status.SetMessageAfterRedraw("Done")
+		if first { // Nothing was generated
+			status.SetMessageAfterRedraw("Nothing was generated")
+			//logf("nothing was generated for this prompt: %s\n", prompt)
+		} else {
+			status.SetMessageAfterRedraw("Done")
+		}
 	} else {
 		status.SetMessageAfterRedraw("Stopped")
 	}
