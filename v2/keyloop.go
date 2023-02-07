@@ -898,7 +898,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 			// Stop the call to ChatGPT, if it is running
-			continueGeneratingTokens.Store(false)
+			continueGeneratingTokens = false
 			// Reset the cut/copy/paste double-keypress detection
 			lastCopyY = -1
 			lastPasteY = -1

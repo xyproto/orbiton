@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"strings"
-	"sync/atomic"
 
 	"github.com/PullRequestInc/go-gpt3"
 	"github.com/xyproto/env"
@@ -15,7 +14,7 @@ import (
 var apiKey = env.Str("CHATGPT_API_KEY")
 
 // For stopping ChatGTP from generating tokens when Esc is pressed
-var continueGeneratingTokens atomic.Bool
+var continueGeneratingTokens bool
 
 // ProgrammingLanguage returns true if the current mode appears to be a programming language (and not a markup language etc)
 func (e *Editor) ProgrammingLanguage() bool {
@@ -51,7 +50,7 @@ func GenerateTokens(apiKey, prompt string, n int, newToken func(string)) error {
 			Temperature: gpt3.Float32Ptr(0.2),
 		}, func(resp *gpt3.CompletionResponse) {
 			newToken(resp.Choices[0].Text)
-			if !continueGeneratingTokens.Load() {
+			if !continueGeneratingTokens {
 				cancelFunction()
 			}
 		})
@@ -75,7 +74,7 @@ func (e *Editor) GenerateCode(c *vt100.Canvas, status *StatusBar, bookmark *Posi
 		return
 	}
 
-	continueGeneratingTokens.Store(true)
+	continueGeneratingTokens = true
 	first := true
 	var generatedLine string
 
@@ -108,7 +107,7 @@ func (e *Editor) GenerateCode(c *vt100.Canvas, status *StatusBar, bookmark *Posi
 	}
 	e.End(c)
 
-	if continueGeneratingTokens.Load() {
+	if continueGeneratingTokens {
 		status.SetMessageAfterRedraw("Done")
 	} else {
 		status.SetMessageAfterRedraw("Stopped")
