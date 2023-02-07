@@ -67,7 +67,14 @@ func (e *Editor) GenerateCode(c *vt100.Canvas, status *StatusBar, bookmark *Posi
 	currentLeadingWhitespace := e.LeadingWhitespace()
 
 	approximateAmountOfPromptTokens := len(strings.Fields(chatPrompt))
-	maxTokens := 4097 - (approximateAmountOfPromptTokens + 100) // The user can press Esc when there are enough tokens
+
+	// TODO: Find an exact way to find the number of tokens in the prompt, from a ChatGPT point of view
+	maxTokens := 4097 - int(float64(approximateAmountOfPromptTokens)*1.2) // The user can press Esc when there are enough tokens
+	if maxTokens < 1 {
+		status.SetErrorMessage("GTPChat request is too long")
+		return
+	}
+
 	continueGeneratingTokens.Store(true)
 	first := true
 	var generatedLine string
