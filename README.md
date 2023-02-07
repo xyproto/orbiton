@@ -79,18 +79,18 @@ These features are unique to `o`, as far as I am aware:
 * Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages.
 * Cycle git rebase keywords with `ctrl-r`, when an interactive git rebase session is in progress.
 * Jump to a line with `ctrl-l`. Either enter a number to jump to a line or just press `return` to jump to the top. Press `ctrl-l` and `return` again to jump to the bottom.
-* When jumping to a specific line or percentage (ie. `50%`) of a file with `ctrl-l`, jumping to a fraction (ie. `0.5`) is also supported.
+* When jumping to a specific line in a file with `ctrl-l`, jumping to a percentage (like `50%`) or a fraction (like `0.5`) is also supported.
 * If tab completion in the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
 * Search by pressing `ctrl-f`, entering text and pressing `return`. Replace by pressing `tab` instead of `return`, then enter the replacement text and press `return`. Searching for unicode runes on the form `u+0000` is also supported.
 * Type `iferr` on a single line in a Go program and press `return` to insert a suitable `if err != nil { return ... }` block, based on [koron/iferr](https://github.com/koron/iferr).
 * For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
-* Preview `.png`, `.jpg`, `.jpeg`, `.gif`, `.ico`, `.bmp` or `.webp` images directly on the terminal, using up to 16 colors.
 
 ## Other features and limitations
 
 * The syntax highlighting is instant.
 * Can compile `"Hello, World"` in many popular programming languages simply by pressing `ctrl-space`.
 * Configuration-free, for better and for worse.
+* Can preview `.png`, `.jpg`, `.jpeg`, `.gif`, `.ico`, `.bmp` or `.webp` images directly in the terminal (using a scaled down version and up to 16 colors).
 * `ctrl-t` can jump between a C++ header and source file.
 * Can only edit one file at the time, by design.
 * Provides syntax highlighting for Go, C++, Markdown, Bash and several other languages. There is generic syntax highlighting built-in.
@@ -98,9 +98,9 @@ These features are unique to `o`, as far as I am aware:
 * Is provided as a single self-contained executable.
 * Loads faster than both `vim` and `emacs`, for small files.
 * Can render text to PDF either by itself or by using `pandoc`.
-* Tested with `alacritty`, `st`, `urxvt`, `konsole`, `zutty`, `xterm` and `xfce4-terminal`.
+* Tested with `alacritty` `konsole` `st` `urxvt` `xfce4-terminal`. `xterm` and `zutty`.
 * Tested on Arch Linux, Debian, FreeBSD and OpenBSD.
-* Never asks before saving or quitting. Be careful!
+* Never asks before saving or quitting. Be careful.
 * The [`NO_COLOR`](https://no-color.org) environment variable can be set to disable all colors.
 * Rainbow parentheses makes lines with many parentheses easier to read.
 * Limited to VT100, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`. And for browsing up and down, `ctrl-n` and `ctrl-p` must be used. `PgUp` and `PgDn` can be used with the GUI frontend, but are not recognized by VT100.
@@ -109,7 +109,7 @@ These features are unique to `o`, as far as I am aware:
 * Must be given a filename at start.
 * May provide smart indentation.
 * Requires that `/dev/tty` is available.
-* `xclip` (for X), `wl-clipboard` (for Wayland) or `pbcopy` for macOS must be installed for using the system clipboard.
+* `xclip` for X, `wl-clipboard` for Wayland or `pbcopy` for macOS needs to be installed to access the system clipboard.
 * May take a line number as the second argument, with an optional `+` or `:` prefix.
 * If the filename is `COMMIT_EDITMSG`, the look and feel will be adjusted for git commit messages.
 * Supports `UTF-8`, but some runes may be displayed incorrectly.
