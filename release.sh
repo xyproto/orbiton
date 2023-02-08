@@ -32,11 +32,11 @@ GOARCH=amd64 "${GOBUILD[@]}" $name.macos_x86_64_static
 echo '* macOS aarch64'
 GOARCH=arm64 "${GOBUILD[@]}" $name.macos_aarch64_static
 
-# echo '* Compressing with upx'
-# for f in $name.linux_*_static $name.macos_*_static; do
-#   echo "Compressing $f"
-#   upx "$f"
-# done
+echo '* Compressing with upx'
+for f in $name.linux_*_static $name.macos_*_static; do
+  echo "Compressing $f"
+  upx "$f"
+done
 
 echo '* FreeBSD x86_64'
 export GOOS=freebsd
