@@ -1011,7 +1011,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// De-indent the current line before moving on to the next
 				e.SetCurrentLine(trimmedLine)
 				leadingWhitespace = currentLeadingWhitespace
-			} else if shouldUseAI && apiKey != "" {
+			} else if shouldUseAI && chatAPIKey != "" {
 				// Generate code by using ChatGPT
 				var chatPrompt = strings.TrimPrefix(trimmedLine, e.SingleLineCommentMarker())
 				if e.ProgrammingLanguage() {

@@ -11,7 +11,7 @@ import (
 )
 
 // For generating code with ChatGPT
-var apiKey = env.Str("CHATGPT_API_KEY")
+var chatAPIKey = env.Str("CHATGPT_API_KEY")
 
 // For stopping ChatGTP from generating tokens when Esc is pressed
 var continueGeneratingTokens bool
@@ -73,6 +73,7 @@ func (e *Editor) GenerateCode(c *vt100.Canvas, status *StatusBar, bookmark *Posi
 	maxTokens := 4097 - (approximateAmountOfPromptTokens + 100) // The user can press Esc when there are enough tokens
 	if maxTokens < 1 {
 		status.SetErrorMessage("GTPChat request is too long")
+		status.Show(c, e)
 		return
 	}
 
@@ -80,7 +81,7 @@ func (e *Editor) GenerateCode(c *vt100.Canvas, status *StatusBar, bookmark *Posi
 	first := true
 	var generatedLine string
 
-	if err := GenerateTokens(apiKey, prompt, maxTokens, func(word string) {
+	if err := GenerateTokens(chatAPIKey, prompt, maxTokens, func(word string) {
 		generatedLine += word
 		if strings.HasSuffix(generatedLine, "\n") {
 			e.SetCurrentLine(currentLeadingWhitespace + e.AIFixups(generatedLine))
@@ -104,6 +105,7 @@ func (e *Editor) GenerateCode(c *vt100.Canvas, status *StatusBar, bookmark *Posi
 		if !strings.Contains(errorMessage, "context") {
 			e.End(c)
 			status.SetError(err)
+			status.Show(c, e)
 			return
 		}
 	}

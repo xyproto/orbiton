@@ -161,8 +161,8 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	// Enter ChatGPT API key
 	actions.Add("Enter ChatGPT API key...", func() {
 		if enteredAPIKey, ok := e.UserInput(c, tty, status, "API key", []string{}, false); ok {
-			apiKey = enteredAPIKey
-			status.SetMessageAfterRedraw("Using API key " + enteredAPIKey)
+			chatAPIKey = enteredAPIKey
+			status.SetMessageAfterRedraw("Using API key " + chatAPIKey)
 		}
 	})
 
