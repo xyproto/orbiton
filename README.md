@@ -15,7 +15,6 @@ It might be a good fit for:
 * Writing and maintaining to-do lists and project documentation in Markdown.
 * Placing it on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in man page viewer, can be used for viewing logs, for `EDITOR=o visudo` and for editing `/etc/fstab`.
 * Testing if your favorite package manager can handle single-letter package names.
-* Not spending time on configuring an editor, if `o` fits your needs.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
