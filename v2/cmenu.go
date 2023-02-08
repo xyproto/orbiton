@@ -143,9 +143,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			if strings.TrimSpace(wordWrapString) == "" {
 				e.WrapNow(wrapWidth)
 				e.wrapWhenTyping = true
-				status.Clear(c)
-				status.SetMessage(fmt.Sprintf("Word wrap at %d", wrapWidth))
-				status.Show(c, e)
+				status.SetMessageAfterRedraw(fmt.Sprintf("Word wrap at %d", wrapWidth))
 			} else {
 				if ww, err := strconv.Atoi(wordWrapString); err != nil {
 					status.Clear(c)
@@ -154,11 +152,17 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				} else {
 					e.WrapNow(ww)
 					e.wrapWhenTyping = true
-					status.Clear(c)
-					status.SetMessage(fmt.Sprintf("Word wrap at %d", wrapWidth))
-					status.Show(c, e)
+					status.SetMessageAfterRedraw(fmt.Sprintf("Word wrap at %d", wrapWidth))
 				}
 			}
+		}
+	})
+
+	// Enter ChatGPT API key
+	actions.Add("Enter ChatGPT API key...", func() {
+		if enteredAPIKey, ok := e.UserInput(c, tty, status, "API key", []string{}, false); ok {
+			apiKey = enteredAPIKey
+			status.SetMessageAfterRedraw("Using API key " + enteredAPIKey)
 		}
 	})
 
@@ -274,11 +278,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				// Save the file when entering debug mode, since gdb may crash for some languages
 				// TODO: Identify which languages work poorly together with gdb
 				e.UserSave(c, tty, status)
-
-				status.Clear(c)
-				status.SetMessage("Debug mode enabled")
-				status.Show(c, e)
-
+				status.SetMessageAfterRedraw("Debug mode enabled")
 				e.debugMode = true
 			})
 		}
