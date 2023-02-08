@@ -1,8 +1,9 @@
-//go:build cgo
+//go:build !cgo
 
 package carveimg
 
 import (
+	"errors"
 	"image"
 	"image/gif"
 	"image/jpeg"
@@ -12,7 +13,6 @@ import (
 	"strings"
 
 	ico "github.com/biessek/golang-ico"
-	"github.com/chai2010/webp"
 	bmp "github.com/jsummers/gobmp"
 )
 
@@ -39,7 +39,7 @@ func LoadImage(filename string) (*image.NRGBA, error) {
 	case ".bmp":
 		img, err = bmp.Decode(f)
 	case ".webp":
-		img, err = webp.Decode(f)
+		return nil, errors.New("webp is not supported when the program is compiled with CGO_ENABLED=0")
 	}
 	if err != nil {
 		return nil, err

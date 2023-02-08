@@ -59,7 +59,7 @@ github.com/sourcegraph/annotate
 # github.com/xyproto/binary v1.3.0
 ## explicit; go 1.18
 github.com/xyproto/binary
-# github.com/xyproto/carveimg v1.3.3
+# github.com/xyproto/carveimg v1.3.4
 ## explicit; go 1.18
 github.com/xyproto/carveimg
 # github.com/xyproto/env v1.8.0
