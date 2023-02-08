@@ -23,15 +23,18 @@ func (e *Editor) CanRun() bool {
 }
 
 // Run will attempt to run the corresponding output executable, given a source filename.
-// This assumes that the BuildOrExport function has been successfully run first.
+// It's an advantage if the BuildOrExport function has been successfully run first.
 func (e *Editor) Run(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filename string) (string, error) {
 	sourceFilename, err := filepath.Abs(filename)
 	if err != nil {
 		return "", err
 	}
+
 	sourceDir := filepath.Dir(sourceFilename)
+
 	var cmd *exec.Cmd
-	cmd.Dir = sourceDir
+
+	// Make sure not to do anything with cmd here until it has been initialized by the switch below!
 
 	switch e.mode {
 	case mode.CMake:
@@ -40,18 +43,19 @@ func (e *Editor) Run(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filenam
 		jarName := e.exeName(sourceFilename) + ".jar"
 		cmd = exec.Command("java", "-jar", jarName)
 	case mode.Go:
-		cmd = exec.Command("go", "run", filename)
+		cmd = exec.Command("go", "run", sourceFilename)
 	case mode.Lua:
 		cmd = exec.Command("lua", sourceFilename)
 	case mode.Make:
 		cmd = exec.Command("make")
-
 	case mode.Python:
 		cmd = exec.Command("python", sourceFilename)
 	default:
 		exeName := filepath.Join(sourceDir, e.exeName(filename))
 		cmd = exec.Command(exeName)
 	}
+
+	cmd.Dir = sourceDir
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
