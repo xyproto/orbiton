@@ -45,7 +45,7 @@ With Go 1.16 or later, `o` can be installed like this:
 
 Alternatively, download and install a [release version](https://github.com/xyproto/o/releases). For example, for Raspberry Pi 2, 3 or 4 running Linux:
 
-    curl -sL 'https://github.com/xyproto/o/releases/download/2.59.2/o-2.59.2-linux_armv7_static.tar.xz' | tar axC /tmp && sudo install -Dm755 /tmp/o-2.59.2-linux_armv7_static/o /usr/bin/o && sudo install -Dm644 /tmp/o-2.59.2-linux_armv7_static/o.1.gz /usr/share/man/man1/o.1.gz
+    curl -sL 'https://github.com/xyproto/o/releases/download/2.59.3/o-2.59.3-linux_armv7_static.tar.xz' | tar axC /tmp && sudo install -Dm755 /tmp/o-2.59.3-linux_armv7_static/o /usr/bin/o && sudo install -Dm644 /tmp/o-2.59.3-linux_armv7_static/o.1.gz /usr/share/man/man1/o.1.gz
 
 ## Setting `o` as the default editor for `git`
 
@@ -552,6 +552,6 @@ Install (use `sudo`, if needed):
 
 ## General info
 
-* Version: 2.59.2
+* Version: 2.59.3
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
