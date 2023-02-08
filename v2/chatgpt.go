@@ -29,7 +29,7 @@ func (e *Editor) ProgrammingLanguage() bool {
 func (e *Editor) AIFixups(generatedLine string) string {
 	singleLineComment := e.SingleLineCommentMarker()
 	trimmedLine := strings.TrimSpace(generatedLine)
-	if len(trimmedLine) > 2 && e.ProgrammingLanguage() && strings.HasPrefix(trimmedLine, singleLineComment) && !strings.HasPrefix(trimmedLine, singleLineComment+" ") {
+	if len(trimmedLine) > 2 && e.ProgrammingLanguage() && strings.HasPrefix(trimmedLine, singleLineComment) && !strings.HasPrefix(trimmedLine, singleLineComment+" ") && !strings.HasPrefix(generatedLine, "#!") {
 		return strings.Replace(generatedLine, singleLineComment, singleLineComment+" ", 1)
 	}
 	return generatedLine
