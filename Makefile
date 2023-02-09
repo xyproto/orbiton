@@ -25,6 +25,9 @@ CXXFLAGS += $(shell pkg-config --cflags --libs vte-2.91)
 o: $(SRCFILES)
 	cd v2 && $(GOBUILD) -o ../o
 
+trace: clean $(SRCFILES)
+	cd v2 && $(GOBUILD) -tags trace -o ../o
+
 gui: og
 ko: og
 og: og/og
