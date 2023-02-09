@@ -47,7 +47,7 @@ func GenerateTokens(apiKey, prompt string, n int, newToken func(string)) error {
 		gpt3.CompletionRequest{
 			Prompt:      []string{prompt},
 			MaxTokens:   gpt3.IntPtr(n),
-			Temperature: gpt3.Float32Ptr(env.Float32("CHATGPT_TEMPERATURE", 0.7)),
+			Temperature: gpt3.Float32Ptr(env.Float32("CHATGPT_TEMPERATURE", 0.0)),
 		}, func(resp *gpt3.CompletionResponse) {
 			newToken(resp.Choices[0].Text)
 			if !continueGeneratingTokens {
