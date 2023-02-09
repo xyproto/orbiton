@@ -385,14 +385,16 @@ func ReadFileAndSize(filename string) ([]byte, uint64, error) {
 	size64++ // one byte for final read at EOF
 
 	data := make([]byte, 0, size64)
+	capData := cap(data)
 	for {
-		if len(data) >= cap(data) {
-			d := append(data[:cap(data)], 0)
+		if len(data) >= capData {
+			d := append(data[:capData], 0)
 			data = d[:len(data)]
 		}
-		n, err := f.Read(data[len(data):cap(data)])
+		n, err := f.Read(data[len(data):capData])
 		data = data[:len(data)+n]
 		if err != nil {
+			// The following is not being run every loop, but only if there are errors
 			if err == io.EOF {
 				err = nil
 			}
