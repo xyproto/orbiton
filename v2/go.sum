@@ -377,8 +377,8 @@ github.com/xyproto/burnpal v0.0.0-20191014130824-80030bc13096/go.mod h1:j3S/tDDO
 github.com/xyproto/carveimg v1.3.4 h1:a2hWwVDPIYppYkQo95Qe/LGISFBjic7jXBVSh14ye8A=
 github.com/xyproto/carveimg v1.3.4/go.mod h1:0x5uEB2haqTunW2aQjFh1u/NoI712bd+uLpo9u5H+O0=
 github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
-github.com/xyproto/env v1.8.0 h1:W8H7zyB+wpJjvJ4mXtN6c6yeMH+qSQ1n0JiW0z3P9v4=
-github.com/xyproto/env v1.8.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
+github.com/xyproto/env v1.9.1 h1:RSWzKrNYEcK+Tvk2fu5eHYW5ENq19tYzbHLWfA7fx5s=
+github.com/xyproto/env v1.9.1/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
 github.com/xyproto/guessica v1.1.2 h1:GP2jniCjE5DLeU0ZBbl9cS4gRXAyk/0lev0dh6Uqrfk=
 github.com/xyproto/guessica v1.1.2/go.mod h1:084aWqVDuOYOMVly0NHHLecAPScmGEZTLxm/+Ny49GE=
 github.com/xyproto/iferr v1.1.0 h1:+5OZVuzb7ups88Yq2Bio1ygCCVdilTpW+9qUZpdhGAg=
