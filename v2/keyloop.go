@@ -1008,7 +1008,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			if chatAPIKey == nil {
-				*chatAPIKey = env.Str("CHATGPT_API_KEY")
+				{
+					s := env.Str("CHATGPT_API_KEY")
+					chatAPIKey = &s
+				}
 			}
 
 			if trimmedLine == "private:" || trimmedLine == "protected:" || trimmedLine == "public:" {
