@@ -5,12 +5,13 @@ import (
 	"strings"
 
 	"github.com/PullRequestInc/go-gpt3"
+	"github.com/xyproto/env"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
 
 // For generating code with ChatGPT
-var chatAPIKey *string // can be null, to not read environment variables needlessly when starting o
+var chatAPIKey string = env.Str("CHATGPT_API_KEY")
 
 // For stopping ChatGTP from generating tokens when Esc is pressed
 var continueGeneratingTokens bool
@@ -46,7 +47,7 @@ func GenerateTokens(apiKey, prompt string, n int, newToken func(string)) error {
 		gpt3.CompletionRequest{
 			Prompt:      []string{prompt},
 			MaxTokens:   gpt3.IntPtr(n),
-			Temperature: gpt3.Float32Ptr(0.2),
+			Temperature: gpt3.Float32Ptr(env.Float32("CHATGPT_TEMPERATURE", 0.7)),
 		}, func(resp *gpt3.CompletionResponse) {
 			newToken(resp.Choices[0].Text)
 			if !continueGeneratingTokens {
