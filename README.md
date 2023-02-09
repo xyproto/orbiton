@@ -38,7 +38,7 @@ Editing a C source file in `og` using the "synthwave" theme:
 
 ## Quick start
 
-With Go 1.16 or later, `o` can be installed like this:
+With Go 1.17 or later, `o` can be installed like this:
 
     go install github.com/xyproto/o/v2@latest
 
