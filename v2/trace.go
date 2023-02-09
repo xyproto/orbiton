@@ -32,6 +32,7 @@ func traceStart() {
 			log.Fatal("could not create CPU profile: ", err)
 		}
 		defer f.Close() // error handling omitted for example
+		// runtime.SetCPUProfileRate(500)
 		if err := pprof.StartCPUProfile(f); err != nil {
 			log.Fatal("could not start CPU profile: ", err)
 		}
