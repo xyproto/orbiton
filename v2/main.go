@@ -230,6 +230,8 @@ See the man page for more information.
 	// Clear the current color attribute
 	fmt.Print(vt100.Stop())
 
+	traceComplete() // if building with -tags trace
+
 	// Respond to the error returned from the main loop, if any
 	if err != nil {
 		if userMessage != "" {
@@ -239,5 +241,4 @@ See the man page for more information.
 		}
 	}
 
-	traceComplete() // if building with -tags trace
 }
