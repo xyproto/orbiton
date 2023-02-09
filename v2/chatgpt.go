@@ -10,9 +10,6 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// For generating code with ChatGPT
-var chatAPIKey string = env.Str("CHATGPT_API_KEY")
-
 // For stopping ChatGTP from generating tokens when Esc is pressed
 var continueGeneratingTokens bool
 
@@ -37,17 +34,17 @@ func (e *Editor) AIFixups(generatedLine string) string {
 
 // GenerateTokens uses the ChatGTP API to generate text. n is the maximum number of tokens.
 // The global atomic Bool "ContinueGeneratingTokens" controls when the text generation should stop.
-func GenerateTokens(apiKey, prompt string, n int, newToken func(string)) error {
+func GenerateTokens(apiKey, prompt string, n int, temperature float32, model string, newToken func(string)) error {
 	client := gpt3.NewClient(apiKey)
 	chatContext, cancelFunction := context.WithCancel(context.Background())
 	defer cancelFunction()
 	err := client.CompletionStreamWithEngine(
 		chatContext,
-		gpt3.TextDavinci003Engine,
+		model,
 		gpt3.CompletionRequest{
 			Prompt:      []string{prompt},
 			MaxTokens:   gpt3.IntPtr(n),
-			Temperature: gpt3.Float32Ptr(env.Float32("CHATGPT_TEMPERATURE", 0.0)),
+			Temperature: gpt3.Float32Ptr(temperature),
 		}, func(resp *gpt3.CompletionResponse) {
 			newToken(resp.Choices[0].Text)
 			if !continueGeneratingTokens {
@@ -57,37 +54,99 @@ func GenerateTokens(apiKey, prompt string, n int, newToken func(string)) error {
 	return err
 }
 
-// GenerateCode will try to generate and insert text at the corrent position in the editor, given a ChatGPT prompt
-func (e *Editor) GenerateCode(c *vt100.Canvas, status *StatusBar, bookmark *Position, chatAPIKey, chatPrompt string) {
+// TODO: Find an exact way to find the number of tokens in the prompt, from a ChatGPT point of view
+func countTokens(s string) int {
+	// Multiplying with 1.1 and adding 100, until the OpenAI API for counting tokens is used
+	return int(float64(len(strings.Fields(s)))*1.1 + 100)
+}
+
+// GenerateCodeOrText will try to generate and insert text at the corrent position in the editor, given a ChatGPT prompt
+func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark *Position, chatAPIKey, chatPrompt string) {
 	if chatAPIKey == "" {
 		status.SetErrorMessage("ChatGPT API key is empty")
 		status.Show(c, e)
 		return
 	}
 
+	// Strip away any leading exclamation marks and trim away spaces at the ends
 	prompt := strings.TrimSpace(strings.TrimSuffix(chatPrompt, "!"))
 
+	const (
+		GENERATE_TEXT = iota
+		GENERATE_CODE
+		CONTINUE_CODE
+	)
+
+	generationType := GENERATE_TEXT // GENERATE_CODE // CONTINUE_CODE
+	if e.ProgrammingLanguage() {
+		generationType = GENERATE_CODE
+		if prompt == "" {
+			generationType = CONTINUE_CODE
+		}
+	}
+
+	// Determine the temperature
+	var defaultTemperature float32
+	switch generationType {
+	case GENERATE_TEXT:
+		defaultTemperature = 0.8
+	}
+	temperature := env.Float32("CHATGPT_TEMPERATURE", defaultTemperature)
+
+	// Select a model
+	gptModel, gptModelTokens := gpt3.TextDavinci003Engine, 4000
+	//gptModel, gptModelTokens := "text-curie-001", 2048 // simpler and faster
+	//gptModel, gptModelTokens := "text-ada-001", 2048 // even simpler and even faster
+	switch generationType {
+	case CONTINUE_CODE:
+		gptModel, gptModelTokens = "code-davinci-002", 8000
+		//gptModel, gptModelTokens = "code-cushman-001", 2048 // slightly simpler and slightly faster
+	}
+
+	// Prefix the prompt
+	switch generationType {
+	case GENERATE_TEXT:
+		prompt += ". Write it in " + e.mode.String() + ". It should be expertly written, concise and correct."
+	case GENERATE_CODE:
+		prompt += ". Write it in " + e.mode.String() + " and include comments where it makes sense. The code should be concise, correct and expertly created."
+	case CONTINUE_CODE:
+		initialPrompt := "Write the next 10 lines of this " + e.mode.String() + " program:\n"
+		// gather about 2000 tokens/fields from the current file and use that as the prompt
+		startTokens := strings.Fields(e.String())
+		gatherNTokens := gptModelTokens - countTokens(initialPrompt)
+		if len(startTokens) > gatherNTokens {
+			startTokens = startTokens[len(startTokens)-gatherNTokens:]
+		}
+		prompt = strings.Join(startTokens, " ")
+	}
+
+	// Set a suitable status bar text
 	status.ClearAll(c)
-	status.SetMessage("Generating code...")
+	switch generationType {
+	case GENERATE_TEXT:
+		status.SetMessage("Generating text...")
+	case GENERATE_CODE:
+		status.SetMessage("Generating code...")
+	case CONTINUE_CODE:
+		status.SetMessage("Continuing code...")
+	}
 	status.Show(c, e)
 
-	currentLeadingWhitespace := e.LeadingWhitespace()
-
-	approximateAmountOfPromptTokens := len(strings.Fields(prompt))
-
-	// TODO: Find an exact way to find the number of tokens in the prompt, from a ChatGPT point of view
-	maxTokens := 4097 - (approximateAmountOfPromptTokens + 100) // The user can press Esc when there are enough tokens
+	// Find the maxTokens value that will be sent to the OpenAI API
+	amountOfPromptTokens := countTokens(prompt)
+	maxTokens := gptModelTokens - amountOfPromptTokens // The user can press Esc when there are enough tokens
 	if maxTokens < 1 {
 		status.SetErrorMessage("ChatGPT API request is too long")
 		status.Show(c, e)
 		return
 	}
 
-	continueGeneratingTokens = true
+	// Start generating the code/text while inserting words into the editor as it happens
+	currentLeadingWhitespace := e.LeadingWhitespace()
+	continueGeneratingTokens = true // global
 	first := true
 	var generatedLine string
-
-	if err := GenerateTokens(chatAPIKey, prompt, maxTokens, func(word string) {
+	if err := GenerateTokens(chatAPIKey, prompt, maxTokens, temperature, gptModel, func(word string) {
 		generatedLine += word
 		if strings.HasSuffix(generatedLine, "\n") {
 			e.SetCurrentLine(currentLeadingWhitespace + e.AIFixups(generatedLine))
@@ -117,10 +176,9 @@ func (e *Editor) GenerateCode(c *vt100.Canvas, status *StatusBar, bookmark *Posi
 	}
 	e.End(c)
 
-	if continueGeneratingTokens {
+	if continueGeneratingTokens { // global
 		if first { // Nothing was generated
 			status.SetMessageAfterRedraw("Nothing was generated")
-			//logf("nothing was generated for this prompt: %s\n", prompt)
 		} else {
 			status.SetMessageAfterRedraw("Done")
 		}
