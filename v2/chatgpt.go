@@ -5,13 +5,12 @@ import (
 	"strings"
 
 	"github.com/PullRequestInc/go-gpt3"
-	"github.com/xyproto/env"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
 
 // For generating code with ChatGPT
-var chatAPIKey = env.Str("CHATGPT_API_KEY")
+var chatAPIKey *string // can be null, to not read environment variables needlessly when starting o
 
 // For stopping ChatGTP from generating tokens when Esc is pressed
 var continueGeneratingTokens bool
@@ -58,7 +57,13 @@ func GenerateTokens(apiKey, prompt string, n int, newToken func(string)) error {
 }
 
 // GenerateCode will try to generate and insert text at the corrent position in the editor, given a ChatGPT prompt
-func (e *Editor) GenerateCode(c *vt100.Canvas, status *StatusBar, bookmark *Position, chatPrompt string) {
+func (e *Editor) GenerateCode(c *vt100.Canvas, status *StatusBar, bookmark *Position, chatAPIKey, chatPrompt string) {
+	if chatAPIKey == "" {
+		status.SetErrorMessage("ChatGPT API key is empty")
+		status.Show(c, e)
+		return
+	}
+
 	prompt := strings.TrimSpace(strings.TrimSuffix(chatPrompt, "!"))
 
 	status.ClearAll(c)
@@ -72,7 +77,7 @@ func (e *Editor) GenerateCode(c *vt100.Canvas, status *StatusBar, bookmark *Posi
 	// TODO: Find an exact way to find the number of tokens in the prompt, from a ChatGPT point of view
 	maxTokens := 4097 - (approximateAmountOfPromptTokens + 100) // The user can press Esc when there are enough tokens
 	if maxTokens < 1 {
-		status.SetErrorMessage("GTPChat request is too long")
+		status.SetErrorMessage("ChatGPT API request is too long")
 		status.Show(c, e)
 		return
 	}
