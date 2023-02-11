@@ -59,7 +59,7 @@ To unset:
 ## Generate code automatically
 
 * Make sure the `CHATGPT_API_KEY` environment variable is set. An API key can be aquired at [openai.com](https://platform.openai.com/account/api-keys).
-* Press return after writing ie. `!write a function that adds two numbers` or `// generate a function that adds two numbers`.
+* Press return after writing ie. `!write a function that adds two numbers` or `// Write a function that adds two numbers`.
 * Watch the code being generated in front of your eyes, with syntax highlighting and everything. ChatGPT generates the code.
 * Press `Esc` to stop the code from being generated.
 * Set `CHATGPT_TEMPERATURE` to ie. `0.75` to make the output more random. It's a value from `0` to `1` and the default is `0`.
