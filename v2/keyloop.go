@@ -994,16 +994,18 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			triggerWordsForAI := []string{"Write", "write", "!"}
 			shouldUseAI := false
-			for _, triggerWord := range triggerWordsForAI {
-				if strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()+" "+triggerWord+" ") {
-					shouldUseAI = true
-					break
-				} else if strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()+triggerWord+" ") {
-					shouldUseAI = true
-					break
-				} else if e.SingleLineCommentMarker() != "!" && strings.HasPrefix(trimmedLine, "!") {
-					shouldUseAI = true
-					break
+			if e.AtOrAfterEndOfLine() {
+				for _, triggerWord := range triggerWordsForAI {
+					if strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()+" "+triggerWord+" ") {
+						shouldUseAI = true
+						break
+					} else if strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()+triggerWord+" ") {
+						shouldUseAI = true
+						break
+					} else if e.SingleLineCommentMarker() != "!" && strings.HasPrefix(trimmedLine, "!") {
+						shouldUseAI = true
+						break
+					}
 				}
 			}
 
