@@ -108,7 +108,7 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 	case GENERATE_TEXT:
 		prompt += ". Write it in " + e.mode.String() + ". It should be expertly written, concise and correct."
 	case GENERATE_CODE:
-		prompt += ". Write it in " + e.mode.String() + " and include comments where it makes sense. The code should be concise, correct and expertly created."
+		prompt += ". Write it in " + e.mode.String() + " and include comments where it makes sense. The code should be concise, correct and expertly created. Comments above functions should start with the function name."
 	case CONTINUE_CODE:
 		initialPrompt := "Write the next 10 lines of this " + e.mode.String() + " program:\n"
 		// gather about 2000 tokens/fields from the current file and use that as the prompt
