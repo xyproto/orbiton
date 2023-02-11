@@ -992,7 +992,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				indent = false
 			}
 
-			triggerWordsForAI := []string{"Write", "Generate", "Create", "write", "generate", "create", "!"}
+			triggerWordsForAI := []string{"Write", "write", "!"}
 			shouldUseAI := false
 			for _, triggerWord := range triggerWordsForAI {
 				if strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()+" "+triggerWord+" ") {
