@@ -63,6 +63,7 @@ To unset:
 * Watch the code being generated in front of your eyes, with syntax highlighting and everything. ChatGPT generates the code.
 * Press `Esc` to stop the code from being generated.
 * Set `CHATGPT_TEMPERATURE` to ie. `0.75` to make the output more random. It's a value from `0` to `1` and the default is `0`.
+* No code is sent to the API endpoint, only the prompt, engine setting and temperature setting.
 
 ## Viewing man pages
 
