@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/xyproto/env"
+	"github.com/xyproto/env/v2"
 )
 
 const maxLocationHistoryEntries = 1024

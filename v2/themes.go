@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/xyproto/env"
+	"github.com/xyproto/env/v2"
 	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
 )

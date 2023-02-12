@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xyproto/env"
+	"github.com/xyproto/env/v2"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )

@@ -12,7 +12,7 @@ import (
 	"unicode"
 
 	"github.com/atotto/clipboard"
-	"github.com/xyproto/env"
+	"github.com/xyproto/env/v2"
 	"github.com/xyproto/iferr"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/syntax"

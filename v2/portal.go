@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/xyproto/env"
+	"github.com/xyproto/env/v2"
 )
 
 var portalFilename = env.ExpandUser(filepath.Join(env.Str("TMPDIR", "/tmp"), env.Str("LOGNAME", "o")+"_portal.txt"))

@@ -15,7 +15,7 @@ import (
 	"unicode"
 
 	"github.com/xyproto/binary"
-	"github.com/xyproto/env"
+	"github.com/xyproto/env/v2"
 )
 
 // exists checks if the given path exists
