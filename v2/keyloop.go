@@ -996,7 +996,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			shouldUseAI := false
 			if e.AtOrAfterEndOfLine() {
 				for _, triggerWord := range triggerWordsForAI {
-					if triggerWord == "!" && e.mode == mode.Markdown {
+					if e.mode == mode.Markdown && triggerWord == "!" {
 						continue
 					}
 					if strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()+" "+triggerWord+" ") {
@@ -1005,7 +1005,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					} else if strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()+triggerWord+" ") {
 						shouldUseAI = true
 						break
-					} else if e.SingleLineCommentMarker() != "!" && strings.HasPrefix(trimmedLine, "!") {
+					} else if e.mode != mode.Markdown && e.SingleLineCommentMarker() != "!" && strings.HasPrefix(trimmedLine, "!") {
 						shouldUseAI = true
 						break
 					}
