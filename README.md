@@ -1,6 +1,6 @@
 ![o](img/icon_128x128.png)
 
-![Build](https://github.com/xyproto/o/workflows/Build/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/o/main/LICENSE) [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
+![Build](https://github.com/xyproto/o/workflows/Build/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/o/main/LICENSE)
 
 `o` is a text editor and a minimalistic IDE.
 
@@ -15,6 +15,7 @@ It might be a good fit for:
 * Writing and maintaining to-do lists and project documentation in Markdown.
 * Placing it on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in man page viewer, can be used for viewing logs, for `EDITOR=o visudo` and for editing `/etc/fstab`.
 * Testing if your favorite package manager can handle single-letter package names.
+* Writing poetry with the help of ChatGPT, directly in the editor.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
@@ -63,7 +64,6 @@ To unset:
 * Watch the code being generated in front of your eyes, with syntax highlighting and everything. ChatGPT generates the code.
 * Press `Esc` to stop the code from being generated.
 * Set `CHATGPT_TEMPERATURE` to ie. `0.75` to make the output more random. It's a value from `0` to `1` and the default is `0`.
-* No code is sent to the API endpoint, only the prompt, engine setting and temperature setting.
 
 ## Viewing man pages
 
