@@ -11,7 +11,7 @@ require (
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/xyproto/binary v1.3.0
 	github.com/xyproto/carveimg v1.3.4
-	github.com/xyproto/env v1.9.1
+	github.com/xyproto/env/v2 v2.0.0
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/mode v0.6.18
@@ -38,6 +38,7 @@ require (
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
+	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.2.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

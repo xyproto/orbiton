@@ -65,6 +65,9 @@ github.com/xyproto/carveimg
 # github.com/xyproto/env v1.9.1
 ## explicit; go 1.15
 github.com/xyproto/env
+# github.com/xyproto/env/v2 v2.0.0
+## explicit; go 1.15
+github.com/xyproto/env/v2
 # github.com/xyproto/guessica v1.1.2
 ## explicit; go 1.18
 github.com/xyproto/guessica
