@@ -996,6 +996,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			shouldUseAI := false
 			if e.AtOrAfterEndOfLine() {
 				for _, triggerWord := range triggerWordsForAI {
+					if triggerWord == "!" && e.mode == mode.Markdown {
+						continue
+					}
 					if strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()+" "+triggerWord+" ") {
 						shouldUseAI = true
 						break
