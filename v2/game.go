@@ -194,7 +194,6 @@ func (b *Pellet) Draw(c *vt100.Canvas) {
 
 // Next moves the object to the next position, and returns true if it moved
 func (b *Pellet) Next(c *vt100.Canvas, e *EvilGobbler) bool {
-
 	b.lifeCounter++
 	if b.lifeCounter > 20 {
 		b.removed = true
@@ -404,7 +403,7 @@ type EvilGobbler struct {
 func NewEvilGobbler(c *vt100.Canvas, startingWidth int) *EvilGobbler {
 	return &EvilGobbler{
 		x:               startingWidth/2 + 5,
-		y:               01,
+		y:               0o1,
 		oldx:            startingWidth/2 + 5,
 		oldy:            10,
 		state:           evilGobblerRune,
@@ -558,7 +557,7 @@ func (g *Gobbler) Next(c *vt100.Canvas, pellets *[]*Pellet, bob *Bob) bool {
 	} else {
 
 		if g.hunting == nil || g.hunting.removed {
-			var minDistance = 0.0
+			minDistance := 0.0
 			var closestPellet *Pellet
 
 			// TODO: Hunt a random pellet that is not already hunted instead of the closest
@@ -673,7 +672,7 @@ func saveHighScore(highScore uint) error {
 	folderPath := filepath.Dir(highScoreFile)
 	os.MkdirAll(folderPath, os.ModePerm)
 	// Prepare the file
-	f, err := os.OpenFile(highScoreFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0700)
+	f, err := os.OpenFile(highScoreFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o700)
 	if err != nil {
 		return err
 	}
@@ -798,7 +797,7 @@ retry:
 
 		// Draw elements in their new positions
 		c.Clear()
-		//c.Draw()
+		// c.Draw()
 
 		resizeMut.RLock()
 		for _, pellet := range pellets {
@@ -837,7 +836,7 @@ retry:
 		c.Write(0, 0, statusTextColor, statusTextBackground, statusLine)
 		resizeMut.RUnlock()
 
-		//vt100.Clear()
+		// vt100.Clear()
 
 		// Update the canvas
 		c.Draw()

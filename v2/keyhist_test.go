@@ -28,5 +28,4 @@ func TestKeyHistory(t *testing.T) {
 	if !kh.OnlyIn("a", "b", "c", "d", "e", "f") {
 		t.Fail()
 	}
-
 }

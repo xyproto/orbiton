@@ -32,15 +32,15 @@ func TestBuildOrExport(t *testing.T) {
 
 	os.Chdir("..")
 
-	//fmt.Printf("err.rs [compilation error: %v] %s\n", err, outputExecutable)
+	// fmt.Printf("err.rs [compilation error: %v] %s\n", err, outputExecutable)
 
 	if which("rustc") != "" {
-		//fmt.Println(err)
+		// fmt.Println(err)
 		if err == nil { // expected to fail, fail on success
 			t.Fail()
 		}
 	} else {
-		//fmt.Println(err)
+		// fmt.Println(err)
 		if err == nil { // expected to fail, fail on success
 			t.Fail()
 		}

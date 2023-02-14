@@ -151,20 +151,20 @@ func sortStrings(line string) (string, error) {
 		if strings.HasPrefix(trimmedElement, "'") && strings.HasSuffix(trimmedElement, "'") {
 			w.s = trimmedElement[1 : len(trimmedElement)-1]
 			w.singleQuoted = true
-			//fmt.Println("SINGLE QUOTED:", w.s)
+			// fmt.Println("SINGLE QUOTED:", w.s)
 		} else if strings.HasPrefix(trimmedElement, "\"") && strings.HasSuffix(trimmedElement, "\"") {
 			w.s = trimmedElement[1 : len(trimmedElement)-1]
 			w.doubleQuoted = true
-			//fmt.Println("DOUBLE QUOTED:", w.s)
+			// fmt.Println("DOUBLE QUOTED:", w.s)
 		} else {
 			w.s = trimmedElement
-			//fmt.Println("NOT QUOTED:", w.s)
+			// fmt.Println("NOT QUOTED:", w.s)
 		}
 		// Save the Word
 		words[i] = w
 	}
 
-	//fmt.Println("WORDS", words)
+	// fmt.Println("WORDS", words)
 
 	// Sort the Words
 	sort.Sort(words)

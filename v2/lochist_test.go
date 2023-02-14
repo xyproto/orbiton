@@ -32,5 +32,5 @@ func TestNeoVimMsgPack(t *testing.T) {
 	_ = line
 
 	// Enable this for debugging
-	//fmt.Println("line", line)
+	// fmt.Println("line", line)
 }

@@ -11,7 +11,7 @@ import (
 // ToggleCheckboxCurrentLine will attempt to toggle the Markdown checkbox on the current line of the editor.
 // Returns true if toggled.
 func (e *Editor) ToggleCheckboxCurrentLine() bool {
-	var checkboxPrefixes = []string{"- [ ]", "- [x]", "- [X]", "* [ ]", "* [x]", "* [X]"}
+	checkboxPrefixes := []string{"- [ ]", "- [x]", "- [X]", "* [ ]", "* [x]", "* [X]"}
 	// Toggle Markdown checkboxes
 	if line := e.CurrentLine(); hasAnyPrefixWord(strings.TrimSpace(line), checkboxPrefixes) {
 		if strings.Contains(line, "[ ]") {
@@ -120,8 +120,8 @@ func emphasis(line string, textColor, italicsColor, boldColor, strikeColor vt100
 	result = style(result, "__", textColor, boldColor)
 	// For now, nested emphasis and italics are not supported, only bold and strikethrough
 	// TODO: Implement nested emphasis and italics
-	//result = style(result, "*", textColor, italicsColor)
-	//result = style(result, "_", textColor, italicsColor)
+	// result = style(result, "*", textColor, italicsColor)
+	// result = style(result, "_", textColor, italicsColor)
 	return result
 }
 
@@ -152,7 +152,6 @@ func isListItem(line string) bool {
 
 // markdownHighlight returns a VT100 colored line, a bool that is true if it worked out and a bool that is true if it's the start or stop of a block quote
 func (e *Editor) markdownHighlight(line string, inCodeBlock bool, listItemRecord []bool, inListItem *bool) (string, bool, bool) {
-
 	dataPos := 0
 	for i, r := range line {
 		if unicode.IsSpace(r) {

@@ -119,7 +119,6 @@ func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, startIn time.Du
 					quitMessage(tty, qmsg)
 				}
 			}
-
 		}
 	}()
 	return quitChan

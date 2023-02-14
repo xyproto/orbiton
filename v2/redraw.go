@@ -122,7 +122,6 @@ func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redrawCanvas bool) {
 
 // InitialRedraw is called right before the main loop is started
 func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
-
 	// Check if an extra reset is needed
 	if e.sshMode {
 		drawLines := true
@@ -152,7 +151,6 @@ func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 
 // RedrawAtEndOfKeyLoop is called after each main loop
 func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar) {
-
 	redrawCanvas := !e.debugMode
 
 	// Redraw, if needed

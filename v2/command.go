@@ -28,7 +28,6 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 
 	if strings.HasPrefix(trimmedCommand, "!") {
 		return func() {
-
 			cmd := exec.Command(trimmedCommand[1:])
 			if len(args) > 1 {
 				cmd.Args = args[1:]
@@ -129,7 +128,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	)
 
 	// Define args and corresponding functions
-	var commandLookup = map[int]func(){
+	commandLookup := map[int]func(){
 		build: func() { // build
 			if e.Empty() {
 				// Empty file, nothing to build

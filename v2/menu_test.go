@@ -7,27 +7,27 @@ import (
 func TestLetterInSmallWord(t *testing.T) {
 	s := "hello in there"
 	if inSmallWordOrSpace(s, 0) { // "h"
-		//fmt.Println(0)
+		// fmt.Println(0)
 		t.Fail()
 	}
 	if !inSmallWordOrSpace(s, 5) { // " "
-		//fmt.Println(5)
+		// fmt.Println(5)
 		t.Fail()
 	}
 	if !inSmallWordOrSpace(s, 6) { // "i"
-		//fmt.Println(6)
+		// fmt.Println(6)
 		t.Fail()
 	}
 	if !inSmallWordOrSpace(s, 7) { // "n"
-		//fmt.Println(7)
+		// fmt.Println(7)
 		t.Fail()
 	}
 	if !inSmallWordOrSpace(s, 8) { // " "
-		//fmt.Println(8)
+		// fmt.Println(8)
 		t.Fail()
 	}
 	if inSmallWordOrSpace(s, 9) { // "t"
-		//fmt.Println(9)
+		// fmt.Println(9)
 		t.Fail()
 	}
 }
@@ -46,7 +46,7 @@ func TestSelectionLettersForChoices(t *testing.T) {
 		runes := []rune(s)
 		runes[stringAndPosition.pos] = '!'
 		s = string(runes)
-		//fmt.Println(s)
+		// fmt.Println(s)
 		_ = s
 	}
 }

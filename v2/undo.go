@@ -136,7 +136,6 @@ func (u *Undo) Snapshot(e *Editor) {
 			u.index = 0
 		}
 	}
-
 }
 
 // Restore will restore a previous snapshot, and move to the previous position in the circular buffer

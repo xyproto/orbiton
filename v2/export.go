@@ -45,7 +45,6 @@ func (e *Editor) exportScdoc(manFilename string) error {
 
 // exportAdoc tries to export the current document as a manual page, using asciidoctor
 func (e *Editor) exportAdoc(c *vt100.Canvas, tty *vt100.TTY, manFilename string) error {
-
 	// TODO: Use a proper function for generating temporary files
 	tmpfn := "___o___.adoc"
 	if exists(tmpfn) {

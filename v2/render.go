@@ -10,7 +10,6 @@ import (
 
 // SavePDF can save the text as a PDF document. It's pretty experimental.
 func (e *Editor) SavePDF(title, filename string) error {
-
 	// Check if the file exists
 	if exists(filename) {
 		return fmt.Errorf("%s already exists", filename)

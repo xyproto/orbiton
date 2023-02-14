@@ -75,7 +75,7 @@ func (sw *SymbolWidget) Draw(c *vt100.Canvas) {
 		row := sw.choices[y]
 		for x := 0; x < len(row); x++ {
 			symbol := sw.choices[y][x]
-			//vt100.SetXY(0, uint(sw.marginTop+y+titleHeight))
+			// vt100.SetXY(0, uint(sw.marginTop+y+titleHeight))
 			if y == int(sw.y) && x == int(sw.x) {
 				c.Write(uint(sw.marginLeft+x*2), uint(sw.marginTop+y+titleHeight), sw.highlightColor, sw.bgColor, symbol)
 			} else {

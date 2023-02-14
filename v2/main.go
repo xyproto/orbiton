@@ -240,5 +240,4 @@ See the man page for more information.
 			quitError(tty, err)
 		}
 	}
-
 }

@@ -97,7 +97,7 @@ func (a *Actions) Perform(index int) {
 func (a *Actions) AddCommand(e *Editor, c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo, title string, args ...string) error {
 	f, err := e.CommandToFunction(c, tty, status, bookmark, undo, args...)
 	if err != nil {
-		//panic(err)
+		// panic(err)
 		return err
 	}
 	a.Add(title, f)
@@ -108,7 +108,6 @@ func (a *Actions) AddCommand(e *Editor, c *vt100.Canvas, tty *vt100.TTY, status 
 // Also returns the selected menu index (can be -1), and if a space should be added to the text editor after the return.
 // TODO: Figure out why this function needs an undo argument and can't use the regular one
 func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) int {
-
 	const insertFilename = "include.txt"
 
 	wrapWidth := e.wrapWidth
@@ -353,12 +352,10 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				lk.Save()
 			}
 		})
-
 	}
 
 	// Render to PDF using the gofpdf package
 	actions.Add("Render to PDF", func() {
-
 		// Write to PDF in a goroutine
 		pdfFilename := strings.ReplaceAll(filepath.Base(e.filename), ".", "_") + ".pdf"
 
@@ -499,7 +496,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	selected := e.Menu(status, tty, "Menu", menuChoices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes)
 
 	// Redraw the editor contents
-	//e.DrawLines(c, true, false)
+	// e.DrawLines(c, true, false)
 
 	if selected < 0 {
 		// Esc was pressed, or an item was otherwise not selected.
@@ -527,7 +524,6 @@ func getCommand(cmd *exec.Cmd) string {
 
 // Save the command to a temporary file, given an exec.Cmd struct
 func saveCommand(cmd *exec.Cmd) error {
-
 	p := lastCommandFile
 
 	// First create the folder for the lock file overview, if needed
@@ -535,7 +531,7 @@ func saveCommand(cmd *exec.Cmd) error {
 	os.MkdirAll(folderPath, os.ModePerm)
 
 	// Prepare the file
-	f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0700)
+	f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o700)
 	if err != nil {
 		return err
 	}

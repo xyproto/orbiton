@@ -42,7 +42,7 @@ func ExtFileSearch(absCppFilename string, headerExtensions []string, maxTime tim
 		err := filepath.Walk(searchPath, func(path string, info os.FileInfo, err error) error {
 			basename := filepath.Base(info.Name())
 			if err == nil {
-				//logf("Walking %s\n", path)
+				// logf("Walking %s\n", path)
 				for _, headerName := range headerNames {
 					if time.Since(startTime) > maxTime {
 						return errors.New("file search timeout")
@@ -54,7 +54,7 @@ func ExtFileSearch(absCppFilename string, headerExtensions []string, maxTime tim
 							continue
 						}
 						foundHeaderAbsPath = absFilename
-						//logf("Found %s!\n", absFilename)
+						// logf("Found %s!\n", absFilename)
 						return nil
 					}
 				}
