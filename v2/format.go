@@ -192,43 +192,45 @@ func formatFstab(data []byte, spaces int) []byte {
 	return buf.Bytes()
 }
 
+func formatJSON(data []byte, jsonFormatToggle *bool, indentationPerTab int) ([]byte, error) {
+	var v interface{}
+	err := json.Unmarshal(data, &v)
+	if err != nil {
+		return nil, err
+	}
+	// Format the JSON bytes, first without indentation and then
+	// with indentation.
+	var indentedJSON []byte
+	if *jsonFormatToggle {
+		indentedJSON, err = json.Marshal(v)
+		*jsonFormatToggle = false
+	} else {
+		indentationString := strings.Repeat(" ", indentationPerTab)
+		indentedJSON, err = json.MarshalIndent(v, "", indentationString)
+		*jsonFormatToggle = true
+	}
+	if err != nil {
+		return nil, err
+	}
+	return indentedJSON, nil
+}
+
 func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, jsonFormatToggle *bool) {
 	// Format JSON
 	if e.mode == mode.JSON {
-		var v interface{}
-
-		err := json.Unmarshal([]byte(e.String()), &v)
+		data, err := formatJSON([]byte(e.String()), jsonFormatToggle, e.indentation.PerTab)
 		if err != nil {
 			status.ClearAll(c)
 			status.ShowErrorAfterRedraw(err)
 			return
 		}
-
-		// Format the JSON bytes, first without indentation and then
-		// with indentation.
-		var indentedJSON []byte
-		if *jsonFormatToggle {
-			indentedJSON, err = json.Marshal(v)
-			*jsonFormatToggle = false
-		} else {
-			indentationString := strings.Repeat(" ", e.indentation.PerTab)
-			indentedJSON, err = json.MarshalIndent(v, "", indentationString)
-			*jsonFormatToggle = true
-		}
-		if err != nil {
-			status.ClearAll(c)
-			status.ShowErrorAfterRedraw(err)
-			return
-		}
-
-		e.LoadBytes(indentedJSON)
+		e.LoadBytes(data)
 		e.redraw = true
-
 		return
 	}
 
-	baseFilename := filepath.Base(e.filename)
-	if baseFilename == "fstab" {
+	// Format /etc/fstab files
+	if baseFilename := filepath.Base(e.filename); baseFilename == "fstab" {
 		const spaces = 2
 		e.LoadBytes(formatFstab([]byte(e.String()), spaces))
 		e.redraw = true
