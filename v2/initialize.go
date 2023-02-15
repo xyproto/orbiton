@@ -25,7 +25,6 @@ var (
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message for the user, a bool that is true if an image was displayed instead and the finally an error type.
 func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor bool) (*Editor, string, bool, error) {
-
 	var (
 		startTime          = time.Now()
 		createdNewFile     bool   // used for indicating that a new file was created
@@ -181,7 +180,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 
 		if !e.slowLoad {
 			// Test open, to check if the file can be written or not
-			testfile, err := os.OpenFile(e.filename, os.O_WRONLY, 0664)
+			testfile, err := os.OpenFile(e.filename, os.O_WRONLY, 0o664)
 			if err != nil {
 				// can not open the file for writing
 				e.readOnly = true

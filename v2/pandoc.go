@@ -89,7 +89,7 @@ func (e *Editor) exportPandoc(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar
 		folderPath := filepath.Dir(expandedTexFilename)
 		os.MkdirAll(folderPath, os.ModePerm)
 		// Write the Pandoc Tex style file
-		err = os.WriteFile(expandedTexFilename, []byte(listingsSetupTex), 0644)
+		err = os.WriteFile(expandedTexFilename, []byte(listingsSetupTex), 0o644)
 		if err != nil {
 			status.SetErrorMessage("Could not write " + pandocTexFilename + ": " + err.Error())
 			status.Show(c, e)

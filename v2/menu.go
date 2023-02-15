@@ -105,7 +105,7 @@ func selectionLettersForChoices(choices []string) map[string]*RuneAndPosition {
 			// If the letter is not already stored in the keymap, and it's not q,
 			// and it's not in a small word like "at" or "to"
 			if !exists && (letter != 'q') && !inSmallWordOrSpace(choiceString, pos) {
-				//fmt.Printf("Using %s [%d] for %s\n", string(letter), index, choice)
+				// fmt.Printf("Using %s [%d] for %s\n", string(letter), index, choice)
 				// Use this letter!
 				selectionLetterMap[choiceString] = &RuneAndPosition{letter, uint(choiceIndex)}
 				// Found a letter for this choice, move on
@@ -121,7 +121,6 @@ func selectionLettersForChoices(choices []string) map[string]*RuneAndPosition {
 // -1 is "no choice", 0 and up is which choice were selected.
 // initialMenuIndex is the choice that should be highlighted when displaying the choices.
 func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices []string, bgColor, titleColor, arrowColor, textColor, highlightColor, selectedColor vt100.AttributeColor, initialMenuIndex int, extraDashes bool) int {
-
 	// Clear the existing handler
 	signal.Reset(syscall.SIGWINCH)
 

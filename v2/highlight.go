@@ -26,7 +26,6 @@ var (
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy uint) {
-
 	bg := e.Background.Background()
 	tabString := strings.Repeat(" ", e.indentation.PerTab)
 	inCodeBlock := false // used when highlighting Doc, Markdown or Python
@@ -37,12 +36,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 	cw := c.Width()
 	if fromline >= toline {
-		return //errors.New("fromline >= toline in WriteLines")
+		return // errors.New("fromline >= toline in WriteLines")
 	}
 	numLinesToDraw := toline - fromline // Number of lines available on the canvas for drawing
 	offsetY := fromline
 
-	//logf("numlines: %d offsetY %d\n", numlines, offsetY)
+	// logf("numlines: %d offsetY %d\n", numlines, offsetY)
 
 	switch e.mode {
 	// If in Markdown mode, figure out the current state of block quotes
@@ -365,7 +364,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					trimmedLine = strings.TrimSpace(line)
 					q.Process(trimmedLine)
 
-					//logf("%s -[ %d ]-->\n\t%s\n", trimmedLine, addedPar, q.String())
+					// logf("%s -[ %d ]-->\n\t%s\n", trimmedLine, addedPar, q.String())
 
 					switch {
 					case e.mode == mode.Python && q.startedMultiLineString:

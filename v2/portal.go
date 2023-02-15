@@ -100,10 +100,10 @@ func (p *Portal) LineNumber() LineNumber {
 func (p *Portal) Save() error {
 	s := p.absFilename + "\n" + p.lineNumber.String() + "\n"
 	// Anyone can read this file
-	if err := os.WriteFile(portalFilename, []byte(s), 0600); err != nil {
+	if err := os.WriteFile(portalFilename, []byte(s), 0o600); err != nil {
 		return err
 	}
-	return os.Chmod(portalFilename, 0666)
+	return os.Chmod(portalFilename, 0o666)
 }
 
 // String returns the current portal (filename + line number) as a colon separated string
@@ -150,7 +150,7 @@ func (p *Portal) PopLine(e *Editor, removeLine bool) (string, error) {
 			return "", errors.New("Could not pop line " + p.String())
 		}
 		data = []byte(strings.Join(modifiedLines, "\n"))
-		if err = os.WriteFile(p.absFilename, data, 0600); err != nil {
+		if err = os.WriteFile(p.absFilename, data, 0o600); err != nil {
 			return "", err
 		}
 	} else {

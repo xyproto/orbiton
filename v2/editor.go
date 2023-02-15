@@ -410,7 +410,7 @@ func (e *Editor) LoadBytes(data []byte) {
 
 	if tabIndentCounter > 0 || spaceIndentCounter > 0 {
 		// Check if there were more tab indentations than space indentations
-		var detectedTabs = tabIndentCounter > spaceIndentCounter
+		detectedTabs := tabIndentCounter > spaceIndentCounter
 		e.detectedTabs = &detectedTabs
 		e.indentation.Spaces = !detectedTabs
 	}
@@ -502,7 +502,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	containsTheWordSource := bytes.Contains(data, []byte("source"))
 
 	// Default file mode (0644 for regular files, 0755 for executable files)
-	var fileMode os.FileMode = 0644
+	var fileMode os.FileMode = 0o644
 
 	// Checking the syntax highlighting makes it easy to press `ctrl-t` before saving a script,
 	// to toggle the executable bit on or off. This is only for files that start with "#!".
@@ -510,7 +510,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	// is supposed to be executable.
 	if shebang && e.syntaxHighlight && !containsTheWordSource {
 		// This is a script file, syntax highlighting is enabled and it does not contain the word "source"
-		fileMode = 0755
+		fileMode = 0o755
 	}
 
 	// Unless it's a binary file and no changes has been made, save the data
@@ -548,7 +548,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 			os.Chmod(e.filename, fileMode)
 			e.syntaxHighlight = true
 		} else if e.mode == mode.Make || e.mode == mode.Markdown || e.mode == mode.Doc || e.mode == mode.ReStructured || filepath.Base(e.filename) == "PKGBUILD" {
-			fileMode = 0644
+			fileMode = 0o644
 			os.Chmod(e.filename, fileMode)
 		}
 
@@ -854,7 +854,6 @@ func (e *Editor) SplitOvershoot(index LineIndex, isSpace bool) ([]rune, []rune, 
 
 // WrapAllLines will word wrap all lines that are longer than e.wrapWidth
 func (e *Editor) WrapAllLines() bool {
-
 	wrapped := false
 	insertedLines := 0
 
@@ -941,7 +940,6 @@ func (e *Editor) InsertLineAbove() {
 		y++
 
 	} else {
-
 		// For each line in the old map, if at (y-1), insert a blank line
 		// (insert a blank line above)
 		for k, v := range e.lines {
@@ -954,7 +952,6 @@ func (e *Editor) InsertLineAbove() {
 				lines2[k+1] = v
 			}
 		}
-
 	}
 
 	// Use the new set of lines
@@ -1450,7 +1447,6 @@ func (e *Editor) TabToTheLeft() bool {
 
 // Prev will move the cursor to the previous position in the contents
 func (e *Editor) Prev(c *vt100.Canvas) error {
-
 	atTab := e.TabToTheLeft() || (e.pos.sx <= e.indentation.PerTab && e.Get(0, e.DataY()) == '\t')
 	if e.pos.sx == 0 && e.pos.offsetX > 0 {
 		// at left edge, but can scroll to the left
@@ -1563,9 +1559,9 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 	if offset == 0 {
 		// Can't scroll further up
 		// Status message
-		//status.SetMessage("Start of text")
-		//status.Show(c, p)
-		//c.Draw()
+		// status.SetMessage("Start of text")
+		// status.Show(c, p)
+		// c.Draw()
 		// Redraw
 		return true
 	}
@@ -1939,7 +1935,7 @@ func (e *Editor) GoToNextParagraph(c *vt100.Canvas, status *StatusBar) (bool, bo
 // GoToPrevParagraph will jump to the previous line that has a blank line below it, if possible
 // Returns true if the editor should be redrawn, and true if the end has been reached
 func (e *Editor) GoToPrevParagraph(c *vt100.Canvas, status *StatusBar) (bool, bool) {
-	var lastFoundBlankLine = LineIndex(e.Len())
+	lastFoundBlankLine := LineIndex(e.Len())
 	for i := e.DataY() - 1; i >= 0; i-- {
 		// Check if this is a blank line
 		if len(strings.TrimSpace(e.Line(i))) == 0 {
@@ -2221,7 +2217,6 @@ func (e *Editor) AbsFilename() (string, error) {
 // The undo stack is also swapped.
 // Only works for switching to one file, and then back again.
 func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *LockKeeper, filenameToOpen string, forceOpen bool) error {
-
 	absFilename, err := e.AbsFilename()
 	if err != nil {
 		return err

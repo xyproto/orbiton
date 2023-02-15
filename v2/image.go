@@ -17,7 +17,6 @@ import (
 var imageResizeFunction = draw.CatmullRom
 
 func displayImage(c *vt100.Canvas, filename string, waitForKeypress bool) error {
-
 	// Find the width and height of the canvas
 	width := int(c.Width())
 	height := int(c.Height())

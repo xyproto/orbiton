@@ -107,11 +107,11 @@ OUTER_LOOP:
 			}
 		}
 		if r != e {
-			//logf("CONSISTS OF: %s, %s, %s: FALSE\n", s, string(e), string(ignore))
+			// logf("CONSISTS OF: %s, %s, %s: FALSE\n", s, string(e), string(ignore))
 			return false
 		}
 	}
-	//logf("CONSISTS OF: %s, %s, %s: TRUE\n", s, string(e), string(ignore))
+	// logf("CONSISTS OF: %s, %s, %s: TRUE\n", s, string(e), string(ignore))
 	return true
 }
 
@@ -235,7 +235,7 @@ var _ = logf
 
 // flogf, for logging to a file with a fprintf-style function
 func flogf(logfile, format string, args ...interface{}) error {
-	f, err := os.OpenFile(logfile, os.O_APPEND|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(logfile, os.O_APPEND|os.O_WRONLY, 0o644)
 	if err != nil {
 		f, err = os.Create(logfile)
 		if err != nil {

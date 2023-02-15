@@ -419,8 +419,8 @@ AGAIN:
 		// Perform the actual search
 		if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
 			// If no match was found, and return was not pressed, try again from the top
-			//e.GoToTop(c, status)
-			//err = e.GoToNextMatch(c, status)
+			// e.GoToTop(c, status)
+			// err = e.GoToNextMatch(c, status)
 			if err == errNoSearchMatch {
 				if wrap {
 					status.SetMessage(s + " not found")
@@ -432,7 +432,6 @@ AGAIN:
 		}
 		e.Center(c)
 	}
-
 }
 
 // LoadSearchHistory will load a list of strings from the given filename
@@ -457,5 +456,5 @@ func SaveSearchHistory(filename string, list []string) error {
 
 	// Then save the data, with strict permissions
 	data := []byte(strings.Join(list, "\n"))
-	return os.WriteFile(filename, data, 0600)
+	return os.WriteFile(filename, data, 0o600)
 }

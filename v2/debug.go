@@ -54,7 +54,6 @@ func (e *Editor) DebugActivateBreakpoint(sourceBaseFilename string) (string, err
 // DebugStart will start a new debug session, using gdb.
 // Will end the existing session first if e.gdb != nil.
 func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilename string, doneFunc func()) (string, error) {
-
 	flogf(gdbLogFile, "[gdb] dir %s, src %s, exe %s\n", sourceDir, sourceBaseFilename, executableBaseFilename)
 
 	// End any existing sessions
@@ -73,7 +72,7 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 	// Find the path to either "rust-gdb" or "gdb", depending on the mode
 	gdbPath := e.findGDB()
 
-	//flogf(gdbLogFile, "[gdb] starting %s: ", gdbExecutable)
+	// flogf(gdbLogFile, "[gdb] starting %s: ", gdbExecutable)
 
 	// Start a new gdb session
 	e.gdb, err = gdb.NewCustom([]string{gdbPath}, func(notification map[string]interface{}) {
@@ -108,7 +107,7 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 					doneFunc()
 				}
 			default:
-				//logf("[gdb] unrecognized notification: %v\n", notification)
+				// logf("[gdb] unrecognized notification: %v\n", notification)
 			}
 			//} else {
 			//    logf("[gdb] callback without payload: %v\n", notification)
@@ -116,14 +115,14 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 	})
 	if err != nil {
 		e.gdb = nil
-		//flogf(gdbLogFile, "%s\n", "fail")
+		// flogf(gdbLogFile, "%s\n", "fail")
 		return "", err
 	}
 	if e.gdb == nil {
-		//flogf(gdbLogFile, "%s\n", "fail")
+		// flogf(gdbLogFile, "%s\n", "fail")
 		return "", errors.New("gdb.New returned no error, but e.gdb is nil")
 	}
-	//flogf(gdbLogFile, "%s\n", "ok")
+	// flogf(gdbLogFile, "%s\n", "ok")
 
 	// Handle output to stdout (and stderr?) from programs that are being debugged
 	go io.Copy(&gdbOutput, e.gdb)
@@ -134,7 +133,7 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 	}
 
 	// Pass in arguments
-	//e.gdb.Send("exec-arguments", "--version")
+	// e.gdb.Send("exec-arguments", "--version")
 
 	// Pass the breakpoint, if it has been set with ctrl-b
 	if e.breakpoint != nil {
@@ -342,13 +341,12 @@ func (e *Editor) DebugRegisterNames() ([]string, error) {
 	}
 	notification, err := e.gdb.CheckedSend("data-list-register-names")
 	if err != nil {
-		//flogf(gdbLogFile, "[gdb] data-list-register-names error: %s\n", err.Error())
+		// flogf(gdbLogFile, "[gdb] data-list-register-names error: %s\n", err.Error())
 		return []string{}, err
 	}
 	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
 		if payloadMap, ok := payload.(map[string]interface{}); ok {
 			if registerNames, ok := payloadMap["register-names"]; ok {
-
 				if registerSlice, ok := registerNames.([]interface{}); ok {
 					registerStringSlice := make([]string, len(registerSlice))
 					for i, interfaceValue := range registerSlice {
@@ -356,10 +354,9 @@ func (e *Editor) DebugRegisterNames() ([]string, error) {
 							registerStringSlice[i] = s
 						}
 					}
-					//flogf(gdbLogFile, "[gdb] data-list-register-names: %s\n", strings.Join(registerStringSlice, ","))
+					// flogf(gdbLogFile, "[gdb] data-list-register-names: %s\n", strings.Join(registerStringSlice, ","))
 					return registerStringSlice, nil
 				}
-
 			}
 		}
 	}
@@ -371,12 +368,12 @@ func (e *Editor) DebugChangedRegisters() ([]int, error) {
 	// Then get the register values
 	notification, err := e.gdb.CheckedSend("data-list-changed-registers")
 	if err != nil {
-		//flogf(gdbLogFile, "[gdb] data-list-changed-registers error: %s\n", err.Error())
+		// flogf(gdbLogFile, "[gdb] data-list-changed-registers error: %s\n", err.Error())
 		return []int{}, err
 	}
 	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
 		if payloadMap, ok := payload.(map[string]interface{}); ok {
-			//flogf(gdbLogFile, "[gdb] changed reg payload: %v\n", payloadMap)
+			// flogf(gdbLogFile, "[gdb] changed reg payload: %v\n", payloadMap)
 			if registerInterfaces, ok := payloadMap["changed-registers"].([]interface{}); ok {
 				changedRegisters := make([]int, len(registerInterfaces))
 				for _, registerNumberString := range registerInterfaces {
@@ -385,13 +382,13 @@ func (e *Editor) DebugChangedRegisters() ([]int, error) {
 						return []int{}, err
 					}
 					changedRegisters = append(changedRegisters, registerNumber)
-					//flogf(gdbLogFile, "[gdb] regnum %v %T\n", registerNumber, registerNumber)
+					// flogf(gdbLogFile, "[gdb] regnum %v %T\n", registerNumber, registerNumber)
 				}
 				return changedRegisters, nil
 			}
 		}
 	}
-	//flogf(gdbLogFile, "[gdb] data-list-register-values %v\n", registers)
+	// flogf(gdbLogFile, "[gdb] data-list-register-values %v\n", registers)
 	return []int{}, errors.New("could not find the register values in the payload returned from gdb")
 }
 
@@ -400,23 +397,23 @@ func (e *Editor) DebugDisassemble(n int) ([]string, error) {
 	// Then get the register values
 	notification, err := e.gdb.CheckedSend("data-disassemble -s $pc -e \"$pc + 20\" -- 0")
 	if err != nil {
-		//flogf(gdbLogFile, "[gdb] data-disassemble error: %s\n", err.Error())
+		// flogf(gdbLogFile, "[gdb] data-disassemble error: %s\n", err.Error())
 		return []string{}, err
 	}
 	result := []string{}
 	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
 		if payloadMap, ok := payload.(map[string]interface{}); ok {
-			//flogf(gdbLogFile, "[gdb] disasm payload: %v\n", payloadMap)
+			// flogf(gdbLogFile, "[gdb] disasm payload: %v\n", payloadMap)
 			if asmDisSlice, ok := payloadMap["asm_insns"].([]interface{}); ok {
 				for i, asmDis := range asmDisSlice {
-					//flogf(gdbLogFile, "[gdb] disasm asm %d: %v %T\n", i, asmDis, asmDis)
+					// flogf(gdbLogFile, "[gdb] disasm asm %d: %v %T\n", i, asmDis, asmDis)
 					if asmMap, ok := asmDis.(map[string]interface{}); ok {
 						instruction := asmMap["inst"]
 						result = append(result, instruction.(string))
 					}
 					// Only collect n asm statements
 					if i >= n {
-						//flogf(gdbLogFile, "[gdb] result %v\n", result)
+						// flogf(gdbLogFile, "[gdb] result %v\n", result)
 						break
 					}
 				}
@@ -424,7 +421,7 @@ func (e *Editor) DebugDisassemble(n int) ([]string, error) {
 			}
 		}
 	}
-	//flogf(gdbLogFile, "[gdb] disasm result: %v\n", result)
+	// flogf(gdbLogFile, "[gdb] disasm result: %v\n", result)
 	return []string{}, errors.New("could not get disasm from gdb")
 }
 
@@ -444,7 +441,7 @@ func (e *Editor) DebugChangedRegisterMap() (map[string]string, error) {
 	// Then get the register IDs, then use them to get the register names and values
 	notification, err := e.gdb.CheckedSend("data-list-register-values", "--skip-unavailable", "x")
 	if err != nil {
-		//flogf(gdbLogFile, "[gdb] data-list-register-values error: %s\n", err.Error())
+		// flogf(gdbLogFile, "[gdb] data-list-register-values error: %s\n", err.Error())
 		return nil, err
 	}
 	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
@@ -479,7 +476,7 @@ func (e *Editor) DebugChangedRegisterMap() (map[string]string, error) {
 							}
 							registerName := names[registerNumber]
 							registers[registerName] = value
-							//flogf(gdbLogFile, "[gdb] data-list-register-values: %s %s\n", registerName, value)
+							// flogf(gdbLogFile, "[gdb] data-list-register-values: %s %s\n", registerName, value)
 						}
 					}
 
@@ -499,7 +496,6 @@ func (e *Editor) DebugChangedRegisterMap() (map[string]string, error) {
 					filterRegisters := e.debugShowRegisters != largeRegisterWindow
 					if filterRegisters {
 						for _, regSlice := range [][]string{reg8byte, reg4byte, reg2byte} {
-
 							for _, regName := range regSlice {
 								if !hasKey(registers, regName) {
 									continue
@@ -543,7 +539,7 @@ func (e *Editor) DebugChangedRegisterMap() (map[string]string, error) {
 			}
 		}
 	}
-	//flogf(gdbLogFile, "[gdb] data-list-register-values %v\n", registers)
+	// flogf(gdbLogFile, "[gdb] data-list-register-values %v\n", registers)
 	return nil, errors.New("could not find the register values in the payload returned from gdb")
 }
 
@@ -557,7 +553,7 @@ func (e *Editor) DebugRegisterMap() (map[string]string, error) {
 	// Then get the register IDs, then use them to get the register names and values
 	notification, err := e.gdb.CheckedSend("data-list-register-values", "--skip-unavailable", "x")
 	if err != nil {
-		//flogf(gdbLogFile, "[gdb] data-list-register-values error: %s\n", err.Error())
+		// flogf(gdbLogFile, "[gdb] data-list-register-values error: %s\n", err.Error())
 		return nil, err
 	}
 	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
@@ -581,7 +577,7 @@ func (e *Editor) DebugRegisterMap() (map[string]string, error) {
 							}
 							registerName := names[registerNumber]
 							registers[registerName] = value
-							//flogf(gdbLogFile, "[gdb] data-list-register-values: %s %s\n", registerName, value)
+							// flogf(gdbLogFile, "[gdb] data-list-register-values: %s %s\n", registerName, value)
 						}
 					}
 					return registers, nil
@@ -589,7 +585,7 @@ func (e *Editor) DebugRegisterMap() (map[string]string, error) {
 			}
 		}
 	}
-	//flogf(gdbLogFile, "[gdb] data-list-register-values %v\n", registers)
+	// flogf(gdbLogFile, "[gdb] data-list-register-values %v\n", registers)
 	return nil, errors.New("could not find the register values in the payload returned from gdb")
 }
 
@@ -612,21 +608,21 @@ func (e *Editor) DebugEnd() {
 	}
 	programRunning = false
 	longInstructionPaneWidth = 0
-	//flogf(gdbLogFile, "[gdb] %s\n", "stopped")
+	// flogf(gdbLogFile, "[gdb] %s\n", "stopped")
 }
 
 // AddWatch will add a watchpoint / watch expression to gdb
 func (e *Editor) AddWatch(expression string) (string, error) {
 	var output string
 	if e.gdb != nil {
-		//flogf(gdbLogFile, "[gdb] adding watch: %s\n", expression)
+		// flogf(gdbLogFile, "[gdb] adding watch: %s\n", expression)
 		_, err := e.gdb.CheckedSend("break-watch", "-a", expression)
 		if err != nil {
 			return "", err
 		}
 		output = gdbOutput.String()
 		gdbOutput.Reset()
-		//flogf(gdbLogFile, "[gdb] output after adding watch: %s\n", output)
+		// flogf(gdbLogFile, "[gdb] output after adding watch: %s\n", output)
 	}
 	watchMap[expression] = "?"
 
@@ -762,12 +758,10 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 		y := e.pos.ScreenY()
 		vt100.SetXY(uint(x), uint(y))
 	}
-
 }
 
 // DrawFlags will draw the currently set flags (like zero, carry etc) at the bottom right
 func (e *Editor) DrawFlags(c *vt100.Canvas, repositionCursor bool) {
-
 	if e.gdb == nil {
 		return
 	}
@@ -946,7 +940,6 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 
 // DrawInstructions will draw a box with the current instructions
 func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error {
-
 	defer func() {
 		// Reposition the cursor
 		if repositionCursor {
@@ -975,7 +968,7 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 
 		// Get the current theme for the register box
 		bt := e.NewBoxTheme()
-		//bt.Text = &e.DebugInstructionsForeground
+		// bt.Text = &e.DebugInstructionsForeground
 		bt.Background = &e.DebugInstructionsBackground
 
 		title := "Next instructions"
@@ -1012,7 +1005,7 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 					}
 					modifiedWord = strings.TrimSuffix(modifiedWord, "@plt")
 					if demangledWord, err := demangle.ToString(modifiedWord); err == nil { // success
-						//logf("%s -> %s\n", modifiedWord, demangledWord)
+						// logf("%s -> %s\n", modifiedWord, demangledWord)
 						demangledLine = strings.ReplaceAll(demangledLine, word, demangledWord)
 						//} else {
 						//logf("could not demangle: %s\n", modifiedWord)
@@ -1054,10 +1047,8 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 			e.DrawList(bt, c, listBox, demangledLines, 0)
 
 		} else {
-
 			// Just draw the background box
 			e.DrawBox(bt, c, centerBox)
-
 		}
 
 		// Draw the title
@@ -1092,7 +1083,6 @@ func (e *Editor) usingGDBMightWork() bool {
 
 // DrawGDBOutput will draw a pane with the 5 last lines of the collected stdoutput from GDB
 func (e *Editor) DrawGDBOutput(c *vt100.Canvas, repositionCursor bool) {
-
 	// Check if the output pane should be shown or not
 	if e.debugHideOutput || e.gdb == nil {
 		return

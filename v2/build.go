@@ -266,7 +266,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd = exec.Command("python", "-m", "py_compile", sourceFilename)
 		cmd.Env = append(cmd.Env, "PYTHONUTF8=1")
 		if !exists(pyCachePrefix) {
-			os.MkdirAll(pyCachePrefix, 0700)
+			os.MkdirAll(pyCachePrefix, 0o700)
 		}
 		cmd.Env = append(cmd.Env, "PYTHONPYCACHEPREFIX="+pyCachePrefix)
 		cmd.Dir = sourceDir
@@ -352,7 +352,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		}
 		// No result
 	}
-	return nil, nothingIsFine, errNoSuitableBuildCommand //errors.New("No build command for " + e.mode.String() + " files")
+	return nil, nothingIsFine, errNoSuitableBuildCommand // errors.New("No build command for " + e.mode.String() + " files")
 }
 
 // BuildOrExport will try to build the source code or export the document.
@@ -495,14 +495,14 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 	// Special considerations for Kotlin Native
 	if usingKotlinNative := strings.HasSuffix(cmd.Path, "kotlinc-native"); usingKotlinNative && exists(exeFirstName+".kexe") {
-		//panic("rename " + exeFirstName + ".kexe" + " -> " + exeFirstName)
+		// panic("rename " + exeFirstName + ".kexe" + " -> " + exeFirstName)
 		os.Rename(exeFirstName+".kexe", exeFirstName)
 	}
 
 	// Special considerations for Koka
 	if e.mode == mode.Koka && exists(exeFirstName) {
 		// chmod +x
-		os.Chmod(exeFirstName, 0755)
+		os.Chmod(exeFirstName, 0o755)
 	}
 
 	// NOTE: Don't do anything with the output and err variables here, let the if below handle it.
@@ -574,7 +574,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 				errorMessage := strings.TrimSpace(lines[2]) + " " + strings.TrimSpace(lines[3])
 				if strings.Contains(fileAndLocation, ":") && strings.Contains(fileAndLocation, ",") && strings.Contains(fileAndLocation, "-") {
 					fields := strings.SplitN(fileAndLocation, ":", 2)
-					//filename := fields[0]
+					// filename := fields[0]
 					lineAndCol := fields[1]
 					fields = strings.SplitN(lineAndCol, ",", 2)
 					lineNumberString := fields[0] // not index
@@ -894,7 +894,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					}
 					e.redrawCursor = true
 					// Nope, just the error message
-					//return errorMessage, true, false
+					// return errorMessage, true, false
 				}
 			}
 		}

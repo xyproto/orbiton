@@ -30,7 +30,6 @@ var fileLock = NewLockKeeper(defaultLockFile)
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
 func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight bool) (userMessage string, stopParent bool, err error) {
-
 	// Create a Canvas for drawing onto the terminal
 	vt100.Init()
 	c := vt100.NewCanvas()
@@ -295,7 +294,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				if e.breakpoint != nil { // exists
 					// continue forward to the end or to the next breakpoint
 					if err := e.DebugContinue(); err != nil {
-						//logf("[continue] gdb output: %s\n", gdbOutput)
+						// logf("[continue] gdb output: %s\n", gdbOutput)
 						e.DebugEnd()
 						status.SetMessage("Done")
 						e.GoToEnd(nil, nil)
@@ -338,14 +337,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// TODO: Make this render the man page like if MANPAGER=o was used
 				e.mode = mode.ManPage
 				e.syntaxHighlight = true
-				//e.LoadBytes([]byte(e.String()))
+				// e.LoadBytes([]byte(e.String()))
 				e.redraw = true
 				e.redrawCursor = true
 				break
 			} else if e.mode == mode.ManPage {
 				e.mode = mode.Nroff
-				//e.syntaxHighlight = true
-				//e.LoadBytes([]byte(e.String()))
+				// e.syntaxHighlight = true
+				// e.LoadBytes([]byte(e.String()))
 				e.redraw = true
 				e.redrawCursor = true
 				break
@@ -611,7 +610,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// no scrolling or movement to the left going on
 				e.Up(c, status)
 				e.End(c)
-				//e.redraw = true
+				// e.redraw = true
 			} // else at the start of the document
 			e.redrawCursor = true
 			// Workaround for Konsole
@@ -786,7 +785,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 					// Was no suitable compilation or export command found?
 					if err == errNoSuitableBuildCommand {
-						//status.ClearAll(c)
+						// status.ClearAll(c)
 						if e.debugMode {
 							// Both in debug mode and can not find a command to build this file with.
 							status.SetError(err)
@@ -1017,7 +1016,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.SetCurrentLine(trimmedLine)
 				leadingWhitespace = currentLeadingWhitespace
 			} else if chatAPIKey := env.StrAlt("CHATGPT_API_KEY", "OPENAPI_API_KEY"); shouldUseAI && chatAPIKey != "" {
-				var chatPrompt = strings.TrimPrefix(trimmedLine, e.SingleLineCommentMarker())
+				chatPrompt := strings.TrimPrefix(trimmedLine, e.SingleLineCommentMarker())
 				// Generate code or text by using ChatGPT
 				go e.GenerateCodeOrText(c, status, bookmark, chatAPIKey, chatPrompt)
 				break
@@ -1112,8 +1111,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 			}
 
-			//onlyOneLine := e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument()
-			//middleOfText := !e.AtOrBeforeStartOfTextLine() && !e.AtOrAfterEndOfLine()
+			// onlyOneLine := e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument()
+			// middleOfText := !e.AtOrBeforeStartOfTextLine() && !e.AtOrAfterEndOfLine()
 
 			scrollBack := false
 
@@ -1163,7 +1162,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			if !noHome {
 				e.pos.sx = 0
-				//e.Home()
+				// e.Home()
 				if scrollBack {
 					e.pos.SetX(c, 0)
 				}
@@ -1173,7 +1172,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// If the leading whitespace starts with a tab and ends with a space, remove the final space
 				if strings.HasPrefix(leadingWhitespace, "\t") && strings.HasSuffix(leadingWhitespace, " ") {
 					leadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-1]
-					//logf("cleaned leading whitespace: %v\n", []rune(leadingWhitespace))
+					// logf("cleaned leading whitespace: %v\n", []rune(leadingWhitespace))
 				}
 				if !noHome {
 					// Insert the same leading whitespace for the new line
@@ -1206,7 +1205,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.redrawCursor = true
 				// Don't break, continue to delete to the left after clearing the search,
 				// since Esc can be used to only clear the search.
-				//break
+				// break
 			}
 
 			undo.Snapshot(e)
@@ -1406,7 +1405,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// If at an empty line, go up one line
 			if !justMovedUpOrDown && e.EmptyRightTrimmedLine() && e.SearchTerm() == "" {
 				e.Up(c, status)
-				//e.GoToStartOfTextLine()
+				// e.GoToStartOfTextLine()
 				e.End(c)
 			} else if x, err := e.DataX(); err == nil && x == 0 && !justMovedUpOrDown && e.SearchTerm() == "" {
 				// If at the start of the line,
@@ -1541,7 +1540,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			// Try to restore the previous editor state in the undo buffer
 			if err := undo.Restore(e); err == nil {
-				//c.Draw()
+				// c.Draw()
 				x := e.pos.ScreenX()
 				y := e.pos.ScreenY()
 				vt100.SetXY(uint(x), uint(y))
@@ -1740,7 +1739,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:3": // ctrl-c, copy the stripped contents of the current line
 
 			// ctrl-c might interrupt the program, but saving at the wrong time might be just as destructive.
-			//e.Save(c, tty)
+			// e.Save(c, tty)
 
 			y := e.DataY()
 
@@ -2092,7 +2091,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redrawCursor = true
 		default: // any other key
 			keyRunes := []rune(key)
-			//panic(fmt.Sprintf("PRESSED KEY: %v", []rune(key)))
+			// panic(fmt.Sprintf("PRESSED KEY: %v", []rune(key)))
 			if len(keyRunes) > 0 && unicode.IsLetter(keyRunes[0]) { // letter
 
 				undo.Snapshot(e)
@@ -2150,7 +2149,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 					noDedent := foundCurlyBracketBelow || foundSquareBracketBelow || foundParenthesisBelow
 
-					//noDedent := similarLineBelow
+					// noDedent := similarLineBelow
 
 					// Okay, dedent this line by 1 indentation, if possible
 					if !noDedent && e.pos.sx > 0 && len(leadingWhitespace) > 0 && noContentHereAlready {
@@ -2217,7 +2216,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		// TODO: If the stored timestamp is older than uptime, unlock and save the lock overview
 
-		//var notime time.Time
+		// var notime time.Time
 
 		if !forceFlag || lockUnchanged {
 			// If the file has not been locked externally since this instance of the editor was loaded, don't
