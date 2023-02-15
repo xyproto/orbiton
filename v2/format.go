@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"os"
@@ -136,8 +137,62 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	return nil
 }
 
-func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, jsonFormatToggle *bool) {
+// formatFstab can format the contents of /etc/fstab files. The suggested number of spaces is 2.
+func formatFstab(data []byte, spaces int) []byte {
+	var (
+		buf       bytes.Buffer
+		nl        = []byte{'\n'}
+		longest   = make(map[int]int) // The longest length of a field, for each field index
+		byteLines = bytes.Split(data, nl)
+	)
 
+	// Find the longest field length for each field on each line
+	for _, line := range byteLines {
+		trimmedLine := bytes.TrimSpace(line)
+		if len(trimmedLine) == 0 || bytes.HasPrefix(trimmedLine, []byte{'#'}) {
+			continue
+		}
+		// Find the longest field length for each field
+		for i, field := range bytes.Fields(trimmedLine) {
+			fieldLength := len(string(field))
+			if val, ok := longest[i]; ok {
+				if fieldLength > val {
+					longest[i] = fieldLength
+				}
+			} else {
+				longest[i] = fieldLength
+			}
+		}
+	}
+
+	// Format the lines nicely
+	for _, line := range byteLines {
+		trimmedLine := bytes.TrimSpace(line)
+		if len(trimmedLine) == 0 {
+			continue
+		}
+		if bytes.HasPrefix(trimmedLine, []byte{'#'}) { // Output comments as they are, but trimmed
+			buf.Write(trimmedLine)
+			buf.Write(nl)
+		} else { // Format the fields
+			for i, field := range bytes.Fields(trimmedLine) {
+				fieldLength := len(string(field))
+				padCount := spaces // Space between the fields if all fields have equal length
+				if longest[i] > fieldLength {
+					padCount += longest[i] - fieldLength
+				}
+				buf.Write(field)
+				if padCount > 0 {
+					buf.Write(bytes.Repeat([]byte{' '}, padCount))
+				}
+			}
+			buf.Write(nl)
+		}
+	}
+	return buf.Bytes()
+}
+
+func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, jsonFormatToggle *bool) {
 	// Format JSON
 	if e.mode == mode.JSON {
 		var v interface{}
@@ -168,23 +223,15 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 
 		e.LoadBytes(indentedJSON)
 		e.redraw = true
+
 		return
 	}
 
 	baseFilename := filepath.Base(e.filename)
 	if baseFilename == "fstab" {
-		cmd := exec.Command("fstabfmt", "-i")
-		if which(cmd.Path) == "" { // Does the formatting tool even exist?
-			status.ClearAll(c)
-			status.SetErrorMessage(cmd.Path + " is missing")
-			status.Show(c, e)
-			return
-		}
-		if err := e.formatWithUtility(c, tty, status, *cmd, baseFilename); err != nil {
-			status.ClearAll(c)
-			status.SetMessage(err.Error())
-			status.Show(c, e)
-		}
+		const spaces = 2
+		e.LoadBytes(formatFstab([]byte(e.String()), spaces))
+		e.redraw = true
 		return
 	}
 
@@ -203,5 +250,4 @@ OUT:
 			}
 		}
 	}
-
 }

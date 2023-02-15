@@ -13,7 +13,7 @@ It might be a good fit for:
 * Editing files deep within larger Go or C++ projects.
 * Solving Advent of Code tasks.
 * Writing and maintaining to-do lists and project documentation in Markdown.
-* Placing it on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in man page viewer, can be used for viewing logs, for `EDITOR=o visudo` and for editing `/etc/fstab`.
+* Placing it on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in man page viewer, can be used for viewing logs, for `EDITOR=o visudo` and for editing and formatting `/etc/fstab`.
 * Testing if your favorite package manager can handle single-letter package names.
 * Writing poetry with the help of ChatGPT, directly in the editor.
 
@@ -211,7 +211,7 @@ These features are unique to `o`, as far as I am aware:
 | V                                               | `.v`                                                      | yes           | `v build`                                         | `v fmt $filename`                                                                                              |
 | Zig                                             | `.zig`                                                    | yes           | `zig build-exe -lc $filename`                     | `zig fmt $filename`                                                                                            |
 
-`/etc/fstab` files are also supported, and can be formatted with `ctrl-w` if [`fstabfmt`](https://github.com/xyproto/fstabfmt) is installed.
+`/etc/fstab` files are also supported, and can be formatted with `ctrl-w`.
 
 | Markup language | File extensions | Jump to error | Format command ($filename is a temporary file) |
 |----|----|----|----|

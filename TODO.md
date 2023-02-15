@@ -145,7 +145,6 @@
 ## External programs
 
 - [ ] Let rendering with `pandoc` have a spinner, since it can take a little while.
-- [ ] Embed `fstabfmt`.
 - [ ] Extract the functionality for searching a MessagePack file to a `mpgrep` utility, that has a `-B` flag (like `grep`).
 - [ ] Draw inspiration from [kilo](https://github.com/antirez/kilo).
 
