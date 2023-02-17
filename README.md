@@ -85,9 +85,9 @@ These features are unique to `o`, as far as I am aware:
 * Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy the rest (until a blank line).
 * Open or close a portal with `ctrl-r`. When a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
 * Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages.
-* Cycle git rebase keywords with `ctrl-r`, when an interactive git rebase session is in progress.
+* Cycle git rebase keywords with `ctrl-w` or `ctrl-r`, when an interactive git rebase session is in progress.
 * Jump to a line with `ctrl-l`. Either enter a number to jump to a line or just press `return` to jump to the top. Press `ctrl-l` and `return` again to jump to the bottom.
-* When jumping to a specific line in a file with `ctrl-l`, jumping to a percentage (like `50%`) or a fraction (like `0.5`) is also supported.
+* When jumping to a specific line in a file with `ctrl-l`, jumping to a percentage (like `50%`) or a fraction (like `0.5`) is also possible.
 * If tab completion in the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
 * Search by pressing `ctrl-f`, entering text and pressing `return`. Replace by pressing `tab` instead of `return`, then enter the replacement text and press `return`. Searching for unicode runes on the form `u+0000` is also supported.
 * Type `iferr` on a single line in a Go program and press `return` to insert a suitable `if err != nil { return ... }` block, based on [koron/iferr](https://github.com/koron/iferr).
