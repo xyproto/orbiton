@@ -21,7 +21,7 @@ require (
 	github.com/xyproto/textoutput v1.14.1
 	github.com/xyproto/vt100 v1.11.3
 	go4.org v0.0.0-20201209231011-d4a079459e60
-	golang.org/x/image v0.4.0
+	golang.org/x/image v0.5.0
 )
 
 require (
