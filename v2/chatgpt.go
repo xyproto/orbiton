@@ -10,9 +10,6 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// For stopping ChatGTP from generating tokens when Esc is pressed
-var continueGeneratingTokens bool
-
 // ProgrammingLanguage returns true if the current mode appears to be a programming language (and not a markup language etc)
 func (e *Editor) ProgrammingLanguage() bool {
 	switch e.mode {
@@ -34,7 +31,7 @@ func (e *Editor) AIFixups(generatedLine string) string {
 
 // GenerateTokens uses the ChatGTP API to generate text. n is the maximum number of tokens.
 // The global atomic Bool "ContinueGeneratingTokens" controls when the text generation should stop.
-func GenerateTokens(apiKey, prompt string, n int, temperature float32, model string, newToken func(string)) error {
+func (e *Editor) GenerateTokens(apiKey, prompt string, n int, temperature float32, model string, newToken func(string)) error {
 	client := gpt3.NewClient(apiKey)
 	chatContext, cancelFunction := context.WithCancel(context.Background())
 	defer cancelFunction()
@@ -47,7 +44,7 @@ func GenerateTokens(apiKey, prompt string, n int, temperature float32, model str
 			Temperature: gpt3.Float32Ptr(temperature),
 		}, func(resp *gpt3.CompletionResponse) {
 			newToken(resp.Choices[0].Text)
-			if !continueGeneratingTokens {
+			if !e.generatingTokens {
 				cancelFunction()
 			}
 		})
@@ -143,10 +140,10 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 
 	// Start generating the code/text while inserting words into the editor as it happens
 	currentLeadingWhitespace := e.LeadingWhitespace()
-	continueGeneratingTokens = true // global
+	e.generatingTokens = true // global
 	first := true
 	var generatedLine string
-	if err := GenerateTokens(chatAPIKey, prompt, maxTokens, temperature, gptModel, func(word string) {
+	if err := e.GenerateTokens(chatAPIKey, prompt, maxTokens, temperature, gptModel, func(word string) {
 		generatedLine += word
 		if strings.HasSuffix(generatedLine, "\n") {
 			e.SetCurrentLine(currentLeadingWhitespace + e.AIFixups(generatedLine))
@@ -176,7 +173,7 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 	}
 	e.End(c)
 
-	if continueGeneratingTokens { // global
+	if e.generatingTokens { // global
 		if first { // Nothing was generated
 			status.SetMessageAfterRedraw("Nothing was generated")
 		} else {

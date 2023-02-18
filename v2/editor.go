@@ -60,6 +60,7 @@ type Editor struct {
 	detectedTabs       *bool           // were tab or space indentations detected when loading the data?
 	building           bool            // currently buildig code or exporting to a file?
 	runAfterBuild      bool            // run the application after building?
+	generatingTokens   bool            // is code or text being generated right now?
 }
 
 // NewCustomEditor takes:
