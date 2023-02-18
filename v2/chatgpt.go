@@ -161,6 +161,7 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 			e.SetCurrentLine(currentLeadingWhitespace + e.AIFixups(generatedLine))
 		}
 		// "refresh"
+		e.MakeConsistent()
 		e.DrawLines(c, true, false)
 	}); err != nil {
 		errorMessage := err.Error()
