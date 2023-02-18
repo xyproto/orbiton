@@ -573,6 +573,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 		case "←": // left arrow
 
+			// Don't move if ChatGPT is currently generating tokens that are being inserted
+			if e.generatingTokens {
+				break
+			}
+
 			// Check if it's a special case
 			if kh.SpecialArrowKeypressWith("←") {
 				// Ask the user for a command and run it
@@ -621,6 +626,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 		case "→": // right arrow
 
+			// Don't move if ChatGPT is currently generating tokens that are being inserted
+			if e.generatingTokens {
+				break
+			}
+
 			// Check if it's a special case
 			if kh.SpecialArrowKeypressWith("→") {
 				// Ask the user for a command and run it
@@ -650,6 +660,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.SaveX(true)
 			e.redrawCursor = true
 		case "↑": // up arrow
+
+			// Don't move if ChatGPT is currently generating tokens that are being inserted
+			if e.generatingTokens {
+				break
+			}
 
 			// Check if it's a special case
 			if kh.SpecialArrowKeypressWith("↑") {
@@ -691,6 +706,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 			e.redrawCursor = true
 		case "↓": // down arrow
+
+			// Don't move if ChatGPT is currently generating tokens that are being inserted
+			if e.generatingTokens {
+				break
+			}
 
 			// Check if it's a special case
 			if kh.SpecialArrowKeypressWith("↓") {
@@ -897,7 +917,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 			// Stop the call to ChatGPT, if it is running
-			continueGeneratingTokens = false
+			e.generatingTokens = false
 			// Reset the cut/copy/paste double-keypress detection
 			lastCopyY = -1
 			lastPasteY = -1
