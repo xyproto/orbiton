@@ -22,7 +22,7 @@ func SimpleDetect(contents string) Mode {
 
 // SimpleDetectBytes tries to return a Mode given a byte slice of file contents
 func SimpleDetectBytes(contents []byte) Mode {
-	var nl = []byte("\n")
+	nl := []byte("\n")
 	firstLine := contents
 	if bytes.Contains(contents, nl) {
 		firstLine = bytes.SplitN(contents, nl, 2)[0]

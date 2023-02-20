@@ -69,6 +69,7 @@ const (
 	Shell                 // Shell scripts and PKGBUILD files
 	StandardML            // Standard ML
 	SQL                   // Structured Query Language
+	Subversion            // Subversion commits
 	Teal                  // Teal
 	Terra                 // Terra
 	Text                  // plain text documents
@@ -214,6 +215,8 @@ func (mode Mode) String() string {
 		return "SQL"
 	case StandardML:
 		return "Standard ML"
+	case Subversion:
+		return "Subversion"
 	case Teal:
 		return "Teal"
 	case Terra:

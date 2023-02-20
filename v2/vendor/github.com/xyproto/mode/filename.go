@@ -8,7 +8,6 @@ import (
 
 // Detect looks at the filename and tries to guess what could be an appropriate editor mode.
 func Detect(filename string) Mode {
-
 	// A list of the most common configuration filenames that does not have an extension
 	var (
 		configFilenames = []string{"BUILD", "WORKSPACE", "config", "environment", "fstab", "group", "gshadow", "hostname", "hosts", "issue", "mirrorlist", "passwd", "shadow"}
@@ -28,6 +27,8 @@ func Detect(filename string) Mode {
 			strings.Count(baseFilename, "-") >= 2):
 		// Git mode
 		mode = Git
+	case baseFilename == "svn-commit.tmp":
+		mode = Subversion
 	case ext == ".vimrc" || ext == ".vim" || ext == ".nvim":
 		mode = Vim
 	case ext == ".mk" || strings.HasPrefix(baseFilename, "Make") || strings.HasPrefix(baseFilename, "makefile") || baseFilename == "GNUmakefile":
