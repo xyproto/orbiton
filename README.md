@@ -4,7 +4,10 @@
 
 Orbiton is a text editor and a minimalistic IDE.
 
-It includes the `o` (TUI) and `og` (VTE GUI) executables.
+It includes these executables:
+
+  * `o` - for terminal emulators that supports at least VT100
+  * `og` - for the VTE GUI
 
 It might be a good fit for:
 
@@ -15,8 +18,8 @@ It might be a good fit for:
 * Editing files deep within larger Go or C++ projects.
 * Solving Advent of Code tasks.
 * Writing and maintaining to-do lists and project documentation in Markdown.
-* Placing it on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in man page viewer, can be used for viewing logs, for `EDITOR=o visudo` and for editing and formatting `/etc/fstab`.
 * Writing poetry with the help of ChatGPT, directly in the editor.
+* Placing it on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in man page viewer, can be used for viewing logs, for `EDITOR=o visudo` and for editing and formatting `/etc/fstab`.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
