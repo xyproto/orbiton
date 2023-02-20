@@ -1,8 +1,10 @@
 ![o](img/icon_128x128.png)
 
-![Build](https://github.com/xyproto/o/workflows/Build/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/o/main/LICENSE)
+![Build](https://github.com/xyproto/orbiton/workflows/Build/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/orbiton/main/LICENSE)
 
-`o` is a text editor and a minimalistic IDE.
+Orbiton is a text editor and a minimalistic IDE.
+
+It includes the `o` (TUI) and `og` (VTE GUI) executables.
 
 It might be a good fit for:
 
@@ -14,7 +16,6 @@ It might be a good fit for:
 * Solving Advent of Code tasks.
 * Writing and maintaining to-do lists and project documentation in Markdown.
 * Placing it on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in man page viewer, can be used for viewing logs, for `EDITOR=o visudo` and for editing and formatting `/etc/fstab`.
-* Testing if your favorite package manager can handle single-letter package names.
 * Writing poetry with the help of ChatGPT, directly in the editor.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
@@ -41,11 +42,11 @@ Editing a C source file in `og` using the "synthwave" theme:
 
 With Go 1.17 or later, `o` can be installed like this:
 
-    go install github.com/xyproto/o/v2@latest
+    go install github.com/xyproto/orbiton/v2@latest
 
-Alternatively, download and install a [release version](https://github.com/xyproto/o/releases). For example, for Raspberry Pi 2, 3 or 4 running Linux:
+Alternatively, download and install a [release version](https://github.com/xyproto/orbiton/releases). For example, for Raspberry Pi 2, 3 or 4 running Linux:
 
-    curl -sL 'https://github.com/xyproto/o/releases/download/2.59.5/o-2.59.5-linux_armv7_static.tar.xz' | tar axC /tmp && sudo install -Dm755 /tmp/o-2.59.5-linux_armv7_static/o /usr/bin/o && sudo install -Dm644 /tmp/o-2.59.5-linux_armv7_static/o.1.gz /usr/share/man/man1/o.1.gz
+    curl -sL 'https://github.com/xyproto/orbiton/releases/download/2.59.5/o-2.59.5-linux_armv7_static.tar.xz' | tar axC /tmp && sudo install -Dm755 /tmp/o-2.59.5-linux_armv7_static/o /usr/bin/o && sudo install -Dm644 /tmp/o-2.59.5-linux_armv7_static/o.1.gz /usr/share/man/man1/o.1.gz
 
 ## Setting `o` as the default editor for `git`
 
@@ -549,7 +550,7 @@ Install (use `sudo`, if needed):
 
 ## Stars
 
-[![Stargazers over time](https://starchart.cc/xyproto/o.svg)](https://starchart.cc/xyproto/o)
+[![Stargazers over time](https://starchart.cc/xyproto/orbiton.svg)](https://starchart.cc/xyproto/orbiton)
 
 ## General info
 
