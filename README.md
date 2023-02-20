@@ -133,6 +133,7 @@ These features are unique to `o`, as far as I am aware:
 * Press `ctrl-w` to toggle the check mark in `- [ ] TODO item` boxes in Markdown.
 * `o` is written mostly in `o`, with some use of NeoVim for the initial development.
 * The default syntax highlighting theme aims to be as pretty as possible with less than 16 colors, but it mainly aims for clarity. It should be easy to spot a keyword, number, string or a stray parenthesis.
+* Has fewer hotkeys to learn than GNU Nano.
 
 ## Known issues
 
