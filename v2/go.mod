@@ -1,4 +1,4 @@
-module github.com/xyproto/o/v2
+module github.com/xyproto/oribton/v2
 
 go 1.17
 
