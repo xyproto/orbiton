@@ -34,7 +34,7 @@ Editing a C source file in `og` using the "synthwave" theme:
 
 ## Packaging status
 
-| Under the name "orbiton" | Under the name "o-editor" | Under the name "o" |
+| **orbiton** | **o-editor** | **o** |
 |--------------------------|---------------------------|--------------------|
 | [![Packaging status](https://repology.org/badge/vertical-allrepos/orbiton.svg)](https://repology.org/project/orbiton/versions) | [![Packaging status](https://repology.org/badge/vertical-allrepos/o-editor.svg)](https://repology.org/project/o-editor/versions) | [![Packaging status](https://repology.org/badge/vertical-allrepos/o.svg)](https://repology.org/project/o/versions) |
 
