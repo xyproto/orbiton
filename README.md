@@ -553,6 +553,10 @@ Install (use `sudo`, if needed):
 
 * Untick the `Flow control` option in the profile settings, to ensure that `ctrl-s` will never freeze the terminal.
 
+## About the name
+
+* An [orbiton](https://en.wikipedia.org/wiki/Orbiton) is a [quasiparticle](https://en.wikipedia.org/wiki/Quasiparticle).
+
 ## Stars
 
 [![Stargazers over time](https://starchart.cc/xyproto/orbiton.svg)](https://starchart.cc/xyproto/orbiton)
