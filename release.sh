@@ -3,7 +3,7 @@
 # Create release tarballs/zip-files
 #
 cd v2
-name=o
+name=orbiton
 version=$(grep -i version main.go | head -1 | cut -d' ' -f4 | cut -d'"' -f1)
 echo "Version $version"
 
