@@ -531,7 +531,7 @@ func saveCommand(cmd *exec.Cmd) error {
 	os.MkdirAll(folderPath, os.ModePerm)
 
 	// Prepare the file
-	f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o700)
+	f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		return err
 	}

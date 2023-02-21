@@ -672,7 +672,7 @@ func saveHighScore(highScore uint) error {
 	folderPath := filepath.Dir(highScoreFile)
 	os.MkdirAll(folderPath, os.ModePerm)
 	// Prepare the file
-	f, err := os.OpenFile(highScoreFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o700)
+	f, err := os.OpenFile(highScoreFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		return err
 	}
