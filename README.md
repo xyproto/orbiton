@@ -450,14 +450,16 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 
 ## Size
 
-* The `o` executable is only **989k** when built with GCC 11.1.0 (for 64-bit Linux) and compressed with `upx`.
+* The `o` executable is **1.5M** when built with GCC 12.2.1 (for 64-bit Linux) and compressed with `upx`.
 * This isn't as small as [e3](https://sites.google.com/site/e3editor/), an editor written in assembly (which is **234k**), but it's reasonably lean.
 
 One way of building with `gccgo` and `upx`:
 
-    go build -mod=vendor -gccgoflags '-Os -s' && upx o
+    go build -mod=vendor -gccgoflags '-Os -s' -o o && upx --best --lzma o
 
-It's **11M** when built with Go 1.19 and no particular build flags are given.
+If the `o` executable is built with Go 1.20 instead, the size can be **8.7M**, or just **2.8M** when packed with `upx`:
+
+    go build -mod=vendor -ldflags="-s -w" -trimpath -o o && upx --best --lzma o
 
 ## Jumping to a specific line when opening a file
 
