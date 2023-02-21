@@ -14,7 +14,7 @@ It might be a good fit for:
 * Solving Advent of Code tasks.
 * Writing and maintaining to-do lists and project documentation in Markdown.
 * Writing poetry with the help of ChatGPT, directly in the editor.
-* Placing it on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in man page viewer, has a built-in image viewer, can be used for viewing logs, for `EDITOR=o visudo` and for editing and formatting `/etc/fstab`.
+* Being placed on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in man page viewer, has a built-in image viewer, can be used for viewing logs, for `EDITOR=o visudo` and for editing and also formatting `/etc/fstab`.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
