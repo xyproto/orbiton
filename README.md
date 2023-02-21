@@ -14,7 +14,7 @@ It might be a good fit for:
 * Solving Advent of Code tasks.
 * Writing and maintaining to-do lists and project documentation in Markdown.
 * Writing poetry with the help of ChatGPT, directly in the editor.
-* Placing it on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in man page viewer, can be used for viewing logs, for `EDITOR=o visudo` and for editing and formatting `/etc/fstab`.
+* Placing it on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in man page viewer, has a built-in image viewer, can be used for viewing logs, for `EDITOR=o visudo` and for editing and formatting `/etc/fstab`.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
@@ -40,13 +40,15 @@ Editing a C source file in `og` using the "synthwave" theme:
 
 ## Quick start
 
-With Go 1.17 or later, `o` can be installed like this:
+With Go 1.17 or later, the development version of `o` can be installed like this:
 
-    go install github.com/xyproto/orbiton/v2@latest
+    go install github.com/xyproto/orbiton/v2@latest && mv -i ~/go/bin/orbiton ~/go/bin/o
+
+Adjust the `mv` flags and the `~/go/bin` path as needed. Perhaps `go install` will have an `-o` flag in the future.
 
 Alternatively, download and install a [release version](https://github.com/xyproto/orbiton/releases). For example, for Raspberry Pi 2, 3 or 4 running Linux:
 
-    curl -sL 'https://github.com/xyproto/orbiton/releases/download/2.60.2/o-2.60.2-linux_armv7_static.tar.xz' | tar axC /tmp && sudo install -Dm755 /tmp/o-2.60.2-linux_armv7_static/o /usr/bin/o && sudo install -Dm644 /tmp/o-2.60.2-linux_armv7_static/o.1.gz /usr/share/man/man1/o.1.gz
+    curl -sL 'https://github.com/xyproto/orbiton/releases/download/2.60.2/orbiton-2.60.2-linux_armv7_static.tar.xz' | tar axC /tmp && sudo install -Dm755 /tmp/orbiton-2.60.2-linux_armv7_static/o /usr/bin/o && sudo install -Dm644 /tmp/orbiton-2.60.2-linux_armv7_static/o.1.gz /usr/share/man/man1/o.1.gz
 
 ## Setting `o` as the default editor for `git`
 
