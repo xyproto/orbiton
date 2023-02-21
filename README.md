@@ -46,7 +46,7 @@ With Go 1.17 or later, `o` can be installed like this:
 
 Alternatively, download and install a [release version](https://github.com/xyproto/orbiton/releases). For example, for Raspberry Pi 2, 3 or 4 running Linux:
 
-    curl -sL 'https://github.com/xyproto/orbiton/releases/download/2.60.1/o-2.60.1-linux_armv7_static.tar.xz' | tar axC /tmp && sudo install -Dm755 /tmp/o-2.60.1-linux_armv7_static/o /usr/bin/o && sudo install -Dm644 /tmp/o-2.60.1-linux_armv7_static/o.1.gz /usr/share/man/man1/o.1.gz
+    curl -sL 'https://github.com/xyproto/orbiton/releases/download/2.60.2/o-2.60.2-linux_armv7_static.tar.xz' | tar axC /tmp && sudo install -Dm755 /tmp/o-2.60.2-linux_armv7_static/o /usr/bin/o && sudo install -Dm644 /tmp/o-2.60.2-linux_armv7_static/o.1.gz /usr/share/man/man1/o.1.gz
 
 ## Setting `o` as the default editor for `git`
 
@@ -450,7 +450,7 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 
 ## Size
 
-* The `o` executable is **1.5M** when built with GCC 12.2.1 (for 64-bit Linux) and compressed with `upx`.
+* The `o` executable is **1.5M** when built with GCC 12.60.2 (for 64-bit Linux) and compressed with `upx`.
 * This isn't as small as [e3](https://sites.google.com/site/e3editor/), an editor written in assembly (which is **234k**), but it's reasonably lean.
 
 One way of building with `gccgo` and `upx`:
@@ -566,6 +566,6 @@ Install (use `sudo`, if needed):
 
 ## General info
 
-* Version: 2.60.1
+* Version: 2.60.2
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
