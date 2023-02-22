@@ -66,7 +66,7 @@ To unset:
 * Press return after writing ie. `!write a function that adds two numbers` or `// Write a function that adds two numbers`.
 * Watch the code being generated in front of your eyes, with syntax highlighting and everything. ChatGPT generates the code.
 * Press `Esc` to stop the code from being generated.
-* Set `CHATGPT_TEMPERATURE` to ie. `0.75` to make the output more random. It's a value from `0` to `1` and the default is `0`.
+* Set `CHATGPT_TEMPERATURE` to ie. `0.75` to make the output more random. It's a value from `0` to `1` and the default for code is `0`.
 
 ## Viewing man pages
 
@@ -139,7 +139,7 @@ These features are unique to `o`, as far as I am aware:
 
 ## Known issues
 
-* Using `tmux` and resizing the terminal emulator window may trigger text rendering issues. Try pressing `esc` to redraw the text.
+* Using `tmux` and resizing the terminal emulator window may trigger text rendering issues. Try pressing `esc` to redraw the text, or `ctrl-f` to search for text.
 * For some terminal emulators, if `o` is busy performing an operation, pressing `ctrl-s` may lock the terminal. Some terminal emulators, like `konsole`, can be configured to turn off this behavior. Press `ctrl-q` to unlock the terminal again (together with the unfortunate risk of quitting `o`). To sidestep this issue, the `ctrl-o` menu can be used instead, for saving and quitting.
 * Some unicode runes may disrupt the text flow. This is generally not a problem for editing code and configuration files, but may be an issue when editing files that contains text in many languages.
 * `o` may have issues with large files (of several MB+). For normal text files or source code files, this is a non-issue.
@@ -153,7 +153,7 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-q` - Quit.
 * `ctrl-r` - Open or close a portal. Text can be pasted from the portal into another file with `ctrl-v`.
              For "git interactive rebase" mode (`git rebase -i`), this will cycle the rebase keywords.
-* `ctrl-w` - Format the current file (see the table below).
+* `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords.
 * `ctrl-a` - Go to start of text, then start of line and then to the previous line.
 * `ctrl-e` - Go to end of line and then to the next line.
 * `ctrl-p` - Scroll up 10 lines, or go to the previous match if a search is active.
@@ -162,7 +162,7 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - For C and C++: jump between the current header and source file. For Agda and Ivy, insert a symbol.
-             For the rest, record and play back keypresses. Press escape to clear the current macro.
+             For the rest, record and play back keypresses. Press `Esc` to clear the current macro.
 * `ctrl-o` - Open a command menu with actions that can be performed.
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text (to the next blank line).
 * `ctrl-c` - Copy one line. Press twice to copy a block of text.
@@ -179,7 +179,7 @@ These features are unique to `o`, as far as I am aware:
 
 ## Build and format
 
-* Press of `ctrl-space` to build or export the current file.
+* Press `ctrl-space` to build or export the current file.
 * Press `ctrl-w` to format the current file, in an opinionated way. If the current file is empty, a "Hello, World!" template will be inserted, for some file extensions.
 
 | Programming language                            | File extensions                                           | Jump to error | Build command                                     | Format command ($filename is a temporary file)                                                                 |
@@ -244,8 +244,8 @@ This is a brand new feature and needs more testing.
 
 ## Manual installation on Linux
 
-    git clone https://github.com/xyproto/o
-    cd o
+    git clone https://github.com/xyproto/orbiton
+    cd orbiton
     make && sudo make install
 
 And optionally:
