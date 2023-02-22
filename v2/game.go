@@ -19,15 +19,16 @@ import (
 // There is a tradition for including silly little games in editors, so here goes:
 
 const (
-	bobRuneLarge    = 'O'
-	bobRuneSmall    = 'o'
-	evilGobblerRune = '€'
-	bubbleRune      = '°'
-	gobblerRune     = 'G'
-	gobblerDeadRune = 'T'
-	bobWonRune      = 'Y'
-	bobLostRune     = 'n'
-	pelletRune      = '¤'
+	bobRuneLarge      = 'O'
+	bobRuneSmall      = 'o'
+	evilGobblerRune   = '€'
+	bubbleRune        = '°'
+	gobblerRune       = 'G'
+	gobblerDeadRune   = 'T'
+	gobblerZombieRune = '@'
+	bobWonRune        = 'Y'
+	bobLostRune       = 'n'
+	pelletRune        = '¤'
 )
 
 var (
@@ -39,6 +40,7 @@ var (
 	evilGobblerColor     = vt100.LightRed
 	gobblerColor         = vt100.Yellow
 	gobblerDeadColor     = vt100.DarkGray
+	gobblerZombieColor   = vt100.LightBlue
 	bubbleColor          = vt100.Magenta
 	pelletColor1         = vt100.LightGreen
 	pelletColor2         = vt100.Green
@@ -322,7 +324,7 @@ func (b *Bubble) Resize(c *vt100.Canvas) {
 }
 
 // Next moves the object to the next position, and returns true if it moved
-func (b *Bubble) Next(c *vt100.Canvas, bob *Bob) bool {
+func (b *Bubble) Next(c *vt100.Canvas, bob *Bob, gobblers *[]*Gobbler) bool {
 	b.oldx = b.x
 	b.oldy = b.y
 
@@ -356,6 +358,17 @@ func (b *Bubble) Next(c *vt100.Canvas, bob *Bob) bool {
 	}
 
 	if b.HitSomething(c) {
+		// "Wake up" dead gobblers
+		for _, g := range *gobblers {
+			if g.x == b.x && g.y == b.y {
+				if g.dead {
+					g.dead = false
+					g.state = gobblerZombieRune
+					g.color = gobblerZombieColor
+				}
+			}
+		}
+		// step back
 		b.x = b.oldx
 		b.y = b.oldy
 		return false
@@ -909,7 +922,7 @@ retry:
 				pellet.Next(c, evilGobbler)
 			}
 			for _, bubble := range bubbles {
-				bubble.Next(c, bob)
+				bubble.Next(c, bob, &gobblers)
 			}
 			for _, gobbler := range gobblers {
 				gobbler.Next(c, &pellets, bob)
