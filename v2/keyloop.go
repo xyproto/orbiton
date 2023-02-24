@@ -1035,7 +1035,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// De-indent the current line before moving on to the next
 				e.SetCurrentLine(trimmedLine)
 				leadingWhitespace = currentLeadingWhitespace
-			} else if chatAPIKey := env.StrAlt("CHATGPT_API_KEY", "OPENAI_API_KEY", "OPENAI_KEY"); shouldUseAI && chatAPIKey != "" {
+			} else if chatAPIKey := env.StrAlt("CHATGPT_API_KEY", "OPENAI_API_KEY", env.Str("OPENAI_KEY")); shouldUseAI && chatAPIKey != "" {
 				chatPrompt := strings.TrimPrefix(trimmedLine, e.SingleLineCommentMarker())
 				// Generate code or text by using ChatGPT
 				go e.GenerateCodeOrText(c, status, bookmark, chatAPIKey, chatPrompt)
