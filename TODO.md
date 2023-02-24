@@ -10,10 +10,11 @@
 
 ## AI
 
-- [ ] Support either GPT-J, GPT-Neo or ChatGPT. At a minimum, make it possible to auto-generate commit messages.
-- [ ] Make it possible to generate the rest of a function, just by typing in a comment and a function signature,
+- [ ] If an API key is entered, save it to file in the cache directory.
+- [x] Support either GPT-J, GPT-Neo or ChatGPT. At a minimum, make it possible to auto-generate commit messages.
+- [x] Make it possible to generate the rest of a function, just by typing in a comment and a function signature,
       for instance by pressing "tab" at the end of a function signature.
-- [ ] Don't use the '!' prefix for Markdown.
+- [x] Don't use the '!' prefix for Markdown.
 
 ## Building, debugging and testing programs
 
