@@ -145,6 +145,7 @@ These features are unique to `o`, as far as I am aware:
 * `o` may have issues with large files (of several MB+). For normal text files or source code files, this is a non-issue.
 * Pressing backspace near the end of lines that are longer than the terminal width may cause the cursor to jump.
 * Middle-click pasting (instead of pasting with `ctrl-v`) may only paste the first character.
+* Pressing `cmd-v`, `cmd-x` and `cmd-c` on macOS does not work. `ctrl-v`, `ctrl-x` and `ctrl-c` needs to be used instead, for now.
 * The smart indentation is not always smart.
 
 ## Hotkeys
