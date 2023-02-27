@@ -55,7 +55,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		lastCommandMenuIndex int               // for the command menu
 		key                  string            // for the main loop
 		jsonFormatToggle     bool              // for toggling indentation or not when pressing ctrl-w for JSON
-		playBackMacroCount   int               // number of times the macro should be played back, right now
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -150,7 +149,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	// This is the main loop for the editor
 	for !e.quit {
 
-		if e.macro == nil || (playBackMacroCount == 0 && !e.macro.Recording) {
+		if e.macro == nil || (e.playBackMacroCount == 0 && !e.macro.Recording) {
 			// Read the next key in the regular way
 			key = tty.String()
 			undo.IgnoreSnapshots(false)
@@ -163,12 +162,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					// But never record the macro toggle button
 					e.macro.Add(key)
 				}
-			} else if playBackMacroCount > 0 {
+			} else if e.playBackMacroCount > 0 {
 				undo.IgnoreSnapshots(true)
 				key = e.macro.Next()
 				if key == "" || key == "c:20" { // ctrl-t
 					e.macro.Home()
-					playBackMacroCount--
+					e.playBackMacroCount--
 					// No more macro keys. Read the next key.
 					key = tty.String()
 				}
@@ -520,11 +519,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.Show(c, e)
 				e.macro = NewMacro()
 				e.macro.Recording = true
-				playBackMacroCount = 0
+				e.playBackMacroCount = 0
 			} else if e.macro.Recording { // && e.macro != nil
 				e.macro.Recording = false
 				undo.IgnoreSnapshots(true)
-				playBackMacroCount = 0
+				e.playBackMacroCount = 0
 				status.Clear(c)
 				if macroLen := e.macro.Len(); macroLen == 0 {
 					status.SetMessage("Stopped recording")
@@ -535,19 +534,19 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					status.SetMessage(fmt.Sprintf("Recorded %d steps", macroLen))
 				}
 				status.Show(c, e)
-			} else if playBackMacroCount > 0 {
+			} else if e.playBackMacroCount > 0 {
 				undo.IgnoreSnapshots(false)
 				status.Clear(c)
 				status.SetMessage("Stopped macro") // stop macro playback
 				status.Show(c, e)
-				playBackMacroCount = 0
+				e.playBackMacroCount = 0
 				e.macro.Home()
-			} else { // && e.macro != nil && playBackMacroCount == 0 // start macro playback
+			} else { // && e.macro != nil && e.playBackMacroCount == 0 // start macro playback
 				undo.IgnoreSnapshots(false)
 				undo.Snapshot(e)
 				status.ClearAll(c)
 				// Play back the macro, once
-				playBackMacroCount = 1
+				e.playBackMacroCount = 1
 			}
 		case "c:28": // ctrl-\, toggle comment for this block
 			undo.Snapshot(e)
@@ -926,9 +925,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			drawLines := true
 			resized := false
 			e.FullResetRedraw(c, status, drawLines, resized)
-			if e.macro != nil || playBackMacroCount > 0 {
+			if e.macro != nil || e.playBackMacroCount > 0 {
 				// Stop the playback
-				playBackMacroCount = 0
+				e.playBackMacroCount = 0
 				// Clear the macro
 				e.macro = nil
 				// Show a message after the redraw

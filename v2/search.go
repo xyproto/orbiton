@@ -248,7 +248,29 @@ AGAIN:
 	}
 	status.ShowNoTimeout(c, e)
 	for !doneCollectingLetters {
-		key = tty.String()
+
+		if e.macro == nil || (e.playBackMacroCount == 0 && !e.macro.Recording) {
+			// Read the next key in the regular way
+			key = tty.String()
+		} else {
+			if e.macro.Recording {
+				// Read and record the next key
+				key = tty.String()
+				if key != "c:20" { // ctrl-t
+					// But never record the macro toggle button
+					e.macro.Add(key)
+				}
+			} else if e.playBackMacroCount > 0 {
+				key = e.macro.Next()
+				if key == "" || key == "c:20" { // ctrl-t
+					e.macro.Home()
+					e.playBackMacroCount--
+					// No more macro keys. Read the next key.
+					key = tty.String()
+				}
+			}
+		}
+
 		switch key {
 		case "c:8", "c:127": // ctrl-h or backspace
 			if len(s) > 0 {

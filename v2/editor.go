@@ -61,6 +61,7 @@ type Editor struct {
 	building           bool            // currently buildig code or exporting to a file?
 	runAfterBuild      bool            // run the application after building?
 	generatingTokens   bool            // is code or text being generated right now?
+	playBackMacroCount int             // number of times the macro should be played back, right now
 }
 
 // NewCustomEditor takes:
