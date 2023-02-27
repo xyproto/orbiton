@@ -19,8 +19,16 @@ else
 endif
 
 CXX ?= g++
-CXXFLAGS ?= -O2 -pipe -fPIC -fno-plt -fstack-protector-strong -Wall -Wshadow -Wpedantic -Wno-parentheses -Wfatal-errors -Wvla -Wignored-qualifiers -pthread -Wl,--as-needed
+CXXFLAGS ?= -O2 -pipe -fPIC -fno-plt -fstack-protector-strong -Wall -Wshadow -Wpedantic -Wno-parentheses -Wfatal-errors -Wvla -Wignored-qualifiers -pthread
 CXXFLAGS += $(shell pkg-config --cflags --libs vte-2.91)
+
+UNAME := $(shell uname)
+
+ifeq ($(UNAME), Darwin)
+  CXXFLAGS += -std=c++20
+else
+  CXXFLAGS += -Wl,--as-needed
+endif
 
 o: $(SRCFILES)
 	cd v2 && $(GOBUILD) -o ../o
@@ -57,7 +65,7 @@ install-og: og/og
 	mkdir -p "$(DESTDIR)$(PREFIX)/share/applications"
 	install -m644 og/og.desktop "$(DESTDIR)$(PREFIX)/share/applications/og.desktop"
 	mkdir -p "$(DESTDIR)$(PREFIX)/share/pixmaps"
-	install -Dm644 img/icon_48x48.png "$(DESTDIR)$(PREFIX)/share/pixmaps/og.png"
+	install -m644 img/icon_48x48.png "$(DESTDIR)$(PREFIX)/share/pixmaps/og.png"
 
 clean:
 	-rm -f o v2/o o.1.gz og/og

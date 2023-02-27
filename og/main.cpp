@@ -32,11 +32,19 @@ void signal_and_quit()
             // Only unlock the file if force was not used at start.
             // Unlock the file by sending an unlock signal (USR1)
             kill(child_pid, SIGUSR1);
-            sleep(0.5);
+#ifndef __MACH__
+            sleep(0.5); // will sleep for 0.5s on Linux and others
+#else
+            usleep(500000); // will sleep for 0.5s on macOS
+#endif
         }
         // This lets o save the file and then sleep a tiny bit, then quit the parent
         kill(child_pid, SIGTERM);
-        sleep(0.5);
+#ifndef __MACH__
+        sleep(0.5); // will sleep for 0.5s on Linux and others
+#else
+        usleep(500000); // will sleep for 0.5s on macOS
+#endif
     }
     gtk_main_quit();
 }
@@ -48,9 +56,17 @@ void wait_and_quit()
         // Only unlock the file if force was not used at start.
         // Unlock the file by sending an unlock signal (USR1)
         kill(child_pid, SIGUSR1);
-        sleep(0.5);
+#ifndef __MACH__
+        sleep(0.5); // will sleep for 0.5s on Linux and others
+#else
+        usleep(500000); // will sleep for 0.5s on macOS
+#endif
     }
-    sleep(0.5);
+#ifndef __MACH__
+    sleep(0.5); // will sleep for 0.5s on Linux and others
+#else
+    usleep(500000); // will sleep for 0.5s on macOS
+#endif
     gtk_main_quit();
 }
 
@@ -683,7 +699,11 @@ int main(int argc, char* argv[])
 
     // Set a default font if no environment variable was specified
     if (font_desc_str == nullptr) {
+#ifdef __MACH__
+        font_desc_str = "Monaco 18";
+#else
         font_desc_str = "JetBrainsMonoNL 12";
+#endif
     }
 
     // Check if the currently configured font can be found
