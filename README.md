@@ -1,6 +1,6 @@
-![o](img/icon_128x128.png)
+![Orbiton Logo](img/icon_128x128.png)
 
-![Build](https://github.com/xyproto/orbiton/workflows/Build/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/orbiton/main/LICENSE)
+![Build](https://github.com/xyproto/orbiton/workflows/Build/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/orbiton/main/LICENSE) [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
 Orbiton is a text editor and a minimalistic IDE.
 
@@ -14,7 +14,7 @@ It might be a good fit for:
 * Solving Advent of Code tasks.
 * Writing and maintaining to-do lists and project documentation in Markdown.
 * Writing poetry with the help of ChatGPT, directly in the editor.
-* Being placed on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in man page viewer, has a built-in image viewer, can be used for viewing logs, for `EDITOR=o visudo` and for editing and also formatting `/etc/fstab`.
+* Being placed on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in log, man page and image viewer, can be used as `EDITOR=o visudo` and has built-in support for editing and formatting `/etc/fstab` files.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
