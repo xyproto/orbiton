@@ -95,6 +95,7 @@ These features are unique to `o`, as far as I am aware:
 * Search by pressing `ctrl-f`, entering text and pressing `return`. Replace by pressing `tab` instead of `return`, then enter the replacement text and press `return`. Searching for unicode runes on the form `u+0000` is also supported.
 * Type `iferr` on a single line in a Go program and press `return` to insert a suitable `if err != nil { return ... }` block, based on [koron/iferr](https://github.com/koron/iferr).
 * For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
+* Generate code by using the ChatGPT API, directly in a source file. See the [section above](#generate-code-automatically).
 
 ## Other features and limitations
 
@@ -456,13 +457,13 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 * The `o` executable is **1.5M** when built with GCC 12.60.2 (for 64-bit Linux) and compressed with `upx`.
 * This isn't as small as [e3](https://sites.google.com/site/e3editor/), an editor written in assembly (which is **234k**), but it's reasonably lean.
 
-One way of building with `gccgo` and `upx`:
+One way of building with `gccgo` and `upx` (in the `v2` directory):
 
     go build -mod=vendor -gccgoflags '-Os -s' -o o && upx --best --lzma o
 
 If the `o` executable is built with Go 1.20 instead, the size can be **8.7M**, or just **2.8M** when packed with `upx`:
 
-    go build -mod=vendor -ldflags="-s -w" -trimpath -o o && upx --best --lzma o
+    go build -mod=vendor -ldflags='-s -w' -trimpath -o o && upx --best --lzma o
 
 ## Jumping to a specific line when opening a file
 
