@@ -1012,7 +1012,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			triggerWordsForAI := []string{"Write", "write", "!"}
 			shouldUseAI := false
-			if e.AtOrAfterEndOfLine() {
+			nextLineIsBlank := strings.TrimSpace(e.Line(e.DataY()+1)) == ""
+
+			if e.AtOrAfterEndOfLine() && nextLineIsBlank {
 				for _, triggerWord := range triggerWordsForAI {
 					if e.mode == mode.Markdown && triggerWord == "!" {
 						continue
