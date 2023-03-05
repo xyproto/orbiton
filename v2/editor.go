@@ -2645,3 +2645,13 @@ func (e *Editor) InsertBlock(c *vt100.Canvas, addLines []string, addEmptyLine bo
 		e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
 	}
 }
+
+// LineIsBlank checks if the given line index is blank
+func (e *Editor) LineIsBlank(y LineIndex) bool {
+	return strings.TrimSpace(e.Line(y)) == ""
+}
+
+// NextLineIsBlank checks if the next line is blank
+func (e *Editor) NextLineIsBlank() bool {
+	return e.LineIsBlank(e.DataY() + 1)
+}
