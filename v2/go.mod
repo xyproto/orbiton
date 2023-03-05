@@ -3,7 +3,7 @@ module github.com/xyproto/orbiton/v2
 go 1.17
 
 require (
-	github.com/PullRequestInc/go-gpt3 v1.1.11
+	github.com/PullRequestInc/go-gpt3 v1.1.13
 	github.com/atotto/clipboard v0.1.4
 	github.com/cyrus-and/gdb v0.0.0-20220625165517-e10bcab384bb
 	github.com/felixge/fgtrace v0.2.0
@@ -40,6 +40,6 @@ require (
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.2.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
