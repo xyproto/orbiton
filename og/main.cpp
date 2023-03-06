@@ -700,7 +700,7 @@ int main(int argc, char* argv[])
     // Set a default font if no environment variable was specified
     if (font_desc_str == nullptr) {
 #ifdef __MACH__
-        font_desc_str = "Monaco 18";
+        font_desc_str = "Menlo 18";
 #else
         font_desc_str = "JetBrainsMonoNL 12";
 #endif
