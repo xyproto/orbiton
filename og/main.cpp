@@ -245,6 +245,11 @@ gboolean mouse_scrolled(GtkWidget* widget, GdkEventScroll* event)
 
 gboolean key_pressed(GtkWidget* widget, GdkEventKey* event, gpointer user_data)
 {
+    // for macOS and the cmd button
+    if (event->state == 268435472) {
+        event->state = GDK_CONTROL_MASK;
+    }
+    // for keys that are not handled by the o editor
     switch (event->keyval) {
     case GDK_KEY_Page_Up:
         // Send ctrl+p instead
