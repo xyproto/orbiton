@@ -7,6 +7,7 @@
 - [ ] If Esc is pressed repeatedly (>=4 times in a row), open the `ctrl-o` menu.
 - [ ] Markdown table editor
 - [ ] HTTP client - scratch document style
+- [ ] The `exeName` function needs to also work on macOS.
 
 ## AI
 
