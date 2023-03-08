@@ -205,16 +205,13 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			status.SetMessage("Calling Guessica")
 			status.Show(c, e)
 
-			// Use the temporary directory defined in TMPDIR, with fallback to /tmp
-			tempdir := env.Str("TMPDIR", "/tmp")
-
 			tempFilename := ""
 
 			var (
 				f   *os.File
 				err error
 			)
-			if f, err = os.CreateTemp(tempdir, "__o*"+"guessica"); err == nil {
+			if f, err = os.CreateTemp(tempDir, "__o*"+"guessica"); err == nil {
 				// no error, everything is fine
 				tempFilename = f.Name()
 				// TODO: Implement e.SaveAs
