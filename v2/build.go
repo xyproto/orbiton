@@ -28,33 +28,47 @@ var (
 // If shouldExist is true, the function will try to select either "main" or the parent
 // directory name, depending on which one is there.
 func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
-	var (
-		exeFirstName        = "main" // The default name
-		sourceDir           = filepath.Dir(sourceFilename)
-		sourceDirectoryName = filepath.Base(sourceDir)
-		parentDir           = filepath.Clean(filepath.Join(sourceDir, ".."))
-	)
+	const exeFirstName = "main" // The default name
+	sourceDir := filepath.Dir(sourceFilename)
+
+	// NOTE: Abs is used to prevent sourceDirectoryName from becoming just "."
+	absDir, err := filepath.Abs(sourceDir)
+	if err != nil {
+		return exeFirstName
+	}
+
+	sourceDirectoryName := filepath.Base(absDir)
+
+	if shouldExist {
+		// If "main" exists, use that
+		if isFile(filepath.Join(sourceDir, exeFirstName)) {
+			return exeFirstName
+		}
+		// Use the name of the source directory as the default executable filename instead
+		if isFile(filepath.Join(sourceDir, sourceDirectoryName)) {
+			//exeFirstName = sourceDirectoryName
+			return sourceDirectoryName
+		}
+	}
+
 	// Find a suitable default executable first name
 	switch e.mode {
 	case mode.Assembly, mode.Kotlin, mode.Lua, mode.OCaml, mode.Rust, mode.Terra, mode.Zig:
 		if sourceDirectoryName == "build" {
-			return filepath.Base(parentDir)
+			parentDirName := filepath.Base(filepath.Clean(filepath.Join(sourceDir, "..")))
+			if shouldExist && isFile(filepath.Join(sourceDir, parentDirName)) {
+				return parentDirName
+			}
 		}
-		if shouldExist && exists(exeFirstName) {
-			return exeFirstName
-		}
-		if shouldExist && exists(sourceDirectoryName) {
-			return sourceDirectoryName
-		}
+		// Default to the source directory base name, for these programming languages
 		return sourceDirectoryName
 	}
-	if shouldExist && exists(exeFirstName) {
-		return exeFirstName
-	}
-	if shouldExist && exists(sourceDirectoryName) {
+	// Use the name of the current directory, if a file with that name exists
+	if shouldExist && isFile(filepath.Join(sourceDir, sourceDirectoryName)) {
 		return sourceDirectoryName
 	}
-	return filepath.Base(sourceDir)
+	// Default to "main"
+	return exeFirstName
 }
 
 // GenerateBuildCommand will generate a command for building the given filename (or for displaying HTML)

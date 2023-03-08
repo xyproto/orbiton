@@ -24,6 +24,12 @@ func exists(path string) bool {
 	return err == nil
 }
 
+// isFile checks if the given path exists and is a regular file
+func isFile(path string) bool {
+	fi, err := os.Stat(path)
+	return err == nil && fi.Mode().IsRegular()
+}
+
 // which tries to find the given executable name in the $PATH
 // Returns an empty string if not found.
 func which(executable string) string {
@@ -107,11 +113,9 @@ OUTER_LOOP:
 			}
 		}
 		if r != e {
-			// logf("CONSISTS OF: %s, %s, %s: FALSE\n", s, string(e), string(ignore))
 			return false
 		}
 	}
-	// logf("CONSISTS OF: %s, %s, %s: TRUE\n", s, string(e), string(ignore))
 	return true
 }
 
