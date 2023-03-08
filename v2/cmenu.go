@@ -158,14 +158,18 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		}
 	})
 
-	// Enter ChatGPT API key
-	actions.Add("Enter ChatGPT API key...", func() {
-		if enteredAPIKey, ok := e.UserInput(c, tty, status, "API key from https://platform.openai.com/account/api-keys", []string{}, false); ok {
-			env.Set("CHATGPT_API_KEY", enteredAPIKey)
-			status.SetMessageAfterRedraw("Using API key " + enteredAPIKey)
-			// TODO: Save it to the cache directory as well
-		}
-	})
+	// Enter ChatGPT API key, if it's not already set
+	if openAIKey == "" {
+		actions.Add("Enter ChatGPT API key...", func() {
+			if enteredAPIKey, ok := e.UserInput(c, tty, status, "API key from https://platform.openai.com/account/api-keys", []string{}, false); ok {
+				openAIKey = enteredAPIKey
+				//env.Set("CHATGPT_API_KEY", enteredAPIKey)
+				status.SetMessageAfterRedraw("Using API key " + enteredAPIKey)
+				// Write the OpenAI API Key to a file in the cache directory as well, but ignore errors
+				_ = WriteAPIKey(openAIKey)
+			}
+		})
+	}
 
 	// Build (for use on the terminal, on macOS, since ctrl-space does not register)
 	if !env.Bool("OG") && runtime.GOOS == "darwin" {
