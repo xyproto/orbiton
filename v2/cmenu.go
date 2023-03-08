@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -165,6 +166,13 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			// TODO: Save it to the cache directory as well
 		}
 	})
+
+	// Build (for use on the terminal, on macOS, since ctrl-space does not register)
+	if !env.Bool("OG") && runtime.GOOS == "darwin" {
+		actions.Add("Build", func() {
+			e.Build(c, status, tty)
+		})
+	}
 
 	// Disable or enable word wrap when typing
 	if e.wrapWhenTyping {
