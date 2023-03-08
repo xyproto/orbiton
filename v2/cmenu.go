@@ -170,8 +170,15 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	// Build (for use on the terminal, on macOS, since ctrl-space does not register)
 	if !env.Bool("OG") && runtime.GOOS == "darwin" {
 		actions.Add("Build", func() {
-			e.Build(c, status, tty)
+			const andRun = false
+			e.Build(c, status, tty, andRun)
 		})
+		if e.CanRun() {
+			actions.Add("Build and run", func() {
+				const andRun = true
+				e.Build(c, status, tty, andRun)
+			})
+		}
 	}
 
 	// Disable or enable word wrap when typing

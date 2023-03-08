@@ -259,7 +259,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.SearchMode(c, status, tty, true, undo)
 		case "c:0": // ctrl-space, build source code to executable, or export, depending on the mode
-			e.Build(c, status, tty)
+			const andRun = false
+			e.Build(c, status, tty, andRun)
 		case "c:20": // ctrl-tV
 			// for C or C++: jump to header/source, or insert symbol
 			// for Agda: insert symbol

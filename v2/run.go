@@ -40,7 +40,7 @@ func (e *Editor) Run(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filenam
 	case mode.CMake:
 		cmd = exec.Command("cmake", "-B", "build", "-D", "CMAKE_BUILD_TYPE=Debug", "-S", sourceDir)
 	case mode.Kotlin:
-		jarName := e.exeName(sourceFilename) + ".jar"
+		jarName := e.exeName(sourceFilename, false) + ".jar"
 		cmd = exec.Command("java", "-jar", jarName)
 	case mode.Go:
 		cmd = exec.Command("go", "run", sourceFilename)
@@ -51,7 +51,7 @@ func (e *Editor) Run(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filenam
 	case mode.Python:
 		cmd = exec.Command("python", sourceFilename)
 	default:
-		exeName := filepath.Join(sourceDir, e.exeName(filename))
+		exeName := filepath.Join(sourceDir, e.exeName(filename, true))
 		cmd = exec.Command(exeName)
 	}
 

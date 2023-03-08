@@ -25,24 +25,36 @@ var (
 
 // exeName tries to find a suitable name for the executable, given a source filename
 // For instance, "main" or the name of the directory holding the source filename.
-func (e *Editor) exeName(sourceFilename string) string {
+// If shouldExist is true, the function will try to select either "main" or the parent
+// directory name, depending on which one is there.
+func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
 	var (
-		exeFirstName = "main" // The default name
-		sourceDir    = filepath.Dir(sourceFilename)
-		parentDir    = filepath.Clean(filepath.Join(sourceDir, ".."))
+		exeFirstName        = "main" // The default name
+		sourceDir           = filepath.Dir(sourceFilename)
+		sourceDirectoryName = filepath.Base(sourceDir)
+		parentDir           = filepath.Clean(filepath.Join(sourceDir, ".."))
 	)
-
 	// Find a suitable default executable first name
 	switch e.mode {
 	case mode.Assembly, mode.Kotlin, mode.Lua, mode.OCaml, mode.Rust, mode.Terra, mode.Zig:
-		sourceDirectoryName := filepath.Base(sourceDir)
 		if sourceDirectoryName == "build" {
 			return filepath.Base(parentDir)
 		}
+		if shouldExist && exists(exeFirstName) {
+			return exeFirstName
+		}
+		if shouldExist && exists(sourceDirectoryName) {
+			return sourceDirectoryName
+		}
 		return sourceDirectoryName
 	}
-
-	return exeFirstName
+	if shouldExist && exists(exeFirstName) {
+		return exeFirstName
+	}
+	if shouldExist && exists(sourceDirectoryName) {
+		return sourceDirectoryName
+	}
+	return filepath.Base(sourceDir)
 }
 
 // GenerateBuildCommand will generate a command for building the given filename (or for displaying HTML)
@@ -70,7 +82,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		sourceDir      = filepath.Dir(sourceFilename)
 		parentDir      = filepath.Clean(filepath.Join(sourceDir, ".."))
 		grandParentDir = filepath.Clean(filepath.Join(sourceDir, "..", ".."))
-		exeFirstName   = e.exeName(sourceFilename)
+		exeFirstName   = e.exeName(sourceFilename, false)
 		exeFilename    = filepath.Join(sourceDir, exeFirstName)
 		jarFilename    = exeFirstName + ".jar"
 	)
@@ -375,7 +387,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	var (
 		baseFilename = filepath.Base(sourceFilename)
 		sourceDir    = filepath.Dir(sourceFilename)
-		exeFirstName = e.exeName(sourceFilename)
+		exeFirstName = e.exeName(sourceFilename, false)
 		exeFilename  = filepath.Join(sourceDir, exeFirstName)
 		ext          = filepath.Ext(sourceFilename)
 	)
@@ -500,7 +512,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		os.Rename(exeFirstName+".kexe", exeFirstName)
 	}
 
-	// Special considerations for Koka
+	// Special considerations for Koka and macOS
 	if e.mode == mode.Koka && exists(exeFirstName) {
 		// chmod +x
 		os.Chmod(exeFirstName, 0o755)
@@ -924,9 +936,14 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	return "", errors.New("could not compile")
 }
 
-func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
+func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, andRun bool) {
+	// Enable only. e.runAfterBuild is set to false elsewhere.
+	if andRun {
+		e.runAfterBuild = true
+	}
+
+	// If the file is empty, there is nothing to build
 	if e.Empty() {
-		// Empty file, nothing to build
 		status.ClearAll(c)
 		status.SetErrorMessage("Nothing to build")
 		status.Show(c, e)
