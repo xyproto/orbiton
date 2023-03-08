@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
@@ -921,4 +922,179 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 	// TODO: Find ways to make the error message more informative
 	return "", errors.New("could not compile")
+}
+
+func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
+	if e.Empty() {
+		// Empty file, nothing to build
+		status.ClearAll(c)
+		status.SetErrorMessage("Nothing to build")
+		status.Show(c, e)
+		return
+	}
+
+	// Save the current file, but only if it has changed
+	if e.changed {
+		if err := e.Save(c, tty); err != nil {
+			status.ClearAll(c)
+			status.SetError(err)
+			status.Show(c, e)
+			return
+		}
+	}
+
+	// debug stepping
+	if e.debugMode && e.gdb != nil {
+		if !programRunning {
+			e.DebugEnd()
+			status.SetMessage("Program stopped")
+			e.redrawCursor = true
+			e.redraw = true
+			status.SetMessageAfterRedraw(status.Message())
+			return
+		}
+		status.ClearAll(c)
+		// If we have a breakpoint, continue to it
+		if e.breakpoint != nil { // exists
+			// continue forward to the end or to the next breakpoint
+			if err := e.DebugContinue(); err != nil {
+				// logf("[continue] gdb output: %s\n", gdbOutput)
+				e.DebugEnd()
+				status.SetMessage("Done")
+				e.GoToEnd(nil, nil)
+			} else {
+				status.SetMessage("Continue")
+			}
+		} else { // if not, make one step
+			err := e.DebugStep()
+			if err != nil {
+				if errorMessage := err.Error(); strings.Contains(errorMessage, "is not being run") {
+					e.DebugEnd()
+					status.SetMessage("Done stepping")
+				} else if err == errProgramStopped {
+					e.DebugEnd()
+					status.SetMessage("Program stopped")
+				} else {
+					e.DebugEnd()
+					status.SetMessage(errorMessage)
+				}
+				// Go to the end, no status message
+				e.GoToEnd(c, nil)
+			} else {
+				status.SetMessage("Step")
+			}
+		}
+		e.redrawCursor = true
+
+		// Redraw and use the triggered status message instead of Show
+		status.SetMessageAfterRedraw(status.Message())
+
+		return
+	}
+
+	// Clear the current search term, but don't redraw if there are status messages
+	e.ClearSearchTerm()
+	e.redraw = false
+
+	// ctrl-space was pressed while in Nroff mode
+	if e.mode == mode.Nroff {
+		// TODO: Make this render the man page like if MANPAGER=o was used
+		e.mode = mode.ManPage
+		e.syntaxHighlight = true
+		// e.LoadBytes([]byte(e.String()))
+		e.redraw = true
+		e.redrawCursor = true
+		return
+	}
+	if e.mode == mode.ManPage {
+		e.mode = mode.Nroff
+		// e.syntaxHighlight = true
+		// e.LoadBytes([]byte(e.String()))
+		e.redraw = true
+		e.redrawCursor = true
+		return
+	}
+
+	// Press ctrl-space twice the first time the Markdown file should be exported to PDF
+	// to avoid the first accidental ctrl-space key press.
+
+	// Run after building, for some modes
+	if e.building && !e.runAfterBuild {
+		if e.CanRun() {
+			status.ClearAll(c)
+			e.DrawOutput(c, 20, "", "Building and running...", e.DebugRegistersBackground, true)
+			e.runAfterBuild = true
+		}
+		return
+	}
+	if e.building && e.runAfterBuild {
+		// do nothing when ctrl-space is pressed more than 2 times when building
+		return
+	}
+
+	// Not building anything right now
+	go func() {
+		e.building = true
+		defer func() {
+			e.building = false
+			if e.runAfterBuild {
+				e.runAfterBuild = false
+
+				doneRunning := false
+				go func() {
+					time.Sleep(500 * time.Millisecond)
+					if !doneRunning {
+						e.DrawOutput(c, 20, "", "Done building. Running...", e.DebugStoppedBackground, true)
+					}
+				}()
+
+				output, err := e.Run(c, tty, status, e.filename)
+				doneRunning = true
+				if err != nil {
+					status.SetError(err)
+					status.Show(c, e)
+					return // from goroutine
+				}
+				title := "Last 20 lines of output"
+				if strings.Count(output, "\n") <= 19 {
+					title = "Program output"
+				}
+
+				e.DrawOutput(c, 20, title, output, e.DebugRunningBackground, true) // also reposition cursor after drawing
+			}
+		}()
+
+		// Build or export the current file
+		// The last argument is if the command should run in the background or not
+		outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
+		// All clear when it comes to status messages and redrawing
+		status.ClearAll(c)
+		if err != nil {
+			// There was an error, so don't run after building after all
+			e.runAfterBuild = false
+			// Error while building
+			status.SetError(err)
+			status.ShowNoTimeout(c, e)
+			return // return from goroutine
+		}
+		// Not building any more
+		e.building = false
+
+		// --- success ---
+
+		// ctrl-space was pressed while in debug mode, and without a debug session running
+		if e.debugMode && e.gdb == nil {
+			if err := e.DebugStartSession(c, tty, status, outputExecutable); err != nil {
+				status.ClearAll(c)
+				status.SetError(err)
+				status.ShowNoTimeout(c, e)
+				e.redrawCursor = true
+			}
+			return // return from goroutine
+		}
+
+		// Regular success, no debug mode
+		status.SetMessage("Success")
+		status.Show(c, e)
+	}()
 }
