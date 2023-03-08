@@ -512,7 +512,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		os.Rename(exeFirstName+".kexe", exeFirstName)
 	}
 
-	// Special considerations for Koka and macOS
+	// Special considerations for Koka
 	if e.mode == mode.Koka && exists(exeFirstName) {
 		// chmod +x
 		os.Chmod(exeFirstName, 0o755)
