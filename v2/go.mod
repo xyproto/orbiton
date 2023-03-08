@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/PullRequestInc/go-gpt3 v1.1.13
 	github.com/atotto/clipboard v0.1.4
-	github.com/cyrus-and/gdb v0.0.0-20220625165517-e10bcab384bb
+	github.com/cyrus-and/gdb v0.0.0-20230307075614-7d4945974ce6
 	github.com/felixge/fgtrace v0.2.0
 	github.com/ianlancetaylor/demangle v0.0.0-20220517205856-0058ec4f073c
 	github.com/jung-kurt/gofpdf v1.16.2

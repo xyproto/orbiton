@@ -16,7 +16,7 @@ github.com/chai2010/webp
 # github.com/creack/pty v1.1.18
 ## explicit; go 1.13
 github.com/creack/pty
-# github.com/cyrus-and/gdb v0.0.0-20220625165517-e10bcab384bb
+# github.com/cyrus-and/gdb v0.0.0-20230307075614-7d4945974ce6
 ## explicit; go 1.18
 github.com/cyrus-and/gdb
 # github.com/davecgh/go-spew v1.1.1
