@@ -10,8 +10,17 @@ import (
 
 var (
 	openAIKeyFilename = filepath.Join(userCacheDir, "o", "openai_key.txt")
-	openAIKey         = env.StrAlt("CHATGPT_API_KEY", "OPENAI_API_KEY", env.Str("OPENAI_KEY", ReadAPIKey()))
+	openAIKey         = env.StrAlt("CHATGPT_API_KEY", "OPENAI_API_KEY", env.Str("OPENAI_KEY"))
 )
+
+func init() {
+	// Delay checking if the OpenAI API Key file is there until after the main file has been read
+	afterLoad = append(afterLoad, func() {
+		if openAIKey == "" {
+			openAIKey = ReadAPIKey()
+		}
+	})
+}
 
 // ReadAPIKey tries to read the Open AI API Key from file.
 // An empty string is returned if the file could not be read.
