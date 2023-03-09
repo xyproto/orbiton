@@ -405,25 +405,26 @@ func (e *Editor) LoadBytes(data []byte) {
 	// One allocation for all the lines
 	e.lines = make(map[int][]rune, lb)
 
-	// Place the lines into the editor, while counting tab indentations
+	// Place the lines into the editor, while counting tab indentations vs space indentations
 	var (
-		line               string
-		tabIndentCounter   uint64
-		spaceIndentCounter uint64
+		tabIndentCounter int64
 	)
+	// TODO: Benchmark if it's faster to convert every line to string and then []rune in goroutines
 	for y, byteLine := range byteLines {
-		line = string(byteLine)
-		if strings.HasPrefix(line, "\t") {
-			tabIndentCounter++
-		} else if strings.HasPrefix(line, "  ") { // assume that two spaces is the smallest space indentation
-			spaceIndentCounter++
+		// Require at least two bytes. Ignore lines with a single tab indentation or a single space
+		if len(byteLine) > 2 {
+			if byteLine[0] == '\t' {
+				tabIndentCounter++ // a tab indentation counts like a positive tab indentation
+			} else if byteLine[0] == ' ' && byteLine[1] == ' ' { // assume that two spaces is the smallest space indentation
+				tabIndentCounter-- // a space indentation counts like a negative tab indentation
+			}
 		}
-		e.lines[y] = []rune(line)
+		e.lines[y] = []rune(string(byteLine))
 	}
 
-	if tabIndentCounter > 0 || spaceIndentCounter > 0 {
+	if tabIndentCounter != 0 {
 		// Check if there were more tab indentations than space indentations
-		detectedTabs := tabIndentCounter > spaceIndentCounter
+		detectedTabs := tabIndentCounter > 0
 		e.detectedTabs = &detectedTabs
 		e.indentation.Spaces = !detectedTabs
 	}
