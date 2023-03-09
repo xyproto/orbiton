@@ -71,7 +71,8 @@
       remove the extra comment marker.
 - [ ] When in `SuggestMode`, typing should start filtering the list.
 - [ ] Introduce the concept of soft and hard breaks, to keep track of where lines were broken automatically and be able to reflow the text.
-- [ ] Sort lines in a less opaque and unusual way than `left,up,right` `sort` `return`.
+- [ ] Sort lines in a less opaque and unusual way than `left,up,right` `sort` `return` before documenting the feature.
+- [ ] Let ctrl-k first delete until "{" and then util the end of the line if there is no "{"?
 
 ## Autocompletion and AI generated code
 

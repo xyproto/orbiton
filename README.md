@@ -133,9 +133,10 @@ These features are unique to `o`, as far as I am aware:
 * If the editor executable is renamed to a word starting with `l` (or have a symlink with that name), the default theme will be suitable for light backgrounds.
 * If the editor executable is renamed to a word starting with `s` (or have a symlink with that name), the default theme will be the "synthwave" theme.
 * Want to quickly convert Markdown to PDF and have pandoc installed? Try `o filename.md`, press `ctrl-space` and quit with `ctrl-q`.
+* The default syntax highlighting theme aims to be as pretty as possible with less than 16 colors, but it mainly aims for clarity. It should be easy to spot a keyword, number, string or a stray parenthesis.
 * Press `ctrl-w` to toggle the check mark in `- [ ] TODO item` boxes in Markdown.
 * `o` is written mostly in `o`, with some use of NeoVim for the initial development.
-* The default syntax highlighting theme aims to be as pretty as possible with less than 16 colors, but it mainly aims for clarity. It should be easy to spot a keyword, number, string or a stray parenthesis.
+* Can load, edit and save gzipped text files or man pages that ends with a `.gz` extension.
 * Has fewer hotkeys to learn than GNU Nano.
 
 ## Known issues
