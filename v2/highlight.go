@@ -22,8 +22,8 @@ const (
 
 var (
 	tout          = textoutput.NewTextOutput(true, true)
-	resizeMut     sync.RWMutex // locked when the terminal emulator is being resized
-	colorTagRegex = regexp.MustCompile(`<(\w+)>`)
+	resizeMut     sync.RWMutex                                  // locked when the terminal emulator is being resized
+	colorTagRegex = regexp.MustCompile(`<([a-nA-Np-zP-Z]\w+)>`) // not starting with "o"
 )
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
@@ -549,15 +549,14 @@ func (e *Editor) ArrowReplace(s string) string {
 func (e *Editor) replaceColorTagsInURL(input string) string {
 	var (
 		fields    = strings.Split(input, " ")
-		newFields = make([]string, len(fields), len(fields))
+		newFields = make([]string, len(fields))
 	)
 	for i, field := range fields {
 		if strings.Contains(field, ">:<off>") && strings.Contains(field, ">//") {
-			field = strings.ReplaceAll(field, "<off>", "|off|")
-			field = colorTagRegex.ReplaceAllString(field, "<"+e.Theme.String+">") + "<" + e.Theme.Plaintext + ">"
-			field = strings.ReplaceAll(field, "|off|", "<off>")
+			newFields[i] = colorTagRegex.ReplaceAllString(field, "<"+e.Theme.String+">") + "<" + e.Theme.Plaintext + ">"
+		} else {
+			newFields[i] = field
 		}
-		newFields[i] = field
 	}
 	return strings.Join(newFields, " ")
 }
