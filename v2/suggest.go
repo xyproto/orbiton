@@ -18,7 +18,7 @@ func corpus(searchword, glob string) []string {
 		return []string{}
 	}
 
-	re := regexp.MustCompile(`[[:^alpha:]]` + searchword + `\.([[:alpha:]]*)`)
+	corpusRegex := regexp.MustCompile(`[[:^alpha:]]` + searchword + `\.([[:alpha:]]*)`)
 
 	var data []byte
 	var highestCount int
@@ -27,7 +27,7 @@ func corpus(searchword, glob string) []string {
 		if err != nil {
 			continue
 		}
-		submatches := re.FindAllStringSubmatch(string(data), -1)
+		submatches := corpusRegex.FindAllStringSubmatch(string(data), -1)
 		for _, submatch := range submatches {
 			word := submatch[1]
 			if _, ok := wordCount[word]; ok {
