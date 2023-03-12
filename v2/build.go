@@ -950,6 +950,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	return "", errors.New("could not compile")
 }
 
+// Build starts a build and is typically triggered from either ctrl-space or the o menu
 func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, andRun bool) {
 	// Enable only. e.runAfterBuild is set to false elsewhere.
 	if andRun {
