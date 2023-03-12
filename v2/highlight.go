@@ -548,7 +548,7 @@ func (e *Editor) ArrowReplace(s string) string {
 // This function is a bit of a hack, until this editor uses a different syntax highlighting package.
 func (e *Editor) replaceColorTagsInURL(input string) string {
 	var (
-		fields    = strings.Fields(input)
+		fields    = strings.Split(input, " ")
 		newFields = make([]string, len(fields), len(fields))
 	)
 	for i, field := range fields {
