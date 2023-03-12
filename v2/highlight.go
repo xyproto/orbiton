@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"unicode"
@@ -20,8 +21,9 @@ const (
 )
 
 var (
-	tout      = textoutput.NewTextOutput(true, true)
-	resizeMut sync.RWMutex // locked when the terminal emulator is being resized
+	tout          = textoutput.NewTextOutput(true, true)
+	resizeMut     sync.RWMutex // locked when the terminal emulator is being resized
+	colorTagRegex = regexp.MustCompile(`<(\w+)>`)
 )
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
@@ -399,8 +401,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// NOTE that if two color tags are placed after each other, they may cause blinking. Remember to turn <off> each color.
 						coloredString = unEscapeFunction(tout.DarkTags(e.ArrowReplace(string(textWithTags))))
 					default:
-						// Regular code
-						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
+						// Regular code, may contain a comment at the end
+						if strings.Contains(line, "://") {
+							coloredString = unEscapeFunction(tout.DarkTags(e.replaceColorTagsInURL(string(textWithTags))))
+						} else {
+							coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
+						}
 					}
 
 					// Take an extra pass on coloring the -> arrow, even if it's in a comment
@@ -536,4 +542,22 @@ func (e *Editor) ArrowReplace(s string) string {
 	fieldColor := syntax.DefaultTextConfig.Protected
 	s = strings.ReplaceAll(s, ">-<", "><off><"+arrowColor+">-<")
 	return strings.ReplaceAll(s, ">"+Escape(">"), "><off><"+arrowColor+">"+Escape(">")+"<off><"+fieldColor+">")
+}
+
+// replaceColorTagsInURL handles a special case where the highlight package doesn't handle URL's with "//" too well.
+// This function is a bit of a hack, until this editor uses a different syntax highlighting package.
+func (e *Editor) replaceColorTagsInURL(input string) string {
+	var (
+		fields    = strings.Fields(input)
+		newFields = make([]string, len(fields), len(fields))
+	)
+	for i, field := range fields {
+		if strings.Contains(field, ">:<off>") && strings.Contains(field, ">//") {
+			field = strings.ReplaceAll(field, "<off>", "|off|")
+			field = colorTagRegex.ReplaceAllString(field, "<"+e.Theme.String+">") + "<" + e.Theme.Plaintext + ">"
+			field = strings.ReplaceAll(field, "|off|", "<off>")
+		}
+		newFields[i] = field
+	}
+	return strings.Join(newFields, " ")
 }
