@@ -12,7 +12,6 @@ It might be a good fit for:
 * Learning programming languages, like Rust or Zig.
 * Editing files deep within larger Go or C++ projects.
 * Solving Advent of Code tasks.
-* Writing and maintaining to-do lists and project documentation in Markdown.
 * Writing poetry with the help of ChatGPT, directly in the editor.
 * Being placed on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in log, man page and image viewer, can be used as `EDITOR=o visudo` and has built-in support for editing and formatting `/etc/fstab` files.
 
