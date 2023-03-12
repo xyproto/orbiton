@@ -163,7 +163,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		actions.Add("Enter ChatGPT API key...", func() {
 			if enteredAPIKey, ok := e.UserInput(c, tty, status, "API key from https://platform.openai.com/account/api-keys", []string{}, false); ok {
 				openAIKey = enteredAPIKey
-				//env.Set("CHATGPT_API_KEY", enteredAPIKey)
+				// env.Set("CHATGPT_API_KEY", enteredAPIKey)
 				status.SetMessageAfterRedraw("Using API key " + enteredAPIKey)
 				// Write the OpenAI API Key to a file in the cache directory as well, but ignore errors
 				_ = WriteAPIKey(openAIKey)

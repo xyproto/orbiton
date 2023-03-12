@@ -46,7 +46,7 @@ func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
 		}
 		// Use the name of the source directory as the default executable filename instead
 		if isFile(filepath.Join(sourceDir, sourceDirectoryName)) {
-			//exeFirstName = sourceDirectoryName
+			// exeFirstName = sourceDirectoryName
 			return sourceDirectoryName
 		}
 	}
