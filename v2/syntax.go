@@ -230,10 +230,10 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return ";;"
 	case mode.Email:
 		return "GIT:"
-	case mode.Elm, mode.OCaml, mode.StandardML:
-		// not applicable, just return something that is unlikely to appear at the beginning of a line
-		fallthrough
-	case mode.Ada, mode.Agda, mode.Garnet, mode.Haskell, mode.Lua, mode.SQL, mode.Teal, mode.Terra:
+	case mode.OCaml, mode.StandardML:
+		// Not applicable, just return the multiline comment start marker
+		return "(*"
+	case mode.Ada, mode.Agda, mode.Elm, mode.Garnet, mode.Haskell, mode.Lua, mode.SQL, mode.Teal, mode.Terra:
 		return "--"
 	case mode.M4:
 		return "dnl"
