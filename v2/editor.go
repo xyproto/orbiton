@@ -437,7 +437,7 @@ func (e *Editor) LoadBytes(data []byte) {
 // If it's an image, there will be text placeholders for pixels.
 // If it's anything else, it will just be blank.
 // Returns an editor mode and an error type.
-func (e *Editor) PrepareEmpty(c *vt100.Canvas, tty *vt100.TTY, filename string) (mode.Mode, error) {
+func (e *Editor) PrepareEmpty() (mode.Mode, error) {
 	var (
 		m    mode.Mode = mode.Blank
 		data []byte
@@ -2187,7 +2187,7 @@ func (e *Editor) HorizontalScrollIfNeeded(c *vt100.Canvas) {
 }
 
 // VerticalScrollIfNeeded will scroll along the X axis, if needed
-func (e *Editor) VerticalScrollIfNeeded(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) VerticalScrollIfNeeded(c *vt100.Canvas) {
 	y := e.pos.sy
 	h := 25
 	if c != nil {
@@ -2227,7 +2227,7 @@ func (e *Editor) AbsFilename() (string, error) {
 // Switch replaces the current editor with a new Editor that opens the given file.
 // The undo stack is also swapped.
 // Only works for switching to one file, and then back again.
-func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *LockKeeper, filenameToOpen string, forceOpen bool) error {
+func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *LockKeeper, filenameToOpen string) error {
 	absFilename, err := e.AbsFilename()
 	if err != nil {
 		return err

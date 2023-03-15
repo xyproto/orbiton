@@ -145,24 +145,22 @@ func (m *MenuWidget) Select() {
 }
 
 // Up will move the highlight up (with wrap-around)
-func (m *MenuWidget) Up(c *vt100.Canvas) bool {
+func (m *MenuWidget) Up() {
 	m.oldy = m.y
 	if m.y <= 0 {
 		m.y = m.h - 1
 	} else {
 		m.y--
 	}
-	return true
 }
 
 // Down will move the highlight down (with wrap-around)
-func (m *MenuWidget) Down(c *vt100.Canvas) bool {
+func (m *MenuWidget) Down() {
 	m.oldy = m.y
 	m.y++
 	if m.y >= m.h {
 		m.y = 0
 	}
-	return true
 }
 
 // SelectIndex will select a specific index. Returns false if it was not possible.

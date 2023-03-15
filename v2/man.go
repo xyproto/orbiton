@@ -21,7 +21,7 @@ func handleManPageEscape(s string) string {
 	return string(lineRunes)
 }
 
-func (e *Editor) manPageHighlight(line, programName string, firstLine, lastLine bool) string {
+func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string {
 	line = handleManPageEscape(line)
 	var (
 		normal          = e.Foreground

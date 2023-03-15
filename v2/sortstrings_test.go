@@ -8,7 +8,7 @@ func ExampleEditor_SortStrings() {
 	e := NewSimpleEditor(80)
 	e.InsertStringAndMove(nil, "example=(o a f g e b c d q h)")
 	currentLine := e.CurrentLine()
-	err := e.SortStrings(nil, nil)
+	err := e.SortStrings()
 	if err != nil {
 		panic(err)
 	}

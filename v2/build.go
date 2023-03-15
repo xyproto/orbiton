@@ -1080,7 +1080,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, andRu
 					}
 				}()
 
-				output, err := e.Run(c, tty, status, e.filename)
+				output, err := e.Run()
 				doneRunning = true
 				if err != nil {
 					status.SetError(err)

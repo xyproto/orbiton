@@ -122,7 +122,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		listItemRecord  []bool
 		inListItem      bool
 		screenLine      string
-		programName     string
 	)
 
 	escapeFunction := Escape
@@ -167,14 +166,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				case mode.Email, mode.Git:
 					coloredString = e.gitHighlight(line)
 				case mode.ManPage:
-					if y == 0 {
-						// Get the first word that consists only of letters, and use that as the man page program name
-						fields := strings.FieldsFunc(trimmedLine, func(c rune) bool { return !unicode.IsLetter(c) })
-						if len(fields) > 0 {
-							programName = fields[0]
-						}
-					}
-					coloredString = e.manPageHighlight(line, programName, y == 0, y+1 == numLinesToDraw)
+					coloredString = e.manPageHighlight(line, y == 0, y+1 == numLinesToDraw)
 				case mode.Doc, mode.Markdown, mode.ReStructured:
 					if highlighted, ok, codeBlockFound := e.markdownHighlight(line, inCodeBlock, listItemRecord, &inListItem); ok {
 						coloredString = highlighted

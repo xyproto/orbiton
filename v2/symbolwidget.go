@@ -87,7 +87,7 @@ func (sw *SymbolWidget) Draw(c *vt100.Canvas) {
 }
 
 // Up will move the highlight up (with wrap-around)
-func (sw *SymbolWidget) Up(c *vt100.Canvas) bool {
+func (sw *SymbolWidget) Up() bool {
 	sw.oldy = sw.y
 	if sw.y <= 0 {
 		sw.y = uint(len(sw.choices)) - 1
@@ -102,7 +102,7 @@ func (sw *SymbolWidget) Up(c *vt100.Canvas) bool {
 }
 
 // Left will move the highlight left (with wrap-around)
-func (sw *SymbolWidget) Left(c *vt100.Canvas) bool {
+func (sw *SymbolWidget) Left() bool {
 	sw.oldx = sw.x
 	if sw.x <= 0 {
 		row := sw.choices[sw.y]
@@ -114,7 +114,7 @@ func (sw *SymbolWidget) Left(c *vt100.Canvas) bool {
 }
 
 // Down will move the highlight down (with wrap-around)
-func (sw *SymbolWidget) Down(c *vt100.Canvas) bool {
+func (sw *SymbolWidget) Down() {
 	sw.oldy = sw.y
 	sw.y++
 	if sw.y >= uint(len(sw.choices)) {
@@ -124,26 +124,21 @@ func (sw *SymbolWidget) Down(c *vt100.Canvas) bool {
 	if sw.x > uint(len(row)) {
 		sw.x = uint(len(row) - 1)
 	}
-	return true
 }
 
 // Right will move the highlight right (with wrap-around)
-func (sw *SymbolWidget) Right(c *vt100.Canvas) bool {
+func (sw *SymbolWidget) Right() {
 	sw.oldx = sw.x
 	sw.x++
 	row := sw.choices[sw.y]
 	if sw.x >= uint(len(row)) {
 		sw.x = 0
 	}
-	return true
 }
 
 // SelectIndex will select a specific index. Returns false if it was not possible.
 func (sw *SymbolWidget) SelectIndex(x, y uint) bool {
-	if y >= sw.h {
-		return false
-	}
-	if x >= sw.w {
+	if y >= sw.h || x >= sw.w {
 		return false
 	}
 	sw.oldx = sw.x

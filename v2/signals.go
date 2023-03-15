@@ -60,8 +60,7 @@ func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *St
 			case syscall.SIGWINCH:
 				// Full redraw, like if Esc was pressed
 				drawLines := true
-				resized := true
-				e.FullResetRedraw(c, status, drawLines, resized)
+				e.FullResetRedraw(c, status, drawLines)
 			}
 		}
 	}()

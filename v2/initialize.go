@@ -198,7 +198,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	} else {
 
 		// Prepare an empty file
-		if newMode, err := e.PrepareEmpty(c, tty, e.filename); err != nil {
+		if newMode, err := e.PrepareEmpty(); err != nil {
 			return nil, "", false, err
 		} else if newMode != mode.Blank {
 			e.mode = newMode

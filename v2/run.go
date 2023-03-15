@@ -24,8 +24,8 @@ func (e *Editor) CanRun() bool {
 
 // Run will attempt to run the corresponding output executable, given a source filename.
 // It's an advantage if the BuildOrExport function has been successfully run first.
-func (e *Editor) Run(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filename string) (string, error) {
-	sourceFilename, err := filepath.Abs(filename)
+func (e *Editor) Run() (string, error) {
+	sourceFilename, err := filepath.Abs(e.filename)
 	if err != nil {
 		return "", err
 	}
@@ -51,7 +51,7 @@ func (e *Editor) Run(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filenam
 	case mode.Python:
 		cmd = exec.Command("python", sourceFilename)
 	default:
-		exeName := filepath.Join(sourceDir, e.exeName(filename, true))
+		exeName := filepath.Join(sourceDir, e.exeName(e.filename, true))
 		cmd = exec.Command(exeName)
 	}
 

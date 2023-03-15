@@ -261,7 +261,7 @@ func (sb *StatusBar) ShowLineColWordCount(c *vt100.Canvas, e *Editor, filename s
 }
 
 // ShowLineColWordCountAfterRedraw shows a status message with the current filename, line, column and word count, after the redraw
-func (sb *StatusBar) ShowLineColWordCountAfterRedraw(c *vt100.Canvas, e *Editor, filename string) {
+func (sb *StatusBar) ShowLineColWordCountAfterRedraw(e *Editor, filename string) {
 	sb.messageAfterRedraw = filename + ": " + e.StatusMessage()
 }
 

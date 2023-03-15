@@ -69,22 +69,22 @@ func (e *Editor) SymbolMenu(status *StatusBar, tty *vt100.TTY, title string, cho
 		switch key {
 		case "↑", "c:16": // Up or ctrl-p
 			resizeMut.Lock()
-			symbolMenu.Up(c)
+			symbolMenu.Up()
 			changed = true
 			resizeMut.Unlock()
 		case "←": // Left
 			resizeMut.Lock()
-			symbolMenu.Left(c)
+			symbolMenu.Left()
 			changed = true
 			resizeMut.Unlock()
 		case "↓", "c:14": // Down or ctrl-n
 			resizeMut.Lock()
-			symbolMenu.Down(c)
+			symbolMenu.Down()
 			changed = true
 			resizeMut.Unlock()
 		case "→": // Right
 			resizeMut.Lock()
-			symbolMenu.Right(c)
+			symbolMenu.Right()
 			changed = true
 			resizeMut.Unlock()
 		case "c:1": // Top, ctrl-a

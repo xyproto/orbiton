@@ -32,7 +32,7 @@ func TestLetterInSmallWord(t *testing.T) {
 	}
 }
 
-func TestSelectionLettersForChoices(t *testing.T) {
+func TestSelectionLettersForChoices(_ *testing.T) {
 	choices := []string{
 		"This is a string",
 		"This is another",

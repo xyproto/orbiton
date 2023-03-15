@@ -216,7 +216,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		},
 		sortstrings: func() { // sort the words on the current line
 			undo.Snapshot(e)
-			e.SortStrings(c, status)
+			e.SortStrings()
 			e.redraw = true
 			e.redrawCursor = true
 		},

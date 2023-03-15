@@ -90,7 +90,7 @@ func (b *Bob) Draw(c *vt100.Canvas) {
 }
 
 // Right is called when Bob should move right
-func (b *Bob) Right(c *vt100.Canvas) bool {
+func (b *Bob) Right() bool {
 	oldx := b.x
 	b.x++
 	if b.x >= int(b.w) {
@@ -103,7 +103,7 @@ func (b *Bob) Right(c *vt100.Canvas) bool {
 }
 
 // Left is called when Bob should move left
-func (b *Bob) Left(c *vt100.Canvas) bool {
+func (b *Bob) Left() bool {
 	oldx := b.x
 	if b.x-1 < 0 {
 		return false
@@ -115,7 +115,7 @@ func (b *Bob) Left(c *vt100.Canvas) bool {
 }
 
 // Up is called when Bob should move up
-func (b *Bob) Up(c *vt100.Canvas) bool {
+func (b *Bob) Up() bool {
 	oldy := b.y
 	if b.y-1 <= 0 {
 		return false
@@ -436,7 +436,7 @@ func (e *EvilGobbler) Draw(c *vt100.Canvas) {
 }
 
 // Next will make the next EvilGobbler move
-func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers *[]*Gobbler, bob *Bob) bool {
+func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers *[]*Gobbler) bool {
 	e.oldx = e.x
 	e.oldy = e.y
 
@@ -550,7 +550,7 @@ func (g *Gobbler) Draw(c *vt100.Canvas) {
 }
 
 // Next is called when the next move should be made
-func (g *Gobbler) Next(c *vt100.Canvas, pellets *[]*Pellet, bob *Bob) bool {
+func (g *Gobbler) Next(pellets *[]*Pellet, bob *Bob) bool {
 	if g.dead {
 		return false
 	}
@@ -871,7 +871,7 @@ retry:
 		switch key {
 		case 253, 119: // Up or w
 			resizeMut.Lock()
-			moved = bob.Up(c)
+			moved = bob.Up()
 			resizeMut.Unlock()
 		case 255, 115: // Down or s
 			resizeMut.Lock()
@@ -879,11 +879,11 @@ retry:
 			resizeMut.Unlock()
 		case 254, 100: // Right or d
 			resizeMut.Lock()
-			moved = bob.Right(c)
+			moved = bob.Right()
 			resizeMut.Unlock()
 		case 252, 97: // Left or a
 			resizeMut.Lock()
-			moved = bob.Left(c)
+			moved = bob.Left()
 			resizeMut.Unlock()
 		case 114: // r
 			goto retry
@@ -925,9 +925,9 @@ retry:
 				bubble.Next(c, bob, &gobblers)
 			}
 			for _, gobbler := range gobblers {
-				gobbler.Next(c, &pellets, bob)
+				gobbler.Next(&pellets, bob)
 			}
-			evilGobbler.Next(c, &gobblers, bob)
+			evilGobbler.Next(c, &gobblers)
 			if moved {
 				bob.ToggleState()
 			}

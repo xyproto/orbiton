@@ -5,7 +5,7 @@ import (
 )
 
 // FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
-func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, resized bool) {
+func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines bool) {
 	savePos := e.pos
 
 	if status != nil {
@@ -27,9 +27,7 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 
 	resizeMut.Unlock()
 
-	if w < e.wrapWidth {
-		e.wrapWidth = w
-	} else if e.wrapWidth < 80 && w >= 80 {
+	if (w < e.wrapWidth) || (e.wrapWidth < 80 && w >= 80) {
 		e.wrapWidth = w
 	}
 
@@ -125,8 +123,7 @@ func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 	// Check if an extra reset is needed
 	if e.sshMode {
 		drawLines := true
-		resized := true
-		e.FullResetRedraw(c, status, drawLines, resized)
+		e.FullResetRedraw(c, status, drawLines)
 	} else {
 		// Draw the editor lines, respect the offset (true) and redraw (true)
 		e.RedrawIfNeeded(c)

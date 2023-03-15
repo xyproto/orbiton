@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-
-	"github.com/xyproto/vt100"
 )
 
 // Word is a type for a string in a list of strings, that may be quoted
@@ -206,7 +204,7 @@ func sortStrings(line string) (string, error) {
 // or that the entire given string is a list of strings.
 // The strings may be space separated or comma separated (consistently).
 // The strings may be single quoted, double quoted or none (may be non-consistent).
-func (e *Editor) SortStrings(c *vt100.Canvas, status *StatusBar) error {
+func (e *Editor) SortStrings() error {
 	// Sort the strings in the current line, return an error if there are problems
 	newCurrentLine, err := sortStrings(e.CurrentLine())
 	if err != nil {
