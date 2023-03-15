@@ -390,16 +390,15 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (st
 
 // LoadBytes replaces the current editor contents with the given bytes
 func (e *Editor) LoadBytes(data []byte) {
+	// Prepare an empty map to load the lines into
 	e.Clear()
+	e.lines = make(map[int][]rune, 0)
 
 	byteLines := bytes.Split(data, []byte{'\n'})
-	lb := len(byteLines)
-
-	// One allocation for all the lines
-	e.lines = make(map[int][]rune, lb)
+	numLines := uint64(0)
 
 	// Place the lines into the editor, while counting tab indentations vs space indentations
-	tabIndentCounter := int64(0)
+	tabIndentCounter := uint64(0)
 	// TODO: Benchmark if it's faster to convert every line to string and then []rune in goroutines
 	for y, byteLine := range byteLines {
 		// Require at least two bytes. Ignore lines with a single tab indentation or a single space
@@ -411,11 +410,12 @@ func (e *Editor) LoadBytes(data []byte) {
 			}
 		}
 		e.lines[y] = []rune(string(byteLine))
+		numLines++
 	}
 
 	// If the last line is empty, delete it
-	if lb > 0 && len(e.lines[lb-1]) == 0 {
-		delete(e.lines, lb-1)
+	if numLines > 0 && len(e.lines[int(numLines-1)]) == 0 {
+		delete(e.lines, int(numLines-1))
 	}
 
 	if tabIndentCounter != 0 {
