@@ -53,12 +53,11 @@ func quotedWordReplace(line string, quote rune, regular, quoted vt100.AttributeC
 					s = append(s, []rune(quoted.String())...)
 					s = append(s, r)
 					continue
-				} else {
-					s = append(s, r)
-					s = append(s, []rune(vt100.Stop())...)
-					s = append(s, []rune(regular.String())...)
-					continue
 				}
+				s = append(s, r)
+				s = append(s, []rune(vt100.Stop())...)
+				s = append(s, []rune(regular.String())...)
+				continue
 			}
 			s = append(s, r)
 			prevR = r                 // the previous r, for the next round
@@ -118,10 +117,12 @@ func emphasis(line string, textColor, italicsColor, boldColor, strikeColor vt100
 	result = style(result, "~~", textColor, strikeColor)
 	result = style(result, "**", textColor, boldColor)
 	result = style(result, "__", textColor, boldColor)
-	// For now, nested emphasis and italics are not supported, only bold and strikethrough
-	// TODO: Implement nested emphasis and italics
-	// result = style(result, "*", textColor, italicsColor)
-	// result = style(result, "_", textColor, italicsColor)
+	if !strings.Contains(line, "**") {
+		result = style(result, "*", textColor, italicsColor)
+	}
+	if !strings.Contains(line, "__") {
+		result = style(result, "_", textColor, italicsColor)
+	}
 	return result
 }
 
