@@ -69,23 +69,23 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 	prompt := strings.TrimSpace(strings.TrimSuffix(chatPrompt, "!"))
 
 	const (
-		GENERATE_TEXT = iota
-		GENERATE_CODE
-		CONTINUE_CODE
+		generateText = iota
+		generateCode
+		continueCode
 	)
 
-	generationType := GENERATE_TEXT // GENERATE_CODE // CONTINUE_CODE
+	generationType := generateText // generateCode // continueCode
 	if e.ProgrammingLanguage() {
-		generationType = GENERATE_CODE
+		generationType = generateCode
 		if prompt == "" {
-			generationType = CONTINUE_CODE
+			generationType = continueCode
 		}
 	}
 
 	// Determine the temperature
 	var defaultTemperature float32
 	switch generationType {
-	case GENERATE_TEXT:
+	case generateText:
 		defaultTemperature = 0.8
 	}
 	temperature := env.Float32("CHATGPT_TEMPERATURE", defaultTemperature)
@@ -95,18 +95,18 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 	// gptModel, gptModelTokens := "text-curie-001", 2048 // simpler and faster
 	// gptModel, gptModelTokens := "text-ada-001", 2048 // even simpler and even faster
 	switch generationType {
-	case CONTINUE_CODE:
+	case continueCode:
 		gptModel, gptModelTokens = "code-davinci-002", 8000
 		// gptModel, gptModelTokens = "code-cushman-001", 2048 // slightly simpler and slightly faster
 	}
 
 	// Prefix the prompt
 	switch generationType {
-	case GENERATE_TEXT:
+	case generateText:
 		prompt += ". Write it in " + e.mode.String() + ". It should be expertly written, concise and correct."
-	case GENERATE_CODE:
+	case generateCode:
 		prompt += ". Write it in " + e.mode.String() + " and include comments where it makes sense. The code should be concise, correct and expertly created. Comments above functions should start with the function name."
-	case CONTINUE_CODE:
+	case continueCode:
 		initialPrompt := "Write the next 10 lines of this " + e.mode.String() + " program:\n"
 		// gather about 2000 tokens/fields from the current file and use that as the prompt
 		startTokens := strings.Fields(e.String())
@@ -120,11 +120,11 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 	// Set a suitable status bar text
 	status.ClearAll(c)
 	switch generationType {
-	case GENERATE_TEXT:
+	case generateText:
 		status.SetMessage("Generating text...")
-	case GENERATE_CODE:
+	case generateCode:
 		status.SetMessage("Generating code...")
-	case CONTINUE_CODE:
+	case continueCode:
 		status.SetMessage("Continuing code...")
 	}
 	status.Show(c, e)

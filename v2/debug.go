@@ -845,6 +845,15 @@ func (e *Editor) DrawFlags(c *vt100.Canvas, repositionCursor bool) {
 
 // DrawRegisters will draw a box with the current register values in the lower right
 func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
+	defer func() {
+		// Reposition the cursor
+		if repositionCursor {
+			x := e.pos.ScreenX()
+			y := e.pos.ScreenY()
+			vt100.SetXY(uint(x), uint(y))
+		}
+	}()
+
 	if e.debugShowRegisters == noRegisterWindow || e.gdb == nil {
 		// Don't draw anything
 		return nil

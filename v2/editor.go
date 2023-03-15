@@ -837,10 +837,7 @@ func (e *Editor) SplitOvershoot(index LineIndex, isSpace bool) ([]rune, []rune, 
 		if spacePosition != -1 {
 			hasSpace = true
 			distance := splitPosition - spacePosition
-			if distance > maxDistance {
-				// To far away, don't use this as a split point,
-				// stick to the hard split.
-			} else {
+			if distance <= maxDistance {
 				// Okay, we found a better split point.
 				splitPosition = spacePosition
 			}

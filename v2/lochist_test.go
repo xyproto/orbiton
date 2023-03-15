@@ -7,11 +7,11 @@ import (
 	"testing"
 )
 
-func TestVimInfo(t *testing.T) {
+func TestVimInfo(_ *testing.T) {
 	LoadVimLocationHistory(vimLocationHistoryFilename)
 }
 
-func TestEmacsPlaces(t *testing.T) {
+func TestEmacsPlaces(_ *testing.T) {
 	LoadEmacsLocationHistory(emacsLocationHistoryFilename)
 }
 

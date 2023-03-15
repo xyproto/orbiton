@@ -23,9 +23,8 @@ func nextGitRebaseKeyword(line string) string {
 			if i+1 < len(cycle1) {
 				next = cycle1[i+1]
 				break
-			} else {
-				next = cycle1[0]
 			}
+			next = cycle1[0]
 		}
 	}
 	if next == "" {
@@ -35,9 +34,8 @@ func nextGitRebaseKeyword(line string) string {
 				if i+1 < len(cycle2) {
 					next = cycle2[i+1]
 					break
-				} else {
-					next = cycle2[0]
 				}
+				next = cycle2[0]
 			}
 		}
 	}

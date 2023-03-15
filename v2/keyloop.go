@@ -617,14 +617,26 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.redrawCursor = true
 					status.SetMessageAfterRedraw(status.Message())
 					break
-				} else { // e.gdb == nil
-					// Build or export the current file
-					// The last argument is if the command should run in the background or not
-					outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
-					// All clear when it comes to status messages and redrawing
-					status.ClearAll(c)
-					if err != nil && err != errNoSuitableBuildCommand {
-						// Error while building
+				} // e.gdb == nil
+				// Build or export the current file
+				// The last argument is if the command should run in the background or not
+				outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
+				// All clear when it comes to status messages and redrawing
+				status.ClearAll(c)
+				if err != nil && err != errNoSuitableBuildCommand {
+					// Error while building
+					status.SetError(err)
+					status.ShowNoTimeout(c, e)
+					e.debugMode = false
+					e.redrawCursor = true
+					e.redraw = true
+					break
+				}
+				// Was no suitable compilation or export command found?
+				if err == errNoSuitableBuildCommand {
+					// status.ClearAll(c)
+					if e.debugMode {
+						// Both in debug mode and can not find a command to build this file with.
 						status.SetError(err)
 						status.ShowNoTimeout(c, e)
 						e.debugMode = false
@@ -632,37 +644,24 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.redraw = true
 						break
 					}
-					// Was no suitable compilation or export command found?
-					if err == errNoSuitableBuildCommand {
-						// status.ClearAll(c)
-						if e.debugMode {
-							// Both in debug mode and can not find a command to build this file with.
-							status.SetError(err)
-							status.ShowNoTimeout(c, e)
-							e.debugMode = false
-							e.redrawCursor = true
-							e.redraw = true
-							break
-						}
-						// Building this file extension is not implemented yet.
-						// Just display the current time and word count.
-						// TODO: status.ClearAll() should have cleared the status bar first, but this is not always true,
-						//       which is why the message is hackily surrounded by spaces. Fix.
-						statsMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
-						status.SetMessage(statsMessage)
-						status.Show(c, e)
-						e.redrawCursor = true
-						break
-					}
-					// Start debugging
-					if err := e.DebugStartSession(c, tty, status, outputExecutable); err != nil {
-						status.ClearAll(c)
-						status.SetError(err)
-						status.ShowNoTimeout(c, e)
-						e.redrawCursor = true
-					}
+					// Building this file extension is not implemented yet.
+					// Just display the current time and word count.
+					// TODO: status.ClearAll() should have cleared the status bar first, but this is not always true,
+					//       which is why the message is hackily surrounded by spaces. Fix.
+					statsMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
+					status.SetMessage(statsMessage)
+					status.Show(c, e)
+					e.redrawCursor = true
 					break
 				}
+				// Start debugging
+				if err := e.DebugStartSession(c, tty, status, outputExecutable); err != nil {
+					status.ClearAll(c)
+					status.SetError(err)
+					status.ShowNoTimeout(c, e)
+					e.redrawCursor = true
+				}
+				break
 			}
 
 			e.UseStickySearchTerm()
@@ -1342,9 +1341,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						if parcount == 1 {
 							// FOUND, STOP
 							break
-						} else {
-							parcount--
 						}
+						parcount--
 					} else if r == opening {
 						parcount++
 					}
@@ -1357,9 +1355,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						if parcount == 1 {
 							// FOUND, STOP
 							break
-						} else {
-							parcount--
 						}
+						parcount--
 					} else if r == closing {
 						parcount++
 					}
@@ -1508,9 +1505,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					// Copy the line to the clipboard
 					err = clipboard.WriteAll(line)
 				}
-				if err == nil {
-					// no issue
-				} else if firstCopyAction {
+				if err != nil && firstCopyAction {
 					if env.Has("WAYLAND_DISPLAY") && which("wl-copy") == "" { // Wayland
 						status.SetErrorMessage("The wl-copy utility (from wl-clipboard) is missing!")
 					} else if env.Has("DISPLAY") && which("xclip") == "" {

@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	openAIKeyFilename = filepath.Join(userCacheDir, "o", "openai_key.txt")
+	openAIKeyFilename = filepath.Join(userCacheDir, "o", "openai_key.txt") // just for caching the key, if it's entered via the menu
 	openAIKey         = env.StrAlt("CHATGPT_API_KEY", "OPENAI_API_KEY", env.Str("OPENAI_KEY"))
 )
 
@@ -34,5 +34,5 @@ func ReadAPIKey() string {
 
 // WriteAPIKey writes the given OpenAI API key to file
 func WriteAPIKey(apiKey string) error {
-	return os.WriteFile(openAIKeyFilename, []byte(openAIKey+"\n"), 0o600)
+	return os.WriteFile(openAIKeyFilename, []byte(apiKey+"\n"), 0o600)
 }
