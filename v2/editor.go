@@ -418,9 +418,8 @@ func (e *Editor) LoadBytes(data []byte) {
 		delete(e.lines, int(numLines-1))
 	}
 
-	if tabIndentCounter != 0 {
+	if detectedTabs := tabIndentCounter > 0; detectedTabs {
 		// Check if there were more tab indentations than space indentations
-		detectedTabs := tabIndentCounter > 0
 		e.detectedTabs = &detectedTabs
 		e.indentation.Spaces = !detectedTabs
 	}
