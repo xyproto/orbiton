@@ -394,7 +394,7 @@ type IndexByteLine struct {
 	byteLine []byte
 }
 
-func (e *Editor) LoadByteLine(ib IndexByteLine, eMut, tcMut *sync.RWMutex, tabIndentCounter, numLines *uint64, wg *sync.WaitGroup) {
+func (e *Editor) LoadByteLine(ib IndexByteLine, eMut, tcMut *sync.RWMutex, tabIndentCounter, numLines *int, wg *sync.WaitGroup) {
 	// Require at least two bytes. Ignore lines with a single tab indentation or a single space
 	if len(ib.byteLine) > 2 {
 		var first byte = ib.byteLine[0]
@@ -426,10 +426,10 @@ func (e *Editor) LoadBytes(data []byte) {
 		byteLines = bytes.Split(data, []byte{'\n'})
 
 		// Place the lines into the editor, while counting tab indentations vs space indentations
-		tabIndentCounter uint64
+		tabIndentCounter int
 
 		// Count the number of lines as the lines are being processed
-		numLines uint64
+		numLines int
 
 		// Mutex for the editor lines and the numLines counter
 		eMut sync.RWMutex
@@ -446,8 +446,8 @@ func (e *Editor) LoadBytes(data []byte) {
 	wg.Wait()
 
 	// If the last line is empty, delete it
-	if numLines > 0 && len(e.lines[int(numLines-1)]) == 0 {
-		delete(e.lines, int(numLines-1))
+	if numLines > 0 && len(e.lines[numLines-1]) == 0 {
+		delete(e.lines, numLines-1)
 	}
 
 	if detectedTabs := tabIndentCounter > 0; detectedTabs {
