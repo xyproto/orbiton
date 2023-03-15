@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -388,30 +389,61 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (st
 	return message, nil
 }
 
+type IndexByteLine struct {
+	index    int
+	byteLine []byte
+}
+
+func (e *Editor) LoadByteLine(ib IndexByteLine, eMut, tcMut *sync.RWMutex, tabIndentCounter, numLines *uint64, wg *sync.WaitGroup) {
+	// Require at least two bytes. Ignore lines with a single tab indentation or a single space
+	if len(ib.byteLine) > 2 {
+		var first byte = ib.byteLine[0]
+		if first == '\t' {
+			tcMut.Lock()
+			*tabIndentCounter++ // a tab indentation counts like a positive tab indentation
+			tcMut.Unlock()
+		} else if first == ' ' && ib.byteLine[1] == ' ' { // assume that two spaces is the smallest space indentation
+			tcMut.Lock()
+			*tabIndentCounter-- // a space indentation counts like a negative tab indentation
+			tcMut.Unlock()
+		}
+	}
+	eMut.Lock()
+	e.lines[ib.index] = []rune(string(ib.byteLine))
+	*numLines++
+	eMut.Unlock()
+	wg.Done()
+}
+
 // LoadBytes replaces the current editor contents with the given bytes
 func (e *Editor) LoadBytes(data []byte) {
 	// Prepare an empty map to load the lines into
 	e.Clear()
 	e.lines = make(map[int][]rune, 0)
 
-	byteLines := bytes.Split(data, []byte{'\n'})
-	numLines := uint64(0)
+	var (
+		// Split the bytes into lines
+		byteLines = bytes.Split(data, []byte{'\n'})
 
-	// Place the lines into the editor, while counting tab indentations vs space indentations
-	tabIndentCounter := uint64(0)
-	// TODO: Benchmark if it's faster to convert every line to string and then []rune in goroutines
-	for y, byteLine := range byteLines {
-		// Require at least two bytes. Ignore lines with a single tab indentation or a single space
-		if len(byteLine) > 2 {
-			if byteLine[0] == '\t' {
-				tabIndentCounter++ // a tab indentation counts like a positive tab indentation
-			} else if byteLine[0] == ' ' && byteLine[1] == ' ' { // assume that two spaces is the smallest space indentation
-				tabIndentCounter-- // a space indentation counts like a negative tab indentation
-			}
-		}
-		e.lines[y] = []rune(string(byteLine))
-		numLines++
+		// Place the lines into the editor, while counting tab indentations vs space indentations
+		tabIndentCounter uint64
+
+		// Count the number of lines as the lines are being processed
+		numLines uint64
+
+		// Mutex for the editor lines and the numLines counter
+		eMut sync.RWMutex
+
+		// Mutex for the tabIndentCounter
+		tcMut sync.RWMutex
+	)
+
+	var wg sync.WaitGroup
+	for index, byteLine := range byteLines {
+		wg.Add(1)
+		go e.LoadByteLine(IndexByteLine{index, byteLine}, &eMut, &tcMut, &tabIndentCounter, &numLines, &wg)
 	}
+	wg.Wait()
 
 	// If the last line is empty, delete it
 	if numLines > 0 && len(e.lines[int(numLines-1)]) == 0 {
