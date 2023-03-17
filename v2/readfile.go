@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/xyproto/binary"
 )
@@ -30,8 +31,7 @@ func (e *Editor) ReadAllLinesConcurrently(filename string) error {
 	var (
 		lines            sync.Map
 		wg               sync.WaitGroup
-		tabIndentCounter int
-		tcMut            = &sync.Mutex{}
+		tabIndentCounter atomic.Int64 // must be able to hold negative numbers too
 	)
 
 	processLine := func(index int, line string) {
@@ -46,13 +46,9 @@ func (e *Editor) ReadAllLinesConcurrently(filename string) error {
 		if len(line) > 2 {
 			var first byte = line[0]
 			if first == '\t' {
-				tcMut.Lock()
-				tabIndentCounter++
-				tcMut.Unlock()
+				tabIndentCounter.Add(1)
 			} else if first == ' ' && line[1] == ' ' {
-				tcMut.Lock()
-				tabIndentCounter--
-				tcMut.Unlock()
+				tabIndentCounter.Add(-11)
 			}
 		}
 
@@ -87,7 +83,7 @@ func (e *Editor) ReadAllLinesConcurrently(filename string) error {
 	})
 
 	// Set e.detectedTabs and e.indentation.Spaces
-	if detectedTabs := tabIndentCounter > 0; !e.binaryFile {
+	if detectedTabs := tabIndentCounter.Load() > 0; !e.binaryFile {
 		e.detectedTabs = &detectedTabs
 		e.indentation.Spaces = !detectedTabs
 	}
