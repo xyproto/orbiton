@@ -4,16 +4,62 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	"io/ioutil"
+	"os"
 	"strings"
 	"sync"
-	"sync/atomic"
 
 	"github.com/xyproto/binary"
 )
 
-func (e *Editor) ReadAllLinesConcurrently(filename string) error {
-	data, err := ioutil.ReadFile(filename)
+// ReadFile reads in a file, concurrently
+func ReadFile(filename string) ([]byte, error) {
+	const bufferSize = 4 * 1024 // buffer size when reading files
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	data := make([]byte, 0)
+	chunks := make(chan []byte)
+	errors := make(chan error)
+	done := make(chan struct{})
+	var wg sync.WaitGroup
+	go func() {
+		defer close(done)
+		for {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				buf := make([]byte, bufferSize)
+				n, err := f.Read(buf)
+				if n > 0 {
+					chunks <- buf[:n]
+				}
+				if err != nil {
+					errors <- err
+					return
+				}
+			}()
+			select {
+			case chunk := <-chunks:
+				data = append(data, chunk...)
+			case err := <-errors:
+				if err == io.EOF {
+					err = nil
+				}
+				wg.Wait()
+				done <- struct{}{}
+				return
+			}
+		}
+	}()
+	<-done
+	return data, nil
+}
+
+// ReadFileAndProcessLines reads the named file concurrently, processes its lines, and updates the Editor.
+func (e *Editor) ReadFileAndProcessLines(filename string) error {
+	data, err := ReadFile(filename)
 	if err != nil {
 		return err
 	}
@@ -28,62 +74,37 @@ func (e *Editor) ReadAllLinesConcurrently(filename string) error {
 	e.binaryFile = binary.Data(data)
 	scanner := bufio.NewScanner(bytes.NewReader(data))
 
-	var (
-		lines            sync.Map
-		wg               sync.WaitGroup
-		tabIndentCounter atomic.Int64 // must be able to hold negative numbers too
-	)
-
-	processLine := func(index int, line string) {
-		lines.Store(index, []rune(line))
-		wg.Done()
-	}
-
-	processLineWithOpinion := func(index int, line string) {
-		line = opinionatedStringReplacer.Replace(line)
-		//line = strings.TrimRightFunc(line, unicode.IsSpace)
-
-		if len(line) > 2 {
-			var first byte = line[0]
-			if first == '\t' {
-				tabIndentCounter.Add(1)
-			} else if first == ' ' && line[1] == ' ' {
-				tabIndentCounter.Add(-11)
-			}
-		}
-
-		lines.Store(index, []rune(line))
-		wg.Done()
-	}
-
+	lines := make(map[int][]rune)
 	var index int
+	var tabIndentCounter int64
+
 	for scanner.Scan() {
 		line := scanner.Text()
-		wg.Add(1)
 		if e.binaryFile {
-			go processLine(index, line)
+			lines[index] = []rune(line)
 		} else {
-			go processLineWithOpinion(index, line)
+			line = opinionatedStringReplacer.Replace(line)
+			if len(line) > 2 {
+				var first byte = line[0]
+				if first == '\t' {
+					tabIndentCounter++
+				} else if first == ' ' && line[1] == ' ' {
+					tabIndentCounter -= 11
+				}
+			}
+			lines[index] = []rune(line)
 		}
 		index++
 	}
-
-	wg.Wait()
 
 	if err := scanner.Err(); err != nil && err != io.EOF {
 		return err
 	}
 
 	e.Clear()
-	e.lines = make(map[int][]rune, index)
+	e.lines = lines
 
-	lines.Range(func(key, value interface{}) bool {
-		e.lines[key.(int)] = value.([]rune)
-		return true
-	})
-
-	// Set e.detectedTabs and e.indentation.Spaces
-	if detectedTabs := tabIndentCounter.Load() > 0; !e.binaryFile {
+	if detectedTabs := tabIndentCounter > 0; !e.binaryFile {
 		e.detectedTabs = &detectedTabs
 		e.indentation.Spaces = !detectedTabs
 	}

@@ -698,7 +698,7 @@ func saveHighScore(highScore uint) error {
 // loadHighScore will load the current high score from the highScoreFile,
 // if possible.
 func loadHighScore() (uint, error) {
-	data, err := os.ReadFile(highScoreFile)
+	data, err := ReadFile(highScoreFile)
 	if err != nil {
 		return 0, err
 	}

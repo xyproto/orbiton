@@ -354,7 +354,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (st
 		// Read the file and set e.binaryFile, if the "fnord" (filename or data) does not contain anything
 		if fnord.Empty() {
 			// read in the file, set e.binaryFile and also make opinionated replacements if it's a text file
-			if err := e.ReadAllLinesConcurrently(fnord.filename); err != nil {
+			if err := e.ReadFileAndProcessLines(fnord.filename); err != nil {
 				return message, err
 			}
 			if e.binaryFile {
@@ -2224,7 +2224,7 @@ func (e *Editor) VerticalScrollIfNeeded(c *vt100.Canvas) {
 
 // InsertFile inserts the contents of a file at the current location
 func (e *Editor) InsertFile(c *vt100.Canvas, filename string) error {
-	data, err := os.ReadFile(filename)
+	data, err := ReadFile(filename)
 	if err != nil {
 		return err
 	}

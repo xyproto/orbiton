@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"path/filepath"
 	"regexp"
 
@@ -23,7 +22,7 @@ func corpus(searchword, glob string) []string {
 	var data []byte
 	var highestCount int
 	for _, filename := range filenames {
-		data, err = os.ReadFile(filename)
+		data, err = ReadFile(filename)
 		if err != nil {
 			continue
 		}
