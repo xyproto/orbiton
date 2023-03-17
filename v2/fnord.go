@@ -1,7 +1,6 @@
 package main
 
 import (
-	"path/filepath"
 	"strings"
 
 	"github.com/xyproto/env/v2"
@@ -12,7 +11,7 @@ import (
 type FilenameOrData struct {
 	filename string
 	data     []byte
-	length   uint64
+	length   int
 }
 
 // ExpandUser will expand the filename if it starts with "~"
@@ -46,14 +45,4 @@ func (fnord *FilenameOrData) SetTitle() {
 		title = fnord.filename
 	}
 	termtitle.Set(termtitle.GenerateTitle(title))
-}
-
-// NoTitle will remove the filename title by setting the shell name as the title,
-// if NO_COLOR is not set and the terminal emulator supports it.
-func NoTitle() {
-	if envNoColor {
-		return
-	}
-	shellName := filepath.Base(env.Str("SHELL", "/bin/sh"))
-	termtitle.Set(shellName)
 }

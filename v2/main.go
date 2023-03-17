@@ -116,7 +116,7 @@ See the man page for more information.
 		if lendata := len(data); lendata > 0 {
 			fnord.filename = "-"
 			fnord.data = data
-			fnord.length = uint64(lendata)
+			fnord.length = lendata
 		}
 	} else {
 		fnord.filename, lineNumber, colNumber = FilenameAndLineNumberAndColNumber(flag.Arg(0), flag.Arg(1), flag.Arg(2))
