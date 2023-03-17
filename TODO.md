@@ -19,6 +19,7 @@
 
 ## Building, debugging and testing programs
 
+- [ ] Along with the per-file location, store the per-file last ctrl-o menu choice location. Or just move "Build" to the top, when on macOS.
 - [ ] Jump to error for Erlang.
 - [ ] Fix output parsing when running `go test` with ctrl-space.
 - [ ] Jump to error when building with `ctrl-space` and `cargo`.
