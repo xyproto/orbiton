@@ -25,7 +25,7 @@ func (e *Editor) ReadAllLinesConcurrently(filename string) error {
 		}
 	}
 
-	isBinary := binary.Data(data)
+	e.binaryFile = binary.Data(data)
 	scanner := bufio.NewScanner(bytes.NewReader(data))
 
 	var (
@@ -65,7 +65,7 @@ func (e *Editor) ReadAllLinesConcurrently(filename string) error {
 	for scanner.Scan() {
 		line := scanner.Text()
 		wg.Add(1)
-		if isBinary {
+		if e.binaryFile {
 			go processLine(index, line)
 		} else {
 			go processLineWithOpinion(index, line)
@@ -88,7 +88,7 @@ func (e *Editor) ReadAllLinesConcurrently(filename string) error {
 	})
 
 	// Set e.detectedTabs and e.indentation.Spaces
-	if detectedTabs := tabIndentCounter > 0; !isBinary {
+	if detectedTabs := tabIndentCounter > 0; !e.binaryFile {
 		e.detectedTabs = &detectedTabs
 		e.indentation.Spaces = !detectedTabs
 	}
