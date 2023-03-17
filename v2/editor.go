@@ -15,7 +15,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/cyrus-and/gdb"
-	"github.com/xyproto/binary"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
@@ -349,32 +348,25 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (st
 		if fnord.data, err = e.LoadClass(fnord.filename); err != nil {
 			return "Could not run jad", err
 		}
+		// Load the data
+		e.LoadBytes(fnord.data)
 	} else {
-		// Read the file and check if it could be read
+		// Read the file and set e.binaryFile, if the "fnord" (filename or data) does not contain anything
 		if fnord.Empty() {
-			fnord.data, fnord.length, err = ReadFileAndSize(fnord.filename)
-			if err != nil {
+			// read in the file, set e.binaryFile and also make opinionated replacements if it's a text file
+			if err := e.ReadAllLinesConcurrently(fnord.filename); err != nil {
 				return message, err
 			}
-		}
-		// Check if it's a binary file or a text file
-		if e.binaryFile = binary.Data(fnord.data); e.binaryFile {
-			e.mode = mode.Blank
+			if e.binaryFile {
+				e.mode = mode.Blank
+			}
 		}
 	}
 
 	// If enough time passed so that the spinner was shown by now, enter "slow disk mode" where fewer disk-related I/O operations will be performed
 	e.slowLoad = time.Since(start) > 400*time.Millisecond
 
-	// Opinionated replacements, but not for binary files
-	if !e.binaryFile {
-		fnord.data = opinionatedByteReplacer.Replace(fnord.data)
-	}
-
-	// Load the data
-	e.LoadBytes(fnord.data)
-
-	// Mark the data as "not changed"
+	// Mark the data as "not changed", since this happens when starting the editor
 	e.changed = false
 
 	// Start the global afterLoad functions in the background, but only once

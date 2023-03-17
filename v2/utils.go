@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"math"
 	"os"
@@ -368,50 +367,6 @@ func removeBinaryFiles(filenames []string) []string {
 		}
 	}
 	return nonBinaryFilenames
-}
-
-// ReadFileAndSize in one go.
-// Based on the os.ReadFile function.
-// This function should not be used for reading files in /proc.
-// Also supports .gz files.
-func ReadFileAndSize(filename string) ([]byte, uint64, error) {
-	var size64 uint64
-
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, size64, err
-	}
-	defer f.Close()
-
-	if info, err := f.Stat(); err == nil {
-		size64 = uint64(info.Size())
-	}
-	size64++ // one byte for final read at EOF
-
-	data := make([]byte, 0, size64)
-	capData := cap(data)
-	for {
-		if len(data) >= capData {
-			d := append(data[:capData], 0)
-			data = d[:len(data)]
-		}
-		n, err := f.Read(data[len(data):capData])
-		data = data[:len(data)+n]
-		if err != nil {
-			// The following is not being run every loop, but only if there are errors
-			if err == io.EOF {
-				err = nil
-			}
-			if strings.HasSuffix(filename, ".gz") {
-				extractedData, err := gUnzipData(data)
-				if err != nil {
-					return nil, size64, err
-				}
-				return extractedData, uint64(len(extractedData)), nil
-			}
-			return data, size64, err
-		}
-	}
 }
 
 // lastEntryIsNot checks that the last entry of xs is not the given x
