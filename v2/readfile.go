@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"strings"
 	"sync"
-	"unicode"
 
 	"github.com/xyproto/binary"
 )
@@ -42,7 +41,7 @@ func (e *Editor) ReadAllLinesConcurrently(filename string) error {
 
 	processLineWithOpinion := func(index int, line string) {
 		line = opinionatedStringReplacer.Replace(line)
-		line = strings.TrimRightFunc(line, unicode.IsSpace)
+		//line = strings.TrimRightFunc(line, unicode.IsSpace)
 
 		if len(line) > 2 {
 			var first byte = line[0]
