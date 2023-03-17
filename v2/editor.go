@@ -546,8 +546,8 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		fileMode = 0o755
 	}
 
-	// Unless it's a binary file and no changes has been made, save the data
-	if !(e.binaryFile && !e.changed) {
+	// If it's not a binary file OR the file has changed: save the data
+	if !e.binaryFile || e.changed {
 
 		// Start a spinner, in a short while
 		quitChan := Spinner(c, tty, fmt.Sprintf("Saving %s... ", e.filename), fmt.Sprintf("saving %s: stopped by user", e.filename), 200*time.Millisecond, e.ItalicsColor)
