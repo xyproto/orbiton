@@ -35,15 +35,20 @@ func (e *Editor) GenerateTokens(apiKey, prompt string, n int, temperature float3
 	client := gpt3.NewClient(apiKey)
 	chatContext, cancelFunction := context.WithCancel(context.Background())
 	defer cancelFunction()
-	err := client.CompletionStreamWithEngine(
+	err := client.ChatCompletionStream(
 		chatContext,
-		model,
-		gpt3.CompletionRequest{
-			Prompt:      []string{prompt},
-			MaxTokens:   gpt3.IntPtr(n),
-			Temperature: gpt3.Float32Ptr(temperature),
-		}, func(resp *gpt3.CompletionResponse) {
-			newToken(resp.Choices[0].Text)
+		gpt3.ChatCompletionRequest{
+			// Model: "gpt-3.5-turbo", // This is the default model. "gpt-4" or later might work in the future.
+			Messages: []gpt3.ChatCompletionRequestMessage{
+				gpt3.ChatCompletionRequestMessage{
+					Role:    "user",
+					Content: prompt,
+				},
+			},
+			MaxTokens:   n,
+			Temperature: temperature,
+		}, func(resp *gpt3.ChatCompletionStreamResponse) {
+			newToken(resp.Choices[0].Delta.Content)
 			if !e.generatingTokens {
 				cancelFunction()
 			}
@@ -91,9 +96,13 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 	temperature := env.Float32("CHATGPT_TEMPERATURE", defaultTemperature)
 
 	// Select a model
-	gptModel, gptModelTokens := gpt3.TextDavinci003Engine, 4000
+	gptModel, gptModelTokens := "gpt-3.5-turbo", 4000
+
+	// Previous experiments
+	// gptModel, gptModelTokens := gpt3.TextDavinci003Engine, 4000
 	// gptModel, gptModelTokens := "text-curie-001", 2048 // simpler and faster
 	// gptModel, gptModelTokens := "text-ada-001", 2048 // even simpler and even faster
+
 	switch generationType {
 	case continueCode:
 		gptModel, gptModelTokens = "code-davinci-002", 8000
