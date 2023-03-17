@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	lastCommandFile = filepath.Join(userCacheDir, "o", "last_command.sh")
-	changedTheme    bool // has the theme been changed manually after the editor was started?
+	lastCommandFile      = filepath.Join(userCacheDir, "o", "last_command.sh")
+	lastCommandMenuIndex int  // for the command menu
+	changedTheme         bool // has the theme been changed manually after the editor was started?
 )
 
 // Actions is a list of action titles and a list of action functions.

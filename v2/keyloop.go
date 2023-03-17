@@ -50,11 +50,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		lastPasteY LineIndex = -1 // used for keeping track if ctrl-v has been pressed twice on the same line
 		lastCutY   LineIndex = -1 // used for keeping track if ctrl-x has been pressed twice on the same line
 
-		clearKeyHistory      bool              // for clearing the last pressed key, for exiting modes that also reads keys
-		kh                   = NewKeyHistory() // keep track of the previous key presses
-		lastCommandMenuIndex int               // for the command menu
-		key                  string            // for the main loop
-		jsonFormatToggle     bool              // for toggling indentation or not when pressing ctrl-w for JSON
+		clearKeyHistory  bool              // for clearing the last pressed key, for exiting modes that also reads keys
+		kh               = NewKeyHistory() // keep track of the previous key presses
+		key              string            // for the main loop
+		jsonFormatToggle bool              // for toggling indentation or not when pressing ctrl-w for JSON
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
