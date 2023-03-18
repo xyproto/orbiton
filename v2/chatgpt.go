@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	codePrompt     = "Write it in %s and include comments where it makes sense. The code should be concise, correct and expertly created. Comments above functions should start with the function name. Don't include examples for how to use the generated code."
+	codePrompt     = "Write it in %s and include comments where it makes sense. The code should be concise, correct and expertly created. Comments above functions should start with the function name."
 	continuePrompt = "Write the next 10 lines of this %s program:\n"
 	textPrompt     = "Write it in %s. It should be expertly written, concise and correct."
 )
@@ -42,10 +42,32 @@ func (e *Editor) GenerateTokens(apiKey, prompt string, n int, temperature float3
 	client := gpt3.NewClient(apiKey)
 	chatContext, cancelFunction := context.WithCancel(context.Background())
 	defer cancelFunction()
+	err := client.CompletionStreamWithEngine(
+		chatContext,
+		model,
+		gpt3.CompletionRequest{
+			Prompt:      []string{prompt},
+			MaxTokens:   gpt3.IntPtr(n),
+			Temperature: gpt3.Float32Ptr(temperature),
+		}, func(resp *gpt3.CompletionResponse) {
+			newToken(resp.Choices[0].Text)
+			if !e.generatingTokens {
+				cancelFunction()
+			}
+		})
+	return err
+}
+
+// GenerateChatTokens uses the ChatGTP API to generate text. n is the maximum number of tokens.
+// The global atomic Bool "ContinueGeneratingChatTokens" controls when the text generation should stop.
+// Currently, gpt-3.5-turbo is the default model for chat. "gpt-4" might be available soon.
+func (e *Editor) GenerateChatTokens(apiKey, prompt string, n int, temperature float32, model string, newToken func(string)) error {
+	client := gpt3.NewClient(apiKey)
+	chatContext, cancelFunction := context.WithCancel(context.Background())
+	defer cancelFunction()
 	err := client.ChatCompletionStream(
 		chatContext,
 		gpt3.ChatCompletionRequest{
-			// Model: "gpt-3.5-turbo", // This is the default model. "gpt-4" or later might work in the future.
 			Messages: []gpt3.ChatCompletionRequestMessage{
 				gpt3.ChatCompletionRequestMessage{
 					Role:    "user",
@@ -103,10 +125,8 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 	temperature := env.Float32("CHATGPT_TEMPERATURE", defaultTemperature)
 
 	// Select a model
-	gptModel, gptModelTokens := "gpt-3.5-turbo", 4000
-
-	// Previous experiments
-	// gptModel, gptModelTokens := gpt3.TextDavinci003Engine, 4000
+	gptModel, gptModelTokens := gpt3.TextDavinci003Engine, 4000
+	// gptModel, gptModelTokens := "gpt-3.5-turbo", 4000 // only for chat
 	// gptModel, gptModelTokens := "text-curie-001", 2048 // simpler and faster
 	// gptModel, gptModelTokens := "text-ada-001", 2048 // even simpler and even faster
 
