@@ -2,12 +2,19 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/PullRequestInc/go-gpt3"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
+)
+
+const (
+	codePrompt     = "Write it in %s and include comments where it makes sense. The code should be concise, correct and expertly created. Comments above functions should start with the function name. Don't include examples for how to use the generated code."
+	continuePrompt = "Write the next 10 lines of this %s program:\n"
+	textPrompt     = "Write it in %s. It should be expertly written, concise and correct."
 )
 
 // ProgrammingLanguage returns true if the current mode appears to be a programming language (and not a markup language etc)
@@ -111,19 +118,19 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 
 	// Prefix the prompt
 	switch generationType {
-	case generateText:
-		prompt += ". Write it in " + e.mode.String() + ". It should be expertly written, concise and correct."
 	case generateCode:
-		prompt += ". Write it in " + e.mode.String() + " and include comments where it makes sense. The code should be concise, correct and expertly created. Comments above functions should start with the function name."
+		prompt += ". " + fmt.Sprintf(codePrompt, e.mode.String())
 	case continueCode:
-		initialPrompt := "Write the next 10 lines of this " + e.mode.String() + " program:\n"
+		prompt += ". " + fmt.Sprintf(continuePrompt, e.mode.String()) + "\n"
 		// gather about 2000 tokens/fields from the current file and use that as the prompt
 		startTokens := strings.Fields(e.String())
-		gatherNTokens := gptModelTokens - countTokens(initialPrompt)
+		gatherNTokens := gptModelTokens - countTokens(prompt)
 		if len(startTokens) > gatherNTokens {
 			startTokens = startTokens[len(startTokens)-gatherNTokens:]
 		}
-		prompt = strings.Join(startTokens, " ")
+		prompt += strings.Join(startTokens, " ")
+	case generateText:
+		prompt += ". " + fmt.Sprintf(textPrompt, e.mode.String())
 	}
 
 	// Set a suitable status bar text
