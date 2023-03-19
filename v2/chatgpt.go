@@ -69,7 +69,7 @@ func (e *Editor) GenerateChatTokens(apiKey, prompt string, n int, temperature fl
 		chatContext,
 		gpt3.ChatCompletionRequest{
 			Messages: []gpt3.ChatCompletionRequestMessage{
-				gpt3.ChatCompletionRequestMessage{
+				{
 					Role:    "user",
 					Content: prompt,
 				},
