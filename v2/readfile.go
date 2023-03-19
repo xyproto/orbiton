@@ -89,7 +89,7 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 				if first == '\t' {
 					tabIndentCounter++
 				} else if first == ' ' && line[1] == ' ' {
-					tabIndentCounter -= 11
+					tabIndentCounter--
 				}
 			}
 			lines[index] = []rune(line)
