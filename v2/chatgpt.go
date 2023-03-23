@@ -199,7 +199,9 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 		// "refresh"
 		e.MakeConsistent()
 		e.DrawLines(c, true, false)
+		e.redrawCursor = true
 	}); err != nil {
+		e.redrawCursor = true
 		errorMessage := err.Error()
 		if !strings.Contains(errorMessage, "context") {
 			e.End(c)
