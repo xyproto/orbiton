@@ -837,7 +837,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				indent = false
 			}
 
-			triggerWordsForAI := []string{"Write", "write", "!"}
+			triggerWordsForAI := []string{"Generate", "generate", "Write", "write", "!"}
 			shouldUseAI := false
 
 			if e.AtOrAfterEndOfLine() && e.NextLineIsBlank() {
