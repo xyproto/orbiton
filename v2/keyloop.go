@@ -884,7 +884,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						}
 					}
 				}
-			} else if e.mode == mode.Go && trimmedLine == "iferr" {
+			} else if (e.mode == mode.Go || e.mode == mode.Odin) && trimmedLine == "iferr" {
 				oneIndentation := e.indentation.String()
 				// default "if err != nil" block if iferr.IfErr can not find a more suitable one
 				ifErrBlock := "if err != nil {\n" + oneIndentation + "return nil, err\n" + "}\n"
