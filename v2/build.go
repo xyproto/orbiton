@@ -62,11 +62,19 @@ func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
 		}
 		// Default to the source directory base name, for these programming languages
 		return sourceDirectoryName
+	case mode.Odin:
+		if shouldExist && isFile(filepath.Join(sourceDir, sourceDirectoryName+".bin")) {
+			return sourceDirectoryName + ".bin"
+		}
+		// Default to just the source directory base name
+		return sourceDirectoryName
 	}
+
 	// Use the name of the current directory, if a file with that name exists
 	if shouldExist && isFile(filepath.Join(sourceDir, sourceDirectoryName)) {
 		return sourceDirectoryName
 	}
+
 	// Default to "main"
 	return exeFirstName
 }
@@ -339,7 +347,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.Odin:
-		cmd = exec.Command("odin", "build", sourceFilename)
+		cmd = exec.Command("odin", "build", ".") // using the filename and then "-file" instead of "." is also possible
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.CS:
