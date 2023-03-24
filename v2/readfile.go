@@ -1,61 +1,83 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"io"
 	"os"
 	"strings"
-	"sync"
 
 	"github.com/xyproto/binary"
 )
 
-// bufferSize is the max length per line when reading files
-const bufferSize = 64 * 1024
+const chunkSize = 64 * 1024 // size of chunks to read
 
-// ReadFile reads in a file, concurrently
+func readChunks(reader io.Reader, chunkChan chan<- []byte, errorChan chan<- error) {
+	defer close(chunkChan)
+	defer close(errorChan)
+
+	buf := make([]byte, chunkSize)
+	for {
+		n, err := reader.Read(buf)
+		if n > 0 {
+			chunk := make([]byte, n)
+			copy(chunk, buf[:n])
+			chunkChan <- chunk
+		}
+		if err != nil {
+			if err != io.EOF {
+				errorChan <- err
+			}
+			break
+		}
+	}
+}
+
+// ReadFile reads in a file concurrently
 func ReadFile(filename string) ([]byte, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
-	data := make([]byte, 0)
-	chunks := make(chan []byte)
-	errors := make(chan error)
-	done := make(chan struct{})
-	var wg sync.WaitGroup
-	go func() {
-		defer close(done)
-		for {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				buf := make([]byte, bufferSize)
-				n, err := f.Read(buf)
-				if n > 0 {
-					chunks <- buf[:n]
-				}
-				if err != nil {
-					errors <- err
-					return
-				}
-			}()
-			select {
-			case chunk := <-chunks:
-				data = append(data, chunk...)
-			case err := <-errors:
-				if err == io.EOF {
-					err = nil
-				}
-				wg.Wait()
-				done <- struct{}{}
-				return
-			}
+
+	chunkChan := make(chan []byte)
+	errorChan := make(chan error)
+
+	go readChunks(f, chunkChan, errorChan)
+
+	var data bytes.Buffer
+	var leftover []byte
+
+	for chunk := range chunkChan {
+		if len(leftover) > 0 {
+			chunk = append(leftover, chunk...)
+			leftover = nil
 		}
-	}()
-	<-done
+		lastNewLine := bytes.LastIndex(chunk, []byte("\n"))
+		if lastNewLine != -1 {
+			leftover = chunk[lastNewLine+1:]
+			chunk = chunk[:lastNewLine+1]
+		}
+		data.Write(chunk)
+	}
+
+	if len(leftover) > 0 {
+		data.Write(leftover)
+	}
+
+	if err := <-errorChan; err != nil {
+		return nil, err
+	}
+
+	return data.Bytes(), nil
+}
+
+// splitAtNewline splits the given byte slice at the first newline character
+// and returns the parts before and after the newline (excluding the newline character itself)
+func splitAtNewline(data []byte) (before, after []byte) {
+	if i := bytes.IndexByte(data, '\n'); i >= 0 {
+		return data[:i], data[i+1:]
+	}
 	return data, nil
 }
 
@@ -74,39 +96,34 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 	}
 
 	e.binaryFile = binary.Data(data)
-	scanner := bufio.NewScanner(bytes.NewReader(data))
-
-	// Set the scanner buffer size (max length per line)
-	buf := make([]byte, bufferSize)
-	scanner.Buffer(buf, bufferSize)
 
 	lines := make(map[int][]rune)
 	var index int
 	var tabIndentCounter int64
 
-	for scanner.Scan() {
-		line := scanner.Text()
-		if e.binaryFile {
-			lines[index] = []rune(line)
-		} else {
-			line = opinionatedStringReplacer.Replace(line)
-			if len(line) > 2 {
-				var first byte = line[0]
-				if first == '\t' {
-					tabIndentCounter++
-				} else if first == ' ' && line[1] == ' ' {
-					tabIndentCounter--
+	for {
+		line, rest := splitAtNewline(data)
+		if len(line) > 0 {
+			if e.binaryFile {
+				lines[index] = []rune(string(line))
+			} else {
+				lineStr := opinionatedStringReplacer.Replace(string(line))
+				if len(lineStr) > 2 {
+					var first byte = lineStr[0]
+					if first == '\t' {
+						tabIndentCounter++
+					} else if first == ' ' && lineStr[1] == ' ' {
+						tabIndentCounter--
+					}
 				}
+				lines[index] = []rune(lineStr)
 			}
-			lines[index] = []rune(line)
+			index++
 		}
-		index++
-	}
-
-	if err := scanner.Err(); err != nil && err != io.EOF {
-		// most likely, this is a binary file and the lines are too long
-		// TODO: Just read the file in another way and/or don't use a scanner
-		return err
+		if len(rest) == 0 {
+			break
+		}
+		data = rest
 	}
 
 	e.Clear()
@@ -120,4 +137,5 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 	e.changed = true
 
 	return nil
+
 }
