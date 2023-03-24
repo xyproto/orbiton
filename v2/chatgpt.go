@@ -75,7 +75,7 @@ func (e *Editor) GenerateChatTokens(apiKey, prompt string, n int, temperature fl
 				},
 			},
 			MaxTokens:   n,
-			Temperature: temperature,
+			Temperature: gpt3.Float32Ptr(temperature),
 		}, func(resp *gpt3.ChatCompletionStreamResponse) {
 			newToken(resp.Choices[0].Delta.Content)
 			if !e.generatingTokens {
