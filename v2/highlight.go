@@ -62,24 +62,17 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	case mode.Python:
 		// Figure out if "fromline" is within a markdown code block or not
 		for i := LineIndex(0); i < fromline; i++ {
-			// Check if the trimmed line starts with """ or '''
 			line := e.Line(i)
 			trimmedLine := strings.TrimSpace(line)
 
-			if trimmedLine == "\"\"\"" || trimmedLine == "'''" { // only 3 letters
-				inCodeBlock = !inCodeBlock
-			} else if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") { // this could be 6 letters or more
-				inCodeBlock = false
-			} else if strings.HasPrefix(trimmedLine, "'''") && strings.HasSuffix(trimmedLine, "'''") { // this could be 6 letters or more
-				inCodeBlock = false
-			} else if strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''") { // this is more than 3 letters
-				// Toggle the flag for if we're in a code block or not
-				inCodeBlock = true
-			} else if strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''") { // this is more than 3 letters
-				// Toggle the flag for if we're in a code block or not
-				inCodeBlock = false
-			}
+			threeQuoteStart := strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''")
+			threeQuoteEnd := strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''")
 
+			if threeQuoteStart && threeQuoteEnd {
+				inCodeBlock = false
+			} else if threeQuoteStart || threeQuoteEnd {
+				inCodeBlock = !inCodeBlock
+			}
 		}
 	}
 
