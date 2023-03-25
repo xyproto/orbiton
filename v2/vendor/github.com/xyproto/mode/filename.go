@@ -118,6 +118,8 @@ func Detect(filename string) Mode {
 			mode = HTML
 		case ".hx", ".hxml":
 			mode = Haxe
+		case ".ino":
+			mode = Arduino
 		case ".ivy":
 			mode = Ivy
 		case ".jakt":

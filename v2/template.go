@@ -24,6 +24,11 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		17,
 		1,
 	},
+	mode.Arduino: {
+		"void setup() {\n  Serial.begin(9600);\n  Serial.println(\"Hello, World!\");\n}\n\nvoid loop() {\n}\n",
+		16,
+		5,
+	},
 	mode.C: {
 		"#include <stdio.h>\n#include <stdlib.h>\n\nint main(int argc, char* argv[])\n{\n\tprintf(\"%s\\n\", \"Hello, World!\");\n\treturn EXIT_SUCCESS;\n}\n",
 		8,

@@ -9,6 +9,7 @@ const (
 	Ada                   // Ada
 	Agda                  // Agda
 	Amber                 // Amber templates
+	Arduino               // Arduino
 	Assembly              // Assembly
 	Basic                 // FreeBasic, Gambas 3
 	Bat                   // DOS and Windows batch files
@@ -93,6 +94,8 @@ func (mode Mode) String() string {
 		return "AIDL"
 	case Amber:
 		return "Amber"
+	case Arduino:
+		return "Arduino"
 	case Assembly:
 		return "Assembly"
 	case Basic:
