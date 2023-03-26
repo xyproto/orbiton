@@ -10,7 +10,7 @@ import (
 
 var (
 	openAIKeyFilename = filepath.Join(userCacheDir, "o", "openai_key.txt") // just for caching the key, if it's entered via the menu
-	openAIKey         = env.StrAlt("CHATGPT_API_KEY", "OPENAI_API_KEY", env.Str("OPENAI_KEY"))
+	openAIKey         = env.StrAlt("OPENAI_API_KEY", "OPENAI_KEY", env.Str("CHATGPT_API_KEY"))
 )
 
 func init() {
