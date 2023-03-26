@@ -386,72 +386,70 @@ type IndexByteLine struct {
 	byteLine []byte
 }
 
+func (e *Editor) LoadByteLine(ib IndexByteLine, eMut, tcMut *sync.RWMutex, tabIndentCounter, numLines *int, wg *sync.WaitGroup) {
+	// Require at least two bytes. Ignore lines with a single tab indentation or a single space
+	if len(ib.byteLine) > 2 {
+		var first byte = ib.byteLine[0]
+		if first == '\t' {
+			tcMut.Lock()
+			*tabIndentCounter++ // a tab indentation counts like a positive tab indentation
+			tcMut.Unlock()
+		} else if first == ' ' && ib.byteLine[1] == ' ' { // assume that two spaces is the smallest space indentation
+			tcMut.Lock()
+			*tabIndentCounter-- // a space indentation counts like a negative tab indentation
+			tcMut.Unlock()
+		}
+	}
+	eMut.Lock()
+	e.lines[ib.index] = []rune(string(ib.byteLine))
+	*numLines++
+	eMut.Unlock()
+	wg.Done()
+}
+
+// LoadBytes replaces the current editor contents with the given bytes
 func (e *Editor) LoadBytes(data []byte) {
 	// Prepare an empty map to load the lines into
 	e.Clear()
 	e.lines = make(map[int][]rune, 0)
 
-	// Split the bytes into lines
-	byteLines := bytes.Split(data, []byte{'\n'})
+	var (
+		// Split the bytes into lines
+		byteLines = bytes.Split(data, []byte{'\n'})
 
-	// Set up channels for sending and receiving data
-	lineChan := make(chan []rune)
-	countChan := make(chan int)
+		// Place the lines into the editor, while counting tab indentations vs space indentations
+		tabIndentCounter int
+
+		// Count the number of lines as the lines are being processed
+		numLines int
+
+		// Mutex for the editor lines and the numLines counter
+		eMut sync.RWMutex
+
+		// Mutex for the tabIndentCounter
+		tcMut sync.RWMutex
+	)
 
 	var wg sync.WaitGroup
-	wg.Add(len(byteLines))
-
-	go func() {
-		// Process each line in parallel
-		var tabIndentCounter int
-		for i, byteLine := range byteLines {
-			go func(index int, byteLine []byte) {
-				// Ignore lines with a single tab indentation or a single space
-				if len(byteLine) > 2 {
-					firstByte := byteLine[0]
-					if firstByte == '\t' {
-						lineChan <- []rune(string(byteLine))
-						countChan <- 1 // a tab indentation counts like a positive tab indentation
-					} else if firstByte == ' ' && byteLine[1] == ' ' { // assume that two spaces is the smallest space indentation
-						lineChan <- []rune(string(byteLine))
-						countChan <- -1 // a space indentation counts like a negative tab indentation
-					}
-				}
-				wg.Done()
-			}(i, byteLine)
-		}
-
-		// Wait for all the lines to be processed
-		wg.Wait()
-		close(lineChan)
-		close(countChan)
-
-		// Retrieve the lines and tab indentation count from the channels
-		for line := range lineChan {
-			e.lines[len(e.lines)] = line
-		}
-		for count := range countChan {
-			tabIndentCounter += count
-		}
-
-		// If the last line is empty, delete it
-		if len(e.lines) > 0 && len(e.lines[len(e.lines)-1]) == 0 {
-			delete(e.lines, len(e.lines)-1)
-		}
-
-		if tabIndentCounter > 0 {
-			// Check if there were more tab indentations than space indentations
-			e.detectedTabs = new(bool)
-			*e.detectedTabs = true
-			e.indentation.Spaces = false
-		}
-
-		// Mark the editor contents as "changed"
-		e.changed = true
-	}()
-
-	// Wait for the processing to finish
+	for index, byteLine := range byteLines {
+		wg.Add(1)
+		go e.LoadByteLine(IndexByteLine{index, byteLine}, &eMut, &tcMut, &tabIndentCounter, &numLines, &wg)
+	}
 	wg.Wait()
+
+	// If the last line is empty, delete it
+	if numLines > 0 && len(e.lines[numLines-1]) == 0 {
+		delete(e.lines, numLines-1)
+	}
+
+	if detectedTabs := tabIndentCounter > 0; detectedTabs {
+		// Check if there were more tab indentations than space indentations
+		e.detectedTabs = &detectedTabs
+		e.indentation.Spaces = !detectedTabs
+	}
+
+	// Mark the editor contents as "changed"
+	e.changed = true
 }
 
 // PrepareEmpty prepares an empty textual representation of a given filename.
