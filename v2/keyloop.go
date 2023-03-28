@@ -65,8 +65,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		return "", false, nil
 	}
 
-	c.SetRunewise(e.sshMode)
-
 	// Find the absolute path to this filename
 	absFilename, err := e.AbsFilename()
 	if err != nil {
