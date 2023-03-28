@@ -24,13 +24,6 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines b
 	newC.ShowCursor()
 	vt100.EchoOff()
 
-	if e.sshMode {
-		newC.SetRunewise(true)
-		defer func() {
-			newC.SetRunewise(false)
-		}()
-	}
-
 	w := int(newC.Width())
 
 	resizeMut.Unlock()
