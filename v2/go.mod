@@ -20,7 +20,6 @@ require (
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/textoutput v1.14.1
 	github.com/xyproto/vt100 v1.11.4-0.20230328115053-1b6c5854c043
-	go4.org v0.0.0-20230225012048-214862532bf5
 	golang.org/x/image v0.6.0
 )
 
@@ -40,6 +39,7 @@ require (
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.2.0 // indirect
+	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
