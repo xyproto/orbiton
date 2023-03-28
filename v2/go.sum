@@ -403,8 +403,9 @@ github.com/xyproto/vt100 v1.8.5/go.mod h1:8ni0+pphJABRAZOoyxY9yD0QQxkia4PjKNFiMQ
 github.com/xyproto/vt100 v1.9.8/go.mod h1:ExY2YeEedHIb8ng0LG0nv0pgO4prm3KFRnPcTVMF/is=
 github.com/xyproto/vt100 v1.9.12/go.mod h1:b0qTpewCw1TQdPH/V2djiI4YdMpfXrxTNi75ri6s0ZI=
 github.com/xyproto/vt100 v1.10.4/go.mod h1:GTrdAbDl0c1TYMjR2EoehGn3QyVwACjhSlAS2wdH45k=
-github.com/xyproto/vt100 v1.11.3 h1:tXveMV5wZYtA7+DoCuyDOdwuCvKlrNpv7d0vC31YAFE=
 github.com/xyproto/vt100 v1.11.3/go.mod h1:/cZEwHrMrKNy75d4Q7GRVdVUUr8nBLfBjlmKoJG/d+8=
+github.com/xyproto/vt100 v1.11.4-0.20230328115053-1b6c5854c043 h1:LKTu2W7E8mKSPB5oKRtGRiPyN+V0gybLYG8ng32uhu8=
+github.com/xyproto/vt100 v1.11.4-0.20230328115053-1b6c5854c043/go.mod h1:uVEBW/aJFdcF/90Y3xrPR1ujyeomJWypi/By9ZxSPbM=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/yuin/goldmark v1.4.1/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=

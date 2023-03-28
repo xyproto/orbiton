@@ -92,7 +92,7 @@ github.com/xyproto/termtitle
 # github.com/xyproto/textoutput v1.14.1
 ## explicit; go 1.10
 github.com/xyproto/textoutput
-# github.com/xyproto/vt100 v1.11.3
+# github.com/xyproto/vt100 v1.11.4-0.20230328115053-1b6c5854c043
 ## explicit; go 1.10
 github.com/xyproto/vt100
 # go4.org v0.0.0-20230225012048-214862532bf5

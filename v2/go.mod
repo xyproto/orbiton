@@ -19,7 +19,7 @@ require (
 	github.com/xyproto/syntax v1.10.9
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/textoutput v1.14.1
-	github.com/xyproto/vt100 v1.11.3
+	github.com/xyproto/vt100 v1.11.4-0.20230328115053-1b6c5854c043
 	go4.org v0.0.0-20230225012048-214862532bf5
 	golang.org/x/image v0.6.0
 )
