@@ -13,7 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/xyproto/env/v2"
 	"github.com/xyproto/vt100"
 )
 
@@ -792,8 +791,6 @@ retry:
 	vt100.Init()
 	vt100.EchoOff()
 	defer vt100.Close()
-
-	c.SetLineWrap(env.Bool("O_LW"))
 
 	// The loop time that is aimed for
 	var (

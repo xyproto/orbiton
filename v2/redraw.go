@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/xyproto/env/v2"
 	"github.com/xyproto/vt100"
 )
 
@@ -24,9 +23,6 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines b
 	newC := vt100.NewCanvas()
 	newC.ShowCursor()
 	vt100.EchoOff()
-
-	newC.SetLineWrap(env.Bool("O_LW"))
-
 	w := int(newC.Width())
 
 	resizeMut.Unlock()

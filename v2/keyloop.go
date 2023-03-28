@@ -36,8 +36,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	c.ShowCursor()
 	vt100.EchoOff()
 
-	c.SetLineWrap(env.Bool("O_LW"))
-
 	var (
 		statusDuration = 2700 * time.Millisecond
 
