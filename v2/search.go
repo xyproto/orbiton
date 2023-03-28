@@ -458,7 +458,7 @@ AGAIN:
 
 // LoadSearchHistory will load a list of strings from the given filename
 func LoadSearchHistory(filename string) ([]string, error) {
-	data, err := ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return []string{}, err
 	}

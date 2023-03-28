@@ -313,7 +313,7 @@ func getFullName() (fullName string) {
 	// Then look for ~/.gitconfig
 	gitConfigFilename := env.ExpandUser("~/.gitconfig")
 	if exists(gitConfigFilename) {
-		data, err := ReadFile(gitConfigFilename)
+		data, err := os.ReadFile(gitConfigFilename)
 		if err != nil {
 			return fullName
 		}

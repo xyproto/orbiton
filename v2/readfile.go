@@ -14,54 +14,9 @@ import (
 // bufferSize is the max length per line when reading files
 const bufferSize = 64 * 1024
 
-// ReadFile reads in a file, concurrently
-func ReadFile(filename string) ([]byte, error) {
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	data := make([]byte, 0)
-	chunks := make(chan []byte)
-	errors := make(chan error)
-	done := make(chan struct{})
-	var wg sync.WaitGroup
-	go func() {
-		defer close(done)
-		for {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				buf := make([]byte, bufferSize)
-				n, err := f.Read(buf)
-				if n > 0 {
-					chunks <- buf[:n]
-				}
-				if err != nil {
-					errors <- err
-					return
-				}
-			}()
-			select {
-			case chunk := <-chunks:
-				data = append(data, chunk...)
-			case err := <-errors:
-				if err == io.EOF {
-					err = nil
-				}
-				wg.Wait()
-				done <- struct{}{}
-				return
-			}
-		}
-	}()
-	<-done
-	return data, nil
-}
-
 // ReadFileAndProcessLines reads the named file concurrently, processes its lines, and updates the Editor.
 func (e *Editor) ReadFileAndProcessLines(filename string) error {
-	data, err := ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}
@@ -126,7 +81,7 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 func (e *Editor) LoadByteLine(ib IndexByteLine, eMut, tcMut *sync.RWMutex, tabIndentCounter, numLines *int, wg *sync.WaitGroup) {
 	// Require at least two bytes. Ignore lines with a single tab indentation or a single space
 	if len(ib.byteLine) > 2 {
-		var first byte = ib.byteLine[0]
+		first := ib.byteLine[0]
 		if first == '\t' {
 			tcMut.Lock()
 			*tabIndentCounter++ // a tab indentation counts like a positive tab indentation

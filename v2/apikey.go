@@ -25,7 +25,7 @@ func init() {
 // ReadAPIKey tries to read the Open AI API Key from file.
 // An empty string is returned if the file could not be read.
 func ReadAPIKey() string {
-	data, err := ReadFile(openAIKeyFilename)
+	data, err := os.ReadFile(openAIKeyFilename)
 	if err != nil {
 		return ""
 	}

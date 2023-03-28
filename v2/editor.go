@@ -380,6 +380,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (st
 	return message, nil
 }
 
+// IndexByteLine represents a single line of text, as bytes and with a line index
 type IndexByteLine struct {
 	index    int
 	byteLine []byte
@@ -2157,7 +2158,7 @@ func (e *Editor) VerticalScrollIfNeeded(c *vt100.Canvas) {
 
 // InsertFile inserts the contents of a file at the current location
 func (e *Editor) InsertFile(c *vt100.Canvas, filename string) error {
-	data, err := ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}
