@@ -1487,7 +1487,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// Check if ctrl-x was pressed once or twice, for this line
 			} else if lastCutY != y { // Single line cut
 				// Also close the portal, if any
-				ClosePortal(e)
+				e.ClosePortal()
 
 				lastCutY = y
 				lastCopyY = -1
@@ -1521,7 +1521,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				lastPasteY = -1
 
 				// Also close the portal, if any
-				ClosePortal(e)
+				e.ClosePortal()
 
 				s := e.Block(y)
 				lines := strings.Split(s, "\n")
@@ -1595,7 +1595,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			lastCopyY = y
 
 			// close the portal, if any
-			closedPortal := ClosePortal(e) == nil
+			closedPortal := e.ClosePortal() == nil
 
 			if singleLineCopy { // Single line copy
 				status.Clear(c)
@@ -1661,7 +1661,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				if err != nil {
 					// status.SetErrorMessage("Could not copy text through the portal.")
 					status.SetError(err)
-					ClosePortal(e)
+					e.ClosePortal()
 				} else {
 					status.SetMessage(fmt.Sprintf("Using portal at %s\n", portal))
 					gotLineFromPortal = true
@@ -1832,7 +1832,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			status.Clear(c)
 			if HasPortal() {
 				status.SetMessage("Closing portal")
-				ClosePortal(e)
+				e.ClosePortal()
 			} else {
 				portal, err := e.NewPortal()
 				if err != nil {

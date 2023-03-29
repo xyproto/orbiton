@@ -334,7 +334,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			// Prepare to delete all lines from this one and out
 			undo.Snapshot(e)
 			// Also close the portal, if any
-			ClosePortal(e)
+			e.ClosePortal()
 			// Mark the file as changed
 			e.changed = true
 		}

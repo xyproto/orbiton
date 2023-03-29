@@ -51,7 +51,7 @@ func (p *Portal) MoveUp() {
 }
 
 // ClosePortal will clear the portal by removing the portal file
-func ClosePortal(e *Editor) error {
+func (e *Editor) ClosePortal() error {
 	e.sameFilePortal = nil
 	return os.Remove(portalFilename)
 }
