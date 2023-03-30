@@ -9,6 +9,8 @@
 - [ ] HTTP client - scratch document style
 - [ ] When rebasing, look for the `>>>>` markers when opening the file and jump to the first one?
 - [ ] When pasting with double ctrl-v, let one ctrl-z undo both keypresses.
+- [ ] Handle really long lines as well.
+- [ ] When pasting lines that start with "+" and it's not a diff/patch file, then replace "+" with a blank.
 
 ## AI
 
