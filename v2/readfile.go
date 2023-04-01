@@ -12,7 +12,7 @@ import (
 )
 
 // bufferSize is the max length per line when reading files
-const bufferSize = 64 * 1024
+const bufferSize = 512 * 1024
 
 // ReadFileAndProcessLines reads the named file concurrently, processes its lines, and updates the Editor.
 func (e *Editor) ReadFileAndProcessLines(filename string) error {
