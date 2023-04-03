@@ -141,7 +141,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.Nroff:
 		clearKeywords()
 		delKeywords = []string{"class"}
-		addKeywords = []string{"B", "BR", "PP", "SH", "TP", "fB", "fP", "RB", "TH", "IR", "IP", "fI", "fR"}
+		addKeywords = []string{"B", "BR", "PP", "SH", "TP", "fB", "fI", "fP", "RB", "TH", "IR", "IP", "fI", "fR"}
 	case mode.ManPage:
 		clearKeywords()
 	case mode.ObjectPascal:
