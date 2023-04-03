@@ -1,7 +1,7 @@
 # github.com/DataDog/gostackparse v0.6.0
 ## explicit; go 1.16
 github.com/DataDog/gostackparse
-# github.com/PullRequestInc/go-gpt3 v1.1.14
+# github.com/PullRequestInc/go-gpt3 v1.1.15
 ## explicit; go 1.13
 github.com/PullRequestInc/go-gpt3
 # github.com/atotto/clipboard v0.1.4

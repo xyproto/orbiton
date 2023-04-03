@@ -3,7 +3,7 @@ module github.com/xyproto/orbiton/v2
 go 1.17
 
 require (
-	github.com/PullRequestInc/go-gpt3 v1.1.14
+	github.com/PullRequestInc/go-gpt3 v1.1.15
 	github.com/atotto/clipboard v0.1.4
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
 	github.com/felixge/fgtrace v0.2.0

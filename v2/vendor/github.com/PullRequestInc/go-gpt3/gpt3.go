@@ -52,6 +52,11 @@ const (
 )
 
 const (
+	TextModerationLatest = "text-moderation-latest"
+	TextModerationStable = "text-moderation-stable"
+)
+
+const (
 	defaultBaseURL        = "https://api.openai.com/v1"
 	defaultUserAgent      = "go-gpt3"
 	defaultTimeoutSeconds = 30
@@ -104,6 +109,10 @@ type Client interface {
 
 	// Returns an embedding using the provided request.
 	Embeddings(ctx context.Context, request EmbeddingsRequest) (*EmbeddingsResponse, error)
+
+	// Moderation performs a moderation check on the given text against an OpenAI classifier to determine whether the
+	// provided content complies with OpenAI's usage policies.
+	Moderation(ctx context.Context, request ModerationRequest) (*ModerationResponse, error)
 }
 
 type client struct {
@@ -370,6 +379,26 @@ func (c *client) Embeddings(ctx context.Context, request EmbeddingsRequest) (*Em
 	}
 
 	output := EmbeddingsResponse{}
+	if err := getResponseObject(resp, &output); err != nil {
+		return nil, err
+	}
+	return &output, nil
+}
+
+// Moderation performs a moderation check on the given text against an OpenAI classifier.
+//
+// See: https://platform.openai.com/docs/api-reference/moderations/create
+func (c *client) Moderation(ctx context.Context, request ModerationRequest) (*ModerationResponse, error) {
+	req, err := c.newRequest(ctx, "POST", "/moderations", request)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.performRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	output := ModerationResponse{}
 	if err := getResponseObject(resp, &output); err != nil {
 		return nil, err
 	}

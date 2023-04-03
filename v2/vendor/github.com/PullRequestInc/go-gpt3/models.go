@@ -286,3 +286,48 @@ type SearchResponse struct {
 	Data   []SearchData `json:"data"`
 	Object string       `json:"object"`
 }
+
+// ModerationRequest is a request for the moderation API.
+type ModerationRequest struct {
+	// Input is the input text that should be classified. Required.
+	Input string `json:"input"`
+	// Model is the content moderation model to use. If not specified, will default to OpenAI API defaults, which is
+	// currently "text-moderation-latest".
+	Model string `json:"model,omitempty"`
+}
+
+// ModerationCategoryResult shows the categories that the moderation classifier flagged the input text for.
+type ModerationCategoryResult struct {
+	Hate            bool `json:"hate"`
+	HateThreatening bool `json:"hate/threatening"`
+	SelfHarm        bool `json:"self-harm"`
+	Sexual          bool `json:"sexual"`
+	SexualMinors    bool `json:"sexual/minors"`
+	Violence        bool `json:"violence"`
+	ViolenceGraphic bool `json:"violence/graphic"`
+}
+
+// ModerationCategoryScores shows the classifier scores for each moderation category.
+type ModerationCategoryScores struct {
+	Hate            float32 `json:"hate"`
+	HateThreatening float32 `json:"hate/threatening"`
+	SelfHarm        float32 `json:"self-harm"`
+	Sexual          float32 `json:"sexual"`
+	SexualMinors    float32 `json:"sexual/minors"`
+	Violence        float32 `json:"violence"`
+	ViolenceGraphic float32 `json:"violence/graphic"`
+}
+
+// ModerationResult represents a single moderation classification result returned by the moderation API.
+type ModerationResult struct {
+	Flagged        bool                     `json:"flagged"`
+	Categories     ModerationCategoryResult `json:"categories"`
+	CategoryScores ModerationCategoryScores `json:"category_scores"`
+}
+
+// ModerationResponse is the full response from a request to the moderation API.
+type ModerationResponse struct {
+	ID      string             `json:"id"`
+	Model   string             `json:"model"`
+	Results []ModerationResult `json:"results"`
+}
