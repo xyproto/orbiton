@@ -11,6 +11,7 @@
 - [ ] When pasting with double ctrl-v, let one ctrl-z undo both keypresses.
 - [ ] Handle really long lines as well.
 - [ ] When pasting lines that start with "+" and it's not a diff/patch file, then replace "+" with a blank.
+- [ ] Add a menu option toggle for letting in-document ChatGPT prompts affect: the next line | code block | function | file
 
 ## AI
 
@@ -19,6 +20,7 @@
 - [x] Make it possible to generate the rest of a function, just by typing in a comment and a function signature,
       for instance by pressing "tab" at the end of a function signature.
 - [x] Don't use the '!' prefix for Markdown.
+- [ ] Embed https://github.com/nomic-ai/gpt4all + data files within the `o` executable, somehow.
 
 ## Building, debugging and testing programs
 
