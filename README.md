@@ -92,9 +92,9 @@ These features are unique to `o`, as far as I am aware:
 * When jumping to a specific line in a file with `ctrl-l`, jumping to a percentage (like `50%`) or a fraction (like `0.5` or `.5`) is also possible.
 * If tab completion in the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
 * Search by pressing `ctrl-f`, entering text and pressing `return`. Replace by pressing `tab` instead of `return`, then enter the replacement text and press `return`. Searching for unicode runes on the form `u+0000` is also supported.
-* Type `iferr` on a single line in a Go program and press `return` to insert a suitable `if err != nil { return ... }` block, based on [koron/iferr](https://github.com/koron/iferr).
+* Type `iferr` on a single line in a Go or Odin program and press `return` to insert a suitable `if err != nil { return ... }` block, based on [koron/iferr](https://github.com/koron/iferr).
 * For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
-* Generate code by using the ChatGPT API, directly in a source file. See the [section above](#generate-code-automatically).
+* Generate code by using the ChatGPT API. See the [section above](#generate-code-automatically).
 
 ## Other features and limitations
 
@@ -134,7 +134,7 @@ These features are unique to `o`, as far as I am aware:
 * Want to quickly convert Markdown to PDF and have pandoc installed? Try `o filename.md`, press `ctrl-space` and quit with `ctrl-q`.
 * The default syntax highlighting theme aims to be as pretty as possible with less than 16 colors, but it mainly aims for clarity. It should be easy to spot a keyword, number, string or a stray parenthesis.
 * Press `ctrl-w` to toggle the check mark in `- [ ] TODO item` boxes in Markdown.
-* `o` is written mostly in `o`, with some use of NeoVim for the initial development.
+* Orbiton is written mostly in Orbiton, with some use of NeoVim for the initial development.
 * Can load, edit and save gzipped text files or man pages that ends with a `.gz` extension.
 * Has fewer hotkeys to learn than GNU Nano.
 
@@ -145,7 +145,7 @@ These features are unique to `o`, as far as I am aware:
 * Some unicode runes may disrupt the text flow. This is generally not a problem for editing code and configuration files, but may be an issue when editing files that contains text in many languages.
 * `o` may have issues with large files (of several MB+). For normal text files or source code files, this is a non-issue.
 * Pressing backspace near the end of lines that are longer than the terminal width may cause the cursor to jump.
-* Middle-click pasting (instead of pasting with `ctrl-v`) may only paste the first character.
+* Middle-click pasting (instead of pasting with `ctrl-v`) will only paste the first character.
 * Pressing `cmd-v`, `cmd-x` and `cmd-c` on macOS only works when using the `og` GUI frontend. For `o`, `ctrl-v`, `ctrl-x` and `ctrl-c` must be used instead, for now.
 * The smart indentation is not always smart.
 
