@@ -153,8 +153,8 @@ These features are unique to `o`, as far as I am aware:
 
 * `ctrl-s` - Save.
 * `ctrl-q` - Quit.
-* `ctrl-r` - Open or close a portal. Text can be pasted from the portal into another file with `ctrl-v`.
-             For "git interactive rebase" mode (`git rebase -i`), this will cycle the rebase keywords.
+* `ctrl-r` - Open or close a portal. Text can be pasted from the portal into another (or the same) file with `ctrl-v`.
+             For "git interactive rebase" mode (`git rebase -i`), this will cycle the rebase keywords instead.
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords.
 * `ctrl-a` - Go to start of text, then start of line and then to the previous line.
 * `ctrl-e` - Go to end of line and then to the next line.
