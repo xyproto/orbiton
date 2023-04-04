@@ -508,7 +508,8 @@ When using `pandoc` to export from Markdown to PDF:
 
 ## Easter eggs
 
-* Press the Konami code keys while in the `ctrl-o` menu to start a silly little game about feeding creatures with pellets before they are eaten. Alternatively, create a symlink for starting it directly with ie.: `ln -sf /usr/bin/o /usr/bin/feedgame`.
+* Press the Konami code keys while in the `ctrl-o` menu to start a silly little game about feeding creatures with pellets before they are eaten. Alternatively, create a symlink for starting it directly, ie.: `ln -sf /usr/bin/o /usr/bin/feedgame`.
+* Searching for the letter `f` jumps to the previous function signature.
 * Press `right, down, left` or `left, down, right` in _rapid_ succession followed by either `down` to save or `up` to save _and_ quit.  The only purpose of this unusual shortcut is to help avoid the painful [Emacs pinky](http://xahlee.info/emacs/emacs/emacs_pinky.html).
 
 ## Included executables
