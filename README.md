@@ -59,9 +59,9 @@ To unset:
 
     git config --global --unset core.editor
 
-## Generate code automatically
+## Code generation
 
-* Make sure the `CHATGPT_API_KEY` environment variable is set. An API key can be aquired at [openai.com](https://platform.openai.com/account/api-keys).
+* Obtain an API key from [openai.com](https://platform.openai.com/account/api-keys) and set it as the `OPENAI_API_KEY`, `OPENAI_KEY` or `CHATGPT_API_KEY` environment variable.
 * Press return after writing ie. `!write a function that adds two numbers` or `// Write a function that adds two numbers`.
 * Watch syntax highlighted code being generated in front of your eyes. ChatGPT generates the code.
 * Press `Esc` to stop code from being generated.
