@@ -2,94 +2,84 @@
 #
 # Create release tarballs/zip-files
 #
+
+platforms="
+  linux,amd64,,linux_x86_64_static,tar.xz
+  linux,arm64,,linux_aarch64_static,tar.xz
+  linux,arm,6,linux_armv6_static,tar.xz
+  linux,arm,7,linux_armv7_static,tar.xz
+  linux,riscv64,,linux_riscv64_static,tar.xz
+  darwin,amd64,,macos_x86_64_static,tar.gz
+  darwin,arm64,,macos_aarch64_static,tar.gz
+  freebsd,amd64,,freebsd_x86_64_static,tar.gz
+  freebsd,arm64,,freebsd_aarch64_static,tar.gz
+  freebsd,arm,6,freebsd_armv6_static,tar.gz
+  freebsd,arm,7,freebsd_armv7_static,tar.gz
+  netbsd,amd64,,netbsd_x86_64_static,tar.gz
+  netbsd,arm64,,netbsd_aarch64_static,tar.gz
+  netbsd,arm,6,netbsd_armv6_static,tar.gz
+  netbsd,arm,7,netbsd_armv7_static,tar.gz
+"
+
+# plan9,amd64,,plan9_x86_64_static,tar.gz
+
 cd v2
 name=orbiton
 version=$(grep -i version main.go | head -1 | cut -d' ' -f4 | cut -d'"' -f1)
 echo "Version $version"
 
-export GOBUILD=( go build -mod=vendor -trimpath -ldflags "-w -s" -a -o )
-export CGO_ENABLED=0
+CGO_ENABLED=0
+
+compile_and_compress() {
+  goos="$1"
+  goarch="$2"
+  goarm="$3"
+  platform="$4"
+  compression="$5"
+
+  echo "Compiling $name.$platform..."
+
+  [ -n "$goarm" ] && GOARM="$goarm" || unset GOARM
+  GOOS="$goos" GOARCH="$goarch" go build -mod=vendor -trimpath -ldflags="-s -w" -a -o "$name.$platform" || {
+    echo "Error: failed to compile for $platform"
+    echo "Platform string: $p"
+    echo "Environment variables: GOOS=$goos GOARCH=$goarch GOARM=$goarm"
+    exit 1
+  }
+
+  echo "Compressing $name-$version.$platform.$compression"
+  mkdir "$name-$version-$platform"
+  cp ../o.1 "$name-$version-$platform/"
+  gzip "$name-$version-$platform/o.1"
+  cp "$name.$platform" "$name-$version-$platform/o"
+  cp ../LICENSE "$name-$version-$platform/"
+
+  case "$compression" in
+    tar.xz)
+      tar Jcf "$name-$version-$platform.$compression" "$name-$version-$platform"
+      ;;
+    tar.gz)
+      tar zcf "$name-$version-$platform.$compression" "$name-$version-$platform"
+      ;;
+  esac
+
+  rm -r "$name-$version-$platform"
+  rm "$name.$platform"
+}
 
 echo 'Compiling...'
-echo '* Linux x86_64'
-export GOOS=linux
-GOARCH=amd64 "${GOBUILD[@]}" $name.linux_x86_64_static
-echo '* Linux aarch64'
-export GOARCH=arm64
-"${GOBUILD[@]}" $name.linux_aarch64_static
-export GOARCH=arm
-echo '* Linux armv6'
-GOARM=6 "${GOBUILD[@]}" $name.linux_armv6_static
-echo '* Linux armv7 (RPI 2/3/4)'
-GOARM=7 "${GOBUILD[@]}" $name.linux_armv7_static
-unset GOARM
-echo '* Linux riscv64'
-GOARCH=riscv64 "${GOBUILD[@]}" $name.linux_riscv64_static
+while read -r p; do
+  [ -z "$p" ] && continue
+  IFS=',' read -r goos goarch goarm platform compression <<EOF
+$p
+EOF
+  compile_and_compress "$goos" "$goarch" "$goarm" "$platform" "$compression" &
+done <<EOF
+$platforms
+EOF
 
-echo '* macOS x86_64'
-export GOOS=darwin
-GOARCH=amd64 "${GOBUILD[@]}" $name.macos_x86_64_static
-echo '* macOS aarch64'
-GOARCH=arm64 "${GOBUILD[@]}" $name.macos_aarch64_static
+wait
 
-echo '* FreeBSD x86_64'
-export GOOS=freebsd
-GOARCH=amd64 "${GOBUILD[@]}" $name.freebsd_x86_64_static
-echo '* FreeBSD aarch64'
-GOARCH=arm64 "${GOBUILD[@]}" $name.freebsd_aarch64_static
-export GOARCH=arm
-echo '* FreeBSD armv6'
-GOARM=6 "${GOBUILD[@]}" $name.freebsd_armv6_static
-echo '* FreeBSD armv7'
-GOARM=7 "${GOBUILD[@]}" $name.freebsd_armv7_static
-
-echo '* NetBSD x86_64'
-export GOOS=netbsd
-GOARCH=amd64 "${GOBUILD[@]}" $name.netbsd_x86_64_static
-echo '* NetBSD aarch64'
-GOARCH=arm64 "${GOBUILD[@]}" $name.netbsd_aarch64_static
-export GOARCH=arm
-echo '* NetBSD armv6'
-GOARM=6 "${GOBUILD[@]}" $name.netbsd_armv6_static
-echo '* NetBSD armv7'
-GOARM=7 "${GOBUILD[@]}" $name.netbsd_armv7_static
-
-# OpenBSD (and Plan9) did not compile: https://github.com/pkg/term/issues/27
-
-# Compress the Linux releases with xz
-for p in \
-  linux_x86_64_static linux_aarch64_static linux_armv6_static \
-  linux_armv7_static linux_riscv64_static
-do
-  echo "Compressing $name-$version.$p.tar.xz"
-  mkdir "$name-$version-$p"
-  cp ../o.1 "$name-$version-$p/"
-  gzip "$name-$version-$p/o.1"
-  cp $name.$p "$name-$version-$p/o"
-  cp ../LICENSE "$name-$version-$p/"
-  tar Jcf "$name-$version-$p.tar.xz" "$name-$version-$p/"
-  rm -r "$name-$version-$p"
-  rm $name.$p
-done
-
-# Compress the other tarballs with gz
-for p in \
-  macos_x86_64_static macos_aarch64_static \
-  freebsd_x86_64_static freebsd_aarch64_static freebsd_armv6_static \
-  freebsd_armv7_static netbsd_x86_64_static netbsd_aarch64_static \
-  netbsd_armv6_static netbsd_armv7_static
-do
-  echo "Compressing $name-$version.$p.tar.gz"
-  mkdir "$name-$version-$p"
-  cp ../o.1 "$name-$version-$p/"
-  gzip "$name-$version-$p/o.1"
-  cp $name.$p "$name-$version-$p/o"
-  cp ../LICENSE "$name-$version-$p/"
-  tar zcf "$name-$version-$p.tar.gz" "$name-$version-$p/"
-  rm -r "$name-$version-$p"
-  rm $name.$p
-done
 cd ..
-
 mkdir -p release
 mv -v v2/$name-$version* release
