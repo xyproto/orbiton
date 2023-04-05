@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"unicode"
@@ -227,6 +228,9 @@ func runeFromUBytes(bs []byte) (rune, error) {
 // Will call log.Fatalln if there are problems!
 func logf(format string, args ...interface{}) {
 	logFilename := filepath.Join(tempDir, "o.log")
+	if runtime.GOOS == "darwin" {
+		logFilename = "/tmp/o.log"
+	}
 	err := flogf(logFilename, format, args...)
 	if err != nil {
 		log.Fatalln(err)
