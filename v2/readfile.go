@@ -11,9 +11,6 @@ import (
 	"github.com/xyproto/binary"
 )
 
-// bufferSize is the max length per line when reading files
-const bufferSize = 512 * 1024
-
 // ReadFileAndProcessLines reads the named file concurrently, processes its lines, and updates the Editor.
 func (e *Editor) ReadFileAndProcessLines(filename string) error {
 	data, err := os.ReadFile(filename)
@@ -30,6 +27,8 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 
 	e.binaryFile = binary.Data(data)
 	scanner := bufio.NewScanner(bytes.NewReader(data))
+
+	const bufferSize = 512 * 1024
 
 	// Set the scanner buffer size (max length per line)
 	buf := make([]byte, bufferSize)
