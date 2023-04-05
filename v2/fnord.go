@@ -42,8 +42,18 @@ func (fnord *FilenameOrData) SetTitle() {
 	title := "?"
 	if fnord.stdin {
 		title = "stdin"
+		if len(fnord.data) > 512 {
+			fields := strings.Fields(string(fnord.data[:512]))
+			firstWord := fields[0]
+			if len(firstWord) >= 2 && strings.Contains(firstWord, "(") && strings.Contains(firstWord, ")") {
+				// Probably a man page, create a nicely formatted lowercase title
+				// "LS(1)" becomes "man ls"
+				fields = strings.Split(firstWord, "(")
+				title = "man " + strings.ToLower(fields[0])
+			}
+		}
 	} else if fnord.filename != "" {
-		title = fnord.filename
+		title = termtitle.GenerateTitle(fnord.filename)
 	}
-	termtitle.Set(termtitle.GenerateTitle(title))
+	termtitle.Set(title)
 }
