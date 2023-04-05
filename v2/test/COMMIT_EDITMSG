@@ -1,0 +1,94 @@
+Update dependencies
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# On branch main
+# Your branch is up to date with 'origin/main'.
+#
+# Changes to be committed:
+#	modified:   v2/go.mod
+#	modified:   v2/go.sum
+#	new file:   v2/vendor/golang.org/x/sys/unix/ioctl_signed.go
+#	renamed:    v2/vendor/golang.org/x/sys/unix/ioctl.go -> v2/vendor/golang.org/x/sys/unix/ioctl_unsigned.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/ioctl_zos.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/mkerrors.sh
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_aix.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_aix_ppc.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_aix_ppc64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_darwin.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_dragonfly.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_freebsd.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_linux.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_linux_386.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_linux_amd64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_linux_arm.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_linux_arm64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_linux_loong64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_linux_mips64x.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_linux_mipsx.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_linux_ppc.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_linux_ppc64x.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_linux_riscv64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_linux_s390x.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_linux_sparc64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_netbsd.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_openbsd.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_solaris.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_unix.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/syscall_zos_s390x.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zerrors_darwin_amd64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zerrors_darwin_arm64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_aix_ppc.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_aix_ppc64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_aix_ppc64_gc.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_aix_ppc64_gccgo.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_darwin_amd64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_darwin_amd64.s
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_darwin_arm64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_darwin_arm64.s
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_dragonfly_amd64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_freebsd_386.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_freebsd_amd64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_freebsd_arm.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_freebsd_arm64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_freebsd_riscv64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_linux.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_linux_386.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_linux_amd64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_linux_arm.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_linux_arm64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_linux_mips.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_linux_mips64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_linux_mips64le.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_linux_mipsle.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_linux_ppc.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_linux_ppc64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_linux_ppc64le.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_linux_riscv64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_linux_s390x.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_linux_sparc64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_netbsd_386.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_netbsd_amd64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_netbsd_arm.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_netbsd_arm64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_openbsd_386.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_openbsd_386.s
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_openbsd_amd64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_openbsd_amd64.s
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_openbsd_arm.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_openbsd_arm.s
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_openbsd_arm64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_openbsd_arm64.s
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_openbsd_mips64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_openbsd_mips64.s
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_openbsd_ppc64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_openbsd_ppc64.s
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_openbsd_riscv64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_openbsd_riscv64.s
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_solaris_amd64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/zsyscall_zos_s390x.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/ztypes_darwin_amd64.go
+#	modified:   v2/vendor/golang.org/x/sys/unix/ztypes_darwin_arm64.go
+#	modified:   v2/vendor/modules.txt
+#
