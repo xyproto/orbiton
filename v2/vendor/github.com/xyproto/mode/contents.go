@@ -11,8 +11,8 @@ func SimpleDetect(contents string) Mode {
 	if strings.Contains(contents, "\n") {
 		firstLine = strings.SplitN(contents, "\n", 2)[0]
 	}
-	if len(firstLine) > 255 { // just look at the first 255, if it's one long line
-		firstLine = firstLine[:255]
+	if len(firstLine) > 512 { // just look at the first 512, if it's one long line
+		firstLine = firstLine[:512]
 	}
 	if m, found := DetectFromContents(Blank, firstLine, func() string { return contents }); found {
 		return m
@@ -27,8 +27,8 @@ func SimpleDetectBytes(contents []byte) Mode {
 	if bytes.Contains(contents, nl) {
 		firstLine = bytes.SplitN(contents, nl, 2)[0]
 	}
-	if len(firstLine) > 255 { // just look at the first 255, if it's one long line
-		firstLine = firstLine[:255]
+	if len(firstLine) > 512 { // just look at the first 255, if it's one long line
+		firstLine = firstLine[:512]
 	}
 	if m, found := DetectFromContentBytes(Blank, firstLine, func() []byte { return contents }); found {
 		return m
