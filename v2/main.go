@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	versionString = "Orbiton 2.60.4"
+	versionString = "Orbiton 2.60.5"
 )
 
 func main() {
