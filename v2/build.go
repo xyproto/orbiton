@@ -565,6 +565,10 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		switch {
 		case bytes.Contains(output, []byte(": undefined")):
 			errorMarker = "undefined"
+		case bytes.Contains(output, []byte(": warning")):
+			errorMarker = "error"
+		case bytes.Contains(output, []byte(": note")):
+			errorMarker = "error"
 		case bytes.Contains(output, []byte(": error")):
 			errorMarker = "error"
 		case bytes.Contains(output, []byte("go: cannot find main module")):
