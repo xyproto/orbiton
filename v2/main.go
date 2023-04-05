@@ -103,8 +103,8 @@ See the man page for more information.
 
 	stdinFilename := len(os.Args) == 1 || (len(os.Args) == 2 && (os.Args[1] == "-" || os.Args[1] == "/dev/stdin"))
 	// If no regular filename is given, check if data is ready at stdin
-	readFromStdin := stdinFilename && dataReadyOnStdin()
-	if readFromStdin {
+	fnord.stdin = stdinFilename && dataReadyOnStdin()
+	if fnord.stdin {
 		// TODO: Use a spinner?
 		data, err := io.ReadAll(os.Stdin)
 		if err != nil {
@@ -113,6 +113,7 @@ See the man page for more information.
 		}
 		// Now stop reading further from stdin
 		os.Stdin.Close()
+
 		if lendata := len(data); lendata > 0 {
 			fnord.filename = "-"
 			fnord.data = data

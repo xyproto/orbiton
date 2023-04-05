@@ -347,19 +347,21 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (st
 		if fnord.data, err = e.LoadClass(fnord.filename); err != nil {
 			return "Could not run jad", err
 		}
-		// Load the data
+		// Load the data (and make opinionated replacements if it's a text file + set e.binaryFile if it's binary)
 		e.LoadBytes(fnord.data)
-	} else {
-		// Read the file and set e.binaryFile, if the "fnord" (filename or data) does not contain anything
-		if fnord.Empty() {
-			// read in the file, set e.binaryFile and also make opinionated replacements if it's a text file
-			if err := e.ReadFileAndProcessLines(fnord.filename); err != nil {
-				return message, err
-			}
-			if e.binaryFile {
-				e.mode = mode.Blank
-			}
+	} else if fnord.stdin {
+		// Load the data that has already been read from stdin
+		// (and make opinionated replacements if it's a text file + set e.binaryFile if it's binary)
+		e.LoadBytes(fnord.data)
+	} else if fnord.Empty() {
+		// Load the file (and make opinionated replacements if it's a text file + set e.binaryFile if it's binary)
+		if err := e.ReadFileAndProcessLines(fnord.filename); err != nil {
+			return message, err
 		}
+	}
+
+	if e.binaryFile {
+		e.mode = mode.Blank
 	}
 
 	// If enough time passed so that the spinner was shown by now, enter "slow disk mode" where fewer disk-related I/O operations will be performed
@@ -2207,7 +2209,7 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		switchBuffer.Restore(e)
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
-		fnord := FilenameOrData{filenameToOpen, []byte{}, 0}
+		fnord := FilenameOrData{filenameToOpen, []byte{}, 0, false}
 		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false)
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.

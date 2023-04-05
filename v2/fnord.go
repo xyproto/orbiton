@@ -12,6 +12,7 @@ type FilenameOrData struct {
 	filename string
 	data     []byte
 	length   int
+	stdin    bool
 }
 
 // ExpandUser will expand the filename if it starts with "~"
@@ -39,7 +40,7 @@ func (fnord *FilenameOrData) SetTitle() {
 		return
 	}
 	title := "?"
-	if fnord.filename == "-" {
+	if fnord.stdin {
 		title = "stdin"
 	} else if fnord.filename != "" {
 		title = fnord.filename

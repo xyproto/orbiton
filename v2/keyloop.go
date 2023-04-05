@@ -24,12 +24,13 @@ var fileLock = NewLockKeeper(defaultLockFile)
 
 // Loop will set up and run the main loop of the editor
 // a *vt100.TTY struct
-// a filename to open
+// fnord contains either data or a filename to open
 // a LineNumber (may be 0 or -1)
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
 func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight bool) (userMessage string, stopParent bool, err error) {
+
 	// Create a Canvas for drawing onto the terminal
 	vt100.Init()
 	c := vt100.NewCanvas()
@@ -66,10 +67,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	}
 
 	// Find the absolute path to this filename
-	absFilename, err := e.AbsFilename()
-	if err != nil {
-		// This should never happen, just use the given filename
-		absFilename = e.filename
+	absFilename := fnord.filename
+	if !fnord.stdin {
+		if filename, err := e.AbsFilename(); err == nil { // success
+			absFilename = filename
+		}
 	}
 
 	// Minor adjustments to some modes
@@ -95,7 +97,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	tty.SetTimeout(2 * time.Millisecond)
 
 	var (
-		canUseLocks   = fnord.filename != "-" && fnord.filename != "/dev/stdin"
+		canUseLocks   = !fnord.stdin
 		lockTimestamp time.Time
 	)
 
@@ -240,7 +242,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			// If in Debug mode, let ctrl-f mean "finish"
 			if e.debugMode {
-				if e.gdb == nil {
+				if e.gdb == nil { // success
 					status.SetMessageAfterRedraw("Not running")
 					break
 				}

@@ -33,7 +33,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		found              bool
 		recordedLineNumber LineNumber
 		err                error
-		readOnly           bool
+		readOnly           = fnord.stdin
 		m                  mode.Mode // mode is what would have been an enum in other languages, for signalling if this file should be in git mode, markdown mode etc
 		syntaxHighlight    bool
 	)
@@ -48,12 +48,12 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		return nil, "", true, displayImage(c, fnord.filename, waitForKeypress)
 	}
 
-	if fnord.Empty() {
-		m = mode.Detect(withoutGZ(fnord.filename)) // Note that mode.Detect can check for the full path, like /etc/fstab
-		syntaxHighlight = origSyntaxHighlight && m != mode.Text && (m != mode.Blank || ext != "")
-	} else {
+	if fnord.stdin {
 		m = mode.SimpleDetectBytes(fnord.data)
 		syntaxHighlight = origSyntaxHighlight && m != mode.Text && m != mode.Blank
+	} else {
+		m = mode.Detect(stripGZ(fnord.filename)) // Note that mode.Detect can check for the full path, like /etc/fstab
+		syntaxHighlight = origSyntaxHighlight && m != mode.Text && (m != mode.Blank || ext != "")
 	}
 
 	adjustSyntaxHighlightingKeywords(m) // no theme changes, just language detection and keyword configuration
@@ -77,7 +77,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		syntaxHighlight,
 		rainbowParenthesis)
 
-	if readOnly {
+	if readOnly || fnord.stdin {
 		e.readOnly = true
 	}
 
@@ -106,7 +106,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	// Use os.Stat to check if the file exists, and load the file if it does
 	var warningMessage string
 
-	if !fnord.Empty() { // we have data from stdin
+	if fnord.stdin && !fnord.Empty() { // we have data from stdin
 
 		warningMessage, err = e.Load(c, tty, fnord)
 		if err != nil {
@@ -126,11 +126,11 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			}
 
 			// If the first line is too long, shorten it a bit.
-			// A length of 100 should be enough to detect the contents.
+			// A length of 500 should be enough to detect the contents.
 			// If not, th rest of the data can be read through the anonymous
 			// function given to DetectFromContentBytes.
-			if len(firstLine) > 100 {
-				firstLine = firstLine[:100]
+			if len(firstLine) > 512 {
+				firstLine = firstLine[:512]
 			}
 
 			// fnord.data is is wrapped in a function, since some types of data may be streamed
@@ -321,10 +321,11 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	}
 
 	// Find the absolute path to this filename
-	absFilename, err := e.AbsFilename()
-	if err != nil {
-		// This should never happen, just use the given filename
-		absFilename = e.filename
+	absFilename := e.filename
+	if !fnord.stdin {
+		if filename, err := e.AbsFilename(); err == nil { // success
+			absFilename = filename
+		}
 	}
 
 	// Load the location history. This will be saved again later. Errors are ignored.
@@ -393,14 +394,14 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	// Craft an appropriate status message
 	if createdNewFile {
 		statusMessage = "New " + e.filename
-	} else if e.Empty() {
+	} else if e.Empty() && !fnord.stdin {
 		statusMessage = "Loaded empty file: " + e.filename + warningMessage
 		if e.readOnly {
 			statusMessage += " (read only)"
 		}
 	} else {
 		// If startup is slow (> 100 ms), display the startup time in the status bar
-		if e.filename == "-" || e.filename == "/dev/stdin" {
+		if fnord.stdin {
 			statusMessage += "Read from stdin"
 		} else {
 			statusMessage += "Loaded " + e.filename

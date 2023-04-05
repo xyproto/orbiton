@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// withoutGZ removes the trailing ".gz" suffix
-func withoutGZ(filename string) string {
+// stripGZ removes the trailing ".gz" suffix
+func stripGZ(filename string) string {
 	return strings.TrimSuffix(filename, ".gz")
 }
 
