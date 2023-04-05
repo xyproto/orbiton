@@ -104,6 +104,8 @@ func (e *Editor) LoadBytes(data []byte) {
 	e.Clear()
 	e.lines = make(map[int][]rune, 0)
 
+	e.binaryFile = binary.Data(data)
+
 	var (
 		// Split the bytes into lines
 		byteLines = bytes.Split(data, []byte{'\n'})
