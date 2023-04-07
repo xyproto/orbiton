@@ -11,6 +11,7 @@ require (
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/xyproto/binary v1.3.0
 	github.com/xyproto/carveimg v1.3.4
+	github.com/xyproto/clip v0.3.2
 	github.com/xyproto/env/v2 v2.0.0
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
@@ -20,7 +21,7 @@ require (
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/textoutput v1.14.1
 	github.com/xyproto/vt100 v1.11.4
-	golang.org/x/image v0.6.0
+	golang.org/x/image v0.7.0
 )
 
 require (

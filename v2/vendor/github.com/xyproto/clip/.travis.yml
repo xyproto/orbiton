@@ -1,0 +1,22 @@
+dist: xenial
+
+services:
+  - xvfb
+
+language: go
+
+go:
+ - "1.13"
+ - "1.14"
+
+#addons:
+#  apt:
+#    packages:
+#    - xsel
+#    - xclip
+
+script:
+ - sudo apt-get install xsel
+ - go test -v .
+ - sudo apt-get install xclip
+ - go test -v .
