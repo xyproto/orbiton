@@ -395,21 +395,35 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 
 					// Take an extra pass on coloring the -> arrow, even if it's in a comment
-					if (e.mode != mode.HTML && e.mode != mode.XML && e.mode != mode.Markdown && e.mode != mode.Blank && e.mode != mode.Config && e.mode != mode.Shell) && strings.Contains(line, "->") {
+					if !(e.mode == mode.HTML || e.mode == mode.XML || e.mode == mode.Markdown || e.mode == mode.Blank || e.mode == mode.Config || e.mode == mode.Shell) && strings.Contains(line, "->") {
 						arrowIndex := strings.Index(line, "->")
-						if i := strings.Index(line, "//"); i != -1 && i < arrowIndex {
-							// arrow is after comment marker, do nothing
-						} else if i := strings.Index(line, "/*"); i != -1 && i < arrowIndex {
-							// arrow is after comment marker, do nothing
-						} else if i := strings.Index(line, "(*"); (e.mode == mode.OCaml || e.mode == mode.StandardML || e.mode == mode.Haskell) && i != -1 && i < arrowIndex {
-							// arrow is after comment marker, do nothing
-						} else if i := strings.Index(line, "{-"); (e.mode == mode.Elm || e.mode == mode.Haskell) && i != -1 && i < arrowIndex {
-							// arrow is after comment marker, do nothing
-						} else {
+						commentMarkers := []string{"//", "/*", "(*", "{-"}
+						arrowBeforeCommentMarker := true
+
+						for _, marker := range commentMarkers {
+							commentIndex := strings.Index(line, marker)
+							if commentIndex != -1 && commentIndex < arrowIndex {
+								if marker == "(*" && (e.mode == mode.OCaml || e.mode == mode.StandardML || e.mode == mode.Haskell) {
+									arrowBeforeCommentMarker = false
+									break
+								}
+								if marker == "{-" && (e.mode == mode.Elm || e.mode == mode.Haskell) {
+									arrowBeforeCommentMarker = false
+									break
+								}
+								if marker != "(*" && marker != "{-" {
+									arrowBeforeCommentMarker = false
+									break
+								}
+							}
+						}
+
+						if arrowBeforeCommentMarker {
 							// arrow is before comment marker, color the arrow
 							coloredString = unEscapeFunction(tout.DarkTags(e.ArrowReplace(string(textWithTags))))
 						}
 					}
+
 				}
 
 				// Extract a slice of runes and color attributes
