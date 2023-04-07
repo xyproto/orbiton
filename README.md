@@ -102,6 +102,7 @@ These features are unique to `o`, as far as I am aware:
 * Can compile `"Hello, World"` in many popular programming languages simply by pressing `ctrl-space`.
 * Configuration-free, for better and for worse.
 * Can preview `.png`, `.jpg`, `.jpeg`, `.gif`, `.ico`, `.bmp` or `.webp` images directly in the terminal (using a scaled down version and up to 16 colors).
+* The `-p` flag followed by a filename can be used for just pasting the clipboard to a new file, instead of editing a file.
 * `ctrl-t` can jump between a C++ header and source file.
 * Can only edit one file at the time, by design.
 * Provides syntax highlighting for Go, C++, Markdown, Bash and several other languages. There is generic syntax highlighting built-in.

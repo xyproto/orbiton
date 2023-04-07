@@ -23,6 +23,7 @@ func main() {
 		versionFlag = flag.Bool("version", false, "version information")
 		helpFlag    = flag.Bool("help", false, "quick overview of hotkeys")
 		forceFlag   = flag.Bool("f", false, "open even if already open")
+		pasteFlag   = flag.Bool("p", false, "paste the clipboard into the file and quit")
 	)
 
 	flag.Parse()
@@ -75,6 +76,20 @@ See the man page for more information.
 
 `)
 		return
+	}
+
+	// If the -p flag is given, just paste the clipboard to the given filename and exit
+	if filename := flag.Arg(0); filename != "" && *pasteFlag {
+		n, err := WriteClipboardToFile(filename)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		} else if n == 0 {
+			fmt.Fprintf(os.Stderr, "Wrote 0 bytes to %s\n", filename)
+			os.Exit(1)
+		}
+		fmt.Printf("Wrote %d bytes to %s.\n", n, filename)
+		os.Exit(0)
 	}
 
 	traceStart() // if building with -tags trace
