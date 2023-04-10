@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VERSION=2.60.5
+VERSION=2.60.6
 
 rm -rf archpackages
 mkdir -p archpackages
