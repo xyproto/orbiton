@@ -80,7 +80,7 @@ See the man page for more information.
 
 	// If the -p flag is given, just paste the clipboard to the given filename and exit
 	if filename := flag.Arg(0); filename != "" && *pasteFlag {
-		n, err := WriteClipboardToFile(filename)
+		n, tailString, err := WriteClipboardToFile(filename, *forceFlag)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			os.Exit(1)
@@ -88,7 +88,11 @@ See the man page for more information.
 			fmt.Fprintf(os.Stderr, "Wrote 0 bytes to %s\n", filename)
 			os.Exit(1)
 		}
-		fmt.Printf("Wrote %d bytes to %s.\n", n, filename)
+		if tailString != "" {
+			fmt.Printf("Wrote %d bytes to %s. Tail bytes: %s\n", n, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
+		} else {
+			fmt.Printf("Wrote %d bytes to %s.\n", n, filename)
+		}
 		os.Exit(0)
 	}
 
