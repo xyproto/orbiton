@@ -66,7 +66,7 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 	e.Clear()
 	e.lines = lines
 
-	if detectedTabs := tabIndentCounter > 0; !e.binaryFile {
+	if detectedTabs := tabIndentCounter > 0; !e.binaryFile && e.indentation.Spaces {
 		e.detectedTabs = &detectedTabs
 		e.indentation.Spaces = !detectedTabs
 	}
@@ -135,7 +135,7 @@ func (e *Editor) LoadBytes(data []byte) {
 		delete(e.lines, numLines-1)
 	}
 
-	if detectedTabs := tabIndentCounter > 0; detectedTabs {
+	if detectedTabs := tabIndentCounter > 0; detectedTabs && e.indentation.Spaces {
 		// Check if there were more tab indentations than space indentations
 		e.detectedTabs = &detectedTabs
 		e.indentation.Spaces = !detectedTabs
