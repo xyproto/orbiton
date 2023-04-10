@@ -41,9 +41,9 @@ func WriteClipboardToFile(filename string, overwrite bool) (int, string, error) 
 		tailString = string(contents[l-8:])
 	}
 
-	if n, err := f.Write(contents); err != nil {
+	n, err := f.Write(contents)
+	if err != nil {
 		return 0, "", err
-	} else {
-		return n, tailString, nil
 	}
+	return n, tailString, nil
 }
