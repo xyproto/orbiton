@@ -158,3 +158,60 @@ func Generate(img image.Image, N int) (color.Palette, error) {
 	// Return the generated palette
 	return pal, nil
 }
+
+// GenerateUpTo can generate a palette with up to N colors, given an image
+func GenerateUpTo(img image.Image, N int) (color.Palette, error) {
+	groups := make(map[int][]color.Color)
+	already := make(map[color.Color]bool)
+
+	// Pick out the colors from the image, per intensity level, and store them in the groups map
+	for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
+		for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
+			c := img.At(x, y)
+			gc := color.GrayModel.Convert(c).(color.Gray)
+			rgba := color.RGBAModel.Convert(c).(color.RGBA)
+			level := int(float64(gc.Y) / (255.0 / float64(N-1)))
+			alreadyColor, ok := already[rgba]
+			if !alreadyColor || !ok {
+				groups[level] = append(groups[level], rgba)
+				already[rgba] = true
+			}
+		}
+	}
+
+	// Reset the map for if colors are already appended to a slice
+	already = make(map[color.Color]bool)
+	already2 := make(map[color.Color]bool)
+	var extrapal color.Palette
+
+	// Find the median color for each intensity level
+	var pal color.Palette
+	for _, colors := range groups {
+		// Find the median color of a group of colors of a certain intensity
+		//medianColor, err := Median(colors)
+		medianColor1, medianColor2, medianColor3, err := Median3(colors)
+		if err != nil {
+			return nil, err
+		}
+		// Add the medianColor1 to the palette, if it's not already there
+		alreadyColor, ok := already[medianColor1]
+		if !alreadyColor || !ok {
+			pal = append(pal, medianColor1)
+			already[medianColor1] = true
+		}
+		// Add medianColor2 and medianColor3 to the extra palette, if they are not already in it
+		alreadyColor2, ok := already2[medianColor2]
+		if !alreadyColor2 || !ok {
+			extrapal = append(extrapal, medianColor2)
+			already2[medianColor2] = true
+		}
+		alreadyColor2, ok = already2[medianColor3]
+		if !alreadyColor2 || !ok {
+			extrapal = append(extrapal, medianColor3)
+			already2[medianColor3] = true
+		}
+	}
+
+	// Return the generated palette
+	return pal, nil
+}

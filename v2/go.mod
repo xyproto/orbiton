@@ -36,10 +36,12 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.18 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
+	github.com/peterhellberg/gfx v0.0.0-20210905153911-4a6ef1535e02 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
+	github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
-	github.com/xyproto/palgen v1.2.0 // indirect
+	github.com/xyproto/palgen v1.4.0 // indirect
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

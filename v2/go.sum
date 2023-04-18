@@ -261,6 +261,8 @@ github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FI
 github.com/pborman/uuid v1.2.0/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtPdI/k=
 github.com/performancecopilot/speed v3.0.0+incompatible/go.mod h1:/CLtqpZ5gBg1M9iaPbIdPPGyKcA8hKdoy6hAWba7Yac=
 github.com/peterhellberg/gfx v0.0.0-20191011152831-b91a0de61948/go.mod h1:itlt/V2ABb7sDu42VXQHXmQ4KOdrEbFZDVIaHsRcwak=
+github.com/peterhellberg/gfx v0.0.0-20210905153911-4a6ef1535e02 h1:2wZ5I/apBKogpjp3n8rpK12i1kkizoNdpmnY+OjvsXI=
+github.com/peterhellberg/gfx v0.0.0-20210905153911-4a6ef1535e02/go.mod h1:ipo3f7y1+RHNR32fj+4TETou6OF4VXvJBhb9rwncKuw=
 github.com/phpdave11/gofpdi v1.0.7/go.mod h1:vBmVV0Do6hSBHC8uKUQ71JGW+ZGQq74llk/7bXwjDoI=
 github.com/pierrec/lz4 v1.0.2-0.20190131084431-473cd7ce01a1/go.mod h1:3/3N9NVKO0jef7pBehbT1qWhCMrIgbYNnFAZCqQ5LRc=
 github.com/pierrec/lz4 v2.0.5+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=
@@ -338,6 +340,8 @@ github.com/xyproto/benchmarked v0.3.0/go.mod h1:4H4a1k1EsFmliut59gNc8RO2N2IIhl74
 github.com/xyproto/binary v1.3.0 h1:RCICHqn81T+vxNdEBQvQ8iZ3Qt44AgMHag4IZgeFXbU=
 github.com/xyproto/binary v1.3.0/go.mod h1:0bRi3JImoPWOFfM7yPYzNVyLZXYGQTBwdNRPs4m3+qQ=
 github.com/xyproto/burnpal v0.0.0-20191014130824-80030bc13096/go.mod h1:j3S/tDDOEkIChz0sWDqO3zXOgIjz/6nhuc+JrmZNLnA=
+github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795 h1:AoL5T5pFgiCn/4feC2ZfAE+7altlWK2KwBntHHAgDpE=
+github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795/go.mod h1:j3S/tDDOEkIChz0sWDqO3zXOgIjz/6nhuc+JrmZNLnA=
 github.com/xyproto/carveimg v1.3.4 h1:a2hWwVDPIYppYkQo95Qe/LGISFBjic7jXBVSh14ye8A=
 github.com/xyproto/carveimg v1.3.4/go.mod h1:0x5uEB2haqTunW2aQjFh1u/NoI712bd+uLpo9u5H+O0=
 github.com/xyproto/clip v0.3.2 h1:xhumLquc3kq1ChieQWHMQjmzECJuifO9SbLYuI0KjZA=
@@ -354,8 +358,9 @@ github.com/xyproto/iferr v1.1.0/go.mod h1:En+YVd+aRA+/q3LKqQ+EmsmbWKdgzBwUPE5C4b
 github.com/xyproto/mode v0.6.18/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/mode v0.6.21 h1:FJ21l2PcFr7aGG/mC65JxNtUgntnWhPyS1YHaR1GalA=
 github.com/xyproto/mode v0.6.21/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
-github.com/xyproto/palgen v1.2.0 h1:pejSeMP6VKpoa8/yGjwjP1HbWtY1ErYpOSSiLBiPhWg=
 github.com/xyproto/palgen v1.2.0/go.mod h1:s2fi72RJ3zv3GMbHP1eC+9CJBf8BNo7lpakWdOjd4U0=
+github.com/xyproto/palgen v1.4.0 h1:k6TO9ikckZn3XWnxin0tRW8a7KdVNC487kU7Pld5P7g=
+github.com/xyproto/palgen v1.4.0/go.mod h1:xDqh3gxecNHpQCB78xETKH5EBlzPYim7NxZ294BEC50=
 github.com/xyproto/stringpainter v1.0.0 h1:fw86p5y+PQ/TnzN/u56iEwRPHChcaDGUSaZQVA9I5xA=
 github.com/xyproto/stringpainter v1.0.0/go.mod h1:Uz/9PJmEJ2efkJDdCSg6Zt0iu/pmJ45rCfbqLShSOfs=
 github.com/xyproto/syntax v1.10.9 h1:rZ6rlD/4odMgeSV/wDbwr9Vllcs3R8shrwEBsQSH3UY=

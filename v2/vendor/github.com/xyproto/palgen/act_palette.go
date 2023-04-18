@@ -3,7 +3,7 @@ package palgen
 import (
 	"bytes"
 	"image/color"
-	"io/ioutil"
+	"os"
 )
 
 // ACT converts a given palette to the Photoshop ACT Palette Format (.act)
@@ -24,5 +24,5 @@ func ACT(pal color.Palette) []byte {
 
 // SaveACT can save a palette to file in the Photoship ACT Palette Format (.act)
 func SaveACT(pal color.Palette, filename string) error {
-	return ioutil.WriteFile(filename, ACT(pal), 0644)
+	return os.WriteFile(filename, ACT(pal), 0644)
 }

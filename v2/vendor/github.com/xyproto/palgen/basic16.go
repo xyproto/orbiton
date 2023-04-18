@@ -4,7 +4,7 @@ import (
 	"image/color"
 )
 
-// A basic 16-color palette
+// BasicPalette16 is a basic 16-color palette
 var BasicPalette16 = [16][3]byte{
 	{0x0, 0x0, 0x0},    // 0
 	{191, 0x0, 0x0},    // 1

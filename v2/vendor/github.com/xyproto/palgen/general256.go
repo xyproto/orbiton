@@ -4,7 +4,7 @@ import (
 	"image/color"
 )
 
-// An OK standard palette
+// GeneralPalette256 is a an OK standard palette
 var GeneralPalette256 = [256][3]byte{
 	{0, 0, 0},
 	{0, 0, 102},

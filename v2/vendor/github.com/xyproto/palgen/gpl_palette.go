@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"image/color"
-	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -39,5 +39,5 @@ func SaveGPL(pal color.Palette, filename, paletteName string) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filename, []byte(GPLString), 0644)
+	return os.WriteFile(filename, []byte(GPLString), 0644)
 }
