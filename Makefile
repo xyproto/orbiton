@@ -36,6 +36,9 @@ o: $(SRCFILES)
 trace: clean $(SRCFILES)
 	cd v2 && $(GOBUILD) -tags trace -o ../o
 
+bench:
+	cd v2 && go test -bench=. -benchmem
+
 gui: og
 ko: og
 og: og/og
