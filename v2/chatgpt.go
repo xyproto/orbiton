@@ -58,33 +58,6 @@ func (e *Editor) GenerateTokens(apiKey, prompt string, n int, temperature float3
 	return err
 }
 
-// GenerateChatTokens uses the ChatGTP API to generate text. n is the maximum number of tokens.
-// The global atomic Bool "ContinueGeneratingChatTokens" controls when the text generation should stop.
-// Currently, gpt-3.5-turbo is the default model for chat. "gpt-4" might be available soon.
-func (e *Editor) GenerateChatTokens(apiKey, prompt string, n int, temperature float32, model string, newToken func(string)) error {
-	client := gpt3.NewClient(apiKey)
-	chatContext, cancelFunction := context.WithCancel(context.Background())
-	defer cancelFunction()
-	err := client.ChatCompletionStream(
-		chatContext,
-		gpt3.ChatCompletionRequest{
-			Messages: []gpt3.ChatCompletionRequestMessage{
-				{
-					Role:    "user",
-					Content: prompt,
-				},
-			},
-			MaxTokens:   n,
-			Temperature: gpt3.Float32Ptr(temperature),
-		}, func(resp *gpt3.ChatCompletionStreamResponse) {
-			newToken(resp.Choices[0].Delta.Content)
-			if !e.generatingTokens {
-				cancelFunction()
-			}
-		})
-	return err
-}
-
 // TODO: Find an exact way to find the number of tokens in the prompt, from a ChatGPT point of view
 func countTokens(s string) int {
 	// Multiplying with 1.1 and adding 100, until the OpenAI API for counting tokens is used
