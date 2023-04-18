@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"io"
 	"os"
@@ -17,62 +16,75 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 	if err != nil {
 		return err
 	}
-
 	if strings.HasSuffix(filename, ".gz") {
 		data, err = gUnzipData(data)
 		if err != nil {
 			return err
 		}
 	}
-
 	e.binaryFile = binary.Data(data)
-	scanner := bufio.NewScanner(bytes.NewReader(data))
-
-	const bufferSize = 512 * 1024
-
-	// Set the scanner buffer size (max length per line)
-	buf := make([]byte, bufferSize)
-	scanner.Buffer(buf, bufferSize)
-
+	reader := bytes.NewReader(data)
+	const chunkSize = 3 * 1024
+	buf := make([]byte, chunkSize)
+	lineBuf := bytes.Buffer{}
 	lines := make(map[int][]rune)
 	var index int
 	var tabIndentCounter int64
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		if e.binaryFile {
-			lines[index] = []rune(line)
-		} else {
-			line = opinionatedStringReplacer.Replace(line)
-			if len(line) > 2 {
-				var first byte = line[0]
-				if first == '\t' {
-					tabIndentCounter++
-				} else if first == ' ' && line[1] == ' ' {
-					tabIndentCounter--
+	for {
+		n, err := reader.Read(buf)
+		if err != nil && err != io.EOF {
+			return err
+		}
+		lineBuf.Write(buf[:n])
+		for {
+			line, err := lineBuf.ReadString('\n')
+			if err != nil {
+				if err == io.EOF {
+					lineBuf.Reset()
+					lineBuf.WriteString(line)
+					break
 				}
+				return err
+			}
+			// Remove the newline character at the end of the line
+			if len(line) > 0 && line[len(line)-1] == '\n' {
+				line = line[:len(line)-1]
+			}
+			if e.binaryFile {
+				lines[index] = []rune(line)
+			} else {
+				line = opinionatedStringReplacer.Replace(line)
+				if len(line) > 2 {
+					var first byte = line[0]
+					if first == '\t' {
+						tabIndentCounter++
+					} else if first == ' ' && line[1] == ' ' {
+						tabIndentCounter--
+					}
+				}
+				lines[index] = []rune(line)
+			}
+			index++
+		}
+		// Process remaining content in lineBuf if there is any
+		if lineBuf.Len() > 0 {
+			line := lineBuf.String()
+			if !e.binaryFile {
+				line = opinionatedStringReplacer.Replace(line)
 			}
 			lines[index] = []rune(line)
 		}
-		index++
+		if err == io.EOF {
+			break
+		}
 	}
-
-	if err := scanner.Err(); err != nil && err != io.EOF {
-		// most likely, this is a binary file and the lines are too long
-		// TODO: Just read the file in another way and/or don't use a scanner
-		return err
-	}
-
 	e.Clear()
 	e.lines = lines
-
 	if detectedTabs := tabIndentCounter > 0; !e.binaryFile && e.indentation.Spaces {
 		e.detectedTabs = &detectedTabs
 		e.indentation.Spaces = !detectedTabs
 	}
-
 	e.changed = true
-
 	return nil
 }
 
