@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"io"
 	"os"
@@ -23,57 +24,36 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 		}
 	}
 	e.binaryFile = binary.Data(data)
-	reader := bytes.NewReader(data)
-	const chunkSize = 3 * 1024
-	buf := make([]byte, chunkSize)
-	lineBuf := bytes.Buffer{}
+	reader := bufio.NewReader(bytes.NewReader(data))
+
 	lines := make(map[int][]rune)
 	var index int
 	var tabIndentCounter int64
 	for {
-		n, err := reader.Read(buf)
+		line, err := reader.ReadString('\n')
 		if err != nil && err != io.EOF {
 			return err
 		}
-		lineBuf.Write(buf[:n])
-		for {
-			line, err := lineBuf.ReadString('\n')
-			if err != nil {
-				if err == io.EOF {
-					lineBuf.Reset()
-					lineBuf.WriteString(line)
-					break
-				}
-				return err
-			}
-			// Remove the newline character at the end of the line
-			if len(line) > 0 && line[len(line)-1] == '\n' {
-				line = line[:len(line)-1]
-			}
-			if e.binaryFile {
-				lines[index] = []rune(line)
-			} else {
-				line = opinionatedStringReplacer.Replace(line)
-				if len(line) > 2 {
-					var first byte = line[0]
-					if first == '\t' {
-						tabIndentCounter++
-					} else if first == ' ' && line[1] == ' ' {
-						tabIndentCounter--
-					}
-				}
-				lines[index] = []rune(line)
-			}
-			index++
+		// Remove the newline character at the end of the line
+		if len(line) > 0 && line[len(line)-1] == '\n' {
+			line = line[:len(line)-1]
 		}
-		// Process remaining content in lineBuf if there is any
-		if lineBuf.Len() > 0 {
-			line := lineBuf.String()
-			if !e.binaryFile {
-				line = opinionatedStringReplacer.Replace(line)
+		if e.binaryFile {
+			lines[index] = []rune(line)
+		} else {
+			line = opinionatedStringReplacer.Replace(line)
+			if len(line) > 2 {
+				var first byte = line[0]
+				if first == '\t' {
+					tabIndentCounter++
+				} else if first == ' ' && line[1] == ' ' {
+					tabIndentCounter--
+				}
 			}
 			lines[index] = []rune(line)
 		}
+		index++
+
 		if err == io.EOF {
 			break
 		}
