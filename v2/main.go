@@ -18,10 +18,11 @@ const versionString = "Orbiton 2.60.6"
 
 func main() {
 	var (
-		versionFlag = flag.Bool("version", false, "version information")
-		helpFlag    = flag.Bool("help", false, "quick overview of hotkeys")
+		copyFlag    = flag.Bool("c", false, "copy a file into the clipboard and quit")
 		forceFlag   = flag.Bool("f", false, "open even if already open")
+		helpFlag    = flag.Bool("help", false, "quick overview of hotkeys")
 		pasteFlag   = flag.Bool("p", false, "paste the clipboard into the file and quit")
+		versionFlag = flag.Bool("version", false, "version information")
 	)
 
 	flag.Parse()
@@ -87,9 +88,27 @@ See the man page for more information.
 			os.Exit(1)
 		}
 		if tailString != "" {
-			fmt.Printf("Wrote %d bytes to %s. Tail bytes: %s\n", n, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
+			fmt.Printf("Wrote %d bytes to %s from the clipboard. Tail bytes: %s\n", n, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
 		} else {
-			fmt.Printf("Wrote %d bytes to %s.\n", n, filename)
+			fmt.Printf("Wrote %d bytes to %s from the clipboard.\n", n, filename)
+		}
+		os.Exit(0)
+	}
+
+	// If the -c flag is given, just copy the given filename to the clipboard and exit
+	if filename := flag.Arg(0); filename != "" && *copyFlag {
+		n, tailString, err := SetClipboardFromFile(filename)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		} else if n == 0 {
+			fmt.Fprintf(os.Stderr, "Wrote 0 bytes to %s\n", filename)
+			os.Exit(1)
+		}
+		if tailString != "" {
+			fmt.Printf("Copied %d bytes from %s to the clipboard. Tail bytes: %s\n", n, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
+		} else {
+			fmt.Printf("Copied %d bytes from %s to the clipboard.\n", n, filename)
 		}
 		os.Exit(0)
 	}

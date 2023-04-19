@@ -477,11 +477,11 @@ These four ways of opening `file.txt` at line `7` are supported:
 
 This also means that filenames containing `+` or `:`, and then followed by a number, are not supported.
 
-## Supported flags
+## Flags
 
-* `-f` can be used to open a file, regardless of if there are any locks.
+* `-f` can be used to open a file, regardless of if there are any locks. It can also be used for overwriting files together with `-p`.
+* `-c FILENAME` can be used to copy the contents of the given file to the clipboard and then exit.
 * `-p FILENAME` can be used to paste the contents of the clipboard to the given `FILENAME` (if it does not already exist) and then exit.
-* `-f -p FILENAME` can be used to paste the contents of the clipboard to the given `FILENAME` (and overwrite it if it already exists) and then exit.
 * `--help` can be used to get a quick overview of the supported keybindings.
 * `--version` will print the current version and then exit.
 
