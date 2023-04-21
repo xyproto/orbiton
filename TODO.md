@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Add support for emojis.
 - [ ] Go through this file and remove all completed TODO items.
 - [ ] Add a table editor for Markdown.
 - [ ] If Esc is pressed repeatedly (>=4 times in a row), open the `ctrl-o` menu.
@@ -14,6 +15,7 @@
 - [ ] Add a menu option toggle for letting in-document ChatGPT prompts affect: the next line | code block | function | file
 
 ## Markdown
+
 - [ ] "Render with Pandoc" should be a menu option.
 - [ ] ctrl-space should render to HTML, using a Go package.
 
