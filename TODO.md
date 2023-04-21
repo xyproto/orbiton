@@ -13,6 +13,10 @@
 - [ ] When pasting lines that start with "+" and it's not a diff/patch file, then replace "+" with a blank.
 - [ ] Add a menu option toggle for letting in-document ChatGPT prompts affect: the next line | code block | function | file
 
+## Markdown
+- [ ] "Render with Pandoc" should be a menu option.
+- [ ] ctrl-space should render to HTML, using a Go package.
+
 ## AI
 
 - [ ] If an API key is entered, save it to file in the cache directory.
@@ -95,7 +99,7 @@
 - [ ] Let `<<EOF` be considered the start of a multiline string in Shell, and `EOF` the end.
 - [ ] Let a struct for a Theme contain both the light and the dark version, if there are two.
 - [ ] Check that the right theme is loaded under `uxterm`.
-- [ ] Don't let single-line comments at the end of lines disable rainbow parentheses.
+- [x] Don't let single-line comments at the end of lines disable rainbow parentheses.
 - [ ] Also highlight hexadecimal numbers.
 - [ ] Fix syntax highlighting of `'tokens` in Clojure.
 - [ ] Don't highlight regular text in Nroff files.
