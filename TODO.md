@@ -13,6 +13,7 @@
 - [ ] Handle really long lines as well.
 - [ ] When pasting lines that start with "+" and it's not a diff/patch file, then replace "+" with a blank.
 - [ ] Add a menu option toggle for letting in-document ChatGPT prompts affect: the next line | code block | function | file
+- [ ] When deleting lines with ctrl-k more than once, scroll the cursor line a bit up, to make it easier.
 
 ## Markdown
 
