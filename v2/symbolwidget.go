@@ -7,19 +7,19 @@ import (
 // SymbolWidget represents a TUI widget for presenting a menu with choices for the user
 type SymbolWidget struct {
 	title          string               // title
-	w              uint                 // width
-	h              uint                 // height (number of menu items)
+	choices        [][]string           // a slice of a slice of menu items
+	bgColor        vt100.AttributeColor // background color
+	highlightColor vt100.AttributeColor // selected color (the choice that has been selected after return has been pressed)
+	textColor      vt100.AttributeColor // text color (the choices that are not highlighted)
+	titleColor     vt100.AttributeColor // title color (above the choices)
 	x              uint                 // current position
-	oldx           uint                 // previous position
-	y              uint                 // current position
-	oldy           uint                 // previous position
 	marginLeft     int                  // margin, may be negative?
 	marginTop      int                  // margin, may be negative?
-	choices        [][]string           // a slice of a slice of menu items
-	titleColor     vt100.AttributeColor // title color (above the choices)
-	textColor      vt100.AttributeColor // text color (the choices that are not highlighted)
-	highlightColor vt100.AttributeColor // selected color (the choice that has been selected after return has been pressed)
-	bgColor        vt100.AttributeColor // background color
+	oldy           uint                 // previous position
+	y              uint                 // current position
+	oldx           uint                 // previous position
+	h              uint                 // height (number of menu items)
+	w              uint                 // width
 }
 
 // NewSymbolWidget creates a new SymbolWidget

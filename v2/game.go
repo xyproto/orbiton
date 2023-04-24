@@ -52,11 +52,11 @@ var (
 
 // Bob represents the player
 type Bob struct {
+	color      vt100.AttributeColor // foreground color
 	x, y       int                  // current position
 	oldx, oldy int                  // previous position
-	state      rune                 // looks
-	color      vt100.AttributeColor // foreground color
 	w, h       float64
+	state      rune // looks
 }
 
 // NewBob creates a new Bob struct
@@ -148,15 +148,15 @@ func (b *Bob) Resize(c *vt100.Canvas) {
 
 // Pellet represents a pellet that can both feed Gobblers and hit the EvilGobbler
 type Pellet struct {
-	x, y        int                  // current position
-	oldx, oldy  int                  // previous position
-	vx, vy      int                  // velocity
-	state       rune                 // looks
 	color       vt100.AttributeColor // foreground color
-	stopped     bool                 // is the movement stopped?
-	removed     bool                 // to be removed
 	lifeCounter int
+	oldx, oldy  int // previous position
+	vx, vy      int // velocity
+	x, y        int // current position
 	w, h        float64
+	state       rune // looks
+	removed     bool // to be removed
+	stopped     bool // is the movement stopped?
 }
 
 // NewPellet creates a new Pellet struct, with position and speed
@@ -281,11 +281,11 @@ func (b *Pellet) Resize(c *vt100.Canvas) {
 
 // Bubble represents a bubble character that is in the way
 type Bubble struct {
+	color      vt100.AttributeColor // foreground color
 	x, y       int                  // current position
 	oldx, oldy int                  // previous position
-	state      rune                 // looks
-	color      vt100.AttributeColor // foreground color
 	w, h       float64
+	state      rune // looks
 }
 
 // NewBubbles creates n new Bubble structs
@@ -400,15 +400,15 @@ func (b *Bubble) HitSomething(c *vt100.Canvas) bool {
 
 // EvilGobbler is a character that hunts Gobblers
 type EvilGobbler struct {
+	hunting         *Gobbler
+	color           vt100.AttributeColor // foreground color
 	x, y            int                  // current position
 	oldx, oldy      int                  // previous position
-	state           rune                 // looks
-	color           vt100.AttributeColor // foreground color
 	counter         uint
-	shot            bool
-	hunting         *Gobbler
 	huntingDistance float64
 	w, h            float64
+	state           rune // looks
+	shot            bool
 }
 
 // NewEvilGobbler creates an EvilGobbler struct.
@@ -506,15 +506,15 @@ func (e *EvilGobbler) Resize(c *vt100.Canvas) {
 
 // Gobbler represents a character that can move around and eat pellets
 type Gobbler struct {
+	hunting         *Pellet              // current pellet to hunt
+	color           vt100.AttributeColor // foreground color
 	x, y            int                  // current position
 	oldx, oldy      int                  // previous position
-	state           rune                 // looks
-	color           vt100.AttributeColor // foreground color
-	hunting         *Pellet              // current pellet to hunt
 	huntingDistance float64              // how far to closest pellet
 	counter         uint
-	dead            bool
 	w, h            float64
+	state           rune // looks
+	dead            bool
 }
 
 // NewGobbler creates a new Gobbler struct

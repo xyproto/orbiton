@@ -13,16 +13,16 @@ var mut *sync.RWMutex
 
 // StatusBar represents the little status field that can appear at the bottom of the screen
 type StatusBar struct {
+	editor             *Editor              // an editor struct (for getting the colors when clearing the status)
 	msg                string               // status message
+	messageAfterRedraw string               // a message to be drawn and cleared AFTER the redraw
 	fg                 vt100.AttributeColor // draw foreground color
 	bg                 vt100.AttributeColor // draw background color
 	errfg              vt100.AttributeColor // error foreground color
 	errbg              vt100.AttributeColor // error background color
-	editor             *Editor              // an editor struct (for getting the colors when clearing the status)
 	show               time.Duration        // show the message for how long before clearing
 	offsetY            int                  // scroll offset
 	isError            bool                 // is this an error message that should be shown after redraw?
-	messageAfterRedraw string               // a message to be drawn and cleared AFTER the redraw
 }
 
 // Used for keeping track of how many status messages are lined up to be cleared
@@ -32,7 +32,7 @@ var statusBeingShown int
 // background color for clearing and a duration for how long to display status messages.
 func NewStatusBar(fg, bg, errfg, errbg vt100.AttributeColor, editor *Editor, show time.Duration, initialMessageAfterRedraw string) *StatusBar {
 	mut = &sync.RWMutex{}
-	return &StatusBar{"", fg, bg, errfg, errbg, editor, show, 0, false, initialMessageAfterRedraw}
+	return &StatusBar{editor, "", initialMessageAfterRedraw, fg, bg, errfg, errbg, show, 0, false}
 }
 
 // Draw will draw the status bar to the canvas

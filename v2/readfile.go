@@ -118,7 +118,7 @@ func (e *Editor) LoadBytes(data []byte) {
 	var wg sync.WaitGroup
 	for index, byteLine := range byteLines {
 		wg.Add(1)
-		go e.LoadByteLine(IndexByteLine{index, byteLine}, &eMut, &tcMut, &tabIndentCounter, &numLines, &wg)
+		go e.LoadByteLine(IndexByteLine{byteLine, index}, &eMut, &tcMut, &tabIndentCounter, &numLines, &wg)
 	}
 	wg.Wait()
 

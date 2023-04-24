@@ -7,8 +7,8 @@ const keypressComboTimeLimit = 120 * time.Millisecond
 
 // KeyHistory represents the last 3 keypresses, and when they were pressed
 type KeyHistory struct {
-	keys [3]string
 	t    [3]time.Time
+	keys [3]string
 }
 
 // NewKeyHistory creates a new KeyHistory struct
