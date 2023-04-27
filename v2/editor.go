@@ -453,6 +453,13 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 				toString := "\n" + strings.Repeat(" ", level*e.indentation.PerTab)
 				s = strings.ReplaceAll(s, fromString, toString)
 			}
+		} else if e.mode == mode.Make {
+			// NOTE: This is a hack, that can only replace 10 levels deep.
+			for level := 10; level > 0; level-- {
+				fromString := "\n" + strings.Repeat(" ", level*e.indentation.PerTab)
+				toString := "\n" + strings.Repeat("\t", level)
+				s = strings.ReplaceAll(s, fromString, toString)
+			}
 		}
 
 		// Should the file be saved with the executable bit enabled?
