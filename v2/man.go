@@ -3,22 +3,33 @@ package main
 import (
 	"strings"
 	"unicode"
+	"regexp"
 
 	"github.com/xyproto/vt100"
 )
 
-func handleManPageEscape(s string) string {
-	var lineRunes []rune
-	for _, r := range s {
-		if r == 0x8 {
-			// Encountered ^H
-			// Pop the last appended rune and continue
-			lineRunes = lineRunes[:len(lineRunes)-1]
-			continue
+// Define a regular expression to match shell color code strings
+var shellColorCodePattern = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+
+func handleManPageEscape(input string) string {
+	// Remove 0x08 characters and their following rune
+	var cleanedRunes []rune
+	for i := 0; i < len(input); {
+		r := rune(input[i])
+
+		if r == 0x08 { // Encountered ^H
+			i += 2 // Skip current 0x08 character and the following rune
+		} else {
+			cleanedRunes = append(cleanedRunes, r)
+			i++
 		}
-		lineRunes = append(lineRunes, r)
 	}
-	return string(lineRunes)
+
+	// Remove color codes
+	cleanedString := string(cleanedRunes)
+	cleanedString = shellColorCodePattern.ReplaceAllString(cleanedString, "")
+
+	return cleanedString
 }
 
 func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string {
