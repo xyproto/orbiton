@@ -70,5 +70,26 @@ install-og: og/og
 	mkdir -p "$(DESTDIR)$(PREFIX)/share/pixmaps"
 	install -m644 img/icon_48x48.png "$(DESTDIR)$(PREFIX)/share/pixmaps/og.png"
 
+install-symlinks: symlinks
+symlinks-install: symlinks
+
+symlinks:
+	ln -s -f "$(DESTDIR)$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/li"
+	ln -s -f "$(DESTDIR)$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/redblack"
+	ln -s -f "$(DESTDIR)$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/sw"
+	ln -s -f "$(DESTDIR)$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/edi"
+	ln -s -f "$(DESTDIR)$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/vs"
+
+symlinks-gui: gui-symlinks
+symlinks-gui-install: gui-symlinks
+install-symlinks-gui: gui-symlinks
+
+gui-symlinks:
+	ln -s -f "$(DESTDIR)$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/lig"
+	ln -s -f "$(DESTDIR)$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/redblackg"
+	ln -s -f "$(DESTDIR)$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/swg"
+	ln -s -f "$(DESTDIR)$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/edig"
+	ln -s -f "$(DESTDIR)$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/vsg"
+
 clean:
-	-rm -f o v2/o o.1.gz og/og
+	-rm -f o v2/o o.1.gz og/og v2/orbiton
