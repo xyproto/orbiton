@@ -61,7 +61,6 @@ ko-install: install-og
 install-ko: install-og
 og-install: install-og
 
-# using mkdir -p instead of install -D, to make it macOS friendly
 install-og: og/og
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
 	install -m755 og/og "$(DESTDIR)$(PREFIX)/bin/og"
@@ -82,6 +81,7 @@ symlinks:
 
 symlinks-gui: gui-symlinks
 symlinks-gui-install: gui-symlinks
+symlinks-install-gui: gui-symlinks
 install-symlinks-gui: gui-symlinks
 
 gui-symlinks:
@@ -90,6 +90,14 @@ gui-symlinks:
 	ln -s -f "$(DESTDIR)$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/swg"
 	ln -s -f "$(DESTDIR)$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/edig"
 	ln -s -f "$(DESTDIR)$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/vsg"
+
+easteregg:
+	ln -s -f "$(DESTDIR)$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/feedgame"
+
+gui-easteregg: easteregg-gui
+
+easteregg-gui:
+	ln -s -f "$(DESTDIR)$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/feedgameg"
 
 clean:
 	-rm -f o v2/o o.1.gz og/og v2/orbiton
