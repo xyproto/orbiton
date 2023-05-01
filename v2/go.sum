@@ -165,8 +165,8 @@ github.com/hashicorp/memberlist v0.1.3/go.mod h1:ajVTdAv/9Im8oMAAj5G31PhhMCZJV2p
 github.com/hashicorp/serf v0.8.2/go.mod h1:6hOLApaqBFA1NXqRQAsxw9QxuDEvNxSQRwA/JwenrHc=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/hudl/fargo v1.3.0/go.mod h1:y3CKSmjA+wD2gak7sUSXTAoopbhU08POFhmITJgmKTg=
-github.com/ianlancetaylor/demangle v0.0.0-20230322204757-857afb9054cd h1:ueaNYLw3m2nY25WL5hKP+wA7glfxb0G0RWepwIYvzjg=
-github.com/ianlancetaylor/demangle v0.0.0-20230322204757-857afb9054cd/go.mod h1:aYm2/VgdVmcIU8iMfdMvDMsRAQjcfZSKFby6HOFvi/w=
+github.com/ianlancetaylor/demangle v0.0.0-20230425220036-24673e7931eb h1:snwf7XklQQnf/t8OVj+nrsuiOVEFDj0E2XIlg235Gb0=
+github.com/ianlancetaylor/demangle v0.0.0-20230425220036-24673e7931eb/go.mod h1:aYm2/VgdVmcIU8iMfdMvDMsRAQjcfZSKFby6HOFvi/w=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d/go.mod h1:qj24IKcXYK6Iy9ceXlo3Tc+vtHo9lIhSX5JddghvEPo=
 github.com/jezek/xgb v1.0.0/go.mod h1:nrhwO0FX/enq75I7Y7G8iN1ubpSGZEiA3v9e9GyRFlk=
@@ -375,8 +375,8 @@ github.com/xyproto/vt100 v1.9.8/go.mod h1:ExY2YeEedHIb8ng0LG0nv0pgO4prm3KFRnPcTV
 github.com/xyproto/vt100 v1.9.12/go.mod h1:b0qTpewCw1TQdPH/V2djiI4YdMpfXrxTNi75ri6s0ZI=
 github.com/xyproto/vt100 v1.10.4/go.mod h1:GTrdAbDl0c1TYMjR2EoehGn3QyVwACjhSlAS2wdH45k=
 github.com/xyproto/vt100 v1.11.3/go.mod h1:/cZEwHrMrKNy75d4Q7GRVdVUUr8nBLfBjlmKoJG/d+8=
-github.com/xyproto/vt100 v1.11.4 h1:TS+0v2MifGZLswQKcDVEFCLQIRzbmZlcaQKpOR2Boxg=
-github.com/xyproto/vt100 v1.11.4/go.mod h1:uVEBW/aJFdcF/90Y3xrPR1ujyeomJWypi/By9ZxSPbM=
+github.com/xyproto/vt100 v1.11.5 h1:ytNkWbmsK3ajfggXKEGk2kYNedGfkVSkFPME/5LmH5k=
+github.com/xyproto/vt100 v1.11.5/go.mod h1:b6gLr53ZM9g6UHywqgQfrUY38Kak6pV0EEgaFmuJYQ4=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/yuin/goldmark v1.4.1/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=

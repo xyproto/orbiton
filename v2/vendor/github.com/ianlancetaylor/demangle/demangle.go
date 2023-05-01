@@ -30,6 +30,7 @@ const (
 	NoParams Option = iota
 
 	// The NoTemplateParams option disables demangling of template parameters.
+	// This applies to both C++ and Rust.
 	NoTemplateParams
 
 	// The NoClones option disables inclusion of clone suffixes.

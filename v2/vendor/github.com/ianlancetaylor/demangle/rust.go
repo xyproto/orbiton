@@ -40,6 +40,14 @@ func rustToString(name string, options []Option) (ret string, err error) {
 
 	name = name[2:]
 	rst := &rustState{orig: name, str: name}
+
+	for _, o := range options {
+		if o == NoTemplateParams {
+			rst.noGenericArgs = true
+			break
+		}
+	}
+
 	rst.symbolName()
 
 	if len(rst.str) > 0 {
@@ -67,13 +75,14 @@ func rustToString(name string, options []Option) (ret string, err error) {
 
 // A rustState holds the current state of demangling a Rust string.
 type rustState struct {
-	orig      string          // the original string being demangled
-	str       string          // remainder of string to demangle
-	off       int             // offset of str within original string
-	buf       strings.Builder // demangled string being built
-	skip      bool            // don't print, just skip
-	lifetimes int64           // number of bound lifetimes
-	last      byte            // last byte written to buffer
+	orig          string          // the original string being demangled
+	str           string          // remainder of string to demangle
+	off           int             // offset of str within original string
+	buf           strings.Builder // demangled string being built
+	skip          bool            // don't print, just skip
+	lifetimes     int64           // number of bound lifetimes
+	last          byte            // last byte written to buffer
+	noGenericArgs bool            // don't demangle generic arguments
 }
 
 // fail panics with demangleErr, to be caught in rustToString.
@@ -232,15 +241,7 @@ func (rst *rustState) path(needsSeparator bool) {
 			rst.writeString("::")
 		}
 		rst.writeByte('<')
-		first := true
-		for len(rst.str) > 0 && rst.str[0] != 'E' {
-			if first {
-				first = false
-			} else {
-				rst.writeString(", ")
-			}
-			rst.genericArg()
-		}
+		rst.genericArgs()
 		rst.writeByte('>')
 		rst.checkChar('E')
 	case 'B':
@@ -434,6 +435,27 @@ func (rst *rustState) expandPunycode(s string) string {
 	}
 
 	return string(output)
+}
+
+// genericArgs prints a list of generic arguments, without angle brackets.
+func (rst *rustState) genericArgs() {
+	if rst.noGenericArgs {
+		hold := rst.skip
+		rst.skip = true
+		defer func() {
+			rst.skip = hold
+		}()
+	}
+
+	first := true
+	for len(rst.str) > 0 && rst.str[0] != 'E' {
+		if first {
+			first = false
+		} else {
+			rst.writeString(", ")
+		}
+		rst.genericArg()
+	}
 }
 
 // genericArg parses:
@@ -724,15 +746,7 @@ func (rst *rustState) pathStartGenerics() bool {
 		rst.advance(1)
 		rst.path(false)
 		rst.writeByte('<')
-		first := true
-		for len(rst.str) > 0 && rst.str[0] != 'E' {
-			if first {
-				first = false
-			} else {
-				rst.writeString(", ")
-			}
-			rst.genericArg()
-		}
+		rst.genericArgs()
 		rst.checkChar('E')
 		return true
 	case 'B':
