@@ -1,14 +1,20 @@
 #include "fs.h"
+
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <signal.h>
-#include <stdlib.h>
 #include <streambuf>
 #include <string>
+
+#include <signal.h>
+#include <stdlib.h>
 #include <unistd.h>
+
 #include <vte/vte.h>
+#include <gio/gio.h>
+
+#include "resource.h"
 
 /*
  * A terminal emulator only for running o.
@@ -542,6 +548,9 @@ int main(int argc, char* argv[])
 
     // Set the default Window size
     // gtk_window_set_default_size(GTK_WINDOW(window), 800, 600);
+
+    GdkPixbuf *logo_pixbuf = gdk_pixbuf_new_from_resource("/com/orbiton/og/icon_128x128.png", nullptr);
+    gtk_window_set_icon(GTK_WINDOW(window), logo_pixbuf);
 
     using fs::exists;
     using fs::path;

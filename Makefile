@@ -20,7 +20,7 @@ endif
 
 CXX ?= g++
 CXXFLAGS ?= -O2 -pipe -fPIC -fno-plt -fstack-protector-strong -Wall -Wshadow -Wpedantic -Wno-parentheses -Wfatal-errors -Wvla -Wignored-qualifiers -pthread
-CXXFLAGS += $(shell pkg-config --cflags --libs vte-2.91)
+CXXFLAGS += $(shell pkg-config --cflags --libs vte-2.91 gdk-pixbuf-2.0)
 
 UNAME := $(shell uname)
 
@@ -43,7 +43,10 @@ gui: og
 ko: og
 og: og/og
 
-og/og: og/main.cpp
+og/resource.h: og/resources.xml img/icon_128x128.png
+	glib-compile-resources --generate-header --target=og/resource.h --sourcedir=og --sourcedir=img og/resources.xml
+
+og/og: og/main.cpp og/resource.h
 	$(CXX) "$<" -o "$@" $(CXXFLAGS)
 
 o.1.gz: o.1

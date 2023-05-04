@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/com/orbiton/og">
+    <file>../img/icon_128x128.png</file>
+  </gresource>
+</gresources>
