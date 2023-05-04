@@ -1,9 +1,9 @@
 package main
 
 import (
+	"regexp"
 	"strings"
 	"unicode"
-	"regexp"
 
 	"github.com/xyproto/vt100"
 )
