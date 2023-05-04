@@ -43,3 +43,5 @@ redblack
 release/
 v2/o
 v2/orbiton
+.DS_Store
+output.txt
