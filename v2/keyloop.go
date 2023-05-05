@@ -22,6 +22,9 @@ import (
 // Create a LockKeeper for keeping track of which files are being edited
 var fileLock = NewLockKeeper(defaultLockFile)
 
+// The maximum amount of times to display the help text when ctrl-g is pressed
+const maxHelpMessages = 3
+
 // Loop will set up and run the main loop of the editor
 // a *vt100.TTY struct
 // fnord contains either data or a filename to open
@@ -55,6 +58,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		kh               = NewKeyHistory() // keep track of the previous key presses
 		key              string            // for the main loop
 		jsonFormatToggle bool              // for toggling indentation or not when pressing ctrl-w for JSON
+
+		helpCounter int // the number of times the help text has been displayed
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -1319,7 +1324,17 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.UserSave(c, tty, status)
 		case "c:7": // ctrl-g, go to definition OR display some help
 			if !e.GoToDefinition(c, status) {
-				e.HelpMessage(c, status)
+				helpCounter++
+				if helpCounter <= maxHelpMessages {
+					e.HelpMessage(c, status)
+				} else {
+					status.ClearAll(c)
+					status.SetMessage("could not jump to definition")
+					status.Show(c, e)
+				}
+			} else {
+				// Don't show the help message any more after a successful jump to definition
+				helpCounter += maxHelpMessages
 			}
 		case "c:21", "c:26": // ctrl-u or ctrl-z (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state
