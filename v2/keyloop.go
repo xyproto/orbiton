@@ -1317,11 +1317,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:19": // ctrl-s, save (or step, if in debug mode)
 			e.UserSave(c, tty, status)
 		case "c:7": // ctrl-g, go to definition OR display some help
-			if word := e.WordAtCursor(); e.CanGoToDefinition() && word != "" {
-				e.GoToDefinition(c, status, word)
-				break
+			if !e.GoToDefinition(c, status) {
+				e.HelpMessage(c, status)
 			}
-			e.HelpMessage(c, status)
 		case "c:21", "c:26": // ctrl-u or ctrl-z (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state
 			lastCutY = -1
