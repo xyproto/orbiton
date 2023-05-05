@@ -163,7 +163,7 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active,
              or jump to the matching parenthesis or bracket, if the cursor is on one.
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
-* `ctrl-g` - Display a simple help text.
+* `ctrl-g` - Display a simple help text, or jump to function definitions within the same file.
 * `ctrl-_` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - For C and C++: jump between the current header and source file. For Agda and Ivy, insert a symbol.

@@ -47,7 +47,7 @@ ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for HTML, format the file with "tidy", for Python: "autopep8"
             for Markdown, toggle checkboxes
             for git interactive rebases, cycle the rebase keywords
-ctrl-g      to display simple help text
+ctrl-g      to display simple help text, or jump to function defs within the same file
 ctrl-_      to toggle filename/line/column/unicode/word count status display
 ctrl-a      go to start of line, then start of text and then the previous line
 ctrl-e      go to end of line and then the next line
