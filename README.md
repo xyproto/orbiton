@@ -158,9 +158,10 @@ These features are unique to `o`, as far as I am aware:
              For "git interactive rebase" mode (`git rebase -i`), this will cycle the rebase keywords instead.
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords.
 * `ctrl-a` - Go to start of text, then start of line and then to the previous line.
-* `ctrl-e` - Go to end of line and then to the next line OR jump to the matching parenthesis or bracket.
+* `ctrl-e` - Go to end of line and then to the next line
 * `ctrl-p` - Scroll up 10 lines, or go to the previous match if a search is active.
-* `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active.
+* `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active,
+             or jump to the matching parenthesis or bracket, if the cursor is on one.
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
 * `ctrl-g` - Display a simple help text.
 * `ctrl-_` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
