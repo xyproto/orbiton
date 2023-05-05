@@ -43,7 +43,7 @@ func (e *Editor) GoToDefinition(c *vt100.Canvas, status *StatusBar) bool {
 	//status.SetMessage("  " + s + "  ")
 
 	// TODO: Implement "go to definition"
-	status.Clear(c)
+	status.ClearAll(c)
 	status.SetMessage("TO IMPLEMENT: GO TO DEFINITION OF " + word)
 	status.Show(c, e)
 

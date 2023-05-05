@@ -393,13 +393,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if e.AfterEndOfLine() {
 				e.End(c)
 			}
-
 		case "c:31": // ctrl-_, status mode
+			status.ClearAll(c)
 			e.statusMode = !e.statusMode
 			if e.statusMode {
 				status.ShowLineColWordCount(c, e, e.filename)
-			} else {
-				status.ClearAll(c)
 			}
 		case "←": // left arrow
 
