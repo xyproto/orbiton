@@ -394,7 +394,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.End(c)
 			}
 
-		case "c:7": // ctrl-g, status mode
+		case "c:31": // ctrl-_, status mode
 			e.statusMode = !e.statusMode
 			if e.statusMode {
 				status.ShowLineColWordCount(c, e, e.filename)
@@ -1318,16 +1318,22 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			status.Show(c, e)
 		case "c:19": // ctrl-s, save (or step, if in debug mode)
 			e.UserSave(c, tty, status)
-		case "c:31": // ctrl-_, go to definition
+		case "c:7": // ctrl-g, go to definition or help
 			// First bookmark the current position
 			bookmark = e.pos.Copy()
 			s := "Bookmarked line " + e.LineNumber().String()
 			status.SetMessage("  " + s + "  ")
-			// TODO: Also bookmark the filename
 			// Then get the word under the cursor
 			word := e.WordAtCursor()
-			// TODO: Implement go to definition or filename
-			status.SetMessage("Current word: " + word)
+
+			if word == "" {
+				// TODO: Implement a better help message
+				status.SetMessage("Press ctrl-q to quit or ctrl-o to show the menu. Use the --help flag for more help.")
+			} else {
+				// TODO: Implement "go to definition"
+				status.SetMessage("TO IMPLEMENT: GO TO DEFINITION OF " + word)
+			}
+
 			status.Show(c, e)
 		case "c:21", "c:26": // ctrl-u or ctrl-z (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state
