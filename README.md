@@ -158,11 +158,12 @@ These features are unique to `o`, as far as I am aware:
              For "git interactive rebase" mode (`git rebase -i`), this will cycle the rebase keywords instead.
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords.
 * `ctrl-a` - Go to start of text, then start of line and then to the previous line.
-* `ctrl-e` - Go to end of line and then to the next line.
+* `ctrl-e` - Go to end of line and then to the next line OR jump to the matching parenthesis or bracket.
 * `ctrl-p` - Scroll up 10 lines, or go to the previous match if a search is active.
 * `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active.
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
-* `ctrl-g` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
+* `ctrl-g` - Display a simple help text.
+* `ctrl-_` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - For C and C++: jump between the current header and source file. For Agda and Ivy, insert a symbol.
              For the rest, record and play back keypresses. Press `Esc` to clear the current macro.
@@ -177,7 +178,7 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive. Press `tab` instead of `return` to search and replace.
 * `ctrl-b` - Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
 * `ctrl-\` - Comment in or out a block of code.
-* `ctrl-~` - Jump to a matching parenthesis.
+* `ctrl-~` - Jump to a matching parenthesis or bracket.
 * `esc` - Redraw everything and clear the last search.
 
 ## Build and format

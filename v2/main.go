@@ -47,9 +47,10 @@ ctrl-w     for Zig, Rust, V and Go, format with the "... fmt" command
            for HTML, format the file with "tidy", for Python: "autopep8"
            for Markdown, toggle checkboxes
            for git interactive rebases, cycle the rebase keywords
-ctrl-g     to toggle filename/line/column/unicode/word count status display
+ctrl-g     to display simple help text
+ctrl-_     to toggle filename/line/column/unicode/word count status display
 ctrl-a     go to start of line, then start of text and then the previous line
-ctrl-e     go to end of line and then the next line
+ctrl-e     go to end of line and then the next line OR jump to matching parenthesis
 ctrl-n     to scroll down 10 lines or go to the next match if a search is active
 ctrl-p     to scroll up 10 lines or go to the previous match
 ctrl-k     to delete characters to the end of the line, then delete the line
