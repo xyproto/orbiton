@@ -2630,9 +2630,7 @@ func (e *Editor) NextLineIsBlank() bool {
 // JumpToMatching can jump to a to matching parenthesis or bracket ([{.
 // Return true if a jump was possible and happened.
 func (e *Editor) JumpToMatching(c *vt100.Canvas) bool {
-	if e.AfterEndOfLine() {
-		e.Prev(c)
-	}
+	//if e.AfterEndOfLine() { e.Prev(c) }
 	r := e.Rune()
 	// Find which opening and closing parenthesis/curly brackets to look for
 	opening, closing := rune(0), rune(0)

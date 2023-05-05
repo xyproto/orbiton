@@ -1246,12 +1246,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:1", "c:25": // ctrl-a, home (or ctrl-y for scrolling up in the st terminal)
-
-			// First check if we can jump to the matching paren or bracket instead
-			if e.JumpToMatching(c) {
-				break
-			}
-
 			// Do not reset cut/copy/paste status
 
 			// First check if we just moved to this line with the arrow keys
@@ -1277,6 +1271,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redrawCursor = true
 			e.SaveX(true)
 		case "c:5": // ctrl-e, end
+			// First check if we can jump to the matching paren or bracket instead
+			if e.JumpToMatching(c) {
+				break
+			}
 
 			// Do not reset cut/copy/paste status
 
@@ -1318,23 +1316,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			status.Show(c, e)
 		case "c:19": // ctrl-s, save (or step, if in debug mode)
 			e.UserSave(c, tty, status)
-		case "c:7": // ctrl-g, go to definition or help
-			// First bookmark the current position
-			bookmark = e.pos.Copy()
-			s := "Bookmarked line " + e.LineNumber().String()
-			status.SetMessage("  " + s + "  ")
-			// Then get the word under the cursor
-			word := e.WordAtCursor()
-
-			if word == "" {
-				// TODO: Implement a better help message
-				status.SetMessage("Press ctrl-q to quit or ctrl-o to show the menu. Use the --help flag for more help.")
-			} else {
-				// TODO: Implement "go to definition"
-				status.SetMessage("TO IMPLEMENT: GO TO DEFINITION OF " + word)
+		case "c:7": // ctrl-g, go to definition OR display some help
+			if word := e.WordAtCursor(); e.CanGoToDefinition() && word != "" {
+				e.GoToDefinition(c, status, word)
+				break
 			}
-
-			status.Show(c, e)
+			e.HelpMessage(c, status)
 		case "c:21", "c:26": // ctrl-u or ctrl-z (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state
 			lastCutY = -1
