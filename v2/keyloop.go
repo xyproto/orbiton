@@ -259,9 +259,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			e.SearchMode(c, status, tty, true, undo)
+
 		case "c:0": // ctrl-space, build source code to executable, or export, depending on the mode
+			// Then build, but don't run
 			const andRun = false
 			e.Build(c, status, tty, andRun)
+
 		case "c:20": // ctrl-tV
 			// for C or C++: jump to header/source, or insert symbol
 			// for Agda: insert symbol
@@ -580,7 +583,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.End(c)
 			}
 			e.redrawCursor = true
+
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
+			// First check if we can jump to the matching paren or bracket instead
+			if e.JumpToMatching(c) {
+				break
+			}
 
 			// If in Debug mode, let ctrl-n mean "next instruction"
 			if e.debugMode {
@@ -1269,11 +1277,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redrawCursor = true
 			e.SaveX(true)
 		case "c:5": // ctrl-e, end
-			// First check if we can jump to the matching paren or bracket instead
-			if e.JumpToMatching(c) {
-				break
-			}
-
 			// Do not reset cut/copy/paste status
 
 			// First check if we just moved to this line with the arrow keys, or just cut a line with ctrl-x
