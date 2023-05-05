@@ -13,6 +13,7 @@
 - [ ] When deleting lines with ctrl-k more than once, scroll the cursor line a bit up, to make it easier.
 - [ ] Go through this file and remove all completed TODO items.
 - [ ] When bookmarking, don't just bookmark the line/col, but also the filename.
+- [ ] If a file is passed through stdin, and > 70% of the lines has a ":", it is probably a log file and not configuration.
 
 ## Markdown
 
