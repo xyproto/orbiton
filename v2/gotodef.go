@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/xyproto/mode"
 	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
@@ -32,20 +34,50 @@ func (e *Editor) GoToDefinition(c *vt100.Canvas, status *StatusBar) bool {
 		}
 	}
 
-	// We might be able to go to the definition of word, maybe.
 	// word can be a string like "package.DoSomething" at this point.
 
-	// TODO: Go to definition should store the current location in a special kind of bookmark (including filename)
-	//       so that another keypress can jump back to where we were.
+	// TODO:
+	// * Implement "go to definition"
+	// * Go to definition should store the current location in a special kind of bookmark (including filename)
+	//   so that another keypress can jump back to where we were.
+	// * Implement a special kind of bookmark which also supports storing the filename.
 
 	//bookmark = e.pos.Copy()
 	//s := "Bookmarked line " + e.LineNumber().String()
 	//status.SetMessage("  " + s + "  ")
 
-	// TODO: Implement "go to definition"
 	status.ClearAll(c)
-	status.SetMessage("TO IMPLEMENT: GO TO DEFINITION OF " + word)
-	status.Show(c, e)
 
+	s := "func " + word
+
+	// Go to defintion, but only of functions defined within the same Go file, for now
+	e.SetSearchTerm(c, status, s)
+
+	// Backward search form the current location
+	startIndex := e.DataY()
+	stopIndex := LineIndex(0)
+	foundX, foundY := e.backwardSearch(startIndex, stopIndex)
+
+	if foundY == -1 {
+		status.SetMessage("Could not find " + s)
+		status.Show(c, e)
+		return false
+	}
+
+	// Go to the found match
+	e.redraw, _ = e.GoTo(foundY, c, status)
+	if foundX != -1 {
+		tabs := strings.Count(e.Line(foundY), "\t")
+		e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
+		e.HorizontalScrollIfNeeded(c)
+	}
+
+	// Center and prepare to redraw
+	e.Center(c)
+	e.redraw = true
+	e.redrawCursor = e.redraw
+
+	//status.SetMessage("Jumped to " + s)
+	//status.Show(c, e)
 	return true
 }

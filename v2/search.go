@@ -18,8 +18,9 @@ var (
 	errNoSearchMatch      = errors.New("no search match")
 )
 
-// SetSearchTerm will set the current search term to highlight
-func (e *Editor) SetSearchTerm(c *vt100.Canvas, status *StatusBar, s string) {
+// SetSearchTerm will set the current search term. This initializes a new search.
+func (e *Editor) SetSearchTerm(c *vt100.Canvas, status *StatusBar, s string) bool {
+	foundMatch := false
 	// set the search term
 	e.searchTerm = s
 	// set the sticky search term (used by ctrl-n, cleared by Esc only)
@@ -32,6 +33,7 @@ func (e *Editor) SetSearchTerm(c *vt100.Canvas, status *StatusBar, s string) {
 			// GoTo returns true if the screen should be redrawn
 			redraw, _ := e.GoTo(y, c, status)
 			if redraw {
+				foundMatch = true
 				e.Center(c)
 			}
 			break
@@ -39,6 +41,7 @@ func (e *Editor) SetSearchTerm(c *vt100.Canvas, status *StatusBar, s string) {
 	}
 	// draw the lines to the canvas
 	e.DrawLines(c, true, false)
+	return foundMatch
 }
 
 // SearchTerm will return the current search term
