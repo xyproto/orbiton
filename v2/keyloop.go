@@ -1247,6 +1247,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redraw = true
 		case "c:1", "c:25": // ctrl-a, home (or ctrl-y for scrolling up in the st terminal)
 
+			// First check if we can jump to the matching paren or bracket instead
+			if e.JumpToMatching(c) {
+				break
+			}
+
 			// Do not reset cut/copy/paste status
 
 			// First check if we just moved to this line with the arrow keys
@@ -1303,69 +1308,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.redraw = true
 			}
 			e.redrawCursor = true
+
 		case "c:29", "c:30": // ctrl-~, jump to matching parenthesis or curly bracket
-			r := e.Rune()
-
-			if e.AfterEndOfLine() {
-				e.Prev(c)
-				r = e.Rune()
-			}
-
-			// Find which opening and closing parenthesis/curly brackets to look for
-			opening, closing := rune(0), rune(0)
-			switch r {
-			case '(', ')':
-				opening = '('
-				closing = ')'
-			case '{', '}':
-				opening = '{'
-				closing = '}'
-			case '[', ']':
-				opening = '['
-				closing = ']'
-			}
-
-			if opening == rune(0) {
-				status.Clear(c)
-				status.SetMessage("No matching (, ), [, ], { or }")
-				status.Show(c, e)
+			if e.JumpToMatching(c) {
 				break
 			}
-
-			// Search either forwards or backwards to find a matching rune
-			switch r {
-			case '(', '{', '[':
-				parcount := 0
-				for !e.AtOrAfterEndOfDocument() {
-					if r := e.Rune(); r == closing {
-						if parcount == 1 {
-							// FOUND, STOP
-							break
-						}
-						parcount--
-					} else if r == opening {
-						parcount++
-					}
-					e.Next(c)
-				}
-			case ')', '}', ']':
-				parcount := 0
-				for !e.AtStartOfDocument() {
-					if r := e.Rune(); r == opening {
-						if parcount == 1 {
-							// FOUND, STOP
-							break
-						}
-						parcount--
-					} else if r == closing {
-						parcount++
-					}
-					e.Prev(c)
-				}
-			}
-
-			e.redrawCursor = true
-			e.redraw = true
+			status.Clear(c)
+			status.SetMessage("No matching (, ), [, ], { or }")
+			status.Show(c, e)
 		case "c:19": // ctrl-s, save (or step, if in debug mode)
 			e.UserSave(c, tty, status)
 		case "c:31": // ctrl-_, go to definition

@@ -2626,3 +2626,65 @@ func (e *Editor) LineIsBlank(y LineIndex) bool {
 func (e *Editor) NextLineIsBlank() bool {
 	return e.LineIsBlank(e.DataY() + 1)
 }
+
+// JumpToMatching can jump to a to matching parenthesis or bracket ([{.
+// Return true if a jump was possible and happened.
+func (e *Editor) JumpToMatching(c *vt100.Canvas) bool {
+	if e.AfterEndOfLine() {
+		e.Prev(c)
+	}
+	r := e.Rune()
+	// Find which opening and closing parenthesis/curly brackets to look for
+	opening, closing := rune(0), rune(0)
+	onparen := true
+	switch r {
+	case '(', ')':
+		opening = '('
+		closing = ')'
+	case '{', '}':
+		opening = '{'
+		closing = '}'
+	case '[', ']':
+		opening = '['
+		closing = ']'
+	default:
+		onparen = false
+	}
+	if onparen {
+		// Search either forwards or backwards to find a matching rune
+		switch r {
+		case '(', '{', '[':
+			parcount := 0
+			for !e.AtOrAfterEndOfDocument() {
+				if r := e.Rune(); r == closing {
+					if parcount == 1 {
+						// FOUND, STOP
+						break
+					}
+					parcount--
+				} else if r == opening {
+					parcount++
+				}
+				e.Next(c)
+			}
+		case ')', '}', ']':
+			parcount := 0
+			for !e.AtStartOfDocument() {
+				if r := e.Rune(); r == opening {
+					if parcount == 1 {
+						// FOUND, STOP
+						break
+					}
+					parcount--
+				} else if r == closing {
+					parcount++
+				}
+				e.Prev(c)
+			}
+		}
+		e.redrawCursor = true
+		e.redraw = true
+		return true
+	}
+	return false
+}
