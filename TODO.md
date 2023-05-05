@@ -2,8 +2,7 @@
 
 ## General
 
-- [ ] Let ctrl-a also jump to the matching () [] or {}
-- [ ] Let ctrl-g first show the status line, then help, then clear both
+- [ ] Add a menu entry in the `ctrl-o` for listing all keybindings.
 - [ ] HTTP client - scratch document style
 - [ ] Add support for emojis.
 - [ ] If Esc is pressed repeatedly (>=4 times in a row), open the `ctrl-o` menu.
