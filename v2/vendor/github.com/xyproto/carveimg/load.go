@@ -1,5 +1,3 @@
-//go:build cgo
-
 package carveimg
 
 import (
@@ -12,8 +10,8 @@ import (
 	"strings"
 
 	ico "github.com/biessek/golang-ico"
-	"github.com/chai2010/webp"
 	bmp "github.com/jsummers/gobmp"
+	"golang.org/x/image/webp"
 )
 
 // LoadImage loads an image and converts it to *image.NRGBA.

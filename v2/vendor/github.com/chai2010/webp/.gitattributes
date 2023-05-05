@@ -1,4 +1,0 @@
-internal/* linguist-vendored
-*.c linguist-language=go
-*.cc linguist-language=go
-*.cpp linguist-language=go

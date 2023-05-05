@@ -1,6 +1,6 @@
 # Carve & Img
 
-Two image viewing utilities for the terminal. Both of them displays images in only 16 colors.
+Two image viewing utilities for the terminal. Both of them can display images in only 16 colors.
 
 * `carve` - uses content-aware image resizing before displaying the image
 * `img` - uses regular image resizing before displaying the image
@@ -35,6 +35,6 @@ With Go 1.17 or later:
 
 ## General info
 
-* Version: 1.3.4
+* Version: 1.4.0
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
