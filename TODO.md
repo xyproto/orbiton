@@ -2,32 +2,33 @@
 
 ## General
 
-- [ ] Add support for emojis.
-- [ ] Go through this file and remove all completed TODO items.
-- [ ] Add a table editor for Markdown.
-- [ ] If Esc is pressed repeatedly (>=4 times in a row), open the `ctrl-o` menu.
-- [ ] Markdown table editor
+- [ ] Let ctrl-a also jump to the matching () [] or {}
+- [ ] Let ctrl-g first show the status line, then help, then clear both
 - [ ] HTTP client - scratch document style
+- [ ] Add support for emojis.
+- [ ] If Esc is pressed repeatedly (>=4 times in a row), open the `ctrl-o` menu.
 - [ ] When rebasing, look for the `>>>>` markers when opening the file and jump to the first one?
 - [ ] When pasting with double ctrl-v, let one ctrl-z undo both keypresses.
-- [ ] Handle really long lines as well.
 - [ ] When pasting lines that start with "+" and it's not a diff/patch file, then replace "+" with a blank.
-- [ ] Add a menu option toggle for letting in-document ChatGPT prompts affect: the next line | code block | function | file
 - [ ] When deleting lines with ctrl-k more than once, scroll the cursor line a bit up, to make it easier.
+- [ ] Go through this file and remove all completed TODO items.
 
 ## Markdown
 
+- [ ] Add a much needed table editor.
 - [ ] "Render with Pandoc" should be a menu option.
-- [ ] ctrl-space should render to HTML, using a Go package.
+- [ ] `ctrl-space` should render Markdown to HTML, using a Go package.
 
-## AI
+## Autocompletion and AI generated code
 
+- [ ] If ChatGPT is enabled, and there is just one error, and the fix proposed by ChatGPT is small, then apply the fix, but let the user press ctrl-z if they don't want it.
 - [ ] If an API key is entered, save it to file in the cache directory.
-- [x] Support either GPT-J, GPT-Neo or ChatGPT. At a minimum, make it possible to auto-generate commit messages.
-- [x] Make it possible to generate the rest of a function, just by typing in a comment and a function signature,
-      for instance by pressing "tab" at the end of a function signature.
-- [x] Don't use the '!' prefix for Markdown.
+- [ ] Add an environment variable for specifying the AI API endpoint.
 - [ ] Embed https://github.com/nomic-ai/gpt4all + data files within the `o` executable, somehow.
+- [ ] Add a way to generate git commit messages with ChatGPT
+- [ ] Let the auto completion also look at method definitions with matching variable names (ignoring types, for now).
+- [ ] Auto completion of filenames if the previous rune is "/" and tab is pressed.
+- [ ] When generating code with ChatGPT, also send a list of function signatures and constants for the current file (+ header file).
 
 ## Building, debugging and testing programs
 
@@ -88,13 +89,6 @@
 - [ ] Sort lines in a less opaque and unusual way than `left,up,right` `sort` `return` before documenting the feature.
 - [ ] Let ctrl-k first delete until "{" and then util the end of the line if there is no "{"?
 
-## Autocompletion and AI generated code
-
-- [ ] Add a way to generate git commit messages with ChatGPT
-- [ ] Let the auto completion also look at method definitions with matching variable names (ignoring types, for now).
-- [ ] Auto completion of filenames if the previous rune is "/" and tab is pressed.
-- [ ] When generating code with ChatGPT, also send a list of function signatures and constants for the current file (+ header file).
-
 ## Syntax highlighting
 
 - [ ] Fix syntax highlighting of `(* ... *)` comments at the end of a line in OCaml.
@@ -102,7 +96,6 @@
 - [ ] Let `<<EOF` be considered the start of a multiline string in Shell, and `EOF` the end.
 - [ ] Let a struct for a Theme contain both the light and the dark version, if there are two.
 - [ ] Check that the right theme is loaded under `uxterm`.
-- [x] Don't let single-line comments at the end of lines disable rainbow parentheses.
 - [ ] Also highlight hexadecimal numbers.
 - [ ] Fix syntax highlighting of `'tokens` in Clojure.
 - [ ] Don't highlight regular text in Nroff files.
@@ -167,12 +160,6 @@
 ## Unit tests
 
 - [ ] Add tests for the smart indent feature: for pressing return, tab and space, especially in relation with `{` and `}`.
-
-## Performance
-
-- [ ] Skip `os.Stat` and `Glob` if they take to long, and just open the file directly (they are needed for smart filename completion).
-- [ ] Extract the features that are used in `vt100` and create a more optimized package.
-- [ ] Reduce memory usage even further.
 
 ## Refactoring
 
