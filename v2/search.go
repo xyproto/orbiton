@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
 
@@ -347,30 +346,8 @@ AGAIN:
 
 	// A special case, search backwards to the start of the function (or to "main")
 	if s == "f" {
-		switch e.mode {
-		case mode.Clojure:
-			s = "defn "
-		case mode.Crystal, mode.Nim, mode.Python, mode.Scala:
-			s = "def "
-		case mode.GDScript, mode.Go:
-			s = "func "
-		case mode.Kotlin:
-			s = "fun "
-		case mode.Jakt, mode.JavaScript, mode.Koka, mode.Lua, mode.Shell, mode.TypeScript:
-			s = "function "
-		case mode.Terra:
-			s = "terra "
-		case mode.Odin:
-			s = "proc() "
-		case mode.Hare, mode.Rust, mode.V, mode.Zig:
-			s = "fn "
-		case mode.Erlang:
-			// This is not "the definition of a function" in Erlang, but should work for many cases
-			s = " ->"
-		case mode.Prolog:
-			// This is not "the definition of a function" in Prolog, but should work for many cases
-			s = " :-"
-		default:
+		s = e.FuncPrefix()
+		if s == "" {
 			s = "main"
 		}
 		forward = false
