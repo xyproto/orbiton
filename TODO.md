@@ -12,6 +12,7 @@
 - [ ] When pasting lines that start with "+" and it's not a diff/patch file, then replace "+" with a blank.
 - [ ] When deleting lines with ctrl-k more than once, scroll the cursor line a bit up, to make it easier.
 - [ ] Go through this file and remove all completed TODO items.
+- [ ] When bookmarking, don't just bookmark the line/col, but also the filename.
 
 ## Markdown
 
