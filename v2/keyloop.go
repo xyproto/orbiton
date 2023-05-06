@@ -1279,7 +1279,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// First check if we are editing Markdown and are in a Markdown table
 			if e.mode == mode.Markdown {
 				if strings.Count(e.CurrentLine(), "|") >= 2 {
-					//EditMarkdownTable()
+					e.GoToTableTop(c, status)
+					//e.EditMarkdownTable()
 					break
 				}
 			}
