@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] When inserting something near the end of a long line, and moving to the line below, and inserting a character, make sure to scroll to the proper place before inserting the character, so that it is not inserted in the wrong place.
 - [ ] Add a menu entry in the `ctrl-o` for listing all keybindings.
 - [ ] HTTP client - scratch document style
 - [ ] Add support for emojis.
