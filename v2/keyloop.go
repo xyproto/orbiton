@@ -270,7 +270,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			const andRun = false
 			e.Build(c, status, tty, andRun)
 
-		case "c:20": // ctrl-tV
+		case "c:20": // ctrl-t
 			// for C or C++: jump to header/source, or insert symbol
 			// for Agda: insert symbol
 			// for the rest: record and play back macros
@@ -316,10 +316,19 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.ClearAll(c)
 				status.SetErrorMessage("No corresponding source file")
 				status.Show(c, e)
-			} else if e.mode == mode.Agda { // insert symbol
+			} else if e.mode == mode.Agda || e.mode == mode.Ivy { // insert symbol
+				var (
+					menuChoices    [][]string
+					selectedSymbol string
+				)
+				if e.mode == mode.Agda {
+					menuChoices = agdaSymbols
+					selectedSymbol = "¤"
+				} else if e.mode == mode.Ivy {
+					menuChoices = ivySymbols
+					selectedSymbol = "×"
+				}
 				e.redraw = true
-				menuChoices := agdaSymbols
-				selectedSymbol := "¤"
 				selectedX, selectedY, cancel := e.SymbolMenu(status, tty, "Insert symbol", menuChoices, e.MenuTitleColor, e.MenuTextColor, e.MenuArrowColor)
 				if !cancel {
 					undo.Snapshot(e)
@@ -331,26 +340,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 					e.InsertString(c, selectedSymbol)
 				}
-			} else if e.mode == mode.Ivy { // insert symbol
-				e.redraw = true
-				menuChoices := ivySymbols
-				selectedSymbol := "×"
-				selectedX, selectedY, cancel := e.SymbolMenu(status, tty, "Insert symbol", menuChoices, e.MenuTitleColor, e.MenuTextColor, e.MenuArrowColor)
-				if !cancel {
-					undo.Snapshot(e)
-					if selectedY < len(menuChoices) {
-						row := menuChoices[selectedY]
-						if selectedX < len(row) {
-							selectedSymbol = menuChoices[selectedY][selectedX]
-						}
-					}
-					e.InsertString(c, selectedSymbol)
-				}
-
+			} else if e.macro == nil {
 				// Start recording a macro, then stop the recording when ctrl-t is pressed again,
 				// then ask for the number of repetitions to play it back when it's pressed after that,
 				// then clear the macro when esc is pressed.
-			} else if e.macro == nil {
 				undo.Snapshot(e)
 				undo.IgnoreSnapshots(true)
 				status.Clear(c)
@@ -1282,6 +1275,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redrawCursor = true
 			e.SaveX(true)
 		case "c:5": // ctrl-e, end
+
+			// First check if we are editing Markdown and are in a Markdown table
+			if e.mode == mode.Markdown {
+				if strings.Count(e.CurrentLine(), "|") >= 2 {
+					//EditMarkdownTable()
+					break
+				}
+			}
+
 			// Do not reset cut/copy/paste status
 
 			// First check if we just moved to this line with the arrow keys, or just cut a line with ctrl-x
