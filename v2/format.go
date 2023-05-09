@@ -12,6 +12,7 @@ import (
 
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
+	"github.com/yosssi/gohtml"
 )
 
 // Map from formatting command to a list of file extensions
@@ -32,10 +33,9 @@ var format = map[*exec.Cmd][]string{
 	exec.Command("prettier", "--tab-width", "4", "-w"):                                {".js", ".ts"},
 	exec.Command("prettier", "--tab-width", "2", "-w"):                                {".css"},
 	exec.Command("shfmt", "-s", "-w", "-i", "2", "-bn", "-ci", "-sr", "-kp"):          {".sh", ".bash", "PKGBUILD"},
-	exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"):                                                                                                 {".lua"},
-	exec.Command("tidy", "-w", "80", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "-xml", "-m"):                                                                                          {".xml"},
-	exec.Command("tidy", "-w", "120", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "--hide-endtags", "yes", "--force-output", "yes", "-ashtml", "-omit", "no", "-xml", "no", "-m", "-c"): {".html", ".htm"},
-	exec.Command("/usr/bin/vendor_perl/perltidy", "-se", "-b", "-i=2", "-ole=unix", "-bt=2", "-pt=2", "-sbt=2", "-ce"):                                                                                                               {".pl"},
+	exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"):        {".lua"},
+	exec.Command("tidy", "-w", "80", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "-xml", "-m"): {".xml"},
+	exec.Command("/usr/bin/vendor_perl/perltidy", "-se", "-b", "-i=2", "-ole=unix", "-bt=2", "-pt=2", "-sbt=2", "-ce"):                      {".pl"},
 }
 
 // Using exec.Cmd instead of *exec.Cmd is on purpose, to get a new cmd.stdout and cmd.stdin every time.
@@ -215,10 +215,28 @@ func formatJSON(data []byte, jsonFormatToggle *bool, indentationPerTab int) ([]b
 	return indentedJSON, nil
 }
 
+func formatHTML(data []byte) ([]byte, error) {
+	return gohtml.FormatBytes(data), nil
+}
+
 func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, jsonFormatToggle *bool) {
+
 	// Format JSON
 	if e.mode == mode.JSON {
 		data, err := formatJSON([]byte(e.String()), jsonFormatToggle, e.indentation.PerTab)
+		if err != nil {
+			status.ClearAll(c)
+			status.ShowErrorAfterRedraw(err)
+			return
+		}
+		e.LoadBytes(data)
+		e.redraw = true
+		return
+	}
+
+	// Format HTML
+	if e.mode == mode.HTML {
+		data, err := formatHTML([]byte(e.String()))
 		if err != nil {
 			status.ClearAll(c)
 			status.ShowErrorAfterRedraw(err)

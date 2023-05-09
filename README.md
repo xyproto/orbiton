@@ -220,11 +220,7 @@ These features are unique to `o`, as far as I am aware:
 | V                                               | `.v`                                                      | yes           | `v build`                                         | `v fmt $filename`                                                                                              |
 | Zig                                             | `.zig`                                                    | yes           | `zig build-exe -lc $filename`                     | `zig fmt $filename`                                                                                            |
 
-`/etc/fstab` files are also supported, and can be formatted with `ctrl-w`.
-
-| Markup language | File extensions | Jump to error | Format command ($filename is a temporary file) |
-|----|----|----|----|
-| HTML | `.htm`, `.html` | no | `tidy -w 120 -q -i -utf8 --show-errors 0 --show-warnings no --tidy-mark no --force-output yes -ashtml -omit no -xml no -m -c` |
+`/etc/fstab`, JSON and HTML files are also supported, and can be formatted with `ctrl-w`.
 
 * `o` will try to jump to the location where the error is and otherwise display `Success`.
 * For regular text files, `ctrl-w` will word wrap the lines to a length of 99.
@@ -451,7 +447,7 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 * `rustfmt` - for formatting Rust
 * `scala` - for compiling Scala
 * `sdoc` - for writing man pages
-* `tidy` - for formatting HTML
+* `tidy` - for formatting XML
 * `v` - for compiling and formatting V code
 * `zig` - for compiling and formatting Zig code
 
