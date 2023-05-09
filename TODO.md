@@ -6,7 +6,6 @@
 - [ ] HTTP client - scratch document style
 - [ ] Add support for emojis.
 - [ ] When inserting something near the end of a long line, and moving to the line below, and inserting a character, make sure to scroll to the proper place before inserting the character, so that it is not inserted in the wrong place.
-- [x] If Esc is pressed repeatedly (>=3 times in a row), open the `ctrl-o` menu.
 - [ ] When rebasing, look for the `>>>>` markers when opening the file and jump to the first one?
 - [ ] When pasting with double ctrl-v, let one ctrl-z undo both keypresses.
 - [ ] When pasting lines that start with "+" and it's not a diff/patch file, then replace "+" with a blank.
