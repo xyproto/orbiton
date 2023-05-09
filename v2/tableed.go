@@ -31,6 +31,7 @@ func (e *Editor) CurrentTable() (string, error) {
 	return sb.String(), nil
 }
 
+// EditMarkdownTable presents the user with a dedicated table editor for the current Markdown table
 func (e *Editor) EditMarkdownTable() {
 	s, err := e.CurrentTable()
 	if err != nil {
