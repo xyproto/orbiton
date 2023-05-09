@@ -1591,7 +1591,7 @@ func (e *Editor) AtEndOfDocument() bool {
 
 // AtStartOfDocument is true if we're at the first line of the document
 func (e *Editor) AtStartOfDocument() bool {
-	return e.pos.sy == 0 && e.pos.offsetY == 0
+	return e.pos.sy == 0 //&& e.pos.offsetY == 0
 }
 
 // AtStartOfScreenLine is true if the cursor is a the start of the screen line.
@@ -2652,8 +2652,8 @@ func (e *Editor) NextLineIsBlank() bool {
 // JumpToMatching can jump to a to matching parenthesis or bracket ([{.
 // Return true if a jump was possible and happened.
 func (e *Editor) JumpToMatching(c *vt100.Canvas) bool {
-	//if e.AfterEndOfLine() { e.Prev(c) }
-	r := e.Rune()
+	const maxSearchLength = 256000
+	var r = e.Rune()
 	// Find which opening and closing parenthesis/curly brackets to look for
 	opening, closing := rune(0), rune(0)
 	onparen := true
@@ -2675,9 +2675,13 @@ func (e *Editor) JumpToMatching(c *vt100.Canvas) bool {
 		switch r {
 		case '(', '{', '[':
 			parcount := 0
-			for !e.AtOrAfterEndOfDocument() {
+			counter := 0
+			found := false
+			for !e.AtOrAfterEndOfDocument() && counter < maxSearchLength {
+				counter++
 				if r := e.Rune(); r == closing {
 					if parcount == 1 {
+						found = true
 						// FOUND, STOP
 						break
 					}
@@ -2687,11 +2691,18 @@ func (e *Editor) JumpToMatching(c *vt100.Canvas) bool {
 				}
 				e.Next(c)
 			}
+			if !found {
+				return false
+			}
 		case ')', '}', ']':
 			parcount := 0
-			for !e.AtStartOfDocument() {
+			counter := 0
+			found := false
+			for !e.AtStartOfDocument() && counter < maxSearchLength {
+				counter++
 				if r := e.Rune(); r == opening {
 					if parcount == 1 {
+						found = true
 						// FOUND, STOP
 						break
 					}
@@ -2700,6 +2711,9 @@ func (e *Editor) JumpToMatching(c *vt100.Canvas) bool {
 					parcount++
 				}
 				e.Prev(c)
+			}
+			if !found {
+				return false
 			}
 		}
 		e.redrawCursor = true
