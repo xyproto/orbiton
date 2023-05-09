@@ -1324,19 +1324,35 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			status.Show(c, e)
 		case "c:19": // ctrl-s, save (or step, if in debug mode)
 			e.UserSave(c, tty, status)
-		case "c:7": // ctrl-g, go to definition OR display some help
-			if !e.GoToDefinition(c, status) {
-				helpCounter++
-				if helpCounter <= maxHelpMessages {
-					e.HelpMessage(c, status)
+		case "c:7": // ctrl-g, display some help (3 times), then either go to definition OR toggle the status bar
+			canGoToDefinition := e.FuncPrefix() != ""
+
+			if canGoToDefinition {
+				if !e.GoToDefinition(c, status) {
+					if helpCounter < maxHelpMessages {
+						helpCounter++
+						e.HelpMessage(c, status)
+					} else {
+						status.ClearAll(c)
+						status.SetMessage("Could not jump to definition: " + e.WordAtCursor())
+						status.Show(c, e)
+					}
 				} else {
-					status.ClearAll(c)
-					status.SetMessage("could not jump to definition")
-					status.Show(c, e)
+					// Don't show the help message any more after a successful jump to definition
+					helpCounter += maxHelpMessages
 				}
 			} else {
-				// Don't show the help message any more after a successful jump to definition
-				helpCounter += maxHelpMessages
+				if helpCounter < maxHelpMessages {
+					helpCounter++
+					e.HelpMessage(c, status)
+				} else {
+					// Toggle the status line at the bottom
+					status.ClearAll(c)
+					e.statusMode = !e.statusMode
+					if e.statusMode {
+						status.ShowLineColWordCount(c, e, e.filename)
+					}
+				}
 			}
 		case "c:21", "c:26": // ctrl-u or ctrl-z (ctrl-z may background the application)
 			// Forget the cut, copy and paste line state
