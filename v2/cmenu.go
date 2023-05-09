@@ -526,9 +526,15 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	// Perform the selected action by passing the function index
 	actions.Perform(selected)
 
+	// Adjust the cursor placement
+	if e.AfterEndOfLine() {
+		e.End(c)
+	}
+
 	// Redraw editor
 	e.redraw = true
 	e.redrawCursor = true
+
 	return selected
 }
 
