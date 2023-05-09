@@ -60,6 +60,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		jsonFormatToggle bool              // for toggling indentation or not when pressing ctrl-w for JSON
 
 		helpCounter int // the number of times the help text has been displayed
+		escCounter  int // the number of times esc has been pressed in a row
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -391,9 +392,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			undoBackup := undo
 			lastCommandMenuIndex = e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
 			undo = undoBackup
-			if e.AfterEndOfLine() {
-				e.End(c)
-			}
 		case "c:31": // ctrl-_, status mode
 			status.ClearAll(c)
 			e.statusMode = !e.statusMode
@@ -736,6 +734,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 			// Additional way to clear the sticky search term, like with Esc
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
+			escCounter++
 			// If o is used as a man page viewer, exit at the press of esc
 			if e.mode == mode.ManPage {
 				e.clearOnQuit = false
@@ -1990,6 +1989,20 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			clearKeyHistory = false
 		} else {
 			kh.Push(key)
+		}
+
+		// Reset the esc key counter if esc was not pressed
+		if key != "c:27" {
+			escCounter = 0
+		} else if escCounter >= 3 {
+			// Display the ctrl-o menu if esc was pressed 3 times in a row
+			status.ClearAll(c)
+			undo.Snapshot(e)
+			undoBackup := undo
+			lastCommandMenuIndex = e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
+			undo = undoBackup
+			// And reset the esc counter
+			escCounter = 0
 		}
 
 		// Clear status, if needed
