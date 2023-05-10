@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/PullRequestInc/go-gpt3"
 	"github.com/xyproto/env/v2"
@@ -17,6 +18,8 @@ const (
 	textPrompt     = "Write it in %s. It should be expertly written, concise and correct."
 )
 
+var fixLineMut sync.Mutex
+
 // ProgrammingLanguage returns true if the current mode appears to be a programming language (and not a markup language etc)
 func (e *Editor) ProgrammingLanguage() bool {
 	switch e.mode {
@@ -26,10 +29,12 @@ func (e *Editor) ProgrammingLanguage() bool {
 	return true
 }
 
-// AIFixups adds a space after single-line comments
-func (e *Editor) AIFixups(generatedLine string) string {
-	singleLineComment := e.SingleLineCommentMarker()
-	trimmedLine := strings.TrimSpace(generatedLine)
+// AddSpaceAfterComments adds a space after single-line comments
+func (e *Editor) AddSpaceAfterComments(generatedLine string) string {
+	var (
+		singleLineComment = e.SingleLineCommentMarker()
+		trimmedLine       = strings.TrimSpace(generatedLine)
+	)
 	if len(trimmedLine) > 2 && e.ProgrammingLanguage() && strings.HasPrefix(trimmedLine, singleLineComment) && !strings.HasPrefix(trimmedLine, singleLineComment+" ") && !strings.HasPrefix(generatedLine, "#!") {
 		return strings.Replace(generatedLine, singleLineComment, singleLineComment+" ", 1)
 	}
@@ -64,34 +69,76 @@ func countTokens(s string) int {
 	return int(float64(len(strings.Fields(s)))*1.1 + 100)
 }
 
+// FixLine will try to correct the line at the given lineIndex in the editor, using ChatGPT
+func (e *Editor) FixLine(c *vt100.Canvas, status *StatusBar, lineIndex LineIndex) {
+
+	line := e.Line(lineIndex)
+	if strings.TrimSpace(line) == "" {
+		// Nothing to do
+		return
+	}
+
+	var temperature float32 = 0.0 // Low temperature for fixing grammar and issues
+
+	// Select a model
+	gptModel, gptModelTokens := gpt3.TextDavinci003Engine, 4000
+	// gptModel, gptModelTokens := "gpt-3.5-turbo", 4000 // only for chat
+	// gptModel, gptModelTokens := "text-curie-001", 2048 // simpler and faster
+	// gptModel, gptModelTokens := "text-ada-001", 2048 // even simpler and even faster
+
+	prompt := "Make as few changes as possible to this line in order to correct any typos or obvious grammatical errors, but only output EITHER the exact same line OR the corrected line! Here it is: " + line
+	if e.ProgrammingLanguage() { // fix a line of code or a line of text?
+		prompt = "Make as few changes as possible to this line of " + e.mode.String() + " code in order to correct any typos or obvious grammatical errors, but only output EITHER the exact same line OR the corrected line! Here it is: " + line
+	}
+
+	// Find the maxTokens value that will be sent to the OpenAI API
+	amountOfPromptTokens := countTokens(prompt)
+	maxTokens := gptModelTokens - amountOfPromptTokens // The user can press Esc when there are enough tokens
+	if maxTokens < 1 {
+		status.SetErrorMessage("ChatGPT API request is too long")
+		status.Show(c, e)
+		return
+	}
+
+	// Start generating the code/text while inserting words into the editor as it happens
+	e.generatingTokens = true // global
+	var (
+		currentLeadingWhitespace = e.LeadingWhitespaceAt(lineIndex)
+		generatedLine            string
+		newContents              string
+		newTrimmedContents       string
+	)
+
+	fixLineMut.Lock()
+	if err := e.GenerateTokens(openAIKey, prompt, maxTokens, temperature, gptModel, func(word string) {
+		generatedLine = strings.TrimSpace(generatedLine) + word
+		newTrimmedContents = e.AddSpaceAfterComments(generatedLine)
+		newContents = currentLeadingWhitespace + newTrimmedContents
+	}); err != nil {
+		e.redrawCursor = true
+		errorMessage := err.Error()
+		if !strings.Contains(errorMessage, "context") {
+			e.End(c)
+			status.SetError(err)
+			status.Show(c, e)
+			return
+		}
+	}
+
+	if e.TrimmedLineAt(lineIndex) != newTrimmedContents {
+		e.SetLine(lineIndex, newContents)
+	}
+
+	fixLineMut.Unlock()
+}
+
 func (e *Editor) FixCodeOrText(c *vt100.Canvas, status *StatusBar) {
 	if openAIKey == "" {
 		status.SetErrorMessage("ChatGPT API key is empty")
 		status.Show(c, e)
 		return
 	}
-
-	currentLineIndex := e.DataY()
-	currentLine := e.Line(currentLineIndex)
-
-	// Get the leading whitespace and the line contents
-	leadingWhitespace := e.LeadingWhitespace()
-	trimmedLine := strings.TrimSpace(currentLine)
-
-	go func(leadingWhitespace, trimmedLine string, lineIndex LineIndex) {
-		// !!! FOR DEBUGGING !!! USE CHATGPT INSTEAD HERE
-		fixedLine := strings.ToUpper(trimmedLine)
-
-		if fixedLine != trimmedLine {
-			// Use the new contents
-			e.SetCurrentLine(leadingWhitespace + fixedLine)
-			// "refresh"
-			e.MakeConsistent()
-			e.DrawLines(c, true, false)
-			e.redrawCursor = true
-			e.RedrawAtEndOfKeyLoop(c, status)
-		}
-	}(leadingWhitespace, trimmedLine, currentLineIndex)
+	go e.FixLine(c, status, e.DataY())
 }
 
 // GenerateCodeOrText will try to generate and insert text at the corrent position in the editor, given a ChatGPT prompt
@@ -109,7 +156,8 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 		// Strip away any comment markers or leading exclamation marks,
 		// and trim away spaces at the end.
 		prompt := strings.TrimPrefix(trimmedLine, e.SingleLineCommentMarker())
-		prompt = strings.TrimSpace(strings.TrimSuffix(prompt, "!"))
+		prompt = strings.TrimPrefix(prompt, "!")
+		prompt = strings.TrimSpace(prompt)
 
 		const (
 			generateText = iota
@@ -191,7 +239,8 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 		if err := e.GenerateTokens(openAIKey, prompt, maxTokens, temperature, gptModel, func(word string) {
 			generatedLine += word
 			if strings.HasSuffix(generatedLine, "\n") {
-				e.SetCurrentLine(currentLeadingWhitespace + e.AIFixups(generatedLine))
+				newContents := currentLeadingWhitespace + e.AddSpaceAfterComments(generatedLine)
+				e.SetCurrentLine(newContents)
 				if !first {
 					if !e.EmptyTrimmedLine() {
 						e.InsertLineBelow()
@@ -203,7 +252,7 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 				}
 				generatedLine = ""
 			} else {
-				e.SetCurrentLine(currentLeadingWhitespace + e.AIFixups(generatedLine))
+				e.SetCurrentLine(currentLeadingWhitespace + e.AddSpaceAfterComments(generatedLine))
 			}
 			// "refresh"
 			e.MakeConsistent()

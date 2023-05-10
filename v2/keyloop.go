@@ -862,15 +862,18 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 				}
 			}
+			alreadyUsedAI := false
+		RETURN_PRESSED_AI_DONE:
 
 			if trimmedLine == "private:" || trimmedLine == "protected:" || trimmedLine == "public:" {
 				// De-indent the current line before moving on to the next
 				e.SetCurrentLine(trimmedLine)
 				leadingWhitespace = currentLeadingWhitespace
-			} else if e.fixAsYouType && openAIKey != "" {
+			} else if e.fixAsYouType && openAIKey != "" && !alreadyUsedAI {
 				// Fix the code and grammar of the written line, using AI
 				e.FixCodeOrText(c, status)
-				break
+				alreadyUsedAI = true
+				goto RETURN_PRESSED_AI_DONE
 			} else if shouldUseAI && openAIKey != "" {
 				// Generate code or text, using AI
 				e.GenerateCodeOrText(c, status, bookmark)
@@ -1328,17 +1331,28 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:19": // ctrl-s, save (or step, if in debug mode)
 			e.UserSave(c, tty, status)
 		case "c:7": // ctrl-g, display some help (3 times), then either go to definition OR toggle the status bar
-			canGoToDefinition := e.FuncPrefix() != ""
 
+			// TODO: Make this block of code less if-else-y, and fewer levels deep
+
+			canGoToDefinition := e.FuncPrefix() != ""
 			if canGoToDefinition {
 				if !e.GoToDefinition(c, status) {
 					if helpCounter < maxHelpMessages {
 						helpCounter++
 						e.HelpMessage(c, status)
 					} else {
-						status.ClearAll(c)
-						status.SetMessage("Could not jump to definition: " + e.WordAtCursor())
-						status.Show(c, e)
+						if word := e.WordAtCursor(); word != "" {
+							status.ClearAll(c)
+							status.SetMessage("Could not jump to definition: " + e.WordAtCursor())
+							status.Show(c, e)
+						} else {
+							// Toggle the status line at the bottom
+							status.ClearAll(c)
+							e.statusMode = !e.statusMode
+							if e.statusMode {
+								status.ShowLineColWordCount(c, e, e.filename)
+							}
+						}
 					}
 				} else {
 					// Don't show the help message any more after a successful jump to definition

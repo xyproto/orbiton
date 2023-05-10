@@ -2274,6 +2274,11 @@ func (e *Editor) TrimmedLine() string {
 	return strings.TrimSpace(e.CurrentLine())
 }
 
+// TrimmedLineAt returns the current line, trimmed in both ends
+func (e *Editor) TrimmedLineAt(lineIndex LineIndex) string {
+	return strings.TrimSpace(e.Line(lineIndex))
+}
+
 // LineContentsFromCursorPosition returns the rest of the line,
 // from the current cursor position, trimmed.
 func (e *Editor) LineContentsFromCursorPosition() string {
