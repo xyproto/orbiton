@@ -366,6 +366,18 @@ AGAIN:
 		replaced := strings.Replace(e.String(), searchFor, replaceWith, 1)
 		e.LoadBytes([]byte(replaced))
 		status.messageAfterRedraw = "Replaced " + searchFor + " with " + replaceWith + ", once"
+		// Save "searchFor" to the search history
+		if trimmedSearchString := strings.TrimSpace(searchFor); trimmedSearchString != "" {
+			if lastEntryIsNot(searchHistory, trimmedSearchString) {
+				searchHistory = append(searchHistory, trimmedSearchString)
+			}
+			// ignore errors saving the search history, since it's not critical
+			if !e.slowLoad {
+				SaveSearchHistory(searchHistoryFilename, searchHistory)
+			}
+		}
+		// Set up a redraw and return
+
 		e.redraw = true
 		return
 	} else if pressedReturn && previousSearch != "" { // search text -> tab -> replace text -> return
@@ -392,7 +404,17 @@ AGAIN:
 			extraS = "s"
 		}
 		status.messageAfterRedraw = fmt.Sprintf("Replaced %d instance%s of %s with %s", instanceCount, extraS, previousSearch, s)
-		// make sure to redraw after returning
+		// Save "searchFor" to the search history
+		if trimmedSearchString := strings.TrimSpace(string(searchForBytes)); trimmedSearchString != "" {
+			if lastEntryIsNot(searchHistory, trimmedSearchString) {
+				searchHistory = append(searchHistory, trimmedSearchString)
+			}
+			// ignore errors saving the search history, since it's not critical
+			if !e.slowLoad {
+				SaveSearchHistory(searchHistoryFilename, searchHistory)
+			}
+		}
+		// Set up a redraw and return
 		e.redraw = true
 		return
 	}
@@ -402,8 +424,8 @@ AGAIN:
 	if pressedReturn {
 		// Return to the first location before performing the actual search
 		e.GoToLineNumber(initialLocation, c, status, false)
-		trimmedSearchString := strings.TrimSpace(s)
-		if len(trimmedSearchString) > 0 {
+		// Save "s" to the search history
+		if trimmedSearchString := strings.TrimSpace(s); trimmedSearchString != "" {
 			if lastEntryIsNot(searchHistory, trimmedSearchString) {
 				searchHistory = append(searchHistory, trimmedSearchString)
 			}
