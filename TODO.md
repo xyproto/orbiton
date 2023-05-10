@@ -8,17 +8,18 @@
 - [ ] When inserting something near the end of a long line, and moving to the line below, and inserting a character, make sure to scroll to the proper place before inserting the character, so that it is not inserted in the wrong place.
 - [ ] When rebasing, look for the `>>>>` markers when opening the file and jump to the first one?
 - [ ] When pasting with double ctrl-v, let one ctrl-z undo both keypresses.
-- [ ] When pasting lines that start with "+" and it's not a diff/patch file, then replace "+" with a blank.
+- [ ] When pasting lines that start with "
+- [ ] `+` and it's not a diff/patch file, then replace `+` with a blank.
 - [ ] When deleting lines with ctrl-k more than once, scroll the cursor line a bit up, to make it easier.
 - [ ] Go through this file and remove all completed TODO items.
 - [ ] When bookmarking, don't just bookmark the line/col, but also the filename.
-- [ ] If a file is passed through stdin, and > 70% of the lines has a ":", it is probably a log file and not configuration.
+- [ ] If a file is passed through stdin, and > 70% of the lines has a `:`, it is probably a log file and not configuration.
 
 ## Markdown
 
 - [ ] Add a much needed table editor.
 - [ ] "Render with Pandoc" should be a menu option.
-- [ ] `ctrl-space` should render Markdown to HTML, using a Go package.
+- [ ] `ctrl-space` should render Markdown to HTML, using a Go package, instead of rendering to a PDF.
 
 ## Autocompletion and AI generated code
 
