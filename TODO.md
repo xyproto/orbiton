@@ -2,7 +2,7 @@
 
 ## General
 
-- [ ] Add a menu entry in the `ctrl-o` for listing all keybindings.
+- [ ] Fix the search history when not only searching, but searching and replacing.
 - [ ] HTTP client - scratch document style
 - [ ] Add support for emojis.
 - [ ] When inserting something near the end of a long line, and moving to the line below, and inserting a character, make sure to scroll to the proper place before inserting the character, so that it is not inserted in the wrong place.
@@ -14,6 +14,7 @@
 - [ ] Go through this file and remove all completed TODO items.
 - [ ] When bookmarking, don't just bookmark the line/col, but also the filename.
 - [ ] If a file is passed through stdin, and > 70% of the lines has a `:`, it is probably a log file and not configuration.
+- [ ] Add a menu entry in the `ctrl-o` menu for listing all keybindings.
 
 ## Markdown
 
