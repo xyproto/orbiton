@@ -301,6 +301,21 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		}
 	}
 
+	// Fix as you type mode, on/off
+	if openAIKey != "" { // has AI
+		if e.fixAsYouType {
+			actions.Add("Fix as you type [turn off]", func() {
+				e.fixAsYouType = false
+				status.SetMessageAfterRedraw("Fix as you type turned off")
+			})
+		} else {
+			actions.Add("Fix as you type", func() {
+				e.fixAsYouType = true
+				status.SetMessageAfterRedraw("Fix as you type turned on")
+			})
+		}
+	}
+
 	if e.debugMode {
 		hasOutputData := len(strings.TrimSpace(gdbOutput.String())) > 0
 		if hasOutputData {

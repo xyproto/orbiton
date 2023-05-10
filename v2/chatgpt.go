@@ -64,136 +64,174 @@ func countTokens(s string) int {
 	return int(float64(len(strings.Fields(s)))*1.1 + 100)
 }
 
-// GenerateCodeOrText will try to generate and insert text at the corrent position in the editor, given a ChatGPT prompt
-func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark *Position, chatAPIKey, chatPrompt string) {
-	if chatAPIKey == "" {
+func (e *Editor) FixCodeOrText(c *vt100.Canvas, status *StatusBar) {
+	if openAIKey == "" {
 		status.SetErrorMessage("ChatGPT API key is empty")
 		status.Show(c, e)
 		return
 	}
 
-	// Strip away any leading exclamation marks and trim away spaces at the ends
-	prompt := strings.TrimSpace(strings.TrimSuffix(chatPrompt, "!"))
+	currentLineIndex := e.DataY()
+	currentLine := e.Line(currentLineIndex)
 
-	const (
-		generateText = iota
-		generateCode
-		continueCode
-	)
+	// Get the leading whitespace and the line contents
+	leadingWhitespace := e.LeadingWhitespace()
+	trimmedLine := strings.TrimSpace(currentLine)
 
-	generationType := generateText // generateCode // continueCode
-	if e.ProgrammingLanguage() {
-		generationType = generateCode
-		if prompt == "" {
-			generationType = continueCode
+	go func(leadingWhitespace, trimmedLine string, lineIndex LineIndex) {
+		// !!! FOR DEBUGGING !!! USE CHATGPT INSTEAD HERE
+		fixedLine := strings.ToUpper(trimmedLine)
+
+		if fixedLine != trimmedLine {
+			// Use the new contents
+			e.SetCurrentLine(leadingWhitespace + fixedLine)
+			// "refresh"
+			e.MakeConsistent()
+			e.DrawLines(c, true, false)
+			e.redrawCursor = true
+			e.RedrawAtEndOfKeyLoop(c, status)
 		}
-	}
+	}(leadingWhitespace, trimmedLine, currentLineIndex)
+}
 
-	// Determine the temperature
-	var defaultTemperature float32
-	switch generationType {
-	case generateText:
-		defaultTemperature = 0.8
-	}
-	temperature := env.Float32("CHATGPT_TEMPERATURE", defaultTemperature)
-
-	// Select a model
-	gptModel, gptModelTokens := gpt3.TextDavinci003Engine, 4000
-	// gptModel, gptModelTokens := "gpt-3.5-turbo", 4000 // only for chat
-	// gptModel, gptModelTokens := "text-curie-001", 2048 // simpler and faster
-	// gptModel, gptModelTokens := "text-ada-001", 2048 // even simpler and even faster
-
-	switch generationType {
-	case continueCode:
-		gptModel, gptModelTokens = "code-davinci-002", 8000
-		// gptModel, gptModelTokens = "code-cushman-001", 2048 // slightly simpler and slightly faster
-	}
-
-	// Prefix the prompt
-	switch generationType {
-	case generateCode:
-		prompt += ". " + fmt.Sprintf(codePrompt, e.mode.String())
-	case continueCode:
-		prompt += ". " + fmt.Sprintf(continuePrompt, e.mode.String()) + "\n"
-		// gather about 2000 tokens/fields from the current file and use that as the prompt
-		startTokens := strings.Fields(e.String())
-		gatherNTokens := gptModelTokens - countTokens(prompt)
-		if len(startTokens) > gatherNTokens {
-			startTokens = startTokens[len(startTokens)-gatherNTokens:]
-		}
-		prompt += strings.Join(startTokens, " ")
-	case generateText:
-		prompt += ". " + fmt.Sprintf(textPrompt, e.mode.String())
-	}
-
-	// Set a suitable status bar text
-	status.ClearAll(c)
-	switch generationType {
-	case generateText:
-		status.SetMessage("Generating text...")
-	case generateCode:
-		status.SetMessage("Generating code...")
-	case continueCode:
-		status.SetMessage("Continuing code...")
-	}
-	status.Show(c, e)
-
-	// Find the maxTokens value that will be sent to the OpenAI API
-	amountOfPromptTokens := countTokens(prompt)
-	maxTokens := gptModelTokens - amountOfPromptTokens // The user can press Esc when there are enough tokens
-	if maxTokens < 1 {
-		status.SetErrorMessage("ChatGPT API request is too long")
+// GenerateCodeOrText will try to generate and insert text at the corrent position in the editor, given a ChatGPT prompt
+func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark *Position) {
+	if openAIKey == "" {
+		status.SetErrorMessage("ChatGPT API key is empty")
 		status.Show(c, e)
 		return
 	}
 
-	// Start generating the code/text while inserting words into the editor as it happens
-	currentLeadingWhitespace := e.LeadingWhitespace()
-	e.generatingTokens = true // global
-	first := true
-	var generatedLine string
-	if err := e.GenerateTokens(chatAPIKey, prompt, maxTokens, temperature, gptModel, func(word string) {
-		generatedLine += word
-		if strings.HasSuffix(generatedLine, "\n") {
-			e.SetCurrentLine(currentLeadingWhitespace + e.AIFixups(generatedLine))
-			if !first {
-				if !e.EmptyTrimmedLine() {
-					e.InsertLineBelow()
-					e.pos.sy++
-				}
-			} else {
-				e.DeleteCurrentLineMoveBookmark(bookmark)
-				first = false
+	trimmedLine := e.TrimmedLine()
+
+	go func() {
+
+		// Strip away any comment markers or leading exclamation marks,
+		// and trim away spaces at the end.
+		prompt := strings.TrimPrefix(trimmedLine, e.SingleLineCommentMarker())
+		prompt = strings.TrimSpace(strings.TrimSuffix(prompt, "!"))
+
+		const (
+			generateText = iota
+			generateCode
+			continueCode
+		)
+
+		generationType := generateText // generateCode // continueCode
+		if e.ProgrammingLanguage() {
+			generationType = generateCode
+			if prompt == "" {
+				generationType = continueCode
 			}
-			generatedLine = ""
-		} else {
-			e.SetCurrentLine(currentLeadingWhitespace + e.AIFixups(generatedLine))
 		}
-		// "refresh"
-		e.MakeConsistent()
-		e.DrawLines(c, true, false)
-		e.redrawCursor = true
-	}); err != nil {
-		e.redrawCursor = true
-		errorMessage := err.Error()
-		if !strings.Contains(errorMessage, "context") {
-			e.End(c)
-			status.SetError(err)
+
+		// Determine the temperature
+		var defaultTemperature float32
+		switch generationType {
+		case generateText:
+			defaultTemperature = 0.8
+		}
+		temperature := env.Float32("CHATGPT_TEMPERATURE", defaultTemperature)
+
+		// Select a model
+		gptModel, gptModelTokens := gpt3.TextDavinci003Engine, 4000
+		// gptModel, gptModelTokens := "gpt-3.5-turbo", 4000 // only for chat
+		// gptModel, gptModelTokens := "text-curie-001", 2048 // simpler and faster
+		// gptModel, gptModelTokens := "text-ada-001", 2048 // even simpler and even faster
+
+		switch generationType {
+		case continueCode:
+			gptModel, gptModelTokens = "code-davinci-002", 8000
+			// gptModel, gptModelTokens = "code-cushman-001", 2048 // slightly simpler and slightly faster
+		}
+
+		// Prefix the prompt
+		switch generationType {
+		case generateCode:
+			prompt += ". " + fmt.Sprintf(codePrompt, e.mode.String())
+		case continueCode:
+			prompt += ". " + fmt.Sprintf(continuePrompt, e.mode.String()) + "\n"
+			// gather about 2000 tokens/fields from the current file and use that as the prompt
+			startTokens := strings.Fields(e.String())
+			gatherNTokens := gptModelTokens - countTokens(prompt)
+			if len(startTokens) > gatherNTokens {
+				startTokens = startTokens[len(startTokens)-gatherNTokens:]
+			}
+			prompt += strings.Join(startTokens, " ")
+		case generateText:
+			prompt += ". " + fmt.Sprintf(textPrompt, e.mode.String())
+		}
+
+		// Set a suitable status bar text
+		status.ClearAll(c)
+		switch generationType {
+		case generateText:
+			status.SetMessage("Generating text...")
+		case generateCode:
+			status.SetMessage("Generating code...")
+		case continueCode:
+			status.SetMessage("Continuing code...")
+		}
+		status.Show(c, e)
+
+		// Find the maxTokens value that will be sent to the OpenAI API
+		amountOfPromptTokens := countTokens(prompt)
+		maxTokens := gptModelTokens - amountOfPromptTokens // The user can press Esc when there are enough tokens
+		if maxTokens < 1 {
+			status.SetErrorMessage("ChatGPT API request is too long")
 			status.Show(c, e)
 			return
 		}
-	}
-	e.End(c)
 
-	if e.generatingTokens { // global
-		if first { // Nothing was generated
-			status.SetMessageAfterRedraw("Nothing was generated")
-		} else {
-			status.SetMessageAfterRedraw("Done")
+		// Start generating the code/text while inserting words into the editor as it happens
+		currentLeadingWhitespace := e.LeadingWhitespace()
+		e.generatingTokens = true // global
+		first := true
+		var generatedLine string
+		if err := e.GenerateTokens(openAIKey, prompt, maxTokens, temperature, gptModel, func(word string) {
+			generatedLine += word
+			if strings.HasSuffix(generatedLine, "\n") {
+				e.SetCurrentLine(currentLeadingWhitespace + e.AIFixups(generatedLine))
+				if !first {
+					if !e.EmptyTrimmedLine() {
+						e.InsertLineBelow()
+						e.pos.sy++
+					}
+				} else {
+					e.DeleteCurrentLineMoveBookmark(bookmark)
+					first = false
+				}
+				generatedLine = ""
+			} else {
+				e.SetCurrentLine(currentLeadingWhitespace + e.AIFixups(generatedLine))
+			}
+			// "refresh"
+			e.MakeConsistent()
+			e.DrawLines(c, true, false)
+			e.redrawCursor = true
+		}); err != nil {
+			e.redrawCursor = true
+			errorMessage := err.Error()
+			if !strings.Contains(errorMessage, "context") {
+				e.End(c)
+				status.SetError(err)
+				status.Show(c, e)
+				return
+			}
 		}
-	} else {
-		status.SetMessageAfterRedraw("Stopped")
-	}
+		e.End(c)
 
-	e.RedrawAtEndOfKeyLoop(c, status)
+		if e.generatingTokens { // global
+			if first { // Nothing was generated
+				status.SetMessageAfterRedraw("Nothing was generated")
+			} else {
+				status.SetMessageAfterRedraw("Done")
+			}
+		} else {
+			status.SetMessageAfterRedraw("Stopped")
+		}
+
+		e.RedrawAtEndOfKeyLoop(c, status)
+
+	}()
 }
