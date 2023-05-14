@@ -581,6 +581,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redrawCursor = true
 
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
+
 			// First check if we can jump to the matching paren or bracket instead
 			// also check that the last keypress was not ctrl-n, to make scrolling continous.
 			if e.OnParenOrBracket() && (jumpMode || !kh.PrevIs("c:14")) {
@@ -708,6 +709,20 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			}
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
+
+			// First check if we can jump to the matching paren or bracket instead
+			// also check that the last keypress was not ctrl-n, to make scrolling continous.
+			if e.OnParenOrBracket() && (jumpMode || !kh.PrevIs("c:16")) {
+				// Don't count successful jumps as ctrl-p scrolling
+				clearKeyHistory = true
+				if !kh.PrevIs("c:16") {
+					jumpMode = false
+				}
+				if e.JumpToMatching(c) {
+					jumpMode = true
+					break
+				}
+			}
 
 			if e.debugMode {
 				// e.showRegisters has three states, 0 (SmallRegisterWindow), 1 (LargeRegisterWindow) and 2 (NoRegisterWindow)
