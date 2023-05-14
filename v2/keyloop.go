@@ -1341,17 +1341,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						helpCounter++
 						e.HelpMessage(c, status)
 					} else {
-						if word := e.WordAtCursor(); word != "" {
-							status.ClearAll(c)
-							status.SetMessage("Could not jump to definition: " + e.WordAtCursor())
-							status.Show(c, e)
-						} else {
-							// Toggle the status line at the bottom
-							status.ClearAll(c)
-							e.statusMode = !e.statusMode
-							if e.statusMode {
-								status.ShowLineColWordCount(c, e, e.filename)
-							}
+						// If the definition cold not be found,
+						// or if max help messages has been reached:
+						// toggle the status line at the bottom.
+						status.ClearAll(c)
+						e.statusMode = !e.statusMode
+						if e.statusMode {
+							status.ShowLineColWordCount(c, e, e.filename)
 						}
 					}
 				} else {
