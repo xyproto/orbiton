@@ -60,7 +60,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		jsonFormatToggle bool              // for toggling indentation or not when pressing ctrl-w for JSON
 
 		helpCounter int // the number of times the help text has been displayed
-		escCounter  int // the number of times esc has been pressed in a row
+		jumpMode    bool
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -582,8 +582,17 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
 			// First check if we can jump to the matching paren or bracket instead
-			if e.JumpToMatching(c) {
-				break
+			// also check that the last keypress was not ctrl-n, to make scrolling continous.
+			if e.OnParenOrBracket() && (jumpMode || !kh.PrevIs("c:14")) {
+				// Don't count successful jumps as ctrl-n scrolling
+				clearKeyHistory = true
+				if !kh.PrevIs("c:14") {
+					jumpMode = false
+				}
+				if e.JumpToMatching(c) {
+					jumpMode = true
+					break
+				}
 			}
 
 			// If in Debug mode, let ctrl-n mean "next instruction"
@@ -734,7 +743,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 			// Additional way to clear the sticky search term, like with Esc
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
-			escCounter++
 			// If o is used as a man page viewer, exit at the press of esc
 			if e.mode == mode.ManPage {
 				e.clearOnQuit = false
@@ -1775,7 +1783,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					skipFirstLineInsert bool
 				)
 
-				if kh.Prev() != "c:13" {
+				if !kh.PrevIs("c:13") {
 					// Start by pasting (and overwriting) an untrimmed version of this line,
 					// if the previous key was not return.
 					e.SetLine(y, copyLines[0])
@@ -2020,18 +2028,16 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			kh.Push(key)
 		}
 
-		// Reset the esc key counter if esc was not pressed
-		if key != "c:27" {
-			escCounter = 0
-		} else if escCounter >= 3 {
-			// Display the ctrl-o menu if esc was pressed 3 times in a row
+		// Display the ctrl-o menu if esc was already pressed 2 times,
+		// (and this is the third keypress)
+		if kh.Repeated("c:27", 2) {
 			status.ClearAll(c)
 			undo.Snapshot(e)
 			undoBackup := undo
 			lastCommandMenuIndex = e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
 			undo = undoBackup
 			// And reset the esc counter
-			escCounter = 0
+			clearKeyHistory = true
 		}
 
 		// Clear status, if needed

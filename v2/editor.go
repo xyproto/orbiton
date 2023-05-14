@@ -2659,10 +2659,21 @@ func (e *Editor) NextLineIsBlank() bool {
 	return e.LineIsBlank(e.DataY() + 1)
 }
 
+// OnParenOrBracket checks if we are currently on a parenthesis or bracket
+func (e *Editor) OnParenOrBracket() bool {
+	switch e.Rune() {
+	case '(', ')', '{', '}', '[', ']':
+		return true
+	default:
+		return false
+	}
+}
+
 // JumpToMatching can jump to a to matching parenthesis or bracket ([{.
 // Return true if a jump was possible and happened.
 func (e *Editor) JumpToMatching(c *vt100.Canvas) bool {
 	const maxSearchLength = 256000
+
 	var r = e.Rune()
 	// Find which opening and closing parenthesis/curly brackets to look for
 	opening, closing := rune(0), rune(0)
@@ -2680,6 +2691,7 @@ func (e *Editor) JumpToMatching(c *vt100.Canvas) bool {
 	default:
 		onparen = false
 	}
+
 	if onparen {
 		// Search either forwards or backwards to find a matching rune
 		switch r {

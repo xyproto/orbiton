@@ -89,6 +89,29 @@ func (kh *KeyHistory) PrevPrevPrevIs(keyPresses ...string) bool {
 	return false
 }
 
+// Only checks if the key press history only contains the given keypress
+func (kh *KeyHistory) Only(keyPress string) bool {
+	for _, prevKeyPress := range kh.keys {
+		if prevKeyPress != keyPress {
+			return false
+		}
+	}
+	return true
+}
+
+// Repeated checks if the given keypress was repeated the N last times
+func (kh *KeyHistory) Repeated(keyPress string, n int) bool {
+	counter := 0
+	for i := len(kh.keys) - 1; i >= 0; i-- {
+		if kh.keys[i] == keyPress {
+			counter++
+		} else {
+			break
+		}
+	}
+	return counter >= n
+}
+
 // OnlyIn checks if the key press history only contains the given
 // keypresses and no other keypresses.
 func (kh *KeyHistory) OnlyIn(keyPresses ...string) bool {
