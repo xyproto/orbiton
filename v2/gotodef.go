@@ -48,6 +48,22 @@ func (e *Editor) GoToDefinition(c *vt100.Canvas, status *StatusBar) bool {
 	// The search string we will use for searching for functions within this file
 	s := funcPrefix + word
 
+	// Or should one search for a method instead?
+	if strings.Contains(word, ".") {
+		fields := strings.SplitN(word, ".", 2)
+		methodName := fields[1]
+		if strings.Contains(methodName, "[") {
+			fields := strings.SplitN(methodName, "[", 2)
+			arrayOrMapName := fields[0]
+			// TODO: Also look for const and in "var"-blocks
+			s = "var " + arrayOrMapName
+		} else {
+			s = ") " + methodName + "("
+		}
+	}
+
+	// TODO: Search for variables, constants etc
+
 	// Go to defintion, but only of functions defined within the same Go file, for now
 	e.SetSearchTerm(c, status, s)
 
