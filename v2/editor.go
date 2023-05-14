@@ -2314,6 +2314,10 @@ func (e *Editor) WordAtCursor() string {
 		return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_' || r == '.'
 	}
 
+	if x >= len(runes) {
+		return ""
+	}
+
 	// Check if the cursor is at a word
 	if !qualifies(runes[x]) {
 		return ""
