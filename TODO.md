@@ -2,6 +2,7 @@
 
 ## General
 
+- [x] Recover from panic seamlessly, but show a status message and add a menu option for viewing the full stacktrace.
 - [ ] Add a "last used" time to the location history, then only keep the N last entries on loading/saving the location history
 - [ ] HTTP client - scratch document style
 - [ ] Add support for emojis.
