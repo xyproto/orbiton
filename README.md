@@ -65,7 +65,6 @@ To unset:
 * Press return after writing ie. `!write a function that adds two numbers` or `// Write a function that adds two numbers`.
 * Watch syntax highlighted code being generated in front of your eyes. ChatGPT generates the code.
 * Press `Esc` to stop code from being generated.
-* Set `CHATGPT_TEMPERATURE` to ie. `0.75` to make the output more random. It's a value from `0` to `1` and the default for code is `0`.
 * Select `Fix as you type` from the `ctrl-o` menu to let ChatGPT try to correct every line as it is typed in. The API key must be set for the menu option to appear.
 
 ## Viewing man pages
@@ -95,8 +94,7 @@ These features are unique to `o`, as far as I am aware:
 * Search by pressing `ctrl-f`, entering text and pressing `return`. Replace by pressing `tab` instead of `return`, then enter the replacement text and press `return`. Searching for unicode runes on the form `u+0000` is also supported.
 * Type `iferr` on a single line in a Go or Odin program and press `return` to insert a suitable `if err != nil { return ... }` block, based on [koron/iferr](https://github.com/koron/iferr).
 * For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
-* Generate code by using the ChatGPT API. See the [section above](#generate-code-automatically).
-* Correct mistakes as lines are typed in, but only if the OpenAI API key is set, and if the feature is enabled from the `ctrl-o` menu.
+* Correct mistakes as lines are typed in, but only if the OpenAI API key is set, and if the "fix as you type" feature is enabled from the `ctrl-o` menu.
 
 ## Other features and limitations
 
