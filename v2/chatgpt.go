@@ -78,7 +78,7 @@ func (e *Editor) FixLine(c *vt100.Canvas, status *StatusBar, lineIndex LineIndex
 		return
 	}
 
-	var temperature float32 = 0.0 // Low temperature for fixing grammar and issues
+	var temperature float32 // Low temperature for fixing grammar and issues
 
 	// Select a model
 	gptModel, gptModelTokens := gpt3.TextDavinci003Engine, 4000
@@ -132,6 +132,7 @@ func (e *Editor) FixLine(c *vt100.Canvas, status *StatusBar, lineIndex LineIndex
 	fixLineMut.Unlock()
 }
 
+// FixCodeOrText tries to fix the current line
 func (e *Editor) FixCodeOrText(c *vt100.Canvas, status *StatusBar) {
 	if openAIKey == "" {
 		status.SetErrorMessage("ChatGPT API key is empty")

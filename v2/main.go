@@ -18,11 +18,12 @@ const versionString = "Orbiton 2.61.0"
 
 func main() {
 	var (
-		copyFlag    = flag.Bool("c", false, "copy a file into the clipboard and quit")
-		forceFlag   = flag.Bool("f", false, "open even if already open")
-		helpFlag    = flag.Bool("help", false, "quick overview of hotkeys")
-		pasteFlag   = flag.Bool("p", false, "paste the clipboard into the file and quit")
-		versionFlag = flag.Bool("version", false, "version information")
+		copyFlag       = flag.Bool("c", false, "copy a file into the clipboard and quit")
+		forceFlag      = flag.Bool("f", false, "open even if already open")
+		helpFlag       = flag.Bool("help", false, "quick overview of hotkeys")
+		pasteFlag      = flag.Bool("p", false, "paste the clipboard into the file and quit")
+		clearLocksFlag = flag.Bool("r", false, "clear all file locks")
+		versionFlag    = flag.Bool("version", false, "version information")
 	)
 
 	flag.Parse()
@@ -54,6 +55,7 @@ ctrl-e      go to end of line and then the next line
 ctrl-n      to scroll down 10 lines or go to the next match if a search is active
             or jump to a matching parenthesis or bracket
 ctrl-p      to scroll up 10 lines or go to the previous match
+            or jump to a matching parenthesis or bracket
 ctrl-k      to delete characters to the end of the line, then delete the line
 ctrl-j      to join lines
 ctrl-d      to delete a single character
@@ -111,6 +113,16 @@ See the man page for more information.
 			fmt.Printf("Copied %d bytes from %s to the clipboard. Tail bytes: %s\n", n, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
 		} else {
 			fmt.Printf("Copied %d bytes from %s to the clipboard.\n", n, filename)
+		}
+		os.Exit(0)
+	}
+
+	// If the -r flag is given, clear all file locks and exit
+	if *clearLocksFlag {
+		if err := os.Remove(defaultLockFile); err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		} else {
+			fmt.Println("Locks cleared")
 		}
 		os.Exit(0)
 	}
