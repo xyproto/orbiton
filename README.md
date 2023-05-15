@@ -33,6 +33,7 @@ Editing a C source file in `og` using the "synthwave" theme:
 
 ## Packaging status
 
+
 | **orbiton** | **o-editor** | **o** |
 |--------------------------|---------------------------|--------------------|
 | [![Packaging status](https://repology.org/badge/vertical-allrepos/orbiton.svg)](https://repology.org/project/orbiton/versions) | [![Packaging status](https://repology.org/badge/vertical-allrepos/o-editor.svg)](https://repology.org/project/o-editor/versions) | [![Packaging status](https://repology.org/badge/vertical-allrepos/o.svg)](https://repology.org/project/o/versions) |
@@ -159,9 +160,10 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords.
 * `ctrl-a` - Go to start of text, then start of line and then to the previous line.
 * `ctrl-e` - Go to end of line and then to the next line
-* `ctrl-p` - Scroll up 10 lines, or go to the previous match if a search is active.
 * `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active,
-             or jump to the matching parenthesis or bracket, if the cursor is on one.
+             or jump to the matching parenthesis or bracket, if the cursor just moved to one.
+* `ctrl-p` - Scroll up 10 lines, or go to the previous match if a search is active,
+             or jump to the matching parenthesis or bracket, if the cursor just moved to one.
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
 * `ctrl-g` - Display a simple help text, or jump to function definitions within the same file.
 * `ctrl-_` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
