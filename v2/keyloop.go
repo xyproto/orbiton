@@ -1355,6 +1355,17 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.UserSave(c, tty, status)
 		case "c:7": // ctrl-g, display some help (3 times), then either go to definition OR toggle the status bar
 
+			// If a search is in progress, clear the search
+			if e.searchTerm != "" {
+				e.ClearSearchTerm()
+				e.redraw = true
+				e.redrawCursor = true
+
+				// TODO: Also jump to where the cursor was before "go to definition"?
+
+				break
+			}
+
 			// TODO: Make this block of code less if-else-y, and fewer levels deep
 
 			canGoToDefinition := e.FuncPrefix() != ""
