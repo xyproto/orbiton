@@ -7,7 +7,8 @@ require (
 	github.com/atotto/clipboard v0.1.4
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
 	github.com/felixge/fgtrace v0.2.0
-	github.com/ianlancetaylor/demangle v0.0.0-20230425220036-24673e7931eb
+	github.com/gomarkdown/markdown v0.0.0-20230322041520-c84983bdbf2a
+	github.com/ianlancetaylor/demangle v0.0.0-20230515170651-1a737e73f260
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/xyproto/binary v1.3.0
 	github.com/xyproto/carveimg v1.4.0
@@ -19,7 +20,7 @@ require (
 	github.com/xyproto/stringpainter v1.0.0
 	github.com/xyproto/syntax v1.10.9
 	github.com/xyproto/termtitle v1.5.1
-	github.com/xyproto/textoutput v1.14.1
+	github.com/xyproto/textoutput v1.14.2
 	github.com/xyproto/vt100 v1.11.5
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
 	golang.org/x/image v0.7.0

@@ -39,24 +39,32 @@ type AST interface {
 func ASTToString(a AST, options ...Option) string {
 	tparams := true
 	llvmStyle := false
+	max := 0
 	for _, o := range options {
-		switch o {
-		case NoTemplateParams:
+		switch {
+		case o == NoTemplateParams:
 			tparams = false
-		case LLVMStyle:
+		case o == LLVMStyle:
 			llvmStyle = true
+		case isMaxLength(o):
+			max = maxLength(o)
 		}
 	}
 
-	ps := printState{tparams: tparams, llvmStyle: llvmStyle}
+	ps := printState{tparams: tparams, llvmStyle: llvmStyle, max: max}
 	a.print(&ps)
-	return ps.buf.String()
+	s := ps.buf.String()
+	if max > 0 && len(s) > max {
+		s = s[:max]
+	}
+	return s
 }
 
 // The printState type holds information needed to print an AST.
 type printState struct {
 	tparams   bool // whether to print template parameters
 	llvmStyle bool
+	max       int  // maximum output length
 
 	buf  strings.Builder
 	last byte // Last byte written to buffer.
@@ -88,6 +96,10 @@ func (ps *printState) writeString(s string) {
 
 // Print an AST.
 func (ps *printState) print(a AST) {
+	if ps.max > 0 && ps.buf.Len() > ps.max {
+		return
+	}
+
 	c := 0
 	for _, v := range ps.printing {
 		if v == a {

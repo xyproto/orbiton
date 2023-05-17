@@ -52,6 +52,34 @@ const (
 	LLVMStyle
 )
 
+// maxLengthShift is how we shift the MaxLength value.
+const maxLengthShift = 16
+
+// maxLengthMask is a mask for the maxLength value.
+const maxLengthMask = 0x1f << maxLengthShift
+
+// MaxLength returns an Option that limits the maximum length of a
+// demangled string. The maximum length is expressed as a power of 2,
+// so a value of 1 limits the returned string to 2 characters, and
+// a value of 16 limits the returned string to 65,536 characters.
+// The value must be between 1 and 30.
+func MaxLength(pow int) Option {
+	if pow <= 0 || pow > 30 {
+		panic("demangle: invalid MaxLength value")
+	}
+	return Option(pow << maxLengthShift)
+}
+
+// isMaxLength reports whether an Option holds a maximum length.
+func isMaxLength(opt Option) bool {
+	return opt&maxLengthMask != 0
+}
+
+// maxLength returns the maximum length stored in an Option.
+func maxLength(opt Option) int {
+	return 1 << ((opt&maxLengthMask) >> maxLengthShift)
+}
+
 // Filter demangles a C++ or Rust symbol name,
 // returning the human-readable C++ or Rust name.
 // If any error occurs during demangling, the input string is returned.
@@ -217,17 +245,19 @@ func doDemangle(name string, options ...Option) (ret AST, err error) {
 	clones := true
 	verbose := false
 	for _, o := range options {
-		switch o {
-		case NoParams:
+		switch {
+		case o == NoParams:
 			params = false
 			clones = false
-		case NoClones:
+		case o == NoClones:
 			clones = false
-		case Verbose:
+		case o == Verbose:
 			verbose = true
-		case NoTemplateParams, LLVMStyle:
+		case o == NoTemplateParams || o == LLVMStyle || isMaxLength(o):
 			// These are valid options but only affect
 			// printing of the AST.
+		case o == NoRust:
+			// Unimportant here.
 		default:
 			return nil, fmt.Errorf("unrecognized demangler option %v", o)
 		}

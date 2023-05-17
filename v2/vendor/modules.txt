@@ -22,8 +22,14 @@ github.com/cyrus-and/gdb
 ## explicit; go 1.18
 github.com/felixge/fgtrace
 github.com/felixge/fgtrace/internal
-# github.com/ianlancetaylor/demangle v0.0.0-20230425220036-24673e7931eb
+# github.com/gomarkdown/markdown v0.0.0-20230322041520-c84983bdbf2a
 ## explicit; go 1.12
+github.com/gomarkdown/markdown
+github.com/gomarkdown/markdown/ast
+github.com/gomarkdown/markdown/html
+github.com/gomarkdown/markdown/parser
+# github.com/ianlancetaylor/demangle v0.0.0-20230515170651-1a737e73f260
+## explicit; go 1.13
 github.com/ianlancetaylor/demangle
 # github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e
 ## explicit
@@ -95,7 +101,7 @@ github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.5.1
 ## explicit; go 1.11
 github.com/xyproto/termtitle
-# github.com/xyproto/textoutput v1.14.1
+# github.com/xyproto/textoutput v1.14.2
 ## explicit; go 1.10
 github.com/xyproto/textoutput
 # github.com/xyproto/vt100 v1.11.5
