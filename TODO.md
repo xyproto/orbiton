@@ -1,22 +1,34 @@
 # TODO
 
+## Must implement for next minor release
+
+- [ ] Press `ctrl-space` twice to render Markdown to HTML.
+- [ ] Add a menu option for rendering Markdown to PDF with pandoc.
+- [ ] Update the documentation.
+- [ ] Fix `ctrl-e` when editing Markdown files so that it does not jump up one table.
+- [ ] Add a "last used" time to the location history, then only keep the N last entries on loading/saving the location history
+- [ ] Set a "go to definition" bookmark before jumping to a definition.
+- [ ] Let `ctrl-g` go back after it has been used for jumping to a definition, if there is a "go to definition" bookmark available.
+- [ ] Recover from panic seamlessly, but show a status message and add a menu option for viewing the full stacktrace.
+
+## Features for next minor release
+
+- [ ] Add a simple Markdown table editor when `ctrl-e` is pressed.
+- [ ] When bookmarking, don't just bookmark the line/col, but also the filename.
+
 ## General
 
-- [ ] Add support for emojis.
-- [ ] Recover from panic seamlessly, but show a status message and add a menu option for viewing the full stacktrace.
-- [ ] Add a "last used" time to the location history, then only keep the N last entries on loading/saving the location history
 - [ ] When inserting something near the end of a long line, and moving to the line below, and inserting a character, make sure to scroll to the proper place before inserting the character, so that it is not inserted in the wrong place.
 - [ ] When rebasing, look for the `>>>>` markers when opening the file and jump to the first one?
 - [ ] When pasting with _double_ `ctrl-v`, let _one_ `ctrl-z` undo both keypresses.
-- [ ] When pasting lines that start with "
-- [ ] `+` and it's not a diff/patch file, then replace `+` with a blank.
+- [ ] When pasting lines that start with `+` and it's not a diff/patch file, then replace `+` with a blank.
 - [ ] When deleting lines with `ctrl-k` more than once, scroll the cursor line a bit up, to make it easier.
 - [ ] Go through this file and remove all completed TODO items.
-- [ ] When bookmarking, don't just bookmark the line/col, but also the filename.
 - [ ] If a file is passed through stdin and > 70% of the lines has a `:`, it might be a log file and not configuration.
 - [ ] If a file is passed through stdin and has many similar lines and no comments or blank lines, it might be a log file and not configuration.
 - [ ] Add a menu entry in the `ctrl-o` menu for listing all keybindings?
 - [ ] HTTP client - scratch document style
+- [ ] Add support for emojis.
 
 ## Markdown
 
