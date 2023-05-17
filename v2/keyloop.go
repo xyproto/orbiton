@@ -1684,13 +1684,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.Clear(c)
 				if err != nil {
 					// status.SetErrorMessage("Could not copy text through the portal.")
-					status.SetError(err)
 					e.ClosePortal()
+					status.SetError(err)
+					status.Show(c, e)
 				} else {
-					status.SetMessage(fmt.Sprintf("Using portal at %s\n", portal))
+					status.SetMessageAfterRedraw("Pasted through the portal")
 					gotLineFromPortal = true
 				}
-				status.Show(c, e)
 
 				if gotLineFromPortal {
 
