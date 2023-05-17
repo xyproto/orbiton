@@ -42,8 +42,8 @@ const (
 `
 )
 
-// exportPandoc will render PDF from Markdown using pandoc
-func (e *Editor) exportPandoc(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, pandocPath, pdfFilename string) error {
+// exportPandocPDF will render PDF from Markdown using pandoc
+func (e *Editor) exportPandocPDF(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, pandocPath, pdfFilename string) error {
 	// This function used to be concurrent. There are some leftovers from this that could be refactored away.
 
 	status.ClearAll(c)

@@ -438,23 +438,38 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 	// Get a few simple cases out of the way first, by editor mode
 	switch e.mode {
-	case mode.Markdown, mode.Doc:
+	case mode.Doc:
 		// pandoc
 		if pandocPath := which("pandoc"); pandocPath != "" {
 			pdfFilename := strings.ReplaceAll(filepath.Base(sourceFilename), ".", "_") + ".pdf"
 			if background {
 				go func() {
 					pandocMutex.Lock()
-					_ = e.exportPandoc(c, tty, status, pandocPath, pdfFilename)
+					_ = e.exportPandocPDF(c, tty, status, pandocPath, pdfFilename)
 					pandocMutex.Unlock()
 				}()
 			} else {
-				_ = e.exportPandoc(c, tty, status, pandocPath, pdfFilename)
+				if err := e.exportPandocPDF(c, tty, status, pandocPath, pdfFilename); err != nil {
+					return pdfFilename, err
+				}
 			}
 			// the exportPandoc function handles it's own status output
 			return pdfFilename, nil
 		}
 		return "", errors.New("could not find pandoc")
+	case mode.Markdown:
+		htmlFilename := strings.ReplaceAll(filepath.Base(sourceFilename), ".", "_") + ".html"
+		if background {
+			go func() {
+				_ = e.exportMarkdownHTML(c, tty, status, htmlFilename)
+			}()
+		} else {
+			if err := e.exportMarkdownHTML(c, tty, status, htmlFilename); err != nil {
+				return htmlFilename, err
+			}
+		}
+		// the exportPandoc function handles it's own status output
+		return htmlFilename, nil
 	}
 
 	// The immediate builds are done, time to build a exec.Cmd, run it and analyze the output
