@@ -1928,22 +1928,27 @@ func (e *Editor) GoToPrevParagraph(c *vt100.Canvas, status *StatusBar) (bool, bo
 // GoToTableTop will move up as long as the current line contains "|", until it can not move further up.
 // Can be used for Markdown tables.
 func (e *Editor) GoToTableTop(c *vt100.Canvas, status *StatusBar) error {
-	if !strings.Contains(e.CurrentLine(), "|") {
+	inTable := func(i LineIndex) bool {
+		return strings.Contains(e.Line(i), "|")
+	}
+
+	startIndex := e.DataY()
+	if !inTable(startIndex) {
 		return errors.New("not in a table")
 	}
-	lastFoundTableLine := LineIndex(e.Len())
-	firstFoundTableLine := lastFoundTableLine
-	for i := e.DataY() - 1; i >= 0; i-- {
-		// Check if this line contains "|"
-		if strings.Contains(e.Line(i), "|") {
-			lastFoundTableLine = i
-		} else {
-			// No, jump to the last found table line
-			if lastFoundTableLine != firstFoundTableLine {
-				e.GoTo(lastFoundTableLine, c, status)
-			}
+
+	index := startIndex
+	for ; index >= 0; index-- {
+		if !inTable(index) {
+			index++
+			break
 		}
 	}
+
+	if index != startIndex {
+		e.GoTo(index, c, status)
+	}
+
 	return nil
 }
 
