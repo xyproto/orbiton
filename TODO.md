@@ -2,11 +2,11 @@
 
 ## Must implement for next minor release
 
+- [ ] Add a "last used" time to the location history, then only keep the N last entries on loading/saving the location history
 - [ ] Press `ctrl-space` twice to render Markdown to HTML.
 - [ ] Add a menu option for rendering Markdown to PDF with pandoc.
 - [ ] Update the documentation.
-- [ ] Fix `ctrl-e` when editing Markdown files so that it does not jump up one table.
-- [ ] Add a "last used" time to the location history, then only keep the N last entries on loading/saving the location history
+- [x] Fix `ctrl-e` when editing Markdown files so that it does not jump up one table.
 - [ ] Set a "go to definition" bookmark before jumping to a definition.
 - [ ] Let `ctrl-g` go back after it has been used for jumping to a definition, if there is a "go to definition" bookmark available.
 - [ ] Recover from panic seamlessly, but show a status message and add a menu option for viewing the full stacktrace.
