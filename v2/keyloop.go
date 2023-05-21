@@ -297,6 +297,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.redrawCursor = true
 
+			// First check if we are editing Markdown and are in a Markdown table (and that this is not the previous thing that we did)
+			if e.mode == mode.Markdown && !kh.PrevIs("c:20") && e.InTable() {
+				undo.Snapshot(e)
+				const justFormat = false
+				e.EditMarkdownTable(tty, c, status, bookmark, justFormat)
+				break
+			}
+
 			if (e.mode == mode.C || e.mode == mode.Cpp) && hasS([]string{".cpp", ".cc", ".c", ".cxx", ".c++"}, filepath.Ext(e.filename)) { // jump from source to header file
 				// If this is a C++ source file, try finding and opening the corresponding header file
 				// Check if there is a corresponding header file
@@ -1311,14 +1319,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redrawCursor = true
 			e.SaveX(true)
 		case "c:5": // ctrl-e, end
-
-			// First check if we are editing Markdown and are in a Markdown table (and that this is not the previous thing that we did)
-			if e.mode == mode.Markdown && e.InTable() && !kh.PrevIs("c:5") {
-				undo.Snapshot(e)
-				const justFormat = false
-				e.EditMarkdownTable(tty, c, status, bookmark, justFormat)
-				break
-			}
 
 			// Do not reset cut/copy/paste status
 
