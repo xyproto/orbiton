@@ -373,6 +373,11 @@ func (e *Editor) TableEditorMode(tty *vt100.TTY, status *StatusBar, headers []st
 			tableWidget.Right()
 			changed = true
 			resizeMut.Unlock()
+		case "c:9": // Next, tab
+			resizeMut.Lock()
+			tableWidget.Next()
+			changed = true
+			resizeMut.Unlock()
 		case "c:1": // Top, ctrl-a
 			resizeMut.Lock()
 			tableWidget.SelectFirst()

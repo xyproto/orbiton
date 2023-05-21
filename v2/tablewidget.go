@@ -61,19 +61,37 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 	for x, r := range tw.title {
 		c.PlotColor(uint(tw.marginLeft+x), uint(tw.marginTop), tw.titleColor, r)
 	}
+
+	columnWidths := TableColumnWidths(tw.headers, tw.body)
+
+	// Draw the headers, with various colors
+	row := tw.headers
+	columnWidthCounter := 0
+	for x := 0; x < len(row); x++ {
+		field := tw.headers[x]
+		if 0 == int(tw.y) && x == int(tw.x) {
+			c.Write(uint(tw.marginLeft+columnWidthCounter), uint(tw.marginTop+titleHeight), tw.highlightColor, tw.bgColor, field)
+		} else {
+			c.Write(uint(tw.marginLeft+columnWidthCounter), uint(tw.marginTop+titleHeight), tw.titleColor, tw.bgColor, field)
+		}
+		columnWidthCounter += columnWidths[x] + 1
+	}
+
 	// Draw the menu entries, with various colors
 	for y := 0; y < len(tw.body); y++ {
 		row := tw.body[y]
+		columnWidthCounter := 0
 		for x := 0; x < len(row); x++ {
 			field := tw.body[y][x]
-			if y == int(tw.y) && x == int(tw.x) {
-				c.Write(uint(tw.marginLeft+x*2), uint(tw.marginTop+y+titleHeight), tw.highlightColor, tw.bgColor, field)
+			if (y+1) == int(tw.y) && x == int(tw.x) {
+				c.Write(uint(tw.marginLeft+columnWidthCounter), uint(tw.marginTop+y+1+titleHeight), tw.highlightColor, tw.bgColor, field)
 			} else {
-				c.Write(uint(tw.marginLeft+x*2), uint(tw.marginTop+y+titleHeight), tw.textColor, tw.bgColor, field)
+				c.Write(uint(tw.marginLeft+columnWidthCounter), uint(tw.marginTop+y+1+titleHeight), tw.textColor, tw.bgColor, field)
 			}
+			columnWidthCounter += columnWidths[x] + 1
 		}
-
 	}
+
 }
 
 // Up will move the highlight up (with wrap-around)
@@ -123,6 +141,20 @@ func (tw *TableWidget) Right() {
 	row := tw.body[tw.y]
 	if tw.x >= uint(len(row)) {
 		tw.x = 0
+	}
+}
+
+// Next will move the highlight to the next cell
+func (tw *TableWidget) Next() {
+	tw.oldx = tw.x
+	tw.x++
+	row := tw.body[tw.y]
+	if tw.x >= uint(len(row)) {
+		tw.x = 0
+		tw.y++
+	}
+	if tw.y >= uint(len(tw.body)) {
+		tw.y = 0
 	}
 }
 
