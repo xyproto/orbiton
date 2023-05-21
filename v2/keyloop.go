@@ -191,6 +191,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Clear the search term
 			e.ClearSearchTerm()
 
+			// First check if we are editing Markdown and are in a Markdown table (and that this is not the previous thing that we did)
+			if e.mode == mode.Markdown && e.InTable() && !kh.PrevIs("c:23") {
+				// Just format the Markdown table
+				const justFormat = true
+				e.EditMarkdownTable(c, status, bookmark, justFormat)
+				break
+			}
+
 			// Add a watch
 			if e.debugMode { // AddWatch will start a new gdb session if needed
 				// Ask the user to type in a watch expression
@@ -1304,10 +1312,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.SaveX(true)
 		case "c:5": // ctrl-e, end
 
-			// First check if we are editing Markdown and are in a Markdown table
-			if e.mode == mode.Markdown && e.InTable(e.DataY()) {
+			// First check if we are editing Markdown and are in a Markdown table (and that this is not the previous thing that we did)
+			if e.mode == mode.Markdown && e.InTable() && !kh.PrevIs("c:5") {
 				undo.Snapshot(e)
-				e.EditMarkdownTable(c, status, bookmark)
+				const justFormat = false
+				e.EditMarkdownTable(c, status, bookmark, justFormat)
 				break
 			}
 

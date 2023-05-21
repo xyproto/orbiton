@@ -7,22 +7,28 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// InTable checks if it is likely that the given LineIndex is in a Markdown table
-func (e *Editor) InTable(i LineIndex) bool {
+// InTableAt checks if it is likely that the given LineIndex is in a Markdown table
+func (e *Editor) InTableAt(i LineIndex) bool {
 	line := e.Line(i)
-	return strings.Count(line, "|") > 1 || strings.Contains(line, "---") || strings.Count(line, "-") > 4
+	return strings.Count(line, "|") > 1 || separatorRow(line)
+}
+
+// InTable checks if we are currently in what appears to be a Markdown table
+func (e *Editor) InTable() bool {
+	line := e.CurrentLine()
+	return strings.Count(line, "|") > 1 || separatorRow(line)
 }
 
 // TopOfCurrentTable tries to find the first line index of the current Markdown table
 func (e *Editor) TopOfCurrentTable() (LineIndex, error) {
 	startIndex := e.DataY()
 
-	if !e.InTable(startIndex) {
+	if !e.InTableAt(startIndex) {
 		return -1, errors.New("not in a table")
 	}
 
 	index := startIndex
-	for index >= 0 && e.InTable(index) {
+	for index >= 0 && e.InTableAt(index) {
 		index--
 	}
 
@@ -30,15 +36,16 @@ func (e *Editor) TopOfCurrentTable() (LineIndex, error) {
 }
 
 // GoToTopOfCurrentTable tries to jump to the first line of the current Markdown table
-func (e *Editor) GoToTopOfCurrentTable(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) GoToTopOfCurrentTable(c *vt100.Canvas, status *StatusBar, centerCursor bool) LineIndex {
 	topIndex, err := e.TopOfCurrentTable()
 	if err != nil {
-		return
+		return 0
 	}
 	e.redraw, _ = e.GoTo(topIndex, c, status)
-	if e.redraw {
+	if e.redraw && centerCursor {
 		e.Center(c)
 	}
+	return topIndex
 }
 
 // CurrentTableString returns the current Markdown table as a newline separated string, if possible
@@ -49,7 +56,7 @@ func (e *Editor) CurrentTableString() (string, error) {
 	}
 
 	var sb strings.Builder
-	for e.InTable(index) {
+	for e.InTableAt(index) {
 		trimmedLine := strings.TrimSpace(e.Line(index))
 		sb.WriteString(trimmedLine + "\n")
 		index++
@@ -60,34 +67,50 @@ func (e *Editor) CurrentTableString() (string, error) {
 }
 
 // DeleteCurrentTable will delete the current Markdown table
-func (e *Editor) DeleteCurrentTable(c *vt100.Canvas, status *StatusBar, bookmark *Position) error {
+func (e *Editor) DeleteCurrentTable(c *vt100.Canvas, status *StatusBar, bookmark *Position) (LineIndex, error) {
 	s, err := e.CurrentTableString()
 	if err != nil {
-		return err
+		return 0, err
 	}
 	lines := strings.Split(s, "\n")
 	if len(lines) == 0 {
-		return errors.New("need at least one line of table to be able to remove it")
+		return 0, errors.New("need at least one line of table to be able to remove it")
 	}
-	e.GoToTopOfCurrentTable(c, status)
+	const centerCursor = false
+	topOfTable := e.GoToTopOfCurrentTable(c, status, centerCursor)
 	for range lines {
 		e.DeleteLineMoveBookmark(e.LineIndex(), bookmark)
 	}
-	return nil
+	return topOfTable, nil
 }
 
 // ReplaceCurrentTableWith will try to replace the current table with the given string.
 // Also moves the current bookmark, if needed.
-func (e *Editor) ReplaceCurrentTableWith(c *vt100.Canvas, status *StatusBar, bookmark *Position, s string) error {
-	if err := e.DeleteCurrentTable(c, status, bookmark); err != nil {
+func (e *Editor) ReplaceCurrentTableWith(c *vt100.Canvas, status *StatusBar, bookmark *Position, tableString string) error {
+	topOfTable, err := e.DeleteCurrentTable(c, status, bookmark)
+	if err != nil {
 		return err
 	}
-	lines := strings.Split(s, "\n")
+	lines := strings.Split(tableString, "\n")
 	addNewLine := false
 	e.InsertBlock(c, lines, addNewLine)
-	e.Up(c, status)
-	e.GoToTopOfCurrentTable(c, status)
+	e.GoTo(topOfTable, c, status)
 	return nil
+}
+
+// separatorRow checks if this string looks like a header/body table separator line in Markdown
+func separatorRow(s string) bool {
+	notEmpty := false
+	for _, r := range s {
+		switch r {
+		case ' ':
+		case '-', '|', '\n', '\t':
+			notEmpty = true
+		default:
+			return false
+		}
+	}
+	return notEmpty
 }
 
 // Parse a Markdown table into a slice of header strings and a [][]slice of rows and columns
@@ -115,7 +138,7 @@ func parseTable(s string) ([]string, [][]string) {
 			}
 		}
 		// Is this a separator row?
-		if strings.Contains(line, "---") || strings.Count(line, "-") > 5 {
+		if separatorRow(line) {
 			// skip
 			continue
 		}
@@ -123,6 +146,7 @@ func parseTable(s string) ([]string, [][]string) {
 		for i := 0; i < len(fields); i++ {
 			fields[i] = strings.TrimSpace(fields[i])
 		}
+
 		// Assign the parsed fields into either headers or the table body
 		if i == 0 {
 			headers = fields
@@ -221,7 +245,7 @@ func tableToString(headers []string, body [][]string) string {
 }
 
 // EditMarkdownTable presents the user with a dedicated table editor for the current Markdown table
-func (e *Editor) EditMarkdownTable(c *vt100.Canvas, status *StatusBar, bookmark *Position) {
+func (e *Editor) EditMarkdownTable(c *vt100.Canvas, status *StatusBar, bookmark *Position, justFormat bool) {
 	tableString, err := e.CurrentTableString()
 	if err != nil {
 		status.ClearAll(c)
@@ -232,11 +256,13 @@ func (e *Editor) EditMarkdownTable(c *vt100.Canvas, status *StatusBar, bookmark 
 
 	headers, body := parseTable(tableString)
 
-	if err := e.TableEditorMode(headers, body); err != nil {
-		status.ClearAll(c)
-		status.SetError(err)
-		status.ShowNoTimeout(c, e)
-		return
+	if !justFormat {
+		if err := e.TableEditorMode(headers, body); err != nil {
+			status.ClearAll(c)
+			status.SetError(err)
+			status.ShowNoTimeout(c, e)
+			return
+		}
 	}
 
 	newTableString := tableToString(headers, body)
