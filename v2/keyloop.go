@@ -1306,7 +1306,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			// First check if we are editing Markdown and are in a Markdown table
 			if e.mode == mode.Markdown && e.InTable(e.DataY()) {
-				e.EditMarkdownTable()
+				undo.Snapshot(e)
+				e.EditMarkdownTable(c, status, bookmark)
 				break
 			}
 
