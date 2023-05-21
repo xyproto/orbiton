@@ -9,7 +9,7 @@ import (
 )
 
 // exportMarkdownHTML will render HTML from Markdown using the gomarkdown package
-func (e *Editor) exportMarkdownHTML(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, htmlFilename string) error {
+func (e *Editor) exportMarkdownHTML(c *vt100.Canvas, status *StatusBar, htmlFilename string) error {
 	status.ClearAll(c)
 	status.SetMessage("Rendering to HTML using gomarkdown...")
 	status.ShowNoTimeout(c, e)

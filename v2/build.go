@@ -461,10 +461,10 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		htmlFilename := strings.ReplaceAll(filepath.Base(sourceFilename), ".", "_") + ".html"
 		if background {
 			go func() {
-				_ = e.exportMarkdownHTML(c, tty, status, htmlFilename)
+				_ = e.exportMarkdownHTML(c, status, htmlFilename)
 			}()
 		} else {
-			if err := e.exportMarkdownHTML(c, tty, status, htmlFilename); err != nil {
+			if err := e.exportMarkdownHTML(c, status, htmlFilename); err != nil {
 				return htmlFilename, err
 			}
 		}
