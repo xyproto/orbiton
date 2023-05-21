@@ -2,7 +2,11 @@ package main
 
 import (
 	"errors"
+	"os"
+	"os/signal"
+	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/xyproto/vt100"
 )
@@ -158,13 +162,15 @@ func parseTable(s string) ([]string, [][]string) {
 	return headers, body
 }
 
-func tableToString(headers []string, body [][]string) string {
+// TableColumnWidths returns a slice of max widths for all columns in the given headers+body table
+func TableColumnWidths(headers []string, body [][]string) []int {
 	maxColumns := len(headers)
 	for _, row := range body {
 		if len(row) > maxColumns {
 			maxColumns = len(row)
 		}
 	}
+
 	columnWidths := make([]int, maxColumns)
 
 	// find the width of the longest string per column
@@ -182,6 +188,12 @@ func tableToString(headers []string, body [][]string) string {
 			}
 		}
 	}
+	return columnWidths
+}
+
+func tableToString(headers []string, body [][]string) string {
+
+	columnWidths := TableColumnWidths(headers, body)
 
 	var sb strings.Builder
 
@@ -245,7 +257,7 @@ func tableToString(headers []string, body [][]string) string {
 }
 
 // EditMarkdownTable presents the user with a dedicated table editor for the current Markdown table
-func (e *Editor) EditMarkdownTable(c *vt100.Canvas, status *StatusBar, bookmark *Position, justFormat bool) {
+func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, bookmark *Position, justFormat bool) {
 	tableString, err := e.CurrentTableString()
 	if err != nil {
 		status.ClearAll(c)
@@ -257,7 +269,7 @@ func (e *Editor) EditMarkdownTable(c *vt100.Canvas, status *StatusBar, bookmark 
 	headers, body := parseTable(tableString)
 
 	if !justFormat {
-		if err := e.TableEditorMode(headers, body); err != nil {
+		if err := e.TableEditorMode(tty, status, headers, body); err != nil {
 			status.ClearAll(c)
 			status.SetError(err)
 			status.ShowNoTimeout(c, e)
@@ -277,10 +289,136 @@ func (e *Editor) EditMarkdownTable(c *vt100.Canvas, status *StatusBar, bookmark 
 }
 
 // TableEditorMode presents an interface for changing the given headers and body
-func (e *Editor) TableEditorMode(headers []string, body [][]string) error {
-	// TODO: Change the headers and body
-	// TODO: Look at the symbol selection UI
+func (e *Editor) TableEditorMode(tty *vt100.TTY, status *StatusBar, headers []string, body [][]string) error {
 
-	// No editor mode just yet
+	// TODO: Change the headers and body
+
+	title := "Markdown Table Editor"
+	titleColor := vt100.LightBlue
+	textColor := vt100.White
+	highlightColor := vt100.LightCyan
+
+	// Clear the existing handler
+	signal.Reset(syscall.SIGWINCH)
+
+	var (
+		c           = vt100.NewCanvas()
+		tableWidget = NewTableWidget(title, headers, body, titleColor, textColor, highlightColor, e.Background, c.W(), c.H())
+		sigChan     = make(chan os.Signal, 1)
+		running     = true
+		changed     = true
+		cancel      = false
+	)
+
+	// Set up a new resize handler
+	signal.Notify(sigChan, syscall.SIGWINCH)
+
+	go func() {
+		for range sigChan {
+			resizeMut.Lock()
+			// Create a new canvas, with the new size
+			nc := c.Resized()
+			if nc != nil {
+				vt100.Clear()
+				c = nc
+				tableWidget.Draw(c)
+				c.Redraw()
+				changed = true
+			}
+
+			// Inform all elements that the terminal was resized
+			resizeMut.Unlock()
+		}
+	}()
+
+	vt100.Clear()
+	vt100.Reset()
+	c.Redraw()
+
+	// Set the initial table body (x,y) position
+	tableWidget.SelectIndex(0, 0)
+
+	for running {
+
+		// Draw elements in their new positions
+
+		if changed {
+			resizeMut.RLock()
+			tableWidget.Draw(c)
+			resizeMut.RUnlock()
+			// Update the canvas
+			c.Draw()
+		}
+
+		// Handle events
+		key := tty.String()
+		switch key {
+		case "↑", "c:16": // Up or ctrl-p
+			resizeMut.Lock()
+			tableWidget.Up()
+			changed = true
+			resizeMut.Unlock()
+		case "←": // Left
+			resizeMut.Lock()
+			tableWidget.Left()
+			changed = true
+			resizeMut.Unlock()
+		case "↓", "c:14": // Down or ctrl-n
+			resizeMut.Lock()
+			tableWidget.Down()
+			changed = true
+			resizeMut.Unlock()
+		case "→": // Right
+			resizeMut.Lock()
+			tableWidget.Right()
+			changed = true
+			resizeMut.Unlock()
+		case "c:1": // Top, ctrl-a
+			resizeMut.Lock()
+			tableWidget.SelectFirst()
+			changed = true
+			resizeMut.Unlock()
+		case "c:5": // Bottom, ctrl-e
+			resizeMut.Lock()
+			tableWidget.SelectLast()
+			changed = true
+			resizeMut.Unlock()
+		case "c:27", "q", "c:3", "c:17", "c:15": // ESC, q, ctrl-c, ctrl-q or ctrl-o
+			running = false
+			changed = true
+			cancel = true
+		case " ", "c:13": // Space or Return
+			running = false
+			changed = true
+		case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9": // 0 .. 9
+			number, err := strconv.Atoi(key)
+			if err != nil {
+				break
+			}
+			resizeMut.Lock()
+			tableWidget.SelectIndex(0, uint(number))
+			changed = true
+			resizeMut.Unlock()
+		}
+
+		// If the menu was changed, draw the canvas
+		if changed {
+			c.Draw()
+		}
+
+		if cancel {
+			break
+		}
+
+	}
+
+	// Clear the existing handler
+	signal.Reset(syscall.SIGWINCH)
+
+	// Restore the signal handlers
+	e.SetUpSignalHandlers(c, tty, status)
+
+	// TODO: Return something else
+
 	return nil
 }
