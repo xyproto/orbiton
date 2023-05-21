@@ -3,31 +3,71 @@ package main
 import (
 	"errors"
 	"strings"
+
+	"github.com/xyproto/vt100"
 )
+
+// InTable checks if it is likely that the given LineIndex is in a Markdown table
+func (e *Editor) InTable(i LineIndex) bool {
+	line := e.Line(i)
+	return strings.Count(line, "|") > 1 || strings.Contains(line, "--")
+}
+
+// GoToTableTop will move up as long as the current line contains "|", until it can not move further up.
+// Can be used for Markdown tables.
+func (e *Editor) GoToTableTop(c *vt100.Canvas, status *StatusBar) error {
+	startIndex := e.DataY()
+
+	if !e.InTable(startIndex) {
+		return errors.New("not in a table")
+	}
+
+	index := startIndex
+	for ; index >= 0; index-- {
+		if !e.InTable(index) {
+			index++
+			break
+		}
+	}
+
+	// index is now the first found line of the table
+
+	if index != startIndex {
+		e.GoTo(index, c, status)
+	}
+
+	return nil
+}
 
 // CurrentTable returns the current Markdown table as a newline separated string, if possible
 func (e *Editor) CurrentTable() (string, error) {
-	currentY := e.DataY()
-	line := e.Line(currentY)
-	if !strings.Contains(line, "|") {
+	startIndex := e.DataY()
+
+	if !e.InTable(startIndex) {
 		return "", errors.New("not in a table")
 	}
+
+	index := startIndex
+	for ; index >= 0; index-- {
+		if !e.InTable(index) {
+			index++
+			break
+		}
+	}
+
+	// index is now the first found line of the table
+
+	// Now collect all the lines of the table
 	var sb strings.Builder
-	topY := currentY
-	for i := currentY - 1; i >= 0; i-- {
-		// Check if this line contains "|"
-		if !strings.Contains(e.Line(i), "|") {
+	for i := index; ; i++ {
+		if !e.InTable(startIndex) {
 			break
 		}
-		topY = i
+		trimmedLine := strings.TrimSpace(e.Line(i))
+		sb.WriteString(trimmedLine + "\n")
 	}
-	i := topY
-	for line := e.Line(i); strings.Contains(line, "|"); i++ {
-		if i <= 0 {
-			break
-		}
-		sb.WriteString(strings.TrimSpace(line) + "\n")
-	}
+
+	// Return the collected table lines
 	return sb.String(), nil
 }
 

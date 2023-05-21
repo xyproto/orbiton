@@ -1925,33 +1925,6 @@ func (e *Editor) GoToPrevParagraph(c *vt100.Canvas, status *StatusBar) (bool, bo
 	return false, false
 }
 
-// GoToTableTop will move up as long as the current line contains "|", until it can not move further up.
-// Can be used for Markdown tables.
-func (e *Editor) GoToTableTop(c *vt100.Canvas, status *StatusBar) error {
-	inTable := func(i LineIndex) bool {
-		return strings.Contains(e.Line(i), "|")
-	}
-
-	startIndex := e.DataY()
-	if !inTable(startIndex) {
-		return errors.New("not in a table")
-	}
-
-	index := startIndex
-	for ; index >= 0; index-- {
-		if !inTable(index) {
-			index++
-			break
-		}
-	}
-
-	if index != startIndex {
-		e.GoTo(index, c, status)
-	}
-
-	return nil
-}
-
 // Center will scroll the contents so that the line with the cursor ends up in the center of the screen
 func (e *Editor) Center(c *vt100.Canvas) {
 	// Find the terminal height
