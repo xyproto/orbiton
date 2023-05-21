@@ -195,7 +195,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if e.mode == mode.Markdown && e.InTable() && !kh.PrevIs("c:23") {
 				// Just format the Markdown table
 				const justFormat = true
-				e.EditMarkdownTable(c, status, bookmark, justFormat)
+				e.EditMarkdownTable(tty, c, status, bookmark, justFormat)
 				break
 			}
 
@@ -338,7 +338,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					selectedSymbol = "×"
 				}
 				e.redraw = true
-				selectedX, selectedY, cancel := e.SymbolMenu(status, tty, "Insert symbol", menuChoices, e.MenuTitleColor, e.MenuTextColor, e.MenuArrowColor)
+				selectedX, selectedY, cancel := e.SymbolMenu(tty, status, "Insert symbol", menuChoices, e.MenuTitleColor, e.MenuTextColor, e.MenuArrowColor)
 				if !cancel {
 					undo.Snapshot(e)
 					if selectedY < len(menuChoices) {
@@ -1316,7 +1316,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if e.mode == mode.Markdown && e.InTable() && !kh.PrevIs("c:5") {
 				undo.Snapshot(e)
 				const justFormat = false
-				e.EditMarkdownTable(c, status, bookmark, justFormat)
+				e.EditMarkdownTable(tty, c, status, bookmark, justFormat)
 				break
 			}
 

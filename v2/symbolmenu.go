@@ -11,7 +11,7 @@ import (
 
 // SymbolMenu starts a loop where keypresses are handled. When a choice is made, a number is returned.
 // x and y are returned. -1,-1 is "no choice", 0,0 is the top left index.
-func (e *Editor) SymbolMenu(status *StatusBar, tty *vt100.TTY, title string, choices [][]string, titleColor, textColor, highlightColor vt100.AttributeColor) (int, int, bool) {
+func (e *Editor) SymbolMenu(tty *vt100.TTY, status *StatusBar, title string, choices [][]string, titleColor, textColor, highlightColor vt100.AttributeColor) (int, int, bool) {
 	// Clear the existing handler
 	signal.Reset(syscall.SIGWINCH)
 
