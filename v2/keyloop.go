@@ -1305,12 +1305,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:5": // ctrl-e, end
 
 			// First check if we are editing Markdown and are in a Markdown table
-			if e.mode == mode.Markdown {
-				if strings.Count(e.CurrentLine(), "|") >= 2 {
-					e.GoToTableTop(c, status)
-					//e.EditMarkdownTable()
-					break
-				}
+			if e.mode == mode.Markdown && e.InTable(e.DataY()) {
+				e.EditMarkdownTable()
+				break
 			}
 
 			// Do not reset cut/copy/paste status
