@@ -77,7 +77,7 @@ func isMaxLength(opt Option) bool {
 
 // maxLength returns the maximum length stored in an Option.
 func maxLength(opt Option) int {
-	return 1 << ((opt&maxLengthMask) >> maxLengthShift)
+	return 1 << ((opt & maxLengthMask) >> maxLengthShift)
 }
 
 // Filter demangles a C++ or Rust symbol name,
@@ -691,7 +691,7 @@ func (st *state) prefix() AST {
 		}
 	}
 
-	isCast := false
+	var cast *Cast
 	for {
 		if len(st.str) == 0 {
 			st.fail("expected prefix")
@@ -703,7 +703,7 @@ func (st *state) prefix() AST {
 			un, isUnCast := st.unqualifiedName()
 			next = un
 			if isUnCast {
-				isCast = true
+				cast = un.(*Cast)
 			}
 		} else {
 			switch st.str[0] {
@@ -757,10 +757,10 @@ func (st *state) prefix() AST {
 				var args []AST
 				args = st.templateArgs()
 				tmpl := &Template{Name: a, Args: args}
-				if isCast {
-					st.setTemplate(a, tmpl)
+				if cast != nil {
+					st.setTemplate(cast, tmpl)
 					st.clearTemplateArgs(args)
-					isCast = false
+					cast = nil
 				}
 				a = nil
 				next = tmpl
@@ -770,8 +770,12 @@ func (st *state) prefix() AST {
 				if a == nil {
 					st.fail("expected prefix")
 				}
-				if isCast {
-					st.setTemplate(a, nil)
+				if cast != nil {
+					var toTmpl *Template
+					if castTempl, ok := cast.To.(*Template); ok {
+						toTmpl = castTempl
+					}
+					st.setTemplate(cast, toTmpl)
 				}
 				return a
 			case 'M':
@@ -801,10 +805,10 @@ func (st *state) prefix() AST {
 				}
 				st.advance(1)
 				tmpl := &Template{Name: a, Args: args}
-				if isCast {
-					st.setTemplate(a, tmpl)
+				if cast != nil {
+					st.setTemplate(cast, tmpl)
 					st.clearTemplateArgs(args)
-					isCast = false
+					cast = nil
 				}
 				a = nil
 				next = tmpl

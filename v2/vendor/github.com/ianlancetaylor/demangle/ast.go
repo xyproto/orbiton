@@ -64,7 +64,7 @@ func ASTToString(a AST, options ...Option) string {
 type printState struct {
 	tparams   bool // whether to print template parameters
 	llvmStyle bool
-	max       int  // maximum output length
+	max       int // maximum output length
 
 	buf  strings.Builder
 	last byte // Last byte written to buffer.
