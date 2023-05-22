@@ -4,7 +4,6 @@ import (
 	"errors"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"syscall"
 
@@ -378,7 +377,7 @@ func (e *Editor) TableEditorMode(tty *vt100.TTY, status *StatusBar, headers []st
 			resizeMut.Unlock()
 		case "c:9": // Next, tab
 			resizeMut.Lock()
-			tableWidget.Next()
+			tableWidget.NextOrInsert()
 			changed = true
 			resizeMut.Unlock()
 		case "c:1": // Top, ctrl-a
@@ -391,21 +390,24 @@ func (e *Editor) TableEditorMode(tty *vt100.TTY, status *StatusBar, headers []st
 			tableWidget.SelectLast()
 			changed = true
 			resizeMut.Unlock()
-		case "c:27", "q", "c:3", "c:17", "c:15": // ESC, q, ctrl-c, ctrl-q or ctrl-o
+		case "c:27", "q", "c:3", "c:17", "c:15", "c:13": // ESC, q, ctrl-c, ctrl-q, ctrl-o or return
 			running = false
 			changed = true
 			cancel = true
-		case " ", "c:13": // Space or Return
-			running = false
-			changed = true
-		case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9": // 0 .. 9
-			number, err := strconv.Atoi(key)
-			if err != nil {
-				break
-			}
+		case "c:8", "c:127": // ctrl-h or backspace
 			resizeMut.Lock()
-			tableWidget.SelectIndex(0, number)
-			changed = true
+			s := tableWidget.Get()
+			if len(s) > 0 {
+				tableWidget.Set(s[:len(s)-1])
+				changed = true
+			}
+			resizeMut.Unlock()
+		default:
+			resizeMut.Lock()
+			if !strings.HasPrefix(key, "c:") {
+				tableWidget.Add(key)
+				changed = true
+			}
 			resizeMut.Unlock()
 		}
 
@@ -415,6 +417,7 @@ func (e *Editor) TableEditorMode(tty *vt100.TTY, status *StatusBar, headers []st
 		}
 
 		if cancel {
+			tableWidget.TrimAll()
 			break
 		}
 

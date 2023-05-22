@@ -297,8 +297,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.redrawCursor = true
 
-			// First check if we are editing Markdown and are in a Markdown table (and that this is not the previous thing that we did)
-			if e.mode == mode.Markdown && !kh.PrevIs("c:20") && e.InTable() {
+			// First check if we are editing Markdown and are in a Markdown table
+			if e.mode == mode.Markdown && e.InTable() {
 				undo.Snapshot(e)
 				const justFormat = false
 				e.EditMarkdownTable(tty, c, status, bookmark, justFormat)
