@@ -291,19 +291,22 @@ func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *Stat
 // TableEditorMode presents an interface for changing the given headers and body
 func (e *Editor) TableEditorMode(tty *vt100.TTY, status *StatusBar, headers []string, body [][]string) error {
 
-	// TODO: Change the headers and body
-
 	title := "Markdown Table Editor"
-	titleColor := vt100.LightBlue
+	titleColor := vt100.LightRed
+	headerColor := vt100.LightBlue
 	textColor := vt100.White
 	highlightColor := vt100.LightCyan
 
 	// Clear the existing handler
 	signal.Reset(syscall.SIGWINCH)
 
+	tableContents := [][]string{}
+	tableContents = append(tableContents, headers)
+	tableContents = append(tableContents, body...)
+
 	var (
 		c           = vt100.NewCanvas()
-		tableWidget = NewTableWidget(title, headers, body, titleColor, textColor, highlightColor, e.Background, c.W(), c.H())
+		tableWidget = NewTableWidget(title, tableContents, titleColor, headerColor, textColor, highlightColor, e.Background, int(c.W()), int(c.H()))
 		sigChan     = make(chan os.Signal, 1)
 		running     = true
 		changed     = true
@@ -401,7 +404,7 @@ func (e *Editor) TableEditorMode(tty *vt100.TTY, status *StatusBar, headers []st
 				break
 			}
 			resizeMut.Lock()
-			tableWidget.SelectIndex(0, uint(number))
+			tableWidget.SelectIndex(0, number)
 			changed = true
 			resizeMut.Unlock()
 		}
