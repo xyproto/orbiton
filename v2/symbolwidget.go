@@ -87,17 +87,18 @@ func (sw *SymbolWidget) Draw(c *vt100.Canvas) {
 }
 
 // Up will move the highlight up (with wrap-around)
-func (sw *SymbolWidget) Up() bool {
+func (sw *SymbolWidget) Up() {
 	sw.oldy = sw.y
-	sw.y--
-	if sw.y < 0 {
+	if sw.y == 0 {
 		sw.y = len(sw.choices) - 1
+	} else {
+		sw.y--
 	}
+	// just in case rows have differing lengths
 	l := len(sw.choices[sw.y])
-	if sw.x > l {
+	if sw.x >= l {
 		sw.x = l - 1
 	}
-	return true
 }
 
 // Down will move the highlight down (with wrap-around)
@@ -108,7 +109,7 @@ func (sw *SymbolWidget) Down() {
 		sw.y = 0
 	}
 	l := len(sw.choices[sw.y])
-	if sw.x > l {
+	if sw.x >= l {
 		sw.x = l - 1
 	}
 }
@@ -116,11 +117,10 @@ func (sw *SymbolWidget) Down() {
 // Left will move the highlight left (with wrap-around)
 func (sw *SymbolWidget) Left() bool {
 	sw.oldx = sw.x
-	if sw.x <= 0 {
+	sw.x--
+	if sw.x < 0 {
 		row := sw.choices[sw.y]
 		sw.x = len(row) - 1
-	} else {
-		sw.x--
 	}
 	return true
 }
@@ -140,6 +140,11 @@ func (sw *SymbolWidget) Next() {
 	sw.oldx = sw.x
 	sw.x++
 	row := sw.choices[sw.y]
+	if sw.x >= len(row) {
+		sw.x = 0
+		sw.y++
+	}
+	row = sw.choices[sw.y]
 	if sw.x >= len(row) {
 		sw.x = 0
 		sw.y++

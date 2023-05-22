@@ -89,17 +89,18 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 }
 
 // Up will move the highlight up (with wrap-around)
-func (tw *TableWidget) Up() bool {
+func (tw *TableWidget) Up() {
 	tw.oldy = tw.y
-	tw.y--
-	if tw.y < 0 {
+	if tw.y == 0 {
 		tw.y = len(tw.contents) - 1
+	} else {
+		tw.y--
 	}
+	// just in case rows have differing lengths
 	l := len(tw.contents[tw.y])
-	if tw.x > l {
+	if tw.x >= l {
 		tw.x = l - 1
 	}
-	return true
 }
 
 // Down will move the highlight down (with wrap-around)
@@ -109,8 +110,9 @@ func (tw *TableWidget) Down() {
 	if tw.y >= (len(tw.contents) - 1) {
 		tw.y = 0
 	}
+	// just in case rows have differing lengths
 	l := len(tw.contents[tw.y])
-	if tw.x > l {
+	if tw.x >= l {
 		tw.x = l - 1
 	}
 }
@@ -118,11 +120,10 @@ func (tw *TableWidget) Down() {
 // Left will move the highlight left (with wrap-around)
 func (tw *TableWidget) Left() bool {
 	tw.oldx = tw.x
-	if tw.x <= 0 {
+	tw.x--
+	if tw.x < 0 {
 		row := tw.contents[tw.y]
 		tw.x = len(row) - 1
-	} else {
-		tw.x--
 	}
 	return true
 }
