@@ -17,7 +17,7 @@ func (e *Editor) SymbolMenu(tty *vt100.TTY, status *StatusBar, title string, cho
 
 	var (
 		c          = vt100.NewCanvas()
-		symbolMenu = NewSymbolWidget(title, choices, titleColor, textColor, highlightColor, e.Background, c.W(), c.H())
+		symbolMenu = NewSymbolWidget(title, choices, titleColor, textColor, highlightColor, e.Background, int(c.W()), int(c.H()))
 		sigChan    = make(chan os.Signal, 1)
 		running    = true
 		changed    = true
@@ -87,6 +87,11 @@ func (e *Editor) SymbolMenu(tty *vt100.TTY, status *StatusBar, title string, cho
 			symbolMenu.Right()
 			changed = true
 			resizeMut.Unlock()
+		case "c:9": // Tab, next
+			resizeMut.Lock()
+			symbolMenu.Next()
+			changed = true
+			resizeMut.Unlock()
 		case "c:1": // Top, ctrl-a
 			resizeMut.Lock()
 			symbolMenu.SelectFirst()
@@ -126,7 +131,7 @@ func (e *Editor) SymbolMenu(tty *vt100.TTY, status *StatusBar, title string, cho
 				break
 			}
 			resizeMut.Lock()
-			symbolMenu.SelectIndex(0, uint(number))
+			symbolMenu.SelectIndex(0, number)
 			changed = true
 			resizeMut.Unlock()
 		}

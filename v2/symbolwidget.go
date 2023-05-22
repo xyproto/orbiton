@@ -12,26 +12,26 @@ type SymbolWidget struct {
 	highlightColor vt100.AttributeColor // selected color (the choice that has been selected after return has been pressed)
 	textColor      vt100.AttributeColor // text color (the choices that are not highlighted)
 	titleColor     vt100.AttributeColor // title color (above the choices)
-	x              uint                 // current position
+	x              int                  // current position
 	marginLeft     int                  // margin, may be negative?
 	marginTop      int                  // margin, may be negative?
-	oldy           uint                 // previous position
-	y              uint                 // current position
-	oldx           uint                 // previous position
-	h              uint                 // height (number of menu items)
-	w              uint                 // width
+	oldy           int                  // previous position
+	y              int                  // current position
+	oldx           int                  // previous position
+	h              int                  // height (number of menu items)
+	w              int                  // width
 }
 
 // NewSymbolWidget creates a new SymbolWidget
-func NewSymbolWidget(title string, choices [][]string, titleColor, textColor, highlightColor, bgColor vt100.AttributeColor, canvasWidth, canvasHeight uint) *SymbolWidget {
-	maxlen := uint(0)
+func NewSymbolWidget(title string, choices [][]string, titleColor, textColor, highlightColor, bgColor vt100.AttributeColor, canvasWidth, canvasHeight int) *SymbolWidget {
+	maxlen := 0
 	for _, choice := range choices {
-		if uint(len(choice)) > uint(maxlen) {
-			maxlen = uint(len(choice))
+		if len(choice) > maxlen {
+			maxlen = len(choice)
 		}
 	}
 	marginLeft := 10
-	if int(canvasWidth)-(int(maxlen)+marginLeft) <= 0 {
+	if canvasWidth-(maxlen+marginLeft) <= 0 {
 		marginLeft = 0
 	}
 	marginTop := 8
@@ -42,8 +42,8 @@ func NewSymbolWidget(title string, choices [][]string, titleColor, textColor, hi
 	}
 	return &SymbolWidget{
 		title:          title,
-		w:              uint(marginLeft + int(maxlen)),
-		h:              uint(len(choices)),
+		w:              marginLeft + maxlen,
+		h:              len(choices),
 		x:              0,
 		oldx:           0,
 		y:              0,
@@ -89,26 +89,13 @@ func (sw *SymbolWidget) Draw(c *vt100.Canvas) {
 // Up will move the highlight up (with wrap-around)
 func (sw *SymbolWidget) Up() bool {
 	sw.oldy = sw.y
-	if sw.y <= 0 {
-		sw.y = uint(len(sw.choices)) - 1
-	} else {
-		sw.y--
+	sw.y--
+	if sw.y < 0 {
+		sw.y = len(sw.choices) - 1
 	}
-	row := sw.choices[sw.y]
-	if sw.x > uint(len(row)) {
-		sw.x = uint(len(row) - 1)
-	}
-	return true
-}
-
-// Left will move the highlight left (with wrap-around)
-func (sw *SymbolWidget) Left() bool {
-	sw.oldx = sw.x
-	if sw.x <= 0 {
-		row := sw.choices[sw.y]
-		sw.x = uint(len(row)) - 1
-	} else {
-		sw.x--
+	l := len(sw.choices[sw.y])
+	if sw.x > l {
+		sw.x = l - 1
 	}
 	return true
 }
@@ -117,13 +104,25 @@ func (sw *SymbolWidget) Left() bool {
 func (sw *SymbolWidget) Down() {
 	sw.oldy = sw.y
 	sw.y++
-	if sw.y >= uint(len(sw.choices)) {
+	if sw.y >= len(sw.choices) {
 		sw.y = 0
 	}
-	row := sw.choices[sw.y]
-	if sw.x > uint(len(row)) {
-		sw.x = uint(len(row) - 1)
+	l := len(sw.choices[sw.y])
+	if sw.x > l {
+		sw.x = l - 1
 	}
+}
+
+// Left will move the highlight left (with wrap-around)
+func (sw *SymbolWidget) Left() bool {
+	sw.oldx = sw.x
+	if sw.x <= 0 {
+		row := sw.choices[sw.y]
+		sw.x = len(row) - 1
+	} else {
+		sw.x--
+	}
+	return true
 }
 
 // Right will move the highlight right (with wrap-around)
@@ -131,13 +130,27 @@ func (sw *SymbolWidget) Right() {
 	sw.oldx = sw.x
 	sw.x++
 	row := sw.choices[sw.y]
-	if sw.x >= uint(len(row)) {
+	if sw.x >= len(row) {
 		sw.x = 0
 	}
 }
 
+// Next will move the highlight to the next cell
+func (sw *SymbolWidget) Next() {
+	sw.oldx = sw.x
+	sw.x++
+	row := sw.choices[sw.y]
+	if sw.x >= len(row) {
+		sw.x = 0
+		sw.y++
+	}
+	if sw.y >= len(sw.choices) {
+		sw.y = 0
+	}
+}
+
 // SelectIndex will select a specific index. Returns false if it was not possible.
-func (sw *SymbolWidget) SelectIndex(x, y uint) bool {
+func (sw *SymbolWidget) SelectIndex(x, y int) bool {
 	if y >= sw.h || x >= sw.w {
 		return false
 	}
