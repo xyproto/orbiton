@@ -252,7 +252,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		functionID = savequit
 	case "s", "sa", "sav", "save", "w", "ww", "↓":
 		functionID = save
-	case "sb", "so", "sor", "sort":
+	case "sb", "so", "sor", "sort", "sortblock":
 		functionID = sortblock
 	case "sortstrings", "sortw", "sortwords", "sow", "ss", "sw", "sortfields", "sf":
 		functionID = sortstrings
