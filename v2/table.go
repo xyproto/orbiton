@@ -378,6 +378,7 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 	go func() {
 		for range sigChan {
 			resizeMut.Lock()
+
 			// Create a new canvas, with the new size
 			nc := c.Resized()
 			if nc != nil {
@@ -437,14 +438,14 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			tableWidget.NextOrInsert()
 			changed = true
 			resizeMut.Unlock()
-		case "c:1": // Top, ctrl-a
+		case "c:1": // Start of row, ctrl-a
 			resizeMut.Lock()
-			tableWidget.SelectFirst()
+			tableWidget.SelectStart()
 			changed = true
 			resizeMut.Unlock()
-		case "c:5": // Bottom, ctrl-e
+		case "c:5": // End of row, ctrl-e
 			resizeMut.Lock()
-			tableWidget.SelectLast()
+			tableWidget.SelectEnd()
 			changed = true
 			resizeMut.Unlock()
 		case "c:27", "q", "c:3", "c:17", "c:15", "c:19", "c:20": // ESC, q, ctrl-c, ctrl-q, ctrl-o, ctrl-s or ctrl-t
@@ -461,6 +462,9 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			s := tableWidget.Get()
 			if len(s) > 0 {
 				tableWidget.Set(s[:len(s)-1])
+				changed = true
+			} else if tableWidget.CurrentRowIsEmpty() {
+				tableWidget.DeleteCurrentRow()
 				changed = true
 			}
 			resizeMut.Unlock()

@@ -133,6 +133,10 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 		}
 	}
 
+	// Clear one extra row after the table
+	y := ch
+	spaces := strings.Repeat(" ", int(c.W()))
+	c.Write(0, uint(tw.marginTop+y+titleHeight), tw.textColor, tw.bgColor, spaces)
 }
 
 // Up will move the highlight up (with wrap-around)
@@ -217,6 +221,27 @@ func (tw *TableWidget) InsertRowBelow() {
 	tw.h++ // Update the widget table height as well (this is not the content height)
 }
 
+// CurrentRowIsEmpty checks if the current row is empty
+func (tw *TableWidget) CurrentRowIsEmpty() bool {
+	row := (*tw.contents)[tw.cy]
+	for _, cell := range row {
+		if strings.TrimSpace(cell) != "" {
+			return false
+		}
+	}
+	return true
+}
+
+// DeleteCurrentRow deletes the current row
+func (tw *TableWidget) DeleteCurrentRow() {
+	if tw.cy >= 0 && tw.cy < len(*tw.contents) {
+		// Remove the current row from the contents
+		*tw.contents = append((*tw.contents)[:tw.cy], (*tw.contents)[tw.cy+1:]...)
+		tw.cy--
+		tw.h-- // Update the widget table height as well (this is not the content height)
+	}
+}
+
 // SelectIndex will select a specific index. Returns false if it was not possible.
 func (tw *TableWidget) SelectIndex(x, y int) bool {
 	cw, ch := tw.ContentsWH()
@@ -231,20 +256,15 @@ func (tw *TableWidget) SelectIndex(x, y int) bool {
 	return true
 }
 
-// SelectFirst will select the first menu choice
-func (tw *TableWidget) SelectFirst() bool {
-	return tw.SelectIndex(0, 0)
+// SelectStart will select the start of the row
+func (tw *TableWidget) SelectStart() bool {
+	return tw.SelectIndex(0, tw.cy)
 }
 
-// SelectLast will select the last menu choice
-func (tw *TableWidget) SelectLast() bool {
-	cw, ch := tw.ContentsWH()
-
-	tw.oldx = tw.cx
-	tw.oldy = tw.cy
-	tw.cx = cw - 1
-	tw.cy = ch - 1
-	return true
+// SelectEnd will select the start of the row
+func (tw *TableWidget) SelectEnd() bool {
+	cw, _ := tw.ContentsWH()
+	return tw.SelectIndex(cw-1, tw.cy)
 }
 
 // Set will change the field contents of the current position
