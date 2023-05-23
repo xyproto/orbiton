@@ -58,7 +58,28 @@ func (e *Editor) CurrentTableY() (int, error) {
 		return -1, err
 	}
 	currentIndex := e.DataY()
-	return int(currentIndex) - int(topIndex), nil
+
+	indexY := int(currentIndex) - int(topIndex)
+
+	// Count the divider Lines, and subtract those
+	s, err := e.CurrentTableString()
+	if err != nil {
+		return indexY, err
+	}
+	separatorCounter := 0
+	for _, line := range strings.Split(s, "\n") {
+		if separatorRow(line) {
+			separatorCounter++
+		}
+	}
+	indexY -= separatorCounter
+
+	// just a safeguard
+	if indexY < 0 {
+		indexY = 0
+	}
+
+	return indexY, nil
 }
 
 // CurrentTableString returns the current Markdown table as a newline separated string, if possible
@@ -376,9 +397,6 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 	vt100.Reset()
 	c.Redraw()
 
-	// Set the initial table body (x,y) position
-	tableWidget.SelectIndex(0, 0)
-
 	for running {
 
 		// Draw elements in their new positions
@@ -429,10 +447,15 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			tableWidget.SelectLast()
 			changed = true
 			resizeMut.Unlock()
-		case "c:27", "q", "c:3", "c:17", "c:15", "c:19", "c:13": // ESC, q, ctrl-c, ctrl-q, ctrl-o, ctrl-s or return
+		case "c:27", "q", "c:3", "c:17", "c:15", "c:19", "c:20": // ESC, q, ctrl-c, ctrl-q, ctrl-o, ctrl-s or ctrl-t
 			running = false
 			changed = true
 			cancel = true
+		case "c:13": // return, insert a row below
+			resizeMut.Lock()
+			tableWidget.InsertRowBelow()
+			changed = true
+			resizeMut.Unlock()
 		case "c:8", "c:127": // ctrl-h or backspace
 			resizeMut.Lock()
 			s := tableWidget.Get()

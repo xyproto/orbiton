@@ -188,9 +188,8 @@ func (tw *TableWidget) Right() {
 }
 
 // NextOrInsert will move the highlight to the next cell, or insert a new row
-func (tw *TableWidget) NextOrInsert() bool {
+func (tw *TableWidget) NextOrInsert() {
 	cw, ch := tw.ContentsWH()
-
 	tw.oldx = tw.cx
 	tw.cx++
 	if tw.cx >= cw {
@@ -203,7 +202,19 @@ func (tw *TableWidget) NextOrInsert() bool {
 			tw.cy = ch // old max index + 1
 		}
 	}
-	return true // redraw
+}
+
+// InsertRowBelow will insert a row below this one
+func (tw *TableWidget) InsertRowBelow() {
+	cw, _ := tw.ContentsWH()
+	tw.cx = 0
+	tw.cy++
+
+	newRow := make([]string, cw)
+	// Insert the new row at the cy position
+	*tw.contents = append((*tw.contents)[:tw.cy], append([][]string{newRow}, (*tw.contents)[tw.cy:]...)...)
+
+	tw.h++ // Update the widget table height as well (this is not the content height)
 }
 
 // SelectIndex will select a specific index. Returns false if it was not possible.
