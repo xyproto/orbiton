@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -148,8 +149,8 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 		c.PlotColor(uint(tw.marginLeft+x), uint(tw.marginTop), tw.titleColor, r)
 	}
 
-	// Plot the table size below the title
-	sizeString := fmt.Sprintf("%dx%d", cw, ch)
+	// Plot the table position and size below the title
+	sizeString := fmt.Sprintf("%d,%d [%dx%d]", tw.cx, tw.cy, cw, ch)
 	for x, r := range sizeString {
 		c.PlotColor(uint(tw.marginLeft+x), uint(tw.marginTop+1), tw.commentColor, r)
 	}
@@ -262,12 +263,29 @@ func (tw *TableWidget) InsertRowBelow() {
 	cw, _ := tw.ContentsWH()
 	tw.cx = 0
 	tw.cy++
-
 	newRow := make([]string, cw)
 	// Insert the new row at the cy position
 	*tw.contents = append((*tw.contents)[:tw.cy], append([][]string{newRow}, (*tw.contents)[tw.cy:]...)...)
-
 	tw.h++ // Update the widget table height as well (this is not the content height)
+}
+
+// InsertColumnAfter will insert a column after the current tw.x position
+func (tw *TableWidget) InsertColumnAfter() {
+	// Iterate through each row in the contents
+	for rowIndex, row := range *tw.contents {
+		// Create a new row with an additional column
+		newRow := make([]string, len(row)+1)
+		// Copy the values before the current tw.x position
+		copy(newRow, row[:tw.cx+1])
+		// Set the new column value to an empty string
+		newRow[tw.cx+1] = ""
+		// Copy the values after the current tw.x position
+		copy(newRow[tw.cx+2:], row[tw.cx+1:])
+		// Update the row in the contents
+		(*tw.contents)[rowIndex] = newRow
+	}
+	// Update the widget table width
+	tw.w++
 }
 
 // CurrentRowIsEmpty checks if the current row is empty
@@ -290,6 +308,43 @@ func (tw *TableWidget) DeleteCurrentRow() {
 		tw.h-- // Update the widget table height as well (this is not the content height)
 	}
 	tw.Ensure1x1()
+}
+
+// DeleteCurrentColumnIfEmpty will delete the current column if all fields are empty
+func (tw *TableWidget) DeleteCurrentColumnIfEmpty() error {
+	// Check if all fields in the column are empty
+	for _, row := range *tw.contents {
+		if row[tw.cx] != "" {
+			return errors.New("can only delete column if fields are empty")
+		}
+	}
+
+	// Iterate through each row in the contents
+	for rowIndex, row := range *tw.contents {
+		// Create a new row without the current column
+		newRow := make([]string, len(row)-1)
+
+		// Copy the values before the current tw.x position
+		copy(newRow, row[:tw.cx])
+
+		// Copy the values after the current tw.x position
+		copy(newRow[tw.cx:], row[tw.cx+1:])
+
+		// Update the row in the contents
+		(*tw.contents)[rowIndex] = newRow
+	}
+
+	// Update the widget table width
+	tw.w--
+
+	// Adjust the current tw.x position if it's at the last column
+	if tw.cx >= tw.w {
+		tw.cx = tw.w - 1
+	}
+
+	tw.Ensure1x1()
+
+	return nil
 }
 
 // SelectIndex will select a specific index. Returns false if it was not possible.

@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/xyproto/vt100"
 )
@@ -414,7 +415,7 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 		// Handle events
 		key := tty.String()
 		switch key {
-		case "↑", "c:16": // Up or ctrl-p
+		case "↑": // Up
 			resizeMut.Lock()
 			tableWidget.Up()
 			changed = true
@@ -424,7 +425,7 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			tableWidget.Left()
 			changed = true
 			resizeMut.Unlock()
-		case "↓", "c:14": // Down or ctrl-n
+		case "↓": // Down
 			resizeMut.Lock()
 			tableWidget.Down()
 			changed = true
@@ -457,6 +458,25 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			resizeMut.Lock()
 			tableWidget.InsertRowBelow()
 			changed = true
+			resizeMut.Unlock()
+		case "c:14": // ctrl-n, insert column after
+			resizeMut.Lock()
+			tableWidget.InsertColumnAfter()
+			tableWidget.NextOrInsert()
+			changed = true
+			resizeMut.Unlock()
+		case "c:4", "c:16": // ctrl-d or ctrl-p, delete the current column if all its fields are empty
+			resizeMut.Lock()
+			if err := tableWidget.DeleteCurrentColumnIfEmpty(); err != nil {
+				c.Write(0, 0, cursorColor, e.Background, err.Error())
+				go func() {
+					time.Sleep(1 * time.Second)
+					s := strings.Repeat(" ", len(err.Error()))
+					c.Write(0, 0, textColor, e.Background, s)
+				}()
+			} else {
+				changed = true
+			}
 			resizeMut.Unlock()
 		case "c:8", "c:127": // ctrl-h or backspace
 			resizeMut.Lock()
