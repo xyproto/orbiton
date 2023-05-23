@@ -69,8 +69,10 @@ func Expand(contents *[][]string) {
 	// Find the max width
 	maxWidth := 0
 	for y := 0; y < len(*contents); y++ {
-		if len((*contents)[y]) > maxWidth {
-			maxWidth = len(*contents)
+		row := (*contents)[y]
+		rowLength := len(row)
+		if rowLength > maxWidth {
+			maxWidth = rowLength
 		}
 	}
 	// Find all rows less than max width
