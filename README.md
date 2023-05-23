@@ -191,13 +191,6 @@ These features are unique to `o`, as far as I am aware:
 * Press `ctrl-space` to build or export the current file.
 * Press `ctrl-w` to format the current file, in an opinionated way. If the current file is empty, a "Hello, World!" template will be inserted, for some file extensions.
 
-| a         | b     | c | dsd | dsfsdf | sdfsdf |
-|-----------|-------|---|-----|--------|--------|
-| 22999d    | 3333d | 7 | d   | d      | d      |
-| Ad        | d     | d | d   | d      | d      |
-| OST       | dd    | d | d   | d      | d      |
-| kakebolle | d     | d | d   | dd     |        |
-
 | Programming language                            | File extensions                                           | Jump to error | Build command                                                                                              | Format command ($filename is a temporary file)                                                                |
 |-------------------------------------------------|-----------------------------------------------------------|---------------|------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
 | Ada                                             | `.ada`                                                    | WIP           | WIP                                                                                                        | WIP                                                                                                           |
