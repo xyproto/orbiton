@@ -291,10 +291,11 @@ func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *Stat
 func (e *Editor) TableEditorMode(tty *vt100.TTY, status *StatusBar, headers []string, body [][]string) error {
 
 	title := "Markdown Table Editor"
-	titleColor := vt100.LightRed
-	headerColor := vt100.LightBlue
-	textColor := vt100.White
-	highlightColor := vt100.LightCyan
+	titleColor := e.MenuArrowColor
+	headerColor := e.HeaderTextColor
+	textColor := e.MenuTextColor
+	highlightColor := e.MenuSelectedColor
+	cursorColor := e.SearchHighlight
 
 	// Clear the existing handler
 	signal.Reset(syscall.SIGWINCH)
@@ -305,7 +306,7 @@ func (e *Editor) TableEditorMode(tty *vt100.TTY, status *StatusBar, headers []st
 
 	var (
 		c           = vt100.NewCanvas()
-		tableWidget = NewTableWidget(title, tableContents, titleColor, headerColor, textColor, highlightColor, e.Background, int(c.W()), int(c.H()))
+		tableWidget = NewTableWidget(title, tableContents, titleColor, headerColor, textColor, highlightColor, cursorColor, e.Background, int(c.W()), int(c.H()))
 		sigChan     = make(chan os.Signal, 1)
 		running     = true
 		changed     = true
@@ -423,13 +424,8 @@ func (e *Editor) TableEditorMode(tty *vt100.TTY, status *StatusBar, headers []st
 
 	}
 
-	// Clear the existing handler
-	signal.Reset(syscall.SIGWINCH)
-
 	// Restore the signal handlers
 	e.SetUpSignalHandlers(c, tty, status)
-
-	// TODO: Return something else
 
 	return nil
 }

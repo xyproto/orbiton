@@ -15,6 +15,7 @@ type TableWidget struct {
 	headerColor    vt100.AttributeColor // the color of the table header row
 	textColor      vt100.AttributeColor // text color (the choices that are not highlighted)
 	titleColor     vt100.AttributeColor // title color (above the choices)
+	cursorColor    vt100.AttributeColor // color of the "_" cursor
 	x              int                  // current position
 	marginLeft     int                  // margin, may be negative?
 	marginTop      int                  // margin, may be negative?
@@ -26,7 +27,7 @@ type TableWidget struct {
 }
 
 // NewTableWidget creates a new TableWidget
-func NewTableWidget(title string, contents [][]string, titleColor, headerColor, textColor, highlightColor, bgColor vt100.AttributeColor, canvasWidth, canvasHeight int) *TableWidget {
+func NewTableWidget(title string, contents [][]string, titleColor, headerColor, textColor, highlightColor, cursorColor, bgColor vt100.AttributeColor, canvasWidth, canvasHeight int) *TableWidget {
 
 	columnWidths := TableColumnWidths([]string{}, contents)
 
@@ -55,6 +56,7 @@ func NewTableWidget(title string, contents [][]string, titleColor, headerColor, 
 		headerColor:    headerColor,
 		textColor:      textColor,
 		highlightColor: highlightColor,
+		cursorColor:    cursorColor,
 		bgColor:        bgColor,
 	}
 }
@@ -84,7 +86,7 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 			if y == int(tw.y) && x == int(tw.x) {
 				color = tw.highlightColor
 				// Draw the "cursor"
-				c.Write(uint(xpos+len(field)), uint(tw.marginTop+y+titleHeight), vt100.LightYellow, tw.bgColor, "_")
+				c.Write(uint(xpos+len(field)), uint(tw.marginTop+y+titleHeight), tw.cursorColor, tw.bgColor, "_")
 			} else if y == 0 {
 				color = tw.headerColor
 			}
