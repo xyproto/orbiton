@@ -51,6 +51,16 @@ func (e *Editor) GoToTopOfCurrentTable(c *vt100.Canvas, status *StatusBar, cente
 	return topIndex
 }
 
+// CurrentTableY returns the current Y position within the current Markdown table
+func (e *Editor) CurrentTableY() (int, error) {
+	topIndex, err := e.TopOfCurrentTable()
+	if err != nil {
+		return -1, err
+	}
+	currentIndex := e.DataY()
+	return int(currentIndex) - int(topIndex), nil
+}
+
 // CurrentTableString returns the current Markdown table as a newline separated string, if possible
 func (e *Editor) CurrentTableString() (string, error) {
 	index, err := e.TopOfCurrentTable()
@@ -257,6 +267,15 @@ func tableToString(headers []string, body [][]string) string {
 
 // EditMarkdownTable presents the user with a dedicated table editor for the current Markdown table
 func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, bookmark *Position, justFormat bool) {
+
+	initialY, err := e.CurrentTableY()
+	if err != nil {
+		status.ClearAll(c)
+		status.SetError(err)
+		status.ShowNoTimeout(c, e)
+		return
+	}
+
 	tableString, err := e.CurrentTableString()
 	if err != nil {
 		status.ClearAll(c)
@@ -267,13 +286,32 @@ func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *Stat
 
 	headers, body := parseTable(tableString)
 
+	tableContents := [][]string{}
+	tableContents = append(tableContents, headers)
+	tableContents = append(tableContents, body...)
+
+	// Make all rows contain as many fields as the longest row
+	Expand(&tableContents)
+
 	if !justFormat {
-		if err := e.TableEditorMode(tty, status, headers, body); err != nil {
+		if err := e.TableEditor(tty, status, &tableContents, initialY); err != nil {
 			status.ClearAll(c)
 			status.SetError(err)
 			status.ShowNoTimeout(c, e)
 			return
 		}
+	}
+
+	switch len(tableContents) {
+	case 0:
+		headers = []string{}
+		body = [][]string{}
+	case 1:
+		headers = tableContents[0]
+		body = [][]string{}
+	default:
+		headers = tableContents[0]
+		body = tableContents[1:]
 	}
 
 	newTableString := tableToString(headers, body)
@@ -287,8 +325,9 @@ func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *Stat
 	}
 }
 
-// TableEditorMode presents an interface for changing the given headers and body
-func (e *Editor) TableEditorMode(tty *vt100.TTY, status *StatusBar, headers []string, body [][]string) error {
+// TableEditor presents an interface for changing the given headers and body
+// initialY is the initial Y position of the cursor in the table
+func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[][]string, initialY int) error {
 
 	title := "Markdown Table Editor"
 	titleColor := e.MenuArrowColor
@@ -300,13 +339,9 @@ func (e *Editor) TableEditorMode(tty *vt100.TTY, status *StatusBar, headers []st
 	// Clear the existing handler
 	signal.Reset(syscall.SIGWINCH)
 
-	tableContents := [][]string{}
-	tableContents = append(tableContents, headers)
-	tableContents = append(tableContents, body...)
-
 	var (
 		c           = vt100.NewCanvas()
-		tableWidget = NewTableWidget(title, tableContents, titleColor, headerColor, textColor, highlightColor, cursorColor, e.Background, int(c.W()), int(c.H()))
+		tableWidget = NewTableWidget(title, tableContents, titleColor, headerColor, textColor, highlightColor, cursorColor, e.Background, int(c.W()), int(c.H()), initialY)
 		sigChan     = make(chan os.Signal, 1)
 		running     = true
 		changed     = true

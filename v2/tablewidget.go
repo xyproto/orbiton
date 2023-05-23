@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/xyproto/vt100"
@@ -16,20 +17,20 @@ type TableWidget struct {
 	textColor      vt100.AttributeColor // text color (the choices that are not highlighted)
 	titleColor     vt100.AttributeColor // title color (above the choices)
 	cursorColor    vt100.AttributeColor // color of the "_" cursor
-	x              int                  // current position
+	cx             int                  // current content position
 	marginLeft     int                  // margin, may be negative?
 	marginTop      int                  // margin, may be negative?
 	oldy           int                  // previous position
-	y              int                  // current position
+	cy             int                  // current content position
 	oldx           int                  // previous position
 	h              int                  // height (number of menu items)
 	w              int                  // width
 }
 
 // NewTableWidget creates a new TableWidget
-func NewTableWidget(title string, contents [][]string, titleColor, headerColor, textColor, highlightColor, cursorColor, bgColor vt100.AttributeColor, canvasWidth, canvasHeight int) *TableWidget {
+func NewTableWidget(title string, contents *[][]string, titleColor, headerColor, textColor, highlightColor, cursorColor, bgColor vt100.AttributeColor, canvasWidth, canvasHeight, initialY int) *TableWidget {
 
-	columnWidths := TableColumnWidths([]string{}, contents)
+	columnWidths := TableColumnWidths([]string{}, *contents)
 
 	widgetWidth := 0
 	for _, w := range columnWidths {
@@ -39,19 +40,19 @@ func NewTableWidget(title string, contents [][]string, titleColor, headerColor, 
 		widgetWidth = int(canvasWidth)
 	}
 
-	widgetHeight := len(contents)
+	widgetHeight := len(*contents)
 
 	return &TableWidget{
 		title:          title,
 		w:              widgetWidth,
 		h:              widgetHeight,
-		x:              0,
+		cx:             0,
 		oldx:           0,
-		y:              0,
-		oldy:           0,
+		cy:             initialY,
+		oldy:           initialY,
 		marginLeft:     10,
 		marginTop:      10,
-		contents:       &contents,
+		contents:       contents,
 		titleColor:     titleColor,
 		headerColor:    headerColor,
 		textColor:      textColor,
@@ -61,12 +62,49 @@ func NewTableWidget(title string, contents [][]string, titleColor, headerColor, 
 	}
 }
 
+// Expand the table contents to the longest width
+func Expand(contents *[][]string) {
+	// Find the max width
+	maxWidth := 0
+	for y := 0; y < len(*contents); y++ {
+		if len((*contents)[y]) > maxWidth {
+			maxWidth = len(*contents)
+		}
+	}
+	// Find all rows less than max width
+	for y := 0; y < len(*contents); y++ {
+		if len((*contents)[y]) < maxWidth {
+			backup := (*contents)[y]
+			// Expand the row by creating a blank string slice
+			(*contents)[y] = make([]string, maxWidth)
+			// Fill in the old data for the first fields of the row
+			for x := 0; x < len(backup); x++ {
+				(*contents)[y][x] = backup[x]
+			}
+		}
+	}
+}
+
+// ContentsWH returns the width and the height of the table contents
+func (tw *TableWidget) ContentsWH() (int, int) {
+	rowCount := len(*tw.contents)
+	if rowCount == 0 {
+		return 0, 0
+	}
+	return len((*tw.contents)[0]), rowCount
+}
+
 // Draw will draw this menu widget on the given canvas
 func (tw *TableWidget) Draw(c *vt100.Canvas) {
+	cw, ch := tw.ContentsWH()
 
 	// Draw the title
 	titleHeight := 2
-	for x, r := range tw.title {
+	title := tw.title
+	if len(*tw.contents) > 0 {
+		title = tw.title + fmt.Sprintf("(%d, %d) [%d, %d]", tw.w, tw.h, cw, ch)
+	}
+	for x, r := range title {
 		c.PlotColor(uint(tw.marginLeft+x), uint(tw.marginTop), tw.titleColor, r)
 	}
 
@@ -74,16 +112,15 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 
 	// Draw the headers, with various colors
 	// Draw the menu entries, with various colors
-	for y := 0; y < len(*tw.contents); y++ {
-		row := (*tw.contents)[y]
+	for y := 0; y < ch; y++ {
 		xpos := tw.marginLeft
 		// First clear this row with spaces
 		spaces := strings.Repeat(" ", int(c.W()))
 		c.Write(0, uint(tw.marginTop+y+titleHeight), tw.textColor, tw.bgColor, spaces)
-		for x := 0; x < len(row); x++ {
+		for x := 0; x < len((*tw.contents)[y]); x++ {
 			field := (*tw.contents)[y][x]
 			color := tw.textColor
-			if y == int(tw.y) && x == int(tw.x) {
+			if y == int(tw.cy) && x == int(tw.cx) {
 				color = tw.highlightColor
 				// Draw the "cursor"
 				c.Write(uint(xpos+len(field)), uint(tw.marginTop+y+titleHeight), tw.cursorColor, tw.bgColor, "_")
@@ -99,85 +136,86 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 
 // Up will move the highlight up (with wrap-around)
 func (tw *TableWidget) Up() {
-	tw.oldy = tw.y
-	if tw.y == 0 {
-		tw.y = len(*tw.contents) - 1
-	} else {
-		tw.y--
+	cw, ch := tw.ContentsWH()
+
+	tw.oldy = tw.cy
+	tw.cy--
+	if tw.cy < 0 {
+		tw.cy = ch - 1
 	}
 	// just in case rows have differing lengths
-	l := len((*tw.contents)[tw.y])
-	if tw.x >= l {
-		tw.x = l - 1
+	if tw.cx >= cw {
+		tw.cx = cw - 1
 	}
 }
 
 // Down will move the highlight down (with wrap-around)
 func (tw *TableWidget) Down() {
-	tw.oldy = tw.y
-	tw.y++
-	if tw.y >= (len(*tw.contents) - 1) {
-		tw.y = 0
+	cw, ch := tw.ContentsWH()
+
+	tw.oldy = tw.cy
+	tw.cy++
+	if tw.cy >= ch-1 {
+		tw.cy = 0
 	}
 	// just in case rows have differing lengths
-	l := len((*tw.contents)[tw.y])
-	if tw.x >= l {
-		tw.x = l - 1
+	if tw.cx >= cw {
+		tw.cx = cw - 1
 	}
 }
 
 // Left will move the highlight left (with wrap-around)
-func (tw *TableWidget) Left() bool {
-	tw.oldx = tw.x
-	tw.x--
-	if tw.x < 0 {
-		row := (*tw.contents)[tw.y]
-		tw.x = len(row) - 1
+func (tw *TableWidget) Left() {
+	cw, _ := tw.ContentsWH()
+
+	tw.oldx = tw.cx
+	tw.cx--
+	if tw.cx < 0 {
+		tw.cx = cw - 1
 	}
-	return true
 }
 
 // Right will move the highlight right (with wrap-around)
 func (tw *TableWidget) Right() {
-	tw.oldx = tw.x
-	tw.x++
-	row := (*tw.contents)[tw.y]
-	if tw.x >= len(row) {
-		tw.x = 0
+	cw, _ := tw.ContentsWH()
+
+	tw.oldx = tw.cx
+	tw.cx++
+	if tw.cx >= cw {
+		tw.cx = 0
 	}
 }
 
 // NextOrInsert will move the highlight to the next cell, or insert a new row
 func (tw *TableWidget) NextOrInsert() bool {
-	tw.oldx = tw.x
-	tw.x++
-	row := (*tw.contents)[tw.y]
-	if tw.x >= len(row) {
-		tw.x = 0
-		tw.y++
+	cw, ch := tw.ContentsWH()
+
+	tw.oldx = tw.cx
+	tw.cx++
+	if tw.cx >= cw {
+		tw.cx = 0
+		tw.cy++
+		if tw.cy >= ch {
+			newRow := make([]string, cw, cw)
+			(*tw.contents) = append((*tw.contents), newRow)
+			tw.h++     // Update the widget table height as well (this is not the content height)
+			tw.cy = ch // old max index + 1
+		}
 	}
-	if tw.y >= len(*tw.contents) {
-		newRow := make([]string, len(row), len(row))
-		newRow[0] = "A"
-		newRow[len(newRow)-1] = "Z"
-		*tw.contents = append(*tw.contents, newRow)
-		tw.x = 0
-		tw.y = len(*tw.contents) - 1
-		tw.h++
-		return true // redraw
-	}
-	return false // no redraw
+	return true // redraw
 }
 
 // SelectIndex will select a specific index. Returns false if it was not possible.
 func (tw *TableWidget) SelectIndex(x, y int) bool {
-	if y >= tw.h || x >= tw.w {
+	cw, ch := tw.ContentsWH()
+
+	if x >= cw || y >= ch {
 		return false
 	}
-	tw.oldx = tw.x
-	tw.oldy = tw.y
-	tw.x = x
-	tw.y = y
+	tw.oldx = tw.cx
+	tw.oldy = tw.cy
+	tw.cx = x
+	tw.cy = y
 	return true
 }
 
@@ -188,26 +226,28 @@ func (tw *TableWidget) SelectFirst() bool {
 
 // SelectLast will select the last menu choice
 func (tw *TableWidget) SelectLast() bool {
-	tw.oldx = tw.x
-	tw.oldy = tw.y
-	tw.x = tw.w - 1
-	tw.y = tw.h - 1
+	cw, ch := tw.ContentsWH()
+
+	tw.oldx = tw.cx
+	tw.oldy = tw.cy
+	tw.cx = cw - 1
+	tw.cy = ch - 1
 	return true
 }
 
 // Set will change the field contents of the current position
 func (tw *TableWidget) Set(field string) {
-	(*tw.contents)[tw.y][tw.x] = field
+	(*tw.contents)[tw.cy][tw.cx] = field
 }
 
 // Get will retrieve the contents of the current field
 func (tw *TableWidget) Get() string {
-	return (*tw.contents)[tw.y][tw.x]
+	return (*tw.contents)[tw.cy][tw.cx]
 }
 
 // Add will add a string to the current field
 func (tw *TableWidget) Add(s string) {
-	(*tw.contents)[tw.y][tw.x] += s
+	(*tw.contents)[tw.cy][tw.cx] += s
 }
 
 // TrimAll will trim the leading and trailing spaces from all fields in this table
