@@ -302,10 +302,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				undo.Snapshot(e)
 				const justFormat = false
 				e.EditMarkdownTable(tty, c, status, bookmark, justFormat)
-				break
-			}
-
-			if (e.mode == mode.C || e.mode == mode.Cpp) && hasS([]string{".cpp", ".cc", ".c", ".cxx", ".c++"}, filepath.Ext(e.filename)) { // jump from source to header file
+				// Full redraw
+				const drawLines = true
+				e.FullResetRedraw(c, status, drawLines)
+				e.redraw = true
+				e.redrawCursor = true
+			} else if (e.mode == mode.C || e.mode == mode.Cpp) && hasS([]string{".cpp", ".cc", ".c", ".cxx", ".c++"}, filepath.Ext(e.filename)) { // jump from source to header file
 				// If this is a C++ source file, try finding and opening the corresponding header file
 				// Check if there is a corresponding header file
 				if absFilename, err := e.AbsFilename(); err == nil { // no error
@@ -357,6 +359,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 					e.InsertString(c, selectedSymbol)
 				}
+				// Full redraw
+				const drawLines = true
+				e.FullResetRedraw(c, status, drawLines)
+				e.redraw = true
+				e.redrawCursor = true
 			} else if e.macro == nil {
 				// Start recording a macro, then stop the recording when ctrl-t is pressed again,
 				// then ask for the number of repetitions to play it back when it's pressed after that,
@@ -794,7 +801,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			lastPasteY = -1
 			lastCutY = -1
 			// Do a full clear and redraw + clear search term + jump
-			drawLines := true
+			const drawLines = true
 			e.FullResetRedraw(c, status, drawLines)
 			if e.macro != nil || e.playBackMacroCount > 0 {
 				// Stop the playback
