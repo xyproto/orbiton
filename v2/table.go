@@ -450,13 +450,17 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			tableWidget.SelectEnd()
 			changed = true
 			resizeMut.Unlock()
-		case "c:27", "q", "c:3", "c:17", "c:15", "c:19", "c:20": // ESC, q, ctrl-c, ctrl-q, ctrl-o, ctrl-s or ctrl-t
+		case "c:27", "q", "c:3", "c:17", "c:15", "c:20": // ESC, q, ctrl-c, ctrl-q, ctrl-o or ctrl-t
 			running = false
 			changed = true
 			cancel = true
 		case "c:13": // return, insert a row below
 			resizeMut.Lock()
-			tableWidget.InsertRowBelow()
+			if tableWidget.FieldBelowIsEmpty() {
+				tableWidget.Down()
+			} else {
+				tableWidget.InsertRowBelow()
+			}
 			changed = true
 			resizeMut.Unlock()
 		case "c:14": // ctrl-n, insert column after

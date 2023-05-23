@@ -310,6 +310,20 @@ func (tw *TableWidget) DeleteCurrentRow() {
 	tw.Ensure1x1()
 }
 
+// FieldBelowIsEmpty returns true if the field below exists but is empty
+func (tw *TableWidget) FieldBelowIsEmpty() bool {
+	_, ch := tw.ContentsWH()
+	y := tw.cy + 1
+	if y >= ch {
+		return false
+	}
+	row := (*tw.contents)[y]
+	if tw.cx >= len(row) {
+		return false
+	}
+	return strings.TrimSpace(row[tw.cx]) == ""
+}
+
 // DeleteCurrentColumnIfEmpty will delete the current column if all fields are empty
 func (tw *TableWidget) DeleteCurrentColumnIfEmpty() error {
 	// Check if all fields in the column are empty
