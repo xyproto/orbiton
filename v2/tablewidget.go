@@ -64,6 +64,35 @@ func NewTableWidget(title string, contents *[][]string, titleColor, headerColor,
 	}
 }
 
+// Ensure1x1 will ensure that the table is at least 1x1
+func (tw *TableWidget) Ensure1x1() {
+	cw, ch := tw.ContentsWH()
+	if cw < 1 {
+		cw = 1
+	}
+	if ch < 1 {
+		ch = 1
+	}
+	if len(*tw.contents) == 0 {
+		*tw.contents = make([][]string, ch)
+	}
+	for y := 0; y < len(*tw.contents); y++ {
+		if len((*tw.contents)[y]) == 0 {
+			(*tw.contents)[y] = make([]string, cw)
+		}
+	}
+	if tw.cx < 0 {
+		tw.cx = 0
+	} else if tw.cx >= cw {
+		tw.cx = cw - 1
+	}
+	if tw.cy < 0 {
+		tw.cy = 0
+	} else if tw.cy >= ch {
+		tw.cy = ch - 1
+	}
+}
+
 // Expand the table contents to the longest width
 func Expand(contents *[][]string) {
 	// Ensure that the table is at least 1x1
@@ -229,6 +258,7 @@ func (tw *TableWidget) NextOrInsert() {
 
 // InsertRowBelow will insert a row below this one
 func (tw *TableWidget) InsertRowBelow() {
+	tw.Ensure1x1()
 	cw, _ := tw.ContentsWH()
 	tw.cx = 0
 	tw.cy++
@@ -259,6 +289,7 @@ func (tw *TableWidget) DeleteCurrentRow() {
 		tw.cy--
 		tw.h-- // Update the widget table height as well (this is not the content height)
 	}
+	tw.Ensure1x1()
 }
 
 // SelectIndex will select a specific index. Returns false if it was not possible.
@@ -288,16 +319,19 @@ func (tw *TableWidget) SelectEnd() bool {
 
 // Set will change the field contents of the current position
 func (tw *TableWidget) Set(field string) {
+	tw.Ensure1x1()
 	(*tw.contents)[tw.cy][tw.cx] = field
 }
 
 // Get will retrieve the contents of the current field
 func (tw *TableWidget) Get() string {
+	tw.Ensure1x1()
 	return (*tw.contents)[tw.cy][tw.cx]
 }
 
 // Add will add a string to the current field
 func (tw *TableWidget) Add(s string) {
+	tw.Ensure1x1()
 	(*tw.contents)[tw.cy][tw.cx] += s
 }
 
