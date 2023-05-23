@@ -46,7 +46,7 @@ ctrl-space  to compile programs, render MD to PDF or export adoc/sdoc as man
 ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for C++, format the current file with "clang-format"
             for HTML, format the file with "tidy", for Python: "autopep8"
-            for Markdown, toggle checkboxes
+            for Markdown, toggle checkboxes or re-format tables
             for git interactive rebases, cycle the rebase keywords
 ctrl-g      to display simple help text, or jump to function defs within the same file
 ctrl-_      to toggle filename/line/column/unicode/word count status display
@@ -60,6 +60,7 @@ ctrl-k      to delete characters to the end of the line, then delete the line
 ctrl-j      to join lines
 ctrl-d      to delete a single character
 ctrl-t      for C and C++, toggle between the header and implementation,
+            for Markdown, launch the Markdown table editor if the cursor is on a table
             for Agda, insert a symbol,
             for the rest, record and then play back a macro
 ctrl-c      to copy the current line, press twice to copy the current block

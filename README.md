@@ -103,7 +103,8 @@ These features are unique to `o`, as far as I am aware:
 * Configuration-free, for better and for worse.
 * Can preview `.png`, `.jpg`, `.jpeg`, `.gif`, `.ico`, `.bmp` or `.webp` images directly in the terminal (using a scaled down version and up to 16 colors).
 * The `-p` flag followed by a filename can be used for just pasting the clipboard to a new file, instead of editing a file.
-* `ctrl-t` can jump between a C++ header and source file.
+* `ctrl-t` can jump between a C++ header and source file, when editing C++ code.
+* `ctrl-t` shows the Markdown table editor, when editing Markdown and the cursor is on a Markdown table.
 * Can only edit one file at the time, by design.
 * Provides syntax highlighting for Go, C++, Markdown, Bash and several other languages. There is generic syntax highlighting built-in.
 * Will jump to the last visited line when opening a recent file.
@@ -157,6 +158,7 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-r` - Open or close a portal. Text can be pasted from the portal into another (or the same) file with `ctrl-v`.
              For "git interactive rebase" mode (`git rebase -i`), this will cycle the rebase keywords instead.
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords.
+             For Markdown, toggle checkboxes or re-format tables.
 * `ctrl-a` - Go to start of text, then start of line and then to the previous line.
 * `ctrl-e` - Go to end of line and then to the next line
 * `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active,
@@ -168,6 +170,7 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-_` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - For C and C++: jump between the current header and source file. For Agda and Ivy, insert a symbol.
+             For Markdown, launch the Markdown table editor if the cursor is on a table.
              For the rest, record and play back keypresses. Press `Esc` to clear the current macro.
 * `ctrl-o` - Open a command menu with actions that can be performed.
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text (to the next blank line).
