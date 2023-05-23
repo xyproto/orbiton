@@ -142,19 +142,13 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 		}
 	}
 
-	// Clear four extra rows after the table
+	// Clear three extra rows after the table
 	spaces := strings.Repeat(" ", int(c.W()))
-	for y := ch; y < ch+4; y++ {
+	for y := ch; y < ch+3; y++ {
 		if uint(y) < c.H() {
 			c.Write(0, uint(tw.marginTop+y+titleHeight), tw.textColor, tw.bgColor, spaces)
 		}
 	}
-
-	// Plot the table size below the table, centered
-	//sizeString := fmt.Sprintf("%dx%d", cw, ch)
-	//for x, r := range sizeString {
-	//c.PlotColor((c.W()/2)-uint(len(sizeString))+uint(x), uint(tw.marginTop+ch+titleHeight+2), tw.cursorColor, r)
-	//}
 }
 
 // Up will move the highlight up (with wrap-around)
