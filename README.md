@@ -258,6 +258,7 @@ While in the Markdown table editor:
 * The arrow keys can be used to move around.
 * `tab` can be used to go to the next cell, or insert new cells if the last cell is reached.
 * `return` can be used to either move to a blank cell below or to insert a new row below.
+* `backspace` can be used to delete letters, but also for deleting the current row if it is empty.
 * `ctrl-n` can be used to insert a new column to the right.
 * `ctrl-d` can be used to delete the current column (if all fields are empty).
 * `esc` or `ctrl-t` can be used to close the Markdown table editor.
