@@ -66,6 +66,13 @@ func NewTableWidget(title string, contents *[][]string, titleColor, headerColor,
 
 // Expand the table contents to the longest width
 func Expand(contents *[][]string) {
+	// Ensure that the table is at least 1x1
+	if len(*contents) == 0 {
+		*contents = make([][]string, 1)
+	}
+	if len((*contents)[0]) == 0 {
+		(*contents)[0] = make([]string, 1)
+	}
 	// Find the max width
 	maxWidth := 0
 	for y := 0; y < len(*contents); y++ {
