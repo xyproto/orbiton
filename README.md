@@ -166,7 +166,7 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-p` - Scroll up 10 lines, or go to the previous match if a search is active,
              or jump to the matching parenthesis or bracket, if the cursor just moved to one.
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
-* `ctrl-g` - Display a simple help text, or jump to function definitions within the same file.
+* `ctrl-g` - Display simple help the first 2 times, then toggle the status bar. Can also jump to function definitions within the same file.
 * `ctrl-_` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - For C and C++: jump between the current header and source file. For Agda and Ivy, insert a symbol.
@@ -190,6 +190,13 @@ These features are unique to `o`, as far as I am aware:
 
 * Press `ctrl-space` to build or export the current file.
 * Press `ctrl-w` to format the current file, in an opinionated way. If the current file is empty, a "Hello, World!" template will be inserted, for some file extensions.
+
+| a         | b     | c | dsd | dsfsdf | sdfsdf |
+|-----------|-------|---|-----|--------|--------|
+| 22999d    | 3333d | 7 | d   | d      | d      |
+| Ad        | d     | d | d   | d      | d      |
+| OST       | dd    | d | d   | d      | d      |
+| kakebolle | d     | d | d   | dd     |        |
 
 | Programming language                            | File extensions                                           | Jump to error | Build command                                                                                              | Format command ($filename is a temporary file)                                                                |
 |-------------------------------------------------|-----------------------------------------------------------|---------------|------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
