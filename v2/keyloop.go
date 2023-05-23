@@ -2068,9 +2068,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			kh.Push(key)
 		}
 
-		// Display the ctrl-o menu if esc was already pressed 2 times,
-		// (and this is the third keypress)
-		if kh.Repeated("c:27", 2) {
+		// Display the ctrl-o menu if esc was pressed 4 times
+		if kh.Repeated("c:27", 3) { // 3 previously, plus 1 right now
 			status.ClearAll(c)
 			undo.Snapshot(e)
 			undoBackup := undo
@@ -2090,11 +2089,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		// Also draw the watches, if debug mode is enabled // and a debug session is in progress
 		if e.debugMode {
-			e.DrawWatches(c, false)      // don't reposition cursor
-			e.DrawRegisters(c, false)    // don't reposition cursor
-			e.DrawGDBOutput(c, false)    // don't reposition cursor
-			e.DrawInstructions(c, false) // don't reposition cursor
-			e.DrawFlags(c, true)         // also reposition cursor
+			repositionCursor := false
+			e.DrawWatches(c, repositionCursor)
+			e.DrawRegisters(c, repositionCursor)
+			e.DrawGDBOutput(c, repositionCursor)
+			e.DrawInstructions(c, repositionCursor)
+			repositionCursor = true
+			e.DrawFlags(c, repositionCursor)
 		}
 
 	} // end of main loop
