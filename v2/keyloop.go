@@ -193,6 +193,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			// First check if we are editing Markdown and are in a Markdown table (and that this is not the previous thing that we did)
 			if e.mode == mode.Markdown && e.InTable() && !kh.PrevIs("c:23") {
+				e.GoToStartOfTextLine(c)
 				// Just format the Markdown table
 				const justFormat = true
 				e.EditMarkdownTable(tty, c, status, bookmark, justFormat)
@@ -300,6 +301,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// First check if we are editing Markdown and are in a Markdown table
 			if e.mode == mode.Markdown && e.InTable() {
 				undo.Snapshot(e)
+				e.GoToStartOfTextLine(c)
+				// Edit the Markdown table
 				const justFormat = false
 				e.EditMarkdownTable(tty, c, status, bookmark, justFormat)
 				// Full redraw
