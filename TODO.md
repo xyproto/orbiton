@@ -1,23 +1,12 @@
 # TODO
 
-## Must implement for next minor release
-
-- [ ] Add a "last used" time to the location history, then only keep the N last entries on loading/saving the location history
-- [ ] Press `ctrl-space` twice to render Markdown to HTML.
-- [ ] Add a menu option for rendering Markdown to PDF with pandoc.
-- [ ] Update the documentation.
-- [x] Fix `ctrl-e` when editing Markdown files so that it does not jump up one table.
-- [ ] Set a "go to definition" bookmark before jumping to a definition.
-- [ ] Let `ctrl-g` go back after it has been used for jumping to a definition, if there is a "go to definition" bookmark available.
-- [ ] Recover from panic seamlessly, but show a status message and add a menu option for viewing the full stacktrace.
-
-## Features for next minor release
-
-- [ ] Add a simple Markdown table editor when `ctrl-e` is pressed.
-- [ ] When bookmarking, don't just bookmark the line/col, but also the filename.
-
 ## General
 
+- [ ] Add a "last used" time to the location history, then only keep the N last entries on loading/saving the location history
+- [ ] Set a "go to definition" bookmark before jumping to a definition.
+- [ ] Let `ctrl-g` go back after it has been used for jumping to a definition, if there is a "go to definition" bookmark available.
+- [ ] Recover from panic seamlessly, but show a status message and save the stacktrace to file.
+- [ ] When bookmarking, don't just bookmark the line/col, but also the filename.
 - [ ] When inserting something near the end of a long line, and moving to the line below, and inserting a character, make sure to scroll to the proper place before inserting the character, so that it is not inserted in the wrong place.
 - [ ] When rebasing, look for the `>>>>` markers when opening the file and jump to the first one?
 - [ ] When pasting with _double_ `ctrl-v`, let _one_ `ctrl-z` undo both keypresses.
@@ -32,9 +21,7 @@
 
 ## Markdown
 
-- [ ] Add a much needed table editor.
-- [ ] "Render with Pandoc" should be a menu option.
-- [ ] `ctrl-space` should render Markdown to HTML, using a Go package, instead of rendering to a PDF.
+- [ ] `ctrl-space` is too easy to press by accident, find a solution.
 
 ## Autocompletion and AI generated code
 

@@ -150,7 +150,7 @@ These features are unique to `o`, as far as I am aware:
 * Pressing backspace near the end of lines that are longer than the terminal width may cause the cursor to jump.
 * Middle-click pasting (instead of pasting with `ctrl-v`) will only paste the first character.
 * Pressing `cmd-v`, `cmd-x` and `cmd-c` on macOS only works when using the `og` GUI frontend. For `o`, `ctrl-v`, `ctrl-x` and `ctrl-c` must be used instead, for now.
-* The smart indentation is not always smart.
+* The Markdown table editor does not have scrolling, so the table must fit within the current terminal emulator width and height, for now.
 
 ## Hotkeys
 
