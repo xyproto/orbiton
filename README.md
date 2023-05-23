@@ -59,14 +59,6 @@ To unset:
 
     git config --global --unset core.editor
 
-## Code generation
-
-* Obtain an API key from [openai.com](https://platform.openai.com/account/api-keys) and set it as the `OPENAI_API_KEY`, `OPENAI_KEY` or `CHATGPT_API_KEY` environment variable.
-* Press return after writing ie. `!write a function that adds two numbers` or `// Write a function that adds two numbers`.
-* Watch syntax highlighted code being generated in front of your eyes. ChatGPT generates the code.
-* Press `Esc` to stop code from being generated.
-* Select `Fix as you type` from the `ctrl-o` menu to let ChatGPT try to correct every line as it is typed in. The API key must be set for the menu option to appear.
-
 ## Viewing man pages
 
 By setting the `MANPAGER` environment variable, it's possible to use `o` for viewing man pages:
@@ -250,8 +242,6 @@ This is a brand new feature and needs more testing.
 
 ## Markdown table editor
 
-In a Markdown document, move the cursor to a table and press `ctrl-t`.
-
 While in the Markdown table editor:
 
 * Cells can be typed into.
@@ -262,6 +252,14 @@ While in the Markdown table editor:
 * `ctrl-n` can be used to insert a new column to the right.
 * `ctrl-d` can be used to delete the current column (if all fields are empty).
 * `esc` or `ctrl-t` can be used to close the Markdown table editor.
+
+## Code generation
+
+* Obtain an API key from [openai.com](https://platform.openai.com/account/api-keys) and set it as the `OPENAI_API_KEY`, `OPENAI_KEY` or `CHATGPT_API_KEY` environment variable.
+* Press return after writing ie. `!write a function that adds two numbers` or `// Write a function that adds two numbers`.
+* Watch syntax highlighted code being generated in front of your eyes. ChatGPT generates the code.
+* Press `Esc` to stop code from being generated.
+* Select `Fix as you type` from the `ctrl-o` menu to let ChatGPT try to correct every line as it is typed in. The API key must be set for the menu option to appear.
 
 ## Manual installation on Linux
 
