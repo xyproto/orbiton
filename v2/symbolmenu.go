@@ -143,9 +143,6 @@ func (e *Editor) SymbolMenu(tty *vt100.TTY, status *StatusBar, title string, cho
 
 	}
 
-	// Clear the existing handler
-	signal.Reset(syscall.SIGWINCH)
-
 	// Restore the signal handlers
 	e.SetUpSignalHandlers(c, tty, status)
 
