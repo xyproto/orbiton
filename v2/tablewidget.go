@@ -17,6 +17,7 @@ type TableWidget struct {
 	textColor      vt100.AttributeColor // text color (the choices that are not highlighted)
 	titleColor     vt100.AttributeColor // title color (above the choices)
 	cursorColor    vt100.AttributeColor // color of the "_" cursor
+	commentColor   vt100.AttributeColor // comment color
 	cx             int                  // current content position
 	marginLeft     int                  // margin, may be negative?
 	marginTop      int                  // margin, may be negative?
@@ -28,7 +29,7 @@ type TableWidget struct {
 }
 
 // NewTableWidget creates a new TableWidget
-func NewTableWidget(title string, contents *[][]string, titleColor, headerColor, textColor, highlightColor, cursorColor, bgColor vt100.AttributeColor, canvasWidth, canvasHeight, initialY int) *TableWidget {
+func NewTableWidget(title string, contents *[][]string, titleColor, headerColor, textColor, highlightColor, cursorColor, commentColor, bgColor vt100.AttributeColor, canvasWidth, canvasHeight, initialY int) *TableWidget {
 
 	columnWidths := TableColumnWidths([]string{}, *contents)
 
@@ -58,6 +59,7 @@ func NewTableWidget(title string, contents *[][]string, titleColor, headerColor,
 		textColor:      textColor,
 		highlightColor: highlightColor,
 		cursorColor:    cursorColor,
+		commentColor:   commentColor,
 		bgColor:        bgColor,
 	}
 }
@@ -99,14 +101,19 @@ func (tw *TableWidget) ContentsWH() (int, int) {
 func (tw *TableWidget) Draw(c *vt100.Canvas) {
 	cw, ch := tw.ContentsWH()
 
+	// Height of the title + the size + a blank line
+	titleHeight := 3
+
 	// Draw the title
-	titleHeight := 2
 	title := tw.title
-	if len(*tw.contents) > 0 {
-		title = tw.title + fmt.Sprintf(", %dx%d", cw, ch)
-	}
 	for x, r := range title {
 		c.PlotColor(uint(tw.marginLeft+x), uint(tw.marginTop), tw.titleColor, r)
+	}
+
+	// Plot the table size below the title
+	sizeString := fmt.Sprintf("%dx%d", cw, ch)
+	for x, r := range sizeString {
+		c.PlotColor(uint(tw.marginLeft+x), uint(tw.marginTop+1), tw.commentColor, r)
 	}
 
 	columnWidths := TableColumnWidths([]string{}, *tw.contents)
@@ -133,10 +140,19 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 		}
 	}
 
-	// Clear one extra row after the table
-	y := ch
+	// Clear four extra rows after the table
 	spaces := strings.Repeat(" ", int(c.W()))
-	c.Write(0, uint(tw.marginTop+y+titleHeight), tw.textColor, tw.bgColor, spaces)
+	for y := ch; y < ch+4; y++ {
+		if uint(y) < c.H() {
+			c.Write(0, uint(tw.marginTop+y+titleHeight), tw.textColor, tw.bgColor, spaces)
+		}
+	}
+
+	// Plot the table size below the table, centered
+	//sizeString := fmt.Sprintf("%dx%d", cw, ch)
+	//for x, r := range sizeString {
+	//c.PlotColor((c.W()/2)-uint(len(sizeString))+uint(x), uint(tw.marginTop+ch+titleHeight+2), tw.cursorColor, r)
+	//}
 }
 
 // Up will move the highlight up (with wrap-around)

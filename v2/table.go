@@ -359,13 +359,14 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 	textColor := e.MenuTextColor
 	highlightColor := e.MenuSelectedColor
 	cursorColor := e.SearchHighlight
+	commentColor := e.CommentColor
 
 	// Clear the existing handler
 	signal.Reset(syscall.SIGWINCH)
 
 	var (
 		c           = vt100.NewCanvas()
-		tableWidget = NewTableWidget(title, tableContents, titleColor, headerColor, textColor, highlightColor, cursorColor, e.Background, int(c.W()), int(c.H()), initialY)
+		tableWidget = NewTableWidget(title, tableContents, titleColor, headerColor, textColor, highlightColor, cursorColor, commentColor, e.Background, int(c.W()), int(c.H()), initialY)
 		sigChan     = make(chan os.Signal, 1)
 		running     = true
 		changed     = true
