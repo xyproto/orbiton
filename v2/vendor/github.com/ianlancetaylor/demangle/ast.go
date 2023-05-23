@@ -38,12 +38,15 @@ type AST interface {
 // ASTToString returns the demangled name of the AST.
 func ASTToString(a AST, options ...Option) string {
 	tparams := true
+	enclosingParams := true
 	llvmStyle := false
 	max := 0
 	for _, o := range options {
 		switch {
 		case o == NoTemplateParams:
 			tparams = false
+		case o == NoEnclosingParams:
+			enclosingParams = false
 		case o == LLVMStyle:
 			llvmStyle = true
 		case isMaxLength(o):
@@ -51,7 +54,12 @@ func ASTToString(a AST, options ...Option) string {
 		}
 	}
 
-	ps := printState{tparams: tparams, llvmStyle: llvmStyle, max: max}
+	ps := printState{
+		tparams:         tparams,
+		enclosingParams: enclosingParams,
+		llvmStyle:       llvmStyle,
+		max:             max,
+	}
 	a.print(&ps)
 	s := ps.buf.String()
 	if max > 0 && len(s) > max {
@@ -62,9 +70,10 @@ func ASTToString(a AST, options ...Option) string {
 
 // The printState type holds information needed to print an AST.
 type printState struct {
-	tparams   bool // whether to print template parameters
-	llvmStyle bool
-	max       int // maximum output length
+	tparams         bool // whether to print template parameters
+	enclosingParams bool // whether to print enclosing parameters
+	llvmStyle       bool
+	max             int // maximum output length
 
 	buf  strings.Builder
 	last byte // Last byte written to buffer.
@@ -1156,7 +1165,7 @@ type FunctionType struct {
 
 func (ft *FunctionType) print(ps *printState) {
 	retType := ft.Return
-	if ft.ForLocalName && !ps.llvmStyle {
+	if ft.ForLocalName && (!ps.enclosingParams || !ps.llvmStyle) {
 		retType = nil
 	}
 	if retType != nil {
@@ -1213,16 +1222,18 @@ func (ft *FunctionType) printArgs(ps *printState) {
 	}
 
 	ps.writeByte('(')
-	first := true
-	for _, a := range ft.Args {
-		if ps.isEmpty(a) {
-			continue
+	if !ft.ForLocalName || ps.enclosingParams {
+		first := true
+		for _, a := range ft.Args {
+			if ps.isEmpty(a) {
+				continue
+			}
+			if !first {
+				ps.writeString(", ")
+			}
+			ps.print(a)
+			first = false
 		}
-		if !first {
-			ps.writeString(", ")
-		}
-		ps.print(a)
-		first = false
 	}
 	ps.writeByte(')')
 

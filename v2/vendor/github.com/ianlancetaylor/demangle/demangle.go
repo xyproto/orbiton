@@ -27,11 +27,20 @@ type Option int
 
 const (
 	// The NoParams option disables demangling of function parameters.
+	// It only omits the parameters of the function name being demangled,
+	// not the parameter types of other functions that may be mentioned.
+	// Using the option will speed up the demangler and cause it to
+	// use less memory.
 	NoParams Option = iota
 
 	// The NoTemplateParams option disables demangling of template parameters.
 	// This applies to both C++ and Rust.
 	NoTemplateParams
+
+	// The NoEnclosingParams option disables demangling of the function
+	// parameter types of the enclosing function when demangling a
+	// local name defined within a function.
+	NoEnclosingParams
 
 	// The NoClones option disables inclusion of clone suffixes.
 	// NoParams implies NoClones.
@@ -253,7 +262,7 @@ func doDemangle(name string, options ...Option) (ret AST, err error) {
 			clones = false
 		case o == Verbose:
 			verbose = true
-		case o == NoTemplateParams || o == LLVMStyle || isMaxLength(o):
+		case o == NoTemplateParams || o == NoEnclosingParams || o == LLVMStyle || isMaxLength(o):
 			// These are valid options but only affect
 			// printing of the AST.
 		case o == NoRust:
