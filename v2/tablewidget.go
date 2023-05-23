@@ -73,14 +73,15 @@ func Expand(contents *[][]string) {
 	}
 	// Find all rows less than max width
 	for y := 0; y < len(*contents); y++ {
-		if len((*contents)[y]) < maxWidth {
+		if (*contents)[y] == nil {
+			// Initialize the row
+			(*contents)[y] = make([]string, maxWidth)
+		} else if len((*contents)[y]) < maxWidth {
 			backup := (*contents)[y]
 			// Expand the row by creating a blank string slice
 			(*contents)[y] = make([]string, maxWidth)
 			// Fill in the old data for the first fields of the row
-			for x := 0; x < len(backup); x++ {
-				(*contents)[y][x] = backup[x]
-			}
+			copy((*contents)[y], backup)
 		}
 	}
 }
@@ -102,7 +103,7 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 	titleHeight := 2
 	title := tw.title
 	if len(*tw.contents) > 0 {
-		title = tw.title + fmt.Sprintf("(%d, %d) [%d, %d]", tw.w, tw.h, cw, ch)
+		title = tw.title + fmt.Sprintf(", %dx%d", cw, ch)
 	}
 	for x, r := range title {
 		c.PlotColor(uint(tw.marginLeft+x), uint(tw.marginTop), tw.titleColor, r)
@@ -155,7 +156,7 @@ func (tw *TableWidget) Down() {
 
 	tw.oldy = tw.cy
 	tw.cy++
-	if tw.cy >= ch-1 {
+	if tw.cy >= ch {
 		tw.cy = 0
 	}
 	// just in case rows have differing lengths
@@ -196,7 +197,7 @@ func (tw *TableWidget) NextOrInsert() bool {
 		tw.cx = 0
 		tw.cy++
 		if tw.cy >= ch {
-			newRow := make([]string, cw, cw)
+			newRow := make([]string, cw)
 			(*tw.contents) = append((*tw.contents), newRow)
 			tw.h++     // Update the widget table height as well (this is not the content height)
 			tw.cy = ch // old max index + 1

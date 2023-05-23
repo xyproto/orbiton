@@ -139,6 +139,9 @@ func parseTable(s string) ([]string, [][]string) {
 	simpleStyle := strings.Contains(s, "\n--")
 
 	for i, line := range strings.Split(s, "\n") {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
 		var fields []string
 		if simpleStyle {
 			fields = strings.Split(line, "|")
@@ -426,7 +429,7 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			tableWidget.SelectLast()
 			changed = true
 			resizeMut.Unlock()
-		case "c:27", "q", "c:3", "c:17", "c:15", "c:13": // ESC, q, ctrl-c, ctrl-q, ctrl-o or return
+		case "c:27", "q", "c:3", "c:17", "c:15", "c:19", "c:13": // ESC, q, ctrl-c, ctrl-q, ctrl-o, ctrl-s or return
 			running = false
 			changed = true
 			cancel = true
