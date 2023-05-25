@@ -330,7 +330,7 @@ func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *Stat
 		}
 	}
 
-	if contentsChanged {
+	if justFormat || contentsChanged {
 		switch len(tableContents) {
 		case 0:
 			headers = []string{}
