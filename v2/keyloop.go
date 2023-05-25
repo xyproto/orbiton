@@ -608,20 +608,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
 
-			// First check if we can jump to the matching paren or bracket instead
-			// also check that the last keypress was not ctrl-n, to make scrolling continous.
-			if e.OnParenOrBracket() && (jumpMode || !kh.PrevIs("c:14")) {
-				// Don't count successful jumps as ctrl-n scrolling
-				clearKeyHistory = true
-				if !kh.PrevIs("c:14") {
-					jumpMode = false
-				}
-				if e.JumpToMatching(c) {
-					jumpMode = true
-					break
-				}
-			}
-
 			// If in Debug mode, let ctrl-n mean "next instruction"
 			if e.debugMode {
 				if e.gdb != nil {
