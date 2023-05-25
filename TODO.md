@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] `ctrl-t` on a blank line in a Markdown document should ask for dimentions and then launch the table editor.
 - [ ] Add a "last used" time to the location history, then only keep the N last entries on loading/saving the location history
 - [ ] Set a "go to definition" bookmark before jumping to a definition.
 - [ ] Let `ctrl-g` go back after it has been used for jumping to a definition, if there is a "go to definition" bookmark available.
