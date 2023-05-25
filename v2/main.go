@@ -53,9 +53,8 @@ ctrl-_      to toggle filename/line/column/unicode/word count status display
 ctrl-a      go to start of line, then start of text and then the previous line
 ctrl-e      go to end of line and then the next line
 ctrl-n      to scroll down 10 lines or go to the next match if a search is active
-            or jump to a matching parenthesis or bracket
 ctrl-p      to scroll up 10 lines or go to the previous match
-            or jump to a matching parenthesis or bracket
+            or jump to a matching parenthesis or bracket, if on one
 ctrl-k      to delete characters to the end of the line, then delete the line
 ctrl-j      to join lines
 ctrl-d      to delete a single character
