@@ -385,21 +385,22 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 	// Set up a new resize handler
 	signal.Notify(sigChan, syscall.SIGWINCH)
 
+	resizeRedrawFunc := func() {
+		// Create a new canvas, with the new size
+		nc := c.Resized()
+		if nc != nil {
+			vt100.Clear()
+			c = nc
+			tableWidget.Draw(c)
+			c.Redraw()
+			changed = true
+		}
+	}
+
 	go func() {
 		for range sigChan {
 			resizeMut.Lock()
-
-			// Create a new canvas, with the new size
-			nc := c.Resized()
-			if nc != nil {
-				vt100.Clear()
-				c = nc
-				tableWidget.Draw(c)
-				c.Redraw()
-				changed = true
-			}
-
-			// Inform all elements that the terminal was resized
+			resizeRedrawFunc()
 			resizeMut.Unlock()
 		}
 	}()
@@ -407,6 +408,15 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 	vt100.Clear()
 	vt100.Reset()
 	c.Redraw()
+
+	showError := func(err error) {
+		c.Write(0, 0, cursorColor, e.Background, err.Error())
+		go func() {
+			time.Sleep(1 * time.Second)
+			s := strings.Repeat(" ", len(err.Error()))
+			c.Write(0, 0, textColor, e.Background, s)
+		}()
+	}
 
 	for running {
 
@@ -463,8 +473,16 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			changed = true
 			cancel = true
 		case "c:19": // ctrl-s, save
-			e.UserSave(c, tty, status)
+			resizeMut.Lock()
+			// Try to save the file
+			if err := e.Save(c, tty); err != nil {
+				// TODO: Use a StatusBar instead, then draw it at the end of the loop
+				showError(err)
+			} else {
+				// TODO: Show a "saved" message at the bottom, using a StatusBar
+			}
 			changed = true
+			resizeMut.Unlock()
 		case "c:13": // return, insert a row below
 			resizeMut.Lock()
 			if tableWidget.FieldBelowIsEmpty() {
@@ -485,12 +503,8 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 		case "c:4", "c:16": // ctrl-d or ctrl-p, delete the current column if all its fields are empty
 			resizeMut.Lock()
 			if err := tableWidget.DeleteCurrentColumnIfEmpty(); err != nil {
-				c.Write(0, 0, cursorColor, e.Background, err.Error())
-				go func() {
-					time.Sleep(1 * time.Second)
-					s := strings.Repeat(" ", len(err.Error()))
-					c.Write(0, 0, textColor, e.Background, s)
-				}()
+				// TODO: Use a StatusBar instead, then draw it at the end of the loop
+				showError(err)
 			} else {
 				changed = true
 				userChangedTheContents = true
