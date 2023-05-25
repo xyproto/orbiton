@@ -1436,6 +1436,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.SetMessage("Nothing more to undo")
 				status.Show(c, e)
 			}
+
 		case "c:12": // ctrl-l, go to line number or percentage
 			status.ClearAll(c)
 			status.SetMessage("Go to line number or percentage:")

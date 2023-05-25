@@ -318,8 +318,11 @@ func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *Stat
 	// Make all rows contain as many fields as the longest row
 	Expand(&tableContents)
 
+	contentsChanged := false
+
 	if !justFormat {
-		if err := e.TableEditor(tty, status, &tableContents, initialY); err != nil {
+		contentsChanged, err = e.TableEditor(tty, status, &tableContents, initialY)
+		if err != nil {
 			status.ClearAll(c)
 			status.SetError(err)
 			status.ShowNoTimeout(c, e)
@@ -327,32 +330,36 @@ func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *Stat
 		}
 	}
 
-	switch len(tableContents) {
-	case 0:
-		headers = []string{}
-		body = [][]string{}
-	case 1:
-		headers = tableContents[0]
-		body = [][]string{}
-	default:
-		headers = tableContents[0]
-		body = tableContents[1:]
-	}
+	if contentsChanged {
+		switch len(tableContents) {
+		case 0:
+			headers = []string{}
+			body = [][]string{}
+		case 1:
+			headers = tableContents[0]
+			body = [][]string{}
+		default:
+			headers = tableContents[0]
+			body = tableContents[1:]
+		}
 
-	newTableString := tableToString(headers, body)
+		newTableString := tableToString(headers, body)
 
-	// Replace the current table with this new string
-	if err := e.ReplaceCurrentTableWith(c, status, bookmark, newTableString); err != nil {
-		status.ClearAll(c)
-		status.SetError(err)
-		status.ShowNoTimeout(c, e)
-		return
+		// Replace the current table with this new string
+		if err := e.ReplaceCurrentTableWith(c, status, bookmark, newTableString); err != nil {
+			status.ClearAll(c)
+			status.SetError(err)
+			status.ShowNoTimeout(c, e)
+			return
+		}
+
 	}
 }
 
 // TableEditor presents an interface for changing the given headers and body
 // initialY is the initial Y position of the cursor in the table
-func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[][]string, initialY int) error {
+// Returns true if the user changed the contents.
+func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[][]string, initialY int) (bool, error) {
 
 	title := "Markdown Table Editor"
 	titleColor := e.MenuArrowColor
@@ -361,6 +368,7 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 	highlightColor := e.MenuSelectedColor
 	cursorColor := e.SearchHighlight
 	commentColor := e.CommentColor
+	userChangedTheContents := false
 
 	// Clear the existing handler
 	signal.Reset(syscall.SIGWINCH)
@@ -456,20 +464,23 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			cancel = true
 		case "c:19": // ctrl-s, save
 			e.UserSave(c, tty, status)
+			changed = true
 		case "c:13": // return, insert a row below
 			resizeMut.Lock()
 			if tableWidget.FieldBelowIsEmpty() {
 				tableWidget.Down()
 			} else {
 				tableWidget.InsertRowBelow()
+				changed = true
+				userChangedTheContents = true
 			}
-			changed = true
 			resizeMut.Unlock()
 		case "c:14": // ctrl-n, insert column after
 			resizeMut.Lock()
 			tableWidget.InsertColumnAfter()
 			tableWidget.NextOrInsert()
 			changed = true
+			userChangedTheContents = true
 			resizeMut.Unlock()
 		case "c:4", "c:16": // ctrl-d or ctrl-p, delete the current column if all its fields are empty
 			resizeMut.Lock()
@@ -482,6 +493,7 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 				}()
 			} else {
 				changed = true
+				userChangedTheContents = true
 			}
 			resizeMut.Unlock()
 		case "c:8", "c:127": // ctrl-h or backspace
@@ -490,9 +502,11 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			if len(s) > 0 {
 				tableWidget.Set(s[:len(s)-1])
 				changed = true
+				userChangedTheContents = true
 			} else if tableWidget.CurrentRowIsEmpty() {
 				tableWidget.DeleteCurrentRow()
 				changed = true
+				userChangedTheContents = true
 			}
 			resizeMut.Unlock()
 		default:
@@ -500,6 +514,7 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			if !strings.HasPrefix(key, "c:") {
 				tableWidget.Add(key)
 				changed = true
+				userChangedTheContents = true
 			}
 			resizeMut.Unlock()
 		}
@@ -519,5 +534,5 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 	// Restore the signal handlers
 	e.SetUpSignalHandlers(c, tty, status)
 
-	return nil
+	return userChangedTheContents, nil
 }
