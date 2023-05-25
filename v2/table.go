@@ -454,6 +454,8 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			running = false
 			changed = true
 			cancel = true
+		case "c:19": // ctrl-s, save
+			e.UserSave(c, tty, status)
 		case "c:13": // return, insert a row below
 			resizeMut.Lock()
 			if tableWidget.FieldBelowIsEmpty() {
