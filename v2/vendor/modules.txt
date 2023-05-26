@@ -28,7 +28,7 @@ github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
 github.com/gomarkdown/markdown/html
 github.com/gomarkdown/markdown/parser
-# github.com/ianlancetaylor/demangle v0.0.0-20230523183106-5ca38e8f74b0
+# github.com/ianlancetaylor/demangle v0.0.0-20230524184225-eabc099b10ab
 ## explicit; go 1.13
 github.com/ianlancetaylor/demangle
 # github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e
@@ -52,7 +52,7 @@ github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 ## explicit
 github.com/mgutz/ansi
-# github.com/peterhellberg/gfx v0.0.0-20210905153911-4a6ef1535e02
+# github.com/peterhellberg/gfx v0.0.0-20230526095554-e6202e653d52
 ## explicit; go 1.17
 github.com/peterhellberg/gfx
 # github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba

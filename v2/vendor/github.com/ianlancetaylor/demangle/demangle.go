@@ -712,6 +712,9 @@ func (st *state) prefix() AST {
 			un, isUnCast := st.unqualifiedName()
 			next = un
 			if isUnCast {
+				if tn, ok := un.(*TaggedName); ok {
+					un = tn.Name
+				}
 				cast = un.(*Cast)
 			}
 		} else {
