@@ -409,12 +409,14 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 	vt100.Reset()
 	c.Redraw()
 
-	showError := func(err error) {
-		c.Write(0, 0, cursorColor, e.Background, err.Error())
+	showMessage := func(msg string, color vt100.AttributeColor) {
+		msgX := (c.W() - uint(len(msg))) / 2
+		msgY := c.H() - 1
+		c.Write(msgX, msgY, color, e.Background, msg)
 		go func() {
 			time.Sleep(1 * time.Second)
-			s := strings.Repeat(" ", len(err.Error()))
-			c.Write(0, 0, textColor, e.Background, s)
+			s := strings.Repeat(" ", len(msg))
+			c.Write(msgX, msgY, textColor, e.Background, s)
 		}()
 	}
 
@@ -477,9 +479,9 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			// Try to save the file
 			if err := e.Save(c, tty); err != nil {
 				// TODO: Use a StatusBar instead, then draw it at the end of the loop
-				showError(err)
+				showMessage(err.Error(), cursorColor)
 			} else {
-				// TODO: Show a "saved" message at the bottom, using a StatusBar
+				showMessage("Saved", cursorColor)
 			}
 			changed = true
 			resizeMut.Unlock()
@@ -504,7 +506,7 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			resizeMut.Lock()
 			if err := tableWidget.DeleteCurrentColumnIfEmpty(); err != nil {
 				// TODO: Use a StatusBar instead, then draw it at the end of the loop
-				showError(err)
+				showMessage(err.Error(), cursorColor)
 			} else {
 				changed = true
 				userChangedTheContents = true
@@ -542,7 +544,6 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			tableWidget.TrimAll()
 			break
 		}
-
 	}
 
 	// Restore the signal handlers
