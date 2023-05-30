@@ -69,6 +69,26 @@ An alternative to viewing man pages in `o` is to use `less`:
 
     export MANPAGER='less -s -M +Gg'
 
+## Setting up `o` on OpenSUSE
+
+Install `o` manually, until an OpenSUSE package exists:
+
+    git clone https://github.com/xyproto/orbiton
+    cd orbiton
+    make && sudo make install
+
+Add this to `~/.alias`:
+
+    alias o=/usr/bin/o
+
+Add this to `~/.profile`:
+
+    export MANPAGER=/usr/bin/o
+    export EDITOR=/usr/bin/o
+    export O_THEME=synthwave
+
+Log out and in again to activate the changes.
+
 ## Unique features
 
 These features are unique to `o`, as far as I am aware:
