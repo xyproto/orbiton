@@ -77,6 +77,8 @@ Install `o` manually, until an OpenSUSE package exists:
     cd orbiton
     make && sudo make install
 
+The following is not strictly needed, but it sets everything up to make full use of `o`:
+
 Add this to `~/.alias`:
 
     alias o=/usr/bin/o
