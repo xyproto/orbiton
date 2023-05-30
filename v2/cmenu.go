@@ -433,7 +433,16 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	if !envNoColor || changedTheme {
 		// Add an option for selecting a theme
 		actions.Add("Change theme", func() {
-			menuChoices := []string{"Default", "Red & black", "VS", "Synthwave", "Blue Edit", "Amber Mono", "Green Mono", "Blue Mono", "No color"}
+			menuChoices := []string{
+				"Default",
+				"Synthwave      (O_THEME=synthwave)",
+				"Red & black    (O_THEME=redblack)",
+				"VS             (O_THEME=vs)",
+				"Blue Edit      (O_THEME=blueedit)",
+				"Amber Mono     (O_THEME=ambermono)",
+				"Green Mono     (O_THEME=greenmono)",
+				"Blue Mono      (O_THEME=bluemono)",
+				"No colors      (NO_COLOR=1)"}
 			useMenuIndex := 0
 			for i, menuChoiceText := range menuChoices {
 				if strings.HasPrefix(e.Theme.Name, menuChoiceText) {
@@ -446,17 +455,17 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				envNoColor = false
 				e.setDefaultTheme()
 				e.syntaxHighlight = true
-			case 1: // Red & black
+			case 1: // Synthwave
+				envNoColor = false
+				e.setSynthwaveTheme()
+				e.syntaxHighlight = true
+			case 2: // Red & black
 				envNoColor = false
 				e.setRedBlackTheme()
 				e.syntaxHighlight = true
-			case 2: // VS
+			case 3: // VS
 				envNoColor = false
 				e.setVSTheme()
-				e.syntaxHighlight = true
-			case 3: // Synthwave
-				envNoColor = false
-				e.setSynthwaveTheme()
 				e.syntaxHighlight = true
 			case 4: // Blue Edit
 				envNoColor = false
