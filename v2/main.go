@@ -174,7 +174,7 @@ See the man page for more information.
 	}
 
 	// Check if the given filename contains something
-	if fnord.Empty() {
+	if fnord.Empty() && !fnord.stdin {
 		if fnord.filename == "" {
 			fmt.Fprintln(os.Stderr, "please provide a filename")
 			os.Exit(1)
