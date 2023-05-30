@@ -172,10 +172,10 @@ See the man page for more information.
 	} else {
 		fnord.filename, lineNumber, colNumber = FilenameAndLineNumberAndColNumber(flag.Arg(0), flag.Arg(1), flag.Arg(2))
 	}
-
 	// Check if the given filename contains something
 	if fnord.Empty() && !fnord.stdin {
 		if fnord.filename == "" {
+			fmt.Fprintf(os.Stderr, "got: %v\n", flag.Args())
 			fmt.Fprintln(os.Stderr, "please provide a filename")
 			os.Exit(1)
 		}
