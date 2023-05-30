@@ -263,7 +263,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	// TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
 	// because $COLORFGBG is "15;0" even though the background is white.
 	if !e.readOnly && (!specificLetter || editTheme) {
-		themeEnv := env.Str("THEME")
+		themeEnv := env.StrAlt("O_THEME", "THEME")
 		if themeEnv == "redblack" {
 			b := false
 			initialLightBackground = &b
@@ -280,6 +280,18 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			b := false
 			initialLightBackground = &b
 			e.setVSTheme()
+		} else if themeEnv == "ambermono" {
+			envNoColor = false
+			e.setAmberTheme()
+			e.syntaxHighlight = false
+		} else if themeEnv == "greenmono" {
+			envNoColor = false
+			e.setGreenTheme()
+			e.syntaxHighlight = false
+		} else if themeEnv == "bluemono" {
+			envNoColor = false
+			e.setBlueTheme()
+			e.syntaxHighlight = false
 		} else if (env.Has("XTERM_VERSION") && !inVTEGUI && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
 			b := true
 			initialLightBackground = &b

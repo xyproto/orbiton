@@ -589,13 +589,13 @@ int main(int argc, char* argv[])
 
     // Setting SHELL to /bin/csh uses the red/black theme...
     if (!lightMode && redBlackMode) {
-        setenv("THEME", "redblack", true);
+        setenv("O_THEME", "redblack", true);
     } else if (!lightMode && synthWaveMode) {
-        setenv("THEME", "synthwave", true);
+        setenv("O_THEME", "synthwave", true);
     } else if (!lightMode && vsMode) {
-        setenv("THEME", "vs", true);
+        setenv("O_THEME", "vs", true);
     } else if (!lightMode && blueEditMode) {
-        setenv("THEME", "blueedit", true);
+        setenv("O_THEME", "blueedit", true);
     }
 
     // Spawn a terminal
