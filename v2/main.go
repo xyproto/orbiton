@@ -176,6 +176,11 @@ See the man page for more information.
 	if fnord.Empty() && !fnord.stdin {
 		if fnord.filename == "" {
 			fmt.Fprintf(os.Stderr, "got: %v\n", os.Args)
+			parentpid := os.Getppid()
+			parentexe, err := os.Readlink(fmt.Sprintf("/proc/%d/exe", parentpid))
+			if err == nil {
+				fmt.Println("parent: ", parentexe)
+			}
 			fmt.Fprintln(os.Stderr, "please provide a filename")
 			os.Exit(1)
 		}
