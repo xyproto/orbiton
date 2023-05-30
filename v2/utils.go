@@ -381,3 +381,14 @@ func lastEntryIsNot(xs []string, x string) bool {
 	}
 	return xs[l-1] != x
 }
+
+// manIsParent checks if the parent process is an executable named "man"
+func manIsParent() bool {
+	parentPID := os.Getppid()
+	parentPath, err := os.Readlink(fmt.Sprintf("/proc/%d/exe", parentPID))
+	if err != nil {
+		return false
+	}
+	baseName := filepath.Base(parentPath)
+	return baseName == "man"
+}

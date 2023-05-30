@@ -153,7 +153,7 @@ See the man page for more information.
 
 	stdinFilename := len(os.Args) == 1 || (len(os.Args) == 2 && (os.Args[1] == "-" || os.Args[1] == "/dev/stdin"))
 	// If no regular filename is given, check if data is ready at stdin
-	fnord.stdin = stdinFilename && dataReadyOnStdin()
+	fnord.stdin = (stdinFilename && dataReadyOnStdin()) || manIsParent()
 	if fnord.stdin {
 		// TODO: Use a spinner?
 		data, err := io.ReadAll(os.Stdin)
@@ -173,14 +173,8 @@ See the man page for more information.
 		fnord.filename, lineNumber, colNumber = FilenameAndLineNumberAndColNumber(flag.Arg(0), flag.Arg(1), flag.Arg(2))
 	}
 	// Check if the given filename contains something
-	if fnord.Empty() && !fnord.stdin {
+	if fnord.Empty() {
 		if fnord.filename == "" {
-			fmt.Fprintf(os.Stderr, "got: %v\n", os.Args)
-			parentpid := os.Getppid()
-			parentexe, err := os.Readlink(fmt.Sprintf("/proc/%d/exe", parentpid))
-			if err == nil {
-				fmt.Println("parent: ", parentexe)
-			}
 			fmt.Fprintln(os.Stderr, "please provide a filename")
 			os.Exit(1)
 		}
