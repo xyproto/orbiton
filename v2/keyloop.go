@@ -1117,7 +1117,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.End(c)
 					e.Delete()
 				}
-			} else if e.indentation.Spaces && (e.EmptyLine() || e.AtStartOfTheLine()) && e.indentation.WSLen(e.LeadingWhitespace()) >= e.indentation.PerTab {
+			} else if (e.EmptyLine() || e.AtStartOfTheLine()) && e.indentation.Spaces && e.indentation.WSLen(e.LeadingWhitespace()) >= e.indentation.PerTab {
 				// Delete several spaces
 				for i := 0; i < e.indentation.PerTab; i++ {
 					// Move back
@@ -1127,7 +1127,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.WriteRune(c)
 					e.Delete()
 				}
-			} else {
+			} else { // THIS IS THE PROBLEMATIC BRANCH WHEN PRESSING BACKSPACE NEAR THE END OF A LONG LINE, WITH A LONG LINE UNDERNEATH
 				// Move back
 				e.Prev(c)
 				// Type a blank
@@ -1137,6 +1137,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					// Delete the blank
 					e.Delete()
 				}
+				//e.HorizontalScrollIfNeeded(c)
 			}
 			e.redrawCursor = true
 			e.redraw = true
