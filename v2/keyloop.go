@@ -528,11 +528,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 
-			// TODO: Stay at the same X offset when moving up in the document?
-			if e.AfterEndOfLine() {
-				e.End(c)
-			}
-
 			if e.DataY() > 0 {
 				// Move the position up in the current screen
 				if e.UpEnd(c) != nil {
@@ -548,6 +543,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.End(c)
 				}
 			}
+
 			// If the cursor is after the length of the current line, move it to the end of the current line
 			if e.AfterLineScreenContents() || e.AfterEndOfLine() {
 				e.End(c)
@@ -598,6 +594,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 				}
 			}
+
 			// If the cursor is after the length of the current line, move it to the end of the current line
 			if e.AfterLineScreenContents() || e.AfterEndOfLine() {
 				e.End(c)
@@ -1102,7 +1099,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			undo.Snapshot(e)
 
-			//e.MakeConsistent()
 			// Delete the character to the left
 			if e.EmptyLine() {
 				e.DeleteCurrentLineMoveBookmark(bookmark)
@@ -1129,9 +1125,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.Delete()
 				}
 			} else {
-
-				positionCopy := e.pos.Copy()
-
 				// Move back
 				e.Prev(c)
 				// Type a blank
@@ -1140,18 +1133,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				if !e.AtOrAfterEndOfLine() {
 					// Delete the blank
 					e.Delete()
-
-					// Only adjust the scrolling X offset
-					e.pos = *positionCopy
-					if e.pos.OffsetX() > 0 {
-						e.pos.SetOffsetX(e.pos.OffsetX() - 1)
+					// scroll left instead of moving the cursor left, if possible
+					if e.pos.offsetX > 0 {
+						e.pos.offsetX--
+						e.pos.sx++
 					}
-
 				}
-			}
-
-			if e.AfterLineScreenContents() {
-				e.End(c)
 			}
 
 			e.redrawCursor = true
