@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/xyproto/binary"
@@ -391,4 +392,12 @@ func manIsParent() bool {
 	}
 	baseName := filepath.Base(parentPath)
 	return baseName == "man"
+}
+
+// timestampedFilename prefixes the given filename with a timestamp
+func timestampedFilename(filename string) string {
+	now := time.Now()
+	year, month, day := now.Date()
+	hour, minute, second := now.Clock()
+	return fmt.Sprintf("%04d-%02d-%02dT%02d-%02d-%02d-%s", year, int(month), day, hour, minute, second, filename)
 }

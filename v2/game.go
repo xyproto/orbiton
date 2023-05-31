@@ -3,6 +3,9 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"math"
 	"math/rand"
 	"os"
@@ -903,6 +906,64 @@ retry:
 			running = false
 		case 17: // ctrl-q
 			return true, nil
+		case 19: // ctrl-s
+			// Save a screenshot
+
+			// First find the lower right corner of the canvas that has a rune
+			maxX := uint(0)
+			maxY := uint(0)
+			for y := uint(0); y < c.Height(); y++ {
+				for x := uint(0); x < c.Width(); x++ {
+					r, err := c.At(x, y)
+					if err != nil {
+						continue
+					}
+					if r != 0 && r != ' ' {
+						maxX = x
+						maxY = y
+					}
+				}
+			}
+			if maxX == 0 && maxY == 0 {
+				statusText = "no pixels to save"
+				break
+			}
+
+			// Generate the image
+			var pixelColor color.RGBA
+			img := image.NewRGBA(image.Rect(0, 0, int(maxX), int(maxY)))
+			for y := uint(0); y < maxY; y++ {
+				for x := uint(0); x < maxX; x++ {
+					r, err := c.At(x, y)
+					if err != nil {
+						continue
+					}
+					pixelColor = color.RGBA{0, 0x80, 0, 0xff} // green, no transparency
+					if r != 0 && r != ' ' {
+						pixelColor = color.RGBA{0x80, 0, 0x80, 0xff} // purple, no transparency
+					}
+					img.Set(int(x), int(y), pixelColor)
+				}
+			}
+
+			// Create the file
+			screenshotFilename := timestampedFilename("orbiton.png")
+			f, err := os.Create(screenshotFilename)
+			if err != nil {
+				statusText = "error: " + err.Error()
+				break
+
+			}
+
+			// Encode and save the image
+			err = png.Encode(f, img)
+			if err != nil {
+				statusText = "error: " + err.Error()
+				break
+			}
+
+			// Done
+			statusText = "Saved " + screenshotFilename
 		case 32: // Space
 			if !paused {
 				// Fire a new pellet
@@ -1003,7 +1064,7 @@ retry:
 				}
 
 				if score > highScore {
-					statusText = fmt.Sprintf("Game over! New highscore: %d - press r to retry", score)
+					statusText = fmt.Sprintf("Game over! New highscore: %d - press r to retry - press ctrl-s to save a screenshot", score)
 					saveHighScore(score)
 				} else if score > 0 {
 					statusText = fmt.Sprintf("Game over! Score: %d - press r to retry", score)
