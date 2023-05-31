@@ -441,7 +441,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			// movement if there is horizontal scrolling
-			if e.pos.offsetX > 0 {
+			if e.pos.OffsetX() > 0 {
 				if e.pos.sx > 0 {
 					// Move one step left
 					if e.TabToTheLeft() {
@@ -451,7 +451,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 				} else {
 					// Scroll one step left
-					e.pos.offsetX--
+					e.pos.SetOffsetX(e.pos.OffsetX() - 1)
 					e.redraw = true
 				}
 				e.SaveX(true)
@@ -498,7 +498,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.Next(c)
 			}
 			if e.AfterScreenWidth(c) {
-				e.pos.offsetX++
+				e.pos.SetOffsetX(e.pos.OffsetX() + 1)
 				e.redraw = true
 				e.pos.sx--
 				if e.pos.sx < 0 {
@@ -529,8 +529,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			// TODO: Stay at the same X offset when moving up in the document?
-			if e.pos.offsetX > 0 {
-				e.pos.offsetX = 0
+			if e.AfterEndOfLine() {
+				e.End(c)
 			}
 
 			if e.DataY() > 0 {
@@ -549,14 +549,17 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 			}
 			// If the cursor is after the length of the current line, move it to the end of the current line
-			if e.AfterLineScreenContents() {
+			if e.AfterLineScreenContents() || e.AfterEndOfLine() {
 				e.End(c)
 
 				// Then, if the rune to the left is '}', move one step to the left
 				if r := e.LeftRune(); r == '}' {
 					e.Prev(c)
 				}
+
+				e.redraw = true
 			}
+
 			e.redrawCursor = true
 		case "↓": // down arrow
 
@@ -572,11 +575,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// It's important to reset the key history after hitting this combo
 				clearKeyHistory = true
 				break
-			}
-
-			// TODO: Stay at the same X offset when moving down in the document?
-			if e.pos.offsetX > 0 {
-				e.pos.offsetX = 0
 			}
 
 			if e.DataY() < LineIndex(e.Len()) {
@@ -601,9 +599,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 			}
 			// If the cursor is after the length of the current line, move it to the end of the current line
-			if e.AfterLineScreenContents() {
+			if e.AfterLineScreenContents() || e.AfterEndOfLine() {
 				e.End(c)
+				e.redraw = true
 			}
+
 			e.redrawCursor = true
 
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
@@ -1065,7 +1065,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// If the leading whitespace starts with a tab and ends with a space, remove the final space
 				if strings.HasPrefix(leadingWhitespace, "\t") && strings.HasSuffix(leadingWhitespace, " ") {
 					leadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-1]
-					// logf("cleaned leading whitespace: %v\n", []rune(leadingWhitespace))
 				}
 				if !noHome {
 					// Insert the same leading whitespace for the new line
@@ -1102,6 +1101,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			undo.Snapshot(e)
+
+			//e.MakeConsistent()
 			// Delete the character to the left
 			if e.EmptyLine() {
 				e.DeleteCurrentLineMoveBookmark(bookmark)
@@ -1127,7 +1128,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.WriteRune(c)
 					e.Delete()
 				}
-			} else { // THIS IS THE PROBLEMATIC BRANCH WHEN PRESSING BACKSPACE NEAR THE END OF A LONG LINE, WITH A LONG LINE UNDERNEATH
+			} else {
+
+				positionCopy := e.pos.Copy()
+
 				// Move back
 				e.Prev(c)
 				// Type a blank
@@ -1136,9 +1140,20 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				if !e.AtOrAfterEndOfLine() {
 					// Delete the blank
 					e.Delete()
+
+					// Only adjust the scrolling X offset
+					e.pos = *positionCopy
+					if e.pos.OffsetX() > 0 {
+						e.pos.SetOffsetX(e.pos.OffsetX() - 1)
+					}
+
 				}
-				//e.HorizontalScrollIfNeeded(c)
 			}
+
+			if e.AfterLineScreenContents() {
+				e.End(c)
+			}
+
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:9": // tab or ctrl-i
@@ -2021,8 +2036,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 					noDedent := foundCurlyBracketBelow || foundSquareBracketBelow || foundParenthesisBelow
 
-					// noDedent := similarLineBelow
-
 					// Okay, dedent this line by 1 indentation, if possible
 					if !noDedent && e.pos.sx > 0 && len(leadingWhitespace) > 0 && noContentHereAlready {
 						newLeadingWhitespace := leadingWhitespace
@@ -2046,6 +2059,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.redrawCursor = true
 			}
 		}
+
 		if e.addSpace {
 			e.InsertString(c, " ")
 			e.addSpace = false
