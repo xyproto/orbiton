@@ -159,12 +159,11 @@ These features are unique to `o`, as far as I am aware:
 
 * Using `tmux` and resizing the terminal emulator window may trigger text rendering issues. Try pressing `esc` to redraw the text, or `ctrl-f` to search for text.
 * For some terminal emulators, if `o` is busy performing an operation, pressing `ctrl-s` may lock the terminal. Some terminal emulators, like `konsole`, can be configured to turn off this behavior. Press `ctrl-q` to unlock the terminal again (together with the unfortunate risk of quitting `o`). To sidestep this issue, the `ctrl-o` menu can be used instead, for saving and quitting.
-* Some unicode runes may disrupt the text flow. This is generally not a problem for editing code and configuration files, but may be an issue when editing files that contains text in many languages.
+* Some unicode runes may disrupt the text flow. This is generally not a problem for editing code and configuration files, but may be an issue when editing files that contains text in many languages, or emojis.
 * `o` may have issues with large files (of several MB+). For normal text files or source code files, this is a non-issue.
-* Pressing backspace near the end of lines that are longer than the terminal width may cause the cursor to jump.
 * Middle-click pasting (instead of pasting with `ctrl-v`) will only paste the first character.
-* Pressing `cmd-v`, `cmd-x` and `cmd-c` on macOS only works when using the `og` GUI frontend. For `o`, `ctrl-v`, `ctrl-x` and `ctrl-c` must be used instead, for now.
-* The Markdown table editor does not have scrolling, so the table must fit within the current terminal emulator width and height, for now.
+* Pressing `cmd-v`, `cmd-x` and `cmd-c` on macOS only works when using the `og` GUI/VTE frontend. For `o`, `ctrl-v`, `ctrl-x` and `ctrl-c` can be used instead.
+* The Markdown table editor does not have scrolling, so the table must fit within the current terminal emulator width and height.
 
 ## Hotkeys
 
