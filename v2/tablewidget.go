@@ -140,6 +140,8 @@ func (tw *TableWidget) ContentsWH() (int, int) {
 func (tw *TableWidget) Draw(c *vt100.Canvas) {
 	cw, ch := tw.ContentsWH()
 
+	canvasWidth := int(c.W())
+
 	// Height of the title + the size + a blank line
 	titleHeight := 3
 
@@ -162,15 +164,20 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 	for y := 0; y < ch; y++ {
 		xpos := tw.marginLeft
 		// First clear this row with spaces
-		spaces := strings.Repeat(" ", int(c.W()))
+		spaces := strings.Repeat(" ", canvasWidth)
 		c.Write(0, uint(tw.marginTop+y+titleHeight), tw.textColor, tw.bgColor, spaces)
 		for x := 0; x < len((*tw.contents)[y]); x++ {
 			field := (*tw.contents)[y][x]
 			color := tw.textColor
 			if y == int(tw.cy) && x == int(tw.cx) {
 				color = tw.highlightColor
+				cursorX := uint(xpos + len(field))
+				cursorY := uint(tw.marginTop + y + titleHeight)
 				// Draw the "cursor"
-				c.Write(uint(xpos+len(field)), uint(tw.marginTop+y+titleHeight), tw.cursorColor, tw.bgColor, "_")
+				c.Write(cursorX, cursorY, tw.cursorColor, tw.bgColor, "_")
+				// Also move the proper cursor, for good measure
+				//vt100.SetXY(cursorX, cursorY)
+
 			} else if y == 0 {
 				color = tw.headerColor
 			}
@@ -180,7 +187,7 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 	}
 
 	// Clear three extra rows after the table
-	spaces := strings.Repeat(" ", int(c.W()))
+	spaces := strings.Repeat(" ", canvasWidth)
 	for y := ch; y < ch+3; y++ {
 		if uint(y) < c.H() {
 			c.Write(0, uint(tw.marginTop+y+titleHeight), tw.textColor, tw.bgColor, spaces)
