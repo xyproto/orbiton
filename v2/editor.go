@@ -1843,11 +1843,11 @@ func (e *Editor) ColIndex() ColIndex {
 
 // StatusMessage returns a status message, intended for being displayed at the bottom
 func (e *Editor) StatusMessage() string {
-	indentations := " spaces"
+	indentations := "spaces"
 	if !e.indentation.Spaces {
-		indentations = " tabs"
+		indentations = "tabs"
 	}
-	return fmt.Sprintf("line %d col %d rune %U words %d [%s]%s", e.LineNumber(), e.ColNumber(), e.Rune(), e.WordCount(), e.mode, indentations)
+	return fmt.Sprintf("line %d col %d rune %U words %d, %s [%s]", e.LineNumber(), e.ColNumber(), e.Rune(), e.WordCount(), indentations, e.mode)
 }
 
 // GoToPosition can go to the given position struct and use it as the new position
