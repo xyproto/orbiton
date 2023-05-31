@@ -590,15 +590,15 @@ ln -sf /usr/bin/og /usr/bin/edig
 ln -sf /usr/bin/og /usr/bin/vsg
 ```
 
-## The GUI frontend `og`
+## The GUI/VTE frontend `og`
 
 Build:
 
-    make og
+    make gui
 
 Install (use `sudo`, if needed):
 
-    make og-install
+    make gui-install
 
 ## Terminal settings
 
