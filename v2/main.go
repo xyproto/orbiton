@@ -49,7 +49,7 @@ ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for Markdown, toggle checkboxes or re-format tables
             for git interactive rebases, cycle the rebase keywords
 ctrl-g      to display simple help 2 times, then toggle the status bar / go to def
-ctrl-_      to toggle filename/line/column/unicode/word count status display
+ctrl-_      to toggle the filename/line/column/unicode/word count/indendation/mode status
 ctrl-a      go to start of line, then start of text and then the previous line
 ctrl-e      go to end of line and then the next line
 ctrl-n      to scroll down 10 lines or go to the next match if a search is active

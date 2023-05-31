@@ -180,7 +180,7 @@ These features are unique to `o`, as far as I am aware:
              or jump to the matching parenthesis or bracket, if the cursor just moved on to one.
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
 * `ctrl-g` - Display simple help the first 2 times, then toggle the status bar. Can also jump to function definitions within the same file.
-* `ctrl-_` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number and word count.
+* `ctrl-_` - Toggle a status line at the bottom for displaying: filename, line, column, Unicode number, word count, indentation style and the currently detected file type.
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - For C and C++: jump between the current header and source file. For Agda and Ivy, insert a symbol.
              For Markdown, launch the Markdown table editor if the cursor is on a table.
