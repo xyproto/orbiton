@@ -30,7 +30,7 @@ type TableWidget struct {
 }
 
 // NewTableWidget creates a new TableWidget
-func NewTableWidget(title string, contents *[][]string, titleColor, headerColor, textColor, highlightColor, cursorColor, commentColor, bgColor vt100.AttributeColor, canvasWidth, canvasHeight, initialY int) *TableWidget {
+func NewTableWidget(title string, contents *[][]string, titleColor, headerColor, textColor, highlightColor, cursorColor, commentColor, bgColor vt100.AttributeColor, canvasWidth, _, initialY int) *TableWidget {
 
 	columnWidths := TableColumnWidths([]string{}, *contents)
 
