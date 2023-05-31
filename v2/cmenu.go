@@ -111,6 +111,7 @@ func (a *Actions) AddCommand(e *Editor, c *vt100.Canvas, tty *vt100.TTY, status 
 // TODO: Figure out why this function needs an undo argument and can't use the regular one
 func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) int {
 	const insertFilename = "include.txt"
+	const menuTitle = versionString
 
 	wrapWidth := e.wrapWidth
 	if wrapWidth == 0 {
@@ -535,7 +536,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		useMenuIndex = lastMenuIndex
 	}
 
-	selected := e.Menu(status, tty, "Menu", menuChoices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes)
+	selected := e.Menu(status, tty, menuTitle, menuChoices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes)
 
 	// Redraw the editor contents
 	// e.DrawLines(c, true, false)
