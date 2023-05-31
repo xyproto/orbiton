@@ -28,7 +28,7 @@ name=orbiton
 version=$(grep -i version main.go | head -1 | cut -d' ' -f5 | cut -d'"' -f1)
 echo "Version $version"
 
-CGO_ENABLED=0
+export CGO_ENABLED=0
 
 compile_and_compress() {
   goos="$1"
