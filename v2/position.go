@@ -143,3 +143,26 @@ func (p *Position) LineNumber() LineNumber {
 func (p *Position) ColNumber() ColNumber {
 	return ColIndex(p.offsetX + p.sx).ColNumber()
 }
+
+// Right will move the cursor to the right, if possible.
+// It will not move the cursor up or down.
+func (p *Position) Right(c *vt100.Canvas) {
+	w := 80 // default width
+	if c != nil {
+		w = int(c.Width())
+	}
+	if p.sx < (w - 1) {
+		p.sx++
+	} else {
+		p.sx = 0
+		p.offsetX += (w - 1)
+	}
+}
+
+// Left will move the cursor to the left, if possible.
+// It will not move the cursor up or down.
+func (p *Position) Left() {
+	if p.sx > 0 {
+		p.sx--
+	}
+}

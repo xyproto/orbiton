@@ -1451,29 +1451,6 @@ func (e *Editor) Prev(c *vt100.Canvas) error {
 	return nil
 }
 
-// Right will move the cursor to the right, if possible.
-// It will not move the cursor up or down.
-func (p *Position) Right(c *vt100.Canvas) {
-	w := 80 // default width
-	if c != nil {
-		w = int(c.Width())
-	}
-	if p.sx < (w - 1) {
-		p.sx++
-	} else {
-		p.sx = 0
-		p.offsetX += (w - 1)
-	}
-}
-
-// Left will move the cursor to the left, if possible.
-// It will not move the cursor up or down.
-func (p *Position) Left() {
-	if p.sx > 0 {
-		p.sx--
-	}
-}
-
 // SaveX will save the current X position, if it's within reason
 func (e *Editor) SaveX(regardless bool) {
 	if regardless || (!e.AfterLineScreenContentsPlusOne() && e.pos.sx > 1) {
