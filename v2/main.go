@@ -83,13 +83,17 @@ See the man page for more information.
 
 	// If the -p flag is given, just paste the clipboard to the given filename and exit
 	if filename := flag.Arg(0); filename != "" && *pasteFlag {
-		n, tailString, err := WriteClipboardToFile(filename, *forceFlag)
+		n, headString, tailString, err := WriteClipboardToFile(filename, *forceFlag)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			os.Exit(1)
 		} else if n == 0 {
 			fmt.Fprintf(os.Stderr, "Wrote 0 bytes to %s\n", filename)
 			os.Exit(1)
+		}
+		// chmod +x if this looks like a shell script or is in ie. /usr/bin
+		if filepath.Ext(filename) == ".sh" || aBinDirectory(filename) || strings.HasPrefix(headString, "#!") {
+			os.Chmod(filename, 0o755)
 		}
 		if tailString != "" {
 			fmt.Printf("Wrote %d bytes to %s from the clipboard. Tail bytes: %s\n", n, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
