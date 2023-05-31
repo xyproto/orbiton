@@ -919,8 +919,12 @@ retry:
 						continue
 					}
 					if r != 0 && r != ' ' {
-						maxX = x
-						maxY = y
+						if x > maxX {
+							maxX = x
+						}
+						if y > maxY {
+							maxY = y
+						}
 					}
 				}
 			}
