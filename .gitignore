@@ -19,7 +19,6 @@ MAlonzo/
 __pycache__/
 archpackages/
 default
-favicon.*
 fgtrace.json
 fo
 include.txt
