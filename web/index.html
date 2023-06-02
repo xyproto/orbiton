@@ -8,12 +8,15 @@
     <link rel="shortcut icon" href="https://www.iconsdb.com/icons/download/orange/teapot-16.png">
     <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.classless.min.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-        #blessings {
-            margin-top: 20px;
-        }
+      body {
+        font-family: Helvetica, Arial, sans-serif;
+      }
+      footer {
+        text-align: right;
+      }
+      h1 {
+        font-size: 3em;
+      }
     </style>
   </head>
   <body>
@@ -28,14 +31,10 @@
         <h1>Orbiton is a text editor.</h1>
       </section>
       <section id="installation">
-        <h5>Installation</h5>
-        <p>If you are on Linux, FreeBSD or macOS, try:</p>
-        <pre><code>go install github.com/xyproto/orbiton/v2@latest && mv -i ~/go/bin/orbiton ~/go/bin/o</code></pre>
-      </section>
-      <section id="blessings">
-        <h5>Will it offer these blessings?</h5>
-        <div id="blessings-list"></div>
-        <p>Only one way to find out.</p>
+        <h5>Installation on Linux or macOS</h5>
+        <pre><code>git clone https://github.com/xyproto/orbiton
+cd orbiton
+make && sudo make install</code></pre>
       </section>
       <section id="link">
         <h5>Project page</h5>
@@ -45,70 +44,5 @@
     <footer>
       <small>- <a href="https://arodseth.com">afr</a></small>
     </footer>
-
-<script>
-    // The mapping between browser+platform and desired blessings are created by GPT4
-    const blessingsTable = {
-        "ChromeWindows": ["Positive Energy", "Creativity", "Abundance"],
-        "ChromeMacOS": ["Inner Peace", "Spiritual Growth", "Wisdom"],
-        "ChromeLinux": ["Courage", "Healing", "Protection"],
-        "FirefoxWindows": ["Harmonious Relationships", "Abundance", "Courage"],
-        "FirefoxMacOS": ["Inner Peace", "Creativity", "Spiritual Growth"],
-        "FirefoxLinux": ["Wisdom", "Healing", "Protection"],
-        "SafariMacOS": ["Inner Peace", "Positive Energy", "Harmonious Relationships"],
-        "SafariiOS": ["Creativity", "Abundance", "Wisdom"],
-        "EdgeWindows": ["Spiritual Growth", "Courage", "Healing"],
-        "EdgeMacOS": ["Positive Energy", "Harmonious Relationships", "Protection"],
-        "OperaWindows": ["Creativity", "Wisdom", "Healing"],
-        "OperaMacOS": ["Inner Peace", "Spiritual Growth", "Courage"],
-        "OperaLinux": ["Positive Energy", "Abundance", "Protection"],
-    };
-
-    function getBrowserAndOS() {
-        const userAgent = navigator.userAgent;
-        let browser = "";
-        let os = "";
-
-        if (userAgent.includes("Chrome")) {
-            browser = "Chrome";
-        } else if (userAgent.includes("Firefox")) {
-            browser = "Firefox";
-        } else if (userAgent.includes("Safari")) {
-            browser = "Safari";
-        } else if (userAgent.includes("Edg") || userAgent.includes("Edge")) {
-            browser = "Edge";
-        } else if (userAgent.includes("Opera")) {
-            browser = "Opera";
-        }
-
-        if (userAgent.includes("Win")) {
-            os = "Windows";
-        } else if (userAgent.includes("Mac")) {
-            os = "MacOS";
-        } else if (userAgent.includes("Linux")) {
-            os = "Linux";
-        } else if (userAgent.includes("iPhone") || userAgent.includes("iPad")) {
-            os = "iOS";
-        }
-
-        return { browser, os };
-    }
-
-    function displayRecommendedBlessings() {
-        const { browser, os } = getBrowserAndOS();
-        const blessingsKey = browser + os;
-        const blessings = blessingsTable[blessingsKey] || [];
-        const blessingsDiv = document.getElementById("blessings-list");
-
-        if (blessings.length > 0) {
-            blessingsDiv.innerHTML = `<ul>${blessings.map(blessing => `<li>${blessing}</li>`).join("")}</ul>`;
-        } else {
-            blessingsDiv.innerHTML = "<p>Sorry, we couldn't find any recommended blessings for your browser and operating system.</p>";
-        }
-    }
-
-    displayRecommendedBlessings();
-</script>
-
   </body>
 </html>
