@@ -1,0 +1,17 @@
+name: Push to GCR GitHub Action
+on: [push]
+jobs:
+  build-and-push-to-gcr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: RafikFarhad/push-to-gcr-github-action@v5-beta
+        with:
+          gcloud_service_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
+          registry: gcr.io
+          project_id: personal-306017
+          image_name: orbiton
+          image_tag: latest,v1
+          dockerfile: ./web/Dockerfile
+          target: prod
+          context: ./web
