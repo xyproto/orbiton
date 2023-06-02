@@ -18,8 +18,8 @@ d=$(LC_ALL=C date +'%d %b %Y')
 
 # macOS
 sed -E -i '' "s/\"[0-9]* [A-Z][a-z]* [0-9]*\"/\"$d\"/g" o.1 2> /dev/null || true
-sed -E -i '' "s/2\.[[:digit:]]+\.[[:digit:]]+/$VERSION/g" o.1 README.md "$0" v2/main.go web/docker.sh 2> /dev/null || true
+sed -E -i '' "s/2\.[[:digit:]]+\.[[:digit:]]+/$VERSION/g" o.1 README.md "$0" v2/main.go web/docker.sh web/index.html 2> /dev/null || true
 
 # Linux
 sed -r -i "s/\"[0-9]* [A-Z][a-z]* [0-9]*\"/\"$d\"/g" o.1 2> /dev/null || true
-sed -r -i "s/2\.[[:digit:]]+\.[[:digit:]]+/$VERSION/g" o.1 README.md "$0" v2/main.go web/docker.sh 2> /dev/null || true
+sed -r -i "s/2\.[[:digit:]]+\.[[:digit:]]+/$VERSION/g" o.1 README.md "$0" v2/main.go web/docker.sh web/index.html 2> /dev/null || true
