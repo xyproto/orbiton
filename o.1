@@ -33,6 +33,7 @@ displays brief usage information
   Format the current file with \fBgoimport\fP or \fBclang-format\fP, depending on the file extension.
   Zig, V, Rust (\fBrustfmt\fP), Haskell (\fBbrittany\fP) and Python (\fBautopep8\fP) are also supported.
   If in git mode, cycle the git interactive rebase keyword on the current line.
+  If in Markdown mode, format the table under the cursor.
 .sp
 .B ctrl-a
   Go to start of the text, then the start of the line and then the previous line.
@@ -42,6 +43,7 @@ displays brief usage information
 .sp
 .B ctrl-p
   Scroll up 10 lines or go to the previous match if a search is active.
+  If the cursor is on a parenthesis, jump to the matching parenthesis.
 .sp
 .B ctrl-n
   Scroll down 10 lines or go to the next match if a search is active.
@@ -50,17 +52,20 @@ displays brief usage information
   Delete all characters to the end of the line. Delete the line if it is empty.
 .sp
 .B ctrl-g
-  Toggle a status line at the bottom for displaying: filename, line, column, unicode number and word count.
+  Toggle a status line at the bottom for displaying: filename, line, column, unicode number, word count, indentation type and editor mode.
 .sp
 .B ctrl-d
   Delete a single character.
 .sp
 .B ctrl-o
   Open the command menu, which is a list of actions that can be performed.
-  If editing a PKGBUILD file, there will be a menu option for updating the pkgver + source fields, that is mainly based on guessing.
+  If editing a PKGBUILD file and guessica is installed, there will be a menu option for updating the pkgver + source fields.
+  If pandoc is installed, a menu option for rendering to PDF may appear.
 .sp
 .B ctrl-t
-  For C and C++: switch between the corresponding header and implementation. For Agda, insert a symbol.
+  For C and C++: switch between the corresponding header and implementation.
+  For Agda, insert a symbol.
+  For Markdown, if the cursor is on a table, launch the Markdown table editor.
   For the rest, record and play back keypresses. Press escape to clear the current macro.
 .sp
 .B ctrl-c
@@ -69,12 +74,12 @@ displays brief usage information
   Also closes the portal.
 .sp
 .B ctrl-v
-  Press twice to paste the copied text, untrimmed.
   Press once to paste only the first line of the copied text, trimmed.
+  Press twice to paste the all copied text, untrimmed.
 .sp
 .B ctrl-x
-  Press twice to cut the current block of text (until a blank line or the end of the file).
   Press once to only cut the current line (or delete the line, if empty).
+  Press twice to cut the current block of text (until a blank line or the end of the file).
   Also closes the portal.
 .sp
 .B ctrl-b
@@ -95,6 +100,7 @@ displays brief usage information
   There is also support for text replacement, after typing in the search term:
   To replace all, press tab instead of return, enter a replace term and then press tab.
   To replace once, press tab instead of return, enter a replace term and then press return.
+  Search for just \fBf\P to find the previous function signature.
 .sp
 .B esc
   Redraw the screen and clear the last search.
@@ -136,6 +142,9 @@ displays brief usage information
 .B ctrl-\\\\
   Toggle single-line comments for a block of code.
 .sp
+.B ctrl-_
+  Toggle the status line at the bottom of the screen.
+.sp
 .B ctrl-r
   Open or close a portal. Text can be pasted from the portal into another file with `ctrl-v`.
   For "git interactive rebase" mode, cycle the rebase keywords.
@@ -152,6 +161,7 @@ O can be used for viewing man pages by setting MANPAGER to "o" with ie. \fBexpor
 .sp
 I wanted to write a simple editor that only used VT100 terminal codes.
 .SH "SEE ALSO"
+.BR e3 (1)
 .BR nano (1)
 .BR micro (1)
 .SH KNOWN BUGS
