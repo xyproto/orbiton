@@ -14,7 +14,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "Orbiton 2.62.1"
+const versionString = "Orbiton 2.62.2"
 
 func main() {
 	var (
