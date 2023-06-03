@@ -18,23 +18,31 @@ else
   MAKE ?= make
 endif
 
+UNAME_R ?= $(shell uname -r)
+ifneq (,$(findstring arch,$(UNAME_R)))
+# Arch Linux
+LDFLAGS ?= -Wl,-O2,--sort-common,--as-needed,-z,relro,-z,now
+BUILDFLAGS ?= -mod=vendor -buildmode=pie -trimpath -ldflags "-s -w -linkmode=external -extldflags $(LDFLAGS)"
+else
+# Default settings
+BUILDFLAGS ?= -mod=vendor -trimpath
+endif
+
 CXX ?= g++
 CXXFLAGS ?= -O2 -pipe -fPIC -fno-plt -fstack-protector-strong -Wall -Wshadow -Wpedantic -Wno-parentheses -Wfatal-errors -Wvla -Wignored-qualifiers -pthread
 CXXFLAGS += $(shell pkg-config --cflags --libs vte-2.91)
 
-UNAME := $(shell uname)
-
-ifeq ($(UNAME), Darwin)
+ifeq ($(UNAMES),Darwin)
   CXXFLAGS += -std=c++20
 else
   CXXFLAGS += -Wl,--as-needed
 endif
 
 o: $(SRCFILES)
-	cd v2 && $(GOBUILD) -o ../o
+	cd v2 && $(GOBUILD) $(BUILDFLAGS) -o ../o
 
 trace: clean $(SRCFILES)
-	cd v2 && $(GOBUILD) -tags trace -o ../o
+	cd v2 && $(GOBUILD) $(BUILDFLAGS) -tags trace -o ../o
 
 bench:
 	cd v2 && go test -bench=. -benchmem
@@ -44,7 +52,7 @@ ko: og
 og: og/og
 
 og/og: og/main.cpp
-	$(CXX) "$<" -o "$@" $(CXXFLAGS)
+	$(CXX) "$<" -o "$@" $(CXXFLAGS) $(LDFLAGS)
 
 o.1.gz: o.1
 	gzip -f -k o.1
