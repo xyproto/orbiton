@@ -778,6 +778,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.DebugEnd()
 				e.debugMode = false
 				status.SetMessageAfterRedraw("Normal mode")
+				e.redraw = true
+				e.redrawCursor = true
 				break
 			}
 			// Stop the call to ChatGPT, if it is running
@@ -796,12 +798,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.macro = nil
 				// Show a message after the redraw
 				status.SetMessageAfterRedraw("Macro cleared")
-				break
 			}
 			e.redraw = true
 			e.redrawCursor = true
 		case " ": // space
-
 			// Scroll down if a man page is being viewed, or if the editor is read-only
 			if e.readOnly {
 				// Scroll down at double scroll speed
@@ -2060,14 +2060,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			kh.Push(key)
 		}
 
-		// Display the ctrl-o menu if esc was pressed 4 times
-		if kh.Repeated("c:27", 3) { // 3 previously, plus 1 right now
+		// Display the ctrl-o menu if esc was pressed 5 times
+		if kh.Repeated("c:27", 5-1) { // 5 times, minus the one that was added just now
 			status.ClearAll(c)
 			undo.Snapshot(e)
 			undoBackup := undo
 			lastCommandMenuIndex = e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
 			undo = undoBackup
-			// And reset the esc counter
+			// Reset the key history next iteration
 			clearKeyHistory = true
 		}
 
