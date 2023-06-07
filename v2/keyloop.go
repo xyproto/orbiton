@@ -23,7 +23,7 @@ import (
 var fileLock = NewLockKeeper(defaultLockFile)
 
 // The maximum number of times to display the help text when ctrl-g is pressed
-const maxHelpMessages = 2
+const maxHelpMessages = 1
 
 // Loop will set up and run the main loop of the editor
 // a *vt100.TTY struct
@@ -720,8 +720,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
 
 			// First check if we can jump to the matching paren or bracket instead
-			// also check that the last keypress was not ctrl-n, to make scrolling continous.
-			if e.OnParenOrBracket() && (jumpMode || !kh.PrevIs("c:16")) {
+			// also check that the last keypress was not ctrl-p or ctrl-n, to make scrolling feel more continous.
+			if e.OnParenOrBracket() && (jumpMode || (!kh.PrevIs("c:16") && !kh.PrevIs("c:14"))) {
 				// Don't count successful jumps as ctrl-p scrolling
 				clearKeyHistory = true
 				if !kh.PrevIs("c:16") {
