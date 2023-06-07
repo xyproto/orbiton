@@ -149,7 +149,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.Oak:
 		addKeywords = []string{"fn"}
 		delKeywords = []string{"from", "new", "print"}
-	case mode.Python:
+	case mode.Python, mode.Nim, mode.Mojo:
 		delKeywords = []string{"append", "exit", "fn", "get", "package", "print"}
 	case mode.Odin:
 		clearKeywords()
@@ -224,7 +224,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "'"
 	case mode.Bat:
 		return "@rem" // or rem or just ":" ...
-	case mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.GDScript, mode.Make, mode.Nim, mode.PolicyLanguage, mode.Python, mode.Shell:
+	case mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.GDScript, mode.Make, mode.Nim, mode.Mojo, mode.PolicyLanguage, mode.Python, mode.Shell:
 		return "#"
 	case mode.Clojure, mode.Lisp:
 		return ";;"

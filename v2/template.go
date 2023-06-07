@@ -139,6 +139,11 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		7,
 		1,
 	},
+	mode.Mojo: {
+		"def main():\n    print(\"Hello, World!\")\n",
+		7,
+		1,
+	},
 	mode.Nim: {
 		"echo \"Hello, World!\"\n",
 		6,

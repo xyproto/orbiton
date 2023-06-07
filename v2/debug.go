@@ -1079,7 +1079,7 @@ func (e *Editor) usingGDBMightWork() bool {
 	case mode.Zig:
 		// Could maybe have worked, but it didn't
 		return false
-	case mode.Ada, mode.Agda, mode.Assembly, mode.Battlestar, mode.Cpp, mode.Crystal, mode.D, mode.Go, mode.GoAssembly, mode.Haskell, mode.Nim, mode.OCaml, mode.ObjectPascal, mode.Odin, mode.StandardML, mode.V:
+	case mode.Ada, mode.Agda, mode.Assembly, mode.Battlestar, mode.Cpp, mode.Crystal, mode.D, mode.Go, mode.GoAssembly, mode.Haskell, mode.Nim, mode.Mojo, mode.OCaml, mode.ObjectPascal, mode.Odin, mode.StandardML, mode.V:
 		// Maybe, but needs testing!
 		return true
 	case mode.C, mode.Rust:
