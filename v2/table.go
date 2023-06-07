@@ -225,6 +225,42 @@ func TableColumnWidths(headers []string, body [][]string) []int {
 	return columnWidths
 }
 
+// RightTrimColumns removes the last column of the table, if it only consists of empty strings
+func RightTrimColumns(headers *[]string, body *[][]string) {
+	if len(*headers) == 0 || len(*body) == 0 {
+		return
+	}
+	if len((*body)[0]) == 0 {
+		return
+	}
+
+	// There is at least 1 header, 1 row and 1 column
+
+	// Check if the last header cell is empty
+	col := len(*headers) - 1
+	if strings.TrimSpace((*headers)[col]) != "" {
+		return
+	}
+
+	// Check if all the last cells per row are empty
+	for _, row := range *body {
+		col = len(row) - 1
+		if strings.TrimSpace(row[len(row)-1]) != "" {
+			return
+		}
+	}
+
+	// We now know that the last column is empty, for the headers and for all rows
+
+	// Remove the last column of the headers
+	*headers = (*headers)[:len(*headers)-1]
+
+	for i := range *body {
+		// Remove the last column of this row
+		(*body)[i] = (*body)[i][:len((*body)[i])-1]
+	}
+}
+
 func tableToString(headers []string, body [][]string) string {
 
 	columnWidths := TableColumnWidths(headers, body)
@@ -343,6 +379,7 @@ func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *Stat
 			body = tableContents[1:]
 		}
 
+		RightTrimColumns(&headers, &body)
 		newTableString := tableToString(headers, body)
 
 		// Replace the current table with this new string
