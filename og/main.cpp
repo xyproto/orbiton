@@ -501,7 +501,7 @@ int main(int argc, char* argv[])
     bool redBlackMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'r';
     bool synthWaveMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 's';
     bool vsMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'v';
-    bool blueEditMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'b';
+    bool blueEditMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'b' || argv[0][0] == 'e';
 
     // Show the file chooser dialog, if no filename was given
     if (!givenFilename) {
