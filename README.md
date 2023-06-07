@@ -585,9 +585,9 @@ ln -sf /usr/bin/og /usr/bin/redblackg
 # For starting the GUI version of o with the Synthwave theme
 ln -sf /usr/bin/og /usr/bin/swg
 # For starting the GUI version of o with the Blue Edit theme
-ln -sf /usr/bin/og /usr/bin/edig
+ln -sf /usr/bin/og /usr/bin/edg
 # For starting the GUI version of o with the Light VS theme
-ln -sf /usr/bin/og /usr/bin/vsg
+ln -sf /usr/bin/og /usr/bin/vg
 ```
 
 ## The GUI/VTE frontend `og`
