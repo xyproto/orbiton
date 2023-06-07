@@ -903,7 +903,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				leadingWhitespace = currentLeadingWhitespace
 			} else if e.fixAsYouType && openAIKey != "" && !alreadyUsedAI {
 				// Fix the code and grammar of the written line, using AI
-				e.FixCodeOrText(c, status)
+				const disableFixAsYouTypeOnError = true
+				e.FixCodeOrText(c, status, disableFixAsYouTypeOnError)
 				alreadyUsedAI = true
 				goto RETURN_PRESSED_AI_DONE
 			} else if shouldUseAI && openAIKey != "" {

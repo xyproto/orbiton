@@ -70,7 +70,7 @@ func countTokens(s string) int {
 }
 
 // FixLine will try to correct the line at the given lineIndex in the editor, using ChatGPT
-func (e *Editor) FixLine(c *vt100.Canvas, status *StatusBar, lineIndex LineIndex) {
+func (e *Editor) FixLine(c *vt100.Canvas, status *StatusBar, lineIndex LineIndex, disableFixAsYouTypeOnError bool) {
 
 	line := e.Line(lineIndex)
 	if strings.TrimSpace(line) == "" {
@@ -97,6 +97,7 @@ func (e *Editor) FixLine(c *vt100.Canvas, status *StatusBar, lineIndex LineIndex
 	if maxTokens < 1 {
 		status.SetErrorMessage("ChatGPT API request is too long")
 		status.Show(c, e)
+		// Don't disable "fix as you type" if this happens
 		return
 	}
 
@@ -118,9 +119,15 @@ func (e *Editor) FixLine(c *vt100.Canvas, status *StatusBar, lineIndex LineIndex
 		e.redrawCursor = true
 		errorMessage := err.Error()
 		if !strings.Contains(errorMessage, "context") {
+
 			e.End(c)
 			status.SetError(err)
 			status.Show(c, e)
+
+			if disableFixAsYouTypeOnError {
+				e.fixAsYouType = false
+			}
+
 			return
 		}
 	}
@@ -133,13 +140,16 @@ func (e *Editor) FixLine(c *vt100.Canvas, status *StatusBar, lineIndex LineIndex
 }
 
 // FixCodeOrText tries to fix the current line
-func (e *Editor) FixCodeOrText(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) FixCodeOrText(c *vt100.Canvas, status *StatusBar, disableFixAsYouTypeOnError bool) {
 	if openAIKey == "" {
 		status.SetErrorMessage("ChatGPT API key is empty")
 		status.Show(c, e)
+		if disableFixAsYouTypeOnError {
+			e.fixAsYouType = false
+		}
 		return
 	}
-	go e.FixLine(c, status, e.DataY())
+	go e.FixLine(c, status, e.DataY(), disableFixAsYouTypeOnError)
 }
 
 // GenerateCodeOrText will try to generate and insert text at the corrent position in the editor, given a ChatGPT prompt
