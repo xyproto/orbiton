@@ -32,7 +32,7 @@ CXX ?= g++
 CXXFLAGS ?= -O2 -pipe -fPIC -fno-plt -fstack-protector-strong -Wall -Wshadow -Wpedantic -Wno-parentheses -Wfatal-errors -Wvla -Wignored-qualifiers -pthread
 CXXFLAGS += $(shell pkg-config --cflags --libs vte-2.91)
 
-ifeq ($(UNAMES),Darwin)
+ifeq ($(UNAME_S),Darwin)
   CXXFLAGS += -std=c++20
 else
   CXXFLAGS += -Wl,--as-needed
