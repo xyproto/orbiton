@@ -36,11 +36,11 @@ void signal_and_quit()
             // Only unlock the file if force was not used at start.
             // Unlock the file by sending an unlock signal (USR1)
             kill(child_pid, SIGUSR1);
-            //usleep(500000); // will sleep for 0.5s on macOS
+            //usleep(300000); // will sleep for 0.3s
         }
         // This lets o save the file and then sleep a tiny bit, then quit the parent
         kill(child_pid, SIGTERM);
-        //usleep(500000); // will sleep for 0.5s on macOS
+        //usleep(300000); // will sleep for 0.3s
     }
     gtk_main_quit();
 }
@@ -55,9 +55,9 @@ void wait_and_quit()
         // Only unlock the file if force was not used at start.
         // Unlock the file by sending an unlock signal (USR1)
         kill(child_pid, SIGUSR1);
-        //usleep(500000); // will sleep for 0.5s on macOS
+        //usleep(300000); // will sleep for 0.3s
     }
-    //usleep(500000); // will sleep for 0.5s on macOS
+    //usleep(300000); // will sleep for 0.3s
     gtk_main_quit();
 }
 
@@ -743,6 +743,8 @@ int main(int argc, char* argv[])
     g_signal_connect(window, "scroll-event", G_CALLBACK(mouse_scrolled), nullptr);
     g_signal_connect(window, "button-press-event", G_CALLBACK(mouse_clicked), nullptr);
     g_signal_connect(window, "size-allocate", G_CALLBACK(size_changed), nullptr);
+
+    usleep(300000); // will sleep for 0.3s
 
     signal(SIGWINCH, signal_handler); // o sends SIGWINCH when it is ready to resize
 
