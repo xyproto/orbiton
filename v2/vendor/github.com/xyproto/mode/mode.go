@@ -51,7 +51,8 @@ const (
 	M4                    // M4 macros
 	Make                  // Makefiles
 	ManPage               // viewing man pages
-	Markdown              // Markdown
+	Markdown              // Markdown document
+	Mojo                  // Mojo
 	Nim                   // Nim
 	Nroff                 // editing man pages
 	OCaml                 // OCaml
@@ -182,6 +183,8 @@ func (mode Mode) String() string {
 		return "Man"
 	case Markdown:
 		return "Markdown"
+	case Mojo:
+		return "Mojo"
 	case Nim:
 		return "Nim"
 	case Nroff:

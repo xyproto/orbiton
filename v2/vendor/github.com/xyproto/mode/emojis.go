@@ -1,0 +1,3 @@
+package mode
+
+const fireEmoji = "🔥"

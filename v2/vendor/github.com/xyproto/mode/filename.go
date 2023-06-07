@@ -157,6 +157,8 @@ func Detect(filename string) Mode {
 			mode = Prolog
 		case ".py":
 			mode = Python
+		case ".mojo", "." + fireEmoji:
+			mode = Mojo
 		case ".r":
 			mode = R
 		case ".rs":
