@@ -374,7 +374,7 @@ JSON
 
 fstab
 
-* For formatting `fstab` files (usually `/etc/fstab`) with `ctrl-w`, [`fstabfmt`](https://github.com/xyproto/fstabfmt) must be installed.
+* Formatting `fstab` files (usually `/etc/fstab`) is a built-in feature. Just press `ctrl-w`. If you need a standalone utility, [`fstabfmt`](https://github.com/xyproto/fstabfmt) is available.
 
 JavaScript
 
@@ -461,7 +461,6 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 * `crystal` - for compiling Crystal
 * [`cxx`](https://github.com/xyproto/cxx) - for compiling C++
 * `fpc` - for compiling Object Pascal
-* [`fstabfmt`](https://github.com/xyproto/fstabfmt) - for formatting `/etc/fstab`
 * `g++` - for compiling C++ code
 * `gdc` - for compiling D code
 * `ghc` - for compiling Haskell code
