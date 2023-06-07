@@ -397,10 +397,10 @@ func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *Stat
 func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[][]string, initialY int) (bool, error) {
 
 	title := "Markdown Table Editor"
-	titleColor := e.MenuArrowColor
-	headerColor := e.HeaderTextColor
-	textColor := e.MenuTextColor
-	highlightColor := e.MenuSelectedColor
+	titleColor := e.HeaderBulletColor
+	headerColor := e.XColor
+	textColor := e.MarkdownTextColor
+	highlightColor := e.MenuArrowColor
 	cursorColor := e.SearchHighlight
 	commentColor := e.CommentColor
 	userChangedTheContents := false
