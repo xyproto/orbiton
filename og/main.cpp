@@ -36,11 +36,9 @@ void signal_and_quit()
             // Only unlock the file if force was not used at start.
             // Unlock the file by sending an unlock signal (USR1)
             kill(child_pid, SIGUSR1);
-            //usleep(300000); // will sleep for 0.3s
         }
         // This lets o save the file and then sleep a tiny bit, then quit the parent
         kill(child_pid, SIGTERM);
-        //usleep(300000); // will sleep for 0.3s
     }
     gtk_main_quit();
 }
@@ -55,9 +53,7 @@ void wait_and_quit()
         // Only unlock the file if force was not used at start.
         // Unlock the file by sending an unlock signal (USR1)
         kill(child_pid, SIGUSR1);
-        //usleep(300000); // will sleep for 0.3s
     }
-    //usleep(300000); // will sleep for 0.3s
     gtk_main_quit();
 }
 
