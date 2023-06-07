@@ -21,36 +21,43 @@ static GPid child_pid = -1; // PID of the child process, the o editor, or -1
 static bool force_enable = false; // was the file locked, so that the -f flag was used?
 
 static GtkWidget* terminal;
+static GtkWidget* window;
 
 const gdouble font_scale_step = 0.05;
 
 void signal_and_quit()
 {
+    // Start by hiding the window
+    gtk_widget_hide(window);
+    // Handle subprocesses
     if (child_pid != -1) {
         if (!force_enable) {
             // If force was used at start, don't unlock the file.
             // Only unlock the file if force was not used at start.
             // Unlock the file by sending an unlock signal (USR1)
             kill(child_pid, SIGUSR1);
-            usleep(500000); // will sleep for 0.5s on macOS
+            //usleep(500000); // will sleep for 0.5s on macOS
         }
         // This lets o save the file and then sleep a tiny bit, then quit the parent
         kill(child_pid, SIGTERM);
-        usleep(500000); // will sleep for 0.5s on macOS
+        //usleep(500000); // will sleep for 0.5s on macOS
     }
     gtk_main_quit();
 }
 
 void wait_and_quit()
 {
+    // Start by hiding the window
+    gtk_widget_hide(window);
+    // Handle subprocesses
     if (child_pid != -1 && !force_enable) {
         // If force was used at start, don't unlock the file.
         // Only unlock the file if force was not used at start.
         // Unlock the file by sending an unlock signal (USR1)
         kill(child_pid, SIGUSR1);
-        usleep(500000); // will sleep for 0.5s on macOS
+        //usleep(500000); // will sleep for 0.5s on macOS
     }
-    usleep(500000); // will sleep for 0.5s on macOS
+    //usleep(500000); // will sleep for 0.5s on macOS
     gtk_main_quit();
 }
 
@@ -478,7 +485,7 @@ int main(int argc, char* argv[])
     gtk_init(&argc, &argv);
 
     // Create a new window and terminal
-    const auto window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     terminal = vte_terminal_new();
 
     // The file to edit
