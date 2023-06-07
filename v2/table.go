@@ -237,14 +237,12 @@ func RightTrimColumns(headers *[]string, body *[][]string) {
 	// There is at least 1 header, 1 row and 1 column
 
 	// Check if the last header cell is empty
-	col := len(*headers) - 1
-	if strings.TrimSpace((*headers)[col]) != "" {
+	if strings.TrimSpace((*headers)[len(*headers)-1]) != "" {
 		return
 	}
 
 	// Check if all the last cells per row are empty
 	for _, row := range *body {
-		col = len(row) - 1
 		if strings.TrimSpace(row[len(row)-1]) != "" {
 			return
 		}
