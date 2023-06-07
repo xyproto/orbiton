@@ -30,7 +30,7 @@ var (
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy uint) {
 	bg := e.Background.Background()
 	tabString := strings.Repeat(" ", e.indentation.PerTab)
-	inCodeBlock := false // used when highlighting Doc, Markdown or Python
+	inCodeBlock := false // used when highlighting Doc, Markdown, Python, Nim or Mojo
 
 	// If the terminal emulator is being resized, then wait a bit
 	resizeMut.Lock()
@@ -59,7 +59,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			// Note that code blocks in Markdown normally starts or ends with ~~~ or ``` as
 			// the first thing happening on the line, so it's not important to check the trimmed line.
 		}
-	case mode.Python:
+	case mode.Nim, mode.Mojo, mode.Python:
 		// Figure out if "fromline" is within a markdown code block or not
 		for i := LineIndex(0); i < fromline; i++ {
 			line := e.Line(i)
@@ -172,7 +172,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 					// If this is a list item, store true in "prevLineIsListItem"
 					listItemRecord = append(listItemRecord, isListItem(line))
-				case mode.Python:
+				case mode.Nim, mode.Mojo, mode.Python:
 					trimmedLine = strings.TrimSpace(line)
 					foundDocstringMarker := false
 
@@ -354,7 +354,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					// logf("%s -[ %d ]-->\n\t%s\n", trimmedLine, addedPar, q.String())
 
 					switch {
-					case e.mode == mode.Python && q.startedMultiLineString:
+					case (e.mode == mode.Nim || e.mode == mode.Mojo || e.mode == mode.Python) && q.startedMultiLineString:
 						// Python docstring
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
 					case (e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.Shader || e.mode == mode.Make) && !q.multiLineComment && (strings.HasPrefix(trimmedLine, "#if") || strings.HasPrefix(trimmedLine, "#else") || strings.HasPrefix(trimmedLine, "#elseif") || strings.HasPrefix(trimmedLine, "#endif") || strings.HasPrefix(trimmedLine, "#define") || strings.HasPrefix(trimmedLine, "#pragma")):

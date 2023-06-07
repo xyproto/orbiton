@@ -520,7 +520,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 
 		// "chmod +x" or "chmod -x". This is needed after saving the file, in order to toggle the executable bit.
 		// rust source may start with something like "#![feature(core_intrinsics)]", so avoid that.
-		if shebang && e.mode != mode.Rust && e.mode != mode.Python && !e.readOnly {
+		if shebang && e.mode != mode.Rust && e.mode != mode.Python && e.mode != mode.Mojo && !e.readOnly {
 			// Call Chmod, but ignore errors (since this is just a bonus and not critical)
 			os.Chmod(e.filename, fileMode)
 			e.syntaxHighlight = true
