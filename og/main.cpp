@@ -752,8 +752,16 @@ int main(int argc, char* argv[])
     // https://code.woboq.org/gtk/gtk/gdk/gdkevents.c.html#1666
     fclose(stderr);
 
-    // Show the window and run the Gtk event loop
+    // Show the window
     gtk_widget_show_all(window);
+
+    // Fullscreen
+    if (!std::getenv("O_WINDOWED")) {
+        gtk_window_fullscreen(GTK_WINDOW(window));
+    }
+
+    // Bring to front
+    gtk_window_present(GTK_WINDOW(window));
 
     // Run the main loop
     gtk_main();
