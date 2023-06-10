@@ -59,8 +59,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		key              string            // for the main loop
 		jsonFormatToggle bool              // for toggling indentation or not when pressing ctrl-w for JSON
 
-		helpCounter int // the number of times the help text has been displayed
-		jumpMode    bool
+		helpCounter                int // the number of times the help text has been displayed
+		markdownTableEditorCounter int // the number of times the Markdown table editor has been displayed
+		jumpMode                   bool
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -196,7 +197,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.GoToStartOfTextLine(c)
 				// Just format the Markdown table
 				const justFormat = true
-				e.EditMarkdownTable(tty, c, status, bookmark, justFormat)
+				const displayQuickHelp = false
+				e.EditMarkdownTable(tty, c, status, bookmark, justFormat, displayQuickHelp)
 				break
 			}
 
@@ -299,12 +301,21 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redrawCursor = true
 
 			// First check if we are editing Markdown and are in a Markdown table
-			if e.mode == mode.Markdown && e.InTable() {
+			if e.mode == mode.Markdown && (e.EmptyLine() || e.InTable()) {
+				if e.EmptyLine() {
+					e.InsertStringAndMove(c, "| | |\n|-|-|\n| | |\n")
+					e.Up(c, status)
+					if !e.InTable() {
+						panic("you are a frog")
+					}
+				}
 				undo.Snapshot(e)
 				e.GoToStartOfTextLine(c)
 				// Edit the Markdown table
 				const justFormat = false
-				e.EditMarkdownTable(tty, c, status, bookmark, justFormat)
+				var displayQuickHelp = markdownTableEditorCounter < 1
+				e.EditMarkdownTable(tty, c, status, bookmark, justFormat, displayQuickHelp)
+				markdownTableEditorCounter++
 				// Full redraw
 				const drawLines = true
 				e.FullResetRedraw(c, status, drawLines)
