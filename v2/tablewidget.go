@@ -10,27 +10,28 @@ import (
 
 // TableWidget represents a TUI widget for editing a Markdown table
 type TableWidget struct {
-	title          string               // title
-	contents       *[][]string          // the table contents
-	bgColor        vt100.AttributeColor // background color
-	highlightColor vt100.AttributeColor // selected color (the choice that has been selected after return has been pressed)
-	headerColor    vt100.AttributeColor // the color of the table header row
-	textColor      vt100.AttributeColor // text color (the choices that are not highlighted)
-	titleColor     vt100.AttributeColor // title color (above the choices)
-	cursorColor    vt100.AttributeColor // color of the "_" cursor
-	commentColor   vt100.AttributeColor // comment color
-	cx             int                  // current content position
-	marginLeft     int                  // margin, may be negative?
-	marginTop      int                  // margin, may be negative?
-	oldy           int                  // previous position
-	cy             int                  // current content position
-	oldx           int                  // previous position
-	h              int                  // height (number of menu items)
-	w              int                  // width
+	title            string               // title
+	contents         *[][]string          // the table contents
+	bgColor          vt100.AttributeColor // background color
+	highlightColor   vt100.AttributeColor // selected color (the choice that has been selected after return has been pressed)
+	headerColor      vt100.AttributeColor // the color of the table header row
+	textColor        vt100.AttributeColor // text color (the choices that are not highlighted)
+	titleColor       vt100.AttributeColor // title color (above the choices)
+	cursorColor      vt100.AttributeColor // color of the "_" cursor
+	commentColor     vt100.AttributeColor // comment color
+	cx               int                  // current content position
+	marginLeft       int                  // margin, may be negative?
+	marginTop        int                  // margin, may be negative?
+	oldy             int                  // previous position
+	cy               int                  // current content position
+	oldx             int                  // previous position
+	h                int                  // height (number of menu items)
+	w                int                  // width
+	displayQuickHelp bool                 // display "quick help" at the bottom"
 }
 
 // NewTableWidget creates a new TableWidget
-func NewTableWidget(title string, contents *[][]string, titleColor, headerColor, textColor, highlightColor, cursorColor, commentColor, bgColor vt100.AttributeColor, canvasWidth, _, initialY int) *TableWidget {
+func NewTableWidget(title string, contents *[][]string, titleColor, headerColor, textColor, highlightColor, cursorColor, commentColor, bgColor vt100.AttributeColor, canvasWidth, _, initialY int, displayQuickHelp bool) *TableWidget {
 
 	columnWidths := TableColumnWidths([]string{}, *contents)
 
@@ -45,23 +46,24 @@ func NewTableWidget(title string, contents *[][]string, titleColor, headerColor,
 	widgetHeight := len(*contents)
 
 	return &TableWidget{
-		title:          title,
-		w:              widgetWidth,
-		h:              widgetHeight,
-		cx:             0,
-		oldx:           0,
-		cy:             initialY,
-		oldy:           initialY,
-		marginLeft:     10,
-		marginTop:      10,
-		contents:       contents,
-		titleColor:     titleColor,
-		headerColor:    headerColor,
-		textColor:      textColor,
-		highlightColor: highlightColor,
-		cursorColor:    cursorColor,
-		commentColor:   commentColor,
-		bgColor:        bgColor,
+		title:            title,
+		w:                widgetWidth,
+		h:                widgetHeight,
+		cx:               0,
+		oldx:             0,
+		cy:               initialY,
+		oldy:             initialY,
+		marginLeft:       10,
+		marginTop:        10,
+		contents:         contents,
+		titleColor:       titleColor,
+		headerColor:      headerColor,
+		textColor:        textColor,
+		highlightColor:   highlightColor,
+		cursorColor:      cursorColor,
+		commentColor:     commentColor,
+		bgColor:          bgColor,
+		displayQuickHelp: displayQuickHelp,
 	}
 }
 
@@ -142,19 +144,21 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 
 	canvasWidth := int(c.W())
 
-	// Height of the title + the size + a blank line
+	// Height of the title + the size + help text + a blank line
 	titleHeight := 3
+	titleY := uint(tw.marginTop)
 
 	// Draw the title
 	title := tw.title
 	for x, r := range title {
-		c.PlotColor(uint(tw.marginLeft+x), uint(tw.marginTop), tw.titleColor, r)
+		c.PlotColor(uint(tw.marginLeft+x), titleY, tw.titleColor, r)
 	}
 
 	// Plot the table position and size below the title
+	titleY++
 	sizeString := fmt.Sprintf("%d,%d [%dx%d]", tw.cx, tw.cy, cw, ch)
 	for x, r := range sizeString {
-		c.PlotColor(uint(tw.marginLeft+x), uint(tw.marginTop+1), tw.commentColor, r)
+		c.PlotColor(uint(tw.marginLeft+x), titleY, tw.commentColor, r)
 	}
 
 	columnWidths := TableColumnWidths([]string{}, *tw.contents)
@@ -186,19 +190,34 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 		}
 	}
 
-	// Clear three extra rows after the table
+	// Clear five extra rows after the table
+	indexY := uint(tw.marginTop + titleHeight + ch)
 	spaces := strings.Repeat(" ", canvasWidth)
-	for y := ch; y < ch+3; y++ {
-		if uint(y) < c.H() {
-			c.Write(0, uint(tw.marginTop+y+titleHeight), tw.textColor, tw.bgColor, spaces)
+	for y := uint(0); y < 5; y++ {
+		if indexY < c.H() {
+			c.Write(0, indexY, tw.textColor, tw.bgColor, spaces)
+			indexY++
 		}
 	}
+	indexY -= 3
 
-	// Clear the bottom line as well
-	//spaces = strings.Repeat(" ", int(c.W())-1)
-	//y := c.H() - 1
-	//c.Write(0, y, tw.textColor, tw.bgColor, spaces)
-
+	if tw.displayQuickHelp {
+		// Plot the quick help
+		helpString := "Quick help:"
+		for x, r := range helpString {
+			c.PlotColor(uint(tw.marginLeft+x), indexY, tw.titleColor, r)
+		}
+		indexY++
+		helpString = "Just start writing. Press return to insert a row below."
+		for x, r := range helpString {
+			c.PlotColor(uint(tw.marginLeft+x), indexY, tw.commentColor, r)
+		}
+		indexY++
+		helpString = "Move with tab and the arrow keys. Add and remove column with ctrl-n and ctrl-p."
+		for x, r := range helpString {
+			c.PlotColor(uint(tw.marginLeft+x), indexY, tw.commentColor, r)
+		}
+	}
 }
 
 // Up will move the highlight up (with wrap-around)

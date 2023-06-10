@@ -325,7 +325,7 @@ func tableToString(headers []string, body [][]string) string {
 }
 
 // EditMarkdownTable presents the user with a dedicated table editor for the current Markdown table
-func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, bookmark *Position, justFormat bool) {
+func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, bookmark *Position, justFormat, displayQuickHelp bool) {
 
 	initialY, err := e.CurrentTableY()
 	if err != nil {
@@ -355,7 +355,7 @@ func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *Stat
 	contentsChanged := false
 
 	if !justFormat {
-		contentsChanged, err = e.TableEditor(tty, status, &tableContents, initialY)
+		contentsChanged, err = e.TableEditor(tty, status, &tableContents, initialY, displayQuickHelp)
 		if err != nil {
 			status.ClearAll(c)
 			status.SetError(err)
@@ -394,10 +394,10 @@ func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *Stat
 // TableEditor presents an interface for changing the given headers and body
 // initialY is the initial Y position of the cursor in the table
 // Returns true if the user changed the contents.
-func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[][]string, initialY int) (bool, error) {
+func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[][]string, initialY int, displayQuickHelp bool) (bool, error) {
 
 	title := "Markdown Table Editor"
-	titleColor := e.HeaderBulletColor
+	titleColor := e.Foreground // HeaderBulletColor
 	headerColor := e.XColor
 	textColor := e.MarkdownTextColor
 	highlightColor := e.MenuArrowColor
@@ -410,7 +410,7 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 
 	var (
 		c           = vt100.NewCanvas()
-		tableWidget = NewTableWidget(title, tableContents, titleColor, headerColor, textColor, highlightColor, cursorColor, commentColor, e.Background, int(c.W()), int(c.H()), initialY)
+		tableWidget = NewTableWidget(title, tableContents, titleColor, headerColor, textColor, highlightColor, cursorColor, commentColor, e.Background, int(c.W()), int(c.H()), initialY, displayQuickHelp)
 		sigChan     = make(chan os.Signal, 1)
 		running     = true
 		changed     = true
