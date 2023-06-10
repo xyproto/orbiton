@@ -1,48 +1,38 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Orbiton</title>
-    <meta name="description" content="orbiton">
-    <link rel="shortcut icon" href="https://www.iconsdb.com/icons/download/orange/teapot-16.png">
-    <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.classless.min.css">
-    <style>
-      body {
-        font-family: Helvetica, Arial, sans-serif;
-      }
-      footer {
-        text-align: right;
-      }
-      h1 {
-        font-size: 3em;
-      }
-    </style>
-  </head>
-  <body>
-    <header>
-      <hgroup>
-        <h1>Orbiton</h1>
-        <p>2.62.2</p>
-      </hgroup>
-    </header>
-    <main>
-      <section id="description">
-        <h1>Orbiton is a text editor.</h1>
-      </section>
-      <section id="installation">
-        <h5>Installation on Linux or macOS</h5>
-        <pre><code>git clone https://github.com/xyproto/orbiton
-cd orbiton
-make && sudo make install</code></pre>
-      </section>
-      <section id="link">
-        <h5>Project page</h5>
-        <p><a href="https://github.com/xyproto/orbiton">https://github.com/xyproto/orbiton</a></p>
-      </section>
-    </main>
-    <footer>
-      <small>- <a href="https://arodseth.com">afr</a></small>
-    </footer>
-  </body>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Orbiton - a text editor and IDE limited by VT100</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Orbiton</h1>
+        <p>Text editor and IDE limited by VT100. Configuration-free, portable, and open source.</p>
+
+        <div class="gallery">
+            <div class="img-container">
+                <img class="screenshot" src="screenshot1.png" alt="Editing code">
+                <p>Editing code</p>
+            </div>
+            <div class="img-container">
+                <img class="screenshot" src="screenshot3.png" alt="The Synthwave theme">
+                <p>The Synthwave theme</p>
+            </div>
+            <div class="img-container">
+                <img class="screenshot" src="screenshot2.png" alt="Stepping through Rust">
+                <p>Stepping through Rust</p>
+            </div>
+        </div>
+
+        <a id="github-btn" href="https://github.com/xyproto/orbiton" target="_blank">Orbiton project page</a>
+
+        <div id="modal" class="modal">
+          <span id="close-modal" class="close">&times;</span>
+          <img id="modal-img" class="modal-content">
+          <div id="modal-caption"></div>
+        </div>
+
+        <script src="main.js"></script>
+    </div>
+</body>
 </html>
