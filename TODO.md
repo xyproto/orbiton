@@ -22,7 +22,6 @@
 ## Markdown
 
 - [ ] `ctrl-space` is too easy to press by accident, find a better solution.
-- [ ] `ctrl-t` on a blank line in a Markdown document could ask for dimensions and then launch the table editor.
 
 ## Autocompletion and AI generated code
 

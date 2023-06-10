@@ -53,8 +53,10 @@ ctrl-_      to toggle the filename/line/column/unicode/word count/indendation/mo
 ctrl-a      go to start of line, then start of text and then the previous line
 ctrl-e      go to end of line and then the next line
 ctrl-n      to scroll down 10 lines or go to the next match if a search is active
+            insert a column when in the Markdown table editor
 ctrl-p      to scroll up 10 lines or go to the previous match
             or jump to a matching parenthesis or bracket, if on one
+            remove an empty column when in the Markdown table editor
 ctrl-k      to delete characters to the end of the line, then delete the line
 ctrl-j      to join lines
 ctrl-d      to delete a single character
