@@ -4,7 +4,12 @@ WORKDIR /app
 
 # Copy in a HTML file, for now
 COPY index.html index.html
+COPY style.css style.css
+COPY main.js main.js
 COPY favicon.ico favicon.ico
+COPY screenshot1.png screenshot1.png
+COPY screenshot2.png screenshot2.png
+COPY screenshot3.png screenshot3.png
 
 # Create a minimal image for running the Algernon web server
 FROM alpine
