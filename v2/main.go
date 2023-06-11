@@ -9,12 +9,16 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/xyproto/vt100"
 )
 
 const versionString = "Orbiton 2.62.3"
+
+// quitMut disallows Exit(1) while a file is being saved
+var quitMut sync.Mutex
 
 func main() {
 	var (
@@ -88,9 +92,13 @@ See the man page for more information.
 		n, headString, tailString, err := WriteClipboardToFile(filename, *forceFlag)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			quitMut.Lock()
+			defer quitMut.Unlock()
 			os.Exit(1)
 		} else if n == 0 {
 			fmt.Fprintf(os.Stderr, "Wrote 0 bytes to %s\n", filename)
+			quitMut.Lock()
+			defer quitMut.Unlock()
 			os.Exit(1)
 		}
 		// chmod +x if this looks like a shell script or is in ie. /usr/bin
@@ -102,7 +110,7 @@ See the man page for more information.
 		} else {
 			fmt.Printf("Wrote %d bytes to %s from the clipboard.\n", n, filename)
 		}
-		os.Exit(0)
+		return
 	}
 
 	// If the -c flag is given, just copy the given filename to the clipboard and exit
@@ -110,9 +118,13 @@ See the man page for more information.
 		n, tailString, err := SetClipboardFromFile(filename)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			quitMut.Lock()
+			defer quitMut.Unlock()
 			os.Exit(1)
 		} else if n == 0 {
 			fmt.Fprintf(os.Stderr, "Wrote 0 bytes to %s\n", filename)
+			quitMut.Lock()
+			defer quitMut.Unlock()
 			os.Exit(1)
 		}
 		if tailString != "" {
@@ -120,7 +132,7 @@ See the man page for more information.
 		} else {
 			fmt.Printf("Copied %d bytes from %s to the clipboard.\n", n, filename)
 		}
-		os.Exit(0)
+		return
 	}
 
 	// If the -r flag is given, clear all file locks and exit
@@ -130,7 +142,7 @@ See the man page for more information.
 		} else {
 			fmt.Println("Locks cleared")
 		}
-		os.Exit(0)
+		return
 	}
 
 	traceStart() // if building with -tags trace
@@ -144,6 +156,8 @@ See the man page for more information.
 			// Start the game
 			if _, err := Game(); err != nil {
 				fmt.Fprintln(os.Stderr, err)
+				quitMut.Lock()
+				defer quitMut.Unlock()
 				os.Exit(1)
 			}
 			return
@@ -165,6 +179,8 @@ See the man page for more information.
 		data, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "could not read from stdin")
+			quitMut.Lock()
+			defer quitMut.Unlock()
 			os.Exit(1)
 		}
 		// Now stop reading further from stdin
@@ -182,6 +198,8 @@ See the man page for more information.
 	if fnord.Empty() {
 		if fnord.filename == "" {
 			fmt.Fprintln(os.Stderr, "please provide a filename")
+			quitMut.Lock()
+			defer quitMut.Unlock()
 			os.Exit(1)
 		}
 
@@ -265,6 +283,8 @@ See the man page for more information.
 	tty, err := vt100.NewTTY()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error: "+err.Error())
+		quitMut.Lock()
+		defer quitMut.Unlock()
 		os.Exit(1)
 	}
 	defer tty.Close()

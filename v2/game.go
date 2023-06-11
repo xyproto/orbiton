@@ -744,6 +744,8 @@ retry:
 	tty, err := vt100.NewTTY()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error: "+err.Error())
+		quitMut.Lock()
+		defer quitMut.Unlock()
 		os.Exit(1)
 	}
 	defer tty.Close()

@@ -429,6 +429,9 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		shebang  bool
 		data     []byte
 	)
+	quitMut.Lock()
+	defer quitMut.Unlock()
+
 	if e.binaryFile {
 		data = []byte(e.String())
 	} else {
