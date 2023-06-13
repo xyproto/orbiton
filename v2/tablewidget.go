@@ -170,7 +170,13 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 		// First clear this row with spaces
 		spaces := strings.Repeat(" ", canvasWidth)
 		c.Write(0, uint(tw.marginTop+y+titleHeight), tw.textColor, tw.bgColor, spaces)
-		for x := 0; x < len((*tw.contents)[y]); x++ {
+
+		lastX := len((*tw.contents)[y])
+		if lastX > cw {
+			lastX = cw
+		}
+
+		for x := 0; x < lastX; x++ {
 			field := (*tw.contents)[y][x]
 			color := tw.textColor
 			if y == int(tw.cy) && x == int(tw.cx) {
@@ -190,34 +196,77 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 		}
 	}
 
-	// Clear five extra rows after the table
 	indexY := uint(tw.marginTop + titleHeight + ch)
+
+	// Clear a few extra rows after the table
 	spaces := strings.Repeat(" ", canvasWidth)
+
 	for y := uint(0); y < 5; y++ {
 		if indexY < c.H() {
 			c.Write(0, indexY, tw.textColor, tw.bgColor, spaces)
 			indexY++
 		}
 	}
+
 	indexY -= 3
 
-	if tw.displayQuickHelp {
-		// Plot the quick help
-		helpString := "Quick help:"
-		for x, r := range helpString {
-			c.PlotColor(uint(tw.marginLeft+x), indexY, tw.titleColor, r)
-		}
-		indexY++
-		helpString = "Just start writing. Press return to insert a row below."
-		for x, r := range helpString {
-			c.PlotColor(uint(tw.marginLeft+x), indexY, tw.commentColor, r)
-		}
-		indexY++
-		helpString = "Move with tab and the arrow keys. Add and remove column with ctrl-n and ctrl-p."
-		for x, r := range helpString {
-			c.PlotColor(uint(tw.marginLeft+x), indexY, tw.commentColor, r)
+	if indexY+4 < c.H() {
+
+		if tw.displayQuickHelp {
+
+			var indexX uint
+			var helpString string
+			var w uint
+
+			// Plot the quick help
+			helpString = "Quick help:"
+			indexX = uint(tw.marginLeft)
+			for _, r := range helpString {
+				//c.Write(0, indexY, tw.textColor, tw.bgColor, spaces)
+				c.PlotColor(indexX, indexY, tw.titleColor, r)
+				indexX++
+			}
+			w = uint(canvasWidth) - indexX
+			for x := indexX; x < w; x++ {
+				c.PlotColor(x, indexY, tw.textColor, ' ')
+			}
+
+			indexY++
+
+			helpString = "Just start writing. Press return to insert a row below."
+			indexX = uint(tw.marginLeft)
+			for _, r := range helpString {
+				//c.Write(0, indexY, tw.textColor, tw.bgColor, spaces)
+				c.PlotColor(indexX, indexY, tw.commentColor, r)
+				indexX++
+			}
+			w = uint(canvasWidth) - indexX
+			for x := indexX; x < w; x++ {
+				c.PlotColor(x, indexY, tw.textColor, ' ')
+			}
+
+			indexY++
+
+			helpString = "Move with tab and the arrow keys. Add and remove column with ctrl-n and ctrl-p."
+			indexX = uint(tw.marginLeft)
+			for _, r := range helpString {
+				//c.Write(0, indexY, tw.textColor, tw.bgColor, spaces)
+				c.PlotColor(indexX, indexY, tw.commentColor, r)
+				indexX++
+			}
+			w = uint(canvasWidth) - indexX
+			for x := indexX; x < w; x++ {
+				c.PlotColor(x, indexY, tw.textColor, ' ')
+			}
+
+			indexY++
+
+			c.Write(0, indexY, tw.textColor, tw.bgColor, spaces)
+			indexY++
+
 		}
 	}
+
 }
 
 // Up will move the highlight up (with wrap-around)
