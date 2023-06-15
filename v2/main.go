@@ -24,7 +24,7 @@ func main() {
 	var (
 		copyFlag       = flag.Bool("c", false, "copy a file into the clipboard and quit")
 		forceFlag      = flag.Bool("f", false, "open even if already open")
-		helpFlag       = flag.Bool("help", false, "quick overview of hotkeys")
+		helpFlag       = flag.Bool("help", false, "quick overview of hotkeys and flags")
 		pasteFlag      = flag.Bool("p", false, "paste the clipboard into the file and quit")
 		clearLocksFlag = flag.Bool("r", false, "clear all file locks")
 		versionFlag    = flag.Bool("version", false, "version information")
@@ -80,6 +80,13 @@ ctrl-~      to jump to matching parenthesis
 esc         to redraw the screen and clear the last search
 
 Set NO_COLOR=1 to disable colors.
+
+Flags:
+  -r                         - clear all file locks
+  -c FILENAME                - just copy a file into the clipboard
+  -p FILENAME                - just paste the contents of the clipboard into a file
+  -f                         - force, ignore file locks or combine with -p to overwrite files
+  --version                  - show the current version
 
 See the man page for more information.
 
