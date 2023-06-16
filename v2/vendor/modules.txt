@@ -31,7 +31,7 @@ github.com/gomarkdown/markdown/parser
 # github.com/ianlancetaylor/demangle v0.0.0-20230524184225-eabc099b10ab
 ## explicit; go 1.13
 github.com/ianlancetaylor/demangle
-# github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e
+# github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25
 ## explicit
 github.com/jsummers/gobmp
 # github.com/jung-kurt/gofpdf v1.16.2
@@ -110,7 +110,7 @@ github.com/xyproto/vt100
 # github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
 ## explicit
 github.com/yosssi/gohtml
-# golang.org/x/image v0.7.0
+# golang.org/x/image v0.8.0
 ## explicit; go 1.12
 golang.org/x/image/draw
 golang.org/x/image/math/f64
@@ -118,11 +118,11 @@ golang.org/x/image/riff
 golang.org/x/image/vp8
 golang.org/x/image/vp8l
 golang.org/x/image/webp
-# golang.org/x/net v0.10.0
+# golang.org/x/net v0.11.0
 ## explicit; go 1.17
 golang.org/x/net/html
 golang.org/x/net/html/atom
-# golang.org/x/sys v0.8.0
+# golang.org/x/sys v0.9.0
 ## explicit; go 1.17
 golang.org/x/sys/unix
 # gopkg.in/yaml.v3 v3.0.1
