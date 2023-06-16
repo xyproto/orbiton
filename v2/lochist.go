@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/xyproto/env/v2"
 )
@@ -23,10 +24,87 @@ var (
 	nvimLocationHistoryFilename  = filepath.Join(env.Dir("XDG_DATA_HOME", "~/.local/share"), "nvim", "shada", "main.shada")
 )
 
+type (
+	// LocationHistory is an interface for different variations of location history data structures
+	LocationHistory interface {
+		Has(path string) bool
+		Get(path string) (LineNumber, error)
+		Set(path string, ln LineNumber)
+		Save(path string) error
+	}
+
+	// RegularLocationHistory is a LocationHistory that only stores the absolute path to a filename and the line number
+	RegularLocationHistory map[string]LineNumber
+
+	// LocationHistoryAndTimestamp is a LocationHistory that stores the absolute path to a filename, a line number and a timestamp (for trimming the location history)
+	LocationHistoryAndTimestamp map[string]LineNumberAndTimestamp
+)
+
+func (locationHistory RegularLocationHistory) Has(path string) bool {
+	_, found := locationHistory[path]
+	return found
+}
+func (locationHistory RegularLocationHistory) Get(path string) (LineNumber, error) {
+	if ln, found := locationHistory[path]; found {
+		return ln, nil
+	}
+	return 0, errors.New("could not find the given path in the location history")
+}
+func (locationHistory RegularLocationHistory) Set(path string, ln LineNumber) {
+	locationHistory[path] = ln
+}
+
+// Save will attempt to save the per-absolute-filename recording of which line is active
+func (locationHistory RegularLocationHistory) Save(path string) error {
+	// First create the folder, if needed, in a best effort attempt
+	folderPath := filepath.Dir(path)
+	os.MkdirAll(folderPath, os.ModePerm)
+	var sb strings.Builder
+	for k, v := range locationHistory {
+		sb.WriteString(fmt.Sprintf("\"%s\": %d\n", k, v))
+	}
+	// Write the location history and return the error, if any.
+	// The permissions are a bit stricter for this one.
+	return os.WriteFile(path, []byte(sb.String()), 0o600)
+}
+
+func (locationHistory LocationHistoryAndTimestamp) Has(path string) bool {
+	_, found := locationHistory[path]
+	return found
+}
+func (locationHistory LocationHistoryAndTimestamp) Get(path string) (LineNumber, error) {
+	if lnat, found := locationHistory[path]; found {
+		return lnat.LineNumber, nil
+	}
+	return 0, errors.New("could not find the given path in the location history")
+}
+func (locationHistory LocationHistoryAndTimestamp) Set(path string, ln LineNumber) {
+	var lnat LineNumberAndTimestamp
+	lnat.LineNumber = ln
+	lnat.Timestamp = time.Now()
+	locationHistory[path] = lnat
+}
+
+// Save will attempt to save the per-absolute-filename recording of which line is active
+func (locationHistory LocationHistoryAndTimestamp) Save(path string) error {
+	// First create the folder, if needed, in a best effort attempt
+	folderPath := filepath.Dir(path)
+	os.MkdirAll(folderPath, os.ModePerm)
+	var sb strings.Builder
+	for k, lineNumberAndTimestamp := range locationHistory {
+		lineNumber := lineNumberAndTimestamp.LineNumber
+		timeStamp := lineNumberAndTimestamp.Timestamp
+		sb.WriteString(fmt.Sprintf("\"%s\": {%d, %d}\n", k, lineNumber, timeStamp.Unix()))
+	}
+	// Write the location history and return the error, if any.
+	// The permissions are a bit stricter for this one.
+	return os.WriteFile(path, []byte(sb.String()), 0o600)
+}
+
 // LoadLocationHistory will attempt to load the per-absolute-filename recording of which line is active.
 // The returned map can be empty.
-func LoadLocationHistory(configFile string) (map[string]LineNumber, error) {
-	locationHistory := make(map[string]LineNumber)
+func LoadLocationHistory(configFile string) (RegularLocationHistory, error) {
+	locationHistory := make(RegularLocationHistory)
 
 	contents, err := os.ReadFile(configFile)
 	if err != nil {
@@ -67,8 +145,8 @@ func LoadLocationHistory(configFile string) (map[string]LineNumber, error) {
 
 // LoadVimLocationHistory will attempt to load the history of where the cursor should be when opening a file from ~/.viminfo
 // The returned map can be empty. The filenames have absolute paths.
-func LoadVimLocationHistory(vimInfoFilename string) map[string]LineNumber {
-	locationHistory := make(map[string]LineNumber)
+func LoadVimLocationHistory(vimInfoFilename string) RegularLocationHistory {
+	locationHistory := make(RegularLocationHistory)
 	// Attempt to read the ViM location history (that may or may not exist)
 	data, err := os.ReadFile(vimInfoFilename)
 	if err != nil {
@@ -402,25 +480,9 @@ func LoadEmacsLocationHistory(emacsPlacesFilename string) map[string]CharacterPo
 	return locationHistory
 }
 
-// SaveLocationHistory will attempt to save the per-absolute-filename recording of which line is active
-func SaveLocationHistory(locationHistory map[string]LineNumber, configFile string) error {
-	// First create the folder, if needed, in a best effort attempt
-	folderPath := filepath.Dir(configFile)
-	os.MkdirAll(folderPath, os.ModePerm)
-
-	var sb strings.Builder
-	for k, v := range locationHistory {
-		sb.WriteString(fmt.Sprintf("\"%s\": %d\n", k, v))
-	}
-
-	// Write the location history and return the error, if any.
-	// The permissions are a bit stricter for this one.
-	return os.WriteFile(configFile, []byte(sb.String()), 0o600)
-}
-
 // SaveLocation takes a filename (which includes the absolute path) and a map which contains
 // an overview of which files were at which line location.
-func (e *Editor) SaveLocation(absFilename string, locationHistory map[string]LineNumber) error {
+func (e *Editor) SaveLocation(absFilename string, locationHistory RegularLocationHistory) error {
 	if baseFilename := filepath.Base(absFilename); strings.HasPrefix(baseFilename, "tmp.") {
 		// Not storing location info for /tmp/tmp.* files
 		return nil
@@ -431,6 +493,7 @@ func (e *Editor) SaveLocation(absFilename string, locationHistory map[string]Lin
 	}
 	// Save the current line location
 	locationHistory[absFilename] = e.LineNumber()
+
 	// Save the location history and return the error, if any
-	return SaveLocationHistory(locationHistory, locationHistoryFilename)
+	return locationHistory.Save(locationHistoryFilename)
 }
