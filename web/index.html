@@ -1,38 +1,50 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <title>Orbiton - a text editor and IDE limited by VT100</title>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Orbiton is a configuration-free, portable and open source text editor and IDE limited to VT100. Suitable for writing git commit messages, editing Markdown, config files, source code, viewing man pages and for quick edit-compile cycles when programming. Includes syntax highlighting, smart cursor movement, jump-to-error, rainbow parentheses, macros, tab completion, cut/paste portals and a gdb front-end.">
+    <title>Orbiton - text editor and IDE limited by VT100</title>
     <link rel="stylesheet" href="style.css">
-</head>
-<body>
+    <meta property="og:title" content="Orbiton - Open Source text editor and IDE limited to VT100" />
+    <meta property="og:description" content="Orbiton is a configuration-free, portable and open source text editor and IDE limited to VT100. Suitable for writing git commit messages, editing Markdown, config files, source code, viewing man pages and for quick edit-compile cycles when programming. Includes syntax highlighting, smart cursor movement, jump-to-error, rainbow parentheses, macros, tab completion, cut/paste portals and a gdb front-end.">
+    <meta property="og:image" content="https://orbiton.zip/screenshot3.png" />
+    <meta property="og:url" content="https://orbiton.zip/" />
+    <meta name="twitter:card" content="summary_large_image">
+  </head>
+  <body>
     <div class="container">
+      <header>
         <h1>Welcome to Orbiton</h1>
         <p>Text editor and IDE limited by VT100. Configuration-free, portable, and open source.</p>
-
-        <div class="gallery">
+      </header>
+      <section>
+        <article>
+          <div class="gallery">
             <div class="img-container">
-                <img class="screenshot" src="screenshot1.png" alt="Editing code">
-                <p>Editing code</p>
+              <img class="screenshot" src="screenshot1.png" alt="The Orbiton text editor can be used for editing code">
+              <p>Editing code</p>
             </div>
             <div class="img-container">
-                <img class="screenshot" src="screenshot2.png" alt="The Synthwave theme">
-                <p>The Synthwave theme</p>
+              <img class="screenshot" src="screenshot2.png" alt="The Orbiton text editor comes with this modern Synthwave theme">
+              <p>The Synthwave theme</p>
             </div>
             <div class="img-container">
-                <img class="screenshot" src="screenshot3.png" alt="Stepping through Rust">
-                <p>Stepping through Rust</p>
+              <img class="screenshot" src="screenshot3.png" alt="The Orbiton text editor is also a simple IDE and comes with a simple gdb front-end that can be used for stepping through for instance Rust code">
+              <p>Stepping through Rust</p>
             </div>
-        </div>
-
-        <a id="github-btn" href="https://github.com/xyproto/orbiton" target="_blank">Orbiton project page</a>
-
-        <div id="modal" class="modal">
-          <span id="close-modal" class="close">&times;</span>
-          <img id="modal-img" class="modal-content">
-          <div id="modal-caption"></div>
-        </div>
-
-        <script src="main.js"></script>
+          </div>
+        </article>
+      </section>
+      <a id="github-btn" href="https://github.com/xyproto/orbiton" target="_blank" rel="noopener noreferrer">
+        Orbiton project page
+      </a>
+      <div id="modal" class="modal">
+        <span id="close-modal" class="close">&times;</span>
+        <img id="modal-img" class="modal-content">
+        <div id="modal-caption"></div>
+      </div>
+      <script src="main.js"></script>
     </div>
-</body>
+  </body>
 </html>

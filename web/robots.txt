@@ -1,0 +1,18 @@
+# ---===[ robots.txt ]===---
+
+Sitemap: https://orbiton.zip/sitemap.xml
+
+# PartyBob
+User-agent: PartyBob
+Crawl-delay: 42
+Disallow: /
+
+# Everyone else
+User-agent: *
+Crawl-delay: 5
+Disallow: /tmp/
+Disallow: *~
+Allow: /
+#Sitemap: https://somewhere.com/sitemap_index.xml
+
+# a snowman ☃
