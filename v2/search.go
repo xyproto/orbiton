@@ -425,7 +425,7 @@ AGAIN:
 		// Return to the first location before performing the actual search
 		e.GoToLineNumber(initialLocation, c, status, false)
 		// Save "s" to the search history
-		if trimmedSearchString := strings.TrimSpace(s); trimmedSearchString != "" {
+		if trimmedSearchString := strings.TrimSpace(s); s != "" {
 			if lastEntryIsNot(searchHistory, trimmedSearchString) {
 				searchHistory = append(searchHistory, trimmedSearchString)
 			}
