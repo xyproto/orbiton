@@ -509,7 +509,11 @@ func (e *Editor) SaveLocation(absFilename string, locationHistory LocationHistor
 // KeepNewest removes all entries from the locationHistory except the N entries with the highest UNIX timestamp
 func (locationHistory LocationHistory) KeepNewest(n int) LocationHistory {
 	lenLocationHistory := len(locationHistory)
-	keys := make([]int64, lenLocationHistory)
+	if lenLocationHistory <= n {
+		return locationHistory
+	}
+
+	keys := make([]int64, 0, lenLocationHistory)
 	time2filename := make(map[int64]string)
 
 	for absFilename, lineNumberAndTimestamp := range locationHistory {
@@ -523,13 +527,9 @@ func (locationHistory LocationHistory) KeepNewest(n int) LocationHistory {
 		return keys[i] > keys[j]
 	})
 
-	if lenLocationHistory <= n {
-		return locationHistory
-	}
+	keys = keys[:n] // Keep only 'n' newest timestamps
 
-	keys = keys[:lenLocationHistory-(n+1)]
-
-	newLocationHistory := make(LocationHistory, len(keys))
+	newLocationHistory := make(LocationHistory, n)
 	for _, timestamp := range keys {
 		absFilename := time2filename[timestamp]
 		newLocationHistory[absFilename] = locationHistory[absFilename]
