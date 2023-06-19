@@ -516,6 +516,9 @@ func (locationHistory LocationHistory) KeepNewest(n int) LocationHistory {
 	keys := make([]int64, 0, lenLocationHistory)
 	time2filename := make(map[int64]string)
 
+	// Note that if there are timestamp collisions, the loss of rembembering a location in a file is acceptable.
+	// Collisions are unlikely, though.
+
 	for absFilename, lineNumberAndTimestamp := range locationHistory {
 		timestamp := lineNumberAndTimestamp.Timestamp.Unix()
 		keys = append(keys, timestamp)
