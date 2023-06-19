@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -23,6 +24,12 @@ var (
 	locationHistoryFilename      = filepath.Join(userCacheDir, "o", "locations.txt")
 	nvimLocationHistoryFilename  = filepath.Join(env.Dir("XDG_DATA_HOME", "~/.local/share"), "nvim", "shada", "main.shada")
 )
+
+// LineNumberAndTimestamp contains both a LineNumber and a time.Time
+type LineNumberAndTimestamp struct {
+	LineNumber LineNumber
+	Timestamp  time.Time
+}
 
 // LocationHistory stores the absolute path to a filename, a line number and a timestamp (for trimming the location history)
 type LocationHistory map[string]LineNumberAndTimestamp
@@ -490,11 +497,43 @@ func (e *Editor) SaveLocation(absFilename string, locationHistory LocationHistor
 	}
 	if locationHistory.Len() > maxLocationHistoryEntries {
 		// Cull the history
-		locationHistory = make(LocationHistory, 1)
+		locationHistory = locationHistory.KeepNewest(maxLocationHistoryEntries)
 	}
 	// Save the current line location
 	locationHistory.Set(absFilename, e.LineNumber())
 
 	// Save the location history and return the error, if any
 	return locationHistory.Save(locationHistoryFilename)
+}
+
+// KeepNewest removes all entries from the locationHistory except the N entries with the highest UNIX timestamp
+func (locationHistory LocationHistory) KeepNewest(n int) LocationHistory {
+	lenLocationHistory := len(locationHistory)
+	keys := make([]int64, lenLocationHistory)
+	time2filename := make(map[int64]string)
+
+	for absFilename, lineNumberAndTimestamp := range locationHistory {
+		timestamp := lineNumberAndTimestamp.Timestamp.Unix()
+		keys = append(keys, timestamp)
+		time2filename[timestamp] = absFilename
+	}
+
+	// Reverse sort
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] > keys[j]
+	})
+
+	if lenLocationHistory <= n {
+		return locationHistory
+	}
+
+	keys = keys[:lenLocationHistory-(n+1)]
+
+	newLocationHistory := make(LocationHistory, len(keys))
+	for _, timestamp := range keys {
+		absFilename := time2filename[timestamp]
+		newLocationHistory[absFilename] = locationHistory[absFilename]
+	}
+
+	return newLocationHistory
 }

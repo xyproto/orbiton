@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type (
@@ -23,12 +22,6 @@ type (
 	// ColIndex is a number from 0 and up (counts lines from 0)
 	ColIndex int
 )
-
-// LineNumberAndTimestamp contains both a LineNumber and a time.Time
-type LineNumberAndTimestamp struct {
-	LineNumber LineNumber
-	Timestamp  time.Time
-}
 
 // String converts a LineNumber to a string
 func (ln LineNumber) String() string {
