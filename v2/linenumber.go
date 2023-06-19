@@ -24,6 +24,7 @@ type (
 	ColIndex int
 )
 
+// LineNumberAndTimestamp contains both a LineNumber and a time.Time
 type LineNumberAndTimestamp struct {
 	LineNumber LineNumber
 	Timestamp  time.Time

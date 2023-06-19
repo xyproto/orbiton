@@ -16,7 +16,7 @@ import (
 const maxLocationHistoryEntries = 1024
 
 var (
-	locationHistory              map[string]LineNumber // per filename location history, for jumping to the last location when opening a file
+	locationHistory              LocationHistory // per absolute filename, for jumping to the last used line when opening a file
 	vimLocationHistoryFilename   = env.ExpandUser("~/.viminfo")
 	emacsLocationHistoryFilename = env.ExpandUser("~/.emacs.d/places")
 	userCacheDir                 = env.Dir("XDG_CACHE_HOME", "~/.cache")
@@ -24,69 +24,41 @@ var (
 	nvimLocationHistoryFilename  = filepath.Join(env.Dir("XDG_DATA_HOME", "~/.local/share"), "nvim", "shada", "main.shada")
 )
 
-type (
-	// LocationHistory is an interface for different variations of location history data structures
-	LocationHistory interface {
-		Has(path string) bool
-		Get(path string) (LineNumber, error)
-		Set(path string, ln LineNumber)
-		Save(path string) error
-	}
+// LocationHistory stores the absolute path to a filename, a line number and a timestamp (for trimming the location history)
+type LocationHistory map[string]LineNumberAndTimestamp
 
-	// RegularLocationHistory is a LocationHistory that only stores the absolute path to a filename and the line number
-	RegularLocationHistory map[string]LineNumber
-
-	// LocationHistoryAndTimestamp is a LocationHistory that stores the absolute path to a filename, a line number and a timestamp (for trimming the location history)
-	LocationHistoryAndTimestamp map[string]LineNumberAndTimestamp
-)
-
-func (locationHistory RegularLocationHistory) Has(path string) bool {
+// Has checks if the location history has the given absolute path
+func (locationHistory LocationHistory) Has(path string) bool {
 	_, found := locationHistory[path]
 	return found
 }
-func (locationHistory RegularLocationHistory) Get(path string) (LineNumber, error) {
-	if ln, found := locationHistory[path]; found {
-		return ln, nil
-	}
-	return 0, errors.New("could not find the given path in the location history")
-}
-func (locationHistory RegularLocationHistory) Set(path string, ln LineNumber) {
-	locationHistory[path] = ln
-}
 
-// Save will attempt to save the per-absolute-filename recording of which line is active
-func (locationHistory RegularLocationHistory) Save(path string) error {
-	// First create the folder, if needed, in a best effort attempt
-	folderPath := filepath.Dir(path)
-	os.MkdirAll(folderPath, os.ModePerm)
-	var sb strings.Builder
-	for k, v := range locationHistory {
-		sb.WriteString(fmt.Sprintf("\"%s\": %d\n", k, v))
-	}
-	// Write the location history and return the error, if any.
-	// The permissions are a bit stricter for this one.
-	return os.WriteFile(path, []byte(sb.String()), 0o600)
-}
-
-func (locationHistory LocationHistoryAndTimestamp) Has(path string) bool {
-	_, found := locationHistory[path]
-	return found
-}
-func (locationHistory LocationHistoryAndTimestamp) Get(path string) (LineNumber, error) {
+// Get takes an absolute path and returns the line number and true if found
+func (locationHistory LocationHistory) Get(path string) (LineNumber, bool) {
 	if lnat, found := locationHistory[path]; found {
-		return lnat.LineNumber, nil
+		return lnat.LineNumber, true
 	}
-	return 0, errors.New("could not find the given path in the location history")
+	return 0, false
 }
-func (locationHistory LocationHistoryAndTimestamp) Set(path string, ln LineNumber) {
+
+// Set sets a new line number for the given absolute path, and also records the current time
+func (locationHistory LocationHistory) Set(path string, ln LineNumber) {
 	var lnat LineNumberAndTimestamp
 	lnat.LineNumber = ln
 	lnat.Timestamp = time.Now()
 	locationHistory[path] = lnat
 }
 
+// SetWithTimestamp sets a new line number for the given absolute path, and also records the current time
+func (locationHistory LocationHistory) SetWithTimestamp(path string, ln LineNumber, timestamp int64) {
+	var lnat LineNumberAndTimestamp
+	lnat.LineNumber = ln
+	lnat.Timestamp = time.Unix(timestamp, 0)
+	locationHistory[path] = lnat
+}
+
 // Save will attempt to save the per-absolute-filename recording of which line is active
-func (locationHistory LocationHistoryAndTimestamp) Save(path string) error {
+func (locationHistory LocationHistory) Save(path string) error {
 	// First create the folder, if needed, in a best effort attempt
 	folderPath := filepath.Dir(path)
 	os.MkdirAll(folderPath, os.ModePerm)
@@ -94,17 +66,22 @@ func (locationHistory LocationHistoryAndTimestamp) Save(path string) error {
 	for k, lineNumberAndTimestamp := range locationHistory {
 		lineNumber := lineNumberAndTimestamp.LineNumber
 		timeStamp := lineNumberAndTimestamp.Timestamp
-		sb.WriteString(fmt.Sprintf("\"%s\": {%d, %d}\n", k, lineNumber, timeStamp.Unix()))
+		sb.WriteString(fmt.Sprintf("%d:%d:%s\n", timeStamp.Unix(), lineNumber, k))
 	}
 	// Write the location history and return the error, if any.
 	// The permissions are a bit stricter for this one.
 	return os.WriteFile(path, []byte(sb.String()), 0o600)
 }
 
+// Len returns the current location history length
+func (locationHistory LocationHistory) Len() int {
+	return len(locationHistory)
+}
+
 // LoadLocationHistory will attempt to load the per-absolute-filename recording of which line is active.
 // The returned map can be empty.
-func LoadLocationHistory(configFile string) (RegularLocationHistory, error) {
-	locationHistory := make(RegularLocationHistory)
+func LoadLocationHistory(configFile string) (LocationHistory, error) {
+	locationHistory := make(LocationHistory)
 
 	contents, err := os.ReadFile(configFile)
 	if err != nil {
@@ -114,29 +91,53 @@ func LoadLocationHistory(configFile string) (RegularLocationHistory, error) {
 	// The format of the file is, per line:
 	// "filename":location
 	for _, filenameLocation := range strings.Split(string(contents), "\n") {
-		if !strings.Contains(filenameLocation, ":") {
-			continue
-		}
-		fields := strings.SplitN(filenameLocation, ":", 2)
+		fields := strings.Split(filenameLocation, ":")
 
-		// Retrieve an unquoted filename in the filename variable
-		quotedFilename := strings.TrimSpace(fields[0])
-		filename := quotedFilename
-		if strings.HasPrefix(quotedFilename, "\"") && strings.HasSuffix(quotedFilename, "\"") {
-			filename = quotedFilename[1 : len(quotedFilename)-1]
-		}
-		if filename == "" {
-			continue
+		if len(fields) == 2 {
+
+			// Retrieve an unquoted filename in the filename variable
+			quotedFilename := strings.TrimSpace(fields[0])
+			filename := quotedFilename
+			if strings.HasPrefix(quotedFilename, "\"") && strings.HasSuffix(quotedFilename, "\"") {
+				filename = quotedFilename[1 : len(quotedFilename)-1]
+			}
+			if filename == "" {
+				continue
+			}
+
+			lineNumberAndMaybeTimestamp := fields[1]
+
+			// Retrieve the line number
+			lineNumberString := strings.TrimSpace(lineNumberAndMaybeTimestamp)
+			lineNumber, err := strconv.Atoi(lineNumberString)
+			if err != nil {
+				// Could not convert to a number
+				continue
+			}
+			locationHistory.Set(filename, LineNumber(lineNumber))
+
+		} else if len(fields) == 3 {
+
+			// Retrieve the line number and UNIX timestamp
+			timeStampString := fields[0]
+			lineNumberString := fields[1]
+			filename := fields[2]
+
+			lineNumber, err := strconv.Atoi(lineNumberString)
+			if err != nil {
+				// Could not convert to a number
+				continue
+			}
+
+			timestamp, err := strconv.ParseInt(timeStampString, 10, 64)
+			if err != nil {
+				// Could not convert to a number
+				continue
+			}
+
+			locationHistory.SetWithTimestamp(filename, LineNumber(lineNumber), timestamp)
 		}
 
-		// Retrieve the line number
-		lineNumberString := strings.TrimSpace(fields[1])
-		lineNumber, err := strconv.Atoi(lineNumberString)
-		if err != nil {
-			// Could not convert to a number
-			continue
-		}
-		locationHistory[filename] = LineNumber(lineNumber)
 	}
 
 	// Return the location history map. It could be empty, which is fine.
@@ -145,8 +146,8 @@ func LoadLocationHistory(configFile string) (RegularLocationHistory, error) {
 
 // LoadVimLocationHistory will attempt to load the history of where the cursor should be when opening a file from ~/.viminfo
 // The returned map can be empty. The filenames have absolute paths.
-func LoadVimLocationHistory(vimInfoFilename string) RegularLocationHistory {
-	locationHistory := make(RegularLocationHistory)
+func LoadVimLocationHistory(vimInfoFilename string) LocationHistory {
+	locationHistory := make(LocationHistory)
 	// Attempt to read the ViM location history (that may or may not exist)
 	data, err := os.ReadFile(vimInfoFilename)
 	if err != nil {
@@ -163,7 +164,7 @@ func LoadVimLocationHistory(vimInfoFilename string) RegularLocationHistory {
 			filename := fields[3]
 			// Skip if the filename already exists in the location history, since .viminfo
 			// may have duplication locations and lists the newest first.
-			if _, alreadyExists := locationHistory[filename]; alreadyExists {
+			if locationHistory.Has(filename) {
 				continue
 			}
 			lineNumber, err := strconv.Atoi(lineNumberString)
@@ -177,7 +178,7 @@ func LoadVimLocationHistory(vimInfoFilename string) RegularLocationHistory {
 				continue
 			}
 			absFilename = filepath.Clean(absFilename)
-			locationHistory[absFilename] = LineNumber(lineNumber)
+			locationHistory.Set(absFilename, LineNumber(lineNumber))
 		}
 	}
 	return locationHistory
@@ -441,11 +442,11 @@ func FindInNvimLocationHistory(nvimLocationFilename, searchFilename string) (Lin
 // The returned map can be empty. The filenames have absolute paths.
 // The values in the map are NOT line numbers but character positions.
 func LoadEmacsLocationHistory(emacsPlacesFilename string) map[string]CharacterPosition {
-	locationHistory := make(map[string]CharacterPosition)
+	locationCharHistory := make(map[string]CharacterPosition)
 	// Attempt to read the Emacs location history (that may or may not exist)
 	data, err := os.ReadFile(emacsPlacesFilename)
 	if err != nil {
-		return locationHistory
+		return locationCharHistory
 	}
 	for _, line := range strings.Split(string(data), "\n") {
 		// Looking for lines with filenames with ""
@@ -475,24 +476,24 @@ func LoadEmacsLocationHistory(emacsPlacesFilename string) map[string]CharacterPo
 			continue
 		}
 		absFilename = filepath.Clean(absFilename)
-		locationHistory[absFilename] = CharacterPosition(charNumber)
+		locationCharHistory[absFilename] = CharacterPosition(charNumber)
 	}
-	return locationHistory
+	return locationCharHistory
 }
 
 // SaveLocation takes a filename (which includes the absolute path) and a map which contains
 // an overview of which files were at which line location.
-func (e *Editor) SaveLocation(absFilename string, locationHistory RegularLocationHistory) error {
+func (e *Editor) SaveLocation(absFilename string, locationHistory LocationHistory) error {
 	if baseFilename := filepath.Base(absFilename); strings.HasPrefix(baseFilename, "tmp.") {
 		// Not storing location info for /tmp/tmp.* files
 		return nil
 	}
-	if len(locationHistory) > maxLocationHistoryEntries {
+	if locationHistory.Len() > maxLocationHistoryEntries {
 		// Cull the history
-		locationHistory = make(map[string]LineNumber, 1)
+		locationHistory = make(LocationHistory, 1)
 	}
 	// Save the current line location
-	locationHistory[absFilename] = e.LineNumber()
+	locationHistory.Set(absFilename, e.LineNumber())
 
 	// Save the location history and return the error, if any
 	return locationHistory.Save(locationHistoryFilename)
