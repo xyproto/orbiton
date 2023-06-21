@@ -18,8 +18,6 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-var afterLoad []func()
-
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
 	detectedTabs       *bool           // were tab or space indentations detected when loading the data?
@@ -370,15 +368,6 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (st
 
 	// Mark the data as "not changed", since this happens when starting the editor
 	e.changed = false
-
-	// Start the global afterLoad functions in the background, but only once
-	if afterLoad != nil {
-		for _, f := range afterLoad {
-			go f()
-		}
-		// Done
-		afterLoad = nil
-	}
 
 	return message, nil
 }
