@@ -23,7 +23,7 @@ import (
 var fileLock = NewLockKeeper(defaultLockFile)
 
 // The maximum number of times to display the help text when ctrl-g is pressed
-const maxHelpMessages = 1
+const maxHelpMessages = 0
 
 // Loop will set up and run the main loop of the editor
 // a *vt100.TTY struct
