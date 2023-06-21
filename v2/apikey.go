@@ -35,12 +35,6 @@ func NewKeyHolder() *KeyHolder {
 // and takes an initial key string. Will always return a struct, never nil.
 func NewKeyHolderWithKey(key string) *KeyHolder {
 	var kh KeyHolder
-
-	// TODO: This check should not be needed if the order of which variables are initialized first is clear
-	if userCacheDir == "" {
-		userCacheDir = env.Dir("XDG_CACHE_HOME", "~/.cache")
-	}
-
 	kh.Filename = filepath.Join(userCacheDir, "o", "openai_key.txt") // just for caching the key, if it's entered via the menu
 	kh.Key = key
 	return &kh
