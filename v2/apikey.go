@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,34 +9,68 @@ import (
 	"github.com/xyproto/env/v2"
 )
 
-var (
-	openAIKeyFilename = filepath.Join(userCacheDir, "o", "openai_key.txt") // just for caching the key, if it's entered via the menu
-	openAIKey         = env.StrAlt("OPENAI_API_KEY", "OPENAI_KEY", env.Str("CHATGPT_API_KEY"))
-)
+// KeyHolder holds an API key and a cache filename
+type KeyHolder struct {
+	Key      string
+	Filename string
+}
 
-func init() {
-	// Delay checking if the OpenAI API Key file is there until after the main file has been read
-	afterLoad = append(afterLoad, func() {
-		if openAIKey == "" {
-			openAIKey = ReadAPIKey()
+var openAIKeyHolder = NewKeyHolder()
+
+// NewKeyHolder creates a new struct for storing the OpenAI API Key + a key cache filename
+// Can return nil if the key ends up being empty!
+// Use NewKeyHolderWithKey instead to allow empty keys and never return nil.
+func NewKeyHolder() *KeyHolder {
+	key := env.StrAlt("OPENAI_API_KEY", "OPENAI_KEY", env.Str("CHATGPT_API_KEY"))
+	kh := NewKeyHolderWithKey(key)
+	if kh.Key == "" {
+		if !kh.ReadAPIKey() {
+			return nil // !
 		}
-	})
+	}
+	return kh
+}
+
+// NewKeyHolderWithKey creates a new struct for storing the OpenAI API Key + a key cache filename,
+// and takes an initial key string. Will always return a struct, never nil.
+func NewKeyHolderWithKey(key string) *KeyHolder {
+	var kh KeyHolder
+
+	// TODO: This check should not be needed if the order of which variables are initialized first is clear
+	if userCacheDir == "" {
+		userCacheDir = env.Dir("XDG_CACHE_HOME", "~/.cache")
+	}
+
+	kh.Filename = filepath.Join(userCacheDir, "o", "openai_key.txt") // just for caching the key, if it's entered via the menu
+	kh.Key = key
+	return &kh
 }
 
 // ReadAPIKey tries to read the Open AI API Key from file.
 // An empty string is returned if the file could not be read.
-func ReadAPIKey() string {
-	data, err := os.ReadFile(openAIKeyFilename)
-	if err != nil {
-		return ""
+// Return true if a key is exists, or false if the key is empty.
+func (kh *KeyHolder) ReadAPIKey() bool {
+	if kh.Filename == "" {
+		return kh.Key != ""
 	}
-	return strings.TrimSpace(string(data))
+	data, err := os.ReadFile(kh.Filename)
+	if err != nil {
+		return kh.Key != ""
+	}
+	kh.Key = strings.TrimSpace(string(data))
+	return kh.Key != ""
 }
 
 // WriteAPIKey writes the given OpenAI API key to file
-func WriteAPIKey(apiKey string) error {
+func (kh *KeyHolder) WriteAPIKey() error {
 	if noWriteToCache {
 		return nil
 	}
-	return os.WriteFile(openAIKeyFilename, []byte(apiKey+"\n"), 0o600)
+	if kh.Key == "" {
+		return errors.New("no API Key to write")
+	}
+	if kh.Filename == "" {
+		return errors.New("no API filename to write to")
+	}
+	return os.WriteFile(kh.Filename, []byte(kh.Key+"\n"), 0o600)
 }

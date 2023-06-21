@@ -162,14 +162,14 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	})
 
 	// Enter ChatGPT API key, if it's not already set
-	if openAIKey == "" {
+	if openAIKeyHolder == nil {
 		actions.Add("Enter ChatGPT API key...", func() {
 			if enteredAPIKey, ok := e.UserInput(c, tty, status, "API key from https://platform.openai.com/account/api-keys", []string{}, false); ok {
-				openAIKey = enteredAPIKey
+				openAIKeyHolder = NewKeyHolderWithKey(enteredAPIKey)
 				// env.Set("CHATGPT_API_KEY", enteredAPIKey)
 				status.SetMessageAfterRedraw("Using API key " + enteredAPIKey)
 				// Write the OpenAI API Key to a file in the cache directory as well, but ignore errors
-				_ = WriteAPIKey(openAIKey)
+				_ = openAIKeyHolder.WriteAPIKey()
 			}
 		})
 	}
@@ -304,7 +304,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	}
 
 	// Fix as you type mode, on/off
-	if openAIKey != "" { // has AI
+	if openAIKeyHolder != nil { // has AI
 		if e.fixAsYouType {
 			actions.Add("Fix as you type [turn off]", func() {
 				e.fixAsYouType = false

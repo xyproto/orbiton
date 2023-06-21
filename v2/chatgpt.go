@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -43,8 +44,11 @@ func (e *Editor) AddSpaceAfterComments(generatedLine string) string {
 
 // GenerateTokens uses the ChatGTP API to generate text. n is the maximum number of tokens.
 // The global atomic Bool "ContinueGeneratingTokens" controls when the text generation should stop.
-func (e *Editor) GenerateTokens(apiKey, prompt string, n int, temperature float32, model string, newToken func(string)) error {
-	client := gpt3.NewClient(apiKey)
+func (e *Editor) GenerateTokens(keyHolder *KeyHolder, prompt string, n int, temperature float32, model string, newToken func(string)) error {
+	if keyHolder == nil {
+		return errors.New("no API key")
+	}
+	client := gpt3.NewClient(keyHolder.Key)
 	chatContext, cancelFunction := context.WithCancel(context.Background())
 	defer cancelFunction()
 	err := client.CompletionStreamWithEngine(
@@ -111,7 +115,7 @@ func (e *Editor) FixLine(c *vt100.Canvas, status *StatusBar, lineIndex LineIndex
 	)
 
 	fixLineMut.Lock()
-	if err := e.GenerateTokens(openAIKey, prompt, maxTokens, temperature, gptModel, func(word string) {
+	if err := e.GenerateTokens(openAIKeyHolder, prompt, maxTokens, temperature, gptModel, func(word string) {
 		generatedLine = strings.TrimSpace(generatedLine) + word
 		newTrimmedContents = e.AddSpaceAfterComments(generatedLine)
 		newContents = currentLeadingWhitespace + newTrimmedContents
@@ -141,7 +145,7 @@ func (e *Editor) FixLine(c *vt100.Canvas, status *StatusBar, lineIndex LineIndex
 
 // FixCodeOrText tries to fix the current line
 func (e *Editor) FixCodeOrText(c *vt100.Canvas, status *StatusBar, disableFixAsYouTypeOnError bool) {
-	if openAIKey == "" {
+	if openAIKeyHolder == nil {
 		status.SetErrorMessage("ChatGPT API key is empty")
 		status.Show(c, e)
 		if disableFixAsYouTypeOnError {
@@ -154,7 +158,7 @@ func (e *Editor) FixCodeOrText(c *vt100.Canvas, status *StatusBar, disableFixAsY
 
 // GenerateCodeOrText will try to generate and insert text at the corrent position in the editor, given a ChatGPT prompt
 func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark *Position) {
-	if openAIKey == "" {
+	if openAIKeyHolder == nil {
 		status.SetErrorMessage("ChatGPT API key is empty")
 		status.Show(c, e)
 		return
@@ -247,7 +251,7 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 		e.generatingTokens = true // global
 		first := true
 		var generatedLine string
-		if err := e.GenerateTokens(openAIKey, prompt, maxTokens, temperature, gptModel, func(word string) {
+		if err := e.GenerateTokens(openAIKeyHolder, prompt, maxTokens, temperature, gptModel, func(word string) {
 			generatedLine += word
 			if strings.HasSuffix(generatedLine, "\n") {
 				newContents := currentLeadingWhitespace + e.AddSpaceAfterComments(generatedLine)

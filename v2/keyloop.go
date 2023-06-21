@@ -305,9 +305,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				if e.EmptyLine() {
 					e.InsertStringAndMove(c, "| | |\n|-|-|\n| | |\n")
 					e.Up(c, status)
-					if !e.InTable() {
-						panic("you are a frog")
-					}
+					//if !e.InTable() {
+					//panic("internal error: not in a table")
+					//}
 				}
 				undo.Snapshot(e)
 				e.GoToStartOfTextLine(c)
@@ -912,13 +912,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// De-indent the current line before moving on to the next
 				e.SetCurrentLine(trimmedLine)
 				leadingWhitespace = currentLeadingWhitespace
-			} else if e.fixAsYouType && openAIKey != "" && !alreadyUsedAI {
+			} else if e.fixAsYouType && openAIKeyHolder != nil && !alreadyUsedAI {
 				// Fix the code and grammar of the written line, using AI
 				const disableFixAsYouTypeOnError = true
 				e.FixCodeOrText(c, status, disableFixAsYouTypeOnError)
 				alreadyUsedAI = true
 				goto RETURN_PRESSED_AI_DONE
-			} else if shouldUseAI && openAIKey != "" {
+			} else if shouldUseAI && openAIKeyHolder != nil {
 				// Generate code or text, using AI
 				e.GenerateCodeOrText(c, status, bookmark)
 				break
