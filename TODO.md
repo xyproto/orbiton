@@ -17,6 +17,7 @@
 - [ ] HTTP client - scratch document style
 - [ ] Add support for emojis.
 - [ ] Go through this file and remove all completed TODO items.
+- [ ] Also timestamp the search history so that it can be cropped when it grows too long.
 
 ## Markdown
 
