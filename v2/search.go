@@ -474,6 +474,10 @@ func SaveSearchHistory(filename string, list []string) error {
 		return nil
 	}
 
+	if noWriteToCache {
+		return nil
+	}
+
 	// First create the folder, if needed, in a best effort attempt
 	folderPath := filepath.Dir(filename)
 	os.MkdirAll(folderPath, os.ModePerm)

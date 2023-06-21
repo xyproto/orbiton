@@ -684,6 +684,9 @@ func (g *Gobbler) Resize(c *vt100.Canvas) {
 // creating a new file if needed and overwriting the existing highscore
 // if it's already there.
 func saveHighScore(highScore uint) error {
+	if noWriteToCache {
+		return nil
+	}
 	// First create the folders, if needed
 	folderPath := filepath.Dir(highScoreFile)
 	os.MkdirAll(folderPath, os.ModePerm)

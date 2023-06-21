@@ -17,10 +17,8 @@ import (
 
 var (
 	errNoSuitableBuildCommand = errors.New("no suitable build command")
-	kokaBuildDir              = filepath.Join(userCacheDir, "o", "koka")
-	pyCachePrefix             = filepath.Join(userCacheDir, "o", "python")
-	zigCacheDir               = filepath.Join(userCacheDir, "o", "zig")
-	pandocMutex               sync.RWMutex
+
+	pandocMutex sync.RWMutex
 )
 
 // exeName tries to find a suitable name for the executable, given a source filename
@@ -107,7 +105,16 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		exeFirstName   = e.exeName(sourceFilename, false)
 		exeFilename    = filepath.Join(sourceDir, exeFirstName)
 		jarFilename    = exeFirstName + ".jar"
+		kokaBuildDir   = filepath.Join(userCacheDir, "o", "koka")
+		pyCachePrefix  = filepath.Join(userCacheDir, "o", "python")
+		zigCacheDir    = filepath.Join(userCacheDir, "o", "zig")
 	)
+
+	if noWriteToCache {
+		kokaBuildDir = filepath.Join(sourceDir, "o", "koka")
+		pyCachePrefix = filepath.Join(sourceDir, "o", "python")
+		zigCacheDir = filepath.Join(sourceDir, "o", "zig")
+	}
 
 	exeExists := func() (bool, string) {
 		return exists(filepath.Join(sourceDir, exeFirstName)), exeFirstName

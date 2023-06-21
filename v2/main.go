@@ -20,6 +20,9 @@ const versionString = "Orbiton 2.62.3"
 // quitMut disallows Exit(1) while a file is being saved
 var quitMut sync.Mutex
 
+// avoid writing to ~/.cache ?
+var noWriteToCache bool
+
 func main() {
 	var (
 		copyFlag       = flag.Bool("c", false, "copy a file into the clipboard and quit")
@@ -27,6 +30,7 @@ func main() {
 		helpFlag       = flag.Bool("help", false, "quick overview of hotkeys and flags")
 		pasteFlag      = flag.Bool("p", false, "paste the clipboard into the file and quit")
 		clearLocksFlag = flag.Bool("r", false, "clear all file locks")
+		noCacheFlag    = flag.Bool("n", false, "don't write anything to "+userCacheDir)
 		versionFlag    = flag.Bool("version", false, "version information")
 	)
 
@@ -86,6 +90,7 @@ Flags:
   -c FILENAME                - just copy a file into the clipboard
   -p FILENAME                - just paste the contents of the clipboard into a file
   -f                         - force, ignore file locks or combine with -p to overwrite files
+  -n                         - avoid writing to ~/.cache/o
   --version                  - show the current version
 
 See the man page for more information.
@@ -93,6 +98,8 @@ See the man page for more information.
 `)
 		return
 	}
+
+	noWriteToCache = *noCacheFlag
 
 	// If the -p flag is given, just paste the clipboard to the given filename and exit
 	if filename := flag.Arg(0); filename != "" && *pasteFlag {
@@ -142,8 +149,9 @@ See the man page for more information.
 		return
 	}
 
-	// If the -r flag is given, clear all file locks and exit
+	// If the -r flag is given, clear all file locks and exit.
 	if *clearLocksFlag {
+		// If the -n flag is also given (to avoid writing to ~/.cache), then ignore it.
 		if err := os.Remove(defaultLockFile); err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		} else {

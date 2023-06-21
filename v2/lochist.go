@@ -18,10 +18,10 @@ const maxLocationHistoryEntries = 1024
 
 var (
 	locationHistory              LocationHistory // per absolute filename, for jumping to the last used line when opening a file
-	vimLocationHistoryFilename   = env.ExpandUser("~/.viminfo")
-	emacsLocationHistoryFilename = env.ExpandUser("~/.emacs.d/places")
 	userCacheDir                 = env.Dir("XDG_CACHE_HOME", "~/.cache")
 	locationHistoryFilename      = filepath.Join(userCacheDir, "o", "locations.txt")
+	vimLocationHistoryFilename   = env.ExpandUser("~/.viminfo")
+	emacsLocationHistoryFilename = env.ExpandUser("~/.emacs.d/places")
 	nvimLocationHistoryFilename  = filepath.Join(env.Dir("XDG_DATA_HOME", "~/.local/share"), "nvim", "shada", "main.shada")
 )
 
@@ -66,6 +66,9 @@ func (locationHistory LocationHistory) SetWithTimestamp(path string, ln LineNumb
 
 // Save will attempt to save the per-absolute-filename recording of which line is active
 func (locationHistory LocationHistory) Save(path string) error {
+	if noWriteToCache {
+		return nil
+	}
 	// First create the folder, if needed, in a best effort attempt
 	folderPath := filepath.Dir(path)
 	os.MkdirAll(folderPath, os.ModePerm)

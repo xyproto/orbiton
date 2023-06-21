@@ -54,7 +54,9 @@ func (e *Editor) DebugActivateBreakpoint(sourceBaseFilename string) (string, err
 // DebugStart will start a new debug session, using gdb.
 // Will end the existing session first if e.gdb != nil.
 func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilename string, doneFunc func()) (string, error) {
-	flogf(gdbLogFile, "[gdb] dir %s, src %s, exe %s\n", sourceDir, sourceBaseFilename, executableBaseFilename)
+	if !noWriteToCache {
+		flogf(gdbLogFile, "[gdb] dir %s, src %s, exe %s\n", sourceDir, sourceBaseFilename, executableBaseFilename)
+	}
 
 	// End any existing sessions
 	e.DebugEnd()
@@ -83,7 +85,9 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 				if payloadMap, ok := payload.(map[string]interface{}); ok {
 					if frame, ok := payloadMap["frame"]; ok {
 						if frameMap, ok := frame.(map[string]interface{}); ok {
-							flogf(gdbLogFile, "[gdb] frame: %v\n", frameMap)
+							if !noWriteToCache {
+								flogf(gdbLogFile, "[gdb] frame: %v\n", frameMap)
+							}
 							if lineNumberString, ok := frameMap["line"].(string); ok {
 								if lineNumber, err := strconv.Atoi(lineNumberString); err == nil { // success
 									// TODO: Fetch a different line number?

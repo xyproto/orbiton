@@ -519,6 +519,7 @@ This also means that filenames containing `+` or `:`, and then followed by a num
 * `-f` can be used to open a file, regardless of if there are any locks. It can also be used for overwriting files together with `-p`.
 * `-c FILENAME` can be used to copy the contents of the given file to the clipboard and then exit.
 * `-p FILENAME` can be used to paste the contents of the clipboard to the given `FILENAME` (if it does not already exist) and then exit.
+* `-n` can be used to avoid writing lockfiles, build files, location history, search history and the game highscore to `$XDG_CACHE_DIR/cache/o` or `~/.cache/o`. Not recommended.
 * `--help` can be used to get a quick overview of the supported keybindings.
 * `--version` will print the current version and then exit.
 

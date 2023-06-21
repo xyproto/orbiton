@@ -549,6 +549,10 @@ func getCommand(cmd *exec.Cmd) string {
 
 // Save the command to a temporary file, given an exec.Cmd struct
 func saveCommand(cmd *exec.Cmd) error {
+	if noWriteToCache {
+		return nil
+	}
+
 	p := lastCommandFile
 
 	// First create the folder for the lock file overview, if needed

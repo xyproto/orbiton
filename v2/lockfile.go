@@ -49,6 +49,10 @@ func (lk *LockKeeper) Load() error {
 
 // Save writes the contents of the main lockfile
 func (lk *LockKeeper) Save() error {
+	if noWriteToCache {
+		return nil
+	}
+
 	// First create the folder for the lock file overview, if needed
 	folderPath := filepath.Dir(lk.lockFilename)
 	os.MkdirAll(folderPath, os.ModePerm)

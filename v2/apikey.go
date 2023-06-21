@@ -34,5 +34,8 @@ func ReadAPIKey() string {
 
 // WriteAPIKey writes the given OpenAI API key to file
 func WriteAPIKey(apiKey string) error {
+	if noWriteToCache {
+		return nil
+	}
 	return os.WriteFile(openAIKeyFilename, []byte(apiKey+"\n"), 0o600)
 }
