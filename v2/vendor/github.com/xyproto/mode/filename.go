@@ -195,10 +195,6 @@ func Detect(filename string) Mode {
 		}
 	}
 
-	if mode == Text {
-		mode = Markdown
-	}
-
 	// If the mode is not set, and there is no extensions
 	if mode == Blank && !strings.Contains(baseFilename, ".") {
 		if baseFilename == strings.ToUpper(baseFilename) {

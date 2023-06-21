@@ -86,7 +86,7 @@ github.com/xyproto/guessica
 # github.com/xyproto/iferr v1.1.0
 ## explicit; go 1.19
 github.com/xyproto/iferr
-# github.com/xyproto/mode v0.6.22
+# github.com/xyproto/mode v0.6.23
 ## explicit; go 1.14
 github.com/xyproto/mode
 # github.com/xyproto/palgen v1.4.0
