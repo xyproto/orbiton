@@ -98,7 +98,7 @@ These features are unique to `o`, as far as I am aware:
 * If the loaded file is read-only, all text will be red by default.
 * Smart cursor movement, trying to maintain the X position when moving up and down, across short and long lines.
 * Press `ctrl-v` once to paste one line, press `ctrl-v` again to paste the rest.
-* Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy the rest (until a blank line).
+* Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy a block of lines (until a blank line).
 * Open or close a portal with `ctrl-r`. When a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
 * Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages.
 * Cycle git rebase keywords with `ctrl-w` or `ctrl-r`, when an interactive git rebase session is in progress.
