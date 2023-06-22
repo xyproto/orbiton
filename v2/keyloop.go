@@ -22,9 +22,6 @@ import (
 // Create a LockKeeper for keeping track of which files are being edited
 var fileLock = NewLockKeeper(defaultLockFile)
 
-// The maximum number of times to display the help text when ctrl-g is pressed
-const maxHelpMessages = 0
-
 // Loop will set up and run the main loop of the editor
 // a *vt100.TTY struct
 // fnord contains either data or a filename to open
@@ -59,7 +56,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		key              string            // for the main loop
 		jsonFormatToggle bool              // for toggling indentation or not when pressing ctrl-w for JSON
 
-		helpCounter                int // the number of times the help text has been displayed
 		markdownTableEditorCounter int // the number of times the Markdown table editor has been displayed
 		jumpMode                   bool
 	)
@@ -1387,36 +1383,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// TODO: Make this block of code less if-else-y, and fewer levels deep
 
 			canGoToDefinition := e.FuncPrefix() != ""
-			if canGoToDefinition {
-				if !e.GoToDefinition(c, status) {
-					if helpCounter < maxHelpMessages {
-						helpCounter++
-						e.HelpMessage(c, status)
-					} else {
-						// If the definition cold not be found,
-						// or if max help messages has been reached:
-						// toggle the status line at the bottom.
-						status.ClearAll(c)
-						e.statusMode = !e.statusMode
-						if e.statusMode {
-							status.ShowLineColWordCount(c, e, e.filename)
-						}
-					}
-				} else {
-					// Don't show the help message any more after a successful jump to definition
-					helpCounter += maxHelpMessages
-				}
-			} else {
-				if helpCounter < maxHelpMessages {
-					helpCounter++
-					e.HelpMessage(c, status)
-				} else {
-					// Toggle the status line at the bottom
-					status.ClearAll(c)
-					e.statusMode = !e.statusMode
-					if e.statusMode {
-						status.ShowLineColWordCount(c, e, e.filename)
-					}
+			if !canGoToDefinition || !e.GoToDefinition(c, status) {
+				// If the definition could not be found,
+				// or if max help messages has been reached:
+				// toggle the status line at the bottom.
+				status.ClearAll(c)
+				e.statusMode = !e.statusMode
+				if e.statusMode {
+					status.ShowLineColWordCount(c, e, e.filename)
 				}
 			}
 		case "c:21", "c:26": // ctrl-u or ctrl-z (ctrl-z may background the application)
