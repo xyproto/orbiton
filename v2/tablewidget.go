@@ -219,7 +219,7 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 			var w uint
 
 			// Plot the quick help
-			helpString = "Quick help:"
+			helpString = "Getting started"
 			indexX = uint(tw.marginLeft)
 			for _, r := range helpString {
 				//c.Write(0, indexY, tw.textColor, tw.bgColor, spaces)
