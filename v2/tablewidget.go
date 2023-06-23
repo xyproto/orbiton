@@ -219,7 +219,7 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 			var w uint
 
 			// Plot the quick help
-			helpString = "Getting started"
+			helpString = "Quick instructions"
 			indexX = uint(tw.marginLeft)
 			for _, r := range helpString {
 				//c.Write(0, indexY, tw.textColor, tw.bgColor, spaces)
@@ -247,7 +247,7 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 
 			indexY++
 
-			helpString = "Move with tab and the arrow keys. Add and remove column with ctrl-n and ctrl-p."
+			helpString = "Move with tab and the arrow keys. Add and remove columns with ctrl-n and ctrl-p."
 			indexX = uint(tw.marginLeft)
 			for _, r := range helpString {
 				//c.Write(0, indexY, tw.textColor, tw.bgColor, spaces)
