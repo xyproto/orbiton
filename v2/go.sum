@@ -360,8 +360,9 @@ github.com/xyproto/iferr v1.1.0/go.mod h1:En+YVd+aRA+/q3LKqQ+EmsmbWKdgzBwUPE5C4b
 github.com/xyproto/mode v0.6.18/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/mode v0.6.23 h1:7FFUyeuEbnwivf0s4VGJdiuafnl+N6a/JWcS3t0CO3k=
 github.com/xyproto/mode v0.6.23/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
-github.com/xyproto/palgen v1.4.0 h1:k6TO9ikckZn3XWnxin0tRW8a7KdVNC487kU7Pld5P7g=
 github.com/xyproto/palgen v1.4.0/go.mod h1:xDqh3gxecNHpQCB78xETKH5EBlzPYim7NxZ294BEC50=
+github.com/xyproto/palgen v1.5.0 h1:JIU39lMxk2Nad1V5hrCUmH8b15R9EdwNTsAzkiII0vU=
+github.com/xyproto/palgen v1.5.0/go.mod h1:IN7HA45EecW7BTEzkJzaSZljyQdjzNp5kdUQ4gpu0T8=
 github.com/xyproto/stringpainter v1.0.0 h1:fw86p5y+PQ/TnzN/u56iEwRPHChcaDGUSaZQVA9I5xA=
 github.com/xyproto/stringpainter v1.0.0/go.mod h1:Uz/9PJmEJ2efkJDdCSg6Zt0iu/pmJ45rCfbqLShSOfs=
 github.com/xyproto/syntax v1.10.9 h1:rZ6rlD/4odMgeSV/wDbwr9Vllcs3R8shrwEBsQSH3UY=

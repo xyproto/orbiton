@@ -42,7 +42,7 @@ require (
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
 	github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
-	github.com/xyproto/palgen v1.4.0 // indirect
+	github.com/xyproto/palgen v1.5.0 // indirect
 	golang.org/x/net v0.11.0 // indirect
 	golang.org/x/sys v0.9.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

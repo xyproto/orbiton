@@ -35,3 +35,5 @@ internal/burn/burn.gpl
 internal/general/burn.gpl
 internal/plan9/plan9.gpl
 internal/websafe/websafe.gpl
+
+.DS_Store

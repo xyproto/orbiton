@@ -93,6 +93,10 @@ func Generate(img image.Image, N int) (color.Palette, error) {
 	groups := make(map[int][]color.Color)
 	already := make(map[color.Color]bool)
 
+	numberOfPixels := (img.Bounds().Max.Y - img.Bounds().Min.Y) * (img.Bounds().Max.X - img.Bounds().Min.X)
+	levelCounter := make(map[int]float64, numberOfPixels)
+	colorCounter := make(map[color.RGBA]float64, numberOfPixels)
+
 	// Pick out the colors from the image, per intensity level, and store them in the groups map
 	for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
 		for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
@@ -105,6 +109,19 @@ func Generate(img image.Image, N int) (color.Palette, error) {
 				groups[level] = append(groups[level], rgba)
 				already[rgba] = true
 			}
+			// Count the different levels used
+			if counter, ok := levelCounter[level]; ok {
+				levelCounter[level] = counter + 1.0
+			} else {
+				levelCounter[level] = 1.0
+			}
+			// Count the different colors used
+			if counter, ok := colorCounter[rgba]; ok {
+				colorCounter[rgba] = counter + 1.0
+			} else {
+				colorCounter[rgba] = 1.0
+			}
+
 		}
 	}
 
@@ -112,6 +129,22 @@ func Generate(img image.Image, N int) (color.Palette, error) {
 	already = make(map[color.Color]bool)
 	already2 := make(map[color.Color]bool)
 	var extrapal color.Palette
+
+	// Remove the group of colors with the least used intensity level
+	minCoverage := 1.0
+	minCoverageKey := 0
+	found := false
+	for intensityLevelKey := range groups {
+		coverage := levelCounter[intensityLevelKey] / float64(numberOfPixels)
+		if coverage < minCoverage {
+			minCoverage = coverage
+			minCoverageKey = intensityLevelKey
+			found = true
+		}
+	}
+	if found {
+		delete(groups, minCoverageKey)
+	}
 
 	// Find the median color for each intensity level
 	var pal color.Palette
@@ -141,17 +174,37 @@ func Generate(img image.Image, N int) (color.Palette, error) {
 		}
 	}
 
-	// If there are not enough colors in the generated palette, add colors from extrapal
-	for (len(pal) < N) && (len(extrapal) > 1) {
+	// If there are not enough colors in the generated palette (N+1, because we will remove one), add colors from extrapal
+	for (len(pal) < (N + 1)) && (len(extrapal) > 0) {
 		// pop a color from the end of extrapal
 		lastIndex := len(extrapal) - 1
 		c := extrapal[lastIndex]
-		extrapal = extrapal[:lastIndex-1]
+		extrapal = extrapal[:lastIndex]
 		// Add the color to the palette, if it's not already there
 		alreadyColor, ok := already[c]
 		if !alreadyColor || !ok {
 			pal = append(pal, c)
 			already[c] = true
+		}
+	}
+
+	// Now remove the one extra color that covers the least amount of pixels of the image that has been converted to the current palette
+	if len(pal) > N {
+		minCoverage := 1.0
+		minCoverageIndex := -1
+		for i := 0; i < len(pal); i++ {
+			c := color.RGBAModel.Convert(pal[i]).(color.RGBA)
+			coverage := colorCounter[c] / float64(numberOfPixels)
+			if coverage < minCoverage {
+				minCoverage = coverage
+				minCoverageIndex = i
+			}
+		}
+		if minCoverageIndex != -1 {
+			// Replace i with the last element
+			pal[minCoverageIndex] = pal[len(pal)-1]
+			// Remove the last element
+			pal = pal[:len(pal)-1]
 		}
 	}
 
@@ -164,6 +217,10 @@ func GenerateUpTo(img image.Image, N int) (color.Palette, error) {
 	groups := make(map[int][]color.Color)
 	already := make(map[color.Color]bool)
 
+	numberOfPixels := (img.Bounds().Max.Y - img.Bounds().Min.Y) * (img.Bounds().Max.X - img.Bounds().Min.X)
+	levelCounter := make(map[int]float64, numberOfPixels)
+	colorCounter := make(map[color.RGBA]float64, numberOfPixels)
+
 	// Pick out the colors from the image, per intensity level, and store them in the groups map
 	for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
 		for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
@@ -176,20 +233,46 @@ func GenerateUpTo(img image.Image, N int) (color.Palette, error) {
 				groups[level] = append(groups[level], rgba)
 				already[rgba] = true
 			}
+			// Count the different levels used
+			if counter, ok := levelCounter[level]; ok {
+				levelCounter[level] = counter + 1.0
+			} else {
+				levelCounter[level] = 1.0
+			}
+			// Count the different colors used
+			if counter, ok := colorCounter[rgba]; ok {
+				colorCounter[rgba] = counter + 1.0
+			} else {
+				colorCounter[rgba] = 1.0
+			}
 		}
+	}
+
+	// Remove the group of colors with the least used intensity level
+	minCoverage := 1.0
+	minCoverageKey := 0
+	found := false
+	for intensityLevelKey := range groups {
+		coverage := levelCounter[intensityLevelKey] / float64(numberOfPixels)
+		if coverage < minCoverage {
+			minCoverage = coverage
+			minCoverageKey = intensityLevelKey
+			found = true
+		}
+	}
+	if found {
+		delete(groups, minCoverageKey)
 	}
 
 	// Reset the map for if colors are already appended to a slice
 	already = make(map[color.Color]bool)
-	already2 := make(map[color.Color]bool)
-	var extrapal color.Palette
 
 	// Find the median color for each intensity level
 	var pal color.Palette
 	for _, colors := range groups {
 		// Find the median color of a group of colors of a certain intensity
 		//medianColor, err := Median(colors)
-		medianColor1, medianColor2, medianColor3, err := Median3(colors)
+		medianColor1, _, _, err := Median3(colors)
 		if err != nil {
 			return nil, err
 		}
@@ -198,17 +281,6 @@ func GenerateUpTo(img image.Image, N int) (color.Palette, error) {
 		if !alreadyColor || !ok {
 			pal = append(pal, medianColor1)
 			already[medianColor1] = true
-		}
-		// Add medianColor2 and medianColor3 to the extra palette, if they are not already in it
-		alreadyColor2, ok := already2[medianColor2]
-		if !alreadyColor2 || !ok {
-			extrapal = append(extrapal, medianColor2)
-			already2[medianColor2] = true
-		}
-		alreadyColor2, ok = already2[medianColor3]
-		if !alreadyColor2 || !ok {
-			extrapal = append(extrapal, medianColor3)
-			already2[medianColor3] = true
 		}
 	}
 
