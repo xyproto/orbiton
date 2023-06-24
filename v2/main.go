@@ -23,6 +23,8 @@ var quitMut sync.Mutex
 // avoid writing to ~/.cache ?
 var noWriteToCache bool
 
+var cacheDirForDoc = shortPath(filepath.Join(userCacheDir, "o"))
+
 func main() {
 	var (
 		copyFlag       = flag.Bool("c", false, "copy a file into the clipboard and quit")
@@ -30,7 +32,7 @@ func main() {
 		helpFlag       = flag.Bool("help", false, "quick overview of hotkeys and flags")
 		pasteFlag      = flag.Bool("p", false, "paste the clipboard into the file and quit")
 		clearLocksFlag = flag.Bool("r", false, "clear all file locks")
-		noCacheFlag    = flag.Bool("n", false, "don't write anything to "+userCacheDir)
+		noCacheFlag    = flag.Bool("n", false, "don't write anything to "+cacheDirForDoc)
 		versionFlag    = flag.Bool("version", false, "version information")
 	)
 
@@ -90,7 +92,8 @@ Flags:
   -c FILENAME                - just copy a file into the clipboard
   -p FILENAME                - just paste the contents of the clipboard into a file
   -f                         - force, ignore file locks or combine with -p to overwrite files
-  -n                         - avoid writing to ~/.cache/o
+  -n                         - avoid writing the location history, search history, highscore,
+                               compilation and format command to ` + cacheDirForDoc + `
   --version                  - show the current version
 
 See the man page for more information.

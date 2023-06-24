@@ -401,3 +401,12 @@ func timestampedFilename(filename string) string {
 	hour, minute, second := now.Clock()
 	return fmt.Sprintf("%04d-%02d-%02dT%02d-%02d-%02d-%s", year, int(month), day, hour, minute, second, filename)
 }
+
+// replace the home directory with ~ in a given path
+func shortPath(path string) string {
+	homeDir, _ := os.UserHomeDir()
+	if strings.HasPrefix(path, homeDir) {
+		return strings.Replace(path, homeDir, "~", 1)
+	}
+	return path
+}
