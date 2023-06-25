@@ -2046,8 +2046,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			kh.Push(key)
 		}
 
-		// Display the ctrl-o menu if esc was pressed 5 times
-		if kh.Repeated("c:27", 5-1) { // 5 times, minus the one that was added just now
+		// Display the ctrl-o menu if esc was pressed 4 times
+		if kh.Repeated("c:27", 4-1) { // 4 times, minus the one that was added just now
 			status.ClearAll(c)
 			undo.Snapshot(e)
 			undoBackup := undo
