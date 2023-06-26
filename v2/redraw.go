@@ -63,6 +63,7 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines b
 		// TODO: Figure out why this helps doing a full redraw when o is used over ssh
 		// Go to the line we were at
 		e.ScrollUp(c, nil, e.pos.scrollSpeed)
+		e.DrawLines(c, true, true)
 		e.ScrollDown(c, nil, e.pos.scrollSpeed)
 		e.redraw = true
 		e.redrawCursor = true
