@@ -2,9 +2,11 @@
 
 ## General
 
+- [ ] Add support for inserting symbols by keywords, in the same way as in ViM.
+- [ ] Set a "go to definition" bookmark before jumping to a definition.
+- [ ] Let `ctrl-w` also format gzipped code, for instance when editing `main.cpp.gz`.
 - [ ] Do not remove indentation from JS code in HTML when `ctrl-w` is pressed.
       See also: https://github.com/yosssi/gohtml/issues/22
-- [ ] Set a "go to definition" bookmark before jumping to a definition.
 - [ ] Let `ctrl-g` go back after it has been used for jumping to a definition, if there is a "go to definition" bookmark available.
 - [ ] Recover from panic seamlessly, but show a status message and save the stacktrace to file.
 - [ ] When bookmarking, don't just bookmark the line/col, but also the filename.
