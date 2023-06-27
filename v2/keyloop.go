@@ -296,6 +296,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.redrawCursor = true
 
+			// Is there no corresponding header or source file?
+			noCorresponding := false
+		AGAIN_NO_CORRESPONDING:
+
 			// First check if we are editing Markdown and are in a Markdown table
 			if e.mode == mode.Markdown && (e.EmptyLine() || e.InTable()) {
 				if e.EmptyLine() {
@@ -317,7 +321,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.FullResetRedraw(c, status, drawLines)
 				e.redraw = true
 				e.redrawCursor = true
-			} else if (e.mode == mode.C || e.mode == mode.Cpp) && hasS([]string{".cpp", ".cc", ".c", ".cxx", ".c++"}, filepath.Ext(e.filename)) { // jump from source to header file
+			} else if !noCorresponding && (e.mode == mode.C || e.mode == mode.Cpp) && hasS([]string{".cpp", ".cc", ".c", ".cxx", ".c++"}, filepath.Ext(e.filename)) { // jump from source to header file
 				// If this is a C++ source file, try finding and opening the corresponding header file
 				// Check if there is a corresponding header file
 				if absFilename, err := e.AbsFilename(); err == nil { // no error
@@ -328,10 +332,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						break
 					}
 				}
-				status.ClearAll(c)
-				status.SetErrorMessage("No corresponding header file")
-				status.Show(c, e)
-			} else if (e.mode == mode.C || e.mode == mode.Cpp) && hasS([]string{".h", ".hpp", ".h++"}, filepath.Ext(e.filename)) { // jump from header to source file
+				noCorresponding = true
+				goto AGAIN_NO_CORRESPONDING
+			} else if !noCorresponding && (e.mode == mode.C || e.mode == mode.Cpp) && hasS([]string{".h", ".hpp", ".h++"}, filepath.Ext(e.filename)) { // jump from header to source file
 				// If this is a header file, present a menu option for open the corresponding source file
 				// Check if there is a corresponding header file
 				if absFilename, err := e.AbsFilename(); err == nil { // no error
@@ -342,9 +345,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						break
 					}
 				}
-				status.ClearAll(c)
-				status.SetErrorMessage("No corresponding source file")
-				status.Show(c, e)
+				noCorresponding = true
+				goto AGAIN_NO_CORRESPONDING
 			} else if e.mode == mode.Agda || e.mode == mode.Ivy { // insert symbol
 				var (
 					menuChoices    [][]string
