@@ -1,6 +1,6 @@
 ![Orbiton Logo](img/icon_128x128.png)
 
-![Build](https://github.com/xyproto/orbiton/workflows/Build/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/o)](https://goreportcard.com/report/github.com/xyproto/o) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/orbiton/main/LICENSE) [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
+![Build](https://github.com/xyproto/orbiton/workflows/Build/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/orbiton)](https://goreportcard.com/report/github.com/xyproto/orbiton) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/orbiton/main/LICENSE) [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
 Orbiton is a text editor and a minimalistic IDE.
 
@@ -33,7 +33,7 @@ Editing a C source file in `og` using the "synthwave" theme:
 
 ## Packaging status
 
-| **orbiton**                                                                                                                    | **o-editor**                                                                                                                     |                                                                                                             
+| **orbiton**                                                                                                                    | **o-editor**                                                                                                                     |
 |--------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | [![Packaging status](https://repology.org/badge/vertical-allrepos/orbiton.svg)](https://repology.org/project/orbiton/versions) | [![Packaging status](https://repology.org/badge/vertical-allrepos/o-editor.svg)](https://repology.org/project/o-editor/versions) |
 
