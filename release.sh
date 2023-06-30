@@ -15,10 +15,12 @@ platforms="
   freebsd,arm64,,freebsd_aarch64_static,tar.gz
   freebsd,arm,6,freebsd_armv6_static,tar.gz
   freebsd,arm,7,freebsd_armv7_static,tar.gz
+  freebsd,386,,freebsd_i386_static,tar.gz
   netbsd,amd64,,netbsd_x86_64_static,tar.gz
   netbsd,arm64,,netbsd_aarch64_static,tar.gz
   netbsd,arm,6,netbsd_armv6_static,tar.gz
   netbsd,arm,7,netbsd_armv7_static,tar.gz
+  netbsd,386,,netbsd_i386_static,tar.gz
 "
 
 # plan9,amd64,,plan9_x86_64_static,tar.gz
