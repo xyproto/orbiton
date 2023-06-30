@@ -275,6 +275,12 @@ While in the Markdown table editor:
 * `ctrl-d` can be used to delete the current column (if all fields are empty).
 * `esc` or `ctrl-t` can be used to close the Markdown table editor.
 
+## Inserting a symbol
+
+* To insert a symbol, like `æ`, just press `ctrl-_` and type in `ae`. To insert `µ`, type in `My`.
+* These are the same digraphs as ViM uses.
+* For a full overview of digraphs, see [digraphs.txt](https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt).
+
 ## Code generation
 
 * Obtain an API key from [openai.com](https://platform.openai.com/account/api-keys) and set it as the `OPENAI_API_KEY`, `OPENAI_KEY` or `CHATGPT_API_KEY` environment variable.
