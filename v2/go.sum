@@ -348,6 +348,8 @@ github.com/xyproto/carveimg v1.4.0 h1:5Klvmos6o24Lpe68NUoFKu8yCkP24R2ZojB63O3+Xn
 github.com/xyproto/carveimg v1.4.0/go.mod h1:EKjAxiLhDQZAHCXwsedYuGZ/XD70E7J85xwus1DdqEk=
 github.com/xyproto/clip v0.3.2 h1:xhumLquc3kq1ChieQWHMQjmzECJuifO9SbLYuI0KjZA=
 github.com/xyproto/clip v0.3.2/go.mod h1:jVRcSiAIK6dadcIXPtOa9/wetlggtIGRiRIDOrU0sfU=
+github.com/xyproto/digraph v1.1.0 h1:3LuuXss4KZUCGBC+G+SfEgtM4rYQNg3oAmbbSKxX5qw=
+github.com/xyproto/digraph v1.1.0/go.mod h1:s7ijNNFO/sZaEwtIznvXjJCPZyqOkE87Y8EtGUd+lQA=
 github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
 github.com/xyproto/env v1.9.1 h1:RSWzKrNYEcK+Tvk2fu5eHYW5ENq19tYzbHLWfA7fx5s=
 github.com/xyproto/env v1.9.1/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
