@@ -192,7 +192,7 @@ See the man page for more information.
 
 	stdinFilename := len(os.Args) == 1 || (len(os.Args) == 2 && (os.Args[1] == "-" || os.Args[1] == "/dev/stdin"))
 	// If no regular filename is given, check if data is ready at stdin
-	fnord.stdin = (stdinFilename && dataReadyOnStdin()) || manIsParent()
+	fnord.stdin = stdinFilename && (dataReadyOnStdin() || manIsParent())
 	if fnord.stdin {
 		// TODO: Use a spinner?
 		data, err := io.ReadAll(os.Stdin)
