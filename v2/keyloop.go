@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	"github.com/atotto/clipboard"
+	"github.com/xyproto/digraph"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/iferr"
 	"github.com/xyproto/mode"
@@ -427,11 +428,24 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			undoBackup := undo
 			lastCommandMenuIndex = e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
 			undo = undoBackup
-		case "c:31": // ctrl-_, status mode
-			status.ClearAll(c)
-			e.statusMode = !e.statusMode
-			if e.statusMode {
-				status.ShowLineColWordCount(c, e, e.filename)
+		case "c:31": // ctrl-_, enter a digraph
+			// Ask the user to type in a digraph
+			if digraphString, ok := e.UserInput(c, tty, status, "Type in a 2-letter digraph", digraph.All(), false); ok {
+				if r, ok := digraph.Lookup(digraphString); !ok {
+					status.ClearAll(c)
+					status.SetErrorMessage("Could not find the " + digraphString + " digraph")
+					status.ShowNoTimeout(c, e)
+				} else {
+					undo.Snapshot(e)
+					// Insert the found rune
+					wrapped := e.InsertRune(c, r)
+					if !wrapped {
+						e.WriteRune(c)
+						// Move to the next position
+						e.Next(c)
+					}
+					e.redraw = true
+				}
 			}
 		case "←": // left arrow
 
@@ -838,6 +852,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.Next(c)
 			}
 			e.redraw = true
+
 		case "c:13": // return
 
 			// Scroll down if a man page is being viewed, or if the editor is read-only

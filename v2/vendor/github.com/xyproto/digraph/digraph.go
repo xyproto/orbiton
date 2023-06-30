@@ -15,10 +15,10 @@ var (
 //go:embed digraphs.txt
 var digraphs string
 
-func init() {
-	// Used to avoid memory allocations while filling the maps
-	const digraphsInDigraphFile = 1305
+// Used to avoid memory allocations while filling the maps, and for testing
+const digraphsInDigraphFile = 1305
 
+func init() {
 	digraphMap = make(map[string]rune, digraphsInDigraphFile)
 	descriptionMap = make(map[string]string, digraphsInDigraphFile)
 
@@ -67,4 +67,15 @@ func MustLookupDescription(digraph string) string {
 func LookupDescription(digraph string) (string, bool) {
 	description, ok := descriptionMap[digraph]
 	return description, ok
+}
+
+// All returns a string slice of all available digraphs
+func All() []string {
+	allDigraphs := make([]string, len(digraphMap))
+	i := 0
+	for k := range digraphMap {
+		allDigraphs[i] = k
+		i++
+	}
+	return allDigraphs
 }
