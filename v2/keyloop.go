@@ -965,9 +965,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						byteCount += len(e.Line(i))
 					}
 					// fetch a suitable "if err != nil" block for the current function signature
-					if generatedIfErrBlock, err := iferr.IfErr([]byte(contents), byteCount); err != nil {
-						logf("could not generate iferrblock: %s\n", err)
-					} else {
+					if generatedIfErrBlock, err := iferr.IfErr([]byte(contents), byteCount); err == nil { // success
 						ifErrBlock = generatedIfErrBlock
 					}
 				}
