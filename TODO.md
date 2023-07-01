@@ -2,7 +2,8 @@
 
 ## General
 
-- [ ] Add support for inserting ViM digraphs. See github.com/xyproto/digraphs.
+- [x] Add support for inserting ViM digraphs. See github.com/xyproto/digraphs.
+- [ ] If in man page mode, set the file as read-only and also let "q" quit.
 - [ ] Set a "go to definition" bookmark before jumping to a definition.
 - [ ] Let `ctrl-w` also format gzipped code, for instance when editing `main.cpp.gz`.
 - [ ] Do not remove indentation from JS code in HTML when `ctrl-w` is pressed.
