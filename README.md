@@ -14,6 +14,7 @@ It might be a good fit for:
 * Solving Advent of Code tasks.
 * Generate poetry with the help of ChatGPT, by prefixing a line in a plain text file with `!`.
 * Being placed on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in log, man page and image viewer, can be used as `EDITOR=o visudo` and has built-in support for editing and formatting `/etc/fstab` files.
+* Write X number of words in a distraction-free full-screen editor. Press `ctrl-g` to see the word count in the status bar.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
@@ -157,13 +158,13 @@ These features are unique to `o`, as far as I am aware:
 
 ## Known issues
 
-* Using `tmux` and resizing the terminal emulator window may trigger text rendering issues. Try pressing `esc` to redraw the text, or `ctrl-f` to search for text.
+* Using `tmux` and resizing the terminal emulator window may trigger text rendering issues. Try pressing `esc` to redraw the text, or `ctrl-f` to search for text. Setting `TERM` correctly might help.
 * For some terminal emulators, if `o` is busy performing an operation, pressing `ctrl-s` may lock the terminal. Some terminal emulators, like `konsole`, can be configured to turn off this behavior. Press `ctrl-q` to unlock the terminal again (together with the unfortunate risk of quitting `o`). To sidestep this issue, the `ctrl-o` menu can be used instead, for saving and quitting.
-* Some unicode runes may disrupt the text flow. This is generally not a problem for editing code and configuration files, but may be an issue when editing files that contains text in many languages, or emojis.
+* Some unicode runes may disrupt the text flow! This is generally not a problem for editing code and configuration files, but is an issue when editing files that contains text in many languages, or using emojis.
 * `o` may have issues with large files (of several MB+). For normal text files or source code files, this is a non-issue.
 * Middle-click pasting (instead of pasting with `ctrl-v`) will only paste the first character.
 * Pressing `cmd-v`, `cmd-x` and `cmd-c` on macOS only works when using the `og` GUI/VTE frontend. For `o`, `ctrl-v`, `ctrl-x` and `ctrl-c` can be used instead.
-* The Markdown table editor does not have scrolling, so the table must fit within the current terminal emulator width and height.
+* The Markdown table editor does not have scrolling, so the table must fit within the current terminal emulator width and height. Resize the terminal as needed.
 
 ## Hotkeys
 
