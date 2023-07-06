@@ -402,11 +402,20 @@ func timestampedFilename(filename string) string {
 	return fmt.Sprintf("%04d-%02d-%02dT%02d-%02d-%02d-%s", year, int(month), day, hour, minute, second, filename)
 }
 
-// replace the home directory with ~ in a given path
+// shortPath replaces the home directory with ~ in a given path
 func shortPath(path string) string {
 	homeDir, _ := os.UserHomeDir()
 	if strings.HasPrefix(path, homeDir) {
 		return strings.Replace(path, homeDir, "~", 1)
 	}
 	return path
+}
+
+// fileHas checks if the given file exists and contains the given string
+func fileHas(path, what string) bool {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+	return bytes.Contains(data, []byte(what))
 }
