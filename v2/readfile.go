@@ -24,11 +24,15 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 		}
 	}
 	e.binaryFile = binary.Data(data)
-	reader := bufio.NewReader(bytes.NewReader(data))
 
-	lines := make(map[int][]rune)
-	var index int
-	var tabIndentCounter int64
+	var (
+		reader           = bufio.NewReader(bytes.NewReader(data))
+		lines            = make(map[int][]rune)
+		index            int
+		tabIndentCounter int64
+		first            byte
+	)
+
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil && err != io.EOF {
@@ -43,7 +47,7 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 		} else {
 			line = opinionatedStringReplacer.Replace(line)
 			if len(line) > 2 {
-				var first byte = line[0]
+				first = line[0]
 				if first == '\t' {
 					tabIndentCounter++
 				} else if first == ' ' && line[1] == ' ' {
