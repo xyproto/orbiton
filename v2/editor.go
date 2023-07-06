@@ -179,14 +179,10 @@ func (e *Editor) Changed() bool {
 // Line returns the contents of line number N, counting from 0
 func (e *Editor) Line(n LineIndex) string {
 	line, ok := e.lines[int(n)]
-	if ok {
-		var sb strings.Builder
-		for _, r := range line {
-			sb.WriteRune(r)
-		}
-		return sb.String()
+	if !ok {
+		return ""
 	}
-	return ""
+	return string(line)
 }
 
 // ScreenLine returns the screen contents of line number N, counting from 0.
@@ -548,17 +544,17 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 // TrimRight will remove whitespace from the end of the given line number
 // Returns true if the line was trimmed
 func (e *Editor) TrimRight(index LineIndex) bool {
-	changed := false
 	n := int(index)
-	if line, ok := e.lines[n]; ok {
-		newRunes := []rune(strings.TrimRightFunc(string(line), unicode.IsSpace))
-		// TODO: Just compare lengths instead of contents?
-		if string(newRunes) != string(line) {
-			e.lines[n] = newRunes
-			changed = true
-		}
+	line, ok := e.lines[n]
+	if !ok {
+		return false
 	}
-	return changed
+	trimmedLine := []rune(strings.TrimRightFunc(string(line), unicode.IsSpace))
+	if len(trimmedLine) != len(line) {
+		e.lines[n] = trimmedLine
+		return true
+	}
+	return false
 }
 
 // TrimLeft will remove whitespace from the start of the given line number
