@@ -148,7 +148,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				// TODO: Check if just "fmt.Print" works here, for several terminal emulators
 				fmt.Println(screenLine)
 				lineRuneCount += uint(utf8.RuneCountInString(screenLine))
-				lineStringCount += uint(len(screenLine))
 			} else {
 				var (
 					// Color and unescape
@@ -520,7 +519,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			screenLine = e.ChopLine(line, int(cw))
 			c.Write(cx+lineRuneCount, cy+uint(y), e.Foreground, e.Background, screenLine)
 			lineRuneCount += uint(utf8.RuneCountInString(screenLine)) // rune count
-			lineStringCount += uint(len(screenLine))                  // string length, not rune length
 		}
 
 		// Fill the rest of the line on the canvas with "blanks"
