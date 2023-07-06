@@ -495,7 +495,7 @@ func (e *Editor) DebugChangedRegisterMap() (map[string]string, error) {
 					// If only the right half of ie. ax has changed, delete ax from the list
 					// But always keep al and ah
 
-					// TODO: Think this throught a bit better!
+					// TODO: Think this through a bit better!
 
 					filterRegisters := e.debugShowRegisters != largeRegisterWindow
 					if filterRegisters {

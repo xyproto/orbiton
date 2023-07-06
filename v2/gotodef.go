@@ -64,7 +64,7 @@ func (e *Editor) GoToDefinition(c *vt100.Canvas, status *StatusBar) bool {
 
 	// TODO: Search for variables, constants etc
 
-	// Go to defintion, but only of functions defined within the same Go file, for now
+	// Go to definition, but only of functions defined within the same Go file, for now
 	e.SetSearchTerm(c, status, s)
 
 	// Backward search from the current location
