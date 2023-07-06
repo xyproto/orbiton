@@ -140,10 +140,16 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 				// Save the current file. The assumption is that it's better than not saving, if something crashes.
 				// TODO: Save to a crash file, then let the editor discover this when it starts.
-				e.Save(c, tty)
+
+				// Create a suitable error message, depending on if the file is saved or not
+				msg := fmt.Sprintf("Saved the file first!\n%v", x)
+				if err := e.Save(c, tty); err != nil {
+					// Output the error message
+					msg = fmt.Sprintf("Could not save the file first! %v\n%v", err, x)
+				}
 
 				// Output the error message
-				quitMessageWithStack(tty, fmt.Sprintf("%v", x))
+				quitMessageWithStack(tty, msg)
 			}
 		}()
 	}
@@ -939,16 +945,19 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// Add missing parenthesis for "if ... {", "} else if", "} elif", "for", "while" and "when" for C-like languages
 				for _, kw := range []string{"for", "foreach", "foreach_reverse", "if", "switch", "when", "while", "while let", "} else if", "} elif"} {
 					if strings.HasPrefix(trimmedLine, kw+" ") && !strings.HasPrefix(trimmedLine, kw+" (") {
-						if strings.HasSuffix(trimmedLine, " {") {
-							// Add ( and ), keep the final "{"
-							e.SetCurrentLine(currentLeadingWhitespace + kw + " (" + trimmedLine[len(kw)+1:len(trimmedLine)-2] + ") {")
-							e.pos.sx += 2
-						} else if !strings.HasSuffix(trimmedLine, ")") {
-							// Add ( and ), there is no final "{"
-							e.SetCurrentLine(currentLeadingWhitespace + kw + " (" + trimmedLine[len(kw)+1:] + ")")
-							e.pos.sx += 2
-							indent = true
-							leadingWhitespace = e.indentation.String() + currentLeadingWhitespace
+						kwLenPlus1 := len(kw) + 1
+						if kwLenPlus1 < len(trimmedLine) {
+							if strings.HasSuffix(trimmedLine, " {") {
+								// Add ( and ), keep the final "{"
+								e.SetCurrentLine(currentLeadingWhitespace + kw + " (" + trimmedLine[kwLenPlus1:len(trimmedLine)-2] + ") {")
+								e.pos.sx += 2
+							} else if !strings.HasSuffix(trimmedLine, ")") {
+								// Add ( and ), there is no final "{"
+								e.SetCurrentLine(currentLeadingWhitespace + kw + " (" + trimmedLine[kwLenPlus1:] + ")")
+								e.pos.sx += 2
+								indent = true
+								leadingWhitespace = e.indentation.String() + currentLeadingWhitespace
+							}
 						}
 					}
 				}
