@@ -146,6 +146,14 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			return exists(filepath.Join(sourceDir, jarFilename)), jarFilename
 		}, nil
 	case mode.Scala:
+		if exists(filepath.Join(sourceDir, "build.sbt")) && which("sbt") != "" && fileHas(filepath.Join(sourceDir, "build.sbt"), "ScalaNative") {
+			cmd = exec.Command("sbt", "nativeLink")
+			cmd.Dir = sourceDir
+			return cmd, func() (bool, string) {
+				// TODO: Check for /scala-*/scalanative-out and not scala-3.3.0 specifically
+				return exists(filepath.Join(sourceDir, "target", "scala-3.3.0", "scalanative-out")), "target/scala-3.3.0/scalanative-out"
+			}, nil
+		}
 		// For building a .jar file that can not be run with "java -jar main.jar" but with "scala main.jar": scalac -jar main.jar Hello.scala
 		scalaShellCommand := "scalaFiles=$(find . -type f -name '*.scala'); for f in $scalaFiles; do grep -q 'def main' \"$f\" && mainScalaFile=\"$f\"; grep -q ' extends App ' \"$f\" && mainScalaFile=\"$f\"; done; objectName=$(grep -oP '(?<=object )[A-Z]+[a-z,A-Z,0-9]*' \"$mainScalaFile\" | head -1); packageName=$(grep -oP '(?<=package )[a-z,A-Z,0-9,.]*' \"$mainScalaFile\" | head -1); if [[ $packageName != \"\" ]]; then packageName=\"$packageName.\"; fi; mkdir -p _o_build/META-INF; scalac -d _o_build $scalaFiles; cd _o_build; echo -e \"Main-Class: $packageName$objectName\\nClass-Path: /usr/share/scala/lib/scala-library.jar\" > META-INF/MANIFEST.MF; classFiles=$(find . -type f -name '*.class'); jar cmf META-INF/MANIFEST.MF ../" + jarFilename + " $classFiles; cd ..; rm -rf _o_build"
 		// Compile directly to jar with scalac if /usr/share/scala/lib/scala-library.jar is not found
