@@ -24,7 +24,7 @@ require (
 	github.com/xyproto/textoutput v1.14.2
 	github.com/xyproto/vt100 v1.11.5
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
-	golang.org/x/image v0.8.0
+	golang.org/x/image v0.9.0
 )
 
 require (
@@ -44,7 +44,7 @@ require (
 	github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.5.0 // indirect
-	golang.org/x/net v0.11.0 // indirect
-	golang.org/x/sys v0.9.0 // indirect
+	golang.org/x/net v0.12.0 // indirect
+	golang.org/x/sys v0.10.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
