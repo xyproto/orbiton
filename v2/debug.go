@@ -207,18 +207,15 @@ func (e *Editor) DebugNext() error {
 	// for variables there are watchpoints for.
 	if consoleString != "" {
 		var varName string
-		var varValue string
 		for _, line := range strings.Split(consoleString, "\n") {
 			if strings.Contains(line, "watchpoint") && strings.Contains(line, ":") {
 				fields := strings.SplitN(line, ":", 2)
 				varName = strings.TrimSpace(fields[1])
 			} else if varName != "" && strings.HasPrefix(line, "New value =") {
 				fields := strings.SplitN(line, "=", 2)
-				varValue = strings.TrimSpace(fields[1])
-				watchMap[varName] = varValue
+				watchMap[varName] = strings.TrimSpace(fields[1])
 				lastSeenWatchVariable = varName
 				varName = ""
-				varValue = ""
 			}
 		}
 	}
@@ -249,18 +246,15 @@ func (e *Editor) DebugNextInstruction() error {
 	// for variables there are watchpoints for.
 	if consoleString != "" {
 		var varName string
-		var varValue string
 		for _, line := range strings.Split(consoleString, "\n") {
 			if strings.Contains(line, "watchpoint") && strings.Contains(line, ":") {
 				fields := strings.SplitN(line, ":", 2)
 				varName = strings.TrimSpace(fields[1])
 			} else if varName != "" && strings.HasPrefix(line, "New value =") {
 				fields := strings.SplitN(line, "=", 2)
-				varValue = strings.TrimSpace(fields[1])
-				watchMap[varName] = varValue
+				watchMap[varName] = strings.TrimSpace(fields[1])
 				lastSeenWatchVariable = varName
 				varName = ""
-				varValue = ""
 			}
 		}
 	}
@@ -284,18 +278,16 @@ func (e *Editor) DebugStep() error {
 	// Interpret consoleString and extract the new variable names and values,
 	// for variables there are watchpoints for.
 	if consoleString != "" {
-		var varName, varValue string
+		var varName string
 		for _, line := range strings.Split(consoleString, "\n") {
 			if strings.Contains(line, "watchpoint") && strings.Contains(line, ":") {
 				fields := strings.SplitN(line, ":", 2)
 				varName = strings.TrimSpace(fields[1])
 			} else if varName != "" && strings.HasPrefix(line, "New value =") {
 				fields := strings.SplitN(line, "=", 2)
-				varValue = strings.TrimSpace(fields[1])
-				watchMap[varName] = varValue
+				watchMap[varName] = strings.TrimSpace(fields[1])
 				lastSeenWatchVariable = varName
 				varName = ""
-				varValue = ""
 			}
 		}
 	}
@@ -317,18 +309,16 @@ func (e *Editor) DebugFinish() error {
 	// Interpret consoleString and extract the new variable names and values,
 	// for variables there are watchpoints for.
 	if consoleString != "" {
-		var varName, varValue string
+		var varName string
 		for _, line := range strings.Split(consoleString, "\n") {
 			if strings.Contains(line, "watchpoint") && strings.Contains(line, ":") {
 				fields := strings.SplitN(line, ":", 2)
 				varName = strings.TrimSpace(fields[1])
 			} else if varName != "" && strings.HasPrefix(line, "New value =") {
 				fields := strings.SplitN(line, "=", 2)
-				varValue = strings.TrimSpace(fields[1])
-				watchMap[varName] = varValue
+				watchMap[varName] = strings.TrimSpace(fields[1])
 				lastSeenWatchVariable = varName
 				varName = ""
-				varValue = ""
 			}
 		}
 	}
