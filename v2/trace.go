@@ -16,6 +16,7 @@ var (
 	cpuProfileFilename *string
 	memProfileFilename *string
 	fgtraceFilename    *string
+	cpuProfileFile     os.File
 )
 
 func init() {
@@ -27,16 +28,16 @@ func init() {
 func traceStart() {
 	// Output CPU profile information, if a filename is given
 	if *cpuProfileFilename != "" {
-		f, err := os.Create(*cpuProfileFilename)
+		cpuProfileFile, err := os.Create(*cpuProfileFilename)
 		if err != nil {
 			log.Fatal("could not create CPU profile: ", err)
 		}
-		defer f.Close() // error handling omitted for example
+
+		// Set the rate and start profiling the CPU usage
 		// runtime.SetCPUProfileRate(500)
-		if err := pprof.StartCPUProfile(f); err != nil {
+		if err := pprof.StartCPUProfile(cpuProfileFile); err != nil {
 			log.Fatal("could not start CPU profile: ", err)
 		}
-		defer pprof.StopCPUProfile()
 	}
 
 	if *fgtraceFilename != "" {
@@ -50,11 +51,18 @@ func traceComplete() {
 		f, err := os.Create(*memProfileFilename)
 		if err != nil {
 			log.Fatal("could not create memory profile: ", err)
+			logf("could not create memory profile: %v\n", err)
 		}
 		defer f.Close() // error handling omitted for example
 		runtime.GC()    // get up-to-date statistics
 		if err := pprof.WriteHeapProfile(f); err != nil {
-			log.Fatal("could not write memory profile: ", err)
+			log.Fatal("could not write to memory profile: ", err)
+			logf("could not write to memory profile: %v\n", err)
 		}
 	}
+	if *cpuProfileFilename != "" {
+		pprof.StopCPUProfile()
+		cpuProfileFile.Close()
+	}
+	logf("Trace complete!\n")
 }
