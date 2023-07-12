@@ -947,9 +947,9 @@ retry:
 					if err != nil {
 						continue
 					}
-					pixelColor = color.RGBA{0, 0x80, 0, 0xff} // green, no transparency
+					pixelColor = color.RGBA{0, 0, 0x20, 0xff} // dark blue
 					if r != 0 && r != ' ' {
-						pixelColor = color.RGBA{0x80, 0, 0x80, 0xff} // purple, no transparency
+						pixelColor = color.RGBA{0, 0xb0, 0, 0xff} // green
 					}
 					img.Set(int(x), int(y), pixelColor)
 				}
@@ -972,7 +972,7 @@ retry:
 			}
 
 			// Done
-			statusText = "Saved " + screenshotFilename
+			statusText = "Wrote " + screenshotFilename
 		case 32: // Space
 			if !paused {
 				// Fire a new pellet
