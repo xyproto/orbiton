@@ -22,7 +22,7 @@ github.com/cyrus-and/gdb
 ## explicit; go 1.18
 github.com/felixge/fgtrace
 github.com/felixge/fgtrace/internal
-# github.com/gomarkdown/markdown v0.0.0-20230322041520-c84983bdbf2a
+# github.com/gomarkdown/markdown v0.0.0-20230711084535-11b03c0ae6d6
 ## explicit; go 1.12
 github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
