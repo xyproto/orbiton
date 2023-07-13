@@ -168,6 +168,8 @@ These features are unique to `o`, as far as I am aware:
 
 ## Hotkeys
 
+There are fewer hotkeys to remember than for GNU Nano.
+
 * `ctrl-s` - Save.
 * `ctrl-q` - Quit.
 * `ctrl-r` - Open or close a portal. Text can be pasted from the portal into another (or the same) file with `ctrl-v`.
