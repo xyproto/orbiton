@@ -26,6 +26,7 @@ var format = map[*exec.Cmd][]string{
 	exec.Command("brittany", "--write-mode=inplace"):                                  {".hs"},
 	exec.Command("google-java-format", "-a", "-i"):                                    {".java"},
 	exec.Command("prettier", "--tab-width", "4", "-w"):                                {".js", ".ts"},
+	exec.Command("just", "--unstable", "--fmt", "-f"):                                 {".just", ".justfile", "justfile"},
 	exec.Command("ktlint", "-F"):                                                      {".kt", ".kts"},
 	exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"): {".lua"},
 	exec.Command("ocamlformat"): {".ml"},

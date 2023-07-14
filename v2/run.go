@@ -48,6 +48,8 @@ func (e *Editor) Run() (string, error) {
 		cmd = exec.Command("lua", sourceFilename)
 	case mode.Make:
 		cmd = exec.Command("make")
+	case mode.Just:
+		cmd = exec.Command("just")
 	case mode.Python:
 		cmd = exec.Command("python", sourceFilename)
 	default:

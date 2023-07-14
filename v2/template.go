@@ -129,6 +129,11 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		13,
 		1,
 	},
+	mode.Just: {
+		"#!/usr/bin/env just --justfile\n\nhello:\n\t@echo \"Hello, World!\"\n",
+		7,
+		1,
+	},
 	mode.Koka: {
 		"fun main() {\n  println(\"Hello, World!\")\n}\n",
 		9,

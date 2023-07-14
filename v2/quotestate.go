@@ -119,7 +119,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			}
 		}
 	case '*': // support multi-line comments
-		if q.mode != mode.Shell && q.mode != mode.Make && q.firstRuneInSingleLineCommentMarker != '#' && prevRune == '/' && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
+		if q.mode != mode.Shell && q.mode != mode.Make && q.mode != mode.Just && q.firstRuneInSingleLineCommentMarker != '#' && prevRune == '/' && (prevPrevRune == '\n' || prevPrevRune == ' ' || prevPrevRune == '\t') && q.None() {
 			// C-style
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
@@ -138,7 +138,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			q.startedMultiLineComment = true
 		}
 	case '-': // support for HTML-style and XML-style multi-line comments
-		if q.mode != mode.Shell && q.mode != mode.Make && prevRune == '!' && prevPrevRune == '<' && q.None() {
+		if q.mode != mode.Shell && q.mode != mode.Make && q.mode != mode.Just && prevRune == '!' && prevPrevRune == '<' && q.None() {
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
 		} else if (q.mode == mode.Elm || q.mode == mode.Haskell) && prevRune == '{' {
@@ -151,7 +151,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			switch {
 			case len(q.singleLineCommentMarkerRunes) == 1:
 				fallthrough
-			case q.mode != mode.Shell && q.mode != mode.Make && len(q.singleLineCommentMarkerRunes) > 1 && prevRune == q.firstRuneInSingleLineCommentMarker:
+			case q.mode != mode.Shell && q.mode != mode.Make && q.mode != mode.Just && len(q.singleLineCommentMarkerRunes) > 1 && prevRune == q.firstRuneInSingleLineCommentMarker:
 				q.hasSingleLineComment = true
 				q.startedMultiLineString = false
 				q.stoppedMultiLineComment = false
@@ -169,7 +169,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 		// r == '/'
 		fallthrough
 	case '/': // support C-style multi-line comments
-		if q.mode != mode.Shell && q.mode != mode.Make && q.firstRuneInSingleLineCommentMarker != '#' && prevRune == '*' {
+		if q.mode != mode.Shell && q.mode != mode.Make && q.mode != mode.Just && q.firstRuneInSingleLineCommentMarker != '#' && prevRune == '*' {
 			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
 			if q.startedMultiLineComment {

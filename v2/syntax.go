@@ -37,6 +37,9 @@ var (
 	// Hardware Interface Description Language. Keywords from https://source.android.com/devices/architecture/hidl
 	hidlWords = []string{"constexpr", "enum", "extends", "generates", "import", "interface", "oneway", "package", "safe_union", "struct", "typedef", "union"}
 
+	// Just
+	justWords = []string{"absolute_path", "arch", "capitalize", "clean", "env_var", "env_var_or_default", "error", "extension", "file_name", "file_stem", "include", "invocation_directory", "invocation_directory_native", "join", "just_executable", "justfile", "justfile_directory", "kebabcase", "lowercamelcase", "lowercase", "os", "os_family", "parent_directory", "path_exists", "quote", "replace", "replace_regex", "sha256", "sha256_file", "shoutykebabcase", "shoutysnakecase", "snakecase", "titlecase", "trim", "trim_end", "trim_end_match", "trim_end_matches", "trim_start", "trim_start_match", "trim_start_matches", "uppercamelcase", "uppercase", "uuid", "without_extension"}
+
 	// Koka
 	kokaWords = []string{"abstract", "alias", "as", "behind", "break", "c", "co", "con", "continue", "cs", "ctl", "effect", "elif", "else", "exists", "extend", "extern", "file", "final", "finally", "fn", "forall", "fun", "handle", "handler", "if", "import", "in", "infix", "infixl", "infixr", "initially", "inline", "interface", "js", "linear", "mask", "match", "module", "named", "noinline", "open", "override", "pub", "raw", "rec", "reference", "return", "some", "struct", "then", "type", "unsafe", "val", "value", "var", "with"}
 
@@ -198,6 +201,9 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		// Only highlight some words, to make them stand out
 		addKeywords := []string{"cap", "close", "complex", "complex128", "complex64", "copy", "db", "dd", "dw", "imag", "int", "len", "panic", "real", "recover", "resb", "resd", "resw", "section", "syscall", "uintptr"}
 		setKeywords(addKeywords)
+	case mode.Just:
+		addKeywords(justWords)
+		fallthrough // Continue to Make and shell
 	case mode.Make, mode.Shell:
 		addKeywords := []string{"--force", "-f", "checkout", "clean", "cmake", "configure", "dd", "do", "doas", "done", "endif", "exec", "fdisk", "for", "gdisk", "ifeq", "ifneq", "in", "make", "mv", "ninja", "rm", "rmdir", "setopt", "su", "sudo", "while"}
 		delKeywords := []string{"#else", "#endif", "as", "build", "default", "del", "double", "exec", "finally", "float", "fn", "generic", "get", "long", "new", "no", "package", "pass", "print", "property", "require", "ret", "set", "super", "super", "template", "type", "var", "with"}

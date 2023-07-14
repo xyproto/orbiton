@@ -1067,8 +1067,8 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 
 func (e *Editor) usingGDBMightWork() bool {
 	switch e.mode {
-	case mode.AIDL, mode.Amber, mode.Arduino, mode.Basic, mode.Bat, mode.Bazel, mode.Blank, mode.CMake, mode.CS, mode.Clojure, mode.Config, mode.Dart, mode.Doc, mode.Email, mode.Erlang, mode.Git, mode.Gradle, mode.HIDL, mode.HTML, mode.JSON, mode.Java, mode.JavaScript, mode.Kotlin, mode.Lisp, mode.Log, mode.Lua, mode.M4, mode.Make, mode.ManPage, mode.Markdown, mode.Nroff, mode.Oak, mode.Perl, mode.PolicyLanguage, mode.Python, mode.SQL, mode.Scala, mode.Shell, mode.Teal, mode.Text, mode.TypeScript, mode.Vim, mode.XML:
-		// No, or most likely "no"
+	case mode.AIDL, mode.Amber, mode.Arduino, mode.Basic, mode.Bat, mode.Bazel, mode.Blank, mode.CMake, mode.CS, mode.Clojure, mode.Config, mode.Dart, mode.Doc, mode.Email, mode.Erlang, mode.Git, mode.Gradle, mode.HIDL, mode.HTML, mode.JSON, mode.Java, mode.JavaScript, mode.Just, mode.Kotlin, mode.Lisp, mode.Log, mode.Lua, mode.M4, mode.Make, mode.ManPage, mode.Markdown, mode.Nroff, mode.Oak, mode.Perl, mode.PolicyLanguage, mode.Python, mode.SQL, mode.Scala, mode.Shell, mode.Teal, mode.Text, mode.TypeScript, mode.Vim, mode.XML:
+		// Most likely "no"
 		return false
 	case mode.Zig:
 		// Could maybe have worked, but it didn't
