@@ -19,8 +19,8 @@ var languageIndentation = map[TabsSpaces][]Mode{
 	{3, true}: {Ada, Prolog}, // Ada and Prolog are special
 	{4, true}: {Bat, Basic, Battlestar, CMake, CS, Cpp, Crystal, Doc, Elm, Email, Garnet, GDScript, Git, Haxe, JSON, Jakt, Java, JavaScript, Kotlin, Markdown, Mojo, Nim, Oak, Python, R, SQL, Subversion, Terra, Text, TypeScript, V, Zig},
 	// Languages that use tabs (from the opinionated point of view of this package)
-	{4, false}: {AIDL, C, Go, GoAssembly, HIDL, Lisp, M4, Make, ManPage, Nroff, OCaml, Odin, Rust, Shader}, // Tabs
-	{8, true}:  {Hare, Ivy},                                                                                // Hare and Ivy are special
+	{4, false}: {AIDL, C, Go, GoAssembly, HIDL, Just, Lisp, M4, Make, ManPage, Nroff, OCaml, Odin, Rust, Shader}, // Tabs
+	{8, true}:  {Hare, Ivy},                                                                                      // Hare and Ivy are special
 }
 
 // Spaces returns true if spaces should be used for the current mode
