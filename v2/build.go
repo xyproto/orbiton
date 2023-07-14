@@ -329,6 +329,10 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd = exec.Command("crystal", "build", "--no-color", sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
+	case mode.Dart:
+		cmd = exec.Command("dart", "compile", "exe", "--verbosity", "error", "-o", exeFirstName, sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Erlang:
 		cmd = exec.Command("erlc", sourceFilename)
 		cmd.Dir = sourceDir

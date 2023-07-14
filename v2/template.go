@@ -64,6 +64,11 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		9,
 		2,
 	},
+	mode.Dart: {
+		"void main() {\n  print('Hello, World!');\n}\n",
+		7,
+		2,
+	},
 	mode.Email: {
 		"Hello ,\n\nBest regards,\n" + getFullName() + "\n",
 		6,

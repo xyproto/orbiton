@@ -22,6 +22,9 @@ var (
 	// C#
 	csWords = []string{"Boolean", "Byte", "Char", "Decimal", "Double", "Int16", "Int32", "Int64", "IntPtr", "Object", "Short", "Single", "String", "UInt16", "UInt32", "UInt64", "UIntPtr", "abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked", "class", "const", "continue", "decimal", "default", "delegate", "do", "double", "dynamic", "else", "enum", "event", "explicit", "extern", "false", "finally", "fixed", "float", "for", "foreach", "goto", "if", "implicit", "in", "int", "interface", "internal", "is", "lock", "long", "namespace", "new", "nint", "nuint", "null", "object", "operator", "out", "override", "params", "readonly", "ref", "return", "sbyte", "sealed", "short", "sizeof", "stackalloc", "static", "string", "struct", "switch", "this", "throw", "true", "try", "typeof", "uint", "ulong", "unchecked", "unsafe", "ushort", "using", "virtual", "void", "volatile", "while"} // private, public, protected
 
+	// Dart
+	dartWords = []string{"Function", "abstract", "as", "assert", "async", "await", "base", "break", "case", "catch", "class", "const", "continue", "covariant", "default", "deferred", "do", "dynamic", "else", "enum", "export", "extends", "extension", "external", "factory", "false", "final", "finally", "for", "get", "hide", "if", "implements", "import", "in", "interface", "is", "late", "library", "mixin", "new", "null", "on", "operator", "part", "required", "rethrow", "return", "sealed", "set", "show", "static", "super", "switch", "sync", "this", "throw", "true", "try", "typedef", "var", "void", "when", "while", "with", "yield"}
+
 	// Elisp
 	emacsWords = []string{"add-to-list", "defconst", "defun", "defvar", "if", "lambda", "let", "load", "nil", "require", "setq", "when"} // this should do it
 
@@ -42,6 +45,9 @@ var (
 
 	// Lua
 	luaWords = []string{"and", "break", "do", "else", "elseif", "end", "false", "for", "function", "goto", "if", "in", "local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while"}
+
+	// Object Pascal
+	objPasWords = []string{"AND", "Array", "Boolean", "Byte", "CASE", "CONST", "Char", "DO", "ELSE", "FOR", "FUNCTION", "IF", "Integer", "LABEL", "NOT", "OF", "PROCEDURE", "PROGRAM", "Pointer", "RECORD", "REPEAT", "Repeat", "String", "THEN", "TO", "TYPE", "Text", "UNTIL", "USES", "VAR", "Word", "do", "downto", "function", "nil", "of", "procedure", "program", "then", "to", "uses"}
 
 	// OCaml
 	ocamlWords = []string{"and", "as", "assert", "asr", "begin", "class", "constraint", "do", "done", "downto", "else", "end", "exception", "external", "false", "for", "fun", "function", "functor", "if", "in", "include", "inherit", "initializer", "land", "lazy", "let", "lor", "lsl", "lsr", "lxor", "match", "method", "mod", "module", "mutable", "new", "nonrec", "object", "of", "open", "or", "private", "rec", "sig", "struct", "then", "to", "true", "try", "type", "val", "virtual", "when", "while", "with"}
@@ -72,143 +78,145 @@ func clearKeywords() {
 	syntax.Keywords = make(map[string]struct{})
 }
 
-// adjustSyntaxHighlightingKeywords contains per-language adjustments to highlighting of keywords
-func adjustSyntaxHighlightingKeywords(m mode.Mode) {
-	var addKeywords, delKeywords []string
-	switch m {
-	case mode.Ada:
-		addKeywords = []string{"constant", "loop", "procedure", "project"}
-	case mode.Assembly:
-		clearKeywords()
-		addKeywords = asmWords
-	case mode.Battlestar:
-		clearKeywords()
-		addKeywords = battlestarWords
-	case mode.Clojure:
-		clearKeywords()
-		addKeywords = clojureWords
-	case mode.CMake:
-		delKeywords = append(delKeywords, "build", "package")
-		addKeywords = cmakeWords
-	case mode.Config:
-		delKeywords = []string{"auto", "default", "install"}
-	case mode.CS:
-		clearKeywords()
-		addKeywords = csWords
-	case mode.D:
-		clearKeywords()
-		addKeywords = dWords
-	case mode.Erlang:
-		clearKeywords()
-		addKeywords = erlangWords
-	case mode.GDScript:
-		clearKeywords()
-		addKeywords = gdscriptWords
-	case mode.Go:
-		// TODO: Add all Go keywords as a var up above
-		// clearKeywords()
-		addKeywords = []string{"defer", "error", "fallthrough", "func", "go", "import", "package", "print", "println", "range", "rune", "string", "uint", "uint16", "uint32", "uint64", "uint8"}
-		delKeywords = []string{"False", "None", "True", "assert", "auto", "build", "char", "class", "def", "def", "del", "die", "done", "end", "fi", "final", "finally", "fn", "from", "get", "in", "include", "is", "last", "let", "match", "mut", "next", "no", "pass", "redo", "rescue", "ret", "retry", "set", "template", "then", "this", "when", "where", "while", "yes"}
-	case mode.Haxe:
-		clearKeywords()
-		addKeywords = haxeWords
-	case mode.HIDL:
-		clearKeywords()
-		addKeywords = hidlWords
-	case mode.AIDL:
-		addKeywords = append(addKeywords, "interface")
-		addKeywords = append(addKeywords, hidlWords...)
-		fallthrough // continue to mode.Java
-	case mode.Java:
-		addKeywords = append(addKeywords, "package")
-		delKeywords = append(delKeywords, "add", "bool", "get", "in", "local", "sub")
-	case mode.JSON:
-		delKeywords = []string{"install"}
-	case mode.Koka:
-		clearKeywords()
-		addKeywords = kokaWords
-	case mode.Kotlin:
-		clearKeywords()
-		addKeywords = kotlinWords
-	case mode.Lisp:
-		clearKeywords()
-		addKeywords = emacsWords
-	case mode.Teal, mode.Terra:
-		fallthrough // continue to mode.Lua, for now
-	case mode.Lua:
-		clearKeywords()
-		addKeywords = luaWords
-	case mode.Nroff:
-		clearKeywords()
-		delKeywords = []string{"class"}
-		addKeywords = []string{"B", "BR", "PP", "SH", "TP", "fB", "fI", "fP", "RB", "TH", "IR", "IP", "fI", "fR"}
-	case mode.ManPage:
-		clearKeywords()
-	case mode.ObjectPascal:
-		addKeywords = []string{"AND", "Array", "Boolean", "Byte", "CASE", "CONST", "Char", "DO", "ELSE", "FOR", "FUNCTION", "IF", "Integer", "LABEL", "NOT", "OF", "PROCEDURE", "PROGRAM", "Pointer", "RECORD", "REPEAT", "Repeat", "String", "THEN", "TO", "TYPE", "Text", "UNTIL", "USES", "VAR", "Word", "do", "downto", "function", "nil", "of", "procedure", "program", "then", "to", "uses"}
-	case mode.Oak:
-		addKeywords = []string{"fn"}
-		delKeywords = []string{"from", "new", "print"}
-	case mode.Python, mode.Nim, mode.Mojo:
-		delKeywords = []string{"append", "exit", "fn", "get", "package", "print"}
-	case mode.Odin:
-		clearKeywords()
-		addKeywords = odinWords
-	case mode.PolicyLanguage: // SE Linux
-		clearKeywords()
-		addKeywords = policyLanguageWords
-	case mode.Garnet, mode.Hare, mode.Jakt, mode.Rust: // Originally only for Rust, split up as needed
-		addKeywords = []string{"String", "assert_eq", "char", "fn", "i16", "i32", "i64", "i8", "impl", "loop", "mod", "out", "panic", "u16", "u32", "u64", "u8", "usize"}
-		// "as" and "mut" are treated as special cases in the syntax package
-		delKeywords = []string{"as", "build", "byte", "done", "foreach", "get", "int", "int16", "int32", "int64", "last", "map", "mut", "next", "pass", "print", "uint16", "uint32", "uint64", "var"}
-		if m != mode.Garnet {
-			delKeywords = append(delKeywords, "end")
-		}
-	case mode.Scala:
-		clearKeywords()
-		addKeywords = scalaWords
-	case mode.OCaml:
-		clearKeywords()
-		addKeywords = ocamlWords
-	case mode.Elm, mode.StandardML:
-		clearKeywords()
-		addKeywords = smlWords
-	case mode.SQL:
-		addKeywords = []string{"NOT"}
-	case mode.Vim:
-		addKeywords = []string{"call", "echo", "elseif", "endfunction", "map", "nmap", "redraw"}
-	case mode.Zig:
-		clearKeywords()
-		addKeywords = zigWords
-		delKeywords = []string{"log"}
-	case mode.GoAssembly:
-		// Only highlight some words, to make them stand out
-		clearKeywords()
-		addKeywords = []string{"cap", "close", "complex", "complex128", "complex64", "copy", "db", "dd", "dw", "imag", "int", "len", "panic", "real", "recover", "resb", "resd", "resw", "section", "syscall", "uintptr"}
-	case mode.Make, mode.Shell:
-		addKeywords = []string{"--force", "-f", "checkout", "clean", "cmake", "configure", "dd", "do", "doas", "done", "endif", "exec", "fdisk", "for", "gdisk", "ifeq", "ifneq", "in", "make", "mv", "ninja", "rm", "rmdir", "setopt", "su", "sudo", "while"}
-		delKeywords = []string{"#else", "#endif", "as", "build", "default", "del", "double", "exec", "finally", "float", "fn", "generic", "get", "long", "new", "no", "package", "pass", "print", "property", "require", "ret", "set", "super", "super", "template", "type", "var", "with"}
-		if m == mode.Shell { // Only for shell scripts, not for Makefiles
-			delKeywords = append(delKeywords, "install")
-		}
-	case mode.Shader:
-		addKeywords = []string{"buffer", "bvec2", "bvec3", "bvec4", "coherent", "dvec2", "dvec3", "dvec4", "flat", "in", "inout", "invariant", "ivec2", "ivec3", "ivec4", "layout", "mat", "mat2", "mat3", "mat4", "noperspective", "out", "precision", "readonly", "restrict", "smooth", "uniform", "uvec2", "uvec3", "uvec4", "vec2", "vec3", "vec4", "volatile", "writeonly"}
-		fallthrough // Continue to C/C++ and then to the default
-	case mode.Arduino, mode.C, mode.Cpp:
-		addKeywords = append(addKeywords, "int8_t", "uint8_t", "int16_t", "uint16_t", "int32_t", "uint32_t", "int64_t", "uint64_t", "size_t")
-		delKeywords = append(delKeywords, "static") // static is treated separately, as a special keyword
-		fallthrough                                 // Continue to the default
-	default:
-		addKeywords = append(addKeywords, "elif", "endif", "ifeq", "ifneq")
-		delKeywords = append(delKeywords, "build", "done", "package", "require", "set", "super", "type", "when")
-	}
-	// Add extra keywords that are to be syntax highlighted
+func addKeywords(addKeywords []string) {
+	// Add the keywords that are to be syntax highlighted
 	for _, kw := range addKeywords {
 		syntax.Keywords[kw] = struct{}{}
 	}
+}
+
+func removeKeywords(delKeywords []string) {
 	// Remove keywords that should not be syntax highlighted
 	for _, kw := range delKeywords {
 		delete(syntax.Keywords, kw)
+	}
+}
+
+func addAndRemoveKeywords(addAndDelKeywords ...[]string) {
+	l := len(addAndDelKeywords)
+	if l > 0 {
+		addKeywords(addAndDelKeywords[0])
+	}
+	if l > 1 {
+		removeKeywords(addAndDelKeywords[1])
+	}
+}
+
+func setKeywords(addAndDelKeywords ...[]string) {
+	clearKeywords()
+	addAndRemoveKeywords(addAndDelKeywords...)
+}
+
+// adjustSyntaxHighlightingKeywords contains per-language adjustments to highlighting of keywords
+func adjustSyntaxHighlightingKeywords(m mode.Mode) {
+	switch m {
+	case mode.Ada:
+		addKeywords([]string{"constant", "loop", "procedure", "project"})
+	case mode.Assembly:
+		setKeywords(asmWords)
+	case mode.Battlestar:
+		setKeywords(battlestarWords)
+	case mode.Clojure:
+		setKeywords(clojureWords)
+	case mode.CMake:
+		addAndRemoveKeywords(cmakeWords, []string{"build", "package"})
+	case mode.Config:
+		removeKeywords([]string{"auto", "default", "install"})
+	case mode.CS:
+		setKeywords(csWords)
+	case mode.D:
+		setKeywords(dWords)
+	case mode.Dart:
+		setKeywords(dartWords)
+	case mode.Erlang:
+		setKeywords(erlangWords)
+	case mode.GDScript:
+		setKeywords(gdscriptWords)
+	case mode.Go:
+		// TODO: Define goWords and use setKeywords instead
+		addKeywords := []string{"defer", "error", "fallthrough", "func", "go", "import", "package", "print", "println", "range", "rune", "string", "uint", "uint16", "uint32", "uint64", "uint8"}
+		delKeywords := []string{"False", "None", "True", "assert", "auto", "build", "char", "class", "def", "def", "del", "die", "done", "end", "fi", "final", "finally", "fn", "from", "get", "in", "include", "is", "last", "let", "match", "mut", "next", "no", "pass", "redo", "rescue", "ret", "retry", "set", "template", "then", "this", "when", "where", "while", "yes"}
+		addAndRemoveKeywords(addKeywords, delKeywords)
+	case mode.Haxe:
+		setKeywords(haxeWords)
+	case mode.HIDL:
+		setKeywords(hidlWords)
+	case mode.AIDL:
+		addKeywords(append([]string{"interface"}, hidlWords...))
+		fallthrough // continue to mode.Java
+	case mode.Java:
+		addKeywords := []string{"package"}
+		delKeywords := []string{"add", "bool", "get", "in", "local", "sub"}
+		addAndRemoveKeywords(addKeywords, delKeywords)
+	case mode.JSON:
+		removeKeywords([]string{"install"})
+	case mode.Koka:
+		setKeywords(kokaWords)
+	case mode.Kotlin:
+		setKeywords(kotlinWords)
+	case mode.Lisp:
+		setKeywords(emacsWords)
+	case mode.Lua, mode.Teal, mode.Terra: // use the Lua mode for Teal and Terra, for now
+		setKeywords(luaWords)
+	case mode.Nroff:
+		addKeywords := []string{"B", "BR", "PP", "SH", "TP", "fB", "fI", "fP", "RB", "TH", "IR", "IP", "fI", "fR"}
+		delKeywords := []string{"class"}
+		setKeywords(addKeywords, delKeywords)
+	case mode.ManPage:
+		clearKeywords()
+	case mode.ObjectPascal:
+		addKeywords(objPasWords)
+	case mode.Oak:
+		addAndRemoveKeywords([]string{"fn"}, []string{"from", "new", "print"})
+	case mode.Python, mode.Nim, mode.Mojo:
+		removeKeywords([]string{"append", "exit", "fn", "get", "package", "print"})
+	case mode.Odin:
+		setKeywords(odinWords)
+	case mode.PolicyLanguage: // SE Linux
+		setKeywords(policyLanguageWords)
+	case mode.Garnet, mode.Hare, mode.Jakt, mode.Rust: // Originally only for Rust, split up as needed
+		addKeywords := []string{"String", "assert_eq", "char", "fn", "i16", "i32", "i64", "i8", "impl", "loop", "mod", "out", "panic", "u16", "u32", "u64", "u8", "usize"}
+		// "as" and "mut" are treated as special cases in the syntax package
+		delKeywords := []string{"as", "build", "byte", "done", "foreach", "get", "int", "int16", "int32", "int64", "last", "map", "mut", "next", "pass", "print", "uint16", "uint32", "uint64", "var"}
+		if m != mode.Garnet {
+			delKeywords = append(delKeywords, "end")
+		}
+		addAndRemoveKeywords(addKeywords, delKeywords)
+	case mode.Scala:
+		setKeywords(scalaWords)
+	case mode.OCaml:
+		setKeywords(ocamlWords)
+	case mode.Elm, mode.StandardML:
+		setKeywords(smlWords)
+	case mode.SQL:
+		addKeywords([]string{"NOT"})
+	case mode.Vim:
+		addKeywords([]string{"call", "echo", "elseif", "endfunction", "map", "nmap", "redraw"})
+	case mode.Zig:
+		setKeywords(zigWords, []string{"log"})
+	case mode.GoAssembly:
+		// Only highlight some words, to make them stand out
+		addKeywords := []string{"cap", "close", "complex", "complex128", "complex64", "copy", "db", "dd", "dw", "imag", "int", "len", "panic", "real", "recover", "resb", "resd", "resw", "section", "syscall", "uintptr"}
+		setKeywords(addKeywords)
+	case mode.Make, mode.Shell:
+		addKeywords := []string{"--force", "-f", "checkout", "clean", "cmake", "configure", "dd", "do", "doas", "done", "endif", "exec", "fdisk", "for", "gdisk", "ifeq", "ifneq", "in", "make", "mv", "ninja", "rm", "rmdir", "setopt", "su", "sudo", "while"}
+		delKeywords := []string{"#else", "#endif", "as", "build", "default", "del", "double", "exec", "finally", "float", "fn", "generic", "get", "long", "new", "no", "package", "pass", "print", "property", "require", "ret", "set", "super", "super", "template", "type", "var", "with"}
+		if m == mode.Shell { // Only for shell scripts, not for Makefiles
+			delKeywords = append(delKeywords, "install")
+		}
+		addAndRemoveKeywords(addKeywords, delKeywords)
+	case mode.Shader:
+		addKeywords([]string{"buffer", "bvec2", "bvec3", "bvec4", "coherent", "dvec2", "dvec3", "dvec4", "flat", "in", "inout", "invariant", "ivec2", "ivec3", "ivec4", "layout", "mat", "mat2", "mat3", "mat4", "noperspective", "out", "precision", "readonly", "restrict", "smooth", "uniform", "uvec2", "uvec3", "uvec4", "vec2", "vec3", "vec4", "volatile", "writeonly"})
+		fallthrough // Continue to C/C++ and then to the default
+	case mode.Arduino, mode.C, mode.Cpp:
+		addKeywords := []string{"int8_t", "uint8_t", "int16_t", "uint16_t", "int32_t", "uint32_t", "int64_t", "uint64_t", "size_t"}
+		delKeywords := []string{"static"} // static is treated separately, as a special keyword
+		addAndRemoveKeywords(addKeywords, delKeywords)
+		fallthrough // Continue to the default
+	default:
+		addKeywords := []string{"elif", "endif", "ifeq", "ifneq"}
+		delKeywords := []string{"build", "done", "package", "require", "set", "super", "type", "when"}
+		addAndRemoveKeywords(addKeywords, delKeywords)
 	}
 }
 
