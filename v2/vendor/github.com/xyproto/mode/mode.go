@@ -1,3 +1,4 @@
+// package mode tries to find the correct editor mode, given a filename and/or file data
 package mode
 
 // Mode is a per-filetype mode, like for Markdown
