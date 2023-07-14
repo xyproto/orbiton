@@ -76,22 +76,21 @@ func Detect(filename string) Mode {
 		case ".cm":
 			// Standard ML project file
 			mode = StandardML
-		case ".cpp", ".cc", ".c++", ".cxx", ".hpp", ".h":
-			// C++ mode
+		case ".cpp", ".cc", ".c++", ".cxx", ".hpp", ".h": // C++ mode
 			// TODO: Find a way to discover is a .h file is most likely to be C or C++
 			mode = Cpp
 		case ".clj", ".clojure", "cljs":
 			mode = Clojure
-		case ".cs":
-			// C# mode
+		case ".cs": // C#
 			mode = CS
 		case ".cl", ".el", ".elisp", ".emacs", ".l", ".lisp", ".lsp":
 			mode = Lisp
 		case ".cr":
 			mode = Crystal
 		case ".d":
-			// D mode
 			mode = D
+		case ".dart":
+			mode = Dart
 		case ".elm":
 			mode = Elm
 		case ".eml":

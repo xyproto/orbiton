@@ -23,6 +23,7 @@ const (
 	Cpp                   // C++
 	Crystal               // Crystal
 	D                     // D
+	Dart                  // Dart
 	Doc                   // asciidoctor, sdoc etc
 	Email                 // For using o with ie. Mutt
 	Elm                   // Elm
@@ -127,6 +128,8 @@ func (mode Mode) String() string {
 		return "Document"
 	case D:
 		return "D"
+	case Dart:
+		return "Dart"
 	case Elm:
 		return "Elm"
 	case Email:
