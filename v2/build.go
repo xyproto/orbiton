@@ -577,11 +577,14 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	// NOTE: Don't do anything with the output and err variables here, let the if below handle it.
 
 	errorMarker := "error:"
-	if e.mode == mode.Crystal || e.mode == mode.ObjectPascal || e.mode == mode.StandardML || e.mode == mode.Python {
+	switch e.mode {
+	case mode.Crystal, mode.ObjectPascal, mode.StandardML, mode.Python:
 		errorMarker = "Error:"
-	} else if e.mode == mode.CS {
+	case mode.Dart:
+		errorMarker = ": Error: "
+	case mode.CS:
 		errorMarker = ": error "
-	} else if e.mode == mode.Agda {
+	case mode.Agda:
 		errorMarker = ","
 	}
 
@@ -778,7 +781,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					lineNumberString := locCol[0]
 					lineColumnString := locCol[1]
 
-					e.MoveToIndex(c, status, lineNumberString, lineColumnString)
+					const subtractOne = false
+					e.MoveToIndex(c, status, lineNumberString, lineColumnString, subtractOne)
 
 					// Return the error message
 					if baseErrorFilename != baseFilename {
@@ -786,7 +790,30 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					}
 					return "", errors.New(errorMessage)
 				}
-			} else if e.mode == mode.ObjectPascal || e.mode == mode.CS {
+			} else if e.mode == mode.Dart {
+				errorMessage = ""
+				if strings.Contains(line, errorMarker) {
+					whereAndWhat := strings.SplitN(line, errorMarker, 2)
+					where := whereAndWhat[0]
+					errorMessage = whereAndWhat[1]
+					filenameAndLoc := strings.SplitN(where, ":", 2)
+					errorFilename := filenameAndLoc[0]
+					baseErrorFilename := filepath.Base(errorFilename)
+					loc := filenameAndLoc[1]
+					locCol := strings.SplitN(loc, ":", 2)
+					lineNumberString := locCol[0]
+					lineColumnString := locCol[1]
+
+					const subtractOne = true
+					e.MoveToIndex(c, status, lineNumberString, lineColumnString, subtractOne)
+
+					// Return the error message
+					if baseErrorFilename != baseFilename {
+						return "", errors.New("in " + baseErrorFilename + ": " + errorMessage)
+					}
+					return "", errors.New(errorMessage)
+				}
+			} else if e.mode == mode.CS || e.mode == mode.ObjectPascal {
 				errorMessage = ""
 				if strings.Contains(line, " Error: ") {
 					pos := strings.Index(line, " Error: ")
@@ -1153,6 +1180,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, andRu
 			// Error while building
 			status.SetError(err)
 			status.ShowNoTimeout(c, e)
+			e.redrawCursor = true
 			return // return from goroutine
 		}
 		// Not building any more

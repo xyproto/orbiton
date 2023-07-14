@@ -2425,21 +2425,21 @@ func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, t
 // MoveToNumber will try to move to the given line number + column number (given as strings)
 func (e *Editor) MoveToNumber(c *vt100.Canvas, status *StatusBar, lineNumber, lineColumn string) error {
 	// Move to (x, y), line number first and then column number
-	if i, err := strconv.Atoi(lineNumber); err == nil {
-		foundY := LineNumber(i)
-		e.redraw, _ = e.GoTo(foundY.LineIndex(), c, status)
-		e.redrawCursor = e.redraw
-		if x, err := strconv.Atoi(lineColumn); err == nil { // no error
-			foundX := x - 1
-			tabs := strings.Count(e.Line(foundY.LineIndex()), "\t")
-			e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
-			e.Center(c)
-		} else {
-			return err
-		}
-	} else {
+	i, err := strconv.Atoi(lineNumber)
+	if err != nil {
 		return err
 	}
+	foundY := LineNumber(i)
+	e.redraw, _ = e.GoTo(foundY.LineIndex(), c, status)
+	e.redrawCursor = e.redraw
+	x, err := strconv.Atoi(lineColumn)
+	if err != nil {
+		return err
+	}
+	foundX := x - 1
+	tabs := strings.Count(e.Line(foundY.LineIndex()), "\t")
+	e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
+	e.Center(c)
 	return nil
 }
 
@@ -2461,23 +2461,29 @@ func (e *Editor) MoveToLineColumnNumber(c *vt100.Canvas, status *StatusBar, line
 }
 
 // MoveToIndex will try to move to the given line index + column index (given as strings)
-func (e *Editor) MoveToIndex(c *vt100.Canvas, status *StatusBar, lineIndex, lineColumnIndex string) error {
+func (e *Editor) MoveToIndex(c *vt100.Canvas, status *StatusBar, lineIndex, lineColumnIndex string, subtractOne bool) error {
 	// Move to (x, y), line number first and then column number
-	if i, err := strconv.Atoi(lineIndex); err == nil {
-		foundY := LineIndex(i)
-		e.redraw, _ = e.GoTo(foundY, c, status)
-		e.redrawCursor = e.redraw
-		if x, err := strconv.Atoi(lineColumnIndex); err == nil { // no error
-			foundX := x - 1
-			tabs := strings.Count(e.Line(foundY), "\t")
-			e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
-			e.Center(c)
-		} else {
-			return err
-		}
-	} else {
+	i, err := strconv.Atoi(lineIndex)
+	if err != nil {
 		return err
 	}
+	if subtractOne {
+		i--
+	}
+	foundY := LineIndex(i)
+	e.redraw, _ = e.GoTo(foundY, c, status)
+	e.redrawCursor = e.redraw
+	x, err := strconv.Atoi(lineColumnIndex)
+	if err != nil {
+		return err
+	}
+	if subtractOne {
+		x--
+	}
+	foundX := x - 1
+	tabs := strings.Count(e.Line(foundY), "\t")
+	e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
+	e.Center(c)
 	return nil
 }
 

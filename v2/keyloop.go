@@ -284,6 +284,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Then build, but don't run
 			const andRun = false
 			e.Build(c, status, tty, andRun)
+			e.redrawCursor = true
 
 		case "c:20": // ctrl-t
 			// for C or C++: jump to header/source, or insert symbol
