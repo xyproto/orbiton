@@ -512,7 +512,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 			// Call Chmod, but ignore errors (since this is just a bonus and not critical)
 			os.Chmod(e.filename, fileMode)
 			e.syntaxHighlight = true
-		} else if e.mode == mode.Make || e.mode == mode.Markdown || e.mode == mode.Doc || e.mode == mode.ReStructured || filepath.Base(e.filename) == "PKGBUILD" {
+		} else if e.mode == mode.Make || e.mode == mode.Markdown || e.mode == mode.Doc || e.mode == mode.ReStructured || filepath.Base(e.filename) == "PKGBUILD" || filepath.Base(e.filename) == "APKBUILD" {
 			fileMode = 0o644
 			os.Chmod(e.filename, fileMode)
 		}

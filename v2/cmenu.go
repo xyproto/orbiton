@@ -205,8 +205,8 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		})
 	}
 
-	// Special menu option for PKGBUILD files
-	if strings.HasSuffix(e.filename, "PKGBUILD") {
+	// Special menu option for PKGBUILD and APKBUILD files
+	if strings.HasSuffix(e.filename, "PKGBUILD") || strings.HasSuffix(e.filename, "APKBUILD") {
 		actions.Add("Call Guessica", func() {
 			status.Clear(c)
 			status.SetMessage("Calling Guessica")

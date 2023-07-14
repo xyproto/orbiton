@@ -252,7 +252,7 @@ See the man page for more information.
 					}
 				}
 			} else {
-				// Also match "PKGBUILD" if just "Pk" was entered
+				// Also match ie. "PKGBUILD" if just "Pk" was entered
 				matches, err := filepath.Glob(strings.ToTitle(fnord.filename) + "*")
 				if err == nil && len(matches) >= 1 { // no error and at least 1 match
 					// Use the first non-binary match of the sorted results
