@@ -50,7 +50,7 @@ Alternatively, download and install a [release version](https://github.com/xypro
 
     curl -sL 'https://github.com/xyproto/orbiton/releases/download/2.62.6/orbiton-2.62.6-linux_armv7_static.tar.xz' | tar axC /tmp && sudo install -Dm755 /tmp/orbiton-2.62.6-linux_armv7_static/o /usr/bin/o && sudo install -Dm644 /tmp/orbiton-2.62.6-linux_armv7_static/o.1.gz /usr/share/man/man1/o.1.gz
 
-## Setting `o` as the default editor for `git`
+## Setting `o` as the default editor executable for `git`
 
 To set:
 
@@ -88,9 +88,18 @@ Add this to `~/.profile`:
 
     export MANPAGER=/usr/bin/o
     export EDITOR=/usr/bin/o
-    export O_THEME=synthwave
 
 Log out and in again to activate the changes.
+
+## Themes
+
+Themes can be selected with the `ctrl-o` menu. The theme menu also lists the theme names, which can be specified in the `O_THEME` environment variable.
+
+The `O_THEME` environment variable is an exception to the claim that `o` is complettely configuration-free, but it is completely optional.
+
+For using ie. the Synthwave theme, the `/usr/bin/sw` symlink can be used, or this can be added to `~/.profile`:
+
+    export O_THEME=synthwave
 
 ## Unique features
 
