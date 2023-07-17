@@ -8,13 +8,13 @@ It might be a good fit for:
 
 * Editing git commit messages (using `EDITOR=o git commit`).
 * Editing `README.md` and `TODO.md` files.
-* Write Markdown files and then export to HTML.
+* Write Markdown and then export to HTML or to a PDF.
 * Learning programming languages, like Rust or Zig.
 * Editing files deep within larger Go or C++ projects.
 * Solving Advent of Code tasks.
-* Generate poetry with the help of ChatGPT, by prefixing a line in a plain text file with `!`.
+* Generate poetry or code with the help of ChatGPT, by prefixing a prompt with `!`.
 * Being placed on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in log, man page and image viewer, can be used as `EDITOR=o visudo` and has built-in support for editing and formatting `/etc/fstab` files.
-* Write X number of words in a distraction-free full-screen editor. Press `ctrl-g` to see the word count in the status bar.
+* Write X number of words in a distraction-free and full-screen environment. Press `ctrl-g` to see the word count in the status bar.
 
 For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
 
