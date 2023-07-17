@@ -11,9 +11,29 @@ import (
 	"github.com/xyproto/binary"
 )
 
+// ReadFileNoStat is similar to os.ReadFile, but does not call os.Stat to get the file size first.
+// It also reads data into a 1024 bytes large buffer, which has a good performance profile.
+// See the graph in ../img/readfile_opt.png for why reading 1024 bytes at the time was chosen.
+func ReadFileNoStat(name string) ([]byte, error) {
+	f, err := os.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	// Prepare the buffer
+	buf := bytes.NewBuffer(make([]byte, 0, 1024))
+
+	_, err = buf.ReadFrom(f)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
 // ReadFileAndProcessLines reads the named file concurrently, processes its lines, and updates the Editor.
 func (e *Editor) ReadFileAndProcessLines(filename string) error {
-	data, err := os.ReadFile(filename)
+	data, err := ReadFileNoStat(filename)
 	if err != nil {
 		return err
 	}
