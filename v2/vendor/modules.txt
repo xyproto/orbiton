@@ -52,6 +52,9 @@ github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 ## explicit
 github.com/mgutz/ansi
+# github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d
+## explicit
+github.com/nathan-fiscaletti/consolesize-go
 # github.com/peterhellberg/gfx v0.0.0-20230526095554-e6202e653d52
 ## explicit; go 1.17
 github.com/peterhellberg/gfx
@@ -107,8 +110,8 @@ github.com/xyproto/termtitle
 # github.com/xyproto/textoutput v1.14.2
 ## explicit; go 1.10
 github.com/xyproto/textoutput
-# github.com/xyproto/vt100 v1.11.5
-## explicit; go 1.10
+# github.com/xyproto/vt100 v1.11.7
+## explicit; go 1.17
 github.com/xyproto/vt100
 # github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
 ## explicit

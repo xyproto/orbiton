@@ -22,7 +22,7 @@ require (
 	github.com/xyproto/syntax v1.10.9
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/textoutput v1.14.2
-	github.com/xyproto/vt100 v1.11.5
+	github.com/xyproto/vt100 v1.11.7
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
 	golang.org/x/image v0.9.0
 )
@@ -38,6 +38,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
+	github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d // indirect
 	github.com/peterhellberg/gfx v0.0.0-20230526095554-e6202e653d52 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
