@@ -11,7 +11,7 @@ import (
 // The returned string is the last 7 characters written to the file.
 func SetClipboardFromFile(filename string) (int, string, error) {
 	// Read the file
-	data, err := os.ReadFile(filename)
+	data, err := ReadFileNoStat(filename)
 	if err != nil {
 		return 0, "", err
 	}

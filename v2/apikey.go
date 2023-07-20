@@ -47,7 +47,7 @@ func (kh *KeyHolder) ReadAPIKey() bool {
 	if kh.Filename == "" {
 		return kh.Key != ""
 	}
-	data, err := os.ReadFile(kh.Filename)
+	data, err := ReadFileNoStat(kh.Filename)
 	if err != nil {
 		return kh.Key != ""
 	}

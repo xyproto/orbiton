@@ -23,7 +23,7 @@ func corpus(searchword, glob string) []string {
 	var data []byte
 	var highestCount int
 	for _, filename := range filenames {
-		data, err = os.ReadFile(filename)
+		data, err = ReadFileNoStat(filename)
 		if err != nil {
 			continue
 		}

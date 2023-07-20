@@ -93,7 +93,7 @@ func (locationHistory LocationHistory) Len() int {
 func LoadLocationHistory(configFile string) (LocationHistory, error) {
 	locationHistory := make(LocationHistory)
 
-	contents, err := os.ReadFile(configFile)
+	contents, err := ReadFileNoStat(configFile)
 	if err != nil {
 		// Could not read file, return an empty map and an error
 		return locationHistory, err
@@ -159,7 +159,7 @@ func LoadLocationHistory(configFile string) (LocationHistory, error) {
 func LoadVimLocationHistory(vimInfoFilename string) LocationHistory {
 	locationHistory := make(LocationHistory)
 	// Attempt to read the ViM location history (that may or may not exist)
-	data, err := os.ReadFile(vimInfoFilename)
+	data, err := ReadFileNoStat(vimInfoFilename)
 	if err != nil {
 		return locationHistory
 	}
@@ -197,7 +197,7 @@ func LoadVimLocationHistory(vimInfoFilename string) LocationHistory {
 // FindInVimLocationHistory will try to find the given filename in the ViM .viminfo file
 func FindInVimLocationHistory(vimInfoFilename, searchFilename string) (LineNumber, error) {
 	// Attempt to read the ViM location history (that may or may not exist)
-	data, err := os.ReadFile(vimInfoFilename)
+	data, err := ReadFileNoStat(vimInfoFilename)
 	if err != nil {
 		return LineNumber(-1), err
 	}
@@ -232,7 +232,7 @@ func FindInVimLocationHistory(vimInfoFilename, searchFilename string) (LineNumbe
 func FindInNvimLocationHistory(nvimLocationFilename, searchFilename string) (LineNumber, error) {
 	nol := LineNumber(-1) // no line number
 
-	data, err := os.ReadFile(nvimLocationFilename) // typically main.shada, a MsgPack file
+	data, err := ReadFileNoStat(nvimLocationFilename) // typically main.shada, a MsgPack file
 	if err != nil {
 		return nol, err
 	}
@@ -454,7 +454,7 @@ func FindInNvimLocationHistory(nvimLocationFilename, searchFilename string) (Lin
 func LoadEmacsLocationHistory(emacsPlacesFilename string) map[string]CharacterPosition {
 	locationCharHistory := make(map[string]CharacterPosition)
 	// Attempt to read the Emacs location history (that may or may not exist)
-	data, err := os.ReadFile(emacsPlacesFilename)
+	data, err := ReadFileNoStat(emacsPlacesFilename)
 	if err != nil {
 		return locationCharHistory
 	}

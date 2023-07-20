@@ -2133,7 +2133,7 @@ func (e *Editor) VerticalScrollIfNeeded(c *vt100.Canvas) {
 
 // InsertFile inserts the contents of a file at the current location
 func (e *Editor) InsertFile(c *vt100.Canvas, filename string) error {
-	data, err := os.ReadFile(filename)
+	data, err := ReadFileNoStat(filename)
 	if err != nil {
 		return err
 	}

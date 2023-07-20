@@ -243,7 +243,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			}
 			// Just build the current file
 			sourceCode := ""
-			sourceData, err := os.ReadFile(sourceFilename)
+			sourceData, err := ReadFileNoStat(sourceFilename)
 			if err == nil { // success
 				sourceCode = string(sourceData)
 			}

@@ -318,7 +318,7 @@ func getFullName() (fullName string) {
 	// Then look for ~/.gitconfig
 	gitConfigFilename := env.ExpandUser("~/.gitconfig")
 	if exists(gitConfigFilename) {
-		data, err := os.ReadFile(gitConfigFilename)
+		data, err := ReadFileNoStat(gitConfigFilename)
 		if err != nil {
 			return fullName
 		}
@@ -413,7 +413,7 @@ func shortPath(path string) string {
 
 // fileHas checks if the given file exists and contains the given string
 func fileHas(path, what string) bool {
-	data, err := os.ReadFile(path)
+	data, err := ReadFileNoStat(path)
 	if err != nil {
 		return false
 	}
