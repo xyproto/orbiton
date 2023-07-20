@@ -107,11 +107,11 @@ func LoadLocationHistory(configFile string) (LocationHistory, error) {
 
 			// Retrieve an unquoted filename in the filename variable
 			quotedFilename := strings.TrimSpace(fields[0])
-			filename := quotedFilename
+			absFilename := quotedFilename
 			if strings.HasPrefix(quotedFilename, "\"") && strings.HasSuffix(quotedFilename, "\"") {
-				filename = quotedFilename[1 : len(quotedFilename)-1]
+				absFilename = quotedFilename[1 : len(quotedFilename)-1]
 			}
-			if filename == "" {
+			if absFilename == "" || !ShouldKeep(absFilename) {
 				continue
 			}
 
@@ -124,14 +124,19 @@ func LoadLocationHistory(configFile string) (LocationHistory, error) {
 				// Could not convert to a number
 				continue
 			}
-			locationHistory.Set(filename, LineNumber(lineNumber))
+			locationHistory.Set(absFilename, LineNumber(lineNumber))
 
 		} else if len(fields) == 3 {
 
 			// Retrieve the line number and UNIX timestamp
 			timeStampString := fields[0]
 			lineNumberString := fields[1]
-			filename := fields[2]
+			absFilename := fields[2]
+
+			if !ShouldKeep(absFilename) {
+				// Typically files in /tmp
+				continue
+			}
 
 			lineNumber, err := strconv.Atoi(lineNumberString)
 			if err != nil {
@@ -145,7 +150,7 @@ func LoadLocationHistory(configFile string) (LocationHistory, error) {
 				continue
 			}
 
-			locationHistory.SetWithTimestamp(filename, LineNumber(lineNumber), timestamp)
+			locationHistory.SetWithTimestamp(absFilename, LineNumber(lineNumber), timestamp)
 		}
 
 	}
@@ -491,19 +496,36 @@ func LoadEmacsLocationHistory(emacsPlacesFilename string) map[string]CharacterPo
 	return locationCharHistory
 }
 
+// ShouldKeep checks if the given absolute filename should be kept in the location history or not
+func ShouldKeep(absFilename string) bool {
+	if strings.HasPrefix(absFilename, "/tmp/commit") || strings.HasPrefix(absFilename, "/tmp/man.") || strings.HasPrefix(absFilename, "/dev/") {
+		// Not storing location info for files in /tmp or /dev
+		return false
+	}
+	baseFilename := filepath.Base(absFilename)
+	if strings.HasPrefix(baseFilename, "tmp.") || baseFilename == "-" {
+		// Not storing location info for /tmp/tmp.* files or "-" files
+		return false
+	}
+	if strings.HasPrefix(absFilename, "/tmp/") && !strings.Contains(baseFilename, ".") {
+		// Not storing location info for files like /tmp/mutt-asdf-asdf-asdf-asdf
+		return false
+	}
+	return true
+}
+
 // SaveLocation takes a filename (which includes the absolute path) and a map which contains
 // an overview of which files were at which line location.
 func (e *Editor) SaveLocation(absFilename string, locationHistory LocationHistory) error {
-	if baseFilename := filepath.Base(absFilename); strings.HasPrefix(baseFilename, "tmp.") {
-		// Not storing location info for /tmp/tmp.* files
-		return nil
-	}
 	if locationHistory.Len() > maxLocationHistoryEntries {
 		// Cull the history
 		locationHistory = locationHistory.KeepNewest(maxLocationHistoryEntries)
 	}
-	// Save the current line location
-	locationHistory.Set(absFilename, e.LineNumber())
+
+	if ShouldKeep(absFilename) {
+		// Save the current line location
+		locationHistory.Set(absFilename, e.LineNumber())
+	}
 
 	// Save the location history and return the error, if any
 	return locationHistory.Save(locationHistoryFilename)
