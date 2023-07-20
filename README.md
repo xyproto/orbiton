@@ -618,7 +618,7 @@ Build:
 
     make gui
 
-Install (use `sudo`, if needed):
+Install (use `sudo` or `doas`, if needed):
 
     make gui-install
 
