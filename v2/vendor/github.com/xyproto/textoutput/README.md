@@ -29,6 +29,6 @@ func main() {
 
 ## General info
 
-* Version: 1.15.1
+* Version: 1.15.2
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

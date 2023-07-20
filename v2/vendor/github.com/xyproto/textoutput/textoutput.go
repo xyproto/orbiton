@@ -431,32 +431,29 @@ func (o *TextOutput) Extract(s string) []CharAttribute {
 
 	for _, r := range s {
 		switch {
-		case r == '\033':
-			escaped = true
-		case escaped && r != 'm':
-			colorcode.WriteRune(r)
 		case escaped && r == 'm':
 			colorAttributes := strings.Split(strings.TrimPrefix(colorcode.String(), "["), ";")
-
-			if len(colorAttributes) == 1 && colorAttributes[0] == "0" {
-				currentColor = vt100.NewAttributeColor()
-			} else {
+			if len(colorAttributes) != 1 || colorAttributes[0] != "0" {
 				for _, attribute := range colorAttributes {
-					attributeNumber, err := strconv.Atoi(attribute)
-					if err != nil {
+					if attributeNumber, err := strconv.Atoi(attribute); err == nil { // success
+						currentColor.Data = append(currentColor.Data, byte(attributeNumber))
+					} else {
 						continue
 					}
-					currentColor.Data = append(currentColor.Data, byte(attributeNumber))
 				}
-
 				// Strip away leading 0 color attribute, if there are more than 1
 				if len(currentColor.Data) > 1 && currentColor.Data[0] == 0 {
 					currentColor.Data = currentColor.Data[1:]
 				}
+			} else {
+				currentColor = vt100.NewAttributeColor()
 			}
-
 			colorcode.Reset()
 			escaped = false
+		case r == '\033':
+			escaped = true
+		case escaped && r != 'm':
+			colorcode.WriteRune(r)
 		default:
 			cc = append(cc, CharAttribute{currentColor, r})
 		}
