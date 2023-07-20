@@ -122,8 +122,8 @@ github.com/golang/protobuf v1.4.0-rc.4.0.20200313231945-b860323f09d0/go.mod h1:W
 github.com/golang/protobuf v1.4.0/go.mod h1:jodUvKwWbYaEsadDk5Fwe5c77LiNKVO9IDvqG2KuDX0=
 github.com/golang/protobuf v1.4.2/go.mod h1:oDoupMAO8OvCJWAcko0GGGIgR6R6ocIYbsSw735rRwI=
 github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEWrmP2Q=
-github.com/gomarkdown/markdown v0.0.0-20230711084535-11b03c0ae6d6 h1:MJj8EdNUiK9LvcNc/sdrJqE6lB+nGGJ5qUg/ycfAwqs=
-github.com/gomarkdown/markdown v0.0.0-20230711084535-11b03c0ae6d6/go.mod h1:JDGcbDT52eL4fju3sZ4TeHGsQwhG9nbDV21aMyhwPoA=
+github.com/gomarkdown/markdown v0.0.0-20230716120725-531d2d74bc12 h1:uK3X/2mt4tbSGoHvbLBHUny7CKiuwUip3MArtukol4E=
+github.com/gomarkdown/markdown v0.0.0-20230716120725-531d2d74bc12/go.mod h1:JDGcbDT52eL4fju3sZ4TeHGsQwhG9nbDV21aMyhwPoA=
 github.com/google/btree v0.0.0-20180813153112-4030bb1f1f0c/go.mod h1:lNA+9X1NB3Zf8V7Ke586lFgjr2dZNuvo3lPJSGZ5JPQ=
 github.com/google/btree v1.0.0/go.mod h1:lNA+9X1NB3Zf8V7Ke586lFgjr2dZNuvo3lPJSGZ5JPQ=
 github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
@@ -346,8 +346,8 @@ github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795 h1:AoL5T5pFgiCn/4f
 github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795/go.mod h1:j3S/tDDOEkIChz0sWDqO3zXOgIjz/6nhuc+JrmZNLnA=
 github.com/xyproto/carveimg v1.4.0 h1:5Klvmos6o24Lpe68NUoFKu8yCkP24R2ZojB63O3+Xn0=
 github.com/xyproto/carveimg v1.4.0/go.mod h1:EKjAxiLhDQZAHCXwsedYuGZ/XD70E7J85xwus1DdqEk=
-github.com/xyproto/clip v0.3.2 h1:xhumLquc3kq1ChieQWHMQjmzECJuifO9SbLYuI0KjZA=
-github.com/xyproto/clip v0.3.2/go.mod h1:jVRcSiAIK6dadcIXPtOa9/wetlggtIGRiRIDOrU0sfU=
+github.com/xyproto/clip v0.3.3 h1:jEPHm5XC+Nc+Ogepr56Vjpv+IxwgivtPGxD99dYlxKs=
+github.com/xyproto/clip v0.3.3/go.mod h1:jVRcSiAIK6dadcIXPtOa9/wetlggtIGRiRIDOrU0sfU=
 github.com/xyproto/digraph v1.2.0 h1:I/tZa5V5OdPfv4A4ps6ASbleB2Uub1dsKRxnMvmLsuE=
 github.com/xyproto/digraph v1.2.0/go.mod h1:s7ijNNFO/sZaEwtIznvXjJCPZyqOkE87Y8EtGUd+lQA=
 github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=

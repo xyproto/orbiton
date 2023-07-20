@@ -73,6 +73,14 @@ func readAll() (string, error) {
 	return text, nil
 }
 
+func readAllBytes() ([]byte, error) {
+	s, err := readAll()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(s), nil
+}
+
 func writeAll(text string) error {
 	err := waitOpenClipboard()
 	if err != nil {
@@ -122,4 +130,8 @@ func writeAll(text string) error {
 	}
 	h = 0 // suppress deferred cleanup
 	return nil
+}
+
+func writeAllBytes(data []byte) error {
+	return writeAll(string(data))
 }
