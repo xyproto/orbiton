@@ -478,14 +478,8 @@ func (c *Canvas) WriteRune(x, y uint, fg, bg AttributeColor, r rune) {
 // the background attribute.
 // The x and y must be within range (x < c.w and y < c.h)
 func (c *Canvas) WriteRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
-	index := y*c.w + x
-
 	c.mut.Lock()
-	chars := (*c).chars
-	chars[index].r = r
-	chars[index].fg = fg
-	chars[index].bg = bgb
-	chars[index].drawn = false
+	(*c).chars[y*c.w+x] = ColorRune{fg, bgb, r, false}
 	c.mut.Unlock()
 }
 
@@ -496,17 +490,11 @@ func (c *Canvas) WriteRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
 func (c *Canvas) WriteRunesB(x, y uint, fg, bgb AttributeColor, r rune, count uint) {
 	startIndex := y*c.w + x
 	afterLastIndex := startIndex + count
-
 	c.mut.Lock()
 	chars := (*c).chars
-
 	for i := startIndex; i < afterLastIndex; i++ {
-		chars[i].r = r
-		chars[i].fg = fg
-		chars[i].bg = bgb
-		chars[i].drawn = false
+		chars[i] = ColorRune{fg, bgb, r, false}
 	}
-
 	c.mut.Unlock()
 }
 
