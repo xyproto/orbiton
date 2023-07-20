@@ -443,18 +443,18 @@ func (o *TextOutput) Extract(s string) []CharAttribute {
 				s2 := strings.TrimPrefix(colorcode.String(), "[")
 				attributeStrings := strings.Split(s2, ";")
 				if len(attributeStrings) == 1 && attributeStrings[0] == "0" {
-					currentColor = []byte{}
+					currentColor = vt100.NewAttributeColor()
 				}
 				for _, attributeString := range attributeStrings {
 					attributeNumber, err := strconv.Atoi(attributeString)
 					if err != nil {
 						continue
 					}
-					currentColor = append(currentColor, byte(attributeNumber))
+					currentColor.Data = append(currentColor.Data, byte(attributeNumber))
 				}
 				// Strip away leading 0 color attribute, if there are more than 1
-				if len(currentColor) > 1 && currentColor[0] == 0 {
-					currentColor = currentColor[1:]
+				if len(currentColor.Data) > 1 && currentColor.Data[0] == 0 {
+					currentColor.Data = currentColor.Data[1:]
 				}
 				// currentColor now contains the last found color attributes,
 				// but as a vt100.AttributeColor.

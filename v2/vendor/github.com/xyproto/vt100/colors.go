@@ -2,6 +2,7 @@ package vt100
 
 import (
 	"fmt"
+	"hash/fnv"
 	"image/color"
 	"os"
 	"strings"
@@ -10,7 +11,10 @@ import (
 
 // Color aliases, for ease of use, not for performance
 
-type AttributeColor []byte
+type AttributeColor struct {
+	Data []byte
+	Hash uint32
+}
 
 var (
 	// Non-color attributes
@@ -68,6 +72,10 @@ var (
 	Default           = NewAttributeColor("39")
 	DefaultBackground = NewAttributeColor("49")
 	BackgroundDefault = NewAttributeColor("49")
+
+	// cache
+	scache = make(map[string]string)
+	smut   = &sync.RWMutex{}
 
 	// Lookup tables
 
@@ -464,9 +472,7 @@ var (
 		"255":                  255,
 	}
 
-	scache = make(map[string]string)
-	smut   = &sync.RWMutex{}
-	b2s    = map[byte]string{
+	b2s = map[byte]string{
 		0:   "0",
 		1:   "01",
 		2:   "02",
@@ -726,29 +732,36 @@ var (
 	}
 )
 
+// HashBytes takes a byte slice and returns a uint32 FNV-1a hash sum
+func HashBytes(data []byte) uint32 {
+	hash := fnv.New32a()
+	hash.Write(data)
+	return hash.Sum32()
+}
+
 func NewAttributeColor(attributes ...string) AttributeColor {
 	result := make([]byte, len(attributes))
 	for i, s := range attributes {
 		result[i] = s2b[s] // if the element is not found in the map, 0 is used
 	}
-	return AttributeColor(result)
+	return AttributeColor{result, HashBytes(result)}
 }
 
 func (ac AttributeColor) Head() byte {
 	// no error checking
-	return ac[0]
+	return ac.Data[0]
 }
 
 func (ac AttributeColor) Tail() []byte {
 	// no error checking
-	return ac[1:]
+	return ac.Data[1:]
 }
 
 // Modify color attributes so that they become background color attributes instead
 func (ac AttributeColor) Background() AttributeColor {
-	newA := make(AttributeColor, 0, len(ac))
+	newA := make([]byte, 0, len(ac.Data))
 	foundOne := false
-	for _, attr := range ac {
+	for _, attr := range ac.Data {
 		if (30 <= attr) && (attr <= 39) {
 			// convert foreground color to background color attribute
 			newA = append(newA, attr+10)
@@ -758,18 +771,18 @@ func (ac AttributeColor) Background() AttributeColor {
 	}
 	// Did not find a background attribute to convert, keep any existing background attributes
 	if !foundOne {
-		for _, attr := range ac {
+		for _, attr := range ac.Data {
 			if (40 <= attr) && (attr <= 49) {
 				newA = append(newA, attr)
 			}
 		}
 	}
-	return newA
+	return AttributeColor{newA, HashBytes(newA)}
 }
 
 // Return the VT100 terminal codes for setting this combination of attributes and color attributes
 func (ac AttributeColor) String() string {
-	id := string(ac)
+	id := string(ac.Data)
 
 	smut.RLock()
 	if s, has := scache[id]; has {
@@ -779,7 +792,7 @@ func (ac AttributeColor) String() string {
 	smut.RUnlock()
 
 	var sb strings.Builder
-	for i, b := range ac {
+	for i, b := range ac.Data {
 		if i != 0 {
 			sb.WriteRune(';')
 		}
@@ -843,24 +856,26 @@ func (ac AttributeColor) Error(text string) {
 }
 
 func (ac AttributeColor) Combine(other AttributeColor) AttributeColor {
-	for _, a1 := range ac {
+	for _, a1 := range ac.Data {
 		a2has := false
-		for _, a2 := range other {
+		for _, a2 := range other.Data {
 			if a1 == a2 {
 				a2has = true
 				break
 			}
 		}
 		if !a2has {
-			other = append(other, a1)
+			other.Data = append(other.Data, a1)
 		}
 	}
-	return AttributeColor(other)
+	other.Hash = HashBytes(other.Data)
+	return other
 }
 
 // Return a new AttributeColor that has "Bright" added to the list of attributes
 func (ac AttributeColor) Bright() AttributeColor {
-	return AttributeColor(append(ac, Bright.Head()))
+	data := append(ac.Data, Bright.Head())
+	return AttributeColor{data, HashBytes(data)}
 }
 
 // Output a string at x, y with the given colors
@@ -876,8 +891,8 @@ func WriteRune(x, y int, r rune, fg, bg AttributeColor) {
 }
 
 func (ac AttributeColor) Ints() []int {
-	il := make([]int, len(ac))
-	for index, b := range ac {
+	il := make([]int, len(ac.Data))
+	for index, b := range ac.Data {
 		il[index] = int(b)
 	}
 	return il
@@ -894,5 +909,5 @@ func TrueColor(fg color.Color, text string) string {
 // Equal checks if two colors have the same attributes, in the same order.
 // The values that are being compared must have at least 1 byte in them.
 func (ac *AttributeColor) Equal(other AttributeColor) bool {
-	return string(*ac) == string(other)
+	return (*ac).Hash == other.Hash
 }
