@@ -503,7 +503,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						tx := cx + lineRuneCount
 						ty := cy + uint(y)
 						if tx < cw {
-							c.WriteRuneB(tx, ty, fg, bg, letter)
+							c.WriteRuneBNoLock(tx, ty, fg, bg, letter)
 							lineRuneCount++                              // 1 rune
 							lineStringCount += uint(len(string(letter))) // 1 rune, expanded
 						}
