@@ -255,14 +255,14 @@ func (sb *StatusBar) ShowWordCount(c *vt100.Canvas, e *Editor) {
 
 // ShowLineColWordCount shows a status message with the current filename, line, column and word count
 func (sb *StatusBar) ShowLineColWordCount(c *vt100.Canvas, e *Editor, filename string) {
-	statusString := filename + ": " + e.StatusMessage()
+	statusString := filename + ": " + e.PositionAndModeInfo()
 	sb.SetMessage(statusString)
 	sb.ShowNoTimeout(c, e)
 }
 
 // ShowLineColWordCountAfterRedraw shows a status message with the current filename, line, column and word count, after the redraw
 func (sb *StatusBar) ShowLineColWordCountAfterRedraw(e *Editor, filename string) {
-	sb.messageAfterRedraw = filename + ": " + e.StatusMessage()
+	sb.messageAfterRedraw = filename + ": " + e.PositionAndModeInfo()
 }
 
 // HoldMessage can be used to let a status message survive on screen for N seconds,

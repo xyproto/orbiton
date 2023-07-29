@@ -1829,13 +1829,19 @@ func (e *Editor) ColIndex() ColIndex {
 	return ColIndex(x)
 }
 
-// StatusMessage returns a status message, intended for being displayed at the bottom
-func (e *Editor) StatusMessage() string {
-	indentations := "spaces"
+// PositionAndModeInfo returns a status message, intended for being displayed at the bottom, containing:
+// * the current line number (counting from 1)
+// * the current column number (counting from 1)
+// * the current rune unicode value
+// * the current word count
+// * the currently detected file mode
+// * the current indentation mode (tabs or spaces)
+func (e *Editor) PositionAndModeInfo() string {
+	indentation := "spaces"
 	if !e.indentation.Spaces {
-		indentations = "tabs"
+		indentation = "tabs"
 	}
-	return fmt.Sprintf("line %d col %d rune %U words %d, %s [%s]", e.LineNumber(), e.ColNumber(), e.Rune(), e.WordCount(), indentations, e.mode)
+	return fmt.Sprintf("line %d col %d rune %U words %d, [%s] %s", e.LineNumber(), e.ColNumber(), e.Rune(), e.WordCount(), e.mode, indentation)
 }
 
 // GoToPosition can go to the given position struct and use it as the new position
