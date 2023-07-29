@@ -497,12 +497,15 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		})
 	}
 
-	actions.Add("Stop parent and quit without saving", func() {
-		e.stopParentOnQuit = true
-		e.clearOnQuit = true
-		e.quit = true        // indicate that the user wishes to quit
-		e.clearOnQuit = true // clear the terminal after quitting
-	})
+	searchProcessNames := []string{"ag", "find", "rg"}
+	if firstWordContainsOneOf(parentCommand(), searchProcessNames) {
+		actions.Add("Stop parent and quit without saving", func() {
+			e.stopParentOnQuit = true
+			e.clearOnQuit = true
+			e.quit = true        // indicate that the user wishes to quit
+			e.clearOnQuit = true // clear the terminal after quitting
+		})
+	}
 
 	menuChoices := actions.MenuChoices()
 
