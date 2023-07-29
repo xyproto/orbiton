@@ -17,7 +17,7 @@ import (
 
 // Map from formatting command to a list of file extensions
 var format = map[*exec.Cmd][]string{
-	exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): {".cpp", ".cc", ".cxx", ".h", ".hpp", ".c++", ".h++", ".c"},
+	exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): {".c", ".c++", ".cc", ".cpp", ".cxx", ".h", ".h++", ".hpp"},
 	exec.Command("astyle", "--mode=cs"):                                               {".cs"},
 	exec.Command("crystal", "tool", "format"):                                         {".cr"},
 	exec.Command("prettier", "--tab-width", "2", "-w"):                                {".css"},
@@ -34,7 +34,7 @@ var format = map[*exec.Cmd][]string{
 	exec.Command("autopep8", "-i", "--max-line-length", "120"):                                                         {".py"},
 	exec.Command("rustfmt"):  {".rs"},
 	exec.Command("scalafmt"): {".scala"},
-	exec.Command("shfmt", "-s", "-w", "-i", "2", "-bn", "-ci", "-sr", "-kp"): {".sh", ".bash", "PKGBUILD", "APKBUILD"},
+	exec.Command("shfmt", "-s", "-w", "-i", "2", "-bn", "-ci", "-sr", "-kp"): {".bash", ".sh", "APKBUILD", "PKGBUILD"},
 	exec.Command("v", "fmt"): {".v"},
 	exec.Command("tidy", "-w", "80", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "-xml", "-m"): {".xml"},
 	exec.Command("zig", "fmt"): {".zig"},
