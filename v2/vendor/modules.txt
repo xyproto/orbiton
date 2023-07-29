@@ -107,10 +107,10 @@ github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.5.1
 ## explicit; go 1.11
 github.com/xyproto/termtitle
-# github.com/xyproto/textoutput v1.15.6
+# github.com/xyproto/textoutput v1.15.8
 ## explicit; go 1.17
 github.com/xyproto/textoutput
-# github.com/xyproto/vt100 v1.12.4
+# github.com/xyproto/vt100 v1.12.5
 ## explicit; go 1.17
 github.com/xyproto/vt100
 # github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
