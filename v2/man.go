@@ -38,13 +38,13 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 		normal          = e.Foreground
 		off             = vt100.Stop()
 		trimmedLine     = strings.TrimSpace(line)
-		hasWords        = HasWords(trimmedLine)
+		hasAnyWords     = hasWords(trimmedLine)
 		innerSpaceCount = strings.Count(trimmedLine, " ")
 	)
 
 	if strings.Count(trimmedLine, "  ") > 10 && (firstLine || lastLine) { // first and last line
 		return e.CommentColor.Get(line)
-	} else if strings.ToUpper(trimmedLine) == trimmedLine && !strings.HasPrefix(trimmedLine, "-") && hasWords && !strings.HasPrefix(line, " ") { // a sub-section header
+	} else if strings.ToUpper(trimmedLine) == trimmedLine && !strings.HasPrefix(trimmedLine, "-") && hasAnyWords && !strings.HasPrefix(line, " ") { // a sub-section header
 		return e.ManSectionColor.Get(line)
 	} else if strings.HasPrefix(trimmedLine, "-") { // a flag or parameter
 		var rs []rune
