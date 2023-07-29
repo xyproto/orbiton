@@ -20,6 +20,9 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+// For when the user scrolls too far
+const endOfFileMessage = "EOF"
+
 // Create a LockKeeper for keeping track of which files are being edited
 var fileLock = NewLockKeeper(defaultLockFile)
 
@@ -738,7 +741,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// If e.redraw is false, the end of file is reached
 				if !e.redraw {
 					status.Clear(c)
-					status.SetMessage("EOF")
+					status.SetMessage(endOfFileMessage)
 					status.Show(c, e)
 				}
 				e.redrawCursor = true
@@ -839,7 +842,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// If e.redraw is false, the end of file is reached
 				if !e.redraw {
 					status.Clear(c)
-					status.SetMessage("EOF")
+					status.SetMessage(endOfFileMessage)
 					status.Show(c, e)
 				}
 				e.redrawCursor = true
@@ -869,7 +872,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// If e.redraw is false, the end of file is reached
 				if !e.redraw {
 					status.Clear(c)
-					status.SetMessage("EOF")
+					status.SetMessage(endOfFileMessage)
 					status.Show(c, e)
 				}
 				e.redrawCursor = true
