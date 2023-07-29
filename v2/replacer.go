@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-// opinionatedStringReplacer is a Replacer that can be used for fixing
+// opinionatedStringReplacer is a Replacer that can be used for fixing:
 // nonbreaking spaces, annoying tildes, \r\n and \r
 var opinionatedStringReplacer = strings.NewReplacer(
 	// Replace non-breaking space with regular space
