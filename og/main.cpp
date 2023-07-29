@@ -502,12 +502,15 @@ int main(int argc, char* argv[])
         givenFilename = true;
     }
 
+    std::filesystem::path full_path = (argc > 0) && argv[0] ? argv[0] : "";
+    std::string exe_filename = full_path.filename().string();
+
     // Check if the executable starts with "l", "r", "s", "v" or "b"
-    bool lightMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'l';
-    bool redBlackMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'r';
-    bool synthWaveMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 's';
-    bool vsMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'v';
-    bool blueEditMode = (argc > 0) && argv[0] != nullptr && argv[0][0] == 'b' || argv[0][0] == 'e';
+    bool lightMode = !exe_filename.empty() && (exe_filename[0] == 'l' || exe_filename[0] == 'v');
+    bool redBlackMode = !exe_filename.empty() && exe_filename[0] == 'r';
+    bool synthWaveMode = !exe_filename.empty() && exe_filename[0] == 's';
+    bool vsMode = !exe_filename.empty() && exe_filename[0] == 'v';
+    bool blueEditMode = !exe_filename.empty() && (exe_filename[0] == 'b' || exe_filename[0] == 'e');
 
     // Show the file chooser dialog, if no filename was given
     if (!givenFilename) {
