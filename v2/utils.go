@@ -71,6 +71,25 @@ func hasS(sl []string, s string) bool {
 	return false
 }
 
+// firstWordContainsOneOf checks if the first word of the given string contains
+// any one of the given strings
+func firstWordContainsOneOf(s string, sl []string) bool {
+	if s == "" {
+		return false
+	}
+	fields := strings.Fields(s)
+	if len(fields) == 0 {
+		return false
+	}
+	firstWord := fields[0]
+	for _, e := range sl {
+		if strings.Contains(firstWord, e) {
+			return true
+		}
+	}
+	return false
+}
+
 // hasKey checks if the given string map contains the given key
 func hasKey(m map[string]string, key string) bool {
 	_, found := m[key]
@@ -148,8 +167,8 @@ func hexDigit(r rune) bool {
 	return false
 }
 
-// HasWords checks if a range of more than one letter is found
-func HasWords(s string) bool {
+// hasWords checks if a range of more than one letter is found
+func hasWords(s string) bool {
 	letterCount := 0
 	for _, r := range s {
 		if unicode.IsLetter(r) {
@@ -418,4 +437,13 @@ func fileHas(path, what string) bool {
 		return false
 	}
 	return bytes.Contains(data, []byte(what))
+}
+
+// parentCommand returns either the command of the parent process or an empty string
+func parentCommand() string {
+	commandString, err := ReadFileNoStat(fmt.Sprintf("/proc/%d/cmdline", os.Getppid()))
+	if err != nil {
+		return ""
+	}
+	return string(commandString)
 }
