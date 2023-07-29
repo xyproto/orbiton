@@ -498,9 +498,18 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	}
 
 	searchProcessNames := []string{"ag", "find", "rg"}
+
+	// Only show the menu option for killing the parent process if the parent process is "ag", "find" or "rg"
 	if firstWordContainsOneOf(parentCommand(), searchProcessNames) {
-		actions.Add("Stop parent and quit without saving", func() {
+		actions.Add("Kill parent and quit without saving", func() {
 			e.stopParentOnQuit = true
+			e.clearOnQuit = true
+			e.quit = true        // indicate that the user wishes to quit
+			e.clearOnQuit = true // clear the terminal after quitting
+		})
+	} else {
+		actions.Add("Exit without saving", func() {
+			e.stopParentOnQuit = false
 			e.clearOnQuit = true
 			e.quit = true        // indicate that the user wishes to quit
 			e.clearOnQuit = true // clear the terminal after quitting
