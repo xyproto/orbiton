@@ -63,7 +63,7 @@ func HasPortal() bool {
 
 // LoadPortal will load a filename + line number from the portal.txt file
 func LoadPortal() (*Portal, error) {
-	data, err := ReadFileNoStat(portalFilename)
+	data, err := os.ReadFile(portalFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (p *Portal) PopLine(e *Editor, removeLine bool) (string, error) {
 		// The line moving is done by the editor InsertAbove and InsertBelow functions
 		return e.Line(p.LineIndex()), nil
 	}
-	data, err := ReadFileNoStat(p.absFilename)
+	data, err := os.ReadFile(p.absFilename)
 	if err != nil {
 		return "", err
 	}

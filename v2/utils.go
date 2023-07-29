@@ -337,7 +337,7 @@ func getFullName() (fullName string) {
 	// Then look for ~/.gitconfig
 	gitConfigFilename := env.ExpandUser("~/.gitconfig")
 	if exists(gitConfigFilename) {
-		data, err := ReadFileNoStat(gitConfigFilename)
+		data, err := os.ReadFile(gitConfigFilename)
 		if err != nil {
 			return fullName
 		}
@@ -432,7 +432,7 @@ func shortPath(path string) string {
 
 // fileHas checks if the given file exists and contains the given string
 func fileHas(path, what string) bool {
-	data, err := ReadFileNoStat(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return false
 	}
@@ -441,7 +441,7 @@ func fileHas(path, what string) bool {
 
 // parentCommand returns either the command of the parent process or an empty string
 func parentCommand() string {
-	commandString, err := ReadFileNoStat(fmt.Sprintf("/proc/%d/cmdline", os.Getppid()))
+	commandString, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", os.Getppid()))
 	if err != nil {
 		return ""
 	}
