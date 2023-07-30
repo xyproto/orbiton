@@ -32,7 +32,7 @@ BUILDFLAGS ?= -mod=vendor -trimpath
 endif
 
 CXX ?= g++
-CXXFLAGS ?= -O2 -pipe -fPIC -fno-plt -fstack-protector-strong -Wall -Wshadow -Wpedantic -Wno-parentheses -Wfatal-errors -Wvla -Wignored-qualifiers -pthread
+CXXFLAGS ?= -O2 -pipe -fPIC -fno-plt -fstack-protector-strong -Wall -Wshadow -Wpedantic -Wno-parentheses -Wfatal-errors -Wvla -Wignored-qualifiers -pthread $(LDFLAGS)
 CXXFLAGS += $(shell pkg-config --cflags --libs vte-2.91)
 
 ifeq ($(UNAME_S),Darwin)
