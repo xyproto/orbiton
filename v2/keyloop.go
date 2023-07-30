@@ -1409,30 +1409,26 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			status.Show(c, e)
 		case "c:19": // ctrl-s, save (or step, if in debug mode)
 			e.UserSave(c, tty, status)
-		case "c:7": // ctrl-g, display some help (3 times), then either go to definition OR toggle the status bar
+		case "c:7": // ctrl-g, either go to definition OR toggle the status bar
 
 			// If a search is in progress, clear the search
 			if e.searchTerm != "" {
 				e.ClearSearchTerm()
 				e.redraw = true
 				e.redrawCursor = true
-
-				// TODO: Also jump to where the cursor was before "go to definition"?
-
 				break
 			}
 
-			// TODO: Make this block of code less if-else-y, and fewer levels deep
+			// func prefix must exist for this language/mode for GoToDefinition to be supported
+			jumpedToDefinition := e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status)
 
-			canGoToDefinition := e.FuncPrefix() != ""
-			if !canGoToDefinition || !e.GoToDefinition(tty, c, status) {
-				// If the definition could not be found,
-				// or if max help messages has been reached:
-				// toggle the status line at the bottom.
+			// If the definition could not be found, toggle the status line at the bottom.
+			if !jumpedToDefinition {
 				status.ClearAll(c)
 				e.statusMode = !e.statusMode
 				if e.statusMode {
 					status.ShowLineColWordCount(c, e, e.filename)
+					e.redraw = true
 				}
 			}
 		case "c:21", "c:26": // ctrl-u or ctrl-z (ctrl-z may background the application)
