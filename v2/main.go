@@ -17,13 +17,15 @@ import (
 
 const versionString = "Orbiton 2.62.7"
 
-// quitMut disallows Exit(1) while a file is being saved
-var quitMut sync.Mutex
+var (
+	// quitMut disallows Exit(1) while a file is being saved
+	quitMut sync.Mutex
 
-// avoid writing to ~/.cache ?
-var noWriteToCache bool
+	// avoid writing to ~/.cache ?
+	noWriteToCache bool
 
-var cacheDirForDoc = shortPath(filepath.Join(userCacheDir, "o"))
+	cacheDirForDoc = shortPath(filepath.Join(userCacheDir, "o"))
+)
 
 func main() {
 	var (
@@ -58,7 +60,8 @@ ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for HTML, format the file with "tidy", for Python: "autopep8"
             for Markdown, toggle checkboxes or re-format tables
             for git interactive rebases, cycle the rebase keywords
-ctrl-g      to display simple help 2 times, then toggle the status bar / go to def
+ctrl-g      to display simple help 2 times, then toggle the status bar
+            can jump to definition (experimental feature), and back with ctrl-t
 ctrl-_      insert a symbol by typing in a two letter ViM-style digraph
             see https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt
 ctrl-a      go to start of line, then start of text and then the previous line

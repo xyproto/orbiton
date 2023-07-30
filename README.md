@@ -193,7 +193,8 @@ There are fewer hotkeys to remember than for GNU Nano.
              or jump to the matching parenthesis or bracket, if the cursor just moved on to one.
              Remove an empty column when in the Markdown table editor.
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
-* `ctrl-g` - Display simple help the first 2 times, then toggle the status bar. Can also jump to function definitions within the same file.
+* `ctrl-g` - Display simple help the first 2 times, then toggle the status bar.
+             Can also jump to definitions (experimental feature), and jump back with `ctrl-t`.
 * `ctrl-_` - Insert a symbol by typing in a 2-letter [digraph](https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt).
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - For C and C++: jump between the current header and source file. For Agda and Ivy, insert a symbol.
