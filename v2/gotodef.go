@@ -75,14 +75,19 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 							oldFilename := e.filename
 							oldLineIndex := e.LineIndex()
 
-							e.Switch(c, tty, status, fileLock, goFile)
+							if goFile != oldFilename {
+								e.Switch(c, tty, status, fileLock, goFile)
+							}
 							e.redraw, _ = e.GoTo(LineIndex(i), c, status)
 
 							// Push a function for how to go back
 							backFunctions = append(backFunctions, func() {
 								oldFilename := oldFilename
 								oldLineIndex := oldLineIndex
-								e.Switch(c, tty, status, fileLock, oldFilename)
+								goFile := goFile
+								if goFile != oldFilename {
+									e.Switch(c, tty, status, fileLock, oldFilename)
+								}
 								e.redraw, _ = e.GoTo(oldLineIndex, c, status)
 							})
 
@@ -96,14 +101,19 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 							oldFilename := e.filename
 							oldLineIndex := e.LineIndex()
 
-							e.Switch(c, tty, status, fileLock, goFile)
+							if goFile != oldFilename {
+								e.Switch(c, tty, status, fileLock, goFile)
+							}
 							e.redraw, _ = e.GoTo(LineIndex(i), c, status)
 
 							// Push a function for how to go back
 							backFunctions = append(backFunctions, func() {
 								oldFilename := oldFilename
 								oldLineIndex := oldLineIndex
-								e.Switch(c, tty, status, fileLock, oldFilename)
+								goFile := goFile
+								if goFile != oldFilename {
+									e.Switch(c, tty, status, fileLock, oldFilename)
+								}
 								e.redraw, _ = e.GoTo(oldLineIndex, c, status)
 							})
 
