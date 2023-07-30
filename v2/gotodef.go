@@ -126,7 +126,7 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 	//s := "Bookmarked line " + e.LineNumber().String()
 	//status.SetMessage("  " + s + "  ")
 
-	status.ClearAll(c)
+	//status.ClearAll(c)
 
 	// The search string we will use for searching for functions within this file
 	s := funcPrefix + word
@@ -156,8 +156,8 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 	foundX, foundY := e.backwardSearch(startIndex, stopIndex)
 
 	if foundY == -1 {
-		status.SetMessage("Could not find " + s)
-		status.Show(c, e)
+		//status.SetMessage("Could not find " + s)
+		//status.Show(c, e)
 		return false
 	}
 
@@ -176,9 +176,9 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 		e.Center(c)
 		e.redraw = true
 		e.redrawCursor = e.redraw
+
+		return false
 	}
 
-	//status.SetMessage("Jumped to " + s)
-	//status.Show(c, e)
 	return true
 }
