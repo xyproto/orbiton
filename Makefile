@@ -1,8 +1,11 @@
-.PHONY: clean gui gui-install gui-symlinks install install-gui install-symlinks ko ko-install og og-install symlinks symlinks-install vg-symlink
+.PHONY: clean trace bench install install-gui symlinks vg-symlink gui-symlinks feedgame-symlink feedgame-gui-symlink license
+
+PROJECT ?= orbiton
+PROGRAM ?= o
 
 MANDIR ?= "$(PREFIX)/share/man/man1"
-GOBUILD := $(shell test $$(go version | tr ' ' '\n' | head -3 | tail -1 | tr '.' '\n' | head -2 | tail -1) -le 12 2>/dev/null && echo GO111MODULES=on go build -v || echo go build -mod=vendor -v)
 
+GOBUILD := $(shell test $$(go version | tr ' ' '\n' | head -3 | tail -1 | tr '.' '\n' | head -2 | tail -1) -le 12 2>/dev/null && echo GO111MODULES=on go build -v || echo go build -mod=vendor -v)
 SRCFILES := $(wildcard go.* v2/*.go v2/go.*)
 
 # macOS and FreeBSD detection
@@ -38,18 +41,14 @@ else
   CXXFLAGS += -Wl,--as-needed
 endif
 
-o: $(SRCFILES)
-	cd v2 && $(GOBUILD) $(BUILDFLAGS) -o ../o
+$(PROGRAM): $(SRCFILES)
+	cd v2 && $(GOBUILD) $(BUILDFLAGS) -o ../$(PROGRAM)
 
 trace: clean $(SRCFILES)
-	cd v2 && $(GOBUILD) $(BUILDFLAGS) -tags trace -o ../o
+	cd v2 && $(GOBUILD) $(BUILDFLAGS) -tags trace -o ../$(PROGRAM)
 
 bench:
 	cd v2 && go test -bench=. -benchmem
-
-gui: og
-ko: og
-og: og/og
 
 og/og: og/main.cpp
 	$(CXX) "$<" -o "$@" $(CXXFLAGS) $(LDFLAGS)
@@ -57,19 +56,14 @@ og/og: og/main.cpp
 o.1.gz: o.1
 	gzip -f -k o.1
 
-install: o o.1.gz
+
+install: $(PROGRAM) o.1.gz
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
-	install -m755 o "$(DESTDIR)$(PREFIX)/bin/o"
+	install -m755 $(PROGRAM) "$(DESTDIR)$(PREFIX)/bin/$(PROGRAM)"
 	mkdir -p "$(DESTDIR)$(MANDIR)/bin"
 	install -m644 o.1.gz "$(DESTDIR)$(MANDIR)/o.1.gz"
 
-gui-install: install-og
-install-gui: install-og
-ko-install: install-og
-install-ko: install-og
-og-install: install-og
-
-install-og: og/og vg-symlink
+install-gui: og/og vg-symlink
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
 	install -m755 og/og "$(DESTDIR)$(PREFIX)/bin/og"
 	mkdir -p "$(DESTDIR)$(PREFIX)/share/pixmaps"
@@ -79,37 +73,31 @@ install-og: og/og vg-symlink
 	install -m644 og/og.desktop "$(DESTDIR)$(PREFIX)/share/applications/og.desktop"
 	install -m644 og/vg.desktop "$(DESTDIR)$(PREFIX)/share/applications/vg.desktop"
 
-install-symlinks: symlinks
-symlinks-install: symlinks
-
 symlinks:
-	ln -s -f "$(DESTDIR)$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/li"
-	ln -s -f "$(DESTDIR)$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/redblack"
-	ln -s -f "$(DESTDIR)$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/sw"
-	ln -s -f "$(DESTDIR)$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/edi"
-	ln -s -f "$(DESTDIR)$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/vs"
-
-symlinks-gui: gui-symlinks
-symlinks-gui-install: gui-symlinks
-symlinks-install-gui: gui-symlinks
-install-symlinks-gui: gui-symlinks
+	ln -s -f "$(PREFIX)/bin/$(PROGRAM)" "$(DESTDIR)$(PREFIX)/bin/li"
+	ln -s -f "$(PREFIX)/bin/$(PROGRAM)" "$(DESTDIR)$(PREFIX)/bin/redblack"
+	ln -s -f "$(PREFIX)/bin/$(PROGRAM)" "$(DESTDIR)$(PREFIX)/bin/sw"
+	ln -s -f "$(PREFIX)/bin/$(PROGRAM)" "$(DESTDIR)$(PREFIX)/bin/edi"
+	ln -s -f "$(PREFIX)/bin/$(PROGRAM)" "$(DESTDIR)$(PREFIX)/bin/vs"
 
 vg-symlink:
 	ln -s -f "$(DESTDIR)$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/vg"
 
 gui-symlinks: vg-symlink
-	ln -s -f "$(DESTDIR)$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/lig"
-	ln -s -f "$(DESTDIR)$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/redblackg"
-	ln -s -f "$(DESTDIR)$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/swg"
-	ln -s -f "$(DESTDIR)$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/edg"
+	ln -s -f "$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/lig"
+	ln -s -f "$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/redblackg"
+	ln -s -f "$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/swg"
+	ln -s -f "$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/edg"
 
-easteregg:
-	ln -s -f "$(DESTDIR)$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/feedgame"
+feedgame-symlink:
+	ln -s -f "$(PREFIX)/bin/$(PROGRAM)" "$(DESTDIR)$(PREFIX)/bin/feedgame"
 
-gui-easteregg: easteregg-gui
+feedgame-gui-symlink:
+	ln -s -f "$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/feedgameg"
 
-easteregg-gui:
-	ln -s -f "$(DESTDIR)$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/feedgameg"
+license:
+	install -d "$(DESTDIR)$(PREFIX)/share/licenses/$(PROJECT)"
+	install -m644 LICENSE "$(DESTDIR)$(PREFIX)/share/licenses/$(PROJECT)/LICENSE"
 
 clean:
 	-rm -f o v2/o o.1.gz og/og v2/orbiton
