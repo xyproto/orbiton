@@ -307,6 +307,20 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.redrawCursor = true
 
+			// Check if we have jumped to a definition and need to go back
+			if len(backFunctions) > 0 {
+				lastIndex := len(backFunctions) - 1
+				// call the function for getting back
+				backFunctions[lastIndex]()
+				// pop a function from the end of backFunctions
+				backFunctions = backFunctions[:lastIndex]
+				if len(backFunctions) == 0 {
+					// last possibility to jump back
+					status.SetMessageAfterRedraw("Jumped all the way back")
+				}
+				break
+			}
+
 			// Is there no corresponding header or source file?
 			noCorresponding := false
 		AGAIN_NO_CORRESPONDING:
@@ -1411,7 +1425,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// TODO: Make this block of code less if-else-y, and fewer levels deep
 
 			canGoToDefinition := e.FuncPrefix() != ""
-			if !canGoToDefinition || !e.GoToDefinition(c, status) {
+			if !canGoToDefinition || !e.GoToDefinition(tty, c, status) {
 				// If the definition could not be found,
 				// or if max help messages has been reached:
 				// toggle the status line at the bottom.

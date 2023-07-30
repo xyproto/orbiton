@@ -1,15 +1,20 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
 )
 
+var backFunctions []func()
+
 // GoToDefinition tries to find the definition of the given string, saves the current location and jumps to the location of the definition.
 // Returns true if it was possible to go to the definition.
-func (e *Editor) GoToDefinition(c *vt100.Canvas, status *StatusBar) bool {
+// This function is currently very experimental and may only work for a few languages, and for a few definitions!
+func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar) bool {
 	// FuncPrefix may return strings with a leading or trailing blank
 	funcPrefix := e.FuncPrefix()
 
@@ -23,7 +28,8 @@ func (e *Editor) GoToDefinition(c *vt100.Canvas, status *StatusBar) bool {
 	if word == "" {
 		return false
 	}
-	// Is the word not a language keyword?
+
+	// Is the word a language keyword?
 	for kw := range syntax.Keywords {
 		if kw == word {
 			// Don't go to the definition of keywords
@@ -31,7 +37,84 @@ func (e *Editor) GoToDefinition(c *vt100.Canvas, status *StatusBar) bool {
 		}
 	}
 
+	currentLine := e.CurrentLine()
+	functionCall := strings.Contains(currentLine, word+"(")
+
+	// NOTE: This is extremely rudimentary "go to definition" and may easily end up in the wrong
+	// function if two methods have the same name! It also does not go into the standard library.
+
 	// word can be a string like "package.DoSomething" at this point.
+
+	if strings.Count(word, ".") == 1 {
+		wordDotWord := strings.Split(word, ".") // often package.function, package.type or object.method
+		name := wordDotWord[1]
+
+		ext := filepath.Ext(e.filename)
+
+		filenames, err := filepath.Glob("*" + ext)
+		if err == nil { // success
+			for _, goFile := range filenames {
+				data, err := os.ReadFile(goFile)
+				if err != nil {
+					continue
+				}
+				singleLineCommentMarker := e.SingleLineCommentMarker()
+				for i, line := range strings.Split(string(data), "\n") {
+					trimmedLine := strings.TrimSpace(line)
+					if strings.HasPrefix(trimmedLine, singleLineCommentMarker) {
+						continue
+					}
+					if strings.Contains(trimmedLine, name) {
+						fields := strings.SplitN(trimmedLine, name, 2)
+						emptyBeforeWord := len(strings.TrimSpace(fields[0])) == 0
+
+						// go to a function definition
+						if strings.HasPrefix(trimmedLine, funcPrefix) && strings.Contains(trimmedLine, " "+name+"(") {
+							//logf("PROLLY FUNC: %s LINE %d WORD %s NAME %s\n", goFile, i+1, word, name)
+
+							oldFilename := e.filename
+							oldLineIndex := e.LineIndex()
+
+							e.Switch(c, tty, status, fileLock, goFile)
+							e.redraw, _ = e.GoTo(LineIndex(i), c, status)
+
+							// Push a function for how to go back
+							backFunctions = append(backFunctions, func() {
+								oldFilename := oldFilename
+								oldLineIndex := oldLineIndex
+								e.Switch(c, tty, status, fileLock, oldFilename)
+								e.redraw, _ = e.GoTo(oldLineIndex, c, status)
+							})
+
+							return true
+						}
+
+						// go to a type definition
+						if !functionCall && emptyBeforeWord && !strings.Contains(trimmedLine, ":") && !strings.Contains(trimmedLine, "=") && !strings.Contains(trimmedLine, ",") {
+							//logf("PROLLY TYPE: %s LINE %d WORD %s NAME %s\n", goFile, i+1, word, name)
+
+							oldFilename := e.filename
+							oldLineIndex := e.LineIndex()
+
+							e.Switch(c, tty, status, fileLock, goFile)
+							e.redraw, _ = e.GoTo(LineIndex(i), c, status)
+
+							// Push a function for how to go back
+							backFunctions = append(backFunctions, func() {
+								oldFilename := oldFilename
+								oldLineIndex := oldLineIndex
+								e.Switch(c, tty, status, fileLock, oldFilename)
+								e.redraw, _ = e.GoTo(oldLineIndex, c, status)
+							})
+
+							return true
+						}
+					}
+				}
+			}
+		}
+
+	}
 
 	// TODO:
 	// * Implement "go to definition"
