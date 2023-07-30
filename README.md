@@ -12,7 +12,6 @@ It might be a good fit for:
 * Learning programming languages, like Rust or Zig.
 * Editing files deep within larger Go or C++ projects.
 * Solving Advent of Code tasks.
-* Generate poetry or code with the help of ChatGPT, by prefixing a prompt with `!`.
 * Being placed on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in log, man page and image viewer, can be used as `EDITOR=o visudo` and has built-in support for editing and formatting `/etc/fstab` files.
 * Write X number of words in a distraction-free and full-screen environment. Press `ctrl-g` to see the word count in the status bar.
 
