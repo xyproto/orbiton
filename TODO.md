@@ -1,28 +1,23 @@
-# TODO
+⁸# TODO
 
 ## General
 
 - [ ] Make it possible to have groups of bookmarks per file, and then name them, somehow.
 - [ ] Make it possible to press `ctrl-f` to search and then `ctrl-v` to paste in text to search for.
-- [x] Add support for inserting ViM digraphs. See github.com/xyproto/digraphs.
 - [ ] If in man page mode, set the file as read-only and also let "q" quit.
-- [ ] Set a "go to definition" bookmark before jumping to a definition.
 - [ ] Let `ctrl-w` also format gzipped code, for instance when editing `main.cpp.gz`.
 - [ ] Do not remove indentation from JS code in HTML when `ctrl-w` is pressed.
       See also: https://github.com/yosssi/gohtml/issues/22
-- [ ] Let `ctrl-g` go back after it has been used for jumping to a definition, if there is a "go to definition" bookmark available.
-- [ ] Recover from panic seamlessly, but show a status message and save the stacktrace to file.
-- [ ] When bookmarking, don't just bookmark the line/col, but also the filename.
-- [ ] When rebasing, look for the `>>>>` markers when opening the file and jump to the first one?
+- [ ] When rebasing, look for the `>>>>` markers when opening the file and jump to the first one (and let `ctrl-n` search for the next one).
 - [ ] When pasting with _double_ `ctrl-v`, let _one_ `ctrl-z` undo both keypresses.
 - [ ] When pasting lines that start with `+` and it's not a diff/patch file, then replace `+` with a blank.
 - [ ] When deleting lines with `ctrl-k` more than once, scroll the cursor line a bit up, to make it easier.
 - [ ] If a file is passed through stdin and > 70% of the lines has a `:`, it might be a log file and not configuration.
 - [ ] If a file is passed through stdin and has many similar lines and no comments or blank lines, it might be a log file and not configuration.
-- [ ] HTTP client - scratch document style
+- [ ] HTTP client - scratch document style `.http` files.
 - [ ] Add support for emojis.
-- [ ] Go through this file and remove all completed TODO items.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
+- [ ] Go through this file and remove all completed TODO items.
 
 ## Markdown
 
@@ -30,20 +25,20 @@
 
 ## Autocompletion and AI generated code
 
-- [ ] If ChatGPT is enabled, and there is just one error, and the fix proposed by ChatGPT is small, then apply the fix, but let the user press ctrl-z if they don't want it.
+- [ ] If ChatGPT is enabled, and there is just one error, and the fix proposed by ChatGPT is small, then apply the fix, but let the user press `ctrl-z` if they don't want it.
 - [ ] If an API key is entered, save it to file in the cache directory.
 - [ ] Add an environment variable for specifying the AI API endpoint.
 - [ ] Embed https://github.com/nomic-ai/gpt4all + data files within the `o` executable, somehow.
 - [ ] Add a way to generate git commit messages with ChatGPT
 - [ ] Let the auto completion also look at method definitions with matching variable names (ignoring types, for now).
-- [ ] Auto completion of filenames if the previous rune is "/" and tab is pressed.
+- [ ] Auto completion of filenames if the previous rune is `/` and tab is pressed.
 - [ ] When generating code with ChatGPT, also send a list of function signatures and constants for the current file (+ header file).
 
 ## Building, debugging and testing programs
 
-- [ ] Along with the per-file location, store the per-file last ctrl-o menu choice location. Or just move "Build" to the top, when on macOS.
+- [ ] Along with the per-file location, store the per-file last `ctrl-o` menu choice location. Or just move "Build" to the top, when on macOS.
 - [ ] Jump to error for Erlang.
-- [ ] Fix output parsing when running `go test` with ctrl-space.
+- [ ] Fix output parsing when running `go test` with `ctrl-space`.
 - [ ] Jump to error when building with `ctrl-space` and `cargo`.
 - [ ] When switching register pane layout with `ctrl-p`, save the contents of the old pane and use that.
 - [ ] Make it possible to send custom commands to `gdb` with `ctrl-g` when in debug mode.
@@ -54,6 +49,7 @@
 ## Saving and loading
 
 - [ ] When "somefile.go" and "somefile_test.go" exists, and only "somefile" is given, load "somefile.go".
+- [ ] When a filename is given, but it does not exist, and no extension is given, and the directory only contains one file, open that one.
 - [ ] Show a spinner when reading a lot of data from stdin.
 - [ ] When editing a man page, make it possible to toggle between the man page and the man page view mode.
 - [ ] Auto-detect tabs/spaces when opening a file.
@@ -77,7 +73,8 @@
 - [ ] `ctrl-f` and then `return` could jump to a location at least 10 lines away that has been most visited within the last 10 minutes.
 - [ ] `ctrl-f` twice should search for the current word.
 - [ ] Let `ctrl-l` double as a command prompt.
-
+- [ ] When bookmarking, don't just bookmark the line/col, but also the filename. Maybe.
+- [ ] 
 ## Code editing
 
 - [ ] When commenting out a block, move comment markers closer to the beginning of the text.
