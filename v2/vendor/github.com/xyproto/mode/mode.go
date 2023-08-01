@@ -29,6 +29,9 @@ const (
 	Email                 // For using o with ie. Mutt
 	Elm                   // Elm
 	Erlang                // Erlang
+	Fortran77             // Fortran 77
+	Fortran90             // Fortran 90
+	FSharp                // F#
 	Garnet                // Garnet
 	GDScript              // Godot Script
 	Git                   // Git commits and interactive rebases
@@ -138,6 +141,12 @@ func (mode Mode) String() string {
 		return "E-mail"
 	case Erlang:
 		return "Erlang"
+	case Fortran77:
+		return "Fortran 77"
+	case Fortran90:
+		return "Fortran 90"
+	case FSharp:
+		return "F#"
 	case Garnet:
 		return "Garnet"
 	case GDScript:

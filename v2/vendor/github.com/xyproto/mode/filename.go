@@ -100,6 +100,12 @@ func Detect(filename string) Mode {
 			mode = Email
 		case ".erl":
 			mode = Erlang
+		case ".f":
+			mode = Fortran77
+		case ".f90":
+			mode = Fortran90
+		case ".fs":
+			mode = FSharp
 		case ".gd":
 			mode = GDScript
 		case ".gt":
