@@ -2,6 +2,8 @@ package main
 
 // TODO: Use a different syntax highlighting package, with support for many different programming languages
 import (
+	"strings"
+
 	"github.com/xyproto/mode"
 	"github.com/xyproto/syntax"
 )
@@ -27,6 +29,15 @@ var (
 
 	// Elisp
 	emacsWords = []string{"add-to-list", "defconst", "defun", "defvar", "if", "lambda", "let", "load", "nil", "require", "setq", "when"} // this should do it
+
+	// Fortran77
+	fortran77Words = []string{"assign", "backspace", "block data", "call", "close", "common", "continue", "data", "dimension", "do", "else", "else if", "end", "endfile", "endif", "entry", "equivalence", "external", "format", "function", "goto", "if", "implicit", "inquire", "intrinsic", "open", "parameter", "pause", "print", "program", "read", "return", "rewind", "rewrite", "save", "stop", "subroutine", "then", "write"}
+
+	// Fortran90
+	fortran90Words = []string{"allocatable", "allocate", "assign", "backspace", "block data", "call", "case", "close", "common", "contains", "continue", "cycle", "data", "deallocate", "dimension", "do", "else", "else if", "elsewhere", "end", "endfile", "endif", "entry", "equivalence", "exit", "external", "format", "function", "goto", "if", "implicit", "include", "inquire", "intent", "interface", "intrinsic", "module", "namelist", "nullify", "only", "open", "operator", "optional", "parameter", "pause", "pointer", "print", "private", "procedure", "program", "public", "read", "recursive", "result", "return", "rewind", "rewrite", "save", "select", "sequence", "stop", "subroutine", "target", "then", "use", "where", "while", "write"}
+
+	// F#
+	fsharpWords = []string{"abstract", "and", "as", "asr", "assert", "base", "begin", "break", "checked", "class", "component", "const", "const", "constraint", "continue", "default", "delegate", "do", "done", "downcast", "downto", "elif", "else", "end", "event", "exception", "extern", "external", "false", "finally", "fixed", "for", "fun", "function", "global", "if", "in", "include", "inherit", "inline", "interface", "internal", "land", "lazy", "let!", "let", "lor", "lsl", "lsr", "lxor", "match!", "match", "member", "mixin", "mod", "module", "mutable", "namespace", "new", "not", "null", "of", "open", "or", "override", "parallel", "private", "process", "protected", "public", "pure", "rec", "return!", "return", "sealed", "select", "sig", "static", "struct", "tailcall", "then", "to", "trait", "true", "try", "type", "upcast", "use!", "use", "val", "virtual", "void", "when", "while", "with", "yield!", "yield"}
 
 	// GDScript
 	gdscriptWords = []string{"as", "assert", "await", "break", "breakpoint", "class", "class_name", "const", "continue", "elif", "else", "enum", "export", "extends", "for", "func", "if", "INF", "is", "master", "mastersync", "match", "NAN", "onready", "pass", "PI", "preload", "puppet", "puppetsync", "remote", "remotesync", "return", "self", "setget", "signal", "static", "TAU", "tool", "var", "while", "yield"}
@@ -133,6 +144,17 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		setKeywords(dartWords)
 	case mode.Erlang:
 		setKeywords(erlangWords)
+	case mode.Fortran77:
+		setKeywords(fortran77Words)
+		uppercase := []string{}
+		for _, word := range fortran77Words {
+			uppercase = append(uppercase, strings.ToUpper(word))
+		}
+		addKeywords(uppercase)
+	case mode.Fortran90:
+		setKeywords(fortran90Words)
+	case mode.FSharp:
+		setKeywords(fsharpWords)
 	case mode.GDScript:
 		setKeywords(gdscriptWords)
 	case mode.Go:
@@ -244,6 +266,10 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return ";;"
 	case mode.Email:
 		return "GIT:"
+	case mode.Fortran77:
+		return "*" // TODO: Also add "C", "c" and all the others
+	case mode.Fortran90:
+		return "!" // TODO: Only at the start of lines
 	case mode.OCaml, mode.StandardML:
 		// Not applicable, just return the multiline comment start marker
 		return "(*"

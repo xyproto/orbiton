@@ -337,6 +337,10 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd = exec.Command("erlc", sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
+	case mode.Fortran77, mode.Fortran90:
+		cmd = exec.Command("gfortran", "-o", exeFirstName, sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Lua:
 		cmd = exec.Command("luac", "-o", exeFirstName+".out", sourceFilename)
 		cmd.Dir = sourceDir

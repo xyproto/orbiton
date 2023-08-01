@@ -79,6 +79,16 @@ var templatePrograms = map[mode.Mode]TemplateProgram{
 		29,
 		2,
 	},
+	mode.Fortran77: {
+		"* Fortran 77\n       PRINT *, 'Hello, World!'\n       END\n",
+		10,
+		2,
+	},
+	mode.Fortran90: {
+		"program hello\n  ! Output the message\n  print *, 'Hello, World!'\nend program hello\n",
+		10,
+		2,
+	},
 	mode.Garnet: {
 		"fn main(): {} =\n    __print_str(\"Hello, World!\")\nend\n",
 		10,
