@@ -218,6 +218,11 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		createdNewFile = true
 	}
 
+	if env.Bool("OG") {
+		// Workaround for an issue where opening empty or small files is too quick for the GUI/VTE wrapper
+		time.Sleep(500 * time.Millisecond)
+	}
+
 	// The editing mode is decided at this point
 
 	// The shebang may have been for bash, make further adjustments
