@@ -2,6 +2,7 @@ package mode
 
 import (
 	"bytes"
+	"strconv"
 	"strings"
 )
 
@@ -80,13 +81,18 @@ func DetectFromContents(initial Mode, firstLine string, allTextFunc func() strin
 		return Vim, true
 	}
 	// Man page detection (two equal words at the start and end of the line, and both have "(" and ")")
+	// Also, the line does not start with a number and does not contain "//"
 	if m == Blank {
 		fields := strings.Fields(strings.TrimSpace(firstLine))
 		if len(fields) > 2 {
 			firstWord := fields[0]
 			lastWord := fields[len(fields)-1]
 			if firstWord == lastWord && strings.Count(firstWord, "(") == 1 && strings.Count(firstWord, ")") == 1 {
-				return ManPage, true
+				if _, err := strconv.Atoi(firstWord); err != nil { // the first word is not a number
+					if !strings.Contains(firstLine, "//") { // first line does not contain "//"
+						return ManPage, true
+					}
+				}
 			}
 		}
 	}
