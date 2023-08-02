@@ -307,20 +307,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.redrawCursor = true
 
-			// Check if we have jumped to a definition and need to go back
-			if len(backFunctions) > 0 {
-				lastIndex := len(backFunctions) - 1
-				// call the function for getting back
-				backFunctions[lastIndex]()
-				// pop a function from the end of backFunctions
-				backFunctions = backFunctions[:lastIndex]
-				if len(backFunctions) == 0 {
-					// last possibility to jump back
-					status.SetMessageAfterRedraw("Jumped all the way back")
-				}
-				break
-			}
-
 			// Is there no corresponding header or source file?
 			noCorresponding := false
 		AGAIN_NO_CORRESPONDING:
@@ -1907,8 +1893,25 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.SetMessage("Opening a portal at " + portal.String())
 			}
 			status.Show(c, e)
-		case "c:2": // ctrl-b, bookmark, unbookmark or jump to bookmark, toggle breakpoint if in debug mode
+		case "c:2": // ctrl-b, go back after jumping to a definition, bookmark, unbookmark or jump to bookmark
+			// toggle breakpoint if in debug mode
+
 			status.Clear(c)
+
+			// Check if we have jumped to a definition and need to go back
+			if len(backFunctions) > 0 {
+				lastIndex := len(backFunctions) - 1
+				// call the function for getting back
+				backFunctions[lastIndex]()
+				// pop a function from the end of backFunctions
+				backFunctions = backFunctions[:lastIndex]
+				if len(backFunctions) == 0 {
+					// last possibility to jump back
+					status.SetMessageAfterRedraw("Jumped all the way back")
+				}
+				break
+			}
+
 			if e.debugMode {
 				if e.breakpoint == nil {
 					e.breakpoint = e.pos.Copy()

@@ -55,7 +55,7 @@ displays brief usage information
 .sp
 .B ctrl-g
   Toggle a status line at the bottom for displaying: filename, line, column, unicode number, word count, indentation type and editor mode.
-  Can also jump to definition (experimental feature), and jump back with ctrl-t.
+  Can also jump to definition (experimental feature).
 .sp
 .B ctrl-d
   Delete a single character.
@@ -86,8 +86,10 @@ displays brief usage information
   Also closes the portal.
 .sp
 .B ctrl-b
+  Jump back after jumping to a definition with `ctrl-g`.
   Bookmark the current line. Press again to remove the bookmark.
   If a bookmark is set, and not on the bookmarked line, jump to the bookmark.
+  Toggle the breakpoint if the editor is in debug mode.
 .sp
 .B ctrl-j
   Join lines.

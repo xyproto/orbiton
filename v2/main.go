@@ -61,7 +61,7 @@ ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for Markdown, toggle checkboxes or re-format tables
             for git interactive rebases, cycle the rebase keywords
 ctrl-g      to display simple help 2 times, then toggle the status bar
-            can jump to definition (experimental feature), and back with ctrl-t
+            can jump to definition (experimental feature)
 ctrl-_      insert a symbol by typing in a two letter ViM-style digraph
             see https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt
 ctrl-a      go to start of line, then start of text and then the previous line
@@ -81,7 +81,9 @@ ctrl-t      for C and C++, toggle between the header and implementation,
 ctrl-c      to copy the current line, press twice to copy the current block
 ctrl-v      to paste one line, press twice to paste the rest
 ctrl-x      to cut the current line, press twice to cut the current block
-ctrl-b      to toggle a bookmark for the current line, or jump to a bookmark
+ctrl-b      to jump back after having jumped to a definition
+            to toggle a bookmark for the current line, or jump to a bookmark
+            to toggle a breakpoint if in debug mode
 ctrl-u      to undo (ctrl-z is also possible, but may background the application)
 ctrl-l      to jump to a specific line (press return to jump to the top or bottom)
 ctrl-f      to find a string, press Tab after the text to search and replace

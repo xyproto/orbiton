@@ -193,7 +193,7 @@ There are fewer hotkeys to remember than for GNU Nano.
              Remove an empty column when in the Markdown table editor.
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
 * `ctrl-g` - Display simple help the first 2 times, then toggle the status bar.
-             Can also jump to definitions (experimental feature), and jump back with `ctrl-t`.
+             Can also jump to definitions (experimental feature).
 * `ctrl-_` - Insert a symbol by typing in a 2-letter [digraph](https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt).
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - For C and C++: jump between the current header and source file. For Agda and Ivy, insert a symbol.
@@ -208,7 +208,8 @@ There are fewer hotkeys to remember than for GNU Nano.
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
 * `ctrl-l` - Jump to a specific line number. Press `return` to jump to the top. If at the top, press `return` to jump to the bottom.
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive. Press `tab` instead of `return` to search and replace.
-* `ctrl-b` - Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
+* `ctrl-b` - Jump back after jumping to a definition with `ctrl-g`.
+             Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
 * `ctrl-\` - Comment in or out a block of code.
 * `ctrl-~` - Jump to a matching parenthesis or bracket.
 * `esc` - Redraw everything and clear the last search.
