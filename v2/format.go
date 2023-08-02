@@ -16,28 +16,30 @@ import (
 )
 
 // Map from formatting command to a list of file extensions
-var format = map[*exec.Cmd][]string{
-	exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): {".c", ".c++", ".cc", ".cpp", ".cxx", ".h", ".h++", ".hpp"},
-	exec.Command("astyle", "--mode=cs"):                                               {".cs"},
-	exec.Command("crystal", "tool", "format"):                                         {".cr"},
-	exec.Command("prettier", "--tab-width", "2", "-w"):                                {".css"},
-	exec.Command("dart", "format"):                                                    {".dart"},
-	exec.Command("goimports", "-w", "--"):                                             {".go"},
-	exec.Command("brittany", "--write-mode=inplace"):                                  {".hs"},
-	exec.Command("google-java-format", "-a", "-i"):                                    {".java"},
-	exec.Command("prettier", "--tab-width", "4", "-w"):                                {".js", ".ts"},
-	exec.Command("just", "--unstable", "--fmt", "-f"):                                 {".just", ".justfile", "justfile"},
-	exec.Command("ktlint", "-F"):                                                      {".kt", ".kts"},
-	exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"): {".lua"},
-	exec.Command("ocamlformat"): {".ml"},
-	exec.Command("/usr/bin/vendor_perl/perltidy", "-se", "-b", "-i=2", "-ole=unix", "-bt=2", "-pt=2", "-sbt=2", "-ce"): {".pl"},
-	exec.Command("autopep8", "-i", "--max-line-length", "120"):                                                         {".py"},
-	exec.Command("rustfmt"):  {".rs"},
-	exec.Command("scalafmt"): {".scala"},
-	exec.Command("shfmt", "-s", "-w", "-i", "2", "-bn", "-ci", "-sr", "-kp"): {".bash", ".sh", "APKBUILD", "PKGBUILD"},
-	exec.Command("v", "fmt"): {".v"},
-	exec.Command("tidy", "-w", "80", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "-xml", "-m"): {".xml"},
-	exec.Command("zig", "fmt"): {".zig"},
+func FormatMap() map[*exec.Cmd][]string {
+	return map[*exec.Cmd][]string{
+		exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): {".c", ".c++", ".cc", ".cpp", ".cxx", ".h", ".h++", ".hpp"},
+		exec.Command("astyle", "--mode=cs"):                                               {".cs"},
+		exec.Command("crystal", "tool", "format"):                                         {".cr"},
+		exec.Command("prettier", "--tab-width", "2", "-w"):                                {".css"},
+		exec.Command("dart", "format"):                                                    {".dart"},
+		exec.Command("goimports", "-w", "--"):                                             {".go"},
+		exec.Command("brittany", "--write-mode=inplace"):                                  {".hs"},
+		exec.Command("google-java-format", "-a", "-i"):                                    {".java"},
+		exec.Command("prettier", "--tab-width", "4", "-w"):                                {".js", ".ts"},
+		exec.Command("just", "--unstable", "--fmt", "-f"):                                 {".just", ".justfile", "justfile"},
+		exec.Command("ktlint", "-F"):                                                      {".kt", ".kts"},
+		exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"): {".lua"},
+		exec.Command("ocamlformat"): {".ml"},
+		exec.Command("/usr/bin/vendor_perl/perltidy", "-se", "-b", "-i=2", "-ole=unix", "-bt=2", "-pt=2", "-sbt=2", "-ce"): {".pl"},
+		exec.Command("autopep8", "-i", "--max-line-length", "120"):                                                         {".py"},
+		exec.Command("rustfmt"):  {".rs"},
+		exec.Command("scalafmt"): {".scala"},
+		exec.Command("shfmt", "-s", "-w", "-i", "2", "-bn", "-ci", "-sr", "-kp"): {".bash", ".sh", "APKBUILD", "PKGBUILD"},
+		exec.Command("v", "fmt"): {".v"},
+		exec.Command("tidy", "-w", "80", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "-xml", "-m"): {".xml"},
+		exec.Command("zig", "fmt"): {".zig"},
+	}
 }
 
 // Using exec.Cmd instead of *exec.Cmd is on purpose, to get a new cmd.stdout and cmd.stdin every time.
@@ -260,7 +262,7 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 	// Not in git mode, format Go or C++ code with goimports or clang-format
 
 OUT:
-	for cmd, extensions := range format {
+	for cmd, extensions := range FormatMap() {
 		for _, ext := range extensions {
 			if strings.HasSuffix(e.filename, ext) {
 				if err := e.formatWithUtility(c, tty, status, *cmd, ext); err != nil {
