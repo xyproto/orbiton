@@ -72,8 +72,6 @@ func DetectFromContents(initial Mode, firstLine string, allTextFunc func() strin
 		return XML, true
 	} else if strings.Contains(firstLine, "-*- nroff -*-") {
 		return Nroff, true
-	} else if !strings.HasPrefix(firstLine, "//") && !strings.HasPrefix(firstLine, "#") && strings.Count(strings.TrimSpace(firstLine), " ") > 10 && strings.HasSuffix(firstLine, ")") {
-		return ManPage, true
 	} else if strings.HasPrefix(firstLine, "From ") && strings.HasSuffix(firstLine, "# This line is ignored.") {
 		return Email, true
 	} else if strings.HasPrefix(firstLine, "\" ") {
@@ -82,6 +80,15 @@ func DetectFromContents(initial Mode, firstLine string, allTextFunc func() strin
 	}
 	// Man page detection (two equal words at the start and end of the line, and both have "(" and ")")
 	// Also, the line does not start with a number and does not contain "//"
+	if !strings.Contains(firstLine, "//") && !strings.HasPrefix(firstLine, "#") && strings.Count(strings.TrimSpace(firstLine), " ") > 10 && strings.HasSuffix(firstLine, ")") {
+		fields := strings.Fields(strings.TrimSpace(firstLine))
+		if len(fields) > 2 {
+			firstWord := fields[0]
+			if _, err := strconv.Atoi(firstWord); err != nil { // the first word is not a number
+				return ManPage, true
+			}
+		}
+	}
 	if m == Blank {
 		fields := strings.Fields(strings.TrimSpace(firstLine))
 		if len(fields) > 2 {
@@ -89,9 +96,7 @@ func DetectFromContents(initial Mode, firstLine string, allTextFunc func() strin
 			lastWord := fields[len(fields)-1]
 			if firstWord == lastWord && strings.Count(firstWord, "(") == 1 && strings.Count(firstWord, ")") == 1 {
 				if _, err := strconv.Atoi(firstWord); err != nil { // the first word is not a number
-					if !strings.Contains(firstLine, "//") { // first line does not contain "//"
-						return ManPage, true
-					}
+					return ManPage, true
 				}
 			}
 		}
