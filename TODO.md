@@ -2,7 +2,7 @@
 
 ## General
 
-- [ ] Make it possible to have groups of bookmarks per file, and then name them, somehow.
+- [ ] If a file is opened with `-r`, open it as read-only and reload the file if the underlying file changes.
 - [ ] Make it possible to press `ctrl-f` to search and then `ctrl-v` to paste in text to search for.
 - [ ] If in man page mode, set the file as read-only and also let "q" quit.
 - [ ] Let `ctrl-w` also format gzipped code, for instance when editing `main.cpp.gz`.
@@ -68,13 +68,14 @@
 
 ## Code navigation
 
+- [ ] Make it possible to have groups of bookmarks per file, and then name them, somehow.
 - [ ] When pressing `ctrl-g` or `F12` and there's a filename under the cursor that exists, go to that file.
 - [ ] When pressing `ctrl-g` on a function that is declared in a file in the same directory, go to that file and function definition.
 - [ ] `ctrl-f` and then `return` could jump to a location at least 10 lines away that has been most visited within the last 10 minutes.
 - [ ] `ctrl-f` twice should search for the current word.
 - [ ] Let `ctrl-l` double as a command prompt.
 - [ ] When bookmarking, don't just bookmark the line/col, but also the filename. Maybe.
-- [ ] 
+
 ## Code editing
 
 - [ ] When commenting out a block, move comment markers closer to the beginning of the text.
