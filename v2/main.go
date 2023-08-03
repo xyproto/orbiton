@@ -29,13 +29,14 @@ var (
 
 func main() {
 	var (
-		copyFlag       = flag.Bool("c", false, "copy a file into the clipboard and quit")
-		forceFlag      = flag.Bool("f", false, "open even if already open")
-		helpFlag       = flag.Bool("help", false, "quick overview of hotkeys and flags")
-		pasteFlag      = flag.Bool("p", false, "paste the clipboard into the file and quit")
-		clearLocksFlag = flag.Bool("r", false, "clear all file locks")
-		noCacheFlag    = flag.Bool("n", false, "don't write anything to "+cacheDirForDoc)
-		versionFlag    = flag.Bool("version", false, "version information")
+		copyFlag               = flag.Bool("c", false, "copy a file into the clipboard and quit")
+		forceFlag              = flag.Bool("f", false, "open even if already open")
+		helpFlag               = flag.Bool("help", false, "quick overview of hotkeys and flags")
+		pasteFlag              = flag.Bool("p", false, "paste the clipboard into the file and quit")
+		clearLocksFlag         = flag.Bool("l", false, "clear all file locks")
+		readOnlyAndMonitorFlag = flag.Bool("r", false, "open read-only and monitor for changes")
+		noCacheFlag            = flag.Bool("n", false, "don't write anything to "+cacheDirForDoc)
+		versionFlag            = flag.Bool("version", false, "version information")
 	)
 
 	flag.Parse()
@@ -94,12 +95,14 @@ esc         to redraw the screen and clear the last search
 Set NO_COLOR=1 to disable colors.
 
 Flags:
-  -r                         - clear all file locks
+  -l                         - clear all file locks
   -c FILENAME                - just copy a file into the clipboard
-  -p FILENAME                - just paste the contents of the clipboard into a file
   -f                         - force, ignore file locks or combine with -p to overwrite files
+
   -n                         - avoid writing the location history, search history, highscore,
                                compilation and format command to ` + cacheDirForDoc + `
+  -p FILENAME                - just paste the contents of the clipboard into a file
+  -r FILENAME                - open file as read-only, and monitor for changes
   --version                  - show the current version
 
 See the man page for more information.
@@ -314,7 +317,7 @@ See the man page for more information.
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight)
+	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight, *readOnlyAndMonitorFlag)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {
