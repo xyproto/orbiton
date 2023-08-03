@@ -75,9 +75,10 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		m,
 		theme,
 		syntaxHighlight,
-		rainbowParenthesis)
+		rainbowParenthesis,
+		readOnlyAndMonitor)
 
-	if readOnly || fnord.stdin {
+	if readOnly || fnord.stdin || readOnlyAndMonitor {
 		e.readOnly = true
 	}
 

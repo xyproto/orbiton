@@ -62,6 +62,7 @@ type Editor struct {
 	generatingTokens   bool            // is code or text being generated right now?
 	redrawCursor       bool            // if the cursor should be moved to the location it is supposed to be
 	fixAsYouType       bool            // fix each line as you type it in, using AI?
+	readOnlyAndMonitor bool            // watch the file for changes, using -r
 }
 
 // NewCustomEditor takes:
@@ -78,13 +79,14 @@ type Editor struct {
 //
 // * a syntax highlighting scheme
 // * a file mode
-func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight, rainbowParenthesis bool) *Editor {
+func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight, rainbowParenthesis, readOnlyAndMonitor bool) *Editor {
 	e := &Editor{}
 	e.SetTheme(theme)
 	e.lines = make(map[int][]rune)
 	e.indentation = indentation
 	e.syntaxHighlight = syntaxHighlight
 	e.rainbowParenthesis = rainbowParenthesis
+	e.readOnlyAndMonitor = readOnlyAndMonitor
 	p := NewPosition(scrollSpeed)
 	e.pos = *p
 	// If the file is not to be highlighted, set word wrap to 79 (0 to disable)
@@ -112,7 +114,7 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
 	t := NewDefaultTheme()
-	e := NewCustomEditor(mode.DefaultTabsSpaces, 1, mode.Blank, t, false, false)
+	e := NewCustomEditor(mode.DefaultTabsSpaces, 1, mode.Blank, t, false, false, false)
 	e.wrapWidth = wordWrapLimit
 	e.wrapWhenTyping = true
 	return e
@@ -408,6 +410,10 @@ func (e *Editor) PrepareEmpty() (mode.Mode, error) {
 // Save will try to save the current editor contents to file.
 // It needs a canvas in case trailing spaces are stripped and the cursor needs to move to the end.
 func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
+	if e.readOnlyAndMonitor {
+		return errors.New("file is read-only")
+	}
+
 	var (
 		bookmark = e.pos.Copy() // Save the current position
 		changed  bool
@@ -463,11 +469,11 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		e.changed = false
 	}
 
-	// Shell scripts that contains the word "source" typically needs to be sourced and should not be "chmod +x"-ed
-	containsTheWordSource := bytes.Contains(data, []byte("source"))
-
 	// Default file mode (0644 for regular files, 0755 for executable files)
 	var fileMode os.FileMode = 0o644
+
+	// Shell scripts that contains the word "source" typically needs to be sourced and should not be "chmod +x"-ed
+	containsTheWordSource := bytes.Contains(data, []byte("source"))
 
 	// Checking the syntax highlighting makes it easy to press `ctrl-t` before saving a script,
 	// to toggle the executable bit on or off. This is only for files that start with "#!".
@@ -2161,7 +2167,7 @@ func (e *Editor) AbsFilename() (string, error) {
 // Switch replaces the current editor with a new Editor that opens the given file.
 // The undo stack is also swapped.
 // Only works for switching to one file, and then back again.
-func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *LockKeeper, filenameToOpen string, readOnlyAndMonitor bool) error {
+func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *LockKeeper, filenameToOpen string) error {
 	absFilename, err := e.AbsFilename()
 	if err != nil {
 		return err
@@ -2192,7 +2198,7 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
 		fnord := FilenameOrData{filenameToOpen, []byte{}, 0, false}
-		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, readOnlyAndMonitor)
+		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, e.readOnlyAndMonitor)
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)
@@ -2222,8 +2228,8 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 }
 
 // Reload tries to load the current file again
-func (e *Editor) Reload(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *LockKeeper, readOnlyAndMonitor bool) error {
-	return e.Switch(c, tty, status, lk, e.filename, readOnlyAndMonitor)
+func (e *Editor) Reload(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *LockKeeper) error {
+	return e.Switch(c, tty, status, lk, e.filename)
 }
 
 // TrimmedLine returns the current line, trimmed in both ends

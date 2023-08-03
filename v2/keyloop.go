@@ -141,7 +141,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						status.SetMessage("Reloading " + e.filename)
 						status.Show(c, e)
 
-						if err := e.Reload(c, tty, status, nil, readOnlyAndMonitor); err != nil {
+						if err := e.Reload(c, tty, status, nil); err != nil {
 							status.ClearAll(c)
 							status.SetError(err)
 							status.Show(c, e)
@@ -411,7 +411,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					headerExtensions := []string{".h", ".hpp", ".h++"}
 					if headerFilename, err := ExtFileSearch(absFilename, headerExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
 						// Switch to another file (without forcing it)
-						e.Switch(c, tty, status, fileLock, headerFilename, readOnlyAndMonitor)
+						e.Switch(c, tty, status, fileLock, headerFilename)
 						break
 					}
 				}
@@ -424,7 +424,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					sourceExtensions := []string{".c", ".cpp", ".cxx", ".cc", ".c++"}
 					if headerFilename, err := ExtFileSearch(absFilename, sourceExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
 						// Switch to another file (without forcing it)
-						e.Switch(c, tty, status, fileLock, headerFilename, readOnlyAndMonitor)
+						e.Switch(c, tty, status, fileLock, headerFilename)
 						break
 					}
 				}
