@@ -18,8 +18,9 @@ import (
 
 var (
 	lastCommandFile      = filepath.Join(userCacheDir, "o", "last_command.sh")
-	lastCommandMenuIndex int  // for the command menu
-	changedTheme         bool // has the theme been changed manually after the editor was started?
+	lastCommandMenuIndex int    // for the command menu
+	changedTheme         bool   // has the theme been changed manually after the editor was started?
+	menuTitle            string // used for displaying the program name and version at the top of the ctrl-o menu only the first time the menu is displayed
 )
 
 // Actions is a list of action titles and a list of action functions.
@@ -111,7 +112,12 @@ func (a *Actions) AddCommand(e *Editor, c *vt100.Canvas, tty *vt100.TTY, status 
 // TODO: Figure out why this function needs an undo argument and can't use the regular one
 func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) int {
 	const insertFilename = "include.txt"
-	const menuTitle = versionString
+
+	if menuTitle == "" {
+		menuTitle = versionString
+	} else if menuTitle == versionString {
+		menuTitle = "Menu"
+	}
 
 	wrapWidth := e.wrapWidth
 	if wrapWidth == 0 {
