@@ -133,9 +133,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 					if event.Has(fsnotify.Write) {
 
-						_ = watcher.Remove(absFilename)
+						//_ = watcher.Remove(absFilename)
 
-						time.Sleep(1 * time.Second)
+						//time.Sleep(1 * time.Second)
 
 						status.Clear(c)
 						status.SetMessage("Reloading " + e.filename)
@@ -152,7 +152,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.redraw = true
 						e.redrawCursor = true
 
-						_ = watcher.Add(absFilename)
+						//_ = watcher.Add(absFilename)
 					}
 				case err, ok := <-watcher.Errors:
 					if !ok {
@@ -163,6 +163,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					status.Show(c, e)
 				}
 			}
+
 		}()
 
 		_ = watcher.Add(absFilename)
