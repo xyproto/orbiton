@@ -147,7 +147,7 @@ func (p *Portal) PopLine(e *Editor, removeLine bool) (string, error) {
 			}
 		}
 		if !found {
-			return "", errors.New("Could not pop line " + p.String())
+			return "", errors.New("Could not teleport line " + p.String())
 		}
 		data = []byte(strings.Join(modifiedLines, "\n"))
 		if err = os.WriteFile(p.absFilename, data, 0o600); err != nil {
@@ -162,7 +162,7 @@ func (p *Portal) PopLine(e *Editor, removeLine bool) (string, error) {
 			}
 		}
 		if !found {
-			return "", errors.New("Could not pop line " + p.String())
+			return "", errors.New("Could not teleport line " + p.String())
 		}
 		// Now move the line number +1
 		p.lineNumber++

@@ -1705,7 +1705,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					status.SetError(err)
 					status.Show(c, e)
 				} else {
-					status.SetMessageAfterRedraw("Pasted through the portal")
+					status.SetMessageAfterRedraw("Pasting through the portal")
 					gotLineFromPortal = true
 				}
 
