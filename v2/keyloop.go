@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	"github.com/atotto/clipboard"
+	"github.com/fsnotify/fsnotify"
 	"github.com/xyproto/digraph"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/iferr"
@@ -65,7 +66,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
-	e, messageAfterRedraw, displayedImage, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true)
+	e, messageAfterRedraw, displayedImage, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true, readOnlyAndMonitor)
 	if err != nil {
 		return "", false, err
 	} else if displayedImage {
@@ -90,10 +91,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		e.readOnly = true
 	}
 
-	if readOnlyAndMonitor {
-		e.readOnly = true
-	}
-
 	// Prepare a status bar
 	status := NewStatusBar(e.StatusForeground, e.StatusBackground, e.StatusErrorForeground, e.StatusErrorBackground, e, statusDuration, messageAfterRedraw)
 
@@ -102,26 +99,97 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	// ctrl-c, USR1 and terminal resize handlers
 	e.SetUpSignalHandlers(c, tty, status)
 
+	// Monitor a read-only file?
+	if readOnlyAndMonitor {
+		e.readOnly = true
+
+		watcher, err := fsnotify.NewWatcher()
+		if err != nil {
+			status.Clear(c)
+			status.SetError(err)
+			status.Show(c, e)
+		}
+		defer watcher.Close()
+
+		absFilename, err := e.AbsFilename()
+		if err != nil {
+			status.ClearAll(c)
+			status.SetError(err)
+			status.Show(c, e)
+		}
+
+		go func() {
+
+			for {
+				select {
+				case event, ok := <-watcher.Events:
+					if !ok {
+						return
+					}
+
+					//status.Clear(c)
+					//status.SetMessage("event: " + event.String())
+					//status.Show(c, e)
+
+					if event.Has(fsnotify.Write) {
+
+						_ = watcher.Remove(absFilename)
+
+						time.Sleep(1 * time.Second)
+
+						status.Clear(c)
+						status.SetMessage("Reloading " + e.filename)
+						status.Show(c, e)
+
+						if err := e.Reload(c, tty, status, nil, readOnlyAndMonitor); err != nil {
+							status.ClearAll(c)
+							status.SetError(err)
+							status.Show(c, e)
+						}
+
+						const drawLines = true
+						e.FullResetRedraw(c, status, drawLines)
+						e.redraw = true
+						e.redrawCursor = true
+
+						_ = watcher.Add(absFilename)
+					}
+				case err, ok := <-watcher.Errors:
+					if !ok {
+						return
+					}
+					status.ClearAll(c)
+					status.SetError(err)
+					status.Show(c, e)
+				}
+			}
+		}()
+
+		_ = watcher.Add(absFilename)
+
+	}
+
 	e.previousX = 1
 	e.previousY = 1
 
 	tty.SetTimeout(2 * time.Millisecond)
 
 	var (
-		canUseLocks   = !fnord.stdin
+		canUseLocks   = !fnord.stdin && !readOnlyAndMonitor
 		lockTimestamp time.Time
 	)
 
-	// If the lock keeper does not have an overview already, that's fine. Ignore errors from lk.Load().
-	if err := fileLock.Load(); err != nil {
-		// Could not load an existing lock overview, this might be the first run? Try saving.
-		if err := fileLock.Save(); err != nil {
-			// Could not save a lock overview. Can not use locks.
-			canUseLocks = false
-		}
-	}
-
 	if canUseLocks {
+
+		// If the lock keeper does not have an overview already, that's fine. Ignore errors from lk.Load().
+		if err := fileLock.Load(); err != nil {
+			// Could not load an existing lock overview, this might be the first run? Try saving.
+			if err := fileLock.Save(); err != nil {
+				// Could not save a lock overview. Can not use locks.
+				canUseLocks = false
+			}
+		}
+
 		// Check if the lock should be forced (also force when running git commit, because it is likely that o was killed in that case)
 		if forceFlag || filepath.Base(absFilename) == "COMMIT_EDITMSG" || env.Bool("O_FORCE") {
 			// Lock and save, regardless of what the previous status is
@@ -343,7 +411,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					headerExtensions := []string{".h", ".hpp", ".h++"}
 					if headerFilename, err := ExtFileSearch(absFilename, headerExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
 						// Switch to another file (without forcing it)
-						e.Switch(c, tty, status, fileLock, headerFilename)
+						e.Switch(c, tty, status, fileLock, headerFilename, readOnlyAndMonitor)
 						break
 					}
 				}
@@ -356,7 +424,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					sourceExtensions := []string{".c", ".cpp", ".cxx", ".cc", ".c++"}
 					if headerFilename, err := ExtFileSearch(absFilename, sourceExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
 						// Switch to another file (without forcing it)
-						e.Switch(c, tty, status, fileLock, headerFilename)
+						e.Switch(c, tty, status, fileLock, headerFilename, readOnlyAndMonitor)
 						break
 					}
 				}
@@ -1410,7 +1478,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			// func prefix must exist for this language/mode for GoToDefinition to be supported
-			jumpedToDefinition := e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status)
+			jumpedToDefinition := e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status, readOnlyAndMonitor)
 
 			// If the definition could not be found, toggle the status line at the bottom.
 			if !jumpedToDefinition {

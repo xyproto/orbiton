@@ -14,7 +14,7 @@ var backFunctions []func()
 // GoToDefinition tries to find the definition of the given string, saves the current location and jumps to the location of the definition.
 // Returns true if it was possible to go to the definition.
 // This function is currently very experimental and may only work for a few languages, and for a few definitions!
-func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar) bool {
+func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, readOnlyAndMonitor bool) bool {
 	// FuncPrefix may return strings with a leading or trailing blank
 	funcPrefix := e.FuncPrefix()
 
@@ -76,7 +76,7 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 							oldLineIndex := e.LineIndex()
 
 							if goFile != oldFilename {
-								e.Switch(c, tty, status, fileLock, goFile)
+								e.Switch(c, tty, status, fileLock, goFile, readOnlyAndMonitor)
 							}
 							e.redraw, _ = e.GoTo(LineIndex(i), c, status)
 
@@ -86,7 +86,7 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 								oldLineIndex := oldLineIndex
 								goFile := goFile
 								if goFile != oldFilename {
-									e.Switch(c, tty, status, fileLock, oldFilename)
+									e.Switch(c, tty, status, fileLock, oldFilename, readOnlyAndMonitor)
 								}
 								e.redraw, _ = e.GoTo(oldLineIndex, c, status)
 							})
@@ -102,7 +102,7 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 							oldLineIndex := e.LineIndex()
 
 							if goFile != oldFilename {
-								e.Switch(c, tty, status, fileLock, goFile)
+								e.Switch(c, tty, status, fileLock, goFile, readOnlyAndMonitor)
 							}
 							e.redraw, _ = e.GoTo(LineIndex(i), c, status)
 
@@ -112,7 +112,7 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 								oldLineIndex := oldLineIndex
 								goFile := goFile
 								if goFile != oldFilename {
-									e.Switch(c, tty, status, fileLock, oldFilename)
+									e.Switch(c, tty, status, fileLock, oldFilename, readOnlyAndMonitor)
 								}
 								e.redraw, _ = e.GoTo(oldLineIndex, c, status)
 							})

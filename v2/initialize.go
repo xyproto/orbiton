@@ -24,7 +24,7 @@ var (
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message for the user, a bool that is true if an image was displayed instead and the finally an error type.
-func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor bool) (*Editor, string, bool, error) {
+func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor, readOnlyAndMonitor bool) (*Editor, string, bool, error) {
 	var (
 		startTime          = time.Now()
 		createdNewFile     bool   // used for indicating that a new file was created
@@ -33,7 +33,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		found              bool
 		recordedLineNumber LineNumber
 		err                error
-		readOnly           = fnord.stdin
+		readOnly           = fnord.stdin || readOnlyAndMonitor
 		m                  mode.Mode // mode is what would have been an enum in other languages, for signalling if this file should be in git mode, markdown mode etc
 		syntaxHighlight    bool
 	)

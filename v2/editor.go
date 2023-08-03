@@ -2161,7 +2161,7 @@ func (e *Editor) AbsFilename() (string, error) {
 // Switch replaces the current editor with a new Editor that opens the given file.
 // The undo stack is also swapped.
 // Only works for switching to one file, and then back again.
-func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *LockKeeper, filenameToOpen string) error {
+func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *LockKeeper, filenameToOpen string, readOnlyAndMonitor bool) error {
 	absFilename, err := e.AbsFilename()
 	if err != nil {
 		return err
@@ -2169,9 +2169,12 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 
 	// About to switch from absFilename to filenameToOpen
 
-	// Unlock and save the lock file
-	lk.Unlock(absFilename)
-	lk.Save()
+	if lk != nil {
+		// Unlock and save the lock file
+		lk.Unlock(absFilename)
+		lk.Save()
+	}
+
 	// Now open the header filename instead of the current file. Save the current file first.
 	e.Save(c, tty)
 	// Save the current location in the location history and write it to file
@@ -2189,7 +2192,7 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
 		fnord := FilenameOrData{filenameToOpen, []byte{}, 0, false}
-		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false)
+		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, readOnlyAndMonitor)
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)
@@ -2216,6 +2219,11 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 	e.redrawCursor = true
 
 	return err
+}
+
+// Reload tries to load the current file again
+func (e *Editor) Reload(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *LockKeeper, readOnlyAndMonitor bool) error {
+	return e.Switch(c, tty, status, lk, e.filename, readOnlyAndMonitor)
 }
 
 // TrimmedLine returns the current line, trimmed in both ends
