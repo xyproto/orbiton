@@ -32,10 +32,10 @@ func main() {
 		copyFlag               = flag.Bool("c", false, "copy a file into the clipboard and quit")
 		forceFlag              = flag.Bool("f", false, "open even if already open")
 		helpFlag               = flag.Bool("help", false, "quick overview of hotkeys and flags")
-		pasteFlag              = flag.Bool("p", false, "paste the clipboard into the file and quit")
-		clearLocksFlag         = flag.Bool("l", false, "clear all file locks")
-		readOnlyAndMonitorFlag = flag.Bool("r", false, "open read-only and monitor for changes")
+		readOnlyAndMonitorFlag = flag.Bool("m", false, "open read-only and monitor for changes")
 		noCacheFlag            = flag.Bool("n", false, "don't write anything to "+cacheDirForDoc)
+		pasteFlag              = flag.Bool("p", false, "paste the clipboard into the file and quit")
+		clearLocksFlag         = flag.Bool("r", false, "clear all file locks")
 		versionFlag            = flag.Bool("version", false, "version information")
 	)
 
@@ -95,14 +95,13 @@ esc         to redraw the screen and clear the last search
 Set NO_COLOR=1 to disable colors.
 
 Flags:
-  -l                         - clear all file locks
   -c FILENAME                - just copy a file into the clipboard
   -f                         - force, ignore file locks or combine with -p to overwrite files
-
+  -m FILENAME                - monitor the given file for changes, and open it as read-only
   -n                         - avoid writing the location history, search history, highscore,
                                compilation and format command to ` + cacheDirForDoc + `
   -p FILENAME                - just paste the contents of the clipboard into a file
-  -r FILENAME                - open file as read-only, and monitor for changes
+  -r                         - clear all file locks
   --version                  - show the current version
 
 See the man page for more information.
