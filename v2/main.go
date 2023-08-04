@@ -32,7 +32,7 @@ func main() {
 		copyFlag               = flag.Bool("c", false, "copy a file into the clipboard and quit")
 		forceFlag              = flag.Bool("f", false, "open even if already open")
 		helpFlag               = flag.Bool("help", false, "quick overview of hotkeys and flags")
-		readOnlyAndMonitorFlag = flag.Bool("m", false, "open read-only and monitor for changes")
+		monitorAndReadOnlyFlag = flag.Bool("m", false, "open read-only and monitor for changes")
 		noCacheFlag            = flag.Bool("n", false, "don't write anything to "+cacheDirForDoc)
 		pasteFlag              = flag.Bool("p", false, "paste the clipboard into the file and quit")
 		clearLocksFlag         = flag.Bool("r", false, "clear all file locks")
@@ -110,7 +110,7 @@ See the man page for more information.
 		return
 	}
 
-	noWriteToCache = *noCacheFlag
+	noWriteToCache = *noCacheFlag || *monitorAndReadOnlyFlag
 
 	// If the -p flag is given, just paste the clipboard to the given filename and exit
 	if filename := flag.Arg(0); filename != "" && *pasteFlag {
@@ -316,7 +316,7 @@ See the man page for more information.
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight, *readOnlyAndMonitorFlag)
+	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight, *monitorAndReadOnlyFlag)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {

@@ -34,7 +34,7 @@ var fileLock = NewLockKeeper(defaultLockFile)
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, readOnlyAndMonitor bool) (userMessage string, stopParent bool, err error) {
+func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly bool) (userMessage string, stopParent bool, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt100.Init()
@@ -66,7 +66,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
-	e, messageAfterRedraw, displayedImage, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true, readOnlyAndMonitor)
+	e, messageAfterRedraw, displayedImage, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true, monitorAndReadOnly)
 	if err != nil {
 		return "", false, err
 	} else if displayedImage {
@@ -100,7 +100,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	e.SetUpSignalHandlers(c, tty, status)
 
 	// Monitor a read-only file?
-	if readOnlyAndMonitor {
+	if monitorAndReadOnly {
 		e.readOnly = true
 
 		watcher, err := fsnotify.NewWatcher()
@@ -176,7 +176,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	tty.SetTimeout(2 * time.Millisecond)
 
 	var (
-		canUseLocks   = !fnord.stdin && !readOnlyAndMonitor
+		canUseLocks   = !fnord.stdin && !monitorAndReadOnly
 		lockTimestamp time.Time
 	)
 
@@ -1479,7 +1479,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			// func prefix must exist for this language/mode for GoToDefinition to be supported
-			jumpedToDefinition := e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status, readOnlyAndMonitor)
+			jumpedToDefinition := e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status)
 
 			// If the definition could not be found, toggle the status line at the bottom.
 			if !jumpedToDefinition {

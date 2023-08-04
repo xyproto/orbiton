@@ -14,7 +14,7 @@ var backFunctions []func()
 // GoToDefinition tries to find the definition of the given string, saves the current location and jumps to the location of the definition.
 // Returns true if it was possible to go to the definition.
 // This function is currently very experimental and may only work for a few languages, and for a few definitions!
-func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, readOnlyAndMonitor bool) bool {
+func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar) bool {
 	// FuncPrefix may return strings with a leading or trailing blank
 	funcPrefix := e.FuncPrefix()
 

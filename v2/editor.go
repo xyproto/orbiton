@@ -62,7 +62,7 @@ type Editor struct {
 	generatingTokens   bool            // is code or text being generated right now?
 	redrawCursor       bool            // if the cursor should be moved to the location it is supposed to be
 	fixAsYouType       bool            // fix each line as you type it in, using AI?
-	readOnlyAndMonitor bool            // watch the file for changes, using -r
+	monitorAndReadOnly bool            // monitor the file for changes and open it as read-only
 }
 
 // NewCustomEditor takes:
@@ -79,14 +79,14 @@ type Editor struct {
 //
 // * a syntax highlighting scheme
 // * a file mode
-func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight, rainbowParenthesis, readOnlyAndMonitor bool) *Editor {
+func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight, rainbowParenthesis, monitorAndReadOnly bool) *Editor {
 	e := &Editor{}
 	e.SetTheme(theme)
 	e.lines = make(map[int][]rune)
 	e.indentation = indentation
 	e.syntaxHighlight = syntaxHighlight
 	e.rainbowParenthesis = rainbowParenthesis
-	e.readOnlyAndMonitor = readOnlyAndMonitor
+	e.monitorAndReadOnly = monitorAndReadOnly
 	p := NewPosition(scrollSpeed)
 	e.pos = *p
 	// If the file is not to be highlighted, set word wrap to 79 (0 to disable)
@@ -410,7 +410,7 @@ func (e *Editor) PrepareEmpty() (mode.Mode, error) {
 // Save will try to save the current editor contents to file.
 // It needs a canvas in case trailing spaces are stripped and the cursor needs to move to the end.
 func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
-	if e.readOnlyAndMonitor {
+	if e.monitorAndReadOnly {
 		return errors.New("file is read-only")
 	}
 
@@ -2198,7 +2198,7 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
 		fnord := FilenameOrData{filenameToOpen, []byte{}, 0, false}
-		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, e.readOnlyAndMonitor)
+		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, e.monitorAndReadOnly)
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)
