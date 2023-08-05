@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"os"
@@ -148,61 +147,6 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		e.redrawCursor = true
 	}
 	return nil
-}
-
-// formatFstab can format the contents of /etc/fstab files. The suggested number of spaces is 2.
-func formatFstab(data []byte, spaces int) []byte {
-	var (
-		buf       bytes.Buffer
-		nl        = []byte{'\n'}
-		longest   = make(map[int]int) // The longest length of a field, for each field index
-		byteLines = bytes.Split(data, nl)
-	)
-
-	// Find the longest field length for each field on each line
-	for _, line := range byteLines {
-		trimmedLine := bytes.TrimSpace(line)
-		if len(trimmedLine) == 0 || bytes.HasPrefix(trimmedLine, []byte{'#'}) {
-			continue
-		}
-		// Find the longest field length for each field
-		for i, field := range bytes.Fields(trimmedLine) {
-			fieldLength := len(string(field))
-			if val, ok := longest[i]; ok {
-				if fieldLength > val {
-					longest[i] = fieldLength
-				}
-			} else {
-				longest[i] = fieldLength
-			}
-		}
-	}
-
-	// Format the lines nicely
-	for _, line := range byteLines {
-		trimmedLine := bytes.TrimSpace(line)
-		if len(trimmedLine) == 0 {
-			continue
-		}
-		if bytes.HasPrefix(trimmedLine, []byte{'#'}) { // Output comments as they are, but trimmed
-			buf.Write(trimmedLine)
-			buf.Write(nl)
-		} else { // Format the fields
-			for i, field := range bytes.Fields(trimmedLine) {
-				fieldLength := len(string(field))
-				padCount := spaces // Space between the fields if all fields have equal length
-				if longest[i] > fieldLength {
-					padCount += longest[i] - fieldLength
-				}
-				buf.Write(field)
-				if padCount > 0 {
-					buf.Write(bytes.Repeat([]byte{' '}, padCount))
-				}
-			}
-			buf.Write(nl)
-		}
-	}
-	return buf.Bytes()
 }
 
 func formatJSON(data []byte, jsonFormatToggle *bool, indentationPerTab int) ([]byte, error) {
