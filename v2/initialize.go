@@ -431,13 +431,13 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		// Take not of the startup duration, in milliseconds
 		startupMilliseconds := time.Since(startTime).Milliseconds()
 
-		if startupMilliseconds > 100 {
+		if startupMilliseconds > 90 {
 			statusMessage += fmt.Sprintf(" (%dms)", startupMilliseconds)
 		}
 		if warningMessage != "" {
 			statusMessage += warningMessage
 		}
-		if e.readOnly {
+		if e.readOnly && !fnord.stdin {
 			statusMessage += " (read only)"
 		}
 	}
