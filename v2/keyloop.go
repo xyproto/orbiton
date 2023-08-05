@@ -12,7 +12,6 @@ import (
 	"unicode"
 
 	"github.com/atotto/clipboard"
-	"github.com/fsnotify/fsnotify"
 	"github.com/xyproto/digraph"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/iferr"
@@ -102,72 +101,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	// Monitor a read-only file?
 	if monitorAndReadOnly {
 		e.readOnly = true
-
-		watcher, err := fsnotify.NewWatcher()
-		if err != nil {
-			status.Clear(c)
-			status.SetError(err)
-			status.Show(c, e)
-		}
-		defer watcher.Close()
-
-		absFilename, err := e.AbsFilename()
-		if err != nil {
-			status.ClearAll(c)
-			status.SetError(err)
-			status.Show(c, e)
-		}
-
-		go func() {
-
-			for {
-				select {
-				case event, ok := <-watcher.Events:
-					if !ok {
-						return
-					}
-
-					//status.Clear(c)
-					//status.SetMessage("event: " + event.String())
-					//status.Show(c, e)
-
-					if event.Has(fsnotify.Write) {
-
-						//_ = watcher.Remove(absFilename)
-
-						//time.Sleep(1 * time.Second)
-
-						status.Clear(c)
-						status.SetMessage("Reloading " + e.filename)
-						status.Show(c, e)
-
-						if err := e.Reload(c, tty, status, nil); err != nil {
-							status.ClearAll(c)
-							status.SetError(err)
-							status.Show(c, e)
-						}
-
-						const drawLines = true
-						e.FullResetRedraw(c, status, drawLines)
-						e.redraw = true
-						e.redrawCursor = true
-
-						//_ = watcher.Add(absFilename)
-					}
-				case err, ok := <-watcher.Errors:
-					if !ok {
-						return
-					}
-					status.ClearAll(c)
-					status.SetError(err)
-					status.Show(c, e)
-				}
-			}
-
-		}()
-
-		_ = watcher.Add(absFilename)
-
+		e.StartMonitoring(c, tty, status)
 	}
 
 	e.previousX = 1
