@@ -437,8 +437,11 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		if warningMessage != "" {
 			statusMessage += warningMessage
 		}
-		if e.readOnly && !fnord.stdin {
+		if e.readOnly && !fnord.stdin && !monitorAndReadOnly {
 			statusMessage += " (read only)"
+		}
+		if e.monitorAndReadOnly {
+			statusMessage += " (monitoring)"
 		}
 	}
 
