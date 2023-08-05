@@ -938,20 +938,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:13": // return
 
-			// Scroll down if a man page is being viewed, or if the editor is read-only
+			// Show a "Read only" status message if a man page is being viewed or if the editor is read-only
+			// It is an alternative way to quickly check if the file is read-only,
+			// and space can still be used for scrolling.
 			if e.readOnly {
-				// Scroll down at double scroll speed
-				e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed*2)
-				// If e.redraw is false, the end of file is reached
-				if !e.redraw {
-					status.Clear(c)
-					status.SetMessage(endOfFileMessage)
-					status.Show(c, e)
-				}
-				e.redrawCursor = true
-				if e.AfterLineScreenContents() {
-					e.End(c)
-				}
+				status.Clear(c)
+				status.SetMessage("Read only")
+				status.Show(c, e)
 				break
 			}
 
