@@ -182,8 +182,6 @@ There are fewer hotkeys to remember than for GNU Nano.
 * `ctrl-q` - Quit.
 * `ctrl-r` - Open or close a portal. Text can be pasted from the portal into another (or the same) file with `ctrl-v`.
              For "git interactive rebase" mode (`git rebase -i`), this will cycle the rebase keywords instead.
-* `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords.
-             For Markdown, toggle checkboxes or re-format tables.
 * `ctrl-a` - Go to start of text, then start of line and then to the previous line.
 * `ctrl-e` - Go to end of line and then to the next line
 * `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active.
@@ -192,8 +190,6 @@ There are fewer hotkeys to remember than for GNU Nano.
              or jump to the matching parenthesis or bracket, if the cursor just moved on to one.
              Remove an empty column when in the Markdown table editor.
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
-* `ctrl-g` - Display simple help the first 2 times, then toggle the status bar.
-             Can also jump to definitions (experimental feature).
 * `ctrl-_` - Insert a symbol by typing in a 2-letter [digraph](https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt).
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - For C and C++: jump between the current header and source file. For Agda and Ivy, insert a symbol.
@@ -210,6 +206,10 @@ There are fewer hotkeys to remember than for GNU Nano.
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive. Press `tab` instead of `return` to search and replace.
 * `ctrl-b` - Jump back after jumping to a definition with `ctrl-g`.
              Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
+* `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords.
+             For Markdown, toggle checkboxes or re-format tables.
+* `ctrl-g` - Toggle the status bar.
+             Can also jump to definitions, for some programming languages (experimental feature).
 * `ctrl-\` - Comment in or out a block of code.
 * `ctrl-~` - Jump to a matching parenthesis or bracket.
 * `esc` - Redraw everything and clear the last search.
