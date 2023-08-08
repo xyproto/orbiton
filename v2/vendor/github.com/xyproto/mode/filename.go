@@ -57,6 +57,8 @@ func Detect(filename string) Mode {
 		switch ext {
 		case ".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8": // not .9
 			mode = Nroff
+		case ".a68":
+			mode = Algol68
 		case ".adb", ".gpr", ".ads", ".ada":
 			mode = Ada
 		case ".adoc", ".scdoc", ".scd":

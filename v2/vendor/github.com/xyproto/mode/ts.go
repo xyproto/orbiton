@@ -15,7 +15,7 @@ var DefaultTabsSpaces = TabsSpaces{4, true}
 
 var languageIndentation = map[TabsSpaces][]Mode{
 	// Languages that use spaces (from the opinionated point of view of this package)
-	{2, true}: {Agda, Amber, Arduino, Assembly, Clojure, Config, Dart, Erlang, Fortran90, HTML, Haskell, JSON, Koka, Lua, ObjectPascal, Perl, PolicyLanguage, ReStructured, Scala, Shell, StandardML, Teal, Vim, Vim, XML},
+	{2, true}: {Agda, Algol68, Amber, Arduino, Assembly, Clojure, Config, Dart, Erlang, Fortran90, HTML, Haskell, JSON, Koka, Lua, ObjectPascal, Perl, PolicyLanguage, ReStructured, Scala, Shell, StandardML, Teal, Vim, Vim, XML},
 	{3, true}: {Ada, Prolog}, // Ada and Prolog are special
 	{4, true}: {Bat, Basic, Battlestar, CMake, CS, Cpp, Crystal, Doc, Elm, Email, FSharp, Garnet, GDScript, Git, Haxe, JSON, Jakt, Java, JavaScript, Kotlin, Markdown, Mojo, Nim, Oak, Python, R, SQL, Subversion, Terra, Text, TypeScript, V, Zig},
 	{7, true}: {Fortran77}, // Fortran77 is weird

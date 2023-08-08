@@ -9,6 +9,7 @@ const (
 	AIDL                  // Android-related: Android Interface Definition Language
 	Ada                   // Ada
 	Agda                  // Agda
+	Algol68               // ALGOL 68
 	Amber                 // Amber templates
 	Arduino               // Arduino
 	Assembly              // Assembly
@@ -97,6 +98,8 @@ func (mode Mode) String() string {
 		return "Ada"
 	case Agda:
 		return "Agda"
+	case Algol68:
+		return "ALGOL 68"
 	case AIDL:
 		return "AIDL"
 	case Amber:
