@@ -117,24 +117,34 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 	}
 
 	exeExists := func() (bool, string) {
-		return exists(filepath.Join(sourceDir, exeFirstName)), exeFirstName
-	}
-
-	exeBaseNameOrMainExists := func() (bool, string) {
-		if exists(filepath.Join(sourceDir, exeFirstName)) {
-			return true, exeFirstName
-		}
-		if baseDirName := filepath.Base(sourceDir); exists(filepath.Join(sourceDir, baseDirName)) {
-			return true, baseDirName
-		}
-		return exists(filepath.Join(sourceDir, "main")), "main"
+		// Check if exeFirstName exists
+		return isFile(filepath.Join(sourceDir, exeFirstName)), exeFirstName
 	}
 
 	exeOrMainExists := func() (bool, string) {
-		if exists(filepath.Join(sourceDir, exeFirstName)) {
+		// First check if exeFirstName exists
+		if isFile(filepath.Join(sourceDir, exeFirstName)) {
 			return true, exeFirstName
 		}
-		return exists(filepath.Join(sourceDir, "main")), "main"
+		// Then try with just "main"
+		return isFile(filepath.Join(sourceDir, "main")), "main"
+	}
+
+	exeBaseNameOrMainExists := func() (bool, string) {
+		// First check if exeFirstName exists
+		if isFile(filepath.Join(sourceDir, exeFirstName)) {
+			return true, exeFirstName
+		}
+		// Then try with the current directory name
+		baseDirName := filepath.Base(sourceDir)
+		if isFile(filepath.Join(sourceDir, baseDirName)) {
+			return true, baseDirName
+		}
+		// The try with just "main"
+		if isFile(filepath.Join(sourceDir, "main")) {
+			return true, "main"
+		}
+		return false, ""
 	}
 
 	switch e.mode {
@@ -204,15 +214,18 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			}
 			return cmd, exeBaseNameOrMainExists, nil
 		}
+		if isDir(exeFilename) {
+			exeFilename = "main"
+		}
 		// Use gcc directly
 		if e.debugMode {
 			cmd = exec.Command("gcc", "-o", exeFilename, "-Og", "-g", "-pipe", "-D_BSD_SOURCE", sourceFilename)
 			cmd.Dir = sourceDir
-			return cmd, exeExists, nil
+			return cmd, exeOrMainExists, nil
 		}
 		cmd = exec.Command("gcc", "-o", exeFilename, "-O2", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-D_BSD_SOURCE", sourceFilename)
 		cmd.Dir = sourceDir
-		return cmd, exeExists, nil
+		return cmd, exeOrMainExists, nil
 	case mode.Cpp:
 		if exists("BUILD.bazel") && which("bazel") != "" { // Google-style C++ + Bazel projects if
 			return exec.Command("bazel", "build"), everythingIsFine, nil
@@ -225,15 +238,18 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			}
 			return cmd, exeBaseNameOrMainExists, nil
 		}
+		if isDir(exeFilename) {
+			exeFilename = "main"
+		}
 		// Use g++ directly
 		if e.debugMode {
 			cmd = exec.Command("g++", "-o", exeFilename, "-Og", "-g", "-pipe", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename)
 			cmd.Dir = sourceDir
-			return cmd, exeExists, nil
+			return cmd, exeOrMainExists, nil
 		}
 		cmd = exec.Command("g++", "-o", exeFilename, "-O2", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename)
 		cmd.Dir = sourceDir
-		return cmd, exeExists, nil
+		return cmd, exeOrMainExists, nil
 	case mode.Zig:
 		if which("zig") != "" {
 			if exists("build.zig") {
