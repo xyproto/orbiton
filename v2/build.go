@@ -205,6 +205,15 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd := exec.Command("hare", "build")
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
+	case mode.Algol68:
+		executablePath := strings.TrimSuffix(sourceFilename, filepath.Ext(sourceFilename))
+		sourceFilenameWithoutPath := filepath.Base(sourceFilename)
+		cmd := exec.Command("a68g", "--compile", sourceFilenameWithoutPath)
+		cmd.Dir = sourceDir
+		return cmd, func() (bool, string) {
+			executableFirstName := filepath.Base(executablePath)
+			return isFile(executablePath), executableFirstName
+		}, nil
 	case mode.C:
 		if which("cxx") != "" {
 			cmd = exec.Command("cxx")
@@ -555,6 +564,13 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		exitCode = exitError.ExitCode()
 	}
 	outputString := string(bytes.TrimSpace(output))
+
+	// Remove .Random.seed if a68g was just used
+	if e.mode == mode.Algol68 {
+		if isFile(".Random.seed") {
+			os.Remove(".Random.seed")
+		}
+	}
 
 	// Check if there was a non-zero exit code together with no output
 	if exitCode != 0 && len(outputString) == 0 {

@@ -34,6 +34,11 @@ func GetTemplatePrograms() TemplatePrograms {
 				17,
 				1,
 			},
+			mode.Algol68: {
+				"print((\"Hello, World!\", newline))\n",
+				8,
+				1,
+			},
 			mode.Arduino: {
 				"void setup() {\n  Serial.begin(9600);\n  Serial.println(\"Hello, World!\");\n}\n\nvoid loop() {\n}\n",
 				16,
