@@ -153,10 +153,10 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd = exec.Command("sh", "-c", javaShellCommand)
 		cmd.Dir = sourceDir
 		return cmd, func() (bool, string) {
-			return exists(filepath.Join(sourceDir, jarFilename)), jarFilename
+			return isFile(filepath.Join(sourceDir, jarFilename)), jarFilename
 		}, nil
 	case mode.Scala:
-		if exists(filepath.Join(sourceDir, "build.sbt")) && which("sbt") != "" && fileHas(filepath.Join(sourceDir, "build.sbt"), "ScalaNative") {
+		if isFile(filepath.Join(sourceDir, "build.sbt")) && which("sbt") != "" && fileHas(filepath.Join(sourceDir, "build.sbt"), "ScalaNative") {
 			cmd = exec.Command("sbt", "nativeLink")
 			cmd.Dir = sourceDir
 			return cmd, func() (bool, string) {
@@ -167,29 +167,29 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		// For building a .jar file that can not be run with "java -jar main.jar" but with "scala main.jar": scalac -jar main.jar Hello.scala
 		scalaShellCommand := "scalaFiles=$(find . -type f -name '*.scala'); for f in $scalaFiles; do grep -q 'def main' \"$f\" && mainScalaFile=\"$f\"; grep -q ' extends App ' \"$f\" && mainScalaFile=\"$f\"; done; objectName=$(grep -oP '(?<=object )[A-Z]+[a-z,A-Z,0-9]*' \"$mainScalaFile\" | head -1); packageName=$(grep -oP '(?<=package )[a-z,A-Z,0-9,.]*' \"$mainScalaFile\" | head -1); if [[ $packageName != \"\" ]]; then packageName=\"$packageName.\"; fi; mkdir -p _o_build/META-INF; scalac -d _o_build $scalaFiles; cd _o_build; echo -e \"Main-Class: $packageName$objectName\\nClass-Path: /usr/share/scala/lib/scala-library.jar\" > META-INF/MANIFEST.MF; classFiles=$(find . -type f -name '*.class'); jar cmf META-INF/MANIFEST.MF ../" + jarFilename + " $classFiles; cd ..; rm -rf _o_build"
 		// Compile directly to jar with scalac if /usr/share/scala/lib/scala-library.jar is not found
-		if !exists("/usr/share/scala/lib/scala-library.jar") {
+		if !isFile("/usr/share/scala/lib/scala-library.jar") {
 			scalaShellCommand = "scalac -d run_with_scala.jar $(find . -type f -name '*.scala')"
 		}
 		cmd = exec.Command("sh", "-c", scalaShellCommand)
 		cmd.Dir = sourceDir
 		return cmd, func() (bool, string) {
-			return exists(filepath.Join(sourceDir, jarFilename)), jarFilename
+			return isFile(filepath.Join(sourceDir, jarFilename)), jarFilename
 		}, nil
 	case mode.Kotlin:
 		if which("kotlinc-native") != "" {
 			cmd = exec.Command("kotlinc-native", "-nowarn", "-opt", "-Xallocator=mimalloc", "-produce", "program", "-linker-option", "--as-needed", sourceFilename, "-o", exeFirstName)
 			cmd.Dir = sourceDir
 			return cmd, func() (bool, string) {
-				if exists(filepath.Join(sourceDir, exeFirstName+".kexe")) {
+				if isFile(filepath.Join(sourceDir, exeFirstName+".kexe")) {
 					return true, exeFirstName + ".kexe"
 				}
-				return exists(filepath.Join(sourceDir, exeFirstName)), exeFirstName
+				return isFile(filepath.Join(sourceDir, exeFirstName)), exeFirstName
 			}, nil
 		}
 		cmd = exec.Command("kotlinc", sourceFilename, "-include-runtime", "-d", jarFilename)
 		cmd.Dir = sourceDir
 		return cmd, func() (bool, string) {
-			return exists(filepath.Join(sourceDir, jarFilename)), jarFilename
+			return isFile(filepath.Join(sourceDir, jarFilename)), jarFilename
 		}, nil
 	case mode.Go:
 		cmd := exec.Command("go", "build")
@@ -227,7 +227,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd.Dir = sourceDir
 		return cmd, exeOrMainExists, nil
 	case mode.Cpp:
-		if exists("BUILD.bazel") && which("bazel") != "" { // Google-style C++ + Bazel projects if
+		if isFile("BUILD.bazel") && which("bazel") != "" { // Google-style C++ + Bazel projects if
 			return exec.Command("bazel", "build"), everythingIsFine, nil
 		}
 		if which("cxx") != "" {
@@ -252,7 +252,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		return cmd, exeOrMainExists, nil
 	case mode.Zig:
 		if which("zig") != "" {
-			if exists("build.zig") {
+			if isFile("build.zig") {
 				cmd = exec.Command("zig", "build")
 				cmd.Dir = sourceDir
 				return cmd, everythingIsFine, nil
@@ -293,11 +293,11 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		} else {
 			cmd = exec.Command("cargo", "build", "--profile", "release")
 		}
-		if exists("Cargo.toml") {
+		if isFile("Cargo.toml") {
 			cmd.Dir = sourceDir
 			return cmd, everythingIsFine, nil
 		}
-		if exists(filepath.Join(parentDir, "Cargo.toml")) {
+		if isFile(filepath.Join(parentDir, "Cargo.toml")) {
 			cmd.Dir = parentDir
 			return cmd, everythingIsFine, nil
 		}
@@ -314,9 +314,9 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		// No result
 	case mode.Clojure:
 		cmd = exec.Command("lein", "uberjar")
-		projectFileExists := exists("project.clj")
-		parentProjectFileExists := exists("../project.clj")
-		grandParentProjectFileExists := exists("../../project.clj")
+		projectFileExists := isFile("project.clj")
+		parentProjectFileExists := isFile("../project.clj")
+		grandParentProjectFileExists := isFile("../../project.clj")
 		cmd.Dir = sourceDir
 		if !projectFileExists && parentProjectFileExists {
 			cmd.Dir = parentDir
@@ -406,7 +406,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		objCheckFunc := func() (bool, string) {
 			// Note that returning the full path as the second argument instead of only the base name
 			// is only done for mode.Assembly. It's treated differently further down when linking.
-			return exists(objFullFilename), objFullFilename
+			return isFile(objFullFilename), objFullFilename
 		}
 		// try to use yasm
 		if which("yasm") != "" {
@@ -578,18 +578,18 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		}
 		// Replace the result check function
 		compilationProducedSomething = func() (bool, string) {
-			return exists(exeFilename), exeFirstName
+			return isFile(exeFilename), exeFirstName
 		}
 	}
 
 	// Special considerations for Kotlin Native
-	if usingKotlinNative := strings.HasSuffix(cmd.Path, "kotlinc-native"); usingKotlinNative && exists(exeFirstName+".kexe") {
+	if usingKotlinNative := strings.HasSuffix(cmd.Path, "kotlinc-native"); usingKotlinNative && isFile(exeFirstName+".kexe") {
 		// panic("rename " + exeFirstName + ".kexe" + " -> " + exeFirstName)
 		os.Rename(exeFirstName+".kexe", exeFirstName)
 	}
 
 	// Special considerations for Koka
-	if e.mode == mode.Koka && exists(exeFirstName) {
+	if e.mode == mode.Koka && isFile(exeFirstName) {
 		// chmod +x
 		os.Chmod(exeFirstName, 0o755)
 	}

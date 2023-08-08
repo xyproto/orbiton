@@ -40,11 +40,10 @@ func isDir(path string) bool {
 // which tries to find the given executable name in the $PATH
 // Returns an empty string if not found.
 func which(executable string) string {
-	p, err := exec.LookPath(executable)
-	if err != nil {
-		return ""
+	if p, err := exec.LookPath(executable); err == nil { // success
+		return p
 	}
-	return p
+	return ""
 }
 
 // hasAnyPrefixWord checks if the given line is prefixed with any one of the given words
