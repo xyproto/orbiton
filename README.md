@@ -223,7 +223,7 @@ There are fewer hotkeys to remember than for GNU Nano.
 |-------------------------------------------------|-----------------------------------------------------------|---------------|------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
 | Ada                                             | `.ada`                                                    | WIP           | WIP                                                                                                        | WIP                                                                                                           |
 | Agda                                            | `.agda`                                                   | yes           | `agda -c $filename`                                                                                        | N/A                                                                                                           |
-| ALGOL 68                                        | `.a68`                                                    | no            | `a68g --compile $filename`                                                                                 | WIP                                                                                                           |
+| ALGOL 68                                        | `.a68`                                                    | WIP           | `a68g --compile $filename`                                                                                 | WIP                                                                                                           |
 | C and C++                                       | `.cpp`, `.cc`, `.cxx`, `.h`, `.hpp`, `.c++`, `.h++`, `.c` | yes           | `cxx`                                                                                                      | `clang-format -fallback-style=WebKit -style=file -i -- $filename`                                             |
 | C#                                              | `.cs`                                                     | yes           | `csc -nologo -unsafe $filename`                                                                            | `astyle -mode=cs $filename`                                                                                   |
 | Clojure                                         | `.clj`, `.cljs`, `.clojure`                               | WIP           | `lein uberjar`                                                                                             | WIP                                                                                                           |
@@ -285,11 +285,12 @@ While in the Markdown table editor:
 * Cells can be typed into.
 * The arrow keys can be used to move around.
 * `tab` can be used to go to the next cell, or insert new cells if the last cell is reached.
-* `return` can be used to either move to a blank cell below or to insert a new row below.
+* `return` can be used to either jump to the blank cell below or to insert a new row below.
 * `backspace` can be used to delete letters, but also for deleting the current row if it is empty.
 * `ctrl-n` can be used to insert a new column to the right.
-* `ctrl-d` can be used to delete the current column (if all fields are empty).
+* `ctrl-d` can be used to delete the current column (if all cells in the column are empty).
 * `esc` or `ctrl-t` can be used to close the Markdown table editor.
+* `ctrl-s` can be used to save.
 
 ## Inserting a symbol
 
@@ -301,7 +302,7 @@ While in the Markdown table editor:
 
 * Obtain an API key from [openai.com](https://platform.openai.com/account/api-keys) and set it as the `OPENAI_API_KEY`, `OPENAI_KEY` or `CHATGPT_API_KEY` environment variable.
 * Press return after writing ie. `!write a function that adds two numbers` or `// Write a function that adds two numbers`.
-* Watch syntax highlighted code being generated in front of your eyes. ChatGPT generates the code.
+* Watch syntax highlighted code being generated beforeyour eyes. ChatGPT generates the code.
 * Press `Esc` to stop code from being generated.
 * Select `Fix as you type` from the `ctrl-o` menu to let ChatGPT try to correct every line as it is typed in. The API key must be set for the menu option to appear.
 
@@ -542,6 +543,7 @@ This also means that filenames containing `+` or `:`, and then followed by a num
 * `-c FILENAME` can be used to copy the contents of the given file to the clipboard and then exit.
 * `-p FILENAME` can be used to paste the contents of the clipboard to the given `FILENAME` (if it does not already exist) and then exit.
 * `-n` can be used to avoid writing lockfiles, build files, location history, search history and the game highscore to `$XDG_CACHE_DIR/cache/o` or `~/.cache/o`. Not recommended.
+* `-m` can be used to open a file as read-only, but monitor it for changes.
 * `--help` can be used to get a quick overview of the supported keybindings.
 * `--version` will print the current version and then exit.
 
@@ -643,3 +645,4 @@ Install (use `sudo` or `doas`, if needed):
 * Version: 2.62.9
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
+ 
