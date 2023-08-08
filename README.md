@@ -94,7 +94,7 @@ Log out and in again to activate the changes.
 
 Themes can be selected with the `ctrl-o` menu. The theme menu also lists the theme names, which can be specified in the `O_THEME` environment variable.
 
-The `O_THEME` environment variable is an exception to the claim that `o` is complettely configuration-free, but it is completely optional.
+The `O_THEME` environment variable is an exception to the claim that `o` is configuration-free, but it is completely optional.
 
 For using ie. the Synthwave theme, the `/usr/bin/sw` symlink can be used, or this can be added to `~/.profile`:
 
@@ -173,6 +173,7 @@ These features are unique to `o`, as far as I am aware:
 * Middle-click pasting (instead of pasting with `ctrl-v`) will only paste the first character.
 * Pressing `cmd-v`, `cmd-x` and `cmd-c` on macOS only works when using the `og` GUI/VTE frontend. For `o`, `ctrl-v`, `ctrl-x` and `ctrl-c` can be used instead.
 * The Markdown table editor does not have scrolling, so the table must fit within the current terminal emulator width and height. Resize the terminal as needed.
+* The man page viewer has issues displaying some special characters, such as the long dash (&mdash;).
 
 ## Hotkeys
 
