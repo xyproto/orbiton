@@ -31,6 +31,12 @@ func isFile(path string) bool {
 	return err == nil && fi.Mode().IsRegular()
 }
 
+// isDir checks if the given path exists and is a directory
+func isDir(path string) bool {
+	fi, err := os.Stat(path)
+	return err == nil && fi.Mode().IsDir()
+}
+
 // which tries to find the given executable name in the $PATH
 // Returns an empty string if not found.
 func which(executable string) string {
