@@ -123,6 +123,5 @@ license:
 	mkdir -p "$(DESTDIR)$(PREFIX)/share/licenses/$(PROJECT)"
 	install -m644 LICENSE "$(DESTDIR)$(PREFIX)/share/licenses/$(PROJECT)/LICENSE"
 
-
 clean:
 	-rm -f o v2/o o.1.gz og/og v2/orbiton
