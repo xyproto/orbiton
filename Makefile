@@ -45,7 +45,7 @@ o: $(SRCFILES)
 	cd v2 && $(GOBUILD) $(BUILDFLAGS) -o ../o
 
 trace: clean $(SRCFILES)
-	cd v2 && $(GOBUILD) $(BUILDFLAGS) -tags trace -o ../o
+	cd v2 && $(GOBUILD) $(BUILDFLAGS) -tags=trace -o ../o
 
 bench:
 	cd v2 && go test -bench=. -benchmem
