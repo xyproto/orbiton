@@ -475,6 +475,7 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 
 ## List of optional runtime dependencies
 
+* `a68g` - for compiling ALGOL 68 code
 * `agda` - for compiling Agda code
 * `asciidoctor` - for writing man pages
 * `astyle` - for formatting C# code
@@ -645,4 +646,3 @@ Install (use `sudo` or `doas`, if needed):
 * Version: 2.62.9
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
- 
