@@ -43,9 +43,12 @@ var (
 	termuxCopyArgs  = []string{termuxClipboardSet}
 
 	errMissingCommands = errors.New("No clipboard utilities available. Please install xsel, xclip, wl-clipboard or Termux:API add-on for termux-clipboard-get/set.")
+
+	initialized bool
 )
 
-func init() {
+func initialize() {
+	initialized = true
 	if WSL() {
 		pasteCmdArgs = powershellExePasteArgs
 		copyCmdArgs = clipExeCopyArgs
@@ -106,6 +109,9 @@ func init() {
 }
 
 func getPasteCommand() *exec.Cmd {
+	if !initialized {
+		initialize()
+	}
 	if Primary {
 		pasteCmdArgs = pasteCmdArgs[:1]
 	}
@@ -113,6 +119,9 @@ func getPasteCommand() *exec.Cmd {
 }
 
 func getCopyCommand() *exec.Cmd {
+	if !initialized {
+		initialize()
+	}
 	if Primary {
 		copyCmdArgs = copyCmdArgs[:1]
 	}
@@ -120,6 +129,9 @@ func getCopyCommand() *exec.Cmd {
 }
 
 func readAllBytes() ([]byte, error) {
+	if !initialized {
+		initialize()
+	}
 	if Unsupported {
 		return []byte{}, errMissingCommands
 	}
@@ -135,6 +147,9 @@ func readAllBytes() ([]byte, error) {
 }
 
 func readAll() (string, error) {
+	if !initialized {
+		initialize()
+	}
 	b, err := readAllBytes()
 	if err != nil {
 		return "", err
@@ -147,6 +162,9 @@ func readAll() (string, error) {
 }
 
 func writeAllBytes(b []byte) error {
+	if !initialized {
+		initialize()
+	}
 	if Unsupported {
 		return errMissingCommands
 	}
@@ -169,6 +187,9 @@ func writeAllBytes(b []byte) error {
 }
 
 func writeAll(text string) error {
+	if !initialized {
+		initialize()
+	}
 	return writeAllBytes([]byte(text))
 }
 

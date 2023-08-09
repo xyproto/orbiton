@@ -349,8 +349,8 @@ github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795 h1:AoL5T5pFgiCn/4f
 github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795/go.mod h1:j3S/tDDOEkIChz0sWDqO3zXOgIjz/6nhuc+JrmZNLnA=
 github.com/xyproto/carveimg v1.4.0 h1:5Klvmos6o24Lpe68NUoFKu8yCkP24R2ZojB63O3+Xn0=
 github.com/xyproto/carveimg v1.4.0/go.mod h1:EKjAxiLhDQZAHCXwsedYuGZ/XD70E7J85xwus1DdqEk=
-github.com/xyproto/clip v0.3.3 h1:jEPHm5XC+Nc+Ogepr56Vjpv+IxwgivtPGxD99dYlxKs=
-github.com/xyproto/clip v0.3.3/go.mod h1:jVRcSiAIK6dadcIXPtOa9/wetlggtIGRiRIDOrU0sfU=
+github.com/xyproto/clip v0.3.4 h1:cyo+iL+0AF5NH9nLWh4UH4+KXqd3XdoD2BTRdTnY55k=
+github.com/xyproto/clip v0.3.4/go.mod h1:jVRcSiAIK6dadcIXPtOa9/wetlggtIGRiRIDOrU0sfU=
 github.com/xyproto/digraph v1.2.0 h1:I/tZa5V5OdPfv4A4ps6ASbleB2Uub1dsKRxnMvmLsuE=
 github.com/xyproto/digraph v1.2.0/go.mod h1:s7ijNNFO/sZaEwtIznvXjJCPZyqOkE87Y8EtGUd+lQA=
 github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=

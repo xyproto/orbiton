@@ -77,7 +77,7 @@ github.com/xyproto/burnpal
 # github.com/xyproto/carveimg v1.4.0
 ## explicit; go 1.18
 github.com/xyproto/carveimg
-# github.com/xyproto/clip v0.3.3
+# github.com/xyproto/clip v0.3.4
 ## explicit; go 1.11
 github.com/xyproto/clip
 # github.com/xyproto/digraph v1.2.0
