@@ -118,41 +118,14 @@ func (sb *StatusBar) SetError(err error) {
 
 // Clear will set the message to nothing and then use the editor contents
 // to remove the status bar field at the bottom of the editor.
-func (sb *StatusBar) Clear(c *vt100.Canvas) error {
-	var err error
-	// Write all lines to the buffer
+func (sb *StatusBar) Clear(c *vt100.Canvas) {
 	mut.Lock()
+	defer mut.Unlock()
 
 	// Clear the message
 	sb.msg = ""
 	// Not an error message
 	sb.isError = false
-
-	mut.Unlock()
-
-	if c == nil {
-		return nil
-	}
-
-	// Then clear/redraw the bottom line
-	h := int(c.H())
-	mut.RLock()
-	offsetY := sb.editor.pos.OffsetY()
-	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
-	mut.RUnlock()
-	c.Draw()
-	return err
-}
-
-// ClearAll will clear all status messages
-func (sb *StatusBar) ClearAll(c *vt100.Canvas) {
-	mut.Lock()
-	statusBeingShown = 0
-	// Clear the message
-	sb.msg = ""
-	// Not an error message
-	sb.isError = false
-	mut.Unlock()
 
 	if c == nil {
 		return
@@ -160,10 +133,31 @@ func (sb *StatusBar) ClearAll(c *vt100.Canvas) {
 
 	// Then clear/redraw the bottom line
 	h := int(c.H())
-	mut.RLock()
 	offsetY := sb.editor.pos.OffsetY()
 	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
-	mut.RUnlock()
+	c.Draw()
+}
+
+// ClearAll will clear all status messages
+func (sb *StatusBar) ClearAll(c *vt100.Canvas) {
+	mut.Lock()
+	defer mut.Unlock()
+
+	statusBeingShown = 0
+
+	// Clear the message
+	sb.msg = ""
+	// Not an error message
+	sb.isError = false
+
+	if c == nil {
+		return
+	}
+
+	// Then clear/redraw the bottom line
+	h := int(c.H())
+	offsetY := sb.editor.pos.OffsetY()
+	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
 	c.Draw()
 }
 
