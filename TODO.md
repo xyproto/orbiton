@@ -17,8 +17,9 @@
 - [ ] HTTP client - scratch document style `.http` files.
 - [ ] Add support for emojis.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
-- [ ] Go through this file and remove all completed TODO items.
 - [ ] Highlight changed lines if a file changed while monitoring it with `-m`.
+- [ ] Move redrawing and clearing the statusbar to a separate goroutine?
+- [ ] Go through this file and remove all completed TODO items.
 
 ## Markdown
 
