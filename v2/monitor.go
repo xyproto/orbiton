@@ -32,12 +32,8 @@ func (e *Editor) StartMonitoring(c *vt100.Canvas, tty *vt100.TTY, status *Status
 					return
 				}
 
-				//status.Clear(c)
-				//status.SetMessage("event: " + event.String())
-				//status.Show(c, e)
-
-				if event.Has(fsnotify.Write) {
-
+				// Handle the received event, for the currently monitored file(s)
+				if event.Has(fsnotify.Write) { // is it a write event?
 					status.Clear(c)
 					status.SetMessage("Reloading " + e.filename)
 					status.Show(c, e)
@@ -52,8 +48,8 @@ func (e *Editor) StartMonitoring(c *vt100.Canvas, tty *vt100.TTY, status *Status
 					e.FullResetRedraw(c, status, drawLines)
 					e.redraw = true
 					e.redrawCursor = true
-
 				}
+
 			case err, ok := <-watcher.Errors:
 				if !ok {
 					return
