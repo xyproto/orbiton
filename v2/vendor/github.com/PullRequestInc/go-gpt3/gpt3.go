@@ -32,6 +32,7 @@ type EmbeddingEngine string
 const (
 	GPT3Dot5Turbo             = "gpt-3.5-turbo"
 	GPT3Dot5Turbo0301         = "gpt-3.5-turbo-0301"
+	GPT3Dot5Turbo0613         = "gpt-3.5-turbo-0613"
 	TextSimilarityAda001      = "text-similarity-ada-001"
 	TextSimilarityBabbage001  = "text-similarity-babbage-001"
 	TextSimilarityCurie001    = "text-similarity-curie-001"
@@ -180,8 +181,13 @@ func (c *client) Engine(ctx context.Context, engine string) (*EngineObject, erro
 
 func (c *client) ChatCompletion(ctx context.Context, request ChatCompletionRequest) (*ChatCompletionResponse, error) {
 	if request.Model == "" {
-		request.Model = GPT3Dot5Turbo
+		if request.Functions == nil {
+			request.Model = GPT3Dot5Turbo
+		} else {
+			request.Model = GPT3Dot5Turbo0613
+		}		
 	}
+	
 	request.Stream = false
 
 	req, err := c.newRequest(ctx, "POST", "/chat/completions", request)
