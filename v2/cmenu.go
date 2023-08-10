@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 
@@ -181,7 +180,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	}
 
 	// Build (for use on the terminal, since ctrl-space does not work on iTerm2 + macOS)
-	if !env.Bool("OG") && runtime.GOOS == "darwin" {
+	if !env.Bool("OG") && isDarwin() {
 		actions.Add("Build", func() {
 			const andRun = false
 			e.Build(c, status, tty, andRun)
@@ -503,9 +502,19 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		})
 	}
 
-	searchProcessNames := []string{"ag", "find", "rg"}
+	// Add a menu item to toggle primary/non-primary clipboard on Linux
+	if isLinux() {
+		primaryToggleText := "Use the secondary clipboard"
+		if !e.primaryClipboard {
+			primaryToggleText = "Use the primary clipboard"
+		}
+		actions.Add(primaryToggleText, func() {
+			e.primaryClipboard = !e.primaryClipboard
+		})
+	}
 
-	// Only show the menu option for killing the parent process if the parent process is "ag", "find" or "rg"
+	// Only show the menu option for killing the parent process if the parent process is a known search command
+	searchProcessNames := []string{"ag", "find", "rg"}
 	if firstWordContainsOneOf(parentCommand(), searchProcessNames) {
 		actions.Add("Kill parent and exit without saving", func() {
 			e.stopParentOnQuit = true
