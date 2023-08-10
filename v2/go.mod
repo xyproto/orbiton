@@ -4,7 +4,6 @@ go 1.17
 
 require (
 	github.com/PullRequestInc/go-gpt3 v1.1.16
-	github.com/atotto/clipboard v0.1.4
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.6.0
@@ -13,7 +12,7 @@ require (
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/xyproto/binary v1.3.0
 	github.com/xyproto/carveimg v1.4.0
-	github.com/xyproto/clip v0.3.4
+	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.2.0
 	github.com/xyproto/env/v2 v2.0.0
 	github.com/xyproto/guessica v1.1.2

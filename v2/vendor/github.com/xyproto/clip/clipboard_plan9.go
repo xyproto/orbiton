@@ -12,7 +12,7 @@ import (
 	"os"
 )
 
-func readAll() (string, error) {
+func readAll(_ ...bool) (string, error) {
 	f, err := os.Open("/dev/snarf")
 	if err != nil {
 		return "", err
@@ -25,7 +25,7 @@ func readAll() (string, error) {
 	return string(str), nil
 }
 
-func readAllBytes() ([]byte, error) {
+func readAllBytes(_ ...bool) ([]byte, error) {
 	f, err := os.Open("/dev/snarf")
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func readAllBytes() ([]byte, error) {
 	return data, nil
 }
 
-func writeAll(text string) error {
+func writeAll(text string, _ ...bool) error {
 	f, err := os.OpenFile("/dev/snarf", os.O_WRONLY, 0666)
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ func writeAll(text string) error {
 	return nil
 }
 
-func writeAllBytes(data []byte) error {
+func writeAllBytes(data []byte, _ ...bool) error {
 	f, err := os.OpenFile("/dev/snarf", os.O_WRONLY, 0666)
 	if err != nil {
 		return err

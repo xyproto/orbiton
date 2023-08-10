@@ -46,7 +46,7 @@ func waitOpenClipboard() error {
 	return err
 }
 
-func readAll() (string, error) {
+func readAll(_ ...bool) (string, error) {
 	err := waitOpenClipboard()
 	if err != nil {
 		return "", err
@@ -73,7 +73,7 @@ func readAll() (string, error) {
 	return text, nil
 }
 
-func readAllBytes() ([]byte, error) {
+func readAllBytes(_ ...bool) ([]byte, error) {
 	s, err := readAll()
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func readAllBytes() ([]byte, error) {
 	return []byte(s), nil
 }
 
-func writeAll(text string) error {
+func writeAll(text string, _ ...bool) error {
 	err := waitOpenClipboard()
 	if err != nil {
 		return err
@@ -132,6 +132,6 @@ func writeAll(text string) error {
 	return nil
 }
 
-func writeAllBytes(data []byte) error {
+func writeAllBytes(data []byte, _ ...bool) error {
 	return writeAll(string(data))
 }

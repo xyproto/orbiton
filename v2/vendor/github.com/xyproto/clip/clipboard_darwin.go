@@ -12,15 +12,15 @@ var (
 	copyCmdArgs  = "pbcopy"
 )
 
-func getPasteCommand() *exec.Cmd {
+func getPasteCommand(_ ...bool) *exec.Cmd {
 	return exec.Command(pasteCmdArgs)
 }
 
-func getCopyCommand() *exec.Cmd {
+func getCopyCommand(_ ...bool) *exec.Cmd {
 	return exec.Command(copyCmdArgs)
 }
 
-func readAll() (string, error) {
+func readAll(_ ...bool) (string, error) {
 	pasteCmd := getPasteCommand()
 	out, err := pasteCmd.Output()
 	if err != nil {
@@ -29,7 +29,7 @@ func readAll() (string, error) {
 	return string(out), nil
 }
 
-func readAllBytes() ([]byte, error) {
+func readAllBytes(primary ...bool) ([]byte, error) {
 	pasteCmd := getPasteCommand()
 	out, err := pasteCmd.Output()
 	if err != nil {
@@ -38,7 +38,7 @@ func readAllBytes() ([]byte, error) {
 	return out, nil
 }
 
-func writeAll(text string) error {
+func writeAll(text string, _ ...bool) error {
 	copyCmd := getCopyCommand()
 	in, err := copyCmd.StdinPipe()
 	if err != nil {
@@ -56,7 +56,7 @@ func writeAll(text string) error {
 	return copyCmd.Wait()
 }
 
-func writeAllBytes(data []byte) error {
+func writeAllBytes(data []byte, _ ...bool) error {
 	copyCmd := getCopyCommand()
 	in, err := copyCmd.StdinPipe()
 	if err != nil {

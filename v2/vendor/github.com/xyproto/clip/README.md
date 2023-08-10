@@ -44,5 +44,5 @@ Copy shell command:
 
 ### General info
 
-* Version: 0.3.4
+* Version: 1.0.0
 * License: BSD-3

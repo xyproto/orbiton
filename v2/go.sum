@@ -30,8 +30,6 @@ github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hC
 github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da/go.mod h1:Q73ZrmVTwzkszR9V5SSuryQ31EELlFMUz1kKyl939pY=
 github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
 github.com/aryann/difflib v0.0.0-20170710044230-e206f873d14a/go.mod h1:DAHtR1m6lCRdSC2Tm3DSWRPvIPr6xNKyeHdqDQSQT+A=
-github.com/atotto/clipboard v0.1.4 h1:EH0zSVneZPSuFR11BlR9YppQTVDbh5+16AmcJi4g1z4=
-github.com/atotto/clipboard v0.1.4/go.mod h1:ZY9tmq7sm5xIbd9bOK4onWV4S6X0u6GY7Vn0Yu86PYI=
 github.com/aws/aws-lambda-go v1.13.3/go.mod h1:4UKl9IzQMoD+QF79YdCuzCwp8VbmG4VAQwij/eHl5CU=
 github.com/aws/aws-sdk-go v1.27.0/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/aws/aws-sdk-go-v2 v0.18.0/go.mod h1:JWVYvqSMppoMJC0x5wdwiImzgXTI9FuZwxzkQq9wy+g=
@@ -349,8 +347,8 @@ github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795 h1:AoL5T5pFgiCn/4f
 github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795/go.mod h1:j3S/tDDOEkIChz0sWDqO3zXOgIjz/6nhuc+JrmZNLnA=
 github.com/xyproto/carveimg v1.4.0 h1:5Klvmos6o24Lpe68NUoFKu8yCkP24R2ZojB63O3+Xn0=
 github.com/xyproto/carveimg v1.4.0/go.mod h1:EKjAxiLhDQZAHCXwsedYuGZ/XD70E7J85xwus1DdqEk=
-github.com/xyproto/clip v0.3.4 h1:cyo+iL+0AF5NH9nLWh4UH4+KXqd3XdoD2BTRdTnY55k=
-github.com/xyproto/clip v0.3.4/go.mod h1:jVRcSiAIK6dadcIXPtOa9/wetlggtIGRiRIDOrU0sfU=
+github.com/xyproto/clip v1.0.0 h1:fA/5CK6rslFvY9Ta76A7U2z73fSaEF96EKjS/RYcC5s=
+github.com/xyproto/clip v1.0.0/go.mod h1:jVRcSiAIK6dadcIXPtOa9/wetlggtIGRiRIDOrU0sfU=
 github.com/xyproto/digraph v1.2.0 h1:I/tZa5V5OdPfv4A4ps6ASbleB2Uub1dsKRxnMvmLsuE=
 github.com/xyproto/digraph v1.2.0/go.mod h1:s7ijNNFO/sZaEwtIznvXjJCPZyqOkE87Y8EtGUd+lQA=
 github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=

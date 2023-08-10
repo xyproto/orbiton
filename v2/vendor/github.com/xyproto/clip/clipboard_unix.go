@@ -21,7 +21,6 @@ const (
 )
 
 var (
-	Primary bool
 	trimDos bool
 
 	pasteCmdArgs []string
@@ -108,34 +107,34 @@ func initialize() {
 	Unsupported = true
 }
 
-func getPasteCommand() *exec.Cmd {
+func getPasteCommand(primary bool) *exec.Cmd {
 	if !initialized {
 		initialize()
 	}
-	if Primary {
+	if primary {
 		pasteCmdArgs = pasteCmdArgs[:1]
 	}
 	return exec.Command(pasteCmdArgs[0], pasteCmdArgs[1:]...)
 }
 
-func getCopyCommand() *exec.Cmd {
+func getCopyCommand(primary bool) *exec.Cmd {
 	if !initialized {
 		initialize()
 	}
-	if Primary {
+	if primary {
 		copyCmdArgs = copyCmdArgs[:1]
 	}
 	return exec.Command(copyCmdArgs[0], copyCmdArgs[1:]...)
 }
 
-func readAllBytes() ([]byte, error) {
+func readAllBytes(primary bool) ([]byte, error) {
 	if !initialized {
 		initialize()
 	}
 	if Unsupported {
 		return []byte{}, errMissingCommands
 	}
-	pasteCmd := getPasteCommand()
+	pasteCmd := getPasteCommand(primary)
 	out, err := pasteCmd.Output()
 	if err != nil {
 		return []byte{}, errors.New("could not run: " + pasteCmd.String())
@@ -146,11 +145,11 @@ func readAllBytes() ([]byte, error) {
 	return out, nil
 }
 
-func readAll() (string, error) {
+func readAll(primary bool) (string, error) {
 	if !initialized {
 		initialize()
 	}
-	b, err := readAllBytes()
+	b, err := readAllBytes(primary)
 	if err != nil {
 		return "", err
 	}
@@ -161,14 +160,14 @@ func readAll() (string, error) {
 	return result, nil
 }
 
-func writeAllBytes(b []byte) error {
+func writeAllBytes(b []byte, primary bool) error {
 	if !initialized {
 		initialize()
 	}
 	if Unsupported {
 		return errMissingCommands
 	}
-	copyCmd := getCopyCommand()
+	copyCmd := getCopyCommand(primary)
 	in, err := copyCmd.StdinPipe()
 	if err != nil {
 		return err
@@ -186,11 +185,11 @@ func writeAllBytes(b []byte) error {
 	return copyCmd.Wait()
 }
 
-func writeAll(text string) error {
+func writeAll(text string, primary bool) error {
 	if !initialized {
 		initialize()
 	}
-	return writeAllBytes([]byte(text))
+	return writeAllBytes([]byte(text), primary)
 }
 
 // WSL returns true if this is a WSL distro
