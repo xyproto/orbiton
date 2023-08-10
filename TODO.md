@@ -20,6 +20,7 @@
 - [ ] Highlight changed lines if a file changed while monitoring it with `-m`.
 - [ ] Move redrawing and clearing the statusbar to a separate goroutine?
 - [ ] Go through this file and remove all completed TODO items.
+- [ ] Refactor `utils.go` into something like `strings.go`, `files.go`, `maths.go`, `runes.go` and `logging.go`.
 
 ## Markdown
 
