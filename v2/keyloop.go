@@ -103,6 +103,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		e.readOnly = true
 		e.StartMonitoring(c, tty, status)
 	}
+	if e.mode == mode.Log && e.readOnly {
+		e.syntaxHighlight = true
+	}
 
 	e.previousX = 1
 	e.previousY = 1

@@ -141,8 +141,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			}
 		}
 
-		// Specifically enable syntax highlighting if the opened file is a configuration file
-		if e.mode == mode.Config {
+		// Specifically enable syntax highlighting if the opened file is a configuration file or a log file
+		if e.mode == mode.Config || e.mode == mode.Log {
 			e.syntaxHighlight = true
 		}
 
