@@ -63,6 +63,7 @@ type Editor struct {
 	redrawCursor       bool            // if the cursor should be moved to the location it is supposed to be
 	fixAsYouType       bool            // fix each line as you type it in, using AI?
 	monitorAndReadOnly bool            // monitor the file for changes and open it as read-only
+	primaryClipboard   bool            // use the primary or the secondary clipboard on UNIX?
 }
 
 // NewCustomEditor takes:

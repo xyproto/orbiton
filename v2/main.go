@@ -114,7 +114,8 @@ See the man page for more information.
 
 	// If the -p flag is given, just paste the clipboard to the given filename and exit
 	if filename := flag.Arg(0); filename != "" && *pasteFlag {
-		n, headString, tailString, err := WriteClipboardToFile(filename, *forceFlag)
+		const primaryClipboard = false
+		n, headString, tailString, err := WriteClipboardToFile(filename, *forceFlag, primaryClipboard)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			quitMut.Lock()
@@ -140,7 +141,8 @@ See the man page for more information.
 
 	// If the -c flag is given, just copy the given filename to the clipboard and exit
 	if filename := flag.Arg(0); filename != "" && *copyFlag {
-		n, tailString, err := SetClipboardFromFile(filename)
+		const primaryClipboard = false
+		n, tailString, err := SetClipboardFromFile(filename, primaryClipboard)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			quitMut.Lock()

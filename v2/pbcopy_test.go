@@ -1,12 +1,11 @@
 package main
 
 import (
-	"runtime"
 	"testing"
 )
 
 func TestPBcopy(t *testing.T) {
-	if runtime.GOOS != "darwin" {
+	if !isDarwin() {
 		return
 	}
 	const oString = "ost"

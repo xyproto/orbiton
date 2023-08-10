@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -1540,20 +1539,19 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				copyLines = []string{line}
 
 				var err error
-				if runtime.GOOS == "darwin" {
+				if isDarwin() {
 					// Copy the line to the clipboard
 					err = pbcopy(line)
 				} else {
 					// Copy the line to the non-primary clipboard
-					const primaryClipboard = false
-					err = clip.WriteAll(line, primaryClipboard)
+					err = clip.WriteAll(line, e.primaryClipboard)
 				}
 				if err != nil && firstCopyAction {
 					if env.Has("WAYLAND_DISPLAY") && which("wl-copy") == "" { // Wayland
 						status.SetErrorMessage("The wl-copy utility (from wl-clipboard) is missing!")
 					} else if env.Has("DISPLAY") && which("xclip") == "" {
 						status.SetErrorMessage("The xclip utility is missing!")
-					} else if runtime.GOOS == "darwin" && which("pbcopy") == "" { // pbcopy is missing, on macOS
+					} else if isDarwin() && which("pbcopy") == "" { // pbcopy is missing, on macOS
 						status.SetErrorMessage("The pbcopy utility is missing!")
 					}
 				}
@@ -1578,12 +1576,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				s = strings.Join(copyLines, "\n")
 
 				// Place the block of text in the clipboard
-				if runtime.GOOS == "darwin" {
+				if isDarwin() {
 					pbcopy(s)
 				} else {
 					// Place it in the non-primary clipboard
-					const primaryClipboard = false
-					_ = clip.WriteAll(s, primaryClipboard)
+					_ = clip.WriteAll(s, e.primaryClipboard)
 				}
 
 				// Delete the corresponding number of lines
@@ -1654,12 +1651,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					// Copy the line to the clipboard
 					s := "Copied 1 line"
 					var err error
-					if runtime.GOOS == "darwin" {
+					if isDarwin() {
 						err = pbcopy(strings.Join(copyLines, "\n"))
 					} else {
 						// Place it in the non-primary clipboard
-						const primaryClipboard = false
-						err = clip.WriteAll(strings.Join(copyLines, "\n"), primaryClipboard)
+						err = clip.WriteAll(strings.Join(copyLines, "\n"), e.primaryClipboard)
 					}
 					if err == nil { // OK
 						// The copy operation worked out, using the clipboard
@@ -1689,12 +1685,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						plural = "s"
 					}
 					// Place the block of text in the clipboard
-					if runtime.GOOS == "darwin" {
+					if isDarwin() {
 						err = pbcopy(s)
 					} else {
 						// Place it in the non-primary clipboard
-						const primaryClipboard = false
-						err = clip.WriteAll(s, primaryClipboard)
+						err = clip.WriteAll(s, e.primaryClipboard)
 					}
 					if err != nil {
 						status.SetMessage(fmt.Sprintf("Copied %d line%s", lineCount, plural))
@@ -1746,7 +1741,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			var s string
 
 			var err error
-			if runtime.GOOS == "darwin" {
+			if isDarwin() {
 				s, err = pbpaste()
 			} else {
 				// Read the clipboard, for other platforms
@@ -1773,7 +1768,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				} else if env.Has("DISPLAY") && which("xclip") == "" { // X + xclip not found
 					status.SetErrorMessage("The xclip utility is missing!")
 					missingUtility = true
-				} else if runtime.GOOS == "darwin" && which("pbpaste") == "" { // pbcopy is missing, on macOS
+				} else if isDarwin() && which("pbpaste") == "" { // pbcopy is missing, on macOS
 					status.SetErrorMessage("The pbpaste utility is missing!")
 					missingUtility = true
 				}

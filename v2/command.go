@@ -114,7 +114,6 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		nothing = iota
 		build
 		copyall
-		copyallprimary
 		help
 		insertdate
 		insertfile
@@ -162,18 +161,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			status.Show(c, e)
 		},
 		copyall: func() { // copy all contents to the clipboard
-			const primaryClipboard = false
-			if err := clip.WriteAll(e.String(), primaryClipboard); err != nil {
-				status.Clear(c)
-				status.SetError(err)
-				status.Show(c, e)
-			} else {
-				status.SetMessageAfterRedraw("Copied everything")
-			}
-		},
-		copyallprimary: func() { // copy all contents to the clipboard
-			const primaryClipboard = true
-			if err := clip.WriteAll(e.String(), primaryClipboard); err != nil {
+			if err := clip.WriteAll(e.String(), e.primaryClipboard); err != nil {
 				status.Clear(c)
 				status.SetError(err)
 				status.Show(c, e)
