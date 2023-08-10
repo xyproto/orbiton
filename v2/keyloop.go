@@ -11,7 +11,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/atotto/clipboard"
+	"github.com/xyproto/clip"
 	"github.com/xyproto/digraph"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/iferr"
@@ -1541,8 +1541,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					// Copy the line to the clipboard
 					err = pbcopy(line)
 				} else {
-					// Copy the line to the clipboard
-					err = clipboard.WriteAll(line)
+					// Copy the line to the non-primary clipboard
+					const primaryClipboard = false
+					err = clip.WriteAll(line, primaryClipboard)
 				}
 				if err != nil && firstCopyAction {
 					if env.Has("WAYLAND_DISPLAY") && which("wl-copy") == "" { // Wayland
@@ -1577,7 +1578,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				if runtime.GOOS == "darwin" {
 					pbcopy(s)
 				} else {
-					_ = clipboard.WriteAll(s)
+					// Place it in the non-primary clipboard
+					const primaryClipboard = false
+					_ = clip.WriteAll(s, primaryClipboard)
 				}
 
 				// Delete the corresponding number of lines
@@ -1651,7 +1654,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					if runtime.GOOS == "darwin" {
 						err = pbcopy(strings.Join(copyLines, "\n"))
 					} else {
-						err = clipboard.WriteAll(strings.Join(copyLines, "\n"))
+						// Place it in the non-primary clipboard
+						const primaryClipboard = false
+						err = clip.WriteAll(strings.Join(copyLines, "\n"), primaryClipboard)
 					}
 					if err == nil { // OK
 						// The copy operation worked out, using the clipboard
@@ -1684,7 +1689,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					if runtime.GOOS == "darwin" {
 						err = pbcopy(s)
 					} else {
-						err = clipboard.WriteAll(s)
+						// Place it in the non-primary clipboard
+						const primaryClipboard = false
+						err = clip.WriteAll(s, primaryClipboard)
 					}
 					if err != nil {
 						status.SetMessage(fmt.Sprintf("Copied %d line%s", lineCount, plural))
@@ -1740,9 +1747,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				s, err = pbpaste()
 			} else {
 				// Read the clipboard, for other platforms
-				s, err = clipboard.ReadAll()
+				s, err = clip.ReadAll(false) // non-primary clipboard
 				if err == nil && strings.TrimSpace(s) == "" {
-					s, err = getOtherClipboardContents()
+					s, err = clip.ReadAll(true) // try the primary clipboard
 				}
 			}
 

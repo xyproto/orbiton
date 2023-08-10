@@ -17,7 +17,8 @@ func SetClipboardFromFile(filename string) (int, string, error) {
 	}
 
 	// Write to the clipboard
-	if err := clip.WriteAllBytes(data); err != nil {
+	const primaryClipboard = false
+	if err := clip.WriteAllBytes(data, primaryClipboard); err != nil {
 		return 0, "", err
 	}
 

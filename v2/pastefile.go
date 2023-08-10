@@ -24,8 +24,10 @@ func WriteClipboardToFile(filename string, overwrite bool) (int, string, string,
 		}
 	}
 
+	const primaryClipboard = false
+
 	// Read the clipboard
-	contents, err := clip.ReadAllBytes()
+	contents, err := clip.ReadAllBytes(primaryClipboard)
 	if err != nil {
 		return 0, "", "", err
 	}
