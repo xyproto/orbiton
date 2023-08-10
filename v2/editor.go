@@ -420,6 +420,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		shebang  bool
 		data     []byte
 	)
+
 	quitMut.Lock()
 	defer quitMut.Unlock()
 
@@ -472,15 +473,16 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	// Default file mode (0644 for regular files, 0755 for executable files)
 	var fileMode os.FileMode = 0o644
 
-	// Shell scripts that contains the word "source" typically needs to be sourced and should not be "chmod +x"-ed
-	containsTheWordSource := bytes.Contains(data, []byte("source"))
+	// Shell scripts that contains the word "source" typically needs to be sourced and should not be "chmod +x"-ed, nor "chmod -x" ed
+	containsTheWordSource := bytes.Contains(data, []byte("source "))
 
 	// Checking the syntax highlighting makes it easy to press `ctrl-t` before saving a script,
 	// to toggle the executable bit on or off. This is only for files that start with "#!".
 	// Also, if the file is in one of the common bin directories, like "/usr/bin", then assume that it
 	// is supposed to be executable.
 	if shebang && e.syntaxHighlight && !containsTheWordSource {
-		// This is a script file, syntax highlighting is enabled and it does not contain the word "source"
+		// This is a script file, syntax highlighting is enabled and it does not contain the word "source "
+		// (typical for shell files that should be sourced and not executed)
 		fileMode = 0o755
 	}
 
@@ -514,13 +516,15 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 
 		// "chmod +x" or "chmod -x". This is needed after saving the file, in order to toggle the executable bit.
 		// rust source may start with something like "#![feature(core_intrinsics)]", so avoid that.
-		if shebang && e.mode != mode.Rust && e.mode != mode.Python && e.mode != mode.Mojo && !e.readOnly {
-			// Call Chmod, but ignore errors (since this is just a bonus and not critical)
-			os.Chmod(e.filename, fileMode)
-			e.syntaxHighlight = true
-		} else if e.mode == mode.Make || e.mode == mode.Just || e.mode == mode.Markdown || e.mode == mode.Doc || e.mode == mode.ReStructured || filepath.Base(e.filename) == "PKGBUILD" || filepath.Base(e.filename) == "APKBUILD" {
-			fileMode = 0o644
-			os.Chmod(e.filename, fileMode)
+		if !containsTheWordSource {
+			if shebang && e.mode != mode.Rust && e.mode != mode.Python && e.mode != mode.Mojo && !e.readOnly {
+				// Call Chmod, but ignore errors (since this is just a bonus and not critical)
+				os.Chmod(e.filename, fileMode)
+				e.syntaxHighlight = true
+			} else if e.mode == mode.Make || e.mode == mode.Just || e.mode == mode.Markdown || e.mode == mode.Doc || e.mode == mode.ReStructured || filepath.Base(e.filename) == "PKGBUILD" || filepath.Base(e.filename) == "APKBUILD" {
+				fileMode = 0o644
+				os.Chmod(e.filename, fileMode)
+			}
 		}
 
 		// Stop the spinner
