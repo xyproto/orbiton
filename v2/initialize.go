@@ -188,7 +188,22 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 				// If the read-only file is in /usr/share/doc or /usr/include, the user is likely to want
 				// to have syntax highlighting enabled, despite the file being read-only.
 				// If not, set the color to red and disable syntax highlighting.
-				if !strings.HasPrefix(e.filename, "/usr/share/doc") || !strings.HasPrefix(e.filename, "/usr/include") {
+				// Find the absolute path to this filename
+				excludeList := []string{"/usr/share/doc", "/usr/include"}
+				wantColors := false
+				absFilename := e.filename
+				if !fnord.stdin {
+					if filename, err := e.AbsFilename(); err == nil { // success
+						absFilename = filename
+					}
+				}
+				for _, pathPrefix := range excludeList {
+					if strings.HasPrefix(absFilename, pathPrefix) {
+						wantColors = true
+						break
+					}
+				}
+				if !wantColors {
 					e.Foreground = vt100.LightRed
 					// disable syntax highlighting, to make it clear that the text is red
 					e.syntaxHighlight = false
