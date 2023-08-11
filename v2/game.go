@@ -331,8 +331,6 @@ func (b *Bubble) Next(c *vt100.Canvas, bob *Bob, gobblers *[]*Gobbler) bool {
 	b.oldx = b.x
 	b.oldy = b.y
 
-	// Now try to move the bubble "intelligently", given the position of the evil gobbler
-
 	d := distance(bob.x, b.x, bob.y, b.y)
 	if d > 10 {
 		if b.x < bob.x {
@@ -446,7 +444,7 @@ func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers *[]*Gobbler) bool {
 	minDistance := 0.0
 	found := false
 	for i, g := range *gobblers {
-		if d := distance(g.x, e.x, g.y, e.y); !g.dead && (d < minDistance || minDistance == 0.0) {
+		if d := distance(g.x, g.y, e.x, e.y); !g.dead && (d < minDistance || minDistance == 0.0) {
 			e.hunting = (*gobblers)[i]
 			minDistance = d
 			found = true
@@ -579,7 +577,7 @@ func (g *Gobbler) Next(pellets *[]*Pellet, bob *Bob) bool {
 			// TODO: Hunt a random pellet that is not already hunted instead of the closest
 
 			for i, b := range *pellets {
-				if d := distance(b.x, g.x, b.y, g.y); !b.removed && (minDistance == 0.0 || d < minDistance) {
+				if d := distance(b.x, b.y, g.x, g.y); !b.removed && (minDistance == 0.0 || d < minDistance) {
 					closestPellet = (*pellets)[i]
 					minDistance = d
 				}
@@ -589,7 +587,7 @@ func (g *Gobbler) Next(pellets *[]*Pellet, bob *Bob) bool {
 				g.huntingDistance = minDistance
 			}
 		} else {
-			g.huntingDistance = distance(g.hunting.x, g.x, g.hunting.y, g.y)
+			g.huntingDistance = distance(g.hunting.x, g.hunting.y, g.x, g.y)
 		}
 
 		if g.hunting == nil {
@@ -630,7 +628,7 @@ func (g *Gobbler) Next(pellets *[]*Pellet, bob *Bob) bool {
 				g.y -= yspeed
 			}
 
-			if distance(bob.x, g.x, bob.y, g.y) < 4 {
+			if distance(bob.x, bob.y, g.x, g.y) < 4 {
 				g.x = g.oldx + (rand.Intn(3) - 1)
 				g.y = g.oldy + (rand.Intn(3) - 1)
 			}
