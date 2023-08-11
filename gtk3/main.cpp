@@ -746,7 +746,7 @@ int main(int argc, char* argv[])
     g_signal_connect(window, "button-press-event", G_CALLBACK(mouse_clicked), nullptr);
     g_signal_connect(window, "size-allocate", G_CALLBACK(size_changed), nullptr);
 
-    usleep(200000); // will sleep for 0.2s
+    usleep(400000); // will sleep for 0.4s
     signal(SIGWINCH, signal_handler); // o sends SIGWINCH when it is ready to resize
 
     // Add the terminal to the window
