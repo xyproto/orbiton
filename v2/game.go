@@ -758,9 +758,9 @@ retry:
 		startingWidth = int(c.W())
 		bob           = NewBob(c, startingWidth)
 		evilGobbler   = NewEvilGobbler(c, startingWidth)
-		gobblers      = NewGobblers(c, startingWidth, 10)
+		gobblers      = NewGobblers(c, startingWidth, 25)
 		pellets       = make([]*Pellet, 0)
-		bubbles       = NewBubbles(c, startingWidth, 20)
+		bubbles       = NewBubbles(c, startingWidth, 15)
 		score         = uint(0)
 	)
 
