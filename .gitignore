@@ -25,6 +25,8 @@ default
 example.go
 fgtrace.json
 fo
+gtk3/gtk3
+gtk4/gtk4
 include.txt
 insert.txt
 light
