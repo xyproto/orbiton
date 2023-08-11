@@ -52,9 +52,9 @@ bench:
 
 gui: og
 ko: og
-og: og/og
+og: gtk3/gtk3
 
-og/og: og/main.cpp
+gtk3/gtk3: gtk3/main.cpp
 	$(CXX) "$<" -o "$@" $(CXXFLAGS) $(LDFLAGS)
 
 o.1.gz: o.1
@@ -66,21 +66,32 @@ install: o o.1.gz
 	mkdir -p "$(DESTDIR)$(MANDIR)"
 	install -m644 o.1.gz "$(DESTDIR)$(MANDIR)/o.1.gz"
 
-gui-install: install-og
-install-gui: install-og
-ko-install: install-og
-install-ko: install-og
-og-install: install-og
+gui-install: install-gtk3
+install-gui: install-gtk3
+ko-install: install-gtk3
+install-ko: install-gtk3
+og-install: install-gtk3
+install-og: install-gtk3
 
-install-og: og/og vg-symlink
+install-gtk3: gtk3/gtk3 vg-symlink
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
-	install -m755 og/og "$(DESTDIR)$(PREFIX)/bin/og"
+	install -m755 gtk3/gtk3 "$(DESTDIR)$(PREFIX)/bin/og"
 	mkdir -p "$(DESTDIR)$(PREFIX)/share/pixmaps"
 	install -m644 img/og.png "$(DESTDIR)$(PREFIX)/share/pixmaps/og.png"
 	install -m644 img/vg.png "$(DESTDIR)$(PREFIX)/share/pixmaps/vg.png"
 	mkdir -p "$(DESTDIR)$(PREFIX)/share/applications"
-	install -m644 og/og.desktop "$(DESTDIR)$(PREFIX)/share/applications/og.desktop"
-	install -m644 og/vg.desktop "$(DESTDIR)$(PREFIX)/share/applications/vg.desktop"
+	install -m644 gtk3/og.desktop "$(DESTDIR)$(PREFIX)/share/applications/og.desktop"
+	install -m644 gtk3/vg.desktop "$(DESTDIR)$(PREFIX)/share/applications/vg.desktop"
+
+install-gtk4: gtk4/gtk4 vg-symlink
+	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
+	install -m755 gtk3/gtk3 "$(DESTDIR)$(PREFIX)/bin/og"
+	mkdir -p "$(DESTDIR)$(PREFIX)/share/pixmaps"
+	install -m644 img/og.png "$(DESTDIR)$(PREFIX)/share/pixmaps/og.png"
+	install -m644 img/vg.png "$(DESTDIR)$(PREFIX)/share/pixmaps/vg.png"
+	mkdir -p "$(DESTDIR)$(PREFIX)/share/applications"
+	install -m644 gtk4/og.desktop "$(DESTDIR)$(PREFIX)/share/applications/og.desktop"
+	install -m644 gtk4/vg.desktop "$(DESTDIR)$(PREFIX)/share/applications/vg.desktop"
 
 install-symlinks: symlinks
 symlinks-install: symlinks
