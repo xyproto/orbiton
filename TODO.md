@@ -16,7 +16,7 @@
 - [ ] HTTP client - scratch document style `.http` files.
 - [ ] Add support for emojis. Perhaps by drawing lines differently if an emoji is detected.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
-- [x] Refactor `utils.go` into something like `strings.go`, `files.go`, `maths.go`, `runes.go` and `logging.go`.
+- [ ] Parse some programming languages to improve the quality of the "go to defintion" feature.
 - [ ] Go through this file and remove all completed TODO items.
 
 ## Maybe
