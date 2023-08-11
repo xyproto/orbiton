@@ -185,9 +185,9 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			if err != nil {
 				// can not open the file for writing
 				e.readOnly = true
-				// Set the color to red when in read-only mode, unless the file is not in "/usr/share/doc",
-				// in which case the user is unlikely to want to save the file,
-				// and is likely to want a better reading experience.
+				// If the read-only file is in /usr/share/doc, the user is likely to want
+				// to have syntax highlighting enabled, despite the file being read-only.
+				// If not, set the color to red and disable syntax highlighting.
 				if !strings.HasPrefix(e.filename, "/usr/share/doc") {
 					e.Foreground = vt100.LightRed
 					// disable syntax highlighting, to make it clear that the text is red
