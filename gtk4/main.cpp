@@ -28,7 +28,7 @@ const gdouble font_scale_step = 0.05;
 void signal_and_quit()
 {
     // Start by hiding the window
-    gtk_widget_hide(window);
+    gtk_widget_set_visible(window, false);
 
     // Handle subprocesses
     if (child_pid != -1) {
@@ -42,13 +42,13 @@ void signal_and_quit()
         usleep(200000); // will sleep for 0.2s
         kill(child_pid, SIGTERM);
     }
-    gtk_main_quit();
+    gtk_window_destroy(GTK_WINDOW(window));
 }
 
 void wait_and_quit()
 {
     // Start by hiding the window
-    gtk_widget_hide(window);
+    gtk_widget_set_visible(window, false);
     // Handle subprocesses
     if (child_pid != -1 && !force_enable) {
         // If force was used at start, don't unlock the file.
@@ -57,7 +57,7 @@ void wait_and_quit()
         kill(child_pid, SIGUSR1);
     }
     usleep(200000); // will sleep for 0.2s
-    gtk_main_quit();
+    gtk_window_destroy(GTK_WINDOW(window));
 }
 
 // trigger_redraw will trigger a terminal resize event when the window is focused (SIGWINCH)
@@ -524,7 +524,7 @@ int main(int argc, char* argv[])
         } else {
             // Did not get GTK_RESPONSE_ACCEPT, just end the program here
             // gtk_widget_destroy(dialog);
-            // gtk_main_quit();
+            // gtk_window_destroy(GTK_WINDOW(window));
             return EXIT_FAILURE;
         }
         gtk_widget_destroy(dialog);
