@@ -1912,7 +1912,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				backFunctions = backFunctions[:lastIndex]
 				if len(backFunctions) == 0 {
 					// last possibility to jump back
-					status.SetMessageAfterRedraw("Jumped all the way back")
+					status.SetMessageAfterRedraw("Back at the first location")
 				}
 				break
 			}
