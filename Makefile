@@ -33,6 +33,7 @@ endif
 
 CXX ?= g++
 CXXFLAGS ?= -O2 -pipe -fPIC -fno-plt -fstack-protector-strong -Wall -Wshadow -Wpedantic -Wno-parentheses -Wfatal-errors -Wvla -Wignored-qualifiers -pthread $(LDFLAGS)
+CXXFLAGS += -DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED
 
 ifeq ($(UNAME_S),Darwin)
   CXXFLAGS += -std=c++20
