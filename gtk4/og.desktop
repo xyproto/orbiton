@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Orbiton Dark
+Comment=Text editor and IDE
+MimeType=text/english;text/plain;text/x-makefile;text/x-c++hdr;text/x-c++src;text/x-chdr;text/x-csrc;text/x-pascal;application/x-shellscript;text/x-c;text/x-c++;text/x-go;text/x-odin;text/x-nim;text/x-json;text/x-nroff;text/x-bat;text/x-objectpascal;text/x-crystal;text/x-hidl;text/x-zig;text/x-asm;text/x-assembly;text/markdown;text/x-markdown;
+Exec=og %F
+Icon=og
+Terminal=false
+StartupNotify=true
+Categories=Application;Development;TextEditor;
+Keywords=Text;Editor;

@@ -33,7 +33,6 @@ endif
 
 CXX ?= g++
 CXXFLAGS ?= -O2 -pipe -fPIC -fno-plt -fstack-protector-strong -Wall -Wshadow -Wpedantic -Wno-parentheses -Wfatal-errors -Wvla -Wignored-qualifiers -pthread $(LDFLAGS)
-CXXFLAGS += $(shell pkg-config --cflags --libs vte-2.91)
 
 ifeq ($(UNAME_S),Darwin)
   CXXFLAGS += -std=c++20
@@ -53,9 +52,14 @@ bench:
 gui: og
 ko: og
 og: gtk3/gtk3
+gtk3: gtk3/gtk3
+gtk4: gtk4/gtk4
 
 gtk3/gtk3: gtk3/main.cpp
-	$(CXX) "$<" -o "$@" $(CXXFLAGS) $(LDFLAGS)
+	$(CXX) "$<" -o "$@" $(CXXFLAGS) $(shell pkg-config --cflags --libs vte-2.91) $(LDFLAGS)
+
+gtk4/gtk4: gtk4/main.cpp
+	$(CXX) "$<" -o "$@" $(CXXFLAGS) $(shell pkg-config --cflags --libs vte-2.91-gtk4) $(LDFLAGS)
 
 o.1.gz: o.1
 	gzip -f -k o.1
@@ -135,4 +139,4 @@ license:
 	install -m644 LICENSE "$(DESTDIR)$(PREFIX)/share/licenses/$(PROJECT)/LICENSE"
 
 clean:
-	-rm -f o v2/o o.1.gz og/og v2/orbiton
+	-rm -f o o.1.gz gtk3/gtk3 gtk4/gtk4 v2/o v2/orbiton
