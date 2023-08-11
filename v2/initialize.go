@@ -351,11 +351,6 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		recordedLineNumber, found = locationHistory.Get(absFilename)
 	}
 
-	if !e.slowLoad {
-		// Load the search history. This will be saved again later. Errors are ignored.
-		searchHistory, _ = LoadSearchHistory(searchHistoryFilename)
-	}
-
 	// Jump to the correct line number
 	switch {
 	case lineNumber > 0:

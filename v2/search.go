@@ -13,7 +13,7 @@ import (
 
 var (
 	searchHistoryFilename = filepath.Join(userCacheDir, "o", "search.txt")
-	searchHistory         = []string{}
+	searchHistory         *[]string
 	errNoSearchMatch      = errors.New("no search match")
 )
 
@@ -225,6 +225,12 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap, forward
 
 // SearchMode will enter the interactive "search mode" where the user can type in a string and then press return to search
 func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, clear bool, undo *Undo) {
+	// Load the search history if needed. Ignore any errors.
+	if searchHistory == nil {
+		searchHistorySlice, _ := LoadSearchHistory(searchHistoryFilename)
+		searchHistory = &searchHistorySlice
+	}
+
 	var (
 		searchPrompt       = "Search:"
 		previousSearch     string
@@ -298,30 +304,30 @@ AGAIN:
 			pressedReturn = true
 			doneCollectingLetters = true
 		case "↑": // previous in the search history
-			if len(searchHistory) == 0 {
+			if len(*searchHistory) == 0 {
 				break
 			}
 			searchHistoryIndex--
 			if searchHistoryIndex < 0 {
 				// wraparound
-				searchHistoryIndex = len(searchHistory) - 1
+				searchHistoryIndex = len(*searchHistory) - 1
 			}
-			s = searchHistory[searchHistoryIndex]
+			s = (*searchHistory)[searchHistoryIndex]
 			if previousSearch == "" {
 				e.SetSearchTerm(c, status, s)
 			}
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
 		case "↓": // next in the search history
-			if len(searchHistory) == 0 {
+			if len(*searchHistory) == 0 {
 				break
 			}
 			searchHistoryIndex++
-			if searchHistoryIndex >= len(searchHistory) {
+			if searchHistoryIndex >= len(*searchHistory) {
 				// wraparound
 				searchHistoryIndex = 0
 			}
-			s = searchHistory[searchHistoryIndex]
+			s = (*searchHistory)[searchHistoryIndex]
 			if previousSearch == "" {
 				e.SetSearchTerm(c, status, s)
 			}
@@ -368,12 +374,12 @@ AGAIN:
 		status.messageAfterRedraw = "Replaced " + searchFor + " with " + replaceWith + ", once"
 		// Save "searchFor" to the search history
 		if trimmedSearchString := strings.TrimSpace(searchFor); trimmedSearchString != "" {
-			if lastEntryIsNot(searchHistory, trimmedSearchString) {
-				searchHistory = append(searchHistory, trimmedSearchString)
+			if lastEntryIsNot(*searchHistory, trimmedSearchString) {
+				*searchHistory = append(*searchHistory, trimmedSearchString)
 			}
 			// ignore errors saving the search history, since it's not critical
 			if !e.slowLoad {
-				SaveSearchHistory(searchHistoryFilename, searchHistory)
+				SaveSearchHistory(searchHistoryFilename, *searchHistory)
 			}
 		}
 		// Set up a redraw and return
@@ -406,12 +412,12 @@ AGAIN:
 		status.messageAfterRedraw = fmt.Sprintf("Replaced %d instance%s of %s with %s", instanceCount, extraS, previousSearch, s)
 		// Save "searchFor" to the search history
 		if trimmedSearchString := strings.TrimSpace(string(searchForBytes)); trimmedSearchString != "" {
-			if lastEntryIsNot(searchHistory, trimmedSearchString) {
-				searchHistory = append(searchHistory, trimmedSearchString)
+			if lastEntryIsNot(*searchHistory, trimmedSearchString) {
+				*searchHistory = append(*searchHistory, trimmedSearchString)
 			}
 			// ignore errors saving the search history, since it's not critical
 			if !e.slowLoad {
-				SaveSearchHistory(searchHistoryFilename, searchHistory)
+				SaveSearchHistory(searchHistoryFilename, *searchHistory)
 			}
 		}
 		// Set up a redraw and return
@@ -426,15 +432,15 @@ AGAIN:
 		e.GoToLineNumber(initialLocation, c, status, false)
 		// Save "s" to the search history
 		if trimmedSearchString := strings.TrimSpace(s); s != "" {
-			if lastEntryIsNot(searchHistory, trimmedSearchString) {
-				searchHistory = append(searchHistory, trimmedSearchString)
+			if lastEntryIsNot(*searchHistory, trimmedSearchString) {
+				*searchHistory = append(*searchHistory, trimmedSearchString)
 			}
 			// ignore errors saving the search history, since it's not critical
 			if !e.slowLoad {
-				SaveSearchHistory(searchHistoryFilename, searchHistory)
+				SaveSearchHistory(searchHistoryFilename, *searchHistory)
 			}
-		} else if len(searchHistory) > 0 {
-			s = searchHistory[searchHistoryIndex]
+		} else if len(*searchHistory) > 0 {
+			s = (*searchHistory)[searchHistoryIndex]
 			e.SetSearchTerm(c, status, s)
 		}
 	}
