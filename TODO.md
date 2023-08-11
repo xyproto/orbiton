@@ -6,8 +6,7 @@
 - [ ] Make it possible to press `ctrl-f` to search and then `ctrl-v` to paste in text to search for.
 - [ ] If in man page mode, set the file as read-only and also let "q" quit.
 - [ ] Let `ctrl-w` also format gzipped code, for instance when editing `main.cpp.gz`.
-- [ ] Do not remove indentation from JS code in HTML when `ctrl-w` is pressed.
-      See also: https://github.com/yosssi/gohtml/issues/22
+- [ ] Do not remove indentation from JS code in HTML when `ctrl-w` is pressed. See: https://github.com/yosssi/gohtml/issues/22
 - [ ] When rebasing, look for the `>>>>` markers when opening the file and jump to the first one (and let `ctrl-n` search for the next one).
 - [ ] When pasting with _double_ `ctrl-v`, let _one_ `ctrl-z` undo both keypresses.
 - [ ] When pasting lines that start with `+` and it's not a diff/patch file, then replace `+` with a blank.
@@ -15,12 +14,16 @@
 - [ ] If a file is passed through stdin and > 70% of the lines has a `:`, it might be a log file and not configuration.
 - [ ] If a file is passed through stdin and has many similar lines and no comments or blank lines, it might be a log file and not configuration.
 - [ ] HTTP client - scratch document style `.http` files.
-- [ ] Add support for emojis.
+- [ ] Add support for emojis. Perhaps by drawing lines differently if an emoji is detected.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
-- [ ] Highlight changed lines if a file changed while monitoring it with `-m`.
-- [ ] Move redrawing and clearing the statusbar to a separate goroutine?
+- [x] Refactor `utils.go` into something like `strings.go`, `files.go`, `maths.go`, `runes.go` and `logging.go`.
 - [ ] Go through this file and remove all completed TODO items.
-- [ ] Refactor `utils.go` into something like `strings.go`, `files.go`, `maths.go`, `runes.go` and `logging.go`.
+
+## Maybe
+
+- [ ] Highlight changed lines if a file changed while monitoring it with `-m`.
+- [ ] Move redrawing and clearing the statusbar to a separate goroutine.
+
 
 ## Markdown
 
