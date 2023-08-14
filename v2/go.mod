@@ -10,11 +10,12 @@ require (
 	github.com/gomarkdown/markdown v0.0.0-20230716120725-531d2d74bc12
 	github.com/ianlancetaylor/demangle v0.0.0-20230524184225-eabc099b10ab
 	github.com/jung-kurt/gofpdf v1.16.2
+	github.com/xyproto/autoimport v1.3.1
 	github.com/xyproto/binary v1.3.0
 	github.com/xyproto/carveimg v1.4.0
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.2.0
-	github.com/xyproto/env/v2 v2.0.0
+	github.com/xyproto/env/v2 v2.1.0
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/mode v0.7.7
