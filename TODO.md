@@ -1,7 +1,8 @@
-⁸# TODO
+# TODO
 
 ## General
 
+- [ ] Also timestamp the search history so that it can be cropped when it grows too long.
 - [ ] If a file is opened with `-r`, open it as read-only and reload the file if the underlying file changes.
 - [ ] Make it possible to press `ctrl-f` to search and then `ctrl-v` to paste in text to search for.
 - [ ] If in man page mode, set the file as read-only and also let "q" quit.
@@ -15,7 +16,6 @@
 - [ ] If a file is passed through stdin and has many similar lines and no comments or blank lines, it might be a log file and not configuration.
 - [ ] HTTP client - scratch document style `.http` files.
 - [ ] Add support for emojis. Perhaps by drawing lines differently if an emoji is detected.
-- [ ] Also timestamp the search history so that it can be cropped when it grows too long.
 - [ ] Parse some programming languages to improve the quality of the "go to defintion" feature.
 - [ ] Go through this file and remove all completed TODO items.
 
@@ -23,7 +23,6 @@
 
 - [ ] Highlight changed lines if a file changed while monitoring it with `-m`.
 - [ ] Move redrawing and clearing the statusbar to a separate goroutine.
-
 
 ## Markdown
 
