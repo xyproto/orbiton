@@ -12,9 +12,5 @@ func abs(a int) int {
 
 // distance returns the distance between two points, given int
 func distance(x1, y1, x2, y2 int) float64 {
-	x1f := float64(x1)
-	y1f := float64(y1)
-	x2f := float64(x2)
-	y2f := float64(y2)
-	return math.Sqrt((x1f*x1f - x2f*x2f) + (y1f*y1f - y2f*y2f))
+	return math.Sqrt(float64((x1*x1 - x2*x2) + (y1*y1 - y2*y2)))
 }
