@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/xyproto/autoimport"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 	"github.com/yosssi/gohtml"
@@ -149,6 +150,7 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	return nil
 }
 
+// formatJSON can format the given JSON data
 func formatJSON(data []byte, jsonFormatToggle *bool, indentationPerTab int) ([]byte, error) {
 	var v interface{}
 	err := json.Unmarshal(data, &v)
@@ -172,8 +174,23 @@ func formatJSON(data []byte, jsonFormatToggle *bool, indentationPerTab int) ([]b
 	return indentedJSON, nil
 }
 
+// formatHTML can format the given HTML data
 func formatHTML(data []byte) ([]byte, error) {
 	return gohtml.FormatBytes(data), nil
+}
+
+// organizeImports can fix, sort and organize imports for Kotlin and for Java
+func organizeImports(data []byte, onlyJava bool) []byte {
+	ima, err := autoimport.New(onlyJava)
+	if err != nil {
+		return data // no change
+	}
+	const verbose = false
+	newData, err := ima.FixImports(data, verbose)
+	if err != nil {
+		return data // no change
+	}
+	return newData
 }
 
 func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, jsonFormatToggle *bool) {
@@ -212,6 +229,13 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 		return
 	}
 
+	// Organize Java or Kotlin imports
+	if e.mode == mode.Java || e.mode == mode.Kotlin {
+		e.LoadBytes(organizeImports([]byte(e.String()), e.mode == mode.Java))
+		e.redraw = true
+		// Do not return, since there is more formatting to be done
+	}
+
 	// Not in git mode, format Go or C++ code with goimports or clang-format
 
 OUT:
@@ -222,6 +246,7 @@ OUT:
 					status.ClearAll(c)
 					status.SetMessage(err.Error())
 					status.Show(c, e)
+					break OUT
 				}
 				break OUT
 			}
