@@ -162,6 +162,7 @@ These features are unique to `o`, as far as I am aware:
 * Press `ctrl-w` to toggle the check mark in `- [ ] TODO item` boxes in Markdown.
 * Orbiton is written mostly in Orbiton, with some use of NeoVim for the initial development.
 * Can load, edit and save gzipped text files or man pages that ends with a `.gz` extension.
+* Can organize imports, for Java and for Kotlin, when formatting code with `ctrl-w`.
 
 ## Known issues
 
