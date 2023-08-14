@@ -65,7 +65,7 @@ github.com/pkg/term/termios
 # github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d
 ## explicit
 github.com/sourcegraph/annotate
-# github.com/xyproto/autoimport v1.3.1
+# github.com/xyproto/autoimport v1.3.2
 ## explicit; go 1.19
 github.com/xyproto/autoimport
 # github.com/xyproto/binary v1.3.0

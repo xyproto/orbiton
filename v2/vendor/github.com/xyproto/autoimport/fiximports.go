@@ -59,13 +59,13 @@ func (ima *ImportMatcher) FixImports(data []byte, verbose bool) ([]byte, error) 
 			if word == "" {
 				continue
 			}
-			foundClass, foundImport := ima.StarPath(word)
+			foundImport := ima.StarPathExact(word)
 			if foundImport == "java.lang.*" {
 				continue
 			}
-			if foundClass != "" && foundImport != "" {
+			if foundImport != "" {
 				key := "import " + foundImport + "; // "
-				value := foundClass
+				value := word
 				if verbose {
 					fmt.Printf("%s\t->\t%s%s\n", word, key, value)
 				}

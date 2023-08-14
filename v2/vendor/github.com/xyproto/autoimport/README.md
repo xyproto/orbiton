@@ -62,6 +62,6 @@ Then one or more sorted import lines are returned (the classes in the comments a
 
 #### General info
 
-* Version: 1.3.1
+* Version: 1.3.2
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
