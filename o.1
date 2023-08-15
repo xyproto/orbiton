@@ -15,11 +15,32 @@ Edit an existing file or create a new one.
 The line number can be prefixed with \fB+\fP, or be a suffix of the filename if prefixed with \fB:\fP.
 .sp
 .TP
+.B \-c FILENAME
+Copy the given file into the clipboard.
+.TP
+.B \-f
+Ignore file locks when opening files.
+.TP
+.B \-l
+Output the last used build/format/export command.
+.TP
+.B \-m FILENAME
+Monitor the given file for changes, and open it as read-ony.
+.TP
+.B \-n
+Avoid writing the location history, search history, game highscore and last build/format/export command to the cache directory.
+.TP
+.B \-p FILENAME
+Paste the contents of the clipboard into the given file. Combine with \-f to overwrite the file.
+.TP
+.B \-r
+Clear all file locks.
+.TP
 .B \-v or \-\-version
-displays the current version number
+Display the current version.
 .TP
 .B \-h or \-\-help
-displays brief usage information
+Display brief usage information.
 .PP
 .SH KEYBINDINGS
 .sp
