@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -36,6 +37,7 @@ func main() {
 		noCacheFlag            = flag.Bool("n", false, "don't write anything to "+cacheDirForDoc)
 		pasteFlag              = flag.Bool("p", false, "paste the clipboard into the file and quit")
 		clearLocksFlag         = flag.Bool("r", false, "clear all file locks")
+		lastCommandFlag        = flag.Bool("l", false, "output the last build or format command")
 		versionFlag            = flag.Bool("version", false, "version information")
 	)
 
@@ -109,6 +111,25 @@ Flags:
 See the man page for more information.
 
 `)
+		return
+	}
+
+	// Output the last used build, export or format command
+	if *lastCommandFlag {
+		data, err := os.ReadFile(lastCommandFile)
+		if err != nil {
+			fmt.Println("no available last command")
+			return
+		}
+		// Remove the shebang
+		firstLineAndRest := strings.SplitN(string(data), "\n", 2)
+		if len(firstLineAndRest) != 2 || !strings.HasPrefix(firstLineAndRest[0], "#") {
+			fmt.Fprintf(os.Stderr, "unrecognized contents in %s\n", lastCommandFile)
+			os.Exit(1)
+		}
+		theRest := strings.TrimSpace(firstLineAndRest[1])
+		replaced := regexp.MustCompile(`/tmp/o\..*$`).ReplaceAllString(theRest, "")
+		fmt.Println(replaced)
 		return
 	}
 
