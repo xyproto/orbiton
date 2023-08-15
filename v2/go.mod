@@ -1,6 +1,6 @@
 module github.com/xyproto/orbiton/v2
 
-go 1.17
+go 1.21.0
 
 require (
 	github.com/PullRequestInc/go-gpt3 v1.1.16
@@ -16,6 +16,7 @@ require (
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.2.0
 	github.com/xyproto/env/v2 v2.1.0
+	github.com/xyproto/files v1.0.0
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/mode v0.7.7
