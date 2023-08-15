@@ -23,9 +23,8 @@ func ForEachLineInData(data []byte, process func(string, string)) {
 	})
 }
 
-// FileImports generates sorted "import" lines for a .java or .kotlin file
-// (the ImportMatcher should be configured to be either for Java or Kotlin as well)
-func (ima *ImportMatcher) FixImports(data []byte, verbose bool) ([]byte, error) {
+// ImportBlock generates "import" lines for the given Java or Kotlin source code
+func (ima *ImportMatcher) ImportBlock(data []byte, verbose bool) ([]byte, error) {
 	importMap := make(map[string]string) // from import path to comment (including "// ")
 	skipWords := []string{"package", "public", "private", "protected"}
 	var inComment bool
@@ -63,6 +62,9 @@ func (ima *ImportMatcher) FixImports(data []byte, verbose bool) ([]byte, error) 
 			if foundImport == "java.lang.*" {
 				continue
 			}
+			if strings.HasPrefix(foundImport, "java.desktop.java.") {
+				foundImport = strings.TrimPrefix(foundImport, "java.desktop.")
+			}
 			if foundImport != "" {
 				key := "import " + foundImport + "; // "
 				value := word
@@ -83,30 +85,107 @@ func (ima *ImportMatcher) FixImports(data []byte, verbose bool) ([]byte, error) 
 		}
 	})
 	var importLines []string
+	var importLine string
 	for k, v := range importMap {
-		importLines = append(importLines, k+v)
+		importLine = k + v
+		if importLine != "" {
+			importLines = append(importLines, importLine)
+		}
 	}
 	sort.Strings(importLines)
-	if verbose {
-		fmt.Println()
-	}
 	importBlock := strings.Join(importLines, "\n")
+	return []byte(importBlock), nil
+}
+
+// FixImports generates sorted "import" lines for a .java or .kotlin file
+// (the ImportMatcher should be configured to be either for Java or Kotlin as well).
+// The existing imports (if any) are the replaced with the generated imports.
+func (ima *ImportMatcher) FixImports(data []byte, verbose bool) ([]byte, error) {
+	importBlockBytes, err := ima.ImportBlock(data, verbose)
+	if err != nil {
+		return nil, err
+	}
 
 	// Imports are found, now modify the given source code and return it
 
 	hasImports := bytes.Contains(data, []byte("\nimport "))
 
-	importsDone := false
-	var sb strings.Builder
+	if hasImports && !ima.removeExistingImports {
+		importMap := make(map[string]string)
+		ForEachLineInData(data, func(line, trimmedLine string) {
+			if strings.HasPrefix(trimmedLine, "import ") {
+				key := trimmedLine
+				if strings.Contains(key, ";") {
+					fields := strings.SplitN(key, ";", 2)
+					key = fields[0]
+				}
+				importMap[key] = trimmedLine
+			}
+		})
+		if verbose {
+			fmt.Println("Existing imports:")
+			for _, v := range importMap {
+				fmt.Println(v)
+			}
+		}
+		ForEachLineInData(importBlockBytes, func(line, trimmedLine string) {
+			if trimmedLine == "" {
+				return // continue
+			}
+			key := trimmedLine
+			if strings.Contains(key, ";") {
+				fields := strings.SplitN(key, ";", 2)
+				key = fields[0]
+			}
+			importMap[key] = trimmedLine
+		})
+		if verbose {
+			fmt.Println("Existing and new imports:")
+			for _, v := range importMap {
+				fmt.Println(v)
+			}
+		}
+		var importLines []string
+		for _, trimmedLine := range importMap {
+			importLines = append(importLines, trimmedLine)
+		}
+		sort.Strings(importLines)
+		if verbose {
+			fmt.Println("Existing and new imports, sorted:")
+			for _, importLine := range importLines {
+				fmt.Println(importLine)
+			}
+		}
+		// We now have a new import block that keeps the old imports, but not duplicates
+		importBlockBytes = []byte(strings.Join(importLines, "\n"))
+	}
+
+	// Now replace/insert the newly organized import statements
+
+	var (
+		sb               strings.Builder
+		importsDone      bool
+		ignoreBlankLines int
+	)
 	ForEachLineInData(data, func(line, trimmedLine string) {
+		if ignoreBlankLines > 0 {
+			if trimmedLine == "" {
+				ignoreBlankLines--
+				return // continue
+			}
+			ignoreBlankLines = 0
+		}
 		if hasImports && strings.HasPrefix(trimmedLine, "import ") {
 			if !importsDone {
-				sb.WriteString(importBlock + "\n")
+				sb.Write(importBlockBytes)
+				sb.WriteString("\n")
 				importsDone = true
+				ignoreBlankLines = 2
 			} // else ignore this "import" line
 		} else if !hasImports && strings.HasPrefix(trimmedLine, "package ") {
-			sb.WriteString(line + "\n\n")
-			sb.WriteString(importBlock + "\n")
+			sb.WriteString(line + "\n")
+			sb.Write(importBlockBytes)
+			sb.WriteString("\n")
 		} else {
 			sb.WriteString(line + "\n")
 		}

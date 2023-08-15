@@ -15,14 +15,23 @@ import (
 // and a lookup map from class names to class paths, which is populated
 // when New or NewCustom is called.
 type ImportMatcher struct {
-	JARPaths []string          // list of paths to examine for .jar files
-	onlyJava bool              // only Java, or Kotlin too?
-	mut      sync.RWMutex      // mutex for protecting the map
-	classMap map[string]string // map from class name to class path. Shortest class path "wins".
+	JARPaths              []string          // list of paths to examine for .jar files
+	mut                   sync.RWMutex      // mutex for protecting the map
+	classMap              map[string]string // map from class name to class path. Shortest class path "wins".
+	onlyJava              bool              // only Java, or Kotlin too?
+	removeExistingImports bool              // keep existing imports (but also avoid duplicates)
 }
 
 // New creates a new ImportMatcher. If onlyJava is false, /usr/share/kotlin/lib will be added to the .jar file search path.
-func New(onlyJava bool) (*ImportMatcher, error) {
+// The first (optional) bool should be set to true if only Java should be considered, and not Kotlin.
+// The second (optional) bool should be set to true if the import organizer should always start out with removing existing imports.
+func New(settings ...bool) (*ImportMatcher, error) {
+
+	var onlyJava bool
+	if len(settings) > 0 {
+		onlyJava = settings[0]
+	}
+
 	javaHomePath, err := FindJava()
 	if err != nil {
 		return nil, err
@@ -35,30 +44,40 @@ func New(onlyJava bool) (*ImportMatcher, error) {
 		}
 		JARSearchPaths = append(JARSearchPaths, kotlinPath)
 	}
-	return NewCustom(JARSearchPaths, onlyJava)
+
+	return NewCustom(JARSearchPaths, settings...)
 }
 
 // addDir adds a directory to the current slice of paths to search for .jar files
-func (impM *ImportMatcher) addDir(path string) {
+func (ima *ImportMatcher) addDir(path string) {
 	if !strings.HasSuffix(path, "/") {
 		path += "/"
 	}
-	impM.JARPaths = append(impM.JARPaths, path)
+	ima.JARPaths = append(ima.JARPaths, path)
 }
 
 // NewCustom creates a new ImportMatcher, given a slice of paths to search for .jar files
-func NewCustom(JARPaths []string, onlyJava bool) (*ImportMatcher, error) {
-	var impM ImportMatcher
-	impM.onlyJava = onlyJava
+// The first (optional) bool should be set to true if only Java should be considered, and not Kotlin.
+// The second (optional) bool should be set to true if the import organizer should always start out with removing existing imports.
+func NewCustom(JARPaths []string, settings ...bool) (*ImportMatcher, error) {
+	var ima ImportMatcher
 
-	impM.JARPaths = make([]string, 0)
+	if len(settings) > 0 {
+		ima.onlyJava = settings[0]
+	}
+
+	if len(settings) > 1 {
+		ima.removeExistingImports = settings[1]
+	}
+
+	ima.JARPaths = make([]string, 0)
 	for _, path := range JARPaths {
 		if isSymlink(path) {
 			// follow the symlink, once
 			path = followSymlink(path)
 			// if the path is a directory, collect it
 			if isDir(path) {
-				impM.addDir(path)
+				ima.addDir(path)
 				continue
 			}
 			// follow the symlink, repeatedly
@@ -67,37 +86,37 @@ func NewCustom(JARPaths []string, onlyJava bool) (*ImportMatcher, error) {
 			}
 			// if the path is a directory, collect it
 			if isDir(path) {
-				impM.addDir(path)
+				ima.addDir(path)
 			}
 		} else if isDir(path) {
-			impM.addDir(path)
+			ima.addDir(path)
 		}
 	}
 
-	if len(impM.JARPaths) == 0 {
+	if len(ima.JARPaths) == 0 {
 		return nil, errors.New("no paths to search for JAR files")
 	}
 
-	impM.classMap = make(map[string]string)
+	ima.classMap = make(map[string]string)
 
 	found := make(chan string)
 	done := make(chan bool)
 
-	go impM.produceClasses(found)
-	go impM.consumeClasses(found, done)
+	go ima.produceClasses(found)
+	go ima.consumeClasses(found, done)
 	<-done
 
-	return &impM, nil
+	return &ima, nil
 }
 
 // ClassMap returns the mapping from class names to class paths
-func (impM *ImportMatcher) ClassMap() map[string]string {
-	return impM.classMap
+func (ima *ImportMatcher) ClassMap() map[string]string {
+	return ima.classMap
 }
 
 // readSOURCE returns a list of classes within the given src.zip file,
 // for instance "some.package.name.SomeClass"
-func (impM *ImportMatcher) readSOURCE(filePath string, found chan string) {
+func (ima *ImportMatcher) readSOURCE(filePath string, found chan string) {
 	readCloser, err := zip.OpenReader(filePath)
 	if err != nil {
 		return
@@ -136,7 +155,7 @@ func (impM *ImportMatcher) readSOURCE(filePath string, found chan string) {
 
 // readJAR returns a list of classes within the given .jar file,
 // for instance "some.package.name.SomeClass"
-func (impM *ImportMatcher) readJAR(filePath string, found chan string) {
+func (ima *ImportMatcher) readJAR(filePath string, found chan string) {
 	readCloser, err := zip.OpenReader(filePath)
 	if err != nil {
 		return
@@ -181,7 +200,7 @@ func (impM *ImportMatcher) readJAR(filePath string, found chan string) {
 // and then search each JAR file for for classes.
 // Found classes will be sent to the found chan.
 // Will also search "*/lib/src.zip" files.
-func (impM *ImportMatcher) findClassesInJarOrSrc(JARPath string, found chan string) {
+func (ima *ImportMatcher) findClassesInJarOrSrc(JARPath string, found chan string) {
 	var wg sync.WaitGroup
 	filepath.Walk(JARPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -197,14 +216,14 @@ func (impM *ImportMatcher) findClassesInJarOrSrc(JARPath string, found chan stri
 		if filepath.Ext(fileName) == ".jar" || filepath.Ext(fileName) == ".JAR" {
 			wg.Add(1)
 			go func(filePath string) {
-				impM.readJAR(filePath, found)
+				ima.readJAR(filePath, found)
 				wg.Done()
 			}(filePath)
 			return err
 		} else if filepath.Base(filePath) == "src.zip" && filepath.Base(filepath.Dir(filePath)) == "lib" {
 			wg.Add(1)
 			go func(filePath string) {
-				impM.readSOURCE(filePath, found)
+				ima.readSOURCE(filePath, found)
 				wg.Done()
 			}(filePath)
 			return err
@@ -215,13 +234,13 @@ func (impM *ImportMatcher) findClassesInJarOrSrc(JARPath string, found chan stri
 	wg.Wait()
 }
 
-func (impM *ImportMatcher) produceClasses(found chan string) {
+func (ima *ImportMatcher) produceClasses(found chan string) {
 	var wg sync.WaitGroup
-	for _, JARPath := range impM.JARPaths {
+	for _, JARPath := range ima.JARPaths {
 		// fmt.Printf("About to search for .jar files in %s...\n", JARPath)
 		wg.Add(1)
 		go func(path string) {
-			impM.findClassesInJarOrSrc(path, found)
+			ima.findClassesInJarOrSrc(path, found)
 			wg.Done()
 		}(JARPath)
 	}
@@ -229,7 +248,7 @@ func (impM *ImportMatcher) produceClasses(found chan string) {
 	close(found)
 }
 
-func (impM *ImportMatcher) consumeClasses(found <-chan string, done chan<- bool) {
+func (ima *ImportMatcher) consumeClasses(found <-chan string, done chan<- bool) {
 	for classPath := range found {
 
 		// Let className be classPath by default, in case the replacements doesn't go through
@@ -241,31 +260,31 @@ func (impM *ImportMatcher) consumeClasses(found <-chan string, done chan<- bool)
 		}
 
 		// Check if the same or a shorter class name name already exists. Also prioritize class paths that does not start with "sun.".
-		impM.mut.RLock()
-		if existingClassPath, ok := impM.classMap[className]; ok && existingClassPath != "" && ((len(existingClassPath) <= len(classPath)) || (!strings.HasPrefix(existingClassPath, "sun.") && strings.HasPrefix(classPath, "sun."))) {
-			impM.mut.RUnlock()
+		ima.mut.RLock()
+		if existingClassPath, ok := ima.classMap[className]; ok && existingClassPath != "" && ((len(existingClassPath) <= len(classPath)) || (!strings.HasPrefix(existingClassPath, "sun.") && strings.HasPrefix(classPath, "sun."))) {
+			ima.mut.RUnlock()
 			continue
 		}
-		impM.mut.RUnlock()
+		ima.mut.RUnlock()
 
 		// fmt.Println("classPath", classPath)
 
 		// Store the new class name and class path
-		impM.mut.Lock()
-		impM.classMap[className] = classPath
-		impM.mut.Unlock()
+		ima.mut.Lock()
+		ima.classMap[className] = classPath
+		ima.mut.Unlock()
 	}
 	done <- true
 }
 
-func (impM *ImportMatcher) String() string {
+func (ima *ImportMatcher) String() string {
 	var sb strings.Builder
 
-	impM.mut.RLock()
-	for className, classPath := range impM.classMap {
+	ima.mut.RLock()
+	for className, classPath := range ima.classMap {
 		sb.WriteString(className + ": " + classPath + "\n")
 	}
-	impM.mut.RUnlock()
+	ima.mut.RUnlock()
 
 	return sb.String()
 }
@@ -273,10 +292,10 @@ func (impM *ImportMatcher) String() string {
 // StarPath takes the start of the class name and tries to return the shortest
 // found class name, and also the import path like "java.io.*"
 // Returns empty strings if there are no matches.
-func (impM *ImportMatcher) StarPath(startOfClassName string) (string, string) {
+func (ima *ImportMatcher) StarPath(startOfClassName string) (string, string) {
 	shortestClassName := ""
 	shortestImportPath := ""
-	for className, classPath := range impM.classMap {
+	for className, classPath := range ima.classMap {
 		if strings.HasPrefix(className, startOfClassName) {
 			if shortestClassName == "" || len(className) < len(shortestClassName) {
 				shortestClassName = className
@@ -296,10 +315,10 @@ func (impM *ImportMatcher) StarPath(startOfClassName string) (string, string) {
 // StarPathExact takes the exact class name and tries to return the shortest
 // import path for the matching class, if found, like "java.io.*".
 // Returns empty string if there are no matches.
-func (impM *ImportMatcher) StarPathExact(exactClassName string) string {
+func (ima *ImportMatcher) StarPathExact(exactClassName string) string {
 	shortestClassName := ""
 	shortestImportPath := ""
-	for className, classPath := range impM.classMap {
+	for className, classPath := range ima.classMap {
 		if className == exactClassName {
 			if shortestClassName == "" {
 				shortestClassName = className
@@ -319,10 +338,10 @@ func (impM *ImportMatcher) StarPathExact(exactClassName string) string {
 // ImportPathExact takes the exact class name and tries to return the shortest
 // specific import path for the matching class. For example, "File" could result
 // in "java.io.File". The function returns an empty string if there are no matches.
-func (impM *ImportMatcher) ImportPathExact(exactClassName string) string {
+func (ima *ImportMatcher) ImportPathExact(exactClassName string) string {
 	shortestClassName := ""
 	shortestImportPath := ""
-	for className, classPath := range impM.classMap {
+	for className, classPath := range ima.classMap {
 		if className == exactClassName {
 			if shortestClassName == "" {
 				shortestClassName = className
@@ -342,10 +361,10 @@ func (impM *ImportMatcher) ImportPathExact(exactClassName string) string {
 // StarPathAll takes the start of the class name and tries to return all
 // found class names, and also the import paths, like "java.io.*".
 // Returns empty strings if there are no matches.
-func (impM *ImportMatcher) StarPathAll(startOfClassName string) ([]string, []string) {
+func (ima *ImportMatcher) StarPathAll(startOfClassName string) ([]string, []string) {
 	allClassNames := make([]string, 0)
 	allImportPaths := make([]string, 0)
-	for className, classPath := range impM.classMap {
+	for className, classPath := range ima.classMap {
 		if strings.HasPrefix(className, startOfClassName) {
 			allClassNames = append(allClassNames, className)
 			allImportPaths = append(allImportPaths, strings.Replace(classPath, className, "*", 1))
@@ -357,10 +376,10 @@ func (impM *ImportMatcher) StarPathAll(startOfClassName string) ([]string, []str
 // StarPathAllExact takes the exact class name and tries to return all
 // matching class names, and also the import paths, like "java.io.*".
 // Returns empty strings if there are no matches.
-func (impM *ImportMatcher) StarPathAllExact(exactClassName string) ([]string, []string) {
+func (ima *ImportMatcher) StarPathAllExact(exactClassName string) ([]string, []string) {
 	allClassNames := make([]string, 0)
 	allImportPaths := make([]string, 0)
-	for className, classPath := range impM.classMap {
+	for className, classPath := range ima.classMap {
 		if className == exactClassName {
 			allClassNames = append(allClassNames, className)
 			allImportPaths = append(allImportPaths, strings.Replace(classPath, className, "*", 1))

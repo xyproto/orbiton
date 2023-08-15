@@ -10,8 +10,6 @@ import (
 	"github.com/xyproto/env/v2"
 )
 
-const kotlinPath = "/usr/share/kotlin/lib"
-
 // FindKotlin finds the most likely location of a Kotlin installation
 // (with subfolders with .jar files) on the system.
 func FindKotlin() (string, error) {
