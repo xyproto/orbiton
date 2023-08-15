@@ -13,6 +13,7 @@ import (
 
 	"github.com/cyrus-and/gdb"
 	"github.com/ianlancetaylor/demangle"
+	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
@@ -1164,7 +1165,7 @@ func (e *Editor) DebugStartSession(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	}
 
 	outputExecutableClean := filepath.Clean(filepath.Join(filepath.Dir(absFilename), outputExecutable))
-	if !exists(outputExecutableClean) {
+	if !files.Exists(outputExecutableClean) {
 		e.debugMode = false
 		e.redrawCursor = true
 		return errors.New("could not find " + outputExecutableClean)
@@ -1205,14 +1206,14 @@ func (e *Editor) findGDB() string {
 	// Use rust-gdb if we are debugging Rust
 	if e.mode == mode.Rust {
 		if gdbPathRust == nil {
-			path := which("rust-gdb")
+			path := files.Which("rust-gdb")
 			gdbPathRust = &path
 			return path
 		}
 		return *gdbPathRust
 	}
 	if gdbPathRegular == nil {
-		path := which("gdb")
+		path := files.Which("gdb")
 		gdbPathRegular = &path
 		return path
 	}

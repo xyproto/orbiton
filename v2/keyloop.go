@@ -13,6 +13,7 @@ import (
 	"github.com/xyproto/clip"
 	"github.com/xyproto/digraph"
 	"github.com/xyproto/env/v2"
+	"github.com/xyproto/files"
 	"github.com/xyproto/iferr"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/syntax"
@@ -1547,11 +1548,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					err = clip.WriteAll(line, e.primaryClipboard)
 				}
 				if err != nil && firstCopyAction {
-					if env.Has("WAYLAND_DISPLAY") && which("wl-copy") == "" { // Wayland
+					if env.Has("WAYLAND_DISPLAY") && files.Which("wl-copy") == "" { // Wayland
 						status.SetErrorMessage("The wl-copy utility (from wl-clipboard) is missing!")
-					} else if env.Has("DISPLAY") && which("xclip") == "" {
+					} else if env.Has("DISPLAY") && files.Which("xclip") == "" {
 						status.SetErrorMessage("The xclip utility is missing!")
-					} else if isDarwin() && which("pbcopy") == "" { // pbcopy is missing, on macOS
+					} else if isDarwin() && files.Which("pbcopy") == "" { // pbcopy is missing, on macOS
 						status.SetErrorMessage("The pbcopy utility is missing!")
 					}
 				}
@@ -1762,13 +1763,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 				status.Clear(c)
 
-				if env.Has("WAYLAND_DISPLAY") && which("wl-paste") == "" { // Wayland + wl-paste not found
+				if env.Has("WAYLAND_DISPLAY") && files.Which("wl-paste") == "" { // Wayland + wl-paste not found
 					status.SetErrorMessage("The wl-paste utility (from wl-clipboard) is missing!")
 					missingUtility = true
-				} else if env.Has("DISPLAY") && which("xclip") == "" { // X + xclip not found
+				} else if env.Has("DISPLAY") && files.Which("xclip") == "" { // X + xclip not found
 					status.SetErrorMessage("The xclip utility is missing!")
 					missingUtility = true
-				} else if isDarwin() && which("pbpaste") == "" { // pbcopy is missing, on macOS
+				} else if isDarwin() && files.Which("pbpaste") == "" { // pbcopy is missing, on macOS
 					status.SetErrorMessage("The pbpaste utility is missing!")
 					missingUtility = true
 				}

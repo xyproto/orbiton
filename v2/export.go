@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/xyproto/files"
 	"github.com/xyproto/vt100"
 )
 
@@ -47,7 +48,7 @@ func (e *Editor) exportScdoc(manFilename string) error {
 func (e *Editor) exportAdoc(c *vt100.Canvas, tty *vt100.TTY, manFilename string) error {
 	// TODO: Use a proper function for generating temporary files
 	tmpfn := "___o___.adoc"
-	if exists(tmpfn) {
+	if files.Exists(tmpfn) {
 		return errors.New(tmpfn + " already exists, please remove it")
 	}
 

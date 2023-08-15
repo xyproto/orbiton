@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/xyproto/files"
 	"github.com/xyproto/vt100"
 )
 
@@ -954,7 +955,7 @@ retry:
 			}
 
 			// Create the file
-			screenshotFilename := timestampedFilename("orbiton.png")
+			screenshotFilename := files.TimestampedFilename("orbiton.png")
 			f, err := os.Create(screenshotFilename)
 			if err != nil {
 				statusText = "error: " + err.Error()

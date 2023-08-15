@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/xyproto/env/v2"
+	"github.com/xyproto/files"
 	"github.com/xyproto/guessica"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
@@ -420,7 +421,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	})
 
 	// Render to PDF using pandoc
-	if (e.mode == mode.Markdown || e.mode == mode.Doc) && which("pandoc") != "" {
+	if (e.mode == mode.Markdown || e.mode == mode.Doc) && files.Which("pandoc") != "" {
 		actions.Add("Render to PDF using pandoc", func() {
 			go func() {
 				pandocMutex.Lock()

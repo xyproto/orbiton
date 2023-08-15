@@ -14,6 +14,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/cyrus-and/gdb"
+	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
@@ -341,7 +342,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (st
 	start := time.Now()
 
 	// Check if the file extension is ".class" and if "jad" is installed
-	if filepath.Ext(fnord.filename) == ".class" && which("jad") != "" && fnord.Empty() {
+	if filepath.Ext(fnord.filename) == ".class" && files.Which("jad") != "" && fnord.Empty() {
 		if fnord.data, err = e.LoadClass(fnord.filename); err != nil {
 			return "Could not run jad", err
 		}
@@ -461,7 +462,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 
 		// Should the file be saved with the executable bit enabled?
 		// (Does it either start with a shebang or reside in a common bin directory like /usr/bin?)
-		shebang = aBinDirectory(e.filename) || strings.HasPrefix(s, "#!")
+		shebang = files.BinDirectory(e.filename) || strings.HasPrefix(s, "#!")
 
 		data = []byte(s)
 	}

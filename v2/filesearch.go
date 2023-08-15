@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/xyproto/files"
 )
 
 // Don't search for a corresponding header/source file for longer than ~0.5 seconds
@@ -27,7 +29,7 @@ func ExtFileSearch(absCppFilename string, headerExtensions []string, maxTime tim
 	// First search the same path as the given filename, without using Walk
 	withoutExt := strings.TrimSuffix(absCppFilename, ext)
 	for _, hext := range headerExtensions {
-		if exists(withoutExt + hext) {
+		if files.Exists(withoutExt + hext) {
 			return withoutExt + hext, nil
 		}
 	}

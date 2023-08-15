@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/xyproto/autoimport"
+	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 	"github.com/yosssi/gohtml"
@@ -53,7 +54,7 @@ func GetFormatMap() FormatMap {
 
 // Using exec.Cmd instead of *exec.Cmd is on purpose, to get a new cmd.stdout and cmd.stdin every time.
 func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, cmd exec.Cmd, extOrBaseFilename string) error {
-	if which(cmd.Path) == "" { // Does the formatting tool even exist?
+	if files.Which(cmd.Path) == "" { // Does the formatting tool even exist?
 		return errors.New(cmd.Path + " is missing")
 	}
 
@@ -85,13 +86,13 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			output, err := cmd.CombinedOutput()
 
 			// Ignore errors if the command is "tidy" and tidy exists
-			ignoreErrors := strings.HasSuffix(cmd.Path, "tidy") && which("tidy") != ""
+			ignoreErrors := strings.HasSuffix(cmd.Path, "tidy") && files.Which("tidy") != ""
 
 			// Perl may place executables in /usr/bin/vendor_perl
 			if e.mode == mode.Perl {
 				// Use perltidy from the PATH if /usr/bin/vendor_perl/perltidy does not exists
-				if cmd.Path == "/usr/bin/vendor_perl/perltidy" && !exists("/usr/bin/vendor_perl/perltidy") {
-					perltidyPath := which("perltidy")
+				if cmd.Path == "/usr/bin/vendor_perl/perltidy" && !files.Exists("/usr/bin/vendor_perl/perltidy") {
+					perltidyPath := files.Which("perltidy")
 					if perltidyPath == "" {
 						return errors.New("perltidy is missing")
 					}

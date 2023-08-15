@@ -13,6 +13,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/xyproto/files"
 	"github.com/xyproto/vt100"
 )
 
@@ -25,7 +26,7 @@ var (
 	// avoid writing to ~/.cache ?
 	noWriteToCache bool
 
-	cacheDirForDoc = shortPath(filepath.Join(userCacheDir, "o"))
+	cacheDirForDoc = files.ShortPath(filepath.Join(userCacheDir, "o"))
 )
 
 func main() {
@@ -151,7 +152,7 @@ See the man page for more information.
 			os.Exit(1)
 		}
 		// chmod +x if this looks like a shell script or is in ie. /usr/bin
-		if filepath.Ext(filename) == ".sh" || aBinDirectory(filename) || strings.HasPrefix(headString, "#!") {
+		if filepath.Ext(filename) == ".sh" || files.BinDirectory(filename) || strings.HasPrefix(headString, "#!") {
 			os.Chmod(filename, 0o755)
 		}
 		if tailString != "" {
@@ -224,7 +225,7 @@ See the man page for more information.
 
 	stdinFilename := len(os.Args) == 1 || (len(os.Args) == 2 && (os.Args[1] == "-" || os.Args[1] == "/dev/stdin"))
 	// If no regular filename is given, check if data is ready at stdin
-	fnord.stdin = stdinFilename && (dataReadyOnStdin() || manIsParent())
+	fnord.stdin = stdinFilename && (files.DataReadyOnStdin() || manIsParent())
 	if fnord.stdin {
 		// TODO: Use a spinner?
 		data, err := io.ReadAll(os.Stdin)
@@ -258,14 +259,14 @@ See the man page for more information.
 		fnord.ExpandUser()
 
 		// Check if the given filename is not a file or a symlink
-		if !isFileOrSymlink(fnord.filename) {
+		if !files.IsFileOrSymlink(fnord.filename) {
 			if strings.HasSuffix(fnord.filename, ".") {
 				// If the filename ends with "." and the file does not exist, assume this was a result of tab-completion going wrong.
 				// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
 				matches, err := filepath.Glob(fnord.filename + "*")
 				if err == nil && len(matches) > 0 { // no error and at least 1 match
 					// Use the first non-binary match of the sorted results
-					matches = removeBinaryFiles(matches)
+					matches = files.FilterOutBinaryFiles(matches)
 					if len(matches) > 0 {
 						sort.Strings(matches)
 						fnord.filename = matches[0]
@@ -277,7 +278,7 @@ See the man page for more information.
 				matches, err := filepath.Glob(fnord.filename + "*")
 				if err == nil && len(matches) > 1 { // no error and more than 1 match
 					// Use the first non-binary match of the sorted results
-					matches = removeBinaryFiles(matches)
+					matches = files.FilterOutBinaryFiles(matches)
 					if len(matches) > 0 {
 						sort.Strings(matches)
 						fnord.filename = matches[0]
@@ -288,7 +289,7 @@ See the man page for more information.
 				matches, err := filepath.Glob(strings.ToTitle(fnord.filename) + "*")
 				if err == nil && len(matches) >= 1 { // no error and at least 1 match
 					// Use the first non-binary match of the sorted results
-					matches = removeBinaryFiles(matches)
+					matches = files.FilterOutBinaryFiles(matches)
 					if len(matches) > 0 {
 						sort.Strings(matches)
 						fnord.filename = matches[0]

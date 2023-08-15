@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/xyproto/env/v2"
+	"github.com/xyproto/files"
 )
 
 var portalFilename = env.ExpandUser(filepath.Join(tempDir, env.Str("LOGNAME", "o")+"_portal.txt"))
@@ -58,7 +59,7 @@ func (e *Editor) ClosePortal() error {
 
 // HasPortal checks if a portal is currently active
 func HasPortal() bool {
-	return exists(portalFilename)
+	return files.Exists(portalFilename)
 }
 
 // LoadPortal will load a filename + line number from the portal.txt file

@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 )
 
@@ -34,7 +35,7 @@ func TestBuildOrExport(t *testing.T) {
 
 	// fmt.Printf("err.rs [compilation error: %v] %s\n", err, outputExecutable)
 
-	if which("rustc") != "" {
+	if files.Which("rustc") != "" {
 		// fmt.Println(err)
 		if err == nil { // expected to fail, fail on success
 			t.Fail()

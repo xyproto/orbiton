@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
@@ -39,11 +40,11 @@ func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
 
 	if shouldExist {
 		// If "main" exists, use that
-		if isFile(filepath.Join(sourceDir, exeFirstName)) {
+		if files.IsFile(filepath.Join(sourceDir, exeFirstName)) {
 			return exeFirstName
 		}
 		// Use the name of the source directory as the default executable filename instead
-		if isFile(filepath.Join(sourceDir, sourceDirectoryName)) {
+		if files.IsFile(filepath.Join(sourceDir, sourceDirectoryName)) {
 			// exeFirstName = sourceDirectoryName
 			return sourceDirectoryName
 		}
@@ -54,14 +55,14 @@ func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
 	case mode.Assembly, mode.Kotlin, mode.Lua, mode.OCaml, mode.Rust, mode.Terra, mode.Zig:
 		if sourceDirectoryName == "build" {
 			parentDirName := filepath.Base(filepath.Clean(filepath.Join(sourceDir, "..")))
-			if shouldExist && isFile(filepath.Join(sourceDir, parentDirName)) {
+			if shouldExist && files.IsFile(filepath.Join(sourceDir, parentDirName)) {
 				return parentDirName
 			}
 		}
 		// Default to the source directory base name, for these programming languages
 		return sourceDirectoryName
 	case mode.Odin:
-		if shouldExist && isFile(filepath.Join(sourceDir, sourceDirectoryName+".bin")) {
+		if shouldExist && files.IsFile(filepath.Join(sourceDir, sourceDirectoryName+".bin")) {
 			return sourceDirectoryName + ".bin"
 		}
 		// Default to just the source directory base name
@@ -69,7 +70,7 @@ func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
 	}
 
 	// Use the name of the current directory, if a file with that name exists
-	if shouldExist && isFile(filepath.Join(sourceDir, sourceDirectoryName)) {
+	if shouldExist && files.IsFile(filepath.Join(sourceDir, sourceDirectoryName)) {
 		return sourceDirectoryName
 	}
 
@@ -118,30 +119,30 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 
 	exeExists := func() (bool, string) {
 		// Check if exeFirstName exists
-		return isFile(filepath.Join(sourceDir, exeFirstName)), exeFirstName
+		return files.IsFile(filepath.Join(sourceDir, exeFirstName)), exeFirstName
 	}
 
 	exeOrMainExists := func() (bool, string) {
 		// First check if exeFirstName exists
-		if isFile(filepath.Join(sourceDir, exeFirstName)) {
+		if files.IsFile(filepath.Join(sourceDir, exeFirstName)) {
 			return true, exeFirstName
 		}
 		// Then try with just "main"
-		return isFile(filepath.Join(sourceDir, "main")), "main"
+		return files.IsFile(filepath.Join(sourceDir, "main")), "main"
 	}
 
 	exeBaseNameOrMainExists := func() (bool, string) {
 		// First check if exeFirstName exists
-		if isFile(filepath.Join(sourceDir, exeFirstName)) {
+		if files.IsFile(filepath.Join(sourceDir, exeFirstName)) {
 			return true, exeFirstName
 		}
 		// Then try with the current directory name
 		baseDirName := filepath.Base(sourceDir)
-		if isFile(filepath.Join(sourceDir, baseDirName)) {
+		if files.IsFile(filepath.Join(sourceDir, baseDirName)) {
 			return true, baseDirName
 		}
 		// The try with just "main"
-		if isFile(filepath.Join(sourceDir, "main")) {
+		if files.IsFile(filepath.Join(sourceDir, "main")) {
 			return true, "main"
 		}
 		return false, ""
@@ -153,43 +154,43 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd = exec.Command("sh", "-c", javaShellCommand)
 		cmd.Dir = sourceDir
 		return cmd, func() (bool, string) {
-			return isFile(filepath.Join(sourceDir, jarFilename)), jarFilename
+			return files.IsFile(filepath.Join(sourceDir, jarFilename)), jarFilename
 		}, nil
 	case mode.Scala:
-		if isFile(filepath.Join(sourceDir, "build.sbt")) && which("sbt") != "" && fileHas(filepath.Join(sourceDir, "build.sbt"), "ScalaNative") {
+		if files.IsFile(filepath.Join(sourceDir, "build.sbt")) && files.Which("sbt") != "" && files.FileHas(filepath.Join(sourceDir, "build.sbt"), "ScalaNative") {
 			cmd = exec.Command("sbt", "nativeLink")
 			cmd.Dir = sourceDir
 			return cmd, func() (bool, string) {
 				// TODO: Check for /scala-*/scalanative-out and not scala-3.3.0 specifically
-				return exists(filepath.Join(sourceDir, "target", "scala-3.3.0", "scalanative-out")), "target/scala-3.3.0/scalanative-out"
+				return files.Exists(filepath.Join(sourceDir, "target", "scala-3.3.0", "scalanative-out")), "target/scala-3.3.0/scalanative-out"
 			}, nil
 		}
 		// For building a .jar file that can not be run with "java -jar main.jar" but with "scala main.jar": scalac -jar main.jar Hello.scala
 		scalaShellCommand := "scalaFiles=$(find . -type f -name '*.scala'); for f in $scalaFiles; do grep -q 'def main' \"$f\" && mainScalaFile=\"$f\"; grep -q ' extends App ' \"$f\" && mainScalaFile=\"$f\"; done; objectName=$(grep -oP '(?<=object )[A-Z]+[a-z,A-Z,0-9]*' \"$mainScalaFile\" | head -1); packageName=$(grep -oP '(?<=package )[a-z,A-Z,0-9,.]*' \"$mainScalaFile\" | head -1); if [[ $packageName != \"\" ]]; then packageName=\"$packageName.\"; fi; mkdir -p _o_build/META-INF; scalac -d _o_build $scalaFiles; cd _o_build; echo -e \"Main-Class: $packageName$objectName\\nClass-Path: /usr/share/scala/lib/scala-library.jar\" > META-INF/MANIFEST.MF; classFiles=$(find . -type f -name '*.class'); jar cmf META-INF/MANIFEST.MF ../" + jarFilename + " $classFiles; cd ..; rm -rf _o_build"
 		// Compile directly to jar with scalac if /usr/share/scala/lib/scala-library.jar is not found
-		if !isFile("/usr/share/scala/lib/scala-library.jar") {
+		if !files.IsFile("/usr/share/scala/lib/scala-library.jar") {
 			scalaShellCommand = "scalac -d run_with_scala.jar $(find . -type f -name '*.scala')"
 		}
 		cmd = exec.Command("sh", "-c", scalaShellCommand)
 		cmd.Dir = sourceDir
 		return cmd, func() (bool, string) {
-			return isFile(filepath.Join(sourceDir, jarFilename)), jarFilename
+			return files.IsFile(filepath.Join(sourceDir, jarFilename)), jarFilename
 		}, nil
 	case mode.Kotlin:
-		if which("kotlinc-native") != "" {
+		if files.Which("kotlinc-native") != "" {
 			cmd = exec.Command("kotlinc-native", "-nowarn", "-opt", "-Xallocator=mimalloc", "-produce", "program", "-linker-option", "--as-needed", sourceFilename, "-o", exeFirstName)
 			cmd.Dir = sourceDir
 			return cmd, func() (bool, string) {
-				if isFile(filepath.Join(sourceDir, exeFirstName+".kexe")) {
+				if files.IsFile(filepath.Join(sourceDir, exeFirstName+".kexe")) {
 					return true, exeFirstName + ".kexe"
 				}
-				return isFile(filepath.Join(sourceDir, exeFirstName)), exeFirstName
+				return files.IsFile(filepath.Join(sourceDir, exeFirstName)), exeFirstName
 			}, nil
 		}
 		cmd = exec.Command("kotlinc", sourceFilename, "-include-runtime", "-d", jarFilename)
 		cmd.Dir = sourceDir
 		return cmd, func() (bool, string) {
-			return isFile(filepath.Join(sourceDir, jarFilename)), jarFilename
+			return files.IsFile(filepath.Join(sourceDir, jarFilename)), jarFilename
 		}, nil
 	case mode.Go:
 		cmd := exec.Command("go", "build")
@@ -212,10 +213,10 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd.Dir = sourceDir
 		return cmd, func() (bool, string) {
 			executableFirstName := filepath.Base(executablePath)
-			return isFile(executablePath), executableFirstName
+			return files.IsFile(executablePath), executableFirstName
 		}, nil
 	case mode.C:
-		if which("cxx") != "" {
+		if files.Which("cxx") != "" {
 			cmd = exec.Command("cxx")
 			cmd.Dir = sourceDir
 			if e.debugMode {
@@ -223,7 +224,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			}
 			return cmd, exeBaseNameOrMainExists, nil
 		}
-		if isDir(exeFilename) {
+		if files.IsDir(exeFilename) {
 			exeFilename = "main"
 		}
 		// Use gcc directly
@@ -236,10 +237,10 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd.Dir = sourceDir
 		return cmd, exeOrMainExists, nil
 	case mode.Cpp:
-		if isFile("BUILD.bazel") && which("bazel") != "" { // Google-style C++ + Bazel projects if
+		if files.IsFile("BUILD.bazel") && files.Which("bazel") != "" { // Google-style C++ + Bazel projects if
 			return exec.Command("bazel", "build"), everythingIsFine, nil
 		}
-		if which("cxx") != "" {
+		if files.Which("cxx") != "" {
 			cmd = exec.Command("cxx")
 			cmd.Dir = sourceDir
 			if e.debugMode {
@@ -247,7 +248,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			}
 			return cmd, exeBaseNameOrMainExists, nil
 		}
-		if isDir(exeFilename) {
+		if files.IsDir(exeFilename) {
 			exeFilename = "main"
 		}
 		// Use g++ directly
@@ -260,8 +261,8 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd.Dir = sourceDir
 		return cmd, exeOrMainExists, nil
 	case mode.Zig:
-		if which("zig") != "" {
-			if isFile("build.zig") {
+		if files.Which("zig") != "" {
+			if files.IsFile("build.zig") {
 				cmd = exec.Command("zig", "build")
 				cmd.Dir = sourceDir
 				return cmd, everythingIsFine, nil
@@ -302,16 +303,16 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		} else {
 			cmd = exec.Command("cargo", "build", "--profile", "release")
 		}
-		if isFile("Cargo.toml") {
+		if files.IsFile("Cargo.toml") {
 			cmd.Dir = sourceDir
 			return cmd, everythingIsFine, nil
 		}
-		if isFile(filepath.Join(parentDir, "Cargo.toml")) {
+		if files.IsFile(filepath.Join(parentDir, "Cargo.toml")) {
 			cmd.Dir = parentDir
 			return cmd, everythingIsFine, nil
 		}
 		// Use rustc instead of cargo if Cargo.toml is missing
-		if rustcExecutable := which("rustc"); rustcExecutable != "" {
+		if rustcExecutable := files.Which("rustc"); rustcExecutable != "" {
 			if e.debugMode {
 				cmd = exec.Command(rustcExecutable, sourceFilename, "-g", "-o", exeFilename)
 			} else {
@@ -323,9 +324,9 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		// No result
 	case mode.Clojure:
 		cmd = exec.Command("lein", "uberjar")
-		projectFileExists := isFile("project.clj")
-		parentProjectFileExists := isFile("../project.clj")
-		grandParentProjectFileExists := isFile("../../project.clj")
+		projectFileExists := files.IsFile("project.clj")
+		parentProjectFileExists := files.IsFile("../project.clj")
+		grandParentProjectFileExists := files.IsFile("../../project.clj")
 		cmd.Dir = sourceDir
 		if !projectFileExists && parentProjectFileExists {
 			cmd.Dir = parentDir
@@ -340,7 +341,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 	case mode.Python:
 		cmd = exec.Command("python", "-m", "py_compile", sourceFilename)
 		cmd.Env = append(cmd.Env, "PYTHONUTF8=1")
-		if !exists(pyCachePrefix) {
+		if !files.Exists(pyCachePrefix) {
 			os.MkdirAll(pyCachePrefix, 0o700)
 		}
 		cmd.Env = append(cmd.Env, "PYTHONPYCACHEPREFIX="+pyCachePrefix)
@@ -415,10 +416,10 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		objCheckFunc := func() (bool, string) {
 			// Note that returning the full path as the second argument instead of only the base name
 			// is only done for mode.Assembly. It's treated differently further down when linking.
-			return isFile(objFullFilename), objFullFilename
+			return files.IsFile(objFullFilename), objFullFilename
 		}
 		// try to use yasm
-		if which("yasm") != "" {
+		if files.Which("yasm") != "" {
 			cmd = exec.Command("yasm", "-f", "elf64", "-o", objFullFilename, sourceFilename)
 			if e.debugMode {
 				cmd.Args = append(cmd.Args, "-g", "dwarf2")
@@ -426,7 +427,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			return cmd, objCheckFunc, nil
 		}
 		// then try to use nasm
-		if which("nasm") != "" { // use nasm
+		if files.Which("nasm") != "" { // use nasm
 			cmd = exec.Command("nasm", "-f", "elf64", "-o", objFullFilename, sourceFilename)
 			if e.debugMode {
 				cmd.Args = append(cmd.Args, "-g")
@@ -488,7 +489,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	switch e.mode {
 	case mode.Doc:
 		// pandoc
-		if pandocPath := which("pandoc"); pandocPath != "" {
+		if pandocPath := files.Which("pandoc"); pandocPath != "" {
 			pdfFilename := strings.ReplaceAll(filepath.Base(sourceFilename), ".", "_") + ".pdf"
 			if background {
 				go func() {
@@ -528,7 +529,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	}
 
 	// Check that the resulting cmd.Path executable exists
-	if which(cmd.Path) == "" {
+	if files.Which(cmd.Path) == "" {
 		return "", errNoSuitableBuildCommand
 	}
 
@@ -567,7 +568,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 	// Remove .Random.seed if a68g was just used
 	if e.mode == mode.Algol68 {
-		if isFile(".Random.seed") {
+		if files.IsFile(".Random.seed") {
 			os.Remove(".Random.seed")
 		}
 	}
@@ -594,18 +595,18 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		}
 		// Replace the result check function
 		compilationProducedSomething = func() (bool, string) {
-			return isFile(exeFilename), exeFirstName
+			return files.IsFile(exeFilename), exeFirstName
 		}
 	}
 
 	// Special considerations for Kotlin Native
-	if usingKotlinNative := strings.HasSuffix(cmd.Path, "kotlinc-native"); usingKotlinNative && isFile(exeFirstName+".kexe") {
+	if usingKotlinNative := strings.HasSuffix(cmd.Path, "kotlinc-native"); usingKotlinNative && files.IsFile(exeFirstName+".kexe") {
 		// panic("rename " + exeFirstName + ".kexe" + " -> " + exeFirstName)
 		os.Rename(exeFirstName+".kexe", exeFirstName)
 	}
 
 	// Special considerations for Koka
-	if e.mode == mode.Koka && isFile(exeFirstName) {
+	if e.mode == mode.Koka && files.IsFile(exeFirstName) {
 		// chmod +x
 		os.Chmod(exeFirstName, 0o755)
 	}

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/xyproto/clip"
+	"github.com/xyproto/files"
 )
 
 // SetClipboardFromFile can copy the given file to the clipboard.
@@ -38,7 +39,7 @@ func SetClipboardFromFile(filename string, primaryClipboard bool) (int, string, 
 // The second returned string is the last 7 characters written to the file.
 func WriteClipboardToFile(filename string, overwrite, primaryClipboard bool) (int, string, string, error) {
 	// Check if the file exists first
-	if exists(filename) {
+	if files.Exists(filename) {
 		if overwrite {
 			if err := os.Remove(filename); err != nil {
 				return 0, "", "", err

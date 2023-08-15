@@ -1,10 +1,12 @@
 package main
 
 import (
-	"github.com/xyproto/env/v2"
 	"os"
 	"runtime"
 	"strings"
+
+	"github.com/xyproto/env/v2"
+	"github.com/xyproto/files"
 )
 
 var (
@@ -38,7 +40,7 @@ func getFullName() (fullName string) {
 	fullName = capitalizeWords(env.Str("LOGNAME", "name"))
 	// Then look for ~/.gitconfig
 	gitConfigFilename := env.ExpandUser("~/.gitconfig")
-	if exists(gitConfigFilename) {
+	if files.Exists(gitConfigFilename) {
 		data, err := os.ReadFile(gitConfigFilename)
 		if err != nil {
 			return fullName

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/xyproto/env/v2"
+	"github.com/xyproto/files"
 	"github.com/xyproto/vt100"
 )
 
@@ -84,7 +85,7 @@ func (e *Editor) exportPandocPDF(c *vt100.Canvas, tty *vt100.TTY, status *Status
 	expandedTexFilename := env.ExpandUser(pandocTexFilename)
 
 	// Write the Pandoc Tex style file, for configuring the listings package, if it does not already exist
-	if !exists(expandedTexFilename) {
+	if !files.Exists(expandedTexFilename) {
 		// First create the folder, if needed, in a best effort attempt
 		folderPath := filepath.Dir(expandedTexFilename)
 		os.MkdirAll(folderPath, os.ModePerm)
