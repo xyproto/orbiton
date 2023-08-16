@@ -203,7 +203,8 @@ There are fewer hotkeys to remember than for GNU Nano.
 * `ctrl-space` - Build program, render to PDF or export to man page (see table below).
 * `ctrl-j` - Join lines (or jump to the bookmark, if set).
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
-* `ctrl-l` - Jump to a specific line number. Press `return` to jump to the top. If at the top, press `return` to jump to the bottom.
+* `ctrl-l` - Jump to a specific line number or percentage. Press `return` to jump to the top. If at the top, press `return` to jump to the bottom.
+             Press one of the highlighted on-screen letters to jump to that location.
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive. Press `tab` instead of `return` to search and replace.
 * `ctrl-b` - Jump back after jumping to a definition with `ctrl-g`.
              Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
