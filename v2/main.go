@@ -265,10 +265,20 @@ See the man page for more information.
 				// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
 				matches, err := filepath.Glob(fnord.filename + "*")
 				if err == nil && len(matches) > 0 { // no error and at least 1 match
-					// Use the first non-binary match of the sorted results
+					// Filter out any binary files
 					matches = files.FilterOutBinaryFiles(matches)
 					if len(matches) > 0 {
 						sort.Strings(matches)
+						// If the matches contains a "*.lock" file, move it last
+						for i, fn := range matches {
+							if strings.HasSuffix(fn, ".lock") {
+								// Move this filename last
+								matches = append(matches[:i], matches[i+1:]...)
+								matches = append(matches, fn)
+								break
+							}
+						}
+						// Use the first filename in the list of matches
 						fnord.filename = matches[0]
 					}
 				}
