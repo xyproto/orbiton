@@ -39,7 +39,7 @@ Editing a C source file in `og` using the "synthwave" theme:
 
 ## Quick start
 
-With Go 1.17 or later, the development version of `o` can be installed like this:
+With Go 1.21, the development version of `o` can be installed like this:
 
     go install github.com/xyproto/orbiton/v2@latest && mv -i ~/go/bin/orbiton ~/go/bin/o
 
