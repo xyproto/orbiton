@@ -187,11 +187,11 @@ There are fewer hotkeys to remember than for GNU Nano.
 * `ctrl-e` - Go to end of line and then to the next line
 * `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active.
              Insert a column when in the Markdown table editor.
-* `ctrl-p` - Scroll up 10 lines, or go to the previous match if a search is active,
-             or jump to the matching parenthesis or bracket, if the cursor just moved on to one.
+* `ctrl-p` - Scroll up 10 lines, or go to the previous match if a search is active.
              Remove an empty column when in the Markdown table editor.
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
-* `ctrl-_` - Insert a symbol by typing in a 2-letter [digraph](https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt).
+* `ctrl-_` - Jump to a matching parenthesis or bracket, if the cursor is on one,
+             otherwise insert a symbol by typing in a 2-letter [digraph](https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt).
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - For C and C++: jump between the current header and source file. For Agda and Ivy, insert a symbol.
              For Markdown, launch the Markdown table editor if the cursor is on a table.

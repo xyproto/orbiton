@@ -68,7 +68,6 @@ Display brief usage information.
   Insert a new column when in the Markdown table editor.
 .B ctrl-p
   Scroll up 10 lines or go to the previous match if a search is active.
-  If the cursor is on a parenthesis, jump to the matching parenthesis.
   Remove an empty column when in the Markdown table editor.
 .sp
 .B ctrl-k
@@ -170,8 +169,9 @@ Display brief usage information.
   Toggle single-line comments for a block of code.
 .sp
 .B ctrl-_
-  Insert a symbol by typing in a 2-letter digraph.
-  These are the same as ViM uses.
+  If the cursor is on a parenthesis, jump to the matching parenthesis.
+  If not, insert a symbol by typing in a 2-letter digraph.
+  The digraphs are the same as for ViM.
   For a full overview, see: https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt
 .sp
 .B ctrl-r
