@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"testing"
@@ -21,7 +20,7 @@ func createDummyFiles(numFiles int, fileSize int) ([]string, error) {
 			content[j] = charset[rand.Intn(len(charset))]
 		}
 
-		tmpfile, err := ioutil.TempFile("", "dummyfile")
+		tmpfile, err := os.CreateTemp("", "dummyfile")
 		if err != nil {
 			return nil, err
 		}
