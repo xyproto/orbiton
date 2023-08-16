@@ -16,7 +16,7 @@ require (
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.2.0
 	github.com/xyproto/env/v2 v2.2.0
-	github.com/xyproto/files v1.2.0
+	github.com/xyproto/files v1.3.0
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/mode v0.7.7
