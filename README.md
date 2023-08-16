@@ -642,9 +642,14 @@ Install (use `sudo` or `doas`, if needed):
 ## Stars
 
 [![Stargazers over time](https://starchart.cc/xyproto/orbiton.svg)](https://starchart.cc/xyproto/orbiton)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Forbiton.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Forbiton?ref=badge_shield)
 
 ## General info
 
 * Version: 2.63.1
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Forbiton.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Forbiton?ref=badge_large)
