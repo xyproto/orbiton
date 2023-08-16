@@ -61,7 +61,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		jsonFormatToggle bool              // for toggling indentation or not when pressing ctrl-w for JSON
 
 		markdownTableEditorCounter int // the number of times the Markdown table editor has been displayed
-		jumpMode                   bool
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -448,7 +447,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			undoBackup := undo
 			lastCommandMenuIndex = e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
 			undo = undoBackup
-		case "c:31": // ctrl-_, enter a digraph
+		case "c:31": // ctrl-_, jump to a matching parenthesis or enter a digraph
+
+			// First check if we can jump to the matching paren or bracket
+			if e.OnParenOrBracket() && e.JumpToMatching(c) {
+				break
+			}
+
 			// Ask the user to type in a digraph
 			if digraphString, ok := e.UserInput(c, tty, status, "Type in a 2-letter digraph", digraph.All(), false); ok {
 				if r, ok := digraph.Lookup(digraphString); !ok {
@@ -761,20 +766,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			}
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
-
-			// First check if we can jump to the matching paren or bracket instead
-			// also check that the last keypress was not ctrl-p or ctrl-n, to make scrolling feel more continuous.
-			if e.OnParenOrBracket() && (jumpMode || (!kh.PrevIs("c:16") && !kh.PrevIs("c:14"))) {
-				// Don't count successful jumps as ctrl-p scrolling
-				clearKeyHistory = true
-				if !kh.PrevIs("c:16") {
-					jumpMode = false
-				}
-				if e.JumpToMatching(c) {
-					jumpMode = true
-					break
-				}
-			}
 
 			if e.debugMode {
 				// e.showRegisters has three states, 0 (SmallRegisterWindow), 1 (LargeRegisterWindow) and 2 (NoRegisterWindow)
