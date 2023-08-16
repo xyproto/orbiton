@@ -504,10 +504,10 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							ty = cy + uint(y) + uint(e.pos.offsetY) // adding offset to get the position in the file and not only on the screen
 							if untilNextJumpLetter <= 0 && !e.HasJumpLetter(letter) && e.RegisterJumpLetter(letter, ColIndex(tx), LineIndex(ty)) {
 								untilNextJumpLetter = 60
-								fg = e.XColor
+								fg = e.XColor // foreground color for the highlighted "jump to letter"
 							} else {
 								untilNextJumpLetter--
-								fg = e.CommentColor
+								fg = e.CommentColor // foreground color for the non-highlighted letters
 							}
 						}
 					}
