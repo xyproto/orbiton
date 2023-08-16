@@ -943,6 +943,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				const disableFixAsYouTypeOnError = true
 				e.FixCodeOrText(c, status, disableFixAsYouTypeOnError)
 				alreadyUsedAI = true
+				e.redrawCursor = true
 				goto RETURN_PRESSED_AI_DONE
 			} else if shouldUseAI && openAIKeyHolder != nil {
 				// Generate code or text, using AI
@@ -1439,6 +1440,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.Show(c, e)
 			}
 		case "c:12": // ctrl-l, go to line number or percentage
+			e.jumpToLetterMode = true
 			status.ClearAll(c)
 			status.SetMessage("Go to line number or percentage:")
 			status.ShowNoTimeout(c, e)
@@ -1516,6 +1518,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.redraw = e.GoToLineNumber(LineNumber(ln), c, status, true)
 				}
 			}
+			e.redrawCursor = true
+			e.jumpToLetterMode = false
+			e.redraw = true
 			e.redrawCursor = true
 		case "c:24": // ctrl-x, cut line
 			y := e.DataY()

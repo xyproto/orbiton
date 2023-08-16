@@ -112,9 +112,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		lineRuneCount   uint
 		lineStringCount uint
 		line            string
+		screenLine      string
 		listItemRecord  []bool
 		inListItem      bool
-		screenLine      string
 	)
 
 	escapeFunction := Escape
@@ -422,7 +422,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							coloredString = unEscapeFunction(tout.DarkTags(e.ArrowReplace(string(textWithTags))))
 						}
 					}
-
 				}
 
 				// Extract a slice of runes and color attributes
@@ -490,6 +489,14 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						if match {
 							fg = e.SearchHighlight
 							matchForAnotherN = length - 1
+						}
+					}
+					if e.jumpToLetterMode {
+						// Highlight some letters, and make it possible for the user to jump directly to these after pressing ctrl-l
+						if runeIndex%10 == 0 && y%10 == 0 {
+							fg = vt100.LightYellow
+						} else {
+							fg = vt100.DarkGray
 						}
 					}
 					if letter == '\t' {

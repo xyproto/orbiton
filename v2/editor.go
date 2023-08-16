@@ -65,6 +65,7 @@ type Editor struct {
 	fixAsYouType       bool            // fix each line as you type it in, using AI?
 	monitorAndReadOnly bool            // monitor the file for changes and open it as read-only
 	primaryClipboard   bool            // use the primary or the secondary clipboard on UNIX?
+	jumpToLetterMode   bool            // jump directly to a highlighted letter
 }
 
 // NewCustomEditor takes:
