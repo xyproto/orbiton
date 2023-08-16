@@ -454,6 +454,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 				// Output a line with the chars (Rune + AttributeColor)
 				skipX := e.pos.offsetX
+				untilNextJumpLetter := 0
 				for runeIndex, ra := range runesAndAttributes {
 					if skipX > 0 {
 						skipX--
@@ -490,13 +491,14 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							fg = e.SearchHighlight
 							matchForAnotherN = length - 1
 						}
-					}
-					if e.jumpToLetterMode {
+					} else if e.jumpToLetterMode {
 						// Highlight some letters, and make it possible for the user to jump directly to these after pressing ctrl-l
-						if runeIndex%10 == 0 && y%10 == 0 {
-							fg = vt100.LightYellow
+						if untilNextJumpLetter <= 0 && !e.HasJumpLetter(letter) && e.RegisterJumpLetter(letter, runeIndex, y) {
+							untilNextJumpLetter = 60
+							fg = e.XColor
 						} else {
-							fg = vt100.DarkGray
+							untilNextJumpLetter--
+							fg = e.CommentColor
 						}
 					}
 					if letter == '\t' {
