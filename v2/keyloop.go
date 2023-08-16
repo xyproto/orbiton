@@ -1438,7 +1438,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.SetMessage("Nothing more to undo")
 				status.Show(c, e)
 			}
-
 		case "c:12": // ctrl-l, go to line number or percentage
 			status.ClearAll(c)
 			status.SetMessage("Go to line number or percentage:")
@@ -1629,77 +1628,80 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// ctrl-c might interrupt the program, but saving at the wrong time might be just as destructive.
 			// e.Save(c, tty)
 
-			y := e.DataY()
+			go func() {
 
-			// Forget the cut and paste line state
-			lastCutY = -1
-			lastPasteY = -1
+				y := e.DataY()
 
-			// check if this operation is done on the same line as last time
-			singleLineCopy := lastCopyY != y
-			lastCopyY = y
+				// Forget the cut and paste line state
+				lastCutY = -1
+				lastPasteY = -1
 
-			// close the portal, if any
-			closedPortal := e.ClosePortal() == nil
+				// check if this operation is done on the same line as last time
+				singleLineCopy := lastCopyY != y
+				lastCopyY = y
 
-			if singleLineCopy { // Single line copy
-				status.Clear(c)
-				// Pressed for the first time for this line number
-				trimmed := strings.TrimSpace(e.Line(y))
-				if trimmed != "" {
-					// Copy the line to the internal clipboard
-					copyLines = []string{trimmed}
-					// Copy the line to the clipboard
-					s := "Copied 1 line"
-					var err error
-					if isDarwin() {
-						err = pbcopy(strings.Join(copyLines, "\n"))
-					} else {
-						// Place it in the non-primary clipboard
-						err = clip.WriteAll(strings.Join(copyLines, "\n"), e.primaryClipboard)
+				// close the portal, if any
+				closedPortal := e.ClosePortal() == nil
+
+				if singleLineCopy { // Single line copy
+					status.Clear(c)
+					// Pressed for the first time for this line number
+					trimmed := strings.TrimSpace(e.Line(y))
+					if trimmed != "" {
+						// Copy the line to the internal clipboard
+						copyLines = []string{trimmed}
+						// Copy the line to the clipboard
+						s := "Copied 1 line"
+						var err error
+						if isDarwin() {
+							err = pbcopy(strings.Join(copyLines, "\n"))
+						} else {
+							// Place it in the non-primary clipboard
+							err = clip.WriteAll(strings.Join(copyLines, "\n"), e.primaryClipboard)
+						}
+						if err == nil { // OK
+							// The copy operation worked out, using the clipboard
+							s += " to the clipboard"
+						}
+						// The portal was closed?
+						if closedPortal {
+							s += " and closed the portal"
+						}
+						status.SetMessage(s)
+						status.Show(c, e)
+						// Go to the end of the line, for easy line duplication with ctrl-c, enter, ctrl-v,
+						// but only if the copied line is shorter than the terminal width.
+						if uint(len(trimmed)) < c.Width() {
+							e.End(c)
+						}
 					}
-					if err == nil { // OK
-						// The copy operation worked out, using the clipboard
-						s += " to the clipboard"
-					}
-					// The portal was closed?
-					if closedPortal {
-						s += " and closed the portal"
-					}
-					status.SetMessage(s)
-					status.Show(c, e)
-					// Go to the end of the line, for easy line duplication with ctrl-c, enter, ctrl-v,
-					// but only if the copied line is shorter than the terminal width.
-					if uint(len(trimmed)) < c.Width() {
-						e.End(c)
+				} else { // Multi line copy
+					// Pressed multiple times for this line number, copy the block of text starting from this line
+					s := e.Block(y)
+					if s != "" {
+						copyLines = strings.Split(s, "\n")
+						// Prepare a status message
+						plural := ""
+						lineCount := strings.Count(s, "\n")
+						if lineCount > 1 {
+							plural = "s"
+						}
+						// Place the block of text in the clipboard
+						if isDarwin() {
+							err = pbcopy(s)
+						} else {
+							// Place it in the non-primary clipboard
+							err = clip.WriteAll(s, e.primaryClipboard)
+						}
+						if err != nil {
+							status.SetMessage(fmt.Sprintf("Copied %d line%s", lineCount, plural))
+						} else {
+							status.SetMessage(fmt.Sprintf("Copied %d line%s (clipboard)", lineCount, plural))
+						}
+						status.Show(c, e)
 					}
 				}
-			} else { // Multi line copy
-				// Pressed multiple times for this line number, copy the block of text starting from this line
-				s := e.Block(y)
-				if s != "" {
-					copyLines = strings.Split(s, "\n")
-					// Prepare a status message
-					plural := ""
-					lineCount := strings.Count(s, "\n")
-					if lineCount > 1 {
-						plural = "s"
-					}
-					// Place the block of text in the clipboard
-					if isDarwin() {
-						err = pbcopy(s)
-					} else {
-						// Place it in the non-primary clipboard
-						err = clip.WriteAll(s, e.primaryClipboard)
-					}
-					if err != nil {
-						status.SetMessage(fmt.Sprintf("Copied %d line%s", lineCount, plural))
-					} else {
-						status.SetMessage(fmt.Sprintf("Copied %d line%s (clipboard)", lineCount, plural))
-					}
-					status.Show(c, e)
-				}
-			}
+			}()
 		case "c:22": // ctrl-v, paste
 			if portal, err := LoadPortal(); err == nil { // no error
 				var gotLineFromPortal bool

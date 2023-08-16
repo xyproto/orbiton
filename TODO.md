@@ -2,7 +2,6 @@
 
 ## General
 
-- [ ] Make `ctrl-c` optimized, to avoid the small chance of double `ctrl-c` triggering a signal.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
 - [ ] If a file is opened with `-r`, open it as read-only and reload the file if the underlying file changes.
 - [ ] Make it possible to press `ctrl-f` to search and then `ctrl-v` to paste in text to search for.
