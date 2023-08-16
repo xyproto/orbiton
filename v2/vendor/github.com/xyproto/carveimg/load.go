@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	ico "github.com/biessek/golang-ico"
+	ico "github.com/dkua/go-ico"
 	bmp "github.com/jsummers/gobmp"
 	"golang.org/x/image/webp"
 )

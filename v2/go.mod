@@ -12,11 +12,11 @@ require (
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/xyproto/autoimport v1.4.3
 	github.com/xyproto/binary v1.3.0
-	github.com/xyproto/carveimg v1.4.0
+	github.com/xyproto/carveimg v1.4.1
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.2.0
 	github.com/xyproto/env/v2 v2.2.0
-	github.com/xyproto/files v1.3.0
+	github.com/xyproto/files v1.4.0
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/mode v0.7.7
@@ -31,9 +31,9 @@ require (
 
 require (
 	github.com/DataDog/gostackparse v0.6.0 // indirect
-	github.com/biessek/golang-ico v0.0.0-20180326222316-d348d9ea4670 // indirect
 	github.com/creack/pty v1.1.18 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06 // indirect
 	github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect

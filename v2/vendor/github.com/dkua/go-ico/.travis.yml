@@ -1,0 +1,14 @@
+sudo: false
+language: go
+go:
+- 1.4
+- tip
+install:
+- go get github.com/robfig/glock
+- go get github.com/smartystreets/goconvey
+- glock sync -n github.com/pressly/go.image < Glockfile
+script:
+- make test
+notifications:
+  slack:
+      secure: WrUxKWTtlytHL7F4WebzAEZoAfAmDnezgrn1s5oTpobJUWZUXnx8Q3E4cyM8aAHQiVvZCF80Yp/yBE0HCGcGq6V7D8ML7w4ktqXKE3Fza52IBS28ATJyV/eJXv3vzzYsjbeosiLpeTXC/FR38021uTMjvVznDLkCallwpwpWXjA=

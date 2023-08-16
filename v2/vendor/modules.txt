@@ -4,9 +4,6 @@ github.com/DataDog/gostackparse
 # github.com/PullRequestInc/go-gpt3 v1.1.16
 ## explicit; go 1.13
 github.com/PullRequestInc/go-gpt3
-# github.com/biessek/golang-ico v0.0.0-20180326222316-d348d9ea4670
-## explicit
-github.com/biessek/golang-ico
 # github.com/creack/pty v1.1.18
 ## explicit; go 1.13
 github.com/creack/pty
@@ -15,6 +12,9 @@ github.com/creack/pty
 github.com/cyrus-and/gdb
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
+# github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06
+## explicit
+github.com/dkua/go-ico
 # github.com/felixge/fgtrace v0.2.0
 ## explicit; go 1.18
 github.com/felixge/fgtrace
@@ -74,8 +74,8 @@ github.com/xyproto/binary
 # github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795
 ## explicit; go 1.11
 github.com/xyproto/burnpal
-# github.com/xyproto/carveimg v1.4.0
-## explicit; go 1.18
+# github.com/xyproto/carveimg v1.4.1
+## explicit; go 1.21
 github.com/xyproto/carveimg
 # github.com/xyproto/clip v1.0.0
 ## explicit; go 1.11
@@ -89,7 +89,7 @@ github.com/xyproto/env
 # github.com/xyproto/env/v2 v2.2.0
 ## explicit; go 1.15
 github.com/xyproto/env/v2
-# github.com/xyproto/files v1.3.0
+# github.com/xyproto/files v1.4.0
 ## explicit; go 1.21.0
 github.com/xyproto/files
 # github.com/xyproto/guessica v1.1.2
