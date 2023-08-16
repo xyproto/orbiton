@@ -7,39 +7,61 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-type XPlusLineIndex struct {
-	x int
-	y LineIndex
+// PositionIndex has a ColIndex and LineIndex
+type PositionIndex struct {
+	X ColIndex
+	Y LineIndex
 }
 
-var jumpLetters map[rune]XPlusLineIndex
+var jumpLetters map[rune]PositionIndex
 
-func (e *Editor) RegisterJumpLetter(r rune, x int, y LineIndex) bool {
-	const skipThese = "0123456789%.,btecm"
-	//if unicode.IsUpper(r) {
-		//r = unicode.ToLower(r)
-	//}
+// RegisterJumpLetter will register a jump-letter together with a location that is visible on screen
+func (e *Editor) RegisterJumpLetter(r rune, x ColIndex, y LineIndex) bool {
+	const skipThese = "0123456789%.,btecm" // used by the ctrl-l functionality for other things
 	if strings.ContainsRune(skipThese, r) || unicode.IsSymbol(r) {
 		return false
 	}
 	if jumpLetters == nil {
-		jumpLetters = make(map[rune]XPlusLineIndex)
+		jumpLetters = make(map[rune]PositionIndex)
 	}
-	jumpLetters[r] = XPlusLineIndex{x, y}
+	jumpLetters[r] = PositionIndex{x, y}
 	return true
 }
 
+// HasJumpLetter checks if this jump letter has been registered yet
 func (e *Editor) HasJumpLetter(r rune) bool {
 	if jumpLetters == nil {
 		return false
 	}
-	//if unicode.IsUpper(r) {
-		//r = unicode.ToLower(r)
-	//}
 	_, found := jumpLetters[r]
 	return found
 }
 
+// GetJumpX returns the X position for the given jump letter, or -1 if not found
+func (e *Editor) GetJumpX(r rune) ColIndex {
+	if jumpLetters == nil {
+		return -1
+	}
+	xy, found := jumpLetters[r]
+	if !found {
+		return -1
+	}
+	return xy.X
+}
+
+// GetJumpY returns the Y position for the given jump letter, or -1 if not found
+func (e *Editor) GetJumpY(r rune) LineIndex {
+	if jumpLetters == nil {
+		return -1
+	}
+	xy, found := jumpLetters[r]
+	if !found {
+		return -1
+	}
+	return xy.Y
+}
+
+// ClearJumpLetters clears all jump letters (typically after the ctrl-l screen is done)
 func (e *Editor) ClearJumpLetters() {
 	jumpLetters = nil
 }
@@ -129,8 +151,8 @@ func (e *Editor) GoToLineNumber(lineNumber LineNumber, c *vt100.Canvas, status *
 	return redraw
 }
 
-// GoToLineNumberAndCol will go to a given line number and column number, but counting from 1, not from 0!
-func (e *Editor) GoToLineNumberAndCol(lineNumber LineNumber, colNumber ColNumber, c *vt100.Canvas, status *StatusBar, center bool) bool {
+// GoToLineNumberAndCol will go to a given line number (counting from 1) and column number (counting from 1)
+func (e *Editor) GoToLineNumberAndCol(lineNumber LineNumber, colNumber ColNumber, c *vt100.Canvas, status *StatusBar, center, handleTabExpansion bool) bool {
 	if colNumber < 1 {
 		colNumber = 1
 	}
@@ -139,18 +161,53 @@ func (e *Editor) GoToLineNumberAndCol(lineNumber LineNumber, colNumber ColNumber
 	}
 	xIndex := colNumber.ColIndex()
 	yIndex := lineNumber.LineIndex()
-
 	// Go to the correct line
 	redraw, _ := e.GoTo(yIndex, c, status)
-
 	// Go to the correct column as well
-	tabs := strings.Count(e.Line(yIndex), "\t")
-	newScreenX := int(xIndex) + (tabs * (e.indentation.PerTab - 1))
-	if e.pos.sx != newScreenX {
-		redraw = true
+	if handleTabExpansion {
+		tabs := strings.Count(e.Line(yIndex), "\t")
+		newScreenX := int(xIndex) + (tabs * (e.indentation.PerTab - 1))
+		if e.pos.sx != newScreenX {
+			redraw = true
+		}
+		e.pos.sx = newScreenX
+	} else {
+		if e.pos.sx != int(xIndex) {
+			redraw = true
+		}
+		e.pos.sx = int(xIndex)
 	}
-	e.pos.sx = newScreenX
+	if redraw && center {
+		e.Center(c)
+	}
+	return redraw
 
+}
+
+// GoToLineIndexAndColIndex will go to a given line index (counting from 0) and column index (counting from 0)
+func (e *Editor) GoToLineIndexAndColIndex(yIndex LineIndex, xIndex ColIndex, c *vt100.Canvas, status *StatusBar, center, handleTabExpansion bool) bool {
+	if xIndex < 0 {
+		xIndex = 0
+	}
+	if yIndex < 0 {
+		yIndex = 0
+	}
+	// Go to the correct line
+	redraw, _ := e.GoTo(yIndex, c, status)
+	// Go to the correct column as well
+	if handleTabExpansion {
+		tabs := strings.Count(e.Line(yIndex), "\t")
+		newScreenX := int(xIndex) + (tabs * (e.indentation.PerTab - 1))
+		if e.pos.sx != newScreenX {
+			redraw = true
+		}
+		e.pos.sx = newScreenX
+	} else {
+		if e.pos.sx != int(xIndex) {
+			redraw = true
+		}
+		e.pos.sx = int(xIndex)
+	}
 	if redraw && center {
 		e.Center(c)
 	}

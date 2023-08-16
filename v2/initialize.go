@@ -370,7 +370,9 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	switch {
 	case lineNumber > 0:
 		if colNumber > 0 {
-			e.GoToLineNumberAndCol(lineNumber, colNumber, c, nil, false)
+			const center = false
+			const handleTabsAsWell = true
+			e.GoToLineNumberAndCol(lineNumber, colNumber, c, nil, center, handleTabsAsWell)
 		} else {
 			e.GoToLineNumber(lineNumber, c, nil, false)
 		}

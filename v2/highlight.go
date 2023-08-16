@@ -493,7 +493,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						}
 					} else if e.jumpToLetterMode {
 						// Highlight some letters, and make it possible for the user to jump directly to these after pressing ctrl-l
-						if untilNextJumpLetter <= 0 && !e.HasJumpLetter(letter) && e.RegisterJumpLetter(letter, runeIndex, y) {
+						tx := cx + lineRuneCount                    // the x position
+						ty := int(cy) + int(y) + int(e.pos.offsetY) // adding offset to get the position in the file and not only on the screen
+						if untilNextJumpLetter <= 0 && !e.HasJumpLetter(letter) && e.RegisterJumpLetter(letter, ColIndex(tx), LineIndex(ty)) {
 							untilNextJumpLetter = 60
 							fg = e.XColor
 						} else {

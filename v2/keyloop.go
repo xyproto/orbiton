@@ -1441,8 +1441,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 		case "c:12": // ctrl-l, go to line number or percentage
 			e.jumpToLetterMode = true
+			const prompt = "Go to line number, letter or percentage:"
 			status.ClearAll(c)
-			status.SetMessage("Go to line number or percentage:")
+			status.SetMessage(prompt)
 			status.ShowNoTimeout(c, e)
 			lns := ""
 			cancel := false
@@ -1450,17 +1451,18 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			goToEnd := false
 			goToTop := false
 			goToCenter := false
+			goToLetter := rune(0)
 			for !doneCollectingDigits {
 				numkey := tty.String()
 				switch numkey {
 				case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "%", ".", ",": // 0..9 + %,.
 					lns += numkey // string('0' + (numkey - 48))
-					status.SetMessage("Go to line number or percentage: " + lns)
+					status.SetMessage(prompt + " " + lns)
 					status.ShowNoTimeout(c, e)
 				case "c:8", "c:127": // ctrl-h or backspace
 					if len(lns) > 0 {
 						lns = lns[:len(lns)-1]
-						status.SetMessage("Go to line number or percentage: " + lns)
+						status.SetMessage(prompt + " " + lns)
 						status.ShowNoTimeout(c, e)
 					}
 				case "b", "t": // top of file
@@ -1472,7 +1474,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				case "c", "m": // center of file
 					doneCollectingDigits = true
 					goToCenter = true
-				case "↑", "↓": // up arrow or down arrow
+				case "↑", "↓", "←", "→": // one of the arrow keys
 					fallthrough // cancel
 				case "c:27", "c:17": // esc or ctrl-q
 					cancel = true
@@ -1480,13 +1482,29 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					fallthrough // done
 				case "c:13": // return
 					doneCollectingDigits = true
+				default:
+					if numkey != "" {
+						r := []rune(numkey)[0]
+						// check the "jump to" keys
+						if e.HasJumpLetter(r) {
+							goToLetter = r
+							doneCollectingDigits = true
+						}
+					}
 				}
 			}
 			if !cancel {
 				e.ClearSearchTerm()
 			}
 			status.ClearAll(c)
-			if goToTop {
+			if goToLetter != rune(0) {
+				colIndex := e.GetJumpX(goToLetter)
+				lineIndex := e.GetJumpY(goToLetter)
+				const center = false
+				const handleTabsAsWell = false
+				e.redraw = e.GoToLineIndexAndColIndex(lineIndex, colIndex, c, status, center, handleTabsAsWell)
+				e.redrawCursor = e.redraw
+			} else if goToTop {
 				e.GoToTop(c, status)
 			} else if goToCenter {
 				// Go to the center line
@@ -1520,6 +1538,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 			e.redrawCursor = true
 			e.jumpToLetterMode = false
+			e.ClearJumpLetters()
 			e.redraw = true
 			e.redrawCursor = true
 		case "c:24": // ctrl-x, cut line
