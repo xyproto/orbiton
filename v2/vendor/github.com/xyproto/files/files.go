@@ -97,7 +97,7 @@ func TimestampedFilename(filename string) string {
 
 // ShortPath replaces the home directory with ~ in a given path
 func ShortPath(path string) string {
-	homeDir, _ := os.UserHomeDir()
+	homeDir := env.HomeDir()
 	if strings.HasPrefix(path, homeDir) {
 		return strings.Replace(path, homeDir, "~", 1)
 	}
