@@ -262,11 +262,8 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 			indexY++
 
 			c.Write(0, indexY, tw.textColor, tw.bgColor, spaces)
-			indexY++
-
 		}
 	}
-
 }
 
 // Up will move the highlight up (with wrap-around)
