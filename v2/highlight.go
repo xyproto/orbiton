@@ -455,64 +455,74 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				// Output a line with the chars (Rune + AttributeColor)
 				skipX := e.pos.offsetX
 				untilNextJumpLetter := 0
+				hasSearchTerm := len(e.searchTerm) > 0
+				jumpToLetterMode := e.jumpToLetterMode
+				var fg vt100.AttributeColor
+				var letter rune
+				var tx, ty uint
+
 				for runeIndex, ra := range runesAndAttributes {
 					if skipX > 0 {
 						skipX--
 						continue
 					}
-					letter := ra.R
-					fg := ra.A
-					if letter == ' ' {
+					if ra.R == ' ' {
 						fg = e.Foreground
-					}
-					if matchForAnotherN > 0 {
-						// Coloring an already found match
-						fg = e.SearchHighlight
-						matchForAnotherN--
-					} else if len(e.searchTerm) > 0 && letter == searchTermRunes[0] {
-						// Potential search highlight match
-						length := utf8.RuneCountInString(e.searchTerm)
-						counter := 0
-						match := true
-						for i := runeIndex; i < (runeIndex + length); i++ {
-							if i >= len(runesAndAttributes) {
-								match = false
-								break
-							}
-							ra2 := runesAndAttributes[i]
-							if ra2.R != []rune(e.searchTerm)[counter] {
-								// mismatch, not a hit
-								match = false
-								break
-							}
-							counter++
-						}
-						if match {
+					} else {
+						fg = ra.A
+
+						if matchForAnotherN > 0 {
+							// Coloring an already found match
 							fg = e.SearchHighlight
-							matchForAnotherN = length - 1
-						}
-					} else if e.jumpToLetterMode {
-						// Highlight some letters, and make it possible for the user to jump directly to these after pressing ctrl-l
-						tx := cx + lineRuneCount                    // the x position
-						ty := int(cy) + int(y) + int(e.pos.offsetY) // adding offset to get the position in the file and not only on the screen
-						if untilNextJumpLetter <= 0 && !e.HasJumpLetter(letter) && e.RegisterJumpLetter(letter, ColIndex(tx), LineIndex(ty)) {
-							untilNextJumpLetter = 60
-							fg = e.XColor
-						} else {
-							untilNextJumpLetter--
-							fg = e.CommentColor
+							matchForAnotherN--
+						} else if hasSearchTerm && ra.R == searchTermRunes[0] {
+							// Potential search highlight match
+							length := utf8.RuneCountInString(e.searchTerm)
+							counter := 0
+							match := true
+							for i := runeIndex; i < (runeIndex + length); i++ {
+								if i >= len(runesAndAttributes) {
+									match = false
+									break
+								}
+								ra2 := runesAndAttributes[i]
+								if ra2.R != []rune(e.searchTerm)[counter] {
+									// mismatch, not a hit
+									match = false
+									break
+								}
+								counter++
+							}
+							if match {
+								fg = e.SearchHighlight
+								matchForAnotherN = length - 1
+							}
+						} else if jumpToLetterMode {
+							letter = ra.R
+							// Highlight some letters, and make it possible for the user to jump directly to these after pressing ctrl-l
+							tx = cx + uint(lineRuneCount)           // the x position
+							ty = cy + uint(y) + uint(e.pos.offsetY) // adding offset to get the position in the file and not only on the screen
+							if untilNextJumpLetter <= 0 && !e.HasJumpLetter(letter) && e.RegisterJumpLetter(letter, ColIndex(tx), LineIndex(ty)) {
+								untilNextJumpLetter = 60
+								fg = e.XColor
+							} else {
+								untilNextJumpLetter--
+								fg = e.CommentColor
+							}
 						}
 					}
-					if letter == '\t' {
+
+					if ra.R == '\t' {
 						c.Write(cx+lineRuneCount, cy+uint(y), fg, e.Background, tabString)
 						lineRuneCount += uint(e.indentation.PerTab)
 						lineStringCount += uint(e.indentation.PerTab)
 					} else {
+						letter = ra.R
 						if unicode.IsControl(letter) {
 							letter = controlRuneReplacement
 						}
-						tx := cx + lineRuneCount
-						ty := cy + uint(y)
+						tx = cx + lineRuneCount
+						ty = cy + uint(y)
 						if tx < cw {
 							c.WriteRuneBNoLock(tx, ty, fg, bg, letter)
 							lineRuneCount++                              // 1 rune
