@@ -1456,13 +1456,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						status.SetMessage(prompt + " " + lns)
 						status.ShowNoTimeout(c, e)
 					}
-				case "b", "t": // top of file
+				case "t": // top of file
 					doneCollectingDigits = true
 					goToTop = true
-				case "e": // end of file
+				case "b": // end of file
 					doneCollectingDigits = true
 					goToEnd = true
-				case "c", "m": // center of file
+				case "c": // center of file
 					doneCollectingDigits = true
 					goToCenter = true
 				case "↑", "↓", "←", "→": // one of the arrow keys

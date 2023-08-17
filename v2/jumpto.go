@@ -17,7 +17,7 @@ var jumpLetters map[rune]PositionIndex
 
 // RegisterJumpLetter will register a jump-letter together with a location that is visible on screen
 func (e *Editor) RegisterJumpLetter(r rune, x ColIndex, y LineIndex) bool {
-	const skipThese = "0123456789%.,btecm" // used by the ctrl-l functionality for other things
+	const skipThese = "0123456789%.,btc" // used by the ctrl-l functionality for other things
 	if strings.ContainsRune(skipThese, r) || unicode.IsSymbol(r) {
 		return false
 	}
