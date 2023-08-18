@@ -158,7 +158,7 @@ These features are unique to `o`, as far as I am aware:
 * If the editor executable is renamed to a word starting with `r` (or have a symlink with that name), the default theme will be red/black.
 * If the editor executable is renamed to a word starting with `l` (or have a symlink with that name), the default theme will be suitable for light backgrounds.
 * If the editor executable is renamed to a word starting with `s` (or have a symlink with that name), the default theme will be the "synthwave" theme.
-* Want to quickly convert Markdown to HTML and have pandoc installed? Try `o filename.md`, press `ctrl-space` twice and quit with `ctrl-q`.
+* Want to quickly convert Markdown to HTML? Try `o filename.md`, press `ctrl-space` twice and quit with `ctrl-q`.
 * The default syntax highlighting theme aims to be as pretty as possible with less than 16 colors, but it mainly aims for clarity. It should be easy to spot a keyword, number, string or a stray parenthesis.
 * Press `ctrl-w` to toggle the check mark in `- [ ] TODO item` boxes in Markdown.
 * Orbiton is written mostly in Orbiton, with some use of NeoVim for the initial development.
@@ -201,7 +201,7 @@ There are fewer hotkeys to remember than for GNU Nano.
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text (to the next blank line).
 * `ctrl-c` - Copy one line. Press twice to copy a block of text.
 * `ctrl-v` - Paste one trimmed line. Press twice to paste multiple untrimmed lines.
-* `ctrl-space` - Build program, render to PDF or export to man page (see table below).
+* `ctrl-space` - Build program, render to PDF or export to man page (see table below). Double press to export Markdown to HTML.
 * `ctrl-j` - Join lines (or jump to the bookmark, if set).
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
 * `ctrl-l` - Jump to a specific line number or percentage. Press `return` to jump to the top. If at the top, press `return` to jump to the bottom.

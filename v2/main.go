@@ -58,7 +58,8 @@ ctrl-s      to save
 ctrl-q      to quit
 ctrl-o      to open the command menu
 ctrl-r      to open a portal so that text can be pasted into another file with ctrl-v
-ctrl-space  to compile programs, render MD to PDF or export adoc/sdoc as man
+ctrl-space  to compile programs or export adoc/sdoc as a man page
+            double press to render Markdown as HTML
 ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for C++, format the current file with "clang-format"
             for HTML, format the file with "tidy", for Python: "autopep8"
