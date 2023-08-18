@@ -183,13 +183,13 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	// Build (for use on the terminal, since ctrl-space does not work on iTerm2 + macOS)
 	if !env.Bool("OG") && isDarwin() {
 		actions.Add("Build", func() {
-			const andRun = false
-			e.Build(c, status, tty, andRun)
+			const alsoRun = false
+			e.Build(c, status, tty, alsoRun)
 		})
 		if e.CanRun() {
 			actions.Add("Build and run", func() {
-				const andRun = true
-				e.Build(c, status, tty, andRun)
+				const alsoRun = true
+				e.Build(c, status, tty, alsoRun)
 			})
 		}
 	}
