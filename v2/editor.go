@@ -2464,14 +2464,11 @@ func (e *Editor) SmartSplitLineOnBlanks(c *vt100.Canvas, status *StatusBar, book
 		}
 		trimmedLines = append(trimmedLines, trimmedLine)
 	}
-	lines = trimmedLines
 
-	// Place the lines into the current file
-	e.GoTo(y, c, status)
-	e.DeleteBlock(bookmark)
-	e.GoTo(y, c, status)
-	const addEmptyLine = true
-	e.InsertBlock(c, lines, addEmptyLine)
+	// Remove the current line and insert the new lines
+	e.DeleteCurrentLineMoveBookmark(bookmark)
+	const addEmptyLine = false
+	e.InsertBlock(c, trimmedLines, addEmptyLine)
 	e.GoTo(y, c, status)
 }
 
