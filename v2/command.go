@@ -124,6 +124,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		savequitclear
 		sortblock
 		sortstrings
+		splitline
 		version
 	)
 
@@ -220,6 +221,10 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			e.redraw = true
 			e.redrawCursor = true
 		},
+		splitline: func() { // split the current line on space
+			undo.Snapshot(e)
+			e.SplitLineOnSpace(c, status, bookmark)
+		},
 		quit: func() { // quit
 			e.quit = true
 		},
@@ -254,6 +259,8 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		functionID = save
 	case "sb", "so", "sor", "sort", "sortblock":
 		functionID = sortblock
+	case "sp", "split", "splitline":
+		functionID = splitline
 	case "sortstrings", "sortw", "sortwords", "sow", "ss", "sw", "sortfields", "sf":
 		functionID = sortstrings
 	case "sqc", "savequitclear":

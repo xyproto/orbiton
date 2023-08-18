@@ -2444,6 +2444,37 @@ func (e *Editor) SortBlock(c *vt100.Canvas, status *StatusBar, bookmark *Positio
 	e.GoTo(y, c, status)
 }
 
+// SplitLineOnSpace splits the current line on space, as separate lines
+func (e *Editor) SplitLineOnSpace(c *vt100.Canvas, status *StatusBar, bookmark *Position) {
+	if e.CurrentLine() == "" {
+		status.SetErrorMessage("no text to split on space")
+		return
+	}
+	y := e.LineIndex()
+
+	// Split the current (trimmed) line on space
+	lines := strings.Split(e.TrimmedLine(), " ")
+
+	// Remove empty elements from the slice
+	var trimmedLines []string
+	for _, line := range lines {
+		trimmedLine := strings.TrimSpace(line)
+		if trimmedLine == "" {
+			continue
+		}
+		trimmedLines = append(trimmedLines, trimmedLine)
+	}
+	lines = trimmedLines
+
+	// Place the lines into the current file
+	e.GoTo(y, c, status)
+	e.DeleteBlock(bookmark)
+	e.GoTo(y, c, status)
+	const addEmptyLine = false
+	e.InsertBlock(c, lines, addEmptyLine)
+	e.GoTo(y, c, status)
+}
+
 // ReplaceBlock replaces the current block with the given string, if possible
 func (e *Editor) ReplaceBlock(c *vt100.Canvas, status *StatusBar, bookmark *Position, s string) {
 	if e.CurrentLine() == "" {
