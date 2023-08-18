@@ -150,7 +150,7 @@ func (kh *KeyHistory) AllWithin(dur time.Duration) bool {
 
 // PrevWithin checks if the previous keypress happened within the given duration (to check for rapid successions)
 func (kh *KeyHistory) PrevWithin(dur time.Duration) bool {
-	prevTime := kh.t[1]
+	prevTime := kh.t[2]
 	return time.Now().Sub(prevTime) < dur
 }
 
@@ -177,12 +177,6 @@ func (kh *KeyHistory) SpecialArrowKeypressWith(extraKeypress string) bool {
 
 // DoubleTapped checks if the given key was pressed twice within a short period of time
 func (kh *KeyHistory) DoubleTapped(keypress string) bool {
-	// Push the extra keypress temporarily
-	khb := *kh
-	kh.Push(keypress)
-	defer func() {
-		*kh = khb
-	}()
 	// Check if the previous keypress was the same as this one and within the time limit for double taps
 	return kh.Prev() == keypress && kh.PrevWithin(doubleTapTimeLimit)
 }

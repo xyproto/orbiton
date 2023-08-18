@@ -1246,5 +1246,8 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 			return // return from goroutine
 		}
 
+		status.SetMessage("Success")
+		status.Show(c, e)
+
 	}()
 }
