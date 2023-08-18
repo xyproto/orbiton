@@ -155,3 +155,70 @@ func lastEntryIsNot(xs []string, x string) bool {
 	}
 	return xs[l-1] != x
 }
+
+// smartSplit will split a string on spaces, but only spaces that are not within [], () or {}
+func smartSplit(s string) []string {
+	// Define constants for states.
+	const (
+		Outside = iota
+		InParentheses
+		InBrackets
+		InBraces
+	)
+
+	state := Outside
+	var result []string
+	var word strings.Builder
+
+	for _, ch := range s {
+		switch ch {
+		case '(':
+			if state == Outside {
+				state = InParentheses
+			}
+			word.WriteRune(ch)
+		case ')':
+			if state == InParentheses {
+				state = Outside
+			}
+			word.WriteRune(ch)
+		case '[':
+			if state == Outside {
+				state = InBrackets
+			}
+			word.WriteRune(ch)
+		case ']':
+			if state == InBrackets {
+				state = Outside
+			}
+			word.WriteRune(ch)
+		case '{':
+			if state == Outside {
+				state = InBraces
+			}
+			word.WriteRune(ch)
+		case '}':
+			if state == InBraces {
+				state = Outside
+			}
+			word.WriteRune(ch)
+		case ' ':
+			if state == Outside {
+				// Only split on space if outside of any brackets, braces, or parentheses.
+				result = append(result, word.String())
+				word.Reset()
+			} else {
+				word.WriteRune(ch)
+			}
+		default:
+			word.WriteRune(ch)
+		}
+	}
+
+	// Append the last word.
+	if word.Len() > 0 {
+		result = append(result, word.String())
+	}
+
+	return result
+}

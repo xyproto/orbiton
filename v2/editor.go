@@ -2444,16 +2444,16 @@ func (e *Editor) SortBlock(c *vt100.Canvas, status *StatusBar, bookmark *Positio
 	e.GoTo(y, c, status)
 }
 
-// SplitLineOnSpace splits the current line on space, as separate lines
-func (e *Editor) SplitLineOnSpace(c *vt100.Canvas, status *StatusBar, bookmark *Position) {
+// SmartSplitLineOnBlanks splits the current line on space, as separate lines, but not if spaces are within brackets, parentheses or curly brackets
+func (e *Editor) SmartSplitLineOnBlanks(c *vt100.Canvas, status *StatusBar, bookmark *Position) {
 	if e.CurrentLine() == "" {
-		status.SetErrorMessage("no text to split on space")
+		status.SetErrorMessage("nothing to split on blanks")
 		return
 	}
 	y := e.LineIndex()
 
 	// Split the current (trimmed) line on space
-	lines := strings.Split(e.TrimmedLine(), " ")
+	lines := smartSplit(e.TrimmedLine())
 
 	// Remove empty elements from the slice
 	var trimmedLines []string
@@ -2470,7 +2470,7 @@ func (e *Editor) SplitLineOnSpace(c *vt100.Canvas, status *StatusBar, bookmark *
 	e.GoTo(y, c, status)
 	e.DeleteBlock(bookmark)
 	e.GoTo(y, c, status)
-	const addEmptyLine = false
+	const addEmptyLine = true
 	e.InsertBlock(c, lines, addEmptyLine)
 	e.GoTo(y, c, status)
 }
