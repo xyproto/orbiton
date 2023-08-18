@@ -123,6 +123,7 @@ These features are unique to `o`, as far as I am aware:
 ## Other features and limitations
 
 * The syntax highlighting is instant.
+* Opens files quickly.
 * Can compile `"Hello, World"` in many popular programming languages simply by pressing `ctrl-space`.
 * Create, build and run a simple program in C, by running `o main.c`, pressing `ctrl-w` and then a double `ctrl-space`.
 * Configuration-free, for better and for worse.
