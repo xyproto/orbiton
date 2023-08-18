@@ -5,6 +5,9 @@ import "time"
 // Keypress combo time limit
 const keypressComboTimeLimit = 120 * time.Millisecond
 
+// Double tap time limit
+const doubleTapTimeLimit = 300 * time.Millisecond
+
 // KeyHistory represents the last 3 keypresses, and when they were pressed
 type KeyHistory struct {
 	t    [3]time.Time
@@ -41,7 +44,7 @@ func (kh *KeyHistory) PrevPrev() string {
 
 // PrevPrevPrev returns the key pressed before the one before the last one
 func (kh *KeyHistory) PrevPrevPrev() string {
-	return kh.keys[2]
+	return kh.keys[0]
 }
 
 // PrevIsNot checks that the given keypress is not the previous one
@@ -145,6 +148,12 @@ func (kh *KeyHistory) AllWithin(dur time.Duration) bool {
 	return lastTime.Sub(firstTime) < dur
 }
 
+// PrevWithin checks if the previous keypress happened within the given duration (to check for rapid successions)
+func (kh *KeyHistory) PrevWithin(dur time.Duration) bool {
+	prevTime := kh.t[1]
+	return time.Now().Sub(prevTime) < dur
+}
+
 // SpecialArrowKeypress checks if the last 3 keypresses are all different arrow keys,
 // like for instance left, up, right or left, down right, but not left, left, left.
 // Also, the keypresses must happen within a fixed amount of time, so that only rapid
@@ -164,6 +173,18 @@ func (kh *KeyHistory) SpecialArrowKeypressWith(extraKeypress string) bool {
 	}()
 	// Check if the special keypress was pressed (3 arrow keys in a row, any arrow key goes)
 	return kh.OnlyInAndAllDiffer("↑", "→", "←", "↓") && kh.AllWithin(keypressComboTimeLimit)
+}
+
+// DoubleTapped checks if the given key was pressed twice within a short period of time
+func (kh *KeyHistory) DoubleTapped(keypress string) bool {
+	// Push the extra keypress temporarily
+	khb := *kh
+	kh.Push(keypress)
+	defer func() {
+		*kh = khb
+	}()
+	// Check if the previous keypress was the same as this one and within the time limit for double taps
+	return kh.Prev() == keypress && kh.PrevWithin(doubleTapTimeLimit)
 }
 
 // String returns the last keypresses as a string, with the oldest one first

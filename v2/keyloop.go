@@ -293,9 +293,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.SearchMode(c, status, tty, true, undo)
 
 		case "c:0": // ctrl-space, build source code to executable, or export, depending on the mode
-			// Then build, but don't run
-			const andRun = false
-			e.Build(c, status, tty, andRun)
+			// Then build, and run if ctrl-space was double-tapped
+			var alsoRun = kh.DoubleTapped("c:0")
+			e.Build(c, status, tty, alsoRun)
 			e.redrawCursor = true
 
 		case "c:20": // ctrl-t
