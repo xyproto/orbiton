@@ -109,7 +109,7 @@ These features are unique to `o`, as far as I am aware:
 * Press `ctrl-v` once to paste one line, press `ctrl-v` again to paste the rest.
 * Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy a block of lines (until a blank line).
 * Open or close a portal with `ctrl-r`. When a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
-* Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages (for simple programs).
+* Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages.
 * Cycle git rebase keywords with `ctrl-w` or `ctrl-r`, when an interactive git rebase session is in progress.
 * Jump to a line with `ctrl-l`. Either enter a number to jump to a line or just press `return` (or `t`) to jump to the top. Press `ctrl-l` and `return` again (or `b`) to jump to the bottom. Press `c` to jump to the center.
 * When jumping to a specific line in a file with `ctrl-l`, jumping to a percentage (like `50%`) or a fraction (like `0.5` or `.5`) is also possible.
@@ -138,7 +138,7 @@ These features are unique to `o`, as far as I am aware:
 * Loads faster than both `vim` and `emacs`, for small files.
 * Can render text to PDF either by itself or by using `pandoc`.
 * Tested with `alacritty`, `konsole`, `st`, `urxvt`, `xfce4-terminal`, `xterm` and `zutty`.
-* Tested on Arch Linux, Debian, FreeBSD and OpenBSD.
+* Tested on Arch Linux, Debian, OpenSUSE, FreeBSD and OpenBSD.
 * Never asks before saving or quitting. Be careful.
 * The [`NO_COLOR`](https://no-color.org) environment variable can be set to disable all colors.
 * Rainbow parentheses makes lines with many parentheses easier to read.
@@ -165,6 +165,7 @@ These features are unique to `o`, as far as I am aware:
 * Orbiton is written mostly in Orbiton, with some use of NeoVim for the initial development.
 * Can load, edit and save gzipped text files or man pages that ends with a `.gz` extension.
 * Can organize imports, for Java and for Kotlin, when formatting code with `ctrl-w`.
+* Can jump directly to a selection of highlighted letters on the screen, when `ctrl-l` has been pressed.
 
 ## Known issues
 
