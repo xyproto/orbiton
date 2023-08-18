@@ -1061,9 +1061,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 }
 
 // Build starts a build and is typically triggered from either ctrl-space or the o menu
-func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, andRun bool) {
+func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoRun bool) {
 	// Enable only. e.runAfterBuild is set to false elsewhere.
-	if andRun {
+	if alsoRun {
 		e.runAfterBuild = true
 	}
 
@@ -1143,22 +1143,21 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, andRu
 		// TODO: Make this render the man page like if MANPAGER=o was used
 		e.mode = mode.ManPage
 		e.syntaxHighlight = true
-		// e.LoadBytes([]byte(e.String()))
 		e.redraw = true
 		e.redrawCursor = true
 		return
 	}
 	if e.mode == mode.ManPage {
 		e.mode = mode.Nroff
-		// e.syntaxHighlight = true
-		// e.LoadBytes([]byte(e.String()))
 		e.redraw = true
 		e.redrawCursor = true
 		return
 	}
 
-	// Press ctrl-space twice the first time the Markdown file should be exported to PDF
-	// to avoid the first accidental ctrl-space key press.
+	// Require a double ctrl-space when exporting Markdown to HTML, because it is so easy to press by accident
+	if e.mode == mode.Markdown && !alsoRun {
+		return
+	}
 
 	// Run after building, for some modes
 	if e.building && !e.runAfterBuild {
