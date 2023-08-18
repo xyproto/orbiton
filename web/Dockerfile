@@ -1,5 +1,5 @@
 FROM alpine
-LABEL maintainer="xyproto@archlinux.org"
+LABEL maintainer="Alexader F. Rødseth <xyproto@archlinux.org>"
 WORKDIR /app
 
 # Copy in a HTML file, for now
@@ -24,7 +24,7 @@ COPY --from=0 /app /srv/orbiton.zip
 RUN ln -s /srv/orbiton.zip /srv/localhost
 
 # Install Algernon
-ENV ALGERNON_VERSION='1.15.2'
+ENV ALGERNON_VERSION='1.15.3'
 ADD "https://github.com/xyproto/algernon/releases/download/v$ALGERNON_VERSION/algernon-$ALGERNON_VERSION-linux_x86_64_static.tar.xz" .
 RUN tar Jxf "algernon-$ALGERNON_VERSION-linux_x86_64_static.tar.xz" && \
     install -Dm755 "algernon-$ALGERNON_VERSION-linux_x86_64_static/algernon" /usr/bin/algernon && \
