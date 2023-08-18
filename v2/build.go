@@ -1163,7 +1163,8 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 	if e.building && !e.runAfterBuild {
 		if e.CanRun() {
 			status.ClearAll(c)
-			e.DrawOutput(c, 20, "", "Building and running...", e.DebugRegistersBackground, true)
+			const repositionCursorAfterDrawing = true
+			e.DrawOutput(c, 20, "", "Building and running...", e.DebugRegistersBackground, repositionCursorAfterDrawing)
 			e.runAfterBuild = true
 		}
 		return
@@ -1185,11 +1186,12 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 				go func() {
 					time.Sleep(500 * time.Millisecond)
 					if !doneRunning {
-						e.DrawOutput(c, 20, "", "Done building. Running...", e.DebugStoppedBackground, true)
+						const repositionCursorAfterDrawing = true
+						e.DrawOutput(c, 20, "", "Done building. Running...", e.DebugStoppedBackground, repositionCursorAfterDrawing)
 					}
 				}()
 
-				output, err := e.Run()
+				output, useErrorStyle, err := e.Run()
 				doneRunning = true
 				if err != nil {
 					status.SetError(err)
@@ -1200,8 +1202,17 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 				if strings.Count(output, "\n") <= 19 {
 					title = "Program output"
 				}
-
-				e.DrawOutput(c, 20, title, output, e.DebugRunningBackground, true) // also reposition cursor after drawing
+				const repositionCursorAfterDrawing = true
+				boxBackgroundColor := e.DebugRunningBackground
+				if useErrorStyle {
+					boxBackgroundColor = e.DebugStoppedBackground
+					status.SetErrorMessage("Exited with error code != 0")
+				} else {
+					status.SetMessage("Success")
+				}
+				e.DrawOutput(c, 20, title, output, boxBackgroundColor, repositionCursorAfterDrawing)
+				// Regular success, no debug mode
+				status.Show(c, e)
 			}
 		}()
 
@@ -1235,8 +1246,5 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 			return // return from goroutine
 		}
 
-		// Regular success, no debug mode
-		status.SetMessage("Success")
-		status.Show(c, e)
 	}()
 }

@@ -24,10 +24,12 @@ func (e *Editor) CanRun() bool {
 
 // Run will attempt to run the corresponding output executable, given a source filename.
 // It's an advantage if the BuildOrExport function has been successfully run first.
-func (e *Editor) Run() (string, error) {
+// The bool is true only if the command exited with an exit code != 0 and there is text on stderr,
+// which implies that the error style / background color should be used when presenting the output.
+func (e *Editor) Run() (string, bool, error) {
 	sourceFilename, err := filepath.Abs(e.filename)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 
 	sourceDir := filepath.Dir(sourceFilename)
@@ -61,12 +63,13 @@ func (e *Editor) Run() (string, error) {
 
 	cmd.Dir = sourceDir
 
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", err
+	if output, err := cmd.CombinedOutput(); err == nil { // success
+		return strings.TrimSpace(string(output)), false, nil
+	} else if len(output) > 0 { // error, but text on stdout/stderr
+		return strings.TrimSpace(string(output)), true, nil
+	} else { // error and no text on stdout/stderr
+		return "", false, err
 	}
-
-	return strings.TrimSpace(string(output)), nil
 }
 
 // DrawOutput will draw a pane with the 5 last lines of the given output
