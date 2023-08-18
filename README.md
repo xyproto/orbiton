@@ -118,7 +118,7 @@ These features are unique to `o`, as far as I am aware:
 * Type `iferr` on a single line in a Go or Odin program and press `return` to insert a suitable `if err != nil { return ... }` block, based on [koron/iferr](https://github.com/koron/iferr).
 * For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
 * Correct mistakes as lines are typed in, but only if the OpenAI API key is set, and if the "fix as you type" feature is enabled from the `ctrl-o` menu.
-* A built-in Markdown table editor that can be launched by pressing `ctrl-t` when the cursor is on a table.
+* Use the built-in Markdown table editor by pressing `ctrl-t` when the cursor is in a table.
 
 ## Other features and limitations
 
