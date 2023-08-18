@@ -223,7 +223,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		},
 		splitline: func() { // split the current line on space
 			undo.Snapshot(e)
-			e.SplitLineOnSpace(c, status, bookmark)
+			e.SmartSplitLineOnBlanks(c, status, bookmark)
 		},
 		quit: func() { // quit
 			e.quit = true
@@ -259,7 +259,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		functionID = save
 	case "sb", "so", "sor", "sort", "sortblock":
 		functionID = sortblock
-	case "sp", "split", "splitline":
+	case "sp", "split", "splitline", "smartsplit":
 		functionID = splitline
 	case "sortstrings", "sortw", "sortwords", "sow", "ss", "sw", "sortfields", "sf":
 		functionID = sortstrings
