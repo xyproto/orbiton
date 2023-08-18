@@ -140,8 +140,10 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	// TODO: Create a string->[]string map from title to command, then add them
 	// TODO: Add the 6 first arguments to a context struct instead
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Save and quit", "savequitclear")
+
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Sort strings on the current line", "sortwords")
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Sort the current block of lines", "sortblock")
+
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert \""+insertFilename+"\" at the current line", "insertfile", insertFilename)
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert the current date", "insertdate") // in the RFC 3339 format
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert the current time", "inserttime")
@@ -512,6 +514,10 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		actions.Add(primaryToggleText, func() {
 			e.primaryClipboard = !e.primaryClipboard
 		})
+	}
+
+	if !e.EmptyLine() {
+		actions.AddCommand(e, c, tty, status, bookmark, undo, "Split line on blanks outside of (), [] or {}", "splitline")
 	}
 
 	// Only show the menu option for killing the parent process if the parent process is a known search command
