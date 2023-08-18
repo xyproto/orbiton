@@ -117,6 +117,21 @@ func selectionLettersForChoices(choices []string) map[string]*RuneAndPosition {
 	return selectionLetterMap
 }
 
+func ctrlkey2letter(key string) (string, bool) {
+	if !strings.HasPrefix(key, "c:") || len(key) < 3 {
+		return "", false
+	}
+	number, err := strconv.Atoi(key[2:])
+	if err != nil {
+		return "", false
+	}
+	var r rune = rune((int('a') - 1) + number)
+	if r > 'z' {
+		return "", false
+	}
+	return string(r), true
+}
+
 // Menu starts a loop where keypresses are handled. When a choice is made, a number is returned.
 // -1 is "no choice", 0 and up is which choice were selected.
 // initialMenuIndex is the choice that should be highlighted when displaying the choices.
@@ -201,7 +216,7 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 			menu.SelectLast()
 			changed = true
 			resizeMut.Unlock()
-		case "c:27", "q", "c:3", "c:17", "c:15": // ESC, q, ctrl-c, ctrl-q or ctrl-o
+		case "c:27", "q", "c:17", "c:15": // ESC, q, ctrl-q or ctrl-o
 			running = false
 			changed = true
 		case " ", "c:13": // Space or Return
@@ -220,6 +235,9 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 			changed = true
 			resizeMut.Unlock()
 		default:
+			if letter, ok := ctrlkey2letter(key); ok {
+				key = letter
+			}
 			if len([]rune(key)) == 0 {
 				// this happens if pgup or pgdn is pressed
 				break
