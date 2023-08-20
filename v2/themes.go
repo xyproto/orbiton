@@ -180,6 +180,88 @@ func NewDefaultTheme() Theme {
 	}
 }
 
+// NewLitmusTheme creates a new default Theme struct
+func NewLitmusTheme() Theme {
+	return Theme{
+		Name:                        "Litmus",
+		Light:                       false,
+		Foreground:                  vt100.Default,
+		Background:                  vt100.BackgroundGray,
+		StatusForeground:            vt100.Gray,
+		StatusBackground:            vt100.BackgroundBlack,
+		StatusErrorForeground:       vt100.LightRed,
+		StatusErrorBackground:       vt100.BackgroundDefault,
+		SearchHighlight:             vt100.LightMagenta,
+		MultiLineComment:            vt100.Gray,
+		MultiLineString:             vt100.Magenta,
+		Git:                         vt100.Black,
+		String:                      "blue",
+		Keyword:                     "lightred",
+		Comment:                     "darkgray",
+		Type:                        "cyan",
+		Literal:                     "black",
+		Punctuation:                 "black",
+		Plaintext:                   "black",
+		Tag:                         "black",
+		TextTag:                     "black",
+		TextAttrName:                "black",
+		TextAttrValue:               "black",
+		Decimal:                     "black",
+		AndOr:                       "lightred",
+		Dollar:                      "lightred",
+		Star:                        "magenta",
+		Static:                      "magenta",
+		Self:                        "black",
+		Class:                       "lightred",
+		Private:                     "red",
+		Protected:                   "yellow",
+		Public:                      "green",
+		Whitespace:                  "",
+		AssemblyEnd:                 "magenta",
+		Mut:                         "yellow",
+		RainbowParenColors:          []vt100.AttributeColor{vt100.LightMagenta, vt100.LightRed, vt100.Yellow, vt100.Green, vt100.Blue, vt100.LightBlue, vt100.Red},
+		MarkdownTextColor:           vt100.Black,
+		HeaderBulletColor:           vt100.DarkGray,
+		HeaderTextColor:             vt100.Black,
+		ListBulletColor:             vt100.Red,
+		ListTextColor:               vt100.LightBlue,
+		ListCodeColor:               vt100.Black,
+		CodeColor:                   vt100.Black,
+		CodeBlockColor:              vt100.Black,
+		ImageColor:                  vt100.Red,
+		LinkColor:                   vt100.Magenta,
+		QuoteColor:                  vt100.Red,
+		QuoteTextColor:              vt100.LightBlue,
+		HTMLColor:                   vt100.Black,
+		CommentColor:                vt100.DarkGray,
+		BoldColor:                   vt100.Red,
+		ItalicsColor:                vt100.Gray,
+		StrikeColor:                 vt100.DarkGray,
+		TableColor:                  vt100.Black,
+		CheckboxColor:               vt100.Black,
+		XColor:                      vt100.Red,
+		TableBackground:             vt100.BackgroundGray,
+		UnmatchedParenColor:         vt100.Gray,
+		MenuTitleColor:              vt100.Black,
+		MenuArrowColor:              vt100.Red,
+		MenuTextColor:               vt100.Gray,
+		MenuHighlightColor:          vt100.Cyan,
+		MenuSelectedColor:           vt100.LightBlue,
+		ManSectionColor:             vt100.LightRed,
+		ManSynopsisColor:            vt100.Red,
+		BoxTextColor:                vt100.Black,
+		BoxBackground:               vt100.BackgroundCyan,
+		BoxHighlight:                vt100.Red,
+		DebugRunningBackground:      vt100.BackgroundBlue,
+		DebugStoppedBackground:      vt100.BackgroundMagenta,
+		DebugRegistersBackground:    vt100.BackgroundCyan,
+		DebugOutputBackground:       vt100.BackgroundGray,
+		DebugInstructionsForeground: vt100.Red,
+		DebugInstructionsBackground: vt100.BackgroundMagenta,
+		BoxUpperEdge:                vt100.Gray,
+	}
+}
+
 // NewSynthwaveTheme creates a new Theme struct,
 // like the default theme, but dapmened.
 func NewSynthwaveTheme() Theme {
@@ -676,6 +758,15 @@ func NewDarkVSTheme() Theme {
 	}
 }
 
+// NewGrayTheme returns a theme where all text is light gray
+func NewGrayTheme() Theme {
+	t := NewDefaultTheme()
+	t.Name = "Gray Mono"
+	t.Foreground = vt100.LightGray
+	t.Background = vt100.BackgroundDefault // black background
+	return t
+}
+
 // NewAmberTheme returns a theme where all text is amber / yellow
 func NewAmberTheme() Theme {
 	t := NewDefaultTheme()
@@ -923,17 +1014,31 @@ func (e *Editor) setDefaultTheme() {
 }
 
 // setSynthwaveTheme sets the synthwave-like colors
-func (e *Editor) setSynthwaveTheme() {
+func (e *Editor) setSynthwaveTheme(bs ...bool) {
+	if len(bs) == 1 {
+		initialLightBackground = &(bs[0])
+	}
 	e.SetTheme(NewSynthwaveTheme())
 }
 
 // setVSTheme sets the VS theme
-func (e *Editor) setVSTheme() {
+func (e *Editor) setVSTheme(bs ...bool) {
+	if len(bs) == 1 {
+		initialLightBackground = &(bs[0])
+	}
 	if initialLightBackground != nil && *initialLightBackground {
 		e.SetTheme(NewLightVSTheme())
 	} else {
 		e.SetTheme(NewDarkVSTheme())
 	}
+}
+
+// setLitmusTheme sets the Litmus theme
+func (e *Editor) setLitmusTheme(bs ...bool) {
+	if len(bs) == 1 {
+		initialLightBackground = &(bs[0])
+	}
+	e.SetTheme(NewLitmusTheme())
 }
 
 // setNoColorTheme sets the NoColor theme, and considers the background color
@@ -953,12 +1058,18 @@ func (e *Editor) setLightVSTheme() {
 }
 
 // setRedBlackTheme sets a red/black/gray theme
-func (e *Editor) setRedBlackTheme() {
+func (e *Editor) setRedBlackTheme(bs ...bool) {
+	if len(bs) == 1 {
+		initialLightBackground = &(bs[0])
+	}
 	e.SetTheme(NewRedBlackTheme())
 }
 
 // setBlueEditTheme sets a blue/yellow/gray theme, for light or dark backgrounds
-func (e *Editor) setBlueEditTheme() {
+func (e *Editor) setBlueEditTheme(bs ...bool) {
+	if len(bs) == 1 {
+		initialLightBackground = &(bs[0])
+	}
 	if initialLightBackground != nil && *initialLightBackground {
 		e.SetTheme(NewLightBlueEditTheme())
 	} else {
@@ -969,6 +1080,11 @@ func (e *Editor) setBlueEditTheme() {
 // setLightBlueEditTheme sets a blue/yellow/gray theme, for light backgrounds
 func (e *Editor) setLightBlueEditTheme() {
 	e.SetTheme(NewLightBlueEditTheme())
+}
+
+// setGratTheme sets a gray theme
+func (e *Editor) setGrayTheme() {
+	e.SetTheme(NewGrayTheme())
 }
 
 // setAmberTheme sets an amber theme

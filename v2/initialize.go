@@ -284,51 +284,35 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	// TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
 	// because $COLORFGBG is "15;0" even though the background is white.
 	if !e.readOnly && (!specificLetter || editTheme) {
-		themeEnv := env.StrAlt("O_THEME", "THEME")
-		if themeEnv == "redblack" {
-			b := false
-			initialLightBackground = &b
-			e.setRedBlackTheme()
-		} else if themeEnv == "synthwave" {
-			b := false
-			initialLightBackground = &b
-			e.setSynthwaveTheme()
-		} else if themeEnv == "blueedit" {
-			b := false
-			initialLightBackground = &b
-			e.setBlueEditTheme()
-		} else if themeEnv == "vs" {
-			b := false
-			initialLightBackground = &b
-			e.setVSTheme()
-		} else if themeEnv == "ambermono" {
+		switch env.StrAlt("O_THEME", "THEME") {
+		case "redblack":
+			e.setRedBlackTheme(false)
+		case "synthwave":
+			e.setSynthwaveTheme(false)
+		case "blueedit":
+			e.setBlueEditTheme(false)
+		case "vs":
+			e.setVSTheme(false)
+		case "litmus":
+			e.setLitmusTheme(false)
+		case "graymono":
+			envNoColor = false
+			e.setGrayTheme()
+			e.syntaxHighlight = false
+		case "ambermono":
 			envNoColor = false
 			e.setAmberTheme()
 			e.syntaxHighlight = false
-		} else if themeEnv == "greenmono" {
+		case "greenmono":
 			envNoColor = false
 			e.setGreenTheme()
 			e.syntaxHighlight = false
-		} else if themeEnv == "bluemono" {
+		case "bluemono":
 			envNoColor = false
 			e.setBlueTheme()
 			e.syntaxHighlight = false
-		} else if (env.Has("XTERM_VERSION") && !inVTEGUI && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
-			b := true
-			initialLightBackground = &b
-			if editTheme {
-				e.setLightBlueEditTheme()
-			} else {
-				e.setLightVSTheme()
-			}
-		} else if shell := env.Str("SHELL"); (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && !inVTEGUI && filepath.Base(os.Args[0]) != "default" {
-			// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
-			e.setRedBlackTheme()
-		} else if colorString := env.Str("COLORFGBG"); strings.Contains(colorString, ";") {
-			fields := strings.Split(colorString, ";")
-			backgroundColor := fields[len(fields)-1]
-			// 10 (light green), 11 (yellow), 12 (light blue), 13 (light purple), 14 (light cyan) or white
-			if backgroundColorNumber, err := strconv.Atoi(backgroundColor); err == nil && backgroundColorNumber >= 10 {
+		default:
+			if (env.Has("XTERM_VERSION") && !inVTEGUI && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
 				b := true
 				initialLightBackground = &b
 				if editTheme {
@@ -336,18 +320,34 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 				} else {
 					e.setLightVSTheme()
 				}
-			}
-		} else if discoverBGColor {
-			// r, g, b is the background color from the current terminal emulator, if available
-			// Checke if the combined value of r, g and b (0..1) is larger than 2
-			// (a bit arbitrary, but should work for most cases)
-			if r, g, b, err := vt100.GetBackgroundColor(tty); err == nil && r+g+b > 2 { // success and the background is not dark
-				b := true
-				initialLightBackground = &b
-				if editTheme {
-					e.setLightBlueEditTheme()
-				} else {
-					e.setLightVSTheme()
+			} else if shell := env.Str("SHELL"); (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && !inVTEGUI && filepath.Base(os.Args[0]) != "default" {
+				// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
+				e.setRedBlackTheme()
+			} else if colorString := env.Str("COLORFGBG"); strings.Contains(colorString, ";") {
+				fields := strings.Split(colorString, ";")
+				backgroundColor := fields[len(fields)-1]
+				// 10 (light green), 11 (yellow), 12 (light blue), 13 (light purple), 14 (light cyan) or white
+				if backgroundColorNumber, err := strconv.Atoi(backgroundColor); err == nil && backgroundColorNumber >= 10 {
+					b := true
+					initialLightBackground = &b
+					if editTheme {
+						e.setLightBlueEditTheme()
+					} else {
+						e.setLightVSTheme()
+					}
+				}
+			} else if discoverBGColor {
+				// r, g, b is the background color from the current terminal emulator, if available
+				// Checke if the combined value of r, g and b (0..1) is larger than 2
+				// (a bit arbitrary, but should work for most cases)
+				if r, g, b, err := vt100.GetBackgroundColor(tty); err == nil && r+g+b > 2 { // success and the background is not dark
+					b := true
+					initialLightBackground = &b
+					if editTheme {
+						e.setLightBlueEditTheme()
+					} else {
+						e.setLightVSTheme()
+					}
 				}
 			}
 		}
