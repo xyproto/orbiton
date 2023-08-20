@@ -54,6 +54,16 @@ func firstWordContainsOneOf(s string, sl []string) bool {
 	return false
 }
 
+// hasSuffix checks if the given string end with one of the given suffixes
+func hasSuffix(s string, suffixes []string) bool {
+	for _, suffix := range suffixes {
+		if strings.HasSuffix(s, suffix) {
+			return true
+		}
+	}
+	return false
+}
+
 // hasKey checks if the given string map contains the given key
 func hasKey(m map[string]string, key string) bool {
 	_, found := m[key]
