@@ -350,8 +350,11 @@ AGAIN:
 	forward := true // forward search
 	wrap := true    // with wraparound
 
-	// A special case, search backwards to the start of the function (or to "main")
-	if s == "f" {
+	if s == "" {
+		// No search string entered, use the current word, if available
+		s = e.WordAtCursor()
+	} else if s == "f" {
+		// A special case, search backwards to the start of the function (or to "main")
 		s = e.FuncPrefix()
 		if s == "" {
 			s = "main"
