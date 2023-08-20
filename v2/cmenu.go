@@ -456,9 +456,17 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				"No colors      (NO_COLOR=1)"}
 			useMenuIndex := 0
 			for i, menuChoiceText := range menuChoices {
-				if strings.HasPrefix(e.Theme.Name, menuChoiceText) {
+				themePrefix := menuChoiceText
+				if strings.Contains(themePrefix, "(") {
+					parts := strings.SplitN(themePrefix, "(", 2)
+					themePrefix = strings.TrimSpace(parts[0])
+				}
+				if strings.HasPrefix(e.Theme.Name, themePrefix) {
 					useMenuIndex = i
 				}
+			}
+			if useMenuIndex == 0 && env.Bool("NO_COLOR") {
+				useMenuIndex = 10 // The "No colors" menu choice
 			}
 			changedTheme = true
 			switch e.Menu(status, tty, "Select color theme", menuChoices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes) {
