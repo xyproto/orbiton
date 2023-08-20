@@ -689,6 +689,7 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 			if h < 32 {
 				helpSlice = helpSlice[:availableHeight]
 			}
+			listBox.Y--
 			e.DrawList(bt, c, listBox, helpSlice, -1)
 		} else if w > 80 {
 			narrowHelpSlice := []string{
