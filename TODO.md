@@ -2,7 +2,7 @@
 
 ## General
 
-- [ ] When quickly pressing `ctrl-l` and `return`, the "jump to letter" feature should not appear. Give it a couple of milliseconds of delay before it appears.
+- [ ] Make `ctrl-f` and then `return` search for the word under the cursor.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
 - [ ] If a file is opened with `-r`, open it as read-only and reload the file if the underlying file changes.
 - [ ] Make it possible to press `ctrl-f` to search and then `ctrl-v` to paste in text to search for.
