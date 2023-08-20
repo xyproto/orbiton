@@ -151,7 +151,7 @@ func (kh *KeyHistory) AllWithin(dur time.Duration) bool {
 // PrevWithin checks if the previous keypress happened within the given duration (to check for rapid successions)
 func (kh *KeyHistory) PrevWithin(dur time.Duration) bool {
 	prevTime := kh.t[2]
-	return time.Now().Sub(prevTime) < dur
+	return time.Since(prevTime) < dur
 }
 
 // SpecialArrowKeypress checks if the last 3 keypresses are all different arrow keys,
