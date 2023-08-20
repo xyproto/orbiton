@@ -661,6 +661,12 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 		bt.Background = &e.DebugStoppedBackground
 	}
 
+	upperRightBox.Y--
+	upperRightBox.H++
+	if h > 35 {
+		upperRightBox.H++
+	}
+
 	// Draw the background box
 	e.DrawBox(bt, c, upperRightBox)
 
