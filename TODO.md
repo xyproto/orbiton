@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] Use proper RPC between `o` and the VTE/GTK3 frontend. This also helps when upgrading to GTK4.
+- [ ] Create an SDL2 frontend.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
 - [ ] If a file is opened with `-r`, open it as read-only and reload the file if the underlying file changes.
 - [ ] Make it possible to press `ctrl-f` to search and then `ctrl-v` to paste in text to search for.
