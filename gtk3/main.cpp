@@ -506,11 +506,12 @@ int main(int argc, char* argv[])
     std::string exe_filename = full_path.filename().string();
 
     // Check if the executable starts with "l", "r", "s", "v" or "b"
-    bool lightMode = !exe_filename.empty() && (exe_filename[0] == 'l' || exe_filename[0] == 'v');
-    bool redBlackMode = !exe_filename.empty() && exe_filename[0] == 'r';
+    bool lightDefaultTheme = !exe_filename.empty() && exe_filename[0] == 'l';
+    bool litmusTheme = !exe_filename.empty() && exe_filename[0] == 't';
+    bool redBlackTheme = !exe_filename.empty() && exe_filename[0] == 'r';
     bool synthWaveMode = !exe_filename.empty() && exe_filename[0] == 's';
-    bool vsMode = !exe_filename.empty() && exe_filename[0] == 'v';
-    bool blueEditMode = !exe_filename.empty() && (exe_filename[0] == 'b' || exe_filename[0] == 'e');
+    bool vsTheme = !exe_filename.empty() && exe_filename[0] == 'v';
+    bool blueEditTheme = !exe_filename.empty() && (exe_filename[0] == 'b' || exe_filename[0] == 'e');
 
     // Show the file chooser dialog, if no filename was given
     if (!givenFilename) {
@@ -596,15 +597,38 @@ int main(int argc, char* argv[])
     // Set the OG environment variable, which affects the behavior of "o"
     setenv("OG", "1", true);
 
+    bool lightMode = false;
+    bool lightPalette = false;
+
     // Setting SHELL to /bin/csh uses the red/black theme...
-    if (!lightMode && redBlackMode) {
+    if (redBlackTheme) {
         setenv("O_THEME", "redblack", true);
-    } else if (!lightMode && synthWaveMode) {
+        lightPalette = false;
+        lightMode = false;
+    } else if (synthWaveMode) {
         setenv("O_THEME", "synthwave", true);
-    } else if (!lightMode && vsMode) {
+        lightPalette = false;
+        lightMode = false; // makes no difference
+    } else if (vsTheme) {
         setenv("O_THEME", "vs", true);
-    } else if (!lightMode && blueEditMode) {
+        lightPalette = true;
+        lightMode = true;
+    } else if (blueEditTheme) {
         setenv("O_THEME", "blueedit", true);
+        lightPalette = false;
+        lightMode = true;
+    } else if (lightDefaultTheme) {
+        setenv("O_THEME", "default", true);
+        lightPalette = true;
+        lightMode = true;
+    } else if (litmusTheme) {
+        setenv("O_THEME", "litmus", true);
+        lightPalette = false;
+        lightMode = false;
+    }
+
+    if (lightMode) {
+        setenv("O_LIGHT", "1", true);
     }
 
     // Spawn a terminal
@@ -629,8 +653,27 @@ int main(int argc, char* argv[])
     auto bg = GdkRGBA { 0.0, 0.0, 0.0, 1.0 };
     auto cb = GdkRGBA { 0.3, 0.7, 0.6, 0.9 }; // cursor block color
 
-    if (lightMode) {
+    if (!lightPalette) {
 
+        // Inspired by the mterm color scheme
+        pal[0] = { 0.23, 0.25, 0.32, 1.0 }; // black
+        pal[1] = { 0.79, 0.34, 0.36, 1.0 }; // red, used for the "private" keyword
+        pal[2] = { 0.68, 0.79, 0.59, 1.0 }; // green
+        pal[3] = { 0.87, 0.74, 0.49, 1.0 }; // yellow
+        pal[4] = { 0.55, 0.68, 0.80, 1.0 }; // blue
+        pal[5] = { 0.70, 0.55, 0.67, 1.0 }; // magenta
+        pal[6] = { 0.58, 0.80, 0.86, 1.0 }; // cyan
+        pal[7] = { 0.94, 0.96, 0.99, 1.0 }; // light gray
+        pal[8] = { 0.34, 0.38, 0.46, 1.0 }; // dark gray
+        pal[9] = { 0.92, 0.30, 0.30, 1.0 }; // light red, used for keywords
+        pal[10] = { 0.68, 0.80, 0.59, 1.0 }; // light green
+        pal[11] = { 1.00, 0.90, 0.65, 1.0 }; // light yellow
+        pal[12] = { 0.55, 0.68, 0.90, 1.0 }; // light blue
+        pal[13] = { 0.75, 0.60, 0.72, 1.0 }; // light magenta
+        pal[14] = { 0.61, 0.78, 0.78, 1.0 }; // light cyan
+        pal[15] = { 0.90, 0.91, 0.93, 1.0 }; // white
+
+    } else {
         fg = GdkRGBA { 0.01, 0.01, 0.01, 1.0 }; // dark foreground
         bg = GdkRGBA { 1.0, 1.0, 1.0, 1.0 }; // light background
         cb = GdkRGBA { 0.2, 0.2, 0.2, 0.9 }; // cursor block color
@@ -652,26 +695,13 @@ int main(int argc, char* argv[])
         pal[13] = { 0.02, 0.45, 0.45, 1.0 }; // light cyan (not used much)
         pal[14] = { 0.7, 0.1, 0.6, 1.0 }; // light magenta (not used much)
         pal[15] = { 0.8, 0.8, 0.8, 1.0 }; // white
+    }
 
-    } else {
+    // Adjustments
 
-        // Inspired by the mterm color scheme
-        pal[0] = { 0.23, 0.25, 0.32, 1.0 }; // black
-        pal[1] = { 0.79, 0.34, 0.36, 1.0 }; // red, used for the "private" keyword
-        pal[2] = { 0.68, 0.79, 0.59, 1.0 }; // green
-        pal[3] = { 0.87, 0.74, 0.49, 1.0 }; // yellow
-        pal[4] = { 0.55, 0.68, 0.80, 1.0 }; // blue
-        pal[5] = { 0.70, 0.55, 0.67, 1.0 }; // magenta
-        pal[6] = { 0.58, 0.80, 0.86, 1.0 }; // cyan
-        pal[7] = { 0.94, 0.96, 0.99, 1.0 }; // light gray
-        pal[8] = { 0.34, 0.38, 0.46, 1.0 }; // dark gray
-        pal[9] = { 0.92, 0.30, 0.30, 1.0 }; // light red, used for keywords
-        pal[10] = { 0.68, 0.80, 0.59, 1.0 }; // light green
-        pal[11] = { 1.00, 0.90, 0.65, 1.0 }; // light yellow
-        pal[12] = { 0.55, 0.68, 0.90, 1.0 }; // light blue
-        pal[13] = { 0.75, 0.60, 0.72, 1.0 }; // light magenta
-        pal[14] = { 0.61, 0.78, 0.78, 1.0 }; // light cyan
-        pal[15] = { 0.90, 0.91, 0.93, 1.0 }; // white
+    if (blueEditTheme) { // && !lightPalette) {
+        bg = GdkRGBA { 0.25, 0.32, 0.40, 1.0 }; // light background
+        pal[4] = { 0.25, 0.32, 0.40, 1.0 }; // proper dark blue
     }
 
     vte_terminal_set_colors(VTE_TERMINAL(terminal), &fg, &bg, pal, 16);
@@ -746,9 +776,6 @@ int main(int argc, char* argv[])
     g_signal_connect(window, "button-press-event", G_CALLBACK(mouse_clicked), nullptr);
     g_signal_connect(window, "size-allocate", G_CALLBACK(size_changed), nullptr);
 
-    usleep(400000); // will sleep for 0.4s
-    signal(SIGWINCH, signal_handler); // o sends SIGWINCH when it is ready to resize
-
     // Add the terminal to the window
     gtk_container_add(GTK_CONTAINER(window), terminal);
 
@@ -767,6 +794,9 @@ int main(int argc, char* argv[])
 
     // Bring to front
     gtk_window_present(GTK_WINDOW(window));
+
+    // usleep(400000); // will sleep for 0.4s
+    signal(SIGWINCH, signal_handler); // o sends SIGWINCH when it is ready to resize
 
     // Run the main loop
     gtk_main();

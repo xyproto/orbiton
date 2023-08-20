@@ -236,7 +236,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 
 	if env.Bool("OG") {
 		// Workaround for an issue where opening empty or small files is too quick for the GUI/VTE wrapper
-		time.Sleep(999 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 	}
 
 	// The editing mode is decided at this point
@@ -284,17 +284,18 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	// TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
 	// because $COLORFGBG is "15;0" even though the background is white.
 	if !e.readOnly && (!specificLetter || editTheme) {
+		assumeLightBackground := env.Bool("O_LIGHT")
 		switch env.StrAlt("O_THEME", "THEME") {
 		case "redblack":
-			e.setRedBlackTheme(false)
+			e.setRedBlackTheme(assumeLightBackground)
 		case "synthwave":
-			e.setSynthwaveTheme(false)
+			e.setSynthwaveTheme(assumeLightBackground)
 		case "blueedit":
-			e.setBlueEditTheme(false)
+			e.setBlueEditTheme(assumeLightBackground)
 		case "vs":
-			e.setVSTheme(false)
+			e.setVSTheme(assumeLightBackground)
 		case "litmus":
-			e.setLitmusTheme(false)
+			e.setLitmusTheme(assumeLightBackground)
 		case "graymono":
 			envNoColor = false
 			e.setGrayTheme()
