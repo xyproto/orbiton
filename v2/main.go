@@ -320,25 +320,24 @@ See the man page for more information.
 	if envNoColor {
 		theme = NewNoColorDarkBackgroundTheme()
 		syntaxHighlight = false
-	} else {
+	} else if len(executableName) > 0 {
 		// Check if the executable starts with a specific letter
-		if len(executableName) > 0 {
-			switch executableName[0] {
-			case 'b', 'e': // bo, borland, ed, edit etc.
-				theme = NewDarkBlueEditTheme()
-				// TODO: Later, when specificLetter is examined, use either NewEditLightTheme or NewEditDarkTheme
-				specificLetter = true
-				editTheme = true
-			case 'l', 'v': // lo, light, vs, vscode etc.
-				theme = NewDarkVSTheme()
-				specificLetter = true
-			case 'r': // rb, ro, rt, red etc.
-				theme = NewRedBlackTheme()
-				specificLetter = true
-			case 's': // s, sw, synthwave etc.
-				theme = NewSynthwaveTheme()
-				specificLetter = true
-			}
+		specificLetter = true
+		switch executableName[0] {
+		case 'b', 'e': // bo, borland, ed, edit etc.
+			theme = NewDarkBlueEditTheme()
+			// TODO: Later, when specificLetter is examined, use either NewEditLightTheme or NewEditDarkTheme
+			editTheme = true
+		case 'l': // lo, light etc
+			theme = NewLitmusTheme()
+		case 'v': // vs, vscode etc.
+			theme = NewDarkVSTheme()
+		case 'r': // rb, ro, rt, red etc.
+			theme = NewRedBlackTheme()
+		case 's': // s, sw, synthwave etc.
+			theme = NewSynthwaveTheme()
+		default:
+			specificLetter = false
 		}
 	}
 
