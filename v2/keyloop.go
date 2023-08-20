@@ -1467,7 +1467,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					goToCenter = true
 				case "↑", "↓", "←", "→": // one of the arrow keys
 					fallthrough // cancel
-				case "c:27", "c:17": // esc or ctrl-q
+				case "c:12", "c:17", "c:27": // ctrl-l, ctrl-q or esc
 					cancel = true
 					lns = ""
 					fallthrough // done
