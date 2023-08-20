@@ -5,13 +5,11 @@ import (
 	"math/rand"
 	"os"
 	"testing"
-	"time"
 )
 
 // createDummyFiles generates dummy files with specified size and returns their paths.
 func createDummyFiles(numFiles int, fileSize int) ([]string, error) {
 	var paths []string
-	rand.Seed(time.Now().UnixNano())
 	charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 	for i := 0; i < numFiles; i++ {
