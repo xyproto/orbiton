@@ -2,7 +2,6 @@
 
 ## General
 
-- [ ] Consider using "smart split block on blanks" instead of "smart split line on blanks"
 - [ ] When quickly pressing `ctrl-l` and `return`, the "jump to letter" feature should not appear. Give it a couple of milliseconds of delay before it appears.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
 - [ ] If a file is opened with `-r`, open it as read-only and reload the file if the underlying file changes.
