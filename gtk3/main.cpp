@@ -71,6 +71,7 @@ void trigger_redraw()
 
 void signal_handler(int signal_num)
 {
+    usleep(400000); // will sleep for 0.4s
     // If we are here, it means we received a SIGWINCH signal from o.
     // This means that o is ready to resize.
     // Answer by sending SIGWINCH to o (the child_pid), to make it
@@ -795,7 +796,6 @@ int main(int argc, char* argv[])
     // Bring to front
     gtk_window_present(GTK_WINDOW(window));
 
-    // usleep(400000); // will sleep for 0.4s
     signal(SIGWINCH, signal_handler); // o sends SIGWINCH when it is ready to resize
 
     // Run the main loop
