@@ -1131,11 +1131,27 @@ func (e *Editor) DrawGDBOutput(c *vt100.Canvas, repositionCursor bool) {
 			lines = lines[l-5:]
 		}
 
+		// Trim and shorten the lines
+		var newLines []string
+		for _, line := range lines {
+			trimmedLine := strings.TrimSpace(line)
+			if len(trimmedLine) > listBox.W {
+				if listBox.W-7 > 0 {
+					trimmedLine = trimmedLine[:listBox.W-7] + " [...]"
+				} else {
+					trimmedLine = trimmedLine[:listBox.W]
+				}
+			}
+			newLines = append(newLines, trimmedLine)
+		}
+		lines = newLines
+
 		e.DrawList(bt, c, listBox, lines, -1)
 
 		// Blit
 		c.Draw()
 
+		repositionCursor = true
 	}
 
 	// Reposition the cursor
