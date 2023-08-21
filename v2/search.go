@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/xyproto/clip"
 	"github.com/xyproto/vt100"
 )
 
@@ -303,6 +304,30 @@ AGAIN:
 		case "c:13": // return
 			pressedReturn = true
 			doneCollectingLetters = true
+		case "c:22": // ctrl-v, paste the last line in the clipboard
+			// Read the clipboard
+			clipboardString, err := clip.ReadAll(false) // non-primary clipboard
+			if err == nil && strings.TrimSpace(s) == "" {
+				clipboardString, err = clip.ReadAll(true) // try the primary clipboard
+			}
+			if err == nil { // success
+				if strings.Contains(clipboardString, "\n") {
+					lines := strings.Split(clipboardString, "\n")
+					for i := len(lines) - 1; i >= 0; i-- {
+						trimmedLine := strings.TrimSpace(lines[i])
+						if trimmedLine != "" {
+							s = trimmedLine
+							status.SetMessage(searchPrompt + " " + s)
+							status.ShowNoTimeout(c, e)
+							break
+						}
+					}
+				} else if trimmedLine := strings.TrimSpace(clipboardString); trimmedLine != "" {
+					s = trimmedLine
+					status.SetMessage(searchPrompt + " " + s)
+					status.ShowNoTimeout(c, e)
+				}
+			}
 		case "↑": // previous in the search history
 			if len(*searchHistory) == 0 {
 				break
