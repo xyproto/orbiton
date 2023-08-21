@@ -1,9 +1,12 @@
 package main
 
 import (
+	"math"
+	"strconv"
 	"strings"
 	"unicode"
 
+	"github.com/xyproto/env/v2"
 	"github.com/xyproto/vt100"
 )
 
@@ -212,4 +215,124 @@ func (e *Editor) GoToLineIndexAndColIndex(yIndex LineIndex, xIndex ColIndex, c *
 		e.Center(c)
 	}
 	return redraw
+}
+
+// JumpMode initiates the mode where the user can enter where to jump to
+// (line number, percentage, fraction or highlighted letter)
+func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
+	e.jumpToLetterMode = true
+	prevCommentColor := e.CommentColor
+	prevSyntaxHighlighting := e.syntaxHighlight
+	e.syntaxHighlight = true
+	prompt := "Go to line number, letter or percentage:"
+	if envNoColor {
+		// TODO: NO_COLOR=1 does not have the "jump to letter" feature, this could be implemented
+		prompt = "Go to line number or percentage:"
+	}
+	// Minor adjustments for some of the themes used in the VTE/GTK frontend
+	if env.Bool("OG") {
+		if !e.Light && e.Name == "Default" {
+			e.CommentColor = vt100.White
+		} else if strings.HasPrefix(e.Name, "Blue") {
+			e.CommentColor = vt100.Gray
+		}
+	}
+	status.ClearAll(c)
+	status.SetMessage(prompt)
+	status.ShowNoTimeout(c, e)
+	lns := ""
+	cancel := false
+	doneCollectingDigits := false
+	goToEnd := false
+	goToTop := false
+	goToCenter := false
+	goToLetter := rune(0)
+	for !doneCollectingDigits {
+		numkey := tty.String()
+		switch numkey {
+		case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "%", ".", ",": // 0..9 + %,.
+			lns += numkey // string('0' + (numkey - 48))
+			status.SetMessage(prompt + " " + lns)
+			status.ShowNoTimeout(c, e)
+		case "c:8", "c:127": // ctrl-h or backspace
+			if len(lns) > 0 {
+				lns = lns[:len(lns)-1]
+				status.SetMessage(prompt + " " + lns)
+				status.ShowNoTimeout(c, e)
+			}
+		case "t": // top of file
+			doneCollectingDigits = true
+			goToTop = true
+		case "b": // end of file
+			doneCollectingDigits = true
+			goToEnd = true
+		case "c": // center of file
+			doneCollectingDigits = true
+			goToCenter = true
+		case "↑", "↓", "←", "→": // one of the arrow keys
+			fallthrough // cancel
+		case "c:12", "c:17", "c:27": // ctrl-l, ctrl-q or esc
+			cancel = true
+			lns = ""
+			fallthrough // done
+		case "c:13": // return
+			doneCollectingDigits = true
+		default:
+			if numkey != "" {
+				r := []rune(numkey)[0]
+				// check the "jump to" keys
+				if e.HasJumpLetter(r) {
+					goToLetter = r
+					doneCollectingDigits = true
+				}
+			}
+		}
+	}
+	if !cancel {
+		e.ClearSearchTerm()
+	}
+	status.ClearAll(c)
+	if goToLetter != rune(0) {
+		colIndex := e.GetJumpX(goToLetter)
+		lineIndex := e.GetJumpY(goToLetter)
+		const center = false
+		const handleTabsAsWell = false
+		e.redraw = e.GoToLineIndexAndColIndex(lineIndex, colIndex, c, status, center, handleTabsAsWell)
+		e.redrawCursor = e.redraw
+	} else if goToTop {
+		e.GoToTop(c, status)
+	} else if goToCenter {
+		// Go to the center line
+		e.GoToMiddle(c, status)
+	} else if goToEnd {
+		e.GoToEnd(c, status)
+	} else if lns == "" && !cancel {
+		if e.DataY() > 0 {
+			// If not already at the top, go there
+			e.GoToTop(c, status)
+		} else {
+			// Go to the last line
+			e.GoToEnd(c, status)
+		}
+	} else if strings.HasSuffix(lns, "%") {
+		// Go to the specified percentage
+		if percentageInt, err := strconv.Atoi(lns[:len(lns)-1]); err == nil { // no error {
+			lineIndex := int(math.Round(float64(e.Len()) * float64(percentageInt) * 0.01))
+			e.redraw = e.GoToLineNumber(LineNumber(lineIndex), c, status, true)
+		}
+	} else if strings.Count(lns, ".") == 1 || strings.Count(lns, ",") == 1 {
+		if percentageFloat, err := strconv.ParseFloat(strings.ReplaceAll(lns, ",", "."), 64); err == nil { // no error
+			lineIndex := int(math.Round(float64(e.Len()) * percentageFloat))
+			e.redraw = e.GoToLineNumber(LineNumber(lineIndex), c, status, true)
+		}
+	} else {
+		// Go to the specified line
+		if ln, err := strconv.Atoi(lns); err == nil { // no error
+			e.redraw = e.GoToLineNumber(LineNumber(ln), c, status, true)
+		}
+	}
+	e.jumpToLetterMode = false
+	e.syntaxHighlight = prevSyntaxHighlighting
+	e.CommentColor = prevCommentColor
+	e.ClearJumpLetters()
 }
