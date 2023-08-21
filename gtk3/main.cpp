@@ -628,6 +628,8 @@ int main(int argc, char* argv[])
         lightMode = false;
     }
 
+    // Inform `o` that the version of the theme suitable for a palette with
+    // a light background color should be used.
     if (lightMode) {
         setenv("O_LIGHT", "1", true);
     }
