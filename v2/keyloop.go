@@ -1434,7 +1434,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.jumpToLetterMode = true
 			syntaxHighlightingBefore := e.syntaxHighlight
 			e.syntaxHighlight = true
-			const prompt = "Go to line number, letter or percentage:"
+			prompt := "Go to line number percentage:"
+			if envNoColor {
+				// TODO: NO_COLOR=1 does not have the "jump to letter" feature, this could be implemented
+				prompt = "Go to line number or percentage:"
+			}
 			status.ClearAll(c)
 			status.SetMessage(prompt)
 			status.ShowNoTimeout(c, e)
