@@ -2,12 +2,9 @@
 
 ## General
 
-- [ ] When changing themes from within the VTE/GKT3 frontend, make sure to set the "light palette" setting correctly.
-- [ ] Use proper RPC between `o` and the VTE/GTK3 frontend. This also helps when upgrading to GTK4.
-- [ ] Create an SDL2 frontend.
+- [ ] Make it possible to press `ctrl-f` to search and then `ctrl-v` to paste in text to search for.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
 - [ ] If a file is opened with `-r`, open it as read-only and reload the file if the underlying file changes.
-- [ ] Make it possible to press `ctrl-f` to search and then `ctrl-v` to paste in text to search for.
 - [ ] If in man page mode, set the file as read-only and also let "q" quit.
 - [ ] Let `ctrl-w` also format gzipped code, for instance when editing `main.cpp.gz`.
 - [ ] Do not remove indentation from JS code in HTML when `ctrl-w` is pressed. See: https://github.com/yosssi/gohtml/issues/22
@@ -21,6 +18,12 @@
 - [ ] Add support for emojis. Perhaps by drawing lines differently if an emoji is detected.
 - [ ] Parse some programming languages to improve the quality of the "go to defintion" feature.
 - [ ] Go through this file and remove all completed TODO items.
+
+## `o` to GUI frontend communication
+
+- [ ] When changing themes from within the VTE/GKT3 frontend, let `o` be able to communicate a palette change per theme, using some sort of RPC.
+- [ ] Use proper RPC between `o` and the VTE/GTK3 frontend. This also helps when upgrading to GTK4.
+- [ ] Create an SDL2 frontend.
 
 ## Maybe
 
