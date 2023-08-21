@@ -55,7 +55,7 @@ var (
 	kokaWords = []string{"abstract", "alias", "as", "behind", "break", "c", "co", "con", "continue", "cs", "ctl", "effect", "elif", "else", "exists", "extend", "extern", "file", "final", "finally", "fn", "forall", "fun", "handle", "handler", "if", "import", "in", "infix", "infixl", "infixr", "initially", "inline", "interface", "js", "linear", "mask", "match", "module", "named", "noinline", "open", "override", "pub", "raw", "rec", "reference", "return", "some", "struct", "then", "type", "unsafe", "val", "value", "var", "with"}
 
 	// Kotlin
-	kotlinWords = []string{"as", "break", "catch", "class", "continue", "do", "else", "false", "for", "fun", "if", "import", "in", "interface", "is", "null", "object", "override", "package", "return", "super", "this", "throw", "true", "try", "typealias", "typeof", "val", "var", "when", "while"}
+	kotlinWords = []string{"as", "break", "by", "catch", "class", "continue", "do", "else", "false", "for", "fun", "if", "import", "in", "interface", "is", "null", "object", "override", "package", "return", "super", "this", "throw", "true", "try", "typealias", "typeof", "val", "var", "when", "while"}
 
 	// Lua
 	luaWords = []string{"and", "break", "do", "else", "elseif", "end", "false", "for", "function", "goto", "if", "in", "local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while"}
@@ -135,7 +135,8 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.CMake:
 		addAndRemoveKeywords(cmakeWords, []string{"build", "package"})
 	case mode.Config:
-		removeKeywords([]string{"auto", "default", "install"})
+		removeKeywords([]string{"auto", "default", "install", "int", "local", "no", "not", "type", "var"})
+		addKeywords([]string{"DB_PASSWORD", "PASSWORD", "POSTGRES_PASSWORD", "Password", "SECRET", "SECRETS", "Secret", "Secrets", "password", "secret", "secrets"})
 	case mode.CS:
 		setKeywords(csWords)
 	case mode.D:
