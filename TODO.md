@@ -2,7 +2,7 @@
 
 ## General
 
-- [x] Make it possible to press `ctrl-f` to search and then `ctrl-v` to paste in text to search for.
+- [ ] Support a symlink named `nano` for nano-like behavior.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
 - [ ] If a file is opened with `-r`, open it as read-only and reload the file if the underlying file changes.
 - [ ] If in man page mode, set the file as read-only and also let "q" quit.
