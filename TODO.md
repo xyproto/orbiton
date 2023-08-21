@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] When changing themes from within the VTE/GKT3 frontend, make sure to set the "light palette" setting correctly.
 - [ ] Use proper RPC between `o` and the VTE/GTK3 frontend. This also helps when upgrading to GTK4.
 - [ ] Create an SDL2 frontend.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
