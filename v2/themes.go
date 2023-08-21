@@ -94,6 +94,7 @@ type Theme struct {
 	DebugRegistersBackground    vt100.AttributeColor
 	DebugOutputBackground       vt100.AttributeColor
 	TableBackground             vt100.AttributeColor
+	JumpToLetterColor           vt100.AttributeColor
 	StatusMode                  bool
 	Light                       bool
 }
@@ -177,6 +178,7 @@ func NewDefaultTheme() Theme {
 		DebugInstructionsForeground: vt100.LightYellow,
 		DebugInstructionsBackground: vt100.BackgroundMagenta,
 		BoxUpperEdge:                vt100.White,
+		JumpToLetterColor:           vt100.LightRed,
 	}
 }
 
@@ -259,6 +261,7 @@ func NewLitmusTheme() Theme {
 		DebugInstructionsForeground: vt100.Red,
 		DebugInstructionsBackground: vt100.BackgroundMagenta,
 		BoxUpperEdge:                vt100.Gray,
+		JumpToLetterColor:           vt100.LightRed,
 	}
 }
 
@@ -342,6 +345,7 @@ func NewSynthwaveTheme() Theme {
 		DebugInstructionsForeground: vt100.LightGray,
 		DebugInstructionsBackground: vt100.BackgroundRed,
 		BoxUpperEdge:                vt100.White,
+		JumpToLetterColor:           vt100.LightMagenta,
 	}
 }
 
@@ -425,6 +429,7 @@ func NewRedBlackTheme() Theme {
 		DebugInstructionsForeground: vt100.Red,
 		DebugInstructionsBackground: vt100.BackgroundGray,
 		BoxUpperEdge:                vt100.Black,
+		JumpToLetterColor:           vt100.Red,
 	}
 }
 
@@ -508,6 +513,7 @@ func NewLightBlueEditTheme() Theme {
 		DebugInstructionsForeground: vt100.LightYellow,
 		DebugInstructionsBackground: vt100.BackgroundCyan,
 		BoxUpperEdge:                vt100.White,
+		JumpToLetterColor:           vt100.LightBlue,
 	}
 }
 
@@ -591,6 +597,7 @@ func NewDarkBlueEditTheme() Theme {
 		DebugInstructionsForeground: vt100.White,
 		DebugInstructionsBackground: vt100.BackgroundGray,
 		BoxUpperEdge:                vt100.LightYellow,
+		JumpToLetterColor:           vt100.White,
 	}
 }
 
@@ -673,6 +680,7 @@ func NewLightVSTheme() Theme {
 		DebugInstructionsForeground: vt100.Black,
 		DebugInstructionsBackground: vt100.BackgroundGray,
 		BoxUpperEdge:                vt100.Black,
+		JumpToLetterColor:           vt100.Red,
 	}
 }
 
@@ -755,6 +763,7 @@ func NewDarkVSTheme() Theme {
 		DebugInstructionsForeground: vt100.Black,
 		DebugInstructionsBackground: vt100.BackgroundGray,
 		BoxUpperEdge:                vt100.Black,
+		JumpToLetterColor:           vt100.Red,
 	}
 }
 
@@ -764,6 +773,7 @@ func NewGrayTheme() Theme {
 	t.Name = "Gray Mono"
 	t.Foreground = vt100.LightGray
 	t.Background = vt100.BackgroundDefault // black background
+	t.JumpToLetterColor = vt100.White
 	return t
 }
 
@@ -773,6 +783,7 @@ func NewAmberTheme() Theme {
 	t.Name = "Amber Mono"
 	t.Foreground = vt100.Yellow
 	t.Background = vt100.BackgroundDefault // black background
+	t.JumpToLetterColor = t.Foreground     // for jumping to a letter with ctrl-l
 	return t
 }
 
@@ -782,6 +793,7 @@ func NewGreenTheme() Theme {
 	t.Name = "Green Mono"
 	t.Foreground = vt100.LightGreen
 	t.Background = vt100.BackgroundDefault // black background
+	t.JumpToLetterColor = t.Foreground     // for jumping to a letter with ctrl-l
 	return t
 }
 
@@ -791,6 +803,7 @@ func NewBlueTheme() Theme {
 	t.Name = "Blue Mono"
 	t.Foreground = vt100.LightBlue
 	t.Background = vt100.BackgroundDefault // black background
+	t.JumpToLetterColor = t.Foreground     // for jumping to a letter with ctrl-l
 	return t
 }
 
@@ -873,6 +886,7 @@ func NewNoColorDarkBackgroundTheme() Theme {
 		DebugInstructionsForeground: vt100.Black,
 		DebugInstructionsBackground: vt100.BackgroundGray,
 		BoxUpperEdge:                vt100.Black,
+		JumpToLetterColor:           vt100.White,
 	}
 }
 
@@ -955,6 +969,7 @@ func NewNoColorLightBackgroundTheme() Theme {
 		DebugInstructionsForeground: vt100.White,
 		DebugInstructionsBackground: vt100.BackgroundGray,
 		BoxUpperEdge:                vt100.White,
+		JumpToLetterColor:           vt100.Black,
 	}
 }
 
