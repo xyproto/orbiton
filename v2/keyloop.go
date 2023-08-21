@@ -1434,7 +1434,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.jumpToLetterMode = true
 			syntaxHighlightingBefore := e.syntaxHighlight
 			e.syntaxHighlight = true
-			prompt := "Go to line number percentage:"
+			prompt := "Go to line number, letter or percentage:"
 			if envNoColor {
 				// TODO: NO_COLOR=1 does not have the "jump to letter" feature, this could be implemented
 				prompt = "Go to line number or percentage:"
