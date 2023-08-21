@@ -290,7 +290,7 @@ AGAIN:
 				status.SetMessage(searchPrompt + " " + s)
 				status.ShowNoTimeout(c, e)
 			}
-		case "c:27", "c:17": // esc or ctrl-q
+		case "c:6", "c:17", "c:27": // ctrl-f, ctrl-q or esc
 			s = ""
 			if previousSearch == "" {
 				e.SetSearchTerm(c, status, s)
