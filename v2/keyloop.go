@@ -1440,8 +1440,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// TODO: NO_COLOR=1 does not have the "jump to letter" feature, this could be implemented
 				prompt = "Go to line number or percentage:"
 			}
-			if !e.Light && e.Name == "Default" && env.Bool("OG") {
-				e.CommentColor = vt100.White
+			// Minor adjustments for some of the themes used in the VTE/GTK frontend
+			if env.Bool("OG") {
+				if !e.Light && e.Name == "Default" {
+					e.CommentColor = vt100.White
+				} else if strings.HasPrefix(e.Name, "Blue") {
+					e.CommentColor = vt100.Gray
+				}
 			}
 			status.ClearAll(c)
 			status.SetMessage(prompt)
