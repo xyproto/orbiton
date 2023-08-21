@@ -1432,6 +1432,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 		case "c:12": // ctrl-l, go to line number or percentage
 			e.jumpToLetterMode = true
+			syntaxHighlightingBefore := e.syntaxHighlight
+			e.syntaxHighlight = true
 			const prompt = "Go to line number, letter or percentage:"
 			status.ClearAll(c)
 			status.SetMessage(prompt)
@@ -1529,6 +1531,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 			e.redrawCursor = true
 			e.jumpToLetterMode = false
+			e.syntaxHighlight = syntaxHighlightingBefore
 			e.ClearJumpLetters()
 			e.redraw = true
 			e.redrawCursor = true
