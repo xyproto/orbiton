@@ -184,16 +184,19 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 
 	// Build (for use on the terminal, since ctrl-space does not work on iTerm2 + macOS)
 	if !env.Bool("OG") && isDarwin() {
-		actions.Add("Build", func() {
-			const alsoRun = false
+		var alsoRun = false
+		var menuItemText = "Export"
+		if e.ProgrammingLanguage() {
+			if e.CanRun() {
+				alsoRun = true
+				menuItemText = "Build and run"
+			} else {
+				menuItemText = "Build"
+			}
+		}
+		actions.Add(menuItemText, func() {
 			e.Build(c, status, tty, alsoRun)
 		})
-		if e.CanRun() {
-			actions.Add("Build and run", func() {
-				const alsoRun = true
-				e.Build(c, status, tty, alsoRun)
-			})
-		}
 	}
 
 	// Disable or enable word wrap when typing
