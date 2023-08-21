@@ -1432,12 +1432,16 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 		case "c:12": // ctrl-l, go to line number or percentage
 			e.jumpToLetterMode = true
-			syntaxHighlightingBefore := e.syntaxHighlight
+			prevCommentColor := e.CommentColor
+			prevSyntaxHighlighting := e.syntaxHighlight
 			e.syntaxHighlight = true
 			prompt := "Go to line number, letter or percentage:"
 			if envNoColor {
 				// TODO: NO_COLOR=1 does not have the "jump to letter" feature, this could be implemented
 				prompt = "Go to line number or percentage:"
+			}
+			if !e.Light && e.Name == "Default" && env.Bool("OG") {
+				e.CommentColor = vt100.White
 			}
 			status.ClearAll(c)
 			status.SetMessage(prompt)
@@ -1535,7 +1539,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 			e.redrawCursor = true
 			e.jumpToLetterMode = false
-			e.syntaxHighlight = syntaxHighlightingBefore
+			e.syntaxHighlight = prevSyntaxHighlighting
+			e.CommentColor = prevCommentColor
 			e.ClearJumpLetters()
 			e.redraw = true
 			e.redrawCursor = true
