@@ -2,10 +2,9 @@
 
 ## General
 
-- [ ] Support a symlink named `nano` for nano-like behavior.
+- [ ] Make the built-in spellchecker accessible and also more useful.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
-- [ ] If a file is opened with `-r`, open it as read-only and reload the file if the underlying file changes.
-- [ ] If in man page mode, set the file as read-only and also let "q" quit.
+- [ ] If in man page mode, set the file as read-only and also let `q` quit.
 - [ ] Let `ctrl-w` also format gzipped code, for instance when editing `main.cpp.gz`.
 - [ ] Do not remove indentation from JS code in HTML when `ctrl-w` is pressed. See: https://github.com/yosssi/gohtml/issues/22
 - [ ] When rebasing, look for the `>>>>` markers when opening the file and jump to the first one (and let `ctrl-n` search for the next one).
@@ -23,7 +22,7 @@
 
 - [ ] Make it so that ctrl-k be pressed repeatedly (figure out why it isn't redrawing).
 - [ ] Add help text to ctrl-g.
-- [ ] Implement all the pico/nano hotkeys, maybe some of the GNU Nano ones as well.
+- [x] Implement all the pico/nano hotkeys, maybe some of the GNU Nano ones as well.
 
 ## `o` to GUI frontend communication
 
