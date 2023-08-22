@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"sync"
@@ -286,6 +287,25 @@ func (sb *StatusBar) ShowWordCount(c *vt100.Canvas, e *Editor) {
 // ShowLineColWordCount shows a status message with the current filename, line, column and word count
 func (sb *StatusBar) ShowLineColWordCount(c *vt100.Canvas, e *Editor, filename string) {
 	statusString := filename + ": " + e.PositionAndModeInfo()
+	sb.SetMessage(statusString)
+	sb.ShowNoTimeout(c, e)
+}
+
+// NanoInfo shows info about the current position, for the Nano emulation mode
+func (sb *StatusBar) NanoInfo(c *vt100.Canvas, e *Editor) {
+	l := e.LineNumber()
+	ls := e.LastLineNumber()
+	lp := 0.0
+	if ls > 0 {
+		lp = float64(l) / float64(ls)
+	}
+
+	// TODO: implement char/byte number, like: [ line 2/2 (100%), col 1/1 (100%), char 8/8 (100%) ]
+	//statusString := fmt.Sprintf("[ line %d/%d (%d%), col 1/1 (100%), char 8/8 (100%) ]", l, ls, int(lp*100.0), e.ColNumber(), 999, ?/?)
+	// also available: e.indentation.Spaces and e.mode
+
+	statusString := fmt.Sprintf("[ line %d/%d (%d%%), col %d, word count %d ]", l, ls, int(lp*100.0), e.ColNumber(), e.WordCount())
+
 	sb.SetMessage(statusString)
 	sb.ShowNoTimeout(c, e)
 }
