@@ -62,6 +62,9 @@ github.com/peterhellberg/gfx
 ## explicit; go 1.14
 github.com/pkg/term
 github.com/pkg/term/termios
+# github.com/sajari/fuzzy v1.0.0
+## explicit
+github.com/sajari/fuzzy
 # github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d
 ## explicit
 github.com/sourcegraph/annotate

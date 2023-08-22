@@ -10,6 +10,7 @@ require (
 	github.com/gomarkdown/markdown v0.0.0-20230716120725-531d2d74bc12
 	github.com/ianlancetaylor/demangle v0.0.0-20230524184225-eabc099b10ab
 	github.com/jung-kurt/gofpdf v1.16.2
+	github.com/sajari/fuzzy v1.0.0
 	github.com/xyproto/autoimport v1.4.3
 	github.com/xyproto/binary v1.3.0
 	github.com/xyproto/carveimg v1.4.1
