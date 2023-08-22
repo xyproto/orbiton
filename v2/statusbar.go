@@ -9,6 +9,19 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+const (
+	fourSpaces = "    "
+	fiveSpaces = "     "
+
+	// nano on macOS (a symlink from "nano" to "pico")
+	nanoHelpString1 = "^G Get Help  ^O WriteOut  ^R Read File  ^Y Prev Pg  ^K Cut Text    ^C Cur Pos"
+	nanoHelpString2 = "^X Exit      ^J Justify   ^W Where is   ^V Next Pg  ^U UnCut Text  ^T To Spell"
+
+	// GNU Nano
+	//nanoHelpString1 = "^G Help  ^O Write Out  ^W Where Is  ^K Cut    ^T Execute  ^C Location    M-U Undo  M-A Set Mark  M-] To Bracket  M-Q Previous"
+	//nanoHelpString2 = "^X Exit  ^R Read File  ^\\ Replace  ^U Paste  ^J Justify  ^/ Go To Line  M-E Redo  M-6 Copy      ^Q Where Was    M-W Next"
+)
+
 var mut *sync.RWMutex
 
 // StatusBar represents the little status field that can appear at the bottom of the screen
@@ -23,6 +36,7 @@ type StatusBar struct {
 	show               time.Duration        // show the message for how long before clearing
 	offsetY            int                  // scroll offset
 	isError            bool                 // is this an error message that should be shown after redraw?
+	nanoMode           bool                 // Nano emulation?
 }
 
 // Used for keeping track of how many status messages are lined up to be cleared
@@ -30,9 +44,9 @@ var statusBeingShown int
 
 // NewStatusBar takes a foreground color, background color, foreground color for clearing,
 // background color for clearing and a duration for how long to display status messages.
-func NewStatusBar(fg, bg, errfg, errbg vt100.AttributeColor, editor *Editor, show time.Duration, initialMessageAfterRedraw string) *StatusBar {
+func NewStatusBar(fg, bg, errfg, errbg vt100.AttributeColor, editor *Editor, show time.Duration, initialMessageAfterRedraw string, nanoMode bool) *StatusBar {
 	mut = &sync.RWMutex{}
-	return &StatusBar{editor, "", initialMessageAfterRedraw, fg, bg, errfg, errbg, show, 0, false}
+	return &StatusBar{editor, "", initialMessageAfterRedraw, fg, bg, errfg, errbg, show, 0, false, nanoMode}
 }
 
 // Draw will draw the status bar to the canvas
@@ -44,13 +58,27 @@ func (sb *StatusBar) Draw(c *vt100.Canvas, offsetY int) {
 		sb.msg = sb.msg[:w-4] + "..."
 	}
 
+	h := c.H() - 1
+	if sb.nanoMode {
+		h -= 2
+	}
+
 	if sb.IsError() {
 		mut.RLock()
-		c.Write(uint((w-len(sb.msg))/2), c.H()-1, sb.errfg, sb.errbg, sb.msg)
+		c.Write(uint((w-len(sb.msg))/2), h, sb.errfg, sb.errbg, sb.msg)
 		mut.RUnlock()
 	} else {
 		mut.RLock()
-		c.Write(uint((w-len(sb.msg))/2), c.H()-1, sb.fg, sb.bg, sb.msg)
+		c.Write(uint((w-len(sb.msg))/2), h, sb.fg, sb.bg, sb.msg)
+		mut.RUnlock()
+	}
+
+	if sb.nanoMode {
+		mut.RLock()
+		// x-align
+		x := uint((w - len(nanoHelpString1)) / 2)
+		c.Write(x, h+1, sb.fg, sb.bg, nanoHelpString1)
+		c.Write(x, h+2, sb.fg, sb.bg, nanoHelpString2)
 		mut.RUnlock()
 	}
 
@@ -101,11 +129,11 @@ func (sb *StatusBar) SetErrorMessage(msg string) {
 	mut.Lock()
 
 	if len(msg)%2 == 0 {
-		sb.msg = "     "
+		sb.msg = fiveSpaces
 	} else {
-		sb.msg = "    "
+		sb.msg = fourSpaces
 	}
-	sb.msg += msg + "    "
+	sb.msg += msg + fourSpaces
 
 	sb.isError = true
 	mut.Unlock()
@@ -133,8 +161,12 @@ func (sb *StatusBar) Clear(c *vt100.Canvas) {
 
 	// Then clear/redraw the bottom line
 	h := int(c.H())
+	if sb.nanoMode {
+		h -= 2
+	}
 	offsetY := sb.editor.pos.OffsetY()
 	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
+
 	c.Draw()
 }
 
@@ -156,8 +188,12 @@ func (sb *StatusBar) ClearAll(c *vt100.Canvas) {
 
 	// Then clear/redraw the bottom line
 	h := int(c.H())
+	if sb.nanoMode {
+		h -= 2
+	}
 	offsetY := sb.editor.pos.OffsetY()
 	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0)
+
 	c.Draw()
 }
 
@@ -168,7 +204,7 @@ func (sb *StatusBar) Show(c *vt100.Canvas, e *Editor) {
 	mut.Unlock()
 
 	mut.RLock()
-	if sb.msg == "" {
+	if sb.msg == "" && !sb.nanoMode {
 		mut.RUnlock()
 		return
 	}
@@ -221,7 +257,7 @@ func (sb *StatusBar) Show(c *vt100.Canvas, e *Editor) {
 // cleared after a certain timeout.
 func (sb *StatusBar) ShowNoTimeout(c *vt100.Canvas, e *Editor) {
 	mut.RLock()
-	if sb.msg == "" {
+	if sb.msg == "" && !sb.nanoMode {
 		mut.RUnlock()
 		return
 	}

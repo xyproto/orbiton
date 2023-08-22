@@ -132,7 +132,9 @@ func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 	}
 
 	// Display the status message
-	if e.statusMode {
+	if e.nanoMode {
+		status.Show(c, e)
+	} else if e.statusMode {
 		status.ShowLineColWordCount(c, e, e.filename)
 	} else if status.IsError() {
 		status.Show(c, e)
@@ -162,7 +164,9 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar) {
 	}
 
 	// Drawing status messages should come after redrawing, but before cursor positioning
-	if e.statusMode {
+	if e.nanoMode {
+		status.Show(c, e)
+	} else if e.statusMode {
 		status.ShowLineColWordCount(c, e, e.filename)
 	} else if status.IsError() {
 		// Show the status message, if *statusMessage is not set
