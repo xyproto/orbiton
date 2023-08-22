@@ -2715,3 +2715,90 @@ func (e *Editor) CutSingleLine(status *StatusBar, bookmark *Position, lastCutY, 
 	}
 	return y, true
 }
+
+// CursorForward moves the cursor forward 1 step
+func (e *Editor) CursorForward(c *vt100.Canvas, status *StatusBar) {
+	// If on the last line or before, go to the next character
+	if e.DataY() <= LineIndex(e.Len()) {
+		e.Next(c)
+	}
+	if e.AfterScreenWidth(c) {
+		e.pos.SetOffsetX(e.pos.OffsetX() + 1)
+		e.redraw = true
+		e.pos.sx--
+		if e.pos.sx < 0 {
+			e.pos.sx = 0
+		}
+		if e.AfterEndOfLine() {
+			e.Down(c, status)
+		}
+	} else if e.AfterEndOfLine() {
+		e.End(c)
+	}
+	e.SaveX(true)
+	e.redrawCursor = true
+}
+
+// CursorBackward moves the cursor backward 1 step
+func (e *Editor) CursorBackward(c *vt100.Canvas, status *StatusBar) {
+	// movement if there is horizontal scrolling
+	if e.pos.OffsetX() > 0 {
+		if e.pos.sx > 0 {
+			// Move one step left
+			if e.TabToTheLeft() {
+				e.pos.sx -= e.indentation.PerTab
+			} else {
+				e.pos.sx--
+			}
+		} else {
+			// Scroll one step left
+			e.pos.SetOffsetX(e.pos.OffsetX() - 1)
+			e.redraw = true
+		}
+		e.SaveX(true)
+	} else if e.pos.sx > 0 {
+		// no horizontal scrolling going on
+		// Move one step left
+		if e.TabToTheLeft() {
+			e.pos.sx -= e.indentation.PerTab
+		} else {
+			e.pos.sx--
+		}
+		e.SaveX(true)
+	} else if e.DataY() > 0 {
+		// no scrolling or movement to the left going on
+		e.Up(c, status)
+		e.End(c)
+		// e.redraw = true
+	} // else at the start of the document
+	e.redrawCursor = true
+	// Workaround for Konsole
+	if e.pos.sx <= 2 {
+		// Konsole prints "2H" here, but
+		// no other terminal emulator does that
+		e.redraw = true
+	}
+}
+
+// JoinLineWithNext tries to join the current line with the next.
+// If the next line is empty, the next line is removed.
+// Returns true if this and the next line had text and they were joined to this line.
+func (e *Editor) JoinLineWithNext(c *vt100.Canvas, bookmark *Position) bool {
+	nextLineIndex := e.DataY() + 1
+	e.redraw = true
+	e.redrawCursor = true
+	if e.EmptyRightTrimmedLineBelow() {
+		// Just delete the line below if it's empty
+		e.DeleteLineMoveBookmark(nextLineIndex, bookmark)
+		return false
+	} else {
+		// Join the line below with this line. Also add a space in between.
+		e.TrimLeft(nextLineIndex) // this is unproblematic, even at the end of the document
+		e.End(c)
+		e.InsertRune(c, ' ')
+		e.WriteRune(c)
+		e.Next(c)
+		e.Delete()
+		return true
+	}
+}
