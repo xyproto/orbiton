@@ -650,6 +650,10 @@ Install (use `sudo` or `doas`, if needed):
 
 [![Stargazers over time](https://starchart.cc/xyproto/orbiton.svg)](https://starchart.cc/xyproto/orbiton)
 
+## Word list
+
+The built-in spellchecker uses an MIT licensed list of words, from [here](https://github.com/sindresorhus/word-list).
+
 ## General info
 
 * Version: 2.63.1
