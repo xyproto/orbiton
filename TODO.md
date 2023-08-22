@@ -19,6 +19,12 @@
 - [ ] Parse some programming languages to improve the quality of the "go to defintion" feature.
 - [ ] Go through this file and remove all completed TODO items.
 
+### Nano emulation
+
+- [ ] Make it so that ctrl-k be pressed repeatedly (figure out why it isn't redrawing).
+- [ ] Add help text to ctrl-g.
+- [ ] Implement all the pico/nano hotkeys, maybe some of the GNU Nano ones as well.
+
 ## `o` to GUI frontend communication
 
 - [ ] When changing themes from within the VTE/GKT3 frontend, let `o` be able to communicate a palette change per theme, using some sort of RPC.
