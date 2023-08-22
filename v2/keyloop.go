@@ -275,6 +275,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:6": // ctrl-f, search for a string
 
+			if e.nanoMode { // nano: ctrl-f, cursor forward
+				e.CursorForward(c, status)
+				break
+			}
+
 			// If in Debug mode, let ctrl-f mean "finish"
 			if e.debugMode {
 				if e.gdb == nil { // success
@@ -503,43 +508,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 
-			// movement if there is horizontal scrolling
-			if e.pos.OffsetX() > 0 {
-				if e.pos.sx > 0 {
-					// Move one step left
-					if e.TabToTheLeft() {
-						e.pos.sx -= e.indentation.PerTab
-					} else {
-						e.pos.sx--
-					}
-				} else {
-					// Scroll one step left
-					e.pos.SetOffsetX(e.pos.OffsetX() - 1)
-					e.redraw = true
-				}
-				e.SaveX(true)
-			} else if e.pos.sx > 0 {
-				// no horizontal scrolling going on
-				// Move one step left
-				if e.TabToTheLeft() {
-					e.pos.sx -= e.indentation.PerTab
-				} else {
-					e.pos.sx--
-				}
-				e.SaveX(true)
-			} else if e.DataY() > 0 {
-				// no scrolling or movement to the left going on
-				e.Up(c, status)
-				e.End(c)
-				// e.redraw = true
-			} // else at the start of the document
-			e.redrawCursor = true
-			// Workaround for Konsole
-			if e.pos.sx <= 2 {
-				// Konsole prints "2H" here, but
-				// no other terminal emulator does that
-				e.redraw = true
-			}
+			e.CursorBackward(c, status)
+
 		case "→": // right arrow
 
 			// Don't move if ChatGPT is currently generating tokens that are being inserted
@@ -556,25 +526,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 
-			// If on the last line or before, go to the next character
-			if e.DataY() <= LineIndex(e.Len()) {
-				e.Next(c)
-			}
-			if e.AfterScreenWidth(c) {
-				e.pos.SetOffsetX(e.pos.OffsetX() + 1)
-				e.redraw = true
-				e.pos.sx--
-				if e.pos.sx < 0 {
-					e.pos.sx = 0
-				}
-				if e.AfterEndOfLine() {
-					e.Down(c, status)
-				}
-			} else if e.AfterEndOfLine() {
-				e.End(c)
-			}
-			e.SaveX(true)
-			e.redrawCursor = true
+			e.CursorForward(c, status)
+
 		case "↑": // up arrow
 
 			// Don't move if ChatGPT is currently generating tokens that are being inserted
@@ -1523,6 +1476,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.DeleteToEndOfLine(c, status, bookmark, &lastCopyY, &lastPasteY, &lastCutY)
 		case "c:3": // ctrl-c, copy the stripped contents of the current line
 
+			if e.nanoMode { // nano: ctrl-c, report cursor position
+				status.ClearAll(c)
+				status.NanoInfo(c, e)
+				break
+			}
+
 			// ctrl-c might interrupt the program, but saving at the wrong time might be just as destructive.
 			// e.Save(c, tty)
 
@@ -1824,8 +1783,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.SetMessage("Opening a portal at " + portal.String())
 			}
 			status.Show(c, e)
-		case "c:2": // ctrl-b, go back after jumping to a definition, bookmark, unbookmark or jump to bookmark
-			// toggle breakpoint if in debug mode
+		case "c:2": // ctrl-b, go back after jumping to a definition, bookmark, unbookmark or jump to bookmark. Toggle breakpoint if in debug mode.
+
+			if e.nanoMode { // nano: ctrl-b, cursor forward
+				e.CursorBackward(c, status)
+				break
+			}
 
 			status.Clear(c)
 
@@ -1903,24 +1866,22 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.Show(c, e)
 			} else {
 				undo.Snapshot(e)
-
-				nextLineIndex := e.DataY() + 1
-				if e.EmptyRightTrimmedLineBelow() {
-					// Just delete the line below if it's empty
-					e.DeleteLineMoveBookmark(nextLineIndex, bookmark)
-				} else {
-					// Join the line below with this line. Also add a space in between.
-					e.TrimLeft(nextLineIndex) // this is unproblematic, even at the end of the document
-					e.End(c)
-					e.InsertRune(c, ' ')
-					e.WriteRune(c)
-					e.Next(c)
-					e.Delete()
+				if e.nanoMode {
+					// Up to 100 times, join the current line with the next, until the next line is empty
+					joinCount := 0
+					for i := 0; i < 100; i++ {
+						if !e.JoinLineWithNext(c, bookmark) {
+							break
+						}
+						joinCount++
+					}
+					for i := 0; i < joinCount; i++ {
+						e.Down(c, status)
+					}
+					break
 				}
-
-				e.redraw = true
+				e.JoinLineWithNext(c, bookmark)
 			}
-			e.redrawCursor = true
 		default: // any other key
 			keyRunes := []rune(key)
 			// panic(fmt.Sprintf("PRESSED KEY: %v", []rune(key)))
