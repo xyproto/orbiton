@@ -325,7 +325,7 @@ See the man page for more information.
 		syntaxHighlight = false
 	} else if len(executableName) > 0 {
 		// Check if the executable name is a specific word
-		if executableName == "nano" || executableNAme == "nan" {
+		if executableName == "nano" || executableName == "nan" {
 			nanoMode = true
 		}
 		// Check if the executable starts with a specific letter
