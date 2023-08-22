@@ -319,10 +319,15 @@ See the man page for more information.
 	// Also use the red/gray theme if $SHELL is /bin/csh (typically BSD)
 	theme := NewDefaultTheme()
 	syntaxHighlight := true
+	nanoMode := false
 	if envNoColor {
 		theme = NewNoColorDarkBackgroundTheme()
 		syntaxHighlight = false
 	} else if len(executableName) > 0 {
+		// Check if the executable name is a specific word
+		if executableName == "nano" {
+			nanoMode = true
+		}
 		// Check if the executable starts with a specific letter
 		specificLetter = true
 		switch executableName[0] {
@@ -354,7 +359,7 @@ See the man page for more information.
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight, *monitorAndReadOnlyFlag)
+	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight, *monitorAndReadOnlyFlag, nanoMode)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {
