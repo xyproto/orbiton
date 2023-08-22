@@ -95,6 +95,10 @@ symlinks:
 	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/edi"
 	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/vs"
 
+# For development of the Nano emulation
+nansymlink:
+	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/nan"
+
 symlinks-gui: gui-symlinks
 symlinks-gui-install: gui-symlinks
 symlinks-install-gui: gui-symlinks
