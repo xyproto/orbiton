@@ -200,7 +200,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.quit = true
 		case "c:23": // ctrl-w, format or insert template (or if in git mode, cycle interactive rebase keywords)
 
-			if e.nanoMode {
+			if e.nanoMode { // nano: ctrl-w, search
 				e.SearchMode(c, status, tty, true, undo)
 				break
 			}
@@ -445,7 +445,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redraw = true
 			e.redrawCursor = true
 		case "c:15": // ctrl-o, launch the command menu
-			if e.nanoMode {
+
+			if e.nanoMode { // ctrl-o, save
 				// Ask the user which filename to save to
 				if newFilename, ok := e.UserInput(c, tty, status, "Save as", []string{e.filename}, false); ok {
 					e.filename = newFilename
@@ -1337,7 +1338,19 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Prepare to redraw
 			e.redrawCursor = true
 			e.redraw = true
-		case "c:1", "c:25": // ctrl-a, home (or ctrl-y for scrolling up in the st terminal)
+		case "c:25": // ctrl-y
+
+			if e.nanoMode { // nano: ctrl-y, page up
+				h := int(c.H())
+				e.redraw = e.ScrollUp(c, status, h)
+				e.redrawCursor = true
+				if e.AfterLineScreenContents() {
+					e.End(c)
+				}
+				break
+			}
+			fallthrough
+		case "c:1": // ctrl-a, home (or ctrl-y for scrolling up in the st terminal)
 			// Do not reset cut/copy/paste status
 
 			// First check if we just moved to this line with the arrow keys
@@ -1406,7 +1419,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.UserSave(c, tty, status)
 		case "c:7": // ctrl-g, either go to definition OR toggle the status bar
 
-			if e.nanoMode {
+			if e.nanoMode { // nano: ctrl-g, help
 				status.Clear(c)
 				status.SetMessage("NANO HELP GOES HERE")
 				status.Show(c, e)
@@ -1457,6 +1470,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redrawCursor = true
 		case "c:24": // ctrl-x, cut line
 
+			if e.nanoMode { // nano: ctrl-x, quit
+				e.quit = true
+			}
+
 			// First try a single line cut
 			if y, multilineCut := e.CutSingleLine(status, bookmark, &lastCutY, &lastCopyY, &lastPasteY, &copyLines, &firstCopyAction); multilineCut { // Multi line cut (add to the clipboard, since it's the second press)
 				lastCutY = y
@@ -1495,12 +1512,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Go to the end of the current line
 			e.End(c)
 		case "c:11": // ctrl-k, delete to end of line
-			if e.nanoMode {
+
+			if e.nanoMode { // nano: ctrl-k, cut line
 				e.CutSingleLine(status, bookmark, &lastCutY, &lastCopyY, &lastPasteY, &copyLines, &firstCopyAction)
 				// Go to the end of the current line
 				e.End(c)
 				break
 			}
+
 			e.DeleteToEndOfLine(c, status, bookmark, &lastCopyY, &lastPasteY, &lastCutY)
 		case "c:3": // ctrl-c, copy the stripped contents of the current line
 
@@ -1581,7 +1600,19 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 				}
 			}()
+
 		case "c:22": // ctrl-v, paste
+
+			if e.nanoMode { // nano: ctrl-v, page down
+				h := int(c.H())
+				e.redraw = e.ScrollDown(c, status, h)
+				e.redrawCursor = true
+				if e.AfterLineScreenContents() {
+					e.End(c)
+				}
+				break
+			}
+
 			if portal, err := LoadPortal(); err == nil { // no error
 				var gotLineFromPortal bool
 				line, err := portal.PopLine(e, false) // pop the line, but don't remove it from the source file
@@ -1741,7 +1772,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redraw = true
 		case "c:18": // ctrl-r, to open or close a portal. In debug mode, continue running the program.
 
-			if e.nanoMode {
+			if e.nanoMode { // nano: ctrl-r, insert file
 				// Ask the user which filename to insert
 				if insertFilename, ok := e.UserInput(c, tty, status, "Insert file", []string{e.filename}, false); ok {
 					err := e.RunCommand(c, tty, status, bookmark, undo, "insertfile", insertFilename)
