@@ -52,69 +52,7 @@ func main() {
 	}
 
 	if *helpFlag {
-		fmt.Println(versionString + " - simple and limited text editor")
-		fmt.Print(`
-Hotkeys
-
-ctrl-s      to save
-ctrl-q      to quit
-ctrl-o      to open the command menu
-ctrl-r      to open a portal so that text can be pasted into another file with ctrl-v
-ctrl-space  to compile programs or export adoc/sdoc as a man page
-            double press to render Markdown as HTML
-ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
-            for C++, format the current file with "clang-format"
-            for HTML, format the file with "tidy", for Python: "autopep8"
-            for Markdown, toggle checkboxes or re-format tables
-            for git interactive rebases, cycle the rebase keywords
-ctrl-g      to display simple help 2 times, then toggle the status bar
-            can jump to definition (experimental feature)
-ctrl-_      jump to a matching parenthesis or bracket if on one,
-            otherwise insert a symbol by typing in a two letter ViM-style digraph
-            see https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt
-ctrl-a      go to start of line, then start of text and then the previous line
-ctrl-e      go to end of line and then the next line
-ctrl-n      to scroll down 10 lines or go to the next match if a search is active
-            insert a column when in the Markdown table editor
-ctrl-p      to scroll up 10 lines or go to the previous match
-            remove an empty column when in the Markdown table editor
-ctrl-k      to delete characters to the end of the line, then delete the line
-ctrl-j      to join lines
-ctrl-d      to delete a single character
-ctrl-t      for C and C++, toggle between the header and implementation,
-            for Markdown, launch the Markdown table editor if the cursor is on a table
-            for Agda, insert a symbol,
-            for the rest, record and then play back a macro
-ctrl-c      to copy the current line, press twice to copy the current block
-ctrl-v      to paste one line, press twice to paste the rest
-ctrl-x      to cut the current line, press twice to cut the current block
-ctrl-b      to jump back after having jumped to a definition
-            to toggle a bookmark for the current line, or jump to a bookmark
-            to toggle a breakpoint if in debug mode
-ctrl-u      to undo (ctrl-z is also possible, but may background the application)
-ctrl-l      to jump to a specific line or letter (press return to jump to the top or bottom)
-ctrl-f      to find a string, press Tab after the text to search and replace
-ctrl-\      to toggle single-line comments for a block of code
-ctrl-~      to jump to matching parenthesis
-esc         to redraw the screen and clear the last search
-
-Set NO_COLOR=1 to disable colors.
-
-Flags:
-  -c FILENAME                - Copy the given file into the clipboard.
-  -f                         - Ignore file locks when opening files.
-  -l                         - Output the last used build/format/export command.
-  -m FILENAME                - Monitor the given file for changes, and open it as read-only.
-  -n                         - Avoid writing the location history, search history, highscore,
-                               compilation and format command to ` + cacheDirForDoc + `.
-  -p FILENAME                - Paste the contents of the clipboard into the given file.
-                               Combine with -f to overwrite the file.
-  -r                         - Clear all file locks.
-  --version                  - Display the current version.
-
-See the man page for more information.
-
-`)
+		Usage()
 		return
 	}
 

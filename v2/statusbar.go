@@ -13,14 +13,6 @@ import (
 const (
 	fourSpaces = "    "
 	fiveSpaces = "     "
-
-	// nano on macOS (a symlink from "nano" to "pico")
-	nanoHelpString1 = "^G Get Help  ^O WriteOut  ^R Read File  ^Y Prev Pg  ^K Cut Text    ^C Cur Pos"
-	nanoHelpString2 = "^X Exit      ^J Justify   ^W Where is   ^V Next Pg  ^U UnCut Text  ^T To Spell"
-
-	// GNU Nano
-	//nanoHelpString1 = "^G Help  ^O Write Out  ^W Where Is  ^K Cut    ^T Execute  ^C Location    M-U Undo  M-A Set Mark  M-] To Bracket  M-Q Previous"
-	//nanoHelpString2 = "^X Exit  ^R Read File  ^\\ Replace  ^U Paste  ^J Justify  ^/ Go To Line  M-E Redo  M-6 Copy      ^Q Where Was    M-W Next"
 )
 
 var mut *sync.RWMutex
