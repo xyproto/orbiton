@@ -2649,7 +2649,6 @@ func (e *Editor) DeleteToEndOfLine(c *vt100.Canvas, status *StatusBar, bookmark 
 	*lastCopyY = -1
 	*lastPasteY = -1
 	*lastCutY = -1
-	undo.Snapshot(e)
 	e.DeleteRestOfLine()
 	if e.EmptyRightTrimmedLine() {
 		// Deleting the rest of the line cleared this line,
@@ -2671,13 +2670,13 @@ func (e *Editor) DeleteToEndOfLine(c *vt100.Canvas, status *StatusBar, bookmark 
 func (e *Editor) CutSingleLine(status *StatusBar, bookmark *Position, lastCutY, lastCopyY, lastPasteY *LineIndex, copyLines *[]string, firstCopyAction *bool) (y LineIndex, multiLineCut bool) {
 	y = e.DataY()
 	line := e.Line(y)
-	// Prepare to cut
-	undo.Snapshot(e)
 	// Now check if there is anything to cut
 	if len(strings.TrimSpace(line)) == 0 {
 		// Nothing to cut, just remove the current line
 		e.Home()
 		e.DeleteCurrentLineMoveBookmark(bookmark)
+		e.redraw = true
+		e.redrawCursor = true
 		// Check if ctrl-x was pressed once or twice, for this line
 		return y, false
 	}
@@ -2791,14 +2790,13 @@ func (e *Editor) JoinLineWithNext(c *vt100.Canvas, bookmark *Position) bool {
 		// Just delete the line below if it's empty
 		e.DeleteLineMoveBookmark(nextLineIndex, bookmark)
 		return false
-	} else {
-		// Join the line below with this line. Also add a space in between.
-		e.TrimLeft(nextLineIndex) // this is unproblematic, even at the end of the document
-		e.End(c)
-		e.InsertRune(c, ' ')
-		e.WriteRune(c)
-		e.Next(c)
-		e.Delete()
-		return true
 	}
+	// Join the line below with this line. Also add a space in between.
+	e.TrimLeft(nextLineIndex) // this is unproblematic, even at the end of the document
+	e.End(c)
+	e.InsertRune(c, ' ')
+	e.WriteRune(c)
+	e.Next(c)
+	e.Delete()
+	return true
 }

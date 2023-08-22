@@ -1427,6 +1427,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.quit = true
 			}
 
+			// Prepare to cut
+			undo.Snapshot(e)
+
 			// First try a single line cut
 			if y, multilineCut := e.CutSingleLine(status, bookmark, &lastCutY, &lastCopyY, &lastPasteY, &copyLines, &firstCopyAction); multilineCut { // Multi line cut (add to the clipboard, since it's the second press)
 				lastCutY = y
@@ -1465,14 +1468,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Go to the end of the current line
 			e.End(c)
 		case "c:11": // ctrl-k, delete to end of line
-
+			undo.Snapshot(e)
 			if e.nanoMode { // nano: ctrl-k, cut line
+				// Prepare to cut
 				e.CutSingleLine(status, bookmark, &lastCutY, &lastCopyY, &lastPasteY, &copyLines, &firstCopyAction)
-				// Go to the end of the current line
-				e.End(c)
 				break
 			}
-
 			e.DeleteToEndOfLine(c, status, bookmark, &lastCopyY, &lastPasteY, &lastCutY)
 		case "c:3": // ctrl-c, copy the stripped contents of the current line
 
