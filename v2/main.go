@@ -27,6 +27,8 @@ var (
 	noWriteToCache bool
 
 	cacheDirForDoc = files.ShortPath(filepath.Join(userCacheDir, "o"))
+
+	probablyDoesNotWantToEditExtensions = []string{".7z", ".a", ".bak", ".core", ".gz", ".lock", ".o", ".out", ".pyc", ".pyo", ".swp", ".tar", ".tmp", ".zip"}
 )
 
 func main() {
@@ -272,7 +274,7 @@ See the man page for more information.
 						sort.Strings(matches)
 						// If the matches contains low priority suffixes, such as ".lock", then move it last
 						for i, fn := range matches {
-							if hasSuffix(fn, []string{".7z", ".a", ".bak", ".core", ".gz", ".lock", ".o", ".out", ".pyc", ".pyo", ".swp", ".tar", ".tmp", ".zip"}) {
+							if hasSuffix(fn, probablyDoesNotWantToEditExtensions) {
 								// Move this filename last
 								matches = append(matches[:i], matches[i+1:]...)
 								matches = append(matches, fn)
