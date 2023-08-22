@@ -14,6 +14,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/cyrus-and/gdb"
+	"github.com/xyproto/clip"
+	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
@@ -2634,4 +2636,82 @@ func (e *Editor) JumpToMatching(c *vt100.Canvas) bool {
 		return true
 	}
 	return false
+}
+
+// DeleteToEndOfLine (ctrl-k)
+func (e *Editor) DeleteToEndOfLine(c *vt100.Canvas, status *StatusBar, bookmark *Position, lastCopyY, lastPasteY, lastCutY *LineIndex) {
+	if e.Empty() {
+		status.SetMessage("Empty file")
+		status.Show(c, e)
+		return
+	}
+	// Reset the cut/copy/paste double-keypress detection
+	*lastCopyY = -1
+	*lastPasteY = -1
+	*lastCutY = -1
+	undo.Snapshot(e)
+	e.DeleteRestOfLine()
+	if e.EmptyRightTrimmedLine() {
+		// Deleting the rest of the line cleared this line,
+		// so just remove it.
+		e.DeleteCurrentLineMoveBookmark(bookmark)
+		// Then go to the end of the line, if needed
+		if e.AfterEndOfLine() {
+			e.End(c)
+		}
+	}
+	// TODO: Is this one needed/useful?
+	vt100.Do("Erase End of Line")
+	e.redraw = true
+	e.redrawCursor = true
+}
+
+// CutSingleLine can be called when ctrl-x is pressed (or ctrl-k in nano mode)
+// returns true if a multi-line cut should happen instead
+func (e *Editor) CutSingleLine(status *StatusBar, bookmark *Position, lastCutY, lastCopyY, lastPasteY *LineIndex, copyLines *[]string, firstCopyAction *bool) (y LineIndex, multiLineCut bool) {
+	y = e.DataY()
+	line := e.Line(y)
+	// Prepare to cut
+	undo.Snapshot(e)
+	// Now check if there is anything to cut
+	if len(strings.TrimSpace(line)) == 0 {
+		// Nothing to cut, just remove the current line
+		e.Home()
+		e.DeleteCurrentLineMoveBookmark(bookmark)
+		// Check if ctrl-x was pressed once or twice, for this line
+		return y, false
+	}
+	if *lastCutY != y { // Single line cut
+		// Also close the portal, if any
+		e.ClosePortal()
+		*lastCutY = y
+		*lastCopyY = -1
+		*lastPasteY = -1
+		// Copy the line internally
+		*copyLines = []string{line}
+		var err error
+		if isDarwin() {
+			// Copy the line to the clipboard
+			err = pbcopy(line)
+		} else {
+			// Copy the line to the non-primary clipboard
+			err = clip.WriteAll(line, e.primaryClipboard)
+		}
+		if err != nil && *firstCopyAction {
+			if env.Has("WAYLAND_DISPLAY") && files.Which("wl-copy") == "" { // Wayland
+				status.SetErrorMessage("The wl-copy utility (from wl-clipboard) is missing!")
+			} else if env.Has("DISPLAY") && files.Which("xclip") == "" {
+				status.SetErrorMessage("The xclip utility is missing!")
+			} else if isDarwin() && files.Which("pbcopy") == "" { // pbcopy is missing, on macOS
+				status.SetErrorMessage("The pbcopy utility is missing!")
+			}
+		}
+		// Delete the line
+		e.DeleteLineMoveBookmark(y, bookmark)
+		// No status message is needed for the cut operation, because it's visible that lines are cut
+		e.redrawCursor = true
+		e.redraw = true
+		return y, false
+	}
+	return y, true
 }

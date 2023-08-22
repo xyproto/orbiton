@@ -88,7 +88,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	}
 
 	// Prepare a status bar
-	status := NewStatusBar(e.StatusForeground, e.StatusBackground, e.StatusErrorForeground, e.StatusErrorBackground, e, statusDuration, messageAfterRedraw)
+	status := NewStatusBar(e.StatusForeground, e.StatusBackground, e.StatusErrorForeground, e.StatusErrorBackground, e, statusDuration, messageAfterRedraw, e.nanoMode)
 
 	e.SetTheme(e.Theme)
 
@@ -199,6 +199,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:17": // ctrl-q, quit
 			e.quit = true
 		case "c:23": // ctrl-w, format or insert template (or if in git mode, cycle interactive rebase keywords)
+
+			if e.nanoMode {
+				e.SearchMode(c, status, tty, true, undo)
+				break
+			}
 
 			undo.Snapshot(e)
 
@@ -440,6 +445,16 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redraw = true
 			e.redrawCursor = true
 		case "c:15": // ctrl-o, launch the command menu
+			if e.nanoMode {
+				// Ask the user which filename to save to
+				if newFilename, ok := e.UserInput(c, tty, status, "Save as", []string{e.filename}, false); ok {
+					e.filename = newFilename
+					e.Save(c, tty)
+					e.Switch(c, tty, status, fileLock, newFilename)
+				}
+				break
+			}
+
 			status.ClearAll(c)
 			undo.Snapshot(e)
 			undoBackup := undo
@@ -470,6 +485,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.redraw = true
 				}
 			}
+
 		case "←": // left arrow
 
 			// Don't move if ChatGPT is currently generating tokens that are being inserted
@@ -1390,6 +1406,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.UserSave(c, tty, status)
 		case "c:7": // ctrl-g, either go to definition OR toggle the status bar
 
+			if e.nanoMode {
+				status.Clear(c)
+				status.SetMessage("NANO HELP GOES HERE")
+				status.Show(c, e)
+				break
+			}
+
 			// If a search is in progress, clear the search
 			if e.searchTerm != "" {
 				e.ClearSearchTerm()
@@ -1401,7 +1424,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// func prefix must exist for this language/mode for GoToDefinition to be supported
 			jumpedToDefinition := e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status)
 
-			// If the definition could not be found, toggle the status line at the bottom.
+			// If the definition could not be found, toggle the status line at the bottom
 			if !jumpedToDefinition {
 				status.ClearAll(c)
 				e.statusMode = !e.statusMode
@@ -1433,47 +1456,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redraw = true
 			e.redrawCursor = true
 		case "c:24": // ctrl-x, cut line
-			y := e.DataY()
-			line := e.Line(y)
-			// Prepare to cut
-			undo.Snapshot(e)
-			// Now check if there is anything to cut
-			if len(strings.TrimSpace(line)) == 0 {
-				// Nothing to cut, just remove the current line
-				e.Home()
-				e.DeleteCurrentLineMoveBookmark(bookmark)
-				// Check if ctrl-x was pressed once or twice, for this line
-			} else if lastCutY != y { // Single line cut
-				// Also close the portal, if any
-				e.ClosePortal()
 
-				lastCutY = y
-				lastCopyY = -1
-				lastPasteY = -1
-				// Copy the line internally
-				copyLines = []string{line}
-
-				var err error
-				if isDarwin() {
-					// Copy the line to the clipboard
-					err = pbcopy(line)
-				} else {
-					// Copy the line to the non-primary clipboard
-					err = clip.WriteAll(line, e.primaryClipboard)
-				}
-				if err != nil && firstCopyAction {
-					if env.Has("WAYLAND_DISPLAY") && files.Which("wl-copy") == "" { // Wayland
-						status.SetErrorMessage("The wl-copy utility (from wl-clipboard) is missing!")
-					} else if env.Has("DISPLAY") && files.Which("xclip") == "" {
-						status.SetErrorMessage("The xclip utility is missing!")
-					} else if isDarwin() && files.Which("pbcopy") == "" { // pbcopy is missing, on macOS
-						status.SetErrorMessage("The pbcopy utility is missing!")
-					}
-				}
-
-				// Delete the line
-				e.DeleteLineMoveBookmark(y, bookmark)
-			} else { // Multi line cut (add to the clipboard, since it's the second press)
+			// First try a single line cut
+			if y, multilineCut := e.CutSingleLine(status, bookmark, &lastCutY, &lastCopyY, &lastPasteY, &copyLines, &firstCopyAction); multilineCut { // Multi line cut (add to the clipboard, since it's the second press)
 				lastCutY = y
 				lastCopyY = -1
 				lastPasteY = -1
@@ -1502,42 +1487,21 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				for range lines {
 					e.DeleteLineMoveBookmark(y, bookmark)
 				}
+
+				// No status message is needed for the cut operation, because it's visible that lines are cut
+				e.redrawCursor = true
+				e.redraw = true
 			}
 			// Go to the end of the current line
 			e.End(c)
-			// No status message is needed for the cut operation, because it's visible that lines are cut
-			e.redrawCursor = true
-			e.redraw = true
 		case "c:11": // ctrl-k, delete to end of line
-			if e.Empty() {
-				status.SetMessage("Empty file")
-				status.Show(c, e)
+			if e.nanoMode {
+				e.CutSingleLine(status, bookmark, &lastCutY, &lastCopyY, &lastPasteY, &copyLines, &firstCopyAction)
+				// Go to the end of the current line
+				e.End(c)
 				break
 			}
-
-			// Reset the cut/copy/paste double-keypress detection
-			lastCopyY = -1
-			lastPasteY = -1
-			lastCutY = -1
-
-			undo.Snapshot(e)
-
-			e.DeleteRestOfLine()
-			if e.EmptyRightTrimmedLine() {
-				// Deleting the rest of the line cleared this line,
-				// so just remove it.
-				e.DeleteCurrentLineMoveBookmark(bookmark)
-				// Then go to the end of the line, if needed
-				if e.AfterEndOfLine() {
-					e.End(c)
-				}
-			}
-
-			// TODO: Is this one needed/useful?
-			vt100.Do("Erase End of Line")
-
-			e.redraw = true
-			e.redrawCursor = true
+			e.DeleteToEndOfLine(c, status, bookmark, &lastCopyY, &lastPasteY, &lastCutY)
 		case "c:3": // ctrl-c, copy the stripped contents of the current line
 
 			// ctrl-c might interrupt the program, but saving at the wrong time might be just as destructive.
@@ -1776,6 +1740,19 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redrawCursor = true
 			e.redraw = true
 		case "c:18": // ctrl-r, to open or close a portal. In debug mode, continue running the program.
+
+			if e.nanoMode {
+				// Ask the user which filename to insert
+				if insertFilename, ok := e.UserInput(c, tty, status, "Insert file", []string{e.filename}, false); ok {
+					err := e.RunCommand(c, tty, status, bookmark, undo, "insertfile", insertFilename)
+					if err != nil {
+						status.SetError(err)
+						status.Show(c, e)
+						break
+					}
+				}
+				break
+			}
 
 			if e.debugMode {
 				e.DebugContinue()
