@@ -307,6 +307,16 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redrawCursor = true
 
 		case "c:20": // ctrl-t
+
+			if e.nanoMode { // nano: ctrl-t, spell check
+				if err := e.SpellCheck(c, status); err != nil {
+					status.Clear(c)
+					status.SetError(err)
+					status.Show(c, e)
+				}
+				break
+			}
+
 			// for C or C++: jump to header/source, or insert symbol
 			// for Agda: insert symbol
 			// for the rest: record and play back macros
