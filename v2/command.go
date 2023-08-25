@@ -167,7 +167,8 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 				status.SetError(err)
 				status.Show(c, e)
 			} else {
-				status.SetMessageAfterRedraw("Copied everything")
+				numLines := strings.Count(e.String(), "\n") + 1
+				status.SetMessageAfterRedraw(fmt.Sprintf("Copied %d lines", numLines))
 			}
 		},
 		help: func() { // display an informative status message
