@@ -231,7 +231,6 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		searchHistorySlice, _ := LoadSearchHistory(searchHistoryFilename)
 		searchHistory = &searchHistorySlice
 	}
-
 	var (
 		searchPrompt       = "Search:"
 		previousSearch     string
@@ -240,7 +239,6 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		searchHistoryIndex int
 		replaceMode        bool
 	)
-
 AGAIN:
 	doneCollectingLetters := false
 	pressedReturn := false
@@ -258,7 +256,6 @@ AGAIN:
 	}
 	status.ShowNoTimeout(c, e)
 	for !doneCollectingLetters {
-
 		if e.macro == nil || (e.playBackMacroCount == 0 && !e.macro.Recording) {
 			// Read the next key in the regular way
 			key = tty.String()
@@ -280,7 +277,6 @@ AGAIN:
 				}
 			}
 		}
-
 		switch key {
 		case "c:8", "c:127": // ctrl-h or backspace
 			if len(s) > 0 {
@@ -371,13 +367,11 @@ AGAIN:
 		}
 	}
 	status.ClearAll(c)
-
 	// Search settings
 	forward := true // forward search
 	wrap := true    // with wraparound
 	foundNoTypos := false
 	typoSearch := false
-
 	if s == "" && !replaceMode {
 		// No search string entered, and not in replace mode, use the current word, if available
 		s = e.CurrentWord()
@@ -409,7 +403,6 @@ AGAIN:
 		e.AddCurrentWordToWordList(c, status)
 		return
 	}
-
 	if pressedTab && previousSearch == "" { // search text -> tab
 		// got the search text, now gather the replace text
 		previousSearch = e.searchTerm
@@ -439,7 +432,6 @@ AGAIN:
 			}
 		}
 		// Set up a redraw and return
-
 		e.redraw = true
 		return
 	} else if pressedReturn && previousSearch != "" { // search text -> tab -> replace text -> return
@@ -484,9 +476,7 @@ AGAIN:
 		e.redraw = true
 		return
 	}
-
 	e.SetSearchTerm(c, status, s)
-
 	if pressedReturn {
 		// Return to the first location before performing the actual search
 		e.GoToLineNumber(initialLocation, c, status, false)
@@ -504,7 +494,6 @@ AGAIN:
 			e.SetSearchTerm(c, status, s)
 		}
 	}
-
 	if previousSearch == "" {
 		// Perform the actual search
 		if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
