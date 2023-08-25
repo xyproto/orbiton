@@ -375,10 +375,12 @@ AGAIN:
 	// Search settings
 	forward := true // forward search
 	wrap := true    // with wraparound
+	foundNoTypos := false
+	typoSearch := false
 
 	if s == "" && !replaceMode {
 		// No search string entered, and not in replace mode, use the current word, if available
-		s = e.WordAtCursor()
+		s = e.CurrentWord()
 	} else if s == "f" {
 		// A special case, search backwards to the start of the function (or to "main")
 		s = e.FuncPrefix()
@@ -386,6 +388,26 @@ AGAIN:
 			s = "main"
 		}
 		forward = false
+	} else if s == "t" {
+		// A special case, search forward for typos
+		typoSearch = true
+		foundNoTypos = false
+		typo, err := e.SearchForTypo(c, status)
+		if err != nil {
+			return
+		} else if err == errFoundNoTypos || typo == "" {
+			foundNoTypos = true
+			status.Clear(c)
+			status.SetMessage("found no typos")
+			status.Show(c, e)
+			return
+		} else {
+			s = typo
+			forward = true
+		}
+	} else if s == "a" {
+		e.AddCurrentWordToWordList(c, status)
+		return
 	}
 
 	if pressedTab && previousSearch == "" { // search text -> tab
@@ -490,7 +512,9 @@ AGAIN:
 			// e.GoToTop(c, status)
 			// err = e.GoToNextMatch(c, status)
 			if err == errNoSearchMatch {
-				if wrap {
+				if foundNoTypos || typoSearch {
+					status.SetMessage("found no typos")
+				} else if wrap {
 					status.SetMessage(s + " not found")
 				} else {
 					status.SetMessage(s + " not found from here")

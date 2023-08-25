@@ -25,7 +25,7 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 	}
 
 	// Do we have a word under the cursor? No need to trim it at this point.
-	word := e.WordAtCursor()
+	word := e.CurrentWord()
 	if word == "" {
 		return false
 	}

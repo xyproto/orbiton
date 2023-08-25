@@ -2148,9 +2148,9 @@ func (e *Editor) LineContentsFromCursorPosition() string {
 	return strings.TrimSpace(e.CurrentLine()[x:])
 }
 
-// WordAtCursor returns the current word under the cursor, or an empty string.
+// CurrentWord returns the current word under the cursor, or an empty string.
 // The word may contain numbers or dashes, but not spaces or special characters.
-func (e *Editor) WordAtCursor() string {
+func (e *Editor) CurrentWord() string {
 	y := int(e.DataY())
 	runes, ok := e.lines[y]
 	if !ok {
