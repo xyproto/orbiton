@@ -9,7 +9,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-//go:embed words.txt.gz
+//go:embed english_word_list.txt.gz
 var gzwords []byte
 
 // SpellCheck checks every word compared to the embedded word list
