@@ -238,6 +238,7 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		key                string
 		initialLocation    = e.DataY().LineNumber()
 		searchHistoryIndex int
+		replaceMode        bool
 	)
 
 AGAIN:
@@ -375,8 +376,8 @@ AGAIN:
 	forward := true // forward search
 	wrap := true    // with wraparound
 
-	if s == "" {
-		// No search string entered, use the current word, if available
+	if s == "" && !replaceMode {
+		// No search string entered, and not in replace mode, use the current word, if available
 		s = e.WordAtCursor()
 	} else if s == "f" {
 		// A special case, search backwards to the start of the function (or to "main")
@@ -391,6 +392,7 @@ AGAIN:
 		// got the search text, now gather the replace text
 		previousSearch = e.searchTerm
 		searchPrompt = "Replace with:"
+		replaceMode = true
 		goto AGAIN
 	} else if pressedTab && previousSearch != "" { // search text -> tab -> replace text- > tab
 		undo.Snapshot(e)
@@ -399,7 +401,11 @@ AGAIN:
 		replaceWith := s
 		replaced := strings.Replace(e.String(), searchFor, replaceWith, 1)
 		e.LoadBytes([]byte(replaced))
-		status.messageAfterRedraw = "Replaced " + searchFor + " with " + replaceWith + ", once"
+		if replaceWith == "" {
+			status.messageAfterRedraw = "Removed " + searchFor + ", once"
+		} else {
+			status.messageAfterRedraw = "Replaced " + searchFor + " with " + replaceWith + ", once"
+		}
 		// Save "searchFor" to the search history
 		if trimmedSearchString := strings.TrimSpace(searchFor); trimmedSearchString != "" {
 			if lastEntryIsNot(*searchHistory, trimmedSearchString) {
@@ -437,7 +443,11 @@ AGAIN:
 		if instanceCount != 1 {
 			extraS = "s"
 		}
-		status.messageAfterRedraw = fmt.Sprintf("Replaced %d instance%s of %s with %s", instanceCount, extraS, previousSearch, s)
+		if s == "" {
+			status.messageAfterRedraw = fmt.Sprintf("Removed %d instance%s of %s", instanceCount, extraS, previousSearch)
+		} else {
+			status.messageAfterRedraw = fmt.Sprintf("Replaced %d instance%s of %s with %s", instanceCount, extraS, previousSearch, s)
+		}
 		// Save "searchFor" to the search history
 		if trimmedSearchString := strings.TrimSpace(string(searchForBytes)); trimmedSearchString != "" {
 			if lastEntryIsNot(*searchHistory, trimmedSearchString) {
