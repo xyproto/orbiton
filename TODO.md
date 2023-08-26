@@ -31,6 +31,7 @@
 - [ ] alt-q for previous (use ctrl-p instead)
 - [ ] alt-a to set mark
 - [ ] alt-] to jump to bracket
+- [ ] Support other themes, like the Mono Gray theme
 
 See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
