@@ -19,7 +19,7 @@ For a more feature complete editor that is also written in Go, check out [micro]
 
 ## Screenshots
 
-Screenshot of the VTE GUI application that can be found in the `og` directory, running the `o` editor:
+Screenshot of the VTE GUI application (that can be found in the `gtk3` directory), running the `o` editor:
 
 ![screenshot](img/screenshot2021sept.png)
 
