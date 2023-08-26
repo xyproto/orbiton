@@ -208,7 +208,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			undo.Snapshot(e)
 
 			// Clear the search term
-			e.ClearSearchTerm()
+			e.ClearSearch()
 
 			// First check if we are editing Markdown and are in a Markdown table (and that this is not the previous thing that we did)
 			if e.mode == mode.Markdown && e.InTable() && !kh.PrevIs("c:23") {
@@ -309,11 +309,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:20": // ctrl-t
 
 			if e.nanoMode { // nano: ctrl-t, spell check
-				if err := e.SpellCheck(c, status); err != nil {
+				if typo, err := e.SearchForTypo(c, status); err == nil {
+					e.SetSearchTerm(c, status, typo)
+				} else if err == errFoundNoTypos || typo == "" {
 					status.Clear(c)
-					status.SetError(err)
+					status.SetMessage("Found no typos")
 					status.Show(c, e)
 				}
+				e.redraw = true
+				e.redrawCursor = true
 				break
 			}
 
@@ -1098,7 +1102,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			// Just clear the search term, if there is an active search
 			if len(e.SearchTerm()) > 0 {
-				e.ClearSearchTerm()
+				e.ClearSearch()
 				e.redraw = true
 				e.redrawCursor = true
 				// Don't break, continue to delete to the left after clearing the search,
@@ -1391,7 +1395,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			// If a search is in progress, clear the search
 			if e.searchTerm != "" {
-				e.ClearSearchTerm()
+				e.ClearSearch()
 				e.redraw = true
 				e.redrawCursor = true
 				break
