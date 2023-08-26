@@ -1445,7 +1445,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.redraw = true
 				}
 			}
-		case "c:21", "c:26": // ctrl-u or ctrl-z (ctrl-z may background the application)
+		case "c:21": // ctrl-u to undo
 
 			if e.nanoMode {
 				// TODO refactor the paste functionality into a different file, and then call it
@@ -1454,6 +1454,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.Show(c, e)
 				break
 			}
+
+			fallthrough
+		case "c:26": // ctrl-z to undo (my background the application)
 
 			// Forget the cut, copy and paste line state
 			lastCutY = -1
