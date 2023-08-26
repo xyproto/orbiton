@@ -95,9 +95,10 @@ func (e *Editor) DrawNanoHelp(c *vt100.Canvas, repositionCursorAfterDrawing bool
 	const (
 		maxLines     = 30
 		title        = "Orbiton Nano Mode"
-		nanoHelpText = `The Orbiton Nano mode is designed to emulate the core functionality and relative easy-of-use of the UW Pico and GNU Nano editors.
+		nanoHelpText = `The Orbiton Nano mode is designed to emulate the core functionality
+and relative easy-of-use of the UW Pico and GNU Nano editors.
 
-Keyboard shortcuts:
+Keyboard hotkeys:
 
 ctrl-g    - display this help
 ctrl-o    - save this file as a different filename ("Write Out")
@@ -115,9 +116,10 @@ ctrl-t    - jump to the next misspelled English word ("To Spell")
 ctrl-/    - go to line
 ctrl-s    - save
 ctrl-a    - go to the start of the line, start of the text or one line up
+            after pressing ctrl-t to find typos, add a word to the dictionary
 ctrl-e    - go to the end of line and then to the next line
-ctrl-n    - move to the next line, or go to the next match if a search is active
-ctrl-p    - move to the previous line, or go to the next match if a search is active
+ctrl-n    - go to the next line, or to the next match if a search is active
+ctrl-p    - go to the previous line, or to the next match if a search is active
 ctrl-d    - delete a single character
 ctrl-f    - move cursor one position forward
 ctrl-b    - move cursor one position back
