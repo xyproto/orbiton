@@ -48,11 +48,13 @@ func initSpellcheck() {
 // AddCurrentWordToWordList will attempt to add the word at the cursor to the spellcheck word list
 func (e *Editor) AddCurrentWordToWordList() string {
 	initSpellcheck()
-	word := letterDigitsRegexp.ReplaceAllString(e.CurrentWord(), "")
-	if hasS(correctWords, word) {
+
+	word := strings.TrimSpace(letterDigitsRegexp.ReplaceAllString(e.CurrentWord(), ""))
+	if hasS(correctWords, word) { // already has this word
 		return ""
 	}
 	correctWords = append(correctWords, word)
+
 	fuzzyModel = fuzzy.NewModel()
 	fuzzyModel.SetDepth(2)
 	fuzzyModel.Train(correctWords)
@@ -63,7 +65,7 @@ func (e *Editor) AddCurrentWordToWordList() string {
 func (e *Editor) RemoveCurrentWordFromWordList() string {
 	initSpellcheck()
 
-	word := letterDigitsRegexp.ReplaceAllString(e.CurrentWord(), "")
+	word := strings.TrimSpace(letterDigitsRegexp.ReplaceAllString(e.CurrentWord(), ""))
 
 	l := len(correctWords)
 
@@ -103,7 +105,7 @@ func (e *Editor) SearchForTypo(c *vt100.Canvas, status *StatusBar) (string, erro
 	// Now spellcheck all the words, and log the results
 	for _, word := range strings.Fields(e.String()) {
 		// Remove special characters
-		justTheWord := letterDigitsRegexp.ReplaceAllString(word, "")
+		justTheWord := strings.TrimSpace(letterDigitsRegexp.ReplaceAllString(word, ""))
 		if justTheWord == "" {
 			continue
 		}
