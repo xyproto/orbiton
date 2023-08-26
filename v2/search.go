@@ -49,8 +49,8 @@ func (e *Editor) SearchTerm() string {
 	return e.searchTerm
 }
 
-// ClearSearchTerm will clear the current search term
-func (e *Editor) ClearSearchTerm() {
+// ClearSearch will clear the current search term
+func (e *Editor) ClearSearch() {
 	e.searchTerm = ""
 }
 
@@ -502,7 +502,8 @@ AGAIN:
 			// err = e.GoToNextMatch(c, status)
 			if err == errNoSearchMatch {
 				if foundNoTypos || typoSearch {
-					status.SetMessage("found no typos")
+					status.SetMessage("No typos found")
+					e.ClearSearch()
 				} else if wrap {
 					status.SetMessage(s + " not found")
 				} else {
