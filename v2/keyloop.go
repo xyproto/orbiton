@@ -310,7 +310,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			if e.nanoMode { // nano: ctrl-t, spell check
 				if typo, err := e.SearchForTypo(c, status); err == nil {
-					e.SetSearchTerm(c, status, typo)
+					e.SetSearchTerm(c, status, typo, true)
 				} else if err == errFoundNoTypos || typo == "" {
 					status.Clear(c)
 					status.SetMessage("Found no typos")
@@ -1158,6 +1158,16 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redraw = true
 		case "c:9": // tab or ctrl-i
 
+			if e.spellCheckMode {
+				// TODO: Save a "custom words" and "ignored words" list to disk
+				if ignoredWord := e.RemoveCurrentWordFromWordList(); ignoredWord != "" {
+					status.Clear(c)
+					status.SetMessage("Ignored " + ignoredWord)
+					status.Show(c, e)
+				}
+				break
+			}
+
 			if e.debugMode {
 				e.debugStepInto = !e.debugStepInto
 				break
@@ -1318,6 +1328,16 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 			fallthrough
 		case "c:1": // ctrl-a, home (or ctrl-y for scrolling up in the st terminal)
+
+			if e.spellCheckMode {
+				if addedWord := e.AddCurrentWordToWordList(); addedWord != "" {
+					status.Clear(c)
+					status.SetMessage("Added " + addedWord)
+					status.Show(c, e)
+				}
+				break
+			}
+
 			// Do not reset cut/copy/paste status
 
 			// First check if we just moved to this line with the arrow keys

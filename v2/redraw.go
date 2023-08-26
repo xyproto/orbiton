@@ -10,7 +10,7 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines b
 
 	if status != nil {
 		status.ClearAll(c)
-		e.SetSearchTerm(c, status, "")
+		e.SetSearchTerm(c, status, "", false)
 	}
 
 	resizeMut.Lock()

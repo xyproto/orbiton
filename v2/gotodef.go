@@ -57,7 +57,7 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 
 	// TODO: Search for variables, constants etc
 	// Go to definition, but only of functions defined within the same Go file, for now
-	e.SetSearchTerm(c, status, s)
+	e.SetSearchTerm(c, status, s, false)
 
 	// Backward search from the current location
 	startIndex := e.DataY()

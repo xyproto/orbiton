@@ -19,12 +19,14 @@ var (
 )
 
 // SetSearchTerm will set the current search term. This initializes a new search.
-func (e *Editor) SetSearchTerm(c *vt100.Canvas, status *StatusBar, s string) bool {
+func (e *Editor) SetSearchTerm(c *vt100.Canvas, status *StatusBar, s string, spellCheckMode bool) bool {
 	foundMatch := false
 	// set the search term
 	e.searchTerm = s
 	// set the sticky search term (used by ctrl-n, cleared by Esc only)
 	e.stickySearchTerm = s
+	// set spellcheck mode on
+	e.spellCheckMode = spellCheckMode
 	// Go to the first instance after the current line, if found
 	e.lineBeforeSearch = e.DataY()
 	for y := e.DataY(); y < LineIndex(e.Len()); y++ {
@@ -245,7 +247,7 @@ AGAIN:
 	pressedTab := false
 	if clear {
 		// Clear the previous search
-		e.SetSearchTerm(c, status, "")
+		e.SetSearchTerm(c, status, "", false)
 	}
 	s := e.SearchTerm()
 	status.ClearAll(c)
@@ -282,7 +284,7 @@ AGAIN:
 			if len(s) > 0 {
 				s = s[:len(s)-1]
 				if previousSearch == "" {
-					e.SetSearchTerm(c, status, s)
+					e.SetSearchTerm(c, status, s, false)
 				}
 				e.GoToLineNumber(initialLocation, c, status, false)
 				status.SetMessage(searchPrompt + " " + s)
@@ -291,7 +293,7 @@ AGAIN:
 		case "c:6", "c:17", "c:27": // ctrl-f, ctrl-q or esc
 			s = ""
 			if previousSearch == "" {
-				e.SetSearchTerm(c, status, s)
+				e.SetSearchTerm(c, status, s, false)
 			}
 			doneCollectingLetters = true
 		case "c:9": // tab
@@ -336,7 +338,7 @@ AGAIN:
 			}
 			s = (*searchHistory)[searchHistoryIndex]
 			if previousSearch == "" {
-				e.SetSearchTerm(c, status, s)
+				e.SetSearchTerm(c, status, s, false)
 			}
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
@@ -351,7 +353,7 @@ AGAIN:
 			}
 			s = (*searchHistory)[searchHistoryIndex]
 			if previousSearch == "" {
-				e.SetSearchTerm(c, status, s)
+				e.SetSearchTerm(c, status, s, false)
 			}
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
@@ -359,7 +361,7 @@ AGAIN:
 			if key != "" && !strings.HasPrefix(key, "c:") {
 				s += key
 				if previousSearch == "" {
-					e.SetSearchTerm(c, status, s)
+					e.SetSearchTerm(c, status, s, false)
 				}
 				status.SetMessage(searchPrompt + " " + s)
 				status.ShowNoTimeout(c, e)
@@ -371,7 +373,7 @@ AGAIN:
 	forward := true // forward search
 	wrap := true    // with wraparound
 	foundNoTypos := false
-	typoSearch := false
+	spellCheckMode := false
 	if s == "" && !replaceMode {
 		// No search string entered, and not in replace mode, use the current word, if available
 		s = e.CurrentWord()
@@ -384,7 +386,7 @@ AGAIN:
 		forward = false
 	} else if s == "t" {
 		// A special case, search forward for typos
-		typoSearch = true
+		spellCheckMode = true
 		foundNoTypos = false
 		typo, err := e.SearchForTypo(c, status)
 		if err != nil {
@@ -399,9 +401,6 @@ AGAIN:
 			s = typo
 			forward = true
 		}
-	} else if s == "a" {
-		e.AddCurrentWordToWordList(c, status)
-		return
 	}
 	if pressedTab && previousSearch == "" { // search text -> tab
 		// got the search text, now gather the replace text
@@ -476,7 +475,7 @@ AGAIN:
 		e.redraw = true
 		return
 	}
-	e.SetSearchTerm(c, status, s)
+	e.SetSearchTerm(c, status, s, spellCheckMode)
 	if pressedReturn {
 		// Return to the first location before performing the actual search
 		e.GoToLineNumber(initialLocation, c, status, false)
@@ -491,7 +490,7 @@ AGAIN:
 			}
 		} else if len(*searchHistory) > 0 {
 			s = (*searchHistory)[searchHistoryIndex]
-			e.SetSearchTerm(c, status, s)
+			e.SetSearchTerm(c, status, s, false)
 		}
 	}
 	if previousSearch == "" {
@@ -501,7 +500,7 @@ AGAIN:
 			// e.GoToTop(c, status)
 			// err = e.GoToNextMatch(c, status)
 			if err == errNoSearchMatch {
-				if foundNoTypos || typoSearch {
+				if foundNoTypos || spellCheckMode {
 					status.SetMessage("No typos found")
 					e.ClearSearch()
 				} else if wrap {

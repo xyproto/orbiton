@@ -69,6 +69,7 @@ type Editor struct {
 	primaryClipboard   bool            // use the primary or the secondary clipboard on UNIX?
 	jumpToLetterMode   bool            // jump directly to a highlighted letter
 	nanoMode           bool            // emulate GNU Nano
+	spellCheckMode     bool            // spell check mode?
 }
 
 // NewCustomEditor takes:

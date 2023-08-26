@@ -14,9 +14,10 @@ var (
 	//go:embed english_word_list.txt.gz
 	gzwords []byte
 
-	fuzzyModel      *fuzzy.Model
-	correctWords    []string
-	errFoundNoTypos = errors.New("found no typos")
+	fuzzyModel         *fuzzy.Model
+	correctWords       []string
+	errFoundNoTypos    = errors.New("found no typos")
+	letterDigitsRegexp = regexp.MustCompile(`[^a-zA-Z0-9 ]+`)
 )
 
 func initSpellcheck() {
@@ -45,23 +46,51 @@ func initSpellcheck() {
 }
 
 // AddCurrentWordToWordList will attempt to add the word at the cursor to the spellcheck word list
-func (e *Editor) AddCurrentWordToWordList(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) AddCurrentWordToWordList() string {
+	initSpellcheck()
+	word := letterDigitsRegexp.ReplaceAllString(e.CurrentWord(), "")
+	if hasS(correctWords, word) {
+		return ""
+	}
+	correctWords = append(correctWords, word)
+	fuzzyModel = fuzzy.NewModel()
+	fuzzyModel.SetDepth(2)
+	fuzzyModel.Train(correctWords)
+	return word
+}
+
+// RemoveCurrentWordFromWordList will attempt to add the word at the cursor to the spellcheck word list
+func (e *Editor) RemoveCurrentWordFromWordList() string {
 	initSpellcheck()
 
-	re := regexp.MustCompile(`[^a-zA-Z0-9 ]+`)
-	word := re.ReplaceAllString(e.CurrentWord(), "")
+	word := letterDigitsRegexp.ReplaceAllString(e.CurrentWord(), "")
 
-	if !hasS(correctWords, word) {
-		correctWords = append(correctWords, word)
+	l := len(correctWords)
+
+	if l == 0 { // can not remove from an empty list
+		return ""
 	}
+
+	wordIndex := -1
+	for i := 0; i < l; i++ {
+		if correctWords[i] == word {
+			wordIndex = i
+			break
+		}
+	}
+	if wordIndex == -1 { // not found
+		return ""
+	}
+
+	lastIndex := l - 1
+	correctWords[wordIndex] = correctWords[lastIndex]
+	correctWords = correctWords[:lastIndex]
 
 	fuzzyModel = fuzzy.NewModel()
 	fuzzyModel.SetDepth(2)
 	fuzzyModel.Train(correctWords)
 
-	status.Clear(c)
-	status.SetMessage("Added " + word)
-	status.Show(c, e)
+	return word
 }
 
 // SearchForTypo returns the first misspelled word in the document (as defined by the dictionary),
@@ -69,12 +98,12 @@ func (e *Editor) AddCurrentWordToWordList(c *vt100.Canvas, status *StatusBar) {
 func (e *Editor) SearchForTypo(c *vt100.Canvas, status *StatusBar) (string, error) {
 	initSpellcheck()
 
-	re := regexp.MustCompile(`[^a-zA-Z0-9 ]+`)
+	e.spellCheckMode = true
 
 	// Now spellcheck all the words, and log the results
 	for _, word := range strings.Fields(e.String()) {
 		// Remove special characters
-		justTheWord := re.ReplaceAllString(word, "")
+		justTheWord := letterDigitsRegexp.ReplaceAllString(word, "")
 		if justTheWord == "" {
 			continue
 		}
