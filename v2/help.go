@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/xyproto/vt100"
 )
@@ -10,16 +11,14 @@ const (
 	// nano on macOS (a symlink from "nano" to "pico")
 	nanoHelpString1 = "^G Get Help  ^O WriteOut  ^R Read File  ^Y Prev Pg  ^K Cut Text    ^C Cur Pos"
 	nanoHelpString2 = "^X Exit      ^J Justify   ^W Where is   ^V Next Pg  ^U UnCut Text  ^T To Spell"
+
 	// GNU Nano
 	//nanoHelpString1 = "^G Help  ^O Write Out  ^W Where Is  ^K Cut    ^T Execute  ^C Location    M-U Undo  M-A Set Mark  M-] To Bracket  M-Q Previous"
 	//nanoHelpString2 = "^X Exit  ^R Read File  ^\\ Replace  ^U Paste  ^J Justify  ^/ Go To Line  M-E Redo  M-6 Copy      ^Q Where Was    M-W Next"
 )
 
-// Usage prints the text that appears when the --help flag is passed
-func Usage() {
-	fmt.Println(versionString + " - simple and limited text editor")
-	fmt.Print(`
-Hotkeys
+var (
+	usageText = `Hotkeys
 
 ctrl-s      to save
 ctrl-q      to quit
@@ -79,7 +78,13 @@ Flags:
 
 See the man page for more information.
 
-`)
+`
+)
+
+// Usage prints the text that appears when the --help flag is passed
+func Usage() {
+	fmt.Println(versionString + " - simple and limited text editor")
+	fmt.Print(usageText)
 }
 
 // HelpMessage tries to show a friendly help message to the user.
@@ -87,4 +92,81 @@ func (e *Editor) HelpMessage(c *vt100.Canvas, status *StatusBar) {
 	status.ClearAll(c)
 	status.SetMessage("Press ctrl-q to quit or ctrl-o to show the menu. Use the --help flag for more help.")
 	status.Show(c, e)
+}
+
+// DrawNanoHelp will draw a help box for nano hotkeys in the center
+func (e *Editor) DrawNanoHelp(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
+	const (
+		maxLines     = 24
+		nanoHelpText = `The Orbiton Nano editor is designed to emulate the core functionality and relative easy-of-use of the UW Pico and the GNU Nano editors.
+
+These hotkeys are supported:
+
+ctrl-g    - display this help
+ctrl-o    - save this file as a different filename ("Write Out")
+ctrl-r    - insert a file ("Read File")
+ctrl-y    - page up ("Prev Pg")
+ctrl-v    - page down ("Next Pg")
+ctrl-k    - cut this line ("Cut Text")
+ctrl-c    - display brief cursor location information ("Cur Pos")
+ctrl-x    - exit the program ("Exit)
+ctrl-j    - join this block of text ("Justify")
+ctrl-w    - search ("Where Is")
+ctrl-u    - paste ("UnCut Text")
+ctrl-t    - jump to the next misspelled English word ("To Spell")
+
+...
+`
+		title = "Nano Help"
+	)
+
+	var (
+		minWidth        = 40
+		backgroundColor = vt100.BackgroundGray
+	)
+
+	// Get the last maxLine lines, and create a string slice
+	lines := strings.Split(nanoHelpText, "\n")
+	if l := len(lines); l > maxLines {
+		lines = lines[l-maxLines:]
+	}
+	for _, line := range lines {
+		if len(line) > minWidth {
+			minWidth = len(line) + 5
+		}
+	}
+
+	// First create a box the size of the entire canvas
+	canvasBox := NewCanvasBox(c)
+
+	centerBox := NewBox()
+
+	const marginX = 5
+	const marginY = 5
+	centerBox.FillWithMargins(canvasBox, marginX, marginY)
+
+	// Then create a list box
+	listBox := NewBox()
+	listBox.FillWithMargins(centerBox, 2, 2)
+
+	// Get the current theme for the stdout box
+	bt := e.NewBoxTheme()
+	bt.Background = &backgroundColor
+	bt.UpperEdge = bt.LowerEdge
+
+	e.DrawBox(bt, c, centerBox)
+
+	e.DrawTitle(bt, c, centerBox, title)
+
+	e.DrawList(bt, c, listBox, lines, -1)
+
+	// Blit
+	c.Draw()
+
+	// Reposition the cursor
+	if repositionCursorAfterDrawing {
+		x := e.pos.ScreenX()
+		y := e.pos.ScreenY()
+		vt100.SetXY(uint(x), uint(y))
+	}
 }
