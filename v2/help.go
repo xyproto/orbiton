@@ -8,14 +8,9 @@ import (
 )
 
 const (
-	// nano on macOS (a symlink from "nano" to "pico")
-	nanoHelpString1 = "^G Get Help  ^O Write Out  ^R Read File  ^Y Prev Pg  ^K Cut Text    ^C Cur Pos"
-	nanoHelpString2 = "^X Exit      ^J Justify    ^W Where Is   ^V Next Pg  ^U UnCut Text  ^T To Spell"
-
-	// GNU Nano
-	//nanoHelpString1 = "^G Help  ^O Write Out  ^W Where Is  ^K Cut    ^T Execute  ^C Location    M-U Undo  M-A Set Mark  M-] To Bracket  M-Q Previous"
-	//nanoHelpString2 = "^X Exit  ^R Read File  ^\\ Replace  ^U Paste  ^J Justify  ^/ Go To Line  M-E Redo  M-6 Copy      ^Q Where Was    M-W Next"
-
+	// macOS-style pico/nano help text
+	nanoHelpString1 = " ^G Get Help  ^O Write Out  ^R Read File  ^Y Prev Pg  ^K Cut Text    ^C Cur Pos  "
+	nanoHelpString2 = " ^X Exit      ^J Justify    ^W Where Is   ^V Next Pg  ^U UnCut Text  ^T To Spell "
 )
 
 var (
@@ -132,7 +127,7 @@ ctrl-l    - refresh the current screen
 
 	var (
 		minWidth        = 40
-		backgroundColor = vt100.BackgroundGray
+		backgroundColor = e.DebugRunningBackground
 	)
 
 	// Get the last maxLine lines, and create a string slice
@@ -152,8 +147,10 @@ ctrl-l    - refresh the current screen
 	centerBox := NewBox()
 
 	const marginX = 5
-	const marginY = 5
+	const marginY = 2
 	centerBox.FillWithMargins(canvasBox, marginX, marginY)
+
+	centerBox.Y--
 
 	// Then create a list box
 	listBox := NewBox()
