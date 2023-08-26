@@ -2,7 +2,7 @@
 
 ## General
 
-- [ ] Make the built-in spellchecker accessible and also more useful.
+- [ ] Save a "custom words" and "ignored words" list to disk
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
 - [ ] If in man page mode, set the file as read-only and also let `q` quit.
 - [ ] Let `ctrl-w` also format gzipped code, for instance when editing `main.cpp.gz`.
