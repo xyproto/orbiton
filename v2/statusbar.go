@@ -70,8 +70,8 @@ func (sb *StatusBar) Draw(c *vt100.Canvas, offsetY int) {
 		mut.RLock()
 		// x-align
 		x := uint((w - len(nanoHelpString1)) / 2)
-		c.Write(x, h+1, sb.fg, sb.bg, nanoHelpString1)
-		c.Write(x, h+2, sb.fg, sb.bg, nanoHelpString2)
+		c.Write(x, h+1, sb.editor.NanoHelpForeground, sb.editor.NanoHelpBackground, nanoHelpString1)
+		c.Write(x, h+2, sb.editor.NanoHelpForeground, sb.editor.NanoHelpBackground, nanoHelpString2)
 		mut.RUnlock()
 	}
 

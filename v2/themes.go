@@ -95,6 +95,8 @@ type Theme struct {
 	DebugOutputBackground       vt100.AttributeColor
 	TableBackground             vt100.AttributeColor
 	JumpToLetterColor           vt100.AttributeColor
+	NanoHelpForeground          vt100.AttributeColor
+	NanoHelpBackground          vt100.AttributeColor
 	StatusMode                  bool
 	Light                       bool
 }
@@ -179,6 +181,8 @@ func NewDefaultTheme() Theme {
 		DebugInstructionsBackground: vt100.BackgroundMagenta,
 		BoxUpperEdge:                vt100.White,
 		JumpToLetterColor:           vt100.LightRed,
+		NanoHelpForeground:          vt100.Black,
+		NanoHelpBackground:          vt100.BackgroundGray,
 	}
 }
 
@@ -262,6 +266,8 @@ func NewLitmusTheme() Theme {
 		DebugInstructionsBackground: vt100.BackgroundMagenta,
 		BoxUpperEdge:                vt100.Gray,
 		JumpToLetterColor:           vt100.LightRed,
+		NanoHelpForeground:          vt100.Black,
+		NanoHelpBackground:          vt100.BackgroundGray,
 	}
 }
 
@@ -346,6 +352,8 @@ func NewSynthwaveTheme() Theme {
 		DebugInstructionsBackground: vt100.BackgroundRed,
 		BoxUpperEdge:                vt100.White,
 		JumpToLetterColor:           vt100.LightMagenta,
+		NanoHelpForeground:          vt100.Black,
+		NanoHelpBackground:          vt100.BackgroundGray,
 	}
 }
 
@@ -430,6 +438,8 @@ func NewRedBlackTheme() Theme {
 		DebugInstructionsBackground: vt100.BackgroundGray,
 		BoxUpperEdge:                vt100.Black,
 		JumpToLetterColor:           vt100.Red,
+		NanoHelpForeground:          vt100.Black,
+		NanoHelpBackground:          vt100.BackgroundGray,
 	}
 }
 
@@ -514,6 +524,8 @@ func NewLightBlueEditTheme() Theme {
 		DebugInstructionsBackground: vt100.BackgroundCyan,
 		BoxUpperEdge:                vt100.White,
 		JumpToLetterColor:           vt100.LightBlue,
+		NanoHelpForeground:          vt100.Black,
+		NanoHelpBackground:          vt100.BackgroundGray,
 	}
 }
 
@@ -598,6 +610,8 @@ func NewDarkBlueEditTheme() Theme {
 		DebugInstructionsBackground: vt100.BackgroundGray,
 		BoxUpperEdge:                vt100.LightYellow,
 		JumpToLetterColor:           vt100.White,
+		NanoHelpForeground:          vt100.Black,
+		NanoHelpBackground:          vt100.BackgroundGray,
 	}
 }
 
@@ -681,6 +695,8 @@ func NewLightVSTheme() Theme {
 		DebugInstructionsBackground: vt100.BackgroundGray,
 		BoxUpperEdge:                vt100.Black,
 		JumpToLetterColor:           vt100.Red,
+		NanoHelpForeground:          vt100.Black,
+		NanoHelpBackground:          vt100.BackgroundGray,
 	}
 }
 
@@ -764,6 +780,8 @@ func NewDarkVSTheme() Theme {
 		DebugInstructionsBackground: vt100.BackgroundGray,
 		BoxUpperEdge:                vt100.Black,
 		JumpToLetterColor:           vt100.Red,
+		NanoHelpForeground:          vt100.Black,
+		NanoHelpBackground:          vt100.BackgroundGray,
 	}
 }
 
@@ -887,6 +905,8 @@ func NewNoColorDarkBackgroundTheme() Theme {
 		DebugInstructionsBackground: vt100.BackgroundGray,
 		BoxUpperEdge:                vt100.Black,
 		JumpToLetterColor:           vt100.White,
+		NanoHelpForeground:          vt100.Black,
+		NanoHelpBackground:          vt100.BackgroundGray,
 	}
 }
 
@@ -970,6 +990,7 @@ func NewNoColorLightBackgroundTheme() Theme {
 		DebugInstructionsBackground: vt100.BackgroundGray,
 		BoxUpperEdge:                vt100.White,
 		JumpToLetterColor:           vt100.Black,
+		NanoHelpBackground:          vt100.BackgroundGray,
 	}
 }
 

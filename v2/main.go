@@ -286,6 +286,11 @@ func main() {
 		}
 	}
 
+	if nanoMode {
+		theme.StatusBackground = vt100.BackgroundBlue
+		theme.StatusErrorBackground = vt100.BackgroundBlue
+	}
+
 	// Initialize the VT100 terminal
 	tty, err := vt100.NewTTY()
 	if err != nil {
