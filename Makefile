@@ -99,6 +99,10 @@ symlinks:
 nano-symlink:
 	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/nano"
 
+# For pico/nano style editing, but "nan" does not conflict with "nano".
+nan-symlink:
+	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/nan"
+
 symlinks-gui: gui-symlinks
 symlinks-gui-install: gui-symlinks
 symlinks-install-gui: gui-symlinks
