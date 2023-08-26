@@ -9,12 +9,13 @@ import (
 
 const (
 	// nano on macOS (a symlink from "nano" to "pico")
-	nanoHelpString1 = "^G Get Help  ^O WriteOut  ^R Read File  ^Y Prev Pg  ^K Cut Text    ^C Cur Pos"
-	nanoHelpString2 = "^X Exit      ^J Justify   ^W Where is   ^V Next Pg  ^U UnCut Text  ^T To Spell"
+	nanoHelpString1 = "^G Get Help  ^O Write Out  ^R Read File  ^Y Prev Pg  ^K Cut Text    ^C Cur Pos"
+	nanoHelpString2 = "^X Exit      ^J Justify    ^W Where Is   ^V Next Pg  ^U UnCut Text  ^T To Spell"
 
 	// GNU Nano
 	//nanoHelpString1 = "^G Help  ^O Write Out  ^W Where Is  ^K Cut    ^T Execute  ^C Location    M-U Undo  M-A Set Mark  M-] To Bracket  M-Q Previous"
 	//nanoHelpString2 = "^X Exit  ^R Read File  ^\\ Replace  ^U Paste  ^J Justify  ^/ Go To Line  M-E Redo  M-6 Copy      ^Q Where Was    M-W Next"
+
 )
 
 var (
@@ -97,10 +98,11 @@ func (e *Editor) HelpMessage(c *vt100.Canvas, status *StatusBar) {
 // DrawNanoHelp will draw a help box for nano hotkeys in the center
 func (e *Editor) DrawNanoHelp(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
 	const (
-		maxLines     = 24
-		nanoHelpText = `The Orbiton Nano editor is designed to emulate the core functionality and relative easy-of-use of the UW Pico and the GNU Nano editors.
+		maxLines     = 30
+		title        = "Orbiton Nano Mode"
+		nanoHelpText = `The Orbiton Nano mode is designed to emulate the core functionality and relative easy-of-use of the UW Pico and GNU Nano editors.
 
-These hotkeys are supported:
+Keyboard shortcuts:
 
 ctrl-g    - display this help
 ctrl-o    - save this file as a different filename ("Write Out")
@@ -109,15 +111,23 @@ ctrl-y    - page up ("Prev Pg")
 ctrl-v    - page down ("Next Pg")
 ctrl-k    - cut this line ("Cut Text")
 ctrl-c    - display brief cursor location information ("Cur Pos")
-ctrl-x    - exit the program ("Exit)
+ctrl-x    - quit without saving ("Exit)
 ctrl-j    - join this block of text ("Justify")
 ctrl-w    - search ("Where Is")
+ctrl-q    - search backwards
 ctrl-u    - paste ("UnCut Text")
 ctrl-t    - jump to the next misspelled English word ("To Spell")
-
-...
+ctrl-/    - go to line
+ctrl-s    - save
+ctrl-a    - go to the start of the line, start of the text or one line up
+ctrl-e    - go to the end of line and then to the next line
+ctrl-n    - move to the next line, or go to the next match if a search is active
+ctrl-p    - move to the previous line, or go to the next match if a search is active
+ctrl-d    - delete a single character
+ctrl-f    - move cursor one position forward
+ctrl-b    - move cursor one position back
+ctrl-l    - refresh the current screen
 `
-		title = "Nano Help"
 	)
 
 	var (

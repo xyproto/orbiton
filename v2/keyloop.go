@@ -11,7 +11,6 @@ import (
 	"github.com/xyproto/clip"
 	"github.com/xyproto/digraph"
 	"github.com/xyproto/env/v2"
-	"github.com/xyproto/files"
 	"github.com/xyproto/iferr"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/syntax"
@@ -197,11 +196,21 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		switch key {
 		case "c:17": // ctrl-q, quit
+
+			if e.nanoMode { // nano: ctrl-w, search backwards
+				const clearPreviousSearch = true
+				const searchForward = false
+				e.SearchMode(c, status, tty, clearPreviousSearch, searchForward, undo)
+				break
+			}
+
 			e.quit = true
 		case "c:23": // ctrl-w, format or insert template (or if in git mode, cycle interactive rebase keywords)
 
 			if e.nanoMode { // nano: ctrl-w, search
-				e.SearchMode(c, status, tty, true, undo)
+				const clearPreviousSearch = true
+				const searchForward = true
+				e.SearchMode(c, status, tty, clearPreviousSearch, searchForward, undo)
 				break
 			}
 
@@ -223,7 +232,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Add a watch
 			if e.debugMode { // AddWatch will start a new gdb session if needed
 				// Ask the user to type in a watch expression
-				if expression, ok := e.UserInput(c, tty, status, "Variable name to watch", []string{}, false); ok {
+				if expression, ok := e.UserInput(c, tty, status, "Variable name to watch", "", []string{}, false); ok {
 					if _, err := e.AddWatch(expression); err != nil {
 						status.ClearAll(c)
 						status.SetError(err)
@@ -298,9 +307,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 
-			e.SearchMode(c, status, tty, true, undo)
+			const clearPreviousSearch = true
+			const searchForward = true
+			e.SearchMode(c, status, tty, clearPreviousSearch, searchForward, undo)
 
 		case "c:0": // ctrl-space, build source code to executable, or export, depending on the mode
+			if e.nanoMode {
+				break // do nothing
+			}
+
 			// Then build, and run if ctrl-space was double-tapped
 			var alsoRun = kh.DoubleTapped("c:0")
 			e.Build(c, status, tty, alsoRun)
@@ -473,13 +488,19 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:15": // ctrl-o, launch the command menu
 
 			if e.nanoMode { // ctrl-o, save
+
 				// Ask the user which filename to save to
-				if newFilename, ok := e.UserInput(c, tty, status, "Save as", []string{e.filename}, false); ok {
+				if newFilename, ok := e.UserInput(c, tty, status, "Save as", e.filename, []string{e.filename}, false); ok {
 					e.filename = newFilename
 					e.Save(c, tty)
 					e.Switch(c, tty, status, fileLock, newFilename)
+				} else {
+					status.Clear(c)
+					status.SetMessage("Saved nothing")
+					status.Show(c, e)
 				}
 				break
+
 			}
 
 			status.ClearAll(c)
@@ -489,13 +510,21 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			undo = undoBackup
 		case "c:31": // ctrl-_, jump to a matching parenthesis or enter a digraph
 
+			if e.nanoMode { // nano: ctrl-/
+				// go to line
+				e.JumpMode(c, status, tty)
+				e.redraw = true
+				e.redrawCursor = true
+				break
+			}
+
 			// First check if we can jump to the matching paren or bracket
 			if e.OnParenOrBracket() && e.JumpToMatching(c) {
 				break
 			}
 
 			// Ask the user to type in a digraph
-			if digraphString, ok := e.UserInput(c, tty, status, "Type in a 2-letter digraph", digraph.All(), false); ok {
+			if digraphString, ok := e.UserInput(c, tty, status, "Type in a 2-letter digraph", "", digraph.All(), false); ok {
 				if r, ok := digraph.Lookup(digraphString); !ok {
 					status.ClearAll(c)
 					status.SetErrorMessage("Could not find the " + digraphString + " digraph")
@@ -549,6 +578,70 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.CursorForward(c, status)
 
+		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
+
+			if !e.nanoMode {
+				if e.debugMode {
+					// e.showRegisters has three states, 0 (SmallRegisterWindow), 1 (LargeRegisterWindow) and 2 (NoRegisterWindow)
+					e.debugShowRegisters++
+					if e.debugShowRegisters > noRegisterWindow {
+						e.debugShowRegisters = smallRegisterWindow
+					}
+					break
+				}
+				e.UseStickySearchTerm()
+				if e.SearchTerm() != "" {
+					// Go to previous match
+					wrap := true
+					forward := false
+					if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
+						status.Clear(c)
+						msg := e.SearchTerm() + " not found"
+						if e.spellCheckMode {
+							msg = "No typos found"
+						}
+						if wrap {
+							status.SetMessage(msg)
+						} else {
+							status.SetMessage(msg + " from here")
+						}
+						status.Show(c, e)
+					}
+				} else {
+					e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
+					e.redrawCursor = true
+					if e.AfterLineScreenContents() {
+						e.End(c)
+					}
+				}
+				break
+			}
+
+			// nano mode
+
+			e.UseStickySearchTerm()
+			if e.SearchTerm() != "" {
+				// Go to previous match
+				wrap := true
+				forward := false
+				if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
+					status.Clear(c)
+					msg := e.SearchTerm() + " not found"
+					if e.spellCheckMode {
+						msg = "No typos found"
+					}
+					if wrap {
+						status.SetMessage(msg)
+					} else {
+						status.SetMessage(msg + " from here")
+					}
+					status.Show(c, e)
+				}
+				break
+			}
+
+			fallthrough // ctrl-p in nano mode
+
 		case "↑": // up arrow
 
 			// Don't move if ChatGPT is currently generating tokens that are being inserted
@@ -594,6 +687,151 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			e.redrawCursor = true
+
+		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
+
+			if !e.nanoMode {
+
+				// If in Debug mode, let ctrl-n mean "next instruction"
+				if e.debugMode {
+					if e.gdb != nil {
+						if !programRunning {
+							e.DebugEnd()
+							status.SetMessage("Program stopped")
+							status.SetMessageAfterRedraw(status.Message())
+							e.redraw = true
+							e.redrawCursor = true
+							break
+						}
+						if err := e.DebugNextInstruction(); err != nil {
+							if errorMessage := err.Error(); strings.Contains(errorMessage, "is not being run") {
+								e.DebugEnd()
+								status.SetMessage("Could not start GDB")
+							} else if err == errProgramStopped {
+								e.DebugEnd()
+								status.SetMessage("Program stopped, could not step")
+							} else { // got an unrecognized error
+								e.DebugEnd()
+								status.SetMessage(errorMessage)
+							}
+						} else {
+							if !programRunning {
+								e.DebugEnd()
+								status.SetMessage("Program stopped when stepping") // Next instruction
+							} else {
+								// Don't show a status message per instruction/step when pressing ctrl-n
+								break
+							}
+						}
+						e.redrawCursor = true
+						status.SetMessageAfterRedraw(status.Message())
+						break
+					} // e.gdb == nil
+					// Build or export the current file
+					// The last argument is if the command should run in the background or not
+					outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
+					// All clear when it comes to status messages and redrawing
+					status.ClearAll(c)
+					if err != nil && err != errNoSuitableBuildCommand {
+						// Error while building
+						status.SetError(err)
+						status.ShowNoTimeout(c, e)
+						e.debugMode = false
+						e.redrawCursor = true
+						e.redraw = true
+						break
+					}
+					// Was no suitable compilation or export command found?
+					if err == errNoSuitableBuildCommand {
+						// status.ClearAll(c)
+						if e.debugMode {
+							// Both in debug mode and can not find a command to build this file with.
+							status.SetError(err)
+							status.ShowNoTimeout(c, e)
+							e.debugMode = false
+							e.redrawCursor = true
+							e.redraw = true
+							break
+						}
+						// Building this file extension is not implemented yet.
+						// Just display the current time and word count.
+						// TODO: status.ClearAll() should have cleared the status bar first, but this is not always true,
+						//       which is why the message is hackily surrounded by spaces. Fix.
+						statsMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
+						status.SetMessage(statsMessage)
+						status.Show(c, e)
+						e.redrawCursor = true
+						break
+					}
+					// Start debugging
+					if err := e.DebugStartSession(c, tty, status, outputExecutable); err != nil {
+						status.ClearAll(c)
+						status.SetError(err)
+						status.ShowNoTimeout(c, e)
+						e.redrawCursor = true
+					}
+					break
+				}
+				e.UseStickySearchTerm()
+				if e.SearchTerm() != "" {
+					// Go to next match
+					wrap := true
+					forward := true
+					if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
+						status.Clear(c)
+						msg := e.SearchTerm() + " not found"
+						if e.spellCheckMode {
+							msg = "No typos found"
+						}
+						if wrap {
+							status.SetMessage(msg)
+						} else {
+							status.SetMessage(msg + " from here")
+						}
+						status.Show(c, e)
+					}
+				} else {
+					// Scroll down
+					e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
+					// If e.redraw is false, the end of file is reached
+					if !e.redraw {
+						status.Clear(c)
+						status.SetMessage(endOfFileMessage)
+						status.Show(c, e)
+					}
+					e.redrawCursor = true
+					if e.AfterLineScreenContents() {
+						e.End(c)
+					}
+				}
+				break
+			}
+
+			// nano mode: ctrl-n
+
+			e.UseStickySearchTerm()
+			if e.SearchTerm() != "" {
+				// Go to next match
+				wrap := true
+				forward := true
+				if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
+					status.Clear(c)
+					msg := e.SearchTerm() + " not found"
+					if e.spellCheckMode {
+						msg = "No typos found"
+					}
+					if wrap {
+						status.SetMessage(msg)
+					} else {
+						status.SetMessage(msg + " from here")
+					}
+					status.Show(c, e)
+				}
+				break
+			}
+
+			fallthrough // nano mode: ctrl-n
+
 		case "↓": // down arrow
 
 			// Don't move if ChatGPT is currently generating tokens that are being inserted
@@ -640,161 +878,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.redrawCursor = true
 
-		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
-
-			// If in Debug mode, let ctrl-n mean "next instruction"
-			if e.debugMode {
-				if e.gdb != nil {
-					if !programRunning {
-						e.DebugEnd()
-						status.SetMessage("Program stopped")
-						status.SetMessageAfterRedraw(status.Message())
-						e.redraw = true
-						e.redrawCursor = true
-						break
-					}
-					if err := e.DebugNextInstruction(); err != nil {
-						if errorMessage := err.Error(); strings.Contains(errorMessage, "is not being run") {
-							e.DebugEnd()
-							status.SetMessage("Could not start GDB")
-						} else if err == errProgramStopped {
-							e.DebugEnd()
-							status.SetMessage("Program stopped, could not step")
-						} else { // got an unrecognized error
-							e.DebugEnd()
-							status.SetMessage(errorMessage)
-						}
-					} else {
-						if !programRunning {
-							e.DebugEnd()
-							status.SetMessage("Program stopped when stepping") // Next instruction
-						} else {
-							// Don't show a status message per instruction/step when pressing ctrl-n
-							break
-						}
-					}
-					e.redrawCursor = true
-					status.SetMessageAfterRedraw(status.Message())
-					break
-				} // e.gdb == nil
-				// Build or export the current file
-				// The last argument is if the command should run in the background or not
-				outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
-				// All clear when it comes to status messages and redrawing
-				status.ClearAll(c)
-				if err != nil && err != errNoSuitableBuildCommand {
-					// Error while building
-					status.SetError(err)
-					status.ShowNoTimeout(c, e)
-					e.debugMode = false
-					e.redrawCursor = true
-					e.redraw = true
-					break
-				}
-				// Was no suitable compilation or export command found?
-				if err == errNoSuitableBuildCommand {
-					// status.ClearAll(c)
-					if e.debugMode {
-						// Both in debug mode and can not find a command to build this file with.
-						status.SetError(err)
-						status.ShowNoTimeout(c, e)
-						e.debugMode = false
-						e.redrawCursor = true
-						e.redraw = true
-						break
-					}
-					// Building this file extension is not implemented yet.
-					// Just display the current time and word count.
-					// TODO: status.ClearAll() should have cleared the status bar first, but this is not always true,
-					//       which is why the message is hackily surrounded by spaces. Fix.
-					statsMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
-					status.SetMessage(statsMessage)
-					status.Show(c, e)
-					e.redrawCursor = true
-					break
-				}
-				// Start debugging
-				if err := e.DebugStartSession(c, tty, status, outputExecutable); err != nil {
-					status.ClearAll(c)
-					status.SetError(err)
-					status.ShowNoTimeout(c, e)
-					e.redrawCursor = true
-				}
+		case "c:12": // ctrl-l, go to line number or percentage
+			if !e.nanoMode {
+				e.JumpMode(c, status, tty)
+				e.redraw = true
+				e.redrawCursor = true
 				break
 			}
-
-			e.UseStickySearchTerm()
-			if e.SearchTerm() != "" {
-				// Go to next match
-				wrap := true
-				forward := true
-				if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
-					status.Clear(c)
-					msg := e.SearchTerm() + " not found"
-					if e.spellCheckMode {
-						msg = "No typos found"
-					}
-					if wrap {
-						status.SetMessage(msg)
-					} else {
-						status.SetMessage(msg + " from here")
-					}
-					status.Show(c, e)
-				}
-			} else {
-
-				// Scroll down
-				e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
-				// If e.redraw is false, the end of file is reached
-				if !e.redraw {
-					status.Clear(c)
-					status.SetMessage(endOfFileMessage)
-					status.Show(c, e)
-				}
-				e.redrawCursor = true
-				if e.AfterLineScreenContents() {
-					e.End(c)
-				}
-
-			}
-		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
-
-			if e.debugMode {
-				// e.showRegisters has three states, 0 (SmallRegisterWindow), 1 (LargeRegisterWindow) and 2 (NoRegisterWindow)
-				e.debugShowRegisters++
-				if e.debugShowRegisters > noRegisterWindow {
-					e.debugShowRegisters = smallRegisterWindow
-				}
-				break
-			}
-
-			e.UseStickySearchTerm()
-			if e.SearchTerm() != "" {
-				// Go to previous match
-				wrap := true
-				forward := false
-				if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
-					status.Clear(c)
-					msg := e.SearchTerm() + " not found"
-					if e.spellCheckMode {
-						msg = "No typos found"
-					}
-					if wrap {
-						status.SetMessage(msg)
-					} else {
-						status.SetMessage(msg + " from here")
-					}
-					status.Show(c, e)
-				}
-			} else {
-				e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
-				e.redrawCursor = true
-				if e.AfterLineScreenContents() {
-					e.End(c)
-				}
-
-			}
-			// Additional way to clear the sticky search term, like with Esc
+			fallthrough // nano: ctrl-l to refresh
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
 			// If o is used as a man page viewer, exit at the press of esc
 			if e.mode == mode.ManPage {
@@ -1447,16 +1538,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 		case "c:21": // ctrl-u to undo
 
-			if e.nanoMode {
-				// TODO refactor the paste functionality into a different file, and then call it
-				status.Clear(c)
-				status.SetMessage("NANO PASTE!")
-				status.Show(c, e)
+			if e.nanoMode { // nano: paste after cutting
+				e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, kh.PrevIs("c:13"))
 				break
 			}
 
-			fallthrough
-		case "c:26": // ctrl-z to undo (my background the application)
+			fallthrough // undo behavior
+		case "c:26": // ctrl-z to undo (my also background the application, unfortunately)
 
 			// Forget the cut, copy and paste line state
 			lastCutY = -1
@@ -1475,14 +1563,24 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.SetMessage("Nothing more to undo")
 				status.Show(c, e)
 			}
-		case "c:12": // ctrl-l, go to line number or percentage
-			e.JumpMode(c, status, tty)
-			e.redraw = true
-			e.redrawCursor = true
 		case "c:24": // ctrl-x, cut line
 
 			if e.nanoMode { // nano: ctrl-x, quit
+
+				if e.changed {
+					// Ask the user which filename to save to
+					if newFilename, ok := e.UserInput(c, tty, status, "Write to", e.filename, []string{e.filename}, false); ok {
+						e.filename = newFilename
+						e.Save(c, tty)
+						e.Switch(c, tty, status, fileLock, newFilename)
+					} else {
+						status.Clear(c)
+						status.SetMessage("Wrote nothing")
+						status.Show(c, e)
+					}
+				}
 				e.quit = true
+				break
 			}
 
 			// Prepare to cut
@@ -1631,168 +1729,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 
-			if portal, err := LoadPortal(); err == nil { // no error
-				var gotLineFromPortal bool
-				line, err := portal.PopLine(e, false) // pop the line, but don't remove it from the source file
-				status.Clear(c)
-				if err != nil {
-					// status.SetErrorMessage("Could not copy text through the portal.")
-					e.ClosePortal()
-					status.SetError(err)
-					status.Show(c, e)
-				} else {
-					status.SetMessageAfterRedraw("Pasting through the portal")
-					gotLineFromPortal = true
-				}
+			// paste from the portal, clipboard or line buffer. Takes an undo snapshot if text is pasted.
+			e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, kh.PrevIs("c:13"))
 
-				if gotLineFromPortal {
-
-					undo.Snapshot(e)
-
-					if e.EmptyRightTrimmedLine() {
-						// If the line is empty, replace with the string from the portal
-						e.SetCurrentLine(line)
-					} else {
-						// If the line is not empty, insert the trimmed string
-						e.InsertStringAndMove(c, strings.TrimSpace(line))
-					}
-
-					e.InsertLineBelow()
-					e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
-
-					e.redraw = true
-
-					break
-				} // errors with loading a portal are ignored
-			}
-
-			// This may only work for the same user, and not with sudo/su
-
-			// Try fetching the lines from the clipboard first
-			var s string
-
-			var err error
-			if isDarwin() {
-				s, err = pbpaste()
-			} else {
-				// Read the clipboard, for other platforms
-				s, err = clip.ReadAll(false) // non-primary clipboard
-				if err == nil && strings.TrimSpace(s) == "" {
-					s, err = clip.ReadAll(true) // try the primary clipboard
-				}
-			}
-
-			if err == nil { // no error
-
-				// Make the replacements, then split the text into lines and store it in "copyLines"
-				copyLines = strings.Split(opinionatedStringReplacer.Replace(s), "\n")
-
-				// Note that control characters are not replaced, they are just not printed.
-			} else if firstPasteAction {
-				missingUtility := false
-
-				status.Clear(c)
-
-				if env.Has("WAYLAND_DISPLAY") && files.Which("wl-paste") == "" { // Wayland + wl-paste not found
-					status.SetErrorMessage("The wl-paste utility (from wl-clipboard) is missing!")
-					missingUtility = true
-				} else if env.Has("DISPLAY") && files.Which("xclip") == "" { // X + xclip not found
-					status.SetErrorMessage("The xclip utility is missing!")
-					missingUtility = true
-				} else if isDarwin() && files.Which("pbpaste") == "" { // pbcopy is missing, on macOS
-					status.SetErrorMessage("The pbpaste utility is missing!")
-					missingUtility = true
-				}
-
-				if missingUtility && firstPasteAction {
-					firstPasteAction = false
-					status.Show(c, e)
-					break // Break instead of pasting from the internal buffer, but only the first time
-				}
-			} else {
-				status.Clear(c)
-				e.redrawCursor = true
-			}
-
-			// Now check if there is anything to paste
-			if len(copyLines) == 0 {
-				break
-			}
-
-			// Now save the contents to "previousCopyLines" and check if they are the same first
-			if !equalStringSlices(copyLines, previousCopyLines) {
-				// Start with single-line paste if the contents are new
-				lastPasteY = -1
-			}
-			previousCopyLines = copyLines
-
-			// Prepare to paste
-			undo.Snapshot(e)
-			y := e.DataY()
-
-			// Forget the cut and copy line state
-			lastCutY = -1
-			lastCopyY = -1
-
-			// Redraw after pasting
-			e.redraw = true
-
-			if lastPasteY != y { // Single line paste
-				lastPasteY = y
-				// Pressed for the first time for this line number, paste only one line
-
-				// copyLines[0] is the line to be pasted, and it exists
-
-				if e.EmptyRightTrimmedLine() {
-					// If the line is empty, use the existing indentation before pasting
-					e.SetLine(y, e.LeadingWhitespace()+strings.TrimSpace(copyLines[0]))
-				} else {
-					// If the line is not empty, insert the trimmed string
-					e.InsertStringAndMove(c, strings.TrimSpace(copyLines[0]))
-				}
-
-			} else { // Multi line paste (the rest of the lines)
-				// Pressed the second time for this line number, paste multiple lines without trimming
-				var (
-					// copyLines contains the lines to be pasted, and they are > 1
-					// the first line is skipped since that was already pasted when ctrl-v was pressed the first time
-					lastIndex = len(copyLines[1:]) - 1
-
-					// If the first line has been pasted, and return has been pressed, paste the rest of the lines differently
-					skipFirstLineInsert bool
-				)
-
-				if !kh.PrevIs("c:13") {
-					// Start by pasting (and overwriting) an untrimmed version of this line,
-					// if the previous key was not return.
-					e.SetLine(y, copyLines[0])
-				} else if e.EmptyRightTrimmedLine() {
-					skipFirstLineInsert = true
-				}
-
-				// Then paste the rest of the lines, also untrimmed
-				for i, line := range copyLines[1:] {
-					if i == lastIndex && len(strings.TrimSpace(line)) == 0 {
-						// If the last line is blank, skip it
-						break
-					}
-					if skipFirstLineInsert {
-						skipFirstLineInsert = false
-					} else {
-						e.InsertLineBelow()
-						e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
-					}
-					e.InsertStringAndMove(c, line)
-				}
-			}
-			// Prepare to redraw the text
-			e.redrawCursor = true
-			e.redraw = true
 		case "c:18": // ctrl-r, to open or close a portal. In debug mode, continue running the program.
 
 			if e.nanoMode { // nano: ctrl-r, insert file
 				// Ask the user which filename to insert
-				if insertFilename, ok := e.UserInput(c, tty, status, "Insert file", []string{e.filename}, false); ok {
+				if insertFilename, ok := e.UserInput(c, tty, status, "Insert file", "", []string{e.filename}, false); ok {
 					err := e.RunCommand(c, tty, status, bookmark, undo, "insertfile", insertFilename)
 					if err != nil {
 						status.SetError(err)
@@ -1800,6 +1744,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						break
 					}
 				}
+
 				break
 			}
 
@@ -2044,7 +1989,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		}
 
 		// Display the ctrl-o menu if esc was pressed 4 times
-		if kh.Repeated("c:27", 4-1) { // 4 times, minus the one that was added just now
+		if !e.nanoMode && kh.Repeated("c:27", 4-1) { // 4 times, minus the one that was added just now
 			status.ClearAll(c)
 			undo.Snapshot(e)
 			undoBackup := undo

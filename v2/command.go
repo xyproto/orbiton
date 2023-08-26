@@ -298,7 +298,7 @@ func (e *Editor) CommandPrompt(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	quickList := []string{":wq", "wq", "sq", "sqc", ":q", "q", ":w ", "s ", "w ", "d", "b", "↑", "↓"}
 	// TODO: Show a REPL in a nicely drawn box instead of this simple command interface
 	//       The REPL can have colors, tab-completion, a command history and single-letter commands
-	if commandString, ok := e.UserInput(c, tty, status, "o", quickList, true); ok {
+	if commandString, ok := e.UserInput(c, tty, status, "o", "", quickList, true); ok {
 		args := strings.Split(strings.TrimSpace(commandString), " ")
 		if err := e.RunCommand(c, tty, status, bookmark, undo, args...); err != nil {
 			status.SetErrorMessage(err.Error())

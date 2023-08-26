@@ -227,25 +227,30 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap, forward
 }
 
 // SearchMode will enter the interactive "search mode" where the user can type in a string and then press return to search
-func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, clear bool, undo *Undo) {
+func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, clearSearch, searchForward bool, undo *Undo) {
 	// Load the search history if needed. Ignore any errors.
 	if searchHistory == nil {
 		searchHistorySlice, _ := LoadSearchHistory(searchHistoryFilename)
 		searchHistory = &searchHistorySlice
 	}
 	var (
-		searchPrompt       = "Search:"
 		previousSearch     string
 		key                string
 		initialLocation    = e.DataY().LineNumber()
 		searchHistoryIndex int
 		replaceMode        bool
 	)
+
+	searchPrompt := "Search:"
+	if !searchForward {
+		searchPrompt = "Search backwards:"
+	}
+
 AGAIN:
 	doneCollectingLetters := false
 	pressedReturn := false
 	pressedTab := false
-	if clear {
+	if clearSearch {
 		// Clear the previous search
 		e.SetSearchTerm(c, status, "", false)
 	}
@@ -370,8 +375,8 @@ AGAIN:
 	}
 	status.ClearAll(c)
 	// Search settings
-	forward := true // forward search
-	wrap := true    // with wraparound
+	forward := searchForward // forward search
+	wrap := true             // with wraparound
 	foundNoTypos := false
 	spellCheckMode := false
 	if s == "" && !replaceMode {
