@@ -18,11 +18,20 @@
 - [ ] Parse some programming languages to improve the quality of the "go to defintion" feature.
 - [ ] Go through this file and remove all completed TODO items.
 
-### Nano emulation
+### Nano emulation mode
 
-- [ ] Make it so that ctrl-k be pressed repeatedly (figure out why it isn't redrawing).
-- [ ] Add help text to ctrl-g.
-- [x] Implement all the pico/nano hotkeys, maybe some of the GNU Nano ones as well.
+- [ ] Make it possible to set a marker with a hotkey before pressing ctrl-k
+- [ ] ctrl-\\ for replace (use ctrl-w, type in text to search for and then press Tab instead of Return)
+- [ ] ctrl-q for searching backwards
+- [ ] alt-e for redo
+- [ ] alt-6 for copy (use ctrl-c instead)
+- [ ] alt-w for next (use ctrl-n instead)
+- [ ] alt-u for undo (use ctrl-z instead, if possible)
+- [ ] alt-q for previous (use ctrl-p instead)
+- [ ] alt-a to set mark
+- [ ] alt-] to jump to bracket
+
+See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
 ## `o` to GUI frontend communication
 
