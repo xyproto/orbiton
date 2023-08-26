@@ -791,7 +791,9 @@ func NewGrayTheme() Theme {
 	t.Name = "Gray Mono"
 	t.Foreground = vt100.LightGray
 	t.Background = vt100.BackgroundDefault // black background
-	t.JumpToLetterColor = vt100.White
+	//t.StatusBackground = vt100.BackgroundDefault
+	//t.StatusErrorBackground = vt100.BackgroundDefault
+	t.JumpToLetterColor = vt100.White // for jumping to a letter with ctrl-l
 	return t
 }
 

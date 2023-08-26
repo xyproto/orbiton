@@ -286,9 +286,10 @@ func main() {
 		}
 	}
 
-	if nanoMode {
-		theme.StatusBackground = vt100.BackgroundBlue
-		theme.StatusErrorBackground = vt100.BackgroundBlue
+	// TODO: Move this to themes.go
+	if nanoMode { // make the status bar stand out
+		theme.StatusBackground = theme.DebugInstructionsBackground
+		theme.StatusErrorBackground = theme.DebugInstructionsBackground
 	}
 
 	// Initialize the VT100 terminal
