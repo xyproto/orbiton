@@ -289,7 +289,7 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 		}
 	}
 	if !cancel {
-		e.ClearSearchTerm()
+		e.ClearSearch()
 	}
 	status.ClearAll(c)
 	if goToLetter != rune(0) {

@@ -1135,7 +1135,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 	}
 
 	// Clear the current search term, but don't redraw if there are status messages
-	e.ClearSearchTerm()
+	e.ClearSearch()
 	e.redraw = false
 
 	// ctrl-space was pressed while in Nroff mode
