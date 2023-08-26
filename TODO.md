@@ -20,6 +20,7 @@
 
 ### Nano emulation mode
 
+- [ ] Make the spell check dictionary persitent
 - [ ] Make it possible to set a marker with a hotkey before pressing ctrl-k
 - [ ] ctrl-\\ for replace (use ctrl-w, type in text to search for and then press Tab instead of Return)
 - [ ] ctrl-q for searching backwards
