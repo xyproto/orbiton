@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/xyproto/clip"
+	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
+	"github.com/xyproto/vt100"
 )
 
 // SetClipboardFromFile can copy the given file to the clipboard.
@@ -79,4 +82,165 @@ func WriteClipboardToFile(filename string, overwrite, primaryClipboard bool) (in
 		return 0, "", "", err
 	}
 	return n, headString, tailString, nil
+}
+
+// Paste is called when the user presses ctrl-v, and handles portals, clipboards and also non-clipboard-based copy and paste
+func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCopyLines *[]string, firstPasteAction *bool, lastCopyY, lastPasteY, lastCutY *LineIndex, prevKeyWasReturn bool) {
+	if portal, err := LoadPortal(); err == nil { // no error
+		var gotLineFromPortal bool
+		line, err := portal.PopLine(e, false) // pop the line, but don't remove it from the source file
+		status.Clear(c)
+		if err != nil {
+			// status.SetErrorMessage("Could not copy text through the portal.")
+			e.ClosePortal()
+			status.SetError(err)
+			status.Show(c, e)
+		} else {
+			status.SetMessageAfterRedraw("Pasting through the portal")
+			gotLineFromPortal = true
+		}
+
+		if gotLineFromPortal {
+
+			undo.Snapshot(e)
+
+			if e.EmptyRightTrimmedLine() {
+				// If the line is empty, replace with the string from the portal
+				e.SetCurrentLine(line)
+			} else {
+				// If the line is not empty, insert the trimmed string
+				e.InsertStringAndMove(c, strings.TrimSpace(line))
+			}
+
+			e.InsertLineBelow()
+			e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
+
+			e.redraw = true
+
+			return
+		} // errors with loading a portal are ignored
+	}
+
+	// This may only work for the same user, and not with sudo/su
+
+	// Try fetching the lines from the clipboard first
+	var s string
+
+	var err error
+	if isDarwin() {
+		s, err = pbpaste()
+	} else {
+		// Read the clipboard, for other platforms
+		s, err = clip.ReadAll(false) // non-primary clipboard
+		if err == nil && strings.TrimSpace(s) == "" {
+			s, err = clip.ReadAll(true) // try the primary clipboard
+		}
+	}
+
+	if err == nil { // no error
+
+		// Make the replacements, then split the text into lines and store it in "copyLines"
+		*copyLines = strings.Split(opinionatedStringReplacer.Replace(s), "\n")
+
+		// Note that control characters are not replaced, they are just not printed.
+	} else if *firstPasteAction {
+		missingUtility := false
+
+		status.Clear(c)
+
+		if env.Has("WAYLAND_DISPLAY") && files.Which("wl-paste") == "" { // Wayland + wl-paste not found
+			status.SetErrorMessage("The wl-paste utility (from wl-clipboard) is missing!")
+			missingUtility = true
+		} else if env.Has("DISPLAY") && files.Which("xclip") == "" { // X + xclip not found
+			status.SetErrorMessage("The xclip utility is missing!")
+			missingUtility = true
+		} else if isDarwin() && files.Which("pbpaste") == "" { // pbcopy is missing, on macOS
+			status.SetErrorMessage("The pbpaste utility is missing!")
+			missingUtility = true
+		}
+
+		if missingUtility && *firstPasteAction {
+			*firstPasteAction = false
+			status.Show(c, e)
+			return // Break instead of pasting from the internal buffer, but only the first time
+		}
+	} else {
+		status.Clear(c)
+		e.redrawCursor = true
+	}
+
+	// Now check if there is anything to paste
+	if len(*copyLines) == 0 {
+		return
+	}
+
+	// Now save the contents to "previousCopyLines" and check if they are the same first
+	if !equalStringSlices(*copyLines, *previousCopyLines) {
+		// Start with single-line paste if the contents are new
+		*lastPasteY = -1
+	}
+	*previousCopyLines = *copyLines
+
+	// Prepare to paste
+	undo.Snapshot(e)
+	y := e.DataY()
+
+	// Forget the cut and copy line state
+	*lastCutY = -1
+	*lastCopyY = -1
+
+	// Redraw after pasting
+	e.redraw = true
+
+	if *lastPasteY != y { // Single line paste
+		*lastPasteY = y
+		// Pressed for the first time for this line number, paste only one line
+
+		// (*copyLines)[0] is the line to be pasted, and it exists
+
+		if e.EmptyRightTrimmedLine() {
+			// If the line is empty, use the existing indentation before pasting
+			e.SetLine(y, e.LeadingWhitespace()+strings.TrimSpace((*copyLines)[0]))
+		} else {
+			// If the line is not empty, insert the trimmed string
+			e.InsertStringAndMove(c, strings.TrimSpace((*copyLines)[0]))
+		}
+
+	} else { // Multi line paste (the rest of the lines)
+		// Pressed the second time for this line number, paste multiple lines without trimming
+		var (
+			// copyLines contains the lines to be pasted, and they are > 1
+			// the first line is skipped since that was already pasted when ctrl-v was pressed the first time
+			lastIndex = len((*copyLines)[1:]) - 1
+
+			// If the first line has been pasted, and return has been pressed, paste the rest of the lines differently
+			skipFirstLineInsert bool
+		)
+
+		if !prevKeyWasReturn {
+			// Start by pasting (and overwriting) an untrimmed version of this line,
+			// if the previous key was not return.
+			e.SetLine(y, (*copyLines)[0])
+		} else if e.EmptyRightTrimmedLine() {
+			skipFirstLineInsert = true
+		}
+
+		// Then paste the rest of the lines, also untrimmed
+		for i, line := range (*copyLines)[1:] {
+			if i == lastIndex && len(strings.TrimSpace(line)) == 0 {
+				// If the last line is blank, skip it
+				break
+			}
+			if skipFirstLineInsert {
+				skipFirstLineInsert = false
+			} else {
+				e.InsertLineBelow()
+				e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
+			}
+			e.InsertStringAndMove(c, line)
+		}
+	}
+	// Prepare to redraw the text
+	e.redrawCursor = true
+	e.redraw = true
 }
