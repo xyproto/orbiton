@@ -1420,9 +1420,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:7": // ctrl-g, either go to definition OR toggle the status bar
 
 			if e.nanoMode { // nano: ctrl-g, help
-				status.Clear(c)
-				status.SetMessage("NANO HELP GOES HERE")
-				status.Show(c, e)
+				const repositionCursorAfterDrawing = true
+				e.DrawNanoHelp(c, repositionCursorAfterDrawing)
 				break
 			}
 
@@ -1447,6 +1446,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 			}
 		case "c:21", "c:26": // ctrl-u or ctrl-z (ctrl-z may background the application)
+
+			if e.nanoMode {
+				// TODO refactor the paste functionality into a different file, and then call it
+				status.Clear(c)
+				status.SetMessage("NANO PASTE!")
+				status.Show(c, e)
+				break
+			}
+
 			// Forget the cut, copy and paste line state
 			lastCutY = -1
 			lastPasteY = -1
@@ -1912,24 +1920,29 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if e.Empty() {
 				status.SetMessage("Empty")
 				status.Show(c, e)
-			} else {
-				undo.Snapshot(e)
-				if e.nanoMode {
-					// Up to 100 times, join the current line with the next, until the next line is empty
-					joinCount := 0
-					for i := 0; i < 100; i++ {
-						if !e.JoinLineWithNext(c, bookmark) {
-							break
-						}
-						joinCount++
-					}
-					for i := 0; i < joinCount; i++ {
-						e.Down(c, status)
-					}
-					break
-				}
-				e.JoinLineWithNext(c, bookmark)
+				break
 			}
+			undo.Snapshot(e)
+			if e.nanoMode {
+				// Up to 100 times, join the current line with the next, until the next line is empty
+				joinCount := 0
+				for i := 0; i < 100; i++ {
+					if !e.JoinLineWithNext(c, bookmark) {
+						break
+					}
+					joinCount++
+				}
+				downCounter := 0
+				for i := 0; i < joinCount; i++ {
+					e.Down(c, status)
+					downCounter++
+				}
+				for i := 0; i < downCounter; i++ {
+					e.Up(c, status)
+				}
+				break
+			}
+			e.JoinLineWithNext(c, bookmark)
 		default: // any other key
 			keyRunes := []rune(key)
 			// panic(fmt.Sprintf("PRESSED KEY: %v", []rune(key)))
