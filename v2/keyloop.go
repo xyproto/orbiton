@@ -324,22 +324,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:20": // ctrl-t
 
 			if e.nanoMode {
-				if typoWord, err := e.SearchForTypo(c, status); err == nil || err == errFoundNoTypos {
-					e.redraw = true
-					e.redrawCursor = true
-					if err == errFoundNoTypos || typoWord == "" {
-						status.Clear(c)
-						status.SetMessage("No typos found")
-						status.Show(c, e)
-						break
-					}
-					e.SetSearchTerm(c, status, typoWord, true) // true for spellCheckMode
-					if err := e.GoToNextMatch(c, status, true, true); err == errNoSearchMatch {
-						status.SetMessage("No typos found")
-						e.ClearSearch()
-						status.ShowNoTimeout(c, e)
-					}
-				}
+				e.NanoNextTypo(c, status)
 				break
 			}
 
@@ -1435,6 +1420,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			if e.spellCheckMode {
 				if addedWord := e.AddCurrentWordToWordList(); addedWord != "" {
+					e.NanoNextTypo(c, status)
 					status.Clear(c)
 					status.SetMessage("Added " + addedWord)
 					status.Show(c, e)
