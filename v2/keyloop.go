@@ -1511,6 +1511,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:7": // ctrl-g, either go to definition OR toggle the status bar
 
 			if e.nanoMode { // nano: ctrl-g, help
+				status.ClearAll(c)
 				const repositionCursorAfterDrawing = true
 				e.DrawNanoHelp(c, repositionCursorAfterDrawing)
 				break
@@ -1572,7 +1573,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					if newFilename, ok := e.UserInput(c, tty, status, "Write to", e.filename, []string{e.filename}, false); ok {
 						e.filename = newFilename
 						e.Save(c, tty)
-						e.Switch(c, tty, status, fileLock, newFilename)
 					} else {
 						status.Clear(c)
 						status.SetMessage("Wrote nothing")
