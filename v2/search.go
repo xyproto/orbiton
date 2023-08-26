@@ -394,7 +394,7 @@ AGAIN:
 		} else if err == errFoundNoTypos || typo == "" {
 			foundNoTypos = true
 			status.Clear(c)
-			status.SetMessage("Found no typos")
+			status.SetMessage("No typos found")
 			status.Show(c, e)
 			return
 		} else {

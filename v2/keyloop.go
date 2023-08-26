@@ -308,16 +308,23 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:20": // ctrl-t
 
-			if e.nanoMode { // nano: ctrl-t, spell check
-				if typo, err := e.SearchForTypo(c, status); err == nil {
-					e.SetSearchTerm(c, status, typo, true)
-				} else if err == errFoundNoTypos || typo == "" {
-					status.Clear(c)
-					status.SetMessage("Found no typos")
-					status.Show(c, e)
+			if e.nanoMode {
+				if typoWord, err := e.SearchForTypo(c, status); err == nil || err == errFoundNoTypos {
+					e.redraw = true
+					e.redrawCursor = true
+					if err == errFoundNoTypos || typoWord == "" {
+						status.Clear(c)
+						status.SetMessage("No typos found")
+						status.Show(c, e)
+						break
+					}
+					e.SetSearchTerm(c, status, typoWord, true) // true for spellCheckMode
+					if err := e.GoToNextMatch(c, status, true, true); err == errNoSearchMatch {
+						status.SetMessage("No typos found")
+						e.ClearSearch()
+						status.ShowNoTimeout(c, e)
+					}
 				}
-				e.redraw = true
-				e.redrawCursor = true
 				break
 			}
 
@@ -724,6 +731,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
 					status.Clear(c)
 					msg := e.SearchTerm() + " not found"
+					if e.spellCheckMode {
+						msg = "No typos found"
+					}
 					if wrap {
 						status.SetMessage(msg)
 					} else {
@@ -766,6 +776,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
 					status.Clear(c)
 					msg := e.SearchTerm() + " not found"
+					if e.spellCheckMode {
+						msg = "No typos found"
+					}
 					if wrap {
 						status.SetMessage(msg)
 					} else {
