@@ -2,7 +2,7 @@
 
 ## General
 
-- [ ] Save a "custom words" and "ignored words" list to disk
+- [ ] Save a "custom words" and "ignored words" list to disk.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
 - [ ] If in man page mode, set the file as read-only and also let `q` quit.
 - [ ] Let `ctrl-w` also format gzipped code, for instance when editing `main.cpp.gz`.
@@ -20,18 +20,21 @@
 
 ### Nano emulation mode
 
-- [ ] Make the spell check dictionary persitent
-- [ ] Make it possible to set a marker with a hotkey before pressing ctrl-k
-- [ ] ctrl-\\ for replace (use ctrl-w, type in text to search for and then press Tab instead of Return)
-- [ ] ctrl-q for searching backwards
-- [ ] alt-e for redo
-- [ ] alt-6 for copy (use ctrl-c instead)
-- [ ] alt-w for next (use ctrl-n instead)
-- [ ] alt-u for undo (use ctrl-z instead, if possible)
-- [ ] alt-q for previous (use ctrl-p instead)
-- [ ] alt-a to set mark
-- [ ] alt-] to jump to bracket
-- [ ] Support other themes, like the Mono Gray theme
+- [ ] If the file is huge, let ctrl-t time out instead of waiting for it to complete.
+- [ ] When searching for a typo with ctrl-t, enable wrap-around for the search.
+- [ ] Make the spell check dictionary persitent.
+- [ ] Make it possible to set a marker with a hotkey before pressing ctrl-k.
+- [ ] ctrl-\\ for replace (use ctrl-w, type in text to search for and then press Tab instead of Return).
+- [ ] ctrl-q for searching backwards.
+- [ ] alt-e for redo.
+- [ ] alt-6 for copy (use ctrl-c instead).
+- [ ] alt-w for next (use ctrl-n instead).
+- [ ] alt-u for undo (use ctrl-z instead, if possible).
+- [ ] alt-q for previous (use ctrl-p instead).
+- [ ] alt-a to set mark.
+- [ ] alt-] to jump to bracket.
+- [ ] Support other themes, like the Mono Gray theme.
+- [ ] Add ctrl-a to add a word to the dictionary after searching with ctrl-t to the help overview.
 
 See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
