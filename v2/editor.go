@@ -281,13 +281,7 @@ func (e *Editor) CountRune(r rune, n LineIndex) int {
 
 // Len returns the number of lines
 func (e *Editor) Len() int {
-	maxy := 0
-	for y := range e.lines {
-		if y > maxy {
-			maxy = y
-		}
-	}
-	return maxy + 1
+	return len(e.lines)
 }
 
 // String returns the contents of the editor
