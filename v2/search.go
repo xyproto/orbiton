@@ -600,23 +600,3 @@ func SaveSearchHistory(filename string, list []string) error {
 	data := []byte(strings.Join(list, "\n"))
 	return os.WriteFile(filename, data, 0o600)
 }
-
-// NanoNextTypo tries to jump to the next typo
-func (e *Editor) NanoNextTypo(c *vt100.Canvas, status *StatusBar) {
-	if typoWord, err := e.SearchForTypo(c, status); err == nil || err == errFoundNoTypos {
-		e.redraw = true
-		e.redrawCursor = true
-		if err == errFoundNoTypos || typoWord == "" {
-			status.Clear(c)
-			status.SetMessage("No typos found")
-			status.Show(c, e)
-			return
-		}
-		e.SetSearchTerm(c, status, typoWord, true) // true for spellCheckMode
-		if err := e.GoToNextMatch(c, status, true, true); err == errNoSearchMatch {
-			status.SetMessage("No typos found")
-			e.ClearSearch()
-			status.ShowNoTimeout(c, e)
-		}
-	}
-}
