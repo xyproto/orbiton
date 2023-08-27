@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Let the `ctrl-g` status line also contain the line percentage, like `ctrl-c` in Nano.
 - [ ] Save a "custom words" and "ignored words" list to disk.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
 - [ ] If in man page mode, set the file as read-only and also let `q` quit.
