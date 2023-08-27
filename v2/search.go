@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/xyproto/clip"
 	"github.com/xyproto/vt100"
@@ -25,7 +26,7 @@ func (e *Editor) SetSearchTerm(c *vt100.Canvas, status *StatusBar, s string, spe
 	e.searchTerm = s
 	// set the sticky search term (used by ctrl-n, cleared by Esc only)
 	e.stickySearchTerm = s
-	// set spellcheck mode on
+	// set spellcheck mode
 	e.spellCheckMode = spellCheckMode
 	// Go to the first instance after the current line, if found
 	e.lineBeforeSearch = e.DataY()
@@ -44,6 +45,56 @@ func (e *Editor) SetSearchTerm(c *vt100.Canvas, status *StatusBar, s string, spe
 	// draw the lines to the canvas
 	e.DrawLines(c, true, false)
 	return foundMatch
+}
+
+// SetSearchTermWithTimeout will set the current search term. This initializes a new search.
+func (e *Editor) SetSearchTermWithTimeout(c *vt100.Canvas, status *StatusBar, s string, spellCheckMode bool, timeout time.Duration) bool {
+	// set the search term
+	e.searchTerm = s
+	// set the sticky search term (used by ctrl-n, cleared by Esc only)
+	e.stickySearchTerm = s
+	// set spellcheck mode
+	e.spellCheckMode = spellCheckMode
+	// Go to the first instance after the current line, if found
+	e.lineBeforeSearch = e.DataY()
+
+	// create a channel to signal when a match is found
+	matchFound := make(chan bool)
+
+	foundMatch := LineIndex(-1)
+
+	// run the search in a separate goroutine
+	go func() {
+		for y := e.DataY(); y < LineIndex(e.Len()); y++ {
+			if strings.Contains(e.Line(y), s) {
+				matchFound <- true
+				foundMatch = y
+				return
+			}
+		}
+		matchFound <- false
+	}()
+
+	// wait for either a match to be found or timeout
+	select {
+	case <-matchFound:
+	case <-time.After(timeout):
+	}
+
+	if foundMatch != -1 {
+		// Found an instance, scroll there
+		// GoTo returns true if the screen should be redrawn
+		redraw, _ := e.GoTo(foundMatch, c, status)
+		if redraw {
+			e.Center(c)
+			// Draw the lines to the canvas
+			e.DrawLines(c, true, false)
+			e.redraw = true
+		}
+		return true
+	}
+
+	return false
 }
 
 // SearchTerm will return the current search term
@@ -239,6 +290,7 @@ func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, 
 		initialLocation    = e.DataY().LineNumber()
 		searchHistoryIndex int
 		replaceMode        bool
+		timeout            = 500 * time.Millisecond
 	)
 
 	searchPrompt := "Search:"
@@ -252,7 +304,7 @@ AGAIN:
 	pressedTab := false
 	if clearSearch {
 		// Clear the previous search
-		e.SetSearchTerm(c, status, "", false)
+		e.SetSearchTerm(c, status, "", false) // no timeout
 	}
 	s := e.SearchTerm()
 	status.ClearAll(c)
@@ -289,7 +341,7 @@ AGAIN:
 			if len(s) > 0 {
 				s = s[:len(s)-1]
 				if previousSearch == "" {
-					e.SetSearchTerm(c, status, s, false)
+					e.SetSearchTermWithTimeout(c, status, s, false, timeout)
 				}
 				e.GoToLineNumber(initialLocation, c, status, false)
 				status.SetMessage(searchPrompt + " " + s)
@@ -298,7 +350,7 @@ AGAIN:
 		case "c:3", "c:6", "c:17", "c:27", "c:24": // ctrl-c, ctrl-f, ctrl-q, esc or ctrl-x
 			s = ""
 			if previousSearch == "" {
-				e.SetSearchTerm(c, status, s, false)
+				e.SetSearchTermWithTimeout(c, status, s, false, timeout)
 			}
 			doneCollectingLetters = true
 		case "c:9": // tab
@@ -343,7 +395,7 @@ AGAIN:
 			}
 			s = (*searchHistory)[searchHistoryIndex]
 			if previousSearch == "" {
-				e.SetSearchTerm(c, status, s, false)
+				e.SetSearchTermWithTimeout(c, status, s, false, timeout)
 			}
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
@@ -358,7 +410,7 @@ AGAIN:
 			}
 			s = (*searchHistory)[searchHistoryIndex]
 			if previousSearch == "" {
-				e.SetSearchTerm(c, status, s, false)
+				e.SetSearchTermWithTimeout(c, status, s, false, timeout)
 			}
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
@@ -366,7 +418,7 @@ AGAIN:
 			if key != "" && !strings.HasPrefix(key, "c:") {
 				s += key
 				if previousSearch == "" {
-					e.SetSearchTerm(c, status, s, false)
+					e.SetSearchTermWithTimeout(c, status, s, false, timeout)
 				}
 				status.SetMessage(searchPrompt + " " + s)
 				status.ShowNoTimeout(c, e)
@@ -480,7 +532,7 @@ AGAIN:
 		e.redraw = true
 		return
 	}
-	e.SetSearchTerm(c, status, s, spellCheckMode)
+	e.SetSearchTermWithTimeout(c, status, s, spellCheckMode, timeout)
 	if pressedReturn {
 		// Return to the first location before performing the actual search
 		e.GoToLineNumber(initialLocation, c, status, false)
@@ -495,7 +547,7 @@ AGAIN:
 			}
 		} else if len(*searchHistory) > 0 {
 			s = (*searchHistory)[searchHistoryIndex]
-			e.SetSearchTerm(c, status, s, false)
+			e.SetSearchTerm(c, status, s, false) // no timeout
 		}
 	}
 	if previousSearch == "" {
