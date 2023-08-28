@@ -57,6 +57,11 @@ func (e *Editor) ClosePortal() error {
 	return os.Remove(portalFilename)
 }
 
+// ClearPortal will clear the portal by removing the portal file
+func ClearPortal() error {
+	return os.Remove(portalFilename)
+}
+
 // HasPortal checks if a portal is currently active
 func HasPortal() bool {
 	return files.Exists(portalFilename)

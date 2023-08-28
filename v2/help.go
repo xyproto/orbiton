@@ -69,7 +69,7 @@ Flags:
                                compilation and format command to ` + cacheDirForDoc + `.
   -p FILENAME                - Paste the contents of the clipboard into the given file.
                                Combine with -f to overwrite the file.
-  -r                         - Clear all file locks.
+  -r                         - Clear all file locks and close all portals.
   --version                  - Display the current version.
 
 See the man page for more information.

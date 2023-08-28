@@ -129,11 +129,22 @@ func main() {
 
 	// If the -r flag is given, clear all file locks and exit.
 	if *clearLocksFlag {
-		// If the -n flag is also given (to avoid writing to ~/.cache), then ignore it.
-		if err := os.Remove(defaultLockFile); err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		lockErr := os.Remove(defaultLockFile)
+
+		// Also remove the portal file
+		portalErr := ClearPortal()
+
+		if lockErr == nil && portalErr == nil {
+			fmt.Println("Locks cleared and portal closed.")
+		} else if lockErr != nil && portalErr == nil {
+			fmt.Fprintf(os.Stderr, "Closed the portal, but could not clear locks: %v\n", lockErr)
+			os.Exit(1)
+		} else if lockErr == nil && portalErr != nil {
+			fmt.Fprintf(os.Stderr, "Cleared all locks, but could not close the portal: %v\n", portalErr)
+			os.Exit(1)
 		} else {
-			fmt.Println("Locks cleared")
+			fmt.Fprintf(os.Stderr, "Could not clear locks and not close the portal, got these errors: %v %v\n", lockErr, portalErr)
+			os.Exit(1)
 		}
 		return
 	}
