@@ -2,8 +2,6 @@ module github.com/xyproto/orbiton/v2
 
 go 1.19
 
-toolchain go1.21.0
-
 require (
 	github.com/PullRequestInc/go-gpt3 v1.1.16
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
