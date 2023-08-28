@@ -2,8 +2,8 @@ class Orbiton < Formula
   desc "Editor"
   homepage "https://orbiton.zip/"
   url "https://github.com/xyproto/orbiton.git",
-      :tag      => "v2.64.0",
-      :revision => "9798d682dc0a84d70d799fcd290e7eaa40beca4b"
+      :tag      => "v2.64.1",
+      :revision => "d01e9de6baa386a08dd6fca6ad76047451fbfa18"
   version_scheme 1
   head "https://github.com/xyproto/orbiton.git"
 
