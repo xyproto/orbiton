@@ -77,8 +77,8 @@ github.com/xyproto/binary
 # github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795
 ## explicit; go 1.11
 github.com/xyproto/burnpal
-# github.com/xyproto/carveimg v1.4.1
-## explicit; go 1.21
+# github.com/xyproto/carveimg v1.4.4
+## explicit; go 1.19
 github.com/xyproto/carveimg
 # github.com/xyproto/clip v1.0.0
 ## explicit; go 1.11
@@ -89,11 +89,11 @@ github.com/xyproto/digraph
 # github.com/xyproto/env v1.9.1
 ## explicit; go 1.15
 github.com/xyproto/env
-# github.com/xyproto/env/v2 v2.2.0
-## explicit; go 1.15
+# github.com/xyproto/env/v2 v2.2.1
+## explicit; go 1.19
 github.com/xyproto/env/v2
-# github.com/xyproto/files v1.4.0
-## explicit; go 1.21.0
+# github.com/xyproto/files v1.4.1
+## explicit; go 1.19
 github.com/xyproto/files
 # github.com/xyproto/guessica v1.1.2
 ## explicit; go 1.18
