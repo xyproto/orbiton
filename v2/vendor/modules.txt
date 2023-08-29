@@ -68,6 +68,9 @@ github.com/sajari/fuzzy
 # github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d
 ## explicit
 github.com/sourcegraph/annotate
+# github.com/spf13/pflag v1.0.5
+## explicit; go 1.12
+github.com/spf13/pflag
 # github.com/xyproto/autoimport v1.4.3
 ## explicit; go 1.19
 github.com/xyproto/autoimport
