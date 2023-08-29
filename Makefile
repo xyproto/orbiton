@@ -33,7 +33,7 @@ endif
 
 CXX ?= g++
 
-CXXFLAGS ?= $(CXXFLAGS) -Wl,--as-needed,--strip-all,--sort-common,-z,relro,-z,now -O2 -pipe -fPIC -fno-plt -fstack-protector-strong -Wall -Wshadow -Wpedantic -Wno-parentheses -Wfatal-errors -Wvla -Wignored-qualifiers -pthread $(LDFLAGS)
+CXXFLAGS ?= -O2 -pipe -fPIC -fno-plt -fstack-protector-strong -Wall -Wshadow -Wpedantic -Wno-parentheses -Wfatal-errors -Wvla -Wignored-qualifiers -pthread $(LDFLAGS)
 CXXFLAGS += -DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED
 
 ifeq ($(UNAME_S),Darwin)
