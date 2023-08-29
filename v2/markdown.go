@@ -207,16 +207,17 @@ func (e *Editor) markdownHighlight(line string, inCodeBlock bool, listItemRecord
 		if strings.Contains(rest, "<img ") && strings.Contains(rest, "://") {
 			// string includes "<img" and "://"
 			return e.ImageColor.Get(line), true, false
-		} else if strings.Contains(rest, "<a ") && strings.Contains(rest, "://") {
+		}
+		if strings.Contains(rest, "<a ") && strings.Contains(rest, "://") {
 			// string includes "<a" and "://"
 			return e.LinkColor.Get(line), true, false
-		} else if strings.Count(rest, "<") == strings.Count(rest, ">") {
+		}
+		if strings.Count(rest, "<") == strings.Count(rest, ">") {
 			// A list with HTML tags, matched evenly?
 			return e.LinkColor.Get(line), true, false
-		} else {
-			// Maybe HTML tags. Maybe matched unevenly.
-			return e.QuoteColor.Get(line), true, false
 		}
+		// Maybe HTML tags. Maybe matched unevenly.
+		return e.QuoteColor.Get(line), true, false
 	}
 
 	// A header line

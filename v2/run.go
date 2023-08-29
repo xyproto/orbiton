@@ -63,13 +63,15 @@ func (e *Editor) Run() (string, bool, error) {
 
 	cmd.Dir = sourceDir
 
-	if output, err := cmd.CombinedOutput(); err == nil { // success
+	output, err := cmd.CombinedOutput()
+	if err == nil { // success
 		return strings.TrimSpace(string(output)), false, nil
-	} else if len(output) > 0 { // error, but text on stdout/stderr
-		return strings.TrimSpace(string(output)), true, nil
-	} else { // error and no text on stdout/stderr
-		return "", false, err
 	}
+	if len(output) > 0 { // error, but text on stdout/stderr
+		return strings.TrimSpace(string(output)), true, nil
+	}
+	// error and no text on stdout/stderr
+	return "", false, err
 }
 
 // DrawOutput will draw a pane with the 5 last lines of the given output

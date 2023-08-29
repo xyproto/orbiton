@@ -448,16 +448,16 @@ AGAIN:
 		typo, err := e.SearchForTypo(c, status)
 		if err != nil {
 			return
-		} else if err == errFoundNoTypos || typo == "" {
+		}
+		if err == errFoundNoTypos || typo == "" {
 			foundNoTypos = true
 			status.Clear(c)
 			status.SetMessage("No typos found")
 			status.Show(c, e)
 			return
-		} else {
-			s = typo
-			forward = true
 		}
+		s = typo
+		forward = true
 	}
 	if pressedTab && previousSearch == "" { // search text -> tab
 		// got the search text, now gather the replace text
