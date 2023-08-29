@@ -13,6 +13,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/spf13/pflag"
 	"github.com/xyproto/files"
 	"github.com/xyproto/vt100"
 )
@@ -33,31 +34,40 @@ var (
 
 func main() {
 	var (
-		copyFlag               = flag.Bool("c", false, "copy a file into the clipboard and quit")
-		forceFlag              = flag.Bool("f", false, "open even if already open")
-		helpFlag               = flag.Bool("help", false, "quick overview of hotkeys and flags")
-		monitorAndReadOnlyFlag = flag.Bool("m", false, "open read-only and monitor for changes")
-		noCacheFlag            = flag.Bool("n", false, "don't write anything to "+cacheDirForDoc)
-		pasteFlag              = flag.Bool("p", false, "paste the clipboard into the file and quit")
-		clearLocksFlag         = flag.Bool("r", false, "clear all file locks")
-		lastCommandFlag        = flag.Bool("l", false, "output the last build or format command")
-		versionFlag            = flag.Bool("version", false, "version information")
+		copyFlag               bool
+		forceFlag              bool
+		helpFlag               bool
+		monitorAndReadOnlyFlag bool
+		noCacheFlag            bool
+		pasteFlag              bool
+		clearLocksFlag         bool
+		lastCommandFlag        bool
+		versionFlag            bool
 	)
 
-	flag.Parse()
+	pflag.BoolVarP(&copyFlag, "copy", "c", false, "copy a file into the clipboard and quit")
+	pflag.BoolVarP(&forceFlag, "force", "f", false, "open even if already open")
+	pflag.BoolVarP(&helpFlag, "help", "h", false, "quick overview of hotkeys and flags")
+	pflag.BoolVarP(&monitorAndReadOnlyFlag, "monitor", "m", false, "open read-only and monitor for changes")
+	pflag.BoolVarP(&noCacheFlag, "no-cache", "n", false, "don't write anything to cache directory")
+	pflag.BoolVarP(&pasteFlag, "paste", "p", false, "paste the clipboard into the file and quit")
+	pflag.BoolVarP(&clearLocksFlag, "clear-locks", "r", false, "clear all file locks")
+	pflag.BoolVarP(&lastCommandFlag, "last-command", "l", false, "output the last build or format command")
+	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 
-	if *versionFlag {
+	pflag.Parse()
+
+	if versionFlag {
 		fmt.Println(versionString)
 		return
 	}
-
-	if *helpFlag {
+	if helpFlag {
 		Usage()
 		return
 	}
 
 	// Output the last used build, export or format command
-	if *lastCommandFlag {
+	if lastCommandFlag {
 		data, err := os.ReadFile(lastCommandFile)
 		if err != nil {
 			fmt.Println("no available last command")
@@ -75,12 +85,12 @@ func main() {
 		return
 	}
 
-	noWriteToCache = *noCacheFlag || *monitorAndReadOnlyFlag
+	noWriteToCache = noCacheFlag || monitorAndReadOnlyFlag
 
 	// If the -p flag is given, just paste the clipboard to the given filename and exit
-	if filename := flag.Arg(0); filename != "" && *pasteFlag {
+	if filename := flag.Arg(0); filename != "" && pasteFlag {
 		const primaryClipboard = false
-		n, headString, tailString, err := WriteClipboardToFile(filename, *forceFlag, primaryClipboard)
+		n, headString, tailString, err := WriteClipboardToFile(filename, forceFlag, primaryClipboard)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			quitMut.Lock()
@@ -105,7 +115,7 @@ func main() {
 	}
 
 	// If the -c flag is given, just copy the given filename to the clipboard and exit
-	if filename := flag.Arg(0); filename != "" && *copyFlag {
+	if filename := flag.Arg(0); filename != "" && copyFlag {
 		const primaryClipboard = false
 		n, tailString, err := SetClipboardFromFile(filename, primaryClipboard)
 		if err != nil {
@@ -128,7 +138,7 @@ func main() {
 	}
 
 	// If the -r flag is given, clear all file locks and exit.
-	if *clearLocksFlag {
+	if clearLocksFlag {
 		lockErr := os.Remove(defaultLockFile)
 
 		// Also remove the portal file
@@ -314,7 +324,7 @@ func main() {
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, *forceFlag, theme, syntaxHighlight, *monitorAndReadOnlyFlag, nanoMode)
+	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {

@@ -61,16 +61,16 @@ esc         to redraw the screen and clear the last search
 Set NO_COLOR=1 to disable colors.
 
 Flags:
-  -c FILENAME                - Copy the given file into the clipboard.
-  -f                         - Ignore file locks when opening files.
-  -l                         - Output the last used build/format/export command.
-  -m FILENAME                - Monitor the given file for changes, and open it as read-only.
-  -n                         - Avoid writing the location history, search history, highscore,
-                               compilation and format command to ` + cacheDirForDoc + `.
-  -p FILENAME                - Paste the contents of the clipboard into the given file.
-                               Combine with -f to overwrite the file.
-  -r                         - Clear all file locks and close all portals.
-  --version                  - Display the current version.
+  -c, --copy FILENAME            Copy the given file into the clipboard.
+  -f, --force                    Ignore file locks when opening files.
+  -l, --last-command             Output the last used build/format/export command.
+  -m, --monitor FILENAME         Monitor the given file for changes, and open it as read-only.
+  -n, --no-cache                 Avoid writing the location history, search history, highscore,
+                                 compilation and format command to ` + cacheDirForDoc + `.
+  -p, --paste FILENAME           Paste the contents of the clipboard into the given file.
+                                 Combine with -f to overwrite the file.
+  -r, --clear-locks              Clear all file locks and close all portals.
+  -v, --version                  Display the current version.
 
 See the man page for more information.
 
