@@ -22,6 +22,7 @@ const (
 var fixLineMut sync.Mutex
 
 // ProgrammingLanguage returns true if the current mode appears to be a programming language (and not a markup language etc)
+// The main question is "can it be compiled or built to something?". Dockerfiles are borderline config files.
 func (e *Editor) ProgrammingLanguage() bool {
 	switch e.mode {
 	case mode.Blank, mode.AIDL, mode.Amber, mode.Bazel, mode.Config, mode.Doc, mode.Email, mode.Git, mode.HIDL, mode.HTML, mode.JSON, mode.Log, mode.M4, mode.ManPage, mode.Markdown, mode.Nroff, mode.PolicyLanguage, mode.ReStructured, mode.Shader, mode.SQL, mode.Text, mode.XML:

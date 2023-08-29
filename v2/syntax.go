@@ -86,6 +86,12 @@ var (
 
 	// Erlang
 	erlangWords = []string{"after", "and", "andalso", "band", "begin", "bnot", "bor", "bsl", "bsr", "bxor", "case", "catch", "cond", "div", "end", "fun", "if", "let", "not", "of", "or", "orelse", "receive", "rem", "try", "when", "xor"}
+
+	// Docker
+	dockerWords = []string{"attach", "build", "commit", "container", "cp", "create", "diff", "events", "exec", "export", "history", "image", "images", "import", "info", "inspect", "kill", "load", "login", "logout", "logs", "network", "pause", "port", "ps", "pull", "push", "rename", "repository", "restart", "rm", "rmi", "run", "save", "search", "start", "stats", "stop", "tag", "top", "unpause", "update", "version", "volume", "wait"}
+
+	// Ollama
+	ollamaWords = []string{"from", "parameter", "template", "system", "adapter", "license"}
 )
 
 func clearKeywords() {
@@ -97,6 +103,14 @@ func addKeywords(addKeywords []string) {
 	for _, kw := range addKeywords {
 		syntax.Keywords[kw] = struct{}{}
 	}
+}
+
+func addKeywordsAsUppercase(xs []string) {
+	uppercase := []string{}
+	for _, word := range xs {
+		uppercase = append(uppercase, strings.ToUpper(word))
+	}
+	addKeywords(uppercase)
 }
 
 func removeKeywords(delKeywords []string) {
@@ -143,15 +157,15 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		setKeywords(dWords)
 	case mode.Dart:
 		setKeywords(dartWords)
+	case mode.Docker:
+		removeKeywords([]string{"auto", "default", "from", "install", "int", "local", "no", "not", "type", "var"})
+		addKeywords(dockerWords)
+		addKeywordsAsUppercase(dockerWords)
 	case mode.Erlang:
 		setKeywords(erlangWords)
 	case mode.Fortran77:
 		setKeywords(fortran77Words)
-		uppercase := []string{}
-		for _, word := range fortran77Words {
-			uppercase = append(uppercase, strings.ToUpper(word))
-		}
-		addKeywords(uppercase)
+		addKeywordsAsUppercase(fortran77Words)
 	case mode.Fortran90:
 		setKeywords(fortran90Words)
 	case mode.FSharp:
@@ -198,6 +212,10 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		removeKeywords([]string{"append", "exit", "fn", "get", "package", "print"})
 	case mode.Odin:
 		setKeywords(odinWords)
+	case mode.Ollama:
+		removeKeywords([]string{"auto", "default", "from", "install", "int", "local", "no", "not", "type", "var"})
+		addKeywords(ollamaWords)
+		addKeywordsAsUppercase(ollamaWords)
 	case mode.PolicyLanguage: // SE Linux
 		setKeywords(policyLanguageWords)
 	case mode.Garnet, mode.Hare, mode.Jakt, mode.Rust: // Originally only for Rust, split up as needed
