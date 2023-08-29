@@ -27,6 +27,7 @@ const (
 	D                     // D
 	Dart                  // Dart
 	Doc                   // asciidoctor, sdoc etc
+	Docker                // For Dockerfiles
 	Email                 // For using o with ie. Mutt
 	Elm                   // Elm
 	Erlang                // Erlang
@@ -66,6 +67,7 @@ const (
 	Oak                   // Oak
 	ObjectPascal          // Object Pascal and Delphi
 	Odin                  // Odin
+	Ollama                // For Modelfiles
 	Perl                  // Perl
 	PolicyLanguage        // SE Linux configuration files
 	Prolog                // Prolog
@@ -138,6 +140,8 @@ func (mode Mode) String() string {
 		return "D"
 	case Dart:
 		return "Dart"
+	case Docker:
+		return "Docker"
 	case Elm:
 		return "Elm"
 	case Email:
@@ -210,6 +214,8 @@ func (mode Mode) String() string {
 		return "Nroff"
 	case Oak:
 		return "Oak"
+	case Ollama:
+		return "Ollama"
 	case ObjectPascal:
 		return "Pas"
 	case OCaml:

@@ -27,6 +27,10 @@ func Detect(filename string) Mode {
 			strings.Count(baseFilename, "-") >= 2):
 		// Git mode
 		mode = Git
+	case baseFilename == "Dockerfile" || baseFilename == "dockerfile":
+		mode = Docker
+	case baseFilename == "Modelfile" || baseFilename == "modelfile":
+		mode = Ollama
 	case baseFilename == "svn-commit.tmp":
 		mode = Subversion
 	case ext == ".vimrc" || ext == ".vim" || ext == ".nvim":
