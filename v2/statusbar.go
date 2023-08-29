@@ -278,7 +278,7 @@ func (sb *StatusBar) ShowWordCount(c *vt100.Canvas, e *Editor) {
 
 // ShowLineColWordCount shows a status message with the current filename, line, column and word count
 func (sb *StatusBar) ShowLineColWordCount(c *vt100.Canvas, e *Editor, filename string) {
-	statusString := filename + ": " + e.PositionAndModeInfo()
+	statusString := filename + ": " + e.PositionPercentageAndModeInfo()
 	sb.SetMessage(statusString)
 	sb.ShowNoTimeout(c, e)
 }
@@ -287,16 +287,16 @@ func (sb *StatusBar) ShowLineColWordCount(c *vt100.Canvas, e *Editor, filename s
 func (sb *StatusBar) NanoInfo(c *vt100.Canvas, e *Editor) {
 	l := e.LineNumber()
 	ls := e.LastLineNumber()
-	lp := 0.0
+	lp := 0
 	if ls > 0 {
-		lp = float64(l) / float64(ls)
+		lp = int(100.0 * (float64(l) / float64(ls)))
 	}
 
 	// TODO: implement char/byte number, like: [ line 2/2 (100%), col 1/1 (100%), char 8/8 (100%) ]
 	//statusString := fmt.Sprintf("[ line %d/%d (%d%), col 1/1 (100%), char 8/8 (100%) ]", l, ls, int(lp*100.0), e.ColNumber(), 999, ?/?)
 	// also available: e.indentation.Spaces and e.mode
 
-	statusString := fmt.Sprintf("[ line %d/%d (%d%%), col %d, word count %d ]", l, ls, int(lp*100.0), e.ColNumber(), e.WordCount())
+	statusString := fmt.Sprintf("[ line %d/%d (%d%%), col %d, word count %d ]", l, ls, lp, e.ColNumber(), e.WordCount())
 
 	sb.SetMessage(statusString)
 	sb.ShowNoTimeout(c, e)
@@ -304,7 +304,7 @@ func (sb *StatusBar) NanoInfo(c *vt100.Canvas, e *Editor) {
 
 // ShowLineColWordCountAfterRedraw shows a status message with the current filename, line, column and word count, after the redraw
 func (sb *StatusBar) ShowLineColWordCountAfterRedraw(e *Editor, filename string) {
-	sb.messageAfterRedraw = filename + ": " + e.PositionAndModeInfo()
+	sb.messageAfterRedraw = filename + ": " + e.PositionPercentageAndModeInfo()
 }
 
 // HoldMessage can be used to let a status message survive on screen for N seconds,

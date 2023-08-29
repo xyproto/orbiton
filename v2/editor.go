@@ -1741,6 +1741,29 @@ func (e *Editor) PositionAndModeInfo() string {
 	return fmt.Sprintf("line %d col %d rune %U words %d, [%s] %s", e.LineNumber(), e.ColNumber(), e.Rune(), e.WordCount(), e.mode, indentation)
 }
 
+// PositionPercentageAndModeInfo returns a status message, intended for being displayed at the bottom, containing:
+// * the current line number (counting from 1)
+// * the current number of lines
+// * the current line percentage
+// * the current column number (counting from 1)
+// * the current rune unicode value
+// * the current word count
+// * the currently detected file mode
+// * the current indentation mode (tabs or spaces)
+func (e *Editor) PositionPercentageAndModeInfo() string {
+	indentation := "spaces"
+	if !e.indentation.Spaces {
+		indentation = "tabs"
+	}
+	lineNumber := e.LineNumber()
+	allLines := e.Len()
+	percentage := 0
+	if allLines > 0 {
+		percentage = int(100.0 * (float64(lineNumber) / float64(allLines)))
+	}
+	return fmt.Sprintf("line %d/%d (%d%%) col %d rune %U words %d, [%s] %s", lineNumber, allLines, percentage, e.ColNumber(), e.Rune(), e.WordCount(), e.mode, indentation)
+}
+
 // GoToPosition can go to the given position struct and use it as the new position
 func (e *Editor) GoToPosition(c *vt100.Canvas, status *StatusBar, pos Position) {
 	e.pos = pos
