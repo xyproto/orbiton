@@ -2,7 +2,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -18,7 +17,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "Orbiton 2.64.2"
+const versionString = "Orbiton 2.64.3"
 
 var (
 	// quitMut disallows Exit(1) while a file is being saved
@@ -88,7 +87,7 @@ func main() {
 	noWriteToCache = noCacheFlag || monitorAndReadOnlyFlag
 
 	// If the -p flag is given, just paste the clipboard to the given filename and exit
-	if filename := flag.Arg(0); filename != "" && pasteFlag {
+	if filename := pflag.Arg(0); filename != "" && pasteFlag {
 		const primaryClipboard = false
 		n, headString, tailString, err := WriteClipboardToFile(filename, forceFlag, primaryClipboard)
 		if err != nil {
@@ -115,7 +114,7 @@ func main() {
 	}
 
 	// If the -c flag is given, just copy the given filename to the clipboard and exit
-	if filename := flag.Arg(0); filename != "" && copyFlag {
+	if filename := pflag.Arg(0); filename != "" && copyFlag {
 		const primaryClipboard = false
 		n, tailString, err := SetClipboardFromFile(filename, primaryClipboard)
 		if err != nil {
@@ -206,7 +205,7 @@ func main() {
 			fnord.length = lendata
 		}
 	} else {
-		fnord.filename, lineNumber, colNumber = FilenameAndLineNumberAndColNumber(flag.Arg(0), flag.Arg(1), flag.Arg(2))
+		fnord.filename, lineNumber, colNumber = FilenameAndLineNumberAndColNumber(pflag.Arg(0), pflag.Arg(1), pflag.Arg(2))
 	}
 	// Check if the given filename contains something
 	if fnord.Empty() {
