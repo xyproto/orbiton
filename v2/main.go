@@ -144,15 +144,15 @@ func main() {
 		portalErr := ClearPortal()
 
 		if lockErr == nil && portalErr == nil {
-			fmt.Println("Locks cleared and portal closed.")
+			fmt.Println("Cleared all locks and closed the portal")
 		} else if lockErr != nil && portalErr == nil {
 			fmt.Fprintf(os.Stderr, "Closed the portal, but could not clear locks: %v\n", lockErr)
 			os.Exit(1)
 		} else if lockErr == nil && portalErr != nil {
-			fmt.Fprintf(os.Stderr, "Cleared all locks, but could not close the portal: %v\n", portalErr)
+			fmt.Fprintln(os.Stderr, "Cleared all locks")
 			os.Exit(1)
 		} else {
-			fmt.Fprintf(os.Stderr, "Could not clear locks and not close the portal, got these errors: %v %v\n", lockErr, portalErr)
+			fmt.Fprintf(os.Stderr, "Could not clear locks: %v\n", lockErr)
 			os.Exit(1)
 		}
 		return
