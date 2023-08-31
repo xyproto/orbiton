@@ -80,7 +80,7 @@ install-gtk3: gtk3/gtk3 vg-symlink
 	install -m755 gtk3/gtk3 "$(DESTDIR)$(PREFIX)/bin/og"
 	mkdir -p "$(DESTDIR)$(PREFIX)/share/pixmaps"
 	install -m644 img/og.png "$(DESTDIR)$(PREFIX)/share/pixmaps/og.png"
-	install -m644 img/vg.png "$(DESTDIR)$(PREFIX)/share/pixmaps/vg.png"
+	install -m644 img/lig.png "$(DESTDIR)$(PREFIX)/share/pixmaps/lig.png"
 	mkdir -p "$(DESTDIR)$(PREFIX)/share/applications"
 	install -m644 gtk3/og.desktop "$(DESTDIR)$(PREFIX)/share/applications/og.desktop"
 	install -m644 gtk3/lig.desktop "$(DESTDIR)$(PREFIX)/share/applications/lig.desktop"
