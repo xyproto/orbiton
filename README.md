@@ -132,13 +132,13 @@ These features are unique to `o`, as far as I am aware:
 * `ctrl-t` can jump between a C++ header and source file, when editing C++ code.
 * `ctrl-t` shows the Markdown table editor, when editing Markdown and the cursor is on a Markdown table.
 * Can only edit one file at the time, by design.
-* Provides syntax highlighting for Go, C++, Markdown, Bash and several other languages. There is generic syntax highlighting built-in.
+* Provides syntax highlighting for Go, Rust, C++, Markdown, Bash and several other languages. There is generic syntax highlighting built-in.
 * Will jump to the last visited line when opening a recent file.
 * Is provided as a single self-contained executable.
 * Loads faster than both `vim` and `emacs`, for small files.
 * Can render text to PDF either by itself or by using `pandoc`.
 * Tested with `alacritty`, `konsole`, `st`, `urxvt`, `xfce4-terminal`, `xterm` and `zutty`.
-* Tested on Arch Linux, Debian, OpenSUSE, FreeBSD and OpenBSD.
+* Tested on Arch Linux, Debian, OpenSUSE, macOS, FreeBSD and OpenBSD.
 * Never asks before saving or quitting. Be careful.
 * The [`NO_COLOR`](https://no-color.org) environment variable can be set to disable all colors.
 * Rainbow parentheses makes lines with many parentheses easier to read.
@@ -173,14 +173,14 @@ These features are unique to `o`, as far as I am aware:
 * The man page viewer can not display some special characters, such as the long dash (&mdash;), just yet.
 * Using `tmux` and resizing the terminal emulator window may trigger text rendering issues. Try pressing `esc` to redraw the text, or `ctrl-f` to search for text. Setting `TERM` correctly might help.
 * For some terminal emulators, if `o` is busy performing an operation, pressing `ctrl-s` may lock the terminal. Some terminal emulators, like `konsole`, can be configured to turn off this behavior. Press `ctrl-q` to unlock the terminal again (together with the unfortunate risk of quitting `o`). To sidestep this issue, the `ctrl-o` menu can be used instead, for saving and quitting.
-* Using `mosh` may cause text rendering issues (in both NeoVim and `o`).
+* Using `mosh` may cause text rendering issues (in both `nvim` and `o`).
 * Pressing `cmd-v`, `cmd-x` and `cmd-c` on macOS only works when using the `og` GUI/VTE frontend. For `o`, `ctrl-v`, `ctrl-x` and `ctrl-c` can be used instead.
-* Middle-click pasting (instead of pasting with `ctrl-v`) will only paste the first character.
 * The Markdown table editor does not have scrolling, so the table must fit within the current terminal emulator width and height. Resize the terminal as needed.
+* Middle-click pasting (instead of pasting with `ctrl-v`) will only paste the first character.
 
 ## Hotkeys
 
-There are fewer hotkeys to remember than for GNU Nano.
+There are pretty few hotkeys to remember:
 
 * `ctrl-s` - Save.
 * `ctrl-q` - Quit.
