@@ -6,7 +6,7 @@ Orbiton is a text editor and a minimalistic IDE.
 
 It might be a good fit for:
 
-* Editing git commit messages (using `EDITOR=o git commit`).
+* Writing git commit messages (using `EDITOR=o git commit`).
 * Editing `README.md` and `TODO.md` files.
 * Writing Markdown and then exporting to HTML or PDF.
 * Learning programming languages, like Rust or Zig.
