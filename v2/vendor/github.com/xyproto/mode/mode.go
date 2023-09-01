@@ -43,6 +43,7 @@ const (
 	Haxe                  // Haxe: .hx and .hxml files
 	HIDL                  // Android-related: Hardware Abstraction Layer Interface Definition Language
 	HTML                  // HTML
+	HTTP                  // .http files are used by IntelliJ and Visual Studio for testing HTTP services
 	Hare                  // Hare
 	Haskell               // Haskell
 	Ivy                   // Ivy
@@ -176,6 +177,8 @@ func (mode Mode) String() string {
 		return "HIDL"
 	case HTML:
 		return "HTML"
+	case HTTP:
+		return "HTTP Tests"
 	case Ivy:
 		return "Ivy"
 	case Jakt:
