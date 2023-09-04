@@ -434,6 +434,23 @@ AGAIN:
 	if s == "" && !replaceMode {
 		// No search string entered, and not in replace mode, use the current word, if available
 		s = e.CurrentWord()
+	} else if s == "t" {
+		// A special case, search forward for typos
+		spellCheckMode = true
+		foundNoTypos = false
+		typo, err := e.SearchForTypo(c, status)
+		if err != nil {
+			return
+		}
+		if err == errFoundNoTypos || typo == "" {
+			foundNoTypos = true
+			status.Clear(c)
+			status.SetMessage("No typos found")
+			status.Show(c, e)
+			return
+		}
+		s = typo
+		forward = true
 	}
 	if pressedTab && previousSearch == "" { // search text -> tab
 		// got the search text, now gather the replace text

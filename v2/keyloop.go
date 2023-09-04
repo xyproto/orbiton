@@ -1983,22 +1983,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			undo = undoBackup
 			// Reset the key history next iteration
 			clearKeyHistory = true
-		} else if kh.Repeated("c:19", 4-1) { // ctrl-s pressed 4 times (minus the one that was added just now)
-			// Spellcheck
-			err := e.RunCommand(c, tty, status, bookmark, undo, "spellcheck")
-			if err != nil {
-				status.SetError(err)
-				status.Show(c, e)
-				break
-			}
-		} else if kh.Repeated("c:6", 4-1) { // ctrl-f pressed 4 times (minus the one that was added just now)
-			// Search backwards for the previous function signature
-			err := e.RunCommand(c, tty, status, bookmark, undo, "gobacktofunc")
-			if err != nil {
-				status.SetError(err)
-				status.Show(c, e)
-				break
-			}
 		}
 
 		// Clear status, if needed
