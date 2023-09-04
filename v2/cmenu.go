@@ -145,8 +145,9 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Sort the current block of lines", "sortblock")
 
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert \""+insertFilename+"\" at the current line", "insertfile", insertFilename)
-	actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert the current date", "insertdate") // in the RFC 3339 format
-	actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert the current time", "inserttime")
+	actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert the current date and time", "insertdateandtime") // in the RFC 3339 format
+
+	actions.AddCommand(e, c, tty, status, bookmark, undo, "Spell check (ctrl-a to add words, ctrl-i to ignore)", "spellcheck")
 
 	// Word wrap at a custom width + enable word wrap when typing
 	actions.Add("Word wrap at...", func() {

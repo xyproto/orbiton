@@ -118,12 +118,14 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		insertdate
 		insertfile
 		inserttime
+		insertdateandtime
 		quit
 		save
 		savequit
 		savequitclear
 		sortblock
 		sortstrings
+		spellcheck
 		splitline
 		version
 	)
@@ -200,6 +202,15 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			e.InsertString(c, timeString)
 			e.addSpace = true
 		},
+		insertdateandtime: func() { // insert the current date and time
+			undo.Snapshot(e)
+			// If a space is added after the string here, instead of using e.addSpace,
+			// it will be stripped when the command menu disappears.
+			dateString := time.Now().Format(time.RFC3339)[:10]
+			timeString := time.Now().Format("15:04") // HH:MM
+			e.InsertString(c, dateString+" "+timeString)
+			e.addSpace = true
+		},
 		save: func() { // save the current file
 			e.UserSave(c, tty, status)
 		},
@@ -219,6 +230,20 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		sortstrings: func() { // sort the words on the current line
 			undo.Snapshot(e)
 			e.SortStrings()
+			e.redraw = true
+			e.redrawCursor = true
+		},
+		spellcheck: func() {
+			typo, err := e.SearchForTypo(c, status)
+			if err != nil {
+				return
+			}
+			if err == errFoundNoTypos || typo == "" {
+				status.Clear(c)
+				status.SetMessage("No typos found")
+				status.Show(c, e)
+				return
+			}
 			e.redraw = true
 			e.redrawCursor = true
 		},
@@ -254,6 +279,8 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		functionID = insertdate
 	case "inserttime", "time", "t", "ti", "tim":
 		functionID = inserttime
+	case "insertdateandtime", "dateandtime", "dt", "dati", "datim":
+		functionID = insertdateandtime
 	case "qs", "byes", "cus", "exitsave", "quitandsave", "quitsave", "qw", "saq", "saveandquit", "saveexit", "saveq", "savequit", "savq", "sq", "wq", "↑":
 		functionID = savequit
 	case "s", "sa", "sav", "save", "w", "ww", "↓":
