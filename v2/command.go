@@ -234,18 +234,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			e.redrawCursor = true
 		},
 		spellcheck: func() {
-			typo, err := e.SearchForTypo(c, status)
-			if err != nil {
-				return
-			}
-			if err == errFoundNoTypos || typo == "" {
-				status.Clear(c)
-				status.SetMessage("No typos found")
-				status.Show(c, e)
-				return
-			}
-			e.redraw = true
-			e.redrawCursor = true
+			e.NanoNextTypo(c, status)
 		},
 		splitline: func() { // split the current line on space
 			undo.Snapshot(e)
@@ -289,6 +278,8 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		functionID = sortblock
 	case "sp", "split", "splitline", "smartsplit":
 		functionID = splitline
+	case "spellcheck":
+		functionID = spellcheck
 	case "sortstrings", "sortw", "sortwords", "sow", "ss", "sw", "sortfields", "sf":
 		functionID = sortstrings
 	case "sqc", "savequitclear":

@@ -116,7 +116,7 @@ func (e *Editor) SearchForTypo(c *vt100.Canvas, status *StatusBar) (string, erro
 		if corrected := fuzzyModel.SpellCheck(justTheWord); word != corrected {
 			status.Clear(c)
 			status.SetMessage(justTheWord + " could be " + corrected)
-			status.Show(c, e)
+			status.ShowNoTimeout(c, e)
 			return justTheWord, nil
 		}
 	}
