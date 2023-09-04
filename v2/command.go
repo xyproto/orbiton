@@ -114,6 +114,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		nothing = iota
 		build
 		copyall
+		gobacktofunc
 		help
 		insertdate
 		insertfile
@@ -171,6 +172,24 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			} else {
 				numLines := strings.Count(e.String(), "\n") + 1
 				status.SetMessageAfterRedraw(fmt.Sprintf("Copied %d lines", numLines))
+			}
+		},
+		gobacktofunc: func() {
+			// A special case, search backwards to the start of the function (or to "main")
+			s := e.FuncPrefix()
+			if s == "" {
+				s = "main"
+			}
+			const forward = false
+			const wrap = true
+			e.SetSearchTerm(c, status, s, false) // no timeout
+			// Perform the actual search
+			if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
+				if err == errNoSearchMatch {
+					e.ClearSearch()
+					status.SetMessage("No function signatures found")
+					status.ShowNoTimeout(c, e)
+				}
 			}
 		},
 		help: func() { // display an informative status message
@@ -234,7 +253,18 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			e.redrawCursor = true
 		},
 		spellcheck: func() {
-			e.NanoNextTypo(c, status)
+			typo, err := e.SearchForTypo(c, status)
+			if err != nil {
+				return
+			}
+			if err == errFoundNoTypos || typo == "" {
+				status.Clear(c)
+				status.SetMessage("No typos found")
+				status.Show(c, e)
+				return
+			}
+			e.redraw = true
+			e.redrawCursor = true
 		},
 		splitline: func() { // split the current line on space
 			undo.Snapshot(e)
@@ -260,6 +290,8 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		functionID = build
 	case "copyall", "copya":
 		functionID = copyall
+	case "gobacktofunc":
+		functionID = gobacktofunc
 	case "h", "he", "hh", "hel", "help":
 		functionID = help
 	case "if", "i", "insertfile", "insert", "insertf":
