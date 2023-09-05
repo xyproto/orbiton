@@ -631,6 +631,14 @@ Install (use `sudo` or `doas`, if needed):
 
     make gui-install
 
+## Spellchecker
+
+* Press `ctrl-f` to search, and then type in `t` and press return to search for the next **t**ypo.
+* If a typo is found, press `ctrl-a` to (temporarily) add it to the dictionary or `ctrl-i` to (temporarily) ignore it.
+* The spellchecker uses a fixed English word list and does not store lists of custom words anywhere, yet.
+* When in Nano mode (when `o` is launched by a symlink or executable named `nan` or `nano`), `ctrl-t` searches for the next typo.
+* The spellchecker is an experimental feature.
+
 ## Terminal settings
 
 ### Konsole
