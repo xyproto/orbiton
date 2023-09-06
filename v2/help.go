@@ -27,8 +27,7 @@ ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for HTML, format the file with "tidy", for Python: "autopep8"
             for Markdown, toggle checkboxes or re-format tables
             for git interactive rebases, cycle the rebase keywords
-ctrl-g      to display simple help 2 times, then toggle the status bar
-            can jump to definition (experimental feature)
+ctrl-g      to toggle the status bar or jump to definition (experimental feature)
 ctrl-_      jump to a matching parenthesis or bracket if on one,
             otherwise insert a symbol by typing in a two letter ViM-style digraph
             see https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt
@@ -56,7 +55,7 @@ ctrl-l      to jump to a specific line or letter (press return to jump to the to
 ctrl-f      to find a string, press Tab after the text to search and replace
 ctrl-\      to toggle single-line comments for a block of code
 ctrl-~      to jump to matching parenthesis
-esc         to redraw the screen and clear the last search
+esc         to redraw the screen, clear the last search and clear the current macro
 
 Set NO_COLOR=1 to disable colors.
 
