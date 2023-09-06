@@ -2300,7 +2300,7 @@ func (e *Editor) LastLineNumber() LineNumber {
 }
 
 // UserInput asks the user to enter text, then collects the letters. No history.
-func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, title, defaultValue string, quickList []string, arrowsAreCountedAsLetters bool) (string, bool) {
+func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, title, defaultValue string, quickList []string, arrowsAreCountedAsLetters bool, tabInsertText string) (string, bool) {
 	status.ClearAll(c)
 	if defaultValue != "" {
 		status.SetMessage(title + ": " + defaultValue)
@@ -2340,6 +2340,12 @@ func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, t
 				break
 			}
 			fallthrough // cancel
+		case "c:9":
+			if tabInsertText != "" {
+				entered = tabInsertText
+				status.SetMessage(title + ": " + entered)
+				status.ShowNoTimeout(c, e)
+			}
 		case "c:27", "c:3", "c:17", "c:24": // esc, ctrl-c, ctrl-q or ctrl-x
 			cancel = true
 			entered = ""

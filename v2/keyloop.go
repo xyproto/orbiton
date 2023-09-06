@@ -232,7 +232,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Add a watch
 			if e.debugMode { // AddWatch will start a new gdb session if needed
 				// Ask the user to type in a watch expression
-				if expression, ok := e.UserInput(c, tty, status, "Variable name to watch", "", []string{}, false); ok {
+				if expression, ok := e.UserInput(c, tty, status, "Variable name to watch", "", []string{}, false, ""); ok {
 					if _, err := e.AddWatch(expression); err != nil {
 						status.ClearAll(c)
 						status.SetError(err)
@@ -473,9 +473,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:15": // ctrl-o, launch the command menu
 
 			if e.nanoMode { // ctrl-o, save
-
 				// Ask the user which filename to save to
-				if newFilename, ok := e.UserInput(c, tty, status, "Save as", e.filename, []string{e.filename}, false); ok {
+				if newFilename, ok := e.UserInput(c, tty, status, "Save as", e.filename, []string{e.filename}, false, e.filename); ok {
 					e.filename = newFilename
 					e.Save(c, tty)
 					e.Switch(c, tty, status, fileLock, newFilename)
@@ -485,7 +484,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					status.Show(c, e)
 				}
 				break
-
 			}
 
 			status.ClearAll(c)
@@ -509,7 +507,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			// Ask the user to type in a digraph
-			if digraphString, ok := e.UserInput(c, tty, status, "Type in a 2-letter digraph", "", digraph.All(), false); ok {
+			const tabInputText = "ae"
+			if digraphString, ok := e.UserInput(c, tty, status, "Type in a 2-letter digraph", "", digraph.All(), false, tabInputText); ok {
 				if r, ok := digraph.Lookup(digraphString); !ok {
 					status.ClearAll(c)
 					status.SetErrorMessage("Could not find the " + digraphString + " digraph")
@@ -1556,7 +1555,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 				if e.changed {
 					// Ask the user which filename to save to
-					if newFilename, ok := e.UserInput(c, tty, status, "Write to", e.filename, []string{e.filename}, false); ok {
+					if newFilename, ok := e.UserInput(c, tty, status, "Write to", e.filename, []string{e.filename}, false, e.filename); ok {
 						e.filename = newFilename
 						e.Save(c, tty)
 					} else {
@@ -1722,7 +1721,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			if e.nanoMode { // nano: ctrl-r, insert file
 				// Ask the user which filename to insert
-				if insertFilename, ok := e.UserInput(c, tty, status, "Insert file", "", []string{e.filename}, false); ok {
+				if insertFilename, ok := e.UserInput(c, tty, status, "Insert file", "", []string{e.filename}, false, e.filename); ok {
 					err := e.RunCommand(c, tty, status, bookmark, undo, "insertfile", insertFilename)
 					if err != nil {
 						status.SetError(err)

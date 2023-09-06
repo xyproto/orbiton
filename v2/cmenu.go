@@ -149,7 +149,8 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 
 	// Word wrap at a custom width + enable word wrap when typing
 	actions.Add("Word wrap at...", func() {
-		if wordWrapString, ok := e.UserInput(c, tty, status, fmt.Sprintf("Word wrap at [%d]", wrapWidth), "", []string{}, false); ok {
+		const tabInputText = "79"
+		if wordWrapString, ok := e.UserInput(c, tty, status, fmt.Sprintf("Word wrap at [%d]", wrapWidth), "", []string{}, false, tabInputText); ok {
 			if strings.TrimSpace(wordWrapString) == "" {
 				e.WrapNow(wrapWidth)
 				e.wrapWhenTyping = true
@@ -171,7 +172,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	// Enter ChatGPT API key, if it's not already set
 	if openAIKeyHolder == nil {
 		actions.Add("Enter ChatGPT API key...", func() {
-			if enteredAPIKey, ok := e.UserInput(c, tty, status, "API key from https://platform.openai.com/account/api-keys", "", []string{}, false); ok {
+			if enteredAPIKey, ok := e.UserInput(c, tty, status, "API key from https://platform.openai.com/account/api-keys", "", []string{}, false, ""); ok {
 				openAIKeyHolder = NewKeyHolderWithKey(enteredAPIKey)
 				// env.Set("CHATGPT_API_KEY", enteredAPIKey)
 				status.SetMessageAfterRedraw("Using API key " + enteredAPIKey)
