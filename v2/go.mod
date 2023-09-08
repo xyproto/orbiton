@@ -28,11 +28,11 @@ require (
 	github.com/xyproto/textoutput v1.15.10
 	github.com/xyproto/vt100 v1.12.7
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
-	golang.org/x/image v0.11.0
+	golang.org/x/image v0.12.0
 )
 
 require (
-	github.com/DataDog/gostackparse v0.6.0 // indirect
+	github.com/DataDog/gostackparse v0.7.0 // indirect
 	github.com/creack/pty v1.1.18 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06 // indirect
@@ -49,7 +49,7 @@ require (
 	github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.5.0 // indirect
-	golang.org/x/net v0.14.0 // indirect
+	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
