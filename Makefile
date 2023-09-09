@@ -48,6 +48,14 @@ o: $(SRCFILES)
 trace: clean $(SRCFILES)
 	cd v2 && $(GOBUILD) $(BUILDFLAGS) -tags=trace -o ../o
 
+pgo: v2/default.pgo
+
+v2/default.pgo: clean $(SRCFILES)
+	cd v2 && $(GOBUILD) $(BUILDFLAGS) -tags=trace -o ../o
+	-rm v2/default.pgo
+	@# v2/main.go could be any filename, it's just for collecting the CPU profile info
+	./o --cpuprofile v2/default.pgo v2/main.go
+
 bench:
 	cd v2 && go test -bench=. -benchmem
 
