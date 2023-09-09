@@ -55,7 +55,7 @@ github.com/mgutz/ansi
 # github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d
 ## explicit
 github.com/nathan-fiscaletti/consolesize-go
-# github.com/peterhellberg/gfx v0.0.0-20230526095554-e6202e653d52
+# github.com/peterhellberg/gfx v0.0.0-20230908181254-9885a9f73abe
 ## explicit; go 1.17
 github.com/peterhellberg/gfx
 # github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba

@@ -23,7 +23,6 @@ type HunterLab struct {
 // Y = ( ( Hunter-L / Reference-Y ) ^ 2 ) * 100.0
 // X =   ( Hunter-a / var_Ka * sqrt( Y / Reference-Y ) + ( Y / Reference-Y ) ) * Reference-X
 // Z = - ( Hunter-b / var_Kb * sqrt( Y / Reference-Y ) - ( Y / Reference-Y ) ) * Reference-Z
-//
 func (h HunterLab) XYZ(ref XYZ) XYZ {
 	Ka := (175.0 / 198.04) * (ref.Y + ref.X)
 	Kb := (70.0 / 218.11) * (ref.Y + ref.Z)
@@ -46,7 +45,6 @@ func (h HunterLab) XYZ(ref XYZ) XYZ {
 // Hunter-L = 100.0 * sqrt( Y / Reference-Y )
 // Hunter-a = var_Ka * ( ( ( X / Reference-X ) - ( Y / Reference-Y ) ) / sqrt( Y / Reference-Y ) )
 // Hunter-b = var_Kb * ( ( ( Y / Reference-Y ) - ( Z / Reference-Z ) ) / sqrt( Y / Reference-Y ) )
-//
 func (xyz XYZ) HunterLab(ref XYZ) HunterLab {
 	Ka := (175.0 / 198.04) * (ref.Y + ref.X)
 	Kb := (70.0 / 218.11) * (ref.Y + ref.Z)

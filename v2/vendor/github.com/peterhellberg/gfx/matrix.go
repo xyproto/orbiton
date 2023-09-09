@@ -11,7 +11,7 @@ import (
 // Matrix has a handful of useful methods, each of which adds a transformation to the matrix. For
 // example:
 //
-//   gfx.IM.Moved(gfx.V(100, 200)).Rotated(gfx.ZV, math.Pi/2)
+//	gfx.IM.Moved(gfx.V(100, 200)).Rotated(gfx.ZV, math.Pi/2)
 //
 // This code creates a Matrix that first moves everything by 100 units horizontally and 200 units
 // vertically and then rotates everything by 90 degrees around the origin.
@@ -19,7 +19,8 @@ import (
 // Layout is:
 // [0] [2] [4]
 // [1] [3] [5]
-//  0   0   1  (implicit row)
+//
+//	0   0   1  (implicit row)
 type Matrix [6]float64
 
 // IM stands for identity matrix. Does nothing, no transformation.
@@ -27,8 +28,8 @@ var IM = Matrix{1, 0, 0, 1, 0, 0}
 
 // String returns a string representation of the Matrix.
 //
-//   m := gfx.IM
-//   fmt.Println(m) // Matrix(1 0 0 | 0 1 0)
+//	m := gfx.IM
+//	fmt.Println(m) // Matrix(1 0 0 | 0 1 0)
 func (m Matrix) String() string {
 	return fmt.Sprintf(
 		"Matrix(%v %v %v | %v %v %v)",

@@ -9,9 +9,8 @@ import (
 //
 // Create vectors with the V3 constructor:
 //
-//   u := gfx.V3(1, 2, 3)
-//   v := gfx.V3(8, -3, 4)
-//
+//	u := gfx.V3(1, 2, 3)
+//	v := gfx.V3(8, -3, 4)
 type Vec3 struct {
 	X, Y, Z float64
 }

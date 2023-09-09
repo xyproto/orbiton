@@ -10,8 +10,8 @@ import (
 
 // ColorToXYZ converts a color into XYZ.
 //
-//R, G and B (Standard RGB) input range = 0 ÷ 255
-//X, Y and Z output refer to a D65/2° standard illuminant.
+// R, G and B (Standard RGB) input range = 0 ÷ 255
+// X, Y and Z output refer to a D65/2° standard illuminant.
 func ColorToXYZ(c color.Color) XYZ {
 	r, g, b := floatRGB(c)
 

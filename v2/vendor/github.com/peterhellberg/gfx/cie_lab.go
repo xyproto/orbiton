@@ -18,8 +18,7 @@ type CIELab struct {
 // CIE-a*2, CIE-b*2                   //Color #2 CIE-L*ab values
 //
 // Delta C* = sqrt( ( CIE-a*2 ^ 2 ) + ( CIE-b*2 ^ 2 ) )
-//          - sqrt( ( CIE-a*1 ^ 2 ) + ( CIE-b*1 ^ 2 ) )
-//
+//   - sqrt( ( CIE-a*1 ^ 2 ) + ( CIE-b*1 ^ 2 ) )
 func (c1 CIELab) DeltaC(c2 CIELab) float64 {
 	return math.Sqrt(math.Pow(c2.A, 2)+math.Pow(c2.B, 2)) -
 		math.Sqrt(math.Pow(c1.A, 2)+math.Pow(c1.B, 2))
@@ -30,14 +29,11 @@ func (c1 CIELab) DeltaC(c2 CIELab) float64 {
 // CIE-a*1, CIE-b*1                   //Color #1 CIE-L*ab values
 // CIE-a*2, CIE-b*2                   //Color #2 CIE-L*ab values
 //
-//
 // xDE =  sqrt( ( CIE-a*2 ^ 2 ) + ( CIE-b*2 ^ 2 ) )
-//      - sqrt( ( CIE-a*1 ^ 2 ) + ( CIE-b*1 ^ 2 ) )
+//   - sqrt( ( CIE-a*1 ^ 2 ) + ( CIE-b*1 ^ 2 ) )
 //
 // Delta H* = sqrt( ( CIE-a*2 - CIE-a*1 ) ^ 2
-//                + ( CIE-b*2 - CIE-b*1 ) ^ 2 - ( xDE ^ 2 ) )
-//
-//
+//   - ( CIE-b*2 - CIE-b*1 ) ^ 2 - ( xDE ^ 2 ) )
 func (c1 CIELab) DeltaH(c2 CIELab) float64 {
 	xDE := math.Sqrt(math.Pow(c2.A, 2)+math.Pow(c2.B, 2)) -
 		math.Sqrt(math.Pow(c1.A, 2)+math.Pow(c1.B, 2))
@@ -52,10 +48,8 @@ func (c1 CIELab) DeltaH(c2 CIELab) float64 {
 // CIE-L*2, CIE-a*2, CIE-b*2          //Color #2 CIE-L*ab values
 //
 // Delta E* = sqrt( ( ( CIE-L*1 - CIE-L*2 ) ^ 2 )
-//                + ( ( CIE-a*1 - CIE-a*2 ) ^ 2 )
-//                + ( ( CIE-b*1 - CIE-b*2 ) ^ 2 ) )
-//
-//
+//   - ( ( CIE-a*1 - CIE-a*2 ) ^ 2 )
+//   - ( ( CIE-b*1 - CIE-b*2 ) ^ 2 ) )
 func (c1 CIELab) DeltaE(c2 CIELab) float64 {
 	return math.Sqrt(math.Pow(c1.L*1-c2.L*2, 2) +
 		math.Pow(c1.A*1-c2.A*2, 2) + math.Pow(c1.B*1-c2.B*2, 2),
@@ -81,7 +75,6 @@ func (c1 CIELab) DeltaE(c2 CIELab) float64 {
 // CIE-L* = ( 116 * var_Y ) - 16
 // CIE-a* = 500 * ( var_X - var_Y )
 // CIE-b* = 200 * ( var_Y - var_Z )
-//
 func (xyz XYZ) CIELab(ref XYZ) CIELab {
 	X := xyz.X / ref.X
 	Y := xyz.Y / ref.Y

@@ -8,7 +8,8 @@ import "image/color"
 // Batch is a Target that allows for efficient drawing of many objects with the same Picture.
 //
 // To put an object into a Batch, just draw it onto it:
-//   object.Draw(batch)
+//
+//	object.Draw(batch)
 type Batch struct {
 	cont Drawer
 
@@ -34,10 +35,10 @@ func NewBatch(container Triangles, pic Picture) *Batch {
 // Dirty notifies Batch about an external modification of it's container. If you retain access to
 // the Batch's container and change it, call Dirty to notify Batch about the change.
 //
-//   container := &gfx.TrianglesData{}
-//   batch := gfx.NewBatch(container, nil)
-//   container.SetLen(10) // container changed from outside of Batch
-//   batch.Dirty()        // notify Batch about the change
+//	container := &gfx.TrianglesData{}
+//	batch := gfx.NewBatch(container, nil)
+//	container.SetLen(10) // container changed from outside of Batch
+//	batch.Dirty()        // notify Batch about the change
 func (b *Batch) Dirty() {
 	b.cont.Dirty()
 }

@@ -6,8 +6,8 @@ import (
 )
 
 // Circle is a 2D circle. It is defined by two properties:
-//  - Center vector
-//  - Radius float64
+//   - Center vector
+//   - Radius float64
 type Circle struct {
 	Center Vec
 	Radius float64
@@ -130,8 +130,8 @@ func (c Circle) Intersect(d Circle) Circle {
 // the perimeters touch.
 //
 // This function will return a non-zero vector if:
-//  - The Rect contains the Circle, partially or fully
-//  - The Circle contains the Rect, partially of fully
+//   - The Rect contains the Circle, partially or fully
+//   - The Circle contains the Rect, partially of fully
 func (c Circle) IntersectRect(r Rect) Vec {
 	// Checks if the c.Center is not in the diagonal quadrants of the rectangle
 	if (r.Min.X <= c.Center.X && c.Center.X <= r.Max.X) || (r.Min.Y <= c.Center.Y && c.Center.Y <= r.Max.Y) {
@@ -216,8 +216,8 @@ func (c Circle) IntersectRect(r Rect) Vec {
 // the perimeters touch.
 //
 // This function will return a non-zero vector if:
-//  - The Rect contains the Circle, partially or fully
-//  - The Circle contains the Rect, partially of fully
+//   - The Rect contains the Circle, partially or fully
+//   - The Circle contains the Rect, partially of fully
 func (r Rect) IntersectCircle(c Circle) Vec {
 	return c.IntersectRect(r).Scaled(-1)
 }

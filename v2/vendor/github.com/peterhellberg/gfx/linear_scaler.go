@@ -42,7 +42,6 @@ func (ls LinearScaler) Range(r ...float64) LinearScaler {
 //
 // OLD PERCENT = (x - OLD MIN) / (OLD MAX - OLD MIN)
 // NEW X = ((NEW MAX - NEW MIN) * OLD PERCENT) + NEW MIN
-//
 func (ls LinearScaler) ScaleFloat64(x float64) float64 {
 	op := (x - ls.d.Min()) / (ls.d.Max() - ls.d.Min())
 	nx := ((ls.r.Last() - ls.r.First()) * op) + ls.r.First()

@@ -11,7 +11,7 @@ package gfx
 //
 // To create a Drawer, just assign it's Triangles and Picture fields:
 //
-//   d := gfx.Drawer{Triangles: t, Picture: p}
+//	d := gfx.Drawer{Triangles: t, Picture: p}
 //
 // If Triangles is nil, nothing will be drawn. If Picture is nil, Triangles will be drawn without a
 // Picture.

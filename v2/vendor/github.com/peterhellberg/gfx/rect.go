@@ -58,9 +58,9 @@ func (r Rect) CenterOrigin(v Vec, z float64) Vec3 {
 
 // String returns the string representation of the Rect.
 //
-//   r := gfx.R(100, 50, 200, 300)
-//   r.String()     // returns "gfx.R(100, 50, 200, 300)"
-//   fmt.Println(r) // gfx.R(100, 50, 200, 300)
+//	r := gfx.R(100, 50, 200, 300)
+//	r.String()     // returns "gfx.R(100, 50, 200, 300)"
+//	fmt.Println(r) // gfx.R(100, 50, 200, 300)
 func (r Rect) String() string {
 	return fmt.Sprintf("gfx.R(%v, %v, %v, %v)", r.Min.X, r.Min.Y, r.Max.X, r.Max.Y)
 }
@@ -115,9 +115,9 @@ func (r Rect) Moved(delta Vec) Rect {
 // Resized returns the Rect resized to the given size while keeping the position of the given
 // anchor.
 //
-//   r.Resized(r.Min, size)      // resizes while keeping the position of the lower-left corner
-//   r.Resized(r.Max, size)      // same with the top-right corner
-//   r.Resized(r.Center(), size) // resizes around the center
+//	r.Resized(r.Min, size)      // resizes while keeping the position of the lower-left corner
+//	r.Resized(r.Max, size)      // same with the top-right corner
+//	r.Resized(r.Center(), size) // resizes around the center
 //
 // This function does not make sense for resizing a rectangle of zero area and will panic. Use
 // ResizedMin in the case of zero area.

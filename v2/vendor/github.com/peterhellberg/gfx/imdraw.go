@@ -14,19 +14,19 @@ import (
 // IMDraw, other than a regular BasicTarget, is used to draw shapes. To draw shapes, you first need
 // to Push some points to IMDraw:
 //
-//   imd := gfx.NewIMDraw(pic) // use nil pic if you only want to draw primitive shapes
-//   imd.Push(gfx.V(100, 100))
-//   imd.Push(gfx.V(500, 100))
+//	imd := gfx.NewIMDraw(pic) // use nil pic if you only want to draw primitive shapes
+//	imd.Push(gfx.V(100, 100))
+//	imd.Push(gfx.V(500, 100))
 //
 // Once you have Pushed some points, you can use them to draw a shape, such as a line:
 //
-//   imd.Line(20) // draws a 20 units thick line
+//	imd.Line(20) // draws a 20 units thick line
 //
 // Set exported fields to change properties of Pushed points:
 //
-//   imd.Color = gfx.RGB(1, 0, 0)
-//   imd.Push(gfx.V(200, 200))
-//   imd.Circle(400, 0)
+//	imd.Color = gfx.RGB(1, 0, 0)
+//	imd.Push(gfx.V(200, 200))
+//	imd.Circle(400, 0)
 //
 // Here is the list of all available point properties (need to be set before Pushing a point):
 //   - Color     - applies to all
@@ -207,7 +207,7 @@ func (imd *IMDraw) Circle(radius, thickness float64) {
 // continues to the high angle. If low<high, the arc will be drawn counterclockwise. Otherwise it
 // will be clockwise. The angles are not normalized by any means.
 //
-//   imd.CircleArc(40, 0, 8*math.Pi, 0)
+//	imd.CircleArc(40, 0, 8*math.Pi, 0)
 //
 // This line will fill the whole circle 4 times.
 func (imd *IMDraw) CircleArc(radius, low, high, thickness float64) {
@@ -234,7 +234,7 @@ func (imd *IMDraw) Ellipse(radius Vec, thickness float64) {
 // angle and continues to the high angle. If low<high, the arc will be drawn counterclockwise.
 // Otherwise it will be clockwise. The angles are not normalized by any means.
 //
-//   imd.EllipseArc(gfx.V(100, 50), 0, 8*math.Pi, 0)
+//	imd.EllipseArc(gfx.V(100, 50), 0, 8*math.Pi, 0)
 //
 // This line will fill the whole ellipse 4 times.
 func (imd *IMDraw) EllipseArc(radius Vec, low, high, thickness float64) {

@@ -90,8 +90,6 @@ var Palette2BitGrayScale = Palette{
 //
 // A calculated palette using 1 bit for each RGB value.
 // It was used by a number of early computers.
-//
-//
 var Palette3Bit = Palette{
 	{0x00, 0x00, 0x00, 0xFF},
 	{0xFF, 0x00, 0x00, 0xFF},
