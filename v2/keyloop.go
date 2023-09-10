@@ -1019,11 +1019,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 							if strings.HasSuffix(trimmedLine, " {") {
 								// Add ( and ), keep the final "{"
 								e.SetCurrentLine(currentLeadingWhitespace + kw + " (" + trimmedLine[kwLenPlus1:len(trimmedLine)-2] + ") {")
+								e.pos.mut.Lock()
 								e.pos.sx += 2
+								e.pos.mut.Unlock()
 							} else if !strings.HasSuffix(trimmedLine, ")") {
 								// Add ( and ), there is no final "{"
 								e.SetCurrentLine(currentLeadingWhitespace + kw + " (" + trimmedLine[kwLenPlus1:] + ")")
+								e.pos.mut.Lock()
 								e.pos.sx += 2
+								e.pos.mut.Unlock()
 								indent = true
 								leadingWhitespace = e.indentation.String() + currentLeadingWhitespace
 							}
@@ -1091,11 +1095,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.InsertLineBelow()
 					// Then if it's not an img tag, insert the closing tag below the current line
 					if tagName != "img" {
+						e.pos.mut.Lock()
 						e.pos.sy++
+						e.pos.mut.Unlock()
 						below := "</" + tagName + ">"
 						e.SetCurrentLine(currentLeadingWhitespace + below)
+						e.pos.mut.Lock()
 						e.pos.sy--
 						e.pos.sx += 2
+						e.pos.mut.Unlock()
 						indent = true
 						leadingWhitespace = e.indentation.String() + currentLeadingWhitespace
 					}
@@ -1152,7 +1160,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			if !noHome {
+				e.pos.mut.Lock()
 				e.pos.sx = 0
+				e.pos.mut.Unlock()
 				// e.Home()
 				if scrollBack {
 					e.pos.SetX(c, 0)
@@ -1235,10 +1245,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					// Delete the blank
 					e.Delete()
 					// scroll left instead of moving the cursor left, if possible
+					e.pos.mut.Lock()
 					if e.pos.offsetX > 0 {
 						e.pos.offsetX--
 						e.pos.sx++
 					}
+					e.pos.mut.Unlock()
 				}
 			}
 

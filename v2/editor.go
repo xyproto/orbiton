@@ -1120,7 +1120,10 @@ func (e *Editor) SplitLine() bool {
 // DataX will return the X position in the data (as opposed to the X position in the viewport)
 func (e *Editor) DataX() (int, error) {
 	// the y position in the data is the lines scrolled + current screen cursor Y position
-	dataY := e.pos.offsetY + e.pos.sy
+	var dataY int
+	e.pos.mut.RLock()
+	dataY = e.pos.offsetY + e.pos.sy
+	e.pos.mut.RUnlock()
 	// get the current line of text
 	screenCounter := 0 // counter for the characters on the screen
 	// loop, while also keeping track of tab expansion
@@ -1129,12 +1132,15 @@ func (e *Editor) DataX() (int, error) {
 	dataX := 0
 	runeCounter := 0
 	for _, r := range e.lines[dataY] {
+		e.pos.mut.RLock()
 		// When we reached the correct screen position, use i as the data position
 		if screenCounter == (e.pos.sx + e.pos.offsetX) {
+			e.pos.mut.RUnlock()
 			dataX = runeCounter
 			found = true
 			break
 		}
+		e.pos.mut.RUnlock()
 		// Increase the counter, based on the current rune
 		if r == '\t' {
 			screenCounter += e.indentation.PerTab
@@ -1152,6 +1158,8 @@ func (e *Editor) DataX() (int, error) {
 
 // DataY will return the Y position in the data (as opposed to the Y position in the viewport)
 func (e *Editor) DataY() LineIndex {
+	e.pos.mut.RLock()
+	defer e.pos.mut.RUnlock()
 	return LineIndex(e.pos.offsetY + e.pos.sy)
 }
 
