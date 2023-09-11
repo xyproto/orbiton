@@ -55,5 +55,5 @@ func (fnord *FilenameOrData) SetTitle() {
 	} else if fnord.filename != "" {
 		title = termtitle.GenerateTitle(fnord.filename)
 	}
-	termtitle.Set(title)
+	termtitle.Set(sanitizeFilename(title))
 }

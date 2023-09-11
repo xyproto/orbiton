@@ -232,3 +232,27 @@ func smartSplit(s string) []string {
 
 	return result
 }
+
+// isAllowedFilenameChar checks if the given rune is allowed in a typical cross-platform filename
+func isAllowedFilenameChar(r rune) bool {
+	if unicode.IsLetter(r) || unicode.IsDigit(r) {
+		return true
+	}
+	switch r {
+	case '.', ',', ':', '-', '+', '_', '/', '\\':
+		return true
+	default:
+		return false
+	}
+}
+
+// sanitizeFilename removes any character from the input string that is not part of a typical cross-platform filename
+func sanitizeFilename(input string) string {
+	var result []rune
+	for _, r := range input {
+		if isAllowedFilenameChar(r) {
+			result = append(result, r)
+		}
+	}
+	return string(result)
+}
