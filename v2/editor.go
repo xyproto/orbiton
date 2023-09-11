@@ -107,7 +107,7 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 		// git commit message can be 72 characters long. Because e-mail standards.
 		e.wrapWidth = 72
 		e.wrapWhenTyping = true
-	case mode.Blank, mode.Doc, mode.Markdown, mode.Text, mode.ReStructured:
+	case mode.ASCIIDoc, mode.Blank, mode.Markdown, mode.ReStructured, mode.SCDoc, mode.Text:
 		e.wrapWidth = 79
 		e.wrapWhenTyping = false
 	}
@@ -522,7 +522,10 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 				// Call Chmod, but ignore errors (since this is just a bonus and not critical)
 				os.Chmod(e.filename, fileMode)
 				e.syntaxHighlight = true
-			} else if e.mode == mode.Make || e.mode == mode.Just || e.mode == mode.Markdown || e.mode == mode.Doc || e.mode == mode.ReStructured || filepath.Base(e.filename) == "PKGBUILD" || filepath.Base(e.filename) == "APKBUILD" {
+			} else if e.mode == mode.ASCIIDoc || e.mode == mode.Just || e.mode == mode.Make || e.mode == mode.Markdown || e.mode == mode.ReStructured || e.mode == mode.SCDoc {
+				fileMode = 0o644
+				os.Chmod(e.filename, fileMode)
+			} else if baseFilename := filepath.Base(e.filename); baseFilename == "PKGBUILD" || baseFilename == "APKGBUILD" {
 				fileMode = 0o644
 				os.Chmod(e.filename, fileMode)
 			}

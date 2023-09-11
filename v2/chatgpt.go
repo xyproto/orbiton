@@ -25,7 +25,7 @@ var fixLineMut sync.Mutex
 // The main question is "can it be compiled or built to something?". Dockerfiles are borderline config files.
 func (e *Editor) ProgrammingLanguage() bool {
 	switch e.mode {
-	case mode.Blank, mode.AIDL, mode.Amber, mode.Bazel, mode.Config, mode.Doc, mode.Email, mode.Git, mode.HIDL, mode.HTML, mode.JSON, mode.Log, mode.M4, mode.ManPage, mode.Markdown, mode.Nroff, mode.PolicyLanguage, mode.ReStructured, mode.Shader, mode.SQL, mode.Text, mode.XML:
+	case mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Bazel, mode.Blank, mode.Config, mode.Email, mode.Git, mode.HIDL, mode.HTML, mode.JSON, mode.Log, mode.M4, mode.ManPage, mode.Markdown, mode.Nroff, mode.PolicyLanguage, mode.ReStructured, mode.SCDoc, mode.SQL, mode.Shader, mode.Text, mode.XML:
 		return false
 	}
 	return true

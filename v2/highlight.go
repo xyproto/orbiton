@@ -47,7 +47,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 	switch e.mode {
 	// If in Markdown mode, figure out the current state of block quotes
-	case mode.Doc, mode.Markdown, mode.ReStructured:
+	case mode.ASCIIDoc, mode.Markdown, mode.ReStructured, mode.SCDoc:
 		// Figure out if "fromline" is within a markdown code block or not
 		for i := LineIndex(0); i < fromline; i++ {
 			// Check if the untrimmed line starts with ~~~ or ```
@@ -159,7 +159,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					coloredString = e.gitHighlight(line)
 				case mode.ManPage:
 					coloredString = e.manPageHighlight(line, y == 0, y+1 == numLinesToDraw)
-				case mode.Doc, mode.Markdown, mode.ReStructured:
+				case mode.ASCIIDoc, mode.Markdown, mode.ReStructured, mode.SCDoc:
 					if highlighted, ok, codeBlockFound := e.markdownHighlight(line, inCodeBlock, listItemRecord, &inListItem); ok {
 						coloredString = highlighted
 						if codeBlockFound {
