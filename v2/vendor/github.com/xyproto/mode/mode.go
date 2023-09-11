@@ -12,6 +12,7 @@ const (
 	Algol68               // ALGOL 68
 	Amber                 // Amber templates
 	Arduino               // Arduino
+	ASCIIDoc              // ASCII doc
 	Assembly              // Assembly
 	Basic                 // FreeBasic, Gambas 3
 	Bat                   // DOS and Windows batch files
@@ -26,7 +27,6 @@ const (
 	Crystal               // Crystal
 	D                     // D
 	Dart                  // Dart
-	Doc                   // asciidoctor, sdoc etc
 	Docker                // For Dockerfiles
 	Email                 // For using o with ie. Mutt
 	Elm                   // Elm
@@ -78,6 +78,7 @@ const (
 	ReStructured          // reStructuredText
 	Rust                  // Rust
 	Scala                 // Scala
+	SCDoc                 // SC Doc
 	Shader                // GLSL Shader
 	Shell                 // Shell scripts and PKGBUILD files
 	StandardML            // Standard ML
@@ -110,6 +111,8 @@ func (mode Mode) String() string {
 		return "Amber"
 	case Arduino:
 		return "Arduino"
+	case ASCIIDoc:
+		return "ASCII Doc"
 	case Assembly:
 		return "Assembly"
 	case Basic:
@@ -136,8 +139,6 @@ func (mode Mode) String() string {
 		return "Crystal"
 	case CS:
 		return "C#"
-	case Doc:
-		return "Document"
 	case D:
 		return "D"
 	case Dart:
@@ -244,6 +245,8 @@ func (mode Mode) String() string {
 		return "Rust"
 	case Scala:
 		return "Scala"
+	case SCDoc:
+		return "SCDoc"
 	case Shader:
 		return "Shader"
 	case Shell:

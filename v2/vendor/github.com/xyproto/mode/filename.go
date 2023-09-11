@@ -65,8 +65,10 @@ func Detect(filename string) Mode {
 			mode = Algol68
 		case ".adb", ".gpr", ".ads", ".ada":
 			mode = Ada
-		case ".adoc", ".scdoc", ".scd":
-			mode = Doc
+		case ".adoc":
+			mode = ASCIIDoc
+		case ".scdoc", ".scd":
+			mode = SCDoc
 		case ".aidl":
 			mode = AIDL
 		case ".agda":
