@@ -493,7 +493,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		outputFilename := firstName + ".pdf" // lilypond may output .midi and/or .pdf by default. --svg is also possible.
 		status.SetMessage("Exporting Lilypond to PDF")
 		status.Show(c, e)
-		return outputFilename, exec.Command("lilypond", "-o", firstName, e.filename).Run()
+		cmd := exec.Command("lilypond", "-o", firstName, e.filename)
+		saveCommand(cmd)
+		return outputFilename, cmd.Run()
 	case mode.Markdown:
 		htmlFilename := strings.ReplaceAll(filepath.Base(sourceFilename), ".", "_") + ".html"
 		if background {

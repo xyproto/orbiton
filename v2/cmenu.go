@@ -604,7 +604,7 @@ func getCommand(cmd *exec.Cmd) string {
 	return strings.TrimPrefix(s, "/usr/bin/sh -c ")
 }
 
-// Save the command to a temporary file, given an exec.Cmd struct
+// Save the command as the "last command"
 func saveCommand(cmd *exec.Cmd) error {
 	if noWriteToCache {
 		return nil

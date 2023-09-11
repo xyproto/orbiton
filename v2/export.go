@@ -64,6 +64,7 @@ func (e *Editor) exportAdoc(c *vt100.Canvas, tty *vt100.TTY, manFilename string)
 
 	// Run asciidoctor
 	adocCommand := exec.Command("asciidoctor", "-b", "manpage", "-o", manFilename, tmpfn)
+	saveCommand(adocCommand)
 	if err = adocCommand.Run(); err != nil {
 		_ = os.Remove(tmpfn) // Try removing the temporary filename if pandoc fails
 		return err
