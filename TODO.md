@@ -2,10 +2,9 @@
 
 ## General
 
-- [ ] `f` and `t` should be removed as "special" search strings when pressing `ctrl-f`:
-- [ ] `ctrl-g`, `up` should go to the previous function signature.
-- [ ] `ctrl-g`, `down` should go to the next function signature.
-- [ ] `ctrl-g`, `ctrl-t` should go to the next typo.
+- [ ] Make it possible to export code to HTML or PNG, maybe by using Splash.
+- [ ] `ctrl-g`, `up` could go to the previous function signature.
+- [ ] `ctrl-g`, `down` could go to the next function signature.
 - [ ] Let the `ctrl-g` status line also contain the line percentage, like `ctrl-c` in Nano.
 - [ ] Save a "custom words" and "ignored words" list to disk.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
