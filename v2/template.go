@@ -169,6 +169,11 @@ func GetTemplatePrograms() TemplatePrograms {
 				9,
 				2,
 			},
+			mode.Lilypond: {
+				"\\version \"2.24.2\"\n\n\\score {\n  \\relative c' {\n    c d e f g a b c\n  }\n}\n",
+				0,
+				3,
+			},
 			mode.Lua: {
 				"print(\"Hello, World!\")\n",
 				7,
