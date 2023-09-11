@@ -1869,9 +1869,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 			undo.Snapshot(e)
 			if e.nanoMode {
-				// Up to 100 times, join the current line with the next, until the next line is empty
+				// Up to 999 times, join the current line with the next, until the next line is empty
 				joinCount := 0
-				for i := 0; i < 100; i++ {
+				for i := 0; i < 999; i++ {
 					if !e.JoinLineWithNext(c, bookmark) {
 						break
 					}
@@ -1887,7 +1887,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 				break
 			}
+
+			// The normal join behavior
 			e.JoinLineWithNext(c, bookmark)
+			e.GoToStartOfTextLine(c)
 		default: // any other key
 			keyRunes := []rune(key)
 			// panic(fmt.Sprintf("PRESSED KEY: %v", []rune(key)))
