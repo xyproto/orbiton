@@ -464,8 +464,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	)
 
 	// Get a few simple cases out of the way first, by filename extension
-	switch ext {
-	case ".scd", ".scdoc": // scdoc
+	switch e.mode {
+	case mode.SCDoc: //
 		manFilename := "out.1"
 		if err := e.exportScdoc(manFilename); err != nil {
 			return "", err
@@ -474,7 +474,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			status.SetMessage("Saved " + manFilename)
 		}
 		return manFilename, nil
-	case ".adoc": // asciidoctor
+	case mode.ASCIIDoc: // asciidoctor
 		manFilename := "out.1"
 		if err := e.exportAdoc(c, tty, manFilename); err != nil {
 			return "", err
@@ -483,29 +483,6 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			status.SetMessage("Saved " + manFilename)
 		}
 		return manFilename, nil
-	}
-
-	// Get a few simple cases out of the way first, by editor mode
-	switch e.mode {
-	case mode.Doc:
-		// pandoc
-		if pandocPath := files.Which("pandoc"); pandocPath != "" {
-			pdfFilename := strings.ReplaceAll(filepath.Base(sourceFilename), ".", "_") + ".pdf"
-			if background {
-				go func() {
-					pandocMutex.Lock()
-					_ = e.exportPandocPDF(c, tty, status, pandocPath, pdfFilename)
-					pandocMutex.Unlock()
-				}()
-			} else {
-				if err := e.exportPandocPDF(c, tty, status, pandocPath, pdfFilename); err != nil {
-					return pdfFilename, err
-				}
-			}
-			// the exportPandoc function handles it's own status output
-			return pdfFilename, nil
-		}
-		return "", errors.New("could not find pandoc")
 	case mode.Markdown:
 		htmlFilename := strings.ReplaceAll(filepath.Base(sourceFilename), ".", "_") + ".html"
 		if background {

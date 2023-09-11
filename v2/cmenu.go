@@ -426,19 +426,21 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	})
 
 	// Render to PDF using pandoc
-	if (e.mode == mode.Markdown || e.mode == mode.Doc) && files.Which("pandoc") != "" {
+	if (e.mode == mode.Markdown || e.mode == mode.ASCIIDoc || e.mode == mode.SCDoc) && files.Which("pandoc") != "" {
 		actions.Add("Render to PDF using pandoc", func() {
-			go func() {
-				pandocMutex.Lock()
-				// The last argument is if pandoc should run in the background or not
-				_, err := e.BuildOrExport(c, tty, status, e.filename, false)
-				// Could an action be performed for this file extension?
-				if err != nil {
-					status.SetError(err)
-				}
-				status.ShowNoTimeout(c, e)
-				pandocMutex.Unlock()
-			}()
+			// pandoc
+			if pandocPath := files.Which("pandoc"); pandocPath != "" {
+				pdfFilename := strings.ReplaceAll(filepath.Base(e.filename), ".", "_") + ".pdf"
+				go func() {
+					pandocMutex.Lock()
+					_ = e.exportPandocPDF(c, tty, status, pandocPath, pdfFilename)
+					pandocMutex.Unlock()
+				}()
+				// the exportPandoc function handles it's own status output
+				return
+			}
+			status.SetErrorMessage("Could not find pandoc")
+			status.ShowNoTimeout(c, e)
 		})
 	}
 
