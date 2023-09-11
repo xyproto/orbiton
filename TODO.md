@@ -2,7 +2,6 @@
 
 ## General
 
-- [ ] Make it possible to export code to HTML or PNG, maybe by using Splash.
 - [ ] `ctrl-g`, `up` could go to the previous function signature.
 - [ ] `ctrl-g`, `down` could go to the next function signature.
 - [ ] Let the `ctrl-g` status line also contain the line percentage, like `ctrl-c` in Nano.
@@ -20,6 +19,8 @@
 - [ ] HTTP client - scratch document style `.http` files.
 - [ ] Add support for emojis. Perhaps by drawing lines differently if an emoji is detected.
 - [ ] Parse some programming languages to improve the quality of the "go to defintion" feature.
+- [ ] When the last line in a document is a long line ending with "}", make it possible to press return before the "}".
+- [ ] Make it possible to export code to HTML or PNG, maybe by using Splash.
 - [ ] Go through this file and remove all completed TODO items.
 
 ### Nano emulation mode
