@@ -227,6 +227,13 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// Regular highlight
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					}
+				case mode.Lilypond:
+					trimmedLine = strings.TrimSpace(line)
+					if strings.HasPrefix(trimmedLine, "%") {
+						coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
+					} else {
+						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
+					}
 				case mode.Bat:
 					trimmedLine = strings.TrimSpace(line)
 					// In DOS batch files, ":" can be used both for labels and for single-line comments
