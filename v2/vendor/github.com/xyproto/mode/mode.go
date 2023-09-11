@@ -54,6 +54,7 @@ const (
 	Just                  // Just
 	Koka                  // Koka
 	Kotlin                // Kotlin
+	Lilypond              // Lilypond
 	Lisp                  // Common Lisp and Emacs Lisp
 	Log                   // All sorts of log files
 	Lua                   // Lua
@@ -195,6 +196,8 @@ func (mode Mode) String() string {
 		return "Koka"
 	case Kotlin:
 		return "Kotlin"
+	case Lilypond:
+		return "Lilypond"
 	case Lisp:
 		return "Lisp"
 	case Log:

@@ -152,6 +152,8 @@ func Detect(filename string) Mode {
 			mode = Log
 		case ".lua":
 			mode = Lua
+		case ".ly":
+			mode = Lilypond
 		case ".m4":
 			mode = M4
 		case ".md":
