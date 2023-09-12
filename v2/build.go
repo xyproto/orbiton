@@ -1200,7 +1200,9 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 				} else {
 					status.SetMessage("Success")
 				}
-				e.DrawOutput(c, 20, title, output, boxBackgroundColor, repositionCursorAfterDrawing)
+				if strings.TrimSpace(output) != "" {
+					e.DrawOutput(c, 20, title, output, boxBackgroundColor, repositionCursorAfterDrawing)
+				}
 				// Regular success, no debug mode
 				status.Show(c, e)
 			}

@@ -3,6 +3,7 @@ package main
 import (
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/xyproto/mode"
@@ -46,6 +47,15 @@ func (e *Editor) Run() (string, bool, error) {
 		cmd = exec.Command("java", "-jar", jarName)
 	case mode.Go:
 		cmd = exec.Command("go", "run", sourceFilename)
+	case mode.Lilypond:
+		ext := filepath.Ext(sourceFilename)
+		firstName := strings.TrimSuffix(filepath.Base(sourceFilename), ext)
+		pdfFilename := firstName + ".pdf"
+		if runtime.GOOS == "darwin" {
+			cmd = exec.Command("open", pdfFilename)
+		} else {
+			cmd = exec.Command("xdg-open", pdfFilename)
+		}
 	case mode.Lua:
 		cmd = exec.Command("lua", sourceFilename)
 	case mode.Make:
