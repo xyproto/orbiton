@@ -231,6 +231,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					trimmedLine = strings.TrimSpace(line)
 					if strings.HasPrefix(trimmedLine, "%") {
 						coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
+					} else if strings.HasPrefix(line, " ") && len(trimmedLine) > 0 && unicode.IsUpper([]rune(trimmedLine)[0]) {
+						coloredString = unEscapeFunction(e.Foreground.Start(line))
 					} else {
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					}
