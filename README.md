@@ -96,7 +96,7 @@ Themes can be selected with the `ctrl-o` menu. The theme menu also lists the the
 
 The `O_THEME` environment variable is an exception to the claim that `o` is configuration-free, but it is completely optional.
 
-For using ie. the Synthwave theme, the `/usr/bin/sw` symlink can be used, or this can be added to `~/.profile`:
+For using ie. the Synthwave theme, the `/usr/bin/sw` symlink to `/usr/bin/o` can be used, or this can be added to `~/.profile`:
 
     export O_THEME=synthwave
 
@@ -223,6 +223,7 @@ There are pretty few hotkeys to remember:
 
 * Press `ctrl-space` to build or export the current file.
 * Press `ctrl-w` to format the current file, in an opinionated way. If the current file is empty, a "Hello, World!" template will be inserted, for some file extensions.
+* If a build or export returns an error code and the status message is not specific enough, the last called command can be run from the command line with `$(o -l)`, to get more details. `o -l` can be used to preview the command.
 
 | Programming language                            | File extensions                                           | Jump to error | Build command                                                                                              | Format command ($filename is a temporary file)                                                                |
 |-------------------------------------------------|-----------------------------------------------------------|---------------|------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
