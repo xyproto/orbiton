@@ -20,6 +20,7 @@ var (
 	letterDigitsRegexp = regexp.MustCompile(`[^a-zA-Z0-9 ]+`)
 )
 
+// SpellChecker is a slice of correct, custom and ignored words together with a *fuzzy.Model
 type SpellChecker struct {
 	correctWords []string
 	customWords  []string
@@ -27,6 +28,8 @@ type SpellChecker struct {
 	fuzzyModel   *fuzzy.Model
 }
 
+// NewSpellChecker creates and initializes a new *SpellChecker.
+// The embedded English word list is used to train the *fuzzy.Model.
 func NewSpellChecker() (*SpellChecker, error) {
 	var sc SpellChecker
 
@@ -78,8 +81,6 @@ func (sc *SpellChecker) Train(reTrain bool) {
 		// Train multiple words simultaneously by passing an array of strings to the "Train" function
 		sc.fuzzyModel.Train(trainWords)
 	}
-
-	return
 }
 
 // AddCurrentWordToWordList will attempt to add the word at the cursor to the spellcheck word list
@@ -129,7 +130,7 @@ func (e *Editor) RemoveCurrentWordFromWordList() string {
 
 // SearchForTypo returns the first misspelled word in the document (as defined by the dictionary),
 // or an empty string. The second returned string is what the word could be if it was corrected.
-func (e *Editor) SearchForTypo(c *vt100.Canvas, status *StatusBar) (string, string, error) {
+func (e *Editor) SearchForTypo() (string, string, error) {
 	if spellChecker == nil {
 		newSpellChecker, err := NewSpellChecker()
 		if err != nil {
@@ -161,7 +162,7 @@ func (e *Editor) SearchForTypo(c *vt100.Canvas, status *StatusBar) (string, stri
 
 // NanoNextTypo tries to jump to the next typo
 func (e *Editor) NanoNextTypo(c *vt100.Canvas, status *StatusBar) {
-	if typo, corrected, err := e.SearchForTypo(c, status); err == nil || err == errFoundNoTypos {
+	if typo, corrected, err := e.SearchForTypo(); err == nil || err == errFoundNoTypos {
 		e.redraw = true
 		e.redrawCursor = true
 		if err == errFoundNoTypos || typo == "" {
@@ -174,7 +175,6 @@ func (e *Editor) NanoNextTypo(c *vt100.Canvas, status *StatusBar) {
 			status.ClearAll(c)
 			status.SetMessage(typo + " could be " + corrected)
 			status.Show(c, e)
-			return
 		}
 		e.SetSearchTerm(c, status, typo, true) // true for spellCheckMode
 		if err := e.GoToNextMatch(c, status, true, true); err == errNoSearchMatch {
