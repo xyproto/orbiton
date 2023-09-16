@@ -154,7 +154,7 @@ func (e *Editor) SearchForTypo() (string, string, error) {
 			continue
 		}
 
-		if corrected := spellChecker.fuzzyModel.SpellCheck(justTheWord); word != corrected {
+		if corrected := spellChecker.fuzzyModel.SpellCheck(justTheWord); strings.EqualFold(justTheWord, corrected) { // case insensitive comparison of the original and spell-check-suggested word
 			return justTheWord, corrected, nil
 		}
 	}
