@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Fix the spellchecker.
 - [ ] Fix `ctrl-a` for adding words when running a spellcheck.
 - [ ] Save a "custom words" and "ignored words" list to disk.
 - [ ] `ctrl-g`, `up` could go to the previous function signature.
