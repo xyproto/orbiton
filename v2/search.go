@@ -392,6 +392,7 @@ AGAIN:
 			if previousSearch == "" {
 				e.SetSearchTermWithTimeout(c, status, s, false, timeout)
 			}
+			status.ClearAll(c)
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
 		case "↓": // next in the search history
@@ -408,6 +409,7 @@ AGAIN:
 			if previousSearch == "" {
 				e.SetSearchTermWithTimeout(c, status, s, false, timeout)
 			}
+			status.ClearAll(c)
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
 
