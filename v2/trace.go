@@ -78,5 +78,4 @@ func traceComplete() {
 		pprof.StopCPUProfile()
 		cpuProfileFile.Close()
 	}
-	logf("Trace complete!\n")
 }
