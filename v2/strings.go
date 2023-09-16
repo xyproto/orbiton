@@ -157,15 +157,6 @@ func onlyAZaz(s string) bool {
 	return true
 }
 
-// lastEntryIsNot checks that the last entry of xs is not the given x
-func lastEntryIsNot(xs []string, x string) bool {
-	l := len(xs)
-	if l == 0 {
-		return true
-	}
-	return xs[l-1] != x
-}
-
 // smartSplit will split a string on spaces, but only spaces that are not within [], () or {}
 func smartSplit(s string) []string {
 	// Define constants for states.
