@@ -7,6 +7,10 @@ import (
 	"os"
 	"runtime"
 	"runtime/pprof"
+	"time"
+
+	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/felixge/fgtrace"
 	"github.com/spf13/pflag"
@@ -23,6 +27,16 @@ func init() {
 	pflag.StringVarP(&cpuProfileFilename, "cpuprofile", "u", "", "write CPU profile to `file`")
 	pflag.StringVarP(&memProfileFilename, "memprofile", "e", "", "write memory profile to `file`")
 	pflag.StringVarP(&fgtraceFilename, "fgtrace", "g", "", "write fgtrace to `file`")
+
+	// Start the pprof HTTP server as well
+	go func() {
+		log.Println("Starting pprof server at :6060")
+		log.Println("Try: http://localhost:6060/debug/pprof/goroutine?debug=2")
+		log.Println(http.ListenAndServe(":6060", nil))
+	}()
+
+	// Give it some time to be able to show the log messages from the goroutine above
+	time.Sleep(1200 * time.Millisecond)
 }
 
 func traceStart() {
