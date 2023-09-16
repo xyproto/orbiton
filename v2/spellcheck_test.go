@@ -41,7 +41,7 @@ func TestSearchForTypo(t *testing.T) {
 	// Setup the Editor content with a typo
 	e.InsertStringAndMove(nil, "helllo world")
 	// Assuming "helllo" is a typo
-	typos, corrected, err := e.SearchForTypo(nil, nil)
+	typos, corrected, err := e.SearchForTypo()
 	if err != nil {
 		t.Fatalf("Error encountered when searching for typo: %s", err)
 	}
