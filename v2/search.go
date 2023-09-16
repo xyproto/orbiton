@@ -437,7 +437,7 @@ AGAIN:
 		// A special case, search forward for typos
 		spellCheckMode = true
 		foundNoTypos = false
-		typo, err := e.SearchForTypo(c, status)
+		typo, corrected, err := e.SearchForTypo()
 		if err != nil {
 			return
 		}
@@ -447,6 +447,11 @@ AGAIN:
 			status.SetMessage("No typos found")
 			status.Show(c, e)
 			return
+		}
+		if typo != "" && corrected != "" {
+			status.ClearAll(c)
+			status.SetMessage(typo + " could be " + corrected)
+			status.Show(c, e)
 		}
 		s = typo
 		forward = true

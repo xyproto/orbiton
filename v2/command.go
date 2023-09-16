@@ -253,7 +253,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		spellcheck: func() {
 			e.redraw = true
 			e.redrawCursor = true
-			typo, corrected, err := e.SearchForTypo(c, status)
+			typo, corrected, err := e.SearchForTypo()
 			switch {
 			case err != nil:
 				status.SetErrorAfterRedraw(err)
