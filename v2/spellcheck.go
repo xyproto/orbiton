@@ -96,7 +96,7 @@ func (e *Editor) AddCurrentWordToWordList() string {
 	word := strings.TrimSpace(letterDigitsRegexp.ReplaceAllString(e.CurrentWord(), ""))
 
 	if hasS(spellChecker.customWords, word) || hasS(spellChecker.correctWords, word) { // already has this word
-		return ""
+		return word
 	}
 
 	spellChecker.customWords = append(spellChecker.customWords, word)
@@ -119,7 +119,7 @@ func (e *Editor) RemoveCurrentWordFromWordList() string {
 	word := strings.TrimSpace(letterDigitsRegexp.ReplaceAllString(e.CurrentWord(), ""))
 
 	if hasS(spellChecker.ignoredWords, word) { // already has this word
-		return ""
+		return word
 	}
 	spellChecker.ignoredWords = append(spellChecker.ignoredWords, word)
 
