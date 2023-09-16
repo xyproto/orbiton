@@ -116,9 +116,9 @@ These features are unique to `o`, as far as I am aware:
 * If tab completion in the terminal went wrong and you are trying to open a `main.` file that does not exist, but `main.cpp` and `main.o` does exists, then `main.cpp` will be opened.
 * Search by pressing `ctrl-f`, entering text and pressing `return`. Replace by pressing `tab` instead of `return`, then enter the replacement text and press `return`. Searching for unicode runes on the form `u+0000` is also supported.
 * Type `iferr` on a single line in a Go or Odin program and press `return` to insert a suitable `if err != nil { return ... }` block, based on [koron/iferr](https://github.com/koron/iferr).
-* For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
-* Correct mistakes as lines are typed in, but only if the OpenAI API key is set, and if the "fix as you type" feature is enabled from the `ctrl-o` menu.
 * Use the built-in Markdown table editor by pressing `ctrl-t` when the cursor is on a table.
+* Correct mistakes as lines are typed in, but only if the OpenAI API key is set, and if the "fix as you type" feature is enabled from the `ctrl-o` menu.
+* For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
 
 ## Other features and limitations
 
@@ -165,6 +165,7 @@ These features are unique to `o`, as far as I am aware:
 * Orbiton is written mostly in Orbiton, with some use of NeoVim for the initial development.
 * Can load, edit and save gzipped text files or man pages that ends with a `.gz` extension.
 * Can organize imports, for Java and for Kotlin, when formatting code with `ctrl-w`.
+* Has a built-in spellchecker (press `ctrl-f` and then `t` to search for a typo, `ctrl-n` for next match and then `ctrl-a` to add it and `ctrl-i` to ignore it).
 * Can jump directly to a selection of highlighted letters on the screen, when `ctrl-l` has been pressed.
 
 ## Known issues
