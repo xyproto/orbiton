@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -13,11 +11,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-var (
-	searchHistoryFilename = filepath.Join(userCacheDir, "o", "search.txt")
-	searchHistory         *[]string
-	errNoSearchMatch      = errors.New("no search match")
-)
+var errNoSearchMatch = errors.New("no search match")
 
 // SetSearchTerm will set the current search term. This initializes a new search.
 func (e *Editor) SetSearchTerm(c *vt100.Canvas, status *StatusBar, s string, spellCheckMode bool) bool {
@@ -280,9 +274,8 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap, forward
 // SearchMode will enter the interactive "search mode" where the user can type in a string and then press return to search
 func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, clearSearch, searchForward bool, undo *Undo) {
 	// Load the search history if needed. Ignore any errors.
-	if searchHistory == nil {
-		searchHistorySlice, _ := LoadSearchHistory(searchHistoryFilename)
-		searchHistory = &searchHistorySlice
+	if len(searchHistory) == 0 {
+		searchHistory, _ = LoadSearchHistory(searchHistoryFilename)
 	}
 	var (
 		previousSearch     string
@@ -384,36 +377,40 @@ AGAIN:
 					status.ShowNoTimeout(c, e)
 				}
 			}
+
 		case "↑": // previous in the search history
-			if len(*searchHistory) == 0 {
+			if searchHistory.Empty() {
 				break
 			}
 			searchHistoryIndex--
 			if searchHistoryIndex < 0 {
 				// wraparound
-				searchHistoryIndex = len(*searchHistory) - 1
+				searchHistoryIndex = searchHistory.Len() - 1
 			}
-			s = (*searchHistory)[searchHistoryIndex]
+			const newestFirst = false
+			s = searchHistory.GetIndex(searchHistoryIndex, newestFirst)
 			if previousSearch == "" {
 				e.SetSearchTermWithTimeout(c, status, s, false, timeout)
 			}
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
 		case "↓": // next in the search history
-			if len(*searchHistory) == 0 {
+			if searchHistory.Empty() {
 				break
 			}
 			searchHistoryIndex++
-			if searchHistoryIndex >= len(*searchHistory) {
+			if searchHistoryIndex >= searchHistory.Len() {
 				// wraparound
 				searchHistoryIndex = 0
 			}
-			s = (*searchHistory)[searchHistoryIndex]
+			const newestFirst = false
+			s = searchHistory.GetIndex(searchHistoryIndex, newestFirst)
 			if previousSearch == "" {
 				e.SetSearchTermWithTimeout(c, status, s, false, timeout)
 			}
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
+
 		default:
 			if key != "" && !strings.HasPrefix(key, "c:") {
 				s += key
@@ -471,14 +468,8 @@ AGAIN:
 			status.messageAfterRedraw = "Replaced " + searchFor + " with " + replaceWith + ", once"
 		}
 		// Save "searchFor" to the search history
-		if trimmedSearchString := strings.TrimSpace(searchFor); trimmedSearchString != "" {
-			if lastEntryIsNot(*searchHistory, trimmedSearchString) {
-				*searchHistory = append(*searchHistory, trimmedSearchString)
-			}
-			// ignore errors saving the search history, since it's not critical
-			if !e.slowLoad {
-				SaveSearchHistory(searchHistoryFilename, *searchHistory)
-			}
+		if trimmedSearchString := strings.TrimSpace(searchFor); trimmedSearchString != "" && !e.slowLoad {
+			searchHistory.AddAndSave(trimmedSearchString)
 		}
 		// Set up a redraw and return
 		e.redraw = true
@@ -512,14 +503,8 @@ AGAIN:
 			status.messageAfterRedraw = fmt.Sprintf("Replaced %d instance%s of %s with %s", instanceCount, extraS, previousSearch, s)
 		}
 		// Save "searchFor" to the search history
-		if trimmedSearchString := strings.TrimSpace(string(searchForBytes)); trimmedSearchString != "" {
-			if lastEntryIsNot(*searchHistory, trimmedSearchString) {
-				*searchHistory = append(*searchHistory, trimmedSearchString)
-			}
-			// ignore errors saving the search history, since it's not critical
-			if !e.slowLoad {
-				SaveSearchHistory(searchHistoryFilename, *searchHistory)
-			}
+		if trimmedSearchString := strings.TrimSpace(string(searchForBytes)); trimmedSearchString != "" && !e.slowLoad {
+			searchHistory.AddAndSave(trimmedSearchString)
 		}
 		// Set up a redraw and return
 		e.redraw = true
@@ -530,16 +515,11 @@ AGAIN:
 		// Return to the first location before performing the actual search
 		e.GoToLineNumber(initialLocation, c, status, false)
 		// Save "s" to the search history
-		if trimmedSearchString := strings.TrimSpace(s); s != "" {
-			if lastEntryIsNot(*searchHistory, trimmedSearchString) {
-				*searchHistory = append(*searchHistory, trimmedSearchString)
-			}
-			// ignore errors saving the search history, since it's not critical
-			if !e.slowLoad {
-				SaveSearchHistory(searchHistoryFilename, *searchHistory)
-			}
-		} else if len(*searchHistory) > 0 {
-			s = (*searchHistory)[searchHistoryIndex]
+		if trimmedSearchString := strings.TrimSpace(s); trimmedSearchString != "" && !e.slowLoad {
+			searchHistory.AddAndSave(trimmedSearchString)
+		} else if !searchHistory.Empty() {
+			const newestFirst = false
+			s = searchHistory.GetIndex(searchHistoryIndex, newestFirst)
 			e.SetSearchTerm(c, status, s, false) // no timeout
 		}
 	}
@@ -563,33 +543,4 @@ AGAIN:
 		}
 		e.Center(c)
 	}
-}
-
-// LoadSearchHistory will load a list of strings from the given filename
-func LoadSearchHistory(filename string) ([]string, error) {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return []string{}, err
-	}
-	// This can load empty words, but they should never be stored in the first place
-	return strings.Split(string(data), "\n"), nil
-}
-
-// SaveSearchHistory will save a list of strings to the given filename
-func SaveSearchHistory(filename string, list []string) error {
-	if len(list) == 0 {
-		return nil
-	}
-
-	if noWriteToCache {
-		return nil
-	}
-
-	// First create the folder, if needed, in a best effort attempt
-	folderPath := filepath.Dir(filename)
-	os.MkdirAll(folderPath, os.ModePerm)
-
-	// Then save the data, with strict permissions
-	data := []byte(strings.Join(list, "\n"))
-	return os.WriteFile(filename, data, 0o600)
 }
