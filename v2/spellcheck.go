@@ -146,17 +146,25 @@ func (e *Editor) SearchForTypo() (string, string, error) {
 	for _, word := range strings.Fields(e.String()) {
 		// Remove special characters
 		justTheWord := strings.TrimSpace(letterDigitsRegexp.ReplaceAllString(word, ""))
+
+		logf("checking %s: ", justTheWord)
+
 		if justTheWord == "" {
+			logf("%s", "empty\n")
 			continue
 		}
 
 		if hasS(spellChecker.ignoredWords, justTheWord) || hasS(spellChecker.customWords, justTheWord) || hasS(spellChecker.correctWords, justTheWord) {
+			logf("%s", "ignored, custom or correct\n")
 			continue
 		}
 
-		if corrected := spellChecker.fuzzyModel.SpellCheck(justTheWord); strings.EqualFold(justTheWord, corrected) { // case insensitive comparison of the original and spell-check-suggested word
+		if corrected := spellChecker.fuzzyModel.SpellCheck(justTheWord); !strings.EqualFold(justTheWord, corrected) { // case insensitive comparison of the original and spell-check-suggested word
+			logf("corrected to %s\n", corrected)
 			return justTheWord, corrected, nil
 		}
+
+		logf("%s\n", "w00t")
 	}
 
 	return "", "", errFoundNoTypos
@@ -171,6 +179,7 @@ func (e *Editor) NanoNextTypo(c *vt100.Canvas, status *StatusBar) {
 			status.ClearAll(c)
 			status.SetMessage("No typos found")
 			status.Show(c, e)
+			e.spellCheckMode = false
 			return
 		}
 		e.SetSearchTerm(c, status, typo, true) // true for spellCheckMode
@@ -179,6 +188,7 @@ func (e *Editor) NanoNextTypo(c *vt100.Canvas, status *StatusBar) {
 			status.ClearAll(c)
 			status.SetMessage("No typos found")
 			status.Show(c, e)
+			e.spellCheckMode = false
 			return
 		}
 		if typo != "" && corrected != "" {
