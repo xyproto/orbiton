@@ -143,18 +143,19 @@ func main() {
 		// Also remove the portal file
 		portalErr := ClearPortal()
 
-		if lockErr == nil && portalErr == nil {
+		switch {
+		case lockErr == nil && portalErr != nil:
+			fmt.Println("Cleared all locks")
+		case lockErr == nil && portalErr == nil:
 			fmt.Println("Cleared all locks and closed the portal")
-		} else if lockErr != nil && portalErr == nil {
+		case lockErr != nil && portalErr == nil:
 			fmt.Fprintf(os.Stderr, "Closed the portal, but could not clear locks: %v\n", lockErr)
 			os.Exit(1)
-		} else if lockErr == nil && portalErr != nil {
-			fmt.Fprintln(os.Stderr, "Cleared all locks")
-			os.Exit(1)
-		} else {
+		default: // both errors are non-nil
 			fmt.Fprintf(os.Stderr, "Could not clear locks: %v\n", lockErr)
 			os.Exit(1)
 		}
+
 		return
 	}
 
