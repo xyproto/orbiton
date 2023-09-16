@@ -136,9 +136,8 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		build: func() { // build
 			if e.Empty() {
 				// Empty file, nothing to build
-				status.ClearAll(c)
-				status.SetErrorMessage("Nothing to build")
-				status.Show(c, e)
+				e.redraw = true
+				status.SetErrorMessageAfterRedraw("Nothing to build")
 				return
 			}
 			// Save the current file, but only if it has changed
@@ -161,8 +160,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 				return
 			}
 			// --- Success ---
-			status.SetMessage("Success, built " + outputExecutable)
-			status.Show(c, e)
+			status.SetMessageAfterRedraw("Success, built " + outputExecutable)
 		},
 		copyall: func() { // copy all contents to the clipboard
 			if err := clip.WriteAll(e.String(), e.primaryClipboard); err != nil {
@@ -187,8 +185,9 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
 				if err == errNoSearchMatch {
 					e.ClearSearch()
-					status.SetMessage("No function signatures found")
-					status.ShowNoTimeout(c, e)
+					e.redraw = true
+					e.redrawCursor = true
+					status.SetErrorMessageAfterRedraw("No function signatures found")
 				}
 			}
 		},
@@ -208,9 +207,8 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			undo.Snapshot(e)
 			editedFileDir := filepath.Dir(e.filename)
 			if err := e.InsertFile(c, filepath.Join(editedFileDir, strings.TrimSpace(args[1]))); err != nil {
-				status.Clear(c)
-				status.SetError(err)
-				status.Show(c, e)
+				e.redraw = true
+				status.SetErrorAfterRedraw(err)
 			}
 		},
 		inserttime: func() { // insert the current time
@@ -253,18 +251,17 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			e.redrawCursor = true
 		},
 		spellcheck: func() {
-			typo, err := e.SearchForTypo(c, status)
-			if err != nil {
-				return
-			}
-			if err == errFoundNoTypos || typo == "" {
-				status.Clear(c)
-				status.SetMessage("No typos found")
-				status.Show(c, e)
-				return
-			}
 			e.redraw = true
 			e.redrawCursor = true
+			typo, corrected, err := e.SearchForTypo(c, status)
+			switch {
+			case err != nil:
+				status.SetErrorAfterRedraw(err)
+			case err == errFoundNoTypos || typo == "":
+				status.SetMessageAfterRedraw("No typos found")
+			case typo != "" && corrected != "":
+				status.SetMessageAfterRedraw(typo + " could be " + corrected)
+			}
 		},
 		splitline: func() { // split the current line on space
 			undo.Snapshot(e)
@@ -308,9 +305,9 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		functionID = save
 	case "sb", "so", "sor", "sort", "sortblock":
 		functionID = sortblock
-	case "sp", "split", "splitline", "smartsplit":
+	case "spl", "split", "splitline", "smartsplit":
 		functionID = splitline
-	case "spellcheck":
+	case "sp", "spellcheck", "spell", "findtypo":
 		functionID = spellcheck
 	case "sortstrings", "sortw", "sortwords", "sow", "ss", "sw", "sortfields", "sf":
 		functionID = sortstrings
