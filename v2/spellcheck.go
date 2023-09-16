@@ -14,91 +14,129 @@ var (
 	//go:embed english_word_list.txt.gz
 	gzwords []byte
 
-	fuzzyModel         *fuzzy.Model
-	correctWords       []string
+	spellChecker *SpellChecker
+
 	errFoundNoTypos    = errors.New("found no typos")
 	letterDigitsRegexp = regexp.MustCompile(`[^a-zA-Z0-9 ]+`)
 )
 
-func initSpellcheck() {
-	if len(correctWords) == 0 {
-		wordData, err := gUnzipData(gzwords)
-		if err != nil {
-			return
-		}
-		correctWords = strings.Fields(string(wordData))
+type SpellChecker struct {
+	correctWords []string
+	customWords  []string
+	ignoredWords []string
+	fuzzyModel   *fuzzy.Model
+}
+
+func NewSpellChecker() (*SpellChecker, error) {
+	var sc SpellChecker
+
+	sc.customWords = make([]string, 0)
+	sc.ignoredWords = make([]string, 0)
+
+	wordData, err := gUnzipData(gzwords)
+	if err != nil {
+		return nil, err
 	}
-	if fuzzyModel == nil {
+	sc.correctWords = strings.Fields(string(wordData))
+
+	sc.Train(false) // training for the first time, not re-training
+
+	return &sc, nil
+}
+
+func (sc *SpellChecker) Train(reTrain bool) {
+	if reTrain || sc.fuzzyModel == nil {
 
 		// Initialize the spellchecker
-		fuzzyModel = fuzzy.NewModel()
-
-		// For testing only, this is not advisable on production
-		//model.SetThreshold(1)
+		sc.fuzzyModel = fuzzy.NewModel()
 
 		// This expands the distance searched, but costs more resources (memory and time).
 		// For spell checking, "2" is typically enough, for query suggestions this can be higher
-		fuzzyModel.SetDepth(2)
+		sc.fuzzyModel.SetDepth(2)
+
+		lenCorrect := len(sc.correctWords)
+		lenCustom := len(sc.customWords)
+
+		trainWords := make([]string, lenCorrect+lenCustom) // initialize with enough capacity
+
+		var word string
+
+		for i := 0; i < lenCorrect; i++ {
+			word := sc.correctWords[i]
+			if !hasS(sc.ignoredWords, word) {
+				trainWords = append(trainWords, word)
+			}
+		}
+
+		for i := 0; i < lenCustom; i++ {
+			word = sc.customWords[i]
+			if !hasS(sc.ignoredWords, word) {
+				trainWords = append(trainWords, word)
+			}
+		}
 
 		// Train multiple words simultaneously by passing an array of strings to the "Train" function
-		fuzzyModel.Train(correctWords)
+		sc.fuzzyModel.Train(trainWords)
 	}
+
+	return
 }
 
 // AddCurrentWordToWordList will attempt to add the word at the cursor to the spellcheck word list
 func (e *Editor) AddCurrentWordToWordList() string {
-	initSpellcheck()
+	if spellChecker == nil {
+		newSpellChecker, err := NewSpellChecker()
+		if err != nil {
+			return ""
+		}
+		spellChecker = newSpellChecker
+	}
 
 	word := strings.TrimSpace(letterDigitsRegexp.ReplaceAllString(e.CurrentWord(), ""))
-	if hasS(correctWords, word) { // already has this word
+
+	if hasS(spellChecker.customWords, word) || hasS(spellChecker.correctWords, word) { // already has this word
 		return ""
 	}
-	correctWords = append(correctWords, word)
 
-	fuzzyModel = fuzzy.NewModel()
-	fuzzyModel.SetDepth(2)
-	fuzzyModel.Train(correctWords)
+	spellChecker.customWords = append(spellChecker.customWords, word)
+
+	spellChecker.Train(true) // re-train
+
 	return word
 }
 
 // RemoveCurrentWordFromWordList will attempt to add the word at the cursor to the spellcheck word list
 func (e *Editor) RemoveCurrentWordFromWordList() string {
-	initSpellcheck()
+	if spellChecker == nil {
+		newSpellChecker, err := NewSpellChecker()
+		if err != nil {
+			return ""
+		}
+		spellChecker = newSpellChecker
+	}
 
 	word := strings.TrimSpace(letterDigitsRegexp.ReplaceAllString(e.CurrentWord(), ""))
 
-	l := len(correctWords)
-
-	if l == 0 { // can not remove from an empty list
+	if hasS(spellChecker.ignoredWords, word) { // already has this word
 		return ""
 	}
+	spellChecker.ignoredWords = append(spellChecker.ignoredWords, word)
 
-	wordIndex := -1
-	for i := 0; i < l; i++ {
-		if correctWords[i] == word {
-			wordIndex = i
-			break
-		}
-	}
-	if wordIndex == -1 { // not found
-		return ""
-	}
-
-	lastIndex := l - 1
-	correctWords[wordIndex] = correctWords[lastIndex]
-	correctWords = correctWords[:lastIndex]
-
-	fuzzyModel = fuzzy.NewModel()
-	fuzzyModel.SetDepth(2)
-	fuzzyModel.Train(correctWords)
+	spellChecker.Train(true) // re-train
 
 	return word
 }
 
 // SearchForTypo returns the first misspelled word in the document (as defined by the dictionary),
-// or an empty string.
-func (e *Editor) SearchForTypo(c *vt100.Canvas, status *StatusBar) (string, error) {
-	initSpellcheck()
+// or an empty string. The second returned string is what the word could be if it was corrected.
+func (e *Editor) SearchForTypo(c *vt100.Canvas, status *StatusBar) (string, string, error) {
+	if spellChecker == nil {
+		newSpellChecker, err := NewSpellChecker()
+		if err != nil {
+			return "", "", err
+		}
+		spellChecker = newSpellChecker
+	}
 
 	e.spellCheckMode = true
 
@@ -109,37 +147,47 @@ func (e *Editor) SearchForTypo(c *vt100.Canvas, status *StatusBar) (string, erro
 		if justTheWord == "" {
 			continue
 		}
-		if hasS(correctWords, justTheWord) {
+		if hasS(spellChecker.ignoredWords, justTheWord) || hasS(spellChecker.correctWords, justTheWord) {
 			continue
 		}
 
-		if corrected := fuzzyModel.SpellCheck(justTheWord); word != corrected {
-			status.Clear(c)
-			status.SetMessage(justTheWord + " could be " + corrected)
-			status.ShowNoTimeout(c, e)
-			return justTheWord, nil
+		if corrected := spellChecker.fuzzyModel.SpellCheck(justTheWord); word != corrected {
+			return justTheWord, corrected, nil
 		}
 	}
 
-	return "", errFoundNoTypos
+	return "", "", errFoundNoTypos
 }
 
 // NanoNextTypo tries to jump to the next typo
 func (e *Editor) NanoNextTypo(c *vt100.Canvas, status *StatusBar) {
-	if typoWord, err := e.SearchForTypo(c, status); err == nil || err == errFoundNoTypos {
+	if typo, corrected, err := e.SearchForTypo(c, status); err == nil || err == errFoundNoTypos {
 		e.redraw = true
 		e.redrawCursor = true
-		if err == errFoundNoTypos || typoWord == "" {
-			status.Clear(c)
+		if err == errFoundNoTypos || typo == "" {
+			status.ClearAll(c)
 			status.SetMessage("No typos found")
 			status.Show(c, e)
 			return
 		}
-		e.SetSearchTerm(c, status, typoWord, true) // true for spellCheckMode
+		if typo != "" && corrected != "" {
+			status.ClearAll(c)
+			status.SetMessage(typo + " could be " + corrected)
+			status.Show(c, e)
+			return
+		}
+		e.SetSearchTerm(c, status, typo, true) // true for spellCheckMode
 		if err := e.GoToNextMatch(c, status, true, true); err == errNoSearchMatch {
-			status.SetMessage("No typos found")
 			e.ClearSearch()
-			status.ShowNoTimeout(c, e)
+			status.ClearAll(c)
+			status.SetMessage("No typos found")
+			status.Show(c, e)
+			return
+		}
+		if typo != "" && corrected != "" {
+			status.ClearAll(c)
+			status.SetMessage(typo + " could be " + corrected)
+			status.Show(c, e)
 		}
 	}
 }
