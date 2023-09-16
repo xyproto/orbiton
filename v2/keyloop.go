@@ -579,17 +579,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					wrap := true
 					forward := false
 					if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
-						status.Clear(c)
+						status.ClearAll(c)
 						msg := e.SearchTerm() + " not found"
 						if e.spellCheckMode {
 							msg = "No typos found"
 						}
-						if wrap {
-							status.SetMessage(msg)
-						} else {
-							status.SetMessage(msg + " from here")
+						if !wrap {
+							msg += " from here"
 						}
-						status.Show(c, e)
+						status.SetMessageAfterRedraw(msg)
 					}
 				} else {
 					e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
@@ -609,17 +607,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				wrap := true
 				forward := false
 				if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
-					status.Clear(c)
+					status.ClearAll(c)
 					msg := e.SearchTerm() + " not found"
 					if e.spellCheckMode {
 						msg = "No typos found"
 					}
-					if wrap {
-						status.SetMessage(msg)
-					} else {
-						status.SetMessage(msg + " from here")
+					if !wrap {
+						msg += " from here"
 					}
-					status.Show(c, e)
+					status.SetMessageAfterRedraw(msg)
 				}
 				break
 			}
@@ -762,7 +758,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					wrap := true
 					forward := true
 					if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
-						status.Clear(c)
+						status.ClearAll(c)
 						msg := e.SearchTerm() + " not found"
 						if e.spellCheckMode {
 							msg = "No typos found"
@@ -772,7 +768,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						} else {
 							status.SetMessage(msg + " from here")
 						}
-						status.Show(c, e)
+						status.ShowNoTimeout(c, e)
 					}
 				} else {
 					// Scroll down
@@ -1261,9 +1257,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if e.spellCheckMode {
 				// TODO: Save a "custom words" and "ignored words" list to disk
 				if ignoredWord := e.RemoveCurrentWordFromWordList(); ignoredWord != "" {
-					status.Clear(c)
-					status.SetMessage("Ignored " + ignoredWord)
-					status.Show(c, e)
+					status.SetMessageAfterRedraw("Ignored " + ignoredWord)
 				}
 				break
 			}
@@ -1432,9 +1426,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if e.spellCheckMode {
 				if addedWord := e.AddCurrentWordToWordList(); addedWord != "" {
 					e.NanoNextTypo(c, status)
-					status.Clear(c)
-					status.SetMessage("Added " + addedWord)
-					status.Show(c, e)
+					status.SetMessageAfterRedraw("Added " + addedWord)
 				}
 				break
 			}

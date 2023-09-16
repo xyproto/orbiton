@@ -441,7 +441,7 @@ AGAIN:
 		}
 		if err == errFoundNoTypos || typo == "" {
 			foundNoTypos = true
-			status.Clear(c)
+			status.ClearAll(c)
 			status.SetMessage("No typos found")
 			status.Show(c, e)
 			return
@@ -530,9 +530,10 @@ AGAIN:
 			// e.GoToTop(c, status)
 			// err = e.GoToNextMatch(c, status)
 			if err == errNoSearchMatch {
+				status.ClearAll(c)
 				if foundNoTypos || spellCheckMode {
-					status.SetMessage("No typos found")
 					e.ClearSearch()
+					status.SetMessage("No typos found")
 				} else if wrap {
 					status.SetMessage(s + " not found")
 				} else {
