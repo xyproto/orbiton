@@ -444,14 +444,14 @@ AGAIN:
 		if err == errFoundNoTypos || typo == "" {
 			foundNoTypos = true
 			status.ClearAll(c)
-			status.SetMessage("No typos found")
-			status.Show(c, e)
+			e.redraw = true
+			status.SetMessageAfterRedraw("No typos found")
 			return
 		}
 		if typo != "" && corrected != "" {
 			status.ClearAll(c)
-			status.SetMessage(typo + " could be " + corrected)
-			status.Show(c, e)
+			e.redraw = true
+			status.SetMessageAfterRedraw(typo + " could be " + corrected)
 		}
 		s = typo
 		forward = true
@@ -470,9 +470,9 @@ AGAIN:
 		replaced := strings.Replace(e.String(), searchFor, replaceWith, 1)
 		e.LoadBytes([]byte(replaced))
 		if replaceWith == "" {
-			status.messageAfterRedraw = "Removed " + searchFor + ", once"
+			status.SetMessageAfterRedraw("Removed " + searchFor + ", once")
 		} else {
-			status.messageAfterRedraw = "Replaced " + searchFor + " with " + replaceWith + ", once"
+			status.SetMessageAfterRedraw("Replaced " + searchFor + " with " + replaceWith + ", once")
 		}
 		// Save "searchFor" to the search history
 		if trimmedSearchString := strings.TrimSpace(searchFor); trimmedSearchString != "" && !e.slowLoad {
@@ -538,15 +538,15 @@ AGAIN:
 			// err = e.GoToNextMatch(c, status)
 			if err == errNoSearchMatch {
 				status.ClearAll(c)
+				e.redraw = true
 				if foundNoTypos || spellCheckMode {
 					e.ClearSearch()
-					status.SetMessage("No typos found")
+					status.SetMessageAfterRedraw("No typos found")
 				} else if wrap {
-					status.SetMessage(s + " not found")
+					status.SetMessageAfterRedraw(s + " not found")
 				} else {
-					status.SetMessage(s + " not found from here")
+					status.SetMessageAfterRedraw(s + " not found from here")
 				}
-				status.ShowNoTimeout(c, e)
 			}
 		}
 		e.Center(c)
