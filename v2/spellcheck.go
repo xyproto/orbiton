@@ -101,7 +101,8 @@ func (e *Editor) AddCurrentWordToWordList() string {
 
 	spellChecker.customWords = append(spellChecker.customWords, word)
 
-	spellChecker.Train(true) // re-train
+	// Add the word
+	spellChecker.fuzzyModel.TrainWord(word)
 
 	return word
 }
@@ -141,14 +142,15 @@ func (e *Editor) SearchForTypo() (string, string, error) {
 
 	e.spellCheckMode = true
 
-	// Now spellcheck all the words, and log the results
+	// Now spellcheck all the words
 	for _, word := range strings.Fields(e.String()) {
 		// Remove special characters
 		justTheWord := strings.TrimSpace(letterDigitsRegexp.ReplaceAllString(word, ""))
 		if justTheWord == "" {
 			continue
 		}
-		if hasS(spellChecker.ignoredWords, justTheWord) || hasS(spellChecker.correctWords, justTheWord) {
+
+		if hasS(spellChecker.ignoredWords, justTheWord) || hasS(spellChecker.customWords, justTheWord) || hasS(spellChecker.correctWords, justTheWord) {
 			continue
 		}
 
@@ -170,11 +172,6 @@ func (e *Editor) NanoNextTypo(c *vt100.Canvas, status *StatusBar) {
 			status.SetMessage("No typos found")
 			status.Show(c, e)
 			return
-		}
-		if typo != "" && corrected != "" {
-			status.ClearAll(c)
-			status.SetMessage(typo + " could be " + corrected)
-			status.Show(c, e)
 		}
 		e.SetSearchTerm(c, status, typo, true) // true for spellCheckMode
 		if err := e.GoToNextMatch(c, status, true, true); err == errNoSearchMatch {
