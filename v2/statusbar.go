@@ -325,7 +325,12 @@ func (sb *StatusBar) SetMessageAfterRedraw(message string) {
 	sb.messageAfterRedraw = message
 }
 
-// ShowErrorAfterRedraw prepares a status bar message that will be shown after redraw
-func (sb *StatusBar) ShowErrorAfterRedraw(err error) {
+// SetErrorAfterRedraw prepares a status bar message that will be shown after redraw
+func (sb *StatusBar) SetErrorAfterRedraw(err error) {
 	sb.messageAfterRedraw = err.Error()
+}
+
+// SetErrorMessageAfterRedraw prepares a status bar message that will be shown after redraw
+func (sb *StatusBar) SetErrorMessageAfterRedraw(errorMessage string) {
+	sb.messageAfterRedraw = errorMessage
 }

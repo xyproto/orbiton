@@ -201,7 +201,7 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 		data, err := formatJSON([]byte(e.String()), jsonFormatToggle, e.indentation.PerTab)
 		if err != nil {
 			status.ClearAll(c)
-			status.ShowErrorAfterRedraw(err)
+			status.SetErrorAfterRedraw(err)
 			return
 		}
 		e.LoadBytes(data)
@@ -214,7 +214,7 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 		data, err := formatHTML([]byte(e.String()))
 		if err != nil {
 			status.ClearAll(c)
-			status.ShowErrorAfterRedraw(err)
+			status.SetErrorAfterRedraw(err)
 			return
 		}
 		e.LoadBytes(data)
