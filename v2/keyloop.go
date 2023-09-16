@@ -588,6 +588,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 							msg += " from here"
 						}
 						status.SetMessageAfterRedraw(msg)
+						e.spellCheckMode = false
 					}
 				} else {
 					e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
@@ -616,6 +617,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						msg += " from here"
 					}
 					status.SetMessageAfterRedraw(msg)
+					e.spellCheckMode = false
 				}
 				break
 			}
@@ -769,6 +771,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 							status.SetMessage(msg + " from here")
 						}
 						status.ShowNoTimeout(c, e)
+						e.spellCheckMode = false
 					}
 				} else {
 					// Scroll down
@@ -801,11 +804,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						msg = "No typos found"
 					}
 					if wrap {
-						status.SetMessage(msg)
+						status.SetMessageAfterRedraw(msg)
 					} else {
-						status.SetMessage(msg + " from here")
+						status.SetMessageAfterRedraw(msg + " from here")
 					}
-					status.Show(c, e)
+					e.redraw = true
+					e.spellCheckMode = false
 				}
 				break
 			}
