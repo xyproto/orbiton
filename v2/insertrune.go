@@ -9,10 +9,13 @@ import (
 func (e *Editor) InsertRune(c *vt100.Canvas, r rune) bool {
 	// Insert a regular space instead of a nonbreaking space.
 	// Nobody likes nonbreaking spaces.
-	if r == 0xc2a0 {
+
+	if r == 0xc2a0 { // non-breaking space
 		r = ' '
-	} else if r == 0xcc88 {
+	} else if r == 0xcc88 { // annoying tilde
 		r = '~'
+	} else if r == 0xcdbe { // greek question mark
+		r = ';'
 	}
 
 	// The document will be changed

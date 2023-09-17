@@ -155,6 +155,8 @@ These features are unique to `o`, as far as I am aware:
 * Only UNIX-style line endings are supported (`\n`).
 * Will convert DOS/Windows line endings (`\r\n`) to UNIX line endings (just `\n`), whenever possible.
 * Will replace non-breaking space (`0xc2 0xa0`) with a regular space (`0x20`) whenever possible.
+* Will replace annoying tilde (`0xcc 0x88`) with a regular tilde (`~`) whenever possible.
+* Will replace the greek question mark that looks like a semicolon (`0xcd 0xbe`) with a regular semicolon (`;`) whenever possible.
 * If interactive rebase is launched with `git rebase -i`, then either `ctrl-w` or `ctrl-r` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
 * If the editor executable is renamed to a word starting with `r` (or have a symlink with that name), the default theme will be red/black.
 * If the editor executable is renamed to a word starting with `l` (or have a symlink with that name), the default theme will be suitable for light backgrounds.
