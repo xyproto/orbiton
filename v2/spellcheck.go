@@ -10,6 +10,9 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+// how far away a word can be from the corrected word that the spellchecker suggests
+const fuzzyDepth = 2
+
 var (
 	//go:embed english_word_list.txt.gz
 	gzwords []byte
@@ -18,6 +21,8 @@ var (
 
 	errFoundNoTypos = errors.New("found no typos")
 	wordRegexp      = regexp.MustCompile(`(?:%2[A-Z])?([a-zA-Z0-9]+)`) // avoid capturing "%2F" and "%2B", other than that, capture English words
+
+	dontSuggest = []string{"urine"}
 )
 
 // SpellChecker is a slice of correct, custom and ignored words together with a *fuzzy.Model
@@ -57,7 +62,7 @@ func (sc *SpellChecker) Train(reTrain bool) {
 
 		// This expands the distance searched, but costs more resources (memory and time).
 		// For spell checking, "2" is typically enough, for query suggestions this can be higher
-		sc.fuzzyModel.SetDepth(3)
+		sc.fuzzyModel.SetDepth(fuzzyDepth)
 
 		lenCorrect := len(sc.correctWords)
 		lenCustom := len(sc.customWords)
@@ -169,18 +174,18 @@ func (e *Editor) SearchForTypo() (string, string, error) {
 		if justTheWord == "" {
 			continue
 		}
-		if hasS(spellChecker.ignoredWords, justTheWord) || hasS(spellChecker.customWords, justTheWord) || hasS(spellChecker.correctWords, justTheWord) {
+		if hasS(spellChecker.ignoredWords, justTheWord) || hasS(spellChecker.customWords, justTheWord) { // || hasS(spellChecker.correctWords, justTheWord) {
 			continue
 		}
 
 		lower := strings.ToLower(justTheWord)
 
-		if hasS(spellChecker.ignoredWords, lower) || hasS(spellChecker.customWords, lower) || hasS(spellChecker.correctWords, lower) {
+		if hasS(spellChecker.ignoredWords, lower) || hasS(spellChecker.customWords, lower) { // || hasS(spellChecker.correctWords, lower) {
 			continue
 		}
 
 		corrected := spellChecker.fuzzyModel.SpellCheck(justTheWord)
-		if !strings.EqualFold(justTheWord, corrected) && corrected != "" && corrected != "urine" { // case insensitive comparison of the original and spell-check-suggested word
+		if !strings.EqualFold(justTheWord, corrected) && corrected != "" && !hasS(dontSuggest, corrected) { // case insensitive comparison of the original and spell-check-suggested word
 			spellChecker.markedWord = justTheWord
 			return justTheWord, corrected, nil
 		}

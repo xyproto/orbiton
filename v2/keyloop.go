@@ -1268,9 +1268,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					typo, corrected := e.NanoNextTypo(c, status)
 					msg := "Ignored " + ignoredWord
 					if spellChecker != nil && typo != "" {
-						msg += " and found " + typo
+						msg += ". Found " + typo
 						if corrected != "" {
-							msg += " (could be " + corrected + ")"
+							msg += " which could be " + corrected + "."
+						} else {
+							msg += "."
 						}
 					}
 					status.SetMessageAfterRedraw(msg)
@@ -1444,9 +1446,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					typo, corrected := e.NanoNextTypo(c, status)
 					msg := "Added " + addedWord
 					if spellChecker != nil && typo != "" {
-						msg += " and found " + typo
+						msg += ". Found " + typo
 						if corrected != "" {
-							msg += " (could be " + corrected + ")"
+							msg += " which could be " + corrected + "."
+						} else {
+							msg += "."
 						}
 					}
 					status.SetMessageAfterRedraw(msg)
