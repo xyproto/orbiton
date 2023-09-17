@@ -326,10 +326,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// for C or C++: jump to header/source, or insert symbol
 			// for Agda: insert symbol
 			// for the rest: record and play back macros
-			// debug mode: next insTruction
+			// debug mode: next instruction
 
 			// Save the current file, but only if it has changed
-			if e.changed {
+			if e.changed && !e.nanoMode {
 				if err := e.Save(c, tty); err != nil {
 					status.ClearAll(c)
 					status.SetError(err)
@@ -354,9 +354,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				if e.EmptyLine() {
 					e.InsertStringAndMove(c, "| | |\n|-|-|\n| | |\n")
 					e.Up(c, status)
-					//if !e.InTable() {
-					//panic("internal error: not in a table")
-					//}
 				}
 				undo.Snapshot(e)
 				e.GoToStartOfTextLine(c)
@@ -1595,6 +1592,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						status.Show(c, e)
 					}
 				}
+
 				e.quit = true
 				break
 			}
