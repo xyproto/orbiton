@@ -166,30 +166,24 @@ func (e *Editor) SearchForTypo() (string, string, error) {
 	// Now spellcheck all the words
 	for _, word := range words {
 		justTheWord := strings.TrimSpace(word)
-		logf("checking %s: ", justTheWord)
 		if justTheWord == "" {
-			logf("%s", "empty\n")
 			continue
 		}
 		if hasS(spellChecker.ignoredWords, justTheWord) || hasS(spellChecker.customWords, justTheWord) || hasS(spellChecker.correctWords, justTheWord) {
-			logf("%s", "ignored, custom or correct\n")
 			continue
 		}
 
 		lower := strings.ToLower(justTheWord)
 
 		if hasS(spellChecker.ignoredWords, lower) || hasS(spellChecker.customWords, lower) || hasS(spellChecker.correctWords, lower) {
-			logf("%s", "ignored, custom or correct\n")
 			continue
 		}
 
 		corrected := spellChecker.fuzzyModel.SpellCheck(justTheWord)
 		if !strings.EqualFold(justTheWord, corrected) && corrected != "" && corrected != "urine" { // case insensitive comparison of the original and spell-check-suggested word
-			logf("corrected to %s\n", corrected)
 			spellChecker.markedWord = justTheWord
 			return justTheWord, corrected, nil
 		}
-		logf("%s\n", "w00t")
 	}
 	return "", "", errFoundNoTypos
 }
