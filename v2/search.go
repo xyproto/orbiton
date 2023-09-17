@@ -447,6 +447,7 @@ AGAIN:
 			status.SetMessageAfterRedraw("No typos found")
 			e.redraw = true
 			e.spellCheckMode = false
+			e.ClearSearch()
 			return
 		}
 		if typo != "" && corrected != "" {
@@ -541,9 +542,9 @@ AGAIN:
 				status.ClearAll(c)
 				e.redraw = true
 				if foundNoTypos || spellCheckMode {
-					e.ClearSearch()
 					status.SetMessageAfterRedraw("No typos found")
 					e.spellCheckMode = false
+					e.ClearSearch()
 				} else if wrap {
 					status.SetMessageAfterRedraw(s + " not found")
 				} else {

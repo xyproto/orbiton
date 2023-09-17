@@ -17,7 +17,7 @@ var (
 	spellChecker *SpellChecker
 
 	errFoundNoTypos = errors.New("found no typos")
-	wordRegexp      = regexp.MustCompile(`(?:%2F)?([a-zA-Z0-9]+)`) // avoid capturing "%2F", other than that, capture English words
+	wordRegexp      = regexp.MustCompile(`(?:%2[A-Z])?([a-zA-Z0-9]+)`) // avoid capturing "%2F" and "%2B", other than that, capture English words
 )
 
 // SpellChecker is a slice of correct, custom and ignored words together with a *fuzzy.Model
@@ -57,7 +57,7 @@ func (sc *SpellChecker) Train(reTrain bool) {
 
 		// This expands the distance searched, but costs more resources (memory and time).
 		// For spell checking, "2" is typically enough, for query suggestions this can be higher
-		sc.fuzzyModel.SetDepth(2)
+		sc.fuzzyModel.SetDepth(3)
 
 		lenCorrect := len(sc.correctWords)
 		lenCustom := len(sc.customWords)
@@ -189,7 +189,7 @@ func (e *Editor) SearchForTypo() (string, string, error) {
 }
 
 // NanoNextTypo tries to jump to the next typo
-func (e *Editor) NanoNextTypo(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) NanoNextTypo(c *vt100.Canvas, status *StatusBar) (string, string) {
 	if typo, corrected, err := e.SearchForTypo(); err == nil || err == errFoundNoTypos {
 		e.redraw = true
 		e.redrawCursor = true
@@ -198,21 +198,24 @@ func (e *Editor) NanoNextTypo(c *vt100.Canvas, status *StatusBar) {
 			status.SetMessage("No typos found")
 			status.Show(c, e)
 			e.spellCheckMode = false
-			return
+			e.ClearSearch()
+			return "", ""
 		}
 		e.SetSearchTerm(c, status, typo, true) // true for spellCheckMode
 		if err := e.GoToNextMatch(c, status, true, true); err == errNoSearchMatch {
-			e.ClearSearch()
 			status.ClearAll(c)
 			status.SetMessage("No typos found")
 			status.Show(c, e)
 			e.spellCheckMode = false
-			return
+			e.ClearSearch()
+			return "", ""
 		}
 		if typo != "" && corrected != "" {
 			status.ClearAll(c)
 			status.SetMessage(typo + " could be " + corrected)
 			status.Show(c, e)
 		}
+		return typo, corrected
 	}
+	return "", ""
 }

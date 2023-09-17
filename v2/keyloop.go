@@ -589,6 +589,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						}
 						status.SetMessageAfterRedraw(msg)
 						e.spellCheckMode = false
+						e.ClearSearch()
 					}
 				} else {
 					e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
@@ -618,6 +619,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 					status.SetMessageAfterRedraw(msg)
 					e.spellCheckMode = false
+					e.ClearSearch()
 				}
 				break
 			}
@@ -772,6 +774,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						}
 						status.ShowNoTimeout(c, e)
 						e.spellCheckMode = false
+						e.ClearSearch()
 					}
 				} else {
 					// Scroll down
@@ -810,6 +813,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 					e.redraw = true
 					e.spellCheckMode = false
+					e.ClearSearch()
 				}
 				break
 			}
@@ -1261,10 +1265,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if e.spellCheckMode {
 				// TODO: Save a "custom words" and "ignored words" list to disk
 				if ignoredWord := e.RemoveCurrentWordFromWordList(); ignoredWord != "" {
-					e.NanoNextTypo(c, status)
+					typo, corrected := e.NanoNextTypo(c, status)
 					msg := "Ignored " + ignoredWord
-					if spellChecker != nil && spellChecker.markedWord != "" {
-						msg += " and found " + spellChecker.markedWord
+					if spellChecker != nil && typo != "" {
+						msg += " and found " + typo
+						if corrected != "" {
+							msg += " (could be " + corrected + ")"
+						}
 					}
 					status.SetMessageAfterRedraw(msg)
 				}
@@ -1434,10 +1441,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			if e.spellCheckMode {
 				if addedWord := e.AddCurrentWordToWordList(); addedWord != "" {
-					e.NanoNextTypo(c, status)
+					typo, corrected := e.NanoNextTypo(c, status)
 					msg := "Added " + addedWord
-					if spellChecker != nil && spellChecker.markedWord != "" {
-						msg += " and found " + spellChecker.markedWord
+					if spellChecker != nil && typo != "" {
+						msg += " and found " + typo
+						if corrected != "" {
+							msg += " (could be " + corrected + ")"
+						}
 					}
 					status.SetMessageAfterRedraw(msg)
 				}
