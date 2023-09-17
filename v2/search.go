@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/xyproto/clip"
@@ -56,13 +57,16 @@ func (e *Editor) SetSearchTermWithTimeout(c *vt100.Canvas, status *StatusBar, s 
 	matchFound := make(chan bool)
 
 	foundMatch := LineIndex(-1)
+	var foundMutex sync.RWMutex
 
 	// run the search in a separate goroutine
 	go func() {
 		for y := e.DataY(); y < LineIndex(e.Len()); y++ {
 			if strings.Contains(e.Line(y), s) {
 				matchFound <- true
+				foundMutex.Lock()
 				foundMatch = y
+				foundMutex.Unlock()
 				return
 			}
 		}
@@ -74,6 +78,9 @@ func (e *Editor) SetSearchTermWithTimeout(c *vt100.Canvas, status *StatusBar, s 
 	case <-matchFound:
 	case <-time.After(timeout):
 	}
+
+	foundMutex.RLock()
+	defer foundMutex.RUnlock()
 
 	if foundMatch != -1 {
 		// Found an instance, scroll there
