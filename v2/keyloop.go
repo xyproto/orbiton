@@ -1261,7 +1261,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if e.spellCheckMode {
 				// TODO: Save a "custom words" and "ignored words" list to disk
 				if ignoredWord := e.RemoveCurrentWordFromWordList(); ignoredWord != "" {
-					status.SetMessageAfterRedraw("Ignored " + ignoredWord)
+					e.NanoNextTypo(c, status)
+					msg := "Ignored " + ignoredWord
+					if spellChecker != nil && spellChecker.markedWord != "" {
+						msg += " and found " + spellChecker.markedWord
+					}
+					status.SetMessageAfterRedraw(msg)
 				}
 				break
 			}
@@ -1430,7 +1435,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if e.spellCheckMode {
 				if addedWord := e.AddCurrentWordToWordList(); addedWord != "" {
 					e.NanoNextTypo(c, status)
-					status.SetMessageAfterRedraw("Added " + addedWord)
+					msg := "Added " + addedWord
+					if spellChecker != nil && spellChecker.markedWord != "" {
+						msg += " and found " + spellChecker.markedWord
+					}
+					status.SetMessageAfterRedraw(msg)
 				}
 				break
 			}
