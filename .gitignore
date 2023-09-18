@@ -31,7 +31,10 @@ include.txt
 insert.txt
 light
 main.c
+main.c
 main.o
+main.py
+main.zig
 manpage.1
 nan
 nano
