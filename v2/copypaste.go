@@ -209,9 +209,13 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 	} else { // Multi line paste (the rest of the lines)
 		// Pressed the second time for this line number, paste multiple lines without trimming
 		var (
-			// copyLines contains the lines to be pasted, and they are > 1
+			firstLine     = (*copyLines)[0]
+			tailLines     = (*copyLines)[1:]
+			tailLineCount = len(tailLines)
+
+			// tailLines contains the lines to be pasted, and they are > 1
 			// the first line is skipped since that was already pasted when ctrl-v was pressed the first time
-			lastIndex = len((*copyLines)[1:]) - 1
+			lastIndex = tailLineCount - 1
 
 			// If the first line has been pasted, and return has been pressed, paste the rest of the lines differently
 			skipFirstLineInsert bool
@@ -220,13 +224,13 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 		if !prevKeyWasReturn {
 			// Start by pasting (and overwriting) an untrimmed version of this line,
 			// if the previous key was not return.
-			e.SetLine(y, (*copyLines)[0])
+			e.SetLine(y, firstLine)
 		} else if e.EmptyRightTrimmedLine() {
 			skipFirstLineInsert = true
 		}
 
 		// Then paste the rest of the lines, also untrimmed
-		for i, line := range (*copyLines)[1:] {
+		for i, line := range tailLines {
 			if i == lastIndex && len(strings.TrimSpace(line)) == 0 {
 				// If the last line is blank, skip it
 				break
@@ -239,7 +243,12 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 			}
 			e.InsertStringAndMove(c, line)
 		}
+
+		if numLines := 1 + tailLineCount; numLines > 1 {
+			status.SetMessageAfterRedraw(fmt.Sprintf("Pasted %d lines", numLines))
+		}
 	}
+
 	// Prepare to redraw the text
 	e.redrawCursor = true
 	e.redraw = true
