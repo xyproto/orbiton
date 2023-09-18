@@ -2,11 +2,8 @@
 
 ## General
 
-- [ ] Fix the spellchecker.
-- [ ] Fix `ctrl-a` for adding words when running a spellcheck.
+- [ ] Display a tutorial the first time `o` is being run without a filename, then ask if this should be disabled and inform about `~/.cache/o/tutorial.disabled`.
 - [ ] Save a "custom words" and "ignored words" list to disk.
-- [ ] `ctrl-g`, `up` could go to the previous function signature.
-- [ ] `ctrl-g`, `down` could go to the next function signature.
 - [ ] Let the `ctrl-g` status line also contain the line percentage, like `ctrl-c` in Nano.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.
 - [ ] If in man page mode, set the file as read-only and also let `q` quit.
@@ -41,7 +38,6 @@
 - [ ] alt-a to set mark.
 - [ ] alt-] to jump to bracket.
 - [ ] Support other themes, like the Mono Gray theme.
-- [ ] Add ctrl-a to add a word to the dictionary after searching with ctrl-t to the help overview.
 
 See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
@@ -56,6 +52,8 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 - [ ] Highlight changed lines if a file changed while monitoring it with `-m`.
 - [ ] Move redrawing and clearing the statusbar to a separate goroutine.
 - [ ] When searching for a number that does not exist in the document, jump there.
+- [ ] `ctrl-g`, `up` could go to the previous function signature.
+- [ ] `ctrl-g`, `down` could go to the next function signature.
 
 ## Markdown
 
