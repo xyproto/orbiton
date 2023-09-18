@@ -89,16 +89,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	// Prepare a status bar
 	status := NewStatusBar(e.StatusForeground, e.StatusBackground, e.StatusErrorForeground, e.StatusErrorBackground, e, statusDuration, messageAfterRedraw, e.nanoMode)
 
-	// Clear the initial status message after 60 seconds, if it's still the same message
-	go func(initialMessage string) {
-		time.Sleep(60 * time.Second)
-		if status.msg == initialMessage {
-			status.ClearAll(c)
-		}
-		const drawLines = true
-		e.FullResetRedraw(c, status, drawLines)
-	}(messageAfterRedraw)
-
 	e.SetTheme(e.Theme)
 
 	// ctrl-c, USR1 and terminal resize handlers
