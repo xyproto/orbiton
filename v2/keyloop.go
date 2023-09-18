@@ -95,6 +95,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		if status.msg == initialMessage {
 			status.ClearAll(c)
 		}
+		const drawLines = true
 		e.FullResetRedraw(c, status, drawLines)
 	}(messageAfterRedraw)
 
