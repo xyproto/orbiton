@@ -84,10 +84,12 @@ func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
 func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool, string), error) {
 	var cmd *exec.Cmd
 
+	// A function that signals that everything is fine, regardless of if an executable is produced or not, after building
 	everythingIsFine := func() (bool, string) {
 		return true, "everything"
 	}
 
+	// A function that signals that something is wrong, regardless of if an executable is produced or not, after building
 	nothingIsFine := func() (bool, string) {
 		return false, "nothing"
 	}
@@ -1026,6 +1028,8 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			}
 		}
 	}
+
+	// Do not expect successful compilation to have produced an artifact
 	if e.mode == mode.Python {
 		if status != nil {
 			status.SetMessage("Syntax OK")
