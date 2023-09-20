@@ -3,7 +3,6 @@
 ## General
 
 - [ ] Display a tutorial the first time `o` is being run without a filename, then ask if this should be disabled and inform about `~/.cache/o/tutorial.disabled`.
-- [ ] Fix single and double `ctrl-space` for Python.
 - [ ] Save a "custom words" and "ignored words" list to disk.
 - [ ] Let the `ctrl-g` status line also contain the line percentage, like `ctrl-c` in Nano.
 - [ ] Also timestamp the search history so that it can be cropped when it grows too long.

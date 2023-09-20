@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -341,7 +342,11 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.Python:
-		cmd = exec.Command("python", "-m", "py_compile", sourceFilename)
+		if isDarwin() {
+			cmd = exec.Command("python3", "-m", "py_compile", sourceFilename)
+		} else {
+			cmd = exec.Command("python", "-m", "py_compile", sourceFilename)
+		}
 		cmd.Env = append(cmd.Env, "PYTHONUTF8=1")
 		if !files.Exists(pyCachePrefix) {
 			os.MkdirAll(pyCachePrefix, 0o700)
@@ -438,6 +443,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		}
 		// No result
 	}
+
 	return nil, nothingIsFine, errNoSuitableBuildCommand // errors.New("No build command for " + e.mode.String() + " files")
 }
 
@@ -522,7 +528,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 	// Check that the resulting cmd.Path executable exists
 	if files.Which(cmd.Path) == "" {
-		return "", errNoSuitableBuildCommand
+		return "", fmt.Errorf("%s (%s %s)", errNoSuitableBuildCommand.Error(), "could not find", cmd.Path)
 	}
 
 	// Display a status message with no timeout, about what is currently being done

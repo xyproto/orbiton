@@ -65,7 +65,11 @@ func (e *Editor) Run() (string, bool, error) {
 	case mode.Just:
 		cmd = exec.Command("just")
 	case mode.Python:
-		cmd = exec.Command("python", sourceFilename)
+		if isDarwin() {
+			cmd = exec.Command("python3", sourceFilename)
+		} else {
+			cmd = exec.Command("python", sourceFilename)
+		}
 	default:
 		exeName := filepath.Join(sourceDir, e.exeName(e.filename, true))
 		cmd = exec.Command(exeName)
