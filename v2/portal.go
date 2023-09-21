@@ -3,10 +3,12 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
@@ -16,6 +18,7 @@ var portalFilename = env.ExpandUser(filepath.Join(tempDir, env.Str("LOGNAME", "o
 
 // Portal is a filename and a line number, for pulling text from
 type Portal struct {
+	timestamp   time.Time
 	absFilename string
 	lineNumber  LineNumber
 }
@@ -27,7 +30,7 @@ func (e *Editor) NewPortal() (*Portal, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Portal{absFilename, e.LineNumber()}, nil
+	return &Portal{time.Now(), absFilename, e.LineNumber()}, nil
 }
 
 // SameFile checks if the portal exist in the same file as the editor is editing
@@ -69,6 +72,7 @@ func HasPortal() bool {
 
 // LoadPortal will load a filename + line number from the portal.txt file
 func LoadPortal() (*Portal, error) {
+	//logf("Loading %s\n", portalFilename)
 	data, err := os.ReadFile(portalFilename)
 	if err != nil {
 		return nil, err
@@ -76,20 +80,34 @@ func LoadPortal() (*Portal, error) {
 	if !bytes.Contains(data, []byte{'\n'}) {
 		return nil, errors.New(portalFilename + " does not have a newline, it's not a portal file")
 	}
-	lines := strings.Split(string(data), "\n")
-	if len(lines) < 2 {
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+	lineCounter := 0
+	timestamp := time.Now()
+	switch len(lines) {
+	case 3: // optional timestamp on the first line, if there are 3 lines
+		timestampInt, err := strconv.ParseInt(lines[lineCounter], 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		lineCounter++
+		timestamp = time.Unix(timestampInt, 0)
+		fallthrough
+	case 2: // 2 lines without a timestamp, use time.Now() from above
+		absFilename, err := filepath.Abs(lines[lineCounter])
+		if err != nil {
+			return nil, err
+		}
+		lineCounter++
+		lineInt, err := strconv.Atoi(lines[lineCounter])
+		if err != nil {
+			return nil, err
+		}
+		lineNumber := LineNumber(lineInt)
+		return &Portal{timestamp, absFilename, lineNumber}, nil
+	default:
+		//logf("%s contains too few lines!\n%s\n", portalFilename, strings.Join(lines, ";"))
 		return nil, errors.New(portalFilename + " contains too few lines")
 	}
-	absFilename, err := filepath.Abs(lines[0])
-	if err != nil {
-		return nil, err
-	}
-	lineInt, err := strconv.Atoi(lines[1])
-	if err != nil {
-		return nil, err
-	}
-	lineNumber := LineNumber(lineInt)
-	return &Portal{absFilename, lineNumber}, nil
 }
 
 // LineIndex returns the current line index that the portal points to
@@ -104,7 +122,8 @@ func (p *Portal) LineNumber() LineNumber {
 
 // Save will save the portal
 func (p *Portal) Save() error {
-	s := p.absFilename + "\n" + p.lineNumber.String() + "\n"
+	//logf("Saving %s\n", portalFilename)
+	s := fmt.Sprintf("%d\n%s\n%s\n", p.timestamp.Unix(), p.absFilename, p.lineNumber)
 	// Anyone can read this file
 	if err := os.WriteFile(portalFilename, []byte(s), 0o600); err != nil {
 		return err
