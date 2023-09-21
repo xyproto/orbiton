@@ -1,11 +1,13 @@
 package main
 
 import (
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 
+	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
@@ -34,6 +36,11 @@ func (e *Editor) Run() (string, bool, error) {
 	}
 
 	sourceDir := filepath.Dir(sourceFilename)
+
+	pyCacheDir := filepath.Join(userCacheDir, "o", "python")
+	if noWriteToCache {
+		pyCacheDir = filepath.Join(sourceDir, "o", "python")
+	}
 
 	var cmd *exec.Cmd
 
@@ -70,6 +77,11 @@ func (e *Editor) Run() (string, bool, error) {
 		} else {
 			cmd = exec.Command("python", sourceFilename)
 		}
+		cmd.Env = append(cmd.Env, "PYTHONUTF8=1")
+		if !files.Exists(pyCacheDir) {
+			os.MkdirAll(pyCacheDir, 0o700)
+		}
+		cmd.Env = append(cmd.Env, "PYTHONPYCACHEPREFIX="+pyCacheDir)
 	default:
 		exeName := filepath.Join(sourceDir, e.exeName(e.filename, true))
 		cmd = exec.Command(exeName)

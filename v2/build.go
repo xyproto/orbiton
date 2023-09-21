@@ -19,8 +19,7 @@ import (
 
 var (
 	errNoSuitableBuildCommand = errors.New("no suitable build command")
-
-	pandocMutex sync.RWMutex
+	pandocMutex               sync.RWMutex
 )
 
 // exeName tries to find a suitable name for the executable, given a source filename
@@ -110,13 +109,13 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		exeFilename    = filepath.Join(sourceDir, exeFirstName)
 		jarFilename    = exeFirstName + ".jar"
 		kokaBuildDir   = filepath.Join(userCacheDir, "o", "koka")
-		pyCachePrefix  = filepath.Join(userCacheDir, "o", "python")
+		pyCacheDir     = filepath.Join(userCacheDir, "o", "python")
 		zigCacheDir    = filepath.Join(userCacheDir, "o", "zig")
 	)
 
 	if noWriteToCache {
 		kokaBuildDir = filepath.Join(sourceDir, "o", "koka")
-		pyCachePrefix = filepath.Join(sourceDir, "o", "python")
+		pyCacheDir = filepath.Join(sourceDir, "o", "python")
 		zigCacheDir = filepath.Join(sourceDir, "o", "zig")
 	}
 
@@ -348,10 +347,10 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			cmd = exec.Command("python", "-m", "py_compile", sourceFilename)
 		}
 		cmd.Env = append(cmd.Env, "PYTHONUTF8=1")
-		if !files.Exists(pyCachePrefix) {
-			os.MkdirAll(pyCachePrefix, 0o700)
+		if !files.Exists(pyCacheDir) {
+			os.MkdirAll(pyCacheDir, 0o700)
 		}
-		cmd.Env = append(cmd.Env, "PYTHONPYCACHEPREFIX="+pyCachePrefix)
+		cmd.Env = append(cmd.Env, "PYTHONPYCACHEPREFIX="+pyCacheDir)
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.OCaml:
