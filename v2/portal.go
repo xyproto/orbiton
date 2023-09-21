@@ -16,6 +16,8 @@ import (
 
 var portalFilename = env.ExpandUser(filepath.Join(tempDir, env.Str("LOGNAME", "o")+"_portal.txt"))
 
+var errPortalTimedOut = errors.New("portal timed out")
+
 // Portal is a filename and a line number, for pulling text from
 type Portal struct {
 	timestamp   time.Time
@@ -71,7 +73,7 @@ func HasPortal() bool {
 }
 
 // LoadPortal will load a filename + line number from the portal.txt file
-func LoadPortal() (*Portal, error) {
+func LoadPortal(portalTimeout time.Duration) (*Portal, error) {
 	//logf("Loading %s\n", portalFilename)
 	data, err := os.ReadFile(portalFilename)
 	if err != nil {
@@ -103,6 +105,11 @@ func LoadPortal() (*Portal, error) {
 			return nil, err
 		}
 		lineNumber := LineNumber(lineInt)
+		// Check for timeout
+		deadline := timestamp.Add(portalTimeout)
+		if time.Now().After(deadline) {
+			return nil, errPortalTimedOut
+		}
 		return &Portal{timestamp, absFilename, lineNumber}, nil
 	default:
 		//logf("%s contains too few lines!\n%s\n", portalFilename, strings.Join(lines, ";"))

@@ -2,7 +2,6 @@
 
 ## General
 
-- [ ] Let portals time out after N minutes.
 - [ ] Display a tutorial the first time `o` is being run without a filename, then ask if this should be disabled and inform about `~/.cache/o/tutorial.disabled`.
 - [ ] Save a "custom words" and "ignored words" list to disk.
 - [ ] Let the `ctrl-g` status line also contain the line percentage, like `ctrl-c` in Nano.

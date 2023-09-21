@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/xyproto/clip"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/vt100"
 )
+
+const portalTimeout = 20 * time.Minute
 
 // SetClipboardFromFile can copy the given file to the clipboard.
 // The returned int is the number of bytes written.
@@ -86,7 +89,7 @@ func WriteClipboardToFile(filename string, overwrite, primaryClipboard bool) (in
 
 // Paste is called when the user presses ctrl-v, and handles portals, clipboards and also non-clipboard-based copy and paste
 func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCopyLines *[]string, firstPasteAction *bool, lastCopyY, lastPasteY, lastCutY *LineIndex, prevKeyWasReturn bool) {
-	if portal, err := LoadPortal(); err == nil { // no error
+	if portal, err := LoadPortal(portalTimeout); err == nil { // no error
 		var gotLineFromPortal bool
 		line, err := portal.PopLine(e, false) // pop the line, but don't remove it from the source file
 		status.Clear(c)
