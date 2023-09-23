@@ -14,9 +14,9 @@ func DisableSplashScreen(c *vt100.Canvas, e *Editor, status *StatusBar) {
 // DrawSplash draws the splash screen + some help for new users
 func (e *Editor) DrawSplash(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
 	const (
-		maxLines  = 8
+		maxLines  = 10
 		title     = "Welcome to " + versionString
-		oHelpText = `Press ctrl-l and then ? to display the tutorial.        ___
+		oHelpText = `Press ctrl-l and then ? to launch the tutorial.         ___
                                                        // \\ ----
 Other hotkeys:                                        ||  || ---
   ctrl-l and then ! to disable this help message      \\_// ---
