@@ -49,10 +49,18 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	}
 
 	if fnord.stdin {
-		m = mode.SimpleDetectBytes(fnord.data)
+		if parentIsMan() {
+			m = mode.ManPage
+		} else {
+			m = mode.SimpleDetectBytes(fnord.data)
+		}
 		syntaxHighlight = origSyntaxHighlight && m != mode.Text && m != mode.Blank
 	} else {
-		m = mode.Detect(stripGZ(fnord.filename)) // Note that mode.Detect can check for the full path, like /etc/fstab
+		if parentIsMan() {
+			m = mode.ManPage
+		} else {
+			m = mode.Detect(stripGZ(fnord.filename)) // Note that mode.Detect can check for the full path, like /etc/fstab
+		}
 		syntaxHighlight = origSyntaxHighlight && m != mode.Text && (m != mode.Blank || ext != "")
 	}
 
@@ -120,6 +128,10 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			return nil, "", false, err
 		}
 
+		if parentIsMan() {
+			e.mode = mode.ManPage
+		}
+
 		// Detect the file mode if the current editor mode is blank, or Prolog (since it could be Perl)
 		// Markdown is set by default for some files.
 		// This corresponds to the check below, and both needs to be updated in sync.
@@ -175,8 +187,12 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 				if len(firstLine) > 100 {
 					firstLine = firstLine[:100]
 				}
-				if m, found := mode.DetectFromContents(e.mode, firstLine, e.String); found {
-					e.mode = m
+				if parentIsMan() {
+					e.mode = mode.ManPage
+				} else {
+					if m, found := mode.DetectFromContents(e.mode, firstLine, e.String); found {
+						e.mode = m
+					}
 				}
 			}
 			// Specifically enable syntax highlighting if the opened file is a configuration file or a Man page

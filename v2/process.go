@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 )
 
-// manIsParent checks if the parent process is an executable named "man"
-func manIsParent() bool {
+// parentIsMan checks if the parent process is an executable named "man"
+func parentIsMan() bool {
 	parentPID := os.Getppid()
 	parentPath, err := os.Readlink(fmt.Sprintf("/proc/%d/exe", parentPID))
 	if err != nil {
