@@ -82,13 +82,6 @@ func Usage() {
 	fmt.Print(usageText)
 }
 
-// HelpMessage tries to show a friendly help message to the user.
-func (e *Editor) HelpMessage(c *vt100.Canvas, status *StatusBar) {
-	status.ClearAll(c)
-	status.SetMessage("Press ctrl-q to quit or ctrl-o to show the menu. Use the --help flag for more help.")
-	status.Show(c, e)
-}
-
 // DrawNanoHelp will draw a help box for nano hotkeys in the center
 func (e *Editor) DrawNanoHelp(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
 	const (
@@ -152,6 +145,71 @@ ctrl-l    - refresh the current screen
 	centerBox.FillWithMargins(canvasBox, marginX, marginY)
 
 	centerBox.Y--
+
+	// Then create a list box
+	listBox := NewBox()
+	listBox.FillWithMargins(centerBox, 2, 2)
+
+	// Get the current theme for the stdout box
+	bt := e.NewBoxTheme()
+	bt.Background = &backgroundColor
+	bt.UpperEdge = bt.LowerEdge
+
+	e.DrawBox(bt, c, centerBox)
+
+	e.DrawTitle(bt, c, centerBox, title)
+
+	e.DrawList(bt, c, listBox, lines, -1)
+
+	// Blit
+	c.Draw()
+
+	// Reposition the cursor
+	if repositionCursorAfterDrawing {
+		x := e.pos.ScreenX()
+		y := e.pos.ScreenY()
+		vt100.SetXY(uint(x), uint(y))
+	}
+}
+
+// DrawSplash draws the splash screen + some help for new users
+func (e *Editor) DrawSplash(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
+	const (
+		maxLines     = 10
+		title        = "Welcome to " + versionString
+		nanoHelpText = `Press ctrl-l and then t to display the tutorial.        ___
+                                                       // \\ ----
+Try also:                                             ||  || ---
+  ctrl-o to display the main menu                     \\_// ---
+  ctrl-l and then . to disable this help message
+  ctrl-s to save
+  ctrl-q to quit
+`
+	)
+
+	var (
+		minWidth        = 30
+		backgroundColor = e.Background
+	)
+
+	// Get the last maxLine lines, and create a string slice
+	lines := strings.Split(nanoHelpText, "\n")
+	if l := len(lines); l > maxLines {
+		lines = lines[l-maxLines:]
+	}
+	for _, line := range lines {
+		if len(line) > minWidth {
+			minWidth = len(line) + 5
+		}
+	}
+
+	// First create a box the size of the entire canvas
+	canvasBox := NewCanvasBox(c)
+
+	centerBox := NewBox()
+
+	centerBox.UpperRightPlacement(canvasBox, minWidth)
+	centerBox.H++
 
 	// Then create a list box
 	listBox := NewBox()
