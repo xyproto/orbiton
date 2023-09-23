@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] When joining lines, only go to the start of the line at the second time ctrl-j is pressed.
 - [ ] Use enet to communicate between the core editor and the GUI application.
 - [ ] Display a tutorial the first time `o` is being run without a filename, then ask if this should be disabled and inform about `~/.cache/o/tutorial.disabled`.
 - [ ] Save a "custom words" and "ignored words" list to disk.
