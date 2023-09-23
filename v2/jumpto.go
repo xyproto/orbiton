@@ -20,7 +20,7 @@ var jumpLetters map[rune]PositionIndex
 
 // RegisterJumpLetter will register a jump-letter together with a location that is visible on screen
 func (e *Editor) RegisterJumpLetter(r rune, x ColIndex, y LineIndex) bool {
-	const skipThese = "0123456789%.,btc" // used by the ctrl-l functionality for other things
+	const skipThese = "0123456789%.,btc?!" // used by the ctrl-l functionality for other things
 	if strings.ContainsRune(skipThese, r) || unicode.IsSymbol(r) {
 		return false
 	}
@@ -247,6 +247,8 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 	goToTop := false
 	goToCenter := false
 	goToLetter := rune(0)
+	launchTutorial := false
+	disableSplashScreen := false
 	for !doneCollectingDigits {
 		numkey := tty.String()
 		switch numkey {
@@ -269,6 +271,12 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 		case "c": // center of file
 			doneCollectingDigits = true
 			goToCenter = true
+		case "?": // display tutorial
+			doneCollectingDigits = true
+			launchTutorial = true
+		case "!": // disable splash screen
+			doneCollectingDigits = true
+			disableSplashScreen = true
 		case "↑", "↓", "←", "→": // one of the arrow keys
 			fallthrough // cancel
 		case "c:12", "c:17", "c:27": // ctrl-l, ctrl-q or esc
@@ -306,6 +314,10 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 		e.GoToMiddle(c, status)
 	} else if goToEnd {
 		e.GoToEnd(c, status)
+	} else if launchTutorial {
+		Tutorial(c, e, status)
+	} else if disableSplashScreen {
+		DisableSplashScreen(c, e, status)
 	} else if lns == "" && !cancel {
 		if e.DataY() > 0 {
 			// If not already at the top, go there
