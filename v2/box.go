@@ -209,6 +209,7 @@ func (e *Editor) DrawBox(bt *BoxTheme, c *vt100.Canvas, r *Box) *Box {
 // Takes a list of strings to be listed and an int that represents
 // which item is currently selected. Does not scroll or wrap.
 // Set selected to -1 to skip highlighting one of the items.
+// Uses bt.Highlight, bt.Text and bt.Background.
 func (e *Editor) DrawList(bt *BoxTheme, c *vt100.Canvas, r *Box, items []string, selected int) {
 	x := uint(r.X)
 	for i, s := range items {
@@ -228,4 +229,17 @@ func (e *Editor) DrawTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title string) 
 	bt.Text = bt.UpperEdge
 	e.Say(bt, c, r.X+(r.W-len(titleWithSpaces))/2, r.Y, titleWithSpaces)
 	bt.Text = tmp
+}
+
+// DrawText will draw a text widget. Takes a Box struct for the size and position.
+// Takes a list of strings. Does not scroll or wrap. Uses bt.Foreground and bt.Background.
+func (e *Editor) DrawText(bt *BoxTheme, c *vt100.Canvas, r *Box, lines []string) {
+	x := uint(r.X)
+	for i, s := range lines {
+		y := uint(r.Y + i)
+		// TODO: Make it possible to output colored text without ruining the box edges and text alignment.
+		//       Look at highlight.go
+		// colorString := UnEscape(tout.DarkTags(s))
+		c.Write(x, y, *bt.Foreground, *bt.Background, s)
+	}
 }

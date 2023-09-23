@@ -30,7 +30,8 @@ Try opening a new main.c file, press ctrl-w and then double ctrl-space.
 
 	var (
 		minWidth        = 30
-		backgroundColor = e.Background // e.DebugInstructionsBackground
+		foregroundColor = e.StatusForeground // e.Foreground // e.ImageColor // vt100.LightRed // e.Foreground
+		backgroundColor = e.Background       // e.Background   // e.DebugInstructionsBackground
 	)
 
 	// Get the last maxLine lines, and create a string slice
@@ -58,14 +59,15 @@ Try opening a new main.c file, press ctrl-w and then double ctrl-space.
 
 	// Get the current theme for the stdout box
 	bt := e.NewBoxTheme()
+	bt.Foreground = &foregroundColor
 	bt.Background = &backgroundColor
-	bt.UpperEdge = bt.LowerEdge
+	bt.LowerEdge = bt.UpperEdge
 
 	e.DrawBox(bt, c, centerBox)
 
 	e.DrawTitle(bt, c, centerBox, title)
 
-	e.DrawList(bt, c, listBox, lines, -1)
+	e.DrawText(bt, c, listBox, lines)
 
 	// Blit
 	c.Draw()
