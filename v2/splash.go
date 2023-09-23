@@ -19,7 +19,7 @@ func (e *Editor) DrawSplash(c *vt100.Canvas, repositionCursorAfterDrawing bool) 
 		oHelpText = `Press ctrl-l and then ? to launch the tutorial.         ___
                                                        // \\ ----
 Other hotkeys:                                        ||  || ---
-  ctrl-l and then ! to disable this help message      \\_// ---
+  ctrl-l and then ! to disable this splash screen     \\_// ---
   ctrl-o to display the main menu
   ctrl-s to save
   ctrl-q to quit
