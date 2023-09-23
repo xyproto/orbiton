@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Use enet to communicate between the core editor and the GUI application.
 - [ ] Display a tutorial the first time `o` is being run without a filename, then ask if this should be disabled and inform about `~/.cache/o/tutorial.disabled`.
 - [ ] Save a "custom words" and "ignored words" list to disk.
 - [ ] Let the `ctrl-g` status line also contain the line percentage, like `ctrl-c` in Nano.
