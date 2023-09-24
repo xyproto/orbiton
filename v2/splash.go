@@ -15,7 +15,7 @@ func DisableSplashScreen(c *vt100.Canvas, e *Editor, status *StatusBar) {
 func (e *Editor) DrawSplash(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
 	const (
 		maxLines  = 8
-		title     = "Quick overview"
+		title     = "Quick help"
 		quickHelp = `Save                   ctrl-s
 Quit                   ctrl-q
 Display the main menu  ctrl-o
