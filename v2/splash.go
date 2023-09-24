@@ -14,34 +14,29 @@ func DisableSplashScreen(c *vt100.Canvas, e *Editor, status *StatusBar) {
 // DrawSplash draws the splash screen + some help for new users
 func (e *Editor) DrawSplash(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
 	const (
-		maxLines  = 10
-		title     = "Welcome to " + versionString
-		oHelpText = `Press ctrl-l and then ? to launch the tutorial.         ___
-                                                       // \\ ----
-Other hotkeys:                                        ||  || ---
-  ctrl-l and then ! to disable this splash screen     \\_// ---
-  ctrl-o to display the main menu
-  ctrl-s to save
-  ctrl-q to quit
-
-Try opening a new main.c file, press ctrl-w and then double ctrl-space.
-`
+		maxLines  = 8
+		title     = "Quick overview"
+		quickHelp = `Save                       ctrl-s
+Quit                       ctrl-q
+Display the main menu      ctrl-o
+Launch tutorial            ctrl-l and then ?
+Disable this overview      ctrl-l and then !`
 	)
 
 	var (
-		minWidth        = 30
+		minWidth        = 49
 		foregroundColor = e.StatusForeground // e.Foreground // e.ImageColor // vt100.LightRed // e.Foreground
 		backgroundColor = e.Background       // e.Background   // e.DebugInstructionsBackground
 	)
 
 	// Get the last maxLine lines, and create a string slice
-	lines := strings.Split(oHelpText, "\n")
+	lines := strings.Split(quickHelp, "\n")
 	if l := len(lines); l > maxLines {
 		lines = lines[l-maxLines:]
 	}
 	for _, line := range lines {
 		if len(line) > minWidth {
-			minWidth = len(line) + 3
+			minWidth = len(line) + 4
 		}
 	}
 
@@ -51,7 +46,7 @@ Try opening a new main.c file, press ctrl-w and then double ctrl-space.
 	centerBox := NewBox()
 
 	centerBox.UpperRightPlacement(canvasBox, minWidth)
-	centerBox.H++
+	centerBox.H -= 3
 
 	// Then create a list box
 	listBox := NewBox()
