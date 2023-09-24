@@ -16,15 +16,15 @@ func (e *Editor) DrawSplash(c *vt100.Canvas, repositionCursorAfterDrawing bool) 
 	const (
 		maxLines  = 8
 		title     = "Quick overview"
-		quickHelp = `Save                       ctrl-s
-Quit                       ctrl-q
-Display the main menu      ctrl-o
-Launch tutorial            ctrl-l and then ?
-Disable this overview      ctrl-l and then !`
+		quickHelp = `Save                   ctrl-s
+Quit                   ctrl-q
+Display the main menu  ctrl-o
+Launch tutorial        ctrl-l and then ?
+Disable this overview  ctrl-l and then !`
 	)
 
 	var (
-		minWidth        = 49
+		minWidth        = 55
 		foregroundColor = e.StatusForeground // e.Foreground // e.ImageColor // vt100.LightRed // e.Foreground
 		backgroundColor = e.Background       // e.Background   // e.DebugInstructionsBackground
 	)
@@ -36,7 +36,7 @@ Disable this overview      ctrl-l and then !`
 	}
 	for _, line := range lines {
 		if len(line) > minWidth {
-			minWidth = len(line) + 4
+			minWidth = len(line) + 5
 		}
 	}
 
@@ -46,7 +46,7 @@ Disable this overview      ctrl-l and then !`
 	centerBox := NewBox()
 
 	centerBox.UpperRightPlacement(canvasBox, minWidth)
-	centerBox.H -= 3
+	centerBox.H += 2
 
 	// Then create a list box
 	listBox := NewBox()
