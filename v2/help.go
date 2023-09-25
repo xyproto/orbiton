@@ -172,7 +172,61 @@ ctrl-l    - refresh the current screen
 	}
 }
 
-// ShowHotkeyOverview shows an overview of the o hotkeys
-func ShowHotkeyOverview(c *vt100.Canvas, e *Editor, status *StatusBar) {
-	status.SetMessageAfterRedraw("HOTKEY OVERVIEW: NOT YET IMPLEMENTED")
+func (e *Editor) DrawHotkeyOverview(tty *vt100.TTY, c *vt100.Canvas, repositionCursorAfterDrawing bool) {
+	// Extracting hotkey information from usageText
+	startIndex := strings.Index(usageText, "Hotkeys")
+	endIndex := strings.Index(usageText, "Flags:")
+	hotkeyInfo := usageText[startIndex:endIndex]
+
+	// Split the hotkeyInfo into lines
+	hotkeyLines := strings.Split(hotkeyInfo, "\n")
+
+	// Calculate the page height as 60% of the canvas height
+	pageHeight := int(float64(c.Height()) * 0.6)
+
+	// Create pages of text
+	var pages []Page
+	for i := 0; i < len(hotkeyLines); i += pageHeight {
+		end := i + pageHeight
+		if end > len(hotkeyLines) {
+			end = len(hotkeyLines)
+		}
+		pages = append(pages, Page{Lines: hotkeyLines[i:end]})
+	}
+
+	// Create a new instance of ScrollableText
+	scrollableText := NewScrollableText(pages)
+
+	box := &Box{X: 10, Y: 10, W: int(c.Width() - 10), H: pageHeight}
+
+	boxTheme := e.NewBoxTheme()
+
+	// Main event loop
+	for {
+		// Draw the current page
+		//e.DrawBox(boxTheme, c, box)
+		e.DrawScrollableText(boxTheme, c, box, scrollableText)
+		c.Draw()
+
+		// Wait for a keypress
+		key := tty.String()
+		switch key {
+		case " ": // Space key to go to next page
+			scrollableText.NextPage()
+		case "q": // 'q' to quit the help overview
+			goto endOfLoop
+		case "j":
+			scrollableText.NextPage()
+		case "k":
+			scrollableText.PrevPage()
+		}
+	}
+
+endOfLoop:
+	// Reposition the cursor
+	if repositionCursorAfterDrawing {
+		x := e.pos.ScreenX()
+		y := e.pos.ScreenY()
+		vt100.SetXY(uint(x), uint(y))
+	}
 }
