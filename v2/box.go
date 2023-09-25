@@ -239,7 +239,6 @@ func (e *Editor) DrawText(bt *BoxTheme, c *vt100.Canvas, r *Box, lines []string)
 		y := uint(r.Y + i)
 		// TODO: Make it possible to output colored text without ruining the box edges and text alignment.
 		//       Look at highlight.go
-		// colorString := UnEscape(tout.DarkTags(s))
 		c.Write(x, y, *bt.Foreground, *bt.Background, s)
 	}
 }
