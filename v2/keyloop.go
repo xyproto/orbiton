@@ -171,7 +171,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	e.InitialRedraw(c, status)
 
 	// Splash screen + help for new users
-	e.DrawSplash(c, false)
+	if !SplashScreenIsDisabled() {
+		e.DrawSplash(c, false)
+	}
 
 	// This is the main loop for the editor
 	for !e.quit {
@@ -872,7 +874,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:12": // ctrl-l, go to line number or percentage
 			if !e.nanoMode {
-				e.JumpMode(c, status, tty)
+				showHotkeyOverview := e.JumpMode(c, status, tty)
+				if showHotkeyOverview {
+					const repositionCursorAfterDrawing = true
+					e.DrawHotkeyOverview(tty, c, repositionCursorAfterDrawing)
+				}
 				e.redraw = true
 				e.redrawCursor = true
 				break

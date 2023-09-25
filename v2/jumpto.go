@@ -219,7 +219,7 @@ func (e *Editor) GoToLineIndexAndColIndex(yIndex LineIndex, xIndex ColIndex, c *
 
 // JumpMode initiates the mode where the user can enter where to jump to
 // (line number, percentage, fraction or highlighted letter)
-func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
+func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) bool {
 	e.jumpToLetterMode = true
 	prevCommentColor := e.CommentColor
 	prevSyntaxHighlighting := e.syntaxHighlight
@@ -248,7 +248,7 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 	goToCenter := false
 	goToLetter := rune(0)
 	launchTutorial := false
-	disableSplashScreen := false
+	toggleSplashScreen := false
 	showHotkeyOverview := false
 	for !doneCollectingDigits {
 		numkey := tty.String()
@@ -277,7 +277,7 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 			launchTutorial = true
 		case "!": // disable splash screen
 			doneCollectingDigits = true
-			disableSplashScreen = true
+			toggleSplashScreen = true
 		case "/": // display hotkey overview
 			doneCollectingDigits = true
 			showHotkeyOverview = true
@@ -320,11 +320,16 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 		e.GoToEnd(c, status)
 	} else if launchTutorial {
 		Tutorial(c, e, status)
-	} else if disableSplashScreen {
-		DisableSplashScreen(c, e, status)
-	} else if showHotkeyOverview {
-		ShowHotkeyOverview(c, e, status)
-	} else if lns == "" && !cancel {
+	} else if toggleSplashScreen {
+		ok := false
+		if SplashScreenIsDisabled() {
+			ok = EnableSplashScreen(status)
+		} else {
+			ok = DisableSplashScreen(status)
+		}
+		e.redraw = ok
+		e.redrawCursor = ok
+	} else if lns == "" && !cancel && !showHotkeyOverview {
 		if e.DataY() > 0 {
 			// If not already at the top, go there
 			e.GoToTop(c, status)
@@ -343,7 +348,7 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 			lineIndex := int(math.Round(float64(e.Len()) * percentageFloat))
 			e.redraw = e.GoToLineNumber(LineNumber(lineIndex), c, status, true)
 		}
-	} else {
+	} else if !showHotkeyOverview {
 		// Go to the specified line
 		if ln, err := strconv.Atoi(lns); err == nil { // no error
 			e.redraw = e.GoToLineNumber(LineNumber(ln), c, status, true)
@@ -353,4 +358,5 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 	e.syntaxHighlight = prevSyntaxHighlighting
 	e.CommentColor = prevCommentColor
 	e.ClearJumpLetters()
+	return showHotkeyOverview
 }

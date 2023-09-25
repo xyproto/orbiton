@@ -1,14 +1,53 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/xyproto/vt100"
 )
 
+var splashToggleFilename = filepath.Join(userCacheDir, "o", "splash.txt")
+
 // DisableSplashScreen saves a file to the cache directory so that the splash screen will be disabled the next time the editor starts
-func DisableSplashScreen(c *vt100.Canvas, e *Editor, status *StatusBar) {
-	status.SetMessageAfterRedraw("DISABLE SPLASH SCREEN: NOT YET IMPLEMENTED")
+func DisableSplashScreen(status *StatusBar) bool {
+	// Remove the file, but ignore errors if it was already gone
+	_ = os.Remove(splashToggleFilename)
+
+	// Write a new file
+	contents := []byte{'0', '\n'} // 1 for enabled, 0 for disabled
+	err := os.WriteFile(splashToggleFilename, contents, 0o644)
+	if err != nil {
+		return false
+	}
+
+	// TODO: Add a flag like "--welcome" to be able to re-enable the quick overview at start
+	status.SetMessageAfterRedraw("Quick overview at start has been disabled.")
+	return true
+}
+
+// EnableSplashScreen removes the splash screen config file
+func EnableSplashScreen(status *StatusBar) bool {
+	// Ignore any errors. If the file is already removed, that is fine too.
+	_ = os.Remove(splashToggleFilename)
+	if SplashScreenIsDisabled() {
+		return false
+	}
+	status.SetMessageAfterRedraw("Quick overview at start has been enabled.")
+	return true
+}
+
+// SplashScreenIsDisabled checks if the splash screen config file exists
+func SplashScreenIsDisabled() bool {
+	// Check if the splash config file exists and contains just "0"
+	d, err := os.ReadFile(splashToggleFilename)
+	if err != nil || len(d) == 0 {
+		// No data means that the splash screen is enabled
+		return false
+	}
+	// If there is data, it must be 0, otherwise the splash screen is enabled
+	return strings.TrimSpace(string(d)) == "0"
 }
 
 // DrawSplash draws the splash screen + some help for new users
