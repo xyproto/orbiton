@@ -15,18 +15,19 @@ func DisableSplashScreen(c *vt100.Canvas, e *Editor, status *StatusBar) {
 func (e *Editor) DrawSplash(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
 	const (
 		maxLines  = 8
-		title     = "Quick help"
+		title     = "Welcome to " + versionString
 		quickHelp = `Save                   ctrl-s
 Quit                   ctrl-q
 Display the main menu  ctrl-o
+Overview of hotkeys    ctrl-l and then /
 Launch tutorial        ctrl-l and then ?
 Disable this overview  ctrl-l and then !`
 	)
 
 	var (
 		minWidth        = 55
-		foregroundColor = e.StatusForeground // e.Foreground // e.ImageColor // vt100.LightRed // e.Foreground
-		backgroundColor = e.Background       // e.Background   // e.DebugInstructionsBackground
+		foregroundColor = e.StatusForeground
+		backgroundColor = e.DebugRunningBackground // e.Background
 	)
 
 	// Get the last maxLine lines, and create a string slice

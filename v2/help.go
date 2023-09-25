@@ -171,3 +171,8 @@ ctrl-l    - refresh the current screen
 		vt100.SetXY(uint(x), uint(y))
 	}
 }
+
+// ShowHotkeyOverview shows an overview of the o hotkeys
+func ShowHotkeyOverview(c *vt100.Canvas, e *Editor, status *StatusBar) {
+	status.SetMessageAfterRedraw("HOTKEY OVERVIEW: NOT YET IMPLEMENTED")
+}
