@@ -319,7 +319,7 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) bo
 	} else if goToEnd {
 		e.GoToEnd(c, status)
 	} else if launchTutorial {
-		LaunchTutorial(c, e, status)
+		LaunchTutorial(c, e)
 	} else if toggleSplashScreen {
 		ok := false
 		if SplashScreenIsDisabled() {

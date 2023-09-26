@@ -231,6 +231,15 @@ func (e *Editor) DrawTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title string) 
 	bt.Text = tmp
 }
 
+// DrawFooter draws text at the bottom of a box, not exactly centered
+func (e *Editor) DrawFooter(bt *BoxTheme, c *vt100.Canvas, r *Box, text string) {
+	textWithSpaces := " " + text + " "
+	tmp := bt.Text
+	bt.Text = bt.UpperEdge
+	e.Say(bt, c, r.X+(r.W-len(textWithSpaces))/2, r.Y+r.H-1, textWithSpaces)
+	bt.Text = tmp
+}
+
 // DrawText will draw a text widget. Takes a Box struct for the size and position.
 // Takes a list of strings. Does not scroll or wrap. Uses bt.Foreground and bt.Background.
 func (e *Editor) DrawText(bt *BoxTheme, c *vt100.Canvas, r *Box, lines []string) {
