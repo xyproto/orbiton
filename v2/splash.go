@@ -53,14 +53,8 @@ func SplashScreenIsDisabled() bool {
 // DrawSplash draws the splash screen + some help for new users
 func (e *Editor) DrawSplash(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
 	const (
-		maxLines  = 8
-		title     = "Welcome to " + versionString
-		quickHelp = `Save                   ctrl-s
-Quit                   ctrl-q
-Display the main menu  ctrl-o
-Overview of hotkeys    ctrl-l and then /
-Launch tutorial        ctrl-l and then ?
-Disable this overview  ctrl-l and then !`
+		maxLines = 8
+		title    = "Welcome to " + versionString
 	)
 
 	var (
@@ -70,7 +64,7 @@ Disable this overview  ctrl-l and then !`
 	)
 
 	// Get the last maxLine lines, and create a string slice
-	lines := strings.Split(quickHelp, "\n")
+	lines := strings.Split(quickHelpText, "\n")
 	if l := len(lines); l > maxLines {
 		lines = lines[l-maxLines:]
 	}

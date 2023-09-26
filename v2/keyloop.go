@@ -877,7 +877,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				showHotkeyOverview := e.JumpMode(c, status, tty)
 				if showHotkeyOverview {
 					const repositionCursorAfterDrawing = true
-					e.DrawHotkeyOverview(tty, c, repositionCursorAfterDrawing)
+					e.DrawHotkeyOverview(tty, c, status, repositionCursorAfterDrawing)
 				}
 				e.redraw = true
 				e.redrawCursor = true
