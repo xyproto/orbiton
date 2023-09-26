@@ -215,15 +215,17 @@ func (e *Editor) DrawHotkeyOverview(tty *vt100.TTY, c *vt100.Canvas, status *Sta
 	centerBox.FillWithMargins(canvasBox, marginX, marginY)
 	centerBox.Y--
 	centerBox.W = pageWidth
-	centerBox.H = pageHeight + 4
+	centerBox.H = pageHeight + 6
 	scrollableTextBox := NewScrollableTextBox(pages)
 	scrollableTextBox.FillWithMargins(centerBox, 4, 4)
 	boxTheme := e.NewBoxTheme()
+	boxTheme.Foreground = &e.TableColor
+	boxTheme.Background = &e.NanoHelpBackground
 	surroundingBox := *(scrollableTextBox.Box)
 	surroundingBox.X -= 2
 	surroundingBox.Y -= 2
 	surroundingBox.W += 2
-	surroundingBox.H += 2
+	surroundingBox.H += 4
 
 	for {
 		// Draw the current page
