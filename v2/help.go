@@ -176,6 +176,7 @@ ctrl-l    - refresh the current screen
 	}
 }
 
+// DrawHotkeyOverview shows an overview of Orbiton hotkeys
 func (e *Editor) DrawHotkeyOverview(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, repositionCursorAfterDrawing bool) {
 	const title = "Hotkey overview"
 
