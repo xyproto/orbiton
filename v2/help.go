@@ -14,6 +14,13 @@ const (
 )
 
 var (
+	quickHelpText = `Save                   ctrl-s
+Quit                   ctrl-q
+Display the main menu  ctrl-o
+Overview of hotkeys    ctrl-l and then /
+Launch tutorial        ctrl-l and then ?
+Disable this overview  ctrl-l and then !`
+
 	usageText = `Hotkeys
 
 ctrl-s      to save
@@ -137,13 +144,10 @@ ctrl-l    - refresh the current screen
 
 	// First create a box the size of the entire canvas
 	canvasBox := NewCanvasBox(c)
-
 	centerBox := NewBox()
-
 	const marginX = 5
 	const marginY = 2
 	centerBox.FillWithMargins(canvasBox, marginX, marginY)
-
 	centerBox.Y--
 
 	// Then create a list box
@@ -172,17 +176,26 @@ ctrl-l    - refresh the current screen
 	}
 }
 
-func (e *Editor) DrawHotkeyOverview(tty *vt100.TTY, c *vt100.Canvas, repositionCursorAfterDrawing bool) {
+func (e *Editor) DrawHotkeyOverview(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, repositionCursorAfterDrawing bool) {
+	const title = "Hotkey overview"
+
 	// Extracting hotkey information from usageText
 	startIndex := strings.Index(usageText, "Hotkeys")
-	endIndex := strings.Index(usageText, "Flags:")
+	if startIndex == -1 {
+		return
+	}
+	endIndex := strings.Index(usageText, "Set NO_COLOR=1")
+	if endIndex == -1 {
+		return
+	}
 	hotkeyInfo := usageText[startIndex:endIndex]
 
 	// Split the hotkeyInfo into lines
 	hotkeyLines := strings.Split(hotkeyInfo, "\n")
 
-	// Calculate the page height as 60% of the canvas height
-	pageHeight := int(float64(c.Height()) * 0.6)
+	// Calculate the box width and height as 80% of the canvas height
+	pageWidth := int(float64(c.Width()) * 0.8)
+	pageHeight := int(float64(c.Height()) * 0.8)
 
 	// Create pages of text
 	var pages []Page
@@ -194,31 +207,49 @@ func (e *Editor) DrawHotkeyOverview(tty *vt100.TTY, c *vt100.Canvas, repositionC
 		pages = append(pages, Page{Lines: hotkeyLines[i:end]})
 	}
 
-	// Create a new instance of ScrollableText
-	scrollableText := NewScrollableText(pages)
-
-	box := &Box{X: 10, Y: 10, W: int(c.Width() - 10), H: pageHeight}
-
+	// TODO: Clean up the following block of code, remove reduntant lines!
+	canvasBox := NewCanvasBox(c)
+	centerBox := NewBox()
+	const marginX = 5
+	const marginY = 2
+	centerBox.FillWithMargins(canvasBox, marginX, marginY)
+	centerBox.Y--
+	centerBox.W = pageWidth
+	centerBox.H = pageHeight + 4
+	scrollableTextBox := NewScrollableTextBox(pages)
+	scrollableTextBox.FillWithMargins(centerBox, 4, 4)
 	boxTheme := e.NewBoxTheme()
+	surroundingBox := *(scrollableTextBox.Box)
+	surroundingBox.X -= 2
+	surroundingBox.Y -= 2
+	surroundingBox.W += 2
+	surroundingBox.H += 2
 
-	// Main event loop
 	for {
 		// Draw the current page
-		//e.DrawBox(boxTheme, c, box)
-		e.DrawScrollableText(boxTheme, c, box, scrollableText)
+		e.DrawBox(boxTheme, c, &surroundingBox)
+		e.DrawTitle(boxTheme, c, &surroundingBox, title)
+		if len(pages) > 1 {
+			status.SetMessage("Press Space to view the next page or press Esc or q to close")
+			status.Show(c, e)
+		} else {
+			status.SetMessage("Press Esc or q to close")
+			status.Show(c, e)
+		}
+		e.DrawScrollableText(boxTheme, c, scrollableTextBox)
 		c.Draw()
 
 		// Wait for a keypress
 		key := tty.String()
 		switch key {
 		case " ": // Space key to go to next page
-			scrollableText.NextPage()
-		case "q": // 'q' to quit the help overview
+			scrollableTextBox.NextPage()
+		case "c:13", "c:17", "c:27", "q": // return, ctrl-q, esc or q
 			goto endOfLoop
-		case "j":
-			scrollableText.NextPage()
-		case "k":
-			scrollableText.PrevPage()
+		case "↓", "j", "c:14": // down, j or ctrl-n
+			scrollableTextBox.NextPage()
+		case "↑", "k", "c:16": // up, k or ctrl-p
+			scrollableTextBox.PrevPage()
 		}
 	}
 
