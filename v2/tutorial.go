@@ -12,35 +12,55 @@ type TutorialStep struct {
 	title       string
 	description string
 	expectKeys  []string
-	feedback    string
 }
 
 type Tutorial []TutorialStep
 
 var tutorialSteps = Tutorial{
 	TutorialStep{
-		title:       "Save",
-		description: "Press ctrl-s to save the current file.",
-		expectKeys:  []string{"c:19"}, // ctrl-s
-		feedback:    "Great!",
+		title:       "Go to start of text",
+		description: "Press ctrl-a to go to the start of the text on the current line.",
+		expectKeys:  []string{"c:1"}, // ctrl-a
 	},
 	TutorialStep{
 		title:       "Go to start of line",
-		description: "Press ctrl-a to go to the start of the line.",
-		expectKeys:  []string{"c:1"}, // ctrl-a
-		feedback:    "Nice.",
+		description: "Press ctrl-a twice to go to the start of the line.",
+		expectKeys:  []string{"c:1", "c:1"}, // ctrl-a
+	},
+	TutorialStep{
+		title:       "Go to the end of the line above",
+		description: "Press ctrl-a 3 times.",
+		expectKeys:  []string{"c:1", "c:1", "c:1"}, // ctrl-a
+	},
+	TutorialStep{
+		title:       "Go to the end of the line",
+		description: "Press ctrl-e to go to the end of the line",
+		expectKeys:  []string{"c:5"}, // ctrl-e
+	},
+	TutorialStep{
+		title:       "Delete the current letter",
+		description: "Press ctrl-d",
+		expectKeys:  []string{"c:8"}, // ctrl-g
+	},
+	TutorialStep{
+		title:       "Delete to letter to the left",
+		description: "Press ctrl-h or backspace",
+		expectKeys:  []string{"c:9"}, // ctrl-h or backspace
+	},
+	TutorialStep{
+		title:       "Save",
+		description: "Press ctrl-s to save.",
+		expectKeys:  []string{"c:15"}, // ctrl-s
 	},
 	TutorialStep{
 		title:       "Quit",
 		description: "Press ctrl-q to quit.",
 		expectKeys:  []string{"c:17"}, // ctrl-q
-		feedback:    "Allright.",
 	},
 	TutorialStep{
 		title:       "Tutorial complete",
 		description: "All done!",
 		expectKeys:  []string{"c:32"}, // space
-		feedback:    "All done!",
 	},
 }
 
