@@ -129,21 +129,30 @@ var tutorialSteps = Tutorial{
 // LaunchTutorial launches a short and sweet tutorial that covers at least portals and cut/paste
 func LaunchTutorial(c *vt100.Canvas, e *Editor) {
 	const repositionCursorAfterDrawing = false
+	const marginX = 4
+
+	minWidth := 32
+	for _, step := range tutorialSteps {
+		for _, line := range strings.Split(step.description, "\n") {
+			if len(line) > minWidth {
+				minWidth = len(line) + marginX
+			}
+		}
+	}
+
 	for i, step := range tutorialSteps {
 		progress := fmt.Sprintf("%d / %d", i+1, len(tutorialSteps))
-		step.Draw(c, e, progress, repositionCursorAfterDrawing)
+		step.Draw(c, e, progress, minWidth, repositionCursorAfterDrawing)
 		time.Sleep(1 * time.Second)
 	}
 }
 
 // Draw draws a step of the tutorial
-func (step TutorialStep) Draw(c *vt100.Canvas, e *Editor, progress string, repositionCursorAfterDrawing bool) {
+func (step TutorialStep) Draw(c *vt100.Canvas, e *Editor, progress string, minWidth int, repositionCursorAfterDrawing bool) {
 	canvasBox := NewCanvasBox(c)
 
 	// Window is the background box that will be drawn in the upper right
 	centerBox := NewBox()
-
-	minWidth := 32
 
 	centerBox.EvenLowerRightPlacement(canvasBox, minWidth)
 	e.redraw = true
@@ -156,6 +165,9 @@ func (step TutorialStep) Draw(c *vt100.Canvas, e *Editor, progress string, repos
 	bt := e.NewBoxTheme()
 	bt.Foreground = &e.ListTextColor
 	bt.Background = &e.DebugInstructionsBackground
+
+	// TODO: Don't split on newline, split on minWidth.
+	//       Draw inspiration from the WrapAllLines function.
 
 	lines := strings.Split(step.description, "\n")
 

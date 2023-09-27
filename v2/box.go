@@ -259,7 +259,6 @@ func (e *Editor) DrawText(bt *BoxTheme, c *vt100.Canvas, r *Box, lines []string)
 // The text can contain tags like "<red>" and "</red>" or "<off>".
 //
 // TODO: This function is a work in progress and does not currently work!
-//
 func (e *Editor) DrawTaggedText(bt *BoxTheme, c *vt100.Canvas, r *Box, lines []string) {
 	var coloredString string
 	x := uint(r.X)
