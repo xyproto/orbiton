@@ -21,7 +21,12 @@ func TestWordWrap(t *testing.T) {
 		"aliqua.",
 	}
 
-	result := wordWrap(text, maxWidth)
+	result, err := wordWrap(text, maxWidth)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+		return
+	}
+
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Expected %v, but got %v", expected, result)
 	}

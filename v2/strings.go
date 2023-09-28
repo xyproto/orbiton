@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"html"
 	"regexp"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 var tagRegexp = regexp.MustCompile(`<\/?[\w\s]*>|<.+[\W]>`)
@@ -259,36 +261,43 @@ func removeTags(s string) string {
 	return unescaped
 }
 
-// wordWrap tries to wrap the given string at around the given maxWidth and return a string slice.
-func wordWrap(text string, maxWidth int) []string {
+// wordWrap wraps the input text to the specified maxWidth.
+// It returns a slice of strings, each of which is a line
+// of the wrapped text, or an error if maxWidth is not valid.
+func wordWrap(text string, maxWidth int) ([]string, error) {
+	if maxWidth <= 0 {
+		return nil, errors.New("maxWidth must be greater than 0")
+	}
+
 	lines := strings.Split(text, "\n") // Split input text into lines
 	var wrappedLines []string
 
 	for _, line := range lines {
-		words := strings.Fields(line) // Split line into words
-		var buffer string
-		var lineLength int
+		words := strings.Fields(line) // Split line into words, normalizing whitespace
+		var buffer strings.Builder
+		lineLength := 0
 
 		for _, word := range words {
-			wordLength := len(word)
+			wordLength := utf8.RuneCountInString(word)
 			if lineLength+wordLength <= maxWidth {
 				if lineLength > 0 {
-					buffer += " " // Add a space before appending the word, except for the first word
+					buffer.WriteString(" ") // Add a space before appending the word, except for the first word
 					lineLength++
 				}
-				buffer += word
+				buffer.WriteString(word)
 				lineLength += wordLength
 			} else {
-				wrappedLines = append(wrappedLines, buffer)
-				buffer = word
+				wrappedLines = append(wrappedLines, buffer.String())
+				buffer.Reset()
+				buffer.WriteString(word)
 				lineLength = wordLength
 			}
 		}
 
-		if buffer != "" {
-			wrappedLines = append(wrappedLines, buffer)
+		if buffer.Len() > 0 {
+			wrappedLines = append(wrappedLines, buffer.String())
 		}
 	}
 
-	return wrappedLines
+	return wrappedLines, nil
 }
