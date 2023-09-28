@@ -92,10 +92,15 @@ func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing boo
 	bt.Background = &backgroundColor
 	bt.LowerEdge = bt.UpperEdge
 
-	e.DrawBox(bt, c, centerBox)
+	leftoverHeight := (canvasBox.Y + canvasBox.H) - (centerBox.Y + centerBox.H)
+
+	// This is just an attempt at drawing the text, in order to find addedLinesBecauseWordWrap
+	if addedLinesBecauseWordWrap := e.DrawText(bt, c, listBox, quickHelpText); leftoverHeight > addedLinesBecauseWordWrap {
+		centerBox.H += addedLinesBecauseWordWrap
+	}
 
 	e.DrawTitle(bt, c, centerBox, title)
-
+	e.DrawBox(bt, c, centerBox)
 	e.DrawText(bt, c, listBox, quickHelpText)
 
 	// Blit

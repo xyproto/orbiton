@@ -245,25 +245,37 @@ func (e *Editor) DrawFooter(bt *BoxTheme, c *vt100.Canvas, r *Box, text string) 
 // DrawText will draw a text widget. Takes a Box struct for the size and position.
 // Takes a list of strings. Does not scroll. Uses bt.Foreground and bt.Background.
 // The text is wrapped by using the wordWrap function.
-func (e *Editor) DrawText(bt *BoxTheme, c *vt100.Canvas, r *Box, text string) {
-	maxWidth := int(r.W) - 2 // Assuming r.W is the width of the Box
+// The number of lines that are added as a concequence of wrapping lines is returned as an int.
+func (e *Editor) DrawText(bt *BoxTheme, c *vt100.Canvas, r *Box, text string) int {
+	maxWidth := int(r.W) - 2 // Adjusted width to account for margins
 	x := uint(r.X)
 	lineIndex := 0
+	addedLines := 0 // Counter for added lines
+
+	// Split the input text into lines
 	lines := strings.Split(text, "\n")
+
 	for _, line := range lines {
+		// Attempt to wrap the line
 		wrappedLines, err := wordWrap(line, maxWidth)
 		if err != nil {
-			// If error, chop the string to fit the width
-			choppedLine := line
+			// If an error occurs, chop the line to fit the width
 			if len(line) > maxWidth {
-				choppedLine = line[:maxWidth]
+				line = line[:maxWidth]
 			}
-			wrappedLines = []string{choppedLine} // Overwrite wrappedLines with the chopped line
+			wrappedLines = []string{line} // Overwrite wrappedLines with the chopped or original line
+		} else {
+			// Count the additional lines created by wrapping
+			addedLines += len(wrappedLines) - 1
 		}
+
+		// Draw each wrapped or chopped line to the canvas
 		for _, wrappedLine := range wrappedLines {
 			y := uint(r.Y + lineIndex)
 			c.Write(x, y, *bt.Foreground, *bt.Background, wrappedLine)
 			lineIndex++
 		}
 	}
+
+	return addedLines
 }
