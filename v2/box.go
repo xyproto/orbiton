@@ -253,23 +253,3 @@ func (e *Editor) DrawText(bt *BoxTheme, c *vt100.Canvas, r *Box, text string) {
 		c.Write(x, y, *bt.Foreground, *bt.Background, s)
 	}
 }
-
-// DrawTaggedText will draw a text widget. Takes a Box struct for the size and position.
-// Takes a list of strings. Does not scroll or wrap. Uses bt.Foreground and bt.Background.
-// The text can contain tags like "<red>" and "</red>" or "<off>".
-//
-// TODO: This function is a work in progress and does not currently work!
-func (e *Editor) DrawTaggedText(bt *BoxTheme, c *vt100.Canvas, r *Box, lines []string) {
-	var coloredString string
-	x := uint(r.X)
-	y := uint(r.Y)
-	for _, textWithTags := range lines {
-		//coloredString = UnEscape(tout.DarkTags(strings.TrimSpace(textWithTags)))
-		coloredString = tout.DarkTags(strings.TrimSpace(textWithTags))
-		//runeCountWithTags := uint(utf8.RuneCountInString(textWithTags))
-		//runeCountWithoutTags := uint(utf8.RuneCountInString(removeTags(textWithTags)))
-		//spacesToAdd := strings.Repeat(" ", int(runeCountWithTags-runeCountWithoutTags))
-		c.WriteString(x, y, *bt.Foreground, *bt.Background, coloredString)
-		y++
-	}
-}
