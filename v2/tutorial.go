@@ -166,15 +166,10 @@ func (step TutorialStep) Draw(c *vt100.Canvas, e *Editor, progress string, minWi
 	bt.Foreground = &e.ListTextColor
 	bt.Background = &e.DebugInstructionsBackground
 
-	// TODO: Don't split on newline, split on minWidth.
-	//       Draw inspiration from the WrapAllLines function.
-
-	lines := strings.Split(step.description, "\n")
-
 	e.DrawBox(bt, c, centerBox)
 	e.DrawTitle(bt, c, centerBox, step.title)
 	e.DrawFooter(bt, c, centerBox, "("+progress+")")
-	e.DrawText(bt, c, listBox, lines)
+	e.DrawText(bt, c, listBox, step.description)
 
 	// Blit
 	c.Draw()

@@ -244,9 +244,9 @@ func (e *Editor) DrawFooter(bt *BoxTheme, c *vt100.Canvas, r *Box, text string) 
 
 // DrawText will draw a text widget. Takes a Box struct for the size and position.
 // Takes a list of strings. Does not scroll or wrap. Uses bt.Foreground and bt.Background.
-func (e *Editor) DrawText(bt *BoxTheme, c *vt100.Canvas, r *Box, lines []string) {
+func (e *Editor) DrawText(bt *BoxTheme, c *vt100.Canvas, r *Box, text string) {
 	x := uint(r.X)
-	for i, s := range lines {
+	for i, s := range strings.Split(text, "\n") {
 		y := uint(r.Y + i)
 		// TODO: Make it possible to output colored text without ruining the box edges and text alignment.
 		//       Look at highlight.go
