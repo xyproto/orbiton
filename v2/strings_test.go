@@ -1,6 +1,7 @@
 package main
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -10,6 +11,18 @@ func TestCapitalizeWords(t *testing.T) {
 	}
 }
 
-// func TestGetFullName(t *testing.T) {
-// 	fmt.Println(getFullName())
-// }
+func TestWordWrap(t *testing.T) {
+	text := `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.`
+	maxWidth := 40
+	expected := []string{
+		"Lorem ipsum dolor sit amet, consectetur",
+		"adipiscing elit. Sed do eiusmod tempor",
+		"incididunt ut labore et dolore magna",
+		"aliqua.",
+	}
+
+	result := wordWrap(text, maxWidth)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Expected %v, but got %v", expected, result)
+	}
+}

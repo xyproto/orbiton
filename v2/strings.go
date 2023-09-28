@@ -258,3 +258,37 @@ func removeTags(s string) string {
 	unescaped := html.UnescapeString(noTags)
 	return unescaped
 }
+
+// wordWrap tries to wrap the given string at around the given maxWidth and return a string slice.
+func wordWrap(text string, maxWidth int) []string {
+	lines := strings.Split(text, "\n") // Split input text into lines
+	var wrappedLines []string
+
+	for _, line := range lines {
+		words := strings.Fields(line) // Split line into words
+		var buffer string
+		var lineLength int
+
+		for _, word := range words {
+			wordLength := len(word)
+			if lineLength+wordLength <= maxWidth {
+				if lineLength > 0 {
+					buffer += " " // Add a space before appending the word, except for the first word
+					lineLength++
+				}
+				buffer += word
+				lineLength += wordLength
+			} else {
+				wrappedLines = append(wrappedLines, buffer)
+				buffer = word
+				lineLength = wordLength
+			}
+		}
+
+		if buffer != "" {
+			wrappedLines = append(wrappedLines, buffer)
+		}
+	}
+
+	return wrappedLines
+}
