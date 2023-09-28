@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/xyproto/vt100"
 )
@@ -21,22 +20,27 @@ type Tutorial []TutorialStep
 var tutorialSteps = Tutorial{
 	TutorialStep{
 		title:       "Start of text",
-		description: "Press ctrl-a or ctrl-y to go to the start of the text on the current line.",
+		description: "Press ctrl-a to go to the start of the text on the current line.",
 		expectKeys:  []string{"c:1"}, // ctrl-a
 	},
 	TutorialStep{
 		title:       "Start of line",
-		description: "Press ctrl-a or ctrl-y twice to go to the start of the line.",
+		description: "Press ctrl-a twice to go to the start of the line.",
 		expectKeys:  []string{"c:1", "c:1"}, // ctrl-a
 	},
 	TutorialStep{
 		title:       "End of the line above",
-		description: "Press ctrl-a or ctrl-y thrice to go to the end of the line above.",
+		description: "Press ctrl-a three times to go to the end of the line above.",
 		expectKeys:  []string{"c:1", "c:1", "c:1"}, // ctrl-a
 	},
 	TutorialStep{
 		title:       "End of the line",
 		description: "Press ctrl-e to go to the end of the line.",
+		expectKeys:  []string{"c:5"}, // ctrl-e
+	},
+	TutorialStep{
+		title:       "Start of the next line",
+		description: "Press ctrl-e twice to go to the start of the next line.",
 		expectKeys:  []string{"c:5"}, // ctrl-e
 	},
 	TutorialStep{
@@ -51,22 +55,22 @@ var tutorialSteps = Tutorial{
 	},
 	TutorialStep{
 		title:       "Insert template",
-		description: "Open an empty source code file, like main.c, then press ctrl-w to insert a \"hello world\" program.",
+		description: "Open a new main.c file, press ctrl-w to insert a \"hello world\" program. This applies to several programming languages.",
 		expectKeys:  []string{"c:23"}, // ctrl-w
 	},
 	TutorialStep{
 		title:       "Format source code",
-		description: "Edit a source code file, like main.c, then press ctrl-w to format the source code in an opinionated way.",
+		description: "Open main.c and then press ctrl-w to format the source code in an opinionated way. This applies to several programming languages.",
 		expectKeys:  []string{"c:23"}, // ctrl-w
 	},
 	TutorialStep{
 		title:       "Build source code",
-		description: "Open a source code file, then press ctrl-space to try to build it. This only works for some projects.",
+		description: "Open main.c and then press ctrl-space to build it. This works for some projects and programming languages.",
 		expectKeys:  []string{"c:0"}, // ctrl-space
 	},
 	TutorialStep{
 		title:       "Build and run",
-		description: "Open a source code file, then build it, run it and display stdout by pressing ctrl-space twice.",
+		description: "Open a source code file, then build it, run it and display stdout+stderr by pressing ctrl-space twice.",
 		expectKeys:  []string{"c:0", "c:0"}, // ctrl-space
 	},
 	TutorialStep{
@@ -121,13 +125,13 @@ var tutorialSteps = Tutorial{
 	},
 	TutorialStep{
 		title:       "Tutorial complete",
-		description: "",
+		description: "Press q, esc or ctrl-q to end the tutorial.",
 		expectKeys:  []string{"c:32"}, // space
 	},
 }
 
 // LaunchTutorial launches a short and sweet tutorial that covers at least portals and cut/paste
-func LaunchTutorial(c *vt100.Canvas, e *Editor) {
+func LaunchTutorial(tty *vt100.TTY, c *vt100.Canvas, e *Editor, status *StatusBar) {
 	const repositionCursorAfterDrawing = false
 	const marginX = 4
 
@@ -140,10 +144,29 @@ func LaunchTutorial(c *vt100.Canvas, e *Editor) {
 		}
 	}
 
-	for i, step := range tutorialSteps {
+	i := 0
+	for {
+		step := tutorialSteps[i]
 		progress := fmt.Sprintf("%d / %d", i+1, len(tutorialSteps))
 		step.Draw(c, e, progress, minWidth, repositionCursorAfterDrawing)
-		time.Sleep(1 * time.Second)
+
+		// Wait for a keypress
+		key := tty.String()
+		switch key {
+		case " ", "c:13", "↓", "→", "j", "c:14": // space, return, down, right, j or ctrl-n to go to the next step
+			if i < (len(tutorialSteps) - 1) {
+				i++
+			}
+			continue
+		case "↑", "←", "k", "c:16": // up, left, k or ctrl-p
+			if i > 0 {
+				i--
+			}
+			continue
+		case "c:17", "c:27", "q": // ctrl-q, esc or q
+			return
+		}
+		// Other keypress, do nothing
 	}
 }
 
