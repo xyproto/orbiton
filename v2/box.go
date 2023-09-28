@@ -243,13 +243,27 @@ func (e *Editor) DrawFooter(bt *BoxTheme, c *vt100.Canvas, r *Box, text string) 
 }
 
 // DrawText will draw a text widget. Takes a Box struct for the size and position.
-// Takes a list of strings. Does not scroll or wrap. Uses bt.Foreground and bt.Background.
+// Takes a list of strings. Does not scroll. Uses bt.Foreground and bt.Background.
+// The text is wrapped by using the wordWrap function.
 func (e *Editor) DrawText(bt *BoxTheme, c *vt100.Canvas, r *Box, text string) {
+	maxWidth := int(r.W) - 2 // Assuming r.W is the width of the Box
 	x := uint(r.X)
-	for i, s := range strings.Split(text, "\n") {
-		y := uint(r.Y + i)
-		// TODO: Make it possible to output colored text without ruining the box edges and text alignment.
-		//       Look at highlight.go
-		c.Write(x, y, *bt.Foreground, *bt.Background, s)
+	lineIndex := 0
+	lines := strings.Split(text, "\n")
+	for _, line := range lines {
+		wrappedLines, err := wordWrap(line, maxWidth)
+		if err != nil {
+			// If error, chop the string to fit the width
+			choppedLine := line
+			if len(line) > maxWidth {
+				choppedLine = line[:maxWidth]
+			}
+			wrappedLines = []string{choppedLine} // Overwrite wrappedLines with the chopped line
+		}
+		for _, wrappedLine := range wrappedLines {
+			y := uint(r.Y + lineIndex)
+			c.Write(x, y, *bt.Foreground, *bt.Background, wrappedLine)
+			lineIndex++
+		}
 	}
 }
