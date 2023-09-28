@@ -54,7 +54,7 @@ func QuickHelpScreenIsDisabled() bool {
 func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
 	const (
 		maxLines = 8
-		title    = "Welcome to " + versionString
+		title    = "Orbiton Quick Help"
 	)
 
 	var (
@@ -99,8 +99,8 @@ func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing boo
 		centerBox.H += addedLinesBecauseWordWrap
 	}
 
-	e.DrawTitle(bt, c, centerBox, title)
 	e.DrawBox(bt, c, centerBox)
+	e.DrawTitle(bt, c, centerBox, title)
 	e.DrawText(bt, c, listBox, quickHelpText)
 
 	// Blit
