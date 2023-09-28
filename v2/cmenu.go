@@ -344,17 +344,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		}
 	}
 
-	// Add the syntax highlighting toggle menu item
-	if !envNoColor {
-		syntaxToggleText := "Disable syntax highlighting"
-		if !e.syntaxHighlight {
-			syntaxToggleText = "Enable syntax highlighting"
-		}
-		actions.Add(syntaxToggleText, func() {
-			e.ToggleSyntaxHighlight()
-		})
-	}
-
 	// Delete the rest of the file
 	actions.Add("Delete the rest of the file", func() { // copy file to clipboard
 
@@ -387,6 +376,17 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			e.redrawCursor = true
 		}
 	})
+
+	// Add the syntax highlighting toggle menu item
+	if !envNoColor {
+		syntaxToggleText := "Disable syntax highlighting"
+		if !e.syntaxHighlight {
+			syntaxToggleText = "Enable syntax highlighting"
+		}
+		actions.Add(syntaxToggleText, func() {
+			e.ToggleSyntaxHighlight()
+		})
+	}
 
 	// Add the unlock menu item
 	if forced {
