@@ -319,7 +319,14 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) bo
 	} else if goToEnd {
 		e.GoToEnd(c, status)
 	} else if launchTutorial {
-		LaunchTutorial(c, e)
+		// Disable the "jump to" syntax highlighting
+		e.jumpToLetterMode = false
+		e.syntaxHighlight = prevSyntaxHighlighting
+		e.CommentColor = prevCommentColor
+		e.ClearJumpLetters()
+		// Launch the tutorial and then quit
+		LaunchTutorial(tty, c, e, status)
+		return showHotkeyOverview
 	} else if toggleQuickHelpScreen {
 		ok := false
 		if QuickHelpScreenIsDisabled() {
