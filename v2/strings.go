@@ -2,14 +2,10 @@ package main
 
 import (
 	"errors"
-	"html"
-	"regexp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 )
-
-var tagRegexp = regexp.MustCompile(`<\/?[\w\s]*>|<.+[\W]>`)
 
 // hasAnyPrefixWord checks if the given line is prefixed with any one of the given words
 func hasAnyPrefixWord(line string, wordList []string) bool {
@@ -252,13 +248,6 @@ func sanitizeFilename(input string) string {
 		}
 	}
 	return string(result)
-}
-
-// removeTags tries to remove attribute-less tags from the given string.
-func removeTags(s string) string {
-	noTags := tagRegexp.ReplaceAllString(s, "")
-	unescaped := html.UnescapeString(noTags)
-	return unescaped
 }
 
 // wordWrap wraps the input text to the specified maxWidth.
