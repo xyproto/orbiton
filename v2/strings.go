@@ -4,7 +4,6 @@ import (
 	"errors"
 	"strings"
 	"unicode"
-	"unicode/utf8"
 )
 
 // hasAnyPrefixWord checks if the given line is prefixed with any one of the given words
@@ -262,30 +261,16 @@ func wordWrap(text string, maxWidth int) ([]string, error) {
 	var wrappedLines []string
 
 	for _, line := range lines {
-		words := strings.Fields(line) // Split line into words, normalizing whitespace
-		var buffer strings.Builder
-		lineLength := 0
-
-		for _, word := range words {
-			wordLength := utf8.RuneCountInString(word)
-			if lineLength+wordLength <= maxWidth {
-				if lineLength > 0 {
-					buffer.WriteString(" ") // Add a space before appending the word, except for the first word
-					lineLength++
-				}
-				buffer.WriteString(word)
-				lineLength += wordLength
-			} else {
-				wrappedLines = append(wrappedLines, buffer.String())
-				buffer.Reset()
-				buffer.WriteString(word)
-				lineLength = wordLength
+		for len(line) > maxWidth {
+			splitPos := strings.LastIndex(line[:maxWidth], " ")
+			if splitPos == -1 { // no space found to split at
+				splitPos = maxWidth // split at max width
 			}
+			wrappedLines = append(wrappedLines, line[:splitPos])
+			line = line[splitPos:]
+			line = strings.TrimLeft(line, " ") // trim leading spaces of the new line
 		}
-
-		if buffer.Len() > 0 {
-			wrappedLines = append(wrappedLines, buffer.String())
-		}
+		wrappedLines = append(wrappedLines, line)
 	}
 
 	return wrappedLines, nil
