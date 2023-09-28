@@ -170,9 +170,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	// Draw everything once, with slightly different behavior if used over ssh
 	e.InitialRedraw(c, status)
 
-	// Splash screen + help for new users
-	if !SplashScreenIsDisabled() {
-		e.DrawSplash(c, false)
+	// QuickHelp screen + help for new users
+	if !QuickHelpScreenIsDisabled() {
+		e.DrawQuickHelp(c, false)
 	}
 
 	// This is the main loop for the editor

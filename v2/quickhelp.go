@@ -8,16 +8,16 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-var splashToggleFilename = filepath.Join(userCacheDir, "o", "splash.txt")
+var quickHelpToggleFilename = filepath.Join(userCacheDir, "o", "quickhelp.txt")
 
-// DisableSplashScreen saves a file to the cache directory so that the splash screen will be disabled the next time the editor starts
-func DisableSplashScreen(status *StatusBar) bool {
+// DisableQuickHelpScreen saves a file to the cache directory so that the quick help will be disabled the next time the editor starts
+func DisableQuickHelpScreen(status *StatusBar) bool {
 	// Remove the file, but ignore errors if it was already gone
-	_ = os.Remove(splashToggleFilename)
+	_ = os.Remove(quickHelpToggleFilename)
 
 	// Write a new file
 	contents := []byte{'0', '\n'} // 1 for enabled, 0 for disabled
-	err := os.WriteFile(splashToggleFilename, contents, 0o644)
+	err := os.WriteFile(quickHelpToggleFilename, contents, 0o644)
 	if err != nil {
 		return false
 	}
@@ -27,31 +27,31 @@ func DisableSplashScreen(status *StatusBar) bool {
 	return true
 }
 
-// EnableSplashScreen removes the splash screen config file
-func EnableSplashScreen(status *StatusBar) bool {
+// EnableQuickHelpScreen removes the quick help config file
+func EnableQuickHelpScreen(status *StatusBar) bool {
 	// Ignore any errors. If the file is already removed, that is fine too.
-	_ = os.Remove(splashToggleFilename)
-	if SplashScreenIsDisabled() {
+	_ = os.Remove(quickHelpToggleFilename)
+	if QuickHelpScreenIsDisabled() {
 		return false
 	}
 	status.SetMessageAfterRedraw("Quick overview at start has been enabled.")
 	return true
 }
 
-// SplashScreenIsDisabled checks if the splash screen config file exists
-func SplashScreenIsDisabled() bool {
-	// Check if the splash config file exists and contains just "0"
-	d, err := os.ReadFile(splashToggleFilename)
+// QuickHelpScreenIsDisabled checks if the quick help config file exists
+func QuickHelpScreenIsDisabled() bool {
+	// Check if the quick help config file exists and contains just "0"
+	d, err := os.ReadFile(quickHelpToggleFilename)
 	if err != nil || len(d) == 0 {
-		// No data means that the splash screen is enabled
+		// No data means that the quick help is enabled
 		return false
 	}
-	// If there is data, it must be 0, otherwise the splash screen is enabled
+	// If there is data, it must be 0, otherwise the quick help is enabled
 	return strings.TrimSpace(string(d)) == "0"
 }
 
-// DrawSplash draws the splash screen + some help for new users
-func (e *Editor) DrawSplash(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
+// DrawQuickHelp draws the quick help + some help for new users
+func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
 	const (
 		maxLines = 8
 		title    = "Welcome to " + versionString

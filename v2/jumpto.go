@@ -248,7 +248,7 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) bo
 	goToCenter := false
 	goToLetter := rune(0)
 	launchTutorial := false
-	toggleSplashScreen := false
+	toggleQuickHelpScreen := false
 	showHotkeyOverview := false
 	for !doneCollectingDigits {
 		numkey := tty.String()
@@ -277,7 +277,7 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) bo
 			launchTutorial = true
 		case "!": // disable splash screen
 			doneCollectingDigits = true
-			toggleSplashScreen = true
+			toggleQuickHelpScreen = true
 		case "/": // display hotkey overview
 			doneCollectingDigits = true
 			showHotkeyOverview = true
@@ -320,12 +320,12 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) bo
 		e.GoToEnd(c, status)
 	} else if launchTutorial {
 		LaunchTutorial(c, e)
-	} else if toggleSplashScreen {
+	} else if toggleQuickHelpScreen {
 		ok := false
-		if SplashScreenIsDisabled() {
-			ok = EnableSplashScreen(status)
+		if QuickHelpScreenIsDisabled() {
+			ok = EnableQuickHelpScreen(status)
 		} else {
-			ok = DisableSplashScreen(status)
+			ok = DisableQuickHelpScreen(status)
 		}
 		e.redraw = ok
 		e.redrawCursor = ok
