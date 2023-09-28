@@ -31,7 +31,7 @@ var tutorialSteps = Tutorial{
 	},
 	TutorialStep{
 		title:       "End of the line above",
-		description: "Press ctrl-a 3 times or ctrl-y 3 times to got to the end of the line above.",
+		description: "Press ctrl-a or ctrl-y thrice to go to the end of the line above.",
 		expectKeys:  []string{"c:1", "c:1", "c:1"}, // ctrl-a
 	},
 	TutorialStep{
