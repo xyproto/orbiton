@@ -131,7 +131,7 @@ var tutorialSteps = Tutorial{
 }
 
 // LaunchTutorial launches a short and sweet tutorial that covers at least portals and cut/paste
-func LaunchTutorial(tty *vt100.TTY, c *vt100.Canvas, e *Editor) {
+func LaunchTutorial(tty *vt100.TTY, c *vt100.Canvas, e *Editor, status *StatusBar) {
 	const repositionCursorAfterDrawing = false
 	const marginX = 4
 
@@ -144,8 +144,18 @@ func LaunchTutorial(tty *vt100.TTY, c *vt100.Canvas, e *Editor) {
 		}
 	}
 
+	displayedStatusOnce := false
+
 	i := 0
 	for {
+		if i == 0 && !displayedStatusOnce {
+			status.SetMessage("Press Esc to end the tutorial, at any time.")
+			status.Show(c, e)
+			displayedStatusOnce = true
+		} else {
+			status.Clear(c)
+		}
+
 		step := tutorialSteps[i]
 		progress := fmt.Sprintf("%d / %d", i+1, len(tutorialSteps))
 		step.Draw(c, e, progress, minWidth, repositionCursorAfterDrawing)
