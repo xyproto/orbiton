@@ -943,6 +943,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			// Regular behavior, take an undo snapshot and insert a space
 			undo.Snapshot(e)
+
+			// De-indent this line by 1 if the line above starts with "case " and this line is only "case" at this time
+			if cLikeSwitch(e.mode) && e.TrimmedLine() == "case" && strings.HasPrefix(e.PreviousTrimmedLine(), "case ") {
+				oneIndentation := e.indentation.String()
+				deIndented := strings.Replace(e.CurrentLine(), oneIndentation, "", 1)
+				e.SetCurrentLine(deIndented)
+				e.End(c)
+			}
+
 			// Place a space
 			wrapped := e.InsertRune(c, ' ')
 			if !wrapped {
@@ -1028,7 +1037,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// Generate code or text, using AI
 				e.GenerateCodeOrText(c, status, bookmark)
 				break
-			} else if e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.Shader || e.mode == mode.Zig || e.mode == mode.Java || e.mode == mode.JavaScript || e.mode == mode.Kotlin || e.mode == mode.TypeScript || e.mode == mode.D || e.mode == mode.Dart || e.mode == mode.Hare || e.mode == mode.Jakt || e.mode == mode.Scala {
+			} else if cLikeFor(e.mode) {
 				// Add missing parenthesis for "if ... {", "} else if", "} elif", "for", "while" and "when" for C-like languages
 				for _, kw := range []string{"for", "foreach", "foreach_reverse", "if", "switch", "when", "while", "while let", "} else if", "} elif"} {
 					if strings.HasPrefix(trimmedLine, kw+" ") && !strings.HasPrefix(trimmedLine, kw+" (") {
