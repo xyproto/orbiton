@@ -149,7 +149,7 @@ func LaunchTutorial(tty *vt100.TTY, c *vt100.Canvas, e *Editor, status *StatusBa
 	i := 0
 	for {
 		if i == 0 && !displayedStatusOnce {
-			status.SetMessage("Press Esc to end the tutorial, at any time.")
+			status.SetMessage("q to end")
 			status.Show(c, e)
 			displayedStatusOnce = true
 		} else {
