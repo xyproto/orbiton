@@ -131,7 +131,7 @@ var tutorialSteps = Tutorial{
 }
 
 // LaunchTutorial launches a short and sweet tutorial that covers at least portals and cut/paste
-func LaunchTutorial(tty *vt100.TTY, c *vt100.Canvas, e *Editor, status *StatusBar) {
+func LaunchTutorial(tty *vt100.TTY, c *vt100.Canvas, e *Editor) {
 	const repositionCursorAfterDrawing = false
 	const marginX = 4
 

@@ -217,9 +217,17 @@ func (e *Editor) GoToLineIndexAndColIndex(yIndex LineIndex, xIndex ColIndex, c *
 	return redraw
 }
 
+const (
+	NoAction = iota
+	ShowHotkeyOverviewAction
+	LaunchTutorialAction
+)
+
 // JumpMode initiates the mode where the user can enter where to jump to
-// (line number, percentage, fraction or highlighted letter)
-func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) bool {
+// (line number, percentage, fraction or highlighted letter).
+// Returns ShowHotkeyOverviewAction if a hotkey overview should be shown after this function.
+// Returns LaunchTutorialAction if the tutorial should be launched after this function.
+func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) int {
 	e.jumpToLetterMode = true
 	prevCommentColor := e.CommentColor
 	prevSyntaxHighlighting := e.syntaxHighlight
@@ -247,9 +255,11 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) bo
 	goToTop := false
 	goToCenter := false
 	goToLetter := rune(0)
-	launchTutorial := false
 	toggleQuickHelpScreen := false
-	showHotkeyOverview := false
+
+	// Which action should be taken after this function returns?
+	postAction := NoAction
+
 	for !doneCollectingDigits {
 		numkey := tty.String()
 		switch numkey {
@@ -274,13 +284,13 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) bo
 			goToCenter = true
 		case "?": // display tutorial
 			doneCollectingDigits = true
-			launchTutorial = true
+			postAction = LaunchTutorialAction
 		case "!": // disable splash screen
 			doneCollectingDigits = true
 			toggleQuickHelpScreen = true
 		case "/": // display hotkey overview
 			doneCollectingDigits = true
-			showHotkeyOverview = true
+			postAction = ShowHotkeyOverviewAction
 		case "↑", "↓", "←", "→": // one of the arrow keys
 			fallthrough // cancel
 		case "c:12", "c:17", "c:27": // ctrl-l, ctrl-q or esc
@@ -318,15 +328,6 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) bo
 		e.GoToMiddle(c, status)
 	} else if goToEnd {
 		e.GoToEnd(c, status)
-	} else if launchTutorial {
-		// Disable the "jump to" syntax highlighting
-		e.jumpToLetterMode = false
-		e.syntaxHighlight = prevSyntaxHighlighting
-		e.CommentColor = prevCommentColor
-		e.ClearJumpLetters()
-		// Launch the tutorial and then quit
-		LaunchTutorial(tty, c, e, status)
-		return showHotkeyOverview
 	} else if toggleQuickHelpScreen {
 		ok := false
 		if QuickHelpScreenIsDisabled() {
@@ -336,7 +337,7 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) bo
 		}
 		e.redraw = ok
 		e.redrawCursor = ok
-	} else if lns == "" && !cancel && !showHotkeyOverview {
+	} else if lns == "" && !cancel && postAction == NoAction {
 		if e.DataY() > 0 {
 			// If not already at the top, go there
 			e.GoToTop(c, status)
@@ -355,7 +356,7 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) bo
 			lineIndex := int(math.Round(float64(e.Len()) * percentageFloat))
 			e.redraw = e.GoToLineNumber(LineNumber(lineIndex), c, status, true)
 		}
-	} else if !showHotkeyOverview {
+	} else if postAction == NoAction {
 		// Go to the specified line
 		if ln, err := strconv.Atoi(lns); err == nil { // no error
 			e.redraw = e.GoToLineNumber(LineNumber(ln), c, status, true)
@@ -365,5 +366,6 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) bo
 	e.syntaxHighlight = prevSyntaxHighlighting
 	e.CommentColor = prevCommentColor
 	e.ClearJumpLetters()
-	return showHotkeyOverview
+
+	return postAction
 }
