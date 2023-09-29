@@ -602,7 +602,6 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 	// Special considerations for Kotlin Native
 	if usingKotlinNative := strings.HasSuffix(cmd.Path, "kotlinc-native"); usingKotlinNative && files.IsFile(exeFirstName+".kexe") {
-		// panic("rename " + exeFirstName + ".kexe" + " -> " + exeFirstName)
 		os.Rename(exeFirstName+".kexe", exeFirstName)
 	}
 

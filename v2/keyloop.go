@@ -1958,7 +1958,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 		default: // any other key
 			keyRunes := []rune(key)
-			// panic(fmt.Sprintf("PRESSED KEY: %v", []rune(key)))
 			if len(keyRunes) > 0 && unicode.IsLetter(keyRunes[0]) { // letter
 
 				undo.Snapshot(e)
