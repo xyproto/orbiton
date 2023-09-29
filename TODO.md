@@ -2,7 +2,6 @@
 
 ## General
 
-- [ ] When joining lines, only go to the start of the line at the second time ctrl-j is pressed.
 - [ ] Use enet to communicate between the core editor and the GUI application.
 - [ ] Save a "custom words" and "ignored words" list to disk.
 - [ ] If in man page mode, set the file as read-only and also let `q` quit.

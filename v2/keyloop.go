@@ -1951,7 +1951,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			// The normal join behavior
 			e.JoinLineWithNext(c, bookmark)
-			e.GoToStartOfTextLine(c)
+
+			// Go to the start of the line when pressing ctrl-j, but only if it is pressed repeatedly
+			if kh.Prev() == "c:10" {
+				e.GoToStartOfTextLine(c)
+			}
 		default: // any other key
 			keyRunes := []rune(key)
 			// panic(fmt.Sprintf("PRESSED KEY: %v", []rune(key)))
