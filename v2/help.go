@@ -233,10 +233,10 @@ func (e *Editor) DrawHotkeyOverview(tty *vt100.TTY, c *vt100.Canvas, status *Sta
 		e.DrawBox(boxTheme, c, &surroundingBox)
 		e.DrawTitle(boxTheme, c, &surroundingBox, title)
 		if len(pages) > 1 {
-			status.SetMessage("Press Space to view the next page or press Esc or q to close")
+			status.SetMessage("Press Space to view the next page. Press q or Esc to close.")
 			status.Show(c, e)
 		} else {
-			status.SetMessage("Press Esc or q to close")
+			status.SetMessage("Press Esc or q to close.")
 			status.Show(c, e)
 		}
 		e.DrawScrollableText(boxTheme, c, scrollableTextBox)
