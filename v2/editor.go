@@ -2142,9 +2142,10 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 			(*e).lines = (*e2).lines
 			(*e).pos = (*e2).pos
 		} else if displayedImage {
+			// internal error
 			panic("displayed an image while switching from one Editor struct to another")
 		} else {
-			// logf("While switching from %s to %s, got error: %s\n", absFilename, filenameToOpen, err)
+			// internal error when switching from absFilename to filenameToOpen
 			panic(err)
 		}
 		fnord.SetTitle()
