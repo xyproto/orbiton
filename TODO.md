@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] Make sure that ctrl-b always works for jumping back, for both types of "jump to symbol".
+- [ ] When writing cases for a switch case in Go, de-indent when space is pressed after the word "case" if the line above starts with "case".
 - [ ] When joining lines, only go to the start of the line at the second time ctrl-j is pressed.
 - [ ] Use enet to communicate between the core editor and the GUI application.
 - [ ] Display a tutorial the first time `o` is being run without a filename, then ask if this should be disabled and inform about `~/.cache/o/tutorial.disabled`.
