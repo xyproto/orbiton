@@ -58,7 +58,7 @@ func (e *Editor) Run() (string, bool, error) {
 		ext := filepath.Ext(sourceFilename)
 		firstName := strings.TrimSuffix(filepath.Base(sourceFilename), ext)
 		pdfFilename := firstName + ".pdf"
-		if runtime.GOOS == "darwin" {
+		if isDarwin() {
 			cmd = exec.Command("open", pdfFilename)
 		} else {
 			cmd = exec.Command("xdg-open", pdfFilename)
