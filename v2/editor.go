@@ -1272,6 +1272,15 @@ func (e *Editor) CurrentLine() string {
 	return e.Line(e.DataY())
 }
 
+// PreviousLine will get the previous data line, as a string
+func (e *Editor) PreviousLine() string {
+	y := e.DataY() - 1
+	if y < 0 {
+		return ""
+	}
+	return e.Line(y)
+}
+
 // Home will move the cursor the the start of the line (x = 0)
 // And also scroll all the way to the left.
 func (e *Editor) Home() {
@@ -2160,6 +2169,11 @@ func (e *Editor) Reload(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 // TrimmedLine returns the current line, trimmed in both ends
 func (e *Editor) TrimmedLine() string {
 	return strings.TrimSpace(e.CurrentLine())
+}
+
+// PreviousTrimmedLine returns the line above, trimmed in both ends
+func (e *Editor) PreviousTrimmedLine() string {
+	return strings.TrimSpace(e.PreviousLine())
 }
 
 // TrimmedLineAt returns the current line, trimmed in both ends
