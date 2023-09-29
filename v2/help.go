@@ -16,7 +16,7 @@ const (
 var (
 	quickHelpText = `Save                   ctrl-s
 Quit                   ctrl-q
-Display the main menu  ctrl-o
+Main menu              ctrl-o
 Overview of hotkeys    ctrl-l and then /
 Launch tutorial        ctrl-l and then ?
 Disable this overview  ctrl-l and then !`
