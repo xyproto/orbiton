@@ -319,8 +319,8 @@ var tutorialSteps = Tutorial{
 		expectKeys:  []string{}, // tbd
 	},
 	TutorialStep{
-		title:       "English spell check",
-		description: "Press ctrl-f, type t. Then press ctrl-n for next instance, ctrl-a to add the word temporarily or ctrl-i to ignore the word temporarily.",
+		title:       "English spell check (experimental feature)",
+		description: "Press ctrl-f, type t and press return. Then press ctrl-n for next instance, ctrl-a to add the word temporarily or ctrl-i to ignore the word temporarily.",
 		expectKeys:  []string{}, // tbd
 	},
 	TutorialStep{
