@@ -60,7 +60,7 @@ func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing boo
 	var (
 		minWidth        = 55
 		foregroundColor = e.StatusForeground
-		backgroundColor = e.DebugRunningBackground // e.Background
+		backgroundColor = e.Background
 	)
 
 	// Get the last maxLine lines, and create a string slice
