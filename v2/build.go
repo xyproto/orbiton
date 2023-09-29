@@ -394,7 +394,11 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd.Dir = sourceDir
 		return cmd, exeExists, nil
 	case mode.HTML:
-		cmd = exec.Command("xdg-open", sourceFilename)
+		if isDarwin() {
+			cmd = exec.Command("open", pdfFilename)
+		} else {
+			cmd = exec.Command("xdg-open", pdfFilename)
+		}
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.Koka:
