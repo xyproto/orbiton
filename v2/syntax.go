@@ -138,6 +138,16 @@ func setKeywords(addAndDelKeywords ...[]string) {
 	addAndRemoveKeywords(addAndDelKeywords...)
 }
 
+// cLikeSwitch checks if the given mode is a language with C-like for expressions
+func cLikeFor(m mode.Mode) bool {
+	return m == mode.Arduino || m == mode.C || m == mode.Cpp || m == mode.Shader || m == mode.Zig || m == mode.Java || m == mode.JavaScript || m == mode.Kotlin || m == mode.TypeScript || m == mode.D || m == mode.Dart || m == mode.Hare || m == mode.Jakt || m == mode.Scala
+}
+
+// cLikeSwitch checks if the given mode is a language with C-like switch/case expressions
+func cLikeSwitch(m mode.Mode) bool {
+	return m == mode.Arduino || m == mode.C || m == mode.Cpp || m == mode.Shader || m == mode.Go || m == mode.Java || m == mode.JavaScript || m == mode.Kotlin || m == mode.TypeScript || m == mode.D || m == mode.Dart || m == mode.Hare || m == mode.Jakt || m == mode.Scala
+}
+
 // adjustSyntaxHighlightingKeywords contains per-language adjustments to highlighting of keywords
 func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	switch m {
