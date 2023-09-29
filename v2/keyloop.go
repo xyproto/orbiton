@@ -1555,6 +1555,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 
+			oldFilename := e.filename
+			oldLineIndex := e.LineIndex()
+
 			// func prefix must exist for this language/mode for GoToDefinition to be supported
 			jumpedToDefinition := e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status)
 
@@ -1567,6 +1570,21 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.redraw = true
 				}
 			}
+
+			if !jumpedToDefinition && e.searchTerm != "" && strings.Contains(e.String(), e.searchTerm) {
+				// Push a function for how to go back
+				backFunctions = append(backFunctions, func() {
+					oldFilename := oldFilename
+					oldLineIndex := oldLineIndex
+					if e.filename != oldFilename {
+						// The switch is not strictly needed, since we will probably be in the same file
+						e.Switch(c, tty, status, fileLock, oldFilename)
+					}
+					e.redraw, _ = e.GoTo(oldLineIndex, c, status)
+					e.ClearSearch()
+				})
+			}
+
 		case "c:21": // ctrl-u to undo
 
 			if e.nanoMode { // nano: paste after cutting
