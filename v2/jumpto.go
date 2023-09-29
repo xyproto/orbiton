@@ -218,9 +218,9 @@ func (e *Editor) GoToLineIndexAndColIndex(yIndex LineIndex, xIndex ColIndex, c *
 }
 
 const (
-	NoAction = iota
-	ShowHotkeyOverviewAction
-	LaunchTutorialAction
+	noAction = iota
+	showHotkeyOverviewAction
+	launchTutorialAction
 )
 
 // JumpMode initiates the mode where the user can enter where to jump to
@@ -258,7 +258,7 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 	toggleQuickHelpScreen := false
 
 	// Which action should be taken after this function returns?
-	postAction := NoAction
+	postAction := noAction
 
 	for !doneCollectingDigits {
 		numkey := tty.String()
@@ -284,13 +284,13 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 			goToCenter = true
 		case "?": // display tutorial
 			doneCollectingDigits = true
-			postAction = LaunchTutorialAction
+			postAction = launchTutorialAction
 		case "!": // disable splash screen
 			doneCollectingDigits = true
 			toggleQuickHelpScreen = true
 		case "/": // display hotkey overview
 			doneCollectingDigits = true
-			postAction = ShowHotkeyOverviewAction
+			postAction = showHotkeyOverviewAction
 		case "↑", "↓", "←", "→": // one of the arrow keys
 			fallthrough // cancel
 		case "c:12", "c:17", "c:27": // ctrl-l, ctrl-q or esc
@@ -337,7 +337,7 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 		}
 		e.redraw = ok
 		e.redrawCursor = ok
-	} else if lns == "" && !cancel && postAction == NoAction {
+	} else if lns == "" && !cancel && postAction == noAction {
 		if e.DataY() > 0 {
 			// If not already at the top, go there
 			e.GoToTop(c, status)
@@ -356,7 +356,7 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 			lineIndex := int(math.Round(float64(e.Len()) * percentageFloat))
 			e.redraw = e.GoToLineNumber(LineNumber(lineIndex), c, status, true)
 		}
-	} else if postAction == NoAction {
+	} else if postAction == noAction {
 		// Go to the specified line
 		if ln, err := strconv.Atoi(lns); err == nil { // no error
 			e.redraw = e.GoToLineNumber(LineNumber(ln), c, status, true)

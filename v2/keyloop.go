@@ -875,13 +875,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:12": // ctrl-l, go to line number or percentage
 			if !e.nanoMode {
 				switch e.JumpMode(c, status, tty) {
-				case ShowHotkeyOverviewAction:
+				case showHotkeyOverviewAction:
 					const repositionCursorAfterDrawing = true
 					e.DrawHotkeyOverview(tty, c, status, repositionCursorAfterDrawing)
-				case LaunchTutorialAction:
+				case launchTutorialAction:
 					const drawLines = true
 					e.FullResetRedraw(c, status, drawLines)
-					LaunchTutorial(tty, c, e)
+					LaunchTutorial(tty, c, e, status)
 				}
 				e.redraw = true
 				e.redrawCursor = true
