@@ -55,22 +55,22 @@ var tutorialSteps = Tutorial{
 	},
 	TutorialStep{
 		title:       "Insert template",
-		description: "Open a new main.c file, press ctrl-w to insert a \"hello world\" program. This applies to several programming languages.",
+		description: "Open an empty source code file and press ctrl-w to insert a \"hello world\" program. This applies to several programming languages.",
 		expectKeys:  []string{"c:23"}, // ctrl-w
 	},
 	TutorialStep{
 		title:       "Format source code",
-		description: "Open main.c and then press ctrl-w to format the source code in an opinionated way. This applies to several programming languages.",
+		description: "Open a source code file and press ctrl-w to format it. This applies to several programming languages.",
 		expectKeys:  []string{"c:23"}, // ctrl-w
 	},
 	TutorialStep{
 		title:       "Build source code",
-		description: "Open main.c and then press ctrl-space to build it. This works for some projects and programming languages.",
+		description: "Open a source code file and press ctrl-space to build it. This works for some projects and programming languages.",
 		expectKeys:  []string{"c:0"}, // ctrl-space
 	},
 	TutorialStep{
 		title:       "Build and run",
-		description: "Open a source code file, then build it, run it and display stdout+stderr by pressing ctrl-space twice.",
+		description: "Open a source code file and press ctrl-space twice to build it, run it and also display stdout + stderr.",
 		expectKeys:  []string{"c:0", "c:0"}, // ctrl-space
 	},
 	TutorialStep{
