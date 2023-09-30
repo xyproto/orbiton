@@ -12,23 +12,35 @@ import (
 var shellColorCodePattern = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
 
 func handleManPageEscape(input string) string {
-	// Remove 0x08 characters and their following rune
-	var cleanedRunes []rune
-	for i := 0; i < len(input); {
-		r := rune(input[i])
-
-		if r == 0x08 { // Encountered ^H
-			i += 2 // Skip current 0x08 character and the following rune
+	var (
+		prevRune, currRune, nextRune rune
+		cleanedRunes                 []rune
+		inputRunes                   = []rune(input)
+		lenInputRunes                = len(inputRunes)
+		lastIndex                    = lenInputRunes - 1
+	)
+	for i := 0; i < lenInputRunes; { // NOTE: no i++
+		prevRune, currRune = currRune, inputRunes[i]
+		if i < lastIndex {
+			nextRune = inputRunes[i+1]
 		} else {
-			cleanedRunes = append(cleanedRunes, r)
+			nextRune = rune(0)
+		}
+		switch {
+		case currRune == '_' && nextRune == 0x08:
+			i++ // Skip the _ character if the next rune is 0x08
+		case prevRune == '_' && currRune == 0x08:
+			i++ // Skip the 0x08 character if the previous rune was '_'
+		case currRune == 0x08: // Encountered ^H
+			i += 2 // Skip current 0x08 character and the following rune
+		default:
+			cleanedRunes = append(cleanedRunes, currRune)
 			i++
 		}
 	}
-
 	// Remove color codes
 	cleanedString := string(cleanedRunes)
 	cleanedString = shellColorCodePattern.ReplaceAllString(cleanedString, "")
-
 	return cleanedString
 }
 
