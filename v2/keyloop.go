@@ -1852,6 +1852,23 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 
+			// Scroll up if a man page is being viewed, or if the editor is read-only
+			if e.readOnly {
+				// Scroll up at double scroll speed
+				e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed*2)
+				// If e.redraw is false, the end of file is reached
+				if !e.redraw {
+					status.Clear(c)
+					status.SetMessage(endOfFileMessage)
+					status.Show(c, e)
+				}
+				e.redrawCursor = true
+				if e.AfterLineScreenContents() {
+					e.End(c)
+				}
+				break
+			}
+
 			status.Clear(c)
 
 			// Check if we have jumped to a definition and need to go back
