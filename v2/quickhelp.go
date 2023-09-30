@@ -54,13 +54,15 @@ func QuickHelpScreenIsDisabled() bool {
 func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
 	const (
 		maxLines = 8
-		title    = "Orbiton Quick Help"
+		title    = "Quick Overview"
 	)
 
 	var (
-		minWidth        = 55
-		foregroundColor = e.StatusForeground
+		minWidth = 55
+
+		foregroundColor = e.Foreground
 		backgroundColor = e.Background
+		edgeColor       = e.StatusForeground
 	)
 
 	// Get the last maxLine lines, and create a string slice
@@ -90,6 +92,7 @@ func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing boo
 	bt := e.NewBoxTheme()
 	bt.Foreground = &foregroundColor
 	bt.Background = &backgroundColor
+	bt.UpperEdge = &edgeColor
 	bt.LowerEdge = bt.UpperEdge
 
 	leftoverHeight := (canvasBox.Y + canvasBox.H) - (centerBox.Y + centerBox.H)
@@ -101,6 +104,7 @@ func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing boo
 
 	e.DrawBox(bt, c, centerBox)
 	e.DrawTitle(bt, c, centerBox, title)
+	e.DrawFooter(bt, c, centerBox, versionString)
 	e.DrawText(bt, c, listBox, quickHelpText)
 
 	// Blit
