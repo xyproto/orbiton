@@ -2,7 +2,12 @@
 
 ## General
 
-- [ ] Use enet to communicate between the core editor and the GUI application.
+- [ ] Make it possible to build PKGBUILD packages in a new terminal emulator window when ctrl-space is pressed.
+      If a terminal emulator parent process is not discoverable, build it in a new pane instead.
+      OR better: always build it in a pane on the right side, but allow further editing at the same time!
+      Use tinyionice or another method to run it with a lower I/O priority.
+- [ ] Use enet or another UDP protocol to communicate between the core editor and the GUI application.
+      Or REST, just to make it even more accessible for developers?
 - [ ] Save a "custom words" and "ignored words" list to disk.
 - [ ] If in man page mode, set the file as read-only and also let `q` quit.
 - [ ] Let `ctrl-w` also format gzipped code, for instance when editing `main.cpp.gz`.
