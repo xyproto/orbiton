@@ -351,7 +351,7 @@ func NewSynthwaveTheme() Theme {
 		DebugInstructionsForeground: vt100.LightGray,
 		DebugInstructionsBackground: vt100.BackgroundRed,
 		BoxUpperEdge:                vt100.White,
-		JumpToLetterColor:           vt100.LightMagenta,
+		JumpToLetterColor:           vt100.LightCyan,
 		NanoHelpForeground:          vt100.Black,
 		NanoHelpBackground:          vt100.BackgroundGray,
 	}
