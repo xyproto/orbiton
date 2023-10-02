@@ -274,11 +274,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 
-			if e.mode == mode.Markdown {
-				e.ToggleCheckboxCurrentLine()
-				break
-			}
-
 			status.ClearAll(c)
 			e.formatCode(c, tty, status, &jsonFormatToggle)
 
@@ -325,6 +320,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break // do nothing
 			}
 
+			if e.mode == mode.Markdown {
+				e.ToggleCheckboxCurrentLine()
+				break
+			}
+
 			// Then build, and run if ctrl-space was double-tapped
 			var alsoRun = kh.DoubleTapped("c:0")
 			e.Build(c, status, tty, alsoRun)
@@ -359,7 +359,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		AGAIN_NO_CORRESPONDING:
 
 			// First check if we are editing Markdown and are in a Markdown table
-			if e.mode == mode.Markdown && (e.EmptyLine() || e.InTable()) {
+			if e.mode == mode.Markdown && (e.EmptyLine() || e.InTable()) { // table editor
 				if e.EmptyLine() {
 					e.InsertStringAndMove(c, "| | |\n|-|-|\n| | |\n")
 					e.Up(c, status)
@@ -376,6 +376,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.FullResetRedraw(c, status, drawLines)
 				e.redraw = true
 				e.redrawCursor = true
+			} else if e.mode == mode.Markdown { // toggle checkbox
+				e.ToggleCheckboxCurrentLine()
+				break
 			} else if !noCorresponding && (e.mode == mode.C || e.mode == mode.Cpp) && hasS([]string{".cpp", ".cc", ".c", ".cxx", ".c++"}, filepath.Ext(e.filename)) { // jump from source to header file
 				// If this is a C++ source file, try finding and opening the corresponding header file
 				// Check if there is a corresponding header file
