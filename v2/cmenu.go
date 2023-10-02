@@ -219,8 +219,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 
 	if bookmark != nil {
 		actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy text from the bookmark to the cursor", "copymark")
-	} else {
-		actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy the next 200 lines", "copy200")
 	}
 
 	// Special menu option for PKGBUILD and APKBUILD files
@@ -448,6 +446,9 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			status.ShowNoTimeout(c, e)
 		})
 	}
+
+	// This is a bit odd, but useful when copying the file in 200 line chunks.
+	// actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy the next 200 lines", "copy200")
 
 	if !envNoColor || changedTheme {
 		// Add an option for selecting a theme
