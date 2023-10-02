@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] Modify the syntax highlighting package to not highlight `//` in PKGBUILD files.
+- [ ] Re-implement visudo as a Go package and use that instead of exec visudo (if the executable is osudo).
 - [ ] Make it possible to build PKGBUILD packages in a new terminal emulator window when ctrl-space is pressed.
       If a terminal emulator parent process is not discoverable, build it in a new pane instead.
       OR better: always build it in a pane on the right side, but allow further editing at the same time!

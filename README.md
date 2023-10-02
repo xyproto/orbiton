@@ -163,7 +163,7 @@ These features are unique to `o`, as far as I am aware:
 * If the editor executable is renamed to a word starting with `s` (or have a symlink with that name), the default theme will be the "synthwave" theme.
 * Want to quickly convert Markdown to HTML? Try `o filename.md`, press `ctrl-space` twice and quit with `ctrl-q`.
 * The default syntax highlighting theme aims to be as pretty as possible with less than 16 colors, but it mainly aims for clarity. It should be easy to spot a keyword, number, string or a stray parenthesis.
-* Press `ctrl-w` to toggle the check mark in `- [ ] TODO item` boxes in Markdown.
+* Press `ctrl-space` or `ctrl-t` to toggle the check mark in `- [ ] TODO item` boxes in Markdown.
 * Orbiton is written mostly in Orbiton, with some use of NeoVim for the initial development.
 * Can load, edit and save gzipped text files or man pages that ends with a `.gz` extension.
 * Can organize imports, for Java and for Kotlin, when formatting code with `ctrl-w`.
@@ -200,13 +200,14 @@ There are pretty few hotkeys to remember:
              otherwise insert a symbol by typing in a 2-letter [digraph](https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt).
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - For C and C++: jump between the current header and source file. For Agda and Ivy, insert a symbol.
-             For Markdown: launch the Markdown table editor if the cursor is on a table.
+             For Markdown: toggle checkboxes, or launch the table editor if the cursor is over a table.
              For the rest: record and play back keypresses. Press `Esc` to clear the current macro.
 * `ctrl-o` - Open a command menu with actions that can be performed.
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text (to the next blank line).
 * `ctrl-c` - Copy one line. Press twice to copy a block of text.
 * `ctrl-v` - Paste one trimmed line. Press twice to paste multiple untrimmed lines.
-* `ctrl-space` - Build program, render to PDF or export to man page (see table below). Double press to export Markdown to HTML.
+* `ctrl-space` - Build program, render to PDF or export to man page (see table below).
+                 For Markdown: toggle checkboxes, or double press to export to HTML.
 * `ctrl-j` - Join lines (or jump to the bookmark, if set).
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
 * `ctrl-l` - Jump to a specific line number or percentage. Press `return` to jump to the top. If at the top, press `return` to jump to the bottom.
@@ -214,10 +215,9 @@ There are pretty few hotkeys to remember:
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive. Press `tab` instead of `return` to search and replace.
 * `ctrl-b` - Jump back after jumping to a definition with `ctrl-g`.
              Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
-* `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords.
-             For Markdown, toggle checkboxes or re-format tables.
+* `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords. For Markdown, format the table under the cursor.
 * `ctrl-g` - Toggle the status bar.
-             Can also jump to definitions, for some programming languages (experimental feature).
+             Can also jump to definition, for some programming languages (experimental feature).
 * `ctrl-\` - Comment in or out a block of code.
 * `ctrl-~` - Jump to a matching parenthesis or bracket.
 * `esc` - Redraw everything and clear the last search.

@@ -254,6 +254,21 @@ var tutorialSteps = Tutorial{
 		expectKeys:  []string{"c:27"}, // esc
 	},
 	TutorialStep{
+		title:       "Toggle checkbox",
+		description: "When editing Markdown, move the cursor to a line with a checkbox (\"- [ ] TODO\") and press ctrl-t or ctrl-space to toggle it.",
+		expectKeys:  []string{"c:20"}, // ctrl-t
+	},
+	TutorialStep{
+		title:       "Edit table",
+		description: "When editing Markdown, move the cursor to a line with a table and press ctrl-t to enter the table editor. This feature currently only supports small tables.",
+		expectKeys:  []string{"c:20"}, // ctrl-t
+	},
+	TutorialStep{
+		title:       "Format table",
+		description: "When editing Markdown, move the cursor to a line with a table and press ctrl-w to format it.",
+		expectKeys:  []string{"c:23"}, // ctrl-w
+	},
+	TutorialStep{
 		title:       "Undo",
 		description: "Press ctrl-u to undo the last operation. There is no redo, yet.",
 		expectKeys:  []string{"c:21"}, // ctrl-u
@@ -333,6 +348,7 @@ var tutorialSteps = Tutorial{
 		description: "Press ctrl-_ to insert a digraph. For instance \"ae\" to insert \"æ\". These are the same as for ViM or NeoViM. Do not be on a (, [, {, }, ] or ) character.",
 		expectKeys:  []string{"c:31"}, // ctrl-_
 	},
+
 	TutorialStep{
 		title:       "Tutorial complete",
 		description: "Press q, esc or ctrl-q to end this tutorial.",

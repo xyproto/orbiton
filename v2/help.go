@@ -28,7 +28,7 @@ ctrl-q      to quit
 ctrl-o      to open the command menu
 ctrl-r      to open a portal so that text can be pasted into another file with ctrl-v
 ctrl-space  to compile programs or export adoc/sdoc as a man page
-            double press to render Markdown as HTML
+            toggle checkboxes in Markdown, or double press to render the file as HTML
 ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for C++, format the current file with "clang-format"
             for HTML, format the file with "tidy", for Python: "autopep8"
@@ -48,7 +48,7 @@ ctrl-k      to delete characters to the end of the line, then delete the line
 ctrl-j      to join lines
 ctrl-d      to delete a single character
 ctrl-t      for C and C++, toggle between the header and implementation,
-            for Markdown, launch the Markdown table editor if the cursor is on a table
+            for Markdown, toggle checkboxes or launch the table editor
             for Agda, insert a symbol,
             for the rest, record and then play back a macro
 ctrl-c      to copy the current line, press twice to copy the current block
