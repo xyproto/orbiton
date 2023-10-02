@@ -114,6 +114,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		nothing = iota
 		build
 		copyall
+		copymark
 		gobacktofunc
 		help
 		insertdate
@@ -163,12 +164,41 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			status.SetMessageAfterRedraw("Success, built " + outputExecutable)
 		},
 		copyall: func() { // copy all contents to the clipboard
-			if err := clip.WriteAll(e.String(), e.primaryClipboard); err != nil {
+			text := e.String()
+			if err := clip.WriteAll(text, e.primaryClipboard); err != nil {
 				status.Clear(c)
 				status.SetError(err)
 				status.Show(c, e)
 			} else {
-				numLines := strings.Count(e.String(), "\n") + 1
+				numLines := strings.Count(text, "\n") + 1
+				status.SetMessageAfterRedraw(fmt.Sprintf("Copied %d lines", numLines))
+			}
+		},
+		copymark: func() { // copy the text between the bookmark and the current line (inclusive)
+			startIndex := e.LineIndex()
+			stopIndex := startIndex
+			// If no bookmark has been set, just copy the line that the cursor is currently at
+			if bookmark != nil {
+				stopIndex = bookmark.LineIndex()
+			}
+			if startIndex > stopIndex {
+				startIndex, stopIndex = stopIndex, startIndex
+			}
+			// from startIndex to stopIndex copy the lines (inclusive)
+			var sb strings.Builder
+			for lineIndex := startIndex; lineIndex <= stopIndex; lineIndex++ {
+				if lineIndex > startIndex {
+					sb.WriteRune('\n')
+				}
+				sb.WriteString(e.Line(lineIndex))
+			}
+			text := sb.String()
+			if err := clip.WriteAll(text, e.primaryClipboard); err != nil {
+				status.Clear(c)
+				status.SetError(err)
+				status.Show(c, e)
+			} else {
+				numLines := strings.Count(text, "\n") + 1
 				status.SetMessageAfterRedraw(fmt.Sprintf("Copied %d lines", numLines))
 			}
 		},
@@ -287,6 +317,8 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		functionID = build
 	case "copyall", "copya":
 		functionID = copyall
+	case "copymark", "copym":
+		functionID = copymark
 	case "gobacktofunc":
 		functionID = gobacktofunc
 	case "h", "he", "hh", "hel", "help":
