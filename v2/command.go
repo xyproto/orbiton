@@ -115,6 +115,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		build
 		copyall
 		copymark
+		copy200
 		gobacktofunc
 		help
 		insertdate
@@ -201,6 +202,35 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 				numLines := strings.Count(text, "\n") + 1
 				status.SetMessageAfterRedraw(fmt.Sprintf("Copied %d lines", numLines))
 			}
+			// move the cursor to stopIndex
+			e.redraw = e.GoToLineNumber(LineNumber(stopIndex), c, status, true)
+		},
+		copy200: func() { // copy 200 lines of text and move the cursor 200 lines ahead
+			startIndex := e.LineIndex()
+			stopIndex := startIndex + 200
+			lastIndex := LineIndex(e.Len()) - 1
+			if stopIndex >= lastIndex {
+				stopIndex = lastIndex
+			}
+			// copy lines from from startIndex (inclusive) to stopIndex (exclusive)
+			var sb strings.Builder
+			for lineIndex := startIndex; lineIndex < stopIndex; lineIndex++ {
+				if lineIndex > startIndex {
+					sb.WriteRune('\n')
+				}
+				sb.WriteString(e.Line(lineIndex))
+			}
+			text := sb.String()
+			if err := clip.WriteAll(text, e.primaryClipboard); err != nil {
+				status.Clear(c)
+				status.SetError(err)
+				status.Show(c, e)
+			} else {
+				numLines := strings.Count(text, "\n") + 1
+				status.SetMessageAfterRedraw(fmt.Sprintf("Copied %d lines", numLines))
+			}
+			// move the cursor to stopIndex
+			e.redraw = e.GoToLineNumber(LineNumber(stopIndex+1), c, status, true)
 		},
 		gobacktofunc: func() {
 			// A special case, search backwards to the start of the function (or to "main")
@@ -319,6 +349,8 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		functionID = copyall
 	case "copymark", "copym":
 		functionID = copymark
+	case "copy200":
+		functionID = copy200
 	case "gobacktofunc":
 		functionID = gobacktofunc
 	case "h", "he", "hh", "hel", "help":
