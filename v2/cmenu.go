@@ -216,7 +216,12 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	}
 
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy all text to the clipboard", "copyall")
-	actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy text from the bookmark to the cursor", "copymark")
+
+	if bookmark != nil {
+		actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy text from the bookmark to the cursor", "copymark")
+	} else {
+		actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy the next 200 lines", "copy200")
+	}
 
 	// Special menu option for PKGBUILD and APKBUILD files
 	if strings.HasSuffix(e.filename, "PKGBUILD") || strings.HasSuffix(e.filename, "APKBUILD") {
