@@ -14,6 +14,7 @@ const (
 )
 
 var (
+	// NOTE: The DrawQuickHelp function requires the wording of "Disable this overview" to stay the same
 	quickHelpText = `Save                   ctrl-s
 Quit                   ctrl-q
 Main menu              ctrl-o

@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/xyproto/files"
 	"github.com/xyproto/vt100"
 )
 
@@ -40,14 +41,7 @@ func EnableQuickHelpScreen(status *StatusBar) bool {
 
 // QuickHelpScreenIsDisabled checks if the quick help config file exists
 func QuickHelpScreenIsDisabled() bool {
-	// Check if the quick help config file exists and contains just "0"
-	d, err := os.ReadFile(quickHelpToggleFilename)
-	if err != nil || len(d) == 0 {
-		// No data means that the quick help is enabled
-		return false
-	}
-	// If there is data, it must be 0, otherwise the quick help is enabled
-	return strings.TrimSpace(string(d)) == "0"
+	return files.Exists(quickHelpToggleFilename)
 }
 
 // DrawQuickHelp draws the quick help + some help for new users
@@ -64,6 +58,12 @@ func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing boo
 		backgroundColor = e.Background
 		edgeColor       = e.StatusForeground
 	)
+
+	if QuickHelpScreenIsDisabled() {
+		quickHelpText = strings.ReplaceAll(quickHelpText, "Disable this overview", "Enable this overview ")
+	} else {
+		quickHelpText = strings.ReplaceAll(quickHelpText, "Enable this overview ", "Disable this overview")
+	}
 
 	// Get the last maxLine lines, and create a string slice
 	lines := strings.Split(quickHelpText, "\n")
