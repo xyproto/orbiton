@@ -1107,7 +1107,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 	// If the file is empty, there is nothing to build
 	if e.Empty() {
 		status.ClearAll(c)
-		status.SetErrorMessage("Nothing to build")
+		status.SetErrorMessage("Nothing to build, the file is empty")
 		status.Show(c, e)
 		return
 	}
