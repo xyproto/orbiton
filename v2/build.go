@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
@@ -148,6 +149,40 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			return true, "main"
 		}
 		return false, ""
+	}
+
+	if filepath.Base(sourceFilename) == "PKGBUILD" {
+		has := func(s string) bool {
+			return files.Which(s) != ""
+		}
+		var s string
+		if env.XOrWaylandSession() {
+			if has("alacritty") {
+				s += "alacritty -e "
+			} else if has("konsole") {
+				s += "konsole -e "
+			} else if has("xterm") {
+				s += "xterm -e "
+			}
+		}
+		if has("tinyionice") {
+			s += "tinyionice "
+		} else if has("ionice") {
+			s += "ionice"
+		}
+		foundCommand := false
+		if has("pkgctl") {
+			s += "pkgctl build --repo extra"
+			foundCommand = true
+		} else if has("makepkg") {
+			s += "makepkg"
+			foundCommand = true
+		}
+		if foundCommand {
+			cmd = exec.Command(s)
+			cmd.Dir = sourceDir
+			return cmd, everythingIsFine, nil
+		}
 	}
 
 	switch e.mode {
