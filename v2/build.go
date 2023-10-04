@@ -230,11 +230,14 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			return files.IsFile(filepath.Join(sourceDir, jarFilename)), jarFilename
 		}, nil
 	case mode.Go:
-		cmd := exec.Command("go", "build")
+		if files.IsFile(filepath.Join(sourceDir, "go.mod")) {
+			cmd = exec.Command("go", "build")
+		} else {
+			cmd = exec.Command("go", "build", sourceFilename)
+		}
 		if strings.HasSuffix(sourceFilename, "_test.go") {
 			// go test run a test that does not exist in order to build just the tests
-			// thanks @cespare at github
-			// https://github.com/golang/go/issues/15513#issuecomment-216410016
+			// thanks @cespare at github https://github.com/golang/go/issues/15513#issuecomment-216410016
 			cmd = exec.Command("go", "test", "-run", "xxxxxxx")
 		}
 		cmd.Dir = sourceDir
