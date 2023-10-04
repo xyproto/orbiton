@@ -92,7 +92,7 @@ github.com/xyproto/digraph
 # github.com/xyproto/env v1.9.1
 ## explicit; go 1.15
 github.com/xyproto/env
-# github.com/xyproto/env/v2 v2.2.3
+# github.com/xyproto/env/v2 v2.2.4
 ## explicit; go 1.19
 github.com/xyproto/env/v2
 # github.com/xyproto/files v1.4.1
