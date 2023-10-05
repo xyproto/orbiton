@@ -3,13 +3,9 @@
 ## General
 
 - [ ] Modify the syntax highlighting package to not highlight `//` in `v2/test/url.sh`.
-- [ ] Re-implement visudo as a Go package and use that instead of exec visudo (if the executable is `osudo`).
-- [ ] Make it possible to build PKGBUILD packages in a new terminal emulator window when ctrl-space is pressed.
-      If a terminal emulator parent process is not discoverable, build it in a new pane instead.
-      OR better: always build it in a pane on the right side, but allow further editing at the same time!
-      Use tinyionice or another method to run it with a lower I/O priority.
-- [ ] Use enet or another UDP protocol to communicate between the core editor and the GUI application.
-      Or REST, just to make it even more accessible for developers?
+- [ ] For man pages: if between "[-" and "]", do not color uppercase letters differently.
+- [ ] For man pages: if the line contains "-*[a-z]" and then later "-*[a-z]" and a majority of words with "-", then color text red instead of blue (and consider the theme).
+- [ ] Use enet or another UDP protocol to communicate between the core editor and the GUI application. Or REST, just to make it even more accessible for developers?
 - [ ] Save a "custom words" and "ignored words" list to disk.
 - [ ] If in man page mode, set the file as read-only and also let `q` quit.
 - [ ] Let `ctrl-w` also format gzipped code, for instance when editing `main.cpp.gz`.
@@ -55,11 +51,13 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
 ## Maybe
 
+- [ ] Adjust the fuzzyness of the spell checker?
 - [ ] Highlight changed lines if a file changed while monitoring it with `-m`.
 - [ ] Move redrawing and clearing the statusbar to a separate goroutine.
 - [ ] When searching for a number that does not exist in the document, jump there.
 - [ ] `ctrl-g`, `up` could go to the previous function signature.
 - [ ] `ctrl-g`, `down` could go to the next function signature.
+- [ ] Re-implement visudo as a Go package and use that instead of exec visudo (if the executable is `osudo`).
 
 ## Markdown
 
