@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
 	"strings"
@@ -385,6 +386,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// In the middle of a multi-line comment
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
 					case q.hasSingleLineComment || q.stoppedMultiLineComment:
+						// Fix for interpreting URLs in shell scripts as single line comments
+						if singleLineCommentMarker != "//" {
+							commentColorName := e.Comment
+							textWithTags = bytes.ReplaceAll(textWithTags, []byte(":<off><"+commentColorName+">//"), []byte("://"))
+							textWithTags = bytes.ReplaceAll(textWithTags, []byte(" "+singleLineCommentMarker), []byte(" <"+commentColorName+">"+singleLineCommentMarker))
+						}
 						// A single line comment (the syntax module did the highlighting)
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case !q.startedMultiLineString && q.backtick > 0:
