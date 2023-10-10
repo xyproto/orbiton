@@ -879,6 +879,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:12": // ctrl-l, go to line number or percentage
 			if !e.nanoMode {
+				e.ClearSearch() // clear the current search first
 				switch e.JumpMode(c, status, tty) {
 				case showHotkeyOverviewAction:
 					const repositionCursorAfterDrawing = true
