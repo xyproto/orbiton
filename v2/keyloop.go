@@ -320,15 +320,17 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break // do nothing
 			}
 
-			if e.mode == mode.Markdown {
+			switch e.mode {
+			case mode.ManPage, mode.Config:
+				break // do nothing
+			case mode.Markdown:
 				e.ToggleCheckboxCurrentLine()
-				break
+			default:
+				// Then build, and run if ctrl-space was double-tapped
+				var alsoRun = kh.DoubleTapped("c:0")
+				e.Build(c, status, tty, alsoRun)
+				e.redrawCursor = true
 			}
-
-			// Then build, and run if ctrl-space was double-tapped
-			var alsoRun = kh.DoubleTapped("c:0")
-			e.Build(c, status, tty, alsoRun)
-			e.redrawCursor = true
 
 		case "c:20": // ctrl-t
 

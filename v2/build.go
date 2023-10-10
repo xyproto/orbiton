@@ -1187,12 +1187,6 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 		e.redrawCursor = true
 		return
 	}
-	if e.mode == mode.ManPage {
-		e.mode = mode.Nroff
-		e.redraw = true
-		e.redrawCursor = true
-		return
-	}
 
 	// Require a double ctrl-space when exporting Markdown to HTML, because it is so easy to press by accident
 	if e.mode == mode.Markdown && !alsoRun {
