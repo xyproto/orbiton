@@ -91,7 +91,7 @@ var (
 	erlangWords = []string{"after", "and", "andalso", "band", "begin", "bnot", "bor", "bsl", "bsr", "bxor", "case", "catch", "cond", "div", "end", "fun", "if", "let", "not", "of", "or", "orelse", "receive", "rem", "try", "when", "xor"}
 
 	// Docker
-	dockerWords = []string{"attach", "build", "commit", "container", "cp", "create", "diff", "events", "exec", "export", "history", "image", "images", "import", "info", "inspect", "kill", "load", "login", "logout", "logs", "network", "pause", "port", "ps", "pull", "push", "rename", "repository", "restart", "rm", "rmi", "run", "save", "search", "start", "stats", "stop", "tag", "top", "unpause", "update", "version", "volume", "wait"}
+	dockerWords = []string{"attach", "build", "commit", "container", "entrypoint", "copy", "cp", "create", "diff", "env", "events", "exec", "export", "history", "image", "images", "import", "info", "inspect", "kill", "load", "login", "logout", "logs", "network", "pause", "port", "ps", "pull", "push", "rename", "repository", "restart", "rm", "rmi", "run", "save", "search", "start", "stats", "stop", "tag", "top", "unpause", "update", "version", "volume", "wait"}
 
 	// Ollama
 	ollamaWords = []string{"from", "parameter", "template", "system", "adapter", "license"}
@@ -171,7 +171,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.Dart:
 		setKeywords(dartWords)
 	case mode.Docker:
-		removeKeywords([]string{"auto", "default", "from", "install", "int", "local", "no", "not", "type", "var"})
+		removeKeywords([]string{"auto", "default", "from", "install", "int", "local", "no", "not", "pull", "type", "var"})
 		addKeywords(dockerWords)
 		addKeywordsAsUppercase(dockerWords)
 	case mode.Erlang:
