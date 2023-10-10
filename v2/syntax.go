@@ -294,7 +294,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "'"
 	case mode.Bat:
 		return "@rem" // or rem or just ":" ...
-	case mode.Algol68, mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.GDScript, mode.Make, mode.Nim, mode.Mojo, mode.PolicyLanguage, mode.Python, mode.Shell:
+	case mode.Algol68, mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.Docker, mode.GDScript, mode.Just, mode.Make, mode.Nim, mode.Mojo, mode.PolicyLanguage, mode.Python, mode.Shell:
 		return "#"
 	case mode.Clojure, mode.Lisp:
 		return ";;"
