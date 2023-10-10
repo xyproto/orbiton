@@ -5,7 +5,7 @@ import (
 )
 
 // FuncPrefix tries to return the function keyword for the current editor mode, if possible.
-// This is not an exhaustive list. It is used when searching for "f" or jumping to definition.
+// This is not an exhaustive list. It can be used in connection with jumping to definitions.
 // If no function prefix is found for this editor mode, an empty string is returned.
 // The returned string may be prefixed or suffixed with a blank, on purpose.
 func (e *Editor) FuncPrefix() string {
