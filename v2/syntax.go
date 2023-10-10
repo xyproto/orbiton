@@ -174,6 +174,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		removeKeywords([]string{"auto", "default", "from", "install", "int", "local", "no", "not", "pull", "type", "var"})
 		addKeywords(dockerWords)
 		addKeywordsAsUppercase(dockerWords)
+		removeKeywords([]string{"copy", "entrypoint", "env", "from", "run"}) // remove the lowercase variety of these
 	case mode.Erlang:
 		setKeywords(erlangWords)
 	case mode.Fortran77:
