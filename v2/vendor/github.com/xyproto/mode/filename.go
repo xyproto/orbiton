@@ -94,6 +94,8 @@ func Detect(filename string) Mode {
 			mode = Clojure
 		case ".cs": // C#
 			mode = CS
+		case ".csproj": // C# projects
+			mode = XML
 		case ".cl", ".el", ".elisp", ".emacs", ".l", ".lisp", ".lsp":
 			mode = Lisp
 		case ".cr":
@@ -179,6 +181,8 @@ func Detect(filename string) Mode {
 			mode = Mojo
 		case ".r":
 			mode = R
+		case ".razor":
+			mode = XML
 		case ".rs":
 			mode = Rust
 		case ".rst":

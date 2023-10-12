@@ -125,7 +125,7 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 	// If it's not a config file and the mode is blank, set it to XML if the first character is "<" and the last is ">"
 	// set the mode to modeConfig and enable syntax highlighting.
 	if !notConfig && m == Blank {
-		data := allBytesFunc()
+		data := bytes.TrimSpace(allBytesFunc())
 		if bytes.HasPrefix(data, []byte{'<'}) && bytes.HasSuffix(data, []byte{'>'}) {
 			return XML, true
 		}
