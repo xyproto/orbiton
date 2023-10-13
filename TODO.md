@@ -2,8 +2,6 @@
 
 ## General
 
-- [ ] Add a flag for creating directories if they are missing when opening new files.
-- [ ] When editing a `main.go` file (for example), and there is no `go.mod` file, pass the filename to `go fmt` so that `ctrl-w` works as expected.
 - [ ] For man pages: if between "[-" and "]", do not color uppercase letters differently.
 - [ ] For man pages: if the line contains "-*[a-z]" and then later "-*[a-z]" and a majority of words with "-", then color text red instead of blue (and consider the theme).
 - [ ] Use enet or another UDP protocol to communicate between the core editor and the GUI application. Or REST, just to make it even more accessible for developers?
