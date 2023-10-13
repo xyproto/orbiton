@@ -271,8 +271,7 @@ func NewLitmusTheme() Theme {
 	}
 }
 
-// NewSynthwaveTheme creates a new Theme struct,
-// like the default theme, but dapmened.
+// NewSynthwaveTheme creates a new Theme struct
 func NewSynthwaveTheme() Theme {
 	return Theme{
 		Name:                        "Synthwave",
@@ -352,6 +351,91 @@ func NewSynthwaveTheme() Theme {
 		DebugInstructionsBackground: vt100.BackgroundRed,
 		BoxUpperEdge:                vt100.White,
 		JumpToLetterColor:           vt100.LightCyan,
+		NanoHelpForeground:          vt100.Black,
+		NanoHelpBackground:          vt100.BackgroundGray,
+	}
+}
+
+// NewDullTheme creates a new Theme struct
+func NewDullTheme() Theme {
+	return Theme{
+		Name:                        "Dull",
+		Light:                       false,
+		Foreground:                  vt100.Default,
+		Background:                  vt100.BackgroundDefault,
+		StatusForeground:            vt100.LightBlue,
+		StatusBackground:            vt100.BackgroundBlack,
+		StatusErrorForeground:       vt100.LightRed,
+		StatusErrorBackground:       vt100.BackgroundGray,
+		SearchHighlight:             vt100.LightYellow,
+		MultiLineComment:            vt100.Gray,
+		MultiLineString:             vt100.Blue,
+		Git:                         vt100.Blue,
+		String:                      "white",
+		Keyword:                     "lightblue",
+		Comment:                     "gray",
+		Type:                        "lightblue",
+		Literal:                     "white",
+		Punctuation:                 "white",
+		Plaintext:                   "lightgray",
+		Tag:                         "gray",
+		TextTag:                     "gray",
+		TextAttrName:                "gray",
+		TextAttrValue:               "gray",
+		Decimal:                     "white",
+		AndOr:                       "lightblue",
+		Dollar:                      "white",
+		Star:                        "white",
+		Static:                      "lightblue",
+		Self:                        "lightyellow",
+		Class:                       "lightblue",
+		Private:                     "darkred",
+		Protected:                   "darkyellow",
+		Public:                      "darkgreen",
+		Whitespace:                  "",
+		AssemblyEnd:                 "white",
+		Mut:                         "blue",
+		RainbowParenColors:          []vt100.AttributeColor{vt100.LightRed, vt100.White, vt100.LightGray, vt100.LightBlue, vt100.Blue},
+		MarkdownTextColor:           vt100.Default,
+		HeaderBulletColor:           vt100.LightBlue,
+		HeaderTextColor:             vt100.White,
+		ListBulletColor:             vt100.White,
+		ListTextColor:               vt100.Default,
+		ListCodeColor:               vt100.Default,
+		CodeColor:                   vt100.Default,
+		CodeBlockColor:              vt100.Default,
+		ImageColor:                  vt100.White,
+		LinkColor:                   vt100.LightBlue,
+		QuoteColor:                  vt100.White,
+		QuoteTextColor:              vt100.Blue,
+		HTMLColor:                   vt100.Default,
+		CommentColor:                vt100.DarkGray,
+		BoldColor:                   vt100.White,
+		ItalicsColor:                vt100.White,
+		StrikeColor:                 vt100.DarkGray,
+		TableColor:                  vt100.Blue,
+		CheckboxColor:               vt100.Default,
+		XColor:                      vt100.White,
+		TableBackground:             vt100.BackgroundDefault,
+		UnmatchedParenColor:         vt100.White,
+		MenuTitleColor:              vt100.White,
+		MenuArrowColor:              vt100.White,
+		MenuTextColor:               vt100.Gray,
+		MenuHighlightColor:          vt100.LightBlue,
+		MenuSelectedColor:           vt100.White,
+		ManSectionColor:             vt100.LightBlue,
+		ManSynopsisColor:            vt100.White,
+		BoxTextColor:                vt100.Black,
+		BoxBackground:               vt100.BackgroundBlue,
+		BoxHighlight:                vt100.White,
+		DebugRunningBackground:      vt100.BackgroundBlue,
+		DebugStoppedBackground:      vt100.BackgroundGray,
+		DebugRegistersBackground:    vt100.BackgroundGreen,
+		DebugOutputBackground:       vt100.BackgroundCyan,
+		DebugInstructionsForeground: vt100.LightCyan,
+		DebugInstructionsBackground: vt100.BackgroundBlue,
+		BoxUpperEdge:                vt100.White,
+		JumpToLetterColor:           vt100.LightBlue,
 		NanoHelpForeground:          vt100.Black,
 		NanoHelpBackground:          vt100.BackgroundGray,
 	}
@@ -1057,6 +1141,14 @@ func (e *Editor) setSynthwaveTheme(bs ...bool) {
 		initialLightBackground = &(bs[0])
 	}
 	e.SetTheme(NewSynthwaveTheme())
+}
+
+// setDullTheme sets the Dull theme
+func (e *Editor) setDullTheme(bs ...bool) {
+	if len(bs) == 1 {
+		initialLightBackground = &(bs[0])
+	}
+	e.SetTheme(NewDullTheme())
 }
 
 // setVSTheme sets the VS theme

@@ -460,6 +460,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				"VS             (O_THEME=vs)",
 				"Blue Edit      (O_THEME=blueedit)",
 				"Litmus         (O_THEME=litmus)",
+				"Dull           (O_THEME=dull)",
 				"Gray Mono      (O_THEME=graymono)",
 				"Amber Mono     (O_THEME=ambermono)",
 				"Green Mono     (O_THEME=greenmono)",
@@ -505,23 +506,27 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				envNoColor = false
 				e.setLitmusTheme()
 				e.syntaxHighlight = true
-			case 6: // Gray Mono
+			case 6: // Corporate
+				envNoColor = false
+				e.setDullTheme()
+				e.syntaxHighlight = true
+			case 7: // Gray Mono
 				envNoColor = false
 				e.setGrayTheme()
 				e.syntaxHighlight = false
-			case 7: // Amber Mono
+			case 8: // Amber Mono
 				envNoColor = false
 				e.setAmberTheme()
 				e.syntaxHighlight = false
-			case 8: // Green Mono
+			case 9: // Green Mono
 				envNoColor = false
 				e.setGreenTheme()
 				e.syntaxHighlight = false
-			case 9: // Blue Mono
+			case 10: // Blue Mono
 				envNoColor = false
 				e.setBlueTheme()
 				e.syntaxHighlight = false
-			case 10: // No color
+			case 11: // No color
 				envNoColor = true
 				e.setNoColorTheme()
 				e.syntaxHighlight = false
