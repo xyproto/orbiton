@@ -244,6 +244,13 @@ OUT:
 	for cmd, extensions := range GetFormatMap() {
 		for _, ext := range extensions {
 			if strings.HasSuffix(e.filename, ext) {
+				// Format a specific file instead of the current directory if "go.mod" is missing
+				if sourceFilename, err := filepath.Abs(e.filename); e.mode == mode.Go && err == nil {
+					sourceDir := filepath.Dir(sourceFilename)
+					if !files.IsFile(filepath.Join(sourceDir, "go.mod")) {
+						cmd.Args = append(cmd.Args, sourceFilename)
+					}
+				}
 				if err := e.formatWithUtility(c, tty, status, *cmd, ext); err != nil {
 					status.ClearAll(c)
 					status.SetMessage(err.Error())
