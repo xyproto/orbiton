@@ -356,10 +356,10 @@ func NewSynthwaveTheme() Theme {
 	}
 }
 
-// NewDullTheme creates a new Theme struct
-func NewDullTheme() Theme {
+// NewGrayBlueTheme creates a new Theme struct
+func NewGrayBlueTheme() Theme {
 	return Theme{
-		Name:                        "Dull",
+		Name:                        "GrayBlue",
 		Light:                       false,
 		Foreground:                  vt100.Default,
 		Background:                  vt100.BackgroundDefault,
@@ -1143,12 +1143,12 @@ func (e *Editor) setSynthwaveTheme(bs ...bool) {
 	e.SetTheme(NewSynthwaveTheme())
 }
 
-// setDullTheme sets the Dull theme
-func (e *Editor) setDullTheme(bs ...bool) {
+// setGrayBlueTheme sets the GrayBlue theme
+func (e *Editor) setGrayBlueTheme(bs ...bool) {
 	if len(bs) == 1 {
 		initialLightBackground = &(bs[0])
 	}
-	e.SetTheme(NewDullTheme())
+	e.SetTheme(NewGrayBlueTheme())
 }
 
 // setVSTheme sets the VS theme

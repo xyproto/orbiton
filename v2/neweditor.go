@@ -314,8 +314,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			e.setRedBlackTheme(assumeLightBackground)
 		case "synthwave":
 			e.setSynthwaveTheme(assumeLightBackground)
-		case "dull":
-			e.setDullTheme(assumeLightBackground)
+		case "grayblue":
+			e.setGrayBlueTheme(assumeLightBackground)
 		case "blueedit":
 			e.setBlueEditTheme(assumeLightBackground)
 		case "vs":

@@ -456,11 +456,11 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			menuChoices := []string{
 				"Default",
 				"Synthwave      (O_THEME=synthwave)",
-				"Red & black    (O_THEME=redblack)",
+				"Red & Black    (O_THEME=redblack)",
 				"VS             (O_THEME=vs)",
 				"Blue Edit      (O_THEME=blueedit)",
 				"Litmus         (O_THEME=litmus)",
-				"Dull           (O_THEME=dull)",
+				"Gray & Blue    (O_THEME=grayblue)",
 				"Gray Mono      (O_THEME=graymono)",
 				"Amber Mono     (O_THEME=ambermono)",
 				"Green Mono     (O_THEME=greenmono)",
@@ -490,7 +490,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				envNoColor = false
 				e.setSynthwaveTheme()
 				e.syntaxHighlight = true
-			case 2: // Red & black
+			case 2: // Red & Black
 				envNoColor = false
 				e.setRedBlackTheme()
 				e.syntaxHighlight = true
@@ -506,9 +506,9 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				envNoColor = false
 				e.setLitmusTheme()
 				e.syntaxHighlight = true
-			case 6: // Corporate
+			case 6: // Gray & Blue
 				envNoColor = false
-				e.setDullTheme()
+				e.setGrayBlueTheme()
 				e.syntaxHighlight = true
 			case 7: // Gray Mono
 				envNoColor = false
