@@ -23,53 +23,54 @@ import (
 
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
-	detectedTabs       *bool           // were tab or space indentations detected when loading the data?
-	breakpoint         *Position       // for the breakpoint/jump functionality in debug mode
-	gdb                *gdb.Gdb        // connection to gdb, if debugMode is enabled
-	sameFilePortal     *Portal         // a portal that points to the same file
-	lines              map[int][]rune  // the contents of the current document
-	macro              *Macro          // the contents of the current macro (will be cleared when esc is pressed)
-	filename           string          // the current filename
-	searchTerm         string          // the current search term, used when searching
-	stickySearchTerm   string          // used when going to the next match with ctrl-n, unless esc has been pressed
-	Theme                              // editor theme, embedded struct
-	pos                Position        // the current cursor and scroll position
-	indentation        mode.TabsSpaces // spaces or tabs, and how many spaces per tab character
-	wrapWidth          int             // set to ie. 80 or 100 to trigger word wrap when typing to that column
-	mode               mode.Mode       // a filetype mode, like for git, markdown or various programming languages
-	debugShowRegisters int             // show no register box, show changed registers, show all changed registers
-	previousY          int             // previous cursor position
-	previousX          int             // previous cursor position
-	lineBeforeSearch   LineIndex       // save the current line number before jumping between search results
-	playBackMacroCount int             // number of times the macro should be played back, right now
-	rainbowParenthesis bool            // rainbow parenthesis
-	redraw             bool            // if the contents should be redrawn in the next loop
-	sshMode            bool            // is o used over ssh, tmux or screen, in a way that usually requires extra redrawing?
-	debugMode          bool            // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
-	statusMode         bool            // display a status line at all times at the bottom of the screen
-	noExpandTags       bool            // used for XML and HTML
-	syntaxHighlight    bool            // syntax highlighting
-	stopParentOnQuit   bool            // send SIGQUIT to the parent PID when quitting
-	clearOnQuit        bool            // clear the terminal when quitting the editor, or not
-	quit               bool            // for indicating if the user wants to end the editor session
-	changed            bool            // has the contents changed, since last save?
-	readOnly           bool            // is the file read-only when initializing o?
-	debugHideOutput    bool            // hide the GDB stdout pane when in debug mode?
-	binaryFile         bool            // is this a binary file, or a text file?
-	wrapWhenTyping     bool            // wrap text at a certain limit when typing
-	addSpace           bool            // add a space to the editor, once
-	debugStepInto      bool            // when stepping to the next instruction, step into instead of over
-	slowLoad           bool            // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
-	building           bool            // currently buildig code or exporting to a file?
-	runAfterBuild      bool            // run the application after building?
-	generatingTokens   bool            // is code or text being generated right now?
-	redrawCursor       bool            // if the cursor should be moved to the location it is supposed to be
-	fixAsYouType       bool            // fix each line as you type it in, using AI?
-	monitorAndReadOnly bool            // monitor the file for changes and open it as read-only
-	primaryClipboard   bool            // use the primary or the secondary clipboard on UNIX?
-	jumpToLetterMode   bool            // jump directly to a highlighted letter
-	nanoMode           bool            // emulate GNU Nano
-	spellCheckMode     bool            // spell check mode?
+	detectedTabs               *bool           // were tab or space indentations detected when loading the data?
+	breakpoint                 *Position       // for the breakpoint/jump functionality in debug mode
+	gdb                        *gdb.Gdb        // connection to gdb, if debugMode is enabled
+	sameFilePortal             *Portal         // a portal that points to the same file
+	lines                      map[int][]rune  // the contents of the current document
+	macro                      *Macro          // the contents of the current macro (will be cleared when esc is pressed)
+	filename                   string          // the current filename
+	searchTerm                 string          // the current search term, used when searching
+	stickySearchTerm           string          // used when going to the next match with ctrl-n, unless esc has been pressed
+	Theme                                      // editor theme, embedded struct
+	pos                        Position        // the current cursor and scroll position
+	indentation                mode.TabsSpaces // spaces or tabs, and how many spaces per tab character
+	wrapWidth                  int             // set to ie. 80 or 100 to trigger word wrap when typing to that column
+	mode                       mode.Mode       // a filetype mode, like for git, markdown or various programming languages
+	debugShowRegisters         int             // show no register box, show changed registers, show all changed registers
+	previousY                  int             // previous cursor position
+	previousX                  int             // previous cursor position
+	lineBeforeSearch           LineIndex       // save the current line number before jumping between search results
+	playBackMacroCount         int             // number of times the macro should be played back, right now
+	rainbowParenthesis         bool            // rainbow parenthesis
+	redraw                     bool            // if the contents should be redrawn in the next loop
+	sshMode                    bool            // is o used over ssh, tmux or screen, in a way that usually requires extra redrawing?
+	debugMode                  bool            // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
+	statusMode                 bool            // display a status line at all times at the bottom of the screen
+	noExpandTags               bool            // used for XML and HTML
+	syntaxHighlight            bool            // syntax highlighting
+	stopParentOnQuit           bool            // send SIGQUIT to the parent PID when quitting
+	clearOnQuit                bool            // clear the terminal when quitting the editor, or not
+	quit                       bool            // for indicating if the user wants to end the editor session
+	changed                    bool            // has the contents changed, since last save?
+	readOnly                   bool            // is the file read-only when initializing o?
+	debugHideOutput            bool            // hide the GDB stdout pane when in debug mode?
+	binaryFile                 bool            // is this a binary file, or a text file?
+	wrapWhenTyping             bool            // wrap text at a certain limit when typing
+	addSpace                   bool            // add a space to the editor, once
+	debugStepInto              bool            // when stepping to the next instruction, step into instead of over
+	slowLoad                   bool            // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
+	building                   bool            // currently buildig code or exporting to a file?
+	runAfterBuild              bool            // run the application after building?
+	generatingTokens           bool            // is code or text being generated right now?
+	redrawCursor               bool            // if the cursor should be moved to the location it is supposed to be
+	fixAsYouType               bool            // fix each line as you type it in, using AI?
+	monitorAndReadOnly         bool            // monitor the file for changes and open it as read-only
+	primaryClipboard           bool            // use the primary or the secondary clipboard on UNIX?
+	jumpToLetterMode           bool            // jump directly to a highlighted letter
+	nanoMode                   bool            // emulate GNU Nano
+	spellCheckMode             bool            // spell check mode?
+	createDirectoriesIfMissing bool            // when saving a file, should directories be created if they are missing?
 }
 
 // NewCustomEditor takes:
@@ -86,7 +87,8 @@ type Editor struct {
 //
 // * a syntax highlighting scheme
 // * a file mode
-func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight, rainbowParenthesis, monitorAndReadOnly bool) *Editor {
+// * if directories should be created when saving a file if they are missing
+func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight, rainbowParenthesis, monitorAndReadOnly, createDirectoriesIfMissing bool) *Editor {
 	e := &Editor{}
 	e.SetTheme(theme)
 	e.lines = make(map[int][]rune)
@@ -94,6 +96,7 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 	e.syntaxHighlight = syntaxHighlight
 	e.rainbowParenthesis = rainbowParenthesis
 	e.monitorAndReadOnly = monitorAndReadOnly
+	e.createDirectoriesIfMissing = createDirectoriesIfMissing
 	p := NewPosition(scrollSpeed)
 	e.pos = *p
 	// If the file is not to be highlighted, set word wrap to 79 (0 to disable)
@@ -121,7 +124,7 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
 	t := NewDefaultTheme()
-	e := NewCustomEditor(mode.DefaultTabsSpaces, 1, mode.Blank, t, false, false, false)
+	e := NewCustomEditor(mode.DefaultTabsSpaces, 1, mode.Blank, t, false, false, false, false)
 	e.wrapWidth = wordWrapLimit
 	e.wrapWhenTyping = true
 	return e
@@ -424,6 +427,12 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 
 	quitMut.Lock()
 	defer quitMut.Unlock()
+
+	if e.createDirectoriesIfMissing {
+		if err := os.MkdirAll(filepath.Dir(e.filename), os.ModePerm); err != nil {
+			return err
+		}
+	}
 
 	if e.binaryFile {
 		data = []byte(e.String())
@@ -2132,7 +2141,7 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
 		fnord := FilenameOrData{filenameToOpen, []byte{}, 0, false}
-		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, e.monitorAndReadOnly, e.nanoMode)
+		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, e.monitorAndReadOnly, e.nanoMode, e.createDirectoriesIfMissing)
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)

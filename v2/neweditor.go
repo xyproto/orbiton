@@ -24,7 +24,7 @@ var (
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message for the user, a bool that is true if an image was displayed instead and the finally an error type.
-func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor, monitorAndReadOnly, nanoMode bool) (*Editor, string, bool, error) {
+func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing bool) (*Editor, string, bool, error) {
 	var (
 		startTime          = time.Now()
 		createdNewFile     bool   // used for indicating that a new file was created
@@ -84,7 +84,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		theme,
 		syntaxHighlight,
 		rainbowParenthesis,
-		monitorAndReadOnly)
+		monitorAndReadOnly,
+		createDirectoriesIfMissing)
 
 	if readOnly || fnord.stdin || monitorAndReadOnly {
 		e.readOnly = true
@@ -244,6 +245,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 
 		// Test save, to check if the file can be created and written, or not
 		if err := e.Save(c, tty); err != nil {
+
 			// Check if the new file can be saved before the user starts working on the file.
 			return nil, "", false, err
 		}

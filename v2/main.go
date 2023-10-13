@@ -43,6 +43,7 @@ func main() {
 		clearLocksFlag         bool
 		lastCommandFlag        bool
 		quickHelpFlag          bool
+		createDirectoriesFlag  bool
 		versionFlag            bool
 	)
 
@@ -55,6 +56,7 @@ func main() {
 	pflag.BoolVarP(&clearLocksFlag, "clear-locks", "r", false, "clear all file locks")
 	pflag.BoolVarP(&lastCommandFlag, "last-command", "l", false, "output the last build or format command")
 	pflag.BoolVarP(&quickHelpFlag, "quick-help", "q", false, "always display the quick help when starting")
+	pflag.BoolVarP(&createDirectoriesFlag, "directories", "d", false, "create diretories when opening a new file")
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 
 	pflag.Parse()
@@ -351,7 +353,7 @@ func main() {
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, manPageMode, quickHelpFlag)
+	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, manPageMode, quickHelpFlag, createDirectoriesFlag)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {
