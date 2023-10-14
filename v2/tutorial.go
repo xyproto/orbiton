@@ -174,7 +174,7 @@ var tutorialSteps = Tutorial{
 		expectKeys:  []string{"c:13"}, // ctrl-m
 	},
 	TutorialStep{
-		title:       "Go down 10 lines",
+		title:       "Move down 10 lines",
 		description: "Press ctrl-n to move and scroll down 10 lines.",
 		expectKeys:  []string{"c:14"}, // ctrl-n
 	},
@@ -194,7 +194,7 @@ var tutorialSteps = Tutorial{
 		expectKeys:  []string{"c:15"}, // ctrl-o
 	},
 	TutorialStep{
-		title:       "Go up 10 lines",
+		title:       "Move up 10 lines",
 		description: "Press ctrl-p to move and scroll up 10 lines.",
 		expectKeys:  []string{"c:16"}, // ctrl-p
 	},
@@ -205,12 +205,12 @@ var tutorialSteps = Tutorial{
 	},
 	TutorialStep{
 		title:       "Cycle register pane layout",
-		description: "When debugging, press ctrl-p to change the size of the register pane from small, to large to hidden.",
+		description: "When debugging, press ctrl-p to cycle the size of the register pane from small, to large to hidden.",
 		expectKeys:  []string{"c:16"}, // ctrl-p
 	},
 	TutorialStep{
 		title:       "Quit",
-		description: "Press ctrl-q to exit the editor, no questions asked.",
+		description: "Press ctrl-q to quit, no questions asked.",
 		expectKeys:  []string{"c:17"}, // ctrl-q
 	},
 	TutorialStep{
@@ -348,7 +348,6 @@ var tutorialSteps = Tutorial{
 		description: "Press ctrl-_ to insert a digraph. For instance \"ae\" to insert \"æ\". These are the same as for ViM or NeoViM. Do not be on a (, [, {, }, ] or ) character.",
 		expectKeys:  []string{"c:31"}, // ctrl-_
 	},
-
 	TutorialStep{
 		title:       "Tutorial complete",
 		description: "Press q, esc or ctrl-q to end this tutorial.",
