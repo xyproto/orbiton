@@ -179,7 +179,8 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			foundCommand = true
 		}
 		if foundCommand {
-			cmd = exec.Command(s)
+			args := strings.Split(s, " ")
+			cmd = exec.Command(args[0], args[1:]...)
 			cmd.Dir = sourceDir
 			return cmd, everythingIsFine, nil
 		}
