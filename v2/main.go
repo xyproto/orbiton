@@ -56,7 +56,7 @@ func main() {
 	pflag.BoolVarP(&clearLocksFlag, "clear-locks", "r", false, "clear all file locks")
 	pflag.BoolVarP(&lastCommandFlag, "last-command", "l", false, "output the last build or format command")
 	pflag.BoolVarP(&quickHelpFlag, "quick-help", "q", false, "always display the quick help when starting")
-	pflag.BoolVarP(&createDirectoriesFlag, "directories", "d", false, "create diretories when opening a new file")
+	pflag.BoolVarP(&createDirectoriesFlag, "create-dir", "d", false, "create diretories when opening a new file")
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 
 	pflag.Parse()

@@ -78,7 +78,7 @@ Flags:
                                  Combine with -f to overwrite the file.
   -q, --quick-help               Always display the quick help pane at start.
   -r, --clear-locks              Clear all file locks and close all portals.
-  -d, --directories              When opening a new file, create directories if needed.
+  -d, --create-dir               When opening a new file, create directories if needed.
   -v, --version                  Display the current version.
 
 See the man page for more information.
