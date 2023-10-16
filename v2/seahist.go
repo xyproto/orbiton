@@ -143,14 +143,14 @@ func (sh SearchHistory) GetIndex(index int, newestFirst bool) string {
 	}
 
 	type timeEntry struct {
-		unixTime int64
 		timeObj  time.Time
+		unixTime int64
 	}
 
 	timeEntries := make([]timeEntry, 0, l)
 
 	for timestamp := range sh {
-		timeEntries = append(timeEntries, timeEntry{unixTime: timestamp.Unix(), timeObj: timestamp})
+		timeEntries = append(timeEntries, timeEntry{timeObj: timestamp, unixTime: timestamp.Unix()})
 	}
 
 	if newestFirst {

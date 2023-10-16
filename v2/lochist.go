@@ -27,8 +27,8 @@ var (
 
 // LineNumberAndTimestamp contains both a LineNumber and a time.Time
 type LineNumberAndTimestamp struct {
-	LineNumber LineNumber
 	Timestamp  time.Time
+	LineNumber LineNumber
 }
 
 // LocationHistory stores the absolute path to a filename, a line number and a timestamp (for trimming the location history)
@@ -51,16 +51,16 @@ func (locationHistory LocationHistory) Get(path string) (LineNumber, bool) {
 // Set sets a new line number for the given absolute path, and also records the current time
 func (locationHistory LocationHistory) Set(path string, ln LineNumber) {
 	var lnat LineNumberAndTimestamp
-	lnat.LineNumber = ln
 	lnat.Timestamp = time.Now()
+	lnat.LineNumber = ln
 	locationHistory[path] = lnat
 }
 
 // SetWithTimestamp sets a new line number for the given absolute path, and also records the current time
 func (locationHistory LocationHistory) SetWithTimestamp(path string, ln LineNumber, timestamp int64) {
 	var lnat LineNumberAndTimestamp
-	lnat.LineNumber = ln
 	lnat.Timestamp = time.Unix(timestamp, 0)
+	lnat.LineNumber = ln
 	locationHistory[path] = lnat
 }
 

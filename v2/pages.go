@@ -11,17 +11,17 @@ type Page struct {
 
 // ScrollableTextBox holds pages of text and keeps track of the current page.
 type ScrollableTextBox struct {
+	*Box
 	Pages       []Page
 	CurrentPage int
-	*Box
 }
 
 // NewScrollableTextBox creates a new instance of ScrollableText which also encapsulates a Box
 func NewScrollableTextBox(pages []Page) *ScrollableTextBox {
 	return &ScrollableTextBox{
+		Box:         &Box{0, 0, 0, 0},
 		Pages:       pages,
 		CurrentPage: 0,
-		Box:         &Box{0, 0, 0, 0},
 	}
 }
 

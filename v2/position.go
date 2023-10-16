@@ -9,23 +9,23 @@ import (
 
 // Position represents a position on the screen, including how far down the view has scrolled
 type Position struct {
+	mut         *sync.RWMutex // for the position
 	sx          int           // the position of the cursor in the current scrollview
 	sy          int           // the position of the cursor in the current scrollview
 	offsetX     int           // how far one has scrolled along the X axis
 	offsetY     int           // how far one has scrolled along the Y axis
 	scrollSpeed int           // how many lines to scroll, when scrolling up and down
 	savedX      int           // for smart down cursor movement
-	mut         *sync.RWMutex // for the position
 }
 
 // NewPosition returns a new Position struct
 func NewPosition(scrollSpeed int) *Position {
-	return &Position{0, 0, 0, 0, scrollSpeed, 0, &sync.RWMutex{}}
+	return &Position{&sync.RWMutex{}, 0, 0, 0, 0, scrollSpeed, 0}
 }
 
 // Copy will create a new Position struct that is a copy of this one
 func (p *Position) Copy() *Position {
-	return &Position{p.sx, p.sy, p.offsetX, p.offsetY, p.scrollSpeed, p.savedX, p.mut}
+	return &Position{p.mut, p.sx, p.sy, p.offsetX, p.offsetY, p.scrollSpeed, p.savedX}
 }
 
 // ScreenX returns the screen X position in the current view

@@ -27,11 +27,11 @@ var (
 
 // SpellChecker is a slice of correct, custom and ignored words together with a *fuzzy.Model
 type SpellChecker struct {
+	fuzzyModel   *fuzzy.Model
+	markedWord   string
 	correctWords []string
 	customWords  []string
 	ignoredWords []string
-	fuzzyModel   *fuzzy.Model
-	markedWord   string
 }
 
 // NewSpellChecker creates and initializes a new *SpellChecker.
