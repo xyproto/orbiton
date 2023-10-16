@@ -14,7 +14,7 @@ import (
 const fuzzyDepth = 2
 
 var (
-	//go:embed english_word_list.txt.gz
+	//go:embed words_en.txt.gz
 	gzwords []byte
 
 	spellChecker *SpellChecker
