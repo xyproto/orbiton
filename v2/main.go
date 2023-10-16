@@ -331,8 +331,8 @@ func main() {
 			theme = NewRedBlackTheme()
 		case 's': // s, sw, synthwave etc.
 			theme = NewSynthwaveTheme()
-		case 'g': // g, gray, grayblue
-			theme = NewGrayBlueTheme()
+		case 't': // t, teal
+			theme = NewTealTheme()
 		default:
 			specificLetter = false
 		}

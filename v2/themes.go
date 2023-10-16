@@ -356,12 +356,12 @@ func NewSynthwaveTheme() Theme {
 	}
 }
 
-// NewGrayBlueTheme creates a new Theme struct
-func NewGrayBlueTheme() Theme {
+// NewTealTheme creates a new Theme struct
+func NewTealTheme() Theme {
 	return Theme{
-		Name:                        "GrayBlue",
+		Name:                        "Teal",
 		Light:                       false,
-		Foreground:                  vt100.Default,
+		Foreground:                  vt100.Cyan,
 		Background:                  vt100.BackgroundDefault,
 		StatusForeground:            vt100.LightBlue,
 		StatusBackground:            vt100.BackgroundBlack,
@@ -371,21 +371,21 @@ func NewGrayBlueTheme() Theme {
 		MultiLineComment:            vt100.Gray,
 		MultiLineString:             vt100.Blue,
 		Git:                         vt100.Blue,
-		String:                      "white",
+		String:                      "lightcyan",
 		Keyword:                     "lightblue",
 		Comment:                     "gray",
 		Type:                        "lightblue",
-		Literal:                     "white",
+		Literal:                     "lightcyan",
 		Punctuation:                 "white",
-		Plaintext:                   "lightgray",
-		Tag:                         "gray",
-		TextTag:                     "gray",
-		TextAttrName:                "gray",
-		TextAttrValue:               "gray",
-		Decimal:                     "white",
+		Plaintext:                   "cyan",
+		Tag:                         "cyan",
+		TextTag:                     "cyan",
+		TextAttrName:                "cyan",
+		TextAttrValue:               "cyan",
+		Decimal:                     "lightwhite",
 		AndOr:                       "lightblue",
-		Dollar:                      "white",
-		Star:                        "white",
+		Dollar:                      "lightwhite",
+		Star:                        "lightwhite",
 		Static:                      "lightblue",
 		Self:                        "lightyellow",
 		Class:                       "lightblue",
@@ -393,34 +393,34 @@ func NewGrayBlueTheme() Theme {
 		Protected:                   "darkyellow",
 		Public:                      "darkgreen",
 		Whitespace:                  "",
-		AssemblyEnd:                 "white",
+		AssemblyEnd:                 "lightwhite",
 		Mut:                         "blue",
 		RainbowParenColors:          []vt100.AttributeColor{vt100.LightRed, vt100.White, vt100.LightGray, vt100.LightBlue, vt100.Blue},
-		MarkdownTextColor:           vt100.Default,
+		MarkdownTextColor:           vt100.Cyan,
 		HeaderBulletColor:           vt100.LightBlue,
 		HeaderTextColor:             vt100.White,
 		ListBulletColor:             vt100.White,
-		ListTextColor:               vt100.Default,
-		ListCodeColor:               vt100.Default,
-		CodeColor:                   vt100.Default,
-		CodeBlockColor:              vt100.Default,
+		ListTextColor:               vt100.Cyan,
+		ListCodeColor:               vt100.Cyan,
+		CodeColor:                   vt100.Cyan,
+		CodeBlockColor:              vt100.Cyan,
 		ImageColor:                  vt100.White,
 		LinkColor:                   vt100.LightBlue,
 		QuoteColor:                  vt100.White,
 		QuoteTextColor:              vt100.Blue,
-		HTMLColor:                   vt100.Default,
+		HTMLColor:                   vt100.Cyan,
 		CommentColor:                vt100.DarkGray,
 		BoldColor:                   vt100.White,
 		ItalicsColor:                vt100.White,
 		StrikeColor:                 vt100.DarkGray,
 		TableColor:                  vt100.Blue,
-		CheckboxColor:               vt100.Default,
+		CheckboxColor:               vt100.Cyan,
 		XColor:                      vt100.White,
 		TableBackground:             vt100.BackgroundDefault,
 		UnmatchedParenColor:         vt100.White,
 		MenuTitleColor:              vt100.White,
 		MenuArrowColor:              vt100.White,
-		MenuTextColor:               vt100.Gray,
+		MenuTextColor:               vt100.Cyan,
 		MenuHighlightColor:          vt100.LightBlue,
 		MenuSelectedColor:           vt100.White,
 		ManSectionColor:             vt100.LightBlue,
@@ -1143,12 +1143,12 @@ func (e *Editor) setSynthwaveTheme(bs ...bool) {
 	e.SetTheme(NewSynthwaveTheme())
 }
 
-// setGrayBlueTheme sets the GrayBlue theme
-func (e *Editor) setGrayBlueTheme(bs ...bool) {
+// setTealTheme sets the Teal theme
+func (e *Editor) setTealTheme(bs ...bool) {
 	if len(bs) == 1 {
 		initialLightBackground = &(bs[0])
 	}
-	e.SetTheme(NewGrayBlueTheme())
+	e.SetTheme(NewTealTheme())
 }
 
 // setVSTheme sets the VS theme
