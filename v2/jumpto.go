@@ -245,7 +245,10 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 			e.CommentColor = vt100.Gray
 		}
 	}
+
+	// TODO: Figure out why this call is needed for the letters to be highlighted
 	status.ClearAll(c)
+
 	status.SetMessage(prompt)
 	status.ShowNoTimeout(c, e)
 	lns := ""
