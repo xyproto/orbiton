@@ -103,7 +103,7 @@ symlinks:
 	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/sw"
 	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/edi"
 	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/vs"
-	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/grayblue"
+	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/teal"
 
 # For pico/nano style editing
 nano-symlink:
@@ -128,6 +128,7 @@ gui-symlinks: vg-symlink
 	ln -s -f "$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/redblackg"
 	ln -s -f "$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/swg"
 	ln -s -f "$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/edg"
+	ln -s -f "$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/tealg"
 
 easteregg:
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
