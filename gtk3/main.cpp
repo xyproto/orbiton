@@ -511,6 +511,7 @@ int main(int argc, char* argv[])
     bool litmusTheme = !exe_filename.empty() && exe_filename[0] == 't';
     bool redBlackTheme = !exe_filename.empty() && exe_filename[0] == 'r';
     bool synthWaveMode = !exe_filename.empty() && exe_filename[0] == 's';
+    bool tealTheme = !exe_filename.empty() && exe_filename[0] == 't';
     bool vsTheme = !exe_filename.empty() && exe_filename[0] == 'v';
     bool blueEditTheme = !exe_filename.empty() && (exe_filename[0] == 'b' || exe_filename[0] == 'e');
 
@@ -604,6 +605,10 @@ int main(int argc, char* argv[])
     // Setting SHELL to /bin/csh uses the red/black theme...
     if (redBlackTheme) {
         setenv("O_THEME", "redblack", true);
+        lightPalette = false;
+        lightMode = false;
+    } else if (tealTheme) {
+        setenv("O_THEME", "teal", true);
         lightPalette = false;
         lightMode = false;
     } else if (synthWaveMode) {
