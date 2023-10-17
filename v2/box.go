@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/xyproto/vt100"
+	"github.com/xyproto/wordwrap"
 )
 
 // Box is a position, width and height
@@ -244,7 +245,7 @@ func (e *Editor) DrawFooter(bt *BoxTheme, c *vt100.Canvas, r *Box, text string) 
 
 // DrawText will draw a text widget. Takes a Box struct for the size and position.
 // Takes a list of strings. Does not scroll. Uses bt.Foreground and bt.Background.
-// The text is wrapped by using the wordWrap function.
+// The text is wrapped by using the WordWrap function.
 // The number of lines that are added as a concequence of wrapping lines is returned as an int.
 func (e *Editor) DrawText(bt *BoxTheme, c *vt100.Canvas, r *Box, text string) int {
 	maxWidth := int(r.W) - 2 // Adjusted width to account for margins
@@ -257,7 +258,7 @@ func (e *Editor) DrawText(bt *BoxTheme, c *vt100.Canvas, r *Box, text string) in
 
 	for _, line := range lines {
 		// Attempt to wrap the line
-		wrappedLines, err := wordWrap(line, maxWidth)
+		wrappedLines, err := wordwrap.WordWrap(line, maxWidth)
 		if err != nil {
 			// If an error occurs, chop the line to fit the width
 			if len(line) > maxWidth {
