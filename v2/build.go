@@ -231,7 +231,11 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			return files.IsFile(filepath.Join(sourceDir, jarFilename)), jarFilename
 		}, nil
 	case mode.Go:
-		if files.IsFile(filepath.Join(sourceDir, "go.mod")) {
+		// TODO: Make this code more elegant, and consider searching all parent directories
+		hasGoMod := files.IsFile(filepath.Join(sourceDir, "go.mod")) ||
+			files.IsFile(filepath.Join(sourceDir, "..", "go.mod")) ||
+			files.IsFile(filepath.Join(sourceDir, "..", "..", "go.mod"))
+		if hasGoMod {
 			cmd = exec.Command("go", "build")
 		} else {
 			cmd = exec.Command("go", "build", sourceFilename)
