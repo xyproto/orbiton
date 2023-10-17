@@ -46,7 +46,7 @@ github.com/lucasb-eyer/go-colorful
 # github.com/mattn/go-colorable v0.1.13
 ## explicit; go 1.15
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.19
+# github.com/mattn/go-isatty v0.0.20
 ## explicit; go 1.15
 github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
@@ -125,6 +125,9 @@ github.com/xyproto/textoutput
 # github.com/xyproto/vt100 v1.12.7
 ## explicit; go 1.17
 github.com/xyproto/vt100
+# github.com/xyproto/wordwrap v1.0.1
+## explicit; go 1.21.3
+github.com/xyproto/wordwrap
 # github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
 ## explicit
 github.com/yosssi/gohtml

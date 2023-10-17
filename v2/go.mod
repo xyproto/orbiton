@@ -1,6 +1,6 @@
 module github.com/xyproto/orbiton/v2
 
-go 1.19
+go 1.21.3
 
 require (
 	github.com/PullRequestInc/go-gpt3 v1.1.16
@@ -27,6 +27,7 @@ require (
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/textoutput v1.15.10
 	github.com/xyproto/vt100 v1.12.7
+	github.com/xyproto/wordwrap v1.0.1
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
 	golang.org/x/image v0.13.0
 )
@@ -40,7 +41,7 @@ require (
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d // indirect
 	github.com/peterhellberg/gfx v0.0.0-20230908181254-9885a9f73abe // indirect
