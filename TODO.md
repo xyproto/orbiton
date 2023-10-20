@@ -2,7 +2,8 @@
 
 ## General
 
-- [ ] Do not highlight lines that start with `#` in gray, for Go code.
+- [ ] Do not highlight lines that start with `#` in gray, for Go.
+- [ ] For Go and "go to definition", let it be able to also discover packages in the parent directory.
 - [ ] For man pages: if between "[-" and "]", do not color uppercase letters differently.
 - [ ] For man pages: if the line contains "-*[a-z]" and then later "-*[a-z]" and a majority of words with "-", then color text red instead of blue (and consider the theme).
 - [ ] Use enet or another UDP protocol to communicate between the core editor and the GUI application. Or REST, just to make it even more accessible for developers?
