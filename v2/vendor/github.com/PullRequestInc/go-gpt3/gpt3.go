@@ -185,9 +185,9 @@ func (c *client) ChatCompletion(ctx context.Context, request ChatCompletionReque
 			request.Model = GPT3Dot5Turbo
 		} else {
 			request.Model = GPT3Dot5Turbo0613
-		}		
+		}
 	}
-	
+
 	request.Stream = false
 
 	req, err := c.newRequest(ctx, "POST", "/chat/completions", request)
@@ -204,6 +204,7 @@ func (c *client) ChatCompletion(ctx context.Context, request ChatCompletionReque
 	if err := getResponseObject(resp, output); err != nil {
 		return nil, err
 	}
+	output.RateLimitHeaders = NewRateLimitHeadersFromResponse(resp)
 	return output, nil
 }
 
@@ -276,6 +277,8 @@ func (c *client) CompletionWithEngine(ctx context.Context, engine string, reques
 	if err := getResponseObject(resp, output); err != nil {
 		return nil, err
 	}
+	output.RateLimitHeaders = NewRateLimitHeadersFromResponse(resp)
+
 	return output, nil
 }
 
@@ -440,9 +443,11 @@ func checkForSuccess(resp *http.Response) error {
 			Type:       "Unexpected",
 			Message:    string(data),
 		}
+		apiError.RateLimitHeaders = NewRateLimitHeadersFromResponse(resp)
 		return apiError
 	}
 	result.Error.StatusCode = resp.StatusCode
+	result.Error.RateLimitHeaders = NewRateLimitHeadersFromResponse(resp)
 	return result.Error
 }
 
