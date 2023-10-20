@@ -2,7 +2,6 @@
 
 ## General
 
-- [ ] Let ctrl-k and other keys near ctrl-l exit out of ctrl-l mode if pressed again.
 - [ ] Add a Markdown template with headers and checkboxes.
 - [ ] ctrl-g must look for definitions in the directory of the current filename before looking in the current directory.
 - [ ] Do not highlight lines that start with `#` in gray, for Go.
