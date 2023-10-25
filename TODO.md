@@ -2,7 +2,6 @@
 
 ## General
 
-- [ ] Use BoxUpperEdge instead of StatusForeground for the quickhelp border. Test with dark and light terminal emulators.
 - [ ] Add a Markdown template with headers and checkboxes.
 - [ ] ctrl-g must look for definitions in the directory of the current filename before looking in the current directory.
 - [ ] Do not highlight lines that start with `#` in gray, for Go.

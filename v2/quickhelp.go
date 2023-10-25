@@ -56,7 +56,7 @@ func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing boo
 
 		foregroundColor = e.Foreground
 		backgroundColor = e.Background
-		edgeColor       = e.StatusForeground
+		edgeColor       = e.BoxUpperEdge
 	)
 
 	if QuickHelpScreenIsDisabled() {
