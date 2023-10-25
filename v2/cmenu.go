@@ -291,32 +291,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		}
 	}
 
-	// Find the path to either "rust-gdb" or "gdb", depending on the mode, then check if it's there
-	foundGDB := e.findGDB() != ""
-
-	// Debug mode on/off, if gdb is found and the mode is tested
-	if foundGDB && e.usingGDBMightWork() {
-		if e.debugMode {
-			actions.Add("Exit debug mode", func() {
-				status.Clear(c)
-				status.SetMessage("Debug mode disabled")
-				status.Show(c, e)
-				e.debugMode = false
-				// Also end the gdb session if there is one in progress
-				e.DebugEnd()
-				status.SetMessageAfterRedraw("Normal mode")
-			})
-		} else {
-			actions.Add("Debug mode", func() {
-				// Save the file when entering debug mode, since gdb may crash for some languages
-				// TODO: Identify which languages work poorly together with gdb
-				e.UserSave(c, tty, status)
-				status.SetMessageAfterRedraw("Debug mode enabled")
-				e.debugMode = true
-			})
-		}
-	}
-
 	// Fix as you type mode, on/off
 	if openAIKeyHolder != nil { // has AI
 		if e.fixAsYouType {
@@ -379,6 +353,32 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			e.redrawCursor = true
 		}
 	})
+
+	// Find the path to either "rust-gdb" or "gdb", depending on the mode, then check if it's there
+	foundGDB := e.findGDB() != ""
+
+	// Debug mode on/off, if gdb is found and the mode is tested
+	if foundGDB && e.usingGDBMightWork() {
+		if e.debugMode {
+			actions.Add("Exit debug mode", func() {
+				status.Clear(c)
+				status.SetMessage("Debug mode disabled")
+				status.Show(c, e)
+				e.debugMode = false
+				// Also end the gdb session if there is one in progress
+				e.DebugEnd()
+				status.SetMessageAfterRedraw("Normal mode")
+			})
+		} else {
+			actions.Add("Debug mode", func() {
+				// Save the file when entering debug mode, since gdb may crash for some languages
+				// TODO: Identify which languages work poorly together with gdb
+				e.UserSave(c, tty, status)
+				status.SetMessageAfterRedraw("Debug mode enabled")
+				e.debugMode = true
+			})
+		}
+	}
 
 	// Add the syntax highlighting toggle menu item
 	if !envNoColor {
