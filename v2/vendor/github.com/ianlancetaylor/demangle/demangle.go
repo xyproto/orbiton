@@ -2643,7 +2643,6 @@ func (st *state) unresolvedName() AST {
 				} else {
 					s = &Qualified{Scope: s, Name: n, LocalName: false}
 				}
-				st.subs.add(s)
 			}
 			if s == nil {
 				st.fail("missing scope in unresolved name")

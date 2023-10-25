@@ -6,9 +6,9 @@ require (
 	github.com/PullRequestInc/go-gpt3 v1.1.18
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
 	github.com/felixge/fgtrace v0.2.0
-	github.com/fsnotify/fsnotify v1.6.0
+	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gomarkdown/markdown v0.0.0-20230922112808-5421fefb8386
-	github.com/ianlancetaylor/demangle v0.0.0-20230524184225-eabc099b10ab
+	github.com/ianlancetaylor/demangle v0.0.0-20231023195312-e2daf7ba7156
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/sajari/fuzzy v1.0.0
 	github.com/spf13/pflag v1.0.5

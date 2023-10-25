@@ -19,8 +19,8 @@ github.com/dkua/go-ico
 ## explicit; go 1.18
 github.com/felixge/fgtrace
 github.com/felixge/fgtrace/internal
-# github.com/fsnotify/fsnotify v1.6.0
-## explicit; go 1.16
+# github.com/fsnotify/fsnotify v1.7.0
+## explicit; go 1.17
 github.com/fsnotify/fsnotify
 # github.com/gomarkdown/markdown v0.0.0-20230922112808-5421fefb8386
 ## explicit; go 1.12
@@ -28,7 +28,7 @@ github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
 github.com/gomarkdown/markdown/html
 github.com/gomarkdown/markdown/parser
-# github.com/ianlancetaylor/demangle v0.0.0-20230524184225-eabc099b10ab
+# github.com/ianlancetaylor/demangle v0.0.0-20231023195312-e2daf7ba7156
 ## explicit; go 1.13
 github.com/ianlancetaylor/demangle
 # github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25
