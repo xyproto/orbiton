@@ -102,6 +102,8 @@ github.com/xyproto/guessica v1.1.2 h1:GP2jniCjE5DLeU0ZBbl9cS4gRXAyk/0lev0dh6Uqrf
 github.com/xyproto/guessica v1.1.2/go.mod h1:084aWqVDuOYOMVly0NHHLecAPScmGEZTLxm/+Ny49GE=
 github.com/xyproto/iferr v1.1.0 h1:+5OZVuzb7ups88Yq2Bio1ygCCVdilTpW+9qUZpdhGAg=
 github.com/xyproto/iferr v1.1.0/go.mod h1:En+YVd+aRA+/q3LKqQ+EmsmbWKdgzBwUPE5C4bUfiqA=
+github.com/xyproto/minimap v1.1.0 h1:aFdyhtumrSygLkBJ1dnrmajFOvZ2ZncD716zgEXdv34=
+github.com/xyproto/minimap v1.1.0/go.mod h1:28pnZidjbQIWXwMM+nHYsjfxqToNcbhfiR7lGI4v3nA=
 github.com/xyproto/mode v0.6.18/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/mode v0.7.15 h1:IlGkDsGl5Kv5uf4/bht51TKqgBVm5XTKi5WzNEtzXdU=
 github.com/xyproto/mode v0.7.15/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=

@@ -1,0 +1,10 @@
+*.bak
+*.o
+*.swp
+*.tmp
+cmd/block/block
+cmd/canvas/canvas
+cmd/color/color
+cmd/simple/simple
+include.txt
+minimap

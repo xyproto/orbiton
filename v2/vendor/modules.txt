@@ -104,6 +104,9 @@ github.com/xyproto/guessica
 # github.com/xyproto/iferr v1.1.0
 ## explicit; go 1.19
 github.com/xyproto/iferr
+# github.com/xyproto/minimap v1.1.0
+## explicit; go 1.21.3
+github.com/xyproto/minimap
 # github.com/xyproto/mode v0.7.15
 ## explicit; go 1.14
 github.com/xyproto/mode
