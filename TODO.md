@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] In Markdown, do not count "_" when within "`" like in `two_step_cfg`.
 - [ ] Let ctrl-p and ctrl-n browse up and down while in ctrl-l mode.
 - [ ] Add a Markdown template with headers and checkboxes.
 - [ ] ctrl-g must look for definitions in the directory of the current filename before looking in the current directory.
