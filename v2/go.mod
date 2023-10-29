@@ -21,13 +21,13 @@ require (
 	github.com/xyproto/files v1.4.1
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
-	github.com/xyproto/minimap v1.1.0
+	github.com/xyproto/minimap v1.2.0
 	github.com/xyproto/mode v0.7.15
 	github.com/xyproto/stringpainter v1.0.0
 	github.com/xyproto/syntax v1.10.9
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/textoutput v1.15.10
-	github.com/xyproto/vt100 v1.12.7
+	github.com/xyproto/vt100 v1.12.9
 	github.com/xyproto/wordwrap v1.0.1
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
 	golang.org/x/image v0.13.0
@@ -35,7 +35,7 @@ require (
 
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
-	github.com/creack/pty v1.1.18 // indirect
+	github.com/creack/pty v1.1.20 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06 // indirect
 	github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 // indirect

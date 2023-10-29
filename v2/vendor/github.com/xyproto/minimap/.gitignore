@@ -3,6 +3,7 @@
 *.swp
 *.tmp
 cmd/block/block
+cmd/bgcanvas/bgcanvas
 cmd/canvas/canvas
 cmd/color/color
 cmd/simple/simple

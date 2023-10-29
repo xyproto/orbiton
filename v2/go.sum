@@ -4,8 +4,8 @@ github.com/PullRequestInc/go-gpt3 v1.1.18 h1:4H72au79tJ5OMpUDh3iQn9H4qdS6HalpPqi
 github.com/PullRequestInc/go-gpt3 v1.1.18/go.mod h1:F9yzAy070LhkqHS2154/IH0HVj5xq5g83gLTj7xzyfw=
 github.com/boombuler/barcode v1.0.0/go.mod h1:paBWMcWSl3LHKBqUq+rly7CNSldXjb2rDl3JlRe0mD8=
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
-github.com/creack/pty v1.1.18 h1:n56/Zwd5o6whRC5PMGretI4IdRLlmBXYNjScPaBgsbY=
-github.com/creack/pty v1.1.18/go.mod h1:MOBLtS5ELjhRRrroQr9kyvTxUAFNvYEK993ew/Vr4O4=
+github.com/creack/pty v1.1.20 h1:VIPb/a2s17qNeQgDnkfZC35RScx+blkKF8GV68n80J4=
+github.com/creack/pty v1.1.20/go.mod h1:MOBLtS5ELjhRRrroQr9kyvTxUAFNvYEK993ew/Vr4O4=
 github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86 h1:kHMmK/Nv9EdcvZyk/nPJAMsyx/RvvDJuAlNGOiv4zeQ=
 github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86/go.mod h1:22k58xzfLfGi/n7fkt/c8uGafmNb3wXPxdL2g/j0SpE=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -102,8 +102,8 @@ github.com/xyproto/guessica v1.1.2 h1:GP2jniCjE5DLeU0ZBbl9cS4gRXAyk/0lev0dh6Uqrf
 github.com/xyproto/guessica v1.1.2/go.mod h1:084aWqVDuOYOMVly0NHHLecAPScmGEZTLxm/+Ny49GE=
 github.com/xyproto/iferr v1.1.0 h1:+5OZVuzb7ups88Yq2Bio1ygCCVdilTpW+9qUZpdhGAg=
 github.com/xyproto/iferr v1.1.0/go.mod h1:En+YVd+aRA+/q3LKqQ+EmsmbWKdgzBwUPE5C4bUfiqA=
-github.com/xyproto/minimap v1.1.0 h1:aFdyhtumrSygLkBJ1dnrmajFOvZ2ZncD716zgEXdv34=
-github.com/xyproto/minimap v1.1.0/go.mod h1:28pnZidjbQIWXwMM+nHYsjfxqToNcbhfiR7lGI4v3nA=
+github.com/xyproto/minimap v1.2.0 h1:UQNLHIXAfDIPZGjzBSZ4pVIIt3gDkcSaqjhpCf7q5DU=
+github.com/xyproto/minimap v1.2.0/go.mod h1:MlNwBiFhgVza0RGMC+cWIZckmAN6OSdUGmjLNLrO6+M=
 github.com/xyproto/mode v0.6.18/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/mode v0.7.15 h1:IlGkDsGl5Kv5uf4/bht51TKqgBVm5XTKi5WzNEtzXdU=
 github.com/xyproto/mode v0.7.15/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
@@ -121,8 +121,8 @@ github.com/xyproto/textoutput v1.15.10/go.mod h1:riYjG+23ZDhmn3lp9VcbAXCdC61eENo
 github.com/xyproto/vt100 v1.8.5/go.mod h1:8ni0+pphJABRAZOoyxY9yD0QQxkia4PjKNFiMQStrT4=
 github.com/xyproto/vt100 v1.9.8/go.mod h1:ExY2YeEedHIb8ng0LG0nv0pgO4prm3KFRnPcTVMF/is=
 github.com/xyproto/vt100 v1.9.12/go.mod h1:b0qTpewCw1TQdPH/V2djiI4YdMpfXrxTNi75ri6s0ZI=
-github.com/xyproto/vt100 v1.12.7 h1:CKltar1kiJZvKcKMHfz50Jvh2C1SKC+I+Pyu2YANdNw=
-github.com/xyproto/vt100 v1.12.7/go.mod h1:pS1w4w/mRXKXL0DJDZ1tdZZ6aML9/7sT9sD8V6l0Rc4=
+github.com/xyproto/vt100 v1.12.9 h1:sRbRR4LuF06nzzyVz2lpSWrd7LMosudLIU8sqGy2/MM=
+github.com/xyproto/vt100 v1.12.9/go.mod h1:pS1w4w/mRXKXL0DJDZ1tdZZ6aML9/7sT9sD8V6l0Rc4=
 github.com/xyproto/wordwrap v1.0.1 h1:nKmUy4Jr+VBbeFfCgcUBx/e707ky7GBZLE/x1Uh3dtA=
 github.com/xyproto/wordwrap v1.0.1/go.mod h1:NIZ+TjJF24AUJzQDmr/fOMWgn3B2pK5+c9fPCp6UvcM=
 github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4 h1:0sw0nJM544SpsihWx1bkXdYLQDlzRflMgFJQ4Yih9ts=
