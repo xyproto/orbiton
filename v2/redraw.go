@@ -182,5 +182,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar) {
 		status.Show(c, e)
 	}
 
+	e.DrawMiniMap(c, false)
+
 	e.RepositionCursorIfNeeded()
 }

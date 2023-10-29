@@ -263,8 +263,6 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 	// Which action should be taken after this function returns?
 	postAction := noAction
 
-	e.DrawMiniMap(c, false)
-
 	for !doneCollectingDigits {
 		numkey := tty.String()
 		switch numkey {
