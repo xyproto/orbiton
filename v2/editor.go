@@ -71,6 +71,7 @@ type Editor struct {
 	nanoMode                   bool            // emulate GNU Nano
 	spellCheckMode             bool            // spell check mode?
 	createDirectoriesIfMissing bool            // when saving a file, should directories be created if they are missing?
+	drawMiniMapOnce            bool            // used for drawing the mini map when browsing up and down
 }
 
 // NewCustomEditor takes:

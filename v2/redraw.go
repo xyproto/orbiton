@@ -159,8 +159,18 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar) {
 		// Draw the editor lines on the canvas, respecting the offset
 		e.DrawLines(c, true, redrawCanvas)
 		e.redraw = false
+
+		if e.drawMiniMapOnce {
+			e.DrawMiniMap(c, false)
+			e.drawMiniMapOnce = false
+		}
 	} else if e.Changed() {
 		c.Draw()
+
+		if e.drawMiniMapOnce {
+			e.DrawMiniMap(c, false)
+			e.drawMiniMapOnce = false
+		}
 	}
 
 	// Drawing status messages should come after redrawing, but before cursor positioning
@@ -181,8 +191,6 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar) {
 		status.messageAfterRedraw = ""
 		status.Show(c, e)
 	}
-
-	e.DrawMiniMap(c, false)
 
 	e.RepositionCursorIfNeeded()
 }

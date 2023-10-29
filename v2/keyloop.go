@@ -609,6 +609,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.End(c)
 					}
 				}
+				e.drawMiniMapOnce = true
 				break
 			}
 
@@ -801,6 +802,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.End(c)
 					}
 				}
+				e.drawMiniMapOnce = true
 				break
 			}
 

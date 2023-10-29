@@ -19,7 +19,11 @@ func (e *Editor) DrawMiniMap(c *vt100.Canvas, repositionCursorAfterDrawing bool)
 	var xpos = cw - (width + margin)
 	const ypos = margin
 
-	minimap.DrawMinimap(c, e.String(), xpos, ypos, width, height, e.mode, int(e.LineIndex()), e.CommentColor, e.Background, e.MenuArrowColor, e.Background)
+	lineIndex := int(LineIndex(e.pos.OffsetY()))
+	text := e.DebugStoppedBackground
+	spaces := text
+	highlight := e.NanoHelpBackground
+	minimap.DrawBackgroundMinimap(c, e.String(), xpos, ypos, width, height, e.mode, lineIndex, text, spaces, highlight)
 
 	// Blit
 	c.Draw()
