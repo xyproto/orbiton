@@ -532,7 +532,7 @@ One way of building with `gccgo` and `upx` (in the `v2` directory):
 
     go build -mod=vendor -gccgoflags '-Os -s' -o o && upx --best --lzma o
 
-If the `o` executable is built with Go 1.20 instead, the size can be **8.7M**, or just **2.8M** when packed with `upx`:
+If the `o` executable is built with `go` instead, the size can be **8.7M**, or just **2.8M** when packed with `upx`:
 
     go build -mod=vendor -ldflags='-s -w' -trimpath -o o && upx --best --lzma o
 
