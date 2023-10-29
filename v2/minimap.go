@@ -10,14 +10,16 @@ func (e *Editor) DrawMiniMap(c *vt100.Canvas, repositionCursorAfterDrawing bool)
 	var cw = int(c.Width())
 	var ch = int(c.Height())
 
-	const margin = 2
+	const topMargin = 1
+	const botMargin = 1
+	const rightMargin = 2
 
 	const width = 20
-	var height = ch - (margin * 2)
+	var height = ch - (topMargin + botMargin)
 
 	// The x and y position for where the minimap should be drawn
-	var xpos = cw - (width + margin)
-	const ypos = margin
+	var xpos = cw - (width + rightMargin)
+	const ypos = topMargin
 
 	lineIndex := int(LineIndex(e.pos.OffsetY()))
 	text := e.DebugStoppedBackground
