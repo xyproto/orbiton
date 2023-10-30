@@ -24,11 +24,10 @@ func (e *Editor) DrawMiniMap(c *vt100.Canvas, repositionCursorAfterDrawing bool)
 	//lineIndex := int(e.LineIndex())
 	lineIndex := int(LineIndex(e.pos.OffsetY()))
 
-	text := e.Background
-	spaces := e.Background
-	highlight := e.NanoHelpBackground
+	highlight := e.BoxBackground
 
-	minimap.DrawBackgroundMinimap(c, e.String(), xpos, ypos, width, height, lineIndex, text, spaces, highlight)
+	// TODO: Cache e.String() until the document is changed
+	minimap.DrawBackgroundMinimapHighlight(c, e.String(), xpos, ypos, width, height, lineIndex, highlight)
 
 	// Blit
 	c.Draw()
