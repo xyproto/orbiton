@@ -224,6 +224,24 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 			skipFirstLineInsert bool
 		)
 
+		// Consider smart indentation for programming languages
+		if e.ProgrammingLanguage() {
+			trimmedLine := e.TrimmedLine()
+			currentLeadingWhitespace := e.LeadingWhitespace()
+
+			// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
+			leadingWhitespace := e.smartIndentation(currentLeadingWhitespace, trimmedLine, false) // the last parameter is "also dedent"
+
+			// Indent the block that is about to be pasted to the smart indentation level, if the block had no indentation
+			if LeadingWhitespace(firstLine) == "" {
+				// add indentation to each line
+				firstLine = leadingWhitespace + firstLine
+				for i := 0; i < tailLineCount; i++ {
+					(*copyLines)[1+i] = leadingWhitespace + (*copyLines)[1+i]
+				}
+			}
+		}
+
 		if !prevKeyWasReturn {
 			// Start by pasting (and overwriting) an untrimmed version of this line,
 			// if the previous key was not return.

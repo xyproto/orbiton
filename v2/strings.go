@@ -247,3 +247,16 @@ func sanitizeFilename(input string) string {
 	}
 	return string(result)
 }
+
+// LeadingWhitespace returns the leading whitespace of the given string
+func LeadingWhitespace(line string) string {
+	var whitespace []rune
+	for _, char := range line {
+		if unicode.IsSpace(char) {
+			whitespace = append(whitespace, char)
+		} else {
+			break
+		}
+	}
+	return string(whitespace)
+}

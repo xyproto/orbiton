@@ -991,10 +991,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			undo.Snapshot(e)
 
 			var (
-				lineContents             = e.CurrentLine()
+				lineContents = e.CurrentLine()
+
 				trimmedLine              = strings.TrimSpace(lineContents)
 				currentLeadingWhitespace = e.LeadingWhitespace()
-
 				// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
 				leadingWhitespace = e.smartIndentation(currentLeadingWhitespace, trimmedLine, false) // the last parameter is "also dedent"
 
