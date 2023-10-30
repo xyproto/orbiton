@@ -7,20 +7,6 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func normalizeLine(line string, length int) string {
 	if len(line) > length {
 		return line[:length]
@@ -34,28 +20,31 @@ func DrawBackgroundMinimap(c *vt100.Canvas, data string, x, y, width, height int
 		return errors.New("width and height must both be positive integers")
 	}
 	lines := strings.Split(data, "\n")
-	widthStep := max(1, len(lines[0])/width)
-	heightStep := max(1, len(lines)/height)
 
 	if highlightIndex < 0 || highlightIndex >= len(lines) {
 		// Set highlight to the middle if out of bounds or set to -1
 		highlightIndex = len(lines) / 2
 	}
-	representativeHighlight := highlightIndex / heightStep
 
-	for i := 0; i < min(len(lines), height*heightStep); i += heightStep {
-		minimapLine := i / heightStep
-		currentLine := normalizeLine(lines[i], width*widthStep)
-		for j := 0; j < min(len(currentLine), width*widthStep); j += widthStep {
-			char := string(currentLine[j])
+	for i := 0; i < height; i++ {
+		startSrcLineIndex := i * len(lines) / height
+		endSrcLineIndex := (i + 1) * len(lines) / height
+
+		// Determine the representative line for this minimap line
+		srcLineIndex := startSrcLineIndex
+		currentLine := normalizeLine(lines[srcLineIndex], width)
+
+		for j := 0; j < width; j++ {
+			srcCharIndex := j * len(currentLine) / width
+			char := string(currentLine[srcCharIndex])
 			color := contentColor
 			if char == " " {
 				color = spaceColor
 			}
-			if minimapLine == representativeHighlight {
-				c.WriteBackground(uint(x+j/widthStep), uint(y+i/heightStep), highlightColor)
+			if highlightIndex >= startSrcLineIndex && highlightIndex < endSrcLineIndex {
+				c.WriteBackground(uint(x+j), uint(y+i), highlightColor)
 			} else {
-				c.WriteBackground(uint(x+j/widthStep), uint(y+i/heightStep), color)
+				c.WriteBackground(uint(x+j), uint(y+i), color)
 			}
 		}
 	}
