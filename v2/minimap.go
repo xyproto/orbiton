@@ -21,11 +21,14 @@ func (e *Editor) DrawMiniMap(c *vt100.Canvas, repositionCursorAfterDrawing bool)
 	var xpos = cw - (width + rightMargin)
 	const ypos = topMargin
 
+	//lineIndex := int(e.LineIndex())
 	lineIndex := int(LineIndex(e.pos.OffsetY()))
-	text := e.DebugStoppedBackground
-	spaces := text
+
+	text := e.Background
+	spaces := e.Background
 	highlight := e.NanoHelpBackground
-	minimap.DrawBackgroundMinimap(c, e.String(), xpos, ypos, width, height, e.mode, lineIndex, text, spaces, highlight)
+
+	minimap.DrawBackgroundMinimap(c, e.String(), xpos, ypos, width, height, lineIndex, text, spaces, highlight)
 
 	// Blit
 	c.Draw()
