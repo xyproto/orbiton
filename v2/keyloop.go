@@ -896,6 +896,22 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					const drawLines = true
 					e.FullResetRedraw(c, status, drawLines)
 					LaunchTutorial(tty, c, e, status)
+				case scrollUpAction:
+					e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
+					e.redrawCursor = true
+					if e.AfterLineScreenContents() {
+						e.End(c)
+					}
+					miniMapCache = e.String()
+					e.drawMiniMapOnce = true
+				case scrollDownAction:
+					e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
+					e.redrawCursor = true
+					if e.AfterLineScreenContents() {
+						e.End(c)
+					}
+					miniMapCache = e.String()
+					e.drawMiniMapOnce = true
 				}
 				e.redraw = true
 				e.redrawCursor = true

@@ -2,7 +2,7 @@
 
 ## General
 
-- [ ] Let ctrl-p and ctrl-n browse up and down while in ctrl-l mode.
+- [x] Let ctrl-p and ctrl-n browse up and down while in ctrl-l mode.
 - [ ] Add a Markdown template with headers and checkboxes.
 - [ ] ctrl-g must look for definitions in the directory of the current filename before looking in the current directory.
 - [ ] Do not highlight lines that start with `#` in gray, for Go. Or lines that starts with `//`, for shell scripts.

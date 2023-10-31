@@ -221,6 +221,8 @@ const (
 	noAction = iota
 	showHotkeyOverviewAction
 	launchTutorialAction
+	scrollUpAction
+	scrollDownAction
 )
 
 // JumpMode initiates the mode where the user can enter where to jump to
@@ -296,6 +298,12 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 			postAction = showHotkeyOverviewAction
 		case "↑", "↓", "←", "→": // one of the arrow keys
 			fallthrough // cancel
+		case "c:16": // ctrl-p, scroll up
+			doneCollectingDigits = true
+			postAction = scrollUpAction
+		case "c:14": // ctrl-n, scroll down
+			doneCollectingDigits = true
+			postAction = scrollDownAction
 		case "c:12", "c:17", "c:27", "c:11", "c:15": // ctrl-l, ctrl-q, esc, ctrl-k or ctrl-o (keys near ctrl-l)
 			cancel = true
 			lns = ""
