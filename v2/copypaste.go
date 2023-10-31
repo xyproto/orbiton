@@ -9,6 +9,7 @@ import (
 	"github.com/xyproto/clip"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
+	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
 
@@ -225,15 +226,10 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 		)
 
 		// Consider smart indentation for programming languages
-		if e.ProgrammingLanguage() {
-			trimmedLine := e.TrimmedLine()
-			currentLeadingWhitespace := e.LeadingWhitespace()
-
-			// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
-			leadingWhitespace := e.smartIndentation(currentLeadingWhitespace, trimmedLine, false) // the last parameter is "also dedent"
-
+		if e.ProgrammingLanguage() || e.mode == mode.Config {
 			// Indent the block that is about to be pasted to the smart indentation level, if the block had no indentation
-			if LeadingWhitespace(firstLine) == "" {
+			if getLeadingWhitespace(firstLine) == "" {
+				leadingWhitespace := e.WhitespaceAboveAndBelow()
 				// add indentation to each line
 				firstLine = leadingWhitespace + firstLine
 				for i := 0; i < tailLineCount; i++ {
