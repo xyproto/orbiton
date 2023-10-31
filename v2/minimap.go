@@ -5,6 +5,8 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+var miniMapCache string
+
 // DrawMiniMap draws a minimap of the current file contents to the right side of the canvas
 func (e *Editor) DrawMiniMap(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
 	var cw = int(c.Width())
@@ -14,7 +16,7 @@ func (e *Editor) DrawMiniMap(c *vt100.Canvas, repositionCursorAfterDrawing bool)
 	const botMargin = 1
 	const rightMargin = 2
 
-	const width = 20
+	var width = (cw - rightMargin) / 20
 	var height = ch - (topMargin + botMargin)
 
 	// The x and y position for where the minimap should be drawn
@@ -24,10 +26,16 @@ func (e *Editor) DrawMiniMap(c *vt100.Canvas, repositionCursorAfterDrawing bool)
 	//lineIndex := int(e.LineIndex())
 	lineIndex := int(LineIndex(e.pos.OffsetY()))
 
-	highlight := e.BoxBackground
+	if miniMapCache == "" {
+		miniMapCache = e.String()
+	}
 
-	// TODO: Cache e.String() until the document is changed
-	minimap.DrawBackgroundMinimapHighlight(c, e.String(), xpos, ypos, width, height, lineIndex, highlight)
+	text := e.BoxBackground
+	space := e.Background
+	highlight := e.NanoHelpBackground
+
+	// TODO: Also pass the canvas height to this function so that the indicator line is drawn all the way down
+	minimap.DrawBackgroundMinimap(c, miniMapCache, xpos, ypos, width, height, lineIndex, text, space, highlight)
 
 	// Blit
 	c.Draw()
