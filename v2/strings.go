@@ -260,3 +260,37 @@ func LeadingWhitespace(line string) string {
 	}
 	return string(whitespace)
 }
+
+func withinBackticks(line, what string) bool {
+	first := []rune(what)[0]
+	within := false
+	lineRunes := []rune(line)
+	whatRunes := []rune(what)
+
+	for i, r := range lineRunes {
+		if r == '`' {
+			within = !within
+			continue
+		}
+		if within && r == first {
+			// check if the following runes also matches "what"
+			// if they do, return true
+			match := true
+			for whatIndex, whatRune := range whatRunes {
+				lineIndex := i + whatIndex
+				if lineIndex >= len(lineRunes) {
+					match = false
+					break
+				}
+				if lineRunes[lineIndex] != whatRune {
+					match = false
+					break
+				}
+			}
+			if match {
+				return true
+			}
+		}
+	}
+	return false
+}

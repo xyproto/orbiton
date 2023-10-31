@@ -114,13 +114,19 @@ func style(line, marker string, textColor, styleColor vt100.AttributeColor) stri
 
 func emphasis(line string, textColor, italicsColor, boldColor, strikeColor vt100.AttributeColor) string {
 	result := line
-	result = style(result, "~~", textColor, strikeColor)
-	result = style(result, "**", textColor, boldColor)
-	result = style(result, "__", textColor, boldColor)
-	if !strings.Contains(line, "**") {
+	if !withinBackticks(line, "~~") {
+		result = style(result, "~~", textColor, strikeColor)
+	}
+	if !withinBackticks(line, "**") {
+		result = style(result, "**", textColor, boldColor)
+	}
+	if !withinBackticks(line, "__") {
+		result = style(result, "__", textColor, boldColor)
+	}
+	if !strings.Contains(line, "**") && !withinBackticks(line, "*") {
 		result = style(result, "*", textColor, italicsColor)
 	}
-	if !strings.Contains(line, "__") {
+	if !strings.Contains(line, "__") && !withinBackticks(line, "_") {
 		result = style(result, "_", textColor, italicsColor)
 	}
 	return result
