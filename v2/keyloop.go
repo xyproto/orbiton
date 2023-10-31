@@ -609,6 +609,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.End(c)
 					}
 				}
+				if !kh.PrevIs("c:16") {
+					miniMapCache = e.String()
+				}
 				e.drawMiniMapOnce = true
 				break
 			}
@@ -801,6 +804,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					if e.AfterLineScreenContents() {
 						e.End(c)
 					}
+				}
+				if !kh.PrevIs("c:14") {
+					miniMapCache = e.String()
 				}
 				e.drawMiniMapOnce = true
 				break
