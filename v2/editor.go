@@ -1681,6 +1681,25 @@ func (e *Editor) EmptyRightTrimmedLine() bool {
 	return len(strings.TrimRightFunc(e.CurrentLine(), unicode.IsSpace)) == 0
 }
 
+// LineAbove returns the line above, if possible
+func (e *Editor) LineAbove() string {
+	y := e.DataY() - 1
+	if y >= 0 {
+		return e.Line(y)
+	}
+	return ""
+
+}
+
+// LineBelow returns the line below, if possible
+func (e *Editor) LineBelow() string {
+	y := e.DataY() + 1
+	if int(y) < e.Len() {
+		return e.Line(y)
+	}
+	return ""
+}
+
 // EmptyRightTrimmedLineBelow checks if the next line is empty (and whitespace doesn't count)
 func (e *Editor) EmptyRightTrimmedLineBelow() bool {
 	return len(strings.TrimRightFunc(e.Line(e.DataY()+1), unicode.IsSpace)) == 0
@@ -1727,6 +1746,16 @@ func (e *Editor) Down(c *vt100.Canvas, status *StatusBar) bool {
 // LeadingWhitespace returns the leading whitespace for this line
 func (e *Editor) LeadingWhitespace() string {
 	return e.CurrentLine()[:e.FirstDataPosition(e.DataY())]
+}
+
+// WhitespaceAboveAndBelow returns the longest indentation whitespace for the line above or below
+func (e *Editor) WhitespaceAboveAndBelow() string {
+	prev := getLeadingWhitespace(e.LineAbove())
+	next := getLeadingWhitespace(e.LineBelow())
+	if len(next) > len(prev) {
+		return next
+	}
+	return prev
 }
 
 // LeadingWhitespaceAt returns the leading whitespace for a given line index

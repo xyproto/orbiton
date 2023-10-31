@@ -248,8 +248,8 @@ func sanitizeFilename(input string) string {
 	return string(result)
 }
 
-// LeadingWhitespace returns the leading whitespace of the given string
-func LeadingWhitespace(line string) string {
+// getLeadingWhitespace returns the leading whitespace of the given string
+func getLeadingWhitespace(line string) string {
 	var whitespace []rune
 	for _, char := range line {
 		if unicode.IsSpace(char) {
