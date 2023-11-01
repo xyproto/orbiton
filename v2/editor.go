@@ -1758,6 +1758,20 @@ func (e *Editor) WhitespaceAboveAndBelow() string {
 	return prev
 }
 
+// WhitespaceOnAboveAndBelow returns the longest indentation whitespace for the current line, the line above or the line below
+func (e *Editor) WhitespaceOnAboveAndBelow() string {
+	prv := getLeadingWhitespace(e.LineAbove())
+	cur := getLeadingWhitespace(e.CurrentLine())
+	nxt := getLeadingWhitespace(e.LineBelow())
+	if len(nxt) > len(prv) && len(nxt) > len(cur) {
+		return nxt
+	}
+	if len(prv) > len(nxt) && len(prv) > len(cur) {
+		return prv
+	}
+	return cur
+}
+
 // LeadingWhitespaceAt returns the leading whitespace for a given line index
 func (e *Editor) LeadingWhitespaceAt(y LineIndex) string {
 	return e.Line(y)[:e.FirstDataPosition(y)]

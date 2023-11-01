@@ -229,7 +229,7 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 		if e.ProgrammingLanguage() || e.mode == mode.Config {
 			// Indent the block that is about to be pasted to the smart indentation level, if the block had no indentation
 			if getLeadingWhitespace(firstLine) == "" {
-				leadingWhitespace := e.WhitespaceAboveAndBelow()
+				leadingWhitespace := e.WhitespaceOnAboveAndBelow()
 				// add indentation to each line
 				firstLine = leadingWhitespace + firstLine
 				for i := 0; i < tailLineCount; i++ {
