@@ -1,0 +1,71 @@
+package main
+
+import (
+	"image/color"
+	"io/ioutil"
+	"log"
+	"regexp"
+
+	"github.com/fogleman/gg"
+)
+
+var (
+	keywords   = `(\bfunc\b|\bif\b|\belse\b|\bfor\b|\breturn\b|\bstruct\b|\benum\b|\bmatch\b|\buse\b|\bmod\b|\bconst\b|\bpub\b)`
+	strings    = `(".*?"|'.*?'|` + "`" + `.*?` + "`" + `)`
+	comments   = `(//.*|/\*.*?\*/|#![.*\[]|#\s.*|\bpackage\b)`
+	whitespace = `(\s+)`
+)
+
+var (
+	colorKeyword    = color.RGBA{255, 0, 0, 255}
+	colorString     = color.RGBA{0, 255, 0, 255}
+	colorComment    = color.RGBA{0, 0, 255, 255}
+	colorNormal     = color.RGBA{255, 255, 255, 255}
+	colorWhitespace = color.RGBA{0, 0, 0, 0}
+)
+
+func main() {
+	data, err := ioutil.ReadFile("input.txt") // Replace with your source file
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	content := string(data)
+	dc := gg.NewContext(800, 1000)
+	dc.SetRGB(0.15, 0.15, 0.15)
+	dc.Clear()
+
+	fontPath := "path/to/your/font.ttf"
+	if err := dc.LoadFontFace(fontPath, 16); err != nil {
+		log.Fatalf("Failed to load font: %v", err)
+	}
+
+	combinedRegex := regexp.MustCompile(keywords + "|" + strings + "|" + comments + "|" + whitespace)
+	tokens := combinedRegex.FindAllStringSubmatch(content, -1)
+
+	x, y := 10.0, 20.0
+	for _, token := range tokens {
+		// Determine the color
+		var col color.RGBA
+		switch {
+		case token[1] != "": // keyword
+			col = colorKeyword
+		case token[2] != "": // string
+			col = colorString
+		case token[3] != "": // comment
+			col = colorComment
+		case token[4] != "": // whitespace
+			col = colorWhitespace
+		default:
+			col = colorNormal
+		}
+
+		dc.SetColor(col)
+		dc.DrawString(token[0], x, y)
+		width, _ := dc.MeasureString(token[0])
+		x += width
+	}
+
+	dc.SavePNG("output.png")
+	log.Println("Image saved as output.png")
+}
