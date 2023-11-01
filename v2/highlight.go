@@ -51,14 +51,24 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	case mode.ASCIIDoc, mode.Markdown, mode.ReStructured, mode.SCDoc:
 		// Figure out if "fromline" is within a markdown code block or not
 		for i := LineIndex(0); i < fromline; i++ {
-			// Check if the untrimmed line starts with ~~~ or ```
-			line := e.Line(i)
-			if strings.HasPrefix(line, "~~~") || strings.HasPrefix(line, "```") {
+			trimmedLine := strings.TrimSpace(e.Line(i))
+			// Check if the trimmed line starts with ~~~ or ```
+			if strings.HasPrefix(trimmedLine, "~~~") || strings.HasPrefix(trimmedLine, "```") {
+				if len(trimmedLine) > 3 && unicode.IsLetter([]rune(trimmedLine)[3]) {
+					// If ~~~ or ``` is immediately followed by a letter, it is the start of a code block
+					inCodeBlock = true
+				} else if len(trimmedLine) > 4 && trimmedLine[3] == ' ' && unicode.IsLetter([]rune(trimmedLine)[4]) {
+					// If ~~~ or ``` is immediately followed by a space and then a letter, it is the start of a code block
+					inCodeBlock = true
+				} else {
+					// Toggle the flag for if we're in a code block or not
+					inCodeBlock = !inCodeBlock
+				}
+			} else if strings.HasSuffix(trimmedLine, "~~~") || strings.HasSuffix(trimmedLine, "```") {
+				// Check if the trimmed line ends with ~~~ or ```
 				// Toggle the flag for if we're in a code block or not
 				inCodeBlock = !inCodeBlock
 			}
-			// Note that code blocks in Markdown normally starts or ends with ~~~ or ``` as
-			// the first thing happening on the line, so it's not important to check the trimmed line.
 		}
 	case mode.Nim, mode.Mojo, mode.Python:
 		// Figure out if "fromline" is within a markdown code block or not
