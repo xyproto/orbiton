@@ -31,6 +31,8 @@ type BoxTheme struct {
 	BL         rune
 	TR         rune
 	TL         rune
+	EdgeLeftT  rune
+	EdgeRightT rune
 }
 
 // NewBox creates a new box/container
@@ -49,6 +51,8 @@ func (e *Editor) NewBoxTheme() *BoxTheme {
 		VR:         '│', // vertical line, right side
 		HT:         '─', // horizontal line
 		HB:         '─', // horizontal bottom line
+		EdgeLeftT:  '├',
+		EdgeRightT: '┤',
 		Foreground: &e.Foreground,
 		Background: &e.BoxBackground,
 		Text:       &e.BoxTextColor,
@@ -195,6 +199,7 @@ func (e *Editor) DrawBox(bt *BoxTheme, c *vt100.Canvas, r *Box) *Box {
 		c.WriteRune(i, y, *FG1, *bg, bt.HT)
 	}
 	c.WriteRune(x+width-1, y, *FG1, *bg, bt.TR)
+
 	for i := y + 1; i < y+height; i++ {
 		c.WriteRune(x, i, *FG1, *bg, bt.VL)
 		c.Write(x+1, i, *FG1, *bg, repeatRune(' ', width-2))
@@ -226,12 +231,58 @@ func (e *Editor) DrawList(bt *BoxTheme, c *vt100.Canvas, r *Box, items []string,
 }
 
 // DrawTitle draws a title at the top of a box, not exactly centered
-func (e *Editor) DrawTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title string) {
-	titleWithSpaces := " " + title + " "
+func (e *Editor) DrawTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title string, withSpaces bool) {
+	titleWithSpaces := title
+	if withSpaces {
+		titleWithSpaces = " " + title + " "
+	}
+
 	tmp := bt.Text
 	bt.Text = bt.UpperEdge
 	e.Say(bt, c, r.X+(r.W-len(titleWithSpaces))/2, r.Y, titleWithSpaces)
 	bt.Text = tmp
+}
+
+// DrawSubTitle draws a title right below the top of a box, not exactly centered
+func (e *Editor) DrawSubTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title string, withSpaces bool) {
+	var (
+		bg    = bt.Background
+		FG1   = bt.UpperEdge
+		x     = r.X
+		y     = r.Y + 1
+		width = r.W
+	)
+
+	titleWithSpaces := title
+	if withSpaces {
+		titleWithSpaces = " " + title + " "
+	}
+
+	// Start out with the edge runes
+	c.WriteRune(uint(x), uint(y), *FG1, *bg, bt.EdgeLeftT)
+	c.WriteRune(uint(x+width-1), uint(y), *FG1, *bg, bt.EdgeRightT)
+
+	leftover := width - len(titleWithSpaces)
+	leftside := leftover / 2
+	rightside := leftover / 2
+
+	counter := 0
+
+	for i := 0; i < leftside; i++ {
+		c.WriteRune(uint(x+1+i), uint(y), *FG1, *bg, bt.HT)
+		counter++
+	}
+
+	tmp := bt.Text
+	bt.Text = bt.UpperEdge
+	e.Say(bt, c, x+counter, y, titleWithSpaces)
+	bt.Text = tmp
+
+	counter += len([]rune(titleWithSpaces))
+
+	for i := 0; i < rightside-1; i++ {
+		c.WriteRune(uint(x+counter+i), uint(y), *FG1, *bg, bt.HT)
+	}
 }
 
 // DrawFooter draws text at the bottom of a box, not exactly centered

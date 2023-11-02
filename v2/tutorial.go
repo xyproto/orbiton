@@ -425,7 +425,7 @@ func (step TutorialStep) Draw(c *vt100.Canvas, e *Editor, progress string, minWi
 	bt.Background = &e.DebugInstructionsBackground
 
 	e.DrawBox(bt, c, centerBox)
-	e.DrawTitle(bt, c, centerBox, step.title)
+	e.DrawTitle(bt, c, centerBox, step.title, true)
 	e.DrawFooter(bt, c, centerBox, "("+progress+")")
 	e.DrawText(bt, c, listBox, step.description)
 

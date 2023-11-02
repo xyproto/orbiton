@@ -164,7 +164,7 @@ ctrl-l    - refresh the current screen
 
 	e.DrawBox(bt, c, centerBox)
 
-	e.DrawTitle(bt, c, centerBox, title)
+	e.DrawTitle(bt, c, centerBox, title, true)
 
 	e.DrawList(bt, c, listBox, lines, -1)
 
@@ -234,7 +234,7 @@ func (e *Editor) DrawHotkeyOverview(tty *vt100.TTY, c *vt100.Canvas, status *Sta
 	for {
 		// Draw the current page
 		e.DrawBox(boxTheme, c, &surroundingBox)
-		e.DrawTitle(boxTheme, c, &surroundingBox, title)
+		e.DrawTitle(boxTheme, c, &surroundingBox, title, true)
 		if len(pages) > 1 {
 			status.SetMessage("Press Space to view the next page. Press q or Esc to close.")
 			status.Show(c, e)

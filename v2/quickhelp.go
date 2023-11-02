@@ -103,8 +103,9 @@ func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing boo
 	}
 
 	e.DrawBox(bt, c, centerBox)
-	e.DrawTitle(bt, c, centerBox, title)
-	e.DrawFooter(bt, c, centerBox, versionString)
+	e.DrawTitle(bt, c, centerBox, "=[ "+versionString+" ]=", false)
+	e.DrawSubTitle(bt, c, centerBox, title, true)
+	listBox.Y++
 	e.DrawText(bt, c, listBox, quickHelpText)
 
 	// Blit

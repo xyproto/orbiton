@@ -749,7 +749,7 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 	}
 
 	// Draw the title
-	e.DrawTitle(bt, c, upperRightBox, title)
+	e.DrawTitle(bt, c, upperRightBox, title, true)
 
 	// Blit
 	c.Draw()
@@ -898,7 +898,7 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 	// Draw the background box and title
 	e.DrawBox(bt, c, lowerRightBox)
 
-	e.DrawTitle(bt, c, lowerRightBox, title)
+	e.DrawTitle(bt, c, lowerRightBox, title, true)
 
 	if e.gdb != nil {
 
@@ -1063,7 +1063,7 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 		}
 
 		// Draw the title
-		e.DrawTitle(bt, c, centerBox, title)
+		e.DrawTitle(bt, c, centerBox, title, true)
 
 		// Blit
 		c.Draw()
@@ -1129,7 +1129,7 @@ func (e *Editor) DrawGDBOutput(c *vt100.Canvas, repositionCursor bool) {
 
 		e.DrawBox(bt, c, lowerLeftBox)
 
-		e.DrawTitle(bt, c, lowerLeftBox, title)
+		e.DrawTitle(bt, c, lowerLeftBox, title, true)
 
 		// Get the last 5 lines, and create a string slice
 		lines := strings.Split(collectedGDBOutput, "\n")

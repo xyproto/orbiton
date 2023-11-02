@@ -142,7 +142,7 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutpu
 	e.DrawBox(bt, c, lowerLeftBox)
 
 	if title != "" {
-		e.DrawTitle(bt, c, lowerLeftBox, title)
+		e.DrawTitle(bt, c, lowerLeftBox, title, true)
 	}
 
 	e.DrawList(bt, c, listBox, lines, -1)
