@@ -2247,6 +2247,7 @@ func (e *Editor) LineContentsFromCursorPosition() string {
 
 // CurrentWord returns the current word under the cursor, or an empty string.
 // The word may contain numbers or dashes, but not spaces or special characters.
+// "." is included.
 func (e *Editor) CurrentWord() string {
 	y := int(e.DataY())
 	runes, ok := e.lines[y]
