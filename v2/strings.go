@@ -3,6 +3,7 @@ package main
 import (
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 // hasAnyPrefixWord checks if the given line is prefixed with any one of the given words
@@ -226,7 +227,7 @@ func smartSplit(s string) []string {
 
 // isAllowedFilenameChar checks if the given rune is allowed in a typical cross-platform filename
 func isAllowedFilenameChar(r rune) bool {
-	if unicode.IsLetter(r) || unicode.IsDigit(r) {
+	if unicode.IsLetter(r) || unicode.IsDigit(r) || isEmoji(r) {
 		return true
 	}
 	switch r {
@@ -268,7 +269,7 @@ func withinBackticks(line, what string) bool {
 	whatRunes := []rune(what)
 
 	for i, r := range lineRunes {
-		if r == '`' {
+		if r == '`' { // `
 			within = !within
 			continue
 		}
@@ -293,4 +294,12 @@ func withinBackticks(line, what string) bool {
 		}
 	}
 	return false
+}
+
+// isEmoji checks if a rune is likely to be an emoji.
+func isEmoji(r rune) bool {
+	// Check if the rune falls within ranges that are likely to be used by emojis.
+	return unicode.Is(unicode.S, r) || // Symbols
+		unicode.Is(unicode.P, r) || // Punctuation
+		r >= utf8.RuneSelf // Emojis are typically multi-byte characters in UTF-8
 }
