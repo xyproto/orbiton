@@ -96,9 +96,11 @@ func (e *Editor) LoadByteLine(ib IndexByteLine, eMut, tcMut *sync.RWMutex, tabIn
 
 // LoadBytes replaces the current editor contents with the given bytes
 func (e *Editor) LoadBytes(data []byte) {
+	lineCount := bytes.Count(data, []byte{'\n'}) + 1
+
 	// Prepare an empty map to load the lines into
 	e.Clear()
-	e.lines = make(map[int][]rune, 0)
+	e.lines = make(map[int][]rune, lineCount)
 
 	e.binaryFile = binary.Data(data)
 
@@ -120,9 +122,11 @@ func (e *Editor) LoadBytes(data []byte) {
 	)
 
 	var wg sync.WaitGroup
-	for index, byteLine := range byteLines {
+	var byteLine []byte
+	for i := 0; i < lineCount; i++ {
+		byteLine = byteLines[i]
 		wg.Add(1)
-		go e.LoadByteLine(IndexByteLine{byteLine, index}, &eMut, &tcMut, &tabIndentCounter, &numLines, &wg)
+		go e.LoadByteLine(IndexByteLine{byteLine, i}, &eMut, &tcMut, &tabIndentCounter, &numLines, &wg)
 	}
 	wg.Wait()
 
