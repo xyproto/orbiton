@@ -2,7 +2,8 @@
 
 ## General
 
-- [x] Let ctrl-p and ctrl-n browse up and down while in ctrl-l mode.
+- [ ] If the user opens a source code file, markdown file or configuration file, edits it and then saves it within the span of 1 minute, disable the quick help at start.
+- [ ] Re-think the minimap feature.
 - [ ] Add a Markdown template with headers and checkboxes.
 - [ ] ctrl-g must look for definitions in the directory of the current filename before looking in the current directory.
 - [ ] Do not highlight lines that start with `#` in gray, for Go. Or lines that starts with `//`, for shell scripts.
