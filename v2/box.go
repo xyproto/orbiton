@@ -244,7 +244,7 @@ func (e *Editor) DrawTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title string, 
 }
 
 // DrawSubTitle draws a title right below the top of a box, not exactly centered
-func (e *Editor) DrawSubTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title string, withSpaces bool) {
+func (e *Editor) DrawSubTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title string, withSpaces, dottedLine bool) {
 	var (
 		bg    = bt.Background
 		FG1   = bt.UpperEdge
@@ -258,9 +258,8 @@ func (e *Editor) DrawSubTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title strin
 		titleWithSpaces = " " + title + " "
 	}
 
-	// Start out with the edge runes
+	// The left hand side |- rune
 	c.WriteRune(uint(x), uint(y), *FG1, *bg, bt.EdgeLeftT)
-	c.WriteRune(uint(x+width-1), uint(y), *FG1, *bg, bt.EdgeRightT)
 
 	leftover := width - len(titleWithSpaces)
 	leftside := leftover / 2
@@ -268,7 +267,12 @@ func (e *Editor) DrawSubTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title strin
 
 	counter := 0
 
-	for i := 0; i < leftside; i++ {
+	inc := 1
+	if dottedLine {
+		inc = 2
+	}
+
+	for i := 0; i < leftside; i += inc {
 		c.WriteRune(uint(x+1+i), uint(y), *FG1, *bg, bt.HT)
 		counter++
 	}
@@ -280,9 +284,12 @@ func (e *Editor) DrawSubTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title strin
 
 	counter += len([]rune(titleWithSpaces))
 
-	for i := 0; i < rightside-1; i++ {
+	for i := 0; i < rightside; i++ {
 		c.WriteRune(uint(x+counter+i), uint(y), *FG1, *bg, bt.HT)
 	}
+
+	// The right hand side -| rune
+	c.WriteRune(uint(x+width-1), uint(y), *FG1, *bg, bt.EdgeRightT)
 }
 
 // DrawFooter draws text at the bottom of a box, not exactly centered

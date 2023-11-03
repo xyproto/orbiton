@@ -106,7 +106,9 @@ func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing boo
 
 	e.DrawBox(bt, c, centerBox)
 	e.DrawTitle(bt, c, centerBox, "=[ "+versionString+" ]=", false)
-	e.DrawSubTitle(bt, c, centerBox, title, true)
+	const dottedLine = true
+	const addSpaces = true
+	e.DrawSubTitle(bt, c, centerBox, title, addSpaces, dottedLine)
 	listBox.Y++
 	e.DrawText(bt, c, listBox, quickHelpText)
 
