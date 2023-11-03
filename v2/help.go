@@ -76,7 +76,7 @@ Flags:
                                  compilation and format command to ` + cacheDirForDoc + `.
   -p, --paste FILENAME           Paste the contents of the clipboard into the given file.
                                  Combine with -f to overwrite the file.
-  -q, --quick-help               Always display the quick help pane at start.
+  -q, --quick-help               Display the quick help pane at start.
   -r, --clear-locks              Clear all file locks and close all portals.
   -d, --create-dir               When opening a new file, create directories if needed.
   -v, --version                  Display the current version.
