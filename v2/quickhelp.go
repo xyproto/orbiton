@@ -23,8 +23,10 @@ func DisableQuickHelpScreen(status *StatusBar) bool {
 		return false
 	}
 
-	// TODO: Add a flag like "--welcome" to be able to re-enable the quick overview at start
-	status.SetMessageAfterRedraw("Quick overview at start has been disabled.")
+	if status != nil {
+		status.SetMessageAfterRedraw("Quick overview at start has been disabled.")
+	}
+
 	return true
 }
 

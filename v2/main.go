@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/spf13/pflag"
 	"github.com/xyproto/env/v2"
@@ -30,6 +31,8 @@ var (
 	cacheDirForDoc = files.ShortPath(filepath.Join(userCacheDir, "o"))
 
 	probablyDoesNotWantToEditExtensions = []string{".7z", ".a", ".bak", ".core", ".gz", ".lock", ".o", ".out", ".pyc", ".pyo", ".swp", ".tar", ".tmp", ".zip"}
+
+	editorLaunchTime = time.Now()
 )
 
 func main() {

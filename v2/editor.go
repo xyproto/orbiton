@@ -500,6 +500,12 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	// If it's not a binary file OR the file has changed: save the data
 	if !e.binaryFile || e.changed {
 
+		// Check if the user appears to be a quick developer
+		if time.Since(editorLaunchTime) < 30*time.Second && e.mode != mode.Text && e.mode != mode.Blank {
+			// Disable the quick help at start
+			DisableQuickHelpScreen(nil)
+		}
+
 		// Start a spinner, in a short while
 		quitChan := Spinner(c, tty, fmt.Sprintf("Saving %s... ", e.filename), fmt.Sprintf("saving %s: stopped by user", e.filename), 200*time.Millisecond, e.ItalicsColor)
 
