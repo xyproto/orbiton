@@ -2,10 +2,10 @@
 
 ## General
 
-- [ ] If the user opens a source code file, markdown file or configuration file, edits it and then saves it within the span of 1 minute, disable the quick help at start.
 - [ ] Re-think the minimap feature.
+- [ ] Figure out why displayQuickHelpAction is not displaying the QuickHelp when it is being enabled.
 - [ ] Add a Markdown template with headers and checkboxes.
-- [ ] ctrl-g must look for definitions in the directory of the current filename before looking in the current directory.
+- [ ] `ctrl-g` must look for definitions in the directory of the current filename before looking in the current directory.
 - [ ] Do not highlight lines that start with `#` in gray, for Go. Or lines that starts with `//`, for shell scripts.
 - [ ] For Go and "go to definition", let it be able to also discover packages in the parent directory.
 - [ ] For man pages: if between "[-" and "]", do not color uppercase letters differently.
