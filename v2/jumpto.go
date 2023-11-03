@@ -223,6 +223,7 @@ const (
 	launchTutorialAction
 	scrollUpAction
 	scrollDownAction
+	displayQuickHelpAction
 )
 
 // JumpMode initiates the mode where the user can enter where to jump to
@@ -343,6 +344,8 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 		ok := false
 		if QuickHelpScreenIsDisabled() {
 			ok = EnableQuickHelpScreen(status)
+			e.displayQuickHelp = true
+			postAction = displayQuickHelpAction
 		} else {
 			ok = DisableQuickHelpScreen(status)
 		}

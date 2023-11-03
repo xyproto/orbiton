@@ -30,7 +30,7 @@ var fileLock = NewLockKeeper(defaultLockFile)
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, manPageMode, alwaysDisplayQuickHelp, createDirectoriesIfMissing bool) (userMessage string, stopParent bool, err error) {
+func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, manPageMode, createDirectoriesIfMissing, displayQuickHelp bool) (userMessage string, stopParent bool, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt100.Init()
@@ -61,7 +61,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
-	e, messageAfterRedraw, displayedImage, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing)
+	e, messageAfterRedraw, displayedImage, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp)
 	if err != nil {
 		return "", false, err
 	} else if displayedImage {
@@ -171,7 +171,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	e.InitialRedraw(c, status)
 
 	// QuickHelp screen + help for new users
-	if !QuickHelpScreenIsDisabled() || alwaysDisplayQuickHelp {
+	if !QuickHelpScreenIsDisabled() || e.displayQuickHelp {
 		e.DrawQuickHelp(c, false)
 	}
 
@@ -892,10 +892,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				case showHotkeyOverviewAction:
 					const repositionCursorAfterDrawing = true
 					e.DrawHotkeyOverview(tty, c, status, repositionCursorAfterDrawing)
+					e.redraw = true
+					e.redrawCursor = true
 				case launchTutorialAction:
 					const drawLines = true
 					e.FullResetRedraw(c, status, drawLines)
 					LaunchTutorial(tty, c, e, status)
+					e.redraw = true
+					e.redrawCursor = true
 				case scrollUpAction:
 					e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
 					e.redrawCursor = true
@@ -912,9 +916,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 					miniMapCache = e.String()
 					e.drawMiniMapOnce = true
+				case displayQuickHelpAction:
+					const repositionCursorAfterDrawing = true
+					e.DrawQuickHelp(c, repositionCursorAfterDrawing)
+					e.redraw = false
+					e.redrawCursor = false
 				}
-				e.redraw = true
-				e.redrawCursor = true
 				break
 			}
 			fallthrough // nano: ctrl-l to refresh
