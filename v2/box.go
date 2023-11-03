@@ -244,13 +244,14 @@ func (e *Editor) DrawTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title string, 
 }
 
 // DrawSubTitle draws a title right below the top of a box, not exactly centered
-func (e *Editor) DrawSubTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title string, withSpaces, dottedLine bool) {
+func (e *Editor) DrawSubTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title string, withSpaces, showLine, dottedLine bool) {
 	var (
-		bg    = bt.Background
-		FG1   = bt.UpperEdge
-		x     = r.X
-		y     = r.Y + 1
-		width = r.W
+		bg       = bt.Background
+		FG1      = bt.UpperEdge
+		x        = r.X
+		y        = r.Y + 1
+		width    = r.W
+		lineRune = bt.HT
 	)
 
 	titleWithSpaces := title
@@ -259,7 +260,13 @@ func (e *Editor) DrawSubTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title strin
 	}
 
 	// The left hand side |- rune
-	c.WriteRune(uint(x), uint(y), *FG1, *bg, bt.EdgeLeftT)
+	if showLine && !dottedLine {
+		c.WriteRune(uint(x), uint(y), *FG1, *bg, bt.EdgeLeftT)
+	}
+
+	if dottedLine {
+		lineRune = '·'
+	}
 
 	leftover := width - len(titleWithSpaces)
 	leftside := leftover / 2
@@ -267,14 +274,14 @@ func (e *Editor) DrawSubTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title strin
 
 	counter := 0
 
-	inc := 1
-	if dottedLine {
-		inc = 2
-	}
-
-	for i := 0; i < leftside; i += inc {
-		c.WriteRune(uint(x+1+i), uint(y), *FG1, *bg, bt.HT)
+	for i := 0; i < leftside; i++ {
 		counter++
+		if dottedLine && i%2 == 0 {
+			continue
+		}
+		if showLine {
+			c.WriteRune(uint(x+1+i), uint(y), *FG1, *bg, lineRune)
+		}
 	}
 
 	tmp := bt.Text
@@ -285,11 +292,18 @@ func (e *Editor) DrawSubTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title strin
 	counter += len([]rune(titleWithSpaces))
 
 	for i := 0; i < rightside; i++ {
-		c.WriteRune(uint(x+counter+i), uint(y), *FG1, *bg, bt.HT)
+		if dottedLine && i%2 == 0 {
+			continue
+		}
+		if showLine {
+			c.WriteRune(uint(x+counter+i), uint(y), *FG1, *bg, lineRune)
+		}
 	}
 
 	// The right hand side -| rune
-	c.WriteRune(uint(x+width-1), uint(y), *FG1, *bg, bt.EdgeRightT)
+	if showLine && !dottedLine {
+		c.WriteRune(uint(x+width-1), uint(y), *FG1, *bg, bt.EdgeRightT)
+	}
 }
 
 // DrawFooter draws text at the bottom of a box, not exactly centered
