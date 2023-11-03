@@ -24,7 +24,7 @@ var (
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message for the user, a bool that is true if an image was displayed instead and the finally an error type.
-func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing bool) (*Editor, string, bool, error) {
+func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp bool) (*Editor, string, bool, error) {
 	var (
 		startTime          = time.Now()
 		createdNewFile     bool   // used for indicating that a new file was created
@@ -85,7 +85,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		syntaxHighlight,
 		rainbowParenthesis,
 		monitorAndReadOnly,
-		createDirectoriesIfMissing)
+		createDirectoriesIfMissing,
+		displayQuickHelp)
 
 	if readOnly || fnord.stdin || monitorAndReadOnly {
 		e.readOnly = true
@@ -485,4 +486,62 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	}
 
 	return e, statusMessage, false, nil
+}
+
+// NewCustomEditor takes:
+// * the number of spaces per tab (typically 2, 4 or 8)
+// * if the text should be syntax highlighted
+// * if rainbow parenthesis should be enabled
+// * if text edit mode is enabled (as opposed to "ASCII draw mode")
+// * the current scroll speed, in lines
+// * the following colors:
+//   - text foreground
+//   - text background
+//   - search highlight
+//   - multi-line comment
+//
+// * a syntax highlighting scheme
+// * a file mode
+// * if directories should be created when saving a file if they are missing
+func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight, rainbowParenthesis, monitorAndReadOnly, createDirectoriesIfMissing, displayQuickHelp bool) *Editor {
+	e := &Editor{}
+	e.SetTheme(theme)
+	e.lines = make(map[int][]rune)
+	e.indentation = indentation
+	e.syntaxHighlight = syntaxHighlight
+	e.rainbowParenthesis = rainbowParenthesis
+	e.monitorAndReadOnly = monitorAndReadOnly
+	e.createDirectoriesIfMissing = createDirectoriesIfMissing
+	e.displayQuickHelp = displayQuickHelp
+	p := NewPosition(scrollSpeed)
+	e.pos = *p
+	// If the file is not to be highlighted, set word wrap to 79 (0 to disable)
+	if e.syntaxHighlight {
+		e.wrapWidth = 79
+		e.wrapWhenTyping = false
+	}
+	switch m {
+	case mode.Email, mode.Git:
+		// The subject should ideally be maximum 50 characters long, then the body of the
+		// git commit message can be 72 characters long. Because e-mail standards.
+		e.wrapWidth = 72
+		e.wrapWhenTyping = true
+	case mode.ASCIIDoc, mode.Blank, mode.Markdown, mode.ReStructured, mode.SCDoc, mode.Text:
+		e.wrapWidth = 79
+		e.wrapWhenTyping = false
+	}
+	e.mode = m
+	return e
+}
+
+// NewSimpleEditor return a new simple editor, where the settings are 4 spaces per tab, white text on black background,
+// no syntax highlighting, text edit mode (as opposed to ASCII draw mode), scroll 1 line at a time, color
+// search results magenta, use the default syntax highlighting scheme, don't use git mode and don't use markdown mode,
+// then set the word wrap limit at the given column width.
+func NewSimpleEditor(wordWrapLimit int) *Editor {
+	t := NewDefaultTheme()
+	e := NewCustomEditor(mode.DefaultTabsSpaces, 1, mode.Blank, t, false, false, false, false, false)
+	e.wrapWidth = wordWrapLimit
+	e.wrapWhenTyping = true
+	return e
 }

@@ -72,63 +72,7 @@ type Editor struct {
 	spellCheckMode             bool            // spell check mode?
 	createDirectoriesIfMissing bool            // when saving a file, should directories be created if they are missing?
 	drawMiniMapOnce            bool            // used for drawing the mini map when browsing up and down
-}
-
-// NewCustomEditor takes:
-// * the number of spaces per tab (typically 2, 4 or 8)
-// * if the text should be syntax highlighted
-// * if rainbow parenthesis should be enabled
-// * if text edit mode is enabled (as opposed to "ASCII draw mode")
-// * the current scroll speed, in lines
-// * the following colors:
-//   - text foreground
-//   - text background
-//   - search highlight
-//   - multi-line comment
-//
-// * a syntax highlighting scheme
-// * a file mode
-// * if directories should be created when saving a file if they are missing
-func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight, rainbowParenthesis, monitorAndReadOnly, createDirectoriesIfMissing bool) *Editor {
-	e := &Editor{}
-	e.SetTheme(theme)
-	e.lines = make(map[int][]rune)
-	e.indentation = indentation
-	e.syntaxHighlight = syntaxHighlight
-	e.rainbowParenthesis = rainbowParenthesis
-	e.monitorAndReadOnly = monitorAndReadOnly
-	e.createDirectoriesIfMissing = createDirectoriesIfMissing
-	p := NewPosition(scrollSpeed)
-	e.pos = *p
-	// If the file is not to be highlighted, set word wrap to 79 (0 to disable)
-	if e.syntaxHighlight {
-		e.wrapWidth = 79
-		e.wrapWhenTyping = false
-	}
-	switch m {
-	case mode.Email, mode.Git:
-		// The subject should ideally be maximum 50 characters long, then the body of the
-		// git commit message can be 72 characters long. Because e-mail standards.
-		e.wrapWidth = 72
-		e.wrapWhenTyping = true
-	case mode.ASCIIDoc, mode.Blank, mode.Markdown, mode.ReStructured, mode.SCDoc, mode.Text:
-		e.wrapWidth = 79
-		e.wrapWhenTyping = false
-	}
-	e.mode = m
-	return e
-}
-
-// NewSimpleEditor return a new simple editor, where the settings are 4 spaces per tab, white text on black background,
-// no syntax highlighting, text edit mode (as opposed to ASCII draw mode), scroll 1 line at a time, color
-// search results magenta, use the default syntax highlighting scheme, don't use git mode and don't use markdown mode,
-// then set the word wrap limit at the given column width.
-func NewSimpleEditor(wordWrapLimit int) *Editor {
-	t := NewDefaultTheme()
-	e := NewCustomEditor(mode.DefaultTabsSpaces, 1, mode.Blank, t, false, false, false, false)
-	e.wrapWidth = wordWrapLimit
-	e.wrapWhenTyping = true
-	return e
+	displayQuickHelp           bool            // display the quick help box?
 }
 
 // CopyLines will create a new map[int][]rune struct that is the copy of all the lines in the editor
@@ -2191,7 +2135,7 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
 		fnord := FilenameOrData{filenameToOpen, []byte{}, 0, false}
-		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, e.monitorAndReadOnly, e.nanoMode, e.createDirectoriesIfMissing)
+		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, e.monitorAndReadOnly, e.nanoMode, e.createDirectoriesIfMissing, e.displayQuickHelp)
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)
