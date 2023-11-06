@@ -2,11 +2,14 @@
 
 ## General
 
-- [ ] Re-think the minimap feature.
-- [ ] Figure out why displayQuickHelpAction is not displaying the QuickHelp when it is being enabled.
-- [ ] Add a Markdown template with headers and checkboxes.
-- [ ] `ctrl-g` must look for definitions in the directory of the current filename before looking in the current directory.
 - [ ] Do not highlight lines that start with `#` in gray, for Go. Or lines that starts with `//`, for shell scripts.
+- [ ] Add a Markdown template with headers and checkboxes.
+- [ ] Add support for `github.com/xyproto/ollamaclient` as an alternative to or instead of the OpenAI API.
+      The `mistral` model is pretty fast and capable by now.
+- [ ] Re-think the minimap feature.
+- [ ] `ctrl-g` must look for definitions in the directory of the current filename before looking in the current directory.
+- [ ] Use a menu option for toggling the status bar at the bottom instead of `ctrl-g`.
+- [ ] Let the `ctrl-o` menu have additional info, like time and date and GC stats.
 - [ ] For Go and "go to definition", let it be able to also discover packages in the parent directory.
 - [ ] For man pages: if between "[-" and "]", do not color uppercase letters differently.
 - [ ] For man pages: if the line contains "-*[a-z]" and then later "-*[a-z]" and a majority of words with "-", then color text red instead of blue (and consider the theme).
@@ -56,6 +59,7 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
 ## Maybe
 
+- [ ] Figure out why displayQuickHelpAction is not displaying the QuickHelp when it is being enabled.
 - [ ] Adjust the fuzzyness of the spell checker?
 - [ ] Highlight changed lines if a file changed while monitoring it with `-m`.
 - [ ] Move redrawing and clearing the statusbar to a separate goroutine.
