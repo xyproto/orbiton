@@ -15,7 +15,7 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Test
       run: cd v2 && go test ./...
 
@@ -27,8 +27,8 @@ jobs:
       with:
         go-version: 1.21.x
     - name: Checkout code
-      uses: actions/checkout@v3
-    - uses: actions/cache@v2
+      uses: actions/checkout@v4
+    - uses: actions/cache@v3
       with:
         path: |
           ~/go/pkg/mod              # Module download cache
@@ -39,4 +39,5 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
     - name: Test
-      run: cd v2 && go test ./...
+      workdir: v2
+      run: go test ./...
