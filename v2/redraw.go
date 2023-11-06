@@ -160,16 +160,16 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar) {
 		e.DrawLines(c, true, redrawCanvas)
 		e.redraw = false
 
-		if e.drawMiniMapOnce {
-			e.DrawMiniMap(c, false)
-			e.drawMiniMapOnce = false
+		if e.drawProgress {
+			e.DrawProgress(c)
+			e.drawProgress = false
 		}
 	} else if e.Changed() {
 		c.Draw()
 
-		if e.drawMiniMapOnce {
-			e.DrawMiniMap(c, false)
-			e.drawMiniMapOnce = false
+		if e.drawProgress {
+			e.DrawProgress(c)
+			e.drawProgress = false
 		}
 	}
 

@@ -71,8 +71,8 @@ type Editor struct {
 	nanoMode                   bool            // emulate GNU Nano
 	spellCheckMode             bool            // spell check mode?
 	createDirectoriesIfMissing bool            // when saving a file, should directories be created if they are missing?
-	drawMiniMapOnce            bool            // used for drawing the mini map when browsing up and down
 	displayQuickHelp           bool            // display the quick help box?
+	drawProgress               bool            // used for drawing the progress character on the right side
 }
 
 // CopyLines will create a new map[int][]rune struct that is the copy of all the lines in the editor
@@ -1784,6 +1784,7 @@ func (e *Editor) PositionPercentageAndModeInfo() string {
 	if allLines > 0 {
 		percentage = int(100.0 * (float64(lineNumber) / float64(allLines)))
 	}
+
 	return fmt.Sprintf("line %d/%d (%d%%) col %d rune %U words %d, [%s] %s", lineNumber, allLines, percentage, e.ColNumber(), e.Rune(), e.WordCount(), e.mode, indentation)
 }
 

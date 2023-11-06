@@ -609,10 +609,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.End(c)
 					}
 				}
-				if !kh.PrevIs("c:16") {
-					miniMapCache = e.String()
-				}
-				e.drawMiniMapOnce = true
+				e.drawProgress = true
 				break
 			}
 
@@ -805,10 +802,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.End(c)
 					}
 				}
-				if !kh.PrevIs("c:14") {
-					miniMapCache = e.String()
-				}
-				e.drawMiniMapOnce = true
+				e.drawProgress = true
 				break
 			}
 
@@ -906,16 +900,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					if e.AfterLineScreenContents() {
 						e.End(c)
 					}
-					miniMapCache = e.String()
-					e.drawMiniMapOnce = true
+					e.drawProgress = true
 				case scrollDownAction:
 					e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
 					e.redrawCursor = true
 					if e.AfterLineScreenContents() {
 						e.End(c)
 					}
-					miniMapCache = e.String()
-					e.drawMiniMapOnce = true
+					e.drawProgress = true
 				case displayQuickHelpAction:
 					const repositionCursorAfterDrawing = true
 					e.DrawQuickHelp(c, repositionCursorAfterDrawing)
