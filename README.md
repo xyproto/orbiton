@@ -17,8 +17,6 @@ It might be a good fit for:
 
 One of the goals of Orbiton is to be quick, polished and not annoying. If you experience anything annoying (that is not caused by the limitations of VT100), please submit a pull request or file a feature request.
 
-For a more feature complete editor that is also written in Go, check out [micro](https://github.com/zyedidia/micro).
-
 ## Screenshots
 
 Screenshot of the VTE GUI application (that can be found in the `gtk3` directory), running the `o` editor:
