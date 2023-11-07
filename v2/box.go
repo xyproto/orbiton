@@ -291,7 +291,7 @@ func (e *Editor) DrawSubTitle(bt *BoxTheme, c *vt100.Canvas, r *Box, title strin
 
 	counter += len([]rune(titleWithSpaces))
 
-	for i := 0; i < rightside; i++ {
+	for i := 0; i < rightside-1; i++ {
 		if dottedLine && i%2 == 0 {
 			continue
 		}
@@ -319,7 +319,7 @@ func (e *Editor) DrawFooter(bt *BoxTheme, c *vt100.Canvas, r *Box, text string) 
 // Takes a list of strings. Does not scroll. Uses bt.Foreground and bt.Background.
 // The text is wrapped by using the WordWrap function.
 // The number of lines that are added as a concequence of wrapping lines is returned as an int.
-func (e *Editor) DrawText(bt *BoxTheme, c *vt100.Canvas, r *Box, text string) int {
+func (e *Editor) DrawText(bt *BoxTheme, c *vt100.Canvas, r *Box, text string, dryRun bool) int {
 	maxWidth := int(r.W) - 2 // Adjusted width to account for margins
 	x := uint(r.X)
 	lineIndex := 0
@@ -345,7 +345,9 @@ func (e *Editor) DrawText(bt *BoxTheme, c *vt100.Canvas, r *Box, text string) in
 		// Draw each wrapped or chopped line to the canvas
 		for _, wrappedLine := range wrappedLines {
 			y := uint(r.Y + lineIndex)
-			c.Write(x, y, *bt.Foreground, *bt.Background, wrappedLine)
+			if !dryRun {
+				c.Write(x, y, *bt.Foreground, *bt.Background, wrappedLine)
+			}
 			lineIndex++
 		}
 	}
