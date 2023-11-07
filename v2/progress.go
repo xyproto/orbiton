@@ -21,6 +21,12 @@ func (e *Editor) DrawProgress(c *vt100.Canvas) {
 	h := int(c.Height())
 	x := w - 1
 	y := int(float64(h) * float64(r))
+	if y >= h {
+		y = h - 1
+	}
+	if x >= w {
+		x = w - 1
+	}
 	c.WriteBackground(uint(x), uint(y), e.MenuArrowColor.Background())
 	c.Draw()
 }
