@@ -100,7 +100,8 @@ func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing boo
 	leftoverHeight := (canvasBox.Y + canvasBox.H) - (centerBox.Y + centerBox.H)
 
 	// This is just an attempt at drawing the text, in order to find addedLinesBecauseWordWrap
-	if addedLinesBecauseWordWrap := e.DrawText(bt, c, listBox, quickHelpText); leftoverHeight > addedLinesBecauseWordWrap {
+	const dryRun = true
+	if addedLinesBecauseWordWrap := e.DrawText(bt, c, listBox, quickHelpText, dryRun); leftoverHeight > addedLinesBecauseWordWrap {
 		centerBox.H += addedLinesBecauseWordWrap + 2
 	}
 
@@ -111,7 +112,7 @@ func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing boo
 	const dottedLine = true
 	e.DrawSubTitle(bt, c, centerBox, title, addSpaces, showLine, dottedLine)
 	listBox.Y++
-	e.DrawText(bt, c, listBox, quickHelpText)
+	e.DrawText(bt, c, listBox, quickHelpText, false)
 
 	// Blit
 	c.Draw()
