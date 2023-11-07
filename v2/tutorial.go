@@ -421,13 +421,25 @@ func (step TutorialStep) Draw(c *vt100.Canvas, e *Editor, progress string, minWi
 
 	// Get the current theme for the register box
 	bt := e.NewBoxTheme()
-	bt.Foreground = &e.ListTextColor
+	bt.Foreground = &e.BoxTextColor
 	bt.Background = &e.DebugInstructionsBackground
 
+	// First figure out how many lines of text this will be after word wrap
+	const dryRun = true
+	addedLines := e.DrawText(bt, c, listBox, step.description, dryRun)
+
+	if addedLines > listBox.H {
+		// Then adjust the box height and text position (addedLines could very well be 0)
+		centerBox.Y -= addedLines
+		centerBox.H += addedLines
+		listBox.Y -= addedLines
+	}
+
+	// Then draw the box with the text
 	e.DrawBox(bt, c, centerBox)
 	e.DrawTitle(bt, c, centerBox, step.title, true)
 	e.DrawFooter(bt, c, centerBox, "("+progress+")")
-	e.DrawText(bt, c, listBox, step.description)
+	e.DrawText(bt, c, listBox, step.description, false)
 
 	// Blit
 	c.Draw()
