@@ -388,17 +388,17 @@ func LaunchTutorial(tty *vt100.TTY, c *vt100.Canvas, e *Editor, status *StatusBa
 		// Wait for a keypress
 		key := tty.String()
 		switch key {
-		case " ", "c:13", "↓", "→", "j", "c:14": // space, return, down, right, j or ctrl-n to go to the next step
+		case " ", "c:13", "↓", "→", "j", "c:14", "n": // space, return, down, right, j, ctrl-n or n to go to the next step
 			if i < (len(tutorialSteps) - 1) {
 				i++
 			}
 			continue
-		case "↑", "←", "k", "c:16": // up, left, k or ctrl-p
+		case "↑", "←", "k", "c:16", "p": // up, left, k, ctrl-p or p to go to the previous step
 			if i > 0 {
 				i--
 			}
 			continue
-		case "c:17", "c:27", "q": // ctrl-q, esc or q
+		case "c:17", "c:27", "q", "x": // ctrl-q, esc, q or x to exit
 			return
 		}
 		// Other keypress, do nothing
