@@ -179,6 +179,11 @@ func GetTemplatePrograms() TemplatePrograms {
 				7,
 				1,
 			},
+			mode.Markdown: {
+				"# Title\n\n## Subtitle\n\ntext\n",
+				4,
+				1,
+			},
 			mode.Mojo: {
 				"print(\"Hello, World!\")\n",
 				7,
