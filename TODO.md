@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] The first time ctrl-g is pressed and a definition is not found, say so. The second time the status bar is toggled.
 - [ ] Do not highlight lines that start with `#` in gray, for Go. Or lines that starts with `//`, for shell scripts.
 - [ ] Add a Markdown template with headers and checkboxes.
 - [ ] Add support for `github.com/xyproto/ollamaclient` as an alternative to or instead of the OpenAI API.
