@@ -419,6 +419,21 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						}
 					}
 
+					// Do not color lines gray if they start with "#" and are not in a multiline comment and the current single line comment marker is "//"
+					otherCommentMarker := "#"
+					if singleLineCommentMarker == "#" {
+						otherCommentMarker = "//"
+					}
+					if strings.HasPrefix(trimmedLine, otherCommentMarker) && !q.containsMultiLineComments && strings.HasPrefix(strings.TrimSpace(string(textWithTags)), "<"+e.Comment+">") {
+						parts := strings.SplitN(line, otherCommentMarker, 2)
+						commentMarkerString := tout.DarkTags(parts[0] + "<" + e.Dollar + ">" + otherCommentMarker + "<off>")
+						theRestString := tout.DarkTags(parts[1])
+						if theRestWithTags, err := syntax.AsText([]byte(escapeFunction(parts[1])), e.mode); err != nil {
+							theRestString = tout.DarkTags(string(theRestWithTags))
+						}
+						coloredString = unEscapeFunction(commentMarkerString + theRestString)
+					}
+
 					// Take an extra pass on coloring the -> arrow, even if it's in a comment
 					if !(e.mode == mode.HTML || e.mode == mode.XML || e.mode == mode.Markdown || e.mode == mode.Blank || e.mode == mode.Config || e.mode == mode.Shell || e.mode == mode.Docker || e.mode == mode.Just) && strings.Contains(line, "->") {
 						arrowIndex := strings.Index(line, "->")
