@@ -29,7 +29,7 @@ require (
 	github.com/xyproto/vt100 v1.12.9
 	github.com/xyproto/wordwrap v1.0.1
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
-	golang.org/x/image v0.13.0
+	golang.org/x/image v0.14.0
 )
 
 require (
