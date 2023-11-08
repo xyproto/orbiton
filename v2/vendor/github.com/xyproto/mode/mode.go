@@ -84,6 +84,7 @@ const (
 	StandardML            // Standard ML
 	SQL                   // Structured Query Language
 	Subversion            // Subversion commits
+	Swift                 // Swift
 	Teal                  // Teal
 	Terra                 // Terra
 	Text                  // plain text documents
@@ -257,6 +258,8 @@ func (mode Mode) String() string {
 		return "Standard ML"
 	case Subversion:
 		return "Subversion"
+	case Swift:
+		return "Swift"
 	case Teal:
 		return "Teal"
 	case Terra:

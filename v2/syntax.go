@@ -95,6 +95,9 @@ var (
 
 	// Ollama
 	ollamaWords = []string{"from", "parameter", "template", "system", "adapter", "license"}
+
+	// Swift
+	swiftWords = []string{"associatedtype", "class", "deinit", "enum", "extension", "fileprivate", "func", "import", "init", "inout", "internal", "let", "open", "operator", "private", "precedencegroup", "protocol", "public", "rethrows", "static", "struct", "subscript", "typealias", "var", "break", "case", "catch", "continue", "default", "defer", "do", "else", "fallthrough", "for", "guard", "if", "in", "repeat", "return", "throw", "switch", "where", "while", "Any", "as", "await", "catch", "false", "is", "nil", "rethrows", "self", "Self", "super", "throw", "throws", "true", "try", "#available", "#colorLiteral", "#elseif", "#else", "#endif", "#fileLiteral", "#if", "#imageLiteral", "#keyPath", "#selector", "#sourceLocation", "associativity", "convenience", "didSet", "dynamic", "final", "get", "indirect", "infix", "lazy", "left", "mutating", "none", "nonmutating", "optional", "override", "postfix", "precedence", "prefix", "Protocol", "required", "right", "set", "some", "Type", "unowned", "weak", "willSet"}
 )
 
 func clearKeywords() {
@@ -250,6 +253,8 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		setKeywords(smlWords)
 	case mode.SQL:
 		addKeywords([]string{"NOT"})
+	case mode.Swift:
+		setKeywords(swiftWords)
 	case mode.Vim:
 		addKeywords([]string{"call", "echo", "elseif", "endfunction", "map", "nmap", "redraw"})
 	case mode.Zig:

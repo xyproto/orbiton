@@ -192,6 +192,8 @@ func Detect(filename string) Mode {
 			mode = Assembly
 		case ".scala":
 			mode = Scala
+		case ".swift":
+			mode = Swift
 		case ".fun", ".sml":
 			mode = StandardML
 		case ".sql":

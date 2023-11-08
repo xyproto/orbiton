@@ -240,6 +240,11 @@ func GetTemplatePrograms() TemplatePrograms {
 				22,
 				1,
 			},
+			mode.Swift: {
+				"print(\"Hello, World!\")\n",
+				7,
+				1,
+			},
 			mode.Teal: {
 				"print(\"Hello, World!\")\n",
 				7,
