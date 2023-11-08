@@ -973,7 +973,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Regular behavior, take an undo snapshot and insert a space
 			undo.Snapshot(e)
 
-			// De-indent this line by 1 if the line above starts with "case " and this line is only "case" at this time
+			// De-indent this line by 1 if the line above starts with "case " and this line is only "case" at this time.
 			if cLikeSwitch(e.mode) && e.TrimmedLine() == "case" && strings.HasPrefix(e.PreviousTrimmedLine(), "case ") {
 				oneIndentation := e.indentation.String()
 				deIndented := strings.Replace(e.CurrentLine(), oneIndentation, "", 1)
@@ -1164,10 +1164,20 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						leadingWhitespace = e.indentation.String() + currentLeadingWhitespace
 					}
 				}
+			} else if cLikeSwitch(e.mode) {
+				currentLine := e.CurrentLine()
+				trimmedLine := e.TrimmedLine()
+				// De-indent this line by 1 if this line starts with "case " and the next line also starts with "case ", but the current line is indented differently.
+				currentCaseIndex := strings.Index(trimmedLine, "case ")
+				nextCaseIndex := strings.Index(e.NextTrimmedLine(), "case ")
+				if currentCaseIndex != -1 && nextCaseIndex != -1 && strings.Index(currentLine, "case ") != strings.Index(e.NextLine(), "case ") {
+					oneIndentation := e.indentation.String()
+					deIndented := strings.Replace(currentLine, oneIndentation, "", 1)
+					e.SetCurrentLine(deIndented)
+					e.End(c)
+					leadingWhitespace = currentLeadingWhitespace
+				}
 			}
-
-			// onlyOneLine := e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument()
-			// middleOfText := !e.AtOrBeforeStartOfTextLine() && !e.AtOrAfterEndOfLine()
 
 			scrollBack := false
 

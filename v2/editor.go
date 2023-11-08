@@ -1134,13 +1134,6 @@ func (e *Editor) SetRune(r rune) {
 	}
 }
 
-// NextLine will go to the start of the next line, with scrolling
-func (e *Editor) NextLine(y LineIndex, c *vt100.Canvas, status *StatusBar) {
-	e.pos.sx = 0
-	e.pos.offsetX = 0
-	e.GoTo(y+1, c, status)
-}
-
 // InsertBelow will insert the given rune at the start of the line below,
 // starting a new line if required.
 func (e *Editor) InsertBelow(y int, r rune) {
@@ -1236,6 +1229,15 @@ func (e *Editor) CurrentLine() string {
 func (e *Editor) PreviousLine() string {
 	y := e.DataY() - 1
 	if y < 0 {
+		return ""
+	}
+	return e.Line(y)
+}
+
+// NextLine will get the previous data line, as a string
+func (e *Editor) NextLine() string {
+	y := e.DataY() + 1
+	if y < 0 || int(y) >= e.Len() {
 		return ""
 	}
 	return e.Line(y)
@@ -2179,6 +2181,11 @@ func (e *Editor) TrimmedLine() string {
 // PreviousTrimmedLine returns the line above, trimmed in both ends
 func (e *Editor) PreviousTrimmedLine() string {
 	return strings.TrimSpace(e.PreviousLine())
+}
+
+// NextTrimmedLine returns the line below, trimmed in both ends
+func (e *Editor) NextTrimmedLine() string {
+	return strings.TrimSpace(e.NextLine())
 }
 
 // TrimmedLineAt returns the current line, trimmed in both ends
