@@ -32,6 +32,51 @@ type QuoteState struct {
 	ignoreSingleQuotes                 bool
 }
 
+// QuoteStateChange represents changes to a QuoteState struct.
+// This is used for caching.
+type QuoteStateChange struct {
+	DeltaBraCount                    int
+	DeltaParCount                    int
+	DeltaSingleQuote                 int
+	ChangedStartedMultiLineComment   bool
+	ChangedStoppedMultiLineComment   bool
+	ChangedContainsMultiLineComments bool
+	ChangedStartedMultiLineString    bool
+	ChangedHasSingleLineComment      bool
+	ChangedMultiLineComment          bool
+}
+
+// ProcessCache can be used for caching the quote state changes, per line of text
+type ProcessCache map[string]QuoteStateChange
+
+// Apply can apply this QuoteStateChange to a QuoteState
+func (qsc *QuoteStateChange) Apply(qs *QuoteState) {
+	qs.braCount += qsc.DeltaBraCount
+	qs.parCount += qsc.DeltaParCount
+	qs.singleQuote += qsc.DeltaSingleQuote
+
+	if qsc.ChangedStartedMultiLineComment {
+		qs.startedMultiLineComment = !qs.startedMultiLineComment
+	}
+	if qsc.ChangedStoppedMultiLineComment {
+		qs.stoppedMultiLineComment = !qs.stoppedMultiLineComment
+	}
+	if qsc.ChangedContainsMultiLineComments {
+		qs.containsMultiLineComments = !qs.containsMultiLineComments
+	}
+	if qsc.ChangedStartedMultiLineString {
+		qs.startedMultiLineString = !qs.startedMultiLineString
+	}
+	if qsc.ChangedHasSingleLineComment {
+		qs.hasSingleLineComment = !qs.hasSingleLineComment
+	}
+	if qsc.ChangedMultiLineComment {
+		qs.multiLineComment = !qs.multiLineComment
+	}
+}
+
+var qcache = make(ProcessCache)
+
 // NewQuoteState takes a singleLineCommentMarker (such as "//" or "#") and returns a pointer to a new QuoteState struct
 func NewQuoteState(singleLineCommentMarker string, m mode.Mode, ignoreSingleQuotes bool) (*QuoteState, error) {
 	var q QuoteState
@@ -227,13 +272,27 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 	}
 }
 
-// Process takes a line of text and modifies the current quote state accordingly,
-// depending on which runes are encountered.
+// extractLastRunes extracts the next-to-last and last runes from the string
+func extractLastRunes(s string) (rune, rune) {
+	if len(s) < 2 {
+		return '\n', '\n' // Fallback runes if the string is too short
+	}
+
+	runes := []rune(s)
+	return runes[len(runes)-2], runes[len(runes)-1]
+}
+
+// Process function with caching
 func (q *QuoteState) Process(line string) (rune, rune) {
-	q.hasSingleLineComment = false
-	q.startedMultiLineString = false
-	q.stoppedMultiLineComment = false
-	q.containsMultiLineComments = false
+	cacheKey := line
+
+	if change, found := qcache[cacheKey]; found {
+		change.Apply(q)
+		return extractLastRunes(line)
+	}
+
+	originalState := *q
+
 	prevRune := '\n'
 	prevPrevRune := '\n'
 	for _, r := range line {
@@ -241,7 +300,26 @@ func (q *QuoteState) Process(line string) (rune, rune) {
 		prevPrevRune = prevRune
 		prevRune = r
 	}
+
+	change := calculateStateChange(originalState, *q)
+	qcache[cacheKey] = change
+
 	return prevRune, prevPrevRune
+}
+
+// calculateStateChange function
+func calculateStateChange(original, new QuoteState) QuoteStateChange {
+	return QuoteStateChange{
+		DeltaBraCount:                    new.braCount - original.braCount,
+		DeltaParCount:                    new.parCount - original.parCount,
+		DeltaSingleQuote:                 new.singleQuote - original.singleQuote,
+		ChangedStartedMultiLineComment:   new.startedMultiLineComment != original.startedMultiLineComment,
+		ChangedStoppedMultiLineComment:   new.stoppedMultiLineComment != original.stoppedMultiLineComment,
+		ChangedContainsMultiLineComments: new.containsMultiLineComments != original.containsMultiLineComments,
+		ChangedStartedMultiLineString:    new.startedMultiLineString != original.startedMultiLineString,
+		ChangedHasSingleLineComment:      new.hasSingleLineComment != original.hasSingleLineComment,
+		ChangedMultiLineComment:          new.multiLineComment != original.multiLineComment,
+	}
 }
 
 // ParBraCount will count the parenthesis and square brackets for a single line
