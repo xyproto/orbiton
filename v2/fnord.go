@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/xyproto/env/v2"
-	"github.com/xyproto/termtitle"
 )
 
 // FilenameOrData represents either a filename, or data read in from stdin
@@ -32,28 +31,4 @@ func (fnord *FilenameOrData) Empty() bool {
 // String returns the contents as a string
 func (fnord *FilenameOrData) String() string {
 	return string(fnord.data)
-}
-
-// SetTitle sets an approperiate terminal emulator title, unless NO_COLOR is set
-func (fnord *FilenameOrData) SetTitle() {
-	if envNoColor {
-		return
-	}
-	title := "?"
-	if fnord.stdin {
-		title = "stdin"
-		if len(fnord.data) > 512 {
-			fields := strings.Fields(string(fnord.data[:512]))
-			firstWord := fields[0]
-			if len(firstWord) >= 2 && strings.Contains(firstWord, "(") && strings.Contains(firstWord, ")") {
-				// Probably a man page, create a nicely formatted lowercase title
-				// "LS(1)" becomes "man ls"
-				fields = strings.Split(firstWord, "(")
-				title = "man " + strings.ToLower(fields[0])
-			}
-		}
-	} else if fnord.filename != "" {
-		title = termtitle.GenerateTitle(fnord.filename)
-	}
-	termtitle.Set(sanitizeFilename(title))
 }
