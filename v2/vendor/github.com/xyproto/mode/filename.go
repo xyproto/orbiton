@@ -138,6 +138,8 @@ func Detect(filename string) Mode {
 			mode = Haxe
 		case ".ino":
 			mode = Arduino
+		case ".inko":
+			mode = Inko
 		case ".ivy":
 			mode = Ivy
 		case ".jakt":

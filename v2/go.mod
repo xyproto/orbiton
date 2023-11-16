@@ -7,7 +7,7 @@ require (
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/gomarkdown/markdown v0.0.0-20230922112808-5421fefb8386
+	github.com/gomarkdown/markdown v0.0.0-20231115200524-a660076da3fd
 	github.com/ianlancetaylor/demangle v0.0.0-20231023195312-e2daf7ba7156
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/sajari/fuzzy v1.0.0
@@ -21,7 +21,7 @@ require (
 	github.com/xyproto/files v1.4.1
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
-	github.com/xyproto/mode v0.7.16
+	github.com/xyproto/mode v0.7.17
 	github.com/xyproto/stringpainter v1.0.0
 	github.com/xyproto/syntax v1.10.9
 	github.com/xyproto/termtitle v1.5.1
@@ -34,7 +34,7 @@ require (
 
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
-	github.com/creack/pty v1.1.20 // indirect
+	github.com/creack/pty v1.1.21 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06 // indirect
 	github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 // indirect

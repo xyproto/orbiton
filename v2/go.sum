@@ -4,8 +4,8 @@ github.com/PullRequestInc/go-gpt3 v1.1.18 h1:4H72au79tJ5OMpUDh3iQn9H4qdS6HalpPqi
 github.com/PullRequestInc/go-gpt3 v1.1.18/go.mod h1:F9yzAy070LhkqHS2154/IH0HVj5xq5g83gLTj7xzyfw=
 github.com/boombuler/barcode v1.0.0/go.mod h1:paBWMcWSl3LHKBqUq+rly7CNSldXjb2rDl3JlRe0mD8=
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
-github.com/creack/pty v1.1.20 h1:VIPb/a2s17qNeQgDnkfZC35RScx+blkKF8GV68n80J4=
-github.com/creack/pty v1.1.20/go.mod h1:MOBLtS5ELjhRRrroQr9kyvTxUAFNvYEK993ew/Vr4O4=
+github.com/creack/pty v1.1.21 h1:1/QdRyBaHHJP61QkWMXlOIBfsgdDeeKfK8SYVUWJKf0=
+github.com/creack/pty v1.1.21/go.mod h1:MOBLtS5ELjhRRrroQr9kyvTxUAFNvYEK993ew/Vr4O4=
 github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86 h1:kHMmK/Nv9EdcvZyk/nPJAMsyx/RvvDJuAlNGOiv4zeQ=
 github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86/go.mod h1:22k58xzfLfGi/n7fkt/c8uGafmNb3wXPxdL2g/j0SpE=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -20,8 +20,8 @@ github.com/fsnotify/fsnotify v1.7.0 h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nos
 github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyTJwOpGvigM=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/protobuf v1.3.1/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
-github.com/gomarkdown/markdown v0.0.0-20230922112808-5421fefb8386 h1:EcQR3gusLHN46TAD+G+EbaaqJArt5vHhNpXAa12PQf4=
-github.com/gomarkdown/markdown v0.0.0-20230922112808-5421fefb8386/go.mod h1:JDGcbDT52eL4fju3sZ4TeHGsQwhG9nbDV21aMyhwPoA=
+github.com/gomarkdown/markdown v0.0.0-20231115200524-a660076da3fd h1:PppHBegd3uPZ3Y/Iax/2mlCFJm1w4Qf/zP1MdW4ju2o=
+github.com/gomarkdown/markdown v0.0.0-20231115200524-a660076da3fd/go.mod h1:JDGcbDT52eL4fju3sZ4TeHGsQwhG9nbDV21aMyhwPoA=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/ianlancetaylor/demangle v0.0.0-20231023195312-e2daf7ba7156 h1:XaXfcSUnkTV/iujizC1//N5IrJA1v6KQHwMDbsZesoM=
 github.com/ianlancetaylor/demangle v0.0.0-20231023195312-e2daf7ba7156/go.mod h1:gx7rwoVhcfuVKG5uya9Hs3Sxj7EIvldVofAWIUtGouw=
@@ -103,8 +103,8 @@ github.com/xyproto/guessica v1.1.2/go.mod h1:084aWqVDuOYOMVly0NHHLecAPScmGEZTLxm
 github.com/xyproto/iferr v1.1.0 h1:+5OZVuzb7ups88Yq2Bio1ygCCVdilTpW+9qUZpdhGAg=
 github.com/xyproto/iferr v1.1.0/go.mod h1:En+YVd+aRA+/q3LKqQ+EmsmbWKdgzBwUPE5C4bUfiqA=
 github.com/xyproto/mode v0.6.18/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
-github.com/xyproto/mode v0.7.16 h1:YkN6kvigonLAYkrpmRz34QTVXBpp05S/wnpX4rnQGx8=
-github.com/xyproto/mode v0.7.16/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
+github.com/xyproto/mode v0.7.17 h1:i7z2lGUcCpQ3YXhTAtZbKey3tsyIKleq0e5XBmI9BNI=
+github.com/xyproto/mode v0.7.17/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/palgen v1.5.0 h1:JIU39lMxk2Nad1V5hrCUmH8b15R9EdwNTsAzkiII0vU=
 github.com/xyproto/palgen v1.5.0/go.mod h1:IN7HA45EecW7BTEzkJzaSZljyQdjzNp5kdUQ4gpu0T8=
 github.com/xyproto/stringpainter v1.0.0 h1:fw86p5y+PQ/TnzN/u56iEwRPHChcaDGUSaZQVA9I5xA=

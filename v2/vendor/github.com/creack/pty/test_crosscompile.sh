@@ -45,10 +45,6 @@ if ! hash docker; then
   return
 fi
 
-echo2 "Build for linux."
-echo2 "  - linux/riscv"
-docker build -t creack-pty-test -f Dockerfile.riscv .
-
 # Golang dropped support for darwin 32bits since go1.15. Make sure the lib still compile with go1.14 on those archs.
 echo2 "Build for darwin (32bits)."
 echo2 "  - darwin/386"
