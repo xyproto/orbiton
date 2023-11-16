@@ -48,6 +48,9 @@ var (
 	// Hardware Interface Description Language. Keywords from https://source.android.com/devices/architecture/hidl
 	hidlWords = []string{"constexpr", "enum", "extends", "generates", "import", "interface", "oneway", "package", "safe_union", "struct", "typedef", "union"}
 
+	// Inko
+	inkoWords = []string{"and", "as", "asnyc", "break", "builtin", "case", "class", "else", "enum", "false", "for", "if", "impl", "import", "let", "loop", "match", "move", "mut", "next", "nil", "or", "pub", "recover", "ref", "return", "self", "static", "throw", "trait", "true", "try", "uni", "while"}
+
 	// Just
 	justWords = []string{"absolute_path", "arch", "capitalize", "clean", "env_var", "env_var_or_default", "error", "extension", "file_name", "file_stem", "include", "invocation_directory", "invocation_directory_native", "join", "just_executable", "justfile", "justfile_directory", "kebabcase", "lowercamelcase", "lowercase", "os", "os_family", "parent_directory", "path_exists", "quote", "replace", "replace_regex", "sha256", "sha256_file", "shoutykebabcase", "shoutysnakecase", "snakecase", "titlecase", "trim", "trim_end", "trim_end_match", "trim_end_matches", "trim_start", "trim_start_match", "trim_start_matches", "uppercamelcase", "uppercase", "uuid", "without_extension"}
 
@@ -198,6 +201,8 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		setKeywords(haxeWords)
 	case mode.HIDL:
 		setKeywords(hidlWords)
+	case mode.Inko:
+		setKeywords(inkoWords)
 	case mode.AIDL:
 		addKeywords(append([]string{"interface"}, hidlWords...))
 		fallthrough // continue to mode.Java

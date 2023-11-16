@@ -28,6 +28,7 @@ var templatePrograms TemplatePrograms
 func GetTemplatePrograms() TemplatePrograms {
 	if templatePrograms == nil {
 		fullName := getFullName()
+		// NOTE: Cursor coordinates are (X, -Y)
 		templatePrograms = TemplatePrograms{
 			mode.Agda: {
 				"module FILENAME where\n\nopen import Agda.Builtin.IO using (IO)\nopen import Agda.Builtin.Unit using (⊤)\nopen import Agda.Builtin.String using (String)\n\npostulate putStrLn : String → IO ⊤\n{-# FOREIGN GHC import qualified Data.Text as T #-}\n{-# COMPILE GHC putStrLn = putStrLn . T.unpack #-}\n\nmain : IO ⊤\nmain = putStrLn \"Hello, World!\"\n",
@@ -138,6 +139,11 @@ func GetTemplatePrograms() TemplatePrograms {
 				"<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <title>Hello</title>\n    <meta name=\"description\" content=\"Hello\">\n    <link rel=\"shortcut icon\" href=\"https://www.iconsdb.com/icons/download/orange/teapot-16.png\">\n    <link rel=\"stylesheet\" href=\"https://unpkg.com/@picocss/pico@latest/css/pico.classless.min.css\">\n  </head>\n  <body>\n    <header>\n      <hgroup>\n        <h1>Greetings</h1>\n        <h2>About to greet <code>the world</code></h2>\n      </hgroup>\n    </header>\n    <main>\n      <section id=\"hello\">\n        <h2>Hello, World!</h2>\n        Task completed.\n      </section>\n    </main>\n    <footer>\n      All done.\n    </footer>\n  </body>\n</html>\n",
 				4,
 				9,
+			},
+			mode.Inko: {
+				"import std.stdio.STDOUT\n\nclass async Main {\n  fn async main {\n    STDOUT.new.print('Hello, World!')\n  }\n}\n",
+				18,
+				3,
 			},
 			mode.Jakt: {
 				"function main() {\n    println(\"Hello, World!\")\n}\n",
