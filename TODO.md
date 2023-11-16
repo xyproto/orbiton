@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Draw a minimap with `silicon SOURCEFILE --theme gruvbox-dark --no-line-number --no-round-corner --no-window-controls --highlight-lines 10-20 --tab-width 4 --output IMAGEFILE` or create a custom minimap package.
 - [ ] The first time ctrl-g is pressed and a definition is not found, say so. The second time the status bar is toggled.
 - [ ] Do not highlight lines that start with `#` in gray, for Go. Or lines that starts with `//`, for shell scripts.
 - [ ] Add a Markdown template with headers and checkboxes.
