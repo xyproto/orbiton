@@ -230,6 +230,10 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		return cmd, func() (bool, string) {
 			return files.IsFile(filepath.Join(sourceDir, jarFilename)), jarFilename
 		}, nil
+	case mode.Inko:
+		cmd := exec.Command("inko", "build", "-o", exeFirstName, sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Go:
 		// TODO: Make this code more elegant, and consider searching all parent directories
 		hasGoMod := files.IsFile(filepath.Join(sourceDir, "go.mod")) ||
