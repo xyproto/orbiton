@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] When browsing up and down with `ctrl-n` and `ctrl-p`, do not insert an "n" or "p" within 50ms after having browsed up or down repeatedly.
 - [ ] Draw a minimap with `silicon SOURCEFILE --theme gruvbox-dark --no-line-number --no-round-corner --no-window-controls --highlight-lines 10-20 --tab-width 4 --output IMAGEFILE` or create a custom minimap package.
 - [ ] The first time ctrl-g is pressed and a definition is not found, say so. The second time the status bar is toggled.
 - [ ] Do not highlight lines that start with `#` in gray, for Go. Or lines that starts with `//`, for shell scripts.
