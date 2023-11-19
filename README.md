@@ -2,7 +2,7 @@
 
 ![Build](https://github.com/xyproto/orbiton/workflows/Build/badge.svg) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Forbiton.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Forbiton?ref=badge_shield) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/orbiton/v2)](https://goreportcard.com/report/github.com/xyproto/orbiton/v2) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/orbiton/main/LICENSE) [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-Orbiton is a text editor and a minimalistic IDE.
+Orbiton is a text editor and a simple IDE.
 
 It might be a good fit for:
 
@@ -15,7 +15,7 @@ It might be a good fit for:
 * Being placed on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in log, man page and image viewer, can be used as `EDITOR=o visudo` and has built-in support for editing and formatting `/etc/fstab` files.
 * Write `X` number of words in a distraction-free fullscreen environment. Press `ctrl-g` to see the word count in the status bar.
 
-One of the goals of Orbiton is to be quick, polished and not annoying. If you experience anything annoying (that is not caused by the limitations of VT100), please submit a pull request or file a feature request.
+One of the goals of Orbiton is to be not annoying. If you experience anything annoying (that is not caused by the limitations of VT100), please submit a pull request or a feature request.
 
 ## Screenshots
 
