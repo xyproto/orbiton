@@ -15,7 +15,7 @@ It might be a good fit for:
 * Being placed on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in log, man page and image viewer, can be used as `EDITOR=o visudo` and has built-in support for editing and formatting `/etc/fstab` files.
 * Write `X` number of words in a distraction-free fullscreen environment. Press `ctrl-g` to see the word count in the status bar.
 
-One of the goals of Orbiton is to be **not annoying**. If you experience anything annoying (that is not caused by the limitations of VT100), please submit a feature request.
+One of the goals of Orbiton is to be **smooth and polished**. If you experience anything that is not smooth and polished (and is not caused by the limitations of VT100), please submit a feature request.
 
 ## Screenshots
 
