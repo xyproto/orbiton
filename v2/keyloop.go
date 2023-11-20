@@ -378,9 +378,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.FullResetRedraw(c, status, drawLines)
 				e.redraw = true
 				e.redrawCursor = true
-			} else if e.mode == mode.Markdown { // toggle checkbox
-				e.ToggleCheckboxCurrentLine()
-				break
 			} else if !noCorresponding && (e.mode == mode.C || e.mode == mode.Cpp) && hasS([]string{".cpp", ".cc", ".c", ".cxx", ".c++"}, filepath.Ext(e.filename)) { // jump from source to header file
 				// If this is a C++ source file, try finding and opening the corresponding header file
 				// Check if there is a corresponding header file
