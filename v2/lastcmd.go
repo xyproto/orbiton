@@ -10,10 +10,26 @@ import (
 
 var lastCommandFile = filepath.Join(userCacheDir, "o", "last_command.sh")
 
+// isProllyFilename checks if the argument is likely a filename based on the presence
+// of an OS-specific path separator and a ".".
+func isProllyFilename(arg string) bool {
+	return strings.ContainsRune(arg, os.PathSeparator) && strings.Contains(arg, ".")
+}
+
 // getCommand takes an *exec.Cmd and returns the command
-// it represents, but with "/usr/bin/sh -c " trimmed away.
+// it represents, but with "/usr/bin/sh -c " trimmed away
+// and filenames quoted.
 func getCommand(cmd *exec.Cmd) string {
-	s := cmd.Path + " " + strings.Join(cmd.Args[1:], " ")
+	var args []string
+	for _, arg := range cmd.Args[1:] {
+		if isProllyFilename(arg) {
+			// Quote what appears to be a filename (has / and .)
+			args = append(args, fmt.Sprintf("%q", arg))
+		} else {
+			args = append(args, arg)
+		}
+	}
+	s := cmd.Path + " " + strings.Join(args, " ")
 	return strings.TrimPrefix(s, "/usr/bin/sh -c ")
 }
 
