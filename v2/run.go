@@ -90,10 +90,10 @@ func (e *Editor) Run() (string, bool, error) {
 
 	output, err := cmd.CombinedOutput()
 	if err == nil { // success
-		return strings.TrimSpace(string(output)), false, nil
+		return trimRightSpace(string(output)), false, nil
 	}
 	if len(output) > 0 { // error, but text on stdout/stderr
-		return strings.TrimSpace(string(output)), true, nil
+		return trimRightSpace(string(output)), true, nil
 	}
 	// error and no text on stdout/stderr
 	return "", false, err
