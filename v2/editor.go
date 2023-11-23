@@ -391,7 +391,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		}
 
 		// Trim away trailing whitespace
-		s := strings.TrimRightFunc(e.String(), unicode.IsSpace)
+		s := trimRightSpace(e.String())
 
 		// Make additional replacements, and add a final newline
 		s = opinionatedStringReplacer.Replace(s) + "\n"
@@ -523,7 +523,7 @@ func (e *Editor) TrimRight(index LineIndex) bool {
 	if !ok {
 		return false
 	}
-	trimmedLine := []rune(strings.TrimRightFunc(string(line), unicode.IsSpace))
+	trimmedLine := []rune(trimRightSpace(string(line)))
 	if len(trimmedLine) != len(line) {
 		e.lines[n] = trimmedLine
 		return true
@@ -1069,7 +1069,7 @@ func (e *Editor) SplitLine() bool {
 		// Did not split
 		return false
 	}
-	leftContents := strings.TrimRightFunc(string(runeLine[:x]), unicode.IsSpace)
+	leftContents := trimRightSpace(string(runeLine[:x]))
 	rightContents := string(runeLine[x:])
 	// Insert a new line above this one
 	e.InsertLineAbove()
@@ -1630,7 +1630,7 @@ func (e *Editor) WriteTab(c *vt100.Canvas) {
 
 // EmptyRightTrimmedLine checks if the current line is empty (and whitespace doesn't count)
 func (e *Editor) EmptyRightTrimmedLine() bool {
-	return len(strings.TrimRightFunc(e.CurrentLine(), unicode.IsSpace)) == 0
+	return len(trimRightSpace(e.CurrentLine())) == 0
 }
 
 // LineAbove returns the line above, if possible
@@ -1654,7 +1654,7 @@ func (e *Editor) LineBelow() string {
 
 // EmptyRightTrimmedLineBelow checks if the next line is empty (and whitespace doesn't count)
 func (e *Editor) EmptyRightTrimmedLineBelow() bool {
-	return len(strings.TrimRightFunc(e.Line(e.DataY()+1), unicode.IsSpace)) == 0
+	return len(trimRightSpace(e.Line(e.DataY()+1))) == 0
 }
 
 // EmptyLine returns true if the current line is completely empty, no whitespace or anything
@@ -2089,7 +2089,7 @@ func (e *Editor) InsertFile(c *vt100.Canvas, filename string) error {
 	if err != nil {
 		return err
 	}
-	s := opinionatedStringReplacer.Replace(strings.TrimRightFunc(string(data), unicode.IsSpace))
+	s := opinionatedStringReplacer.Replace(trimRightSpace(string(data)))
 	e.InsertStringAndMove(c, s)
 	return nil
 }

@@ -140,9 +140,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		lineRuneCount = 0   // per line rune counter, for drawing spaces afterwards (does not handle wide runes)
 		lineStringCount = 0 // per line string counter, for drawing spaces afterwards (handles wide runes)
 
-		line = e.Line(LineIndex(y + offsetY))
-
-		line = strings.TrimRightFunc(line, unicode.IsSpace)
+		line = trimRightSpace(e.Line(LineIndex(y + offsetY)))
 
 		// already trimmed right, just trim left
 		trimmedLine = strings.TrimLeftFunc(line, unicode.IsSpace)
