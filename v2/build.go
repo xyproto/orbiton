@@ -1241,8 +1241,8 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 					status.Show(c, e)
 					return // from goroutine
 				}
-				title := "Last 20 lines of output"
-				if strings.Count(output, "\n") <= 19 {
+				title := "Last 25 lines of output"
+				if strings.Count(output, "\n") <= 24 {
 					title = "Program output"
 				}
 				const repositionCursorAfterDrawing = true
@@ -1254,7 +1254,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 					status.SetMessage("Success")
 				}
 				if strings.TrimSpace(output) != "" {
-					e.DrawOutput(c, 20, title, output, boxBackgroundColor, repositionCursorAfterDrawing)
+					e.DrawOutput(c, 25, title, output, boxBackgroundColor, repositionCursorAfterDrawing)
 				}
 				// Regular success, no debug mode
 				status.Show(c, e)
