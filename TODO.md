@@ -3,8 +3,7 @@
 ## General
 
 - [ ] When outputting a long result from running a command, add something like `[...]` at the top, as an indicator that the output has been shortened.
-- [ ] Only right trim the output when pressing ctrl-space twice, not left trim.
-- [ ] When pressing ctrl-space twice, adjust the status message to indicate what is happening.
+- [ ] When pressing `ctrl-space` twice, adjust the status message to indicate what is happening.
 - [ ] Add a "Run" option to the ctrl-o menu that will only build first if needed.
 - [ ] When writing the last build command to a file, make sure to quote paths. They may contain " - ".
 - [ ] Sometimes `ctrl-g` needs to be pressed twice to go to a symbol. Find out why.
