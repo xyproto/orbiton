@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -17,7 +16,6 @@ import (
 )
 
 var (
-	lastCommandFile      = filepath.Join(userCacheDir, "o", "last_command.sh")
 	lastCommandMenuIndex int    // for the command menu
 	changedTheme         bool   // has the theme been changed manually after the editor was started?
 	menuTitle            string // used for displaying the program name and version at the top of the ctrl-o menu only the first time the menu is displayed
@@ -606,38 +604,4 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	e.redrawCursor = true
 
 	return selected
-}
-
-// getCommand takes an *exec.Cmd and returns the command
-// it represents, but with "/usr/bin/sh -c " trimmed away.
-func getCommand(cmd *exec.Cmd) string {
-	s := cmd.Path + " " + strings.Join(cmd.Args[1:], " ")
-	return strings.TrimPrefix(s, "/usr/bin/sh -c ")
-}
-
-// Save the command as the "last command"
-func saveCommand(cmd *exec.Cmd) error {
-	if noWriteToCache {
-		return nil
-	}
-
-	p := lastCommandFile
-
-	// First create the folder for the lock file overview, if needed
-	folderPath := filepath.Dir(p)
-	os.MkdirAll(folderPath, os.ModePerm)
-
-	// Prepare the file
-	f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	// Strip the leading /usr/bin/sh -c command, if present
-	commandString := getCommand(cmd)
-
-	// Write the contents, ignore the number of written bytes
-	_, err = f.WriteString(fmt.Sprintf("#!/bin/sh\n%s\n", commandString))
-	return err
 }
