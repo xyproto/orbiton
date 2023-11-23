@@ -303,3 +303,8 @@ func isEmoji(r rune) bool {
 		unicode.Is(unicode.P, r) || // Punctuation
 		r >= utf8.RuneSelf // Emojis are typically multi-byte characters in UTF-8
 }
+
+// trimRightSpace trims space but only at the right side of a string
+func trimRightSpace(str string) string {
+	return strings.TrimRightFunc(str, unicode.IsSpace)
+}
