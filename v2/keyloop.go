@@ -1996,6 +1996,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			keyRunes := []rune(key)
 			if len(keyRunes) > 0 && unicode.IsLetter(keyRunes[0]) { // letter
 
+				if keyRunes[0] == 'n' && kh.TwoLastAre("c:14") && kh.PrevWithin(500*time.Millisecond) {
+					// Avoid inserting "n" if the user very recently pressed ctrl-n twice
+					break
+				} else if keyRunes[0] == 'p' && kh.TwoLastAre("c:16") && kh.PrevWithin(500*time.Millisecond) {
+					// Avoid inserting "p" if the user very recently pressed ctrl-p twice
+					break
+				}
+
 				undo.Snapshot(e)
 
 				if e.mode == mode.Go { // TODO: And e.onlyValidCode

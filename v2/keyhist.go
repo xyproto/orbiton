@@ -82,6 +82,11 @@ func (kh *KeyHistory) PrevPrevIs(keyPresses ...string) bool {
 	return false
 }
 
+// TwoLastAre checks if the two previous keypresses are the given keypress
+func (kh *KeyHistory) TwoLastAre(keyPress string) bool {
+	return kh.Prev() == keyPress && kh.PrevPrev() == keyPress
+}
+
 // PrevPrevPrevIs checks if the one before the previous keypress is the given one
 func (kh *KeyHistory) PrevPrevPrevIs(keyPresses ...string) bool {
 	for _, keyPress := range keyPresses {
