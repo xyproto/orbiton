@@ -168,7 +168,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.CMake:
 		addAndRemoveKeywords(cmakeWords, []string{"build", "package"})
 	case mode.Config:
-		removeKeywords([]string{"auto", "build", "default", "from", "get", "install", "int", "local", "no", "not", "package", "type", "var", "with"})
+		removeKeywords([]string{"auto", "build", "default", "for", "from", "get", "install", "int", "local", "no", "not", "package", "type", "var", "with"})
 		addKeywords([]string{"DB_PASSWORD", "PASSWORD", "POSTGRES_PASSWORD", "PWD", "Password", "Pwd", "SECRET", "SECRETS", "Secret", "Secrets", "bind", "password", "pwd", "secret", "secrets", "set-option", "set-window-option", "unbind", "uses"})
 	case mode.CS:
 		setKeywords(csWords)
