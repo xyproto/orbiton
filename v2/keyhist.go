@@ -3,7 +3,7 @@ package main
 import "time"
 
 // Keypress combo time limit
-const keypressComboTimeLimit = 120 * time.Millisecond
+const keypressComboTimeLimit = 100 * time.Millisecond
 
 // Double tap time limit
 const doubleTapTimeLimit = 300 * time.Millisecond
