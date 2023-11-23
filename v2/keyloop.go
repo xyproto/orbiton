@@ -1069,7 +1069,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					if strings.HasPrefix(trimmedLine, kw+" ") && !strings.HasPrefix(trimmedLine, kw+" (") {
 						kwLenPlus1 := len(kw) + 1
 						if kwLenPlus1 < len(trimmedLine) {
-							if strings.HasSuffix(trimmedLine, " {") && len(trimmedLine) > 2 {
+							if strings.HasSuffix(trimmedLine, " {") && kwLenPlus1 < len(trimmedLine) && len(trimmedLine) > 3 {
 								// Add ( and ), keep the final "{"
 								e.SetCurrentLine(currentLeadingWhitespace + kw + " (" + trimmedLine[kwLenPlus1:len(trimmedLine)-2] + ") {")
 								e.pos.mut.Lock()
