@@ -1,12 +1,17 @@
 # TODO
 
+## For the next release
+
+- [ ] Test that this has been fixed: When writing the last build command to a file, make sure to quote paths. They may contain " - ".
+- [ ] Sometimes `ctrl-g` needs to be pressed twice to go to a symbol. Figure out why.
+- [ ] `ctrl-g` must look for definitions in the directory of the current filename before looking in the current directory.
+- [ ] For Go and "go to definition", let it be able to also discover packages in the parent directory.
+
 ## General
 
 - [ ] When outputting a long result from running a command, add something like `[...]` at the top, as an indicator that the output has been shortened.
 - [ ] When pressing `ctrl-space` twice, adjust the status message to indicate what is happening.
-- [ ] Add a "Run" option to the ctrl-o menu that will only build first if needed.
-- [ ] When writing the last build command to a file, make sure to quote paths. They may contain " - ".
-- [ ] Sometimes `ctrl-g` needs to be pressed twice to go to a symbol. Find out why.
+- [ ] Add a `Run` option to the ctrl-o menu that will only build first if needed.
 - [ ] Draw a minimap with `silicon SOURCEFILE --theme gruvbox-dark --no-line-number --no-round-corner --no-window-controls --highlight-lines 10-20 --tab-width 4 --output IMAGEFILE` or create a custom minimap package.
 - [ ] The first time ctrl-g is pressed and a definition is not found, say so. The second time the status bar is toggled.
 - [ ] Do not highlight lines that start with `#` in gray, for Go. Or lines that starts with `//`, for shell scripts.
@@ -14,13 +19,10 @@
 - [ ] Add support for `github.com/xyproto/ollamaclient` as an alternative to or instead of the OpenAI API.
       The `mistral` model is pretty fast and capable by now.
 - [ ] Re-think the minimap feature.
-- [ ] `ctrl-g` must look for definitions in the directory of the current filename before looking in the current directory.
 - [ ] Use a menu option for toggling the status bar at the bottom instead of `ctrl-g`.
 - [ ] Let the `ctrl-o` menu have additional info, like time and date and GC stats.
-- [ ] For Go and "go to definition", let it be able to also discover packages in the parent directory.
 - [ ] For man pages: if between "[-" and "]", do not color uppercase letters differently.
 - [ ] For man pages: if the line contains "-*[a-z]" and then later "-*[a-z]" and a majority of words with "-", then color text red instead of blue (and consider the theme).
-- [ ] Use enet or another UDP protocol to communicate between the core editor and the GUI application. Or REST, just to make it even more accessible for developers?
 - [ ] Save a "custom words" and "ignored words" list to disk.
 - [ ] If in man page mode, set the file as read-only and also let `q` quit.
 - [ ] Let `ctrl-w` also format gzipped code, for instance when editing `main.cpp.gz`.
@@ -37,6 +39,7 @@
 - [ ] When the last line in a document is a long line ending with "}", make it possible to press return before the "}".
 - [ ] Make it possible to export code to HTML or PNG, maybe by using Splash.
 - [ ] Figure out why multi-line commenting sometimes stops after a few lines.
+- [ ] Adjust the fuzzyness of the spell checker.
 - [ ] Go through this file and remove all completed TODO items.
 
 ### Nano emulation mode
@@ -58,29 +61,29 @@
 
 See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
+## Markdown
+
+- [ ] Add a hotkey for inserting a TODO item.
+
 ## `o` to GUI frontend communication
 
+- [ ] Use enet or another UDP protocol to communicate between the core editor and the GUI application. Or REST, just to make it even more accessible for developers?
 - [ ] When changing themes from within the VTE/GKT3 frontend, let `o` be able to communicate a palette change per theme, using some sort of RPC.
 - [ ] Use proper RPC between `o` and the VTE/GTK3 frontend. This also helps when upgrading to GTK4.
 - [ ] Create an SDL2 frontend.
 
 ## Maybe
 
-- [ ] Figure out why displayQuickHelpAction is not displaying the QuickHelp when it is being enabled.
-- [ ] Adjust the fuzzyness of the spell checker?
 - [ ] Highlight changed lines if a file changed while monitoring it with `-m`.
 - [ ] Move redrawing and clearing the statusbar to a separate goroutine.
 - [ ] When searching for a number that does not exist in the document, jump there.
 - [ ] `ctrl-g`, `up` could go to the previous function signature.
 - [ ] `ctrl-g`, `down` could go to the next function signature.
-- [ ] Re-implement visudo as a Go package and use that instead of exec visudo (if the executable is `osudo`).
-
-## Markdown
-
-- [ ] `ctrl-space` is too easy to press by accident, find a better solution.
+- [ ] Re-implement `visudo` as a Go package and use that instead of `exec visudo` (if the executable is `osudo`).
 
 ## Autocompletion and AI generated code
 
+- [ ] Primarily support Ollama instead of ChatGPT. Try one of the models with a large context. Try loading in all source files in a directory. Use my `ollamaclient` package.
 - [ ] If ChatGPT is enabled, and there is just one error, and the fix proposed by ChatGPT is small, then apply the fix, but let the user press `ctrl-z` if they don't want it.
 - [ ] If an API key is entered, save it to file in the cache directory.
 - [ ] Add an environment variable for specifying the AI API endpoint.
@@ -101,10 +104,12 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 - [ ] Make it possible to step through Go programs as well.
 - [ ] Build Jakt and Prolog programs with ctrl-space.
 - [ ] Support for Prolog.
+- [ ] Supporty for Red.
+- [ ] Jump to error for Inko.
 
 ## Saving and loading
 
-- [ ] When "somefile.go" and "somefile_test.go" exists, and only "somefile" is given, load "somefile.go".
+- [ ] When `somefile.go` and `somefile_test.go` exists, and only `somefile` is given, load `somefile.go`.
 - [ ] When a filename is given, but it does not exist, and no extension is given, and the directory only contains one file, open that one.
 - [ ] Show a spinner when reading a lot of data from stdin.
 - [ ] When editing a man page, make it possible to toggle between the man page and the man page view mode.
