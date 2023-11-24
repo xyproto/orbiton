@@ -1,14 +1,11 @@
 # TODO
 
-## For the next release
+## General
 
-- [ ] Test that this has been fixed: When writing the last build command to a file, make sure to quote paths. They may contain " - ".
 - [ ] Sometimes `ctrl-g` needs to be pressed twice to go to a symbol. Figure out why.
 - [ ] `ctrl-g` must look for definitions in the directory of the current filename before looking in the current directory.
 - [ ] For Go and "go to definition", let it be able to also discover packages in the parent directory.
-
-## General
-
+- [ ] If a type is defined with `typealias`, then do not add an import to that type when formatting Kotlin code.
 - [ ] When outputting a long result from running a command, add something like `[...]` at the top, as an indicator that the output has been shortened.
 - [ ] When pressing `ctrl-space` twice, adjust the status message to indicate what is happening.
 - [ ] Add a `Run` option to the ctrl-o menu that will only build first if needed.
