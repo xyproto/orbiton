@@ -85,6 +85,7 @@ func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing boo
 
 	centerBox.UpperRightPlacement(canvasBox, minWidth)
 	centerBox.H += 2
+	centerBox.X -= 4
 
 	// Then create a list box
 	listBox := NewBox()
