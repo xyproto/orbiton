@@ -83,7 +83,7 @@ type Client interface {
 
 	// ChatCompletion creates a completion with the Chat completion endpoint which
 	// is what powers the ChatGPT experience.
-	ChatCompletionStream(ctx context.Context, request ChatCompletionRequest, onData func(*ChatCompletionStreamResponse)) error
+	ChatCompletionStream(ctx context.Context, request ChatCompletionRequest, onData func(*ChatCompletionStreamResponse) error) error
 
 	// Completion creates a completion with the default engine. This is the main endpoint of the API
 	// which auto-completes based on the given prompt.
@@ -211,7 +211,7 @@ func (c *client) ChatCompletion(ctx context.Context, request ChatCompletionReque
 func (c *client) ChatCompletionStream(
 	ctx context.Context,
 	request ChatCompletionRequest,
-	onData func(*ChatCompletionStreamResponse)) error {
+	onData func(*ChatCompletionStreamResponse) error) error {
 	if request.Model == "" {
 		request.Model = GPT3Dot5Turbo
 	}
@@ -252,7 +252,9 @@ func (c *client) ChatCompletionStream(
 		if err := json.Unmarshal(line, output); err != nil {
 			return fmt.Errorf("invalid json stream data: %v", err)
 		}
-		onData(output)
+		if err := onData(output); err != nil {
+			return fmt.Errorf("callback returned an error: %v", err)
+		}
 	}
 
 	return nil

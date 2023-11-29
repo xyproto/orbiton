@@ -3,7 +3,7 @@ module github.com/xyproto/orbiton/v2
 go 1.21.3
 
 require (
-	github.com/PullRequestInc/go-gpt3 v1.1.18
+	github.com/PullRequestInc/go-gpt3 v1.2.0
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.7.0
@@ -50,7 +50,7 @@ require (
 	github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.5.0 // indirect
-	golang.org/x/net v0.18.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/net v0.19.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
