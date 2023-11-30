@@ -15,9 +15,9 @@ import (
 // and a lookup map from class names to class paths, which is populated
 // when New or NewCustom is called.
 type ImportMatcher struct {
+	classMap              map[string]string // map from class name to class path. Shortest class path "wins".
 	JARPaths              []string          // list of paths to examine for .jar files
 	mut                   sync.RWMutex      // mutex for protecting the map
-	classMap              map[string]string // map from class name to class path. Shortest class path "wins".
 	onlyJava              bool              // only Java, or Kotlin too?
 	removeExistingImports bool              // keep existing imports (but also avoid duplicates)
 }

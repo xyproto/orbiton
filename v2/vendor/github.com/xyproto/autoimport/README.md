@@ -6,6 +6,8 @@ This currently only works for OpenJDK 8, not OpenJDK 11 and beyond.
 
 Includes the `autoimport` utility for looking up packages, given the start of a class name.
 
+Experimental functionality for organizing imports is also included.
+
 ## Example use
 
 ### With OpenJDK 8 installed
@@ -45,13 +47,6 @@ public class Main {
 }
 ```
 
-When this command is executed:
-
-    autoimport -f Main.java
-
-Then one or more sorted import lines are returned (the classes in the comments are also sorted):
-
-    import java.util.*; // ArrayList, HashMap, List, Map
 
 #### Features and limitation
 
@@ -62,6 +57,6 @@ Then one or more sorted import lines are returned (the classes in the comments a
 
 #### General info
 
-* Version: 1.4.3
+* Version: 1.4.4
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
