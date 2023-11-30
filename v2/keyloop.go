@@ -543,7 +543,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			// Check if it's a special case
 			if kh.SpecialArrowKeypressWith("←") {
-				// TODO: Instead of moving up twice, place a bookmark where the special arrow keypress combo is started
+				// TODO: Instead of moving up twice, play back the reverse of the latest keypress history
 				e.Up(c, status)
 				e.Up(c, status)
 				// Ask the user for a command and run it
@@ -564,7 +564,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			// Check if it's a special case
 			if kh.SpecialArrowKeypressWith("→") {
-				// TODO: Instead of moving up twice, place a bookmark where the special arrow keypress combo is started
+				// TODO: Instead of moving up twice, play back the reverse of the latest keypress history
 				e.Up(c, status)
 				e.Up(c, status)
 				// Ask the user for a command and run it
