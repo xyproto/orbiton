@@ -194,6 +194,10 @@ func (ima *ImportMatcher) FixImports(data []byte, verbose bool) ([]byte, error) 
 		importBlockBytes = []byte(strings.Join(importLines, "\n"))
 	}
 
+	if ima.DeGlob {
+		importBlockBytes = []byte(strings.Join(DeGlob(string(importBlockBytes)), "\n"))
+	}
+
 	// Now replace/insert the newly organized import statements
 
 	var (
@@ -218,6 +222,9 @@ func (ima *ImportMatcher) FixImports(data []byte, verbose bool) ([]byte, error) 
 			} // else ignore this "import" line
 		} else if !hasImports && strings.HasPrefix(trimmedLine, "package ") {
 			sb.WriteString(line + "\n")
+			if ima.DeGlob {
+				sb.WriteString("\n")
+			}
 			sb.Write(importBlockBytes)
 			sb.WriteString("\n")
 		} else {

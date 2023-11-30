@@ -20,11 +20,13 @@ type ImportMatcher struct {
 	mut                   sync.RWMutex      // mutex for protecting the map
 	onlyJava              bool              // only Java, or Kotlin too?
 	removeExistingImports bool              // keep existing imports (but also avoid duplicates)
+	DeGlob                bool              // generate import statements without "*"
 }
 
 // New creates a new ImportMatcher. If onlyJava is false, /usr/share/kotlin/lib will be added to the .jar file search path.
 // The first (optional) bool should be set to true if only Java should be considered, and not Kotlin.
 // The second (optional) bool should be set to true if the import organizer should always start out with removing existing imports.
+// The third (optional) bool should be set to true if the generated imports should be exact intead of with a glob ("*").
 func New(settings ...bool) (*ImportMatcher, error) {
 
 	var onlyJava bool
@@ -59,6 +61,7 @@ func (ima *ImportMatcher) addDir(path string) {
 // NewCustom creates a new ImportMatcher, given a slice of paths to search for .jar files
 // The first (optional) bool should be set to true if only Java should be considered, and not Kotlin.
 // The second (optional) bool should be set to true if the import organizer should always start out with removing existing imports.
+// The third (optional) bool should be set to true if the generated imports should be exact intead of with a glob ("*").
 func NewCustom(JARPaths []string, settings ...bool) (*ImportMatcher, error) {
 	var ima ImportMatcher
 
@@ -68,6 +71,10 @@ func NewCustom(JARPaths []string, settings ...bool) (*ImportMatcher, error) {
 
 	if len(settings) > 1 {
 		ima.removeExistingImports = settings[1]
+	}
+
+	if len(settings) > 2 {
+		ima.DeGlob = settings[2]
 	}
 
 	ima.JARPaths = make([]string, 0)

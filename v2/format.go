@@ -181,8 +181,8 @@ func formatHTML(data []byte) ([]byte, error) {
 }
 
 // organizeImports can fix, sort and organize imports for Kotlin and for Java
-func organizeImports(data []byte, onlyJava, removeExistingImports bool) []byte {
-	ima, err := autoimport.New(onlyJava, removeExistingImports)
+func organizeImports(data []byte, onlyJava, removeExistingImports, deGlob bool) []byte {
+	ima, err := autoimport.New(onlyJava, removeExistingImports, deGlob)
 	if err != nil {
 		return data // no change
 	}
@@ -233,7 +233,8 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 	// Organize Java or Kotlin imports
 	if e.mode == mode.Java || e.mode == mode.Kotlin {
 		const removeExistingImports = false
-		e.LoadBytes(organizeImports([]byte(e.String()), e.mode == mode.Java, removeExistingImports))
+		const deGlobImports = true
+		e.LoadBytes(organizeImports([]byte(e.String()), e.mode == mode.Java, removeExistingImports, deGlobImports))
 		e.redraw = true
 		// Do not return, since there is more formatting to be done
 	}
