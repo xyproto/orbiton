@@ -6,6 +6,9 @@ import (
 
 // FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
 func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines bool) {
+	mut.Lock()
+	defer mut.Unlock()
+
 	savePos := e.pos
 
 	if status != nil {
