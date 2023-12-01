@@ -78,8 +78,8 @@ github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
-github.com/xyproto/autoimport v1.4.6 h1:shCAYVHpX7RmzJY9vZXu8QbVYbRk44SB+jyX+0g4ydQ=
-github.com/xyproto/autoimport v1.4.6/go.mod h1:L8xvJBA397aNDDsu/BcXI9GJjgT4FsUoZeXj9Vlu+Ow=
+github.com/xyproto/autoimport v1.5.2 h1:TrQRec20mD6NG1unF+vCkMkUM4Tm5Z68y6D/zAbXBwQ=
+github.com/xyproto/autoimport v1.5.2/go.mod h1:L8xvJBA397aNDDsu/BcXI9GJjgT4FsUoZeXj9Vlu+Ow=
 github.com/xyproto/benchmarked v0.3.0/go.mod h1:4H4a1k1EsFmliut59gNc8RO2N2IIhl74XqfW0AVjWbk=
 github.com/xyproto/binary v1.3.0 h1:RCICHqn81T+vxNdEBQvQ8iZ3Qt44AgMHag4IZgeFXbU=
 github.com/xyproto/binary v1.3.0/go.mod h1:0bRi3JImoPWOFfM7yPYzNVyLZXYGQTBwdNRPs4m3+qQ=

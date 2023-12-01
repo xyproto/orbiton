@@ -7,7 +7,17 @@ import (
 	"strings"
 )
 
-var KotlinTypes = []string{"Annotation", "Any", "Array", "Boolean", "Byte", "Char", "CharSequence", "Collection", "Comparable", "Double", "Enum", "Float", "Int", "IntrinsicConstEvaluation", "Iterable", "Iterator", "List", "ListIterator", "Long", "Map", "MutableCollection", "MutableIterable", "MutableIterator", "MutableList", "MutableListIterator", "MutableMap", "MutableSet", "Nothing", "Number", "PlatformDependent", "PureReifiable", "Set", "Short", "String", "Throwable"}
+// KotlinTypes lists classes and types that are available in Kotlin (with imports in mind)
+var KotlinTypes = []string{
+	"Annotation", "Any", "Array", "Boolean", "Byte", "Char", "CharSequence",
+	"Collection", "Comparable", "Double", "Enum", "Float", "Function", "Int",
+	"IntrinsicConstEvaluation", "Iterable", "Iterator", "List", "ListIterator",
+	"Long", "Map", "Map.Entry", "MutableCollection", "MutableIterable",
+	"MutableIterator", "MutableList", "MutableListIterator", "MutableMap",
+	"MutableMap.MutableEntry", "MutableSet", "Nothing", "Number", "Pair",
+	"PlatformDependent", "PureReifiable", "Runnable", "Set", "Short", "String",
+	"Throwable", "Triple", "Unit", "UByte", "UInt", "ULong", "UShort",
+}
 
 // ForEachByteLineInData splits data on '\n' and iterates over the byte slices
 func ForEachByteLineInData(data []byte, process func([]byte)) {
@@ -77,6 +87,7 @@ func (ima *ImportMatcher) ImportBlock(data []byte, verbose bool) ([]byte, error)
 				fields := strings.SplitN(word, "<", 2)
 				word = strings.TrimSpace(fields[0])
 			}
+			word = strings.TrimPrefix(word, "@") // Also handle attributes / decorators
 			if word == "" {
 				continue
 			}
@@ -204,8 +215,19 @@ func (ima *ImportMatcher) FixImports(data []byte, verbose bool) ([]byte, error) 
 		sb               strings.Builder
 		importsDone      bool
 		ignoreBlankLines int
+		blankLineCount   int
 	)
 	ForEachLineInData(data, func(line, trimmedLine string) {
+		// Count consecutive blank lines
+		if trimmedLine == "" {
+			blankLineCount++
+			if blankLineCount >= 2 { // && importsDone
+				return // continue
+			}
+		} else {
+			blankLineCount = 0
+		}
+
 		if ignoreBlankLines > 0 {
 			if trimmedLine == "" {
 				ignoreBlankLines--
@@ -213,12 +235,16 @@ func (ima *ImportMatcher) FixImports(data []byte, verbose bool) ([]byte, error) 
 			}
 			ignoreBlankLines = 0
 		}
+
 		if hasImports && strings.HasPrefix(trimmedLine, "import ") {
 			if !importsDone {
 				sb.Write(importBlockBytes)
 				sb.WriteString("\n")
 				importsDone = true
 				ignoreBlankLines = 2
+				if !bytes.HasSuffix(importBlockBytes, []byte{'\n', '\n'}) {
+					ignoreBlankLines = 0
+				}
 			} // else ignore this "import" line
 		} else if !hasImports && strings.HasPrefix(trimmedLine, "package ") {
 			sb.WriteString(line + "\n")
@@ -226,6 +252,9 @@ func (ima *ImportMatcher) FixImports(data []byte, verbose bool) ([]byte, error) 
 				sb.WriteString("\n")
 			}
 			sb.Write(importBlockBytes)
+			if !bytes.HasSuffix(importBlockBytes, []byte{'\n', '\n'}) {
+				sb.WriteString("\n")
+			}
 			sb.WriteString("\n")
 		} else {
 			sb.WriteString(line + "\n")
