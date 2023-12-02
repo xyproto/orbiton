@@ -12,8 +12,13 @@ import (
 // SetUpSignalHandlers sets up a signal handler for when ctrl-c is pressed (SIGTERM),
 // and also for when SIGUSR1 or SIGWINCH is received.
 func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
+	// For the drawing
 	resizeMut.Lock()
 	defer resizeMut.Unlock()
+
+	// For the statusbar
+	mut.Lock()
+	defer mut.Unlock()
 
 	sigChan := make(chan os.Signal, 1)
 
