@@ -4,29 +4,25 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// Ratio returns where the cursor is in the document, linewise, from 0 to 1
-func (e *Editor) Ratio() float64 {
-	lineNumber := e.LineNumber()
-	allLines := e.Len()
-	if allLines <= 0 {
-		return 1.0
-	}
-	return float64(lineNumber) / float64(allLines)
-}
-
 // DrawProgress draws a small progress indicator on the right hand side
 func (e *Editor) DrawProgress(c *vt100.Canvas) {
-	r := e.Ratio()
-	w := int(c.Width())
-	h := int(c.Height())
-	x := w - 1
-	y := int(float64(h) * float64(r))
-	if y >= h {
-		y = h - 1
+	var (
+		canvasWidth   = c.Width()
+		canvasHeight  = float64(c.Height())
+		lineNumberTop = float64(e.LineNumber())
+		allLines      = float64(e.Len())
+		x             = canvasWidth - 1
+		y             = canvasHeight - 1
+	)
+	if allLines > 0 {
+		y = (canvasHeight * lineNumberTop * (allLines - canvasHeight)) / (allLines * allLines)
 	}
-	if x >= w {
-		x = w - 1
+	if x >= canvasWidth {
+		x = canvasWidth - 1
 	}
-	c.WriteBackground(uint(x), uint(y), e.MenuArrowColor.Background())
+	if y >= canvasHeight {
+		y = canvasHeight - 1
+	}
+	c.WriteBackground(x, uint(y), e.MenuArrowColor.Background())
 	c.Draw()
 }
