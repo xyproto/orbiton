@@ -88,6 +88,20 @@ func (e *Editor) Run() (string, bool, error) {
 
 	cmd.Dir = sourceDir
 
+	// If inputFileWhenRunning has been specified (or is input.txt),
+	// check if that file can be used as stdin for the command to be run
+	if inputFileWhenRunning != "" {
+		inputFile, err := os.Open(inputFileWhenRunning)
+		if err != nil {
+			// Do not retry until the editor has been started again
+			inputFileWhenRunning = ""
+		} else {
+			defer inputFile.Close()
+			// Use the file as the input for stdin
+			cmd.Stdin = inputFile
+		}
+	}
+
 	output, err := cmd.CombinedOutput()
 	if err == nil { // success
 		return trimRightSpace(string(output)), false, nil

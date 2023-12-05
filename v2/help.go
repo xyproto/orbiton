@@ -79,6 +79,8 @@ Flags:
   -q, --quick-help               Display the quick help pane at start.
   -r, --clear-locks              Clear all file locks and close all portals.
   -d, --create-dir               When opening a new file, create directories if needed.
+  -i, --input-file FILENAME      Used as stdin when running programs with ctrl-space.
+                                 The default filename is input.txt. Handy for AoC.
   -v, --version                  Display the current version.
 
 See the man page for more information.
