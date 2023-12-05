@@ -30,9 +30,13 @@ var (
 
 	cacheDirForDoc = files.ShortPath(filepath.Join(userCacheDir, "o"))
 
-	probablyDoesNotWantToEditExtensions = []string{".7z", ".a", ".bak", ".core", ".gz", ".lock", ".o", ".out", ".pyc", ".pyo", ".swp", ".tar", ".tmp", ".zip"}
+	// Only for the filename completion, when starting the editor
+	probablyDoesNotWantToEditExtensions = []string{".7z", ".a", ".bak", ".core", ".gz", ".img", ".lock", ".o", ".out", ".pkg", ".pyc", ".pyo", ".swp", ".tar", ".tmp", ".xz", ".zip"}
 
 	editorLaunchTime = time.Now()
+
+	// For when building and running programs with ctrl-space
+	inputFileWhenRunning string
 )
 
 func main() {
