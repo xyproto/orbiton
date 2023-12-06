@@ -308,6 +308,9 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 		case "c:12", "c:17", "c:27", "c:11", "c:15": // ctrl-l, ctrl-q, esc, ctrl-k or ctrl-o (keys near ctrl-l)
 			cancel = true
 			lns = ""
+			e.redraw = true
+			e.redrawCursor = true
+			postAction = noAction
 			fallthrough // done
 		case "c:13": // return
 			doneCollectingDigits = true
