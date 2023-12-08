@@ -5,6 +5,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/xyproto/vt100"
 )
@@ -65,6 +66,9 @@ func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *St
 			case syscall.SIGWINCH:
 				// Full redraw, like if Esc was pressed
 				drawLines := true
+				e.FullResetRedraw(c, status, drawLines)
+				// Try twice
+				time.Sleep(300 * time.Millisecond)
 				e.FullResetRedraw(c, status, drawLines)
 			}
 		}
