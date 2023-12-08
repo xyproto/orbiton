@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] When the first word on a line in Kotlin is "const" followed by a space, expand it to "const val ", when it's being typed in.
 - [ ] When calculating the progress, the algorithm assumes the cursor is at the top line of the canvas. If it's not, subtract some lines.
 - [ ] Sometimes `ctrl-g` needs to be pressed twice to go to a symbol. Figure out why.
 - [ ] `ctrl-g` must look for definitions in the directory of the current filename before looking in the current directory.
