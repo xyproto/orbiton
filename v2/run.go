@@ -121,6 +121,8 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutpu
 	lines := strings.Split(collectedOutput, "\n")
 	if l := len(lines); l > maxLines {
 		lines = lines[l-maxLines:]
+		// Add "[...]" as the first line
+		lines = append([]string{"[...]", ""}, lines...)
 	}
 	for _, line := range lines {
 		if len(line) > minWidth {
@@ -146,7 +148,7 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutpu
 
 	// Then create a list box
 	listBox := NewBox()
-	listBox.FillWithMargins(lowerLeftBox, 2, 2)
+	listBox.FillWithMargins(lowerLeftBox, 1, 2)
 
 	// Get the current theme for the stdout box
 	bt := e.NewBoxTheme()

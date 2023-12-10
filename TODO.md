@@ -9,7 +9,6 @@
 - [ ] `ctrl-g` must look for definitions in the directory of the current filename before looking in the current directory.
 - [ ] For Go and "go to definition", let it be able to also discover packages in the parent directory.
 - [ ] If a type is defined with `typealias`, then do not add an import to that type when formatting Kotlin code.
-- [ ] When outputting a long result from running a command, add something like `[...]` at the top, as an indicator that the output has been shortened.
 - [ ] When pressing `ctrl-space` twice, adjust the status message to indicate what is happening.
 - [ ] Add a `Run` option to the ctrl-o menu that will only build first if needed.
 - [ ] Draw a minimap with `silicon SOURCEFILE --theme gruvbox-dark --no-line-number --no-round-corner --no-window-controls --highlight-lines 10-20 --tab-width 4 --output IMAGEFILE` or create a custom minimap package.
