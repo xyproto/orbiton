@@ -1241,9 +1241,9 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 					status.Show(c, e)
 					return // from goroutine
 				}
-				title := "Last 25 lines of output"
-				if strings.Count(output, "\n") <= 24 {
-					title = "Program output"
+				title := "Program output"
+				if strings.Count(output, "\n") > 24 {
+					title = "Last 25 lines of output"
 				}
 				const repositionCursorAfterDrawing = true
 				boxBackgroundColor := e.DebugRunningBackground
