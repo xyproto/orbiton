@@ -215,7 +215,7 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			return files.IsFile(filepath.Join(sourceDir, jarFilename)), jarFilename
 		}, nil
 	case mode.Kotlin:
-		if files.Which("kotlinc-native") != "" {
+		if files.Which("kotlinc-native") != "" && strings.Contains(e.String(), "import kotlinx.cinterop.") {
 			cmd = exec.Command("kotlinc-native", "-nowarn", "-opt", "-Xallocator=mimalloc", "-produce", "program", "-linker-option", "--as-needed", sourceFilename, "-o", exeFirstName)
 			cmd.Dir = sourceDir
 			return cmd, func() (bool, string) {
