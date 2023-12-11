@@ -108,7 +108,7 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 			filenames = append(filenames, filenamesParent...)
 		}
 
-		if len(filenames) > 0 { // success, found .go files to examine
+		if len(filenames) > 0 { // success, found source files to examine
 			for _, goFile := range filenames {
 				data, err := os.ReadFile(goFile)
 				if err != nil {
