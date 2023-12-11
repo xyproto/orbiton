@@ -93,8 +93,22 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 
 		ext := filepath.Ext(e.filename)
 
-		filenames, err := filepath.Glob("*" + ext)
-		if err == nil { // success
+		var filenames []string
+
+		if curDirFilenames, err := filepath.Glob("*" + ext); err == nil { // success
+			filenames = append(filenames, curDirFilenames...)
+		}
+		if absFilename, err := filepath.Abs(e.filename); err == nil { // success
+			sourceDir := filepath.Join(filepath.Dir(absFilename), "*"+ext)
+			if sourceDirFiles, err := filepath.Glob(sourceDir); err == nil { // success
+				filenames = append(filenames, sourceDirFiles...)
+			}
+		}
+		if filenamesParent, err := filepath.Glob("../*" + ext); err == nil { // success
+			filenames = append(filenames, filenamesParent...)
+		}
+
+		if len(filenames) > 0 { // success, found .go files to examine
 			for _, goFile := range filenames {
 				data, err := os.ReadFile(goFile)
 				if err != nil {
