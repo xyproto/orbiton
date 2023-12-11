@@ -1598,12 +1598,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 
-			// If a search is in progress, clear the search
+			// If a search is in progress, clear the search first
 			if e.searchTerm != "" {
 				e.ClearSearch()
 				e.redraw = true
 				e.redrawCursor = true
-				break
 			}
 
 			oldFilename := e.filename
