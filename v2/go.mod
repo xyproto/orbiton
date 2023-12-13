@@ -17,7 +17,7 @@ require (
 	github.com/xyproto/carveimg v1.4.4
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.2.0
-	github.com/xyproto/env/v2 v2.2.4
+	github.com/xyproto/env/v2 v2.2.5
 	github.com/xyproto/files v1.4.1
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
