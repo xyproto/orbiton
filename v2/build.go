@@ -1242,8 +1242,18 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 					return // from goroutine
 				}
 				title := "Program output"
-				if strings.Count(output, "\n") > 24 {
-					title = "Last 25 lines of output"
+				n := 25
+				h := float64(c.Height())
+				counter := 0
+				for float64(n) > h*0.6 {
+					n /= 2
+					counter++
+					if counter > 10 { // endless loop safeguard
+						break
+					}
+				}
+				if strings.Count(output, "\n") >= n {
+					title = fmt.Sprintf("Last %d lines of output", n)
 				}
 				const repositionCursorAfterDrawing = true
 				boxBackgroundColor := e.DebugRunningBackground
@@ -1254,7 +1264,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 					status.SetMessage("Success")
 				}
 				if strings.TrimSpace(output) != "" {
-					e.DrawOutput(c, 25, title, output, boxBackgroundColor, repositionCursorAfterDrawing)
+					e.DrawOutput(c, n, title, output, boxBackgroundColor, repositionCursorAfterDrawing)
 				}
 				// Regular success, no debug mode
 				status.Show(c, e)
