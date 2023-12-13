@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Consider switching to [creack/pty](https://github.com/creack/pty).
 - [ ] Examine the `SIGWINCH` behavior and try to trigger a redraw if this happens when the mouse cursor returns to i.e. Alacritty after some time.
 - [ ] When the first word on a line in Kotlin is `const` followed by a space, expand it to "const val ", when it's being typed in.
 - [ ] When calculating the progress, the algorithm assumes the cursor is at the top line of the canvas. If it's not, subtract some lines.
