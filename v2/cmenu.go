@@ -192,7 +192,8 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			}
 		}
 		actions.Add(menuItemText, func() {
-			e.Build(c, status, tty, alsoRun)
+			const markdownDoubleSpacePrevention = false
+			e.Build(c, status, tty, alsoRun, markdownDoubleSpacePrevention)
 		})
 	}
 

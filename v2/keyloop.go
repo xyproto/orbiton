@@ -328,7 +328,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			default:
 				// Then build, and run if ctrl-space was double-tapped
 				var alsoRun = kh.DoubleTapped("c:0")
-				e.Build(c, status, tty, alsoRun)
+				const markdownDoubleSpacePrevention = true
+				e.Build(c, status, tty, alsoRun, markdownDoubleSpacePrevention)
 				e.redrawCursor = true
 			}
 
