@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -34,20 +33,6 @@ func NewActions() *Actions {
 	a.actionTitles = make(map[int]string)
 	a.actionFunctions = make(map[int]func())
 	return &a
-}
-
-// NewActions2 will create a new Actions struct, while
-// initializing it with the given slices of titles and functions
-func NewActions2(actionTitles []string, actionFunctions []func()) (*Actions, error) {
-	a := NewActions()
-	if len(actionTitles) != len(actionFunctions) {
-		return nil, errors.New("length of action titles and action functions differ")
-	}
-	for i, title := range actionTitles {
-		a.actionTitles[i] = title
-		a.actionFunctions[i] = actionFunctions[i]
-	}
-	return a, nil
 }
 
 // UserSave saves the file and the location history

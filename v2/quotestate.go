@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/xyproto/mode"
 )
@@ -51,31 +50,6 @@ func NewQuoteState(singleLineCommentMarker string, m mode.Mode, ignoreSingleQuot
 // None returns true if we're not within ', "", `, /* ... */ or a single-line quote right now
 func (q *QuoteState) None() bool {
 	return q.singleQuote == 0 && q.doubleQuote == 0 && q.backtick == 0 && !q.multiLineComment && !q.hasSingleLineComment
-}
-
-// OnlyBacktick returns true if we're only within a ` quote
-func (q *QuoteState) OnlyBacktick() bool {
-	return q.singleQuote == 0 && q.doubleQuote == 0 && q.backtick > 0 && !q.multiLineComment && !q.hasSingleLineComment
-}
-
-// OnlySingleQuote returns true if we're only within a ' quote
-func (q *QuoteState) OnlySingleQuote() bool {
-	return q.singleQuote > 0 && q.doubleQuote == 0 && q.backtick == 0 && !q.multiLineComment && !q.hasSingleLineComment
-}
-
-// OnlyDoubleQuote returns true if we're only within a " quote
-func (q *QuoteState) OnlyDoubleQuote() bool {
-	return q.singleQuote == 0 && q.doubleQuote > 0 && q.backtick == 0 && !q.multiLineComment && !q.hasSingleLineComment
-}
-
-// OnlyMultiLineComment returns true if we're only within a multi-line comment
-func (q *QuoteState) OnlyMultiLineComment() bool {
-	return q.singleQuote == 0 && q.doubleQuote == 0 && q.backtick == 0 && q.multiLineComment && !q.hasSingleLineComment
-}
-
-// String returns info about the current quote state
-func (q *QuoteState) String() string {
-	return fmt.Sprintf("singleQuote=%v doubleQuote=%v backtick=%v multiLineComment=%v singleLineComment=%v startedMultiLineString=%v\n", q.singleQuote, q.doubleQuote, q.backtick, q.multiLineComment, q.hasSingleLineComment, q.startedMultiLineString)
 }
 
 // ProcessRune is for processing single runes

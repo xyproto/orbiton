@@ -23,19 +23,6 @@ var (
 	searchHistoryMutex    sync.RWMutex
 )
 
-// Has checks if the search history has the given searchTerm
-func (sh SearchHistory) Has(searchTerm string) bool {
-	searchHistoryMutex.RLock()
-	defer searchHistoryMutex.RUnlock()
-
-	for _, v := range sh {
-		if v == searchTerm {
-			return true
-		}
-	}
-	return false
-}
-
 // Empty checks if the search history has no entries
 func (sh SearchHistory) Empty() bool {
 	searchHistoryMutex.RLock()

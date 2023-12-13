@@ -20,7 +20,7 @@ func ExampleEditor_SortStrings() {
 	// example=(a b c d e f g h o q)
 }
 
-func ExamplesortStrings() {
+func Example_sortStrings() {
 	inputString := "example=(o a f g e b c d q h)"
 	fmt.Println(inputString)
 	sorted, err := sortStrings(inputString)

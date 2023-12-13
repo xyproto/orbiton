@@ -42,26 +42,6 @@ func (kh *KeyHistory) PrevPrev() string {
 	return kh.keys[1]
 }
 
-// PrevPrevPrev returns the key pressed before the one before the last one
-func (kh *KeyHistory) PrevPrevPrev() string {
-	return kh.keys[0]
-}
-
-// PrevIsNot checks that the given keypress is not the previous one
-func (kh *KeyHistory) PrevIsNot(keyPress string) bool {
-	return keyPress != kh.keys[2]
-}
-
-// ClearLast clears the previous (and last) keypress in the history
-func (kh *KeyHistory) ClearLast() {
-	kh.keys[2] = ""
-}
-
-// SetLast modifies the previous (and last) keypress in the history
-func (kh *KeyHistory) SetLast(keyPress string) {
-	kh.keys[2] = keyPress
-}
-
 // PrevIs checks if one of the given strings is the previous keypress
 func (kh *KeyHistory) PrevIs(keyPresses ...string) bool {
 	for _, keyPress := range keyPresses {
@@ -72,39 +52,9 @@ func (kh *KeyHistory) PrevIs(keyPresses ...string) bool {
 	return false
 }
 
-// PrevPrevIs checks if the one before the previous keypress is the given one
-func (kh *KeyHistory) PrevPrevIs(keyPresses ...string) bool {
-	for _, keyPress := range keyPresses {
-		if keyPress == kh.keys[1] {
-			return true
-		}
-	}
-	return false
-}
-
 // TwoLastAre checks if the two previous keypresses are the given keypress
 func (kh *KeyHistory) TwoLastAre(keyPress string) bool {
 	return kh.Prev() == keyPress && kh.PrevPrev() == keyPress
-}
-
-// PrevPrevPrevIs checks if the one before the previous keypress is the given one
-func (kh *KeyHistory) PrevPrevPrevIs(keyPresses ...string) bool {
-	for _, keyPress := range keyPresses {
-		if keyPress == kh.keys[0] {
-			return true
-		}
-	}
-	return false
-}
-
-// Only checks if the key press history only contains the given keypress
-func (kh *KeyHistory) Only(keyPress string) bool {
-	for _, prevKeyPress := range kh.keys {
-		if prevKeyPress != keyPress {
-			return false
-		}
-	}
-	return true
 }
 
 // Repeated checks if the given keypress was repeated the N last times
@@ -157,14 +107,6 @@ func (kh *KeyHistory) AllWithin(dur time.Duration) bool {
 func (kh *KeyHistory) PrevWithin(dur time.Duration) bool {
 	prevTime := kh.t[2]
 	return time.Since(prevTime) < dur
-}
-
-// SpecialArrowKeypress checks if the last 3 keypresses are all different arrow keys,
-// like for instance left, up, right or left, down right, but not left, left, left.
-// Also, the keypresses must happen within a fixed amount of time, so that only rapid
-// successions are registered.
-func (kh *KeyHistory) SpecialArrowKeypress() bool {
-	return kh.OnlyInAndAllDiffer("↑", "→", "←", "↓") && kh.AllWithin(keypressComboTimeLimit)
 }
 
 // SpecialArrowKeypressWith is like SpecialArrowKeypress, but also considers
