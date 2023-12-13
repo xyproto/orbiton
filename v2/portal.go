@@ -50,12 +50,6 @@ func (p *Portal) MoveDown() {
 	p.lineNumber++
 }
 
-// MoveUp is useful when using portals within the same file.
-func (p *Portal) MoveUp() {
-	// PopLine handles overflows.
-	p.lineNumber--
-}
-
 // ClosePortal will clear the portal by removing the portal file
 func (e *Editor) ClosePortal() error {
 	e.sameFilePortal = nil
@@ -120,11 +114,6 @@ func LoadPortal(portalTimeout time.Duration) (*Portal, error) {
 // LineIndex returns the current line index that the portal points to
 func (p *Portal) LineIndex() LineIndex {
 	return p.lineNumber.LineIndex()
-}
-
-// LineNumber returns the current line number that the portal points to
-func (p *Portal) LineNumber() LineNumber {
-	return p.lineNumber
 }
 
 // Save will save the portal

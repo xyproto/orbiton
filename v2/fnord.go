@@ -27,8 +27,3 @@ func (fnord *FilenameOrData) ExpandUser() {
 func (fnord *FilenameOrData) Empty() bool {
 	return fnord.length == 0
 }
-
-// String returns the contents as a string
-func (fnord *FilenameOrData) String() string {
-	return string(fnord.data)
-}

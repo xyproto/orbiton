@@ -116,11 +116,6 @@ func (e *Editor) UseStickySearchTerm() {
 	}
 }
 
-// ClearStickySearchTerm will clear the sticky search term, for when ctrl-n is pressed.
-func (e *Editor) ClearStickySearchTerm() {
-	e.stickySearchTerm = ""
-}
-
 // forwardSearch is a helper function for searching for a string from the given startIndex,
 // up to the given stopIndex. -1
 // -1 is returned if there are no matches.

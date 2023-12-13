@@ -281,13 +281,6 @@ func GetTemplatePrograms() TemplatePrograms {
 	return templatePrograms
 }
 
-// HasTemplateProgram checks if a template is available for the current
-// programming language, by looking at e.mode.
-func (e *Editor) HasTemplateProgram() bool {
-	_, found := GetTemplatePrograms()[e.mode]
-	return found
-}
-
 // BaseFilenameWithoutExtension returns the base filename, without the extension
 // For instance, "/some/where/main.c" becomes just "main".
 func (e *Editor) BaseFilenameWithoutExtension() string {

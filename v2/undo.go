@@ -162,11 +162,6 @@ func (u *Undo) Restore(e *Editor) error {
 	return errors.New("no undo state at this index")
 }
 
-// Index will return the current undo index, in the undo buffers
-func (u *Undo) Index() int {
-	return u.index
-}
-
 // Len will return the current number of stored undo snapshots.
 // This is the same as the index int that points to the next free slot.
 func (u *Undo) Len() int {

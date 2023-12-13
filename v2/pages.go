@@ -25,11 +25,6 @@ func NewScrollableTextBox(pages []Page) *ScrollableTextBox {
 	}
 }
 
-// GetBox returns the encapsulated Box
-func (stb *ScrollableTextBox) GetBox() *Box {
-	return stb.Box
-}
-
 // DrawScrollableText will draw a scrollable text widget.
 // Takes a Box struct for the size and position.
 // Uses bt.Foreground and bt.Background.

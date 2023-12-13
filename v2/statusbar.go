@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -269,13 +268,6 @@ func (sb *StatusBar) ShowNoTimeout(c *vt100.Canvas, e *Editor) {
 	c.Draw()
 }
 
-// ShowWordCount displays a status message with only the current word count
-func (sb *StatusBar) ShowWordCount(c *vt100.Canvas, e *Editor) {
-	wordCountString := strconv.Itoa(e.WordCount())
-	sb.SetMessage(wordCountString)
-	sb.ShowNoTimeout(c, e)
-}
-
 // ShowLineColWordCount shows a status message with the current filename, line, column and word count
 func (sb *StatusBar) ShowLineColWordCount(c *vt100.Canvas, e *Editor, filename string) {
 	statusString := filename + ": " + e.PositionPercentageAndModeInfo()
@@ -300,11 +292,6 @@ func (sb *StatusBar) NanoInfo(c *vt100.Canvas, e *Editor) {
 
 	sb.SetMessage(statusString)
 	sb.ShowNoTimeout(c, e)
-}
-
-// ShowLineColWordCountAfterRedraw shows a status message with the current filename, line, column and word count, after the redraw
-func (sb *StatusBar) ShowLineColWordCountAfterRedraw(e *Editor, filename string) {
-	sb.messageAfterRedraw = filename + ": " + e.PositionPercentageAndModeInfo()
 }
 
 // HoldMessage can be used to let a status message survive on screen for N seconds,

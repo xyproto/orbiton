@@ -1,9 +1,5 @@
 package main
 
-import (
-	"errors"
-)
-
 // Macro represents a series of keypresses that can be played back later
 type Macro struct {
 	KeyPresses []string
@@ -40,15 +36,4 @@ func (m *Macro) Home() {
 // Len returns the number of keypresses in this macro
 func (m *Macro) Len() int {
 	return len(m.KeyPresses)
-}
-
-// Pop will pop the last keypress off the stack
-func (m *Macro) Pop() (string, error) {
-	l := len(m.KeyPresses)
-	if l > 0 {
-		last := m.KeyPresses[l-1]
-		m.KeyPresses = m.KeyPresses[:l-1]
-		return last, nil
-	}
-	return "", errors.New("no more items")
 }
