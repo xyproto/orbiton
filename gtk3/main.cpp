@@ -71,7 +71,7 @@ void trigger_redraw()
 
 void signal_handler(int signal_num)
 {
-    usleep(400000); // will sleep for 0.4s
+    usleep(200000); // will sleep for 0.2s
     // If we are here, it means we received a SIGWINCH signal from o.
     // This means that o is ready to resize.
     // Answer by sending SIGWINCH to o (the child_pid), to make it
