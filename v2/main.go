@@ -19,7 +19,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "Orbiton 2.65.6"
+const versionString = "Orbiton 2.65.7"
 
 var (
 	// quitMut disallows Exit(1) while a file is being saved
