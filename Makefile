@@ -2,9 +2,11 @@
 
 PROJECT ?= orbiton
 
-GOBUILD := GOEXPERIMENT=loopvar go build -mod=vendor -v
+GOFLAGS := -mod=vendor -trimpath -v
+GOBUILD := GOEXPERIMENT=loopvar go build
 
 SRCFILES := $(wildcard go.* v2/*.go v2/go.*)
+
 
 # macOS and FreeBSD detection
 UNAME_S := $(shell uname -s)
@@ -25,10 +27,8 @@ UNAME_R ?= $(shell uname -r)
 ifneq (,$(findstring arch,$(UNAME_R)))
 # Arch Linux
 LDFLAGS ?= -Wl,-O2,--sort-common,--as-needed,-z,relro,-z,now
-BUILDFLAGS ?= -mod=vendor -buildmode=pie -trimpath -ldflags "-s -w -linkmode=external -extldflags $(LDFLAGS)"
-else
-# Default settings
-BUILDFLAGS ?= -mod=vendor -trimpath
+GOFLAGS += -buildmode=pie
+BUILDFLAGS ?= -ldflags "-s -w -linkmode=external -extldflags $(LDFLAGS)"
 endif
 
 CXX ?= g++
@@ -43,15 +43,15 @@ else
 endif
 
 o: $(SRCFILES)
-	cd v2 && $(GOBUILD) $(BUILDFLAGS) -o ../o
+	cd v2 && $(GOBUILD) $(GOFLAGS) $(BUILDFLAGS) -o ../o
 
 trace: clean $(SRCFILES)
-	cd v2 && $(GOBUILD) $(BUILDFLAGS) -tags=trace -o ../o
+	cd v2 && $(GOBUILD) $(GOFLAGS) $(BUILDFLAGS) -tags=trace -o ../o
 
 pgo: v2/default.pgo
 
 v2/default.pgo: clean $(SRCFILES)
-	cd v2 && $(GOBUILD) $(BUILDFLAGS) -tags=trace -o ../o
+	cd v2 && $(GOBUILD) $(GOFLAGS) $(BUILDFLAGS) -tags=trace -o ../o
 	-rm v2/default.pgo
 	@# v2/main.go could be any filename, it's just for collecting the CPU profile info
 	./o --cpuprofile v2/default.pgo v2/main.go
