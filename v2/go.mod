@@ -1,6 +1,6 @@
 module github.com/xyproto/orbiton/v2
 
-go 1.21.3
+go 1.21.5
 
 require (
 	github.com/PullRequestInc/go-gpt3 v1.2.0
@@ -35,7 +35,6 @@ require (
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
 	github.com/creack/pty v1.1.21 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06 // indirect
 	github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 // indirect
 	github.com/kr/pty v1.1.8 // indirect
@@ -53,5 +52,4 @@ require (
 	github.com/xyproto/palgen v1.5.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -10,8 +10,6 @@ github.com/creack/pty
 # github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
 ## explicit; go 1.18
 github.com/cyrus-and/gdb
-# github.com/davecgh/go-spew v1.1.1
-## explicit
 # github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06
 ## explicit
 github.com/dkua/go-ico
@@ -150,5 +148,3 @@ golang.org/x/net/html/atom
 ## explicit; go 1.18
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# gopkg.in/yaml.v3 v3.0.1
-## explicit
