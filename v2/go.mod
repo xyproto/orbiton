@@ -25,8 +25,8 @@ require (
 	github.com/xyproto/stringpainter v1.0.0
 	github.com/xyproto/syntax v1.10.9
 	github.com/xyproto/termtitle v1.5.1
-	github.com/xyproto/textoutput v1.15.10
-	github.com/xyproto/vt100 v1.12.9
+	github.com/xyproto/textoutput v1.16.0
+	github.com/xyproto/vt100 v1.13.0
 	github.com/xyproto/wordwrap v1.0.1
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
 	golang.org/x/image v0.14.0
@@ -47,6 +47,7 @@ require (
 	github.com/peterhellberg/gfx v0.0.0-20230908181254-9885a9f73abe // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
+	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.5.0 // indirect
