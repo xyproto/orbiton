@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"image/draw"
+	"image/color"
 	"image/png"
 	"math"
 	"math/rand"
@@ -910,33 +910,66 @@ retry:
 			running = false
 		case 17: // ctrl-q
 			return true, nil
-
 		case 19: // ctrl-s
 			// Save a screenshot
-			// Use c.ToImage to generate the image
-			originalImg, err := c.ToImage()
-			if err != nil {
-				statusText = "error: " + err.Error()
+
+			// First find the lower right corner of the canvas that has a rune
+			maxX := uint(0)
+			maxY := uint(0)
+			for y := uint(0); y < c.Height(); y++ {
+				for x := uint(0); x < c.Width(); x++ {
+					r, err := c.At(x, y)
+					if err != nil {
+						continue
+					}
+					if r != 0 && r != ' ' {
+						if x > maxX {
+							maxX = x
+						}
+						if y > maxY {
+							maxY = y
+						}
+					}
+				}
+			}
+			if maxX == 0 && maxY == 0 {
+				statusText = "no pixels to save"
 				break
 			}
-			// Create a new image without the first 8 rows
-			bounds := originalImg.Bounds()
-			newImg := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()-8))
-			draw.Draw(newImg, newImg.Bounds(), originalImg, image.Point{0, 8}, draw.Src)
+
+			// Generate the image
+			var pixelColor color.RGBA
+			img := image.NewRGBA(image.Rect(0, 0, int(maxX), int(maxY)))
+			for y := uint(0); y < maxY; y++ {
+				for x := uint(0); x < maxX; x++ {
+					r, err := c.At(x, y)
+					if err != nil {
+						continue
+					}
+					pixelColor = color.RGBA{0, 0, 0x20, 0xff} // dark blue
+					if r != 0 && r != ' ' {
+						pixelColor = color.RGBA{0, 0xb0, 0, 0xff} // green
+					}
+					img.Set(int(x), int(y), pixelColor)
+				}
+			}
+
 			// Create the file
 			screenshotFilename := files.TimestampedFilename("orbiton.png")
 			f, err := os.Create(screenshotFilename)
 			if err != nil {
 				statusText = "error: " + err.Error()
 				break
+
 			}
-			defer f.Close()
+
 			// Encode and save the image
-			err = png.Encode(f, newImg)
+			err = png.Encode(f, img)
 			if err != nil {
 				statusText = "error: " + err.Error()
 				break
 			}
+
 			// Done
 			statusText = "Wrote " + screenshotFilename
 		case 32: // Space
