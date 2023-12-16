@@ -25,8 +25,8 @@ require (
 	github.com/xyproto/stringpainter v1.0.0
 	github.com/xyproto/syntax v1.10.9
 	github.com/xyproto/termtitle v1.5.1
-	github.com/xyproto/textoutput v1.16.0
-	github.com/xyproto/vt100 v1.13.0
+	github.com/xyproto/textoutput v1.16.1
+	github.com/xyproto/vt100 v1.14.0
 	github.com/xyproto/wordwrap v1.0.1
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
 	golang.org/x/image v0.14.0
