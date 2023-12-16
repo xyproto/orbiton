@@ -15,8 +15,7 @@ It might be a good fit for:
 * Being placed on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in log, man page and image viewer, can be used as `EDITOR=o visudo` and has built-in support for editing and formatting `/etc/fstab` files.
 * Writing any number of words in a distraction-free fullscreen environment. (Press `ctrl-g` to see the word count in the status bar).
 
-The main goals of Orbiton is to:
-**be small, fast, provide quick edit-compile cycles and not be annoying, within the limits of VT100**.
+The main goal of Orbiton is to **be small, be fast, allow for quick edit-compile cycles and not be annoying, within the limits of VT100**.
 
 ## Screenshots
 
