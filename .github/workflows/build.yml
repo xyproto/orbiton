@@ -16,7 +16,7 @@ jobs:
         go-version: ${{ matrix.go-version }}
     - name: Checkout code
       uses: actions/checkout@v4
-    - name: Slegga
+    - name: Update deps
       run: cd v2 && (go get -d -v; go get -t -v; go get -u -v; go mod vendor; go mod tidy; go mod vendor; go mod tidy)
     - name: Build
       run: cd v2 && go build
@@ -42,7 +42,7 @@ jobs:
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-
-    - name: Slegga
+    - name: Update deps
       run: cd v2 && (go get -d -v; go get -t -v; go get -u -v; go mod vendor; go mod tidy; go mod vendor; go mod tidy)
     - name: Build
       run: cd v2 && go build
