@@ -35,6 +35,6 @@ With Go 1.17 or later:
 
 ## General info
 
-* Version: 1.4.4
+* Version: 1.4.5
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

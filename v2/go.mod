@@ -14,7 +14,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/xyproto/autoimport v1.5.2
 	github.com/xyproto/binary v1.3.0
-	github.com/xyproto/carveimg v1.4.4
+	github.com/xyproto/carveimg v1.4.5
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.2.0
 	github.com/xyproto/env/v2 v2.2.5
@@ -22,10 +22,10 @@ require (
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/mode v0.7.17
-	github.com/xyproto/stringpainter v1.0.0
+	github.com/xyproto/stringpainter v1.0.1
 	github.com/xyproto/syntax v1.10.9
 	github.com/xyproto/termtitle v1.5.1
-	github.com/xyproto/textoutput v1.16.1
+	github.com/xyproto/textoutput v1.16.2
 	github.com/xyproto/vt100 v1.14.2
 	github.com/xyproto/wordwrap v1.0.1
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
