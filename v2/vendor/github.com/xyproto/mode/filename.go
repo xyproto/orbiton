@@ -183,6 +183,8 @@ func Detect(filename string) Mode {
 			mode = Mojo
 		case ".r":
 			mode = R
+		case ".rb":
+			mode = Ruby
 		case ".razor":
 			mode = XML
 		case ".rs":

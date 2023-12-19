@@ -77,6 +77,7 @@ const (
 	Python                // Python
 	R                     // R
 	ReStructured          // reStructuredText
+	Ruby                  // Ruby
 	Rust                  // Rust
 	Scala                 // Scala
 	SCDoc                 // SC Doc
@@ -245,6 +246,8 @@ func (mode Mode) String() string {
 		return "R"
 	case ReStructured:
 		return "reStructuredText"
+	case Ruby:
+		return "Ruby"
 	case Rust:
 		return "Rust"
 	case Scala:
