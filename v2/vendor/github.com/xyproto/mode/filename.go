@@ -146,7 +146,7 @@ func Detect(filename string) Mode {
 			mode = Jakt
 		case ".java":
 			mode = Java
-		case ".js":
+		case ".js", ".jsx":
 			mode = JavaScript
 		case ".json", ".ipynb":
 			mode = JSON
