@@ -210,6 +210,9 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		addKeywords := []string{"package"}
 		delKeywords := []string{"add", "bool", "get", "in", "local", "sub"}
 		addAndRemoveKeywords(addKeywords, delKeywords)
+	case mode.JavaScript:
+		kws := []string{"super"}
+		addKeywords(kws)
 	case mode.JSON:
 		removeKeywords([]string{"install"})
 	case mode.Koka:
