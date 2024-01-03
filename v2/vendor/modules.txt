@@ -78,10 +78,10 @@ github.com/xyproto/binary
 # github.com/xyproto/burnfont v1.2.3
 ## explicit; go 1.9
 github.com/xyproto/burnfont
-# github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795
+# github.com/xyproto/burnpal v1.0.0
 ## explicit; go 1.11
 github.com/xyproto/burnpal
-# github.com/xyproto/carveimg v1.4.5
+# github.com/xyproto/carveimg v1.4.6
 ## explicit; go 1.19
 github.com/xyproto/carveimg
 # github.com/xyproto/clip v1.0.0
@@ -108,7 +108,7 @@ github.com/xyproto/iferr
 # github.com/xyproto/mode v0.7.19
 ## explicit; go 1.14
 github.com/xyproto/mode
-# github.com/xyproto/palgen v1.5.0
+# github.com/xyproto/palgen v1.5.1
 ## explicit; go 1.16
 github.com/xyproto/palgen
 # github.com/xyproto/stringpainter v1.0.1
@@ -127,7 +127,7 @@ github.com/xyproto/textoutput
 ## explicit; go 1.17
 github.com/xyproto/vt100
 # github.com/xyproto/wordwrap v1.0.1
-## explicit; go 1.21
+## explicit; go 1.21.3
 github.com/xyproto/wordwrap
 # github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
 ## explicit

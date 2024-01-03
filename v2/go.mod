@@ -14,7 +14,7 @@ require (
     github.com/spf13/pflag v1.0.5
     github.com/xyproto/autoimport v1.5.2
     github.com/xyproto/binary v1.3.0
-    github.com/xyproto/carveimg v1.4.5
+    github.com/xyproto/carveimg v1.4.6
     github.com/xyproto/clip v1.0.0
     github.com/xyproto/digraph v1.2.0
     github.com/xyproto/env/v2 v2.2.5
@@ -47,9 +47,9 @@ require (
     github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
     github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
     github.com/xyproto/burnfont v1.2.3 // indirect
-    github.com/xyproto/burnpal v0.0.0-20191014132200-bd9858647795 // indirect
+    github.com/xyproto/burnpal v1.0.0 // indirect
     github.com/xyproto/env v1.9.1 // indirect
-    github.com/xyproto/palgen v1.5.0 // indirect
+    github.com/xyproto/palgen v1.5.1 // indirect
     golang.org/x/net v0.19.0 // indirect
     golang.org/x/sys v0.15.0 // indirect
 )

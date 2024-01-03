@@ -1,4 +1,4 @@
-# burnpal [![Build Status](https://travis-ci.org/xyproto/burnpal.svg?branch=master)](https://travis-ci.org/xyproto/burnpal) [![GoDoc](https://godoc.org/github.com/xyproto/burnpal?status.svg)](http://godoc.org/github.com/xyproto/burnpal)
+# burnpal [![GoDoc](https://godoc.org/github.com/xyproto/burnpal?status.svg)](http://godoc.org/github.com/xyproto/burnpal)
 
 A predefined palette, inspired by my old pixling program for DOS.
 
@@ -23,6 +23,6 @@ A predefined palette, inspired by my old pixling program for DOS.
 
 ### General information
 
-* License: MIT
 * Version: 1.0.0
-* Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
+* License: BSD-3
+* Author: Alexander F. Rødseth
