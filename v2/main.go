@@ -312,7 +312,6 @@ func main() {
 	fnord.SetTitle()
 
 	// If the editor executable has been named "red", use the red/gray theme by default
-	// Also use the red/gray theme if $SHELL is /bin/csh (typically BSD)
 	theme := NewDefaultTheme()
 	syntaxHighlight := true
 	nanoMode := false

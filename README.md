@@ -1,6 +1,6 @@
 ![Orbiton Logo](img/icon_128x128.png)
 
-![Build](https://github.com/xyproto/orbiton/workflows/Build/badge.svg) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Forbiton.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Forbiton?ref=badge_shield) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/orbiton/v2)](https://goreportcard.com/report/github.com/xyproto/orbiton/v2) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/orbiton/main/LICENSE) 
+![Build](https://github.com/xyproto/orbiton/workflows/Build/badge.svg) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Forbiton.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Forbiton?ref=badge_shield) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/orbiton/v2)](https://goreportcard.com/report/github.com/xyproto/orbiton/v2) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/orbiton/main/LICENSE)
 
 Orbiton is a text editor and a simple IDE.
 
@@ -337,9 +337,14 @@ Build both the editor `o` and the GUI frontend `og`:
 
     gmake CXX="clang++ -w" o og
 
-*Install both executables, a man page, an icon and a desktop shortcut file (use `doas` if needed`):
+Install both executables, a man page, an icon and a desktop shortcut file (use `doas` if needed`):
 
     PREFIX=/usr/local gmake install og-install
+
+Just building and installing `o` also works:
+
+    gmake
+    doas gmake install
 
 It is also possible to install the symlinks that are suggested further down in this document.
 
