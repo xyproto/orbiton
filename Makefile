@@ -3,7 +3,7 @@
 PROJECT ?= orbiton
 
 GOFLAGS := -mod=vendor -trimpath -v
-GOBUILD := GOEXPERIMENT=loopvar go build
+GOBUILD := go build
 
 SRCFILES := $(wildcard go.* v2/*.go v2/go.*)
 
