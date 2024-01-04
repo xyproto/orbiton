@@ -7,4 +7,4 @@
 ### General info
 
 * License: BSD-3
-* Version: 0.7.19
+* Version: 0.7.20
