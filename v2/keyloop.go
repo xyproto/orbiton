@@ -1808,9 +1808,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 							err = clip.WriteAll(s, e.primaryClipboard)
 						}
 						if err != nil {
-							status.SetMessage(fmt.Sprintf("Copied %d line%s", lineCount, plural))
+							status.SetMessage(fmt.Sprintf("Copied %d line%s from %s", lineCount, plural, filepath.Base(e.filename)))
 						} else {
-							status.SetMessage(fmt.Sprintf("Copied %d line%s (clipboard)", lineCount, plural))
+							status.SetMessage(fmt.Sprintf("Copied %d line%s from %s to clipboard", lineCount, plural, filepath.Base(e.filename)))
 						}
 						status.Show(c, e)
 					}
