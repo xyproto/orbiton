@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/xyproto/env/v2"
+	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
@@ -461,7 +462,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	if createdNewFile {
 		statusMessage = "New " + e.filename
 	} else if e.Empty() && !fnord.stdin {
-		statusMessage = "Loaded empty file: " + e.filename + warningMessage
+		statusMessage = "Loaded empty file: " + files.Relative(e.filename) + warningMessage
 		if e.readOnly {
 			statusMessage += " (read only)"
 		}
@@ -470,7 +471,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		if fnord.stdin {
 			statusMessage += "Read from stdin"
 		} else {
-			statusMessage += "Loaded " + e.filename
+			statusMessage += "Loaded " + files.Relative(e.filename)
 		}
 		if e.binaryFile {
 			statusMessage += " (binary)"
