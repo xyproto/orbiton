@@ -3134,7 +3134,7 @@ func (st *state) substitution(forPrefix bool) AST {
 
 			return &TemplateParam{Index: index, Template: template}
 		}
-		var seen []AST
+		seen := make(map[AST]bool)
 		skip := func(a AST) bool {
 			switch a := a.(type) {
 			case *Typed:
@@ -3151,12 +3151,10 @@ func (st *state) substitution(forPrefix bool) AST {
 			case *TemplateParam, *LambdaAuto:
 				return false
 			}
-			for _, v := range seen {
-				if v == a {
-					return true
-				}
+			if seen[a] {
+				return true
 			}
-			seen = append(seen, a)
+			seen[a] = true
 			return false
 		}
 
@@ -3208,14 +3206,12 @@ func isLower(c byte) bool {
 // simplify replaces template parameters with their expansions, and
 // merges qualifiers.
 func simplify(a AST) AST {
-	var seen []AST
+	seen := make(map[AST]bool)
 	skip := func(a AST) bool {
-		for _, v := range seen {
-			if v == a {
-				return true
-			}
+		if seen[a] {
+			return true
 		}
-		seen = append(seen, a)
+		seen[a] = true
 		return false
 	}
 	if r := a.Copy(simplifyOne, skip); r != nil {
