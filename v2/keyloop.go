@@ -379,7 +379,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.FullResetRedraw(c, status, drawLines)
 				e.redraw = true
 				e.redrawCursor = true
-			} else if !noCorresponding && (e.mode == mode.C || e.mode == mode.Cpp) && hasS([]string{".cpp", ".cc", ".c", ".cxx", ".c++"}, filepath.Ext(e.filename)) { // jump from source to header file
+			} else if !noCorresponding && (e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC) && hasS([]string{".cpp", ".cc", ".c", ".cxx", ".c++", ".m", ".mm", ".M"}, filepath.Ext(e.filename)) { // jump from source to header file
 				// If this is a C++ source file, try finding and opening the corresponding header file
 				// Check if there is a corresponding header file
 				if absFilename, err := e.AbsFilename(); err == nil { // no error
@@ -392,7 +392,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 				noCorresponding = true
 				goto AGAIN_NO_CORRESPONDING
-			} else if !noCorresponding && (e.mode == mode.C || e.mode == mode.Cpp) && hasS([]string{".h", ".hpp", ".h++"}, filepath.Ext(e.filename)) { // jump from header to source file
+			} else if !noCorresponding && (e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC) && hasS([]string{".h", ".hpp", ".h++"}, filepath.Ext(e.filename)) { // jump from header to source file
 				// If this is a header file, present a menu option for open the corresponding source file
 				// Check if there is a corresponding header file
 				if absFilename, err := e.AbsFilename(); err == nil { // no error

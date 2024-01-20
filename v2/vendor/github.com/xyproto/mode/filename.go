@@ -160,6 +160,8 @@ func Detect(filename string) Mode {
 			mode = Lua
 		case ".ly":
 			mode = Lilypond
+		case ".m":
+			mode = ObjC
 		case ".m4":
 			mode = M4
 		case ".md":

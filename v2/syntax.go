@@ -146,12 +146,12 @@ func setKeywords(addAndDelKeywords ...[]string) {
 
 // cLikeSwitch checks if the given mode is a language with C-like for expressions
 func cLikeFor(m mode.Mode) bool {
-	return m == mode.Arduino || m == mode.C || m == mode.Cpp || m == mode.Shader || m == mode.Zig || m == mode.Java || m == mode.JavaScript || m == mode.Kotlin || m == mode.TypeScript || m == mode.D || m == mode.Dart || m == mode.Hare || m == mode.Jakt || m == mode.Scala
+	return m == mode.Arduino || m == mode.C || m == mode.Cpp || m == mode.ObjC || m == mode.Shader || m == mode.Zig || m == mode.Java || m == mode.JavaScript || m == mode.Kotlin || m == mode.TypeScript || m == mode.D || m == mode.Dart || m == mode.Hare || m == mode.Jakt || m == mode.Scala
 }
 
 // cLikeSwitch checks if the given mode is a language with C-like switch/case expressions
 func cLikeSwitch(m mode.Mode) bool {
-	return m == mode.Arduino || m == mode.C || m == mode.Cpp || m == mode.Shader || m == mode.Go || m == mode.Java || m == mode.JavaScript || m == mode.Kotlin || m == mode.TypeScript || m == mode.D || m == mode.Dart || m == mode.Hare || m == mode.Jakt || m == mode.Scala
+	return m == mode.Arduino || m == mode.C || m == mode.Cpp || m == mode.ObjC || m == mode.Shader || m == mode.Go || m == mode.Java || m == mode.JavaScript || m == mode.Kotlin || m == mode.TypeScript || m == mode.D || m == mode.Dart || m == mode.Hare || m == mode.Jakt || m == mode.Scala
 }
 
 // adjustSyntaxHighlightingKeywords contains per-language adjustments to highlighting of keywords
@@ -284,7 +284,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.Shader:
 		addKeywords([]string{"buffer", "bvec2", "bvec3", "bvec4", "coherent", "dvec2", "dvec3", "dvec4", "flat", "in", "inout", "invariant", "ivec2", "ivec3", "ivec4", "layout", "mat", "mat2", "mat3", "mat4", "noperspective", "out", "precision", "readonly", "restrict", "smooth", "uniform", "uvec2", "uvec3", "uvec4", "vec2", "vec3", "vec4", "volatile", "writeonly"})
 		fallthrough // Continue to C/C++ and then to the default
-	case mode.Arduino, mode.C, mode.Cpp:
+	case mode.Arduino, mode.C, mode.Cpp, mode.ObjC:
 		addKeywords := []string{"int8_t", "uint8_t", "int16_t", "uint16_t", "int32_t", "uint32_t", "int64_t", "uint64_t", "size_t"}
 		delKeywords := []string{"ret", "static"} // static is treated separately, as a special keyword
 		addAndRemoveKeywords(addKeywords, delKeywords)

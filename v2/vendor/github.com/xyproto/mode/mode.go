@@ -68,6 +68,7 @@ const (
 	Nroff                 // editing man pages
 	OCaml                 // OCaml
 	Oak                   // Oak
+	ObjC                  // Objective-C
 	ObjectPascal          // Object Pascal and Delphi
 	Odin                  // Odin
 	Ollama                // For Modelfiles
@@ -226,6 +227,8 @@ func (mode Mode) String() string {
 		return "Nroff"
 	case Oak:
 		return "Oak"
+	case ObjC:
+		return "Objective-C"
 	case Ollama:
 		return "Ollama"
 	case ObjectPascal:
