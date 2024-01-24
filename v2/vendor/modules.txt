@@ -26,7 +26,7 @@ github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
 github.com/gomarkdown/markdown/html
 github.com/gomarkdown/markdown/parser
-# github.com/ianlancetaylor/demangle v0.0.0-20240117034632-964b1d53ca6c
+# github.com/ianlancetaylor/demangle v0.0.0-20240123011522-1fd6b93ad1eb
 ## explicit; go 1.13
 github.com/ianlancetaylor/demangle
 # github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25

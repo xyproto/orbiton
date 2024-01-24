@@ -2124,7 +2124,7 @@ func (st *state) templateParam() AST {
 // This handles the forward referencing template parameters found in
 // cast operators.
 func (st *state) setTemplate(a AST, tmpl *Template) {
-	var seen []AST
+	seen := make(map[AST]bool)
 	a.Traverse(func(a AST) bool {
 		switch a := a.(type) {
 		case *TemplateParam:
@@ -2147,12 +2147,10 @@ func (st *state) setTemplate(a AST, tmpl *Template) {
 			// https://gcc.gnu.org/PR78252.
 			return false
 		default:
-			for _, v := range seen {
-				if v == a {
-					return false
-				}
+			if seen[a] {
+				return false
 			}
-			seen = append(seen, a)
+			seen[a] = true
 			return true
 		}
 	})
@@ -3292,19 +3290,17 @@ func simplifyOne(a AST) AST {
 					return nil
 				}
 
-				var seen []AST
+				seen := make(map[AST]bool)
 				skip := func(sub AST) bool {
 					// Don't traverse into another
 					// pack expansion.
 					if _, ok := sub.(*PackExpansion); ok {
 						return true
 					}
-					for _, v := range seen {
-						if v == sub {
-							return true
-						}
+					if seen[sub] {
+						return true
 					}
-					seen = append(seen, sub)
+					seen[sub] = true
 					return false
 				}
 
@@ -3323,7 +3319,7 @@ func simplifyOne(a AST) AST {
 // findArgumentPack walks the AST looking for the argument pack for a
 // pack expansion.  We find it via a template parameter.
 func (st *state) findArgumentPack(a AST) *ArgumentPack {
-	var seen []AST
+	seen := make(map[AST]bool)
 	var ret *ArgumentPack
 	a.Traverse(func(a AST) bool {
 		if ret != nil {
@@ -3345,12 +3341,10 @@ func (st *state) findArgumentPack(a AST) *ArgumentPack {
 		case *UnnamedType, *FixedType, *DefaultArg:
 			return false
 		}
-		for _, v := range seen {
-			if v == a {
-				return false
-			}
+		if seen[a] {
+			return false
 		}
-		seen = append(seen, a)
+		seen[a] = true
 		return true
 	})
 	return ret
