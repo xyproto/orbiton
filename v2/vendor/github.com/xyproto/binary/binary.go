@@ -3,6 +3,7 @@ package binary
 import (
 	"bytes"
 	"os"
+	"unicode/utf16"
 	"unicode/utf8"
 )
 
@@ -14,7 +15,8 @@ func probablyBinaryData(b []byte) bool {
 	if zeroCount > len(b)/3 {
 		return true
 	}
-	return !utf8.ValidString(string(b))
+	s := string(b)
+	return !utf8.ValidString(s) && !utf16.ValidString(s)
 }
 
 // File tries to determine if the given filename is a binary file by reading the first, last
