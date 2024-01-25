@@ -1,22 +1,104 @@
 package binary
 
 import (
-	"bytes"
+	"encoding/binary"
 	"os"
-	"unicode/utf16"
 	"unicode/utf8"
 )
 
-// probablyBinaryData is designed to examine a byte slice that is 24 bytes long, or less.
-// If there are more than 1/3 null bytes, it's considered to be binary.
-// If the bytes can be converted to an utf8 string, it's considered to be text.
+// readUint16 reads a 16-bit value from a byte slice based on endianness
+func readUint16(b []byte, bigEndian bool) uint16 {
+	if bigEndian {
+		return binary.BigEndian.Uint16(b)
+	}
+	return binary.LittleEndian.Uint16(b)
+}
+
+// isValidUTF16 checks if the given byte slice is valid UTF-16.
+// It handles both big endian and little endian byte orders.
+func isValidUTF16(data []byte) (valid bool) {
+	lenData := len(data)
+	if lenData < 2 {
+		return false
+	}
+	var bigEndian bool
+	switch {
+	case data[0] == 0xFE && data[1] == 0xFF:
+		bigEndian = true
+		data = data[2:] // Remove BOM for big endian
+		lenData -= 2
+	case data[0] == 0xFF && data[1] == 0xFE:
+		bigEndian = false
+		data = data[2:] // Remove BOM for little endian
+		lenData -= 2
+	}
+	if lenData%2 != 0 {
+		return false // Length of UTF-16 data must be even
+	}
+
+	var charValue, nextChar uint16
+	for i := 0; i < lenData; i += 2 {
+		charValue = readUint16(data[i:], bigEndian)
+		switch {
+		case charValue >= 0xD800 && charValue <= 0xDBFF:
+			// High surrogate
+			if i+2 >= lenData {
+				return false // High surrogate at end of data is invalid
+			}
+			nextChar = readUint16(data[i+2:], bigEndian)
+			if nextChar < 0xDC00 || nextChar > 0xDFFF {
+				return false // Invalid low surrogate following a high surrogate
+			}
+			i += 2 // Skip the next surrogate pair part
+		case charValue >= 0xDC00 && charValue <= 0xDFFF:
+			// Low surrogate without preceding high surrogate
+			return false
+		}
+	}
+	return true
+}
+
+// probablyBinaryData uses enhanced heuristics to guess whether data is binary or text.
 func probablyBinaryData(b []byte) bool {
-	zeroCount := bytes.Count(b, []byte{0})
-	if zeroCount > len(b)/3 {
+	var zeroCount, controlCharCount, continuousNullCount int
+	maxContinuousNull := 0
+	distinctBytes := make(map[byte]struct{})
+
+	for _, byteVal := range b {
+		distinctBytes[byteVal] = struct{}{}
+
+		if byteVal == 0 {
+			zeroCount++
+			continuousNullCount++
+			if continuousNullCount > maxContinuousNull {
+				maxContinuousNull = continuousNullCount
+			}
+		} else {
+			continuousNullCount = 0
+		}
+
+		if byteVal < 32 && byteVal != 9 && byteVal != 10 && byteVal != 13 { // excluding tab, LF, CR
+			controlCharCount++
+		}
+	}
+
+	// High proportion of null bytes or long continuous null byte sequences suggest binary
+	if zeroCount > len(b)/2 || maxContinuousNull > 4 {
 		return true
 	}
-	s := string(b)
-	return !utf8.ValidString(s) && !utf16.ValidString(s)
+
+	// Valid UTF-8 or UTF-16 data suggests text
+	if utf8.Valid(b) || isValidUTF16(b) {
+		return false
+	}
+
+	// High count of control characters suggests binary
+	if controlCharCount > len(b)/10 {
+		return true
+	}
+
+	// Little variety in byte values might suggest binary
+	return len(distinctBytes) < len(b)/2
 }
 
 // File tries to determine if the given filename is a binary file by reading the first, last
