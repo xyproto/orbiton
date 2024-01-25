@@ -1794,11 +1794,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					s := e.Block(y)
 					if s != "" {
 						copyLines = strings.Split(s, "\n")
-						// Prepare a status message
-						plural := ""
 						lineCount := strings.Count(s, "\n")
-						if lineCount > 1 {
-							plural = "s"
+						// Prepare a status message
+						plural := "s"
+						if lineCount == 1 {
+							plural = ""
 						}
 						// Place the block of text in the clipboard
 						if isDarwin() {
@@ -1807,11 +1807,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 							// Place it in the non-primary clipboard
 							err = clip.WriteAll(s, e.primaryClipboard)
 						}
+						fmtMsg := "Copied %d line%s from %s"
 						if err != nil {
-							status.SetMessage(fmt.Sprintf("Copied %d line%s from %s", lineCount, plural, filepath.Base(e.filename)))
-						} else {
-							status.SetMessage(fmt.Sprintf("Copied %d line%s from %s to clipboard", lineCount, plural, filepath.Base(e.filename)))
+							fmtMsg = "Copied %d line%s from %s to internal buffer"
 						}
+						status.SetMessage(fmt.Sprintf(fmtMsg, lineCount, plural, filepath.Base(e.filename)))
 						status.Show(c, e)
 					}
 				}

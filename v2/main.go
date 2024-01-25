@@ -141,10 +141,14 @@ func main() {
 			defer quitMut.Unlock()
 			os.Exit(1)
 		}
+		plural := "s"
+		if n == 1 {
+			plural = ""
+		}
 		if tailString != "" {
-			fmt.Printf("Copied %d bytes from %s to the clipboard. Tail bytes: %s\n", n, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
+			fmt.Printf("Copied %d byte%s from %s to the clipboard. Tail bytes: %s\n", n, plural, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
 		} else {
-			fmt.Printf("Copied %d bytes from %s to the clipboard.\n", n, filename)
+			fmt.Printf("Copied %d byte%s from %s to the clipboard.\n", n, plural, filename)
 		}
 		return
 	}

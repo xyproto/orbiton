@@ -172,7 +172,12 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 				status.Show(c, e)
 			} else {
 				numLines := strings.Count(text, "\n") + 1
-				status.SetMessageAfterRedraw(fmt.Sprintf("Copied %d lines", numLines))
+				plural := "s"
+				if numLines == 1 {
+					plural = ""
+				}
+				const fmtMsg = "Copied %d line%s from %s"
+				status.SetMessageAfterRedraw(fmt.Sprintf(fmtMsg, numLines, plural, filepath.Base(e.filename)))
 			}
 		},
 		copymark: func() { // copy the text between the bookmark and the current line (inclusive)
