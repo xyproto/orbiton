@@ -57,7 +57,7 @@ v2/default.pgo: clean $(SRCFILES)
 	./o --cpuprofile v2/default.pgo v2/main.go
 
 bench:
-	cd v2 && go test -bench=. -benchmem
+	cd v2 && go test -mod=vendor -bench=. -benchmem
 
 gui: og
 ko: og
