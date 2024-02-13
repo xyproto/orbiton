@@ -2,7 +2,7 @@ module github.com/xyproto/orbiton/v2
 
 go 1.21.3
 
-toolchain go1.21.6
+toolchain go1.21.7
 
 require (
 	github.com/PullRequestInc/go-gpt3 v1.2.0
