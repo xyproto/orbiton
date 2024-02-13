@@ -255,7 +255,7 @@ There are pretty few hotkeys to remember:
 | Object Pascal                                   | `.pas`, `.pp`, `.lpr`                                     | yes           | `fpc`                                                                                                      | WIP                                                                                                           |
 | OCaml                                           | `.ml`                                                     | WIP           | `ocamlopt -o $executable $filename`                                                                        | WIP                                                                                                           |
 | Odin                                            | `.odin`                                                   | yes           | `odin build`                                                                                               | N/A                                                                                                           |
-| Python                                          | `.py`                                                     | yes           | `python -m py_compile $filename`                                                                           | `autopep8 -i --maxline-length 120 $filename`                                                                  |
+| Python                                          | `.py`                                                     | yes           | `python -m py_compile $filename`                                                                           | `black $filename`                                                                                             |
 | Rust, if `Cargo.toml` or `../Cargo.toml` exists | `.rs`                                                     | yes           | `cargo build`                                                                                              | `rustfmt $filename`                                                                                           |
 | Rust                                            | `.rs`                                                     | yes           | `rustc $filename`                                                                                          | `rustfmt $filename`                                                                                           |
 | Scala                                           | `.scala`                                                  | yes           | `scalac` + `jar`, see details below                                                                        | WIP                                                                                                           |
@@ -381,7 +381,7 @@ Haskell
 Python
 
 * `ctrl-space` only checks the syntax, without executing. This only requires `python` to be available.
-* For formatting the code with `ctrl-w`, `autopep8` must be installed.
+* For formatting the code with `ctrl-w`, `black` must be installed.
 
 Crystal
 
@@ -493,7 +493,7 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 * `agda` - for compiling Agda code
 * `asciidoctor` - for writing man pages
 * `astyle` - for formatting C# code
-* `autopep8` - for formatting Python code
+* `black` - for formatting Python code
 * `brittany` - for formatting Haskell code
 * `cargo` - for compiling Rust
 * `clang` - for formatting C++ code with `clang-format`

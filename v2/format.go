@@ -40,7 +40,7 @@ func GetFormatMap() FormatMap {
 			exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"): {".lua"},
 			exec.Command("ocamlformat"): {".ml"},
 			exec.Command("/usr/bin/vendor_perl/perltidy", "-se", "-b", "-i=2", "-ole=unix", "-bt=2", "-pt=2", "-sbt=2", "-ce"): {".pl"},
-			exec.Command("autopep8", "-i", "--max-line-length", "120"):                                                         {".py"},
+			exec.Command("black"):    {".py"},
 			exec.Command("rustfmt"):  {".rs"},
 			exec.Command("scalafmt"): {".scala"},
 			exec.Command("shfmt", "-s", "-w", "-i", "2", "-bn", "-ci", "-sr", "-kp"): {".bash", ".sh", "APKBUILD", "PKGBUILD"},

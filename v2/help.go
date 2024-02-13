@@ -32,7 +32,7 @@ ctrl-space  to compile programs or export adoc/sdoc as a man page
             toggle checkboxes in Markdown, or double press to render the file as HTML
 ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for C++, format the current file with "clang-format"
-            for HTML, format the file with "tidy", for Python: "autopep8"
+            for HTML, format the file with "tidy", for Python: "black"
             for Markdown, toggle checkboxes or re-format tables
             for git interactive rebases, cycle the rebase keywords
 ctrl-g      to toggle the status bar or jump to definition (experimental feature)
