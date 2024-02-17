@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] Instead of updating the entire screen when typing, keep track of the regions of the canvas that needs to be updated.
+      Perhaps create version 2 of the vt100 Canvas.
 - [ ] Consider switching to [creack/pty](https://github.com/creack/pty).
 - [ ] Examine the `SIGWINCH` behavior and try to trigger a redraw if this happens when the mouse cursor returns to i.e. Alacritty after some time.
 - [ ] When the first word on a line in Kotlin is `const` followed by a space, expand it to "const val ", when it's being typed in.
