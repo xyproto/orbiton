@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] When pasting through a portal, a status message must appear that highlights this.
 - [ ] Instead of updating the entire screen when typing, keep track of the regions of the canvas that needs to be updated.
       Perhaps create version 2 of the vt100 Canvas.
 - [ ] Consider switching to [creack/pty](https://github.com/creack/pty).
