@@ -1,6 +1,6 @@
 module github.com/xyproto/orbiton/v2
 
-go 1.21.3
+go 1.22.0
 
 require (
 	github.com/PullRequestInc/go-gpt3 v1.2.0
@@ -25,8 +25,8 @@ require (
 	github.com/xyproto/stringpainter v1.0.1
 	github.com/xyproto/syntax v1.10.9
 	github.com/xyproto/termtitle v1.5.1
-	github.com/xyproto/textoutput v1.16.2
-	github.com/xyproto/vt100 v1.14.2
+	github.com/xyproto/textoutput v1.16.3
+	github.com/xyproto/vt100 v1.14.3
 	github.com/xyproto/wordwrap v1.0.1
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
 	golang.org/x/image v0.15.0
