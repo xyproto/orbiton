@@ -67,7 +67,7 @@ func HasPortal() bool {
 }
 
 // LoadPortal will load a filename + line number from the portal.txt file
-func LoadPortal(portalTimeout time.Duration) (*Portal, error) {
+func LoadPortal(maxPortalAge time.Duration) (*Portal, error) {
 	//logf("Loading %s\n", portalFilename)
 	data, err := os.ReadFile(portalFilename)
 	if err != nil {
@@ -99,9 +99,9 @@ func LoadPortal(portalTimeout time.Duration) (*Portal, error) {
 			return nil, err
 		}
 		lineNumber := LineNumber(lineInt)
-		// Check for timeout
-		deadline := timestamp.Add(portalTimeout)
-		if time.Now().After(deadline) {
+		portalAge := time.Since(timestamp)
+		// Check if the portal was created for too long ago to be used for the current session
+		if portalAge > maxPortalAge {
 			return nil, errPortalTimedOut
 		}
 		return &Portal{timestamp, absFilename, lineNumber}, nil
