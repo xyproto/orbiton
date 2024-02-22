@@ -13,13 +13,10 @@ import (
 // SetUpSignalHandlers sets up a signal handler for when ctrl-c is pressed (SIGTERM),
 // and also for when SIGUSR1 or SIGWINCH is received.
 func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
-	// For the drawing
-	resizeMut.Lock()
-	defer resizeMut.Unlock()
 
-	// For the statusbar
+	// For the drawing and the statusbar
+	resizeMut.Lock()
 	mut.Lock()
-	defer mut.Unlock()
 
 	sigChan := make(chan os.Signal, 1)
 
@@ -43,6 +40,10 @@ func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *St
 		}()
 	}
 
+	// For the drawing and the statusbar
+	resizeMut.Unlock()
+	mut.Unlock()
+
 	go func() {
 		for {
 			// Block until the signal is received
@@ -51,9 +52,11 @@ func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *St
 			switch sig {
 			case syscall.SIGTERM:
 				// Save the file
+				mut.Lock()
 				e.UserSave(c, tty, status)
 				status.SetMessage("ctrl-c")
 				status.Show(c, e)
+				mut.Unlock()
 			case syscall.SIGUSR1:
 				// Unlock the file
 				if absFilename, err := filepath.Abs(e.filename); err != nil {
