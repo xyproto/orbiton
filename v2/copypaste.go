@@ -92,23 +92,11 @@ func WriteClipboardToFile(filename string, overwrite, primaryClipboard bool) (in
 // Paste is called when the user presses ctrl-v, and handles portals, clipboards and also non-clipboard-based copy and paste
 func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCopyLines *[]string, firstPasteAction *bool, lastCopyY, lastPasteY, lastCutY *LineIndex, prevKeyWasReturn bool) {
 	if portal, err := LoadPortal(maxPortalAge); err == nil { // no error
-		var gotLineFromPortal bool
-		line, err := portal.PopLine(e, false) // pop the line, but don't remove it from the source file
 		status.Clear(c)
-		if err != nil {
-			// status.SetErrorMessage("Could not copy text through the portal.")
-			e.ClosePortal()
-			status.SetError(err)
-			status.Show(c, e)
-		} else {
+		line, err := portal.PopLine(e, false) // pop the line, but don't remove it from the source file
+		if err == nil {                       // success
 			status.SetMessageAfterRedraw("Pasting through the portal")
-			gotLineFromPortal = true
-		}
-
-		if gotLineFromPortal {
-
 			undo.Snapshot(e)
-
 			if e.EmptyRightTrimmedLine() {
 				// If the line is empty, replace with the string from the portal
 				e.SetCurrentLine(line)
@@ -116,14 +104,14 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 				// If the line is not empty, insert the trimmed string
 				e.InsertStringAndMove(c, strings.TrimSpace(line))
 			}
-
 			e.InsertLineBelow()
 			e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
-
 			e.redraw = true
-
 			return
-		} // errors with loading a portal are ignored
+		}
+		e.ClosePortal()
+		status.SetError(err)
+		status.Show(c, e)
 	}
 
 	// This may only work for the same user, and not with sudo/su
