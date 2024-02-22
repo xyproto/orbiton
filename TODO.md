@@ -2,12 +2,11 @@
 
 ## General
 
-- [ ] When pasting through a portal, a status message must appear that highlights this.
-- [ ] Instead of updating the entire screen when typing, keep track of the regions of the canvas that needs to be updated.
-      Perhaps create version 2 of the vt100 Canvas.
+- [ ] Sorting lines does not handle indentation well. Examine why.
 - [ ] Consider switching to [creack/pty](https://github.com/creack/pty).
-- [ ] Examine the `SIGWINCH` behavior and try to trigger a redraw if this happens when the mouse cursor returns to i.e. Alacritty after some time.
-- [ ] When the first word on a line in Kotlin is `const` followed by a space, expand it to "const val ", when it's being typed in.
+- [ ] When pasting through a portal, make this even more apparent by changing the background color of lines being pasted in and also the background color of lines being pasted from, if in view.
+- [ ] Instead of updating the entire screen when typing, keep track of the regions of the canvas that needs to be updated. Perhaps create version 2 of the vt100 Canvas.
+- [ ] When the first word on a line in Kotlin is `const` followed by a space, expand it to `const val `, when it's being typed in.
 - [ ] When calculating the progress, the algorithm assumes the cursor is at the top line of the canvas. If it's not, subtract some lines.
 - [ ] For Go and "go to definition", let it be able to also discover packages in the parent directory.
 - [ ] If a type is defined with `typealias`, then do not add an import to that type when formatting Kotlin code.
