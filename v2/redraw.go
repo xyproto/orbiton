@@ -35,7 +35,9 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines b
 	if drawLines {
 		e.DrawLines(c, true, e.sshMode)
 	}
+
 	// Assign the new canvas to the current canvas
+	// All mutexes are unlocked at this point for the copying not to be worrysome.
 	*c = *newC
 
 	// TODO: Find out why the following lines are needed to properly handle the SIGWINCH resize signal
