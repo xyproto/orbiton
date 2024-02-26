@@ -21,6 +21,7 @@ const (
 	C                     // C
 	CMake                 // CMake files
 	CS                    // C#
+	CSS                   // CSS
 	Clojure               // Clojure
 	Config                // Config like yaml, yml, toml, and ini files
 	Cpp                   // C++
@@ -129,6 +130,8 @@ func (mode Mode) String() string {
 		return "Bazel"
 	case Blank:
 		return "-"
+	case C:
+		return "C"
 	case Clojure:
 		return "Clojure"
 	case CMake:
@@ -137,12 +140,12 @@ func (mode Mode) String() string {
 		return "Configuration"
 	case Cpp:
 		return "C++"
-	case C:
-		return "C"
 	case Crystal:
 		return "Crystal"
 	case CS:
 		return "C#"
+	case CSS:
+		return "CSS"
 	case D:
 		return "D"
 	case Dart:
