@@ -24,6 +24,9 @@ var (
 	// C#
 	csWords = []string{"Boolean", "Byte", "Char", "Decimal", "Double", "Int16", "Int32", "Int64", "IntPtr", "Object", "Short", "Single", "String", "UInt16", "UInt32", "UInt64", "UIntPtr", "abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked", "class", "const", "continue", "decimal", "default", "delegate", "do", "double", "dynamic", "else", "enum", "event", "explicit", "extern", "false", "finally", "fixed", "float", "for", "foreach", "goto", "if", "implicit", "in", "int", "interface", "internal", "is", "lock", "long", "namespace", "new", "nint", "nuint", "null", "object", "operator", "out", "override", "params", "readonly", "ref", "return", "sbyte", "sealed", "short", "sizeof", "stackalloc", "static", "string", "struct", "switch", "this", "throw", "true", "try", "typeof", "uint", "ulong", "unchecked", "unsafe", "ushort", "using", "virtual", "void", "volatile", "while"} // private, public, protected
 
+	// CSS
+	cssWords = []string{"align-content", "align-items", "align-self", "background-color", "background-image", "background-position", "background-repeat", "background-size", "border", "border-color", "border-radius", "border-style", "border-width", "bottom", "color", "display", "flex", "flex-direction", "flex-wrap", "font-family", "font-size", "font-style", "font-weight", "height", "justify-content", "left", "letter-spacing", "line-height", "margin", "margin-bottom", "margin-left", "margin-right", "margin-top", "max-height", "max-width", "min-height", "min-width", "padding", "padding-bottom", "padding-left", "padding-right", "padding-top", "position", "right", "text-align", "text-decoration", "text-transform", "top", "width", "word-spacing", "z-index"}
+
 	// Dart + some FFI classes
 	dartWords = []string{"ArrayType", "BigInt", "DateTime", "Deprecated", "Double", "Duration", "Float", "Function", "Future", "Int16", "Int32", "Int64", "Int8", "Iterable", "List", "Map", "Null", "Object", "Pointer", "Queue", "Set", "Stream", "String", "Struct", "Uint16", "Uint32", "Uint64", "Uint8", "Uri", "Void", "abstract", "as", "assert", "async", "await", "bool", "break", "case", "catch", "class", "const", "continue", "covariant", "default", "deferred", "do", "double", "dynamic", "else", "enum", "export", "extends", "extension", "external", "factory", "false", "final", "finally", "for", "get", "hide", "if", "implements", "import", "in", "int", "interface", "is", "late", "library", "mixin", "new", "null", "num", "on", "operator", "override", "part", "required", "rethrow", "return", "set", "show", "static", "super", "switch", "sync", "this", "throw", "true", "try", "typedef", "var", "void", "while", "with", "yield"}
 
@@ -172,6 +175,8 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		addKeywords([]string{"DB_PASSWORD", "PASSWORD", "POSTGRES_PASSWORD", "PWD", "Password", "Pwd", "SECRET", "SECRETS", "Secret", "Secrets", "bind", "password", "pwd", "secret", "secrets", "set-option", "set-window-option", "unbind", "uses"})
 	case mode.CS:
 		setKeywords(csWords)
+	case mode.CSS:
+		setKeywords(cssWords)
 	case mode.D:
 		setKeywords(dWords)
 	case mode.Dart:
