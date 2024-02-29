@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Drop the mutexes and have one "server" that deals with I/O and one "server" that deals with presentation.
 - [ ] If running "o main" and "o main" + "o main.go" exists, open "main.go".
 - [ ] Sorting lines does not handle indentation well. Examine why.
 - [ ] Consider switching to [creack/pty](https://github.com/creack/pty).
