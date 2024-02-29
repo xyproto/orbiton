@@ -2715,6 +2715,12 @@ func (e *Editor) DeleteToEndOfLine(c *vt100.Canvas, status *StatusBar, bookmark 
 	*lastCopyY = -1
 	*lastPasteY = -1
 	*lastCutY = -1
+	if e.EmptyLine() {
+		e.DeleteCurrentLineMoveBookmark(bookmark)
+		e.redraw = true
+		e.redrawCursor = true
+		return
+	}
 	e.DeleteRestOfLine()
 	if e.EmptyRightTrimmedLine() {
 		// Deleting the rest of the line cleared this line,
@@ -2725,8 +2731,6 @@ func (e *Editor) DeleteToEndOfLine(c *vt100.Canvas, status *StatusBar, bookmark 
 			e.End(c)
 		}
 	}
-	// TODO: Is this one needed/useful?
-	vt100.Do("Erase End of Line")
 	e.redraw = true
 	e.redrawCursor = true
 }

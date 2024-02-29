@@ -2,6 +2,8 @@
 
 ## General
 
+- [x] ctrl-k is too slow. Optimize.
+- [ ] If running "o main" and "o main" + "o main.go" exists, open "main.go".
 - [ ] Sorting lines does not handle indentation well. Examine why.
 - [ ] Consider switching to [creack/pty](https://github.com/creack/pty).
 - [ ] When pasting through a portal, make this even more apparent by changing the background color of lines being pasted in and also the background color of lines being pasted from, if in view.
