@@ -13,8 +13,6 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines b
 		e.SetSearchTerm(c, status, "", false)
 	}
 
-	resizeMut.Lock()
-
 	vt100.Close()
 	vt100.Reset()
 	vt100.Clear()
@@ -25,8 +23,6 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines b
 	vt100.EchoOff()
 
 	w := int(newC.Width())
-
-	resizeMut.Unlock()
 
 	if (w < e.wrapWidth) || (e.wrapWidth < 80 && w >= 80) {
 		e.wrapWidth = w
