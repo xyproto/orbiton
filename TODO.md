@@ -2,7 +2,6 @@
 
 ## General
 
-- [x] ctrl-k is too slow. Optimize.
 - [ ] If running "o main" and "o main" + "o main.go" exists, open "main.go".
 - [ ] Sorting lines does not handle indentation well. Examine why.
 - [ ] Consider switching to [creack/pty](https://github.com/creack/pty).
