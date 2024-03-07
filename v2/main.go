@@ -99,8 +99,22 @@ func main() {
 
 	noWriteToCache = noCacheFlag || monitorAndReadOnlyFlag
 
-	// If the -p flag is given, just paste the clipboard to the given filename and exit
-	if filename := pflag.Arg(0); filename != "" && pasteFlag {
+	var (
+		executableName          string
+		firstLetterOfExecutable = rune(0)
+	)
+
+	if len(os.Args) > 0 {
+		// The executable name is in arg 0
+		executableName = filepath.Base(os.Args[0])
+		if len(executableName) > 0 {
+			// Get the first rune of the executable name
+			firstLetterOfExecutable = []rune(strings.ToLower(filepath.Base(os.Args[0])))[0]
+		}
+	}
+
+	// If the -p flag is given, or the executable starts with 'p', just paste the clipboard to the given filename and exit
+	if filename := pflag.Arg(0); filename != "" && (pasteFlag || firstLetterOfExecutable == 'p') {
 		const primaryClipboard = false
 		n, headString, tailString, err := WriteClipboardToFile(filename, forceFlag, primaryClipboard)
 		if err != nil {
@@ -126,8 +140,8 @@ func main() {
 		return
 	}
 
-	// If the -c flag is given, just copy the given filename to the clipboard and exit
-	if filename := pflag.Arg(0); filename != "" && copyFlag {
+	// If the -c flag is given, or the executable name starts with 'c', just copy the given filename to the clipboard and exit
+	if filename := pflag.Arg(0); filename != "" && (copyFlag || firstLetterOfExecutable == 'c') {
 		const primaryClipboard = false
 		n, tailString, err := SetClipboardFromFile(filename, primaryClipboard)
 		if err != nil {
@@ -178,11 +192,9 @@ func main() {
 
 	traceStart() // if building with -tags trace
 
-	// Check if the executable starts with "g" or "f"
-	var executableName string
+	// Check if the executable starts with "g" or "f" ("c" and "p" are already checked for, further up)
 	if len(os.Args) > 0 {
-		executableName = filepath.Base(os.Args[0]) // if os.Args[0] is empty, executableName will be "."
-		switch executableName[0] {
+		switch firstLetterOfExecutable {
 		case 'f', 'g':
 			// Start the game
 			if _, err := Game(); err != nil {
@@ -322,14 +334,10 @@ func main() {
 	if envNoColor {
 		theme = NewNoColorDarkBackgroundTheme()
 		syntaxHighlight = false
-	} else if len(executableName) > 0 {
-		// Check if the executable name is a specific word
-		if executableName == "nano" || executableName == "nan" {
-			nanoMode = true
-		}
-		// Check if the executable starts with a specific letter
+	} else if firstLetterOfExecutable != rune(0) {
+		// Check if the executable starts with a specific letter ('f', 'g', 'p' and 'c' are already chekced for)
 		specificLetter = true
-		switch executableName[0] {
+		switch firstLetterOfExecutable {
 		case 'b', 'e': // bo, borland, ed, edit etc.
 			theme = NewDarkBlueEditTheme()
 			// TODO: Later, when specificLetter is examined, use either NewEditLightTheme or NewEditDarkTheme
@@ -344,6 +352,9 @@ func main() {
 			theme = NewSynthwaveTheme()
 		case 't': // t, teal
 			theme = NewTealTheme()
+		case 'n': // nan, nano
+			// Check if "Nano mode" should be set
+			nanoMode = executableName == "nan" || executableName == "nano"
 		default:
 			specificLetter = false
 		}
