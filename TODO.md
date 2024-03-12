@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] When searching for text in Markdown or other text, use case-insensitive search. Use case-sensitive search in code.
 - [ ] Drop the mutexes and have one "server" that deals with I/O and one "server" that deals with presentation.
 - [ ] If running "o main" and "o main" + "o main.go" exists, open "main.go".
 - [ ] Sorting lines does not handle indentation well. Examine why.
