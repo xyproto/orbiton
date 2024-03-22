@@ -3435,6 +3435,11 @@ func (st *state) substitution(forPrefix bool) AST {
 			default:
 				return nil
 			}
+			if st.parsingConstraint {
+				// We don't try to substitute template
+				// parameters in a constraint expression.
+				return &Name{Name: fmt.Sprintf("T%d", index)}
+			}
 			if st.lambdaTemplateLevel > 0 {
 				if _, ok := a.(*LambdaAuto); ok {
 					return nil
