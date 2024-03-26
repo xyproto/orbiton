@@ -262,19 +262,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		})
 	}
 
-	// Disable or enable the tag-expanding behavior when typing in HTML or XML
-	if e.mode == mode.HTML || e.mode == mode.XML {
-		if !e.noExpandTags {
-			actions.Add("Disable tag expansion when typing", func() {
-				e.noExpandTags = true
-			})
-		} else {
-			actions.Add("Enable tag expansion when typing", func() {
-				e.noExpandTags = false
-			})
-		}
-	}
-
 	// Fix as you type mode, on/off
 	if openAIKeyHolder != nil { // has AI
 		if e.fixAsYouType {
@@ -337,6 +324,19 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			e.redrawCursor = true
 		}
 	})
+
+	// Disable or enable the tag-expanding behavior when typing in HTML or XML
+	if e.mode == mode.HTML || e.mode == mode.XML {
+		if !e.noExpandTags {
+			actions.Add("Disable tag expansion when typing", func() {
+				e.noExpandTags = true
+			})
+		} else {
+			actions.Add("Enable tag expansion when typing", func() {
+				e.noExpandTags = false
+			})
+		}
+	}
 
 	// Find the path to either "rust-gdb" or "gdb", depending on the mode, then check if it's there
 	foundGDB := e.findGDB() != ""
