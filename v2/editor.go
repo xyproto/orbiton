@@ -2492,6 +2492,7 @@ func (e *Editor) SortBlock(c *vt100.Canvas, status *StatusBar, bookmark *Positio
 		return
 	}
 	y := e.LineIndex()
+	e.Home()
 	s := e.Block(y)
 	var lines sort.StringSlice
 	lines = strings.Split(s, "\n")
