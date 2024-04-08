@@ -327,13 +327,13 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 
 	// Disable or enable the tag-expanding behavior when typing in HTML or XML
 	if e.mode == mode.HTML || e.mode == mode.XML {
-		if !e.noExpandTags {
+		if e.expandTags {
 			actions.Add("Disable tag expansion when typing", func() {
-				e.noExpandTags = true
+				e.expandTags = false
 			})
 		} else {
 			actions.Add("Enable tag expansion when typing", func() {
-				e.noExpandTags = false
+				e.expandTags = true
 			})
 		}
 	}

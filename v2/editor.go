@@ -47,7 +47,7 @@ type Editor struct {
 	sshMode                    bool            // is o used over ssh, tmux or screen, in a way that usually requires extra redrawing?
 	debugMode                  bool            // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
 	statusMode                 bool            // display a status line at all times at the bottom of the screen
-	noExpandTags               bool            // used for XML and HTML
+	expandTags                 bool            // can be used for XML and HTML
 	syntaxHighlight            bool            // syntax highlighting
 	stopParentOnQuit           bool            // send SIGQUIT to the parent PID when quitting
 	clearOnQuit                bool            // clear the terminal when quitting the editor, or not
