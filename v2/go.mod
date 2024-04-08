@@ -50,6 +50,6 @@ require (
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.5.1 // indirect
-	golang.org/x/net v0.22.0 // indirect
-	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/net v0.24.0 // indirect
+	golang.org/x/sys v0.19.0 // indirect
 )
