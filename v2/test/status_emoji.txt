@@ -1,0 +1,2 @@
+
+indicator.textContent = isSuccess ? '🟢' : '🔴';
