@@ -54,8 +54,6 @@ func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *St
 				// Save the file
 				mut.Lock()
 				e.UserSave(c, tty, status)
-				status.SetMessage("ctrl-c")
-				status.Show(c, e)
 				mut.Unlock()
 			case syscall.SIGUSR1:
 				// Unlock the file
