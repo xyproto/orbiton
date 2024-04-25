@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] If ctrl-t was just pressed, do not treat ) differently in terms of ctrl-a and ctrl-e.
 - [ ] Use the ctrl-g statusbar to the top, and move everything down 1 line. This can be useful if there is a something covering the very top of the monitor.
 - [ ] When searching for text in Markdown or other text, use case-insensitive search. Use case-sensitive search in code.
 - [ ] Drop the mutexes and have one "server" that deals with I/O and one "server" that deals with presentation.
