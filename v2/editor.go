@@ -288,10 +288,10 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (st
 
 	start := time.Now()
 
-	// Check if the file extension is ".class" and if "jad" is installed
-	if filepath.Ext(fnord.filename) == ".class" && files.Which("jad") != "" && fnord.Empty() {
+	// Check if the file extension is ".class" and if "cfr" is installed
+	if filepath.Ext(fnord.filename) == ".class" && files.Which("cfr") != "" && fnord.Empty() {
 		if fnord.data, err = e.LoadClass(fnord.filename); err != nil {
-			return "Could not run jad", err
+			return "Could not run cfr", err
 		}
 		// Load the data (and make opinionated replacements if it's a text file + set e.binaryFile if it's binary)
 		e.LoadBytes(fnord.data)

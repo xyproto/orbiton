@@ -511,7 +511,7 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 * `go` - for compiling Go code
 * `go-tools` - for formatting Go code and handling imports with `goimports`
 * `google-java-format` - for formatting Java code
-* `jad` - decompile `.class` files on the fly when opening them with `o`
+* `cfr` - decompile `.class` files on the fly when opening them with `o`
 * `java-environment` - for compiling Java code and creating `.jar` files with `javac` and `jar`
 * `kotlin` - for compiling Kotlin
 * `ktlint` - for formatting Kotlin code
