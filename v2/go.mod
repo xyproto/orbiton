@@ -29,7 +29,7 @@ require (
 	github.com/xyproto/vt100 v1.14.3
 	github.com/xyproto/wordwrap v1.0.1
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
-	golang.org/x/image v0.15.0
+	golang.org/x/image v0.16.0
 )
 
 require (
@@ -50,6 +50,6 @@ require (
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.5.1 // indirect
-	golang.org/x/net v0.24.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/net v0.25.0 // indirect
+	golang.org/x/sys v0.20.0 // indirect
 )
