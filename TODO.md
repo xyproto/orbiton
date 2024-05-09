@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] `echo something | o -c` should be possible!
 - [ ] Have many portal bookmarks. Add a menu option for selecting one of them, deleting all of them or deleting one of them.
 - [ ] When pasting through a portal, show a little window with the filename and line number that is being pasted from. Drop the status message.
 - [ ] If ctrl-t was just pressed, do not treat ) differently in terms of ctrl-a and ctrl-e.
