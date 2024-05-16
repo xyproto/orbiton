@@ -175,17 +175,38 @@ func Generate(img image.Image, N int) (color.Palette, error) {
 	}
 
 	// If there are not enough colors in the generated palette (N+1, because we will remove one), add colors from extrapal
-	for (len(pal) < (N + 1)) && (len(extrapal) > 0) {
-		// pop a color from the end of extrapal
-		lastIndex := len(extrapal) - 1
-		c := extrapal[lastIndex]
-		extrapal = extrapal[:lastIndex]
+	for (len(pal) < N) && (len(extrapal) > 0) {
+		var (
+			maxUsage          = -1.0
+			mostFrequentIndex = -1
+		)
+
+		// Loop through extrapal to find the most frequently used color
+		for i, extraColor := range extrapal {
+			rgbaExtra := color.RGBAModel.Convert(extraColor).(color.RGBA)
+			if usage, ok := colorCounter[rgbaExtra]; ok {
+				if usage > maxUsage {
+					maxUsage = usage
+					mostFrequentIndex = i
+				}
+			}
+		}
+		if mostFrequentIndex == -1 { // not found
+			break
+		}
+
+		// Use the most frequently used color from the palette of extra colors
+		c := extrapal[mostFrequentIndex]
+
 		// Add the color to the palette, if it's not already there
 		alreadyColor, ok := already[c]
 		if !alreadyColor || !ok {
 			pal = append(pal, c)
 			already[c] = true
 		}
+
+		// Remove this color from extrapal
+		extrapal = append(extrapal[:mostFrequentIndex], extrapal[mostFrequentIndex+1:]...)
 	}
 
 	// Now remove the one extra color that covers the least amount of pixels of the image that has been converted to the current palette
