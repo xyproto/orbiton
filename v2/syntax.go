@@ -97,7 +97,7 @@ var (
 	erlangWords = []string{"after", "and", "andalso", "band", "begin", "bnot", "bor", "bsl", "bsr", "bxor", "case", "catch", "cond", "div", "end", "fun", "if", "let", "not", "of", "or", "orelse", "receive", "rem", "try", "when", "xor"}
 
 	// Docker
-	dockerWords = []string{"attach", "build", "commit", "container", "entrypoint", "copy", "cp", "create", "diff", "env", "events", "exec", "export", "history", "image", "images", "import", "info", "inspect", "kill", "load", "login", "logout", "logs", "network", "pause", "port", "ps", "pull", "push", "rename", "repository", "restart", "rm", "rmi", "run", "save", "search", "start", "stats", "stop", "tag", "top", "unpause", "update", "version", "volume", "wait", "workdir"}
+	dockerWords = []string{"arg", "attach", "build", "cmd", "commit", "container", "copy", "cp", "create", "diff", "entrypoint", "env", "events", "exec", "export", "expose", "from", "history", "image", "images", "import", "info", "inspect", "kill", "load", "login", "logout", "logs", "network", "pause", "port", "ps", "pull", "push", "rename", "repository", "restart", "rm", "rmi", "run", "save", "search", "start", "stats", "stop", "tag", "top", "unpause", "update", "version", "volume", "wait", "workdir"}
 
 	// Ollama
 	ollamaWords = []string{"from", "parameter", "template", "system", "adapter", "license"}
