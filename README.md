@@ -2,13 +2,11 @@
 
 ![Build](https://github.com/xyproto/orbiton/workflows/Build/badge.svg) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Forbiton.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Forbiton?ref=badge_shield) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/orbiton/v2)](https://goreportcard.com/report/github.com/xyproto/orbiton/v2) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/orbiton/main/LICENSE)
 
-Orbiton is a text editor and a simple IDE.
+Orbiton is a text editor and a simple IDE with the following goals in mind:
 
-The goal is that it can:
-
-* **Be quick and responsive.**
-* **Not be annoying** (within the limits of `VT100`)
-* **Facilitate quick edit-format-compile cycles.**
+* **Speed and responsiveness.**
+* **Minimal annoyance.** (within the limits of `VT100`)
+* **Support for rapid edit-format-compile cycles.**
 
 It might be a good fit for:
 
