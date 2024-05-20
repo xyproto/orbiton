@@ -120,10 +120,10 @@ github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.5.1
 ## explicit; go 1.11
 github.com/xyproto/termtitle
-# github.com/xyproto/textoutput v1.16.3
+# github.com/xyproto/textoutput v1.16.4
 ## explicit; go 1.22.0
 github.com/xyproto/textoutput
-# github.com/xyproto/vt100 v1.14.3
+# github.com/xyproto/vt100 v1.14.4
 ## explicit; go 1.22.0
 github.com/xyproto/vt100
 # github.com/xyproto/wordwrap v1.0.1
