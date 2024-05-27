@@ -92,16 +92,6 @@ Add this to `~/.profile`:
 
 Log out and in again to activate the changes.
 
-## Themes
-
-Themes can be selected with the `ctrl-o` menu. The theme menu also lists the theme names, which can be specified in the `O_THEME` environment variable.
-
-The `O_THEME` environment variable is an exception to the claim that `o` is configuration-free, but it is completely optional.
-
-For using ie. the Synthwave theme, the `/usr/bin/sw` symlink to `/usr/bin/o` can be used, or this can be added to `~/.profile`:
-
-    export O_THEME=synthwave
-
 ## Unique features
 
 These features are unique to `o`, as far as I am aware:
@@ -303,6 +293,16 @@ While in the Markdown table editor:
 * `ctrl-d` can be used to delete the current column (if all cells in the column are empty).
 * `esc` or `ctrl-t` can be used to close the Markdown table editor.
 * `ctrl-s` can be used to save.
+
+## Themes
+
+Themes can be selected with the `ctrl-o` menu. The theme menu also lists the theme names, which can be specified in the `O_THEME` environment variable.
+
+The `O_THEME` environment variable is an exception to the claim that `o` is configuration-free, but it is completely optional.
+
+For using ie. the Synthwave theme, the `/usr/bin/sw` symlink to `/usr/bin/o` can be used, or this can be added to `~/.profile`:
+
+    export O_THEME=synthwave
 
 ## Inserting a symbol
 
