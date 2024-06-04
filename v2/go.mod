@@ -28,7 +28,6 @@ require (
 	github.com/xyproto/textoutput v1.16.4
 	github.com/xyproto/vt100 v1.14.4
 	github.com/xyproto/wordwrap v1.0.1
-	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
 	golang.org/x/image v0.16.0
 )
 

@@ -129,9 +129,6 @@ github.com/xyproto/vt100
 # github.com/xyproto/wordwrap v1.0.1
 ## explicit; go 1.21.3
 github.com/xyproto/wordwrap
-# github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
-## explicit
-github.com/yosssi/gohtml
 # golang.org/x/image v0.16.0
 ## explicit; go 1.18
 golang.org/x/image/draw
@@ -142,8 +139,6 @@ golang.org/x/image/vp8l
 golang.org/x/image/webp
 # golang.org/x/net v0.25.0
 ## explicit; go 1.18
-golang.org/x/net/html
-golang.org/x/net/html/atom
 # golang.org/x/sys v0.20.0
 ## explicit; go 1.18
 golang.org/x/sys/unix
