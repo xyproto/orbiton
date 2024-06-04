@@ -175,11 +175,6 @@ func formatJSON(data []byte, jsonFormatToggle *bool, indentationPerTab int) ([]b
 	return indentedJSON, nil
 }
 
-// formatHTML can format the given HTML data
-func formatHTML(data []byte) ([]byte, error) {
-	return gohtml.FormatBytes(data), nil
-}
-
 // organizeImports can fix, sort and organize imports for Kotlin and for Java
 func organizeImports(data []byte, onlyJava, removeExistingImports, deGlob bool) []byte {
 	ima, err := autoimport.New(onlyJava, removeExistingImports, deGlob)
@@ -199,19 +194,6 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 	// Format JSON
 	if e.mode == mode.JSON {
 		data, err := formatJSON([]byte(e.String()), jsonFormatToggle, e.indentation.PerTab)
-		if err != nil {
-			status.ClearAll(c)
-			status.SetErrorAfterRedraw(err)
-			return
-		}
-		e.LoadBytes(data)
-		e.redraw = true
-		return
-	}
-
-	// Format HTML
-	if e.mode == mode.HTML {
-		data, err := formatHTML([]byte(e.String()))
 		if err != nil {
 			status.ClearAll(c)
 			status.SetErrorAfterRedraw(err)
