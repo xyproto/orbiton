@@ -13,7 +13,6 @@ import (
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
-	"github.com/yosssi/gohtml"
 )
 
 // FormatMap maps from format command to file extensions
