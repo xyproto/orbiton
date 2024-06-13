@@ -129,7 +129,13 @@ github.com/xyproto/vt100
 # github.com/xyproto/wordwrap v1.0.1
 ## explicit; go 1.21.3
 github.com/xyproto/wordwrap
-# golang.org/x/image v0.16.0
+# github.com/yuin/gopher-lua v1.1.1
+## explicit; go 1.17
+github.com/yuin/gopher-lua
+github.com/yuin/gopher-lua/ast
+github.com/yuin/gopher-lua/parse
+github.com/yuin/gopher-lua/pm
+# golang.org/x/image v0.17.0
 ## explicit; go 1.18
 golang.org/x/image/draw
 golang.org/x/image/math/f64
@@ -139,7 +145,7 @@ golang.org/x/image/vp8l
 golang.org/x/image/webp
 # golang.org/x/net v0.25.0
 ## explicit; go 1.18
-# golang.org/x/sys v0.20.0
+# golang.org/x/sys v0.21.0
 ## explicit; go 1.18
 golang.org/x/sys/unix
 golang.org/x/sys/windows
