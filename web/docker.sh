@@ -19,7 +19,7 @@ fi
 
 build() {
   # Build a docker image
-  docker build . -f Dockerfile -t "orbiton.zip:3000/orbiton:$DOCKER_TAG"
+  docker build . -f Dockerfile -t "roboticoverlords.org/orbiton:3000/orbiton:$DOCKER_TAG"
 }
 
 launch() {
@@ -31,7 +31,7 @@ launch() {
     -p 8080 \
     --name orbiton_dev \
     --network host \
-    "orbiton.zip:3000/orbiton:$DOCKER_TAG"
+    "roboticoverlords.org/orbiton:3000/orbiton:$DOCKER_TAG"
 }
 
 main() {
@@ -44,7 +44,7 @@ main() {
     buildpush)
       # Build, tag and push
       build && \
-        docker tag "orbiton.zip:3000/orbiton:$DOCKER_TAG" \
+        docker tag "roboticoverlords.org/orbiton:3000/orbiton:$DOCKER_TAG" \
           "europe-north1-docker.pkg.dev/personal-306017/homepage/orbiton:$DOCKER_TAG" && \
         docker push europe-north1-docker.pkg.dev/personal-306017/homepage/orbiton:$DOCKER_TAG
         ;;

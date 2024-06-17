@@ -18,10 +18,10 @@ FROM alpine
 WORKDIR /srv
 
 # Copy over the application that is about to be served
-COPY --from=0 /app /srv/orbiton.zip
+COPY --from=0 /app /srv/roboticoverlords.org/orbiton
 
 # Also add a symlink for localhost to one of the domains
-RUN ln -s /srv/orbiton.zip /srv/localhost
+RUN ln -s /srv/roboticoverlords.org/orbiton /srv/localhost
 
 # Install Algernon
 ENV ALGERNON_VERSION='1.15.3'

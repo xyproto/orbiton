@@ -1,6 +1,6 @@
 # ---===[ robots.txt ]===---
 
-Sitemap: https://orbiton.zip/sitemap.xml
+Sitemap: https://roboticoverlords.org/orbiton/sitemap.xml
 
 # PartyBob
 User-agent: PartyBob

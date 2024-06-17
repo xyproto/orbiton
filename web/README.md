@@ -1,4 +1,4 @@
-# orbiton.zip web site
+# roboticoverlords.org/orbiton web site
 
 `index.html` is currently just a placeholder.
 
