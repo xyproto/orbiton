@@ -2006,6 +2006,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				} else if keyRunes[0] == 'p' && kh.TwoLastAre("c:16") && kh.PrevWithin(500*time.Millisecond) {
 					// Avoid inserting "p" if the user very recently pressed ctrl-p twice
 					break
+				} else if e.mode == mode.ManPage && keyRunes[0] == 'q' {
+					// If o is used as a man page viewer, exit at the press of "q"
+					e.clearOnQuit = false
+					e.quit = true
+					break
 				}
 
 				undo.Snapshot(e)
