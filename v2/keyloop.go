@@ -959,8 +959,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case " ": // space
 			// Scroll down if a man page is being viewed, or if the editor is read-only
 			if e.readOnly {
-				// Scroll down at double scroll speed
-				e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed*2)
+				// Try to scroll down a full page
+				e.redraw = e.PgDn(c, status)
 				// If e.redraw is false, the end of file is reached
 				if !e.redraw {
 					status.Clear(c)

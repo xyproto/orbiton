@@ -1488,12 +1488,6 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 	mut.RUnlock()
 
 	if offset == 0 {
-		// Can't scroll further up
-		// Status message
-		// status.SetMessage("Start of text")
-		// status.Show(c, p)
-		// c.Draw()
-		// Redraw
 		return true
 	}
 	if status != nil {
@@ -1510,6 +1504,12 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 	mut.Unlock()
 	// Prepare to redraw
 	return true
+}
+
+// PgDn will try to scroll down a full page
+func (e *Editor) PgDn(c *vt100.Canvas, status *StatusBar) bool {
+	scrollSpeed := int(c.H())
+	return e.ScrollDown(c, status, scrollSpeed)
 }
 
 // AtFirstLineOfDocument is true if we're at the first line of the document
