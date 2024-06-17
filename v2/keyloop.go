@@ -1528,10 +1528,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			// First check if we just moved to this line with the arrow keys
 			justMovedUpOrDown := kh.PrevIs("↓") || kh.PrevIs("↑")
-			// If at an empty line, go up one line
-			if !justMovedUpOrDown && e.EmptyRightTrimmedLine() && e.SearchTerm() == "" {
+			if e.macro != nil {
+				e.Home()
+			} else if !justMovedUpOrDown && e.EmptyRightTrimmedLine() && e.SearchTerm() == "" {
+				// If at an empty line, go up one line
 				e.Up(c, status)
-				// e.GoToStartOfTextLine()
 				e.End(c)
 			} else if x, err := e.DataX(); err == nil && x == 0 && !justMovedUpOrDown && e.SearchTerm() == "" {
 				// If at the start of the line,
@@ -1554,20 +1555,17 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			// First check if we just moved to this line with the arrow keys, or just cut a line with ctrl-x
 			justMovedUpOrDown := kh.PrevIs("↓") || kh.PrevIs("↑") || kh.PrevIs("c:24")
-			if e.AtEndOfDocument() {
+			if e.AtEndOfDocument() || e.macro != nil {
 				e.End(c)
-				break
-			}
-			// If we didn't just move here, and are at the end of the line,
-			// move down one line and to the end, if not,
-			// just move to the end.
-			if !justMovedUpOrDown && e.AfterEndOfLine() && e.SearchTerm() == "" {
+			} else if !justMovedUpOrDown && e.AfterEndOfLine() && e.SearchTerm() == "" {
+				// If we didn't just move here, and are at the end of the line,
+				// move down one line and to the end, if not,
+				// just move to the end.
 				e.Down(c, status)
 				e.Home()
 			} else {
 				e.End(c)
 			}
-
 			e.redrawCursor = true
 			e.SaveX(true)
 		case "c:4": // ctrl-d, delete
