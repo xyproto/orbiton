@@ -1,12 +1,9 @@
-.PHONY: clean gui gui-install gui-symlinks install install-gui install-symlinks ko ko-install og og-install symlinks symlinks-install vg-symlink
+.PHONY: clean gui gui-install gui-symlinks install install-gui install-symlinks ko ko-install o og og-install symlinks symlinks-install trace vg-symlink
 
 PROJECT ?= orbiton
-
 GOFLAGS := -mod=vendor -trimpath -v
 GOBUILD := go build
-
 SRCFILES := $(wildcard go.* v2/*.go v2/go.*)
-
 
 # macOS and FreeBSD detection
 UNAME_S := $(shell uname -s)
