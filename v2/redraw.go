@@ -1,11 +1,18 @@
 package main
 
 import (
+	"sync"
+
 	"github.com/xyproto/vt100"
 )
 
+var redrawMutex sync.Mutex // to avoid an issue where the terminal is resized, signals are flying and the user is hammering the esc button
+
 // FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
 func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines bool) {
+	redrawMutex.Lock()
+	defer redrawMutex.Unlock()
+
 	savePos := e.pos
 
 	if status != nil {
