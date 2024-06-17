@@ -39,7 +39,7 @@ void signal_and_quit()
             kill(child_pid, SIGUSR1);
         }
         // This lets o save the file and then sleep a tiny bit, then quit the parent
-        usleep(200000); // will sleep for 0.2s
+        usleep(20000);
         kill(child_pid, SIGTERM);
     }
     gtk_main_quit();
@@ -56,7 +56,7 @@ void wait_and_quit()
         // Unlock the file by sending an unlock signal (USR1)
         kill(child_pid, SIGUSR1);
     }
-    usleep(200000); // will sleep for 0.2s
+    usleep(20000);
     gtk_main_quit();
 }
 
@@ -71,7 +71,7 @@ void trigger_redraw()
 
 void signal_handler(int signal_num)
 {
-    usleep(200000); // will sleep for 0.2s
+    usleep(20000);
     // If we are here, it means we received a SIGWINCH signal from o.
     // This means that o is ready to resize.
     // Answer by sending SIGWINCH to o (the child_pid), to make it
