@@ -26,7 +26,7 @@ MANDIR ?= $(PREFIX)/share/man/man1
 UNAME_R ?= $(shell uname -r)
 ifneq (,$(findstring arch,$(UNAME_R)))
 # Arch Linux
-LDFLAGS ?= -Wl,-O2,--sort-common,--as-needed,-z,relro,-z,now
+LDFLAGS ?= -Wl,-O2,--as-needed,-z,relro,-z,now
 GOFLAGS += -buildmode=pie
 BUILDFLAGS ?= -ldflags "-s -w -linkmode=external -extldflags $(LDFLAGS)"
 endif
