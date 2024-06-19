@@ -2,7 +2,6 @@
 
 ## General
 
-- [ ] When `ctrl-w` is pressed in a Markdown file, format all tables and let all headers have 1 blank line underneath.
 - [ ] `echo something | o -c` should be possible!
 - [ ] Have many portal bookmarks. Add a menu option for selecting one of them, deleting all of them or deleting one of them.
 - [ ] When pasting through a portal, show a little window with the filename and line number that is being pasted from. Drop the status message.
