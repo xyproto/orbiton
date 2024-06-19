@@ -324,7 +324,101 @@ func tableToString(headers []string, body [][]string) string {
 	return sb.String()
 }
 
-// EditMarkdownTable presents the user with a dedicated table editor for the current Markdown table
+// FormatAllMarkdownTables formats all tables without moving the cursor
+func (e *Editor) FormatAllMarkdownTables(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, bookmark *Position) {
+	content := e.String()
+	lines := strings.Split(content, "\n")
+
+	formattedLines := make([]string, 0, len(lines))
+	inTable := false
+	var tableLines []string
+
+	for i, line := range lines {
+		if e.InTableAt(LineIndex(i)) {
+			inTable = true
+			tableLines = append(tableLines, line)
+		} else if inTable {
+			// End of the table
+			headers, body := parseTable(strings.Join(tableLines, "\n"))
+
+			tableContents := [][]string{}
+			tableContents = append(tableContents, headers)
+			tableContents = append(tableContents, body...)
+
+			// Make all rows contain as many fields as the longest row
+			Expand(&tableContents)
+
+			switch len(tableContents) {
+			case 0:
+				headers = []string{}
+				body = [][]string{}
+			case 1:
+				headers = tableContents[0]
+				body = [][]string{}
+			default:
+				headers = tableContents[0]
+				body = tableContents[1:]
+			}
+
+			RightTrimColumns(&headers, &body)
+			formattedTableString := tableToString(headers, body)
+
+			// Add the formatted table to the result
+			formattedLines = append(formattedLines, strings.Split(formattedTableString, "\n")...)
+
+			// Add the current line (which is not part of the table) to the result if it's not empty
+			if strings.TrimSpace(line) != "" {
+				formattedLines = append(formattedLines, line)
+			}
+
+			// Reset the table state
+			inTable = false
+			tableLines = nil
+		} else {
+			formattedLines = append(formattedLines, line)
+		}
+	}
+
+	// Handle case where the last lines are part of a table
+	if inTable {
+		headers, body := parseTable(strings.Join(tableLines, "\n"))
+
+		tableContents := [][]string{}
+		tableContents = append(tableContents, headers)
+		tableContents = append(tableContents, body...)
+
+		// Make all rows contain as many fields as the longest row
+		Expand(&tableContents)
+
+		switch len(tableContents) {
+		case 0:
+			headers = []string{}
+			body = [][]string{}
+		case 1:
+			headers = tableContents[0]
+			body = [][]string{}
+		default:
+			headers = tableContents[0]
+			body = tableContents[1:]
+		}
+
+		RightTrimColumns(&headers, &body)
+		formattedTableString := tableToString(headers, body)
+
+		// Add the formatted table to the result
+		formattedLines = append(formattedLines, strings.Split(formattedTableString, "\n")...)
+	}
+
+	e.Clear()
+	for i, line := range formattedLines {
+		e.SetLine(LineIndex(i), line)
+	}
+
+	e.changed = true
+	e.redraw = true
+}
+
+// EditMarkdownTable presents the user with a dedicated table editor for the current Markdown table, or just formats it
 func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, bookmark *Position, justFormat, displayQuickHelp bool) {
 
 	initialY, err := e.CurrentTableY()

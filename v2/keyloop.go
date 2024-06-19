@@ -228,6 +228,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Clear the search term
 			e.ClearSearch()
 
+			const experimentalFormatMarkdownFeature = true
+
 			// First check if we are editing Markdown and are in a Markdown table (and that this is not the previous thing that we did)
 			if e.mode == mode.Markdown && e.InTable() && !kh.PrevIs("c:23") {
 				e.GoToStartOfTextLine(c)
@@ -235,6 +237,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				const justFormat = true
 				const displayQuickHelp = false
 				e.EditMarkdownTable(tty, c, status, bookmark, justFormat, displayQuickHelp)
+				break
+			} else if e.mode == mode.Markdown && !kh.PrevIs("c:23") && experimentalFormatMarkdownFeature {
+				e.GoToStartOfTextLine(c)
+				e.FormatAllMarkdownTables(tty, c, status, bookmark)
 				break
 			}
 
