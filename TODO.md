@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] When opening `file.txt+7`, only assume that 7 is the line number if no file named `file.txt+7` exists, but `file.txt` exists.
 - [ ] `echo something | o -c` should be possible!
 - [ ] Have many portal bookmarks. Add a menu option for selecting one of them, deleting all of them or deleting one of them.
 - [ ] When pasting through a portal, show a little window with the filename and line number that is being pasted from. Drop the status message.
