@@ -5,8 +5,9 @@
 Orbiton is a text editor and a simple IDE with the following goals in mind:
 
 * **Minimal annoyance** (within the limits of `VT100`)
+* * **Not be configurable** (with the exception of themes) **to help users stay focused**
 * **Support for rapid edit-format-compile cycles**
-* **Not be configurable, with the exception of themes, to help users stay focused**
+
 
 Please submit a PR if anything can be improved to help reach these goals.
 
