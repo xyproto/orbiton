@@ -11,7 +11,7 @@ Orbiton is a text editor and a simple IDE with the following goals in mind:
 
 Please submit a PR if anything can be improved to help reach these goals.
 
-It might be a good fit for:
+Orbiton might be a good fit for:
 
 * Writing git commit messages (using `EDITOR=o git commit`).
 * Editing `README.md` and `TODO.md` files.
