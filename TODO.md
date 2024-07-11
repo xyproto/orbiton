@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] Change the cursor color when it is past 80 lines (or the set wrap width).
+- [ ] Let the status bar be toggled by the ctrl-o menu. Let ctrl-g when not on a definition do something useful, like cycle indenting a block 0 to 7 indentations.
 - [ ] When opening `file.txt+7`, only assume that 7 is the line number if no file named `file.txt+7` exists, but `file.txt` exists.
 - [ ] `echo something | o -c` should be possible!
 - [ ] Have many portal bookmarks. Add a menu option for selecting one of them, deleting all of them or deleting one of them.
