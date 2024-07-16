@@ -7,7 +7,7 @@ require (
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/gomarkdown/markdown v0.0.0-20240419095408-642f0ee99ae2
+	github.com/gomarkdown/markdown v0.0.0-20240626202925-2eda941fd024
 	github.com/ianlancetaylor/demangle v0.0.0-20240312041847-bd984b5ce465
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/sajari/fuzzy v1.0.0
@@ -50,5 +50,5 @@ require (
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.6.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
-	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/sys v0.22.0 // indirect
 )
