@@ -4,7 +4,7 @@ test:
 	go test -v ./...
 
 README.md:
-	GO111MODULE=off go get github.com/campoy/embedmd
+	go install github.com/campoy/embedmd@latest
 	embedmd -w README.md
 
 .PHONY:all test README.md

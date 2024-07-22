@@ -2,7 +2,7 @@
 
 [![Build status](https://github.com/peterhellberg/gfx/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/peterhellberg/gfx/actions/workflows/test.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/peterhellberg/gfx?style=flat)](https://goreportcard.com/report/github.com/peterhellberg/gfx)
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/peterhellberg/gfx)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://pkg.go.dev/github.com/peterhellberg/gfx)
 [![License MIT](https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat)](https://github.com/peterhellberg/gfx#license-mit)
 
 Convenience package for dealing with graphics in my pixel drawing experiments.
@@ -581,7 +581,7 @@ func main() {
 
 ## License (MIT)
 
-Copyright (c) 2019-2021 [Peter Hellberg](https://c7.se)
+Copyright (c) 2019-2024 [Peter Hellberg](https://c7.se)
 
 > Permission is hereby granted, free of charge, to any person obtaining
 > a copy of this software and associated documentation files (the

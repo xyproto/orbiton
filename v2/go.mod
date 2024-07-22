@@ -42,7 +42,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d // indirect
-	github.com/peterhellberg/gfx v0.0.0-20230908181254-9885a9f73abe // indirect
+	github.com/peterhellberg/gfx v0.0.0-20240717094052-4fa835cea5a4 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
 	github.com/xyproto/burnfont v1.2.3 // indirect
