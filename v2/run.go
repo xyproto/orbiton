@@ -52,7 +52,12 @@ func (e *Editor) Run() (string, bool, error) {
 		jarName := e.exeName(sourceFilename, false) + ".jar"
 		cmd = exec.Command("java", "-jar", jarName)
 	case mode.Go:
-		cmd = exec.Command("go", "run", sourceFilename)
+		if strings.HasSuffix(sourceFilename, "_test.go") {
+			// TODO: go test . -run NameOfTest and fetch NameOfTest from the test function that the cursor is within, if available
+			cmd = exec.Command("go", "test", ".")
+		} else {
+			cmd = exec.Command("go", "run", sourceFilename)
+		}
 	case mode.Lilypond:
 		ext := filepath.Ext(sourceFilename)
 		firstName := strings.TrimSuffix(filepath.Base(sourceFilename), ext)
