@@ -20,7 +20,7 @@ github.com/felixge/fgtrace/internal
 # github.com/fsnotify/fsnotify v1.7.0
 ## explicit; go 1.17
 github.com/fsnotify/fsnotify
-# github.com/gomarkdown/markdown v0.0.0-20240626202925-2eda941fd024
+# github.com/gomarkdown/markdown v0.0.0-20240723152757-afa4a469d4f9
 ## explicit; go 1.12
 github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
