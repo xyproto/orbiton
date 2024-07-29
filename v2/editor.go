@@ -405,12 +405,26 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 				s = strings.ReplaceAll(s, fromString, toString)
 			}
 		} else if e.mode == mode.Make || e.mode == mode.Just {
-			// NOTE: This is a hack, that can only replace 10 levels deep.
-			for level := 10; level > 0; level-- {
-				fromString := "\n" + strings.Repeat(" ", level*e.indentation.PerTab)
-				toString := "\n" + strings.Repeat("\t", level)
-				s = strings.ReplaceAll(s, fromString, toString)
+			var (
+				level                          int
+				fromString, toString, prevLine string
+				lines                          = strings.Split(s, "\n")
+			)
+		NEXTLINE:
+			for i, line := range lines {
+				// NOTE: This is a hack, that can only replace 10 levels deep.
+				for level = 10; level > 0; level-- {
+					if strings.HasPrefix(prevLine, "  ") && len(prevLine) > 2 && prevLine[2] != ' ' {
+						// make no replacements for this case, where the previous line has a 2-space indentation
+						continue NEXTLINE
+					}
+					fromString = "\n" + strings.Repeat(" ", level*e.indentation.PerTab)
+					toString = "\n" + strings.Repeat("\t", level)
+					lines[i] = strings.ReplaceAll(lines[i], fromString, toString)
+				}
+				prevLine = line
 			}
+			s = strings.Join(lines, "\n")
 		}
 
 		// Should the file be saved with the executable bit enabled?
