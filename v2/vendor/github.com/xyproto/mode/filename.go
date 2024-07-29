@@ -82,8 +82,9 @@ func Detect(filename string) Mode {
 		case ".bts":
 			mode = Battlestar
 		case ".c":
-			// C mode
 			mode = C
+		case ".c3":
+			mode = C3
 		case ".cm":
 			// Standard ML project file
 			mode = StandardML
@@ -94,7 +95,7 @@ func Detect(filename string) Mode {
 			mode = Clojure
 		case ".cs": // C#
 			mode = CS
-		case ".css": // CSS
+		case ".css":
 			mode = CSS
 		case ".csproj": // C# projects
 			mode = XML
@@ -179,6 +180,8 @@ func Detect(filename string) Mode {
 			mode = Oak
 		case ".pas", ".pp", ".lpr":
 			mode = ObjectPascal
+		case ".php", ".php3", ".php4", ".php5", ".phtml":
+			mode = PHP
 		case ".pl", ".pro":
 			mode = Prolog
 		case ".py":
@@ -200,6 +203,8 @@ func Detect(filename string) Mode {
 			mode = Assembly
 		case ".scala":
 			mode = Scala
+		case ".rkt", ".sc", ".sch", ".scm", ".scr", ".scrbl", ".sld", ".sls", ".sps", ".sps7", ".ss":
+			mode = Scheme
 		case ".swift":
 			mode = Swift
 		case ".fun", ".sml":

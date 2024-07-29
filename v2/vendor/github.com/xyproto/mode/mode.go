@@ -19,6 +19,7 @@ const (
 	Battlestar            // Battlestar
 	Bazel                 // Bazel and Starlark
 	C                     // C
+	C3                    // C3
 	CMake                 // CMake files
 	CS                    // C#
 	CSS                   // CSS
@@ -74,6 +75,7 @@ const (
 	Odin                  // Odin
 	Ollama                // For Modelfiles
 	Perl                  // Perl
+	PHP                   // PHP
 	PolicyLanguage        // SE Linux configuration files
 	Prolog                // Prolog
 	Python                // Python
@@ -83,6 +85,7 @@ const (
 	Rust                  // Rust
 	Scala                 // Scala
 	SCDoc                 // SC Doc
+	Scheme                // Scheme
 	Shader                // GLSL Shader
 	Shell                 // Shell scripts and PKGBUILD files
 	StandardML            // Standard ML
@@ -132,6 +135,8 @@ func (mode Mode) String() string {
 		return "-"
 	case C:
 		return "C"
+	case C3:
+		return "C3"
 	case Clojure:
 		return "Clojure"
 	case CMake:
@@ -242,6 +247,8 @@ func (mode Mode) String() string {
 		return "Odin"
 	case Perl:
 		return "Perl"
+	case PHP:
+		return "PHP"
 	case PolicyLanguage:
 		return "SELinux"
 	case Prolog:
@@ -260,6 +267,8 @@ func (mode Mode) String() string {
 		return "Scala"
 	case SCDoc:
 		return "SCDoc"
+	case Scheme:
+		return "Scheme"
 	case Shader:
 		return "Shader"
 	case Shell:

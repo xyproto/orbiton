@@ -371,6 +371,14 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			return cmd, exeExists, nil
 		}
 		// No result
+	case mode.C3:
+		if e.debugMode {
+			cmd = exec.Command("c3c", "compile", "-o", exeFilename, ".")
+		} else {
+			cmd = exec.Command("c3c", "compile", "-g", "-o", exeFilename, ".")
+		}
+		cmd.Dir = sourceDir
+		return cmd, exeExists, nil
 	case mode.Clojure:
 		cmd = exec.Command("lein", "uberjar")
 		projectFileExists := files.IsFile("project.clj")
