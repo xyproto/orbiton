@@ -670,7 +670,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 	errorMarker := "error:"
 	switch e.mode {
-	case mode.Crystal, mode.ObjectPascal, mode.StandardML, mode.Python:
+	case mode.C3, mode.Crystal, mode.ObjectPascal, mode.StandardML, mode.Python:
 		errorMarker = "Error:"
 	case mode.Dart:
 		errorMarker = ": Error: "
