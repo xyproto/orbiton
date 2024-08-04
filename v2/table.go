@@ -325,7 +325,7 @@ func tableToString(headers []string, body [][]string) string {
 }
 
 // FormatAllMarkdownTables formats all tables without moving the cursor
-func (e *Editor) FormatAllMarkdownTables(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, bookmark *Position) {
+func (e *Editor) FormatAllMarkdownTables() {
 	content := e.String()
 	lines := strings.Split(content, "\n")
 

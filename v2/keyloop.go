@@ -240,7 +240,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			} else if e.mode == mode.Markdown && !kh.PrevIs("c:23") && experimentalFormatMarkdownFeature {
 				e.GoToStartOfTextLine(c)
-				e.FormatAllMarkdownTables(tty, c, status, bookmark)
+				e.FormatAllMarkdownTables()
 				break
 			}
 
