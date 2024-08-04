@@ -67,22 +67,22 @@ func (e *Editor) SymbolMenu(tty *vt100.TTY, status *StatusBar, title string, cho
 		// Handle events
 		key := tty.String()
 		switch key {
-		case "↑", "c:16": // Up or ctrl-p
+		case upArrow, "c:16": // Up or ctrl-p
 			resizeMut.Lock()
 			symbolMenu.Up()
 			changed = true
 			resizeMut.Unlock()
-		case "←": // Left
+		case leftArrow: // Left
 			resizeMut.Lock()
 			symbolMenu.Left()
 			changed = true
 			resizeMut.Unlock()
-		case "↓", "c:14": // Down or ctrl-n
+		case downArrow, "c:14": // Down or ctrl-n
 			resizeMut.Lock()
 			symbolMenu.Down()
 			changed = true
 			resizeMut.Unlock()
-		case "→": // Right
+		case rightArrow: // Right
 			resizeMut.Lock()
 			symbolMenu.Right()
 			changed = true

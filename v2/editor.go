@@ -2379,9 +2379,9 @@ func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, t
 				status.SetMessage(title + ": " + entered)
 				status.ShowNoTimeout(c, e)
 			}
-		case "←", "→": // left arrow or right arrow
+		case leftArrow, rightArrow: // left arrow or right arrow
 			fallthrough // cancel
-		case "↑", "↓": // up arrow or down arrow
+		case upArrow, downArrow: // up arrow or down arrow
 			if arrowsAreCountedAsLetters {
 				entered += pressed
 				status.SetMessage(title + ": " + entered)

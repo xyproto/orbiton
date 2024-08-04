@@ -119,7 +119,7 @@ func (kh *KeyHistory) SpecialArrowKeypressWith(extraKeypress string) bool {
 		*kh = khb
 	}()
 	// Check if the special keypress was pressed (3 arrow keys in a row, any arrow key goes)
-	return kh.OnlyInAndAllDiffer("↑", "→", "←", "↓") && kh.AllWithin(keypressComboTimeLimit)
+	return kh.OnlyInAndAllDiffer(upArrow, rightArrow, leftArrow, downArrow) && kh.AllWithin(keypressComboTimeLimit)
 }
 
 // DoubleTapped checks if the given key was pressed twice within a short period of time

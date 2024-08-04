@@ -196,12 +196,12 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 		// Handle events
 		key := tty.String()
 		switch key {
-		case "↑", "←", "c:16": // Up, left or ctrl-p
+		case upArrow, leftArrow, "c:16": // Up, left or ctrl-p
 			resizeMut.Lock()
 			menu.Up()
 			changed = true
 			resizeMut.Unlock()
-		case "↓", "→", "c:14": // Down, right or ctrl-n
+		case downArrow, rightArrow, "c:14": // Down, right or ctrl-n
 			resizeMut.Lock()
 			menu.Down()
 			changed = true

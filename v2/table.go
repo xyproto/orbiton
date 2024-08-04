@@ -564,22 +564,22 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 		// Handle events
 		key := tty.String()
 		switch key {
-		case "↑": // Up
+		case upArrow: // Up
 			resizeMut.Lock()
 			tableWidget.Up()
 			changed = true
 			resizeMut.Unlock()
-		case "←": // Left
+		case leftArrow: // Left
 			resizeMut.Lock()
 			tableWidget.Left()
 			changed = true
 			resizeMut.Unlock()
-		case "↓": // Down
+		case downArrow: // Down
 			resizeMut.Lock()
 			tableWidget.Down()
 			changed = true
 			resizeMut.Unlock()
-		case "→": // Right
+		case rightArrow: // Right
 			resizeMut.Lock()
 			tableWidget.Right()
 			changed = true

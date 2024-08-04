@@ -18,7 +18,14 @@ import (
 )
 
 // For when the user scrolls too far
-const endOfFileMessage = "EOF"
+const (
+	endOfFileMessage = "EOF"
+
+	leftArrow  = "←"
+	rightArrow = "→"
+	upArrow    = "↑"
+	downArrow  = "↓"
+)
 
 // Create a LockKeeper for keeping track of which files are being edited
 var fileLock = NewLockKeeper(defaultLockFile)
@@ -541,7 +548,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 			}
 
-		case "←": // left arrow
+		case leftArrow: // left arrow
 
 			// Don't move if ChatGPT is currently generating tokens that are being inserted
 			if e.generatingTokens {
@@ -549,7 +556,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			// Check if it's a special case
-			if kh.SpecialArrowKeypressWith("←") {
+			if kh.SpecialArrowKeypressWith(leftArrow) {
 				// TODO: Instead of moving up twice, play back the reverse of the latest keypress history
 				e.Up(c, status)
 				e.Up(c, status)
@@ -562,7 +569,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.CursorBackward(c, status)
 
-		case "→": // right arrow
+		case rightArrow: // right arrow
 
 			// Don't move if ChatGPT is currently generating tokens that are being inserted
 			if e.generatingTokens {
@@ -570,7 +577,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			// Check if it's a special case
-			if kh.SpecialArrowKeypressWith("→") {
+			if kh.SpecialArrowKeypressWith(rightArrow) {
 				// TODO: Instead of moving up twice, play back the reverse of the latest keypress history
 				e.Up(c, status)
 				e.Up(c, status)
@@ -648,7 +655,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			fallthrough // ctrl-p in nano mode
 
-		case "↑": // up arrow
+		case upArrow: // up arrow
 
 			// Don't move if ChatGPT is currently generating tokens that are being inserted
 			if e.generatingTokens {
@@ -656,7 +663,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			// Check if it's a special case
-			if kh.SpecialArrowKeypressWith("↑") {
+			if kh.SpecialArrowKeypressWith(upArrow) {
 				// Ask the user for a command and run it
 				e.CommandPrompt(c, tty, status, bookmark, undo)
 				// It's important to reset the key history after hitting this combo
@@ -843,7 +850,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			fallthrough // nano mode: ctrl-n
 
-		case "↓": // down arrow
+		case downArrow: // down arrow
 
 			// Don't move if ChatGPT is currently generating tokens that are being inserted
 			if e.generatingTokens {
@@ -851,7 +858,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			// Check if it's a special case
-			if kh.SpecialArrowKeypressWith("↓") {
+			if kh.SpecialArrowKeypressWith(downArrow) {
 				// Ask the user for a command and run it
 				e.CommandPrompt(c, tty, status, bookmark, undo)
 				// It's important to reset the key history after hitting this combo

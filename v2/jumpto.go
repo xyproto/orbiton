@@ -297,7 +297,7 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 		case "/": // display hotkey overview
 			doneCollectingDigits = true
 			postAction = showHotkeyOverviewAction
-		case "↑", "↓", "←", "→": // one of the arrow keys
+		case upArrow, downArrow, leftArrow, rightArrow: // one of the arrow keys
 			fallthrough // cancel
 		case "c:16": // ctrl-p, scroll up
 			doneCollectingDigits = true

@@ -77,7 +77,7 @@ func (e *Editor) SuggestMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 	for !doneChoosing {
 		key := tty.String()
 		switch key {
-		case "c:9", "↓", "→": // tab, down arrow or right arrow
+		case "c:9", downArrow, rightArrow: // tab, down arrow or right arrow
 			// Cycle suggested words
 			suggestIndex++
 			if suggestIndex == len(suggestions) {
@@ -87,7 +87,7 @@ func (e *Editor) SuggestMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			status.ClearAll(c)
 			status.SetMessage("Suggest: " + s)
 			status.ShowNoTimeout(c, e)
-		case "↑", "←": // up arrow or left arrow
+		case upArrow, leftArrow: // up arrow or left arrow
 			// Cycle suggested words (one back)
 			suggestIndex--
 			if suggestIndex < 0 {
