@@ -7,7 +7,7 @@ require (
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/gomarkdown/markdown v0.0.0-20240723152757-afa4a469d4f9
+	github.com/gomarkdown/markdown v0.0.0-20240730141124-034f12af3bf6
 	github.com/ianlancetaylor/demangle v0.0.0-20240312041847-bd984b5ce465
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/sajari/fuzzy v1.0.0
