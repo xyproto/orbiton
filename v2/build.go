@@ -255,14 +255,24 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 		cmd := exec.Command("hare", "build")
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
+	case mode.Shader:
+		sourceFilenameWithoutExt := strings.TrimSuffix(sourceFilename, filepath.Ext(sourceFilename))
+		shaderCode := e.String()
+		shaderType, err := detectShaderType(shaderCode)
+		if err != nil {
+			shaderType = "frag" // default to compiling fragment shaders to spirv, the alternative is "vert"
+		}
+		cmd := exec.Command("glslangValidator", "-V", "-S", shaderType, "-o", sourceFilenameWithoutExt+".spv", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Algol68:
-		executablePath := strings.TrimSuffix(sourceFilename, filepath.Ext(sourceFilename))
+		sourceFilenameWithoutExt := strings.TrimSuffix(sourceFilename, filepath.Ext(sourceFilename))
 		sourceFilenameWithoutPath := filepath.Base(sourceFilename)
 		cmd := exec.Command("a68g", "--compile", sourceFilenameWithoutPath)
 		cmd.Dir = sourceDir
 		return cmd, func() (bool, string) {
-			executableFirstName := filepath.Base(executablePath)
-			return files.IsFile(executablePath), executableFirstName
+			executableFirstName := filepath.Base(sourceFilenameWithoutExt)
+			return files.IsFile(sourceFilenameWithoutPath), executableFirstName
 		}, nil
 	case mode.C:
 		if files.Which("cxx") != "" {
