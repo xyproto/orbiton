@@ -5,37 +5,51 @@ import (
 	"regexp"
 )
 
-// detectShaderType detects if the shader code is a vertex shader or a fragment shader
-// returns "frag", "vert" or an error
+// guessShaderType tries to detect which type of shader the given source code could be
 func detectShaderType(shaderCode string) (string, error) {
-	var (
-		fragmentCount, vertexCount int
-		vertexShaderKeywords       = []string{"gl_Position", "gl_VertexID"}
-		fragmentShaderKeywords     = []string{"gl_FragColor", "gl_FragCoord", "gl_FragDepth", "sampler2D", "texture"}
-	)
 
-	// Count vertex shader keywords
-	for _, keyword := range vertexShaderKeywords {
-		matched, _ := regexp.MatchString(keyword, shaderCode)
-		if matched {
-			vertexCount++
-		}
+	shaderKeywords := map[string][]string{
+		"vert":  {`gl_Position`, `gl_VertexID`},
+		"frag":  {`gl_FragColor`, `gl_FragCoord`, `gl_FragDepth`, `sampler2D`, `texture`},
+		"geom":  {`layout\s*\(\s*points\s*\|`, `layout\s*\(\s*lines\s*\|`, `layout\s*\(\s*triangles\s*\|`},
+		"tesc":  {`layout\s*\(\s*vertices\s*=\s*\d+\s*\)`},
+		"tese":  {`gl_TessCoord`, `gl_TessLevelInner`, `gl_TessLevelOuter`},
+		"comp":  {`layout\s*\(\s*local_size_[xyz]`},
+		"mesh":  {`mesh`, `gl_MeshVerticesEXT`},
+		"task":  {`task`, `gl_TaskCountNV`},
+		"rgen":  {`raygeneration`},
+		"rint":  {`intersection`},
+		"rahit": {`anyhit`},
+		"rchit": {`closesthit`},
+		"rmiss": {`miss`},
+		"rcall": {`callable`},
 	}
 
-	// Count fragment shader keywords
-	for _, keyword := range fragmentShaderKeywords {
-		matched, _ := regexp.MatchString(keyword, shaderCode)
-		if matched {
-			fragmentCount++
+	detectedTypes := make(map[string]int)
+
+	// Check for shader type keywords
+	for shaderType, keywords := range shaderKeywords {
+		for _, keyword := range keywords {
+			matched, _ := regexp.MatchString(keyword, shaderCode)
+			if matched {
+				detectedTypes[shaderType]++
+			}
 		}
 	}
 
 	// Determine the shader type based on the keyword counts
-	if vertexCount > fragmentCount {
-		return "vert", nil
-	} else if fragmentCount > vertexCount {
-		return "frag", nil
+	var maxType string
+	var maxCount int
+	for shaderType, count := range detectedTypes {
+		if count > maxCount {
+			maxType = shaderType
+			maxCount = count
+		}
 	}
 
-	return "", errors.New("unrecognized type of shader")
+	if maxType == "" {
+		return "", errors.New("unrecognized shader type")
+	}
+
+	return maxType, nil
 }
