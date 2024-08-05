@@ -1629,8 +1629,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.statusMode = !e.statusMode
 				if e.statusMode {
 					status.ShowLineColWordCount(c, e, e.filename)
-					e.redraw = true
 				}
+				e.redraw = true
 			}
 
 			if !jumpedToDefinition && e.searchTerm != "" && strings.Contains(e.String(), e.searchTerm) {
