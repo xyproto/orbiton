@@ -5,7 +5,6 @@
 - [ ] If every other byte is 0x0 in a source code file, assume UTF-16 or Windows text formatting.
 - [ ] When opening a file and pressing `ctrl-f` and then `return`: search for the previously searched for string.
 - [ ] Let the status bar be toggled by the `ctrl-o` menu. Let `ctrl-g` when not on a definition do something useful, like cycle indenting a block 0 to 7 indentations.
-- [ ] Change the cursor color when it is past 80 lines (or the set wrap width).
 - [ ] Make `echo asdf | o -c` work, for copying `asdf` to the clipboard.
 - [ ] Run a specific test if the cursor is within a test function when double `ctrl-space` is pressed.
 - [ ] When opening `file.txt+7`, only assume that 7 is the line number if no file named `file.txt+7` exists, but `file.txt` exists.
