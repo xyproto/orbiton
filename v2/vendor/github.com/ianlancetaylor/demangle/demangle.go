@@ -906,6 +906,9 @@ func (st *state) unqualifiedName(module AST) (r AST, isCast bool) {
 	if len(st.str) > 0 && st.str[0] == 'F' {
 		st.advance(1)
 		friend = true
+		if len(st.str) < 1 {
+			st.fail("expected unqualified name")
+		}
 	}
 
 	var a AST
