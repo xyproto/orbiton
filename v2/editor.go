@@ -23,56 +23,57 @@ import (
 
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
-	detectedTabs               *bool           // were tab or space indentations detected when loading the data?
-	breakpoint                 *Position       // for the breakpoint/jump functionality in debug mode
-	gdb                        *gdb.Gdb        // connection to gdb, if debugMode is enabled
-	sameFilePortal             *Portal         // a portal that points to the same file
-	lines                      map[int][]rune  // the contents of the current document
-	macro                      *Macro          // the contents of the current macro (will be cleared when esc is pressed)
-	filename                   string          // the current filename
-	searchTerm                 string          // the current search term, used when searching
-	stickySearchTerm           string          // used when going to the next match with ctrl-n, unless esc has been pressed
-	Theme                                      // editor theme, embedded struct
-	pos                        Position        // the current cursor and scroll position
-	indentation                mode.TabsSpaces // spaces or tabs, and how many spaces per tab character
-	wrapWidth                  int             // set to ie. 80 or 100 to trigger word wrap when typing to that column
-	mode                       mode.Mode       // a filetype mode, like for git, markdown or various programming languages
-	debugShowRegisters         int             // show no register box, show changed registers, show all changed registers
-	previousY                  int             // previous cursor position
-	previousX                  int             // previous cursor position
-	lineBeforeSearch           LineIndex       // save the current line number before jumping between search results
-	playBackMacroCount         int             // number of times the macro should be played back, right now
-	rainbowParenthesis         bool            // rainbow parenthesis
-	redraw                     bool            // if the contents should be redrawn in the next loop
-	sshMode                    bool            // is o used over ssh, tmux or screen, in a way that usually requires extra redrawing?
-	debugMode                  bool            // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
-	statusMode                 bool            // display a status line at all times at the bottom of the screen
-	expandTags                 bool            // can be used for XML and HTML
-	syntaxHighlight            bool            // syntax highlighting
-	stopParentOnQuit           bool            // send SIGQUIT to the parent PID when quitting
-	clearOnQuit                bool            // clear the terminal when quitting the editor, or not
-	quit                       bool            // for indicating if the user wants to end the editor session
-	changed                    bool            // has the contents changed, since last save?
-	readOnly                   bool            // is the file read-only when initializing o?
-	debugHideOutput            bool            // hide the GDB stdout pane when in debug mode?
-	binaryFile                 bool            // is this a binary file, or a text file?
-	wrapWhenTyping             bool            // wrap text at a certain limit when typing
-	addSpace                   bool            // add a space to the editor, once
-	debugStepInto              bool            // when stepping to the next instruction, step into instead of over
-	slowLoad                   bool            // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
-	building                   bool            // currently buildig code or exporting to a file?
-	runAfterBuild              bool            // run the application after building?
-	generatingTokens           bool            // is code or text being generated right now?
-	redrawCursor               bool            // if the cursor should be moved to the location it is supposed to be
-	fixAsYouType               bool            // fix each line as you type it in, using AI?
-	monitorAndReadOnly         bool            // monitor the file for changes and open it as read-only
-	primaryClipboard           bool            // use the primary or the secondary clipboard on UNIX?
-	jumpToLetterMode           bool            // jump directly to a highlighted letter
-	nanoMode                   bool            // emulate GNU Nano
-	spellCheckMode             bool            // spell check mode?
-	createDirectoriesIfMissing bool            // when saving a file, should directories be created if they are missing?
-	displayQuickHelp           bool            // display the quick help box?
-	drawProgress               bool            // used for drawing the progress character on the right side
+	detectedTabs                 *bool           // were tab or space indentations detected when loading the data?
+	breakpoint                   *Position       // for the breakpoint/jump functionality in debug mode
+	gdb                          *gdb.Gdb        // connection to gdb, if debugMode is enabled
+	sameFilePortal               *Portal         // a portal that points to the same file
+	lines                        map[int][]rune  // the contents of the current document
+	macro                        *Macro          // the contents of the current macro (will be cleared when esc is pressed)
+	filename                     string          // the current filename
+	searchTerm                   string          // the current search term, used when searching
+	stickySearchTerm             string          // used when going to the next match with ctrl-n, unless esc has been pressed
+	Theme                                        // editor theme, embedded struct
+	pos                          Position        // the current cursor and scroll position
+	indentation                  mode.TabsSpaces // spaces or tabs, and how many spaces per tab character
+	wrapWidth                    int             // set to ie. 80 or 100 to trigger word wrap when typing to that column
+	mode                         mode.Mode       // a filetype mode, like for git, markdown or various programming languages
+	debugShowRegisters           int             // show no register box, show changed registers, show all changed registers
+	previousY                    int             // previous cursor position
+	previousX                    int             // previous cursor position
+	lineBeforeSearch             LineIndex       // save the current line number before jumping between search results
+	playBackMacroCount           int             // number of times the macro should be played back, right now
+	rainbowParenthesis           bool            // rainbow parenthesis
+	redraw                       bool            // if the contents should be redrawn in the next loop
+	sshMode                      bool            // is o used over ssh, tmux or screen, in a way that usually requires extra redrawing?
+	debugMode                    bool            // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
+	statusMode                   bool            // display a status line at all times at the bottom of the screen
+	showColumnLimitToggleCounter int             // show the line where the column limit is (at 79 by default)
+	expandTags                   bool            // can be used for XML and HTML
+	syntaxHighlight              bool            // syntax highlighting
+	stopParentOnQuit             bool            // send SIGQUIT to the parent PID when quitting
+	clearOnQuit                  bool            // clear the terminal when quitting the editor, or not
+	quit                         bool            // for indicating if the user wants to end the editor session
+	changed                      bool            // has the contents changed, since last save?
+	readOnly                     bool            // is the file read-only when initializing o?
+	debugHideOutput              bool            // hide the GDB stdout pane when in debug mode?
+	binaryFile                   bool            // is this a binary file, or a text file?
+	wrapWhenTyping               bool            // wrap text at a certain limit when typing
+	addSpace                     bool            // add a space to the editor, once
+	debugStepInto                bool            // when stepping to the next instruction, step into instead of over
+	slowLoad                     bool            // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
+	building                     bool            // currently buildig code or exporting to a file?
+	runAfterBuild                bool            // run the application after building?
+	generatingTokens             bool            // is code or text being generated right now?
+	redrawCursor                 bool            // if the cursor should be moved to the location it is supposed to be
+	fixAsYouType                 bool            // fix each line as you type it in, using AI?
+	monitorAndReadOnly           bool            // monitor the file for changes and open it as read-only
+	primaryClipboard             bool            // use the primary or the secondary clipboard on UNIX?
+	jumpToLetterMode             bool            // jump directly to a highlighted letter
+	nanoMode                     bool            // emulate GNU Nano
+	spellCheckMode               bool            // spell check mode?
+	createDirectoriesIfMissing   bool            // when saving a file, should directories be created if they are missing?
+	displayQuickHelp             bool            // display the quick help box?
+	drawProgress                 bool            // used for drawing the progress character on the right side
 }
 
 // CopyLines will create a new map[int][]rune struct that is the copy of all the lines in the editor

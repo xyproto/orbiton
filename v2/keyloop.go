@@ -1627,6 +1627,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if !jumpedToDefinition {
 				status.ClearAll(c)
 				e.statusMode = !e.statusMode
+				e.showColumnLimitToggleCounter++
 				if e.statusMode {
 					status.ShowLineColWordCount(c, e, e.filename)
 				}
