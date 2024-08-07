@@ -198,14 +198,15 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 		temperature := env.Float32("CHATGPT_TEMPERATURE", defaultTemperature)
 
 		// Select a model
-		gptModel, gptModelTokens := gpt3.TextDavinci003Engine, 4000
+		//gptModel, gptModelTokens := gpt3.TextDavinci003Engine, 4000
+		gptModel, gptModelTokens := "gpt-4o-mini", 16000
 		// gptModel, gptModelTokens := "gpt-3.5-turbo", 4000 // only for chat
 		// gptModel, gptModelTokens := "text-curie-001", 2048 // simpler and faster
 		// gptModel, gptModelTokens := "text-ada-001", 2048 // even simpler and even faster
 
 		switch generationType {
 		case continueCode:
-			gptModel, gptModelTokens = "code-davinci-002", 8000
+			gptModel, gptModelTokens = "gpt-4o-mini", 16000
 			// gptModel, gptModelTokens = "code-cushman-001", 2048 // slightly simpler and slightly faster
 		}
 
