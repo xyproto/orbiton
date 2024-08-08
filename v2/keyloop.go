@@ -275,6 +275,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			if e.Empty() {
+				// If the filename is __init__.py, don't insert anything
+				if filepath.Base(e.filename) == "__init__.py" {
+					break
+				}
 				// Empty file, nothing to format, insert a program template, if available
 				if err := e.InsertTemplateProgram(c); err != nil {
 					status.ClearAll(c)
