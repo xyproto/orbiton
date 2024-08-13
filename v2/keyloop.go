@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/xyproto/clip"
 	"github.com/xyproto/digraph"
@@ -2064,15 +2065,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 				// Place *something*
 				r := keyRunes[0]
-
-				if r == 160 {
+				switch r {
+				case 160:
 					// This is a nonbreaking space that may be inserted with altgr+space that is HORRIBLE.
 					// Set r to a regular space instead.
 					r = ' '
-				}
-
-				// "smart dedent"
-				if r == '}' || r == ']' || r == ')' {
+				case '}', ']', ')':
+					// "smart dedent"
 
 					// Normally, dedent once, but there are exceptions
 
@@ -2104,7 +2103,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 				wrapped := e.InsertRune(c, r)
 				e.WriteRune(c)
-				if !wrapped && len(string(r)) > 0 {
+				if !wrapped && utf8.RuneCountInString(string(r)) > 0 {
 					// Move to the next position
 					e.Next(c)
 				}
