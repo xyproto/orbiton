@@ -33,7 +33,7 @@ require (
 
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
-	github.com/creack/pty v1.1.21 // indirect
+	github.com/creack/pty v1.1.23 // indirect
 	github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06 // indirect
 	github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 // indirect
 	github.com/kr/pty v1.1.8 // indirect

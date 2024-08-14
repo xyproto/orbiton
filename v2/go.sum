@@ -4,8 +4,8 @@ github.com/PullRequestInc/go-gpt3 v1.2.0 h1:2Yr4e3VO/gQnvSdj1bJYIFzubaGjV7p9oGoQ
 github.com/PullRequestInc/go-gpt3 v1.2.0/go.mod h1:F9yzAy070LhkqHS2154/IH0HVj5xq5g83gLTj7xzyfw=
 github.com/boombuler/barcode v1.0.0/go.mod h1:paBWMcWSl3LHKBqUq+rly7CNSldXjb2rDl3JlRe0mD8=
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
-github.com/creack/pty v1.1.21 h1:1/QdRyBaHHJP61QkWMXlOIBfsgdDeeKfK8SYVUWJKf0=
-github.com/creack/pty v1.1.21/go.mod h1:MOBLtS5ELjhRRrroQr9kyvTxUAFNvYEK993ew/Vr4O4=
+github.com/creack/pty v1.1.23 h1:4M6+isWdcStXEf15G/RbrMPOQj1dZ7HPZCGwE4kOeP0=
+github.com/creack/pty v1.1.23/go.mod h1:08sCNb52WyoAwi2QDyzUCTgcvVFhUzewun7wtTfvcwE=
 github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86 h1:kHMmK/Nv9EdcvZyk/nPJAMsyx/RvvDJuAlNGOiv4zeQ=
 github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86/go.mod h1:22k58xzfLfGi/n7fkt/c8uGafmNb3wXPxdL2g/j0SpE=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
