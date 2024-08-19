@@ -95,8 +95,8 @@ github.com/xyproto/digraph v1.2.0/go.mod h1:s7ijNNFO/sZaEwtIznvXjJCPZyqOkE87Y8Et
 github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
 github.com/xyproto/env v1.9.1 h1:RSWzKrNYEcK+Tvk2fu5eHYW5ENq19tYzbHLWfA7fx5s=
 github.com/xyproto/env v1.9.1/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
-github.com/xyproto/env/v2 v2.2.5 h1:FNrp56sptc7ebC2QpM8lqKSGEb3UoYUJZZFl4bmcrPs=
-github.com/xyproto/env/v2 v2.2.5/go.mod h1:F81ZEzu15s3TWUZJ1uzBl9iNeq9zcfHvxMkQJaLZUl0=
+github.com/xyproto/env/v2 v2.3.0 h1:9g1EOZYpccH1L2SeCXEvibyis/gPT+8+t34WqGMSBXQ=
+github.com/xyproto/env/v2 v2.3.0/go.mod h1:F81ZEzu15s3TWUZJ1uzBl9iNeq9zcfHvxMkQJaLZUl0=
 github.com/xyproto/files v1.4.2 h1:DpZbogck63U6fpjBlD91H/3n+Er90FppBUbCwo2bJMk=
 github.com/xyproto/files v1.4.2/go.mod h1:ev4YWddHsJYYyOmc+LL8wvfYMMWA3w7U+VDnpReALGs=
 github.com/xyproto/guessica v1.1.2 h1:GP2jniCjE5DLeU0ZBbl9cS4gRXAyk/0lev0dh6Uqrfk=
