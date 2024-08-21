@@ -11,7 +11,6 @@
 - [ ] `echo something | o -c` should be possible!
 - [ ] Have many portal bookmarks. Add a menu option for selecting one of them, deleting all of them or deleting one of them.
 - [ ] When pasting through a portal, show a little window with the filename and line number that is being pasted from. Drop the status message.
-- [ ] Use the ctrl-g statusbar to the top, and move everything down 1 line. This can be useful if there is a something covering the very top of the monitor.
 - [ ] When searching for text in Markdown or other text, use case-insensitive search. Use case-sensitive search in code.
 - [ ] Drop the mutexes and have one "server" that deals with I/O and one "server" that deals with presentation.
 - [ ] If running "o main" and "o main" + "o main.go" exists, open "main.go".
@@ -31,7 +30,6 @@
 - [ ] Add support for `github.com/xyproto/ollamaclient` as an alternative to or instead of the OpenAI API.
       The `mistral` model is pretty fast and capable by now.
 - [ ] Re-think the minimap feature.
-- [ ] Use a menu option for toggling the status bar at the bottom instead of `ctrl-g`.
 - [ ] Let the `ctrl-o` menu have additional info, like time and date and GC stats.
 - [ ] For man pages: if between "[-" and "]", do not color uppercase letters differently.
 - [ ] For man pages: if the line contains "-*[a-z]" and then later "-*[a-z]" and a majority of words with "-", then color text red instead of blue (and consider the theme).
