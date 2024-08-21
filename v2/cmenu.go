@@ -162,19 +162,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		}
 	})
 
-	// Enter ChatGPT API key, if it's not already set
-	if openAIKeyHolder == nil {
-		actions.Add("Enter ChatGPT API key...", func() {
-			if enteredAPIKey, ok := e.UserInput(c, tty, status, "API key from https://platform.openai.com/account/api-keys", "", []string{}, false, ""); ok {
-				openAIKeyHolder = NewKeyHolderWithKey(enteredAPIKey)
-				// env.Set("CHATGPT_API_KEY", enteredAPIKey)
-				status.SetMessageAfterRedraw("Using API key " + enteredAPIKey)
-				// Write the OpenAI API Key to a file in the cache directory as well, but ignore errors
-				_ = openAIKeyHolder.WriteAPIKey()
-			}
-		})
-	}
-
 	// Build (for use on the terminal, since ctrl-space does not work on iTerm2 + macOS)
 	if !env.Bool("OG") && isDarwin() {
 		var alsoRun = false
@@ -271,21 +258,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 
 			}
 		})
-	}
-
-	// Fix as you type mode, on/off
-	if openAIKeyHolder != nil { // has AI
-		if e.fixAsYouType {
-			actions.Add("Fix as you type [turn off]", func() {
-				e.fixAsYouType = false
-				status.SetMessageAfterRedraw("Fix as you type turned off")
-			})
-		} else {
-			actions.Add("Fix as you type", func() {
-				e.fixAsYouType = true
-				status.SetMessageAfterRedraw("Fix as you type turned on")
-			})
-		}
 	}
 
 	if e.debugMode {

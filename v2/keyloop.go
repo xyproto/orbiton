@@ -1050,44 +1050,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				indent = false
 			}
 
-			triggerWordsForAI := []string{"Generate", "generate", "Write", "write", "!"}
-			shouldUseAI := false
-
-			if e.AtOrAfterEndOfLine() && e.NextLineIsBlank() {
-				for _, triggerWord := range triggerWordsForAI {
-					if e.mode == mode.Markdown && triggerWord == "!" {
-						continue
-					}
-					if strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()+" "+triggerWord+" ") {
-						shouldUseAI = true
-						break
-					} else if strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()+triggerWord+" ") {
-						shouldUseAI = true
-						break
-					} else if e.mode != mode.Markdown && e.SingleLineCommentMarker() != "!" && strings.HasPrefix(trimmedLine, "!") {
-						shouldUseAI = true
-						break
-					}
-				}
-			}
-			alreadyUsedAI := false
-		RETURN_PRESSED_AI_DONE:
-
 			if trimmedLine == "private:" || trimmedLine == "protected:" || trimmedLine == "public:" {
 				// De-indent the current line before moving on to the next
 				e.SetCurrentLine(trimmedLine)
 				leadingWhitespace = currentLeadingWhitespace
-			} else if e.fixAsYouType && openAIKeyHolder != nil && !alreadyUsedAI {
-				// Fix the code and grammar of the written line, using AI
-				const disableFixAsYouTypeOnError = true
-				e.FixCodeOrText(c, status, disableFixAsYouTypeOnError)
-				alreadyUsedAI = true
-				e.redrawCursor = true
-				goto RETURN_PRESSED_AI_DONE
-			} else if shouldUseAI && openAIKeyHolder != nil {
-				// Generate code or text, using AI
-				e.GenerateCodeOrText(c, status, bookmark)
-				break
 			} else if cLikeFor(e.mode) {
 				// Add missing parenthesis for "if ... {", "} else if", "} elif", "for", "while" and "when" for C-like languages
 				for _, kw := range []string{"for", "foreach", "foreach_reverse", "if", "switch", "when", "while", "while let", "} else if", "} elif"} {
