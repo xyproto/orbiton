@@ -113,7 +113,6 @@ These features are unique to `o`, as far as I am aware:
 * Type `iferr` on a single line in a Go or Odin program and press `return` to insert a suitable `if err != nil { return ... }` block, based on [koron/iferr](https://github.com/koron/iferr).
 * Use the built-in Markdown table editor by pressing `ctrl-t` when the cursor is on a table. This works best for tables that are not too wide.
 * Format Markdown tables by moving the cursor to a table and pressing `ctrl-w`.
-* Correct mistakes as lines are typed in, but only if the OpenAI API key is set, and if the "fix as you type" feature is enabled from the `ctrl-o` menu.
 * For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
 
 ## Other features and limitations
@@ -327,14 +326,6 @@ For using ie. the Synthwave theme, the `/usr/bin/sw` symlink to `/usr/bin/o` can
 * To insert a symbol, like `æ`, just press `ctrl-_` and type in `ae`. To insert `µ`, type in `My`.
 * These are the same digraphs as ViM uses.
 * For a full overview of digraphs, see [digraphs.txt](https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt).
-
-## Code generation
-
-* Obtain an API key from [openai.com](https://platform.openai.com/account/api-keys) and set it as the `OPENAI_API_KEY`, `OPENAI_KEY` or `CHATGPT_API_KEY` environment variable.
-* Press return after writing ie. `!write a function that adds two numbers` or `// Write a function that adds two numbers`.
-* Watch syntax highlighted code being generated beforeyour eyes. ChatGPT generates the code.
-* Press `Esc` to stop code from being generated.
-* Select `Fix as you type` from the `ctrl-o` menu to let ChatGPT try to correct every line as it is typed in. The API key must be set for the menu option to appear.
 
 ## Manual installation on Linux
 
