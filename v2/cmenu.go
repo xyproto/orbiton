@@ -508,9 +508,9 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 
 	// Add a menu item to toggle primary/non-primary clipboard on Linux
 	if isLinux() {
-		primaryToggleText := "Use the secondary clipboard"
+		primaryToggleText := "Use the secondary clipboard instead"
 		if !e.primaryClipboard {
-			primaryToggleText = "Use the primary clipboard"
+			primaryToggleText = "Use the primary clipboard instead"
 		}
 		actions.Add(primaryToggleText, func() {
 			e.primaryClipboard = !e.primaryClipboard
