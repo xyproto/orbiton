@@ -17,7 +17,7 @@ require (
 	github.com/xyproto/carveimg v1.4.6
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.2.0
-	github.com/xyproto/env/v2 v2.3.0
+	github.com/xyproto/env/v2 v2.5.0
 	github.com/xyproto/files v1.4.2
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
@@ -25,7 +25,7 @@ require (
 	github.com/xyproto/stringpainter v1.0.1
 	github.com/xyproto/syntax v1.10.9
 	github.com/xyproto/termtitle v1.5.1
-	github.com/xyproto/textoutput v1.16.4
+	github.com/xyproto/textoutput v1.16.5
 	github.com/xyproto/vt100 v1.14.5
 	github.com/xyproto/wordwrap v1.0.1
 	golang.org/x/image v0.19.0

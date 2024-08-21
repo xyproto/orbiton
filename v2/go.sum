@@ -95,8 +95,8 @@ github.com/xyproto/digraph v1.2.0/go.mod h1:s7ijNNFO/sZaEwtIznvXjJCPZyqOkE87Y8Et
 github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
 github.com/xyproto/env v1.9.1 h1:RSWzKrNYEcK+Tvk2fu5eHYW5ENq19tYzbHLWfA7fx5s=
 github.com/xyproto/env v1.9.1/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
-github.com/xyproto/env/v2 v2.3.0 h1:9g1EOZYpccH1L2SeCXEvibyis/gPT+8+t34WqGMSBXQ=
-github.com/xyproto/env/v2 v2.3.0/go.mod h1:F81ZEzu15s3TWUZJ1uzBl9iNeq9zcfHvxMkQJaLZUl0=
+github.com/xyproto/env/v2 v2.5.0 h1:1KXF3UCaELjnXzfZ6iHDCdJoBeQPz4LXG4oHlBN+jvs=
+github.com/xyproto/env/v2 v2.5.0/go.mod h1:F81ZEzu15s3TWUZJ1uzBl9iNeq9zcfHvxMkQJaLZUl0=
 github.com/xyproto/files v1.4.2 h1:DpZbogck63U6fpjBlD91H/3n+Er90FppBUbCwo2bJMk=
 github.com/xyproto/files v1.4.2/go.mod h1:ev4YWddHsJYYyOmc+LL8wvfYMMWA3w7U+VDnpReALGs=
 github.com/xyproto/guessica v1.1.2 h1:GP2jniCjE5DLeU0ZBbl9cS4gRXAyk/0lev0dh6Uqrfk=
@@ -115,8 +115,8 @@ github.com/xyproto/syntax v1.10.9/go.mod h1:dhgw9EjQKHotxsu0uD+cpUhK9UHl1RGFmInC
 github.com/xyproto/termtitle v1.5.1 h1:L1I+6juzNQk+BsoPCYw2c+3unEv4pxQqcyIoO9Xb3qc=
 github.com/xyproto/termtitle v1.5.1/go.mod h1:U+yMnuL9ENDJy9+OCDEiEx01b7Uk6Zu6g1O22xY/rvQ=
 github.com/xyproto/textoutput v1.12.0/go.mod h1:7gHUVNJjTYzjRsc3S54W8hCcjB96C+/ug/mLus9nBjc=
-github.com/xyproto/textoutput v1.16.4 h1:fNJdnsDpQHOGqsOmeMw8oqAwAVuDQ30762ck9B6GUO4=
-github.com/xyproto/textoutput v1.16.4/go.mod h1:9ObywN82UrMiIR3L4hGXurrV9kWcdbZc36hLdJdhN7s=
+github.com/xyproto/textoutput v1.16.5 h1:XPHjLqJj33bCYJd9lVcMSjqe536Nu3lLGdumo0Dlyvs=
+github.com/xyproto/textoutput v1.16.5/go.mod h1:8ac52PRcQEWIPkdIV8UhiN+3X4WmIzkKSTGgas99hFI=
 github.com/xyproto/vt100 v1.8.5/go.mod h1:8ni0+pphJABRAZOoyxY9yD0QQxkia4PjKNFiMQStrT4=
 github.com/xyproto/vt100 v1.9.8/go.mod h1:ExY2YeEedHIb8ng0LG0nv0pgO4prm3KFRnPcTVMF/is=
 github.com/xyproto/vt100 v1.14.2/go.mod h1:DZDxocHCwx0kZTVnsyGogNYKyQ1rwDzUURDhAThjLVw=

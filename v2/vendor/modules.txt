@@ -93,7 +93,7 @@ github.com/xyproto/digraph
 # github.com/xyproto/env v1.9.1
 ## explicit; go 1.15
 github.com/xyproto/env
-# github.com/xyproto/env/v2 v2.3.0
+# github.com/xyproto/env/v2 v2.5.0
 ## explicit; go 1.19
 github.com/xyproto/env/v2
 # github.com/xyproto/files v1.4.2
@@ -120,7 +120,7 @@ github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.5.1
 ## explicit; go 1.11
 github.com/xyproto/termtitle
-# github.com/xyproto/textoutput v1.16.4
+# github.com/xyproto/textoutput v1.16.5
 ## explicit; go 1.22.0
 github.com/xyproto/textoutput
 # github.com/xyproto/vt100 v1.14.5
