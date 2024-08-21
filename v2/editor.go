@@ -65,7 +65,6 @@ type Editor struct {
 	runAfterBuild              bool            // run the application after building?
 	generatingTokens           bool            // is code or text being generated right now?
 	redrawCursor               bool            // if the cursor should be moved to the location it is supposed to be
-	fixAsYouType               bool            // fix each line as you type it in, using AI?
 	monitorAndReadOnly         bool            // monitor the file for changes and open it as read-only
 	primaryClipboard           bool            // use the primary or the secondary clipboard on UNIX?
 	jumpToLetterMode           bool            // jump directly to a highlighted letter
