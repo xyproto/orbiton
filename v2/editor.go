@@ -976,20 +976,18 @@ func (e *Editor) InsertLineBelowAt(index LineIndex) {
 }
 
 // Insert will insert a rune at the given position, with no word wrap,
-// but MakeConsisten will be called.
+// and call MakeConsistent at the end.
 func (e *Editor) Insert(r rune) {
 	// Ignore it if the current position is out of bounds
 	x, _ := e.DataX()
 
 	y := int(e.DataY())
-
 	// If there are no lines, initialize and set the 0th rune to the given one
 	if e.lines == nil {
 		e.lines = make(map[int][]rune)
 		e.lines[0] = []rune{r}
 		return
 	}
-
 	// If the current line is empty, initialize it with a line that is just the given rune
 	_, ok := e.lines[y]
 	if !ok {
@@ -1010,11 +1008,54 @@ func (e *Editor) Insert(r rune) {
 		newline[i] = e.lines[y][i-1]
 	}
 	e.lines[y] = newline
-
 	e.changed = true
 
 	// Make sure no lines are nil
 	e.MakeConsistent()
+}
+
+// BlockModeInsert will insert a rune at the given position, with no word wrap,
+// and call MakeConsistent at the end, for every line of this block.
+func (e *Editor) BlockModeInsert(c *vt100.Canvas, r rune) {
+	e.ForEachLineInBlock(c, func() bool {
+		x, _ := e.DataX()
+		// Ignore it if the current position is out of bounds
+		y := int(e.DataY())
+		// If there are no lines, initialize and set the 0th rune to the given one
+		if e.lines == nil {
+			e.lines = make(map[int][]rune)
+			e.lines[0] = []rune{r}
+			return false // exit
+		}
+		// If the current line is empty, initialize it with a line that is just the given rune
+		_, ok := e.lines[y]
+		if !ok {
+			e.lines[y] = []rune{r}
+			return false // exit
+		}
+		if len(e.lines[y]) < x {
+			// Can only insert in the existing block of text
+			return false // exit
+		}
+		newlineLength := len(e.lines[y]) + 1
+		newline := make([]rune, newlineLength)
+		for i := 0; i < x; i++ {
+			newline[i] = e.lines[y][i]
+		}
+		newline[x] = r
+		for i := x + 1; i < newlineLength; i++ {
+			newline[i] = e.lines[y][i-1]
+		}
+		e.lines[y] = newline
+
+		e.changed = true
+
+		// Make sure no lines are nil
+		e.MakeConsistent()
+
+		return true // continue
+	})
+
 }
 
 // CreateLineIfMissing will create a line at the given Y index, if it's missing
@@ -1367,28 +1408,39 @@ func (e *Editor) UpEnd(c *vt100.Canvas) error {
 
 // Next will move the cursor to the next position in the contents
 func (e *Editor) Next(c *vt100.Canvas) error {
+	if !e.blockMode {
+		// Ignore it if the position is out of bounds
+		atTab := e.Rune() == '\t'
+		if atTab {
+			e.pos.sx += e.indentation.PerTab
+		} else {
+			e.pos.sx++
+		}
+		// Did we move too far on this line?
+		if e.AfterLineScreenContentsPlusOne() {
+			// Undo the move
+			if atTab {
+				e.pos.sx -= e.indentation.PerTab
+			} else {
+				e.pos.sx--
+			}
+			// Move down
+			err := e.pos.Down(c)
+			if err != nil {
+				return err
+			}
+			// Move to the start of the line
+			e.pos.sx = 0
+		}
+		return nil
+	}
+	// block mode
 	// Ignore it if the position is out of bounds
 	atTab := e.Rune() == '\t'
 	if atTab {
 		e.pos.sx += e.indentation.PerTab
 	} else {
 		e.pos.sx++
-	}
-	// Did we move too far on this line?
-	if e.AfterLineScreenContentsPlusOne() {
-		// Undo the move
-		if atTab {
-			e.pos.sx -= e.indentation.PerTab
-		} else {
-			e.pos.sx--
-		}
-		// Move down
-		err := e.pos.Down(c)
-		if err != nil {
-			return err
-		}
-		// Move to the start of the line
-		e.pos.sx = 0
 	}
 	return nil
 }
@@ -1631,16 +1683,36 @@ func (e *Editor) AfterLineScreenContentsPlusOne() bool {
 
 // WriteRune writes the current rune to the given canvas
 func (e *Editor) WriteRune(c *vt100.Canvas) {
-	if c != nil {
+	if c == nil {
+		return
+	}
+	if !e.blockMode {
 		c.WriteRune(uint(e.pos.sx+e.pos.offsetX), uint(e.pos.sy), e.Foreground, e.Background, e.Rune())
+	} else {
+		e.ForEachLineInBlock(c, func() bool {
+			c.WriteRune(uint(e.pos.sx+e.pos.offsetX), uint(e.pos.sy), e.Foreground, e.Background, e.Rune())
+			return true // continue
+		})
 	}
 }
 
 // WriteTab writes spaces when there is a tab character, to the canvas
 func (e *Editor) WriteTab(c *vt100.Canvas) {
+	if c == nil {
+		return
+	}
 	spacesPerTab := e.indentation.PerTab
-	for x := e.pos.sx; x < e.pos.sx+spacesPerTab; x++ {
-		c.WriteRune(uint(x+e.pos.offsetX), uint(e.pos.sy), e.Foreground, e.Background, ' ')
+	if !e.blockMode {
+		for x := e.pos.sx; x < e.pos.sx+spacesPerTab; x++ {
+			c.WriteRune(uint(x+e.pos.offsetX), uint(e.pos.sy), e.Foreground, e.Background, ' ')
+		}
+	} else {
+		e.ForEachLineInBlock(c, func() bool {
+			for x := e.pos.sx; x < e.pos.sx+spacesPerTab; x++ {
+				c.WriteRune(uint(x+e.pos.offsetX), uint(e.pos.sy), e.Foreground, e.Background, ' ')
+			}
+			return true // continue
+		})
 	}
 }
 
@@ -1938,10 +2010,10 @@ func (e *Editor) CurrentLineCommented(commentMarker string) bool {
 	return strings.HasPrefix(e.TrimmedLine(), commentMarker)
 }
 
-// ForEachLineInBlock will move the cursor and run the given function for
+// ForEachLineInBlockWithCommentMarker will move the cursor and run the given function for
 // each line in the current block of text (until newline or end of document)
 // Also takes a string that will be passed on to the function.
-func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func(string), commentMarker string) {
+func (e *Editor) ForEachLineInBlockWithCommentMarker(c *vt100.Canvas, f func(string), commentMarker string) {
 	downCounter := 0
 	for !e.EmptyRightTrimmedLine() {
 		f(commentMarker)
@@ -1952,7 +2024,7 @@ func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func(string), commentMark
 			break
 		}
 		downCounter++
-		if downCounter > 10 { // safeguard
+		if e.EmptyLine() {
 			break
 		}
 	}
@@ -1960,6 +2032,43 @@ func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func(string), commentMark
 	for i := downCounter; i > 0; i-- {
 		e.Up(c, nil)
 	}
+}
+
+// ForEachLineInBlock will move the cursor and run the given function for
+// each line in the current block of text (until newline or end of document).
+// It will also keep X the same for each line.
+// It will then use the X value after the final successfull call of the given function.
+func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func() bool) {
+	originalX := e.pos.sx
+	originalOffsetX := e.pos.offsetX
+	finalX := e.pos.sx
+	finalOffsetX := e.pos.offsetX
+	downCounter := 0
+	for !e.EmptyRightTrimmedLine() {
+		e.pos.sx = originalX
+		e.pos.offsetX = originalOffsetX
+		if !f() {
+			break
+		}
+		finalX = e.pos.sx
+		finalOffsetX = e.pos.offsetX
+		if e.AtOrAfterEndOfDocument() {
+			break
+		}
+		if e.Down(c, nil) { // reached the end
+			break
+		}
+		downCounter++
+		if e.EmptyLine() {
+			break
+		}
+	}
+	// Go up again
+	for i := downCounter; i > 0; i-- {
+		e.Up(c, nil)
+	}
+	e.pos.sx = finalX
+	e.pos.offsetX = finalOffsetX
 }
 
 // Block will return the text from the given line until
@@ -2037,9 +2146,9 @@ func (e *Editor) ToggleCommentBlock(c *vt100.Canvas) {
 	} else if downCounter == 1 && commentCounter == 1 {
 		e.CommentOff(commentMarker)
 	} else if mostLinesAreComments {
-		e.ForEachLineInBlock(c, e.CommentOff, commentMarker)
+		e.ForEachLineInBlockWithCommentMarker(c, e.CommentOff, commentMarker)
 	} else {
-		e.ForEachLineInBlock(c, e.CommentOn, commentMarker)
+		e.ForEachLineInBlockWithCommentMarker(c, e.CommentOn, commentMarker)
 	}
 }
 
