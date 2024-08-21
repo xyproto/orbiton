@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] New idea for a text editor: make it more like a multiplayer-game, where several people and AI agents can cooperate on the server side, with a nice client on top
 - [ ] If every other byte is 0x0 in a source code file, assume UTF-16 or Windows text formatting.
 - [ ] When opening a file and pressing `ctrl-f` and then `return`: search for the previously searched for string.
 - [ ] Let the status bar be toggled by the `ctrl-o` menu. Let `ctrl-g` when not on a definition do something useful, like cycle indenting a block 0 to 7 indentations.
