@@ -53,7 +53,9 @@ func (e *Editor) GenerateTokens(geminiClient *simplegemini.GeminiClient, prompt 
 	defer cancel()
 
 	_, err := geminiClient.SubmitToClientStreaming(ctx, func(token string) {
-		newToken(token)
+		if !(len(token) <= 6 && strings.HasPrefix(token, "```")) {
+			newToken(token)
+		}
 		if !e.generatingTokens {
 			cancel()
 		}
@@ -102,15 +104,22 @@ func (e *Editor) FixLine(c *vt100.Canvas, status *StatusBar, lineIndex LineIndex
 
 	e.generatingTokens = true
 	currentLeadingWhitespace := e.LeadingWhitespaceAt(lineIndex)
-	var generatedLine, newContents, newTrimmedContents string
+	var generatedLine string
 
 	fixLineMut.Lock()
 	defer fixLineMut.Unlock()
 
-	if err := e.GenerateTokens(geminiClient, prompt, maxTokens, temperature, func(word string) {
-		generatedLine = strings.TrimSpace(generatedLine) + word
-		newTrimmedContents = e.AddSpaceAfterComments(generatedLine)
-		newContents = currentLeadingWhitespace + newTrimmedContents
+	if err := e.GenerateTokens(geminiClient, prompt, maxTokens, temperature, func(token string) {
+		lines := strings.Split(token, "\n")
+		for i, line := range lines {
+			if i > 0 {
+				e.InsertLineBelow()
+				e.pos.sy++
+				generatedLine = ""
+			}
+			generatedLine += line
+			e.SetCurrentLine(currentLeadingWhitespace + e.AddSpaceAfterComments(generatedLine))
+		}
 	}); err != nil {
 		e.redrawCursor = true
 		if !strings.Contains(err.Error(), "context") {
@@ -122,10 +131,6 @@ func (e *Editor) FixLine(c *vt100.Canvas, status *StatusBar, lineIndex LineIndex
 			}
 			return
 		}
-	}
-
-	if e.TrimmedLineAt(lineIndex) != newTrimmedContents {
-		e.SetLine(lineIndex, newContents)
 	}
 }
 
@@ -221,23 +226,20 @@ func (e *Editor) GenerateCodeOrText(c *vt100.Canvas, status *StatusBar, bookmark
 		first := true
 		var generatedLine string
 
-		if err := e.GenerateTokens(geminiClient, prompt, maxTokens, temperature, func(word string) {
-			generatedLine += word
-			if strings.HasSuffix(generatedLine, "\n") {
-				newContents := currentLeadingWhitespace + e.AddSpaceAfterComments(generatedLine)
-				e.SetCurrentLine(newContents)
-				if !first {
-					if !e.EmptyTrimmedLine() {
-						e.InsertLineBelow()
-						e.pos.sy++
-					}
-				} else {
+		if err := e.GenerateTokens(geminiClient, prompt, maxTokens, temperature, func(token string) {
+			lines := strings.Split(token, "\n")
+			for i, line := range lines {
+				if i > 0 {
+					e.InsertLineBelow()
+					e.pos.sy++
+					generatedLine = ""
+				}
+				generatedLine += line
+				e.SetCurrentLine(currentLeadingWhitespace + e.AddSpaceAfterComments(generatedLine))
+				if first {
 					e.DeleteCurrentLineMoveBookmark(bookmark)
 					first = false
 				}
-				generatedLine = ""
-			} else {
-				e.SetCurrentLine(currentLeadingWhitespace + e.AddSpaceAfterComments(generatedLine))
 			}
 			e.MakeConsistent()
 			e.DrawLines(c, true, false)
