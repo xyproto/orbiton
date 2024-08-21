@@ -18,6 +18,8 @@ cloud.google.com/go/vertexai v0.12.0/go.mod h1:8u+d0TsvBfAAd2x5R6GMgbYhsLgo3J7lm
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/DataDog/gostackparse v0.7.0 h1:i7dLkXHvYzHV308hnkvVGDL3BR4FWl7IsXNPz/IGQh4=
 github.com/DataDog/gostackparse v0.7.0/go.mod h1:lTfqcJKqS9KnXQGnyQMCugq3u1FP6UZMfWR0aitKFMM=
+github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b h1:1+WfnfjMtmNFvZohd6NvMP8QB5q4KjGw4kNtLt9yXVM=
+github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b/go.mod h1:aPyh7jEvrog9zAwx5N7+JUQX5dZTSGpxF1LAR4dr35I=
 github.com/boombuler/barcode v1.0.0/go.mod h1:paBWMcWSl3LHKBqUq+rly7CNSldXjb2rDl3JlRe0mD8=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
@@ -32,6 +34,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06 h1:yKWwcHDMrhQ1Vle7iG4xPt9l61A/rTsdYc7bJHwB+sQ=
 github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06/go.mod h1:ILJc15OqkUIbcYqL9A7W7xTsfOLRAKP0Jpl74ur9mm8=
+github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
+github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
@@ -158,6 +162,8 @@ github.com/xyproto/iferr v1.1.0/go.mod h1:En+YVd+aRA+/q3LKqQ+EmsmbWKdgzBwUPE5C4b
 github.com/xyproto/mode v0.6.18/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/mode v0.7.23 h1:FD3zIn/2z8XbCemKm3HO0+bT8xZm41w8RlqeBtyU5aU=
 github.com/xyproto/mode v0.7.23/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
+github.com/xyproto/ollamaclient/v2 v2.5.0 h1:m4VKQLOdKmY/FNfo+EkNGEjUaAWxjWNUhXz1fgHvoz0=
+github.com/xyproto/ollamaclient/v2 v2.5.0/go.mod h1:WGFVADiCf/UXH/Fajx2yVUcyi6sDOU2Exzf8aqG3jio=
 github.com/xyproto/palgen v1.6.0 h1:o3NgtiU4vuUvctOgButN80XIR+YGVFVLw33Y143YuiI=
 github.com/xyproto/palgen v1.6.0/go.mod h1:CNbNEV/7R9UvbF8oiS0hBdANveDfBBc4/pvQIFp5ygg=
 github.com/xyproto/simplegemini v1.4.1 h1:zUfGrE14n5ktF6u4Y3CMAryoZ+lQFUlA96do8cFgf3Q=

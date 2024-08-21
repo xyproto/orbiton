@@ -45,6 +45,10 @@ cloud.google.com/go/vertexai/internal/support
 # github.com/DataDog/gostackparse v0.7.0
 ## explicit; go 1.16
 github.com/DataDog/gostackparse
+# github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b
+## explicit; go 1.16
+github.com/allegro/bigcache/v3
+github.com/allegro/bigcache/v3/queue
 # github.com/creack/pty v1.1.23
 ## explicit; go 1.18
 github.com/creack/pty
@@ -54,6 +58,9 @@ github.com/cyrus-and/gdb
 # github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06
 ## explicit
 github.com/dkua/go-ico
+# github.com/dustin/go-humanize v1.0.1
+## explicit; go 1.16
+github.com/dustin/go-humanize
 # github.com/felixge/fgtrace v0.2.0
 ## explicit; go 1.18
 github.com/felixge/fgtrace
@@ -197,6 +204,9 @@ github.com/xyproto/iferr
 # github.com/xyproto/mode v0.7.23
 ## explicit; go 1.14
 github.com/xyproto/mode
+# github.com/xyproto/ollamaclient/v2 v2.5.0
+## explicit; go 1.21.3
+github.com/xyproto/ollamaclient/v2
 # github.com/xyproto/palgen v1.6.0
 ## explicit; go 1.16
 github.com/xyproto/palgen
