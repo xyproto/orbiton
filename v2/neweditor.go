@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -350,7 +349,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 				} else {
 					e.setLightVSTheme()
 				}
-			} else if strings.HasSuffix(runtime.GOOS, "bsd") || runtime.GOOS == "dragonfly" {
+			} else if isBSD() {
 				// NetBSD, FreeBSD, OpenBSD or Dragonfly
 				e.setRedBlackTheme()
 				DisableQuickHelpScreen(nil)
