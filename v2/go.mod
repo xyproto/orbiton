@@ -21,8 +21,7 @@ require (
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/mode v0.7.23
-	github.com/xyproto/ollamaclient/v2 v2.5.0
-	github.com/xyproto/simplegemini v1.4.1
+	github.com/xyproto/simplegemini v1.4.2
 	github.com/xyproto/stringpainter v1.0.1
 	github.com/xyproto/syntax v1.10.9
 	github.com/xyproto/termtitle v1.5.1
@@ -42,10 +41,8 @@ require (
 	cloud.google.com/go/longrunning v0.6.0 // indirect
 	cloud.google.com/go/vertexai v0.12.0 // indirect
 	github.com/DataDog/gostackparse v0.7.0 // indirect
-	github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b // indirect
 	github.com/creack/pty v1.1.23 // indirect
 	github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06 // indirect
-	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
