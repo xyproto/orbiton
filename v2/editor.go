@@ -977,65 +977,27 @@ func (e *Editor) InsertLineBelowAt(index LineIndex) {
 
 // Insert will insert a rune at the given position, with no word wrap,
 // and call MakeConsistent at the end.
-func (e *Editor) Insert(r rune) {
-	// Ignore it if the current position is out of bounds
-	x, _ := e.DataX()
+func (e *Editor) Insert(c *vt100.Canvas, r rune) {
 
-	y := int(e.DataY())
-	// If there are no lines, initialize and set the 0th rune to the given one
-	if e.lines == nil {
-		e.lines = make(map[int][]rune)
-		e.lines[0] = []rune{r}
-		return
-	}
-	// If the current line is empty, initialize it with a line that is just the given rune
-	_, ok := e.lines[y]
-	if !ok {
-		e.lines[y] = []rune{r}
-		return
-	}
-	if len(e.lines[y]) < x {
-		// Can only insert in the existing block of text
-		return
-	}
-	newlineLength := len(e.lines[y]) + 1
-	newline := make([]rune, newlineLength)
-	for i := 0; i < x; i++ {
-		newline[i] = e.lines[y][i]
-	}
-	newline[x] = r
-	for i := x + 1; i < newlineLength; i++ {
-		newline[i] = e.lines[y][i-1]
-	}
-	e.lines[y] = newline
-	e.changed = true
-
-	// Make sure no lines are nil
-	e.MakeConsistent()
-}
-
-// BlockModeInsert will insert a rune at the given position, with no word wrap,
-// and call MakeConsistent at the end, for every line of this block.
-func (e *Editor) BlockModeInsert(c *vt100.Canvas, r rune) {
-	e.ForEachLineInBlock(c, func() bool {
-		x, _ := e.DataX()
+	doInsert := func() bool {
 		// Ignore it if the current position is out of bounds
+		x, _ := e.DataX()
 		y := int(e.DataY())
 		// If there are no lines, initialize and set the 0th rune to the given one
 		if e.lines == nil {
 			e.lines = make(map[int][]rune)
 			e.lines[0] = []rune{r}
-			return false // exit
+			return true // continue
 		}
 		// If the current line is empty, initialize it with a line that is just the given rune
 		_, ok := e.lines[y]
 		if !ok {
 			e.lines[y] = []rune{r}
-			return false // exit
+			return true // continue
 		}
 		if len(e.lines[y]) < x {
 			// Can only insert in the existing block of text
-			return false // exit
+			return true // continue
 		}
 		newlineLength := len(e.lines[y]) + 1
 		newline := make([]rune, newlineLength)
@@ -1047,15 +1009,19 @@ func (e *Editor) BlockModeInsert(c *vt100.Canvas, r rune) {
 			newline[i] = e.lines[y][i-1]
 		}
 		e.lines[y] = newline
-
-		e.changed = true
-
-		// Make sure no lines are nil
-		e.MakeConsistent()
-
 		return true // continue
-	})
+	}
 
+	if e.blockMode {
+		e.ForEachLineInBlock(c, doInsert)
+	} else {
+		doInsert()
+	}
+
+	e.changed = true
+
+	// Make sure no lines are nil
+	e.MakeConsistent()
 }
 
 // CreateLineIfMissing will create a line at the given Y index, if it's missing
@@ -2039,14 +2005,15 @@ func (e *Editor) ForEachLineInBlockWithCommentMarker(c *vt100.Canvas, f func(str
 // It will also keep X the same for each line.
 // It will then use the X value after the final successfull call of the given function.
 func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func() bool) {
-	originalX := e.pos.sx
-	originalOffsetX := e.pos.offsetX
+	firstX := e.pos.sx
+	firstY := e.pos.sy
+	firstOffsetX := e.pos.offsetX
 	finalX := e.pos.sx
 	finalOffsetX := e.pos.offsetX
 	downCounter := 0
 	for !e.EmptyRightTrimmedLine() {
-		e.pos.sx = originalX
-		e.pos.offsetX = originalOffsetX
+		e.pos.sx = firstX
+		e.pos.offsetX = firstOffsetX
 		if !f() {
 			break
 		}
@@ -2068,7 +2035,11 @@ func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func() bool) {
 		e.Up(c, nil)
 	}
 	e.pos.sx = finalX
+	e.pos.sy = firstY
 	e.pos.offsetX = finalOffsetX
+
+	// Make sure no lines are nil
+	e.MakeConsistent()
 }
 
 // Block will return the text from the given line until

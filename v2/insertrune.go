@@ -43,7 +43,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) bool {
 		e.Home()
 		e.pos.sx = 0
 		if r != ' ' {
-			e.Insert(r)
+			e.Insert(c, r)
 			e.pos.sx = 1
 		}
 		e.pos.sy = y
@@ -64,11 +64,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) bool {
 	}
 
 	// A regular insert, no wrapping
-	if e.blockMode {
-		e.BlockModeInsert(c, r)
-	} else {
-		e.Insert(r)
-	}
+	e.Insert(c, r)
 
 	// Scroll right when reaching 95% of the terminal width
 	wf := 80.0
