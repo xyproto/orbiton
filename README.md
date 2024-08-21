@@ -20,7 +20,7 @@ Orbiton might be a good fit for:
 * Editing files deep within larger Go or C++ projects.
 * Solving Advent of Code tasks.
 * Being placed on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in log, man page and image viewer, has an optional nano/pico mode, can be used as `EDITOR=o visudo` and has built-in support for neatly formatting `/etc/fstab` files.
-* Writing any number of words in a distraction-free fullscreen environment. (Press `ctrl-g` to see the word count in the status bar).
+* Writing any number of words in a distraction-free fullscreen environment (toggle the status line via the `ctrl-o` menu to see the word count in the status bar).
 
 ## Screenshots
 
@@ -212,7 +212,7 @@ There are pretty few hotkeys to remember:
 * `ctrl-b` - Jump back after jumping to a definition with `ctrl-g`.
              Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords. For Markdown, format the table under the cursor.
-* `ctrl-g` - Toggle the status bar.
+* `ctrl-g` - Toggle block editing mode, where several continous lines can be edited at once.
              Can also jump to definition, for some programming languages (experimental feature).
 * `ctrl-\` - Comment in or out a block of code.
 * `ctrl-~` - Jump to a matching parenthesis or bracket.
