@@ -442,7 +442,7 @@ func FindInNvimLocationHistory(nvimLocationFilename, searchFilename string) (Lin
 		case b == 0xdf:
 			// fmt.Println("map 32")
 			return nol, errors.New("unimplemented msgpack field: map 32")
-		case b >= 0xe0 && b <= 0xff: // negative fixint
+		case b >= 0xe0: // >= 0xff is implied
 			n := -(int(b) - 224) // - 111xxxxx
 			_ = n
 			// fmt.Printf("%d (negative fixint)\n", n)
