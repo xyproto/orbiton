@@ -1628,20 +1628,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// func prefix must exist for this language/mode for GoToDefinition to be supported
 			jumpedToDefinition := e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status)
 
-			// If the definition could not be found, toggle the status line at the bottom
-			if !jumpedToDefinition {
-				status.ClearAll(c)
-				e.statusMode = !e.statusMode
-				if e.statusMode {
-					status.ShowLineColWordCount(c, e, e.filename)
-					e.showColumnLimit = e.wrapWhenTyping
-				} else {
-					e.showColumnLimit = false
-				}
-				e.redraw = true
+			if jumpedToDefinition {
+				break
 			}
 
-			if !jumpedToDefinition && e.searchTerm != "" && strings.Contains(e.String(), e.searchTerm) {
+			// TODO: Is this correct? Should it only happen if jumpedToDefinition is true? false?
+			if e.searchTerm != "" && strings.Contains(e.String(), e.searchTerm) {
 				// Push a function for how to go back
 				backFunctions = append(backFunctions, func() {
 					oldFilename := oldFilename
@@ -1654,6 +1646,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.ClearSearch()
 				})
 			}
+
+			e.blockMode = !e.blockMode // let typing affect all the lines in this block
+			if e.blockMode {
+				status.SetMessage("Block mode")
+			} else {
+				status.SetMessage("Block mode off")
+			}
+			status.Show(c, e)
 
 		case "c:21": // ctrl-u to undo
 
