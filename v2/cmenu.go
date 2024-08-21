@@ -127,7 +127,18 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Sort the current block of lines", "sortblock")
 
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert \""+insertFilename+"\" at the current line", "insertfile", insertFilename)
-	actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert the current date and time", "insertdateandtime") // in the RFC 3339 format
+
+	actions.Add("Toggle status line", func() {
+		status.ClearAll(c)
+		if !e.statusMode {
+			e.statusMode = true
+			status.ShowLineColWordCount(c, e, e.filename)
+			e.showColumnLimit = e.wrapWhenTyping
+		} else {
+			e.statusMode = false
+			e.showColumnLimit = false
+		}
+	})
 
 	// Word wrap at a custom width + enable word wrap when typing
 	actions.Add("Word wrap at...", func() {
