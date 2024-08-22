@@ -1960,19 +1960,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 				undo.Snapshot(e)
 
-				if e.mode == mode.Go { // TODO: And e.onlyValidCode
-					if e.Empty() {
-						r := keyRunes[0]
-						// Only "/" or "p" is allowed
-						if r != 'p' && r != '/' {
-							status.Clear(c)
-							status.SetMessage("Not valid Go: " + string(r))
-							status.Show(c, e)
-							break
-						}
-					}
-				}
-
 				// Type in the letters that were pressed
 				for _, r := range keyRunes {
 					// Insert a letter. This is what normally happens.
