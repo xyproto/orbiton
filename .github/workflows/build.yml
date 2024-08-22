@@ -17,7 +17,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     - name: Update deps
-      run: cd v2 && (go get -d -v; go get -t -v; go get -u -v; go mod vendor; go mod tidy; go mod vendor; go mod tidy)
+      run: cd v2 && (go get -t -v; go get -u -v; go mod vendor; go mod tidy; go mod vendor; go mod tidy)
     - name: Build
       run: cd v2 && go build
     - name: Test
@@ -39,7 +39,7 @@ jobs:
           ~/.cache/go-build         # Build cache (Linux)
           ~/Library/Caches/go-build # Build cache (Mac)
           '%LocalAppData%\go-build' # Build cache (Windows)
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        key: ${{ runner.os }}-go-${{ hashFiles('**/v2/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-
     - name: Update deps
