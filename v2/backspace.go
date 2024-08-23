@@ -24,7 +24,7 @@ func (e *Editor) Backspace(c *vt100.Canvas, bookmark *Position) {
 				e.pos.Up()
 				e.TrimRight(e.DataY())
 				e.End(c)
-				e.Delete()
+				e.Delete(c)
 			}
 		} else if (e.EmptyLine() || e.AtStartOfTheLine()) && e.indentation.Spaces && e.indentation.WSLen(e.LeadingWhitespace()) >= e.indentation.PerTab {
 			// Delete several spaces
@@ -34,7 +34,7 @@ func (e *Editor) Backspace(c *vt100.Canvas, bookmark *Position) {
 				// Type a blank
 				e.SetRune(' ')
 				e.WriteRune(c)
-				e.Delete()
+				e.Delete(c)
 			}
 		} else {
 			// Move back
@@ -44,7 +44,7 @@ func (e *Editor) Backspace(c *vt100.Canvas, bookmark *Position) {
 			e.WriteRune(c)
 			if !e.AtOrAfterEndOfLine() {
 				// Delete the blank
-				e.Delete()
+				e.Delete(c)
 				// scroll left instead of moving the cursor left, if possible
 				e.pos.mut.Lock()
 				if e.pos.offsetX > 0 {

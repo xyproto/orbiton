@@ -1516,7 +1516,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.SetMessage("Empty")
 				status.Show(c, e)
 			} else {
-				e.Delete()
+				e.Delete(c)
 				e.redraw = true
 			}
 			e.redrawCursor = true

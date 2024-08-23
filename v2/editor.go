@@ -663,37 +663,47 @@ func (e *Editor) DeleteCurrentLineMoveBookmark(bookmark *Position) {
 }
 
 // Delete will delete a character at the given position
-func (e *Editor) Delete() {
-	y := int(e.DataY())
-	lineLen := len(e.lines[y])
-	if _, ok := e.lines[y]; !ok || lineLen == 0 || (lineLen == 1 && unicode.IsSpace(e.lines[y][0])) {
-		// All keys in the map that are > y should be shifted -1.
-		// This also overwrites e.lines[y].
-		e.DeleteLine(LineIndex(y))
-		e.changed = true
-		return
-	}
-	x, err := e.DataX()
-	if err != nil || x > len(e.lines[y])-1 {
-		// on the last index, just use every element but x
-		e.lines[y] = e.lines[y][:x]
-		// check if the next line exists
-		if _, ok := e.lines[y+1]; ok {
-			// then add the contents of the next line, if available
-			nextLine, ok := e.lines[y+1]
-			if ok && len(nextLine) > 0 {
-				e.lines[y] = append(e.lines[y], nextLine...)
-				// then delete the next line
-				e.DeleteLine(LineIndex(y + 1))
-			}
-		}
-		e.changed = true
-		return
-	}
-	// Delete just this character
-	e.lines[y] = append(e.lines[y][:x], e.lines[y][x+1:]...)
-	e.changed = true
+func (e *Editor) Delete(c *vt100.Canvas) {
 
+	deleteThisRune := func() bool {
+		y := int(e.DataY())
+		lineLen := len(e.lines[y])
+		if _, ok := e.lines[y]; !ok || lineLen == 0 || (lineLen == 1 && unicode.IsSpace(e.lines[y][0])) {
+			// All keys in the map that are > y should be shifted -1.
+			// This also overwrites e.lines[y].
+			e.DeleteLine(LineIndex(y))
+			e.changed = true
+			return true // continue
+		}
+		x, err := e.DataX()
+		if err != nil || x > len(e.lines[y])-1 {
+			// on the last index, just use every element but x
+			e.lines[y] = e.lines[y][:x]
+			// check if the next line exists
+			if _, ok := e.lines[y+1]; ok {
+				// then add the contents of the next line, if available
+				nextLine, ok := e.lines[y+1]
+				if ok && len(nextLine) > 0 && !e.blockMode {
+					e.lines[y] = append(e.lines[y], nextLine...)
+					// then delete the next line
+					e.DeleteLine(LineIndex(y + 1))
+				}
+			}
+			e.changed = true
+			return true // continue
+		}
+		// Delete just this character
+		e.lines[y] = append(e.lines[y][:x], e.lines[y][x+1:]...)
+		return true // continue
+	}
+
+	if e.blockMode {
+		e.ForEachLineInBlock(c, deleteThisRune)
+	} else {
+		deleteThisRune()
+	}
+
+	e.changed = true
 	// Make sure no lines are nil
 	e.MakeConsistent()
 }
@@ -2963,6 +2973,6 @@ func (e *Editor) JoinLineWithNext(c *vt100.Canvas, bookmark *Position) bool {
 	e.InsertRune(c, ' ')
 	e.WriteRune(c)
 	e.Next(c)
-	e.Delete()
+	e.Delete(c)
 	return true
 }
