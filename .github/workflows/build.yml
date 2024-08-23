@@ -1,4 +1,12 @@
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.txt'
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.txt'
 name: Build
 env:
   GOFLAGS: -mod=vendor
