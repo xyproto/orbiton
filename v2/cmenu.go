@@ -128,16 +128,17 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert \""+insertFilename+"\" at the current line", "insertfile", insertFilename)
 
-	actions.Add("Toggle status line", func() {
+	actions.Add("Toggle status bar", func() {
 		status.ClearAll(c)
-		if !e.statusMode {
-			e.statusMode = true
+		e.statusMode = !e.statusMode
+		if e.statusMode {
 			status.ShowLineColWordCount(c, e, e.filename)
 			e.showColumnLimit = e.wrapWhenTyping
-		} else {
-			e.statusMode = false
-			e.showColumnLimit = false
 		}
+	})
+
+	actions.Add("Toggle column limit indicator", func() {
+		e.showColumnLimit = !e.showColumnLimit
 	})
 
 	// Word wrap at a custom width + enable word wrap when typing
