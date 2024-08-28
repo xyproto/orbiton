@@ -29,20 +29,85 @@ var (
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy uint) {
-	bg := e.Background.Background()
-	tabString := strings.Repeat(" ", e.indentation.PerTab)
-	inCodeBlock := false // used when highlighting Doc, Markdown, Python, Nim or Mojo
+	// TODO: Refactor this function
+	var (
+		bg                                 = e.Background.Background()
+		tabString                          = strings.Repeat(" ", e.indentation.PerTab)
+		inCodeBlock                        bool // used when highlighting Doc, Markdown, Python, Nim or Mojo
+		cw                                 uint
+		numLinesToDraw                     int
+		offsetY                            LineIndex
+		searchTermRunes                    = []rune(e.searchTerm) // Search term highlighting
+		matchForAnotherN                   int
+		skipX                              = e.pos.offsetX
+		untilNextJumpLetter                int
+		hasSearchTerm                      = len(e.searchTerm) > 0
+		jumpToLetterMode                   = e.jumpToLetterMode
+		fg                                 vt100.AttributeColor
+		letter                             rune
+		tx, ty                             uint
+		runeIndex                          int
+		ra, ra2                            textoutput.CharAttribute
+		length                             int
+		counter                            int
+		match                              bool
+		i                                  int
+		li                                 LineIndex
+		thisLineParCount, thisLineBraCount int
+		parCountBeforeThisLine             int
+		braCountBeforeThisLine             int
+		runesAndAttributes                 []textoutput.CharAttribute
+		arrowIndex                         int
+		arrowBeforeCommentMarker           bool
+		commentMarkers                     = []string{"//", "/*", "(*", "{-"}
+		commentIndex                       int
+		marker                             string
+		y                                  LineIndex
+		lineRuneCount                      uint
+		lineStringCount                    uint
+		line                               string
+		screenLine                         string
+		listItemRecord                     []bool
+		inListItem                         bool
+		q                                  *QuoteState
+		err                                error
+		trimmedLine                        string
+		singleLineCommentMarker            = e.SingleLineCommentMarker()
+		ignoreSingleQuotes                 = e.mode == mode.Lisp || e.mode == mode.Clojure || e.mode == mode.Scheme
+		escapeFunction                     = Escape
+		unEscapeFunction                   = UnEscape
+		threeQuoteStart                    bool
+		threeQuoteEnd                      bool
+		textWithTags                       []byte
+		highlighted                        string
+		ok                                 bool
+		codeBlockFound                     bool
+		foundDocstringMarker               bool
+		stringWithTags                     string
+		doubleSemiCount                    int
+		parts                              []string
+		newTextWithTags                    []byte
+		commentColorName                   string
+		otherCommentMarker                 string
+		commentMarkerString                string
+		theRestString                      string
+		theRestWithTags                    []byte
+		k                                  int
+		coloredString                      string
+		doneHighlighting                   = true
+		yp, xp                             uint
+	)
 
 	// If the terminal emulator is being resized, then wait a bit
 	resizeMut.Lock()
 	defer resizeMut.Unlock()
 
-	cw := c.Width()
+	cw = c.Width()
 	if fromline >= toline {
 		return // errors.New("fromline >= toline in WriteLines")
 	}
-	numLinesToDraw := toline - fromline // Number of lines available on the canvas for drawing
-	offsetY := fromline
+	numLinesToDraw = int(toline - fromline) // Number of lines available on the canvas for drawing
+	offsetY = fromline
 
 	// logf("numlines: %d offsetY %d\n", numlines, offsetY)
 
@@ -50,8 +115,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	// If in Markdown mode, figure out the current state of block quotes
 	case mode.ASCIIDoc, mode.Markdown, mode.ReStructured, mode.SCDoc:
 		// Figure out if "fromline" is within a markdown code block or not
-		for i := LineIndex(0); i < fromline; i++ {
-			trimmedLine := strings.TrimSpace(e.Line(i))
+		for li = LineIndex(0); li < fromline; li++ {
+			trimmedLine = strings.TrimSpace(e.Line(li))
 			// Check if the trimmed line starts with ~~~ or ```
 			if strings.HasPrefix(trimmedLine, "~~~") || strings.HasPrefix(trimmedLine, "```") {
 				if len(trimmedLine) > 3 && unicode.IsLetter([]rune(trimmedLine)[3]) {
@@ -72,13 +137,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		}
 	case mode.Nim, mode.Mojo, mode.Python:
 		// Figure out if "fromline" is within a markdown code block or not
-		for i := LineIndex(0); i < fromline; i++ {
-			line := e.Line(i)
-			trimmedLine := strings.TrimSpace(line)
-
-			threeQuoteStart := strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''")
-			threeQuoteEnd := strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''")
-
+		for li = LineIndex(0); li < fromline; li++ {
+			line = e.Line(li)
+			trimmedLine = strings.TrimSpace(line)
+			threeQuoteStart = strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''")
+			threeQuoteEnd = strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''")
 			if threeQuoteStart && threeQuoteEnd {
 				inCodeBlock = false
 			} else if threeQuoteStart || threeQuoteEnd {
@@ -87,56 +150,46 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		}
 	}
 
-	var (
-		trimmedLine             string
-		singleLineCommentMarker = e.SingleLineCommentMarker()
-		ignoreSingleQuotes      = (e.mode == mode.Lisp) || (e.mode == mode.Clojure)
-	)
-
-	q, err := NewQuoteState(singleLineCommentMarker, e.mode, ignoreSingleQuotes)
+	q, err = NewQuoteState(singleLineCommentMarker, e.mode, ignoreSingleQuotes)
 	if err != nil {
 		return // err
 	}
 
-	// First loop from 0 up to to offset to figure out if we are already in a multiLine comment or a multiLine string at the current line
-	for i := LineIndex(0); i < offsetY; i++ {
-		trimmedLine = strings.TrimSpace(e.Line(LineIndex(i)))
-
-		// Special case for ViM
-		if e.mode == mode.Vim && strings.HasPrefix(trimmedLine, "\"") {
-			q.hasSingleLineComment = true
-			q.startedMultiLineString = false
-			q.stoppedMultiLineComment = false
-			q.backtick = 0
-			q.doubleQuote = 0
-			q.singleQuote = 0
-			continue
+	if e.mode != mode.Vim {
+		// First loop from 0 up to to offset to figure out if we are already in a multiLine comment or a multiLine string at the current line
+		for li = LineIndex(0); li < offsetY; li++ {
+			trimmedLine = strings.TrimSpace(e.Line(li))
+			// Have a trimmed line. Want to know: the current state of which quotes, comments or strings we are in.
+			// Solution, have a state struct!
+			q.Process(trimmedLine)
 		}
-
-		// Have a trimmed line. Want to know: the current state of which quotes, comments or strings we are in.
-		// Solution, have a state struct!
-		q.Process(trimmedLine)
+	} else { // Special case for ViM
+		// First loop from 0 up to to offset to figure out if we are already in a multiLine comment or a multiLine string at the current line
+		for li = LineIndex(0); li < offsetY; li++ {
+			trimmedLine = strings.TrimSpace(e.Line(li))
+			if strings.HasPrefix(trimmedLine, "\"") {
+				q.hasSingleLineComment = true
+				q.startedMultiLineString = false
+				q.stoppedMultiLineComment = false
+				q.backtick = 0
+				q.doubleQuote = 0
+				q.singleQuote = 0
+				continue
+			}
+			// Have a trimmed line. Want to know: the current state of which quotes, comments or strings we are in.
+			// Solution, have a state struct!
+			q.Process(trimmedLine)
+		}
 	}
 	// q should now contain the current quote state
 
-	var (
-		lineRuneCount   uint
-		lineStringCount uint
-		line            string
-		screenLine      string
-		listItemRecord  []bool
-		inListItem      bool
-	)
-
-	escapeFunction := Escape
-	unEscapeFunction := UnEscape
 	if e.mode == mode.Make || e.mode == mode.Just || e.mode == mode.Shell || e.mode == mode.Docker {
 		escapeFunction = ShEscape
 		unEscapeFunction = ShUnEscape
 	}
 
 	// Loop from 0 to numlines (used as y+offset in the loop) to draw the text
-	for y := LineIndex(0); y < numLinesToDraw; y++ {
+	for y = LineIndex(0); y < LineIndex(numLinesToDraw); y++ {
 		lineRuneCount = 0   // per line rune counter, for drawing spaces afterwards (does not handle wide runes)
 		lineStringCount = 0 // per line string counter, for drawing spaces afterwards (handles wide runes)
 
@@ -151,25 +204,20 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		if e.syntaxHighlight && !envNoColor {
 			// Output a syntax highlighted line. Escape any tags in the input line.
 			// textWithTags must be unescaped if there is not an error.
-			if textWithTags, err := syntax.AsText([]byte(escapeFunction(line)), e.mode); err != nil {
+			if textWithTags, err = syntax.AsText([]byte(escapeFunction(line)), e.mode); err != nil {
 				// Only output the line up to the width of the canvas
 				screenLine = e.ChopLine(line, int(cw))
 				// TODO: Check if just "fmt.Print" works here, for several terminal emulators
 				fmt.Println(screenLine)
 				lineRuneCount += uint(utf8.RuneCountInString(screenLine))
 			} else {
-				var (
-					// Color and unescape
-					coloredString    string
-					doneHighlighting = true
-				)
 				switch e.mode {
 				case mode.Email, mode.Git:
 					coloredString = e.gitHighlight(line)
 				case mode.ManPage:
-					coloredString = e.manPageHighlight(line, y == 0, y+1 == numLinesToDraw)
+					coloredString = e.manPageHighlight(line, y == 0, int(y+1) == numLinesToDraw)
 				case mode.ASCIIDoc, mode.Markdown, mode.ReStructured, mode.SCDoc:
-					if highlighted, ok, codeBlockFound := e.markdownHighlight(line, inCodeBlock, listItemRecord, &inListItem); ok {
+					if highlighted, ok, codeBlockFound = e.markdownHighlight(line, inCodeBlock, listItemRecord, &inListItem); ok {
 						coloredString = highlighted
 						if codeBlockFound {
 							inCodeBlock = !inCodeBlock
@@ -182,7 +230,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					listItemRecord = append(listItemRecord, isListItem(line))
 				case mode.Nim, mode.Mojo, mode.Python:
 					trimmedLine = strings.TrimSpace(line)
-					foundDocstringMarker := false
+					foundDocstringMarker = false
 
 					if trimmedLine == "\"\"\"" || trimmedLine == "'''" { // only 3 letters
 						inCodeBlock = !inCodeBlock
@@ -219,7 +267,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						coloredString = unEscapeFunction(e.MultiLineString.Start(trimmedLine))
 					} else if strings.Contains(trimmedLine, ":"+singleLineCommentMarker) {
 						// If the line contains "://", then don't let the syntax package highlight it as a comment, by removing the gray color
-						stringWithTags := strings.ReplaceAll(strings.ReplaceAll(string(textWithTags), "<"+e.Comment+">", "<"+e.Plaintext+">"), "</"+e.Comment+">", "</"+e.Plaintext+">")
+						stringWithTags = strings.ReplaceAll(strings.ReplaceAll(string(textWithTags), "<"+e.Comment+">", "<"+e.Plaintext+">"), "</"+e.Comment+">", "</"+e.Plaintext+">")
 						coloredString = unEscapeFunction(tout.DarkTags(strings.ReplaceAll(strings.ReplaceAll(stringWithTags, "<lightgreen>yes<", "<lightyellow>yes<"), "<lightred>no<", "<lightyellow>no<")))
 					} else {
 						// Regular highlight + highlight yes and no in blue when using the default color scheme
@@ -312,28 +360,24 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					q.singleQuote = 0
 					// Special case for Lisp single-line comments
 					trimmedLine = strings.TrimSpace(line)
-					if doubleSemiCount := strings.Count(trimmedLine, ";;"); doubleSemiCount > 0 {
+					if doubleSemiCount = strings.Count(trimmedLine, ";;"); doubleSemiCount > 0 {
 						// Color the line with the same color as for multiLine comments
 						if strings.HasPrefix(trimmedLine, ";") {
 							coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
 						} else if doubleSemiCount == 1 {
-
-							parts := strings.SplitN(line, ";;", 2)
-							if newTextWithTags, err := syntax.AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
+							parts = strings.SplitN(line, ";;", 2)
+							if newTextWithTags, err = syntax.AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
 								coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 							} else {
 								coloredString = unEscapeFunction(tout.DarkTags(string(newTextWithTags)) + e.MultiLineComment.Get(";;"+parts[1]))
 							}
-
 						} else if strings.Count(trimmedLine, ";") == 1 {
-
-							parts := strings.SplitN(line, ";", 2)
-							if newTextWithTags, err := syntax.AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
+							parts = strings.SplitN(line, ";", 2)
+							if newTextWithTags, err = syntax.AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
 								coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 							} else {
 								coloredString = unEscapeFunction(tout.DarkTags(string(newTextWithTags)) + e.MultiLineComment.Start(";"+parts[1]))
 							}
-
 						}
 						doneHighlighting = true
 						break
@@ -347,8 +391,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						if strings.HasPrefix(trimmedLine, "\"") {
 							coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
 						} else {
-							parts := strings.SplitN(line, "\"", 2)
-							if newTextWithTags, err := syntax.AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
+							parts = strings.SplitN(line, "\"", 2)
+							if newTextWithTags, err = syntax.AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
 								coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 							} else {
 								coloredString = unEscapeFunction(tout.DarkTags(string(newTextWithTags)) + e.MultiLineComment.Start("\""+parts[1]))
@@ -396,7 +440,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					case q.hasSingleLineComment || q.stoppedMultiLineComment:
 						// Fix for interpreting URLs in shell scripts as single line comments
 						if singleLineCommentMarker != "//" {
-							commentColorName := e.Comment
+							commentColorName = e.Comment
 							textWithTags = bytes.ReplaceAll(textWithTags, []byte(":<off><"+commentColorName+">//"), []byte("://"))
 							textWithTags = bytes.ReplaceAll(textWithTags, []byte(" "+singleLineCommentMarker), []byte(" <"+commentColorName+">"+singleLineCommentMarker))
 						}
@@ -418,15 +462,15 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 
 					// Do not color lines gray if they start with "#" and are not in a multiline comment and the current single line comment marker is "//"
-					otherCommentMarker := "#"
+					otherCommentMarker = "#"
 					if singleLineCommentMarker == "#" {
 						otherCommentMarker = "//"
 					}
 					if strings.HasPrefix(trimmedLine, otherCommentMarker) && !q.containsMultiLineComments && strings.HasPrefix(strings.TrimSpace(string(textWithTags)), "<"+e.Comment+">") {
-						parts := strings.SplitN(line, otherCommentMarker, 2)
-						commentMarkerString := tout.DarkTags(parts[0] + "<" + e.Dollar + ">" + otherCommentMarker + "<off>")
-						theRestString := tout.DarkTags(parts[1])
-						if theRestWithTags, err := syntax.AsText([]byte(escapeFunction(parts[1])), e.mode); err != nil {
+						parts = strings.SplitN(line, otherCommentMarker, 2)
+						commentMarkerString = tout.DarkTags(parts[0] + "<" + e.Dollar + ">" + otherCommentMarker + "<off>")
+						theRestString = tout.DarkTags(parts[1])
+						if theRestWithTags, err = syntax.AsText([]byte(escapeFunction(parts[1])), e.mode); err != nil {
 							theRestString = tout.DarkTags(string(theRestWithTags))
 						}
 						coloredString = unEscapeFunction(commentMarkerString + theRestString)
@@ -434,12 +478,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 					// Take an extra pass on coloring the -> arrow, even if it's in a comment
 					if !(e.mode == mode.HTML || e.mode == mode.XML || e.mode == mode.Markdown || e.mode == mode.Blank || e.mode == mode.Config || e.mode == mode.Shell || e.mode == mode.Docker || e.mode == mode.Just) && strings.Contains(line, "->") {
-						arrowIndex := strings.Index(line, "->")
-						commentMarkers := []string{"//", "/*", "(*", "{-"}
-						arrowBeforeCommentMarker := true
+						arrowIndex = strings.Index(line, "->")
+						arrowBeforeCommentMarker = true
 
-						for _, marker := range commentMarkers {
-							commentIndex := strings.Index(line, marker)
+						for _, marker = range commentMarkers {
+							commentIndex = strings.Index(line, marker)
 							if commentIndex != -1 && commentIndex < arrowIndex {
 								if marker == "(*" && (e.mode == mode.OCaml || e.mode == mode.StandardML || e.mode == mode.Haskell) {
 									arrowBeforeCommentMarker = false
@@ -464,12 +507,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				}
 
 				// Extract a slice of runes and color attributes
-				runesAndAttributes := tout.Extract(coloredString)
+				runesAndAttributes = tout.Extract(coloredString)
 
 				// Also handle things like ZALGO HE COMES which contains unicode "mark" runes
 				// TODO: Also handle all languages in v2/test/problematic.desktop
-				for k, v := range runesAndAttributes {
-					if unicode.IsMark(v.R) {
+				for k, ra = range runesAndAttributes {
+					if unicode.IsMark(ra.R) {
 						// Replace the "unprintable" (for a terminal emulator) characters
 						runesAndAttributes[k].R = controlRuneReplacement
 					}
@@ -477,9 +520,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
 				if e.mode != mode.Git && e.mode != mode.Email && e.rainbowParenthesis && q.None() && !q.hasSingleLineComment && !q.stoppedMultiLineComment {
-					thisLineParCount, thisLineBraCount := q.ParBraCount(trimmedLine)
-					parCountBeforeThisLine := q.parCount - thisLineParCount
-					braCountBeforeThisLine := q.braCount - thisLineBraCount
+					thisLineParCount, thisLineBraCount = q.ParBraCount(trimmedLine)
+					parCountBeforeThisLine = q.parCount - thisLineParCount
+					braCountBeforeThisLine = q.braCount - thisLineBraCount
 					if e.rainbowParen(&parCountBeforeThisLine, &braCountBeforeThisLine, &runesAndAttributes, singleLineCommentMarker, ignoreSingleQuotes) == errUnmatchedParenthesis {
 						// Don't mark the rest of the parenthesis as wrong, even though this one is
 						q.parCount = 0
@@ -487,20 +530,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 				}
 
-				// Search term highlighting
-				searchTermRunes := []rune(e.searchTerm)
-				matchForAnotherN := 0
-
-				// Output a line with the chars (Rune + AttributeColor)
-				skipX := e.pos.offsetX
-				untilNextJumpLetter := 0
-				hasSearchTerm := len(e.searchTerm) > 0
-				jumpToLetterMode := e.jumpToLetterMode
-				var fg vt100.AttributeColor
-				var letter rune
-				var tx, ty uint
-
-				for runeIndex, ra := range runesAndAttributes {
+				for runeIndex, ra = range runesAndAttributes {
 					if skipX > 0 {
 						skipX--
 						continue
@@ -516,15 +546,15 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							matchForAnotherN--
 						} else if hasSearchTerm && ra.R == searchTermRunes[0] {
 							// Potential search highlight match
-							length := utf8.RuneCountInString(e.searchTerm)
-							counter := 0
-							match := true
-							for i := runeIndex; i < (runeIndex + length); i++ {
+							length = utf8.RuneCountInString(e.searchTerm)
+							counter = 0
+							match = true
+							for i = runeIndex; i < (runeIndex + length); i++ {
 								if i >= len(runesAndAttributes) {
 									match = false
 									break
 								}
-								ra2 := runesAndAttributes[i]
+								ra2 = runesAndAttributes[i]
 								if ra2.R != []rune(e.searchTerm)[counter] {
 									// mismatch, not a hit
 									match = false
@@ -583,8 +613,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 		// Fill the rest of the line on the canvas with "blanks"
 		// TODO: This may draw the wrong number of blanks, since lineRuneCount should really be the number of visible glyphs at this point
-		yp := cy + uint(y)
-		xp := cx + lineRuneCount
+		yp = cy + uint(y)
+		xp = cx + lineRuneCount
 		c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', cw-lineRuneCount)
 
 		// Draw a red line to remind the user of where the N-column limit is
