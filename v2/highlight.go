@@ -589,7 +589,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 		// Draw a red line to remind the user of where the N-column limit is
 		if (e.showColumnLimit || e.mode == mode.Git) && lineRuneCount <= uint(e.wrapWidth) {
-			c.WriteRune(uint(e.wrapWidth), yp, e.Theme.HeaderTextColor, bg, '|')
+			c.WriteRune(uint(e.wrapWidth), yp, e.Theme.HeaderBulletColor, bg, '|')
 		}
 
 	}
