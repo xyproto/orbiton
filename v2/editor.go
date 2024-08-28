@@ -46,7 +46,7 @@ type Editor struct {
 	redraw                     bool            // if the contents should be redrawn in the next loop
 	sshMode                    bool            // is o used over ssh, tmux or screen, in a way that usually requires extra redrawing?
 	debugMode                  bool            // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
-	statusMode                 bool            // display a status line at all times at the bottom of the screen
+	statusMode                 bool            // display a status bar at all times at the bottom of the screen
 	showColumnLimit            bool            // show the line where the wrapWidth is (at 79 by default)
 	expandTags                 bool            // can be used for XML and HTML
 	syntaxHighlight            bool            // syntax highlighting
