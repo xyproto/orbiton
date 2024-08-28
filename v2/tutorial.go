@@ -89,8 +89,8 @@ var tutorialSteps = Tutorial{
 		expectKeys:  []string{"c:7"}, // ctrl-g
 	},
 	TutorialStep{
-		title:       "Toggle word count and cursor position status",
-		description: "ctrl-g will toggle a status bar at the bottom, containing the current line, total number of lines, the current rune, word count, file mode and either \"tabs\" or \"spaces\", unless the cursor is over a definition that can be jumped to.",
+		title:       "Toggle block editing mode",
+		description: "ctrl-g will toggle block editing mode, where multiple lines in a block (until a blank line of EOF) can be edited at once.",
 		expectKeys:  []string{"c:7"}, // ctrl-g
 	},
 	TutorialStep{
