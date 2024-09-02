@@ -1571,12 +1571,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				})
 			}
 
-			e.blockMode = !e.blockMode // let typing affect all the lines in this block
-			if e.blockMode {
-				status.SetMessage("Block mode")
-			} else {
-				status.SetMessage("Block mode off")
-			}
+			// Toggle block editing mode
+			e.blockMode = !e.blockMode
+			e.redraw = true
 			status.Show(c, e)
 
 		case "c:21": // ctrl-u to undo
@@ -2046,8 +2043,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			clearKeyHistory = true
 		}
 
-		// Clear status, if needed
-		if e.statusMode && e.redrawCursor {
+		// Clear status line, if needed
+		if (e.statusMode || e.blockMode) && e.redrawCursor {
 			status.ClearAll(c)
 		}
 

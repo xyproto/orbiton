@@ -132,7 +132,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		status.ClearAll(c)
 		e.statusMode = !e.statusMode
 		if e.statusMode {
-			status.ShowLineColWordCount(c, e, e.filename)
+			status.ShowFilenameLineColWordCount(c, e)
 			e.showColumnLimit = e.wrapWhenTyping
 		}
 	})

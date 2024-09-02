@@ -268,10 +268,37 @@ func (sb *StatusBar) ShowNoTimeout(c *vt100.Canvas, e *Editor) {
 	c.Draw()
 }
 
-// ShowLineColWordCount shows a status message with the current filename, line, column and word count
-func (sb *StatusBar) ShowLineColWordCount(c *vt100.Canvas, e *Editor, filename string) {
-	statusString := filename + ": " + e.PositionPercentageAndModeInfo()
-	sb.SetMessage(statusString)
+// ShowFilenameLineColWordCount sets a status message at the bottom, containing:
+// * the current filename
+// * the current line number (counting from 1)
+// * the current number of lines
+// * the current line percentage
+// * the current column number (counting from 1)
+// * the current rune unicode value
+// * the current word count
+// * the currently detected file mode
+// * the current indentation mode (tabs or spaces)
+// func FilenamePositionPercentageAndModeInfo(e *Editor) string {
+func (sb *StatusBar) ShowFilenameLineColWordCount(c *vt100.Canvas, e *Editor) {
+	indentation := "spaces"
+	if !e.indentation.Spaces {
+		indentation = "tabs"
+	}
+	lineNumber := e.LineNumber()
+	allLines := e.Len()
+	percentage := 0
+	if allLines > 0 {
+		percentage = int(100.0 * (float64(lineNumber) / float64(allLines)))
+	}
+	statusLine := fmt.Sprintf("%s: line %d/%d (%d%%) col %d rune %U words %d, [%s] %s", e.filename, lineNumber, allLines, percentage, e.ColNumber(), e.Rune(), e.WordCount(), e.mode, indentation)
+	sb.SetMessage(statusLine)
+	sb.ShowNoTimeout(c, e)
+}
+
+// ShowBlockModeStatusLine shows a status message for when block mode is enabled
+func (sb *StatusBar) ShowBlockModeStatusLine(c *vt100.Canvas, e *Editor) {
+	statusLine := fmt.Sprintf("Block Editing Mode [line %d, column %d]", e.LineNumber(), e.ColNumber())
+	sb.SetMessage(statusLine)
 	sb.ShowNoTimeout(c, e)
 }
 
