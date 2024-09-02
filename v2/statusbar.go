@@ -297,16 +297,17 @@ func (sb *StatusBar) ShowFilenameLineColWordCount(c *vt100.Canvas, e *Editor) {
 
 // ShowBlockModeStatusLine shows a status message for when block mode is enabled
 func (sb *StatusBar) ShowBlockModeStatusLine(c *vt100.Canvas, e *Editor) {
-	statusLine := fmt.Sprintf("Block Editing Mode [line %d, column %d]", e.LineNumber(), e.ColNumber())
-	sb.SetMessage(statusLine)
+	sb.SetMessage(fmt.Sprintf("Block Edit Mode (%d, %d) [%s]", e.ColNumber(), e.LineNumber(), e.mode))
 	sb.ShowNoTimeout(c, e)
 }
 
 // NanoInfo shows info about the current position, for the Nano emulation mode
 func (sb *StatusBar) NanoInfo(c *vt100.Canvas, e *Editor) {
-	l := e.LineNumber()
-	ls := e.LastLineNumber()
-	lp := 0
+	var (
+		l  = e.LineNumber()
+		ls = e.LastLineNumber()
+		lp = 0
+	)
 	if ls > 0 {
 		lp = int(100.0 * (float64(l) / float64(ls)))
 	}
@@ -315,9 +316,7 @@ func (sb *StatusBar) NanoInfo(c *vt100.Canvas, e *Editor) {
 	//statusString := fmt.Sprintf("[ line %d/%d (%d%), col 1/1 (100%), char 8/8 (100%) ]", l, ls, int(lp*100.0), e.ColNumber(), 999, ?/?)
 	// also available: e.indentation.Spaces and e.mode
 
-	statusString := fmt.Sprintf("[ line %d/%d (%d%%), col %d, word count %d ]", l, ls, lp, e.ColNumber(), e.WordCount())
-
-	sb.SetMessage(statusString)
+	sb.SetMessage(fmt.Sprintf("[ line %d/%d (%d%%), col %d, word count %d ]", l, ls, lp, e.ColNumber(), e.WordCount()))
 	sb.ShowNoTimeout(c, e)
 }
 

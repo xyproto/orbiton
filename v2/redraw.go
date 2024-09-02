@@ -147,11 +147,11 @@ func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 		status.Show(c, e)
 	}
 
-	if status.messageAfterRedraw != "" {
+	if msg := status.messageAfterRedraw; len(msg) > 0 {
 		status.Clear(c)
-		status.SetMessage(status.messageAfterRedraw)
-		status.Show(c, e)
+		status.SetMessage(msg)
 		status.messageAfterRedraw = ""
+		status.Show(c, e)
 	}
 
 	e.RepositionCursorIfNeeded()
@@ -194,9 +194,9 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar) {
 		}
 	}
 
-	if status.messageAfterRedraw != "" {
+	if msg := status.messageAfterRedraw; len(msg) > 0 {
 		status.Clear(c)
-		status.SetMessage(status.messageAfterRedraw)
+		status.SetMessage(msg)
 		status.messageAfterRedraw = ""
 		status.Show(c, e)
 	}
