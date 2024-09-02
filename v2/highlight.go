@@ -535,6 +535,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 				}
 
+				matchForAnotherN = 0
+				skipX = e.pos.offsetX
+				untilNextJumpLetter = 0
+				letter = rune(0)
+				tx, ty = uint(0), uint(0)
+
 				for runeIndex, ra = range runesAndAttributes {
 					if skipX > 0 {
 						skipX--
