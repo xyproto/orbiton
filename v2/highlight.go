@@ -31,71 +31,71 @@ var (
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy uint) {
 	// TODO: Refactor this function
 	var (
-		bg                                 = e.Background.Background()
-		tabString                          = strings.Repeat(" ", e.indentation.PerTab)
-		inCodeBlock                        bool // used when highlighting Doc, Markdown, Python, Nim or Mojo
-		cw                                 uint
-		numLinesToDraw                     int
-		offsetY                            LineIndex
-		searchTermRunes                    = []rune(e.searchTerm) // Search term highlighting
-		matchForAnotherN                   int
-		skipX                              = e.pos.offsetX
-		untilNextJumpLetter                int
-		hasSearchTerm                      = len(e.searchTerm) > 0
-		jumpToLetterMode                   = e.jumpToLetterMode
-		fg                                 vt100.AttributeColor
-		letter                             rune
-		tx, ty                             uint
-		runeIndex                          int
-		ra, ra2                            textoutput.CharAttribute
-		length                             int
-		counter                            int
 		match                              bool
-		i                                  int
-		li                                 LineIndex
-		thisLineParCount, thisLineBraCount int
-		parCountBeforeThisLine             int
-		braCountBeforeThisLine             int
-		runesAndAttributes                 []textoutput.CharAttribute
-		arrowIndex                         int
 		arrowBeforeCommentMarker           bool
-		commentMarkers                     = []string{"//", "/*", "(*", "{-"}
-		commentIndex                       int
-		marker                             string
-		y                                  LineIndex
-		lineRuneCount                      uint
-		lineStringCount                    uint
-		line                               string
-		screenLine                         string
-		listItemRecord                     []bool
 		inListItem                         bool
-		q                                  *QuoteState
-		err                                error
-		trimmedLine                        string
-		singleLineCommentMarker            = e.SingleLineCommentMarker()
-		ignoreSingleQuotes                 = e.mode == mode.Lisp || e.mode == mode.Clojure || e.mode == mode.Scheme
-		escapeFunction                     = Escape
-		unEscapeFunction                   = UnEscape
+		inCodeBlock                        bool // used when highlighting Doc, Markdown, Python, Nim or Mojo
 		threeQuoteStart                    bool
 		threeQuoteEnd                      bool
-		textWithTags                       []byte
-		highlighted                        string
 		ok                                 bool
 		codeBlockFound                     bool
 		foundDocstringMarker               bool
-		stringWithTags                     string
+		doneHighlighting                   = true
+		hasSearchTerm                      = len(e.searchTerm) > 0
+		ignoreSingleQuotes                 = e.mode == mode.Lisp || e.mode == mode.Clojure || e.mode == mode.Scheme
+		numLinesToDraw                     int
+		runeIndex                          int
+		length                             int
+		counter                            int
+		i                                  int
+		thisLineParCount, thisLineBraCount int
+		parCountBeforeThisLine             int
+		braCountBeforeThisLine             int
 		doubleSemiCount                    int
-		parts                              []string
-		newTextWithTags                    []byte
+		matchForAnotherN                   int
+		untilNextJumpLetter                int
+		arrowIndex                         int
+		commentIndex                       int
+		k                                  int
+		skipX                              = e.pos.offsetX
+		lineRuneCount                      uint
+		lineStringCount                    uint
+		yp, xp                             uint
+		tx, ty                             uint
+		cw                                 uint
+		marker                             string
+		line                               string
+		screenLine                         string
+		trimmedLine                        string
+		highlighted                        string
+		stringWithTags                     string
 		commentColorName                   string
 		otherCommentMarker                 string
 		commentMarkerString                string
 		theRestString                      string
-		theRestWithTags                    []byte
-		k                                  int
 		coloredString                      string
-		doneHighlighting                   = true
-		yp, xp                             uint
+		tabString                          = strings.Repeat(" ", e.indentation.PerTab)
+		singleLineCommentMarker            = e.SingleLineCommentMarker()
+		letter                             rune
+		err                                error
+		listItemRecord                     []bool
+		textWithTags                       []byte
+		newTextWithTags                    []byte
+		theRestWithTags                    []byte
+		commentMarkers                     = []string{"//", "/*", "(*", "{-"}
+		parts                              []string
+		li                                 LineIndex
+		y                                  LineIndex
+		offsetY                            LineIndex
+		fg                                 vt100.AttributeColor
+		dottedLineColor                    vt100.AttributeColor
+		bg                                 vt100.AttributeColor = e.Background.Background()
+		ra, ra2                            textoutput.CharAttribute
+		searchTermRunes                    = []rune(e.searchTerm) // Search term highlighting
+		runesAndAttributes                 []textoutput.CharAttribute
+		q                                  *QuoteState
+		escapeFunction                     = Escape
+		unEscapeFunction                   = UnEscape
 	)
 
 	// If the terminal emulator is being resized, then wait a bit
@@ -110,6 +110,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	offsetY = fromline
 
 	// logf("numlines: %d offsetY %d\n", numlines, offsetY)
+
+	dottedLineColor = e.Theme.SearchHighlight
+	if e.wrapWhenTyping {
+		dottedLineColor = e.Theme.StatusForeground
+	}
 
 	switch e.mode {
 	// If in Markdown mode, figure out the current state of block quotes
@@ -566,7 +571,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 								fg = e.SearchHighlight
 								matchForAnotherN = length - 1
 							}
-						} else if jumpToLetterMode {
+						} else if e.jumpToLetterMode {
 							letter = ra.R
 							// Highlight some letters, and make it possible for the user to jump directly to these after pressing ctrl-l
 							tx = cx + uint(lineRuneCount)           // the x position
@@ -619,7 +624,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 		// Draw a red line to remind the user of where the N-column limit is
 		if (e.showColumnLimit || e.mode == mode.Git) && lineRuneCount <= uint(e.wrapWidth) {
-			c.WriteRune(uint(e.wrapWidth), yp, e.Theme.SearchHighlight, bg, '·')
+			c.WriteRune(uint(e.wrapWidth), yp, dottedLineColor, bg, '·')
 		}
 
 	}
