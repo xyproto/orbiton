@@ -171,6 +171,11 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 		if foundCommand {
 			// Save and exec / replace the process with syscall.Exec
 			if e.Save(c, tty) == nil { // success
+				// Unlock and save the lock file
+				if absFilename, err := filepath.Abs(e.filename); fileLock != nil && err == nil { // success
+					fileLock.Unlock(absFilename)
+					fileLock.Save()
+				}
 				quitExecShellCommand(tty, sourceDir, s) // The program ends here
 			}
 			// Could not save the file, execute the command in a separate process
