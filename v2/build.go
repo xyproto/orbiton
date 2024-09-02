@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
@@ -82,7 +81,7 @@ func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
 // GenerateBuildCommand will generate a command for building the given filename (or for displaying HTML)
 // If there are no errors, a exec.Cmd is returned together with a function that can tell if the build
 // produced an executable, together with the executable name,
-func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool, string), error) {
+func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename string) (*exec.Cmd, func() (bool, string), error) {
 	var cmd *exec.Cmd
 
 	// A function that signals that everything is fine, regardless of if an executable is produced or not, after building
@@ -156,15 +155,6 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			return files.Which(s) != ""
 		}
 		var s string
-		if env.XOrWaylandSession() {
-			if has("alacritty") {
-				s += "alacritty -e "
-			} else if has("konsole") {
-				s += "konsole -e "
-			} else if has("xterm") {
-				s += "xterm -e "
-			}
-		}
 		if has("tinyionice") {
 			s += "tinyionice "
 		} else if has("ionice") {
@@ -179,6 +169,11 @@ func (e *Editor) GenerateBuildCommand(filename string) (*exec.Cmd, func() (bool,
 			foundCommand = true
 		}
 		if foundCommand {
+			// Save and exec / replace the process with syscall.Exec
+			if e.Save(c, tty) == nil { // success
+				quitExecShellCommand(tty, sourceDir, s) // The program ends here
+			}
+			// Could not save the file, execute the command in a separate process
 			args := strings.Split(s, " ")
 			cmd = exec.Command(args[0], args[1:]...)
 			cmd.Dir = sourceDir
@@ -589,7 +584,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 	// The immediate builds are done, time to build a exec.Cmd, run it and analyze the output
 
-	cmd, compilationProducedSomething, err := e.GenerateBuildCommand(sourceFilename)
+	cmd, compilationProducedSomething, err := e.GenerateBuildCommand(c, tty, sourceFilename)
 	if err != nil {
 		return "", err
 	}
