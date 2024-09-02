@@ -538,7 +538,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if digraphString, ok := e.UserInput(c, tty, status, "Type in a 2-letter digraph", "", digraph.All(), false, tabInputText); ok {
 				if r, ok := digraph.Lookup(digraphString); !ok {
 					status.ClearAll(c)
-					status.SetErrorMessage("Could not find the " + digraphString + " digraph")
+					status.SetErrorMessage(fmt.Sprintf("Could not find the %q digraph", digraphString))
 					status.ShowNoTimeout(c, e)
 				} else {
 					undo.Snapshot(e)
