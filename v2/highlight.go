@@ -111,7 +111,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 	// logf("numlines: %d offsetY %d\n", numlines, offsetY)
 
-	dottedLineColor = e.Theme.SearchHighlight
+	dottedLineColor = e.Theme.StatusErrorForeground
 	if e.wrapWhenTyping {
 		dottedLineColor = e.Theme.StatusForeground
 	}
