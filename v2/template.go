@@ -50,6 +50,11 @@ func GetTemplatePrograms() TemplatePrograms {
 				8,
 				3,
 			},
+			mode.C3: {
+				"import std::io;\n\nfn void main()\n{\n    io::printn(\"Hello, World!\");\n}\n\n",
+				12,
+				3,
+			},
 			mode.Cpp: {
 				"#include <cstdlib>\n#include <iostream>\n#include <string>\n\nusing namespace std::string_literals;\n\nint main(int argc, char** argv)\n{\n    std::cout << \"Hello, World!\"s << std::endl;\n    return EXIT_SUCCESS;\n}\n",
 				14,
