@@ -90,7 +90,7 @@ var tutorialSteps = Tutorial{
 	},
 	TutorialStep{
 		title:       "Toggle block editing mode",
-		description: "ctrl-g will toggle block editing mode, where multiple lines in a block (until a blank line of EOF) can be edited at once.",
+		description: "ctrl-g will toggle block editing mode, where multiple lines in a block (until a blank line of EOF) can be edited at once. An informative status bar will also be shown.",
 		expectKeys:  []string{"c:7"}, // ctrl-g
 	},
 	TutorialStep{
