@@ -2,7 +2,6 @@
 
 ## General
 
-- [ ] Do not assume that `asdfasdf\n------\n` is a Markdown table when formatting with `ctrl-w`.
 - [ ] Let ctrl-space when editing a man page toggle between viewing the code for the man page, and the rendered man page.
 - [ ] New idea for a text editor: make it more like a multiplayer-game, where several people and AI agents can cooperate on the server side, with a nice client on top
 - [ ] If every other byte is 0x0 in a source code file, assume UTF-16 or Windows text formatting.

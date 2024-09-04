@@ -11,16 +11,26 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+func looksLikeTable(line string) bool {
+	return strings.Count(line, "|") > 1 || separatorRow(line)
+}
+
 // InTableAt checks if it is likely that the given LineIndex is in a Markdown table
 func (e *Editor) InTableAt(i LineIndex) bool {
-	line := e.Line(i)
-	return strings.Count(line, "|") > 1 || separatorRow(line)
+	// If there is a separation line with no "|" or "-" above or below, then this is not a table
+	if !looksLikeTable(e.Line(i-1)) && !looksLikeTable(e.Line(i+1)) {
+		return false
+	}
+	return looksLikeTable(e.Line(i))
 }
 
 // InTable checks if we are currently in what appears to be a Markdown table
 func (e *Editor) InTable() bool {
-	line := e.CurrentLine()
-	return strings.Count(line, "|") > 1 || separatorRow(line)
+	// If there is a separation line with no "|" or "-" above or below, then this is not a table
+	if !looksLikeTable(e.PrevLine()) && !looksLikeTable(e.NextLine()) {
+		return false
+	}
+	return looksLikeTable(e.CurrentLine())
 }
 
 // TopOfCurrentTable tries to find the first line index of the current Markdown table

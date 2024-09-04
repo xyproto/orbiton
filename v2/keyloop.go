@@ -996,7 +996,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			undo.Snapshot(e)
 
 			// De-indent this line by 1 if the line above starts with "case " and this line is only "case" at this time.
-			if cLikeSwitch(e.mode) && e.TrimmedLine() == "case" && strings.HasPrefix(e.PreviousTrimmedLine(), "case ") {
+			if cLikeSwitch(e.mode) && e.TrimmedLine() == "case" && strings.HasPrefix(e.PrevTrimmedLine(), "case ") {
 				oneIndentation := e.indentation.String()
 				deIndented := strings.Replace(e.CurrentLine(), oneIndentation, "", 1)
 				e.SetCurrentLine(deIndented)

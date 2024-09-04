@@ -137,18 +137,19 @@ func (e *Editor) Changed() bool {
 
 // Line returns the contents of line number N, counting from 0
 func (e *Editor) Line(n LineIndex) string {
-	line, ok := e.lines[int(n)]
-	if !ok {
+	if n < 0 {
 		return ""
 	}
-	return string(line)
+	if line, ok := e.lines[int(n)]; ok {
+		return string(line)
+	}
+	return ""
 }
 
 // ScreenLine returns the screen contents of line number N, counting from 0.
 // The tabs are expanded.
 func (e *Editor) ScreenLine(n int) string {
-	line, ok := e.lines[n]
-	if ok {
+	if line, ok := e.lines[n]; ok {
 		var sb strings.Builder
 		skipX := e.pos.offsetX
 		for _, r := range line {
@@ -1253,13 +1254,13 @@ func (e *Editor) LeftRune() rune {
 	return e.Get(x-1, e.DataY())
 }
 
-// CurrentLine will get the current data line, as a string
+// CurrentLine will get the current data line as a string
 func (e *Editor) CurrentLine() string {
 	return e.Line(e.DataY())
 }
 
-// PreviousLine will get the previous data line, as a string
-func (e *Editor) PreviousLine() string {
+// PrevLine will get the previous data line as a string, or return an empty string
+func (e *Editor) PrevLine() string {
 	y := e.DataY() - 1
 	if y < 0 {
 		return ""
@@ -1267,7 +1268,7 @@ func (e *Editor) PreviousLine() string {
 	return e.Line(y)
 }
 
-// NextLine will get the previous data line, as a string
+// NextLine will get the previous data line as a string, or return an empty string
 func (e *Editor) NextLine() string {
 	y := e.DataY() + 1
 	if y < 0 || int(y) >= e.Len() {
@@ -2245,9 +2246,9 @@ func (e *Editor) TrimmedLine() string {
 	return strings.TrimSpace(e.CurrentLine())
 }
 
-// PreviousTrimmedLine returns the line above, trimmed in both ends
-func (e *Editor) PreviousTrimmedLine() string {
-	return strings.TrimSpace(e.PreviousLine())
+// PrevTrimmedLine returns the line above, trimmed in both ends
+func (e *Editor) PrevTrimmedLine() string {
+	return strings.TrimSpace(e.PrevLine())
 }
 
 // NextTrimmedLine returns the line below, trimmed in both ends
