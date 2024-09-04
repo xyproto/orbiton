@@ -61,6 +61,8 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 		return Shell, true
 	} else if bytes.HasPrefix(firstLine, []byte("<?xml ")) {
 		return XML, true
+	} else if bytes.HasPrefix(firstLine, []byte("{\"")) {
+		return JSON, true
 	} else if bytes.HasPrefix(bytes.ToLower(firstLine), []byte("<!doctype html")) || bytes.HasPrefix(bytes.ToLower(firstLine), []byte("<html")) {
 		return HTML, true
 	} else if bytes.Contains(firstLine, []byte("-*- nroff -*-")) {

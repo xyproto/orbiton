@@ -20,7 +20,7 @@ require (
 	github.com/xyproto/files v1.4.2
 	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
-	github.com/xyproto/mode v0.7.23
+	github.com/xyproto/mode v0.7.24
 	github.com/xyproto/stringpainter v1.0.1
 	github.com/xyproto/syntax v1.10.9
 	github.com/xyproto/termtitle v1.5.1
