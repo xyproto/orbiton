@@ -40,6 +40,7 @@ const (
 	GDScript              // Godot Script
 	Git                   // Git commits and interactive rebases
 	Go                    // Go
+	GoMod                 // go.mod files
 	GoAssembly            // Go-style Assembly
 	Gradle                // Gradle
 	Haxe                  // Haxe: .hx and .hxml files
@@ -179,6 +180,8 @@ func (mode Mode) String() string {
 		return "Go-style Assembly"
 	case Go:
 		return "Go"
+	case GoMod:
+		return "Go Module"
 	case Gradle:
 		return "Gradle"
 	case Hare:

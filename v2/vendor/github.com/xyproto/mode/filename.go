@@ -172,6 +172,8 @@ func Detect(filename string) Mode {
 			mode = Markdown
 		case ".ml":
 			mode = OCaml // or standard ML, if the file does not contain ";;"
+		case ".mod":
+			mode = GoMod // go.mod files
 		case ".nim":
 			mode = Nim
 		case ".odin":
