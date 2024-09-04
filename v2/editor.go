@@ -74,6 +74,7 @@ type Editor struct {
 	displayQuickHelp           bool            // display the quick help box?
 	drawProgress               bool            // used for drawing the progress character on the right side
 	blockMode                  bool            // toggle if typing should affect the current line or the current block
+	dirMode                    bool            // browse a directory and also interact with git
 }
 
 // CopyLines will create a new map[int][]rune struct that is the copy of all the lines in the editor

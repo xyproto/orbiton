@@ -171,7 +171,37 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		// TODO: Enter file-rename mode when opening a directory?
 		// Check if this is a directory
 		if fileInfo.IsDir() {
-			return nil, "", false, errors.New(e.filename + " is a directory")
+			e.dirMode = true
+			e.filename = "README.md" // Useing the same method as if o if started with a new file, the file is not immedately created
+			exists := files.IsFile
+			// TODO: Use a loop, check for README.* first, then file_id.diz, then TODO.*, then index.html, then main.*
+			if !exists(e.filename) {
+				if exists("README") {
+					e.filename = "README"
+				} else if exists("README.txt") {
+					e.filename = "README.txt"
+				} else if exists("README.rst") {
+					e.filename = "README.rst"
+				} else if exists("file_id.diz") {
+					e.filename = "file_id.diz"
+				} else if exists("TODO.md") {
+					e.filename = "TODO.md"
+				} else if exists("index.html") {
+					e.filename = "index.html"
+				} else if exists("main.c") {
+					e.filename = "main.c"
+				} else if exists("main.py") {
+					e.filename = "main.py"
+				}
+			}
+			fnord.filename = e.filename
+			if !exists(e.filename) {
+				if ok, err := e.PrepareEmptySaveAndRemove(c, tty); err != nil {
+					return nil, "", false, err
+				} else if ok {
+					createdNewFile = true
+				}
+			}
 		}
 
 		warningMessage, err = e.Load(c, tty, fnord)
@@ -236,9 +266,10 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			testfile.Close()
 		}
 	} else {
-		createdNewFile, err = e.PrepareEmptySaveAndRemove(c, tty)
-		if err != nil {
+		if ok, err := e.PrepareEmptySaveAndRemove(c, tty); err != nil {
 			return nil, "", false, err
+		} else if ok {
+			createdNewFile = true
 		}
 	}
 
