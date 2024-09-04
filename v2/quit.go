@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/xyproto/env/v2"
+	"github.com/xyproto/files"
 	"github.com/xyproto/textoutput"
 	"github.com/xyproto/vt100"
 )
@@ -55,6 +56,21 @@ func quitMessageWithStack(tty *vt100.TTY, msg string) {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 	os.Exit(1)
+}
+
+func quitExec(tty *vt100.TTY, workDir, executable string) {
+	if tty != nil {
+		tty.Close()
+	}
+	vt100.Reset()
+	vt100.Clear()
+	vt100.Close()
+	vt100.SetXY(uint(0), uint(1))
+	quitMut.Lock()
+	defer quitMut.Unlock()
+	_ = os.Chdir(workDir)
+	absExecutable := files.WhichCached(executable)
+	syscall.Exec(absExecutable, []string{executable}, env.Environ())
 }
 
 func quitExecShellCommand(tty *vt100.TTY, workDir string, shellCommand string) {
