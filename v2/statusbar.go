@@ -297,7 +297,18 @@ func (sb *StatusBar) ShowFilenameLineColWordCount(c *vt100.Canvas, e *Editor) {
 
 // ShowBlockModeStatusLine shows a status message for when block mode is enabled
 func (sb *StatusBar) ShowBlockModeStatusLine(c *vt100.Canvas, e *Editor) {
-	sb.SetMessage(fmt.Sprintf("Block Edit Mode (%d, %d) [%s]", e.ColNumber(), e.LineNumber(), e.mode))
+	indentation := "spaces"
+	if !e.indentation.Spaces {
+		indentation = "tabs"
+	}
+	lineNumber := e.LineNumber()
+	allLines := e.Len()
+	percentage := 0
+	if allLines > 0 {
+		percentage = int(100.0 * (float64(lineNumber) / float64(allLines)))
+	}
+	statusLine := fmt.Sprintf("%s: line %d/%d (%d%%) col %d rune %U words %d, [Block Edit Mode, %s] %s", e.filename, lineNumber, allLines, percentage, e.ColNumber(), e.Rune(), e.WordCount(), e.mode, indentation)
+	sb.SetMessage(statusLine)
 	sb.ShowNoTimeout(c, e)
 }
 
