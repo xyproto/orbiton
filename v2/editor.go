@@ -663,7 +663,7 @@ func (e *Editor) DeleteCurrentLineMoveBookmark(bookmark *Position) {
 }
 
 // Delete will delete a character at the given position
-func (e *Editor) Delete(c *vt100.Canvas) {
+func (e *Editor) Delete(c *vt100.Canvas, useBlockMode bool) {
 
 	deleteThisRune := func() bool {
 		y := int(e.DataY())
@@ -697,7 +697,7 @@ func (e *Editor) Delete(c *vt100.Canvas) {
 		return true // continue
 	}
 
-	if e.blockMode {
+	if useBlockMode {
 		e.ForEachLineInBlock(c, deleteThisRune)
 	} else {
 		deleteThisRune()
@@ -2934,6 +2934,6 @@ func (e *Editor) JoinLineWithNext(c *vt100.Canvas, bookmark *Position) bool {
 	e.InsertRune(c, ' ')
 	e.WriteRune(c)
 	e.Next(c)
-	e.Delete(c)
+	e.Delete(c, false)
 	return true
 }

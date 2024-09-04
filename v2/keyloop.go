@@ -976,7 +976,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redrawCursor = true
 		case " ": // space
 			// Scroll down if a man page is being viewed, or if the editor is read-only
-			if e.readOnly {
+			if e.readOnly && !e.blockMode{
 				// Try to scroll down a full page
 				e.redraw = e.PgDn(c, status)
 				// If e.redraw is false, the end of file is reached
@@ -1242,7 +1242,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:8", "c:127": // ctrl-h or backspace
 
 			// Scroll up if a man page is being viewed, or if the editor is read-only
-			if e.readOnly {
+			if e.readOnly && !e.blockMode {
 				// Scroll up at double speed
 				e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed*2)
 				e.redrawCursor = true
@@ -1516,7 +1516,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.SetMessage("Empty")
 				status.Show(c, e)
 			} else {
-				e.Delete(c)
+				e.Delete(c, e.blockMode)
 				e.redraw = true
 			}
 			e.redrawCursor = true
