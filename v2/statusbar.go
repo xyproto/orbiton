@@ -283,6 +283,7 @@ func (e *Editor) PLA() (int, LineNumber, LineNumber) {
 	return percentage, lineNumber, lastLineNumber
 }
 
+// IndentationDescription returns "tabs" or "spaces", depending on the current setting
 func (e *Editor) IndentationDescription() string {
 	if e.indentation.Spaces {
 		return "spaces"
