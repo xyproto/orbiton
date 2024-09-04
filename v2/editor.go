@@ -451,8 +451,8 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	// Checking the syntax highlighting makes it easy to press `ctrl-t` before saving a script,
 	// to toggle the executable bit on or off. This is only for files that start with "#!".
 	// Also, if the file is in one of the common bin directories, like "/usr/bin", then assume that it
-	// is supposed to be executable.
-	if shebang && e.syntaxHighlight && !containsTheWordSource {
+	// is supposed to be executable. Also skip .install files, even though they are scripts.
+	if shebang && e.syntaxHighlight && !containsTheWordSource && !strings.HasSuffix(e.filename, ".install") {
 		// This is a script file, syntax highlighting is enabled and it does not contain the word "source "
 		// (typical for shell files that should be sourced and not executed)
 		fileMode = 0o755
