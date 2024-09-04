@@ -5,7 +5,7 @@ import (
 )
 
 func TestPBcopy(t *testing.T) {
-	if !isDarwin() {
+	if !isDarwin {
 		return
 	}
 	const oString = "ost"
