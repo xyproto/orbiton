@@ -39,11 +39,10 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		syntaxHighlight    bool
 	)
 
-	baseFilename := filepath.Base(fnord.filename)
-	ext := filepath.Ext(baseFilename)
+	ext := strings.ToLower(filepath.Ext(fnord.filename))
 
 	// Check if the given filename is an image
-	switch strings.ToLower(ext) {
+	switch ext {
 	case ".png", ".jpg", ".jpeg", ".ico", ".gif", ".bmp", ".webp":
 		const waitForKeypress = true
 		return nil, "", true, displayImage(c, fnord.filename, waitForKeypress)
@@ -237,27 +236,10 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			testfile.Close()
 		}
 	} else {
-
-		// Prepare an empty file
-		if newMode, err := e.PrepareEmpty(); err != nil {
-			return nil, "", false, err
-		} else if newMode != mode.Blank {
-			e.mode = newMode
-		}
-
-		// Test save, to check if the file can be created and written, or not
-		if err := e.Save(c, tty); err != nil {
-
-			// Check if the new file can be saved before the user starts working on the file.
+		createdNewFile, err = e.PrepareEmptySaveAndRemove(c, tty)
+		if err != nil {
 			return nil, "", false, err
 		}
-
-		// Creating a new empty file worked out fine, don't save it until the user saves it
-		if os.Remove(e.filename) != nil {
-			// This should never happen
-			return nil, "", false, errors.New("could not remove an empty file that was just created: " + e.filename)
-		}
-		createdNewFile = true
 	}
 
 	if env.Bool("OG") {
@@ -552,4 +534,25 @@ func NewSimpleEditor(wordWrapLimit int) *Editor {
 	e.wrapWidth = wordWrapLimit
 	e.wrapWhenTyping = true
 	return e
+}
+
+// PrepareEmptySaveAndRemove prepares an empty document, saves a file and then removes it, just to check
+func (e *Editor) PrepareEmptySaveAndRemove(c *vt100.Canvas, tty *vt100.TTY) (bool, error) {
+	// Prepare an empty file
+	if newMode, err := e.PrepareEmpty(); err != nil {
+		return false, err
+	} else if newMode != mode.Blank {
+		e.mode = newMode
+	}
+	// Test save, to check if the file can be created and written, or not
+	if err := e.Save(c, tty); err != nil {
+		// Check if the new file can be saved before the user starts working on the file.
+		return false, err
+	}
+	// Creating a new empty file worked out fine, don't save it until the user saves it
+	if os.Remove(e.filename) != nil {
+		// This should never happen
+		return true, errors.New("could not remove an empty file that was just created: " + e.filename)
+	}
+	return true, nil
 }
