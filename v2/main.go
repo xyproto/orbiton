@@ -208,7 +208,6 @@ func main() {
 		if executableName == "osudo" {
 			// Build the environment with the EDITOR variable set to "o"
 			env := append(env.Environ(), "EDITOR=o")
-
 			// Get the path to the visudo executable
 			visudoPath := files.Which("visudo")
 			if visudoPath != "" { // success
