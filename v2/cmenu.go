@@ -39,7 +39,11 @@ func NewActions() *Actions {
 func (e *Editor) UserSave(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
 	// Save the file
 	if err := e.Save(c, tty); err != nil {
-		status.SetError(err)
+		if msg := err.Error(); strings.HasPrefix(msg, "open ") && strings.Contains(msg, ": ") {
+			status.SetErrorMessage("Could not save " + msg[5:])
+		} else {
+			status.SetError(err)
+		}
 		status.Show(c, e)
 		return
 	}
