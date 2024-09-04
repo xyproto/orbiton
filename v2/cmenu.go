@@ -190,7 +190,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			}
 		})
 	} else {
-		actions.Add("Enable word wrap when typing", func() {
+		actions.Add("Word wrap when typing", func() {
 			e.wrapWhenTyping = true
 			if e.wrapWidth == 0 {
 				e.wrapWidth = wrapWidth
