@@ -406,7 +406,7 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.Python:
-		if isDarwin() {
+		if isDarwin {
 			cmd = exec.Command("python3", "-m", "py_compile", sourceFilename)
 		} else {
 			cmd = exec.Command("python", "-m", "py_compile", sourceFilename)
@@ -459,7 +459,7 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 		cmd.Dir = sourceDir
 		return cmd, exeExists, nil
 	case mode.HTML:
-		if isDarwin() {
+		if isDarwin {
 			cmd = exec.Command("open", sourceFilename)
 		} else {
 			cmd = exec.Command("xdg-open", sourceFilename)

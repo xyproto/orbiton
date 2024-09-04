@@ -2827,7 +2827,7 @@ func (e *Editor) CutSingleLine(status *StatusBar, bookmark *Position, lastCutY, 
 		// Copy the line internally
 		*copyLines = []string{line}
 		var err error
-		if isDarwin() {
+		if isDarwin {
 			// Copy the line to the clipboard
 			err = pbcopy(line)
 		} else {
@@ -2839,7 +2839,7 @@ func (e *Editor) CutSingleLine(status *StatusBar, bookmark *Position, lastCutY, 
 				status.SetErrorMessage("The wl-copy utility (from wl-clipboard) is missing!")
 			} else if env.Has("DISPLAY") && files.Which("xclip") == "" {
 				status.SetErrorMessage("The xclip utility is missing!")
-			} else if isDarwin() && files.Which("pbcopy") == "" { // pbcopy is missing, on macOS
+			} else if isDarwin && files.Which("pbcopy") == "" { // pbcopy is missing, on macOS
 				status.SetErrorMessage("The pbcopy utility is missing!")
 			}
 		}

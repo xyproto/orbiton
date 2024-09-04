@@ -6,7 +6,6 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/xyproto/env/v2"
 	"github.com/xyproto/vt100"
 )
 
@@ -241,7 +240,7 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 		prompt = "Go to line number or percentage:"
 	}
 	// Minor adjustments for some of the themes used in the VTE/GTK frontend
-	if env.Bool("OG") {
+	if inVTEGUI {
 		if !e.Light && e.Name == "Default" {
 			e.CommentColor = vt100.White
 		} else if strings.HasPrefix(e.Name, "Blue") {

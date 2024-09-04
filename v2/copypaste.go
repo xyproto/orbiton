@@ -120,7 +120,7 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 	var s string
 
 	var err error
-	if isDarwin() {
+	if isDarwin {
 		s, err = pbpaste()
 	} else {
 		// Read the clipboard, for other platforms
@@ -147,7 +147,7 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 		} else if env.Has("DISPLAY") && files.Which("xclip") == "" { // X + xclip not found
 			status.SetErrorMessage("The xclip utility is missing!")
 			missingUtility = true
-		} else if isDarwin() && files.Which("pbpaste") == "" { // pbcopy is missing, on macOS
+		} else if isDarwin && files.Which("pbpaste") == "" { // pbcopy is missing, on macOS
 			status.SetErrorMessage("The pbpaste utility is missing!")
 			missingUtility = true
 		}

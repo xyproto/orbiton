@@ -1645,7 +1645,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				s = strings.Join(copyLines, "\n")
 
 				// Place the block of text in the clipboard
-				if isDarwin() {
+				if isDarwin {
 					pbcopy(s)
 				} else {
 					// Place it in the non-primary clipboard
@@ -1707,7 +1707,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						// Copy the line to the clipboard
 						s := "Copied 1 line"
 						var err error
-						if isDarwin() {
+						if isDarwin {
 							err = pbcopy(strings.Join(copyLines, "\n"))
 						} else {
 							// Place it in the non-primary clipboard
@@ -1741,7 +1741,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 							plural = ""
 						}
 						// Place the block of text in the clipboard
-						if isDarwin() {
+						if isDarwin {
 							err = pbcopy(s)
 						} else {
 							// Place it in the non-primary clipboard

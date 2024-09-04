@@ -11,7 +11,7 @@ import (
 // Will call log.Fatalln if there are problems!
 func logf(format string, args ...interface{}) {
 	logFilename := filepath.Join(tempDir, "o.log")
-	if isDarwin() {
+	if isDarwin {
 		logFilename = "/tmp/o.log"
 	}
 	err := flogf(logFilename, format, args...)

@@ -168,7 +168,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	})
 
 	// Build (for use on the terminal, since ctrl-space does not work on iTerm2 + macOS)
-	if !env.Bool("OG") && isDarwin() {
+	if isDarwin && !inVTEGUI {
 		var alsoRun = false
 		var menuItemText = "Export"
 		if e.ProgrammingLanguage() {
@@ -512,7 +512,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	}
 
 	// Add a menu item to toggle primary/non-primary clipboard on Linux
-	if isLinux() {
+	if isLinux {
 		primaryToggleText := "Use the secondary clipboard instead"
 		if !e.primaryClipboard {
 			primaryToggleText = "Use the primary clipboard instead"

@@ -244,7 +244,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		}
 	}
 
-	if env.Bool("OG") {
+	if inVTEGUI && isDarwin {
 		// Workaround for an issue where opening empty or small files is too quick for the GUI/VTE wrapper
 		time.Sleep(500 * time.Millisecond)
 	}
@@ -333,7 +333,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 				} else {
 					e.setLightVSTheme()
 				}
-			} else if isBSD() {
+			} else if isBSD {
 				// NetBSD, FreeBSD, OpenBSD or Dragonfly
 				e.setRedBlackTheme()
 				DisableQuickHelpScreen(nil)

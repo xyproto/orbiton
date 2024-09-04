@@ -2,15 +2,9 @@
 
 package main
 
-// All functions return false as none of the specified platforms match
-func isLinux() bool {
-	return false
-}
-
-func isDarwin() bool {
-	return false
-}
-
-func isBSD() bool {
-	return false
-}
+// None of these are true, since none of the build tags matches
+const (
+	isBSD    = false
+	isDarwin = false
+	isLinux  = false
+)

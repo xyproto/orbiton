@@ -62,7 +62,7 @@ func (e *Editor) Run() (string, bool, error) {
 		ext := filepath.Ext(sourceFilename)
 		firstName := strings.TrimSuffix(filepath.Base(sourceFilename), ext)
 		pdfFilename := firstName + ".pdf"
-		if isDarwin() {
+		if isDarwin {
 			cmd = exec.Command("open", pdfFilename)
 		} else {
 			cmd = exec.Command("xdg-open", pdfFilename)
@@ -76,7 +76,7 @@ func (e *Editor) Run() (string, bool, error) {
 	case mode.Just:
 		cmd = exec.Command("just")
 	case mode.Python:
-		if isDarwin() {
+		if isDarwin {
 			cmd = exec.Command("python3", sourceFilename)
 		} else {
 			cmd = exec.Command("python", sourceFilename)
