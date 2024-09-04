@@ -150,7 +150,8 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 		return false, ""
 	}
 
-	if filepath.Base(sourceFilename) == "PKGBUILD" {
+	switch filepath.Base(sourceFilename) {
+	case "PKGBUILD":
 		has := func(s string) bool {
 			return files.WhichCached(s) != ""
 		}
@@ -178,6 +179,7 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 				}
 				quitExecShellCommand(tty, sourceDir, s) // The program ends here
 			}
+
 			// Could not save the file, execute the command in a separate process
 			args := strings.Split(s, " ")
 			cmd = exec.Command(args[0], args[1:]...)
@@ -187,6 +189,10 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 	}
 
 	switch e.mode {
+	case mode.Make:
+		cmd = exec.Command("make")
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Java: // build a .jar file
 		javaShellCommand := "javaFiles=$(find . -type f -name '*.java'); for f in $javaFiles; do grep -q 'static void main' \"$f\" && mainJavaFile=\"$f\"; done; className=$(grep -oP '(?<=class )[A-Z]+[a-z,A-Z,0-9]*' \"$mainJavaFile\" | head -1); packageName=$(grep -oP '(?<=package )[a-z,A-Z,0-9,.]*' \"$mainJavaFile\" | head -1); if [[ $packageName != \"\" ]]; then packageName=\"$packageName.\"; fi; mkdir -p _o_build/META-INF; javac -d _o_build $javaFiles; cd _o_build; echo \"Main-Class: $packageName$className\" > META-INF/MANIFEST.MF; classFiles=$(find . -type f -name '*.class'); jar cmf META-INF/MANIFEST.MF ../" + jarFilename + " $classFiles; cd ..; rm -rf _o_build"
 		cmd = exec.Command("sh", "-c", javaShellCommand)
