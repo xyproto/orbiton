@@ -1229,14 +1229,14 @@ func (e *Editor) findGDB() string {
 	// Use rust-gdb if we are debugging Rust
 	if e.mode == mode.Rust {
 		if gdbPathRust == nil {
-			path := files.Which("rust-gdb")
+			path := files.WhichCached("rust-gdb")
 			gdbPathRust = &path
 			return path
 		}
 		return *gdbPathRust
 	}
 	if gdbPathRegular == nil {
-		path := files.Which("gdb")
+		path := files.WhichCached("gdb")
 		gdbPathRegular = &path
 		return path
 	}

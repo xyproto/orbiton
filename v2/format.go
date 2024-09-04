@@ -53,7 +53,7 @@ func GetFormatMap() FormatMap {
 
 // Using exec.Cmd instead of *exec.Cmd is on purpose, to get a new cmd.stdout and cmd.stdin every time.
 func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, cmd exec.Cmd, extOrBaseFilename string) error {
-	if files.Which(cmd.Path) == "" { // Does the formatting tool even exist?
+	if files.WhichCached(cmd.Path) == "" { // Does the formatting tool even exist?
 		return errors.New(cmd.Path + " is missing")
 	}
 
@@ -85,13 +85,13 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			output, err := cmd.CombinedOutput()
 
 			// Ignore errors if the command is "tidy" and tidy exists
-			ignoreErrors := strings.HasSuffix(cmd.Path, "tidy") && files.Which("tidy") != ""
+			ignoreErrors := strings.HasSuffix(cmd.Path, "tidy") && files.WhichCached("tidy") != ""
 
 			// Perl may place executables in /usr/bin/vendor_perl
 			if e.mode == mode.Perl {
 				// Use perltidy from the PATH if /usr/bin/vendor_perl/perltidy does not exists
 				if cmd.Path == "/usr/bin/vendor_perl/perltidy" && !files.Exists("/usr/bin/vendor_perl/perltidy") {
-					perltidyPath := files.Which("perltidy")
+					perltidyPath := files.WhichCached("perltidy")
 					if perltidyPath == "" {
 						return errors.New("perltidy is missing")
 					}

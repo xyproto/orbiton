@@ -152,7 +152,7 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 
 	if filepath.Base(sourceFilename) == "PKGBUILD" {
 		has := func(s string) bool {
-			return files.Which(s) != ""
+			return files.WhichCached(s) != ""
 		}
 		var s string
 		if has("tinyionice") {
@@ -195,7 +195,7 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 			return files.IsFile(filepath.Join(sourceDir, jarFilename)), jarFilename
 		}, nil
 	case mode.Scala:
-		if files.IsFile(filepath.Join(sourceDir, "build.sbt")) && files.Which("sbt") != "" && files.FileHas(filepath.Join(sourceDir, "build.sbt"), "ScalaNative") {
+		if files.IsFile(filepath.Join(sourceDir, "build.sbt")) && files.WhichCached("sbt") != "" && files.FileHas(filepath.Join(sourceDir, "build.sbt"), "ScalaNative") {
 			cmd = exec.Command("sbt", "nativeLink")
 			cmd.Dir = sourceDir
 			return cmd, func() (bool, string) {
@@ -215,7 +215,7 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 			return files.IsFile(filepath.Join(sourceDir, jarFilename)), jarFilename
 		}, nil
 	case mode.Kotlin:
-		if files.Which("kotlinc-native") != "" && strings.Contains(e.String(), "import kotlinx.cinterop.") {
+		if files.WhichCached("kotlinc-native") != "" && strings.Contains(e.String(), "import kotlinx.cinterop.") {
 			cmd = exec.Command("kotlinc-native", "-nowarn", "-opt", "-Xallocator=mimalloc", "-produce", "program", "-linker-option", "--as-needed", sourceFilename, "-o", exeFirstName)
 			cmd.Dir = sourceDir
 			return cmd, func() (bool, string) {
@@ -275,7 +275,7 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 			return files.IsFile(sourceFilenameWithoutPath), executableFirstName
 		}, nil
 	case mode.C:
-		if files.Which("cxx") != "" {
+		if files.WhichCached("cxx") != "" {
 			cmd = exec.Command("cxx")
 			cmd.Dir = sourceDir
 			if e.debugMode {
@@ -296,10 +296,10 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 		cmd.Dir = sourceDir
 		return cmd, exeOrMainExists, nil
 	case mode.Cpp:
-		if files.IsFile("BUILD.bazel") && files.Which("bazel") != "" { // Google-style C++ + Bazel projects if
+		if files.IsFile("BUILD.bazel") && files.WhichCached("bazel") != "" { // Google-style C++ + Bazel projects if
 			return exec.Command("bazel", "build"), everythingIsFine, nil
 		}
-		if files.Which("cxx") != "" {
+		if files.WhichCached("cxx") != "" {
 			cmd = exec.Command("cxx")
 			cmd.Dir = sourceDir
 			if e.debugMode {
@@ -320,7 +320,7 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 		cmd.Dir = sourceDir
 		return cmd, exeOrMainExists, nil
 	case mode.Zig:
-		if files.Which("zig") != "" {
+		if files.WhichCached("zig") != "" {
 			if files.IsFile("build.zig") {
 				cmd = exec.Command("zig", "build")
 				cmd.Dir = sourceDir
@@ -371,7 +371,7 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 			return cmd, everythingIsFine, nil
 		}
 		// Use rustc instead of cargo if Cargo.toml is missing
-		if rustcExecutable := files.Which("rustc"); rustcExecutable != "" {
+		if rustcExecutable := files.WhichCached("rustc"); rustcExecutable != "" {
 			if e.debugMode {
 				cmd = exec.Command(rustcExecutable, sourceFilename, "-g", "-o", exeFilename)
 			} else {
@@ -494,7 +494,7 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 			return files.IsFile(objFullFilename), objFullFilename
 		}
 		// try to use yasm
-		if files.Which("yasm") != "" {
+		if files.WhichCached("yasm") != "" {
 			cmd = exec.Command("yasm", "-f", "elf64", "-o", objFullFilename, sourceFilename)
 			if e.debugMode {
 				cmd.Args = append(cmd.Args, "-g", "dwarf2")
@@ -502,7 +502,7 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 			return cmd, objCheckFunc, nil
 		}
 		// then try to use nasm
-		if files.Which("nasm") != "" { // use nasm
+		if files.WhichCached("nasm") != "" { // use nasm
 			cmd = exec.Command("nasm", "-f", "elf64", "-o", objFullFilename, sourceFilename)
 			if e.debugMode {
 				cmd.Args = append(cmd.Args, "-g")
@@ -595,7 +595,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 	}
 
 	// Check that the resulting cmd.Path executable exists
-	if files.Which(cmd.Path) == "" {
+	if files.WhichCached(cmd.Path) == "" {
 		return "", fmt.Errorf("%s (%s %s)", errNoSuitableBuildCommand.Error(), "could not find", cmd.Path)
 	}
 

@@ -401,10 +401,10 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	})
 
 	// Render to PDF using pandoc
-	if (e.mode == mode.Markdown || e.mode == mode.ASCIIDoc || e.mode == mode.SCDoc) && files.Which("pandoc") != "" {
+	if (e.mode == mode.Markdown || e.mode == mode.ASCIIDoc || e.mode == mode.SCDoc) && files.WhichCached("pandoc") != "" {
 		actions.Add("Render to PDF using pandoc", func() {
 			// pandoc
-			if pandocPath := files.Which("pandoc"); pandocPath != "" {
+			if pandocPath := files.WhichCached("pandoc"); pandocPath != "" {
 				pdfFilename := strings.ReplaceAll(filepath.Base(e.filename), ".", "_") + ".pdf"
 				go func() {
 					pandocMutex.Lock()

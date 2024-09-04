@@ -141,13 +141,13 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 
 		status.Clear(c)
 
-		if env.Has("WAYLAND_DISPLAY") && files.Which("wl-paste") == "" { // Wayland + wl-paste not found
+		if env.Has("WAYLAND_DISPLAY") && files.WhichCached("wl-paste") == "" { // Wayland + wl-paste not found
 			status.SetErrorMessage("The wl-paste utility (from wl-clipboard) is missing!")
 			missingUtility = true
-		} else if env.Has("DISPLAY") && files.Which("xclip") == "" { // X + xclip not found
+		} else if env.Has("DISPLAY") && files.WhichCached("xclip") == "" { // X + xclip not found
 			status.SetErrorMessage("The xclip utility is missing!")
 			missingUtility = true
-		} else if isDarwin && files.Which("pbpaste") == "" { // pbcopy is missing, on macOS
+		} else if isDarwin && files.WhichCached("pbpaste") == "" { // pbcopy is missing, on macOS
 			status.SetErrorMessage("The pbpaste utility is missing!")
 			missingUtility = true
 		}

@@ -35,7 +35,7 @@ func TestBuildOrExport(t *testing.T) {
 
 	// fmt.Printf("err.rs [compilation error: %v] %s\n", err, outputExecutable)
 
-	if files.Which("rustc") != "" {
+	if files.WhichCached("rustc") != "" {
 		// fmt.Println(err)
 		if err == nil { // expected to fail, fail on success
 			t.Fail()

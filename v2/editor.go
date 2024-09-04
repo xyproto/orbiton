@@ -291,7 +291,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (st
 	start := time.Now()
 
 	// Check if the file extension is ".class" and if "jad" is installed
-	if filepath.Ext(fnord.filename) == ".class" && files.Which("jad") != "" && fnord.Empty() {
+	if filepath.Ext(fnord.filename) == ".class" && files.WhichCached("jad") != "" && fnord.Empty() {
 		if fnord.data, err = e.LoadClass(fnord.filename); err != nil {
 			return "Could not run jad", err
 		}
@@ -2835,11 +2835,11 @@ func (e *Editor) CutSingleLine(status *StatusBar, bookmark *Position, lastCutY, 
 			err = clip.WriteAll(line, e.primaryClipboard)
 		}
 		if err != nil && *firstCopyAction {
-			if env.Has("WAYLAND_DISPLAY") && files.Which("wl-copy") == "" { // Wayland
+			if env.Has("WAYLAND_DISPLAY") && files.WhichCached("wl-copy") == "" { // Wayland
 				status.SetErrorMessage("The wl-copy utility (from wl-clipboard) is missing!")
-			} else if env.Has("DISPLAY") && files.Which("xclip") == "" {
+			} else if env.Has("DISPLAY") && files.WhichCached("xclip") == "" {
 				status.SetErrorMessage("The xclip utility is missing!")
-			} else if isDarwin && files.Which("pbcopy") == "" { // pbcopy is missing, on macOS
+			} else if isDarwin && files.WhichCached("pbcopy") == "" { // pbcopy is missing, on macOS
 				status.SetErrorMessage("The pbcopy utility is missing!")
 			}
 		}
