@@ -268,6 +268,28 @@ func (sb *StatusBar) ShowNoTimeout(c *vt100.Canvas, e *Editor) {
 	c.Draw()
 }
 
+func getPercentage(lineNumber, lastLineNumber LineNumber) int {
+	if lastLineNumber > 0 {
+		return int(100.0 * (float64(lineNumber) / float64(lastLineNumber)))
+	}
+	return 0
+}
+
+// PLA returns the linewise percentage, the current line number and the total number of lines
+func (e *Editor) PLA() (int, LineNumber, LineNumber) {
+	lineNumber := e.LineNumber()
+	lastLineNumber := e.LastLineNumber()
+	percentage := getPercentage(lineNumber, lastLineNumber)
+	return percentage, lineNumber, lastLineNumber
+}
+
+func (e *Editor) IndentationDescription() string {
+	if e.indentation.Spaces {
+		return "spaces"
+	}
+	return "tabs"
+}
+
 // ShowFilenameLineColWordCount sets a status message at the bottom, containing:
 // * the current filename
 // * the current line number (counting from 1)
@@ -280,54 +302,31 @@ func (sb *StatusBar) ShowNoTimeout(c *vt100.Canvas, e *Editor) {
 // * the current indentation mode (tabs or spaces)
 // func FilenamePositionPercentageAndModeInfo(e *Editor) string {
 func (sb *StatusBar) ShowFilenameLineColWordCount(c *vt100.Canvas, e *Editor) {
-	indentation := "spaces"
-	if !e.indentation.Spaces {
-		indentation = "tabs"
-	}
-	lineNumber := e.LineNumber()
-	allLines := e.Len()
-	percentage := 0
-	if allLines > 0 {
-		percentage = int(100.0 * (float64(lineNumber) / float64(allLines)))
-	}
-	statusLine := fmt.Sprintf("%s: line %d/%d (%d%%) col %d rune %U words %d, [%s] %s", e.filename, lineNumber, allLines, percentage, e.ColNumber(), e.Rune(), e.WordCount(), e.mode, indentation)
+	indentation := e.IndentationDescription()
+	percentage, lineNumber, lastLineNumber := e.PLA()
+	statusLine := fmt.Sprintf("%s: line %d/%d (%d%%) col %d rune %U words %d, [%s] %s", e.filename, lineNumber, lastLineNumber, percentage, e.ColNumber(), e.Rune(), e.WordCount(), e.mode, indentation)
 	sb.SetMessage(statusLine)
 	sb.ShowNoTimeout(c, e)
 }
 
 // ShowBlockModeStatusLine shows a status message for when block mode is enabled
 func (sb *StatusBar) ShowBlockModeStatusLine(c *vt100.Canvas, e *Editor) {
-	indentation := "spaces"
-	if !e.indentation.Spaces {
-		indentation = "tabs"
-	}
-	lineNumber := e.LineNumber()
-	allLines := e.Len()
-	percentage := 0
-	if allLines > 0 {
-		percentage = int(100.0 * (float64(lineNumber) / float64(allLines)))
-	}
-	statusLine := fmt.Sprintf("%s: line %d/%d (%d%%) col %d rune %U words %d, [Block Edit Mode, %s] %s", e.filename, lineNumber, allLines, percentage, e.ColNumber(), e.Rune(), e.WordCount(), e.mode, indentation)
+	indentation := e.IndentationDescription()
+	percentage, lineNumber, lastLineNumber := e.PLA()
+	statusLine := fmt.Sprintf("%s: line %d/%d (%d%%) col %d rune %U words %d, [Block Edit Mode, %s] %s", e.filename, lineNumber, lastLineNumber, percentage, e.ColNumber(), e.Rune(), e.WordCount(), e.mode, indentation)
 	sb.SetMessage(statusLine)
 	sb.ShowNoTimeout(c, e)
 }
 
 // NanoInfo shows info about the current position, for the Nano emulation mode
 func (sb *StatusBar) NanoInfo(c *vt100.Canvas, e *Editor) {
-	var (
-		l  = e.LineNumber()
-		ls = e.LastLineNumber()
-		lp = 0
-	)
-	if ls > 0 {
-		lp = int(100.0 * (float64(l) / float64(ls)))
-	}
+	percentage, lineNumber, lastLineNumber := e.PLA()
 
 	// TODO: implement char/byte number, like: [ line 2/2 (100%), col 1/1 (100%), char 8/8 (100%) ]
 	//statusString := fmt.Sprintf("[ line %d/%d (%d%), col 1/1 (100%), char 8/8 (100%) ]", l, ls, int(lp*100.0), e.ColNumber(), 999, ?/?)
 	// also available: e.indentation.Spaces and e.mode
 
-	sb.SetMessage(fmt.Sprintf("[ line %d/%d (%d%%), col %d, word count %d ]", l, ls, lp, e.ColNumber(), e.WordCount()))
+	sb.SetMessage(fmt.Sprintf("[ line %d/%d (%d%%), col %d, word count %d ]", lineNumber, lastLineNumber, percentage, e.ColNumber(), e.WordCount()))
 	sb.ShowNoTimeout(c, e)
 }
 
