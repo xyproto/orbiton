@@ -168,11 +168,12 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 
 	} else if fileInfo, err := os.Stat(e.filename); err == nil { // no issue
 
-		// TODO: Enter file-rename mode when opening a directory?
 		// Check if this is a directory
 		if fileInfo.IsDir() {
 			e.dirMode = true
-			return nil, "", false, errors.New("dirmode has not been implemented yet")
+			// TODO: Support opening directories and giving a GitHub-like overview of projects and the git status
+			// TODO: Consider supporting file rename, finding programming symbols or git push
+			return nil, "", false, errors.New("can not open directories")
 		}
 
 		warningMessage, err = e.Load(c, tty, fnord)
