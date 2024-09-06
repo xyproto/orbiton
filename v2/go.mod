@@ -27,7 +27,7 @@ require (
 	github.com/xyproto/textoutput v1.16.6
 	github.com/xyproto/vt100 v1.14.5
 	github.com/xyproto/wordwrap v1.0.1
-	golang.org/x/image v0.19.0
+	golang.org/x/image v0.20.0
 )
 
 require (
@@ -49,5 +49,5 @@ require (
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.6.0 // indirect
-	golang.org/x/sys v0.24.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
 )
