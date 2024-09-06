@@ -940,6 +940,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 			fallthrough // nano: ctrl-l to refresh
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
+			e.blockMode = false
 			// If o is used as a man page viewer, exit at the press of esc
 			if e.mode == mode.ManPage {
 				e.clearOnQuit = false
