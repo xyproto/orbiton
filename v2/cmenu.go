@@ -9,7 +9,6 @@ import (
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
-	"github.com/xyproto/guessica"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
@@ -206,63 +205,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 
 	if bookmark != nil {
 		actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy text from the bookmark to the cursor", "copymark")
-	}
-
-	// Special menu option for PKGBUILD and APKBUILD files
-	if strings.HasSuffix(e.filename, "PKGBUILD") || strings.HasSuffix(e.filename, "APKBUILD") {
-		actions.Add("Call Guessica", func() {
-			status.Clear(c)
-			status.SetMessage("Calling Guessica")
-			status.Show(c, e)
-
-			tempFilename := ""
-
-			var (
-				f   *os.File
-				err error
-			)
-			if f, err = os.CreateTemp(tempDir, "__o*"+"guessica"); err == nil {
-				// no error, everything is fine
-				tempFilename = f.Name()
-				// TODO: Implement e.SaveAs
-				oldFilename := e.filename
-				e.filename = tempFilename
-				err = e.Save(c, tty)
-				e.filename = oldFilename
-			}
-			if err != nil {
-				status.SetError(err)
-				status.Show(c, e)
-				return
-			}
-
-			if tempFilename == "" {
-				status.SetErrorMessage("Could not create a temporary file")
-				status.Show(c, e)
-				return
-			}
-
-			// Show the status message to the user right now
-			status.Draw(c, e.pos.offsetY)
-
-			// Call Guessica, which may take a little while
-			err = guessica.UpdateFile(tempFilename)
-
-			if err != nil {
-				status.SetErrorMessage("Failed to update PKGBUILD: " + err.Error())
-				status.Show(c, e)
-			} else {
-				if _, err := e.Load(c, tty, FilenameOrData{tempFilename, []byte{}, 0, false}); err != nil {
-					status.ClearAll(c)
-					status.SetMessage(err.Error())
-					status.Show(c, e)
-				}
-				// Mark the data as changed, despite just having loaded a file
-				e.changed = true
-				e.redrawCursor = true
-
-			}
-		})
 	}
 
 	if e.debugMode {

@@ -18,7 +18,6 @@ require (
 	github.com/xyproto/digraph v1.2.0
 	github.com/xyproto/env/v2 v2.5.0
 	github.com/xyproto/files v1.6.0
-	github.com/xyproto/guessica v1.1.2
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/mode v0.7.25
 	github.com/xyproto/stringpainter v1.0.1
