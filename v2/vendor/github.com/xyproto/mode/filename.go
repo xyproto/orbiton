@@ -47,6 +47,8 @@ func Detect(filename string) Mode {
 		mode = Config
 	case ext == ".sh" || ext == ".fish" || ext == ".install" || ext == ".ksh" || ext == ".tcsh" || ext == ".bash" || ext == ".zsh" || ext == ".local" || ext == ".profile" || baseFilename == "PKGBUILD" || baseFilename == "APKBUILD" || (strings.HasPrefix(baseFilename, ".") && strings.Contains(baseFilename, "sh")): // This last part covers .bashrc, .zshrc etc
 		mode = Shell
+	case baseFilename == ".gitignore" || baseFilename == ".ignore":
+		mode = Ignore
 	case ext == ".bzl" || baseFilename == "BUILD" || baseFilename == "WORKSPACE":
 		mode = Bazel
 	case baseFilename == "CMakeLists.txt" || ext == ".cmake":

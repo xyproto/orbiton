@@ -49,6 +49,7 @@ const (
 	HTTP                  // .http files are used by IntelliJ and Visual Studio for testing HTTP services
 	Hare                  // Hare
 	Haskell               // Haskell
+	Ignore                // .gitignore and .ignore files
 	Inko                  // Inko
 	Ivy                   // Ivy
 	JSON                  // JSON and iPython notebooks
@@ -196,6 +197,8 @@ func (mode Mode) String() string {
 		return "HTML"
 	case HTTP:
 		return "HTTP Tests"
+	case Ignore:
+		return "Ignore"
 	case Inko:
 		return "Inko"
 	case Ivy:
