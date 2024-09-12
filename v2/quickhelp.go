@@ -43,7 +43,7 @@ func EnableQuickHelpScreen(status *StatusBar) bool {
 
 // QuickHelpScreenIsDisabled checks if the quick help config file exists
 func QuickHelpScreenIsDisabled() bool {
-	return files.Exists(quickHelpToggleFilename)
+	return isAndroid || files.Exists(quickHelpToggleFilename)
 }
 
 // DrawQuickHelp draws the quick help + some help for new users
