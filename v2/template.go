@@ -150,6 +150,11 @@ func GetTemplatePrograms() TemplatePrograms {
 				4,
 				9,
 			},
+			mode.Ignore: {
+				"# Binaries for programs and plugins\n*.exe\n*.dll\n*.so\n*.dylib\n*.test\n*.out\n\n# Object files and cached files\n*.o\n*.a\n*.bak\n\n# Build directories\nbin/\n\n# Logs and temp files\n*.log\n*.tmp\n*.swp\n*.bak\n*.log\n.DS_Store\n\n# Ignore editor or IDE directories\n.idea/\n.vscode/\n*.iml\n\n# cmd directory: ignore everything except Go source files and documentation\ncmd/*/*\n!cmd/*/*.go\n!cmd/*/*.txt\n!cmd/*/*.md\n!cmd/*/*.rst\n!cmd/*/*.asciidoc\n!cmd/*/*.1*\n\n# images not in img/\n*.bmp\n*.gif\n*.jpeg\n*.jpg\n*.png\n*.webp\n!img/*\n\n# Orbiton include.txt file\ninclude.txt\n\n",
+				0,
+				0,
+			},
 			mode.Inko: {
 				"import std.stdio.STDOUT\n\nclass async Main {\n  fn async main {\n    STDOUT.new.print('Hello, World!')\n  }\n}\n",
 				18,
