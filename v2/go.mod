@@ -7,7 +7,7 @@ require (
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gomarkdown/markdown v0.0.0-20240730141124-034f12af3bf6
-	github.com/ianlancetaylor/demangle v0.0.0-20240805132620-81f5be970eca
+	github.com/ianlancetaylor/demangle v0.0.0-20240912202439-0a2b6291aafd
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/sajari/fuzzy v1.0.0
 	github.com/spf13/pflag v1.0.5
