@@ -2,8 +2,10 @@
 
 ## General
 
-- [ ] Let ctrl-space when editing a man page toggle between viewing the code for the man page, and the rendered man page.
-- [ ] New idea for a text editor: make it more like a multiplayer-game, where several people and AI agents can cooperate on the server side, with a nice client on top
+- [ ] When pasting through a portal and reaching the end of the source, don't immediately start pasting from the clipboard. Require the cursor to be moved around first.
+- [ ] When opening "main" and "main" is binary, while "main.c" is text, open "main.c" instead. Add a flag for not making these kinds of assumptions.
+- [ ] Let `ctrl-space` when editing a man page toggle between viewing the code for the man page, and the rendered man page.
+- [ ] New idea for a text editor: make it more like a multiplayer-game, where several people and AI agents can cooperate on the server side, with a nice client on top.
 - [ ] If every other byte is 0x0 in a source code file, assume UTF-16 or Windows text formatting.
 - [ ] When opening a file and pressing `ctrl-f` and then `return`: search for the previously searched for string.
 - [ ] Let the status bar be toggled by the `ctrl-o` menu. Let `ctrl-g` when not on a definition do something useful, like cycle indenting a block 0 to 7 indentations.
