@@ -36,7 +36,9 @@ Editing a C source file in `og` using the "synthwave" theme:
 
 ![synthwave theme](img/2022-10-08_synthwave_theme.png)
 
-`o` also have a light theme. Not all terminal based editors has one:
+`o` also have light themes. Not all terminal based editors has this:
+
+![vs theme](img/vs_screenshot.png)
 
 ![light theme](img/light_screenshot.png)
 
