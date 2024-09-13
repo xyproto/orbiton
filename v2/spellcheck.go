@@ -209,7 +209,7 @@ func (e *Editor) NanoNextTypo(c *vt100.Canvas, status *StatusBar) (string, strin
 		e.SetSearchTerm(c, status, typo, true) // true for spellCheckMode
 		if err := e.GoToNextMatch(c, status, true, true); err == errNoSearchMatch {
 			status.ClearAll(c)
-			status.SetMessage("No typos found")
+			status.SetMessage("No more typos found")
 			status.Show(c, e)
 			e.spellCheckMode = false
 			e.ClearSearch()
