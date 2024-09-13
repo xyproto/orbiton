@@ -214,6 +214,7 @@ There are pretty few hotkeys to remember:
 * `ctrl-l` - Jump to a specific line number or percentage. Press `return` to jump to the top. If at the top, press `return` to jump to the bottom.
              Press one of the highlighted on-screen letters to jump to that location.
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive. Press `tab` instead of `return` to search and replace.
+             To find typos, search for the letter `t`, then press `ctrl-n` for the next word, `ctrl-a` to add it or `ctrl-i` to ignore it.
 * `ctrl-b` - Jump back after jumping to a definition with `ctrl-g`.
              Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords. For Markdown, format the table under the cursor.

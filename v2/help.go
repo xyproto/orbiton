@@ -43,6 +43,7 @@ ctrl-a      go to start of line, then start of text and then the previous line
 ctrl-e      go to end of line and then the next line
 ctrl-n      to scroll down 10 lines or go to the next match if a search is active
             insert a column when in the Markdown table editor
+            go to next match when searching, or next typo when spellchecking
 ctrl-p      to scroll up 10 lines or go to the previous match
             remove an empty column when in the Markdown table editor
 ctrl-k      to delete characters to the end of the line, then delete the line
@@ -60,7 +61,8 @@ ctrl-b      to jump back after having jumped to a definition
             to toggle a breakpoint if in debug mode
 ctrl-u      to undo (ctrl-z is also possible, but may background the application)
 ctrl-l      to jump to a specific line or letter (press return to jump to the top or bottom)
-ctrl-f      to find a string, press Tab after the text to search and replace
+ctrl-f      to find text. To search and replace, press Tab instead of Return.
+            to spellcheck, search for "t", then press ctrl-a to add and ctrl-i to ignore
 ctrl-\      to toggle single-line comments for a block of code
 ctrl-~      to jump to matching parenthesis
 esc         to redraw the screen, clear the last search and clear the current macro
