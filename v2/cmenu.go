@@ -372,9 +372,11 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				"Synthwave      (O_THEME=synthwave)",
 				"Red & Black    (O_THEME=redblack)",
 				"VS             (O_THEME=vs)",
-				"Blue Edit      (O_THEME=blueedit)",
+				"Orb            (O_THEME=orb)",
 				"Litmus         (O_THEME=litmus)",
 				"Teal           (O_THEME=teal)",
+				"Blue Edit      (O_THEME=blueedit)",
+				"Pinetree       (O_THEME=pinetree)",
 				"Gray Mono      (O_THEME=graymono)",
 				"Amber Mono     (O_THEME=ambermono)",
 				"Green Mono     (O_THEME=greenmono)",
@@ -412,9 +414,9 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				envNoColor = false
 				e.setVSTheme()
 				e.syntaxHighlight = true
-			case 4: // Blue Edit
+			case 4: // Orb
 				envNoColor = false
-				e.setBlueEditTheme()
+				e.SetTheme(NewOrbTheme())
 				e.syntaxHighlight = true
 			case 5: // Litmus
 				envNoColor = false
@@ -424,23 +426,31 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				envNoColor = false
 				e.SetTheme(NewTealTheme())
 				e.syntaxHighlight = true
-			case 7: // Gray Mono
+			case 7: // Blue Edit
+				envNoColor = false
+				e.setBlueEditTheme()
+				e.syntaxHighlight = true
+			case 8: // Pinetree
+				envNoColor = false
+				e.SetTheme(NewPinetreeTheme())
+				e.syntaxHighlight = true
+			case 9: // Gray Mono
 				envNoColor = false
 				e.setGrayTheme()
 				e.syntaxHighlight = false
-			case 8: // Amber Mono
+			case 10: // Amber Mono
 				envNoColor = false
 				e.setAmberTheme()
 				e.syntaxHighlight = false
-			case 9: // Green Mono
+			case 11: // Green Mono
 				envNoColor = false
 				e.setGreenTheme()
 				e.syntaxHighlight = false
-			case 10: // Blue Mono
+			case 12: // Blue Mono
 				envNoColor = false
 				e.setBlueTheme()
 				e.syntaxHighlight = false
-			case 11: // No color
+			case 13: // No color
 				envNoColor = true
 				e.setNoColorTheme()
 				e.syntaxHighlight = false

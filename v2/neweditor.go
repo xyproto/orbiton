@@ -301,18 +301,18 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			e.SetTheme(NewRedBlackTheme(), assumeLightBackground)
 		case "synthwave":
 			e.SetTheme(NewSynthwaveTheme(), assumeLightBackground)
+		case "orb":
+			e.SetTheme(NewOrbTheme(), assumeLightBackground)
 		case "teal":
 			e.SetTheme(NewTealTheme(), assumeLightBackground)
-		case "blueedit":
-			e.setBlueEditTheme(assumeLightBackground)
 		case "vs":
 			e.setVSTheme(assumeLightBackground)
 		case "litmus":
 			e.SetTheme(NewLitmusTheme(), assumeLightBackground)
+		case "blueedit":
+			e.setBlueEditTheme(assumeLightBackground)
 		case "pinetree":
 			e.SetTheme(NewPinetreeTheme(), assumeLightBackground)
-		case "snazzy":
-			e.SetTheme(NewSnazzyTheme(), assumeLightBackground)
 		case "graymono":
 			envNoColor = false
 			e.setGrayTheme()
