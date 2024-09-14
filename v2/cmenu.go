@@ -402,11 +402,11 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				e.syntaxHighlight = true
 			case 1: // Synthwave
 				envNoColor = false
-				e.setSynthwaveTheme()
+				e.SetTheme(NewSynthwaveTheme())
 				e.syntaxHighlight = true
 			case 2: // Red & Black
 				envNoColor = false
-				e.setRedBlackTheme()
+				e.SetTheme(NewRedBlackTheme())
 				e.syntaxHighlight = true
 			case 3: // VS
 				envNoColor = false
@@ -418,11 +418,11 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				e.syntaxHighlight = true
 			case 5: // Litmus
 				envNoColor = false
-				e.setLitmusTheme()
+				e.SetTheme(NewLitmusTheme())
 				e.syntaxHighlight = true
 			case 6: // Teal
 				envNoColor = false
-				e.setTealTheme()
+				e.SetTheme(NewTealTheme())
 				e.syntaxHighlight = true
 			case 7: // Gray Mono
 				envNoColor = false

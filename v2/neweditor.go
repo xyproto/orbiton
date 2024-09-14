@@ -298,17 +298,21 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		assumeLightBackground := env.Bool("O_LIGHT")
 		switch env.StrAlt("O_THEME", "THEME") {
 		case "redblack":
-			e.setRedBlackTheme(assumeLightBackground)
+			e.SetTheme(NewRedBlackTheme(), assumeLightBackground)
 		case "synthwave":
-			e.setSynthwaveTheme(assumeLightBackground)
+			e.SetTheme(NewSynthwaveTheme(), assumeLightBackground)
 		case "teal":
-			e.setTealTheme(assumeLightBackground)
+			e.SetTheme(NewTealTheme(), assumeLightBackground)
 		case "blueedit":
 			e.setBlueEditTheme(assumeLightBackground)
 		case "vs":
 			e.setVSTheme(assumeLightBackground)
 		case "litmus":
-			e.setLitmusTheme(assumeLightBackground)
+			e.SetTheme(NewLitmusTheme(), assumeLightBackground)
+		case "pinetree":
+			e.SetTheme(NewPinetreeTheme(), assumeLightBackground)
+		case "snazzy":
+			e.SetTheme(NewSnazzyTheme(), assumeLightBackground)
 		case "graymono":
 			envNoColor = false
 			e.setGrayTheme()
@@ -336,12 +340,12 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 				}
 			} else if isBSD {
 				// NetBSD, FreeBSD, OpenBSD or Dragonfly
-				e.setRedBlackTheme()
+				e.SetTheme(NewRedBlackTheme())
 				DisableQuickHelpScreen(nil)
 				e.clearOnQuit = true
 			} else if shell := env.Str("SHELL"); shell != "/usr/local/bin/fish" && (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && !inVTEGUI && filepath.Base(os.Args[0]) != "default" {
 				// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
-				e.setRedBlackTheme()
+				e.SetTheme(NewRedBlackTheme())
 				DisableQuickHelpScreen(nil)
 				e.clearOnQuit = true
 			} else if colorString := env.Str("COLORFGBG"); strings.Contains(colorString, ";") {

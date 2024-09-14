@@ -1112,43 +1112,9 @@ func (t Theme) TextConfig() *syntax.TextConfig {
 	}
 }
 
-// SetTheme assigns the given theme to the Editor,
-// and also configures syntax highlighting by setting syntax.DefaultTextConfig.
-// Light/dark, syntax highlighting and no color information is also set.
-// Respect the NO_COLOR environment variable. May set e.NoSyntaxHighlight to true.
-func (e *Editor) SetTheme(t Theme) {
-	if envNoColor {
-		if initialLightBackground != nil && *initialLightBackground {
-			t = NewNoColorLightBackgroundTheme()
-		} else {
-			t = NewNoColorDarkBackgroundTheme()
-		}
-		e.syntaxHighlight = false
-	}
-	e.Theme = t
-	e.statusMode = t.StatusMode
-	syntax.DefaultTextConfig = *(t.TextConfig())
-}
-
 // setDefaultTheme sets the default colors
 func (e *Editor) setDefaultTheme() {
 	e.SetTheme(NewDefaultTheme())
-}
-
-// setSynthwaveTheme sets the synthwave-like colors
-func (e *Editor) setSynthwaveTheme(bs ...bool) {
-	if len(bs) == 1 {
-		initialLightBackground = &(bs[0])
-	}
-	e.SetTheme(NewSynthwaveTheme())
-}
-
-// setTealTheme sets the Teal theme
-func (e *Editor) setTealTheme(bs ...bool) {
-	if len(bs) == 1 {
-		initialLightBackground = &(bs[0])
-	}
-	e.SetTheme(NewTealTheme())
 }
 
 // setVSTheme sets the VS theme
@@ -1163,12 +1129,24 @@ func (e *Editor) setVSTheme(bs ...bool) {
 	}
 }
 
-// setLitmusTheme sets the Litmus theme
-func (e *Editor) setLitmusTheme(bs ...bool) {
-	if len(bs) == 1 {
+// SetTheme assigns the given theme to the Editor,
+// and also configures syntax highlighting by setting syntax.DefaultTextConfig.
+// Light/dark, syntax highlighting and no color information is also set.
+// Respect the NO_COLOR environment variable. May set e.NoSyntaxHighlight to true.
+func (e *Editor) SetTheme(theme Theme, bs ...bool) {
+	if envNoColor {
+		if initialLightBackground != nil && *initialLightBackground {
+			theme = NewNoColorLightBackgroundTheme()
+		} else {
+			theme = NewNoColorDarkBackgroundTheme()
+		}
+		e.syntaxHighlight = false
+	} else if len(bs) == 1 {
 		initialLightBackground = &(bs[0])
 	}
-	e.SetTheme(NewLitmusTheme())
+	e.Theme = theme
+	e.statusMode = theme.StatusMode
+	syntax.DefaultTextConfig = *(theme.TextConfig())
 }
 
 // setNoColorTheme sets the NoColor theme, and considers the background color
@@ -1185,14 +1163,6 @@ func (e *Editor) setNoColorTheme() {
 // setLightVSTheme sets the light theme suitable for xterm
 func (e *Editor) setLightVSTheme() {
 	e.SetTheme(NewLightVSTheme())
-}
-
-// setRedBlackTheme sets a red/black/gray theme
-func (e *Editor) setRedBlackTheme(bs ...bool) {
-	if len(bs) == 1 {
-		initialLightBackground = &(bs[0])
-	}
-	e.SetTheme(NewRedBlackTheme())
 }
 
 // setBlueEditTheme sets a blue/yellow/gray theme, for light or dark backgrounds
