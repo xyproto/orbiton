@@ -69,6 +69,7 @@ const (
 	Markdown              // Markdown document
 	Mojo                  // Mojo
 	Nim                   // Nim
+	Nmap                  // Nmap scripts
 	Nroff                 // editing man pages
 	OCaml                 // OCaml
 	Oak                   // Oak
@@ -237,6 +238,8 @@ func (mode Mode) String() string {
 		return "Mojo"
 	case Nim:
 		return "Nim"
+	case Nmap:
+		return "Nmap"
 	case Nroff:
 		return "Nroff"
 	case Oak:

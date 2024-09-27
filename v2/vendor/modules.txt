@@ -95,13 +95,13 @@ github.com/xyproto/env
 # github.com/xyproto/env/v2 v2.5.0
 ## explicit; go 1.19
 github.com/xyproto/env/v2
-# github.com/xyproto/files v1.6.0
+# github.com/xyproto/files v1.7.0
 ## explicit; go 1.19
 github.com/xyproto/files
 # github.com/xyproto/iferr v1.1.0
 ## explicit; go 1.19
 github.com/xyproto/iferr
-# github.com/xyproto/mode v0.7.26
+# github.com/xyproto/mode v0.7.28
 ## explicit; go 1.14
 github.com/xyproto/mode
 # github.com/xyproto/palgen v1.6.0

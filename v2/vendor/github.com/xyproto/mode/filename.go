@@ -178,6 +178,8 @@ func Detect(filename string) Mode {
 			mode = GoMod // go.mod files
 		case ".nim":
 			mode = Nim
+		case ".nse":
+			mode = Nmap
 		case ".odin":
 			mode = Odin
 		case ".ok":
