@@ -336,7 +336,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 	case mode.OCaml, mode.StandardML:
 		// Not applicable, just return the multiline comment start marker
 		return "(*"
-	case mode.Ada, mode.Agda, mode.Elm, mode.Garnet, mode.Haskell, mode.Lua, mode.SQL, mode.Teal, mode.Terra:
+	case mode.Ada, mode.Agda, mode.Elm, mode.Garnet, mode.Haskell, mode.Lua, mode.Nmap, mode.SQL, mode.Teal, mode.Terra:
 		return "--"
 	case mode.M4:
 		return "dnl"
