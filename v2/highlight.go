@@ -340,16 +340,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						doneHighlighting = false
 						break
 					}
-				case mode.Elm:
-					trimmedLine = strings.TrimSpace(line)
-					if strings.HasPrefix(trimmedLine, "{-") && strings.HasSuffix(trimmedLine, "-}") {
-						coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
-					} else if strings.Contains(trimmedLine, "->") {
-						coloredString = unEscapeFunction(tout.DarkTags(e.ArrowReplace(string(textWithTags))))
-					} else {
-						doneHighlighting = false
-						break
-					}
 				case mode.Nroff:
 					trimmedLine = strings.TrimSpace(line)
 					if strings.HasPrefix(trimmedLine, `.\"`) {
