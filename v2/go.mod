@@ -6,7 +6,7 @@ require (
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/gomarkdown/markdown v0.0.0-20240730141124-034f12af3bf6
+	github.com/gomarkdown/markdown v0.0.0-20240930133441-72d49d9543d8
 	github.com/ianlancetaylor/demangle v0.0.0-20240912202439-0a2b6291aafd
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/sajari/fuzzy v1.0.0
@@ -26,7 +26,7 @@ require (
 	github.com/xyproto/textoutput v1.16.6
 	github.com/xyproto/vt100 v1.14.7
 	github.com/xyproto/wordwrap v1.0.1
-	golang.org/x/image v0.20.0
+	golang.org/x/image v0.21.0
 )
 
 require (
@@ -48,5 +48,5 @@ require (
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.6.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
 )
