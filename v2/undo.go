@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 	"unsafe"
 )
@@ -121,7 +120,6 @@ func (u *Undo) Snapshot(e *Editor) {
 				copyFromPos -= u.size
 			}
 			copyToPos := i
-			fmt.Println(copyFromPos, copyToPos)
 
 			newUndo.editorCopies[copyToPos] = u.editorCopies[copyFromPos]
 			newUndo.editorLineCopies[copyToPos] = u.editorLineCopies[copyFromPos]
