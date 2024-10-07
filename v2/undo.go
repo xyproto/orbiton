@@ -93,9 +93,12 @@ func (u *Undo) Snapshot(e *Editor) {
 		u.index = 0
 	}
 
-	// If the undo buffer uses too much memory, reduce the size to 10
+	// If the undo buffer uses too much memory, reduce the size to half of the current size, but use a minimum of 10
 	if u.maxMemoryUse > 0 && u.MemoryFootprint() > u.maxMemoryUse {
-		newSize := 10
+		newSize := u.size / 2
+		if newSize < 10 {
+			newSize = 10
+		}
 
 		smallest := newSize
 		if u.size < smallest {
