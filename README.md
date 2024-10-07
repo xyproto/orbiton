@@ -1,6 +1,6 @@
 ![Orbiton Logo](img/icon_128x128.png)
 
-![Build](https://github.com/xyproto/orbiton/workflows/Build/badge.svg) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Forbiton.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Forbiton?ref=badge_shield) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/orbiton/v2)](https://goreportcard.com/report/github.com/xyproto/orbiton/v2) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/orbiton/main/LICENSE)
+[![Build](https://github.com/xyproto/orbiton/actions/workflows/build.yml/badge.svg)](https://github.com/xyproto/orbiton/actions/workflows/build.yml) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Forbiton.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Forbiton?ref=badge_shield) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/orbiton/v2)](https://goreportcard.com/report/github.com/xyproto/orbiton/v2) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/orbiton/main/LICENSE)
 
 Orbiton is a text editor and a simple IDE with the following goals in mind:
 
