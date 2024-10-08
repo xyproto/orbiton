@@ -97,6 +97,8 @@ type Theme struct {
 	JumpToLetterColor           vt100.AttributeColor
 	NanoHelpForeground          vt100.AttributeColor
 	NanoHelpBackground          vt100.AttributeColor
+	HighlightForeground         vt100.AttributeColor
+	HighlightBackground         vt100.AttributeColor
 	StatusMode                  bool
 	Light                       bool
 }
@@ -115,6 +117,8 @@ func NewDefaultTheme() Theme {
 		SearchHighlight:             vt100.LightMagenta,
 		MultiLineComment:            vt100.Gray,
 		MultiLineString:             vt100.Magenta,
+		HighlightForeground:         vt100.White,
+		HighlightBackground:         vt100.BackgroundDefault, // vt100.BackgroundBlack, // vt100.BackgroundGray,
 		Git:                         vt100.LightGreen,
 		String:                      "lightyellow",
 		Keyword:                     "lightred",
