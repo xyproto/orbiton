@@ -394,7 +394,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				markdownTableEditorCounter++
 				// Full redraw
 				const drawLines = true
-				e.FullResetRedraw(c, status, drawLines)
+				justMovedUpOrDown := kh.PrevIs("↓") || kh.PrevIs("↑")
+				e.FullResetRedraw(c, status, drawLines, justMovedUpOrDown)
 				e.redraw = true
 				e.redrawCursor = true
 			} else if !noCorresponding && (e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC) && hasS([]string{".cpp", ".cc", ".c", ".cxx", ".c++", ".m", ".mm", ".M"}, filepath.Ext(e.filename)) { // jump from source to header file
@@ -449,7 +450,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 				// Full redraw
 				const drawLines = true
-				e.FullResetRedraw(c, status, drawLines)
+				justMovedUpOrDown := kh.PrevIs("↓") || kh.PrevIs("↑")
+				e.FullResetRedraw(c, status, drawLines, justMovedUpOrDown)
 				e.redraw = true
 				e.redrawCursor = true
 			} else if e.macro == nil {
@@ -930,7 +932,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.redrawCursor = true
 				case launchTutorialAction:
 					const drawLines = true
-					e.FullResetRedraw(c, status, drawLines)
+					e.FullResetRedraw(c, status, drawLines, false)
 					LaunchTutorial(tty, c, e, status)
 					e.redraw = true
 					e.redrawCursor = true
@@ -982,7 +984,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			lastCutY = -1
 			// Do a full clear and redraw + clear search term + jump
 			const drawLines = true
-			e.FullResetRedraw(c, status, drawLines)
+			e.FullResetRedraw(c, status, drawLines, false)
 			if e.macro != nil || e.playBackMacroCount > 0 {
 				// Stop the playback
 				e.playBackMacroCount = 0
@@ -1888,7 +1890,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.GoToPosition(c, status, *e.breakpoint)
 					// TODO: Just use status.SetMessageAfterRedraw instead?
 					// Do the redraw manually before showing the status message
-					e.DrawLines(c, true, false)
+					e.DrawLines(c, true, false, true)
 					e.redraw = false
 					// Show the status message
 					s := "Jumped to breakpoint at line " + e.LineNumber().String()
@@ -1912,7 +1914,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.GoToPosition(c, status, *bookmark)
 					// TODO: Just use status.SetMessageAfterRedraw instead?
 					// Do the redraw manually before showing the status message
-					e.DrawLines(c, true, false)
+					e.DrawLines(c, true, false, true)
 					e.redraw = false
 					// Show the status message
 					s := "Jumped to bookmark at line " + e.LineNumber().String()
@@ -2066,7 +2068,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		}
 
 		// Draw and/or redraw everything, with slightly different behavior over ssh
-		e.RedrawAtEndOfKeyLoop(c, status)
+		justMovedUpOrDown := kh.PrevIs("↓") || kh.PrevIs("↑")
+		e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown)
 
 		// Also draw the watches, if debug mode is enabled // and a debug session is in progress
 		if e.debugMode {

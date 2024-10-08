@@ -428,7 +428,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		fallthrough
 	default:
 		// Draw editor lines from line 0 to h onto the canvas at 0,0
-		e.DrawLines(c, false, false)
+		e.DrawLines(c, false, false, false)
 		e.redraw = false
 	}
 
@@ -441,7 +441,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	// Redraw the TUI, if needed
 	if e.redraw {
 		e.Center(c)
-		e.DrawLines(c, true, false)
+		e.DrawLines(c, true, false, false)
 		e.redraw = false
 	}
 

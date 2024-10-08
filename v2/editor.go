@@ -526,7 +526,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		// Do the redraw manually before showing the status message
 		respectOffset := true
 		redrawCanvas := false
-		e.DrawLines(c, respectOffset, redrawCanvas)
+		e.DrawLines(c, respectOffset, redrawCanvas, false)
 		e.redraw = false
 	}
 

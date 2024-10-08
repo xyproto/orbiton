@@ -459,7 +459,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				return
 			}
 			drawLines := true
-			e.FullResetRedraw(c, status, drawLines)
+			e.FullResetRedraw(c, status, drawLines, false)
 		})
 	}
 

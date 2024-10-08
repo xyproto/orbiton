@@ -28,7 +28,7 @@ var (
 )
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
-func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy uint) {
+func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy uint, shouldHighlightNow bool) {
 	// TODO: Refactor this function
 	var (
 		match                              bool
@@ -193,12 +193,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		unEscapeFunction = ShUnEscape
 	}
 
-	highlight := false
+	highlightCurrentLine := false
 
 	// Loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y = LineIndex(0); y < LineIndex(numLinesToDraw); y++ {
 
-		highlight = int(y) == e.pos.sy
+		highlightCurrentLine = shouldHighlightNow && int(y) == e.pos.sy
 
 		lineRuneCount = 0   // per line rune counter, for drawing spaces afterwards (does not handle wide runes)
 		lineStringCount = 0 // per line string counter, for drawing spaces afterwards (handles wide runes)
@@ -599,7 +599,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						tx = cx + lineRuneCount
 						ty = cy + uint(y)
 						if tx < cw {
-							if highlight && (e.highlightCurrentText || e.highlightCurrentLine) {
+							if highlightCurrentLine && (e.highlightCurrentText || e.highlightCurrentLine) {
 								c.WriteRuneBNoLock(tx, ty, e.HighlightForeground, e.HighlightBackground, letter)
 							} else {
 								c.WriteRuneBNoLock(tx, ty, fg, bg, letter)
@@ -625,7 +625,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		// TODO: This may draw the wrong number of blanks, since lineRuneCount should really be the number of visible glyphs at this point. This is problematic for emojis.
 		yp = cy + uint(y)
 		xp = cx + lineRuneCount
-		if highlight && e.highlightCurrentLine {
+		if highlightCurrentLine && e.highlightCurrentLine {
 			c.WriteRunesB(xp, yp, e.HighlightForeground, e.HighlightBackground, ' ', cw-lineRuneCount)
 		} else {
 			c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', cw-lineRuneCount)
