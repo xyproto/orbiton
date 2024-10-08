@@ -1590,8 +1590,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				})
 			}
 
-			// Toggle block editing mode
-			e.blockMode = !e.blockMode
 			e.redraw = true
 			status.Show(c, e)
 
