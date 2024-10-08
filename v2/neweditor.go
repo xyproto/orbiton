@@ -88,6 +88,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		createDirectoriesIfMissing,
 		displayQuickHelp)
 
+	e.highlightCurrentText = true
+
 	if readOnly || fnord.stdin || monitorAndReadOnly {
 		e.readOnly = true
 	}
