@@ -574,6 +574,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.CursorBackward(c, status)
 
+			if e.highlightCurrentLine || e.highlightCurrentText {
+				e.redraw = true
+			}
+
 		case rightArrow: // right arrow
 
 			// Don't move if ChatGPT is currently generating tokens that are being inserted
@@ -594,6 +598,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			e.CursorForward(c, status)
+
+			if e.highlightCurrentLine || e.highlightCurrentText {
+				e.redraw = true
+			}
+
+			e.highlightCurrentText = true
 
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
 
@@ -701,6 +711,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.Prev(c)
 				}
 
+				e.redraw = true
+			}
+
+			if e.highlightCurrentLine || e.highlightCurrentText {
 				e.redraw = true
 			}
 
@@ -896,6 +910,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// If the cursor is after the length of the current line, move it to the end of the current line
 			if e.AfterLineScreenContents() || e.AfterEndOfLine() {
 				e.End(c)
+				e.redraw = true
+			}
+
+			if e.highlightCurrentLine || e.highlightCurrentText {
 				e.redraw = true
 			}
 
