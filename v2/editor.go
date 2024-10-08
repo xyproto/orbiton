@@ -63,7 +63,6 @@ type Editor struct {
 	slowLoad                   bool            // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
 	building                   bool            // currently buildig code or exporting to a file?
 	runAfterBuild              bool            // run the application after building?
-	generatingTokens           bool            // is code or text being generated right now?
 	redrawCursor               bool            // if the cursor should be moved to the location it is supposed to be
 	monitorAndReadOnly         bool            // monitor the file for changes and open it as read-only
 	primaryClipboard           bool            // use the primary or the secondary clipboard on UNIX?
