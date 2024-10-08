@@ -35,7 +35,7 @@ ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for HTML, format the file with "tidy", for Python: "black"
             for Markdown, toggle checkboxes or re-format tables
             for git interactive rebases, cycle the rebase keywords
-ctrl-g      to toggle block editing mode, or jump to a definition (experimental feature)
+ctrl-g      jump to definition (experimental feature) or toggle the status bar
 ctrl-_      jump to a matching parenthesis or bracket if on one,
             otherwise insert a symbol by typing in a two letter ViM-style digraph
             see https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt

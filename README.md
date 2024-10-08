@@ -218,8 +218,7 @@ There are pretty few hotkeys to remember:
 * `ctrl-b` - Jump back after jumping to a definition with `ctrl-g`.
              Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords. For Markdown, format the table under the cursor.
-* `ctrl-g` - Toggle block editing mode, where several continous lines can be edited at once.
-             Can also jump to definition, for some programming languages (experimental feature).
+* `ctrl-g` - Jump to definition, for some programming languages (experimental feature), or toggle the status bar.
 * `ctrl-\` - Comment in or out a block of code.
 * `ctrl-~` - Jump to a matching parenthesis or bracket.
 * `esc` - Redraw everything and clear the last search.
