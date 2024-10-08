@@ -193,8 +193,13 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		unEscapeFunction = ShUnEscape
 	}
 
+	highlight := false
+
 	// Loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y = LineIndex(0); y < LineIndex(numLinesToDraw); y++ {
+
+		highlight = int(y) == e.pos.sy
+
 		lineRuneCount = 0   // per line rune counter, for drawing spaces afterwards (does not handle wide runes)
 		lineStringCount = 0 // per line string counter, for drawing spaces afterwards (handles wide runes)
 
@@ -594,7 +599,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						tx = cx + lineRuneCount
 						ty = cy + uint(y)
 						if tx < cw {
-							c.WriteRuneBNoLock(tx, ty, fg, bg, letter)
+							if highlight && (e.highlightCurrentText || e.highlightCurrentLine) {
+								c.WriteRuneBNoLock(tx, ty, e.HighlightForeground, e.HighlightBackground, letter)
+							} else {
+								c.WriteRuneBNoLock(tx, ty, fg, bg, letter)
+							}
 							lineRuneCount++                              // 1 rune
 							lineStringCount += uint(len(string(letter))) // 1 rune, expanded
 						}
@@ -613,10 +622,14 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		}
 
 		// Fill the rest of the line on the canvas with "blanks"
-		// TODO: This may draw the wrong number of blanks, since lineRuneCount should really be the number of visible glyphs at this point
+		// TODO: This may draw the wrong number of blanks, since lineRuneCount should really be the number of visible glyphs at this point. This is problematic for emojis.
 		yp = cy + uint(y)
 		xp = cx + lineRuneCount
-		c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', cw-lineRuneCount)
+		if highlight && e.highlightCurrentLine {
+			c.WriteRunesB(xp, yp, e.HighlightForeground, e.HighlightBackground, ' ', cw-lineRuneCount)
+		} else {
+			c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', cw-lineRuneCount)
+		}
 
 		// Draw a red line to remind the user of where the N-column limit is
 		if (e.showColumnLimit || e.mode == mode.Git) && lineRuneCount <= uint(e.wrapWidth) {
