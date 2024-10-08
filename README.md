@@ -120,6 +120,8 @@ These features are unique to `o`, as far as I am aware:
 * Use the built-in Markdown table editor by pressing `ctrl-t` when the cursor is on a table. This works best for tables that are not too wide.
 * Format Markdown tables by moving the cursor to a table and pressing `ctrl-w`.
 * For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
+* Lines are highlighted only when the arrow keys are used.
+* Pressing `ctrl-f` twice searches for the word under the cursor.
 
 ## Other features and limitations
 
