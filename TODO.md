@@ -2,8 +2,8 @@
 
 ## General
 
-- [ ] Find a different key for toggling multiline editing.
-- [ ] Let `ctrl-g` go to definition.
+- [ ] When browsing up and down with `ctrl-n` or `ctrl-p`, do not highlight lines until an arrow key has been pressed, or until some time have passed.
+- [ ] Let `ctrl-g` go to definition for more languages.
 - [ ] When pressing `ctrl-f` twice on a word, clear the search string after finding a match.
 - [ ] Add a flag for using more colors, for nicer themes, perhaps `-2`.
 - [ ] Support the `base16` themes.
