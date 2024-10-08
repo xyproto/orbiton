@@ -2,6 +2,11 @@
 
 ## General
 
+- [ ] Find a different key for toggling multiline editing.
+- [ ] Let `ctrl-g` go to definition.
+- [ ] When pressing `ctrl-f` twice on a word, clear the search string after finding a match.
+- [ ] Add a flag for using more colors, for nicer themes, perhaps `-2`.
+- [ ] Support the `base16` themes.
 - [ ] When pasting through a portal and reaching the end of the source, don't immediately start pasting from the clipboard. Require the cursor to be moved around first.
 - [ ] When opening "main" and "main" is binary, while "main.c" is text, open "main.c" instead. Add a flag for not making these kinds of assumptions.
 - [ ] Let `ctrl-space` when editing a man page toggle between viewing the code for the man page, and the rendered man page.
