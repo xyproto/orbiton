@@ -42,7 +42,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		foundDocstringMarker               bool
 		doneHighlighting                   = true
 		hasSearchTerm                      = len(e.searchTerm) > 0
-		ignoreSingleQuotes                 = e.mode == mode.Lisp || e.mode == mode.Clojure || e.mode == mode.Scheme
+		ignoreSingleQuotes                 = e.mode == mode.Lisp || e.mode == mode.Clojure || e.mode == mode.Scheme || e.mode == mode.Ini
 		numLinesToDraw                     int
 		runeIndex                          int
 		length                             int
@@ -477,7 +477,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 
 					// Take an extra pass on coloring the -> arrow, even if it's in a comment
-					if !(e.mode == mode.HTML || e.mode == mode.XML || e.mode == mode.Markdown || e.mode == mode.Blank || e.mode == mode.Config || e.mode == mode.Shell || e.mode == mode.Docker || e.mode == mode.Just) && strings.Contains(line, "->") {
+					if !(e.mode == mode.HTML || e.mode == mode.XML || e.mode == mode.Markdown || e.mode == mode.Blank || e.mode == mode.Config || e.mode == mode.Shell || e.mode == mode.Docker || e.mode == mode.Ini || e.mode == mode.Just) && strings.Contains(line, "->") {
 						arrowIndex = strings.Index(line, "->")
 						arrowBeforeCommentMarker = true
 

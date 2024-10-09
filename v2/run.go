@@ -11,19 +11,6 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-// CanRun checks if the current file mode supports running executables after building
-func (e *Editor) CanRun() bool {
-	switch e.mode {
-	case mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Bazel, mode.Blank, mode.Config, mode.Email, mode.Git, mode.HIDL, mode.HTML, mode.JSON, mode.Log, mode.M4, mode.ManPage, mode.Markdown, mode.Nroff, mode.PolicyLanguage, mode.ReStructured, mode.SCDoc, mode.SQL, mode.Shader, mode.Text, mode.XML:
-		return false
-	case mode.Shell: // don't run, because it's not a good idea
-		return false
-	case mode.Zig: // TODO: Find out why running Zig programs is problematic, terminal emulator wise
-		return false
-	}
-	return true
-}
-
 // Run will attempt to run the corresponding output executable, given a source filename.
 // It's an advantage if the BuildOrExport function has been successfully run first.
 // The bool is true only if the command exited with an exit code != 0 and there is text on stderr,
