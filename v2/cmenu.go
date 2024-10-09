@@ -131,14 +131,14 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert \""+insertFilename+"\" at the current line", "insertfile", insertFilename)
 
-	actions.Add("Toggle status bar", func() {
-		status.ClearAll(c)
-		e.statusMode = !e.statusMode
-		if e.statusMode {
-			status.ShowFilenameLineColWordCount(c, e)
-			e.showColumnLimit = e.wrapWhenTyping
-		}
-	})
+	//actions.Add("Toggle status bar", func() {
+	//status.ClearAll(c)
+	//e.statusMode = !e.statusMode
+	//if e.statusMode {
+	//status.ShowFilenameLineColWordCount(c, e)
+	//e.showColumnLimit = e.wrapWhenTyping
+	//}
+	//})
 
 	actions.Add("Toggle column limit indicator", func() {
 		e.showColumnLimit = !e.showColumnLimit
@@ -482,13 +482,13 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		e.blockMode = !e.blockMode
 	})
 
-	actions.Add("Toggle highlight text", func() {
-		e.highlightCurrentText = !e.highlightCurrentText
-	})
+	//actions.Add("Toggle highlight text", func() {
+	//e.highlightCurrentText = !e.highlightCurrentText
+	//})
 
-	actions.Add("Toggle highlight line", func() {
-		e.highlightCurrentLine = !e.highlightCurrentLine
-	})
+	//actions.Add("Toggle highlight line", func() {
+	//e.highlightCurrentLine = !e.highlightCurrentLine
+	//})
 
 	// Only show the menu option for killing the parent process if the parent process is a known search command
 	searchProcessNames := []string{"ag", "find", "rg"}
