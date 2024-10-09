@@ -50,6 +50,7 @@ const (
 	Hare                  // Hare
 	Haskell               // Haskell
 	Ignore                // .gitignore and .ignore files
+	Ini                   // INI Configuration
 	Inko                  // Inko
 	Ivy                   // Ivy
 	JSON                  // JSON and iPython notebooks
@@ -200,6 +201,8 @@ func (mode Mode) String() string {
 		return "HTTP Tests"
 	case Ignore:
 		return "Ignore"
+	case Ini:
+		return "INI Configuration"
 	case Inko:
 		return "Inko"
 	case Ivy:
