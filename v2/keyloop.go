@@ -1568,6 +1568,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.redraw, _ = e.GoTo(oldLineIndex, c, status)
 					e.ClearSearch()
 				})
+			} else {
+				// Toggle status bar
+				status.ClearAll(c)
+				e.statusMode = !e.statusMode
+				if e.statusMode {
+					status.ShowFilenameLineColWordCount(c, e)
+					e.showColumnLimit = e.wrapWhenTyping
+				}
 			}
 
 			e.redraw = true
