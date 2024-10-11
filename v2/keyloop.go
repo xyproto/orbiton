@@ -595,8 +595,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.redraw = true
 			}
 
-			e.highlightCurrentText = true
-
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
 
 			if !e.nanoMode {
