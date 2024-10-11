@@ -268,10 +268,13 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// Regular highlight
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					}
-				case mode.Config, mode.CMake, mode.JSON:
+				case mode.Config, mode.CMake, mode.JSON, mode.Ini:
 					if !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && (strings.Contains(trimmedLine, "/*") || strings.HasSuffix(trimmedLine, "*/")) {
 						// No highlight
 						coloredString = line
+					} else if (e.mode == mode.Ini || e.mode == mode.Config) && strings.HasPrefix(trimmedLine, ";") {
+						// Commented out
+						coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
 					} else if strings.HasPrefix(trimmedLine, "> ") {
 						// If there is a } underneath and typing }, don't dedent, keep it at the same level!
 						coloredString = unEscapeFunction(e.MultiLineString.Start(trimmedLine))
