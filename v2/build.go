@@ -162,8 +162,8 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 			s += "ionice"
 		}
 		foundCommand := false
-		if has("pkgctl") {
-			s += "pkgctl build --repo extra"
+		if has("pkgctl") { // extrabuild
+			s += "pkgctl build"
 			foundCommand = true
 		} else if has("makepkg") {
 			s += "makepkg"
