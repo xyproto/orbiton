@@ -394,7 +394,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				markdownTableEditorCounter++
 				// Full redraw
 				const drawLines = true
-				justMovedUpOrDown := kh.PrevIs("↓") || kh.PrevIs("↑")
+				justMovedUpOrDown := kh.PrevIs("↓", "↑")
 				e.FullResetRedraw(c, status, drawLines, justMovedUpOrDown)
 				e.redraw = true
 				e.redrawCursor = true
@@ -450,7 +450,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 				// Full redraw
 				const drawLines = true
-				justMovedUpOrDown := kh.PrevIs("↓") || kh.PrevIs("↑")
+				justMovedUpOrDown := kh.PrevIs("↓", "↑")
 				e.FullResetRedraw(c, status, drawLines, justMovedUpOrDown)
 				e.redraw = true
 				e.redrawCursor = true
@@ -1466,7 +1466,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Do not reset cut/copy/paste status
 
 			// First check if we just moved to this line with the arrow keys
-			justMovedUpOrDown := kh.PrevIs("↓") || kh.PrevIs("↑")
+			justMovedUpOrDown := kh.PrevIs("↓", "↑")
 			if e.macro != nil {
 				e.Home()
 			} else if !justMovedUpOrDown && e.EmptyRightTrimmedLine() && e.SearchTerm() == "" {
@@ -1493,7 +1493,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Do not reset cut/copy/paste status
 
 			// First check if we just moved to this line with the arrow keys, or just cut a line with ctrl-x
-			justMovedUpOrDown := kh.PrevIs("↓") || kh.PrevIs("↑") || kh.PrevIs("c:24")
+			justMovedUpOrDown := kh.PrevIs("↓", "↑", "c:24")
 			if e.AtEndOfDocument() || e.macro != nil {
 				e.End(c)
 			} else if !justMovedUpOrDown && e.AfterEndOfLine() && e.SearchTerm() == "" {
