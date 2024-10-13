@@ -52,6 +52,17 @@ func (kh *KeyHistory) PrevIs(keyPresses ...string) bool {
 	return false
 }
 
+// PrevIsWithin checks if one of the given strings is the previous keypress, within the given duration
+func (kh *KeyHistory) PrevIsWithin(duration time.Duration, keyPresses ...string) bool {
+	now := time.Now()
+	for _, keyPress := range keyPresses {
+		if keyPress == kh.keys[2] && now.Sub(kh.t[2]) < duration {
+			return true
+		}
+	}
+	return false
+}
+
 // TwoLastAre checks if the two previous keypresses are the given keypress
 func (kh *KeyHistory) TwoLastAre(keyPress string) bool {
 	return kh.Prev() == keyPress && kh.PrevPrev() == keyPress

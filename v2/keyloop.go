@@ -2051,9 +2051,24 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			status.ClearAll(c)
 		}
 
+		arrowKeyHighlightTime := 1 * time.Second
+
 		// Draw and/or redraw everything, with slightly different behavior over ssh
-		justMovedUpOrDown := kh.PrevIs("↓") || kh.PrevIs("↑")
+		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
 		e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown)
+
+		// When not moving up or down, turn off the text highlight after arrowHighlightTime
+		go func() {
+			time.Sleep(arrowKeyHighlightTime)
+			justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
+			if !justMovedUpOrDownOrLeftOrRight {
+				e.redraw = true
+				e.redrawCursor = true
+				e.RedrawAtEndOfKeyLoop(c, status, false)
+				e.redraw = false
+				e.redrawCursor = false
+			}
+		}()
 
 		// Also draw the watches, if debug mode is enabled // and a debug session is in progress
 		if e.debugMode {
