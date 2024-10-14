@@ -145,7 +145,7 @@ These features are unique to `o`, as far as I am aware:
 * Never asks before saving or quitting. Be careful.
 * The [`NO_COLOR`](https://no-color.org) environment variable can be set to disable all colors.
 * Rainbow parentheses makes lines with many parentheses easier to read.
-* Limited to VT100, so hotkeys like `ctrl-a` and `ctrl-e` must be used instead of `Home` and `End`. And for browsing up and down, `ctrl-n` and `ctrl-p` must be used. `PgUp` and `PgDn` can be used with the GUI frontend, but are not recognized by VT100.
+* Limited to VT100, so hotkeys like `ctrl-a` and `ctrl-e` may need to be used instead of `Home` and `End`. And for browsing up and down, `ctrl-n` and `ctrl-p` may be used.
 * Compiles with either `go` or `gccgo`.
 * Will strip trailing whitespace whenever it can.
 * Must be given a filename at start.
