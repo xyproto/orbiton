@@ -55,8 +55,9 @@ func (e *Editor) GoToTopOfCurrentTable(c *vt100.Canvas, status *StatusBar, cente
 	if err != nil {
 		return 0
 	}
-	e.redraw, _ = e.GoTo(topIndex, c, status)
-	if e.redraw && centerCursor {
+	redraw, _ := e.GoTo(topIndex, c, status)
+	e.redraw.Store(redraw)
+	if redraw && centerCursor {
 		e.Center(c)
 	}
 	return topIndex
@@ -424,8 +425,8 @@ func (e *Editor) FormatAllMarkdownTables() {
 		e.SetLine(LineIndex(i), line)
 	}
 
-	e.changed = true
-	e.redraw = true
+	e.changed.Store(true)
+	e.redraw.Store(true)
 }
 
 // EditMarkdownTable presents the user with a dedicated table editor for the current Markdown table, or just formats it

@@ -413,7 +413,7 @@ func (step TutorialStep) Draw(c *vt100.Canvas, e *Editor, progress string, minWi
 	centerBox := NewBox()
 
 	centerBox.EvenLowerRightPlacement(canvasBox, minWidth)
-	e.redraw = true
+	e.redraw.Store(true)
 
 	// Then create a list box
 	listBox := NewBox()

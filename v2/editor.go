@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -43,7 +44,6 @@ type Editor struct {
 	lineBeforeSearch           LineIndex       // save the current line number before jumping between search results
 	playBackMacroCount         int             // number of times the macro should be played back, right now
 	rainbowParenthesis         bool            // rainbow parenthesis
-	redraw                     bool            // if the contents should be redrawn in the next loop
 	sshMode                    bool            // is o used over ssh, tmux or screen, in a way that usually requires extra redrawing?
 	debugMode                  bool            // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
 	statusMode                 bool            // display a status bar at all times at the bottom of the screen
@@ -53,7 +53,6 @@ type Editor struct {
 	stopParentOnQuit           bool            // send SIGQUIT to the parent PID when quitting
 	clearOnQuit                bool            // clear the terminal when quitting the editor, or not
 	quit                       bool            // for indicating if the user wants to end the editor session
-	changed                    bool            // has the contents changed, since last save?
 	readOnly                   bool            // is the file read-only when initializing o?
 	debugHideOutput            bool            // hide the GDB stdout pane when in debug mode?
 	binaryFile                 bool            // is this a binary file, or a text file?
@@ -63,7 +62,9 @@ type Editor struct {
 	slowLoad                   bool            // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
 	building                   bool            // currently buildig code or exporting to a file?
 	runAfterBuild              bool            // run the application after building?
-	redrawCursor               bool            // if the cursor should be moved to the location it is supposed to be
+	changed                    atomic.Bool     // has the contents changed, since last save?
+	redraw                     atomic.Bool     // if the contents should be redrawn in the next loop
+	redrawCursor               atomic.Bool     // if the cursor should be moved to the location it is supposed to be
 	monitorAndReadOnly         bool            // monitor the file for changes and open it as read-only
 	primaryClipboard           bool            // use the primary or the secondary clipboard on UNIX?
 	jumpToLetterMode           bool            // jump directly to a highlighted letter
@@ -102,7 +103,7 @@ func (e *Editor) Set(x int, index LineIndex, r rune) {
 	l := len(e.lines[y])
 	if x < l {
 		e.lines[y][x] = r
-		e.changed = true
+		e.changed.Store(true)
 		return
 	}
 	// If the line is too short, fill it up with spaces
@@ -113,7 +114,7 @@ func (e *Editor) Set(x int, index LineIndex, r rune) {
 
 	// Set the rune
 	e.lines[y][x] = r
-	e.changed = true
+	e.changed.Store(true)
 }
 
 // Get will retrieve a rune from the editor data, at the given coordinates
@@ -133,7 +134,7 @@ func (e *Editor) Get(x int, y LineIndex) rune {
 
 // Changed will return true if the contents were changed since last time this function was called
 func (e *Editor) Changed() bool {
-	return e.changed
+	return e.changed.Load()
 }
 
 // Line returns the contents of line number N, counting from 0
@@ -271,7 +272,7 @@ func (e *Editor) ContentsAndReverseSearchPrefix(prefix string) (string, LineInde
 // Clear removes all data from the editor
 func (e *Editor) Clear() {
 	e.lines = make(map[int][]rune)
-	e.changed = true
+	e.changed.Store(true)
 }
 
 // Load will try to load a file. The file is assumed to be checked to already exist.
@@ -318,7 +319,7 @@ func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (st
 	e.slowLoad = time.Since(start) > 400*time.Millisecond
 
 	// Mark the data as "not changed", since this happens when starting the editor
-	e.changed = false
+	e.changed.Store(false)
 
 	return message, nil
 }
@@ -355,7 +356,7 @@ func (e *Editor) PrepareEmpty() (mode.Mode, error) {
 		}
 	}
 	// Mark the data as "not changed"
-	e.changed = false
+	e.changed.Store(false)
 
 	return m, nil
 }
@@ -440,7 +441,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 
 	// Mark the data as "not changed" if it's not a binary file
 	if !e.binaryFile {
-		e.changed = false
+		e.changed.Store(false)
 	}
 
 	// Default file mode (0644 for regular files, 0755 for executable files)
@@ -460,7 +461,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	}
 
 	// If it's not a binary file OR the file has changed: save the data
-	if !e.binaryFile || e.changed {
+	if !e.binaryFile || e.changed.Load() {
 
 		// Check if the user appears to be a quick developer
 		if time.Since(editorLaunchTime) < 30*time.Second && e.mode != mode.Text && e.mode != mode.Blank {
@@ -514,7 +515,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 
 	}
 
-	e.redrawCursor = true
+	e.redrawCursor.Store(true)
 
 	// Trailing spaces may be trimmed, so move to the end, if needed
 	if changed {
@@ -526,7 +527,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		respectOffset := true
 		redrawCanvas := false
 		e.DrawLines(c, respectOffset, redrawCanvas, false)
-		e.redraw = false
+		e.redraw.Store(false)
 	}
 
 	// All done
@@ -598,7 +599,7 @@ func (e *Editor) DeleteRestOfLine() {
 		return
 	}
 	e.lines[y] = e.lines[y][:x]
-	e.changed = true
+	e.changed.Store(true)
 
 	// Make sure no lines are nil
 	e.MakeConsistent()
@@ -645,7 +646,7 @@ func (e *Editor) DeleteLine(n LineIndex) {
 	delete(e.lines, int(maxIndex))
 
 	// This changes the document
-	e.changed = true
+	e.changed.Store(true)
 
 	// Make sure no lines are nil
 	e.MakeConsistent()
@@ -675,7 +676,7 @@ func (e *Editor) Delete(c *vt100.Canvas, useBlockMode bool) {
 			// All keys in the map that are > y should be shifted -1.
 			// This also overwrites e.lines[y].
 			e.DeleteLine(LineIndex(y))
-			e.changed = true
+			e.changed.Store(true)
 			return true // continue
 		}
 		x, err := e.DataX()
@@ -692,7 +693,7 @@ func (e *Editor) Delete(c *vt100.Canvas, useBlockMode bool) {
 					e.DeleteLine(LineIndex(y + 1))
 				}
 			}
-			e.changed = true
+			e.changed.Store(true)
 			return true // continue
 		}
 		// Delete just this character
@@ -706,7 +707,7 @@ func (e *Editor) Delete(c *vt100.Canvas, useBlockMode bool) {
 		deleteThisRune()
 	}
 
-	e.changed = true
+	e.changed.Store(true)
 	// Make sure no lines are nil
 	e.MakeConsistent()
 }
@@ -735,7 +736,7 @@ func (e *Editor) MakeConsistent() {
 	for i := 0; i < len(e.lines); i++ {
 		if _, found := e.lines[i]; !found {
 			e.lines[i] = make([]rune, 0)
-			e.changed = true
+			e.changed.Store(true)
 		}
 	}
 }
@@ -846,7 +847,7 @@ func (e *Editor) WrapAllLines() bool {
 				insertedLines++
 			}
 
-			e.changed = true
+			e.changed.Store(true)
 		}
 	}
 
@@ -858,8 +859,8 @@ func (e *Editor) WrapAllLines() bool {
 		} else if e.pos.sy >= len(e.lines) {
 			e.pos.sy = len(e.lines) - 1
 		}
-		e.redraw = true
-		e.redrawCursor = true
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
 	}
 
 	// This appears to be needed as well
@@ -873,8 +874,8 @@ func (e *Editor) WrapAllLines() bool {
 func (e *Editor) WrapNow(wrapWith int) {
 	e.wrapWidth = wrapWith
 	if e.WrapAllLines() {
-		e.redraw = true
-		e.redrawCursor = true
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
 	}
 }
 
@@ -931,7 +932,7 @@ func (e *Editor) InsertLineAbove() {
 			break
 		}
 	}
-	e.changed = true
+	e.changed.Store(true)
 }
 
 // InsertLineBelow will attempt to insert a new line below the current position
@@ -953,7 +954,7 @@ func (e *Editor) InsertLineBelowAt(index LineIndex) {
 	// If we are the the last line, add an empty line at the end and return
 	if y == (len(e.lines) - 1) {
 		e.lines[int(y)+1] = make([]rune, 0)
-		e.changed = true
+		e.changed.Store(true)
 		return
 	}
 
@@ -984,7 +985,7 @@ func (e *Editor) InsertLineBelowAt(index LineIndex) {
 		}
 	}
 
-	e.changed = true
+	e.changed.Store(true)
 }
 
 // Insert will insert a rune at the given position, with no word wrap,
@@ -1030,7 +1031,7 @@ func (e *Editor) Insert(c *vt100.Canvas, r rune) {
 		doInsert()
 	}
 
-	e.changed = true
+	e.changed.Store(true)
 
 	// Make sure no lines are nil
 	e.MakeConsistent()
@@ -1044,7 +1045,7 @@ func (e *Editor) CreateLineIfMissing(n LineIndex) {
 	_, ok := e.lines[int(n)]
 	if !ok {
 		e.lines[int(n)] = make([]rune, 0)
-		e.changed = true
+		e.changed.Store(true)
 	}
 }
 
@@ -1283,7 +1284,7 @@ func (e *Editor) NextLine() string {
 func (e *Editor) Home() {
 	e.pos.sx = 0
 	e.pos.offsetX = 0
-	e.redraw = true
+	e.redraw.Store(true)
 }
 
 // End will move the cursor to the position right after the end of the current line contents,
@@ -1293,14 +1294,14 @@ func (e *Editor) End(c *vt100.Canvas) {
 	e.TrimRight(y)
 	x := e.LastTextPosition(y) + 1
 	e.pos.SetX(c, x)
-	e.redraw = true
+	e.redraw.Store(true)
 }
 
 // EndNoTrim will move the cursor to the position right after the end of the current line contents
 func (e *Editor) EndNoTrim(c *vt100.Canvas) {
 	x := e.LastTextPosition(e.DataY()) + 1
 	e.pos.SetX(c, x)
-	e.redraw = true
+	e.redraw.Store(true)
 }
 
 // AtEndOfLine returns true if the cursor is at exactly the last character of the line, not the one after
@@ -1451,7 +1452,7 @@ func (e *Editor) Prev(c *vt100.Canvas) error {
 	if e.pos.sx == 0 && e.pos.offsetX > 0 {
 		// at left edge, but can scroll to the left
 		e.pos.offsetX--
-		e.redraw = true
+		e.redraw.Store(true)
 	} else {
 		// If at a tab character, move a few more positions
 		if atTab {
@@ -1820,14 +1821,15 @@ func (e *Editor) ColIndex() ColIndex {
 // GoToPosition can go to the given position struct and use it as the new position
 func (e *Editor) GoToPosition(c *vt100.Canvas, status *StatusBar, pos Position) {
 	e.pos = pos
-	e.redraw, _ = e.GoTo(e.DataY(), c, status)
-	e.redrawCursor = true
+	redraw, _ := e.GoTo(e.DataY(), c, status)
+	e.redraw.Store(redraw)
+	e.redrawCursor.Store(true)
 }
 
 // GoToStartOfTextLine will go to the start of the non-whitespace text, for this line
 func (e *Editor) GoToStartOfTextLine(c *vt100.Canvas) {
 	e.pos.SetX(c, int(e.FirstScreenPosition(e.DataY())))
-	e.redraw = true
+	e.redraw.Store(true)
 }
 
 // GoToNextParagraph will jump to the next line that has a blank line above it, if possible
@@ -2135,8 +2137,8 @@ func (e *Editor) HorizontalScrollIfNeeded(c *vt100.Canvas) {
 		e.pos.offsetX = (x - w) + 1
 		e.pos.sx -= e.pos.offsetX
 	}
-	e.redraw = true
-	e.redrawCursor = true
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
 }
 
 // VerticalScrollIfNeeded will scroll along the X axis, if needed
@@ -2152,8 +2154,8 @@ func (e *Editor) VerticalScrollIfNeeded(c *vt100.Canvas) {
 		e.pos.offsetY = (y - h) + 1
 		e.pos.sy -= e.pos.offsetY
 	}
-	e.redraw = true
-	e.redrawCursor = true
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
 }
 
 // InsertFile inserts the contents of a file at the current location
@@ -2235,8 +2237,8 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		status.SetMessageAfterRedraw(statusMessage)
 	}
 
-	e.redraw = true
-	e.redrawCursor = true
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
 
 	return err
 }
@@ -2485,8 +2487,9 @@ func (e *Editor) MoveToNumber(c *vt100.Canvas, status *StatusBar, lineNumber, li
 		return err
 	}
 	foundY := LineNumber(i)
-	e.redraw, _ = e.GoTo(foundY.LineIndex(), c, status)
-	e.redrawCursor = e.redraw
+	redraw, _ := e.GoTo(foundY.LineIndex(), c, status)
+	e.redraw.Store(redraw)
+	e.redrawCursor.Store(redraw)
 	x, err := strconv.Atoi(lineColumn)
 	if err != nil {
 		return err
@@ -2502,8 +2505,9 @@ func (e *Editor) MoveToNumber(c *vt100.Canvas, status *StatusBar, lineNumber, li
 func (e *Editor) MoveToLineColumnNumber(c *vt100.Canvas, status *StatusBar, lineNumber, lineColumn int, ignoreIndentation bool) error {
 	// Move to (x, y), line number first and then column number
 	foundY := LineNumber(lineNumber)
-	e.redraw, _ = e.GoTo(foundY.LineIndex(), c, status)
-	e.redrawCursor = e.redraw
+	redraw, _ := e.GoTo(foundY.LineIndex(), c, status)
+	e.redraw.Store(redraw)
+	e.redrawCursor.Store(redraw)
 	x := lineColumn
 	foundX := x - 1
 	tabs := strings.Count(e.Line(foundY.LineIndex()), "\t")
@@ -2526,8 +2530,9 @@ func (e *Editor) MoveToIndex(c *vt100.Canvas, status *StatusBar, lineIndex, line
 		i--
 	}
 	foundY := LineIndex(i)
-	e.redraw, _ = e.GoTo(foundY, c, status)
-	e.redrawCursor = e.redraw
+	redraw, _ := e.GoTo(foundY, c, status)
+	e.redraw.Store(redraw)
+	e.redrawCursor.Store(redraw)
 	x, err := strconv.Atoi(lineColumnIndex)
 	if err != nil {
 		return err
@@ -2544,7 +2549,7 @@ func (e *Editor) MoveToIndex(c *vt100.Canvas, status *StatusBar, lineIndex, line
 
 // GoToTop jumps and scrolls to the top of the file
 func (e *Editor) GoToTop(c *vt100.Canvas, status *StatusBar) {
-	e.redraw = e.GoToLineNumber(1, c, status, true)
+	e.redraw.Store(e.GoToLineNumber(1, c, status, true))
 }
 
 // GoToMiddle jumps and scrolls to the middle of the file
@@ -2555,7 +2560,7 @@ func (e *Editor) GoToMiddle(c *vt100.Canvas, status *StatusBar) {
 // GoToEnd jumps and scrolls to the end of the file
 func (e *Editor) GoToEnd(c *vt100.Canvas, status *StatusBar) {
 	// Go to the last line (by line number, not by index, e.Len() returns an index which is why there is no -1)
-	e.redraw = e.GoToLineNumber(LineNumber(e.Len()), c, status, true)
+	e.redraw.Store(e.GoToLineNumber(LineNumber(e.Len()), c, status, true))
 }
 
 // SortBlock sorts the a block of lines, at the current position
@@ -2771,8 +2776,8 @@ func (e *Editor) JumpToMatching(c *vt100.Canvas) bool {
 				return false
 			}
 		}
-		e.redrawCursor = true
-		e.redraw = true
+		e.redrawCursor.Store(true)
+		e.redraw.Store(true)
 		return true
 	}
 	return false
@@ -2791,8 +2796,8 @@ func (e *Editor) DeleteToEndOfLine(c *vt100.Canvas, status *StatusBar, bookmark 
 	*lastCutY = -1
 	if e.EmptyLine() {
 		e.DeleteCurrentLineMoveBookmark(bookmark)
-		e.redraw = true
-		e.redrawCursor = true
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
 		return
 	}
 	e.DeleteRestOfLine()
@@ -2805,8 +2810,8 @@ func (e *Editor) DeleteToEndOfLine(c *vt100.Canvas, status *StatusBar, bookmark 
 			e.End(c)
 		}
 	}
-	e.redraw = true
-	e.redrawCursor = true
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
 }
 
 // CutSingleLine can be called when ctrl-x is pressed (or ctrl-k in nano mode)
@@ -2819,8 +2824,8 @@ func (e *Editor) CutSingleLine(status *StatusBar, bookmark *Position, lastCutY, 
 		// Nothing to cut, just remove the current line
 		e.Home()
 		e.DeleteCurrentLineMoveBookmark(bookmark)
-		e.redraw = true
-		e.redrawCursor = true
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
 		// Check if ctrl-x was pressed once or twice, for this line
 		return y, false
 	}
@@ -2852,8 +2857,8 @@ func (e *Editor) CutSingleLine(status *StatusBar, bookmark *Position, lastCutY, 
 		// Delete the line
 		e.DeleteLineMoveBookmark(y, bookmark)
 		// No status message is needed for the cut operation, because it's visible that lines are cut
-		e.redrawCursor = true
-		e.redraw = true
+		e.redrawCursor.Store(true)
+		e.redraw.Store(true)
 		return y, false
 	}
 	return y, true
@@ -2867,7 +2872,7 @@ func (e *Editor) CursorForward(c *vt100.Canvas, status *StatusBar) {
 	}
 	if e.AfterScreenWidth(c) {
 		e.pos.SetOffsetX(e.pos.OffsetX() + 1)
-		e.redraw = true
+		e.redraw.Store(true)
 		e.pos.sx--
 		if e.pos.sx < 0 {
 			e.pos.sx = 0
@@ -2879,7 +2884,7 @@ func (e *Editor) CursorForward(c *vt100.Canvas, status *StatusBar) {
 		e.End(c)
 	}
 	e.SaveX(true)
-	e.redrawCursor = true
+	e.redrawCursor.Store(true)
 }
 
 // CursorBackward moves the cursor backward 1 step
@@ -2896,7 +2901,7 @@ func (e *Editor) CursorBackward(c *vt100.Canvas, status *StatusBar) {
 		} else {
 			// Scroll one step left
 			e.pos.SetOffsetX(e.pos.OffsetX() - 1)
-			e.redraw = true
+			e.redraw.Store(true)
 		}
 		e.SaveX(true)
 	} else if e.pos.sx > 0 {
@@ -2912,14 +2917,14 @@ func (e *Editor) CursorBackward(c *vt100.Canvas, status *StatusBar) {
 		// no scrolling or movement to the left going on
 		e.Up(c, status)
 		e.End(c)
-		// e.redraw = true
+		// e.redraw.Store(true)
 	} // else at the start of the document
-	e.redrawCursor = true
+	e.redrawCursor.Store(true)
 	// Workaround for Konsole
 	if e.pos.sx <= 2 {
 		// Konsole prints "2H" here, but
 		// no other terminal emulator does that
-		e.redraw = true
+		e.redraw.Store(true)
 	}
 }
 
@@ -2928,8 +2933,8 @@ func (e *Editor) CursorBackward(c *vt100.Canvas, status *StatusBar) {
 // Returns true if this and the next line had text and they were joined to this line.
 func (e *Editor) JoinLineWithNext(c *vt100.Canvas, bookmark *Position) bool {
 	nextLineIndex := e.DataY() + 1
-	e.redraw = true
-	e.redrawCursor = true
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
 	if e.EmptyRightTrimmedLineBelow() {
 		// Just delete the line below if it's empty
 		e.DeleteLineMoveBookmark(nextLineIndex, bookmark)

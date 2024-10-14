@@ -120,8 +120,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	}
 
 	// We wish to redraw the canvas and reposition the cursor
-	e.redraw = true
-	e.redrawCursor = true
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
 
 	// Use os.Stat to check if the file exists, and load the file if it does
 	var warningMessage string
@@ -408,8 +408,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		} else {
 			e.GoToLineNumber(lineNumber, c, nil, false)
 		}
-		e.redraw = true
-		e.redrawCursor = true
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
 	case lineNumber == 0 && e.mode != mode.Git && e.mode != mode.Email:
 		// Load the o location history, if a line number was not given on the command line (and if available)
 		if !found && !e.slowLoad {
@@ -426,15 +426,15 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		if found {
 			lineNumber = recordedLineNumber
 			e.GoToLineNumber(lineNumber, c, nil, true)
-			e.redraw = true
-			e.redrawCursor = true
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
 			break
 		}
 		fallthrough
 	default:
 		// Draw editor lines from line 0 to h onto the canvas at 0,0
 		e.DrawLines(c, false, false, false)
-		e.redraw = false
+		e.redraw.Store(false)
 	}
 
 	// Make sure the location history isn't empty (the search history can be empty, it's just a string slice)
@@ -444,10 +444,10 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	}
 
 	// Redraw the TUI, if needed
-	if e.redraw {
+	if e.redraw.Load() {
 		e.Center(c)
 		e.DrawLines(c, true, false, false)
-		e.redraw = false
+		e.redraw.Store(false)
 	}
 
 	// If SSH_TTY or TMUX is set, redraw everything and then display the status message

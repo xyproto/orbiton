@@ -68,7 +68,7 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 		e.detectedTabs = &detectedTabs
 		e.indentation.Spaces = !detectedTabs
 	}
-	e.changed = true
+	e.changed.Store(true)
 	return nil
 }
 
@@ -142,5 +142,5 @@ func (e *Editor) LoadBytes(data []byte) {
 	}
 
 	// Mark the editor contents as "changed"
-	e.changed = true
+	e.changed.Store(true)
 }

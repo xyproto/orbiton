@@ -70,11 +70,11 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 		e.ScrollUp(c, nil, e.pos.scrollSpeed)
 		e.DrawLines(c, true, true, shouldHighlight)
 		e.ScrollDown(c, nil, e.pos.scrollSpeed)
-		e.redraw = true
-		e.redrawCursor = true
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
 	} else {
-		e.redraw = false
-		e.redrawCursor = false
+		e.redraw.Store(false)
+		e.redrawCursor.Store(false)
 	}
 
 	e.pos = savePos
@@ -82,11 +82,11 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 
 // RedrawIfNeeded will redraw the text on the canvas if e.redraw is set
 func (e *Editor) RedrawIfNeeded(c *vt100.Canvas, shouldHighlight bool) {
-	if e.redraw {
+	if e.redraw.Load() {
 		respectOffset := true
 		redrawCanvas := e.sshMode
 		e.DrawLines(c, respectOffset, redrawCanvas, shouldHighlight)
-		e.redraw = false
+		e.redraw.Store(false)
 	}
 }
 
@@ -103,9 +103,9 @@ func (e *Editor) RepositionCursorIfNeeded() {
 	// Redraw the cursor, if needed
 	x := e.pos.ScreenX()
 	y := e.pos.ScreenY()
-	if e.redrawCursor || x != e.previousX || y != e.previousY {
+	if x != e.previousX || y != e.previousY || e.redrawCursor.Load() {
 		e.RepositionCursor(x, y)
-		e.redrawCursor = false
+		e.redrawCursor.Store(false)
 	}
 }
 
@@ -162,10 +162,10 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, should
 	redrawCanvas := !e.debugMode
 
 	// Redraw, if needed
-	if e.redraw {
+	if e.redraw.Load() {
 		// Draw the editor lines on the canvas, respecting the offset
 		e.DrawLines(c, true, redrawCanvas, shouldHighlight)
-		e.redraw = false
+		e.redraw.Store(false)
 
 		if e.drawProgress {
 			e.DrawProgress(c)

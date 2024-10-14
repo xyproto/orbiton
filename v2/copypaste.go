@@ -106,7 +106,7 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 			}
 			e.InsertLineBelow()
 			e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
-			e.redraw = true
+			e.redraw.Store(true)
 			return
 		}
 		e.ClosePortal()
@@ -159,7 +159,7 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 		}
 	} else {
 		status.Clear(c)
-		e.redrawCursor = true
+		e.redrawCursor.Store(true)
 	}
 
 	// Now check if there is anything to paste
@@ -183,7 +183,7 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 	*lastCopyY = -1
 
 	// Redraw after pasting
-	e.redraw = true
+	e.redraw.Store(true)
 
 	if *lastPasteY != y { // Single line paste
 		*lastPasteY = y
@@ -256,6 +256,6 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 	}
 
 	// Prepare to redraw the text
-	e.redrawCursor = true
-	e.redraw = true
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
 }

@@ -878,13 +878,12 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 		if showInstructionPane {
 			lowerRightBox.H = int(float64(lowerRightBox.H) * 0.9)
 		}
-
-		e.redraw = true
+		e.redraw.Store(true)
 	} else {
 		title = "All changed registers"
 		// wide box
 		lowerRightBox.LowerPlacement(canvasBox, 100)
-		e.redraw = true
+		e.redraw.Store(true)
 	}
 
 	// Then create a list box
@@ -971,7 +970,7 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 		minWidth := 32
 
 		centerBox.EvenLowerRightPlacement(canvasBox, minWidth)
-		e.redraw = true
+		e.redraw.Store(true)
 
 		// Then create a list box
 		listBox := NewBox()
@@ -1161,7 +1160,7 @@ func (e *Editor) DebugStartSession(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		outputExecutable, err = e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
 		if err != nil {
 			e.debugMode = false
-			e.redrawCursor = true
+			e.redrawCursor.Store(true)
 			return err
 		}
 	} else {
@@ -1171,7 +1170,7 @@ func (e *Editor) DebugStartSession(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	outputExecutableClean := filepath.Clean(filepath.Join(filepath.Dir(absFilename), outputExecutable))
 	if !files.Exists(outputExecutableClean) {
 		e.debugMode = false
-		e.redrawCursor = true
+		e.redrawCursor.Store(true)
 		return errors.New("could not find " + outputExecutableClean)
 	}
 
@@ -1180,11 +1179,11 @@ func (e *Editor) DebugStartSession(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		// This happens when the program running under GDB is done running.
 		programRunning = false
 		status.SetMessageAfterRedraw("Execution complete")
-		e.redraw = true
-		e.redrawCursor = true
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
 	})
 	if err != nil || e.gdb == nil {
-		e.redrawCursor = true
+		e.redrawCursor.Store(true)
 		if msg != "" {
 			msg += ", "
 		}

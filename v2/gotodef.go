@@ -65,11 +65,12 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 	foundX, foundY := e.backwardSearch(startIndex, stopIndex)
 	if foundY != -1 {
 		// Go to the found match
-		e.redraw, _ = e.GoTo(foundY, c, status)
+		redraw, _ := e.GoTo(foundY, c, status)
+		e.redraw.Store(redraw)
 		if foundX == -1 {
 			// Center and prepare to redraw
 			e.Center(c)
-			e.redraw = true
+			e.redraw.Store(true)
 			e.redrawCursor = e.redraw
 			return false
 		}
@@ -134,7 +135,8 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 							if goFile != oldFilename {
 								e.Switch(c, tty, status, fileLock, goFile)
 							}
-							e.redraw, _ = e.GoTo(LineIndex(i), c, status)
+							redraw, _ := e.GoTo(LineIndex(i), c, status)
+							e.redraw.Store(redraw)
 
 							// Push a function for how to go back
 							backFunctions = append(backFunctions, func() {
@@ -144,7 +146,8 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 								if goFile != oldFilename {
 									e.Switch(c, tty, status, fileLock, oldFilename)
 								}
-								e.redraw, _ = e.GoTo(oldLineIndex, c, status)
+								redraw, _ := e.GoTo(oldLineIndex, c, status)
+								e.redraw.Store(redraw)
 							})
 
 							return true
@@ -160,7 +163,8 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 							if goFile != oldFilename {
 								e.Switch(c, tty, status, fileLock, goFile)
 							}
-							e.redraw, _ = e.GoTo(LineIndex(i), c, status)
+							redraw, _ := e.GoTo(LineIndex(i), c, status)
+							e.redraw.Store(redraw)
 
 							// Push a function for how to go back
 							backFunctions = append(backFunctions, func() {
@@ -170,7 +174,8 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 								if goFile != oldFilename {
 									e.Switch(c, tty, status, fileLock, oldFilename)
 								}
-								e.redraw, _ = e.GoTo(oldLineIndex, c, status)
+								redraw, _ := e.GoTo(oldLineIndex, c, status)
+								e.redraw.Store(redraw)
 							})
 
 							return true

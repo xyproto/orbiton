@@ -36,7 +36,9 @@ const (
 )
 
 // Create a LockKeeper for keeping track of which files are being edited
-var fileLock = NewLockKeeper(defaultLockFile)
+var (
+	fileLock = NewLockKeeper(defaultLockFile)
+)
 
 // Loop will set up and run the main loop of the editor
 // a *vt100.TTY struct
@@ -279,8 +281,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if line := e.CurrentLine(); e.mode == mode.Git && hasAnyPrefixWord(line, gitRebasePrefixes) {
 				newLine := nextGitRebaseKeyword(line)
 				e.SetCurrentLine(newLine)
-				e.redraw = true
-				e.redrawCursor = true
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
 				break
 			}
 
@@ -295,8 +297,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					status.SetMessage("nothing to format and no template available")
 					status.Show(c, e)
 				} else {
-					e.redraw = true
-					e.redrawCursor = true
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
 				}
 				break
 			}
@@ -360,7 +362,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				var alsoRun = kh.DoubleTapped("c:0")
 				const markdownDoubleSpacePrevention = true
 				e.Build(c, status, tty, alsoRun, markdownDoubleSpacePrevention)
-				e.redrawCursor = true
+				e.redrawCursor.Store(true)
 				regularEditingRightNow = true
 			}
 
@@ -372,7 +374,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// debug mode: next instruction
 
 			// Save the current file, but only if it has changed
-			if e.changed && !e.nanoMode {
+			if !e.nanoMode && e.changed.Load() {
 				if err := e.Save(c, tty); err != nil {
 					status.ClearAll(c)
 					status.SetError(err)
@@ -386,7 +388,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 
-			e.redrawCursor = true
+			e.redrawCursor.Store(true)
 
 			// Is there no corresponding header or source file?
 			noCorresponding := false
@@ -409,8 +411,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				const drawLines = true
 				justMovedUpOrDown := kh.PrevIs("↓", "↑")
 				e.FullResetRedraw(c, status, drawLines, justMovedUpOrDown)
-				e.redraw = true
-				e.redrawCursor = true
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
 			} else if !noCorresponding && (e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC) && hasS([]string{".cpp", ".cc", ".c", ".cxx", ".c++", ".m", ".mm", ".M"}, filepath.Ext(e.filename)) { // jump from source to header file
 				// If this is a C++ source file, try finding and opening the corresponding header file
 				// Check if there is a corresponding header file
@@ -449,7 +451,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					menuChoices = ivySymbols
 					selectedSymbol = "×"
 				}
-				e.redraw = true
+				e.redraw.Store(true)
 				selectedX, selectedY, cancel := e.SymbolMenu(tty, status, "Insert symbol", menuChoices, e.MenuTitleColor, e.MenuTextColor, e.MenuArrowColor)
 				if !cancel {
 					undo.Snapshot(e)
@@ -465,8 +467,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				const drawLines = true
 				justMovedUpOrDown := kh.PrevIs("↓", "↑")
 				e.FullResetRedraw(c, status, drawLines, justMovedUpOrDown)
-				e.redraw = true
-				e.redrawCursor = true
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
 			} else if e.macro == nil {
 				// Start recording a macro, then stop the recording when ctrl-t is pressed again,
 				// then ask for the number of repetitions to play it back when it's pressed after that,
@@ -510,8 +512,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:28": // ctrl-\, toggle comment for this block
 			undo.Snapshot(e)
 			e.ToggleCommentBlock(c)
-			e.redraw = true
-			e.redrawCursor = true
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
 		case "c:15": // ctrl-o, launch the command menu
 
 			if e.nanoMode { // ctrl-o, save
@@ -541,8 +543,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if e.nanoMode { // nano: ctrl-/
 				// go to line
 				e.JumpMode(c, status, tty)
-				e.redraw = true
-				e.redrawCursor = true
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
 				break
 			}
 
@@ -567,7 +569,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						// Move to the next position
 						e.Next(c)
 					}
-					e.redraw = true
+					e.redraw.Store(true)
 				}
 			}
 
@@ -588,7 +590,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.CursorBackward(c, status)
 
 			if e.highlightCurrentLine || e.highlightCurrentText {
-				e.redraw = true
+				e.redraw.Store(true)
 			}
 
 		case rightArrow: // right arrow
@@ -608,7 +610,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.CursorForward(c, status)
 
 			if e.highlightCurrentLine || e.highlightCurrentText {
-				e.redraw = true
+				e.redraw.Store(true)
 			}
 
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
@@ -641,8 +643,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.ClearSearch()
 					}
 				} else {
-					e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
-					e.redrawCursor = true
+					e.redraw.Store(e.ScrollUp(c, status, e.pos.scrollSpeed))
+					e.redrawCursor.Store(true)
 					if e.AfterLineScreenContents() {
 						e.End(c)
 					}
@@ -692,7 +694,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				if e.UpEnd(c) != nil {
 					// If below the top, scroll the contents up
 					if e.DataY() > 0 {
-						e.redraw = e.ScrollUp(c, status, 1)
+						e.redraw.Store(e.ScrollUp(c, status, 1))
 						e.pos.Down(c)
 						e.UpEnd(c)
 					}
@@ -712,14 +714,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.Prev(c)
 				}
 
-				e.redraw = true
+				e.redraw.Store(true)
 			}
 
 			if e.highlightCurrentLine || e.highlightCurrentText {
-				e.redraw = true
+				e.redraw.Store(true)
 			}
 
-			e.redrawCursor = true
+			e.redrawCursor.Store(true)
 
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
 
@@ -732,8 +734,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 							e.DebugEnd()
 							status.SetMessage("Program stopped")
 							status.SetMessageAfterRedraw(status.Message())
-							e.redraw = true
-							e.redrawCursor = true
+							e.redraw.Store(true)
+							e.redrawCursor.Store(true)
 							break
 						}
 						if err := e.DebugNextInstruction(); err != nil {
@@ -756,7 +758,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 								break
 							}
 						}
-						e.redrawCursor = true
+						e.redrawCursor.Store(true)
 						status.SetMessageAfterRedraw(status.Message())
 						break
 					} // e.gdb == nil
@@ -770,8 +772,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						status.SetError(err)
 						status.ShowNoTimeout(c, e)
 						e.debugMode = false
-						e.redrawCursor = true
-						e.redraw = true
+						e.redrawCursor.Store(true)
+						e.redraw.Store(true)
 						break
 					}
 					// Was no suitable compilation or export command found?
@@ -782,8 +784,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 							status.SetError(err)
 							status.ShowNoTimeout(c, e)
 							e.debugMode = false
-							e.redrawCursor = true
-							e.redraw = true
+							e.redrawCursor.Store(true)
+							e.redraw.Store(true)
 							break
 						}
 						// Building this file extension is not implemented yet.
@@ -793,7 +795,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						statsMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
 						status.SetMessage(statsMessage)
 						status.Show(c, e)
-						e.redrawCursor = true
+						e.redrawCursor.Store(true)
 						break
 					}
 					// Start debugging
@@ -801,7 +803,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						status.ClearAll(c)
 						status.SetError(err)
 						status.ShowNoTimeout(c, e)
-						e.redrawCursor = true
+						e.redrawCursor.Store(true)
 					}
 					break
 				}
@@ -827,14 +829,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 				} else {
 					// Scroll down
-					e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
+					redraw := e.ScrollDown(c, status, e.pos.scrollSpeed)
+					e.redraw.Store(redraw)
 					// If e.redraw is false, the end of file is reached
-					if !e.redraw {
+					if !redraw {
 						status.Clear(c)
 						status.SetMessage(endOfFileMessage)
 						status.Show(c, e)
 					}
-					e.redrawCursor = true
+					e.redrawCursor.Store(true)
 					if e.AfterLineScreenContents() {
 						e.End(c)
 					}
@@ -861,7 +864,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					} else {
 						status.SetMessageAfterRedraw(msg + " from here")
 					}
-					e.redraw = true
+					e.redraw.Store(true)
 					e.spellCheckMode = false
 					e.ClearSearch()
 				}
@@ -887,7 +890,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					// If at the bottom, don't move down, but scroll the contents
 					// Output a helpful message
 					if !e.AfterEndOfDocument() {
-						e.redraw = e.ScrollDown(c, status, 1)
+						e.redraw.Store(e.ScrollDown(c, status, 1))
 						e.pos.Up()
 						e.DownEnd(c)
 					}
@@ -906,14 +909,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// If the cursor is after the length of the current line, move it to the end of the current line
 			if e.AfterLineScreenContents() || e.AfterEndOfLine() {
 				e.End(c)
-				e.redraw = true
+				e.redraw.Store(true)
 			}
 
 			if e.highlightCurrentLine || e.highlightCurrentText {
-				e.redraw = true
+				e.redraw.Store(true)
 			}
 
-			e.redrawCursor = true
+			e.redrawCursor.Store(true)
 
 		case "c:12": // ctrl-l, go to line number or percentage
 			if !e.nanoMode {
@@ -923,24 +926,24 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				case showHotkeyOverviewAction:
 					const repositionCursorAfterDrawing = true
 					e.DrawHotkeyOverview(tty, c, status, repositionCursorAfterDrawing)
-					e.redraw = true
-					e.redrawCursor = true
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
 				case launchTutorialAction:
 					const drawLines = true
 					e.FullResetRedraw(c, status, drawLines, false)
 					LaunchTutorial(tty, c, e, status)
-					e.redraw = true
-					e.redrawCursor = true
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
 				case scrollUpAction:
-					e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed)
-					e.redrawCursor = true
+					e.redraw.Store(e.ScrollUp(c, status, e.pos.scrollSpeed))
+					e.redrawCursor.Store(true)
 					if e.AfterLineScreenContents() {
 						e.End(c)
 					}
 					e.drawProgress = true
 				case scrollDownAction:
-					e.redraw = e.ScrollDown(c, status, e.pos.scrollSpeed)
-					e.redrawCursor = true
+					e.redraw.Store(e.ScrollDown(c, status, e.pos.scrollSpeed))
+					e.redrawCursor.Store(true)
 					if e.AfterLineScreenContents() {
 						e.End(c)
 					}
@@ -948,8 +951,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				case displayQuickHelpAction:
 					const repositionCursorAfterDrawing = true
 					e.DrawQuickHelp(c, repositionCursorAfterDrawing)
-					e.redraw = false
-					e.redrawCursor = false
+					e.redraw.Store(false)
+					e.redrawCursor.Store(false)
 				}
 				regularEditingRightNow = true
 				break
@@ -968,8 +971,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.DebugEnd()
 				e.debugMode = false
 				status.SetMessageAfterRedraw("Normal mode")
-				e.redraw = true
-				e.redrawCursor = true
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
 				break
 			}
 			// Reset the cut/copy/paste double-keypress detection
@@ -988,20 +991,21 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// Show a message after the redraw
 				status.SetMessageAfterRedraw("Macro cleared")
 			}
-			e.redraw = true
-			e.redrawCursor = true
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
 		case " ": // space
 			// Scroll down if a man page is being viewed, or if the editor is read-only
 			if e.readOnly && !e.blockMode {
 				// Try to scroll down a full page
-				e.redraw = e.PgDn(c, status)
+				redraw := e.PgDn(c, status)
+				e.redraw.Store(redraw)
 				// If e.redraw is false, the end of file is reached
-				if !e.redraw {
+				if !redraw {
 					status.Clear(c)
 					status.SetMessage(endOfFileMessage)
 					status.Show(c, e)
 				}
-				e.redrawCursor = true
+				e.redrawCursor.Store(true)
 				if e.AfterLineScreenContents() {
 					e.End(c)
 				}
@@ -1026,7 +1030,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// Move to the next position
 				e.Next(c)
 			}
-			e.redraw = true
+			e.redraw.Store(true)
 
 		case "c:13": // return
 
@@ -1220,11 +1224,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			h := int(c.Height())
 			if e.pos.sy > (h - 1) {
 				e.pos.Down(c)
-				e.redraw = e.ScrollDown(c, status, 1)
-				e.redrawCursor = true
+				e.redraw.Store(e.ScrollDown(c, status, 1))
+				e.redrawCursor.Store(true)
 			} else if e.pos.sy == (h - 1) {
-				e.redraw = e.ScrollDown(c, status, 1)
-				e.redrawCursor = true
+				e.redraw.Store(e.ScrollDown(c, status, 1))
+				e.redrawCursor.Store(true)
 			} else {
 				e.pos.Down(c)
 			}
@@ -1253,15 +1257,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			e.SaveX(true)
-			e.redraw = true
-			e.redrawCursor = true
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
 		case "c:8", "c:127": // ctrl-h or backspace
 
 			// Scroll up if a man page is being viewed, or if the editor is read-only
 			if e.readOnly && !e.blockMode {
 				// Scroll up at double speed
-				e.redraw = e.ScrollUp(c, status, e.pos.scrollSpeed*2)
-				e.redrawCursor = true
+				e.redraw.Store(e.ScrollUp(c, status, e.pos.scrollSpeed*2))
+				e.redrawCursor.Store(true)
 				if e.AfterLineScreenContents() {
 					e.End(c)
 				}
@@ -1271,8 +1275,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Just clear the search term, if there is an active search
 			if len(e.SearchTerm()) > 0 {
 				e.ClearSearch()
-				e.redraw = true
-				e.redrawCursor = true
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
 				// Don't break, continue to delete to the left after clearing the search,
 				// since Esc can be used to only clear the search.
 				// break
@@ -1282,8 +1286,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.Backspace(c, bookmark)
 
-			e.redrawCursor = true
-			e.redraw = true
+			e.redrawCursor.Store(true)
+			e.redraw.Store(true)
 		case "c:9": // tab or ctrl-i
 
 			if e.spellCheckMode {
@@ -1335,8 +1339,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				if found {
 					toInsert := strings.TrimPrefix(expandedWord, word)
 					undo.Snapshot(e)
-					e.redrawCursor = true
-					e.redraw = true
+					e.redrawCursor.Store(true)
+					e.redraw.Store(true)
 					// Insert the part of expandedWord that comes after the current word
 					e.InsertStringAndMove(c, toInsert)
 					break
@@ -1355,8 +1359,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 				// Choose a suggestion (tab cycles to the next suggestion)
 				chosen := e.SuggestMode(c, status, tty, suggestions)
-				e.redrawCursor = true
-				e.redraw = true
+				e.redrawCursor.Store(true)
+				e.redraw.Store(true)
 
 				if chosen != "" {
 					undo.Snapshot(e)
@@ -1421,8 +1425,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					if e.AtOrAfterEndOfLine() {
 						e.End(c)
 					}
-					e.redrawCursor = true
-					e.redraw = true
+					e.redrawCursor.Store(true)
+					e.redraw.Store(true)
 
 					// job done
 					break
@@ -1449,13 +1453,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			// Prepare to redraw
-			e.redrawCursor = true
-			e.redraw = true
+			e.redrawCursor.Store(true)
+			e.redraw.Store(true)
 
 		case pgUpKey: // page up
 			h := int(c.H())
-			e.redraw = e.ScrollUp(c, status, h)
-			e.redrawCursor = true
+			e.redraw.Store(e.ScrollUp(c, status, h))
+			e.redrawCursor.Store(true)
 			if e.AfterLineScreenContents() {
 				e.End(c)
 			}
@@ -1463,8 +1467,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case pgDnKey: // page down
 			h := int(c.H())
-			e.redraw = e.ScrollDown(c, status, h)
-			e.redrawCursor = true
+			e.redraw.Store(e.ScrollDown(c, status, h))
+			e.redrawCursor.Store(true)
 			if e.AfterLineScreenContents() {
 				e.End(c)
 			}
@@ -1474,8 +1478,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			if e.nanoMode { // nano: ctrl-y, page up
 				h := int(c.H())
-				e.redraw = e.ScrollUp(c, status, h)
-				e.redrawCursor = true
+				e.redraw.Store(e.ScrollUp(c, status, h))
+				e.redrawCursor.Store(true)
 				if e.AfterLineScreenContents() {
 					e.End(c)
 				}
@@ -1525,7 +1529,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.GoToStartOfTextLine(c)
 			}
 
-			e.redrawCursor = true
+			e.redrawCursor.Store(true)
 			e.SaveX(true)
 		case "c:5", endKey: // ctrl-e, end
 
@@ -1544,7 +1548,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			} else {
 				e.End(c)
 			}
-			e.redrawCursor = true
+			e.redrawCursor.Store(true)
 			e.SaveX(true)
 		case "c:4": // ctrl-d, delete
 			undo.Snapshot(e)
@@ -1553,9 +1557,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.Show(c, e)
 			} else {
 				e.Delete(c, e.blockMode)
-				e.redraw = true
+				e.redraw.Store(true)
 			}
-			e.redrawCursor = true
+			e.redrawCursor.Store(true)
 
 		case "c:29", "c:30": // ctrl-~, jump to matching parenthesis or curly bracket
 			if e.JumpToMatching(c) {
@@ -1578,8 +1582,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// If a search is in progress, clear the search first
 			if e.searchTerm != "" {
 				e.ClearSearch()
-				e.redraw = true
-				e.redrawCursor = true
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
 			}
 
 			oldFilename := e.filename
@@ -1602,7 +1606,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						// The switch is not strictly needed, since we will probably be in the same file
 						e.Switch(c, tty, status, fileLock, oldFilename)
 					}
-					e.redraw, _ = e.GoTo(oldLineIndex, c, status)
+					redraw, _ := e.GoTo(oldLineIndex, c, status)
+					e.redraw.Store(redraw)
 					e.ClearSearch()
 				})
 			} else {
@@ -1615,7 +1620,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 			}
 
-			e.redraw = true
+			e.redraw.Store(true)
 			status.Show(c, e)
 
 		case "c:21": // ctrl-u to undo
@@ -1639,8 +1644,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				x := e.pos.ScreenX()
 				y := e.pos.ScreenY()
 				vt100.SetXY(uint(x), uint(y))
-				e.redrawCursor = true
-				e.redraw = true
+				e.redrawCursor.Store(true)
+				e.redraw.Store(true)
 			} else {
 				status.SetMessage("Nothing more to undo")
 				status.Show(c, e)
@@ -1649,7 +1654,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			if e.nanoMode { // nano: ctrl-x, quit
 
-				if e.changed {
+				if e.changed.Load() {
 					// Ask the user which filename to save to
 					if newFilename, ok := e.UserInput(c, tty, status, "Write to", e.filename, []string{e.filename}, false, e.filename); ok {
 						e.filename = newFilename
@@ -1702,8 +1707,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				regularEditingRightNow = true
 
 				// No status message is needed for the cut operation, because it's visible that lines are cut
-				e.redrawCursor = true
-				e.redraw = true
+				e.redrawCursor.Store(true)
+				e.redraw.Store(true)
 			}
 			// Go to the end of the current line
 			e.End(c)
@@ -1805,8 +1810,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			if e.nanoMode { // nano: ctrl-v, page down
 				h := int(c.H())
-				e.redraw = e.ScrollDown(c, status, h)
-				e.redrawCursor = true
+				e.redraw.Store(e.ScrollDown(c, status, h))
+				e.redrawCursor.Store(true)
 				if e.AfterLineScreenContents() {
 					e.End(c)
 				}
@@ -1842,8 +1847,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				undo.Snapshot(e)
 				newLine := nextGitRebaseKeyword(line)
 				e.SetCurrentLine(newLine)
-				e.redraw = true
-				e.redrawCursor = true
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
 				break
 			}
 
@@ -1916,7 +1921,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					// TODO: Just use status.SetMessageAfterRedraw instead?
 					// Do the redraw manually before showing the status message
 					e.DrawLines(c, true, false, true)
-					e.redraw = false
+					e.redraw.Store(false)
 					// Show the status message
 					s := "Jumped to breakpoint at line " + e.LineNumber().String()
 					status.SetMessage(s)
@@ -1940,14 +1945,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					// TODO: Just use status.SetMessageAfterRedraw instead?
 					// Do the redraw manually before showing the status message
 					e.DrawLines(c, true, false, true)
-					e.redraw = false
+					e.redraw.Store(false)
 					// Show the status message
 					s := "Jumped to bookmark at line " + e.LineNumber().String()
 					status.SetMessage(s)
 				}
 			}
 			status.Show(c, e)
-			e.redrawCursor = true
+			e.redrawCursor.Store(true)
 		case "c:10": // ctrl-j, join line
 			if e.Empty() {
 				status.SetMessage("Empty")
@@ -2009,11 +2014,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.WriteRune(c)
 						e.Next(c)
 					}
-					e.redraw = true
+					e.redraw.Store(true)
 				}
 			} else if len(keyRunes) > 0 && unicode.IsGraphic(keyRunes[0]) { // any other key that can be drawn
 				undo.Snapshot(e)
-				e.redraw = true
+				e.redraw.Store(true)
 
 				// Place *something*
 				r := keyRunes[0]
@@ -2059,7 +2064,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					// Move to the next position
 					e.Next(c)
 				}
-				e.redrawCursor = true
+				e.redrawCursor.Store(true)
 			}
 		}
 
@@ -2090,7 +2095,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		}
 
 		// Clear status line, if needed
-		if (e.statusMode || e.blockMode) && e.redrawCursor {
+		if (e.statusMode || e.blockMode) && e.redrawCursor.Load() {
 			status.ClearAll(c)
 		}
 
@@ -2106,11 +2111,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				time.Sleep(arrowKeyHighlightTime)
 				justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
 				if !justMovedUpOrDownOrLeftOrRight && regularEditingRightNow {
-					e.redraw = true
-					e.redrawCursor = true
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
 					e.RedrawAtEndOfKeyLoop(c, status, false)
-					e.redraw = false
-					e.redrawCursor = false
+					e.redraw.Store(false)
+					e.redrawCursor.Store(false)
 				}
 			}()
 		}

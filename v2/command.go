@@ -138,12 +138,12 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		build: func() { // build
 			if e.Empty() {
 				// Empty file, nothing to build
-				e.redraw = true
+				e.redraw.Store(true)
 				status.SetErrorMessageAfterRedraw("Nothing to build")
 				return
 			}
 			// Save the current file, but only if it has changed
-			if e.changed {
+			if e.changed.Load() {
 				if err := e.Save(c, tty); err != nil {
 					status.ClearAll(c)
 					status.SetError(err)
@@ -208,7 +208,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 				status.SetMessageAfterRedraw(fmt.Sprintf("Copied %d lines", numLines))
 			}
 			// move the cursor to stopIndex
-			e.redraw = e.GoToLineNumber(LineNumber(stopIndex), c, status, true)
+			e.redraw.Store(e.GoToLineNumber(LineNumber(stopIndex), c, status, true))
 		},
 		copy200: func() { // copy 200 lines of text and move the cursor 200 lines ahead
 			startIndex := e.LineIndex()
@@ -235,7 +235,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 				status.SetMessageAfterRedraw(fmt.Sprintf("Copied %d lines", numLines))
 			}
 			// move the cursor to stopIndex
-			e.redraw = e.GoToLineNumber(LineNumber(stopIndex+1), c, status, true)
+			e.redraw.Store(e.GoToLineNumber(LineNumber(stopIndex+1), c, status, true))
 		},
 		gobacktofunc: func() {
 			// A special case, search backwards to the start of the function (or to "main")
@@ -250,8 +250,8 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
 				if err == errNoSearchMatch {
 					e.ClearSearch()
-					e.redraw = true
-					e.redrawCursor = true
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
 					status.SetErrorMessageAfterRedraw("No function signatures found")
 				}
 			}
@@ -272,7 +272,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			undo.Snapshot(e)
 			editedFileDir := filepath.Dir(e.filename)
 			if err := e.InsertFile(c, filepath.Join(editedFileDir, strings.TrimSpace(args[1]))); err != nil {
-				e.redraw = true
+				e.redraw.Store(true)
 				status.SetErrorAfterRedraw(err)
 			}
 		},
@@ -312,12 +312,12 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		sortstrings: func() { // sort the words on the current line
 			undo.Snapshot(e)
 			e.SortStrings()
-			e.redraw = true
-			e.redrawCursor = true
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
 		},
 		spellcheck: func() {
-			e.redraw = true
-			e.redrawCursor = true
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
 			typo, corrected, err := e.SearchForTypo()
 			switch {
 			case err != nil:
@@ -425,6 +425,6 @@ func (e *Editor) CommandPrompt(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			time.Sleep(120 * time.Millisecond)
 		}
 	} else {
-		e.redrawCursor = true
+		e.redrawCursor.Store(true)
 	}
 }

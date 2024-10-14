@@ -46,8 +46,8 @@ func (e *Editor) StartMonitoring(c *vt100.Canvas, tty *vt100.TTY, status *Status
 
 					const drawLines = true
 					e.FullResetRedraw(c, status, drawLines, false)
-					e.redraw = true
-					e.redrawCursor = true
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
 				}
 
 			case err, ok := <-watcher.Errors:

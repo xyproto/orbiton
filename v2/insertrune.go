@@ -19,11 +19,11 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) bool {
 	}
 
 	// The document will be changed
-	e.changed = true
+	e.changed.Store(true)
 
 	// Repaint afterwards
-	e.redrawCursor = true
-	e.redraw = true
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
 
 	// Wrap a bit before the limit if the inserted rune is a space?
 	limit := e.wrapWidth
@@ -57,8 +57,8 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) bool {
 		}
 
 		e.Center(c)
-		e.redraw = true
-		e.redrawCursor = true
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
 
 		return true
 	}

@@ -90,7 +90,7 @@ func (e *Editor) SetSearchTermWithTimeout(c *vt100.Canvas, status *StatusBar, s 
 			e.Center(c)
 			// Draw the lines to the canvas
 			e.DrawLines(c, true, false, false)
-			e.redraw = true
+			e.redraw.Store(true)
 		}
 		return true
 	}
@@ -258,7 +258,8 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap, forward
 	}
 
 	// Go to the found match
-	e.redraw, _ = e.GoTo(foundY, c, status)
+	redraw, _ := e.GoTo(foundY, c, status)
+	e.redraw.Store(redraw)
 	if foundX != -1 {
 		tabs := strings.Count(e.Line(foundY), "\t")
 		e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
@@ -267,8 +268,8 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap, forward
 
 	// Center and prepare to redraw
 	e.Center(c)
-	e.redraw = true
-	e.redrawCursor = e.redraw
+	e.redraw.Store(true)
+	e.redrawCursor.Store(redraw)
 
 	return nil
 }
@@ -447,14 +448,14 @@ AGAIN:
 			foundNoTypos = true
 			status.ClearAll(c)
 			status.SetMessageAfterRedraw("No typos found")
-			e.redraw = true
+			e.redraw.Store(true)
 			e.spellCheckMode = false
 			e.ClearSearch()
 			return
 		}
 		if typo != "" && corrected != "" {
 			status.ClearAll(c)
-			e.redraw = true
+			e.redraw.Store(true)
 			status.SetMessageAfterRedraw(typo + " could be " + corrected)
 		}
 		s = typo
@@ -483,7 +484,7 @@ AGAIN:
 			searchHistory.AddAndSave(trimmedSearchString)
 		}
 		// Set up a redraw and return
-		e.redraw = true
+		e.redraw.Store(true)
 		return
 	} else if pressedReturn && previousSearch != "" { // search text -> tab -> replace text -> return
 		undo.Snapshot(e)
@@ -518,7 +519,7 @@ AGAIN:
 			searchHistory.AddAndSave(trimmedSearchString)
 		}
 		// Set up a redraw and return
-		e.redraw = true
+		e.redraw.Store(true)
 		return
 	}
 	e.SetSearchTermWithTimeout(c, status, s, spellCheckMode, timeout)
@@ -542,7 +543,7 @@ AGAIN:
 			// err = e.GoToNextMatch(c, status)
 			if err == errNoSearchMatch {
 				status.ClearAll(c)
-				e.redraw = true
+				e.redraw.Store(true)
 				if foundNoTypos || spellCheckMode {
 					status.SetMessageAfterRedraw("No typos found")
 					e.spellCheckMode = false

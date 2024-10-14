@@ -120,7 +120,8 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 					var foundY int
 					if y, err := strconv.Atoi(fields[1]); err == nil { // no error
 						foundY = y - 1
-						e.redraw, _ = e.GoTo(LineIndex(foundY), c, status)
+						redraw, _ := e.GoTo(LineIndex(foundY), c, status)
+						e.redraw.Store(redraw)
 						foundX := -1
 						if x, err := strconv.Atoi(fields[2]); err == nil { // no error
 							foundX = x - 1
@@ -131,7 +132,7 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 							e.Center(c)
 						}
 					}
-					e.redrawCursor = true
+					e.redrawCursor.Store(true)
 				}
 				return retErr
 			}
@@ -140,12 +141,12 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 				return err
 			}
 			// Mark the data as changed, despite just having loaded a file
-			e.changed = true
-			e.redrawCursor = true
+			e.changed.Store(true)
+			e.redrawCursor.Store(true)
 		}
 		// Try to close the file. f.Close() checks if f is nil before closing.
-		e.redraw = true
-		e.redrawCursor = true
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
 	}
 	return nil
 }
@@ -199,7 +200,7 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 			return
 		}
 		e.LoadBytes(data)
-		e.redraw = true
+		e.redraw.Store(true)
 		return
 	}
 
@@ -207,7 +208,7 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 	if baseFilename := filepath.Base(e.filename); baseFilename == "fstab" {
 		const spaces = 2
 		e.LoadBytes(formatFstab([]byte(e.String()), spaces))
-		e.redraw = true
+		e.redraw.Store(true)
 		return
 	}
 
@@ -216,7 +217,7 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 		const removeExistingImports = false
 		const deGlobImports = true
 		e.LoadBytes(organizeImports([]byte(e.String()), e.mode == mode.Java, removeExistingImports, deGlobImports))
-		e.redraw = true
+		e.redraw.Store(true)
 		// Do not return, since there is more formatting to be done
 	}
 

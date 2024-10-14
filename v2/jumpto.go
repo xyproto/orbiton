@@ -135,7 +135,7 @@ func (e *Editor) GoTo(dataY LineIndex, c *vt100.Canvas, status *StatusBar) (bool
 	}
 
 	// Trigger cursor redraw
-	e.redrawCursor = true
+	e.redrawCursor.Store(true)
 
 	// Should also redraw the text, and has the end been reached?
 	return true, reachedTheEnd
@@ -278,10 +278,10 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 				status.SetMessage(prompt + " " + lns)
 				status.ShowNoTimeout(c, e)
 			}
-		case "t": // top of file
+		case "t", homeKey: // top of file
 			doneCollectingDigits = true
 			goToTop = true
-		case "b": // end of file
+		case "b", endKey: // end of file
 			doneCollectingDigits = true
 			goToEnd = true
 		case "c": // center of file
@@ -307,8 +307,8 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 		case "c:12", "c:17", "c:27", "c:11", "c:15": // ctrl-l, ctrl-q, esc, ctrl-k or ctrl-o (keys near ctrl-l)
 			cancel = true
 			lns = ""
-			e.redraw = true
-			e.redrawCursor = true
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
 			postAction = noAction
 			fallthrough // done
 		case "c:13": // return
@@ -333,8 +333,8 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 		lineIndex := e.GetJumpY(goToLetter)
 		const center = false
 		const handleTabsAsWell = false
-		e.redraw = e.GoToLineIndexAndColIndex(lineIndex, colIndex, c, status, center, handleTabsAsWell)
-		e.redrawCursor = e.redraw
+		redraw := e.GoToLineIndexAndColIndex(lineIndex, colIndex, c, status, center, handleTabsAsWell)
+		e.redraw.Store(redraw)
 	} else if goToTop {
 		e.GoToTop(c, status)
 	} else if goToCenter {
@@ -351,8 +351,8 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 		} else {
 			ok = DisableQuickHelpScreen(status)
 		}
-		e.redraw = ok
-		e.redrawCursor = ok
+		e.redraw.Store(ok)
+		e.redrawCursor.Store(ok)
 	} else if lns == "" && !cancel && postAction == noAction {
 		if e.DataY() > 0 {
 			// If not already at the top, go there
@@ -365,17 +365,17 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 		// Go to the specified percentage
 		if percentageInt, err := strconv.Atoi(lns[:len(lns)-1]); err == nil { // no error {
 			lineIndex := int(math.Round(float64(e.Len()) * float64(percentageInt) * 0.01))
-			e.redraw = e.GoToLineNumber(LineNumber(lineIndex), c, status, true)
+			e.redraw.Store(e.GoToLineNumber(LineNumber(lineIndex), c, status, true))
 		}
 	} else if strings.Count(lns, ".") == 1 || strings.Count(lns, ",") == 1 {
 		if percentageFloat, err := strconv.ParseFloat(strings.ReplaceAll(lns, ",", "."), 64); err == nil { // no error
 			lineIndex := int(math.Round(float64(e.Len()) * percentageFloat))
-			e.redraw = e.GoToLineNumber(LineNumber(lineIndex), c, status, true)
+			e.redraw.Store(e.GoToLineNumber(LineNumber(lineIndex), c, status, true))
 		}
 	} else if postAction == noAction {
 		// Go to the specified line
 		if ln, err := strconv.Atoi(lns); err == nil { // no error
-			e.redraw = e.GoToLineNumber(LineNumber(ln), c, status, true)
+			e.redraw.Store(e.GoToLineNumber(LineNumber(ln), c, status, true))
 		}
 	}
 	e.jumpToLetterMode = false

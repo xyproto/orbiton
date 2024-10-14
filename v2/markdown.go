@@ -16,13 +16,13 @@ func (e *Editor) ToggleCheckboxCurrentLine() bool {
 	if line := e.CurrentLine(); hasAnyPrefixWord(strings.TrimSpace(line), checkboxPrefixes) {
 		if strings.Contains(line, "[ ]") {
 			e.SetLine(e.DataY(), strings.Replace(line, "[ ]", "[x]", 1))
-			e.redraw = true
+			e.redraw.Store(true)
 		} else if strings.Contains(line, "[x]") {
 			e.SetLine(e.DataY(), strings.Replace(line, "[x]", "[ ]", 1))
-			e.redraw = true
+			e.redraw.Store(true)
 		} else if strings.Contains(line, "[X]") {
 			e.SetLine(e.DataY(), strings.Replace(line, "[X]", "[ ]", 1))
-			e.redraw = true
+			e.redraw.Store(true)
 		}
 		e.redrawCursor = e.redraw
 		return true

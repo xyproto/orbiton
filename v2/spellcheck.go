@@ -196,8 +196,8 @@ func (e *Editor) SearchForTypo() (string, string, error) {
 // NanoNextTypo tries to jump to the next typo
 func (e *Editor) NanoNextTypo(c *vt100.Canvas, status *StatusBar) (string, string) {
 	if typo, corrected, err := e.SearchForTypo(); err == nil || err == errFoundNoTypos {
-		e.redraw = true
-		e.redrawCursor = true
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
 		if err == errFoundNoTypos || typo == "" {
 			status.ClearAll(c)
 			status.SetMessage("No typos found")

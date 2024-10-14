@@ -131,15 +131,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert \""+insertFilename+"\" at the current line", "insertfile", insertFilename)
 
-	//actions.Add("Toggle status bar", func() {
-	//status.ClearAll(c)
-	//e.statusMode = !e.statusMode
-	//if e.statusMode {
-	//status.ShowFilenameLineColWordCount(c, e)
-	//e.showColumnLimit = e.wrapWhenTyping
-	//}
-	//})
-
 	actions.Add("Toggle column limit indicator", func() {
 		e.showColumnLimit = !e.showColumnLimit
 	})
@@ -231,7 +222,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			// Also close the portal, if any
 			e.ClosePortal()
 			// Mark the file as changed
-			e.changed = true
+			e.changed.Store(true)
 		}
 
 		// Get the current index and remove the rest of the lines
@@ -248,10 +239,10 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			}
 		}
 
-		if e.changed {
+		if e.changed.Load() {
 			e.MakeConsistent()
-			e.redraw = true
-			e.redrawCursor = true
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
 		}
 	})
 
@@ -524,8 +515,8 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	if selected < 0 {
 		// Esc was pressed, or an item was otherwise not selected.
 		// Trigger a redraw and return.
-		e.redraw = true
-		e.redrawCursor = true
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
 		return selected
 	}
 
@@ -538,8 +529,8 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	}
 
 	// Redraw editor
-	e.redraw = true
-	e.redrawCursor = true
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
 
 	return selected
 }

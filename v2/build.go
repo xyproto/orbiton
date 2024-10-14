@@ -803,8 +803,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 								// Move to (x, y), line number first and then column number
 								if i, err := strconv.Atoi(lineNumberString); err == nil {
 									foundY := LineIndex(i - 1)
-									e.redraw, _ = e.GoTo(foundY, c, status)
-									e.redrawCursor = e.redraw
+									redraw, _ := e.GoTo(foundY, c, status)
+									e.redraw.Store(redraw)
+									e.redrawCursor.Store(redraw)
 									if x, err := strconv.Atoi(lineColumnString); err == nil { // no error
 										foundX := x - 1
 										tabs := strings.Count(e.Line(foundY), "\t")
@@ -952,8 +953,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					// Move to (x, y), line number first and then column number
 					if i, err := strconv.Atoi(lineNumberString); err == nil {
 						foundY := LineIndex(i - 1)
-						e.redraw, _ = e.GoTo(foundY, c, status)
-						e.redrawCursor = e.redraw
+						redraw, _ := e.GoTo(foundY, c, status)
+						e.redraw.Store(redraw)
+						e.redrawCursor.Store(redraw)
 						if x, err := strconv.Atoi(lineColumnString); err == nil { // no error
 							foundX := x - 1
 							tabs := strings.Count(e.Line(foundY), "\t")
@@ -975,8 +977,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 					if i, err := strconv.Atoi(parts[2]); err == nil {
 						foundY := LineIndex(i - 1)
-						e.redraw, _ = e.GoTo(foundY, c, status)
-						e.redrawCursor = e.redraw
+						redraw, _ := e.GoTo(foundY, c, status)
+						e.redraw.Store(redraw)
+						e.redrawCursor.Store(redraw)
 					}
 
 					baseErrorFilename := filepath.Base(parts[1])
@@ -1011,8 +1014,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 			if y, err := strconv.Atoi(fields[1]); err == nil { // no error
 
 				foundY := LineIndex(y - 1)
-				e.redraw, _ = e.GoTo(foundY, c, status)
-				e.redrawCursor = e.redraw
+				redraw, _ := e.GoTo(foundY, c, status)
+				e.redraw.Store(redraw)
+				e.redrawCursor.Store(redraw)
 
 				if x, err := strconv.Atoi(fields[2]); err == nil { // no error
 					foundX := x - 1
@@ -1044,8 +1048,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 				var foundY LineIndex
 				if y, err := strconv.Atoi(fields[1]); err == nil { // no error
 					foundY = LineIndex(y - 1)
-					e.redraw, _ = e.GoTo(foundY, c, status)
-					e.redrawCursor = e.redraw
+					redraw, _ := e.GoTo(foundY, c, status)
+					e.redraw.Store(redraw)
+					e.redrawCursor.Store(redraw)
 					foundX := -1
 					if x, err := strconv.Atoi(fields[2]); err == nil { // no error
 						foundX = x - 1
@@ -1084,8 +1089,9 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					var foundY LineIndex
 					if y, err := strconv.Atoi(errorY); err == nil { // no error
 						foundY = LineIndex(y - 1)
-						e.redraw, _ = e.GoTo(foundY, c, status)
-						e.redrawCursor = e.redraw
+						redraw, _ := e.GoTo(foundY, c, status)
+						e.redraw.Store(redraw)
+						e.redrawCursor.Store(redraw)
 						foundX := -1
 						if x, err := strconv.Atoi(errorX); err == nil { // no error
 							foundX = x - 1
@@ -1100,7 +1106,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 							}
 						}
 					}
-					e.redrawCursor = true
+					e.redrawCursor.Store(true)
 					// Nope, just the error message
 					// return errorMessage, true, false
 				}
@@ -1149,7 +1155,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 	}
 
 	// Save the current file, but only if it has changed
-	if e.changed {
+	if e.changed.Load() {
 		if err := e.Save(c, tty); err != nil {
 			status.ClearAll(c)
 			status.SetError(err)
@@ -1163,8 +1169,8 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 		if !programRunning {
 			e.DebugEnd()
 			status.SetMessage("Program stopped")
-			e.redrawCursor = true
-			e.redraw = true
+			e.redrawCursor.Store(true)
+			e.redraw.Store(true)
 			status.SetMessageAfterRedraw(status.Message())
 			return
 		}
@@ -1199,7 +1205,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 				status.SetMessage("Step")
 			}
 		}
-		e.redrawCursor = true
+		e.redrawCursor.Store(true)
 
 		// Redraw and use the triggered status message instead of Show
 		status.SetMessageAfterRedraw(status.Message())
@@ -1209,15 +1215,15 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 
 	// Clear the current search term, but don't redraw if there are status messages
 	e.ClearSearch()
-	e.redraw = false
+	e.redraw.Store(false)
 
 	// ctrl-space was pressed while in Nroff mode
 	if e.mode == mode.Nroff {
 		// TODO: Make this render the man page like if MANPAGER=o was used
 		e.mode = mode.ManPage
 		e.syntaxHighlight = true
-		e.redraw = true
-		e.redrawCursor = true
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
 		return
 	}
 
@@ -1306,7 +1312,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 			// Error while building
 			status.SetError(err)
 			status.ShowNoTimeout(c, e)
-			e.redrawCursor = true
+			e.redrawCursor.Store(true)
 			return // return from goroutine
 		}
 		// Not building any more
@@ -1320,7 +1326,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 				status.ClearAll(c)
 				status.SetError(err)
 				status.ShowNoTimeout(c, e)
-				e.redrawCursor = true
+				e.redrawCursor.Store(true)
 			}
 			return // return from goroutine
 		}
