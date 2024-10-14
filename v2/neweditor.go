@@ -21,6 +21,7 @@ var (
 	editTheme      bool             // does the theme has both a dark and a light version?
 	inVTEGUI       = env.Bool("OG") // is o running within the VTE GUI application?
 	tempDir        = env.Dir("TMPDIR", "/tmp")
+	envNoColor     = env.Bool("NO_COLOR")
 )
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
