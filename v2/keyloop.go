@@ -26,6 +26,13 @@ const (
 	rightArrow = "→"
 	upArrow    = "↑"
 	downArrow  = "↓"
+
+	// These keys are undocumented features
+	pgUpKey = "⇞" // page up
+	pgDnKey = "⇟" // page down
+	homeKey = "⇱" // home
+	endKey  = "⇲" // end
+	copyKey = "⎘" // ctrl-insert
 )
 
 // Create a LockKeeper for keeping track of which files are being edited
@@ -1444,6 +1451,25 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Prepare to redraw
 			e.redrawCursor = true
 			e.redraw = true
+
+		case pgUpKey: // page up
+			h := int(c.H())
+			e.redraw = e.ScrollUp(c, status, h)
+			e.redrawCursor = true
+			if e.AfterLineScreenContents() {
+				e.End(c)
+			}
+			e.drawProgress = true
+
+		case pgDnKey: // page down
+			h := int(c.H())
+			e.redraw = e.ScrollDown(c, status, h)
+			e.redrawCursor = true
+			if e.AfterLineScreenContents() {
+				e.End(c)
+			}
+			e.drawProgress = true
+
 		case "c:25": // ctrl-y
 
 			if e.nanoMode { // nano: ctrl-y, page up
@@ -1455,8 +1481,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 				break
 			}
+
 			fallthrough
-		case "c:1": // ctrl-a, home (or ctrl-y for scrolling up in the st terminal)
+		case "c:1", homeKey: // ctrl-a, home (or ctrl-y for scrolling up in the st terminal)
 
 			if e.spellCheckMode {
 				if addedWord := e.AddCurrentWordToWordList(); addedWord != "" {
@@ -1500,7 +1527,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.redrawCursor = true
 			e.SaveX(true)
-		case "c:5": // ctrl-e, end
+		case "c:5", endKey: // ctrl-e, end
 
 			// Do not reset cut/copy/paste status
 
@@ -1668,9 +1695,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 
 				// Delete the corresponding number of lines
+				regularEditingRightNow = false
 				for range lines {
 					e.DeleteLineMoveBookmark(y, bookmark)
 				}
+				regularEditingRightNow = true
 
 				// No status message is needed for the cut operation, because it's visible that lines are cut
 				e.redrawCursor = true
@@ -1686,7 +1715,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 			e.DeleteToEndOfLine(c, status, bookmark, &lastCopyY, &lastPasteY, &lastCutY)
-		case "c:3": // ctrl-c, copy the stripped contents of the current line
+		case "c:3", copyKey: // ctrl-c, copy the stripped contents of the current line
 
 			if e.nanoMode { // nano: ctrl-c, report cursor position
 				status.ClearAll(c)
@@ -2065,7 +2094,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			status.ClearAll(c)
 		}
 
-		arrowKeyHighlightTime := 750 * time.Millisecond
+		arrowKeyHighlightTime := 1200 * time.Millisecond
 
 		// Draw and/or redraw everything, with slightly different behavior over ssh
 		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
