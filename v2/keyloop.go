@@ -66,6 +66,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		jsonFormatToggle bool              // for toggling indentation or not when pressing ctrl-w for JSON
 
 		markdownTableEditorCounter int // the number of times the Markdown table editor has been displayed
+
+		regularEditingRightNow = true // is the user in some sort of mode, like the ctrl-o menu, or editing text right now?
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -329,9 +331,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 
+			regularEditingRightNow = false
 			const clearPreviousSearch = true
 			const searchForward = true
 			e.SearchMode(c, status, tty, clearPreviousSearch, searchForward, undo)
+			regularEditingRightNow = true
 
 		case "c:0": // ctrl-space, build source code to executable, or export, depending on the mode
 			if e.nanoMode {
@@ -344,11 +348,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			case mode.Markdown:
 				e.ToggleCheckboxCurrentLine()
 			default:
+				regularEditingRightNow = false
 				// Then build, and run if ctrl-space was double-tapped
 				var alsoRun = kh.DoubleTapped("c:0")
 				const markdownDoubleSpacePrevention = true
 				e.Build(c, status, tty, alsoRun, markdownDoubleSpacePrevention)
 				e.redrawCursor = true
+				regularEditingRightNow = true
 			}
 
 		case "c:20": // ctrl-t
@@ -515,11 +521,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 
+			regularEditingRightNow = false
 			status.ClearAll(c)
 			undo.Snapshot(e)
 			undoBackup := undo
 			lastCommandMenuIndex = e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
 			undo = undoBackup
+			regularEditingRightNow = true
+
 		case "c:31": // ctrl-_, jump to a matching parenthesis or enter a digraph
 
 			if e.nanoMode { // nano: ctrl-/
@@ -901,6 +910,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:12": // ctrl-l, go to line number or percentage
 			if !e.nanoMode {
+				regularEditingRightNow = false
 				e.ClearSearch() // clear the current search first
 				switch e.JumpMode(c, status, tty) {
 				case showHotkeyOverviewAction:
@@ -934,6 +944,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.redraw = false
 					e.redrawCursor = false
 				}
+				regularEditingRightNow = true
 				break
 			}
 			fallthrough // nano: ctrl-l to refresh
@@ -2057,18 +2068,20 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
 		e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown)
 
-		// When not moving up or down, turn off the text highlight after arrowHighlightTime
-		go func() {
-			time.Sleep(arrowKeyHighlightTime)
-			justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
-			if !justMovedUpOrDownOrLeftOrRight {
-				e.redraw = true
-				e.redrawCursor = true
-				e.RedrawAtEndOfKeyLoop(c, status, false)
-				e.redraw = false
-				e.redrawCursor = false
-			}
-		}()
+		if (e.highlightCurrentLine || e.highlightCurrentText) && !e.EmptyLine() {
+			// When not moving up or down, turn off the text highlight after arrowHighlightTime
+			go func() {
+				time.Sleep(arrowKeyHighlightTime)
+				justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
+				if !justMovedUpOrDownOrLeftOrRight && regularEditingRightNow {
+					e.redraw = true
+					e.redrawCursor = true
+					e.RedrawAtEndOfKeyLoop(c, status, false)
+					e.redraw = false
+					e.redrawCursor = false
+				}
+			}()
+		}
 
 		// Also draw the watches, if debug mode is enabled // and a debug session is in progress
 		if e.debugMode {
