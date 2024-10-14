@@ -972,6 +972,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Do a full clear and redraw + clear search term + jump
 			const drawLines = true
 			e.FullResetRedraw(c, status, drawLines, false)
+			regularEditingRightNow = true
 			if e.macro != nil || e.playBackMacroCount > 0 {
 				// Stop the playback
 				e.playBackMacroCount = 0
@@ -2048,6 +2049,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		// Display the ctrl-o menu if esc was pressed 4 times
 		if !e.nanoMode && kh.Repeated("c:27", 4-1) { // esc pressed 4 times (minus the one that was added just now)
+			regularEditingRightNow = false
 			status.ClearAll(c)
 			undo.Snapshot(e)
 			undoBackup := undo
@@ -2055,6 +2057,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			undo = undoBackup
 			// Reset the key history next iteration
 			clearKeyHistory = true
+			regularEditingRightNow = true
 		}
 
 		// Clear status line, if needed
