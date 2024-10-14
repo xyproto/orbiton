@@ -2062,7 +2062,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			status.ClearAll(c)
 		}
 
-		arrowKeyHighlightTime := 500 * time.Millisecond
+		arrowKeyHighlightTime := 750 * time.Millisecond
 
 		// Draw and/or redraw everything, with slightly different behavior over ssh
 		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
