@@ -299,7 +299,11 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	// because $COLORFGBG is "15;0" even though the background is white.
 	if !e.readOnly && (!specificLetter || editTheme) {
 		assumeLightBackground := env.Bool("O_LIGHT")
-		switch env.StrAlt("O_THEME", "THEME") {
+		theme := env.StrAlt("O_THEME", "THEME")
+		if envNoColor {
+			theme = ""
+		}
+		switch theme {
 		case "redblack":
 			e.SetTheme(NewRedBlackTheme(), assumeLightBackground)
 		case "synthwave":
