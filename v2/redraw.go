@@ -132,8 +132,6 @@ func (e *Editor) HideCursorDrawLines(c *vt100.Canvas, respectOffset, redrawCanva
 	}
 }
 
-//e.EnableAndPlaceCursor(c)
-
 // InitialRedraw is called right before the main loop is started
 func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 	// Check if an extra reset is needed
