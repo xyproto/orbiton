@@ -77,6 +77,69 @@ type Editor struct {
 	redraw                     atomic.Bool     // if the contents should be redrawn in the next loop
 	redrawCursor               atomic.Bool     // if the cursor should be moved to the location it is supposed to be
 	drawProgress               atomic.Bool     // used for drawing the progress character on the right side
+
+}
+
+// Copy makes a copy of an Editor struct, with most fields deep copied
+func (e *Editor) Copy() *Editor {
+	var e2 Editor
+	if e.detectedTabs != nil {
+		detectedTabsCopy := *e.detectedTabs
+		e2.detectedTabs = &detectedTabsCopy
+	}
+	e2.breakpoint = e.breakpoint         //.Copy()
+	e2.gdb = e.gdb                       //.Copy()
+	e2.sameFilePortal = e.sameFilePortal //.Copy()
+	e2.lines = e.CopyLines()
+	e2.macro = e.macro //.Copy()
+	e2.filename = e.filename
+	e2.searchTerm = e.searchTerm
+	e2.stickySearchTerm = e.stickySearchTerm
+	e2.Theme = e.Theme
+	e2.pos = e.pos
+	e2.indentation = e.indentation
+	e2.wrapWidth = e.wrapWidth
+	e2.mode = e.mode
+	e2.debugShowRegisters = e.debugShowRegisters
+	e2.previousY = e.previousY
+	e2.previousX = e.previousX
+	e2.lineBeforeSearch = e.lineBeforeSearch
+	e2.playBackMacroCount = e.playBackMacroCount
+	e2.rainbowParenthesis = e.rainbowParenthesis
+	e2.sshMode = e.sshMode
+	e2.debugMode = e.debugMode
+	e2.statusMode = e.statusMode
+	e2.showColumnLimit = e.showColumnLimit
+	e2.expandTags = e.expandTags
+	e2.syntaxHighlight = e.syntaxHighlight
+	e2.stopParentOnQuit = e.stopParentOnQuit
+	e2.clearOnQuit = e.clearOnQuit
+	e2.quit = e.quit
+	e2.readOnly = e.readOnly
+	e2.debugHideOutput = e.debugHideOutput
+	e2.binaryFile = e.binaryFile
+	e2.wrapWhenTyping = e.wrapWhenTyping
+	e2.addSpace = e.addSpace
+	e2.debugStepInto = e.debugStepInto
+	e2.slowLoad = e.slowLoad
+	e2.building = e.building
+	e2.runAfterBuild = e.runAfterBuild
+	e2.monitorAndReadOnly = e.monitorAndReadOnly
+	e2.primaryClipboard = e.primaryClipboard
+	e2.jumpToLetterMode = e.jumpToLetterMode
+	e2.nanoMode = e.nanoMode
+	e2.spellCheckMode = e.spellCheckMode
+	e2.createDirectoriesIfMissing = e.createDirectoriesIfMissing
+	e2.displayQuickHelp = e.displayQuickHelp
+	e2.blockMode = e.blockMode
+	e2.dirMode = e.dirMode
+	e2.highlightCurrentLine = e.highlightCurrentLine
+	e2.highlightCurrentText = e.highlightCurrentText
+	e2.changed.Store(e.changed.Load())
+	e2.redraw.Store(e.redraw.Load())
+	e2.redrawCursor.Store(e.redrawCursor.Load())
+	e2.drawProgress.Store(e.drawProgress.Load())
+	return &e2
 }
 
 // CopyLines will create a new map[int][]rune struct that is the copy of all the lines in the editor
@@ -2225,7 +2288,6 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)
-
 			// Now use e2 as the current editor
 			*e = *e2
 			(*e).lines = (*e2).lines
