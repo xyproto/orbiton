@@ -79,7 +79,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		regularEditingRightNow = true // is the user in some sort of mode, like the ctrl-o menu, or editing text right now?
 
-		highlightTimerActive atomic.Bool
+		highlightTimerCounter atomic.Uint64
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -2110,12 +2110,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		if (e.highlightCurrentLine || e.highlightCurrentText) && !e.statusMode && !e.EmptyLine() {
 			// When not moving up or down, turn off the text highlight after arrowHighlightTime
-			if !highlightTimerActive.Load() {
+			if !e.statusMode && status.messageAfterRedraw == "" {
 				go func() {
+					thisID := highlightTimerCounter.Add(1)
 					time.Sleep(arrowKeyHighlightTime)
-					highlightTimerActive.Store(true)
-					if e.statusMode || status.messageAfterRedraw != "" {
-						highlightTimerActive.Store(false)
+					if thisID < highlightTimerCounter.Load() { // only the freshest ID should be active
 						return
 					}
 					justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
@@ -2126,7 +2125,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.redraw.Store(false)
 						e.redrawCursor.Store(false)
 					}
-					highlightTimerActive.Store(false)
 				}()
 			}
 		}
