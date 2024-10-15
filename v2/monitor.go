@@ -10,7 +10,7 @@ import (
 func (e *Editor) StartMonitoring(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		status.Clear(c)
+		status.Clear(c, false)
 		status.SetError(err)
 		status.Show(c, e)
 	}
@@ -18,7 +18,7 @@ func (e *Editor) StartMonitoring(c *vt100.Canvas, tty *vt100.TTY, status *Status
 
 	absFilename, err := e.AbsFilename()
 	if err != nil {
-		status.ClearAll(c)
+		status.ClearAll(c, false)
 		status.SetError(err)
 		status.Show(c, e)
 	}
@@ -34,12 +34,12 @@ func (e *Editor) StartMonitoring(c *vt100.Canvas, tty *vt100.TTY, status *Status
 
 				// Handle the received event, for the currently monitored file(s)
 				if event.Has(fsnotify.Write) { // is it a write event?
-					status.Clear(c)
+					status.Clear(c, false)
 					status.SetMessage("Reloading " + e.filename)
 					status.Show(c, e)
 
 					if err := e.Reload(c, tty, status, nil); err != nil {
-						status.ClearAll(c)
+						status.ClearAll(c, false)
 						status.SetError(err)
 						status.Show(c, e)
 					}
@@ -54,7 +54,7 @@ func (e *Editor) StartMonitoring(c *vt100.Canvas, tty *vt100.TTY, status *Status
 				if !ok {
 					return
 				}
-				status.ClearAll(c)
+				status.ClearAll(c, true)
 				status.SetError(err)
 				status.Show(c, e)
 			}

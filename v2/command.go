@@ -36,7 +36,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			// Now run the cmd with the current block of lines as input
 			stdin, err := cmd.StdinPipe()
 			if err != nil {
-				status.Clear(c)
+				status.Clear(c, false)
 				status.SetError(err)
 				status.Show(c, e)
 				return
@@ -52,7 +52,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			cmd.Stderr = &buf
 			err = cmd.Start()
 			if err != nil {
-				status.Clear(c)
+				status.Clear(c, false)
 				status.SetError(err)
 				status.Show(c, e)
 				return
@@ -72,14 +72,14 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			select {
 			case <-timeout:
 				cmd.Process.Kill()
-				status.Clear(c)
+				status.Clear(c, false)
 				status.SetErrorMessage("command timed out")
 				status.Show(c, e)
 				return
 			case err := <-done:
 				outputString = buf.String()
 				if err != nil {
-					status.Clear(c)
+					status.Clear(c, false)
 					status.SetErrorMessage(cmd.String() + ": " + err.Error())
 					status.Show(c, e)
 					return
@@ -87,7 +87,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			}
 
 			if outputString == "" {
-				status.Clear(c)
+				status.Clear(c, false)
 				status.SetErrorMessage("no output")
 				status.Show(c, e)
 				return
@@ -145,7 +145,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			// Save the current file, but only if it has changed
 			if e.changed.Load() {
 				if err := e.Save(c, tty); err != nil {
-					status.ClearAll(c)
+					status.ClearAll(c, false)
 					status.SetError(err)
 					status.Show(c, e)
 					return
@@ -155,7 +155,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			// The last argument is if the command should run in the background or not
 			outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
 			// All clear when it comes to status messages and redrawing
-			status.ClearAll(c)
+			status.ClearAll(c, false)
 			if err != nil {
 				status.SetError(err)
 				status.ShowNoTimeout(c, e)
@@ -167,7 +167,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		copyall: func() { // copy all contents to the clipboard
 			text := e.String()
 			if err := clip.WriteAll(text, e.primaryClipboard); err != nil {
-				status.Clear(c)
+				status.Clear(c, false)
 				status.SetError(err)
 				status.Show(c, e)
 			} else {
@@ -200,7 +200,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			}
 			text := sb.String()
 			if err := clip.WriteAll(text, e.primaryClipboard); err != nil {
-				status.Clear(c)
+				status.Clear(c, false)
 				status.SetError(err)
 				status.Show(c, e)
 			} else {
@@ -227,7 +227,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			}
 			text := sb.String()
 			if err := clip.WriteAll(text, e.primaryClipboard); err != nil {
-				status.Clear(c)
+				status.Clear(c, false)
 				status.SetError(err)
 				status.Show(c, e)
 			} else {

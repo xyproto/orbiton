@@ -303,7 +303,7 @@ AGAIN:
 		e.SetSearchTerm(c, status, "", false) // no timeout
 	}
 	s := e.SearchTerm()
-	status.ClearAll(c)
+	status.ClearAll(c, true)
 	if s == "" {
 		status.SetMessage(searchPrompt)
 	} else {
@@ -395,7 +395,7 @@ AGAIN:
 			if previousSearch == "" {
 				e.SetSearchTermWithTimeout(c, status, s, false, timeout)
 			}
-			status.ClearAll(c)
+			status.ClearAll(c, true)
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
 		case "↓": // next in the search history
@@ -412,7 +412,7 @@ AGAIN:
 			if previousSearch == "" {
 				e.SetSearchTermWithTimeout(c, status, s, false, timeout)
 			}
-			status.ClearAll(c)
+			status.ClearAll(c, true)
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
 
@@ -427,7 +427,7 @@ AGAIN:
 			}
 		}
 	}
-	status.ClearAll(c)
+	status.ClearAll(c, false)
 	// Search settings
 	forward := searchForward // forward search
 	wrap := true             // with wraparound
@@ -446,7 +446,7 @@ AGAIN:
 		}
 		if err == errFoundNoTypos || typo == "" {
 			foundNoTypos = true
-			status.ClearAll(c)
+			status.ClearAll(c, true)
 			status.SetMessageAfterRedraw("No typos found")
 			e.redraw.Store(true)
 			e.spellCheckMode = false
@@ -454,7 +454,7 @@ AGAIN:
 			return
 		}
 		if typo != "" && corrected != "" {
-			status.ClearAll(c)
+			status.ClearAll(c, true)
 			e.redraw.Store(true)
 			status.SetMessageAfterRedraw(typo + " could be " + corrected)
 		}
@@ -542,7 +542,7 @@ AGAIN:
 			// e.GoToTop(c, status)
 			// err = e.GoToNextMatch(c, status)
 			if err == errNoSearchMatch {
-				status.ClearAll(c)
+				status.ClearAll(c, true)
 				e.redraw.Store(true)
 				if foundNoTypos || spellCheckMode {
 					status.SetMessageAfterRedraw("No typos found")

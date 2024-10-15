@@ -53,7 +53,7 @@ func (e *Editor) UserSave(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
 	}
 
 	// Status message
-	status.Clear(c)
+	status.Clear(c, true)
 	status.SetMessage("Saved " + e.filename)
 	status.Show(c, e)
 }
@@ -145,7 +145,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				status.SetMessageAfterRedraw(fmt.Sprintf("Word wrap at %d", wrapWidth))
 			} else {
 				if ww, err := strconv.Atoi(wordWrapString); err != nil {
-					status.Clear(c)
+					status.Clear(c, false)
 					status.SetError(err)
 					status.Show(c, e)
 				} else {
@@ -266,7 +266,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	if foundGDB && e.UsingGDBMightWork() {
 		if e.debugMode {
 			actions.Add("Exit debug mode", func() {
-				status.Clear(c)
+				status.Clear(c, false)
 				status.SetMessage("Debug mode disabled")
 				status.Show(c, e)
 				e.debugMode = false
@@ -328,7 +328,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 			statusMessage = "Wrote " + pdfFilename
 		}
 		// Show a status message after writing
-		status.ClearAll(c)
+		status.ClearAll(c, true)
 		status.SetMessage(statusMessage)
 		status.ShowNoTimeout(c, e)
 	})

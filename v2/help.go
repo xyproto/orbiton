@@ -262,6 +262,7 @@ func (e *Editor) DrawHotkeyOverview(tty *vt100.TTY, c *vt100.Canvas, status *Sta
 	}
 
 endOfLoop:
+
 	// Reposition the cursor
 	if repositionCursorAfterDrawing {
 		e.EnableAndPlaceCursor(c)

@@ -434,7 +434,7 @@ func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *Stat
 
 	initialY, err := e.CurrentTableY()
 	if err != nil {
-		status.ClearAll(c)
+		status.ClearAll(c, true)
 		status.SetError(err)
 		status.ShowNoTimeout(c, e)
 		return
@@ -442,7 +442,7 @@ func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *Stat
 
 	tableString, err := e.CurrentTableString()
 	if err != nil {
-		status.ClearAll(c)
+		status.ClearAll(c, true)
 		status.SetError(err)
 		status.ShowNoTimeout(c, e)
 		return
@@ -462,7 +462,7 @@ func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *Stat
 	if !justFormat {
 		contentsChanged, err = e.TableEditor(tty, status, &tableContents, initialY, displayQuickHelp)
 		if err != nil {
-			status.ClearAll(c)
+			status.ClearAll(c, true)
 			status.SetError(err)
 			status.ShowNoTimeout(c, e)
 			return
@@ -487,7 +487,7 @@ func (e *Editor) EditMarkdownTable(tty *vt100.TTY, c *vt100.Canvas, status *Stat
 
 		// Replace the current table with this new string
 		if err := e.ReplaceCurrentTableWith(c, status, bookmark, newTableString); err != nil {
-			status.ClearAll(c)
+			status.ClearAll(c, true)
 			status.SetError(err)
 			status.ShowNoTimeout(c, e)
 			return

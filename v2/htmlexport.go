@@ -10,7 +10,7 @@ import (
 
 // exportMarkdownHTML will render HTML from Markdown using the gomarkdown package
 func (e *Editor) exportMarkdownHTML(c *vt100.Canvas, status *StatusBar, htmlFilename string) error {
-	status.ClearAll(c)
+	status.ClearAll(c, true)
 	status.SetMessage("Rendering to HTML using gomarkdown...")
 	status.ShowNoTimeout(c, e)
 
@@ -27,13 +27,13 @@ func (e *Editor) exportMarkdownHTML(c *vt100.Canvas, status *StatusBar, htmlFile
 	// Write the HTML content to the output file
 	err := os.WriteFile(htmlFilename, htmlBytes, 0o644)
 	if err != nil {
-		status.ClearAll(c)
+		status.ClearAll(c, false)
 		status.SetError(err)
 		status.Show(c, e)
 		return err
 	}
 
-	status.ClearAll(c)
+	status.ClearAll(c, true)
 	status.SetMessage("Saved " + htmlFilename)
 	status.ShowNoTimeout(c, e)
 	return nil

@@ -92,7 +92,7 @@ func WriteClipboardToFile(filename string, overwrite, primaryClipboard bool) (in
 // Paste is called when the user presses ctrl-v, and handles portals, clipboards and also non-clipboard-based copy and paste
 func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCopyLines *[]string, firstPasteAction *bool, lastCopyY, lastPasteY, lastCutY *LineIndex, prevKeyWasReturn bool) {
 	if portal, err := LoadPortal(maxPortalAge); err == nil { // no error
-		status.Clear(c)
+		status.Clear(c, false)
 		line, err := portal.PopLine(e, false) // pop the line, but don't remove it from the source file
 		if err == nil {                       // success
 			status.SetMessageAfterRedraw("Pasting through the portal")
@@ -139,7 +139,7 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 	} else if *firstPasteAction {
 		missingUtility := false
 
-		status.Clear(c)
+		status.Clear(c, false)
 
 		if env.Has("WAYLAND_DISPLAY") && files.WhichCached("wl-paste") == "" { // Wayland + wl-paste not found
 			status.SetErrorMessage("The wl-paste utility (from wl-clipboard) is missing!")
@@ -158,7 +158,7 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 			return // Break instead of pasting from the internal buffer, but only the first time
 		}
 	} else {
-		status.Clear(c)
+		status.Clear(c, true)
 		e.redrawCursor.Store(true)
 	}
 

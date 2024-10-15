@@ -1509,7 +1509,7 @@ func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int)
 		return false
 	}
 	if status != nil {
-		status.Clear(c)
+		status.Clear(c, false)
 	}
 	if (offset + canScroll) >= (l - canvasLastY) {
 		// Almost at the bottom, we can scroll the remaining lines
@@ -1544,7 +1544,7 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 		return true
 	}
 	if status != nil {
-		status.Clear(c)
+		status.Clear(c, false)
 	}
 	if offset-canScroll < 0 {
 		// Almost at the top, we can scroll the remaining lines
@@ -2422,7 +2422,7 @@ func (e *Editor) LastLineNumber() LineNumber {
 
 // UserInput asks the user to enter text, then collects the letters. No history.
 func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, title, defaultValue string, quickList []string, arrowsAreCountedAsLetters bool, tabInsertText string) (string, bool) {
-	status.ClearAll(c)
+	status.ClearAll(c, false)
 	if defaultValue != "" {
 		status.SetMessage(title + ": " + defaultValue)
 	} else {
@@ -2483,7 +2483,7 @@ func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, t
 			break
 		}
 	}
-	status.ClearAll(c)
+	status.ClearAll(c, true)
 	return entered, !cancel
 }
 

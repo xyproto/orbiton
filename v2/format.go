@@ -195,7 +195,7 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 	if e.mode == mode.JSON {
 		data, err := formatJSON([]byte(e.String()), jsonFormatToggle, e.indentation.PerTab)
 		if err != nil {
-			status.ClearAll(c)
+			status.ClearAll(c, true)
 			status.SetErrorAfterRedraw(err)
 			return
 		}
@@ -235,7 +235,7 @@ OUT:
 					}
 				}
 				if err := e.formatWithUtility(c, tty, status, *cmd, ext); err != nil {
-					status.ClearAll(c)
+					status.ClearAll(c, false)
 					status.SetMessage(err.Error())
 					status.Show(c, e)
 					break OUT

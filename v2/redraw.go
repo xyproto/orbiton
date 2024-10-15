@@ -16,7 +16,7 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 	savePos := e.pos
 
 	if status != nil {
-		status.ClearAll(c)
+		status.ClearAll(c, false)
 		e.SetSearchTerm(c, status, "", false)
 	}
 
@@ -93,6 +93,7 @@ func (e *Editor) RedrawIfNeeded(c *vt100.Canvas, shouldHighlight bool) {
 // RepositionCursor will send the VT100 commands needed to position the cursor
 func (e *Editor) RepositionCursor(x, y uint) {
 	// Redraw the cursor
+	vt100.ShowCursor(true)
 	vt100.SetXY(x, y)
 	e.previousX = int(x)
 	e.previousY = int(y)
@@ -107,6 +108,7 @@ func (e *Editor) RepositionCursorIfNeeded() {
 	e.pos.mut.RUnlock()
 
 	if x != e.previousX || y != e.previousY || e.redrawCursor.Load() {
+		vt100.ShowCursor(true)
 		e.RepositionCursor(uint(x), uint(y))
 		e.redrawCursor.Store(false)
 	}
@@ -153,12 +155,13 @@ func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 	}
 
 	if msg := status.messageAfterRedraw; len(msg) > 0 {
-		status.Clear(c)
+		status.Clear(c, false)
 		status.SetMessage(msg)
 		status.messageAfterRedraw = ""
 		status.Show(c, e)
 	}
 
+	vt100.ShowCursor(true)
 	e.RepositionCursorIfNeeded()
 }
 
@@ -200,7 +203,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, should
 	}
 
 	if msg := status.messageAfterRedraw; len(msg) > 0 {
-		status.Clear(c)
+		status.Clear(c, false)
 		status.SetMessage(msg)
 		status.messageAfterRedraw = ""
 		status.Show(c, e)
@@ -209,6 +212,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, should
 	if repositionCursor {
 		e.EnableAndPlaceCursor(c)
 	} else {
+		vt100.ShowCursor(true)
 		e.RepositionCursorIfNeeded()
 	}
 }

@@ -527,7 +527,7 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filename string, background bool) (string, error) {
 	// Clear the status messages, if we have a status bar
 	if status != nil {
-		status.ClearAll(c)
+		status.ClearAll(c, false)
 	}
 
 	// Find the absolute path to the source file
@@ -628,7 +628,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 
 	// Done building, clear the "Building" message
 	if status != nil {
-		status.ClearAll(c)
+		status.ClearAll(c, false)
 	}
 
 	// Get the exit code and combined output of the build command
@@ -1148,7 +1148,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 
 	// If the file is empty, there is nothing to build
 	if e.Empty() {
-		status.ClearAll(c)
+		status.ClearAll(c, false)
 		status.SetErrorMessage("Nothing to build, the file is empty")
 		status.Show(c, e)
 		return
@@ -1157,7 +1157,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 	// Save the current file, but only if it has changed
 	if e.changed.Load() {
 		if err := e.Save(c, tty); err != nil {
-			status.ClearAll(c)
+			status.ClearAll(c, false)
 			status.SetError(err)
 			status.Show(c, e)
 			return
@@ -1174,7 +1174,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 			status.SetMessageAfterRedraw(status.Message())
 			return
 		}
-		status.ClearAll(c)
+		status.ClearAll(c, false)
 		// If we have a breakpoint, continue to it
 		if e.breakpoint != nil { // exists
 			// continue forward to the end or to the next breakpoint
@@ -1235,7 +1235,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 	// Run after building, for some modes
 	if e.building && !e.runAfterBuild {
 		if e.CanRun() {
-			status.ClearAll(c)
+			status.ClearAll(c, false)
 			const repositionCursorAfterDrawing = true
 			e.DrawOutput(c, 20, "", "Building and running...", e.DebugRegistersBackground, repositionCursorAfterDrawing)
 			e.runAfterBuild = true
@@ -1305,7 +1305,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 		// The last argument is if the command should run in the background or not
 		outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
 		// All clear when it comes to status messages and redrawing
-		status.ClearAll(c)
+		status.ClearAll(c, false)
 		if err != nil {
 			// There was an error, so don't run after building after all
 			e.runAfterBuild = false
@@ -1323,7 +1323,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 		// ctrl-space was pressed while in debug mode, and without a debug session running
 		if e.debugMode && e.gdb == nil {
 			if err := e.DebugStartSession(c, tty, status, outputExecutable); err != nil {
-				status.ClearAll(c)
+				status.ClearAll(c, true)
 				status.SetError(err)
 				status.ShowNoTimeout(c, e)
 				e.redrawCursor.Store(true)

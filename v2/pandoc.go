@@ -47,7 +47,7 @@ const (
 func (e *Editor) exportPandocPDF(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, pandocPath, pdfFilename string) error {
 	// This function used to be concurrent. There are some leftovers from this that could be refactored away.
 
-	status.ClearAll(c)
+	status.ClearAll(c, true)
 	status.SetMessage("Rendering to PDF using Pandoc...")
 	status.ShowNoTimeout(c, e)
 
@@ -70,7 +70,7 @@ func (e *Editor) exportPandocPDF(c *vt100.Canvas, tty *vt100.TTY, status *Status
 	err = e.Save(c, tty)
 	if err != nil {
 		e.filename = oldFilename
-		status.ClearAll(c)
+		status.ClearAll(c, true)
 		status.SetError(err)
 		status.Show(c, e)
 		return err
@@ -111,7 +111,7 @@ func (e *Editor) exportPandocPDF(c *vt100.Canvas, tty *vt100.TTY, status *Status
 	pandocCommand.Args[len(pandocCommand.Args)-1] = tempFilename
 
 	if output, err := pandocCommand.CombinedOutput(); err != nil {
-		status.ClearAll(c)
+		status.ClearAll(c, false)
 
 		// The program was executed, but failed
 		outputByteLines := bytes.Split(bytes.TrimSpace(output), []byte{'\n'})
@@ -127,7 +127,7 @@ func (e *Editor) exportPandocPDF(c *vt100.Canvas, tty *vt100.TTY, status *Status
 		return err
 	}
 
-	status.ClearAll(c)
+	status.ClearAll(c, true)
 	status.SetMessage("Saved " + pdfFilename)
 	status.ShowNoTimeout(c, e)
 	return nil

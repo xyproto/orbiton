@@ -69,7 +69,7 @@ func (e *Editor) SuggestMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 	suggestIndex := 0
 	s := suggestions[suggestIndex]
 
-	status.ClearAll(c)
+	status.ClearAll(c, true)
 	status.SetMessage("Suggest: " + s)
 	status.ShowNoTimeout(c, e)
 
@@ -84,7 +84,7 @@ func (e *Editor) SuggestMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 				suggestIndex = 0
 			}
 			s = suggestions[suggestIndex]
-			status.ClearAll(c)
+			status.ClearAll(c, true)
 			status.SetMessage("Suggest: " + s)
 			status.ShowNoTimeout(c, e)
 		case upArrow, leftArrow: // up arrow or left arrow
@@ -94,7 +94,7 @@ func (e *Editor) SuggestMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 				suggestIndex = len(suggestions) - 1
 			}
 			s = suggestions[suggestIndex]
-			status.ClearAll(c)
+			status.ClearAll(c, true)
 			status.SetMessage("Suggest: " + s)
 			status.ShowNoTimeout(c, e)
 		case "c:8", "c:127": // ctrl-h or backspace
@@ -106,7 +106,7 @@ func (e *Editor) SuggestMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY,
 			doneChoosing = true
 		}
 	}
-	status.ClearAll(c)
+	status.ClearAll(c, true)
 	// The chosen word
 	return s
 }

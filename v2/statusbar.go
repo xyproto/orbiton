@@ -138,7 +138,7 @@ func (sb *StatusBar) SetError(err error) {
 
 // Clear will set the message to nothing and then use the editor contents
 // to remove the status bar field at the bottom of the editor.
-func (sb *StatusBar) Clear(c *vt100.Canvas) {
+func (sb *StatusBar) Clear(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
 	mut.Lock()
 	defer mut.Unlock()
 
@@ -160,10 +160,15 @@ func (sb *StatusBar) Clear(c *vt100.Canvas) {
 	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0, false)
 
 	c.HideCursorAndDraw()
+
+	// Reposition the cursor
+	if repositionCursorAfterDrawing {
+		sb.editor.EnableAndPlaceCursor(c)
+	}
 }
 
 // ClearAll will clear all status messages
-func (sb *StatusBar) ClearAll(c *vt100.Canvas) {
+func (sb *StatusBar) ClearAll(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
 	mut.Lock()
 	defer mut.Unlock()
 
@@ -187,6 +192,11 @@ func (sb *StatusBar) ClearAll(c *vt100.Canvas) {
 	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0, false)
 
 	c.HideCursorAndDraw()
+
+	// Reposition the cursor
+	if repositionCursorAfterDrawing {
+		sb.editor.EnableAndPlaceCursor(c)
+	}
 }
 
 // Show will draw a status message, then clear it after a certain delay
@@ -340,7 +350,7 @@ func (sb *StatusBar) HoldMessage(c *vt100.Canvas, dur time.Duration) {
 		sb.messageAfterRedraw = sb.msg
 		go func() {
 			time.Sleep(dur)
-			sb.ClearAll(c)
+			sb.ClearAll(c, true)
 		}()
 	}
 }

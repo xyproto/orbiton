@@ -199,7 +199,7 @@ func (e *Editor) NanoNextTypo(c *vt100.Canvas, status *StatusBar) (string, strin
 		e.redraw.Store(true)
 		e.redrawCursor.Store(true)
 		if err == errFoundNoTypos || typo == "" {
-			status.ClearAll(c)
+			status.ClearAll(c, false)
 			status.SetMessage("No typos found")
 			status.Show(c, e)
 			e.spellCheckMode = false
@@ -208,7 +208,7 @@ func (e *Editor) NanoNextTypo(c *vt100.Canvas, status *StatusBar) (string, strin
 		}
 		e.SetSearchTerm(c, status, typo, true) // true for spellCheckMode
 		if err := e.GoToNextMatch(c, status, true, true); err == errNoSearchMatch {
-			status.ClearAll(c)
+			status.ClearAll(c, false)
 			status.SetMessage("No more typos found")
 			status.Show(c, e)
 			e.spellCheckMode = false
@@ -216,7 +216,7 @@ func (e *Editor) NanoNextTypo(c *vt100.Canvas, status *StatusBar) (string, strin
 			return "", ""
 		}
 		if typo != "" && corrected != "" {
-			status.ClearAll(c)
+			status.ClearAll(c, false)
 			status.SetMessage(typo + " could be " + corrected)
 			status.Show(c, e)
 		}

@@ -1183,7 +1183,7 @@ func (e *Editor) DebugStartSession(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 
 	e.GoToTop(c, nil)
 
-	status.ClearAll(c)
+	status.ClearAll(c, false)
 	if e.breakpoint == nil {
 		status.SetMessage("Running")
 	} else {

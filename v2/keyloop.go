@@ -271,7 +271,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// Ask the user to type in a watch expression
 				if expression, ok := e.UserInput(c, tty, status, "Variable name to watch", "", []string{}, false, ""); ok {
 					if _, err := e.AddWatch(expression); err != nil {
-						status.ClearAll(c)
+						status.ClearAll(c, true)
 						status.SetError(err)
 						status.ShowNoTimeout(c, e)
 						break
@@ -296,7 +296,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 				// Empty file, nothing to format, insert a program template, if available
 				if err := e.InsertTemplateProgram(c); err != nil {
-					status.ClearAll(c)
+					status.ClearAll(c, true)
 					status.SetMessage("nothing to format and no template available")
 					status.Show(c, e)
 				} else {
@@ -306,7 +306,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 
-			status.ClearAll(c)
+			status.ClearAll(c, true)
 			e.formatCode(c, tty, status, &jsonFormatToggle)
 
 			// Move the cursor if after the end of the line
@@ -331,7 +331,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					status.SetMessageAfterRedraw("Not running")
 					break
 				}
-				status.ClearAll(c)
+				status.ClearAll(c, false)
 				if err := e.DebugFinish(); err != nil {
 					e.DebugEnd()
 					status.SetMessage(err.Error())
@@ -379,7 +379,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Save the current file, but only if it has changed
 			if !e.nanoMode && e.changed.Load() {
 				if err := e.Save(c, tty); err != nil {
-					status.ClearAll(c)
+					status.ClearAll(c, false)
 					status.SetError(err)
 					status.Show(c, e)
 					break
@@ -478,7 +478,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// then clear the macro when esc is pressed.
 				undo.Snapshot(e)
 				undo.IgnoreSnapshots(true)
-				status.Clear(c)
+				status.Clear(c, false)
 				status.SetMessage("Recording macro")
 				status.Show(c, e)
 				e.macro = NewMacro()
@@ -488,7 +488,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.macro.Recording = false
 				undo.IgnoreSnapshots(true)
 				e.playBackMacroCount = 0
-				status.Clear(c)
+				status.Clear(c, false)
 				if macroLen := e.macro.Len(); macroLen == 0 {
 					status.SetMessage("Stopped recording")
 					e.macro = nil
@@ -500,7 +500,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.Show(c, e)
 			} else if e.playBackMacroCount > 0 {
 				undo.IgnoreSnapshots(false)
-				status.Clear(c)
+				status.Clear(c, false)
 				status.SetMessage("Stopped macro") // stop macro playback
 				status.Show(c, e)
 				e.playBackMacroCount = 0
@@ -508,7 +508,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			} else { // && e.macro != nil && e.playBackMacroCount == 0 // start macro playback
 				undo.IgnoreSnapshots(false)
 				undo.Snapshot(e)
-				status.ClearAll(c)
+				status.ClearAll(c, false)
 				// Play back the macro, once
 				e.playBackMacroCount = 1
 			}
@@ -526,7 +526,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.Save(c, tty)
 					e.Switch(c, tty, status, fileLock, newFilename)
 				} else {
-					status.Clear(c)
+					status.Clear(c, false)
 					status.SetMessage("Saved nothing")
 					status.Show(c, e)
 				}
@@ -534,7 +534,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			regularEditingRightNow = false
-			status.ClearAll(c)
+			status.ClearAll(c, false)
 			undo.Snapshot(e)
 			undoBackup := undo
 			lastCommandMenuIndex = e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
@@ -560,7 +560,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			const tabInputText = "ae"
 			if digraphString, ok := e.UserInput(c, tty, status, "Type in a 2-letter digraph", "", digraph.All(), false, tabInputText); ok {
 				if r, ok := digraph.Lookup(digraphString); !ok {
-					status.ClearAll(c)
+					status.ClearAll(c, true)
 					status.SetErrorMessage(fmt.Sprintf("Could not find the %q digraph", digraphString))
 					status.ShowNoTimeout(c, e)
 				} else {
@@ -633,7 +633,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					wrap := true
 					forward := false
 					if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
-						status.ClearAll(c)
+						status.ClearAll(c, false)
 						msg := e.SearchTerm() + " not found"
 						if e.spellCheckMode {
 							msg = "No typos found"
@@ -664,7 +664,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				wrap := true
 				forward := false
 				if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
-					status.ClearAll(c)
+					status.ClearAll(c, false)
 					msg := e.SearchTerm() + " not found"
 					if e.spellCheckMode {
 						msg = "No typos found"
@@ -769,7 +769,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					// The last argument is if the command should run in the background or not
 					outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
 					// All clear when it comes to status messages and redrawing
-					status.ClearAll(c)
+					status.ClearAll(c, false)
 					if err != nil && err != errNoSuitableBuildCommand {
 						// Error while building
 						status.SetError(err)
@@ -803,7 +803,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 					// Start debugging
 					if err := e.DebugStartSession(c, tty, status, outputExecutable); err != nil {
-						status.ClearAll(c)
+						status.ClearAll(c, false)
 						status.SetError(err)
 						status.ShowNoTimeout(c, e)
 						e.redrawCursor.Store(true)
@@ -816,7 +816,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					wrap := true
 					forward := true
 					if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
-						status.ClearAll(c)
+						status.ClearAll(c, false)
 						msg := e.SearchTerm() + " not found"
 						if e.spellCheckMode {
 							msg = "No typos found"
@@ -836,7 +836,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.redraw.Store(redraw)
 					// If e.redraw is false, the end of file is reached
 					if !redraw {
-						status.Clear(c)
+						status.Clear(c, false)
 						status.SetMessage(endOfFileMessage)
 						status.Show(c, e)
 					}
@@ -857,7 +857,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				wrap := true
 				forward := true
 				if err := e.GoToNextMatch(c, status, wrap, forward); err == errNoSearchMatch {
-					status.Clear(c)
+					status.Clear(c, false)
 					msg := e.SearchTerm() + " not found"
 					if e.spellCheckMode {
 						msg = "No typos found"
@@ -1004,7 +1004,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.redraw.Store(redraw)
 				// If e.redraw is false, the end of file is reached
 				if !redraw {
-					status.Clear(c)
+					status.Clear(c, false)
 					status.SetMessage(endOfFileMessage)
 					status.Show(c, e)
 				}
@@ -1041,7 +1041,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// It is an alternative way to quickly check if the file is read-only,
 			// and space can still be used for scrolling.
 			if e.readOnly {
-				status.Clear(c)
+				status.Clear(c, false)
 				status.SetMessage("Read only")
 				status.Show(c, e)
 				break
@@ -1568,7 +1568,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if e.JumpToMatching(c) {
 				break
 			}
-			status.Clear(c)
+			status.Clear(c, false)
 			status.SetMessage("No matching (, ), [, ], { or }")
 			status.Show(c, e)
 		case "c:19": // ctrl-s, save (or step, if in debug mode)
@@ -1576,7 +1576,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:7": // ctrl-g, either go to definition OR toggle the status bar
 
 			if e.nanoMode { // nano: ctrl-g, help
-				status.ClearAll(c)
+				status.ClearAll(c, false)
 				const repositionCursorAfterDrawing = true
 				e.DrawNanoHelp(c, repositionCursorAfterDrawing)
 				break
@@ -1615,7 +1615,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				})
 			} else {
 				// Toggle status bar
-				status.ClearAll(c)
+				status.ClearAll(c, false)
 				e.statusMode = !e.statusMode
 				if e.statusMode {
 					status.ShowFilenameLineColWordCount(c, e)
@@ -1660,7 +1660,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.filename = newFilename
 						e.Save(c, tty)
 					} else {
-						status.Clear(c)
+						status.Clear(c, false)
 						status.SetMessage("Wrote nothing")
 						status.Show(c, e)
 					}
@@ -1723,7 +1723,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:3", copyKey: // ctrl-c, copy the stripped contents of the current line
 
 			if e.nanoMode { // nano: ctrl-c, report cursor position
-				status.ClearAll(c)
+				status.ClearAll(c, false)
 				status.NanoInfo(c, e)
 				break
 			}
@@ -1747,7 +1747,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				closedPortal := e.ClosePortal() == nil
 
 				if singleLineCopy { // Single line copy
-					status.Clear(c)
+					status.Clear(c, false)
 					// Pressed for the first time for this line number
 					trimmed := strings.TrimSpace(e.Line(y))
 					if trimmed != "" {
@@ -1853,7 +1853,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			// Deal with the portal
-			status.Clear(c)
+			status.Clear(c, false)
 			if HasPortal() {
 				status.SetMessage("Closing portal")
 				e.ClosePortal()
@@ -1883,7 +1883,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 
-			status.Clear(c)
+			status.Clear(c, false)
 
 			// Check if we have jumped to a definition and need to go back
 			if len(backFunctions) > 0 {
@@ -2084,7 +2084,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		// Display the ctrl-o menu if esc was pressed 4 times
 		if !e.nanoMode && kh.Repeated("c:27", 4-1) { // esc pressed 4 times (minus the one that was added just now)
 			regularEditingRightNow = false
-			status.ClearAll(c)
+			status.ClearAll(c, false)
 			undo.Snapshot(e)
 			undoBackup := undo
 			lastCommandMenuIndex = e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
@@ -2096,7 +2096,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		// Clear status line, if needed
 		if (e.statusMode || e.blockMode) && e.redrawCursor.Load() {
-			status.ClearAll(c)
+			status.ClearAll(c, false)
 		}
 
 		arrowKeyHighlightTime := 1200 * time.Millisecond
@@ -2162,7 +2162,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	e.SaveLocation(absFilename, locationHistory)
 
 	// Clear all status bar messages
-	status.ClearAll(c)
+	status.ClearAll(c, false)
 
 	// Quit everything that has to do with the terminal
 	if e.clearOnQuit {

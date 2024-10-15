@@ -378,7 +378,7 @@ func LaunchTutorial(tty *vt100.TTY, c *vt100.Canvas, e *Editor, status *StatusBa
 			status.Show(c, e)
 			displayedStatusOnce = true
 		} else {
-			status.Clear(c)
+			status.Clear(c, false)
 		}
 
 		step := tutorialSteps[i]

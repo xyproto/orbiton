@@ -131,7 +131,7 @@ func (e *Editor) GoTo(dataY LineIndex, c *vt100.Canvas, status *StatusBar) (bool
 
 	// Clear all status messages
 	if status != nil {
-		status.ClearAll(c)
+		status.ClearAll(c, true)
 	}
 
 	// Trigger cursor redraw
@@ -249,7 +249,7 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 	}
 
 	// TODO: Figure out why this call is needed for the letters to be highlighted
-	status.ClearAll(c)
+	status.ClearAll(c, true)
 
 	status.SetMessage(prompt)
 	status.ShowNoTimeout(c, e)
@@ -327,7 +327,7 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 	if !cancel {
 		e.ClearSearch()
 	}
-	status.ClearAll(c)
+	status.ClearAll(c, true)
 	if goToLetter != rune(0) {
 		colIndex := e.GetJumpX(goToLetter)
 		lineIndex := e.GetJumpY(goToLetter)
