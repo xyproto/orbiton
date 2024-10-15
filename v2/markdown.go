@@ -24,7 +24,7 @@ func (e *Editor) ToggleCheckboxCurrentLine() bool {
 			e.SetLine(e.DataY(), strings.Replace(line, "[X]", "[ ]", 1))
 			e.redraw.Store(true)
 		}
-		e.redrawCursor = e.redraw
+		e.redrawCursor.Store(e.redraw.Load())
 		return true
 	}
 	return false

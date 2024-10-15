@@ -71,7 +71,7 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 			// Center and prepare to redraw
 			e.Center(c)
 			e.redraw.Store(true)
-			e.redrawCursor = e.redraw
+			e.redrawCursor.Store(e.redraw.Load())
 			return false
 		}
 		tabs := strings.Count(e.Line(foundY), "\t")
