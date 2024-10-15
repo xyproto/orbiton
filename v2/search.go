@@ -380,7 +380,6 @@ AGAIN:
 					status.ShowNoTimeout(c, e)
 				}
 			}
-
 		case "↑": // previous in the search history
 			if searchHistory.Empty() {
 				break
@@ -415,7 +414,6 @@ AGAIN:
 			status.ClearAll(c, true)
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
-
 		default:
 			if key != "" && !strings.HasPrefix(key, "c:") {
 				s += key
