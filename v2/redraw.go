@@ -69,7 +69,8 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 		// Go to the line we were at
 		e.ScrollUp(c, nil, e.pos.scrollSpeed)
 		e.HideCursorDrawLines(c, true, true, shouldHighlight)
-		e.ScrollDown(c, nil, e.pos.scrollSpeed)
+		canvasHeight := int(c.Height())
+		e.ScrollDown(c, nil, e.pos.scrollSpeed, canvasHeight)
 		e.redraw.Store(true)
 		e.redrawCursor.Store(true)
 	} else {

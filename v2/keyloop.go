@@ -837,9 +837,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 				} else {
 					// Scroll down
-					redraw := e.ScrollDown(c, status, e.pos.scrollSpeed)
+					h := int(c.Height())
+					redraw := e.ScrollDown(c, status, e.pos.scrollSpeed, h)
 					e.redraw.Store(redraw)
-					// If e.redraw is false, the end of file is reached
+					// If redraw is false, the end of file is reached
 					if !redraw {
 						status.Clear(c, false)
 						status.SetMessage(endOfFileMessage)
@@ -898,7 +899,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					// If at the bottom, don't move down, but scroll the contents
 					// Output a helpful message
 					if !e.AfterEndOfDocument() {
-						e.redraw.Store(e.ScrollDown(c, status, 1))
+						canvasHeight := int(c.Height())
+						e.redraw.Store(e.ScrollDown(c, status, 1, canvasHeight))
 						e.pos.Up()
 						e.DownEnd(c)
 					}
@@ -950,7 +952,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 					e.drawProgress.Store(true)
 				case scrollDownAction:
-					e.redraw.Store(e.ScrollDown(c, status, e.pos.scrollSpeed))
+					canvasHeight := int(c.Height())
+					e.redraw.Store(e.ScrollDown(c, status, e.pos.scrollSpeed, canvasHeight))
 					e.redrawCursor.Store(true)
 					if e.AfterLineScreenContents() {
 						e.End(c)
@@ -1232,10 +1235,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			h := int(c.Height())
 			if e.pos.sy > (h - 1) {
 				e.pos.Down(c)
-				e.redraw.Store(e.ScrollDown(c, status, 1))
+				e.redraw.Store(e.ScrollDown(c, status, 1, h))
 				e.redrawCursor.Store(true)
 			} else if e.pos.sy == (h - 1) {
-				e.redraw.Store(e.ScrollDown(c, status, 1))
+				e.redraw.Store(e.ScrollDown(c, status, 1, h))
 				e.redrawCursor.Store(true)
 			} else {
 				e.pos.Down(c)
@@ -1475,7 +1478,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case pgDnKey: // page down
 			h := int(c.H())
-			e.redraw.Store(e.ScrollDown(c, status, h))
+			redraw := e.ScrollDown(c, status, h, h)
+			e.redraw.Store(redraw)
+			// If redraw is false, the end of file is reached
+			if !redraw {
+				status.Clear(c, false)
+				status.SetMessage(endOfFileMessage)
+				status.Show(c, e)
+			}
 			e.redrawCursor.Store(true)
 			if e.AfterLineScreenContents() {
 				e.End(c)
@@ -1815,7 +1825,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			if e.nanoMode { // nano: ctrl-v, page down
 				h := int(c.H())
-				e.redraw.Store(e.ScrollDown(c, status, h))
+				e.redraw.Store(e.ScrollDown(c, status, h, h))
 				e.redrawCursor.Store(true)
 				if e.AfterLineScreenContents() {
 					e.End(c)

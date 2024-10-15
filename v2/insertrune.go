@@ -53,7 +53,7 @@ func (e *Editor) InsertRune(c *vt100.Canvas, r rune) bool {
 			h = int(c.Height())
 		}
 		if e.pos.sy >= (h - 1) {
-			e.ScrollDown(c, nil, 1)
+			e.ScrollDown(c, nil, 1, h)
 		}
 
 		e.Center(c)

@@ -1549,12 +1549,12 @@ func (e *Editor) SaveX(regardless bool) {
 }
 
 // ScrollDown will scroll down the given amount of lines given in scrollSpeed
-func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int) bool {
+func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed, canvasHeight int) bool {
 	// Find out if we can scroll scrollSpeed, or less
 	canScroll := scrollSpeed
 
 	// Last y position in the canvas
-	canvasLastY := int(c.H() - 1)
+	canvasLastY := canvasHeight - 1
 
 	// Retrieve the current editor scroll offset offset
 	mut.RLock()
@@ -1626,8 +1626,9 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 
 // PgDn will try to scroll down a full page
 func (e *Editor) PgDn(c *vt100.Canvas, status *StatusBar) bool {
-	scrollSpeed := int(c.H())
-	return e.ScrollDown(c, status, scrollSpeed)
+	canvasHeight := int(c.H())
+	scrollSpeed := canvasHeight
+	return e.ScrollDown(c, status, scrollSpeed, canvasHeight)
 }
 
 // AtFirstLineOfDocument is true if we're at the first line of the document
