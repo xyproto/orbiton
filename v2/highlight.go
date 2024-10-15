@@ -22,13 +22,15 @@ const (
 )
 
 var (
-	tout          = textoutput.NewTextOutput(true, true)
-	resizeMut     sync.RWMutex                                  // locked when the terminal emulator is being resized
 	colorTagRegex = regexp.MustCompile(`<([a-nA-Np-zP-Z]\w+)>`) // not starting with "o"
+	tout          = textoutput.NewTextOutput(true, true)
+	resizeMut     sync.RWMutex // locked when the terminal emulator is being resized
 )
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy uint, shouldHighlightNow bool) {
+	// TODO: Use a channel for queuing up calls to the vt100 package to avoid race conditions
+
 	// TODO: Refactor this function
 	var (
 		match                              bool
