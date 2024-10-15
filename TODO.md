@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Let `ctrl-space` show a preview of man pages instead of changing the syntax highlighting.
 - [ ] Use a channel for queuing up calls to the vt100 package to avoid race conditions.
 - [ ] Instead of sleeping in a goroutine before clearing the highlighted line, do a check for how much time has elapsed when redrawing at the end of the loop, to avoid race conditions.
 - [ ] When removing `-` in front of lines, do not move 1 to the right when encountering `}`.
