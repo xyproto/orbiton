@@ -752,13 +752,11 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 	e.DrawTitle(bt, c, upperRightBox, title, true)
 
 	// Blit
-	c.Draw()
+	c.HideCursorAndDraw()
 
 	// Reposition the cursor
 	if repositionCursor {
-		x := e.pos.ScreenX()
-		y := e.pos.ScreenY()
-		vt100.SetXY(uint(x), uint(y))
+		e.EnableAndPlaceCursor(c)
 	}
 }
 
@@ -771,9 +769,7 @@ func (e *Editor) DrawFlags(c *vt100.Canvas, repositionCursor bool) {
 	defer func() {
 		// Reposition the cursor
 		if repositionCursor {
-			x := e.pos.ScreenX()
-			y := e.pos.ScreenY()
-			vt100.SetXY(uint(x), uint(y))
+			e.EnableAndPlaceCursor(c)
 		}
 	}()
 
@@ -842,7 +838,7 @@ func (e *Editor) DrawFlags(c *vt100.Canvas, repositionCursor bool) {
 	}
 
 	// Blit
-	c.Draw()
+	c.HideCursorAndDraw()
 }
 
 // DrawRegisters will draw a box with the current register values in the lower right
@@ -850,9 +846,7 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 	defer func() {
 		// Reposition the cursor
 		if repositionCursor {
-			x := e.pos.ScreenX()
-			y := e.pos.ScreenY()
-			vt100.SetXY(uint(x), uint(y))
+			e.EnableAndPlaceCursor(c)
 		}
 	}()
 
@@ -943,7 +937,7 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 	}
 
 	// Blit
-	c.Draw()
+	c.HideCursorAndDraw()
 
 	return nil
 }
@@ -953,9 +947,7 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 	defer func() {
 		// Reposition the cursor
 		if repositionCursor {
-			x := e.pos.ScreenX()
-			y := e.pos.ScreenY()
-			vt100.SetXY(uint(x), uint(y))
+			e.EnableAndPlaceCursor(c)
 		}
 	}()
 
@@ -1065,7 +1057,7 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 		e.DrawTitle(bt, c, centerBox, title, true)
 
 		// Blit
-		c.Draw()
+		c.HideCursorAndDraw()
 
 	}
 
@@ -1135,16 +1127,14 @@ func (e *Editor) DrawGDBOutput(c *vt100.Canvas, repositionCursor bool) {
 		e.DrawList(bt, c, listBox, lines, -1)
 
 		// Blit
-		c.Draw()
+		c.HideCursorAndDraw()
 
 		repositionCursor = true
 	}
 
 	// Reposition the cursor
 	if repositionCursor {
-		x := e.pos.ScreenX()
-		y := e.pos.ScreenY()
-		vt100.SetXY(uint(x), uint(y))
+		e.EnableAndPlaceCursor(c)
 	}
 }
 

@@ -38,7 +38,7 @@ func (e *Editor) SetSearchTerm(c *vt100.Canvas, status *StatusBar, s string, spe
 		}
 	}
 	// draw the lines to the canvas
-	e.DrawLines(c, true, false, false)
+	e.HideCursorDrawLines(c, true, false, false)
 	return foundMatch
 }
 
@@ -89,7 +89,7 @@ func (e *Editor) SetSearchTermWithTimeout(c *vt100.Canvas, status *StatusBar, s 
 		if redraw {
 			e.Center(c)
 			// Draw the lines to the canvas
-			e.DrawLines(c, true, false, false)
+			e.HideCursorDrawLines(c, true, false, false)
 			e.redraw.Store(true)
 		}
 		return true

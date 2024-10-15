@@ -159,7 +159,7 @@ func (sb *StatusBar) Clear(c *vt100.Canvas) {
 	offsetY := sb.editor.pos.OffsetY()
 	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0, false)
 
-	c.Draw()
+	c.HideCursorAndDraw()
 }
 
 // ClearAll will clear all status messages
@@ -186,7 +186,7 @@ func (sb *StatusBar) ClearAll(c *vt100.Canvas) {
 	offsetY := sb.editor.pos.OffsetY()
 	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0, false)
 
-	c.Draw()
+	c.HideCursorAndDraw()
 }
 
 // Show will draw a status message, then clear it after a certain delay
@@ -242,7 +242,8 @@ func (sb *StatusBar) Show(c *vt100.Canvas, e *Editor) {
 			mut.RUnlock()
 		}
 	}()
-	c.Draw()
+
+	c.HideCursorAndDraw()
 }
 
 // ShowNoTimeout will draw a status message that will not be
@@ -265,7 +266,7 @@ func (sb *StatusBar) ShowNoTimeout(c *vt100.Canvas, e *Editor) {
 	statusBeingShown++
 	mut.Unlock()
 
-	c.Draw()
+	c.HideCursorAndDraw()
 }
 
 func getPercentage(lineNumber, lastLineNumber LineNumber) int {

@@ -111,12 +111,10 @@ func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing boo
 	e.DrawText(bt, c, listBox, quickHelpText, false)
 
 	// Blit
-	c.Draw()
+	c.HideCursorAndDraw()
 
 	// Reposition the cursor
 	if repositionCursorAfterDrawing {
-		x := e.pos.ScreenX()
-		y := e.pos.ScreenY()
-		vt100.SetXY(uint(x), uint(y))
+		e.EnableAndPlaceCursor(c)
 	}
 }

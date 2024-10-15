@@ -442,12 +442,10 @@ func (step TutorialStep) Draw(c *vt100.Canvas, e *Editor, progress string, minWi
 	e.DrawText(bt, c, listBox, step.description, false)
 
 	// Blit
-	c.Draw()
+	c.HideCursorAndDraw()
 
 	// Reposition the cursor, if needed
 	if repositionCursorAfterDrawing {
-		x := e.pos.ScreenX()
-		y := e.pos.ScreenY()
-		vt100.SetXY(uint(x), uint(y))
+		e.EnableAndPlaceCursor(c)
 	}
 }

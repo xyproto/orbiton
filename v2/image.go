@@ -62,10 +62,9 @@ func displayImage(c *vt100.Canvas, filename string, waitForKeypress bool) error 
 	c.Write(uint((width-len(title))/2), uint(height-1), vt100.Black, vt100.BackgroundGray, title)
 
 	// Draw the contents of the canvas to the screen
-	c.Draw()
+	c.HideCursorAndDraw()
 
-	// Hide the cursor
-	vt100.ShowCursor(false)
+	// Show the cursor after the keypress
 	defer vt100.ShowCursor(true)
 
 	if waitForKeypress {

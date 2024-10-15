@@ -161,7 +161,7 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 				vt100.Clear()
 				c = nc
 				menu.Draw(c)
-				c.Redraw()
+				c.HideCursorAndRedraw()
 				changed = true
 			}
 
@@ -173,7 +173,7 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 	vt100.Clear()
 	vt100.Reset()
 	c.FillBackground(bgColor)
-	c.Redraw()
+	c.HideCursorAndRedraw()
 
 	// Set the initial menu index
 	menu.SelectIndex(uint(initialMenuIndex))
@@ -190,7 +190,7 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 			resizeMut.RUnlock()
 
 			// Update the canvas
-			c.Draw()
+			c.HideCursorAndDraw()
 		}
 
 		// Handle events
@@ -288,7 +288,7 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 
 		// If the menu was changed, draw the canvas
 		if changed {
-			c.Draw()
+			c.HideCursorAndDraw()
 		}
 
 	}
@@ -298,7 +298,7 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 		resizeMut.Lock()
 		menu.SelectDraw(c)
 		resizeMut.Unlock()
-		c.Draw()
+		c.HideCursorAndDraw()
 		time.Sleep(selectedDelay)
 	}
 

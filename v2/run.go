@@ -156,12 +156,10 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutpu
 	e.DrawList(bt, c, listBox, lines, -1)
 
 	// Blit
-	c.Draw()
+	c.HideCursorAndDraw()
 
 	// Reposition the cursor
 	if repositionCursorAfterDrawing {
-		x := e.pos.ScreenX()
-		y := e.pos.ScreenY()
-		vt100.SetXY(uint(x), uint(y))
+		e.EnableAndPlaceCursor(c)
 	}
 }

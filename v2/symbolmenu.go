@@ -36,7 +36,7 @@ func (e *Editor) SymbolMenu(tty *vt100.TTY, status *StatusBar, title string, cho
 				vt100.Clear()
 				c = nc
 				symbolMenu.Draw(c)
-				c.Redraw()
+				c.HideCursorAndRedraw()
 				changed = true
 			}
 
@@ -47,7 +47,7 @@ func (e *Editor) SymbolMenu(tty *vt100.TTY, status *StatusBar, title string, cho
 
 	vt100.Clear()
 	vt100.Reset()
-	c.Redraw()
+	c.HideCursorAndRedraw()
 
 	// Set the initial menu index
 	symbolMenu.SelectIndex(0, 0)
@@ -61,7 +61,7 @@ func (e *Editor) SymbolMenu(tty *vt100.TTY, status *StatusBar, title string, cho
 			symbolMenu.Draw(c)
 			resizeMut.RUnlock()
 			// Update the canvas
-			c.Draw()
+			c.HideCursorAndDraw()
 		}
 
 		// Handle events
@@ -138,7 +138,7 @@ func (e *Editor) SymbolMenu(tty *vt100.TTY, status *StatusBar, title string, cho
 
 		// If the menu was changed, draw the canvas
 		if changed {
-			c.Draw()
+			c.HideCursorAndDraw()
 		}
 
 	}

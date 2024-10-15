@@ -36,7 +36,7 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 	}
 
 	if drawLines {
-		e.DrawLines(c, true, e.sshMode, shouldHighlight)
+		e.HideCursorDrawLines(c, true, e.sshMode, shouldHighlight)
 	}
 
 	// Assign the new canvas to the current canvas
@@ -61,14 +61,14 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 	}
 
 	if drawLines {
-		e.DrawLines(c, true, e.sshMode, shouldHighlight)
+		e.HideCursorDrawLines(c, true, e.sshMode, shouldHighlight)
 	}
 
 	if e.sshMode {
 		// TODO: Figure out why this helps doing a full redraw when o is used over ssh
 		// Go to the line we were at
 		e.ScrollUp(c, nil, e.pos.scrollSpeed)
-		e.DrawLines(c, true, true, shouldHighlight)
+		e.HideCursorDrawLines(c, true, true, shouldHighlight)
 		e.ScrollDown(c, nil, e.pos.scrollSpeed)
 		e.redraw.Store(true)
 		e.redrawCursor.Store(true)
@@ -85,17 +85,17 @@ func (e *Editor) RedrawIfNeeded(c *vt100.Canvas, shouldHighlight bool) {
 	if e.redraw.Load() {
 		respectOffset := true
 		redrawCanvas := e.sshMode
-		e.DrawLines(c, respectOffset, redrawCanvas, shouldHighlight)
+		e.HideCursorDrawLines(c, respectOffset, redrawCanvas, shouldHighlight)
 		e.redraw.Store(false)
 	}
 }
 
 // RepositionCursor will send the VT100 commands needed to position the cursor
-func (e *Editor) RepositionCursor(x, y int) {
+func (e *Editor) RepositionCursor(x, y uint) {
 	// Redraw the cursor
-	vt100.SetXY(uint(x), uint(y))
-	e.previousX = x
-	e.previousY = y
+	vt100.SetXY(x, y)
+	e.previousX = int(x)
+	e.previousY = int(y)
 }
 
 // RepositionCursorIfNeeded will reposition the cursor using VT100 commands, if needed
@@ -107,13 +107,13 @@ func (e *Editor) RepositionCursorIfNeeded() {
 	e.pos.mut.RUnlock()
 
 	if x != e.previousX || y != e.previousY || e.redrawCursor.Load() {
-		e.RepositionCursor(x, y)
+		e.RepositionCursor(uint(x), uint(y))
 		e.redrawCursor.Store(false)
 	}
 }
 
-// DrawLines will draw a screen full of lines on the given canvas
-func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redrawCanvas, shouldHighlight bool) {
+// HideCursorDrawLines will draw a screen full of lines on the given canvas
+func (e *Editor) HideCursorDrawLines(c *vt100.Canvas, respectOffset, redrawCanvas, shouldHighlight bool) {
 	h := int(c.Height())
 	if respectOffset {
 		offsetY := e.pos.OffsetY()
@@ -126,8 +126,9 @@ func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redrawCanvas, shouldH
 	} else {
 		c.HideCursorAndDraw()
 	}
-	e.EnableAndPlaceCursor(c)
 }
+
+//e.EnableAndPlaceCursor(c)
 
 // InitialRedraw is called right before the main loop is started
 func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
@@ -162,13 +163,13 @@ func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 }
 
 // RedrawAtEndOfKeyLoop is called after each main loop
-func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, shouldHighlight bool) {
+func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, shouldHighlight, repositionCursor bool) {
 	redrawCanvas := !e.debugMode
 
 	// Redraw, if needed
 	if e.redraw.Load() {
 		// Draw the editor lines on the canvas, respecting the offset
-		e.DrawLines(c, true, redrawCanvas, shouldHighlight)
+		e.HideCursorDrawLines(c, true, redrawCanvas, shouldHighlight)
 		e.redraw.Store(false)
 
 		if e.drawProgress.Load() {
@@ -176,7 +177,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, should
 			e.drawProgress.Store(false)
 		}
 	} else if e.Changed() {
-		c.Draw()
+		c.HideCursorAndDraw()
 
 		if e.drawProgress.Load() {
 			e.DrawProgress(c)
@@ -205,5 +206,9 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, should
 		status.Show(c, e)
 	}
 
-	e.RepositionCursorIfNeeded()
+	if repositionCursor {
+		e.EnableAndPlaceCursor(c)
+	} else {
+		e.RepositionCursorIfNeeded()
+	}
 }

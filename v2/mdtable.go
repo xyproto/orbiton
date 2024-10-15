@@ -532,7 +532,7 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			vt100.Clear()
 			c = nc
 			tableWidget.Draw(c)
-			c.Redraw()
+			c.HideCursorAndRedraw()
 			changed = true
 		}
 	}
@@ -547,7 +547,7 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 
 	vt100.Clear()
 	vt100.Reset()
-	c.Redraw()
+	c.HideCursorAndRedraw()
 
 	showMessage := func(msg string, color vt100.AttributeColor) {
 		msgX := (c.W() - uint(len(msg))) / 2
@@ -569,7 +569,7 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 			tableWidget.Draw(c)
 			resizeMut.RUnlock()
 			// Update the canvas
-			c.Draw()
+			c.HideCursorAndDraw()
 		}
 
 		// Handle events
@@ -677,7 +677,7 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 
 		// If the menu was changed, draw the canvas
 		if changed {
-			c.Draw()
+			c.HideCursorAndDraw()
 		}
 
 		if cancel {

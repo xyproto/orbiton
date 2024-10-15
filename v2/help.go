@@ -173,13 +173,11 @@ ctrl-l    - refresh the current screen
 	e.DrawList(bt, c, listBox, lines, -1)
 
 	// Blit
-	c.Draw()
+	c.HideCursorAndDraw()
 
 	// Reposition the cursor
 	if repositionCursorAfterDrawing {
-		x := e.pos.ScreenX()
-		y := e.pos.ScreenY()
-		vt100.SetXY(uint(x), uint(y))
+		e.EnableAndPlaceCursor(c)
 	}
 }
 
@@ -247,7 +245,7 @@ func (e *Editor) DrawHotkeyOverview(tty *vt100.TTY, c *vt100.Canvas, status *Sta
 			status.Show(c, e)
 		}
 		e.DrawScrollableText(boxTheme, c, scrollableTextBox)
-		c.Draw()
+		c.HideCursorAndDraw()
 
 		// Wait for a keypress
 		key := tty.String()
@@ -266,8 +264,6 @@ func (e *Editor) DrawHotkeyOverview(tty *vt100.TTY, c *vt100.Canvas, status *Sta
 endOfLoop:
 	// Reposition the cursor
 	if repositionCursorAfterDrawing {
-		x := e.pos.ScreenX()
-		y := e.pos.ScreenY()
-		vt100.SetXY(uint(x), uint(y))
+		e.EnableAndPlaceCursor(c)
 	}
 }

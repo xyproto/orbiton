@@ -526,7 +526,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		// Do the redraw manually before showing the status message
 		respectOffset := true
 		redrawCanvas := false
-		e.DrawLines(c, respectOffset, redrawCanvas, false)
+		e.HideCursorDrawLines(c, respectOffset, redrawCanvas, false)
 		e.redraw.Store(false)
 	}
 
@@ -1504,7 +1504,7 @@ func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int)
 	l := e.Len()
 
 	if offset >= l-canvasLastY {
-		c.Draw()
+		c.HideCursorAndDraw()
 		// Don't redraw
 		return false
 	}
@@ -2960,8 +2960,10 @@ func (e *Editor) JoinLineWithNext(c *vt100.Canvas, bookmark *Position) bool {
 
 // EnableAndPlaceCursor first sets the cursor to shown and then places it at the right position
 func (e *Editor) EnableAndPlaceCursor(c *vt100.Canvas) {
-	c.ShowCursor()
+	//e.pos.mut.Lock()
 	x := uint(e.pos.ScreenX())
 	y := uint(e.pos.ScreenY())
+	//e.pos.mut.Unlock()
+	c.ShowCursor()
 	vt100.SetXY(x, y)
 }

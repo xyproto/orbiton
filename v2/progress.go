@@ -24,5 +24,5 @@ func (e *Editor) DrawProgress(c *vt100.Canvas) {
 		y = canvasHeight - 1
 	}
 	c.WriteBackground(x, uint(y), e.MenuArrowColor.Background())
-	c.Draw()
+	c.HideCursorAndDraw()
 }

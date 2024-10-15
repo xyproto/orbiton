@@ -774,7 +774,7 @@ retry:
 			if nc != nil {
 				c.Clear()
 				vt100.Clear()
-				c.Draw()
+				c.HideCursorAndDraw()
 				c = nc
 			}
 
@@ -817,7 +817,6 @@ retry:
 
 		// Draw elements in their new positions
 		c.Clear()
-		// c.Draw()
 
 		resizeMut.RLock()
 		for _, pellet := range pellets {
@@ -859,7 +858,7 @@ retry:
 		// vt100.Clear()
 
 		// Update the canvas
-		c.Draw()
+		c.HideCursorAndDraw()
 
 		// Wait a bit
 		end := time.Now()

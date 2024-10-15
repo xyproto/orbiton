@@ -1640,10 +1640,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			// Try to restore the previous editor state in the undo buffer
 			if err := undo.Restore(e); err == nil {
-				// c.Draw()
-				x := e.pos.ScreenX()
-				y := e.pos.ScreenY()
-				vt100.SetXY(uint(x), uint(y))
+				e.EnableAndPlaceCursor(c)
 				e.redrawCursor.Store(true)
 				e.redraw.Store(true)
 			} else {
@@ -1920,7 +1917,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.GoToPosition(c, status, *e.breakpoint)
 					// TODO: Just use status.SetMessageAfterRedraw instead?
 					// Do the redraw manually before showing the status message
-					e.DrawLines(c, true, false, true)
+					e.HideCursorDrawLines(c, true, false, true)
 					e.redraw.Store(false)
 					// Show the status message
 					s := "Jumped to breakpoint at line " + e.LineNumber().String()
@@ -1944,7 +1941,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.GoToPosition(c, status, *bookmark)
 					// TODO: Just use status.SetMessageAfterRedraw instead?
 					// Do the redraw manually before showing the status message
-					e.DrawLines(c, true, false, true)
+					e.HideCursorDrawLines(c, true, false, true)
 					e.redraw.Store(false)
 					// Show the status message
 					s := "Jumped to bookmark at line " + e.LineNumber().String()
@@ -2103,17 +2100,20 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		// Draw and/or redraw everything, with slightly different behavior over ssh
 		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
-		e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown)
+		e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown, true)
 
-		if (e.highlightCurrentLine || e.highlightCurrentText) && !e.EmptyLine() {
+		if (e.highlightCurrentLine || e.highlightCurrentText) && !e.statusMode && !e.EmptyLine() {
 			// When not moving up or down, turn off the text highlight after arrowHighlightTime
 			go func() {
 				time.Sleep(arrowKeyHighlightTime)
+				if e.statusMode || status.messageAfterRedraw != "" {
+					return
+				}
 				justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
 				if !justMovedUpOrDownOrLeftOrRight && regularEditingRightNow {
 					e.redraw.Store(true)
 					e.redrawCursor.Store(true)
-					e.RedrawAtEndOfKeyLoop(c, status, false)
+					e.RedrawAtEndOfKeyLoop(c, status, false, true)
 					e.redraw.Store(false)
 					e.redrawCursor.Store(false)
 				}
@@ -2122,14 +2122,16 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		// Also draw the watches, if debug mode is enabled // and a debug session is in progress
 		if e.debugMode {
-			repositionCursor := false
+			const repositionCursor = false
 			e.DrawWatches(c, repositionCursor)
 			e.DrawRegisters(c, repositionCursor)
 			e.DrawGDBOutput(c, repositionCursor)
 			e.DrawInstructions(c, repositionCursor)
-			repositionCursor = true
 			e.DrawFlags(c, repositionCursor)
 		}
+
+		// Repositions the cursor
+		e.EnableAndPlaceCursor(c)
 
 	} // end of main loop
 
@@ -2159,12 +2161,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	// Clear all status bar messages
 	status.ClearAll(c)
 
+	// Make sure to enable the cursor again
+	vt100.ShowCursor(true)
+
 	// Quit everything that has to do with the terminal
 	if e.clearOnQuit {
 		vt100.Clear()
 		vt100.Close()
 	} else {
-		c.Draw()
+		c.HideCursorAndDraw()
 		fmt.Println()
 	}
 
