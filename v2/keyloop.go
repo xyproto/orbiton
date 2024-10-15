@@ -2102,7 +2102,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			status.ClearAll(c, false)
 		}
 
-		arrowKeyHighlightTime := 1200 * time.Millisecond
+		const arrowKeyHighlightTime = 1200 * time.Millisecond
 
 		// Draw and/or redraw everything, with slightly different behavior over ssh
 		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
@@ -2112,8 +2112,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// When not moving up or down, turn off the text highlight after arrowHighlightTime
 			if !highlightTimerActive.Load() {
 				go func() {
-					highlightTimerActive.Store(true)
 					time.Sleep(arrowKeyHighlightTime)
+					highlightTimerActive.Store(true)
 					if e.statusMode || status.messageAfterRedraw != "" {
 						highlightTimerActive.Store(false)
 						return
