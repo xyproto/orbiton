@@ -101,8 +101,11 @@ func (e *Editor) RepositionCursor(x, y int) {
 // RepositionCursorIfNeeded will reposition the cursor using VT100 commands, if needed
 func (e *Editor) RepositionCursorIfNeeded() {
 	// Redraw the cursor, if needed
+	e.pos.mut.RLock()
 	x := e.pos.ScreenX()
 	y := e.pos.ScreenY()
+	e.pos.mut.RUnlock()
+
 	if x != e.previousX || y != e.previousY || e.redrawCursor.Load() {
 		e.RepositionCursor(x, y)
 		e.redrawCursor.Store(false)
@@ -167,16 +170,16 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, should
 		e.DrawLines(c, true, redrawCanvas, shouldHighlight)
 		e.redraw.Store(false)
 
-		if e.drawProgress {
+		if e.drawProgress.Load() {
 			e.DrawProgress(c)
-			e.drawProgress = false
+			e.drawProgress.Store(false)
 		}
 	} else if e.Changed() {
 		c.Draw()
 
-		if e.drawProgress {
+		if e.drawProgress.Load() {
 			e.DrawProgress(c)
-			e.drawProgress = false
+			e.drawProgress.Store(false)
 		}
 	}
 

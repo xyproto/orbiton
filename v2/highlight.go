@@ -29,6 +29,10 @@ var (
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy uint, shouldHighlightNow bool) {
+	e.pos.mut.RLock()
+	skipX := e.pos.offsetX
+	e.pos.mut.RUnlock()
+
 	// TODO: Refactor this function
 	var (
 		match                              bool
@@ -57,7 +61,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		arrowIndex                         int
 		commentIndex                       int
 		k                                  int
-		skipX                              = e.pos.offsetX
 		lineRuneCount                      uint
 		lineStringCount                    uint
 		yp, xp                             uint

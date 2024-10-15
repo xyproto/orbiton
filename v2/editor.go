@@ -62,9 +62,6 @@ type Editor struct {
 	slowLoad                   bool            // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
 	building                   bool            // currently buildig code or exporting to a file?
 	runAfterBuild              bool            // run the application after building?
-	changed                    atomic.Bool     // has the contents changed, since last save?
-	redraw                     atomic.Bool     // if the contents should be redrawn in the next loop
-	redrawCursor               atomic.Bool     // if the cursor should be moved to the location it is supposed to be
 	monitorAndReadOnly         bool            // monitor the file for changes and open it as read-only
 	primaryClipboard           bool            // use the primary or the secondary clipboard on UNIX?
 	jumpToLetterMode           bool            // jump directly to a highlighted letter
@@ -72,11 +69,14 @@ type Editor struct {
 	spellCheckMode             bool            // spell check mode?
 	createDirectoriesIfMissing bool            // when saving a file, should directories be created if they are missing?
 	displayQuickHelp           bool            // display the quick help box?
-	drawProgress               bool            // used for drawing the progress character on the right side
 	blockMode                  bool            // toggle if typing should affect the current line or the current block
 	dirMode                    bool            // browse a directory and also interact with git
 	highlightCurrentLine       bool            // highlight the current line
 	highlightCurrentText       bool            // highlight the current text (not the entire line)
+	changed                    atomic.Bool     // has the contents changed, since last save?
+	redraw                     atomic.Bool     // if the contents should be redrawn in the next loop
+	redrawCursor               atomic.Bool     // if the cursor should be moved to the location it is supposed to be
+	drawProgress               atomic.Bool     // used for drawing the progress character on the right side
 }
 
 // CopyLines will create a new map[int][]rune struct that is the copy of all the lines in the editor
@@ -1495,7 +1495,9 @@ func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int)
 
 	// Retrieve the current editor scroll offset offset
 	mut.RLock()
+	e.pos.mut.Lock()
 	offset := e.pos.offsetY
+	e.pos.mut.Unlock()
 	mut.RUnlock()
 
 	// Number of lines in the document
@@ -1516,8 +1518,10 @@ func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed int)
 
 	// Move the scroll offset
 	mut.Lock()
+	e.pos.mut.Lock()
 	e.pos.offsetX = 0
 	e.pos.offsetY += canScroll
+	e.pos.mut.Unlock()
 	mut.Unlock()
 
 	// Prepare to redraw
@@ -1531,7 +1535,9 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 
 	// Retrieve the current editor scroll offset offset
 	mut.RLock()
+	e.pos.mut.Lock()
 	offset := e.pos.offsetY
+	e.pos.mut.Unlock()
 	mut.RUnlock()
 
 	if offset == 0 {
@@ -1546,8 +1552,10 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 	}
 	// Move the scroll offset
 	mut.Lock()
+	e.pos.mut.Lock()
 	e.pos.offsetX = 0
 	e.pos.offsetY -= canScroll
+	e.pos.mut.Unlock()
 	mut.Unlock()
 	// Prepare to redraw
 	return true

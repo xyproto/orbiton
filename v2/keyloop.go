@@ -649,7 +649,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.End(c)
 					}
 				}
-				e.drawProgress = true
+				e.drawProgress.Store(true)
 				break
 			}
 
@@ -842,7 +842,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.End(c)
 					}
 				}
-				e.drawProgress = true
+				e.drawProgress.Store(true)
 				break
 			}
 
@@ -940,14 +940,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					if e.AfterLineScreenContents() {
 						e.End(c)
 					}
-					e.drawProgress = true
+					e.drawProgress.Store(true)
 				case scrollDownAction:
 					e.redraw.Store(e.ScrollDown(c, status, e.pos.scrollSpeed))
 					e.redrawCursor.Store(true)
 					if e.AfterLineScreenContents() {
 						e.End(c)
 					}
-					e.drawProgress = true
+					e.drawProgress.Store(true)
 				case displayQuickHelpAction:
 					const repositionCursorAfterDrawing = true
 					e.DrawQuickHelp(c, repositionCursorAfterDrawing)
@@ -1463,7 +1463,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if e.AfterLineScreenContents() {
 				e.End(c)
 			}
-			e.drawProgress = true
+			e.drawProgress.Store(true)
 
 		case pgDnKey: // page down
 			h := int(c.H())
@@ -1472,7 +1472,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			if e.AfterLineScreenContents() {
 				e.End(c)
 			}
-			e.drawProgress = true
+			e.drawProgress.Store(true)
 
 		case "c:25": // ctrl-y
 
