@@ -2164,9 +2164,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	// Clear all status bar messages
 	status.ClearAll(c)
 
-	// Make sure to enable the cursor again
-	vt100.ShowCursor(true)
-
 	// Quit everything that has to do with the terminal
 	if e.clearOnQuit {
 		vt100.Clear()
@@ -2175,6 +2172,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		c.HideCursorAndDraw()
 		fmt.Println()
 	}
+
+	// Make sure to enable the cursor again
+	vt100.ShowCursor(true)
 
 	// All done
 	return "", e.stopParentOnQuit, nil
