@@ -52,3 +52,5 @@ redblack
 release/
 v2/o
 v2/orbiton
+
+o.log.*
