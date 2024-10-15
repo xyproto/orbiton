@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -77,6 +78,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		markdownTableEditorCounter int // the number of times the Markdown table editor has been displayed
 
 		regularEditingRightNow = true // is the user in some sort of mode, like the ctrl-o menu, or editing text right now?
+
+		highlightTimerActive atomic.Bool
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -2107,20 +2110,25 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		if (e.highlightCurrentLine || e.highlightCurrentText) && !e.statusMode && !e.EmptyLine() {
 			// When not moving up or down, turn off the text highlight after arrowHighlightTime
-			go func() {
-				time.Sleep(arrowKeyHighlightTime)
-				if e.statusMode || status.messageAfterRedraw != "" {
-					return
-				}
-				justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
-				if !justMovedUpOrDownOrLeftOrRight && regularEditingRightNow {
-					e.redraw.Store(true)
-					e.redrawCursor.Store(true)
-					e.RedrawAtEndOfKeyLoop(c, status, false, true)
-					e.redraw.Store(false)
-					e.redrawCursor.Store(false)
-				}
-			}()
+			if !highlightTimerActive.Load() {
+				go func() {
+					highlightTimerActive.Store(true)
+					time.Sleep(arrowKeyHighlightTime)
+					if e.statusMode || status.messageAfterRedraw != "" {
+						highlightTimerActive.Store(false)
+						return
+					}
+					justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
+					if !justMovedUpOrDownOrLeftOrRight && regularEditingRightNow {
+						e.redraw.Store(true)
+						e.redrawCursor.Store(true)
+						e.RedrawAtEndOfKeyLoop(c, status, false, true)
+						e.redraw.Store(false)
+						e.redrawCursor.Store(false)
+					}
+					highlightTimerActive.Store(false)
+				}()
+			}
 		}
 
 		// Also draw the watches, if debug mode is enabled // and a debug session is in progress
