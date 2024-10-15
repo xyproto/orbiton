@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 	"unicode"
@@ -80,6 +81,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		regularEditingRightNow = true // is the user in some sort of mode, like the ctrl-o menu, or editing text right now?
 
 		highlightTimerCounter atomic.Uint64
+		highlightTimerMut     sync.Mutex
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -2117,6 +2119,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					if thisID < highlightTimerCounter.Load() { // only the freshest ID should be active
 						return
 					}
+					highlightTimerMut.Lock()
+					defer highlightTimerMut.Unlock()
 					justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
 					if !justMovedUpOrDownOrLeftOrRight && regularEditingRightNow {
 						e.redraw.Store(true)
