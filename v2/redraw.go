@@ -122,10 +122,11 @@ func (e *Editor) DrawLines(c *vt100.Canvas, respectOffset, redrawCanvas, shouldH
 		e.WriteLines(c, LineIndex(0), LineIndex(h), 0, 0, shouldHighlight)
 	}
 	if redrawCanvas {
-		c.Redraw()
+		c.HideCursorAndRedraw()
 	} else {
-		c.Draw()
+		c.HideCursorAndDraw()
 	}
+	e.EnableAndPlaceCursor(c)
 }
 
 // InitialRedraw is called right before the main loop is started

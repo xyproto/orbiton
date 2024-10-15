@@ -2957,3 +2957,11 @@ func (e *Editor) JoinLineWithNext(c *vt100.Canvas, bookmark *Position) bool {
 	e.Delete(c, false)
 	return true
 }
+
+// EnableAndPlaceCursor first sets the cursor to shown and then places it at the right position
+func (e *Editor) EnableAndPlaceCursor(c *vt100.Canvas) {
+	c.ShowCursor()
+	x := uint(e.pos.ScreenX())
+	y := uint(e.pos.ScreenY())
+	vt100.SetXY(x, y)
+}
