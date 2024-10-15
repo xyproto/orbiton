@@ -2,7 +2,8 @@
 
 ## General
 
-- [ ] Instead of sleeping in a goroutine before clearing the highlighted line, do a check for how much time has elapsed when redrawing at the end of the loop.
+- [ ] Use a channel for queuing up calls to the vt100 package to avoid race conditions.
+- [ ] Instead of sleeping in a goroutine before clearing the highlighted line, do a check for how much time has elapsed when redrawing at the end of the loop, to avoid race conditions.
 - [ ] When removing `-` in front of lines, do not move 1 to the right when encountering `}`.
 - [ ] When browsing up and down with `ctrl-n` or `ctrl-p`, do not highlight lines until an arrow key has been pressed, or until some time have passed.
 - [ ] Let `ctrl-g` go to definition for more languages.
