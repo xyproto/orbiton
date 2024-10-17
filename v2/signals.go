@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -19,6 +20,7 @@ func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *St
 	mut.Lock()
 
 	sigChan := make(chan os.Signal, 1)
+	done := make(chan struct{})
 
 	// Send a SIGWINCH signal to the parent process if "OG" is set,
 	// to signal that "o is ready" to resize. The "og" GUI will then
@@ -44,34 +46,46 @@ func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *St
 	resizeMut.Unlock()
 	mut.Unlock()
 
-	go func() {
-		for {
-			// Block until the signal is received
-			sig := <-sigChan
+	// Using a context to make it easy stop the goroutine loop below
+	ctx, cancel := context.WithCancel(context.Background())
 
-			switch sig {
-			case syscall.SIGTERM:
-				// Save the file
-				mut.Lock()
-				e.UserSave(c, tty, status)
-				mut.Unlock()
-			case syscall.SIGUSR1:
-				// Unlock the file
-				if absFilename, err := filepath.Abs(e.filename); err != nil {
-					// Just unlock the non-absolute filename
-					fileLock.Unlock(e.filename)
-				} else {
-					fileLock.Unlock(absFilename)
+	go func() {
+		defer cancel()
+		for {
+			select {
+			case sig := <-sigChan:
+				switch sig {
+				case syscall.SIGTERM:
+					// Save the file
+					mut.Lock()
+					e.UserSave(c, tty, status)
+					mut.Unlock()
+				case syscall.SIGUSR1:
+					// Unlock the file
+					if absFilename, err := filepath.Abs(e.filename); err != nil {
+						// Just unlock the non-absolute filename
+						fileLock.Unlock(e.filename)
+					} else {
+						fileLock.Unlock(absFilename)
+					}
+					fileLock.Save()
+				case syscall.SIGWINCH:
+					// Full redraw, like if Esc was pressed
+					drawLines := true
+					e.FullResetRedraw(c, status, drawLines, false)
+					// Try twice
+					time.Sleep(300 * time.Millisecond)
+					e.FullResetRedraw(c, status, drawLines, false)
 				}
-				fileLock.Save()
-			case syscall.SIGWINCH:
-				// Full redraw, like if Esc was pressed
-				drawLines := true
-				e.FullResetRedraw(c, status, drawLines, false)
-				// Try twice
-				time.Sleep(300 * time.Millisecond)
-				e.FullResetRedraw(c, status, drawLines, false)
+			case <-ctx.Done():
+				return
 			}
 		}
+	}()
+
+	defer func() {
+		close(done)
+		signal.Reset()
+		cancel()
 	}()
 }
