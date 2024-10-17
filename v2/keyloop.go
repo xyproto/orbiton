@@ -1469,7 +1469,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case pgUpKey: // page up
 			h := int(c.H())
-			e.redraw.Store(e.ScrollUp(c, status, h))
+			e.redraw.Store(e.ScrollUp(c, status, int(float64(h)*0.9)))
 			e.redrawCursor.Store(true)
 			if e.AfterLineScreenContents() {
 				e.End(c)
@@ -1478,7 +1478,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case pgDnKey: // page down
 			h := int(c.H())
-			redraw := e.ScrollDown(c, status, h, h)
+			redraw := e.ScrollDown(c, status, int(float64(h)*0.9), h)
 			e.redraw.Store(redraw)
 			// If redraw is false, the end of file is reached
 			if !redraw {
