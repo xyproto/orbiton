@@ -86,6 +86,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		originallyNroff bool
 	)
 
+	// TODO: Move this to themes.go
+	if nanoMode { // make the status bar stand out
+		theme.StatusBackground = theme.DebugInstructionsBackground
+		theme.StatusErrorBackground = theme.DebugInstructionsBackground
+	}
+
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
 	e, messageAfterRedraw, displayedImage, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp)
 	if err != nil {
