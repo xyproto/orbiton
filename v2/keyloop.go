@@ -82,6 +82,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		highlightTimerCounter atomic.Uint64
 		highlightTimerMut     sync.Mutex
+
+		originallyNroff bool
 	)
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
@@ -360,8 +362,23 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			switch e.mode {
-			case mode.ManPage, mode.Config:
+			case mode.Config:
 				break // do nothing
+			case mode.Nroff:
+				originallyNroff = true
+				manPageMode = true
+				e.mode = mode.ManPage
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				break
+			case mode.ManPage:
+				if originallyNroff {
+					e.mode = mode.Nroff
+					manPageMode = false
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
+				}
+				break
 			case mode.Markdown:
 				e.ToggleCheckboxCurrentLine()
 			default:
