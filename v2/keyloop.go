@@ -579,11 +579,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 
-			// First check if we can jump to the matching paren or bracket
-			if e.OnParenOrBracket() && e.JumpToMatching(c) {
-				break
-			}
-
 			// Ask the user to type in a digraph
 			const tabInputText = "ae"
 			if digraphString, ok := e.UserInput(c, tty, status, "Type in a 2-letter digraph", "", digraph.All(), false, tabInputText); ok {
@@ -1611,7 +1606,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			status.Show(c, e)
 		case "c:19": // ctrl-s, save (or step, if in debug mode)
 			e.UserSave(c, tty, status)
-		case "c:7": // ctrl-g, either go to definition OR toggle the status bar
+		case "c:7": // ctrl-g, either go to definition OR jump to matching parent/bracket OR toggle the status bar
 
 			if e.nanoMode { // nano: ctrl-g, help
 				status.ClearAll(c, false)
@@ -1650,7 +1645,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					redraw, _ := e.GoTo(oldLineIndex, c, status)
 					e.redraw.Store(redraw)
 					e.ClearSearch()
+					status.Show(c, e)
 				})
+			} else if e.OnParenOrBracket() {
+				e.JumpToMatching(c)
+				e.redrawCursor.Store(true)
 			} else {
 				// Toggle status bar
 				status.ClearAll(c, false)
@@ -1659,10 +1658,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					status.ShowFilenameLineColWordCount(c, e)
 					e.showColumnLimit = e.wrapWhenTyping
 				}
+				status.Show(c, e)
 			}
-
 			e.redraw.Store(true)
-			status.Show(c, e)
 
 		case "c:21": // ctrl-u to undo
 
