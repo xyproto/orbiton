@@ -372,6 +372,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break // do nothing
 			case mode.Nroff:
 				originallyNroff = true
+				// Switch to man page mode
 				manPageMode = true
 				e.mode = mode.ManPage
 				e.redraw.Store(true)
@@ -379,8 +380,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			case mode.ManPage:
 				if originallyNroff {
-					e.mode = mode.Nroff
+					// Switch back to Nroff mode
 					manPageMode = false
+					e.mode = mode.Nroff
 					e.redraw.Store(true)
 					e.redrawCursor.Store(true)
 				}
@@ -1599,6 +1601,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:29", "c:30": // ctrl-~, jump to matching parenthesis or curly bracket
 			if e.JumpToMatching(c) {
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
 				break
 			}
 			status.Clear(c, false)
@@ -1627,7 +1631,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			// func prefix must exist for this language/mode for GoToDefinition to be supported
 			jumpedToDefinition := e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status)
-
 			if jumpedToDefinition {
 				break
 			}
