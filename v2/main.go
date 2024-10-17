@@ -353,16 +353,10 @@ func main() {
 			theme = NewTealTheme()
 		case 'n': // nan, nano
 			// Check if "Nano mode" should be set
-			nanoMode = executableName == "nan" || executableName == "nano"
+			nanoMode = strings.HasPrefix(executableName, "na")
 		default:
 			specificLetter = false
 		}
-	}
-
-	// TODO: Move this to themes.go
-	if nanoMode { // make the status bar stand out
-		theme.StatusBackground = theme.DebugInstructionsBackground
-		theme.StatusErrorBackground = theme.DebugInstructionsBackground
 	}
 
 	// Initialize the VT100 terminal
@@ -385,8 +379,7 @@ func main() {
 		}()
 	}
 
-	// Remove the terminal title, if the current terminal emulator supports it
-	// and if NO_COLOR is not set.
+	// Remove the terminal title, if the current terminal emulator supports it and if NO_COLOR is not set.
 	NoTitle()
 
 	// Clear the current color attribute
