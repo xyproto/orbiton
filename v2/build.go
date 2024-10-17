@@ -1217,16 +1217,6 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 	e.ClearSearch()
 	e.redraw.Store(false)
 
-	// ctrl-space was pressed while in Nroff mode
-	if e.mode == mode.Nroff {
-		// TODO: Make this render the man page like if MANPAGER=o was used
-		e.mode = mode.ManPage
-		e.syntaxHighlight = true
-		e.redraw.Store(true)
-		e.redrawCursor.Store(true)
-		return
-	}
-
 	// Require a double ctrl-space when exporting Markdown to HTML, because it is so easy to press by accident
 	if markdownDoubleSpacePrevention && (e.mode == mode.Markdown && !alsoRun) {
 		return
