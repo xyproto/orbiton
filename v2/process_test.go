@@ -5,10 +5,9 @@ import (
 )
 
 func TestParentIsMan(t *testing.T) {
-	// This test will only pass if run from the 'man' command, which is not typical.
-	isMan := parentIsMan()
-	if isMan {
-		t.Logf("Parent process is 'man'.")
+	// This test will only pass if NOT run via the 'man' command (which is not typical.)
+	if parentProcessIs("man") {
+		t.Error("Parent process is 'man'.")
 	} else {
 		t.Logf("Parent process is not 'man'.")
 	}
