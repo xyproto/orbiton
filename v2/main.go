@@ -37,6 +37,9 @@ var (
 
 	// For when building and running programs with ctrl-space
 	inputFileWhenRunning string
+
+	// Check if the parent process is "man"
+	parentIsMan = parentProcessIs("man")
 )
 
 func main() {
@@ -234,11 +237,8 @@ func main() {
 
 	stdinFilename := len(os.Args) == 1 || (len(os.Args) == 2 && (os.Args[1] == "-" || os.Args[1] == "/dev/stdin"))
 
-	// Check if the parent process is "man"
-	manPageMode := parentIsMan()
-
 	// If no regular filename is given, check if data is ready at stdin
-	fnord.stdin = stdinFilename && (files.DataReadyOnStdin() || manPageMode)
+	fnord.stdin = stdinFilename && (files.DataReadyOnStdin() || parentIsMan)
 
 	if fnord.stdin {
 		// TODO: Use a spinner?
@@ -370,7 +370,7 @@ func main() {
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, manPageMode, createDirectoriesFlag, quickHelpFlag)
+	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {

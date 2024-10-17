@@ -49,7 +49,7 @@ var (
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, manPageMode, createDirectoriesIfMissing, displayQuickHelp bool) (userMessage string, stopParent bool, err error) {
+func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp bool) (userMessage string, stopParent bool, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt100.Init()
@@ -109,7 +109,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		}
 	}
 
-	if manPageMode {
+	if parentIsMan {
 		e.mode = mode.ManPage
 	}
 
@@ -373,7 +373,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			case mode.Nroff:
 				originallyNroff = true
 				// Switch to man page mode
-				manPageMode = true
 				e.mode = mode.ManPage
 				e.redraw.Store(true)
 				e.redrawCursor.Store(true)
@@ -381,7 +380,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			case mode.ManPage:
 				if originallyNroff {
 					// Switch back to Nroff mode
-					manPageMode = false
 					e.mode = mode.Nroff
 					e.redraw.Store(true)
 					e.redrawCursor.Store(true)
