@@ -58,11 +58,11 @@ func (ci ColIndex) ColNumber() ColNumber {
 	return ColNumber(ci + 1)
 }
 
-// FilenameAndLineNumberAndColNumber will take the first two arguments and return a filename and a line number (can be 0)
+// FilenameLineColNumber will take the first two arguments and return a filename and a line number (can be 0)
 // If the second argument is a number, that will be used as the line number. Or:
 // If the second argument is a number prefixed with a "+", that will be used as the line number. Or:
 // If the filename ends with a ":" and a number, that will be used as the line number.
-func FilenameAndLineNumberAndColNumber(filename, lineNumberString, colNumberString string) (string, LineNumber, ColNumber) {
+func FilenameLineColNumber(filename, lineNumberString, colNumberString string) (string, LineNumber, ColNumber) {
 	lineNumber := 0
 	colNumber := 0
 	if lineNumberConverted, err := strconv.Atoi(lineNumberString); err == nil { // no error

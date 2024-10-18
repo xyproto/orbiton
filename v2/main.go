@@ -258,7 +258,7 @@ func main() {
 			fnord.length = lendata
 		}
 	} else {
-		fnord.filename, lineNumber, colNumber = FilenameAndLineNumberAndColNumber(pflag.Arg(0), pflag.Arg(1), pflag.Arg(2))
+		fnord.filename, lineNumber, colNumber = FilenameLineColNumber(pflag.Arg(0), pflag.Arg(1), pflag.Arg(2))
 	}
 	// Check if the given filename contains something
 	if fnord.Empty() {
