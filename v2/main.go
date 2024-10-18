@@ -238,7 +238,7 @@ func main() {
 	stdinFilename := len(os.Args) == 1 || (len(os.Args) == 2 && (os.Args[1] == "-" || os.Args[1] == "/dev/stdin"))
 
 	// If no regular filename is given, check if data is ready at stdin
-	fnord.stdin = stdinFilename && (files.DataReadyOnStdin() || parentIsMan)
+	fnord.stdin = stdinFilename && (parentIsMan || files.DataReadyOnStdin())
 
 	if fnord.stdin {
 		// TODO: Use a spinner?
