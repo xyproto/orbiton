@@ -141,7 +141,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				inCodeBlock = !inCodeBlock
 			}
 		}
-	case mode.Nim, mode.Mojo, mode.Python:
+	case mode.Mojo, mode.Num, mode.Python:
 		// Figure out if "fromline" is within a markdown code block or not
 		for li = LineIndex(0); li < fromline; li++ {
 			line = e.Line(li)
