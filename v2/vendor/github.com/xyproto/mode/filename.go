@@ -216,7 +216,7 @@ func Detect(filename string) Mode {
 			mode = Rust
 		case ".rst":
 			mode = ReStructured // reStructuredText
-		case ".s", ".S", ".asm", ".inc":
+		case ".mac", ".S", ".asm", ".inc", ".s":
 			// Go-style assembly (modeGoAssembly) is enabled if a mid-dot is discovered
 			mode = Assembly
 		case ".scala":
