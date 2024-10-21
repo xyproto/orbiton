@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Have a progress indicator on the right side also for when `NO_COLOR=1` is set.
 - [ ] Add a history for not only previous searches, but also for previous replacements.
 - [ ] Fix the "jump to matching paren/bracket" feature so that it can jump anywhere in a file.
 - [ ] Let `ctrl-space` show a preview of man pages instead of changing the syntax highlighting.
