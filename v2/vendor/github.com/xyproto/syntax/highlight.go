@@ -303,7 +303,7 @@ func tokenKind(tok rune, tokText string, inSingleLineComment *bool, m mode.Mode)
 	}
 
 	// Check if this is #include or #define
-	if (m == mode.C || m == mode.Cpp) && (tokText == "include" || tokText == "define" || tokText == "ifdef" || tokText == "ifndef" || tokText == "endif" || tokText == "else") {
+	if (m == mode.C || m == mode.Cpp) && (tokText == "include" || tokText == "define" || tokText == "ifdef" || tokText == "ifndef" || tokText == "endif" || tokText == "else" || tokText == "elif") {
 		*inSingleLineComment = false
 		return Keyword
 	}

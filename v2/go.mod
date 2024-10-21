@@ -21,7 +21,7 @@ require (
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/mode v0.7.30
 	github.com/xyproto/stringpainter v1.0.1
-	github.com/xyproto/syntax v1.10.9
+	github.com/xyproto/syntax v1.10.10
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/textoutput v1.16.6
 	github.com/xyproto/vt100 v1.16.5
