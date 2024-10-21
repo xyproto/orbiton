@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Let "go to definition" also jump to ie. `static inline void print_or_suppress_zero_line(const char* buffer, char* z, const int nz, const char* program_name)` in C.
 - [ ] Always show the current function name in the upper right corner.
 - [ ] Have a progress indicator on the right side also for when `NO_COLOR=1` is set.
 - [ ] Add a history for not only previous searches, but also for previous replacements.
