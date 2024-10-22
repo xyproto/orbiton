@@ -79,8 +79,8 @@ func (e *Editor) LooksLikeFunctionDef(line string) bool {
 				return false
 			}
 		}
-		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") {
-			if strings.Contains(line, "(") && strings.Contains(line, ")") {
+		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") { // lines that are not indented are more likely to be function definitions
+			if strings.Contains(line, "(") && strings.Contains(line, ")") { // looking more and more like a function definition
 				return true
 			}
 		}
@@ -117,9 +117,16 @@ func (e *Editor) FunctionName(line string) string {
 func (e *Editor) FindCurrentFunctionName() string {
 	startLineIndex := e.LineIndex()
 	startLine := e.Line(startLineIndex)
-	if !strings.HasPrefix(startLine, " ") && !strings.HasPrefix(startLine, "\t") {
-		if trimmedLine := strings.TrimSpace(startLine); trimmedLine == "" {
-			return ""
+	if !strings.HasPrefix(startLine, " ") && !strings.HasPrefix(startLine, "\t") { // no indentation on this line
+		trimmedLine := strings.TrimSpace(startLine)
+		if trimmedLine == "" { // and this line is empty
+			lineAbove := e.LineAbove()
+			if !strings.HasPrefix(lineAbove, " ") && !strings.HasPrefix(lineAbove, "\t") { // no indentation on the line above as well
+				return "" // most likely an empty line between functions, so there is no function name to return here
+			}
+		}
+		if strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()) || strings.HasPrefix(trimmedLine, "/*") || strings.HasSuffix(trimmedLine, "*/") || strings.HasPrefix(trimmedLine, "*") {
+			return "" // probably on a comment before a function
 		}
 	}
 	for i := startLineIndex; i >= 0; i-- {
