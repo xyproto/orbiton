@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Detect `name() {` as a function signature for many languages + do not include the function prefix like `function asdf` in the function name status.
 - [ ] Add a flag for only programming with arrow keys and space/return and esc, or joystick and A and B.
       Leverage Ollama to find good questions to ask and offer good options on screen.
       Use 2 to 4 large horizontal squares to choose between. Implement this is a new type of menu.
