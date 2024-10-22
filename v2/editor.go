@@ -2088,7 +2088,6 @@ func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func() bool) {
 	e.pos.sx = finalX
 	e.pos.sy = firstY
 	e.pos.offsetX = finalOffsetX
-
 	// Make sure no lines are nil
 	e.MakeConsistent()
 }
