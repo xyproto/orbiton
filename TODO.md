@@ -2,6 +2,10 @@
 
 ## General
 
+- [ ] Add a flag for only programming with arrow keys and space/return and esc, or joystick and A and B.
+      Leverage Ollama to find good questions to ask and offer good options on screen.
+      Use 2 to 4 large horizontal squares to choose between. Implement this is a new type of menu.
+      Then package Orbiton as an app for Steam, Play Store and App Store and become rich! Muheh hehaaaha!!!1!!
 - [ ] Let "go to definition" also jump to ie. `static inline void print_or_suppress_zero_line(const char* buffer, char* z, const int nz, const char* program_name)` in C.
 - [ ] Always show the current function name in the upper right corner.
 - [ ] Have a progress indicator on the right side also for when `NO_COLOR=1` is set.
