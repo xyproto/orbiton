@@ -698,7 +698,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 				}
 				e.drawProgress.Store(true)
-				e.drawFuncName.Store(false)
+				e.drawFuncName.Store(true)
 				break
 			}
 
@@ -894,7 +894,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 				}
 				e.drawProgress.Store(true)
-				e.drawFuncName.Store(false)
+				e.drawFuncName.Store(true)
 				break
 			}
 
@@ -1521,7 +1521,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.End(c)
 			}
 			e.drawProgress.Store(true)
-			e.drawFuncName.Store(false)
+			e.drawFuncName.Store(true)
 
 		case pgDnKey: // page down
 			h := int(c.H())
@@ -1538,7 +1538,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.End(c)
 			}
 			e.drawProgress.Store(true)
-			e.drawFuncName.Store(false)
+			e.drawFuncName.Store(true)
 
 		case "c:25": // ctrl-y
 
