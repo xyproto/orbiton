@@ -200,7 +200,11 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, should
 			e.WriteProgress(c) // not drawing immediately
 			e.drawProgress.Store(false)
 		}
-		e.WriteCurrentFunctionName(c) // not drawing immediatly
+
+		if e.drawFuncName.Load() {
+			e.WriteCurrentFunctionName(c) // not drawing immediatly
+			e.drawFuncName.Store(false)
+		}
 
 		c.HideCursorAndDraw()  // drawing now
 		e.redraw.Store(redraw) // mark as redrawn

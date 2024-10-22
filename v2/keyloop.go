@@ -637,6 +637,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			if e.highlightCurrentLine || e.highlightCurrentText {
 				e.redraw.Store(true)
+				e.drawFuncName.Store(true)
 			}
 
 		case rightArrow: // right arrow
@@ -657,6 +658,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			if e.highlightCurrentLine || e.highlightCurrentText {
 				e.redraw.Store(true)
+				e.drawFuncName.Store(true)
 			}
 
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
@@ -696,6 +698,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 				}
 				e.drawProgress.Store(true)
+				e.drawFuncName.Store(false)
 				break
 			}
 
@@ -765,6 +768,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			if e.highlightCurrentLine || e.highlightCurrentText {
 				e.redraw.Store(true)
+				e.drawFuncName.Store(true)
 			}
 
 			e.redrawCursor.Store(true)
@@ -890,6 +894,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 				}
 				e.drawProgress.Store(true)
+				e.drawFuncName.Store(false)
 				break
 			}
 
@@ -962,6 +967,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			if e.highlightCurrentLine || e.highlightCurrentText {
 				e.redraw.Store(true)
+				e.drawFuncName.Store(true)
 			}
 
 			e.redrawCursor.Store(true)
@@ -989,6 +995,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.End(c)
 					}
 					e.drawProgress.Store(true)
+					e.drawFuncName.Store(false)
 				case scrollDownAction:
 					canvasHeight := int(c.Height())
 					e.redraw.Store(e.ScrollDown(c, status, e.pos.scrollSpeed, canvasHeight))
@@ -997,6 +1004,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.End(c)
 					}
 					e.drawProgress.Store(true)
+					e.drawFuncName.Store(false)
 				case displayQuickHelpAction:
 					const repositionCursorAfterDrawing = true
 					e.DrawQuickHelp(c, repositionCursorAfterDrawing)
@@ -1513,6 +1521,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.End(c)
 			}
 			e.drawProgress.Store(true)
+			e.drawFuncName.Store(false)
 
 		case pgDnKey: // page down
 			h := int(c.H())
@@ -1529,6 +1538,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.End(c)
 			}
 			e.drawProgress.Store(true)
+			e.drawFuncName.Store(false)
 
 		case "c:25": // ctrl-y
 

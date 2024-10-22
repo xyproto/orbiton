@@ -77,7 +77,7 @@ type Editor struct {
 	redraw                     atomic.Bool     // if the contents should be redrawn in the next loop
 	redrawCursor               atomic.Bool     // if the cursor should be moved to the location it is supposed to be
 	drawProgress               atomic.Bool     // used for drawing the progress character on the right side
-
+	drawFuncName               atomic.Bool
 }
 
 // Copy makes a copy of an Editor struct, with most fields deep copied
@@ -139,6 +139,7 @@ func (e *Editor) Copy() *Editor {
 	e2.redraw.Store(e.redraw.Load())
 	e2.redrawCursor.Store(e.redrawCursor.Load())
 	e2.drawProgress.Store(e.drawProgress.Load())
+	e2.drawFuncName.Store(e.drawFuncName.Load())
 	return &e2
 }
 
