@@ -207,8 +207,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		e.DrawQuickHelp(c, false)
 	}
 
-	// Enable the cursor
-	vt100.ShowCursor(true)
+	// Place and enable the cursor
+	e.PlaceAndEnableCursor()
 
 	// This is the main loop for the editor
 	for !e.quit {

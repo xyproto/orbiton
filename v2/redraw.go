@@ -96,6 +96,22 @@ func (e *Editor) RepositionCursor(x, y uint) {
 	// Redraw the cursor
 	vt100.ShowCursor(true)
 	vt100.SetXY(x, y)
+
+	e.previousX = int(x)
+	e.previousY = int(y)
+}
+
+// PlaceAndEnableCursor will enable the cursor and then place it
+func (e *Editor) PlaceAndEnableCursor() {
+	// Redraw the cursor, if needed
+	e.pos.mut.RLock()
+	x := uint(e.pos.ScreenX())
+	y := uint(e.pos.ScreenY())
+	e.pos.mut.RUnlock()
+
+	vt100.ShowCursor(true)
+	vt100.SetXY(x, y)
+
 	e.previousX = int(x)
 	e.previousY = int(y)
 }
@@ -162,8 +178,8 @@ func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 		status.Show(c, e)
 	}
 
-	vt100.ShowCursor(true)
-	e.RepositionCursorIfNeeded()
+	e.WriteCurrentFunctionName(c) // not drawing immediatly
+	c.HideCursorAndDraw()         // drawing now
 }
 
 // RedrawAtEndOfKeyLoop is called after each main loop
@@ -184,7 +200,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, should
 			e.WriteProgress(c) // not drawing immediately
 			e.drawProgress.Store(false)
 		}
-		e.WriteCurrentFuctionName(c) // not drawing immediatly
+		e.WriteCurrentFunctionName(c) // not drawing immediatly
 
 		c.HideCursorAndDraw()  // drawing now
 		e.redraw.Store(redraw) // mark as redrawn
