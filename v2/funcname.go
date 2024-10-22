@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/xyproto/mode"
@@ -40,6 +39,7 @@ func (e *Editor) FuncPrefix() string {
 	return ""
 }
 
+// LooksLikeFunctionDef tries to decide if the given line looks like a function definition or not
 func (e *Editor) LooksLikeFunctionDef(line string) bool {
 	trimmedLine := strings.TrimSpace(line)
 	if funcPrefix := e.FuncPrefix(); funcPrefix != "" && strings.HasPrefix(trimmedLine, funcPrefix) {
@@ -89,13 +89,9 @@ func (e *Editor) LooksLikeFunctionDef(line string) bool {
 	return false
 }
 
-// WriteCurrentFunctionName writes (but does not redraw) the current function name we are within (if any) in the top right corner
-func (e *Editor) WriteCurrentFuctionName(c *vt100.Canvas) {
-	if !e.ProgrammingLanguage() {
-		return
-	}
+// FunctionName tries to extract the function name given a line with what looks like a function definition.
+func (e *Editor) FunctionName(line string) string {
 	var s string
-	line := e.CurrentLine()
 	if e.LooksLikeFunctionDef(line) {
 		trimmedLine := strings.TrimSpace(line)
 		s = strings.TrimSpace(strings.TrimSuffix(trimmedLine, "{"))
@@ -111,9 +107,41 @@ func (e *Editor) WriteCurrentFuctionName(c *vt100.Canvas) {
 			}
 		}
 	}
-	if s == "" {
-		s = fmt.Sprintf("%d%%", e.Percentage())
+	return s
+}
+
+// FindCurrentFunctionName searches upwards until it finds a function definition.
+// It returns either the found function name or an empty string.
+// But! If the current line has no indentation AND is blank or closing (like "}"),
+// then an empty string is returned.
+func (e *Editor) FindCurrentFunctionName() string {
+	startLineIndex := e.LineIndex()
+	startLine := e.Line(startLineIndex)
+	if !strings.HasPrefix(startLine, " ") && !strings.HasPrefix(startLine, "\t") {
+		if trimmedLine := strings.TrimSpace(startLine); trimmedLine == "" {
+			return ""
+		}
 	}
+	for i := startLineIndex; i >= 0; i-- {
+		line := e.Line(i)
+		if functionName := e.FunctionName(line); functionName != "" {
+			// Found the current function name
+			return functionName
+		}
+	}
+	return ""
+}
+
+// WriteCurrentFunctionName writes (but does not redraw) the current function name we are within (if any),
+// in the top right corner of the canvas.
+func (e *Editor) WriteCurrentFunctionName(c *vt100.Canvas) {
+	if !e.ProgrammingLanguage() {
+		return
+	}
+	s := e.FindCurrentFunctionName()
+	//if s == "" {
+	//s = fmt.Sprintf("%d%%", e.Percentage())
+	//}
 	var (
 		canvasWidth      = c.Width()
 		x           uint = canvasWidth - uint(len(s))
