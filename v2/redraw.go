@@ -170,23 +170,24 @@ func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, shouldHighlight, repositionCursor bool) {
 	redrawCanvas := !e.debugMode
 
+	redraw := e.redraw.Load()
+
 	// Redraw, if needed
-	if e.redraw.Load() {
+	if redraw {
 		// Draw the editor lines on the canvas, respecting the offset
 		e.HideCursorDrawLines(c, true, redrawCanvas, shouldHighlight)
-		e.redraw.Store(false)
+	}
 
+	if redraw || e.Changed() {
+		// Draw the scroll progress indicator block on the right side
 		if e.drawProgress.Load() {
-			e.DrawProgress(c)
+			e.WriteProgress(c) // not drawing immediately
 			e.drawProgress.Store(false)
 		}
-	} else if e.Changed() {
-		c.HideCursorAndDraw()
+		e.WriteCurrentFuctionName(c) // not drawing immediatly
 
-		if e.drawProgress.Load() {
-			e.DrawProgress(c)
-			e.drawProgress.Store(false)
-		}
+		c.HideCursorAndDraw()  // drawing now
+		e.redraw.Store(redraw) // mark as redrawn
 	}
 
 	// Drawing status messages should come after redrawing, but before cursor positioning
