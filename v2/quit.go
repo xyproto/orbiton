@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime/debug"
 	"strings"
 	"syscall"
@@ -77,7 +78,7 @@ func quitExecShellCommand(tty *vt100.TTY, workDir string, shellCommand string) {
 	syscall.Exec(shellExecutable, []string{shellExecutable, "-c", shellCommand}, env.Environ())
 }
 
-func execMan(tty *vt100.TTY, workDir, manPageFilename string) {
+func quitExec(tty *vt100.TTY, workDir string, command string) {
 	if tty != nil {
 		tty.Close()
 	}
@@ -86,12 +87,55 @@ func execMan(tty *vt100.TTY, workDir, manPageFilename string) {
 	vt100.Close()
 	vt100.ShowCursor(true)
 	vt100.SetXY(uint(0), uint(1))
-	const shellExecutable = "/bin/sh"
 	quitMut.Lock()
 	defer quitMut.Unlock()
 	_ = os.Chdir(workDir)
-	env.Set("MANPAGER", os.Args[0])
+
+	executable := command
+	args := []string{executable}
+	if fields := strings.Split(command, " "); len(fields) > 0 {
+		executable = fields[0] // TODO: Take abs path as well
+		args = fields
+	}
+
+	env.Unset("CTRL_SPACE_COMMAND")
+
+	syscall.Exec(executable, args, env.Environ())
+}
+
+func runMan(tty *vt100.TTY, workDir, manPageFilename string) error {
+	if tty != nil {
+		tty.Close()
+	}
+	vt100.Reset()
+	vt100.Clear()
+	vt100.Close()
+	vt100.ShowCursor(true)
+	vt100.SetXY(uint(0), uint(1))
+	quitMut.Lock()
+	defer quitMut.Unlock()
+	_ = os.Chdir(workDir)
+	oExecutable, err := filepath.Abs(os.Args[0])
+	if err != nil {
+		return err
+	}
+
 	manExecutable := files.Which("man")
-	// TODO: Do not use syscall.Exec here, but rather launch a child process
-	syscall.Exec(manExecutable, []string{manExecutable, "-l", manPageFilename}, env.Environ())
+	args := []string{manExecutable}
+
+	if isLinux {
+		args = append(args, "-E", "utf8", "-l", manPageFilename)
+	} else {
+		absManPageFilename, err := filepath.Abs(manPageFilename)
+		if err != nil {
+			return err
+		}
+		args = append(args, absManPageFilename)
+	}
+
+	env.Set("CTRL_SPACE_COMMAND", oExecutable+" "+manPageFilename)
+	env.Set("MANPAGER", oExecutable)
+
+	syscall.Exec(manExecutable, args, env.Environ())
+	return nil
 }

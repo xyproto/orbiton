@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -367,6 +368,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break // do nothing
 			}
 
+			// Used when switching back and forth between editing and viewing man pages
+			if env.Has("CTRL_SPACE_COMMAND") {
+				if pwd, err := os.Getwd(); err == nil {
+					quitExec(tty, pwd, env.Str("CTRL_SPACE_COMMAND"))
+				}
+			}
+
 			switch e.mode {
 			case mode.Config:
 				break // do nothing
@@ -376,7 +384,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.mode = mode.ManPage
 				e.redraw.Store(true)
 				e.redrawCursor.Store(true)
-				break
+				if pwd, err := os.Getwd(); err == nil {
+					runMan(tty, pwd, e.filename)
+				}
+
 			case mode.ManPage:
 				if originallyNroff {
 					// Switch back to Nroff mode
@@ -384,7 +395,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.redraw.Store(true)
 					e.redrawCursor.Store(true)
 				}
-				break
 			case mode.Markdown:
 				e.ToggleCheckboxCurrentLine()
 			default:
