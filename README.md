@@ -122,6 +122,7 @@ These features are unique to `o`, as far as I am aware:
 * For C-like languages, missing parentheses are added to statements like `if`, `for` and `while` when return is pressed.
 * Pressing `ctrl-f` twice searches for the word under the cursor.
 * Lines are highlighted only when the up and down arrow keys are used.
+* Display the name of the function that the cursor is within, in the upper right corner of the screen (for some languages).
 
 ## Other features and limitations
 
