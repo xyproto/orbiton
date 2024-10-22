@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -15,6 +16,9 @@ import (
 )
 
 func quitError(tty *vt100.TTY, err error) {
+	quitMut.Lock()
+	defer quitMut.Unlock()
+
 	if tty != nil {
 		tty.Close()
 	}
@@ -24,12 +28,13 @@ func quitError(tty *vt100.TTY, err error) {
 	textoutput.NewTextOutput(true, true).Err(err.Error())
 	vt100.ShowCursor(true)
 	vt100.SetXY(uint(0), uint(1))
-	quitMut.Lock()
-	defer quitMut.Unlock()
 	os.Exit(1)
 }
 
 func quitMessage(tty *vt100.TTY, msg string) {
+	quitMut.Lock()
+	defer quitMut.Unlock()
+
 	if tty != nil {
 		tty.Close()
 	}
@@ -40,12 +45,13 @@ func quitMessage(tty *vt100.TTY, msg string) {
 	newLineCount := strings.Count(msg, "\n")
 	vt100.ShowCursor(true)
 	vt100.SetXY(uint(0), uint(newLineCount+1))
-	quitMut.Lock()
-	defer quitMut.Unlock()
 	os.Exit(1)
 }
 
 func quitMessageWithStack(tty *vt100.TTY, msg string) {
+	quitMut.Lock()
+	defer quitMut.Unlock()
+
 	if tty != nil {
 		tty.Close()
 	}
@@ -57,64 +63,42 @@ func quitMessageWithStack(tty *vt100.TTY, msg string) {
 	vt100.ShowCursor(true)
 	vt100.SetXY(uint(0), uint(newLineCount+1))
 	debug.PrintStack()
-	quitMut.Lock()
-	defer quitMut.Unlock()
 	os.Exit(1)
 }
 
 func quitExecShellCommand(tty *vt100.TTY, workDir string, shellCommand string) {
+	quitMut.Lock()
+	defer quitMut.Unlock()
+
 	if tty != nil {
 		tty.Close()
 	}
 	vt100.Reset()
+
 	vt100.Clear()
 	vt100.Close()
 	vt100.ShowCursor(true)
 	vt100.SetXY(uint(0), uint(1))
 	const shellExecutable = "/bin/sh"
-	quitMut.Lock()
-	defer quitMut.Unlock()
 	_ = os.Chdir(workDir)
 	syscall.Exec(shellExecutable, []string{shellExecutable, "-c", shellCommand}, env.Environ())
 }
 
-func quitExec(tty *vt100.TTY, workDir string, command string) {
+func quitToMan(tty *vt100.TTY, workDir, nroffFilename string, w, h uint) error {
+	quitMut.Lock()
+	defer quitMut.Unlock()
+
+	vt100.Close()
+	vt100.Clear()
+	vt100.Reset()
 	if tty != nil {
 		tty.Close()
 	}
-	vt100.Reset()
-	vt100.Clear()
-	vt100.Close()
-	vt100.ShowCursor(true)
-	vt100.SetXY(uint(0), uint(1))
-	quitMut.Lock()
-	defer quitMut.Unlock()
-	_ = os.Chdir(workDir)
 
-	executable := command
-	args := []string{executable}
-	if fields := strings.Split(command, " "); len(fields) > 0 {
-		executable = fields[0] // TODO: Take abs path as well
-		args = fields
+	if err := os.Chdir(workDir); err != nil {
+		return err
 	}
 
-	env.Unset("CTRL_SPACE_COMMAND")
-
-	syscall.Exec(executable, args, env.Environ())
-}
-
-func runMan(tty *vt100.TTY, workDir, manPageFilename string) error {
-	if tty != nil {
-		tty.Close()
-	}
-	vt100.Reset()
-	vt100.Clear()
-	vt100.Close()
-	vt100.ShowCursor(true)
-	vt100.SetXY(uint(0), uint(1))
-	quitMut.Lock()
-	defer quitMut.Unlock()
-	_ = os.Chdir(workDir)
 	oExecutable, err := filepath.Abs(os.Args[0])
 	if err != nil {
 		return err
@@ -124,18 +108,62 @@ func runMan(tty *vt100.TTY, workDir, manPageFilename string) error {
 	args := []string{manExecutable}
 
 	if isLinux {
-		args = append(args, "-E", "utf8", "-l", manPageFilename)
+		args = append(args, "-E", "utf8", "-l", nroffFilename)
 	} else {
-		absManPageFilename, err := filepath.Abs(manPageFilename)
+		absManPageFilename, err := filepath.Abs(nroffFilename)
 		if err != nil {
 			return err
 		}
 		args = append(args, absManPageFilename)
 	}
 
-	env.Set("CTRL_SPACE_COMMAND", oExecutable+" "+manPageFilename)
+	env.Set("NROFF_FILENAME", nroffFilename)
 	env.Set("MANPAGER", oExecutable)
 
+	env.Set("COLUMNS", strconv.Itoa(int(w)))
+	env.Set("LINES", strconv.Itoa(int(h)))
+
 	syscall.Exec(manExecutable, args, env.Environ())
+	return nil
+}
+
+func quitToNroff(tty *vt100.TTY, backupDirectory string, w, h uint) error {
+	quitMut.Lock()
+	defer quitMut.Unlock()
+
+	vt100.Close()
+	vt100.Clear()
+	vt100.Reset()
+	if tty != nil {
+		tty.Close()
+	}
+
+	oExecutable, err := filepath.Abs(os.Args[0])
+	if err != nil {
+		return err
+	}
+
+	args := []string{oExecutable, "-f"}
+
+	if nroffFilename := env.Str("NROFF_FILENAME"); nroffFilename != "" {
+		args = append(args, filepath.Base(nroffFilename))
+		if dir := filepath.Dir(nroffFilename); dir != "" {
+			if err := os.Chdir(filepath.Dir(nroffFilename)); err != nil {
+				return err
+			}
+		} else {
+			if err := os.Chdir(backupDirectory); err != nil {
+				return err
+			}
+		}
+	}
+
+	env.Unset("NROFF_FILENAME")
+	env.Unset("MANPAGER")
+
+	env.Set("COLUMNS", strconv.Itoa(int(w)))
+	env.Set("LINES", strconv.Itoa(int(h)))
+
+	syscall.Exec(oExecutable, args, env.Environ())
 	return nil
 }

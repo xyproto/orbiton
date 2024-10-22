@@ -687,7 +687,7 @@ func (e *Editor) TableEditor(tty *vt100.TTY, status *StatusBar, tableContents *[
 	}
 
 	// Restore the signal handlers
-	e.SetUpSignalHandlers(c, tty, status)
+	e.SetUpSignalHandlers(c, tty, status, false) // do not only clear the signals
 
 	return userChangedTheContents, nil
 }

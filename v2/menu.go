@@ -303,7 +303,7 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 	}
 
 	// Restore the resize handler
-	e.SetUpSignalHandlers(c, tty, status)
+	e.SetUpSignalHandlers(c, tty, status, false) // do not only clear the signals
 
 	return menu.Selected()
 }

@@ -14,7 +14,7 @@ import (
 var cancelPreviousSignalHandler context.CancelFunc
 
 // SetUpSignalHandlers sets up signal handlers for SIGTERM, SIGUSR1, and SIGWINCH.
-func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
+func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, justClear bool) {
 
 	// Cancel the previous signal handler if it exists
 	if cancelPreviousSignalHandler != nil {
@@ -42,6 +42,10 @@ func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *St
 
 	resizeMut.Unlock()
 	mut.Unlock()
+
+	if justClear {
+		return
+	}
 
 	go func() {
 		defer cancel()

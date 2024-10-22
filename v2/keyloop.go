@@ -83,8 +83,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		highlightTimerCounter atomic.Uint64
 		highlightTimerMut     sync.Mutex
-
-		originallyNroff bool
 	)
 
 	// TODO: Move this to themes.go
@@ -129,7 +127,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	e.SetTheme(e.Theme)
 
 	// ctrl-c, USR1 and terminal resize handlers
-	e.SetUpSignalHandlers(c, tty, status)
+	const onlyClearSignals = false
+	e.SetUpSignalHandlers(c, tty, status, onlyClearSignals)
 
 	// Monitor a read-only file?
 	if monitorAndReadOnly {
@@ -368,32 +367,43 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break // do nothing
 			}
 
-			// Used when switching back and forth between editing and viewing man pages
-			if env.Has("CTRL_SPACE_COMMAND") {
-				if pwd, err := os.Getwd(); err == nil {
-					quitExec(tty, pwd, env.Str("CTRL_SPACE_COMMAND"))
-				}
-			}
-
 			switch e.mode {
 			case mode.Config:
 				break // do nothing
 			case mode.Nroff:
-				originallyNroff = true
-				// Switch to man page mode
+				// Switch to man page mode, just in case the switching over does not work out
 				e.mode = mode.ManPage
 				e.redraw.Store(true)
 				e.redrawCursor.Store(true)
-				if pwd, err := os.Getwd(); err == nil {
-					runMan(tty, pwd, e.filename)
+				// Save the current file, but only if it has changed
+				if e.changed.Load() {
+					if err := e.Save(c, tty); err != nil {
+						status.ClearAll(c, false)
+						status.SetError(err)
+						status.Show(c, e)
+						break
+					}
 				}
-
+				// Switch over to the rendered man page output, as produced by the "man" command
+				if pwd, err := os.Getwd(); err == nil {
+					if absFilename, err := filepath.Abs(e.filename); err == nil { // success
+						e.SetUpSignalHandlers(c, tty, status, true) // only clear signals
+						e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag)
+						quitToMan(tty, pwd, absFilename, c.W(), c.H())
+					}
+				}
 			case mode.ManPage:
-				if originallyNroff {
-					// Switch back to Nroff mode
-					e.mode = mode.Nroff
-					e.redraw.Store(true)
-					e.redrawCursor.Store(true)
+				// Switch back to Nroff mode, just in case the switching below does not work out (or is activated)
+				e.mode = mode.Nroff
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				// Used when switching back and forth between editing and viewing man pages
+				if env.Has("NROFF_FILENAME") {
+					if pwd, err := os.Getwd(); err == nil {
+						e.SetUpSignalHandlers(c, tty, status, true) // only clear signals
+						e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag)
+						quitToNroff(tty, pwd, c.W(), c.H())
+					}
 				}
 			case mode.Markdown:
 				e.ToggleCheckboxCurrentLine()
@@ -2190,28 +2200,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 	} // end of main loop
 
-	if canUseLocks {
-		// Start by loading the lock overview, just in case something has happened in the mean time
-		fileLock.Load()
-
-		// Check if the lock is unchanged
-		fileLockTimestamp := fileLock.GetTimestamp(absFilename)
-		lockUnchanged := lockTimestamp == fileLockTimestamp
-
-		// TODO: If the stored timestamp is older than uptime, unlock and save the lock overview
-
-		// var notime time.Time
-
-		if !forceFlag || lockUnchanged {
-			// If the file has not been locked externally since this instance of the editor was loaded, don't
-			// Unlock the current file and save the lock overview. Ignore errors because they are not critical.
-			fileLock.Unlock(absFilename)
-			fileLock.Save()
-		}
-	}
-
-	// Save the current location in the location history and write it to file
-	e.SaveLocation(absFilename, locationHistory)
+	e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag)
 
 	// Clear all status bar messages
 	status.ClearAll(c, false)
@@ -2230,4 +2219,24 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 	// All done
 	return "", e.stopParentOnQuit, nil
+}
+
+// CloseLocksAndLocationHistory tries to close any active file locks and save the location history
+func (e *Editor) CloseLocksAndLocationHistory(canUseLocks bool, absFilename string, lockTimestamp time.Time, forceFlag bool) {
+	if canUseLocks {
+		// Start by loading the lock overview, just in case something has happened in the mean time
+		fileLock.Load()
+		// Check if the lock is unchanged
+		fileLockTimestamp := fileLock.GetTimestamp(absFilename)
+		lockUnchanged := lockTimestamp == fileLockTimestamp
+		// TODO: If the stored timestamp is older than uptime, unlock and save the lock overview
+		if !forceFlag || lockUnchanged {
+			// If the file has not been locked externally since this instance of the editor was loaded, don't
+			// Unlock the current file and save the lock overview. Ignore errors because they are not critical.
+			fileLock.Unlock(absFilename)
+			fileLock.Save()
+		}
+	}
+	// Save the current location in the location history and write it to file
+	e.SaveLocation(absFilename, locationHistory)
 }

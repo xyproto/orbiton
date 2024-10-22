@@ -144,7 +144,7 @@ func (e *Editor) SymbolMenu(tty *vt100.TTY, status *StatusBar, title string, cho
 	}
 
 	// Restore the signal handlers
-	e.SetUpSignalHandlers(c, tty, status)
+	e.SetUpSignalHandlers(c, tty, status, false) // do not only clear the signals
 
 	x, y := symbolMenu.Selected()
 	return x, y, cancel
