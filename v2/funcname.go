@@ -40,15 +40,22 @@ func (e *Editor) FuncPrefix() string {
 	return ""
 }
 
-func (e *Editor) LooksLikeFunctionDef(trimmedLine string) bool {
-	if strings.HasPrefix(trimmedLine, e.FuncPrefix()) {
+func (e *Editor) LooksLikeFunctionDef(line string) bool {
+	trimmedLine := strings.TrimSpace(line)
+	if funcPrefix := e.FuncPrefix(); funcPrefix != "" && strings.HasPrefix(trimmedLine, funcPrefix) {
 		return true
 	}
 	switch e.mode {
 	// Very unscientific and approximate function definition detection for C and C++
 	// TODO: Write a C parser and a C++ parser...
 	case mode.C, mode.Cpp:
-		if !(strings.HasSuffix(trimmedLine, "{") || !strings.HasSuffix(trimmedLine, ")")) { // the line should end with either "{" or ")"
+		if strings.HasSuffix(trimmedLine, "()") {
+			return true
+		}
+		if !strings.Contains(trimmedLine, "(") { // must contain at least one "("
+			return false
+		}
+		if !strings.HasSuffix(trimmedLine, "{") && !strings.HasSuffix(trimmedLine, ")") && !strings.HasSuffix(trimmedLine, "};") && !strings.HasSuffix(trimmedLine, "} ;") { // the line should end with either "{" or ")" or "};" or "} ;"
 			return false
 		}
 		if strings.Contains(trimmedLine, ";") && !(strings.HasSuffix(trimmedLine, "};") || strings.HasSuffix(trimmedLine, "} ;")) {
@@ -66,6 +73,17 @@ func (e *Editor) LooksLikeFunctionDef(trimmedLine string) bool {
 				return true // it looks like it could return a pointer to a struct
 			}
 		}
+		if strings.Contains(trimmedLine, "(") {
+			fields := strings.SplitN(trimmedLine, "(", 2)
+			if strings.Contains(fields[0], "=") {
+				return false
+			}
+		}
+		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") {
+			if strings.Contains(line, "(") && strings.Contains(line, ")") {
+				return true
+			}
+		}
 		return false
 	}
 	return false
@@ -77,8 +95,9 @@ func (e *Editor) WriteCurrentFuctionName(c *vt100.Canvas) {
 		return
 	}
 	var s string
-	trimmedLine := e.TrimmedLine()
-	if e.LooksLikeFunctionDef(trimmedLine) {
+	line := e.CurrentLine()
+	if e.LooksLikeFunctionDef(line) {
+		trimmedLine := strings.TrimSpace(line)
 		s = strings.TrimSpace(strings.TrimSuffix(trimmedLine, "{"))
 		words := strings.Split(s, " ")
 		for _, word := range words {
