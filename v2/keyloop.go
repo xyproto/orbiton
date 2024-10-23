@@ -2172,7 +2172,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
 		e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown, true)
 
-		if (e.highlightCurrentLine || e.highlightCurrentText) && !e.statusMode && !e.EmptyLine() {
+		notEmptyLine := !e.EmptyLine()
+
+		if notEmptyLine && e.ProgrammingLanguage() {
+			e.drawFuncName.Store(true)
+			c.HideCursorAndDraw()
+		}
+
+		if (e.highlightCurrentLine || e.highlightCurrentText) && !e.statusMode && notEmptyLine {
 			// When not moving up or down, turn off the text highlight after arrowHighlightTime
 			if !e.statusMode && status.messageAfterRedraw == "" {
 				go func() {
