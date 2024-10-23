@@ -42,7 +42,7 @@ func (e *Editor) FuncPrefix() string {
 // LooksLikeFunctionDef tries to decide if the given line looks like a function definition or not
 func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 	trimmedLine := strings.TrimSpace(line)
-	if strings.HasPrefix(trimmedLine, funcPrefix) {
+	if funcPrefix != "" && strings.HasPrefix(trimmedLine, funcPrefix) {
 		return true
 	}
 	switch e.mode {
@@ -79,12 +79,25 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 				return false
 			}
 		}
+		if strings.Index(trimmedLine, "=") < strings.Index(trimmedLine, "(") { // equal sign before the first (
+			return false
+		}
 		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") { // lines that are not indented are more likely to be function definitions
 			if strings.Contains(line, "(") && strings.Contains(line, ")") { // looking more and more like a function definition
 				return true
 			}
 		}
 		return false
+	default:
+		if strings.Contains(trimmedLine, "(") {
+			fields := strings.SplitN(trimmedLine, "(", 2)
+			if strings.Contains(fields[0], "=") {
+				return false
+			}
+			if !strings.Contains(fields[0], " ") && strings.HasSuffix(trimmedLine, ") {") { // shell functions without a func prefix
+				return true
+			}
+		}
 	}
 	return false
 }
@@ -108,7 +121,12 @@ func (e *Editor) FunctionName(line string) string {
 			}
 		}
 	}
-	return strings.TrimSpace(strings.TrimPrefix(s, funcPrefix))
+	withoutFuncPrefix := strings.TrimSpace(strings.TrimPrefix(s, funcPrefix))
+	if strings.Contains(withoutFuncPrefix, "(") {
+		fields := strings.SplitN(withoutFuncPrefix, "(", 2)
+		return strings.TrimSpace(fields[0])
+	}
+	return withoutFuncPrefix
 }
 
 // FindCurrentFunctionName searches upwards until it finds a function definition.
