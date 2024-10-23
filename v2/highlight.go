@@ -196,6 +196,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 	highlightCurrentLine := false
 
+	// buffer for extracting char attributes from strings with terminal codes (will be expanded if it's too small)
+	cc := make([]textoutput.CharAttribute, 256)
+
 	// Loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y = LineIndex(0); y < LineIndex(numLinesToDraw); y++ {
 
@@ -511,7 +514,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				}
 
 				// Extract a slice of runes and color attributes
-				cc := make([]textoutput.CharAttribute, len(coloredString))
+				if len(coloredString) >= len(cc) {
+					cc = make([]textoutput.CharAttribute, len(coloredString)*2)
+				}
 				n := tout.ExtractToSlice(coloredString, &cc)
 				runesAndAttributes = cc[:n]
 
