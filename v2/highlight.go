@@ -511,7 +511,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				}
 
 				// Extract a slice of runes and color attributes
-				runesAndAttributes = tout.Extract(coloredString)
+				cc := make([]textoutput.CharAttribute, len(coloredString))
+				n := tout.ExtractToSlice(coloredString, &cc)
+				runesAndAttributes = cc[:n]
 
 				// Also handle things like ZALGO HE COMES which contains unicode "mark" runes
 				// TODO: Also handle all languages in v2/test/problematic.desktop
