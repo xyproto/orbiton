@@ -108,7 +108,7 @@ func quitToMan(tty *vt100.TTY, workDir, nroffFilename string, w, h uint) error {
 	args := []string{manExecutable}
 
 	if isLinux {
-		args = append(args, "-E", "utf8", "-l", nroffFilename)
+		args = append(args, "-l", nroffFilename)
 	} else {
 		absManPageFilename, err := filepath.Abs(nroffFilename)
 		if err != nil {
