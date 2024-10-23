@@ -40,9 +40,9 @@ func (e *Editor) FuncPrefix() string {
 }
 
 // LooksLikeFunctionDef tries to decide if the given line looks like a function definition or not
-func (e *Editor) LooksLikeFunctionDef(line string) bool {
+func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 	trimmedLine := strings.TrimSpace(line)
-	if funcPrefix := e.FuncPrefix(); funcPrefix != "" && strings.HasPrefix(trimmedLine, funcPrefix) {
+	if strings.HasPrefix(trimmedLine, funcPrefix) {
 		return true
 	}
 	switch e.mode {
@@ -92,7 +92,8 @@ func (e *Editor) LooksLikeFunctionDef(line string) bool {
 // FunctionName tries to extract the function name given a line with what looks like a function definition.
 func (e *Editor) FunctionName(line string) string {
 	var s string
-	if e.LooksLikeFunctionDef(line) {
+	funcPrefix := e.FuncPrefix()
+	if e.LooksLikeFunctionDef(line, funcPrefix) {
 		trimmedLine := strings.TrimSpace(line)
 		s = strings.TrimSpace(strings.TrimSuffix(trimmedLine, "{"))
 		words := strings.Split(s, " ")
@@ -107,7 +108,7 @@ func (e *Editor) FunctionName(line string) string {
 			}
 		}
 	}
-	return s
+	return strings.TrimSpace(strings.TrimPrefix(s, funcPrefix))
 }
 
 // FindCurrentFunctionName searches upwards until it finds a function definition.
