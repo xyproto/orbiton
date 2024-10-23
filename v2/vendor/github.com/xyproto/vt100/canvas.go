@@ -367,7 +367,9 @@ func (c *Canvas) HideCursorAndDraw() {
 
 	// Save the current state to oldchars
 	c.mut.Lock()
-	c.oldchars = make([]ColorRune, len(c.chars))
+	if lc := len(c.chars); len(c.oldchars) != lc {
+		c.oldchars = make([]ColorRune, lc)
+	}
 	copy(c.oldchars, c.chars)
 	c.mut.Unlock()
 }
