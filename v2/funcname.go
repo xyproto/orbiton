@@ -170,7 +170,7 @@ func (e *Editor) WriteCurrentFunctionName(c *vt100.Canvas) {
 	//}
 	var (
 		canvasWidth      = c.Width()
-		x           uint = canvasWidth - uint(len(s))
+		x           uint = (canvasWidth - uint(len(s))) - 2 // 2 is the right side padding
 		y           uint
 	)
 	c.Write(x, y, e.Foreground, e.Background, s)
