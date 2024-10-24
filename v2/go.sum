@@ -78,8 +78,8 @@ github.com/xyproto/digraph v1.2.0/go.mod h1:s7ijNNFO/sZaEwtIznvXjJCPZyqOkE87Y8Et
 github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
 github.com/xyproto/env v1.9.1 h1:RSWzKrNYEcK+Tvk2fu5eHYW5ENq19tYzbHLWfA7fx5s=
 github.com/xyproto/env v1.9.1/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
-github.com/xyproto/env/v2 v2.5.0 h1:1KXF3UCaELjnXzfZ6iHDCdJoBeQPz4LXG4oHlBN+jvs=
-github.com/xyproto/env/v2 v2.5.0/go.mod h1:F81ZEzu15s3TWUZJ1uzBl9iNeq9zcfHvxMkQJaLZUl0=
+github.com/xyproto/env/v2 v2.5.1 h1:vu8A+z5VGp9TGgg7HQlAZPjbnk/Nvzt3gKzUtbt9kbQ=
+github.com/xyproto/env/v2 v2.5.1/go.mod h1:F81ZEzu15s3TWUZJ1uzBl9iNeq9zcfHvxMkQJaLZUl0=
 github.com/xyproto/files v1.7.0 h1:8LHK6j6HN5gb4zmvElf6SWqPWLWUTbIoBbFh+bmlPHA=
 github.com/xyproto/files v1.7.0/go.mod h1:johy1UtusLfkGuQ98zGJIHkQ1hWPUre5GHQ0GrUzKnk=
 github.com/xyproto/iferr v1.1.0 h1:+5OZVuzb7ups88Yq2Bio1ygCCVdilTpW+9qUZpdhGAg=
@@ -101,8 +101,8 @@ github.com/xyproto/textoutput v1.17.0/go.mod h1:cruWGufxD8yMQDDCs1Ub+LM2IDeaDwK2
 github.com/xyproto/vt100 v1.8.5/go.mod h1:8ni0+pphJABRAZOoyxY9yD0QQxkia4PjKNFiMQStrT4=
 github.com/xyproto/vt100 v1.9.8/go.mod h1:ExY2YeEedHIb8ng0LG0nv0pgO4prm3KFRnPcTVMF/is=
 github.com/xyproto/vt100 v1.14.2/go.mod h1:DZDxocHCwx0kZTVnsyGogNYKyQ1rwDzUURDhAThjLVw=
-github.com/xyproto/vt100 v1.16.6 h1:IziERegmQZVS8MEXDwoqxwIIXvobzw/MmCx5kCLhX1o=
-github.com/xyproto/vt100 v1.16.6/go.mod h1:cuR2XszXVf224IxIObMhhjJAxwtMpLwayF4GRbMF/oA=
+github.com/xyproto/vt100 v1.16.8 h1:C6qbGGxyPsrr6QgQh43A+WwW5Y5iaMeTDb3k34z81vc=
+github.com/xyproto/vt100 v1.16.8/go.mod h1:xm5tWQS/v1/3erzn5l3kEwYeEXiDBOVctPJ+NiAGd64=
 github.com/xyproto/wordwrap v1.0.1 h1:nKmUy4Jr+VBbeFfCgcUBx/e707ky7GBZLE/x1Uh3dtA=
 github.com/xyproto/wordwrap v1.0.1/go.mod h1:NIZ+TjJF24AUJzQDmr/fOMWgn3B2pK5+c9fPCp6UvcM=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
