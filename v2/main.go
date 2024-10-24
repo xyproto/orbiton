@@ -22,6 +22,8 @@ import (
 const versionString = "Orbiton 2.67.1"
 
 var (
+	editorLaunchTime = time.Now()
+
 	// quitMut disallows Exit(1) while a file is being saved
 	quitMut sync.Mutex
 
@@ -33,13 +35,11 @@ var (
 	// Only for the filename completion, when starting the editor
 	probablyDoesNotWantToEditExtensions = []string{".7z", ".a", ".bak", ".core", ".gz", ".img", ".lock", ".o", ".out", ".pkg", ".pyc", ".pyo", ".swp", ".tar", ".tmp", ".xz", ".zip"}
 
-	editorLaunchTime = time.Now()
-
 	// For when building and running programs with ctrl-space
 	inputFileWhenRunning string
 
 	// Check if the parent process is "man"
-	parentIsMan = parentProcessIs("man")
+	parentIsMan *bool
 )
 
 func main() {
@@ -238,7 +238,10 @@ func main() {
 	stdinFilename := len(os.Args) == 1 || (len(os.Args) == 2 && (os.Args[1] == "-" || os.Args[1] == "/dev/stdin"))
 
 	// If no regular filename is given, check if data is ready at stdin
-	fnord.stdin = stdinFilename && (parentIsMan || files.DataReadyOnStdin())
+	if stdinFilename {
+		*parentIsMan = parentProcessIs("man")
+		fnord.stdin = (*parentIsMan || files.DataReadyOnStdin())
+	}
 
 	if fnord.stdin {
 		// TODO: Use a spinner?

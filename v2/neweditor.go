@@ -49,15 +49,20 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		return nil, "", true, displayImage(c, fnord.filename, waitForKeypress)
 	}
 
+	if parentIsMan == nil {
+		b := parentProcessIs("man")
+		parentIsMan = &b
+	}
+
 	if fnord.stdin {
-		if parentIsMan {
+		if *parentIsMan {
 			m = mode.ManPage
 		} else {
 			m = mode.SimpleDetectBytes(fnord.data)
 		}
 		syntaxHighlight = origSyntaxHighlight && m != mode.Text && m != mode.Blank
 	} else {
-		if parentIsMan {
+		if *parentIsMan {
 			m = mode.ManPage
 		} else {
 			m = mode.Detect(stripGZ(fnord.filename)) // Note that mode.Detect can check for the full path, like /etc/fstab
@@ -133,7 +138,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			return nil, "", false, err
 		}
 
-		if parentIsMan {
+		if *parentIsMan {
 			e.mode = mode.ManPage
 		}
 
@@ -194,7 +199,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 				if len(firstLine) > 100 {
 					firstLine = firstLine[:100]
 				}
-				if parentIsMan {
+				if *parentIsMan {
 					e.mode = mode.ManPage
 				} else {
 					if m, found := mode.DetectFromContents(e.mode, firstLine, e.String); found {

@@ -498,7 +498,11 @@ func LoadEmacsLocationHistory(emacsPlacesFilename string) map[string]CharacterPo
 
 // ShouldKeep checks if the given absolute filename should be kept in the location history or not
 func ShouldKeep(absFilename string) bool {
-	if parentIsMan {
+	if parentIsMan == nil {
+		b := parentProcessIs("man")
+		parentIsMan = &b
+	}
+	if *parentIsMan {
 		return false
 	}
 	if strings.HasPrefix(absFilename, "/tmp/commit") || strings.HasPrefix(absFilename, "/tmp/man.") || strings.HasPrefix(absFilename, "/dev/") {

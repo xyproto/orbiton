@@ -108,7 +108,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		}
 	}
 
-	if parentIsMan {
+	if parentIsMan == nil {
+		b := parentProcessIs("man")
+		parentIsMan = &b
+	}
+	if *parentIsMan {
 		e.mode = mode.ManPage
 	}
 
