@@ -133,7 +133,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	// Monitor a read-only file?
 	if monitorAndReadOnly {
 		e.readOnly = true
-		e.StartMonitoring(c, tty, status)
+		if err := e.StartMonitoring(c, tty, status); err != nil {
+			quitError(tty, err)
+		}
 	}
 	if e.mode == mode.Log && e.readOnly {
 		e.syntaxHighlight = true

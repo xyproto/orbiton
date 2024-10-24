@@ -7,33 +7,34 @@ import (
 
 // StartMonitoring will start monitoring the current file for changes
 // and reload the file whenever it changes.
-func (e *Editor) StartMonitoring(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
+func (e *Editor) StartMonitoring(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) error {
+
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		status.Clear(c, false)
-		status.SetError(err)
-		status.Show(c, e)
+		return err
 	}
-	defer watcher.Close()
 
 	absFilename, err := e.AbsFilename()
 	if err != nil {
-		status.ClearAll(c, false)
-		status.SetError(err)
-		status.Show(c, e)
+		return err
 	}
 
 	go func() {
+
+		defer watcher.Close()
 
 		for {
 			select {
 			case event, ok := <-watcher.Events:
 				if !ok {
+					// event channel closed, return from goroutine
 					return
 				}
 
 				// Handle the received event, for the currently monitored file(s)
-				if event.Has(fsnotify.Write) { // is it a write event?
+				if event.Op&fsnotify.Write == fsnotify.Write { // write event?
+					//logf("FILE WRITE\n")
+
 					status.Clear(c, false)
 					status.SetMessage("Reloading " + e.filename)
 					status.Show(c, e)
@@ -44,16 +45,19 @@ func (e *Editor) StartMonitoring(c *vt100.Canvas, tty *vt100.TTY, status *Status
 						status.Show(c, e)
 					}
 
-					const drawLines = true
-					e.FullResetRedraw(c, status, drawLines, false)
+					//const drawLines = true
+					//e.FullResetRedraw(c, status, drawLines, false)
+
 					e.redraw.Store(true)
 					e.redrawCursor.Store(true)
 				}
 
 			case err, ok := <-watcher.Errors:
 				if !ok {
+					// event channel closed, return from goroutine
 					return
 				}
+
 				status.ClearAll(c, true)
 				status.SetError(err)
 				status.Show(c, e)
@@ -62,5 +66,5 @@ func (e *Editor) StartMonitoring(c *vt100.Canvas, tty *vt100.TTY, status *Status
 
 	}()
 
-	_ = watcher.Add(absFilename)
+	return watcher.Add(absFilename)
 }
