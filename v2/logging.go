@@ -42,24 +42,3 @@ func flogf(logfile, format string, args ...interface{}) error {
 	}
 	return f.Close()
 }
-
-// // pplogf, for pretty print logging to a file, using
-// // import "github.com/k0kubun/pp/v3"
-// func pplogf(format string, args ...interface{}) error {
-// 	logFilename := filepath.Join(tempDir, "o.log")
-// 	f, err := os.OpenFile(logFilename, os.O_APPEND|os.O_WRONLY, 0644)
-// 	if err != nil {
-// 		f, err = os.Create(logFilename)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-// 	prettyPrinter := pp.New()
-// 	prettyPrinter.SetOutput(f)
-// 	prettyPrinter.Printf(format, args...)
-// 	err = f.Sync()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return f.Close()
-// }
