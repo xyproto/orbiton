@@ -2055,7 +2055,7 @@ func (e *Editor) ForEachLineInBlockWithCommentMarker(c *vt100.Canvas, f func(str
 // ForEachLineInBlock will move the cursor and run the given function for
 // each line in the current block of text (until newline or end of document).
 // It will also keep X the same for each line.
-// It will then use the X value after the final successfull call of the given function.
+// It will then use the X value after the final successful call of the given function.
 func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func() bool) {
 	firstX := e.pos.sx
 	firstY := e.pos.sy

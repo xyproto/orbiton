@@ -13,7 +13,7 @@ import (
 
 const maxSearchHistoryEntries = 1024
 
-// SearchHistory is a map from timestap to search term (string).
+// SearchHistory is a map from timestamp to search term (string).
 // Assume no timestamp collisions for when the user is adding search terms, because the user is not that fast.
 type SearchHistory map[time.Time]string
 
