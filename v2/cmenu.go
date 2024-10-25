@@ -469,17 +469,9 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		actions.AddCommand(e, c, tty, status, bookmark, undo, "Split line on blanks outside of (), [] or {}", "splitline")
 	}
 
-	actions.Add("Toggle block editing mode", func() {
+	actions.Add("Toggle block editing", func() {
 		e.blockMode = !e.blockMode
 	})
-
-	//actions.Add("Toggle highlight text", func() {
-	//e.highlightCurrentText = !e.highlightCurrentText
-	//})
-
-	//actions.Add("Toggle highlight line", func() {
-	//e.highlightCurrentLine = !e.highlightCurrentLine
-	//})
 
 	// Only show the menu option for killing the parent process if the parent process is a known search command
 	searchProcessNames := []string{"ag", "find", "rg"}
