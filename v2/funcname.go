@@ -148,6 +148,11 @@ func (e *Editor) FindCurrentFunctionName() string {
 			// Found the current function name
 			return functionName
 		}
+		if i < startLineIndex && (!strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t")) { // not indented, and not a function definition
+			if trimmedLine := strings.TrimSpace(line); trimmedLine == "}" || trimmedLine == "end" {
+				return ""
+			}
+		}
 	}
 	return ""
 }
