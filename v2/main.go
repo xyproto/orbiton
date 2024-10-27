@@ -239,7 +239,8 @@ func main() {
 
 	// If no regular filename is given, check if data is ready at stdin
 	if stdinFilename {
-		*parentIsMan = parentProcessIs("man")
+		b := parentProcessIs("man")
+		parentIsMan = &b
 		fnord.stdin = (*parentIsMan || files.DataReadyOnStdin())
 	}
 
