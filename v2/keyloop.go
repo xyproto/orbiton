@@ -2156,6 +2156,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		// Display the ctrl-o menu if esc was pressed 4 times
 		if !e.nanoMode && kh.Repeated("c:27", 4-1) { // esc pressed 4 times (minus the one that was added just now)
+			backFunctions = make([]func(), 0)
 			regularEditingRightNow = false
 			status.ClearAll(c, false)
 			undo.Snapshot(e)
