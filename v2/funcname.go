@@ -73,21 +73,7 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 				return true // it looks like it could return a pointer to a struct
 			}
 		}
-		if strings.Contains(trimmedLine, "(") {
-			fields := strings.SplitN(trimmedLine, "(", 2)
-			if strings.Contains(fields[0], "=") {
-				return false
-			}
-		}
-		if strings.Index(trimmedLine, "=") < strings.Index(trimmedLine, "(") { // equal sign before the first (
-			return false
-		}
-		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") { // lines that are not indented are more likely to be function definitions
-			if strings.Contains(line, "(") && strings.Contains(line, ")") { // looking more and more like a function definition
-				return true
-			}
-		}
-		return false
+		fallthrough
 	default:
 		if strings.Contains(trimmedLine, "(") {
 			fields := strings.SplitN(trimmedLine, "(", 2)
@@ -95,6 +81,14 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 				return false
 			}
 			if !strings.Contains(fields[0], " ") && strings.HasSuffix(trimmedLine, ") {") { // shell functions without a func prefix
+				return true
+			}
+		}
+		if strings.Index(trimmedLine, "=") < strings.Index(trimmedLine, "(") { // equal sign before the first (
+			return false
+		}
+		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") { // lines that are not indented are more likely to be function definitions
+			if strings.Contains(line, "(") && strings.Contains(line, ")") { // looking more and more like a function definition
 				return true
 			}
 		}
@@ -165,9 +159,6 @@ func (e *Editor) WriteCurrentFunctionName(c *vt100.Canvas) {
 		return
 	}
 	s := e.FindCurrentFunctionName()
-	//if s == "" {
-	//s = fmt.Sprintf("%d%%", e.Percentage())
-	//}
 	var (
 		canvasWidth      = c.Width()
 		x           uint = (canvasWidth - uint(len(s))) - 2 // 2 is the right side padding
