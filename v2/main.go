@@ -19,7 +19,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "Orbiton 2.68.0"
+const versionString = "Orbiton 2.68.1"
 
 var (
 	editorLaunchTime = time.Now()
