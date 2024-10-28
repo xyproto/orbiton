@@ -9,6 +9,7 @@ require (
 	github.com/gomarkdown/markdown v0.0.0-20240930133441-72d49d9543d8
 	github.com/ianlancetaylor/demangle v0.0.0-20240912202439-0a2b6291aafd
 	github.com/jung-kurt/gofpdf v1.16.2
+	github.com/klauspost/asmfmt v1.3.2
 	github.com/sajari/fuzzy v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/xyproto/autoimport v1.5.2
