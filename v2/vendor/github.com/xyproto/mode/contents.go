@@ -35,6 +35,13 @@ func SimpleDetect(contents string) Mode {
 func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() []byte) (Mode, bool) {
 	var found, notConfig bool
 	m := initial
+	if m == Assembly || m == Blank {
+		// Go/Plan9 style Assembly
+		data := bytes.TrimSpace(allBytesFunc())
+		if bytes.Contains(data, []byte("·")) || (bytes.Contains(data, []byte("TEXT")) && bytes.Contains(data, []byte("RET\n"))) {
+			return GoAssembly, true
+		}
+	}
 	if bytes.HasPrefix(firstLine, []byte("#!")) { // The line starts with a shebang
 		words := bytes.Split(firstLine, []byte(" "))
 		lastWord := words[len(words)-1]
@@ -125,10 +132,6 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 			// If it's not a config file and the mode is blank, set it to XML if the first character is "<" and the last is ">"
 			// set the mode to modeConfig and enable syntax highlighting.
 			data := bytes.TrimSpace(allBytesFunc())
-			// Go/Plan9 style Assembly
-			if bytes.Contains(data, []byte("·")) || (bytes.Contains(data, []byte("TEXT")) && bytes.Contains(data, []byte("RET\n"))) {
-				return GoAssembly, true
-			}
 			if bytes.HasPrefix(data, []byte{'<'}) && bytes.HasSuffix(data, []byte{'>'}) {
 				return XML, true
 			}
