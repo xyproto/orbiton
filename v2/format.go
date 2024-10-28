@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/klauspost/asmfmt"
 	"github.com/xyproto/autoimport"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
@@ -212,8 +213,14 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 		return
 	}
 
-	// Organize Java or Kotlin imports
-	if e.mode == mode.Java || e.mode == mode.Kotlin {
+	switch e.mode {
+	case mode.GoAssembly:
+		if formatted, err := asmfmt.Format(strings.NewReader(e.String())); err == nil { // success
+			e.LoadBytes(formatted)
+			e.redraw.Store(true)
+			return // All done
+		}
+	case mode.Java, mode.Kotlin:
 		const removeExistingImports = false
 		const deGlobImports = true
 		e.LoadBytes(organizeImports([]byte(e.String()), e.mode == mode.Java, removeExistingImports, deGlobImports))
