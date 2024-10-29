@@ -36,9 +36,9 @@ var statusBeingShown int
 
 // NewStatusBar takes a foreground color, background color, foreground color for clearing,
 // background color for clearing and a duration for how long to display status messages.
-func NewStatusBar(fg, bg, errfg, errbg vt100.AttributeColor, editor *Editor, show time.Duration, initialMessageAfterRedraw string, nanoMode bool) *StatusBar {
+func (e *Editor) NewStatusBar(statusDuration time.Duration, initialMessageAfterRedraw string) *StatusBar {
 	mut = &sync.RWMutex{}
-	return &StatusBar{editor, "", initialMessageAfterRedraw, fg, bg, errfg, errbg, show, 0, false, nanoMode}
+	return &StatusBar{e, "", initialMessageAfterRedraw, e.StatusForeground, e.StatusBackground, e.StatusErrorForeground, e.StatusErrorBackground, statusDuration, 0, false, e.nanoMode.Load()}
 }
 
 // Draw will draw the status bar to the canvas

@@ -126,7 +126,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	}
 
 	// Prepare a status bar
-	status := NewStatusBar(e.StatusForeground, e.StatusBackground, e.StatusErrorForeground, e.StatusErrorBackground, e, statusDuration, messageAfterRedraw, e.nanoMode)
+	status := e.NewStatusBar(statusDuration, messageAfterRedraw)
 
 	e.SetTheme(e.Theme)
 
