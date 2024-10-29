@@ -85,9 +85,7 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 			if r != ' ' && (prevR == ' ' || prevR == '-') && (r == '-' || r == '[' || r == '_') && (prevR == '-' || !inFlag) {
 				inFlag = true
 				rs = append(rs, []rune(off+e.MenuArrowColor.String())...)
-			} else if (prevR == ' ' || prevR == '-') && (r == '-' || r == '[' || r == ']' || r == '_') && inFlag {
-				// do nothing
-			} else if inFlag { // Color the rest of the flag text in the textColor color (LightBlue)
+			} else if inFlag && !((prevR == ' ' || prevR == '-') && (r == '-' || r == '[' || r == ']' || r == '_')) { // Color the rest of the flag text in the textColor color (LightBlue)
 				inFlag = false
 				rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
 			} else if foundLetter && spaceCount > 2 { // Color the rest of the line in the foreground color (LightGreen)
@@ -135,9 +133,7 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 		if !inWord && unicode.IsDigit(r) && !inDigits {
 			inDigits = true
 			rs = append(rs, []rune(off+e.ItalicsColor.String())...)
-		} else if inDigits && hexDigit(r) {
-			// do nothing
-		} else if !inWord && inDigits {
+		} else if inDigits && !inWord && !hexDigit(r) {
 			inDigits = false
 			rs = append(rs, []rune(off+normal.String())...)
 		} else if !inWord && (r == '*' || r == '$' || r == '%' || r == '!' || r == '/' || r == '=' || r == '-') {
