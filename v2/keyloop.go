@@ -247,7 +247,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		switch key {
 		case "c:17": // ctrl-q, quit
 
-			if e.nanoMode { // nano: ctrl-w, search backwards
+			if e.nanoMode.Load() { // nano: ctrl-w, search backwards
 				const clearPreviousSearch = true
 				const searchForward = false
 				e.SearchMode(c, status, tty, clearPreviousSearch, searchForward, undo)
@@ -257,14 +257,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.quit = true
 		case "c:23": // ctrl-w, format or insert template (or if in git mode, cycle interactive rebase keywords)
 
-			if e.nanoMode { // nano: ctrl-w, search
+			if e.nanoMode.Load() { // nano: ctrl-w, search
 				const clearPreviousSearch = true
 				const searchForward = true
 				e.SearchMode(c, status, tty, clearPreviousSearch, searchForward, undo)
 				break
 			}
 
-			if e.viMode {
+			if e.viMode.Load() {
 				status.ClearAll(c, true)
 				status.SetMessage("VI mode ctrl-w")
 				status.Show(c, e)
@@ -345,7 +345,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:6": // ctrl-f, search for a string
 
-			if e.nanoMode { // nano: ctrl-f, cursor forward
+			if e.nanoMode.Load() { // nano: ctrl-f, cursor forward
 				e.CursorForward(c, status)
 				break
 			}
@@ -375,7 +375,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			regularEditingRightNow = true
 
 		case "c:0": // ctrl-space, build source code to executable, or export, depending on the mode
-			if e.nanoMode {
+			if e.nanoMode.Load() {
 				break // do nothing
 			}
 
@@ -437,7 +437,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// debug mode: next instruction
 
 			// Save the current file, but only if it has changed
-			if !e.nanoMode && e.changed.Load() {
+			if !e.nanoMode.Load() && e.changed.Load() {
 				if err := e.Save(c, tty); err != nil {
 					status.ClearAll(c, false)
 					status.SetError(err)
@@ -446,7 +446,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				}
 			}
 
-			if e.nanoMode {
+			if e.nanoMode.Load() {
 				e.NanoNextTypo(c, status)
 				break
 			}
@@ -579,7 +579,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redrawCursor.Store(true)
 		case "c:15": // ctrl-o, launch the command menu
 
-			if e.nanoMode { // ctrl-o, save
+			if e.nanoMode.Load() { // ctrl-o, save
 				// Ask the user which filename to save to
 				if newFilename, ok := e.UserInput(c, tty, status, "Save as", e.filename, []string{e.filename}, false, e.filename); ok {
 					e.filename = newFilename
@@ -603,7 +603,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:31": // ctrl-_, jump to a matching parenthesis or enter a digraph
 
-			if e.nanoMode { // nano: ctrl-/
+			if e.nanoMode.Load() { // nano: ctrl-/
 				// go to line
 				e.JumpMode(c, status, tty)
 				e.redraw.Store(true)
@@ -675,7 +675,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
 
-			if !e.nanoMode {
+			if !e.nanoMode.Load() {
 				if e.debugMode {
 					// e.showRegisters has three states, 0 (SmallRegisterWindow), 1 (LargeRegisterWindow) and 2 (NoRegisterWindow)
 					e.debugShowRegisters++
@@ -787,7 +787,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
 
-			if !e.nanoMode {
+			if !e.nanoMode.Load() {
 
 				// If in Debug mode, let ctrl-n mean "next instruction"
 				if e.debugMode {
@@ -985,7 +985,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.redrawCursor.Store(true)
 
 		case "c:12": // ctrl-l, go to line number or percentage
-			if !e.nanoMode {
+			if !e.nanoMode.Load() {
 				regularEditingRightNow = false
 				e.ClearSearch() // clear the current search first
 				switch e.JumpMode(c, status, tty) {
@@ -1554,7 +1554,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:25": // ctrl-y
 
-			if e.nanoMode { // nano: ctrl-y, page up
+			if e.nanoMode.Load() { // nano: ctrl-y, page up
 				h := int(c.H())
 				e.redraw.Store(e.ScrollUp(c, status, h))
 				e.redrawCursor.Store(true)
@@ -1652,7 +1652,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.UserSave(c, tty, status)
 		case "c:7": // ctrl-g, either go to definition OR jump to matching parent/bracket OR toggle the status bar
 
-			if e.nanoMode { // nano: ctrl-g, help
+			if e.nanoMode.Load() { // nano: ctrl-g, help
 				status.ClearAll(c, false)
 				const repositionCursorAfterDrawing = true
 				e.DrawNanoHelp(c, repositionCursorAfterDrawing)
@@ -1707,7 +1707,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:21": // ctrl-u to undo
 
-			if e.nanoMode { // nano: paste after cutting
+			if e.nanoMode.Load() { // nano: paste after cutting
 				e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, kh.PrevIs("c:13"))
 				break
 			}
@@ -1731,7 +1731,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 		case "c:24": // ctrl-x, cut line
 
-			if e.nanoMode { // nano: ctrl-x, quit
+			if e.nanoMode.Load() { // nano: ctrl-x, quit
 
 				if e.changed.Load() {
 					// Ask the user which filename to save to
@@ -1793,7 +1793,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.End(c)
 		case "c:11": // ctrl-k, delete to end of line
 			undo.Snapshot(e)
-			if e.nanoMode { // nano: ctrl-k, cut line
+			if e.nanoMode.Load() { // nano: ctrl-k, cut line
 				// Prepare to cut
 				e.CutSingleLine(status, bookmark, &lastCutY, &lastCopyY, &lastPasteY, &copyLines, &firstCopyAction)
 				break
@@ -1801,7 +1801,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.DeleteToEndOfLine(c, status, bookmark, &lastCopyY, &lastPasteY, &lastCutY)
 		case "c:3", copyKey: // ctrl-c, copy the stripped contents of the current line
 
-			if e.nanoMode { // nano: ctrl-c, report cursor position
+			if e.nanoMode.Load() { // nano: ctrl-c, report cursor position
 				status.ClearAll(c, false)
 				status.NanoInfo(c, e)
 				break
@@ -1887,7 +1887,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:22": // ctrl-v, paste
 
-			if e.nanoMode { // nano: ctrl-v, page down
+			if e.nanoMode.Load() { // nano: ctrl-v, page down
 				h := int(c.H())
 				e.redraw.Store(e.ScrollDown(c, status, h, h))
 				e.redrawCursor.Store(true)
@@ -1902,7 +1902,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		case "c:18": // ctrl-r, to open or close a portal. In debug mode, continue running the program.
 
-			if e.nanoMode { // nano: ctrl-r, insert file
+			if e.nanoMode.Load() { // nano: ctrl-r, insert file
 				// Ask the user which filename to insert
 				if insertFilename, ok := e.UserInput(c, tty, status, "Insert file", "", []string{e.filename}, false, e.filename); ok {
 					err := e.RunCommand(c, tty, status, bookmark, undo, "insertfile", insertFilename)
@@ -1957,7 +1957,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			status.Show(c, e)
 		case "c:2": // ctrl-b, go back after jumping to a definition, bookmark, unbookmark or jump to bookmark. Toggle breakpoint if in debug mode.
 
-			if e.nanoMode { // nano: ctrl-b, cursor forward
+			if e.nanoMode.Load() { // nano: ctrl-b, cursor forward
 				e.CursorBackward(c, status)
 				break
 			}
@@ -2039,7 +2039,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 			undo.Snapshot(e)
-			if e.nanoMode {
+			if e.nanoMode.Load() {
 				// Up to 999 times, join the current line with the next, until the next line is empty
 				joinCount := 0
 				for i := 0; i < 999; i++ {
@@ -2161,7 +2161,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		}
 
 		// Display the ctrl-o menu if esc was pressed 4 times
-		if !e.nanoMode && kh.Repeated("c:27", 4-1) { // esc pressed 4 times (minus the one that was added just now)
+		if !e.nanoMode.Load() && kh.Repeated("c:27", 4-1) { // esc pressed 4 times (minus the one that was added just now)
 			backFunctions = make([]func(), 0)
 			regularEditingRightNow = false
 			status.ClearAll(c, false)

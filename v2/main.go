@@ -359,11 +359,11 @@ func main() {
 		case 'n': // nan, nano
 			// Check if "Nano mode" should be set
 			nanoMode = strings.HasPrefix(executableName, "na")
-		case 'v': // vs, vscode, vi, vim etc.
+		case 'v':
 			// Check if "VI mode" hould be set
-			if strings.HasPrefix(executableName, "vi") {
+			if strings.HasPrefix(executableName, "vi") { // vi, vim etc.
 				viMode = true
-			} else {
+			} else { // vs, vscode etc
 				theme = NewDarkVSTheme()
 			}
 		default:

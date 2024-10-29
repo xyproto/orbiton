@@ -65,8 +65,6 @@ type Editor struct {
 	monitorAndReadOnly         bool            // monitor the file for changes and open it as read-only
 	primaryClipboard           bool            // use the primary or the secondary clipboard on UNIX?
 	jumpToLetterMode           bool            // jump directly to a highlighted letter
-	nanoMode                   bool            // emulate GNU Nano
-	viMode                     bool            // emulate VI
 	spellCheckMode             bool            // spell check mode?
 	createDirectoriesIfMissing bool            // when saving a file, should directories be created if they are missing?
 	displayQuickHelp           bool            // display the quick help box?
@@ -74,11 +72,14 @@ type Editor struct {
 	dirMode                    bool            // browse a directory and also interact with git
 	highlightCurrentLine       bool            // highlight the current line
 	highlightCurrentText       bool            // highlight the current text (not the entire line)
-	changed                    atomic.Bool     // has the contents changed, since last save?
-	redraw                     atomic.Bool     // if the contents should be redrawn in the next loop
-	redrawCursor               atomic.Bool     // if the cursor should be moved to the location it is supposed to be
-	drawProgress               atomic.Bool     // used for drawing the progress character on the right side
-	drawFuncName               atomic.Bool
+	// atomic.Bool are used for values that might be read when redrawing text asynchronously
+	changed      atomic.Bool // has the contents changed, since last save?
+	redraw       atomic.Bool // if the contents should be redrawn in the next loop
+	redrawCursor atomic.Bool // if the cursor should be moved to the location it is supposed to be
+	drawProgress atomic.Bool // used for drawing the progress character on the right side
+	drawFuncName atomic.Bool // used when drawing the function name in the top right corner
+	nanoMode     atomic.Bool // emulate GNU Nano
+	viMode       atomic.Bool // emulate VI
 }
 
 // Copy makes a copy of an Editor struct, with most fields deep copied
@@ -2287,7 +2288,7 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
 		fnord := FilenameOrData{filenameToOpen, []byte{}, 0, false}
-		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, e.monitorAndReadOnly, e.nanoMode, e.viMode, e.createDirectoriesIfMissing, e.displayQuickHelp)
+		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, e.monitorAndReadOnly, e.nanoMode.Load(), e.viMode.Load(), e.createDirectoriesIfMissing, e.displayQuickHelp)
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)

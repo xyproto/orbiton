@@ -119,12 +119,12 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	e.filename = fnord.filename
 
 	// emulate Nano?
-	e.nanoMode = nanoMode
+	e.nanoMode.Store(nanoMode)
 	if nanoMode {
 		e.statusMode = true
 	}
 
-	e.viMode = viMode
+	e.viMode.Store(viMode)
 
 	// We wish to redraw the canvas and reposition the cursor
 	e.redraw.Store(true)

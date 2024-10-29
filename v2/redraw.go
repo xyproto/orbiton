@@ -161,7 +161,7 @@ func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 	}
 
 	// Display the status message
-	if e.nanoMode {
+	if e.nanoMode.Load() {
 		status.Show(c, e)
 	} else if e.statusMode {
 		status.ShowFilenameLineColWordCount(c, e)
@@ -201,8 +201,8 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, should
 			e.drawProgress.Store(false)
 		}
 
-		// If the function name should not be drawn in Nano mode, then also check if e.nanoMode is false here
-		if e.drawFuncName.Load() {
+		// Draw the function name if drawFuncName is set and Nano mode is not enabled
+		if e.drawFuncName.Load() && !e.nanoMode.Load() {
 			e.WriteCurrentFunctionName(c) // not drawing immediatly
 			e.drawFuncName.Store(false)
 		}
@@ -212,7 +212,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, should
 	}
 
 	// Drawing status messages should come after redrawing, but before cursor positioning
-	if e.nanoMode {
+	if e.nanoMode.Load() {
 		status.Show(c, e)
 	} else if e.statusMode {
 		status.ShowFilenameLineColWordCount(c, e)
