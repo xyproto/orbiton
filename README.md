@@ -677,6 +677,11 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
+## Moby Dick Workout
+
+* Orbiton passes the [Moby Dick Workout](https://www.hogbaysoftware.com/posts/moby-dick-workout/) here on my machine.
+* Please create an issue if it is even a little bit slow on your machine (as long as your macine is at least as fast as a Raspberry Pi 3).
+
 ## Terminal settings
 
 ### Konsole
@@ -686,11 +691,6 @@ The above copyright notice and this permission notice shall be included in all c
 ## About the name
 
 * An [orbiton](https://en.wikipedia.org/wiki/Orbiton) is a [quasiparticle](https://en.wikipedia.org/wiki/Quasiparticle).
-
-## Moby Dick Workout
-
-* Orbiton passes the [Moby Dick Workout](https://www.hogbaysoftware.com/posts/moby-dick-workout/) with flying colors on my machine.
-* Please raise an issue if it is even a little bit slow on your machine (if it is at least as fast as a Raspberry Pi 3).
 
 ## License scan
 
