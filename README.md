@@ -687,6 +687,11 @@ The above copyright notice and this permission notice shall be included in all c
 
 * An [orbiton](https://en.wikipedia.org/wiki/Orbiton) is a [quasiparticle](https://en.wikipedia.org/wiki/Quasiparticle).
 
+## Moby Dick Workout
+
+* Orbiton passes the [Moby Dick Workout](https://www.hogbaysoftware.com/posts/moby-dick-workout/) with flying colors on my machine.
+* Please raise an issue if it is even a little bit slow on your machine (if it is at least as fast as a Raspberry Pi 3).
+
 ## License scan
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Forbiton.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Forbiton?ref=badge_large)
