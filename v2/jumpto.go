@@ -337,11 +337,14 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 		e.redraw.Store(redraw)
 	} else if goToTop {
 		e.GoToTop(c, status)
+		e.drawProgress.Store(true)
 	} else if goToCenter {
 		// Go to the center line
 		e.GoToMiddle(c, status)
+		e.drawProgress.Store(true)
 	} else if goToEnd {
 		e.GoToEnd(c, status)
+		e.drawProgress.Store(true)
 	} else if toggleQuickHelpScreen {
 		ok := false
 		if QuickHelpScreenIsDisabled() {
@@ -357,25 +360,30 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 		if e.DataY() > 0 {
 			// If not already at the top, go there
 			e.GoToTop(c, status)
+			e.drawProgress.Store(true)
 		} else {
 			// Go to the last line
 			e.GoToEnd(c, status)
+			e.drawProgress.Store(true)
 		}
 	} else if strings.HasSuffix(lns, "%") {
 		// Go to the specified percentage
 		if percentageInt, err := strconv.Atoi(lns[:len(lns)-1]); err == nil { // no error {
 			lineIndex := int(math.Round(float64(e.Len()) * float64(percentageInt) * 0.01))
 			e.redraw.Store(e.GoToLineNumber(LineNumber(lineIndex), c, status, true))
+			e.drawProgress.Store(true)
 		}
 	} else if strings.Count(lns, ".") == 1 || strings.Count(lns, ",") == 1 {
 		if percentageFloat, err := strconv.ParseFloat(strings.ReplaceAll(lns, ",", "."), 64); err == nil { // no error
 			lineIndex := int(math.Round(float64(e.Len()) * percentageFloat))
 			e.redraw.Store(e.GoToLineNumber(LineNumber(lineIndex), c, status, true))
+			e.drawProgress.Store(true)
 		}
 	} else if postAction == noAction {
 		// Go to the specified line
 		if ln, err := strconv.Atoi(lns); err == nil { // no error
 			e.redraw.Store(e.GoToLineNumber(LineNumber(ln), c, status, true))
+			e.drawProgress.Store(true)
 		}
 	}
 	e.jumpToLetterMode = false
