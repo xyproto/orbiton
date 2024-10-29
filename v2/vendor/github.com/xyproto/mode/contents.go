@@ -3,6 +3,8 @@ package mode
 import (
 	"bytes"
 	"strings"
+
+	"github.com/xyproto/lookslikegoasm"
 )
 
 // SimpleDetectBytes tries to return a Mode given a byte slice of file contents
@@ -136,8 +138,12 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 				return XML, true
 			}
 		}
+	case Assembly:
+		// Check if it looks like Go/Plan9-style Assembly or not
+		if lookslikegoasm.Consider(string(allBytesFunc())) {
+			return GoAssembly, true
+		}
 	}
-
 	return m, found
 }
 

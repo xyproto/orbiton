@@ -100,7 +100,7 @@ func Detect(filename string) Mode {
 		case ".cm":
 			// Standard ML project file
 			mode = StandardML
-		case ".cpp", ".cc", ".c++", ".cxx", ".hpp", ".h": // C++ mode
+		case ".cpp", ".cc", ".c++", ".cxx", ".hpp", ".h", ".h++": // C++ mode
 			// TODO: Find a way to discover is a .h file is most likely to be C or C++
 			mode = Cpp
 		case ".clj", ".clojure", "cljs":
@@ -216,8 +216,8 @@ func Detect(filename string) Mode {
 			mode = Rust
 		case ".rst":
 			mode = ReStructured // reStructuredText
-		case ".mac", ".S", ".asm", ".inc", ".s":
-			// Go-style assembly (modeGoAssembly) is enabled if a mid-dot is discovered
+		case ".S", ".asm", ".inc", ".mac", ".s":
+			// Temporary set the mode to Assembly. Go-style Assembly will be detected from the contents.
 			mode = Assembly
 		case ".scala":
 			mode = Scala

@@ -1,6 +1,6 @@
 module github.com/xyproto/orbiton/v2
 
-go 1.23.0
+go 1.23.2
 
 require (
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
@@ -20,7 +20,7 @@ require (
 	github.com/xyproto/env/v2 v2.5.1
 	github.com/xyproto/files v1.7.0
 	github.com/xyproto/iferr v1.1.0
-	github.com/xyproto/mode v0.7.33
+	github.com/xyproto/mode v0.7.34
 	github.com/xyproto/stringpainter v1.0.1
 	github.com/xyproto/syntax v1.10.10
 	github.com/xyproto/termtitle v1.5.1
@@ -48,6 +48,7 @@ require (
 	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
+	github.com/xyproto/lookslikegoasm v1.0.0 // indirect
 	github.com/xyproto/palgen v1.6.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 )
