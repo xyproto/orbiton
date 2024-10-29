@@ -17,43 +17,46 @@ import (
 )
 
 // FormatMap maps from format command to file extensions
-type FormatMap map[*exec.Cmd][]string
+type FormatMap map[mode.Mode]*exec.Cmd
 
 var formatMap FormatMap
 
 // GetFormatMap will return a map from format command to file extensions.
 // It is done this way to only initialize the map once, but not at the time when the program starts.
-func GetFormatMap() FormatMap {
+func (e *Editor) GetFormatMap() FormatMap {
 	if formatMap == nil {
 		formatMap = FormatMap{
-			exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"): {".c", ".c++", ".cc", ".cpp", ".cxx", ".h", ".h++", ".hpp"},
-			exec.Command("astyle", "--mode=cs"):                                               {".cs"},
-			exec.Command("crystal", "tool", "format"):                                         {".cr"},
-			exec.Command("prettier", "--tab-width", "2", "-w"):                                {".css"},
-			exec.Command("dart", "format"):                                                    {".dart"},
-			exec.Command("goimports", "-w", "--"):                                             {".go"},
-			exec.Command("brittany", "--write-mode=inplace"):                                  {".hs"},
-			exec.Command("google-java-format", "-a", "-i"):                                    {".java"},
-			exec.Command("prettier", "--tab-width", "4", "-w"):                                {".js", ".ts"},
-			exec.Command("just", "--unstable", "--fmt", "-f"):                                 {".just", ".justfile", "justfile"},
-			exec.Command("ktlint", "-F"):                                                      {".kt", ".kts"},
-			exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"): {".lua"},
-			exec.Command("ocamlformat"): {".ml"},
-			exec.Command("/usr/bin/vendor_perl/perltidy", "-se", "-b", "-i=2", "-ole=unix", "-bt=2", "-pt=2", "-sbt=2", "-ce"): {".pl"},
-			exec.Command("black"):    {".py"},
-			exec.Command("rustfmt"):  {".rs"},
-			exec.Command("scalafmt"): {".scala"},
-			exec.Command("shfmt", "-s", "-w", "-i", "2", "-bn", "-ci", "-sr", "-kp"): {".bash", ".sh", "APKBUILD", "PKGBUILD"},
-			exec.Command("v", "fmt"): {".v"},
-			exec.Command("tidy", "-w", "80", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "-xml", "-m"): {".xml"},
-			exec.Command("zig", "fmt"): {".zig"},
+			mode.Cpp:        exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"),
+			mode.C:          exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"),
+			mode.CS:         exec.Command("astyle", "--mode=cs"),
+			mode.Crystal:    exec.Command("crystal", "tool", "format"),
+			mode.CSS:        exec.Command("prettier", "--tab-width", "2", "-w"),
+			mode.Dart:       exec.Command("dart", "format"),
+			mode.Go:         exec.Command("goimports", "-w", "--"),
+			mode.Haskell:    exec.Command("brittany", "--write-mode=inplace"),
+			mode.Java:       exec.Command("google-java-format", "-a", "-i"),
+			mode.JavaScript: exec.Command("prettier", "--tab-width", "4", "-w"),
+			mode.TypeScript: exec.Command("prettier", "--tab-width", "4", "-w"),
+			mode.Just:       exec.Command("just", "--unstable", "--fmt", "-f"),
+			mode.Kotlin:     exec.Command("ktlint", "-F"),
+			mode.Lua:        exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"),
+			mode.OCaml:      exec.Command("ocamlformat"),
+			mode.Perl:       exec.Command("/usr/bin/vendor_perl/perltidy", "-se", "-b", "-i=2", "-ole=unix", "-bt=2", "-pt=2", "-sbt=2", "-ce"),
+			mode.Python:     exec.Command("black"),
+			mode.Rust:       exec.Command("rustfmt"),
+			mode.Scala:      exec.Command("scalafmt"),
+			mode.Shell:      exec.Command("shfmt", "-s", "-w", "-i", "2", "-bn", "-ci", "-sr", "-kp"),
+			mode.V:          exec.Command("v", "fmt"),
+			mode.XML:        exec.Command("tidy", "-w", "80", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "-xml", "-m"),
+			mode.Zig:        exec.Command("zig", "fmt"),
+			mode.PHP:        exec.Command("php-cs-fixer", "--no-ansi", "--no-interaction", "fix"),
 		}
 	}
 	return formatMap
 }
 
 // Using exec.Cmd instead of *exec.Cmd is on purpose, to get a new cmd.stdout and cmd.stdin every time.
-func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, cmd exec.Cmd, extOrBaseFilename string) error {
+func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, cmd exec.Cmd) error {
 	if files.WhichCached(cmd.Path) == "" { // Does the formatting tool even exist?
 		return errors.New(cmd.Path + " is missing")
 	}
@@ -61,6 +64,11 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	tempFirstName := "o"
 	if e.mode == mode.Kotlin {
 		tempFirstName = "O"
+	}
+
+	extOrBaseFilename := filepath.Ext(e.filename)
+	if extOrBaseFilename == "" {
+		extOrBaseFilename = filepath.Base(e.filename)
 	}
 
 	if f, err := os.CreateTemp(tempDir, tempFirstName+".*"+extOrBaseFilename); err == nil {
@@ -229,26 +237,24 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 	}
 
 	// Not in git mode, format Go or C++ code with goimports or clang-format
-
-OUT:
-	for cmd, extensions := range GetFormatMap() {
-		for _, ext := range extensions {
-			if strings.HasSuffix(e.filename, ext) {
-				// Format a specific file instead of the current directory if "go.mod" is missing
-				if sourceFilename, err := filepath.Abs(e.filename); e.mode == mode.Go && err == nil {
-					sourceDir := filepath.Dir(sourceFilename)
-					if !files.IsFile(filepath.Join(sourceDir, "go.mod")) {
-						cmd.Args = append(cmd.Args, sourceFilename)
-					}
+	for formatMode, cmd := range e.GetFormatMap() {
+		if e.mode == formatMode && e.mode == mode.Go {
+			// Format a specific file instead of the current directory if "go.mod" is missing
+			if sourceFilename, err := filepath.Abs(e.filename); err == nil {
+				sourceDir := filepath.Dir(sourceFilename)
+				if !files.IsFile(filepath.Join(sourceDir, "go.mod")) {
+					cmd.Args = append(cmd.Args, sourceFilename)
 				}
-				if err := e.formatWithUtility(c, tty, status, *cmd, ext); err != nil {
-					status.ClearAll(c, false)
-					status.SetMessage(err.Error())
-					status.Show(c, e)
-					break OUT
-				}
-				break OUT
 			}
+		}
+		if e.mode == formatMode {
+			if err := e.formatWithUtility(c, tty, status, *cmd); err != nil {
+				status.ClearAll(c, false)
+				status.SetMessage(err.Error())
+				status.Show(c, e)
+				break
+			}
+			break
 		}
 	}
 }
