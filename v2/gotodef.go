@@ -126,7 +126,7 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 						emptyBeforeWord := len(strings.TrimSpace(fields[0])) == 0
 
 						// go to a function definition
-						if strings.HasPrefix(trimmedLine, funcPrefix) && strings.Contains(trimmedLine, " "+name+"(") {
+						if e.LooksLikeFunctionDef(line, funcPrefix) && e.FunctionName(line) == name {
 							//logf("PROLLY FUNC: %s LINE %d WORD %s NAME %s\n", goFile, i+1, word, name)
 
 							oldFilename := e.filename
