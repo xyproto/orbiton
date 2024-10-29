@@ -66,6 +66,7 @@ type Editor struct {
 	primaryClipboard           bool            // use the primary or the secondary clipboard on UNIX?
 	jumpToLetterMode           bool            // jump directly to a highlighted letter
 	nanoMode                   bool            // emulate GNU Nano
+	viMode                     bool            // emulate VI
 	spellCheckMode             bool            // spell check mode?
 	createDirectoriesIfMissing bool            // when saving a file, should directories be created if they are missing?
 	displayQuickHelp           bool            // display the quick help box?
@@ -128,6 +129,7 @@ func (e *Editor) Copy() *Editor {
 	e2.primaryClipboard = e.primaryClipboard
 	e2.jumpToLetterMode = e.jumpToLetterMode
 	e2.nanoMode = e.nanoMode
+	e2.viMode = e.viMode
 	e2.spellCheckMode = e.spellCheckMode
 	e2.createDirectoriesIfMissing = e.createDirectoriesIfMissing
 	e2.displayQuickHelp = e.displayQuickHelp
@@ -2285,7 +2287,7 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
 		fnord := FilenameOrData{filenameToOpen, []byte{}, 0, false}
-		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, e.monitorAndReadOnly, e.nanoMode, e.createDirectoriesIfMissing, e.displayQuickHelp)
+		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, e.monitorAndReadOnly, e.nanoMode, e.viMode, e.createDirectoriesIfMissing, e.displayQuickHelp)
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)

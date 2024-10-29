@@ -55,6 +55,8 @@ func main() {
 		quickHelpFlag          bool
 		createDirectoriesFlag  bool
 		versionFlag            bool
+		nanoMode               bool
+		viMode                 bool
 	)
 
 	pflag.BoolVarP(&copyFlag, "copy", "c", false, "copy a file into the clipboard and quit")
@@ -69,6 +71,8 @@ func main() {
 	pflag.BoolVarP(&createDirectoriesFlag, "create-dir", "d", false, "create diretories when opening a new file")
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
+	pflag.BoolVarP(&nanoMode, "nano", "a", false, "Nano/Pico mode")
+	pflag.BoolVarP(&viMode, "vi", "e", false, "VI mode")
 
 	pflag.Parse()
 
@@ -333,7 +337,6 @@ func main() {
 	// If the editor executable has been named "red", use the red/gray theme by default
 	theme := NewDefaultTheme()
 	syntaxHighlight := true
-	nanoMode := false
 	if envNoColor {
 		theme = NewNoColorDarkBackgroundTheme()
 		syntaxHighlight = false
@@ -347,8 +350,6 @@ func main() {
 			editTheme = true
 		case 'l': // lo, light etc
 			theme = NewLitmusTheme()
-		case 'v': // vs, vscode etc.
-			theme = NewDarkVSTheme()
 		case 'r': // rb, ro, rt, red etc.
 			theme = NewRedBlackTheme()
 		case 's': // s, sw, synthwave etc.
@@ -358,6 +359,13 @@ func main() {
 		case 'n': // nan, nano
 			// Check if "Nano mode" should be set
 			nanoMode = strings.HasPrefix(executableName, "na")
+		case 'v': // vs, vscode, vi, vim etc.
+			// Check if "VI mode" hould be set
+			if strings.HasPrefix(executableName, "vi") {
+				viMode = true
+			} else {
+				theme = NewDarkVSTheme()
+			}
 		default:
 			specificLetter = false
 		}
@@ -374,7 +382,7 @@ func main() {
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag)
+	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, viMode, createDirectoriesFlag, quickHelpFlag)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {
