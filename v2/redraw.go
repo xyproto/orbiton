@@ -201,6 +201,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, should
 			e.drawProgress.Store(false)
 		}
 
+		// If the function name should not be drawn in Nano mode, then also check if e.nanoMode is false here
 		if e.drawFuncName.Load() {
 			e.WriteCurrentFunctionName(c) // not drawing immediatly
 			e.drawFuncName.Store(false)
