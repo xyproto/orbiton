@@ -118,7 +118,10 @@ func (e *Editor) FunctionName(line string) string {
 	withoutFuncPrefix := strings.TrimSpace(strings.TrimPrefix(s, funcPrefix))
 	if strings.Contains(withoutFuncPrefix, "(") {
 		fields := strings.SplitN(withoutFuncPrefix, "(", 2)
-		return strings.TrimSpace(fields[0])
+		withoutFuncPrefix = strings.TrimSpace(fields[0])
+	}
+	if strings.Contains(withoutFuncPrefix, ".") {
+		return ""
 	}
 	return withoutFuncPrefix
 }
