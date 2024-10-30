@@ -246,6 +246,10 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		}
 	})
 
+	actions.Add("Block edit", func() {
+		e.blockMode = !e.blockMode
+	})
+
 	// Disable or enable the tag-expanding behavior when typing in HTML or XML
 	if e.mode == mode.HTML || e.mode == mode.XML {
 		if e.expandTags {
@@ -468,10 +472,6 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	if !e.EmptyLine() {
 		actions.AddCommand(e, c, tty, status, bookmark, undo, "Split line on blanks outside of (), [] or {}", "splitline")
 	}
-
-	actions.Add("Toggle block editing", func() {
-		e.blockMode = !e.blockMode
-	})
 
 	// Only show the menu option for killing the parent process if the parent process is a known search command
 	searchProcessNames := []string{"ag", "find", "rg"}
