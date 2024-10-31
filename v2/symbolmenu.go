@@ -106,7 +106,7 @@ func (e *Editor) SymbolMenu(tty *vt100.TTY, status *StatusBar, title string, cho
 			running = false
 			changed = true
 			cancel = true
-		case " ", "c:13": // Space or Return
+		case " ", "c:13": // space or return
 			running = false
 			changed = true
 		case "n": // handy shortcut
