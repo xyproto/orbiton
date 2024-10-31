@@ -18,7 +18,6 @@ import (
 	"github.com/xyproto/iferr"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/syntax"
-	"github.com/xyproto/vt100"
 )
 
 // For when the user scrolls too far
@@ -44,19 +43,19 @@ var (
 )
 
 // Loop will set up and run the main loop of the editor
-// a *vt100.TTY struct
+// a *TTY struct
 // fnord contains either data or a filename to open
 // a LineNumber (may be 0 or -1)
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, viMode, createDirectoriesIfMissing, displayQuickHelp bool) (userMessage string, stopParent bool, err error) {
+func Loop(tty *TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, viMode, createDirectoriesIfMissing, displayQuickHelp bool) (userMessage string, stopParent bool, err error) {
 
 	// Create a Canvas for drawing onto the terminal
-	vt100.Init()
-	c := vt100.NewCanvas()
+	Init()
+	c := NewCanvas()
 	c.ShowCursor()
-	vt100.EchoOff()
+	EchoOff()
 
 	var (
 		statusDuration = 2700 * time.Millisecond
@@ -119,8 +118,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	// Minor adjustments to some modes
 	switch e.mode {
 	case mode.Email, mode.Git:
-		e.StatusForeground = vt100.LightBlue
-		e.StatusBackground = vt100.BackgroundDefault
+		e.StatusForeground = LightBlue
+		e.StatusBackground = BackgroundDefault
 	case mode.ManPage:
 		e.readOnly = true
 	}
@@ -2237,15 +2236,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 	// Quit everything that has to do with the terminal
 	if e.clearOnQuit {
-		vt100.Clear()
-		vt100.Close()
+		Clear()
+		Close()
 	} else {
 		c.HideCursorAndDraw()
 		fmt.Println()
 	}
 
 	// Make sure to enable the cursor again
-	vt100.ShowCursor(true)
+	ShowCursor(true)
 
 	// All done
 	return "", e.stopParentOnQuit, nil

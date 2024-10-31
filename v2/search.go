@@ -9,13 +9,12 @@ import (
 	"time"
 
 	"github.com/xyproto/clip"
-	"github.com/xyproto/vt100"
 )
 
 var errNoSearchMatch = errors.New("no search match")
 
 // SetSearchTerm will set the current search term. This initializes a new search.
-func (e *Editor) SetSearchTerm(c *vt100.Canvas, status *StatusBar, s string, spellCheckMode bool) bool {
+func (e *Editor) SetSearchTerm(c *Canvas, status *StatusBar, s string, spellCheckMode bool) bool {
 	foundMatch := false
 	// set the search term
 	e.searchTerm = s
@@ -43,7 +42,7 @@ func (e *Editor) SetSearchTerm(c *vt100.Canvas, status *StatusBar, s string, spe
 }
 
 // SetSearchTermWithTimeout will set the current search term. This initializes a new search.
-func (e *Editor) SetSearchTermWithTimeout(c *vt100.Canvas, status *StatusBar, s string, spellCheckMode bool, timeout time.Duration) bool {
+func (e *Editor) SetSearchTermWithTimeout(c *Canvas, status *StatusBar, s string, spellCheckMode bool, timeout time.Duration) bool {
 	// set the search term
 	e.searchTerm = s
 	// set the sticky search term (used by ctrl-n, cleared by Esc only)
@@ -211,7 +210,7 @@ func (e *Editor) backwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex
 // * The search is backawards if forward is false.
 // * The search is case-sensitive.
 // Returns an error if the search was successful but no match was found.
-func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap, forward bool) error {
+func (e *Editor) GoToNextMatch(c *Canvas, status *StatusBar, wrap, forward bool) error {
 	var (
 		foundX int
 		foundY LineIndex
@@ -275,7 +274,7 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap, forward
 }
 
 // SearchMode will enter the interactive "search mode" where the user can type in a string and then press return to search
-func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, clearSearch, searchForward bool, undo *Undo) {
+func (e *Editor) SearchMode(c *Canvas, status *StatusBar, tty *TTY, clearSearch, searchForward bool, undo *Undo) {
 	// Load the search history if needed. Ignore any errors.
 	if len(searchHistory) == 0 {
 		searchHistory, _ = LoadSearchHistory(searchHistoryFilename)

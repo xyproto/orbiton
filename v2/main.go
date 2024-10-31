@@ -16,7 +16,6 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
-	"github.com/xyproto/vt100"
 )
 
 const versionString = "Orbiton 2.68.1"
@@ -372,7 +371,7 @@ func main() {
 	}
 
 	// Initialize the VT100 terminal
-	tty, err := vt100.NewTTY()
+	tty, err := NewTTY()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error: "+err.Error())
 		quitMut.Lock()
@@ -395,7 +394,7 @@ func main() {
 	NoTitle()
 
 	// Clear the current color attribute
-	fmt.Print(vt100.Stop())
+	fmt.Print(Stop())
 
 	traceComplete() // if building with -tags trace
 

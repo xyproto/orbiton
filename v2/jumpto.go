@@ -5,8 +5,6 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
-
-	"github.com/xyproto/vt100"
 )
 
 // PositionIndex has a ColIndex and LineIndex
@@ -72,7 +70,7 @@ func (e *Editor) ClearJumpLetters() {
 // status is used for clearing status bar messages and can be nil
 // Returns true if the editor should be redrawn
 // The second returned bool is if the end has been reached
-func (e *Editor) GoTo(dataY LineIndex, c *vt100.Canvas, status *StatusBar) (bool, bool) {
+func (e *Editor) GoTo(dataY LineIndex, c *Canvas, status *StatusBar) (bool, bool) {
 	if dataY == e.DataY() {
 		// Already at the correct line, but still trigger a redraw
 		return true, false
@@ -142,7 +140,7 @@ func (e *Editor) GoTo(dataY LineIndex, c *vt100.Canvas, status *StatusBar) (bool
 }
 
 // GoToLineNumber will go to a given line number, but counting from 1, not from 0!
-func (e *Editor) GoToLineNumber(lineNumber LineNumber, c *vt100.Canvas, status *StatusBar, center bool) bool {
+func (e *Editor) GoToLineNumber(lineNumber LineNumber, c *Canvas, status *StatusBar, center bool) bool {
 	if lineNumber < 1 {
 		lineNumber = 1
 	}
@@ -154,7 +152,7 @@ func (e *Editor) GoToLineNumber(lineNumber LineNumber, c *vt100.Canvas, status *
 }
 
 // GoToLineNumberAndCol will go to a given line number (counting from 1) and column number (counting from 1)
-func (e *Editor) GoToLineNumberAndCol(lineNumber LineNumber, colNumber ColNumber, c *vt100.Canvas, status *StatusBar, center, handleTabExpansion bool) bool {
+func (e *Editor) GoToLineNumberAndCol(lineNumber LineNumber, colNumber ColNumber, c *Canvas, status *StatusBar, center, handleTabExpansion bool) bool {
 	if colNumber < 1 {
 		colNumber = 1
 	}
@@ -187,7 +185,7 @@ func (e *Editor) GoToLineNumberAndCol(lineNumber LineNumber, colNumber ColNumber
 }
 
 // GoToLineIndexAndColIndex will go to a given line index (counting from 0) and column index (counting from 0)
-func (e *Editor) GoToLineIndexAndColIndex(yIndex LineIndex, xIndex ColIndex, c *vt100.Canvas, status *StatusBar, center, handleTabExpansion bool) bool {
+func (e *Editor) GoToLineIndexAndColIndex(yIndex LineIndex, xIndex ColIndex, c *Canvas, status *StatusBar, center, handleTabExpansion bool) bool {
 	if xIndex < 0 {
 		xIndex = 0
 	}
@@ -229,7 +227,7 @@ const (
 // (line number, percentage, fraction or highlighted letter).
 // Returns ShowHotkeyOverviewAction if a hotkey overview should be shown after this function.
 // Returns LaunchTutorialAction if the tutorial should be launched after this function.
-func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) int {
+func (e *Editor) JumpMode(c *Canvas, status *StatusBar, tty *TTY) int {
 	e.jumpToLetterMode = true
 	prevCommentColor := e.CommentColor
 	prevSyntaxHighlighting := e.syntaxHighlight
@@ -242,9 +240,9 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 	// Minor adjustments for some of the themes used in the VTE/GTK frontend
 	if inVTEGUI {
 		if !e.Light && e.Name == "Default" {
-			e.CommentColor = vt100.White
+			e.CommentColor = White
 		} else if strings.HasPrefix(e.Name, "Blue") {
-			e.CommentColor = vt100.Gray
+			e.CommentColor = Gray
 		}
 	}
 

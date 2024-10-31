@@ -14,7 +14,6 @@ import (
 
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/vt100"
 )
 
 var (
@@ -81,7 +80,7 @@ func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
 // GenerateBuildCommand will generate a command for building the given filename (or for displaying HTML)
 // If there are no errors, a exec.Cmd is returned together with a function that can tell if the build
 // produced an executable, together with the executable name,
-func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename string) (*exec.Cmd, func() (bool, string), error) {
+func (e *Editor) GenerateBuildCommand(c *Canvas, tty *TTY, filename string) (*exec.Cmd, func() (bool, string), error) {
 	var cmd *exec.Cmd
 
 	// A function that signals that everything is fine, regardless of if an executable is produced or not, after building
@@ -524,7 +523,7 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 // BuildOrExport will try to build the source code or export the document.
 // Returns a status message and then true if an action was performed and another true if compilation/testing worked out.
 // Will also return the executable output file, if available after compilation.
-func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filename string, background bool) (string, error) {
+func (e *Editor) BuildOrExport(c *Canvas, tty *TTY, status *StatusBar, filename string, background bool) (string, error) {
 	// Clear the status messages, if we have a status bar
 	if status != nil {
 		status.ClearAll(c, false)
@@ -1140,7 +1139,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 }
 
 // Build starts a build and is typically triggered from either ctrl-space or the o menu
-func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoRun, markdownDoubleSpacePrevention bool) {
+func (e *Editor) Build(c *Canvas, status *StatusBar, tty *TTY, alsoRun, markdownDoubleSpacePrevention bool) {
 	// Enable only. e.runAfterBuild is set to false elsewhere.
 	if alsoRun {
 		e.runAfterBuild = true

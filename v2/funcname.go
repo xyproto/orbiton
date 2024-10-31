@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/xyproto/mode"
-	"github.com/xyproto/vt100"
 )
 
 // FuncPrefix tries to return the function keyword for the current editor mode, if possible.
@@ -162,7 +161,7 @@ func (e *Editor) FindCurrentFunctionName() string {
 
 // WriteCurrentFunctionName writes (but does not redraw) the current function name we are within (if any),
 // in the top right corner of the canvas.
-func (e *Editor) WriteCurrentFunctionName(c *vt100.Canvas) {
+func (e *Editor) WriteCurrentFunctionName(c *Canvas) {
 	if !e.ProgrammingLanguage() {
 		return
 	}

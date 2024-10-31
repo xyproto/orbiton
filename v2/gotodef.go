@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/xyproto/syntax"
-	"github.com/xyproto/vt100"
 )
 
 var backFunctions []func()
@@ -15,7 +14,7 @@ var backFunctions []func()
 // Returns true if it was possible to go to the definition.
 // This function is currently very experimental and may only work for a few languages, and for a few definitions!
 // TODO: Parse some programming langages before jumping.
-func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar) bool {
+func (e *Editor) GoToDefinition(tty *TTY, c *Canvas, status *StatusBar) bool {
 	// FuncPrefix may return strings with a leading or trailing blank
 	funcPrefix := e.FuncPrefix()
 

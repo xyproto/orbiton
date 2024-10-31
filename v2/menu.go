@@ -10,8 +10,6 @@ import (
 	"syscall"
 	"time"
 	"unicode"
-
-	"github.com/xyproto/vt100"
 )
 
 const konami = "↑↑↓↓←→←→ba"
@@ -135,14 +133,14 @@ func ctrlkey2letter(key string) (string, bool) {
 // Menu starts a loop where keypresses are handled. When a choice is made, a number is returned.
 // -1 is "no choice", 0 and up is which choice were selected.
 // initialMenuIndex is the choice that should be highlighted when displaying the choices.
-func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices []string, bgColor, titleColor, arrowColor, textColor, highlightColor, selectedColor vt100.AttributeColor, initialMenuIndex int, extraDashes bool) int {
+func (e *Editor) Menu(status *StatusBar, tty *TTY, title string, choices []string, bgColor, titleColor, arrowColor, textColor, highlightColor, selectedColor AttributeColor, initialMenuIndex int, extraDashes bool) int {
 	// Clear the existing handler
 	signal.Reset(syscall.SIGWINCH)
 
 	var (
 		selectionLetterMap = selectionLettersForChoices(choices)
 		selectedDelay      = 100 * time.Millisecond
-		c                  = vt100.NewCanvas()
+		c                  = NewCanvas()
 		menu               = NewMenuWidget(title, choices, titleColor, arrowColor, textColor, highlightColor, selectedColor, c.W(), c.H(), extraDashes, selectionLetterMap)
 		sigChan            = make(chan os.Signal, 1)
 		running            = true
@@ -158,7 +156,7 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 			// Create a new canvas, with the new size
 			nc := c.Resized()
 			if nc != nil {
-				vt100.Clear()
+				Clear()
 				c = nc
 				menu.Draw(c)
 				c.HideCursorAndRedraw()
@@ -170,8 +168,8 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 		}
 	}()
 
-	vt100.Clear()
-	vt100.Reset()
+	Clear()
+	Reset()
 	c.FillBackground(bgColor)
 	c.HideCursorAndRedraw()
 

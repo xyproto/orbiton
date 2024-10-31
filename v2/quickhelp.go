@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/xyproto/files"
-	"github.com/xyproto/vt100"
 )
 
 var quickHelpToggleFilename = filepath.Join(userCacheDir, "o", "quickhelp.txt")
@@ -47,7 +46,7 @@ func QuickHelpScreenIsDisabled() bool {
 }
 
 // DrawQuickHelp draws the quick help + some help for new users
-func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
+func (e *Editor) DrawQuickHelp(c *Canvas, repositionCursorAfterDrawing bool) {
 	const (
 		maxLines = 8
 		title    = "Quick Overview"

@@ -4,8 +4,6 @@ import (
 	"regexp"
 	"strings"
 	"unicode"
-
-	"github.com/xyproto/vt100"
 )
 
 // Define a regular expression to match shell color code strings
@@ -48,7 +46,7 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 	line = handleManPageEscape(line)
 	var (
 		normal          = e.Foreground
-		off             = vt100.Stop()
+		off             = Stop()
 		trimmedLine     = strings.TrimSpace(line)
 		hasAnyWords     = hasWords(trimmedLine)
 		innerSpaceCount = strings.Count(trimmedLine, " ")

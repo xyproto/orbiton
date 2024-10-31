@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/xyproto/files"
-	"github.com/xyproto/vt100"
 )
 
 // There is a tradition for including silly little games in editors, so here goes:
@@ -38,33 +37,33 @@ const (
 var (
 	highScoreFile = filepath.Join(userCacheDir, "o", "highscore.txt")
 
-	bobColor             = vt100.LightYellow
-	bobWonColor          = vt100.LightGreen
-	bobLostColor         = vt100.Red
-	evilGobblerColor     = vt100.LightRed
-	gobblerColor         = vt100.Yellow
-	gobblerDeadColor     = vt100.DarkGray
-	gobblerZombieColor   = vt100.LightBlue
-	bubbleColor          = vt100.Magenta
-	pelletColor1         = vt100.LightGreen
-	pelletColor2         = vt100.Green
-	statusTextColor      = vt100.Black
-	statusTextBackground = vt100.Blue
-	resizeColor          = vt100.LightMagenta
-	gameBackgroundColor  = vt100.DefaultBackground
+	bobColor             = LightYellow
+	bobWonColor          = LightGreen
+	bobLostColor         = Red
+	evilGobblerColor     = LightRed
+	gobblerColor         = Yellow
+	gobblerDeadColor     = DarkGray
+	gobblerZombieColor   = LightBlue
+	bubbleColor          = Magenta
+	pelletColor1         = LightGreen
+	pelletColor2         = Green
+	statusTextColor      = Black
+	statusTextBackground = Blue
+	resizeColor          = LightMagenta
+	gameBackgroundColor  = DefaultBackground
 )
 
 // Bob represents the player
 type Bob struct {
-	color      vt100.AttributeColor // foreground color
-	x, y       int                  // current position
-	oldx, oldy int                  // previous position
+	color      AttributeColor // foreground color
+	x, y       int            // current position
+	oldx, oldy int            // previous position
 	w, h       float64
 	state      rune // looks
 }
 
 // NewBob creates a new Bob struct
-func NewBob(c *vt100.Canvas, startingWidth int) *Bob {
+func NewBob(c *Canvas, startingWidth int) *Bob {
 	return &Bob{
 		x:     startingWidth / 20,
 		y:     10,
@@ -89,7 +88,7 @@ func (b *Bob) ToggleState() {
 }
 
 // Draw is called when Bob should be drawn on the canvas
-func (b *Bob) Draw(c *vt100.Canvas) {
+func (b *Bob) Draw(c *Canvas) {
 	c.PlotColor(uint(b.x), uint(b.y), b.color, b.state)
 }
 
@@ -131,7 +130,7 @@ func (b *Bob) Up() bool {
 }
 
 // Down is called when Bob should move down
-func (b *Bob) Down(c *vt100.Canvas) bool {
+func (b *Bob) Down(c *Canvas) bool {
 	oldy := b.y
 	b.y++
 	if b.y >= int(c.H()) {
@@ -144,7 +143,7 @@ func (b *Bob) Down(c *vt100.Canvas) bool {
 }
 
 // Resize is called when the terminal is resized
-func (b *Bob) Resize(c *vt100.Canvas) {
+func (b *Bob) Resize(c *Canvas) {
 	b.color = resizeColor
 	b.w = float64(c.W())
 	b.h = float64(c.H())
@@ -152,7 +151,7 @@ func (b *Bob) Resize(c *vt100.Canvas) {
 
 // Pellet represents a pellet that can both feed Gobblers and hit the EvilGobbler
 type Pellet struct {
-	color       vt100.AttributeColor // foreground color
+	color       AttributeColor // foreground color
 	lifeCounter int
 	oldx, oldy  int // previous position
 	vx, vy      int // velocity
@@ -164,7 +163,7 @@ type Pellet struct {
 }
 
 // NewPellet creates a new Pellet struct, with position and speed
-func NewPellet(c *vt100.Canvas, x, y, vx, vy int) *Pellet {
+func NewPellet(c *Canvas, x, y, vx, vy int) *Pellet {
 	return &Pellet{
 		x:           x,
 		y:           y,
@@ -194,12 +193,12 @@ func (b *Pellet) ToggleColor() {
 }
 
 // Draw draws the Pellet on the canvas
-func (b *Pellet) Draw(c *vt100.Canvas) {
+func (b *Pellet) Draw(c *Canvas) {
 	c.PlotColor(uint(b.x), uint(b.y), b.color, b.state)
 }
 
 // Next moves the object to the next position, and returns true if it moved
-func (b *Pellet) Next(c *vt100.Canvas, e *EvilGobbler) bool {
+func (b *Pellet) Next(c *Canvas, e *EvilGobbler) bool {
 	b.lifeCounter++
 	if b.lifeCounter > 20 {
 		b.removed = true
@@ -257,7 +256,7 @@ func (b *Pellet) Stop() {
 }
 
 // HitSomething is called when the pellet hits something
-func (b *Pellet) HitSomething(c *vt100.Canvas) bool {
+func (b *Pellet) HitSomething(c *Canvas) bool {
 	r, err := c.At(uint(b.x), uint(b.y))
 	if err != nil {
 		return false
@@ -277,7 +276,7 @@ func (b *Pellet) HitSomething(c *vt100.Canvas) bool {
 }
 
 // Resize is called when the terminal is resized
-func (b *Pellet) Resize(c *vt100.Canvas) {
+func (b *Pellet) Resize(c *Canvas) {
 	b.stopped = false
 	b.w = float64(c.W())
 	b.h = float64(c.H())
@@ -285,15 +284,15 @@ func (b *Pellet) Resize(c *vt100.Canvas) {
 
 // Bubble represents a bubble character that is in the way
 type Bubble struct {
-	color      vt100.AttributeColor // foreground color
-	x, y       int                  // current position
-	oldx, oldy int                  // previous position
+	color      AttributeColor // foreground color
+	x, y       int            // current position
+	oldx, oldy int            // previous position
 	w, h       float64
 	state      rune // looks
 }
 
 // NewBubbles creates n new Bubble structs
-func NewBubbles(c *vt100.Canvas, startingWidth int, n int) []*Bubble {
+func NewBubbles(c *Canvas, startingWidth int, n int) []*Bubble {
 	bubbles := make([]*Bubble, n)
 	for i := range bubbles {
 		bubbles[i] = NewBubble(c, startingWidth)
@@ -302,7 +301,7 @@ func NewBubbles(c *vt100.Canvas, startingWidth int, n int) []*Bubble {
 }
 
 // NewBubble creates a new Bubble struct
-func NewBubble(c *vt100.Canvas, startingWidth int) *Bubble {
+func NewBubble(c *Canvas, startingWidth int) *Bubble {
 	return &Bubble{
 		x:     startingWidth / 5,
 		y:     10,
@@ -316,19 +315,19 @@ func NewBubble(c *vt100.Canvas, startingWidth int) *Bubble {
 }
 
 // Draw draws the Bubble on the canvas
-func (b *Bubble) Draw(c *vt100.Canvas) {
+func (b *Bubble) Draw(c *Canvas) {
 	c.PlotColor(uint(b.x), uint(b.y), b.color, b.state)
 }
 
 // Resize is called when the terminal is resized
-func (b *Bubble) Resize(c *vt100.Canvas) {
+func (b *Bubble) Resize(c *Canvas) {
 	b.color = resizeColor
 	b.w = float64(c.W())
 	b.h = float64(c.H())
 }
 
 // Next moves the object to the next position, and returns true if it moved
-func (b *Bubble) Next(c *vt100.Canvas, bob *Bob, gobblers *[]*Gobbler) bool {
+func (b *Bubble) Next(c *Canvas, bob *Bob, gobblers *[]*Gobbler) bool {
 	b.oldx = b.x
 	b.oldy = b.y
 
@@ -391,7 +390,7 @@ func (b *Bubble) Next(c *vt100.Canvas, bob *Bob, gobblers *[]*Gobbler) bool {
 }
 
 // HitSomething is called if the Bubble hits another character
-func (b *Bubble) HitSomething(c *vt100.Canvas) bool {
+func (b *Bubble) HitSomething(c *Canvas) bool {
 	r, err := c.At(uint(b.x), uint(b.y))
 	if err != nil {
 		return false
@@ -403,9 +402,9 @@ func (b *Bubble) HitSomething(c *vt100.Canvas) bool {
 // EvilGobbler is a character that hunts Gobblers
 type EvilGobbler struct {
 	hunting         *Gobbler
-	color           vt100.AttributeColor // foreground color
-	x, y            int                  // current position
-	oldx, oldy      int                  // previous position
+	color           AttributeColor // foreground color
+	x, y            int            // current position
+	oldx, oldy      int            // previous position
 	counter         uint
 	huntingDistance float64
 	w, h            float64
@@ -415,7 +414,7 @@ type EvilGobbler struct {
 
 // NewEvilGobbler creates an EvilGobbler struct.
 // startingWidth is the initial width of the canvas.
-func NewEvilGobbler(c *vt100.Canvas, startingWidth int) *EvilGobbler {
+func NewEvilGobbler(c *Canvas, startingWidth int) *EvilGobbler {
 	return &EvilGobbler{
 		x:               startingWidth/2 + 5,
 		y:               0o1,
@@ -433,12 +432,12 @@ func NewEvilGobbler(c *vt100.Canvas, startingWidth int) *EvilGobbler {
 }
 
 // Draw will draw the EvilGobbler on the canvas
-func (e *EvilGobbler) Draw(c *vt100.Canvas) {
+func (e *EvilGobbler) Draw(c *Canvas) {
 	c.PlotColor(uint(e.x), uint(e.y), e.color, e.state)
 }
 
 // Next will make the next EvilGobbler move
-func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers *[]*Gobbler) bool {
+func (e *EvilGobbler) Next(c *Canvas, gobblers *[]*Gobbler) bool {
 	e.oldx = e.x
 	e.oldy = e.y
 
@@ -500,7 +499,7 @@ func (e *EvilGobbler) Next(c *vt100.Canvas, gobblers *[]*Gobbler) bool {
 }
 
 // Resize is called when the terminal is resized
-func (e *EvilGobbler) Resize(c *vt100.Canvas) {
+func (e *EvilGobbler) Resize(c *Canvas) {
 	e.color = resizeColor
 	e.w = float64(c.W())
 	e.h = float64(c.H())
@@ -508,11 +507,11 @@ func (e *EvilGobbler) Resize(c *vt100.Canvas) {
 
 // Gobbler represents a character that can move around and eat pellets
 type Gobbler struct {
-	hunting         *Pellet              // current pellet to hunt
-	color           vt100.AttributeColor // foreground color
-	x, y            int                  // current position
-	oldx, oldy      int                  // previous position
-	huntingDistance float64              // how far to closest pellet
+	hunting         *Pellet        // current pellet to hunt
+	color           AttributeColor // foreground color
+	x, y            int            // current position
+	oldx, oldy      int            // previous position
+	huntingDistance float64        // how far to closest pellet
 	counter         uint
 	w, h            float64
 	state           rune // looks
@@ -520,7 +519,7 @@ type Gobbler struct {
 }
 
 // NewGobbler creates a new Gobbler struct
-func NewGobbler(c *vt100.Canvas, startingWidth int) *Gobbler {
+func NewGobbler(c *Canvas, startingWidth int) *Gobbler {
 	return &Gobbler{
 		x:               startingWidth / 2,
 		y:               10,
@@ -538,7 +537,7 @@ func NewGobbler(c *vt100.Canvas, startingWidth int) *Gobbler {
 }
 
 // NewGobblers creates n new Gobbler structs
-func NewGobblers(c *vt100.Canvas, startingWidth int, n int) []*Gobbler {
+func NewGobblers(c *Canvas, startingWidth int, n int) []*Gobbler {
 	gobblers := make([]*Gobbler, n)
 	for i := range gobblers {
 		gobblers[i] = NewGobbler(c, startingWidth)
@@ -547,7 +546,7 @@ func NewGobblers(c *vt100.Canvas, startingWidth int, n int) []*Gobbler {
 }
 
 // Draw draws the current Gobbler on the canvas
-func (g *Gobbler) Draw(c *vt100.Canvas) {
+func (g *Gobbler) Draw(c *Canvas) {
 	c.PlotColor(uint(g.x), uint(g.y), g.color, g.state)
 }
 
@@ -673,7 +672,7 @@ func (g *Gobbler) Next(pellets *[]*Pellet, bob *Bob) bool {
 }
 
 // Resize is called when the terminal is resized
-func (g *Gobbler) Resize(c *vt100.Canvas) {
+func (g *Gobbler) Resize(c *Canvas) {
 	g.color = resizeColor
 	g.w = float64(c.W())
 	g.h = float64(c.H())
@@ -719,31 +718,31 @@ func loadHighScore() (uint, error) {
 func Game() (bool, error) {
 retry:
 	if envNoColor {
-		bobColor = vt100.White
-		bobWonColor = vt100.LightGray
-		bobLostColor = vt100.DarkGray
-		evilGobblerColor = vt100.White
-		gobblerColor = vt100.LightGray
-		gobblerDeadColor = vt100.DarkGray
-		bubbleColor = vt100.DarkGray
-		pelletColor1 = vt100.White
-		pelletColor2 = vt100.White
-		statusTextColor = vt100.Black
-		statusTextBackground = vt100.LightGray
-		resizeColor = vt100.White
-		gameBackgroundColor = vt100.DefaultBackground
+		bobColor = White
+		bobWonColor = LightGray
+		bobLostColor = DarkGray
+		evilGobblerColor = White
+		gobblerColor = LightGray
+		gobblerDeadColor = DarkGray
+		bubbleColor = DarkGray
+		pelletColor1 = White
+		pelletColor2 = White
+		statusTextColor = Black
+		statusTextBackground = LightGray
+		resizeColor = White
+		gameBackgroundColor = DefaultBackground
 	} else {
-		statusTextBackground = vt100.Blue
-		bobColor = vt100.LightYellow
+		statusTextBackground = Blue
+		bobColor = LightYellow
 	}
 
 	// Try loading the highscore from the file, but ignore any errors
 	highScore, _ := loadHighScore()
 
-	c := vt100.NewCanvas()
+	c := NewCanvas()
 	c.FillBackground(gameBackgroundColor)
 
-	tty, err := vt100.NewTTY()
+	tty, err := NewTTY()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error: "+err.Error())
 		quitMut.Lock()
@@ -773,7 +772,7 @@ retry:
 			nc := c.Resized()
 			if nc != nil {
 				c.Clear()
-				vt100.Clear()
+				Clear()
 				c.HideCursorAndDraw()
 				c = nc
 			}
@@ -795,9 +794,9 @@ retry:
 		}
 	}()
 
-	vt100.Init()
-	vt100.EchoOff()
-	defer vt100.Close()
+	Init()
+	EchoOff()
+	defer Close()
 
 	// The loop time that is aimed for
 	var (
@@ -855,7 +854,7 @@ retry:
 		c.Write(0, 0, statusTextColor, statusTextBackground, statusLine)
 		resizeMut.RUnlock()
 
-		// vt100.Clear()
+		// Clear()
 
 		// Update the canvas
 		c.HideCursorAndDraw()

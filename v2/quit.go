@@ -11,86 +11,84 @@ import (
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
-	"github.com/xyproto/textoutput"
-	"github.com/xyproto/vt100"
 )
 
-func quitError(tty *vt100.TTY, err error) {
+func quitError(tty *TTY, err error) {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 
 	if tty != nil {
 		tty.Close()
 	}
-	vt100.Reset()
-	vt100.Clear()
-	vt100.Close()
-	textoutput.NewTextOutput(true, true).Err(err.Error())
-	vt100.ShowCursor(true)
-	vt100.SetXY(uint(0), uint(1))
+	Reset()
+	Clear()
+	Close()
+	NewTextOutput(true, true).Err(err.Error())
+	ShowCursor(true)
+	SetXY(uint(0), uint(1))
 	os.Exit(1)
 }
 
-func quitMessage(tty *vt100.TTY, msg string) {
+func quitMessage(tty *TTY, msg string) {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 
 	if tty != nil {
 		tty.Close()
 	}
-	vt100.Reset()
-	vt100.Clear()
-	vt100.Close()
+	Reset()
+	Clear()
+	Close()
 	fmt.Fprintln(os.Stderr, msg)
 	newLineCount := strings.Count(msg, "\n")
-	vt100.ShowCursor(true)
-	vt100.SetXY(uint(0), uint(newLineCount+1))
+	ShowCursor(true)
+	SetXY(uint(0), uint(newLineCount+1))
 	os.Exit(1)
 }
 
-func quitMessageWithStack(tty *vt100.TTY, msg string) {
+func quitMessageWithStack(tty *TTY, msg string) {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 
 	if tty != nil {
 		tty.Close()
 	}
-	vt100.Reset()
-	vt100.Clear()
-	vt100.Close()
+	Reset()
+	Clear()
+	Close()
 	fmt.Fprintln(os.Stderr, msg)
 	newLineCount := strings.Count(msg, "\n")
-	vt100.ShowCursor(true)
-	vt100.SetXY(uint(0), uint(newLineCount+1))
+	ShowCursor(true)
+	SetXY(uint(0), uint(newLineCount+1))
 	debug.PrintStack()
 	os.Exit(1)
 }
 
-func quitExecShellCommand(tty *vt100.TTY, workDir string, shellCommand string) {
+func quitExecShellCommand(tty *TTY, workDir string, shellCommand string) {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 
 	if tty != nil {
 		tty.Close()
 	}
-	vt100.Reset()
+	Reset()
 
-	vt100.Clear()
-	vt100.Close()
-	vt100.ShowCursor(true)
-	vt100.SetXY(uint(0), uint(1))
+	Clear()
+	Close()
+	ShowCursor(true)
+	SetXY(uint(0), uint(1))
 	const shellExecutable = "/bin/sh"
 	_ = os.Chdir(workDir)
 	syscall.Exec(shellExecutable, []string{shellExecutable, "-c", shellCommand}, env.Environ())
 }
 
-func quitToMan(tty *vt100.TTY, workDir, nroffFilename string, w, h uint) error {
+func quitToMan(tty *TTY, workDir, nroffFilename string, w, h uint) error {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 
-	vt100.Close()
-	vt100.Clear()
-	vt100.Reset()
+	Close()
+	Clear()
+	Reset()
 	if tty != nil {
 		tty.Close()
 	}
@@ -127,13 +125,13 @@ func quitToMan(tty *vt100.TTY, workDir, nroffFilename string, w, h uint) error {
 	return nil
 }
 
-func quitToNroff(tty *vt100.TTY, backupDirectory string, w, h uint) error {
+func quitToNroff(tty *TTY, backupDirectory string, w, h uint) error {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 
-	vt100.Close()
-	vt100.Clear()
-	vt100.Reset()
+	Close()
+	Clear()
+	Reset()
 	if tty != nil {
 		tty.Close()
 	}

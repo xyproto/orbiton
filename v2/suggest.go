@@ -4,8 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-
-	"github.com/xyproto/vt100"
 )
 
 // corpus will grep all files matching the glob for "searchword.*" and return a list of what matched "*".
@@ -61,7 +59,7 @@ func corpus(searchword, glob string) []string {
 }
 
 // SuggestMode lets the user tab through the suggested words
-func (e *Editor) SuggestMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, suggestions []string) string {
+func (e *Editor) SuggestMode(c *Canvas, status *StatusBar, tty *TTY, suggestions []string) string {
 	if len(suggestions) == 0 {
 		return ""
 	}

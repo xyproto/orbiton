@@ -39,7 +39,7 @@ var (
 )
 
 // NewUndo takes arguments that are only for initializing the undo buffers.
-// The *Position and *vt100.Canvas is used only as a default values for the elements in the undo buffers.
+// The *Position and *Canvas is used only as a default values for the elements in the undo buffers.
 func NewUndo(size int, maxMemoryUse uint64) *Undo {
 	return &Undo{&sync.RWMutex{}, make([]Editor, size), make([]map[int][]rune, size), make([]Position, size), 0, size, maxMemoryUse, false}
 }

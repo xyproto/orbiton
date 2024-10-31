@@ -13,7 +13,6 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/vt100"
 )
 
 var (
@@ -26,7 +25,7 @@ var (
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message for the user, a bool that is true if an image was displayed instead and the finally an error type.
-func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor, monitorAndReadOnly, nanoMode, viMode, createDirectoriesIfMissing, displayQuickHelp bool) (*Editor, string, bool, error) {
+func NewEditor(tty *TTY, c *Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor, monitorAndReadOnly, nanoMode, viMode, createDirectoriesIfMissing, displayQuickHelp bool) (*Editor, string, bool, error) {
 	var (
 		startTime          = time.Now()
 		createdNewFile     bool   // used for indicating that a new file was created
@@ -245,7 +244,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 					}
 				}
 				if !wantColors {
-					e.Foreground = vt100.LightRed
+					e.Foreground = LightRed
 					// disable syntax highlighting, to make it clear that the text is red
 					e.syntaxHighlight = false
 				}
@@ -284,7 +283,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 
 	// If we're editing a git commit message, add a newline and enable word-wrap at 72
 	if e.mode == mode.Git {
-		e.Git = vt100.LightGreen
+		e.Git = LightGreen
 		if filepath.Base(e.filename) == "MERGE_MSG" {
 			e.InsertLineBelow()
 		} else if e.EmptyLine() {
@@ -384,7 +383,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 				// r, g, b is the background color from the current terminal emulator, if available
 				// Checke if the combined value of r, g and b (0..1) is larger than 2
 				// (a bit arbitrary, but should work for most cases)
-				if r, g, b, err := vt100.GetBackgroundColor(tty); err == nil && r+g+b > 2 { // success and the background is not dark
+				if r, g, b, err := GetBackgroundColor(tty); err == nil && r+g+b > 2 { // success and the background is not dark
 					b := true
 					initialLightBackground = &b
 					if editTheme {
@@ -563,7 +562,7 @@ func NewSimpleEditor(wordWrapLimit int) *Editor {
 }
 
 // PrepareEmptySaveAndRemove prepares an empty document, saves a file and then removes it, just to check
-func (e *Editor) PrepareEmptySaveAndRemove(c *vt100.Canvas, tty *vt100.TTY) (bool, error) {
+func (e *Editor) PrepareEmptySaveAndRemove(c *Canvas, tty *TTY) (bool, error) {
 	// Prepare an empty file
 	if newMode, err := e.PrepareEmpty(); err != nil {
 		return false, err

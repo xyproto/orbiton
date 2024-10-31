@@ -3,9 +3,6 @@ package main
 import (
 	"fmt"
 	"time"
-
-	"github.com/xyproto/textoutput"
-	"github.com/xyproto/vt100"
 )
 
 var pacmanNoColor = []string{
@@ -43,7 +40,7 @@ var pacmanColor = []string{
 // Returns a quit channel (chan bool).
 // The spinner is shown asynchronously.
 // "true" must be sent to the quit channel once whatever operating that the spinner is spinning for is completed.
-func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, startIn time.Duration, textColor vt100.AttributeColor) chan bool {
+func Spinner(c *Canvas, tty *TTY, umsg, qmsg string, startIn time.Duration, textColor AttributeColor) chan bool {
 	quitChan := make(chan bool)
 	go func() {
 		// Divide the startIn time into 5, then wait while listening to the quitChan
@@ -77,7 +74,7 @@ func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, startIn time.Du
 		)
 
 		// Move the cursor there and write a message
-		vt100.SetXY(x, y)
+		SetXY(x, y)
 		fmt.Print(msg)
 
 		// Store the position after the message
@@ -85,17 +82,17 @@ func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, startIn time.Du
 
 		// Prepare to output colored text
 		var (
-			o                = textoutput.NewTextOutput(true, true)
+			o                = NewTextOutput(true, true)
 			counter          uint
 			spinnerAnimation []string
 		)
 
 		// Hide the cursor
-		vt100.ShowCursor(false)
-		defer vt100.ShowCursor(true)
+		ShowCursor(false)
+		defer ShowCursor(true)
 
 		// Echo off
-		vt100.EchoOff()
+		EchoOff()
 
 		if envNoColor {
 			spinnerAnimation = pacmanNoColor
@@ -109,7 +106,7 @@ func Spinner(c *vt100.Canvas, tty *vt100.TTY, umsg, qmsg string, startIn time.Du
 			case <-quitChan:
 				return
 			default:
-				vt100.SetXY(x, y)
+				SetXY(x, y)
 				// Iterate over the 12 different ASCII images as the counter increases
 				o.Print(spinnerAnimation[counter%12])
 				counter++

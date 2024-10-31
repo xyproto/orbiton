@@ -2,14 +2,12 @@ package main
 
 import (
 	"sync"
-
-	"github.com/xyproto/vt100"
 )
 
 var redrawMutex sync.Mutex // to avoid an issue where the terminal is resized, signals are flying and the user is hammering the esc button
 
 // FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
-func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, shouldHighlight bool) {
+func (e *Editor) FullResetRedraw(c *Canvas, status *StatusBar, drawLines, shouldHighlight bool) {
 	redrawMutex.Lock()
 	defer redrawMutex.Unlock()
 
@@ -20,14 +18,14 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 		e.SetSearchTerm(c, status, "", false)
 	}
 
-	vt100.Close()
-	vt100.Reset()
-	vt100.Clear()
-	vt100.Init()
+	Close()
+	Reset()
+	Clear()
+	Init()
 
-	newC := vt100.NewCanvas()
+	newC := NewCanvas()
 	newC.ShowCursor()
-	vt100.EchoOff()
+	EchoOff()
 
 	w := int(newC.Width())
 
@@ -47,9 +45,9 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 
 	resizeMut.Lock()
 
-	newC = vt100.NewCanvas()
+	newC = NewCanvas()
 	newC.ShowCursor()
-	vt100.EchoOff()
+	EchoOff()
 	w = int(newC.Width())
 
 	resizeMut.Unlock()
@@ -82,7 +80,7 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 }
 
 // RedrawIfNeeded will redraw the text on the canvas if e.redraw is set
-func (e *Editor) RedrawIfNeeded(c *vt100.Canvas, shouldHighlight bool) {
+func (e *Editor) RedrawIfNeeded(c *Canvas, shouldHighlight bool) {
 	if e.redraw.Load() {
 		respectOffset := true
 		redrawCanvas := e.sshMode
@@ -94,8 +92,8 @@ func (e *Editor) RedrawIfNeeded(c *vt100.Canvas, shouldHighlight bool) {
 // RepositionCursor will send the VT100 commands needed to position the cursor
 func (e *Editor) RepositionCursor(x, y uint) {
 	// Redraw the cursor
-	vt100.ShowCursor(true)
-	vt100.SetXY(x, y)
+	ShowCursor(true)
+	SetXY(x, y)
 
 	e.previousX = int(x)
 	e.previousY = int(y)
@@ -109,8 +107,8 @@ func (e *Editor) PlaceAndEnableCursor() {
 	y := uint(e.pos.ScreenY())
 	e.pos.mut.RUnlock()
 
-	vt100.ShowCursor(true)
-	vt100.SetXY(x, y)
+	ShowCursor(true)
+	SetXY(x, y)
 
 	e.previousX = int(x)
 	e.previousY = int(y)
@@ -125,14 +123,14 @@ func (e *Editor) RepositionCursorIfNeeded() {
 	e.pos.mut.RUnlock()
 
 	if x != e.previousX || y != e.previousY || e.redrawCursor.Load() {
-		vt100.ShowCursor(true)
+		ShowCursor(true)
 		e.RepositionCursor(uint(x), uint(y))
 		e.redrawCursor.Store(false)
 	}
 }
 
 // HideCursorDrawLines will draw a screen full of lines on the given canvas
-func (e *Editor) HideCursorDrawLines(c *vt100.Canvas, respectOffset, redrawCanvas, shouldHighlight bool) {
+func (e *Editor) HideCursorDrawLines(c *Canvas, respectOffset, redrawCanvas, shouldHighlight bool) {
 	// TODO: Use a channel for queuing up calls to the vt100 package to avoid race conditions
 
 	h := int(c.Height())
@@ -150,7 +148,7 @@ func (e *Editor) HideCursorDrawLines(c *vt100.Canvas, respectOffset, redrawCanva
 }
 
 // InitialRedraw is called right before the main loop is started
-func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) InitialRedraw(c *Canvas, status *StatusBar) {
 	// Check if an extra reset is needed
 	if e.sshMode {
 		drawLines := true
@@ -183,7 +181,7 @@ func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 }
 
 // RedrawAtEndOfKeyLoop is called after each main loop
-func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, shouldHighlight, repositionCursor bool) {
+func (e *Editor) RedrawAtEndOfKeyLoop(c *Canvas, status *StatusBar, shouldHighlight, repositionCursor bool) {
 	redrawCanvas := !e.debugMode
 
 	redraw := e.redraw.Load()
@@ -235,7 +233,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, should
 	if repositionCursor {
 		e.EnableAndPlaceCursor(c)
 	} else {
-		vt100.ShowCursor(true)
+		ShowCursor(true)
 		e.RepositionCursorIfNeeded()
 	}
 }

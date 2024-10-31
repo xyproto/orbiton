@@ -8,7 +8,6 @@ import (
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
-	"github.com/xyproto/vt100"
 )
 
 var (
@@ -44,7 +43,7 @@ const (
 )
 
 // exportPandocPDF will render PDF from Markdown using pandoc
-func (e *Editor) exportPandocPDF(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, pandocPath, pdfFilename string) error {
+func (e *Editor) exportPandocPDF(c *Canvas, tty *TTY, status *StatusBar, pandocPath, pdfFilename string) error {
 	// This function used to be concurrent. There are some leftovers from this that could be refactored away.
 
 	status.ClearAll(c, true)

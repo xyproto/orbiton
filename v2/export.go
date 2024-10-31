@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/xyproto/files"
-	"github.com/xyproto/vt100"
 )
 
 // exportScdoc tries to export the current document as a manual page, using scdoc
@@ -45,7 +44,7 @@ func (e *Editor) exportScdoc(manFilename string) error {
 }
 
 // exportAdoc tries to export the current document as a manual page, using asciidoctor
-func (e *Editor) exportAdoc(c *vt100.Canvas, tty *vt100.TTY, manFilename string) error {
+func (e *Editor) exportAdoc(c *Canvas, tty *TTY, manFilename string) error {
 	// TODO: Use a proper function for generating temporary files
 	tmpfn := "___o___.adoc"
 	if files.Exists(tmpfn) {

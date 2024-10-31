@@ -10,7 +10,6 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/vt100"
 )
 
 var (
@@ -35,7 +34,7 @@ func NewActions() *Actions {
 }
 
 // UserSave saves the file and the location history
-func (e *Editor) UserSave(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) {
+func (e *Editor) UserSave(c *Canvas, tty *TTY, status *StatusBar) {
 	// Save the file
 	if err := e.Save(c, tty); err != nil {
 		if msg := err.Error(); strings.HasPrefix(msg, "open ") && strings.Contains(msg, ": ") {
@@ -83,7 +82,7 @@ func (a *Actions) Perform(index int) {
 }
 
 // AddCommand will add a command to the action menu, if it can be looked up by e.CommandToFunction
-func (a *Actions) AddCommand(e *Editor, c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo, title string, args ...string) error {
+func (a *Actions) AddCommand(e *Editor, c *Canvas, tty *TTY, status *StatusBar, bookmark *Position, undo *Undo, title string, args ...string) error {
 	f, err := e.CommandToFunction(c, tty, status, bookmark, undo, args...)
 	if err != nil {
 		return err
@@ -95,7 +94,7 @@ func (a *Actions) AddCommand(e *Editor, c *vt100.Canvas, tty *vt100.TTY, status 
 // CommandMenu will display a menu with various commands that can be browsed with arrow up and arrow down.
 // Also returns the selected menu index (can be -1), and if a space should be added to the text editor after the return.
 // TODO: Figure out why this function needs an undo argument and can't use the regular one
-func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) int {
+func (e *Editor) CommandMenu(c *Canvas, tty *TTY, status *StatusBar, bookmark *Position, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) int {
 	const insertFilename = "include.txt"
 
 	if menuTitle == "" {
