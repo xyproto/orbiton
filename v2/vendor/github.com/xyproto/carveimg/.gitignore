@@ -1,8 +1,0 @@
-*.bak
-*.o
-*.tmp
-*.swp
-*~
-include.txt
-cmd/carve/carve
-cmd/img/img
