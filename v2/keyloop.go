@@ -601,11 +601,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			lastCommandMenuIndex = selectedIndex
 			if spacePressed {
 				status.Clear(c, false)
-				status.SetMessage("SPECIAL COMMAND MODE A")
-				status.Show(c, e)
-
+				// Ask the user for a command and run it
+				e.CommandPrompt(c, tty, status, bookmark, undo)
 			}
-
 			undo = undoBackup
 			regularEditingRightNow = true
 

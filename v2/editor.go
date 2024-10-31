@@ -2533,7 +2533,7 @@ func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, t
 				status.SetMessage(title + ": " + entered)
 				status.ShowNoTimeout(c, e)
 			}
-		case "c:27", "c:3", "c:17", "c:24": // esc, ctrl-c, ctrl-q or ctrl-x
+		case "c:27", "c:3", "c:24": // esc, ctrl-c or ctrl-x
 			cancel = true
 			entered = ""
 			fallthrough // done
