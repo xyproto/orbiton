@@ -94,8 +94,8 @@ func (a *Actions) AddCommand(e *Editor, c *vt100.Canvas, tty *vt100.TTY, status 
 
 // CommandMenu will display a menu with various commands that can be browsed with arrow up and arrow down.
 // Also returns the selected menu index (can be -1), and if a space should be added to the text editor after the return.
-// TODO: Figure out why this function needs an undo argument and can't use the regular one
-func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) int {
+// Returns -1, true if space was pressed.
+func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) (int, bool) {
 	const insertFilename = "include.txt"
 
 	if menuTitle == "" {
@@ -392,7 +392,8 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 				useMenuIndex = 10 // The "No colors" menu choice
 			}
 			changedTheme = true
-			switch e.Menu(status, tty, "Select color theme", menuChoices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes) {
+			selectedItemIndex, _ := e.Menu(status, tty, "Select color theme", menuChoices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes)
+			switch selectedItemIndex {
 			case 0: // Default
 				envNoColor = false
 				e.setDefaultTheme()
@@ -499,7 +500,10 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		useMenuIndex = lastMenuIndex
 	}
 
-	selected := e.Menu(status, tty, menuTitle, menuChoices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes)
+	selected, spacePressed := e.Menu(status, tty, menuTitle, menuChoices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes)
+	if spacePressed {
+		return selected, spacePressed
+	}
 
 	// Redraw the editor contents
 	// e.DrawLines(c, true, false)
@@ -509,7 +513,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		// Trigger a redraw and return.
 		e.redraw.Store(true)
 		e.redrawCursor.Store(true)
-		return selected
+		return selected, false
 	}
 
 	// Perform the selected action by passing the function index
@@ -524,5 +528,5 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	e.redraw.Store(true)
 	e.redrawCursor.Store(true)
 
-	return selected
+	return selected, false
 }

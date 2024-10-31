@@ -135,7 +135,8 @@ func ctrlkey2letter(key string) (string, bool) {
 // Menu starts a loop where keypresses are handled. When a choice is made, a number is returned.
 // -1 is "no choice", 0 and up is which choice were selected.
 // initialMenuIndex is the choice that should be highlighted when displaying the choices.
-func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices []string, bgColor, titleColor, arrowColor, textColor, highlightColor, selectedColor vt100.AttributeColor, initialMenuIndex int, extraDashes bool) int {
+// returns -1, true if space was pressed
+func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices []string, bgColor, titleColor, arrowColor, textColor, highlightColor, selectedColor vt100.AttributeColor, initialMenuIndex int, extraDashes bool) (int, bool) {
 	// Clear the existing handler
 	signal.Reset(syscall.SIGWINCH)
 
@@ -219,7 +220,9 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 		case "c:27", "q", "c:17", "c:15": // ESC, q, ctrl-q or ctrl-o
 			running = false
 			changed = true
-		case " ", "c:13": // Space or Return
+		case " ": // Space
+			return -1, true
+		case "c:13": // Return
 			resizeMut.Lock()
 			menu.Select()
 			resizeMut.Unlock()
@@ -305,5 +308,5 @@ func (e *Editor) Menu(status *StatusBar, tty *vt100.TTY, title string, choices [
 	// Restore the resize handler
 	e.SetUpSignalHandlers(c, tty, status, false) // do not only clear the signals
 
-	return menu.Selected()
+	return menu.Selected(), false
 }

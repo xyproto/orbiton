@@ -597,7 +597,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			status.ClearAll(c, false)
 			undo.Snapshot(e)
 			undoBackup := undo
-			lastCommandMenuIndex = e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
+			selectedIndex, spacePressed := e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
+			lastCommandMenuIndex = selectedIndex
+			if spacePressed {
+				status.Clear(c, false)
+				status.SetMessage("SPECIAL COMMAND MODE A")
+				status.Show(c, e)
+
+			}
+
 			undo = undoBackup
 			regularEditingRightNow = true
 
@@ -2161,14 +2169,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			kh.Push(key)
 		}
 
-		// Display the ctrl-o menu if esc was pressed 4 times
+		// Display the ctrl-o menu if esc was pressed 4 times. Do not react if space is pressed.
 		if !e.nanoMode.Load() && kh.Repeated("c:27", 4-1) { // esc pressed 4 times (minus the one that was added just now)
 			backFunctions = make([]func(), 0)
 			regularEditingRightNow = false
 			status.ClearAll(c, false)
 			undo.Snapshot(e)
 			undoBackup := undo
-			lastCommandMenuIndex = e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
+			selectedIndex, _ := e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
+			lastCommandMenuIndex = selectedIndex
 			undo = undoBackup
 			// Reset the key history next iteration
 			clearKeyHistory = true
