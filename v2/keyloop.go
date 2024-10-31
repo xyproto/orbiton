@@ -2006,6 +2006,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					status.SetMessage(s)
 				}
 			} else {
+				status.ClearAll(c, true)
 				if bookmark == nil {
 					// no bookmark, create a bookmark at the current line
 					bookmark = e.pos.Copy()
