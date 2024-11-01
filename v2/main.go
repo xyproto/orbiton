@@ -70,7 +70,7 @@ func main() {
 	pflag.BoolVarP(&createDirectoriesFlag, "create-dir", "d", false, "create diretories when opening a new file")
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
-	pflag.BoolVarP(&nanoMode, "nano", "a", false, "Nano/Pico mode")
+	pflag.BoolVarP(&nanoMode, "nano", "e", false, "Nano/Pico mode")
 
 	pflag.Parse()
 
