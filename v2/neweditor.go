@@ -26,7 +26,7 @@ var (
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message for the user, a bool that is true if an image was displayed instead and the finally an error type.
-func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor, monitorAndReadOnly, nanoMode, viMode, createDirectoriesIfMissing, displayQuickHelp bool) (*Editor, string, bool, error) {
+func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp bool) (*Editor, string, bool, error) {
 	var (
 		startTime          = time.Now()
 		createdNewFile     bool   // used for indicating that a new file was created
@@ -123,8 +123,6 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	if nanoMode {
 		e.statusMode = true
 	}
-
-	e.viMode.Store(viMode)
 
 	// We wish to redraw the canvas and reposition the cursor
 	e.redraw.Store(true)

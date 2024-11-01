@@ -79,7 +79,6 @@ type Editor struct {
 	drawProgress atomic.Bool // used for drawing the progress character on the right side
 	drawFuncName atomic.Bool // used when drawing the function name in the top right corner
 	nanoMode     atomic.Bool // emulate GNU Nano
-	viMode       atomic.Bool // emulate VI
 }
 
 // Copy makes a copy of an Editor struct, with most fields deep copied
@@ -130,7 +129,6 @@ func (e *Editor) Copy() *Editor {
 	e2.primaryClipboard = e.primaryClipboard
 	e2.jumpToLetterMode = e.jumpToLetterMode
 	e2.nanoMode = e.nanoMode
-	e2.viMode = e.viMode
 	e2.spellCheckMode = e.spellCheckMode
 	e2.createDirectoriesIfMissing = e.createDirectoriesIfMissing
 	e2.displayQuickHelp = e.displayQuickHelp
@@ -2288,7 +2286,7 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
 		fnord := FilenameOrData{filenameToOpen, []byte{}, 0, false}
-		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, e.monitorAndReadOnly, e.nanoMode.Load(), e.viMode.Load(), e.createDirectoriesIfMissing, e.displayQuickHelp)
+		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, e.monitorAndReadOnly, e.nanoMode.Load(), e.createDirectoriesIfMissing, e.displayQuickHelp)
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)

@@ -56,7 +56,6 @@ func main() {
 		createDirectoriesFlag  bool
 		versionFlag            bool
 		nanoMode               bool
-		viMode                 bool
 	)
 
 	pflag.BoolVarP(&copyFlag, "copy", "c", false, "copy a file into the clipboard and quit")
@@ -72,7 +71,6 @@ func main() {
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
 	pflag.BoolVarP(&nanoMode, "nano", "a", false, "Nano/Pico mode")
-	pflag.BoolVarP(&viMode, "vi", "e", false, "VI mode")
 
 	pflag.Parse()
 
@@ -359,13 +357,9 @@ func main() {
 		case 'n': // nan, nano
 			// Check if "Nano mode" should be set
 			nanoMode = strings.HasPrefix(executableName, "na")
-		case 'v':
-			// Check if "VI mode" hould be set
-			if strings.HasPrefix(executableName, "vi") { // vi, vim etc.
-				viMode = true
-			} else { // vs, vscode etc
-				theme = NewDarkVSTheme()
-			}
+		case 'v': // vs, vscode etc
+			// if strings.HasPrefix(executableName, "vi") { // vi, vim etc.
+			theme = NewDarkVSTheme()
 		default:
 			specificLetter = false
 		}
@@ -382,7 +376,7 @@ func main() {
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, viMode, createDirectoriesFlag, quickHelpFlag)
+	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {
