@@ -84,6 +84,8 @@ Flags:
   -d, --create-dir               When opening a new file, create directories if needed.
   -i, --input-file FILENAME      Used as stdin when running programs with ctrl-space.
                                  The default filename is input.txt. Handy for AoC.
+  -o, --ollama                   Use Ollama and the ` + codeCompletionModel + ` model
+                                 for tab completion.
   -v, --version                  Display the current version.
 
 See the man page for more information.

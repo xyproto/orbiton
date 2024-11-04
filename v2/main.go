@@ -93,6 +93,11 @@ func main() {
 		fmt.Println(versionString)
 		return
 	}
+
+	if ollamaTabCompletion {
+		codeCompletionModel = usermodel.GetCodeModel()
+	}
+
 	if helpFlag {
 		Usage()
 		return
@@ -117,8 +122,7 @@ func main() {
 		return
 	}
 
-	if ollamaContextLines != -1 {
-		codeCompletionModel = usermodel.GetCodeModel()
+	if ollamaTabCompletion {
 		ollamaClient = ollamaclient.New(codeCompletionModel)
 		ollamaClient.Verbose = false
 		const verbosePull = true
