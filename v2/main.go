@@ -16,6 +16,8 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
+	"github.com/xyproto/ollamaclient/v2"
+	"github.com/xyproto/usermodel"
 	"github.com/xyproto/vt100"
 )
 
@@ -40,6 +42,9 @@ var (
 
 	// Check if the parent process is "man"
 	parentIsMan *bool
+
+	// Ollama client, used for tab completion
+	ollamaClient *ollamaclient.Config
 )
 
 func main() {
@@ -56,6 +61,7 @@ func main() {
 		createDirectoriesFlag  bool
 		versionFlag            bool
 		nanoMode               bool
+		ollamaFlag             bool
 	)
 
 	pflag.BoolVarP(&copyFlag, "copy", "c", false, "copy a file into the clipboard and quit")
@@ -71,6 +77,7 @@ func main() {
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
 	pflag.BoolVarP(&nanoMode, "nano", "e", false, "Nano/Pico mode")
+	pflag.BoolVarP(&ollamaFlag, "ollama", "o", false, "use Ollama for tab completion")
 
 	pflag.Parse()
 
@@ -100,6 +107,18 @@ func main() {
 		replaced := regexp.MustCompile(`/tmp/o\..*$`).ReplaceAllString(theRest, "")
 		fmt.Println(replaced)
 		return
+	}
+
+	if ollamaFlag {
+		codeCompletionModel := usermodel.GetCodeModel()
+		ollamaClient = ollamaclient.New(codeCompletionModel)
+		ollamaClient.Verbose = false
+		const verbosePull = true
+		if err := ollamaClient.PullIfNeeded(verbosePull); err != nil {
+			fmt.Fprintf(os.Stderr, "could not fetch the %s model, Ollama must be up and running locally or OLLAMA_HOST must be set", codeCompletionModel)
+			os.Exit(1)
+		}
+		ollamaClient.SetReproducible()
 	}
 
 	noWriteToCache = noCacheFlag || monitorAndReadOnlyFlag

@@ -17,7 +17,6 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/iferr"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
 )
 
@@ -39,9 +38,7 @@ const (
 )
 
 // Create a LockKeeper for keeping track of which files are being edited
-var (
-	fileLock = NewLockKeeper(defaultLockFile)
-)
+var fileLock = NewLockKeeper(defaultLockFile)
 
 // Loop will set up and run the main loop of the editor
 // a *vt100.TTY struct
@@ -1391,57 +1388,41 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			y := int(e.DataY())
 			r := e.Rune()
 			leftRune := e.LeftRune()
-			ext := filepath.Ext(e.filename)
 
-			// Tab completion of words for Go
-			if word := e.LettersBeforeCursor(); e.mode != mode.Blank && e.mode != mode.GoAssembly && e.mode != mode.Assembly && leftRune != '.' && !unicode.IsLetter(r) && len(word) > 0 {
-				found := false
-				expandedWord := ""
-				for kw := range syntax.Keywords {
-					if len(kw) < 3 {
-						// skip too short suggestions
+			// Tab completion with Ollama
+			if trimmedLine := e.TrimmedLine(); ollamaClient != nil && e.mode != mode.Blank && len(trimmedLine) > 0 {
+
+				var codeBefore strings.Builder
+				for i := e.LineIndex() - 10; i < e.LineIndex(); i++ {
+					if i < 0 {
 						continue
 					}
-					if strings.HasPrefix(kw, word) {
-						if !found || (len(kw) < len(expandedWord)) && (len(expandedWord) > 0) {
-							expandedWord = kw
-							found = true
-						}
+					codeBefore.WriteString(e.Line(i) + "\n")
+				}
+				codeBefore.WriteString(e.CurrentLine()) // without a newline
+
+				var codeAfter strings.Builder
+				for i := e.LineIndex() + 1; i < e.LineIndex()+10; i++ {
+					if int(i) >= e.Len() {
+						break
 					}
+					codeAfter.WriteString(e.Line(i) + "\n")
 				}
 
-				// Found a suitable keyword to expand to? Insert the rest of the string.
-				if found {
-					toInsert := strings.TrimPrefix(expandedWord, word)
-					undo.Snapshot(e)
-					e.redrawCursor.Store(true)
-					e.redraw.Store(true)
-					// Insert the part of expandedWord that comes after the current word
-					e.InsertStringAndMove(c, toInsert)
-					break
-				}
+				codeStart := codeBefore.String()
+				codeEnd := codeAfter.String()
 
-				// Tab completion after a '.'
-			} else if word := e.LettersOrDotBeforeCursor(); e.mode != mode.Blank && e.mode != mode.GoAssembly && e.mode != mode.Assembly && leftRune == '.' && !unicode.IsLetter(r) && len(word) > 0 {
-				// Now the preceding word before the "." has been found
-
-				// Trim the trailing ".", if needed
-				word = strings.TrimSuffix(strings.TrimSpace(word), ".")
-
-				// Grep all files in this directory with the same extension as the currently edited file
-				// for what could follow the word and a "."
-				suggestions := corpus(word, "*"+ext)
-
-				// Choose a suggestion (tab cycles to the next suggestion)
-				chosen := e.SuggestMode(c, status, tty, suggestions)
-				e.redrawCursor.Store(true)
-				e.redraw.Store(true)
-
-				if chosen != "" {
-					undo.Snapshot(e)
-					// Insert the chosen word
-					e.InsertStringAndMove(c, chosen)
-					break
+				if response, err := ollamaClient.GetBetweenResponse(codeStart, codeEnd); err == nil { // success
+					generatedCodeCompletion := strings.TrimSuffix(response.Response, "\n")
+					//logf("CODE START ---\n%s\n---\n\nGENERATED ---\n%s\n\n--- CODE END ---\n%s\n", codeStart, generatedCodeCompletion, codeEnd)
+					if generatedCodeCompletion != "" {
+						e.redrawCursor.Store(true)
+						e.redraw.Store(true)
+						// Take an undo snapshot and insert the generated code
+						undo.Snapshot(e)
+						e.InsertStringAndMove(c, generatedCodeCompletion)
+						break
+					}
 				}
 
 			}
