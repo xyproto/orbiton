@@ -27,7 +27,7 @@ platforms="
 
 cd v2
 name=orbiton
-version=$(grep -i version main.go | head -1 | cut -d' ' -f5 | cut -d'"' -f1)
+version=$(grep -i version main.go | head -1 | cut -d' ' -f4 | cut -d'"' -f1)
 echo "Version $version"
 
 export CGO_ENABLED=0
