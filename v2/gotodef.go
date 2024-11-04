@@ -88,10 +88,13 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 
 	// word can be a string like "package.DoSomething" at this point.
 
+	name := strings.TrimSpace(word)
 	if strings.Count(word, ".") == 1 {
 		wordDotWord := strings.Split(word, ".") // often package.function, package.type or object.method
-		name := wordDotWord[1]
+		name = strings.TrimSpace(wordDotWord[1])
+	}
 
+	if len(name) > 0 {
 		ext := filepath.Ext(e.filename)
 
 		var filenames []string
