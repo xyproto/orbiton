@@ -1104,7 +1104,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 			e.redraw.Store(true)
 
-		case "c:13": // return
+		case "c:13", "\n": // return
 
 			// Show a "Read only" status message if a man page is being viewed or if the editor is read-only
 			// It is an alternative way to quickly check if the file is read-only,
@@ -1126,9 +1126,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			undo.Snapshot(e)
 
 			var (
-				lineContents = e.CurrentLine()
-
-				trimmedLine              = strings.TrimSpace(lineContents)
+				trimmedLine              = e.TrimmedLine()
 				currentLeadingWhitespace = e.LeadingWhitespace()
 				// Grab the leading whitespace from the current line, and indent depending on the end of trimmedLine
 				leadingWhitespace = e.smartIndentation(currentLeadingWhitespace, trimmedLine, false) // the last parameter is "also dedent"
