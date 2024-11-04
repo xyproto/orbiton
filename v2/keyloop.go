@@ -1390,10 +1390,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Tab completion with Ollama
 			if ollamaClient != nil && e.mode != mode.Blank {
 
-				var linesOfContext = 5
-				if ollamaContextLines > 0 {
-					linesOfContext = ollamaContextLines / 2
-				}
+				linesOfContext := ollamaContextLines / 2
 
 				currentLineIndex := int(e.LineIndex())
 

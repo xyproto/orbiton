@@ -21,7 +21,12 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-const versionString = "Orbiton 2.68.1"
+const (
+	versionString = "Orbiton 2.68.1"
+
+	// How many lines of context above and below should the tab completion try to use?
+	ollamaContextLines = 20
+)
 
 var (
 	editorLaunchTime = time.Now()
@@ -48,9 +53,6 @@ var (
 
 	// The Ollama model that is used for code completion
 	codeCompletionModel string
-
-	// How many lines of context above and below should the tab completion try to use?
-	ollamaContextLines int
 )
 
 func main() {
@@ -67,6 +69,7 @@ func main() {
 		createDirectoriesFlag  bool
 		versionFlag            bool
 		nanoMode               bool
+		ollamaTabCompletion    bool
 	)
 
 	pflag.BoolVarP(&copyFlag, "copy", "c", false, "copy a file into the clipboard and quit")
@@ -82,7 +85,7 @@ func main() {
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
 	pflag.BoolVarP(&nanoMode, "nano", "e", false, "Nano/Pico mode")
-	pflag.IntVarP(&ollamaContextLines, "ollama", "o", -1, "use Ollama for tab completion, with N lines of context (-1 to disable)")
+	pflag.BoolVarP(&ollamaTabCompletion, "ollama", "o", false, "use Ollama for tab completion")
 
 	pflag.Parse()
 
@@ -115,12 +118,16 @@ func main() {
 	}
 
 	if ollamaContextLines != -1 {
-		const verbosePull = true
 		codeCompletionModel = usermodel.GetCodeModel()
 		ollamaClient = ollamaclient.New(codeCompletionModel)
 		ollamaClient.Verbose = false
+		const verbosePull = true
 		if err := ollamaClient.PullIfNeeded(verbosePull); err != nil {
-			fmt.Fprintf(os.Stderr, "could not fetch the %s model, Ollama must be up and running locally or OLLAMA_HOST must be set", codeCompletionModel)
+			if ollamaHost := env.Str("OLLAMA_HOST"); ollamaHost != "" {
+				fmt.Fprintf(os.Stderr, "could not fetch the %s model, is Ollama up and running at %s?\n", codeCompletionModel, ollamaHost)
+			} else {
+				fmt.Fprintf(os.Stderr, "could not fetch the %s model, is Ollama running locally? (or is OLLAMA_HOST set?)\n", codeCompletionModel)
+			}
 			os.Exit(1)
 		}
 		ollamaClient.SetReproducible()
