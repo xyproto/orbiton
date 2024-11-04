@@ -108,8 +108,8 @@ github.com/xyproto/termtitle v1.5.1/go.mod h1:U+yMnuL9ENDJy9+OCDEiEx01b7Uk6Zu6g1
 github.com/xyproto/textoutput v1.12.0/go.mod h1:7gHUVNJjTYzjRsc3S54W8hCcjB96C+/ug/mLus9nBjc=
 github.com/xyproto/textoutput v1.17.1 h1:BbDHf8eLpAXdTFf+whnbFrsF7yCMZ7suhW9Es4lyltU=
 github.com/xyproto/textoutput v1.17.1/go.mod h1:4+ToxX8zW6hvC02WXJRDvA/1jrdl0gfgaFlimbfHYWs=
-github.com/xyproto/usermodel v1.2.1 h1:l/rcGx0UkxAMDQ5oc5Mw7jdbLzS8F/dTgeeWs+3qxvw=
-github.com/xyproto/usermodel v1.2.1/go.mod h1:Yq23gofv51bjTujYYnAH3fpvWD+ENa3fdIA+ahfU/B4=
+github.com/xyproto/usermodel v1.2.2 h1:jfLmh65PGabdHR7mUR6fUGSax/joDOfai/Gr4VV3jtc=
+github.com/xyproto/usermodel v1.2.2/go.mod h1:Yq23gofv51bjTujYYnAH3fpvWD+ENa3fdIA+ahfU/B4=
 github.com/xyproto/vt100 v1.8.5/go.mod h1:8ni0+pphJABRAZOoyxY9yD0QQxkia4PjKNFiMQStrT4=
 github.com/xyproto/vt100 v1.9.8/go.mod h1:ExY2YeEedHIb8ng0LG0nv0pgO4prm3KFRnPcTVMF/is=
 github.com/xyproto/vt100 v1.14.2/go.mod h1:DZDxocHCwx0kZTVnsyGogNYKyQ1rwDzUURDhAThjLVw=
