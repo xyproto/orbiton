@@ -123,6 +123,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		inserttime
 		insertdateandtime
 		quit
+		runmake
 		save
 		savequit
 		savequitclear
@@ -293,6 +294,10 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 			e.InsertString(c, dateString+" "+timeString)
 			e.addSpace = true
 		},
+		runmake: func() {
+			workDir := filepath.Dir(e.filename)
+			quitExecShellCommand(tty, workDir, "make")
+		},
 		save: func() { // save the current file
 			e.UserSave(c, tty, status)
 		},
@@ -368,6 +373,8 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		functionID = inserttime
 	case "insertdateandtime", "dateandtime", "dt", "dati", "datim":
 		functionID = insertdateandtime
+	case "make":
+		functionID = runmake
 	case "qs", "byes", "cus", "exitsave", "quitandsave", "quitsave", "qw", "saq", "saveandquit", "saveexit", "saveq", "savequit", "savq", "sq", "wq", "↑", "c:23": // ctrl-w, if the user keeps holding down ctrl
 		functionID = savequit
 	case "s", "sa", "sav", "save", "w", "ww", "↓", "c:19": // ctrl-s, if the user keeps holding down ctrl
