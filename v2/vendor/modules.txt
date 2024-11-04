@@ -139,7 +139,7 @@ github.com/xyproto/textoutput
 # github.com/xyproto/usermodel v1.2.1
 ## explicit; go 1.23.1
 github.com/xyproto/usermodel
-# github.com/xyproto/vt100 v1.16.8
+# github.com/xyproto/vt100 v1.16.9
 ## explicit; go 1.22.0
 github.com/xyproto/vt100
 # github.com/xyproto/wordwrap v1.0.1

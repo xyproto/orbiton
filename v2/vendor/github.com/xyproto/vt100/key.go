@@ -188,23 +188,19 @@ func (tty *TTY) Key() int {
 func (tty *TTY) String() string {
 	bytes := make([]byte, 6)
 	var numRead int
-
 	// Set the terminal into raw mode with a timeout
 	tty.RawMode()
 	tty.SetTimeout(0)
 	// Read bytes from the terminal
 	numRead, err := tty.t.Read(bytes)
-
 	defer func() {
 		// Restore the terminal settings
 		tty.Restore()
 		tty.t.Flush()
 	}()
-
 	if err != nil || numRead == 0 {
 		return ""
 	}
-
 	switch {
 	case numRead == 1:
 		r := rune(bytes[0])
@@ -235,12 +231,12 @@ func (tty *TTY) String() string {
 		bytesLeftToRead, err := tty.t.Available()
 		if err == nil { // success
 			bytes2 := make([]byte, bytesLeftToRead)
-			numRead, err := tty.t.Read(bytes2)
+			numRead2, err := tty.t.Read(bytes2)
 			if err != nil { // error
 				// Just read the first read bytes
 				return string(bytes[:numRead])
 			}
-			return string(append(bytes[:numRead], bytes2...))
+			return string(append(bytes[:numRead], bytes2[:numRead2]...))
 		}
 	}
 	return string(bytes[:numRead])
