@@ -26,7 +26,7 @@ require (
 	github.com/xyproto/syntax v1.10.10
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/textoutput v1.17.1
-	github.com/xyproto/usermodel v1.2.0
+	github.com/xyproto/usermodel v1.2.1
 	github.com/xyproto/vt100 v1.16.8
 	github.com/xyproto/wordwrap v1.0.1
 	golang.org/x/image v0.21.0

@@ -1,9 +1,12 @@
 package usermodel
 
 import (
+	"bytes"
+	"os"
 	"os/exec"
 	"strings"
 
+	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 )
 
@@ -60,18 +63,50 @@ func defaultModel(task Task) string {
 // Get attempts to retrieve the model name using llm-manager.
 // If llm-manager is not available or the command fails, it falls back to the Default*Model variables.
 func Get(task Task) string {
-	llmManagerPath := files.WhichCached(llmManagerExecutable)
-	if llmManagerPath == "" {
-		return defaultModel(task)
+	var (
+		data             []byte
+		err              error
+		found            bool
+		userConfFilename = env.ExpandUser("~/.config/llm-manager/llm.conf")
+		rootConfFilename = "/etc/llm.conf"
+	)
+	if !files.Exists(userConfFilename) {
+		userConfFilename = ""
 	}
-	cmd := exec.Command(llmManagerPath, "get", string(task))
-	outputBytes, err := cmd.Output()
-	if err != nil {
-		return defaultModel(task)
+	if userConfFilename != "" {
+		data, err = os.ReadFile(userConfFilename)
+		if err == nil && len(bytes.TrimSpace(data)) > 0 { // success
+			found = true
+		}
 	}
-	output := strings.TrimSpace(string(outputBytes))
-	if output == "" {
-		return defaultModel(task)
+	if !files.Exists(rootConfFilename) {
+		rootConfFilename = ""
 	}
-	return output
+	if !found && rootConfFilename != "" {
+		data, err = os.ReadFile(rootConfFilename)
+		if err == nil && len(bytes.TrimSpace(data)) > 0 { // success
+			found = true
+		}
+	}
+	if found { // found a configuration file with data, and was able to read the file
+		for _, line := range strings.Split(string(data), " ") {
+			trimmedLine := strings.TrimSpace(line)
+			if strings.HasPrefix(trimmedLine, string(task)) && strings.Count(trimmedLine, "=") == 1 {
+				fields := strings.SplitN(trimmedLine, "=", 2)
+				value := strings.TrimSpace(fields[1])
+				if value != "" {
+					return value
+				}
+			}
+		}
+	}
+	if llmManagerPath := files.WhichCached(llmManagerExecutable); llmManagerPath != "" {
+		cmd := exec.Command(llmManagerPath, "get", string(task))
+		if outputBytes, err := cmd.Output(); err == nil { // success
+			if output := strings.TrimSpace(string(outputBytes)); output != "" {
+				return output
+			}
+		}
+	}
+	return defaultModel(task)
 }
