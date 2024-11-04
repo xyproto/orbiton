@@ -1,5 +1,7 @@
 github.com/DataDog/gostackparse v0.7.0 h1:i7dLkXHvYzHV308hnkvVGDL3BR4FWl7IsXNPz/IGQh4=
 github.com/DataDog/gostackparse v0.7.0/go.mod h1:lTfqcJKqS9KnXQGnyQMCugq3u1FP6UZMfWR0aitKFMM=
+github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b h1:1+WfnfjMtmNFvZohd6NvMP8QB5q4KjGw4kNtLt9yXVM=
+github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b/go.mod h1:aPyh7jEvrog9zAwx5N7+JUQX5dZTSGpxF1LAR4dr35I=
 github.com/boombuler/barcode v1.0.0/go.mod h1:paBWMcWSl3LHKBqUq+rly7CNSldXjb2rDl3JlRe0mD8=
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
 github.com/creack/pty v1.1.24 h1:bJrF4RRfyJnbTJqzRLHzcGaZK1NeM5kTC9jGgovnR1s=
@@ -11,6 +13,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06 h1:yKWwcHDMrhQ1Vle7iG4xPt9l61A/rTsdYc7bJHwB+sQ=
 github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06/go.mod h1:ILJc15OqkUIbcYqL9A7W7xTsfOLRAKP0Jpl74ur9mm8=
+github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
+github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
 github.com/felixge/fgtrace v0.2.0 h1:lq7RO6ELjR+S74+eD+ai/vhYvsjno7Vb84yzU6RPSeU=
 github.com/felixge/fgtrace v0.2.0/go.mod h1:q9vMuItthu3CRfNhirTCTwzBcJ8atUFkrJUhgQbjg8c=
 github.com/fsnotify/fsnotify v1.8.0 h1:dAwr6QBTBZIkG8roQaJjGof0pp0EeF+tNV7YBP3F/8M=
@@ -91,6 +95,8 @@ github.com/xyproto/lookslikegoasm v1.0.0/go.mod h1:4ck0t+iH2rEAmjwnRhMZl72lCeCxK
 github.com/xyproto/mode v0.7.30/go.mod h1:yLSIaGs0nroL/dR8vZ9eDOSEpfIDOSjrF1l/ZCgKOcc=
 github.com/xyproto/mode v0.7.34 h1:BAw0IGXYSmLlIG7ObvUJGA3KEHbEKbvh3ZbNm3HbxDg=
 github.com/xyproto/mode v0.7.34/go.mod h1:Bl7ymMitqlFLl3lgyAY3knkZb0t9/4fzgja7mWp66n0=
+github.com/xyproto/ollamaclient/v2 v2.7.0 h1:mlTOmhACueaqLEsoTnxpE2NAvhxRF4TmYprnMIjUhnU=
+github.com/xyproto/ollamaclient/v2 v2.7.0/go.mod h1:o1GmnP7/qLen2lmuTdVk4MO+4EgbdblE3SFvC+rcOvU=
 github.com/xyproto/palgen v1.6.0 h1:o3NgtiU4vuUvctOgButN80XIR+YGVFVLw33Y143YuiI=
 github.com/xyproto/palgen v1.6.0/go.mod h1:CNbNEV/7R9UvbF8oiS0hBdANveDfBBc4/pvQIFp5ygg=
 github.com/xyproto/stringpainter v1.0.1 h1:OpCY4iTqtdyQD5wllMIp9vebVUB5hUrbQH2SQKKuB8w=
@@ -102,6 +108,8 @@ github.com/xyproto/termtitle v1.5.1/go.mod h1:U+yMnuL9ENDJy9+OCDEiEx01b7Uk6Zu6g1
 github.com/xyproto/textoutput v1.12.0/go.mod h1:7gHUVNJjTYzjRsc3S54W8hCcjB96C+/ug/mLus9nBjc=
 github.com/xyproto/textoutput v1.17.1 h1:BbDHf8eLpAXdTFf+whnbFrsF7yCMZ7suhW9Es4lyltU=
 github.com/xyproto/textoutput v1.17.1/go.mod h1:4+ToxX8zW6hvC02WXJRDvA/1jrdl0gfgaFlimbfHYWs=
+github.com/xyproto/usermodel v1.2.0 h1:tra1ZK5BVcjoe1VGI/0qsTqbJx+oChJREqRhQCqVnZ0=
+github.com/xyproto/usermodel v1.2.0/go.mod h1:tGwa1it0GhzsROzaf4QQGTmgBTDHQibI72rbIB3R2K0=
 github.com/xyproto/vt100 v1.8.5/go.mod h1:8ni0+pphJABRAZOoyxY9yD0QQxkia4PjKNFiMQStrT4=
 github.com/xyproto/vt100 v1.9.8/go.mod h1:ExY2YeEedHIb8ng0LG0nv0pgO4prm3KFRnPcTVMF/is=
 github.com/xyproto/vt100 v1.14.2/go.mod h1:DZDxocHCwx0kZTVnsyGogNYKyQ1rwDzUURDhAThjLVw=

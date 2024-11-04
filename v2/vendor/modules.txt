@@ -1,6 +1,10 @@
 # github.com/DataDog/gostackparse v0.7.0
 ## explicit; go 1.16
 github.com/DataDog/gostackparse
+# github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b
+## explicit; go 1.16
+github.com/allegro/bigcache/v3
+github.com/allegro/bigcache/v3/queue
 # github.com/creack/pty v1.1.24
 ## explicit; go 1.18
 github.com/creack/pty
@@ -10,6 +14,9 @@ github.com/cyrus-and/gdb
 # github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06
 ## explicit
 github.com/dkua/go-ico
+# github.com/dustin/go-humanize v1.0.1
+## explicit; go 1.16
+github.com/dustin/go-humanize
 # github.com/felixge/fgtrace v0.2.0
 ## explicit; go 1.18
 github.com/felixge/fgtrace
@@ -111,6 +118,9 @@ github.com/xyproto/lookslikegoasm
 # github.com/xyproto/mode v0.7.34
 ## explicit; go 1.23.2
 github.com/xyproto/mode
+# github.com/xyproto/ollamaclient/v2 v2.7.0
+## explicit; go 1.23.1
+github.com/xyproto/ollamaclient/v2
 # github.com/xyproto/palgen v1.6.0
 ## explicit; go 1.16
 github.com/xyproto/palgen
@@ -126,6 +136,9 @@ github.com/xyproto/termtitle
 # github.com/xyproto/textoutput v1.17.1
 ## explicit; go 1.22.0
 github.com/xyproto/textoutput
+# github.com/xyproto/usermodel v1.2.0
+## explicit; go 1.23.1
+github.com/xyproto/usermodel
 # github.com/xyproto/vt100 v1.16.8
 ## explicit; go 1.22.0
 github.com/xyproto/vt100

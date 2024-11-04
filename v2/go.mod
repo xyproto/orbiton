@@ -21,10 +21,12 @@ require (
 	github.com/xyproto/files v1.7.0
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/mode v0.7.34
+	github.com/xyproto/ollamaclient/v2 v2.7.0
 	github.com/xyproto/stringpainter v1.0.1
 	github.com/xyproto/syntax v1.10.10
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/textoutput v1.17.1
+	github.com/xyproto/usermodel v1.2.0
 	github.com/xyproto/vt100 v1.16.8
 	github.com/xyproto/wordwrap v1.0.1
 	golang.org/x/image v0.21.0
@@ -32,8 +34,10 @@ require (
 
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
+	github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
