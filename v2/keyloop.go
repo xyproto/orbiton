@@ -1390,41 +1390,59 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			leftRune := e.LeftRune()
 
 			// Tab completion with Ollama
-			if trimmedLine := e.TrimmedLine(); ollamaClient != nil && e.mode != mode.Blank && len(trimmedLine) > 0 {
+			if ollamaClient != nil && e.mode != mode.Blank {
+
+				var linesOfContext = 5
+				if ollamaContextLines > 0 {
+					linesOfContext = ollamaContextLines / 2
+				}
+
+				currentLineIndex := int(e.LineIndex())
 
 				var codeBefore strings.Builder
-				for i := e.LineIndex() - 10; i < e.LineIndex(); i++ {
+				for i := currentLineIndex - linesOfContext; i < currentLineIndex; i++ {
 					if i < 0 {
 						continue
 					}
-					codeBefore.WriteString(e.Line(i) + "\n")
+					codeBefore.WriteString(e.Line(LineIndex(i)) + "\n")
 				}
 				codeBefore.WriteString(e.CurrentLine()) // without a newline
 
 				var codeAfter strings.Builder
-				for i := e.LineIndex() + 1; i < e.LineIndex()+10; i++ {
+				for i := currentLineIndex + 1; i < currentLineIndex+linesOfContext; i++ {
 					if int(i) >= e.Len() {
 						break
 					}
-					codeAfter.WriteString(e.Line(i) + "\n")
+					codeAfter.WriteString(e.Line(LineIndex(i)) + "\n")
 				}
 
 				codeStart := codeBefore.String()
 				codeEnd := codeAfter.String()
 
+				status.ClearAll(c, true)
+				status.SetMessage(fmt.Sprintf("Generating code with Ollama and the %s model...", codeCompletionModel))
+				status.ShowNoTimeout(c, e)
+
+				vt100.ShowCursor(false)
+
 				if response, err := ollamaClient.GetBetweenResponse(codeStart, codeEnd); err == nil { // success
+
 					generatedCodeCompletion := strings.TrimSuffix(response.Response, "\n")
 					//logf("CODE START ---\n%s\n---\n\nGENERATED ---\n%s\n\n--- CODE END ---\n%s\n", codeStart, generatedCodeCompletion, codeEnd)
 					if generatedCodeCompletion != "" {
-						e.redrawCursor.Store(true)
-						e.redraw.Store(true)
 						// Take an undo snapshot and insert the generated code
 						undo.Snapshot(e)
 						e.InsertStringAndMove(c, generatedCodeCompletion)
-						break
 					}
+
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
+					e.RedrawAtEndOfKeyLoop(c, status, false, true)
+					e.redraw.Store(false)
+					e.redrawCursor.Store(false)
 				}
 
+				break
 			}
 
 			// Enable auto indent if the extension is not "" and either:

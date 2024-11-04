@@ -45,6 +45,12 @@ var (
 
 	// Ollama client, used for tab completion
 	ollamaClient *ollamaclient.Config
+
+	// The Ollama model that is used for code completion
+	codeCompletionModel string
+
+	// How many lines of context above and below should the tab completion try to use?
+	ollamaContextLines int
 )
 
 func main() {
@@ -61,7 +67,6 @@ func main() {
 		createDirectoriesFlag  bool
 		versionFlag            bool
 		nanoMode               bool
-		ollamaFlag             bool
 	)
 
 	pflag.BoolVarP(&copyFlag, "copy", "c", false, "copy a file into the clipboard and quit")
@@ -77,7 +82,7 @@ func main() {
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
 	pflag.BoolVarP(&nanoMode, "nano", "e", false, "Nano/Pico mode")
-	pflag.BoolVarP(&ollamaFlag, "ollama", "o", false, "use Ollama for tab completion")
+	pflag.IntVarP(&ollamaContextLines, "ollama", "o", -1, "use Ollama for tab completion, with N lines of context (-1 to disable)")
 
 	pflag.Parse()
 
@@ -109,11 +114,11 @@ func main() {
 		return
 	}
 
-	if ollamaFlag {
-		codeCompletionModel := usermodel.GetCodeModel()
+	if ollamaContextLines != -1 {
+		const verbosePull = true
+		codeCompletionModel = usermodel.GetCodeModel()
 		ollamaClient = ollamaclient.New(codeCompletionModel)
 		ollamaClient.Verbose = false
-		const verbosePull = true
 		if err := ollamaClient.PullIfNeeded(verbosePull); err != nil {
 			fmt.Fprintf(os.Stderr, "could not fetch the %s model, Ollama must be up and running locally or OLLAMA_HOST must be set", codeCompletionModel)
 			os.Exit(1)
