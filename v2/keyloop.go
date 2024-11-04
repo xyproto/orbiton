@@ -1388,7 +1388,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			leftRune := e.LeftRune()
 
 			// Tab completion with Ollama
-			if ollamaClient != nil && e.mode != mode.Blank {
+			if ollamaClient != nil && e.mode != mode.Blank && e.AnyTextBeforeCursor() {
+
+				status.ClearAll(c, true)
+				status.SetMessage(fmt.Sprintf("Generating code with Ollama and the %s model...", codeCompletionModel))
+				status.ShowNoTimeout(c, e)
+				vt100.ShowCursor(false)
 
 				linesOfContext := ollamaContextLines / 2
 
@@ -1413,12 +1418,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 				codeStart := codeBefore.String()
 				codeEnd := codeAfter.String()
-
-				status.ClearAll(c, true)
-				status.SetMessage(fmt.Sprintf("Generating code with Ollama and the %s model...", codeCompletionModel))
-				status.ShowNoTimeout(c, e)
-
-				vt100.ShowCursor(false)
 
 				if response, err := ollamaClient.GetBetweenResponse(codeStart, codeEnd); err == nil { // success
 
