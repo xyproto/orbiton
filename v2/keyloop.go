@@ -113,7 +113,13 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		parentIsMan = &b
 	}
 	if *parentIsMan {
-		e.mode = mode.ManPage
+		// The parent process is "man", but NROFF_FILENAME has not been set:
+		// This means that ctrl-space has been pressed a second time when editing an Nroff file, so switch back to Nroff mode.
+		if env.No("NROFF_FILENAME") {
+			e.mode = mode.Nroff
+		} else {
+			e.mode = mode.ManPage
+		}
 	}
 
 	// Minor adjustments to some modes
