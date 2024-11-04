@@ -2411,10 +2411,29 @@ func (e *Editor) CurrentWord() string {
 	return string(word)
 }
 
+// AnyTextBeforeCursor checks if there is any text before the cursor, on the same line
+func (e *Editor) AnyTextBeforeCursor() bool {
+	y := int(e.DataY())
+	runes, ok := e.lines[y]
+	if !ok {
+		// This should never happen
+		return false
+	}
+
+	// Either find x or use the last index of the line
+	x, err := e.DataX()
+	if err != nil {
+		x = len(runes)
+	}
+
+	return strings.TrimSpace(string(runes[:x])) != ""
+}
+
 // LettersBeforeCursor returns the current word up until the cursor (for autocompletion)
 func (e *Editor) LettersBeforeCursor() string {
 	y := int(e.DataY())
 	runes, ok := e.lines[y]
+
 	if !ok {
 		// This should never happen
 		return ""
