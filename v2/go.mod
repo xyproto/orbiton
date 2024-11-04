@@ -6,7 +6,7 @@ require (
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.8.0
-	github.com/gomarkdown/markdown v0.0.0-20240930133441-72d49d9543d8
+	github.com/gomarkdown/markdown v0.0.0-20241102151059-6bc1ffdc6e8c
 	github.com/ianlancetaylor/demangle v0.0.0-20240912202439-0a2b6291aafd
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/klauspost/asmfmt v1.3.2
@@ -17,7 +17,7 @@ require (
 	github.com/xyproto/carveimg v1.4.6
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.2.0
-	github.com/xyproto/env/v2 v2.5.1
+	github.com/xyproto/env/v2 v2.5.2
 	github.com/xyproto/files v1.7.0
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/mode v0.7.34
