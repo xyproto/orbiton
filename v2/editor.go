@@ -2828,7 +2828,7 @@ func (e *Editor) JumpToMatching(c *vt100.Canvas) bool {
 			parcount := 0
 			counter := 0
 			found := false
-			for !e.AtOrAfterEndOfDocument() && counter < maxSearchLength {
+			for counter < maxSearchLength {
 				counter++
 				if r := e.Rune(); r == closing {
 					if parcount == 1 {
@@ -2840,7 +2840,9 @@ func (e *Editor) JumpToMatching(c *vt100.Canvas) bool {
 				} else if r == opening {
 					parcount++
 				}
-				e.Next(c)
+				if err := e.Next(c); err != nil {
+					break
+				}
 			}
 			if !found {
 				return false
@@ -2849,7 +2851,7 @@ func (e *Editor) JumpToMatching(c *vt100.Canvas) bool {
 			parcount := 0
 			counter := 0
 			found := false
-			for !e.AtStartOfDocument() && counter < maxSearchLength {
+			for counter < maxSearchLength {
 				counter++
 				if r := e.Rune(); r == opening {
 					if parcount == 1 {
@@ -2861,7 +2863,9 @@ func (e *Editor) JumpToMatching(c *vt100.Canvas) bool {
 				} else if r == closing {
 					parcount++
 				}
-				e.Prev(c)
+				if err := e.Prev(c); err != nil {
+					break
+				}
 			}
 			if !found {
 				return false
