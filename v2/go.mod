@@ -28,7 +28,7 @@ require (
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/textoutput v1.17.1
 	github.com/xyproto/usermodel v1.2.2
-	github.com/xyproto/vt100 v1.16.9
+	github.com/xyproto/vt100 v1.16.10
 	github.com/xyproto/wordwrap v1.0.1
 	golang.org/x/image v0.21.0
 )
