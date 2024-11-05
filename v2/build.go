@@ -895,7 +895,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					lineNumberString := locCol[0]
 					lineColumnString := locCol[1]
 
-					const subtractOne = false
+					const subtractOne = true
 					e.MoveToIndex(c, status, lineNumberString, lineColumnString, subtractOne)
 
 					// Return the error message
