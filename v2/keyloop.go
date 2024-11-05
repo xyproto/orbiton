@@ -1669,9 +1669,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			oldLineIndex := e.LineIndex()
 
 			// func prefix must exist for this language/mode for GoToDefinition to be supported
-			jumpedToDefinition := e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status)
-			if jumpedToDefinition {
-				break
+			if e.ProgrammingLanguage() {
+				jumpedToDefinition := e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status)
+				if jumpedToDefinition {
+					break
+				}
 			}
 
 			// TODO: Is this correct? Should it only happen if jumpedToDefinition is true? false?
