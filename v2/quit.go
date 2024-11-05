@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -91,11 +90,27 @@ func quitBat(filename string) error {
 	vt100.ShowCursor(true)
 	workDir := filepath.Dir(filename)
 	_ = os.Chdir(workDir)
-	batExecutable := files.Which(env.Str("ORBITON_BAT", "bat"))
-	if batExecutable == "" {
-		return errors.New("bat is not available in the PATH")
+	batCommandLine := env.Str("ORBITON_BAT", "bat")
+	batExecutable := batCommandLine
+	args := []string{batExecutable}
+	if strings.Contains(batCommandLine, " ") {
+		batCommandLine = strings.ReplaceAll(batCommandLine, "\\ ", "\\")
+		fields := strings.Split(batCommandLine, " ")
+		batExecutable = files.Which(fields[0])
+		args = append([]string{batExecutable}, fields[1:]...)
+		for i, arg := range args {
+			if strings.Contains(arg, "\\") {
+				args[i] = strings.ReplaceAll(arg, "\\", " ")
+			}
+		}
+	} else {
+		batExecutable = files.Which(batExecutable)
 	}
-	syscall.Exec(batExecutable, []string{batExecutable, filename}, env.Environ())
+	if batExecutable == "" {
+		return fmt.Errorf("%q is not available in the PATH", batExecutable)
+	}
+	args = append(args, filename)
+	syscall.Exec(batExecutable, args, env.Environ())
 	return nil // this is never reached
 }
 
