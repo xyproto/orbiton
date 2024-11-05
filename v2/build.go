@@ -477,7 +477,12 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.Odin:
-		cmd = exec.Command("odin", "build", ".") // using the filename and then "-file" instead of "." is also possible
+		pattern := filepath.Join(sourceDir, "*.odin")
+		if matches, err := filepath.Glob(pattern); err == nil && len(matches) != 1 {
+			cmd = exec.Command("odin", "build", "-max-error-count:1", ".")
+		} else {
+			cmd = exec.Command("odin", "build", "-max-error-count:1", "-build-mode:exe", sourceFilename, "-file")
+		}
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.CS:
