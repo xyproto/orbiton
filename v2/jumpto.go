@@ -393,3 +393,81 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 
 	return postAction
 }
+
+// JumpToMatching can jump to a to matching parenthesis or bracket ([{.
+// Return true if a jump was possible and happened.
+func (e *Editor) JumpToMatching(c *vt100.Canvas) bool {
+	const maxSearchLength = 256000
+	var r = e.Rune()
+	// Find which opening and closing parenthesis/curly brackets to look for
+	opening, closing := rune(0), rune(0)
+	onparen := true
+	switch r {
+	case '(', ')':
+		opening = '('
+		closing = ')'
+	case '{', '}':
+		opening = '{'
+		closing = '}'
+	case '[', ']':
+		opening = '['
+		closing = ']'
+	default:
+		onparen = false
+	}
+	if onparen {
+		// Search either forwards or backwards to find a matching rune
+		switch r {
+		case '(', '{', '[':
+			parcount := 0
+			counter := 0
+			found := false
+			for counter < maxSearchLength {
+				counter++
+				if r := e.Rune(); r == closing {
+					if parcount == 1 {
+						found = true
+						// FOUND, STOP
+						break
+					}
+					parcount--
+				} else if r == opening {
+					parcount++
+				}
+				if err := e.Next(c); err != nil {
+					break
+				}
+			}
+			if !found {
+				return false
+			}
+		case ')', '}', ']':
+			parcount := 0
+			counter := 0
+			found := false
+			for counter < maxSearchLength {
+				counter++
+				if r := e.Rune(); r == opening {
+					if parcount == 1 {
+						found = true
+						// FOUND, STOP
+						break
+					}
+					parcount--
+				} else if r == closing {
+					parcount++
+				}
+				if err := e.Prev(c); err != nil {
+					break
+				}
+			}
+			if !found {
+				return false
+			}
+		}
+		e.redrawCursor.Store(true)
+		e.redraw.Store(true)
+		return true
+	}
+	return false
+}
