@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -82,6 +83,20 @@ func quitExecShellCommand(tty *vt100.TTY, workDir string, shellCommand string) {
 	const shellExecutable = "/bin/sh"
 	_ = os.Chdir(workDir)
 	syscall.Exec(shellExecutable, []string{shellExecutable, "-c", shellCommand}, env.Environ())
+}
+
+func quitBat(filename string) error {
+	quitMut.Lock()
+	defer quitMut.Unlock()
+	vt100.ShowCursor(true)
+	workDir := filepath.Dir(filename)
+	_ = os.Chdir(workDir)
+	batExecutable := files.Which(env.Str("ORBITON_BAT", "bat"))
+	if batExecutable == "" {
+		return errors.New("bat is not available in the PATH")
+	}
+	syscall.Exec(batExecutable, []string{batExecutable, filename}, env.Environ())
+	return nil // this is never reached
 }
 
 func quitToMan(tty *vt100.TTY, workDir, nroffFilename string, w, h uint) error {

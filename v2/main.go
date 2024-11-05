@@ -70,6 +70,7 @@ func main() {
 		versionFlag            bool
 		nanoMode               bool
 		ollamaTabCompletion    bool
+		batFlag                bool
 	)
 
 	pflag.BoolVarP(&copyFlag, "copy", "c", false, "copy a file into the clipboard and quit")
@@ -86,8 +87,13 @@ func main() {
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
 	pflag.BoolVarP(&nanoMode, "nano", "e", false, "Nano/Pico mode")
 	pflag.BoolVarP(&ollamaTabCompletion, "ollama", "o", false, "use Ollama for tab completion")
+	pflag.BoolVarP(&batFlag, "bat", "b", false, "Cat the file with colors instead of editing it")
 
 	pflag.Parse()
+
+	if env.Has("ORBITON_BAT") {
+		batFlag = true
+	}
 
 	if versionFlag {
 		fmt.Println(versionString)
@@ -172,11 +178,18 @@ func main() {
 		if filepath.Ext(filename) == ".sh" || files.BinDirectory(filename) || strings.HasPrefix(headString, "#!") {
 			os.Chmod(filename, 0o755)
 		}
-		if tailString != "" {
+		if tailString != "" && !batFlag {
 			fmt.Printf("Wrote %d bytes to %s from the clipboard. Tail bytes: %s\n", n, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
 		} else {
 			fmt.Printf("Wrote %d bytes to %s from the clipboard.\n", n, filename)
 		}
+		if batFlag {
+			// Run bat and quit
+			if err := quitBat(filename); err != nil {
+				fmt.Fprintf(os.Stderr, "%v\n", err)
+			}
+		}
+
 		return
 	}
 
@@ -199,10 +212,16 @@ func main() {
 		if n == 1 {
 			plural = ""
 		}
-		if tailString != "" {
+		if tailString != "" && !batFlag {
 			fmt.Printf("Copied %d byte%s from %s to the clipboard. Tail bytes: %s\n", n, plural, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
 		} else {
 			fmt.Printf("Copied %d byte%s from %s to the clipboard.\n", n, plural, filename)
+		}
+		if batFlag {
+			// Run bat and quit
+			if err := quitBat(filename); err != nil {
+				fmt.Fprintf(os.Stderr, "%v\n", err)
+			}
 		}
 		return
 	}
@@ -226,7 +245,6 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Could not clear locks: %v\n", lockErr)
 			os.Exit(1)
 		}
-
 		return
 	}
 
@@ -397,6 +415,13 @@ func main() {
 			theme = NewDarkVSTheme()
 		default:
 			specificLetter = false
+		}
+	}
+
+	if batFlag {
+		// Run bat and quit
+		if err := quitBat(fnord.filename); err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
 		}
 	}
 
