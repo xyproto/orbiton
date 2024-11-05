@@ -142,10 +142,10 @@ func (c TextConfig) GetClass(kind Kind) string {
 
 // Print is the function that emits highlighted source code using
 // <color>...<off> wrapper tags
-func (p TextPrinter) Print(w io.Writer, kind Kind, tokText string) error {
+func (p TextPrinter) Print(w io.Writer, kind Kind, tokText string) (err error) {
 	class := ((TextConfig)(p)).GetClass(kind)
 	if class != "" {
-		_, err := w.Write([]byte(`<`))
+		_, err = io.WriteString(w, "<")
 		if err != nil {
 			return err
 		}
@@ -153,19 +153,19 @@ func (p TextPrinter) Print(w io.Writer, kind Kind, tokText string) error {
 		if err != nil {
 			return err
 		}
-		_, err = w.Write([]byte(`>`))
+		_, err = io.WriteString(w, ">")
 		if err != nil {
 			return err
 		}
 	}
-	w.Write([]byte(tokText))
+	_, err = io.WriteString(w, tokText)
+	if err != nil {
+		return err
+	}
 	if class != "" {
-		_, err := w.Write([]byte(`<off>`))
-		if err != nil {
-			return err
-		}
+		_, err = io.WriteString(w, "<off>")
 	}
-	return nil
+	return err // can be nil
 }
 
 type Annotator interface {
