@@ -1404,6 +1404,8 @@ func (ac AttributeColor) Combine(other AttributeColor) AttributeColor {
 	lot := len(other)
 	if lot == 0 {
 		return ac
+	} else if lot == 1 && lac == 1 {
+		return AttributeColor([]byte{ac[0], other[0]})
 	}
 	counter := 0
 	combined := make(AttributeColor, lac+lot)

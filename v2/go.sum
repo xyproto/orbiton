@@ -107,8 +107,8 @@ github.com/xyproto/textoutput v1.17.1/go.mod h1:4+ToxX8zW6hvC02WXJRDvA/1jrdl0gfg
 github.com/xyproto/usermodel v1.2.2 h1:jfLmh65PGabdHR7mUR6fUGSax/joDOfai/Gr4VV3jtc=
 github.com/xyproto/usermodel v1.2.2/go.mod h1:Yq23gofv51bjTujYYnAH3fpvWD+ENa3fdIA+ahfU/B4=
 github.com/xyproto/vt100 v1.14.2/go.mod h1:DZDxocHCwx0kZTVnsyGogNYKyQ1rwDzUURDhAThjLVw=
-github.com/xyproto/vt100 v1.16.10 h1:pPELURTkrFznZLU1Mpepr4h8tVRSU2gL30wyz6UNsIM=
-github.com/xyproto/vt100 v1.16.10/go.mod h1:xm5tWQS/v1/3erzn5l3kEwYeEXiDBOVctPJ+NiAGd64=
+github.com/xyproto/vt100 v1.16.11 h1:PLsRhI7v4s4wrp5OkiZpOppnpZIZgK6A+4FJ5zpdVzg=
+github.com/xyproto/vt100 v1.16.11/go.mod h1:xm5tWQS/v1/3erzn5l3kEwYeEXiDBOVctPJ+NiAGd64=
 github.com/xyproto/wordwrap v1.0.1 h1:nKmUy4Jr+VBbeFfCgcUBx/e707ky7GBZLE/x1Uh3dtA=
 github.com/xyproto/wordwrap v1.0.1/go.mod h1:NIZ+TjJF24AUJzQDmr/fOMWgn3B2pK5+c9fPCp6UvcM=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
