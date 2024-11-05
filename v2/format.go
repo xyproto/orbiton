@@ -12,6 +12,7 @@ import (
 	"github.com/klauspost/asmfmt"
 	"github.com/xyproto/autoimport"
 	"github.com/xyproto/files"
+	"github.com/xyproto/lookslikegoasm"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
@@ -222,6 +223,12 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 	}
 
 	switch e.mode {
+	case mode.Assembly:
+		if !lookslikegoasm.Consider(e.String()) {
+			break // no formatter for regular Assembly, yet
+		}
+		e.mode = mode.GoAssembly
+		fallthrough
 	case mode.GoAssembly:
 		if formatted, err := asmfmt.Format(strings.NewReader(e.String())); err == nil { // success
 			e.LoadBytes(formatted)

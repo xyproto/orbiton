@@ -20,6 +20,7 @@ require (
 	github.com/xyproto/env/v2 v2.5.2
 	github.com/xyproto/files v1.7.0
 	github.com/xyproto/iferr v1.1.0
+	github.com/xyproto/lookslikegoasm v1.0.0
 	github.com/xyproto/mode v0.7.34
 	github.com/xyproto/ollamaclient/v2 v2.7.0
 	github.com/xyproto/stringpainter v1.0.1
@@ -52,7 +53,6 @@ require (
 	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
-	github.com/xyproto/lookslikegoasm v1.0.0 // indirect
 	github.com/xyproto/palgen v1.6.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 )
