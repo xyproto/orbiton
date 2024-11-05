@@ -91,10 +91,6 @@ func main() {
 
 	pflag.Parse()
 
-	if env.Has("ORBITON_BAT") {
-		batFlag = true
-	}
-
 	if versionFlag {
 		fmt.Println(versionString)
 		return
@@ -178,6 +174,9 @@ func main() {
 		if filepath.Ext(filename) == ".sh" || files.BinDirectory(filename) || strings.HasPrefix(headString, "#!") {
 			os.Chmod(filename, 0o755)
 		}
+		if env.Has("ORBITON_BAT") {
+			batFlag = true
+		}
 		if tailString != "" && !batFlag {
 			fmt.Printf("Wrote %d bytes to %s from the clipboard. Tail bytes: %s\n", n, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
 		} else {
@@ -211,6 +210,9 @@ func main() {
 		plural := "s"
 		if n == 1 {
 			plural = ""
+		}
+		if env.Has("ORBITON_BAT") {
+			batFlag = true
 		}
 		if tailString != "" && !batFlag {
 			fmt.Printf("Copied %d byte%s from %s to the clipboard. Tail bytes: %s\n", n, plural, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
@@ -418,7 +420,7 @@ func main() {
 		}
 	}
 
-	if batFlag {
+	if batFlag { // This should NOT happen if only ORBITON_BAT is set!
 		// Run bat and quit
 		if err := quitBat(fnord.filename); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
