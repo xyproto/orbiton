@@ -25,7 +25,7 @@ var (
 
 func init() {
 	pflag.StringVarP(&cpuProfileFilename, "cpuprofile", "u", "", "write CPU profile to `file`")
-	pflag.StringVarP(&memProfileFilename, "memprofile", "e", "", "write memory profile to `file`")
+	pflag.StringVarP(&memProfileFilename, "memprofile", "t", "", "write memory profile to `file`")
 	pflag.StringVarP(&fgtraceFilename, "fgtrace", "g", "", "write fgtrace to `file`")
 
 	// Start the pprof HTTP server as well
