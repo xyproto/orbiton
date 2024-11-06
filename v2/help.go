@@ -86,7 +86,9 @@ Flags:
                                  The default filename is input.txt. Handy for AoC.
   -o, --ollama                   Use Ollama and the ` + codeCompletionModel + ` model
                                  for tab completion (experimental feature).
-  -b, --bat                      Cat the file with bat (useful in connection with -c and -p).
+  -b, --bat                      List the given file using bat, if it exists in the PATH.
+                                 This can be useful in connection with -c or -p.
+  -t, --list                     List the given file using the red/black theme.
   -v, --version                  Display the current version.
 
 See the man page for more information.

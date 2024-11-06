@@ -71,6 +71,7 @@ func main() {
 		nanoMode               bool
 		ollamaTabCompletion    bool
 		batFlag                bool
+		catFlag                bool
 	)
 
 	pflag.BoolVarP(&copyFlag, "copy", "c", false, "copy a file into the clipboard and quit")
@@ -87,7 +88,8 @@ func main() {
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
 	pflag.BoolVarP(&nanoMode, "nano", "a", false, "Nano/Pico mode")
 	pflag.BoolVarP(&ollamaTabCompletion, "ollama", "o", false, "use Ollama for tab completion")
-	pflag.BoolVarP(&batFlag, "bat", "b", false, "Cat the file with colors instead of editing it")
+	pflag.BoolVarP(&batFlag, "bat", "b", false, "Cat the file with colors instead of editing it, using bat")
+	pflag.BoolVarP(&catFlag, "list", "t", false, "List the file with colors instead of editing it")
 
 	pflag.Parse()
 
@@ -183,10 +185,11 @@ func main() {
 			fmt.Printf("Wrote %d bytes to %s from the clipboard.\n", n, filename)
 		}
 		if batFlag {
-			// Run bat and quit
-			if err := quitBat(filename); err != nil {
-				fmt.Fprintf(os.Stderr, "%v\n", err)
-			}
+			// List the file in a colorful way, using bat, and quit
+			quitBat(filename)
+		} else if catFlag {
+			// List the file in a colorful way and quit
+			quitCat(&FilenameOrData{filename, []byte{}, 0, false})
 		}
 
 		return
@@ -220,11 +223,13 @@ func main() {
 			fmt.Printf("Copied %d byte%s from %s to the clipboard.\n", n, plural, filename)
 		}
 		if batFlag {
-			// Run bat and quit
-			if err := quitBat(filename); err != nil {
-				fmt.Fprintf(os.Stderr, "%v\n", err)
-			}
+			// List the file in a colorful way, using bat, and quit
+			quitBat(filename)
+		} else if catFlag {
+			// List the file in a colorful way and quit
+			quitCat(&FilenameOrData{filename, []byte{}, 0, false})
 		}
+
 		return
 	}
 
@@ -421,10 +426,11 @@ func main() {
 	}
 
 	if batFlag { // This should NOT happen if only ORBITON_BAT is set!
-		// Run bat and quit
-		if err := quitBat(fnord.filename); err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-		}
+		// List the file in a colorful way, using bat, and quit
+		quitBat(fnord.filename)
+	} else if catFlag {
+		// List the file in a colorful way and quit
+		quitCat(&fnord)
 	}
 
 	// Initialize the VT100 terminal
