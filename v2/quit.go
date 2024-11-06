@@ -110,7 +110,7 @@ func quitCat(fnord *FilenameOrData) {
 func quitBat(filename string) error {
 	quitMut.Lock()
 	defer quitMut.Unlock()
-	batCommandLine := env.Str("ORBITON_BAT", "bat")
+	batCommandLine := env.Str("ORBITON_BAT", "bat") // TODO: Document ORBITON_BAT, for configuring flags given to bat when -c, p, -b or --bat is used
 	batExecutable := batCommandLine
 	args := []string{batExecutable}
 	if strings.Contains(batCommandLine, " ") {
