@@ -1,10 +1,16 @@
-# syntax
+# Syntax
 
 Syntax highlight text.
 
-This is a fork of [syntaxhighlight](https://github.com/sourcegraph/syntaxhighlight).
+This started out as a fork of [syntaxhighlight](https://github.com/sourcegraph/syntaxhighlight), but several modifications has been made over several years.
 
-Modifications have been made to output syntax highlighted text in a format that suites [textoutput](https://github.com/xyproto/textoutput) instead of HTML, so that it can be used in terminal applications.
+### hicat
+
+The `hicat` utility (a bit like `bat` / syntax highlighted `cat`) can be installed with:
+
+    go install github.com/xyproto/syntax/cmd/hicat@latest
+
+### General info
 
 * License: BSD 3-Clause
-* Version: 1.11.0
+* Version: 1.12.0

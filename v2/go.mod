@@ -6,7 +6,7 @@ require (
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.8.0
-	github.com/gomarkdown/markdown v0.0.0-20241102151059-6bc1ffdc6e8c
+	github.com/gomarkdown/markdown v0.0.0-20241105142532-d03b89096d81
 	github.com/ianlancetaylor/demangle v0.0.0-20240912202439-0a2b6291aafd
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/klauspost/asmfmt v1.3.2
@@ -24,7 +24,7 @@ require (
 	github.com/xyproto/mode v0.7.36
 	github.com/xyproto/ollamaclient/v2 v2.7.0
 	github.com/xyproto/stringpainter v1.0.1
-	github.com/xyproto/syntax v1.11.0
+	github.com/xyproto/syntax v1.12.0
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/textoutput v1.17.1
 	github.com/xyproto/usermodel v1.2.2
