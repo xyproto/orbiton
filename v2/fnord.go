@@ -1,8 +1,6 @@
 package main
 
 import (
-	"strings"
-
 	"github.com/xyproto/env/v2"
 )
 
@@ -18,9 +16,7 @@ type FilenameOrData struct {
 // fnord is short for "filename or data"
 func (fnord *FilenameOrData) ExpandUser() {
 	// If the filename starts with "~", then expand it
-	if strings.HasPrefix(fnord.filename, "~") {
-		fnord.filename = env.ExpandUser(fnord.filename)
-	}
+	fnord.filename = env.ExpandUser(fnord.filename)
 }
 
 // Empty checks if data has been loaded
