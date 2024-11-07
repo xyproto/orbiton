@@ -70,8 +70,8 @@ func main() {
 		versionFlag            bool
 		nanoMode               bool
 		ollamaTabCompletion    bool
-		batFlag                bool
 		catFlag                bool
+		batFlag                bool
 	)
 
 	pflag.BoolVarP(&copyFlag, "copy", "c", false, "copy a file into the clipboard and quit")
@@ -176,7 +176,7 @@ func main() {
 		if filepath.Ext(filename) == ".sh" || files.BinDirectory(filename) || strings.HasPrefix(headString, "#!") {
 			os.Chmod(filename, 0o755)
 		}
-		if env.Has("ORBITON_BAT") {
+		if !catFlag && env.Has("ORBITON_BAT") {
 			batFlag = true
 		}
 		if tailString != "" && !batFlag {
@@ -184,12 +184,12 @@ func main() {
 		} else {
 			fmt.Printf("Wrote %d bytes to %s from the clipboard.\n", n, filename)
 		}
-		if batFlag {
-			// List the file in a colorful way, using bat, and quit
-			quitBat(filename)
-		} else if catFlag {
+		if catFlag {
 			// List the file in a colorful way and quit
 			quitCat(&FilenameOrData{filename, []byte{}, 0, false})
+		} else if batFlag {
+			// List the file in a colorful way, using bat, and quit
+			quitBat(filename)
 		}
 
 		return
@@ -214,7 +214,7 @@ func main() {
 		if n == 1 {
 			plural = ""
 		}
-		if env.Has("ORBITON_BAT") {
+		if !catFlag && env.Has("ORBITON_BAT") {
 			batFlag = true
 		}
 		if tailString != "" && !batFlag {
@@ -222,12 +222,12 @@ func main() {
 		} else {
 			fmt.Printf("Copied %d byte%s from %s to the clipboard.\n", n, plural, filename)
 		}
-		if batFlag {
-			// List the file in a colorful way, using bat, and quit
-			quitBat(filename)
-		} else if catFlag {
+		if catFlag {
 			// List the file in a colorful way and quit
 			quitCat(&FilenameOrData{filename, []byte{}, 0, false})
+		} else if batFlag {
+			// List the file in a colorful way, using bat, and quit
+			quitBat(filename)
 		}
 
 		return
@@ -425,12 +425,12 @@ func main() {
 		}
 	}
 
-	if batFlag { // This should NOT happen if only ORBITON_BAT is set!
-		// List the file in a colorful way, using bat, and quit
-		quitBat(fnord.filename)
-	} else if catFlag {
+	if catFlag {
 		// List the file in a colorful way and quit
 		quitCat(&fnord)
+	} else if batFlag { // This should NOT happen if only ORBITON_BAT is set!
+		// List the file in a colorful way, using bat, and quit
+		quitBat(fnord.filename)
 	}
 
 	// Initialize the VT100 terminal
