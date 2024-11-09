@@ -680,7 +680,7 @@ The above copyright notice and this permission notice shall be included in all c
 ## Moby Dick Workout
 
 * Orbiton passes the [Moby Dick Workout](https://www.hogbaysoftware.com/posts/moby-dick-workout/) here on my machine.
-* Please create an issue if it is even a little bit slow on your machine (as long as your macine is at least as fast as a Raspberry Pi 3).
+* Please create an issue if it is even a little bit slow on your machine (as long as your machine is at least as fast as a Raspberry Pi 3).
 
 ## Terminal settings
 
