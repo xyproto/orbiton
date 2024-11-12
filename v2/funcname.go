@@ -48,7 +48,7 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 	switch e.mode {
 	// Very unscientific and approximate function definition detection for C and C++
 	// TODO: Write a C parser and a C++ parser...
-	case mode.C, mode.Cpp:
+	case mode.Arduino, mode.C, mode.Cpp, mode.D, mode.Dart, mode.Hare, mode.Jakt, mode.Java, mode.JavaScript, mode.Kotlin, mode.ObjC, mode.Scala, mode.Shader, mode.TypeScript, mode.Zig:
 		if strings.HasSuffix(trimmedLine, "()") {
 			return true
 		}
