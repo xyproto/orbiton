@@ -87,9 +87,9 @@ func main() {
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
 	pflag.BoolVarP(&nanoMode, "nano", "a", false, "Nano/Pico mode")
-	pflag.BoolVarP(&ollamaTabCompletion, "ollama", "o", false, "use Ollama for tab completion")
-	pflag.BoolVarP(&batFlag, "bat", "b", false, "Cat the file with colors instead of editing it, using bat")
+	pflag.BoolVarP(&ollamaTabCompletion, "ollama", "o", env.Bool("ORBITON_OLLAMA"), "use Ollama for tab completion")
 	pflag.BoolVarP(&catFlag, "list", "t", false, "List the file with colors instead of editing it")
+	pflag.BoolVarP(&batFlag, "bat", "b", false, "Cat the file with colors instead of editing it, using bat")
 
 	pflag.Parse()
 
@@ -175,9 +175,6 @@ func main() {
 		// chmod +x if this looks like a shell script or is in ie. /usr/bin
 		if filepath.Ext(filename) == ".sh" || files.BinDirectory(filename) || strings.HasPrefix(headString, "#!") {
 			os.Chmod(filename, 0o755)
-		}
-		if !catFlag && env.Has("ORBITON_BAT") {
-			batFlag = true
 		}
 		if tailString != "" && !batFlag {
 			fmt.Printf("Wrote %d bytes to %s from the clipboard. Tail bytes: %s\n", n, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
