@@ -36,7 +36,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		match                              bool
 		arrowBeforeCommentMarker           bool
 		inListItem                         bool
-		inCodeBlock                        bool // used when highlighting Doc, Markdown, Python, Nim or Mojo
+		inCodeBlock                        bool // used when highlighting Doc, Markdown, Python, Nim, Mojo or Starlark
 		threeQuoteStart                    bool
 		threeQuoteEnd                      bool
 		ok                                 bool
@@ -141,7 +141,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				inCodeBlock = !inCodeBlock
 			}
 		}
-	case mode.Mojo, mode.Nim, mode.Python:
+	case mode.Mojo, mode.Nim, mode.Python, mode.Starlark:
 		// Figure out if "fromline" is within a markdown code block or not
 		for li = LineIndex(0); li < fromline; li++ {
 			line = e.Line(li)
@@ -242,7 +242,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					}
 					// If this is a list item, store true in "prevLineIsListItem"
 					listItemRecord = append(listItemRecord, isListItem(line))
-				case mode.Nim, mode.Mojo, mode.Python:
+				case mode.Nim, mode.Mojo, mode.Python, mode.Starlark:
 					trimmedLine = strings.TrimSpace(line)
 					foundDocstringMarker = false
 
@@ -422,7 +422,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					// logf("%s -[ %d ]-->\n\t%s\n", trimmedLine, addedPar, q.String())
 
 					switch {
-					case (e.mode == mode.Nim || e.mode == mode.Mojo || e.mode == mode.Python) && q.startedMultiLineString:
+					case (e.mode == mode.Nim || e.mode == mode.Mojo || e.mode == mode.Python || e.mode == mode.Starlark) && q.startedMultiLineString:
 						// Python docstring
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
 					case (e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC || e.mode == mode.Shader || e.mode == mode.Make || e.mode == mode.Just) && !q.multiLineComment && (strings.HasPrefix(trimmedLine, "#if") || strings.HasPrefix(trimmedLine, "#else") || strings.HasPrefix(trimmedLine, "#elseif") || strings.HasPrefix(trimmedLine, "#endif") || strings.HasPrefix(trimmedLine, "#elif") || strings.HasPrefix(trimmedLine, "#define") || strings.HasPrefix(trimmedLine, "#pragma")):

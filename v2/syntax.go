@@ -250,7 +250,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		addKeywords(objPasWords)
 	case mode.Oak:
 		addAndRemoveKeywords([]string{"fn"}, []string{"from", "new", "print"})
-	case mode.Python, mode.Nim, mode.Mojo:
+	case mode.Python, mode.Nim, mode.Mojo, mode.Starlark:
 		addAndRemoveKeywords([]string{"type"}, []string{"append", "exit", "fn", "get", "package", "print"})
 	case mode.Odin:
 		setKeywords(odinWords)
@@ -328,7 +328,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "'"
 	case mode.Bat:
 		return "@rem" // or rem or just ":" ...
-	case mode.Algol68, mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.Docker, mode.GDScript, mode.Ignore, mode.Just, mode.Make, mode.Nim, mode.Mojo, mode.PolicyLanguage, mode.Python, mode.R, mode.Ruby, mode.Shell:
+	case mode.Algol68, mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.Docker, mode.GDScript, mode.Ignore, mode.Just, mode.Make, mode.Nim, mode.Mojo, mode.PolicyLanguage, mode.Python, mode.R, mode.Ruby, mode.Shell, mode.Starlark:
 		return "#"
 	case mode.Clojure, mode.Lisp:
 		return ";;"
@@ -372,7 +372,7 @@ func (e *Editor) ProgrammingLanguage() bool {
 // UsingGDBMightWork evaluates if usig GDB might work, for this file type
 func (e *Editor) UsingGDBMightWork() bool {
 	switch e.mode {
-	case mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Arduino, mode.Basic, mode.Bat, mode.Bazel, mode.Blank, mode.CMake, mode.CS, mode.Clojure, mode.Config, mode.Dart, mode.Email, mode.Erlang, mode.Git, mode.Gradle, mode.HIDL, mode.HTML, mode.Ini, mode.JSON, mode.Java, mode.JavaScript, mode.Just, mode.Kotlin, mode.Lisp, mode.Log, mode.Lua, mode.M4, mode.Make, mode.ManPage, mode.Markdown, mode.Nroff, mode.Oak, mode.Perl, mode.PolicyLanguage, mode.Python, mode.SCDoc, mode.SQL, mode.Scala, mode.Shell, mode.Teal, mode.Text, mode.TypeScript, mode.Vim, mode.XML:
+	case mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Arduino, mode.Basic, mode.Bat, mode.Bazel, mode.Blank, mode.CMake, mode.CS, mode.Clojure, mode.Config, mode.Dart, mode.Email, mode.Erlang, mode.Git, mode.Gradle, mode.HIDL, mode.HTML, mode.Ini, mode.JSON, mode.Java, mode.JavaScript, mode.Just, mode.Kotlin, mode.Lisp, mode.Log, mode.Lua, mode.M4, mode.Make, mode.ManPage, mode.Markdown, mode.Nroff, mode.Oak, mode.Perl, mode.PolicyLanguage, mode.Python, mode.SCDoc, mode.Starlark, mode.SQL, mode.Scala, mode.Shell, mode.Teal, mode.Text, mode.TypeScript, mode.Vim, mode.XML:
 		// Most likely "no"
 		return false
 	case mode.Zig:
