@@ -2,12 +2,12 @@
 
 ## General
 
-- [ ] Let `ctrl-space` for Nroff work as well on Linux as on macOS.
-- [ ] Detect `name() {` as a function signature for many languages + do not include the function prefix like `function asdf` in the function name status.
+- [ ] Fix and rewrite the multiline string detection for Python and Starlark.
 - [ ] Add a flag for only programming with arrow keys and space/return and esc, or joystick and A and B.
       Leverage Ollama to find good questions to ask and offer good options on screen.
       Use 2 to 4 large horizontal squares to choose between. Implement this is a new type of menu.
-      Then package Orbiton as an app for Steam, Play Store and App Store, as some sort of programming game?
+      Then package Orbiton as an app for Steam, Play Store and App Store, as some sort of programming game? Create a separate project for this.
+- [ ] Let `ctrl-space` for Nroff work as well on Linux as on macOS.
 - [ ] Let "go to definition" also jump to ie. `static inline void print_or_suppress_zero_line(const char* buffer, char* z, const int nz, const char* program_name)` in C.
 - [ ] Always show the current function name in the upper right corner.
 - [ ] Have a progress indicator on the right side also for when `NO_COLOR=1` is set.
