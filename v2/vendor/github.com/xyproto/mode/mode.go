@@ -93,6 +93,7 @@ const (
 	Shader                // GLSL Shader
 	Shell                 // Shell scripts and PKGBUILD files
 	StandardML            // Standard ML
+	Starlark              // Starlark
 	SQL                   // Structured Query Language
 	Subversion            // Subversion commits
 	Swift                 // Swift
@@ -289,6 +290,8 @@ func (mode Mode) String() string {
 		return "SQL"
 	case StandardML:
 		return "Standard ML"
+	case Starlark:
+		return "Starlark"
 	case Subversion:
 		return "Subversion"
 	case Swift:

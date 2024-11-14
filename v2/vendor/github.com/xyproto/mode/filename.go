@@ -221,6 +221,8 @@ func Detect(filename string) Mode {
 			mode = Assembly
 		case ".scala":
 			mode = Scala
+		case ".star", ".starlark":
+			mode = Starlark
 		case ".rkt", ".sc", ".sch", ".scm", ".scr", ".scrbl", ".sld", ".sls", ".sps", ".sps7", ".ss":
 			mode = Scheme
 		case ".swift":
