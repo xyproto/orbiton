@@ -9,6 +9,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/mattn/go-runewidth"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/stringpainter"
 	"github.com/xyproto/syntax"
@@ -618,8 +619,8 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							} else {
 								c.WriteRuneBNoLock(tx, ty, fg, bg, letter)
 							}
-							lineRuneCount++                              // 1 rune
-							lineStringCount += uint(len(string(letter))) // 1 rune, expanded
+							lineRuneCount++                                      // 1 rune
+							lineStringCount += uint(runewidth.RuneWidth(letter)) // 1 rune, expanded
 						}
 					}
 				}
