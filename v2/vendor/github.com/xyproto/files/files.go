@@ -247,3 +247,22 @@ func RemoveFile(path string) error {
 	}
 	return nil // the file has been removed, or did not exist in the first place
 }
+
+// DirectoryWithFiles checks if the given path is a directory and contains at least one file
+func DirectoryWithFiles(path string) (bool, error) {
+	if fileInfo, err := os.Stat(path); err != nil {
+		return false, err
+	} else if !fileInfo.IsDir() {
+		return false, fmt.Errorf("path is not a directory")
+	}
+	if entries, err := os.ReadDir(path); err != nil {
+		return false, err
+	} else {
+		for _, entry := range entries {
+			if entry.Type().IsRegular() || entry.Type()&os.ModeSymlink != 0 {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
