@@ -92,9 +92,9 @@ func WriteClipboardToFile(filename string, overwrite, primaryClipboard bool) (in
 // Paste is called when the user presses ctrl-v, and handles portals, clipboards and also non-clipboard-based copy and paste
 func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCopyLines *[]string, firstPasteAction *bool, lastCopyY, lastPasteY, lastCutY *LineIndex, prevKeyWasReturn bool) {
 	if portal, err := LoadPortal(maxPortalAge); err == nil { // no error
-		status.Clear(c, false)
 		line, err := portal.PopLine(e, false) // pop the line, but don't remove it from the source file
 		if err == nil {                       // success
+			status.ClearAll(c, false)
 			status.SetMessageAfterRedraw("Pasting through the portal")
 			undo.Snapshot(e)
 			if e.EmptyRightTrimmedLine() {
@@ -110,6 +110,7 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 			return
 		}
 		e.ClosePortal()
+		status.Clear(c, false)
 		status.SetError(err)
 		status.Show(c, e)
 	}
