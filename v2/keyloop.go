@@ -1933,9 +1933,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			// Deal with the portal
-			status.Clear(c, false)
+			status.ClearAll(c, false)
 			if HasPortal() {
-				status.SetMessage("Closing portal")
+				status.SetMessageAfterRedraw("Closing portal")
 				e.ClosePortal()
 			} else {
 				portal, err := e.NewPortal()
@@ -1953,9 +1953,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					status.Show(c, e)
 					break
 				}
-				status.SetMessage("Opening a portal at " + portal.String())
+				status.SetMessageAfterRedraw("Opening a portal at " + portal.String())
 			}
-			status.Show(c, e)
 		case "c:2": // ctrl-b, go back after jumping to a definition, bookmark, unbookmark or jump to bookmark. Toggle breakpoint if in debug mode.
 
 			if e.nanoMode.Load() { // nano: ctrl-b, cursor forward
