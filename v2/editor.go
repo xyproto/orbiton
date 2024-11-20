@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -429,6 +428,13 @@ func (e *Editor) PrepareEmpty() (mode.Mode, error) {
 // Save will try to save the current editor contents to file.
 // It needs a canvas in case trailing spaces are stripped and the cursor needs to move to the end.
 func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
+	return e.SaveAs(c, tty, e.filename)
+}
+
+// SaveAs will try to save the current editor contents to given file.
+// It needs a canvas in case trailing spaces are stripped and the cursor needs to move to the end.
+func (e *Editor) SaveAs(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
+
 	if e.monitorAndReadOnly {
 		return errors.New("file is read-only")
 	}
@@ -444,7 +450,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	defer quitMut.Unlock()
 
 	if e.createDirectoriesIfMissing {
-		if err := os.MkdirAll(filepath.Dir(e.filename), os.ModePerm); err != nil {
+		if err := os.MkdirAll(filepath.Dir(filename), os.ModePerm); err != nil {
 			return err
 		}
 	}
@@ -499,7 +505,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 
 		// Should the file be saved with the executable bit enabled?
 		// (Does it either start with a shebang or reside in a common bin directory like /usr/bin?)
-		shebang = files.BinDirectory(e.filename) || strings.HasPrefix(s, "#!")
+		shebang = files.BinDirectory(filename) || strings.HasPrefix(s, "#!")
 
 		data = []byte(s)
 	}
@@ -512,14 +518,14 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 	// Default file mode (0644 for regular files, 0755 for executable files)
 	var fileMode os.FileMode = 0o644
 
-	// Shell scripts that contains the word "source" typically needs to be sourced and should not be "chmod +x"-ed, nor "chmod -x" ed
-	containsTheWordSource := bytes.Contains(data, []byte("source "))
+	// Shell scripts that contains the word "source" on the first three lines often needs to be sourced and should not be "chmod +x"-ed, nor "chmod -x" ed
+	containsTheWordSource := containsInTheFirstNLines(data, 3, []byte("source "))
 
 	// Checking the syntax highlighting makes it easy to press `ctrl-t` before saving a script,
 	// to toggle the executable bit on or off. This is only for files that start with "#!".
 	// Also, if the file is in one of the common bin directories, like "/usr/bin", then assume that it
 	// is supposed to be executable. Also skip .install files, even though they are scripts.
-	if shebang && e.syntaxHighlight && !containsTheWordSource && !strings.HasSuffix(e.filename, ".install") {
+	if shebang && e.syntaxHighlight && !containsTheWordSource && !strings.HasSuffix(filename, ".install") {
 		// This is a script file, syntax highlighting is enabled and it does not contain the word "source "
 		// (typical for shell files that should be sourced and not executed)
 		fileMode = 0o755
@@ -535,10 +541,10 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		}
 
 		// Start a spinner, in a short while
-		quitChan := Spinner(c, tty, fmt.Sprintf("Saving %s... ", e.filename), fmt.Sprintf("saving %s: stopped by user", e.filename), 200*time.Millisecond, e.ItalicsColor)
+		quitChan := Spinner(c, tty, fmt.Sprintf("Saving %s... ", filename), fmt.Sprintf("saving %s: stopped by user", filename), 200*time.Millisecond, e.ItalicsColor)
 
 		// Prepare gzipped data
-		if strings.HasSuffix(e.filename, ".gz") {
+		if strings.HasSuffix(filename, ".gz") {
 			var err error
 			data, err = gZipData(data)
 			if err != nil {
@@ -548,7 +554,7 @@ func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
 		}
 
 		// Save the file and return any errors
-		if err := os.WriteFile(e.filename, data, fileMode); err != nil {
+		if err := os.WriteFile(filename, data, fileMode); err != nil {
 			// Stop the spinner and return
 			quitChan <- true
 			return err
