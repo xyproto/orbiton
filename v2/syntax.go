@@ -186,7 +186,20 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.CS:
 		setKeywords(csWords)
 	case mode.CSS:
-		setKeywords(cssWords)
+		var massagedWords []string
+		for _, word := range cssWords {
+			if strings.Contains(word, "-") {
+				fields := strings.Split(word, "-")
+				for _, field := range fields {
+					massagedWords = append(massagedWords, field)
+				}
+			} else {
+				massagedWords = append(massagedWords, word)
+			}
+		}
+		setKeywords(massagedWords)
+		//removeKeywords([]string{"flex"}) // flex can be part of the property name and also the value
+		addKeywords([]string{"animation", "events", "pointer"})
 	case mode.D:
 		setKeywords(dWords)
 	case mode.Dart:
