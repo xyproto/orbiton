@@ -74,8 +74,7 @@ func (e *Editor) Run() (string, bool, error) {
 		}
 		cmd.Env = append(cmd.Env, "PYTHONPYCACHEPREFIX="+pyCacheDir)
 	default:
-		exeName := filepath.Join(sourceDir, e.exeName(e.filename, true))
-		cmd = exec.Command(exeName)
+		cmd = exec.Command(filepath.Join(sourceDir, e.exeName(e.filename, true)))
 	}
 
 	cmd.Dir = sourceDir
