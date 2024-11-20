@@ -62,6 +62,10 @@ func (e *Editor) Run() (string, bool, error) {
 		cmd = exec.Command("java", "-jar", "main.jar")
 	case mode.Just:
 		cmd = exec.Command("just")
+	case mode.Odin:
+		if efn := e.exeName(e.filename, true); files.IsExecutable(efn) {
+			cmd = exec.Command(filepath.Join(sourceDir, efn))
+		}
 	case mode.Python:
 		if isDarwin {
 			cmd = exec.Command("python3", sourceFilename)

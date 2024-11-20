@@ -27,7 +27,7 @@ var (
 // If shouldExist is true, the function will try to select either "main" or the parent
 // directory name, depending on which one is there.
 func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
-	const exeFirstName = "main" // The default name
+	exeFirstName := "main" // The default name
 	sourceDir := filepath.Dir(sourceFilename)
 
 	// NOTE: Abs is used to prevent sourceDirectoryName from becoming just "."
@@ -40,6 +40,11 @@ func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
 
 	if shouldExist {
 		// If "main" exists, use that
+		if files.IsFile(filepath.Join(sourceDir, exeFirstName)) {
+			return exeFirstName
+		}
+		// If the name of the source file, without the extension, exists, use that
+		exeFirstName = strings.TrimSuffix(filepath.Base(sourceFilename), filepath.Ext(sourceFilename))
 		if files.IsFile(filepath.Join(sourceDir, exeFirstName)) {
 			return exeFirstName
 		}
