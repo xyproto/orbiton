@@ -16,9 +16,9 @@ const maxSearchHistoryEntries = 1024
 // SearchHistory is a map from timestamp to search term (string).
 // Assume no timestamp collisions for when the user is adding search terms, because the user is not that fast.
 type SearchHistory struct {
-	mut          sync.RWMutex
 	entries      map[time.Time]string
 	filename     string
+	mut          sync.RWMutex
 	failedToLoad bool
 }
 
@@ -35,9 +35,9 @@ var (
 // NewSearchHistory creates a new blank SearchHistory struct
 func NewSearchHistory(shortFilename string) *SearchHistory {
 	return &SearchHistory{
-		mut:          sync.RWMutex{},
 		entries:      make(map[time.Time]string),
 		filename:     filepath.Join(userCacheDir, "o", shortFilename),
+		mut:          sync.RWMutex{},
 		failedToLoad: false,
 	}
 }
