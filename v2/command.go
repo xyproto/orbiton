@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/xyproto/clip"
+	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
@@ -296,7 +297,19 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		},
 		runmake: func() {
 			workDir := filepath.Dir(e.filename)
-			quitExecShellCommand(tty, workDir, "make")
+			found := false
+			for _, fn := range []string{"GNUmakefile", "makefile", "Makefile"} {
+				if files.Exists(filepath.Join(workDir, fn)) {
+					found = true
+					break
+				}
+			}
+			if found {
+				e.UserSave(c, tty, status)
+				quitExecShellCommand(tty, workDir, "make")
+			} else {
+				status.SetErrorMessageAfterRedraw("no Makefile")
+			}
 		},
 		save: func() { // save the current file
 			e.UserSave(c, tty, status)
