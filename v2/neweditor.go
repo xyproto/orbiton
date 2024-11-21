@@ -351,7 +351,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 				b := true
 				initialLightBackground = &b
 				if editTheme {
-					e.setLightBlueEditTheme()
+					e.setBlueEditTheme(*initialLightBackground)
 				} else {
 					e.setLightVSTheme()
 				}
@@ -373,7 +373,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 					b := true
 					initialLightBackground = &b
 					if editTheme {
-						e.setLightBlueEditTheme()
+						e.setBlueEditTheme(*initialLightBackground)
 					} else {
 						e.setLightVSTheme()
 					}
@@ -386,7 +386,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 					b := true
 					initialLightBackground = &b
 					if editTheme {
-						e.setLightBlueEditTheme()
+						e.setBlueEditTheme(*initialLightBackground)
 					} else {
 						e.setLightVSTheme()
 					}

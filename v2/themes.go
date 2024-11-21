@@ -812,14 +812,14 @@ func NewDarkBlueEditTheme() Theme {
 		StatusErrorForeground:       vt100.Red,
 		StatusErrorBackground:       vt100.BackgroundCyan,
 		SearchHighlight:             vt100.Red,
-		MultiLineComment:            vt100.LightGray,
+		MultiLineComment:            vt100.White,
 		MultiLineString:             vt100.White,
 		HighlightForeground:         vt100.LightYellow,
 		HighlightBackground:         vt100.BackgroundBlue,
 		Git:                         vt100.White,
 		String:                      "lightyellow",
 		Keyword:                     "lightyellow",
-		Comment:                     "lightgray",
+		Comment:                     "white",
 		Type:                        "white",
 		Literal:                     "white",
 		Punctuation:                 "white",
@@ -1362,6 +1362,7 @@ func (e *Editor) setLightVSTheme() {
 }
 
 // setBlueEditTheme sets a blue/yellow/gray theme, for light or dark backgrounds
+// if given "true" as an argument, then a light background is assumed
 func (e *Editor) setBlueEditTheme(bs ...bool) {
 	if len(bs) == 1 {
 		initialLightBackground = &(bs[0])
@@ -1371,11 +1372,6 @@ func (e *Editor) setBlueEditTheme(bs ...bool) {
 	} else {
 		e.SetTheme(NewDarkBlueEditTheme())
 	}
-}
-
-// setLightBlueEditTheme sets a blue/yellow/gray theme, for light backgrounds
-func (e *Editor) setLightBlueEditTheme() {
-	e.SetTheme(NewLightBlueEditTheme())
 }
 
 // setGratTheme sets a gray theme
