@@ -15,90 +15,111 @@ const maxSearchHistoryEntries = 1024
 
 // SearchHistory is a map from timestamp to search term (string).
 // Assume no timestamp collisions for when the user is adding search terms, because the user is not that fast.
-type SearchHistory map[time.Time]string
+type SearchHistory struct {
+	mut          sync.RWMutex
+	entries      map[time.Time]string
+	filename     string
+	failedToLoad bool
+}
 
-var (
-	searchHistoryFilename = filepath.Join(userCacheDir, "o", "search.txt")
-	searchHistory         SearchHistory
-	searchHistoryMutex    sync.RWMutex
+const (
+	shortSearchFilename  = "search.txt"
+	shortReplaceFilename = "replace.txt"
 )
 
-// Empty checks if the search history has no entries
-func (sh SearchHistory) Empty() bool {
-	searchHistoryMutex.RLock()
-	defer searchHistoryMutex.RUnlock()
+var (
+	searchHistory  = NewSearchHistory(shortSearchFilename)
+	replaceHistory = NewSearchHistory(shortReplaceFilename)
+)
 
-	return len(sh) == 0
+// NewSearchHistory creates a new blank SearchHistory struct
+func NewSearchHistory(shortFilename string) *SearchHistory {
+	return &SearchHistory{
+		mut:          sync.RWMutex{},
+		entries:      make(map[time.Time]string),
+		filename:     filepath.Join(userCacheDir, "o", shortFilename),
+		failedToLoad: false,
+	}
+}
+
+// Empty checks if the search history has no entries
+func (sh *SearchHistory) Empty() bool {
+	sh.mut.RLock()
+	defer sh.mut.RUnlock()
+
+	return len(sh.entries) == 0
 }
 
 // AddWithTimestamp adds a new line number for the given absolute path, and also records the current time
-func (sh SearchHistory) AddWithTimestamp(searchTerm string, timestamp int64) {
-	searchHistoryMutex.Lock()
-	defer searchHistoryMutex.Unlock()
+func (sh *SearchHistory) AddWithTimestamp(searchTerm string, timestamp int64) {
+	sh.mut.RLock()
+	defer sh.mut.RUnlock()
 
-	sh[time.Unix(timestamp, 0)] = searchTerm
+	sh.entries[time.Unix(timestamp, 0)] = searchTerm
 }
 
 // Add adds a search term to the search history, and also sets the timestamp
-func (sh SearchHistory) Add(searchTerm string) {
+func (sh *SearchHistory) Add(searchTerm string) {
 	sh.AddWithTimestamp(searchTerm, time.Now().Unix())
 }
 
 // Set adds or updates the given search term
-func (sh SearchHistory) Set(searchTerm string) {
+func (sh *SearchHistory) Set(searchTerm string) {
 	// First check if an existing entry can be removed
-	searchHistoryMutex.RLock()
-	for k, v := range sh {
+	sh.mut.RLock()
+	for k, v := range sh.entries {
 		if v == searchTerm {
-			searchHistoryMutex.RUnlock()
-			searchHistoryMutex.Lock()
-			delete(sh, k)
-			searchHistoryMutex.Unlock()
-			searchHistoryMutex.RLock() // to be unlocked after the loop
+			sh.mut.RUnlock()
+			sh.mut.Lock()
+			delete(sh.entries, k)
+			sh.mut.Unlock()
+			sh.mut.RLock() // to be unlocked after the loop
 			break
 		}
 	}
-	searchHistoryMutex.RUnlock()
+	sh.mut.RUnlock()
 
 	// If not, just add the new entry
 	sh.Add(searchTerm)
 }
 
 // SetWithTimestamp adds or updates the given search term
-func (sh SearchHistory) SetWithTimestamp(searchTerm string, timestamp int64) {
+func (sh *SearchHistory) SetWithTimestamp(searchTerm string, timestamp int64) {
 	// First check if an existing entry can be removed
-	searchHistoryMutex.RLock()
-	for k, v := range sh {
+	sh.mut.RLock()
+	for k, v := range sh.entries {
 		if v == searchTerm {
-			searchHistoryMutex.RUnlock()
-			searchHistoryMutex.Lock()
-			delete(sh, k)
-			searchHistoryMutex.Unlock()
-			searchHistoryMutex.RLock() // to be unlocked after the loop
+			sh.mut.RUnlock()
+			sh.mut.Lock()
+			delete(sh.entries, k)
+			sh.mut.Unlock()
+			sh.mut.RLock() // to be unlocked after the loop
 			break
 		}
 	}
-	searchHistoryMutex.RUnlock()
+	sh.mut.RUnlock()
 
 	// If not, just add the new entry
 	sh.AddWithTimestamp(searchTerm, timestamp)
 }
 
 // Save will attempt to save the per-absolute-filename recording of which line is active
-func (sh SearchHistory) Save(path string) error {
+func (sh *SearchHistory) Save() error {
 	if noWriteToCache {
 		return nil
 	}
 
-	searchHistoryMutex.RLock()
-	defer searchHistoryMutex.RUnlock()
+	sh.mut.RLock()
+	defer sh.mut.RUnlock()
+
+	path := sh.filename
 
 	// First create the folder, if needed, in a best effort attempt
 	folderPath := filepath.Dir(path)
 	os.MkdirAll(folderPath, os.ModePerm)
 
 	var sb strings.Builder
-	for timeStamp, searchTerm := range sh {
+	for timeStamp, searchTerm := range sh.entries {
 		sb.WriteString(fmt.Sprintf("%d:%s\n", timeStamp.Unix(), searchTerm))
 	}
 
@@ -108,22 +129,22 @@ func (sh SearchHistory) Save(path string) error {
 }
 
 // Len returns the current search history length
-func (sh SearchHistory) Len() int {
-	searchHistoryMutex.RLock()
-	defer searchHistoryMutex.RUnlock()
+func (sh *SearchHistory) Len() int {
+	sh.mut.RLock()
+	defer sh.mut.RUnlock()
 
-	return len(sh)
+	return len(sh.entries)
 }
 
 // GetIndex sorts the timestamps and indexes into that.
 // An empty string is returned if no element is found.
 // Indexes from oldest to newest entry if asc is true,
 // and from newest to oldest if asc is false.
-func (sh SearchHistory) GetIndex(index int, newestFirst bool) string {
-	searchHistoryMutex.RLock()
-	defer searchHistoryMutex.RUnlock()
+func (sh *SearchHistory) GetIndex(index int, newestFirst bool) string {
+	sh.mut.RLock()
+	defer sh.mut.RUnlock()
 
-	l := len(sh)
+	l := len(sh.entries)
 
 	if l == 0 || index < 0 || index >= l {
 		return ""
@@ -136,7 +157,7 @@ func (sh SearchHistory) GetIndex(index int, newestFirst bool) string {
 
 	timeEntries := make([]timeEntry, 0, l)
 
-	for timestamp := range sh {
+	for timestamp := range sh.entries {
 		timeEntries = append(timeEntries, timeEntry{timeObj: timestamp, unixTime: timestamp.Unix()})
 	}
 
@@ -154,18 +175,38 @@ func (sh SearchHistory) GetIndex(index int, newestFirst bool) string {
 	}
 
 	selectedTimestampKey := timeEntries[index].timeObj
-	return sh[selectedTimestampKey]
+	return sh.entries[selectedTimestampKey]
 }
 
-// LoadSearchHistory will attempt to load the map[time.Time]string from the given filename.
-// The returned map can be empty.
-func LoadSearchHistory(path string) (SearchHistory, error) {
-	sh := make(SearchHistory, 0)
+// LoadSearchHistory attempts to load the search history.
+// If there are errors, then failedToLoad is set (not critical, fine to ignore)
+// and an empty struct is returned.
+func LoadSearchHistory() *SearchHistory {
+	return LoadSearchOrReplaceHistory(shortSearchFilename)
+}
 
-	contents, err := os.ReadFile(path)
+// LoadReplaceHistory attempts to load the replace history.
+// If there are errors, then failedToLoad is set (not critical, fine to ignore)
+// and an empty struct is returned.
+func LoadReplaceHistory() *SearchHistory {
+	return LoadSearchOrReplaceHistory(shortReplaceFilename)
+}
+
+// LoadSearchOrReplaceHistory will attempt to load the map[time.Time]string from either the
+// search or the replace history file (a given short filename).
+// If there are errors, then failedToLoad is set (not critical, fine to ignore)
+// and an empty struct is returned.
+func LoadSearchOrReplaceHistory(shortFilename string) *SearchHistory {
+	sh := NewSearchHistory(shortFilename) // usually search.txt or replace.txt
+
+	contents, err := os.ReadFile(sh.filename)
 	if err != nil {
-		// Could not read file, return an empty map and an error
-		return sh, err
+		sh.mut.Lock()
+		sh.failedToLoad = true
+		sh.mut.Unlock()
+
+		// Could not read file, return an empty map
+		return sh
 	}
 
 	// The format of the file is, per line:
@@ -192,17 +233,14 @@ func LoadSearchHistory(path string) (SearchHistory, error) {
 	}
 
 	// Return the search history map. It could be empty, which is fine.
-	return sh, nil
+	return sh
 }
 
 // KeepNewest removes all entries from the searchHistory except the N entries with the highest UNIX timestamp
-func (sh SearchHistory) KeepNewest(n int) SearchHistory {
-	searchHistoryMutex.RLock()
-	l := len(sh)
-	searchHistoryMutex.RUnlock()
-
+func (sh *SearchHistory) KeepNewest(n int) {
+	l := sh.Len()
 	if l <= n {
-		return sh
+		return
 	}
 
 	keys := make([]int64, 0, l)
@@ -210,8 +248,8 @@ func (sh SearchHistory) KeepNewest(n int) SearchHistory {
 	// Note that if there are timestamp collisions, the loss of rembembering a search in a file is acceptable.
 	// Collisions are unlikely, though.
 
-	searchHistoryMutex.RLock()
-	for timestamp := range sh {
+	sh.mut.RLock()
+	for timestamp := range sh.entries {
 		keys = append(keys, timestamp.Unix())
 	}
 
@@ -222,23 +260,22 @@ func (sh SearchHistory) KeepNewest(n int) SearchHistory {
 
 	keys = keys[:n] // Keep only 'n' newest timestamps
 
-	newSearchHistory := make(SearchHistory, n)
+	newEntries := make(map[time.Time]string)
 
 	for _, timestamp := range keys {
 		t := time.Unix(timestamp, 0)
-		newSearchHistory[t] = sh[t]
+		newEntries[t] = sh.entries[t]
 	}
-	searchHistoryMutex.RUnlock()
+	sh.mut.RUnlock()
 
-	return newSearchHistory
+	sh.mut.Lock()
+	sh.entries = newEntries
+	sh.mut.Unlock()
 }
 
 // LastAdded returns the search entry that was added last
-func (sh SearchHistory) LastAdded() string {
-	searchHistoryMutex.RLock()
-	l := len(sh)
-	searchHistoryMutex.RUnlock()
-
+func (sh *SearchHistory) LastAdded() string {
+	l := sh.Len()
 	if l == 0 {
 		return ""
 	}
@@ -258,21 +295,22 @@ func (sh *SearchHistory) AddAndSave(searchTerm string) {
 	sh.Set(searchTerm)
 
 	// Cull the history
-	searchHistoryMutex.RLock()
-	l := len(*sh)
-	searchHistoryMutex.RUnlock()
-
+	l := sh.Len()
 	if l > maxSearchHistoryEntries {
-		culledSearchHistory := sh.KeepNewest(maxSearchHistoryEntries)
-
-		searchHistoryMutex.Lock()
-		*sh = culledSearchHistory
-		searchHistoryMutex.Unlock()
+		sh.KeepNewest(maxSearchHistoryEntries)
 	}
 
 	// Save the search history in the background
 	go func() {
 		// Ignore any errors, since saving the search history is not that important
-		_ = sh.Save(searchHistoryFilename)
+		_ = sh.Save()
 	}()
+}
+
+// FailedToLoad returns true if the file was attempted loaded but that failed
+func (sh *SearchHistory) FailedToLoad() bool {
+	sh.mut.RLock()
+	b := sh.failedToLoad
+	sh.mut.RUnlock()
+	return b
 }

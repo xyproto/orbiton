@@ -276,17 +276,23 @@ func (e *Editor) GoToNextMatch(c *vt100.Canvas, status *StatusBar, wrap, forward
 
 // SearchMode will enter the interactive "search mode" where the user can type in a string and then press return to search
 func (e *Editor) SearchMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, clearSearch, searchForward bool, undo *Undo) {
-	// Load the search history if needed. Ignore any errors.
-	if len(searchHistory) == 0 {
-		searchHistory, _ = LoadSearchHistory(searchHistoryFilename)
+	// Attempt to load the search history. Ignores errors, but does not try to load it twice if it fails.
+	if searchHistory.Len() == 0 && !searchHistory.FailedToLoad() {
+		searchHistory = LoadSearchHistory()
 	}
+	// Attempt to load the replace history. Ignores errors, but does not try to load it twice if it fails.
+	if replaceHistory.Len() == 0 && !replaceHistory.FailedToLoad() {
+		replaceHistory = LoadReplaceHistory()
+	}
+
 	var (
-		previousSearch     string
-		key                string
-		initialLocation    = e.DataY().LineNumber()
-		searchHistoryIndex int
-		replaceMode        bool
-		timeout            = 500 * time.Millisecond
+		previousSearch      string
+		key                 string
+		initialLocation     = e.DataY().LineNumber()
+		searchHistoryIndex  int
+		replaceHistoryIndex int
+		replaceMode         bool
+		timeout             = 500 * time.Millisecond
 	)
 
 	searchPrompt := "Search:"
@@ -380,34 +386,52 @@ AGAIN:
 					status.ShowNoTimeout(c, e)
 				}
 			}
-		case "↑": // previous in the search history
-			if searchHistory.Empty() {
+		case "↑": // arrow up, use the previous search or replacement string from the search or replacement history
+			if (!replaceMode && searchHistory.Empty()) || (replaceMode && replaceHistory.Empty()) {
 				break
 			}
-			searchHistoryIndex--
-			if searchHistoryIndex < 0 {
-				// wraparound
-				searchHistoryIndex = searchHistory.Len() - 1
-			}
 			const newestFirst = false
-			s = searchHistory.GetIndex(searchHistoryIndex, newestFirst)
+			if !replaceMode {
+				searchHistoryIndex--
+				if searchHistoryIndex < 0 {
+					// wraparound
+					searchHistoryIndex = searchHistory.Len() - 1
+				}
+				s = searchHistory.GetIndex(searchHistoryIndex, newestFirst)
+			} else {
+				replaceHistoryIndex--
+				if replaceHistoryIndex < 0 {
+					// wraparound
+					replaceHistoryIndex = replaceHistory.Len() - 1
+				}
+				s = replaceHistory.GetIndex(replaceHistoryIndex, newestFirst)
+			}
 			if previousSearch == "" {
 				e.SetSearchTermWithTimeout(c, status, s, false, timeout)
 			}
 			status.ClearAll(c, true)
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
-		case "↓": // next in the search history
-			if searchHistory.Empty() {
+		case "↓": // arrow down, use the next search or replacement string from the search or replacement history
+			if (!replaceMode && searchHistory.Empty()) || (replaceMode && replaceHistory.Empty()) {
 				break
 			}
-			searchHistoryIndex++
-			if searchHistoryIndex >= searchHistory.Len() {
-				// wraparound
-				searchHistoryIndex = 0
-			}
 			const newestFirst = false
-			s = searchHistory.GetIndex(searchHistoryIndex, newestFirst)
+			if !replaceMode {
+				searchHistoryIndex++
+				if searchHistoryIndex >= searchHistory.Len() {
+					// wraparound
+					searchHistoryIndex = 0
+				}
+				s = searchHistory.GetIndex(searchHistoryIndex, newestFirst)
+			} else {
+				replaceHistoryIndex++
+				if replaceHistoryIndex >= replaceHistory.Len() {
+					// wraparound
+					replaceHistoryIndex = 0
+				}
+				s = replaceHistory.GetIndex(replaceHistoryIndex, newestFirst)
+			}
 			if previousSearch == "" {
 				e.SetSearchTermWithTimeout(c, status, s, false, timeout)
 			}
@@ -477,9 +501,13 @@ AGAIN:
 		} else {
 			status.SetMessageAfterRedraw("Replaced " + searchFor + " with " + replaceWith + ", once")
 		}
-		// Save "searchFor" to the search history
+		// Save "searchFor" to the search or replace history, if we are on a fast enough system
 		if trimmedSearchString := strings.TrimSpace(searchFor); trimmedSearchString != "" && !e.slowLoad {
-			searchHistory.AddAndSave(trimmedSearchString)
+			if !replaceMode {
+				searchHistory.AddAndSave(trimmedSearchString)
+			} else {
+				replaceHistory.AddAndSave(trimmedSearchString)
+			}
 		}
 		// Set up a redraw and return
 		e.redraw.Store(true)
@@ -512,9 +540,13 @@ AGAIN:
 		} else {
 			status.messageAfterRedraw = fmt.Sprintf("Replaced %d instance%s of %s with %s", instanceCount, extraS, previousSearch, s)
 		}
-		// Save "searchFor" to the search history
+		// Save "searchFor" to the search or replace history, if we are on a fast enough system
 		if trimmedSearchString := strings.TrimSpace(string(searchForBytes)); trimmedSearchString != "" && !e.slowLoad {
-			searchHistory.AddAndSave(trimmedSearchString)
+			if !replaceMode {
+				searchHistory.AddAndSave(trimmedSearchString)
+			} else {
+				replaceHistory.AddAndSave(trimmedSearchString)
+			}
 		}
 		// Set up a redraw and return
 		e.redraw.Store(true)
@@ -524,12 +556,20 @@ AGAIN:
 	if pressedReturn {
 		// Return to the first location before performing the actual search
 		e.GoToLineNumber(initialLocation, c, status, false)
-		// Save "s" to the search history
+		// Save "s" to the search or replace history, if we are on a fast enough system
 		if trimmedSearchString := strings.TrimSpace(s); trimmedSearchString != "" && !e.slowLoad {
-			searchHistory.AddAndSave(trimmedSearchString)
+			if !replaceMode {
+				searchHistory.AddAndSave(trimmedSearchString)
+			} else {
+				replaceHistory.AddAndSave(trimmedSearchString)
+			}
 		} else if !searchHistory.Empty() {
 			const newestFirst = false
-			s = searchHistory.GetIndex(searchHistoryIndex, newestFirst)
+			if !replaceMode {
+				s = searchHistory.GetIndex(searchHistoryIndex, newestFirst)
+			} else {
+				s = replaceHistory.GetIndex(searchHistoryIndex, newestFirst)
+			}
 			e.SetSearchTerm(c, status, s, false) // no timeout
 		}
 	}

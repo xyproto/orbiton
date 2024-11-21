@@ -6,13 +6,13 @@ import (
 )
 
 func TestGetIndex(t *testing.T) {
-	sh := make(SearchHistory)
+	sh := NewSearchHistory("asdf.txt")
 	now := time.Now()
 
 	// Add some entries to the search history
-	sh[now.Add(-1*time.Hour)] = "search1"
-	sh[now.Add(-2*time.Hour)] = "search2"
-	sh[now.Add(-3*time.Hour)] = "search3"
+	sh.entries[now.Add(-1*time.Hour)] = "search1"
+	sh.entries[now.Add(-2*time.Hour)] = "search2"
+	sh.entries[now.Add(-3*time.Hour)] = "search3"
 
 	tests := []struct {
 		index         int
@@ -35,13 +35,8 @@ func TestGetIndex(t *testing.T) {
 }
 
 func TestKeepNewest(t *testing.T) {
-	sh := make(SearchHistory)
+	sh := NewSearchHistory("asdf.txt")
 	now := time.Now()
-
-	// Add some entries to the search history
-	sh[now.Add(-1*time.Hour)] = "search1"
-	sh[now.Add(-2*time.Hour)] = "search2"
-	sh[now.Add(-3*time.Hour)] = "search3"
 
 	tests := []struct {
 		n           int
@@ -54,8 +49,16 @@ func TestKeepNewest(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		newSh := sh.KeepNewest(test.n)
-		gotLen := newSh.Len()
+
+		sh.entries = make(map[time.Time]string)
+
+		// Add some entries to the search history
+		sh.entries[now.Add(-1*time.Hour)] = "search1"
+		sh.entries[now.Add(-2*time.Hour)] = "search2"
+		sh.entries[now.Add(-3*time.Hour)] = "search3"
+
+		sh.KeepNewest(test.n)
+		gotLen := sh.Len()
 		if gotLen != test.expectedLen {
 			t.Errorf("Test %d: expected length %d, got %d", i, test.expectedLen, gotLen)
 		}
