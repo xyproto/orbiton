@@ -190,9 +190,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		for _, word := range cssWords {
 			if strings.Contains(word, "-") {
 				fields := strings.Split(word, "-")
-				for _, field := range fields {
-					massagedWords = append(massagedWords, field)
-				}
+				massagedWords = append(massagedWords, fields...)
 			} else {
 				massagedWords = append(massagedWords, word)
 			}
