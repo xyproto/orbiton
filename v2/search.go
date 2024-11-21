@@ -501,13 +501,13 @@ AGAIN:
 		} else {
 			status.SetMessageAfterRedraw("Replaced " + searchFor + " with " + replaceWith + ", once")
 		}
-		// Save "searchFor" to the search or replace history, if we are on a fast enough system
+		// Save "searchFor" to the search history, if we are on a fast enough system
 		if trimmedSearchString := strings.TrimSpace(searchFor); trimmedSearchString != "" && !e.slowLoad {
-			if !replaceMode {
-				searchHistory.AddAndSave(trimmedSearchString)
-			} else {
-				replaceHistory.AddAndSave(trimmedSearchString)
-			}
+			searchHistory.AddAndSave(trimmedSearchString)
+		}
+		// Save "replaceWidth" to the replace history, if we are on a fast enough system
+		if trimmedReplaceString := strings.TrimSpace(replaceWith); trimmedReplaceString != "" && !e.slowLoad {
+			replaceHistory.AddAndSave(trimmedReplaceString)
 		}
 		// Set up a redraw and return
 		e.redraw.Store(true)
@@ -540,13 +540,13 @@ AGAIN:
 		} else {
 			status.messageAfterRedraw = fmt.Sprintf("Replaced %d instance%s of %s with %s", instanceCount, extraS, previousSearch, s)
 		}
-		// Save "searchFor" to the search or replace history, if we are on a fast enough system
+		// Save "searchForBytes" to the search history, if we are on a fast enough system
 		if trimmedSearchString := strings.TrimSpace(string(searchForBytes)); trimmedSearchString != "" && !e.slowLoad {
-			if !replaceMode {
-				searchHistory.AddAndSave(trimmedSearchString)
-			} else {
-				replaceHistory.AddAndSave(trimmedSearchString)
-			}
+			searchHistory.AddAndSave(trimmedSearchString)
+		}
+		// Save "replaceWidthBytes" to the replace history, if we are on a fast enough system
+		if trimmedReplaceString := strings.TrimSpace(string(replaceWithBytes)); trimmedReplaceString != "" && !e.slowLoad {
+			replaceHistory.AddAndSave(trimmedReplaceString)
 		}
 		// Set up a redraw and return
 		e.redraw.Store(true)
@@ -557,19 +557,13 @@ AGAIN:
 		// Return to the first location before performing the actual search
 		e.GoToLineNumber(initialLocation, c, status, false)
 		// Save "s" to the search or replace history, if we are on a fast enough system
+
+		// Save "s" to the search history, if we are on a fast enough system
 		if trimmedSearchString := strings.TrimSpace(s); trimmedSearchString != "" && !e.slowLoad {
-			if !replaceMode {
-				searchHistory.AddAndSave(trimmedSearchString)
-			} else {
-				replaceHistory.AddAndSave(trimmedSearchString)
-			}
+			searchHistory.AddAndSave(trimmedSearchString)
 		} else if !searchHistory.Empty() {
 			const newestFirst = false
-			if !replaceMode {
-				s = searchHistory.GetIndex(searchHistoryIndex, newestFirst)
-			} else {
-				s = replaceHistory.GetIndex(searchHistoryIndex, newestFirst)
-			}
+			s = searchHistory.GetIndex(searchHistoryIndex, newestFirst)
 			e.SetSearchTerm(c, status, s, false) // no timeout
 		}
 	}
