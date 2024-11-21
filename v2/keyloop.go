@@ -1962,7 +1962,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				break
 			}
 
-			status.Clear(c, false)
+			status.ClearAll(c, false)
 
 			// Check if we have jumped to a definition and need to go back
 			if len(backFunctions) > 0 {
@@ -2012,7 +2012,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					bookmark = e.pos.Copy()
 					// TODO: Modify the statusbar implementation so that extra spaces are not needed here.
 					s := "Bookmarked line " + e.LineNumber().String()
-					status.SetMessage("  " + s + "  ")
+					status.SetMessageAfterRedraw("  " + s + "  ")
 				} else if bookmark.LineNumber() == e.LineNumber() {
 					// bookmarking the same line twice: remove the bookmark
 					s := "Removed bookmark for line " + bookmark.LineNumber().String()
