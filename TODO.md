@@ -3,6 +3,7 @@
 ## General
 
 - [ ] Fix the syntax highlighting dependency to view strings with "-" as single words for CSS.
+- [ ] Fix the tab insertion in the middle of a line.
 - [ ] Fix and rewrite the multiline string detection for Python and Starlark.
 - [ ] Add a flag for only programming with arrow keys and space/return and esc, or joystick and A and B.
       Leverage Ollama to find good questions to ask and offer good options on screen.
