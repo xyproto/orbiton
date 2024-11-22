@@ -11,11 +11,7 @@ import (
 	"golang.org/x/image/draw"
 )
 
-// var imageResizeFunction = draw.NearestNeighbor
-// var imageResizeFunction = draw.ApproxBiLinear
-// var imageResizeFunction = draw.BiLinear
-var imageResizeFunction = draw.CatmullRom
-
+// displayImage loads and scales an image and tries to draw it to the terminal canvas
 func displayImage(c *vt100.Canvas, filename string, waitForKeypress bool) error {
 	// Find the width and height of the canvas
 	width := int(c.Width())
@@ -28,13 +24,17 @@ func displayImage(c *vt100.Canvas, filename string, waitForKeypress bool) error 
 		return fmt.Errorf("could not load %s: %s", filename, err)
 	}
 
-	imageHeight := nImage.Bounds().Max.Y - nImage.Bounds().Min.Y
-	imageWidth := nImage.Bounds().Max.X - nImage.Bounds().Min.X
+	imageHeight := float64(nImage.Bounds().Max.Y - nImage.Bounds().Min.Y)
+	if imageHeight == 0 {
+		return errors.New("the height of the given image is 0")
+	}
+
+	imageWidth := float64(nImage.Bounds().Max.X - nImage.Bounds().Min.X)
 	if imageWidth == 0 {
 		return errors.New("the width of the given image is 0")
 	}
 
-	ratio := (float64(imageHeight) / float64(imageWidth)) * 4.0 // terminal "pixels" are a bit narrow, so multiply by 4.0
+	ratio := (imageHeight / imageWidth) * 4.0 // terminal "pixels" are a bit narrow, so multiply by 4.0
 	if ratio == 0 {
 		return errors.New("the ratio of the given image is 0")
 	}
@@ -49,6 +49,7 @@ func displayImage(c *vt100.Canvas, filename string, waitForKeypress bool) error 
 	resizedImage := image.NewRGBA(image.Rect(0, 0, width, height))
 
 	// Resize the image
+	imageResizeFunction := draw.CatmullRom // other alternatives: draw.NearestNeighbor, draw.ApproxBiLinear and draw.BiLinear
 	imageResizeFunction.Scale(resizedImage, resizedImage.Rect, nImage, nImage.Bounds(), draw.Over, nil)
 
 	// Draw the image to the canvas, using only the basic 16 colors
