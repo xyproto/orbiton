@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DOCKER_TAG='2.68.2'
+DOCKER_TAG='2.68.3'
 
 # Google Cloud
 PROJECT_ID='personal-306017'
