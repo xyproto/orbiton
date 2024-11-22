@@ -5,11 +5,13 @@ import (
 	"time"
 )
 
-// Keypress combo time limit
-const keypressComboTimeLimit = 100 * time.Millisecond
+const (
+	// Keypress combo time limit
+	keypressComboTimeLimit = 100 * time.Millisecond
 
-// Double tap time limit
-const doubleTapTimeLimit = 300 * time.Millisecond
+	// Double tap time limit
+	doubleTapTimeLimit = 300 * time.Millisecond
+)
 
 var khMut sync.RWMutex
 
