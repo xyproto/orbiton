@@ -19,6 +19,7 @@ require (
 	github.com/xyproto/digraph v1.2.0
 	github.com/xyproto/env/v2 v2.5.2
 	github.com/xyproto/files v1.9.0
+	github.com/xyproto/fullname v1.1.0
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/lookslikegoasm v1.0.0
 	github.com/xyproto/mode v0.7.38
