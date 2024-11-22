@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/xyproto/env/v2"
+	"github.com/xyproto/fullname"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
@@ -27,7 +28,7 @@ var templatePrograms TemplatePrograms
 // It is done this way to only initialize the map once, but not at the time when the program starts.
 func GetTemplatePrograms() TemplatePrograms {
 	if templatePrograms == nil {
-		fullName := getFullName()
+		fullName := fullname.Get()
 		// NOTE: Cursor coordinates are (X, -Y)
 		templatePrograms = TemplatePrograms{
 			mode.Agda: {
