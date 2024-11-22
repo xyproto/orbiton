@@ -22,21 +22,19 @@ type SearchHistory struct {
 	failedToLoad bool
 }
 
-const (
-	shortSearchFilename  = "search.txt"
-	shortReplaceFilename = "replace.txt"
-)
-
 var (
-	searchHistory  = NewSearchHistory(shortSearchFilename)
-	replaceHistory = NewSearchHistory(shortReplaceFilename)
+	searchHistoryFilename  = filepath.Join(userCacheDir, "o", "search.txt")
+	replaceHistoryFilename = filepath.Join(userCacheDir, "o", "replace.txt")
+
+	searchHistory  = NewSearchHistory(searchHistoryFilename)
+	replaceHistory = NewSearchHistory(replaceHistoryFilename)
 )
 
 // NewSearchHistory creates a new blank SearchHistory struct
-func NewSearchHistory(shortFilename string) *SearchHistory {
+func NewSearchHistory(historyFilename string) *SearchHistory {
 	return &SearchHistory{
 		entries:      make(map[time.Time]string),
-		filename:     filepath.Join(userCacheDir, "o", shortFilename),
+		filename:     historyFilename,
 		mut:          sync.RWMutex{},
 		failedToLoad: false,
 	}
@@ -182,22 +180,22 @@ func (sh *SearchHistory) GetIndex(index int, newestFirst bool) string {
 // If there are errors, then failedToLoad is set (not critical, fine to ignore)
 // and an empty struct is returned.
 func LoadSearchHistory() *SearchHistory {
-	return LoadSearchOrReplaceHistory(shortSearchFilename)
+	return LoadSearchOrReplaceHistory(searchHistoryFilename)
 }
 
 // LoadReplaceHistory attempts to load the replace history.
 // If there are errors, then failedToLoad is set (not critical, fine to ignore)
 // and an empty struct is returned.
 func LoadReplaceHistory() *SearchHistory {
-	return LoadSearchOrReplaceHistory(shortReplaceFilename)
+	return LoadSearchOrReplaceHistory(replaceHistoryFilename)
 }
 
 // LoadSearchOrReplaceHistory will attempt to load the map[time.Time]string from either the
 // search or the replace history file (a given short filename).
 // If there are errors, then failedToLoad is set (not critical, fine to ignore)
 // and an empty struct is returned.
-func LoadSearchOrReplaceHistory(shortFilename string) *SearchHistory {
-	sh := NewSearchHistory(shortFilename) // usually search.txt or replace.txt
+func LoadSearchOrReplaceHistory(historyFilename string) *SearchHistory {
+	sh := NewSearchHistory(historyFilename)
 
 	contents, err := os.ReadFile(sh.filename)
 	if err != nil {
