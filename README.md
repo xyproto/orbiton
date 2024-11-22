@@ -183,7 +183,6 @@ These features are unique to `o`, as far as I am aware:
 * Using `mosh` may cause text rendering issues (in both `nvim` and `o`).
 * Pressing `cmd-v`, `cmd-x` and `cmd-c` on macOS only works when using the `og` GUI/VTE frontend. For `o`, `ctrl-v`, `ctrl-x` and `ctrl-c` can be used instead.
 * The Markdown table editor does not have scrolling, so the table must fit within the current terminal emulator width and height. Resize the terminal as needed.
-* Middle-click pasting (instead of pasting with `ctrl-v`) will only paste the first character.
 
 ## Hotkeys
 
