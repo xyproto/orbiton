@@ -2206,7 +2206,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					highlightTimerMut.Lock()
 					defer highlightTimerMut.Unlock()
 					justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
-					if !justMovedUpOrDownOrLeftOrRight && regularEditingRightNow {
+					if e.waitWithRedrawing.Load() {
+						e.waitWithRedrawing.Store(false)
+					} else if !justMovedUpOrDownOrLeftOrRight && regularEditingRightNow {
 						e.redraw.Store(true)
 						e.redrawCursor.Store(true)
 						e.RedrawAtEndOfKeyLoop(c, status, false, true)

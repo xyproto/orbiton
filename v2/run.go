@@ -110,6 +110,8 @@ func (e *Editor) Run() (string, bool, error) {
 
 // DrawOutput will draw a pane with the 5 last lines of the given output
 func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutput string, backgroundColor vt100.AttributeColor, repositionCursorAfterDrawing bool) {
+	e.waitWithRedrawing.Store(true)
+
 	minWidth := 32
 
 	// Get the last maxLine lines, and create a string slice

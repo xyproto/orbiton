@@ -72,12 +72,13 @@ type Editor struct {
 	highlightCurrentLine       bool            // highlight the current line
 	highlightCurrentText       bool            // highlight the current text (not the entire line)
 	// atomic.Bool are used for values that might be read when redrawing text asynchronously
-	changed      atomic.Bool // has the contents changed, since last save?
-	redraw       atomic.Bool // if the contents should be redrawn in the next loop
-	redrawCursor atomic.Bool // if the cursor should be moved to the location it is supposed to be
-	drawProgress atomic.Bool // used for drawing the progress character on the right side
-	drawFuncName atomic.Bool // used when drawing the function name in the top right corner
-	nanoMode     atomic.Bool // emulate GNU Nano
+	changed           atomic.Bool // has the contents changed, since last save?
+	redraw            atomic.Bool // if the contents should be redrawn in the next loop
+	redrawCursor      atomic.Bool // if the cursor should be moved to the location it is supposed to be
+	drawProgress      atomic.Bool // used for drawing the progress character on the right side
+	drawFuncName      atomic.Bool // used when drawing the function name in the top right corner
+	nanoMode          atomic.Bool // emulate GNU Nano
+	waitWithRedrawing atomic.Bool // wait with redrawing until a key is pressed
 }
 
 // Copy makes a copy of an Editor struct, with most fields deep copied
@@ -127,7 +128,7 @@ func (e *Editor) Copy() *Editor {
 	e2.monitorAndReadOnly = e.monitorAndReadOnly
 	e2.primaryClipboard = e.primaryClipboard
 	e2.jumpToLetterMode = e.jumpToLetterMode
-	e2.nanoMode = e.nanoMode
+	e2.nanoMode.Store(e.nanoMode.Load())
 	e2.spellCheckMode = e.spellCheckMode
 	e2.createDirectoriesIfMissing = e.createDirectoriesIfMissing
 	e2.displayQuickHelp = e.displayQuickHelp
