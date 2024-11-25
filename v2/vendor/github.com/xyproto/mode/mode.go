@@ -29,6 +29,7 @@ const (
 	Crystal               // Crystal
 	D                     // D
 	Dart                  // Dart
+	Diff                  // Diff / patch
 	Docker                // For Dockerfiles
 	Email                 // For using o with ie. Mutt
 	Elm                   // Elm
@@ -160,6 +161,8 @@ func (mode Mode) String() string {
 		return "D"
 	case Dart:
 		return "Dart"
+	case Diff:
+		return "Diff / patch"
 	case Docker:
 		return "Docker"
 	case Elm:

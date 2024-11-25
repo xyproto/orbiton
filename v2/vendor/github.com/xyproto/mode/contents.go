@@ -81,6 +81,8 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 	} else if bytes.HasPrefix(firstLine, []byte("\" ")) {
 		// The first line starts with '" ', assume ViM script
 		return Vim, true
+	} else if bytes.HasPrefix(firstLine, []byte("diff -")) {
+		return Diff, true
 	}
 	// If more lines start with "# " than "// " or "/* ", and mode is blank,
 	// set the mode to modeConfig and enable syntax highlighting.
@@ -109,6 +111,8 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 					m = JSON
 					found = true
 				}
+			} else if bytes.HasPrefix(trimmedLine, []byte("+++ ")) || bytes.HasPrefix(trimmedLine, []byte("--- ")) {
+				return Diff, true
 			}
 			if bytes.Contains(trimmedLine, []byte("(")) || bytes.Contains(trimmedLine, []byte(")")) || bytes.Contains(trimmedLine, []byte("=")) {
 				// Might be a configuration file if most of the lines have (, ) or =

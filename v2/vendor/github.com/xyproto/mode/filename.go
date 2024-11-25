@@ -119,6 +119,8 @@ func Detect(filename string) Mode {
 			mode = D
 		case ".dart":
 			mode = Dart
+		case ".patch", ".diff":
+			mode = Diff
 		case ".elm":
 			mode = Elm
 		case ".eml":
