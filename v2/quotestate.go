@@ -118,6 +118,14 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 		} else if (q.mode == mode.Elm || q.mode == mode.Haskell) && prevRune == '{' {
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
+		} else if q.mode == mode.Diff && prevRune == '-' && prevPrevRune == '-' {
+			// Reset all comment state if we encounter '--' in a diff / patch file
+			q.hasSingleLineComment = false
+			q.startedMultiLineString = false
+			q.stoppedMultiLineComment = false
+			q.containsMultiLineComments = false
+			q.multiLineComment = false
+			q.hasSingleLineComment = false
 		}
 	case q.lastRuneInSingleLineCommentMarker:
 		// TODO: Simplify by checking q.None() first, and assuming that the len of the marker is > 1 if it's not 1 since it's not 0
