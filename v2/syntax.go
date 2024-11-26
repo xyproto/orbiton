@@ -305,6 +305,8 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		delKeywords := []string{"ret", "static"} // static is treated separately, as a special keyword
 		addAndRemoveKeywords(addKeywords, delKeywords)
 		fallthrough // Continue to the default
+	case mode.Text:
+		clearKeywords()
 	default:
 		addKeywords := []string{"elif", "endif", "ifeq", "ifneq"}
 		delKeywords := []string{"build", "done", "package", "require", "set", "super", "type", "when"}
