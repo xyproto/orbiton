@@ -10,7 +10,6 @@ import (
 	"sync/atomic"
 	"time"
 	"unicode"
-	"unicode/utf8"
 
 	"github.com/xyproto/clip"
 	"github.com/xyproto/digraph"
@@ -2140,7 +2139,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 				wrapped := e.InsertRune(c, r)
 				e.WriteRune(c)
-				if !wrapped && utf8.RuneCountInString(string(r)) > 0 {
+				if !wrapped {
 					// Move to the next position
 					e.Next(c)
 				}
