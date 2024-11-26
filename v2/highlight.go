@@ -9,6 +9,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/mattn/go-runewidth"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/stringpainter"
 	"github.com/xyproto/syntax"
@@ -60,7 +61,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		commentIndex                       int
 		k                                  int
 		lineRuneCount                      uint
-		lineStringCount                    uint
 		yp, xp                             uint
 		tx, ty                             uint
 		cw                                 uint
@@ -204,8 +204,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 		highlightCurrentLine = shouldHighlightNow && int(y) == e.pos.sy
 
-		lineRuneCount = 0   // per line rune counter, for drawing spaces afterwards (does not handle wide runes)
-		lineStringCount = 0 // per line string counter, for drawing spaces afterwards (handles wide runes)
+		lineRuneCount = 0 // per line rune counter, for drawing spaces afterwards
 
 		line = trimRightSpace(e.Line(LineIndex(y + offsetY)))
 
@@ -604,7 +603,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					if ra.R == '\t' {
 						c.Write(cx+lineRuneCount, cy+uint(y), fg, e.Background, tabString)
 						lineRuneCount += uint(e.indentation.PerTab)
-						lineStringCount += uint(e.indentation.PerTab)
 					} else {
 						letter = ra.R
 						if unicode.IsControl(letter) {
@@ -618,8 +616,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							} else {
 								c.WriteRuneBNoLock(tx, ty, fg, bg, letter)
 							}
-							lineRuneCount++                              // 1 rune
-							lineStringCount += uint(len(string(letter))) // 1 rune, expanded
+							lineRuneCount += uint(runewidth.RuneWidth(letter))
 						}
 					}
 				}
@@ -639,10 +636,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		// TODO: This may draw the wrong number of blanks, since lineRuneCount should really be the number of visible glyphs at this point. This is problematic for emojis.
 		yp = cy + uint(y)
 		xp = cx + lineRuneCount
-		if highlightCurrentLine && e.highlightCurrentLine {
-			c.WriteRunesB(xp, yp, e.HighlightForeground, e.HighlightBackground, ' ', cw-lineRuneCount)
-		} else {
-			c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', cw-lineRuneCount)
+		if int(cw-lineRuneCount) > 0 {
+			if highlightCurrentLine && e.highlightCurrentLine {
+				c.WriteRunesB(xp, yp, e.HighlightForeground, e.HighlightBackground, ' ', cw-lineRuneCount)
+			} else {
+				c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', cw-lineRuneCount)
+			}
 		}
 
 		// Draw a dotted line to remind the user of where the N-column limit is
