@@ -10,6 +10,7 @@ require (
 	github.com/ianlancetaylor/demangle v0.0.0-20240912202439-0a2b6291aafd
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/klauspost/asmfmt v1.3.2
+	github.com/mattn/go-runewidth v0.0.16
 	github.com/sajari/fuzzy v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/xyproto/autoimport v1.5.2
@@ -49,6 +50,7 @@ require (
 	github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d // indirect
 	github.com/peterhellberg/gfx v0.0.0-20240717094052-4fa835cea5a4 // indirect
 	github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
 	github.com/xyproto/burnfont v1.2.3 // indirect
