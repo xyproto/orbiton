@@ -695,3 +695,9 @@ func (e *Editor) ChopLine(line string, viewportWidth int) string {
 	}
 	return screenLine
 }
+
+// LastDataPosition returns the last X index for this line, for the data (does not expand tabs)
+// Can be negative, if the line is empty.
+func (e *Editor) LastDataPosition(n LineIndex) int {
+	return utf8.RuneCountInString(e.Line(n)) - 1
+}
