@@ -2188,22 +2188,6 @@ func (e *Editor) NewLine(c *vt100.Canvas, status *StatusBar) {
 	e.Down(c, status)
 }
 
-// ChopLine takes a string where the tabs have been expanded
-// and scrolls it + chops it up for display in the current viewport.
-// e.pos.offsetX and the given viewportWidth are respected.
-func (e *Editor) ChopLine(line string, viewportWidth int) string {
-	var screenLine string
-	// Shorten the screen line to account for the X offset
-	if utf8.RuneCountInString(line) > e.pos.offsetX {
-		screenLine = line[e.pos.offsetX:]
-	}
-	// Shorten the screen line to account for the terminal width
-	if len(string(screenLine)) >= viewportWidth {
-		screenLine = screenLine[:viewportWidth]
-	}
-	return screenLine
-}
-
 // HorizontalScrollIfNeeded will scroll along the X axis, if needed
 func (e *Editor) HorizontalScrollIfNeeded(c *vt100.Canvas) {
 	x := e.pos.sx
