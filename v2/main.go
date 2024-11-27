@@ -72,6 +72,8 @@ func main() {
 		ollamaTabCompletion    bool
 		catFlag                bool
 		batFlag                bool
+		fmtFlag                bool
+		buildFlag              bool
 	)
 
 	pflag.BoolVarP(&copyFlag, "copy", "c", false, "copy a file into the clipboard and quit")
@@ -89,7 +91,9 @@ func main() {
 	pflag.BoolVarP(&nanoMode, "nano", "a", false, "Nano/Pico mode")
 	pflag.BoolVarP(&ollamaTabCompletion, "ollama", "o", env.Bool("ORBITON_OLLAMA"), "use Ollama for tab completion")
 	pflag.BoolVarP(&catFlag, "list", "t", false, "List the file with colors instead of editing it")
-	pflag.BoolVarP(&batFlag, "bat", "b", false, "Cat the file with colors instead of editing it, using bat")
+	pflag.BoolVarP(&batFlag, "bat", "B", false, "Cat the file with colors instead of editing it, using bat")
+	pflag.BoolVarP(&fmtFlag, "fmt", "m", false, "Try to build the file instead of editing it")
+	pflag.BoolVarP(&buildFlag, "build", "b", false, "Try to build the file instead of editing it")
 
 	pflag.Parse()
 
