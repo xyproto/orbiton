@@ -92,7 +92,7 @@ func main() {
 	pflag.BoolVarP(&ollamaTabCompletion, "ollama", "o", env.Bool("ORBITON_OLLAMA"), "use Ollama for tab completion")
 	pflag.BoolVarP(&catFlag, "list", "t", false, "List the file with colors instead of editing it")
 	pflag.BoolVarP(&batFlag, "bat", "B", false, "Cat the file with colors instead of editing it, using bat")
-	pflag.BoolVarP(&fmtFlag, "fmt", "m", false, "Try to build the file instead of editing it")
+	pflag.BoolVarP(&fmtFlag, "fmt", "F", false, "Try to build the file instead of editing it")
 	pflag.BoolVarP(&buildFlag, "build", "b", false, "Try to build the file instead of editing it")
 
 	pflag.Parse()
