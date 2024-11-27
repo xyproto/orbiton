@@ -222,7 +222,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 				screenLine = e.ChopLine(line, int(cw))
 				// TODO: Check if just "fmt.Print" works here, for several terminal emulators
 				fmt.Println(screenLine)
-				lineRuneCount += uint(utf8.RuneCountInString(screenLine))
+				lineRuneCount += uint(runewidth.StringWidth(screenLine))
 			} else {
 				switch e.mode {
 				case mode.Email, mode.Git:
@@ -684,16 +684,32 @@ func (e *Editor) replaceColorTagsInURL(input string) string {
 // and scrolls it + chops it up for display in the current viewport.
 // e.pos.offsetX and the given viewportWidth are respected.
 func (e *Editor) ChopLine(line string, viewportWidth int) string {
-	var screenLine string
-	// Shorten the screen line to account for the X offset
-	if utf8.RuneCountInString(line) > e.pos.offsetX {
-		screenLine = line[e.pos.offsetX:]
+	var (
+		resultRunes []rune
+		width       int
+		offset      int
+		w           int
+	)
+	// Skip runes until the horizontal offset has been reached
+	for i, r := range line {
+		w = runewidth.RuneWidth(r)
+		if width+w > e.pos.offsetX {
+			offset = i
+			break
+		}
+		width += w
 	}
-	// Shorten the screen line to account for the terminal width
-	if len(string(screenLine)) >= viewportWidth {
-		screenLine = screenLine[:viewportWidth]
+	// Collect runes until the viewport width has been reached
+	width = 0
+	for _, r := range line[offset:] {
+		w = runewidth.RuneWidth(r)
+		if width+w > viewportWidth {
+			break
+		}
+		resultRunes = append(resultRunes, r)
+		width += w
 	}
-	return screenLine
+	return string(resultRunes)
 }
 
 // LastDataPosition returns the last X index for this line, for the data (does not expand tabs)
