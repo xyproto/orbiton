@@ -211,6 +211,7 @@ func quitToNroff(tty *vt100.TTY, backupDirectory string, w, h uint) error {
 
 	env.Unset("NROFF_FILENAME")
 	env.Unset("MANPAGER")
+	env.Set("ORBITON_SPACE")
 
 	env.Set("COLUMNS", strconv.Itoa(int(w)))
 	env.Set("LINES", strconv.Itoa(int(h)))
