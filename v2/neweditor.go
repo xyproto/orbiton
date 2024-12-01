@@ -476,7 +476,13 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		if fnord.stdin {
 			statusMessage += "Read from stdin"
 		} else {
-			statusMessage += "Loaded " + files.Relative(e.filename)
+			relFilename := files.Relative(e.filename)
+			absFilename, err := filepath.Abs(e.filename)
+			if err == nil && len(absFilename) < len(relFilename) {
+				statusMessage += "Loaded " + absFilename
+			} else {
+				statusMessage += "Loaded " + relFilename
+			}
 		}
 		if e.binaryFile {
 			statusMessage += " (binary)"
