@@ -42,6 +42,7 @@ func (e *Editor) GetFormatMap() FormatMap {
 			mode.Kotlin:     exec.Command("ktlint", "-F"),
 			mode.Lua:        exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"),
 			mode.OCaml:      exec.Command("ocamlformat"),
+			mode.Odin:       exec.Command("odinfmt", "-w"),
 			mode.Perl:       exec.Command("/usr/bin/vendor_perl/perltidy", "-se", "-b", "-i=2", "-ole=unix", "-bt=2", "-pt=2", "-sbt=2", "-ce"),
 			mode.Python:     exec.Command("black"),
 			mode.Rust:       exec.Command("rustfmt"),
