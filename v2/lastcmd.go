@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -58,4 +60,20 @@ func saveCommand(cmd *exec.Cmd) error {
 	// Write the contents, ignore the number of written bytes
 	_, err = f.WriteString(fmt.Sprintf("#!/bin/sh\n%s\n", commandString))
 	return err
+}
+
+// Read last command tries to read the last used external command, but also present it in a nice way
+func readLastCommand() (string, error) {
+	data, err := os.ReadFile(lastCommandFile)
+	if err != nil {
+		return "", errors.New("no available last command")
+	}
+	// Remove the shebang
+	firstLineAndRest := strings.SplitN(string(data), "\n", 2)
+	if len(firstLineAndRest) != 2 || !strings.HasPrefix(firstLineAndRest[0], "#") {
+		return "", fmt.Errorf("unrecognized contents in %s", lastCommandFile)
+	}
+	theRest := strings.TrimSpace(firstLineAndRest[1])
+	replaced := regexp.MustCompile(`/tmp/o\..*$`).ReplaceAllString(theRest, "")
+	return replaced, nil
 }
