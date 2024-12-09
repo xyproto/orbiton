@@ -1339,3 +1339,44 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 
 	}()
 }
+
+// Do not start a full editor, only try to build the given FilenameOrData
+func OnlyBuild(tty *vt100.TTY, fnord FilenameOrData) (string, error) {
+	// Create a Canvas for drawing onto the terminal
+	//vt100.Init()
+	c := vt100.NewCanvas()
+	//c.ShowCursor()
+	//vt100.EchoOff()
+
+	e, messageAfterRedraw, _, err := NewEditor(tty, c, fnord, 0, 0, NewDefaultTheme(), false, true, false, false, false, false)
+
+	//e, messageAfterRedraw, _, err := NewEditor(tty, nil, fnord, 0, 0, NewDefaultTheme(), false, true, false, false, false, false)
+	if err != nil {
+		return "", err
+	}
+
+	//e := NewSimpleEditor(80)
+
+	// Prepare a status bar
+	const statusDuration = 2700 * time.Millisecond
+	status := e.NewStatusBar(statusDuration, messageAfterRedraw)
+
+	outputExecutable, err := e.BuildOrExport(c, tty, status)
+
+	//outputExecutable, err := e.BuildOrExport(nil, nil, status)
+	if err != nil {
+		return "", err
+	}
+
+	finalMessage := ""
+	if lastCommand, err := readLastCommand(); err == nil { // success
+		finalMessage += fmt.Sprintf("Ran %s\n", lastCommand)
+	}
+	finalMessage += fmt.Sprintf("Built %s", filepath.Join(filepath.Dir(e.filename), outputExecutable))
+	if msg := strings.TrimSpace(status.msg); status.isError && msg != "" {
+		return "", errors.New(msg)
+	} else if msg != "" {
+		finalMessage += "\n" + msg
+	}
+	return finalMessage, nil
+}
