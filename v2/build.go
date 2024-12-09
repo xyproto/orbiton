@@ -534,14 +534,17 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 // BuildOrExport will try to build the source code or export the document.
 // Returns a status message and then true if an action was performed and another true if compilation/testing worked out.
 // Will also return the executable output file, if available after compilation.
-func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, filename string, background bool) (string, error) {
+func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) (string, error) {
+	// Build or export in the background
+	background := e.mode == mode.Markdown
+
 	// Clear the status messages, if we have a status bar
 	if status != nil {
 		status.ClearAll(c, false)
 	}
 
 	// Find the absolute path to the source file
-	sourceFilename, err := filepath.Abs(filename)
+	sourceFilename, err := filepath.Abs(e.filename)
 	if err != nil {
 		return "", err
 	}
@@ -752,7 +755,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 		errorMessage := "Build error"
 
 		if e.mode == mode.Python {
-			if errorLine, errorColumn, errorMessage := ParsePythonError(string(output), filepath.Base(filename)); errorLine != -1 {
+			if errorLine, errorColumn, errorMessage := ParsePythonError(string(output), filepath.Base(e.filename)); errorLine != -1 {
 				ignoreIndentation := true
 				e.MoveToLineColumnNumber(c, status, errorLine, errorColumn, ignoreIndentation)
 				return "", errors.New(errorMessage)
@@ -1089,7 +1092,7 @@ func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBa
 					locationFields := strings.SplitN(line, ":", 3)                  // Already checked for 2 colons in line
 					filenameFields := strings.SplitN(locationFields[0], " --> ", 2) // [0] is fine, already checked for " ---> "
 					errorFilename := strings.TrimSpace(filenameFields[1])           // [1] is fine
-					if filename != errorFilename {
+					if e.filename != errorFilename {
 						return "", errors.New("In " + errorFilename + ": " + errorMessage)
 					}
 					errorY := locationFields[1]
@@ -1303,7 +1306,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 
 		// Build or export the current file
 		// The last argument is if the command should run in the background or not
-		outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
+		outputExecutable, err := e.BuildOrExport(c, tty, status)
 		// All clear when it comes to status messages and redrawing
 		status.ClearAll(c, false)
 		if err != nil {

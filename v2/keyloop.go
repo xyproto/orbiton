@@ -827,8 +827,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						break
 					} // e.gdb == nil
 					// Build or export the current file
-					// The last argument is if the command should run in the background or not
-					outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
+					outputExecutable, err := e.BuildOrExport(c, tty, status)
 					// All clear when it comes to status messages and redrawing
 					status.ClearAll(c, false)
 					if err != nil && err != errNoSuitableBuildCommand {

@@ -12,7 +12,6 @@ import (
 
 	"github.com/xyproto/clip"
 	"github.com/xyproto/files"
-	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
 
@@ -154,8 +153,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 				}
 			}
 			// Build or export the current file
-			// The last argument is if the command should run in the background or not
-			outputExecutable, err := e.BuildOrExport(c, tty, status, e.filename, e.mode == mode.Markdown)
+			outputExecutable, err := e.BuildOrExport(c, tty, status)
 			// All clear when it comes to status messages and redrawing
 			status.ClearAll(c, false)
 			if err != nil {

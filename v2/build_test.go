@@ -16,7 +16,8 @@ func ExampleEditor_BuildOrExport_goError() {
 	os.Chdir("test")
 	// The rename is so that "err.go" is not picked up by the CI tests
 	os.Rename("err_go", "err.go")
-	outputExecutable, err := e.BuildOrExport(nil, nil, nil, "err.go", false)
+	e.filename = "err.go"
+	outputExecutable, err := e.BuildOrExport(nil, nil, nil)
 	os.Rename("err.go", "err_go")
 	os.Chdir("..")
 	fmt.Printf("err.go [compilation error: %v] %s\n", err, outputExecutable)
@@ -29,7 +30,8 @@ func TestBuildOrExport(t *testing.T) {
 	e.mode = mode.Detect("err.rs")
 
 	os.Chdir("test")
-	_, err := e.BuildOrExport(nil, nil, nil, "err.rs", false)
+	e.filename = "err.rs"
+	_, err := e.BuildOrExport(nil, nil, nil)
 
 	os.Chdir("..")
 
