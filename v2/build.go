@@ -1340,7 +1340,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 	}()
 }
 
-// Do not start a full editor, only try to build the given FilenameOrData
+// OnlyBuild tries to build/export the given FilenameOrData, without starting a full editor
 func OnlyBuild(fnord FilenameOrData) (string, error) {
 	// Prepare an editor, without tty and canvas
 	e, _, _, err := NewEditor(nil, nil, fnord, 0, 0, NewDefaultTheme(), false, true, false, false, false, false)
@@ -1370,7 +1370,7 @@ func OnlyBuild(fnord FilenameOrData) (string, error) {
 		finalMessage += fmt.Sprintf("cd %s\n", directory) //filepath.Join(filepath.Dir(e.filename), outputExecutable)
 	}
 	if lastCommand, err := readLastCommand(); err == nil { // success
-		finalMessage += fmt.Sprintf("%s", lastCommand)
+		finalMessage += lastCommand
 	}
 	if msg := strings.TrimSpace(status.msg); status.isError && msg != "" {
 		return "", errors.New(msg)
