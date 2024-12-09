@@ -35,7 +35,6 @@ func quitError(tty *vt100.TTY, err error) {
 func quitMessage(tty *vt100.TTY, msg string) {
 	quitMut.Lock()
 	defer quitMut.Unlock()
-
 	if tty != nil {
 		tty.Close()
 	}
@@ -47,6 +46,22 @@ func quitMessage(tty *vt100.TTY, msg string) {
 	vt100.ShowCursor(true)
 	vt100.SetXY(uint(0), uint(newLineCount+1))
 	os.Exit(1)
+}
+
+func quitMessageOK(tty *vt100.TTY, msg string) {
+	quitMut.Lock()
+	defer quitMut.Unlock()
+	if tty != nil {
+		tty.Close()
+	}
+	vt100.Reset()
+	vt100.Clear()
+	vt100.Close()
+	fmt.Fprintln(os.Stderr, msg)
+	newLineCount := strings.Count(msg, "\n")
+	vt100.ShowCursor(true)
+	vt100.SetXY(uint(0), uint(newLineCount+1))
+	os.Exit(0)
 }
 
 func quitMessageWithStack(tty *vt100.TTY, msg string) {
