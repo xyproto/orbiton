@@ -153,7 +153,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 				}
 			}
 			// Build or export the current file
-			outputExecutable, err := e.BuildOrExport(c, tty, status)
+			outputExecutable, err := e.BuildOrExport(tty, c, status)
 			// All clear when it comes to status messages and redrawing
 			status.ClearAll(c, false)
 			if err != nil {

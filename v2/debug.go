@@ -1147,7 +1147,7 @@ func (e *Editor) DebugStartSession(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 
 	var outputExecutable string
 	if optionalOutputExecutable == "" {
-		outputExecutable, err = e.BuildOrExport(c, tty, status)
+		outputExecutable, err = e.BuildOrExport(tty, c, status)
 		if err != nil {
 			e.debugMode = false
 			e.redrawCursor.Store(true)

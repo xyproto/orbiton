@@ -160,13 +160,9 @@ func main() {
 		n, headString, tailString, err := WriteClipboardToFile(filename, forceFlag, primaryClipboard)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			quitMut.Lock()
-			defer quitMut.Unlock()
 			os.Exit(1)
 		} else if n == 0 {
 			fmt.Fprintf(os.Stderr, "Wrote 0 bytes to %s\n", filename)
-			quitMut.Lock()
-			defer quitMut.Unlock()
 			os.Exit(1)
 		}
 		// chmod +x if this looks like a shell script or is in ie. /usr/bin
@@ -195,13 +191,9 @@ func main() {
 		n, tailString, err := SetClipboardFromFile(filename, primaryClipboard)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			quitMut.Lock()
-			defer quitMut.Unlock()
 			os.Exit(1)
 		} else if n == 0 {
 			fmt.Fprintf(os.Stderr, "Wrote 0 bytes to %s\n", filename)
-			quitMut.Lock()
-			defer quitMut.Unlock()
 			os.Exit(1)
 		}
 		plural := "s"
@@ -258,8 +250,6 @@ func main() {
 			// Start the game
 			if _, err := Game(); err != nil {
 				fmt.Fprintln(os.Stderr, err)
-				quitMut.Lock()
-				defer quitMut.Unlock()
 				os.Exit(1)
 			}
 			return
@@ -274,8 +264,6 @@ func main() {
 				if err := syscall.Exec(visudoPath, []string{"visudo"}, env); err != nil {
 					// Could not exec visudo
 					fmt.Fprintln(os.Stderr, err)
-					quitMut.Lock()
-					defer quitMut.Unlock()
 					os.Exit(1)
 				}
 				// No need to return here, because syscall.Exec replaces the current process
@@ -433,6 +421,14 @@ func main() {
 	} else if batFlag { // This should NOT happen if only ORBITON_BAT is set!
 		// List the file in a colorful way, using bat, and quit
 		quitBat(fnord.filename)
+	} else if buildFlag {
+		msg, err := OnlyBuild(fnord)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+		fmt.Println(msg)
+		os.Exit(0)
 	}
 
 	// Initialize the VT100 terminal
@@ -444,14 +440,6 @@ func main() {
 		os.Exit(1)
 	}
 	defer tty.Close()
-
-	if buildFlag {
-		msg, err := OnlyBuild(tty, fnord)
-		if err != nil {
-			quitError(tty, err)
-		}
-		quitMessageOK(tty, msg)
-	}
 
 	// Run the main editor loop
 	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, fmtFlag)

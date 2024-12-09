@@ -201,6 +201,10 @@ func (sb *StatusBar) ClearAll(c *vt100.Canvas, repositionCursorAfterDrawing bool
 
 // Show will draw a status message, then clear it after a certain delay
 func (sb *StatusBar) Show(c *vt100.Canvas, e *Editor) {
+	if c == nil {
+		return
+	}
+
 	mut.Lock()
 	statusBeingShown++
 	mut.Unlock()
@@ -259,6 +263,10 @@ func (sb *StatusBar) Show(c *vt100.Canvas, e *Editor) {
 // ShowNoTimeout will draw a status message that will not be
 // cleared after a certain timeout.
 func (sb *StatusBar) ShowNoTimeout(c *vt100.Canvas, e *Editor) {
+	if c == nil {
+		return
+	}
+
 	mut.RLock()
 	if sb.msg == "" && !sb.nanoMode {
 		mut.RUnlock()

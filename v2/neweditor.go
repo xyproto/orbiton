@@ -101,7 +101,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	}
 
 	// For non-highlighted files, adjust the word wrap
-	if !e.syntaxHighlight {
+	if !e.syntaxHighlight && c != nil {
 		// Adjust the word wrap if the terminal is too narrow
 		w := int(c.Width())
 		if w < e.wrapWidth {
@@ -454,7 +454,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	}
 
 	// Redraw the TUI, if needed
-	if e.redraw.Load() {
+	if e.redraw.Load() && c != nil {
 		e.Center(c)
 		e.HideCursorDrawLines(c, true, false, false)
 		e.redraw.Store(false)

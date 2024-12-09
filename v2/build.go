@@ -534,12 +534,12 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 // BuildOrExport will try to build the source code or export the document.
 // Returns a status message and then true if an action was performed and another true if compilation/testing worked out.
 // Will also return the executable output file, if available after compilation.
-func (e *Editor) BuildOrExport(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar) (string, error) {
+func (e *Editor) BuildOrExport(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar) (string, error) {
 	// Build or export in the background
 	background := e.mode == mode.Markdown
 
 	// Clear the status messages, if we have a status bar
-	if status != nil {
+	if status != nil && c != nil {
 		status.ClearAll(c, false)
 	}
 
@@ -1306,7 +1306,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 
 		// Build or export the current file
 		// The last argument is if the command should run in the background or not
-		outputExecutable, err := e.BuildOrExport(c, tty, status)
+		outputExecutable, err := e.BuildOrExport(tty, c, status)
 		// All clear when it comes to status messages and redrawing
 		status.ClearAll(c, false)
 		if err != nil {
@@ -1341,38 +1341,37 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 }
 
 // Do not start a full editor, only try to build the given FilenameOrData
-func OnlyBuild(tty *vt100.TTY, fnord FilenameOrData) (string, error) {
-	// Create a Canvas for drawing onto the terminal
-	//vt100.Init()
-	c := vt100.NewCanvas()
-	//c.ShowCursor()
-	//vt100.EchoOff()
-
-	e, messageAfterRedraw, _, err := NewEditor(tty, c, fnord, 0, 0, NewDefaultTheme(), false, true, false, false, false, false)
-
-	//e, messageAfterRedraw, _, err := NewEditor(tty, nil, fnord, 0, 0, NewDefaultTheme(), false, true, false, false, false, false)
+func OnlyBuild(fnord FilenameOrData) (string, error) {
+	// Prepare an editor, without tty and canvas
+	e, _, _, err := NewEditor(nil, nil, fnord, 0, 0, NewDefaultTheme(), false, true, false, false, false, false)
 	if err != nil {
 		return "", err
 	}
-
-	//e := NewSimpleEditor(80)
-
 	// Prepare a status bar
-	const statusDuration = 2700 * time.Millisecond
-	status := e.NewStatusBar(statusDuration, messageAfterRedraw)
+	status := e.NewStatusBar(2700*time.Millisecond, "")
 
-	outputExecutable, err := e.BuildOrExport(c, tty, status)
-
-	//outputExecutable, err := e.BuildOrExport(nil, nil, status)
+	// Try to change directory to where the file is at
+	directory, err := os.Getwd()
 	if err != nil {
+		directory = "."
+	}
+	if !fnord.stdin {
+		directory = filepath.Dir(fnord.filename)
+		_ = os.Chdir(directory)
+	}
+
+	// Build, without tty and canvas
+	if _, err := e.BuildOrExport(nil, nil, status); err != nil {
 		return "", err
 	}
-
+	// Return a message
 	finalMessage := ""
-	if lastCommand, err := readLastCommand(); err == nil { // success
-		finalMessage += fmt.Sprintf("Ran %s\n", lastCommand)
+	if directory != "." && directory != "" {
+		finalMessage += fmt.Sprintf("cd %s\n", directory) //filepath.Join(filepath.Dir(e.filename), outputExecutable)
 	}
-	finalMessage += fmt.Sprintf("Built %s", filepath.Join(filepath.Dir(e.filename), outputExecutable))
+	if lastCommand, err := readLastCommand(); err == nil { // success
+		finalMessage += fmt.Sprintf("%s", lastCommand)
+	}
 	if msg := strings.TrimSpace(status.msg); status.isError && msg != "" {
 		return "", errors.New(msg)
 	} else if msg != "" {

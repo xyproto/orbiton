@@ -840,7 +840,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						break
 					} // e.gdb == nil
 					// Build or export the current file
-					outputExecutable, err := e.BuildOrExport(c, tty, status)
+					outputExecutable, err := e.BuildOrExport(tty, c, status)
 					// All clear when it comes to status messages and redrawing
 					status.ClearAll(c, false)
 					if err != nil && err != errNoSuitableBuildCommand {

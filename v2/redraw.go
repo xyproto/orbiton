@@ -133,6 +133,10 @@ func (e *Editor) RepositionCursorIfNeeded() {
 
 // HideCursorDrawLines will draw a screen full of lines on the given canvas
 func (e *Editor) HideCursorDrawLines(c *vt100.Canvas, respectOffset, redrawCanvas, shouldHighlight bool) {
+	if c == nil {
+		return
+	}
+
 	// TODO: Use a channel for queuing up calls to the vt100 package to avoid race conditions
 
 	h := int(c.Height())
@@ -151,6 +155,10 @@ func (e *Editor) HideCursorDrawLines(c *vt100.Canvas, respectOffset, redrawCanva
 
 // InitialRedraw is called right before the main loop is started
 func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
+	if c == nil {
+		return
+	}
+
 	// Check if an extra reset is needed
 	if e.sshMode {
 		drawLines := true
