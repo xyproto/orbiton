@@ -107,6 +107,9 @@ var (
 
 	// Swift
 	swiftWords = []string{"associatedtype", "class", "deinit", "enum", "extension", "fileprivate", "func", "import", "init", "inout", "internal", "let", "open", "operator", "private", "precedencegroup", "protocol", "public", "rethrows", "static", "struct", "subscript", "typealias", "var", "break", "case", "catch", "continue", "default", "defer", "do", "else", "fallthrough", "for", "guard", "if", "in", "repeat", "return", "throw", "switch", "where", "while", "Any", "as", "await", "catch", "false", "is", "nil", "rethrows", "self", "Self", "super", "throw", "throws", "true", "try", "#available", "#colorLiteral", "#elseif", "#else", "#endif", "#fileLiteral", "#if", "#imageLiteral", "#keyPath", "#selector", "#sourceLocation", "associativity", "convenience", "didSet", "dynamic", "final", "get", "indirect", "infix", "lazy", "left", "mutating", "none", "nonmutating", "optional", "override", "postfix", "precedence", "prefix", "Protocol", "required", "right", "set", "some", "Type", "unowned", "weak", "willSet"}
+
+	// For Shell, Make and Just
+	shellWords = []string{"--force", "-f", "checkout", "configure", "dd", "do", "doas", "done", "endif", "exec", "fdisk", "for", "gdisk", "ifeq", "ifneq", "in", "make", "mv", "ninja", "rm", "rmdir", "setopt", "su", "sudo", "while"}
 )
 
 func clearKeywords() {
@@ -289,14 +292,13 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		setKeywords(addKeywords)
 	case mode.Just:
 		addKeywords(justWords)
-		fallthrough // Continue to Make and shell
-	case mode.Make, mode.Shell:
-		addKeywords := []string{"--force", "-f", "checkout", "configure", "dd", "do", "doas", "done", "endif", "exec", "fdisk", "for", "gdisk", "ifeq", "ifneq", "in", "make", "mv", "ninja", "rm", "rmdir", "setopt", "su", "sudo", "while"}
-		delKeywords := []string{"#else", "#endif", "as", "build", "default", "del", "double", "exec", "finally", "float", "fn", "generic", "get", "long", "new", "no", "package", "pass", "print", "property", "require", "ret", "set", "super", "super", "template", "type", "var", "with"}
-		if m == mode.Shell { // Only for shell scripts, not for Makefiles
-			delKeywords = append(delKeywords, "install")
-		}
-		addAndRemoveKeywords(addKeywords, delKeywords)
+		fallthrough // Continue to Make
+	case mode.Make:
+		delKeywords := []string{"#else", "#endif", "as", "build", "default", "del", "double", "exec", "finally", "float", "fn", "generic", "get", "local", "long", "new", "no", "package", "pass", "print", "property", "require", "ret", "set", "super", "super", "template", "type", "var", "with"}
+		addAndRemoveKeywords(shellWords, delKeywords)
+	case mode.Shell:
+		delKeywords := []string{"#else", "#endif", "as", "build", "default", "del", "double", "exec", "finally", "float", "fn", "generic", "get", "install", "long", "new", "no", "package", "pass", "print", "property", "require", "ret", "set", "super", "super", "template", "type", "var", "with"}
+		addAndRemoveKeywords(shellWords, delKeywords)
 	case mode.Shader:
 		addKeywords([]string{"buffer", "bvec2", "bvec3", "bvec4", "coherent", "dvec2", "dvec3", "dvec4", "flat", "in", "inout", "invariant", "ivec2", "ivec3", "ivec4", "layout", "mat", "mat2", "mat3", "mat4", "noperspective", "out", "precision", "readonly", "restrict", "smooth", "uniform", "uvec2", "uvec3", "uvec4", "vec2", "vec3", "vec4", "volatile", "writeonly"})
 		fallthrough // Continue to C/C++ and then to the default
