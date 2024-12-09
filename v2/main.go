@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -74,6 +73,7 @@ func main() {
 		batFlag                bool
 		fmtFlag                bool
 		buildFlag              bool
+		noApproxMatchFlag      bool
 	)
 
 	pflag.BoolVarP(&copyFlag, "copy", "c", false, "copy a file into the clipboard and quit")
@@ -94,6 +94,7 @@ func main() {
 	pflag.BoolVarP(&batFlag, "bat", "B", false, "Cat the file with colors instead of editing it, using bat")
 	pflag.BoolVarP(&fmtFlag, "fmt", "F", false, "Try to build the file instead of editing it")
 	pflag.BoolVarP(&buildFlag, "build", "b", false, "Try to build the file instead of editing it")
+	pflag.BoolVarP(&noApproxMatchFlag, "noapprox", "x", false, "Disable approximate filename matching")
 
 	pflag.Parse()
 
@@ -113,20 +114,12 @@ func main() {
 
 	// Output the last used build, export or format command
 	if lastCommandFlag {
-		data, err := os.ReadFile(lastCommandFile)
+		lastCommand, err := readLastCommand()
 		if err != nil {
-			fmt.Println("no available last command")
-			return
-		}
-		// Remove the shebang
-		firstLineAndRest := strings.SplitN(string(data), "\n", 2)
-		if len(firstLineAndRest) != 2 || !strings.HasPrefix(firstLineAndRest[0], "#") {
-			fmt.Fprintf(os.Stderr, "unrecognized contents in %s\n", lastCommandFile)
+			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-		theRest := strings.TrimSpace(firstLineAndRest[1])
-		replaced := regexp.MustCompile(`/tmp/o\..*$`).ReplaceAllString(theRest, "")
-		fmt.Println(replaced)
+		fmt.Println(lastCommand)
 		return
 	}
 
@@ -340,53 +333,61 @@ func main() {
 		fnord.ExpandUser()
 
 		// Check if the given filename is not a file or a symlink
-		if !files.IsFileOrSymlink(fnord.filename) {
-			if strings.HasSuffix(fnord.filename, ".") {
-				// If the filename ends with "." and the file does not exist, assume this was a result of tab-completion going wrong.
-				// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
-				matches, err := filepath.Glob(fnord.filename + "*")
-				if err == nil && len(matches) > 0 { // no error and at least 1 match
-					// Filter out any binary files
-					matches = files.FilterOutBinaryFiles(matches)
-					if len(matches) > 0 {
-						sort.Strings(matches)
-						// If the matches contains low priority suffixes, such as ".lock", then move it last
-						for i, fn := range matches {
-							if hasSuffix(fn, probablyDoesNotWantToEditExtensions) {
-								// Move this filename last
-								matches = append(matches[:i], matches[i+1:]...)
-								matches = append(matches, fn)
-								break
+		if !noApproxMatchFlag {
+			if !files.IsFileOrSymlink(fnord.filename) {
+				if strings.HasSuffix(fnord.filename, ".") {
+					// If the filename ends with "." and the file does not exist, assume this was a result of tab-completion going wrong.
+					// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
+					matches, err := filepath.Glob(fnord.filename + "*")
+					if err == nil && len(matches) > 0 { // no error and at least 1 match
+						// Filter out any binary files
+						matches = files.FilterOutBinaryFiles(matches)
+						if len(matches) > 0 {
+							sort.Strings(matches)
+							// If the matches contains low priority suffixes, such as ".lock", then move it last
+							matchesRegular := make([]string, len(matches))
+							matchesLowPri := make([]string, len(matches))
+							for _, fn := range matches {
+								if !hasSuffix(fn, probablyDoesNotWantToEditExtensions) {
+									matchesRegular = append(matchesRegular, fn)
+								} else {
+									// Store as a low-priority match
+									matchesLowPri = append(matchesLowPri, fn)
+								}
+							}
+							// Combine the regular and the low-priority matches
+							matches = append(matchesRegular, matchesLowPri...)
+							if len(matches) > 0 {
+								// Use the first filename in the list of matches
+								fnord.filename = matches[0]
 							}
 						}
-						// Use the first filename in the list of matches
-						fnord.filename = matches[0]
+					}
+				} else if !strings.Contains(fnord.filename, ".") && allLower(fnord.filename) {
+					// The filename has no ".", is written in lowercase and it does not exist,
+					// but more than one file that starts with the filename  exists. Assume tab-completion failed.
+					matches, err := filepath.Glob(fnord.filename + "*")
+					if err == nil && len(matches) > 1 { // no error and more than 1 match
+						// Use the first non-binary match of the sorted results
+						matches = files.FilterOutBinaryFiles(matches)
+						if len(matches) > 0 {
+							sort.Strings(matches)
+							fnord.filename = matches[0]
+						}
+					}
+				} else {
+					// Also match ie. "PKGBUILD" if just "Pk" was entered
+					matches, err := filepath.Glob(strings.ToTitle(fnord.filename) + "*")
+					if err == nil && len(matches) >= 1 { // no error and at least 1 match
+						// Use the first non-binary match of the sorted results
+						matches = files.FilterOutBinaryFiles(matches)
+						if len(matches) > 0 {
+							sort.Strings(matches)
+							fnord.filename = matches[0]
+						}
 					}
 				}
-			} else if !strings.Contains(fnord.filename, ".") && allLower(fnord.filename) {
-				// The filename has no ".", is written in lowercase and it does not exist,
-				// but more than one file that starts with the filename  exists. Assume tab-completion failed.
-				matches, err := filepath.Glob(fnord.filename + "*")
-				if err == nil && len(matches) > 1 { // no error and more than 1 match
-					// Use the first non-binary match of the sorted results
-					matches = files.FilterOutBinaryFiles(matches)
-					if len(matches) > 0 {
-						sort.Strings(matches)
-						fnord.filename = matches[0]
-					}
-				}
-			} else {
-				// Also match ie. "PKGBUILD" if just "Pk" was entered
-				matches, err := filepath.Glob(strings.ToTitle(fnord.filename) + "*")
-				if err == nil && len(matches) >= 1 { // no error and at least 1 match
-					// Use the first non-binary match of the sorted results
-					matches = files.FilterOutBinaryFiles(matches)
-					if len(matches) > 0 {
-						sort.Strings(matches)
-						fnord.filename = matches[0]
-					}
-				}
-			}
+			} // !noApproxMatchFlag
 		}
 	}
 
@@ -444,8 +445,16 @@ func main() {
 	}
 	defer tty.Close()
 
+	if buildFlag {
+		msg, err := OnlyBuild(tty, fnord)
+		if err != nil {
+			quitError(tty, err)
+		}
+		quitMessageOK(tty, msg)
+	}
+
 	// Run the main editor loop
-	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag)
+	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, fmtFlag)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {

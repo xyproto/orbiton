@@ -46,7 +46,7 @@ var fileLock = NewLockKeeper(defaultLockFile)
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp bool) (userMessage string, stopParent bool, err error) {
+func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, fmtFlag bool) (userMessage string, stopParent bool, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt100.Init()
@@ -143,6 +143,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			quitError(tty, err)
 		}
 	}
+
 	if e.mode == mode.Log && e.readOnly {
 		e.syntaxHighlight = true
 	}
@@ -205,6 +206,20 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				quitMessageWithStack(tty, msg)
 			}
 		}()
+	}
+
+	if fmtFlag { // Only try to format the file, save the file and then quit
+		if e.mode == mode.Markdown {
+			e.GoToStartOfTextLine(c)
+			e.FormatAllMarkdownTables()
+		}
+		e.formatCode(c, tty, status, &jsonFormatToggle) // jsonFormatToggle is for also formatting indentation, or not, when formatting
+		if msg := strings.TrimSpace(status.msg); status.isError && msg != "" {
+			quitError(tty, errors.New(msg))
+		}
+		e.UserSave(c, tty, status)
+		// Continue to the loop and then quit
+		e.quit = true
 	}
 
 	// Draw everything once, with slightly different behavior if used over ssh
@@ -271,8 +286,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Clear the search term
 			e.ClearSearch()
 
-			const experimentalFormatMarkdownFeature = true
-
 			// First check if we are editing Markdown and are in a Markdown table (and that this is not the previous thing that we did)
 			if e.mode == mode.Markdown && e.InTable() && !kh.PrevIs("c:23") {
 				e.GoToStartOfTextLine(c)
@@ -281,7 +294,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				const displayQuickHelp = false
 				e.EditMarkdownTable(tty, c, status, bookmark, justFormat, displayQuickHelp)
 				break
-			} else if e.mode == mode.Markdown && !kh.PrevIs("c:23") && experimentalFormatMarkdownFeature {
+			} else if e.mode == mode.Markdown && !kh.PrevIs("c:23") {
 				e.GoToStartOfTextLine(c)
 				e.FormatAllMarkdownTables()
 				break
