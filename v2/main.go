@@ -380,7 +380,7 @@ func main() {
 	}
 
 	// Set the terminal title, if the current terminal emulator supports it, and NO_COLOR is not set
-	fnord.SetTitle()
+	go fnord.SetTitle()
 
 	// If the editor executable has been named "red", use the red/gray theme by default
 	theme := NewDefaultTheme()

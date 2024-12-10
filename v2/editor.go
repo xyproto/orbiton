@@ -2285,7 +2285,7 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 			// internal error when switching from absFilename to filenameToOpen
 			panic(err)
 		}
-		fnord.SetTitle()
+		go fnord.SetTitle()
 		undo, switchUndoBackup = switchUndoBackup, undo
 	}
 
