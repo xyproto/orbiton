@@ -46,7 +46,7 @@ var fileLock = NewLockKeeper(defaultLockFile)
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, fmtFlag bool) (userMessage string, stopParent bool, err error) {
+func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, fmtFlag bool) (userMessage string, stopParent, clearOnQuit bool, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt100.Init()
@@ -90,10 +90,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
 	e, messageAfterRedraw, displayedImage, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp)
 	if err != nil {
-		return "", false, err
+		return "", false, e.clearOnQuit, err
 	} else if displayedImage {
 		// A special case for if an image was displayed instead of a file being opened
-		return "", false, nil
+		return "", false, e.clearOnQuit, nil
 	}
 
 	// Find the absolute path to this filename
@@ -178,7 +178,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		} else {
 			// Lock the current file, if it's not already locked
 			if err := fileLock.Lock(absFilename); err != nil {
-				return fmt.Sprintf("Locked by another (possibly dead) instance of this editor.\nTry: o -f %s", filepath.Base(absFilename)), false, errors.New(absFilename + " is locked")
+				return fmt.Sprintf("Locked by another (possibly dead) instance of this editor.\nTry: o -f %s", filepath.Base(absFilename)), false, e.clearOnQuit, errors.New(absFilename + " is locked")
 			}
 			// Immediately save the lock file as a signal to other instances of the editor
 			fileLock.Save()
@@ -409,7 +409,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				if pwd, err := os.Getwd(); err == nil {
 					if absFilename, err := filepath.Abs(e.filename); err == nil { // success
 						e.SetUpSignalHandlers(c, tty, status, true) // only clear signals
-						e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag)
+						var wg sync.WaitGroup
+						go e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag, &wg)
+						wg.Wait()
 						quitToMan(tty, pwd, absFilename, c.W(), c.H())
 					}
 				}
@@ -422,7 +424,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				if env.Has("NROFF_FILENAME") {
 					if pwd, err := os.Getwd(); err == nil {
 						e.SetUpSignalHandlers(c, tty, status, true) // only clear signals
-						e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag)
+						var wg sync.WaitGroup
+						go e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag, &wg)
+						wg.Wait()
 						quitToNroff(tty, pwd, c.W(), c.H())
 					}
 				}
@@ -2245,43 +2249,54 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 	} // end of main loop
 
-	e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag)
-
-	// Clear all status bar messages
-	status.ClearAll(c, false)
+	var closeLocksWaitGroup sync.WaitGroup
+	go e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag, &closeLocksWaitGroup)
 
 	// Quit everything that has to do with the terminal
 	if e.clearOnQuit {
 		vt100.Clear()
 		vt100.Close()
 	} else {
-		c.HideCursorAndDraw()
-		fmt.Println()
+		// Clear all status bar messages
+		status.ClearAll(c, false)
+		// Redraw
+		c.Draw()
 	}
 
 	// Make sure to enable the cursor again
 	vt100.ShowCursor(true)
 
+	// Wait for locks to be closed and location history to be written
+	closeLocksWaitGroup.Wait()
+
 	// All done
-	return "", e.stopParentOnQuit, nil
+	return "", e.stopParentOnQuit, e.clearOnQuit, nil
 }
 
 // CloseLocksAndLocationHistory tries to close any active file locks and save the location history
-func (e *Editor) CloseLocksAndLocationHistory(canUseLocks bool, absFilename string, lockTimestamp time.Time, forceFlag bool) {
-	if canUseLocks {
-		// Start by loading the lock overview, just in case something has happened in the mean time
-		fileLock.Load()
-		// Check if the lock is unchanged
-		fileLockTimestamp := fileLock.GetTimestamp(absFilename)
-		lockUnchanged := lockTimestamp == fileLockTimestamp
-		// TODO: If the stored timestamp is older than uptime, unlock and save the lock overview
-		if !forceFlag || lockUnchanged {
-			// If the file has not been locked externally since this instance of the editor was loaded, don't
-			// Unlock the current file and save the lock overview. Ignore errors because they are not critical.
-			fileLock.Unlock(absFilename)
-			fileLock.Save()
+func (e *Editor) CloseLocksAndLocationHistory(canUseLocks bool, absFilename string, lockTimestamp time.Time, forceFlag bool, wg *sync.WaitGroup) {
+	go func() {
+		wg.Add(1)
+		if canUseLocks {
+			// Start by loading the lock overview, just in case something has happened in the mean time
+			fileLock.Load()
+			// Check if the lock is unchanged
+			fileLockTimestamp := fileLock.GetTimestamp(absFilename)
+			lockUnchanged := lockTimestamp == fileLockTimestamp
+			// TODO: If the stored timestamp is older than uptime, unlock and save the lock overview
+			if !forceFlag || lockUnchanged {
+				// If the file has not been locked externally since this instance of the editor was loaded, don't
+				// Unlock the current file and save the lock overview. Ignore errors because they are not critical.
+				fileLock.Unlock(absFilename)
+				fileLock.Save()
+			}
 		}
-	}
+		wg.Done()
+	}()
 	// Save the current location in the location history and write it to file
-	e.SaveLocation(absFilename, locationHistory)
+	go func() {
+		wg.Add(1)
+		e.SaveLocation(absFilename, locationHistory)
+		wg.Done()
+	}()
 }

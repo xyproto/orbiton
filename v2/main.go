@@ -442,7 +442,7 @@ func main() {
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, fmtFlag)
+	userMessage, stopParent, clearOnQuit, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, fmtFlag)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {
@@ -455,7 +455,11 @@ func main() {
 	NoTitle()
 
 	// Clear the current color attribute
-	fmt.Print(vt100.Stop())
+	if !clearOnQuit {
+		fmt.Print("\n" + vt100.Stop())
+	} else {
+		fmt.Print(vt100.Stop())
+	}
 
 	traceComplete() // if building with -tags trace
 
