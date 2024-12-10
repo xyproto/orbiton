@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/xyproto/env/v2"
@@ -571,4 +572,32 @@ func (locationHistory LocationHistory) KeepNewest(n int) LocationHistory {
 	}
 
 	return newLocationHistory
+}
+
+// CloseLocksAndLocationHistory tries to close any active file locks and save the location history
+func (e *Editor) CloseLocksAndLocationHistory(canUseLocks bool, absFilename string, lockTimestamp time.Time, forceFlag bool, wg *sync.WaitGroup) {
+	go func() {
+		wg.Add(1)
+		if canUseLocks {
+			// Start by loading the lock overview, just in case something has happened in the mean time
+			fileLock.Load()
+			// Check if the lock is unchanged
+			fileLockTimestamp := fileLock.GetTimestamp(absFilename)
+			lockUnchanged := lockTimestamp == fileLockTimestamp
+			// TODO: If the stored timestamp is older than uptime, unlock and save the lock overview
+			if !forceFlag || lockUnchanged {
+				// If the file has not been locked externally since this instance of the editor was loaded, don't
+				// Unlock the current file and save the lock overview. Ignore errors because they are not critical.
+				fileLock.Unlock(absFilename)
+				fileLock.Save()
+			}
+		}
+		wg.Done()
+	}()
+	// Save the current location in the location history and write it to file
+	go func() {
+		wg.Add(1)
+		e.SaveLocation(absFilename, locationHistory)
+		wg.Done()
+	}()
 }
