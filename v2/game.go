@@ -37,6 +37,7 @@ const (
 
 var (
 	highScoreFile = filepath.Join(userCacheDir, "o", "highscore.txt")
+	gameTitle     = "Feed the gobblers! Keys: arrows, space and q"
 
 	bobColor             = vt100.LightYellow
 	bobWonColor          = vt100.LightGreen
@@ -830,7 +831,7 @@ retry:
 			gobbler.Draw(c)
 		}
 		bob.Draw(c)
-		centerStatus := "Feed the gobblers"
+		centerStatus := gameTitle
 		rightStatus := fmt.Sprintf("%d alive", gobblersAlive)
 		statusLineLength := int(c.W())
 		statusLine := " " + statusText
@@ -905,6 +906,8 @@ retry:
 			pellets = append(pellets, NewPellet(c, bob.x-dx, bob.y, -dx, 0))
 			pellets = append(pellets, NewPellet(c, bob.x, bob.y-dy, 0, -dy))
 			pellets = append(pellets, NewPellet(c, bob.x, bob.y-dy, 0, -dy))
+			// Remove the hotkey help from the title bar at the top
+			gameTitle = "Feed the gobblers"
 		case 27: // ESC
 			running = false
 		case 17: // ctrl-q
