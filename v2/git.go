@@ -43,7 +43,9 @@ func nextGitRebaseKeyword(line string) string {
 	return strings.Replace(line, firstWord, next, 1)
 }
 
+// syntax highlighting for git commit messages
 func (e *Editor) gitHighlight(line string) string {
+	// TODO: Refactor
 	var coloredString string
 	if strings.HasPrefix(line, "#") {
 		filenameColor := vt100.Red
