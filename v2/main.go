@@ -71,7 +71,7 @@ func main() {
 		ollamaTabCompletion    bool
 		catFlag                bool
 		batFlag                bool
-		fmtFlag                bool
+		formatFlag             bool
 		buildFlag              bool
 		noApproxMatchFlag      bool
 	)
@@ -92,7 +92,7 @@ func main() {
 	pflag.BoolVarP(&ollamaTabCompletion, "ollama", "o", env.Bool("ORBITON_OLLAMA"), "use Ollama for tab completion")
 	pflag.BoolVarP(&catFlag, "list", "t", false, "List the file with colors instead of editing it")
 	pflag.BoolVarP(&batFlag, "bat", "B", false, "Cat the file with colors instead of editing it, using bat")
-	pflag.BoolVarP(&fmtFlag, "fmt", "F", false, "Try to build the file instead of editing it")
+	pflag.BoolVarP(&formatFlag, "format", "F", false, "Try to build the file instead of editing it")
 	pflag.BoolVarP(&buildFlag, "build", "b", false, "Try to build the file instead of editing it")
 	pflag.BoolVarP(&noApproxMatchFlag, "noapprox", "x", false, "Disable approximate filename matching")
 
@@ -442,7 +442,7 @@ func main() {
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, stopParent, clearOnQuit, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, fmtFlag)
+	userMessage, stopParent, clearOnQuit, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, formatFlag)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {
