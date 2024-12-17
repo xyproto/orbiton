@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	versionString = "Orbiton 2.68.4"
+	versionString = "Orbiton 2.68.5"
 
 	// How many lines of context above and below should the tab completion try to use?
 	ollamaContextLines = 20
