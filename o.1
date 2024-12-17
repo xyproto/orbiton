@@ -36,6 +36,22 @@ Paste the contents of the clipboard into the given file. Combine with \-f to ove
 .B \-r or \-\-clear-locks
 Clear all file locks.
 .TP
+.B \-o or \-\-ollama
+Use Ollama for tab completion with the model specified in the \fBORBITON_OLLAMA\fP environment variable. This requires that Ollama is up and running,
+either locally or at the host specified in the \fBOLLAMA_HOST\fP environment variable.
+.TP
+.B \-b or \-\-bat
+List the file with syntax highlighting using the \fBbat\fP command, if installed.
+.TP
+.B \-t or \-\-list
+List the file in a colorful way without opening it for editing.
+.TP
+.B \-b or \-\-build
+Build the given file instead of opening it for editing.
+.TP
+.B \-F or \-\-format
+Format the given file instead of opening it for editing.
+.TP
 .B \-v or \-\-version
 Display the current version.
 .TP
@@ -182,6 +198,10 @@ Display brief usage information.
 The \fBNO_COLOR\fP environment variable can be set to 1 to disable all colors.
 .sp
 If \fBXTERM_VERSION\fP is set (usually automatically by xterm), the "light" color scheme will be used.
+.sp
+The \fBORBITON_OLLAMA\fP environment variable can be set to 1 to enable Ollama tab completion.
+.sp
+The \fBOLLAMA_HOST\fP environment variable specifies the host for the Ollama service if a non-local service should be used.
 .sp
 .SH "MAN PAGER"
 O can be used for viewing man pages by setting MANPAGER to "o" with ie. \fBexport MANPAGER=o\fP.
