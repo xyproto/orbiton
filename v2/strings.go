@@ -308,3 +308,26 @@ func isEmoji(r rune) bool {
 func trimRightSpace(str string) string {
 	return strings.TrimRightFunc(str, unicode.IsSpace)
 }
+
+// checkMultiLineString detects and updates the inCodeBlock state.
+// For languages like Nim, Mojo, Python and Starlark.
+func checkMultiLineString(trimmedLine string, inCodeBlock bool) (bool, bool) {
+	foundDocstringMarker := false
+	if trimmedLine == "\"\"\"" || trimmedLine == "'''" { // only 3 letters
+		inCodeBlock = !inCodeBlock
+		foundDocstringMarker = true
+	} else if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") { // this could be 6 lte
+		inCodeBlock = false
+		foundDocstringMarker = true
+	} else if strings.HasPrefix(trimmedLine, "'''") && strings.HasSuffix(trimmedLine, "'''") { // this could be 6 lettersre
+		inCodeBlock = false
+		foundDocstringMarker = true
+	} else if strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''") { // this is more than 3 ts
+		inCodeBlock = true
+		foundDocstringMarker = true
+	} else if strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''") { // this is more than 3 ts
+		inCodeBlock = false
+		foundDocstringMarker = true
+	}
+	return inCodeBlock, foundDocstringMarker
+}

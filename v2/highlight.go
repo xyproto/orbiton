@@ -245,24 +245,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					trimmedLine = strings.TrimSpace(line)
 					foundDocstringMarker = false
 
-					if trimmedLine == "\"\"\"" || trimmedLine == "'''" { // only 3 letters
-						inCodeBlock = !inCodeBlock
-						foundDocstringMarker = true
-					} else if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") { // this could be 6 letters or more
-						inCodeBlock = false
-						foundDocstringMarker = true
-					} else if strings.HasPrefix(trimmedLine, "'''") && strings.HasSuffix(trimmedLine, "'''") { // this could be 6 letters or more
-						inCodeBlock = false
-						foundDocstringMarker = true
-					} else if strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''") { // this is more than 3 letters
-						// Toggle the flag for if we're in a code block or not
-						inCodeBlock = true
-						foundDocstringMarker = true
-					} else if strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''") { // this is more than 3 letters
-						// Toggle the flag for if we're in a code block or not
-						inCodeBlock = false
-						foundDocstringMarker = true
-					}
+					inCodeBlock, foundDocstringMarker = checkMultiLineString(trimmedLine, inCodeBlock)
 
 					if inCodeBlock || foundDocstringMarker {
 						// Purple
