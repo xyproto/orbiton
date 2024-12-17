@@ -60,8 +60,7 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 		return e.ManSectionColor.Get(line)
 	}
 	if strings.HasPrefix(trimmedLine, "-") { // a flag or parameter
-		var rs []rune
-		rs = append(rs, []rune(e.MarkdownTextColor.String())...)
+		rs := []rune(e.MarkdownTextColor.String())
 		inFlag := false
 		spaceCount := 0
 		foundLetter := false
@@ -120,16 +119,8 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 		} else {
 			nextRune = ' '
 		}
-		if (unicode.IsLetter(r) || r == '_') && !inWord {
-			inWord = true
-		} else if inWord && !unicode.IsLetter(r) && !hexDigit(r) {
-			inWord = false
-		}
-		if !inAngles && r == '<' {
-			inAngles = true
-		} else if inAngles && r == '>' {
-			inAngles = false
-		}
+		inWord = (unicode.IsLetter(r) || r == '_') || (inWord && unicode.IsLetter(r)) || (inWord && hexDigit(r))
+		inAngles = (!inAngles && r == '<') || (inAngles && r != '>')
 		if !inWord && unicode.IsDigit(r) && !inDigits {
 			inDigits = true
 			rs = append(rs, []rune(off+e.ItalicsColor.String())...)
@@ -173,6 +164,5 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 		}
 		prevRune = r
 	}
-	rs = append(rs, []rune(off)...)
-	return string(rs)
+	return string(append(rs, []rune(off)...))
 }
