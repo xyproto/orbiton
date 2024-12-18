@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Let the user call digraph.Print to get an overview of digraphs, perhaps with a --digraph flag.
 - [ ] Fix the syntax highlighting dependency to view strings with "-" as single words for CSS.
 - [ ] Fix and rewrite the multiline string detection for Python and Starlark.
 - [ ] Add a flag for only programming with arrow keys and space/return and esc, or joystick and A and B.
