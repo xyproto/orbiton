@@ -488,6 +488,9 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 		} else {
 			cmd = exec.Command("odin", "build", sourceFilename, "-file", "-max-error-count:1")
 		}
+		if e.debugMode {
+			cmd.Args = append(cmd.Args, "-strict-style", "-vet-unused", "-vet-using-stmt", "-vet-using-param", "-vet-style", "-vet-semicolon", "-debug")
+		}
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.CS:
