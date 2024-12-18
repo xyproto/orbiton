@@ -75,7 +75,7 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 		}
 		fallthrough
 	case mode.Odin:
-		if strings.Contains(trimmedLine, " :: proc(") {
+		if strings.Contains(trimmedLine, " :: proc(") || strings.Contains(trimmedLine, " :: proc \"") {
 			return true
 		}
 		fallthrough
@@ -104,8 +104,8 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 // FunctionName tries to extract the function name given a line with what looks like a function definition.
 func (e *Editor) FunctionName(line string) string {
 	if e.mode == mode.Odin {
-		if strings.Contains(line, " :: proc(") {
-			fields := strings.SplitN(line, " :: proc(", 2)
+		if strings.Contains(line, " :: proc(") || strings.Contains(line, " :: proc \"") {
+			fields := strings.SplitN(line, " :: proc", 2)
 			name := strings.TrimSpace(fields[0])
 			if name != "" {
 				return name
