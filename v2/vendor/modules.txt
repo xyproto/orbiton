@@ -103,7 +103,7 @@ github.com/xyproto/carveimg
 # github.com/xyproto/clip v1.0.0
 ## explicit; go 1.11
 github.com/xyproto/clip
-# github.com/xyproto/digraph v1.2.0
+# github.com/xyproto/digraph v1.3.0
 ## explicit; go 1.20
 github.com/xyproto/digraph
 # github.com/xyproto/env v1.9.1

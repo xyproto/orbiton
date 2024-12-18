@@ -2,9 +2,16 @@
 package digraph
 
 import (
+	"bytes"
+	"compress/gzip"
 	_ "embed"
+	"fmt"
+	"io"
+	"os"
 	"strconv"
 	"strings"
+	"text/tabwriter"
+	"unicode"
 )
 
 var (
@@ -12,13 +19,30 @@ var (
 	descriptionMap map[string]string
 )
 
-//go:embed digraphs.txt
-var digraphs string
+//go:embed digraphs.txt.gz
+var digraphsCompressed []byte
 
 // Used to avoid memory allocations while filling the maps, and for testing
 const digraphsInDigraphFile = 1305
 
 func init() {
+
+	// Start out by decompressing the embedded digraphCompressed bytes to a digraphs string
+
+	reader, err := gzip.NewReader(bytes.NewReader(digraphsCompressed))
+	if err != nil {
+		panic("could not create a gzip reader in init: " + err.Error())
+	}
+	defer reader.Close()
+	var decompressed bytes.Buffer
+	_, err = io.Copy(&decompressed, reader)
+	if err != nil {
+		panic("could not decompress digraphs in init: " + err.Error())
+	}
+	digraphs := decompressed.String()
+
+	// Then initialize the global maps
+
 	digraphMap = make(map[string]rune, digraphsInDigraphFile)
 	descriptionMap = make(map[string]string, digraphsInDigraphFile)
 
@@ -78,4 +102,20 @@ func All() []string {
 		i++
 	}
 	return allDigraphs
+}
+
+// PrintTable outputs a table of all available digraphs
+func PrintTable() {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+	defer w.Flush()
+	for _, twoLetters := range All() {
+		symbol := MustLookup(twoLetters)
+		description := MustLookupDescription(twoLetters)
+		symbolStr := "N/A"
+		if unicode.IsPrint(symbol) {
+			symbolStr = fmt.Sprintf("%c", symbol)
+		}
+		// print hex code, two letters, description and symbol
+		fmt.Fprintf(w, "%04X\t%s\t%s\t%s\n", symbol, twoLetters, description, symbolStr)
+	}
 }
