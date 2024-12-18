@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Make it possible to step through Odin programs in debug mode.
 - [ ] Let the user call digraph.Print to get an overview of digraphs, perhaps with a --digraph flag.
 - [ ] Fix the syntax highlighting dependency to view strings with "-" as single words for CSS.
 - [ ] Fix and rewrite the multiline string detection for Python and Starlark.
