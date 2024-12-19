@@ -81,9 +81,10 @@ Flags:
   -q, --quick-help               Display the quick help pane at start.
   -a, --nano                     Emulate Pico/Nano.
   -r, --clear-locks              Clear all file locks and close all portals.
-  -d, --create-dir               When opening a new file, create directories if needed.
+  -d, --create-dir               When opening a new file, create directories as needed.
+  -g, --digraphs                 List all possible digraphs.
   -i, --input-file FILENAME      Used as stdin when running programs with ctrl-space.
-                                 The default filename is input.txt. Handy for AoC.
+                                 The default filename is input.txt. Handy for Advent of Code.
   -o, --ollama                   Use Ollama and the ` + codeCompletionModel + ` model
                                  for tab completion (experimental feature).
   -b, --bat                      List the given file using bat, if it exists in the PATH.
