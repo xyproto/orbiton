@@ -79,7 +79,7 @@ Flags:
   -p, --paste FILENAME           Paste the contents of the clipboard into the given file.
                                  Combine with -f to overwrite the file.
   -q, --quick-help               Display the quick help pane at start.
-  -e, --nano                     Emulate Pico/Nano.
+  -a, --nano                     Emulate Pico/Nano.
   -r, --clear-locks              Clear all file locks and close all portals.
   -d, --create-dir               When opening a new file, create directories if needed.
   -i, --input-file FILENAME      Used as stdin when running programs with ctrl-space.
