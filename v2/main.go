@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
+	"github.com/xyproto/digraph"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/ollamaclient/v2"
@@ -74,6 +75,7 @@ func main() {
 		formatFlag             bool
 		buildFlag              bool
 		noApproxMatchFlag      bool
+		listDigraphsFlag       bool
 	)
 
 	pflag.BoolVarP(&copyFlag, "copy", "c", false, "copy a file into the clipboard and quit")
@@ -95,6 +97,7 @@ func main() {
 	pflag.BoolVarP(&formatFlag, "format", "F", false, "Try to build the file instead of editing it")
 	pflag.BoolVarP(&buildFlag, "build", "b", false, "Try to build the file instead of editing it")
 	pflag.BoolVarP(&noApproxMatchFlag, "noapprox", "x", false, "Disable approximate filename matching")
+	pflag.BoolVarP(&listDigraphsFlag, "digraphs", "g", false, "List digraphs")
 
 	pflag.Parse()
 
@@ -109,6 +112,11 @@ func main() {
 
 	if helpFlag {
 		Usage()
+		return
+	}
+
+	if listDigraphsFlag {
+		digraph.PrintTable()
 		return
 	}
 
