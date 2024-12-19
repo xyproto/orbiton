@@ -17,11 +17,12 @@ import (
 )
 
 var (
-	specificLetter bool             // did the editor executable start with a specific letter, or just "o"?
-	editTheme      bool             // does the theme has both a dark and a light version?
-	inVTEGUI       = env.Bool("OG") // is o running within the VTE GUI application?
-	tempDir        = env.Dir("TMPDIR", "/tmp")
-	envNoColor     = env.Bool("NO_COLOR")
+	specificLetter  bool             // did the editor executable start with a specific letter, or just "o"?
+	editTheme       bool             // does the theme has both a dark and a light version?
+	inVTEGUI        = env.Bool("OG") // is o running within the VTE GUI application?
+	tempDir         = env.Dir("TMPDIR", "/tmp")
+	envNoColor      = env.Bool("NO_COLOR")
+	errFileNotFound = errors.New("file not found")
 )
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
@@ -135,7 +136,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 
 		warningMessage, err = e.Load(c, tty, fnord)
 		if err != nil {
-			return nil, "", false, err
+			return e, "", false, err
 		}
 
 		if *parentIsMan {
@@ -175,6 +176,10 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			e.syntaxHighlight = true
 		}
 
+	} else if e.filename == "" { // no filename, and no data on stdin
+
+		return e, "", false, errFileNotFound
+
 	} else if fileInfo, err := os.Stat(e.filename); err == nil { // no issue
 
 		// Check if this is a directory
@@ -182,12 +187,12 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			e.dirMode = true
 			// TODO: Support opening directories and giving a GitHub-like overview of projects and the git status
 			// TODO: Consider supporting file rename, finding programming symbols or git push
-			return nil, "", false, errors.New("can not open directories")
+			return e, "", false, errors.New("can not open directories")
 		}
 
 		warningMessage, err = e.Load(c, tty, fnord)
 		if err != nil {
-			return nil, "", false, err
+			return e, "", false, err
 		}
 
 		if !e.Empty() {
@@ -252,7 +257,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		}
 	} else {
 		if ok, err := e.PrepareEmptySaveAndRemove(c, tty); err != nil {
-			return nil, "", false, err
+			return e, "", false, err
 		} else if ok {
 			createdNewFile = true
 		}

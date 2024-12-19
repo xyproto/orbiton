@@ -345,7 +345,7 @@ func main() {
 							}
 							// Combine the regular and the low-priority matches
 							matches = append(matchesRegular, matchesLowPri...)
-							if len(matches) > 0 {
+							if len(matches) > 0 && len(matches[0]) > 0 {
 								// Use the first filename in the list of matches
 								fnord.filename = matches[0]
 							}
