@@ -413,7 +413,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					if absFilename, err := filepath.Abs(e.filename); err == nil { // success
 						e.SetUpSignalHandlers(c, tty, status, true) // only clear signals
 						var wg sync.WaitGroup
-						go e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag, &wg)
+						e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag, &wg)
 						wg.Wait()
 						quitToMan(tty, pwd, absFilename, c.W(), c.H())
 					}
@@ -428,7 +428,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					if pwd, err := os.Getwd(); err == nil {
 						e.SetUpSignalHandlers(c, tty, status, true) // only clear signals
 						var wg sync.WaitGroup
-						go e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag, &wg)
+						e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag, &wg)
 						wg.Wait()
 						quitToNroff(tty, pwd, c.W(), c.H())
 					}
@@ -2253,7 +2253,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	} // end of main loop
 
 	var closeLocksWaitGroup sync.WaitGroup
-	go e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag, &closeLocksWaitGroup)
+	e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag, &closeLocksWaitGroup)
 
 	// Quit everything that has to do with the terminal
 	if e.clearOnQuit {
