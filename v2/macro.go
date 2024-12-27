@@ -9,9 +9,7 @@ type Macro struct {
 
 // NewMacro creates a new Macro struct
 func NewMacro() *Macro {
-	var m Macro
-	m.KeyPresses = make([]string, 0)
-	return &m
+	return &Macro{KeyPresses: make([]string, 0)}
 }
 
 // Add adds a keypress to this macro, when recording
