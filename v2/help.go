@@ -22,6 +22,8 @@ Overview of hotkeys    ctrl-l and then /
 Launch tutorial        ctrl-l and then ?
 Disable this overview  ctrl-l and then !`
 
+	ollamaHelpText = "Ollama"
+
 	usageText = `Hotkeys
 
 ctrl-s      to save
@@ -85,7 +87,7 @@ Flags:
   -g, --digraphs                 List all possible digraphs.
   -i, --input-file FILENAME      Used as stdin when running programs with ctrl-space.
                                  The default filename is input.txt. Handy for Advent of Code.
-  -o, --ollama                   Use Ollama and the ` + codeCompletionModel + ` model
+  -o, --ollama                   Use $OLLAMA$
                                  for tab completion (experimental feature).
   -b, --bat                      List the given file using bat, if it exists in the PATH.
                                  This can be useful in connection with -c or -p.
@@ -100,7 +102,7 @@ See the man page for more information.
 // Usage prints the text that appears when the --help flag is passed
 func Usage() {
 	fmt.Println(versionString + " - simple and limited text editor")
-	fmt.Print(usageText)
+	fmt.Print(strings.Replace(usageText, "$OLLAMA$", ollamaHelpText, 1))
 }
 
 // DrawNanoHelp will draw a help box for nano hotkeys in the center

@@ -106,8 +106,12 @@ func main() {
 		return
 	}
 
-	if ollamaTabCompletion {
+	if ollamaTabCompletion || helpFlag {
 		codeCompletionModel = usermodel.GetCodeModel()
+		if codeCompletionModel != "" {
+			// Used by the --help output, ollamaText is "Use Ollama" before this
+			ollamaHelpText += " and the " + strings.TrimSuffix(codeCompletionModel, ":latest") + " model"
+		}
 	}
 
 	if helpFlag {
