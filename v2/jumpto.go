@@ -304,14 +304,14 @@ func (e *Editor) JumpMode(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) in
 		case "c:14": // ctrl-n, scroll down
 			doneCollectingDigits = true
 			postAction = scrollDownAction
-		case "c:12", "c:17", "c:27", "c:11", "c:15": // ctrl-l, ctrl-q, esc, ctrl-k or ctrl-o (keys near ctrl-l)
+		case "c:17", "c:27", "c:11", "c:15": // ctrl-q, esc, ctrl-k or ctrl-o (keys near ctrl-l)
 			cancel = true
 			lns = ""
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 			postAction = noAction
 			fallthrough // done
-		case "c:13": // return
+		case "c:13", "c:12": // return or ctrl-l
 			doneCollectingDigits = true
 		default:
 			if numkey != "" {
