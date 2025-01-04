@@ -2,10 +2,11 @@
 
 ## General
 
+- [ ] Write a new syntax highlight module, the current one is a bit limited.
 - [ ] At attempt 2 or 3 opening a locked file, just clear the lock and open it.
 - [ ] Make it possible to step through Odin programs in debug mode.
-- [ ] Let the user call digraph.Print to get an overview of digraphs, perhaps with a --digraph flag.
-- [ ] Fix the syntax highlighting dependency to view strings with "-" as single words for CSS.
+- [x] Let the user call `digraph.Print` to get an overview of digraphs, perhaps with a `-d` / `--digraphs` flag.
+- [ ] Fix the syntax highlighting dependency to view strings with `-` as single words for CSS.
 - [ ] Fix and rewrite the multiline string detection for Python and Starlark.
 - [ ] Add a flag for only programming with arrow keys and space/return and esc, or joystick and A and B.
       Leverage Ollama to find good questions to ask and offer good options on screen.
