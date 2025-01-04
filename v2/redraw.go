@@ -10,6 +10,10 @@ var redrawMutex sync.Mutex // to avoid an issue where the terminal is resized, s
 
 // FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
 func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, shouldHighlight bool) {
+	if noDrawUntilResize.Load() {
+		return
+	}
+
 	redrawMutex.Lock()
 	defer redrawMutex.Unlock()
 
@@ -156,6 +160,10 @@ func (e *Editor) HideCursorDrawLines(c *vt100.Canvas, respectOffset, redrawCanva
 // InitialRedraw is called right before the main loop is started
 func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 	if c == nil {
+		return
+	}
+
+	if noDrawUntilResize.Load() {
 		return
 	}
 

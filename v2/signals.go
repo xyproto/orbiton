@@ -65,6 +65,7 @@ func (e *Editor) SetUpSignalHandlers(c *vt100.Canvas, tty *vt100.TTY, status *St
 					}
 					fileLock.Save()
 				case syscall.SIGWINCH:
+					noDrawUntilResize.Store(false)
 					e.FullResetRedraw(c, status, true, false)
 					time.Sleep(300 * time.Millisecond)
 					e.FullResetRedraw(c, status, true, false)

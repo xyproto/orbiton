@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/xyproto/env/v2"
@@ -17,17 +18,22 @@ import (
 )
 
 var (
-	specificLetter  bool             // did the editor executable start with a specific letter, or just "o"?
-	editTheme       bool             // does the theme has both a dark and a light version?
-	inVTEGUI        = env.Bool("OG") // is o running within the VTE GUI application?
-	tempDir         = env.Dir("TMPDIR", "/tmp")
-	envNoColor      = env.Bool("NO_COLOR")
-	errFileNotFound = errors.New("file not found")
+	specificLetter    bool             // did the editor executable start with a specific letter, or just "o"?
+	editTheme         bool             // does the theme has both a dark and a light version?
+	inVTEGUI          = env.Bool("OG") // is o running within the VTE GUI application?
+	noDrawUntilResize atomic.Bool      // we are running within the VTE GUI application, but SIGWINCH has not been sent yet
+	tempDir           = env.Dir("TMPDIR", "/tmp")
+	envNoColor        = env.Bool("NO_COLOR")
+	errFileNotFound   = errors.New("file not found")
 )
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message for the user, a bool that is true if an image was displayed instead and the finally an error type.
 func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp bool) (*Editor, string, bool, error) {
+	if inVTEGUI {
+		noDrawUntilResize.Store(true)
+	}
+
 	var (
 		startTime          = time.Now()
 		createdNewFile     bool   // used for indicating that a new file was created
