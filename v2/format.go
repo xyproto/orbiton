@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"os"
@@ -162,6 +163,11 @@ func (e *Editor) formatWithUtility(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 	return nil
 }
 
+// oneLine returns true if the given bytes appear to be only one line of text, or less
+func oneLine(data []byte) bool {
+	return bytes.Count(data, []byte{'\n'}) <= 1
+}
+
 // formatJSON can format the given JSON data
 func formatJSON(data []byte, jsonFormatToggle *bool, indentationPerTab int) ([]byte, error) {
 	var v interface{}
@@ -183,6 +189,21 @@ func formatJSON(data []byte, jsonFormatToggle *bool, indentationPerTab int) ([]b
 	if err != nil {
 		return nil, err
 	}
+
+	// This is a hack to prevent the json.Unmarshal formatter to end up formatting everything on one line
+	if oneLine(indentedJSON) && !oneLine(data) { // did everything end up on a single line
+		// Try again (TODO: Figure out why this is sometimes needed)
+		indentedJSON, err = formatJSON(indentedJSON, jsonFormatToggle, indentationPerTab)
+		if err != nil {
+			return nil, err
+		}
+		// Is it still on a single line?
+		if oneLine(indentedJSON) {
+			// Ignore the formatting changes and just return the original data
+			return data, nil
+		}
+	}
+
 	return indentedJSON, nil
 }
 
