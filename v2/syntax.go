@@ -294,10 +294,10 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		addKeywords(justWords)
 		fallthrough // Continue to Make
 	case mode.Make:
-		delKeywords := []string{"#else", "#endif", "as", "build", "default", "del", "double", "exec", "finally", "float", "fn", "generic", "get", "local", "long", "new", "no", "package", "pass", "print", "property", "require", "ret", "set", "super", "super", "template", "type", "var", "with"}
+		delKeywords := []string{"#else", "#endif", "as", "build", "default", "del", "double", "exec", "finally", "float", "fn", "generic", "get", "install", "local", "long", "new", "no", "package", "pass", "print", "property", "require", "ret", "set", "super", "super", "template", "type", "var", "with"}
 		addAndRemoveKeywords(shellWords, delKeywords)
 	case mode.Shell:
-		delKeywords := []string{"#else", "#endif", "as", "build", "default", "del", "double", "exec", "finally", "float", "fn", "generic", "get", "install", "long", "new", "no", "package", "pass", "print", "property", "require", "ret", "set", "super", "super", "template", "type", "var", "with"}
+		delKeywords := []string{"#else", "#endif", "as", "build", "default", "del", "double", "exec", "false", "finally", "float", "fn", "generic", "get", "install", "long", "new", "no", "package", "pass", "print", "property", "require", "ret", "set", "super", "super", "template", "true", "type", "var", "with"}
 		addAndRemoveKeywords(shellWords, delKeywords)
 	case mode.Shader:
 		addKeywords([]string{"buffer", "bvec2", "bvec3", "bvec4", "coherent", "dvec2", "dvec3", "dvec4", "flat", "in", "inout", "invariant", "ivec2", "ivec3", "ivec4", "layout", "mat", "mat2", "mat3", "mat4", "noperspective", "out", "precision", "readonly", "restrict", "smooth", "uniform", "uvec2", "uvec3", "uvec4", "vec2", "vec3", "vec4", "volatile", "writeonly"})
