@@ -156,6 +156,8 @@ func setKeywords(addAndDelKeywords ...[]string) {
 // adjustSyntaxHighlightingKeywords contains per-language adjustments to highlighting of keywords
 func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	switch m {
+	case mode.ABC:
+		addKeywords([]string{"MIDI"})
 	case mode.Ada:
 		addKeywords([]string{"constant", "loop", "procedure", "project"})
 	case mode.Assembly:
