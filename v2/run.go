@@ -16,6 +16,15 @@ import (
 
 var runPID int
 
+// stopBackgroundProcesses stops the "run" process that is running
+// in the background, if runPID > 0.
+func stopBackgroundProcesses() {
+	if runPID > 0 {
+		syscall.Kill(runPID, syscall.SIGKILL)
+		runPID = -1
+	}
+}
+
 // Run will attempt to run the corresponding output executable, given a source filename.
 // It's an advantage if the BuildOrExport function has been successfully run first.
 // The bool is true only if the command exited with an exit code != 0 and there is text on stderr,
@@ -39,10 +48,7 @@ func (e *Editor) Run() (string, bool, error) {
 
 	switch e.mode {
 	case mode.ABC:
-		if runPID > 0 {
-			syscall.Kill(runPID, syscall.SIGKILL)
-			runPID = -1
-		}
+		stopBackgroundProcesses()
 		cmd = exec.Command("timidity", "--quiet", "-Oj", filepath.Join(tempDir, "o.mid"))
 	case mode.CMake:
 		cmd = exec.Command("cmake", "-B", "build", "-D", "CMAKE_BUILD_TYPE=Debug", "-S", sourceDir)

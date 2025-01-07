@@ -20,9 +20,12 @@ func quitError(tty *vt100.TTY, err error) {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 
+	stopBackgroundProcesses()
+
 	if tty != nil {
 		tty.Close()
 	}
+
 	vt100.Reset()
 	vt100.Clear()
 	vt100.Close()
@@ -35,9 +38,13 @@ func quitError(tty *vt100.TTY, err error) {
 func quitMessage(tty *vt100.TTY, msg string) {
 	quitMut.Lock()
 	defer quitMut.Unlock()
+
+	stopBackgroundProcesses()
+
 	if tty != nil {
 		tty.Close()
 	}
+
 	vt100.Reset()
 	vt100.Clear()
 	vt100.Close()
@@ -52,9 +59,12 @@ func quitMessageWithStack(tty *vt100.TTY, msg string) {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 
+	stopBackgroundProcesses()
+
 	if tty != nil {
 		tty.Close()
 	}
+
 	vt100.Reset()
 	vt100.Clear()
 	vt100.Close()
@@ -69,9 +79,13 @@ func quitMessageWithStack(tty *vt100.TTY, msg string) {
 func quitExecShellCommand(tty *vt100.TTY, workDir string, shellCommand string) {
 	quitMut.Lock()
 	defer quitMut.Unlock()
+
+	stopBackgroundProcesses()
+
 	if tty != nil {
 		tty.Close()
 	}
+
 	vt100.Reset()
 	vt100.Clear()
 	vt100.Close()
@@ -107,6 +121,9 @@ func quitCat(fnord *FilenameOrData) {
 func quitBat(filename string) error {
 	quitMut.Lock()
 	defer quitMut.Unlock()
+
+	stopBackgroundProcesses()
+
 	batCommandLine := env.Str("ORBITON_BAT", "bat") // TODO: Document ORBITON_BAT, for configuring flags given to bat when -c, p, -b or --bat is used
 	batExecutable := batCommandLine
 	args := []string{batExecutable}
@@ -135,6 +152,8 @@ func quitBat(filename string) error {
 func quitToMan(tty *vt100.TTY, workDir, nroffFilename string, w, h uint) error {
 	quitMut.Lock()
 	defer quitMut.Unlock()
+
+	stopBackgroundProcesses()
 
 	vt100.Close()
 	vt100.Clear()
@@ -179,9 +198,12 @@ func quitToNroff(tty *vt100.TTY, backupDirectory string, w, h uint) error {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 
+	stopBackgroundProcesses()
+
 	vt100.Close()
 	vt100.Clear()
 	vt100.Reset()
+
 	if tty != nil {
 		tty.Close()
 	}
