@@ -2272,6 +2272,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	// Wait for locks to be closed and location history to be written
 	closeLocksWaitGroup.Wait()
 
+	// stop background processes, such as "timidity" if music is playing
+	stopBackgroundProcesses()
+
 	// All done
 	return "", e.stopParentOnQuit, e.clearOnQuit, nil
 }
