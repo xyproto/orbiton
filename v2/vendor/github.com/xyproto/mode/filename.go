@@ -81,6 +81,8 @@ func Detect(filename string) Mode {
 			mode = ASCIIDoc
 		case ".scdoc", ".scd":
 			mode = SCDoc
+		case ".abc":
+			mode = ABC
 		case ".aidl":
 			mode = AIDL
 		case ".agda":

@@ -6,6 +6,7 @@ type Mode int
 
 const (
 	Blank          = iota // No file mode found
+	ABC                   // ABC music notation
 	AIDL                  // Android-related: Android Interface Definition Language
 	Ada                   // Ada
 	Agda                  // Agda
@@ -113,6 +114,8 @@ func (mode Mode) String() string {
 	// TODO: Sort the cases alphabetically
 	// TODO: Add a test that makes sure every mode has a string
 	switch mode {
+	case ABC:
+		return "ABC"
 	case Ada:
 		return "Ada"
 	case Agda:
