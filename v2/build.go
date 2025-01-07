@@ -194,6 +194,10 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 	}
 
 	switch e.mode {
+	case mode.ABC:
+		cmd = exec.Command("abc2midi", e.filename, "-o", filepath.Join(tempDir, "o.mid"))
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Make:
 		cmd = exec.Command("make")
 		cmd.Dir = sourceDir
@@ -1266,7 +1270,11 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 					time.Sleep(500 * time.Millisecond)
 					if !doneRunning {
 						const repositionCursorAfterDrawing = true
-						e.DrawOutput(c, 20, "", "Done building. Running...", e.DebugStoppedBackground, repositionCursorAfterDrawing)
+						msg := "Done building. Running..."
+						if e.mode == mode.ABC {
+							msg = "  Playing with Timidity..."
+						}
+						e.DrawOutput(c, 20, "", msg, e.DebugStoppedBackground, repositionCursorAfterDrawing)
 					}
 				}()
 

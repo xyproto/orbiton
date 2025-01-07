@@ -1,15 +1,20 @@
 package main
 
 import (
+	"bytes"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
+
+var runPID int
 
 // Run will attempt to run the corresponding output executable, given a source filename.
 // It's an advantage if the BuildOrExport function has been successfully run first.
@@ -33,6 +38,12 @@ func (e *Editor) Run() (string, bool, error) {
 	// Make sure not to do anything with cmd here until it has been initialized by the switch below!
 
 	switch e.mode {
+	case mode.ABC:
+		if runPID > 0 {
+			syscall.Kill(runPID, syscall.SIGKILL)
+			runPID = -1
+		}
+		cmd = exec.Command("timidity", "--quiet", "-Oj", filepath.Join(tempDir, "o.mid"))
 	case mode.CMake:
 		cmd = exec.Command("cmake", "-B", "build", "-D", "CMAKE_BUILD_TYPE=Debug", "-S", sourceDir)
 	case mode.Kotlin:
@@ -97,11 +108,11 @@ func (e *Editor) Run() (string, bool, error) {
 		}
 	}
 
-	output, err := cmd.CombinedOutput()
-	if err == nil { // success
+	output, err := CombinedOutputSetPID(cmd, &runPID)
+	if e.mode != mode.ABC && err == nil { // success
 		return trimRightSpace(string(output)), false, nil
 	}
-	if len(output) > 0 { // error, but text on stdout/stderr
+	if e.mode != mode.ABC && len(output) > 0 { // error, but text on stdout/stderr
 		return trimRightSpace(string(output)), true, nil
 	}
 	// error and no text on stdout/stderr
@@ -167,4 +178,31 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutpu
 	if repositionCursorAfterDrawing {
 		e.EnableAndPlaceCursor(c)
 	}
+}
+
+// CombinedOutputSetPID runs the command and returns its combined standard output and standard error.
+// It also assignes the PID to the given pid variable, right after the command has started.
+func CombinedOutputSetPID(c *exec.Cmd, pid *int) ([]byte, error) {
+	if c.Stdout != nil || c.Stderr != nil {
+		return nil, errors.New("exec: stdout or stderr has already been set")
+	}
+	// Prepare a single buffer for both stdout and stderr
+	var b bytes.Buffer
+	c.Stdout = &b
+	c.Stderr = &b
+	// Start the process in the background
+	err := c.Start()
+	if err != nil {
+		return b.Bytes(), err
+	}
+	// Get the PID of the running process
+	*pid = c.Process.Pid
+	// Wait for the process to complete
+	err = c.Wait()
+	// Ignore the error if the process was killed
+	if err.Error() == "signal: killed" { // ignore it if this process was killed
+		err = nil
+	}
+	// Return the output bytes and the error, if any
+	return b.Bytes(), err
 }
