@@ -85,10 +85,10 @@ Flags:
   -r, --clear-locks              Clear all file locks and close all portals.
   -d, --create-dir               When opening a new file, create directories as needed.
   -g, --digraphs                 List all possible digraphs.
-  -i, --input-file FILENAME      Used as stdin when running programs with ctrl-space.
-                                 The default filename is input.txt. Handy for Advent of Code.
   -o, --ollama                   Use $OLLAMA$
                                  for tab completion (experimental feature).
+  -i, --input-file FILENAME      Used as stdin when running programs with ctrl-space.
+                                 The default filename is input.txt. Handy for Advent of Code.
   -b, --bat                      List the given file using bat, if it exists in the PATH.
                                  This can be useful in connection with -c or -p.
   -t, --list                     List the given file using the red/black theme.
