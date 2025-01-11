@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Make it possible to search for double space ("  ").
 - [ ] Write a new syntax highlight module, the current one is a bit limited.
 - [ ] At attempt 2 or 3 opening a locked file, just clear the lock and open it.
 - [ ] Make it possible to step through Odin programs in debug mode.
