@@ -72,19 +72,19 @@ func (e *Editor) Run() (string, bool, error) {
 			cmd = exec.Command("xdg-open", pdfFilename)
 		}
 	case mode.Lua:
-		if e.IsLuaLove() {
+		if e.LuaLove() {
 			const macLovePath = "/Applications/love.app/Contents/MacOS/love"
-			if isDarwin && files.Exists(macLovePath) {
+			if files.Which("love") != "" {
+				cmd = exec.Command("love", ".")
+			} else if isDarwin && files.Exists(macLovePath) {
 				cmd = exec.Command(macLovePath, sourceFilename)
-			} else {
-				cmd = exec.Command("love", sourceFilename)
 			}
-		} else if e.IsLuaLovr() {
+		} else if e.LuaLovr() {
 			const macLovrPath = "/Applications/lovr.app/Contents/MacOS/lovr"
-			if isDarwin && files.Exists(macLovrPath) {
-				cmd = exec.Command(macLovrPath, sourceFilename)
-			} else {
+			if files.Which("lovr") != "" {
 				cmd = exec.Command("lovr", sourceFilename)
+			} else if isDarwin && files.Exists(macLovrPath) {
+				cmd = exec.Command(macLovrPath, sourceFilename)
 			}
 		} else {
 			cmd = exec.Command("lua", sourceFilename)

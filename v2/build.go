@@ -612,7 +612,7 @@ func (e *Editor) BuildOrExport(tty *vt100.TTY, c *vt100.Canvas, status *StatusBa
 		// the exportPandoc function handles it's own status output
 		return htmlFilename, nil
 	case mode.Lua:
-		if e.IsLuaLove() || e.IsLuaLovr() {
+		if e.LuaLoveOrLovr() {
 			return "", nil
 		}
 	}
@@ -1281,7 +1281,9 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 						case mode.JavaScript, mode.Lua, mode.Python, mode.Shell, mode.TypeScript:
 							msg = "Running..."
 						}
-						e.DrawOutput(c, 20, "", "  "+msg, e.DebugStoppedBackground, repositionCursorAfterDrawing)
+						if !(e.mode == mode.Lua && e.LuaLoveOrLovr()) { // skip drawing the box for Lua + LÖVE/LÖVR
+							e.DrawOutput(c, 20, "", "  "+msg, e.DebugStoppedBackground, repositionCursorAfterDrawing)
+						}
 					}
 				}()
 
