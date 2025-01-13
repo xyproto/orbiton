@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -233,10 +234,15 @@ func CombinedOutputSetPID(c *exec.Cmd) ([]byte, error) {
 	return b.Bytes(), err
 }
 
-func (e *Editor) IsLuaLove() bool {
-	return e.mode == mode.Lua && strings.Contains(e.String(), "function love.draw(")
-}
-
-func (e *Editor) IsLuaLovr() bool {
-	return e.mode == mode.Lua && strings.Contains(e.String(), "function lovr.draw(")
+// run tries to run the given command, without using a shell
+func run(commandString string) error {
+	parts := strings.Fields(commandString)
+	if len(parts) == 0 {
+		return errors.New("empty command")
+	}
+	if files.Which(parts[0]) == "" {
+		return fmt.Errorf("could not find %s in path", parts[0])
+	}
+	cmd := exec.Command(parts[0], parts[1:]...)
+	return cmd.Run()
 }

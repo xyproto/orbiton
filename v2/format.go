@@ -23,6 +23,16 @@ type FormatMap map[mode.Mode]*exec.Cmd
 
 var formatMap FormatMap
 
+// InstallMissingTools will try to install some of the tools, if they are missing
+func (e *Editor) InstallMissingTools() {
+	switch e.mode {
+	case mode.Go:
+		if files.Which("go") != "" && files.Which("goimport") == "" {
+			run("go install golang.org/x/tools/cmd/goimports@latest")
+		}
+	}
+}
+
 // GetFormatMap will return a map from format command to file extensions.
 // It is done this way to only initialize the map once, but not at the time when the program starts.
 func (e *Editor) GetFormatMap() FormatMap {
@@ -264,6 +274,8 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 		e.redraw.Store(true)
 		// Do not return, since there is more formatting to be done
 	}
+
+	e.InstallMissingTools()
 
 	// Not in git mode, format Go or C++ code with goimports or clang-format
 	for formatMode, cmd := range e.GetFormatMap() {
