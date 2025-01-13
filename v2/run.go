@@ -72,7 +72,23 @@ func (e *Editor) Run() (string, bool, error) {
 			cmd = exec.Command("xdg-open", pdfFilename)
 		}
 	case mode.Lua:
-		cmd = exec.Command("lua", sourceFilename)
+		if e.IsLuaLove() {
+			const macLovePath = "/Applications/love.app/Contents/MacOS/love"
+			if isDarwin && files.Exists(macLovePath) {
+				cmd = exec.Command(macLovePath, sourceFilename)
+			} else {
+				cmd = exec.Command("love", sourceFilename)
+			}
+		} else if e.IsLuaLovr() {
+			const macLovrPath = "/Applications/lovr.app/Contents/MacOS/lovr"
+			if isDarwin && files.Exists(macLovrPath) {
+				cmd = exec.Command(macLovrPath, sourceFilename)
+			} else {
+				cmd = exec.Command("lovr", sourceFilename)
+			}
+		} else {
+			cmd = exec.Command("lua", sourceFilename)
+		}
 	case mode.Make:
 		cmd = exec.Command("make")
 	case mode.Java:
@@ -215,4 +231,12 @@ func CombinedOutputSetPID(c *exec.Cmd) ([]byte, error) {
 	}
 	// Return the output bytes and the error, if any
 	return b.Bytes(), err
+}
+
+func (e *Editor) IsLuaLove() bool {
+	return e.mode == mode.Lua && strings.Contains(e.String(), "function love.draw(")
+}
+
+func (e *Editor) IsLuaLovr() bool {
+	return e.mode == mode.Lua && strings.Contains(e.String(), "function lovr.draw(")
 }

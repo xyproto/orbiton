@@ -611,6 +611,10 @@ func (e *Editor) BuildOrExport(tty *vt100.TTY, c *vt100.Canvas, status *StatusBa
 		}
 		// the exportPandoc function handles it's own status output
 		return htmlFilename, nil
+	case mode.Lua:
+		if e.IsLuaLove() || e.IsLuaLovr() {
+			return "", nil
+		}
 	}
 
 	// The immediate builds are done, time to build a exec.Cmd, run it and analyze the output
