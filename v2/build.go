@@ -1271,10 +1271,13 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 					if !doneRunning {
 						const repositionCursorAfterDrawing = true
 						msg := "Done building. Running..."
-						if e.mode == mode.ABC {
-							msg = "  Playing with Timidity..."
+						switch e.mode {
+						case mode.ABC:
+							msg = "Playing with Timidity..."
+						case mode.JavaScript, mode.Lua, mode.Python, mode.Shell, mode.TypeScript:
+							msg = "Running..."
 						}
-						e.DrawOutput(c, 20, "", msg, e.DebugStoppedBackground, repositionCursorAfterDrawing)
+						e.DrawOutput(c, 20, "", "  "+msg, e.DebugStoppedBackground, repositionCursorAfterDrawing)
 					}
 				}()
 
