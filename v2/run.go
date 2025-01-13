@@ -114,7 +114,7 @@ func (e *Editor) Run() (string, bool, error) {
 		}
 	}
 
-	output, err := CombinedOutputSetPID(cmd, &runPID)
+	output, err := CombinedOutputSetPID(cmd)
 	if e.mode != mode.ABC && err == nil { // success
 		return trimRightSpace(string(output)), false, nil
 	}
@@ -187,10 +187,10 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutpu
 }
 
 // CombinedOutputSetPID runs the command and returns its combined standard output and standard error.
-// It also assignes the PID to the given pid variable, right after the command has started.
-func CombinedOutputSetPID(c *exec.Cmd, pid *int) ([]byte, error) {
+// It also assignes the PID to the global runPID variable, right after the command has started.
+func CombinedOutputSetPID(c *exec.Cmd) ([]byte, error) {
 	if c.Stdout != nil || c.Stderr != nil {
-		return nil, errors.New("exec: stdout or stderr has already been set")
+		return []byte{}, errors.New("exec: stdout or stderr has already been set")
 	}
 	// Prepare a single buffer for both stdout and stderr
 	var b bytes.Buffer
@@ -202,11 +202,15 @@ func CombinedOutputSetPID(c *exec.Cmd, pid *int) ([]byte, error) {
 		return b.Bytes(), err
 	}
 	// Get the PID of the running process
-	*pid = c.Process.Pid
+	if c.Process != nil {
+		runPID = c.Process.Pid
+	} else {
+		runPID = -1
+	}
 	// Wait for the process to complete
 	err = c.Wait()
 	// Ignore the error if the process was killed
-	if err.Error() == "signal: killed" { // ignore it if this process was killed
+	if err != nil && err.Error() == "signal: killed" { // ignore it if this process was killed
 		err = nil
 	}
 	// Return the output bytes and the error, if any
