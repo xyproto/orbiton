@@ -146,7 +146,7 @@ func (e *Editor) Run() (string, bool, error) {
 func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutput string, backgroundColor vt100.AttributeColor, repositionCursorAfterDrawing bool) {
 	e.waitWithRedrawing.Store(true)
 
-	minWidth := 32
+	w := c.Width()
 
 	// Get the last maxLine lines, and create a string slice
 	lines := strings.Split(collectedOutput, "\n")
@@ -155,20 +155,20 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutpu
 		// Add "[...]" as the first line
 		lines = append([]string{"[...]", ""}, lines...)
 	}
-	for _, line := range lines {
-		if len(line) > minWidth {
-			minWidth = len(line) + 5
-		}
-	}
-	if minWidth > 79 {
-		minWidth = 79
+
+	boxMinWidth := w - 7
+
+	_, maxLineLength := MinMaxLength(lines)
+
+	if maxLineLength < int(boxMinWidth) {
+		boxMinWidth = uint(maxLineLength + 7)
 	}
 
 	// First create a box the size of the entire canvas
 	canvasBox := NewCanvasBox(c)
 
 	lowerLeftBox := NewBox()
-	lowerLeftBox.LowerLeftPlacement(canvasBox, minWidth)
+	lowerLeftBox.LowerLeftPlacement(canvasBox, int(boxMinWidth))
 
 	if title == "" {
 		lowerLeftBox.H = 5

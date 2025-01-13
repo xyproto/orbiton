@@ -331,3 +331,23 @@ func checkMultiLineString(trimmedLine string, inCodeBlock bool) (bool, bool) {
 	}
 	return inCodeBlock, foundDocstringMarker
 }
+
+// MinMaxLength returns the length of the shortest and longest string
+// If the given slice is empty, then 0,0 is returned.
+func MinMaxLength(xs []string) (int, int) {
+	if len(xs) == 0 {
+		return 0, 0 // can not find min and max string lengths of an empty slice
+	}
+	minLen := -1
+	maxLen := -1
+	for _, s := range xs {
+		l := len(s)
+		if minLen == -1 || l < minLen {
+			minLen = l
+		}
+		if maxLen == -1 || l > maxLen {
+			maxLen = l
+		}
+	}
+	return minLen, maxLen
+}
