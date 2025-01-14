@@ -188,6 +188,10 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutpu
 	lowerBox.Y -= 5
 	lowerBox.H += 2
 
+	if rightHandSide { // cosmetic adjustments
+		lowerBox.W -= 2
+	}
+
 	// Then create a list box
 	listBox := NewBox()
 	listBox.FillWithMargins(lowerBox, 1, 2)
