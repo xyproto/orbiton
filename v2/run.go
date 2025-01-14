@@ -50,7 +50,13 @@ func (e *Editor) Run() (string, bool, error) {
 	switch e.mode {
 	case mode.ABC:
 		stopBackgroundProcesses()
-		cmd = exec.Command("timidity", "--quiet", "-Oj", filepath.Join(tempDir, "o.mid"))
+		var audioOutputFlag string
+		if isLinux {
+			audioOutputFlag = "-Oj" // jack
+		} else if isDarwin {
+			audioOutputFlag = "-Od" // macOS
+		}
+		cmd = exec.Command("timidity", "--quiet", audioOutputFlag, filepath.Join(tempDir, "o.mid"))
 	case mode.CMake:
 		cmd = exec.Command("cmake", "-B", "build", "-D", "CMAKE_BUILD_TYPE=Debug", "-S", sourceDir)
 	case mode.Kotlin:
@@ -143,7 +149,7 @@ func (e *Editor) Run() (string, bool, error) {
 }
 
 // DrawOutput will draw a pane with the 5 last lines of the given output
-func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutput string, backgroundColor vt100.AttributeColor, repositionCursorAfterDrawing bool) {
+func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutput string, backgroundColor vt100.AttributeColor, repositionCursorAfterDrawing, rightHandSide bool) {
 	e.waitWithRedrawing.Store(true)
 
 	w := c.Width()
@@ -167,29 +173,34 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutpu
 	// First create a box the size of the entire canvas
 	canvasBox := NewCanvasBox(c)
 
-	lowerLeftBox := NewBox()
-	lowerLeftBox.LowerLeftPlacement(canvasBox, int(boxMinWidth))
+	lowerBox := NewBox()
 
-	if title == "" {
-		lowerLeftBox.H = 5
+	if rightHandSide {
+		lowerBox.LowerRightPlacement(canvasBox, int(boxMinWidth))
+	} else {
+		lowerBox.LowerLeftPlacement(canvasBox, int(boxMinWidth))
 	}
 
-	lowerLeftBox.Y -= 5
-	lowerLeftBox.H += 2
+	if title == "" {
+		lowerBox.H = 5
+	}
+
+	lowerBox.Y -= 5
+	lowerBox.H += 2
 
 	// Then create a list box
 	listBox := NewBox()
-	listBox.FillWithMargins(lowerLeftBox, 1, 2)
+	listBox.FillWithMargins(lowerBox, 1, 2)
 
 	// Get the current theme for the stdout box
 	bt := e.NewBoxTheme()
 	bt.Background = &backgroundColor
 	bt.UpperEdge = bt.LowerEdge
 
-	e.DrawBox(bt, c, lowerLeftBox)
+	e.DrawBox(bt, c, lowerBox)
 
 	if title != "" {
-		e.DrawTitle(bt, c, lowerLeftBox, title, true)
+		e.DrawTitle(bt, c, lowerBox, title, true)
 	}
 
 	e.DrawList(bt, c, listBox, lines, -1)

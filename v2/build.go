@@ -1251,7 +1251,8 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 		if e.CanRun() {
 			status.ClearAll(c, false)
 			const repositionCursorAfterDrawing = true
-			e.DrawOutput(c, 20, "", "Building and running...", e.DebugRegistersBackground, repositionCursorAfterDrawing)
+			const rightHandSide = true
+			e.DrawOutput(c, 20, "", "Building and running...", e.DebugRegistersBackground, repositionCursorAfterDrawing, rightHandSide)
 			e.runAfterBuild = true
 		}
 		return
@@ -1274,15 +1275,16 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 					time.Sleep(500 * time.Millisecond)
 					if !doneRunning {
 						const repositionCursorAfterDrawing = true
-						msg := "Done building. Running..."
-						switch e.mode {
-						case mode.ABC:
-							msg = "Playing with Timidity..."
-						case mode.JavaScript, mode.Lua, mode.Python, mode.Shell, mode.TypeScript:
-							msg = "Running..."
-						}
-						if !(e.mode == mode.Lua && e.LuaLoveOrLovr()) { // skip drawing the box for Lua + LÖVE/LÖVR
-							e.DrawOutput(c, 20, "", "  "+msg, e.DebugStoppedBackground, repositionCursorAfterDrawing)
+						const rightHandSide = true
+						if skipTheStatusBox := e.mode == mode.Lua && e.LuaLoveOrLovr(); !skipTheStatusBox {
+							msg := "Done building. Running..."
+							switch e.mode {
+							case mode.ABC:
+								msg = "Playing with Timidity..."
+							case mode.JavaScript, mode.Lua, mode.Python, mode.Shell, mode.TypeScript:
+								msg = "Running..."
+							}
+							e.DrawOutput(c, 20, "", "  "+msg, e.DebugStoppedBackground, repositionCursorAfterDrawing, rightHandSide)
 						}
 					}
 				}()
@@ -1317,7 +1319,8 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 					status.SetMessage("Success")
 				}
 				if strings.TrimSpace(output) != "" {
-					e.DrawOutput(c, n, title, output, boxBackgroundColor, repositionCursorAfterDrawing)
+					const rightHandSide = false
+					e.DrawOutput(c, n, title, output, boxBackgroundColor, repositionCursorAfterDrawing, rightHandSide)
 				}
 				// Regular success, no debug mode
 				status.Show(c, e)
