@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Support the Langauge Server Protocol, per language.
 - [ ] When pressing esc several times to make the command menu appear (to aid ViM users),
       make the esc-pressing consistent. Either 3 or 4 times.
 - [ ] Make it possible to search for double space ("  ").
