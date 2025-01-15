@@ -319,7 +319,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		savequitclear: func() { // save and quit, then clear the screen
 			e.UserSave(c, tty, status)
 			e.quit = true
-			e.clearOnQuit = true
+			e.clearOnQuit.Store(true)
 		},
 		sortblock: func() { // sort the current block of lines, until the next blank line or EOF
 			undo.Snapshot(e)

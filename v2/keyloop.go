@@ -91,12 +91,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	e, messageAfterRedraw, displayedImage, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp)
 	if err != nil {
 		if e != nil {
-			return "", false, e.clearOnQuit, err
+			return "", false, e.clearOnQuit.Load(), err
 		}
 		return "", false, false, err
 	} else if displayedImage {
 		// A special case for if an image was displayed instead of a file being opened
-		return "", false, e.clearOnQuit, nil
+		if e != nil {
+			return "", false, e.clearOnQuit.Load(), nil
+		}
+		return "", false, false, nil
 	}
 
 	// Find the absolute path to this filename
@@ -181,7 +184,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		} else {
 			// Lock the current file, if it's not already locked
 			if err := fileLock.Lock(absFilename); err != nil {
-				return fmt.Sprintf("Locked by another (possibly dead) instance of this editor.\nTry: o -f %s", filepath.Base(absFilename)), false, e.clearOnQuit, errors.New(absFilename + " is locked")
+				return fmt.Sprintf("Locked by another (possibly dead) instance of this editor.\nTry: o -f %s", filepath.Base(absFilename)), false, e.clearOnQuit.Load(), errors.New(absFilename + " is locked")
 			}
 			// Immediately save the lock file as a signal to other instances of the editor
 			fileLock.Save()
@@ -1052,7 +1055,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.blockMode = false
 			// If o is used as a man page viewer, exit at the press of esc
 			if e.mode == mode.ManPage {
-				e.clearOnQuit = false
+				e.clearOnQuit.Store(false)
 				e.quit = true
 				break
 			}
@@ -2097,7 +2100,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					break
 				} else if e.mode == mode.ManPage && keyRunes[0] == 'q' {
 					// If o is used as a man page viewer, exit at the press of "q"
-					e.clearOnQuit = false
+					e.clearOnQuit.Store(false)
 					e.quit = true
 					break
 				}
@@ -2256,7 +2259,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag, &closeLocksWaitGroup)
 
 	// Quit everything that has to do with the terminal
-	if e.clearOnQuit {
+	if e.clearOnQuit.Load() {
 		vt100.Clear()
 		vt100.Close()
 	} else {
@@ -2276,5 +2279,5 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	stopBackgroundProcesses()
 
 	// All done
-	return "", e.stopParentOnQuit, e.clearOnQuit, nil
+	return "", e.stopParentOnQuit, e.clearOnQuit.Load(), nil
 }

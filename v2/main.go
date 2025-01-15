@@ -467,10 +467,10 @@ func main() {
 	NoTitle()
 
 	// Clear the current color attribute
-	if !clearOnQuit {
-		fmt.Print("\n" + vt100.Stop())
-	} else {
+	if clearOnQuit {
 		fmt.Print(vt100.Stop())
+	} else {
+		fmt.Print("\n" + vt100.Stop())
 	}
 
 	traceComplete() // if building with -tags trace

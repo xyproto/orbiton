@@ -119,7 +119,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 	// Minor adjustments for some file types
 	switch e.mode {
 	case mode.Email, mode.Git, mode.ManPage:
-		e.clearOnQuit = true
+		e.clearOnQuit.Store(true)
 	}
 
 	// Set the editor filename
@@ -370,12 +370,12 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 				// NetBSD, FreeBSD, OpenBSD or Dragonfly
 				e.SetTheme(NewRedBlackTheme())
 				DisableQuickHelpScreen(nil)
-				e.clearOnQuit = true
+				e.clearOnQuit.Store(true)
 			} else if shell := env.Str("SHELL"); shell != "/usr/local/bin/fish" && (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && !inVTEGUI && filepath.Base(os.Args[0]) != "default" {
 				// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
 				e.SetTheme(NewRedBlackTheme())
 				DisableQuickHelpScreen(nil)
-				e.clearOnQuit = true
+				e.clearOnQuit.Store(true)
 			} else if colorString := env.Str("COLORFGBG"); strings.Contains(colorString, ";") {
 				fields := strings.Split(colorString, ";")
 				backgroundColor := fields[len(fields)-1]

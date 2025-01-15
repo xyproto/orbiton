@@ -49,7 +49,6 @@ type Editor struct {
 	expandTags                 bool            // can be used for XML and HTML
 	syntaxHighlight            bool            // syntax highlighting
 	stopParentOnQuit           bool            // send SIGQUIT to the parent PID when quitting
-	clearOnQuit                bool            // clear the terminal when quitting the editor, or not
 	quit                       bool            // for indicating if the user wants to end the editor session
 	readOnly                   bool            // is the file read-only when initializing o?
 	debugHideOutput            bool            // hide the GDB stdout pane when in debug mode?
@@ -71,6 +70,7 @@ type Editor struct {
 	highlightCurrentLine       bool            // highlight the current line
 	highlightCurrentText       bool            // highlight the current text (not the entire line)
 	// atomic.Bool are used for values that might be read when redrawing text asynchronously
+	clearOnQuit       atomic.Bool // clear the terminal when quitting the editor, or not
 	changed           atomic.Bool // has the contents changed, since last save?
 	redraw            atomic.Bool // if the contents should be redrawn in the next loop
 	redrawCursor      atomic.Bool // if the cursor should be moved to the location it is supposed to be

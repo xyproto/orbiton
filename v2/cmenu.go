@@ -479,16 +479,14 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	if firstWordContainsOneOf(parentCommand(), searchProcessNames) {
 		actions.Add("Kill parent and exit without saving", func() {
 			e.stopParentOnQuit = true
-			e.clearOnQuit = true
-			e.quit = true        // indicate that the user wishes to quit
-			e.clearOnQuit = true // clear the terminal after quitting
+			e.quit = true             // indicate that the user wishes to quit
+			e.clearOnQuit.Store(true) // clear the terminal after quitting
 		})
 	} else {
 		actions.Add("Exit without saving", func() {
 			e.stopParentOnQuit = false
-			e.clearOnQuit = false
-			e.quit = true        // indicate that the user wishes to quit
-			e.clearOnQuit = true // clear the terminal after quitting
+			e.quit = true             // indicate that the user wishes to quit
+			e.clearOnQuit.Store(true) // clear the terminal after quitting
 		})
 	}
 
