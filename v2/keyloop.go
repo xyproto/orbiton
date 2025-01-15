@@ -1072,6 +1072,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			lastCopyY = -1
 			lastPasteY = -1
 			lastCutY = -1
+			// Stop background processes (like playing music with timidity), if any
+			stopBackgroundProcesses()
 			// Do a full clear and redraw + clear search term + jump
 			const drawLines = true
 			e.FullResetRedraw(c, status, drawLines, false)
