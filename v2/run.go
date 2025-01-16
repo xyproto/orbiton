@@ -85,6 +85,8 @@ func (e *Editor) Run() (string, bool, error) {
 				cmd = exec.Command("love", ".")
 			} else if isDarwin && files.Exists(macLovePath) {
 				cmd = exec.Command(macLovePath, sourceFilename)
+			} else {
+				return "", false, errors.New("please install LÖVE")
 			}
 		} else if e.LuaLovr() {
 			const macLovrPath = "/Applications/lovr.app/Contents/MacOS/lovr"
@@ -92,6 +94,8 @@ func (e *Editor) Run() (string, bool, error) {
 				cmd = exec.Command("lovr", sourceFilename)
 			} else if isDarwin && files.Exists(macLovrPath) {
 				cmd = exec.Command(macLovrPath, sourceFilename)
+			} else {
+				return "", false, errors.New("please install LÖVR")
 			}
 		} else {
 			cmd = exec.Command("lua", sourceFilename)
