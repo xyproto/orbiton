@@ -1272,6 +1272,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 
 				doneRunning := false
 				go func() {
+					// TODO: Wait for the process to start instead of sleeping
 					time.Sleep(500 * time.Millisecond)
 					if !doneRunning {
 						const repositionCursorAfterDrawing = true
