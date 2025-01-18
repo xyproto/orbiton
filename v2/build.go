@@ -1322,6 +1322,8 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 				if strings.TrimSpace(output) != "" {
 					const rightHandSide = false
 					e.DrawOutput(c, n, title, output, boxBackgroundColor, repositionCursorAfterDrawing, rightHandSide)
+				} else {
+					e.FullResetRedraw(c, status, true, false)
 				}
 				// Regular success, no debug mode
 				status.Show(c, e)
