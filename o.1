@@ -1,6 +1,6 @@
 .\"             -*-Nroff-*-
 .\"
-.TH "o" 1 "19 Dec 2024" "o" "User Commands"
+.TH "o" 1 "18 Jan 2025" "o" "User Commands"
 .SH NAME
 o \- an editor
 .SH SYNOPSIS
@@ -82,9 +82,11 @@ Display brief usage information.
 .B ctrl-n
   Scroll down 10 lines or go to the next match if a search is active.
   Insert a new column when in the Markdown table editor.
+  Jump to a matching parenthesis or bracket if the arrow keys were just used.
 .B ctrl-p
   Scroll up 10 lines or go to the previous match if a search is active.
   Remove an empty column when in the Markdown table editor.
+  Jump to a matching parenthesis or bracket if the arrow keys were just used.
 .sp
 .B ctrl-k
   Delete all characters to the end of the line. Delete the line if it is empty.
@@ -176,7 +178,7 @@ Display brief usage information.
   The last used external command by `o` can be found in `~/.cache/o/last_command.sh`.
 .sp
 .B ctrl-~
-  Jump to a matching parenthesis, curly bracket or square bracket.
+  Start the spellchecker.
 .sp
   `o` will try to jump to the location where the error is and otherwise display "Success".
 .sp
@@ -184,8 +186,7 @@ Display brief usage information.
   Toggle single-line comments for a block of code.
 .sp
 .B ctrl-_
-  If the cursor is on a parenthesis, jump to the matching parenthesis.
-  If not, insert a symbol by typing in a 2-letter digraph.
+  Insert a symbol by typing in a 2-letter digraph.
   The digraphs are the same as for ViM.
   For a full overview, see: https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt
 .sp

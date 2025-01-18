@@ -38,16 +38,17 @@ ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for Markdown, toggle checkboxes or re-format tables
             for git interactive rebases, cycle the rebase keywords
 ctrl-g      jump to definition (experimental feature) or toggle the status bar
-ctrl-_      jump to a matching parenthesis or bracket if on one,
-            otherwise insert a symbol by typing in a two letter ViM-style digraph
+ctrl-_      insert a symbol by typing in a two letter ViM-style digraph
             see https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt
 ctrl-a      go to start of line, then start of text and then the previous line
 ctrl-e      go to end of line and then the next line
 ctrl-n      to scroll down 10 lines or go to the next match if a search is active
             insert a column when in the Markdown table editor
             go to next match when searching, or next typo when spellchecking
+            jump to a matching parenthesis or bracket if the arrow keys were just used
 ctrl-p      to scroll up 10 lines or go to the previous match
             remove an empty column when in the Markdown table editor
+            jump to a matching parenthesis or bracket if the arrow keys were just used
 ctrl-k      to delete characters to the end of the line, then delete the line
 ctrl-j      to join lines
 ctrl-d      to delete a single character
@@ -66,7 +67,7 @@ ctrl-l      to jump to a specific line or letter (press return to jump to the to
 ctrl-f      to find text. To search and replace, press Tab instead of Return.
             to spellcheck, search for "t", then press ctrl-a to add and ctrl-i to ignore
 ctrl-\      to toggle single-line comments for a block of code
-ctrl-~      to jump to matching parenthesis
+ctrl-~      spellcheck
 esc         to redraw the screen, clear the last search and clear the current macro
 
 Set NO_COLOR=1 to disable colors.

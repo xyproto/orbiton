@@ -196,11 +196,12 @@ There are pretty few hotkeys to remember:
 * `ctrl-e` - Go to end of line and then to the next line
 * `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active.
              Insert a column when in the Markdown table editor.
+             Jump to a matching parenthesis or bracket if the arrow keys were just used.
 * `ctrl-p` - Scroll up 10 lines, or go to the previous match if a search is active.
              Remove an empty column when in the Markdown table editor.
+             Jump to a matching parenthesis or bracket if the arrow keys were just used.
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
-* `ctrl-_` - Jump to a matching parenthesis or bracket, if the cursor is on one,
-             otherwise insert a symbol by typing in a 2-letter [digraph](https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt).
+* `ctrl-_` - Insert a symbol by typing in a 2-letter [digraph](https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt).
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - For C and C++: jump between the current header and source file. For Agda and Ivy, insert a symbol.
              For Markdown: toggle checkboxes, or launch the table editor if the cursor is over a table.
@@ -222,8 +223,8 @@ There are pretty few hotkeys to remember:
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords. For Markdown, format the table under the cursor.
 * `ctrl-g` - Jump to definition, for some programming languages (experimental feature), or toggle the status bar.
 * `ctrl-\` - Comment in or out a block of code.
-* `ctrl-~` - Jump to a matching parenthesis or bracket.
-* `esc` - Redraw everything and clear the last search.
+* `ctrl-~` - Start the spellchecker.
+* `esc`    - Redraw everything and clear the last search.
 
 ## Build and format
 
