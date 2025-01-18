@@ -40,6 +40,16 @@ func SetClipboardFromFile(filename string, primaryClipboard bool) (int, string, 
 	return len(data), tailString, nil
 }
 
+// emptyFile checks if the given file is empty
+// if there is an error, then false is returned
+func emptyFile(filename string) bool {
+	fi, err := os.Stat(filename)
+	if err != nil {
+		return false // something went wrong, probably not an empty file
+	}
+	return fi.Size() == 0
+}
+
 // WriteClipboardToFile can write the contents of the clipboard to a file.
 // If overwrite is true, the original file will be removed first, if it exists.
 // The returned int is the number of bytes written.
@@ -48,12 +58,12 @@ func SetClipboardFromFile(filename string, primaryClipboard bool) (int, string, 
 func WriteClipboardToFile(filename string, overwrite, primaryClipboard bool) (int, string, string, error) {
 	// Check if the file exists first
 	if files.Exists(filename) {
-		if overwrite {
+		if overwrite || emptyFile(filename) {
 			if err := os.Remove(filename); err != nil {
 				return 0, "", "", err
 			}
 		} else {
-			return 0, "", "", fmt.Errorf("%s already exists", filename)
+			return 0, "", "", fmt.Errorf("%s already exists and is not empty", filename)
 		}
 	}
 
