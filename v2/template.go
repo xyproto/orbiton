@@ -31,6 +31,11 @@ func GetTemplatePrograms() TemplatePrograms {
 		fullName := fullname.Get()
 		// NOTE: Cursor coordinates are (X, -Y)
 		templatePrograms = TemplatePrograms{
+			mode.ABC: {
+				"X:1\nT:ABC Template\nM:4/4\nL:1/8\nQ:1/4=80\nK:C\n%%MIDI program 62  % Synth Brass 1\nC C/2 C/2 E E/2 E/2 G G/2 G/2 c2\n",
+				0,
+				1,
+			},
 			mode.Agda: {
 				"module FILENAME where\n\nopen import Agda.Builtin.IO using (IO)\nopen import Agda.Builtin.Unit using (⊤)\nopen import Agda.Builtin.String using (String)\n\npostulate putStrLn : String → IO ⊤\n{-# FOREIGN GHC import qualified Data.Text as T #-}\n{-# COMPILE GHC putStrLn = putStrLn . T.unpack #-}\n\nmain : IO ⊤\nmain = putStrLn \"Hello, World!\"\n",
 				17,
