@@ -1686,9 +1686,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.redraw.Store(true)
 			}
 			e.redrawCursor.Store(true)
-
-		case "c:29", "c:30": // ctrl-~, insert the current date
-			if spellCheckFunc, err := e.CommandToFunction(c, tty, status, bookmark, undo, "spellcheck"); err == nil { // success
+		case "c:29", "c:30": // ctrl-~, insert the current date and time
+			if spellCheckFunc, err := e.CommandToFunction(c, tty, status, bookmark, undo, "insertdateandtime"); err == nil { // success
 				spellCheckFunc()
 			}
 		case "c:19": // ctrl-s, save (or step, if in debug mode)

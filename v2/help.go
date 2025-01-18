@@ -67,7 +67,7 @@ ctrl-l      to jump to a specific line or letter (press return to jump to the to
 ctrl-f      to find text. To search and replace, press Tab instead of Return.
             to spellcheck, search for "t", then press ctrl-a to add and ctrl-i to ignore
 ctrl-\      to toggle single-line comments for a block of code
-ctrl-~      spellcheck
+ctrl-~      insert the current date and time
 esc         to redraw the screen, clear the last search and clear the current macro
 
 Set NO_COLOR=1 to disable colors.

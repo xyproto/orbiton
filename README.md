@@ -223,7 +223,7 @@ There are pretty few hotkeys to remember:
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords. For Markdown, format the table under the cursor.
 * `ctrl-g` - Jump to definition, for some programming languages (experimental feature), or toggle the status bar.
 * `ctrl-\` - Comment in or out a block of code.
-* `ctrl-~` - Start the spellchecker.
+* `ctrl-~` - Insert the current date and time.
 * `esc`    - Redraw everything and clear the last search.
 
 ## Build and format
