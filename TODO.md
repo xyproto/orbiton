@@ -2,31 +2,25 @@
 
 ## General
 
-- [ ] Don't require `-f` to overwrite empty files with permissions in order.
-- [ ] Support the Langauge Server Protocol, per language.
+- [ ] Support the Language Server Protocol, per language.
 - [ ] When pressing esc several times to make the command menu appear (to aid ViM users),
       make the esc-pressing consistent. Either 3 or 4 times.
 - [ ] Make it possible to search for double space ("  ").
 - [ ] Write a new syntax highlight module, the current one is a bit limited.
-- [ ] At attempt 2 or 3 opening a locked file, just clear the lock and open it.
+- [ ] At attempt 2 or 3 opening a locked file, just clear the lock and open it? This might not be a good idea.
 - [ ] Make it possible to step through Odin programs in debug mode.
-- [x] Let the user call `digraph.Print` to get an overview of digraphs, perhaps with a `-d` / `--digraphs` flag.
 - [ ] Fix the syntax highlighting dependency to view strings with `-` as single words for CSS.
 - [ ] Fix and rewrite the multiline string detection for Python and Starlark.
 - [ ] Add a flag for only programming with arrow keys and space/return and esc, or joystick and A and B.
       Leverage Ollama to find good questions to ask and offer good options on screen.
       Use 2 to 4 large horizontal squares to choose between. Implement this is a new type of menu.
       Then package Orbiton as an app for Steam, Play Store and App Store, as some sort of programming game? Create a separate project for this.
-- [ ] Let `ctrl-space` for Nroff work as well on Linux as on macOS.
-- [ ] Let "go to definition" also jump to ie. `static inline void print_or_suppress_zero_line(const char* buffer, char* z, const int nz, const char* program_name)` in C.
-- [ ] Always show the current function name in the upper right corner.
 - [ ] Have a progress indicator on the right side also for when `NO_COLOR=1` is set.
 - [ ] Add a history for not only previous searches, but also for previous replacements.
 - [ ] Fix the "jump to matching paren/bracket" feature so that it can jump anywhere in a file.
 - [ ] Let `ctrl-space` show a preview of man pages instead of changing the syntax highlighting.
 - [ ] When removing `-` in front of lines, do not move 1 to the right when encountering `}`.
 - [ ] Let `ctrl-g` go to definition for more languages.
-- [ ] When pressing `ctrl-f` twice on a word, clear the search string after finding a match.
 - [ ] Add a flag for using more colors, for nicer themes, perhaps `-2`.
 - [ ] Support the `base16` themes.
 - [ ] When pasting through a portal and reaching the end of the source, don't immediately start pasting from the clipboard. Require the cursor to be moved around first.
@@ -172,11 +166,7 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
 - [ ] Make it possible to have groups of bookmarks per file, and then name them, somehow.
 - [ ] When pressing `ctrl-g` or `F12` and there's a filename under the cursor that exists, go to that file.
-- [ ] When pressing `ctrl-g` on a function that is declared in a file in the same directory, go to that file and function definition.
-- [ ] `ctrl-f` and then `return` could jump to a location at least 10 lines away that has been most visited within the last 10 minutes.
-- [ ] `ctrl-f` twice should search for the current word.
-- [ ] Let `ctrl-l` double as a command prompt.
-- [ ] When bookmarking, don't just bookmark the line/col, but also the filename. Maybe.
+- [ ] Let ctrl-p also jump to a matching parenthesis, if the last pressed key was an arrow key.
 
 ## Code editing
 
