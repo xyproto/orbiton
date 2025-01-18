@@ -79,6 +79,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		highlightTimerCounter atomic.Uint64
 		highlightTimerMut     sync.Mutex
+
+		justJumpedToMatchingP bool
 	)
 
 	// TODO: Move this to themes.go
@@ -730,6 +732,17 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.ClearSearch()
 					}
 				} else {
+
+					// Jump to a matching parenthesis if either an arrow key was last pressed or we just jumped to a matchin parenthesis
+					justUsedArrowKeys := kh.PrevIs(downArrow, upArrow, leftArrow, rightArrow)
+					if (justUsedArrowKeys || justJumpedToMatchingP) && e.JumpToMatching(c) {
+						justJumpedToMatchingP = true
+						e.redraw.Store(true)
+						e.redrawCursor.Store(true)
+						break
+					}
+					justJumpedToMatchingP = false
+
 					e.redraw.Store(e.ScrollUp(c, status, e.pos.scrollSpeed))
 					e.redrawCursor.Store(true)
 					if e.AfterLineScreenContents() {
@@ -916,6 +929,17 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						e.ClearSearch()
 					}
 				} else {
+
+					// Jump to a matching parenthesis if either an arrow key was last pressed or we just jumped to a matchin parenthesis
+					justUsedArrowKeys := kh.PrevIs(downArrow, upArrow, leftArrow, rightArrow)
+					if (justUsedArrowKeys || justJumpedToMatchingP) && e.JumpToMatching(c) {
+						justJumpedToMatchingP = true
+						e.redraw.Store(true)
+						e.redrawCursor.Store(true)
+						break
+					}
+					justJumpedToMatchingP = false
+
 					// Scroll down
 					h := int(c.Height())
 					redraw := e.ScrollDown(c, status, e.pos.scrollSpeed, h)
@@ -1711,8 +1735,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					e.ClearSearch()
 					status.Show(c, e)
 				})
-			} else if e.OnParenOrBracket() {
-				e.JumpToMatching(c)
+			} else if e.JumpToMatching(c) {
 				e.redrawCursor.Store(true)
 			} else {
 				// Toggle status bar
