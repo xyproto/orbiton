@@ -1661,15 +1661,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 			e.redrawCursor.Store(true)
 
-		case "c:29", "c:30": // ctrl-~, jump to matching parenthesis or curly bracket
-			if e.JumpToMatching(c) {
-				e.redraw.Store(true)
-				e.redrawCursor.Store(true)
-				break
+		case "c:29", "c:30": // ctrl-~, insert the current date
+			if spellCheckFunc, err := e.CommandToFunction(c, tty, status, bookmark, undo, "spellcheck"); err == nil { // success
+				spellCheckFunc()
 			}
-			status.Clear(c, false)
-			status.SetMessage("No matching (, ), [, ], { or }")
-			status.Show(c, e)
 		case "c:19": // ctrl-s, save (or step, if in debug mode)
 			e.UserSave(c, tty, status)
 		case "c:7": // ctrl-g, either go to definition OR jump to matching parent/bracket OR toggle the status bar
