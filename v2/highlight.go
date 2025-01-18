@@ -283,9 +283,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// Regular highlight
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					}
-				case mode.Lilypond:
+				case mode.ABC, mode.Lilypond, mode.Perl, mode.Prolog:
 					trimmedLine = strings.TrimSpace(line)
-					if strings.HasPrefix(trimmedLine, "%") {
+					if strings.HasPrefix(trimmedLine, "%") && !(e.mode == mode.ABC && strings.HasPrefix(trimmedLine, "%%")) {
 						coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
 					} else if strings.HasPrefix(line, " ") && len(trimmedLine) > 0 && unicode.IsUpper([]rune(trimmedLine)[0]) {
 						coloredString = unEscapeFunction(e.Foreground.Start(line))

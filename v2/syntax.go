@@ -322,6 +322,8 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 // comment for the current language mode the editor is in.
 func (e *Editor) SingleLineCommentMarker() string {
 	switch e.mode {
+	case mode.ABC, mode.Lilypond, mode.Perl, mode.Prolog:
+		return "%"
 	case mode.Amber:
 		return "!!"
 	case mode.Assembly, mode.Ini:
@@ -351,8 +353,6 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return `.\"`
 	case mode.ObjectPascal:
 		return "{"
-	case mode.Lilypond, mode.Perl, mode.Prolog:
-		return "%"
 	case mode.ReStructured:
 		return "["
 	case mode.Vim:
