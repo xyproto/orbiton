@@ -20,6 +20,8 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+var clearOnQuit atomic.Bool // clear the terminal when quitting the editor, or not
+
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
 	detectedTabs               *bool           // were tab or space indentations detected when loading the data?
@@ -70,7 +72,6 @@ type Editor struct {
 	highlightCurrentLine       bool            // highlight the current line
 	highlightCurrentText       bool            // highlight the current text (not the entire line)
 	// atomic.Bool are used for values that might be read when redrawing text asynchronously
-	clearOnQuit       atomic.Bool // clear the terminal when quitting the editor, or not
 	changed           atomic.Bool // has the contents changed, since last save?
 	redraw            atomic.Bool // if the contents should be redrawn in the next loop
 	redrawCursor      atomic.Bool // if the cursor should be moved to the location it is supposed to be
@@ -113,7 +114,6 @@ func (e *Editor) Copy() *Editor {
 	e2.expandTags = e.expandTags
 	e2.syntaxHighlight = e.syntaxHighlight
 	e2.stopParentOnQuit = e.stopParentOnQuit
-	e2.clearOnQuit = e.clearOnQuit
 	e2.quit = e.quit
 	e2.readOnly = e.readOnly
 	e2.debugHideOutput = e.debugHideOutput

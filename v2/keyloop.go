@@ -46,7 +46,7 @@ var fileLock = NewLockKeeper(defaultLockFile)
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, fmtFlag bool) (userMessage string, stopParent, clearOnQuit bool, err error) {
+func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, fmtFlag bool) (userMessage string, stopParent bool, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt100.Init()
@@ -91,15 +91,17 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	e, messageAfterRedraw, displayedImage, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp)
 	if err != nil {
 		if e != nil {
-			return "", false, e.clearOnQuit.Load(), err
+			return "", false, err
 		}
-		return "", false, false, err
+		clearOnQuit.Store(false)
+		return "", false, err
 	} else if displayedImage {
 		// A special case for if an image was displayed instead of a file being opened
 		if e != nil {
-			return "", false, e.clearOnQuit.Load(), nil
+			return "", false, nil
 		}
-		return "", false, false, nil
+		clearOnQuit.Store(false)
+		return "", false, nil
 	}
 
 	// Find the absolute path to this filename
@@ -184,7 +186,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		} else {
 			// Lock the current file, if it's not already locked
 			if err := fileLock.Lock(absFilename); err != nil {
-				return fmt.Sprintf("Locked by another (possibly dead) instance of this editor.\nTry: o -f %s", filepath.Base(absFilename)), false, e.clearOnQuit.Load(), errors.New(absFilename + " is locked")
+				return fmt.Sprintf("Locked by another (possibly dead) instance of this editor.\nTry: o -f %s", filepath.Base(absFilename)), false, errors.New(absFilename + " is locked")
 			}
 			// Immediately save the lock file as a signal to other instances of the editor
 			fileLock.Save()
@@ -1055,7 +1057,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.blockMode = false
 			// If o is used as a man page viewer, exit at the press of esc
 			if e.mode == mode.ManPage {
-				e.clearOnQuit.Store(false)
+				clearOnQuit.Store(false)
 				e.quit = true
 				break
 			}
@@ -2097,7 +2099,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					break
 				} else if e.mode == mode.ManPage && keyRunes[0] == 'q' {
 					// If o is used as a man page viewer, exit at the press of "q"
-					e.clearOnQuit.Store(false)
+					clearOnQuit.Store(false)
 					e.quit = true
 					break
 				}
@@ -2256,7 +2258,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag, &closeLocksWaitGroup)
 
 	// Quit everything that has to do with the terminal
-	if e.clearOnQuit.Load() {
+	if clearOnQuit.Load() {
 		vt100.Clear()
 		vt100.Close()
 	} else {
@@ -2276,5 +2278,5 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	stopBackgroundProcesses()
 
 	// All done
-	return "", e.stopParentOnQuit, e.clearOnQuit.Load(), nil
+	return "", e.stopParentOnQuit, nil
 }
