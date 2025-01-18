@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"syscall"
 
 	"github.com/xyproto/files"
@@ -15,14 +16,14 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-var runPID int
+var runPID atomic.Int64
 
 // stopBackgroundProcesses stops the "run" process that is running
 // in the background, if runPID > 0.
 func stopBackgroundProcesses() {
-	if runPID > 0 {
-		syscall.Kill(runPID, syscall.SIGKILL)
-		runPID = -1
+	if runPID.Load() > 0 {
+		syscall.Kill(int(runPID.Load()), syscall.SIGKILL)
+		runPID.Store(-1)
 	}
 }
 
@@ -142,6 +143,7 @@ func (e *Editor) Run() (string, bool, error) {
 	}
 
 	output, err := CombinedOutputSetPID(cmd)
+
 	if e.mode != mode.ABC && err == nil { // success
 		return trimRightSpace(string(output)), false, nil
 	}
@@ -239,9 +241,9 @@ func CombinedOutputSetPID(c *exec.Cmd) ([]byte, error) {
 	}
 	// Get the PID of the running process
 	if c.Process != nil {
-		runPID = c.Process.Pid
+		runPID.Store(int64(c.Process.Pid))
 	} else {
-		runPID = -1
+		runPID.Store(-1)
 	}
 	// Wait for the process to complete
 	err = c.Wait()
