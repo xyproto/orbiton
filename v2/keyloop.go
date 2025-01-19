@@ -1696,7 +1696,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			if e.nanoMode.Load() { // nano: ctrl-g, help
 				status.ClearAll(c, false)
-				const repositionCursorAfterDrawing = true
+				const repositionCursorAfterDrawing = false
 				e.DrawNanoHelp(c, repositionCursorAfterDrawing)
 				break
 			}
