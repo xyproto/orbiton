@@ -23,6 +23,7 @@ const (
 	C3                    // C3
 	CMake                 // CMake files
 	CS                    // C#
+	CSound                // Csound
 	CSS                   // CSS
 	Clojure               // Clojure
 	Config                // Config like yaml, yml, toml, and ini files
@@ -158,6 +159,8 @@ func (mode Mode) String() string {
 		return "Crystal"
 	case CS:
 		return "C#"
+	case CSound:
+		return "Csound"
 	case CSS:
 		return "CSS"
 	case D:

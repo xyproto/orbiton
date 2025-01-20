@@ -109,6 +109,8 @@ func Detect(filename string) Mode {
 			mode = Clojure
 		case ".cs": // C#
 			mode = CS
+		case ".csd", ".orc", ".sco":
+			mode = CSound
 		case ".css":
 			mode = CSS
 		case ".csproj": // C# projects
@@ -169,7 +171,7 @@ func Detect(filename string) Mode {
 			mode = Java
 		case ".js", ".jsx":
 			mode = JavaScript
-		case ".json", ".ipynb":
+		case ".ign", ".ipynb", ".json":
 			mode = JSON
 		case ".kk":
 			mode = Koka
