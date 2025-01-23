@@ -40,6 +40,7 @@ func (e *Editor) GetFormatMap() FormatMap {
 		formatMap = FormatMap{
 			mode.Cpp:        exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"),
 			mode.C:          exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"),
+			mode.ObjC:       exec.Command("clang-format", "-fallback-style=WebKit", "-style=file", "-i", "--"),
 			mode.CS:         exec.Command("astyle", "--mode=cs"),
 			mode.Crystal:    exec.Command("crystal", "tool", "format"),
 			mode.CSS:        exec.Command("prettier", "--tab-width", "2", "-w"),
