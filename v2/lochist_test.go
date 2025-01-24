@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -24,12 +23,8 @@ func TestNeoVimMsgPack(t *testing.T) {
 	if err != nil {
 		t.Fail()
 	}
-	line, err := FindInNvimLocationHistory(nvimLocationHistoryFilename, searchFilename)
-	if err != nil {
-		// main.go might not be in the neovim location history, this is fine
-		fmt.Println(err)
-	}
-	_ = line
+	// main.go might not be in the neovim location history, this is fine
+	_, _ = FindInNvimLocationHistory(nvimLocationHistoryFilename, searchFilename)
 
 	// Enable this for debugging
 	// fmt.Println("line", line)
