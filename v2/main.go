@@ -16,6 +16,7 @@ import (
 	"github.com/xyproto/digraph"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
+	"github.com/xyproto/globi"
 	"github.com/xyproto/ollamaclient/v2"
 	"github.com/xyproto/usermodel"
 	"github.com/xyproto/vt100"
@@ -338,7 +339,7 @@ func main() {
 				if strings.HasSuffix(fnord.filename, ".") {
 					// If the filename ends with "." and the file does not exist, assume this was a result of tab-completion going wrong.
 					// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
-					matches, err := filepath.Glob(fnord.filename + "*")
+					matches, err := globi.Glob(fnord.filename + "*")
 					if err == nil && len(matches) > 0 { // no error and at least 1 match
 						// Filter out any binary files
 						matches = files.FilterOutBinaryFiles(matches)
@@ -366,7 +367,7 @@ func main() {
 				} else if !strings.Contains(fnord.filename, ".") && allLower(fnord.filename) {
 					// The filename has no ".", is written in lowercase and it does not exist,
 					// but more than one file that starts with the filename  exists. Assume tab-completion failed.
-					matches, err := filepath.Glob(fnord.filename + "*")
+					matches, err := globi.Glob(fnord.filename + "*")
 					if err == nil && len(matches) > 1 { // no error and more than 1 match
 						// Use the first non-binary match of the sorted results
 						matches = files.FilterOutBinaryFiles(matches)
@@ -377,7 +378,7 @@ func main() {
 					}
 				} else {
 					// Also match ie. "PKGBUILD" if just "Pk" was entered
-					matches, err := filepath.Glob(strings.ToTitle(fnord.filename) + "*")
+					matches, err := globi.Glob(strings.ToTitle(fnord.filename) + "*")
 					if err == nil && len(matches) >= 1 { // no error and at least 1 match
 						// Use the first non-binary match of the sorted results
 						matches = files.FilterOutBinaryFiles(matches)
