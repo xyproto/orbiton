@@ -6,95 +6,10 @@ import (
 	"unicode/utf8"
 )
 
-// hasAnyPrefixWord checks if the given line is prefixed with any one of the given words
-func hasAnyPrefixWord(line string, wordList []string) bool {
-	for _, word := range wordList {
-		if strings.HasPrefix(line, word+" ") {
-			return true
-		}
-	}
-	return false
-}
-
-// hasAnyPrefix checks if the given line is prefixed with any one of the given strings
-func hasAnyPrefix(line string, stringList []string) bool {
-	for _, s := range stringList {
-		if strings.HasPrefix(line, s) {
-			return true
-		}
-	}
-	return false
-}
-
-// hasS checks if the given string slice contains the given string
-func hasS(sl []string, s string) bool {
-	for _, e := range sl {
-		if e == s {
-			return true
-		}
-	}
-	return false
-}
-
-// firstWordContainsOneOf checks if the first word of the given string contains
-// any one of the given strings
-func firstWordContainsOneOf(s string, sl []string) bool {
-	if s == "" {
-		return false
-	}
-	fields := strings.Fields(s)
-	if len(fields) == 0 {
-		return false
-	}
-	firstWord := fields[0]
-	for _, e := range sl {
-		if strings.Contains(firstWord, e) {
-			return true
-		}
-	}
-	return false
-}
-
-// hasSuffix checks if the given string end with one of the given suffixes
-func hasSuffix(s string, suffixes []string) bool {
-	for _, suffix := range suffixes {
-		if strings.HasSuffix(s, suffix) {
-			return true
-		}
-	}
-	return false
-}
-
 // hasKey checks if the given string map contains the given key
 func hasKey(m map[string]string, key string) bool {
 	_, found := m[key]
 	return found
-}
-
-// filterS returns all strings that makes the function f return true
-func filterS(sl []string, f func(string) bool) []string {
-	var results []string
-	for _, e := range sl {
-		if f(e) {
-			results = append(results, e)
-		}
-	}
-	return results
-}
-
-// equalStringSlices checks if two given string slices are equal or not
-// returns true if they are equal
-func equalStringSlices(a, b []string) bool {
-	lena := len(a)
-	if lena != len(b) {
-		return false
-	}
-	for i := 0; i < lena; i++ {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
 }
 
 // hasWords checks if a range of more than one letter is found
@@ -330,24 +245,4 @@ func checkMultiLineString(trimmedLine string, inCodeBlock bool) (bool, bool) {
 		foundDocstringMarker = true
 	}
 	return inCodeBlock, foundDocstringMarker
-}
-
-// MinMaxLength returns the length of the shortest and longest string
-// If the given slice is empty, then 0,0 is returned.
-func MinMaxLength(xs []string) (int, int) {
-	if len(xs) == 0 {
-		return 0, 0 // can not find min and max string lengths of an empty slice
-	}
-	minLen := -1
-	maxLen := -1
-	for _, s := range xs {
-		l := len(s)
-		if minLen == -1 || l < minLen {
-			minLen = l
-		}
-		if maxLen == -1 || l > maxLen {
-			maxLen = l
-		}
-	}
-	return minLen, maxLen
 }
