@@ -1,6 +1,6 @@
 module github.com/xyproto/orbiton/v2
 
-go 1.23.2
+go 1.23.5
 
 require (
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
@@ -21,6 +21,7 @@ require (
 	github.com/xyproto/env/v2 v2.5.3
 	github.com/xyproto/files v1.9.0
 	github.com/xyproto/fullname v1.1.0
+	github.com/xyproto/globi v1.0.2
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/lookslikegoasm v1.0.0
 	github.com/xyproto/mode v0.10.0
