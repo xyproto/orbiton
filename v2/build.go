@@ -542,9 +542,6 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 // Returns a status message and then true if an action was performed and another true if compilation/testing worked out.
 // Will also return the executable output file, if available after compilation.
 func (e *Editor) BuildOrExport(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar) (string, error) {
-	// Build or export in the background
-	background := e.mode == mode.Markdown
-
 	// Clear the status messages, if we have a status bar
 	if status != nil && c != nil {
 		status.ClearAll(c, false)
@@ -600,16 +597,9 @@ func (e *Editor) BuildOrExport(tty *vt100.TTY, c *vt100.Canvas, status *StatusBa
 		return outputFilename, cmd.Run()
 	case mode.Markdown:
 		htmlFilename := strings.ReplaceAll(filepath.Base(sourceFilename), ".", "_") + ".html"
-		if background {
-			go func() {
-				_ = e.exportMarkdownHTML(c, status, htmlFilename)
-			}()
-		} else {
-			if err := e.exportMarkdownHTML(c, status, htmlFilename); err != nil {
-				return htmlFilename, err
-			}
-		}
-		// the exportPandoc function handles it's own status output
+		go func() {
+			_ = e.exportMarkdownHTML(c, status, htmlFilename)
+		}()
 		return htmlFilename, nil
 	case mode.Lua:
 		if e.LuaLoveOrLovr() {
@@ -1164,12 +1154,7 @@ func (e *Editor) BuildOrExport(tty *vt100.TTY, c *vt100.Canvas, status *StatusBa
 }
 
 // Build starts a build and is typically triggered from either ctrl-space or the o menu
-func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoRun, markdownDoubleSpacePrevention bool) {
-	// Enable only. e.runAfterBuild is set to false elsewhere.
-	if alsoRun {
-		e.runAfterBuild = true
-	}
-
+func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 	// If the file is empty, there is nothing to build
 	if e.Empty() {
 		status.ClearAll(c, false)
@@ -1242,7 +1227,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY, alsoR
 	e.redraw.Store(false)
 
 	// Require a double ctrl-space when exporting Markdown to HTML, because it is so easy to press by accident
-	if markdownDoubleSpacePrevention && (e.mode == mode.Markdown && !alsoRun) {
+	if e.mode == mode.Markdown && !e.runAfterBuild {
 		return
 	}
 

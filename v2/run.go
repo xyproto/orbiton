@@ -79,6 +79,8 @@ func (e *Editor) Run() (string, bool, error) {
 		} else {
 			cmd = exec.Command("xdg-open", pdfFilename)
 		}
+	case mode.Markdown:
+		cmd = exec.Command("algernon", "-m", sourceFilename)
 	case mode.Lua:
 		if e.LuaLove() {
 			const macLovePath = "/Applications/love.app/Contents/MacOS/love"
