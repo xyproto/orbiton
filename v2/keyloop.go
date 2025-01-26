@@ -2112,14 +2112,16 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		default: // any other key
 			keyRunes := []rune(key)
 			if len(keyRunes) > 0 && unicode.IsLetter(keyRunes[0]) { // letter
-
 				if keyRunes[0] == 'n' && kh.TwoLastAre("c:14") && kh.PrevWithin(500*time.Millisecond) {
 					// Avoid inserting "n" if the user very recently pressed ctrl-n twice
 					break
 				} else if keyRunes[0] == 'p' && kh.TwoLastAre("c:16") && kh.PrevWithin(500*time.Millisecond) {
 					// Avoid inserting "p" if the user very recently pressed ctrl-p twice
 					break
-				} else if e.mode == mode.ManPage && keyRunes[0] == 'q' {
+				} else if keyRunes[0] == 'l' && kh.TwoLastAre("c:12") && kh.PrevWithin(500*time.Millisecond) {
+					// Avoid inserting "l" if the user very recently pressed ctrl-l twice
+					break
+				} else if keyRunes[0] == 'q' && e.mode == mode.ManPage {
 					// If o is used as a man page viewer, exit at the press of "q"
 					clearOnQuit.Store(false)
 					e.quit = true
