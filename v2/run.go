@@ -132,7 +132,7 @@ func (e *Editor) Run() (string, bool, error) {
 
 	// If inputFileWhenRunning has been specified (or is input.txt),
 	// check if that file can be used as stdin for the command to be run
-	if inputFileWhenRunning != "" {
+	if inputFileWhenRunning != "" && files.Exists(inputFileWhenRunning) {
 		inputFile, err := os.Open(inputFileWhenRunning)
 		if err != nil {
 			// Do not retry until the editor has been started again
