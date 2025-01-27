@@ -1,5 +1,7 @@
 package main
 
+// The whole purpose of this file is to make sure the cursor is not hidden after all the tests have been run.
+
 import (
 	"os"
 	"testing"
@@ -10,8 +12,6 @@ import (
 func TestMain(m *testing.M) {
 	code := m.Run()
 
-	//vt100.Close()
-	//vt100.Reset()
 	vt100.ShowCursor(true)
 
 	os.Exit(code)
