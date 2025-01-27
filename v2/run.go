@@ -196,7 +196,7 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutpu
 	}
 
 	lowerBox.Y -= 5
-	lowerBox.H += 2
+	lowerBox.H += 4
 
 	if rightHandSide { // cosmetic adjustments
 		lowerBox.W -= 2
