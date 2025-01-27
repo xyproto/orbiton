@@ -9,8 +9,8 @@ import (
 	"github.com/xyproto/vt100"
 )
 
+// ReturnPressed is called when the user pressed return while editing text
 func (e *Editor) ReturnPressed(c *vt100.Canvas, status *StatusBar) {
-
 	var (
 		trimmedLine              = e.TrimmedLine()
 		currentLeadingWhitespace = e.LeadingWhitespace()
