@@ -74,25 +74,27 @@ Set NO_COLOR=1 to disable colors.
 
 Flags:
   -c, --copy FILENAME            Copy the given file into the clipboard.
-  -f, --force                    Ignore file locks when opening files.
-  -l, --last-command             Output the last used build/format/export command.
-  -m, --monitor FILENAME         Monitor the given file for changes, and open it as read-only.
-  -n, --no-cache                 Avoid writing the location history, search history, highscore,
-                                 compilation and format command to ` + cacheDirForDoc + `.
   -p, --paste FILENAME           Paste the contents of the clipboard into the given file.
                                  Combine with -f to overwrite the file.
-  -q, --quick-help               Display the quick help pane at start.
-  -a, --nano                     Emulate Pico/Nano.
+  -f, --force                    Ignore file locks when opening files.
+  -l, --last-command             Output the last used build/format/export command.
   -r, --clear-locks              Clear all file locks and close all portals.
-  -d, --create-dir               When opening a new file, create directories as needed.
-  -g, --digraphs                 List all possible digraphs.
+  -m, --monitor FILENAME         Monitor the given file for changes, and open it as read-only.
   -o, --ollama                   Use $OLLAMA$
                                  for tab completion (experimental feature).
+  -x, --noapprox                 Disable approximate filename matching.
+  -n, --no-cache                 Avoid writing the location history, search history, highscore,
+                                 compilation and format command to ` + cacheDirForDoc + `.
+  -d, --create-dir               When opening a new file, create directories as needed.
+  -g, --digraphs                 List all possible digraphs.
+  -t, --list                     List the given file using the red/black theme and quit.
+  -b, --bat                      List the given file using bat, if it exists in the PATH.
+                                 This can be useful when used with together with -c or -p.
   -i, --input-file FILENAME      Used as stdin when running programs with ctrl-space.
                                  The default filename is input.txt. Handy for Advent of Code.
-  -b, --bat                      List the given file using bat, if it exists in the PATH.
-                                 This can be useful in connection with -c or -p.
-  -t, --list                     List the given file using the red/black theme.
+  -a, --nano                     Emulate Pico/Nano.
+  -q, --quick-help               Display the quick help pane at start.
+  -h, --help                     Display this usage information.
   -v, --version                  Display the current version.
 
 See the man page for more information.
