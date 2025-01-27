@@ -211,7 +211,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.Go:
 		// TODO: Define goWords and use setKeywords instead
 		addKeywords := []string{"defer", "error", "fallthrough", "func", "go", "import", "package", "print", "println", "range", "rune", "string", "uint", "uint16", "uint32", "uint64", "uint8"}
-		delKeywords := []string{"False", "None", "True", "assert", "auto", "build", "char", "class", "def", "def", "del", "die", "done", "end", "fi", "final", "finally", "fn", "foreach", "from", "get", "in", "include", "is", "last", "let", "match", "mut", "next", "no", "pass", "redo", "rescue", "ret", "retry", "set", "static", "template", "then", "this", "when", "where", "while", "yes"}
+		delKeywords := []string{"False", "None", "True", "assert", "auto", "build", "char", "class", "def", "def", "del", "die", "done", "end", "fi", "final", "finally", "fn", "foreach", "from", "get", "in", "include", "is", "last", "let", "match", "mut", "next", "no", "pass", "redo", "rescue", "ret", "retry", "set", "static", "template", "then", "this", "until", "when", "where", "while", "yes"}
 		addAndRemoveKeywords(addKeywords, delKeywords)
 	case mode.Haxe:
 		setKeywords(haxeWords)
@@ -224,13 +224,13 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		fallthrough // continue to mode.Java
 	case mode.Java:
 		addKeywords := []string{"package"}
-		delKeywords := []string{"add", "bool", "get", "in", "local", "sub"}
+		delKeywords := []string{"add", "bool", "get", "in", "local", "sub", "until"}
 		addAndRemoveKeywords(addKeywords, delKeywords)
 	case mode.JavaScript:
 		kws := []string{"super"}
 		addKeywords(kws)
 	case mode.JSON:
-		removeKeywords([]string{"install"})
+		removeKeywords([]string{"install", "until"})
 	case mode.Koka:
 		setKeywords(kokaWords)
 	case mode.Kotlin:
@@ -252,7 +252,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.Oak:
 		addAndRemoveKeywords([]string{"fn"}, []string{"from", "new", "print"})
 	case mode.Python, mode.Nim, mode.Mojo, mode.Starlark:
-		addAndRemoveKeywords([]string{"type"}, []string{"append", "exit", "fn", "get", "package", "print"})
+		addAndRemoveKeywords([]string{"type"}, []string{"append", "exit", "fn", "get", "package", "print", "until"})
 	case mode.Odin:
 		setKeywords(odinWords)
 	case mode.Ollama:
@@ -264,12 +264,12 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.Hare:
 		addKeywords := []string{"String", "assert_eq", "char", "done", "fn", "i16", "i32", "i64", "i8", "impl", "loop", "mod", "out", "panic", "u16", "u32", "u64", "u8", "usize"}
 		// "as" and "mut" are treated as special cases in the syntax package
-		delKeywords := []string{"as", "build", "byte", "end", "foreach", "get", "int", "int16", "int32", "int64", "last", "map", "mut", "next", "pass", "print", "uint16", "uint32", "uint64", "var"}
+		delKeywords := []string{"as", "build", "byte", "end", "foreach", "get", "int", "int16", "int32", "int64", "last", "map", "mut", "next", "pass", "print", "uint16", "uint32", "uint64", "until", "var"}
 		addAndRemoveKeywords(addKeywords, delKeywords)
 	case mode.Garnet, mode.Jakt, mode.Rust: // Originally only for Rust, split up as needed
 		addKeywords := []string{"String", "assert_eq", "char", "fn", "i16", "i32", "i64", "i8", "impl", "loop", "mod", "out", "panic", "u16", "u32", "u64", "u8", "usize"}
 		// "as" and "mut" are treated as special cases in the syntax package
-		delKeywords := []string{"as", "build", "byte", "done", "foreach", "get", "int", "int16", "int32", "int64", "last", "map", "mut", "next", "pass", "print", "uint16", "uint32", "uint64", "var"}
+		delKeywords := []string{"as", "build", "byte", "done", "foreach", "get", "int", "int16", "int32", "int64", "last", "map", "mut", "next", "pass", "print", "uint16", "uint32", "uint64", "until", "var"}
 		if m != mode.Garnet {
 			delKeywords = append(delKeywords, "end")
 		}
