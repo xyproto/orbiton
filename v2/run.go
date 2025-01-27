@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 	"syscall"
 
+	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
@@ -43,6 +44,8 @@ func (e *Editor) Run() (string, bool, error) {
 	if noWriteToCache {
 		pyCacheDir = filepath.Join(sourceDir, "o", "python")
 	}
+
+	allEnv := env.Environ()
 
 	var cmd *exec.Cmd
 
@@ -121,11 +124,11 @@ func (e *Editor) Run() (string, bool, error) {
 		} else {
 			cmd = exec.Command("python", sourceFilename)
 		}
-		cmd.Env = append(cmd.Env, "PYTHONUTF8=1")
+		allEnv = append(allEnv, "PYTHONUTF8=1")
 		if !files.Exists(pyCacheDir) {
 			os.MkdirAll(pyCacheDir, 0o700)
 		}
-		cmd.Env = append(cmd.Env, "PYTHONPYCACHEPREFIX="+pyCacheDir)
+		allEnv = append(allEnv, "PYTHONPYCACHEPREFIX="+pyCacheDir)
 	default:
 		cmd = exec.Command(filepath.Join(sourceDir, e.exeName(e.filename, true)))
 	}
@@ -145,6 +148,13 @@ func (e *Editor) Run() (string, bool, error) {
 			cmd.Stdin = inputFile
 		}
 	}
+
+	// Disable colored text in applications that are run with Orbiton.
+	// TODO: Document this.
+	allEnv = append(allEnv, "NO_COLOR=1")
+
+	// Set the command environment to the parent environment + changes
+	cmd.Env = allEnv
 
 	output, err := CombinedOutputSetPID(cmd)
 
