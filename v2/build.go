@@ -1282,6 +1282,13 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 					status.Show(c, e)
 					return // from goroutine
 				}
+
+				// Clear the "Done building. Running..." box
+				const repositionCursorAfterDrawing = true
+				const rightHandSide = true
+				const msg = "  Done running              "
+				e.DrawOutput(c, 20, "", msg, e.NanoHelpBackground, repositionCursorAfterDrawing, rightHandSide)
+
 				title := "Program output"
 				n := 25
 				h := float64(c.Height())
@@ -1296,7 +1303,6 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 				if strings.Count(output, "\n") >= n {
 					title = fmt.Sprintf("Last %d lines of output", n)
 				}
-				const repositionCursorAfterDrawing = true
 				boxBackgroundColor := e.DebugRunningBackground
 				if useErrorStyle {
 					boxBackgroundColor = e.DebugStoppedBackground
