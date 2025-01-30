@@ -2,10 +2,10 @@
 
 ## General
 
+- [ ] Make it possible to search for double space ("  ").
 - [ ] Support the Language Server Protocol, per language.
 - [ ] When pressing esc several times to make the command menu appear (to aid ViM users),
       make the esc-pressing consistent. Either 3 or 4 times.
-- [ ] Make it possible to search for double space ("  ").
 - [ ] Write a new syntax highlight module, the current one is a bit limited.
 - [ ] At attempt 2 or 3 opening a locked file, just clear the lock and open it? This might not be a good idea.
 - [ ] Make it possible to step through Odin programs in debug mode.
