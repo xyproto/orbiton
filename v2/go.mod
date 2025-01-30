@@ -12,7 +12,7 @@ require (
 	github.com/klauspost/asmfmt v1.3.2
 	github.com/mattn/go-runewidth v0.0.16
 	github.com/sajari/fuzzy v1.0.0
-	github.com/spf13/pflag v1.0.5
+	github.com/spf13/pflag v1.0.6
 	github.com/xyproto/autoimport v1.5.2
 	github.com/xyproto/binary v1.3.3
 	github.com/xyproto/carveimg v1.4.6
@@ -25,7 +25,7 @@ require (
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/lookslikegoasm v1.0.0
 	github.com/xyproto/mode v0.10.0
-	github.com/xyproto/ollamaclient/v2 v2.7.0
+	github.com/xyproto/ollamaclient/v2 v2.7.1
 	github.com/xyproto/stringpainter v1.0.1
 	github.com/xyproto/syntax v1.12.0
 	github.com/xyproto/termtitle v1.5.1
