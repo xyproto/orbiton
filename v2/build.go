@@ -1284,10 +1284,9 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 				}
 
 				// Clear the "Done building. Running..." box
-				const repositionCursorAfterDrawing = true
-				const rightHandSide = true
-				const msg = "  Done running              "
-				e.DrawOutput(c, 20, "", msg, e.NanoHelpBackground, repositionCursorAfterDrawing, rightHandSide)
+				const drawLines = true
+				const shouldHighlightCurrentLine = false
+				e.FullResetRedraw(c, status, drawLines, shouldHighlightCurrentLine)
 
 				title := "Program output"
 				n := 25
@@ -1312,6 +1311,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 				}
 				if strings.TrimSpace(output) != "" {
 					const rightHandSide = false
+					const repositionCursorAfterDrawing = true
 					e.DrawOutput(c, n, title, output, boxBackgroundColor, repositionCursorAfterDrawing, rightHandSide)
 				} else {
 					e.FullResetRedraw(c, status, true, false)
