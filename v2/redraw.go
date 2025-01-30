@@ -9,7 +9,7 @@ import (
 var redrawMutex sync.Mutex // to avoid an issue where the terminal is resized, signals are flying and the user is hammering the esc button
 
 // FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
-func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, shouldHighlight bool) {
+func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, shouldHighlightCurrentLine bool) {
 	if noDrawUntilResize.Load() {
 		return
 	}
@@ -40,7 +40,7 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 	}
 
 	if drawLines {
-		e.HideCursorDrawLines(c, true, e.sshMode, shouldHighlight)
+		e.HideCursorDrawLines(c, true, e.sshMode, shouldHighlightCurrentLine)
 	}
 
 	// Assign the new canvas to the current canvas
@@ -65,14 +65,14 @@ func (e *Editor) FullResetRedraw(c *vt100.Canvas, status *StatusBar, drawLines, 
 	}
 
 	if drawLines {
-		e.HideCursorDrawLines(c, true, e.sshMode, shouldHighlight)
+		e.HideCursorDrawLines(c, true, e.sshMode, shouldHighlightCurrentLine)
 	}
 
 	if e.sshMode {
 		// TODO: Figure out why this helps doing a full redraw when o is used over ssh
 		// Go to the line we were at
 		e.ScrollUp(c, nil, e.pos.scrollSpeed)
-		e.HideCursorDrawLines(c, true, true, shouldHighlight)
+		e.HideCursorDrawLines(c, true, true, shouldHighlightCurrentLine)
 		canvasHeight := int(c.Height())
 		e.ScrollDown(c, nil, e.pos.scrollSpeed, canvasHeight)
 		e.redraw.Store(true)
@@ -136,7 +136,7 @@ func (e *Editor) RepositionCursorIfNeeded() {
 }
 
 // HideCursorDrawLines will draw a screen full of lines on the given canvas
-func (e *Editor) HideCursorDrawLines(c *vt100.Canvas, respectOffset, redrawCanvas, shouldHighlight bool) {
+func (e *Editor) HideCursorDrawLines(c *vt100.Canvas, respectOffset, redrawCanvas, shouldHighlightCurrentLine bool) {
 	if c == nil {
 		return
 	}
@@ -146,9 +146,9 @@ func (e *Editor) HideCursorDrawLines(c *vt100.Canvas, respectOffset, redrawCanva
 	h := int(c.Height())
 	if respectOffset {
 		offsetY := e.pos.OffsetY()
-		e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0, shouldHighlight)
+		e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0, shouldHighlightCurrentLine)
 	} else {
-		e.WriteLines(c, LineIndex(0), LineIndex(h), 0, 0, shouldHighlight)
+		e.WriteLines(c, LineIndex(0), LineIndex(h), 0, 0, shouldHighlightCurrentLine)
 	}
 	if redrawCanvas {
 		c.HideCursorAndRedraw()
@@ -199,7 +199,7 @@ func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 }
 
 // RedrawAtEndOfKeyLoop is called after each main loop
-func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, shouldHighlight, repositionCursor bool) {
+func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, shouldHighlightCurrentLine, repositionCursor bool) {
 	redrawCanvas := !e.debugMode
 
 	redraw := e.redraw.Load()
@@ -207,7 +207,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, should
 	// Redraw, if needed
 	if redraw {
 		// Draw the editor lines on the canvas, respecting the offset
-		e.HideCursorDrawLines(c, true, redrawCanvas, shouldHighlight)
+		e.HideCursorDrawLines(c, true, redrawCanvas, shouldHighlightCurrentLine)
 	}
 
 	if redraw || e.Changed() {
