@@ -209,7 +209,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			os.Exit(1)
 		} else if n == 0 {
-			fmt.Fprintf(os.Stderr, "Wrote 0 bytes to %s\n", filename)
+			fmt.Fprintf(os.Stderr, "Copied 0 bytes from %s\n", filename)
 			os.Exit(1)
 		}
 		plural := "s"
