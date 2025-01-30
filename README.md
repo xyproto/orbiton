@@ -41,6 +41,10 @@ There are also light themes available:
 
 ![light theme](img/light_screenshot.png)
 
+Writing commit messages:
+
+![git](img/git_screenshotpng)
+
 ## Packaging status
 
 | **orbiton**                                                                                                                    |
