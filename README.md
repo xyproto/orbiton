@@ -43,7 +43,7 @@ There are also light themes available:
 
 Writing commit messages:
 
-![git](img/git_screenshotpng)
+![git](img/git_screenshot.png)
 
 ## Packaging status
 
