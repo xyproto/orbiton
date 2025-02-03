@@ -83,6 +83,10 @@ func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
 	return exeFirstName
 }
 
+func has(executableInPath string) bool {
+	return files.WhichCached(executableInPath) != ""
+}
+
 // GenerateBuildCommand will generate a command for building the given filename (or for displaying HTML)
 // If there are no errors, a exec.Cmd is returned together with a function that can tell if the build
 // produced an executable, together with the executable name,
@@ -156,10 +160,45 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 	}
 
 	switch filepath.Base(sourceFilename) {
-	case "PKGBUILD":
-		has := func(s string) bool {
-			return files.WhichCached(s) != ""
+	case "CMakeLists.txt":
+		var s string
+		if has("cmake") {
+			if has("ninja") {
+				s = "cmake -B build -D CMAKE_BUILD_TYPE=Debug -G Ninja -S . -W no-dev || (rm -rv build; cmake -B build -D CMAKE_BUILD_TYPE=Debug -G Ninja -S . -W no-dev) && ninja -C build"
+			} else if has("make") {
+				s = "cmake -B build -D CMAKE_BUILD_TYPE=Debug -S . -W no-dev || (rm -rv build; cmake -B build -D CMAKE_BUILD_TYPE=Debug -S . -W no-dev) && make -C build"
+			} else if has("gmake") {
+				s = "cmake -B build -D CMAKE_BUILD_TYPE=Debug -S . -W no-dev || (rm -rv build; cmake -B build -D CMAKE_BUILD_TYPE=Debug -S . -W no-dev) && gmake -C build"
+			}
 		}
+		lastCommand, err := readLastCommand()
+		if releaseBuildFlag {
+			if err == nil && strings.Contains(lastCommand, "CMAKE_BUILD_TYPE=Debug ") {
+				s = "rm -r build; " + s
+			}
+			s = strings.ReplaceAll(s, "CMAKE_BUILD_TYPE=Debug ", "CMAKE_BUILD_TYPE=Release ")
+		} else {
+			if err == nil && strings.Contains(lastCommand, "CMAKE_BUILD_TYPE=Release ") {
+				s = "rm -r build; " + s
+			}
+		}
+		if s != "" {
+			// Save and exec / replace the process with syscall.Exec
+			if e.Save(c, tty) == nil { // success
+				// Unlock and save the lock file
+				if absFilename, err := filepath.Abs(e.filename); fileLock != nil && err == nil { // success
+					fileLock.Unlock(absFilename)
+					fileLock.Save()
+				}
+				quitExecShellCommand(tty, sourceDir, s) // The program ends here
+			}
+			// Could not save the file, execute the command in a separate process
+			args := strings.Split(s, " ")
+			cmd = exec.Command(args[0], args[1:]...)
+			cmd.Dir = sourceDir
+			return cmd, everythingIsFine, nil
+		}
+	case "PKGBUILD":
 		var s string
 		if has("tinyionice") {
 			s += "tinyionice "
@@ -184,7 +223,6 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 				}
 				quitExecShellCommand(tty, sourceDir, s) // The program ends here
 			}
-
 			// Could not save the file, execute the command in a separate process
 			args := strings.Split(s, " ")
 			cmd = exec.Command(args[0], args[1:]...)

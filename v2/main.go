@@ -54,51 +54,55 @@ var (
 
 	// The Ollama model that is used for code completion
 	codeCompletionModel string
+
+	// Build with release mode instead of debug mode whenever applicable
+	releaseBuildFlag bool
 )
 
 func main() {
 	var (
-		copyFlag               bool
-		forceFlag              bool
-		helpFlag               bool
-		monitorAndReadOnlyFlag bool
-		noCacheFlag            bool
-		pasteFlag              bool
-		clearLocksFlag         bool
-		lastCommandFlag        bool
-		quickHelpFlag          bool
-		createDirectoriesFlag  bool
-		versionFlag            bool
-		nanoMode               bool
-		ollamaTabCompletion    bool
-		catFlag                bool
 		batFlag                bool
-		formatFlag             bool
 		buildFlag              bool
-		noApproxMatchFlag      bool
+		catFlag                bool
+		clearLocksFlag         bool
+		copyFlag               bool
+		createDirectoriesFlag  bool
+		forceFlag              bool
+		formatFlag             bool
+		helpFlag               bool
+		lastCommandFlag        bool
 		listDigraphsFlag       bool
+		monitorAndReadOnlyFlag bool
+		nanoMode               bool
+		noApproxMatchFlag      bool
+		noCacheFlag            bool
+		ollamaTabCompletion    bool
+		pasteFlag              bool
+		quickHelpFlag          bool
+		versionFlag            bool
 	)
 
-	pflag.BoolVarP(&copyFlag, "copy", "c", false, "copy a file into the clipboard and quit")
-	pflag.BoolVarP(&forceFlag, "force", "f", false, "open even if already open")
-	pflag.BoolVarP(&helpFlag, "help", "h", false, "quick overview of hotkeys and flags")
-	pflag.BoolVarP(&monitorAndReadOnlyFlag, "monitor", "m", false, "open read-only and monitor for changes")
-	pflag.BoolVarP(&noCacheFlag, "no-cache", "n", false, "don't write anything to cache directory")
-	pflag.BoolVarP(&pasteFlag, "paste", "p", false, "paste the clipboard into the file and quit")
+	pflag.BoolVarP(&batFlag, "bat", "B", false, "Cat the file with colors instead of editing it, using bat")
+	pflag.BoolVarP(&buildFlag, "build", "b", false, "Try to build the file instead of editing it")
+	pflag.BoolVarP(&catFlag, "list", "t", false, "List the file with colors instead of editing it")
 	pflag.BoolVarP(&clearLocksFlag, "clear-locks", "r", false, "clear all file locks")
-	pflag.BoolVarP(&lastCommandFlag, "last-command", "l", false, "output the last build or format command")
-	pflag.BoolVarP(&quickHelpFlag, "quick-help", "q", false, "always display the quick help when starting")
+	pflag.BoolVarP(&copyFlag, "copy", "c", false, "copy a file into the clipboard and quit")
 	pflag.BoolVarP(&createDirectoriesFlag, "create-dir", "d", false, "create diretories when opening a new file")
+	pflag.BoolVarP(&forceFlag, "force", "f", false, "open even if already open")
+	pflag.BoolVarP(&formatFlag, "format", "F", false, "Try to build the file instead of editing it")
+	pflag.BoolVarP(&helpFlag, "help", "h", false, "quick overview of hotkeys and flags")
+	pflag.BoolVarP(&lastCommandFlag, "last-command", "l", false, "output the last build or format command")
+	pflag.BoolVarP(&listDigraphsFlag, "digraphs", "g", false, "List digraphs")
+	pflag.BoolVarP(&monitorAndReadOnlyFlag, "monitor", "m", false, "open read-only and monitor for changes")
+	pflag.BoolVarP(&nanoMode, "nano", "a", false, "Nano/Pico mode")
+	pflag.BoolVarP(&noApproxMatchFlag, "noapprox", "x", false, "Disable approximate filename matching")
+	pflag.BoolVarP(&noCacheFlag, "no-cache", "n", false, "don't write anything to cache directory")
+	pflag.BoolVarP(&ollamaTabCompletion, "ollama", "o", env.Bool("ORBITON_OLLAMA"), "use Ollama for tab completion")
+	pflag.BoolVarP(&pasteFlag, "paste", "p", false, "paste the clipboard into the file and quit")
+	pflag.BoolVarP(&releaseBuildFlag, "release", "r", false, "build with release mode instead of debug mode, whenever applicable")
+	pflag.BoolVarP(&quickHelpFlag, "quick-help", "q", false, "always display the quick help when starting")
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
-	pflag.BoolVarP(&nanoMode, "nano", "a", false, "Nano/Pico mode")
-	pflag.BoolVarP(&ollamaTabCompletion, "ollama", "o", env.Bool("ORBITON_OLLAMA"), "use Ollama for tab completion")
-	pflag.BoolVarP(&catFlag, "list", "t", false, "List the file with colors instead of editing it")
-	pflag.BoolVarP(&batFlag, "bat", "B", false, "Cat the file with colors instead of editing it, using bat")
-	pflag.BoolVarP(&formatFlag, "format", "F", false, "Try to build the file instead of editing it")
-	pflag.BoolVarP(&buildFlag, "build", "b", false, "Try to build the file instead of editing it")
-	pflag.BoolVarP(&noApproxMatchFlag, "noapprox", "x", false, "Disable approximate filename matching")
-	pflag.BoolVarP(&listDigraphsFlag, "digraphs", "g", false, "List digraphs")
 
 	pflag.Parse()
 
