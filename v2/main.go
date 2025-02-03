@@ -99,7 +99,7 @@ func main() {
 	pflag.BoolVarP(&noCacheFlag, "no-cache", "n", false, "don't write anything to cache directory")
 	pflag.BoolVarP(&ollamaTabCompletion, "ollama", "o", env.Bool("ORBITON_OLLAMA"), "use Ollama for tab completion")
 	pflag.BoolVarP(&pasteFlag, "paste", "p", false, "paste the clipboard into the file and quit")
-	pflag.BoolVarP(&releaseBuildFlag, "release", "r", false, "build with release mode instead of debug mode, whenever applicable")
+	pflag.BoolVarP(&releaseBuildFlag, "release", "e", false, "build with release mode instead of debug mode, whenever applicable")
 	pflag.BoolVarP(&quickHelpFlag, "quick-help", "q", false, "always display the quick help when starting")
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
