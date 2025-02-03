@@ -78,11 +78,11 @@ Flags:
                                  Combine with -f to overwrite the file.
   -f, --force                    Ignore file locks when opening files.
   -l, --last-command             Output the last used build/format/export command.
-  -r, --clear-locks              Clear all file locks and close all portals.
+  -e, --clear-locks              Clear all file locks and close all portals.
   -m, --monitor FILENAME         Monitor the given file for changes, and open it as read-only.
   -o, --ollama                   Use $OLLAMA$
                                  for tab completion (experimental feature).
-  -e, --release                  Build with release instead of debug mode whenever applicable.
+  -r, --release                  Build with release instead of debug mode whenever applicable.
   -x, --noapprox                 Disable approximate filename matching.
   -n, --no-cache                 Avoid writing the location history, search history, highscore,
                                  compilation and format command to ` + cacheDirForDoc + `.
