@@ -136,7 +136,7 @@ func (mode Mode) String() string {
 	case Basic:
 		return "Basic"
 	case Bat:
-		return "Bat"
+		return "Batch"
 	case Battlestar:
 		return "Battlestar"
 	case Bazel:
