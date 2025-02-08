@@ -27,7 +27,7 @@ require (
 	github.com/xyproto/mode v0.10.1
 	github.com/xyproto/ollamaclient/v2 v2.7.1
 	github.com/xyproto/stringpainter v1.0.1
-	github.com/xyproto/syntax v1.12.0
+	github.com/xyproto/syntax v1.12.1
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/textoutput v1.17.1
 	github.com/xyproto/usermodel v1.2.2

@@ -295,8 +295,8 @@ func NewScannerReader(src io.Reader) *scanner.Scanner {
 
 func tokenKind(tok rune, tokText string, inSingleLineComment *bool, m mode.Mode) Kind {
 
-	// Check if we are in a bash-style single line comment
-	if (m == mode.Assembly && tok == ';') || (m != mode.Assembly && m != mode.GoAssembly && m != mode.Clojure && m != mode.Lisp && m != mode.C && m != mode.Cpp && tok == '#') {
+	// Check if we are in a bash-style single line comment, this probably needs to check for even more languages
+	if (m == mode.Assembly && tok == ';') || (m != mode.Assembly && m != mode.GoAssembly && m != mode.Clojure && m != mode.Lisp && m != mode.C && m != mode.Cpp && m != mode.Lua && tok == '#') {
 		*inSingleLineComment = true
 	} else if tok == '\n' {
 		*inSingleLineComment = false

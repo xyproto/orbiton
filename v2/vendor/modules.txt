@@ -139,7 +139,7 @@ github.com/xyproto/palgen
 # github.com/xyproto/stringpainter v1.0.1
 ## explicit; go 1.13
 github.com/xyproto/stringpainter
-# github.com/xyproto/syntax v1.12.0
+# github.com/xyproto/syntax v1.12.1
 ## explicit; go 1.23.2
 github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.5.1

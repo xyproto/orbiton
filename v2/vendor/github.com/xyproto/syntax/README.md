@@ -13,4 +13,4 @@ The `hicat` utility (a bit like `bat` / syntax highlighted `cat`) can be install
 ### General info
 
 * License: BSD 3-Clause
-* Version: 1.12.0
+* Version: 1.12.1
