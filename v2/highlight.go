@@ -307,6 +307,17 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 					if strings.HasPrefix(trimmedLine, "--") {
 						// Handle single line comments
 						coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
+					} else if e.mode == mode.Lua && strings.Contains(line, "--") {
+						// Inline Lua comment, e.g. "local x = 42 -- set x to 42"
+						parts := strings.SplitN(line, "--", 2)
+						// Highlight the code portion before the comment
+						if newTextWithTags, err = syntax.AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
+							coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
+						} else {
+							// Append the comment portion highlighted as a comment
+							coloredString = unEscapeFunction(tout.DarkTags(string(newTextWithTags)) +
+								e.MultiLineComment.Start("--"+parts[1]))
+						}
 					} else if strings.HasPrefix(trimmedLine, "{-") && strings.HasSuffix(trimmedLine, "-}") {
 						coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
 					} else if strings.Contains(trimmedLine, "->") {
