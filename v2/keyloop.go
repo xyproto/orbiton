@@ -1918,6 +1918,19 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					clearOnQuit.Store(false)
 					e.quit = true
 					break
+				} else if keyRunes[0] == 'q' && !e.nanoMode.Load() && kh.PrevPrev() == "c:27" && kh.Prev() == "," { // <esc> ,q
+					// Remove the ","
+					e.Backspace(c, bookmark)
+					// Quit
+					e.quit = true
+					break
+				} else if keyRunes[0] == 'w' && !e.nanoMode.Load() && kh.PrevPrev() == "c:27" && kh.Prev() == "," { // <esc> ,w
+					// Remove the ","
+					e.Backspace(c, bookmark)
+					// Save the file
+					e.UserSave(c, tty, status)
+					// Skip the rest
+					continue
 				}
 
 				undo.Snapshot(e)
