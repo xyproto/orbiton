@@ -296,14 +296,14 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.ClearSearch()
 
 			// First check if we are editing Markdown and are in a Markdown table (and that this is not the previous thing that we did)
-			if e.mode == mode.Markdown && e.InTable() && !kh.PrevHas("c:23") {
+			if e.mode == mode.Markdown && e.InTable() && !kh.PrevIs("c:23") {
 				e.GoToStartOfTextLine(c)
 				// Just format the Markdown table
 				const justFormat = true
 				const displayQuickHelp = false
 				e.EditMarkdownTable(tty, c, status, bookmark, justFormat, displayQuickHelp)
 				break
-			} else if e.mode == mode.Markdown && !kh.PrevHas("c:23") {
+			} else if e.mode == mode.Markdown && !kh.PrevIs("c:23") {
 				e.GoToStartOfTextLine(c)
 				e.FormatAllMarkdownTables()
 				break
@@ -1544,7 +1544,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		case "c:21": // ctrl-u to undo
 
 			if e.nanoMode.Load() { // nano: paste after cutting
-				e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, kh.PrevHas("c:13"))
+				e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, kh.PrevIs("c:13"))
 				break
 			}
 
@@ -1733,7 +1733,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			// paste from the portal, clipboard or line buffer. Takes an undo snapshot if text is pasted.
-			e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, kh.PrevHas("c:13"))
+			e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, kh.PrevIs("c:13"))
 
 		case "c:18": // ctrl-r, to open or close a portal. In debug mode, continue running the program.
 

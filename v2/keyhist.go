@@ -50,6 +50,14 @@ func (kh *KeyHistory) Prev() string {
 	return kh.keys[2]
 }
 
+// PrevIs checks if the last pressed key is the given string
+func (kh *KeyHistory) PrevIs(s string) bool {
+	khMut.RLock()
+	defer khMut.RUnlock()
+
+	return kh.keys[2] == s
+}
+
 // PrevPrev returns the key pressed before the last one
 func (kh *KeyHistory) PrevPrev() string {
 	khMut.RLock()
