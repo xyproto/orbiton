@@ -58,8 +58,8 @@ func (kh *KeyHistory) PrevPrev() string {
 	return kh.keys[1]
 }
 
-// PrevIs checks if one of the given strings is the previous keypress
-func (kh *KeyHistory) PrevIs(keyPresses ...string) bool {
+// PrevHas checks if one of the given strings is the previous keypress
+func (kh *KeyHistory) PrevHas(keyPresses ...string) bool {
 	khMut.RLock()
 	defer khMut.RUnlock()
 
