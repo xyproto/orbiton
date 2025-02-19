@@ -233,9 +233,8 @@ func organizeImports(data []byte, onlyJava, removeExistingImports, deGlob bool) 
 }
 
 func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, jsonFormatToggle *bool) {
-
-	// Format JSON
-	if e.mode == mode.JSON {
+	switch e.mode {
+	case mode.JSON: // Format JSON
 		data, err := formatJSON([]byte(e.String()), jsonFormatToggle, e.indentation.PerTab)
 		if err != nil {
 			status.ClearAll(c, true)
@@ -245,17 +244,11 @@ func (e *Editor) formatCode(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 		e.LoadBytes(data)
 		e.redraw.Store(true)
 		return
-	}
-
-	// Format /etc/fstab files
-	if baseFilename := filepath.Base(e.filename); baseFilename == "fstab" {
+	case mode.FSTAB: // Format /etc/fstab files
 		const spaces = 2
 		e.LoadBytes(formatFstab([]byte(e.String()), spaces))
 		e.redraw.Store(true)
 		return
-	}
-
-	switch e.mode {
 	case mode.Assembly:
 		if !lookslikegoasm.Consider(e.String()) {
 			break // no formatter for regular Assembly, yet

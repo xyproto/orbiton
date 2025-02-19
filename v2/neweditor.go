@@ -153,7 +153,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		// Markdown is set by default for some files.
 		// This corresponds to the check below, and both needs to be updated in sync.
 		// Also detect if Assembly could be Go/Plan9-style Assembly.
-		if e.mode == mode.Blank || e.mode == mode.Prolog || e.mode == mode.Config || e.mode == mode.Markdown || e.mode == mode.Assembly {
+		if e.mode == mode.Blank || e.mode == mode.Prolog || e.mode == mode.Config || e.mode == mode.FSTAB || e.mode == mode.Markdown || e.mode == mode.Assembly {
 			var firstLine []byte
 			byteLines := bytes.SplitN(fnord.data, []byte{'\n'}, 2)
 			if len(byteLines) > 0 {
@@ -177,7 +177,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			}
 		}
 
-		// Specifically enable syntax highlighting if the opened file is a configuration file or a log file
+		// Specifically enable syntax highlighting if the opened file is a configuration file or log file
 		if e.mode == mode.Config || e.mode == mode.Log {
 			e.syntaxHighlight = true
 		}
@@ -204,8 +204,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		if !e.Empty() {
 			// Detect the file mode if the current editor mode is blank (or Prolog, since it could be Perl)
 			// Markdown is set by default for some files.
-			// This corresponds to the check furthe up, and both needs to be updated in sync.
-			if e.mode == mode.Blank || e.mode == mode.Prolog || e.mode == mode.Config || (e.mode == mode.Markdown && ext != ".md") {
+			// This corresponds to the check further up, and both needs to be updated in sync.
+			if e.mode == mode.Blank || e.mode == mode.Prolog || e.mode == mode.Config || e.mode == mode.FSTAB || (e.mode == mode.Markdown && ext != ".md") {
 				firstLine := e.Line(0)
 				// The first 100 bytes are enough when trying to detect the contents
 				if len(firstLine) > 100 {

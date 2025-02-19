@@ -226,7 +226,7 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 		)
 
 		// Consider smart indentation for programming languages
-		if e.ProgrammingLanguage() || e.mode == mode.Config { // not mode.Ini, since it seldom has indentations
+		if e.ProgrammingLanguage() || e.mode == mode.Config { // not mode.Ini and mode.Fstab, since those seldom have indentations
 			// Indent the block that is about to be pasted to the smart indentation level, if the block had no indentation
 			if getLeadingWhitespace(firstLine) == "" {
 				leadingWhitespace := e.LeadingWhitespace()

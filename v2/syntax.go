@@ -170,7 +170,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		setKeywords(clojureWords)
 	case mode.CMake:
 		addAndRemoveKeywords(cmakeWords, []string{"build", "package"})
-	case mode.Config, mode.Ini:
+	case mode.Config, mode.Ini, mode.FSTAB:
 		removeKeywords([]string{"auto", "build", "default", "for", "from", "get", "install", "int", "local", "no", "not", "package", "super", "type", "var", "with"})
 		addKeywords([]string{"DB_PASSWORD", "PASSWORD", "POSTGRES_PASSWORD", "PWD", "Password", "Pwd", "SECRET", "SECRETS", "Secret", "Secrets", "bind", "password", "pwd", "secret", "secrets", "set-option", "set-window-option", "unbind", "uses"})
 	case mode.CS:
@@ -332,7 +332,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "'"
 	case mode.Bat:
 		return "@rem" // or rem or just ":" ...
-	case mode.Algol68, mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.Docker, mode.GDScript, mode.Ignore, mode.Just, mode.Make, mode.Nim, mode.Mojo, mode.PolicyLanguage, mode.Python, mode.R, mode.Ruby, mode.Shell, mode.Starlark:
+	case mode.Algol68, mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.Docker, mode.FSTAB, mode.GDScript, mode.Ignore, mode.Just, mode.Make, mode.Nim, mode.Mojo, mode.PolicyLanguage, mode.Python, mode.R, mode.Ruby, mode.Shell, mode.Starlark:
 		return "#"
 	case mode.Clojure, mode.Lisp:
 		return ";;"

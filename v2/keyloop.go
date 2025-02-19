@@ -398,7 +398,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			switch e.mode {
-			case mode.Config:
+			case mode.Config, mode.FSTAB:
 				break // do nothing
 			case mode.Nroff:
 				// Switch to man page mode, just in case the switching over does not work out
