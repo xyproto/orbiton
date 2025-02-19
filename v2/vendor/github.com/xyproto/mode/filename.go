@@ -20,7 +20,7 @@ func hasS(sl []string, s string) bool {
 func Detect(filename string) Mode {
 	// A list of the most common configuration filenames that does not have an extension
 	var (
-		configFilenames = []string{"BUILD", "WORKSPACE", "config", "environment", "fstab", "group", "gshadow", "hostname", "hosts", "issue", "mirrorlist", "passwd", "shadow"}
+		configFilenames = []string{"BUILD", "WORKSPACE", "config", "environment", "group", "gshadow", "hostname", "hosts", "issue", "mirrorlist", "passwd", "shadow"}
 		mode            Mode
 	)
 
@@ -43,6 +43,8 @@ func Detect(filename string) Mode {
 		mode = Ollama
 	case baseFilename == "svn-commit.tmp":
 		mode = Subversion
+	case baseFilename == "fstab":
+		mode = FSTAB
 	case ext == ".vimrc" || ext == ".vim" || ext == ".nvim":
 		mode = Vim
 	case ext == ".mk" || strings.HasPrefix(baseFilename, "Make") || strings.HasPrefix(baseFilename, "makefile") || baseFilename == "GNUmakefile":
