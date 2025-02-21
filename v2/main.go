@@ -17,16 +17,11 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/globi"
-	"github.com/xyproto/ollamaclient/v2"
-	"github.com/xyproto/usermodel"
 	"github.com/xyproto/vt100"
 )
 
 const (
 	versionString = "Orbiton 2.68.7"
-
-	// How many lines of context above and below should the tab completion try to use?
-	ollamaContextLines = 20
 )
 
 var (
@@ -48,12 +43,6 @@ var (
 
 	// Check if the parent process is "man"
 	parentIsMan *bool
-
-	// Ollama client, used for tab completion
-	ollamaClient *ollamaclient.Config
-
-	// The Ollama model that is used for code completion
-	codeCompletionModel string
 
 	// Build with release mode instead of debug mode whenever applicable
 	releaseBuildFlag bool
@@ -111,14 +100,11 @@ func main() {
 		return
 	}
 
-	if ollamaTabCompletion || helpFlag {
-		codeCompletionModel = env.Str("OLLAMA_MODEL", usermodel.GetCodeModel())
-		if codeCompletionModel != "" {
-			// Used by the --help output, ollamaText is "Use Ollama" before this
-			ollamaHelpText += fmt.Sprintf(" and %q", strings.TrimSuffix(codeCompletionModel, ":latest"))
-			if env.No("OLLAMA_MODEL") {
-				ollamaHelpText += " or $OLLAMA_MODEL"
-			}
+	if (ollamaTabCompletion || helpFlag) && GetOllamaCodeModel() {
+		// Used by the --help output, ollamaText is "Use Ollama" before this
+		ollamaHelpText += fmt.Sprintf(" and %q", strings.TrimSuffix(codeCompletionModel, ":latest"))
+		if env.No("OLLAMA_MODEL") {
+			ollamaHelpText += " or $OLLAMA_MODEL"
 		}
 	}
 
@@ -143,19 +129,9 @@ func main() {
 		return
 	}
 
-	if ollamaTabCompletion {
-		ollamaClient = ollamaclient.New(codeCompletionModel)
-		ollamaClient.Verbose = false
-		const verbosePull = true
-		if err := ollamaClient.PullIfNeeded(verbosePull); err != nil {
-			if ollamaHost := env.Str("OLLAMA_HOST"); ollamaHost != "" {
-				fmt.Fprintf(os.Stderr, "could not fetch the %s model, is Ollama up and running at %s?\n", codeCompletionModel, ollamaHost)
-			} else {
-				fmt.Fprintf(os.Stderr, "could not fetch the %s model, is Ollama running locally? (or is OLLAMA_HOST set?)\n", codeCompletionModel)
-			}
-			os.Exit(1)
-		}
-		ollamaClient.SetReproducible()
+	if err := LoadOllama(ollamaTabCompletion); err != nil {
+		fmt.Fprintf(os.Stderr, err.Error())
+		os.Exit(1)
 	}
 
 	noWriteToCache = noCacheFlag || monitorAndReadOnlyFlag
