@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Make it possible to disable the use of v2/ollama.go at compile time using build tags, for a slightly smaller executable.
 - [ ] Make it possible to search for double space ("  ").
 - [ ] Support the Language Server Protocol, per language.
 - [ ] When pressing esc several times to make the command menu appear (to aid ViM users),
