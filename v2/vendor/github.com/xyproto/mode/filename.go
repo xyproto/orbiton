@@ -133,6 +133,8 @@ func Detect(filename string) Mode {
 			mode = Email
 		case ".erl":
 			mode = Erlang
+		case ".dsp":
+			mode = Faust
 		case ".f":
 			mode = Fortran77
 		case ".f90":

@@ -24,7 +24,7 @@ require (
 	github.com/xyproto/globi v1.0.2
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/lookslikegoasm v1.0.0
-	github.com/xyproto/mode v0.10.2
+	github.com/xyproto/mode v0.11.0
 	github.com/xyproto/ollamaclient/v2 v2.7.1
 	github.com/xyproto/stringpainter v1.0.1
 	github.com/xyproto/syntax v1.12.1

@@ -36,6 +36,7 @@ const (
 	Email                 // For using o with ie. Mutt
 	Elm                   // Elm
 	Erlang                // Erlang
+	Faust                 // Faust
 	Fortran77             // Fortran 77
 	Fortran90             // Fortran 90
 	FSharp                // F#
@@ -178,6 +179,8 @@ func (mode Mode) String() string {
 		return "E-mail"
 	case Erlang:
 		return "Erlang"
+	case Faust:
+		return "Faust"
 	case Fortran77:
 		return "Fortran 77"
 	case Fortran90:

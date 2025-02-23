@@ -127,7 +127,7 @@ github.com/xyproto/iferr
 # github.com/xyproto/lookslikegoasm v1.0.0
 ## explicit; go 1.23.2
 github.com/xyproto/lookslikegoasm
-# github.com/xyproto/mode v0.10.2
+# github.com/xyproto/mode v0.11.0
 ## explicit; go 1.23.2
 github.com/xyproto/mode
 # github.com/xyproto/ollamaclient/v2 v2.7.1
