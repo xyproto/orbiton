@@ -2,7 +2,8 @@
 
 PROJECT ?= orbiton
 
-GOFLAGS := -mod=vendor -trimpath -v
+GOFLAGS ?= -mod=vendor -trimpath -v -ldflags "-s -w" -buildvcs=false
+
 GOBUILD := go build
 
 SRCFILES := $(wildcard go.* v2/*.go v2/go.*)
