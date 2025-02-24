@@ -420,7 +420,7 @@ func main() {
 	} else if buildFlag {
 		msg, err := OnlyBuild(fnord)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
+			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 		fmt.Println(msg)
@@ -430,7 +430,7 @@ func main() {
 	// Initialize the VT100 terminal
 	tty, err := vt100.NewTTY()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "error: "+err.Error())
+		fmt.Fprintln(os.Stderr, err)
 		quitMut.Lock()
 		defer quitMut.Unlock()
 		os.Exit(1)
