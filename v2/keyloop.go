@@ -33,6 +33,9 @@ const (
 	homeKey = "⇱" // home
 	endKey  = "⇲" // end
 	copyKey = "⎘" // ctrl-insert
+
+	// How many lines of context above and below should the tab completion try to use?
+	codeCompletionContextLines = 20
 )
 
 // Create a LockKeeper for keeping track of which files are being edited
@@ -1229,15 +1232,15 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			r := e.Rune()
 			leftRune := e.LeftRune()
 
-			// Tab completion with Ollama
-			if ollamaClient != nil && e.mode != mode.Blank && e.AnyTextBeforeCursor() {
+			// Tab triggered code completion with Ollama
+			if cc.Loaded() && e.mode != mode.Blank && e.AnyTextBeforeCursor() {
 
 				status.ClearAll(c, true)
-				status.SetMessage(fmt.Sprintf("Generating code with Ollama and the %s model...", codeCompletionModel))
+				status.SetMessage(fmt.Sprintf("Generating code with Ollama and the %s model...", cc.ModelName))
 				status.ShowNoTimeout(c, e)
 				vt100.ShowCursor(false)
 
-				linesOfContext := ollamaContextLines / 2
+				linesOfContext := codeCompletionContextLines / 2
 
 				currentLineIndex := int(e.LineIndex())
 
@@ -1261,9 +1264,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				codeStart := codeBefore.String()
 				codeEnd := codeAfter.String()
 
-				if response, err := ollamaClient.GetBetweenResponse(codeStart, codeEnd); err == nil { // success
+				if responseString, err := cc.CompleteBetween(codeStart, codeEnd); err == nil { // success
 
-					generatedCodeCompletion := strings.TrimSuffix(response.Response, "\n")
+					generatedCodeCompletion := strings.TrimSuffix(responseString, "\n")
 					//logf("CODE START ---\n%s\n---\n\nGENERATED ---\n%s\n\n--- CODE END ---\n%s\n", codeStart, generatedCodeCompletion, codeEnd)
 					if generatedCodeCompletion != "" {
 						// Take an undo snapshot and insert the generated code

@@ -46,6 +46,9 @@ var (
 
 	// Build with release mode instead of debug mode whenever applicable
 	releaseBuildFlag bool
+
+	// An empty *CodeCompleter struct
+	cc = NewCodeCompleter()
 )
 
 func main() {
@@ -100,9 +103,9 @@ func main() {
 		return
 	}
 
-	if (ollamaTabCompletion || helpFlag) && GetOllamaCodeModel() {
+	if (ollamaTabCompletion || helpFlag) && cc.FindModel() {
 		// Used by the --help output, ollamaText is "Use Ollama" before this
-		ollamaHelpText += fmt.Sprintf(" and %q", strings.TrimSuffix(codeCompletionModel, ":latest"))
+		ollamaHelpText += fmt.Sprintf(" and %q", strings.TrimSuffix(cc.ModelName, ":latest"))
 		if env.No("OLLAMA_MODEL") {
 			ollamaHelpText += " or $OLLAMA_MODEL"
 		}
@@ -129,9 +132,11 @@ func main() {
 		return
 	}
 
-	if err := LoadOllama(ollamaTabCompletion); err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
-		os.Exit(1)
+	if ollamaTabCompletion {
+		if err := cc.LoadModel(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 	}
 
 	noWriteToCache = noCacheFlag || monitorAndReadOnlyFlag
