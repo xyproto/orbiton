@@ -336,7 +336,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			if e.Empty() {
-				// If the filename is __init__.py, don't insert anything
+				// If the filename is __init__.py, don't insert anything, since this should often stay empty
 				if filepath.Base(e.filename) == "__init__.py" {
 					break
 				}
