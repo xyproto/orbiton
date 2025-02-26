@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Fix the nano-mode ctrl-g key so that the help text stays up until a key has been pressed.
 - [ ] Make it possible to disable the use of v2/ollama.go at compile time using build tags, for a slightly smaller executable.
 - [ ] Make it possible to search for double space ("  ").
 - [ ] Support the Language Server Protocol, per language.
