@@ -8,7 +8,7 @@ Orbiton is a text editor and a simple IDE with the following leading principles:
 * **Not be configurable, to help users stay focused** (with the exception of themes)
 * **Facilitate rapid edit-format-compile-run cycles**
 
-Please submit a PR if anything can be improved to help adhere to these principles.
+Please submit a PR if anything can be improved to help adhere to these.
 
 Orbiton might be a good fit for:
 
