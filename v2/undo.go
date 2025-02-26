@@ -151,8 +151,8 @@ func (u *Undo) Restore(e *Editor) error {
 		u.index = u.size - 1
 	}
 
-	// Restore the state from this index, if there is something there
-	if lines := u.editorLineCopies[u.index]; len(lines) > 0 {
+	// Restore the state from this index, if there is something there OR if the index is 0
+	if lines := u.editorLineCopies[u.index]; len(lines) > 0 || u.index == 0 {
 
 		*e = u.editorCopies[u.index]
 		e.lines = lines
