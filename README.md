@@ -53,7 +53,7 @@ Writing commit messages:
 
 ## Quick start
 
-With Go 1.21, the development version of `o` can be installed like this:
+With Go 1.21 or later, the development version of `o` can be installed like this:
 
     go install github.com/xyproto/orbiton/v2@latest && mv -i ~/go/bin/orbiton ~/go/bin/o
 
