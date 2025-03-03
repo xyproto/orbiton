@@ -1494,6 +1494,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.ClearAll(c, false)
 				const repositionCursorAfterDrawing = false
 				e.DrawNanoHelp(c, repositionCursorAfterDrawing)
+				e.waitWithRedrawing.Store(true)
+				e.redraw.Store(false)
+				e.redrawCursor.Store(false)
+				messageAfterRedraw = ""
 				break
 			}
 
