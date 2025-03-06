@@ -97,6 +97,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		q                                  *QuoteState
 		escapeFunction                     = Escape
 		unEscapeFunction                   = UnEscape
+		rw                                 int // rune width
 	)
 
 	// If the terminal emulator is being resized, then wait a bit
@@ -599,12 +600,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						}
 					}
 
-					if ra.R == '\t' {
-						c.Write(cx+lineRuneCount, cy+uint(y), fg, e.Background, tabString)
-						lineRuneCount += uint(e.indentation.PerTab)
-					} else {
+					if ra.R != '\t' {
 						letter = ra.R
+						rw = runewidth.RuneWidth(letter)
 						if unicode.IsControl(letter) {
+							letter = controlRuneReplacement
+						} else if rw > 1 { // NOTE: This is a hack to prevent all the text from becoming skewed! Ideally, letter should be drawn, and other text should not be skewed.
 							letter = controlRuneReplacement
 						}
 						tx = cx + lineRuneCount
@@ -615,9 +616,13 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							} else {
 								c.WriteRuneBNoLock(tx, ty, fg, bg, letter)
 							}
-							lineRuneCount += uint(runewidth.RuneWidth(letter))
+							lineRuneCount += uint(rw)
 						}
+					} else {
+						c.Write(cx+lineRuneCount, cy+uint(y), fg, e.Background, tabString)
+						lineRuneCount += uint(e.indentation.PerTab)
 					}
+
 				}
 			}
 		} else { // no syntax highlighting
