@@ -61,6 +61,8 @@ func (e *Editor) Run() (string, bool, error) {
 			audioOutputFlag = "-Od" // macOS
 		}
 		cmd = exec.Command("timidity", "--quiet", audioOutputFlag, filepath.Join(tempDir, "o.mid"))
+	case mode.Clojure:
+		cmd = exec.Command("clojure", "-M", sourceFilename) // single file
 	case mode.CMake:
 		cmd = exec.Command("cmake", "-B", "build", "-D", "CMAKE_BUILD_TYPE=Debug", "-S", sourceDir)
 	case mode.Kotlin:

@@ -453,6 +453,9 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 			cmd.Dir = parentDir
 		} else if !projectFileExists && !parentProjectFileExists && grandParentProjectFileExists {
 			cmd.Dir = grandParentDir
+		} else if !projectFileExists && !parentProjectFileExists && !grandParentProjectFileExists {
+			cmd = exec.Command("clojure", "-e", `(try (clojure.core/read-string (slurp "`+sourceFilename+`")) (println "Syntax OK") (catch Exception e (println "Syntax error:" (.getMessage e))))`)
+			cmd.Dir = sourceDir
 		}
 		return cmd, everythingIsFine, nil
 	case mode.Haskell:
