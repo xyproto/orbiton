@@ -66,6 +66,9 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 				return true // it looks-ish like a function definition
 			}
 		}
+		if e.mode == mode.Kotlin && strings.HasPrefix(trimmedLine, "suspend "+funcPrefix) {
+			return true
+		}
 		if strings.Contains(trimmedLine, " ") {
 			fields := strings.SplitN(trimmedLine, " ", 2)
 			if strings.Contains(fields[0], "*") {
