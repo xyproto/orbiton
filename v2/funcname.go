@@ -61,8 +61,7 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 		if strings.Contains(trimmedLine, ";") && !(strings.HasSuffix(trimmedLine, "};") || strings.HasSuffix(trimmedLine, "} ;")) {
 			return false
 		}
-		xs := []string{"bool", "char", "const", "constexpr", "double", "float", "inline", "int", "int16_t", "int32_t", "int64_t", "int8_t", "long", "short", "signed", "size_t", "static", "uint", "uint16_t", "uint32_t", "uint64_t", "uint8_t", "unsigned", "void", "volatile"}
-		for _, x := range xs {
+		for _, x := range cTypes {
 			if strings.HasPrefix(trimmedLine, x) {
 				return true // it looks-ish like a function definition
 			}
