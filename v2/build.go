@@ -163,12 +163,13 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 	case "CMakeLists.txt":
 		var s string
 		if has("cmake") {
-			if has("ninja") {
-				s = "cmake -B build -D CMAKE_BUILD_TYPE=Debug -G Ninja -S . -W no-dev || (rm -rv build; cmake -B build -D CMAKE_BUILD_TYPE=Debug -G Ninja -S . -W no-dev) && ninja -C build"
-			} else if has("make") {
-				s = "cmake -B build -D CMAKE_BUILD_TYPE=Debug -S . -W no-dev || (rm -rv build; cmake -B build -D CMAKE_BUILD_TYPE=Debug -S . -W no-dev) && make -C build"
-			} else if has("gmake") {
-				s = "cmake -B build -D CMAKE_BUILD_TYPE=Debug -S . -W no-dev || (rm -rv build; cmake -B build -D CMAKE_BUILD_TYPE=Debug -S . -W no-dev) && gmake -C build"
+			s = "cmake -B build -D CMAKE_BUILD_TYPE=Debug -G Ninja -S . -W no-dev || (rm -rv build; cmake -B build -D CMAKE_BUILD_TYPE=Debug -G Ninja -S . -W no-dev) && ninja -C build"
+			if !has("ninja") {
+				s = strings.ReplaceAll(s, " -G Ninja", "")
+				s = strings.ReplaceAll(s, "ninja -C ", "make -C ")
+			}
+			if isBSD && has("gmake") {
+				s = strings.ReplaceAll(s, "make -C ", "gmake -C ")
 			}
 		}
 		lastCommand, err := readLastCommand()
