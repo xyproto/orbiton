@@ -91,7 +91,7 @@ func (e *Editor) Run() (string, bool, error) {
 	case mode.Lua:
 		if e.LuaLove() {
 			const macLovePath = "/Applications/love.app/Contents/MacOS/love"
-			if files.Which("love") != "" {
+			if files.WhichCached("love") != "" {
 				cmd = exec.Command("love", ".")
 			} else if isDarwin && files.Exists(macLovePath) {
 				cmd = exec.Command(macLovePath, sourceFilename)
@@ -100,7 +100,7 @@ func (e *Editor) Run() (string, bool, error) {
 			}
 		} else if e.LuaLovr() {
 			const macLovrPath = "/Applications/lovr.app/Contents/MacOS/lovr"
-			if files.Which("lovr") != "" {
+			if files.WhichCached("lovr") != "" {
 				cmd = exec.Command("lovr", sourceFilename)
 			} else if isDarwin && files.Exists(macLovrPath) {
 				cmd = exec.Command(macLovrPath, sourceFilename)
@@ -277,7 +277,7 @@ func run(commandString string) error {
 	if len(parts) == 0 {
 		return errors.New("empty command")
 	}
-	if files.Which(parts[0]) == "" {
+	if files.WhichCached(parts[0]) == "" {
 		return fmt.Errorf("could not find %s in path", parts[0])
 	}
 	cmd := exec.Command(parts[0], parts[1:]...)
