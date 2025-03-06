@@ -28,7 +28,7 @@ var (
 	tout          = textoutput.NewTextOutput(true, true)
 	resizeMut     sync.RWMutex // locked when the terminal emulator is being resized
 
-	noGUI = !(env.Has("DISPLAY") || env.Has("WAYLAND_DISPLAY"))
+	noGUI = !env.Has("DISPLAY") && !env.Has("WAYLAND_DISPLAY") // no X, no Wayland
 )
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
