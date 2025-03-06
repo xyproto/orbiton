@@ -157,8 +157,8 @@ github.com/xyproto/vt100
 # github.com/xyproto/wordwrap v1.0.1
 ## explicit; go 1.21.3
 github.com/xyproto/wordwrap
-# golang.org/x/image v0.24.0
-## explicit; go 1.18
+# golang.org/x/image v0.25.0
+## explicit; go 1.23.0
 golang.org/x/image/draw
 golang.org/x/image/math/f64
 golang.org/x/image/riff

@@ -33,7 +33,7 @@ require (
 	github.com/xyproto/usermodel v1.2.2
 	github.com/xyproto/vt100 v1.16.11
 	github.com/xyproto/wordwrap v1.0.1
-	golang.org/x/image v0.24.0
+	golang.org/x/image v0.25.0
 )
 
 require (
