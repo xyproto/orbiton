@@ -157,7 +157,7 @@ func (sb *StatusBar) Clear(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
 		h -= 2
 	}
 	offsetY := sb.editor.pos.OffsetY()
-	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0, false)
+	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0, false, true)
 
 	c.HideCursorAndDraw()
 
@@ -189,7 +189,7 @@ func (sb *StatusBar) ClearAll(c *vt100.Canvas, repositionCursorAfterDrawing bool
 		h -= 2
 	}
 	offsetY := sb.editor.pos.OffsetY()
-	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0, false)
+	sb.editor.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0, false, true)
 
 	c.HideCursorAndDraw()
 

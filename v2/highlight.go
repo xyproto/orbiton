@@ -29,7 +29,7 @@ var (
 )
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
-func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy uint, shouldHighlightNow bool) {
+func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy uint, shouldHighlightNow, hideCursorWhenDrawing bool) {
 	// TODO: Use a channel for queuing up calls to the vt100 package to avoid race conditions
 
 	// TODO: Refactor this function
@@ -102,6 +102,11 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	// If the terminal emulator is being resized, then wait a bit
 	resizeMut.Lock()
 	defer resizeMut.Unlock()
+
+	if hideCursorWhenDrawing {
+		c.HideCursor()
+		defer c.ShowCursor()
+	}
 
 	cw = c.Width()
 	if fromline >= toline {

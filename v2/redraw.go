@@ -141,14 +141,16 @@ func (e *Editor) HideCursorDrawLines(c *vt100.Canvas, respectOffset, redrawCanva
 		return
 	}
 
+	const hideCursorWhenDrawing = true
+
 	// TODO: Use a channel for queuing up calls to the vt100 package to avoid race conditions
 
 	h := int(c.Height())
 	if respectOffset {
 		offsetY := e.pos.OffsetY()
-		e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0, shouldHighlightCurrentLine)
+		e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0, shouldHighlightCurrentLine, hideCursorWhenDrawing)
 	} else {
-		e.WriteLines(c, LineIndex(0), LineIndex(h), 0, 0, shouldHighlightCurrentLine)
+		e.WriteLines(c, LineIndex(0), LineIndex(h), 0, 0, shouldHighlightCurrentLine, hideCursorWhenDrawing)
 	}
 	if redrawCanvas {
 		c.HideCursorAndRedraw()
