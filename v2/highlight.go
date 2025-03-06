@@ -10,6 +10,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/mattn/go-runewidth"
+	"github.com/xyproto/env/v2"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/stringpainter"
 	"github.com/xyproto/syntax"
@@ -26,6 +27,8 @@ var (
 	colorTagRegex = regexp.MustCompile(`<([a-nA-Np-zP-Z]\w+)>`) // not starting with "o"
 	tout          = textoutput.NewTextOutput(true, true)
 	resizeMut     sync.RWMutex // locked when the terminal emulator is being resized
+
+	noGUI = !(env.Has("DISPLAY") || env.Has("WAYLAND_DISPLAY"))
 )
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
@@ -646,6 +649,10 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 			} else {
 				c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', cw-lineRuneCount)
 			}
+		}
+
+		if noGUI {
+			vt100.SetXY(0, yp+1)
 		}
 
 		// Draw a dotted line to remind the user of where the N-column limit is
