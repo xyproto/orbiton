@@ -702,7 +702,7 @@ func (e *Editor) BuildOrExport(tty *vt100.TTY, c *vt100.Canvas, status *StatusBa
 	}
 
 	// Check if there was a non-zero exit code together with no output
-	if exitCode != 0 && len(outputString) == 0 {
+	if exitCode != 0 && outputString == "" {
 		return "", errors.New("non-zero exit code and no error message")
 	}
 

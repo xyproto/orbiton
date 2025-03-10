@@ -787,7 +787,7 @@ func (e *Editor) Empty() bool {
 	if l == 1 {
 		// Regardless of line number key, check the contents of the one remaining trimmed line
 		for _, line := range e.lines {
-			return len(strings.TrimSpace(string(line))) == 0
+			return strings.TrimSpace(string(line)) == ""
 		}
 	}
 	// > 1 lines
@@ -1913,7 +1913,7 @@ func (e *Editor) GoToNextParagraph(c *vt100.Canvas, status *StatusBar) (bool, bo
 	l := e.Len()
 	for i := e.DataY() + 1; i < LineIndex(l); i++ {
 		// Check if this is a blank line
-		if len(strings.TrimSpace(e.Line(i))) == 0 {
+		if strings.TrimSpace(e.Line(i)) == "" {
 			lastFoundBlankLine = i
 		} else {
 			// This is a non-blank line, check if the line above is blank (or before the first line)
@@ -1932,7 +1932,7 @@ func (e *Editor) GoToPrevParagraph(c *vt100.Canvas, status *StatusBar) (bool, bo
 	lastFoundBlankLine := LineIndex(e.Len())
 	for i := e.DataY() - 1; i >= 0; i-- {
 		// Check if this is a blank line
-		if len(strings.TrimSpace(e.Line(i))) == 0 {
+		if strings.TrimSpace(e.Line(i)) == "" {
 			lastFoundBlankLine = i
 		} else {
 			// This is a non-blank line, check if the line below is blank (or after the last line)
@@ -2115,7 +2115,7 @@ func (e *Editor) Block(n LineIndex) string {
 			lb.WriteRune(r)
 		}
 		s = lb.String()
-		if len(strings.TrimSpace(s)) == 0 {
+		if strings.TrimSpace(s) == "" {
 			// Empty trimmed line, end of block
 			return bb.String()
 		}
@@ -2744,7 +2744,7 @@ func (e *Editor) InsertBlock(c *vt100.Canvas, addLines []string, addEmptyLine bo
 	skipFirstLineInsert := e.EmptyRightTrimmedLine()
 	// Insert the lines
 	for i, line := range addLines {
-		if i == lastIndex && len(strings.TrimSpace(line)) == 0 {
+		if i == lastIndex && strings.TrimSpace(line) == "" {
 			// If the last line is blank, skip it
 			break
 		}
@@ -2819,7 +2819,7 @@ func (e *Editor) CutSingleLine(status *StatusBar, bookmark *Position, lastCutY, 
 	y = e.DataY()
 	line := e.Line(y)
 	// Now check if there is anything to cut
-	if len(strings.TrimSpace(line)) == 0 {
+	if strings.TrimSpace(line) == "" {
 		// Nothing to cut, just remove the current line
 		e.Home()
 		e.DeleteCurrentLineMoveBookmark(bookmark)

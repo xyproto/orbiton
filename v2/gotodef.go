@@ -126,7 +126,7 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 					}
 					if strings.Contains(trimmedLine, name) {
 						fields := strings.SplitN(trimmedLine, name, 2)
-						emptyBeforeWord := len(strings.TrimSpace(fields[0])) == 0
+						emptyBeforeWord := strings.TrimSpace(fields[0]) == ""
 
 						// go to a function definition
 						if e.LooksLikeFunctionDef(line, funcPrefix) && e.FunctionName(line) == name {

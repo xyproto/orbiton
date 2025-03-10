@@ -248,7 +248,7 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 
 		// Then paste the rest of the lines, also untrimmed
 		for i, line := range tailLines {
-			if i == lastIndex && len(strings.TrimSpace(line)) == 0 {
+			if i == lastIndex && strings.TrimSpace(line) == "" {
 				// If the last line is blank, skip it
 				break
 			}
