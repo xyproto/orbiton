@@ -689,7 +689,7 @@ func saveHighScore(highScore uint) error {
 	}
 	// First create the folders, if needed
 	folderPath := filepath.Dir(highScoreFile)
-	os.MkdirAll(folderPath, os.ModePerm)
+	_ = os.MkdirAll(folderPath, 0o755)
 	// Prepare the file
 	f, err := os.OpenFile(highScoreFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {

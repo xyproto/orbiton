@@ -11,10 +11,7 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-var (
-	userConfigDir     = env.Dir("XDG_CONFIG_HOME", "~/.config")
-	pandocTexFilename = filepath.Join(userConfigDir, "o", "pandoc.tex")
-)
+var pandocTexFilename = filepath.Join(userConfigDir, "o", "pandoc.tex")
 
 const (
 	listingsSetupTex = `% https://tex.stackexchange.com/a/179956/5116
@@ -88,7 +85,7 @@ func (e *Editor) exportPandocPDF(c *vt100.Canvas, tty *vt100.TTY, status *Status
 	if !files.Exists(expandedTexFilename) {
 		// First create the folder, if needed, in a best effort attempt
 		folderPath := filepath.Dir(expandedTexFilename)
-		os.MkdirAll(folderPath, os.ModePerm)
+		_ = os.MkdirAll(folderPath, 0o755)
 		// Write the Pandoc Tex style file
 		err = os.WriteFile(expandedTexFilename, []byte(listingsSetupTex), 0o644)
 		if err != nil {

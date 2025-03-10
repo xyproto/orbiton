@@ -9,12 +9,15 @@ import (
 	"github.com/xyproto/vt100"
 )
 
-var quickHelpToggleFilename = filepath.Join(userCacheDir, "o", "quickhelp.txt")
-
 // DisableQuickHelpScreen saves a file to the cache directory so that the quick help will be disabled the next time the editor starts
 func DisableQuickHelpScreen(status *StatusBar) bool {
 	// Remove the file, but ignore errors if it was already gone
 	_ = os.Remove(quickHelpToggleFilename)
+
+	folderPath := filepath.Dir(quickHelpToggleFilename)
+
+	// Try to (re)create the cache/o directory, but ignore errors
+	_ = os.MkdirAll(folderPath, 0o755)
 
 	// Write a new file
 	contents := []byte{'0', '\n'} // 1 for enabled, 0 for disabled
@@ -34,6 +37,12 @@ func DisableQuickHelpScreen(status *StatusBar) bool {
 func EnableQuickHelpScreen(status *StatusBar) bool {
 	// Ignore any errors. If the file is already removed, that is fine too.
 	_ = os.Remove(quickHelpToggleFilename)
+
+	folderPath := filepath.Dir(quickHelpToggleFilename)
+
+	// Try to (re)create the cache/o directory, but ignore errors
+	_ = os.MkdirAll(folderPath, 0o755)
+
 	if QuickHelpScreenIsDisabled() {
 		return false
 	}

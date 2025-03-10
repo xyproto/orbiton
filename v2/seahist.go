@@ -114,7 +114,7 @@ func (sh *SearchHistory) Save() error {
 
 	// First create the folder, if needed, in a best effort attempt
 	folderPath := filepath.Dir(path)
-	os.MkdirAll(folderPath, os.ModePerm)
+	_ = os.MkdirAll(folderPath, 0o755)
 
 	var sb strings.Builder
 	for timeStamp, searchTerm := range sh.entries {

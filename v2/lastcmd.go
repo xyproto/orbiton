@@ -45,7 +45,7 @@ func saveCommand(cmd *exec.Cmd) error {
 
 	// First create the folder for the lock file overview, if needed
 	folderPath := filepath.Dir(p)
-	os.MkdirAll(folderPath, os.ModePerm)
+	_ = os.MkdirAll(folderPath, 0o755)
 
 	// Prepare the file
 	f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)

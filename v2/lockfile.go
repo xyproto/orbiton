@@ -55,7 +55,7 @@ func (lk *LockKeeper) Save() error {
 
 	// First create the folder for the lock file overview, if needed
 	folderPath := filepath.Dir(lk.lockFilename)
-	os.MkdirAll(folderPath, os.ModePerm)
+	_ = os.MkdirAll(folderPath, 0o755)
 
 	f, err := os.OpenFile(lk.lockFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {

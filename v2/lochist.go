@@ -11,20 +11,11 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/xyproto/env/v2"
 )
 
 const maxLocationHistoryEntries = 1024
 
-var (
-	userCacheDir                 = env.Dir("XDG_CACHE_HOME", "~/.cache")
-	locationHistoryFilename      = filepath.Join(userCacheDir, "o", "locations.txt")
-	vimLocationHistoryFilename   = env.ExpandUser("~/.viminfo")
-	emacsLocationHistoryFilename = env.ExpandUser("~/.emacs.d/places")
-	nvimLocationHistoryFilename  = filepath.Join(env.Dir("XDG_DATA_HOME", "~/.local/share"), "nvim", "shada", "main.shada")
-	locationHistory              LocationHistory // per absolute filename, for jumping to the last used line when opening a file
-)
+var locationHistory LocationHistory // per absolute filename, for jumping to the last used line when opening a file
 
 // LineNumberAndTimestamp contains both a LineNumber and a time.Time
 type LineNumberAndTimestamp struct {
@@ -72,7 +63,7 @@ func (locationHistory LocationHistory) Save(path string) error {
 	}
 	// First create the folder, if needed, in a best effort attempt
 	folderPath := filepath.Dir(path)
-	os.MkdirAll(folderPath, os.ModePerm)
+	_ = os.MkdirAll(folderPath, 0o755) // try to (re)create the directory, but ignore errors
 	var sb strings.Builder
 	for k, lineNumberAndTimestamp := range locationHistory {
 		lineNumber := lineNumberAndTimestamp.LineNumber

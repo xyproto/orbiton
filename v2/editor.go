@@ -444,7 +444,7 @@ func (e *Editor) SaveAs(c *vt100.Canvas, tty *vt100.TTY, filename string) error 
 	defer quitMut.Unlock()
 
 	if e.createDirectoriesIfMissing {
-		if err := os.MkdirAll(filepath.Dir(filename), os.ModePerm); err != nil {
+		if err := os.MkdirAll(filepath.Dir(filename), 0o755); err != nil {
 			return err
 		}
 	}
