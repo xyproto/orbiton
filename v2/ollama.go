@@ -10,14 +10,14 @@ import (
 
 // CodeCompleter holds a model name, a boolean for if the model name was found and an Ollama client struct
 type CodeCompleter struct {
+	// Ollama client, used for tab completion
+	ollamaClient *ollamaclient.Config
+
 	// The Ollama model that is used for code completion
 	ModelName string
 
 	// found a model name?
 	foundModel bool
-
-	// Ollama client, used for tab completion
-	ollamaClient *ollamaclient.Config
 }
 
 // NewCodeCompleter returns the pointer to an empty CodeCompleter struct
