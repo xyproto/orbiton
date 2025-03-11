@@ -242,12 +242,30 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.Java: // build a .jar file
-		javaShellCommand := "javaFiles=$(find . -type f -name '*.java'); for f in $javaFiles; do grep -q 'static void main' \"$f\" && mainJavaFile=\"$f\"; done; className=$(grep -oP '(?<=class )[A-Z]+[a-z,A-Z,0-9]*' \"$mainJavaFile\" | head -1); packageName=$(grep -oP '(?<=package )[a-z,A-Z,0-9,.]*' \"$mainJavaFile\" | head -1); if [[ $packageName != \"\" ]]; then packageName=\"$packageName.\"; fi; mkdir -p _o_build/META-INF; javac -d _o_build $javaFiles; cd _o_build; echo \"Main-Class: $packageName$className\" > META-INF/MANIFEST.MF; classFiles=$(find . -type f -name '*.class'); jar cmf META-INF/MANIFEST.MF ../" + jarFilename + " $classFiles; cd ..; rm -rf _o_build"
+		javaShellCommand := "javaFiles=$(find . -type f -name '*.java'); " +
+			"for f in $javaFiles; do grep -q 'static void main' \"$f\" && mainJavaFile=\"$f\"; done; " +
+			"if command -v grep >/dev/null 2>&1 && echo 'test' | grep -P 'test' >/dev/null 2>&1; then " +
+			"className=$(grep -oP '(?<=class )[A-Z][a-zA-Z0-9]*' \"$mainJavaFile\" | head -1); " +
+			"packageName=$(grep -oP '(?<=package )[a-zA-Z0-9.]*' \"$mainJavaFile\" | head -1); " +
+			"else " +
+			"className=$(grep -E 'class [A-Z][a-zA-Z0-9]*' \"$mainJavaFile\" | sed -E 's/.*class ([A-Z][a-zA-Z0-9]*).*/\\1/' | head -1); " +
+			"packageName=$(grep -E 'package [a-zA-Z0-9.]*' \"$mainJavaFile\" | sed -E 's/.*package ([a-zA-Z0-9.]*).*/\\1/' | head -1); " +
+			"fi; " +
+			"if [[ $packageName != \"\" ]]; then packageName=\"$packageName.\"; fi; " +
+			"mkdir -p _o_build/META-INF; " +
+			"javac -d _o_build $javaFiles; " +
+			"cd _o_build; " +
+			"echo \"Main-Class: $packageName$className\" > META-INF/MANIFEST.MF; " +
+			"classFiles=$(find . -type f -name '*.class'); " +
+			"jar cmf META-INF/MANIFEST.MF ../" + jarFilename + " $classFiles; " +
+			"cd ..; " +
+			"rm -rf _o_build"
 		cmd = exec.Command("sh", "-c", javaShellCommand)
 		cmd.Dir = sourceDir
 		return cmd, func() (bool, string) {
 			return files.IsFile(filepath.Join(sourceDir, jarFilename)), jarFilename
 		}, nil
+
 	case mode.Scala:
 		if files.IsFile(filepath.Join(sourceDir, "build.sbt")) && files.WhichCached("sbt") != "" && files.FileHas(filepath.Join(sourceDir, "build.sbt"), "ScalaNative") {
 			cmd = exec.Command("sbt", "nativeLink")
