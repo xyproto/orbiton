@@ -2,11 +2,11 @@
 
 ## General
 
+- [ ] Make it possible to search for double space ("  ").
+- [ ] Improve syntax highlighting of comments in JSON, ref test/tsconfig.json.
 - [ ] Fix compilation of a single Scala file on macOS.
 - [ ] Make it possible to search for a string (like with rg or ag) and then go to the next file+match with a hotkey or menu option.
-- [ ] Fix the nano-mode ctrl-g key so that the help text stays up until a key has been pressed.
 - [ ] Make it possible to disable the use of v2/ollama.go at compile time using build tags, for a slightly smaller executable.
-- [ ] Make it possible to search for double space ("  ").
 - [ ] Support the Language Server Protocol, per language.
 - [ ] When pressing esc several times to make the command menu appear (to aid ViM users),
       make the esc-pressing consistent. Either 3 or 4 times.
