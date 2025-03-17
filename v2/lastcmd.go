@@ -57,6 +57,11 @@ func saveCommand(cmd *exec.Cmd) error {
 	// Strip the leading /usr/bin/sh -c command, if present
 	commandString := getCommand(cmd)
 
+	// Add environment variables
+	for _, assignment := range cmd.Env {
+		commandString = assignment + " " + commandString
+	}
+
 	// Write the contents, ignore the number of written bytes
 	_, err = f.WriteString(fmt.Sprintf("#!/bin/sh\n%s\n", commandString))
 	return err
