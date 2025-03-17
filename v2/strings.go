@@ -1,6 +1,7 @@
 package main
 
 import (
+	"regexp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -245,4 +246,11 @@ func checkMultiLineString(trimmedLine string, inCodeBlock bool) (bool, bool) {
 		foundDocstringMarker = true
 	}
 	return inCodeBlock, foundDocstringMarker
+}
+
+func stripTerminalCodes(msg string) string {
+	// Regular expression to match ANSI escape sequences
+	ansiRegex := regexp.MustCompile("\x1b\\[[0-9;]*[a-zA-Z]")
+	// Replace all occurrences with an empty string
+	return ansiRegex.ReplaceAllString(msg, "")
 }

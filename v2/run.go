@@ -178,10 +178,10 @@ func (e *Editor) Run() (string, bool, error) {
 	output, err := CombinedOutputSetPID(cmd)
 
 	if e.mode != mode.ABC && err == nil { // success
-		return trimRightSpace(string(output)), false, nil
+		return trimRightSpace(stripTerminalCodes(string(output))), false, nil
 	}
 	if e.mode != mode.ABC && len(output) > 0 { // error, but text on stdout/stderr
-		return trimRightSpace(string(output)), true, nil
+		return trimRightSpace(stripTerminalCodes(string(output))), true, nil
 	}
 	// error and no text on stdout/stderr
 	return "", false, err
