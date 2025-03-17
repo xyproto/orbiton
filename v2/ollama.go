@@ -53,11 +53,6 @@ func (cc *CodeCompleter) LoadModel() error {
 	return nil
 }
 
-// FoundModel returns true if the name of the model to use for code completion was found
-func (cc *CodeCompleter) FoundModel() bool {
-	return cc.foundModel
-}
-
 // Loaded returns true if the ollama client could be used and the code completion model could be loaded
 func (cc *CodeCompleter) Loaded() bool {
 	return cc.ollamaClient != nil
