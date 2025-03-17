@@ -20,12 +20,15 @@ import (
 var runPID atomic.Int64
 
 // stopBackgroundProcesses stops the "run" process that is running
-// in the background, if runPID > 0.
-func stopBackgroundProcesses() {
-	if runPID.Load() > 0 {
-		syscall.Kill(int(runPID.Load()), syscall.SIGKILL)
-		runPID.Store(-1)
+// in the background, if runPID > 0. Returns true if something was killed.
+func stopBackgroundProcesses() bool {
+	if runPID.Load() <= 0 {
+		return false // nothing was killed
 	}
+	// calling runPID.Load() twice, in case something happens concurrently after the first .Load()
+	syscall.Kill(int(runPID.Load()), syscall.SIGKILL)
+	runPID.Store(-1)
+	return true // something was killed
 }
 
 // Run will attempt to run the corresponding output executable, given a source filename.

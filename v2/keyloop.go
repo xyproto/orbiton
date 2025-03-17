@@ -1643,6 +1643,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			e.DeleteToEndOfLine(c, status, bookmark, &lastCopyY, &lastPasteY, &lastCutY)
 		case "c:3", copyKey: // ctrl-c, copy the stripped contents of the current line
 
+			// Stop background processes (like playing music with timidity), if any
+			if stopBackgroundProcesses() {
+				break // If background processes were stopped, then don't copy text just yet
+			}
+
 			if e.nanoMode.Load() { // nano: ctrl-c, report cursor position
 				status.ClearAll(c, false)
 				status.NanoInfo(c, e)
