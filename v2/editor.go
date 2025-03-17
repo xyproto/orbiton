@@ -1771,7 +1771,7 @@ func (e *Editor) WriteTab(c *vt100.Canvas) {
 
 // EmptyRightTrimmedLine checks if the current line is empty (and whitespace doesn't count)
 func (e *Editor) EmptyRightTrimmedLine() bool {
-	return len(trimRightSpace(e.CurrentLine())) == 0
+	return trimRightSpace(e.CurrentLine()) == ""
 }
 
 // LineAbove returns the line above, if possible
@@ -1795,17 +1795,17 @@ func (e *Editor) LineBelow() string {
 
 // EmptyRightTrimmedLineBelow checks if the next line is empty (and whitespace doesn't count)
 func (e *Editor) EmptyRightTrimmedLineBelow() bool {
-	return len(trimRightSpace(e.Line(e.DataY()+1))) == 0
+	return trimRightSpace(e.Line(e.DataY()+1)) == ""
 }
 
 // EmptyLine returns true if the current line is completely empty, no whitespace or anything
 func (e *Editor) EmptyLine() bool {
-	return len(e.CurrentLine()) == 0
+	return e.CurrentLine() == ""
 }
 
 // EmptyTrimmedLine returns true if the current line (trimmed) is completely empty
 func (e *Editor) EmptyTrimmedLine() bool {
-	return len(e.TrimmedLine()) == 0
+	return e.TrimmedLine() == ""
 }
 
 // AtStartOfTextScreenLine returns true if the position is at the start of the text for this screen line
