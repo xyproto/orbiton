@@ -227,6 +227,11 @@ func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutpu
 		lowerBox.H = 5
 	}
 
+	if e.flaskApplication.Load() {
+		lowerBox.X -= 7
+		lowerBox.W += 7
+	}
+
 	lowerBox.Y -= 5
 	lowerBox.H += 4
 
