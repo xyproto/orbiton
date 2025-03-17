@@ -239,11 +239,17 @@ func checkMultiLineString(trimmedLine string, inCodeBlock bool) (bool, bool) {
 		inCodeBlock = false
 		foundDocstringMarker = true
 	} else if strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''") { // this is more than 3 ts
-		inCodeBlock = true
-		foundDocstringMarker = true
+		inCodeBlock = !inCodeBlock
+		if inCodeBlock {
+			foundDocstringMarker = true
+		}
 	} else if strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''") { // this is more than 3 ts
-		inCodeBlock = false
-		foundDocstringMarker = true
+		if (strings.Count(trimmedLine, "\"\"\"") % 2 != 0 || strings.Count(trimmedLine, "'''") % 2 != 0) {
+			inCodeBlock = !inCodeBlock
+		}
+		if inCodeBlock {
+			foundDocstringMarker = true
+		}
 	}
 	return inCodeBlock, foundDocstringMarker
 }
