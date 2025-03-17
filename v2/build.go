@@ -1330,6 +1330,13 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 							case mode.JavaScript, mode.Lua, mode.Python, mode.Shell, mode.TypeScript:
 								if e.flaskApplication.Load() {
 									msg = "Serving Flask on http://127.0.0.1:5000/ ..."
+									var cmd *exec.Cmd
+									if isDarwin {
+										cmd = exec.Command("open", "http://127.0.0.1:5000")
+									} else {
+										cmd = exec.Command("xdg-open", "http://127.0.0.1:5000")
+									}
+									cmd.Run()
 								} else {
 									msg = "Running..."
 								}
