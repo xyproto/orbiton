@@ -137,14 +137,12 @@ func (e *Editor) Run() (string, bool, error) {
 				if isDarwin {
 					cmd.Args[2] = "python3"
 				}
-
 			}
 		} else {
 			cmd = exec.Command("python", sourceFilename)
 			if isDarwin {
 				cmd.Args[0] = "python3"
 			}
-
 		}
 		allEnv = append(allEnv, "PYTHONUTF8=1")
 		if !files.Exists(pyCacheDir) {
@@ -177,6 +175,11 @@ func (e *Editor) Run() (string, bool, error) {
 
 	// Set the command environment to the parent environment + changes
 	cmd.Env = allEnv
+
+	// For Python, save the run command
+	if e.mode == mode.Python {
+		saveCommand(cmd)
+	}
 
 	output, err := CombinedOutputSetPID(cmd)
 
