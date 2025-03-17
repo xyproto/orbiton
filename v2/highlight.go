@@ -41,8 +41,6 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		arrowBeforeCommentMarker           bool
 		inListItem                         bool
 		inCodeBlock                        bool // used when highlighting Doc, Markdown, Python, Nim, Mojo or Starlark
-		threeQuoteStart                    bool
-		threeQuoteEnd                      bool
 		ok                                 bool
 		codeBlockFound                     bool
 		foundDocstringMarker               bool
@@ -155,20 +153,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		for li = LineIndex(0); li < fromline; li++ {
 			line = e.Line(li)
 			trimmedLine = strings.TrimSpace(line)
-			// return """ can be the start of a multiline string, where """ is the end of the multiline string!
-			threeQuoteStart = strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''")
-			threeQuoteEnd = strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''")
-			if threeQuoteStart && threeQuoteEnd {
-				inCodeBlock = false
-			} else if trimmedLine == "return \"\"\"" || trimmedLine == "return '''" {
-				inCodeBlock = true
-			} else if strings.HasSuffix(trimmedLine, " = \"\"\"") || strings.HasSuffix(trimmedLine, " = '''") {
-				inCodeBlock = true
-			} else if inCodeBlock && strings.Contains(trimmedLine, "\"\"\"") {
-				inCodeBlock = false
-			} else if threeQuoteStart || threeQuoteEnd {
-				inCodeBlock = !inCodeBlock
-			}
+			inCodeBlock, _ = checkMultiLineString(trimmedLine, inCodeBlock)
 		}
 	}
 

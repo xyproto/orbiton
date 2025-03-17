@@ -228,14 +228,19 @@ func trimRightSpace(str string) string {
 // checkMultiLineString detects and updates the inCodeBlock state.
 // For languages like Nim, Mojo, Python and Starlark.
 func checkMultiLineString(trimmedLine string, inCodeBlock bool) (bool, bool) {
+	trimmedLine = strings.TrimPrefix(trimmedLine, "return ")
 	foundDocstringMarker := false
+	// Check for special syntax patterns that indicate the start of a multiline string
 	if trimmedLine == "\"\"\"" || trimmedLine == "'''" { // only 3 letters
 		inCodeBlock = !inCodeBlock
 		foundDocstringMarker = true
-	} else if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") { // this could be 6 lte
+	} else if strings.HasSuffix(trimmedLine, " = \"\"\"") || strings.HasSuffix(trimmedLine, " = '''") {
+		inCodeBlock = true
+		foundDocstringMarker = true
+	} else if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") { // this could be 6 letters
 		inCodeBlock = false
 		foundDocstringMarker = true
-	} else if strings.HasPrefix(trimmedLine, "'''") && strings.HasSuffix(trimmedLine, "'''") { // this could be 6 lettersre
+	} else if strings.HasPrefix(trimmedLine, "'''") && strings.HasSuffix(trimmedLine, "'''") { // this could be 6 letters
 		inCodeBlock = false
 		foundDocstringMarker = true
 	} else if strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''") { // this is more than 3 ts
@@ -244,7 +249,7 @@ func checkMultiLineString(trimmedLine string, inCodeBlock bool) (bool, bool) {
 			foundDocstringMarker = true
 		}
 	} else if strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''") { // this is more than 3 ts
-		if (strings.Count(trimmedLine, "\"\"\"") % 2 != 0 || strings.Count(trimmedLine, "'''") % 2 != 0) {
+		if strings.Count(trimmedLine, "\"\"\"")%2 != 0 || strings.Count(trimmedLine, "'''")%2 != 0 {
 			inCodeBlock = !inCodeBlock
 		}
 		if inCodeBlock {
