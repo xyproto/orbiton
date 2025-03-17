@@ -1328,7 +1328,11 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 							case mode.ABC:
 								msg = "Playing with Timidity..."
 							case mode.JavaScript, mode.Lua, mode.Python, mode.Shell, mode.TypeScript:
-								msg = "Running..."
+								if e.flaskApplication.Load() {
+									msg = "Serving Flask on http://127.0.0.1:5000/ ..."
+								} else {
+									msg = "Running..."
+								}
 							}
 							e.DrawOutput(c, 20, "", "  "+msg, e.DebugStoppedBackground, repositionCursorAfterDrawing, rightHandSide)
 						}

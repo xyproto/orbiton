@@ -121,10 +121,27 @@ func (e *Editor) Run() (string, bool, error) {
 			cmd = exec.Command(filepath.Join(sourceDir, efn))
 		}
 	case mode.Python:
-		if isDarwin {
-			cmd = exec.Command("python3", sourceFilename)
+		if (files.Exists("pyproject.toml") || files.Exists("poetry.lock")) && files.WhichCached("poetry") != "" {
+			// Special support for Flask
+			if strings.Contains(e.String(), "from flask import Flask") {
+				cmd = exec.Command("poetry", "run", "python", "-m", "flask", "--app", sourceFilename, "run")
+				if isDarwin {
+					cmd.Args[2] = "python3"
+				}
+				e.flaskApplication.Store(true)
+			} else {
+				cmd = exec.Command("poetry", "run", "python", sourceFilename)
+				if isDarwin {
+					cmd.Args[2] = "python3"
+				}
+
+			}
 		} else {
 			cmd = exec.Command("python", sourceFilename)
+			if isDarwin {
+				cmd.Args[0] = "python3"
+			}
+
 		}
 		allEnv = append(allEnv, "PYTHONUTF8=1")
 		if !files.Exists(pyCacheDir) {

@@ -79,6 +79,7 @@ type Editor struct {
 	drawFuncName      atomic.Bool // used when drawing the function name in the top right corner
 	nanoMode          atomic.Bool // emulate GNU Nano
 	waitWithRedrawing atomic.Bool // wait with redrawing until a key is pressed
+	flaskApplication  atomic.Bool // Python + Flask
 }
 
 // Copy makes a copy of an Editor struct, with most fields deep copied
