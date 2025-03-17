@@ -97,8 +97,8 @@ github.com/xyproto/burnfont
 # github.com/xyproto/burnpal v1.0.0
 ## explicit; go 1.11
 github.com/xyproto/burnpal
-# github.com/xyproto/carveimg v1.4.6
-## explicit; go 1.19
+# github.com/xyproto/carveimg v1.4.7
+## explicit; go 1.23.0
 github.com/xyproto/carveimg
 # github.com/xyproto/clip v1.0.0
 ## explicit; go 1.11
@@ -145,14 +145,14 @@ github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.5.1
 ## explicit; go 1.11
 github.com/xyproto/termtitle
-# github.com/xyproto/textoutput v1.17.1
-## explicit; go 1.22.0
+# github.com/xyproto/textoutput v1.17.2
+## explicit; go 1.23.0
 github.com/xyproto/textoutput
 # github.com/xyproto/usermodel v1.2.2
 ## explicit; go 1.23.1
 github.com/xyproto/usermodel
-# github.com/xyproto/vt100 v1.16.11
-## explicit; go 1.22.0
+# github.com/xyproto/vt100 v1.16.12
+## explicit; go 1.23.0
 github.com/xyproto/vt100
 # github.com/xyproto/wordwrap v1.0.1
 ## explicit; go 1.21.3
