@@ -446,6 +446,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				regularEditingRightNow = false
 				// Then build, and run if ctrl-space was double-tapped
 				e.runAfterBuild = kh.DoubleTapped("c:0")
+				// Stop background processes first (if any)
+				stopBackgroundProcesses()
+				// Then build (and run)
 				e.Build(c, status, tty)
 				e.redrawCursor.Store(true)
 				regularEditingRightNow = true
