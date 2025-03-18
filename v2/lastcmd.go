@@ -57,9 +57,12 @@ func saveCommand(cmd *exec.Cmd) error {
 	// Strip the leading /usr/bin/sh -c command, if present
 	commandString := getCommand(cmd)
 
-	// Add environment variables
+	// Add environment variables, but only some
+	selectedEnvVars := []string{"NO_COLOR", "PYTHON"}
 	for _, assignment := range cmd.Env {
-		commandString = assignment + " " + commandString
+		if strings.Contains(assignment, "=") && containsSubstring(assignment, selectedEnvVars) {
+			commandString = strings.Replace(assignment, "=", "=\"", 1) + "\" \\\n" + commandString
+		}
 	}
 
 	// Write the contents, ignore the number of written bytes

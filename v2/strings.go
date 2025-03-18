@@ -29,6 +29,16 @@ func hasWords(s string) bool {
 	return false
 }
 
+// containsSubstring checks if the given string contains one of the given substrings
+func containsSubstring(haystack string, substrings []string) bool {
+	for _, ss := range substrings {
+		if strings.Contains(haystack, ss) {
+			return true
+		}
+	}
+	return false
+}
+
 // allUpper checks if all letters in a string are uppercase
 func allUpper(s string) bool {
 	for _, r := range s {
