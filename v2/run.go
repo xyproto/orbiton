@@ -124,9 +124,9 @@ func (e *Editor) Run() (string, bool, error) {
 			cmd = exec.Command(filepath.Join(sourceDir, efn))
 		}
 	case mode.Python:
+		// Special support for Poetry and Flask
 		if (files.Exists("pyproject.toml") || files.Exists("poetry.lock")) && files.WhichCached("poetry") != "" {
-			// Special support for Flask
-			if strings.Contains(e.String(), "from flask import Flask") {
+			if strings.Contains(e.String(), "import Flask") {
 				cmd = exec.Command("poetry", "run", "python", "-m", "flask", "--app", sourceFilename, "run")
 				if isDarwin {
 					cmd.Args[2] = "python3"
