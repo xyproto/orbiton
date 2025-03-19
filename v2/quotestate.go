@@ -271,29 +271,3 @@ func checkMultiLineString(trimmedLine string, inCodeBlock bool) (bool, bool) {
 	}
 	return inCodeBlock, foundDocstringMarker
 }
-
-// checkMultiLineString2 detects and updates the inCodeBlock state.
-// For languages like Nim, Mojo, Python and Starlark.
-func checkMultiLineString2(trimmedLine string, inCodeBlock bool) (bool, bool) {
-	foundDocstringMarker := false
-	if trimmedLine == "return \"\"\"" || trimmedLine == "return '''" {
-		inCodeBlock = true
-		foundDocstringMarker = false
-	} else if trimmedLine == "\"\"\"" || trimmedLine == "'''" { // only 3 letters
-		inCodeBlock = !inCodeBlock
-		foundDocstringMarker = true
-	} else if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") {
-		inCodeBlock = false
-		foundDocstringMarker = true
-	} else if strings.HasPrefix(trimmedLine, "'''") && strings.HasSuffix(trimmedLine, "'''") {
-		inCodeBlock = false
-		foundDocstringMarker = true
-	} else if strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''") {
-		inCodeBlock = !inCodeBlock
-		foundDocstringMarker = true
-	} else if strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''") {
-		inCodeBlock = !inCodeBlock
-		foundDocstringMarker = true
-	}
-	return inCodeBlock, foundDocstringMarker
-}
