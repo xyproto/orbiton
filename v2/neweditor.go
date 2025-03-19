@@ -190,10 +190,18 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 
 		// Check if this is a directory
 		if fileInfo.IsDir() {
-			e.dirMode = true
-			// TODO: Support opening directories and giving a GitHub-like overview of projects and the git status
-			// TODO: Consider supporting file rename, finding programming symbols or git push
-			return e, "", false, errors.New("can not open directories")
+			// Check if there is only one file in that directory
+			matches, err := filepath.Glob(strings.TrimSuffix(e.filename, "/") + "/" + "*")
+			if err == nil && len(matches) == 1 {
+				found_filename := matches[0]
+				fnord.filename = found_filename
+				e.filename = found_filename
+			} else {
+				e.dirMode = true
+				// TODO: Support opening directories and giving a GitHub-like overview of projects and the git status
+				// TODO: Consider supporting file rename, finding programming symbols or git push
+				return e, "", false, errors.New("can not open directories")
+			}
 		}
 
 		warningMessage, err = e.Load(c, tty, fnord)
