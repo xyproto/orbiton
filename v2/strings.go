@@ -235,40 +235,6 @@ func trimRightSpace(str string) string {
 	return strings.TrimRightFunc(str, unicode.IsSpace)
 }
 
-// checkMultiLineString detects and updates the inCodeBlock state.
-// For languages like Nim, Mojo, Python and Starlark.
-func checkMultiLineString(trimmedLine string, inCodeBlock bool) (bool, bool) {
-	trimmedLine = strings.TrimPrefix(trimmedLine, "return ")
-	foundDocstringMarker := false
-	// Check for special syntax patterns that indicate the start of a multiline string
-	if trimmedLine == "\"\"\"" || trimmedLine == "'''" { // only 3 letters
-		inCodeBlock = !inCodeBlock
-		foundDocstringMarker = true
-	} else if strings.HasSuffix(trimmedLine, " = \"\"\"") || strings.HasSuffix(trimmedLine, " = '''") {
-		inCodeBlock = true
-		foundDocstringMarker = true
-	} else if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") { // this could be 6 letters
-		inCodeBlock = false
-		foundDocstringMarker = true
-	} else if strings.HasPrefix(trimmedLine, "'''") && strings.HasSuffix(trimmedLine, "'''") { // this could be 6 letters
-		inCodeBlock = false
-		foundDocstringMarker = true
-	} else if strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''") { // this is more than 3 ts
-		inCodeBlock = !inCodeBlock
-		if inCodeBlock {
-			foundDocstringMarker = true
-		}
-	} else if strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''") { // this is more than 3 ts
-		if strings.Count(trimmedLine, "\"\"\"")%2 != 0 || strings.Count(trimmedLine, "'''")%2 != 0 {
-			inCodeBlock = !inCodeBlock
-		}
-		if inCodeBlock {
-			foundDocstringMarker = true
-		}
-	}
-	return inCodeBlock, foundDocstringMarker
-}
-
 func stripTerminalCodes(msg string) string {
 	// Regular expression to match ANSI escape sequences
 	ansiRegex := regexp.MustCompile("\x1b\\[[0-9;]*[a-zA-Z]")

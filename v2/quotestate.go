@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/xyproto/mode"
 )
@@ -235,4 +236,64 @@ func (q *QuoteState) ParBraCount(line string) (int, int) {
 	qCopy.braCount = 0
 	qCopy.Process(line)
 	return qCopy.parCount, qCopy.braCount
+}
+
+// checkMultiLineString detects and updates the inCodeBlock state.
+// For languages like Nim, Mojo, Python and Starlark.
+func checkMultiLineString(trimmedLine string, inCodeBlock bool) (bool, bool) {
+	trimmedLine = strings.TrimPrefix(trimmedLine, "return ")
+	foundDocstringMarker := false
+	// Check for special syntax patterns that indicate the start of a multiline string
+	if trimmedLine == "\"\"\"" || trimmedLine == "'''" { // only 3 letters
+		inCodeBlock = !inCodeBlock
+		foundDocstringMarker = true
+	} else if strings.HasSuffix(trimmedLine, " = \"\"\"") || strings.HasSuffix(trimmedLine, " = '''") {
+		inCodeBlock = true
+		foundDocstringMarker = true
+	} else if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") { // this could be 6 letters
+		inCodeBlock = false
+		foundDocstringMarker = true
+	} else if strings.HasPrefix(trimmedLine, "'''") && strings.HasSuffix(trimmedLine, "'''") { // this could be 6 letters
+		inCodeBlock = false
+		foundDocstringMarker = true
+	} else if strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''") { // this is more than 3 ts
+		inCodeBlock = !inCodeBlock
+		if inCodeBlock {
+			foundDocstringMarker = true
+		}
+	} else if strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''") { // this is more than 3 ts
+		if strings.Count(trimmedLine, "\"\"\"")%2 != 0 || strings.Count(trimmedLine, "'''")%2 != 0 {
+			inCodeBlock = !inCodeBlock
+		}
+		if inCodeBlock {
+			foundDocstringMarker = true
+		}
+	}
+	return inCodeBlock, foundDocstringMarker
+}
+
+// checkMultiLineString2 detects and updates the inCodeBlock state.
+// For languages like Nim, Mojo, Python and Starlark.
+func checkMultiLineString2(trimmedLine string, inCodeBlock bool) (bool, bool) {
+	foundDocstringMarker := false
+	if trimmedLine == "return \"\"\"" || trimmedLine == "return '''" {
+		inCodeBlock = true
+		foundDocstringMarker = false
+	} else if trimmedLine == "\"\"\"" || trimmedLine == "'''" { // only 3 letters
+		inCodeBlock = !inCodeBlock
+		foundDocstringMarker = true
+	} else if strings.HasPrefix(trimmedLine, "\"\"\"") && strings.HasSuffix(trimmedLine, "\"\"\"") {
+		inCodeBlock = false
+		foundDocstringMarker = true
+	} else if strings.HasPrefix(trimmedLine, "'''") && strings.HasSuffix(trimmedLine, "'''") {
+		inCodeBlock = false
+		foundDocstringMarker = true
+	} else if strings.HasPrefix(trimmedLine, "\"\"\"") || strings.HasPrefix(trimmedLine, "'''") {
+		inCodeBlock = !inCodeBlock
+		foundDocstringMarker = true
+	} else if strings.HasSuffix(trimmedLine, "\"\"\"") || strings.HasSuffix(trimmedLine, "'''") {
+		inCodeBlock = !inCodeBlock
+		foundDocstringMarker = true
+	}
+	return inCodeBlock, foundDocstringMarker
 }
