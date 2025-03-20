@@ -47,7 +47,7 @@ func Detect(filename string) Mode {
 		mode = FSTAB
 	case ext == ".vimrc" || ext == ".vim" || ext == ".nvim":
 		mode = Vim
-	case ext == ".mk" || strings.HasPrefix(baseFilename, "Make") || strings.HasPrefix(baseFilename, "makefile") || baseFilename == "GNUmakefile":
+	case ext == ".mk" || ext == ".mak" || ext == ".Mak" || strings.HasPrefix(baseFilename, "Make") || strings.HasPrefix(baseFilename, "makefile") || baseFilename == "GNUmakefile":
 		// NOTE: This one MUST come before the ext == "" check below!
 		mode = Make
 	case ext == ".just" || ext == ".justfile" || baseFilename == "justfile":
