@@ -193,9 +193,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 			// Check if there is only one file in that directory
 			matches, err := filepath.Glob(strings.TrimSuffix(e.filename, "/") + "/" + "*")
 			if err == nil && len(matches) == 1 {
-				found_filename := matches[0]
-				fnord.filename = found_filename
-				e.filename = found_filename
+				fnord.filename = matches[0]
+				e.filename = matches[0]
 			} else {
 				e.dirMode = true
 				// TODO: Support opening directories and giving a GitHub-like overview of projects and the git status
