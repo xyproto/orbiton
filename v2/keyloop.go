@@ -1515,7 +1515,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			oldLineIndex := e.LineIndex()
 
 			// func prefix must exist for this language/mode for GoToDefinition to be supported
-			if e.ProgrammingLanguage() {
+			if ProgrammingLanguage(e.mode) {
 				jumpedToDefinition := e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status)
 				if jumpedToDefinition {
 					break
@@ -2053,7 +2053,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		notEmptyLine := !e.EmptyLine()
 
-		if notEmptyLine && e.ProgrammingLanguage() {
+		if notEmptyLine && ProgrammingLanguage(e.mode) {
 			e.drawFuncName.Store(true)
 			c.HideCursorAndDraw()
 		}

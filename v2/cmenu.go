@@ -161,7 +161,7 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	if isDarwin && !inVTEGUI {
 		var alsoRun = false
 		var menuItemText = "Export"
-		if e.ProgrammingLanguage() {
+		if ProgrammingLanguage(e.mode) {
 			if e.CanRun() {
 				alsoRun = true
 				menuItemText = "Build and run"

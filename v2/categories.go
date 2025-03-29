@@ -15,9 +15,10 @@ func cLikeSwitch(m mode.Mode) bool {
 }
 
 // ProgrammingLanguage returns true if the current mode appears to be a programming language and not a document, configuration format or similar
-func (e *Editor) ProgrammingLanguage() bool {
-	switch e.mode {
-	case mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Bazel, mode.Blank, mode.Config, mode.Email, mode.FSTAB, mode.Git, mode.HIDL, mode.HTML, mode.Ini, mode.JSON, mode.Log, mode.M4, mode.ManPage, mode.Markdown, mode.Nmap, mode.Nroff, mode.PolicyLanguage, mode.ReStructured, mode.SCDoc, mode.SQL, mode.Shader, mode.Text, mode.XML:
+func ProgrammingLanguage(m mode.Mode) bool {
+	// TODO: Update this, and the NoSmartIndentation. Make sure all languages are covered.
+	switch m {
+	case mode.Assembly, mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Bazel, mode.Blank, mode.Config, mode.Email, mode.FSTAB, mode.Git, mode.HIDL, mode.HTML, mode.Ini, mode.JSON, mode.Log, mode.M4, mode.ManPage, mode.Markdown, mode.Nmap, mode.Nroff, mode.PolicyLanguage, mode.ReStructured, mode.SCDoc, mode.SQL, mode.Shader, mode.Text, mode.XML:
 		return false
 	}
 	return true
