@@ -18,7 +18,7 @@ func cLikeSwitch(m mode.Mode) bool {
 func ProgrammingLanguage(m mode.Mode) bool {
 	// TODO: Update this, and the NoSmartIndentation. Make sure all languages are covered.
 	switch m {
-	case mode.Assembly, mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Bazel, mode.Blank, mode.Config, mode.Email, mode.FSTAB, mode.Git, mode.HIDL, mode.HTML, mode.Ini, mode.JSON, mode.Log, mode.M4, mode.ManPage, mode.Markdown, mode.Nmap, mode.Nroff, mode.PolicyLanguage, mode.ReStructured, mode.SCDoc, mode.SQL, mode.Shader, mode.Text, mode.XML:
+	case mode.AIDL, mode.Arduino, mode.Assembly, mode.ASCIIDoc, mode.Amber, mode.Bazel, mode.Blank, mode.Config, mode.Email, mode.FSTAB, mode.Git, mode.GoAssembly, mode.HIDL, mode.HTML, mode.Ini, mode.JSON, mode.Log, mode.M4, mode.ManPage, mode.Markdown, mode.Nmap, mode.Nroff, mode.Odin, mode.PolicyLanguage, mode.ReStructured, mode.SCDoc, mode.SQL, mode.Shader, mode.Text, mode.XML:
 		return false
 	}
 	return true
