@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/xyproto/binary"
 	"github.com/xyproto/clip"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
@@ -71,6 +73,13 @@ func WriteClipboardToFile(filename string, overwrite, primaryClipboard bool) (in
 	contents, err := clip.ReadAllBytes(primaryClipboard)
 	if err != nil {
 		return 0, "", "", err
+	}
+
+	// If it's not binary data, make sure there is a final newline
+	if !binary.Data(contents) {
+		if !bytes.HasSuffix(contents, []byte{'\n'}) {
+			contents = append(contents, '\n')
+		}
 	}
 
 	// Write to file
@@ -226,7 +235,7 @@ func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCo
 		)
 
 		// Consider smart indentation for programming languages
-		if e.ProgrammingLanguage() || e.mode == mode.Config { // not mode.Ini and mode.Fstab, since those seldom have indentations
+		if ProgrammingLanguage(e.mode) || e.mode == mode.Config { // not mode.Ini and mode.Fstab, since those seldom have indentations
 			// Indent the block that is about to be pasted to the smart indentation level, if the block had no indentation
 			if getLeadingWhitespace(firstLine) == "" {
 				leadingWhitespace := e.LeadingWhitespace()
