@@ -72,6 +72,7 @@ func main() {
 		pasteFlag              bool
 		quickHelpFlag          bool
 		versionFlag            bool
+		searchAndOpenFlag      bool
 	)
 
 	pflag.BoolVarP(&batFlag, "bat", "B", false, "Cat the file with colors instead of editing it, using bat")
@@ -95,6 +96,7 @@ func main() {
 	pflag.BoolVarP(&quickHelpFlag, "quick-help", "q", false, "always display the quick help when starting")
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
+	pflag.BoolVarP(&searchAndOpenFlag, "search", "s", false, "search for a file with the given string and open it")
 
 	pflag.Parse()
 
@@ -309,6 +311,15 @@ func main() {
 	} else {
 		fnord.filename, lineNumber, colNumber = FilenameLineColNumber(pflag.Arg(0), pflag.Arg(1), pflag.Arg(2))
 	}
+
+	if searchAndOpenFlag {
+		substring := fnord.filename
+		if matches, err := FindFile(substring); err == nil && len(matches) > 0 {
+			sort.Strings(matches)
+			fnord.filename = matches[0]
+		}
+	}
+
 	// Check if the given filename contains something
 	if fnord.Empty() {
 		if fnord.filename == "" {

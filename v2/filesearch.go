@@ -83,3 +83,35 @@ func ExtFileSearch(absCppFilename string, headerExtensions []string, maxTime tim
 	// Return the result
 	return foundHeaderAbsPath, nil
 }
+
+// FindFile searches for files that contain the given substring in their filename
+// starting from the current directory. It returns all matches as absolute paths
+// or an error if the search fails.
+func FindFile(substring string) ([]string, error) {
+	var matches []string
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return nil, errors.New("failed to get current directory: " + err.Error())
+	}
+	if err := filepath.Walk(currentDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		if strings.Contains(strings.ToLower(info.Name()), strings.ToLower(substring)) {
+			absPath, err := filepath.Abs(path)
+			if err != nil {
+				return nil
+			}
+			matches = append(matches, absPath)
+		}
+		return nil
+	}); err != nil {
+		return nil, errors.New("no matches when searching for " + substring)
+	}
+	return matches, nil
+}
