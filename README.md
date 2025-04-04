@@ -608,6 +608,12 @@ Example use:
 fo somefile.cpp 123
 ```
 
+It is also possible to run a case-insensitive file search and open up the first match with, where "omfile" is a case-insensitive substring of the found filename:
+
+```bash
+o omefile
+```
+
 ## Pandoc
 
 When using `pandoc` to export from Markdown to PDF:
