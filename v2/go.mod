@@ -5,7 +5,7 @@ go 1.23.5
 require (
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
 	github.com/felixge/fgtrace v0.2.0
-	github.com/fsnotify/fsnotify v1.8.0
+	github.com/fsnotify/fsnotify v1.9.0
 	github.com/gomarkdown/markdown v0.0.0-20250311123330-531bef5e742b
 	github.com/ianlancetaylor/demangle v0.0.0-20240912202439-0a2b6291aafd
 	github.com/jung-kurt/gofpdf v1.16.2
@@ -33,7 +33,7 @@ require (
 	github.com/xyproto/usermodel v1.2.2
 	github.com/xyproto/vt100 v1.16.12
 	github.com/xyproto/wordwrap v1.0.1
-	golang.org/x/image v0.25.0
+	golang.org/x/image v0.26.0
 )
 
 require (
@@ -58,5 +58,5 @@ require (
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.6.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
 )
