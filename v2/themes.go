@@ -289,7 +289,7 @@ func NewPinetreeTheme() Theme {
 		SearchHighlight:             vt100.Yellow,
 		MultiLineComment:            vt100.DarkGray,
 		MultiLineString:             vt100.Magenta,
-		HighlightForeground:         vt100.LightYellow,
+		HighlightForeground:         vt100.LightCyan,
 		HighlightBackground:         vt100.BackgroundBlack,
 		Git:                         vt100.LightGreen,
 		String:                      "lightgreen",
