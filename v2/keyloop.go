@@ -1434,7 +1434,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Do not reset cut/copy/paste status
 
 			// First check if we just moved to this line with the arrow keys
-			justMovedUpOrDown := kh.PrevHas("↓", "↑")
+			justMovedUpOrDown := kh.PrevHas(downArrow, upArrow)
 			if e.macro != nil {
 				e.Home()
 			} else if !justMovedUpOrDown && e.EmptyRightTrimmedLine() && e.SearchTerm() == "" {
@@ -1461,7 +1461,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			// Do not reset cut/copy/paste status
 
 			// First check if we just moved to this line with the arrow keys, or just cut a line with ctrl-x
-			justMovedUpOrDown := kh.PrevHas("↓", "↑", "c:24")
+			justMovedUpOrDown := kh.PrevHas(downArrow, upArrow, "c:24")
 			if e.AtEndOfDocument() || e.macro != nil {
 				e.End(c)
 			} else if !justMovedUpOrDown && e.AfterEndOfLine() && e.SearchTerm() == "" {
@@ -2048,7 +2048,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		const arrowKeyHighlightTime = 1200 * time.Millisecond
 
 		// Draw and/or redraw everything, with slightly different behavior over ssh
-		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
+		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow)
 		e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown, true)
 
 		notEmptyLine := !e.EmptyLine()
@@ -2069,7 +2069,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 					highlightTimerMut.Lock()
 					defer highlightTimerMut.Unlock()
-					justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, "↓", "↑")
+					justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow)
 					if e.waitWithRedrawing.Load() {
 						e.waitWithRedrawing.Store(false)
 					} else if !justMovedUpOrDownOrLeftOrRight && regularEditingRightNow {
