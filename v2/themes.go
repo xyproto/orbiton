@@ -217,7 +217,7 @@ func NewOrbTheme() Theme {
 		TextAttrName:                "lightblue",
 		TextAttrValue:               "lightgreen",
 		Decimal:                     "white",
-		AndOr:                       "lightgreen",
+		AndOr:                       "lightcyan",
 		Dollar:                      "lightred",
 		Star:                        "lightgreen",
 		Static:                      "lightgreen",
