@@ -252,7 +252,7 @@ func NewOrbTheme() Theme {
 		XColor:                      vt100.LightGreen,
 		TableBackground:             vt100.BackgroundBlack,
 		UnmatchedParenColor:         vt100.LightRed,
-		MenuTitleColor:              vt100.LightGreen,
+		MenuTitleColor:              vt100.LightMagenta,
 		MenuArrowColor:              vt100.White,
 		MenuTextColor:               vt100.Blue,
 		MenuHighlightColor:          vt100.LightCyan,
