@@ -152,10 +152,17 @@ func (kh *KeyHistory) OnlyInAndAllDiffer(keyPresses ...string) bool {
 func (kh *KeyHistory) AllWithin(dur time.Duration) bool {
 	khMut.RLock()
 	defer khMut.RUnlock()
-
 	firstTime := kh.t[0]
 	lastTime := kh.t[2]
 	return lastTime.Sub(firstTime) < dur
+}
+
+// LastChanged checks if a key was added to the key history for longer since than the given duration, or not
+func (kh *KeyHistory) LastChanged(dur time.Duration) bool {
+	khMut.RLock()
+	defer khMut.RUnlock()
+	lastTime := kh.t[2]
+	return time.Since(lastTime) < dur
 }
 
 // PrevWithin checks if the previous keypress happened within the given duration (to check for rapid successions)

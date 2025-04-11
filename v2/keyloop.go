@@ -678,8 +678,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.CursorBackward(c, status)
 
-			// Check if it has been pressed 2 times the last 200ms, if so, give it an extra boost
-			if kh.TwoLastAre(leftArrow) && kh.AllWithin(200*time.Millisecond) {
+			// Move extra if the key is held down
+			if kh.TwoLastAre(leftArrow) && kh.AllWithin(200*time.Millisecond) && kh.LastChanged(200*time.Millisecond) {
+				e.CursorBackward(c, status)
+				e.CursorBackward(c, status)
 				e.CursorBackward(c, status)
 			}
 
@@ -704,12 +706,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.CursorForward(c, status)
 
-			if kh.TwoLastAre(leftArrow) && kh.AllWithin(200*time.Millisecond) {
+			// Move extra if the key is held down
+			if kh.TwoLastAre(rightArrow) && kh.AllWithin(200*time.Millisecond) && kh.LastChanged(200*time.Millisecond) {
 				e.CursorForward(c, status)
-			}
-
-			// Check if it has been pressed 2 times the last 200 ms, if so, give it an extra boost
-			if kh.TwoLastAre(rightArrow) && kh.AllWithin(200*time.Millisecond) {
 				e.CursorForward(c, status)
 				e.CursorForward(c, status)
 			}
@@ -731,8 +730,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.CursorUpward(c, status)
 
-			// Check if it has been pressed 2 times the last 200 ms, if so, give it an extra boost
-			if kh.TwoLastAre(upArrow) && kh.AllWithin(200*time.Millisecond) {
+			// Move extra if the key is held down
+			if kh.TwoLastAre(upArrow) && kh.AllWithin(200*time.Millisecond) && kh.LastChanged(200*time.Millisecond) {
 				e.CursorUpward(c, status)
 			}
 
@@ -754,8 +753,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.CursorDownward(c, status)
 
-			// Check if it has been pressed 2 times the last 200 ms, if so, give it an extra boost
-			if kh.TwoLastAre(downArrow) && kh.AllWithin(200*time.Millisecond) {
+			// Move extra if the key is held down
+			if kh.TwoLastAre(downArrow) && kh.AllWithin(200*time.Millisecond) && kh.LastChanged(200*time.Millisecond) {
 				e.CursorDownward(c, status)
 			}
 
