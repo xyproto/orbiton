@@ -678,6 +678,11 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.CursorBackward(c, status)
 
+			// Check if it has been pressed 2 times the last 200ms, if so, give it an extra boost
+			if kh.TwoLastAre(leftArrow) && kh.AllWithin(200*time.Millisecond) {
+				e.CursorBackward(c, status)
+			}
+
 			if e.highlightCurrentLine || e.highlightCurrentText {
 				e.redraw.Store(true)
 				e.drawFuncName.Store(true)
@@ -699,10 +704,71 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			e.CursorForward(c, status)
 
+			if kh.TwoLastAre(leftArrow) && kh.AllWithin(200*time.Millisecond) {
+				e.CursorForward(c, status)
+			}
+
+			// Check if it has been pressed 2 times the last 200 ms, if so, give it an extra boost
+			if kh.TwoLastAre(rightArrow) && kh.AllWithin(200*time.Millisecond) {
+				e.CursorForward(c, status)
+				e.CursorForward(c, status)
+			}
+
 			if e.highlightCurrentLine || e.highlightCurrentText {
 				e.redraw.Store(true)
 				e.drawFuncName.Store(true)
 			}
+
+		case upArrow: // up arrow
+			// Check if it's a special case
+			if kh.SpecialArrowKeypressWith(upArrow) {
+				// Ask the user for a command and run it
+				e.CommandPrompt(c, tty, status, bookmark, undo)
+				// It's important to reset the key history after hitting this combo
+				clearKeyHistory = true
+				break
+			}
+
+			e.CursorUpward(c, status)
+
+			// Check if it has been pressed 2 times the last 200 ms, if so, give it an extra boost
+			if kh.TwoLastAre(upArrow) && kh.AllWithin(200*time.Millisecond) {
+				e.CursorUpward(c, status)
+			}
+
+			if e.highlightCurrentLine || e.highlightCurrentText {
+				e.redraw.Store(true)
+				e.drawFuncName.Store(true)
+			}
+			e.redrawCursor.Store(true)
+
+		case downArrow: // down arrow
+			// Check if it's a special case
+			if kh.SpecialArrowKeypressWith(downArrow) {
+				// Ask the user for a command and run it
+				e.CommandPrompt(c, tty, status, bookmark, undo)
+				// It's important to reset the key history after hitting this combo
+				clearKeyHistory = true
+				break
+			}
+
+			e.CursorDownward(c, status)
+
+			// Check if it has been pressed 2 times the last 200 ms, if so, give it an extra boost
+			if kh.TwoLastAre(downArrow) && kh.AllWithin(200*time.Millisecond) {
+				e.CursorDownward(c, status)
+			}
+
+			// If the cursor is after the length of the current line, move it to the end of the current line
+			if e.AfterLineScreenContents() || e.AfterEndOfLine() {
+				e.End(c)
+				e.redraw.Store(true)
+			}
+			if e.highlightCurrentLine || e.highlightCurrentText {
+				e.redraw.Store(true)
+				e.drawFuncName.Store(true)
+			}
+			e.redrawCursor.Store(true)
 
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
 
@@ -780,52 +846,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			fallthrough // ctrl-p in nano mode
-
-		case upArrow: // up arrow
-
-			// Check if it's a special case
-			if kh.SpecialArrowKeypressWith(upArrow) {
-				// Ask the user for a command and run it
-				e.CommandPrompt(c, tty, status, bookmark, undo)
-				// It's important to reset the key history after hitting this combo
-				clearKeyHistory = true
-				break
-			}
-
-			if e.DataY() > 0 {
-				// Move the position up in the current screen
-				if e.UpEnd(c) != nil {
-					// If below the top, scroll the contents up
-					if e.DataY() > 0 {
-						e.redraw.Store(e.ScrollUp(c, status, 1))
-						e.pos.Down(c)
-						e.UpEnd(c)
-					}
-				}
-				// If the cursor is after the length of the current line, move it to the end of the current line
-				if e.AfterLineScreenContents() {
-					e.End(c)
-				}
-			}
-
-			// If the cursor is after the length of the current line, move it to the end of the current line
-			if e.AfterLineScreenContents() || e.AfterEndOfLine() {
-				e.End(c)
-
-				// Then, if the rune to the left is '}', move one step to the left
-				if r := e.LeftRune(); r == '}' {
-					e.Prev(c)
-				}
-
-				e.redraw.Store(true)
-			}
-
-			if e.highlightCurrentLine || e.highlightCurrentText {
-				e.redraw.Store(true)
-				e.drawFuncName.Store(true)
-			}
-
-			e.redrawCursor.Store(true)
 
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
 
@@ -988,53 +1008,6 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 			}
 
 			fallthrough // nano mode: ctrl-n
-
-		case downArrow: // down arrow
-
-			// Check if it's a special case
-			if kh.SpecialArrowKeypressWith(downArrow) {
-				// Ask the user for a command and run it
-				e.CommandPrompt(c, tty, status, bookmark, undo)
-				// It's important to reset the key history after hitting this combo
-				clearKeyHistory = true
-				break
-			}
-
-			if e.DataY() < LineIndex(e.Len()) {
-				// Move the position down in the current screen
-				if e.DownEnd(c) != nil {
-					// If at the bottom, don't move down, but scroll the contents
-					// Output a helpful message
-					if !e.AfterEndOfDocument() {
-						canvasHeight := int(c.Height())
-						e.redraw.Store(e.ScrollDown(c, status, 1, canvasHeight))
-						e.pos.Up()
-						e.DownEnd(c)
-					}
-				}
-				// If the cursor is after the length of the current line, move it to the end of the current line
-				if e.AfterLineScreenContents() {
-					e.End(c)
-
-					// Then, if the rune to the left is '}', move one step to the left
-					if r := e.LeftRune(); r == '}' {
-						e.Prev(c)
-					}
-				}
-			}
-
-			// If the cursor is after the length of the current line, move it to the end of the current line
-			if e.AfterLineScreenContents() || e.AfterEndOfLine() {
-				e.End(c)
-				e.redraw.Store(true)
-			}
-
-			if e.highlightCurrentLine || e.highlightCurrentText {
-				e.redraw.Store(true)
-				e.drawFuncName.Store(true)
-			}
-
-			e.redrawCursor.Store(true)
 
 		case "c:12": // ctrl-l, go to line number or percentage
 			if !e.nanoMode.Load() {

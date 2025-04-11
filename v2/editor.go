@@ -2928,6 +2928,59 @@ func (e *Editor) CursorBackward(c *vt100.Canvas, status *StatusBar) {
 	}
 }
 
+// CursorUpward moves the cursor up 1 step
+func (e *Editor) CursorUpward(c *vt100.Canvas, status *StatusBar) {
+	if e.DataY() > 0 {
+		// Move the position up in the current screen
+		if e.UpEnd(c) != nil {
+			// If below the top, scroll the contents up
+			if e.DataY() > 0 {
+				e.redraw.Store(e.ScrollUp(c, status, 1))
+				e.pos.Down(c)
+				e.UpEnd(c)
+			}
+		}
+		// If the cursor is after the length of the current line, move it to the end of the current line
+		if e.AfterLineScreenContents() {
+			e.End(c)
+		}
+	}
+	// If the cursor is after the length of the current line, move it to the end of the current line
+	if e.AfterLineScreenContents() || e.AfterEndOfLine() {
+		e.End(c)
+		// Then, if the rune to the left is '}', move one step to the left
+		if r := e.LeftRune(); r == '}' {
+			e.Prev(c)
+		}
+		e.redraw.Store(true)
+	}
+}
+
+// CursorDownward moves the cursor down 1 step
+func (e *Editor) CursorDownward(c *vt100.Canvas, status *StatusBar) {
+	if e.DataY() < LineIndex(e.Len()) {
+		// Move the position down in the current screen
+		if e.DownEnd(c) != nil {
+			// If at the bottom, don't move down, but scroll the contents
+			// Output a helpful message
+			if !e.AfterEndOfDocument() {
+				canvasHeight := int(c.Height())
+				e.redraw.Store(e.ScrollDown(c, status, 1, canvasHeight))
+				e.pos.Up()
+				e.DownEnd(c)
+			}
+		}
+		// If the cursor is after the length of the current line, move it to the end of the current line
+		if e.AfterLineScreenContents() {
+			e.End(c)
+			// Then, if the rune to the left is '}', move one step to the left
+			if r := e.LeftRune(); r == '}' {
+				e.Prev(c)
+			}
+		}
+	}
+}
+
 // JoinLineWithNext tries to join the current line with the next.
 // If the next line is empty, the next line is removed.
 // Returns true if this and the next line had text and they were joined to this line.

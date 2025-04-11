@@ -162,7 +162,6 @@ func (kh *KeyHistory) AllWithin(dur time.Duration) bool {
 func (kh *KeyHistory) PrevWithin(dur time.Duration) bool {
 	khMut.RLock()
 	defer khMut.RUnlock()
-
 	prevTime := kh.t[2]
 	return time.Since(prevTime) < dur
 }
