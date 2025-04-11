@@ -49,6 +49,8 @@ var (
 
 	// An empty *CodeCompleter struct
 	cc = NewCodeCompleter()
+
+	envNoColor = env.Bool("NO_COLOR")
 )
 
 func main() {
@@ -173,7 +175,11 @@ func main() {
 			os.Chmod(filename, 0o755)
 		}
 		if tailString != "" && !batFlag {
-			fmt.Printf("Wrote %d bytes to %s from the clipboard. Tail bytes: %s\n", n, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
+			if envNoColor {
+				fmt.Printf("Wrote %d bytes to %s from the clipboard. Tail bytes: %s\n", n, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
+			} else {
+				fmt.Printf("Wrote %s%d%s bytes to %s from the clipboard. Tail bytes: %s%s%s\n", vt100.Red, n, vt100.Stop(), filename, vt100.LightBlue, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")), vt100.Stop())
+			}
 		} else {
 			fmt.Printf("Wrote %d bytes to %s from the clipboard.\n", n, filename)
 		}
@@ -207,7 +213,11 @@ func main() {
 			batFlag = true
 		}
 		if tailString != "" && !batFlag {
-			fmt.Printf("Copied %d byte%s from %s to the clipboard. Tail bytes: %s\n", n, plural, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
+			if envNoColor {
+				fmt.Printf("Copied %d byte%s from %s to the clipboard. Tail bytes: %s\n", n, plural, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
+			} else {
+				fmt.Printf("Copied %s%d%s byte%s from %s to the clipboard. Tail bytes: %s%s%s\n", vt100.Yellow, n, vt100.Stop(), plural, filename, vt100.LightCyan, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")), vt100.Stop())
+			}
 		} else {
 			fmt.Printf("Copied %d byte%s from %s to the clipboard.\n", n, plural, filename)
 		}

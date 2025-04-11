@@ -23,7 +23,6 @@ var (
 	inVTEGUI          = env.Bool("OG") // is o running within the VTE GUI application?
 	noDrawUntilResize atomic.Bool      // we are running within the VTE GUI application, but SIGWINCH has not been sent yet
 	tempDir           = env.Dir("TMPDIR", "/tmp")
-	envNoColor        = env.Bool("NO_COLOR")
 	errFileNotFound   = errors.New("file not found")
 )
 
