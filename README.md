@@ -21,6 +21,8 @@ Orbiton might be a good fit for:
 * Being placed on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in log, man page and image viewer, has an optional nano/pico mode, can be used as `EDITOR=o visudo` and has built-in support for neatly formatting `/etc/fstab` files.
 * Writing any number of words in a distraction-free fullscreen environment (toggle the status bar by pressing `ctrl-g` to see the word count).
 
+This has been my main editor for around 3 years now, and it is mostly written in itself, apart from some NeoViM in the beginning.
+
 ## Screenshots
 
 Screenshot of the VTE GUI application (that can be found in the `gtk3` directory), running the `o` editor:
