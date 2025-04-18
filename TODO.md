@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] If goimport is downloaded, add some info for the user.
 - [ ] Make it possible to search for double space ("  ").
 - [ ] Improve syntax highlighting of comments in JSON, ref test/tsconfig.json.
 - [ ] Fix compilation of a single Scala file on macOS.
