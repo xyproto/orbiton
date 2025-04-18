@@ -7,7 +7,7 @@ require (
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/gomarkdown/markdown v0.0.0-20250311123330-531bef5e742b
-	github.com/ianlancetaylor/demangle v0.0.0-20240912202439-0a2b6291aafd
+	github.com/ianlancetaylor/demangle v0.0.0-20250417193237-f615e6bd150b
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/klauspost/asmfmt v1.3.2
 	github.com/mattn/go-runewidth v0.0.16
