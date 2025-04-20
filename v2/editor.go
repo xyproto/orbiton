@@ -623,8 +623,8 @@ func (e *Editor) TrimLeft(index LineIndex) bool {
 	n := int(index)
 	if line, ok := e.lines[n]; ok {
 		newRunes := []rune(strings.TrimLeftFunc(string(line), unicode.IsSpace))
-		// TODO: Just compare lengths instead of contents?
-		if string(newRunes) != string(line) {
+		// Compare lengths to detect trimming without full content comparison
+		if len(newRunes) != len(line) {
 			e.lines[n] = newRunes
 			changed = true
 		}
@@ -635,10 +635,18 @@ func (e *Editor) TrimLeft(index LineIndex) bool {
 // StripSingleLineComment will strip away trailing single-line comments.
 // TODO: Also strip trailing /* ... */ comments
 func (e *Editor) StripSingleLineComment(line string) string {
+	// Strip trailing block comments (/* ... */) if present
+	if start := strings.LastIndex(line, "/*"); start != -1 {
+		if idx := strings.Index(line[start:], "*/"); idx != -1 {
+			return strings.TrimSpace(line[:start])
+		}
+	}
+	// Strip single-line comments (according to language marker)
 	commentMarker := e.SingleLineCommentMarker()
-	if strings.Count(line, commentMarker) == 1 {
-		p := strings.Index(line, commentMarker)
-		return strings.TrimSpace(line[:p])
+	if count := strings.Count(line, commentMarker); count == 1 {
+		if p := strings.Index(line, commentMarker); p != -1 {
+			return strings.TrimSpace(line[:p])
+		}
 	}
 	return line
 }
