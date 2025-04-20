@@ -83,6 +83,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		highlightTimerMut     sync.Mutex
 
 		justJumpedToMatchingP bool
+
+		heldDownLeftArrowTime  time.Time // used to speed up cursor movement after the left arrow key has been held down for a while
+		heldDownRightArrowTime time.Time // used to speed up cursor movement after the right arrow key has been held down for a while
 	)
 
 	// TODO: Move this to themes.go
@@ -680,9 +683,16 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			// Move extra if the key is held down
 			if kh.TwoLastAre(leftArrow) && kh.AllWithin(200*time.Millisecond) && kh.LastChanged(200*time.Millisecond) {
-				e.CursorBackward(c, status)
-				e.CursorBackward(c, status)
-				e.CursorBackward(c, status)
+				if heldDownLeftArrowTime.IsZero() {
+					heldDownLeftArrowTime = time.Now()
+				}
+				heldDuration := time.Since(heldDownLeftArrowTime)
+				steps := int(int64(heldDuration) / int64(200*time.Millisecond))
+				for i := 1; i < steps; i++ {
+					e.CursorBackward(c, status)
+				}
+			} else {
+				heldDownLeftArrowTime = time.Time{}
 			}
 
 			if e.highlightCurrentLine || e.highlightCurrentText {
@@ -708,9 +718,16 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 			// Move extra if the key is held down
 			if kh.TwoLastAre(rightArrow) && kh.AllWithin(200*time.Millisecond) && kh.LastChanged(200*time.Millisecond) {
-				e.CursorForward(c, status)
-				e.CursorForward(c, status)
-				e.CursorForward(c, status)
+				if heldDownRightArrowTime.IsZero() {
+					heldDownRightArrowTime = time.Now()
+				}
+				heldDuration := time.Since(heldDownRightArrowTime)
+				steps := int(int64(heldDuration) / int64(200*time.Millisecond))
+				for i := 1; i < steps; i++ {
+					e.CursorForward(c, status)
+				}
+			} else {
+				heldDownRightArrowTime = time.Time{}
 			}
 
 			if e.highlightCurrentLine || e.highlightCurrentText {
