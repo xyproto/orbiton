@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] If the cursor is at the end of the line on the final line of the screen view, and arrow right is pressed, move down to the next line
 - [ ] If goimport is downloaded, add some info for the user.
 - [ ] Make it possible to search for double space ("  ").
 - [ ] Improve syntax highlighting of comments in JSON, ref test/tsconfig.json.
