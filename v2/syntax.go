@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/xyproto/mode"
-	"github.com/xyproto/syntax"
 )
 
 var (
@@ -116,13 +115,13 @@ var (
 )
 
 func clearKeywords() {
-	syntax.Keywords = make(map[string]struct{})
+	Keywords = make(map[string]struct{})
 }
 
 func addKeywords(addKeywords []string) {
 	// Add the keywords that are to be syntax highlighted
 	for _, kw := range addKeywords {
-		syntax.Keywords[kw] = struct{}{}
+		Keywords[kw] = struct{}{}
 	}
 }
 
@@ -137,7 +136,7 @@ func addKeywordsAsUppercase(xs []string) {
 func removeKeywords(delKeywords []string) {
 	// Remove keywords that should not be syntax highlighted
 	for _, kw := range delKeywords {
-		delete(syntax.Keywords, kw)
+		delete(Keywords, kw)
 	}
 }
 

@@ -13,7 +13,6 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/stringpainter"
-	"github.com/xyproto/syntax"
 	"github.com/xyproto/textoutput"
 	"github.com/xyproto/vt100"
 )
@@ -218,7 +217,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		if e.syntaxHighlight && !envNoColor {
 			// Output a syntax highlighted line. Escape any tags in the input line.
 			// textWithTags must be unescaped if there is not an error.
-			if textWithTags, err = syntax.AsText([]byte(escapeFunction(line)), e.mode); err != nil {
+			if textWithTags, err = AsText([]byte(escapeFunction(line)), e.mode); err != nil {
 				// Only output the line up to the width of the canvas
 				screenLine = e.ChopLine(line, int(cw))
 				// TODO: Check if just "fmt.Print" works here, for several terminal emulators
@@ -312,7 +311,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						// Inline Lua comment, e.g. "local x = 42 -- set x to 42"
 						parts := strings.SplitN(line, "--", 2)
 						// Highlight the code portion before the comment
-						if newTextWithTags, err = syntax.AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
+						if newTextWithTags, err = AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
 							coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 						} else {
 							// Append the comment portion highlighted as a comment
@@ -367,14 +366,14 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
 						} else if doubleSemiCount == 1 {
 							parts = strings.SplitN(line, ";;", 2)
-							if newTextWithTags, err = syntax.AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
+							if newTextWithTags, err = AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
 								coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 							} else {
 								coloredString = unEscapeFunction(tout.DarkTags(string(newTextWithTags)) + e.MultiLineComment.Get(";;"+parts[1]))
 							}
 						} else if strings.Count(trimmedLine, ";") == 1 {
 							parts = strings.SplitN(line, ";", 2)
-							if newTextWithTags, err = syntax.AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
+							if newTextWithTags, err = AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
 								coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 							} else {
 								coloredString = unEscapeFunction(tout.DarkTags(string(newTextWithTags)) + e.MultiLineComment.Start(";"+parts[1]))
@@ -393,7 +392,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 							coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
 						} else {
 							parts = strings.SplitN(line, "\"", 2)
-							if newTextWithTags, err = syntax.AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
+							if newTextWithTags, err = AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
 								coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 							} else {
 								coloredString = unEscapeFunction(tout.DarkTags(string(newTextWithTags)) + e.MultiLineComment.Start("\""+parts[1]))
@@ -471,7 +470,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						parts = strings.SplitN(line, otherCommentMarker, 2)
 						commentMarkerString = tout.DarkTags(parts[0] + "<" + e.Dollar + ">" + otherCommentMarker + "<off>")
 						theRestString = tout.DarkTags(parts[1])
-						if theRestWithTags, err = syntax.AsText([]byte(escapeFunction(parts[1])), e.mode); err != nil {
+						if theRestWithTags, err = AsText([]byte(escapeFunction(parts[1])), e.mode); err != nil {
 							theRestString = tout.DarkTags(string(theRestWithTags))
 						}
 						coloredString = unEscapeFunction(commentMarkerString + theRestString)
@@ -659,9 +658,9 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 func (e *Editor) ArrowReplace(s string) string {
 	arrowColor := e.Star
 	if e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC || e.mode == mode.Shader {
-		arrowColor = syntax.DefaultTextConfig.Class
+		arrowColor = DefaultTextConfig.Class
 	}
-	fieldColor := syntax.DefaultTextConfig.Protected
+	fieldColor := DefaultTextConfig.Protected
 	s = strings.ReplaceAll(s, ">-<", "><off><"+arrowColor+">-<")
 	return strings.ReplaceAll(s, ">"+Escape(">"), "><off><"+arrowColor+">"+Escape(">")+"<off><"+fieldColor+">")
 }
