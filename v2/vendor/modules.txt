@@ -133,15 +133,12 @@ github.com/xyproto/mode
 # github.com/xyproto/ollamaclient/v2 v2.7.1
 ## explicit; go 1.23.1
 github.com/xyproto/ollamaclient/v2
-# github.com/xyproto/palgen v1.6.0
+# github.com/xyproto/palgen v1.6.1
 ## explicit; go 1.16
 github.com/xyproto/palgen
 # github.com/xyproto/stringpainter v1.0.1
 ## explicit; go 1.13
 github.com/xyproto/stringpainter
-# github.com/xyproto/syntax v1.12.1
-## explicit; go 1.23.2
-github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.5.1
 ## explicit; go 1.11
 github.com/xyproto/termtitle
