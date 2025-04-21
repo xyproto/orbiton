@@ -6,7 +6,7 @@ UNAME_R ?= $(shell uname -r)
 
 ifneq (,$(findstring arch,$(UNAME_R)))
 # Arch Linux
-LDFLAGS ?= -Wl,-O2,--sort-common,--as-needed,-z,relro,-z,now
+LDFLAGS ?= -Wl,-O2,--as-needed,-z,relro,-z,now
 BUILDFLAGS ?= -mod=vendor -buildmode=pie -trimpath -ldflags "-s -w -extldflags $(LDFLAGS)"
 else
 # Default settings

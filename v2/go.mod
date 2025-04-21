@@ -57,6 +57,6 @@ require (
 	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
-	github.com/xyproto/palgen v1.6.0 // indirect
+	github.com/xyproto/palgen v1.6.1 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 )
