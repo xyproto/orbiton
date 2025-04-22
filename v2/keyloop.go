@@ -36,6 +36,8 @@ const (
 
 	// How many lines of context above and below should the tab completion try to use?
 	codeCompletionContextLines = 20
+
+	delayUntilSpeedUp = 700 * time.Millisecond
 )
 
 // Create a LockKeeper for keeping track of which files are being edited
@@ -687,7 +689,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					heldDownLeftArrowTime = time.Now()
 				}
 				heldDuration := time.Since(heldDownLeftArrowTime)
-				steps := int(int64(heldDuration) / int64(200*time.Millisecond))
+				steps := int(int64(heldDuration) / int64(delayUntilSpeedUp))
 				for i := 1; i < steps; i++ {
 					e.CursorBackward(c, status)
 				}
@@ -722,7 +724,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					heldDownRightArrowTime = time.Now()
 				}
 				heldDuration := time.Since(heldDownRightArrowTime)
-				steps := int(int64(heldDuration) / int64(200*time.Millisecond))
+				steps := int(int64(heldDuration) / int64(delayUntilSpeedUp))
 				for i := 1; i < steps; i++ {
 					e.CursorForward(c, status)
 				}
