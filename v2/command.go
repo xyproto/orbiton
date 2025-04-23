@@ -271,9 +271,15 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 		insertfile: func() { // insert a file
 			undo.Snapshot(e)
 			editedFileDir := filepath.Dir(e.filename)
-			if err := e.InsertFile(c, filepath.Join(editedFileDir, strings.TrimSpace(args[1]))); err != nil {
-				e.redraw.Store(true)
-				status.SetErrorAfterRedraw(err)
+			filename2 := strings.TrimSpace(args[1])              // include.txt
+			filename1 := filepath.Join(editedFileDir, filename2) // include.txt in the same dir as the edited file
+			// First try inserting include.txt from the same directory as the edited file,
+			// then try inserting include.txt from the current directory.
+			if err := e.InsertFile(c, filename1); err != nil {
+				if err2 := e.InsertFile(c, filename2); err2 != nil {
+					e.redraw.Store(true)
+					status.SetErrorAfterRedraw(err2)
+				}
 			}
 		},
 		inserttime: func() { // insert the current time
