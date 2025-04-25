@@ -3,6 +3,7 @@ package main
 import (
 	"strings"
 
+	"github.com/xyproto/javasig"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
@@ -29,6 +30,8 @@ func (e *Editor) FuncPrefix() string {
 		return "proc() "
 	case mode.Hare, mode.Rust, mode.V, mode.Zig:
 		return "fn "
+	case mode.Java:
+		return "void" // TODO
 	case mode.Erlang:
 		// This is not "the definition of a function" in Erlang, but should work for many cases
 		return " ->"
@@ -46,9 +49,11 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 		return true
 	}
 	switch e.mode {
+	case mode.Java:
+		return javasig.Is(trimmedLine)
 	// Very unscientific and approximate function definition detection for C and C++
 	// TODO: Write a C parser and a C++ parser...
-	case mode.Arduino, mode.C, mode.Cpp, mode.D, mode.Dart, mode.Hare, mode.Jakt, mode.Java, mode.JavaScript, mode.Kotlin, mode.ObjC, mode.Scala, mode.Shader, mode.TypeScript, mode.Zig:
+	case mode.Arduino, mode.C, mode.Cpp, mode.D, mode.Dart, mode.Hare, mode.Jakt, mode.JavaScript, mode.Kotlin, mode.ObjC, mode.Scala, mode.Shader, mode.TypeScript, mode.Zig:
 		if strings.HasSuffix(trimmedLine, "()") {
 			return true
 		}
