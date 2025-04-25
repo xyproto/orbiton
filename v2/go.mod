@@ -1,6 +1,6 @@
 module github.com/xyproto/orbiton/v2
 
-go 1.23.5
+go 1.24.2
 
 require (
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
@@ -15,7 +15,7 @@ require (
 	github.com/spf13/pflag v1.0.6
 	github.com/xyproto/autoimport v1.5.2
 	github.com/xyproto/binary v1.3.3
-	github.com/xyproto/carveimg v1.4.7
+	github.com/xyproto/carveimg v1.4.8
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.3.0
 	github.com/xyproto/env/v2 v2.5.3
@@ -23,6 +23,7 @@ require (
 	github.com/xyproto/fullname v1.1.0
 	github.com/xyproto/globi v1.0.2
 	github.com/xyproto/iferr v1.1.0
+	github.com/xyproto/javasig v1.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
 	github.com/xyproto/mode v0.11.4
 	github.com/xyproto/ollamaclient/v2 v2.7.1

@@ -97,7 +97,7 @@ github.com/xyproto/burnfont
 # github.com/xyproto/burnpal v1.0.0
 ## explicit; go 1.11
 github.com/xyproto/burnpal
-# github.com/xyproto/carveimg v1.4.7
+# github.com/xyproto/carveimg v1.4.8
 ## explicit; go 1.23.0
 github.com/xyproto/carveimg
 # github.com/xyproto/clip v1.0.0
@@ -124,6 +124,9 @@ github.com/xyproto/globi
 # github.com/xyproto/iferr v1.1.0
 ## explicit; go 1.19
 github.com/xyproto/iferr
+# github.com/xyproto/javasig v1.0.1
+## explicit; go 1.24.2
+github.com/xyproto/javasig
 # github.com/xyproto/lookslikegoasm v1.0.0
 ## explicit; go 1.23.2
 github.com/xyproto/lookslikegoasm
