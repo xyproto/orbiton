@@ -86,8 +86,10 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		justJumpedToMatchingP bool
 
+		// Keys where one wishes to speed up the actions when they are held down for a while
 		heldDownLeftArrowTime  time.Time // used to speed up cursor movement after the left arrow key has been held down for a while
 		heldDownRightArrowTime time.Time // used to speed up cursor movement after the right arrow key has been held down for a while
+		heldDownCtrlKTime      time.Time // used to speed up line deletion after ctrl-k has been held down for a while
 	)
 
 	// TODO: Move this to themes.go
@@ -1634,7 +1636,24 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.CutSingleLine(status, bookmark, &lastCutY, &lastCopyY, &lastPasteY, &copyLines, &firstCopyAction)
 				break
 			}
+
 			e.DeleteToEndOfLine(c, status, bookmark, &lastCopyY, &lastPasteY, &lastCutY)
+
+			// Delete extra if the key is held down
+			if kh.TwoLastAre("c:11") && kh.AllWithin(200*time.Millisecond) && kh.LastChanged(200*time.Millisecond) {
+				if heldDownCtrlKTime.IsZero() {
+					heldDownCtrlKTime = time.Now()
+				}
+				heldDuration := time.Since(heldDownCtrlKTime)
+				// 2x slower step up for ctrl-k than for left/right arrow
+				steps := int(int64(heldDuration) / int64(delayUntilSpeedUp*2))
+				for i := 1; i < steps; i++ {
+					e.DeleteToEndOfLine(c, status, bookmark, &lastCopyY, &lastPasteY, &lastCutY)
+				}
+			} else {
+				heldDownCtrlKTime = time.Time{}
+			}
+
 		case "c:3", copyKey: // ctrl-c, copy the stripped contents of the current line
 
 			// Stop background processes (like playing music with timidity), if any
