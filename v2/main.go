@@ -87,7 +87,7 @@ func main() {
 	pflag.BoolVarP(&formatFlag, "format", "F", false, "Try to build the file instead of editing it")
 	pflag.BoolVarP(&helpFlag, "help", "h", false, "quick overview of hotkeys and flags")
 	pflag.BoolVarP(&lastCommandFlag, "last-command", "l", false, "output the last build or format command")
-	pflag.BoolVarP(&listDigraphsFlag, "digraphs", "g", false, "List digraphs")
+	pflag.BoolVarP(&listDigraphsFlag, "digraphs", "s", false, "List digraphs")
 	pflag.BoolVarP(&monitorAndReadOnlyFlag, "monitor", "m", false, "open read-only and monitor for changes")
 	pflag.BoolVarP(&nanoMode, "nano", "a", false, "Nano/Pico mode")
 	pflag.BoolVarP(&noApproxMatchFlag, "noapprox", "x", false, "Disable approximate filename matching")
@@ -98,7 +98,7 @@ func main() {
 	pflag.BoolVarP(&quickHelpFlag, "quick-help", "q", false, "always display the quick help when starting")
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
-	pflag.BoolVarP(&searchAndOpenFlag, "search", "s", false, "search for a file with the given string and open it")
+	pflag.BoolVarP(&searchAndOpenFlag, "glob", "g", false, "open the first filename that matches the given glob (recursively)")
 
 	pflag.Parse()
 

@@ -87,7 +87,7 @@ Flags:
   -n, --no-cache                 Avoid writing the location history, search history, highscore,
                                  compilation and format command to ` + cacheDirForDoc + `.
   -d, --create-dir               When opening a new file, create directories as needed.
-  -g, --digraphs                 List all possible digraphs.
+  -s, --digraphs                 List all possible digraphs.
   -t, --list                     List the given file using the red/black theme and quit.
   -b, --bat                      List the given file using bat, if it exists in the PATH.
                                  This can be useful when used with together with -c or -p.
@@ -95,6 +95,7 @@ Flags:
                                  The default filename is input.txt. Handy for Advent of Code.
   -a, --nano                     Emulate Pico/Nano.
   -q, --quick-help               Display the quick help pane at start.
+  -g, --glob GLOB                Search for and open the first filename that matches the glob.
   -h, --help                     Display this usage information.
   -v, --version                  Display the current version.
 
