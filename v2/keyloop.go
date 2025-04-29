@@ -2111,6 +2111,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	var closeLocksWaitGroup sync.WaitGroup
 	e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag, &closeLocksWaitGroup)
 
+	// Clear the colors
+	vt100.SetNoColor()
+
 	// Quit everything that has to do with the terminal
 	if clearOnQuit.Load() {
 		vt100.Clear()

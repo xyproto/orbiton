@@ -27,6 +27,7 @@ func quitError(tty *vt100.TTY, err error) {
 	}
 
 	vt100.Reset()
+	vt100.SetNoColor()
 	vt100.Clear()
 	vt100.Close()
 	textoutput.NewTextOutput(true, true).Err(err.Error())
@@ -46,6 +47,7 @@ func quitMessage(tty *vt100.TTY, msg string) {
 	}
 
 	vt100.Reset()
+	vt100.SetNoColor()
 	vt100.Clear()
 	vt100.Close()
 	fmt.Fprintln(os.Stderr, msg)
@@ -66,6 +68,7 @@ func quitMessageWithStack(tty *vt100.TTY, msg string) {
 	}
 
 	vt100.Reset()
+	vt100.SetNoColor()
 	vt100.Clear()
 	vt100.Close()
 	fmt.Fprintln(os.Stderr, msg)
@@ -87,6 +90,7 @@ func quitExecShellCommand(tty *vt100.TTY, workDir string, shellCommand string) {
 	}
 
 	vt100.Reset()
+	vt100.SetNoColor()
 	vt100.Clear()
 	vt100.Close()
 	vt100.ShowCursor(true)
@@ -156,6 +160,7 @@ func quitToMan(tty *vt100.TTY, workDir, nroffFilename string, w, h uint) error {
 	stopBackgroundProcesses()
 
 	vt100.Close()
+	vt100.SetNoColor()
 	vt100.Clear()
 	vt100.Reset()
 	if tty != nil {
@@ -201,6 +206,7 @@ func quitToNroff(tty *vt100.TTY, backupDirectory string, w, h uint) error {
 	stopBackgroundProcesses()
 
 	vt100.Close()
+	vt100.SetNoColor()
 	vt100.Clear()
 	vt100.Reset()
 
