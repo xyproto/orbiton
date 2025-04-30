@@ -95,7 +95,7 @@ Flags:
                                  The default filename is input.txt. Handy for Advent of Code.
   -a, --nano                     Emulate Pico/Nano.
   -q, --quick-help               Display the quick help pane at start.
-  -g, --glob GLOB                Search for and open the first filename that matches the glob.
+  -g, --glob GLOB                Search for and open the first filename that matches the substring.
   -h, --help                     Display this usage information.
   -v, --version                  Display the current version.
 
