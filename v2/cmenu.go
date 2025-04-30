@@ -98,6 +98,8 @@ func (a *Actions) AddCommand(e *Editor, c *vt100.Canvas, tty *vt100.TTY, status 
 func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) (int, bool) {
 	const insertFilename = "include.txt"
 
+	vsCode := env.Str("TERM_PROGRAM") == "vscode"
+
 	if menuTitle == "" {
 		menuTitle = versionString
 	} else if menuTitle == versionString {
@@ -129,36 +131,39 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Sort the current block of lines", "sortblock")
 	actions.AddCommand(e, c, tty, status, bookmark, undo, "Sort strings on the current line", "sortwords")
 
-	actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert \""+insertFilename+"\" at the current line", "insertfile", insertFilename)
+	if !vsCode {
+		actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert \""+insertFilename+"\" at the current line", "insertfile", insertFilename)
+	}
 
 	actions.Add("Toggle column limit indicator", func() {
 		e.showColumnLimit = !e.showColumnLimit
 	})
 
 	// Word wrap at a custom width + enable word wrap when typing
-	actions.Add("Word wrap at...", func() {
-		const tabInputText = "79"
-		if wordWrapString, ok := e.UserInput(c, tty, status, fmt.Sprintf("Word wrap at [%d]", wrapWidth), "", []string{}, false, tabInputText); ok {
-			if strings.TrimSpace(wordWrapString) == "" {
-				e.WrapNow(wrapWidth)
-				e.wrapWhenTyping = true
-				status.SetMessageAfterRedraw(fmt.Sprintf("Word wrap at %d", wrapWidth))
-			} else {
-				if ww, err := strconv.Atoi(wordWrapString); err != nil {
-					status.Clear(c, false)
-					status.SetError(err)
-					status.Show(c, e)
-				} else {
-					e.WrapNow(ww)
+	if !vsCode {
+		actions.Add("Word wrap at...", func() {
+			const tabInputText = "79"
+			if wordWrapString, ok := e.UserInput(c, tty, status, fmt.Sprintf("Word wrap at [%d]", wrapWidth), "", []string{}, false, tabInputText); ok {
+				if strings.TrimSpace(wordWrapString) == "" {
+					e.WrapNow(wrapWidth)
 					e.wrapWhenTyping = true
 					status.SetMessageAfterRedraw(fmt.Sprintf("Word wrap at %d", wrapWidth))
+				} else {
+					if ww, err := strconv.Atoi(wordWrapString); err != nil {
+						status.Clear(c, false)
+						status.SetError(err)
+						status.Show(c, e)
+					} else {
+						e.WrapNow(ww)
+						e.wrapWhenTyping = true
+						status.SetMessageAfterRedraw(fmt.Sprintf("Word wrap at %d", wrapWidth))
+					}
 				}
 			}
-		}
-	})
+		})
+	}
 
-	// Build (for use on the terminal, since ctrl-space does not work on iTerm2 + macOS)
-	if isDarwin && !inVTEGUI {
+	if !vsCode {
 		var alsoRun = false
 		var menuItemText = "Export"
 		if ProgrammingLanguage(e.mode) {
@@ -312,48 +317,51 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		})
 	}
 
-	// Render to PDF using the gofpdf package
-	actions.Add("Render to PDF", func() {
-		// Write to PDF in a goroutine
-		pdfFilename := strings.ReplaceAll(filepath.Base(e.filename), ".", "_") + ".pdf"
+	if !vsCode {
 
-		// Show a status message while writing
-		status.SetMessage("Writing " + pdfFilename + "...")
-		status.ShowNoTimeout(c, e)
+		// Render to PDF using the gofpdf package
+		actions.Add("Render to PDF", func() {
+			// Write to PDF in a goroutine
+			pdfFilename := strings.ReplaceAll(filepath.Base(e.filename), ".", "_") + ".pdf"
 
-		statusMessage := ""
+			// Show a status message while writing
+			status.SetMessage("Writing " + pdfFilename + "...")
+			status.ShowNoTimeout(c, e)
 
-		// TODO: Only overwrite if the previous PDF file was also rendered by "o".
-		_ = os.Remove(pdfFilename)
-		// Write the file
-		if err := e.SavePDF(e.filename, pdfFilename); err != nil {
-			statusMessage = err.Error()
-		} else {
-			statusMessage = "Wrote " + pdfFilename
-		}
-		// Show a status message after writing
-		status.ClearAll(c, true)
-		status.SetMessage(statusMessage)
-		status.ShowNoTimeout(c, e)
-	})
+			statusMessage := ""
 
-	// Render to PDF using pandoc
-	if (e.mode == mode.Markdown || e.mode == mode.ASCIIDoc || e.mode == mode.SCDoc) && files.WhichCached("pandoc") != "" {
-		actions.Add("Render to PDF using pandoc", func() {
-			// pandoc
-			if pandocPath := files.WhichCached("pandoc"); pandocPath != "" {
-				pdfFilename := strings.ReplaceAll(filepath.Base(e.filename), ".", "_") + ".pdf"
-				go func() {
-					pandocMutex.Lock()
-					_ = e.exportPandocPDF(c, tty, status, pandocPath, pdfFilename)
-					pandocMutex.Unlock()
-				}()
-				// the exportPandoc function handles it's own status output
-				return
+			// TODO: Only overwrite if the previous PDF file was also rendered by "o".
+			_ = os.Remove(pdfFilename)
+			// Write the file
+			if err := e.SavePDF(e.filename, pdfFilename); err != nil {
+				statusMessage = err.Error()
+			} else {
+				statusMessage = "Wrote " + pdfFilename
 			}
-			status.SetErrorMessage("Could not find pandoc")
+			// Show a status message after writing
+			status.ClearAll(c, true)
+			status.SetMessage(statusMessage)
 			status.ShowNoTimeout(c, e)
 		})
+
+		// Render to PDF using pandoc
+		if (e.mode == mode.Markdown || e.mode == mode.ASCIIDoc || e.mode == mode.SCDoc) && files.WhichCached("pandoc") != "" {
+			actions.Add("Render to PDF using pandoc", func() {
+				// pandoc
+				if pandocPath := files.WhichCached("pandoc"); pandocPath != "" {
+					pdfFilename := strings.ReplaceAll(filepath.Base(e.filename), ".", "_") + ".pdf"
+					go func() {
+						pandocMutex.Lock()
+						_ = e.exportPandocPDF(c, tty, status, pandocPath, pdfFilename)
+						pandocMutex.Unlock()
+					}()
+					// the exportPandoc function handles it's own status output
+					return
+				}
+				status.SetErrorMessage("Could not find pandoc")
+				status.ShowNoTimeout(c, e)
+			})
+		}
 	}
 
 	// This is a bit odd, but useful when copying the file in 200 line chunks.
@@ -474,14 +482,16 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		actions.AddCommand(e, c, tty, status, bookmark, undo, "Split line on blanks outside of (), [] or {}", "splitline")
 	}
 
-	if e.moveLinesMode.Load() {
-		actions.Add("Move the cursor with ctrl-n and ctrl-p", func() {
-			e.moveLinesMode.Store(false)
-		})
-	} else {
-		actions.Add("Move lines with ctrl-n and ctrl-p", func() {
-			e.moveLinesMode.Store(true)
-		})
+	if !vsCode {
+		if e.moveLinesMode.Load() {
+			actions.Add("Move the cursor with ctrl-n and ctrl-p", func() {
+				e.moveLinesMode.Store(false)
+			})
+		} else {
+			actions.Add("Move lines with ctrl-n and ctrl-p", func() {
+				e.moveLinesMode.Store(true)
+			})
+		}
 	}
 
 	// Only show the menu option for killing the parent process if the parent process is a known search command
