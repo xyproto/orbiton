@@ -80,6 +80,7 @@ type Editor struct {
 	nanoMode          atomic.Bool // emulate GNU Nano
 	waitWithRedrawing atomic.Bool // wait with redrawing until a key is pressed
 	flaskApplication  atomic.Bool // Python + Flask
+	moveLinesMode     atomic.Bool // move lines up and down with ctrl-p and ctrl-n, when enabled
 }
 
 // Copy makes a copy of an Editor struct, with most fields deep copied
@@ -141,6 +142,10 @@ func (e *Editor) Copy() *Editor {
 	e2.redrawCursor.Store(e.redrawCursor.Load())
 	e2.drawProgress.Store(e.drawProgress.Load())
 	e2.drawFuncName.Store(e.drawFuncName.Load())
+	e2.nanoMode.Store(e.nanoMode.Load())
+	e2.waitWithRedrawing.Store(e.waitWithRedrawing.Load())
+	e2.flaskApplication.Store(e.flaskApplication.Load())
+	e2.moveLinesMode.Store(e.moveLinesMode.Load())
 	return &e2
 }
 
@@ -1645,6 +1650,11 @@ func (e *Editor) PgDn(c *vt100.Canvas, status *StatusBar) bool {
 // AtFirstLineOfDocument is true if we're at the first line of the document
 func (e *Editor) AtFirstLineOfDocument() bool {
 	return e.DataY() == LineIndex(0)
+}
+
+// AtSecondLineOfDocumentOrLater is true if we're at the second line of the document, or later
+func (e *Editor) AtSecondLineOfDocumentOrLater() bool {
+	return e.DataY() >= LineIndex(1)
 }
 
 // AtLastLineOfDocument is true if we're at the last line of the document

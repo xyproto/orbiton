@@ -831,10 +831,22 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 					justJumpedToMatchingP = false
 
-					e.redraw.Store(e.ScrollUp(c, status, e.pos.scrollSpeed))
-					e.redrawCursor.Store(true)
-					if e.AfterLineScreenContents() {
-						e.End(c)
+					if e.moveLinesMode.Load() && e.AtSecondLineOfDocumentOrLater() {
+						// Move the current line up
+						line := e.CurrentLine()
+						e.DeleteCurrentLineMoveBookmark(bookmark)
+						e.Up(c, nil) // no status message if the end of document is reached, there should always be a new line
+						e.Home()
+						e.InsertLineAbove()
+						e.InsertStringAndMove(c, line)
+						e.Home()
+					} else {
+						// Scroll up
+						e.redraw.Store(e.ScrollUp(c, status, e.pos.scrollSpeed))
+						e.redrawCursor.Store(true)
+						if e.AfterLineScreenContents() {
+							e.End(c)
+						}
 					}
 				}
 				e.drawProgress.Store(true)
@@ -972,7 +984,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 				} else {
 
-					// Jump to a matching parenthesis if either an arrow key was last pressed or we just jumped to a matchin parenthesis
+					// Jump to a matching parenthesis if either an arrow key was last pressed or we just jumped to a matching parenthesis
 					justUsedArrowKeys := kh.PrevHas(downArrow, upArrow, leftArrow, rightArrow)
 					if (justUsedArrowKeys || justJumpedToMatchingP) && e.JumpToMatching(c) {
 						justJumpedToMatchingP = true
@@ -982,16 +994,28 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 					justJumpedToMatchingP = false
 
-					// Scroll down
-					h := int(c.Height())
-					redraw := e.ScrollDown(c, status, e.pos.scrollSpeed, h)
-					e.redraw.Store(redraw)
-					// If redraw is false, the end of file is reached
-					if !redraw {
-						status.Clear(c, false)
-						status.SetMessage(endOfFileMessage)
-						status.Show(c, e)
+					if e.moveLinesMode.Load() && !e.AtOrAfterLastLineOfDocument() {
+						// Move the current line down
+						line := e.CurrentLine()
+						e.DeleteCurrentLineMoveBookmark(bookmark)
+						e.InsertLineBelow()
+						e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
+						e.Home()
+						e.InsertStringAndMove(c, line)
+						e.Home()
+					} else {
+						// Scroll down
+						h := int(c.Height())
+						redraw := e.ScrollDown(c, status, e.pos.scrollSpeed, h)
+						e.redraw.Store(redraw)
+						// If redraw is false, the end of file is reached
+						if !redraw {
+							status.Clear(c, false)
+							status.SetMessage(endOfFileMessage)
+							status.Show(c, e)
+						}
 					}
+
 					e.redrawCursor.Store(true)
 					if e.AfterLineScreenContents() {
 						e.End(c)
