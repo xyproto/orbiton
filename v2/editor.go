@@ -67,6 +67,7 @@ type Editor struct {
 	spellCheckMode             bool            // spell check mode?
 	createDirectoriesIfMissing bool            // when saving a file, should directories be created if they are missing?
 	displayQuickHelp           bool            // display the quick help box?
+	noDisplayQuickHelp         bool            // prevent the quick help box from being displayed?
 	blockMode                  bool            // toggle if typing should affect the current line or the current block
 	dirMode                    bool            // browse a directory and also interact with git
 	highlightCurrentLine       bool            // highlight the current line
@@ -2289,7 +2290,7 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
 		fnord := FilenameOrData{filenameToOpen, []byte{}, 0, false}
-		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, e.monitorAndReadOnly, e.nanoMode.Load(), e.createDirectoriesIfMissing, e.displayQuickHelp)
+		e2, statusMessage, displayedImage, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, e.monitorAndReadOnly, e.nanoMode.Load(), e.createDirectoriesIfMissing, e.displayQuickHelp, e.noDisplayQuickHelp)
 		if err == nil { // no issue
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)

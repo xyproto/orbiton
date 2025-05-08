@@ -1431,7 +1431,7 @@ func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
 // OnlyBuild tries to build/export the given FilenameOrData, without starting a full editor
 func OnlyBuild(fnord FilenameOrData) (string, error) {
 	// Prepare an editor, without tty and canvas
-	e, _, _, err := NewEditor(nil, nil, fnord, 0, 0, NewDefaultTheme(), false, true, false, false, false, false)
+	e, _, _, err := NewEditor(nil, nil, fnord, 0, 0, NewDefaultTheme(), false, true, false, false, false, false, false)
 	if err != nil {
 		return "", err
 	}

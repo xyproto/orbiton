@@ -73,9 +73,12 @@ func main() {
 		ollamaTabCompletion    bool
 		pasteFlag              bool
 		quickHelpFlag          bool
+		noQuickHelpFlag        bool
 		versionFlag            bool
 		searchAndOpenFlag      bool
 	)
+
+	// Available short options: j k u w y
 
 	pflag.BoolVarP(&batFlag, "bat", "B", false, "Cat the file with colors instead of editing it, using bat")
 	pflag.BoolVarP(&buildFlag, "build", "b", false, "Try to build the file instead of editing it")
@@ -96,6 +99,7 @@ func main() {
 	pflag.BoolVarP(&pasteFlag, "paste", "p", false, "paste the clipboard into the file and quit")
 	pflag.BoolVarP(&releaseBuildFlag, "release", "r", false, "build with release mode instead of debug mode, whenever applicable")
 	pflag.BoolVarP(&quickHelpFlag, "quick-help", "q", false, "always display the quick help when starting")
+	pflag.BoolVarP(&noQuickHelpFlag, "no-quick-help", "z", false, "never display the quick help when starting")
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
 	pflag.BoolVarP(&searchAndOpenFlag, "glob", "g", false, "open the first filename that matches the given glob (recursively)")
@@ -464,7 +468,7 @@ func main() {
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, formatFlag)
+	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, noQuickHelpFlag, formatFlag)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {

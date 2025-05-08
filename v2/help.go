@@ -94,7 +94,8 @@ Flags:
   -i, --input-file FILENAME      Used as stdin when running programs with ctrl-space.
                                  The default filename is input.txt. Handy for Advent of Code.
   -a, --nano                     Emulate Pico/Nano.
-  -q, --quick-help               Display the quick help pane at start.
+  -q, --quick-help               Always display the quick help pane at start.
+  -z, --no-quick-help            Never display the quick help pane at start.
   -g, --glob GLOB                Search for and open the first filename that matches the substring.
   -h, --help                     Display this usage information.
   -v, --version                  Display the current version.

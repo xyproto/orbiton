@@ -28,7 +28,7 @@ var (
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message for the user, a bool that is true if an image was displayed instead and the finally an error type.
-func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp bool) (*Editor, string, bool, error) {
+func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp bool) (*Editor, string, bool, error) {
 	if inVTEGUI {
 		noDrawUntilResize.Store(true)
 	}
@@ -98,7 +98,8 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 		rainbowParenthesis,
 		monitorAndReadOnly,
 		createDirectoriesIfMissing,
-		displayQuickHelp)
+		displayQuickHelp,
+		noDisplayQuickHelp)
 
 	e.highlightCurrentText = !envNoColor
 
@@ -540,7 +541,7 @@ func NewEditor(tty *vt100.TTY, c *vt100.Canvas, fnord FilenameOrData, lineNumber
 // * a syntax highlighting scheme
 // * a file mode
 // * if directories should be created when saving a file if they are missing
-func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight, rainbowParenthesis, monitorAndReadOnly, createDirectoriesIfMissing, displayQuickHelp bool) *Editor {
+func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight, rainbowParenthesis, monitorAndReadOnly, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp bool) *Editor {
 	e := &Editor{}
 	e.SetTheme(theme)
 	e.lines = make(map[int][]rune)
@@ -550,6 +551,7 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 	e.monitorAndReadOnly = monitorAndReadOnly
 	e.createDirectoriesIfMissing = createDirectoriesIfMissing
 	e.displayQuickHelp = displayQuickHelp
+	e.noDisplayQuickHelp = noDisplayQuickHelp
 	p := NewPosition(scrollSpeed)
 	e.pos = *p
 	// If the file is not to be highlighted, set word wrap to 79 (0 to disable)
@@ -577,7 +579,7 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 // then set the word wrap limit at the given column width.
 func NewSimpleEditor(wordWrapLimit int) *Editor {
 	t := NewDefaultTheme()
-	e := NewCustomEditor(mode.DefaultTabsSpaces, 1, mode.Blank, t, false, false, false, false, false)
+	e := NewCustomEditor(mode.DefaultTabsSpaces, 1, mode.Blank, t, false, false, false, false, false, false)
 	e.wrapWidth = wordWrapLimit
 	e.wrapWhenTyping = true
 	return e
