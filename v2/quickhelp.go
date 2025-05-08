@@ -63,7 +63,7 @@ func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing boo
 	)
 
 	var (
-		minWidth = 55
+		minWidth = 60
 
 		foregroundColor = e.Foreground
 		backgroundColor = e.Background
