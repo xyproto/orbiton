@@ -63,7 +63,7 @@ func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing boo
 	)
 
 	var (
-		minWidth = 60
+		minWidth = 55
 
 		foregroundColor = e.Foreground
 		backgroundColor = e.Background
@@ -94,7 +94,8 @@ func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing boo
 
 	centerBox.UpperRightPlacement(canvasBox, minWidth)
 	centerBox.H += 2
-	centerBox.X -= 4
+	centerBox.X -= 10
+	centerBox.W += 5
 
 	// Then create a list box
 	listBox := NewBox()
