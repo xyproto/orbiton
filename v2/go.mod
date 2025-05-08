@@ -15,7 +15,7 @@ require (
 	github.com/spf13/pflag v1.0.6
 	github.com/xyproto/autoimport v1.5.2
 	github.com/xyproto/binary v1.3.3
-	github.com/xyproto/carveimg v1.4.8
+	github.com/xyproto/carveimg v1.4.9
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.3.0
 	github.com/xyproto/env/v2 v2.5.3
@@ -34,7 +34,7 @@ require (
 	github.com/xyproto/usermodel v1.2.2
 	github.com/xyproto/vt100 v1.16.12
 	github.com/xyproto/wordwrap v1.0.1
-	golang.org/x/image v0.26.0
+	golang.org/x/image v0.27.0
 )
 
 require (
@@ -59,5 +59,5 @@ require (
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.6.1 // indirect
-	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
 )
