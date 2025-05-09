@@ -2009,7 +2009,7 @@ func (e *Editor) CommentOn(commentMarker string) {
 	var space string
 	switch e.mode {
 	// For config files, assume things will be toggled in and out, without a space
-	case mode.Config, mode.Ini, mode.FSTAB:
+	case mode.Config, mode.Ini, mode.FSTAB, mode.Nix:
 		break // space == ""
 	default:
 		space = " "
