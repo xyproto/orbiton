@@ -95,6 +95,8 @@ func Detect(filename string) Mode {
 			mode = Basic
 		case ".bat":
 			mode = Bat
+		case ".bf":
+			mode = Beef
 		case ".bts":
 			mode = Battlestar
 		case ".c":
@@ -200,6 +202,8 @@ func Detect(filename string) Mode {
 			mode = GoMod // go.mod files
 		case ".nim":
 			mode = Nim
+		case ".nix":
+			mode = Nix
 		case ".nse":
 			mode = Nmap
 		case ".odin":

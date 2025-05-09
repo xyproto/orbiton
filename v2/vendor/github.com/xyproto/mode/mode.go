@@ -19,6 +19,7 @@ const (
 	Bat                   // DOS and Windows batch files
 	Battlestar            // Battlestar
 	Bazel                 // Bazel and Starlark
+	Beef                  // Beef
 	C                     // C
 	C3                    // C3
 	CMake                 // CMake files
@@ -75,6 +76,7 @@ const (
 	Markdown              // Markdown document
 	Mojo                  // Mojo
 	Nim                   // Nim
+	Nix                   // Nix
 	Nmap                  // Nmap scripts
 	Nroff                 // editing man pages
 	OCaml                 // OCaml
@@ -143,6 +145,8 @@ func (mode Mode) String() string {
 		return "Battlestar"
 	case Bazel:
 		return "Bazel"
+	case Beef:
+		return "Beef"
 	case Blank:
 		return "-"
 	case C:
@@ -257,6 +261,8 @@ func (mode Mode) String() string {
 		return "Mojo"
 	case Nim:
 		return "Nim"
+	case Nix:
+		return "Nix"
 	case Nmap:
 		return "Nmap"
 	case Nroff:

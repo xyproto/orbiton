@@ -99,8 +99,8 @@ github.com/xyproto/javasig v1.0.1 h1:Ltj/qPXaiybls9r+OnUso8d4xAm0qXaz91bRaj70Q2I
 github.com/xyproto/javasig v1.0.1/go.mod h1:F0hqS0fXTJYLSH9kLP4XBn2pCB8GnqLmR223i1QqkTk=
 github.com/xyproto/lookslikegoasm v1.0.0 h1:/2nuhAu67tdjqXHkdOjP/UUAH9uJbAdptIkF2WzXqz4=
 github.com/xyproto/lookslikegoasm v1.0.0/go.mod h1:4ck0t+iH2rEAmjwnRhMZl72lCeCxK4iylxdcZ3K3FbY=
-github.com/xyproto/mode v0.11.4 h1:lkkr/Ad5Xg1aZNINCu9HNhGwZIRnf+M0nRzXMTtG1Jg=
-github.com/xyproto/mode v0.11.4/go.mod h1:Bl7ymMitqlFLl3lgyAY3knkZb0t9/4fzgja7mWp66n0=
+github.com/xyproto/mode v0.11.5 h1:I43Jth/UbqUq97yI2rWuLSO+mCm/1OKT0mksOg0nPG8=
+github.com/xyproto/mode v0.11.5/go.mod h1:Bl7ymMitqlFLl3lgyAY3knkZb0t9/4fzgja7mWp66n0=
 github.com/xyproto/ollamaclient/v2 v2.7.1 h1:kYel2Ye2ZfnzG+trjlImq4Hmoeupb5+nfYYDDVVQ4sk=
 github.com/xyproto/ollamaclient/v2 v2.7.1/go.mod h1:493pxyifwu57ifEg8DK45cw9aZuzvewXc/mReBlVI2o=
 github.com/xyproto/palgen v1.6.1 h1:TmVtbNZ6VAPzTBxFDFm0Fxk5Xw+NVdnl1xmJuvzFHsI=

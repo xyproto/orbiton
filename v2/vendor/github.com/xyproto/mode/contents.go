@@ -86,8 +86,8 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 		return Diff, true
 	}
 	// If more lines start with "# " than "// " or "/* ", and mode is blank,
-	// set the mode to modeConfig and enable syntax highlighting.
-	if !notConfig && (m == Blank || m == Config || m == Markdown) {
+	// set the mode to Config and enable syntax highlighting.
+	if !notConfig && (m == Blank || m == Config || m == Markdown || m == Nix) {
 		foundFirstContent := false
 		hashComment := 0
 		slashComment := 0
