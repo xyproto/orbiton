@@ -245,9 +245,9 @@ func main() {
 
 		switch {
 		case lockErr == nil && portalErr != nil:
-			fmt.Println("Cleared all locks")
+			fmt.Println("All locks clear.")
 		case lockErr == nil && portalErr == nil:
-			fmt.Println("Cleared all locks and closed the portal")
+			fmt.Println("All locks clear, and the portal has been closed.")
 		case lockErr != nil && portalErr == nil:
 			fmt.Fprintf(os.Stderr, "Closed the portal, but could not clear locks: %v\n", lockErr)
 			os.Exit(1)
