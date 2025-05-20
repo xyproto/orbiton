@@ -11,6 +11,7 @@ import (
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
+	"github.com/xyproto/mode"
 	"github.com/xyproto/textoutput"
 	"github.com/xyproto/vt100"
 )
@@ -97,6 +98,16 @@ func quitExecShellCommand(tty *vt100.TTY, workDir string, shellCommand string) {
 	const shellExecutable = "/bin/sh"
 	_ = os.Chdir(workDir)
 	syscall.Exec(shellExecutable, []string{shellExecutable, "-c", shellCommand}, env.Environ())
+}
+
+// CatBytes detects the source code mode and outputs syntax highlighted text to the given TextOutput.
+func CatBytes(sourceCodeData []byte, o *textoutput.TextOutput) error {
+	detectedMode := mode.SimpleDetectBytes(sourceCodeData)
+	taggedTextBytes, err := AsText(sourceCodeData, detectedMode)
+	if err == nil {
+		o.OutputTags(string(taggedTextBytes))
+	}
+	return err
 }
 
 // quitCat tries to list the given source code file using CatBytes, and then exits
