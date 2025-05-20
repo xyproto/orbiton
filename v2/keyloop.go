@@ -570,9 +570,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				// then clear the macro when esc is pressed.
 				undo.Snapshot(e)
 				undo.IgnoreSnapshots(true)
-				status.Clear(c, false)
-				status.SetMessage("Recording macro")
-				status.Show(c, e)
+				status.ClearAll(c, false)
+				status.SetMessageAfterRedraw("Recording macro")
 				e.macro = NewMacro()
 				e.macro.Recording = true
 				e.playBackMacroCount = 0
