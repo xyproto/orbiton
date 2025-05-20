@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
 )
 
@@ -31,7 +30,7 @@ func (e *Editor) GoToDefinition(tty *vt100.TTY, c *vt100.Canvas, status *StatusB
 	}
 
 	// Is the word a language keyword?
-	for kw := range syntax.Keywords {
+	for kw := range Keywords {
 		if kw == word {
 			// Don't go to the definition of keywords
 			return false

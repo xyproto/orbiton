@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt100"
 )
 
@@ -1279,8 +1278,8 @@ func NewNoColorLightBackgroundTheme() Theme {
 // TextConfig returns a TextConfig struct that can be used for settings
 // the syntax highlighting colors in the public TextConfig variable that is
 // exported from the syntax package.
-func (t Theme) TextConfig() *syntax.TextConfig {
-	return &syntax.TextConfig{
+func (t Theme) TextConfig() *TextConfig {
+	return &TextConfig{
 		String:        t.String,
 		Keyword:       t.Keyword,
 		Comment:       t.Comment,
@@ -1326,7 +1325,7 @@ func (e *Editor) setVSTheme(bs ...bool) {
 }
 
 // SetTheme assigns the given theme to the Editor,
-// and also configures syntax highlighting by setting syntax.DefaultTextConfig.
+// and also configures syntax highlighting by setting DefaultTextConfig.
 // Light/dark, syntax highlighting and no color information is also set.
 // Respect the NO_COLOR environment variable. May set e.NoSyntaxHighlight to true.
 func (e *Editor) SetTheme(theme Theme, bs ...bool) {
@@ -1342,7 +1341,7 @@ func (e *Editor) SetTheme(theme Theme, bs ...bool) {
 	}
 	e.Theme = theme
 	e.statusMode = theme.StatusMode
-	syntax.DefaultTextConfig = *(theme.TextConfig())
+	DefaultTextConfig = *(theme.TextConfig())
 }
 
 // setNoColorTheme sets the NoColor theme, and considers the background color
@@ -1353,7 +1352,7 @@ func (e *Editor) setNoColorTheme() {
 		e.Theme = NewNoColorDarkBackgroundTheme()
 	}
 	e.statusMode = e.Theme.StatusMode
-	syntax.DefaultTextConfig = *(e.Theme.TextConfig())
+	DefaultTextConfig = *(e.Theme.TextConfig())
 }
 
 // setLightVSTheme sets the light theme suitable for xterm

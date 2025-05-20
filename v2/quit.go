@@ -11,7 +11,6 @@ import (
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
-	"github.com/xyproto/syntax"
 	"github.com/xyproto/textoutput"
 	"github.com/xyproto/vt100"
 )
@@ -100,19 +99,19 @@ func quitExecShellCommand(tty *vt100.TTY, workDir string, shellCommand string) {
 	syscall.Exec(shellExecutable, []string{shellExecutable, "-c", shellCommand}, env.Environ())
 }
 
-// quitCat tries to list the given source code file using syntax.CatBytes, and then exits
+// quitCat tries to list the given source code file using CatBytes, and then exits
 func quitCat(fnord *FilenameOrData) {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 	if fnord.Empty() {
 		if sourceCodeBytes, err := os.ReadFile(fnord.filename); err == nil { // success
-			if err := syntax.CatBytes(sourceCodeBytes, tout); err == nil { // success
+			if err := CatBytes(sourceCodeBytes, tout); err == nil { // success
 				vt100.ShowCursor(true)
 				os.Exit(0)
 			}
 		}
 	} else {
-		if err := syntax.CatBytes(fnord.data, tout); err == nil { // success
+		if err := CatBytes(fnord.data, tout); err == nil { // success
 			vt100.ShowCursor(true)
 			os.Exit(0)
 		}
