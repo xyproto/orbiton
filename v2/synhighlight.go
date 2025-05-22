@@ -79,7 +79,6 @@ const (
 	Type
 )
 
-//go:generate gostringer -type=Kind
 
 // Printer implements an interface to render highlighted output
 // (see TextPrinter for the implementation of this interface)
