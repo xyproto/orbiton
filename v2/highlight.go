@@ -3,19 +3,275 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"regexp"
 	"strings"
 	"sync"
+	"text/scanner"
 	"unicode"
 	"unicode/utf8"
 
 	"github.com/mattn/go-runewidth"
+	"github.com/sourcegraph/annotate"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/stringpainter"
 	"github.com/xyproto/textoutput"
 	"github.com/xyproto/vt100"
 )
+
+// Kind represents a syntax highlighting kind (class) which will be assigned to tokens.
+// A syntax highlighting scheme (style) maps text style properties to each token kind.
+type Kind uint8
+
+// Supported highlighting kinds.
+const (
+	Whitespace Kind = iota
+	AndOr
+	AssemblyEnd
+	Class
+	Comment
+	Decimal
+	Dollar
+	Literal
+	Keyword
+	Mut
+	Plaintext
+	Private
+	Protected
+	Public
+	Punctuation
+	Self
+	Star
+	Static
+	String
+	Tag
+	TextAttrName
+	TextAttrValue
+	TextTag
+	Type
+)
+
+// TextConfig holds the Text class configuration to be used by annotators when highlighting code.
+type TextConfig struct {
+	AndOr         string
+	AssemblyEnd   string
+	Class         string
+	Comment       string
+	Decimal       string
+	Dollar        string
+	Keyword       string
+	Literal       string
+	Mut           string
+	Plaintext     string
+	Private       string
+	Protected     string
+	Public        string
+	Punctuation   string
+	Self          string
+	Star          string
+	Static        string
+	String        string
+	Tag           string
+	TextAttrName  string
+	TextAttrValue string
+	TextTag       string
+	Type          string
+	Whitespace    string
+}
+
+// Option is a function that can modify TextConfig.
+type Option func(*TextConfig)
+
+// DefaultTextConfig provides class names matching the color names of textoutput tags.
+var DefaultTextConfig = TextConfig{
+	AndOr:         "red",
+	AssemblyEnd:   "lightyellow",
+	Class:         "white",
+	Comment:       "darkgray",
+	Decimal:       "red",
+	Dollar:        "white",
+	Keyword:       "red",
+	Literal:       "white",
+	Mut:           "magenta",
+	Plaintext:     "white",
+	Private:       "red",
+	Protected:     "red",
+	Public:        "red",
+	Punctuation:   "red",
+	Self:          "magenta",
+	Star:          "white",
+	Static:        "lightyellow",
+	String:        "lightwhite",
+	Tag:           "white",
+	TextAttrName:  "white",
+	TextAttrValue: "white",
+	TextTag:       "white",
+	Type:          "white",
+	Whitespace:    "",
+}
+
+// GetClass returns the CSS class for a given token kind.
+func (c TextConfig) GetClass(kind Kind) string {
+	switch kind {
+	case String:
+		return c.String
+	case Keyword:
+		return c.Keyword
+	case Comment:
+		return c.Comment
+	case Type:
+		return c.Type
+	case Literal:
+		return c.Literal
+	case Punctuation:
+		return c.Punctuation
+	case Plaintext:
+		return c.Plaintext
+	case Tag:
+		return c.Tag
+	case TextTag:
+		return c.TextTag
+	case TextAttrName:
+		return c.TextAttrName
+	case TextAttrValue:
+		return c.TextAttrValue
+	case Decimal:
+		return c.Decimal
+	case AndOr:
+		return c.AndOr
+	case Dollar:
+		return c.Dollar
+	case Star:
+		return c.Star
+	case Static:
+		return c.Static
+	case Self:
+		return c.Self
+	case Class:
+		return c.Class
+	case Public:
+		return c.Public
+	case Private:
+		return c.Private
+	case Protected:
+		return c.Protected
+	case AssemblyEnd:
+		return c.AssemblyEnd
+	case Mut:
+		return c.Mut
+	}
+	return ""
+}
+
+// Printer renders highlighted output.
+type Printer interface {
+	Print(w io.Writer, kind Kind, tokText string) error
+}
+
+// TextPrinter wraps TextConfig to implement Printer.
+type TextPrinter TextConfig
+
+// Print writes token text with start/end tags based on its kind.
+func (p TextPrinter) Print(w io.Writer, kind Kind, tokText string) error {
+	class := TextConfig(p).GetClass(kind)
+	if class != "" {
+		if _, err := io.WriteString(w, "<"+class+">"); err != nil {
+			return err
+		}
+	}
+	if _, err := io.WriteString(w, tokText); err != nil {
+		return err
+	}
+	if class != "" {
+		if _, err := io.WriteString(w, "<off>"); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Annotator produces syntax highlighting annotations.
+type Annotator interface {
+	Annotate(start int, kind Kind, tokText string) (*annotate.Annotation, error)
+}
+
+// TextAnnotator wraps TextConfig to implement Annotator.
+type TextAnnotator TextConfig
+
+// Annotate returns an Annotation if the token kind has a CSS class.
+func (a TextAnnotator) Annotate(start int, kind Kind, tokText string) (*annotate.Annotation, error) {
+	class := TextConfig(a).GetClass(kind)
+	if class == "" {
+		return nil, nil
+	}
+	return &annotate.Annotation{
+		Start: start,
+		End:   start + len(tokText),
+		Left:  []byte("<" + class + ">"),
+		Right: []byte("<off>"),
+	}, nil
+}
+
+// Print scans tokens from s, using Printer p for mode m.
+func Print(s *scanner.Scanner, w io.Writer, p Printer, m mode.Mode) error {
+	inComment := false
+	for tok := s.Scan(); tok != scanner.EOF; tok = s.Scan() {
+		tokText := s.TokenText()
+		if err := p.Print(w, tokenKind(tok, tokText, &inComment, m), tokText); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Annotate scans src for tokens in mode m using Annotator a.
+func Annotate(src []byte, a Annotator, m mode.Mode) (annotate.Annotations, error) {
+	var (
+		anns      annotate.Annotations
+		s         = NewScanner(src)
+		offset    = 0
+		inComment = false
+	)
+	for tok := s.Scan(); tok != scanner.EOF; tok = s.Scan() {
+		tokText := s.TokenText()
+		if ann, err := a.Annotate(offset, tokenKind(tok, tokText, &inComment, m), tokText); err != nil {
+			return nil, err
+		} else if ann != nil {
+			anns = append(anns, ann)
+		}
+		offset += len(tokText)
+	}
+	return anns, nil
+}
+
+// AsText returns src highlighted for mode m, applying options to TextConfig.
+func AsText(src []byte, m mode.Mode, options ...Option) ([]byte, error) {
+	cfg := DefaultTextConfig
+	for _, opt := range options {
+		opt(&cfg)
+	}
+	var buf bytes.Buffer
+	if err := Print(NewScanner(src), &buf, TextPrinter(cfg), m); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+// NewScanner returns a scanner.Scanner configured for syntax highlighting.
+func NewScanner(src []byte) *scanner.Scanner {
+	return NewScannerReader(bytes.NewReader(src))
+}
+
+// NewScannerReader returns a scanner.Scanner configured for syntax highlighting from r.
+func NewScannerReader(r io.Reader) *scanner.Scanner {
+	var s scanner.Scanner
+	s.Init(r)
+	s.Error = func(*scanner.Scanner, string) {}
+	s.Whitespace = 0
+	s.Mode ^= scanner.SkipComments
+	return &s
+}
 
 const (
 	blankRune              = ' '

@@ -3,6 +3,9 @@ package main
 // TODO: Use a different syntax highlighting package, with support for many different programming languages
 import (
 	"strings"
+	"text/scanner"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/xyproto/mode"
 )
@@ -195,6 +198,90 @@ var Keywords = map[string]struct{}{
 	"while":            {},
 	"with":             {},
 	"yield":            {},
+}
+
+// tokenKind determines the Kind of a token for syntax highlighting.
+func tokenKind(tok rune, tokText string, inComment *bool, m mode.Mode) Kind {
+	// Detect single-line comment start/end.
+	if (m == mode.Assembly && tok == ';') ||
+		(m != mode.Assembly && m != mode.GoAssembly && m != mode.Clojure && m != mode.Lisp && m != mode.C && m != mode.Cpp && m != mode.Lua && tok == '#') {
+		*inComment = true
+	} else if tok == '\n' {
+		*inComment = false
+	}
+
+	// C-style preprocessor directives.
+	if (m == mode.C || m == mode.Cpp) && (tokText == "include" || tokText == "define" || tokText == "ifdef" || tokText == "ifndef" || tokText == "endif" || tokText == "else" || tokText == "elif") {
+		*inComment = false
+		return Keyword
+	}
+
+	if *inComment {
+		return Comment
+	}
+
+	// Rust-specific cases.
+	if m == mode.Rust {
+		switch tokText {
+		case "as":
+			return Type
+		case "mut":
+			return Mut
+		}
+	}
+
+	// Python-specific self.
+	if m == mode.Python && tokText == "self" {
+		return Self
+	}
+
+	switch tok {
+	case scanner.Ident:
+		if _, ok := Keywords[tokText]; ok {
+			return Keyword
+		}
+		switch tokText {
+		case "private":
+			return Private
+		case "public":
+			return Public
+		case "protected":
+			return Protected
+		case "class":
+			return Class
+		case "static":
+			return Static
+		case "JMP", "jmp", "LEAVE", "leave", "RET", "ret", "CALL", "call":
+			if m == mode.Assembly || m == mode.GoAssembly {
+				return AssemblyEnd
+			}
+		}
+		if r, _ := utf8.DecodeRuneInString(tokText); unicode.IsUpper(r) {
+			return Type
+		}
+		return Plaintext
+
+	case scanner.Float, scanner.Int:
+		return Decimal
+	case scanner.Char, scanner.String, scanner.RawString:
+		return String
+	case scanner.Comment:
+		return Comment
+	}
+
+	if tok == '&' || tok == '|' {
+		return AndOr
+	} else if tok == '*' {
+		return Star
+	} else if tok == '$' {
+		return Dollar
+	}
+
+	if unicode.IsSpace(tok) {
+		return Whitespace
+	}
+
+	return Punctuation
 }
 
 var (
