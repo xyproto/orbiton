@@ -79,7 +79,6 @@ const (
 	Type
 )
 
-
 // Printer implements an interface to render highlighted output
 // (see TextPrinter for the implementation of this interface)
 type Printer interface {
@@ -172,32 +171,22 @@ func (c TextConfig) GetClass(kind Kind) string {
 	return ""
 }
 
-// Print is the function that emits highlighted source code using
-// <color>...<off> wrapper tags
-func (p TextPrinter) Print(w io.Writer, kind Kind, tokText string) (err error) {
-	class := ((TextConfig)(p)).GetClass(kind)
+func (p TextPrinter) Print(w io.Writer, kind Kind, tokText string) error {
+	class := TextConfig(p).GetClass(kind)
 	if class != "" {
-		_, err = io.WriteString(w, "<")
-		if err != nil {
-			return err
-		}
-		_, err = io.WriteString(w, class)
-		if err != nil {
-			return err
-		}
-		_, err = io.WriteString(w, ">")
-		if err != nil {
+		if _, err := io.WriteString(w, "<"+class+">"); err != nil {
 			return err
 		}
 	}
-	_, err = io.WriteString(w, tokText)
-	if err != nil {
+	if _, err := io.WriteString(w, tokText); err != nil {
 		return err
 	}
 	if class != "" {
-		_, err = io.WriteString(w, "<off>")
+		if _, err := io.WriteString(w, "<off>"); err != nil {
+			return err
+		}
 	}
-	return err // can be nil
+	return nil
 }
 
 type Annotator interface {
@@ -207,17 +196,17 @@ type Annotator interface {
 type TextAnnotator TextConfig
 
 func (a TextAnnotator) Annotate(start int, kind Kind, tokText string) (*annotate.Annotation, error) {
-	class := ((TextConfig)(a)).GetClass(kind)
-	if class != "" {
-		left := []byte(`<`)
-		left = append(left, []byte(class)...)
-		left = append(left, []byte(`>`)...)
-		return &annotate.Annotation{
-			Start: start, End: start + len(tokText),
-			Left: left, Right: []byte("<off>"),
-		}, nil
+	class := TextConfig(a).GetClass(kind)
+	if class == "" {
+		return nil, nil
 	}
-	return nil, nil
+	left := []byte("<" + class + ">")
+	return &annotate.Annotation{
+		Start: start,
+		End:   start + len(tokText),
+		Left:  left,
+		Right: []byte("<off>"),
+	}, nil
 }
 
 // Option is a type of the function that can modify
@@ -253,6 +242,7 @@ var DefaultTextConfig = TextConfig{
 	Whitespace:    "",
 }
 
+// Print scans tokens from s and uses Printer p to write highlighted output to w for language mode m.
 func Print(s *scanner.Scanner, w io.Writer, p Printer, m mode.Mode) error {
 	tok := s.Scan()
 	inSingleLineComment := false
@@ -269,6 +259,8 @@ func Print(s *scanner.Scanner, w io.Writer, p Printer, m mode.Mode) error {
 	return nil
 }
 
+// Annotate scans src for tokens in language mode m using Annotator a
+// and returns syntax highlighting annotations.
 func Annotate(src []byte, a Annotator, m mode.Mode) (annotate.Annotations, error) {
 	var (
 		anns                annotate.Annotations
@@ -293,9 +285,8 @@ func Annotate(src []byte, a Annotator, m mode.Mode) (annotate.Annotations, error
 	return anns, nil
 }
 
-// AsText converts source code into an Text-highlighted version;
-// It accepts optional configuration parameters to control rendering
-// (see OrderedList as one example)
+// AsText returns the source src highlighted for language mode m,
+// applying optional TextConfig options to control rendering.
 func AsText(src []byte, m mode.Mode, options ...Option) ([]byte, error) {
 	opt := DefaultTextConfig
 	for _, f := range options {
@@ -310,12 +301,14 @@ func AsText(src []byte, m mode.Mode, options ...Option) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// NewScanner is a helper that takes a []byte src, wraps it in a reader and creates a Scanner.
+// NewScanner returns a scanner.Scanner configured for syntax highlighting,
+// reading tokens from the given src byte slice.
 func NewScanner(src []byte) *scanner.Scanner {
 	return NewScannerReader(bytes.NewReader(src))
 }
 
-// NewScannerReader takes a reader src and creates a Scanner.
+// NewScannerReader returns a scanner.Scanner configured for syntax highlighting,
+// reading tokens from the given io.Reader.
 func NewScannerReader(src io.Reader) *scanner.Scanner {
 	var s scanner.Scanner
 	s.Init(src)
@@ -325,6 +318,9 @@ func NewScannerReader(src io.Reader) *scanner.Scanner {
 	return &s
 }
 
+// tokenKind determines the Kind of a token with rune tok and text tokText,
+// based on the language mode m. It updates inSingleLineComment to track single-line
+// comment state and returns the appropriate Kind for syntax highlighting.
 func tokenKind(tok rune, tokText string, inSingleLineComment *bool, m mode.Mode) Kind {
 
 	// Check if we are in a bash-style single line comment, this probably needs to check for even more languages
