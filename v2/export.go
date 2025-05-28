@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -55,14 +56,20 @@ func (e *Editor) exportAdoc(c *vt100.Canvas, tty *vt100.TTY, manFilename string)
 	if adocPath == "" {
 		return errors.New("could not find asciidoctor in the PATH")
 	}
-
-	// TODO: Use a proper function for generating temporary files
-	tmpfn := "___o___.adoc"
-	if files.Exists(tmpfn) {
-		return errors.New(tmpfn + " already exists, please remove it")
+	tmpfile, err := os.CreateTemp("", "*.adoc")
+	if err != nil {
+		return err
 	}
+	tmpfn := tmpfile.Name()
 
-	e.SaveAs(c, tty, tmpfn)
+	defer func() {
+		tmpfile.Close()
+		os.Remove(tmpfn)
+	}()
+
+	if _, err := io.WriteString(tmpfile, e.String()); err != nil {
+		return err
+	}
 
 	// Run asciidoctor
 	adocCommand := exec.Command(adocPath, "-b", "manpage", "-o", manFilename, tmpfn)
