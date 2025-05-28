@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+	"strings"
 )
 
 var defaultLockFile = filepath.Join(userCacheDir, "o", "lockfile.txt")
@@ -80,6 +81,12 @@ func (lk *LockKeeper) Lock(filename string) error {
 
 	// TODO: Make sure not to lock "-" or "/dev/*" files
 
+	// Avoid locking "-" or "/dev/*" files
+	if filename == "-" || strings.HasPrefix(filename, "/dev/") {
+		return errors.New("locking '-' or '/dev/*' files is not allowed")
+	}
+
+	// Check if already locked
 	var has bool
 	lk.mut.RLock()
 	_, has = lk.lockedFiles[filename]
