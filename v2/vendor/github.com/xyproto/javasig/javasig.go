@@ -38,6 +38,7 @@ func Is(line string) bool {
 	if strings.HasPrefix(lower, "new ") ||
 		strings.HasPrefix(lower, "return ") ||
 		strings.HasPrefix(lower, "throw ") ||
+		strings.HasPrefix(lower, "} catch ") ||
 		strings.HasPrefix(lower, "super(") ||
 		strings.HasPrefix(lower, "class ") ||
 		strings.HasPrefix(lower, "@interface ") {

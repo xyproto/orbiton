@@ -4,5 +4,5 @@ The `Is` function tries to determine if the given string is most likely a Java m
 
 ### General info
 
-* Version: 1.0.1
+* Version: 1.0.2
 * License: BSD-3
