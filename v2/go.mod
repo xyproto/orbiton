@@ -24,7 +24,7 @@ require (
 	github.com/xyproto/fullname v1.1.0
 	github.com/xyproto/globi v1.0.2
 	github.com/xyproto/iferr v1.1.0
-	github.com/xyproto/javasig v1.0.2
+	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/lookslikegoasm v1.0.0
 	github.com/xyproto/mode v0.11.5
 	github.com/xyproto/ollamaclient/v2 v2.7.1

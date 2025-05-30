@@ -23,11 +23,14 @@ func isIdentifier(s string) bool {
 // Is tries to determine if the given string is most likely a Java method/function signature or not
 func Is(line string) bool {
 	line = strings.TrimSpace(line)
-	if !strings.HasSuffix(line, "{") && !strings.HasSuffix(line, ";") {
-		return false
-	}
 	if strings.Contains(line, "=") {
 		return false
+	}
+	if !strings.HasSuffix(line, "{") && !strings.HasSuffix(line, ";") {
+		// some function signatures starts with ie. "protected " and has "throws" on the next line, before "{"
+		if !strings.HasPrefix(line, "private ") && !strings.HasPrefix(line, "public ") && !strings.HasPrefix(line, "protected ") {
+			return false
+		}
 	}
 	open := strings.Index(line, "(")
 	close := strings.Index(line, ")")
