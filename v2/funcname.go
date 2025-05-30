@@ -147,10 +147,113 @@ func (e *Editor) FunctionName(line string) string {
 	return withoutFuncPrefix
 }
 
+// isBraceBasedLanguage returns true if the language uses braces to delimit function bodies
+func (e *Editor) isBraceBasedLanguage() bool {
+	switch e.mode {
+	case mode.Arduino, mode.C, mode.C3, mode.Cpp, mode.CS, mode.CSS, mode.D, mode.Dart,
+		mode.Go, mode.Hare, mode.Haxe, mode.Jakt, mode.Java, mode.JavaScript, mode.JSON,
+		mode.Kotlin, mode.Mojo, mode.ObjC, mode.Rust, mode.Scala, mode.Shader,
+		mode.Swift, mode.TypeScript, mode.V, mode.Zig:
+		return true
+	}
+	return false
+}
+
+// findMatchingCloseBrace finds the closing brace that matches an opening brace at the given line
+// Returns the line index of the matching closing brace, or -1 if not found
+func (e *Editor) findMatchingCloseBrace(openBraceLineIndex LineIndex) LineIndex {
+	braceCount := 0
+	totalLines := LineIndex(e.Len())
+
+	for i := openBraceLineIndex; i < totalLines; i++ {
+		line := e.Line(i)
+		for _, char := range line {
+			switch char {
+			case '{':
+				braceCount++
+			case '}':
+				braceCount--
+				if braceCount == 0 {
+					return i
+				}
+			}
+		}
+	}
+	return -1 // No matching closing brace found
+}
+
+// isWithinFunctionBody checks if the current cursor position is within the body of the function
+// that starts at the given function definition line
+func (e *Editor) isWithinFunctionBody(funcDefLineIndex LineIndex) bool {
+	if !e.isBraceBasedLanguage() {
+		// For non-brace languages, use the original simpler logic
+		return true
+	}
+
+	currentLineIndex := e.LineIndex()
+
+	// Find the line with the opening brace for this function
+	openBraceLineIndex := LineIndex(-1)
+	totalLines := LineIndex(e.Len())
+
+	// Look for opening brace starting from the function definition line
+	// Search more lines to handle multi-line method signatures, annotations, etc.
+	searchLimit := funcDefLineIndex + 20
+	if searchLimit > totalLines {
+		searchLimit = totalLines
+	}
+
+	for i := funcDefLineIndex; i < searchLimit; i++ {
+		line := e.Line(i)
+		trimmedLine := strings.TrimSpace(line)
+
+		// Skip empty lines and comments while looking for the opening brace
+		if trimmedLine == "" || strings.HasPrefix(trimmedLine, "//") ||
+			strings.HasPrefix(trimmedLine, "/*") || strings.HasPrefix(trimmedLine, "*") {
+			continue
+		}
+
+		if strings.Contains(line, "{") {
+			openBraceLineIndex = i
+			break
+		}
+
+		// If we hit another method signature or class/interface declaration, stop searching
+		if i > funcDefLineIndex && (e.LooksLikeFunctionDef(line, e.FuncPrefix()) ||
+			strings.Contains(trimmedLine, "class ") || strings.Contains(trimmedLine, "interface ") ||
+			strings.Contains(trimmedLine, "enum ")) {
+			break
+		}
+	}
+
+	if openBraceLineIndex == -1 {
+		// No opening brace found, might be an abstract method or interface method
+		return false
+	}
+
+	// If cursor is before the opening brace, it's not within the function body
+	if currentLineIndex < openBraceLineIndex {
+		return false
+	}
+
+	// Find the matching closing brace
+	closeBraceLineIndex := e.findMatchingCloseBrace(openBraceLineIndex)
+
+	if closeBraceLineIndex == -1 {
+		// No matching closing brace found, assume we're within the function
+		return true
+	}
+
+	// Check if cursor is between opening and closing braces (inclusive of closing brace)
+	return currentLineIndex <= closeBraceLineIndex
+}
+
 // FindCurrentFunctionName searches upwards until it finds a function definition.
 // It returns either the found function name or an empty string.
 // But! If the current line has no indentation AND is blank or closing (like "}"),
 // then an empty string is returned.
+// For brace-based languages like Java, it also verifies that the cursor is actually
+// within the function body, not just above the function declaration.
 func (e *Editor) FindCurrentFunctionName() string {
 	startLineIndex := e.LineIndex()
 	startLine := e.Line(startLineIndex)
@@ -166,11 +269,16 @@ func (e *Editor) FindCurrentFunctionName() string {
 			return "" // probably on a comment before a function
 		}
 	}
+
 	for i := startLineIndex; i >= 0; i-- {
 		line := e.Line(i)
 		if functionName := e.FunctionName(line); functionName != "" {
-			// Found the current function name
-			return functionName
+			// Found a function definition, but verify we're actually within its body
+			if e.isWithinFunctionBody(i) {
+				return functionName
+			}
+			// We found a function but we're not within its body (e.g., we're above it)
+			return ""
 		}
 		if i < startLineIndex && (!strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t")) { // not indented, and not a function definition
 			if trimmedLine := strings.TrimSpace(line); trimmedLine == "}" || trimmedLine == "end" {
