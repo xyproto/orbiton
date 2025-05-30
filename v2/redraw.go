@@ -202,6 +202,9 @@ func (e *Editor) InitialRedraw(c *vt100.Canvas, status *StatusBar) {
 
 // RedrawAtEndOfKeyLoop is called after each main loop
 func (e *Editor) RedrawAtEndOfKeyLoop(c *vt100.Canvas, status *StatusBar, shouldHighlightCurrentLine, repositionCursor bool) {
+	redrawMutex.Lock()
+	defer redrawMutex.Unlock()
+
 	redrawCanvas := !e.debugMode
 
 	redraw := e.redraw.Load()
