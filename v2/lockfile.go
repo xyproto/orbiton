@@ -5,9 +5,9 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
-	"strings"
 )
 
 var defaultLockFile = filepath.Join(userCacheDir, "o", "lockfile.txt")
