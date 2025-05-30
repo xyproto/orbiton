@@ -10,7 +10,7 @@ import (
 )
 
 // ZP is the zero image.Point.
-var ZP = image.ZP
+var ZP = image.Point{}
 
 // NewImage creates an image of the given size (optionally filled with a color)
 func NewImage(w, h int, colors ...color.Color) *image.RGBA {

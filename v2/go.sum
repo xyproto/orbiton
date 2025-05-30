@@ -45,8 +45,9 @@ github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d/go.mod h1:01TrycV0kFyex
 github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d h1:NqRhLdNVlozULwM1B3VaHhcXYSgrOAv8V5BE65om+1Q=
 github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d/go.mod h1:cxIIfNMTwff8f/ZvRouvWYF6wOoO7nj99neWSx2q/Es=
 github.com/peterhellberg/gfx v0.0.0-20191011152831-b91a0de61948/go.mod h1:itlt/V2ABb7sDu42VXQHXmQ4KOdrEbFZDVIaHsRcwak=
-github.com/peterhellberg/gfx v0.0.0-20240717094052-4fa835cea5a4 h1:Iv17i2mukPLwXTftiwj1bzOamqw1UVXm4vHGxKxi+1U=
 github.com/peterhellberg/gfx v0.0.0-20240717094052-4fa835cea5a4/go.mod h1:ipo3f7y1+RHNR32fj+4TETou6OF4VXvJBhb9rwncKuw=
+github.com/peterhellberg/gfx v0.0.0-20250527135442-6d3d9592c742 h1:yhvMz4mk1Wj2j2fUB0avkKpgBZW/pmzZC4wsz2H1jWM=
+github.com/peterhellberg/gfx v0.0.0-20250527135442-6d3d9592c742/go.mod h1:ipo3f7y1+RHNR32fj+4TETou6OF4VXvJBhb9rwncKuw=
 github.com/phpdave11/gofpdi v1.0.7/go.mod h1:vBmVV0Do6hSBHC8uKUQ71JGW+ZGQq74llk/7bXwjDoI=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba h1:KVTuKXe/NMcKMIlgVuOq9cWogO8LkolqY0ienhEEYlY=
