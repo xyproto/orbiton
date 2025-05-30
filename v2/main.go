@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
+	"github.com/xyproto/clip"
 	"github.com/xyproto/digraph"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
@@ -163,8 +164,80 @@ func main() {
 		}
 	}
 
-	// If the -p flag is given, or the executable starts with 'p', just paste the clipboard to the given filename and exit
-	if filename := pflag.Arg(0); filename != "" && (pasteFlag || firstLetterOfExecutable == 'p') {
+	args := pflag.Args()
+
+	// Handle the copy flag / mode - before reading from stdin
+	if copyFlag || firstLetterOfExecutable == 'c' {
+		// If no filename argument or stdin indicators, copy from stdin
+		if len(args) == 0 || (len(args) == 1 && (args[0] == "-" || args[0] == "/dev/stdin")) {
+			// Copy from stdin to clipboard
+			data, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error reading from stdin: %v\n", err)
+				os.Exit(1)
+			}
+
+			const primaryClipboard = false
+			if err := clip.WriteAll(string(data), primaryClipboard); err != nil {
+				fmt.Fprintf(os.Stderr, "error writing to clipboard: %v\n", err)
+				os.Exit(1)
+			}
+
+			n := len(data)
+			plural := "s"
+			if n == 1 {
+				plural = ""
+			}
+			fmt.Printf("Copied %d byte%s from stdin to the clipboard.\n", n, plural)
+			return
+		}
+
+		// If filename is provided with copy flag, copy from file
+		if len(args) > 0 {
+			filename := args[0]
+			const primaryClipboard = false
+			n, tailString, err := SetClipboardFromFile(filename, primaryClipboard)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error: %v\n", err)
+				os.Exit(1)
+			} else if n == 0 {
+				fmt.Fprintf(os.Stderr, "Copied 0 bytes from %s\n", filename)
+				os.Exit(1)
+			}
+			plural := "s"
+			if n == 1 {
+				plural = ""
+			}
+			if !catFlag && env.Has("ORBITON_BAT") {
+				batFlag = true
+			}
+			if tailString != "" && !batFlag {
+				if envNoColor {
+					fmt.Printf("Copied %d byte%s from %s to the clipboard. Tail bytes: %s\n", n, plural, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
+				} else {
+					fmt.Printf("Copied %s%d%s byte%s from %s to the clipboard. Tail bytes: %s%s%s\n", vt100.Yellow, n, vt100.Stop(), plural, filename, vt100.LightCyan, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")), vt100.Stop())
+				}
+			} else {
+				fmt.Printf("Copied %d byte%s from %s to the clipboard.\n", n, plural, filename)
+			}
+			if catFlag {
+				// List the file in a colorful way and quit
+				quitCat(&FilenameOrData{filename, []byte{}, 0, false})
+			} else if batFlag {
+				// List the file in a colorful way, using bat, and quit
+				quitBat(filename)
+			}
+			return
+		}
+	}
+
+	// Handle paste flag
+	if pasteFlag || firstLetterOfExecutable == 'p' {
+		if len(args) == 0 {
+			fmt.Fprintf(os.Stderr, "paste flag requires a filename\n")
+			os.Exit(1)
+		}
+		filename := args[0]
 		const primaryClipboard = false
 		n, headString, tailString, err := WriteClipboardToFile(filename, forceFlag, primaryClipboard)
 		if err != nil {
@@ -194,49 +267,10 @@ func main() {
 			// List the file in a colorful way, using bat, and quit
 			quitBat(filename)
 		}
-
 		return
 	}
 
-	// If the -c flag is given, or the executable name starts with 'c', just copy the given filename to the clipboard and exit
-	if filename := pflag.Arg(0); filename != "" && (copyFlag || firstLetterOfExecutable == 'c') {
-		const primaryClipboard = false
-		n, tailString, err := SetClipboardFromFile(filename, primaryClipboard)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			os.Exit(1)
-		} else if n == 0 {
-			fmt.Fprintf(os.Stderr, "Copied 0 bytes from %s\n", filename)
-			os.Exit(1)
-		}
-		plural := "s"
-		if n == 1 {
-			plural = ""
-		}
-		if !catFlag && env.Has("ORBITON_BAT") {
-			batFlag = true
-		}
-		if tailString != "" && !batFlag {
-			if envNoColor {
-				fmt.Printf("Copied %d byte%s from %s to the clipboard. Tail bytes: %s\n", n, plural, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
-			} else {
-				fmt.Printf("Copied %s%d%s byte%s from %s to the clipboard. Tail bytes: %s%s%s\n", vt100.Yellow, n, vt100.Stop(), plural, filename, vt100.LightCyan, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")), vt100.Stop())
-			}
-		} else {
-			fmt.Printf("Copied %d byte%s from %s to the clipboard.\n", n, plural, filename)
-		}
-		if catFlag {
-			// List the file in a colorful way and quit
-			quitCat(&FilenameOrData{filename, []byte{}, 0, false})
-		} else if batFlag {
-			// List the file in a colorful way, using bat, and quit
-			quitBat(filename)
-		}
-
-		return
-	}
-
-	// If the -r flag is given, clear all file locks and exit.
+	// If the -e flag is given, clear all file locks and exit.
 	if clearLocksFlag {
 		lockErr := os.Remove(defaultLockFile)
 
@@ -296,7 +330,8 @@ func main() {
 		colNumber  ColNumber
 	)
 
-	stdinFilename := len(os.Args) == 1 || (len(os.Args) == 2 && (os.Args[1] == "-" || os.Args[1] == "/dev/stdin"))
+	// Check if the given filename looks like "stdin"
+	stdinFilename := len(args) == 0 || (len(args) == 1 && (args[0] == "-" || args[0] == "/dev/stdin"))
 
 	// If no regular filename is given, check if data is ready at stdin
 	if stdinFilename {
@@ -336,8 +371,10 @@ func main() {
 
 	// Check if the given filename contains something
 	if fnord.Empty() {
+
 		if fnord.filename == "" {
 			fmt.Fprintln(os.Stderr, "please provide a filename")
+
 			quitMut.Lock()
 			defer quitMut.Unlock()
 			os.Exit(1)
@@ -415,7 +452,7 @@ func main() {
 		theme = NewNoColorDarkBackgroundTheme()
 		syntaxHighlight = false
 	} else if firstLetterOfExecutable != rune(0) {
-		// Check if the executable starts with a specific letter ('f', 'g', 'p' and 'c' are already chekced for)
+		// Check if the executable starts with a specific letter ('f', 'g', 'p' and 'c' are already checked for)
 		specificLetter = true
 		switch firstLetterOfExecutable {
 		case 'b', 'e': // bo, borland, ed, edit etc.
