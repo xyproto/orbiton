@@ -138,7 +138,8 @@ func quitBat(filename string) error {
 
 	stopBackgroundProcesses()
 
-	batCommandLine := env.Str("ORBITON_BAT", "bat") // TODO: Document ORBITON_BAT, for configuring flags given to bat when -c, p, -b or --bat is used
+	// ORBITON_BAT environment variable allows configuring the bat command and flags used when invoking "bat" via -c, -p, -b, or --bat options.
+	batCommandLine := env.Str("ORBITON_BAT", "bat")
 	batExecutable := batCommandLine
 	args := []string{batExecutable}
 	if strings.Contains(batCommandLine, " ") {
