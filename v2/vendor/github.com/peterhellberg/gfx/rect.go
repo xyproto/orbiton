@@ -9,7 +9,7 @@ import (
 )
 
 // ZR is the zero image.Rectangle.
-var ZR = image.ZR
+var ZR = image.Rectangle{}
 
 // Rect is a 2D rectangle aligned with the axes of the coordinate system. It is defined by two
 // points, Min and Max.

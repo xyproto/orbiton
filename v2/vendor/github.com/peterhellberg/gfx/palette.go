@@ -40,7 +40,7 @@ func (p Palette) Random() color.NRGBA {
 func (p Palette) Tile(src image.Image) *Paletted {
 	dst := NewPalettedImage(src.Bounds(), p)
 
-	draw.Draw(dst, dst.Bounds(), src, image.ZP, draw.Src)
+	draw.Draw(dst, dst.Bounds(), src, image.Point{}, draw.Src)
 
 	return dst
 }

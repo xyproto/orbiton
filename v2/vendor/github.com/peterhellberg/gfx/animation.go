@@ -70,7 +70,7 @@ func (a *Animation) EncodeGIF(w io.Writer) error {
 	for i, src := range a.Frames {
 		dst := image.NewPaletted(src.Bounds(), a.Palettes[i])
 
-		draw.Draw(dst, dst.Bounds(), src, image.ZP, draw.Src)
+		draw.Draw(dst, dst.Bounds(), src, image.Point{}, draw.Src)
 
 		frames = append(frames, dst)
 		delays = append(delays, a.Delay)
