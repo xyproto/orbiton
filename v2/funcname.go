@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/xyproto/javasig"
+	"github.com/xyproto/kotlinsig"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt100"
 )
@@ -51,9 +52,11 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 	switch e.mode {
 	case mode.Java:
 		return javasig.Is(trimmedLine)
+	case mode.Kotlin:
+		return kotlinsig.Is(trimmedLine)
 	// Very unscientific and approximate function definition detection for C and C++
 	// TODO: Write a C parser and a C++ parser...
-	case mode.Arduino, mode.C, mode.Cpp, mode.D, mode.Dart, mode.Hare, mode.Jakt, mode.JavaScript, mode.Kotlin, mode.ObjC, mode.Scala, mode.Shader, mode.TypeScript, mode.Zig:
+	case mode.Arduino, mode.C, mode.Cpp, mode.D, mode.Dart, mode.Hare, mode.Jakt, mode.JavaScript, mode.ObjC, mode.Scala, mode.Shader, mode.TypeScript, mode.Zig:
 		if strings.HasSuffix(trimmedLine, "()") {
 			return true
 		}
