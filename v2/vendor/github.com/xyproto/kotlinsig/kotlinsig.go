@@ -23,25 +23,36 @@ func isIdentifier(s string) bool {
 // Is tries to determine if the given string is most likely a Kotlin function signature or not
 func Is(line string) bool {
 	line = strings.TrimSpace(line)
+	lower := strings.ToLower(line)
 
 	// Skip lines that are clearly not function declarations
 	if strings.Contains(line, "=") && !strings.Contains(line, "fun ") {
 		return false
 	}
 
-	// Kotlin functions must contain "fun " keyword
-	if !strings.Contains(line, "fun ") {
+	// Kotlin functions must contain "fun " keyword, "init", or "constructor"
+	hasFun := strings.Contains(line, "fun ")
+	hasInit := strings.Contains(lower, "init")
+	hasConstructor := strings.Contains(lower, "constructor")
+
+	if !hasFun && !hasInit && !hasConstructor {
 		return false
 	}
 
-	// Check for parentheses (function parameters)
+	// Handle init blocks first (they don't need parentheses)
+	if hasInit {
+		// init blocks just need to have "init" and typically braces
+		if strings.Contains(line, "init") {
+			return true
+		}
+	}
+
+	// Check for parentheses (function parameters) - required for fun and constructor
 	open := strings.Index(line, "(")
 	close := strings.LastIndex(line, ")")
 	if open == -1 || close == -1 || open > close {
 		return false
 	}
-
-	lower := strings.ToLower(line)
 
 	// Skip common non-function constructs
 	if strings.HasPrefix(lower, "return ") ||
@@ -54,6 +65,21 @@ func Is(line string) bool {
 		strings.HasPrefix(lower, "enum ") ||
 		strings.HasPrefix(lower, "data class ") ||
 		strings.HasPrefix(lower, "sealed class ") {
+		return false
+	}
+
+	// Handle constructors
+	if hasConstructor {
+		// Primary or secondary constructors
+		constructorIndex := strings.Index(lower, "constructor")
+		if constructorIndex != -1 {
+			// Constructors should have parentheses (already checked above)
+			return true
+		}
+	}
+
+	// If it's not a regular fun, init, or constructor, return false
+	if !hasFun {
 		return false
 	}
 

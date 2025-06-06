@@ -127,7 +127,7 @@ github.com/xyproto/iferr
 # github.com/xyproto/javasig v1.0.3
 ## explicit; go 1.24.2
 github.com/xyproto/javasig
-# github.com/xyproto/kotlinsig v0.0.0-20250606174047-d1430650623f
+# github.com/xyproto/kotlinsig v0.0.1
 ## explicit; go 1.24.4
 github.com/xyproto/kotlinsig
 # github.com/xyproto/lookslikegoasm v1.0.0
