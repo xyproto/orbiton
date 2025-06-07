@@ -3,8 +3,15 @@ package main
 import (
 	"regexp"
 	"strings"
+	"sync"
 	"unicode"
 	"unicode/utf8"
+)
+
+// ansiRegex matches ANSI escape sequences
+var (
+	ansiRegex     *regexp.Regexp
+	ansiRegexOnce sync.Once
 )
 
 // hasKey checks if the given string map contains the given key
@@ -237,7 +244,9 @@ func trimRightSpace(str string) string {
 
 func stripTerminalCodes(msg string) string {
 	// Regular expression to match ANSI escape sequences
-	ansiRegex := regexp.MustCompile("\x1b\\[[0-9;]*[a-zA-Z]")
+	ansiRegexOnce.Do(func() {
+		ansiRegex = regexp.MustCompile("\x1b\\[[0-9;]*[a-zA-Z]")
+	})
 	// Replace all occurrences with an empty string
 	return ansiRegex.ReplaceAllString(msg, "")
 }
