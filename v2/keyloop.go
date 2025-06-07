@@ -1587,8 +1587,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				e.redrawCursor.Store(true)
 				e.redraw.Store(true)
 			} else {
-				status.SetMessage("Nothing more to undo")
-				status.Show(c, e)
+				status.SetMessageAfterRedraw("Nothing more to undo")
 			}
 		case "c:24": // ctrl-x, cut line
 
