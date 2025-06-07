@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
-	"io"
 	"os"
 	"strings"
 	"sync"
@@ -13,10 +11,17 @@ import (
 
 // ReadFileAndProcessLines reads the named file concurrently, processes its lines, and updates the Editor.
 func (e *Editor) ReadFileAndProcessLines(filename string) error {
-	data, err := os.ReadFile(filename)
+	// Try to memory-map the file for faster loading; fall back to ReadFile on error.
+	data, unmap, err := mmapFile(filename)
 	if err != nil {
-		return err
+		data, err = os.ReadFile(filename)
+		if err != nil {
+			return err
+		}
+	} else {
+		defer unmap()
 	}
+	// Decompress .gz files if needed
 	if strings.HasSuffix(filename, ".gz") {
 		data, err = gUnzipData(data)
 		if err != nil {
@@ -25,44 +30,31 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 	}
 	e.binaryFile = binary.Data(data)
 
-	var (
-		reader           = bufio.NewReader(bytes.NewReader(data))
-		lines            = make(map[int][]rune)
-		index            int
-		tabIndentCounter int64
-		first            byte
-	)
-
-	for {
-		line, err := reader.ReadString('\n')
-		if err != nil && err != io.EOF {
-			return err
-		}
-		// Remove the newline character at the end of the line
-		if len(line) > 0 && line[len(line)-1] == '\n' {
-			line = line[:len(line)-1]
-		}
-		if e.binaryFile {
-			lines[index] = []rune(line)
-		} else {
-			line = opinionatedStringReplacer.Replace(line)
-			if len(line) > 2 {
-				first = line[0]
-				if first == '\t' {
-					tabIndentCounter++
-				} else if first == ' ' && line[1] == ' ' {
-					tabIndentCounter--
-				}
-			}
-			lines[index] = []rune(line)
-		}
-		index++
-
-		if err == io.EOF {
-			break
-		}
+	// For text files, apply the opinionated replacer once to the entire data.
+	if !e.binaryFile {
+		data = []byte(opinionatedStringReplacer.Replace(string(data)))
 	}
+
+	rawLines := bytes.Split(data, []byte{'\n'})
+	lines := make(map[int][]rune, len(rawLines))
+	var tabIndentCounter int64
+	for i, raw := range rawLines {
+		if len(raw) > 2 {
+			if raw[0] == '\t' {
+				tabIndentCounter++
+			} else if raw[0] == ' ' && raw[1] == ' ' {
+				tabIndentCounter--
+			}
+		}
+		runes := make([]rune, len(raw))
+		for j, b := range raw {
+			runes[j] = rune(b)
+		}
+		lines[i] = runes
+	}
+
 	e.Clear()
+
 	e.lines = lines
 	if detectedTabs := tabIndentCounter > 0; !e.binaryFile && e.indentation.Spaces {
 		e.detectedTabs = &detectedTabs

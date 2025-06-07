@@ -34,6 +34,18 @@ func createDummyFiles(numFiles int, fileSize int) ([]string, error) {
 	return paths, nil
 }
 
+// BenchmarkReadmeLoad measures time to load the project README file.
+func BenchmarkReadmeLoad(b *testing.B) {
+	e := NewSimpleEditor(80)
+	const path = "../README.md"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := e.ReadFileAndProcessLines(path); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
 func BenchmarkReadFileAndProcessLines(b *testing.B) {
 	numFiles := 5
 	fileSizes := []int{32, 64, 128, 256, 512, 1024, 2 * 1024, 3 * 1024, 7 * 512, 4 * 1024, 5 * 1024, 6 * 1024, 7 * 1024, 8 * 1024, 10 * 1024, 12 * 1024, 16 * 1024, 32 * 1024, 64 * 1024}
