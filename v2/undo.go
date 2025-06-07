@@ -82,7 +82,9 @@ func (u *Undo) Snapshot(e *Editor) {
 	u.mut.Lock()
 	defer u.mut.Unlock()
 
-	u.editorCopies[u.index] = *e.Copy()
+	eCopy := e.Copy()
+	eCopy.lines = nil
+	u.editorCopies[u.index] = *eCopy
 	u.editorLineCopies[u.index] = e.CopyLines()
 	u.editorPositionCopies[u.index] = e.pos
 
