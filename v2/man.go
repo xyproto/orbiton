@@ -3,13 +3,18 @@ package main
 import (
 	"regexp"
 	"strings"
+	"sync"
 	"unicode"
 
 	"github.com/xyproto/vt100"
 )
 
-// Define a regular expression to match shell color code strings
-var shellColorCodePattern = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+// shellColorCodePattern matches shell color escape sequences (ANSI codes).
+// Compiled lazily on first use to avoid startup cost.
+var (
+	shellColorCodePattern *regexp.Regexp
+	shellColorCodeOnce    sync.Once
+)
 
 func handleManPageEscape(input string) string {
 	var (
@@ -38,10 +43,12 @@ func handleManPageEscape(input string) string {
 			i++
 		}
 	}
-	// Remove color codes
+	// Remove color codes (ANSI sequences), compiling the regex once lazily.
 	cleanedString := string(cleanedRunes)
-	cleanedString = shellColorCodePattern.ReplaceAllString(cleanedString, "")
-	return cleanedString
+	shellColorCodeOnce.Do(func() {
+		shellColorCodePattern = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+	})
+	return shellColorCodePattern.ReplaceAllString(cleanedString, "")
 }
 
 func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string {

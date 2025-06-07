@@ -8,9 +8,16 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 var lastCommandFile = filepath.Join(userCacheDir, "o", "last_command.sh")
+
+// tmpFileStripRegex and tmpFileStripOnce cache the regex for stripping /tmp/o.* suffixes.
+var (
+	tmpFileStripRegex *regexp.Regexp
+	tmpFileStripOnce  sync.Once
+)
 
 // isProllyFilename checks if the argument is likely a filename based on the presence
 // of an OS-specific path separator and a ".".
@@ -82,6 +89,10 @@ func readLastCommand() (string, error) {
 		return "", fmt.Errorf("unrecognized contents in %s", lastCommandFile)
 	}
 	theRest := strings.TrimSpace(firstLineAndRest[1])
-	replaced := regexp.MustCompile(`/tmp/o\..*$`).ReplaceAllString(theRest, "")
+	// Strip out any /tmp/o.* suffix (cached regex compiled lazily)
+	tmpFileStripOnce.Do(func() {
+		tmpFileStripRegex = regexp.MustCompile(`/tmp/o\..*$`)
+	})
+	replaced := tmpFileStripRegex.ReplaceAllString(theRest, "")
 	return replaced, nil
 }
