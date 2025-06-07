@@ -1,7 +1,9 @@
 package main
 
-// TODO: Use a different syntax highlighting package, with support for many different programming languages
+// TODO: Rewrite and refactor all the code related to syntax highlighting
+
 import (
+	"fmt"
 	"strings"
 	"text/scanner"
 	"unicode"
@@ -9,6 +11,10 @@ import (
 
 	"github.com/xyproto/mode"
 )
+
+const KindName = "WhitespaceStringKeywordCommentTypeLiteralPunctuationPlaintextTagHTMLTagHTMLAttrNameHTMLAttrValueDecimal"
+
+var KindIndex = [...]uint8{0, 10, 16, 23, 30, 34, 41, 52, 61, 64, 71, 83, 96, 103}
 
 var Keywords = map[string]struct{}{
 	"#define":          {},
@@ -198,6 +204,13 @@ var Keywords = map[string]struct{}{
 	"while":            {},
 	"with":             {},
 	"yield":            {},
+}
+
+func (i Kind) GoString() string {
+	if i+1 >= Kind(len(KindIndex)) {
+		return fmt.Sprintf("syntaxhighlight.Kind(%d)", i)
+	}
+	return "syntaxhighlight." + KindName[KindIndex[i]:KindIndex[i+1]]
 }
 
 // tokenKind determines the Kind of a token for syntax highlighting.
