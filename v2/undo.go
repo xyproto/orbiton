@@ -20,7 +20,7 @@ type Undo struct {
 
 const (
 	// number of undo actions possible to store in the circular buffer
-	defaultUndoCount = 1024
+	defaultUndoCount = 512
 
 	// maximum amount of memory the undo buffers can use before re-using buffers, 0 to disable
 	defaultUndoMemory = 0 // 32 * 1024 * 1024
