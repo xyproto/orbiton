@@ -242,7 +242,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	}
 
 	// Draw everything once, with slightly different behavior if used over ssh
-	e.InitialRedraw(c, status)
+	go e.InitialRedraw(c, status)
 
 	// QuickHelp screen + help for new users
 	if (!QuickHelpScreenIsDisabled() || e.displayQuickHelp) && !e.noDisplayQuickHelp {
@@ -250,7 +250,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	}
 
 	// Place and enable the cursor
-	e.PlaceAndEnableCursor()
+	go e.PlaceAndEnableCursor()
 
 	// This is the main loop for the editor
 	for !e.quit {
@@ -2081,7 +2081,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 		// Draw and/or redraw everything, with slightly different behavior over ssh
 		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow)
-		e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown, true)
+		go e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown, true)
 
 		notEmptyLine := !e.EmptyLine()
 
@@ -2126,7 +2126,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		}
 
 		// Repositions the cursor
-		e.EnableAndPlaceCursor(c)
+		go e.EnableAndPlaceCursor(c)
 
 	} // end of main loop
 
