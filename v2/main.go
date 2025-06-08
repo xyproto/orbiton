@@ -151,25 +151,18 @@ func main() {
 	noWriteToCache = noCacheFlag || monitorAndReadOnlyFlag
 
 	var (
-		executableName          string
-		firstLetterOfExecutable = rune(0)
-	)
-
-	if len(os.Args) > 0 {
 		// The executable name is in arg 0
-		executableName = filepath.Base(os.Args[0])
-		if len(executableName) > 0 {
-			// Get the first rune of the executable name
-			firstLetterOfExecutable = []rune(strings.ToLower(filepath.Base(os.Args[0])))[0]
-		}
-	}
-
-	args := pflag.Args()
+		executableName = filepath.Base(os.Args[0]) // using os.Args to get the executable name
+		// Get the first rune of the executable name
+		firstLetterOfExecutable = []rune(strings.ToLower(string(executableName[0])))[0]
+		args                    = pflag.Args() // using pflag.Args() to get the non-flag arguments
+		argsGiven               = len(args) > 0
+	)
 
 	// Handle the copy flag / mode - before reading from stdin
 	if copyFlag || firstLetterOfExecutable == 'c' {
 		// If no filename argument or stdin indicators, copy from stdin
-		if len(args) == 0 || (len(args) == 1 && (args[0] == "-" || args[0] == "/dev/stdin")) {
+		if !argsGiven || (len(args) == 1 && (args[0] == "-" || args[0] == "/dev/stdin")) {
 			// Copy from stdin to clipboard
 			data, err := io.ReadAll(os.Stdin)
 			if err != nil {
@@ -193,7 +186,7 @@ func main() {
 		}
 
 		// If filename is provided with copy flag, copy from file
-		if len(args) > 0 {
+		if argsGiven {
 			filename := args[0]
 			const primaryClipboard = false
 			n, tailString, err := SetClipboardFromFile(filename, primaryClipboard)
@@ -233,7 +226,7 @@ func main() {
 
 	// Handle paste flag
 	if pasteFlag || firstLetterOfExecutable == 'p' {
-		if len(args) == 0 {
+		if !argsGiven {
 			fmt.Fprintf(os.Stderr, "paste flag requires a filename\n")
 			os.Exit(1)
 		}
@@ -295,7 +288,7 @@ func main() {
 	traceStart() // if building with -tags trace
 
 	// Check if the executable starts with "g" or "f" ("c" and "p" are already checked for, further up)
-	if len(os.Args) > 0 {
+	if argsGiven {
 		switch firstLetterOfExecutable {
 		case 'f', 'g':
 			// Start the game
@@ -328,10 +321,10 @@ func main() {
 		fnord      FilenameOrData
 		lineNumber LineNumber
 		colNumber  ColNumber
-	)
 
-	// Check if the given filename looks like "stdin"
-	stdinFilename := len(args) == 0 || (len(args) == 1 && (args[0] == "-" || args[0] == "/dev/stdin"))
+		// Check if the given filename looks like "stdin"
+		stdinFilename = !argsGiven || (len(args) == 1 && (args[0] == "-" || args[0] == "/dev/stdin"))
+	)
 
 	// If no regular filename is given, check if data is ready at stdin
 	if stdinFilename {
