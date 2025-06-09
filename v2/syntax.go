@@ -3,7 +3,6 @@ package main
 // TODO: Rewrite and refactor all the code related to syntax highlighting
 
 import (
-	"fmt"
 	"strings"
 	"text/scanner"
 	"unicode"
@@ -12,10 +11,7 @@ import (
 	"github.com/xyproto/mode"
 )
 
-const kindName = "WhitespaceStringKeywordCommentTypeLiteralPunctuationPlaintextTagHTMLTagHTMLAttrNameHTMLAttrValueDecimal"
-
-var kindIndex = [...]uint8{0, 10, 16, 23, 30, 34, 41, 52, 61, 64, 71, 83, 96, 103}
-
+// Keywords contains the default syntax highlighting keywords
 var Keywords = map[string]struct{}{
 	"#define":          {},
 	"#elif":            {},
@@ -204,13 +200,6 @@ var Keywords = map[string]struct{}{
 	"while":            {},
 	"with":             {},
 	"yield":            {},
-}
-
-func (i Kind) GoString() string {
-	if i+1 >= Kind(len(kindIndex)) {
-		return fmt.Sprintf("syntaxhighlight.Kind(%d)", i)
-	}
-	return "syntaxhighlight." + kindName[kindIndex[i]:kindIndex[i+1]]
 }
 
 // tokenKind determines the Kind of a token for syntax highlighting.
