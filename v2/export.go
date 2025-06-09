@@ -51,7 +51,7 @@ func (e *Editor) exportScdoc(manFilename string) error {
 }
 
 // exportAdoc tries to export the current document as a manual page, using asciidoctor
-func (e *Editor) exportAdoc(c *vt100.Canvas, tty *vt100.TTY, manFilename string) error {
+func (e *Editor) exportAdoc(manFilename string) error {
 	adocPath := files.WhichCached("asciidoctor")
 	if adocPath == "" {
 		return errors.New("could not find asciidoctor in the PATH")

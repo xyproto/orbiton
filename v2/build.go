@@ -639,7 +639,7 @@ func (e *Editor) BuildOrExport(tty *vt100.TTY, c *vt100.Canvas, status *StatusBa
 		const manFilename = "out.1"
 		status.SetMessage("Exporting ASCIIDoc to PDF")
 		status.Show(c, e)
-		if err := e.exportAdoc(c, tty, manFilename); err != nil {
+		if err := e.exportAdoc(manFilename); err != nil {
 			return "", err
 		}
 		if status != nil {
