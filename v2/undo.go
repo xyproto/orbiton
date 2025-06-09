@@ -13,35 +13,50 @@ type Undo struct {
 	editorLineCopies     []map[int][]rune
 	editorPositionCopies []Position
 	index                int
-	size                 int
+	count                int
+	maxSize              int
 	maxMemoryUse         uint64 // can be <= 0 to not check for memory use
 	ignoreSnapshots      bool   // used when playing back macros
 }
 
 const (
-	// number of undo actions possible to store in the circular buffer
-	defaultUndoCount = 512
-
-	// maximum amount of memory the undo buffers can use before re-using buffers, 0 to disable
-	defaultUndoMemory = 0 // 32 * 1024 * 1024
+	initialUndoSize     = 8
+	defaultMaxUndoCount = 512
+	undoGrowthFactor    = 2
+	defaultUndoMemory   = 0 // 32 * 1024 * 1024
 )
 
 var (
-	// Circular undo buffer with room for N actions, change false to true to check for too limit memory use
-	undo = NewUndo(defaultUndoCount, defaultUndoMemory)
+	// Circular undo buffer that starts small and grows as needed
+	undo = NewUndo(defaultMaxUndoCount, defaultUndoMemory)
 
 	// Save the contents of one switch.
 	// Used when switching between a .c or .cpp file to the corresponding .h file.
 	switchBuffer = NewUndo(1, defaultUndoMemory)
 
 	// Save a copy of the undo stack when switching between files
-	switchUndoBackup = NewUndo(defaultUndoCount, defaultUndoMemory)
+	switchUndoBackup = NewUndo(defaultMaxUndoCount, defaultUndoMemory)
 )
 
-// NewUndo takes arguments that are only for initializing the undo buffers.
-// The *Position and *vt100.Canvas is used only as a default values for the elements in the undo buffers.
-func NewUndo(size int, maxMemoryUse uint64) *Undo {
-	return &Undo{&sync.RWMutex{}, make([]Editor, size), make([]map[int][]rune, size), make([]Position, size), 0, size, maxMemoryUse, false}
+// NewUndo takes arguments that are only for initializing the undo buffers
+func NewUndo(maxSize int, maxMemoryUse uint64) *Undo {
+	// Start with a small initial size or the max size if it's very small
+	initialSize := initialUndoSize
+	if maxSize < initialSize {
+		initialSize = maxSize
+	}
+
+	return &Undo{
+		mut:                  &sync.RWMutex{},
+		editorCopies:         make([]Editor, initialSize),
+		editorLineCopies:     make([]map[int][]rune, initialSize),
+		editorPositionCopies: make([]Position, initialSize),
+		index:                0,
+		count:                0,
+		maxSize:              maxSize,
+		maxMemoryUse:         maxMemoryUse,
+		ignoreSnapshots:      false,
+	}
 }
 
 // IgnoreSnapshots is used when playing back macros, to snapshot the macro playback as a whole instead
@@ -58,19 +73,69 @@ func lineMapMemoryFootprint(m map[int][]rune) uint64 {
 }
 
 // MemoryFootprint returns how much memory one Undo struct is using
-// TODO: Check if the size of the slices that contains structs are correct
 func (u *Undo) MemoryFootprint() uint64 {
 	var sum uint64
-	for _, m := range u.editorLineCopies {
-		sum += lineMapMemoryFootprint(m)
+	for i := 0; i < len(u.editorLineCopies); i++ {
+		sum += lineMapMemoryFootprint(u.editorLineCopies[i])
 	}
 	sum += uint64(unsafe.Sizeof(u.index))
-	sum += uint64(unsafe.Sizeof(u.size))
+	sum += uint64(unsafe.Sizeof(u.count))
+	sum += uint64(unsafe.Sizeof(u.maxSize))
 	sum += uint64(unsafe.Sizeof(u.editorCopies))
 	sum += uint64(unsafe.Sizeof(u.editorPositionCopies))
 	sum += uint64(unsafe.Sizeof(u.mut))
 	sum += uint64(unsafe.Sizeof(u.maxMemoryUse))
+	// Add the actual capacity of the slices
+	sum += uint64(cap(u.editorCopies)) * uint64(unsafe.Sizeof(Editor{}))
+	sum += uint64(cap(u.editorLineCopies)) * uint64(unsafe.Sizeof(map[int][]rune{}))
+	sum += uint64(cap(u.editorPositionCopies)) * uint64(unsafe.Sizeof(Position{}))
 	return sum
+}
+
+// grow expands the circular buffer when more space is needed
+func (u *Undo) grow() {
+	currentSize := len(u.editorCopies)
+	newSize := currentSize * undoGrowthFactor
+	if newSize > u.maxSize {
+		newSize = u.maxSize
+	}
+
+	// If we can't grow anymore, we're at max capacity
+	if newSize <= currentSize {
+		return
+	}
+
+	// Create new slices with larger capacity
+	newEditorCopies := make([]Editor, newSize)
+	newEditorLineCopies := make([]map[int][]rune, newSize)
+	newEditorPositionCopies := make([]Position, newSize)
+
+	// Copy existing data to new slices
+	// Handle the circular nature of the buffer
+	if u.count > 0 {
+		// Find the oldest entry in the circular buffer
+		oldestIndex := u.index - u.count
+		if oldestIndex < 0 {
+			oldestIndex += currentSize
+		}
+
+		copied := 0
+		for i := 0; i < u.count; i++ {
+			srcIndex := (oldestIndex + i) % currentSize
+			newEditorCopies[copied] = u.editorCopies[srcIndex]
+			newEditorLineCopies[copied] = u.editorLineCopies[srcIndex]
+			newEditorPositionCopies[copied] = u.editorPositionCopies[srcIndex]
+			copied++
+		}
+
+		// Reset index to point to the next free slot
+		u.index = u.count
+	}
+
+	// Replace the slices
+	u.editorCopies = newEditorCopies
+	u.editorLineCopies = newEditorLineCopies
+	u.editorPositionCopies = newEditorPositionCopies
 }
 
 // Snapshot will store a snapshot, and move to the next position in the circular buffer
@@ -82,6 +147,11 @@ func (u *Undo) Snapshot(e *Editor) {
 	u.mut.Lock()
 	defer u.mut.Unlock()
 
+	// Check if we need to grow the buffer
+	if u.count >= len(u.editorCopies) && len(u.editorCopies) < u.maxSize {
+		u.grow()
+	}
+
 	eCopy := e.Copy()
 	eCopy.lines = nil
 	u.editorCopies[u.index] = *eCopy
@@ -90,55 +160,58 @@ func (u *Undo) Snapshot(e *Editor) {
 
 	// Go forward 1 step in the circular buffer
 	u.index++
+
 	// Circular buffer wrap
-	if u.index >= u.size {
+	if u.index >= len(u.editorCopies) {
 		u.index = 0
 	}
 
-	// If the undo buffer uses too much memory, reduce the size to half of the current size, but use a minimum of 10
-	if u.maxMemoryUse > 0 && u.MemoryFootprint() > u.maxMemoryUse {
-		newSize := u.size / 2
-		if newSize < 10 {
-			newSize = 10
-		}
-
-		smallest := newSize
-		if u.size < smallest {
-			smallest = u.size
-		}
-
-		newUndo := NewUndo(newSize, u.maxMemoryUse)
-		newUndo.index = u.index
-		if newUndo.index >= newUndo.size {
-			newUndo.index = 0
-		}
-		newUndo.mut = u.mut
-
-		u.mut.Lock()
-		defer u.mut.Unlock()
-
-		// Copy over the contents to the new undo struct
-		offset := u.index
-		for i := 0; i < smallest; i++ {
-			copyFromPos := i + offset
-			if copyFromPos > u.size {
-				copyFromPos -= u.size
-			}
-			copyToPos := i
-
-			newUndo.editorCopies[copyToPos] = u.editorCopies[copyFromPos]
-			newUndo.editorLineCopies[copyToPos] = u.editorLineCopies[copyFromPos]
-			newUndo.editorPositionCopies[copyToPos] = u.editorPositionCopies[copyFromPos]
-		}
-
-		// Replace the undo struct
-		*u = *newUndo
-
-		// Adjust the index after the size has been changed
-		if u.index >= u.size {
-			u.index = 0
-		}
+	// Update count (don't exceed buffer size)
+	if u.count < len(u.editorCopies) {
+		u.count++
 	}
+
+	// If the undo buffer uses too much memory, reduce the size
+	if u.maxMemoryUse > 0 && u.MemoryFootprint() > u.maxMemoryUse {
+		u.shrinkForMemory()
+	}
+}
+
+// shrinkForMemory reduces the buffer size when memory usage is too high
+func (u *Undo) shrinkForMemory() {
+	newSize := len(u.editorCopies) / 2
+	if newSize < initialUndoSize {
+		newSize = initialUndoSize
+	}
+
+	// Keep only the most recent entries
+	keepCount := newSize
+	if u.count < keepCount {
+		keepCount = u.count
+	}
+
+	newEditorCopies := make([]Editor, newSize)
+	newEditorLineCopies := make([]map[int][]rune, newSize)
+	newEditorPositionCopies := make([]Position, newSize)
+
+	// Copy the most recent entries
+	for i := 0; i < keepCount; i++ {
+		srcIndex := u.index - keepCount + i
+		if srcIndex < 0 {
+			srcIndex += len(u.editorCopies)
+		}
+
+		newEditorCopies[i] = u.editorCopies[srcIndex]
+		newEditorLineCopies[i] = u.editorLineCopies[srcIndex]
+		newEditorPositionCopies[i] = u.editorPositionCopies[srcIndex]
+	}
+
+	// Update the undo struct
+	u.editorCopies = newEditorCopies
+	u.editorLineCopies = newEditorLineCopies
+	u.editorPositionCopies = newEditorPositionCopies
+	u.index = keepCount % newSize
+	u.count = keepCount
 }
 
 // Restore will restore a previous snapshot, and move to the previous position in the circular buffer
@@ -146,27 +219,45 @@ func (u *Undo) Restore(e *Editor) error {
 	u.mut.Lock()
 	defer u.mut.Unlock()
 
-	// Go back 1 step in the circular buffer
-	u.index--
-	// Circular buffer wrap
-	if u.index < 0 {
-		u.index = u.size - 1
+	if u.count == 0 {
+		return errors.New("no undo state available")
 	}
 
-	// Restore the state from this index, if there is something there OR if the index is 0
-	if lines := u.editorLineCopies[u.index]; len(lines) > 0 || u.index == 0 {
+	// Go back 1 step in the circular buffer
+	u.index--
+	if u.index < 0 {
+		u.index = len(u.editorCopies) - 1
+	}
 
+	// Decrease count since we're moving backwards
+	u.count--
+
+	// Restore the state from this index
+	if lines := u.editorLineCopies[u.index]; len(lines) > 0 || u.index == 0 {
 		*e = u.editorCopies[u.index]
 		e.lines = lines
 		e.pos = u.editorPositionCopies[u.index]
-
 		return nil
 	}
+
 	return errors.New("no undo state at this index")
 }
 
-// Len will return the current number of stored undo snapshots.
-// This is the same as the index int that points to the next free slot.
+// Len will return the current number of stored undo snapshots
 func (u *Undo) Len() int {
-	return u.index
+	u.mut.RLock()
+	defer u.mut.RUnlock()
+	return u.count
+}
+
+// Cap returns the current capacity of the undo buffer
+func (u *Undo) Cap() int {
+	u.mut.RLock()
+	defer u.mut.RUnlock()
+	return len(u.editorCopies)
+}
+
+// MaxCap returns the maximum capacity the undo buffer can grow to
+func (u *Undo) MaxCap() int {
+	return u.maxSize
 }
