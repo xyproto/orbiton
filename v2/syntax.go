@@ -12,9 +12,9 @@ import (
 	"github.com/xyproto/mode"
 )
 
-const KindName = "WhitespaceStringKeywordCommentTypeLiteralPunctuationPlaintextTagHTMLTagHTMLAttrNameHTMLAttrValueDecimal"
+const kindName = "WhitespaceStringKeywordCommentTypeLiteralPunctuationPlaintextTagHTMLTagHTMLAttrNameHTMLAttrValueDecimal"
 
-var KindIndex = [...]uint8{0, 10, 16, 23, 30, 34, 41, 52, 61, 64, 71, 83, 96, 103}
+var kindIndex = [...]uint8{0, 10, 16, 23, 30, 34, 41, 52, 61, 64, 71, 83, 96, 103}
 
 var Keywords = map[string]struct{}{
 	"#define":          {},
@@ -207,10 +207,10 @@ var Keywords = map[string]struct{}{
 }
 
 func (i Kind) GoString() string {
-	if i+1 >= Kind(len(KindIndex)) {
+	if i+1 >= Kind(len(kindIndex)) {
 		return fmt.Sprintf("syntaxhighlight.Kind(%d)", i)
 	}
-	return "syntaxhighlight." + KindName[KindIndex[i]:KindIndex[i+1]]
+	return "syntaxhighlight." + kindName[kindIndex[i]:kindIndex[i+1]]
 }
 
 // tokenKind determines the Kind of a token for syntax highlighting.
