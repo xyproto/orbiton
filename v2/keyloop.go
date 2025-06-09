@@ -40,8 +40,12 @@ const (
 	delayUntilSpeedUp = 700 * time.Millisecond
 )
 
-// Create a LockKeeper for keeping track of which files are being edited
-var fileLock = NewLockKeeper(defaultLockFile)
+var (
+	// Create a LockKeeper for keeping track of which files are being edited
+	fileLock = NewLockKeeper(defaultLockFile)
+	// Remember if locks can be saved and loaded
+	canUseLocks atomic.Bool
+)
 
 // Loop will set up and run the main loop of the editor
 // a *vt100.TTY struct
@@ -172,35 +176,37 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 
 	tty.SetTimeout(2 * time.Millisecond)
 
-	var (
-		canUseLocks   = !fnord.stdin && !monitorAndReadOnly
-		lockTimestamp time.Time
-	)
+	var lockTimestamp time.Time
+	canUseLocks.Store(!fnord.stdin && !monitorAndReadOnly)
 
-	if canUseLocks {
+	if canUseLocks.Load() {
 
-		// If the lock keeper does not have an overview already, that's fine. Ignore errors from lk.Load().
-		if err := fileLock.Load(); err != nil {
-			// Could not load an existing lock overview, this might be the first run? Try saving.
-			if err := fileLock.Save(); err != nil {
-				// Could not save a lock overview. Can not use locks.
-				canUseLocks = false
+		go func() {
+			// If the lock keeper does not have an overview already, that's fine. Ignore errors from lk.Load().
+			if err := fileLock.Load(); err != nil {
+				// Could not load an existing lock overview, this might be the first run? Try saving.
+				if err := fileLock.Save(); err != nil {
+					// Could not save a lock overview. Can not use locks.
+					canUseLocks.Store(false)
+				}
 			}
-		}
+		}()
 
 		// Check if the lock should be forced (also force when running git commit, because it is likely that o was killed in that case)
 		if forceFlag || filepath.Base(absFilename) == "COMMIT_EDITMSG" || env.Bool("O_FORCE") {
 			// Lock and save, regardless of what the previous status is
-			fileLock.Lock(absFilename)
-			// TODO: If the file was already marked as locked, this is not strictly needed? The timestamp might be modified, though.
-			fileLock.Save()
+			go func() {
+				fileLock.Lock(absFilename)
+				// TODO: If the file was already marked as locked, this is not strictly needed? The timestamp might be modified, though.
+				fileLock.Save()
+			}()
 		} else {
 			// Lock the current file, if it's not already locked
 			if err := fileLock.Lock(absFilename); err != nil {
 				return fmt.Sprintf("Locked by another (possibly dead) instance of this editor.\nTry: o -f %s", filepath.Base(absFilename)), false, errors.New(absFilename + " is locked")
 			}
-			// Immediately save the lock file as a signal to other instances of the editor
-			fileLock.Save()
+			// Save the lock file as a signal to other instances of the editor
+			go fileLock.Save()
 		}
 		lockTimestamp = fileLock.GetTimestamp(absFilename)
 
@@ -208,8 +214,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 		defer func() {
 			if x := recover(); x != nil {
 				// Unlock and save the lock file
-				fileLock.Unlock(absFilename)
-				fileLock.Save()
+				go func() {
+					quitMut.Lock()
+					defer quitMut.Unlock()
+					fileLock.Unlock(absFilename)
+					fileLock.Save()
+				}()
 
 				// Save the current file. The assumption is that it's better than not saving, if something crashes.
 				// TODO: Save to a crash file, then let the editor discover this when it starts.
@@ -429,7 +439,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					if absFilename, err := filepath.Abs(e.filename); err == nil { // success
 						e.SetUpSignalHandlers(c, tty, status, true) // only clear signals
 						var wg sync.WaitGroup
-						e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag, &wg)
+						e.CloseLocksAndLocationHistory(absFilename, lockTimestamp, forceFlag, &wg)
 						wg.Wait()
 						quitToMan(tty, pwd, absFilename, c.W(), c.H())
 					}
@@ -444,7 +454,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					if pwd, err := os.Getwd(); err == nil {
 						e.SetUpSignalHandlers(c, tty, status, true) // only clear signals
 						var wg sync.WaitGroup
-						e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag, &wg)
+						e.CloseLocksAndLocationHistory(absFilename, lockTimestamp, forceFlag, &wg)
 						wg.Wait()
 						quitToNroff(tty, pwd, c.W(), c.H())
 					}
@@ -2131,7 +2141,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	} // end of main loop
 
 	var closeLocksWaitGroup sync.WaitGroup
-	e.CloseLocksAndLocationHistory(canUseLocks, absFilename, lockTimestamp, forceFlag, &closeLocksWaitGroup)
+	e.CloseLocksAndLocationHistory(absFilename, lockTimestamp, forceFlag, &closeLocksWaitGroup)
 
 	// Clear the colors
 	vt100.SetNoColor()

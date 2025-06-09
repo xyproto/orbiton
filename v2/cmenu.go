@@ -95,7 +95,7 @@ func (a *Actions) AddCommand(e *Editor, c *vt100.Canvas, tty *vt100.TTY, status 
 // CommandMenu will display a menu with various commands that can be browsed with arrow up and arrow down.
 // Also returns the selected menu index (can be -1), and if a space should be added to the text editor after the return.
 // Returns -1, true if space was pressed.
-func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo, lastMenuIndex int, forced bool, lk *LockKeeper) (int, bool) {
+func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo, lastMenuIndex int, forced bool, fileLock *LockKeeper) (int, bool) {
 	const insertFilename = "include.txt"
 
 	vsCode := env.Str("TERM_PROGRAM") == "vscode"
@@ -310,9 +310,13 @@ func (e *Editor) CommandMenu(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar,
 		// TODO: Detect if file is locked first
 		actions.Add("Unlock if locked", func() {
 			if absFilename, err := e.AbsFilename(); err == nil { // no issues
-				lk.Load()
-				lk.Unlock(absFilename)
-				lk.Save()
+				go func() {
+					quitMut.Lock()
+					defer quitMut.Unlock()
+					fileLock.Load()
+					fileLock.Unlock(absFilename)
+					fileLock.Save()
+				}()
 			}
 		})
 	}

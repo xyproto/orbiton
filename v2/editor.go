@@ -2259,7 +2259,7 @@ func (e *Editor) AbsFilename() (string, error) {
 // Switch replaces the current editor with a new Editor that opens the given file.
 // The undo stack is also swapped.
 // Only works for switching to one file, and then back again.
-func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *LockKeeper, filenameToOpen string) error {
+func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, fileLock *LockKeeper, filenameToOpen string) error {
 	absFilename, err := e.AbsFilename()
 	if err != nil {
 		return err
@@ -2267,10 +2267,14 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *
 
 	// About to switch from absFilename to filenameToOpen
 
-	if lk != nil {
+	if fileLock != nil {
 		// Unlock and save the lock file
-		lk.Unlock(absFilename)
-		lk.Save()
+		go func() {
+			quitMut.Lock()
+			defer quitMut.Unlock()
+			fileLock.Unlock(absFilename)
+			fileLock.Save()
+		}()
 	}
 
 	// Now open the header filename instead of the current file. Save the current file first.

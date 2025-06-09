@@ -566,8 +566,8 @@ func (locationHistory LocationHistory) KeepNewest(n int) LocationHistory {
 }
 
 // CloseLocksAndLocationHistory tries to close any active file locks and save the location history
-func (e *Editor) CloseLocksAndLocationHistory(canUseLocks bool, absFilename string, lockTimestamp time.Time, forceFlag bool, wg *sync.WaitGroup) {
-	if canUseLocks {
+func (e *Editor) CloseLocksAndLocationHistory(absFilename string, lockTimestamp time.Time, forceFlag bool, wg *sync.WaitGroup) {
+	if canUseLocks.Load() {
 		wg.Add(1)
 		go func() {
 			// Start by loading the lock overview, just in case something has happened in the mean time
