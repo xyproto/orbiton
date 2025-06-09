@@ -302,11 +302,6 @@ func (e *Editor) PLA() (int, LineNumber, LineNumber) {
 	return percentage, lineNumber, lastLineNumber
 }
 
-// Percentage returns how far into the current file the user is, as an int
-func (e *Editor) Percentage() int {
-	return getPercentage(e.LineNumber(), e.LastLineNumber())
-}
-
 // IndentationDescription returns "tabs" or "spaces", depending on the current setting
 func (e *Editor) IndentationDescription() string {
 	if e.indentation.Spaces {

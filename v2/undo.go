@@ -249,15 +249,3 @@ func (u *Undo) Len() int {
 	defer u.mut.RUnlock()
 	return u.count
 }
-
-// Cap returns the current capacity of the undo buffer
-func (u *Undo) Cap() int {
-	u.mut.RLock()
-	defer u.mut.RUnlock()
-	return len(u.editorCopies)
-}
-
-// MaxCap returns the maximum capacity the undo buffer can grow to
-func (u *Undo) MaxCap() int {
-	return u.maxSize
-}
