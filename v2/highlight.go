@@ -199,20 +199,6 @@ type Annotator interface {
 // TextAnnotator wraps TextConfig to implement Annotator.
 type TextAnnotator TextConfig
 
-// Annotate returns an Annotation if the token kind has a CSS class.
-func (a TextAnnotator) Annotate(start int, kind Kind, tokText string) (*annotate.Annotation, error) {
-	class := TextConfig(a).GetClass(kind)
-	if class == "" {
-		return nil, nil
-	}
-	return &annotate.Annotation{
-		Start: start,
-		End:   start + len(tokText),
-		Left:  []byte("<" + class + ">"),
-		Right: []byte("<off>"),
-	}, nil
-}
-
 // Print scans tokens from s, using Printer p for mode m.
 func Print(s *scanner.Scanner, w io.Writer, p Printer, m mode.Mode) error {
 	inComment := false
@@ -223,26 +209,6 @@ func Print(s *scanner.Scanner, w io.Writer, p Printer, m mode.Mode) error {
 		}
 	}
 	return nil
-}
-
-// Annotate scans src for tokens in mode m using Annotator a.
-func Annotate(src []byte, a Annotator, m mode.Mode) (annotate.Annotations, error) {
-	var (
-		anns      annotate.Annotations
-		s         = NewScanner(src)
-		offset    = 0
-		inComment = false
-	)
-	for tok := s.Scan(); tok != scanner.EOF; tok = s.Scan() {
-		tokText := s.TokenText()
-		if ann, err := a.Annotate(offset, tokenKind(tok, tokText, &inComment, m), tokText); err != nil {
-			return nil, err
-		} else if ann != nil {
-			anns = append(anns, ann)
-		}
-		offset += len(tokText)
-	}
-	return anns, nil
 }
 
 // AsText returns src highlighted for mode m, applying options to TextConfig.
