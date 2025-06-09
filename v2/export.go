@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/xyproto/files"
-	"github.com/xyproto/vt100"
 )
 
 // exportScdoc tries to export the current document as a manual page, using scdoc
