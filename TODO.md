@@ -1,7 +1,22 @@
 # TODO
 
 ## General
-
+- [ ] v2/editor.go: Rely on the length of the hash map for finding the index instead of
+- [ ] v2/editor.go: Save to a crash file, then let the editor discover this when it starts.
+- [ ] v2/editor.go: Consider the previous fileMode of the file when doing chmod +x instead of just setting 0755 or 0644
+- [ ] v2/editor.go: Find ways to make the error message more informative
+- [ ] v2/editor.go: Use a spinner?
+- [ ] v2/editor.go: Auto-detect tabs/spaces instead of per-language assumptions
+- [ ] v2/editor.go: Also strip trailing /* ... */ comments
+- [ ] v2/editor.go: Are these two needed, or covered by NewCustomEditor?
+- [ ] v2/editor.go: This is after the line contents, return the last rune
+- [ ] v2/editor.go: add and use something like "e.shouldAutoIndent" for these file types
+- [ ] v2/editor.go: Collect the criteria that trigger the same behavior
+- [ ] v2/editor.go: Remove the safeguard
+- [ ] v2/template.go: Define goWords and use setKeywords instead
+- [ ] v2/template.go: Also add "C", "c" and all the others
+- [ ] v2/template.go: Only at the start of lines
+- [ ] v2/spinner.go: NO_COLOR=1 does not have the "jump to letter" feature, this could be implemented
 - [ ] If the cursor is at the end of the line on the final line of the screen view, and arrow right is pressed, move down to the next line
 - [ ] If goimport is downloaded, add some info for the user.
 - [ ] Make it possible to search for double space ("  ").
@@ -58,13 +73,10 @@
 - [ ] Draw a minimap with `silicon SOURCEFILE --theme gruvbox-dark --no-line-number --no-round-corner --no-window-controls --highlight-lines 10-20 --tab-width 4 --output IMAGEFILE` or create a custom minimap package.
 - [ ] Do not highlight lines that start with `#` in gray, for Go. Or lines that starts with `//`, for shell scripts.
 - [ ] Add a Markdown template with headers and checkboxes.
-- [ ] Add support for `github.com/xyproto/ollamaclient` as an alternative to or instead of the OpenAI API.
-      The `mistral` model is pretty fast and capable by now.
 - [ ] Re-think the minimap feature.
 - [ ] Let the `ctrl-o` menu have additional info, like time and date and GC stats.
 - [ ] For man pages: if between "[-" and "]", do not color uppercase letters differently.
 - [ ] For man pages: if the line contains "-*[a-z]" and then later "-*[a-z]" and a majority of words with "-", then color text red instead of blue (and consider the theme).
-- [ ] Save a "custom words" and "ignored words" list to disk.
 - [ ] If in man page mode, set the file as read-only and also let `q` quit.
 - [ ] Let `ctrl-w` also format gzipped code, for instance when editing `main.cpp.gz`.
 - [ ] Do not remove indentation from JS code in HTML when `ctrl-w` is pressed. See: https://github.com/yosssi/gohtml/issues/22
@@ -76,7 +88,6 @@
 - [ ] If a file is passed through stdin and has many similar lines and no comments or blank lines, it might be a log file and not configuration.
 - [ ] HTTP client - scratch document style `.http` files.
 - [ ] Add support for emojis. Perhaps by drawing lines differently if an emoji is detected.
-- [ ] Parse some programming languages to improve the quality of the "go to defintion" feature.
 - [ ] When the last line in a document is a long line ending with "}", make it possible to press return before the "}".
 - [ ] Make it possible to export code to HTML or PNG, maybe by using Splash.
 - [ ] Figure out why multi-line commenting sometimes stops after a few lines.
@@ -104,6 +115,7 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
 ## Markdown
 
+- [ ] v2/markdown.go: fix syntax highlighting when this comment is removed `
 - [ ] Add a hotkey for inserting a TODO item.
 
 ## `o` to GUI frontend communication
@@ -124,6 +136,7 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
 ## Autocompletion and AI generated code
 
+- [ ] Add support for `github.com/xyproto/ollamaclient` as an alternative to or instead of the OpenAI API.
 - [ ] Primarily support Ollama instead of ChatGPT. Try one of the models with a large context. Try loading in all source files in a directory. Use my `ollamaclient` package.
 - [ ] If ChatGPT is enabled, and there is just one error, and the fix proposed by ChatGPT is small, then apply the fix, but let the user press `ctrl-z` if they don't want it.
 - [ ] If an API key is entered, save it to file in the cache directory.
@@ -136,6 +149,13 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
 ## Building, debugging and testing programs
 
+- [ ] v2/build.go: Check for /scala-*/scalanative-out and not scala-3.3.0 specifically
+- [ ] v2/build.go: Make this code more elegant, and consider searching all parent directories
+- [ ] v2/build.go: Find a better way than this
+- [ ] v2/run.go: go test . -run NameOfTest and fetch NameOfTest from the test function that the cursor is within, if available
+- [ ] v2/run.go: Document this.
+- [ ] v2/run.go: Wait for the process to start instead of sleeping
+- [ ] v2/run.go: Find out why running Zig programs is problematic, terminal emulator wise
 - [ ] Along with the per-file location, store the per-file last `ctrl-o` menu choice location. Or just move "Build" to the top, when on macOS.
 - [ ] Jump to error for Erlang.
 - [ ] Fix output parsing when running `go test` with `ctrl-space`.
@@ -154,7 +174,6 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 - [ ] When a filename is given, but it does not exist, and no extension is given, and the directory only contains one file, open that one.
 - [ ] Show a spinner when reading a lot of data from stdin.
 - [ ] When editing a man page, make it possible to toggle between the man page and the man page view mode.
-- [ ] Auto-detect tabs/spaces when opening a file.
 - [ ] When editing a file that then is deleted, `ctrl-s` should maybe create the file again?
       Or save it to `/tmp` or `~/.cache/o`? Or copy it to the clipboard?
 - [ ] Be able to open and edit large text files (60M+).
@@ -170,12 +189,16 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
 ## Code navigation
 
+- [ ] v2/gotodef.go: Parse some programming langages before jumping.
+- [ ] v2/gotodef.go: Search for variables, constants etc
+- [ ] v2/gotodef.go: Also look for const and in "var"-blocks
 - [ ] Make it possible to have groups of bookmarks per file, and then name them, somehow.
 - [ ] When pressing `ctrl-g` or `F12` and there's a filename under the cursor that exists, go to that file.
 - [ ] Let ctrl-p also jump to a matching parenthesis, if the last pressed key was an arrow key.
 
 ## Code editing
 
+- [ ] v2/insertrune.go: Use an established method of word wrapping / breaking lines.
 - [ ] When commenting out a block, move comment markers closer to the beginning of the text.
 - [ ] When sorting comma-separated strings that do not start with (, [ or {, make sure to keep the same trailing comma status.
 - [ ] When `}` is the last character of a file, sometimes pressing enter right before it does not work.
@@ -195,6 +218,17 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
 ## Syntax highlighting
 
+- [ ] v2/syntax.go: Use a different syntax highlighting package, with support for many different programming languages
+- [ ] v2/syntax.go: Define goWords and use setKeywords instead
+- [ ] v2/syntax.go: Also add "C", "c" and all the others
+- [ ] v2/syntax.go: Only at the start of lines
+- [ ] v2/highlight.go: Use a channel for queuing up calls to the vt100 package to avoid race conditions
+- [ ] v2/highlight.go: Refactor this function
+- [ ] v2/highlight.go: Check if just "fmt.Print" works here, for several terminal emulators
+- [ ] v2/highlight.go: Modify (and rewrite) the syntax package instead.
+- [ ] v2/highlight.go: Also handle all languages in v2/test/problematic.desktop
+- [ ] v2/highlight.go: This is a hack to prevent all the text from becoming skewed! Ideally, letter should be drawn, and other text should not be skewed.
+- [ ] v2/highlight.go: This may draw the wrong number of blanks, since lineRuneCount should really be the number of visible glyphs at this point. This is problematic for emojis.
 - [ ] Fix syntax highlighting of `(* ... *)` comments at the end of a line in OCaml.
 - [ ] When viewing man pages, respect the current theme.
 - [ ] Let `<<EOF` be considered the start of a multiline string in Shell, and `EOF` the end.
@@ -247,6 +281,11 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
 ## Command menu
 
+- [ ] v2/cmenu.go: Create a string->[]string map from title to command, then add them
+- [ ] v2/cmenu.go: Add the 6 first arguments to a context struct instead
+- [ ] v2/cmenu.go: Identify which languages work poorly together with gdb
+- [ ] v2/cmenu.go: Detect if file is locked first
+- [ ] v2/cmenu.go: Only overwrite if the previous PDF file was also rendered by "o".
 - [ ] Add a menu option for listing all functions in the current directory, alphabetically, and be able to jump to any one of them.
 - [ ] Add one or more of these commands: regex search, go to definition, rename symbol, find references and disassembly.
 - [ ] Make it easy to make recordings of the editing process (can already use asciinema?).
@@ -267,6 +306,7 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
 ## Refactoring
 
+- [ ] v2/categories.go: Update this, and the NoSmartIndentation. Make sure all languages are covered.
 - [ ] Replace and/or rewrite the syntax highlighting system.
 - [ ] Refactor the code to handle a line as a Line struct/object that has these markers: start of line, start of text, start of scroll view,
       end of scroll view, end of text, one after end of text, end of line including whitespace.
@@ -292,4 +332,26 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
 ## Built-in game
 
+- [ ] v2/game.go: Use a slice of interfaces that can contain all elements
+- [ ] v2/game.go: Hunt a random pellet that is not already hunted instead of the closest
 - [ ] Two pellets next to each other should combine.
+
+## File System & Operations
+- [ ] v2/filesearch.go: Search sibling and parent directories named "include" first, then search the rest.
+- [ ] v2/lockfile.go: Make sure not to lock "-" or "/dev/*" files
+- [ ] v2/lockfile.go: If the stored timestamp is older than uptime, unlock and save the lock overview
+- [ ] v2/fstab.go: Find out why double blank lines are sometimes inserted below, when pressing ctrl-w twice,
+
+## Editor Core
+- [ ] v2/editor.go: Rely on the length of the hash map for finding the index instead of
+- [ ] v2/editor.go: Save to a crash file, then let the editor discover this when it starts.
+- [ ] v2/editor.go: Consider the previous fileMode of the file when doing chmod +x instead of just setting 0755 or 0644
+- [ ] v2/editor.go: Find ways to make the error message more informative
+- [ ] v2/editor.go: Use a spinner?
+- [ ] v2/editor.go: Auto-detect tabs/spaces instead of per-language assumptions
+- [ ] v2/editor.go: Also strip trailing /* ... */ comments
+- [ ] v2/editor.go: Are these two needed, or covered by NewCustomEditor?
+- [ ] v2/editor.go: This is after the line contents, return the last rune
+- [ ] v2/editor.go: add and use something like "e.shouldAutoIndent" for these file types
+- [ ] v2/editor.go: Collect the criteria that trigger the same behavior
+- [ ] v2/editor.go: Remove the safeguard
