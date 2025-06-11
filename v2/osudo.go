@@ -12,77 +12,22 @@ import (
 	"time"
 )
 
+// Sudoers represents an /etc/sudoers file while it is being edited
 type Sudoers struct {
+	origModTime  time.Time
+	fd           *os.File
 	originalPath string
 	tempPath     string
-	fd           *os.File
 	origSize     int64
-	origModTime  time.Time
 }
 
-// osudo sets up safe sudoers editing and returns temp file path
-// osudo is a visudo replacement that uses this editor instead of vi / $SUDO_EDITOR / $EDITOR / $VISUAL
-func osudo() string {
-	if os.Geteuid() != 0 {
-		fmt.Fprintf(os.Stderr, "osudo: only root can run %s\n", filepath.Base(os.Args[0]))
-		os.Exit(1)
-	}
-
-	sudo, err := NewSudoers("/etc/sudoers")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
-	}
-
-	sudo.setupSignalHandlers()
-
-	if err := sudo.createTempFile(); err != nil {
-		sudo.cleanup()
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
-	}
-
-	return sudo.tempPath
-}
-
-// osudoFinalize validates and installs the edited sudoers file
-func osudoFinalize() {
-	sudo := &Sudoers{
-		originalPath: "/etc/sudoers",
-		tempPath:     "/etc/sudoers.tmp",
-	}
-	defer sudo.cleanup()
-
-	if !sudo.wasModified() {
-		if !isQuietMode() {
-			fmt.Printf("%s unchanged\n", sudo.originalPath)
-		}
-		return
-	}
-
-	if err := sudo.handleValidationAndInstall(); err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
-	}
-}
-
-func (s *Sudoers) handleValidationAndInstall() error {
-	for !validateSudoersSyntax(s.tempPath) {
-		switch askWhatNow() {
-		case 'e':
-			return nil // Re-edit
-		case 'x':
-			fmt.Fprintf(os.Stderr, "sudoers file unchanged\n")
-			return nil
-		case 'Q':
-			fmt.Fprintf(os.Stderr, "Warning: installing sudoers file with syntax errors!\n")
-			return s.commitChanges()
-		}
-	}
-	return s.commitChanges()
-}
-
+// NewSudoers creates a new Sudoers instance for safe editing
+// It requires root privileges and locks the sudoers file
 func NewSudoers(sudoersPath string) (*Sudoers, error) {
+	if os.Geteuid() != 0 {
+		return nil, fmt.Errorf("osudo: only root can run %s", filepath.Base(os.Args[0]))
+	}
+
 	file, err := os.OpenFile(sudoersPath, os.O_RDWR, 0)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open %s: %w", sudoersPath, err)
@@ -100,13 +45,57 @@ func NewSudoers(sudoersPath string) (*Sudoers, error) {
 		return nil, fmt.Errorf("unable to stat %s: %w", sudoersPath, err)
 	}
 
-	return &Sudoers{
+	sudoers := &Sudoers{
+		origModTime:  info.ModTime(),
+		fd:           file,
 		originalPath: sudoersPath,
 		tempPath:     sudoersPath + ".tmp",
-		fd:           file,
 		origSize:     info.Size(),
-		origModTime:  info.ModTime(),
-	}, nil
+	}
+
+	sudoers.setupSignalHandlers()
+
+	if err := sudoers.createTempFile(); err != nil {
+		sudoers.cleanup()
+		return nil, err
+	}
+
+	return sudoers, nil
+}
+
+// TempPath returns the path to the temporary file for editing
+func (s *Sudoers) TempPath() string {
+	return s.tempPath
+}
+
+// Finalize validates and installs the edited sudoers file
+func (s *Sudoers) Finalize() error {
+	defer s.cleanup()
+
+	if !s.wasModified() {
+		if !isQuietMode() {
+			fmt.Printf("%s unchanged\n", s.originalPath)
+		}
+		return nil
+	}
+
+	return s.handleValidationAndInstall()
+}
+
+func (s *Sudoers) handleValidationAndInstall() error {
+	for !validateSudoersSyntax(s.tempPath) {
+		switch askWhatNow() {
+		case 'e':
+			return nil // Re-edit
+		case 'x':
+			fmt.Fprintf(os.Stderr, "sudoers file unchanged\n")
+			return nil
+		case 'Q':
+			fmt.Fprintf(os.Stderr, "Warning: installing sudoers file with syntax errors!\n")
+			return s.commitChanges()
+		}
+	}
+	return s.commitChanges()
 }
 
 func (s *Sudoers) createTempFile() error {

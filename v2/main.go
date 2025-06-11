@@ -335,9 +335,19 @@ func main() {
 		}
 	} else if osudoMode {
 		// osudo may exit the program
-		tempPath := osudo()
+		sudoers, err := NewSudoers("/etc/sudoers")
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		tempPath := sudoers.TempPath()
 		fnord.filename, lineNumber, colNumber = FilenameLineColNumber(tempPath, "", "")
-		defer osudoFinalize()
+		defer func() {
+			if err := sudoers.Finalize(); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+		}()
 	} else {
 		fnord.filename, lineNumber, colNumber = FilenameLineColNumber(pflag.Arg(0), pflag.Arg(1), pflag.Arg(2))
 	}
