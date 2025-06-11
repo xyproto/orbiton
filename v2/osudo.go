@@ -224,32 +224,12 @@ func (s *Sudoers) commitChanges() error {
 	if err := os.Chmod(s.tempPath, 0o440); err != nil {
 		return fmt.Errorf("unable to set permissions of %s: %w", s.tempPath, err)
 	}
-	// Atomic move (or copy+remove if cross-filesystem)
+	// Atomic move
 	if err := os.Rename(s.tempPath, s.originalPath); err != nil {
-		if copyErr := copyFile(s.tempPath, s.originalPath); copyErr != nil {
-			return fmt.Errorf("unable to install %s: %w", s.originalPath, err)
-		}
-		os.Remove(s.tempPath)
+		return fmt.Errorf("unable to install %s: %w", s.originalPath, err)
 	}
 	s.tempPath = "" // Mark as installed
 	return nil
-}
-
-func copyFile(src, dst string) error {
-	srcFile, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer srcFile.Close()
-
-	dstFile, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer dstFile.Close()
-
-	_, err = io.Copy(dstFile, srcFile)
-	return err
 }
 
 func (s *Sudoers) setupSignalHandlers() {
