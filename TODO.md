@@ -1,9 +1,11 @@
 # TODO
 
+
 ## General
 
-- [ ] If the cursor is at the end of the line on the final line of the screen view, and arrow right is pressed, move down to the next line
-- [ ] If goimport is downloaded, add some info for the user.
+- [ ] When inserting a .gitignore template, also ignore files with no extension with the same name as the current directory, and also the go.mod name (last part, after /)
+- [ ] If the cursor is at the end of the line on the final line of the screen view, and arrow right is pressed, move down to the next line.
+- [ ] When goimport is downloaded, add some info for the user, like the spinner.
 - [ ] Make it possible to search for double space ("  ").
 - [ ] Improve syntax highlighting of comments in JSON, ref test/tsconfig.json.
 - [ ] Fix compilation of a single Scala file on macOS.
