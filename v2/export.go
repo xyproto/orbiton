@@ -30,6 +30,7 @@ func (e *Editor) exportScdoc(manFilename string) error {
 	if err != nil {
 		return err
 	}
+	defer manpageFile.Close()
 
 	var errBuf bytes.Buffer
 	scdoc.Stdout = manpageFile
