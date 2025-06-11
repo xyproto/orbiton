@@ -18,7 +18,7 @@ Orbiton might be a good fit for:
 * Learning programming languages, like Rust or Zig.
 * Editing files deep within larger Go or C++ projects.
 * Solving Advent of Code tasks.
-* Being placed on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in log, man page and image viewer, has an optional nano/pico mode, can be used as `EDITOR=o visudo` and has built-in support for neatly formatting `/etc/fstab` files.
+* Being placed on a live image for a Linux or BSD distro, since it supports VT100, is small and self-contained, has a built-in log, man page and image viewer, has an optional nano/pico mode, can be used as a `visudo` replacment and has built-in support for neatly formatting `/etc/fstab` files.
 * Writing any number of words in a distraction-free fullscreen environment (toggle the status bar by pressing `ctrl-g` to see the word count).
 
 This has been my main editor for around 3 years now, and it is mostly written in itself, apart from some NeoViM in the beginning.
