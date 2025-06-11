@@ -287,6 +287,15 @@ func main() {
 
 	traceStart() // if building with -tags trace
 
+	var (
+		fnord         FilenameOrData
+		lineNumber    LineNumber
+		colNumber     ColNumber
+		stdinFilename = !argsGiven || (len(args) == 1 && (args[0] == "-" || args[0] == "/dev/stdin"))
+		osudoMode     = executableName == "osudo" || executableName == "visudo"
+		err           error
+	)
+
 	// Check if the executable starts with "g" or "f" ("c" and "p" are already checked for, further up)
 	if argsGiven {
 		switch firstLetterOfExecutable {
@@ -298,21 +307,7 @@ func main() {
 			}
 			return
 		}
-		if executableName == "osudo" {
-			// The osudo function may exit the program if successfull
-			osudo()
-		}
 	}
-
-	var (
-		err        error
-		fnord      FilenameOrData
-		lineNumber LineNumber
-		colNumber  ColNumber
-
-		// Check if the given filename looks like "stdin"
-		stdinFilename = !argsGiven || (len(args) == 1 && (args[0] == "-" || args[0] == "/dev/stdin"))
-	)
 
 	// If no regular filename is given, check if data is ready at stdin
 	if stdinFilename {
@@ -338,6 +333,11 @@ func main() {
 			fnord.data = data
 			fnord.length = lendata
 		}
+	} else if osudoMode {
+		// osudo may exit the program
+		tempPath := osudo()
+		fnord.filename, lineNumber, colNumber = FilenameLineColNumber(tempPath, "", "")
+		defer osudoFinalize()
 	} else {
 		fnord.filename, lineNumber, colNumber = FilenameLineColNumber(pflag.Arg(0), pflag.Arg(1), pflag.Arg(2))
 	}
@@ -432,7 +432,7 @@ func main() {
 	if envNoColor {
 		theme = NewNoColorDarkBackgroundTheme()
 		syntaxHighlight = false
-	} else if firstLetterOfExecutable != rune(0) {
+	} else if firstLetterOfExecutable != rune(0) && !osudoMode {
 		// Check if the executable starts with a specific letter ('f', 'g', 'p' and 'c' are already checked for)
 		specificLetter = true
 		switch firstLetterOfExecutable {
@@ -452,8 +452,9 @@ func main() {
 			// Check if "Nano mode" should be set
 			nanoMode = strings.HasPrefix(executableName, "na")
 		case 'v': // vs, vscode etc
-			// if strings.HasPrefix(executableName, "vi") { // vi, vim etc.
-			theme = NewDarkVSTheme()
+			if !strings.HasPrefix(executableName, "vi") { // vi, vim, visudo etc.
+				theme = NewDarkVSTheme()
+			}
 		default:
 			specificLetter = false
 		}
