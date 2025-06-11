@@ -84,6 +84,18 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 			}
 		}
 		fallthrough
+	case mode.Make:
+		if !strings.HasPrefix(trimmedLine, " ") && !strings.HasPrefix(trimmedLine, "\t") && strings.Count(trimmedLine, ":") == 1 {
+			parts := strings.Split(trimmedLine, ":")
+			targetName := strings.TrimSpace(parts[0])
+			return targetName != "" && !strings.Contains(targetName, "=") // looks like it could be a Makefile target name
+		}
+		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") && strings.Count(line, ":") == 1 {
+			parts := strings.Split(line, ":")
+			targetName := strings.TrimSpace(parts[0])
+			return targetName != "" && !strings.Contains(targetName, "=") && !strings.Contains(targetName, " ") // looks like it could be a Makefile target name
+		}
+
 	case mode.Odin:
 		if strings.Contains(trimmedLine, " :: proc(") || strings.Contains(trimmedLine, " :: proc \"") {
 			return true
@@ -113,12 +125,21 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 
 // FunctionName tries to extract the function name given a line with what looks like a function definition.
 func (e *Editor) FunctionName(line string) string {
-	if e.mode == mode.Odin {
+	switch e.mode {
+	case mode.Odin:
 		if strings.Contains(line, " :: proc(") || strings.Contains(line, " :: proc \"") {
 			fields := strings.SplitN(line, " :: proc", 2)
 			name := strings.TrimSpace(fields[0])
 			if name != "" {
 				return name
+			}
+		}
+	case mode.Make:
+		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") && strings.Count(line, ":") == 1 {
+			parts := strings.Split(line, ":")
+			targetName := strings.TrimSpace(parts[0])
+			if targetName != "" && !strings.Contains(targetName, "=") && !strings.Contains(targetName, " ") { // looks like it could be a Makefile target name
+				return targetName
 			}
 		}
 	}
