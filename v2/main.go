@@ -37,7 +37,7 @@ var (
 	cacheDirForDoc = files.ShortPath(filepath.Join(userCacheDir, "o"))
 
 	// Only for the filename completion, when starting the editor
-	probablyDoesNotWantToEditExtensions = []string{".7z", ".a", ".bak", ".core", ".gz", ".img", ".lock", ".o", ".out", ".pkg", ".pyc", ".pyo", ".swp", ".tar", ".tmp", ".xz", ".zip"}
+	probablyDoesNotWantToEditExtensions = []string{".7z", ".a", ".bak", ".core", ".exe", ".gz", ".img", ".lock", ".o", ".out", ".pkg", ".pyc", ".pyo", ".swp", ".tar", ".tmp", ".xz", ".zip"}
 
 	// For when building and running programs with ctrl-space
 	inputFileWhenRunning string
@@ -392,7 +392,7 @@ func main() {
 							matchesRegular := make([]string, len(matches))
 							matchesLowPri := make([]string, len(matches))
 							for _, fn := range matches {
-								if !hasSuffix(fn, probablyDoesNotWantToEditExtensions) {
+								if !hasSuffix(fn, probablyDoesNotWantToEditExtensions) && strings.Contains(fn, ".") {
 									matchesRegular = append(matchesRegular, fn)
 								} else {
 									// Store as a low-priority match
