@@ -90,7 +90,7 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 			targetName := strings.TrimSpace(parts[0])
 			return targetName != "" && !strings.Contains(targetName, "=") // looks like it could be a Makefile target name
 		}
-		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") && strings.Count(line, ":") == 1 {
+		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") && !strings.HasPrefix(trimmedLine, ".") && strings.Count(line, ":") == 1 {
 			parts := strings.Split(line, ":")
 			targetName := strings.TrimSpace(parts[0])
 			return targetName != "" && !strings.Contains(targetName, "=") && !strings.Contains(targetName, " ") // looks like it could be a Makefile target name
@@ -125,6 +125,7 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 
 // FunctionName tries to extract the function name given a line with what looks like a function definition.
 func (e *Editor) FunctionName(line string) string {
+	trimmedLine := strings.TrimSpace(line)
 	switch e.mode {
 	case mode.Odin:
 		if strings.Contains(line, " :: proc(") || strings.Contains(line, " :: proc \"") {
@@ -135,7 +136,7 @@ func (e *Editor) FunctionName(line string) string {
 			}
 		}
 	case mode.Make:
-		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") && strings.Count(line, ":") == 1 {
+		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") && !strings.HasPrefix(trimmedLine, ".") && strings.Count(line, ":") == 1 {
 			parts := strings.Split(line, ":")
 			targetName := strings.TrimSpace(parts[0])
 			if targetName != "" && !strings.Contains(targetName, "=") && !strings.Contains(targetName, " ") { // looks like it could be a Makefile target name
@@ -143,10 +144,9 @@ func (e *Editor) FunctionName(line string) string {
 			}
 		}
 	}
-	var s string
 	funcPrefix := e.FuncPrefix()
+	var s string
 	if e.LooksLikeFunctionDef(line, funcPrefix) {
-		trimmedLine := strings.TrimSpace(line)
 		s = strings.TrimSpace(strings.TrimSuffix(trimmedLine, "{"))
 		words := strings.Split(s, " ")
 		for _, word := range words {
