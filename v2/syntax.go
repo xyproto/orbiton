@@ -532,8 +532,10 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		addKeywords(objPasWords)
 	case mode.Oak:
 		addAndRemoveKeywords([]string{"fn"}, []string{"from", "new", "print"})
-	case mode.Python, mode.Nim, mode.Mojo, mode.Starlark:
+	case mode.Python, mode.Mojo, mode.Starlark:
 		addAndRemoveKeywords([]string{"type"}, []string{"append", "exit", "fn", "get", "package", "print", "until"})
+	case mode.Nim:
+		addAndRemoveKeywords([]string{"proc", "type"}, []string{"append", "exit", "fn", "get", "package", "print", "until"})
 	case mode.Odin:
 		setKeywords(odinWords)
 	case mode.Ollama:
