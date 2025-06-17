@@ -17,8 +17,10 @@ func (e *Editor) FuncPrefix() string {
 	switch e.mode {
 	case mode.Clojure:
 		return "defn "
-	case mode.Crystal, mode.Nim, mode.Mojo, mode.Python, mode.Scala, mode.Starlark:
+	case mode.Crystal, mode.Mojo, mode.Python, mode.Scala, mode.Starlark:
 		return "def "
+	case mode.Nim:
+		return "proc "
 	case mode.GDScript, mode.Go:
 		return "func "
 	case mode.Kotlin:
