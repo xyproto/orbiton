@@ -217,7 +217,7 @@ There are pretty few hotkeys to remember:
 * `ctrl-v` - Paste one trimmed line. Press twice to paste multiple untrimmed lines.
 * `ctrl-space` - Build program, render to PDF or export to man page (see table below).
                  For Markdown: toggle checkboxes, or double press to export to HTML.
-* `ctrl-j` - Join lines (or jump to the bookmark, if set).
+* `ctrl-j` - Join the current line with the next one.
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
 * `ctrl-l` - Jump to a specific line number or percentage. Press `return` to jump to the top. If at the top, press `return` to jump to the bottom.
              Press one of the highlighted on-screen letters to jump to that location.
