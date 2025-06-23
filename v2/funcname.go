@@ -90,12 +90,12 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 		if !strings.HasPrefix(trimmedLine, " ") && !strings.HasPrefix(trimmedLine, "\t") && strings.Count(trimmedLine, ":") == 1 {
 			parts := strings.Split(trimmedLine, ":")
 			targetName := strings.TrimSpace(parts[0])
-			return targetName != "" && !strings.Contains(targetName, "=") // looks like it could be a Makefile target name
+			return targetName != "" && !strings.Contains(targetName, "=") && !strings.Contains(targetName, "$")// looks like it could be a Makefile target name
 		}
 		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") && !strings.HasPrefix(trimmedLine, ".") && strings.Count(line, ":") == 1 {
 			parts := strings.Split(line, ":")
 			targetName := strings.TrimSpace(parts[0])
-			return targetName != "" && !strings.Contains(targetName, "=") && !strings.Contains(targetName, " ") // looks like it could be a Makefile target name
+			return targetName != "" && !strings.Contains(targetName, "=") && !strings.Contains(targetName, "$") && !strings.Contains(targetName, " ") // looks like it could be a Makefile target name
 		}
 
 	case mode.Odin:
@@ -141,7 +141,7 @@ func (e *Editor) FunctionName(line string) string {
 		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") && !strings.HasPrefix(trimmedLine, ".") && strings.Count(line, ":") == 1 {
 			parts := strings.Split(line, ":")
 			targetName := strings.TrimSpace(parts[0])
-			if targetName != "" && !strings.Contains(targetName, "=") && !strings.Contains(targetName, " ") { // looks like it could be a Makefile target name
+			if targetName != "" && !strings.Contains(targetName, "=") && !strings.Contains(targetName, "$") && !strings.Contains(targetName, " ") { // looks like it could be a Makefile target name
 				return targetName
 			}
 		}
@@ -168,6 +168,9 @@ func (e *Editor) FunctionName(line string) string {
 		withoutFuncPrefix = strings.TrimSpace(fields[0])
 	}
 	if strings.Contains(withoutFuncPrefix, ".") {
+		return ""
+	}
+	if strings.HasPrefix(withoutFuncPrefix, "$") {
 		return ""
 	}
 	return withoutFuncPrefix
