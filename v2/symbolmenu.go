@@ -6,17 +6,17 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 // SymbolMenu starts a loop where keypresses are handled. When a choice is made, a number is returned.
 // x and y are returned. -1,-1 is "no choice", 0,0 is the top left index.
-func (e *Editor) SymbolMenu(tty *vt100.TTY, status *StatusBar, title string, choices [][]string, titleColor, textColor, highlightColor vt100.AttributeColor) (int, int, bool) {
+func (e *Editor) SymbolMenu(tty *vt.TTY, status *StatusBar, title string, choices [][]string, titleColor, textColor, highlightColor vt.AttributeColor) (int, int, bool) {
 	// Clear the existing handler
 	signal.Reset(syscall.SIGWINCH)
 
 	var (
-		c          = vt100.NewCanvas()
+		c          = vt.NewCanvas()
 		symbolMenu = NewSymbolWidget(title, choices, titleColor, textColor, highlightColor, e.Background, int(c.W()), int(c.H()))
 		sigChan    = make(chan os.Signal, 1)
 		running    = true
@@ -33,7 +33,7 @@ func (e *Editor) SymbolMenu(tty *vt100.TTY, status *StatusBar, title string, cho
 			// Create a new canvas, with the new size
 			nc := c.Resized()
 			if nc != nil {
-				vt100.Clear()
+				vt.Clear()
 				c = nc
 				symbolMenu.Draw(c)
 				c.HideCursorAndRedraw()
@@ -45,8 +45,8 @@ func (e *Editor) SymbolMenu(tty *vt100.TTY, status *StatusBar, title string, cho
 		}
 	}()
 
-	vt100.Clear()
-	vt100.Reset()
+	vt.Clear()
+	vt.Reset()
 	c.HideCursorAndRedraw()
 
 	// Set the initial menu index

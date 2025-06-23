@@ -12,11 +12,10 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/textoutput"
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
-func quitError(tty *vt100.TTY, err error) {
+func quitError(tty *vt.TTY, err error) {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 
@@ -26,17 +25,17 @@ func quitError(tty *vt100.TTY, err error) {
 		tty.Close()
 	}
 
-	vt100.Reset()
-	vt100.SetNoColor()
-	vt100.Clear()
-	vt100.Close()
-	textoutput.NewTextOutput(true, true).Err(err.Error())
-	vt100.ShowCursor(true)
-	vt100.SetXY(uint(0), uint(1))
+	vt.Reset()
+	vt.SetNoColor()
+	vt.Clear()
+	vt.Close()
+	vt.NewTextOutput(true, true).Err(err.Error())
+	vt.ShowCursor(true)
+	vt.SetXY(uint(0), uint(1))
 	os.Exit(1)
 }
 
-func quitMessage(tty *vt100.TTY, msg string) {
+func quitMessage(tty *vt.TTY, msg string) {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 
@@ -46,18 +45,18 @@ func quitMessage(tty *vt100.TTY, msg string) {
 		tty.Close()
 	}
 
-	vt100.Reset()
-	vt100.SetNoColor()
-	vt100.Clear()
-	vt100.Close()
+	vt.Reset()
+	vt.SetNoColor()
+	vt.Clear()
+	vt.Close()
 	fmt.Fprintln(os.Stderr, msg)
 	newLineCount := strings.Count(msg, "\n")
-	vt100.ShowCursor(true)
-	vt100.SetXY(uint(0), uint(newLineCount+1))
+	vt.ShowCursor(true)
+	vt.SetXY(uint(0), uint(newLineCount+1))
 	os.Exit(1)
 }
 
-func quitMessageWithStack(tty *vt100.TTY, msg string) {
+func quitMessageWithStack(tty *vt.TTY, msg string) {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 
@@ -67,19 +66,19 @@ func quitMessageWithStack(tty *vt100.TTY, msg string) {
 		tty.Close()
 	}
 
-	vt100.Reset()
-	vt100.SetNoColor()
-	vt100.Clear()
-	vt100.Close()
+	vt.Reset()
+	vt.SetNoColor()
+	vt.Clear()
+	vt.Close()
 	fmt.Fprintln(os.Stderr, msg)
 	newLineCount := strings.Count(msg, "\n")
-	vt100.ShowCursor(true)
-	vt100.SetXY(uint(0), uint(newLineCount+1))
+	vt.ShowCursor(true)
+	vt.SetXY(uint(0), uint(newLineCount+1))
 	debug.PrintStack()
 	os.Exit(1)
 }
 
-func quitExecShellCommand(tty *vt100.TTY, workDir string, shellCommand string) {
+func quitExecShellCommand(tty *vt.TTY, workDir string, shellCommand string) {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 
@@ -89,19 +88,19 @@ func quitExecShellCommand(tty *vt100.TTY, workDir string, shellCommand string) {
 		tty.Close()
 	}
 
-	vt100.Reset()
-	vt100.SetNoColor()
-	vt100.Clear()
-	vt100.Close()
-	vt100.ShowCursor(true)
-	vt100.SetXY(uint(0), uint(1))
+	vt.Reset()
+	vt.SetNoColor()
+	vt.Clear()
+	vt.Close()
+	vt.ShowCursor(true)
+	vt.SetXY(uint(0), uint(1))
 	const shellExecutable = "/bin/sh"
 	_ = os.Chdir(workDir)
 	syscall.Exec(shellExecutable, []string{shellExecutable, "-c", shellCommand}, env.Environ())
 }
 
 // CatBytes detects the source code mode and outputs syntax highlighted text to the given TextOutput.
-func CatBytes(sourceCodeData []byte, o *textoutput.TextOutput) error {
+func CatBytes(sourceCodeData []byte, o *vt.TextOutput) error {
 	detectedMode := mode.SimpleDetectBytes(sourceCodeData)
 	taggedTextBytes, err := AsText(sourceCodeData, detectedMode)
 	if err == nil {
@@ -117,17 +116,17 @@ func quitCat(fnord *FilenameOrData) {
 	if fnord.Empty() {
 		if sourceCodeBytes, err := os.ReadFile(fnord.filename); err == nil { // success
 			if err := CatBytes(sourceCodeBytes, tout); err == nil { // success
-				vt100.ShowCursor(true)
+				vt.ShowCursor(true)
 				os.Exit(0)
 			}
 		}
 	} else {
 		if err := CatBytes(fnord.data, tout); err == nil { // success
-			vt100.ShowCursor(true)
+			vt.ShowCursor(true)
 			os.Exit(0)
 		}
 	}
-	vt100.ShowCursor(true)
+	vt.ShowCursor(true)
 	os.Exit(1) // could not cat the file in a syntax highlighted way
 }
 
@@ -159,21 +158,21 @@ func quitBat(filename string) error {
 		return fmt.Errorf("%q is not available in the PATH", batExecutable)
 	}
 	args = append(args, filename)
-	vt100.ShowCursor(true)
+	vt.ShowCursor(true)
 	syscall.Exec(batExecutable, args, env.Environ())
 	return nil // this is never reached
 }
 
-func quitToMan(tty *vt100.TTY, workDir, nroffFilename string, w, h uint) error {
+func quitToMan(tty *vt.TTY, workDir, nroffFilename string, w, h uint) error {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 
 	stopBackgroundProcesses()
 
-	vt100.Close()
-	vt100.SetNoColor()
-	vt100.Clear()
-	vt100.Reset()
+	vt.Close()
+	vt.SetNoColor()
+	vt.Clear()
+	vt.Reset()
 	if tty != nil {
 		tty.Close()
 	}
@@ -210,16 +209,16 @@ func quitToMan(tty *vt100.TTY, workDir, nroffFilename string, w, h uint) error {
 	return nil
 }
 
-func quitToNroff(tty *vt100.TTY, backupDirectory string, w, h uint) error {
+func quitToNroff(tty *vt.TTY, backupDirectory string, w, h uint) error {
 	quitMut.Lock()
 	defer quitMut.Unlock()
 
 	stopBackgroundProcesses()
 
-	vt100.Close()
-	vt100.SetNoColor()
-	vt100.Clear()
-	vt100.Reset()
+	vt.Close()
+	vt.SetNoColor()
+	vt.Clear()
+	vt.Reset()
 
 	if tty != nil {
 		tty.Close()

@@ -8,7 +8,7 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/fullname"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 // TemplateProgram represents a string and cursor movement up, and then to the right
@@ -312,7 +312,7 @@ func (e *Editor) BaseFilenameWithoutExtension() string {
 
 // InsertTemplateProgram will insert a template program at the current cursor position,
 // if available. It will then reposition the cursor at an appropriate place in the template.
-func (e *Editor) InsertTemplateProgram(c *vt100.Canvas) error {
+func (e *Editor) InsertTemplateProgram(c *vt.Canvas) error {
 	prog, found := GetTemplatePrograms()[e.mode]
 	if !found {
 		return fmt.Errorf("could not find a template program for %s", e.mode)

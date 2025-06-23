@@ -1,29 +1,29 @@
 package main
 
 import (
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 // SymbolWidget represents a TUI widget for presenting a menu with choices for the user
 type SymbolWidget struct {
-	title          string               // title
-	choices        [][]string           // a slice of a slice of menu items
-	bgColor        vt100.AttributeColor // background color
-	highlightColor vt100.AttributeColor // selected color (the choice that has been selected after return has been pressed)
-	textColor      vt100.AttributeColor // text color (the choices that are not highlighted)
-	titleColor     vt100.AttributeColor // title color (above the choices)
-	x              int                  // current position
-	marginLeft     int                  // margin, may be negative?
-	marginTop      int                  // margin, may be negative?
-	oldy           int                  // previous position
-	y              int                  // current position
-	oldx           int                  // previous position
-	h              int                  // height (number of menu items)
-	w              int                  // width
+	title          string            // title
+	choices        [][]string        // a slice of a slice of menu items
+	bgColor        vt.AttributeColor // background color
+	highlightColor vt.AttributeColor // selected color (the choice that has been selected after return has been pressed)
+	textColor      vt.AttributeColor // text color (the choices that are not highlighted)
+	titleColor     vt.AttributeColor // title color (above the choices)
+	x              int               // current position
+	marginLeft     int               // margin, may be negative?
+	marginTop      int               // margin, may be negative?
+	oldy           int               // previous position
+	y              int               // current position
+	oldx           int               // previous position
+	h              int               // height (number of menu items)
+	w              int               // width
 }
 
 // NewSymbolWidget creates a new SymbolWidget
-func NewSymbolWidget(title string, choices [][]string, titleColor, textColor, highlightColor, bgColor vt100.AttributeColor, canvasWidth, canvasHeight int) *SymbolWidget {
+func NewSymbolWidget(title string, choices [][]string, titleColor, textColor, highlightColor, bgColor vt.AttributeColor, canvasWidth, canvasHeight int) *SymbolWidget {
 	maxlen := 0
 	for _, choice := range choices {
 		if len(choice) > maxlen {
@@ -64,7 +64,7 @@ func (sw *SymbolWidget) Selected() (int, int) {
 }
 
 // Draw will draw this menu widget on the given canvas
-func (sw *SymbolWidget) Draw(c *vt100.Canvas) {
+func (sw *SymbolWidget) Draw(c *vt.Canvas) {
 	// Draw the title
 	titleHeight := 2
 	for x, r := range sw.title {
@@ -75,7 +75,7 @@ func (sw *SymbolWidget) Draw(c *vt100.Canvas) {
 		row := sw.choices[y]
 		for x := 0; x < len(row); x++ {
 			symbol := sw.choices[y][x]
-			// vt100.SetXY(0, uint(sw.marginTop+y+titleHeight))
+			// SetXY(0, uint(sw.marginTop+y+titleHeight))
 			if y == int(sw.y) && x == int(sw.x) {
 				c.Write(uint(sw.marginLeft+x*2), uint(sw.marginTop+y+titleHeight), sw.highlightColor, sw.bgColor, symbol)
 			} else {

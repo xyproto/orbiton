@@ -1,7 +1,6 @@
-package stringpainter
+package vt
 
 import (
-	"github.com/xyproto/vt100"
 	"strings"
 )
 
@@ -11,11 +10,11 @@ func colorWrite(sb *strings.Builder, s string, colorIndex int) {
 	case 0:
 		sb.WriteString(s)
 	case 1:
-		sb.WriteString(vt100.White.Get(s))
+		sb.WriteString(White.Get(s))
 	case 2:
-		sb.WriteString(vt100.Magenta.Get(s))
+		sb.WriteString(Magenta.Get(s))
 	case 3:
-		sb.WriteString(vt100.Cyan.Get(s))
+		sb.WriteString(Cyan.Get(s))
 	}
 }
 
@@ -24,25 +23,25 @@ func Colorize(line string) string {
 	var sb strings.Builder
 	trimmed := strings.TrimSpace(line)
 	if strings.HasPrefix(trimmed, "//") || strings.HasPrefix(trimmed, "#") || strings.Contains(trimmed, "Leaving directory") || strings.Contains(trimmed, "Entering directory") || strings.Contains(trimmed, "Nothing to be done") {
-		return vt100.Black.Get(line)
+		return Black.Get(line)
 	}
 	if strings.Contains(trimmed, "(ignored)") {
-		return vt100.LightYellow.Get(line)
+		return LightYellow.Get(line)
 	}
 	if strings.Contains(trimmed, "In file included from") {
-		return vt100.LightBlue.Get(line)
+		return LightBlue.Get(line)
 	}
 	if strings.HasPrefix(trimmed, "OPKG ") {
-		return vt100.LightMagenta.Get(line)
+		return LightMagenta.Get(line)
 	}
 	if strings.HasPrefix(trimmed, "STRIP ") {
-		return vt100.Cyan.Get(line)
+		return Cyan.Get(line)
 	}
 	if strings.Contains(trimmed, "***") || strings.Contains(trimmed, "===") || strings.Contains(trimmed, "No such file or directory") {
-		return vt100.Red.Get(line)
+		return Red.Get(line)
 	}
 	if (strings.HasPrefix(trimmed, "*") && strings.HasSuffix(trimmed, "*")) || (strings.HasPrefix(trimmed, "-") && strings.HasSuffix(trimmed, "-")) || (strings.HasPrefix(trimmed, "=") && strings.HasSuffix(trimmed, "=")) || strings.Contains(trimmed, ">>>") {
-		return vt100.White.Get(line)
+		return White.Get(line)
 	}
 
 	if strings.Contains(trimmed, ": In function ") || strings.Contains(trimmed, ": In member function ") {
@@ -54,7 +53,7 @@ func Colorize(line string) string {
 			a := parts[0]
 			signature := parts[1]
 			b := parts[2]
-			return vt100.LightYellow.Get(fn) + ":" + vt100.White.Get(a) + "'" + vt100.LightBlue.Get(signature) + "'" + vt100.White.Get(b)
+			return LightYellow.Get(fn) + ":" + White.Get(a) + "'" + LightBlue.Get(signature) + "'" + White.Get(b)
 		}
 	}
 
@@ -161,24 +160,24 @@ func Colorize(line string) string {
 		}
 		switch word {
 		case "\"GET", "\"POST":
-			sb.WriteString(vt100.Cyan.Get(string(word[0])) + vt100.Blue.Get(word[1:]))
+			sb.WriteString(Cyan.Get(string(word[0])) + Blue.Get(word[1:]))
 			continue
 		}
 		switch strings.ToLower(word) {
 		case "error", "error:", "errors", "errors:", "abort", "quit", "no such file or directory", "failed", "failed:", "failed,":
-			sb.WriteString(vt100.LightRed.Get(word))
+			sb.WriteString(LightRed.Get(word))
 		case "warning", "warning:", "removed", "deleted", "erased", "o":
-			sb.WriteString(vt100.LightYellow.Get(word))
+			sb.WriteString(LightYellow.Get(word))
 		case "note", "note:":
-			sb.WriteString(vt100.LightGreen.Get(word))
+			sb.WriteString(LightGreen.Get(word))
 		case "cc", "cxx", "ld", "rm", "make", "strip", "ccgi", "opkg", "install", "run", "running", "move", "format", "upgrading", "gcc", "g++", "clang", "clang++", "complete":
-			sb.WriteString(vt100.Blue.Get(word))
+			sb.WriteString(Blue.Get(word))
 		case "upgraded", "installed", "moved", "ran", "formatted", "cp", "mv", "ln":
-			sb.WriteString(vt100.Magenta.Get(word))
+			sb.WriteString(Magenta.Get(word))
 		case "=", "==", ":=", "tar", "zip":
-			sb.WriteString(vt100.White.Get(word))
+			sb.WriteString(White.Get(word))
 		default:
-			sb.WriteString(vt100.Cyan.Get(word))
+			sb.WriteString(Cyan.Get(word))
 		}
 	}
 

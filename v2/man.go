@@ -6,7 +6,7 @@ import (
 	"sync"
 	"unicode"
 
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 // shellColorCodePattern matches shell color escape sequences (ANSI codes).
@@ -55,7 +55,7 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 	line = handleManPageEscape(line)
 	var (
 		normal          = e.Foreground
-		off             = vt100.Stop()
+		off             = vt.Stop()
 		trimmedLine     = strings.TrimSpace(line)
 		hasAnyWords     = hasWords(trimmedLine)
 		innerSpaceCount = strings.Count(trimmedLine, " ")

@@ -17,7 +17,7 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 var clearOnQuit atomic.Bool // clear the terminal when quitting the editor, or not
@@ -342,7 +342,7 @@ func (e *Editor) Clear() {
 
 // Load will try to load a file. The file is assumed to be checked to already exist.
 // Returns a warning message (possibly empty) and an error type
-func (e *Editor) Load(c *vt100.Canvas, tty *vt100.TTY, fnord FilenameOrData) (string, error) {
+func (e *Editor) Load(c *vt.Canvas, tty *vt.TTY, fnord FilenameOrData) (string, error) {
 	var (
 		message string
 		err     error
@@ -428,13 +428,13 @@ func (e *Editor) PrepareEmpty() (mode.Mode, error) {
 
 // Save will try to save the current editor contents to file.
 // It needs a canvas in case trailing spaces are stripped and the cursor needs to move to the end.
-func (e *Editor) Save(c *vt100.Canvas, tty *vt100.TTY) error {
+func (e *Editor) Save(c *vt.Canvas, tty *vt.TTY) error {
 	return e.SaveAs(c, tty, e.filename)
 }
 
 // SaveAs will try to save the current editor contents to given file.
 // It needs a canvas in case trailing spaces are stripped and the cursor needs to move to the end.
-func (e *Editor) SaveAs(c *vt100.Canvas, tty *vt100.TTY, filename string) error {
+func (e *Editor) SaveAs(c *vt.Canvas, tty *vt.TTY, filename string) error {
 
 	if e.monitorAndReadOnly {
 		return errors.New("file is read-only")
@@ -747,7 +747,7 @@ func (e *Editor) DeleteCurrentLineMoveBookmark(bookmark *Position) {
 }
 
 // Delete will delete a character at the given position
-func (e *Editor) Delete(c *vt100.Canvas, useBlockMode bool) {
+func (e *Editor) Delete(c *vt.Canvas, useBlockMode bool) {
 
 	deleteThisRune := func() bool {
 		y := int(e.DataY())
@@ -1070,7 +1070,7 @@ func (e *Editor) InsertLineBelowAt(index LineIndex) {
 
 // Insert will insert a rune at the given position, with no word wrap,
 // and call MakeConsistent at the end.
-func (e *Editor) Insert(c *vt100.Canvas, r rune) {
+func (e *Editor) Insert(c *vt.Canvas, r rune) {
 
 	doInsert := func() bool {
 		// Ignore it if the current position is out of bounds
@@ -1282,7 +1282,7 @@ func (e *Editor) InsertStringBelow(y int, s string) {
 
 // InsertStringAndMove will insert a string at the current data position
 // and possibly move down. This will also call e.WriteRune, e.Down and e.Next, as needed.
-func (e *Editor) InsertStringAndMove(c *vt100.Canvas, s string) {
+func (e *Editor) InsertStringAndMove(c *vt.Canvas, s string) {
 	for _, r := range s {
 		if r == '\n' {
 			e.InsertLineBelow()
@@ -1297,7 +1297,7 @@ func (e *Editor) InsertStringAndMove(c *vt100.Canvas, s string) {
 
 // InsertString will insert a string without newlines at the current data position.
 // his will also call e.WriteRune and e.Next, as needed.
-func (e *Editor) InsertString(c *vt100.Canvas, s string) {
+func (e *Editor) InsertString(c *vt.Canvas, s string) {
 	for _, r := range s {
 		e.InsertRune(c, r)
 		e.WriteRune(c)
@@ -1369,7 +1369,7 @@ func (e *Editor) Home() {
 
 // End will move the cursor to the position right after the end of the current line contents,
 // and also trim away whitespace from the right side.
-func (e *Editor) End(c *vt100.Canvas) {
+func (e *Editor) End(c *vt.Canvas) {
 	y := e.DataY()
 	e.TrimRight(y)
 	x := e.LastTextPosition(y) + 1
@@ -1378,7 +1378,7 @@ func (e *Editor) End(c *vt100.Canvas) {
 }
 
 // EndNoTrim will move the cursor to the position right after the end of the current line contents
-func (e *Editor) EndNoTrim(c *vt100.Canvas) {
+func (e *Editor) EndNoTrim(c *vt.Canvas) {
 	x := e.LastTextPosition(e.DataY()) + 1
 	e.pos.SetX(c, x)
 	e.redraw.Store(true)
@@ -1390,7 +1390,7 @@ func (e *Editor) AtEndOfLine() bool {
 }
 
 // DownEnd will move down and then choose a "smart" X position
-func (e *Editor) DownEnd(c *vt100.Canvas) error {
+func (e *Editor) DownEnd(c *vt.Canvas) error {
 	tmpx := e.pos.sx
 	err := e.pos.Down(c)
 	if err != nil {
@@ -1430,7 +1430,7 @@ func (e *Editor) DownEnd(c *vt100.Canvas) error {
 }
 
 // UpEnd will move up and then choose a "smart" X position
-func (e *Editor) UpEnd(c *vt100.Canvas) error {
+func (e *Editor) UpEnd(c *vt.Canvas) error {
 	tmpx := e.pos.sx
 	err := e.pos.Up()
 	if err != nil {
@@ -1466,7 +1466,7 @@ func (e *Editor) UpEnd(c *vt100.Canvas) error {
 }
 
 // Next will move the cursor to the next position in the contents
-func (e *Editor) Next(c *vt100.Canvas) error {
+func (e *Editor) Next(c *vt.Canvas) error {
 	if !e.blockMode {
 		// Ignore it if the position is out of bounds
 		atTab := e.Rune() == '\t'
@@ -1527,7 +1527,7 @@ func (e *Editor) TabToTheLeft() bool {
 }
 
 // Prev will move the cursor to the previous position in the contents
-func (e *Editor) Prev(c *vt100.Canvas) error {
+func (e *Editor) Prev(c *vt.Canvas) error {
 	atTab := e.TabToTheLeft() || (e.pos.sx <= e.indentation.PerTab && e.Get(0, e.DataY()) == '\t')
 	if e.pos.sx == 0 && e.pos.offsetX > 0 {
 		// at left edge, but can scroll to the left
@@ -1566,7 +1566,7 @@ func (e *Editor) SaveX(regardless bool) {
 }
 
 // ScrollDown will scroll down the given amount of lines given in scrollSpeed
-func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed, canvasHeight int) bool {
+func (e *Editor) ScrollDown(c *vt.Canvas, status *StatusBar, scrollSpeed, canvasHeight int) bool {
 	// Find out if we can scroll scrollSpeed, or less
 	canScroll := scrollSpeed
 
@@ -1609,7 +1609,7 @@ func (e *Editor) ScrollDown(c *vt100.Canvas, status *StatusBar, scrollSpeed, can
 }
 
 // ScrollUp will scroll down the given amount of lines given in scrollSpeed
-func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) bool {
+func (e *Editor) ScrollUp(c *vt.Canvas, status *StatusBar, scrollSpeed int) bool {
 	// Find out if we can scroll scrollSpeed, or less
 	canScroll := scrollSpeed
 
@@ -1642,7 +1642,7 @@ func (e *Editor) ScrollUp(c *vt100.Canvas, status *StatusBar, scrollSpeed int) b
 }
 
 // PgDn will try to scroll down a full page
-func (e *Editor) PgDn(c *vt100.Canvas, status *StatusBar) bool {
+func (e *Editor) PgDn(c *vt.Canvas, status *StatusBar) bool {
 	canvasHeight := int(c.H())
 	scrollSpeed := canvasHeight
 	return e.ScrollDown(c, status, scrollSpeed, canvasHeight)
@@ -1741,7 +1741,7 @@ func (e *Editor) AfterLineScreenContents() bool {
 }
 
 // AfterScreenWidth checks if the current cursor position has moved after the terminal/canvas width
-func (e *Editor) AfterScreenWidth(c *vt100.Canvas) bool {
+func (e *Editor) AfterScreenWidth(c *vt.Canvas) bool {
 	w := 80 // default width
 	if c != nil {
 		w = int(c.W())
@@ -1755,7 +1755,7 @@ func (e *Editor) AfterLineScreenContentsPlusOne() bool {
 }
 
 // WriteRune writes the current rune to the given canvas
-func (e *Editor) WriteRune(c *vt100.Canvas) {
+func (e *Editor) WriteRune(c *vt.Canvas) {
 	if c == nil {
 		return
 	}
@@ -1770,7 +1770,7 @@ func (e *Editor) WriteRune(c *vt100.Canvas) {
 }
 
 // WriteTab writes spaces when there is a tab character, to the canvas
-func (e *Editor) WriteTab(c *vt100.Canvas) {
+func (e *Editor) WriteTab(c *vt.Canvas) {
 	if c == nil {
 		return
 	}
@@ -1844,14 +1844,14 @@ func (e *Editor) AtOrBeforeStartOfTextScreenLine() bool {
 }
 
 // Up tried to move the cursor up, and also scroll
-func (e *Editor) Up(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) Up(c *vt.Canvas, status *StatusBar) {
 	e.GoTo(e.DataY()-1, c, status)
 }
 
 // Down tries to move the cursor down, and also scroll
 // status is used for clearing status bar messages and can be nil
 // returns true if the end is reached
-func (e *Editor) Down(c *vt100.Canvas, status *StatusBar) bool {
+func (e *Editor) Down(c *vt.Canvas, status *StatusBar) bool {
 	_, reachedTheEnd := e.GoTo(e.DataY()+1, c, status)
 	return reachedTheEnd
 }
@@ -1913,7 +1913,7 @@ func (e *Editor) ColIndex() ColIndex {
 }
 
 // GoToPosition can go to the given position struct and use it as the new position
-func (e *Editor) GoToPosition(c *vt100.Canvas, status *StatusBar, pos Position) {
+func (e *Editor) GoToPosition(c *vt.Canvas, status *StatusBar, pos Position) {
 	e.pos = pos
 	redraw, _ := e.GoTo(e.DataY(), c, status)
 	e.redraw.Store(redraw)
@@ -1921,14 +1921,14 @@ func (e *Editor) GoToPosition(c *vt100.Canvas, status *StatusBar, pos Position) 
 }
 
 // GoToStartOfTextLine will go to the start of the non-whitespace text, for this line
-func (e *Editor) GoToStartOfTextLine(c *vt100.Canvas) {
+func (e *Editor) GoToStartOfTextLine(c *vt.Canvas) {
 	e.pos.SetX(c, int(e.FirstScreenPosition(e.DataY())))
 	e.redraw.Store(true)
 }
 
 // GoToNextParagraph will jump to the next line that has a blank line above it, if possible
 // Returns true if the editor should be redrawn, and true if the end has been reached
-func (e *Editor) GoToNextParagraph(c *vt100.Canvas, status *StatusBar) (bool, bool) {
+func (e *Editor) GoToNextParagraph(c *vt.Canvas, status *StatusBar) (bool, bool) {
 	var lastFoundBlankLine LineIndex = -1
 	l := e.Len()
 	for i := e.DataY() + 1; i < LineIndex(l); i++ {
@@ -1948,7 +1948,7 @@ func (e *Editor) GoToNextParagraph(c *vt100.Canvas, status *StatusBar) (bool, bo
 
 // GoToPrevParagraph will jump to the previous line that has a blank line below it, if possible
 // Returns true if the editor should be redrawn, and true if the end has been reached
-func (e *Editor) GoToPrevParagraph(c *vt100.Canvas, status *StatusBar) (bool, bool) {
+func (e *Editor) GoToPrevParagraph(c *vt.Canvas, status *StatusBar) (bool, bool) {
 	lastFoundBlankLine := LineIndex(e.Len())
 	for i := e.DataY() - 1; i >= 0; i-- {
 		// Check if this is a blank line
@@ -1966,7 +1966,7 @@ func (e *Editor) GoToPrevParagraph(c *vt100.Canvas, status *StatusBar) (bool, bo
 }
 
 // Center will scroll the contents so that the line with the cursor ends up in the center of the screen
-func (e *Editor) Center(c *vt100.Canvas) {
+func (e *Editor) Center(c *vt.Canvas) {
 	// Find the terminal height
 	h := 25
 	if c != nil {
@@ -2052,7 +2052,7 @@ func (e *Editor) CurrentLineCommented(commentMarker string) bool {
 // ForEachLineInBlockWithCommentMarker will move the cursor and run the given function for
 // each line in the current block of text (until newline or end of document)
 // Also takes a string that will be passed on to the function.
-func (e *Editor) ForEachLineInBlockWithCommentMarker(c *vt100.Canvas, f func(string), commentMarker string) {
+func (e *Editor) ForEachLineInBlockWithCommentMarker(c *vt.Canvas, f func(string), commentMarker string) {
 	downCounter := 0
 	for !e.EmptyRightTrimmedLine() {
 		f(commentMarker)
@@ -2077,7 +2077,7 @@ func (e *Editor) ForEachLineInBlockWithCommentMarker(c *vt100.Canvas, f func(str
 // each line in the current block of text (until newline or end of document).
 // It will also keep X the same for each line.
 // It will then use the X value after the final successful call of the given function.
-func (e *Editor) ForEachLineInBlock(c *vt100.Canvas, f func() bool) {
+func (e *Editor) ForEachLineInBlock(c *vt.Canvas, f func() bool) {
 	firstX := e.pos.sx
 	firstY := e.pos.sy
 	firstOffsetX := e.pos.offsetX
@@ -2176,7 +2176,7 @@ func (e *Editor) FunctionBlock(n LineIndex) (string, error) {
 
 // ToggleCommentBlock will toggle comments until a blank line or the end of the document is reached
 // The amount of existing commented lines is considered before deciding to comment the block in or out
-func (e *Editor) ToggleCommentBlock(c *vt100.Canvas) {
+func (e *Editor) ToggleCommentBlock(c *vt.Canvas) {
 	// If most of the lines in the block are comments, comment it out
 	// If most of the lines in the block are not comments, comment it in
 
@@ -2224,13 +2224,13 @@ func (e *Editor) ToggleCommentBlock(c *vt100.Canvas) {
 }
 
 // NewLine inserts a new line below and moves down one step
-func (e *Editor) NewLine(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) NewLine(c *vt.Canvas, status *StatusBar) {
 	e.InsertLineBelow()
 	e.Down(c, status)
 }
 
 // HorizontalScrollIfNeeded will scroll along the X axis, if needed
-func (e *Editor) HorizontalScrollIfNeeded(c *vt100.Canvas) {
+func (e *Editor) HorizontalScrollIfNeeded(c *vt.Canvas) {
 	x := e.pos.sx
 	w := 80
 	if c != nil {
@@ -2247,7 +2247,7 @@ func (e *Editor) HorizontalScrollIfNeeded(c *vt100.Canvas) {
 }
 
 // VerticalScrollIfNeeded will scroll along the X axis, if needed
-func (e *Editor) VerticalScrollIfNeeded(c *vt100.Canvas) {
+func (e *Editor) VerticalScrollIfNeeded(c *vt.Canvas) {
 	y := e.pos.sy
 	h := 25
 	if c != nil {
@@ -2264,7 +2264,7 @@ func (e *Editor) VerticalScrollIfNeeded(c *vt100.Canvas) {
 }
 
 // InsertFile inserts the contents of a file at the current location
-func (e *Editor) InsertFile(c *vt100.Canvas, filename string) error {
+func (e *Editor) InsertFile(c *vt.Canvas, filename string) error {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err
@@ -2287,7 +2287,7 @@ func (e *Editor) AbsFilename() (string, error) {
 // Switch replaces the current editor with a new Editor that opens the given file.
 // The undo stack is also swapped.
 // Only works for switching to one file, and then back again.
-func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, fileLock *LockKeeper, filenameToOpen string) error {
+func (e *Editor) Switch(c *vt.Canvas, tty *vt.TTY, status *StatusBar, fileLock *LockKeeper, filenameToOpen string) error {
 	absFilename, err := e.AbsFilename()
 	if err != nil {
 		return err
@@ -2352,7 +2352,7 @@ func (e *Editor) Switch(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, file
 }
 
 // Reload tries to load the current file again
-func (e *Editor) Reload(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, lk *LockKeeper) error {
+func (e *Editor) Reload(c *vt.Canvas, tty *vt.TTY, status *StatusBar, lk *LockKeeper) error {
 	return e.Switch(c, tty, status, lk, e.filename)
 }
 
@@ -2540,7 +2540,7 @@ func (e *Editor) LastLineNumber() LineNumber {
 }
 
 // UserInput asks the user to enter text, then collects the letters. No history.
-func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, title, defaultValue string, quickList []string, arrowsAreCountedAsLetters bool, tabInsertText string) (string, bool) {
+func (e *Editor) UserInput(c *vt.Canvas, tty *vt.TTY, status *StatusBar, title, defaultValue string, quickList []string, arrowsAreCountedAsLetters bool, tabInsertText string) (string, bool) {
 	status.ClearAll(c, false)
 	if defaultValue != "" {
 		status.SetMessage(title + ": " + defaultValue)
@@ -2607,7 +2607,7 @@ func (e *Editor) UserInput(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, t
 }
 
 // MoveToNumber will try to move to the given line number + column number (given as strings)
-func (e *Editor) MoveToNumber(c *vt100.Canvas, status *StatusBar, lineNumber, lineColumn string) error {
+func (e *Editor) MoveToNumber(c *vt.Canvas, status *StatusBar, lineNumber, lineColumn string) error {
 	// Move to (x, y), line number first and then column number
 	i, err := strconv.Atoi(lineNumber)
 	if err != nil {
@@ -2629,7 +2629,7 @@ func (e *Editor) MoveToNumber(c *vt100.Canvas, status *StatusBar, lineNumber, li
 }
 
 // MoveToLineColumnNumber will try to move to the given line number + column number (given as ints)
-func (e *Editor) MoveToLineColumnNumber(c *vt100.Canvas, status *StatusBar, lineNumber, lineColumn int, ignoreIndentation bool) error {
+func (e *Editor) MoveToLineColumnNumber(c *vt.Canvas, status *StatusBar, lineNumber, lineColumn int, ignoreIndentation bool) error {
 	// Move to (x, y), line number first and then column number
 	foundY := LineNumber(lineNumber)
 	redraw, _ := e.GoTo(foundY.LineIndex(), c, status)
@@ -2647,7 +2647,7 @@ func (e *Editor) MoveToLineColumnNumber(c *vt100.Canvas, status *StatusBar, line
 }
 
 // MoveToIndex will try to move to the given line index + column index (given as strings)
-func (e *Editor) MoveToIndex(c *vt100.Canvas, status *StatusBar, lineIndex, lineColumnIndex string, subtractOne bool) error {
+func (e *Editor) MoveToIndex(c *vt.Canvas, status *StatusBar, lineIndex, lineColumnIndex string, subtractOne bool) error {
 	// Move to (x, y), line number first and then column number
 	i, err := strconv.Atoi(lineIndex)
 	if err != nil {
@@ -2675,23 +2675,23 @@ func (e *Editor) MoveToIndex(c *vt100.Canvas, status *StatusBar, lineIndex, line
 }
 
 // GoToTop jumps and scrolls to the top of the file
-func (e *Editor) GoToTop(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) GoToTop(c *vt.Canvas, status *StatusBar) {
 	e.redraw.Store(e.GoToLineNumber(1, c, status, true))
 }
 
 // GoToMiddle jumps and scrolls to the middle of the file
-func (e *Editor) GoToMiddle(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) GoToMiddle(c *vt.Canvas, status *StatusBar) {
 	e.GoToLineNumber(LineNumber(e.Len()/2), c, status, true)
 }
 
 // GoToEnd jumps and scrolls to the end of the file
-func (e *Editor) GoToEnd(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) GoToEnd(c *vt.Canvas, status *StatusBar) {
 	// Go to the last line (by line number, not by index, e.Len() returns an index which is why there is no -1)
 	e.redraw.Store(e.GoToLineNumber(LineNumber(e.Len()), c, status, true))
 }
 
 // SortBlock sorts the a block of lines, at the current position
-func (e *Editor) SortBlock(c *vt100.Canvas, status *StatusBar, bookmark *Position) {
+func (e *Editor) SortBlock(c *vt.Canvas, status *StatusBar, bookmark *Position) {
 	if e.CurrentLine() == "" {
 		status.SetErrorMessage("no text block at the current position")
 		return
@@ -2720,7 +2720,7 @@ func (e *Editor) SortBlock(c *vt100.Canvas, status *StatusBar, bookmark *Positio
 }
 
 // SmartSplitLineOnBlanks splits the current line on space, as separate lines, but not if spaces are within brackets, parentheses or curly brackets
-func (e *Editor) SmartSplitLineOnBlanks(c *vt100.Canvas, status *StatusBar, bookmark *Position) {
+func (e *Editor) SmartSplitLineOnBlanks(c *vt.Canvas, status *StatusBar, bookmark *Position) {
 	if e.CurrentLine() == "" {
 		status.SetErrorMessage("nothing to split on blanks")
 		return
@@ -2748,7 +2748,7 @@ func (e *Editor) SmartSplitLineOnBlanks(c *vt100.Canvas, status *StatusBar, book
 }
 
 // ReplaceBlock replaces the current block with the given string, if possible
-func (e *Editor) ReplaceBlock(c *vt100.Canvas, status *StatusBar, bookmark *Position, s string) {
+func (e *Editor) ReplaceBlock(c *vt.Canvas, status *StatusBar, bookmark *Position, s string) {
 	if e.CurrentLine() == "" {
 		status.SetErrorMessage("no text block at the current position")
 		return
@@ -2787,7 +2787,7 @@ func (e *Editor) DeleteBlock(bookmark *Position) {
 
 // InsertBlock will insert multiple lines at the current position, without trimming
 // If addEmptyLine is true, an empty line will be added at the end
-func (e *Editor) InsertBlock(c *vt100.Canvas, addLines []string, addEmptyLine bool) {
+func (e *Editor) InsertBlock(c *vt.Canvas, addLines []string, addEmptyLine bool) {
 	e.InsertLineAbove()
 	// copyLines contains the lines to be pasted, and they are > 1
 	// the first line is skipped since that was already pasted when ctrl-v was pressed the first time
@@ -2835,7 +2835,7 @@ func (e *Editor) OnParenOrBracket() bool {
 }
 
 // DeleteToEndOfLine (ctrl-k)
-func (e *Editor) DeleteToEndOfLine(c *vt100.Canvas, status *StatusBar, bookmark *Position, lastCopyY, lastPasteY, lastCutY *LineIndex) {
+func (e *Editor) DeleteToEndOfLine(c *vt.Canvas, status *StatusBar, bookmark *Position, lastCopyY, lastPasteY, lastCutY *LineIndex) {
 	if e.Empty() {
 		status.SetMessage("Empty file")
 		status.Show(c, e)
@@ -2916,7 +2916,7 @@ func (e *Editor) CutSingleLine(status *StatusBar, bookmark *Position, lastCutY, 
 }
 
 // CursorForward moves the cursor forward 1 step
-func (e *Editor) CursorForward(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) CursorForward(c *vt.Canvas, status *StatusBar) {
 	// If on the last line or before, go to the next character
 	if e.DataY() <= LineIndex(e.Len()) {
 		e.Next(c)
@@ -2943,7 +2943,7 @@ func (e *Editor) CursorForward(c *vt100.Canvas, status *StatusBar) {
 }
 
 // CursorBackward moves the cursor backward 1 step
-func (e *Editor) CursorBackward(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) CursorBackward(c *vt.Canvas, status *StatusBar) {
 	// movement if there is horizontal scrolling
 	if e.pos.OffsetX() > 0 {
 		if e.pos.sx > 0 {
@@ -2984,7 +2984,7 @@ func (e *Editor) CursorBackward(c *vt100.Canvas, status *StatusBar) {
 }
 
 // CursorUpward moves the cursor up 1 step
-func (e *Editor) CursorUpward(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) CursorUpward(c *vt.Canvas, status *StatusBar) {
 	if e.DataY() > 0 {
 		// Move the position up in the current screen
 		if e.UpEnd(c) != nil {
@@ -3012,7 +3012,7 @@ func (e *Editor) CursorUpward(c *vt100.Canvas, status *StatusBar) {
 }
 
 // CursorDownward moves the cursor down 1 step
-func (e *Editor) CursorDownward(c *vt100.Canvas, status *StatusBar) {
+func (e *Editor) CursorDownward(c *vt.Canvas, status *StatusBar) {
 	if e.DataY() < LineIndex(e.Len()) {
 		// Move the position down in the current screen
 		if e.DownEnd(c) != nil {
@@ -3039,7 +3039,7 @@ func (e *Editor) CursorDownward(c *vt100.Canvas, status *StatusBar) {
 // JoinLineWithNext tries to join the current line with the next.
 // If the next line is empty, the next line is removed.
 // Returns true if this and the next line had text and they were joined to this line.
-func (e *Editor) JoinLineWithNext(c *vt100.Canvas, bookmark *Position) bool {
+func (e *Editor) JoinLineWithNext(c *vt.Canvas, bookmark *Position) bool {
 	nextLineIndex := e.DataY() + 1
 	e.redraw.Store(true)
 	e.redrawCursor.Store(true)
@@ -3059,11 +3059,11 @@ func (e *Editor) JoinLineWithNext(c *vt100.Canvas, bookmark *Position) bool {
 }
 
 // EnableAndPlaceCursor first sets the cursor to shown and then places it at the right position
-func (e *Editor) EnableAndPlaceCursor(c *vt100.Canvas) {
+func (e *Editor) EnableAndPlaceCursor(c *vt.Canvas) {
 	//e.pos.mut.Lock()
 	x := uint(e.pos.ScreenX())
 	y := uint(e.pos.ScreenY())
 	//e.pos.mut.Unlock()
 	c.ShowCursor()
-	vt100.SetXY(x, y)
+	vt.SetXY(x, y)
 }

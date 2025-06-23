@@ -2,26 +2,24 @@ package main
 
 import (
 	"errors"
-
-	"github.com/xyproto/textoutput"
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 var (
-	colorSlice = make([]vt100.AttributeColor, 0) // to be pushed to and popped from
+	colorSlice = make([]vt.AttributeColor, 0) // to be pushed to and popped from
 
 	errUnmatchedParenthesis = errors.New("unmatched parenthesis")
 )
 
 // rainbowParen implements "rainbow parenthesis" which colors "(" and ")" according to how deep they are nested
 // pCount is the existing parenthesis count when reaching the start of this line
-func (e *Editor) rainbowParen(parCount, braCount *int, chars *[]textoutput.CharAttribute, singleLineCommentMarker string, ignoreSingleQuotes bool) (err error) {
+func (e *Editor) rainbowParen(parCount, braCount *int, chars *[]vt.CharAttribute, singleLineCommentMarker string, ignoreSingleQuotes bool) (err error) {
 	var (
 		prevPrevRune = '\n'
 
-		// CharAttribute has a rune "R" and a vt100.AttributeColor "A"
-		nextChar = textoutput.CharAttribute{R: '\n', A: e.Background}
-		prevChar = textoutput.CharAttribute{R: '\n', A: e.Background}
+		// CharAttribute has a rune "R" and a AttributeColor "A"
+		nextChar = vt.CharAttribute{R: '\n', A: e.Background}
+		prevChar = vt.CharAttribute{R: '\n', A: e.Background}
 
 		// the first color in this slice will normally not be used until the parenthesis are many levels deep,
 		// the second one will be used for the regular case which is 1 level deep

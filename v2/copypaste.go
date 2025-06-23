@@ -12,7 +12,7 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 // When pasting text, portals older than this duration will be disregarded
@@ -109,7 +109,7 @@ func WriteClipboardToFile(filename string, overwrite, primaryClipboard bool) (in
 }
 
 // Paste is called when the user presses ctrl-v, and handles portals, clipboards and also non-clipboard-based copy and paste
-func (e *Editor) Paste(c *vt100.Canvas, status *StatusBar, copyLines, previousCopyLines *[]string, firstPasteAction *bool, lastCopyY, lastPasteY, lastCutY *LineIndex, prevKeyWasReturn bool) {
+func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyLines *[]string, firstPasteAction *bool, lastCopyY, lastPasteY, lastCutY *LineIndex, prevKeyWasReturn bool) {
 	if portal, err := LoadPortal(maxPortalAge); err == nil { // no error
 		line, err := portal.PopLine(e, false) // pop the line, but don't remove it from the source file
 		if err == nil {                       // success

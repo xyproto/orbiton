@@ -14,7 +14,7 @@ import (
 
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 var (
@@ -90,7 +90,7 @@ func has(executableInPath string) bool {
 // GenerateBuildCommand will generate a command for building the given filename (or for displaying HTML)
 // If there are no errors, a exec.Cmd is returned together with a function that can tell if the build
 // produced an executable, together with the executable name,
-func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename string) (*exec.Cmd, func() (bool, string), error) {
+func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string) (*exec.Cmd, func() (bool, string), error) {
 	var cmd *exec.Cmd
 
 	// A function that signals that everything is fine, regardless of if an executable is produced or not, after building
@@ -609,7 +609,7 @@ func (e *Editor) GenerateBuildCommand(c *vt100.Canvas, tty *vt100.TTY, filename 
 // BuildOrExport will try to build the source code or export the document.
 // Returns a status message and then true if an action was performed and another true if compilation/testing worked out.
 // Will also return the executable output file, if available after compilation.
-func (e *Editor) BuildOrExport(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar) (string, error) {
+func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (string, error) {
 	// Clear the status messages, if we have a status bar
 	if status != nil && c != nil {
 		status.ClearAll(c, false)
@@ -1222,7 +1222,7 @@ func (e *Editor) BuildOrExport(tty *vt100.TTY, c *vt100.Canvas, status *StatusBa
 }
 
 // Build starts a build and is typically triggered from either ctrl-space or the o menu
-func (e *Editor) Build(c *vt100.Canvas, status *StatusBar, tty *vt100.TTY) {
+func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 	// If the file is empty, there is nothing to build
 	if e.Empty() {
 		status.ClearAll(c, false)

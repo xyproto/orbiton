@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 const (
@@ -113,7 +113,7 @@ func Usage() {
 }
 
 // DrawNanoHelp will draw a help box for nano hotkeys in the center
-func (e *Editor) DrawNanoHelp(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
+func (e *Editor) DrawNanoHelp(c *vt.Canvas, repositionCursorAfterDrawing bool) {
 	const (
 		maxLines     = 30
 		title        = "Orbiton Nano Mode"
@@ -198,7 +198,7 @@ ctrl-l    - refresh the current screen
 }
 
 // DrawHotkeyOverview shows an overview of Orbiton hotkeys
-func (e *Editor) DrawHotkeyOverview(tty *vt100.TTY, c *vt100.Canvas, status *StatusBar, repositionCursorAfterDrawing bool) {
+func (e *Editor) DrawHotkeyOverview(tty *vt.TTY, c *vt.Canvas, status *StatusBar, repositionCursorAfterDrawing bool) {
 	const title = "Hotkey overview"
 
 	// Extracting hotkey information from usageText

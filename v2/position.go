@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 // Position represents a position on the screen, including how far down the view has scrolled
@@ -65,7 +65,7 @@ func (p *Position) OffsetY() int {
 }
 
 // SetX will set the screen X position
-func (p *Position) SetX(c *vt100.Canvas, x int) {
+func (p *Position) SetX(c *vt.Canvas, x int) {
 	p.mut.Lock()
 	defer p.mut.Unlock()
 
@@ -102,7 +102,7 @@ func (p *Position) DecY() {
 }
 
 // IncY will increase Y by 1
-func (p *Position) IncY(c *vt100.Canvas) {
+func (p *Position) IncY(c *vt.Canvas) {
 	p.mut.Lock()
 	defer p.mut.Unlock()
 
@@ -145,7 +145,7 @@ func (p *Position) Up() error {
 }
 
 // Down will move the cursor down
-func (p *Position) Down(c *vt100.Canvas) error {
+func (p *Position) Down(c *vt.Canvas) error {
 	p.mut.Lock()
 	defer p.mut.Unlock()
 	h := 25 // default height
@@ -201,7 +201,7 @@ func (p *Position) ColNumber() ColNumber {
 
 // Right will move the cursor to the right, if possible.
 // It will not move the cursor up or down.
-func (p *Position) Right(c *vt100.Canvas) {
+func (p *Position) Right(c *vt.Canvas) {
 	p.mut.Lock()
 	defer p.mut.Unlock()
 

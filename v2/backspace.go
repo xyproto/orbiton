@@ -1,9 +1,11 @@
 package main
 
-import "github.com/xyproto/vt100"
+import (
+	"github.com/xyproto/vt"
+)
 
 // Backspace tries to delete characters to the left and move the cursor accordingly. Also supports block mode.
-func (e *Editor) Backspace(c *vt100.Canvas, bookmark *Position) {
+func (e *Editor) Backspace(c *vt.Canvas, bookmark *Position) {
 	// doBackspace is defined as a function here in order to enclose the c and bookmark arguments
 	doBackspace := func() bool {
 		// Delete the character to the left

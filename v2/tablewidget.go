@@ -5,33 +5,33 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 // TableWidget represents a TUI widget for editing a Markdown table
 type TableWidget struct {
-	title            string               // title
-	contents         *[][]string          // the table contents
-	bgColor          vt100.AttributeColor // background color
-	highlightColor   vt100.AttributeColor // selected color (the choice that has been selected after return has been pressed)
-	headerColor      vt100.AttributeColor // the color of the table header row
-	textColor        vt100.AttributeColor // text color (the choices that are not highlighted)
-	titleColor       vt100.AttributeColor // title color (above the choices)
-	cursorColor      vt100.AttributeColor // color of the "_" cursor
-	commentColor     vt100.AttributeColor // comment color
-	cx               int                  // current content position
-	marginLeft       int                  // margin, may be negative?
-	marginTop        int                  // margin, may be negative?
-	oldy             int                  // previous position
-	cy               int                  // current content position
-	oldx             int                  // previous position
-	h                int                  // height (number of menu items)
-	w                int                  // width
-	displayQuickHelp bool                 // display "quick help" at the bottom"
+	title            string            // title
+	contents         *[][]string       // the table contents
+	bgColor          vt.AttributeColor // background color
+	highlightColor   vt.AttributeColor // selected color (the choice that has been selected after return has been pressed)
+	headerColor      vt.AttributeColor // the color of the table header row
+	textColor        vt.AttributeColor // text color (the choices that are not highlighted)
+	titleColor       vt.AttributeColor // title color (above the choices)
+	cursorColor      vt.AttributeColor // color of the "_" cursor
+	commentColor     vt.AttributeColor // comment color
+	cx               int               // current content position
+	marginLeft       int               // margin, may be negative?
+	marginTop        int               // margin, may be negative?
+	oldy             int               // previous position
+	cy               int               // current content position
+	oldx             int               // previous position
+	h                int               // height (number of menu items)
+	w                int               // width
+	displayQuickHelp bool              // display "quick help" at the bottom"
 }
 
 // NewTableWidget creates a new TableWidget
-func NewTableWidget(title string, contents *[][]string, titleColor, headerColor, textColor, highlightColor, cursorColor, commentColor, bgColor vt100.AttributeColor, canvasWidth, _, initialY int, displayQuickHelp bool) *TableWidget {
+func NewTableWidget(title string, contents *[][]string, titleColor, headerColor, textColor, highlightColor, cursorColor, commentColor, bgColor vt.AttributeColor, canvasWidth, _, initialY int, displayQuickHelp bool) *TableWidget {
 
 	columnWidths := TableColumnWidths([]string{}, *contents)
 
@@ -139,7 +139,7 @@ func (tw *TableWidget) ContentsWH() (int, int) {
 }
 
 // Draw will draw this menu widget on the given canvas
-func (tw *TableWidget) Draw(c *vt100.Canvas) {
+func (tw *TableWidget) Draw(c *vt.Canvas) {
 	cw, ch := tw.ContentsWH()
 
 	canvasWidth := int(c.W())
@@ -186,7 +186,7 @@ func (tw *TableWidget) Draw(c *vt100.Canvas) {
 				// Draw the "cursor"
 				c.Write(cursorX, cursorY, tw.cursorColor, tw.bgColor, "_")
 				// Also move the proper cursor, for good measure
-				//vt100.SetXY(cursorX, cursorY)
+				//SetXY(cursorX, cursorY)
 
 			} else if y == 0 {
 				color = tw.headerColor

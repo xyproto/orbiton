@@ -6,7 +6,7 @@ import (
 	"github.com/xyproto/javasig"
 	"github.com/xyproto/kotlinsig"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 // FuncPrefix tries to return the function keyword for the current editor mode, if possible.
@@ -329,7 +329,7 @@ func (e *Editor) OnlyFunctionNameForLineIndex(n LineIndex) string {
 
 // WriteCurrentFunctionName writes (but does not redraw) the current function name we are within (if any),
 // in the top right corner of the canvas.
-func (e *Editor) WriteCurrentFunctionName(c *vt100.Canvas) {
+func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
 	if !ProgrammingLanguage(e.mode) {
 		return
 	}
