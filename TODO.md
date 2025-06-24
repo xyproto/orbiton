@@ -3,9 +3,8 @@
 
 ## General
 
-- [ ] Triple press ctrl-c to copy the current function.
-- [ ] When pressing ctrl-f and then Tab without a search string,
-      enter regexp search mode.
+- [x] Triple press ctrl-c to copy the current function.
+- [ ] When pressing ctrl-f and then Tab without a search string, enter regexp search mode.
 - [ ] When jumping to a parenthesis with ctrl-p, remember to scroll horizontally if needed.
 - [ ] When inserting a .gitignore template, also ignore files with no extension with the same name as the current directory, and also the go.mod name (last part, after /)
 - [ ] When opening a partial filename "asdf", and both "asdf.go" and "asdf" (binary file) exists, then open "asdf.go".
