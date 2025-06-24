@@ -1751,7 +1751,16 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 					}
 				} else { // Multi line copy
 					// Pressed multiple times for this line number, copy the block of text starting from this line
-					s := e.Block(y)
+					var s string
+					if kh.Repeated("c:3", 3) {
+						var err error
+						s, err = e.FunctionBlock(y)
+						if err != nil {
+							s = e.Block(y)
+						}
+					} else {
+						s = e.Block(y)
+					}
 					if s != "" {
 						copyLines = strings.Split(s, "\n")
 						lineCount := strings.Count(s, "\n")
@@ -1775,6 +1784,9 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 						status.Show(c, e)
 					}
 				}
+
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
 			}()
 
 		case "c:22": // ctrl-v, paste

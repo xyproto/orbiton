@@ -2146,6 +2146,35 @@ func (e *Editor) Block(n LineIndex) string {
 	}
 }
 
+// FunctionBlock will return the text from the given line until
+// either the function name changes or the end of the document is reached.
+// If no function name is found, an error is returned.
+func (e *Editor) FunctionBlock(n LineIndex) (string, error) {
+	var (
+		sb                    strings.Builder
+		line                  []rune
+		ok                    bool
+		fname, firstLineIndex = e.FunctionNameForLineIndex(n)
+	)
+	if fname == "" {
+		return "", errors.New("not in a function")
+	}
+	n = firstLineIndex
+	for {
+		line, ok = e.lines[int(n)]
+		if !ok || e.OnlyFunctionNameForLineIndex(n) != fname {
+			// End of document or end of function
+			return sb.String(), nil
+		}
+		// Save this line
+		for _, r := range line {
+			sb.WriteRune(r)
+		}
+		sb.WriteRune('\n')
+		n++
+	}
+}
+
 // ToggleCommentBlock will toggle comments until a blank line or the end of the document is reached
 // The amount of existing commented lines is considered before deciding to comment the block in or out
 func (e *Editor) ToggleCommentBlock(c *vt100.Canvas) {

@@ -57,6 +57,7 @@ ctrl-t      for C and C++, toggle between the header and implementation,
             for Agda, insert a symbol,
             for the rest, record and then play back a macro
 ctrl-c      to copy the current line, press twice to copy the current block
+            press thrice to copy the current function
 ctrl-v      to paste one line, press twice to paste the rest
 ctrl-x      to cut the current line, press twice to cut the current block
 ctrl-b      to jump back after having jumped to a definition

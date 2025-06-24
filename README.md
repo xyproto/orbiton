@@ -113,7 +113,7 @@ These features are unique to `o`, as far as I am aware:
 * If the loaded file is read-only, all text will be red by default.
 * Smart cursor movement, trying to maintain the X position when moving up and down, across short and long lines.
 * Press `ctrl-v` once to paste one line, press `ctrl-v` again to paste the rest.
-* Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy a block of lines (until a blank line).
+* Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy a block of lines (until a blank line), press `ctrl-c` again to copy the current function.
 * Open or close a portal with `ctrl-r`. When a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
 * Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages.
 * Cycle git rebase keywords with `ctrl-w` or `ctrl-r`, when an interactive git rebase session is in progress.
@@ -213,7 +213,7 @@ There are pretty few hotkeys to remember:
              For the rest: record and play back keypresses. Press `Esc` to clear the current macro.
 * `ctrl-o` - Open a command menu with actions that can be performed.
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text (to the next blank line).
-* `ctrl-c` - Copy one line. Press twice to copy a block of text.
+* `ctrl-c` - Copy one line. Press twice to copy a block of text. Press thrice to copy the current function.
 * `ctrl-v` - Paste one trimmed line. Press twice to paste multiple untrimmed lines.
 * `ctrl-space` - Build program, render to PDF or export to man page (see table below).
                  For Markdown: toggle checkboxes, or double press to export to HTML.

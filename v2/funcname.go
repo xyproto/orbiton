@@ -90,7 +90,7 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 		if !strings.HasPrefix(trimmedLine, " ") && !strings.HasPrefix(trimmedLine, "\t") && strings.Count(trimmedLine, ":") == 1 {
 			parts := strings.Split(trimmedLine, ":")
 			targetName := strings.TrimSpace(parts[0])
-			return targetName != "" && !strings.Contains(targetName, "=") && !strings.Contains(targetName, "$")// looks like it could be a Makefile target name
+			return targetName != "" && !strings.Contains(targetName, "=") && !strings.Contains(targetName, "$") // looks like it could be a Makefile target name
 		}
 		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") && !strings.HasPrefix(trimmedLine, ".") && strings.Count(line, ":") == 1 {
 			parts := strings.Split(line, ":")
@@ -277,45 +277,54 @@ func (e *Editor) isWithinFunctionBody(funcDefLineIndex LineIndex) bool {
 	return currentLineIndex <= closeBraceLineIndex
 }
 
-// FindCurrentFunctionName searches upwards until it finds a function definition.
+// FunctionNameForLineIndex searches upwards until it finds a function definition.
 // It returns either the found function name or an empty string.
-// But! If the current line has no indentation AND is blank or closing (like "}"),
-// then an empty string is returned.
-// For brace-based languages like Java, it also verifies that the cursor is actually
-// within the function body, not just above the function declaration.
-func (e *Editor) FindCurrentFunctionName() string {
-	startLineIndex := e.LineIndex()
+// The returned LineIndex is the first line of the function, if found.
+func (e *Editor) FunctionNameForLineIndex(startLineIndex LineIndex) (string, LineIndex) {
 	startLine := e.Line(startLineIndex)
 	if !strings.HasPrefix(startLine, " ") && !strings.HasPrefix(startLine, "\t") { // no indentation on this line
 		trimmedLine := strings.TrimSpace(startLine)
 		if trimmedLine == "" { // and this line is empty
 			lineAbove := e.LineAbove()
 			if !strings.HasPrefix(lineAbove, " ") && !strings.HasPrefix(lineAbove, "\t") { // no indentation on the line above as well
-				return "" // most likely an empty line between functions, so there is no function name to return here
+				return "", 0 // most likely an empty line between functions, so there is no function name to return here
 			}
 		}
 		if strings.HasPrefix(trimmedLine, e.SingleLineCommentMarker()) || strings.HasPrefix(trimmedLine, "/*") || strings.HasSuffix(trimmedLine, "*/") || strings.HasPrefix(trimmedLine, "*") {
-			return "" // probably on a comment before a function
+			return "", 0 // probably on a comment before a function
 		}
 	}
-
 	for i := startLineIndex; i >= 0; i-- {
 		line := e.Line(i)
 		if functionName := e.FunctionName(line); functionName != "" {
 			// Found a function definition, but verify we're actually within its body
 			if e.isWithinFunctionBody(i) {
-				return functionName
+				return functionName, i
 			}
 			// We found a function but we're not within its body (e.g., we're above it)
-			return ""
+			return "", 0
 		}
 		if i < startLineIndex && (!strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t")) { // not indented, and not a function definition
 			if trimmedLine := strings.TrimSpace(line); trimmedLine == "}" || trimmedLine == "end" {
-				return ""
+				return "", 0
 			}
 		}
 	}
-	return ""
+	return "", 0
+}
+
+// FindCurrentFunctionName searches upwards until it finds a function definition.
+// It returns either the found function name or an empty string.
+func (e *Editor) FindCurrentFunctionName() string {
+	functionName, _ := e.FunctionNameForLineIndex(e.LineIndex())
+	return functionName
+}
+
+// OnlyFunctionNameForLineIndex searches upwards until it finds a function definition.
+// It returns either the found function name or an empty string.
+func (e *Editor) OnlyFunctionNameForLineIndex(n LineIndex) string {
+	functionName, _ := e.FunctionNameForLineIndex(n)
+	return functionName
 }
 
 // WriteCurrentFunctionName writes (but does not redraw) the current function name we are within (if any),
