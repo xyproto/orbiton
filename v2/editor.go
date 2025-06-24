@@ -2159,8 +2159,8 @@ func (e *Editor) FunctionBlock(n LineIndex) (string, error) {
 	if fname == "" {
 		return "", errors.New("not in a function")
 	}
-	n = firstLineIndex
-	for {
+
+	for n := firstLineIndex; ; n++ {
 		line, ok = e.lines[int(n)]
 		if !ok || e.OnlyFunctionNameForLineIndex(n) != fname {
 			// End of document or end of function
@@ -2171,7 +2171,6 @@ func (e *Editor) FunctionBlock(n LineIndex) (string, error) {
 			sb.WriteRune(r)
 		}
 		sb.WriteRune('\n')
-		n++
 	}
 }
 
