@@ -3,6 +3,7 @@
 
 ## General
 
+- [ ] Triple press ctrl-c to copy the current function.
 - [ ] When pressing ctrl-f and then Tab without a search string,
       enter regexp search mode.
 - [ ] When jumping to a parenthesis with ctrl-p, remember to scroll horizontally if needed.
