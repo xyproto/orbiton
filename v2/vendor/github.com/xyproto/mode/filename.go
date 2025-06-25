@@ -119,6 +119,8 @@ func Detect(filename string) Mode {
 			mode = CSS
 		case ".csproj": // C# projects
 			mode = XML
+		case ".ck":
+			mode = Chuck
 		case ".cl", ".el", ".elisp", ".emacs", ".l", ".lisp", ".lsp":
 			mode = Lisp
 		case ".cr":
@@ -218,6 +220,8 @@ func Detect(filename string) Mode {
 			mode = Prolog
 		case ".py":
 			mode = Python
+		case ".pov":
+			mode = POV
 		case ".mojo", "." + fireEmoji:
 			mode = Mojo
 		case ".r":
@@ -230,14 +234,18 @@ func Detect(filename string) Mode {
 			mode = Rust
 		case ".rst":
 			mode = ReStructured // reStructuredText
-		case ".S", ".asm", ".inc", ".mac", ".s":
+		case ".S", ".asm", ".mac", ".s":
 			// Temporary set the mode to Assembly. Go-style Assembly will be detected from the contents.
 			mode = Assembly
+		case ".inc":
+			mode = Assembly // TODO: Could be POV-Ray as well. Detect POV-Ray or Go-style Assembly from the contents.
+		case ".sc":
+			mode = SuperCollider // TODO: Could be Scheme as well. Detect Scheme from the contents.
 		case ".scala":
 			mode = Scala
 		case ".star", ".starlark":
 			mode = Starlark
-		case ".rkt", ".sc", ".sch", ".scm", ".scr", ".scrbl", ".sld", ".sls", ".sps", ".sps7", ".ss":
+		case ".rkt", ".sch", ".scm", ".scr", ".scrbl", ".sld", ".sls", ".sps", ".sps7", ".ss":
 			mode = Scheme
 		case ".swift":
 			mode = Swift

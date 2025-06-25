@@ -24,8 +24,9 @@ const (
 	C3                    // C3
 	CMake                 // CMake files
 	CS                    // C#
-	CSound                // Csound
+	CSound                // CSound // music
 	CSS                   // CSS
+	Chuck                 // Chuck // music
 	Clojure               // Clojure
 	Config                // Config like yaml, yml, toml, and ini files
 	Cpp                   // C++
@@ -88,6 +89,7 @@ const (
 	Perl                  // Perl
 	PHP                   // PHP
 	PolicyLanguage        // SE Linux configuration files
+	POV                   // POV-Ray raytracer
 	Prolog                // Prolog
 	Python                // Python
 	R                     // R
@@ -103,6 +105,7 @@ const (
 	Starlark              // Starlark
 	SQL                   // Structured Query Language
 	Subversion            // Subversion commits
+	SuperCollider         // SuperCollider // music
 	Swift                 // Swift
 	Teal                  // Teal
 	Terra                 // Terra
@@ -155,6 +158,8 @@ func (mode Mode) String() string {
 		return "C3"
 	case Clojure:
 		return "Clojure"
+	case Chuck:
+		return "Chuck"
 	case CMake:
 		return "CMake"
 	case Config:
@@ -285,6 +290,8 @@ func (mode Mode) String() string {
 		return "PHP"
 	case PolicyLanguage:
 		return "SELinux"
+	case POV:
+		return "POV-Ray"
 	case Prolog:
 		return "Prolog"
 	case Python:
@@ -315,6 +322,8 @@ func (mode Mode) String() string {
 		return "Starlark"
 	case Subversion:
 		return "Subversion"
+	case SuperCollider:
+		return "SuperCollider"
 	case Swift:
 		return "Swift"
 	case Teal:
