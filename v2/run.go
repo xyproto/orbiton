@@ -64,6 +64,9 @@ func (e *Editor) Run() (string, bool, error) {
 			audioOutputFlag = "-Od" // macOS
 		}
 		cmd = exec.Command("timidity", "--quiet", audioOutputFlag, filepath.Join(tempDir, "o.mid"))
+	case mode.Chuck:
+		stopBackgroundProcesses()
+		cmd = exec.Command("chuck", sourceFilename)
 	case mode.Clojure:
 		cmd = exec.Command("clojure", "-M", sourceFilename) // single file
 	case mode.CMake:
@@ -149,6 +152,21 @@ func (e *Editor) Run() (string, bool, error) {
 			os.MkdirAll(pyCacheDir, 0o700)
 		}
 		allEnv = append(allEnv, "PYTHONPYCACHEPREFIX="+pyCacheDir)
+	case mode.SuperCollider:
+		stopBackgroundProcesses()
+		// Check if the file needs s.waitForBoot wrapper
+		content := e.String()
+		if !strings.Contains(content, "s.waitForBoot") && !strings.Contains(content, "s.boot") {
+			// Create a temporary file with the wrapper
+			tempFile := filepath.Join(tempDir, "_o_tmp.sc")
+			wrappedContent := fmt.Sprintf("s.waitForBoot({\n%s\n});", strings.TrimSpace(content))
+			if err := os.WriteFile(tempFile, []byte(wrappedContent), 0644); err != nil {
+				return "", false, err
+			}
+			cmd = exec.Command("sclang", tempFile)
+		} else {
+			cmd = exec.Command("sclang", sourceFilename)
+		}
 	default:
 		cmd = exec.Command(filepath.Join(sourceDir, e.exeName(e.filename, true)))
 	}

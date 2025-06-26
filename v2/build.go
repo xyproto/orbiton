@@ -245,6 +245,10 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		cmd = exec.Command("abc2midi", e.filename, "-o", filepath.Join(tempDir, "o.mid"))
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
+	case mode.Chuck, mode.SuperCollider:
+		cmd = exec.Command("true")
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Make:
 		cmd = exec.Command("make")
 		cmd.Dir = sourceDir
@@ -1333,8 +1337,8 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 						if skipTheStatusBox := e.mode == mode.Lua && e.LuaLoveOrLovr(); !skipTheStatusBox {
 							msg := "Done building. Running..."
 							switch e.mode {
-							case mode.ABC:
-								msg = "Playing with Timidity..."
+							case mode.ABC, mode.Chuck, mode.SuperCollider:
+								msg = fmt.Sprintf("Playing with %s...", e.mode)
 							case mode.JavaScript, mode.Lua, mode.Python, mode.Shell, mode.TypeScript:
 								if e.flaskApplication.Load() {
 									msg = "Serving Flask on http://127.0.0.1:5000/ ..."
