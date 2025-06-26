@@ -15,7 +15,7 @@ import (
 	"github.com/xyproto/digraph"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 // For when the user scrolls too far
@@ -48,19 +48,19 @@ var (
 )
 
 // Loop will set up and run the main loop of the editor
-// a *vt100.TTY struct
+// a *vt.TTY struct
 // fnord contains either data or a filename to open
 // a LineNumber (may be 0 or -1)
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, fmtFlag bool) (userMessage string, stopParent bool, err error) {
+func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, fmtFlag bool) (userMessage string, stopParent bool, err error) {
 
 	// Create a Canvas for drawing onto the terminal
-	vt100.Init()
-	c := vt100.NewCanvas()
+	vt.Init()
+	c := vt.NewCanvas()
 	c.ShowCursor()
-	vt100.EchoOff()
+	vt.EchoOff()
 
 	var (
 		statusDuration = 2700 * time.Millisecond
@@ -144,8 +144,8 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	// Minor adjustments to some modes
 	switch e.mode {
 	case mode.Email, mode.Git:
-		e.StatusForeground = vt100.LightBlue
-		e.StatusBackground = vt100.BackgroundDefault
+		e.StatusForeground = vt.LightBlue
+		e.StatusBackground = vt.BackgroundDefault
 	case mode.ManPage:
 		e.readOnly = true
 	}
@@ -1267,7 +1267,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 				status.ClearAll(c, true)
 				status.SetMessage(fmt.Sprintf("Generating code with Ollama and the %s model...", cc.ModelName))
 				status.ShowNoTimeout(c, e)
-				vt100.ShowCursor(false)
+				vt.ShowCursor(false)
 
 				linesOfContext := codeCompletionContextLines / 2
 
@@ -2156,12 +2156,12 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	e.CloseLocksAndLocationHistory(absFilename, lockTimestamp, forceFlag, &closeLocksWaitGroup)
 
 	// Clear the colors
-	vt100.SetNoColor()
+	vt.SetNoColor()
 
 	// Quit everything that has to do with the terminal
 	if clearOnQuit.Load() {
-		vt100.Clear()
-		vt100.Close()
+		vt.Clear()
+		vt.Close()
 	} else {
 		// Clear all status bar messages
 		status.ClearAll(c, false)
@@ -2170,7 +2170,7 @@ func Loop(tty *vt100.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber
 	}
 
 	// Make sure to enable the cursor again
-	vt100.ShowCursor(true)
+	vt.ShowCursor(true)
 
 	// Wait for locks to be closed and location history to be written
 	closeLocksWaitGroup.Wait()

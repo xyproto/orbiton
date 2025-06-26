@@ -6,21 +6,20 @@ import (
 	"image"
 	"path/filepath"
 
-	"github.com/xyproto/carveimg"
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 	"golang.org/x/image/draw"
 )
 
 // displayImage loads and scales an image and tries to draw it to the terminal canvas
-func displayImage(c *vt100.Canvas, filename string, waitForKeypress bool) error {
+func displayImage(c *vt.Canvas, filename string, waitForKeypress bool) error {
 	// Find the width and height of the canvas
 	width := int(c.Width())
 	height := int(c.Height())
 
 	// Load the given filename
-	nImage, err := carveimg.LoadImage(filename)
+	nImage, err := LoadImage(filename)
 	if err != nil {
-		vt100.Close()
+		vt.Close()
 		return fmt.Errorf("could not load %s: %s", filename, err)
 	}
 
@@ -53,24 +52,24 @@ func displayImage(c *vt100.Canvas, filename string, waitForKeypress bool) error 
 	imageResizeFunction.Scale(resizedImage, resizedImage.Rect, nImage, nImage.Bounds(), draw.Over, nil)
 
 	// Draw the image to the canvas, using only the basic 16 colors
-	if err := carveimg.Draw(c, resizedImage); err != nil {
-		vt100.Close()
+	if err := Draw(c, resizedImage); err != nil {
+		vt.Close()
 		return fmt.Errorf("could not draw image: %s", err)
 	}
 
 	// Output the filename on top of the image
 	title := " " + filepath.Base(filename) + " "
-	c.Write(uint((width-len(title))/2), uint(height-1), vt100.Black, vt100.BackgroundGray, title)
+	c.Write(uint((width-len(title))/2), uint(height-1), vt.Black, vt.BackgroundGray, title)
 
 	// Draw the contents of the canvas to the screen
 	c.HideCursorAndDraw()
 
 	// Show the cursor after the keypress
-	defer vt100.ShowCursor(true)
+	defer vt.ShowCursor(true)
 
 	if waitForKeypress {
 		// Wait for a keypress
-		vt100.WaitForKey()
+		vt.WaitForKey()
 	}
 
 	return nil

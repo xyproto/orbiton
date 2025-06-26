@@ -6,13 +6,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 func TestMain(m *testing.M) {
 	code := m.Run()
 
-	vt100.ShowCursor(true)
+	vt.ShowCursor(true)
 
 	os.Exit(code)
 }

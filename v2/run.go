@@ -14,7 +14,7 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 var runPID atomic.Int64
@@ -194,7 +194,7 @@ func (e *Editor) Run() (string, bool, error) {
 }
 
 // DrawOutput will draw a pane with the 5 last lines of the given output
-func (e *Editor) DrawOutput(c *vt100.Canvas, maxLines int, title, collectedOutput string, backgroundColor vt100.AttributeColor, repositionCursorAfterDrawing, rightHandSide bool) {
+func (e *Editor) DrawOutput(c *vt.Canvas, maxLines int, title, collectedOutput string, backgroundColor vt.AttributeColor, repositionCursorAfterDrawing, rightHandSide bool) {
 	e.waitWithRedrawing.Store(true)
 
 	w := c.Width()

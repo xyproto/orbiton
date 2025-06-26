@@ -1,8 +1,7 @@
 //go:build windows
 // +build windows
 
-// Package textoutput offers a simple way to use vt100 and output colored text
-package textoutput
+package vt
 
 import (
 	"fmt"
@@ -472,7 +471,7 @@ func (o *TextOutput) initializeTagReplacers() {
 // 					currentColor = currentColor[1:]
 // 				}
 // 				// currentColor now contains the last found color attributes,
-// 				// but as a vt100.AttributeColor.
+// 				// but as an AttributeColor.
 // 				colorcode.Reset()
 // 				escaped = false
 // 			}

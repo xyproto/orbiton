@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/xyproto/files"
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 // DisableQuickHelpScreen saves a file to the cache directory so that the quick help will be disabled the next time the editor starts
@@ -56,7 +56,7 @@ func QuickHelpScreenIsDisabled() bool {
 }
 
 // DrawQuickHelp draws the quick help + some help for new users
-func (e *Editor) DrawQuickHelp(c *vt100.Canvas, repositionCursorAfterDrawing bool) {
+func (e *Editor) DrawQuickHelp(c *vt.Canvas, repositionCursorAfterDrawing bool) {
 	const (
 		maxLines = 8
 		title    = "Quick Overview"

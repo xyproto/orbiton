@@ -1,4 +1,4 @@
-package vt100
+package vt
 
 import (
 	"image"
@@ -36,10 +36,10 @@ func (c *Canvas) ToImage() (image.Image, error) {
 }
 
 func ansiCodeToColor(ac AttributeColor, isForeground bool) color.NRGBA {
-	if len(ac) == 0 {
+	code := uint32(ac)
+	if code == 0 {
 		return color.NRGBA{0, 0, 0, 255} // Default black color
 	}
-	code := ac[0]
 	if isForeground {
 		switch code {
 		case 30: // Black

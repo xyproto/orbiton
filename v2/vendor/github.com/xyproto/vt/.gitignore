@@ -47,3 +47,14 @@ cmd/*/*
 
 # Orbiton include.txt file
 include.txt
+
+# Java and Kotlin
+build/
+.gradle/
+.kotlin/
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/

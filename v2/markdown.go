@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 // ToggleCheckboxCurrentLine will attempt to toggle the Markdown checkbox on the current line of the editor.
@@ -35,7 +35,7 @@ func (e *Editor) ToggleCheckboxCurrentLine() bool {
 // quote is the quote string (like "`" or "**")
 // regular is the color of the regular text
 // quoted is the color of the highlighted quoted text (including the quotes)
-func quotedWordReplace(line string, quote rune, regular, quoted vt100.AttributeColor) string {
+func quotedWordReplace(line string, quote rune, regular, quoted vt.AttributeColor) string {
 	// Now do backtick replacements
 	if strings.ContainsRune(line, quote) && runeCount(line, quote)%2 == 0 {
 		inQuote := false
@@ -49,13 +49,13 @@ func quotedWordReplace(line string, quote rune, regular, quoted vt100.AttributeC
 			if r == quote && prevR != '*' && nextR != '*' && prevR != '_' && nextR != '_' {
 				inQuote = !inQuote
 				if inQuote {
-					s = append(s, []rune(vt100.Stop())...)
+					s = append(s, []rune(vt.Stop())...)
 					s = append(s, []rune(quoted.String())...)
 					s = append(s, r)
 					continue
 				}
 				s = append(s, r)
-				s = append(s, []rune(vt100.Stop())...)
+				s = append(s, []rune(vt.Stop())...)
 				s = append(s, []rune(regular.String())...)
 				continue
 			}
@@ -67,14 +67,14 @@ func quotedWordReplace(line string, quote rune, regular, quoted vt100.AttributeC
 			}
 		}
 		// End by turning the color off
-		s = append(s, []rune(vt100.Stop())...)
+		s = append(s, []rune(vt.Stop())...)
 		return string(s)
 	}
 	// Return the same line, but colored, if the quotes are not balanced
 	return regular.Get(line)
 }
 
-func style(line, marker string, textColor, styleColor vt100.AttributeColor) string {
+func style(line, marker string, textColor, styleColor vt.AttributeColor) string {
 	n := strings.Count(line, marker)
 	if n < 2 {
 		// There must be at least two found markers
@@ -98,21 +98,21 @@ func style(line, marker string, textColor, styleColor vt100.AttributeColor) stri
 			if len(part) == 0 {
 				result += marker
 			} else {
-				result += part + vt100.Stop() + styleColor.String() + marker
+				result += part + vt.Stop() + styleColor.String() + marker
 			}
 		default:
 			// Odd case that is not the last case
 			if len(part) == 0 {
 				result += marker
 			} else {
-				result += part + marker + vt100.Stop() + textColor.String()
+				result += part + marker + vt.Stop() + textColor.String()
 			}
 		}
 	}
 	return result
 }
 
-func emphasis(line string, textColor, italicsColor, boldColor, strikeColor vt100.AttributeColor) string {
+func emphasis(line string, textColor, italicsColor, boldColor, strikeColor vt.AttributeColor) string {
 	result := line
 	if !withinBackticks(line, "~~") {
 		result = style(result, "~~", textColor, strikeColor)

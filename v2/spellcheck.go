@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/sajari/fuzzy"
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 // how far away a word can be from the corrected word that the spellchecker suggests
@@ -194,7 +194,7 @@ func (e *Editor) SearchForTypo() (string, string, error) {
 }
 
 // NanoNextTypo tries to jump to the next typo
-func (e *Editor) NanoNextTypo(c *vt100.Canvas, status *StatusBar) (string, string) {
+func (e *Editor) NanoNextTypo(c *vt.Canvas, status *StatusBar) (string, string) {
 	if typo, corrected, err := e.SearchForTypo(); err == nil || err == errFoundNoTypos {
 		e.redraw.Store(true)
 		e.redrawCursor.Store(true)

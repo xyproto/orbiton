@@ -1,4 +1,4 @@
-package carveimg
+package main
 
 import (
 	"image"

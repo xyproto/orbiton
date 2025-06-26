@@ -15,7 +15,7 @@ import (
 	"github.com/ianlancetaylor/demangle"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 const (
@@ -628,7 +628,7 @@ func (e *Editor) AddWatch(expression string) (string, error) {
 }
 
 // DrawWatches will draw a box with the current watch expressions and values in the upper right
-func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
+func (e *Editor) DrawWatches(c *vt.Canvas, repositionCursor bool) {
 	// First create a box the size of the entire canvas
 	canvasBox := NewCanvasBox(c)
 
@@ -761,7 +761,7 @@ func (e *Editor) DrawWatches(c *vt100.Canvas, repositionCursor bool) {
 }
 
 // DrawFlags will draw the currently set flags (like zero, carry etc) at the bottom right
-func (e *Editor) DrawFlags(c *vt100.Canvas, repositionCursor bool) {
+func (e *Editor) DrawFlags(c *vt.Canvas, repositionCursor bool) {
 	if e.gdb == nil {
 		return
 	}
@@ -842,7 +842,7 @@ func (e *Editor) DrawFlags(c *vt100.Canvas, repositionCursor bool) {
 }
 
 // DrawRegisters will draw a box with the current register values in the lower right
-func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
+func (e *Editor) DrawRegisters(c *vt.Canvas, repositionCursor bool) error {
 	defer func() {
 		// Reposition the cursor
 		if repositionCursor {
@@ -943,7 +943,7 @@ func (e *Editor) DrawRegisters(c *vt100.Canvas, repositionCursor bool) error {
 }
 
 // DrawInstructions will draw a box with the current instructions
-func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error {
+func (e *Editor) DrawInstructions(c *vt.Canvas, repositionCursor bool) error {
 	defer func() {
 		// Reposition the cursor
 		if repositionCursor {
@@ -1065,7 +1065,7 @@ func (e *Editor) DrawInstructions(c *vt100.Canvas, repositionCursor bool) error 
 }
 
 // DrawGDBOutput will draw a pane with the 5 last lines of the collected stdoutput from GDB
-func (e *Editor) DrawGDBOutput(c *vt100.Canvas, repositionCursor bool) {
+func (e *Editor) DrawGDBOutput(c *vt.Canvas, repositionCursor bool) {
 	// Check if the output pane should be shown or not
 	if e.debugHideOutput || e.gdb == nil {
 		return
@@ -1139,7 +1139,7 @@ func (e *Editor) DrawGDBOutput(c *vt100.Canvas, repositionCursor bool) {
 }
 
 // DebugStartSession builds and then connects to gdb
-func (e *Editor) DebugStartSession(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, optionalOutputExecutable string) error {
+func (e *Editor) DebugStartSession(c *vt.Canvas, tty *vt.TTY, status *StatusBar, optionalOutputExecutable string) error {
 	absFilename, err := e.AbsFilename()
 	if err != nil {
 		return err

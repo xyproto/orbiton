@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 // Page represents a single page of text.
@@ -28,7 +28,7 @@ func NewScrollableTextBox(pages []Page) *ScrollableTextBox {
 // DrawScrollableText will draw a scrollable text widget.
 // Takes a Box struct for the size and position.
 // Uses bt.Foreground and bt.Background.
-func (e *Editor) DrawScrollableText(bt *BoxTheme, c *vt100.Canvas, stb *ScrollableTextBox) {
+func (e *Editor) DrawScrollableText(bt *BoxTheme, c *vt.Canvas, stb *ScrollableTextBox) {
 	if stb.CurrentPage >= len(stb.Pages) || stb.CurrentPage < 0 {
 		// Invalid page number, do nothing or log an error
 		return

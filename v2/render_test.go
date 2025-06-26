@@ -3,10 +3,10 @@ package main
 import (
 	"testing"
 
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
-func TestToImage(_ *testing.T) {
+func TestRender(_ *testing.T) {
 	// Just check that .ToImage() is available and possible to call
-	vt100.NewCanvas().ToImage()
+	vt.NewCanvas().ToImage()
 }

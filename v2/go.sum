@@ -21,8 +21,8 @@ github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S
 github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
 github.com/gomarkdown/markdown v0.0.0-20250311123330-531bef5e742b h1:EY/KpStFl60qA17CptGXhwfZ+k1sFNJIUNR8DdbcuUk=
 github.com/gomarkdown/markdown v0.0.0-20250311123330-531bef5e742b/go.mod h1:JDGcbDT52eL4fju3sZ4TeHGsQwhG9nbDV21aMyhwPoA=
-github.com/ianlancetaylor/demangle v0.0.0-20250417193237-f615e6bd150b h1:ogbOPx86mIhFy764gGkqnkFC8m5PJA7sPzlk9ppLVQA=
-github.com/ianlancetaylor/demangle v0.0.0-20250417193237-f615e6bd150b/go.mod h1:gx7rwoVhcfuVKG5uya9Hs3Sxj7EIvldVofAWIUtGouw=
+github.com/ianlancetaylor/demangle v0.0.0-20250625212726-86fd2c0a1a74 h1:j+XHk/IOBmed9KtbrgwEv06IECCu+uJDl4OYN2fJYl0=
+github.com/ianlancetaylor/demangle v0.0.0-20250625212726-86fd2c0a1a74/go.mod h1:gx7rwoVhcfuVKG5uya9Hs3Sxj7EIvldVofAWIUtGouw=
 github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 h1:YLvr1eE6cdCqjOe972w/cYF+FjW34v27+9Vo5106B4M=
 github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25/go.mod h1:kLgvv7o6UM+0QSf0QjAse3wReFDsb9qbZJdfexWlrQw=
 github.com/jung-kurt/gofpdf v1.0.0/go.mod h1:7Id9E/uU8ce6rXgefFLlgrJj/GYY22cpxn+r32jIOes=
@@ -42,8 +42,6 @@ github.com/mattn/go-runewidth v0.0.16 h1:E5ScNMtiwvlvB5paMFdw9p4kSQzbXFikJ5SQO6T
 github.com/mattn/go-runewidth v0.0.16/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh153qUoGf23w=
 github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d h1:5PJl274Y63IEHC+7izoQE9x6ikvDFZS2mDVS3drnohI=
 github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d/go.mod h1:01TrycV0kFyexm33Z7vhZRXopbI8J3TDReVlkTgMUxE=
-github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d h1:NqRhLdNVlozULwM1B3VaHhcXYSgrOAv8V5BE65om+1Q=
-github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d/go.mod h1:cxIIfNMTwff8f/ZvRouvWYF6wOoO7nj99neWSx2q/Es=
 github.com/peterhellberg/gfx v0.0.0-20191011152831-b91a0de61948/go.mod h1:itlt/V2ABb7sDu42VXQHXmQ4KOdrEbFZDVIaHsRcwak=
 github.com/peterhellberg/gfx v0.0.0-20240717094052-4fa835cea5a4/go.mod h1:ipo3f7y1+RHNR32fj+4TETou6OF4VXvJBhb9rwncKuw=
 github.com/peterhellberg/gfx v0.0.0-20250602150231-2e41f5fad310 h1:GYpS3eYKhZmxRlKKAMaSRM/V+L6IPFlYd+IB/kc7TmU=
@@ -77,8 +75,6 @@ github.com/xyproto/burnfont v1.2.3 h1:4MHSRrmVqZT8i1XmDrEG/5qcg2G1bSEDlOoO3BCl11
 github.com/xyproto/burnfont v1.2.3/go.mod h1:NlQwt/VHpxq17k8CkHcWvWTGhBim818XB4onh+TeZRo=
 github.com/xyproto/burnpal v1.0.0 h1:cwiMfJdQKRuTWbg6XjCjBNd7c0TLCpfbxLW5bQNzU+c=
 github.com/xyproto/burnpal v1.0.0/go.mod h1:j3S/tDDOEkIChz0sWDqO3zXOgIjz/6nhuc+JrmZNLnA=
-github.com/xyproto/carveimg v1.4.9 h1:xR/VRLUqB2Ct3pq42ng/eKMq2OX4122W6Yv0Z5i/G+Q=
-github.com/xyproto/carveimg v1.4.9/go.mod h1:Xuf6N0G/bNrLHibt0GbYRTcnuGqvVVX+mu38qspfrzc=
 github.com/xyproto/clip v1.0.0 h1:fA/5CK6rslFvY9Ta76A7U2z73fSaEF96EKjS/RYcC5s=
 github.com/xyproto/clip v1.0.0/go.mod h1:jVRcSiAIK6dadcIXPtOa9/wetlggtIGRiRIDOrU0sfU=
 github.com/xyproto/digraph v1.3.0 h1:3zEUnFMHem6hrwePg/M9OrV+3R0GmBd2yH42QJYuIBg=
@@ -108,17 +104,12 @@ github.com/xyproto/ollamaclient/v2 v2.7.1 h1:kYel2Ye2ZfnzG+trjlImq4Hmoeupb5+nfYY
 github.com/xyproto/ollamaclient/v2 v2.7.1/go.mod h1:493pxyifwu57ifEg8DK45cw9aZuzvewXc/mReBlVI2o=
 github.com/xyproto/palgen v1.6.1 h1:TmVtbNZ6VAPzTBxFDFm0Fxk5Xw+NVdnl1xmJuvzFHsI=
 github.com/xyproto/palgen v1.6.1/go.mod h1:HOIPtsPHOgpGTSLifWenL1Q6C+Sq/QoC8REct5J8OPI=
-github.com/xyproto/stringpainter v1.0.1 h1:OpCY4iTqtdyQD5wllMIp9vebVUB5hUrbQH2SQKKuB8w=
-github.com/xyproto/stringpainter v1.0.1/go.mod h1:k6CjhMdN0Rq+FECU4rm5mk8ozaRq7tEM9J1s19JqKjI=
 github.com/xyproto/termtitle v1.5.1 h1:L1I+6juzNQk+BsoPCYw2c+3unEv4pxQqcyIoO9Xb3qc=
 github.com/xyproto/termtitle v1.5.1/go.mod h1:U+yMnuL9ENDJy9+OCDEiEx01b7Uk6Zu6g1O22xY/rvQ=
-github.com/xyproto/textoutput v1.17.2 h1:Gv82OLXtzIgqOYCHd/g5qM+Aw1AWW4nv9JvObT0IKyo=
-github.com/xyproto/textoutput v1.17.2/go.mod h1:H7mjyYNWUYFYVK/gfc0mPYUJb7sNYedSafqQOCJYqy0=
 github.com/xyproto/usermodel v1.2.2 h1:jfLmh65PGabdHR7mUR6fUGSax/joDOfai/Gr4VV3jtc=
 github.com/xyproto/usermodel v1.2.2/go.mod h1:Yq23gofv51bjTujYYnAH3fpvWD+ENa3fdIA+ahfU/B4=
-github.com/xyproto/vt100 v1.14.2/go.mod h1:DZDxocHCwx0kZTVnsyGogNYKyQ1rwDzUURDhAThjLVw=
-github.com/xyproto/vt100 v1.16.12 h1:FZlRfVBqhIEZOwJyRh08OlCyDohutbIyZgaQnkNYQvQ=
-github.com/xyproto/vt100 v1.16.12/go.mod h1:cyNzlkP5m2rcVkn4di5D67RFVXADMx4D4RpZbcjOK7I=
+github.com/xyproto/vt v1.1.0 h1:yVx1CmY3sXiBFcREa/kfmBgM7VS80HQJpvu+xlXm4Ms=
+github.com/xyproto/vt v1.1.0/go.mod h1:9TyReL74KpOt9uZHkvdsLY+BsiuLq2enM5kR/14BlWg=
 github.com/xyproto/wordwrap v1.0.1 h1:nKmUy4Jr+VBbeFfCgcUBx/e707ky7GBZLE/x1Uh3dtA=
 github.com/xyproto/wordwrap v1.0.1/go.mod h1:NIZ+TjJF24AUJzQDmr/fOMWgn3B2pK5+c9fPCp6UvcM=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
@@ -147,7 +138,6 @@ golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a/go.mod h1:oPkhp1MJrh7nUepCBc
 golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.5.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.6.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
-golang.org/x/sys v0.15.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
 golang.org/x/sys v0.33.0 h1:q3i8TbbEz+JRD9ywIRlyRAQbM0qF7hu24q3teo2hbuw=
 golang.org/x/sys v0.33.0/go.mod h1:BJP2sWEmIv4KK5OTEluFJCKSidICx8ciO85XgH3Ak8k=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=

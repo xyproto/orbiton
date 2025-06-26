@@ -31,7 +31,7 @@ github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
 github.com/gomarkdown/markdown/html
 github.com/gomarkdown/markdown/parser
-# github.com/ianlancetaylor/demangle v0.0.0-20250417193237-f615e6bd150b
+# github.com/ianlancetaylor/demangle v0.0.0-20250625212726-86fd2c0a1a74
 ## explicit; go 1.13
 github.com/ianlancetaylor/demangle
 # github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25
@@ -61,9 +61,6 @@ github.com/mattn/go-runewidth
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 ## explicit
 github.com/mgutz/ansi
-# github.com/nathan-fiscaletti/consolesize-go v0.0.0-20220204101620-317176b6684d
-## explicit
-github.com/nathan-fiscaletti/consolesize-go
 # github.com/peterhellberg/gfx v0.0.0-20250602150231-2e41f5fad310
 ## explicit; go 1.17
 github.com/peterhellberg/gfx
@@ -97,9 +94,6 @@ github.com/xyproto/burnfont
 # github.com/xyproto/burnpal v1.0.0
 ## explicit; go 1.11
 github.com/xyproto/burnpal
-# github.com/xyproto/carveimg v1.4.9
-## explicit; go 1.23.0
-github.com/xyproto/carveimg
 # github.com/xyproto/clip v1.0.0
 ## explicit; go 1.11
 github.com/xyproto/clip
@@ -142,21 +136,15 @@ github.com/xyproto/ollamaclient/v2
 # github.com/xyproto/palgen v1.6.1
 ## explicit; go 1.16
 github.com/xyproto/palgen
-# github.com/xyproto/stringpainter v1.0.1
-## explicit; go 1.13
-github.com/xyproto/stringpainter
 # github.com/xyproto/termtitle v1.5.1
 ## explicit; go 1.11
 github.com/xyproto/termtitle
-# github.com/xyproto/textoutput v1.17.2
-## explicit; go 1.23.0
-github.com/xyproto/textoutput
 # github.com/xyproto/usermodel v1.2.2
 ## explicit; go 1.23.1
 github.com/xyproto/usermodel
-# github.com/xyproto/vt100 v1.16.12
-## explicit; go 1.23.0
-github.com/xyproto/vt100
+# github.com/xyproto/vt v1.1.0
+## explicit; go 1.24.4
+github.com/xyproto/vt
 # github.com/xyproto/wordwrap v1.0.1
 ## explicit; go 1.21.3
 github.com/xyproto/wordwrap

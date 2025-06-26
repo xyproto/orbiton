@@ -5,11 +5,11 @@ import (
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/parser"
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 // exportMarkdownHTML will render HTML from Markdown using the gomarkdown package
-func (e *Editor) exportMarkdownHTML(c *vt100.Canvas, status *StatusBar, htmlFilename string) error {
+func (e *Editor) exportMarkdownHTML(c *vt.Canvas, status *StatusBar, htmlFilename string) error {
 	status.ClearAll(c, true)
 	status.SetMessage("Rendering to HTML using gomarkdown...")
 	status.ShowNoTimeout(c, e)

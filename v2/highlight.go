@@ -15,9 +15,7 @@ import (
 	"github.com/sourcegraph/annotate"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/stringpainter"
-	"github.com/xyproto/textoutput"
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 // Kind represents a syntax highlighting kind (class) which will be assigned to tokens.
@@ -246,15 +244,15 @@ const (
 
 var (
 	colorTagRegex = regexp.MustCompile(`<([a-nA-Np-zP-Z]\w+)>`) // not starting with "o"
-	tout          = textoutput.NewTextOutput(true, true)
+	tout          = vt.NewTextOutput(true, true)
 	resizeMut     sync.RWMutex // locked when the terminal emulator is being resized
 
 	noGUI = !env.Has("DISPLAY") && !env.Has("WAYLAND_DISPLAY") // no X, no Wayland
 )
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
-func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy uint, shouldHighlightNow, hideCursorWhenDrawing bool) {
-	// TODO: Use a channel for queuing up calls to the vt100 package to avoid race conditions
+func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uint, shouldHighlightNow, hideCursorWhenDrawing bool) {
+	// TODO: Use a channel for queuing up calls to the package to avoid race conditions
 
 	// TODO: Refactor this function
 	var (
@@ -310,12 +308,12 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		li                                 LineIndex
 		y                                  LineIndex
 		offsetY                            LineIndex
-		fg                                 vt100.AttributeColor
-		dottedLineColor                    vt100.AttributeColor
-		bg                                 vt100.AttributeColor = e.Background.Background()
-		ra, ra2                            textoutput.CharAttribute
+		fg                                 vt.AttributeColor
+		dottedLineColor                    vt.AttributeColor
+		bg                                 vt.AttributeColor = e.Background.Background()
+		ra, ra2                            vt.CharAttribute
 		searchTermRunes                    = []rune(e.searchTerm) // Search term highlighting
-		runesAndAttributes                 []textoutput.CharAttribute
+		runesAndAttributes                 []vt.CharAttribute
 		q                                  *QuoteState
 		escapeFunction                     = Escape
 		unEscapeFunction                   = UnEscape
@@ -419,7 +417,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 	highlightCurrentLine := false
 
 	// buffer for extracting char attributes from strings with terminal codes (will be expanded if it's too small)
-	cc := make([]textoutput.CharAttribute, 256)
+	cc := make([]vt.CharAttribute, 256)
 
 	// Loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y = LineIndex(0); y < LineIndex(numLinesToDraw); y++ {
@@ -577,7 +575,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					}
 				case mode.Log:
-					coloredString = stringpainter.Colorize(line)
+					coloredString = vt.Colorize(line)
 				case mode.Lisp, mode.Clojure:
 					q.singleQuote = 0
 					// Special case for Lisp single-line comments
@@ -730,7 +728,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 
 				// Extract a slice of runes and color attributes
 				if len(coloredString) >= len(cc) {
-					cc = make([]textoutput.CharAttribute, len(coloredString)*2)
+					cc = make([]vt.CharAttribute, len(coloredString)*2)
 				}
 				n := tout.ExtractToSlice(coloredString, &cc)
 				runesAndAttributes = cc[:n]
@@ -865,7 +863,7 @@ func (e *Editor) WriteLines(c *vt100.Canvas, fromline, toline LineIndex, cx, cy 
 		}
 
 		if noGUI {
-			vt100.SetXY(0, yp+1)
+			vt.SetXY(0, yp+1)
 		}
 
 		// Draw a dotted line to remind the user of where the N-column limit is

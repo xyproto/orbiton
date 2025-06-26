@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 // TutorialStep represents a step in the tutorial wizard
@@ -356,7 +356,7 @@ var tutorialSteps = Tutorial{
 }
 
 // LaunchTutorial launches a short and sweet tutorial that covers at least portals and cut/paste
-func LaunchTutorial(tty *vt100.TTY, c *vt100.Canvas, e *Editor, status *StatusBar) {
+func LaunchTutorial(tty *vt.TTY, c *vt.Canvas, e *Editor, status *StatusBar) {
 	const repositionCursorAfterDrawing = false
 	const marginX = 4
 
@@ -406,7 +406,7 @@ func LaunchTutorial(tty *vt100.TTY, c *vt100.Canvas, e *Editor, status *StatusBa
 }
 
 // Draw draws a step of the tutorial
-func (step TutorialStep) Draw(c *vt100.Canvas, e *Editor, progress string, minWidth int, repositionCursorAfterDrawing bool) {
+func (step TutorialStep) Draw(c *vt.Canvas, e *Editor, progress string, minWidth int, repositionCursorAfterDrawing bool) {
 	canvasBox := NewCanvasBox(c)
 
 	// Window is the background box that will be drawn in the upper right

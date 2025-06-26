@@ -12,14 +12,14 @@ import (
 
 	"github.com/xyproto/clip"
 	"github.com/xyproto/files"
-	"github.com/xyproto/vt100"
+	"github.com/xyproto/vt"
 )
 
 const commandTimeout = 10 * time.Second
 
 // CommandToFunction takes an editor command as a string (with optional arguments) and returns a function that
 // takes no arguments and performs the suggested action, like "save". Some functions may take an undo snapshot first.
-func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo, args ...string) (func(), error) {
+func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookmark *Position, undo *Undo, args ...string) (func(), error) {
 	if len(args) == 0 {
 		return nil, errors.New("no command given")
 	}
@@ -421,7 +421,7 @@ func (e *Editor) CommandToFunction(c *vt100.Canvas, tty *vt100.TTY, status *Stat
 }
 
 // RunCommand takes a command string and performs and action (like "save" or "quit")
-func (e *Editor) RunCommand(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo, args ...string) error {
+func (e *Editor) RunCommand(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookmark *Position, undo *Undo, args ...string) error {
 	f, err := e.CommandToFunction(c, tty, status, bookmark, undo, args...)
 	if err != nil {
 		return err
@@ -432,7 +432,7 @@ func (e *Editor) RunCommand(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, 
 
 // CommandPrompt shows and handles user input that is interpreted as internal commands,
 // or external commands if they start with "!"
-func (e *Editor) CommandPrompt(c *vt100.Canvas, tty *vt100.TTY, status *StatusBar, bookmark *Position, undo *Undo) {
+func (e *Editor) CommandPrompt(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookmark *Position, undo *Undo) {
 	// The spaces are intentional, to stop the shorter strings from always kicking in before
 	// the longer ones can be typed.
 	quickList := []string{":wq", "wq", "sq", "sqc", ":q", "q", ":w ", "s ", "w ", "d", "b", "↑", "↓", "c:23", "c:19", "c:17"}

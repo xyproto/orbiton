@@ -1,4 +1,4 @@
-package vt100
+package vt
 
 import (
 	"errors"
@@ -355,17 +355,6 @@ func (tty *TTY) Term() *term.Term {
 	return tty.t
 }
 
-// asciiAndKeyCodeOnce reads a single key press and returns the ASCII code and key code
-func asciiAndKeyCodeOnce() (ascii, keyCode int, err error) {
-	t, err := NewTTY()
-	if err != nil {
-		return 0, 0, err
-	}
-	a, kc, err := asciiAndKeyCode(t)
-	t.Close()
-	return a, kc, err
-}
-
 // ASCII returns the ASCII code of the key pressed
 func (tty *TTY) ASCII() int {
 	ascii, _, err := asciiAndKeyCode(tty)
@@ -375,27 +364,9 @@ func (tty *TTY) ASCII() int {
 	return ascii
 }
 
-// ASCIIOnce returns the ASCII code of a single key press
-func ASCIIOnce() int {
-	ascii, _, err := asciiAndKeyCodeOnce()
-	if err != nil {
-		return 0
-	}
-	return ascii
-}
-
 // KeyCode returns the key code of the key pressed
 func (tty *TTY) KeyCode() int {
 	_, keyCode, err := asciiAndKeyCode(tty)
-	if err != nil {
-		return 0
-	}
-	return keyCode
-}
-
-// KeyCodeOnce returns the key code of a single key press
-func KeyCodeOnce() int {
-	_, keyCode, err := asciiAndKeyCodeOnce()
 	if err != nil {
 		return 0
 	}
