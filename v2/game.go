@@ -57,11 +57,11 @@ var (
 
 // Bob represents the player
 type Bob struct {
-	color      vt.AttributeColor // foreground color
-	x, y       int               // current position
-	oldx, oldy int               // previous position
+	x, y       int // current position
+	oldx, oldy int // previous position
 	w, h       float64
-	state      rune // looks
+	color      vt.AttributeColor // foreground color
+	state      rune              // looks
 }
 
 // NewBob creates a new Bob struct
@@ -286,11 +286,11 @@ func (b *Pellet) Resize(c *vt.Canvas) {
 
 // Bubble represents a bubble character that is in the way
 type Bubble struct {
-	color      vt.AttributeColor // foreground color
-	x, y       int               // current position
-	oldx, oldy int               // previous position
+	x, y       int // current position
+	oldx, oldy int // previous position
 	w, h       float64
-	state      rune // looks
+	color      vt.AttributeColor // foreground color
+	state      rune              // looks
 }
 
 // NewBubbles creates n new Bubble structs

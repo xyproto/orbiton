@@ -24,64 +24,64 @@ var clearOnQuit atomic.Bool // clear the terminal when quitting the editor, or n
 
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
-	detectedTabs               *bool           // were tab or space indentations detected when loading the data?
-	breakpoint                 *Position       // for the breakpoint/jump functionality in debug mode
-	gdb                        *gdb.Gdb        // connection to gdb, if debugMode is enabled
-	sameFilePortal             *Portal         // a portal that points to the same file
-	lines                      map[int][]rune  // the contents of the current document
-	macro                      *Macro          // the contents of the current macro (will be cleared when esc is pressed)
-	filename                   string          // the current filename
-	searchTerm                 string          // the current search term, used when searching
-	stickySearchTerm           string          // used when going to the next match with ctrl-n, unless esc has been pressed
-	Theme                                      // editor theme, embedded struct
-	pos                        Position        // the current cursor and scroll position
-	indentation                mode.TabsSpaces // spaces or tabs, and how many spaces per tab character
-	wrapWidth                  int             // set to ie. 80 or 100 to trigger word wrap when typing to that column
-	mode                       mode.Mode       // a filetype mode, like for git, markdown or various programming languages
-	debugShowRegisters         int             // show no register box, show changed registers, show all changed registers
-	previousY                  int             // previous cursor position
-	previousX                  int             // previous cursor position
-	lineBeforeSearch           LineIndex       // save the current line number before jumping between search results
-	playBackMacroCount         int             // number of times the macro should be played back, right now
-	rainbowParenthesis         bool            // rainbow parenthesis
-	sshMode                    bool            // is o used over ssh, tmux or screen, in a way that usually requires extra redrawing?
-	debugMode                  bool            // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
-	statusMode                 bool            // display a status bar at all times at the bottom of the screen
-	showColumnLimit            bool            // show the line where the wrapWidth is (at 79 by default)
-	expandTags                 bool            // can be used for XML and HTML
-	syntaxHighlight            bool            // syntax highlighting
-	stopParentOnQuit           bool            // send SIGQUIT to the parent PID when quitting
-	quit                       bool            // for indicating if the user wants to end the editor session
-	readOnly                   bool            // is the file read-only when initializing o?
-	debugHideOutput            bool            // hide the GDB stdout pane when in debug mode?
-	binaryFile                 bool            // is this a binary file, or a text file?
-	wrapWhenTyping             bool            // wrap text at a certain limit when typing
-	addSpace                   bool            // add a space to the editor, once
-	debugStepInto              bool            // when stepping to the next instruction, step into instead of over
-	slowLoad                   bool            // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
-	building                   bool            // currently buildig code or exporting to a file?
-	runAfterBuild              bool            // run the application after building?
-	monitorAndReadOnly         bool            // monitor the file for changes and open it as read-only
-	primaryClipboard           bool            // use the primary or the secondary clipboard on UNIX?
-	jumpToLetterMode           bool            // jump directly to a highlighted letter
-	spellCheckMode             bool            // spell check mode?
-	createDirectoriesIfMissing bool            // when saving a file, should directories be created if they are missing?
-	displayQuickHelp           bool            // display the quick help box?
-	noDisplayQuickHelp         bool            // prevent the quick help box from being displayed?
-	blockMode                  bool            // toggle if typing should affect the current line or the current block
-	dirMode                    bool            // browse a directory and also interact with git
-	highlightCurrentLine       bool            // highlight the current line
-	highlightCurrentText       bool            // highlight the current text (not the entire line)
+	detectedTabs       *bool           // were tab or space indentations detected when loading the data?
+	breakpoint         *Position       // for the breakpoint/jump functionality in debug mode
+	gdb                *gdb.Gdb        // connection to gdb, if debugMode is enabled
+	sameFilePortal     *Portal         // a portal that points to the same file
+	lines              map[int][]rune  // the contents of the current document
+	macro              *Macro          // the contents of the current macro (will be cleared when esc is pressed)
+	filename           string          // the current filename
+	searchTerm         string          // the current search term, used when searching
+	stickySearchTerm   string          // used when going to the next match with ctrl-n, unless esc has been pressed
+	pos                Position        // the current cursor and scroll position
+	Theme                              // editor theme, embedded struct
+	indentation        mode.TabsSpaces // spaces or tabs, and how many spaces per tab character
+	wrapWidth          int             // set to ie. 80 or 100 to trigger word wrap when typing to that column
+	mode               mode.Mode       // a filetype mode, like for git, markdown or various programming languages
+	debugShowRegisters int             // show no register box, show changed registers, show all changed registers
+	previousY          int             // previous cursor position
+	previousX          int             // previous cursor position
+	lineBeforeSearch   LineIndex       // save the current line number before jumping between search results
+	playBackMacroCount int             // number of times the macro should be played back, right now
 	// atomic.Bool are used for values that might be read when redrawing text asynchronously
-	changed           atomic.Bool // has the contents changed, since last save?
-	redraw            atomic.Bool // if the contents should be redrawn in the next loop
-	redrawCursor      atomic.Bool // if the cursor should be moved to the location it is supposed to be
-	drawProgress      atomic.Bool // used for drawing the progress character on the right side
-	drawFuncName      atomic.Bool // used when drawing the function name in the top right corner
-	nanoMode          atomic.Bool // emulate GNU Nano
-	waitWithRedrawing atomic.Bool // wait with redrawing until a key is pressed
-	flaskApplication  atomic.Bool // Python + Flask
-	moveLinesMode     atomic.Bool // move lines up and down with ctrl-p and ctrl-n, when enabled
+	changed                    atomic.Bool // has the contents changed, since last save?
+	redraw                     atomic.Bool // if the contents should be redrawn in the next loop
+	redrawCursor               atomic.Bool // if the cursor should be moved to the location it is supposed to be
+	drawProgress               atomic.Bool // used for drawing the progress character on the right side
+	drawFuncName               atomic.Bool // used when drawing the function name in the top right corner
+	nanoMode                   atomic.Bool // emulate GNU Nano
+	waitWithRedrawing          atomic.Bool // wait with redrawing until a key is pressed
+	flaskApplication           atomic.Bool // Python + Flask
+	moveLinesMode              atomic.Bool // move lines up and down with ctrl-p and ctrl-n, when enabled
+	rainbowParenthesis         bool        // rainbow parenthesis
+	sshMode                    bool        // is o used over ssh, tmux or screen, in a way that usually requires extra redrawing?
+	debugMode                  bool        // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
+	statusMode                 bool        // display a status bar at all times at the bottom of the screen
+	showColumnLimit            bool        // show the line where the wrapWidth is (at 79 by default)
+	expandTags                 bool        // can be used for XML and HTML
+	syntaxHighlight            bool        // syntax highlighting
+	stopParentOnQuit           bool        // send SIGQUIT to the parent PID when quitting
+	quit                       bool        // for indicating if the user wants to end the editor session
+	readOnly                   bool        // is the file read-only when initializing o?
+	debugHideOutput            bool        // hide the GDB stdout pane when in debug mode?
+	binaryFile                 bool        // is this a binary file, or a text file?
+	wrapWhenTyping             bool        // wrap text at a certain limit when typing
+	addSpace                   bool        // add a space to the editor, once
+	debugStepInto              bool        // when stepping to the next instruction, step into instead of over
+	slowLoad                   bool        // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
+	building                   bool        // currently buildig code or exporting to a file?
+	runAfterBuild              bool        // run the application after building?
+	monitorAndReadOnly         bool        // monitor the file for changes and open it as read-only
+	primaryClipboard           bool        // use the primary or the secondary clipboard on UNIX?
+	jumpToLetterMode           bool        // jump directly to a highlighted letter
+	spellCheckMode             bool        // spell check mode?
+	createDirectoriesIfMissing bool        // when saving a file, should directories be created if they are missing?
+	displayQuickHelp           bool        // display the quick help box?
+	noDisplayQuickHelp         bool        // prevent the quick help box from being displayed?
+	blockMode                  bool        // toggle if typing should affect the current line or the current block
+	dirMode                    bool        // browse a directory and also interact with git
+	highlightCurrentLine       bool        // highlight the current line
+	highlightCurrentText       bool        // highlight the current text (not the entire line)
 }
 
 // Copy makes a copy of an Editor struct, with most fields deep copied

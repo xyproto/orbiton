@@ -10,11 +10,6 @@ import (
 type MenuWidget struct {
 	selectionLetterMap map[string]*RuneAndPosition // used for knowing which accelerator letter of each choice should be drawn in a different color (not all choices may have a suitable letter)
 	title              string                      // title
-	titleColor         vt.AttributeColor           // title color (above the choices)
-	arrowColor         vt.AttributeColor           // arrow color (before each menu choice)
-	textColor          vt.AttributeColor           // text color (the choices that are not highlighted)
-	highlightColor     vt.AttributeColor           // highlight color (the choice that will be selected if return is pressed)
-	selectedColor      vt.AttributeColor           // selected color (the choice that has been selected after return has been pressed)
 	choices            []string                    // a slice of menu items
 	marginLeft         int                         // margin, may be negative?
 	marginTop          int                         // margin, may be negative?
@@ -23,6 +18,11 @@ type MenuWidget struct {
 	h                  uint                        // height (number of menu items)
 	y                  uint                        // current position
 	oldy               uint                        // previous position
+	titleColor         vt.AttributeColor           // title color (above the choices)
+	arrowColor         vt.AttributeColor           // arrow color (before each menu choice)
+	textColor          vt.AttributeColor           // text color (the choices that are not highlighted)
+	highlightColor     vt.AttributeColor           // highlight color (the choice that will be selected if return is pressed)
+	selectedColor      vt.AttributeColor           // selected color (the choice that has been selected after return has been pressed)
 	extraDashes        bool                        // add "---" after each menu item?
 }
 

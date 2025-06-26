@@ -41,6 +41,7 @@ type Theme struct {
 	AndOr                       string
 	TextTag                     string
 	TextAttrName                string
+	RainbowParenColors          []vt.AttributeColor
 	HeaderBulletColor           vt.AttributeColor
 	MultiLineString             vt.AttributeColor
 	DebugInstructionsBackground vt.AttributeColor
@@ -53,7 +54,6 @@ type Theme struct {
 	StatusForeground            vt.AttributeColor
 	Background                  vt.AttributeColor
 	Foreground                  vt.AttributeColor
-	RainbowParenColors          []vt.AttributeColor
 	MarkdownTextColor           vt.AttributeColor
 	BoxUpperEdge                vt.AttributeColor
 	HeaderTextColor             vt.AttributeColor

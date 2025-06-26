@@ -10,15 +10,8 @@ import (
 
 // TableWidget represents a TUI widget for editing a Markdown table
 type TableWidget struct {
-	title            string            // title
 	contents         *[][]string       // the table contents
-	bgColor          vt.AttributeColor // background color
-	highlightColor   vt.AttributeColor // selected color (the choice that has been selected after return has been pressed)
-	headerColor      vt.AttributeColor // the color of the table header row
-	textColor        vt.AttributeColor // text color (the choices that are not highlighted)
-	titleColor       vt.AttributeColor // title color (above the choices)
-	cursorColor      vt.AttributeColor // color of the "_" cursor
-	commentColor     vt.AttributeColor // comment color
+	title            string            // title
 	cx               int               // current content position
 	marginLeft       int               // margin, may be negative?
 	marginTop        int               // margin, may be negative?
@@ -27,6 +20,13 @@ type TableWidget struct {
 	oldx             int               // previous position
 	h                int               // height (number of menu items)
 	w                int               // width
+	bgColor          vt.AttributeColor // background color
+	highlightColor   vt.AttributeColor // selected color (the choice that has been selected after return has been pressed)
+	headerColor      vt.AttributeColor // the color of the table header row
+	textColor        vt.AttributeColor // text color (the choices that are not highlighted)
+	titleColor       vt.AttributeColor // title color (above the choices)
+	cursorColor      vt.AttributeColor // color of the "_" cursor
+	commentColor     vt.AttributeColor // comment color
 	displayQuickHelp bool              // display "quick help" at the bottom"
 }
 
