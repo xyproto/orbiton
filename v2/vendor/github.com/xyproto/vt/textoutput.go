@@ -2,6 +2,7 @@ package vt
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -70,6 +71,12 @@ func (o *TextOutput) Err(msg string) {
 			Default.Error(msg)
 		}
 	}
+}
+
+// Write an error message to stderr and quit with exit code 1
+func (o *TextOutput) ErrExit(msg string) {
+	o.Err(msg)
+	os.Exit(1)
 }
 
 func (o *TextOutput) LightBlue(s string) string {
