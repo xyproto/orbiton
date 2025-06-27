@@ -136,7 +136,7 @@ These features are unique to `o`, as far as I am aware:
 * Can compile `"Hello, World"` in many popular programming languages simply by pressing `ctrl-space`.
 * Create, build and run a simple program in C, by running `o main.c`, pressing `ctrl-w` and then a double `ctrl-space`.
 * Configuration-free, for better and for worse.
-* Can preview `.png`, `.jpg`, `.jpeg`, `.gif`, `.ico`, `.bmp` or `.webp` images directly in the terminal (using a scaled down version and up to 16 colors).
+* Can preview `.png`, `.jpg`, `.jpeg`, `.gif`, `.ico`, `.bmp` and `.webp` images directly in the terminal (using a scaled down version and up to 16 colors).
 * The `-p` flag followed by a filename can be used for just pasting the clipboard to a new file, instead of editing a file.
 * `ctrl-t` can jump between a C++ header and source file, when editing C++ code.
 * `ctrl-t` shows the Markdown table editor, when editing Markdown and the cursor is on a Markdown table.
@@ -177,11 +177,11 @@ These features are unique to `o`, as far as I am aware:
 * Can load, edit and save gzipped text files or man pages that ends with a `.gz` extension.
 * Can organize imports, for Java and for Kotlin, when formatting code with `ctrl-w`.
 * Has a built-in spellchecker (press `ctrl-f` and then `t` to search for a typo, `ctrl-n` for next match and then `ctrl-a` to add it and `ctrl-i` to ignore it).
-* Can jump directly to a selection of highlighted letters on the screen, when `ctrl-l` has been pressed.
+* Can jump directly to a selection of highlighted letters on the screen, when `ctrl-l` is pressed.
 
 ## Known issues
 
-* Some unicode runes may disrupt the text flow! This is generally not a problem for editing code and configuration files, but is an issue when editing files that contains text in many languages, or using emojis.
+* Some unicode runes may disrupt the text flow! This is generally not a problem for editing code and configuration files, but is an issue when editing files that contains text in many languages, or emojis.
 * The man page viewer can not display some special characters, such as the long dash (&mdash;), just yet.
 * Using `tmux` and resizing the terminal emulator window may trigger text rendering issues. Try pressing `esc` to redraw the text, or `ctrl-f` to search for text. Setting `TERM` correctly might help.
 * For some terminal emulators, if `o` is busy performing an operation, pressing `ctrl-s` may lock the terminal. Some terminal emulators, like `konsole`, can be configured to turn off this behavior. Press `ctrl-q` to unlock the terminal again (together with the unfortunate risk of quitting `o`). To sidestep this issue, the `ctrl-o` menu can be used instead, for saving and quitting.
