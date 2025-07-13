@@ -206,7 +206,7 @@ There are pretty few hotkeys to remember:
              Remove an empty column when in the Markdown table editor.
              Jump to a matching parenthesis or bracket if the arrow keys were just used.
 * `ctrl-k` - Delete characters to the end of the line, then delete the line.
-* `ctrl-_` - Insert a symbol by typing in a 2-letter [digraph](https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt). Try the `--digraphs` or `-s` flag to list all possible digraphs. 
+* `ctrl-_` - Insert a symbol by typing in a 2-letter [digraph](https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt). Try the `--digraphs` or `-s` flag to list all possible digraphs.
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - For C and C++: jump between the current header and source file. For Agda and Ivy, insert a symbol.
              For Markdown: toggle checkboxes, or launch the table editor if the cursor is over a table.
@@ -585,7 +585,7 @@ This also means that filenames containing `+` or `:`, and then followed by a num
 * `-p FILENAME` can be used to paste the contents of the clipboard to the given `FILENAME` (if it does not already exist) and then exit.
 * `-n` can be used to avoid writing lockfiles, build files, location history, search history and the game highscore to `$XDG_CACHE_DIR/cache/o` or `~/.cache/o`. Not recommended.
 * `-m` can be used to open a file as read-only, but monitor it for changes.
-* `--help` can be used to get a quick overview of the supported keybindings. It will also list additional supported flags. 
+* `--help` can be used to get a quick overview of the supported keybindings. It will also list additional supported flags.
 * `--version` will print the current version and then exit.
 
 ## Spinner
