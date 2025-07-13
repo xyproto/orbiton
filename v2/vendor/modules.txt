@@ -31,7 +31,7 @@ github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
 github.com/gomarkdown/markdown/html
 github.com/gomarkdown/markdown/parser
-# github.com/ianlancetaylor/demangle v0.0.0-20250625212726-86fd2c0a1a74
+# github.com/ianlancetaylor/demangle v0.0.0-20250628045327-2d64ad6b7ec5
 ## explicit; go 1.13
 github.com/ianlancetaylor/demangle
 # github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25
@@ -148,7 +148,7 @@ github.com/xyproto/vt
 # github.com/xyproto/wordwrap v1.0.1
 ## explicit; go 1.21.3
 github.com/xyproto/wordwrap
-# golang.org/x/image v0.28.0
+# golang.org/x/image v0.29.0
 ## explicit; go 1.23.0
 golang.org/x/image/draw
 golang.org/x/image/math/f64
@@ -156,7 +156,7 @@ golang.org/x/image/riff
 golang.org/x/image/vp8
 golang.org/x/image/vp8l
 golang.org/x/image/webp
-# golang.org/x/sys v0.33.0
+# golang.org/x/sys v0.34.0
 ## explicit; go 1.23.0
 golang.org/x/sys/unix
 golang.org/x/sys/windows
