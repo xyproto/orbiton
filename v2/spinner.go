@@ -84,7 +84,7 @@ func Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn time.Duration
 
 		// Prepare to output colored text
 		var (
-			o                = vt.NewTextOutput(true, true)
+			to               = vt.New()
 			counter          uint
 			spinnerAnimation []string
 		)
@@ -110,7 +110,7 @@ func Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn time.Duration
 			default:
 				vt.SetXY(x, y)
 				// Iterate over the 12 different ASCII images as the counter increases
-				o.Print(spinnerAnimation[counter%12])
+				to.Print(spinnerAnimation[counter%12])
 				counter++
 				// Wait for a key press (also sleeps just a bit)
 				switch tty.Key() {

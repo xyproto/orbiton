@@ -88,7 +88,7 @@ type Option func(*TextConfig)
 
 var (
 	colorTagRegex = regexp.MustCompile(`<([a-nA-Np-zP-Z]\w+)>`) // not starting with "o"
-	tout          = vt.NewTextOutput(true, true)
+	tout          = vt.New()
 	resizeMut     sync.RWMutex                                         // locked when the terminal emulator is being resized
 	noGUI         = !env.Has("DISPLAY") && !env.Has("WAYLAND_DISPLAY") // no X, no Wayland
 )

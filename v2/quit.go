@@ -29,7 +29,7 @@ func quitError(tty *vt.TTY, err error) {
 	vt.SetNoColor()
 	vt.Clear()
 	vt.Close()
-	vt.NewTextOutput(true, true).Err(err.Error())
+	vt.New().Err(err.Error())
 	vt.ShowCursor(true)
 	vt.SetXY(uint(0), uint(1))
 	os.Exit(1)
