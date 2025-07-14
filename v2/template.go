@@ -268,9 +268,14 @@ func GetTemplatePrograms() TemplatePrograms {
 			},
 			// This one is a bit more elaborate than strictly needed
 			mode.StandardML: {
-				"let\n  val name = \"World\"\nin\n  map (fn x => (print (\"Hello, \" ^ x ^ \"!\\n\"))) [name]\nend;",
+				"let\n  val name = \"World\"\nin\n  map (fn x => (print (\"Hello, \" ^ x ^ \"!\\n\"))) [name]\nend;\n",
 				22,
 				1,
+			},
+			mode.SuperCollider: {
+				"// Drum example from https://supercollider.github.io/examples.html\n{\n  var bdrum, hihat, snare;\n  var tempo = 4;\n  tempo = Impulse.ar(tempo);\n  snare = WhiteNoise.ar(Decay2.ar(PulseDivider.ar(tempo, 4, 2), 0.005, 0.5));\n  bdrum = SinOsc.ar(Line.ar(120,60, 1), 0, Decay2.ar(PulseDivider.ar(tempo, 4, 0), 0.005, 0.5));\n  hihat = HPF.ar(WhiteNoise.ar(1), 10000) * Decay2.ar(tempo, 0.005, 0.5);  \n  Out.ar(0, (snare + bdrum + hihat) * 0.4 ! 2)\n}.play\n",
+				0,
+				2,
 			},
 			mode.Swift: {
 				"print(\"Hello, World!\")\n",
