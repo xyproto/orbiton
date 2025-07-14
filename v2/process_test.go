@@ -1,14 +1,89 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
 func TestParentIsMan(t *testing.T) {
-	// This test will only pass if NOT run via the 'man' command (which is not typical.)
 	if parentProcessIs("man") {
 		t.Error("Parent process is 'man'.")
 	} else {
 		t.Logf("Parent process is not 'man'.")
+	}
+}
+
+func TestParentProcessIsSelf(t *testing.T) {
+	ppid := os.Getppid()
+	ppName, err := getProcPath(ppid, "exe")
+	if err != nil {
+		t.Skipf("Skipping: cannot get parent process path: %v", err)
+	}
+	ppBase := filepath.Base(ppName)
+	if !parentProcessIs(ppBase) {
+		t.Errorf("Expected parentProcessIs(%q) to return true", ppBase)
+	}
+}
+
+func TestGetProcPathSelf(t *testing.T) {
+	pid := os.Getpid()
+	exe, err := getProcPath(pid, "exe")
+	if err != nil {
+		t.Fatalf("Failed to get exe path for self: %v", err)
+	}
+	if !strings.HasPrefix(exe, "/") {
+		t.Errorf("Expected absolute path, got: %s", exe)
+	}
+}
+
+func TestParentCommandNotEmpty(t *testing.T) {
+	cmd := parentCommand()
+	if cmd == "" {
+		t.Skip("Skipping: parent command is empty (may be a system process)")
+	}
+	if !strings.Contains(cmd, "\x00") {
+		t.Errorf("Expected null-separated cmdline, got: %q", cmd)
+	}
+}
+
+func TestGetPIDFoundProcess(t *testing.T) {
+	selfExe, err := os.Executable()
+	if err != nil {
+		t.Fatalf("Failed to get own executable: %v", err)
+	}
+	base := filepath.Base(selfExe)
+	pid, err := getPID(base)
+	if err != nil {
+		t.Errorf("Expected to find self by name %q, got error: %v", base, err)
+	}
+	if pid <= 0 {
+		t.Errorf("Expected valid pid for %q, got %d", base, pid)
+	}
+}
+
+func TestGetPIDNotFound(t *testing.T) {
+	_, err := getPID("nonexistent_process_name_123456789")
+	if err == nil {
+		t.Error("Expected error for nonexistent process, got nil")
+	}
+}
+
+func TestFoundProcess(t *testing.T) {
+	// This assumes the current process is visible to /proc
+	selfExe, err := os.Executable()
+	if err != nil {
+		t.Fatalf("Failed to get own executable: %v", err)
+	}
+	base := filepath.Base(selfExe)
+	if !foundProcess(base) {
+		t.Errorf("Expected to find current process %q", base)
+	}
+}
+
+func TestFoundProcessFalse(t *testing.T) {
+	if foundProcess("definitely_not_a_real_process_654321") {
+		t.Error("Expected foundProcess to return false for nonexistent process")
 	}
 }

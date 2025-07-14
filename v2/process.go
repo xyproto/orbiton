@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 )
 
 // getProcPath resolves and returns the specified path (e.g., "exe", "cwd") for the process identified by pid.
@@ -33,4 +35,35 @@ func parentCommand() string {
 		return ""
 	}
 	return string(commandString)
+}
+
+// getPID tries to find the PID, given a process name, similar to pgrep
+func getPID(name string) (int64, error) {
+	procDir, err := os.ReadDir("/proc")
+	if err != nil {
+		return 0, err
+	}
+	for _, entry := range procDir {
+		if !entry.IsDir() {
+			continue
+		}
+		pid, err := strconv.Atoi(entry.Name())
+		if err != nil {
+			continue
+		}
+		exePath, err := getProcPath(pid, "exe")
+		if err != nil {
+			continue
+		}
+		if strings.Contains(strings.ToLower(filepath.Base(exePath)), strings.ToLower(name)) {
+			return int64(pid), nil
+		}
+	}
+	return 0, os.ErrNotExist
+}
+
+// foundProcess returns true if a valid PID for the given process name is found in /proc, similar to how pgrep works
+func foundProcess(name string) bool {
+	pid, err := getPID(name)
+	return err == nil && pid > 0
 }
