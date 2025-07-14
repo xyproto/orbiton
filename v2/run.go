@@ -8,28 +8,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"sync/atomic"
-	"syscall"
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 )
-
-var runPID atomic.Int64
-
-// stopBackgroundProcesses stops the "run" process that is running
-// in the background, if runPID > 0. Returns true if something was killed.
-func stopBackgroundProcesses() bool {
-	if runPID.Load() <= 0 {
-		return false // nothing was killed
-	}
-	// calling runPID.Load() twice, in case something happens concurrently after the first .Load()
-	syscall.Kill(int(runPID.Load()), syscall.SIGKILL)
-	runPID.Store(-1)
-	return true // something was killed
-}
 
 // Run will attempt to run the corresponding output executable, given a source filename.
 // It's an advantage if the BuildOrExport function has been successfully run first.
@@ -201,11 +185,9 @@ func (e *Editor) Run() (string, bool, error) {
 
 	output, err := CombinedOutputSetPID(cmd)
 
-	if e.mode != mode.ABC && err == nil { // success
-		return trimRightSpace(stripTerminalCodes(string(output))), false, nil
-	}
-	if e.mode != mode.ABC && len(output) > 0 { // error, but text on stdout/stderr
-		return trimRightSpace(stripTerminalCodes(string(output))), true, nil
+	if e.mode != mode.ABC {
+		errorButTextOnStdoutOrStderr := err != nil && len(output) > 0 // error and output, or just success
+		return trimRightSpace(stripTerminalCodes(output)), errorButTextOnStdoutOrStderr, nil
 	}
 	// error and no text on stdout/stderr
 	return "", false, err
@@ -288,9 +270,9 @@ func (e *Editor) DrawOutput(c *vt.Canvas, maxLines int, title, collectedOutput s
 
 // CombinedOutputSetPID runs the command and returns its combined standard output and standard error.
 // It also assignes the PID to the global runPID variable, right after the command has started.
-func CombinedOutputSetPID(c *exec.Cmd) ([]byte, error) {
+func CombinedOutputSetPID(c *exec.Cmd) (string, error) {
 	if c.Stdout != nil || c.Stderr != nil {
-		return []byte{}, errors.New("exec: stdout or stderr has already been set")
+		return "", errors.New("exec: stdout or stderr has already been set")
 	}
 	// Prepare a single buffer for both stdout and stderr
 	var b bytes.Buffer
@@ -299,7 +281,7 @@ func CombinedOutputSetPID(c *exec.Cmd) ([]byte, error) {
 	// Start the process in the background
 	err := c.Start()
 	if err != nil {
-		return b.Bytes(), err
+		return b.String(), err
 	}
 	// Get the PID of the running process
 	if c.Process != nil {
@@ -314,7 +296,7 @@ func CombinedOutputSetPID(c *exec.Cmd) ([]byte, error) {
 		err = nil
 	}
 	// Return the output bytes and the error, if any
-	return b.Bytes(), err
+	return b.String(), err
 }
 
 // run tries to run the given command, without using a shell
