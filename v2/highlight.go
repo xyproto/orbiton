@@ -18,6 +18,11 @@ import (
 	"github.com/xyproto/vt"
 )
 
+const (
+	blankRune              = ' '
+	controlRuneReplacement = '¿' // for displaying control sequence characters. Could also use: �
+)
+
 // Kind represents a syntax highlighting kind (class) which will be assigned to tokens.
 // A syntax highlighting scheme (style) maps text style properties to each token kind.
 type Kind uint8
@@ -80,6 +85,13 @@ type TextConfig struct {
 
 // Option is a function that can modify TextConfig.
 type Option func(*TextConfig)
+
+var (
+	colorTagRegex = regexp.MustCompile(`<([a-nA-Np-zP-Z]\w+)>`) // not starting with "o"
+	tout          = vt.NewTextOutput(true, true)
+	resizeMut     sync.RWMutex                                         // locked when the terminal emulator is being resized
+	noGUI         = !env.Has("DISPLAY") && !env.Has("WAYLAND_DISPLAY") // no X, no Wayland
+)
 
 // DefaultTextConfig provides class names matching the color names of textoutput tags.
 var DefaultTextConfig = TextConfig{
@@ -236,19 +248,6 @@ func NewScannerReader(r io.Reader) *scanner.Scanner {
 	s.Mode ^= scanner.SkipComments
 	return &s
 }
-
-const (
-	blankRune              = ' '
-	controlRuneReplacement = '¿' // for displaying control sequence characters. Could also use: �
-)
-
-var (
-	colorTagRegex = regexp.MustCompile(`<([a-nA-Np-zP-Z]\w+)>`) // not starting with "o"
-	tout          = vt.NewTextOutput(true, true)
-	resizeMut     sync.RWMutex // locked when the terminal emulator is being resized
-
-	noGUI = !env.Has("DISPLAY") && !env.Has("WAYLAND_DISPLAY") // no X, no Wayland
-)
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uint, shouldHighlightNow, hideCursorWhenDrawing bool) {
