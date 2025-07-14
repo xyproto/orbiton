@@ -293,20 +293,17 @@ func main() {
 		colNumber     ColNumber
 		stdinFilename = !argsGiven || (len(args) == 1 && (args[0] == "-" || args[0] == "/dev/stdin"))
 		osudoMode     = executableName == "osudo" || executableName == "visudo"
+		gameMode      = firstLetterOfExecutable == 'f' || firstLetterOfExecutable == 'g'
 		err           error
 	)
 
-	// Check if the executable starts with "g" or "f" ("c" and "p" are already checked for, further up)
-	if argsGiven {
-		switch firstLetterOfExecutable {
-		case 'f', 'g':
-			// Start the game
-			if _, err := Game(); err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
-			return
+	// Start the game if the executable or symlink starts with 'f' or 'g'
+	if gameMode {
+		if _, err := Game(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
 		}
+		return
 	}
 
 	// If no regular filename is given, check if data is ready at stdin
