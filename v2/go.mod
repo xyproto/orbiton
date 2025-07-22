@@ -15,7 +15,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.16
 	github.com/sajari/fuzzy v1.0.0
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d
-	github.com/spf13/pflag v1.0.6
+	github.com/spf13/pflag v1.0.7
 	github.com/xyproto/autoimport v1.5.2
 	github.com/xyproto/binary v1.3.3
 	github.com/xyproto/clip v1.0.0
