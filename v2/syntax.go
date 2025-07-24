@@ -286,7 +286,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		delKeywords := []string{"#else", "#endif", "and", "as", "build", "default", "del", "double", "exec", "export", "finally", "float", "fn", "generic", "get", "install", "local", "long", "new", "no", "package", "pass", "print", "property", "require", "ret", "set", "stop", "super", "super", "template", "type", "var", "with"}
 		addAndRemoveKeywords(shellWords, delKeywords)
 	case mode.Shell:
-		delKeywords := []string{"#else", "#endif", "as", "build", "default", "del", "double", "exec", "false", "finally", "float", "fn", "generic", "get", "install", "long", "new", "no", "package", "pass", "print", "property", "require", "ret", "set", "super", "super", "template", "true", "type", "var", "with"}
+		delKeywords := []string{"#else", "#endif", "as", "build", "default", "del", "double", "exec", "false", "finally", "float", "fn", "generic", "get", "install", "long", "native", "new", "no", "package", "pass", "print", "property", "require", "ret", "set", "super", "super", "template", "true", "type", "var", "with"}
 		addAndRemoveKeywords(shellWords, delKeywords)
 	case mode.SuperCollider:
 		addKeywords(superColliderWords)
