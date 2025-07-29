@@ -110,6 +110,8 @@ github.com/xyproto/usermodel v1.2.2 h1:jfLmh65PGabdHR7mUR6fUGSax/joDOfai/Gr4VV3j
 github.com/xyproto/usermodel v1.2.2/go.mod h1:Yq23gofv51bjTujYYnAH3fpvWD+ENa3fdIA+ahfU/B4=
 github.com/xyproto/vt v1.2.5 h1:/CdD2XUeZMhKpOF/+LqF2eIfmCqfpMs1TuLP2uFQdr8=
 github.com/xyproto/vt v1.2.5/go.mod h1:ghC4luErrmQKKcKeVlnlaYeRm23qVIqypZw0+YulnVc=
+github.com/xyproto/vt v1.2.6 h1:Xd+t9z4FfxQa7UrBGaBJcT4bp/Dm6x01Q+WUU+WBjQ4=
+github.com/xyproto/vt v1.2.6/go.mod h1:NXzu3viotMcmauWrtP8L6YBgyO70qHvkIc8BSPj6cMo=
 github.com/xyproto/wordwrap v1.0.1 h1:nKmUy4Jr+VBbeFfCgcUBx/e707ky7GBZLE/x1Uh3dtA=
 github.com/xyproto/wordwrap v1.0.1/go.mod h1:NIZ+TjJF24AUJzQDmr/fOMWgn3B2pK5+c9fPCp6UvcM=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=

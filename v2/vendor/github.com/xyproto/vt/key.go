@@ -373,7 +373,7 @@ func (tty *TTY) KeyCode() int {
 	return keyCode
 }
 
-// WaitForKey waits for Return, Esc, Space, or 'q' to be pressed
+// WaitForKey waits for ctrl-c, Return, Esc, Space, or 'q' to be pressed
 func WaitForKey() {
 	// Get a new TTY and start reading keypresses in a loop
 	r, err := NewTTY()
@@ -383,7 +383,7 @@ func WaitForKey() {
 	defer r.Close()
 	for {
 		switch r.Key() {
-		case 13, 27, 32, 113:
+		case 3, 13, 27, 32, 113:
 			return
 		}
 	}
