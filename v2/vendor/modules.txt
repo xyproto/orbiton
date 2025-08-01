@@ -25,7 +25,7 @@ github.com/felixge/fgtrace/internal
 ## explicit; go 1.17
 github.com/fsnotify/fsnotify
 github.com/fsnotify/fsnotify/internal
-# github.com/gomarkdown/markdown v0.0.0-20250311123330-531bef5e742b
+# github.com/gomarkdown/markdown v0.0.0-20250731182530-5d03d1963446
 ## explicit; go 1.12
 github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
@@ -142,7 +142,7 @@ github.com/xyproto/termtitle
 # github.com/xyproto/usermodel v1.2.2
 ## explicit; go 1.23.1
 github.com/xyproto/usermodel
-# github.com/xyproto/vt v1.2.6
+# github.com/xyproto/vt v1.2.8
 ## explicit; go 1.24.4
 github.com/xyproto/vt
 # github.com/xyproto/wordwrap v1.0.1

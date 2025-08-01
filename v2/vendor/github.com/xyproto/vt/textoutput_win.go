@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/mgutz/ansi"
@@ -15,8 +16,8 @@ import (
 
 // CharAttribute is a rune and a color attribute
 type CharAttribute struct {
-	R rune
 	A ANSIColor
+	R rune
 }
 
 // TextOutput keeps state about verbosity and if colors are enabled
@@ -62,15 +63,6 @@ func (o *TextOutput) OutputTags(colors ...string) {
 	}
 }
 
-// Given a line with words and several color strings, color the words
-// in the order of the colors. The last color will color the rest of the
-// words.
-func (o *TextOutput) OutputWords(line string, colors ...string) {
-	if o.enabled {
-		fmt.Println(o.Words(line, colors...))
-	}
-}
-
 // Write a message to stdout if output is enabled
 func (o *TextOutput) Println(msg ...interface{}) {
 	if o.enabled {
@@ -78,54 +70,10 @@ func (o *TextOutput) Println(msg ...interface{}) {
 	}
 }
 
-// Write a message to the given io.Writer if output is enabled
-func (o *TextOutput) Fprintln(w io.Writer, msg ...interface{}) {
+// Printf writes a formatted message to stdout if output is enabled
+func (o *TextOutput) Printf(format string, args ...interface{}) {
 	if o.enabled {
-		fmt.Fprintln(w, o.InterfaceTags(msg...))
-	}
-}
-
-// Write a message to stdout if output is enabled
-func (o *TextOutput) Printf(msg ...interface{}) {
-	if !o.enabled {
-		return
-	}
-	count := len(msg)
-	if count == 0 {
-		return
-	} else if count == 1 {
-		if fmtString, ok := msg[0].(string); ok {
-			fmt.Print(fmtString)
-		}
-	} else { // > 1
-		if fmtString, ok := msg[0].(string); ok {
-			fmt.Printf(o.InterfaceTags(fmtString), msg[1:]...)
-		} else {
-			// fail
-			fmt.Printf("%v", msg...)
-		}
-	}
-}
-
-// Write a message to the given io.Writer if output is enabled
-func (o *TextOutput) Fprintf(w io.Writer, msg ...interface{}) {
-	if !o.enabled {
-		return
-	}
-	count := len(msg)
-	if count == 0 {
-		return
-	} else if count == 1 {
-		if fmtString, ok := msg[0].(string); ok {
-			fmt.Fprint(w, fmtString)
-		}
-	} else { // > 1
-		if fmtString, ok := msg[0].(string); ok {
-			fmt.Fprintf(w, o.InterfaceTags(fmtString), msg[1:]...)
-		} else {
-			// fail
-			fmt.Fprintf(w, "%v", msg...)
-		}
+		fmt.Print(o.Tags(fmt.Sprintf(format, args...)))
 	}
 }
 
@@ -133,13 +81,6 @@ func (o *TextOutput) Fprintf(w io.Writer, msg ...interface{}) {
 func (o *TextOutput) Print(msg ...interface{}) {
 	if o.enabled {
 		fmt.Print(o.InterfaceTags(msg...))
-	}
-}
-
-// Write a message to the given io.Writer if output is enabled
-func (o *TextOutput) Fprint(w io.Writer, msg ...interface{}) {
-	if o.enabled {
-		fmt.Fprint(w, o.InterfaceTags(msg...))
 	}
 }
 
@@ -154,84 +95,10 @@ func (o *TextOutput) Err(msg string) {
 	}
 }
 
-// Enabled returns true if any output is enabled
-func (o *TextOutput) Enabled() bool {
-	return o.enabled
-}
-
-// Disabled returns true if all output is disabled
-func (o *TextOutput) Disabled() bool {
-	return !o.enabled
-}
-
-func (o *TextOutput) DarkRed(s string) string {
-	if o.color {
-		return ansi.Color(s, "red")
-	}
-	return s
-}
-
-func (o *TextOutput) DarkGreen(s string) string {
-	if o.color {
-		return ansi.Color(s, "green")
-	}
-	return s
-}
-
-func (o *TextOutput) DarkYellow(s string) string {
-	if o.color {
-		return ansi.Color(s, "yellow")
-	}
-	return s
-}
-
-func (o *TextOutput) DarkBlue(s string) string {
-	if o.color {
-		return ansi.Color(s, "blue")
-	}
-	return s
-}
-
-func (o *TextOutput) DarkPurple(s string) string {
-	if o.color {
-		return ansi.Color(s, "magenta")
-	}
-	return s
-}
-
-func (o *TextOutput) DarkCyan(s string) string {
-	if o.color {
-		return ansi.Color(s, "cyan")
-	}
-	return s
-}
-
-func (o *TextOutput) DarkGray(s string) string {
-	if o.color {
-		return ansi.Color(s, "black")
-	}
-	return s
-}
-
-func (o *TextOutput) LightRed(s string) string {
-	if o.color {
-		return ansi.Color(s, "red+h")
-	}
-	return s
-}
-
-func (o *TextOutput) LightGreen(s string) string {
-	if o.color {
-		return ansi.Color(s, "green+h")
-	}
-	return s
-}
-
-func (o *TextOutput) LightYellow(s string) string {
-	if o.color {
-		return ansi.Color(s, "yellow+h")
-	}
-	return s
+// ErrExit writes an error message to stderr and quit with exit code 1
+func (o *TextOutput) ErrExit(msg string) {
+	o.Err(msg)
+	os.Exit(1)
 }
 
 func (o *TextOutput) LightBlue(s string) string {
@@ -239,61 +106,6 @@ func (o *TextOutput) LightBlue(s string) string {
 		return ansi.Color(s, "blue+h")
 	}
 	return s
-}
-
-func (o *TextOutput) LightCyan(s string) string {
-	if o.color {
-		return ansi.Color(s, "cyan+h")
-	}
-	return s
-}
-
-func (o *TextOutput) White(s string) string {
-	if o.color {
-		return ansi.Color(s, "white+h")
-	}
-	return s
-}
-
-// Given a line with words and several color strings, color the words
-// in the order of the colors. The last color will color the rest of the
-// words.
-func (o *TextOutput) Words(line string, colors ...string) string {
-	if o.color {
-		var ok bool
-		words := strings.Split(line, " ")
-		color := ANSIColor(ansi.ColorCode("black+h")) // LightGray
-		coloredWords := make([]string, len(words))
-		for i, word := range words {
-			if i < len(colors) {
-				prevColor := color
-				color, ok = LightColorMap[colors[i]]
-				if !ok {
-					// Use the previous color of this color string was not found
-					color = prevColor
-				}
-			}
-			coloredWords[i] = ansi.Color(word, string(color))
-		}
-		return strings.Join(coloredWords, " ")
-	}
-	return line
-}
-
-// Change the color state in the terminal emulator
-func (o *TextOutput) ColorOn(attribute1, attribute2 int) string {
-	if !o.color {
-		return ""
-	}
-	return fmt.Sprintf("\033[%d;%dm", attribute1, attribute2)
-}
-
-// Change the color state in the terminal emulator
-func (o *TextOutput) ColorOff() string {
-	if !o.color {
-		return ""
-	}
-	return "\033[0m"
 }
 
 // Replace <blue> with starting a light blue color attribute and <off> with using the default attributes.
@@ -324,16 +136,6 @@ func (o *TextOutput) InterfaceTags(colors ...interface{}) string {
 // </blue> can also be used for using the default attributes.
 func (o *TextOutput) DarkTags(colors ...string) string {
 	return o.darkReplacer.Replace(strings.Join(colors, ""))
-}
-
-func (o *TextOutput) DisableColors() {
-	o.color = false
-	o.initializeTagReplacers()
-}
-
-func (o *TextOutput) EnableColors() {
-	o.color = true
-	o.initializeTagReplacers()
 }
 
 func (o *TextOutput) Disable() {
@@ -411,6 +213,62 @@ func (o *TextOutput) initializeTagReplacers() {
 		rs[i] = ""
 	}
 	o.darkReplacer = strings.NewReplacer(rs...)
+}
+
+// ExtractToSlice iterates over an ANSI encoded string, parsing out color codes and places it in
+// a slice of CharAttribute. Each CharAttribute in the slice represents a character in the
+// input string and its corresponding color attributes. This function handles escaping sequences
+// and converts ANSI color codes to AttributeColor structs.
+// The returned uint is the number of stored elements.
+func (o *TextOutput) ExtractToSlice(s string, pcc *[]CharAttribute) uint {
+	var (
+		escaped      bool
+		colorcode    strings.Builder
+		currentColor ANSIColor
+	)
+	counter := uint(0)
+	for _, r := range s {
+		switch {
+		case escaped && r == 'm':
+			colorAttributes := strings.Split(strings.TrimPrefix(colorcode.String(), "["), ";")
+			if len(colorAttributes) != 1 || colorAttributes[0] != "0" {
+				var primaryAttr, secondaryAttr ANSIColor
+				for i, attribute := range colorAttributes {
+					if attributeNumber, err := strconv.Atoi(attribute); err == nil {
+						if i == 0 {
+							primaryAttr = ANSIColor(ansi.ColorCode(strconv.Itoa(attributeNumber)))
+						} else {
+							secondaryAttr = ANSIColor(ansi.ColorCode(strconv.Itoa(attributeNumber)))
+							break // Only handle two attributes for now
+						}
+					}
+				}
+				if secondaryAttr != "" {
+					currentColor = primaryAttr + secondaryAttr
+				} else {
+					currentColor = primaryAttr
+				}
+			} else {
+				currentColor = ANSIColor("")
+			}
+			colorcode.Reset()
+			escaped = false
+		case r == '\033':
+			escaped = true
+		case escaped && r != 'm':
+			colorcode.WriteRune(r)
+		default:
+			if counter >= uint(len(*pcc)) {
+				// Extend the slice
+				newSlice := make([]CharAttribute, len(*pcc)*2+1)
+				copy(newSlice, *pcc)
+				*pcc = newSlice
+			}
+			(*pcc)[counter] = CharAttribute{currentColor, r}
+			counter++
+		}
+	}
+	return counter
 }
 
 // // Pair takes a string with ANSI codes and returns

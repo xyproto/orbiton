@@ -19,8 +19,8 @@ github.com/felixge/fgtrace v0.2.0 h1:lq7RO6ELjR+S74+eD+ai/vhYvsjno7Vb84yzU6RPSeU
 github.com/felixge/fgtrace v0.2.0/go.mod h1:q9vMuItthu3CRfNhirTCTwzBcJ8atUFkrJUhgQbjg8c=
 github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S9k=
 github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
-github.com/gomarkdown/markdown v0.0.0-20250311123330-531bef5e742b h1:EY/KpStFl60qA17CptGXhwfZ+k1sFNJIUNR8DdbcuUk=
-github.com/gomarkdown/markdown v0.0.0-20250311123330-531bef5e742b/go.mod h1:JDGcbDT52eL4fju3sZ4TeHGsQwhG9nbDV21aMyhwPoA=
+github.com/gomarkdown/markdown v0.0.0-20250731182530-5d03d1963446 h1:DCrj2T/IjH7beow847X2wc/lQRAQlvUQYxCyZE9wA+E=
+github.com/gomarkdown/markdown v0.0.0-20250731182530-5d03d1963446/go.mod h1:JDGcbDT52eL4fju3sZ4TeHGsQwhG9nbDV21aMyhwPoA=
 github.com/ianlancetaylor/demangle v0.0.0-20250628045327-2d64ad6b7ec5 h1:QCtizt3VTaANvnsd8TtD/eonx7JLIVdEKW1//ZNPZ9A=
 github.com/ianlancetaylor/demangle v0.0.0-20250628045327-2d64ad6b7ec5/go.mod h1:gx7rwoVhcfuVKG5uya9Hs3Sxj7EIvldVofAWIUtGouw=
 github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 h1:YLvr1eE6cdCqjOe972w/cYF+FjW34v27+9Vo5106B4M=
@@ -108,10 +108,8 @@ github.com/xyproto/termtitle v1.5.1 h1:L1I+6juzNQk+BsoPCYw2c+3unEv4pxQqcyIoO9Xb3
 github.com/xyproto/termtitle v1.5.1/go.mod h1:U+yMnuL9ENDJy9+OCDEiEx01b7Uk6Zu6g1O22xY/rvQ=
 github.com/xyproto/usermodel v1.2.2 h1:jfLmh65PGabdHR7mUR6fUGSax/joDOfai/Gr4VV3jtc=
 github.com/xyproto/usermodel v1.2.2/go.mod h1:Yq23gofv51bjTujYYnAH3fpvWD+ENa3fdIA+ahfU/B4=
-github.com/xyproto/vt v1.2.5 h1:/CdD2XUeZMhKpOF/+LqF2eIfmCqfpMs1TuLP2uFQdr8=
-github.com/xyproto/vt v1.2.5/go.mod h1:ghC4luErrmQKKcKeVlnlaYeRm23qVIqypZw0+YulnVc=
-github.com/xyproto/vt v1.2.6 h1:Xd+t9z4FfxQa7UrBGaBJcT4bp/Dm6x01Q+WUU+WBjQ4=
-github.com/xyproto/vt v1.2.6/go.mod h1:NXzu3viotMcmauWrtP8L6YBgyO70qHvkIc8BSPj6cMo=
+github.com/xyproto/vt v1.2.8 h1:GftQ2oaWVVNFnO7a8lYZKO8mugpZt24Bv47fBRx+Yh8=
+github.com/xyproto/vt v1.2.8/go.mod h1:NXzu3viotMcmauWrtP8L6YBgyO70qHvkIc8BSPj6cMo=
 github.com/xyproto/wordwrap v1.0.1 h1:nKmUy4Jr+VBbeFfCgcUBx/e707ky7GBZLE/x1Uh3dtA=
 github.com/xyproto/wordwrap v1.0.1/go.mod h1:NIZ+TjJF24AUJzQDmr/fOMWgn3B2pK5+c9fPCp6UvcM=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
