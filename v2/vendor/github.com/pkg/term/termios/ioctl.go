@@ -1,9 +1,16 @@
-// +build !windows
+// +build !windows,!solaris
 
 package termios
 
-import "golang.org/x/sys/unix"
+import (
+	"syscall"
+
+	"golang.org/x/sys/unix"
+)
 
 func ioctl(fd, request, argp uintptr) error {
-	return unix.IoctlSetInt(int(fd), uint(request), int(argp))
+	if _, _, e := unix.Syscall6(syscall.SYS_IOCTL, fd, request, argp, 0, 0, 0); e != 0 {
+		return e
+	}
+	return nil
 }

@@ -49,22 +49,13 @@ github.com/kr/pty
 # github.com/lucasb-eyer/go-colorful v1.2.0
 ## explicit; go 1.12
 github.com/lucasb-eyer/go-colorful
-# github.com/mattn/go-colorable v0.1.14
-## explicit; go 1.18
-github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.20
-## explicit; go 1.15
-github.com/mattn/go-isatty
 # github.com/mattn/go-runewidth v0.0.16
 ## explicit; go 1.9
 github.com/mattn/go-runewidth
-# github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
-## explicit
-github.com/mgutz/ansi
 # github.com/peterhellberg/gfx v0.0.0-20250602150231-2e41f5fad310
 ## explicit; go 1.17
 github.com/peterhellberg/gfx
-# github.com/pkg/term v1.2.0-beta.2.0.20210419004637-f749b98bd0ba
+# github.com/pkg/term v1.1.0
 ## explicit; go 1.14
 github.com/pkg/term
 github.com/pkg/term/termios
@@ -142,7 +133,7 @@ github.com/xyproto/termtitle
 # github.com/xyproto/usermodel v1.2.2
 ## explicit; go 1.23.1
 github.com/xyproto/usermodel
-# github.com/xyproto/vt v1.2.8
+# github.com/xyproto/vt v1.2.9-0.20250804213647-2d1c337f1a91
 ## explicit; go 1.24.4
 github.com/xyproto/vt
 # github.com/xyproto/wordwrap v1.0.1
@@ -158,5 +149,9 @@ golang.org/x/image/vp8l
 golang.org/x/image/webp
 # golang.org/x/sys v0.34.0
 ## explicit; go 1.23.0
+golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
+# golang.org/x/term v0.33.0
+## explicit; go 1.23.0
+golang.org/x/term

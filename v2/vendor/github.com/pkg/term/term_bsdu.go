@@ -2,11 +2,7 @@
 
 package term
 
-import (
-	"syscall"
-
-	"golang.org/x/sys/unix"
-)
+import "golang.org/x/sys/unix"
 
 type attr unix.Termios
 

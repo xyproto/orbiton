@@ -1,5 +1,8 @@
 package term
 
+// #include<stropts.h>
+import "C"
+
 import (
 	"os"
 	"syscall"
@@ -15,51 +18,55 @@ func (a *attr) getSpeed() (int, error) {
 	// We generally only care about ospeed, since that's what would
 	// be used for padding characters, for example.
 
-	rate := termios.Cfgetospeed((*unix.Termios)(a))
+	rate := termios.Cfgetospeed((*syscall.Termios)(a))
 
 	switch rate {
-	case unix.B50:
+	case syscall.B50:
 		return 50, nil
-	case unix.B75:
+	case syscall.B75:
 		return 75, nil
-	case unix.B110:
+	case syscall.B110:
 		return 110, nil
-	case unix.B134:
+	case syscall.B134:
 		return 134, nil
-	case unix.B150:
+	case syscall.B150:
 		return 150, nil
-	case unix.B200:
+	case syscall.B200:
 		return 200, nil
-	case unix.B300:
+	case syscall.B300:
 		return 300, nil
-	case unix.B600:
+	case syscall.B600:
 		return 600, nil
-	case unix.B1200:
+	case syscall.B1200:
 		return 1200, nil
-	case unix.B1800:
+	case syscall.B1800:
 		return 1800, nil
-	case unix.B2400:
+	case syscall.B2400:
 		return 2400, nil
-	case unix.B4800:
+	case syscall.B4800:
 		return 4800, nil
-	case unix.B9600:
+	case syscall.B9600:
 		return 9600, nil
-	case unix.B19200:
+	case syscall.B19200:
 		return 19200, nil
-	case unix.B38400:
+	case syscall.B38400:
 		return 38400, nil
-	case unix.B57600:
+	case syscall.B57600:
 		return 57600, nil
-	case unix.B115200:
+	case syscall.B115200:
 		return 115200, nil
-	case unix.B230400:
+	case syscall.B230400:
 		return 230400, nil
-	case unix.B460800:
+	case syscall.B460800:
 		return 460800, nil
-	case unix.B921600:
+	case syscall.B500000:
+		return 500000, nil
+	case syscall.B576000:
+		return 576000, nil
+	case syscall.B921600:
 		return 921600, nil
 	default:
-		return 0, unix.EINVAL
+		return 0, syscall.EINVAL
 	}
 }
 
@@ -125,14 +132,6 @@ func (a *attr) setSpeed(baud int) error {
 
 // Open opens an asynchronous communications port.
 func Open(name string, options ...func(*Term) error) (*Term, error) {
-
-	// copied from https://github.com/kofemann/opensolaris/blob/master/usr/src/uts/common/sys/stropts.h#L229
-	// to avoid cgo dependency.
-	const (
-		STR    = ('S' << 8)
-		I_PUSH = (STR | 02)
-	)
-
 	fd, e := unix.Open(name, unix.O_NOCTTY|unix.O_CLOEXEC|unix.O_NDELAY|unix.O_RDWR, 0666)
 	if e != nil {
 		return nil, &os.PathError{"open", name, e}
@@ -140,17 +139,17 @@ func Open(name string, options ...func(*Term) error) (*Term, error) {
 
 	modules := [2]string{"ptem", "ldterm"}
 	for _, mod := range modules {
-		err := unix.IoctlSetInt(fd, I_PUSH, int(uintptr(unsafe.Pointer(syscall.StringBytePtr(mod)))))
+		err := unix.IoctlSetInt(fd, C.I_PUSH, int(uintptr(unsafe.Pointer(unix.StringBytePtr(mod)))))
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	orig, err := termios.Tcgetattr(uintptr(t.fd))
-	if err != nil {
+	t := Term{name: name, fd: fd}
+	termios.Tcgetattr(uintptr(t.fd), &t.orig)
+	if err := termios.Tcgetattr(uintptr(t.fd), &t.orig); err != nil {
 		return nil, err
 	}
-	t := Term{name: name, fd: fd, *orig}
 
 	if err := t.SetOption(options...); err != nil {
 		return nil, err

@@ -6,6 +6,7 @@
 package term
 
 import (
+	"errors"
 	"io"
 	"os"
 
@@ -19,6 +20,8 @@ const (
 	HARDWARE        // hardware flow control
 )
 
+var errNotSupported = errors.New("not supported")
+
 // Read reads up to len(b) bytes from the terminal. It returns the number of
 // bytes read and an error, if any. EOF is signaled by a zero count with
 // err set to io.EOF.
@@ -31,10 +34,7 @@ func (t *Term) Read(b []byte) (int, error) {
 		return 0, io.EOF
 	}
 	if e != nil {
-		return n, &os.PathError{
-			Op:   "read",
-			Path: t.name,
-			Err:  e}
+		return n, &os.PathError{"read", t.name, e}
 	}
 	return n, nil
 }
@@ -61,11 +61,7 @@ func (t *Term) Write(b []byte) (int, error) {
 		return n, io.ErrShortWrite
 	}
 	if e != nil {
-		return n, &os.PathError{
-			Op:   "write",
-			Path: t.name,
-			Err:  e,
-		}
+		return n, &os.PathError{"write", t.name, e}
 	}
 	return n, nil
 }
