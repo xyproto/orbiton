@@ -102,8 +102,8 @@ github.com/xyproto/termtitle v1.5.1 h1:L1I+6juzNQk+BsoPCYw2c+3unEv4pxQqcyIoO9Xb3
 github.com/xyproto/termtitle v1.5.1/go.mod h1:U+yMnuL9ENDJy9+OCDEiEx01b7Uk6Zu6g1O22xY/rvQ=
 github.com/xyproto/usermodel v1.2.2 h1:jfLmh65PGabdHR7mUR6fUGSax/joDOfai/Gr4VV3jtc=
 github.com/xyproto/usermodel v1.2.2/go.mod h1:Yq23gofv51bjTujYYnAH3fpvWD+ENa3fdIA+ahfU/B4=
-github.com/xyproto/vt v1.2.9-0.20250804213647-2d1c337f1a91 h1:+AhrKUUofYzJkV8UJNmcDs9zNqmMPAON65Wtiz4CKok=
-github.com/xyproto/vt v1.2.9-0.20250804213647-2d1c337f1a91/go.mod h1:Wf9H6ZDvdhEdBZDnLnnXoVGr+Bm6aPQvLtaBypVlNrE=
+github.com/xyproto/vt v1.2.9 h1:scVmLoMdmbOR7FQPjoHzg48hVayY5AWfj/yQBvAZEpo=
+github.com/xyproto/vt v1.2.9/go.mod h1:Wf9H6ZDvdhEdBZDnLnnXoVGr+Bm6aPQvLtaBypVlNrE=
 github.com/xyproto/wordwrap v1.0.1 h1:nKmUy4Jr+VBbeFfCgcUBx/e707ky7GBZLE/x1Uh3dtA=
 github.com/xyproto/wordwrap v1.0.1/go.mod h1:NIZ+TjJF24AUJzQDmr/fOMWgn3B2pK5+c9fPCp6UvcM=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
