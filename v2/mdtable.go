@@ -3,9 +3,7 @@ package main
 import (
 	"errors"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/xyproto/vt"
@@ -511,7 +509,7 @@ func (e *Editor) TableEditor(tty *vt.TTY, status *StatusBar, tableContents *[][]
 	userChangedTheContents := false
 
 	// Clear the existing handler
-	signal.Reset(syscall.SIGWINCH)
+	resetResizeSignal()
 
 	var (
 		c           = vt.NewCanvas()
@@ -523,7 +521,7 @@ func (e *Editor) TableEditor(tty *vt.TTY, status *StatusBar, tableContents *[][]
 	)
 
 	// Set up a new resize handler
-	signal.Notify(sigChan, syscall.SIGWINCH)
+	setupResizeSignal(sigChan)
 
 	resizeRedrawFunc := func() {
 		// Create a new canvas, with the new size

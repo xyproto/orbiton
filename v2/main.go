@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -499,7 +498,7 @@ func main() {
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {
 		defer func() {
-			syscall.Kill(os.Getppid(), syscall.SIGQUIT)
+			sendParentQuitSignal()
 		}()
 	}
 

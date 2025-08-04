@@ -9,11 +9,9 @@ import (
 	"math"
 	"math/rand"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/xyproto/files"
@@ -766,7 +764,7 @@ retry:
 		score         = uint(0)
 	)
 
-	signal.Notify(sigChan, syscall.SIGWINCH)
+	setupResizeSignal(sigChan)
 	go func() {
 		for range sigChan {
 			resizeMut.Lock()

@@ -4,10 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/signal"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 	"unicode"
 
@@ -138,7 +136,7 @@ func ctrlkey2letter(key string) (string, bool) {
 // returns -1, true if space was pressed
 func (e *Editor) Menu(status *StatusBar, tty *vt.TTY, title string, choices []string, bgColor, titleColor, arrowColor, textColor, highlightColor, selectedColor vt.AttributeColor, initialMenuIndex int, extraDashes bool) (int, bool) {
 	// Clear the existing handler
-	signal.Reset(syscall.SIGWINCH)
+	resetResizeSignal()
 
 	var (
 		selectionLetterMap = selectionLettersForChoices(choices)
@@ -151,7 +149,7 @@ func (e *Editor) Menu(status *StatusBar, tty *vt.TTY, title string, choices []st
 	)
 
 	// Set up a new resize handler
-	signal.Notify(sigChan, syscall.SIGWINCH)
+	setupResizeSignal(sigChan)
 
 	go func() {
 		for range sigChan {

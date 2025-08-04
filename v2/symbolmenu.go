@@ -2,9 +2,7 @@ package main
 
 import (
 	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 
 	"github.com/xyproto/vt"
 )
@@ -13,7 +11,7 @@ import (
 // x and y are returned. -1,-1 is "no choice", 0,0 is the top left index.
 func (e *Editor) SymbolMenu(tty *vt.TTY, status *StatusBar, title string, choices [][]string, titleColor, textColor, highlightColor vt.AttributeColor) (int, int, bool) {
 	// Clear the existing handler
-	signal.Reset(syscall.SIGWINCH)
+	resetResizeSignal()
 
 	var (
 		c          = vt.NewCanvas()
@@ -25,7 +23,7 @@ func (e *Editor) SymbolMenu(tty *vt.TTY, status *StatusBar, title string, choice
 	)
 
 	// Set up a new resize handler
-	signal.Notify(sigChan, syscall.SIGWINCH)
+	setupResizeSignal(sigChan)
 
 	go func() {
 		for range sigChan {
