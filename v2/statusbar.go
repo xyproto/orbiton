@@ -14,9 +14,10 @@ const (
 	fiveSpaces = "     "
 )
 
+var mut *sync.RWMutex
+
 // StatusBar represents the little status field that can appear at the bottom of the screen
 type StatusBar struct {
-	mu                 sync.RWMutex      // instance-level mutex for this status bar
 	editor             *Editor           // an editor struct (for getting the colors when clearing the status)
 	msg                string            // status message
 	messageAfterRedraw string            // a message to be drawn and cleared AFTER the redraw
@@ -36,7 +37,8 @@ var statusBeingShown int
 // NewStatusBar takes a foreground color, background color, foreground color for clearing,
 // background color for clearing and a duration for how long to display status messages.
 func (e *Editor) NewStatusBar(statusDuration time.Duration, initialMessageAfterRedraw string) *StatusBar {
-	return &StatusBar{sync.RWMutex{}, e, "", initialMessageAfterRedraw, e.StatusForeground, e.StatusBackground, e.StatusErrorForeground, e.StatusErrorBackground, statusDuration, 0, false, e.nanoMode.Load()}
+	mut = &sync.RWMutex{}
+	return &StatusBar{e, "", initialMessageAfterRedraw, e.StatusForeground, e.StatusBackground, e.StatusErrorForeground, e.StatusErrorBackground, statusDuration, 0, false, e.nanoMode.Load()}
 }
 
 // Draw will draw the status bar to the canvas
@@ -54,33 +56,33 @@ func (sb *StatusBar) Draw(c *vt.Canvas, offsetY int) {
 	}
 
 	if sb.IsError() {
-		sb.mu.RLock()
+		mut.RLock()
 		c.Write(uint((w-len(sb.msg))/2), h, sb.errfg, sb.errbg, sb.msg)
-		sb.mu.RUnlock()
+		mut.RUnlock()
 	} else {
-		sb.mu.RLock()
+		mut.RLock()
 		c.Write(uint((w-len(sb.msg))/2), h, sb.fg, sb.bg, sb.msg)
-		sb.mu.RUnlock()
+		mut.RUnlock()
 	}
 
 	if sb.nanoMode {
-		sb.mu.RLock()
+		mut.RLock()
 		// x-align
 		x := uint((w - len(nanoHelpString1)) / 2)
 		c.Write(x, h+1, sb.editor.NanoHelpForeground, sb.editor.NanoHelpBackground, nanoHelpString1)
 		c.Write(x, h+2, sb.editor.NanoHelpForeground, sb.editor.NanoHelpBackground, nanoHelpString2)
-		sb.mu.RUnlock()
+		mut.RUnlock()
 	}
 
-	sb.mu.Lock()
+	mut.Lock()
 	sb.offsetY = offsetY
-	sb.mu.Unlock()
+	mut.Unlock()
 }
 
 // SetMessage will change the status bar message.
 // A couple of spaces are added as padding.
 func (sb *StatusBar) SetMessage(msg string) {
-	sb.mu.Lock()
+	mut.Lock()
 
 	if len(msg)%2 == 0 {
 		sb.msg = "     "
@@ -90,14 +92,14 @@ func (sb *StatusBar) SetMessage(msg string) {
 	sb.msg += msg + "    "
 
 	sb.isError = false
-	sb.mu.Unlock()
+	mut.Unlock()
 }
 
 // Message trims and returns the currently set status bar message
 func (sb *StatusBar) Message() string {
-	sb.mu.RLock()
+	mut.RLock()
 	s := strings.TrimSpace(sb.msg)
-	sb.mu.RUnlock()
+	mut.RUnlock()
 	return s
 }
 
@@ -106,9 +108,9 @@ func (sb *StatusBar) Message() string {
 func (sb *StatusBar) IsError() bool {
 	var isError bool
 
-	sb.mu.RLock()
+	mut.RLock()
 	isError = sb.isError
-	sb.mu.RUnlock()
+	mut.RUnlock()
 
 	return isError
 }
@@ -116,7 +118,7 @@ func (sb *StatusBar) IsError() bool {
 // SetErrorMessage is for setting a message that will be shown after a full editor redraw,
 // to make the message appear also after jumping around in the text.
 func (sb *StatusBar) SetErrorMessage(msg string) {
-	sb.mu.Lock()
+	mut.Lock()
 
 	if len(msg)%2 == 0 {
 		sb.msg = fiveSpaces
@@ -126,7 +128,7 @@ func (sb *StatusBar) SetErrorMessage(msg string) {
 	sb.msg += msg + fourSpaces
 
 	sb.isError = true
-	sb.mu.Unlock()
+	mut.Unlock()
 }
 
 // SetError is for setting the error message
@@ -137,8 +139,8 @@ func (sb *StatusBar) SetError(err error) {
 // Clear will set the message to nothing and then use the editor contents
 // to remove the status bar field at the bottom of the editor.
 func (sb *StatusBar) Clear(c *vt.Canvas, repositionCursorAfterDrawing bool) {
-	sb.mu.Lock()
-	defer sb.mu.Unlock()
+	mut.Lock()
+	defer mut.Unlock()
 
 	// Clear the message
 	sb.msg = ""
@@ -167,8 +169,8 @@ func (sb *StatusBar) Clear(c *vt.Canvas, repositionCursorAfterDrawing bool) {
 
 // ClearAll will clear all status messages
 func (sb *StatusBar) ClearAll(c *vt.Canvas, repositionCursorAfterDrawing bool) {
-	sb.mu.Lock()
-	defer sb.mu.Unlock()
+	mut.Lock()
+	defer mut.Unlock()
 
 	statusBeingShown = 0
 
@@ -203,24 +205,24 @@ func (sb *StatusBar) Show(c *vt.Canvas, e *Editor) {
 		return
 	}
 
-	sb.mu.Lock()
+	mut.Lock()
 	statusBeingShown++
-	sb.mu.Unlock()
+	mut.Unlock()
 
-	sb.mu.RLock()
+	mut.RLock()
 	if sb.msg == "" && !sb.nanoMode {
-		sb.mu.RUnlock()
+		mut.RUnlock()
 		return
 	}
 	offsetY := e.pos.OffsetY()
-	sb.mu.RUnlock()
+	mut.RUnlock()
 
 	sb.Draw(c, offsetY)
 
 	go func() {
-		sb.mu.RLock()
+		mut.RLock()
 		sleepDuration := sb.show
-		sb.mu.RUnlock()
+		mut.RUnlock()
 
 		if sb.IsError() {
 			// Show error messages for 3x as long
@@ -228,30 +230,30 @@ func (sb *StatusBar) Show(c *vt.Canvas, e *Editor) {
 		}
 		time.Sleep(sleepDuration)
 
-		sb.mu.RLock()
+		mut.RLock()
 		// Has everyhing been cleared while sleeping?
 		if statusBeingShown <= 0 {
 			// Yes, so just quit
-			sb.mu.RUnlock()
+			mut.RUnlock()
 			return
 		}
-		sb.mu.RUnlock()
+		mut.RUnlock()
 
-		sb.mu.Lock()
+		mut.Lock()
 		statusBeingShown--
-		sb.mu.Unlock()
+		mut.Unlock()
 
-		sb.mu.RLock()
+		mut.RLock()
 		if statusBeingShown == 0 {
-			sb.mu.RUnlock()
-			sb.mu.Lock()
+			mut.RUnlock()
+			mut.Lock()
 			// Clear the message
 			sb.msg = ""
 			// Not an error message
 			sb.isError = false
-			sb.mu.Unlock()
+			mut.Unlock()
 		} else {
-			sb.mu.RUnlock()
+			mut.RUnlock()
 		}
 	}()
 
@@ -265,22 +267,22 @@ func (sb *StatusBar) ShowNoTimeout(c *vt.Canvas, e *Editor) {
 		return
 	}
 
-	sb.mu.RLock()
+	mut.RLock()
 	if sb.msg == "" && !sb.nanoMode {
-		sb.mu.RUnlock()
+		mut.RUnlock()
 		return
 	}
-	sb.mu.RUnlock()
+	mut.RUnlock()
 
-	sb.mu.RLock()
+	mut.RLock()
 	offsetY := e.pos.OffsetY()
-	sb.mu.RUnlock()
+	mut.RUnlock()
 
 	sb.Draw(c, offsetY)
 
-	sb.mu.Lock()
+	mut.Lock()
 	statusBeingShown++
-	sb.mu.Unlock()
+	mut.Unlock()
 
 	c.HideCursorAndDraw()
 }

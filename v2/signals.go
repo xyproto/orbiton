@@ -24,7 +24,7 @@ func (e *Editor) SetUpSignalHandlers(c *vt.Canvas, tty *vt.TTY, status *StatusBa
 	}
 
 	resizeMut.Lock()
-	defer resizeMut.Unlock()
+	mut.Lock()
 
 	sigChan := make(chan os.Signal, 1)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -42,6 +42,9 @@ func (e *Editor) SetUpSignalHandlers(c *vt.Canvas, tty *vt.TTY, status *StatusBa
 		}()
 	}
 
+	resizeMut.Unlock()
+	mut.Unlock()
+
 	if justClear {
 		return
 	}
@@ -53,7 +56,9 @@ func (e *Editor) SetUpSignalHandlers(c *vt.Canvas, tty *vt.TTY, status *StatusBa
 			case sig := <-sigChan:
 				switch sig {
 				case syscall.SIGTERM:
+					mut.Lock()
 					e.UserSave(c, tty, status)
+					mut.Unlock()
 				case syscall.SIGUSR1:
 					if absFilename, err := filepath.Abs(e.filename); err != nil {
 						fileLock.Unlock(e.filename)

@@ -1574,9 +1574,11 @@ func (e *Editor) ScrollDown(c *vt.Canvas, status *StatusBar, scrollSpeed, canvas
 	canvasLastY := canvasHeight - 1
 
 	// Retrieve the current editor scroll offset offset
-	e.pos.mut.RLock()
+	mut.RLock()
+	e.pos.mut.Lock()
 	offset := e.pos.offsetY
-	e.pos.mut.RUnlock()
+	e.pos.mut.Unlock()
+	mut.RUnlock()
 
 	// Number of lines in the document
 	l := e.Len()
@@ -1595,10 +1597,12 @@ func (e *Editor) ScrollDown(c *vt.Canvas, status *StatusBar, scrollSpeed, canvas
 	}
 
 	// Move the scroll offset
+	mut.Lock()
 	e.pos.mut.Lock()
 	e.pos.offsetX = 0
 	e.pos.offsetY += canScroll
 	e.pos.mut.Unlock()
+	mut.Unlock()
 
 	// Prepare to redraw
 	return true
@@ -1610,9 +1614,11 @@ func (e *Editor) ScrollUp(c *vt.Canvas, status *StatusBar, scrollSpeed int) bool
 	canScroll := scrollSpeed
 
 	// Retrieve the current editor scroll offset offset
-	e.pos.mut.RLock()
+	mut.RLock()
+	e.pos.mut.Lock()
 	offset := e.pos.offsetY
-	e.pos.mut.RUnlock()
+	e.pos.mut.Unlock()
+	mut.RUnlock()
 
 	if offset == 0 {
 		return true
@@ -1625,10 +1631,12 @@ func (e *Editor) ScrollUp(c *vt.Canvas, status *StatusBar, scrollSpeed int) bool
 		canScroll = offset
 	}
 	// Move the scroll offset
+	mut.Lock()
 	e.pos.mut.Lock()
 	e.pos.offsetX = 0
 	e.pos.offsetY -= canScroll
 	e.pos.mut.Unlock()
+	mut.Unlock()
 	// Prepare to redraw
 	return true
 }
