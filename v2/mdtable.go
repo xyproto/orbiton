@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"os"
 	"strings"
@@ -523,10 +524,20 @@ func (e *Editor) TableEditor(tty *vt.TTY, status *StatusBar, tableContents *[][]
 	// Set up a new resize handler
 	setupResizeSignal(sigChan)
 
+	// Create context for clean goroutine shutdown
+	ctx, cancelFunc := context.WithCancel(context.Background())
+
+	// Cleanup function to be called on function exit
+	defer func() {
+		cancelFunc()
+		resetResizeSignal()
+	}()
+
 	resizeRedrawFunc := func() {
 		// Create a new canvas, with the new size
 		nc := c.Resized()
 		if nc != nil {
+			c.Clear()
 			vt.Clear()
 			c = nc
 			tableWidget.Draw(c)
@@ -536,10 +547,15 @@ func (e *Editor) TableEditor(tty *vt.TTY, status *StatusBar, tableContents *[][]
 	}
 
 	go func() {
-		for range sigChan {
-			resizeMut.Lock()
-			resizeRedrawFunc()
-			resizeMut.Unlock()
+		for {
+			select {
+			case <-sigChan:
+				resizeMut.Lock()
+				resizeRedrawFunc()
+				resizeMut.Unlock()
+			case <-ctx.Done():
+				return
+			}
 		}
 	}()
 
