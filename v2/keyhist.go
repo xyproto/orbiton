@@ -13,10 +13,9 @@ const (
 	doubleTapTimeLimit = 300 * time.Millisecond
 )
 
-var khMut sync.RWMutex
-
 // KeyHistory represents the last 3 keypresses, and when they were pressed
 type KeyHistory struct {
+	mu   sync.RWMutex // instance-level mutex instead of global
 	t    [3]time.Time
 	keys [3]string
 }
@@ -31,8 +30,8 @@ func NewKeyHistory() *KeyHistory {
 // The oldest keypress is pushed out.
 // The time is also registered.
 func (kh *KeyHistory) Push(key string) {
-	khMut.Lock()
-	defer khMut.Unlock()
+	kh.mu.Lock()
+	defer kh.mu.Unlock()
 
 	kh.keys[0] = kh.keys[1]
 	kh.t[0] = kh.t[1]
@@ -44,32 +43,32 @@ func (kh *KeyHistory) Push(key string) {
 
 // Prev returns the last pressed key
 func (kh *KeyHistory) Prev() string {
-	khMut.RLock()
-	defer khMut.RUnlock()
+	kh.mu.RLock()
+	defer kh.mu.RUnlock()
 
 	return kh.keys[2]
 }
 
 // PrevIs checks if the last pressed key is the given string
 func (kh *KeyHistory) PrevIs(s string) bool {
-	khMut.RLock()
-	defer khMut.RUnlock()
+	kh.mu.RLock()
+	defer kh.mu.RUnlock()
 
 	return kh.keys[2] == s
 }
 
 // PrevPrev returns the key pressed before the last one
 func (kh *KeyHistory) PrevPrev() string {
-	khMut.RLock()
-	defer khMut.RUnlock()
+	kh.mu.RLock()
+	defer kh.mu.RUnlock()
 
 	return kh.keys[1]
 }
 
 // PrevHas checks if one of the given strings is the previous keypress
 func (kh *KeyHistory) PrevHas(keyPresses ...string) bool {
-	khMut.RLock()
-	defer khMut.RUnlock()
+	kh.mu.RLock()
+	defer kh.mu.RUnlock()
 
 	for _, keyPress := range keyPresses {
 		if keyPress == kh.keys[2] {
@@ -81,8 +80,8 @@ func (kh *KeyHistory) PrevHas(keyPresses ...string) bool {
 
 // PrevIsWithin checks if one of the given strings is the previous keypress, within the given duration
 func (kh *KeyHistory) PrevIsWithin(duration time.Duration, keyPresses ...string) bool {
-	khMut.RLock()
-	defer khMut.RUnlock()
+	kh.mu.RLock()
+	defer kh.mu.RUnlock()
 
 	now := time.Now()
 	for _, keyPress := range keyPresses {
@@ -95,16 +94,16 @@ func (kh *KeyHistory) PrevIsWithin(duration time.Duration, keyPresses ...string)
 
 // TwoLastAre checks if the two previous keypresses are the given keypress
 func (kh *KeyHistory) TwoLastAre(keyPress string) bool {
-	khMut.RLock()
-	defer khMut.RUnlock()
+	kh.mu.RLock()
+	defer kh.mu.RUnlock()
 
 	return kh.Prev() == keyPress && kh.PrevPrev() == keyPress
 }
 
 // Repeated checks if the given keypress was repeated the N last times
 func (kh *KeyHistory) Repeated(keyPress string, n int) bool {
-	khMut.RLock()
-	defer khMut.RUnlock()
+	kh.mu.RLock()
+	defer kh.mu.RUnlock()
 
 	counter := 0
 	for i := len(kh.keys) - 1; i >= 0; i-- {
@@ -120,8 +119,8 @@ func (kh *KeyHistory) Repeated(keyPress string, n int) bool {
 // OnlyIn checks if the key press history only contains the given
 // keypresses and no other keypresses.
 func (kh *KeyHistory) OnlyIn(keyPresses ...string) bool {
-	khMut.RLock()
-	defer khMut.RUnlock()
+	kh.mu.RLock()
+	defer kh.mu.RUnlock()
 
 	var found bool
 	for _, prevKeyPress := range kh.keys {
@@ -142,16 +141,16 @@ func (kh *KeyHistory) OnlyIn(keyPresses ...string) bool {
 // OnlyInAndAllDiffer checks if the key press history only contains the given
 // keypresses and no other keypresses, and that all are different.
 func (kh *KeyHistory) OnlyInAndAllDiffer(keyPresses ...string) bool {
-	khMut.RLock()
+	kh.mu.RLock()
 	allDiffer := kh.keys[0] != kh.keys[1] && kh.keys[0] != kh.keys[2] && kh.keys[1] != kh.keys[2]
-	khMut.RUnlock()
+	kh.mu.RUnlock()
 	return kh.OnlyIn(keyPresses...) && allDiffer
 }
 
 // AllWithin checks if the entire key history happened within the given duration (to check for rapid successions)
 func (kh *KeyHistory) AllWithin(dur time.Duration) bool {
-	khMut.RLock()
-	defer khMut.RUnlock()
+	kh.mu.RLock()
+	defer kh.mu.RUnlock()
 	firstTime := kh.t[0]
 	lastTime := kh.t[2]
 	return lastTime.Sub(firstTime) < dur
@@ -159,16 +158,16 @@ func (kh *KeyHistory) AllWithin(dur time.Duration) bool {
 
 // LastChanged checks if a key was added to the key history for longer since than the given duration, or not
 func (kh *KeyHistory) LastChanged(dur time.Duration) bool {
-	khMut.RLock()
-	defer khMut.RUnlock()
+	kh.mu.RLock()
+	defer kh.mu.RUnlock()
 	lastTime := kh.t[2]
 	return time.Since(lastTime) < dur
 }
 
 // PrevWithin checks if the previous keypress happened within the given duration (to check for rapid successions)
 func (kh *KeyHistory) PrevWithin(dur time.Duration) bool {
-	khMut.RLock()
-	defer khMut.RUnlock()
+	kh.mu.RLock()
+	defer kh.mu.RUnlock()
 	prevTime := kh.t[2]
 	return time.Since(prevTime) < dur
 }
@@ -177,14 +176,14 @@ func (kh *KeyHistory) PrevWithin(dur time.Duration) bool {
 // the given extraKeypress as if it was the last one pressed.
 func (kh *KeyHistory) SpecialArrowKeypressWith(extraKeypress string) bool {
 	// Push the extra keypress temporarily
-	khMut.RLock()
+	kh.mu.RLock()
 	khb := *kh
-	khMut.RUnlock()
+	kh.mu.RUnlock()
 	kh.Push(extraKeypress)
 	defer func() {
-		khMut.Lock()
+		kh.mu.Lock()
 		*kh = khb
-		khMut.Unlock()
+		kh.mu.Unlock()
 	}()
 	// Check if the special keypress was pressed (3 arrow keys in a row, any arrow key goes)
 	return kh.OnlyInAndAllDiffer(upArrow, rightArrow, leftArrow, downArrow) && kh.AllWithin(keypressComboTimeLimit)
@@ -199,16 +198,16 @@ func (kh *KeyHistory) DoubleTapped(keypress string) bool {
 // String returns the last keypresses as a string, with the oldest one first
 // and the latest one at the end.
 func (kh *KeyHistory) String() string {
-	khMut.RLock()
-	defer khMut.RUnlock()
+	kh.mu.RLock()
+	defer kh.mu.RUnlock()
 
 	return kh.keys[0] + kh.keys[1] + kh.keys[2]
 }
 
 // Clear clears the entire history
 func (kh *KeyHistory) Clear() {
-	khMut.Lock()
-	defer khMut.Unlock()
+	kh.mu.Lock()
+	defer kh.mu.Unlock()
 
 	kh.keys[0] = ""
 	kh.keys[1] = ""

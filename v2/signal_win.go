@@ -43,7 +43,7 @@ func (e *Editor) SetUpSignalHandlers(c *vt.Canvas, tty *vt.TTY, status *StatusBa
 	}
 
 	resizeMut.Lock()
-	mut.Lock()
+	defer resizeMut.Unlock()
 
 	sigChan := make(chan os.Signal, 1)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -52,9 +52,6 @@ func (e *Editor) SetUpSignalHandlers(c *vt.Canvas, tty *vt.TTY, status *StatusBa
 	// Windows signal handling - only handle interrupt signals
 	signal.Reset(os.Interrupt)
 	signal.Notify(sigChan, os.Interrupt)
-
-	resizeMut.Unlock()
-	mut.Unlock()
 
 	if justClear {
 		return
@@ -67,9 +64,7 @@ func (e *Editor) SetUpSignalHandlers(c *vt.Canvas, tty *vt.TTY, status *StatusBa
 			case sig := <-sigChan:
 				switch sig {
 				case os.Interrupt:
-					mut.Lock()
 					e.UserSave(c, tty, status)
-					mut.Unlock()
 				}
 			case <-ctx.Done():
 				return
