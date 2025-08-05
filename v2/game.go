@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"image"
 	"image/draw"
@@ -765,32 +766,43 @@ retry:
 	)
 
 	setupResizeSignal(sigChan)
-	go func() {
-		for range sigChan {
-			resizeMut.Lock()
-			// Create a new canvas, with the new size
-			nc := c.Resized()
-			if nc != nil {
-				c.Clear()
-				vt.Clear()
-				c.HideCursorAndDraw()
-				c = nc
-			}
 
-			// Inform all elements that the terminal was resized
-			// TODO: Use a slice of interfaces that can contain all elements
-			for _, pellet := range pellets {
-				pellet.Resize(c)
+	ctx, cancelFunc := context.WithCancel(context.Background())
+
+	// Cleanup function to be called on function exit
+	defer func() {
+		cancelFunc()
+		resetResizeSignal()
+	}()
+
+	go func() {
+		for {
+			select {
+			case <-sigChan:
+				resizeMut.Lock()
+				nc := c.Resized()
+				if nc != nil {
+					c.Clear()
+					vt.Clear()
+					c.HideCursorAndDraw()
+					c = nc
+				}
+
+				for _, pellet := range pellets {
+					pellet.Resize(c)
+				}
+				for _, bubble := range bubbles {
+					bubble.Resize(c)
+				}
+				for _, gobbler := range gobblers {
+					gobbler.Resize(c)
+				}
+				bob.Resize(c)
+				evilGobbler.Resize(c)
+				resizeMut.Unlock()
+			case <-ctx.Done():
+				return
 			}
-			for _, bubble := range bubbles {
-				bubble.Resize(c)
-			}
-			for _, gobbler := range gobblers {
-				gobbler.Resize(c)
-			}
-			bob.Resize(c)
-			evilGobbler.Resize(c)
-			resizeMut.Unlock()
 		}
 	}()
 

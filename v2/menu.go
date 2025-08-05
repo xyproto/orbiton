@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -151,21 +152,32 @@ func (e *Editor) Menu(status *StatusBar, tty *vt.TTY, title string, choices []st
 	// Set up a new resize handler
 	setupResizeSignal(sigChan)
 
-	go func() {
-		for range sigChan {
-			resizeMut.Lock()
-			// Create a new canvas, with the new size
-			nc := c.Resized()
-			if nc != nil {
-				vt.Clear()
-				c = nc
-				menu.Draw(c)
-				c.HideCursorAndRedraw()
-				changed = true
-			}
+	ctx, cancelFunc := context.WithCancel(context.Background())
 
-			// Inform all elements that the terminal was resized
-			resizeMut.Unlock()
+	// Cleanup function to be called on function exit
+	defer func() {
+		cancelFunc()
+		resetResizeSignal()
+	}()
+
+	go func() {
+		for {
+			select {
+			case <-sigChan:
+				resizeMut.Lock()
+				nc := c.Resized()
+				if nc != nil {
+					c.Clear()
+					vt.Clear()
+					c = nc
+					menu.Draw(c)
+					c.HideCursorAndRedraw()
+					changed = true
+				}
+				resizeMut.Unlock()
+			case <-ctx.Done():
+				return
+			}
 		}
 	}()
 
