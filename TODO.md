@@ -3,6 +3,7 @@
 
 ## General
 
+- [ ] If `ctrl-c` is pressed thrice when not in a function: copy to the end of the file.
 - [ ] If the `ctrl-o` menu was opened by pressing `esc` repeatedly, add a `Help` menu option.
 - [ ] Let `--ollama` only be used for fixing simple compilation errors.
 - [ ] When pressing ctrl-c twice while on a function signature, copy the entire function.
