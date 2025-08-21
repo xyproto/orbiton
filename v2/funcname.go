@@ -51,15 +51,6 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 	if funcPrefix != "" && strings.HasPrefix(trimmedLine, funcPrefix) {
 		return true
 	}
-	if strings.HasPrefix(trimmedLine, "for ") {
-		return false
-	}
-	if strings.HasPrefix(trimmedLine, "while ") {
-		return false
-	}
-	if strings.HasPrefix(trimmedLine, "switch ") {
-		return false
-	}
 	switch e.mode {
 	case mode.Java:
 		return javasig.Is(trimmedLine)
