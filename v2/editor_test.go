@@ -168,3 +168,43 @@ func TestStripSingleLineComment(t *testing.T) {
 		t.Errorf("StripSingleLineComment no comment: want '%s', got '%s'", want, got)
 	}
 }
+
+// TestFunctionNameKeywordExclusion tests that language keywords are not detected as function names
+func TestFunctionNameKeywordExclusion(t *testing.T) {
+	e := NewSimpleEditor(0)
+	e.mode = mode.Cpp
+
+	// Test cases that should NOT be detected as function names (keywords)
+	keywordTests := []string{
+		"for (int i = 0; i < 10; i++) {",
+		"if (condition) {",
+		"while (x > 0) {",
+		"return result;",
+		"switch (value) {",
+		"case 1:",
+		"do {",
+		"else {",
+		"break;",
+		"continue;",
+	}
+
+	for _, line := range keywordTests {
+		if got := e.FunctionName(line); got != "" {
+			t.Errorf("FunctionName('%s'): expected empty string for keyword, got '%s'", line, got)
+		}
+	}
+
+	// Test cases that SHOULD be detected as function names
+	validFunctionTests := map[string]string{
+		"void myFunction() {":                      "myFunction",
+		"int calculateSum(int a, int b) {":         "calculateSum",
+		"bool isValid(const std::string& input) {": "isValid",
+		"static double getValue() {":               "getValue",
+	}
+
+	for line, expected := range validFunctionTests {
+		if got := e.FunctionName(line); got != expected {
+			t.Errorf("FunctionName('%s'): expected '%s', got '%s'", line, expected, got)
+		}
+	}
+}

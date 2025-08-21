@@ -173,6 +173,10 @@ func (e *Editor) FunctionName(line string) string {
 	if strings.HasPrefix(withoutFuncPrefix, "$") {
 		return ""
 	}
+	// Don't return language keywords as function names
+	if _, isKeyword := Keywords[withoutFuncPrefix]; isKeyword {
+		return ""
+	}
 	return withoutFuncPrefix
 }
 
