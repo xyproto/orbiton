@@ -18,7 +18,7 @@ func pbpaste() (string, error) {
 	var buf bytes.Buffer
 	cmd.Stdout = &buf
 	if err := cmd.Run(); err != nil {
-		return "", nil
+		return "", err
 	}
 	return buf.String(), nil
 }
