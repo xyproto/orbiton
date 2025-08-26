@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -34,7 +35,7 @@ func ExtFileSearch(absCppFilename string, headerExtensions []string, maxTime tim
 		}
 	}
 
-	var headerNames []string
+	headerNames := make([]string, 0, len(headerExtensions))
 	for _, ext := range headerExtensions {
 		headerNames = append(headerNames, firstName+ext)
 	}
@@ -65,7 +66,7 @@ func ExtFileSearch(absCppFilename string, headerExtensions []string, maxTime tim
 			return nil
 		})
 		if err != nil {
-			return "", errors.New("error when searching for a corresponding header for " + cppBasename + ":" + err.Error())
+			return "", fmt.Errorf("error when searching for a corresponding header for %s: %w", cppBasename, err)
 		}
 		if len(foundHeaderAbsPath) == 0 {
 			// Try the parent directory
@@ -93,6 +94,7 @@ func FindFile(substring string) ([]string, error) {
 	if err != nil {
 		return nil, errors.New("failed to get current directory: " + err.Error())
 	}
+	lower := strings.ToLower(substring)
 	if err := filepath.Walk(currentDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil
@@ -102,7 +104,7 @@ func FindFile(substring string) ([]string, error) {
 			return nil
 		}
 
-		if strings.Contains(strings.ToLower(info.Name()), strings.ToLower(substring)) {
+		if strings.Contains(strings.ToLower(info.Name()), lower) {
 			absPath, err := filepath.Abs(path)
 			if err != nil {
 				return nil
