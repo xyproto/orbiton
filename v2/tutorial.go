@@ -40,7 +40,7 @@ var tutorialSteps = Tutorial{
 	},
 	TutorialStep{
 		title:       "Jump to a bookmark",
-		description: "Press ctrl-b jump to the bookmark. It must be on a different line than the current line.",
+		description: "Press ctrl-b to jump to the bookmark. It must be on a different line than the current line.",
 		expectKeys:  []string{"c:2"}, // ctrl-b
 	},
 	TutorialStep{
