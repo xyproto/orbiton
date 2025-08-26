@@ -179,7 +179,7 @@ func (e *Editor) FunctionName(line string) string {
 	if strings.Contains(withoutFuncPrefix, ".") {
 		return ""
 	}
-	if strings.HasPrefix(withoutFuncPrefix, "$") {
+	if strings.HasPrefix(withoutFuncPrefix, "$") || strings.HasSuffix(withoutFuncPrefix, "$") {
 		return ""
 	}
 	if strings.HasPrefix(withoutFuncPrefix, e.SingleLineCommentMarker()) {
