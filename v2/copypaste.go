@@ -33,10 +33,9 @@ func SetClipboardFromFile(filename string, primaryClipboard bool) (int, string, 
 		return 0, "", err
 	}
 
-	contents := string(data)
 	tailString := ""
-	if l := len(contents); l > 7 {
-		tailString = string(contents[l-7:])
+	if l := len(data); l > 7 {
+		tailString = string(data[l-7:])
 	}
 
 	return len(data), tailString, nil
@@ -93,12 +92,12 @@ func WriteClipboardToFile(filename string, overwrite, primaryClipboard bool) (in
 
 	headString := ""
 	if lenContents > 7 {
-		headString = string(contents[:8])
+		headString = string(contents[:7])
 	}
 
 	tailString := ""
 	if lenContents > 7 {
-		tailString = string(contents[lenContents-8:])
+		tailString = string(contents[lenContents-7:])
 	}
 
 	n, err := f.Write(contents)
