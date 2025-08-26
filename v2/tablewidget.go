@@ -343,7 +343,9 @@ func (tw *TableWidget) InsertRowBelow() {
 	tw.cy++
 	newRow := make([]string, cw)
 	// Insert the new row at the cy position
-	*tw.contents = append((*tw.contents)[:tw.cy], append([][]string{newRow}, (*tw.contents)[tw.cy:]...)...)
+	*tw.contents = append(*tw.contents, nil)
+	copy((*tw.contents)[tw.cy+1:], (*tw.contents)[tw.cy:])
+	(*tw.contents)[tw.cy] = newRow
 	tw.h++ // Update the widget table height as well (this is not the content height)
 }
 
