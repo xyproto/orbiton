@@ -76,8 +76,17 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 				return true // it looks-ish like a function definition
 			}
 		}
-		if e.mode == mode.Kotlin && strings.HasPrefix(trimmedLine, "suspend "+funcPrefix) {
-			return true
+		switch e.mode {
+		case mode.Kotlin:
+			if strings.HasPrefix(trimmedLine, "suspend "+funcPrefix) {
+				return true
+			}
+		case mode.Zig:
+			if strings.HasPrefix(trimmedLine, "pub "+funcPrefix) {
+				return true
+			} else if strings.HasPrefix(trimmedLine, "extern ") && strings.Contains(trimmedLine, funcPrefix) {
+				return true
+			}
 		}
 		if strings.Contains(trimmedLine, " ") {
 			fields := strings.SplitN(trimmedLine, " ", 2)
