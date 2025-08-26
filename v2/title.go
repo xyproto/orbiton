@@ -8,7 +8,7 @@ import (
 	"github.com/xyproto/termtitle"
 )
 
-// SetTitle sets an approperiate terminal emulator title, unless NO_COLOR is set
+// SetTitle sets an appropriate terminal emulator title, unless NO_COLOR is set
 func (fnord *FilenameOrData) SetTitle() {
 	if envNoColor {
 		return
