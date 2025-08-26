@@ -11,23 +11,40 @@ import (
 // ToggleCheckboxCurrentLine will attempt to toggle the Markdown checkbox on the current line of the editor.
 // Returns true if toggled.
 func (e *Editor) ToggleCheckboxCurrentLine() bool {
-	checkboxPrefixes := []string{"- [ ]", "- [x]", "- [X]", "* [ ]", "* [x]", "* [X]"}
-	// Toggle Markdown checkboxes
-	if line := e.CurrentLine(); hasAnyPrefixWord(strings.TrimSpace(line), checkboxPrefixes) {
-		if strings.Contains(line, "[ ]") {
-			e.SetLine(e.DataY(), strings.Replace(line, "[ ]", "[x]", 1))
-			e.redraw.Store(true)
-		} else if strings.Contains(line, "[x]") {
-			e.SetLine(e.DataY(), strings.Replace(line, "[x]", "[ ]", 1))
-			e.redraw.Store(true)
-		} else if strings.Contains(line, "[X]") {
-			e.SetLine(e.DataY(), strings.Replace(line, "[X]", "[ ]", 1))
-			e.redraw.Store(true)
+	var (
+		line    = e.CurrentLine()
+		trimmed = strings.TrimSpace(line)
+		newLine string
+		found   bool
+
+		// Check each checkbox pattern and replace in one pass
+		checkboxPatterns = [][2]string{
+			{"- [ ]", "- [x]"},
+			{"- [x]", "- [ ]"},
+			{"- [X]", "- [ ]"},
+			{"* [ ]", "* [x]"},
+			{"* [x]", "* [ ]"},
+			{"* [X]", "* [ ]"},
 		}
-		e.redrawCursor.Store(e.redraw.Load())
-		return true
+	)
+
+	for _, pattern := range checkboxPatterns {
+		prefix := pattern[0]
+		// Check if line starts with the pattern and is followed by space, end of line, or has content after
+		if strings.HasPrefix(trimmed, prefix) && (len(trimmed) == len(prefix) || trimmed[len(prefix)] == ' ') {
+			newLine = strings.Replace(line, prefix, pattern[1], 1)
+			found = true
+			break
+		}
 	}
-	return false
+
+	if found {
+		e.SetLine(e.DataY(), newLine)
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
+	}
+
+	return found
 }
 
 // quotedWordReplace will replace quoted words with a highlighted version
