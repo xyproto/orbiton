@@ -36,7 +36,7 @@ func SetClipboardFromFile(filename string, primaryClipboard bool) (int, string, 
 	contents := string(data)
 	tailString := ""
 	if l := len(contents); l > 7 {
-		tailString = string(contents[l-8:])
+		tailString = string(contents[l-7:])
 	}
 
 	return len(data), tailString, nil
