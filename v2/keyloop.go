@@ -498,37 +498,39 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
-			// Try to toggle checkbox for Markdown mode first
-			if e.mode == mode.Markdown && e.ToggleCheckboxCurrentLine() {
-				undo.Snapshot(e)
-				break
-			}
-
 			e.redrawCursor.Store(true)
 
 			// Is there no corresponding header or source file?
 			noCorresponding := false
 		AGAIN_NO_CORRESPONDING:
 
-			// First check if we are editing Markdown and are in a Markdown table
-			if e.mode == mode.Markdown && (e.EmptyLine() || e.InTable()) { // table editor
-				if e.EmptyLine() {
-					e.InsertStringAndMove(c, "| | |\n|-|-|\n| | |\n")
-					e.Up(c, status)
+			// First check if we are editing Markdown
+			if e.mode == mode.Markdown {
+				// Try to toggle checkbox first
+				if e.ToggleCheckboxCurrentLine() {
+					undo.Snapshot(e)
+					break
 				}
-				undo.Snapshot(e)
-				e.GoToStartOfTextLine(c)
-				// Edit the Markdown table
-				const justFormat = false
-				var displayQuickHelp = markdownTableEditorCounter < 1
-				e.EditMarkdownTable(tty, c, status, bookmark, justFormat, displayQuickHelp)
-				markdownTableEditorCounter++
-				// Full redraw
-				const drawLines = true
-				justMovedUpOrDown := kh.PrevHas("↓", "↑")
-				e.FullResetRedraw(c, status, drawLines, justMovedUpOrDown)
-				e.redraw.Store(true)
-				e.redrawCursor.Store(true)
+				// If no checkbox, check if we're in a table
+				if e.EmptyLine() || e.InTable() { // table editor
+					if e.EmptyLine() {
+						e.InsertStringAndMove(c, "| | |\n|-|-|\n| | |\n")
+						e.Up(c, status)
+					}
+					undo.Snapshot(e)
+					e.GoToStartOfTextLine(c)
+					// Edit the Markdown table
+					const justFormat = false
+					var displayQuickHelp = markdownTableEditorCounter < 1
+					e.EditMarkdownTable(tty, c, status, bookmark, justFormat, displayQuickHelp)
+					markdownTableEditorCounter++
+					// Full redraw
+					const drawLines = true
+					justMovedUpOrDown := kh.PrevHas("↓", "↑")
+					e.FullResetRedraw(c, status, drawLines, justMovedUpOrDown)
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
+				}
 			} else if !noCorresponding && (e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC) && hasS([]string{".cpp", ".cc", ".c", ".cxx", ".c++", ".m", ".mm", ".M"}, filepath.Ext(e.filename)) { // jump from source to header file
 				// If this is a C++ source file, try finding and opening the corresponding header file
 				// Check if there is a corresponding header file
