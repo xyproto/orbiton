@@ -15,7 +15,7 @@ import (
 )
 
 // LoadImage loads an image and converts it to *image.NRGBA.
-// Currently, PNG, GIF and JPEG images are supported.
+// Currently, PNG, JPEG, ICO, GIF, BMP, and WebP images are supported.
 func LoadImage(filename string) (*image.NRGBA, error) {
 	f, err := os.Open(filename)
 	if err != nil {

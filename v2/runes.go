@@ -58,7 +58,7 @@ func runeFromUBytes(bs []byte) (rune, error) {
 }
 
 // repeatRune can repeat a rune, n number of times.
-// Returns an empty string if memory can not be allocated within append.
+// Returns an empty string if memory cannot be allocated within append.
 func repeatRune(r rune, n uint) string {
 	var sb strings.Builder
 	for i := uint(0); i < n; i++ {
