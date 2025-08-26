@@ -69,13 +69,13 @@ func allLower(s string) bool {
 // capitalizeWords can change "john bob" to "John Bob"
 func capitalizeWords(s string) string {
 	words := strings.Fields(s)
-	var newWords []string
-	for _, word := range words {
+	newWords := make([]string, len(words))
+	for i, word := range words {
 		if len(word) > 1 {
 			capitalizedWord := strings.ToUpper(string(word[0])) + word[1:]
-			newWords = append(newWords, capitalizedWord)
+			newWords[i] = capitalizedWord
 		} else {
-			newWords = append(newWords, word)
+			newWords[i] = word
 		}
 	}
 	return strings.Join(newWords, " ")
@@ -173,7 +173,7 @@ func isAllowedFilenameChar(r rune) bool {
 
 // sanitizeFilename removes any character from the input string that is not part of a typical cross-platform filename
 func sanitizeFilename(input string) string {
-	var result []rune
+	result := make([]rune, 0, len(input))
 	for _, r := range input {
 		if isAllowedFilenameChar(r) {
 			result = append(result, r)
@@ -184,7 +184,7 @@ func sanitizeFilename(input string) string {
 
 // getLeadingWhitespace returns the leading whitespace of the given string
 func getLeadingWhitespace(line string) string {
-	var whitespace []rune
+	whitespace := make([]rune, 0, 8) // pre-allocate for the expected common case
 	for _, char := range line {
 		if unicode.IsSpace(char) {
 			whitespace = append(whitespace, char)

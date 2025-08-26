@@ -79,7 +79,7 @@ func hasSuffix(s string, suffixes []string) bool {
 
 // filterS returns all strings that makes the function f return true
 func filterS(sl []string, f func(string) bool) []string {
-	var results []string
+	results := make([]string, 0, len(sl)/4) // pre-allocate with estimated capacity
 	for _, e := range sl {
 		if f(e) {
 			results = append(results, e)
@@ -92,7 +92,7 @@ func filterS(sl []string, f func(string) bool) []string {
 // If the given slice is empty, then 0 is returned.
 func maxLength(xs []string) int {
 	if len(xs) == 0 {
-		return 0 // cannot find string length of an empty slice
+		return 0
 	}
 	maxLen := len(xs[0]) // use the first string length as the initial max length
 	for _, s := range xs[1:] {
