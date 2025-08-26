@@ -78,9 +78,6 @@ func (lk *LockKeeper) Save() error {
 // Lock marks the given absolute filename as locked.
 // If the file is already locked, an error is returned.
 func (lk *LockKeeper) Lock(filename string) error {
-
-	// TODO: Make sure not to lock "-" or "/dev/*" files
-
 	// Avoid locking "-" or "/dev/*" files
 	if filename == "-" || strings.HasPrefix(filename, "/dev/") {
 		return errors.New("locking '-' or '/dev/*' files is not allowed")
