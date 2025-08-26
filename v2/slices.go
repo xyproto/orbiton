@@ -92,7 +92,7 @@ func filterS(sl []string, f func(string) bool) []string {
 // If the given slice is empty, then 0 is returned.
 func maxLength(xs []string) int {
 	if len(xs) == 0 {
-		return 0 // can not find min and max string lengths of an empty slice
+		return 0 // cannot find string length of an empty slice
 	}
 	maxLen := len(xs[0]) // use the first string length as the initial max length
 	for _, s := range xs[1:] {

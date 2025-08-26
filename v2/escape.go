@@ -23,7 +23,7 @@ func Escape(s string) string {
 	return escapeReplacer.Replace(s)
 }
 
-// UnEscape escapes specialString1 and specialString2 by replacing them with < and >
+// UnEscape unescapes specialString1 and specialString2 by replacing them with < and >
 func UnEscape(s string) string {
 	return unEscapeReplacer.Replace(s)
 }
@@ -34,8 +34,8 @@ func ShEscape(s string) string {
 	return shEscapeReplacer.Replace(s)
 }
 
-// ShUnEscape escapes specialString1 and specialString2 by replacing them with < and >
-// Also escapes /* and */
+// ShUnEscape unescapes specialString1 and specialString2 by replacing them with < and >
+// Also unescapes /* and */
 func ShUnEscape(s string) string {
 	return shUnEscapeReplacer.Replace(s)
 }

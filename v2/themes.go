@@ -10,7 +10,7 @@ var (
 	initialLightBackground *bool
 )
 
-// Theme contains iformation about:
+// Theme contains information about:
 // * If the theme is light or dark
 // * If syntax highlighting should be enabled
 // * If no colors should be used

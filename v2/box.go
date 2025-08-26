@@ -247,7 +247,7 @@ func (e *Editor) DrawFooter(bt *BoxTheme, c *vt.Canvas, r *Box, text string) {
 // DrawText will draw a text widget. Takes a Box struct for the size and position.
 // Takes a list of strings. Does not scroll. Uses bt.Foreground and bt.Background.
 // The text is wrapped by using the WordWrap function.
-// The number of lines that are added as a concequence of wrapping lines is returned as an int.
+// The number of lines that are added as a consequence of wrapping lines is returned as an int.
 func (e *Editor) DrawText(bt *BoxTheme, c *vt.Canvas, r *Box, text string, dryRun bool) int {
 	maxWidth := int(r.W) - 2 // Adjusted width to account for margins
 	x := uint(r.X)

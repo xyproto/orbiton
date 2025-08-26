@@ -11,7 +11,7 @@ func stripGZ(filename string) string {
 	return strings.TrimSuffix(filename, ".gz")
 }
 
-// gUnzipData uncompressed gzip data
+// gUnzipData uncompresses gzip data
 func gUnzipData(data []byte) ([]byte, error) {
 	b := bytes.NewBuffer(data)
 	r, err := gzip.NewReader(b)
