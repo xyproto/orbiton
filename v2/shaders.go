@@ -5,7 +5,7 @@ import (
 	"regexp"
 )
 
-// guessShaderType tries to detect which type of shader the given source code could be
+// detectShaderType tries to detect which type of shader the given source code could be
 func detectShaderType(shaderCode string) (string, error) {
 
 	shaderKeywords := map[string][]string{

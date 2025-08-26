@@ -35,7 +35,7 @@ func (e *Editor) NewPortal() (*Portal, error) {
 	return &Portal{time.Now(), absFilename, e.LineNumber()}, nil
 }
 
-// SameFile checks if the portal exist in the same file as the editor is editing
+// SameFile checks if the portal exists in the same file as the editor is editing
 func (p *Portal) SameFile(e *Editor) bool {
 	absFilename, err := e.AbsFilename()
 	if err != nil {

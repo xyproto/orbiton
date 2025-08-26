@@ -27,7 +27,7 @@ type TableWidget struct {
 	titleColor       vt.AttributeColor // title color (above the choices)
 	cursorColor      vt.AttributeColor // color of the "_" cursor
 	commentColor     vt.AttributeColor // comment color
-	displayQuickHelp bool              // display "quick help" at the bottom"
+	displayQuickHelp bool              // display "quick help" at the bottom
 }
 
 // NewTableWidget creates a new TableWidget

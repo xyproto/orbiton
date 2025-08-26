@@ -69,7 +69,7 @@ type Editor struct {
 	addSpace                   bool        // add a space to the editor, once
 	debugStepInto              bool        // when stepping to the next instruction, step into instead of over
 	slowLoad                   bool        // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
-	building                   bool        // currently buildig code or exporting to a file?
+	building                   bool        // currently building code or exporting to a file?
 	runAfterBuild              bool        // run the application after building?
 	monitorAndReadOnly         bool        // monitor the file for changes and open it as read-only
 	primaryClipboard           bool        // use the primary or the secondary clipboard on UNIX?

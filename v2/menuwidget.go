@@ -13,7 +13,7 @@ type MenuWidget struct {
 	choices            []string                    // a slice of menu items
 	marginLeft         int                         // margin, may be negative?
 	marginTop          int                         // margin, may be negative?
-	selected           int                         // the index o the currently selected item
+	selected           int                         // the index of the currently selected item
 	w                  uint                        // width
 	h                  uint                        // height (number of menu items)
 	y                  uint                        // current position
