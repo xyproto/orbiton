@@ -33,7 +33,7 @@ func (e *Editor) NoSmartIndentation() bool {
 	return false
 }
 
-// UsingGDBMightWork evaluates if usig GDB might work, for this file type
+// UsingGDBMightWork evaluates if using GDB might work, for this file type
 func (e *Editor) UsingGDBMightWork() bool {
 	switch e.mode {
 	case mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Arduino, mode.Basic, mode.Bat, mode.Bazel, mode.Blank, mode.CMake, mode.CS, mode.Clojure, mode.Config, mode.Dart, mode.Email, mode.Erlang, mode.FSTAB, mode.Git, mode.Gradle, mode.HIDL, mode.HTML, mode.Ini, mode.JSON, mode.Java, mode.JavaScript, mode.Just, mode.Kotlin, mode.Lisp, mode.Log, mode.Lua, mode.M4, mode.Make, mode.ManPage, mode.Markdown, mode.Nix, mode.Nroff, mode.Oak, mode.Perl, mode.PolicyLanguage, mode.Python, mode.SCDoc, mode.Starlark, mode.SQL, mode.Scala, mode.Shell, mode.Teal, mode.Text, mode.TypeScript, mode.Vim, mode.XML:
