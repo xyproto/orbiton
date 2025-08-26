@@ -209,7 +209,7 @@ func (e *Editor) DrawOutput(c *vt.Canvas, maxLines int, title, collectedOutput s
 
 	boxMinWidth := w - 7
 
-	_, maxLineLength := minMaxLength(lines)
+	maxLineLength := maxLength(lines)
 
 	if maxLineLength < int(boxMinWidth) {
 		boxMinWidth = uint(maxLineLength + 7)

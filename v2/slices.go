@@ -88,22 +88,17 @@ func filterS(sl []string, f func(string) bool) []string {
 	return results
 }
 
-// minMaxLength returns the length of the shortest and longest string
-// If the given slice is empty, then 0,0 is returned.
-func minMaxLength(xs []string) (int, int) {
+// maxLength returns the length of the longest string.
+// If the given slice is empty, then 0 is returned.
+func maxLength(xs []string) int {
 	if len(xs) == 0 {
-		return 0, 0 // can not find min and max string lengths of an empty slice
+		return 0 // can not find min and max string lengths of an empty slice
 	}
-	minLen := -1
-	maxLen := -1
-	for _, s := range xs {
-		l := len(s)
-		if minLen == -1 || l < minLen {
-			minLen = l
-		}
-		if maxLen == -1 || l > maxLen {
+	maxLen := len(xs[0]) // use the first string length as the initial max length
+	for _, s := range xs[1:] {
+		if l := len(s); l > maxLen {
 			maxLen = l
 		}
 	}
-	return minLen, maxLen
+	return maxLen
 }
