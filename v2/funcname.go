@@ -82,9 +82,9 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 				return true
 			}
 		case mode.Zig:
-			if strings.HasPrefix(trimmedLine, "pub "+funcPrefix) {
+			if strings.HasPrefix(trimmedLine, "pub "+funcPrefix) || strings.HasPrefix(trimmedLine, "inline "+funcPrefix) {
 				return true
-			} else if strings.HasPrefix(trimmedLine, "extern ") && strings.Contains(trimmedLine, funcPrefix) {
+			} else if (strings.HasPrefix(trimmedLine, "extern ") || strings.HasPrefix(trimmedLine, "test ")) && strings.Contains(trimmedLine, funcPrefix) {
 				return true
 			}
 		}
