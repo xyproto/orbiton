@@ -25,7 +25,7 @@ func NewPosition(scrollSpeed int) *Position {
 
 // Copy will create a new Position struct that is a copy of this one
 func (p *Position) Copy() *Position {
-	return &Position{p.mut, p.sx, p.sy, p.offsetX, p.offsetY, p.scrollSpeed, p.savedX}
+	return &Position{&sync.RWMutex{}, p.sx, p.sy, p.offsetX, p.offsetY, p.scrollSpeed, p.savedX}
 }
 
 // ScreenX returns the screen X position in the current view
