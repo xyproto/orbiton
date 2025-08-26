@@ -317,6 +317,8 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 		escapeFunction                     = Escape
 		unEscapeFunction                   = UnEscape
 		rw                                 int // rune width
+		yesNoReplacer                      = strings.NewReplacer("<lightgreen>yes<", "<lightyellow>yes<", "<lightred>no<", "<lightyellow>no<")
+		commentReplacer                    = strings.NewReplacer("<"+e.Comment+">", "<"+e.Plaintext+">", "</"+e.Comment+">", "</"+e.Plaintext+">")
 	)
 
 	// If the terminal emulator is being resized, then wait a bit
@@ -485,12 +487,12 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						coloredString = unEscapeFunction(e.MultiLineString.Start(trimmedLine))
 					} else if strings.Contains(trimmedLine, ":"+singleLineCommentMarker) {
 						// If the line contains "://", then don't let the syntax package highlight it as a comment, by removing the gray color
-						stringWithTags = strings.ReplaceAll(strings.ReplaceAll(string(textWithTags), "<"+e.Comment+">", "<"+e.Plaintext+">"), "</"+e.Comment+">", "</"+e.Plaintext+">")
-						coloredString = unEscapeFunction(tout.DarkTags(strings.ReplaceAll(strings.ReplaceAll(stringWithTags, "<lightgreen>yes<", "<lightyellow>yes<"), "<lightred>no<", "<lightyellow>no<")))
+						stringWithTags = commentReplacer.Replace(string(textWithTags))
+						coloredString = unEscapeFunction(tout.DarkTags(yesNoReplacer.Replace(stringWithTags)))
 					} else {
 						// Regular highlight + highlight yes and no in blue when using the default color scheme
 						// TODO: Modify (and rewrite) the syntax package instead.
-						coloredString = unEscapeFunction(tout.DarkTags(strings.ReplaceAll(strings.ReplaceAll(string(textWithTags), "<lightgreen>yes<", "<lightyellow>yes<"), "<lightred>no<", "<lightyellow>no<")))
+						coloredString = unEscapeFunction(tout.DarkTags(yesNoReplacer.Replace(string(textWithTags))))
 					}
 				case mode.Zig:
 					trimmedLine = strings.TrimSpace(line)
