@@ -418,6 +418,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			switch e.mode {
+			case mode.Markdown:
+				if e.ToggleCheckboxCurrentLine() { // Toggle checkbox
+					undo.Snapshot(e)
+					break
+				}
 			case mode.Config, mode.FSTAB:
 				break // do nothing
 			case mode.Nroff:
@@ -490,6 +495,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			if e.nanoMode.Load() {
 				e.NanoNextTypo(c, status)
+				break
+			}
+
+			// Try to toggle checkbox for Markdown mode first
+			if e.mode == mode.Markdown && e.ToggleCheckboxCurrentLine() {
+				undo.Snapshot(e)
 				break
 			}
 
