@@ -205,7 +205,7 @@ var tutorialSteps = Tutorial{
 	},
 	TutorialStep{
 		title:       "Cycle register pane layout",
-		description: "When debugging, press ctrl-p to cycle the size of the register pane from small, to large to hidden.",
+		description: "When debugging, press ctrl-p to cycle the size of the register pane: small -> large -> hidden",
 		expectKeys:  []string{"c:16"}, // ctrl-p
 	},
 	TutorialStep{
