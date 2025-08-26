@@ -65,13 +65,11 @@ func traceComplete() {
 		f, err := os.Create(memProfileFilename)
 		if err != nil {
 			log.Fatal("could not create memory profile: ", err)
-			logf("could not create memory profile: %v\n", err)
 		}
-		f.Close()
+		defer f.Close()
 		runtime.GC() // get up-to-date statistics
 		if err := pprof.WriteHeapProfile(f); err != nil {
 			log.Fatal("could not write to memory profile: ", err)
-			logf("could not write to memory profile: %v\n", err)
 		}
 	}
 	if cpuProfileFilename != "" {
