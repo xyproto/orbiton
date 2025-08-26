@@ -59,7 +59,7 @@ func formatFstab(data []byte, spaces int) []byte {
 		// Get the next next next line, if possible
 		var nextNextNextLineTrimmed []byte
 		if (i + 3) < len(byteLines) {
-			nextNextLineTrimmed = bytes.TrimSpace(byteLines[i+3])
+			nextNextNextLineTrimmed = bytes.TrimSpace(byteLines[i+3])
 		}
 
 		// Gather stats for if the lines are blank
