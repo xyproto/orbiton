@@ -26,13 +26,7 @@ func (ws Words) Len() int {
 // Less reports whether the element with
 // index i should sort before the element with index j.
 func (ws Words) Less(i, j int) bool {
-	// This did not provide a good sorting order for strings:
-	// return ws[i].s < ws[j].s
-
-	// This worked out, but is probably quite a bit slower:
-	twoStrings := []string{ws[i].s, ws[j].s}
-	sort.Strings(twoStrings)
-	return twoStrings[0] == ws[i].s
+	return strings.ToLower(ws[i].s) < strings.ToLower(ws[j].s)
 }
 
 // Swap helps make Words sortable.
