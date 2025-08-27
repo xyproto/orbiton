@@ -484,7 +484,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
 					} else if strings.HasPrefix(trimmedLine, "> ") {
 						// If there is a } underneath and typing }, don't dedent, keep it at the same level!
-						coloredString = unEscapeFunction(e.MultiLineString.Start(trimmedLine))
+						coloredString = unEscapeFunction(e.MultiLineString.Start(line))
 					} else if strings.Contains(trimmedLine, ":"+singleLineCommentMarker) {
 						// If the line contains "://", then don't let the syntax package highlight it as a comment, by removing the gray color
 						stringWithTags = commentReplacer.Replace(string(textWithTags))
@@ -499,7 +499,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					// Handle doc comments (starting with ///)
 					// and multi-line strings (starting with \\)
 					if strings.HasPrefix(trimmedLine, "///") || strings.HasPrefix(trimmedLine, `\\`) {
-						coloredString = unEscapeFunction(e.MultiLineString.Start(trimmedLine))
+						coloredString = unEscapeFunction(e.MultiLineString.Start(line))
 					} else {
 						// Regular highlight
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
