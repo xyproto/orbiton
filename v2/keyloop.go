@@ -1553,16 +1553,18 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			oldFilename := e.filename
 			oldLineIndex := e.LineIndex()
 
-			// func prefix must exist for this language/mode for GoToDefinition to be supported
-			if ProgrammingLanguage(e.mode) {
+			// Check if we should toggle status bar based on cursor position and file type
+			if ProgrammingLanguage(e.mode) && !e.AtOrBeforeStartOfTextScreenLine() {
+				// For programming languages, try go to definition when not at or before start of text
 				jumpedToDefinition := e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status)
 				if jumpedToDefinition {
 					break
 				}
-			}
-
-			// TODO: Is this correct? Should it only happen if jumpedToDefinition is true? false?
-			if e.searchTerm != "" && strings.Contains(e.String(), e.searchTerm) {
+				// If go to definition didn't work, try jump to matching
+				if e.JumpToMatching(c) {
+					e.redrawCursor.Store(true)
+				}
+			} else if e.searchTerm != "" && strings.Contains(e.String(), e.searchTerm) {
 				// Push a function for how to go back
 				backFunctions = append(backFunctions, func() {
 					oldFilename := oldFilename
@@ -1579,7 +1581,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			} else if e.JumpToMatching(c) {
 				e.redrawCursor.Store(true)
 			} else {
-				// Toggle status bar
+				// Toggle status bar (for non-programming languages or when at/before start of text)
 				status.ClearAll(c, false)
 				e.statusMode = !e.statusMode
 				if e.statusMode {
