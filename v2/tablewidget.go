@@ -296,6 +296,34 @@ func (tw *TableWidget) Down() {
 	}
 }
 
+// PageUp moves up 10 rows (or to the top if less than 10 rows available)
+func (tw *TableWidget) PageUp() {
+	_, ch := tw.ContentsWH()
+	tw.oldy = tw.cy
+	tw.cy -= 10
+	if tw.cy < 0 {
+		tw.cy = 0
+	}
+	// Ensure we don't exceed the table bounds
+	if tw.cy >= ch {
+		tw.cy = ch - 1
+	}
+}
+
+// PageDown moves down 10 rows (or to the bottom if less than 10 rows available)
+func (tw *TableWidget) PageDown() {
+	cw, ch := tw.ContentsWH()
+	tw.oldy = tw.cy
+	tw.cy += 10
+	if tw.cy >= ch {
+		tw.cy = ch - 1
+	}
+	// just in case rows have differing lengths
+	if tw.cx >= cw {
+		tw.cx = cw - 1
+	}
+}
+
 // Left will move the highlight left (with wrap-around)
 func (tw *TableWidget) Left() {
 	cw, _ := tw.ContentsWH()

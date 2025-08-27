@@ -624,6 +624,26 @@ func (e *Editor) TableEditor(tty *vt.TTY, status *StatusBar, tableContents *[][]
 			tableWidget.SelectEnd()
 			changed = true
 			resizeMut.Unlock()
+		case homeKey: // Home - go to first cell in row
+			resizeMut.Lock()
+			tableWidget.SelectStart()
+			changed = true
+			resizeMut.Unlock()
+		case endKey: // End - go to last cell in row
+			resizeMut.Lock()
+			tableWidget.SelectEnd()
+			changed = true
+			resizeMut.Unlock()
+		case pgUpKey: // Page Up - move up 10 rows
+			resizeMut.Lock()
+			tableWidget.PageUp()
+			changed = true
+			resizeMut.Unlock()
+		case pgDnKey: // Page Down - move down 10 rows
+			resizeMut.Lock()
+			tableWidget.PageDown()
+			changed = true
+			resizeMut.Unlock()
 		case "c:27", "q", "c:3", "c:17", "c:15", "c:20": // ESC, q, ctrl-c, ctrl-q, ctrl-o or ctrl-t
 			running = false
 			changed = true
