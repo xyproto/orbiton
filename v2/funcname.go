@@ -51,6 +51,10 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 	if funcPrefix != "" && strings.HasPrefix(trimmedLine, funcPrefix) {
 		return true
 	}
+	if singleLineComment := e.SingleLineCommentMarker(); strings.Contains(trimmedLine, singleLineComment) {
+		parts := strings.Split(trimmedLine, singleLineComment)
+		trimmedLine = strings.TrimSpace(parts[0])
+	}
 	switch e.mode {
 	case mode.Java:
 		return javasig.Is(trimmedLine)
