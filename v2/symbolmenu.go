@@ -4,18 +4,16 @@ import (
 	"context"
 	"os"
 	"strconv"
-
-	"github.com/xyproto/vt"
 )
 
 // SymbolMenu starts a loop where keypresses are handled. When a choice is made, a number is returned.
 // x and y are returned. -1,-1 is "no choice", 0,0 is the top left index.
-func (e *Editor) SymbolMenu(tty *vt.TTY, status *StatusBar, title string, choices [][]string, titleColor, textColor, highlightColor vt.AttributeColor) (int, int, bool) {
+func (e *Editor) SymbolMenu(tty *TTY, status *StatusBar, title string, choices [][]string, titleColor, textColor, highlightColor AttributeColor) (int, int, bool) {
 	// Clear the existing handler
 	resetResizeSignal()
 
 	var (
-		c          = vt.NewCanvas()
+		c          = NewCanvas()
 		symbolMenu = NewSymbolWidget(title, choices, titleColor, textColor, highlightColor, e.Background, int(c.W()), int(c.H()))
 		sigChan    = make(chan os.Signal, 1)
 		running    = true
@@ -41,7 +39,7 @@ func (e *Editor) SymbolMenu(tty *vt.TTY, status *StatusBar, title string, choice
 				nc := c.Resized()
 				if nc != nil {
 					c.Clear()
-					vt.Clear()
+					Clear()
 					c = nc
 					symbolMenu.Draw(c)
 					c.HideCursorAndRedraw()
@@ -54,8 +52,8 @@ func (e *Editor) SymbolMenu(tty *vt.TTY, status *StatusBar, title string, choice
 		}
 	}()
 
-	vt.Clear()
-	vt.Reset()
+	Clear()
+	Reset()
 	c.HideCursorAndRedraw()
 
 	// Set the initial menu index

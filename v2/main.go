@@ -17,7 +17,6 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/globi"
-	"github.com/xyproto/vt"
 )
 
 const (
@@ -211,7 +210,7 @@ func main() {
 				if envNoColor {
 					fmt.Printf("Copied %d byte%s from %s to the clipboard. Tail bytes: %s\n", n, plural, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
 				} else {
-					fmt.Printf("Copied %s%d%s byte%s from %s to the clipboard. Tail bytes: %s%s%s\n", vt.Yellow, n, vt.Stop(), plural, filename, vt.LightCyan, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")), vt.Stop())
+					fmt.Printf("Copied %s%d%s byte%s from %s to the clipboard. Tail bytes: %s%s%s\n", Yellow, n, Stop(), plural, filename, LightCyan, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")), Stop())
 				}
 			} else {
 				fmt.Printf("Copied %d byte%s from %s to the clipboard.\n", n, plural, filename)
@@ -251,7 +250,7 @@ func main() {
 			if envNoColor {
 				fmt.Printf("Wrote %d bytes to %s from the clipboard. Tail bytes: %s\n", n, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
 			} else {
-				fmt.Printf("Wrote %s%d%s bytes to %s from the clipboard. Tail bytes: %s%s%s\n", vt.Red, n, vt.Stop(), filename, vt.LightBlue, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")), vt.Stop())
+				fmt.Printf("Wrote %s%d%s bytes to %s from the clipboard. Tail bytes: %s%s%s\n", Red, n, Stop(), filename, LightBlue, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")), Stop())
 			}
 		} else {
 			fmt.Printf("Wrote %d bytes to %s from the clipboard.\n", n, filename)
@@ -487,7 +486,7 @@ func main() {
 	}
 
 	// Initialize the VT100 terminal
-	tty, err := vt.NewTTY()
+	tty, err := NewTTY()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		quitMut.Lock()
@@ -511,9 +510,9 @@ func main() {
 
 	// Clear the current color attribute
 	if clearOnQuit.Load() {
-		fmt.Print(vt.Stop())
+		fmt.Print(Stop())
 	} else {
-		fmt.Print("\n" + vt.Stop())
+		fmt.Print("\n" + Stop())
 	}
 
 	traceComplete() // if building with -tags trace

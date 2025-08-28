@@ -3,7 +3,6 @@ package main
 import (
 	"strings"
 
-	"github.com/xyproto/vt"
 	"github.com/xyproto/wordwrap"
 )
 
@@ -17,12 +16,12 @@ type Box struct {
 
 // BoxTheme contains the runes used to draw boxes
 type BoxTheme struct {
-	LowerEdge  *vt.AttributeColor
-	UpperEdge  *vt.AttributeColor
-	Highlight  *vt.AttributeColor
-	Text       *vt.AttributeColor
-	Background *vt.AttributeColor
-	Foreground *vt.AttributeColor
+	LowerEdge  *AttributeColor
+	UpperEdge  *AttributeColor
+	Highlight  *AttributeColor
+	Text       *AttributeColor
+	Background *AttributeColor
+	Foreground *AttributeColor
 	HB         rune
 	HT         rune
 	VR         rune
@@ -63,7 +62,7 @@ func (e *Editor) NewBoxTheme() *BoxTheme {
 }
 
 // NewCanvasBox creates a new box/container for the entire canvas/screen
-func NewCanvasBox(c *vt.Canvas) *Box {
+func NewCanvasBox(c *Canvas) *Box {
 	w := int(c.W())
 	h := int(c.H())
 	return &Box{0, 0, w, h}
@@ -168,7 +167,7 @@ func (b *Box) LowerPlacement(container *Box, minWidth int) {
 }
 
 // Say will output text at the given coordinates, with the configured theme
-func (e *Editor) Say(bt *BoxTheme, c *vt.Canvas, x, y int, text string) {
+func (e *Editor) Say(bt *BoxTheme, c *Canvas, x, y int, text string) {
 	c.Write(uint(x), uint(y), *bt.Text, *bt.Background, text)
 }
 
@@ -176,7 +175,7 @@ func (e *Editor) Say(bt *BoxTheme, c *vt.Canvas, x, y int, text string) {
 // The given Box struct defines the size and placement.
 // If extrude is True, the box looks a bit more like it's sticking out.
 // bg is expected to be a background color, for instance e.BoxBackground.
-func (e *Editor) DrawBox(bt *BoxTheme, c *vt.Canvas, r *Box) *Box {
+func (e *Editor) DrawBox(bt *BoxTheme, c *Canvas, r *Box) *Box {
 	var (
 		bg     = bt.Background
 		FG1    = bt.UpperEdge
@@ -210,7 +209,7 @@ func (e *Editor) DrawBox(bt *BoxTheme, c *vt.Canvas, r *Box) *Box {
 // which item is currently selected. Does not scroll or wrap.
 // Set selected to -1 to skip highlighting one of the items.
 // Uses bt.Highlight, bt.Text and bt.Background.
-func (e *Editor) DrawList(bt *BoxTheme, c *vt.Canvas, r *Box, items []string, selected int) {
+func (e *Editor) DrawList(bt *BoxTheme, c *Canvas, r *Box, items []string, selected int) {
 	x := uint(r.X)
 	for i, s := range items {
 		y := uint(r.Y + i)
@@ -223,7 +222,7 @@ func (e *Editor) DrawList(bt *BoxTheme, c *vt.Canvas, r *Box, items []string, se
 }
 
 // DrawTitle draws a title at the top of a box, not exactly centered
-func (e *Editor) DrawTitle(bt *BoxTheme, c *vt.Canvas, r *Box, title string, withSpaces bool) {
+func (e *Editor) DrawTitle(bt *BoxTheme, c *Canvas, r *Box, title string, withSpaces bool) {
 	titleWithSpaces := title
 	if withSpaces {
 		titleWithSpaces = " " + title + " "
@@ -236,7 +235,7 @@ func (e *Editor) DrawTitle(bt *BoxTheme, c *vt.Canvas, r *Box, title string, wit
 }
 
 // DrawFooter draws text at the bottom of a box, not exactly centered
-func (e *Editor) DrawFooter(bt *BoxTheme, c *vt.Canvas, r *Box, text string) {
+func (e *Editor) DrawFooter(bt *BoxTheme, c *Canvas, r *Box, text string) {
 	textWithSpaces := " " + text + " "
 	tmp := bt.Text
 	bt.Text = bt.UpperEdge
@@ -248,7 +247,7 @@ func (e *Editor) DrawFooter(bt *BoxTheme, c *vt.Canvas, r *Box, text string) {
 // Takes a list of strings. Does not scroll. Uses bt.Foreground and bt.Background.
 // The text is wrapped by using the WordWrap function.
 // The number of lines that are added as a consequence of wrapping lines is returned as an int.
-func (e *Editor) DrawText(bt *BoxTheme, c *vt.Canvas, r *Box, text string, dryRun bool) int {
+func (e *Editor) DrawText(bt *BoxTheme, c *Canvas, r *Box, text string, dryRun bool) int {
 	maxWidth := int(r.W) - 2 // Adjusted width to account for margins
 	x := uint(r.X)
 	lineIndex := 0

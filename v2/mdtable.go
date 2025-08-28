@@ -6,8 +6,6 @@ import (
 	"os"
 	"strings"
 	"time"
-
-	"github.com/xyproto/vt"
 )
 
 func looksLikeTable(line string) bool {
@@ -49,7 +47,7 @@ func (e *Editor) TopOfCurrentTable() (LineIndex, error) {
 }
 
 // GoToTopOfCurrentTable tries to jump to the first line of the current Markdown table
-func (e *Editor) GoToTopOfCurrentTable(c *vt.Canvas, status *StatusBar, centerCursor bool) LineIndex {
+func (e *Editor) GoToTopOfCurrentTable(c *Canvas, status *StatusBar, centerCursor bool) LineIndex {
 	topIndex, err := e.TopOfCurrentTable()
 	if err != nil {
 		return 0
@@ -112,7 +110,7 @@ func (e *Editor) CurrentTableString() (string, error) {
 }
 
 // DeleteCurrentTable will delete the current Markdown table
-func (e *Editor) DeleteCurrentTable(c *vt.Canvas, status *StatusBar, bookmark *Position) (LineIndex, error) {
+func (e *Editor) DeleteCurrentTable(c *Canvas, status *StatusBar, bookmark *Position) (LineIndex, error) {
 	s, err := e.CurrentTableString()
 	if err != nil {
 		return 0, err
@@ -131,7 +129,7 @@ func (e *Editor) DeleteCurrentTable(c *vt.Canvas, status *StatusBar, bookmark *P
 
 // ReplaceCurrentTableWith will try to replace the current table with the given string.
 // Also moves the current bookmark, if needed.
-func (e *Editor) ReplaceCurrentTableWith(c *vt.Canvas, status *StatusBar, bookmark *Position, tableString string) error {
+func (e *Editor) ReplaceCurrentTableWith(c *Canvas, status *StatusBar, bookmark *Position, tableString string) error {
 	topOfTable, err := e.DeleteCurrentTable(c, status, bookmark)
 	if err != nil {
 		return err
@@ -429,7 +427,7 @@ func (e *Editor) FormatAllMarkdownTables() {
 }
 
 // EditMarkdownTable presents the user with a dedicated table editor for the current Markdown table, or just formats it
-func (e *Editor) EditMarkdownTable(tty *vt.TTY, c *vt.Canvas, status *StatusBar, bookmark *Position, justFormat, displayQuickHelp bool) {
+func (e *Editor) EditMarkdownTable(tty *TTY, c *Canvas, status *StatusBar, bookmark *Position, justFormat, displayQuickHelp bool) {
 
 	initialY, err := e.CurrentTableY()
 	if err != nil {
@@ -498,7 +496,7 @@ func (e *Editor) EditMarkdownTable(tty *vt.TTY, c *vt.Canvas, status *StatusBar,
 // TableEditor presents an interface for changing the given headers and body
 // initialY is the initial Y position of the cursor in the table
 // Returns true if the user changed the contents.
-func (e *Editor) TableEditor(tty *vt.TTY, status *StatusBar, tableContents *[][]string, initialY int, displayQuickHelp bool) (bool, error) {
+func (e *Editor) TableEditor(tty *TTY, status *StatusBar, tableContents *[][]string, initialY int, displayQuickHelp bool) (bool, error) {
 
 	title := "Markdown Table Editor"
 	titleColor := e.Foreground // HeaderBulletColor
@@ -513,7 +511,7 @@ func (e *Editor) TableEditor(tty *vt.TTY, status *StatusBar, tableContents *[][]
 	resetResizeSignal()
 
 	var (
-		c           = vt.NewCanvas()
+		c           = NewCanvas()
 		tableWidget = NewTableWidget(title, tableContents, titleColor, headerColor, textColor, highlightColor, cursorColor, commentColor, e.Background, int(c.W()), int(c.H()), initialY, displayQuickHelp)
 		sigChan     = make(chan os.Signal, 1)
 		running     = true
@@ -538,7 +536,7 @@ func (e *Editor) TableEditor(tty *vt.TTY, status *StatusBar, tableContents *[][]
 		nc := c.Resized()
 		if nc != nil {
 			c.Clear()
-			vt.Clear()
+			Clear()
 			c = nc
 			tableWidget.Draw(c)
 			c.HideCursorAndRedraw()
@@ -559,11 +557,11 @@ func (e *Editor) TableEditor(tty *vt.TTY, status *StatusBar, tableContents *[][]
 		}
 	}()
 
-	vt.Clear()
-	vt.Reset()
+	Clear()
+	Reset()
 	c.HideCursorAndRedraw()
 
-	showMessage := func(msg string, color vt.AttributeColor) {
+	showMessage := func(msg string, color AttributeColor) {
 		msgX := (c.W() - uint(len(msg))) / 2
 		msgY := c.H() - 1
 		c.Write(msgX, msgY, color, e.Background, msg)

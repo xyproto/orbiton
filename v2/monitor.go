@@ -2,12 +2,11 @@ package main
 
 import (
 	"github.com/fsnotify/fsnotify"
-	"github.com/xyproto/vt"
 )
 
 // StartMonitoring will start monitoring the current file for changes
 // and reload the file whenever it changes.
-func (e *Editor) StartMonitoring(c *vt.Canvas, tty *vt.TTY, status *StatusBar) error {
+func (e *Editor) StartMonitoring(c *Canvas, tty *TTY, status *StatusBar) error {
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {

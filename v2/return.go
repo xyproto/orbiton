@@ -6,11 +6,10 @@ import (
 
 	"github.com/xyproto/iferr"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/vt"
 )
 
 // ReturnPressed is called when the user pressed return while editing text
-func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar) {
+func (e *Editor) ReturnPressed(c *Canvas, status *StatusBar) {
 	var (
 		trimmedLine              = e.TrimmedLine()
 		currentLeadingWhitespace = e.LeadingWhitespace()

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/xyproto/vt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,7 +12,7 @@ var backFunctions []func()
 // Returns true if it was possible to go to the definition.
 // This function is currently very experimental and may only work for a few languages, and for a few definitions!
 // TODO: Parse some programming languages before jumping.
-func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bool {
+func (e *Editor) GoToDefinition(tty *TTY, c *Canvas, status *StatusBar) bool {
 	// FuncPrefix may return strings with a leading or trailing blank
 	funcPrefix := e.FuncPrefix()
 

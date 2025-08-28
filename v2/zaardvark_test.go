@@ -5,14 +5,12 @@ package main
 import (
 	"os"
 	"testing"
-
-	"github.com/xyproto/vt"
 )
 
 func TestMain(m *testing.M) {
 	code := m.Run()
 
-	vt.ShowCursor(true)
+	ShowCursor(true)
 
 	os.Exit(code)
 }

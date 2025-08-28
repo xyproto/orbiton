@@ -9,14 +9,12 @@ import (
 	"path/filepath"
 	"syscall"
 	"time"
-
-	"github.com/xyproto/vt"
 )
 
 var cancelPreviousSignalHandler context.CancelFunc
 
 // SetUpSignalHandlers sets up signal handlers for SIGTERM, SIGUSR1, and SIGWINCH.
-func (e *Editor) SetUpSignalHandlers(c *vt.Canvas, tty *vt.TTY, status *StatusBar, justClear bool) {
+func (e *Editor) SetUpSignalHandlers(c *Canvas, tty *TTY, status *StatusBar, justClear bool) {
 
 	// Cancel the previous signal handler if it exists
 	if cancelPreviousSignalHandler != nil {

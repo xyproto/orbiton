@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/xyproto/palgen"
-	"github.com/xyproto/vt"
 )
 
 const drawRune = '▒'
@@ -29,7 +28,7 @@ func ConvertToNRGBA(img image.Image) (*image.NRGBA, error) {
 }
 
 // Draw attempts to draw the given image.Image onto a VT100 Canvas
-func Draw(canvas *vt.Canvas, m image.Image) error {
+func Draw(canvas *Canvas, m image.Image) error {
 	// Convert the image to only use the basic 16-color palette
 	img, err := palgen.ConvertBasic(m)
 	if err != nil {
@@ -38,7 +37,7 @@ func Draw(canvas *vt.Canvas, m image.Image) error {
 	}
 
 	// img is now an indexed image
-	var vc vt.AttributeColor
+	var vc AttributeColor
 	for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
 		for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
 			c := color.NRGBAModel.Convert(img.At(x, y)).(color.NRGBA)
@@ -46,39 +45,39 @@ func Draw(canvas *vt.Canvas, m image.Image) error {
 				if rgb[0] == c.R && rgb[1] == c.G && rgb[2] == c.B {
 					switch i {
 					case 0:
-						vc = vt.Black
+						vc = Black
 					case 1:
-						vc = vt.Red
+						vc = Red
 					case 2:
-						vc = vt.Green
+						vc = Green
 					case 3:
-						vc = vt.Yellow
+						vc = Yellow
 					case 4:
-						vc = vt.Blue
+						vc = Blue
 					case 5:
-						vc = vt.Magenta
+						vc = Magenta
 					case 6:
-						vc = vt.Cyan
+						vc = Cyan
 					case 7:
-						vc = vt.LightGray
+						vc = LightGray
 					case 8:
-						vc = vt.DarkGray
+						vc = DarkGray
 					case 9:
-						vc = vt.LightRed
+						vc = LightRed
 					case 10:
-						vc = vt.LightGreen
+						vc = LightGreen
 					case 11:
-						vc = vt.LightYellow
+						vc = LightYellow
 					case 12:
-						vc = vt.LightBlue
+						vc = LightBlue
 					case 13:
-						vc = vt.LightMagenta
+						vc = LightMagenta
 					case 14:
-						vc = vt.LightCyan
+						vc = LightCyan
 					case 15:
-						vc = vt.White
+						vc = White
 					default:
-						vc = vt.White
+						vc = White
 					}
 					break
 				}

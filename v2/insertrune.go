@@ -1,12 +1,8 @@
 package main
 
-import (
-	"github.com/xyproto/vt"
-)
-
 // InsertRune will insert a rune at the current data position, with word wrap
 // Returns true if the line was wrapped
-func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
+func (e *Editor) InsertRune(c *Canvas, r rune) bool {
 	// Insert a regular space instead of a non-breaking space.
 	// Nobody likes non-breaking spaces.
 	switch r {

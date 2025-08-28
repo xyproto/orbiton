@@ -1,11 +1,7 @@
 package main
 
-import (
-	"github.com/xyproto/vt"
-)
-
 // WriteProgress draws a small progress indicator on the right hand side, but does not draw/redraw the canvas
-func (e *Editor) WriteProgress(c *vt.Canvas) {
+func (e *Editor) WriteProgress(c *Canvas) {
 	var (
 		canvasWidth   = c.Width()
 		canvasHeight  = float64(c.Height())

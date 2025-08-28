@@ -2,8 +2,6 @@ package main
 
 import (
 	"unicode"
-
-	"github.com/xyproto/vt"
 )
 
 // MenuWidget represents a TUI widget for presenting a menu with choices for the user
@@ -18,16 +16,16 @@ type MenuWidget struct {
 	h                  uint                        // height (number of menu items)
 	y                  uint                        // current position
 	oldy               uint                        // previous position
-	titleColor         vt.AttributeColor           // title color (above the choices)
-	arrowColor         vt.AttributeColor           // arrow color (before each menu choice)
-	textColor          vt.AttributeColor           // text color (the choices that are not highlighted)
-	highlightColor     vt.AttributeColor           // highlight color (the choice that will be selected if return is pressed)
-	selectedColor      vt.AttributeColor           // selected color (the choice that has been selected after return has been pressed)
+	titleColor         AttributeColor              // title color (above the choices)
+	arrowColor         AttributeColor              // arrow color (before each menu choice)
+	textColor          AttributeColor              // text color (the choices that are not highlighted)
+	highlightColor     AttributeColor              // highlight color (the choice that will be selected if return is pressed)
+	selectedColor      AttributeColor              // selected color (the choice that has been selected after return has been pressed)
 	extraDashes        bool                        // add "---" after each menu item?
 }
 
 // NewMenuWidget creates a new MenuWidget
-func NewMenuWidget(title string, choices []string, titleColor, arrowColor, textColor, highlightColor, selectedColor vt.AttributeColor, canvasWidth, canvasHeight uint, extraDashes bool, selectionLetterMap map[string]*RuneAndPosition) *MenuWidget {
+func NewMenuWidget(title string, choices []string, titleColor, arrowColor, textColor, highlightColor, selectedColor AttributeColor, canvasWidth, canvasHeight uint, extraDashes bool, selectionLetterMap map[string]*RuneAndPosition) *MenuWidget {
 	maxlen := uint(0)
 	for _, choice := range choices {
 		if uint(len(choice)) > uint(maxlen) {
@@ -70,7 +68,7 @@ func (m *MenuWidget) Selected() int {
 }
 
 // Draw will draw this menu widget on the given canvas
-func (m *MenuWidget) Draw(c *vt.Canvas) {
+func (m *MenuWidget) Draw(c *Canvas) {
 	// Draw the title
 	titleHeight := 2
 	for x, r := range m.title {
@@ -132,7 +130,7 @@ func (m *MenuWidget) Draw(c *vt.Canvas) {
 
 // SelectDraw will draw the currently highlighted menu choices with the selected color.
 // This is used after a menu item has been selected.
-func (m *MenuWidget) SelectDraw(c *vt.Canvas) {
+func (m *MenuWidget) SelectDraw(c *Canvas) {
 	old := m.highlightColor
 	m.highlightColor = m.selectedColor
 	m.Draw(c)

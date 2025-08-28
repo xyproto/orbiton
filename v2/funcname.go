@@ -6,7 +6,6 @@ import (
 	"github.com/xyproto/javasig"
 	"github.com/xyproto/kotlinsig"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/vt"
 )
 
 // FuncPrefix tries to return the function keyword for the current editor mode, if possible.
@@ -349,14 +348,14 @@ func (e *Editor) OnlyFunctionNameForLineIndex(n LineIndex) string {
 
 // WriteCurrentFunctionName writes (but does not redraw) the current function name we are within (if any),
 // in the top right corner of the canvas.
-func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
+func (e *Editor) WriteCurrentFunctionName(c *Canvas) {
 	if !ProgrammingLanguage(e.mode) {
 		return
 	}
-	s := e.FindCurrentFunctionName()
 	var (
-		canvasWidth      = c.Width()
-		x           uint = (canvasWidth - uint(len(s))) - 2 // 2 is the right side padding
+		s           = e.FindCurrentFunctionName()
+		canvasWidth = c.Width()
+		x           = (canvasWidth - uint(len(s))) - 2 // 2 is the right side padding
 		y           uint
 	)
 	c.Write(x, y, e.Foreground, e.Background, s)

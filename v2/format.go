@@ -15,7 +15,6 @@ import (
 	"github.com/xyproto/files"
 	"github.com/xyproto/lookslikegoasm"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/vt"
 )
 
 // FormatMap maps from format command to file extensions
@@ -70,7 +69,7 @@ func (e *Editor) GetFormatMap() FormatMap {
 }
 
 // Using exec.Cmd instead of *exec.Cmd is on purpose, to get a new cmd.stdout and cmd.stdin every time.
-func (e *Editor) formatWithUtility(c *vt.Canvas, tty *vt.TTY, status *StatusBar, cmd exec.Cmd) error {
+func (e *Editor) formatWithUtility(c *Canvas, tty *TTY, status *StatusBar, cmd exec.Cmd) error {
 	if files.WhichCached(cmd.Path) == "" { // Does the formatting tool even exist?
 		return errors.New(cmd.Path + " is missing")
 	}
@@ -232,7 +231,7 @@ func organizeImports(data []byte, onlyJava, removeExistingImports, deGlob bool) 
 	return newData
 }
 
-func (e *Editor) formatCode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, jsonFormatToggle *bool) {
+func (e *Editor) formatCode(c *Canvas, tty *TTY, status *StatusBar, jsonFormatToggle *bool) {
 	switch e.mode {
 	case mode.JSON: // Format JSON
 		data, err := formatJSON([]byte(e.String()), jsonFormatToggle, e.indentation.PerTab)

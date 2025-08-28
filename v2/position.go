@@ -3,8 +3,6 @@ package main
 import (
 	"errors"
 	"sync"
-
-	"github.com/xyproto/vt"
 )
 
 // Position represents a position on the screen, including how far down the view has scrolled
@@ -65,7 +63,7 @@ func (p *Position) OffsetY() int {
 }
 
 // SetX will set the screen X position
-func (p *Position) SetX(c *vt.Canvas, x int) {
+func (p *Position) SetX(c *Canvas, x int) {
 	p.mut.Lock()
 	defer p.mut.Unlock()
 
@@ -102,7 +100,7 @@ func (p *Position) DecY() {
 }
 
 // IncY will increase Y by 1
-func (p *Position) IncY(c *vt.Canvas) {
+func (p *Position) IncY(c *Canvas) {
 	p.mut.Lock()
 	defer p.mut.Unlock()
 
@@ -145,7 +143,7 @@ func (p *Position) Up() error {
 }
 
 // Down will move the cursor down
-func (p *Position) Down(c *vt.Canvas) error {
+func (p *Position) Down(c *Canvas) error {
 	p.mut.Lock()
 	defer p.mut.Unlock()
 	h := 25 // default height
@@ -201,7 +199,7 @@ func (p *Position) ColNumber() ColNumber {
 
 // Right will move the cursor to the right, if possible.
 // It will not move the cursor up or down.
-func (p *Position) Right(c *vt.Canvas) {
+func (p *Position) Right(c *Canvas) {
 	p.mut.Lock()
 	defer p.mut.Unlock()
 

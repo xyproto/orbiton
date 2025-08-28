@@ -2,14 +2,12 @@ package main
 
 import (
 	"sync"
-
-	"github.com/xyproto/vt"
 )
 
 var redrawMutex sync.Mutex // to avoid an issue where the terminal is resized, signals are flying and the user is hammering the esc button
 
 // FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
-func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, shouldHighlightCurrentLine bool) {
+func (e *Editor) FullResetRedraw(c *Canvas, status *StatusBar, drawLines, shouldHighlightCurrentLine bool) {
 	if noDrawUntilResize.Load() {
 		return
 	}
@@ -24,14 +22,14 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 		e.SetSearchTerm(c, status, "", false)
 	}
 
-	vt.Close()
-	vt.Reset()
-	vt.Clear()
-	vt.Init()
+	Close()
+	Reset()
+	Clear()
+	Init()
 
-	newC := vt.NewCanvas()
+	newC := NewCanvas()
 	newC.ShowCursor()
-	vt.EchoOff()
+	EchoOff()
 
 	w := int(newC.Width())
 
@@ -50,9 +48,9 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 
 	resizeMut.Lock()
 
-	newC = vt.NewCanvas()
+	newC = NewCanvas()
 	newC.ShowCursor()
-	vt.EchoOff()
+	EchoOff()
 	w = int(newC.Width())
 
 	resizeMut.Unlock()
@@ -85,7 +83,7 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 }
 
 // RedrawIfNeeded will redraw the text on the canvas if e.redraw is set
-func (e *Editor) RedrawIfNeeded(c *vt.Canvas, shouldHighlight bool) {
+func (e *Editor) RedrawIfNeeded(c *Canvas, shouldHighlight bool) {
 	if e.redraw.Load() {
 		respectOffset := true
 		redrawCanvas := e.sshMode
@@ -97,8 +95,8 @@ func (e *Editor) RedrawIfNeeded(c *vt.Canvas, shouldHighlight bool) {
 // RepositionCursor will send the VT100 commands needed to position the cursor
 func (e *Editor) RepositionCursor(x, y uint) {
 	// Redraw the cursor
-	vt.ShowCursor(true)
-	vt.SetXY(x, y)
+	ShowCursor(true)
+	SetXY(x, y)
 
 	e.previousX = int(x)
 	e.previousY = int(y)
@@ -112,8 +110,8 @@ func (e *Editor) PlaceAndEnableCursor() {
 	y := uint(e.pos.ScreenY())
 	e.pos.mut.RUnlock()
 
-	vt.ShowCursor(true)
-	vt.SetXY(x, y)
+	ShowCursor(true)
+	SetXY(x, y)
 
 	e.previousX = int(x)
 	e.previousY = int(y)
@@ -128,14 +126,14 @@ func (e *Editor) RepositionCursorIfNeeded() {
 	e.pos.mut.RUnlock()
 
 	if x != e.previousX || y != e.previousY || e.redrawCursor.Load() {
-		vt.ShowCursor(true)
+		ShowCursor(true)
 		e.RepositionCursor(uint(x), uint(y))
 		e.redrawCursor.Store(false)
 	}
 }
 
 // HideCursorDrawLines will draw a screen full of lines on the given canvas
-func (e *Editor) HideCursorDrawLines(c *vt.Canvas, respectOffset, redrawCanvas, shouldHighlightCurrentLine bool) {
+func (e *Editor) HideCursorDrawLines(c *Canvas, respectOffset, redrawCanvas, shouldHighlightCurrentLine bool) {
 	if c == nil {
 		return
 	}
@@ -159,7 +157,7 @@ func (e *Editor) HideCursorDrawLines(c *vt.Canvas, respectOffset, redrawCanvas, 
 }
 
 // InitialRedraw is called right before the main loop is started
-func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
+func (e *Editor) InitialRedraw(c *Canvas, status *StatusBar) {
 	if c == nil {
 		return
 	}
@@ -200,7 +198,7 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 }
 
 // RedrawAtEndOfKeyLoop is called after each main loop
-func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHighlightCurrentLine, repositionCursor bool) {
+func (e *Editor) RedrawAtEndOfKeyLoop(c *Canvas, status *StatusBar, shouldHighlightCurrentLine, repositionCursor bool) {
 	redrawMutex.Lock()
 	defer redrawMutex.Unlock()
 
@@ -255,7 +253,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 	if repositionCursor {
 		e.EnableAndPlaceCursor(c)
 	} else {
-		vt.ShowCursor(true)
+		ShowCursor(true)
 		e.RepositionCursorIfNeeded()
 	}
 }

@@ -12,7 +12,6 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/vt"
 )
 
 // Run will attempt to run the corresponding output executable, given a source filename.
@@ -194,7 +193,7 @@ func (e *Editor) Run() (string, bool, error) {
 }
 
 // DrawOutput will draw a pane with the 5 last lines of the given output
-func (e *Editor) DrawOutput(c *vt.Canvas, maxLines int, title, collectedOutput string, backgroundColor vt.AttributeColor, repositionCursorAfterDrawing, rightHandSide bool) {
+func (e *Editor) DrawOutput(c *Canvas, maxLines int, title, collectedOutput string, backgroundColor AttributeColor, repositionCursorAfterDrawing, rightHandSide bool) {
 	e.waitWithRedrawing.Store(true)
 
 	w := c.Width()

@@ -5,8 +5,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/xyproto/vt"
 )
 
 const (
@@ -18,17 +16,17 @@ var mut *sync.RWMutex
 
 // StatusBar represents the little status field that can appear at the bottom of the screen
 type StatusBar struct {
-	editor             *Editor           // an editor struct (for getting the colors when clearing the status)
-	msg                string            // status message
-	messageAfterRedraw string            // a message to be drawn and cleared AFTER the redraw
-	fg                 vt.AttributeColor // draw foreground color
-	bg                 vt.AttributeColor // draw background color
-	errfg              vt.AttributeColor // error foreground color
-	errbg              vt.AttributeColor // error background color
-	show               time.Duration     // show the message for how long before clearing
-	offsetY            int               // scroll offset
-	isError            bool              // is this an error message that should be shown after redraw?
-	nanoMode           bool              // Nano emulation?
+	editor             *Editor        // an editor struct (for getting the colors when clearing the status)
+	msg                string         // status message
+	messageAfterRedraw string         // a message to be drawn and cleared AFTER the redraw
+	fg                 AttributeColor // draw foreground color
+	bg                 AttributeColor // draw background color
+	errfg              AttributeColor // error foreground color
+	errbg              AttributeColor // error background color
+	show               time.Duration  // show the message for how long before clearing
+	offsetY            int            // scroll offset
+	isError            bool           // is this an error message that should be shown after redraw?
+	nanoMode           bool           // Nano emulation?
 }
 
 // Used for keeping track of how many status messages are lined up to be cleared
@@ -42,7 +40,7 @@ func (e *Editor) NewStatusBar(statusDuration time.Duration, initialMessageAfterR
 }
 
 // Draw will draw the status bar to the canvas
-func (sb *StatusBar) Draw(c *vt.Canvas, offsetY int) {
+func (sb *StatusBar) Draw(c *Canvas, offsetY int) {
 	w := int(c.W())
 
 	// Shorten the status message if it's longer than the terminal width
@@ -138,7 +136,7 @@ func (sb *StatusBar) SetError(err error) {
 
 // Clear will set the message to nothing and then use the editor contents
 // to remove the status bar field at the bottom of the editor.
-func (sb *StatusBar) Clear(c *vt.Canvas, repositionCursorAfterDrawing bool) {
+func (sb *StatusBar) Clear(c *Canvas, repositionCursorAfterDrawing bool) {
 	mut.Lock()
 	defer mut.Unlock()
 
@@ -168,7 +166,7 @@ func (sb *StatusBar) Clear(c *vt.Canvas, repositionCursorAfterDrawing bool) {
 }
 
 // ClearAll will clear all status messages
-func (sb *StatusBar) ClearAll(c *vt.Canvas, repositionCursorAfterDrawing bool) {
+func (sb *StatusBar) ClearAll(c *Canvas, repositionCursorAfterDrawing bool) {
 	mut.Lock()
 	defer mut.Unlock()
 
@@ -200,7 +198,7 @@ func (sb *StatusBar) ClearAll(c *vt.Canvas, repositionCursorAfterDrawing bool) {
 }
 
 // Show will draw a status message, then clear it after a certain delay
-func (sb *StatusBar) Show(c *vt.Canvas, e *Editor) {
+func (sb *StatusBar) Show(c *Canvas, e *Editor) {
 	if c == nil {
 		return
 	}
@@ -262,7 +260,7 @@ func (sb *StatusBar) Show(c *vt.Canvas, e *Editor) {
 
 // ShowNoTimeout will draw a status message that will not be
 // cleared after a certain timeout.
-func (sb *StatusBar) ShowNoTimeout(c *vt.Canvas, e *Editor) {
+func (sb *StatusBar) ShowNoTimeout(c *Canvas, e *Editor) {
 	if c == nil {
 		return
 	}
@@ -321,7 +319,7 @@ func (e *Editor) IndentationDescription() string {
 // * the currently detected file mode
 // * the current indentation mode (tabs or spaces)
 // func FilenamePositionPercentageAndModeInfo(e *Editor) string {
-func (sb *StatusBar) ShowFilenameLineColWordCount(c *vt.Canvas, e *Editor) {
+func (sb *StatusBar) ShowFilenameLineColWordCount(c *Canvas, e *Editor) {
 	indentation := e.IndentationDescription()
 	percentage, lineNumber, lastLineNumber := e.PLA()
 	statusLine := fmt.Sprintf("%s: line %d/%d (%d%%) col %d rune %U words %d, [%s] %s", e.filename, lineNumber, lastLineNumber, percentage, e.ColNumber(), e.Rune(), e.WordCount(), e.mode, indentation)
@@ -330,7 +328,7 @@ func (sb *StatusBar) ShowFilenameLineColWordCount(c *vt.Canvas, e *Editor) {
 }
 
 // ShowBlockModeStatusLine shows a status message for when block mode is enabled
-func (sb *StatusBar) ShowBlockModeStatusLine(c *vt.Canvas, e *Editor) {
+func (sb *StatusBar) ShowBlockModeStatusLine(c *Canvas, e *Editor) {
 	indentation := e.IndentationDescription()
 	percentage, lineNumber, lastLineNumber := e.PLA()
 	statusLine := fmt.Sprintf("%s: line %d/%d (%d%%) col %d rune %U words %d, [Block Edit Mode, %s] %s", e.filename, lineNumber, lastLineNumber, percentage, e.ColNumber(), e.Rune(), e.WordCount(), e.mode, indentation)
@@ -339,7 +337,7 @@ func (sb *StatusBar) ShowBlockModeStatusLine(c *vt.Canvas, e *Editor) {
 }
 
 // NanoInfo shows info about the current position, for the Nano emulation mode
-func (sb *StatusBar) NanoInfo(c *vt.Canvas, e *Editor) {
+func (sb *StatusBar) NanoInfo(c *Canvas, e *Editor) {
 	percentage, lineNumber, lastLineNumber := e.PLA()
 
 	// TODO: implement char/byte number, like: [ line 2/2 (100%), col 1/1 (100%), char 8/8 (100%) ]
@@ -353,7 +351,7 @@ func (sb *StatusBar) NanoInfo(c *vt.Canvas, e *Editor) {
 // HoldMessage can be used to let a status message survive on screen for N seconds,
 // even if e.redraw has been set. statusMessageAfterRedraw is a pointer to the one-off
 // variable that will be used in keyloop.go, after redrawing.
-func (sb *StatusBar) HoldMessage(c *vt.Canvas, dur time.Duration) {
+func (sb *StatusBar) HoldMessage(c *Canvas, dur time.Duration) {
 	if strings.TrimSpace(sb.msg) != "" {
 		sb.messageAfterRedraw = sb.msg
 		go func() {

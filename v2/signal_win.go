@@ -7,8 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"sync/atomic"
-
-	"github.com/xyproto/vt"
 )
 
 var (
@@ -36,7 +34,7 @@ func sendParentQuitSignal() {
 }
 
 // Windows implementation for SetUpSignalHandlers
-func (e *Editor) SetUpSignalHandlers(c *vt.Canvas, tty *vt.TTY, status *StatusBar, justClear bool) {
+func (e *Editor) SetUpSignalHandlers(c *Canvas, tty *TTY, status *StatusBar, justClear bool) {
 	// Cancel the previous signal handler if it exists
 	if cancelPreviousSignalHandler != nil {
 		cancelPreviousSignalHandler()
