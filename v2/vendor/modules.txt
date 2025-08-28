@@ -133,9 +133,6 @@ github.com/xyproto/termtitle
 # github.com/xyproto/usermodel v1.2.2
 ## explicit; go 1.23.1
 github.com/xyproto/usermodel
-# github.com/xyproto/vt v1.2.9
-## explicit; go 1.24.4
-github.com/xyproto/vt
 # github.com/xyproto/wordwrap v1.0.1
 ## explicit; go 1.21.3
 github.com/xyproto/wordwrap
