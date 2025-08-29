@@ -79,7 +79,10 @@ func hasSuffix(s string, suffixes []string) bool {
 
 // filterS returns all strings that makes the function f return true
 func filterS(sl []string, f func(string) bool) []string {
-	results := make([]string, 0, len(sl)/4) // pre-allocate with estimated capacity
+	// pre-allocate with half the length, based on estimated
+	// usage by the nextGitRebaseKeyword function, which is currently
+	// the only function that calls filterS.
+	results := make([]string, 0, len(sl)/2)
 	for _, e := range sl {
 		if f(e) {
 			results = append(results, e)
