@@ -11,6 +11,7 @@ import (
 
 	ico "github.com/dkua/go-ico"
 	bmp "github.com/jsummers/gobmp"
+	"github.com/xfmoulet/qoi"
 	"golang.org/x/image/webp"
 )
 
@@ -38,6 +39,8 @@ func LoadImage(filename string) (*image.NRGBA, error) {
 		img, err = bmp.Decode(f)
 	case ".webp":
 		img, err = webp.Decode(f)
+	case ".qoi":
+		img, err = qoi.Decode(f)
 	}
 	if err != nil {
 		return nil, err

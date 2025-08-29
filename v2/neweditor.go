@@ -50,7 +50,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 
 	// Check if the given filename is an image
 	switch ext {
-	case ".png", ".jpg", ".jpeg", ".ico", ".gif", ".bmp", ".webp":
+	case ".png", ".jpg", ".jpeg", ".ico", ".gif", ".bmp", ".webp", ".qoi":
 		const waitForKeypress = true
 		return nil, "", true, displayImage(c, fnord.filename, waitForKeypress)
 	}
