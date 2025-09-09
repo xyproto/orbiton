@@ -3,7 +3,9 @@
 
 ## General
 
-- [ ] Fix pasting with midclick / `shift-insert`.
+- [ ] If a line of code in C or C++ have two arrows, like `directory = S_ISDIR(p->fts_statp->st_mode);`, then color the second arrow differently from the first one.
+- [ ] If `ctrl-g` is pressed on a comment or multiline comment, toggle the status bar.
+- [ ] Fix pasting with midclick / `shift-insert`, also for multiline strings.
 - [ ] If `ctrl-c` is pressed thrice when not in a function: copy to the end of the file.
 - [ ] If the `ctrl-o` menu was opened by pressing `esc` repeatedly, add a `Help` menu option.
 - [ ] Let `--ollama` only be used for fixing simple compilation errors.
