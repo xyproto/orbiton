@@ -348,6 +348,8 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 			e.setBlueEditTheme(assumeLightBackground)
 		case "pinetree":
 			e.SetTheme(NewPinetreeTheme(), assumeLightBackground)
+		case "zulu":
+			e.SetTheme(NewZuluTheme(), assumeLightBackground)
 		case "graymono":
 			envNoColor = false
 			e.setGrayTheme()

@@ -384,6 +384,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 				"Teal           (O_THEME=teal)",
 				"Blue Edit      (O_THEME=blueedit)",
 				"Pinetree       (O_THEME=pinetree)",
+				"Zulu           (O_THEME=zulu)",
 				"Gray Mono      (O_THEME=graymono)",
 				"Amber Mono     (O_THEME=ambermono)",
 				"Green Mono     (O_THEME=greenmono)",
@@ -442,23 +443,27 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 				envNoColor = false
 				e.SetTheme(NewPinetreeTheme())
 				e.syntaxHighlight = true
-			case 9: // Gray Mono
+			case 9: // Zulu
+				envNoColor = false
+				e.SetTheme(NewZuluTheme())
+				e.syntaxHighlight = true
+			case 10: // Gray Mono
 				envNoColor = false
 				e.setGrayTheme()
 				e.syntaxHighlight = false
-			case 10: // Amber Mono
+			case 11: // Amber Mono
 				envNoColor = false
 				e.setAmberTheme()
 				e.syntaxHighlight = false
-			case 11: // Green Mono
+			case 12: // Green Mono
 				envNoColor = false
 				e.setGreenTheme()
 				e.syntaxHighlight = false
-			case 12: // Blue Mono
+			case 13: // Blue Mono
 				envNoColor = false
 				e.setBlueTheme()
 				e.syntaxHighlight = false
-			case 13: // No color
+			case 14: // No color
 				envNoColor = true
 				e.setNoColorTheme()
 				e.syntaxHighlight = false
