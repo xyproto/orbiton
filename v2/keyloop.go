@@ -1555,13 +1555,17 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			// Check if we should toggle status bar based on cursor position and file type
 			if ProgrammingLanguage(e.mode) && !e.AtOrBeforeStartOfTextScreenLine() {
-				// For programming languages, try go to definition when not at or before start of text
-				if e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status) {
-					break
-				}
-				// If go to definition didn't work, try jump to matching
-				if e.JumpToMatching(c) {
+				if e.JumpToMatching(c) { // jump to matching parenthesis or bracket
 					e.redrawCursor.Store(true)
+				} else if e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status) { // go to definition
+					break
+				} else if strings.HasPrefix(e.TrimmedLine(), "#include ") { // go to include
+					if includeFilename, jumped := e.GoToInclude(tty, c, status); !jumped {
+						status.Clear(c, false)
+						status.SetErrorMessage("could not jump to " + includeFilename)
+						status.Show(c, e)
+						e.redrawCursor.Store(true)
+					}
 				}
 			} else if e.searchTerm != "" && strings.Contains(e.String(), e.searchTerm) {
 				// Push a function for how to go back
