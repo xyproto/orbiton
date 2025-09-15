@@ -86,6 +86,16 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 			if strings.Contains(trimmedLine, ";") { // declarations with semicolons are not definitions
 				return false
 			}
+			// Check if this looks like an assignment (= before the main function call or lambda)
+			if strings.Contains(trimmedLine, "=") {
+				// Find the last = (in case of operators like ==, !=, etc.)
+				equalPos := strings.LastIndex(trimmedLine, "=")
+				// Check if there's a ( or [ after the = (function call or lambda)
+				afterEqual := trimmedLine[equalPos+1:]
+				if strings.Contains(afterEqual, "(") || strings.Contains(afterEqual, "[") {
+					return false // this is an assignment, not a function definition
+				}
+			}
 
 			// Check if line starts with C/C++ type keywords or modifiers
 			for _, x := range cTypes {

@@ -189,6 +189,8 @@ func TestFunctionNameKeywordExclusion(t *testing.T) {
 		// Function declarations (with semicolon) should not be detected
 		"int someFunction(int x, int y);",
 		"extern void externalFunc(const char* str);",
+		// Assignments should not be detected as functions
+		"int x = someFunc(",
 	}
 
 	for _, line := range keywordTests {
