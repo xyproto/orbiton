@@ -1562,7 +1562,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				backFunctions = backFunctions[:lastIndex]
 				if len(backFunctions) == 0 {
 					// last possibility to jump back
-					status.SetMessageAfterRedraw("Jumped back to " + filepath.Base(e.filename))
+					status.SetMessageAfterRedraw("Loaded " + filepath.Base(e.filename))
 				}
 				break
 			}
@@ -1914,7 +1914,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				backFunctions = backFunctions[:lastIndex]
 				if len(backFunctions) == 0 {
 					// last possibility to jump back
-					status.SetMessageAfterRedraw("Jumped back to " + filepath.Base(e.filename))
+					status.SetMessageAfterRedraw("Loaded " + filepath.Base(e.filename))
 				}
 				break
 			}
