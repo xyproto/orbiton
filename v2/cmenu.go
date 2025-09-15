@@ -100,10 +100,10 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 
 	vsCode := env.Str("TERM_PROGRAM") == "vscode"
 
-	if menuTitle == "" {
+	if menuTitle == "" || len(backFunctions) == 0 {
 		menuTitle = versionString
-	} else if menuTitle == versionString {
-		menuTitle = "Menu"
+	} else {
+		menuTitle = "Editing " + filepath.Base(e.filename)
 	}
 
 	wrapWidth := e.wrapWidth
@@ -478,9 +478,9 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 
 	// Add a menu item to toggle primary/non-primary clipboard on Linux
 	if isLinux {
-		primaryToggleText := "Use the secondary clipboard instead"
+		primaryToggleText := "Switch to the secondary clipboard"
 		if !e.primaryClipboard {
-			primaryToggleText = "Use the primary clipboard instead"
+			primaryToggleText = "Switch to the primary clipboard"
 		}
 		actions.Add(primaryToggleText, func() {
 			e.primaryClipboard = !e.primaryClipboard
