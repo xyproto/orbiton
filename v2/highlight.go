@@ -31,6 +31,7 @@ type Kind uint8
 const (
 	Whitespace Kind = iota
 	AndOr
+	AngleBracket
 	AssemblyEnd
 	Class
 	Comment
@@ -58,6 +59,7 @@ const (
 // TextConfig holds the Text class configuration to be used by annotators when highlighting code.
 type TextConfig struct {
 	AndOr         string
+	AngleBracket  string
 	AssemblyEnd   string
 	Class         string
 	Comment       string
@@ -96,6 +98,7 @@ var (
 // DefaultTextConfig provides class names matching the color names of textoutput tags.
 var DefaultTextConfig = TextConfig{
 	AndOr:         "red",
+	AngleBracket:  "red",
 	AssemblyEnd:   "lightyellow",
 	Class:         "white",
 	Comment:       "darkgray",
@@ -150,6 +153,8 @@ func (c TextConfig) GetClass(kind Kind) string {
 		return c.Decimal
 	case AndOr:
 		return c.AndOr
+	case AngleBracket:
+		return c.AngleBracket
 	case Dollar:
 		return c.Dollar
 	case Star:
