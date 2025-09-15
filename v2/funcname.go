@@ -80,8 +80,8 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 					return true // it looks-ish like a function definition
 				}
 			}
-		} else {
-			// Handle incomplete function definitions (split across lines)
+		} else if e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC {
+			// Handle incomplete function definitions (split across lines) - C-like languages only
 			// Look for patterns like "static int functionName(" or "void functionName(const"
 			if strings.Contains(trimmedLine, ";") { // declarations with semicolons are not definitions
 				return false
@@ -120,6 +120,31 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 				return true
 			}
 		}
+
+		// Detection for functions with custom return types (namespaced types, templates, etc.)
+		// Matches lines at column 0 ending with function signature indicators
+		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") {
+			if strings.HasSuffix(trimmedLine, "(") || strings.HasSuffix(trimmedLine, ",") || strings.HasSuffix(trimmedLine, "{") {
+				// Confirm function-like characteristics: parentheses or scope resolution operator
+				if strings.Contains(trimmedLine, "(") || strings.Contains(trimmedLine, "::") {
+					parts := strings.Fields(trimmedLine)
+					if len(parts) >= 2 {
+						// Exclude common non-function declarations
+						firstWord := strings.ToLower(parts[0])
+						if firstWord != "typedef" && firstWord != "struct" && firstWord != "class" &&
+							firstWord != "enum" && firstWord != "union" && firstWord != "#define" &&
+							!strings.HasPrefix(firstWord, "#") {
+							return true
+						}
+					}
+					// C++ member functions and scoped functions
+					if strings.Contains(trimmedLine, "::") && strings.Contains(trimmedLine, "(") {
+						return true
+					}
+				}
+			}
+		}
+
 		if strings.Contains(trimmedLine, " ") {
 			fields := strings.SplitN(trimmedLine, " ", 2)
 			if strings.Contains(fields[0], "*") {
@@ -192,24 +217,26 @@ func (e *Editor) FunctionName(line string) string {
 	if e.LooksLikeFunctionDef(line, funcPrefix) {
 		s = strings.TrimSpace(strings.TrimSuffix(trimmedLine, "{"))
 
-		// Special handling for C/C++ function definitions
+		// Special handling for C-like function definitions
 		switch e.mode {
-		case mode.Arduino, mode.C, mode.Cpp, mode.D, mode.ObjC:
-			// For C/C++, look for the pattern: [modifiers] type functionName(
+		case mode.Arduino, mode.C, mode.Cpp, mode.D, mode.Dart, mode.Hare, mode.Jakt, mode.JavaScript, mode.ObjC, mode.Scala, mode.Shader, mode.TypeScript, mode.Zig:
 			words := strings.Split(s, " ")
 			for i, word := range words {
 				if strings.Contains(word, "(") {
 					// Found the word with opening parenthesis
 					fields := strings.SplitN(word, "(", 2)
 					functionName := strings.TrimSpace(fields[0])
-					// Remove any pointer/reference symbols
-					functionName = strings.TrimPrefix(functionName, "*")
-					functionName = strings.TrimPrefix(functionName, "&")
+					// Remove any pointer/reference symbols for C-like languages
+					if e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC {
+						functionName = strings.TrimPrefix(functionName, "*")
+						functionName = strings.TrimPrefix(functionName, "&")
+					}
 					if functionName != "" {
 						s = functionName
 						break
 					}
-				} else if i > 0 && i == len(words)-1 {
+				} else if i > 0 && i == len(words)-1 && (e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC) {
+					// Enhanced incomplete function detection - only for C-like languages
 					// Last word without parenthesis - might be incomplete function def
 					// Check if previous words contain types/modifiers
 					hasTypeOrModifier := false
