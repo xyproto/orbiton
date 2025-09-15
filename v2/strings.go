@@ -250,3 +250,16 @@ func stripTerminalCodes(msg string) string {
 	// Replace all occurrences with an empty string
 	return ansiRegex.ReplaceAllString(msg, "")
 }
+
+// Return what's between two strings, "a" and "b", in another string
+func between(orig string, a string, b string) string {
+	if strings.Contains(orig, a) && strings.Contains(orig, b) {
+		posa := strings.Index(orig, a) + len(a)
+		posb := strings.LastIndex(orig, b)
+		if posa > posb {
+			return ""
+		}
+		return orig[posa:posb]
+	}
+	return ""
+}
