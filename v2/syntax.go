@@ -290,6 +290,8 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		addAndRemoveKeywords(shellWords, delKeywords)
 	case mode.SuperCollider:
 		addKeywords(superColliderWords)
+	case mode.Text:
+		clearKeywords()
 	case mode.Shader:
 		addKeywords([]string{"buffer", "bvec2", "bvec3", "bvec4", "coherent", "dvec2", "dvec3", "dvec4", "flat", "in", "inout", "invariant", "ivec2", "ivec3", "ivec4", "layout", "mat", "mat2", "mat3", "mat4", "noperspective", "out", "precision", "readonly", "restrict", "smooth", "uniform", "uvec2", "uvec3", "uvec4", "vec2", "vec3", "vec4", "volatile", "writeonly"})
 		fallthrough // Continue to C/C++ and then to the default
@@ -298,8 +300,6 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		delKeywords := []string{"ret", "static"} // static is treated separately, as a special keyword
 		addAndRemoveKeywords(addKeywords, delKeywords)
 		fallthrough // Continue to the default
-	case mode.Text:
-		clearKeywords()
 	default:
 		addKeywords := []string{"elif", "endif", "ifeq", "ifneq"}
 		delKeywords := []string{"build", "done", "package", "require", "set", "super", "type", "when"}
