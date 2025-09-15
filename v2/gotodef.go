@@ -16,31 +16,6 @@ var backFunctions []func()
 // TODO: Parse some programming languages before jumping.
 func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bool {
 
-	// First check if we are jumping to an #include instead
-	trimmedLine := e.TrimmedLine()
-	if strings.HasPrefix(trimmedLine, "#include ") {
-		var goFile string
-		if fn := strings.TrimSpace(between(trimmedLine, "\"", "\"")); fn != "" {
-			goFile = fn
-		} else if fn := between(trimmedLine, "<", ">"); fn != "" {
-			goFile = fn
-		}
-		if goFile != "" {
-			oldFilename := e.filename
-			if goFile != oldFilename {
-				e.Switch(c, tty, status, fileLock, goFile)
-			}
-			// Push a function for how to go back
-			backFunctions = append(backFunctions, func() {
-				oldFilename := oldFilename
-				goFile := goFile
-				if goFile != oldFilename {
-					e.Switch(c, tty, status, fileLock, oldFilename)
-				}
-			})
-		}
-	}
-
 	// FuncPrefix may return strings with a leading or trailing blank
 	funcPrefix := e.FuncPrefix()
 
@@ -159,13 +134,11 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 
 							oldFilename := e.filename
 							oldLineIndex := e.LineIndex()
-							//
 							if goFile != oldFilename {
 								e.Switch(c, tty, status, fileLock, goFile)
 							}
 							redraw, _ := e.GoTo(LineIndex(i), c, status)
 							e.redraw.Store(redraw)
-							//
 							// Push a function for how to go back
 							backFunctions = append(backFunctions, func() {
 								oldFilename := oldFilename
@@ -216,4 +189,34 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 	}
 
 	return false
+}
+
+// GoToInclude looks for an #include filename and jumps to it, or returns false
+func (e *Editor) GoToInclude(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bool {
+	// First check if we are jumping to an #include
+	trimmedLine := e.TrimmedLine()
+	if strings.HasPrefix(trimmedLine, "#include ") {
+		var goFile string
+		if fn := strings.TrimSpace(between(trimmedLine, "\"", "\"")); fn != "" {
+			goFile = fn
+		} else if fn := between(trimmedLine, "<", ">"); fn != "" {
+			goFile = fn
+		}
+		if goFile != "" {
+			oldFilename := e.filename
+			if goFile != oldFilename {
+				e.Switch(c, tty, status, fileLock, goFile)
+			}
+			// Push a function for how to go back
+			backFunctions = append(backFunctions, func() {
+				oldFilename := oldFilename
+				goFile := goFile
+				if goFile != oldFilename {
+					e.Switch(c, tty, status, fileLock, oldFilename)
+				}
+			})
+			return true // jumped
+		}
+	}
+	return false // did not jump
 }

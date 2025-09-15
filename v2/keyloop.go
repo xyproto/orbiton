@@ -1553,11 +1553,15 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			oldFilename := e.filename
 			oldLineIndex := e.LineIndex()
 
+			// First check if we can jump to an #include file
+			if e.GoToInclude(tty, c, status) {
+				break
+			}
+
 			// Check if we should toggle status bar based on cursor position and file type
 			if ProgrammingLanguage(e.mode) && !e.AtOrBeforeStartOfTextScreenLine() {
 				// For programming languages, try go to definition when not at or before start of text
-				jumpedToDefinition := e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status)
-				if jumpedToDefinition {
+				if e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status) {
 					break
 				}
 				// If go to definition didn't work, try jump to matching
