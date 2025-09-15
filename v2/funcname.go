@@ -69,15 +69,43 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 		if !strings.Contains(trimmedLine, "(") { // must contain at least one "("
 			return false
 		}
-		if !strings.HasSuffix(trimmedLine, "{") && !strings.HasSuffix(trimmedLine, ")") && !strings.HasSuffix(trimmedLine, "};") && !strings.HasSuffix(trimmedLine, "} ;") { // the line should end with either "{" or ")" or "};" or "} ;"
-			return false
-		}
-		if strings.Contains(trimmedLine, ";") && !(strings.HasSuffix(trimmedLine, "};") || strings.HasSuffix(trimmedLine, "} ;")) {
-			return false
-		}
-		for _, x := range cTypes {
-			if strings.HasPrefix(trimmedLine, x) {
-				return true // it looks-ish like a function definition
+
+		// Check for complete function definitions
+		if strings.HasSuffix(trimmedLine, "{") || strings.HasSuffix(trimmedLine, ")") || strings.HasSuffix(trimmedLine, "};") || strings.HasSuffix(trimmedLine, "} ;") {
+			if strings.Contains(trimmedLine, ";") && !(strings.HasSuffix(trimmedLine, "};") || strings.HasSuffix(trimmedLine, "} ;")) {
+				return false
+			}
+			for _, x := range cTypes {
+				if strings.HasPrefix(trimmedLine, x) {
+					return true // it looks-ish like a function definition
+				}
+			}
+		} else {
+			// Handle incomplete function definitions (split across lines)
+			// Look for patterns like "static int functionName(" or "void functionName(const"
+			if strings.Contains(trimmedLine, ";") { // declarations with semicolons are not definitions
+				return false
+			}
+
+			// Check if line starts with C/C++ type keywords or modifiers
+			for _, x := range cTypes {
+				if strings.HasPrefix(trimmedLine, x) {
+					return true // looks like start of a function definition
+				}
+			}
+
+			// Check for common C/C++ function modifiers/specifiers
+			modifiers := []string{"constexpr ", "explicit ", "extern ", "inline ", "noexcept ", "override ", "static ", "virtual "}
+			for _, modifier := range modifiers {
+				if strings.HasPrefix(trimmedLine, modifier) {
+					// Check if there's a type after the modifier
+					remaining := strings.TrimPrefix(trimmedLine, modifier)
+					for _, x := range cTypes {
+						if strings.HasPrefix(remaining, x) {
+							return true
+						}
+					}
+				}
 			}
 		}
 		switch e.mode {
@@ -163,15 +191,62 @@ func (e *Editor) FunctionName(line string) string {
 	var s string
 	if e.LooksLikeFunctionDef(line, funcPrefix) {
 		s = strings.TrimSpace(strings.TrimSuffix(trimmedLine, "{"))
-		words := strings.Split(s, " ")
-		for _, word := range words {
-			if strings.HasPrefix(word, "(") {
-				continue
+
+		// Special handling for C/C++ function definitions
+		switch e.mode {
+		case mode.Arduino, mode.C, mode.Cpp, mode.D, mode.ObjC:
+			// For C/C++, look for the pattern: [modifiers] type functionName(
+			words := strings.Split(s, " ")
+			for i, word := range words {
+				if strings.Contains(word, "(") {
+					// Found the word with opening parenthesis
+					fields := strings.SplitN(word, "(", 2)
+					functionName := strings.TrimSpace(fields[0])
+					// Remove any pointer/reference symbols
+					functionName = strings.TrimPrefix(functionName, "*")
+					functionName = strings.TrimPrefix(functionName, "&")
+					if functionName != "" {
+						s = functionName
+						break
+					}
+				} else if i > 0 && i == len(words)-1 {
+					// Last word without parenthesis - might be incomplete function def
+					// Check if previous words contain types/modifiers
+					hasTypeOrModifier := false
+					for j := 0; j < i; j++ {
+						prevWord := words[j]
+						for _, cType := range cTypes {
+							if strings.HasPrefix(prevWord, strings.TrimSpace(cType)) {
+								hasTypeOrModifier = true
+								break
+							}
+						}
+						if hasTypeOrModifier {
+							break
+						}
+					}
+					if hasTypeOrModifier {
+						functionName := strings.TrimSpace(word)
+						functionName = strings.TrimPrefix(functionName, "*")
+						functionName = strings.TrimPrefix(functionName, "&")
+						if functionName != "" {
+							s = functionName
+						}
+					}
+				}
 			}
-			if strings.Contains(word, "(") {
-				fields := strings.SplitN(word, "(", 2)
-				s = fields[0]
-				break
+		default:
+			// Original logic for other languages
+			words := strings.Split(s, " ")
+			for _, word := range words {
+				if strings.HasPrefix(word, "(") {
+					continue
+				}
+				if strings.Contains(word, "(") {
+					fields := strings.SplitN(word, "(", 2)
+					s = fields[0]
+					break
+				}
 			}
 		}
 	}

@@ -186,6 +186,9 @@ func TestFunctionNameKeywordExclusion(t *testing.T) {
 		"else {",
 		"break;",
 		"continue;",
+		// Function declarations (with semicolon) should not be detected
+		"int someFunction(int x, int y);",
+		"extern void externalFunc(const char* str);",
 	}
 
 	for _, line := range keywordTests {
@@ -196,10 +199,14 @@ func TestFunctionNameKeywordExclusion(t *testing.T) {
 
 	// Test cases that SHOULD be detected as function names
 	validFunctionTests := map[string]string{
-		"void myFunction() {":                      "myFunction",
-		"int calculateSum(int a, int b) {":         "calculateSum",
-		"bool isValid(const std::string& input) {": "isValid",
-		"static double getValue() {":               "getValue",
+		"void myFunction() {":                                    "myFunction",
+		"int calculateSum(int a, int b) {":                       "calculateSum",
+		"bool isValid(const std::string& input) {":               "isValid",
+		"static double getValue() {":                             "getValue",
+		"static int prepare_app_dir(const std::string& path,":    "prepare_app_dir",
+		"const char* get_filename(const char* path,":             "get_filename",
+		"inline void process_data(const std::vector<int>& data,": "process_data",
+		"int funcname(const std::string& path, mode blabla,":     "funcname",
 	}
 
 	for line, expected := range validFunctionTests {
