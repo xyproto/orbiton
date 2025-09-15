@@ -183,7 +183,7 @@ These features are unique to `o`, as far as I am aware:
 
 * Some unicode runes may disrupt the text flow! This is generally not a problem for editing code and configuration files, but is an issue when editing files that contains text in many languages, or emojis.
 * The man page viewer can not display some special characters, such as the long dash (&mdash;), just yet.
-* Using `tmux` or `screen` and resizing the terminal emulator window may trigger text rendering issues. Try pressing `esc` to redraw the text, or `ctrl-f` to search for text. Setting `TERM` correctly might help (but probably not). Using [`zellij`](https://zellij.dev/) instead of `tmux` should work. 
+* Using `tmux` or `screen` and resizing the terminal emulator window may trigger text rendering issues. Try pressing `esc` to redraw the text, or `ctrl-f` to search for text. Setting `TERM` correctly might help (but probably not). Using [`zellij`](https://zellij.dev/) instead of `tmux` should work.
 * For some terminal emulators, if `o` is busy performing an operation, pressing `ctrl-s` may lock the terminal. Some terminal emulators, like `konsole`, can be configured to turn off this behavior. Press `ctrl-q` to unlock the terminal again (together with the unfortunate risk of quitting `o`). To sidestep this issue, the `ctrl-o` menu can be used instead, for saving and quitting.
 * Using `mosh` may cause text rendering issues (in both `nvim` and `o`).
 * Pressing `cmd-v`, `cmd-x` and `cmd-c` on macOS only works when using the `og` GUI/VTE frontend. For `o`, `ctrl-v`, `ctrl-x` and `ctrl-c` can be used instead.
@@ -223,10 +223,10 @@ There are pretty few hotkeys to remember:
              Press one of the highlighted on-screen letters to jump to that location.
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive. Press `tab` instead of `return` to search and replace.
              To find typos, search for the letter `t`, then press `ctrl-n` for the next word, `ctrl-a` to add it or `ctrl-i` to ignore it.
-* `ctrl-b` - Jump back after jumping to a definition with `ctrl-g`.
+* `ctrl-b` - Jump back after jumping to a definition or include with `ctrl-g`.
              Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords. For Markdown, format the table under the cursor.
-* `ctrl-g` - Jump to definition, for some programming languages (experimental feature), or toggle the status bar.
+* `ctrl-g` - Jump to definition, for some programming languages (experimental feature), jump to an include, jump back or toggle the status bar.
 * `ctrl-\` - Comment in or out a block of code.
 * `ctrl-~` - Insert the current date and time.
 * `esc`    - Redraw everything and clear the last search.
