@@ -60,108 +60,9 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 		return javasig.Is(trimmedLine)
 	case mode.Kotlin:
 		return kotlinsig.Is(trimmedLine)
-	// Very unscientific and approximate function definition detection for C and C++
-	// TODO: Write a C parser and a C++ parser...
+	// C-like languages use specialized function detection
 	case mode.Arduino, mode.C, mode.Cpp, mode.D, mode.Dart, mode.Hare, mode.Jakt, mode.JavaScript, mode.ObjC, mode.Scala, mode.Shader, mode.TypeScript, mode.Zig:
-		if strings.HasSuffix(trimmedLine, "()") {
-			return true
-		}
-		if !strings.Contains(trimmedLine, "(") { // must contain at least one "("
-			return false
-		}
-
-		// Check for complete function definitions
-		if strings.HasSuffix(trimmedLine, "{") || strings.HasSuffix(trimmedLine, ")") || strings.HasSuffix(trimmedLine, "};") || strings.HasSuffix(trimmedLine, "} ;") {
-			if strings.Contains(trimmedLine, ";") && !(strings.HasSuffix(trimmedLine, "};") || strings.HasSuffix(trimmedLine, "} ;")) {
-				return false
-			}
-			for _, x := range cTypes {
-				if strings.HasPrefix(trimmedLine, x) {
-					return true // it looks-ish like a function definition
-				}
-			}
-		} else if e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC {
-			// Handle incomplete function definitions (split across lines) - C-like languages only
-			// Look for patterns like "static int functionName(" or "void functionName(const"
-			if strings.Contains(trimmedLine, ";") { // declarations with semicolons are not definitions
-				return false
-			}
-			// Check if this looks like an assignment (= before the main function call or lambda)
-			if strings.Contains(trimmedLine, "=") {
-				// Find the last = (in case of operators like ==, !=, etc.)
-				equalPos := strings.LastIndex(trimmedLine, "=")
-				// Check if there's a ( or [ after the = (function call or lambda)
-				afterEqual := trimmedLine[equalPos+1:]
-				if strings.Contains(afterEqual, "(") || strings.Contains(afterEqual, "[") {
-					return false // this is an assignment, not a function definition
-				}
-			}
-
-			// Check if line starts with C/C++ type keywords or modifiers
-			for _, x := range cTypes {
-				if strings.HasPrefix(trimmedLine, x) {
-					return true // looks like start of a function definition
-				}
-			}
-
-			// Check for common C/C++ function modifiers/specifiers
-			modifiers := []string{"constexpr ", "explicit ", "extern ", "inline ", "noexcept ", "override ", "static ", "virtual "}
-			for _, modifier := range modifiers {
-				if strings.HasPrefix(trimmedLine, modifier) {
-					// Check if there's a type after the modifier
-					remaining := strings.TrimPrefix(trimmedLine, modifier)
-					for _, x := range cTypes {
-						if strings.HasPrefix(remaining, x) {
-							return true
-						}
-					}
-				}
-			}
-		}
-		switch e.mode {
-		case mode.Kotlin:
-			if strings.HasPrefix(trimmedLine, "suspend "+funcPrefix) {
-				return true
-			}
-		case mode.Zig:
-			if strings.HasPrefix(trimmedLine, "pub "+funcPrefix) || strings.HasPrefix(trimmedLine, "inline "+funcPrefix) {
-				return true
-			} else if (strings.HasPrefix(trimmedLine, "extern ") || strings.HasPrefix(trimmedLine, "test ")) && strings.Contains(trimmedLine, funcPrefix) {
-				return true
-			}
-		}
-
-		// Detection for functions with custom return types (namespaced types, templates, etc.)
-		// Matches lines at column 0 ending with function signature indicators
-		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") {
-			if strings.HasSuffix(trimmedLine, "(") || strings.HasSuffix(trimmedLine, ",") || strings.HasSuffix(trimmedLine, "{") {
-				// Confirm function-like characteristics: parentheses or scope resolution operator
-				if strings.Contains(trimmedLine, "(") || strings.Contains(trimmedLine, "::") {
-					parts := strings.Fields(trimmedLine)
-					if len(parts) >= 2 {
-						// Exclude common non-function declarations
-						firstWord := strings.ToLower(parts[0])
-						if firstWord != "typedef" && firstWord != "struct" && firstWord != "class" &&
-							firstWord != "enum" && firstWord != "union" && firstWord != "#define" &&
-							!strings.HasPrefix(firstWord, "#") {
-							return true
-						}
-					}
-					// C++ member functions and scoped functions
-					if strings.Contains(trimmedLine, "::") && strings.Contains(trimmedLine, "(") {
-						return true
-					}
-				}
-			}
-		}
-
-		if strings.Contains(trimmedLine, " ") {
-			fields := strings.SplitN(trimmedLine, " ", 2)
-			if strings.Contains(fields[0], "*") {
-				return true // it looks like it could return a pointer to a struct
-			}
-		}
-		fallthrough
+		return e.cLooksLikeFunctionDef(line)
 	case mode.Make:
 		if !strings.HasPrefix(trimmedLine, " ") && !strings.HasPrefix(trimmedLine, "\t") && strings.Count(trimmedLine, ":") == 1 {
 			parts := strings.Split(trimmedLine, ":")
@@ -230,47 +131,8 @@ func (e *Editor) FunctionName(line string) string {
 		// Special handling for C-like function definitions
 		switch e.mode {
 		case mode.Arduino, mode.C, mode.Cpp, mode.D, mode.Dart, mode.Hare, mode.Jakt, mode.JavaScript, mode.ObjC, mode.Scala, mode.Shader, mode.TypeScript, mode.Zig:
-			words := strings.Split(s, " ")
-			for i, word := range words {
-				if strings.Contains(word, "(") {
-					// Found the word with opening parenthesis
-					fields := strings.SplitN(word, "(", 2)
-					functionName := strings.TrimSpace(fields[0])
-					// Remove any pointer/reference symbols for C-like languages
-					if e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC {
-						functionName = strings.TrimPrefix(functionName, "*")
-						functionName = strings.TrimPrefix(functionName, "&")
-					}
-					if functionName != "" {
-						s = functionName
-						break
-					}
-				} else if i > 0 && i == len(words)-1 && (e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC) {
-					// Enhanced incomplete function detection - only for C-like languages
-					// Last word without parenthesis - might be incomplete function def
-					// Check if previous words contain types/modifiers
-					hasTypeOrModifier := false
-					for j := 0; j < i; j++ {
-						prevWord := words[j]
-						for _, cType := range cTypes {
-							if strings.HasPrefix(prevWord, strings.TrimSpace(cType)) {
-								hasTypeOrModifier = true
-								break
-							}
-						}
-						if hasTypeOrModifier {
-							break
-						}
-					}
-					if hasTypeOrModifier {
-						functionName := strings.TrimSpace(word)
-						functionName = strings.TrimPrefix(functionName, "*")
-						functionName = strings.TrimPrefix(functionName, "&")
-						if functionName != "" {
-							s = functionName
-						}
-					}
-				}
+			if extractedName := e.cExtractFunctionName(line); extractedName != "" {
+				s = extractedName
 			}
 		default:
 			// Original logic for other languages
