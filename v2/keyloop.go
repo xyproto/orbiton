@@ -1553,8 +1553,29 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			oldFilename := e.filename
 			oldLineIndex := e.LineIndex()
 
-			// First check if we can jump to an #include file
-			if e.GoToInclude(tty, c, status) {
+			// Check if we have jumped somewhere and need to jump back
+			if len(backFunctions) > 0 {
+				lastIndex := len(backFunctions) - 1
+				// call the function for getting back
+				backFunctions[lastIndex]()
+				// pop a function from the end of backFunctions
+				backFunctions = backFunctions[:lastIndex]
+				if len(backFunctions) == 0 {
+					// last possibility to jump back
+					status.SetMessageAfterRedraw("Back at the first location")
+				}
+				break
+			}
+
+			// First check if we can possibly jump to an #include file, regardless of file mode
+			if strings.HasPrefix(e.TrimmedLine(), "#include ") {
+				if includeFilename, jumped := e.GoToInclude(tty, c, status); !jumped {
+					status.Clear(c, false)
+					status.SetErrorMessage("could not jump to " + includeFilename)
+					status.Show(c, e)
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
+				}
 				break
 			}
 
@@ -1585,7 +1606,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			} else if e.JumpToMatching(c) {
 				e.redrawCursor.Store(true)
 			} else {
-				// Toggle status bar (for non-programming languages or when at/before start of text)
+				// Toggle status bar (for non-programming languages or when at/before start of text), when not on include lines
 				status.ClearAll(c, false)
 				e.statusMode = !e.statusMode
 				if e.statusMode {
@@ -1884,8 +1905,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
-			status.ClearAll(c, false)
-
 			// Check if we have jumped to a definition and need to go back
 			if len(backFunctions) > 0 {
 				lastIndex := len(backFunctions) - 1
@@ -1899,6 +1918,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 				break
 			}
+
+			status.ClearAll(c, false)
 
 			if e.debugMode {
 				if e.breakpoint == nil {

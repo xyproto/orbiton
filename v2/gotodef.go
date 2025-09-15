@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/xyproto/files"
 	"github.com/xyproto/vt"
 )
 
@@ -135,7 +136,9 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 							oldFilename := e.filename
 							oldLineIndex := e.LineIndex()
 							if goFile != oldFilename {
-								e.Switch(c, tty, status, fileLock, goFile)
+								if err := e.Switch(c, tty, status, fileLock, goFile); err != nil {
+									return false // could not switch
+								}
 							}
 							redraw, _ := e.GoTo(LineIndex(i), c, status)
 							e.redraw.Store(redraw)
@@ -162,7 +165,9 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 							oldLineIndex := e.LineIndex()
 
 							if goFile != oldFilename {
-								e.Switch(c, tty, status, fileLock, goFile)
+								if err := e.Switch(c, tty, status, fileLock, goFile); err != nil {
+									return false // could not switch
+								}
 							}
 							redraw, _ := e.GoTo(LineIndex(i), c, status)
 							e.redraw.Store(redraw)
@@ -191,21 +196,28 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 	return false
 }
 
-// GoToInclude looks for an #include filename and jumps to it, or returns false
-func (e *Editor) GoToInclude(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bool {
+// GoToInclude looks for an #include filename and jumps to it, or returns false.
+// returns the include filename (if found) and then true if a jump/switch was made.
+func (e *Editor) GoToInclude(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (string, bool) {
+	var goFile string
 	// First check if we are jumping to an #include
 	trimmedLine := e.TrimmedLine()
 	if strings.HasPrefix(trimmedLine, "#include ") {
-		var goFile string
 		if fn := strings.TrimSpace(between(trimmedLine, "\"", "\"")); fn != "" {
 			goFile = fn
 		} else if fn := between(trimmedLine, "<", ">"); fn != "" {
 			goFile = fn
 		}
-		if goFile != "" {
+		systemInclude := filepath.Join("/usr/include", goFile)
+		if !files.Exists(goFile) && files.Exists(systemInclude) {
+			goFile = systemInclude
+		}
+		if goFile != "" && files.Exists(goFile) {
 			oldFilename := e.filename
 			if goFile != oldFilename {
-				e.Switch(c, tty, status, fileLock, goFile)
+				if err := e.Switch(c, tty, status, fileLock, goFile); err != nil {
+					return goFile, false // could not switch
+				}
 			}
 			// Push a function for how to go back
 			backFunctions = append(backFunctions, func() {
@@ -215,8 +227,8 @@ func (e *Editor) GoToInclude(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bool 
 					e.Switch(c, tty, status, fileLock, oldFilename)
 				}
 			})
-			return true // jumped
+			return goFile, true // jumped
 		}
 	}
-	return false // did not jump
+	return goFile, false // did not jump, not an #include statement
 }

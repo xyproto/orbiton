@@ -2288,6 +2288,10 @@ func (e *Editor) AbsFilename() (string, error) {
 // The undo stack is also swapped.
 // Only works for switching to one file, and then back again.
 func (e *Editor) Switch(c *vt.Canvas, tty *vt.TTY, status *StatusBar, fileLock *LockKeeper, filenameToOpen string) error {
+	if !files.Exists(filenameToOpen) {
+		return errors.New("could not find file to switch to: " + filenameToOpen)
+	}
+
 	absFilename, err := e.AbsFilename()
 	if err != nil {
 		return err
