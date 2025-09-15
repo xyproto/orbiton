@@ -100,7 +100,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 
 	vsCode := env.Str("TERM_PROGRAM") == "vscode"
 
-	if menuTitle == "" || len(backFunctions) == 0 {
+	if (menuTitle == "" || len(backFunctions) == 0) && !strings.HasPrefix(menuTitle, "Editing ") {
 		menuTitle = versionString
 	} else {
 		menuTitle = "Editing " + filepath.Base(e.filename)
