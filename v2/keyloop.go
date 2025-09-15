@@ -1553,32 +1553,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			oldFilename := e.filename
 			oldLineIndex := e.LineIndex()
 
-			// Check if we have jumped somewhere and need to jump back
-			if len(backFunctions) > 0 {
-				lastIndex := len(backFunctions) - 1
-				// call the function for getting back
-				backFunctions[lastIndex]()
-				// pop a function from the end of backFunctions
-				backFunctions = backFunctions[:lastIndex]
-				if len(backFunctions) == 0 {
-					// last possibility to jump back
-					status.SetMessageAfterRedraw("Loaded " + filepath.Base(e.filename))
-				}
-				break
-			}
-
-			// First check if we can possibly jump to an #include file, regardless of file mode
-			if strings.HasPrefix(e.TrimmedLine(), "#include ") {
-				if includeFilename, jumped := e.GoToInclude(tty, c, status); !jumped {
-					status.Clear(c, false)
-					status.SetErrorMessage("could not jump to " + includeFilename)
-					status.Show(c, e)
-					e.redraw.Store(true)
-					e.redrawCursor.Store(true)
-				}
-				break
-			}
-
 			// Check if we should toggle status bar based on cursor position and file type
 			if ProgrammingLanguage(e.mode) && !e.AtOrBeforeStartOfTextScreenLine() {
 				// For programming languages, try go to definition when not at or before start of text
@@ -1605,6 +1579,23 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				})
 			} else if e.JumpToMatching(c) {
 				e.redrawCursor.Store(true)
+			} else if strings.HasPrefix(e.TrimmedLine(), "#include ") { // Check if we can jump to an #include file, regardless of file mode
+				if includeFilename, jumped := e.GoToInclude(tty, c, status); !jumped {
+					status.Clear(c, false)
+					status.SetErrorMessage("could not jump to " + includeFilename)
+					status.Show(c, e)
+					e.redrawCursor.Store(true)
+				}
+			} else if len(backFunctions) > 0 { // Check if we have jumped somewhere and need to jump back
+				lastIndex := len(backFunctions) - 1
+				// call the function for getting back
+				backFunctions[lastIndex]()
+				// pop a function from the end of backFunctions
+				backFunctions = backFunctions[:lastIndex]
+				if len(backFunctions) == 0 {
+					// last possibility to jump back
+					status.SetMessageAfterRedraw("Loaded " + filepath.Base(e.filename))
+				}
 			} else {
 				// Toggle status bar (for non-programming languages or when at/before start of text), when not on include lines
 				status.ClearAll(c, false)
