@@ -131,6 +131,11 @@ func GetTemplatePrograms() TemplatePrograms {
 				6,
 				5,
 			},
+			mode.Gleam: {
+				"import gleam/io\n\npub fn main() {\n  io.println(\"Hello, World!\")\n}\n",
+				12,
+				2,
+			},
 			mode.Go: {
 				"package main\n\nimport (\n\t\"fmt\"\n)\n\nfunc main() {\n\tfmt.Println(\"Hello, World!\")\n}\n",
 				13,

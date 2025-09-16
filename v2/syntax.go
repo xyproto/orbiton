@@ -193,6 +193,8 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		setKeywords(fsharpWords)
 	case mode.GDScript:
 		setKeywords(gdscriptWords)
+	case mode.Gleam:
+		setKeywords(gleamWords)
 	case mode.Go:
 		// TODO: Define goWords and use setKeywords instead
 		addKeywords := []string{"defer", "error", "fallthrough", "func", "go", "import", "package", "print", "println", "range", "rune", "string", "uint", "uint16", "uint32", "uint64", "uint8"}

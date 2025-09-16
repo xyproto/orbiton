@@ -46,6 +46,9 @@ var (
 	// GDScript
 	gdscriptWords = []string{"as", "assert", "await", "break", "breakpoint", "class", "class_name", "const", "continue", "elif", "else", "enum", "export", "extends", "for", "func", "if", "INF", "is", "master", "mastersync", "match", "NAN", "onready", "pass", "PI", "preload", "puppet", "puppetsync", "remote", "remotesync", "return", "self", "setget", "signal", "static", "TAU", "tool", "var", "while", "yield"}
 
+	// Gleam
+	gleamWords = []string{"as", "assert", "case", "const", "external", "fn", "import", "let", "module", "opaque", "pub", "todo", "type", "use", "when", "auto", "delegate", "derive", "else", "implement", "macro", "test"}
+
 	// Haxe
 	haxeWords = []string{"abstract", "break", "case", "cast", "catch", "class", "continue", "default", "do", "dynamic", "else", "enum", "extends", "extern", "false", "final", "for", "function", "if", "implements", "import", "in", "inline", "interface", "macro", "new", "null", "operator", "overload", "override", "package", "private", "public", "return", "static", "switch", "this", "throw", "true", "try", "typedef", "untyped", "using", "var", "while"}
 
