@@ -1559,7 +1559,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					e.redrawCursor.Store(true)
 				} else if e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status) { // go to definition
 					break
-				} else if strings.HasPrefix(e.TrimmedLine(), "#include ") { // go to include
+				} else if e.OnIncludeLine() { // go to include
 					if includeFilename, jumped := e.GoToInclude(tty, c, status); !jumped {
 						status.Clear(c, false)
 						status.SetErrorMessage("could not jump to " + includeFilename)
@@ -1583,7 +1583,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				})
 			} else if e.JumpToMatching(c) {
 				e.redrawCursor.Store(true)
-			} else if strings.HasPrefix(e.TrimmedLine(), "#include ") { // Check if we can jump to an #include file, regardless of file mode
+			} else if e.OnIncludeLine() { // Check if we can jump to an #include file, regardless of file mode
 				if includeFilename, jumped := e.GoToInclude(tty, c, status); !jumped {
 					status.Clear(c, false)
 					status.SetErrorMessage("could not jump to " + includeFilename)
