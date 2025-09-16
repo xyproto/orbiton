@@ -1,8 +1,6 @@
 package main
 
-import (
-	"github.com/xyproto/vt"
-)
+import "github.com/xyproto/vt"
 
 // TODO: Restructure how themes are stored, so that it's easier to list all themes that works with a dark background or all that works with a light background, ref. initialLightBackground
 
@@ -189,7 +187,7 @@ func NewDefaultTheme() Theme {
 	}
 }
 
-// NewOrbTheme creates a new logical Theme struct with a refined color palette
+// NewOrbTheme creates a new "logical looking" theme
 func NewOrbTheme() Theme {
 	return Theme{
 		Name:                        "Orb",
@@ -254,10 +252,10 @@ func NewOrbTheme() Theme {
 		XColor:                      vt.LightGreen,
 		TableBackground:             vt.BackgroundBlack,
 		UnmatchedParenColor:         vt.LightRed,
-		MenuTitleColor:              vt.LightMagenta,
-		MenuArrowColor:              vt.White,
-		MenuTextColor:               vt.Blue,
-		MenuHighlightColor:          vt.LightCyan,
+		MenuTitleColor:              vt.Blue,
+		MenuArrowColor:              vt.LightMagenta,
+		MenuTextColor:               vt.LightCyan,
+		MenuHighlightColor:          vt.White,
 		MenuSelectedColor:           vt.LightRed,
 		ManSectionColor:             vt.LightCyan,
 		ManSynopsisColor:            vt.LightGreen,
@@ -370,7 +368,7 @@ func NewZuluTheme() Theme {
 	return Theme{
 		Name:                        "Zulu",
 		Light:                       false,
-		Foreground:                  vt.LightGray,
+		Foreground:                  vt.Default,
 		Background:                  vt.BackgroundDefault,
 		StatusForeground:            vt.White,
 		StatusBackground:            vt.BackgroundBlack,
@@ -432,7 +430,7 @@ func NewZuluTheme() Theme {
 		UnmatchedParenColor:         vt.LightRed,
 		MenuTitleColor:              vt.LightCyan,
 		MenuArrowColor:              vt.LightGreen,
-		MenuTextColor:               vt.LightGray,
+		MenuTextColor:               vt.Default,
 		MenuHighlightColor:          vt.LightYellow,
 		MenuSelectedColor:           vt.White,
 		ManSectionColor:             vt.LightMagenta,
@@ -635,7 +633,7 @@ func NewTealTheme() Theme {
 		Name:                        "Teal",
 		Light:                       false,
 		Foreground:                  vt.White,
-		Background:                  vt.BackgroundDefault,
+		Background:                  vt.BackgroundBlack,
 		StatusForeground:            vt.White,
 		StatusBackground:            vt.BackgroundBlack,
 		StatusErrorForeground:       vt.LightRed,
@@ -643,8 +641,8 @@ func NewTealTheme() Theme {
 		SearchHighlight:             vt.Yellow,
 		MultiLineComment:            vt.Gray,
 		MultiLineString:             vt.LightBlue,
-		HighlightForeground:         vt.White,
-		HighlightBackground:         vt.BackgroundDefault,
+		HighlightForeground:         vt.LightCyan,
+		HighlightBackground:         vt.BackgroundBlack,
 		Git:                         vt.LightBlue,
 		String:                      "lightblue",
 		Keyword:                     "white",
@@ -694,11 +692,11 @@ func NewTealTheme() Theme {
 		XColor:                      vt.White,
 		TableBackground:             vt.BackgroundDefault,
 		UnmatchedParenColor:         vt.LightRed,
-		MenuTitleColor:              vt.White,
-		MenuArrowColor:              vt.LightBlue,
+		MenuTitleColor:              vt.Blue,
+		MenuArrowColor:              vt.LightCyan,
 		MenuTextColor:               vt.White,
-		MenuHighlightColor:          vt.LightBlue,
-		MenuSelectedColor:           vt.White,
+		MenuHighlightColor:          vt.LightCyan,
+		MenuSelectedColor:           vt.LightRed,
 		ManSectionColor:             vt.White,
 		ManSynopsisColor:            vt.White,
 		BoxTextColor:                vt.White,
@@ -1410,6 +1408,12 @@ func (t Theme) TextConfig() *TextConfig {
 	}
 }
 
+func (e *Editor) makeLightAdjustments() {
+	if e.Theme.HighlightForeground == vt.White && e.Theme.Background != vt.BackgroundBlack && e.Theme.Light {
+		e.Theme.HighlightForeground = vt.Black
+	}
+}
+
 // setDefaultTheme sets the default colors
 func (e *Editor) setDefaultTheme() {
 	e.SetTheme(NewDefaultTheme())
@@ -1420,9 +1424,9 @@ func (e *Editor) setVSTheme(bs ...bool) {
 	if len(bs) == 1 {
 		initialLightBackground = &(bs[0])
 	}
-	if initialLightBackground != nil && *initialLightBackground {
+	if initialLightBackground != nil && *initialLightBackground { // light
 		e.SetTheme(NewLightVSTheme())
-	} else {
+	} else { // dark
 		e.SetTheme(NewDarkVSTheme())
 	}
 }
@@ -1433,9 +1437,9 @@ func (e *Editor) setVSTheme(bs ...bool) {
 // Respect the NO_COLOR environment variable. May set e.NoSyntaxHighlight to true.
 func (e *Editor) SetTheme(theme Theme, bs ...bool) {
 	if envNoColor {
-		if initialLightBackground != nil && *initialLightBackground {
+		if initialLightBackground != nil && *initialLightBackground { // light
 			theme = NewNoColorLightBackgroundTheme()
-		} else {
+		} else { // dark
 			theme = NewNoColorDarkBackgroundTheme()
 		}
 		e.syntaxHighlight = false
@@ -1445,17 +1449,23 @@ func (e *Editor) SetTheme(theme Theme, bs ...bool) {
 	e.Theme = theme
 	e.statusMode = theme.StatusMode
 	DefaultTextConfig = *(theme.TextConfig())
+	if initialLightBackground != nil && *initialLightBackground { // light
+		e.makeLightAdjustments()
+	}
 }
 
 // setNoColorTheme sets the NoColor theme, and considers the background color
 func (e *Editor) setNoColorTheme() {
-	if initialLightBackground != nil && *initialLightBackground {
+	if initialLightBackground != nil && *initialLightBackground { // light
 		e.Theme = NewNoColorLightBackgroundTheme()
-	} else {
+	} else { //dark
 		e.Theme = NewNoColorDarkBackgroundTheme()
 	}
 	e.statusMode = e.Theme.StatusMode
 	DefaultTextConfig = *(e.Theme.TextConfig())
+	if initialLightBackground != nil && *initialLightBackground { // light
+		e.makeLightAdjustments()
+	}
 }
 
 // setLightVSTheme sets the light theme suitable for xterm
@@ -1469,9 +1479,9 @@ func (e *Editor) setBlueEditTheme(bs ...bool) {
 	if len(bs) == 1 {
 		initialLightBackground = &(bs[0])
 	}
-	if initialLightBackground != nil && *initialLightBackground {
+	if initialLightBackground != nil && *initialLightBackground { // light
 		e.SetTheme(NewLightBlueEditTheme())
-	} else {
+	} else { // dark
 		e.SetTheme(NewDarkBlueEditTheme())
 	}
 }
