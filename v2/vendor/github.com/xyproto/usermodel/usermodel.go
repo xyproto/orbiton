@@ -14,7 +14,7 @@ type Task string
 
 const (
 	llmManagerExecutable = "llm-manager"
-	defaultModelFallback = "gemma2:2b"
+	defaultModelFallback = "gemma3:4b"
 
 	// Tasks
 	ChatTask           = "chat"
@@ -30,10 +30,10 @@ const (
 var (
 	DefaultModels = map[Task]string{
 		"chat":            "llama3.2:3b",
-		"code":            "deepseek-coder:1.3b",
-		"code-completion": "deepseek-coder:1.3b",
+		"code":            "deepseek-coder-v2:16b",
+		"code-completion": "deepseek-coder-v2:16b",
 		"test":            "tinyllama:1b",
-		"text-generation": "gemma2:2b",
+		"text-generation": "gemma3:4b",
 		"tool-use":        "llama3.2:3b",
 		"translation":     "mixtral:8x7b",
 		"vision":          "llava:7b",
@@ -93,7 +93,7 @@ func Get(task Task) string {
 			trimmedLine := strings.TrimSpace(line)
 			if strings.HasPrefix(trimmedLine, string(task)) && strings.Count(trimmedLine, "=") == 1 {
 				fields := strings.SplitN(trimmedLine, "=", 2)
-				value := strings.TrimSpace(fields[1])
+				value := strings.TrimSpace(strings.ReplaceAll(strings.TrimSpace(fields[1]), "#", ""))
 				if value != "" {
 					return value
 				}

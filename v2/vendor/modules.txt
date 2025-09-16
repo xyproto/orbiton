@@ -121,10 +121,10 @@ github.com/xyproto/kotlinsig
 # github.com/xyproto/lookslikegoasm v1.0.0
 ## explicit; go 1.23.2
 github.com/xyproto/lookslikegoasm
-# github.com/xyproto/mode v0.11.6
+# github.com/xyproto/mode v0.11.7
 ## explicit; go 1.23.2
 github.com/xyproto/mode
-# github.com/xyproto/ollamaclient/v2 v2.7.1
+# github.com/xyproto/ollamaclient/v2 v2.7.2
 ## explicit; go 1.23.1
 github.com/xyproto/ollamaclient/v2
 # github.com/xyproto/palgen v1.6.1
@@ -133,7 +133,7 @@ github.com/xyproto/palgen
 # github.com/xyproto/termtitle v1.5.1
 ## explicit; go 1.11
 github.com/xyproto/termtitle
-# github.com/xyproto/usermodel v1.2.2
+# github.com/xyproto/usermodel v1.2.3
 ## explicit; go 1.23.1
 github.com/xyproto/usermodel
 # github.com/xyproto/vt v1.2.9

@@ -151,6 +151,8 @@ func Detect(filename string) Mode {
 			mode = Garnet
 		case ".go":
 			mode = Go
+		case ".gleam":
+			mode = Gleam
 		case ".glsl":
 			mode = Shader
 		case ".gradle":

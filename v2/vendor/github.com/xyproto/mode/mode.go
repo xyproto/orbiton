@@ -46,6 +46,7 @@ const (
 	Garnet                // Garnet
 	GDScript              // Godot Script
 	Git                   // Git commits and interactive rebases
+	Gleam                 // Gleam
 	Go                    // Go
 	GoMod                 // go.mod files
 	GoAssembly            // Go-style Assembly
@@ -204,6 +205,8 @@ func (mode Mode) String() string {
 		return "Godot Script"
 	case Git:
 		return "Git"
+	case Gleam:
+		return "Gleam"
 	case GoAssembly:
 		return "Go-style Assembly"
 	case Go:

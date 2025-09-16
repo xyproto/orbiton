@@ -29,11 +29,11 @@ require (
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
-	github.com/xyproto/mode v0.11.6
-	github.com/xyproto/ollamaclient/v2 v2.7.1
+	github.com/xyproto/mode v0.11.7
+	github.com/xyproto/ollamaclient/v2 v2.7.2
 	github.com/xyproto/palgen v1.6.1
 	github.com/xyproto/termtitle v1.5.1
-	github.com/xyproto/usermodel v1.2.2
+	github.com/xyproto/usermodel v1.2.3
 	github.com/xyproto/vt v1.2.9
 	github.com/xyproto/wordwrap v1.0.1
 	golang.org/x/image v0.31.0
