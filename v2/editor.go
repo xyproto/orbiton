@@ -3074,5 +3074,5 @@ func (e *Editor) EnableAndPlaceCursor(c *vt.Canvas) {
 
 // OnIncludeLine checks if it looks like the current line is a C or C++ #include
 func (e *Editor) OnIncludeLine() bool {
-	return strings.HasPrefix("#include", e.TrimmedLine())
+	return strings.HasPrefix(e.TrimmedLine(), "#include")
 }
