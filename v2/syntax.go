@@ -298,7 +298,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		addKeywords([]string{"buffer", "bvec2", "bvec3", "bvec4", "coherent", "dvec2", "dvec3", "dvec4", "flat", "in", "inout", "invariant", "ivec2", "ivec3", "ivec4", "layout", "mat", "mat2", "mat3", "mat4", "noperspective", "out", "precision", "readonly", "restrict", "smooth", "uniform", "uvec2", "uvec3", "uvec4", "vec2", "vec3", "vec4", "volatile", "writeonly"})
 		fallthrough // Continue to C/C++ and then to the default
 	case mode.Arduino, mode.C, mode.Cpp, mode.ObjC:
-		addKeywords := []string{"int8_t", "uint8_t", "int16_t", "uint16_t", "int32_t", "uint32_t", "int64_t", "uint64_t", "size_t"}
+		addKeywords := []string{"int8_t", "uint8_t", "int16_t", "uint16_t", "int32_t", "uint32_t", "int64_t", "uint64_t", "size_t", "std::string"}
 		delKeywords := []string{"from", "ret", "static"} // static is treated separately, as a special keyword
 		addAndRemoveKeywords(addKeywords, delKeywords)
 		fallthrough // Continue to the default
