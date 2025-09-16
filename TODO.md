@@ -1,6 +1,20 @@
 # TODO
 
 
+## Theme fixes for white backgrounds / xterm
+
+* not white highlight for the default theme
+* not yellow text in the menu for the default theme
+* not white highlight for the synthwave theme
+* in the menu for orb:
+  * let cyan be white
+  * let white be magenta
+  * let blue be cyan
+  * let magenta be blue
+* in the menu for teal: use the VS colors, but change red for cyan
+* in zulu: let comments be gray and text be black, instead of the other way around like it is now
+* in the zulu menu: use black instead of gray text
+
 ## General
 
 - [ ] If a line of code in C or C++ have two arrows, like `directory = S_ISDIR(p->fts_statp->st_mode);`, then color the second arrow differently from the first one.
