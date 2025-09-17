@@ -21,5 +21,5 @@ func (e *Editor) WriteProgress(c *vt.Canvas) {
 			y = bottomLine
 		}
 	}
-	c.WriteBackground(x, uint(y), e.MenuArrowColor.Background())
+	c.WriteBackground(x, uint(y), e.DebugStoppedBackground)
 }
