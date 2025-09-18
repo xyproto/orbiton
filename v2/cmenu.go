@@ -133,14 +133,12 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 
 	if !vsCode {
 		actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert \""+insertFilename+"\" at the current line", "insertfile", insertFilename)
-	}
 
-	actions.Add("Toggle column limit indicator", func() {
-		e.showColumnLimit = !e.showColumnLimit
-	})
+		actions.Add("Toggle column limit indicator", func() {
+			e.showColumnLimit = !e.showColumnLimit
+		})
 
-	// Word wrap at a custom width + enable word wrap when typing
-	if !vsCode {
+		// Word wrap at a custom width + enable word wrap when typing
 		actions.Add("Word wrap at...", func() {
 			const tabInputText = "79"
 			if wordWrapString, ok := e.UserInput(c, tty, status, fmt.Sprintf("Word wrap at [%d]", wrapWidth), "", []string{}, false, tabInputText); ok {
