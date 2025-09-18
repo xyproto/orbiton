@@ -8,8 +8,8 @@ import (
 	"github.com/xyproto/usermodel"
 )
 
-// CodeCompleter holds a model name, a boolean for if the model name was found and an Ollama client struct
-type CodeCompleter struct {
+// Ollama holds a model name, a boolean for if the model name was found and an Ollama client struct
+type Ollama struct {
 	// Ollama client, used for tab completion
 	ollamaClient *ollamaclient.Config
 
@@ -20,23 +20,23 @@ type CodeCompleter struct {
 	foundModel bool
 }
 
-// NewCodeCompleter returns the pointer to an empty CodeCompleter struct
-func NewCodeCompleter() *CodeCompleter {
-	return &CodeCompleter{}
+// NewOllama returns the pointer to an empty Ollama struct
+func NewOllama() *Ollama {
+	return &Ollama{}
 }
 
 // FindModel checks if a code completion model was specified either in $OLLAMA_MODEL,
 // ~/.config/llm-manager/llm.conf or /etc/llm.conf.
 // See https://github.com/xyproto/usermodel for more info.
 // Returns true if an Ollama model name[:tag] was found.
-func (cc *CodeCompleter) FindModel() bool {
+func (cc *Ollama) FindModel() bool {
 	cc.ModelName = env.Str("OLLAMA_MODEL", usermodel.GetCodeModel())
 	cc.foundModel = cc.ModelName != ""
 	return cc.foundModel
 }
 
 // LoadModel tries to load the cc.ModelName by using the Ollama client
-func (cc *CodeCompleter) LoadModel() error {
+func (cc *Ollama) LoadModel() error {
 	if !cc.foundModel {
 		return fmt.Errorf("could not find a code completion model name to use")
 	}
@@ -54,13 +54,14 @@ func (cc *CodeCompleter) LoadModel() error {
 }
 
 // Loaded returns true if the ollama client could be used and the code completion model could be loaded
-func (cc *CodeCompleter) Loaded() bool {
+func (cc *Ollama) Loaded() bool {
 	return cc.ollamaClient != nil
 }
 
-// CompleteBetween tries to return generated code that fits between the given codeStart and codeEnd strings
-func (cc *CodeCompleter) CompleteBetween(codeStart, codeEnd string) (string, error) {
-	response, err := cc.ollamaClient.GetBetweenResponse(codeStart, codeEnd)
+// GetSimpleResponse gets a simple text response from Ollama for a given prompt
+func (cc *Ollama) GetSimpleResponse(prompt string) (string, error) {
+	// Use the same approach as CompleteBetween but with empty end
+	response, err := cc.ollamaClient.GetBetweenResponse(prompt, "")
 	if err != nil {
 		return "", err
 	}

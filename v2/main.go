@@ -47,8 +47,8 @@ var (
 	// Build with release mode instead of debug mode whenever applicable
 	releaseBuildFlag bool
 
-	// An empty *CodeCompleter struct
-	cc = NewCodeCompleter()
+	// An empty *Ollama struct
+	ollama = NewOllama()
 
 	envNoColor = env.Bool("NO_COLOR")
 )
@@ -74,7 +74,7 @@ func main() {
 		nanoMode               bool
 		noApproxMatchFlag      bool
 		noCacheFlag            bool
-		ollamaTabCompletion    bool
+		ollamaEnabled          bool
 		pasteFlag              bool
 		quickHelpFlag          bool
 		noQuickHelpFlag        bool
@@ -99,7 +99,7 @@ func main() {
 	pflag.BoolVarP(&nanoMode, "nano", "a", false, "Nano/Pico mode")
 	pflag.BoolVarP(&noApproxMatchFlag, "noapprox", "x", false, "Disable approximate filename matching")
 	pflag.BoolVarP(&noCacheFlag, "no-cache", "n", false, "don't write anything to cache directory")
-	pflag.BoolVarP(&ollamaTabCompletion, "ollama", "o", env.Bool("ORBITON_OLLAMA"), "use Ollama for tab completion")
+	pflag.BoolVarP(&ollamaEnabled, "ollama", "o", env.Bool("ORBITON_OLLAMA"), "enable Ollama-specific features")
 	pflag.BoolVarP(&pasteFlag, "paste", "p", false, "paste the clipboard into the file and quit")
 	pflag.BoolVarP(&releaseBuildFlag, "release", "r", false, "build with release mode instead of debug mode, whenever applicable")
 	pflag.BoolVarP(&quickHelpFlag, "quick-help", "q", false, "always display the quick help when starting")
@@ -115,9 +115,9 @@ func main() {
 		return
 	}
 
-	if (ollamaTabCompletion || helpFlag) && cc.FindModel() {
+	if (ollamaEnabled || helpFlag) && ollama.FindModel() {
 		// Used by the --help output, ollamaText is "Use Ollama" before this
-		ollamaHelpText += fmt.Sprintf(" and %q", strings.TrimSuffix(cc.ModelName, ":latest"))
+		ollamaHelpText += fmt.Sprintf(" and %q", strings.TrimSuffix(ollama.ModelName, ":latest"))
 		if env.No("OLLAMA_MODEL") {
 			ollamaHelpText += " or $OLLAMA_MODEL"
 		}
@@ -144,8 +144,8 @@ func main() {
 		return
 	}
 
-	if ollamaTabCompletion {
-		if err := cc.LoadModel(); err != nil {
+	if ollamaEnabled {
+		if err := ollama.LoadModel(); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}

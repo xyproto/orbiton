@@ -254,6 +254,22 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	// Draw everything once, with slightly different behavior if used over ssh
 	e.InitialRedraw(c, status)
 
+	// Request function description at startup if cursor is on a function
+	if ollama.Loaded() && ProgrammingLanguage(e.mode) {
+		s := e.FindCurrentFunctionName()
+		if s != "" {
+			// Extract function body
+			y := e.DataY()
+			funcBody, err := e.FunctionBlock(y)
+			if err != nil {
+				funcBody = e.Block(y)
+			}
+			if funcBody != "" {
+				e.RequestFunctionDescription(s, funcBody, c)
+			}
+		}
+	}
+
 	// QuickHelp screen + help for new users
 	if (!QuickHelpScreenIsDisabled() || e.displayQuickHelp) && !e.noDisplayQuickHelp {
 		e.DrawQuickHelp(c, false)

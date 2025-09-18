@@ -196,7 +196,13 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 	}
 
 	e.WriteCurrentFunctionName(c) // not drawing immediatly
-	c.HideCursorAndDraw()         // drawing now
+
+	// Draw the function description if function description mode is enabled
+	if ollama.Loaded() {
+		e.DrawFunctionDescriptionContinuous(c, false)
+	}
+
+	c.HideCursorAndDraw() // drawing now
 }
 
 // RedrawAtEndOfKeyLoop is called after each main loop
@@ -225,6 +231,11 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 		if e.drawFuncName.Load() && !e.nanoMode.Load() {
 			e.WriteCurrentFunctionName(c) // not drawing immediatly
 			e.drawFuncName.Store(false)
+		}
+
+		// Draw the function description if function description mode is enabled
+		if ollama.Loaded() {
+			e.DrawFunctionDescriptionContinuous(c, false)
 		}
 
 		c.HideCursorAndDraw()  // drawing now
