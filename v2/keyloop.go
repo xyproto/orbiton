@@ -1274,57 +1274,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			r := e.Rune()
 			leftRune := e.LeftRune()
 
-			// Tab triggered code completion with Ollama
-			if cc.Loaded() && e.mode != mode.Blank && e.AnyTextBeforeCursor() {
-
-				status.ClearAll(c, true)
-				status.SetMessage(fmt.Sprintf("Generating code with Ollama and the %s model...", cc.ModelName))
-				status.ShowNoTimeout(c, e)
-				vt.ShowCursor(false)
-
-				linesOfContext := codeCompletionContextLines / 2
-
-				currentLineIndex := int(e.LineIndex())
-
-				var codeBefore strings.Builder
-				for i := currentLineIndex - linesOfContext; i < currentLineIndex; i++ {
-					if i < 0 {
-						continue
-					}
-					codeBefore.WriteString(e.Line(LineIndex(i)) + "\n")
-				}
-				codeBefore.WriteString(e.CurrentLine()) // without a newline
-
-				var codeAfter strings.Builder
-				for i := currentLineIndex + 1; i < currentLineIndex+linesOfContext; i++ {
-					if int(i) >= e.Len() {
-						break
-					}
-					codeAfter.WriteString(e.Line(LineIndex(i)) + "\n")
-				}
-
-				codeStart := codeBefore.String()
-				codeEnd := codeAfter.String()
-
-				if responseString, err := cc.CompleteBetween(codeStart, codeEnd); err == nil { // success
-
-					generatedCodeCompletion := strings.TrimSuffix(responseString, "\n")
-					//logf("CODE START ---\n%s\n---\n\nGENERATED ---\n%s\n\n--- CODE END ---\n%s\n", codeStart, generatedCodeCompletion, codeEnd)
-					if generatedCodeCompletion != "" {
-						// Take an undo snapshot and insert the generated code
-						undo.Snapshot(e)
-						e.InsertStringAndMove(c, generatedCodeCompletion)
-					}
-
-					e.redraw.Store(true)
-					e.redrawCursor.Store(true)
-					e.RedrawAtEndOfKeyLoop(c, status, false, true)
-					e.redraw.Store(false)
-					e.redrawCursor.Store(false)
-				}
-
-				break
-			}
+			// TODO: Tab completion goes here
 
 			// Enable auto indent if the extension is not "" and either:
 			// * The mode is set to Go and the position is not at the very start of the line (empty or not)
