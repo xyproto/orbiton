@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/xyproto/vt"
 )
@@ -18,94 +19,161 @@ type FunctionDescriptionRequest struct {
 	editor   *Editor
 }
 
+// OllamaQueue manages the queue of function description requests and processing state
+type OllamaQueue struct {
+	// LIFO queue system for function description requests
+	stack        []FunctionDescriptionRequest
+	queuedHashes map[string]bool // Track what's already queued
+	mutex        sync.Mutex
+
+	// Worker control
+	workerStarted bool
+	signal        chan struct{} // Signal when new items are added
+
+	// Processing state
+	isThinking         bool   // Whether Ollama is currently processing
+	processingFunction string // The function currently being processed by Ollama
+
+	// Atomic cache for Ollama responses - map from function body hash to description
+	responseCache atomic.Value // stores map[string]string
+}
+
 var (
 	// Function description text from Ollama
 	functionDescription strings.Builder
-
 	// Track current function for continuous descriptions
-	currentDescribedFunction    string // The function we have a description for
-	actualCurrentFunction       string // The function the cursor is actually on
-	functionDescriptionReady    bool
-	functionDescriptionThinking bool
-	processingFunction          string // The function currently being processed by Ollama
+	currentDescribedFunction string // The function we have a description for
+	actualCurrentFunction    string // The function the cursor is actually on
+	functionDescriptionReady bool
 
-	// Cache for Ollama responses - map from function body hash to description
-	ollamaResponseCache = make(map[string]string)
-
-	// Mutex for both cache operations and ensuring only one Ollama request at a time
-	ollamaMutex sync.RWMutex
-
-	// LIFO queue system for function description requests
-	descriptionStack   []FunctionDescriptionRequest
-	queuedHashes       = make(map[string]bool) // Track what's already queued
-	queueMutex         sync.Mutex
-	queueWorkerStarted bool
-	queueSignal        = make(chan struct{}, 1) // Signal when new items are added
+	// Global queue instance
+	queue = &OllamaQueue{
+		queuedHashes: make(map[string]bool),
+		signal:       make(chan struct{}, 1),
+	}
 )
+
+// init initializes the atomic cache
+func init() {
+	queue.responseCache.Store(make(map[string]string))
+}
 
 // hashFunctionBody creates a SHA256 hash of the function body for caching
 func hashFunctionBody(funcBody string) string {
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(funcBody)))
+	h := sha256.Sum256([]byte(funcBody))
+	return fmt.Sprintf("%x", h)
 }
 
-// startQueueWorker starts the background worker that processes function description requests
-func startQueueWorker() {
-	queueMutex.Lock()
-	if queueWorkerStarted {
-		queueMutex.Unlock()
+// IsThinking returns whether Ollama is currently processing a request
+func (q *OllamaQueue) IsThinking() bool {
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
+	return q.isThinking
+}
+
+// getFromCache retrieves a cached description
+func (q *OllamaQueue) getFromCache(hash string) (string, bool) {
+	cached := q.responseCache.Load()
+	if cached == nil {
+		return "", false
+	}
+	cache, ok := cached.(map[string]string)
+	if !ok {
+		return "", false
+	}
+	desc, exists := cache[hash]
+	return desc, exists
+}
+
+// addToCache adds a description to the cache
+func (q *OllamaQueue) addToCache(hash, description string) {
+	for {
+		oldCached := q.responseCache.Load()
+		var oldCache map[string]string
+		if oldCached == nil {
+			oldCache = make(map[string]string)
+		} else {
+			var ok bool
+			oldCache, ok = oldCached.(map[string]string)
+			if !ok {
+				oldCache = make(map[string]string)
+			}
+		}
+
+		newCache := make(map[string]string, len(oldCache)+1)
+		for k, v := range oldCache {
+			newCache[k] = v
+		}
+		newCache[hash] = description
+
+		if oldCached == nil {
+			if q.responseCache.CompareAndSwap(nil, newCache) {
+				break
+			}
+		} else {
+			if q.responseCache.CompareAndSwap(oldCached, newCache) {
+				break
+			}
+		}
+	}
+}
+
+// startWorker starts the background worker that processes function description requests
+func (q *OllamaQueue) startWorker() {
+	q.mutex.Lock()
+	if q.workerStarted {
+		q.mutex.Unlock()
 		return
 	}
-	queueWorkerStarted = true
-	queueMutex.Unlock()
+	q.workerStarted = true
+	q.mutex.Unlock()
 
 	go func() {
-		for range queueSignal {
+		for range q.signal {
 			for {
 				// Get the next request from the stack (LIFO)
-				queueMutex.Lock()
-				if len(descriptionStack) == 0 {
-					queueMutex.Unlock()
+				q.mutex.Lock()
+				if len(q.stack) == 0 {
+					q.mutex.Unlock()
 					break
 				}
 				// Pop from the end (most recent)
-				req := descriptionStack[len(descriptionStack)-1]
-				descriptionStack = descriptionStack[:len(descriptionStack)-1]
-				delete(queuedHashes, req.bodyHash)
-				queueMutex.Unlock()
+				req := q.stack[len(q.stack)-1]
+				q.stack = q.stack[:len(q.stack)-1]
+				delete(q.queuedHashes, req.bodyHash)
+				q.mutex.Unlock()
 
 				// Check cache first (in case it was added while queued)
-				ollamaMutex.RLock()
-				if cachedDescription, exists := ollamaResponseCache[req.bodyHash]; exists {
-					ollamaMutex.RUnlock()
+				if cachedDescription, exists := q.getFromCache(req.bodyHash); exists {
 					// Only show cached response if this is still the current function
 					if actualCurrentFunction == req.funcName {
 						currentDescribedFunction = req.funcName
 						functionDescriptionReady = true
-						functionDescriptionThinking = false
 						functionDescription.Reset()
 						functionDescription.WriteString(strings.TrimSpace(cachedDescription))
-						// Force immediate redraw
-						req.editor.DrawFunctionDescriptionContinuous(req.canvas, false)
-						req.canvas.HideCursorAndDraw()
+						// Description will be drawn by main redraw cycle
 					}
 					continue
 				}
-				ollamaMutex.RUnlock()
 
 				// Set thinking state before processing
-				functionDescriptionThinking = true
-				processingFunction = req.funcName
+				q.mutex.Lock()
+				q.isThinking = true
+				q.processingFunction = req.funcName
+				q.mutex.Unlock()
 
-				// Draw ellipsis immediately when starting to process
+				// Draw ellipsis immediately when processing starts
 				req.editor.WriteCurrentFunctionName(req.canvas)
 				req.canvas.HideCursorAndDraw()
 
-				// Process the request
-				processDescriptionRequest(req)
+				// Always process the request (for caching)
+				q.processRequest(req)
 
 				// Clear thinking state after processing
-				functionDescriptionThinking = false
-				processingFunction = ""
+				q.mutex.Lock()
+				q.isThinking = false
+				q.processingFunction = ""
+				q.mutex.Unlock()
 
 				// Clear ellipsis when processing is done
 				req.editor.WriteCurrentFunctionName(req.canvas)
@@ -118,31 +186,24 @@ func startQueueWorker() {
 	}()
 }
 
-// processDescriptionRequest handles the actual Ollama request and response
-func processDescriptionRequest(req FunctionDescriptionRequest) {
+// processRequest handles the actual Ollama request and response
+func (q *OllamaQueue) processRequest(req FunctionDescriptionRequest) {
 	prompt := fmt.Sprintf("You have a PhD in Computer Science and are gifted when it comes to explaning things clearly. Be truthful and consise. If you are unsure of anything, then skip it. Describe and explain what the following %q function does, in 1-5 sentences:\n\n%s", req.funcName, req.funcBody)
 
 	if description, err := ollama.GetSimpleResponse(prompt); err == nil {
 		// Cache the response
-		ollamaMutex.Lock()
-		ollamaResponseCache[req.bodyHash] = description
-		ollamaMutex.Unlock()
+		q.addToCache(req.bodyHash, description)
 
-		// Only update and display if this is still the actual current function
+		// Only update if this is still the actual current function
 		if actualCurrentFunction == req.funcName && ollama.Loaded() {
 			currentDescribedFunction = req.funcName
 			functionDescription.Reset()
 			functionDescription.WriteString(strings.TrimSpace(description))
 			functionDescriptionReady = true
-			//logf("Ollama response ready for %s, drawing description box", req.funcName)
-			// Clear ellipsis by overwriting with space
-			ellipsisX := req.canvas.Width() - 1
-			req.canvas.Write(ellipsisX, 0, req.editor.Foreground, req.editor.Background, " ")
-			// Redraw function name area and description box
-			req.editor.WriteCurrentFunctionName(req.canvas)
-			req.editor.DrawFunctionDescriptionContinuous(req.canvas, false)
-			req.canvas.HideCursorAndDraw()
+			//logf("Ollama response ready for %s", req.funcName)
+			// Description will be drawn by main redraw cycle
 		}
+		// Note: thinking state is managed by the worker, not here
 	} else {
 		// If error and this was for current function, clear ellipsis
 		if actualCurrentFunction == req.funcName && ollama.Loaded() {
@@ -152,6 +213,60 @@ func processDescriptionRequest(req FunctionDescriptionRequest) {
 			// Redraw function name area
 			req.editor.WriteCurrentFunctionName(req.canvas)
 			req.canvas.HideCursorAndDraw()
+		}
+		// Note: thinking state is managed by the worker, not here
+	}
+}
+
+// enqueue adds a function description request to the queue
+func (q *OllamaQueue) enqueue(funcName, funcBody, bodyHash string, c *vt.Canvas, e *Editor) {
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
+
+	// Don't queue if currently being processed
+	if q.processingFunction == funcName {
+		return
+	}
+
+	if !q.queuedHashes[bodyHash] {
+		// Add to the stack (LIFO - most recent at the end)
+		q.stack = append(q.stack, FunctionDescriptionRequest{
+			funcName: funcName,
+			funcBody: funcBody,
+			bodyHash: bodyHash,
+			canvas:   c,
+			editor:   e,
+		})
+		q.queuedHashes[bodyHash] = true
+
+		// Signal the worker
+		select {
+		case q.signal <- struct{}{}:
+		default:
+		}
+	} else {
+		// Function is already in queue - move it to the top (end of slice)
+		// Find the existing request and move it to the end
+		for i, req := range q.stack {
+			if req.bodyHash == bodyHash {
+				// Remove from current position
+				q.stack = append(q.stack[:i], q.stack[i+1:]...)
+				// Add to the end (top of LIFO stack)
+				q.stack = append(q.stack, FunctionDescriptionRequest{
+					funcName: funcName,
+					funcBody: funcBody,
+					bodyHash: bodyHash,
+					canvas:   c,
+					editor:   e,
+				})
+				break
+			}
+		}
+
+		// Signal the worker in case it's waiting
+		select {
+		case q.signal <- struct{}{}:
+		default:
 		}
 	}
 }
@@ -167,19 +282,16 @@ func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Can
 	}
 
 	// Start the queue worker if not already started
-	startQueueWorker()
+	queue.startWorker()
 
 	// Generate hash for caching
 	bodyHash := hashFunctionBody(funcBody)
 
 	// Check cache first
-	ollamaMutex.RLock()
-	if cachedDescription, exists := ollamaResponseCache[bodyHash]; exists {
-		ollamaMutex.RUnlock()
+	if cachedDescription, exists := queue.getFromCache(bodyHash); exists {
 		// Use cached response immediately
 		currentDescribedFunction = funcName
 		functionDescriptionReady = true
-		functionDescriptionThinking = false
 		functionDescription.Reset()
 		functionDescription.WriteString(strings.TrimSpace(cachedDescription))
 		// Force immediate redraw
@@ -187,7 +299,6 @@ func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Can
 		c.HideCursorAndDraw()
 		return
 	}
-	ollamaMutex.RUnlock()
 
 	// Update the actual current function
 	actualCurrentFunction = funcName
@@ -198,57 +309,8 @@ func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Can
 		functionDescription.Reset()
 	}
 
-	// Add to queue or move to top if already queued
-	queueMutex.Lock()
-
-	// Don't queue if currently being processed
-	if processingFunction == funcName {
-		queueMutex.Unlock()
-		return
-	}
-
-	if !queuedHashes[bodyHash] {
-		// Add to the stack (LIFO - most recent at the end)
-		descriptionStack = append(descriptionStack, FunctionDescriptionRequest{
-			funcName: funcName,
-			funcBody: funcBody,
-			bodyHash: bodyHash,
-			canvas:   c,
-			editor:   e,
-		})
-		queuedHashes[bodyHash] = true
-
-		// Signal the worker
-		select {
-		case queueSignal <- struct{}{}:
-		default:
-		}
-	} else {
-		// Function is already in queue - move it to the top (end of slice)
-		// Find the existing request and move it to the end
-		for i, req := range descriptionStack {
-			if req.bodyHash == bodyHash {
-				// Remove from current position
-				descriptionStack = append(descriptionStack[:i], descriptionStack[i+1:]...)
-				// Add to the end (top of LIFO stack)
-				descriptionStack = append(descriptionStack, FunctionDescriptionRequest{
-					funcName: funcName,
-					funcBody: funcBody,
-					bodyHash: bodyHash,
-					canvas:   c,
-					editor:   e,
-				})
-				break
-			}
-		}
-
-		// Signal the worker in case it's waiting
-		select {
-		case queueSignal <- struct{}{}:
-		default:
-		}
-	}
-	queueMutex.Unlock()
+	// Add to queue using the OllamaQueue method
+	queue.enqueue(funcName, funcBody, bodyHash, c, e)
 }
 
 // DrawFunctionDescriptionContinuous draws the function description panel if in continuous mode
@@ -280,7 +342,7 @@ func (e *Editor) drawFunctionDescriptionPopup(c *vt.Canvas, title, descriptionTe
 	descriptionBox.EvenLowerRightPlacement(canvasBox, minWidth)
 	// Move box up 3 positions and increase height by 1
 	descriptionBox.Y -= 3
-	descriptionBox.H++
+	descriptionBox.H += 1
 	e.redraw.Store(true)
 
 	// Create a list box inside
@@ -289,6 +351,7 @@ func (e *Editor) drawFunctionDescriptionPopup(c *vt.Canvas, title, descriptionTe
 
 	// Get the current theme for the description box (exactly like tutorial)
 	bt := e.NewBoxTheme()
+	//bt.Foreground = &e.BoxTextColor
 	bt.Foreground = &e.ItalicsColor
 	bt.Background = &e.BoxBackground
 
