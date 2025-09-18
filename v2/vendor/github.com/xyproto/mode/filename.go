@@ -97,6 +97,8 @@ func Detect(filename string) Mode {
 			mode = Bat
 		case ".bf":
 			mode = Beef
+		case ".blp":
+			mode = Blueprint
 		case ".bts":
 			mode = Battlestar
 		case ".c":

@@ -20,6 +20,7 @@ const (
 	Battlestar            // Battlestar
 	Bazel                 // Bazel and Starlark
 	Beef                  // Beef
+	Blueprint             // GNOME Blueprint
 	C                     // C
 	C3                    // C3
 	CMake                 // CMake files
@@ -151,6 +152,8 @@ func (mode Mode) String() string {
 		return "Bazel"
 	case Beef:
 		return "Beef"
+	case Blueprint:
+		return "Blueprint"
 	case Blank:
 		return "-"
 	case C:

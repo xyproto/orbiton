@@ -16,7 +16,7 @@ var DefaultTabsSpaces = TabsSpaces{4, true}
 var languageIndentation = map[TabsSpaces][]Mode{
 	// Languages that use spaces (from the opinionated point of view of this package)
 	{1, true}: {ABC},
-	{2, true}: {Agda, Algol68, Amber, Arduino, Assembly, C3, Clojure, Config, CSS, CSound, Dart, Diff, Erlang, Fortran90, FSTAB, Gleam, HTML, Haskell, Ignore, Ini, Inko, JSON, Koka, Lilypond, Lua, Nmap, Nix, ObjC, ObjectPascal, Perl, PolicyLanguage, POV, ReStructured, Ruby, Scala, Scheme, Shell, StandardML, Teal, Vim, Vim, XML},
+	{2, true}: {Agda, Algol68, Amber, Arduino, Assembly, Blueprint, C3, Clojure, Config, CSS, CSound, Dart, Diff, Erlang, Fortran90, FSTAB, Gleam, HTML, Haskell, Ignore, Ini, Inko, JSON, Koka, Lilypond, Lua, Nmap, Nix, ObjC, ObjectPascal, Perl, PolicyLanguage, POV, ReStructured, Ruby, Scala, Scheme, Shell, StandardML, Teal, Vim, Vim, XML},
 	{3, true}: {Ada, Prolog}, // Ada and Prolog are special
 	{4, true}: {ASCIIDoc, Basic, Bat, Battlestar, Beef, CMake, Chuck, CS, Cpp, Crystal, Docker, Elm, Email, Faust, FSharp, GDScript, Garnet, Git, Haxe, JSON, Jakt, Java, JavaScript, Kotlin, Markdown, Mojo, Nim, Oak, Ollama, PHP, Python, R, SCDoc, SQL, Starlark, Subversion, Swift, Terra, Text, TypeScript, V, Zig},
 	{7, true}: {Fortran77},        // Fortran77 is weird
