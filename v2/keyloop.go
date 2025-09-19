@@ -258,14 +258,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	if ollama.Loaded() && ProgrammingLanguage(e.mode) {
 		s := e.FindCurrentFunctionName()
 		if s != "" {
-			// Extract function body
-			y := e.DataY()
-			funcBody, err := e.FunctionBlock(y)
-			if err != nil {
-				funcBody = e.Block(y)
-			}
-			if funcBody != "" {
-				e.RequestFunctionDescription(s, funcBody, c)
+			// Find the function definition line to extract complete function body
+			funcName, funcDefLineIndex := e.FunctionNameForLineIndex(e.LineIndex())
+			if funcName != "" {
+				// Extract complete function body starting from the function definition
+				funcBody := e.ExtractCompleteFunctionBody(funcName, funcDefLineIndex)
+				if funcBody != "" {
+					e.RequestFunctionDescription(s, funcBody)
+				}
 			}
 		}
 	}

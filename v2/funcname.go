@@ -332,26 +332,18 @@ func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
 	// Try to display the function description if Ollama is enabled
 	if ollama.Loaded() {
 		if s != "" {
-			// Extract function body
-			y := e.DataY()
-			funcBody, err := e.FunctionBlock(y)
-			if err != nil {
-				funcBody = e.Block(y)
-			}
-			if funcBody != "" {
-				e.RequestFunctionDescription(s, funcBody, c)
-			} else {
-				e.RequestFunctionDescription(s, "", c)
+			// Find the function definition line to extract complete function body
+			funcName, funcDefLineIndex := e.FunctionNameForLineIndex(e.LineIndex())
+			if funcName != "" {
+				// Extract complete function body starting from the function definition
+				funcBody := e.ExtractCompleteFunctionBody(funcName, funcDefLineIndex)
+				if funcBody != "" {
+					e.RequestFunctionDescription(s, funcBody)
+				}
 			}
 		} else {
-			// Clear description if not in a function
-			if currentDescribedFunction != "" {
-				currentDescribedFunction = ""
-				functionDescriptionReady = false
-				functionDescriptionThinking = false
-				functionDescription.Reset()
-				e.redraw.Store(true)
-			}
+			// Clear description if not in a function - this is handled by the queue now
+			queue.SetCurrentFunction("")
 		}
 	}
 
@@ -363,7 +355,7 @@ func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
 	c.Write(x, y, e.Foreground, e.Background, s)
 
 	// Add red ellipsis when Ollama is thinking
-	if ollama.Loaded() && functionDescriptionThinking {
+	if ollama.Loaded() && queue.IsThinking() {
 		ellipsisX := canvasWidth - 1 // rightmost position
 		c.Write(ellipsisX, y, e.StatusErrorForeground, e.Background, "…")
 	}

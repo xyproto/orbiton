@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"sync/atomic"
 
 	"github.com/xyproto/vt"
 )
@@ -15,48 +14,46 @@ type FunctionDescriptionRequest struct {
 	funcName string
 	funcBody string
 	bodyHash string
-	canvas   *vt.Canvas
-	editor   *Editor
+}
+
+// FunctionDescriptionResponse represents the result of processing a request
+type FunctionDescriptionResponse struct {
+	funcName    string
+	description string
+	bodyHash    string
+	err         error
 }
 
 // OllamaQueue manages the queue of function description requests and processing state
 type OllamaQueue struct {
-	// LIFO queue system for function description requests
-	stack        []FunctionDescriptionRequest
-	queuedHashes map[string]bool // Track what's already queued
-	mutex        sync.Mutex
+	// Channel-based queue system
+	requestChan  chan FunctionDescriptionRequest
+	responseChan chan FunctionDescriptionResponse
+	shutdownChan chan struct{}
+
+	// Processing state with mutex protection
+	mutex            sync.RWMutex
+	isThinking       bool
+	processingFunc   string
+	currentFunc      string
+	readyDescription string
+
+	// Thread-safe cache using sync.Map
+	responseCache sync.Map // map[string]string (hash -> description)
 
 	// Worker control
 	workerStarted bool
-	signal        chan struct{} // Signal when new items are added
-
-	// Processing state
-	isThinking         bool   // Whether Ollama is currently processing
-	processingFunction string // The function currently being processed by Ollama
-
-	// Atomic cache for Ollama responses - map from function body hash to description
-	responseCache atomic.Value // stores map[string]string
+	shutdownOnce  sync.Once
 }
 
 var (
-	// Function description text from Ollama
-	functionDescription strings.Builder
-	// Track current function for continuous descriptions
-	currentDescribedFunction string // The function we have a description for
-	actualCurrentFunction    string // The function the cursor is actually on
-	functionDescriptionReady bool
-
 	// Global queue instance
 	queue = &OllamaQueue{
-		queuedHashes: make(map[string]bool),
-		signal:       make(chan struct{}, 1),
+		requestChan:  make(chan FunctionDescriptionRequest, 10),
+		responseChan: make(chan FunctionDescriptionResponse, 10),
+		shutdownChan: make(chan struct{}),
 	}
 )
-
-// init initializes the atomic cache
-func init() {
-	queue.responseCache.Store(make(map[string]string))
-}
 
 // hashFunctionBody creates a SHA256 hash of the function body for caching
 func hashFunctionBody(funcBody string) string {
@@ -66,56 +63,51 @@ func hashFunctionBody(funcBody string) string {
 
 // IsThinking returns whether Ollama is currently processing a request
 func (q *OllamaQueue) IsThinking() bool {
+	q.mutex.RLock()
+	defer q.mutex.RUnlock()
+	return q.isThinking
+}
+
+// GetCurrentState returns the current processing state
+func (q *OllamaQueue) GetCurrentState() (isThinking bool, currentFunc, readyDescription string) {
+	q.mutex.RLock()
+	defer q.mutex.RUnlock()
+	return q.isThinking, q.currentFunc, q.readyDescription
+}
+
+// SetCurrentFunction updates the current function and returns whether description is ready
+func (q *OllamaQueue) SetCurrentFunction(funcName string) bool {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
-	return q.isThinking
+
+	q.currentFunc = funcName
+
+	// If we have a ready description for this function, return true
+	if funcName != "" && q.readyDescription != "" {
+		return true
+	}
+
+	// Clear ready description if function changed
+	if funcName == "" {
+		q.readyDescription = ""
+	}
+
+	return false
 }
 
 // getFromCache retrieves a cached description
 func (q *OllamaQueue) getFromCache(hash string) (string, bool) {
-	cached := q.responseCache.Load()
-	if cached == nil {
+	value, exists := q.responseCache.Load(hash)
+	if !exists {
 		return "", false
 	}
-	cache, ok := cached.(map[string]string)
-	if !ok {
-		return "", false
-	}
-	desc, exists := cache[hash]
-	return desc, exists
+	desc, ok := value.(string)
+	return desc, ok
 }
 
 // addToCache adds a description to the cache
 func (q *OllamaQueue) addToCache(hash, description string) {
-	for {
-		oldCached := q.responseCache.Load()
-		var oldCache map[string]string
-		if oldCached == nil {
-			oldCache = make(map[string]string)
-		} else {
-			var ok bool
-			oldCache, ok = oldCached.(map[string]string)
-			if !ok {
-				oldCache = make(map[string]string)
-			}
-		}
-
-		newCache := make(map[string]string, len(oldCache)+1)
-		for k, v := range oldCache {
-			newCache[k] = v
-		}
-		newCache[hash] = description
-
-		if oldCached == nil {
-			if q.responseCache.CompareAndSwap(nil, newCache) {
-				break
-			}
-		} else {
-			if q.responseCache.CompareAndSwap(oldCached, newCache) {
-				break
-			}
-		}
-	}
+	q.responseCache.Store(hash, description)
 }
 
 // startWorker starts the background worker that processes function description requests
@@ -128,151 +120,120 @@ func (q *OllamaQueue) startWorker() {
 	q.workerStarted = true
 	q.mutex.Unlock()
 
+	// Start request processor
 	go func() {
-		for range q.signal {
-			for {
-				// Get the next request from the stack (LIFO)
-				q.mutex.Lock()
-				if len(q.stack) == 0 {
-					q.mutex.Unlock()
-					break
-				}
-				// Pop from the end (most recent)
-				req := q.stack[len(q.stack)-1]
-				q.stack = q.stack[:len(q.stack)-1]
-				delete(q.queuedHashes, req.bodyHash)
-				q.mutex.Unlock()
-
-				// Check cache first (in case it was added while queued)
+		for {
+			select {
+			case req := <-q.requestChan:
+				// Check cache first
 				if cachedDescription, exists := q.getFromCache(req.bodyHash); exists {
-					// Only show cached response if this is still the current function
-					if actualCurrentFunction == req.funcName {
-						currentDescribedFunction = req.funcName
-						functionDescriptionReady = true
-						functionDescription.Reset()
-						functionDescription.WriteString(strings.TrimSpace(cachedDescription))
-						// Description will be drawn by main redraw cycle
+					// Send cached response
+					q.responseChan <- FunctionDescriptionResponse{
+						funcName:    req.funcName,
+						description: cachedDescription,
+						bodyHash:    req.bodyHash,
 					}
 					continue
 				}
 
-				// Set thinking state before processing
+				// Set thinking state
 				q.mutex.Lock()
 				q.isThinking = true
-				q.processingFunction = req.funcName
+				q.processingFunc = req.funcName
 				q.mutex.Unlock()
 
-				// Draw ellipsis immediately when processing starts
-				req.editor.WriteCurrentFunctionName(req.canvas)
-				req.canvas.HideCursorAndDraw()
+				// Process request
+				prompt := fmt.Sprintf("You have a PhD in Computer Science and are gifted when it comes to explaining things clearly. Be truthful and concise. If you are unsure of anything, then skip it. Describe and explain what the following %q function does, in 1-5 sentences:\n\n%s", req.funcName, req.funcBody)
 
-				// Always process the request (for caching)
-				q.processRequest(req)
+				var response FunctionDescriptionResponse
+				if description, err := ollama.GetSimpleResponse(prompt); err == nil {
+					// Cache the response
+					q.addToCache(req.bodyHash, description)
+					response = FunctionDescriptionResponse{
+						funcName:    req.funcName,
+						description: description,
+						bodyHash:    req.bodyHash,
+					}
+				} else {
+					response = FunctionDescriptionResponse{
+						funcName: req.funcName,
+						bodyHash: req.bodyHash,
+						err:      err,
+					}
+				}
 
-				// Clear thinking state after processing
+				// Clear thinking state
 				q.mutex.Lock()
 				q.isThinking = false
-				q.processingFunction = ""
+				q.processingFunc = ""
 				q.mutex.Unlock()
 
-				// Clear ellipsis when processing is done
-				req.editor.WriteCurrentFunctionName(req.canvas)
-				req.canvas.HideCursorAndDraw()
+				// Send response
+				q.responseChan <- response
 
-				// Only process one request at a time, then check for newer ones
-				break
+			case <-q.shutdownChan:
+				return
+			}
+		}
+	}()
+
+	// Start response handler - this handles UI updates safely
+	go func() {
+		for {
+			select {
+			case resp := <-q.responseChan:
+				q.mutex.Lock()
+				if resp.err == nil && resp.funcName == q.currentFunc {
+					q.readyDescription = strings.TrimSpace(resp.description)
+				} else if resp.funcName == q.currentFunc {
+					q.readyDescription = ""
+				}
+				q.mutex.Unlock()
+			case <-q.shutdownChan:
+				return
 			}
 		}
 	}()
 }
 
-// processRequest handles the actual Ollama request and response
-func (q *OllamaQueue) processRequest(req FunctionDescriptionRequest) {
-	prompt := fmt.Sprintf("You have a PhD in Computer Science and are gifted when it comes to explaning things clearly. Be truthful and consise. If you are unsure of anything, then skip it. Describe and explain what the following %q function does, in 1-5 sentences:\n\n%s", req.funcName, req.funcBody)
-
-	if description, err := ollama.GetSimpleResponse(prompt); err == nil {
-		// Cache the response
-		q.addToCache(req.bodyHash, description)
-
-		// Only update if this is still the actual current function
-		if actualCurrentFunction == req.funcName && ollama.Loaded() {
-			currentDescribedFunction = req.funcName
-			functionDescription.Reset()
-			functionDescription.WriteString(strings.TrimSpace(description))
-			functionDescriptionReady = true
-			//logf("Ollama response ready for %s", req.funcName)
-			// Description will be drawn by main redraw cycle
-		}
-		// Note: thinking state is managed by the worker, not here
-	} else {
-		// If error and this was for current function, clear ellipsis
-		if actualCurrentFunction == req.funcName && ollama.Loaded() {
-			// Clear ellipsis by overwriting with space
-			ellipsisX := req.canvas.Width() - 1
-			req.canvas.Write(ellipsisX, 0, req.editor.Foreground, req.editor.Background, " ")
-			// Redraw function name area
-			req.editor.WriteCurrentFunctionName(req.canvas)
-			req.canvas.HideCursorAndDraw()
-		}
-		// Note: thinking state is managed by the worker, not here
-	}
-}
-
 // enqueue adds a function description request to the queue
-func (q *OllamaQueue) enqueue(funcName, funcBody, bodyHash string, c *vt.Canvas, e *Editor) {
-	q.mutex.Lock()
-	defer q.mutex.Unlock()
-
+func (q *OllamaQueue) enqueue(funcName, funcBody, bodyHash string) {
+	q.mutex.RLock()
 	// Don't queue if currently being processed
-	if q.processingFunction == funcName {
+	if q.processingFunc == funcName {
+		q.mutex.RUnlock()
 		return
 	}
+	q.mutex.RUnlock()
 
-	if !q.queuedHashes[bodyHash] {
-		// Add to the stack (LIFO - most recent at the end)
-		q.stack = append(q.stack, FunctionDescriptionRequest{
-			funcName: funcName,
-			funcBody: funcBody,
-			bodyHash: bodyHash,
-			canvas:   c,
-			editor:   e,
-		})
-		q.queuedHashes[bodyHash] = true
+	// Send request to worker (non-blocking)
+	req := FunctionDescriptionRequest{
+		funcName: funcName,
+		funcBody: funcBody,
+		bodyHash: bodyHash,
+	}
 
-		// Signal the worker
+	select {
+	case q.requestChan <- req:
+		// Request queued successfully
+	default:
+		// Channel full, drop oldest and add new
+		// Drain one request if channel is full
 		select {
-		case q.signal <- struct{}{}:
+		case <-q.requestChan:
 		default:
 		}
-	} else {
-		// Function is already in queue - move it to the top (end of slice)
-		// Find the existing request and move it to the end
-		for i, req := range q.stack {
-			if req.bodyHash == bodyHash {
-				// Remove from current position
-				q.stack = append(q.stack[:i], q.stack[i+1:]...)
-				// Add to the end (top of LIFO stack)
-				q.stack = append(q.stack, FunctionDescriptionRequest{
-					funcName: funcName,
-					funcBody: funcBody,
-					bodyHash: bodyHash,
-					canvas:   c,
-					editor:   e,
-				})
-				break
-			}
-		}
-
-		// Signal the worker in case it's waiting
+		// Try to send again
 		select {
-		case q.signal <- struct{}{}:
+		case q.requestChan <- req:
 		default:
+			// Still full, just drop the request
 		}
 	}
 }
 
 // RequestFunctionDescription requests a description for a function using the queue system
-func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Canvas) {
+func (e *Editor) RequestFunctionDescription(funcName, funcBody string) {
 	if !ollama.Loaded() {
 		return
 	}
@@ -287,86 +248,103 @@ func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Can
 	// Generate hash for caching
 	bodyHash := hashFunctionBody(funcBody)
 
-	// Check cache first
-	if cachedDescription, exists := queue.getFromCache(bodyHash); exists {
-		// Use cached response immediately
-		currentDescribedFunction = funcName
-		functionDescriptionReady = true
-		functionDescription.Reset()
-		functionDescription.WriteString(strings.TrimSpace(cachedDescription))
-		// Force immediate redraw
-		e.DrawFunctionDescriptionContinuous(c, false)
-		c.HideCursorAndDraw()
+	// Update current function and check if description is ready
+	if queue.SetCurrentFunction(funcName) {
+		// Description is already ready
 		return
 	}
 
-	// Update the actual current function
-	actualCurrentFunction = funcName
-
-	// Clear description if it's for a different function
-	if currentDescribedFunction != funcName {
-		functionDescriptionReady = false
-		functionDescription.Reset()
+	// Check cache first
+	if cachedDescription, exists := queue.getFromCache(bodyHash); exists {
+		// Update ready description immediately
+		queue.mutex.Lock()
+		queue.readyDescription = strings.TrimSpace(cachedDescription)
+		queue.mutex.Unlock()
+		return
 	}
 
-	// Add to queue using the OllamaQueue method
-	queue.enqueue(funcName, funcBody, bodyHash, c, e)
+	// Add to queue
+	queue.enqueue(funcName, funcBody, bodyHash)
 }
 
 // DrawFunctionDescriptionContinuous draws the function description panel if in continuous mode
 func (e *Editor) DrawFunctionDescriptionContinuous(c *vt.Canvas, repositionCursor bool) {
+	if !ollama.Loaded() {
+		return
+	}
+
+	// Get current state
+	_, currentFunc, readyDescription := queue.GetCurrentState()
+
 	// Only show description box if we have a ready description
-	if !ollama.Loaded() || currentDescribedFunction == "" || !functionDescriptionReady {
+	if currentFunc == "" || readyDescription == "" {
 		return
 	}
 
 	// Description is ready - show it
-	title := fmt.Sprintf("Function: %s", currentDescribedFunction)
-	descriptionText := strings.TrimSpace(functionDescription.String())
-	if len(descriptionText) == 0 {
-		descriptionText = "No description available"
-	}
-
-	e.drawFunctionDescriptionPopup(c, title, descriptionText, repositionCursor)
+	title := fmt.Sprintf("Function: %s", currentFunc)
+	e.drawFunctionDescriptionPopup(c, title, readyDescription, repositionCursor)
 }
 
-// drawFunctionDescriptionPopup draws a panel with the function description text
+// drawFunctionDescriptionPopup draws a panel with the function description text on the right side
 func (e *Editor) drawFunctionDescriptionPopup(c *vt.Canvas, title, descriptionText string, repositionCursorAfterDrawing bool) {
 	// Create a box the size of the entire canvas
 	canvasBox := NewCanvasBox(c)
 
-	minWidth := 40
+	// Calculate right side positioning with margins
+	margin := 2
+	maxWidth := 50 // Maximum width for the description box
+	minWidth := 30 // Minimum width
 
-	// Position the description panel exactly like tutorial
+	// Calculate width based on canvas size, but enforce limits
+	width := canvasBox.W / 3 // Use 1/3 of canvas width
+	if width > maxWidth {
+		width = maxWidth
+	}
+	if width < minWidth {
+		width = minWidth
+	}
+
+	// Position on the right side with margin
 	descriptionBox := NewBox()
-	descriptionBox.EvenLowerRightPlacement(canvasBox, minWidth)
-	// Move box up 3 positions and increase height by 1
-	descriptionBox.Y -= 3
-	descriptionBox.H += 1
+	descriptionBox.X = canvasBox.W - width - margin
+	descriptionBox.Y = margin + 2 // Leave space for function name at top
+	descriptionBox.W = width
+	descriptionBox.H = canvasBox.H - (margin * 2) - 3 // Leave margins and space for function name
+
+	// Ensure we don't go off canvas
+	if descriptionBox.X+descriptionBox.W > canvasBox.W {
+		descriptionBox.X = canvasBox.W - descriptionBox.W
+	}
+	if descriptionBox.Y+descriptionBox.H > canvasBox.H {
+		descriptionBox.H = canvasBox.H - descriptionBox.Y
+	}
+
 	e.redraw.Store(true)
 
-	// Create a list box inside
+	// Create a list box inside with margins
 	listBox := NewBox()
-	listBox.FillWithMargins(descriptionBox, 2, 2)
+	listBox.FillWithMargins(descriptionBox, 1, 2)
 
-	// Get the current theme for the description box (exactly like tutorial)
+	// Get the current theme for the description box
 	bt := e.NewBoxTheme()
-	//bt.Foreground = &e.BoxTextColor
 	bt.Foreground = &e.ItalicsColor
 	bt.Background = &e.BoxBackground
 
-	// First figure out how many lines of text this will be after word wrap (like tutorial)
+	// First figure out how many lines of text this will be after word wrap
 	const dryRun = true
 	addedLines := e.DrawText(bt, c, listBox, descriptionText, dryRun)
 
-	if addedLines > listBox.H {
-		// Then adjust the box height and text position (addedLines could very well be 0)
-		descriptionBox.Y -= addedLines
-		descriptionBox.H += addedLines
-		listBox.Y -= addedLines
+	// Adjust height if needed, but don't exceed canvas
+	if addedLines > 0 && listBox.H < addedLines {
+		neededHeight := addedLines + 4 // Add space for borders and title
+		if descriptionBox.Y+neededHeight <= canvasBox.H {
+			descriptionBox.H = neededHeight
+			listBox.H = addedLines
+		}
 	}
 
-	// Then draw the box with the text (like tutorial but non-blocking)
+	// Draw the box with the text
 	e.DrawBox(bt, c, descriptionBox)
 	e.DrawTitle(bt, c, descriptionBox, title, true)
 	e.DrawText(bt, c, listBox, descriptionText, false)
@@ -375,4 +353,95 @@ func (e *Editor) drawFunctionDescriptionPopup(c *vt.Canvas, title, descriptionTe
 	if repositionCursorAfterDrawing {
 		e.EnableAndPlaceCursor(c)
 	}
+}
+
+// ExtractCompleteFunctionBody extracts the complete function body starting from the function definition line
+// This ensures we get the entire function regardless of cursor position
+func (e *Editor) ExtractCompleteFunctionBody(funcName string, funcDefLineIndex LineIndex) string {
+	if funcName == "" {
+		return ""
+	}
+
+	// For brace-based languages, find the complete function body
+	if e.isBraceBasedLanguage() {
+		return e.extractBraceBasedFunctionBody(funcDefLineIndex)
+	}
+
+	// For other languages, use the existing FunctionBlock method
+	// but ensure we start from the function definition line
+	originalPos := e.pos
+	e.GoTo(funcDefLineIndex, nil, nil)
+	funcBody, err := e.FunctionBlock(funcDefLineIndex)
+	e.pos = originalPos // Restore original position
+
+	if err != nil {
+		return e.Block(funcDefLineIndex)
+	}
+	return funcBody
+}
+
+// extractBraceBasedFunctionBody extracts the complete function body for brace-based languages
+func (e *Editor) extractBraceBasedFunctionBody(funcDefLineIndex LineIndex) string {
+	var sb strings.Builder
+	totalLines := LineIndex(e.Len())
+
+	// Find the opening brace
+	openBraceLineIndex := LineIndex(-1)
+	searchLimit := funcDefLineIndex + 20
+	if searchLimit > totalLines {
+		searchLimit = totalLines
+	}
+
+	for i := funcDefLineIndex; i < searchLimit; i++ {
+		line := e.Line(i)
+		// Include all lines up to and including the opening brace
+		sb.WriteString(line)
+		sb.WriteRune('\n')
+
+		if strings.Contains(line, "{") {
+			openBraceLineIndex = i
+			break
+		}
+
+		// Stop if we hit another function or class definition
+		trimmedLine := strings.TrimSpace(line)
+		if i > funcDefLineIndex && (e.LooksLikeFunctionDef(line, e.FuncPrefix()) ||
+			strings.Contains(trimmedLine, "class ") || strings.Contains(trimmedLine, "interface ")) {
+			break
+		}
+	}
+
+	if openBraceLineIndex == -1 {
+		// No opening brace found, return what we have
+		return sb.String()
+	}
+
+	// Find the matching closing brace and include all content
+	closeBraceLineIndex := e.findMatchingCloseBrace(openBraceLineIndex)
+	if closeBraceLineIndex == -1 {
+		// No matching close brace, include rest of file or until next function
+		for i := openBraceLineIndex + 1; i < totalLines; i++ {
+			line := e.Line(i)
+			trimmedLine := strings.TrimSpace(line)
+
+			// Stop at next top-level function or class definition
+			if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") &&
+				(e.LooksLikeFunctionDef(line, e.FuncPrefix()) ||
+					strings.Contains(trimmedLine, "class ") || strings.Contains(trimmedLine, "interface ")) {
+				break
+			}
+
+			sb.WriteString(line)
+			sb.WriteRune('\n')
+		}
+	} else {
+		// Include all lines up to and including the closing brace
+		for i := openBraceLineIndex + 1; i <= closeBraceLineIndex; i++ {
+			line := e.Line(i)
+			sb.WriteString(line)
+			sb.WriteRune('\n')
+		}
+	}
+
+	return sb.String()
 }
