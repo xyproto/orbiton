@@ -1262,6 +1262,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redraw.Store(true)
 
 		case "c:9": // tab or ctrl-i
+			logf("TAB: Tab key pressed, mode=%s, filename=%s", e.mode.String(), e.filename)
 
 			if e.spellCheckMode {
 				// TODO: Save a "custom words" and "ignored words" list to disk
@@ -1290,7 +1291,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			r := e.Rune()
 			leftRune := e.LeftRune()
 
-			// TODO: Tab completion goes here
+			// Try LSP tab completion for Go files
+			if e.TryLSPCompletion(c) {
+				// LSP completion was successful, we're done
+				break
+			}
 
 			// Enable auto indent if the extension is not "" and either:
 			// * The mode is set to Go and the position is not at the very start of the line (empty or not)
