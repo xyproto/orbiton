@@ -1,22 +1,11 @@
 # TODO
 
-
-## Theme fixes for white backgrounds / xterm
-
-* not white highlight for the default theme
-* not yellow text in the menu for the default theme
-* not white highlight for the synthwave theme
-* in the menu for orb:
-  * let cyan be white
-  * let white be magenta
-  * let blue be cyan
-  * let magenta be blue
-* in the menu for teal: use the VS colors, but change red for cyan
-* in zulu: let comments be gray and text be black, instead of the other way around like it is now
-* in the zulu menu: use black instead of gray text
-
 ## General
 
+- [ ] Add LSP tab completion.
+- [ ] Add a couple of test programs that uses various external packages, then test them out within tmux+mosh.
+- [ ] Continue working on the ollama worker queue branch.
+- [ ] Add syntax highlighting of "<" and ">" in C++.
 - [ ] If a line of code in C or C++ have two arrows, like `directory = S_ISDIR(p->fts_statp->st_mode);`, then color the second arrow differently from the first one.
 - [ ] If `ctrl-g` is pressed on a comment or multiline comment, toggle the status bar.
 - [ ] Fix pasting with midclick / `shift-insert`, also for multiline strings.
