@@ -695,6 +695,10 @@ The above copyright notice and this permission notice shall be included in all c
 
 ## Terminal settings
 
+### Kitty
+
+* Kitty with the "Glacier" theme works well together with Orbiton.
+
 ### Konsole
 
 * Untick the `Flow control` option in the profile settings, to ensure that `ctrl-s` will never freeze the terminal.
