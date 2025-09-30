@@ -882,11 +882,17 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 
 // ArrowReplace can syntax highlight pointer arrows in C and C++ and function arrows in other languages
 func (e *Editor) ArrowReplace(s string) string {
+	// TODO: Use the function that checks if e.mode is "C-like".
+	// TODO: Don't hardcode colors here, introduce theme.CArrow, theme.Arrow and theme.ArrowField instead.
 	arrowColor := e.Star
+	fieldColor := DefaultTextConfig.Protected
 	if e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC || e.mode == mode.Shader {
 		arrowColor = DefaultTextConfig.Class
+		if e.Name == "Zulu" {
+			arrowColor = "yellow"
+			fieldColor = "cyan" // lightcyan
+		}
 	}
-	fieldColor := DefaultTextConfig.Protected
 	s = strings.ReplaceAll(s, ">-<", "><off><"+arrowColor+">-<")
 	return strings.ReplaceAll(s, ">"+Escape(">"), "><off><"+arrowColor+">"+Escape(">")+"<off><"+fieldColor+">")
 }
