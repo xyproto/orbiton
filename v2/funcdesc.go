@@ -274,36 +274,43 @@ func (e *Editor) drawFunctionDescriptionPopup(c *vt.Canvas, title, descriptionTe
 	canvasBox := NewCanvasBox(c)
 
 	minWidth := 40
+	maxHeightPercent := 0.8 // Use up to 80% of canvas height
 
-	// Position the description panel exactly like tutorial
+	// Calculate maximum height based on canvas
+	maxHeight := int(float64(canvasBox.H) * maxHeightPercent)
+
+	// Position the description panel near the top instead of bottom
 	descriptionBox := NewBox()
 	descriptionBox.EvenLowerRightPlacement(canvasBox, minWidth)
-	// Move box up 3 positions and increase height by 1
-	descriptionBox.Y -= 3
-	descriptionBox.H++
+
+	// Start from the top (line 2 to leave room for function name)
+	descriptionBox.Y = 2
+	descriptionBox.H = maxHeight
 	e.redraw.Store(true)
 
-	// Create a list box inside
+	// Create a list box inside with margins
 	listBox := NewBox()
 	listBox.FillWithMargins(descriptionBox, 2, 2)
 
-	// Get the current theme for the description box (exactly like tutorial)
+	// Get the current theme for the description box
 	bt := e.NewBoxTheme()
 	bt.Foreground = &e.ItalicsColor
 	bt.Background = &e.BoxBackground
 
-	// First figure out how many lines of text this will be after word wrap (like tutorial)
+	// First figure out how many lines of text this will be after word wrap
 	const dryRun = true
 	addedLines := e.DrawText(bt, c, listBox, descriptionText, dryRun)
 
-	if addedLines > listBox.H {
-		// Then adjust the box height and text position (addedLines could very well be 0)
-		descriptionBox.Y -= addedLines
-		descriptionBox.H += addedLines
-		listBox.Y -= addedLines
+	// Adjust box height to fit content, but don't exceed maxHeight
+	if addedLines > 0 && addedLines < listBox.H {
+		// Content fits - shrink box to fit content
+		heightDiff := listBox.H - addedLines
+		descriptionBox.H -= heightDiff
+		listBox.H -= heightDiff
 	}
+	// If addedLines > listBox.H, keep the box at maxHeight (scrolling would be needed)
 
-	// Then draw the box with the text (like tutorial but non-blocking)
+	// Draw the box with the text
 	e.DrawBox(bt, c, descriptionBox)
 	e.DrawTitle(bt, c, descriptionBox, title, true)
 	e.DrawText(bt, c, listBox, descriptionText, false)
