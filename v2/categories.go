@@ -4,7 +4,12 @@ import (
 	"github.com/xyproto/mode"
 )
 
-// cLikeSwitch checks if the given mode is a language with C-like for expressions
+// cLikeFunction checks if the given mode is a language with C-like function definitions
+func cLikeFunction(m mode.Mode) bool {
+	return m == mode.Arduino || m == mode.C || m == mode.Cpp || m == mode.D || m == mode.Dart || m == mode.Hare || m == mode.Jakt || m == mode.JavaScript || m == mode.ObjC || m == mode.Scala || m == mode.Shader || m == mode.TypeScript || m == mode.Zig
+}
+
+// cLikeFor checks if the given mode is a language with C-like for expressions
 func cLikeFor(m mode.Mode) bool {
 	return m == mode.Arduino || m == mode.Beef || m == mode.C || m == mode.Cpp || m == mode.ObjC || m == mode.Shader || m == mode.Zig || m == mode.Java || m == mode.JavaScript || m == mode.Kotlin || m == mode.TypeScript || m == mode.D || m == mode.Dart || m == mode.Hare || m == mode.Jakt || m == mode.Scala
 }

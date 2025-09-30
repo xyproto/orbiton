@@ -249,15 +249,23 @@ func (e *Editor) DrawFooter(bt *BoxTheme, c *vt.Canvas, r *Box, text string) {
 // The text is wrapped by using the WordWrap function.
 // The number of lines that are added as a consequence of wrapping lines is returned as an int.
 func (e *Editor) DrawText(bt *BoxTheme, c *vt.Canvas, r *Box, text string, dryRun bool) int {
-	maxWidth := int(r.W) - 2 // Adjusted width to account for margins
-	x := uint(r.X)
-	lineIndex := 0
-	addedLines := 0 // Counter for added lines
-
-	// Split the input text into lines
-	lines := strings.Split(text, "\n")
-
+	var (
+		maxWidth   = int(r.W) - 5
+		x          = uint(r.X) + 1
+		lineIndex  = 0
+		addedLines = 0
+		lines      = strings.Split(text, "\n")
+	)
 	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			// For blank lines, just increment the line index and continue
+			y := uint(r.Y + lineIndex)
+			if !dryRun {
+				c.Write(x, y, *bt.Foreground, *bt.Background, "")
+			}
+			lineIndex++
+			continue
+		}
 		// Attempt to wrap the line
 		wrappedLines, err := wordwrap.WordWrap(line, maxWidth)
 		if err != nil {
@@ -270,7 +278,6 @@ func (e *Editor) DrawText(bt *BoxTheme, c *vt.Canvas, r *Box, text string, dryRu
 			// Count the additional lines created by wrapping
 			addedLines += len(wrappedLines) - 1
 		}
-
 		// Draw each wrapped or chopped line to the canvas
 		for _, wrappedLine := range wrappedLines {
 			y := uint(r.Y + lineIndex)
@@ -280,6 +287,5 @@ func (e *Editor) DrawText(bt *BoxTheme, c *vt.Canvas, r *Box, text string, dryRu
 			lineIndex++
 		}
 	}
-
 	return addedLines
 }

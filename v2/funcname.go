@@ -129,12 +129,11 @@ func (e *Editor) FunctionName(line string) string {
 		s = strings.TrimSpace(strings.TrimSuffix(trimmedLine, "{"))
 
 		// Special handling for C-like function definitions
-		switch e.mode {
-		case mode.Arduino, mode.C, mode.Cpp, mode.D, mode.Dart, mode.Hare, mode.Jakt, mode.JavaScript, mode.ObjC, mode.Scala, mode.Shader, mode.TypeScript, mode.Zig:
+		if cLikeFunction(e.mode) {
 			if extractedName := e.cExtractFunctionName(line); extractedName != "" {
 				s = extractedName
 			}
-		default:
+		} else {
 			// Original logic for other languages
 			words := strings.Split(s, " ")
 			for _, word := range words {
