@@ -46,6 +46,11 @@ func cLikeness(m mode.Mode) float64 {
 func (e *Editor) cLooksLikeFunctionDef(line string) bool {
 	trimmedLine := strings.TrimSpace(line)
 
+	// Filter out comments
+	if strings.HasPrefix(trimmedLine, "/*") || strings.HasPrefix(trimmedLine, "//") || strings.HasPrefix(trimmedLine, "*") {
+		return false
+	}
+
 	if strings.HasSuffix(trimmedLine, "()") {
 		return true
 	}
