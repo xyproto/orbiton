@@ -395,7 +395,7 @@ func NewZuluTheme() Theme {
 		AndOr:                       "lightgreen",
 		AngleBracket:                "lightgreen",
 		Dollar:                      "lightmagenta",
-		Star:                        "lightgray",
+		Star:                        "yellow",
 		Static:                      "lightgreen",
 		Self:                        "white",
 		Class:                       "lightcyan",
