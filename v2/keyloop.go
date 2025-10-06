@@ -34,9 +34,6 @@ const (
 	endKey  = "⇲" // end
 	copyKey = "⎘" // ctrl-insert
 
-	// How many lines of context above and below should the tab completion try to use?
-	codeCompletionContextLines = 20
-
 	delayUntilSpeedUp = 700 * time.Millisecond
 )
 
