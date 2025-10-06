@@ -2,6 +2,9 @@
 
 ## General
 
+- [ ] Fix debug mode (especially for Rust, C and C++).
+- [ ] Pressing ctrl-g in a script should toggle the status bar unless the cursor is on a function call and the function was found.
+- [ ] Searching for a rune like "U+2713" does not work.
 - [ ] Add LSP tab completion.
 - [ ] Add a couple of test programs that uses various external packages, then test them out within tmux+mosh.
 - [ ] Continue working on the ollama worker queue branch.
