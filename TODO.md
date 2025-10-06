@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] ctrl-/ should also be able to toggle /* * */ comments, not only single line comments.
 - [ ] Fix debug mode (especially for Rust, C and C++).
 - [ ] Pressing ctrl-g in a script should toggle the status bar unless the cursor is on a function call and the function was found.
 - [ ] Searching for a rune like "U+2713" does not work.
