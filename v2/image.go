@@ -39,8 +39,7 @@ func displayImage(c *vt.Canvas, filename string, waitForKeypress bool) error {
 	}
 
 	// Use a smaller width, if that makes the image more like the original proportions
-	proportionalWidth := int(float64(height) * ratio)
-	if proportionalWidth < width {
+	if proportionalWidth := int(float64(height) * ratio); proportionalWidth < width {
 		width = proportionalWidth
 	}
 
