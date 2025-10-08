@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] If parenthesis are unbalanced (too many ")"), then it's not a function name. Like "reinterpret_cast<char*>(&dq)) != 0= {".
 - [ ] ctrl-/ should also be able to toggle /* * */ comments, not only single line comments.
 - [ ] Fix debug mode (especially for Rust, C and C++).
 - [ ] Pressing ctrl-g in a script should toggle the status bar unless the cursor is on a function call and the function was found.
