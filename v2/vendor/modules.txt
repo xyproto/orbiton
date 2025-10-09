@@ -143,7 +143,7 @@ github.com/xyproto/vt
 # github.com/xyproto/wordwrap v1.0.1
 ## explicit; go 1.21.3
 github.com/xyproto/wordwrap
-# golang.org/x/image v0.31.0
+# golang.org/x/image v0.32.0
 ## explicit; go 1.24.0
 golang.org/x/image/draw
 golang.org/x/image/math/f64
@@ -156,6 +156,6 @@ golang.org/x/image/webp
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.35.0
+# golang.org/x/term v0.36.0
 ## explicit; go 1.24.0
 golang.org/x/term
