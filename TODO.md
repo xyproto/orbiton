@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Port the scons/python/cxx tool over as a Go module and use that by default when building C or C++.
 - [ ] If parenthesis are unbalanced (too many ")"), then it's not a function name. Like "reinterpret_cast<char*>(&dq)) != 0= {".
 - [ ] ctrl-/ should also be able to toggle /* * */ comments, not only single line comments.
 - [ ] Fix debug mode (especially for Rust, C and C++).
