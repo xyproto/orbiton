@@ -2110,9 +2110,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			c.HideCursorAndDraw()
 		}
 
-		if (e.highlightCurrentLine || e.highlightCurrentText) && !e.statusMode && notEmptyLine {
+		if (e.highlightCurrentLine || e.highlightCurrentText) && !e.statusMode && notEmptyLine && !e.debugMode {
 			// When not moving up or down, turn off the text highlight after arrowHighlightTime
-			if !e.statusMode && status.messageAfterRedraw == "" {
+			if status.messageAfterRedraw == "" {
 				go func() {
 					thisID := highlightTimerCounter.Add(1)
 					time.Sleep(arrowKeyHighlightTime)
