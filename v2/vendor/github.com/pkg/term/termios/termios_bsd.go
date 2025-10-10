@@ -9,9 +9,6 @@ import (
 )
 
 const (
-	FREAD  = 0x0001
-	FWRITE = 0x0002
-
 	IXON       = 0x00000200
 	IXOFF      = 0x00000400
 	IXANY      = 0x00000800
@@ -21,8 +18,8 @@ const (
 )
 
 // Tcgetattr gets the current serial port settings.
-func Tcgetattr(fd uintptr, argp *unix.Termios) error {
-	return unix.IoctlSetTermios(int(fd), unix.TIOCGETA, argp)
+func Tcgetattr(fd uintptr) (*unix.Termios, error) {
+	return unix.IoctlGetTermios(int(fd), unix.TIOCGETA)
 }
 
 // Tcsetattr sets the current serial port settings.
@@ -43,7 +40,7 @@ func Tcsetattr(fd, opt uintptr, argp *unix.Termios) error {
 // Tcsendbreak function transmits a continuous stream of zero-valued bits for
 // four-tenths of a second to the terminal referenced by fildes. The duration
 // parameter is ignored in this implementation.
-func Tcsendbreak(fd, duration uintptr) error {
+func Tcsendbreak(fd uintptr, duration int) error {
 	if err := unix.IoctlSetInt(int(fd), unix.TIOCSBRK, 0); err != nil {
 		return err
 	}
@@ -58,18 +55,7 @@ func Tcdrain(fd uintptr) error {
 
 // Tcflush discards data written to the object referred to by fd but not transmitted, or data received but not read, depending on the value of which.
 func Tcflush(fd, which uintptr) error {
-	var com int
-	switch which {
-	case unix.TCIFLUSH:
-		com = FREAD
-	case unix.TCOFLUSH:
-		com = FWRITE
-	case unix.TCIOFLUSH:
-		com = FREAD | FWRITE
-	default:
-		return unix.EINVAL
-	}
-	return unix.IoctlSetPointerInt(int(fd), unix.TIOCFLUSH, com)
+	return unix.IoctlSetPointerInt(int(fd), unix.TIOCFLUSH, int(which))
 }
 
 // Cfgetispeed returns the input baud rate stored in the termios structure.
@@ -81,9 +67,4 @@ func Cfgetospeed(attr *unix.Termios) uint32 { return uint32(attr.Ospeed) }
 // Tiocinq returns the number of bytes in the input buffer.
 func Tiocinq(fd uintptr) (int, error) {
 	return 0, nil
-}
-
-// Tiocoutq return the number of bytes in the output buffer.
-func Tiocoutq(fd uintptr) (int, error) {
-	return unix.IoctlGetInt(int(fd), unix.TIOCOUTQ)
 }

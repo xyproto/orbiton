@@ -13,7 +13,6 @@ const (
 	TCSETS  = 0x5402
 	TCSETSW = 0x5403
 	TCSETSF = 0x5404
-	TCFLSH  = 0x540B
 	TCSBRK  = 0x5409
 	TCSBRKP = 0x5425
 
@@ -23,14 +22,9 @@ const (
 	CRTSCTS = 0x80000000
 )
 
-// See /usr/include/sys/termios.h
-const FIORDCHK = C.FIORDCHK
-
 // Tcgetattr gets the current serial port settings.
-func Tcgetattr(fd uintptr, argp *unix.Termios) error {
-	termios, err := unix.IoctlGetTermios(int(fd), unix.TCGETS)
-	*argp = *(tiosTounix(termios))
-	return err
+func Tcgetattr(fd uintptr) (*unix.Termios, error) {
+	return unix.IoctlGetTermios(int(fd), unix.TCGETS)
 }
 
 // Tcsetattr sets the current serial port settings.
@@ -43,8 +37,8 @@ func Tcsetattr(fd, action uintptr, argp *unix.Termios) error {
 // duration is zero, it transmits zero-valued bits for at least 0.25 seconds, and not more that 0.5 seconds.
 // If duration is not zero, it sends zero-valued bits for some
 // implementation-defined length of time.
-func Tcsendbreak(fd, duration uintptr) error {
-	return ioctl(fd, TCSBRKP, duration)
+func Tcsendbreak(fd uintptr, duration int) error {
+	return ioctl(fd, TCSBRKP, uintptr(duration))
 }
 
 // Tcdrain waits until all output written to the object referred to by fd has been transmitted.
@@ -59,18 +53,12 @@ func Tcdrain(fd uintptr) error {
 
 // Tcflush discards data written to the object referred to by fd but not transmitted, or data received but not read, depending on the value of selector.
 func Tcflush(fd, selector uintptr) error {
-	return ioctl(fd, TCFLSH, selector)
+	return ioctl(fd, unix.TCFLSH, selector)
 }
 
 // Tiocinq returns the number of bytes in the input buffer.
-func Tiocinq(fd uintptr, argp *int) (err error) {
-	*argp, err = unix.IoctlGetInt(int(fd), FIORDCHK)
-	return err
-}
-
-// Tiocoutq return the number of bytes in the output buffer.
-func Tiocoutq(fd uintptr, argp *int) error {
-	return ioctl(fd, unix.TIOCOUTQ, uintptr(unsafe.Pointer(argp)))
+func Tiocinq(fd uintptr) (int, error) {
+	return unix.IoctlGetInt(int(fd), unix.FIORDCHK)
 }
 
 // Cfgetispeed returns the input baud rate stored in the termios structure.

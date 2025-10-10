@@ -13,13 +13,18 @@ import (
 func Open(name string, options ...func(*Term) error) (*Term, error) {
 	fd, e := unix.Open(name, unix.O_NOCTTY|unix.O_CLOEXEC|unix.O_NDELAY|unix.O_RDWR, 0666)
 	if e != nil {
-		return nil, &os.PathError{"open", name, e}
+		return nil, &os.PathError{
+			Op:   "open",
+			Path: name,
+			Err:  e,
+		}
 	}
 
-	t := Term{name: name, fd: fd}
-	if err := termios.Tcgetattr(uintptr(t.fd), &t.orig); err != nil {
+	orig, err := termios.Tcgetattr(uintptr(fd))
+	if err != nil {
 		return nil, err
 	}
+	t := Term{name: name, fd: fd, orig: *orig}
 	if err := t.SetOption(options...); err != nil {
 		return nil, err
 	}

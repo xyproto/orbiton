@@ -26,6 +26,11 @@ func Tiocmbic(fd uintptr, status int) error {
 	return unix.IoctlSetPointerInt(int(fd), unix.TIOCMBIC, status)
 }
 
+// Tiocoutq return the number of bytes in the output buffer.
+func Tiocoutq(fd uintptr) (int, error) {
+	return unix.IoctlGetInt(int(fd), unix.TIOCOUTQ)
+}
+
 // Cfmakecbreak modifies attr for cbreak mode.
 func Cfmakecbreak(attr *unix.Termios) {
 	attr.Lflag &^= unix.ECHO | unix.ICANON

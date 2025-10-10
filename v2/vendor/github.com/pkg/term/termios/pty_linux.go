@@ -12,12 +12,8 @@ func open_pty_master() (uintptr, error) {
 }
 
 func Ptsname(fd uintptr) (string, error) {
-	var n uintptr
-	err := ioctl(fd, unix.TIOCGPTN, uintptr(unsafe.Pointer(&n)))
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("/dev/pts/%d", n), nil
+	n, err := unix.IoctlGetInt(int(fd), unix.TIOCGPTN)
+	return fmt.Sprintf("/dev/pts/%d", n), err
 }
 
 func grantpt(fd uintptr) error {

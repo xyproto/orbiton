@@ -16,6 +16,33 @@ type Term struct {
 	orig unix.Termios // original state of the terminal, see Open and Restore
 }
 
+// SetAttr returns an option function which will apply the provided modifier to
+// a unix.Termios before using that unix.Termios to set the state of the
+// Term. This allows a developer to manually set attributes for the terminal.
+// Here's an example case to set a terminal into raw mode, but then re-enable
+// the 'opost' attribute:
+//
+//     func EnableOutputPostprocess(a *unix.Termios) uintptr {
+//         a.Oflag |= unix.OPOST
+//         return termios.TCSANOW
+//     }
+//
+//     func init() {
+//         t, _ = term.Open("/dev/tty")
+//         t.SetRaw()
+//         t.SetOption(term.SetAttr(EnableOutputPostprocess))
+//     }
+func SetAttr(modifier func(*unix.Termios) uintptr) func(*Term) error {
+	return func(t *Term) error {
+		a, err := termios.Tcgetattr(uintptr(t.fd))
+		if err != nil {
+			return err
+		}
+		action := modifier(a)
+		return termios.Tcsetattr(uintptr(t.fd), action, a)
+	}
+}
+
 // SetCbreak sets cbreak mode.
 func (t *Term) SetCbreak() error {
 	return t.SetOption(CBreakMode)
@@ -23,12 +50,12 @@ func (t *Term) SetCbreak() error {
 
 // CBreakMode places the terminal into cbreak mode.
 func CBreakMode(t *Term) error {
-	var a attr
-	if err := termios.Tcgetattr(uintptr(t.fd), (*unix.Termios)(&a)); err != nil {
+	a, err := termios.Tcgetattr(uintptr(t.fd))
+	if err != nil {
 		return err
 	}
-	termios.Cfmakecbreak((*unix.Termios)(&a))
-	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*unix.Termios)(&a))
+	termios.Cfmakecbreak(a)
+	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, a)
 }
 
 // SetRaw sets raw mode.
@@ -38,12 +65,12 @@ func (t *Term) SetRaw() error {
 
 // RawMode places the terminal into raw mode.
 func RawMode(t *Term) error {
-	var a attr
-	if err := termios.Tcgetattr(uintptr(t.fd), (*unix.Termios)(&a)); err != nil {
+	a, err := termios.Tcgetattr(uintptr(t.fd))
+	if err != nil {
 		return err
 	}
-	termios.Cfmakeraw((*unix.Termios)(&a))
-	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*unix.Termios)(&a))
+	termios.Cfmakeraw(a)
+	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, a)
 }
 
 // Speed sets the baud rate option for the terminal.
@@ -59,21 +86,26 @@ func (t *Term) SetSpeed(baud int) error {
 }
 
 func (t *Term) setSpeed(baud int) error {
-	var a attr
-	if err := termios.Tcgetattr(uintptr(t.fd), (*unix.Termios)(&a)); err != nil {
+	a, err := termios.Tcgetattr(uintptr(t.fd))
+	if err != nil {
 		return err
 	}
-	a.setSpeed(baud)
-	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*unix.Termios)(&a))
+
+	err = (*attr)(a).setSpeed(baud)
+	if err != nil {
+		return err
+	}
+
+	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, a)
 }
 
 // GetSpeed gets the current output baud rate.
 func (t *Term) GetSpeed() (int, error) {
-	var a attr
-	if err := termios.Tcgetattr(uintptr(t.fd), (*unix.Termios)(&a)); err != nil {
+	a, err := termios.Tcgetattr(uintptr(t.fd))
+	if err != nil {
 		return 0, err
 	}
-	return a.getSpeed()
+	return (*attr)(a).getSpeed()
 }
 
 func clamp(v, lo, hi int64) int64 {
@@ -113,12 +145,12 @@ func (t *Term) SetReadTimeout(d time.Duration) error {
 }
 
 func (t *Term) setReadTimeout(d time.Duration) error {
-	var a attr
-	if err := termios.Tcgetattr(uintptr(t.fd), (*unix.Termios)(&a)); err != nil {
+	a, err := termios.Tcgetattr(uintptr(t.fd))
+	if err != nil {
 		return err
 	}
 	a.Cc[unix.VMIN], a.Cc[unix.VTIME] = timeoutVals(d)
-	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*unix.Termios)(&a))
+	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, a)
 }
 
 // FlowControl sets the flow control option for the terminal.
@@ -134,8 +166,8 @@ func (t *Term) SetFlowControl(kind int) error {
 }
 
 func (t *Term) setFlowControl(kind int) error {
-	var a attr
-	if err := termios.Tcgetattr(uintptr(t.fd), (*unix.Termios)(&a)); err != nil {
+	a, err := termios.Tcgetattr(uintptr(t.fd))
+	if err != nil {
 		return err
 	}
 	switch kind {
@@ -151,7 +183,7 @@ func (t *Term) setFlowControl(kind int) error {
 		a.Iflag &^= termios.IXON | termios.IXOFF | termios.IXANY
 		a.Cflag |= termios.CRTSCTS
 	}
-	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, (*unix.Termios)(&a))
+	return termios.Tcsetattr(uintptr(t.fd), termios.TCSANOW, a)
 }
 
 // Flush flushes both data received but not read, and data written but not transmitted.
@@ -162,6 +194,12 @@ func (t *Term) Flush() error {
 // SendBreak sends a break signal.
 func (t *Term) SendBreak() error {
 	return termios.Tcsendbreak(uintptr(t.fd), 0)
+}
+
+// DCD returns the state of the DCD (data carrier detect) signal.
+func (t *Term) DCD() (bool, error) {
+	status, err := termios.Tiocmget(uintptr(t.fd))
+	return status&unix.TIOCM_CD == unix.TIOCM_CD, err
 }
 
 // SetDTR sets the DTR (data terminal ready) signal.
@@ -180,6 +218,12 @@ func (t *Term) DTR() (bool, error) {
 	return status&unix.TIOCM_DTR == unix.TIOCM_DTR, err
 }
 
+// DSR returns the state of the DSR (data set ready) signal.
+func (t *Term) DSR() (bool, error) {
+	status, err := termios.Tiocmget(uintptr(t.fd))
+	return status&unix.TIOCM_DSR == unix.TIOCM_DSR, err
+}
+
 // SetRTS sets the RTS (data terminal ready) signal.
 func (t *Term) SetRTS(v bool) error {
 	bits := unix.TIOCM_RTS
@@ -190,10 +234,22 @@ func (t *Term) SetRTS(v bool) error {
 	}
 }
 
-// RTS returns the state of the RTS (data terminal ready) signal.
+// RTS returns the state of the RTS (request to send) signal.
 func (t *Term) RTS() (bool, error) {
 	status, err := termios.Tiocmget(uintptr(t.fd))
 	return status&unix.TIOCM_RTS == unix.TIOCM_RTS, err
+}
+
+// CTS returns the state of the CTS (clear to send) signal.
+func (t *Term) CTS() (bool, error) {
+	status, err := termios.Tiocmget(uintptr(t.fd))
+	return status&unix.TIOCM_CTS == unix.TIOCM_CTS, err
+}
+
+// RI returns the state of the RI (ring indicator) signal.
+func (t *Term) RI() (bool, error) {
+	status, err := termios.Tiocmget(uintptr(t.fd))
+	return status&unix.TIOCM_RI == unix.TIOCM_RI, err
 }
 
 // Close closes the device and releases any associated resources.

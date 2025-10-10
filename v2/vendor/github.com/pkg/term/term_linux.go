@@ -175,8 +175,8 @@ func (a *attr) setSpeed(baud int) error {
 	default:
 		return unix.EINVAL
 	}
-	(*unix.Termios)(a).Cflag = unix.CS8 | unix.CREAD | unix.CLOCAL | rate
-	(*unix.Termios)(a).Ispeed = rate
-	(*unix.Termios)(a).Ospeed = rate
+	a.Cflag = unix.CS8 | unix.CREAD | unix.CLOCAL | rate
+	a.Ispeed = rate
+	a.Ospeed = rate
 	return nil
 }
