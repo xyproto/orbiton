@@ -142,23 +142,6 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		return files.IsFile(filepath.Join(sourceDir, "main")), "main"
 	}
 
-	exeBaseNameOrMainExists := func() (bool, string) {
-		// First check if exeFirstName exists
-		if files.IsFile(filepath.Join(sourceDir, exeFirstName)) {
-			return true, exeFirstName
-		}
-		// Then try with the current directory name
-		baseDirName := filepath.Base(sourceDir)
-		if files.IsFile(filepath.Join(sourceDir, baseDirName)) {
-			return true, baseDirName
-		}
-		// The try with just "main"
-		if files.IsFile(filepath.Join(sourceDir, "main")) {
-			return true, "main"
-		}
-		return false, ""
-	}
-
 	switch filepath.Base(sourceFilename) {
 	case "CMakeLists.txt":
 		var s string
@@ -359,14 +342,6 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 			return files.IsFile(sourceFilenameWithoutPath), executableFirstName
 		}, nil
 	case mode.C:
-		if files.WhichCached("cxx") != "" {
-			cmd = exec.Command("cxx")
-			cmd.Dir = sourceDir
-			if e.debugMode {
-				cmd.Args = append(cmd.Args, "debugnosan")
-			}
-			return cmd, exeBaseNameOrMainExists, nil
-		}
 		if files.IsDir(exeFilename) {
 			exeFilename = "main"
 		}
@@ -382,14 +357,6 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 	case mode.Cpp:
 		if files.IsFile("BUILD.bazel") && files.WhichCached("bazel") != "" { // Google-style C++ + Bazel projects if
 			return exec.Command("bazel", "build"), everythingIsFine, nil
-		}
-		if files.WhichCached("cxx") != "" {
-			cmd = exec.Command("cxx")
-			cmd.Dir = sourceDir
-			if e.debugMode {
-				cmd.Args = append(cmd.Args, "debugnosan")
-			}
-			return cmd, exeBaseNameOrMainExists, nil
 		}
 		if files.IsDir(exeFilename) {
 			exeFilename = "main"
