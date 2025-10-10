@@ -82,7 +82,7 @@ Flags:
   -e, --clear-locks              Clear all file locks and close all portals.
   -m, --monitor FILENAME         Monitor the given file for changes, and open it as read-only.
   -o, --ollama                   Use $OLLAMA$
-                                 for tab completion (experimental feature).
+                                 to explain the function under the cursor.
   -r, --release                  Build with release instead of debug mode whenever applicable.
   -x, --noapprox                 Disable approximate filename matching.
   -n, --no-cache                 Avoid writing the location history, search history, highscore,
