@@ -17,6 +17,9 @@ var runPID atomic.Int64
 // stopBackgroundProcesses stops the "run" process that is running
 // in the background, if runPID > 0. Returns true if something was killed.
 func stopBackgroundProcesses() bool {
+	// Shutdown LSP clients
+	ShutdownAllLSPClients()
+
 	if runPID.Load() <= 0 {
 		return false // nothing was killed
 	}

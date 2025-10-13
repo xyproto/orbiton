@@ -276,6 +276,11 @@ func (e *Editor) GoToNextMatch(c *vt.Canvas, status *StatusBar, wrap, forward bo
 
 // SearchMode will enter the interactive "search mode" where the user can type in a string and then press return to search
 func (e *Editor) SearchMode(c *vt.Canvas, status *StatusBar, tty *vt.TTY, clearSearch, searchForward bool, undo *Undo) {
+	notRegularEditingRightNow.Store(true)
+	defer func() {
+		notRegularEditingRightNow.Store(false)
+	}()
+
 	// Attempt to load the search history. Ignores errors, but does not try to load it twice if it fails.
 	if searchHistory.Len() == 0 && !searchHistory.FailedToLoad() {
 		searchHistory = LoadSearchHistory()

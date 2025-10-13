@@ -11,11 +11,11 @@ import (
 
 // FunctionDescriptionRequest represents a queued function description request
 type FunctionDescriptionRequest struct {
+	canvas   *vt.Canvas
+	editor   *Editor
 	funcName string
 	funcBody string
 	bodyHash string
-	canvas   *vt.Canvas
-	editor   *Editor
 }
 
 var (

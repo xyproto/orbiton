@@ -1194,6 +1194,11 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 
 // Build starts a build and is typically triggered from either ctrl-space or the o menu
 func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
+	notRegularEditingRightNow.Store(true)
+	defer func() {
+		notRegularEditingRightNow.Store(false)
+	}()
+
 	// If the file is empty, there is nothing to build
 	if e.Empty() {
 		status.ClearAll(c, false)

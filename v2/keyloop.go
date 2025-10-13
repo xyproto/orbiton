@@ -42,6 +42,9 @@ var (
 	fileLock = NewLockKeeper(defaultLockFile)
 	// Remember if locks can be saved and loaded
 	canUseLocks atomic.Bool
+
+	// Track if the user is in regular editing mode (not in a menu or special mode)
+	notRegularEditingRightNow atomic.Bool
 )
 
 // Loop will set up and run the main loop of the editor
@@ -79,8 +82,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		jsonFormatToggle bool              // for toggling indentation or not when pressing ctrl-w for JSON
 
 		markdownTableEditorCounter int // the number of times the Markdown table editor has been displayed
-
-		regularEditingRightNow = true // is the user in some sort of mode, like the ctrl-o menu, or editing text right now?
 
 		highlightTimerCounter atomic.Uint64
 		highlightTimerMut     sync.Mutex
@@ -419,11 +420,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
-			regularEditingRightNow = false
 			const clearPreviousSearch = true
 			const searchForward = true
 			e.SearchMode(c, status, tty, clearPreviousSearch, searchForward, undo)
-			regularEditingRightNow = true
 
 		case "c:0": // ctrl-space, build source code to executable, or export, depending on the mode
 			if e.nanoMode.Load() {
@@ -478,7 +477,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					}
 				}
 			default:
-				regularEditingRightNow = false
 				// Then build, and run if ctrl-space was double-tapped
 				e.runAfterBuild = kh.DoubleTapped("c:0")
 				// Stop background processes first (if any)
@@ -486,7 +484,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				// Then build (and run)
 				e.Build(c, status, tty)
 				e.redrawCursor.Store(true)
-				regularEditingRightNow = true
 			}
 
 		case "c:20": // ctrl-t
@@ -660,7 +657,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
-			regularEditingRightNow = false
 			status.ClearAll(c, false)
 			undo.Snapshot(e)
 			undoBackup := undo
@@ -672,7 +668,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.CommandPrompt(c, tty, status, bookmark, undo)
 			}
 			undo = undoBackup
-			regularEditingRightNow = true
 
 		case "c:31": // ctrl-_, jump to a matching parenthesis or enter a digraph
 
@@ -1090,7 +1085,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case "c:12": // ctrl-l, go to line number or percentage
 			if !e.nanoMode.Load() {
-				regularEditingRightNow = false
+				notRegularEditingRightNow.Store(true)
 				e.ClearSearch() // clear the current search first
 				switch e.JumpMode(c, status, tty) {
 				case showHotkeyOverviewAction:
@@ -1127,7 +1122,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					e.redraw.Store(false)
 					e.redrawCursor.Store(false)
 				}
-				regularEditingRightNow = true
+				notRegularEditingRightNow.Store(false)
 				break
 			}
 			fallthrough // nano: ctrl-l to refresh
@@ -1157,7 +1152,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// Do a full clear and redraw + clear search term + jump
 			const drawLines = true
 			e.FullResetRedraw(c, status, drawLines, false)
-			regularEditingRightNow = true
+			notRegularEditingRightNow.Store(false)
 			if e.macro != nil || e.playBackMacroCount > 0 {
 				// Stop the playback
 				e.playBackMacroCount = 0
@@ -1287,14 +1282,71 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			r := e.Rune()
 			leftRune := e.LeftRune()
 
-			// TODO: Tab completion goes here
+			if e.mode == mode.Go && e.syntaxHighlight {
+				if e.pos.sx > 0 && (unicode.IsLetter(leftRune) || unicode.IsDigit(leftRune) || leftRune == '_' || leftRune == '.') {
+					items, err := e.GetGoCompletions()
+					if err == nil && len(items) > 0 {
+						choices := make([]string, 0, len(items))
+						for _, item := range items {
+							label := item.Label
+							if item.Detail != "" && len(item.Detail) < 40 {
+								label += " • " + item.Detail
+							}
+							choices = append(choices, label)
+						}
+						currentWord := e.CurrentWord()
+						if choice, _ := e.Menu(status, tty, "Completions", choices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, 0, false); choice >= 0 && choice < len(items) {
+							undo.Snapshot(e)
 
-			// Enable auto indent if the extension is not "" and either:
-			// * The mode is set to Go and the position is not at the very start of the line (empty or not)
-			// * Syntax highlighting is enabled and the cursor is not at the start of the line (or before)
+							insertText := items[choice].InsertText
+							if insertText == "" {
+								insertText = items[choice].Label
+							}
+							if items[choice].TextEdit != nil && items[choice].TextEdit.NewText != "" {
+								insertText = items[choice].TextEdit.NewText
+							}
+							// Strip function parameters
+							if parenIndex := strings.Index(insertText, "("); parenIndex > 0 {
+								insertText = insertText[:parenIndex]
+							}
+
+							// Calculate how many characters to delete based on textEdit range
+							var charsToDelete int
+							if items[choice].TextEdit != nil {
+								// Use the range from gopls to determine what to replace
+								rangeStart := items[choice].TextEdit.Range.Start.Character
+								rangeEnd := items[choice].TextEdit.Range.End.Character
+								charsToDelete = rangeEnd - rangeStart
+							} else if currentWord != "" {
+								charsToDelete = len([]rune(currentWord))
+							}
+
+							if charsToDelete > 0 {
+								for i := 0; i < charsToDelete; i++ {
+									e.Prev(c)
+								}
+								for i := 0; i < charsToDelete; i++ {
+									e.Delete(c, false)
+								}
+							}
+
+							e.InsertString(c, insertText)
+
+							const drawLines = true
+							e.FullResetRedraw(c, status, drawLines, false)
+							e.redraw.Store(true)
+							e.redrawCursor.Store(true)
+
+							status.SetMessage("Completed: " + insertText)
+							status.ShowNoTimeout(c, e)
+						}
+						break
+					}
+				}
+			}
+
 			trimmedLine := e.TrimmedLine()
 
-			// Check if a line that is more than just a '{', '(', '[' or ':' ends with one of those
 			endsWithSpecial := len(trimmedLine) > 1 && r == '{' || r == '(' || r == '[' || r == ':'
 
 			// Smart indent if:
@@ -1647,11 +1699,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 
 				// Delete the corresponding number of lines
-				regularEditingRightNow = false
+				notRegularEditingRightNow.Store(true)
 				for range lines {
 					e.DeleteLineMoveBookmark(y, bookmark)
 				}
-				regularEditingRightNow = true
+				notRegularEditingRightNow.Store(false)
 
 				// No status message is needed for the cut operation, because it's visible that lines are cut
 				e.redrawCursor.Store(true)
@@ -2080,7 +2132,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		// Display the ctrl-o menu if esc was pressed 4 times. Do not react if space is pressed.
 		if !e.nanoMode.Load() && kh.Repeated("c:27", 4-1) { // esc pressed 4 times (minus the one that was added just now)
 			backFunctions = make([]func(), 0)
-			regularEditingRightNow = false
 			status.ClearAll(c, false)
 			undo.Snapshot(e)
 			undoBackup := undo
@@ -2089,7 +2140,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			undo = undoBackup
 			// Reset the key history next iteration
 			clearKeyHistory = true
-			regularEditingRightNow = true
 		}
 
 		// Clear status line, if needed
@@ -2124,7 +2174,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow)
 					if e.waitWithRedrawing.Load() {
 						e.waitWithRedrawing.Store(false)
-					} else if !justMovedUpOrDownOrLeftOrRight && regularEditingRightNow {
+					} else if !justMovedUpOrDownOrLeftOrRight && !notRegularEditingRightNow.Load() {
 						e.redraw.Store(true)
 						e.redrawCursor.Store(true)
 						e.RedrawAtEndOfKeyLoop(c, status, false, true)

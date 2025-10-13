@@ -136,6 +136,11 @@ func ctrlkey2letter(key string) (string, bool) {
 // initialMenuIndex is the choice that should be highlighted when displaying the choices.
 // returns -1, true if space was pressed
 func (e *Editor) Menu(status *StatusBar, tty *vt.TTY, title string, choices []string, bgColor, titleColor, arrowColor, textColor, highlightColor, selectedColor vt.AttributeColor, initialMenuIndex int, extraDashes bool) (int, bool) {
+	notRegularEditingRightNow.Store(true)
+	defer func() {
+		notRegularEditingRightNow.Store(false)
+	}()
+
 	// Clear the existing handler
 	resetResizeSignal()
 

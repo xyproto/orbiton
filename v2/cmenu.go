@@ -98,6 +98,11 @@ func (a *Actions) AddCommand(e *Editor, c *vt.Canvas, tty *vt.TTY, status *Statu
 func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookmark *Position, undo *Undo, lastMenuIndex int, forced bool, fileLock *LockKeeper) (int, bool) {
 	const insertFilename = "include.txt"
 
+	notRegularEditingRightNow.Store(true)
+	defer func() {
+		notRegularEditingRightNow.Store(false)
+	}()
+
 	vsCode := env.Str("TERM_PROGRAM") == "vscode"
 
 	if (menuTitle == "" || len(backFunctions) == 0) && !strings.HasPrefix(menuTitle, "Editing ") {
