@@ -304,6 +304,8 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		delKeywords := []string{"from", "in", "ret", "static"} // static is treated separately, as a special keyword
 		addAndRemoveKeywords(addKeywords, delKeywords)
 		fallthrough // Continue to the default
+    case mode.Wpp:
+		setKeywords(wppWords)
 	default:
 		addKeywords := []string{"elif", "endif", "ifeq", "ifneq"}
 		delKeywords := []string{"build", "done", "package", "require", "set", "super", "type", "when"}
@@ -350,6 +352,8 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "["
 	case mode.Vim:
 		return "\""
+	case mode.Wpp:
+		return "//"
 	default:
 		return "//"
 	}

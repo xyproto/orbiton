@@ -115,6 +115,7 @@ const (
 	TypeScript            // TypeScript
 	V                     // V programming language
 	Vim                   // Vim or NeoVim configuration, or .vim scripts
+	Wpp                   // W++ programming language
 	XML                   // XML
 	Zig                   // Zig
 )
@@ -344,6 +345,8 @@ func (mode Mode) String() string {
 		return "ViM"
 	case V:
 		return "V"
+	case Wpp:
+		return "W++"
 	case XML:
 		return "XML"
 	case Zig:

@@ -269,6 +269,8 @@ func Detect(filename string) Mode {
 			mode = Text
 		case ".v":
 			mode = V
+		case ".wpp":
+			mode = Wpp
 		case ".xml":
 			mode = XML
 		case ".zig", ".zir":

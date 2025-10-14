@@ -117,6 +117,9 @@ var (
 
 	// SuperCollider
 	superColliderWords = []string{"arg", "var", "nil", "true", "false", "this", "super", "thisProcess", "thisThread", "thisMethod", "thisFunction", "currentEnvironment", "topEnvironment", "inf", "pi", "__FILE__", "__LINE__"}
+	
+	// W++
+	wppWords = []string{"let", "if", "else", "while", "for", "break", "continue", "true", "false", "switch", "case", "default", "try", "catch", "throw", "finally", "funcy", "return", "async", "await", "const", "print", "http.get","http.post", "http.put", "http.patch", "http.delete", "http.status", "http.body", "http.headers", "server.register", "server.start"}
 
 	// Keywords contains the default syntax highlighting keywords
 	Keywords = map[string]struct{}{
