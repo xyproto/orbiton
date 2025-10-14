@@ -10,12 +10,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 	"unicode"
 
 	"github.com/xyproto/mode"
+	"github.com/xyproto/vt"
 )
 
 // LSPClient manages communication with a language server
@@ -68,6 +70,12 @@ type scoredItem struct {
 	score int
 }
 
+const (
+	lspInitTimeout       = 5 * time.Second
+	lspCompletionTimeout = 2 * time.Second
+	lspShutdownTimeout   = 2 * time.Second
+)
+
 var (
 	goLSPClient       *LSPClient
 	lspMutex          sync.Mutex
@@ -114,6 +122,38 @@ func NewLSPClient(serverCmd string, args []string, workspaceRoot string) (*LSPCl
 	return client, nil
 }
 
+// writeMessage writes a JSON-RPC message with proper headers
+func (lsp *LSPClient) writeMessage(message map[string]interface{}) error {
+	body, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+	header := fmt.Sprintf("Content-Length: %d\r\n\r\n", len(body))
+	if _, err := lsp.stdin.Write([]byte(header)); err != nil {
+		return err
+	}
+	if _, err := lsp.stdin.Write(body); err != nil {
+		return err
+	}
+	return nil
+}
+
+// sendNotification sends a JSON-RPC notification (no response expected)
+func (lsp *LSPClient) sendNotification(method string, params interface{}) error {
+	lsp.mutex.Lock()
+	defer lsp.mutex.Unlock()
+
+	if !lsp.running {
+		return errors.New("LSP client not running")
+	}
+	notification := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  method,
+		"params":  params,
+	}
+	return lsp.writeMessage(notification)
+}
+
 // sendRequest sends a JSON-RPC request to the language server
 func (lsp *LSPClient) sendRequest(method string, params interface{}) (int, error) {
 	lsp.mutex.Lock()
@@ -130,15 +170,7 @@ func (lsp *LSPClient) sendRequest(method string, params interface{}) (int, error
 		"method":  method,
 		"params":  params,
 	}
-	body, err := json.Marshal(request)
-	if err != nil {
-		return 0, err
-	}
-	header := fmt.Sprintf("Content-Length: %d\r\n\r\n", len(body))
-	if _, err := lsp.stdin.Write([]byte(header)); err != nil {
-		return 0, err
-	}
-	if _, err := lsp.stdin.Write(body); err != nil {
+	if err := lsp.writeMessage(request); err != nil {
 		return 0, err
 	}
 	return id, nil
@@ -225,27 +257,10 @@ func (lsp *LSPClient) Initialize() error {
 	if _, err := lsp.sendRequest("initialize", params); err != nil {
 		return err
 	}
-	if _, err := lsp.readResponse(5 * time.Second); err != nil {
+	if _, err := lsp.readResponse(lspInitTimeout); err != nil {
 		return err
 	}
-	notification := map[string]interface{}{
-		"jsonrpc": "2.0",
-		"method":  "initialized",
-		"params":  map[string]interface{}{},
-	}
-	body, err := json.Marshal(notification)
-	if err != nil {
-		return err
-	}
-	header := fmt.Sprintf("Content-Length: %d\r\n\r\n", len(body))
-
-	lsp.mutex.Lock()
-	defer lsp.mutex.Unlock()
-
-	if _, err := lsp.stdin.Write([]byte(header)); err != nil {
-		return err
-	}
-	if _, err := lsp.stdin.Write(body); err != nil {
+	if err := lsp.sendNotification("initialized", map[string]interface{}{}); err != nil {
 		return err
 	}
 	lsp.initialized = true
@@ -254,75 +269,29 @@ func (lsp *LSPClient) Initialize() error {
 
 // DidOpen notifies the language server that a document was opened
 func (lsp *LSPClient) DidOpen(uri, languageID, text string) error {
-	notification := map[string]interface{}{
-		"jsonrpc": "2.0",
-		"method":  "textDocument/didOpen",
-		"params": map[string]interface{}{
-			"textDocument": map[string]interface{}{
-				"uri":        uri,
-				"languageId": languageID,
-				"version":    1,
-				"text":       text,
-			},
+	params := map[string]interface{}{
+		"textDocument": map[string]interface{}{
+			"uri":        uri,
+			"languageId": languageID,
+			"version":    1,
+			"text":       text,
 		},
 	}
-	body, err := json.Marshal(notification)
-	if err != nil {
-		return err
-	}
-	header := fmt.Sprintf("Content-Length: %d\r\n\r\n", len(body))
-
-	lsp.mutex.Lock()
-	defer lsp.mutex.Unlock()
-
-	if !lsp.running {
-		return errors.New("LSP client not running")
-	}
-	if _, err := lsp.stdin.Write([]byte(header)); err != nil {
-		return err
-	}
-	if _, err := lsp.stdin.Write(body); err != nil {
-		return err
-	}
-	return nil
+	return lsp.sendNotification("textDocument/didOpen", params)
 }
 
 // DidChange notifies the language server that a document was changed
 func (lsp *LSPClient) DidChange(uri, text string, version int) error {
-	notification := map[string]interface{}{
-		"jsonrpc": "2.0",
-		"method":  "textDocument/didChange",
-		"params": map[string]interface{}{
-			"textDocument": map[string]interface{}{
-				"uri":     uri,
-				"version": version,
-			},
-			"contentChanges": []map[string]interface{}{
-				{
-					"text": text,
-				},
-			},
+	params := map[string]interface{}{
+		"textDocument": map[string]interface{}{
+			"uri":     uri,
+			"version": version,
+		},
+		"contentChanges": []map[string]interface{}{
+			{"text": text},
 		},
 	}
-	body, err := json.Marshal(notification)
-	if err != nil {
-		return err
-	}
-	header := fmt.Sprintf("Content-Length: %d\r\n\r\n", len(body))
-
-	lsp.mutex.Lock()
-	defer lsp.mutex.Unlock()
-
-	if !lsp.running {
-		return errors.New("LSP client not running")
-	}
-	if _, err := lsp.stdin.Write([]byte(header)); err != nil {
-		return err
-	}
-	if _, err := lsp.stdin.Write(body); err != nil {
-		return err
-	}
-	return nil
+	return lsp.sendNotification("textDocument/didChange", params)
 }
 
 // GetCompletions requests completions at the given position
@@ -339,11 +308,10 @@ func (lsp *LSPClient) GetCompletions(uri string, line, character int) ([]LSPComp
 			"character": character,
 		},
 	}
-	_, err := lsp.sendRequest("textDocument/completion", params)
-	if err != nil {
+	if _, err := lsp.sendRequest("textDocument/completion", params); err != nil {
 		return nil, err
 	}
-	response, err := lsp.readResponse(2 * time.Second)
+	response, err := lsp.readResponse(lspCompletionTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -381,9 +349,8 @@ func (lsp *LSPClient) GetCompletions(uri string, line, character int) ([]LSPComp
 // Shutdown cleanly shuts down the LSP client
 func (lsp *LSPClient) Shutdown() error {
 	lsp.mutex.Lock()
-	defer lsp.mutex.Unlock()
-
 	if !lsp.running {
+		lsp.mutex.Unlock()
 		return nil
 	}
 	lsp.running = false
@@ -394,28 +361,23 @@ func (lsp *LSPClient) Shutdown() error {
 		"method":  "shutdown",
 		"params":  nil,
 	}
-	body, _ := json.Marshal(request)
-	header := fmt.Sprintf("Content-Length: %d\r\n\r\n", len(body))
-	lsp.stdin.Write([]byte(header))
-	lsp.stdin.Write(body)
+	lsp.writeMessage(request)
 	notification := map[string]interface{}{
 		"jsonrpc": "2.0",
 		"method":  "exit",
 	}
-	body, _ = json.Marshal(notification)
-	header = fmt.Sprintf("Content-Length: %d\r\n\r\n", len(body))
-	lsp.stdin.Write([]byte(header))
-	lsp.stdin.Write(body)
+	lsp.writeMessage(notification)
 	lsp.stdin.Close()
-	done := make(chan error, 1)
+	lsp.mutex.Unlock()
 
+	done := make(chan error, 1)
 	go func() {
 		done <- lsp.cmd.Wait()
 	}()
 
 	select {
 	case <-done:
-	case <-time.After(2 * time.Second):
+	case <-time.After(lspShutdownTimeout):
 		lsp.cmd.Process.Kill()
 	}
 	return nil
@@ -460,12 +422,12 @@ var commonGoFunctions = map[string]int{
 // gatherCodebaseStatistics scans *.go files to find usage frequency
 func gatherCodebaseStatistics(workspaceRoot string) map[string]int {
 	stats := make(map[string]int)
-	filepath.Walk(workspaceRoot, func(path string, info os.FileInfo, err error) error {
+	filepath.WalkDir(workspaceRoot, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return nil
 		}
-		if info.IsDir() {
-			name := info.Name()
+		if d.IsDir() {
+			name := d.Name()
 			if name == "vendor" || name == ".git" || strings.HasPrefix(name, ".") {
 				return filepath.SkipDir
 			}
@@ -541,14 +503,9 @@ func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspa
 		}
 		scored = append(scored, scoredItem{item, score})
 	}
-	for i := 0; i < len(scored); i++ {
-		for j := i + 1; j < len(scored); j++ {
-			if scored[j].score > scored[i].score {
-				scored[i], scored[j] = scored[j], scored[i]
-			}
-		}
-	}
-	// Extract sorted items
+	sort.Slice(scored, func(i, j int) bool {
+		return scored[i].score > scored[j].score
+	})
 	result := make([]LSPCompletionItem, len(scored))
 	for i, s := range scored {
 		result[i] = s.item
@@ -644,4 +601,73 @@ func ShutdownAllLSPClients() {
 		goLSPClient.Shutdown()
 		goLSPClient = nil
 	}
+}
+
+// handleGoCompletion handles LSP-based Go code completion in the editor
+func (e *Editor) handleGoCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TTY, undo *Undo) bool {
+	items, err := e.GetGoCompletions()
+	if err != nil || len(items) == 0 {
+		return false
+	}
+
+	choices := make([]string, 0, len(items))
+	for _, item := range items {
+		label := item.Label
+		if item.Detail != "" && len(item.Detail) < 40 {
+			label += " • " + item.Detail
+		}
+		choices = append(choices, label)
+	}
+
+	currentWord := e.CurrentWord()
+	choice, _ := e.Menu(status, tty, "Completions", choices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, 0, false)
+	if choice < 0 || choice >= len(items) {
+		return false
+	}
+
+	undo.Snapshot(e)
+
+	insertText := items[choice].InsertText
+	if insertText == "" {
+		insertText = items[choice].Label
+	}
+	if items[choice].TextEdit != nil && items[choice].TextEdit.NewText != "" {
+		insertText = items[choice].TextEdit.NewText
+	}
+
+	if parenIndex := strings.Index(insertText, "("); parenIndex > 0 {
+		insertText = insertText[:parenIndex]
+	}
+
+	var charsToDelete int
+	if items[choice].TextEdit != nil {
+		rangeStart := items[choice].TextEdit.Range.Start.Character
+		rangeEnd := items[choice].TextEdit.Range.End.Character
+		charsToDelete = rangeEnd - rangeStart
+	} else if currentWord != "" {
+		charsToDelete = len([]rune(currentWord))
+	}
+
+	if charsToDelete > 0 {
+		for i := 0; i < charsToDelete; i++ {
+			e.Prev(c)
+		}
+		for i := 0; i < charsToDelete; i++ {
+			e.Delete(c, false)
+		}
+	}
+
+	e.InsertString(c, insertText)
+
+	const drawLines = true
+	e.FullResetRedraw(c, status, drawLines, false)
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
+
+	status.SetMessage("Completed: " + insertText)
+	status.ShowNoTimeout(c, e)
+
+	c.Draw()
+
+	return true
 }

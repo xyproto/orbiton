@@ -1282,64 +1282,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			r := e.Rune()
 			leftRune := e.LeftRune()
 
-			if e.mode == mode.Go && e.syntaxHighlight {
-				if e.pos.sx > 0 && (unicode.IsLetter(leftRune) || unicode.IsDigit(leftRune) || leftRune == '_' || leftRune == '.') {
-					items, err := e.GetGoCompletions()
-					if err == nil && len(items) > 0 {
-						choices := make([]string, 0, len(items))
-						for _, item := range items {
-							label := item.Label
-							if item.Detail != "" && len(item.Detail) < 40 {
-								label += " • " + item.Detail
-							}
-							choices = append(choices, label)
-						}
-						currentWord := e.CurrentWord()
-						if choice, _ := e.Menu(status, tty, "Completions", choices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, 0, false); choice >= 0 && choice < len(items) {
-							undo.Snapshot(e)
-
-							insertText := items[choice].InsertText
-							if insertText == "" {
-								insertText = items[choice].Label
-							}
-							if items[choice].TextEdit != nil && items[choice].TextEdit.NewText != "" {
-								insertText = items[choice].TextEdit.NewText
-							}
-							// Strip function parameters
-							if parenIndex := strings.Index(insertText, "("); parenIndex > 0 {
-								insertText = insertText[:parenIndex]
-							}
-
-							// Calculate how many characters to delete based on textEdit range
-							var charsToDelete int
-							if items[choice].TextEdit != nil {
-								// Use the range from gopls to determine what to replace
-								rangeStart := items[choice].TextEdit.Range.Start.Character
-								rangeEnd := items[choice].TextEdit.Range.End.Character
-								charsToDelete = rangeEnd - rangeStart
-							} else if currentWord != "" {
-								charsToDelete = len([]rune(currentWord))
-							}
-
-							if charsToDelete > 0 {
-								for i := 0; i < charsToDelete; i++ {
-									e.Prev(c)
-								}
-								for i := 0; i < charsToDelete; i++ {
-									e.Delete(c, false)
-								}
-							}
-
-							e.InsertString(c, insertText)
-
-							const drawLines = true
-							e.FullResetRedraw(c, status, drawLines, false)
-							e.redraw.Store(true)
-							e.redrawCursor.Store(true)
-
-							status.SetMessage("Completed: " + insertText)
-							status.ShowNoTimeout(c, e)
-						}
+			if e.mode == mode.Go && e.syntaxHighlight && e.pos.sx > 0 {
+				if unicode.IsLetter(leftRune) || unicode.IsDigit(leftRune) || leftRune == '_' || leftRune == '.' {
+					if e.handleGoCompletion(c, status, tty, undo) {
 						break
 					}
 				}
