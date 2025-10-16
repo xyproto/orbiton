@@ -51,7 +51,7 @@ Writing commit messages:
 
 | **orbiton**                                                                                                                    |
 |--------------------------------------------------------------------------------------------------------------------------------|
-| [![Packaging status](https://repology.org/badge/vertical-allrepos/orbiton.svg?columns=4)](https://repology.org/project/orbiton/versions) |
+| [![Packaging status](https://repology.org/badge/vertical-allrepos/orbiton.svg?columns=2)](https://repology.org/project/orbiton/versions) |
 
 ## Quick start
 
