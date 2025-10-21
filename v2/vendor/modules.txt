@@ -122,7 +122,7 @@ github.com/xyproto/kotlinsig
 # github.com/xyproto/lookslikegoasm v1.0.0
 ## explicit; go 1.23.2
 github.com/xyproto/lookslikegoasm
-# github.com/xyproto/mode v0.11.9
+# github.com/xyproto/mode v0.11.10
 ## explicit; go 1.23.2
 github.com/xyproto/mode
 # github.com/xyproto/ollamaclient/v2 v2.7.2

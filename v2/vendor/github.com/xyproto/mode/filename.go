@@ -141,6 +141,8 @@ func Detect(filename string) Mode {
 			mode = Erlang
 		case ".dsp":
 			mode = Faust
+		case ".flap":
+			mode = Flap
 		case ".f":
 			mode = Fortran77
 		case ".f90":
