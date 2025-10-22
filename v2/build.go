@@ -544,6 +544,10 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		cmd = exec.Command("mlton", sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
+	case mode.Flap:
+		cmd = exec.Command("flapc", "-o", exeFilename, sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Agda:
 		cmd = exec.Command("agda", "-c", sourceFilename)
 		cmd.Dir = sourceDir
