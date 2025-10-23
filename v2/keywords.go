@@ -35,7 +35,7 @@ var (
 	emacsWords = []string{"add-to-list", "defconst", "defun", "defvar", "if", "lambda", "let", "load", "nil", "require", "setq", "when"}
 
 	// Flap
-	flapWords = []string{"@first", "@last", "@counter", "@key", "@i", "&b", "<<b", "<b", ">>b", ">b", "^b", "and", "as", "cme", "cstr", "f32", "f64", "i16", "i32", "i64", "i8", "in", "list", "me", "not", "number", "or", "or!", "printf", "println", "ptr", "ret", "string", "u16", "u32", "u64", "u8", "xor", "|b", "~b"}
+	flapWords = []string{"&b", "<<b", "<b", ">>b", ">b", "@counter", "@first", "@i", "@key", "@last", "^b", "and", "as", "cme", "cstr", "f32", "f64", "i16", "i32", "i64", "i8", "in", "list", "me", "not", "number", "or", "or!", "printf", "println", "ptr", "ret", "string", "u16", "u32", "u64", "u8", "xor", "|b", "~b"}
 
 	// Fortran77
 	fortran77Words = []string{"assign", "backspace", "block data", "call", "close", "common", "continue", "data", "dimension", "do", "else", "else if", "end", "endfile", "endif", "entry", "equivalence", "external", "format", "function", "goto", "if", "implicit", "inquire", "intrinsic", "open", "parameter", "pause", "print", "program", "read", "return", "rewind", "rewrite", "save", "stop", "subroutine", "then", "write"}
