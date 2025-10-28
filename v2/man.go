@@ -131,9 +131,11 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 		if !inWord && unicode.IsDigit(r) && !inDigits {
 			inDigits = true
 			rs = append(rs, []rune(off+e.ItalicsColor.String())...)
-		} else if inDigits && !inWord && !hexDigit(r) {
+		} else if inDigits && !inWord && !unicode.IsDigit(r) && !hexDigit(r) {
 			inDigits = false
 			rs = append(rs, []rune(off+normal.String())...)
+		} else if inDigits && (unicode.IsDigit(r) || hexDigit(r)) {
+			// don't apply a new color
 		} else if !inWord && (r == '*' || r == '$' || r == '%' || r == '!' || r == '/' || r == '=' || r == '-') {
 			rs = append(rs, []rune(off+e.MenuArrowColor.String())...)
 		} else if r == '@' { // color @ gray and the rest of the string white
