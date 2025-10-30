@@ -6,6 +6,8 @@ GOFLAGS ?= -mod=vendor -trimpath -v -ldflags "-s -w" -buildvcs=false
 
 GOBUILD := go build
 
+GOEXPERIMENT := greenteagc
+
 SRCFILES := $(wildcard go.* v2/*.go v2/go.*)
 
 
