@@ -50,6 +50,17 @@ github.com/jung-kurt/gofpdf
 # github.com/klauspost/asmfmt v1.3.2
 ## explicit; go 1.16
 github.com/klauspost/asmfmt
+# github.com/kpfaulkner/jxl-go v0.0.0-20251025233454-8fd66f5063d1
+## explicit; go 1.22.2
+github.com/kpfaulkner/jxl-go/bundle
+github.com/kpfaulkner/jxl-go/colour
+github.com/kpfaulkner/jxl-go/core
+github.com/kpfaulkner/jxl-go/entropy
+github.com/kpfaulkner/jxl-go/frame
+github.com/kpfaulkner/jxl-go/image
+github.com/kpfaulkner/jxl-go/jxlio
+github.com/kpfaulkner/jxl-go/options
+github.com/kpfaulkner/jxl-go/util
 # github.com/kr/pty v1.1.8
 ## explicit; go 1.12
 github.com/kr/pty
@@ -69,6 +80,9 @@ github.com/pkg/term/termios
 # github.com/sajari/fuzzy v1.0.0
 ## explicit
 github.com/sajari/fuzzy
+# github.com/sirupsen/logrus v1.9.3
+## explicit; go 1.13
+github.com/sirupsen/logrus
 # github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d
 ## explicit
 github.com/sourcegraph/annotate
@@ -146,6 +160,9 @@ github.com/xyproto/vt
 # github.com/xyproto/wordwrap v1.0.1
 ## explicit; go 1.21.3
 github.com/xyproto/wordwrap
+# golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
+## explicit; go 1.24.0
+golang.org/x/exp/constraints
 # golang.org/x/image v0.32.0
 ## explicit; go 1.24.0
 golang.org/x/image/draw
