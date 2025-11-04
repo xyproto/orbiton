@@ -1,19 +1,17 @@
 package main
 
 import (
-	"bytes"
 	"image"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
 	ico "github.com/dkua/go-ico"
+	"github.com/gen2brain/jpegxl"
 	bmp "github.com/jsummers/gobmp"
-	jxlcore "github.com/kpfaulkner/jxl-go/core"
 	"github.com/xfmoulet/qoi"
 	"golang.org/x/image/webp"
 )
@@ -39,15 +37,7 @@ func LoadImage(filename string) (*image.NRGBA, error) {
 	case ".jpg", ".jpeg":
 		img, err = jpeg.Decode(f)
 	case ".jxl":
-		if data, err := io.ReadAll(f); err == nil { // success
-			if jxlimg, err := jxlcore.NewJXLDecoder(bytes.NewReader(data), nil).Decode(); err == nil { // success
-				img, err = jxlimg.ToImage()
-			} else {
-				return nil, err
-			}
-		} else {
-			return nil, err
-		}
+		img, err = jpegxl.Decode(f)
 	case ".png":
 		img, err = png.Decode(f)
 	case ".qoi":
