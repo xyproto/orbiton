@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"image"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,10 +39,14 @@ func LoadImage(filename string) (*image.NRGBA, error) {
 	case ".jpg", ".jpeg":
 		img, err = jpeg.Decode(f)
 	case ".jxl":
-		if jxlimg, err := jxlcore.NewJXLDecoder(f, nil).Decode(); err != nil {
-			return nil, err
+		if data, err := io.ReadAll(f); err == nil { // success
+			if jxlimg, err := jxlcore.NewJXLDecoder(bytes.NewReader(data), nil).Decode(); err == nil { // success
+				img, err = jxlimg.ToImage()
+			} else {
+				return nil, err
+			}
 		} else {
-			img, err = jxlimg.ToImage()
+			return nil, err
 		}
 	case ".png":
 		img, err = png.Decode(f)
