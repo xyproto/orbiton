@@ -11,6 +11,7 @@ import (
 
 	ico "github.com/dkua/go-ico"
 	bmp "github.com/jsummers/gobmp"
+	jxlcore "github.com/kpfaulkner/jxl-go/core"
 	"github.com/xfmoulet/qoi"
 	"golang.org/x/image/webp"
 )
@@ -27,20 +28,26 @@ func LoadImage(filename string) (*image.NRGBA, error) {
 	var img image.Image
 	// Read and decode the image
 	switch filepath.Ext(strings.ToLower(filename)) {
-	case ".png":
-		img, err = png.Decode(f)
-	case ".jpg", ".jpeg":
-		img, err = jpeg.Decode(f)
-	case ".ico":
-		img, err = ico.Decode(f)
-	case ".gif":
-		img, err = gif.Decode(f)
 	case ".bmp":
 		img, err = bmp.Decode(f)
-	case ".webp":
-		img, err = webp.Decode(f)
+	case ".gif":
+		img, err = gif.Decode(f)
+	case ".ico":
+		img, err = ico.Decode(f)
+	case ".jpg", ".jpeg":
+		img, err = jpeg.Decode(f)
+	case ".jxl":
+		if jxlimg, err := jxlcore.NewJXLDecoder(f, nil).Decode(); err != nil {
+			return nil, err
+		} else {
+			img, err = jxlimg.ToImage()
+		}
+	case ".png":
+		img, err = png.Decode(f)
 	case ".qoi":
 		img, err = qoi.Decode(f)
+	case ".webp":
+		img, err = webp.Decode(f)
 	}
 	if err != nil {
 		return nil, err
