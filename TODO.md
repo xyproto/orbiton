@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Don't highlight `ran` and `error` when editing Markdown.
 - [ ] Jump to definition for at least C.
 - [ ] Fix blinking text issue when holding down arrow up/down in the Linux console.
 - [ ] Port the scons/python/cxx tool over as a Go module and use that by default when building C or C++.
