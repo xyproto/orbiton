@@ -580,13 +580,34 @@ This also means that filenames containing `+` or `:`, and then followed by a num
 
 ## Flags
 
-* `-f` can be used to open a file, regardless of if there are any locks. It can also be used for overwriting files together with `-p`.
-* `-c FILENAME` can be used to copy the contents of the given file to the clipboard and then exit.
-* `-p FILENAME` can be used to paste the contents of the clipboard to the given `FILENAME` (if it does not already exist) and then exit.
-* `-n` can be used to avoid writing lockfiles, build files, location history, search history and the game highscore to `$XDG_CACHE_DIR/cache/o` or `~/.cache/o`. Not recommended.
-* `-m` can be used to open a file as read-only, but monitor it for changes.
-* `--help` can be used to get a quick overview of the supported keybindings. It will also list additional supported flags.
-* `--version` will print the current version and then exit.
+```
+  -c, --copy FILENAME            Copy the given file into the clipboard.
+  -p, --paste FILENAME           Paste the contents of the clipboard into the given file.
+                                 Combine with -f to overwrite the file.
+  -f, --force                    Ignore file locks when opening files.
+  -l, --last-command             Output the last used build/format/export command.
+  -e, --clear-locks              Clear all file locks and close all portals.
+  -m, --monitor FILENAME         Monitor the given file for changes, and open it as read-only.
+  -o, --ollama                   Use Ollama and "deepseek-coder-v2" or $OLLAMA_MODEL
+                                 to explain the function under the cursor.
+  -r, --release                  Build with release instead of debug mode whenever applicable.
+  -x, --noapprox                 Disable approximate filename matching.
+  -n, --no-cache                 Avoid writing the location history, search history, highscore,
+                                 compilation and format command to ~/.cache/o.
+  -d, --create-dir               When opening a new file, create directories as needed.
+  -s, --digraphs                 List all possible digraphs.
+  -t, --list                     List the given file using the red/black theme and quit.
+  -b, --bat                      List the given file using bat, if it exists in the PATH.
+                                 This can be useful when used with together with -c or -p.
+  -i, --input-file FILENAME      Used as stdin when running programs with ctrl-space.
+                                 The default filename is input.txt. Handy for Advent of Code.
+  -a, --nano                     Emulate Pico/Nano.
+  -q, --quick-help               Always display the quick help pane at start.
+  -z, --no-quick-help            Never display the quick help pane at start.
+  -g, --glob GLOB                Search for and open the first filename that matches the substring.
+  -h, --help                     Display this usage information.
+  -v, --version                  Display the current version.
+```
 
 ## Spinner
 
