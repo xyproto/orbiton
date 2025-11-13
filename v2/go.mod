@@ -37,7 +37,7 @@ require (
 	github.com/xyproto/usermodel v1.2.3
 	github.com/xyproto/vt v1.2.10
 	github.com/xyproto/wordwrap v1.0.1
-	golang.org/x/image v0.32.0
+	golang.org/x/image v0.33.0
 )
 
 require (
@@ -53,10 +53,10 @@ require (
 	github.com/peterhellberg/gfx v0.0.0-20250602150231-2e41f5fad310 // indirect
 	github.com/pkg/term v1.2.0-beta.2 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
-	github.com/tetratelabs/wazero v1.9.0 // indirect
+	github.com/tetratelabs/wazero v1.10.1 // indirect
 	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
-	golang.org/x/sys v0.37.0 // indirect
-	golang.org/x/term v0.36.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/term v0.37.0 // indirect
 )
