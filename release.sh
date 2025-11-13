@@ -32,7 +32,7 @@ echo "Version $version"
 
 export CGO_ENABLED=0
 export GOEXPERIMENT=greenteagc
-export GOFLAGS='-mod=vendor -trimpath -v -ldflags "-s -w" -buildvcs=false'
+export GOFLAGS='-mod=vendor -trimpath -buildvcs=false'
 
 compile_and_compress() {
   goos="$1"
