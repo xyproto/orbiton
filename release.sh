@@ -31,6 +31,8 @@ version=$(grep -i version main.go | head -1 | cut -d' ' -f4 | cut -d'"' -f1)
 echo "Version $version"
 
 export CGO_ENABLED=0
+export GOEXPERIMENT=greenteagc
+export GOFLAGS='-mod=vendor -trimpath -v -ldflags "-s -w" -buildvcs=false'
 
 compile_and_compress() {
   goos="$1"
