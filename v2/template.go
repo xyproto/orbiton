@@ -242,8 +242,8 @@ func GetTemplatePrograms() TemplatePrograms {
 				2,
 			},
 			mode.Perl: {
-				"#!/usr/bin/env perl\n\nuse strict;\nuse utf8;\nuse warnings;\n\nbinmode(\\*STDOUT, \":utf8\");\nbinmode(\\*STDIN,  \":utf8\");\nbinmode(\\*STDERR, \":utf8\");\n\nsub main {\n  print(\"Hello, World!\\n\");\n}\n\nmain();\n",
-				7,
+				"#!/usr/bin/env perl\nuse v5.40;\nuse feature 'say';\nuse open ':std', ':encoding(UTF-8)';\n\nsub MAIN($name = \"World\") {\n    say \"Hello, $name!\";\n}\n\nMAIN(@ARGV);\n",
+				5,
 				4,
 			},
 			mode.Python: {

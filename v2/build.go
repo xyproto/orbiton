@@ -459,6 +459,9 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		cmd = exec.Command("ghc", "-dynamic", sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
+	case mode.Perl:
+		cmd = exec.Command("perl", "-c", sourceFilename)
+		return cmd, everythingIsFine, nil
 	case mode.Python:
 		if isDarwin {
 			cmd = exec.Command("python3", "-m", "py_compile", sourceFilename)

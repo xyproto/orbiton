@@ -110,6 +110,8 @@ func (e *Editor) Run() (string, bool, error) {
 		if efn := e.exeName(e.filename, true); files.IsExecutable(efn) {
 			cmd = exec.Command(filepath.Join(sourceDir, efn))
 		}
+	case mode.Perl:
+		cmd = exec.Command("perl", sourceFilename)
 	case mode.Python:
 		// Special support for Poetry and Flask
 		if (files.Exists("pyproject.toml") || files.Exists("poetry.lock")) && files.WhichCached("poetry") != "" {
