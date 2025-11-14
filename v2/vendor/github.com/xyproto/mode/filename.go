@@ -222,7 +222,9 @@ func Detect(filename string) Mode {
 			mode = ObjectPascal
 		case ".php", ".php3", ".php4", ".php5", ".phtml":
 			mode = PHP
-		case ".pl", ".pro":
+		case ".pl", ".perl":
+			mode = Perl
+		case ".plg", ".pro":
 			mode = Prolog
 		case ".py":
 			mode = Python

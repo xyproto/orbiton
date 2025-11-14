@@ -775,8 +775,14 @@ func (st *state) prefix() AST {
 			next = un
 			module = nil
 			if isUnCast {
+				if m, ok := un.(*ModuleEntity); ok {
+					un = m.Name
+				}
 				if tn, ok := un.(*TaggedName); ok {
 					un = tn.Name
+				}
+				if f, ok := un.(*Friend); ok {
+					un = f.Name
 				}
 				cast = un.(*Cast)
 			}
@@ -794,6 +800,12 @@ func (st *state) prefix() AST {
 				}
 				if last == nil {
 					st.fail("constructor before name is seen")
+				}
+				switch st.str[0] {
+				// 0 is not used.
+				case '1', '2', '3', '4', '5':
+				default:
+					st.fail("unknown constructor type")
 				}
 				st.advance(1)
 				var base AST
@@ -816,6 +828,12 @@ func (st *state) prefix() AST {
 					}
 					if last == nil {
 						st.fail("destructor before name is seen")
+					}
+					switch st.str[1] {
+					// 3 is not used.
+					case '0', '1', '2', '4', '5':
+					default:
+						st.fail("unknown destructor type")
 					}
 					st.advance(2)
 					next = &Destructor{Name: getLast(last)}

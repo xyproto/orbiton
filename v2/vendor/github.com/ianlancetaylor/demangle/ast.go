@@ -4827,7 +4827,9 @@ func (mn *ModuleName) print(ps *printState) {
 
 func (mn *ModuleName) Traverse(fn func(AST) bool) {
 	if fn(mn) {
-		mn.Parent.Traverse(fn)
+		if mn.Parent != nil {
+			mn.Parent.Traverse(fn)
+		}
 		mn.Name.Traverse(fn)
 	}
 }
