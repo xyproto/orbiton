@@ -2015,6 +2015,15 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 				// Place *something*
 				r := keyRunes[0]
+
+				if e.mode == mode.ManPage && r == '/' {
+					// If o is used as a man page viewer, search for a string at the press of "/"
+					const clearPreviousSearch = true
+					const searchForward = true
+					e.SearchMode(c, status, tty, clearPreviousSearch, searchForward, undo)
+					break
+				}
+
 				switch r {
 				case 160:
 					// This is a nonbreaking space that may be inserted with altgr+space that is HORRIBLE.
