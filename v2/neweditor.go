@@ -325,7 +325,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	// Use a light theme if XTERM_VERSION (and not running with "og") or
 	// TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
 	// because $COLORFGBG is "15;0" even though the background is white.
-	if !e.readOnly && (!specificLetter || editTheme) {
+	if !e.readOnly && (!specificLetter || editTheme || nanoMode) {
 		assumeLightBackground := env.Bool("O_LIGHT")
 		theme := env.StrAlt("O_THEME", "THEME")
 		if envNoColor {
