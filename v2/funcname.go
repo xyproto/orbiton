@@ -90,7 +90,7 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 				return true
 			}
 		}
-		if strings.Index(trimmedLine, "=") < strings.Index(trimmedLine, "(") { // equal sign before the first (
+		if strings.HasPrefix(trimmedLine, "=") || strings.Index(trimmedLine, "=") < strings.Index(trimmedLine, "(") { // equal sign before the first (
 			return false
 		}
 		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") { // lines that are not indented are more likely to be function definitions
