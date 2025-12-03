@@ -201,7 +201,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	case mode.Go:
 		// TODO: Define goWords and use setKeywords instead
 		addKeywords := []string{"defer", "error", "fallthrough", "func", "go", "import", "package", "print", "println", "range", "rune", "string", "uint", "uint16", "uint32", "uint64", "uint8"}
-		delKeywords := []string{"assert", "auto", "build", "char", "class", "def", "def", "del", "die", "done", "end", "False", "fi", "final", "finally", "fn", "foreach", "from", "get", "in", "include", "is", "lambda", "last", "let", "match", "mut", "next", "no", "None", "pass", "redo", "rescue", "ret", "retry", "set", "static", "template", "then", "this", "True", "until", "when", "where", "while", "yes"}
+		delKeywords := []string{"assert", "auto", "build", "char", "class", "def", "def", "del", "die", "dir", "done", "end", "exec", "False", "fi", "final", "finally", "fn", "foreach", "from", "get", "in", "include", "is", "lambda", "last", "let", "match", "mut", "next", "no", "None", "pass", "redo", "rescue", "ret", "retry", "set", "static", "template", "then", "this", "True", "until", "when", "where", "while", "yes"}
 		addAndRemoveKeywords(addKeywords, delKeywords)
 	case mode.Haxe:
 		setKeywords(haxeWords)
