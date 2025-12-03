@@ -62,7 +62,7 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 		return kotlinsig.Is(trimmedLine)
 	// C-like languages use specialized function detection
 	case mode.Arduino, mode.C, mode.Cpp, mode.D, mode.Dart, mode.Hare, mode.Jakt, mode.JavaScript, mode.ObjC, mode.Scala, mode.Shader, mode.TypeScript, mode.Zig:
-		return e.cLooksLikeFunctionDef(line)
+		return e.cLooksLikeFunctionDef(line) && !strings.Contains(line, "=")
 	case mode.Make:
 		if !strings.HasPrefix(trimmedLine, " ") && !strings.HasPrefix(trimmedLine, "\t") && strings.Count(trimmedLine, ":") == 1 {
 			parts := strings.Split(trimmedLine, ":")
@@ -90,7 +90,7 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 				return true
 			}
 		}
-		if strings.HasPrefix(trimmedLine, "=") || strings.Index(trimmedLine, "=") < strings.Index(trimmedLine, "(") { // equal sign before the first (
+		if strings.Index(trimmedLine, "=") < strings.Index(trimmedLine, "(") { // equal sign before the first (
 			return false
 		}
 		if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") { // lines that are not indented are more likely to be function definitions
@@ -123,16 +123,19 @@ func (e *Editor) FunctionName(line string) string {
 			}
 		}
 	}
-	funcPrefix := e.FuncPrefix()
-	var s string
+	var (
+		funcPrefix               = e.FuncPrefix()
+		s, extractedFunctionName string
+	)
 	if e.LooksLikeFunctionDef(line, funcPrefix) {
 		s = strings.TrimSpace(strings.TrimSuffix(trimmedLine, "{"))
 
 		// Special handling for C-like function definitions
 		if cLikeFunction(e.mode) {
-			if extractedName := e.cExtractFunctionName(line); extractedName != "" {
-				s = extractedName
-			}
+			extractedFunctionName = e.cExtractFunctionName(line)
+		}
+		if extractedFunctionName != "" && !strings.Contains(extractedFunctionName, "=") {
+			s = extractedFunctionName
 		} else {
 			// Original logic for other languages
 			words := strings.Split(s, " ")

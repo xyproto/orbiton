@@ -155,8 +155,8 @@ func (e *Editor) cExtractFunctionName(line string) string {
 			// Remove any pointer/reference symbols for C/C++
 			functionName = strings.TrimPrefix(functionName, "*")
 			functionName = strings.TrimPrefix(functionName, "&")
-			if functionName != "" {
-				return functionName
+			if trimmedFunctionName := strings.TrimSpace(functionName); trimmedFunctionName != "" {
+				return trimmedFunctionName
 			}
 		} else if i > 0 && i == len(words)-1 {
 			// Enhanced incomplete function detection - only for C/C++
@@ -179,8 +179,8 @@ func (e *Editor) cExtractFunctionName(line string) string {
 				functionName := strings.TrimSpace(word)
 				functionName = strings.TrimPrefix(functionName, "*")
 				functionName = strings.TrimPrefix(functionName, "&")
-				if functionName != "" {
-					return functionName
+				if trimmedFunctionName := strings.TrimSpace(functionName); trimmedFunctionName != "" {
+					return trimmedFunctionName
 				}
 			}
 		}
