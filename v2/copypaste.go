@@ -22,10 +22,18 @@ const maxPortalAge = 25 * time.Minute
 // The returned int is the number of bytes written.
 // The returned string is the last 7 characters written to the file.
 func SetClipboardFromFile(filename string, primaryClipboard bool) (int, string, error) {
+
 	// Read the file
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return 0, "", err
+	}
+
+	if strings.HasSuffix(filename, ".gz") {
+		data, err = gUnzipData(data)
+		if err != nil {
+			return 0, "", err
+		}
 	}
 
 	// Write to the clipboard
