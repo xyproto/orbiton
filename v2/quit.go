@@ -181,12 +181,12 @@ func quitToMan(tty *vt.TTY, workDir, nroffFilename string, w, h uint) error {
 		return err
 	}
 
-	oExecutable, err := filepath.Abs(os.Args[0])
-	if err != nil {
-		return err
+	editorExecutable := files.WhichCached(env.Str("EDITOR"))
+	if editorExecutable == "" {
+		return fmt.Errorf("could not find %s in PATH", env.Str("EDITOR"))
 	}
 
-	manExecutable := files.Which("man")
+	manExecutable := files.WhichCached("man")
 	args := []string{manExecutable}
 
 	if isLinux {
@@ -200,7 +200,7 @@ func quitToMan(tty *vt.TTY, workDir, nroffFilename string, w, h uint) error {
 	}
 
 	env.Set("NROFF_FILENAME", nroffFilename)
-	env.Set("MANPAGER", oExecutable)
+	env.Set("MANPAGER", editorExecutable)
 
 	env.Set("COLUMNS", strconv.Itoa(int(w)))
 	env.Set("LINES", strconv.Itoa(int(h)))
