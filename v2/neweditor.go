@@ -13,6 +13,7 @@ import (
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
+	"github.com/xyproto/megacli"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 )
@@ -197,9 +198,12 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				e.filename = matches[0]
 			} else {
 				e.dirMode = true
-				// TODO: Support opening directories and giving a GitHub-like overview of projects and the git status
-				// TODO: Consider supporting file rename, finding programming symbols or git push
-				return e, "", false, errors.New("can not open directories")
+				startdirs := []string{e.filename, env.HomeDir(), "/tmp"}
+				_, err := megacli.MegaCLI(c, tty, startdirs, "Orbiton Shell")
+				if err != nil {
+					return e, "", false, fmt.Errorf("could not browse %s", e.filename)
+				}
+				os.Exit(0)
 			}
 		}
 
