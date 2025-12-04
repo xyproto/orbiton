@@ -108,6 +108,13 @@ func WriteClipboardToFile(filename string, overwrite, primaryClipboard bool) (in
 		tailString = string(contents[lenContents-7:])
 	}
 
+	if strings.HasSuffix(filename, ".gz") {
+		contents, err = gZipData(contents)
+		if err != nil {
+			return 0, "", "", err
+		}
+	}
+
 	n, err := f.Write(contents)
 	if err != nil {
 		return 0, "", "", err
