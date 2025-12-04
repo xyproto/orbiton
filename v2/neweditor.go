@@ -200,8 +200,8 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				e.dirMode = true
 				startdirs := []string{e.filename, env.HomeDir(), "/tmp"}
 				_, err := megacli.MegaCLI(c, tty, startdirs, "Orbiton Shell")
-				if err != nil {
-					return e, "", false, fmt.Errorf("could not browse %s", e.filename)
+				if err != nil && err != megacli.ErrExit {
+					return e, "", false, fmt.Errorf("could not browse %s: %v", e.filename, err)
 				}
 				os.Exit(0)
 			}
