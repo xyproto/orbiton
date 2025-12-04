@@ -1,6 +1,6 @@
 .PHONY: clean install
 
-PROJECT ?= megacli
+PROJECT ?= megafile
 
 GOFLAGS ?= -mod=vendor -trimpath -v -ldflags "-s -w" -buildvcs=false
 
@@ -33,18 +33,18 @@ GOFLAGS += -buildmode=pie
 BUILDFLAGS ?= -ldflags "-s -w -linkmode=external -extldflags $(LDFLAGS)"
 endif
 
-megacli: $(SRCFILES)
-	cd cmd/megacli && $(GOBUILD) $(GOFLAGS) $(BUILDFLAGS) -o ../../megacli
+megafile: $(SRCFILES)
+	cd cmd/megafile && $(GOBUILD) $(GOFLAGS) $(BUILDFLAGS) -o ../../megafile
 
-install: megacli
+install: megafile
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
-	install -m755 megacli "$(DESTDIR)$(PREFIX)/bin/megacli"
+	install -m755 megafile "$(DESTDIR)$(PREFIX)/bin/megafile"
 	mkdir -p "$(DESTDIR)$(MANDIR)"
-	install -m644 megacli.1.gz "$(DESTDIR)$(MANDIR)/megacli.1.gz"
+	install -m644 megafile.1.gz "$(DESTDIR)$(MANDIR)/megafile.1.gz"
 
 license:
 	mkdir -p "$(DESTDIR)$(PREFIX)/share/licenses/$(PROJECT)"
 	install -m644 LICENSE "$(DESTDIR)$(PREFIX)/share/licenses/$(PROJECT)/LICENSE"
 
 clean:
-	-rm -f megacli
+	-rm -f megafile

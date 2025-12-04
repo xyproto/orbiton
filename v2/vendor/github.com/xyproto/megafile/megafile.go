@@ -1,5 +1,5 @@
-// package megacli provides functionality for a simple TUI for browsing files and directories
-package megacli
+// package megafile provides functionality for a simple TUI for browsing files and directories
+package megafile
 
 import (
 	"errors"
@@ -315,7 +315,7 @@ func Cleanup(c *vt.Canvas) {
 	vt.ShowCursor(true)
 }
 
-func MegaCLI(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage string) (string, error) {
+func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage string) (string, error) {
 	var (
 		x, y uint
 		s    = &State{

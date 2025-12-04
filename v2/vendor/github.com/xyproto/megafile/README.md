@@ -1,10 +1,10 @@
-# MegaCLI
+# MegaFile
 
 A simple and colorful TUI shell for Linux, written in Go.
 
 ![screenshot](img/screenshot.png)
 
-This project can be used as the `github.com/xyproto/megacli` package, or as a standalone exectuable.
+This project can be used as the `github.com/xyproto/megafile` package, or as a standalone exectuable.
 
 ### Building
 
@@ -40,6 +40,6 @@ This project can be used as the `github.com/xyproto/megacli` package, or as a st
 
 ### General info
 
-* Version: 1.0.9
+* Version: 1.1.0
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
