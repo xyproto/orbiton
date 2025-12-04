@@ -391,7 +391,7 @@ AGAIN:
 					status.ShowNoTimeout(c, e)
 				}
 			}
-		case "↑": // arrow up, use the previous search or replacement string from the search or replacement history
+		case upArrow, leftArrow: // arrow up, arrown left : use the previous search or replacement string from the search or replacement history
 			if (!replaceMode && searchHistory.Empty()) || (replaceMode && replaceHistory.Empty()) {
 				break
 			}
@@ -417,7 +417,7 @@ AGAIN:
 			status.ClearAll(c, true)
 			status.SetMessage(searchPrompt + " " + s)
 			status.ShowNoTimeout(c, e)
-		case "↓": // arrow down, use the next search or replacement string from the search or replacement history
+		case downArrow, rightArrow: // arrow down, arrow right : use the next search or replacement string from the search or replacement history
 			if (!replaceMode && searchHistory.Empty()) || (replaceMode && replaceHistory.Empty()) {
 				break
 			}
