@@ -13,7 +13,7 @@ import (
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
-	"github.com/xyproto/megacli"
+	"github.com/xyproto/megafile"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 )
@@ -199,8 +199,8 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 			} else {
 				e.dirMode = true
 				startdirs := []string{e.filename, env.HomeDir(), "/tmp"}
-				_, err := megacli.MegaCLI(c, tty, startdirs, "Orbiton Shell")
-				if err != nil && err != megacli.ErrExit {
+				_, err := megafile.MegaFile(c, tty, startdirs, "Orbiton Shell")
+				if err != nil && err != megafile.ErrExit {
 					return e, "", false, fmt.Errorf("could not browse %s: %v", e.filename, err)
 				}
 				os.Exit(0)
