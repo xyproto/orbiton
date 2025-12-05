@@ -84,6 +84,7 @@ type Theme struct {
 	ManSynopsisColor            vt.AttributeColor
 	BoxTextColor                vt.AttributeColor
 	BoxBackground               vt.AttributeColor
+	ProgressIndicatorBackground vt.AttributeColor
 	BoxHighlight                vt.AttributeColor
 	DebugRunningBackground      vt.AttributeColor
 	DebugStoppedBackground      vt.AttributeColor
@@ -173,6 +174,7 @@ func NewDefaultTheme() Theme {
 		ManSynopsisColor:            vt.LightYellow,
 		BoxTextColor:                vt.Black,
 		BoxBackground:               vt.BackgroundBlue,
+		ProgressIndicatorBackground: vt.BackgroundBlue,
 		BoxHighlight:                vt.LightYellow,
 		DebugRunningBackground:      vt.BackgroundCyan,
 		DebugStoppedBackground:      vt.BackgroundMagenta,
@@ -261,6 +263,7 @@ func NewOrbTheme() Theme {
 		ManSynopsisColor:            vt.LightGreen,
 		BoxTextColor:                vt.White,
 		BoxBackground:               vt.DarkGray,
+		ProgressIndicatorBackground: vt.BackgroundGreen,
 		BoxHighlight:                vt.LightYellow,
 		DebugRunningBackground:      vt.Cyan,
 		DebugStoppedBackground:      vt.BackgroundRed,
@@ -349,6 +352,7 @@ func NewPinetreeTheme() Theme {
 		ManSynopsisColor:            vt.Yellow,
 		BoxTextColor:                vt.Black,
 		BoxBackground:               vt.BackgroundBlue,
+		ProgressIndicatorBackground: vt.BackgroundBlue,
 		BoxHighlight:                vt.LightYellow,
 		DebugRunningBackground:      vt.BackgroundGreen,
 		DebugStoppedBackground:      vt.BackgroundMagenta,
@@ -437,6 +441,7 @@ func NewZuluTheme() Theme {
 		ManSynopsisColor:            vt.LightCyan,
 		BoxTextColor:                vt.White,
 		BoxBackground:               vt.BackgroundBlack,
+		ProgressIndicatorBackground: vt.BackgroundBlack,
 		BoxHighlight:                vt.LightYellow,
 		DebugRunningBackground:      vt.BackgroundGreen,
 		DebugStoppedBackground:      vt.BackgroundMagenta,
@@ -525,6 +530,7 @@ func NewLitmusTheme() Theme {
 		ManSynopsisColor:            vt.Red,
 		BoxTextColor:                vt.Black,
 		BoxBackground:               vt.BackgroundCyan,
+		ProgressIndicatorBackground: vt.BackgroundCyan,
 		BoxHighlight:                vt.Red,
 		DebugRunningBackground:      vt.BackgroundBlue,
 		DebugStoppedBackground:      vt.BackgroundMagenta,
@@ -613,6 +619,7 @@ func NewSynthwaveTheme() Theme {
 		ManSynopsisColor:            vt.LightGray,
 		BoxTextColor:                vt.Black,
 		BoxBackground:               vt.BackgroundBlue,
+		ProgressIndicatorBackground: vt.BackgroundBlue,
 		BoxHighlight:                vt.LightGray,
 		DebugRunningBackground:      vt.BackgroundCyan,
 		DebugStoppedBackground:      vt.BackgroundRed,
@@ -701,6 +708,7 @@ func NewTealTheme() Theme {
 		ManSynopsisColor:            vt.White,
 		BoxTextColor:                vt.White,
 		BoxBackground:               vt.BackgroundBlack,
+		ProgressIndicatorBackground: vt.BackgroundBlue,
 		BoxHighlight:                vt.LightBlue,
 		DebugRunningBackground:      vt.BackgroundBlue,
 		DebugStoppedBackground:      vt.BackgroundRed,
@@ -790,6 +798,7 @@ func NewRedBlackTheme() Theme {
 		ManSynopsisColor:            vt.White,
 		BoxTextColor:                vt.Black,
 		BoxBackground:               vt.BackgroundGray,
+		ProgressIndicatorBackground: vt.BackgroundGray,
 		BoxHighlight:                vt.Red,
 		DebugRunningBackground:      vt.BackgroundGray,
 		DebugStoppedBackground:      vt.BackgroundGray,
@@ -879,6 +888,7 @@ func NewLightBlueEditTheme() Theme {
 		ManSynopsisColor:            vt.LightBlue,
 		BoxTextColor:                vt.Black,
 		BoxBackground:               vt.BackgroundGray,
+		ProgressIndicatorBackground: vt.BackgroundGray,
 		BoxHighlight:                vt.LightYellow,
 		DebugRunningBackground:      vt.BackgroundGray,
 		DebugStoppedBackground:      vt.BackgroundMagenta,
@@ -967,7 +977,8 @@ func NewDarkBlueEditTheme() Theme {
 		ManSectionColor:             vt.White,
 		ManSynopsisColor:            vt.LightYellow,
 		BoxTextColor:                vt.LightYellow,
-		BoxBackground:               vt.LightYellow,
+		BoxBackground:               vt.BackgroundYellow,
+		ProgressIndicatorBackground: vt.BackgroundYellow,
 		BoxHighlight:                vt.LightYellow,
 		DebugRunningBackground:      vt.BackgroundGray,
 		DebugStoppedBackground:      vt.BackgroundGray,
@@ -1056,6 +1067,7 @@ func NewLightVSTheme() Theme {
 		ManSynopsisColor:            vt.Blue,
 		BoxTextColor:                vt.Black,
 		BoxBackground:               vt.BackgroundGray,
+		ProgressIndicatorBackground: vt.BackgroundRed,
 		BoxHighlight:                vt.Red,
 		DebugRunningBackground:      vt.BackgroundCyan,
 		DebugStoppedBackground:      vt.BackgroundBlack,
@@ -1144,6 +1156,7 @@ func NewDarkVSTheme() Theme {
 		ManSynopsisColor:            vt.Blue,
 		BoxTextColor:                vt.Black,
 		BoxBackground:               vt.BackgroundGray,
+		ProgressIndicatorBackground: vt.BackgroundBlack,
 		BoxHighlight:                vt.Red,
 		DebugRunningBackground:      vt.BackgroundCyan,
 		DebugStoppedBackground:      vt.BackgroundBlack,
@@ -1167,6 +1180,7 @@ func NewGrayTheme() Theme {
 	//t.StatusBackground =vt.BackgroundDefault
 	//t.StatusErrorBackground =vt.BackgroundDefault
 	t.JumpToLetterColor = vt.White // for jumping to a letter with ctrl-l
+	t.ProgressIndicatorBackground = vt.BackgroundGray
 	return t
 }
 
@@ -1177,6 +1191,7 @@ func NewAmberTheme() Theme {
 	t.Foreground = vt.Yellow
 	t.Background = vt.BackgroundDefault // black background
 	t.JumpToLetterColor = t.Foreground  // for jumping to a letter with ctrl-l
+	t.ProgressIndicatorBackground = vt.BackgroundYellow
 	return t
 }
 
@@ -1187,6 +1202,7 @@ func NewGreenTheme() Theme {
 	t.Foreground = vt.LightGreen
 	t.Background = vt.BackgroundDefault // black background
 	t.JumpToLetterColor = t.Foreground  // for jumping to a letter with ctrl-l
+	t.ProgressIndicatorBackground = vt.BackgroundGreen
 	return t
 }
 
@@ -1197,6 +1213,7 @@ func NewBlueTheme() Theme {
 	t.Foreground = vt.LightBlue
 	t.Background = vt.BackgroundDefault // black background
 	t.JumpToLetterColor = t.Foreground  // for jumping to a letter with ctrl-l
+	t.ProgressIndicatorBackground = vt.BackgroundBlue
 	return t
 }
 
@@ -1274,6 +1291,7 @@ func NewNoColorDarkBackgroundTheme() Theme {
 		ManSynopsisColor:            vt.White,
 		BoxTextColor:                vt.Black,
 		BoxBackground:               vt.BackgroundGray,
+		ProgressIndicatorBackground: vt.BackgroundGray,
 		BoxHighlight:                vt.Black,
 		DebugRunningBackground:      vt.BackgroundGray,
 		DebugStoppedBackground:      vt.BackgroundGray,
@@ -1362,6 +1380,7 @@ func NewNoColorLightBackgroundTheme() Theme {
 		ManSynopsisColor:            vt.Black,
 		BoxTextColor:                vt.White,
 		BoxBackground:               vt.BackgroundGray,
+		ProgressIndicatorBackground: vt.BackgroundGray,
 		BoxHighlight:                vt.White,
 		DebugRunningBackground:      vt.BackgroundGray,
 		DebugStoppedBackground:      vt.BackgroundGray,
