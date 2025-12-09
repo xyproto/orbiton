@@ -149,6 +149,9 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		setKeywords(battlestarWords)
 	case mode.C3:
 		setKeywords(c3Words)
+	case mode.C67:
+		setKeywords(c67Words)
+		removeKeywords([]string{"double", "true", "false", "True", "False"})
 	case mode.Chuck:
 		setKeywords(chuckWords)
 	case mode.Clojure:
@@ -184,9 +187,6 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		removeKeywords([]string{"copy", "entrypoint", "env", "from", "pull", "run"}) // remove the lowercase variety of these
 	case mode.Erlang:
 		setKeywords(erlangWords)
-	case mode.Flap:
-		setKeywords(flapWords)
-		removeKeywords([]string{"double", "true", "false", "True", "False"})
 	case mode.Fortran77:
 		setKeywords(fortran77Words)
 		addKeywordsAsUppercase(fortran77Words)

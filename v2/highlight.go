@@ -528,7 +528,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						// Regular highlight
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					}
-				case mode.Ada, mode.Agda, mode.Elm, mode.Garnet, mode.Haskell, mode.Flap, mode.Lua, mode.Nmap, mode.SQL, mode.Teal, mode.Terra: // not for OCaml and Standard ML
+				case mode.Ada, mode.Agda, mode.C67, mode.Elm, mode.Garnet, mode.Haskell, mode.Lua, mode.Nmap, mode.SQL, mode.Teal, mode.Terra: // not for OCaml and Standard ML
 					trimmedLine = strings.TrimSpace(line)
 					if strings.HasPrefix(trimmedLine, "--") {
 						// Handle single line comments
@@ -650,13 +650,13 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
 					case (e.mode == mode.StandardML || e.mode == mode.OCaml) && (!strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*)") && !strings.Contains(trimmedLine, "(*")):
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
-					case (e.mode == mode.Elm || e.mode == mode.Haskell || e.mode == mode.Flap) && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "-}") && !strings.Contains(trimmedLine, "{-") || q.multiLineComment:
+					case (e.mode == mode.Elm || e.mode == mode.Haskell || e.mode == mode.C67) && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "-}") && !strings.Contains(trimmedLine, "{-") || q.multiLineComment:
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
 					case e.mode != mode.Shell && e.mode != mode.Docker && e.mode != mode.Make && e.mode != mode.Just && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "/*") > strings.LastIndex(trimmedLine, "*/"):
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case (e.mode == mode.StandardML || e.mode == mode.OCaml) && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "(*") > strings.LastIndex(trimmedLine, "*)"):
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
-					case (e.mode == mode.Elm || e.mode == mode.Haskell || e.mode == mode.Flap) && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "{-") > strings.LastIndex(trimmedLine, "-}") || q.multiLineComment:
+					case (e.mode == mode.Elm || e.mode == mode.Haskell || e.mode == mode.C67) && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "{-") > strings.LastIndex(trimmedLine, "-}") || q.multiLineComment:
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case q.containsMultiLineComments:
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
@@ -675,7 +675,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					case !q.startedMultiLineString && q.backtick > 0:
 						// A multi-line string
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
-					case (e.mode != mode.HTML && e.mode != mode.XML && e.mode != mode.Markdown && e.mode != mode.Make && e.mode != mode.Just && e.mode != mode.Blank && e.mode != mode.Flap) && strings.Contains(line, "->"):
+					case (e.mode != mode.HTML && e.mode != mode.XML && e.mode != mode.Markdown && e.mode != mode.Make && e.mode != mode.Just && e.mode != mode.Blank && e.mode != mode.C67) && strings.Contains(line, "->"):
 						// NOTE that if two color tags are placed after each other, they may cause blinking. Remember to turn <off> each color.
 						coloredString = unEscapeFunction(tout.DarkTags(e.ArrowReplace(string(textWithTags))))
 					default:
