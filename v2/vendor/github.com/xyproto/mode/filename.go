@@ -105,6 +105,8 @@ func Detect(filename string) Mode {
 			mode = C
 		case ".c3":
 			mode = C3
+		case ".c67":
+			mode = C67
 		case ".cm":
 			// Standard ML project file
 			mode = StandardML
@@ -141,8 +143,6 @@ func Detect(filename string) Mode {
 			mode = Erlang
 		case ".dsp":
 			mode = Faust
-		case ".flap":
-			mode = Flap
 		case ".f":
 			mode = Fortran77
 		case ".f90":

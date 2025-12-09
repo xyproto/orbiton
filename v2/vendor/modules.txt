@@ -128,7 +128,7 @@ github.com/xyproto/lookslikegoasm
 # github.com/xyproto/megafile v1.1.1
 ## explicit; go 1.25.3
 github.com/xyproto/megafile
-# github.com/xyproto/mode v0.11.11
+# github.com/xyproto/mode v0.12.0
 ## explicit; go 1.23.2
 github.com/xyproto/mode
 # github.com/xyproto/ollamaclient/v2 v2.7.2
@@ -149,7 +149,7 @@ github.com/xyproto/vt
 # github.com/xyproto/wordwrap v1.0.1
 ## explicit; go 1.21.3
 github.com/xyproto/wordwrap
-# golang.org/x/image v0.33.0
+# golang.org/x/image v0.34.0
 ## explicit; go 1.24.0
 golang.org/x/image/draw
 golang.org/x/image/math/f64
@@ -157,11 +157,11 @@ golang.org/x/image/riff
 golang.org/x/image/vp8
 golang.org/x/image/vp8l
 golang.org/x/image/webp
-# golang.org/x/sys v0.38.0
+# golang.org/x/sys v0.39.0
 ## explicit; go 1.24.0
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.37.0
+# golang.org/x/term v0.38.0
 ## explicit; go 1.24.0
 golang.org/x/term

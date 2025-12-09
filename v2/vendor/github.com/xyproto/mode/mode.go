@@ -40,7 +40,7 @@ const (
 	Elm                   // Elm
 	Erlang                // Erlang
 	Faust                 // Faust
-	Flap                  // Flap
+	C67                   // C67
 	Fortran77             // Fortran 77
 	Fortran90             // Fortran 90
 	FSharp                // F#
@@ -195,8 +195,8 @@ func (mode Mode) String() string {
 		return "Erlang"
 	case Faust:
 		return "Faust"
-	case Flap:
-		return "Flap"
+	case C67:
+		return "C67"
 	case Fortran77:
 		return "Fortran 77"
 	case Fortran90:
