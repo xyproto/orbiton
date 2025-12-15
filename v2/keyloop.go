@@ -1517,7 +1517,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if ProgrammingLanguage(e.mode) && !e.AtOrBeforeStartOfTextScreenLine() {
 				if e.JumpToMatching(c) { // jump to matching parenthesis or bracket
 					e.redrawCursor.Store(true)
-				} else if e.FuncPrefix() != "" && e.GoToDefinition(tty, c, status) { // go to definition
+				} else if e.GoToDefinition(tty, c, status) { // go to definition
 					break
 				} else if e.OnIncludeLine() { // go to include
 					if includeFilename, jumped := e.GoToInclude(tty, c, status); !jumped {

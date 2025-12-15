@@ -41,10 +41,14 @@ func cLikeness(m mode.Mode) float64 {
 	}
 }
 
+// Common C/C++ control flow keywords to exclude from function definition checks
+var cControlFlow = []string{"if", "while", "for", "switch", "return", "else", "do", "catch", "case", "default", "goto", "break", "continue"}
+
 // cLooksLikeFunctionDef checks if a line looks like a C/C++ function definition
 // This includes enhanced detection for incomplete function definitions split across lines
 func (e *Editor) cLooksLikeFunctionDef(line string) bool {
-	trimmedLine := strings.TrimSpace(line)
+	// Trimmed line without comments
+	trimmedLine := e.StripSingleLineComment(strings.TrimSpace(line))
 
 	// Filter out comments
 	if strings.HasPrefix(trimmedLine, "/*") || strings.HasPrefix(trimmedLine, "//") || strings.HasPrefix(trimmedLine, "*") {
@@ -59,8 +63,8 @@ func (e *Editor) cLooksLikeFunctionDef(line string) bool {
 	}
 
 	// Check for complete function definitions
-	if strings.HasSuffix(trimmedLine, "{") || strings.HasSuffix(trimmedLine, ")") || strings.HasSuffix(trimmedLine, "};") || strings.HasSuffix(trimmedLine, "} ;") {
-		if strings.Contains(trimmedLine, ";") && !(strings.HasSuffix(trimmedLine, "};") || strings.HasSuffix(trimmedLine, "} ;")) {
+	if strings.HasSuffix(trimmedLine, "{") || strings.HasSuffix(trimmedLine, ")") || strings.HasSuffix(trimmedLine, "};") || strings.HasSuffix(trimmedLine, "} ;") || strings.HasSuffix(trimmedLine, "}") {
+		if strings.Contains(trimmedLine, ";") && !(strings.HasSuffix(trimmedLine, "};") || strings.HasSuffix(trimmedLine, "} ;") || (strings.Contains(trimmedLine, "{") && strings.Contains(trimmedLine, "}"))) {
 			return false
 		}
 		for _, x := range cTypes {
@@ -91,6 +95,9 @@ func (e *Editor) cLooksLikeFunctionDef(line string) bool {
 				return true // looks like start of a function definition
 			}
 		}
+		if strings.HasPrefix(trimmedLine, "struct ") || strings.HasPrefix(trimmedLine, "enum ") || strings.HasPrefix(trimmedLine, "union ") {
+			return true
+		}
 
 		// Check for common C/C++ function modifiers/specifiers
 		modifiers := []string{"constexpr ", "explicit ", "extern ", "inline ", "noexcept ", "override ", "static ", "virtual "}
@@ -102,6 +109,9 @@ func (e *Editor) cLooksLikeFunctionDef(line string) bool {
 					if strings.HasPrefix(remaining, x) {
 						return true
 					}
+				}
+				if strings.HasPrefix(remaining, "struct ") || strings.HasPrefix(remaining, "enum ") || strings.HasPrefix(remaining, "union ") {
+					return true
 				}
 			}
 		}
@@ -117,8 +127,8 @@ func (e *Editor) cLooksLikeFunctionDef(line string) bool {
 				if len(parts) >= 2 {
 					// Exclude common non-function declarations
 					firstWord := strings.ToLower(parts[0])
-					if firstWord != "typedef" && firstWord != "struct" && firstWord != "class" &&
-						firstWord != "enum" && firstWord != "union" && firstWord != "#define" &&
+					if firstWord != "typedef" && firstWord != "#define" &&
+						!hasS(cControlFlow, firstWord) &&
 						!strings.HasPrefix(firstWord, "#") {
 						return true
 					}
@@ -170,6 +180,9 @@ func (e *Editor) cExtractFunctionName(line string) string {
 						hasTypeOrModifier = true
 						break
 					}
+				}
+				if strings.HasPrefix(prevWord, "struct") || strings.HasPrefix(prevWord, "enum") || strings.HasPrefix(prevWord, "union") {
+					hasTypeOrModifier = true
 				}
 				if hasTypeOrModifier {
 					break

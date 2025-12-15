@@ -21,7 +21,7 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 	funcPrefix := e.FuncPrefix()
 
 	// Can this language / editor mode support this?
-	if funcPrefix == "" {
+	if funcPrefix == "" && cLikeness(e.mode) == 0 {
 		return false
 	}
 
@@ -58,12 +58,30 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 
 	// TODO: Search for variables, constants etc
 	// Go to definition, but only of functions defined within the same Go file, for now
-	e.SetSearchTerm(c, status, s, false)
 
-	// Backward search from the current location
-	startIndex := e.DataY()
-	stopIndex := LineIndex(0)
-	foundX, foundY := e.backwardSearch(startIndex, stopIndex)
+	var (
+		foundX int       = -1
+		foundY LineIndex = -1
+	)
+
+	if funcPrefix == "" && cLikeness(e.mode) > 0 && s == word { // Special handling for C-like languages, if it's a simple function name
+		startIndex := e.DataY()
+		for y := startIndex; y >= 0; y-- {
+			line := e.Line(y)
+			if e.LooksLikeFunctionDef(line, "") && e.FunctionName(line) == word {
+				foundY = y
+				foundX = 0 // We don't have exact X, but 0 is fine for line jump
+				break
+			}
+		}
+	} else {
+		e.SetSearchTerm(c, status, s, false)
+
+		// Backward search from the current location
+		startIndex := e.DataY()
+		stopIndex := LineIndex(0)
+		foundX, foundY = e.backwardSearch(startIndex, stopIndex)
+	}
 	if foundY != -1 {
 		// Go to the found match
 		redraw, _ := e.GoTo(foundY, c, status)
@@ -100,17 +118,40 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 
 		var filenames []string
 
-		if curDirFilenames, err := filepath.Glob("*" + ext); err == nil { // success
-			filenames = append(filenames, curDirFilenames...)
-		}
-		if absFilename, err := filepath.Abs(e.filename); err == nil { // success
-			sourceDir := filepath.Join(filepath.Dir(absFilename), "*"+ext)
-			if sourceDirFiles, err := filepath.Glob(sourceDir); err == nil { // success
-				filenames = append(filenames, sourceDirFiles...)
+		// If this is C-like, searching for *ext is not enough.
+		// For example, one might want to jump from a .c file to a definition in a .h file.
+		if cLikeness(e.mode) > 0 {
+			// C-like languages
+			// TODO: Use a slice of strings for the extensions instead of checking one by one
+			extensions := []string{".c", ".cpp", ".cc", ".cxx", ".m", ".mm", ".h", ".hpp"}
+			for _, ext := range extensions {
+				if curDirFilenames, err := filepath.Glob("*" + ext); err == nil {
+					filenames = append(filenames, curDirFilenames...)
+				}
+				if absFilename, err := filepath.Abs(e.filename); err == nil {
+					sourceDir := filepath.Join(filepath.Dir(absFilename), "*"+ext)
+					if sourceDirFiles, err := filepath.Glob(sourceDir); err == nil {
+						filenames = append(filenames, sourceDirFiles...)
+					}
+				}
+				if filenamesParent, err := filepath.Glob("../*" + ext); err == nil {
+					filenames = append(filenames, filenamesParent...)
+				}
 			}
-		}
-		if filenamesParent, err := filepath.Glob("../*" + ext); err == nil { // success
-			filenames = append(filenames, filenamesParent...)
+		} else {
+			// Other languages
+			if curDirFilenames, err := filepath.Glob("*" + ext); err == nil { // success
+				filenames = append(filenames, curDirFilenames...)
+			}
+			if absFilename, err := filepath.Abs(e.filename); err == nil { // success
+				sourceDir := filepath.Join(filepath.Dir(absFilename), "*"+ext)
+				if sourceDirFiles, err := filepath.Glob(sourceDir); err == nil { // success
+					filenames = append(filenames, sourceDirFiles...)
+				}
+			}
+			if filenamesParent, err := filepath.Glob("../*" + ext); err == nil { // success
+				filenames = append(filenames, filenamesParent...)
+			}
 		}
 
 		if len(filenames) > 0 { // success, found source files to examine
@@ -141,7 +182,7 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 								}
 							}
 							redraw, _ := e.GoTo(LineIndex(i), c, status)
-							e.redraw.Store(redraw)
+							e.redraw.Store(redraw || (goFile != oldFilename))
 							// Push a function for how to go back
 							backFunctions = append(backFunctions, func() {
 								oldFilename := oldFilename
