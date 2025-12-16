@@ -1,4 +1,4 @@
-.PHONY: clean gui gui-install gui-symlinks install install-gui install-symlinks ko ko-install og og-install symlinks symlinks-install vg-symlink
+.PHONY: clean gui gui-install gui-symlinks install install-gui install-symlinks ko ko-install og og-install symlinks symlinks-install
 
 PROJECT ?= orbiton
 
@@ -86,7 +86,7 @@ install-ko: install-gtk3
 og-install: install-gtk3
 install-og: install-gtk3
 
-install-gtk3: gtk3/gtk3 vg-symlink
+install-gtk3: gtk3/gtk3
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
 	install -m755 gtk3/gtk3 "$(DESTDIR)$(PREFIX)/bin/og"
 	mkdir -p "$(DESTDIR)$(PREFIX)/share/pixmaps"
@@ -101,12 +101,8 @@ symlinks-install: symlinks
 
 symlinks:
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
-	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/li"
-	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/redblack"
-	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/sw"
-	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/edi"
+	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/osudo"
 	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/vs"
-	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/teal"
 
 # For pico/nano style editing
 nano-symlink:
@@ -121,17 +117,9 @@ symlinks-gui-install: gui-symlinks
 symlinks-install-gui: gui-symlinks
 install-symlinks-gui: gui-symlinks
 
-vg-symlink:
-	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
-	ln -s -f "$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/vg"
-
-gui-symlinks: vg-symlink
+gui-symlinks:
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
 	ln -s -f "$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/lig"
-	ln -s -f "$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/redblackg"
-	ln -s -f "$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/swg"
-	ln -s -f "$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/edg"
-	ln -s -f "$(PREFIX)/bin/og" "$(DESTDIR)$(PREFIX)/bin/tealg"
 
 easteregg:
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
