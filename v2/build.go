@@ -483,6 +483,10 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		cmd = exec.Command("crystal", "build", "--no-color", sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
+	case mode.COBOL:
+		cmd = exec.Command("cobc", "-x", "-o", exeFirstName, sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Dart:
 		cmd = exec.Command("dart", "compile", "exe", "--verbosity", "error", "-o", exeFirstName, sourceFilename)
 		cmd.Dir = sourceDir
