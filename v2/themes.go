@@ -441,7 +441,7 @@ func NewZuluTheme() Theme {
 		ManSynopsisColor:            vt.LightCyan,
 		BoxTextColor:                vt.White,
 		BoxBackground:               vt.BackgroundBlack,
-		ProgressIndicatorBackground: vt.BackgroundBlack,
+		ProgressIndicatorBackground: vt.BackgroundGray,
 		BoxHighlight:                vt.LightYellow,
 		DebugRunningBackground:      vt.BackgroundGreen,
 		DebugStoppedBackground:      vt.BackgroundMagenta,
