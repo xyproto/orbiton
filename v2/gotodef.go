@@ -59,6 +59,10 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 	// TODO: Search for variables, constants etc
 	// Go to definition, but only of functions defined within the same Go file, for now
 
+	// Capture state before jumping
+	oldFilename := e.filename
+	oldLineIndex := e.LineIndex()
+
 	var (
 		foundX int       = -1
 		foundY LineIndex = -1
@@ -70,7 +74,10 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 			line := e.Line(y)
 			if e.LooksLikeFunctionDef(line, "") && e.FunctionName(line) == word {
 				foundY = y
-				foundX = 0 // We don't have exact X, but 0 is fine for line jump
+				foundX = strings.Index(line, word) // Position cursor at the function name
+				if foundX < 0 {
+					foundX = 0
+				}
 				break
 			}
 		}
@@ -96,6 +103,18 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 		tabs := strings.Count(e.Line(foundY), "\t")
 		e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
 		e.HorizontalScrollIfNeeded(c)
+
+		// Push a function for how to go back
+		backFunctions = append(backFunctions, func() {
+			oldFilename := oldFilename
+			oldLineIndex := oldLineIndex
+			if e.filename != oldFilename {
+				e.Switch(c, tty, status, fileLock, oldFilename)
+			}
+			redraw, _ := e.GoTo(oldLineIndex, c, status)
+			e.redraw.Store(redraw)
+		})
+
 		return true
 	}
 
@@ -114,48 +133,77 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 	}
 
 	if len(name) > 0 {
-		ext := filepath.Ext(e.filename)
+		// Determine which file extensions to search
+		// For C-like languages, search across all C-family extensions (.c, .h, .cpp, etc.)
+		// For other languages, search only files with the same extension
+		var extensions []string
+		if cLikeness(e.mode) > 0 {
+			extensions = cExtensions
+		} else {
+			extensions = []string{filepath.Ext(e.filename)}
+		}
 
+		// Use a map to deduplicate files (avoid processing same file multiple times)
+		fileSet := make(map[string]bool)
 		var filenames []string
 
-		// If this is C-like, searching for *ext is not enough.
-		// For example, one might want to jump from a .c file to a definition in a .h file.
-		if cLikeness(e.mode) > 0 {
-			// C-like languages
-			// TODO: Use a slice of strings for the extensions instead of checking one by one
-			extensions := []string{".c", ".cpp", ".cc", ".cxx", ".m", ".mm", ".h", ".hpp"}
-			for _, ext := range extensions {
-				if curDirFilenames, err := filepath.Glob("*" + ext); err == nil {
-					filenames = append(filenames, curDirFilenames...)
-				}
-				if absFilename, err := filepath.Abs(e.filename); err == nil {
-					sourceDir := filepath.Join(filepath.Dir(absFilename), "*"+ext)
-					if sourceDirFiles, err := filepath.Glob(sourceDir); err == nil {
-						filenames = append(filenames, sourceDirFiles...)
+		for _, ext := range extensions {
+			if curDirFilenames, err := filepath.Glob("*" + ext); err == nil {
+				for _, fn := range curDirFilenames {
+					if absFn, err := filepath.Abs(fn); err == nil {
+						if !fileSet[absFn] {
+							fileSet[absFn] = true
+							filenames = append(filenames, fn)
+						}
 					}
 				}
-				if filenamesParent, err := filepath.Glob("../*" + ext); err == nil {
-					filenames = append(filenames, filenamesParent...)
-				}
 			}
-		} else {
-			// Other languages
-			if curDirFilenames, err := filepath.Glob("*" + ext); err == nil { // success
-				filenames = append(filenames, curDirFilenames...)
-			}
-			if absFilename, err := filepath.Abs(e.filename); err == nil { // success
+			if absFilename, err := filepath.Abs(e.filename); err == nil {
 				sourceDir := filepath.Join(filepath.Dir(absFilename), "*"+ext)
-				if sourceDirFiles, err := filepath.Glob(sourceDir); err == nil { // success
-					filenames = append(filenames, sourceDirFiles...)
+				if sourceDirFiles, err := filepath.Glob(sourceDir); err == nil {
+					for _, fn := range sourceDirFiles {
+						if absFn, err := filepath.Abs(fn); err == nil {
+							if !fileSet[absFn] {
+								fileSet[absFn] = true
+								filenames = append(filenames, fn)
+							}
+						}
+					}
 				}
 			}
-			if filenamesParent, err := filepath.Glob("../*" + ext); err == nil { // success
-				filenames = append(filenames, filenamesParent...)
+			if filenamesParent, err := filepath.Glob("../*" + ext); err == nil {
+				for _, fn := range filenamesParent {
+					if absFn, err := filepath.Abs(fn); err == nil {
+						if !fileSet[absFn] {
+							fileSet[absFn] = true
+							filenames = append(filenames, fn)
+						}
+					}
+				}
 			}
 		}
 
 		if len(filenames) > 0 { // success, found source files to examine
-			for _, goFile := range filenames {
+			// Prioritize searching current file first, then others
+			var orderedFilenames []string
+			var otherFilenames []string
+			currentFileAbs, _ := filepath.Abs(e.filename)
+			for _, fn := range filenames {
+				if absFn, err := filepath.Abs(fn); err == nil && absFn == currentFileAbs {
+					orderedFilenames = append([]string{fn}, orderedFilenames...) // prepend current file
+				} else {
+					otherFilenames = append(otherFilenames, fn)
+				}
+			}
+			orderedFilenames = append(orderedFilenames, otherFilenames...)
+
+			for _, goFile := range orderedFilenames {
+				// Normalize path to absolute for proper comparison
+				absGoFile, err := filepath.Abs(goFile)
+				if err != nil {
+					absGoFile = goFile // fallback to original if Abs fails
+				}
+
 				data, err := os.ReadFile(goFile)
 				if err != nil {
 					continue
@@ -172,23 +220,22 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 
 						// go to a function definition
 						if e.LooksLikeFunctionDef(line, funcPrefix) && e.FunctionName(line) == name {
-							//logf("PROLLY FUNC: %s LINE %d WORD %s NAME %s\n", goFile, i+1, word, name)
+							//logf("FOUND FUNC: %s LINE %d WORD %s NAME %s\n", goFile, i+1, word, name)
 
-							oldFilename := e.filename
-							oldLineIndex := e.LineIndex()
-							if goFile != oldFilename {
+							if absGoFile != oldFilename {
 								if err := e.Switch(c, tty, status, fileLock, goFile); err != nil {
 									return false // could not switch
 								}
 							}
 							redraw, _ := e.GoTo(LineIndex(i), c, status)
-							e.redraw.Store(redraw || (goFile != oldFilename))
+							e.redraw.Store(redraw || (absGoFile != oldFilename))
+
 							// Push a function for how to go back
 							backFunctions = append(backFunctions, func() {
 								oldFilename := oldFilename
 								oldLineIndex := oldLineIndex
-								goFile := goFile
-								if goFile != oldFilename {
+								absGoFile := absGoFile
+								if absGoFile != oldFilename {
 									e.Switch(c, tty, status, fileLock, oldFilename)
 								}
 								redraw, _ := e.GoTo(oldLineIndex, c, status)
@@ -202,10 +249,7 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 						if !functionCall && emptyBeforeWord && !strings.Contains(trimmedLine, ":") && !strings.Contains(trimmedLine, "=") && !strings.Contains(trimmedLine, ",") {
 							//logf("PROLLY TYPE: %s LINE %d WORD %s NAME %s\n", goFile, i+1, word, name)
 
-							oldFilename := e.filename
-							oldLineIndex := e.LineIndex()
-
-							if goFile != oldFilename {
+							if absGoFile != oldFilename {
 								if err := e.Switch(c, tty, status, fileLock, goFile); err != nil {
 									return false // could not switch
 								}
@@ -217,8 +261,8 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 							backFunctions = append(backFunctions, func() {
 								oldFilename := oldFilename
 								oldLineIndex := oldLineIndex
-								goFile := goFile
-								if goFile != oldFilename {
+								absGoFile := absGoFile
+								if absGoFile != oldFilename {
 									e.Switch(c, tty, status, fileLock, oldFilename)
 								}
 								redraw, _ := e.GoTo(oldLineIndex, c, status)

@@ -41,13 +41,29 @@ func cLikeness(m mode.Mode) float64 {
 	}
 }
 
-// Common C/C++ control flow keywords to exclude from function definition checks
-var cControlFlow = []string{"if", "while", "for", "switch", "return", "else", "do", "catch", "case", "default", "goto", "break", "continue"}
+// startsWithCType checks if the line starts with a C type, composite type, or modifier+type
+func startsWithCType(line string) bool {
+	return hasPrefixWithSpace(line, cTypes) || hasPrefixWithSpace(line, cCompositeTypes)
+}
+
+// startsWithCModifierAndType checks if line starts with a modifier followed by a type
+func startsWithCModifierAndType(line string) bool {
+	for _, modifier := range cModifiers {
+		// Check for modifier followed by space to avoid false matches
+		modifierWithSpace := modifier + " "
+		if strings.HasPrefix(line, modifierWithSpace) {
+			remaining := strings.TrimPrefix(line, modifierWithSpace)
+			if startsWithCType(remaining) {
+				return true
+			}
+		}
+	}
+	return false
+}
 
 // cLooksLikeFunctionDef checks if a line looks like a C/C++ function definition
 // This includes enhanced detection for incomplete function definitions split across lines
 func (e *Editor) cLooksLikeFunctionDef(line string) bool {
-	// Trimmed line without comments
 	trimmedLine := e.StripSingleLineComment(strings.TrimSpace(line))
 
 	// Filter out comments
@@ -58,62 +74,43 @@ func (e *Editor) cLooksLikeFunctionDef(line string) bool {
 	if strings.HasSuffix(trimmedLine, "()") {
 		return true
 	}
-	if !strings.Contains(trimmedLine, "(") { // must contain at least one "("
+	if !strings.Contains(trimmedLine, "(") {
 		return false
 	}
 
-	// Check for complete function definitions
-	if strings.HasSuffix(trimmedLine, "{") || strings.HasSuffix(trimmedLine, ")") || strings.HasSuffix(trimmedLine, "};") || strings.HasSuffix(trimmedLine, "} ;") || strings.HasSuffix(trimmedLine, "}") {
-		if strings.Contains(trimmedLine, ";") && !(strings.HasSuffix(trimmedLine, "};") || strings.HasSuffix(trimmedLine, "} ;") || (strings.Contains(trimmedLine, "{") && strings.Contains(trimmedLine, "}"))) {
+	// Check for complete function definitions (lines ending with {, ), }, };, or } ;)
+	endsLikeFuncDef := strings.HasSuffix(trimmedLine, "{") ||
+		strings.HasSuffix(trimmedLine, ")") ||
+		strings.HasSuffix(trimmedLine, "}") ||
+		strings.HasSuffix(trimmedLine, "};") ||
+		strings.HasSuffix(trimmedLine, "} ;")
+
+	if endsLikeFuncDef {
+		// Reject forward declarations (have ; but don't end with }; or } ; and aren't one-liners)
+		hasSemicolon := strings.Contains(trimmedLine, ";")
+		endsWithBraceSemi := strings.HasSuffix(trimmedLine, "};") || strings.HasSuffix(trimmedLine, "} ;")
+		isOneLiner := strings.Contains(trimmedLine, "{") && strings.Contains(trimmedLine, "}")
+		if hasSemicolon && !endsWithBraceSemi && !isOneLiner {
 			return false
 		}
-		for _, x := range cTypes {
-			if strings.HasPrefix(trimmedLine, x) {
-				return true // it looks-ish like a function definition
-			}
+		if startsWithCType(trimmedLine) {
+			return true
 		}
 	} else if cLikeness(e.mode) >= 0.8 {
 		// Handle incomplete function definitions (split across lines) - only for core C/C++ modes
-		// Look for patterns like "static int functionName(" or "void functionName(const"
-		if strings.Contains(trimmedLine, ";") { // declarations with semicolons are not definitions
+		if strings.Contains(trimmedLine, ";") {
 			return false
 		}
-		// Check if this looks like an assignment (= before the main function call or lambda)
+		// Reject assignments (= before function call or lambda)
 		if strings.Contains(trimmedLine, "=") {
-			// Find the last = (in case of operators like ==, !=, etc.)
 			equalPos := strings.LastIndex(trimmedLine, "=")
-			// Check if there's a ( or [ after the = (function call or lambda)
 			afterEqual := trimmedLine[equalPos+1:]
 			if strings.Contains(afterEqual, "(") || strings.Contains(afterEqual, "[") {
-				return false // this is an assignment, not a function definition
+				return false
 			}
 		}
-
-		// Check if line starts with C/C++ type keywords or modifiers
-		for _, x := range cTypes {
-			if strings.HasPrefix(trimmedLine, x) {
-				return true // looks like start of a function definition
-			}
-		}
-		if strings.HasPrefix(trimmedLine, "struct ") || strings.HasPrefix(trimmedLine, "enum ") || strings.HasPrefix(trimmedLine, "union ") {
+		if startsWithCType(trimmedLine) || startsWithCModifierAndType(trimmedLine) {
 			return true
-		}
-
-		// Check for common C/C++ function modifiers/specifiers
-		modifiers := []string{"constexpr ", "explicit ", "extern ", "inline ", "noexcept ", "override ", "static ", "virtual "}
-		for _, modifier := range modifiers {
-			if strings.HasPrefix(trimmedLine, modifier) {
-				// Check if there's a type after the modifier
-				remaining := strings.TrimPrefix(trimmedLine, modifier)
-				for _, x := range cTypes {
-					if strings.HasPrefix(remaining, x) {
-						return true
-					}
-				}
-				if strings.HasPrefix(remaining, "struct ") || strings.HasPrefix(remaining, "enum ") || strings.HasPrefix(remaining, "union ") {
-					return true
-				}
-			}
 		}
 	}
 
@@ -151,53 +148,43 @@ func (e *Editor) cLooksLikeFunctionDef(line string) bool {
 	return false
 }
 
+// stripPointerRef removes leading * and & from a function name
+func stripPointerRef(name string) string {
+	name = strings.TrimSpace(name)
+	name = strings.TrimPrefix(name, "*")
+	name = strings.TrimPrefix(name, "&")
+	return strings.TrimSpace(name)
+}
+
+// wordLooksLikeCType checks if a word looks like a C type or composite type keyword
+func wordLooksLikeCType(word string) bool {
+	return hasPrefix(word, cTypes) || hasPrefix(word, cCompositeTypes)
+}
+
 // cExtractFunctionName extracts function name from a C/C++ function definition line
 func (e *Editor) cExtractFunctionName(line string) string {
-	trimmedLine := strings.TrimSpace(line)
-	s := strings.TrimSpace(strings.TrimSuffix(trimmedLine, "{"))
-
+	s := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(line), "{"))
 	words := strings.Split(s, " ")
+
 	for i, word := range words {
 		if strings.Contains(word, "(") {
 			// Found the word with opening parenthesis
 			fields := strings.SplitN(word, "(", 2)
-			functionName := strings.TrimSpace(fields[0])
-			// Remove any pointer/reference symbols for C/C++
-			functionName = strings.TrimPrefix(functionName, "*")
-			functionName = strings.TrimPrefix(functionName, "&")
-			if trimmedFunctionName := strings.TrimSpace(functionName); trimmedFunctionName != "" {
-				return trimmedFunctionName
+			if name := stripPointerRef(fields[0]); name != "" {
+				return name
 			}
 		} else if i > 0 && i == len(words)-1 {
-			// Enhanced incomplete function detection - only for C/C++
 			// Last word without parenthesis - might be incomplete function def
-			// Check if previous words contain types/modifiers
-			hasTypeOrModifier := false
+			// Check if any previous word is a type/modifier
 			for j := 0; j < i; j++ {
-				prevWord := words[j]
-				for _, cType := range cTypes {
-					if strings.HasPrefix(prevWord, strings.TrimSpace(cType)) {
-						hasTypeOrModifier = true
-						break
+				if wordLooksLikeCType(words[j]) {
+					if name := stripPointerRef(word); name != "" {
+						return name
 					}
-				}
-				if strings.HasPrefix(prevWord, "struct") || strings.HasPrefix(prevWord, "enum") || strings.HasPrefix(prevWord, "union") {
-					hasTypeOrModifier = true
-				}
-				if hasTypeOrModifier {
 					break
-				}
-			}
-			if hasTypeOrModifier {
-				functionName := strings.TrimSpace(word)
-				functionName = strings.TrimPrefix(functionName, "*")
-				functionName = strings.TrimPrefix(functionName, "&")
-				if trimmedFunctionName := strings.TrimSpace(functionName); trimmedFunctionName != "" {
-					return trimmedFunctionName
 				}
 			}
 		}
 	}
-
 	return ""
 }

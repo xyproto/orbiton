@@ -31,8 +31,20 @@ var (
 	// Most common types in C and C++
 	cTypes = []string{"bool", "char", "const", "constexpr", "double", "float", "inline", "int", "int16_t", "int32_t", "int64_t", "int8_t", "long", "short", "signed", "size_t", "static", "uint", "uint16_t", "uint32_t", "uint64_t", "uint8_t", "unsigned", "void", "volatile"}
 
+	// File extensions for C-family source files (used for cross-file definition search)
+	cExtensions = []string{".c", ".cc", ".cpp", ".cxx", ".h", ".hpp", ".m", ".mm"}
+
+	// C/C++ control flow keywords (excluded from function definition checks)
+	cControlFlow = []string{"break", "case", "catch", "continue", "default", "do", "else", "for", "goto", "if", "return", "switch", "while"}
+
+	// C/C++ function modifiers not already in cTypes
+	cModifiers = []string{"explicit", "extern", "noexcept", "override", "virtual"}
+
+	// C/C++ composite type keywords
+	cCompositeTypes = []string{"enum", "struct", "union"}
+
 	// Dart + some FFI classes
-	dartWords = []string{"ArrayType", "BigInt", "DateTime", "Deprecated", "Double", "Duration", "Float", "Function", "Future", "Int16", "Int32", "Int64", "Int8", "Iterable", "List", "Map", "Null", "Object", "Pointer", "Queue", "Set", "Stream", "String", "Struct", "Uint16", "Uint32", "Uint64", "Uint8", "Uri", "Void", "abstract", "as", "assert", "async", "await", "bool", "break", "case", "catch", "class", "const", "continue", "covariant", "default", "deferred", "do", "double", "dynamic", "else", "enum", "export", "extends", "extension", "external", "factory", "false", "final", "finally", "for", "get", "hide", "if", "implements", "import", "in", "int", "interface", "is", "late", "library", "mixin", "new", "null", "num", "on", "operator", "override", "part", "required", "rethrow", "return", "set", "show", "static", "super", "switch", "sync", "this", "throw", "true", "try", "typedef", "var", "void", "while", "with", "yield"}
+	dartWords = []string{"abstract", "ArrayType", "as", "assert", "async", "await", "BigInt", "bool", "break", "case", "catch", "class", "const", "continue", "covariant", "DateTime", "default", "deferred", "Deprecated", "do", "double", "Double", "Duration", "dynamic", "else", "enum", "export", "extends", "extension", "external", "factory", "false", "final", "finally", "Float", "for", "Function", "Future", "get", "hide", "if", "implements", "import", "in", "int", "Int16", "Int32", "Int64", "Int8", "interface", "is", "Iterable", "late", "library", "List", "Map", "mixin", "new", "null", "Null", "num", "Object", "on", "operator", "override", "part", "Pointer", "Queue", "required", "rethrow", "return", "Set", "set", "show", "static", "Stream", "String", "Struct", "super", "switch", "sync", "this", "throw", "true", "try", "typedef", "Uint16", "Uint32", "Uint64", "Uint8", "Uri", "var", "Void", "void", "while", "with", "yield"}
 
 	// Elisp
 	emacsWords = []string{"add-to-list", "defconst", "defun", "defvar", "if", "lambda", "let", "load", "nil", "require", "setq", "when"}

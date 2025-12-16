@@ -36,6 +36,27 @@ func hasWords(s string) bool {
 	return false
 }
 
+// hasPrefix checks if the given string starts with one of the given prefixes
+func hasPrefix(s string, prefixes []string) bool {
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(s, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
+// hasPrefixWithSpace checks if the given string starts with one of the given prefixes
+// plus a space after the prefix.
+func hasPrefixWithSpace(s string, prefixes []string) bool {
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(s, prefix+" ") {
+			return true
+		}
+	}
+	return false
+}
+
 // containsSubstring checks if the given string contains one of the given substrings
 func containsSubstring(haystack string, substrings []string) bool {
 	for _, ss := range substrings {
