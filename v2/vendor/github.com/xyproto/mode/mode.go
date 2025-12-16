@@ -29,12 +29,14 @@ const (
 	CSS                   // CSS
 	Chuck                 // Chuck // music
 	Clojure               // Clojure
+	COBOL                 // COBOL
 	Config                // Config like yaml, yml, toml, and ini files
 	Cpp                   // C++
 	Crystal               // Crystal
 	D                     // D
 	Dart                  // Dart
 	Diff                  // Diff / patch
+	Dingo                 // Dingo
 	Docker                // For Dockerfiles
 	Email                 // For using o with ie. Mutt
 	Elm                   // Elm
@@ -167,6 +169,8 @@ func (mode Mode) String() string {
 		return "Chuck"
 	case CMake:
 		return "CMake"
+	case COBOL:
+		return "COBOL"
 	case Config:
 		return "Configuration"
 	case Cpp:
@@ -185,6 +189,8 @@ func (mode Mode) String() string {
 		return "Dart"
 	case Diff:
 		return "Diff / patch"
+	case Dingo:
+		return "Dingo"
 	case Docker:
 		return "Docker"
 	case Elm:

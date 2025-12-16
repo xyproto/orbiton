@@ -107,6 +107,8 @@ func Detect(filename string) Mode {
 			mode = C3
 		case ".c67":
 			mode = C67
+		case ".cb", ".cbl", ".cob", ".cby", ".cobol":
+			mode = COBOL
 		case ".cm":
 			// Standard ML project file
 			mode = StandardML
@@ -133,6 +135,8 @@ func Detect(filename string) Mode {
 			mode = D
 		case ".dart":
 			mode = Dart
+		case ".dingo":
+			mode = Dingo
 		case ".patch", ".diff":
 			mode = Diff
 		case ".elm":

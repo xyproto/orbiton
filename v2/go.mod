@@ -30,7 +30,7 @@ require (
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
 	github.com/xyproto/megafile v1.1.1
-	github.com/xyproto/mode v0.12.0
+	github.com/xyproto/mode v0.12.1
 	github.com/xyproto/ollamaclient/v2 v2.7.2
 	github.com/xyproto/palgen v1.6.1
 	github.com/xyproto/termtitle v1.5.1

@@ -128,7 +128,7 @@ github.com/xyproto/lookslikegoasm
 # github.com/xyproto/megafile v1.1.1
 ## explicit; go 1.25.3
 github.com/xyproto/megafile
-# github.com/xyproto/mode v0.12.0
+# github.com/xyproto/mode v0.12.1
 ## explicit; go 1.23.2
 github.com/xyproto/mode
 # github.com/xyproto/ollamaclient/v2 v2.7.2
