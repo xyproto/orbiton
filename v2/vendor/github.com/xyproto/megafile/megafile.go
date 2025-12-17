@@ -1,4 +1,4 @@
-// package megafile provides functionality for a simple TUI for browsing files and directories
+// Package megafile provides functionality for a simple TUI for browsing files and directories
 package megafile
 
 import (
@@ -34,20 +34,33 @@ const (
 	topLine = uint(1)
 )
 
-// State holds the current state of the shell, then canvas and the directory structures
-type State struct {
-	c            *vt.Canvas
-	dir          []string
-	dirIndex     uint
-	quit         bool
-	startx       uint
-	starty       uint
-	promptLength uint
-	written      []rune
-	prevdir      []string
-	showHidden   bool
+// FileEntry represents a file entry with position and name information
+type FileEntry struct {
+	x           uint
+	y           uint
+	realName    string
+	displayName string
 }
 
+// State holds the current state of the shell, then canvas and the directory structures
+type State struct {
+	c              *vt.Canvas
+	dir            []string
+	dirIndex       uint
+	quit           bool
+	startx         uint
+	starty         uint
+	promptLength   uint
+	written        []rune
+	prevdir        []string
+	showHidden     bool
+	fileEntries    []FileEntry
+	selectedIndex  int
+	selectionMoved bool
+	filterPattern  string
+}
+
+// ErrExit is the error that is returned if the user appeared to want to exit
 var ErrExit = errors.New("exit")
 
 func ulen[T string | []rune | []string](xs T) uint {
@@ -76,8 +89,65 @@ func (s *State) drawError(text string) {
 	}
 }
 
-func (s *State) ls(dir string) error {
-	const margin = 1
+func (s *State) highlightSelection() {
+	if len(s.fileEntries) == 0 || s.selectedIndex < 0 {
+		return
+	}
+	if s.selectedIndex >= len(s.fileEntries) {
+		s.selectedIndex = len(s.fileEntries) - 1
+	}
+
+	entry := s.fileEntries[s.selectedIndex]
+	s.c.Write(entry.x, entry.y, vt.Black, vt.BackgroundWhite, entry.displayName)
+}
+
+func (s *State) clearHighlight() {
+	if s.selectedIndex >= 0 && s.selectedIndex < len(s.fileEntries) {
+		entry := s.fileEntries[s.selectedIndex]
+
+		// Clear only the area that was actually highlighted (displayName + suffix)
+		clearWidth := ulen(entry.displayName) + 2 // +2 for suffix and safety margin
+		for i := uint(0); i < clearWidth; i++ {
+			s.c.WriteRune(entry.x+i, entry.y, vt.Default, vt.BackgroundDefault, ' ')
+		}
+
+		// Redraw with original colors
+		path := filepath.Join(s.dir[s.dirIndex], entry.realName)
+		var color vt.AttributeColor
+		var suffix string
+
+		if files.IsDir(path) && files.IsSymlink(path) {
+			color = vt.Blue
+			suffix = ">"
+		} else if files.IsDir(path) {
+			color = vt.Blue
+			suffix = "/"
+		} else if files.IsExecutableCached(path) {
+			color = vt.LightGreen
+			suffix = "*"
+		} else if files.IsSymlink(path) {
+			color = vt.LightRed
+			suffix = "^"
+		} else if files.IsBinary(path) {
+			color = vt.LightMagenta
+			suffix = "¤"
+		} else {
+			color = vt.Default
+			suffix = ""
+		}
+
+		s.c.Write(entry.x, entry.y, color, vt.BackgroundDefault, entry.displayName)
+		if suffix != "" {
+			s.c.Write(entry.x+ulen(entry.displayName), entry.y, vt.White, vt.BackgroundDefault, suffix)
+		}
+	}
+}
+
+func (s *State) ls(dir string) (int, error) {
+	const (
+		margin      = 1
+		columnWidth = 25
+	)
 	var (
 		x            = s.startx
 		y            = s.starty + 1
@@ -86,35 +156,89 @@ func (s *State) ls(dir string) error {
 	)
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return err
+		return 0, err
 	}
+
+	// Clear file entries for new listing
+	s.fileEntries = []FileEntry{}
+
 	for _, e := range entries {
 		name := e.Name()
 		if !s.showHidden && strings.HasPrefix(name, ".") {
 			continue
 		}
+
+		// Filter by pattern if one is set
+		if s.filterPattern != "" {
+			// Check if pattern contains glob special characters
+			hasGlobChars := strings.ContainsAny(s.filterPattern, "*?[]")
+			matched := false
+			if hasGlobChars {
+				// Use glob pattern matching
+				var err error
+				matched, err = filepath.Match(s.filterPattern, name)
+				if err != nil {
+					matched = false
+				}
+			} else {
+				// Use simple prefix matching for plain text
+				matched = strings.HasPrefix(name, s.filterPattern)
+			}
+			if !matched {
+				continue
+			}
+		}
+
+		// Determine display name (truncate if needed)
+		displayName := name
+		if ulen(name) > columnWidth-2 {
+			displayName = string([]rune(name)[:columnWidth-5]) + "..."
+		}
+
+		// Store file entry with position info
+		s.fileEntries = append(s.fileEntries, FileEntry{
+			x:           x,
+			y:           y,
+			realName:    name,
+			displayName: displayName,
+		})
+
 		if ulen(name) > longestSoFar {
 			longestSoFar = ulen(name)
 		}
-		path := filepath.Join(dir, name)
-		if files.IsDir(path) && files.IsSymlink(path) {
-			s.c.Write(x, y, vt.Blue, vt.BackgroundDefault, name)
-			s.c.Write(x+ulen(name), y, vt.White, vt.BackgroundDefault, ">")
-		} else if files.IsDir(path) {
-			s.c.Write(x, y, vt.Blue, vt.BackgroundDefault, name)
-			s.c.Write(x+ulen(name), y, vt.White, vt.BackgroundDefault, "/")
-		} else if files.IsExecutableCached(path) {
-			s.c.Write(x, y, vt.LightGreen, vt.BackgroundDefault, name)
-			s.c.Write(x+ulen(name), y, vt.White, vt.BackgroundDefault, "*")
-		} else if files.IsSymlink(path) {
-			s.c.Write(x, y, vt.LightRed, vt.BackgroundDefault, name)
-			s.c.Write(x+ulen(name), y, vt.White, vt.BackgroundDefault, "^")
-		} else if files.IsBinary(path) {
-			s.c.Write(x, y, vt.LightMagenta, vt.BackgroundDefault, name)
-			s.c.Write(x+ulen(name), y, vt.White, vt.BackgroundDefault, "¤")
-		} else {
-			s.c.Write(x, y, vt.Default, vt.BackgroundDefault, name)
+		if longestSoFar > columnWidth {
+			longestSoFar = columnWidth
 		}
+
+		path := filepath.Join(dir, name)
+		var color vt.AttributeColor
+		var suffix string
+
+		if files.IsDir(path) && files.IsSymlink(path) {
+			color = vt.Blue
+			suffix = ">"
+		} else if files.IsDir(path) {
+			color = vt.Blue
+			suffix = "/"
+		} else if files.IsExecutableCached(path) {
+			color = vt.LightGreen
+			suffix = "*"
+		} else if files.IsSymlink(path) {
+			color = vt.LightRed
+			suffix = "^"
+		} else if files.IsBinary(path) {
+			color = vt.LightMagenta
+			suffix = "¤"
+		} else {
+			color = vt.Default
+			suffix = ""
+		}
+
+		s.c.Write(x, y, color, vt.BackgroundDefault, displayName)
+		if suffix != "" {
+			s.c.Write(x+ulen(displayName), y, vt.White, vt.BackgroundDefault, suffix)
+		}
+
 		y++
 		if y >= s.c.H() {
 			x += longestSoFar + margin
@@ -124,7 +248,86 @@ func (s *State) ls(dir string) error {
 			break
 		}
 	}
-	return nil
+
+	// Reset selection if out of bounds
+	if s.selectedIndex >= len(s.fileEntries) {
+		s.selectedIndex = 0
+	}
+
+	return len(s.fileEntries), nil
+}
+
+func (s *State) confirmBinaryEdit(tty *vt.TTY, filename string) bool {
+	c := s.c
+	w := c.W()
+	h := c.H()
+
+	// Calculate dialog box dimensions
+	boxWidth := uint(60)
+	boxHeight := uint(9)
+	if boxWidth > w-4 {
+		boxWidth = w - 4
+	}
+	startX := (w - boxWidth) / 2
+	startY := (h - boxHeight) / 2
+
+	// Draw fancy ASCII art dialog box
+	// Top border
+	c.Write(startX, startY, vt.LightCyan, vt.BackgroundDefault, "╔")
+	for i := uint(1); i < boxWidth-1; i++ {
+		c.Write(startX+i, startY, vt.LightCyan, vt.BackgroundDefault, "═")
+	}
+	c.Write(startX+boxWidth-1, startY, vt.LightCyan, vt.BackgroundDefault, "╗")
+
+	// Middle rows
+	for i := uint(1); i < boxHeight-1; i++ {
+		c.Write(startX, startY+i, vt.LightCyan, vt.BackgroundDefault, "║")
+		// Clear the middle
+		for j := uint(1); j < boxWidth-1; j++ {
+			c.WriteRune(startX+j, startY+i, vt.Default, vt.BackgroundDefault, ' ')
+		}
+		c.Write(startX+boxWidth-1, startY+i, vt.LightCyan, vt.BackgroundDefault, "║")
+	}
+
+	// Bottom border
+	c.Write(startX, startY+boxHeight-1, vt.LightCyan, vt.BackgroundDefault, "╚")
+	for i := uint(1); i < boxWidth-1; i++ {
+		c.Write(startX+i, startY+boxHeight-1, vt.LightCyan, vt.BackgroundDefault, "═")
+	}
+	c.Write(startX+boxWidth-1, startY+boxHeight-1, vt.LightCyan, vt.BackgroundDefault, "╝")
+
+	// First line: filename is a binary file
+	maxNameLen := int(boxWidth - 20) // Leave room for " is a binary file"
+	displayName := filename
+	if len(filename) > maxNameLen {
+		displayName = filename[:maxNameLen-3] + "..."
+	}
+	line1 := displayName + " is a binary file"
+	line1X := startX + (boxWidth-uint(len(line1)))/2
+	c.Write(line1X, startY+2, vt.LightYellow, vt.BackgroundDefault, line1)
+
+	// Second line: do you really want to edit it?
+	line2 := "Do you really want to edit it?"
+	line2X := startX + (boxWidth-uint(len(line2)))/2
+	c.Write(line2X, startY+4, vt.Default, vt.BackgroundDefault, line2)
+
+	// Third line: instruction
+	line3 := "Press return to edit or any other key to cancel."
+	line3X := startX + (boxWidth-uint(len(line3)))/2
+	c.Write(line3X, startY+6, vt.LightGreen, vt.BackgroundDefault, line3)
+
+	c.Draw()
+
+	// Wait for key press
+	for {
+		key := tty.String()
+		if key == "c:13" { // return/enter
+			return true
+		}
+		if key != "" {
+			return false
+		}
+	}
 }
 
 func (s *State) edit(filename, path string) error {
@@ -180,7 +383,7 @@ func (s *State) setPath(path string) {
 // and returns true if the directory was changed
 // and returns true if a file was edited
 // and returns an error if something went wrong
-func (s *State) execute(cmd, path string) (bool, bool, error) {
+func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 	// Common for non-bash and bash mode
 	if cmd == "exit" || cmd == "quit" || cmd == "q" || cmd == "bye" {
 		s.quit = true
@@ -214,13 +417,27 @@ func (s *State) execute(cmd, path string) (bool, bool, error) {
 			}
 			return false, false, err
 		}
+		// Check if file is binary (but allow .gz files as they can be edited)
+		fullPath := filepath.Join(path, cmd)
+		if files.IsBinary(fullPath) && !strings.HasSuffix(fullPath, ".gz") {
+			if !s.confirmBinaryEdit(tty, cmd) {
+				return false, false, nil // User cancelled
+			}
+		}
 		return false, true, s.edit(cmd, path)
 	}
 	if files.IsFile(cmd) { // abs absolute path
+		// Check if file is binary (but allow .gz files as they can be edited)
+		if files.IsBinary(cmd) && !strings.HasSuffix(cmd, ".gz") {
+			if !s.confirmBinaryEdit(tty, filepath.Base(cmd)) {
+				return false, false, nil // User cancelled
+			}
+		}
 		return false, true, s.edit(cmd, path)
 	}
 	if cmd == "l" || cmd == "ls" || cmd == "dir" {
-		return false, false, s.ls(path)
+		_, err := s.ls(path)
+		return false, false, err
 	}
 	if strings.HasSuffix(cmd, "which ") {
 		rest := ""
@@ -308,6 +525,7 @@ func (s *State) currentAbsDir() string {
 	return path
 }
 
+// Cleanup tries to set everything right in the terminal emulator before returning
 func Cleanup(c *vt.Canvas) {
 	vt.SetXY(0, c.H()-1)
 	c.Clear()
@@ -315,18 +533,28 @@ func Cleanup(c *vt.Canvas) {
 	vt.ShowCursor(true)
 }
 
+// MegaFile launches a file browser
+// c and tty is a canvas and TTY, initiated with the vt package
+// startdirs is a slice of directories to browse (toggle with tab)
+// startMessage is the string to display at the top of the screen
+// the function returns the absolute path to the directory the user ended up in,
+// and an error if something went wrong
 func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage string) (string, error) {
 	var (
 		x, y uint
 		s    = &State{
-			c:          c,
-			dir:        startdirs,
-			prevdir:    startdirs,
-			dirIndex:   0,
-			quit:       false,
-			startx:     uint(5),
-			starty:     topLine + uint(4),
-			showHidden: false,
+			c:              c,
+			dir:            startdirs,
+			prevdir:        startdirs,
+			dirIndex:       0,
+			quit:           false,
+			startx:         uint(5),
+			starty:         topLine + uint(4),
+			showHidden:     false,
+			fileEntries:    []FileEntry{},
+			selectedIndex:  -1,
+			selectionMoved: false,
+			filterPattern:  "",
 		}
 	)
 
@@ -395,16 +623,29 @@ func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage string
 	}
 
 	listDirectory := func() {
+		s.clearHighlight() // Clear old highlight before clearing entries
+		s.fileEntries = []FileEntry{}
+		s.selectedIndex = -1
+		s.selectionMoved = false // Reset selection moved flag
+		s.filterPattern = ""     // Clear filter when changing directories
 		clearAndPrepare()
 		s.ls(s.dir[s.dirIndex])
 		s.written = []rune{}
 		index = 0
 		clearWritten()
 		drawWritten()
+		if len(s.fileEntries) > 0 {
+			s.selectedIndex = 0
+		}
+		s.highlightSelection()
 	}
 
 	clearAndPrepare()
 	s.ls(s.dir[s.dirIndex])
+	if len(s.fileEntries) > 0 {
+		s.selectedIndex = 0
+		s.highlightSelection()
+	}
 	c.Draw()
 
 	for !s.quit {
@@ -414,66 +655,378 @@ func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage string
 			s.quit = true
 		case "c:13": // return
 			if len(s.written) == 0 {
-				listDirectory()
+				// If no text written but file is selected, execute it
+				if s.selectedIndex >= 0 && s.selectedIndex < len(s.fileEntries) {
+					s.clearHighlight()
+					selectedFile := s.fileEntries[s.selectedIndex].realName
+					savedIndex := s.selectedIndex // Save the selection before editing
+					if changedDirectory, editedFile, err := s.execute(selectedFile, s.dir[s.dirIndex], tty); err != nil {
+						clearAndPrepare()
+						s.ls(s.dir[s.dirIndex])
+						s.drawError(err.Error())
+						s.highlightSelection()
+					} else if changedDirectory {
+						listDirectory()
+					} else if editedFile {
+						// File was edited, restore selection position
+						listDirectory()
+						if savedIndex < len(s.fileEntries) {
+							s.clearHighlight()
+							s.selectedIndex = savedIndex
+							s.highlightSelection()
+						}
+					} else {
+						// User cancelled or nothing happened, redraw screen
+						clearAndPrepare()
+						s.ls(s.dir[s.dirIndex])
+						if savedIndex < len(s.fileEntries) {
+							s.selectedIndex = savedIndex
+							s.highlightSelection()
+						}
+					}
+				} else {
+					listDirectory()
+				}
 				break
 			}
+			// Text has been written - check if it's a directory first
+			if strings.Contains(string(s.written), "/") {
+				// Contains a slash, might be a directory path
+				typedPath := string(s.written)
+				if files.IsDir(typedPath) || files.IsDir(filepath.Join(s.dir[s.dirIndex], typedPath)) {
+					// It's a directory, navigate to it instead of selecting file
+					clearAndPrepare()
+					if changedDirectory, editedFile, err := s.execute(typedPath, s.dir[s.dirIndex], tty); err != nil {
+						s.drawError(err.Error())
+					} else if changedDirectory || editedFile {
+						listDirectory()
+					} else {
+						s.ls(s.dir[s.dirIndex])
+					}
+					s.written = []rune{}
+					index = 0
+					clearWritten()
+					drawWritten()
+					break
+				}
+			}
+			// Text has been written - check if a file is selected from filtering
+			if s.selectedIndex >= 0 && s.selectedIndex < len(s.fileEntries) {
+				// File is selected, execute the selected file instead of the text
+				s.clearHighlight()
+				selectedFile := s.fileEntries[s.selectedIndex].realName
+				savedIndex := s.selectedIndex
+				if changedDirectory, editedFile, err := s.execute(selectedFile, s.dir[s.dirIndex], tty); err != nil {
+					clearAndPrepare()
+					s.ls(s.dir[s.dirIndex])
+					s.drawError(err.Error())
+					s.highlightSelection()
+				} else if changedDirectory {
+					listDirectory()
+				} else if editedFile {
+					listDirectory()
+					if savedIndex < len(s.fileEntries) {
+						s.clearHighlight()
+						s.selectedIndex = savedIndex
+						s.highlightSelection()
+					}
+				} else {
+					// User cancelled or nothing happened, redraw screen
+					clearAndPrepare()
+					s.ls(s.dir[s.dirIndex])
+					if savedIndex < len(s.fileEntries) {
+						s.selectedIndex = savedIndex
+						s.highlightSelection()
+					}
+				}
+				s.written = []rune{}
+				index = 0
+				clearWritten()
+				drawWritten()
+				break
+			}
+			// No file selected, execute the written text as a command
 			clearAndPrepare()
-			if changedDirectory, editedFile, err := s.execute(string(s.written), s.dir[s.dirIndex]); err != nil {
+			if changedDirectory, editedFile, err := s.execute(string(s.written), s.dir[s.dirIndex], tty); err != nil {
 				s.drawError(err.Error())
 			} else if changedDirectory || editedFile {
 				listDirectory()
+			} else {
+				// User cancelled or nothing happened, redraw screen
+				s.ls(s.dir[s.dirIndex])
 			}
 			s.written = []rune{}
 			index = 0
 			clearWritten()
 			drawWritten() // for the cursor
-		case "c:127": // backspace
-			clearWritten()
-			if len(s.written) > 0 && index > 0 {
-				s.written = append(s.written[:index-1], s.written[index:]...)
-				index--
-			}
-			drawWritten()
+
 		case "c:11": // ctrl-k
 			clearWritten()
 			if len(s.written) > 0 {
 				s.written = s.written[:index]
 			}
+			// Update filter pattern and redraw
+			s.clearHighlight()
+			s.filterPattern = string(s.written)
+			clearAndPrepare()
+			count, _ := s.ls(s.dir[s.dirIndex])
+			// If no matches, redraw without filter
+			if count == 0 && s.filterPattern != "" {
+				s.filterPattern = ""
+				clearAndPrepare()
+				s.ls(s.dir[s.dirIndex])
+			}
+			if len(s.fileEntries) > 0 {
+				s.selectedIndex = 0
+				s.highlightSelection()
+			} else {
+				s.selectedIndex = -1
+			}
+			clearWritten()
 			drawWritten()
 		case "c:4": // ctrl-d
 			if len(s.written) == 0 {
 				Cleanup(c)
 				return s.currentAbsDir(), ErrExit
 			}
+			clearWritten()
+			s.written = append(s.written[:index], s.written[index+1:]...)
+			// Update filter pattern and redraw
+			s.clearHighlight()
+			s.filterPattern = string(s.written)
+			clearAndPrepare()
+			count, _ := s.ls(s.dir[s.dirIndex])
+			// If no matches, redraw without filter
+			if count == 0 && s.filterPattern != "" {
+				s.filterPattern = ""
+				clearAndPrepare()
+				s.ls(s.dir[s.dirIndex])
+			}
+			if len(s.fileEntries) > 0 {
+				s.selectedIndex = 0
+				s.highlightSelection()
+			} else {
+				s.selectedIndex = -1
+			}
+			clearWritten()
+			drawWritten()
+		case pgUpKey: // page up
+			if len(s.fileEntries) > 0 && s.selectedIndex >= 0 {
+				s.selectionMoved = true
+				s.clearHighlight()
+				// Find the first entry in the current column (same x, lowest y)
+				currentX := s.fileEntries[s.selectedIndex].x
+				for i := 0; i < len(s.fileEntries); i++ {
+					if s.fileEntries[i].x == currentX {
+						s.selectedIndex = i
+						break
+					}
+				}
+				s.highlightSelection()
+			}
+		case pgDnKey: // page down
+			if len(s.fileEntries) > 0 && s.selectedIndex >= 0 {
+				s.selectionMoved = true
+				s.clearHighlight()
+				// Find the last entry in the current column (same x, highest y)
+				currentX := s.fileEntries[s.selectedIndex].x
+				lastInColumn := s.selectedIndex
+				for i := s.selectedIndex; i < len(s.fileEntries); i++ {
+					if s.fileEntries[i].x == currentX {
+						lastInColumn = i
+					} else if s.fileEntries[i].x > currentX {
+						break
+					}
+				}
+				s.selectedIndex = lastInColumn
+				s.highlightSelection()
+			}
+		case "c:1", homeKey: // ctrl-a, home
 			if len(s.written) > 0 {
 				clearWritten()
-				s.written = append(s.written[:index], s.written[index+1:]...)
+				index = 0
 				drawWritten()
+			} else if len(s.fileEntries) > 0 {
+				s.selectionMoved = true
+				s.clearHighlight()
+				// Jump to first file
+				s.selectedIndex = 0
+				s.highlightSelection()
 			}
-		case "c:1", homeKey, upArrow: // ctrl-a, home, arrow up
-			clearWritten()
-			index = 0
-			drawWritten()
-		case "c:5", endKey, downArrow: // ctrl-e, end, arrow down
-			clearWritten()
-			index = ulen(s.written) // one after the text
-			drawWritten()
+		case "c:5", endKey: // ctrl-e, end
+			if len(s.written) > 0 {
+				clearWritten()
+				index = ulen(s.written) // one after the text
+				drawWritten()
+			} else if len(s.fileEntries) > 0 {
+				s.selectionMoved = true
+				s.clearHighlight()
+				// Jump to last file
+				s.selectedIndex = len(s.fileEntries) - 1
+				s.highlightSelection()
+			}
+		case upArrow:
+			if len(s.written) > 0 && len(s.fileEntries) == 0 {
+				// No files listed, move cursor to start of text
+				clearWritten()
+				index = 0
+				drawWritten()
+			} else if len(s.fileEntries) > 0 {
+				// Files listed, navigate files
+				s.selectionMoved = true
+				s.clearHighlight()
+				// Move selection up
+				if s.selectedIndex < 0 {
+					s.selectedIndex = 0
+				} else if s.selectedIndex > 0 {
+					s.selectedIndex--
+				}
+				s.highlightSelection()
+			}
+		case downArrow:
+			if len(s.written) > 0 && len(s.fileEntries) == 0 {
+				// No files listed, move cursor to end of text
+				clearWritten()
+				index = ulen(s.written) // one after the text
+				drawWritten()
+			} else if len(s.fileEntries) > 0 {
+				// Files listed, navigate files
+				s.selectionMoved = true
+				s.clearHighlight()
+				// Move selection down
+				if s.selectedIndex < 0 {
+					s.selectedIndex = 0
+				} else if s.selectedIndex < len(s.fileEntries)-1 {
+					s.selectedIndex++
+				}
+				s.highlightSelection()
+			}
 		case leftArrow:
+			if len(s.written) > 0 {
+				clearWritten()
+				if index > 0 {
+					index--
+				}
+				drawWritten()
+			} else if len(s.fileEntries) > 0 && s.selectedIndex >= 0 {
+				s.selectionMoved = true
+				s.clearHighlight()
+				// Move to previous column (with wraparound)
+				currentEntry := s.fileEntries[s.selectedIndex]
+				currentY := currentEntry.y
+
+				// Find an entry with smaller x at the same y position
+				found := false
+				for i := s.selectedIndex - 1; i >= 0; i-- {
+					if s.fileEntries[i].y == currentY && s.fileEntries[i].x < currentEntry.x {
+						s.selectedIndex = i
+						found = true
+						break
+					}
+				}
+
+				// If not found, wrap around to the rightmost column at this y
+				if !found {
+					maxX := uint(0)
+					for i := 0; i < len(s.fileEntries); i++ {
+						if s.fileEntries[i].y == currentY && s.fileEntries[i].x > maxX {
+							s.selectedIndex = i
+							maxX = s.fileEntries[i].x
+						}
+					}
+				}
+				s.highlightSelection()
+			}
+		case rightArrow:
+			if len(s.written) > 0 {
+				clearWritten()
+				if index < ulen(s.written) {
+					index++
+				}
+				drawWritten()
+			} else if len(s.fileEntries) > 0 && s.selectedIndex >= 0 {
+				s.selectionMoved = true
+				s.clearHighlight()
+				// Move to next column (with wraparound)
+				currentEntry := s.fileEntries[s.selectedIndex]
+				currentY := currentEntry.y
+
+				// Find an entry with larger x at the same y position
+				found := false
+				for i := s.selectedIndex + 1; i < len(s.fileEntries); i++ {
+					if s.fileEntries[i].y == currentY && s.fileEntries[i].x > currentEntry.x {
+						s.selectedIndex = i
+						found = true
+						break
+					}
+				}
+
+				// If not found, wrap around to the leftmost column at this y
+				if !found {
+					for i := 0; i < len(s.fileEntries); i++ {
+						if s.fileEntries[i].y == currentY {
+							s.selectedIndex = i
+							break
+						}
+					}
+				}
+				s.highlightSelection()
+			}
+		case "c:15": // ctrl-o, toggle hidden files
+			s.showHidden = !s.showHidden
+			listDirectory()
+		case "c:8": // ctrl-h, either toggle hidden files or delete text
+			if index == 0 {
+				s.showHidden = !s.showHidden
+				listDirectory()
+				break
+			}
 			clearWritten()
-			if index > 0 {
+			if len(s.written) > 0 && index > 0 {
+				s.written = append(s.written[:index-1], s.written[index:]...)
 				index--
 			}
 			drawWritten()
-		case rightArrow:
-			clearWritten()
-			if index < ulen(s.written) {
-				index++
+		case "c:127": // backspace, either go one directory up or delete text
+			if index == 0 { // cursor is at the start of the line, nothing to delete
+				// go one directory up
+				if absPath, err := filepath.Abs(filepath.Join(s.dir[s.dirIndex], "..")); err == nil { // success
+					s.setPath(absPath)
+					listDirectory()
+				}
+				break
 			}
+			clearWritten()
+			if len(s.written) > 0 && index > 0 {
+				s.written = append(s.written[:index-1], s.written[index:]...)
+				index--
+			}
+			// Update filter pattern and redraw
+			s.clearHighlight()
+			s.filterPattern = string(s.written)
+			clearAndPrepare()
+			count, _ := s.ls(s.dir[s.dirIndex])
+			// If no matches, redraw without filter
+			if count == 0 && s.filterPattern != "" {
+				s.filterPattern = ""
+				clearAndPrepare()
+				s.ls(s.dir[s.dirIndex])
+			}
+			if len(s.fileEntries) > 0 {
+				s.selectedIndex = 0
+				s.highlightSelection()
+			} else {
+				s.selectedIndex = -1
+			}
+			clearWritten()
 			drawWritten()
-		case "c:15", "c:8": // ctrl-o, ctrl-h
-			s.showHidden = !s.showHidden
+		case "c:14": // ctrl-n : cycle directory index forward
+			s.dirIndex++
+			if s.dirIndex >= ulen(s.dir) {
+				s.dirIndex = 0
+			}
 			listDirectory()
-		case "c:14": // ctrl-n : enter the most recent directory
+		case "c:0": // ctrl-space : enter the most recent directory
 			if entries, err := os.ReadDir(s.dir[s.dirIndex]); err == nil { // success
 				var youngestTime time.Time
 				var youngestName string
@@ -494,20 +1047,60 @@ func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage string
 					listDirectory()
 				}
 			}
-		case "c:0": // ctrl-space : cycle directory numbers backwards
-			if s.dirIndex == 0 {
-				s.dirIndex = ulen(s.dir) - 1
-			} else {
-				s.dirIndex--
-			}
-			listDirectory()
-		case "c:9": // tab : cycle directory numbers or tab complete
-			if len(s.written) == 0 {
-				s.dirIndex++
-				if s.dirIndex >= ulen(s.dir) {
-					s.dirIndex = 0
+		case "c:9": // tab : behave like right arrow or tab complete
+			if len(s.written) == 0 && len(s.fileEntries) > 1 {
+				// No text written and more than 1 file, cycle through files
+				if len(s.fileEntries) > 0 && s.selectedIndex >= 0 {
+					s.selectionMoved = true
+					s.clearHighlight()
+					currentEntry := s.fileEntries[s.selectedIndex]
+					currentY := currentEntry.y
+
+					// Find an entry with larger x at the same y position
+					found := false
+					for i := s.selectedIndex + 1; i < len(s.fileEntries); i++ {
+						if s.fileEntries[i].y == currentY && s.fileEntries[i].x > currentEntry.x {
+							s.selectedIndex = i
+							found = true
+							break
+						}
+					}
+
+					// If not found at same row, move to first column of next row
+					if !found {
+						var nextY uint
+						nextRowFound := false
+						// Find the y position of the next row
+						for i := s.selectedIndex + 1; i < len(s.fileEntries); i++ {
+							if s.fileEntries[i].y > currentY {
+								nextY = s.fileEntries[i].y
+								nextRowFound = true
+								break
+							}
+						}
+						// Find the first entry (smallest x) on that next row
+						if nextRowFound {
+							minX := ^uint(0) // max uint value
+							for i := 0; i < len(s.fileEntries); i++ {
+								if s.fileEntries[i].y == nextY && s.fileEntries[i].x < minX {
+									s.selectedIndex = i
+									minX = s.fileEntries[i].x
+									found = true
+								}
+							}
+						}
+					}
+
+					// If still not found, wrap to the very first entry
+					if !found {
+						s.selectedIndex = 0
+					}
+					s.highlightSelection()
 				}
-				listDirectory()
+				break
+			}
+			// Text has been written or only 1 file, do tab completion
+			if len(s.written) == 0 {
 				break
 			}
 			clearWritten()
@@ -548,20 +1141,76 @@ func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage string
 		case "c:12": // ctrl-l
 			c.Clear()
 			clearAndPrepare()
-		case "c:2", "c:16": // ctrl-b, ctrl-p : go up one directory
-			absPath, err := filepath.Abs(filepath.Join(s.dir[s.dirIndex], ".."))
-			if err == nil { // success
+		case "c:2": // ctrl-b : go up one directory
+			if absPath, err := filepath.Abs(filepath.Join(s.dir[s.dirIndex], "..")); err == nil { // success
 				s.setPath(absPath)
 				listDirectory()
 			}
+		case "c:16": // ctrl-p : cycle directory index backward
+			if s.dirIndex == 0 {
+				s.dirIndex = ulen(s.dir) - 1
+			} else {
+				s.dirIndex--
+			}
+			listDirectory()
 		case "c:20": // ctrl-t : tig
 			run("tig", []string{}, s.dir[s.dirIndex])
 		case "c:7": // ctrl-g : lazygit
 			run("lazygit", []string{}, s.dir[s.dirIndex])
-		//case "c:6": // ctrl-r : history search
+		case "c:6": // ctrl-f : find in files
+			if len(s.written) == 0 {
+				break
+			}
+			searchText := string(s.written)
+			// Search for text in non-binary files recursively
+			var foundPath string
+			var foundFile string
+			filepath.Walk(s.dir[s.dirIndex], func(path string, info os.FileInfo, err error) error {
+				if err != nil || foundPath != "" {
+					return nil
+				}
+				if info.IsDir() {
+					// Skip hidden directories unless showHidden is enabled
+					if !s.showHidden && strings.HasPrefix(info.Name(), ".") {
+						return filepath.SkipDir
+					}
+					return nil
+				}
+				// Skip binary files
+				if files.IsBinary(path) {
+					return nil
+				}
+				// Read and search file
+				content, err := os.ReadFile(path)
+				if err != nil {
+					return nil
+				}
+				if strings.Contains(string(content), searchText) {
+					foundPath = filepath.Dir(path)
+					foundFile = filepath.Base(path)
+					return filepath.SkipAll
+				}
+				return nil
+			})
+			if foundPath != "" {
+				s.setPath(foundPath)
+				s.filterPattern = ""
+				s.written = []rune{}
+				index = 0
+				listDirectory()
+				// Find and highlight the found file
+				for i, entry := range s.fileEntries {
+					if entry.realName == foundFile {
+						s.clearHighlight()
+						s.selectedIndex = i
+						s.selectionMoved = true
+						s.highlightSelection()
+						break
+					}
+				}
+			}
+		//case "c:18": // ctrl-r : history search
 		//run("fzf", []string{"a", "b", "c"}, s.dir[s.dirIndex])
-		//case "c:18": // ctrl-f : find in files
-		//run("rg", []string{"-n", "-w", string(s.written)}, s.dir[s.dirIndex])
 		case "c:3": // ctrl-c
 			if len(s.written) == 0 {
 				Cleanup(c)
@@ -569,6 +1218,14 @@ func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage string
 			}
 			s.written = []rune{}
 			index = 0
+			s.selectedIndex = -1
+			s.filterPattern = ""
+			clearAndPrepare()
+			s.ls(s.dir[s.dirIndex])
+			if len(s.fileEntries) > 0 {
+				s.selectedIndex = 0
+			}
+			s.highlightSelection()
 			clearWritten()
 			drawWritten() // for the cursor
 		case "":
@@ -577,10 +1234,27 @@ func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage string
 			if key != " " && strings.TrimSpace(key) == "" {
 				continue
 			}
+			// Reset selection when typing
+			s.clearHighlight()
+			s.selectedIndex = -1
 			clearWritten()
 			tmp := append(s.written[:index], []rune(key)...)
 			s.written = append(tmp, s.written[index:]...)
 			index += ulen([]rune(key))
+			// Update filter pattern and redraw file list
+			s.filterPattern = string(s.written)
+			clearAndPrepare()
+			count, _ := s.ls(s.dir[s.dirIndex])
+			// If no matches, redraw without filter
+			if count == 0 && s.filterPattern != "" {
+				s.filterPattern = ""
+				clearAndPrepare()
+				s.ls(s.dir[s.dirIndex])
+			}
+			if len(s.fileEntries) > 0 {
+				s.selectedIndex = 0
+				s.highlightSelection()
+			}
 			clearWritten()
 			drawWritten()
 		}
