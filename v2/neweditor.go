@@ -199,7 +199,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 			} else {
 				e.dirMode = true
 				startdirs := []string{e.filename, env.HomeDir(), "/tmp"}
-				_, err := megafile.MegaFile(c, tty, startdirs, "Orbiton Shell")
+				_, err := megafile.MegaFile(c, tty, startdirs, "Orbiton File Navigator")
 				if err != nil && err != megafile.ErrExit {
 					return e, "", false, fmt.Errorf("could not browse %s: %v", e.filename, err)
 				}
