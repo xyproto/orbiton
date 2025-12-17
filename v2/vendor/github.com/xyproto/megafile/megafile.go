@@ -689,14 +689,15 @@ func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage string
 				}
 				break
 			}
-			// Text has been written - check if it's a directory first
-			if strings.Contains(string(s.written), "/") {
-				// Contains a slash, might be a directory path
-				typedPath := string(s.written)
-				if files.IsDir(typedPath) || files.IsDir(filepath.Join(s.dir[s.dirIndex], typedPath)) {
+			// Text has been written - check if it's a directory or executable command first
+			typedText := string(s.written)
+
+			// Check if it's a directory path
+			if strings.Contains(typedText, "/") {
+				if files.IsDir(typedText) || files.IsDir(filepath.Join(s.dir[s.dirIndex], typedText)) {
 					// It's a directory, navigate to it instead of selecting file
 					clearAndPrepare()
-					if changedDirectory, editedFile, err := s.execute(typedPath, s.dir[s.dirIndex], tty); err != nil {
+					if changedDirectory, editedFile, err := s.execute(typedText, s.dir[s.dirIndex], tty); err != nil {
 						s.drawError(err.Error())
 					} else if changedDirectory || editedFile {
 						listDirectory()
@@ -710,6 +711,29 @@ func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage string
 					break
 				}
 			}
+
+			// Check if the first word is an executable in PATH
+			firstWord := typedText
+			if idx := strings.Index(typedText, " "); idx > 0 {
+				firstWord = typedText[:idx]
+			}
+			if _, err := exec.LookPath(firstWord); err == nil {
+				// It's a valid executable, run it instead of selecting file
+				clearAndPrepare()
+				if changedDirectory, editedFile, err := s.execute(typedText, s.dir[s.dirIndex], tty); err != nil {
+					s.drawError(err.Error())
+				} else if changedDirectory || editedFile {
+					listDirectory()
+				} else {
+					s.ls(s.dir[s.dirIndex])
+				}
+				s.written = []rune{}
+				index = 0
+				clearWritten()
+				drawWritten()
+				break
+			}
+
 			// Text has been written - check if a file is selected from filtering
 			if s.selectedIndex >= 0 && s.selectedIndex < len(s.fileEntries) {
 				// File is selected, execute the selected file instead of the text
