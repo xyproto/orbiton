@@ -306,7 +306,7 @@ func (s *State) confirmBinaryEdit(tty *vt.TTY, filename string) bool {
 	if len(filename) > maxNameLen {
 		displayName = filename[:maxNameLen-3] + "..."
 	}
-	line1 := displayName + " is a binary file"
+	line1 := displayName + " is binary and executable"
 	line1X := startX + (boxWidth-uint(len(line1)))/2
 	c.Write(line1X, startY+2, vt.LightYellow, vt.BackgroundDefault, line1)
 
@@ -432,9 +432,9 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 			}
 			return false, false, err
 		}
-		// Check if file is binary (but allow .gz files as they can be edited)
+		// Check if file is both binary and executable
 		fullPath := filepath.Join(path, cmd)
-		if files.IsBinary(fullPath) && !strings.HasSuffix(fullPath, ".gz") {
+		if files.IsBinary(fullPath) && files.IsExecutable(fullPath) {
 			if !s.confirmBinaryEdit(tty, cmd) {
 				return false, false, nil // User cancelled
 			}
