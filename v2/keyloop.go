@@ -54,7 +54,7 @@ var (
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, fmtFlag bool) (userMessage string, stopParent bool, err error) {
+func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, fmtFlag, escToExit bool) (userMessage string, stopParent bool, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt.Init()
@@ -1128,8 +1128,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			fallthrough // nano: ctrl-l to refresh
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
 			e.blockMode = false
-			// If o is used as a man page viewer, exit at the press of esc
-			if e.mode == mode.ManPage {
+			// If o is used as a man page viewer, or if the escToExit flag is set, exit at the press of esc
+			if escToExit || e.mode == mode.ManPage {
 				clearOnQuit.Store(false)
 				e.quit = true
 				break

@@ -27,6 +27,9 @@ const (
 var (
 	editorLaunchTime = time.Now()
 
+	// The executable name is in arg 0
+	editorExecutable = filepath.Base(os.Args[0]) // using os.Args to get the executable name
+
 	// quitMut disallows Exit(1) while a file is being saved
 	quitMut sync.Mutex
 
@@ -80,6 +83,7 @@ func main() {
 		noQuickHelpFlag        bool
 		versionFlag            bool
 		searchAndOpenFlag      bool
+		escToExitFlag          bool
 	)
 
 	// Available short options: j k u w y
@@ -107,6 +111,7 @@ func main() {
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
 	pflag.BoolVarP(&searchAndOpenFlag, "glob", "g", false, "open the first filename that matches the given glob (recursively)")
+	pflag.BoolVarP(&escToExitFlag, "esc", "y", false, "press Esc to exit the program")
 
 	pflag.Parse()
 
@@ -154,10 +159,8 @@ func main() {
 	noWriteToCache = noCacheFlag || monitorAndReadOnlyFlag
 
 	var (
-		// The executable name is in arg 0
-		executableName = filepath.Base(os.Args[0]) // using os.Args to get the executable name
 		// Get the first rune of the executable name
-		firstLetterOfExecutable = []rune(strings.ToLower(string(executableName[0])))[0]
+		firstLetterOfExecutable = []rune(strings.ToLower(editorExecutable))[0]
 		args                    = pflag.Args() // using pflag.Args() to get the non-flag arguments
 		argsGiven               = len(args) > 0
 	)
@@ -295,7 +298,7 @@ func main() {
 		lineNumber    LineNumber
 		colNumber     ColNumber
 		stdinFilename = !argsGiven || (len(args) == 1 && (args[0] == "-" || args[0] == "/dev/stdin"))
-		osudoMode     = executableName == "osudo" || executableName == "visudo"
+		osudoMode     = editorExecutable == "osudo" || editorExecutable == "visudo"
 		gameMode      = firstLetterOfExecutable == 'f' || firstLetterOfExecutable == 'g'
 		err           error
 	)
@@ -460,9 +463,9 @@ func main() {
 			theme = NewTealTheme()
 		case 'n': // nan, nano
 			// Check if "Nano mode" should be set
-			nanoMode = strings.HasPrefix(executableName, "na")
+			nanoMode = strings.HasPrefix(editorExecutable, "na")
 		case 'v': // vs, vscode etc
-			if !strings.HasPrefix(executableName, "vi") { // vi, vim, visudo etc.
+			if !strings.HasPrefix(editorExecutable, "vi") { // vi, vim, visudo etc.
 				theme = NewDarkVSTheme()
 			}
 		default:
@@ -497,7 +500,7 @@ func main() {
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, noQuickHelpFlag, formatFlag)
+	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, noQuickHelpFlag, formatFlag, escToExitFlag)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	if stopParent {
