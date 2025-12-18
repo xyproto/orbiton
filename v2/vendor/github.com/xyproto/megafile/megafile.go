@@ -68,7 +68,7 @@ func ulen[T string | []rune | []string](xs T) uint {
 	return uint(len(xs))
 }
 
-func (s *State) drawOutput(text string) {
+func (s *State) drawOutput(text string, tty *vt.TTY) {
 	lines := strings.Split(text, "\n")
 	x := s.startx
 	y := s.starty + 1
@@ -77,6 +77,9 @@ func (s *State) drawOutput(text string) {
 		s.c.Write(x, y, vt.Default, vt.BackgroundDefault, strings.TrimSpace(line))
 		y++
 	}
+	s.c.Draw()
+	// Wait for a key press before continuing
+	tty.String()
 }
 
 func (s *State) drawError(text string) {
@@ -313,7 +316,7 @@ func (s *State) confirmBinaryEdit(tty *vt.TTY, filename string) bool {
 	c.Write(line2X, startY+4, vt.Default, vt.BackgroundDefault, line2)
 
 	// Third line: instruction
-	line3 := "Press return to edit or any other key to cancel."
+	line3 := "Press y or return to edit or any other key to cancel."
 	line3X := startX + (boxWidth-uint(len(line3)))/2
 	c.Write(line3X, startY+6, vt.LightGreen, vt.BackgroundDefault, line3)
 
@@ -321,11 +324,10 @@ func (s *State) confirmBinaryEdit(tty *vt.TTY, filename string) bool {
 
 	// Wait for key press
 	for {
-		key := tty.String()
-		if key == "c:13" { // return/enter
+		switch tty.String() {
+		case "c13", "y": // return/enter, y
 			return true
-		}
-		if key != "" {
+		default:
 			return false
 		}
 	}
@@ -342,6 +344,10 @@ func (s *State) edit(filename, path string) error {
 	editorPath, err := exec.LookPath(executableName)
 	if err != nil {
 		return err
+	}
+	// Add -y flag for "o" editor
+	if filepath.Base(editorPath) == "o" {
+		args = append(args, "-y")
 	}
 	args = append(args, filename)
 	command := exec.Command(editorPath, args...)
@@ -422,7 +428,7 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 			}
 			output, err := run2(cmd, args, path)
 			if err == nil {
-				s.drawOutput(output)
+				s.drawOutput(output, tty)
 			}
 			return false, false, err
 		}
@@ -448,12 +454,12 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 		_, err := s.ls(path)
 		return false, false, err
 	}
-	if strings.HasSuffix(cmd, "which ") {
+	if strings.HasPrefix(cmd, "which ") {
 		rest := ""
 		if len(cmd) > 6 {
 			rest = cmd[6:]
 			found := files.WhichCached(rest)
-			s.drawOutput(found)
+			s.drawOutput(found, tty)
 		}
 		return false, false, nil
 	}
@@ -496,7 +502,7 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 		return false, false, nil
 	}
 	if strings.HasPrefix(cmd, "echo ") {
-		s.drawOutput(cmd[5:])
+		s.drawOutput(cmd[5:], tty)
 		return false, false, nil
 	}
 	if cmd == filepath.Base(env.Str("EDITOR")) {
@@ -516,7 +522,7 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 		arguments := fields[1:]
 		output, err := run2(program, arguments, s.dir[s.dirIndex])
 		if err == nil {
-			s.drawOutput(output)
+			s.drawOutput(output, tty)
 		}
 		return false, false, err
 	} else if foundExecutableInPath := files.WhichCached(cmd); foundExecutableInPath != "" {
@@ -644,112 +650,32 @@ func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage, edito
 		index = 0
 		clearWritten()
 		drawWritten()
-		if len(s.fileEntries) > 0 {
-			s.selectedIndex = 0
-		}
-		s.highlightSelection()
 	}
 
 	clearAndPrepare()
 	s.ls(s.dir[s.dirIndex])
-	if len(s.fileEntries) > 0 {
-		s.selectedIndex = 0
-		s.highlightSelection()
-	}
 	c.Draw()
 
 	for !s.quit {
 		key := tty.String()
 		switch key {
-		case "c:27", "c:17": // esc, ctrl-q
+		case "c:27": // esc
+			// If selection is active, clear it; otherwise quit
+			if s.selectedIndex >= 0 {
+				s.clearHighlight()
+				s.selectedIndex = -1
+				c.Draw()
+			} else {
+				s.quit = true
+			}
+		case "c:17": // ctrl-q
 			s.quit = true
 		case "c:13": // return
-			if len(s.written) == 0 {
-				// If no text written but file is selected, execute it
-				if s.selectedIndex >= 0 && s.selectedIndex < len(s.fileEntries) {
-					s.clearHighlight()
-					selectedFile := s.fileEntries[s.selectedIndex].realName
-					savedIndex := s.selectedIndex // Save the selection before editing
-					if changedDirectory, editedFile, err := s.execute(selectedFile, s.dir[s.dirIndex], tty); err != nil {
-						clearAndPrepare()
-						s.ls(s.dir[s.dirIndex])
-						s.drawError(err.Error())
-						s.highlightSelection()
-					} else if changedDirectory {
-						listDirectory()
-					} else if editedFile {
-						// File was edited, restore selection position
-						listDirectory()
-						if savedIndex < len(s.fileEntries) {
-							s.clearHighlight()
-							s.selectedIndex = savedIndex
-							s.highlightSelection()
-						}
-					} else {
-						// User cancelled or nothing happened, redraw screen
-						clearAndPrepare()
-						s.ls(s.dir[s.dirIndex])
-						if savedIndex < len(s.fileEntries) {
-							s.selectedIndex = savedIndex
-							s.highlightSelection()
-						}
-					}
-				} else {
-					listDirectory()
-				}
-				break
-			}
-			// Text has been written - check if it's a directory or executable command first
-			typedText := string(s.written)
-
-			// Check if it's a directory path
-			if strings.Contains(typedText, "/") {
-				if files.IsDir(typedText) || files.IsDir(filepath.Join(s.dir[s.dirIndex], typedText)) {
-					// It's a directory, navigate to it instead of selecting file
-					clearAndPrepare()
-					if changedDirectory, editedFile, err := s.execute(typedText, s.dir[s.dirIndex], tty); err != nil {
-						s.drawError(err.Error())
-					} else if changedDirectory || editedFile {
-						listDirectory()
-					} else {
-						s.ls(s.dir[s.dirIndex])
-					}
-					s.written = []rune{}
-					index = 0
-					clearWritten()
-					drawWritten()
-					break
-				}
-			}
-
-			// Check if the first word is an executable in PATH
-			firstWord := typedText
-			if idx := strings.Index(typedText, " "); idx > 0 {
-				firstWord = typedText[:idx]
-			}
-			if _, err := exec.LookPath(firstWord); err == nil {
-				// It's a valid executable, run it instead of selecting file
-				clearAndPrepare()
-				if changedDirectory, editedFile, err := s.execute(typedText, s.dir[s.dirIndex], tty); err != nil {
-					s.drawError(err.Error())
-				} else if changedDirectory || editedFile {
-					listDirectory()
-				} else {
-					s.ls(s.dir[s.dirIndex])
-				}
-				s.written = []rune{}
-				index = 0
-				clearWritten()
-				drawWritten()
-				break
-			}
-
-			// Text has been written - check if a file is selected from filtering
+			// If a file is selected (via arrow keys), execute it regardless of text
 			if s.selectedIndex >= 0 && s.selectedIndex < len(s.fileEntries) {
-				// File is selected, execute the selected file instead of the text
 				s.clearHighlight()
 				selectedFile := s.fileEntries[s.selectedIndex].realName
-				savedIndex := s.selectedIndex
+				savedFilename := selectedFile // Save the filename before editing
 				if changedDirectory, editedFile, err := s.execute(selectedFile, s.dir[s.dirIndex], tty); err != nil {
 					clearAndPrepare()
 					s.ls(s.dir[s.dirIndex])
@@ -758,40 +684,59 @@ func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage, edito
 				} else if changedDirectory {
 					listDirectory()
 				} else if editedFile {
+					// File was edited, restore selection by finding the filename
 					listDirectory()
-					if savedIndex < len(s.fileEntries) {
-						s.clearHighlight()
-						s.selectedIndex = savedIndex
-						s.highlightSelection()
+					// Search for the file by name
+					for i, entry := range s.fileEntries {
+						if entry.realName == savedFilename {
+							s.selectedIndex = i
+							s.highlightSelection()
+							break
+						}
 					}
 				} else {
 					// User cancelled or nothing happened, redraw screen
 					clearAndPrepare()
 					s.ls(s.dir[s.dirIndex])
-					if savedIndex < len(s.fileEntries) {
-						s.selectedIndex = savedIndex
-						s.highlightSelection()
+					// Search for the file by name
+					for i, entry := range s.fileEntries {
+						if entry.realName == savedFilename {
+							s.selectedIndex = i
+							s.highlightSelection()
+							break
+						}
 					}
 				}
 				s.written = []rune{}
 				index = 0
+				s.filterPattern = ""
 				clearWritten()
 				drawWritten()
 				break
 			}
-			// No file selected, execute the written text as a command
+			// No file selected, check if text was written
+			if len(s.written) == 0 {
+				listDirectory()
+				clearWritten()
+				drawWritten()
+				break
+			}
+			// Text has been written - execute it as a command
+			commandText := string(s.written)
+			s.written = []rune{}
+			index = 0
 			clearAndPrepare()
-			if changedDirectory, editedFile, err := s.execute(string(s.written), s.dir[s.dirIndex], tty); err != nil {
+			clearWritten()
+			c.Draw()
+			if changedDirectory, editedFile, err := s.execute(commandText, s.dir[s.dirIndex], tty); err != nil {
 				s.drawError(err.Error())
 			} else if changedDirectory || editedFile {
 				listDirectory()
 			} else {
-				// User cancelled or nothing happened, redraw screen
+				// Command output was shown, clear screen and redraw
+				clearAndPrepare()
 				s.ls(s.dir[s.dirIndex])
 			}
-			s.written = []rune{}
-			index = 0
-			clearWritten()
 			drawWritten() // for the cursor
 
 		case "c:11": // ctrl-k
@@ -810,12 +755,7 @@ func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage, edito
 				clearAndPrepare()
 				s.ls(s.dir[s.dirIndex])
 			}
-			if len(s.fileEntries) > 0 {
-				s.selectedIndex = 0
-				s.highlightSelection()
-			} else {
-				s.selectedIndex = -1
-			}
+			s.selectedIndex = -1
 			clearWritten()
 			drawWritten()
 		case "c:4": // ctrl-d
@@ -836,12 +776,7 @@ func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage, edito
 				clearAndPrepare()
 				s.ls(s.dir[s.dirIndex])
 			}
-			if len(s.fileEntries) > 0 {
-				s.selectedIndex = 0
-				s.highlightSelection()
-			} else {
-				s.selectedIndex = -1
-			}
+			s.selectedIndex = -1
 			clearWritten()
 			drawWritten()
 		case pgUpKey: // page up
@@ -1046,12 +981,7 @@ func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage, edito
 				clearAndPrepare()
 				s.ls(s.dir[s.dirIndex])
 			}
-			if len(s.fileEntries) > 0 {
-				s.selectedIndex = 0
-				s.highlightSelection()
-			} else {
-				s.selectedIndex = -1
-			}
+			s.selectedIndex = -1
 			clearWritten()
 			drawWritten()
 		case "c:14": // ctrl-n : cycle directory index forward
@@ -1256,10 +1186,6 @@ func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage, edito
 			s.filterPattern = ""
 			clearAndPrepare()
 			s.ls(s.dir[s.dirIndex])
-			if len(s.fileEntries) > 0 {
-				s.selectedIndex = 0
-			}
-			s.highlightSelection()
 			clearWritten()
 			drawWritten() // for the cursor
 		case "":
@@ -1284,10 +1210,6 @@ func MegaFile(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage, edito
 				s.filterPattern = ""
 				clearAndPrepare()
 				s.ls(s.dir[s.dirIndex])
-			}
-			if len(s.fileEntries) > 0 {
-				s.selectedIndex = 0
-				s.highlightSelection()
 			}
 			clearWritten()
 			drawWritten()

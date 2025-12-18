@@ -26,22 +26,46 @@ This project can be used as the `github.com/xyproto/megafile` package, or as a s
 
 ### Hotkeys
 
-* `tab` - cycle between the 3 different current diretories, or tab completion of directories and filenames
-* `ctrl-space` - cycle backwards between the 3 different current directories
-* `ctrl-q` - exit program
-* `ctrl-o` or `ctrl-h` - toggle "show hidden files"
-* `ctrl-a` - start of line
+**Navigation and Selection**
+* `↑/↓/←/→` - navigate and select files
+* `Page Up/Down` - jump to first/last entry in current column
+* `Home` or `ctrl-a` - jump to first file (or start of line when typing)
+* `End` or `ctrl-e` - jump to last file (or end of line when typing)
+
+**Execution**
+* `Return` - execute selected file, or run typed command
+* `Esc` - clear selection (first press), exit program (second press)
+
+**Text Editing**
+* `Backspace` - delete character, or go up directory (when at start)
+* `ctrl-h` - delete character, or toggle hidden files (when at start)
 * `ctrl-d` - delete character under cursor, or exit program
 * `ctrl-k` - delete text to the end of the line
-* `ctrl-l` - clear screen
 * `ctrl-c` - clear text, or exit program
+
+**File Operations**
+* `Tab` - cycle through files, or tab completion
+* `ctrl-f` - search for text in files
+
+**Directory Navigation**
+* `ctrl-space` - enter the most recent subdirectory
+* `ctrl-n` - cycle to next directory
+* `ctrl-p` - cycle to previous directory
+* `ctrl-b` - go to parent directory
+
+**Display**
+* `ctrl-o` - toggle show hidden files
+* `ctrl-l` - clear screen
+
+**External Tools**
 * `ctrl-t` - run `tig`
 * `ctrl-g` - run `lazygit`
-* `ctrl-n` - enter the freshest directory
-* `ctrl-p` - go up one directory
+
+**Exit**
+* `ctrl-q` - exit program immediately
 
 ### General info
 
-* Version: 1.2.3
+* Version: 1.2.5
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
