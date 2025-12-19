@@ -199,7 +199,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 			} else {
 				e.dirMode = true
 				startdirs := []string{e.filename, env.HomeDir(), "/tmp"}
-				const title = "--––—==[ Orbiton Shell ]==—––--"
+				const title = "--––—==[ Orbiton FileBrowser ]==—––--"
 				megaFileState := megafile.New(c, tty, startdirs, title, editorExecutable+" -y")
 
 				megaFileState.WrittenTextColor = e.Foreground
@@ -207,7 +207,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				megaFileState.TitleColor = e.HeaderTextColor
 				megaFileState.PromptColor = e.LinkColor
 				megaFileState.AngleColor = e.JumpToLetterColor
-				megaFileState.EdgeBackground = e.BoxBackground
+				megaFileState.EdgeBackground = e.Background            // TODO using e.BoxBackground needs some more work in megafile
 				megaFileState.HighlightBackground = vt.BackgroundWhite // TODO add to the theme struct
 
 				if _, err := megaFileState.Run(); err != nil && err != megafile.ErrExit {
