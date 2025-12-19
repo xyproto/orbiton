@@ -2,22 +2,22 @@
 
 ## General
 
+- [ ] If `ctrl-c` is pressed thrice when not in a function: copy to the end of the file.
 - [ ] Don't highlight `ran` and `error` when editing Markdown.
-- [ ] Jump to definition for at least C.
+- [x] Jump to definition for at least C.
 - [ ] Fix blinking text issue when holding down arrow up/down in the Linux console.
 - [ ] Port the scons/python/cxx tool over as a Go module and use that by default when building C or C++.
 - [ ] If parenthesis are unbalanced (too many `)`), then it's not a function name. Like `reinterpret_cast<char*>(&dq)) != 0= {`.
 - [ ] ctrl-/ should also be able to toggle /* * */ comments, not only single line comments.
 - [ ] Pressing ctrl-g in a script should toggle the status bar unless the cursor is on a function call and the function was found.
 - [ ] Searching for a rune like "U+2713" does not work.
-- [ ] Add LSP tab completion.
+- [x] Add LSP tab completion.
 - [ ] Add a couple of test programs that uses various external packages, then test them out within tmux+mosh.
 - [ ] Continue working on the ollama worker queue branch.
 - [ ] Add syntax highlighting of "<" and ">" in C++.
 - [ ] If a line of code in C or C++ have two arrows, like `directory = S_ISDIR(p->fts_statp->st_mode);`, then color the second arrow differently from the first one.
 - [ ] If `ctrl-g` is pressed on a comment or multiline comment, toggle the status bar.
 - [ ] Fix pasting with midclick / `shift-insert`, also for multiline strings.
-- [ ] If `ctrl-c` is pressed thrice when not in a function: copy to the end of the file.
 - [ ] If the `ctrl-o` menu was opened by pressing `esc` repeatedly, add a `Help` menu option.
 - [ ] Let `--ollama` only be used for fixing simple compilation errors.
 - [ ] When pressing ctrl-c twice while on a function signature, copy the entire function.
