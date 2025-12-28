@@ -745,7 +745,11 @@ func (s *State) Run() (string, error) {
 				break
 			}
 			// No file selected, check if text was written
-			if len(s.written) == 0 {
+			if len(s.written) == 0 { // nothing was written
+				homedir := env.HomeDir()
+				if s.Directories[s.dirIndex] != homedir {
+					s.setPath(homedir)
+				}
 				listDirectory()
 				clearWritten()
 				drawWritten()
