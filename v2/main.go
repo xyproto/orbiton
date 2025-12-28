@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	versionString = "Orbiton 2.70.4"
+	versionString = "Orbiton 2.70.5"
 )
 
 var (
