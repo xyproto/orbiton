@@ -850,17 +850,17 @@ retry:
 			paddingLength := statusLineLength - (len(" "+statusText) + len(centerStatus) + len(rightStatus+" "))
 			centerLeftLength := int(math.Floor(float64(paddingLength) / 2.0))
 			centerRightLength := int(math.Ceil(float64(paddingLength) / 2.0))
-			statusLine += strings.Repeat(" ", centerLeftLength) // padding left of center
+			statusLine += strings.Repeat(" ", max(1, centerLeftLength)) // padding left of center
 			statusLine += centerStatus
-			statusLine += strings.Repeat(" ", centerRightLength) // padding right of center
+			statusLine += strings.Repeat(" ", max(1, centerRightLength)) // padding right of center
 			statusLine += rightStatus + " "
 		} else if statusLineLength-len(" "+statusText) > len(rightStatus+" ") {
 			paddingLength := statusLineLength - (len(" "+statusText) + len(rightStatus+" "))
-			statusLine += strings.Repeat(" ", paddingLength) // center padding
+			statusLine += strings.Repeat(" ", max(1, paddingLength)) // center padding
 			statusLine += rightStatus + " "
 		} else {
 			paddingLength := statusLineLength - len(" "+statusText)
-			statusLine += strings.Repeat("-", paddingLength)
+			statusLine += strings.Repeat("-", max(1, paddingLength))
 		}
 
 		c.Write(0, 0, statusTextColor, statusTextBackground, statusLine)
