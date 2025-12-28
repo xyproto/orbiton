@@ -199,7 +199,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 			} else {
 				e.dirMode = true
 				startdirs := []string{e.filename, env.HomeDir(), "/tmp"}
-				const title = "--––—==[ Orbiton FileBrowser ]==—––--"
+				const title = "·-––—==[ Orbiton File Browser ]==—––-·"
 				megaFileState := megafile.New(c, tty, startdirs, title, editorExecutable+" -y")
 
 				megaFileState.WrittenTextColor = e.Foreground
