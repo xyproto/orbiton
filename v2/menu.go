@@ -124,7 +124,7 @@ func ctrlkey2letter(key string) (string, bool) {
 	if err != nil {
 		return "", false
 	}
-	var r rune = rune((int('a') - 1) + number)
+	r := rune((int('a') - 1) + number)
 	if r > 'z' {
 		return "", false
 	}

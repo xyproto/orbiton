@@ -59,12 +59,12 @@ func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bo
 	// TODO: Search for variables, constants etc
 	// Go to definition, but only of functions defined within the same Go file, for now
 
-	// Capture state before jumping
-	oldFilename := e.filename
-	oldLineIndex := e.LineIndex()
-
 	var (
-		foundX int       = -1
+		// Capture state before jumping
+		oldFilename  = e.filename
+		oldLineIndex = e.LineIndex()
+
+		foundX           = -1
 		foundY LineIndex = -1
 	)
 
