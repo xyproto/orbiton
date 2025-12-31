@@ -408,6 +408,41 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 		s.quit = true
 		return false, false, nil
 	}
+	if cmd == "cd" || cmd == "-" || strings.HasPrefix(cmd, "cd ") {
+		possibleDirectory := ""
+		rest := ""
+		if len(cmd) > 3 {
+			rest = strings.TrimSpace(cmd[3:])
+			possibleDirectory = filepath.Join(s.Directories[s.dirIndex], rest)
+		}
+		if cmd == "-" || rest == "-" {
+			if s.Directories[s.dirIndex] != s.prevdir[s.dirIndex] {
+				s.prevdir[s.dirIndex], s.Directories[s.dirIndex] = s.Directories[s.dirIndex], s.prevdir[s.dirIndex]
+				return true, false, nil
+			}
+			return false, false, errors.New("OLDPWD not set")
+		} else if possibleDirectory == "" {
+			homedir := env.HomeDir()
+			if s.Directories[s.dirIndex] != homedir {
+				s.setPath(homedir)
+				return true, false, nil
+			}
+			return false, false, nil
+		} else if files.IsDir(possibleDirectory) {
+			if s.Directories[s.dirIndex] != possibleDirectory {
+				s.setPath(possibleDirectory)
+				return true, false, nil
+			}
+			return false, false, nil
+		} else if files.IsDir(rest) {
+			if s.Directories[s.dirIndex] != rest {
+				s.setPath(rest)
+				return true, false, nil
+			}
+			return false, false, nil
+		}
+		return false, false, errors.New("cd WHAT?")
+	}
 	if files.IsDir(filepath.Join(path, cmd)) { // relative path
 		newPath := filepath.Join(path, cmd)
 		if s.Directories[s.dirIndex] != newPath {
@@ -467,41 +502,6 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 		}
 		return false, false, nil
 	}
-	if cmd == "cd" || cmd == "-" || strings.HasPrefix(cmd, "cd ") {
-		possibleDirectory := ""
-		rest := ""
-		if len(cmd) > 3 {
-			rest = strings.TrimSpace(cmd[3:])
-			possibleDirectory = filepath.Join(s.Directories[s.dirIndex], rest)
-		}
-		if possibleDirectory == "" && cmd != "-" {
-			homedir := env.HomeDir()
-			if s.Directories[s.dirIndex] != homedir {
-				s.setPath(homedir)
-				return true, false, nil
-			}
-			return false, false, nil
-		} else if files.IsDir(possibleDirectory) {
-			if s.Directories[s.dirIndex] != possibleDirectory {
-				s.setPath(possibleDirectory)
-				return true, false, nil
-			}
-			return false, false, nil
-		} else if files.IsDir(rest) {
-			if s.Directories[s.dirIndex] != rest {
-				s.setPath(rest)
-				return true, false, nil
-			}
-			return false, false, nil
-		} else if cmd == "-" || rest == "-" {
-			if s.Directories[s.dirIndex] != s.prevdir[s.dirIndex] {
-				s.prevdir[s.dirIndex], s.Directories[s.dirIndex] = s.Directories[s.dirIndex], s.prevdir[s.dirIndex]
-				return true, false, nil
-			}
-			return false, false, nil
-		}
-		return false, false, errors.New("cd WHAT?")
-	}
 	if cmd == "echo" {
 		return false, false, nil
 	}
@@ -552,6 +552,12 @@ func Cleanup(c *vt.Canvas) {
 	vt.ShowCursor(true)
 }
 
+func dupli(xs []string) []string {
+	tmp := make([]string, len(xs))
+	copy(tmp, xs)
+	return tmp
+}
+
 // New creates a new MegaFile State
 // c and tty is a canvas and TTY, initiated with the vt package
 // startdirs is a slice of directories to browse (toggle with tab)
@@ -562,7 +568,7 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage, editor str
 	return &State{
 		canvas:              c,
 		tty:                 tty,
-		prevdir:             startdirs,
+		prevdir:             dupli(startdirs),
 		dirIndex:            0,
 		quit:                false,
 		startx:              uint(5),
