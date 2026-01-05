@@ -300,16 +300,3 @@ func CombinedOutputSetPID(c *exec.Cmd) (string, error) {
 	// Return the output bytes and the error, if any
 	return b.String(), err
 }
-
-// run tries to run the given command, without using a shell
-func run(commandString string) error {
-	parts := strings.Fields(commandString)
-	if len(parts) == 0 {
-		return errors.New("empty command")
-	}
-	if files.WhichCached(parts[0]) == "" {
-		return fmt.Errorf("could not find %s in path", parts[0])
-	}
-	cmd := exec.Command(parts[0], parts[1:]...)
-	return cmd.Run()
-}

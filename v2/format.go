@@ -28,7 +28,7 @@ func (e *Editor) InstallMissingTools() {
 	switch e.mode {
 	case mode.Go:
 		if files.WhichCached("go") != "" && files.WhichCached("goimport") == "" {
-			run("go install golang.org/x/tools/cmd/goimports@latest")
+			files.Run("go install golang.org/x/tools/cmd/goimports@latest")
 		}
 	}
 }
