@@ -31,38 +31,41 @@ const (
 
 // FileEntry represents a file entry with position and name information
 type FileEntry struct {
-	x           uint
-	y           uint
 	realName    string
 	displayName string
+	x           uint
+	y           uint
+	selected    bool
+	color       vt.AttributeColor
+	suffix      string
 }
 
 // State holds the current state of the shell, then canvas and the directory structures
 type State struct {
-	canvas              *vt.Canvas
-	tty                 *vt.TTY
-	dirIndex            uint
-	quit                bool
-	startx              uint
-	starty              uint
-	promptLength        uint
-	written             []rune
-	prevdir             []string
-	fileEntries         []FileEntry
-	selectedIndex       int
-	selectionMoved      bool
-	filterPattern       string
-	editor              string // typically $EDITOR
-	ShowHidden          bool
-	Directories         []string
-	StartMessage        string // title/header
-	AngleColor          vt.AttributeColor
-	PromptColor         vt.AttributeColor
-	TitleColor          vt.AttributeColor
-	HighlightBackground vt.AttributeColor
-	Background          vt.AttributeColor
-	EdgeBackground      vt.AttributeColor
-	WrittenTextColor    vt.AttributeColor
+	canvas                    *vt.Canvas
+	tty                       *vt.TTY
+	selectedIndexPerDirectory map[string]int
+	filterPattern             string
+	editor                    string // typically $EDITOR
+	StartMessage              string // title/header
+	written                   []rune
+	prevdir                   []string
+	fileEntries               []FileEntry
+	Directories               []string
+	dirIndex                  uint
+	startx                    uint
+	starty                    uint
+	promptLength              uint
+	AngleColor                vt.AttributeColor
+	PromptColor               vt.AttributeColor
+	TitleColor                vt.AttributeColor
+	HighlightBackground       vt.AttributeColor
+	Background                vt.AttributeColor
+	EdgeBackground            vt.AttributeColor
+	WrittenTextColor          vt.AttributeColor
+	quit                      bool
+	selectionMoved            bool
+	ShowHidden                bool
 }
 
 // ErrExit is the error that is returned if the user appeared to want to exit
@@ -83,7 +86,7 @@ func (s *State) drawOutput(text string, tty *vt.TTY) {
 	}
 	s.canvas.Draw()
 	// Wait for a key press before continuing
-	tty.String()
+	_ = tty.String()
 }
 
 func (s *State) drawError(text string) {
@@ -97,56 +100,80 @@ func (s *State) drawError(text string) {
 	}
 }
 
+// Set the given index
+func (s *State) setSelectedIndex(index int) {
+	s.selectedIndexPerDirectory[s.Directories[s.dirIndex]] = index
+}
+
+// Decrease the given index
+func (s *State) decSelectedIndex() {
+	if val, ok := s.selectedIndexPerDirectory[s.Directories[s.dirIndex]]; ok && val != -1 {
+		if val-1 >= 0 {
+			s.selectedIndexPerDirectory[s.Directories[s.dirIndex]] = val - 1
+		} else {
+			s.selectedIndexPerDirectory[s.Directories[s.dirIndex]] = 0
+		}
+	} else {
+		s.selectedIndexPerDirectory[s.Directories[s.dirIndex]] = 0
+	}
+}
+
+// Increase the given index
+func (s *State) incSelectedIndex() {
+	if val, ok := s.selectedIndexPerDirectory[s.Directories[s.dirIndex]]; ok && val != -1 {
+		s.selectedIndexPerDirectory[s.Directories[s.dirIndex]] = val + 1
+	} else {
+		s.selectedIndexPerDirectory[s.Directories[s.dirIndex]] = 1
+	}
+}
+
+// Set the selected index to the given value, but only if it is currently missing or -1
+func (s *State) setSelectedIndexIfMissing(index int) bool {
+	if val, ok := s.selectedIndexPerDirectory[s.Directories[s.dirIndex]]; !ok || val == -1 {
+		s.selectedIndexPerDirectory[s.Directories[s.dirIndex]] = index
+		return false // not found
+	}
+	return true // found
+}
+
+// Load the index from the cache, or set the given defaultIndex
+func (s *State) selectedIndex() int {
+	if val, ok := s.selectedIndexPerDirectory[s.Directories[s.dirIndex]]; ok && val != -1 {
+		return val
+	}
+	return -1
+}
+
 func (s *State) highlightSelection() {
-	if len(s.fileEntries) == 0 || s.selectedIndex < 0 {
+	if len(s.fileEntries) == 0 || s.selectedIndex() < 0 {
 		return
 	}
-	if s.selectedIndex >= len(s.fileEntries) {
-		s.selectedIndex = len(s.fileEntries) - 1
+	if s.selectedIndex() >= len(s.fileEntries) {
+		s.setSelectedIndex(len(s.fileEntries) - 1)
 	}
 
-	entry := s.fileEntries[s.selectedIndex]
+	entry := &s.fileEntries[s.selectedIndex()]
 	s.canvas.Write(entry.x, entry.y, vt.Black, s.HighlightBackground, entry.displayName)
+	entry.selected = true
 }
 
 func (s *State) clearHighlight() {
-	if s.selectedIndex >= 0 && s.selectedIndex < len(s.fileEntries) {
-		entry := s.fileEntries[s.selectedIndex]
+	for i := range s.fileEntries {
+		entry := &s.fileEntries[i]
+		if entry.selected {
+			// Clear only the area that was actually highlighted (displayName + suffix)
+			clearWidth := ulen(entry.displayName) + 2 // +2 for suffix and safety margin
+			for i := uint(0); i < clearWidth; i++ {
+				s.canvas.WriteRune(entry.x+i, entry.y, vt.Default, s.Background, ' ')
+			}
 
-		// Clear only the area that was actually highlighted (displayName + suffix)
-		clearWidth := ulen(entry.displayName) + 2 // +2 for suffix and safety margin
-		for i := uint(0); i < clearWidth; i++ {
-			s.canvas.WriteRune(entry.x+i, entry.y, vt.Default, s.Background, ' ')
-		}
-
-		// Redraw with original colors
-		path := filepath.Join(s.Directories[s.dirIndex], entry.realName)
-		var color vt.AttributeColor
-		var suffix string
-
-		if files.IsDir(path) && files.IsSymlink(path) {
-			color = vt.Blue
-			suffix = ">"
-		} else if files.IsDir(path) {
-			color = vt.Blue
-			suffix = "/"
-		} else if files.IsExecutableCached(path) {
-			color = vt.LightGreen
-			suffix = "*"
-		} else if files.IsSymlink(path) {
-			color = vt.LightRed
-			suffix = "^"
-		} else if files.IsBinary(path) {
-			color = vt.LightMagenta
-			suffix = "¤"
-		} else {
-			color = vt.Default
-			suffix = ""
-		}
-
-		s.canvas.Write(entry.x, entry.y, color, s.Background, entry.displayName)
-		if suffix != "" {
-			s.canvas.Write(entry.x+ulen(entry.displayName), entry.y, vt.White, s.Background, suffix)
+			// Redraw with original colors
+			s.canvas.Write(entry.x, entry.y, entry.color, s.Background, entry.displayName)
+			if entry.suffix != "" {
+				s.canvas.Write(entry.x+ulen(entry.displayName), entry.y, vt.White, s.Background, entry.suffix)
+			}
+			entry.selected = false
+			return
 		}
 	}
 }
@@ -203,14 +230,6 @@ func (s *State) ls(dir string) (int, error) {
 			displayName = string([]rune(name)[:columnWidth-5]) + "..."
 		}
 
-		// Store file entry with position info
-		s.fileEntries = append(s.fileEntries, FileEntry{
-			x:           x,
-			y:           y,
-			realName:    name,
-			displayName: displayName,
-		})
-
 		if ulen(name) > longestSoFar {
 			longestSoFar = ulen(name)
 		}
@@ -242,6 +261,16 @@ func (s *State) ls(dir string) (int, error) {
 			suffix = ""
 		}
 
+		// Store file entry with position info
+		s.fileEntries = append(s.fileEntries, FileEntry{
+			x:           x,
+			y:           y,
+			realName:    name,
+			displayName: displayName,
+			color:       color,
+			suffix:      suffix,
+		})
+
 		s.canvas.Write(x, y, color, s.Background, displayName)
 		if suffix != "" {
 			s.canvas.Write(x+ulen(displayName), y, vt.White, s.Background, suffix)
@@ -257,9 +286,11 @@ func (s *State) ls(dir string) (int, error) {
 		}
 	}
 
+	s.setSelectedIndexIfMissing(-1)
+
 	// Reset selection if out of bounds
-	if s.selectedIndex >= len(s.fileEntries) {
-		s.selectedIndex = 0
+	if s.selectedIndex() >= len(s.fileEntries) {
+		s.setSelectedIndex(0)
 	}
 
 	return len(s.fileEntries), nil
@@ -565,29 +596,37 @@ func dupli(xs []string) []string {
 // the function returns the absolute path to the directory the user ended up in,
 // and an error if something went wrong
 func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage, editor string) *State {
+	absStartDirs := make([]string, len(startdirs))
+	for i, d := range startdirs {
+		if abs, err := filepath.Abs(d); err == nil {
+			absStartDirs[i] = abs
+		} else {
+			absStartDirs[i] = d
+		}
+	}
 	return &State{
-		canvas:              c,
-		tty:                 tty,
-		prevdir:             dupli(startdirs),
-		dirIndex:            0,
-		quit:                false,
-		startx:              uint(5),
-		starty:              topLine + uint(4),
-		fileEntries:         []FileEntry{},
-		selectedIndex:       -1,
-		selectionMoved:      false,
-		filterPattern:       "",
-		editor:              editor,
-		ShowHidden:          false,
-		Directories:         startdirs,
-		StartMessage:        startMessage,
-		AngleColor:          vt.LightRed,
-		PromptColor:         vt.LightGreen,
-		TitleColor:          vt.LightMagenta,
-		Background:          vt.BackgroundDefault,
-		HighlightBackground: vt.BackgroundWhite,
-		EdgeBackground:      vt.BackgroundDefault,
-		WrittenTextColor:    vt.LightYellow,
+		canvas:                    c,
+		tty:                       tty,
+		prevdir:                   dupli(absStartDirs),
+		dirIndex:                  0,
+		quit:                      false,
+		startx:                    uint(5),
+		starty:                    topLine + uint(4),
+		fileEntries:               []FileEntry{},
+		selectionMoved:            false,
+		filterPattern:             "",
+		editor:                    editor,
+		ShowHidden:                false,
+		Directories:               absStartDirs,
+		StartMessage:              startMessage,
+		AngleColor:                vt.LightRed,
+		PromptColor:               vt.LightGreen,
+		TitleColor:                vt.LightMagenta,
+		Background:                vt.BackgroundDefault,
+		HighlightBackground:       vt.BackgroundWhite,
+		EdgeBackground:            vt.BackgroundDefault,
+		WrittenTextColor:          vt.LightYellow,
+		selectedIndexPerDirectory: make(map[string]int, 0),
 	}
 }
 
@@ -660,10 +699,10 @@ func (s *State) Run() (string, error) {
 	}
 
 	listDirectory := func() {
-		s.clearHighlight() // Clear old highlight before clearing entries
+		s.clearHighlight()
 		s.fileEntries = []FileEntry{}
-		s.selectedIndex = -1
-		s.selectionMoved = false // Reset selection moved flag
+		found := s.setSelectedIndexIfMissing(-1)
+		s.selectionMoved = found // Reset selection moved flag
 		s.filterPattern = ""     // Clear filter when changing directories
 		clearAndPrepare()
 		s.ls(s.Directories[s.dirIndex])
@@ -671,20 +710,24 @@ func (s *State) Run() (string, error) {
 		index = 0
 		clearWritten()
 		drawWritten()
+		if found {
+			s.highlightSelection()
+		}
 	}
 
 	clearAndPrepare()
 	s.ls(s.Directories[s.dirIndex])
+
 	c.Draw()
 
 	for !s.quit {
 		key := s.tty.String()
 		switch key {
 		case "c:27": // esc
-			if s.selectedIndex >= 0 {
+			if s.selectedIndex() >= 0 {
 				// If a file selection is active, clear it
 				s.clearHighlight()
-				s.selectedIndex = -1
+				s.setSelectedIndex(-1)
 				c.Draw()
 				break
 			}
@@ -708,9 +751,9 @@ func (s *State) Run() (string, error) {
 			s.quit = true
 		case "c:13": // return
 			// If a file is selected (via arrow keys), execute it regardless of text
-			if s.selectedIndex >= 0 && s.selectedIndex < len(s.fileEntries) {
+			if s.selectedIndex() >= 0 && s.selectedIndex() < len(s.fileEntries) {
 				s.clearHighlight()
-				selectedFile := s.fileEntries[s.selectedIndex].realName
+				selectedFile := s.fileEntries[s.selectedIndex()].realName
 				savedFilename := selectedFile // Save the filename before editing
 				if changedDirectory, editedFile, err := s.execute(selectedFile, s.Directories[s.dirIndex], s.tty); err != nil {
 					clearAndPrepare()
@@ -725,7 +768,7 @@ func (s *State) Run() (string, error) {
 					// Search for the file by name
 					for i, entry := range s.fileEntries {
 						if entry.realName == savedFilename {
-							s.selectedIndex = i
+							s.setSelectedIndex(i)
 							s.highlightSelection()
 							break
 						}
@@ -737,7 +780,7 @@ func (s *State) Run() (string, error) {
 					// Search for the file by name
 					for i, entry := range s.fileEntries {
 						if entry.realName == savedFilename {
-							s.selectedIndex = i
+							s.setSelectedIndex(i)
 							s.highlightSelection()
 							break
 						}
@@ -794,7 +837,7 @@ func (s *State) Run() (string, error) {
 				clearAndPrepare()
 				s.ls(s.Directories[s.dirIndex])
 			}
-			s.selectedIndex = -1
+			s.setSelectedIndex(-1)
 			clearWritten()
 			drawWritten()
 		case "c:4": // ctrl-d
@@ -815,38 +858,38 @@ func (s *State) Run() (string, error) {
 				clearAndPrepare()
 				s.ls(s.Directories[s.dirIndex])
 			}
-			s.selectedIndex = -1
+			s.setSelectedIndex(-1)
 			clearWritten()
 			drawWritten()
 		case pgUpKey: // page up
-			if len(s.fileEntries) > 0 && s.selectedIndex >= 0 {
+			if len(s.fileEntries) > 0 && s.selectedIndex() >= 0 {
 				s.selectionMoved = true
 				s.clearHighlight()
 				// Find the first entry in the current column (same x, lowest y)
-				currentX := s.fileEntries[s.selectedIndex].x
+				currentX := s.fileEntries[s.selectedIndex()].x
 				for i := 0; i < len(s.fileEntries); i++ {
 					if s.fileEntries[i].x == currentX {
-						s.selectedIndex = i
+						s.setSelectedIndex(i)
 						break
 					}
 				}
 				s.highlightSelection()
 			}
 		case pgDnKey: // page down
-			if len(s.fileEntries) > 0 && s.selectedIndex >= 0 {
+			if len(s.fileEntries) > 0 && s.selectedIndex() >= 0 {
 				s.selectionMoved = true
 				s.clearHighlight()
 				// Find the last entry in the current column (same x, highest y)
-				currentX := s.fileEntries[s.selectedIndex].x
-				lastInColumn := s.selectedIndex
-				for i := s.selectedIndex; i < len(s.fileEntries); i++ {
+				currentX := s.fileEntries[s.selectedIndex()].x
+				lastInColumn := s.selectedIndex()
+				for i := s.selectedIndex(); i < len(s.fileEntries); i++ {
 					if s.fileEntries[i].x == currentX {
 						lastInColumn = i
 					} else if s.fileEntries[i].x > currentX {
 						break
 					}
 				}
-				s.selectedIndex = lastInColumn
+				s.setSelectedIndex(lastInColumn)
 				s.highlightSelection()
 			}
 		case "c:1", homeKey: // ctrl-a, home
@@ -857,8 +900,8 @@ func (s *State) Run() (string, error) {
 			} else if len(s.fileEntries) > 0 {
 				s.selectionMoved = true
 				s.clearHighlight()
-				// Jump to first file
-				s.selectedIndex = 0
+				// Jump to first file, or use the cached index
+				s.setSelectedIndex(0)
 				s.highlightSelection()
 			}
 		case "c:5", endKey: // ctrl-e, end
@@ -870,7 +913,7 @@ func (s *State) Run() (string, error) {
 				s.selectionMoved = true
 				s.clearHighlight()
 				// Jump to last file
-				s.selectedIndex = len(s.fileEntries) - 1
+				s.setSelectedIndex(len(s.fileEntries) - 1)
 				s.highlightSelection()
 			}
 		case upArrow:
@@ -884,10 +927,10 @@ func (s *State) Run() (string, error) {
 				s.selectionMoved = true
 				s.clearHighlight()
 				// Move selection up
-				if s.selectedIndex < 0 {
-					s.selectedIndex = 0
-				} else if s.selectedIndex > 0 {
-					s.selectedIndex--
+				if s.selectedIndex() < 0 {
+					s.setSelectedIndex(0)
+				} else if s.selectedIndex() > 0 {
+					s.decSelectedIndex()
 				}
 				s.highlightSelection()
 			}
@@ -902,10 +945,10 @@ func (s *State) Run() (string, error) {
 				s.selectionMoved = true
 				s.clearHighlight()
 				// Move selection down
-				if s.selectedIndex < 0 {
-					s.selectedIndex = 0
-				} else if s.selectedIndex < len(s.fileEntries)-1 {
-					s.selectedIndex++
+				if s.selectedIndex() < 0 {
+					s.setSelectedIndex(0)
+				} else if s.selectedIndex() < len(s.fileEntries)-1 {
+					s.incSelectedIndex()
 				}
 				s.highlightSelection()
 			}
@@ -916,18 +959,18 @@ func (s *State) Run() (string, error) {
 					index--
 				}
 				drawWritten()
-			} else if len(s.fileEntries) > 0 && s.selectedIndex >= 0 {
+			} else if len(s.fileEntries) > 0 && s.selectedIndex() >= 0 {
 				s.selectionMoved = true
 				s.clearHighlight()
 				// Move to previous column (with wraparound)
-				currentEntry := s.fileEntries[s.selectedIndex]
+				currentEntry := s.fileEntries[s.selectedIndex()]
 				currentY := currentEntry.y
 
 				found := false
 				// 1. Try to find exact Y match in previous column
-				for i := s.selectedIndex - 1; i >= 0; i-- {
+				for i := s.selectedIndex() - 1; i >= 0; i-- {
 					if s.fileEntries[i].y == currentY && s.fileEntries[i].x < currentEntry.x {
-						s.selectedIndex = i
+						s.setSelectedIndex(i)
 						found = true
 						break
 					}
@@ -939,7 +982,7 @@ func (s *State) Run() (string, error) {
 					targetXFound := false
 
 					// Check if there IS a previous column
-					for i := s.selectedIndex - 1; i >= 0; i-- {
+					for i := s.selectedIndex() - 1; i >= 0; i-- {
 						if s.fileEntries[i].x < currentEntry.x {
 							targetX = s.fileEntries[i].x
 							targetXFound = true
@@ -970,7 +1013,7 @@ func (s *State) Run() (string, error) {
 						}
 					}
 					if bestIndex != -1 {
-						s.selectedIndex = bestIndex
+						s.setSelectedIndex(bestIndex)
 					}
 				}
 				s.highlightSelection()
@@ -982,18 +1025,18 @@ func (s *State) Run() (string, error) {
 					index++
 				}
 				drawWritten()
-			} else if len(s.fileEntries) > 0 && s.selectedIndex >= 0 {
+			} else if len(s.fileEntries) > 0 && s.selectedIndex() >= 0 {
 				s.selectionMoved = true
 				s.clearHighlight()
 				// Move to next column (with wraparound)
-				currentEntry := s.fileEntries[s.selectedIndex]
+				currentEntry := s.fileEntries[s.selectedIndex()]
 				currentY := currentEntry.y
 
 				found := false
 				// 1. Try to find exact Y match in next column
-				for i := s.selectedIndex + 1; i < len(s.fileEntries); i++ {
+				for i := s.selectedIndex() + 1; i < len(s.fileEntries); i++ {
 					if s.fileEntries[i].y == currentY && s.fileEntries[i].x > currentEntry.x {
-						s.selectedIndex = i
+						s.setSelectedIndex(i)
 						found = true
 						break
 					}
@@ -1005,7 +1048,7 @@ func (s *State) Run() (string, error) {
 					targetXFound := false
 
 					// Check if there IS a next column
-					for i := s.selectedIndex + 1; i < len(s.fileEntries); i++ {
+					for i := s.selectedIndex() + 1; i < len(s.fileEntries); i++ {
 						if s.fileEntries[i].x > currentEntry.x {
 							targetX = s.fileEntries[i].x
 							targetXFound = true
@@ -1036,7 +1079,7 @@ func (s *State) Run() (string, error) {
 						}
 					}
 					if bestIndex != -1 {
-						s.selectedIndex = bestIndex
+						s.setSelectedIndex(bestIndex)
 					}
 				}
 				s.highlightSelection()
@@ -1081,10 +1124,11 @@ func (s *State) Run() (string, error) {
 				clearAndPrepare()
 				s.ls(s.Directories[s.dirIndex])
 			}
-			s.selectedIndex = -1
+			s.setSelectedIndexIfMissing(-1)
 			clearWritten()
 			drawWritten()
 		case "c:14": // ctrl-n : cycle directory index forward
+			s.clearHighlight()
 			s.dirIndex++
 			if s.dirIndex >= ulen(s.Directories) {
 				s.dirIndex = 0
@@ -1114,17 +1158,17 @@ func (s *State) Run() (string, error) {
 		case "c:9": // tab : behave like right arrow or tab complete
 			if len(s.written) == 0 && len(s.fileEntries) > 1 {
 				// No text written and more than 1 file, cycle through files
-				if len(s.fileEntries) > 0 && s.selectedIndex >= 0 {
+				if len(s.fileEntries) > 0 && s.selectedIndex() >= 0 {
 					s.selectionMoved = true
 					s.clearHighlight()
-					currentEntry := s.fileEntries[s.selectedIndex]
+					currentEntry := s.fileEntries[s.selectedIndex()]
 					currentY := currentEntry.y
 
 					// Find an entry with larger x at the same y position
 					found := false
-					for i := s.selectedIndex + 1; i < len(s.fileEntries); i++ {
+					for i := s.selectedIndex() + 1; i < len(s.fileEntries); i++ {
 						if s.fileEntries[i].y == currentY && s.fileEntries[i].x > currentEntry.x {
-							s.selectedIndex = i
+							s.setSelectedIndex(i)
 							found = true
 							break
 						}
@@ -1135,7 +1179,7 @@ func (s *State) Run() (string, error) {
 						var nextY uint
 						nextRowFound := false
 						// Find the y position of the next row
-						for i := s.selectedIndex + 1; i < len(s.fileEntries); i++ {
+						for i := s.selectedIndex() + 1; i < len(s.fileEntries); i++ {
 							if s.fileEntries[i].y > currentY {
 								nextY = s.fileEntries[i].y
 								nextRowFound = true
@@ -1147,7 +1191,7 @@ func (s *State) Run() (string, error) {
 							minX := ^uint(0) // max uint value
 							for i := 0; i < len(s.fileEntries); i++ {
 								if s.fileEntries[i].y == nextY && s.fileEntries[i].x < minX {
-									s.selectedIndex = i
+									s.setSelectedIndex(i)
 									minX = s.fileEntries[i].x
 									found = true
 								}
@@ -1157,7 +1201,7 @@ func (s *State) Run() (string, error) {
 
 					// If still not found, wrap to the very first entry
 					if !found {
-						s.selectedIndex = 0
+						s.setSelectedIndex(0)
 					}
 					s.highlightSelection()
 				}
@@ -1266,7 +1310,7 @@ func (s *State) Run() (string, error) {
 				for i, entry := range s.fileEntries {
 					if entry.realName == foundFile {
 						s.clearHighlight()
-						s.selectedIndex = i
+						s.setSelectedIndex(i)
 						s.selectionMoved = true
 						s.highlightSelection()
 						break
@@ -1282,7 +1326,7 @@ func (s *State) Run() (string, error) {
 			}
 			s.written = []rune{}
 			index = 0
-			s.selectedIndex = -1
+			s.setSelectedIndex(-1)
 			s.filterPattern = ""
 			clearAndPrepare()
 			s.ls(s.Directories[s.dirIndex])
@@ -1296,7 +1340,7 @@ func (s *State) Run() (string, error) {
 			}
 			// Reset selection when typing
 			s.clearHighlight()
-			s.selectedIndex = -1
+			s.setSelectedIndex(-1)
 			clearWritten()
 			tmp := append(s.written[:index], []rune(key)...)
 			s.written = append(tmp, s.written[index:]...)
