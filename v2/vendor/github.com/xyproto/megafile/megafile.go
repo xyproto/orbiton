@@ -755,8 +755,13 @@ func (s *State) Run() (string, error) {
 		case "c:17": // ctrl-q
 			s.quit = true
 		case "c:13": // return
+			okToAutoSelect := !s.autoSelected
+			if s.autoSelected && len(s.written) == 0 {
+				okToAutoSelect = true
+			}
 			// If a file is selected (via arrow keys), execute it regardless of text
-			if s.selectedIndex() >= 0 && s.selectedIndex() < len(s.fileEntries) && !s.autoSelected {
+			// unless it was auto-selected, then there must be no text
+			if s.selectedIndex() >= 0 && s.selectedIndex() < len(s.fileEntries) && okToAutoSelect {
 				s.clearHighlight()
 				selectedFile := s.fileEntries[s.selectedIndex()].realName
 				savedFilename := selectedFile // Save the filename before editing
