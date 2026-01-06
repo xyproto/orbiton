@@ -2,6 +2,7 @@
 package megafile
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -27,6 +28,16 @@ const (
 	endKey  = "⇲" // end
 
 	topLine = uint(1)
+)
+
+type Action int
+
+const (
+	// Returned action from the Orbiton editor
+	NoAction = iota
+	NextFile
+	PreviousFile
+	StopParent
 )
 
 // FileEntry represents a file entry with position and name information
@@ -433,7 +444,8 @@ func (s *State) confirmBinaryEdit(tty *vt.TTY, filename string) bool {
 	}
 }
 
-func (s *State) edit(filename, path string) error {
+// edit a file, but return stderr when done
+func (s *State) edit(filename, path string) (string, error) {
 	executableName := s.editor
 	var args []string
 	if strings.Contains(executableName, " ") {
@@ -443,19 +455,29 @@ func (s *State) edit(filename, path string) error {
 	}
 	editorPath, err := exec.LookPath(executableName)
 	if err != nil {
-		return err
+		return "", err
 	}
-	// Add -y flag for "o" editor
+	// Add -y and -w flags for the "o" editor
+	// -y is to make it so that ctrl-n and ctrl-p will cycle filenames
+	// -w is to make it so that esc will quit the editor
 	if filepath.Base(editorPath) == "o" {
-		args = append(args, "-y")
+		args = append(args, "-y", "-w")
 	}
 	args = append(args, filename)
+	var stderr bytes.Buffer
+
 	command := exec.Command(editorPath, args...)
 	command.Dir = path
 	command.Stdout = os.Stdout
-	command.Stderr = os.Stderr
+	command.Stderr = &stderr
 	command.Stdin = os.Stdin
-	return command.Run()
+
+	stderrString := ""
+	err = command.Run()
+	if err == nil {
+		stderrString = strings.TrimSpace(stderr.String())
+	}
+	return stderrString, err
 }
 
 func run(executableName string, args []string, path string) error {
@@ -494,15 +516,28 @@ func (s *State) setPath(path string) {
 	}
 }
 
+func string2action(s string) Action {
+	var nextAction Action = NoAction
+	switch s {
+	case "nextfile":
+		nextAction = NextFile
+	case "prevfile", "previousfile":
+		nextAction = PreviousFile
+	case "stopparent":
+		nextAction = StopParent
+	}
+	return nextAction
+}
+
 // execute tries to execute the given command in the given directory,
 // and returns true if the directory was changed
 // and returns true if a file was edited
 // and returns an error if something went wrong
-func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
+func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, error) {
 	// Common for non-bash and bash mode
 	if cmd == "exit" || cmd == "quit" || cmd == "q" || cmd == "bye" {
 		s.quit = true
-		return false, false, nil
+		return false, false, NoAction, nil
 	}
 	if cmd == "cd" || cmd == "-" || strings.HasPrefix(cmd, "cd ") {
 		possibleDirectory := ""
@@ -514,45 +549,45 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 		if cmd == "-" || rest == "-" {
 			if s.Directories[s.dirIndex] != s.prevdir[s.dirIndex] {
 				s.prevdir[s.dirIndex], s.Directories[s.dirIndex] = s.Directories[s.dirIndex], s.prevdir[s.dirIndex]
-				return true, false, nil
+				return true, false, NoAction, nil
 			}
-			return false, false, errors.New("OLDPWD not set")
+			return false, false, NoAction, errors.New("OLDPWD not set")
 		} else if possibleDirectory == "" {
 			homedir := env.HomeDir()
 			if s.Directories[s.dirIndex] != homedir {
 				s.setPath(homedir)
-				return true, false, nil
+				return true, false, NoAction, nil
 			}
-			return false, false, nil
+			return false, false, NoAction, nil
 		} else if files.Dir(possibleDirectory) {
 			if s.Directories[s.dirIndex] != possibleDirectory {
 				s.setPath(possibleDirectory)
-				return true, false, nil
+				return true, false, NoAction, nil
 			}
-			return false, false, nil
+			return false, false, NoAction, nil
 		} else if files.Dir(rest) {
 			if s.Directories[s.dirIndex] != rest {
 				s.setPath(rest)
-				return true, false, nil
+				return true, false, NoAction, nil
 			}
-			return false, false, nil
+			return false, false, NoAction, nil
 		}
-		return false, false, errors.New("cd WHAT?")
+		return false, false, NoAction, errors.New("cd WHAT?")
 	}
 	if files.Dir(filepath.Join(path, cmd)) { // relative path
 		newPath := filepath.Join(path, cmd)
 		if s.Directories[s.dirIndex] != newPath {
 			s.setPath(newPath)
-			return true, false, nil
+			return true, false, NoAction, nil
 		}
-		return false, false, nil
+		return false, false, NoAction, nil
 	}
 	if files.Dir(cmd) { // absolute path
 		if s.Directories[s.dirIndex] != cmd {
 			s.setPath(cmd)
-			return true, false, nil
+			return true, false, NoAction, nil
 		}
-		return false, false, nil
+		return false, false, NoAction, nil
 	}
 	if files.File(filepath.Join(path, cmd)) { // relative path
 		if strings.HasPrefix(cmd, "./") && files.ExecutableCached(filepath.Join(path, cmd)) {
@@ -565,29 +600,32 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 			if err == nil {
 				s.drawOutput(output, tty)
 			}
-			return false, false, err
+			return false, false, NoAction, err
 		}
 		// Check if file is both binary and executable
 		fullPath := filepath.Join(path, cmd)
 		if files.Binary(fullPath) && files.Executable(fullPath) {
 			if !s.confirmBinaryEdit(tty, cmd) {
-				return false, false, nil // User cancelled
+				return false, false, NoAction, nil // User cancelled
 			}
 		}
-		return false, true, s.edit(cmd, path)
+		stderrString, err := s.edit(cmd, path)
+		return false, true, string2action(stderrString), err
 	}
 	if files.File(cmd) { // abs absolute path
 		// Check if file is binary (but allow .gz files as they can be edited)
 		if files.Binary(cmd) && !strings.HasSuffix(cmd, ".gz") {
 			if !s.confirmBinaryEdit(tty, filepath.Base(cmd)) {
-				return false, false, nil // User cancelled
+				return false, false, NoAction, nil // User cancelled
 			}
 		}
-		return false, true, s.edit(cmd, path)
+		stderrString, err := s.edit(cmd, path)
+		return false, true, string2action(stderrString), err
+
 	}
 	if cmd == "l" || cmd == "ls" || cmd == "dir" {
 		_, err := s.ls(path)
-		return false, false, err
+		return false, false, NoAction, err
 	}
 	if strings.HasPrefix(cmd, "which ") {
 		rest := ""
@@ -596,17 +634,18 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 			found := files.WhichCached(rest)
 			s.drawOutput(found, tty)
 		}
-		return false, false, nil
+		return false, false, NoAction, nil
 	}
 	if cmd == "echo" {
-		return false, false, nil
+		return false, false, NoAction, nil
 	}
 	if strings.HasPrefix(cmd, "echo ") {
 		s.drawOutput(cmd[5:], tty)
-		return false, false, nil
+		return false, false, NoAction, nil
 	}
 	if cmd == filepath.Base(env.Str("EDITOR")) {
-		return false, true, s.edit("", path)
+		stderrString, err := s.edit(cmd, path)
+		return false, true, string2action(stderrString), err
 	}
 	if strings.HasPrefix(cmd, filepath.Base(env.Str("EDITOR"))+" ") {
 		spaceIndex := strings.Index(cmd, " ")
@@ -614,7 +653,8 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 		if spaceIndex+1 < len(cmd) {
 			rest = cmd[spaceIndex+1:]
 		}
-		return false, true, s.edit(rest, path)
+		stderrString, err := s.edit(rest, path)
+		return false, true, string2action(stderrString), err
 	}
 	if strings.Contains(cmd, " ") {
 		fields := strings.Split(cmd, " ")
@@ -624,12 +664,12 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 		if err == nil {
 			s.drawOutput(output, tty)
 		}
-		return false, false, err
+		return false, false, NoAction, err
 	} else if foundExecutableInPath := files.WhichCached(cmd); foundExecutableInPath != "" {
-		return false, false, run(foundExecutableInPath, []string{}, s.Directories[s.dirIndex])
+		return false, false, NoAction, run(foundExecutableInPath, []string{}, s.Directories[s.dirIndex])
 	}
 
-	return false, false, fmt.Errorf("WHAT DO YOU MEAN, %s?", cmd)
+	return false, false, NoAction, fmt.Errorf("WHAT DO YOU MEAN, %s?", cmd)
 }
 
 func (s *State) currentAbsDir() string {
@@ -815,7 +855,7 @@ func (s *State) Run() (string, error) {
 				s.clearHighlight()
 				selectedFile := s.fileEntries[s.selectedIndex()].realName
 				savedFilename := selectedFile // Save the filename before editing
-				if changedDirectory, editedFile, err := s.execute(selectedFile, s.Directories[s.dirIndex], s.tty); err != nil {
+				if changedDirectory, editedFile, nextAction, err := s.execute(selectedFile, s.Directories[s.dirIndex], s.tty); err != nil {
 					clearAndPrepare()
 					s.ls(s.Directories[s.dirIndex])
 					s.drawError(err.Error())
@@ -828,7 +868,22 @@ func (s *State) Run() (string, error) {
 					// Search for the file by name
 					for i, entry := range s.fileEntries {
 						if entry.realName == savedFilename {
-							s.setSelectedIndex(i)
+							switch nextAction {
+							case NextFile:
+								if (i + 1) < len(s.fileEntries) {
+									s.setSelectedIndex(i + 1)
+								} else {
+									s.setSelectedIndex(i)
+								}
+							case PreviousFile:
+								if (i - 1) >= 0 {
+									s.setSelectedIndex(i - 1)
+								} else {
+									s.setSelectedIndex(i)
+								}
+							default:
+								s.setSelectedIndex(i)
+							}
 							s.highlightSelection()
 							break
 						}
@@ -864,7 +919,7 @@ func (s *State) Run() (string, error) {
 			clearAndPrepare()
 			clearWritten()
 			c.Draw()
-			if changedDirectory, editedFile, err := s.execute(commandText, s.Directories[s.dirIndex], s.tty); err != nil {
+			if changedDirectory, editedFile, _, err := s.execute(commandText, s.Directories[s.dirIndex], s.tty); err != nil {
 				s.drawError(err.Error())
 			} else if changedDirectory || editedFile {
 				listDirectory()
