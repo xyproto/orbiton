@@ -99,6 +99,7 @@ Flags:
   -z, --no-quick-help            Never display the quick help pane at start.
   -g, --glob GLOB                Search for and open the first filename that matches the substring.
   -h, --help                     Display this usage information.
+  -y, --esc                      Just pressing Esc will exit the program.
   -v, --version                  Display the current version.
 
 See the man page for more information.
