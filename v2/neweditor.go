@@ -198,7 +198,13 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				e.filename = matches[0]
 			} else {
 				e.dirMode = true
-				startdirs := []string{e.filename, env.HomeDir(), "/tmp"}
+				startdirs := []string{e.filename}
+				for _, arg := range globalArgs { // check the command line arguments
+					if files.IsDir(arg) && !hasS(startdirs, arg) {
+						startdirs = append(startdirs, arg)
+					}
+				}
+
 				const title = "·-––—==[ Orbiton File Browser ]==—––-·"
 				megaFileState := megafile.New(c, tty, startdirs, title, editorExecutable+" -y")
 

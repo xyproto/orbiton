@@ -53,7 +53,11 @@ var (
 	// An empty *Ollama struct
 	ollama = NewOllama()
 
+	// Check if $NO_COLOR is set
 	envNoColor = env.Bool("NO_COLOR")
+
+	// Arguments given on the command line
+	globalArgs []string
 )
 
 func main() {
@@ -164,6 +168,8 @@ func main() {
 		args                    = pflag.Args() // using pflag.Args() to get the non-flag arguments
 		argsGiven               = len(args) > 0
 	)
+
+	globalArgs = args
 
 	// Handle the copy flag / mode - before reading from stdin
 	if copyFlag || firstLetterOfExecutable == 'c' {
