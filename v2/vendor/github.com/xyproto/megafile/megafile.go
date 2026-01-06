@@ -165,7 +165,7 @@ func (s *State) setSelectedIndex(index int) {
 func (s *State) selectNextIndexThatIsANonBinaryFile() error {
 	dir := s.Directories[s.dirIndex]
 	var path string
-	for i := s.selectedIndex(); i < len(s.fileEntries); i++ {
+	for i := s.selectedIndex() + 1; i < len(s.fileEntries); i++ {
 		path = filepath.Join(dir, s.fileEntries[i].realName)
 		if files.File(path) && !files.Binary(path) {
 			s.selectedIndexPerDirectory[dir] = i
@@ -178,7 +178,7 @@ func (s *State) selectNextIndexThatIsANonBinaryFile() error {
 func (s *State) selectPrevIndexThatIsANonBinaryFile() error {
 	dir := s.Directories[s.dirIndex]
 	var path string
-	for i := s.selectedIndex(); i >= 0; i-- {
+	for i := s.selectedIndex() - 1; i >= 0; i-- {
 		path = filepath.Join(dir, s.fileEntries[i].realName)
 		if files.File(path) && !files.Binary(path) {
 			s.selectedIndexPerDirectory[dir] = i
