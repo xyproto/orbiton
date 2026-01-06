@@ -748,10 +748,41 @@ func (s *State) Run() (string, error) {
 				clearAndPrepare()
 				s.ls(s.Directories[s.dirIndex])
 				c.Draw()
-			} else {
-				// Quit the program
-				s.quit = true
+				break
 			}
+			//if absPath, err := filepath.Abs(s.Directories[s.dirIndex]); err == nil && absPath == "/" { // at root
+			//s.quit = true
+			//break
+			//}
+			fallthrough
+		case "c:127": // backspace, either go one directory up or delete text
+			if index == 0 { // cursor is at the start of the line, nothing to delete
+				// go one directory up
+				if absPath, err := filepath.Abs(filepath.Join(s.Directories[s.dirIndex], "..")); err == nil { // success
+					s.setPath(absPath)
+					listDirectory()
+				}
+				break
+			}
+			clearWritten()
+			if len(s.written) > 0 && index > 0 {
+				s.written = append(s.written[:index-1], s.written[index:]...)
+				index--
+			}
+			// Update filter pattern and redraw
+			s.clearHighlight()
+			s.filterPattern = string(s.written)
+			clearAndPrepare()
+			count, _ := s.ls(s.Directories[s.dirIndex])
+			// If no matches, redraw without filter
+			if count == 0 && s.filterPattern != "" {
+				s.filterPattern = ""
+				clearAndPrepare()
+				s.ls(s.Directories[s.dirIndex])
+			}
+			s.setSelectedIndexIfMissing(-1)
+			clearWritten()
+			drawWritten()
 		case "c:17": // ctrl-q
 			s.quit = true
 		case "c:13": // return
@@ -1108,34 +1139,6 @@ func (s *State) Run() (string, error) {
 				s.written = append(s.written[:index-1], s.written[index:]...)
 				index--
 			}
-			drawWritten()
-		case "c:127": // backspace, either go one directory up or delete text
-			if index == 0 { // cursor is at the start of the line, nothing to delete
-				// go one directory up
-				if absPath, err := filepath.Abs(filepath.Join(s.Directories[s.dirIndex], "..")); err == nil { // success
-					s.setPath(absPath)
-					listDirectory()
-				}
-				break
-			}
-			clearWritten()
-			if len(s.written) > 0 && index > 0 {
-				s.written = append(s.written[:index-1], s.written[index:]...)
-				index--
-			}
-			// Update filter pattern and redraw
-			s.clearHighlight()
-			s.filterPattern = string(s.written)
-			clearAndPrepare()
-			count, _ := s.ls(s.Directories[s.dirIndex])
-			// If no matches, redraw without filter
-			if count == 0 && s.filterPattern != "" {
-				s.filterPattern = ""
-				clearAndPrepare()
-				s.ls(s.Directories[s.dirIndex])
-			}
-			s.setSelectedIndexIfMissing(-1)
-			clearWritten()
 			drawWritten()
 		case "c:14": // ctrl-n : cycle directory index forward
 			s.clearHighlight()
