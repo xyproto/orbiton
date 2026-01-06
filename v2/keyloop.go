@@ -823,7 +823,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
 
-			if cycleFilenames {
+			if cycleFilenames && !e.changed.Load() {
 				return "", megafile.PreviousFile, nil
 			}
 
@@ -916,7 +916,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
 
-			if cycleFilenames {
+			if cycleFilenames && !e.changed.Load() {
 				return "", megafile.NextFile, nil
 			}
 
