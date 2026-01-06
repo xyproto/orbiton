@@ -853,15 +853,8 @@ func (s *State) Run() (string, error) {
 				drawWritten()
 				break
 			}
-			// No file selected, check if text was written
+			// No file selected and no text written, break out
 			if len(s.written) == 0 { // nothing was written
-				homedir := env.HomeDir()
-				if s.Directories[s.dirIndex] != homedir {
-					s.setPath(homedir)
-				}
-				listDirectory()
-				clearWritten()
-				drawWritten()
 				break
 			}
 			// Text has been written - execute it as a command
