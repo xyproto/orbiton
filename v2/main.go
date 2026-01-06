@@ -17,6 +17,7 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/globi"
+	"github.com/xyproto/megafile"
 	"github.com/xyproto/vt"
 )
 
@@ -88,9 +89,10 @@ func main() {
 		versionFlag            bool
 		searchAndOpenFlag      bool
 		escToExitFlag          bool
+		cycleFilenamesFlag     bool // for internal use
 	)
 
-	// Available short options: j k u w y
+	// Available short options: j k u
 
 	pflag.BoolVarP(&batFlag, "bat", "B", false, "Cat the file with colors instead of editing it, using bat")
 	pflag.BoolVarP(&buildFlag, "build", "b", false, "Try to build the file instead of editing it")
@@ -116,6 +118,9 @@ func main() {
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
 	pflag.BoolVarP(&searchAndOpenFlag, "glob", "g", false, "open the first filename that matches the given glob (recursively)")
 	pflag.BoolVarP(&escToExitFlag, "esc", "y", false, "press Esc to exit the program")
+	pflag.BoolVarP(&cycleFilenamesFlag, "cycle", "w", false, "cycle files with ctrl-n and ctrl-p (undocumented)")
+
+	pflag.CommandLine.MarkHidden("cycle")
 
 	pflag.Parse()
 
@@ -506,10 +511,15 @@ func main() {
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, stopParent, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, noQuickHelpFlag, formatFlag, escToExitFlag)
+	userMessage, nextAction, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, noQuickHelpFlag, formatFlag, escToExitFlag, cycleFilenamesFlag)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
-	if stopParent {
+	switch nextAction {
+	case megafile.NextFile:
+		fmt.Fprintln(os.Stderr, "nextfile")
+	case megafile.PreviousFile:
+		fmt.Fprintln(os.Stderr, "prevfile")
+	case megafile.StopParent:
 		defer func() {
 			sendParentQuitSignal()
 		}()

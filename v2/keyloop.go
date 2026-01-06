@@ -14,6 +14,7 @@ import (
 	"github.com/xyproto/clip"
 	"github.com/xyproto/digraph"
 	"github.com/xyproto/env/v2"
+	"github.com/xyproto/megafile"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 )
@@ -54,7 +55,7 @@ var (
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, fmtFlag, escToExit bool) (userMessage string, stopParent bool, err error) {
+func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, fmtFlag, escToExit, cycleFilenames bool) (userMessage string, nextAction megafile.Action, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt.Init()
@@ -104,17 +105,17 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	e, messageAfterRedraw, displayedImage, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp)
 	if err != nil {
 		if e != nil {
-			return "", false, err
+			return "", megafile.NoAction, err
 		}
 		clearOnQuit.Store(false)
-		return "", false, err
+		return "", megafile.NoAction, err
 	} else if displayedImage {
 		// A special case for if an image was displayed instead of a file being opened
 		if e != nil {
-			return "", false, nil
+			return "", megafile.NoAction, nil
 		}
 		clearOnQuit.Store(false)
-		return "", false, nil
+		return "", megafile.NoAction, nil
 	}
 
 	// Find the absolute path to this filename
@@ -201,7 +202,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		} else {
 			// Lock the current file, if it's not already locked
 			if err := fileLock.Lock(absFilename); err != nil {
-				return fmt.Sprintf("Locked by another (possibly dead) instance of this editor.\nTry: o -f %s", filepath.Base(absFilename)), false, errors.New(absFilename + " is locked")
+				return fmt.Sprintf("Locked by another (possibly dead) instance of this editor.\nTry: o -f %s", filepath.Base(absFilename)), megafile.NoAction, errors.New(absFilename + " is locked")
 			}
 			// Save the lock file as a signal to other instances of the editor
 			go fileLock.Save()
@@ -822,6 +823,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
 
+			if cycleFilenames {
+				return "", megafile.PreviousFile, nil
+			}
+
 			if !e.nanoMode.Load() {
 				if e.debugMode {
 					// e.showRegisters has three states, 0 (SmallRegisterWindow), 1 (LargeRegisterWindow) and 2 (NoRegisterWindow)
@@ -910,6 +915,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			fallthrough // ctrl-p in nano mode
 
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
+
+			if cycleFilenames {
+				return "", megafile.NextFile, nil
+			}
 
 			if !e.nanoMode.Load() {
 
@@ -2195,5 +2204,5 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	stopBackgroundProcesses()
 
 	// All done
-	return "", e.stopParentOnQuit, nil
+	return "", e.nextAction, nil
 }

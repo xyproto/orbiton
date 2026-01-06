@@ -9,6 +9,7 @@ import (
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
+	"github.com/xyproto/megafile"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 )
@@ -509,13 +510,13 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 	searchProcessNames := []string{"ag", "find", "rg"}
 	if firstWordContainsOneOf(parentCommand(), searchProcessNames) {
 		actions.Add("Kill parent and exit without saving", func() {
-			e.stopParentOnQuit = true
+			e.nextAction = megafile.StopParent
 			e.quit = true           // indicate that the user wishes to quit
 			clearOnQuit.Store(true) // clear the terminal after quitting
 		})
 	} else {
 		actions.Add("Exit without saving", func() {
-			e.stopParentOnQuit = false
+			e.nextAction = megafile.StopParent
 			e.quit = true           // indicate that the user wishes to quit
 			clearOnQuit.Store(true) // clear the terminal after quitting
 		})
