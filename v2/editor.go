@@ -16,6 +16,7 @@ import (
 	"github.com/xyproto/clip"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
+	"github.com/xyproto/megafile"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 )
@@ -44,48 +45,48 @@ type Editor struct {
 	lineBeforeSearch   LineIndex       // save the current line number before jumping between search results
 	playBackMacroCount int             // number of times the macro should be played back, right now
 	// atomic.Bool are used for values that might be read when redrawing text asynchronously
-	changed                    atomic.Bool // has the contents changed, since last save?
-	redraw                     atomic.Bool // if the contents should be redrawn in the next loop
-	redrawCursor               atomic.Bool // if the cursor should be moved to the location it is supposed to be
-	drawProgress               atomic.Bool // used for drawing the progress character on the right side
-	drawFuncName               atomic.Bool // used when drawing the function name in the top right corner
-	nanoMode                   atomic.Bool // emulate GNU Nano
-	waitWithRedrawing          atomic.Bool // wait with redrawing until a key is pressed
-	flaskApplication           atomic.Bool // Python + Flask
-	moveLinesMode              atomic.Bool // move lines up and down with ctrl-p and ctrl-n, when enabled
-	rainbowParenthesis         bool        // rainbow parenthesis
-	sshMode                    bool        // is o used over ssh, tmux or screen, in a way that usually requires extra redrawing?
-	debugMode                  bool        // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
-	statusMode                 bool        // display a status bar at all times at the bottom of the screen
-	showColumnLimit            bool        // show the line where the wrapWidth is (at 79 by default)
-	expandTags                 bool        // can be used for XML and HTML
-	syntaxHighlight            bool        // syntax highlighting
-	stopParentOnQuit           bool        // send SIGQUIT to the parent PID when quitting
-	quit                       bool        // for indicating if the user wants to end the editor session
-	readOnly                   bool        // is the file read-only when initializing o?
-	debugHideOutput            bool        // hide the GDB stdout pane when in debug mode?
-	binaryFile                 bool        // is this a binary file, or a text file?
-	wrapWhenTyping             bool        // wrap text at a certain limit when typing
-	addSpace                   bool        // add a space to the editor, once
-	debugStepInto              bool        // when stepping to the next instruction, step into instead of over
-	slowLoad                   bool        // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
-	building                   bool        // currently building code or exporting to a file?
-	runAfterBuild              bool        // run the application after building?
-	monitorAndReadOnly         bool        // monitor the file for changes and open it as read-only
-	primaryClipboard           bool        // use the primary or the secondary clipboard on UNIX?
-	jumpToLetterMode           bool        // jump directly to a highlighted letter
-	spellCheckMode             bool        // spell check mode?
-	createDirectoriesIfMissing bool        // when saving a file, should directories be created if they are missing?
-	displayQuickHelp           bool        // display the quick help box?
-	noDisplayQuickHelp         bool        // prevent the quick help box from being displayed?
-	blockMode                  bool        // toggle if typing should affect the current line or the current block
-	dirMode                    bool        // browse a directory and also interact with git
-	highlightCurrentLine       bool        // highlight the current line
-	highlightCurrentText       bool        // highlight the current text (not the entire line)
+	changed                    atomic.Bool     // has the contents changed, since last save?
+	redraw                     atomic.Bool     // if the contents should be redrawn in the next loop
+	redrawCursor               atomic.Bool     // if the cursor should be moved to the location it is supposed to be
+	drawProgress               atomic.Bool     // used for drawing the progress character on the right side
+	drawFuncName               atomic.Bool     // used when drawing the function name in the top right corner
+	nanoMode                   atomic.Bool     // emulate GNU Nano
+	waitWithRedrawing          atomic.Bool     // wait with redrawing until a key is pressed
+	flaskApplication           atomic.Bool     // Python + Flask
+	moveLinesMode              atomic.Bool     // move lines up and down with ctrl-p and ctrl-n, when enabled
+	rainbowParenthesis         bool            // rainbow parenthesis
+	sshMode                    bool            // is o used over ssh, tmux or screen, in a way that usually requires extra redrawing?
+	debugMode                  bool            // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
+	statusMode                 bool            // display a status bar at all times at the bottom of the screen
+	showColumnLimit            bool            // show the line where the wrapWidth is (at 79 by default)
+	expandTags                 bool            // can be used for XML and HTML
+	syntaxHighlight            bool            // syntax highlighting
+	nextAction                 megafile.Action // send SIGQUIT to the parent PID when quitting
+	quit                       bool            // for indicating if the user wants to end the editor session
+	readOnly                   bool            // is the file read-only when initializing o?
+	debugHideOutput            bool            // hide the GDB stdout pane when in debug mode?
+	binaryFile                 bool            // is this a binary file, or a text file?
+	wrapWhenTyping             bool            // wrap text at a certain limit when typing
+	addSpace                   bool            // add a space to the editor, once
+	debugStepInto              bool            // when stepping to the next instruction, step into instead of over
+	slowLoad                   bool            // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
+	building                   bool            // currently building code or exporting to a file?
+	runAfterBuild              bool            // run the application after building?
+	monitorAndReadOnly         bool            // monitor the file for changes and open it as read-only
+	primaryClipboard           bool            // use the primary or the secondary clipboard on UNIX?
+	jumpToLetterMode           bool            // jump directly to a highlighted letter
+	spellCheckMode             bool            // spell check mode?
+	createDirectoriesIfMissing bool            // when saving a file, should directories be created if they are missing?
+	displayQuickHelp           bool            // display the quick help box?
+	noDisplayQuickHelp         bool            // prevent the quick help box from being displayed?
+	blockMode                  bool            // toggle if typing should affect the current line or the current block
+	dirMode                    bool            // browse a directory and also interact with git
+	highlightCurrentLine       bool            // highlight the current line
+	highlightCurrentText       bool            // highlight the current text (not the entire line)
 }
 
 // Copy makes a copy of an Editor struct, with most fields deep copied
-func (e *Editor) Copy() *Editor {
+func (e *Editor) Copy(withLines bool) *Editor {
 	var e2 Editor
 	if e.detectedTabs != nil {
 		detectedTabsCopy := *e.detectedTabs
@@ -94,7 +95,11 @@ func (e *Editor) Copy() *Editor {
 	e2.breakpoint = e.breakpoint         //.Copy()
 	e2.gdb = e.gdb                       //.Copy()
 	e2.sameFilePortal = e.sameFilePortal //.Copy()
-	e2.lines = e.CopyLines()
+	if withLines {
+		e2.lines = e.CopyLines()
+	} else {
+		e2.lines = nil
+	}
 	e2.macro = e.macro //.Copy()
 	e2.filename = e.filename
 	e2.searchTerm = e.searchTerm
@@ -116,7 +121,7 @@ func (e *Editor) Copy() *Editor {
 	e2.showColumnLimit = e.showColumnLimit
 	e2.expandTags = e.expandTags
 	e2.syntaxHighlight = e.syntaxHighlight
-	e2.stopParentOnQuit = e.stopParentOnQuit
+	e2.nextAction = e.nextAction
 	e2.quit = e.quit
 	e2.readOnly = e.readOnly
 	e2.debugHideOutput = e.debugHideOutput
@@ -2331,9 +2336,11 @@ func (e *Editor) Switch(c *vt.Canvas, tty *vt.TTY, status *StatusBar, fileLock *
 			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
 			switchBuffer.Snapshot(e)
 			// Now use e2 as the current editor
-			*e = *e2
-			(*e).lines = (*e2).lines
-			(*e).pos = (*e2).pos
+			const withLines = true
+			*e = *(e2.Copy(withLines))
+			//*e = *e2
+			//(*e).lines = (*e2).lines
+			//(*e).pos = (*e2).pos
 		} else if displayedImage {
 			// internal error
 			panic("displayed an image while switching from one Editor struct to another")

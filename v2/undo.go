@@ -119,10 +119,12 @@ func (u *Undo) grow() {
 			oldestIndex += currentSize
 		}
 
+		const withLines = true
+
 		copied := 0
 		for i := 0; i < u.count; i++ {
 			srcIndex := (oldestIndex + i) % currentSize
-			newEditorCopies[copied] = u.editorCopies[srcIndex]
+			newEditorCopies[copied] = *(u.editorCopies[srcIndex].Copy(withLines))
 			newEditorLineCopies[copied] = u.editorLineCopies[srcIndex]
 			newEditorPositionCopies[copied] = u.editorPositionCopies[srcIndex]
 			copied++
@@ -152,9 +154,9 @@ func (u *Undo) Snapshot(e *Editor) {
 		u.grow()
 	}
 
-	eCopy := e.Copy()
-	eCopy.lines = nil
-	u.editorCopies[u.index] = *eCopy
+	const withLines = false
+
+	u.editorCopies[u.index] = *(e.Copy(withLines))
 	u.editorLineCopies[u.index] = e.CopyLines()
 	u.editorPositionCopies[u.index] = e.pos
 
@@ -194,6 +196,8 @@ func (u *Undo) shrinkForMemory() {
 	newEditorLineCopies := make([]map[int][]rune, newSize)
 	newEditorPositionCopies := make([]Position, newSize)
 
+	const withLines = true
+
 	// Copy the most recent entries
 	for i := 0; i < keepCount; i++ {
 		srcIndex := u.index - keepCount + i
@@ -201,7 +205,7 @@ func (u *Undo) shrinkForMemory() {
 			srcIndex += len(u.editorCopies)
 		}
 
-		newEditorCopies[i] = u.editorCopies[srcIndex]
+		newEditorCopies[i] = *(u.editorCopies[srcIndex].Copy(withLines))
 		newEditorLineCopies[i] = u.editorLineCopies[srcIndex]
 		newEditorPositionCopies[i] = u.editorPositionCopies[srcIndex]
 	}
@@ -232,9 +236,11 @@ func (u *Undo) Restore(e *Editor) error {
 	// Decrease count since we're moving backwards
 	u.count--
 
+	const withLines = true
+
 	// Restore the state from this index
 	if lines := u.editorLineCopies[u.index]; len(lines) > 0 || u.index == 0 {
-		*e = u.editorCopies[u.index]
+		*e = *(u.editorCopies[u.index].Copy(withLines))
 		e.lines = lines
 		e.pos = u.editorPositionCopies[u.index]
 		return nil
