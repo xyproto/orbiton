@@ -22,7 +22,7 @@ require (
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.3.0
 	github.com/xyproto/env/v2 v2.5.3
-	github.com/xyproto/files v1.9.2
+	github.com/xyproto/files v1.9.3
 	github.com/xyproto/fullname v1.1.0
 	github.com/xyproto/globi v1.0.2
 	github.com/xyproto/iferr v1.1.0

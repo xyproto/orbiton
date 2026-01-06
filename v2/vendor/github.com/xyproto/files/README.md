@@ -31,11 +31,23 @@ func RemoveFile(path string) error
 func DirectoryWithFiles(path string) (bool, error)
 func IsExecutable(path string) bool
 func IsExecutableCached(path string) bool
+```
+
+## Running commands
+
+```
+// Run a command without using a shell, only return nil if it went well
 func Run(command string) error
+// Run a command with /bin/sh and return the combined and trimmed output
+func Shell(command string) (string, error)
+// Run a command with /bin/bash (or bash from the PATH) and return the combined and trimmed output
+func Bash(command string) (string, error)
+// Run a command with /usr/bin/fish (or fish from the PATH) and return the combined and trimmed output
+func Fish(command string) (string, error)
 ```
 
 ## General info
 
-* Version: 1.9.2
+* Version: 1.9.3
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
