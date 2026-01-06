@@ -2,6 +2,8 @@ module github.com/xyproto/orbiton/v2
 
 go 1.25.3
 
+toolchain go1.24
+
 require (
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
 	github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06
@@ -29,7 +31,7 @@ require (
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
-	github.com/xyproto/megafile v1.2.11
+	github.com/xyproto/megafile v1.2.12
 	github.com/xyproto/mode v0.12.1
 	github.com/xyproto/ollamaclient/v2 v2.7.2
 	github.com/xyproto/palgen v1.6.1

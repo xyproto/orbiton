@@ -33,11 +33,11 @@ const (
 type FileEntry struct {
 	realName    string
 	displayName string
+	suffix      string
 	x           uint
 	y           uint
-	selected    bool
 	color       vt.AttributeColor
-	suffix      string
+	selected    bool
 }
 
 // State holds the current state of the shell, then canvas and the directory structures
@@ -66,6 +66,7 @@ type State struct {
 	quit                      bool
 	selectionMoved            bool
 	ShowHidden                bool
+	autoSelected              bool
 }
 
 // ErrExit is the error that is returned if the user appeared to want to exit
@@ -288,9 +289,13 @@ func (s *State) ls(dir string) (int, error) {
 
 	s.setSelectedIndexIfMissing(-1)
 
-	// Reset selection if out of bounds
-	if s.selectedIndex() >= len(s.fileEntries) {
+	if s.selectedIndex() >= len(s.fileEntries) || len(s.fileEntries) == 1 {
+		// Select the first file/dir either if the selected index is
+		// out of bounds, or if there is only one.
 		s.setSelectedIndex(0)
+		s.autoSelected = true
+	} else {
+		s.autoSelected = false
 	}
 
 	return len(s.fileEntries), nil
@@ -710,7 +715,7 @@ func (s *State) Run() (string, error) {
 		index = 0
 		clearWritten()
 		drawWritten()
-		if found {
+		if found || len(s.fileEntries) == 1 {
 			s.highlightSelection()
 		}
 	}
@@ -751,7 +756,7 @@ func (s *State) Run() (string, error) {
 			s.quit = true
 		case "c:13": // return
 			// If a file is selected (via arrow keys), execute it regardless of text
-			if s.selectedIndex() >= 0 && s.selectedIndex() < len(s.fileEntries) {
+			if s.selectedIndex() >= 0 && s.selectedIndex() < len(s.fileEntries) && !s.autoSelected {
 				s.clearHighlight()
 				selectedFile := s.fileEntries[s.selectedIndex()].realName
 				savedFilename := selectedFile // Save the filename before editing
