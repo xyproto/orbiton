@@ -30,16 +30,6 @@ const (
 	topLine = uint(1)
 )
 
-type Action int
-
-const (
-	// Returned action from the Orbiton editor
-	NoAction = iota
-	NextFile
-	PreviousFile
-	StopParent
-)
-
 // FileEntry represents a file entry with position and name information
 type FileEntry struct {
 	realName    string
@@ -170,6 +160,32 @@ func (s *State) drawError(text string) {
 // Set the given index
 func (s *State) setSelectedIndex(index int) {
 	s.selectedIndexPerDirectory[s.Directories[s.dirIndex]] = index
+}
+
+func (s *State) selectNextIndexThatIsANonBinaryFile() error {
+	dir := s.Directories[s.dirIndex]
+	var path string
+	for i := s.selectedIndex(); i < len(s.fileEntries); i++ {
+		path = filepath.Join(dir, s.fileEntries[i].realName)
+		if files.File(path) && !files.Binary(path) {
+			s.selectedIndexPerDirectory[dir] = i
+			return nil
+		}
+	}
+	return errors.New("could not find another non-binary file to select")
+}
+
+func (s *State) selectPrevIndexThatIsANonBinaryFile() error {
+	dir := s.Directories[s.dirIndex]
+	var path string
+	for i := s.selectedIndex(); i >= 0; i-- {
+		path = filepath.Join(dir, s.fileEntries[i].realName)
+		if files.File(path) && !files.Binary(path) {
+			s.selectedIndexPerDirectory[dir] = i
+			return nil
+		}
+	}
+	return errors.New("could not find a previous non-binary file to select")
 }
 
 // Decrease the given index
@@ -874,15 +890,13 @@ func (s *State) Run() (string, error) {
 						if entry.realName == savedFilename {
 							switch nextAction {
 							case NextFile:
-								if (i + 1) < len(s.fileEntries) {
-									s.setSelectedIndex(i + 1)
+								if s.selectNextIndexThatIsANonBinaryFile() == nil { // success
 									goto AGAIN
 								} else {
 									s.setSelectedIndex(i)
 								}
 							case PreviousFile:
-								if (i - 1) >= 0 {
-									s.setSelectedIndex(i - 1)
+								if s.selectPrevIndexThatIsANonBinaryFile() == nil { // success
 									goto AGAIN
 								} else {
 									s.setSelectedIndex(i)
