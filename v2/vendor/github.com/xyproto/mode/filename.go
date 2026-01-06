@@ -230,7 +230,7 @@ func Detect(filename string) Mode {
 			mode = Perl
 		case ".plg", ".pro":
 			mode = Prolog
-		case ".py":
+		case ".py", ".bzl":
 			mode = Python
 		case ".pov":
 			mode = POV
