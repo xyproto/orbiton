@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] If a file has been edited, ask if the user wants to save if `ctrl-n` or `ctrl-p` is pressed, and it was launched though `megafile`.
 - [ ] If `ctrl-c` is pressed thrice when not in a function: copy to the end of the file.
 - [ ] Don't highlight `ran` and `error` when editing Markdown.
 - [x] Jump to definition for at least C.
