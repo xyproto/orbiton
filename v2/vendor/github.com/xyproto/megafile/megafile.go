@@ -63,6 +63,13 @@ type State struct {
 	Background                vt.AttributeColor
 	EdgeBackground            vt.AttributeColor
 	WrittenTextColor          vt.AttributeColor
+	SymlinkDirColor           vt.AttributeColor
+	DirColor                  vt.AttributeColor
+	SymlinkFileColor          vt.AttributeColor
+	EmptyFileColor            vt.AttributeColor
+	ExecutableColor           vt.AttributeColor
+	BinaryColor               vt.AttributeColor
+	DefaultFileColor          vt.AttributeColor
 	quit                      bool
 	selectionMoved            bool
 	ShowHidden                bool
@@ -71,6 +78,54 @@ type State struct {
 
 // ErrExit is the error that is returned if the user appeared to want to exit
 var ErrExit = errors.New("exit")
+
+// New creates a new MegaFile State
+// c and tty is a canvas and TTY, initiated with the vt package
+// startdirs is a slice of directories to browse (toggle with tab)
+// startMessage is the string to display at the top of the screen
+// the function returns the absolute path to the directory the user ended up in,
+// and an error if something went wrong
+func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage, editor string) *State {
+	absStartDirs := make([]string, len(startdirs))
+	for i, d := range startdirs {
+		if abs, err := filepath.Abs(d); err == nil {
+			absStartDirs[i] = abs
+		} else {
+			absStartDirs[i] = d
+		}
+	}
+	return &State{
+		canvas:                    c,
+		tty:                       tty,
+		prevdir:                   dupli(absStartDirs),
+		dirIndex:                  0,
+		quit:                      false,
+		startx:                    uint(5),
+		starty:                    topLine + uint(4),
+		fileEntries:               []FileEntry{},
+		selectionMoved:            false,
+		filterPattern:             "",
+		editor:                    editor,
+		ShowHidden:                false,
+		Directories:               absStartDirs,
+		StartMessage:              startMessage,
+		AngleColor:                vt.LightRed,
+		PromptColor:               vt.LightGreen,
+		TitleColor:                vt.LightMagenta,
+		Background:                vt.BackgroundDefault,
+		HighlightBackground:       vt.BackgroundWhite,
+		EdgeBackground:            vt.BackgroundDefault,
+		WrittenTextColor:          vt.LightYellow,
+		selectedIndexPerDirectory: make(map[string]int, 0),
+		SymlinkDirColor:           vt.Blue,
+		DirColor:                  vt.Blue,
+		SymlinkFileColor:          vt.LightRed,
+		EmptyFileColor:            vt.Black,
+		ExecutableColor:           vt.LightGreen,
+		BinaryColor:               vt.LightMagenta,
+		DefaultFileColor:          vt.Default,
+	}
+}
 
 func ulen[T string | []rune | []string](xs T) uint {
 	return uint(len(xs))
@@ -238,27 +293,32 @@ func (s *State) ls(dir string) (int, error) {
 			longestSoFar = columnWidth
 		}
 
-		path := filepath.Join(dir, name)
-		var color vt.AttributeColor
-		var suffix string
+		var (
+			path   = filepath.Join(dir, name)
+			color  vt.AttributeColor
+			suffix string
+		)
 
-		if files.IsDir(path) && files.IsSymlink(path) {
-			color = vt.Blue
+		if files.Dir(path) && files.Symlink(path) {
+			color = s.SymlinkDirColor
 			suffix = ">"
-		} else if files.IsDir(path) {
-			color = vt.Blue
+		} else if files.Dir(path) {
+			color = s.DirColor
 			suffix = "/"
-		} else if files.IsExecutableCached(path) {
-			color = vt.LightGreen
-			suffix = "*"
-		} else if files.IsSymlink(path) { // not a directory symlink
-			color = vt.LightRed
+		} else if files.Symlink(path) { // not a directory symlink
+			color = s.SymlinkFileColor
 			suffix = "^"
-		} else if files.IsBinary(path) {
-			color = vt.LightMagenta
+		} else if files.Empty(path) {
+			color = s.EmptyFileColor
+			suffix = "°"
+		} else if files.ExecutableCached(path) {
+			color = s.ExecutableColor
+			suffix = "*"
+		} else if files.Binary(path) {
+			color = s.BinaryColor
 			suffix = "¤"
 		} else {
-			color = vt.Default
+			color = s.DefaultFileColor
 			suffix = ""
 		}
 
@@ -464,13 +524,13 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 				return true, false, nil
 			}
 			return false, false, nil
-		} else if files.IsDir(possibleDirectory) {
+		} else if files.Dir(possibleDirectory) {
 			if s.Directories[s.dirIndex] != possibleDirectory {
 				s.setPath(possibleDirectory)
 				return true, false, nil
 			}
 			return false, false, nil
-		} else if files.IsDir(rest) {
+		} else if files.Dir(rest) {
 			if s.Directories[s.dirIndex] != rest {
 				s.setPath(rest)
 				return true, false, nil
@@ -479,7 +539,7 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 		}
 		return false, false, errors.New("cd WHAT?")
 	}
-	if files.IsDir(filepath.Join(path, cmd)) { // relative path
+	if files.Dir(filepath.Join(path, cmd)) { // relative path
 		newPath := filepath.Join(path, cmd)
 		if s.Directories[s.dirIndex] != newPath {
 			s.setPath(newPath)
@@ -487,15 +547,15 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 		}
 		return false, false, nil
 	}
-	if files.IsDir(cmd) { // absolute path
+	if files.Dir(cmd) { // absolute path
 		if s.Directories[s.dirIndex] != cmd {
 			s.setPath(cmd)
 			return true, false, nil
 		}
 		return false, false, nil
 	}
-	if files.IsFile(filepath.Join(path, cmd)) { // relative path
-		if strings.HasPrefix(cmd, "./") && files.IsExecutableCached(filepath.Join(path, cmd)) {
+	if files.File(filepath.Join(path, cmd)) { // relative path
+		if strings.HasPrefix(cmd, "./") && files.ExecutableCached(filepath.Join(path, cmd)) {
 			args := []string{}
 			if strings.Contains(cmd, " ") {
 				fields := strings.Split(cmd, " ")
@@ -509,16 +569,16 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, error) {
 		}
 		// Check if file is both binary and executable
 		fullPath := filepath.Join(path, cmd)
-		if files.IsBinary(fullPath) && files.IsExecutable(fullPath) {
+		if files.Binary(fullPath) && files.Executable(fullPath) {
 			if !s.confirmBinaryEdit(tty, cmd) {
 				return false, false, nil // User cancelled
 			}
 		}
 		return false, true, s.edit(cmd, path)
 	}
-	if files.IsFile(cmd) { // abs absolute path
+	if files.File(cmd) { // abs absolute path
 		// Check if file is binary (but allow .gz files as they can be edited)
-		if files.IsBinary(cmd) && !strings.HasSuffix(cmd, ".gz") {
+		if files.Binary(cmd) && !strings.HasSuffix(cmd, ".gz") {
 			if !s.confirmBinaryEdit(tty, filepath.Base(cmd)) {
 				return false, false, nil // User cancelled
 			}
@@ -592,47 +652,6 @@ func dupli(xs []string) []string {
 	tmp := make([]string, len(xs))
 	copy(tmp, xs)
 	return tmp
-}
-
-// New creates a new MegaFile State
-// c and tty is a canvas and TTY, initiated with the vt package
-// startdirs is a slice of directories to browse (toggle with tab)
-// startMessage is the string to display at the top of the screen
-// the function returns the absolute path to the directory the user ended up in,
-// and an error if something went wrong
-func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage, editor string) *State {
-	absStartDirs := make([]string, len(startdirs))
-	for i, d := range startdirs {
-		if abs, err := filepath.Abs(d); err == nil {
-			absStartDirs[i] = abs
-		} else {
-			absStartDirs[i] = d
-		}
-	}
-	return &State{
-		canvas:                    c,
-		tty:                       tty,
-		prevdir:                   dupli(absStartDirs),
-		dirIndex:                  0,
-		quit:                      false,
-		startx:                    uint(5),
-		starty:                    topLine + uint(4),
-		fileEntries:               []FileEntry{},
-		selectionMoved:            false,
-		filterPattern:             "",
-		editor:                    editor,
-		ShowHidden:                false,
-		Directories:               absStartDirs,
-		StartMessage:              startMessage,
-		AngleColor:                vt.LightRed,
-		PromptColor:               vt.LightGreen,
-		TitleColor:                vt.LightMagenta,
-		Background:                vt.BackgroundDefault,
-		HighlightBackground:       vt.BackgroundWhite,
-		EdgeBackground:            vt.BackgroundDefault,
-		WrittenTextColor:          vt.LightYellow,
-		selectedIndexPerDirectory: make(map[string]int, 0),
-	}
 }
 
 // Run launches a file browser
@@ -1248,7 +1267,7 @@ func (s *State) Run() (string, error) {
 					if entries, err := os.ReadDir(p); err == nil { // success
 						for _, entry := range entries {
 							name := entry.Name()
-							if strings.HasPrefix(name, lastWordWrittenSoFar) && files.IsExecutable(filepath.Join(p, name)) && len(s.written) < len([]rune(name)) {
+							if strings.HasPrefix(name, lastWordWrittenSoFar) && files.Executable(filepath.Join(p, name)) && len(s.written) < len([]rune(name)) {
 								rest := []rune(name)[len(s.written):]
 								s.written = append(s.written, rest...)
 								index += ulen(rest)
@@ -1298,7 +1317,7 @@ func (s *State) Run() (string, error) {
 					return nil
 				}
 				// Skip binary files
-				if files.IsBinary(path) {
+				if files.Binary(path) {
 					return nil
 				}
 				// Read and search file
