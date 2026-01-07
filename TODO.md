@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] When editing files in connection with browsing files, let `ctrl-n` and `ctrl-p` preserve the cursor position across files.
 - [ ] Let `delete` ask if a file should be deleted, when browsing files.
 - [ ] If `ctrl-c` is pressed thrice when not in a function: copy to the end of the file.
 - [ ] Don't highlight `ran` and `error` when editing Markdown.
