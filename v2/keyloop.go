@@ -14,6 +14,7 @@ import (
 	"github.com/xyproto/clip"
 	"github.com/xyproto/digraph"
 	"github.com/xyproto/env/v2"
+	"github.com/xyproto/files"
 	"github.com/xyproto/megafile"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
@@ -46,6 +47,9 @@ var (
 
 	// Track if the user is in regular editing mode (not in a menu or special mode)
 	notRegularEditingRightNow atomic.Bool
+
+	// Don't search for a corresponding header/source file for longer than ~0.5 seconds
+	fileSearchMaxTime = 500 * time.Millisecond
 )
 
 // Loop will set up and run the main loop of the editor
@@ -547,7 +551,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				// Check if there is a corresponding header file
 				if absFilename, err := e.AbsFilename(); err == nil { // no error
 					headerExtensions := []string{".h", ".hpp", ".h++"}
-					if headerFilename, err := ExtFileSearch(absFilename, headerExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
+					if headerFilename, err := files.HeaderSearch(absFilename, headerExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
 						// Switch to another file (without forcing it)
 						e.Switch(c, tty, status, fileLock, headerFilename)
 						break
@@ -560,7 +564,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				// Check if there is a corresponding header file
 				if absFilename, err := e.AbsFilename(); err == nil { // no error
 					sourceExtensions := []string{".c", ".cpp", ".cxx", ".cc", ".c++"}
-					if headerFilename, err := ExtFileSearch(absFilename, sourceExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
+					if headerFilename, err := files.HeaderSearch(absFilename, sourceExtensions, fileSearchMaxTime); err == nil && headerFilename != "" { // no error
 						// Switch to another file (without forcing it)
 						e.Switch(c, tty, status, fileLock, headerFilename)
 						break

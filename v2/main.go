@@ -368,7 +368,7 @@ func main() {
 
 	if searchAndOpenFlag {
 		substring := fnord.filename
-		if matches, err := FindFile(substring); err == nil && len(matches) > 0 {
+		if matches, err := files.FindFile(substring); err == nil && len(matches) > 0 {
 			sort.Strings(matches)
 			fnord.filename = matches[0]
 		}
