@@ -274,13 +274,13 @@ func DirectoryWithFiles(path string) (bool, error) {
 	} else if !fileInfo.IsDir() {
 		return false, fmt.Errorf("path is not a directory")
 	}
-	if entries, err := os.ReadDir(path); err != nil {
+	entries, err := os.ReadDir(path)
+	if err != nil {
 		return false, err
-	} else {
-		for _, entry := range entries {
-			if entry.Type().IsRegular() || entry.Type()&os.ModeSymlink != 0 {
-				return true, nil
-			}
+	}
+	for _, entry := range entries {
+		if entry.Type().IsRegular() || entry.Type()&os.ModeSymlink != 0 {
+			return true, nil
 		}
 	}
 	return false, nil

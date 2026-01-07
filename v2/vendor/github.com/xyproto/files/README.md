@@ -49,6 +49,6 @@ func Fish(command string) (string, error)
 
 ## General info
 
-* Version: 1.10.0
+* Version: 1.10.1
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
