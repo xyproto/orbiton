@@ -13,6 +13,7 @@ import (
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
+	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 )
 
@@ -404,7 +405,8 @@ func (s *State) ls(dir string) (int, error) {
 	return len(s.fileEntries), nil
 }
 
-func (s *State) confirmBinaryEdit(tty *vt.TTY, filename string) bool {
+func (s *State) msgBox(line1, line2, line3 string) bool {
+	tty := s.tty
 	c := s.canvas
 	w := c.W()
 	h := c.H()
@@ -412,6 +414,7 @@ func (s *State) confirmBinaryEdit(tty *vt.TTY, filename string) bool {
 	// Calculate dialog box dimensions
 	boxWidth := uint(60)
 	boxHeight := uint(9)
+
 	if boxWidth > w-4 {
 		boxWidth = w - 4
 	}
@@ -443,23 +446,12 @@ func (s *State) confirmBinaryEdit(tty *vt.TTY, filename string) bool {
 	}
 	c.Write(startX+boxWidth-1, startY+boxHeight-1, vt.LightCyan, s.EdgeBackground, "╝")
 
-	// First line: filename is a binary file
-	maxNameLen := int(boxWidth - 20) // Leave room for " is a binary file"
-	displayName := filename
-	if len(filename) > maxNameLen {
-		displayName = filename[:maxNameLen-3] + "..."
-	}
-	line1 := displayName + " is binary and executable"
 	line1X := startX + (boxWidth-uint(len(line1)))/2
 	c.Write(line1X, startY+2, vt.LightYellow, s.Background, line1)
 
-	// Second line: do you really want to edit it?
-	line2 := "Do you really want to edit it?"
 	line2X := startX + (boxWidth-uint(len(line2)))/2
 	c.Write(line2X, startY+4, vt.Default, s.Background, line2)
 
-	// Third line: instruction
-	line3 := "Press y or return to edit or any other key to cancel."
 	line3X := startX + (boxWidth-uint(len(line3)))/2
 	c.Write(line3X, startY+6, vt.LightGreen, s.Background, line3)
 
@@ -468,12 +460,29 @@ func (s *State) confirmBinaryEdit(tty *vt.TTY, filename string) bool {
 	// Wait for key press
 	for {
 		switch tty.String() {
-		case "c13", "y": // return/enter, y
+		case "y", "j": // y or j (undocumented)
 			return true
 		default:
 			return false
 		}
 	}
+
+}
+
+func (s *State) confirmBinaryEdit(filename string) bool {
+	boxWidth := uint(60)
+	// First line: filename is a binary file
+	maxNameLen := int(boxWidth - 20) // Leave room for " is a binary file"
+	displayName := filename
+	if len(filename) > maxNameLen {
+		displayName = filename[:maxNameLen-3] + "..."
+	}
+
+	line1 := displayName + " is binary and executable"
+	line2 := "Do you really want to edit it?"
+	line3 := "Press y to edit or any other key to cancel."
+
+	return s.msgBox(line1, line2, line3)
 }
 
 // edit a file, but return stderr when done
@@ -640,7 +649,7 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 		// Check if file is both binary and executable
 		fullPath := filepath.Join(path, cmd)
 		if files.Binary(fullPath) && files.Executable(fullPath) {
-			if !s.confirmBinaryEdit(tty, cmd) {
+			if !s.confirmBinaryEdit(cmd) {
 				return false, false, NoAction, nil // User cancelled
 			}
 		}
@@ -650,7 +659,7 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 	if files.File(cmd) { // abs absolute path
 		// Check if file is binary (but allow .gz files as they can be edited)
 		if files.Binary(cmd) && !strings.HasSuffix(cmd, ".gz") {
-			if !s.confirmBinaryEdit(tty, filepath.Base(cmd)) {
+			if !s.confirmBinaryEdit(filepath.Base(cmd)) {
 				return false, false, NoAction, nil // User cancelled
 			}
 		}
@@ -1238,8 +1247,16 @@ func (s *State) Run() (string, error) {
 				}
 				s.highlightSelection()
 			}
-		case "c:15": // ctrl-o, toggle hidden files
-			s.ShowHidden = !s.ShowHidden
+		case "c:15": // ctrl-o, show more actions for the selected file
+			if s.selectedIndex() >= 0 && s.selectedIndex() < len(s.fileEntries) {
+				filename := s.fileEntries[s.selectedIndex()].realName
+				filemode := mode.Detect(filename).String()
+				filesize, err := fileSizeHuman(filename)
+				if err != nil {
+					filesize = "?"
+				}
+				s.msgBox(filename, filemode, filesize)
+			}
 			listDirectory()
 		case "c:8": // ctrl-h, either toggle hidden files or delete text
 			if index == 0 {
