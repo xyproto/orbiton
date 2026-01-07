@@ -205,12 +205,13 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 					}
 				}
 
-				const title = "·-––—==[ Orbiton File Browser ]==—––-·"
+				//const title = "·-––—==[ Orbiton File Browser ]==—––-·"
+				const title = ""
 				megaFileState := megafile.New(c, tty, startdirs, title, editorExecutable+" -y")
 
 				megaFileState.WrittenTextColor = e.Foreground
 				megaFileState.Background = e.Background
-				megaFileState.TitleColor = e.HeaderTextColor
+				megaFileState.HeaderColor = e.HeaderTextColor
 				megaFileState.PromptColor = e.LinkColor
 				megaFileState.AngleColor = e.JumpToLetterColor
 				megaFileState.EdgeBackground = e.Background            // TODO using e.BoxBackground needs some more work in megafile
