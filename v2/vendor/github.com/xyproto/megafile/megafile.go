@@ -48,7 +48,7 @@ type State struct {
 	selectedIndexPerDirectory map[string]int
 	filterPattern             string
 	editor                    string // typically $EDITOR
-	StartMessage              string // title/header
+	Header                    string // title/header
 	written                   []rune
 	prevdir                   []string
 	fileEntries               []FileEntry
@@ -59,7 +59,7 @@ type State struct {
 	promptLength              uint
 	AngleColor                vt.AttributeColor
 	PromptColor               vt.AttributeColor
-	TitleColor                vt.AttributeColor
+	HeaderColor               vt.AttributeColor
 	HighlightBackground       vt.AttributeColor
 	Background                vt.AttributeColor
 	EdgeBackground            vt.AttributeColor
@@ -83,10 +83,10 @@ var ErrExit = errors.New("exit")
 // New creates a new MegaFile State
 // c and tty is a canvas and TTY, initiated with the vt package
 // startdirs is a slice of directories to browse (toggle with tab)
-// startMessage is the string to display at the top of the screen
+// header is the string to display at the top of the screen
 // the function returns the absolute path to the directory the user ended up in,
 // and an error if something went wrong
-func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage, editor string) *State {
+func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor string) *State {
 	absStartDirs := make([]string, len(startdirs))
 	for i, d := range startdirs {
 		if abs, err := filepath.Abs(d); err == nil {
@@ -102,17 +102,17 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, startMessage, editor str
 		dirIndex:                  0,
 		quit:                      false,
 		startx:                    uint(5),
-		starty:                    topLine + uint(4),
+		starty:                    topLine + uint(5),
 		fileEntries:               []FileEntry{},
 		selectionMoved:            false,
 		filterPattern:             "",
 		editor:                    editor,
 		ShowHidden:                false,
 		Directories:               absStartDirs,
-		StartMessage:              startMessage,
+		Header:                    header,
 		AngleColor:                vt.LightRed,
 		PromptColor:               vt.LightGreen,
-		TitleColor:                vt.LightMagenta,
+		HeaderColor:               vt.LightMagenta,
 		Background:                vt.BackgroundDefault,
 		HighlightBackground:       vt.BackgroundWhite,
 		EdgeBackground:            vt.BackgroundDefault,
@@ -754,17 +754,26 @@ func (s *State) Run() (string, error) {
 		vt.SetXY(x, y)
 	}
 
+	o := vt.New()
+
 	clearAndPrepare := func() {
 		c.Clear()
 
 		y := topLine
 
-		// the title
-		c.Write(5, y, s.TitleColor, s.Background, s.StartMessage)
+		// the header
+		c.Write(5, y, s.HeaderColor, s.Background, s.Header)
 		y++
 
-		// the directory number
-		c.Write(5, y, vt.LightYellow, s.Background, fmt.Sprintf("%d [%s]", s.dirIndex, s.Directories[s.dirIndex]))
+		// the uptime
+		const fullKernelVersion = false
+		if uptimeString, err := upsieString(fullKernelVersion); err == nil { // success
+			c.WriteTagged(5, y, s.Background, o.LightTags(uptimeString))
+			y++
+		}
+
+		// the directory number and name
+		c.WriteTagged(5, y, s.Background, o.LightTags(fmt.Sprintf("<yellow>%d</yellow> <gray>[</gray><green>%s</green><gray>]</gray>", s.dirIndex, s.Directories[s.dirIndex])))
 		y++
 
 		// if files are hidden or not
@@ -773,6 +782,7 @@ func (s *State) Run() (string, error) {
 		} else {
 			c.Write(5, y, vt.Default, s.Background, " ")
 		}
+		y++
 
 		// the prompt and written text (if any)
 		drawPrompt()

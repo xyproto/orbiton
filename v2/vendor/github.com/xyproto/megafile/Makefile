@@ -8,7 +8,7 @@ GOBUILD := go build
 
 GOEXPERIMENT := greenteagc
 
-SRCFILES := $(wildcard go.* *.go)
+SRCFILES := $(wildcard go.* *.go cmd/megafile/*.go)
 
 # macOS and FreeBSD detection
 UNAME_S := $(shell uname -s)
