@@ -1653,6 +1653,12 @@ func (e *Editor) PgDn(c *vt.Canvas, status *StatusBar) bool {
 	return e.ScrollDown(c, status, scrollSpeed, canvasHeight)
 }
 
+// AtTopLeftOfDocument is true if the cursor is to the far left of the first line of the document
+func (e *Editor) AtTopLeftOfDocument() bool {
+	x, err := e.DataX()
+	return err == nil && x == 0 && e.DataY() == LineIndex(0)
+}
+
 // AtFirstLineOfDocument is true if we're at the first line of the document
 func (e *Editor) AtFirstLineOfDocument() bool {
 	return e.DataY() == LineIndex(0)

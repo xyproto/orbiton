@@ -1234,6 +1234,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case "c:8", "c:127": // ctrl-h or backspace
 
+			if cycleFilenames && !e.changed.Load() && e.AtLeftEdgeOfDocument() {
+				e.quit = true
+				break
+			}
+
 			// Scroll up if a man page is being viewed, or if the editor is read-only
 			if e.readOnly && !e.blockMode {
 				// Scroll up at double speed
