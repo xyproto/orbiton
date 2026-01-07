@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/xyproto/env/v2"
+	"github.com/xyproto/files"
 	"github.com/xyproto/fullname"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
@@ -320,6 +321,15 @@ func (e *Editor) BaseFilenameWithoutExtension() string {
 	return strings.TrimSuffix(baseFilename, ext)
 }
 
+// getPackageName detects the Go package name from *.go ("package ...")
+func getPackageName() string {
+	// TODO: Write in Go instead
+	if s, err := files.Shell("grep 'package ' *.go | head -1 | cut -d' ' -f2"); err == nil { // success
+		return s
+	}
+	return "main"
+}
+
 // InsertTemplateProgram will insert a template program at the current cursor position,
 // if available. It will then reposition the cursor at an appropriate place in the template.
 func (e *Editor) InsertTemplateProgram(c *vt.Canvas) error {
@@ -332,8 +342,9 @@ func (e *Editor) InsertTemplateProgram(c *vt.Canvas) error {
 
 	// If the mode is Go and this is a test file, insert a test template instead
 	if e.mode == mode.Go && strings.HasSuffix(baseFilenameWithoutExt, "_test") {
+		packageName := getPackageName()
 		prog = TemplateProgram{
-			"package main\n\nimport (\n\t\"testing\"\n)\n\nfunc TestSomething(t *testing.T) {\n\tt.Fail()\n}\n",
+			"package " + packageName + "\n\nimport (\n\t\"testing\"\n)\n\nfunc TestSomething(t *testing.T) {\n\tt.Fail()\n}\n",
 			7,
 			2,
 		}
