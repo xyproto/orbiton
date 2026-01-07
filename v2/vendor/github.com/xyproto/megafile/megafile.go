@@ -163,6 +163,17 @@ func (s *State) setSelectedIndex(index int) {
 	s.selectedIndexPerDirectory[s.Directories[s.dirIndex]] = index
 }
 
+func (s *State) selectedPath() (string, error) {
+	i := s.selectedIndex()
+	if i < 0 || i >= len(s.fileEntries) {
+		return "", errors.New("no selected path")
+	}
+	filename := s.fileEntries[i].realName
+	dir := s.Directories[s.dirIndex]
+	path := filepath.Join(dir, filename)
+	return path, nil
+}
+
 func (s *State) selectNextIndexThatIsANonBinaryFile() error {
 	dir := s.Directories[s.dirIndex]
 	var path string
@@ -405,7 +416,7 @@ func (s *State) ls(dir string) (int, error) {
 	return len(s.fileEntries), nil
 }
 
-func (s *State) msgBox(line1, line2, line3 string) bool {
+func (s *State) msgBox(line1, line2, line3, line4 string) bool {
 	tty := s.tty
 	c := s.canvas
 	w := c.W()
@@ -453,7 +464,10 @@ func (s *State) msgBox(line1, line2, line3 string) bool {
 	c.Write(line2X, startY+4, vt.Default, s.Background, line2)
 
 	line3X := startX + (boxWidth-uint(len(line3)))/2
-	c.Write(line3X, startY+6, vt.LightGreen, s.Background, line3)
+	c.Write(line3X, startY+5, vt.Red, s.Background, line3)
+
+	line4X := startX + (boxWidth-uint(len(line4)))/2
+	c.Write(line4X, startY+6, vt.LightGreen, s.Background, line4)
 
 	c.Draw()
 
@@ -482,7 +496,7 @@ func (s *State) confirmBinaryEdit(filename string) bool {
 	line2 := "Do you really want to edit it?"
 	line3 := "Press y to edit or any other key to cancel."
 
-	return s.msgBox(line1, line2, line3)
+	return s.msgBox(line1, line2, "", line3)
 }
 
 // edit a file, but return stderr when done
@@ -738,8 +752,8 @@ func dupli(xs []string) []string {
 	return tmp
 }
 
-// Run launches a file browser
-func (s *State) Run() (string, error) {
+// Run launches a file browser and returns the currently selected directories when it is done running
+func (s *State) Run() ([]string, error) {
 	var x, y uint
 	c := s.canvas
 	drawPrompt := func() {
@@ -1006,7 +1020,7 @@ func (s *State) Run() (string, error) {
 		case "c:4": // ctrl-d
 			if len(s.written) == 0 {
 				Cleanup(c)
-				return s.currentAbsDir(), ErrExit
+				return s.Directories, ErrExit
 			}
 			clearWritten()
 			s.written = append(s.written[:index], s.written[index+1:]...)
@@ -1248,14 +1262,25 @@ func (s *State) Run() (string, error) {
 				s.highlightSelection()
 			}
 		case "c:15": // ctrl-o, show more actions for the selected file
-			if s.selectedIndex() >= 0 && s.selectedIndex() < len(s.fileEntries) {
-				filename := s.fileEntries[s.selectedIndex()].realName
-				filemode := mode.Detect(filename).String()
-				filesize, err := fileSizeHuman(filename)
-				if err != nil {
-					filesize = "?"
+			if path, err := s.selectedPath(); err == nil { // success
+				filename := path
+				filemode := "Directory"
+				filesize := "-"
+				if !files.Dir(path) {
+					if files.Binary(path) {
+						filemode = "Binary"
+					} else {
+						filemode = mode.Detect(path).String()
+					}
+					if size, err := fileSizeHuman(path); err == nil {
+						filesize = size
+					}
 				}
-				s.msgBox(filename, filemode, filesize)
+				permissions := ""
+				if fi, err := os.Stat(path); err == nil { // success
+					permissions = fi.Mode().String()
+				}
+				s.msgBox(filename, filemode, permissions, filesize)
 			}
 			listDirectory()
 		case "c:8": // ctrl-h, either toggle hidden files or delete text
@@ -1465,7 +1490,7 @@ func (s *State) Run() (string, error) {
 		case "c:3": // ctrl-c
 			if len(s.written) == 0 {
 				Cleanup(c)
-				return s.currentAbsDir(), ErrExit
+				return s.Directories, ErrExit
 			}
 			s.written = []rune{}
 			index = 0
@@ -1505,5 +1530,5 @@ func (s *State) Run() (string, error) {
 	}
 
 	Cleanup(c)
-	return s.currentAbsDir(), nil
+	return s.Directories, nil
 }
