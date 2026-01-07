@@ -513,9 +513,19 @@ func ShouldKeep(absFilename string) bool {
 	return true
 }
 
-// SaveLocation takes a filename (which includes the absolute path) and a map which contains
+// SaveLocation saves the current file position to the location history file
+func (e *Editor) SaveLocation() error {
+	// Save the current location in the location history and write it to file
+	absFilename, err := e.AbsFilename()
+	if err != nil {
+		return err
+	}
+	return e.SaveLocationCustom(absFilename, locationHistory)
+}
+
+// SaveLocationCustom takes a filename (which includes the absolute path) and a map which contains
 // an overview of which files were at which line location.
-func (e *Editor) SaveLocation(absFilename string, locationHistory LocationHistory) error {
+func (e *Editor) SaveLocationCustom(absFilename string, locationHistory LocationHistory) error {
 	if locationHistory.Len() > maxLocationHistoryEntries {
 		// Cull the history
 		locationHistory = locationHistory.KeepNewest(maxLocationHistoryEntries)
@@ -588,7 +598,7 @@ func (e *Editor) CloseLocksAndLocationHistory(absFilename string, lockTimestamp 
 	// Save the current location in the location history and write it to file
 	wg.Add(1)
 	go func() {
-		e.SaveLocation(absFilename, locationHistory)
+		e.SaveLocationCustom(absFilename, locationHistory)
 		wg.Done()
 	}()
 }
