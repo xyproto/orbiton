@@ -172,6 +172,14 @@ func (s *State) selectNextIndexThatIsANonBinaryFile() error {
 			return nil
 		}
 	}
+	// TODO: Cycle with a single loop instead of 2
+	for i := 0; i <= s.selectedIndex(); i++ {
+		path = filepath.Join(dir, s.fileEntries[i].realName)
+		if files.File(path) && !files.Binary(path) {
+			s.selectedIndexPerDirectory[dir] = i
+			return nil
+		}
+	}
 	return errors.New("could not find another non-binary file to select")
 }
 
@@ -179,6 +187,14 @@ func (s *State) selectPrevIndexThatIsANonBinaryFile() error {
 	dir := s.Directories[s.dirIndex]
 	var path string
 	for i := s.selectedIndex() - 1; i >= 0; i-- {
+		path = filepath.Join(dir, s.fileEntries[i].realName)
+		if files.File(path) && !files.Binary(path) {
+			s.selectedIndexPerDirectory[dir] = i
+			return nil
+		}
+	}
+	// TODO: Cycle with a single loop instead of 2
+	for i := len(s.fileEntries) - 1; i >= s.selectedIndex(); i-- {
 		path = filepath.Join(dir, s.fileEntries[i].realName)
 		if files.File(path) && !files.Binary(path) {
 			s.selectedIndexPerDirectory[dir] = i
@@ -540,7 +556,7 @@ func string2action(s string) Action {
 	switch s {
 	case "nextfile":
 		nextAction = NextFile
-	case "prevfile", "previousfile":
+	case "prevfile":
 		nextAction = PreviousFile
 	case "stopparent":
 		nextAction = StopParent
