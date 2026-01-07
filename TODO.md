@@ -2,17 +2,15 @@
 
 ## General
 
-- [ ] If a file has been edited, ask if the user wants to save if `ctrl-n` or `ctrl-p` is pressed, and it was launched though `megafile`.
+- [ ] Let `delete` ask if a file should be deleted, when browsing files.
 - [ ] If `ctrl-c` is pressed thrice when not in a function: copy to the end of the file.
 - [ ] Don't highlight `ran` and `error` when editing Markdown.
-- [x] Jump to definition for at least C.
 - [ ] Fix blinking text issue when holding down arrow up/down in the Linux console.
 - [ ] Port the scons/python/cxx tool over as a Go module and use that by default when building C or C++.
 - [ ] If parenthesis are unbalanced (too many `)`), then it's not a function name. Like `reinterpret_cast<char*>(&dq)) != 0= {`.
 - [ ] ctrl-/ should also be able to toggle /* * */ comments, not only single line comments.
 - [ ] Pressing ctrl-g in a script should toggle the status bar unless the cursor is on a function call and the function was found.
 - [ ] Searching for a rune like "U+2713" does not work.
-- [x] Add LSP tab completion.
 - [ ] Add a couple of test programs that uses various external packages, then test them out within tmux+mosh.
 - [ ] Continue working on the ollama worker queue branch.
 - [ ] Add syntax highlighting of "<" and ">" in C++.
@@ -23,7 +21,6 @@
 - [ ] Let `--ollama` only be used for fixing simple compilation errors.
 - [ ] When pressing ctrl-c twice while on a function signature, copy the entire function.
 - [ ] When pressing ctrl-x twice while on a function signature, cut the entire function.
-- [x] Triple press ctrl-c to copy the current function.
 - [ ] When pressing ctrl-f and then Tab without a search string, enter regexp search mode.
 - [ ] When jumping to a parenthesis with ctrl-p, remember to scroll horizontally if needed.
 - [ ] When inserting a .gitignore template, also ignore files with no extension with the same name as the current directory, and also the go.mod name (last part, after /)
