@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"io" // Added for error logging for pprof
-	"os" // Added for CPU profiling
-	"strconv"
+	// Added for CPU profiling
 	"strings"
-	"syscall"
 )
 
 // trimNullBytes converts a null-terminated []int8 slice to a Go string.
@@ -67,25 +65,14 @@ func writeUptime(w io.Writer, totalSeconds int64) {
 }
 
 func upsieString(fullKernelVersion bool) (string, error) {
-	// Retrieve system information using uname()
-	var unameData syscall.Utsname
-	if err := syscall.Uname(&unameData); err != nil {
+	hostname, kernelRelease, machineArch, err := uname()
+	if err != nil {
 		return "", fmt.Errorf("failed to get system information (uname): %w", err)
 	}
 
-	hostname := trimNullBytes(unameData.Nodename[:])
-	kernelRelease := trimNullBytes(unameData.Release[:])
-	machineArch := trimNullBytes(unameData.Machine[:])
-
-	// Retrieve uptime information from /proc/uptime
-	uptimeBytes, err := os.ReadFile("/proc/uptime")
+	uptimeSeconds, err := uptime()
 	if err != nil {
-		return "", fmt.Errorf("failed to open /proc/uptime: %w", err)
-	}
-	uptimeStr := strings.Fields(string(uptimeBytes))[0]
-	uptimeSeconds, err := strconv.ParseFloat(uptimeStr, 64)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse uptime from /proc/uptime: %w", err)
+		return "", fmt.Errorf("failed to get system information (uptime): %w", err)
 	}
 
 	// Prepare kernel version string based on 'fullKernelVersion' flag
