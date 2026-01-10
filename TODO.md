@@ -4,6 +4,7 @@
 
 - [ ] When browsing a directory that contains hidden files, show: `show hidden files with ctrl-h`.
 - [ ] When editing files in connection with browsing files, let `ctrl-n` and `ctrl-p` preserve the cursor position across files.
+- [ ] Let `game` or the konami code from the file browser also launch the easter egg.
 - [ ] Let `delete` ask if a file should be deleted, when browsing files.
 - [ ] If `ctrl-c` is pressed thrice when not in a function: copy to the end of the file.
 - [ ] Don't highlight `ran` and `error` when editing Markdown.
