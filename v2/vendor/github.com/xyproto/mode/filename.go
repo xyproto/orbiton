@@ -105,8 +105,8 @@ func Detect(filename string) Mode {
 			mode = C
 		case ".c3":
 			mode = C3
-		case ".c67":
-			mode = C67
+		case ".v67":
+			mode = Vibe67
 		case ".cb", ".cbl", ".cob", ".cby", ".cobol":
 			mode = COBOL
 		case ".cm":

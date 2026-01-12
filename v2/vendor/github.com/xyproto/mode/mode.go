@@ -42,7 +42,6 @@ const (
 	Elm                   // Elm
 	Erlang                // Erlang
 	Faust                 // Faust
-	C67                   // C67
 	Fortran77             // Fortran 77
 	Fortran90             // Fortran 90
 	FSharp                // F#
@@ -117,6 +116,7 @@ const (
 	Text                  // plain text documents
 	TypeScript            // TypeScript
 	V                     // V programming language
+	Vibe67                // Vibe67
 	Vim                   // Vim or NeoVim configuration, or .vim scripts
 	XML                   // XML
 	Zig                   // Zig
@@ -201,8 +201,8 @@ func (mode Mode) String() string {
 		return "Erlang"
 	case Faust:
 		return "Faust"
-	case C67:
-		return "C67"
+	case Vibe67:
+		return "Vibe67"
 	case Fortran77:
 		return "Fortran 77"
 	case Fortran90:
