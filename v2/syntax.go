@@ -149,8 +149,8 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		setKeywords(battlestarWords)
 	case mode.C3:
 		setKeywords(c3Words)
-	case mode.C67:
-		setKeywords(c67Words)
+	case mode.Vibe67:
+		setKeywords(vibe67Words)
 		removeKeywords([]string{"double", "true", "false", "True", "False"})
 	case mode.Chuck:
 		setKeywords(chuckWords)
