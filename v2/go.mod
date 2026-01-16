@@ -35,9 +35,9 @@ require (
 	github.com/xyproto/palgen v1.6.1
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.2.3
-	github.com/xyproto/vt v1.2.11
+	github.com/xyproto/vt v1.3.0
 	github.com/xyproto/wordwrap v1.0.1
-	golang.org/x/image v0.34.0
+	golang.org/x/image v0.35.0
 )
 
 require (
