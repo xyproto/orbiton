@@ -44,7 +44,7 @@ require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
 	github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b // indirect
 	github.com/clipperhouse/stringish v0.1.1 // indirect
-	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
+	github.com/clipperhouse/uax29/v2 v2.3.1 // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/kr/pty v1.1.8 // indirect

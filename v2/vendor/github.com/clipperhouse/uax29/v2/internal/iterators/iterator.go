@@ -44,8 +44,15 @@ func (iter *Iterator[T]) Next() bool {
 	}
 
 	iter.start = iter.pos
+	d := iter.data[iter.pos:]
 
-	advance, _, err := iter.split(iter.data[iter.pos:], true)
+	if len(d) == 1 {
+		// No need to split, just return the single byte
+		iter.pos++
+		return true
+	}
+
+	advance, _, err := iter.split(d, true)
 	if err != nil {
 		panic(err)
 	}
