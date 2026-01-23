@@ -3,7 +3,7 @@ module github.com/xyproto/orbiton/v2
 go 1.24.4
 
 require (
-	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
+	github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa
 	github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.9.0

@@ -15,7 +15,7 @@ github.com/clipperhouse/uax29/v2/internal/iterators
 # github.com/creack/pty v1.1.24
 ## explicit; go 1.18
 github.com/creack/pty
-# github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86
+# github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa
 ## explicit; go 1.18
 github.com/cyrus-and/gdb
 # github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06

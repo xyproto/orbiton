@@ -10,8 +10,8 @@ github.com/clipperhouse/uax29/v2 v2.3.1/go.mod h1:Wn1g7MK6OoeDT0vL+Q0SQLDz/KpfsV
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
 github.com/creack/pty v1.1.24 h1:bJrF4RRfyJnbTJqzRLHzcGaZK1NeM5kTC9jGgovnR1s=
 github.com/creack/pty v1.1.24/go.mod h1:08sCNb52WyoAwi2QDyzUCTgcvVFhUzewun7wtTfvcwE=
-github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86 h1:kHMmK/Nv9EdcvZyk/nPJAMsyx/RvvDJuAlNGOiv4zeQ=
-github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86/go.mod h1:22k58xzfLfGi/n7fkt/c8uGafmNb3wXPxdL2g/j0SpE=
+github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa h1:yIDFuNkKV82G0m/pVbDmpIoZCxPcEpqTtOoxKGco0nk=
+github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa/go.mod h1:22k58xzfLfGi/n7fkt/c8uGafmNb3wXPxdL2g/j0SpE=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
