@@ -3,6 +3,7 @@ package main
 import (
 	"strings"
 
+	"github.com/xyproto/env/v2"
 	"github.com/xyproto/javasig"
 	"github.com/xyproto/kotlinsig"
 	"github.com/xyproto/mode"
@@ -326,6 +327,9 @@ func (e *Editor) OnlyFunctionNameForLineIndex(n LineIndex) string {
 // WriteCurrentFunctionName writes (but does not redraw) the current function name we are within (if any),
 // in the top right corner of the canvas.
 func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
+	if env.Str("TERM") == "vt100" {
+		return
+	}
 	if !ProgrammingLanguage(e.mode) {
 		return
 	}
