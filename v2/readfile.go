@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -73,7 +74,7 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 }
 
 // LoadByteLine loads a single byte line
-func (e *Editor) LoadByteLine(ib IndexByteLine, eMut, tcMut *sync.RWMutex, tabIndentCounter, numLines *int, wg *sync.WaitGroup) {
+func (e *Editor) LoadByteLine(ib IndexByteLine, eMut, tcMut *sync.RWMutex, tabIndentCounter, numLines *int) {
 	// Require at least two bytes. Ignore lines with a single tab indentation or a single space
 	if len(ib.byteLine) > 2 {
 		first := ib.byteLine[0]
@@ -91,7 +92,6 @@ func (e *Editor) LoadByteLine(ib IndexByteLine, eMut, tcMut *sync.RWMutex, tabIn
 	e.lines[ib.index] = []rune(string(ib.byteLine))
 	*numLines++
 	eMut.Unlock()
-	wg.Done()
 }
 
 // LoadBytes replaces the current editor contents with the given bytes
@@ -121,13 +121,25 @@ func (e *Editor) LoadBytes(data []byte) {
 		tcMut sync.RWMutex
 	)
 
-	var wg sync.WaitGroup
-	var byteLine []byte
-	for i := 0; i < lineCount; i++ {
-		byteLine = byteLines[i]
-		wg.Add(1)
-		go e.LoadByteLine(IndexByteLine{byteLine, i}, &eMut, &tcMut, &tabIndentCounter, &numLines, &wg)
+	workerCount := runtime.GOMAXPROCS(0)
+	if workerCount < 1 {
+		workerCount = 1
 	}
+	jobs := make(chan IndexByteLine, workerCount*2)
+	var wg sync.WaitGroup
+	wg.Add(workerCount)
+	for i := 0; i < workerCount; i++ {
+		go func() {
+			defer wg.Done()
+			for ib := range jobs {
+				e.LoadByteLine(ib, &eMut, &tcMut, &tabIndentCounter, &numLines)
+			}
+		}()
+	}
+	for i := 0; i < lineCount; i++ {
+		jobs <- IndexByteLine{byteLines[i], i}
+	}
+	close(jobs)
 	wg.Wait()
 
 	// If the last line is empty, delete it
