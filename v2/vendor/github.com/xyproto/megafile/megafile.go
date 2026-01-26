@@ -51,10 +51,12 @@ type State struct {
 	filterPattern             string
 	editor                    string // typically $EDITOR
 	Header                    string // title/header
+	undoHistoryPath           string
 	written                   []rune
 	prevdir                   []string
 	fileEntries               []FileEntry
 	Directories               []string
+	trashUndo                 []trashEntry
 	dirIndex                  uint
 	startx                    uint
 	starty                    uint
@@ -77,8 +79,8 @@ type State struct {
 	selectionMoved            bool
 	ShowHidden                bool
 	autoSelected              bool
-	trashUndo                 []trashEntry
-	undoHistoryPath           string
+	visibleEntries            int
+	hiddenEntries             int
 }
 
 // ErrExit is the error that is returned if the user appeared to want to exit
@@ -304,19 +306,39 @@ func (s *State) clearHighlight() {
 
 func (s *State) ls(dir string) (int, error) {
 	const (
-		margin      = 1
-		columnWidth = 25
+		margin       = 1
+		columnWidth  = 25
+		bottomMargin = 2
 	)
 	var (
 		x            = s.startx
 		y            = s.starty + 1
 		w            = s.canvas.W()
 		longestSoFar = uint(0)
+		maxY         = s.canvas.H()
 	)
+	if maxY > bottomMargin {
+		maxY -= bottomMargin
+	}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
+		s.visibleEntries = 0
+		s.hiddenEntries = 0
+		s.drawStatusLine()
 		return 0, err
 	}
+
+	visibleEntries := 0
+	hiddenEntries := 0
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), ".") {
+			hiddenEntries++
+		} else {
+			visibleEntries++
+		}
+	}
+	s.visibleEntries = visibleEntries
+	s.hiddenEntries = hiddenEntries
 
 	// Clear file entries for new listing
 	s.fileEntries = []FileEntry{}
@@ -406,7 +428,7 @@ func (s *State) ls(dir string) (int, error) {
 		}
 
 		y++
-		if y >= s.canvas.H() {
+		if y >= maxY {
 			x += longestSoFar + margin
 			y = s.starty + 1
 		}
@@ -426,7 +448,46 @@ func (s *State) ls(dir string) (int, error) {
 		s.autoSelected = false
 	}
 
+	s.drawStatusLine()
 	return len(s.fileEntries), nil
+}
+
+func pluralSuffix(n int) string {
+	if n == 1 {
+		return ""
+	}
+	return "s"
+}
+
+func (s *State) statusLine() string {
+	visible := s.visibleEntries
+	hidden := s.hiddenEntries
+	switch {
+	case visible == 0 && hidden == 0:
+		return "no files"
+	case visible == 0:
+		return fmt.Sprintf("%d hidden file%s", hidden, pluralSuffix(hidden))
+	case hidden == 0:
+		return fmt.Sprintf("%d file%s", visible, pluralSuffix(visible))
+	default:
+		return fmt.Sprintf("%d file%s, %d hidden", visible, pluralSuffix(visible), hidden)
+	}
+}
+
+func (s *State) drawStatusLine() {
+	c := s.canvas
+	if c == nil || c.H() == 0 {
+		return
+	}
+	y := c.H() - 1
+	for x := uint(0); x < c.W(); x++ {
+		c.WriteRune(x, y, vt.Default, s.Background, ' ')
+	}
+	line := s.statusLine()
+	if line == "" {
+		return
+	}
+	c.Write(s.startx, y, vt.Default, s.Background, line)
 }
 
 func (s *State) msgBox(line1, line2, line3, line4 string) bool {
@@ -827,9 +888,9 @@ func (s *State) Run() ([]string, error) {
 
 		// if files are hidden or not
 		if s.ShowHidden {
-			c.Write(5, y, vt.Default, s.Background, " ")
-		} else {
 			c.Write(5, y, vt.Default, s.Background, ".")
+		} else {
+			c.Write(5, y, vt.Default, s.Background, " ")
 		}
 		y++
 
