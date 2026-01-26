@@ -1,4 +1,4 @@
-An implementation of grapheme cluster boundaries from [Unicode text segmentation](https://unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries) (UAX 29), for Unicode version 15.0.0.
+An implementation of grapheme cluster boundaries from [Unicode text segmentation](https://unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries) (UAX 29), for Unicode 16.
 
 [![Documentation](https://pkg.go.dev/badge/github.com/clipperhouse/uax29/v2/graphemes.svg)](https://pkg.go.dev/github.com/clipperhouse/uax29/v2/graphemes)
 ![Tests](https://github.com/clipperhouse/uax29/actions/workflows/gotest.yml/badge.svg)
@@ -83,8 +83,8 @@ goos: darwin
 goarch: arm64
 pkg: github.com/clipperhouse/uax29/graphemes/comparative
 cpu: Apple M2
-BenchmarkGraphemes/clipperhouse/uax29-8    	    173805 ns/op	 201.16 MB/s      0 B/op	   0 allocs/op
-BenchmarkGraphemes/rivo/uniseg-8           	   2045128 ns/op	  17.10 MB/s      0 B/op	   0 allocs/op
+BenchmarkGraphemes/clipperhouse/uax29-8   	  171895 ns/op	   203.39 MB/s     0 B/op	     0 allocs/op
+BenchmarkGraphemes/rivo/uniseg-8          	 1980475 ns/op	    17.65 MB/s     0 B/op	     0 allocs/op
 ```
 
 ### Invalid inputs

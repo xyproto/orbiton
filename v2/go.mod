@@ -21,15 +21,15 @@ require (
 	github.com/xyproto/binary v1.3.3
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.3.0
-	github.com/xyproto/env/v2 v2.5.3
-	github.com/xyproto/files v1.10.1
+	github.com/xyproto/env/v2 v2.5.4
+	github.com/xyproto/files v1.10.2
 	github.com/xyproto/fullname v1.1.0
 	github.com/xyproto/globi v1.0.2
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
-	github.com/xyproto/megafile v1.3.13
+	github.com/xyproto/megafile v1.3.14
 	github.com/xyproto/mode v0.12.3
 	github.com/xyproto/ollamaclient/v2 v2.7.2
 	github.com/xyproto/palgen v1.6.1
@@ -44,7 +44,7 @@ require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
 	github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b // indirect
 	github.com/clipperhouse/stringish v0.1.1 // indirect
-	github.com/clipperhouse/uax29/v2 v2.3.1 // indirect
+	github.com/clipperhouse/uax29/v2 v2.4.0 // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/kr/pty v1.1.8 // indirect

@@ -5,8 +5,8 @@ github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b/go.mod h1:aP
 github.com/boombuler/barcode v1.0.0/go.mod h1:paBWMcWSl3LHKBqUq+rly7CNSldXjb2rDl3JlRe0mD8=
 github.com/clipperhouse/stringish v0.1.1 h1:+NSqMOr3GR6k1FdRhhnXrLfztGzuG+VuFDfatpWHKCs=
 github.com/clipperhouse/stringish v0.1.1/go.mod h1:v/WhFtE1q0ovMta2+m+UbpZ+2/HEXNWYXQgCt4hdOzA=
-github.com/clipperhouse/uax29/v2 v2.3.1 h1:RjM8gnVbFbgI67SBekIC7ihFpyXwRPYWXn9BZActHbw=
-github.com/clipperhouse/uax29/v2 v2.3.1/go.mod h1:Wn1g7MK6OoeDT0vL+Q0SQLDz/KpfsVRgg6W7ihQeh4g=
+github.com/clipperhouse/uax29/v2 v2.4.0 h1:RXqE/l5EiAbA4u97giimKNlmpvkmz+GrBVTelsoXy9g=
+github.com/clipperhouse/uax29/v2 v2.4.0/go.mod h1:Wn1g7MK6OoeDT0vL+Q0SQLDz/KpfsVRgg6W7ihQeh4g=
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
 github.com/creack/pty v1.1.24 h1:bJrF4RRfyJnbTJqzRLHzcGaZK1NeM5kTC9jGgovnR1s=
 github.com/creack/pty v1.1.24/go.mod h1:08sCNb52WyoAwi2QDyzUCTgcvVFhUzewun7wtTfvcwE=
@@ -80,10 +80,10 @@ github.com/xyproto/digraph v1.3.0/go.mod h1:jl8pUKdKdwMDDBqUQPVeKjgvV5dzMyL37pco
 github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
 github.com/xyproto/env v1.9.1 h1:RSWzKrNYEcK+Tvk2fu5eHYW5ENq19tYzbHLWfA7fx5s=
 github.com/xyproto/env v1.9.1/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
-github.com/xyproto/env/v2 v2.5.3 h1:H/Fd1OAld+sPQrPKpAEkfwF3xn7eZiFys2QeH7c7oFE=
-github.com/xyproto/env/v2 v2.5.3/go.mod h1:F81ZEzu15s3TWUZJ1uzBl9iNeq9zcfHvxMkQJaLZUl0=
-github.com/xyproto/files v1.10.1 h1:AYbKcNku7lE81g9FKCra2KKWtVq9PRwNh0RjUxQTEUI=
-github.com/xyproto/files v1.10.1/go.mod h1:qdjxPTPCNWG4Gk83G6QgDE0Vbzx9zcxc6eTMSaG+INU=
+github.com/xyproto/env/v2 v2.5.4 h1:L0S/eUhFKDf5mGj7RmlRwdeLgaV8UY/RdJvlFiz+HfI=
+github.com/xyproto/env/v2 v2.5.4/go.mod h1:F81ZEzu15s3TWUZJ1uzBl9iNeq9zcfHvxMkQJaLZUl0=
+github.com/xyproto/files v1.10.2 h1:m0Ip6o/hGH2Z2JykpYg6xdfHW+fpMBWvU4Y/2okdPJc=
+github.com/xyproto/files v1.10.2/go.mod h1:qdjxPTPCNWG4Gk83G6QgDE0Vbzx9zcxc6eTMSaG+INU=
 github.com/xyproto/fullname v1.1.0 h1:QTykh2AuMB4Nr41vp/jnGofki1MFSqEAjI4fLXaNPDA=
 github.com/xyproto/fullname v1.1.0/go.mod h1:Yq+cQPXuZ4KaucZ8RtixShE2aZNag4fs05XYtWN1Wfo=
 github.com/xyproto/globi v1.0.2 h1:w7jxy0X4pmM/Jw5k1fO8Z030XeTf7A/1P8MB7/fD5H8=
@@ -96,8 +96,8 @@ github.com/xyproto/kotlinsig v0.0.1 h1:WsRn1dyJ7EwQk5MngOujIcSZazjG+yAIiZzWIJC0F
 github.com/xyproto/kotlinsig v0.0.1/go.mod h1:tq9ILkFh43rUuDiscyTZoBs6zSDxPa+hKKM5c6Bdnio=
 github.com/xyproto/lookslikegoasm v1.0.0 h1:/2nuhAu67tdjqXHkdOjP/UUAH9uJbAdptIkF2WzXqz4=
 github.com/xyproto/lookslikegoasm v1.0.0/go.mod h1:4ck0t+iH2rEAmjwnRhMZl72lCeCxK4iylxdcZ3K3FbY=
-github.com/xyproto/megafile v1.3.13 h1:SantwrDkjK7/sqdxrUS16r9DuF+/8FF0OCM1t9RU+rU=
-github.com/xyproto/megafile v1.3.13/go.mod h1:KpBZt+AsOAi8ztZ0fPCB8dUPCgSvjpP/pto6lfiR24Y=
+github.com/xyproto/megafile v1.3.14 h1:83AK9G/xF5qj8Qu3WP7mZoIYDp0UoEujl3X+3d0h0/Y=
+github.com/xyproto/megafile v1.3.14/go.mod h1:jwaHDYdZqQLR9pAR0HsGen7GGqp1Imn6H6mg/umh6Gk=
 github.com/xyproto/mode v0.12.3 h1:00hmgnkFGge/yYQReA+9EwEW0NvdpRP7HY7XDT0hW5g=
 github.com/xyproto/mode v0.12.3/go.mod h1:Bl7ymMitqlFLl3lgyAY3knkZb0t9/4fzgja7mWp66n0=
 github.com/xyproto/ollamaclient/v2 v2.7.2 h1:Z5uAZool07r2HuhPmdEJ6N8kmxNnwsjii0/uOl415uc=

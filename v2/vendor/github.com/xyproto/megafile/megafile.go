@@ -23,10 +23,11 @@ const (
 	upArrow    = "↑"
 	downArrow  = "↓"
 
-	pgUpKey = "⇞" // page up
-	pgDnKey = "⇟" // page down
-	homeKey = "⇱" // home
-	endKey  = "⇲" // end
+	pgUpKey   = "⇞"       // page up
+	pgDnKey   = "⇟"       // page down
+	homeKey   = "⇱"       // home
+	endKey    = "⇲"       // end
+	deleteKey = "\x1b[3~" // delete (ESC [ 3 ~)
 
 	topLine = uint(1)
 )
@@ -76,6 +77,8 @@ type State struct {
 	selectionMoved            bool
 	ShowHidden                bool
 	autoSelected              bool
+	trashUndo                 []trashEntry
+	undoHistoryPath           string
 }
 
 // ErrExit is the error that is returned if the user appeared to want to exit
@@ -87,7 +90,7 @@ var ErrExit = errors.New("exit")
 // header is the string to display at the top of the screen
 // the function returns the absolute path to the directory the user ended up in,
 // and an error if something went wrong
-func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor string) *State {
+func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor, undoHistoryPath string) *State {
 	absStartDirs := make([]string, len(startdirs))
 	for i, d := range startdirs {
 		if abs, err := filepath.Abs(d); err == nil {
@@ -96,7 +99,7 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor string) *
 			absStartDirs[i] = d
 		}
 	}
-	return &State{
+	state := &State{
 		canvas:                    c,
 		tty:                       tty,
 		prevdir:                   dupli(absStartDirs),
@@ -126,11 +129,21 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor string) *
 		ExecutableColor:           vt.LightGreen,
 		BinaryColor:               vt.LightMagenta,
 		DefaultFileColor:          vt.Default,
+		undoHistoryPath:           undoHistoryPath,
 	}
+	state.loadUndoHistory()
+	return state
 }
 
 func ulen[T string | []rune | []string](xs T) uint {
 	return uint(len(xs))
+}
+
+// RealPath checks if the current path is the same if symlinks are not followed (pwd -P) (the "real" path)
+func (s *State) RealPath() bool {
+	currentPath := s.Directories[s.dirIndex]
+	// is this the "real" directory (not the symlink-based path)?
+	return files.RealPath(currentPath)
 }
 
 func (s *State) drawOutput(text string, tty *vt.TTY) {
@@ -730,14 +743,6 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 	return false, false, NoAction, fmt.Errorf("WHAT DO YOU MEAN, %s?", cmd)
 }
 
-func (s *State) currentAbsDir() string {
-	path := s.Directories[s.dirIndex]
-	if absPath, err := filepath.Abs(path); err == nil { // success
-		return absPath
-	}
-	return path
-}
-
 // Cleanup tries to set everything right in the terminal emulator before returning
 func Cleanup(c *vt.Canvas) {
 	vt.SetXY(0, c.H()-1)
@@ -811,15 +816,20 @@ func (s *State) Run() ([]string, error) {
 			y++
 		}
 
-		// the directory number and name
-		c.WriteTagged(5, y, s.Background, o.LightTags(fmt.Sprintf("<yellow>%d</yellow> <gray>[</gray><green>%s</green><gray>]</gray>", s.dirIndex, s.Directories[s.dirIndex])))
+		var symlinkPathMarker string
+		if !s.RealPath() {
+			symlinkPathMarker = ">"
+		}
+
+		// the directory number, name and if it's "real" or not (">" for a path with symlinks)
+		c.WriteTagged(5, y, s.Background, o.LightTags(fmt.Sprintf("<yellow>%d</yellow> <gray>[</gray><green>%s</green><gray>]</gray> <magenta>%s</magenta>", s.dirIndex, s.Directories[s.dirIndex], symlinkPathMarker)))
 		y++
 
 		// if files are hidden or not
 		if s.ShowHidden {
-			c.Write(5, y, vt.Default, s.Background, ".")
-		} else {
 			c.Write(5, y, vt.Default, s.Background, " ")
+		} else {
+			c.Write(5, y, vt.Default, s.Background, ".")
 		}
 		y++
 
@@ -891,6 +901,7 @@ func (s *State) Run() ([]string, error) {
 				}
 				break
 			}
+
 			clearWritten()
 			if len(s.written) > 0 && index > 0 {
 				s.written = append(s.written[:index-1], s.written[index:]...)
@@ -912,9 +923,22 @@ func (s *State) Run() ([]string, error) {
 			drawWritten()
 		case "c:17": // ctrl-q
 			s.quit = true
+		case "c:18": // ctrl-r
+			// go to the "real" directory (not the symlink-based path)
+			currentPath := s.Directories[s.dirIndex]
+			if realPath, err := filepath.EvalSymlinks(currentPath); err == nil { // success
+				if absPath, err := filepath.Abs(realPath); err == nil { // success
+					s.setPath(absPath)
+					listDirectory()
+				}
+			}
 		case "c:13": // return
 			okToAutoSelect := !s.autoSelected
 			if s.autoSelected && len(s.written) == 0 {
+				okToAutoSelect = true
+			}
+			if s.autoSelected && len(s.written) > 0 && s.filterPattern != "" {
+				// Treat active filtering as a selection intent.
 				okToAutoSelect = true
 			}
 			// If a file is selected (via arrow keys), execute it regardless of text
@@ -1017,10 +1041,79 @@ func (s *State) Run() ([]string, error) {
 			s.setSelectedIndex(-1)
 			clearWritten()
 			drawWritten()
-		case "c:4": // ctrl-d
+		case deleteKey, "c:4": // delete or ctrl-d
+			allowExit := key == "c:4"
 			if len(s.written) == 0 {
-				Cleanup(c)
-				return s.Directories, ErrExit
+				if s.selectedIndex() >= 0 && s.selectedIndex() < len(s.fileEntries) {
+					if path, err := s.selectedPath(); err == nil {
+						if trashPath, fileHash, err := s.moveToTrash(path); err != nil {
+							clearAndPrepare()
+							s.ls(s.Directories[s.dirIndex])
+							s.drawError(err.Error())
+							s.highlightSelection()
+						} else {
+							entry := trashEntry{
+								original: path,
+								trash:    trashPath,
+								hash:     fileHash,
+							}
+							s.trashUndo = append(s.trashUndo, entry)
+							_ = s.appendUndoHistory(entry)
+							listDirectory()
+						}
+					}
+					break
+				}
+				if len(s.fileEntries) == 0 {
+					currentDir := s.Directories[s.dirIndex]
+					entries, err := os.ReadDir(currentDir)
+					if err != nil {
+						clearAndPrepare()
+						s.ls(s.Directories[s.dirIndex])
+						s.drawError(err.Error())
+						s.highlightSelection()
+						break
+					}
+					if len(entries) == 0 {
+						parentDir := filepath.Dir(currentDir)
+						if absParent, err := filepath.Abs(parentDir); err == nil {
+							parentDir = absParent
+						}
+						if absCurrent, err := filepath.Abs(currentDir); err == nil {
+							currentDir = absCurrent
+						}
+						if parentDir == currentDir {
+							clearAndPrepare()
+							s.ls(s.Directories[s.dirIndex])
+							s.drawError("cannot delete root directory")
+							s.highlightSelection()
+							break
+						}
+						s.setPath(parentDir)
+						listDirectory()
+						if trashPath, fileHash, err := s.moveToTrash(currentDir); err != nil {
+							clearAndPrepare()
+							s.ls(s.Directories[s.dirIndex])
+							s.drawError(err.Error())
+							s.highlightSelection()
+						} else {
+							entry := trashEntry{
+								original: currentDir,
+								trash:    trashPath,
+								hash:     fileHash,
+							}
+							s.trashUndo = append(s.trashUndo, entry)
+							_ = s.appendUndoHistory(entry)
+							listDirectory()
+						}
+						break
+					}
+				}
+				if allowExit {
+					Cleanup(c)
+					return s.Directories, ErrExit
+				}
+				break
 			}
 			clearWritten()
 			s.written = append(s.written[:index], s.written[index+1:]...)
@@ -1038,6 +1131,30 @@ func (s *State) Run() ([]string, error) {
 			s.setSelectedIndex(-1)
 			clearWritten()
 			drawWritten()
+		case "c:21", "c:26": // ctrl-u or ctrl-z: undo trash
+			entry, err := s.undoTrash(s.Directories[s.dirIndex])
+			if err != nil {
+				if errors.Is(err, errNoUndoForDir) {
+					break
+				}
+				clearAndPrepare()
+				s.ls(s.Directories[s.dirIndex])
+				s.drawError(err.Error())
+				s.highlightSelection()
+				break
+			}
+			if filepath.Dir(entry.original) == s.Directories[s.dirIndex] {
+				listDirectory()
+				restoredName := filepath.Base(entry.original)
+				for i, fileEntry := range s.fileEntries {
+					if fileEntry.realName == restoredName {
+						s.clearHighlight()
+						s.setSelectedIndex(i)
+						s.highlightSelection()
+						break
+					}
+				}
+			}
 		case pgUpKey: // page up
 			if len(s.fileEntries) > 0 && s.selectedIndex() >= 0 {
 				s.selectionMoved = true

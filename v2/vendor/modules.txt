@@ -8,7 +8,7 @@ github.com/allegro/bigcache/v3/queue
 # github.com/clipperhouse/stringish v0.1.1
 ## explicit; go 1.18
 github.com/clipperhouse/stringish
-# github.com/clipperhouse/uax29/v2 v2.3.1
+# github.com/clipperhouse/uax29/v2 v2.4.0
 ## explicit; go 1.18
 github.com/clipperhouse/uax29/v2/graphemes
 github.com/clipperhouse/uax29/v2/internal/iterators
@@ -101,10 +101,10 @@ github.com/xyproto/digraph
 # github.com/xyproto/env v1.9.1
 ## explicit; go 1.15
 github.com/xyproto/env
-# github.com/xyproto/env/v2 v2.5.3
+# github.com/xyproto/env/v2 v2.5.4
 ## explicit; go 1.19
 github.com/xyproto/env/v2
-# github.com/xyproto/files v1.10.1
+# github.com/xyproto/files v1.10.2
 ## explicit; go 1.19
 github.com/xyproto/files
 # github.com/xyproto/fullname v1.1.0
@@ -125,7 +125,7 @@ github.com/xyproto/kotlinsig
 # github.com/xyproto/lookslikegoasm v1.0.0
 ## explicit; go 1.23.2
 github.com/xyproto/lookslikegoasm
-# github.com/xyproto/megafile v1.3.13
+# github.com/xyproto/megafile v1.3.14
 ## explicit; go 1.24.4
 github.com/xyproto/megafile
 # github.com/xyproto/mode v0.12.3
