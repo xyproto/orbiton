@@ -16,4 +16,6 @@ var (
 	vimLocationHistoryFilename   = env.ExpandUser("~/.viminfo")
 	nvimLocationHistoryFilename  = filepath.Join(env.Dir("XDG_DATA_HOME", "~/.local/share"), "nvim", "shada", "main.shada")
 	emacsLocationHistoryFilename = env.ExpandUser("~/.emacs.d/places")
+
+	fileBrowserUndoHistoryFilename = filepath.Join(userCacheDir, "o", "fileundo.txt")
 )
