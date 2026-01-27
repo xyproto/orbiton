@@ -20,7 +20,7 @@ var (
 	cpuProfileFilename string
 	memProfileFilename string
 	fgtraceFilename    string
-	cpuProfileFile     os.File
+	cpuProfileFile     *os.File
 )
 
 func init() {
@@ -42,7 +42,8 @@ func init() {
 func traceStart() {
 	// Output CPU profile information, if a filename is given
 	if cpuProfileFilename != "" {
-		cpuProfileFile, err := os.Create(cpuProfileFilename)
+		var err error
+		cpuProfileFile, err = os.Create(cpuProfileFilename)
 		if err != nil {
 			log.Fatal("could not create CPU profile: ", err)
 		}
