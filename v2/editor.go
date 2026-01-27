@@ -135,7 +135,6 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.monitorAndReadOnly = e.monitorAndReadOnly
 	e2.primaryClipboard = e.primaryClipboard
 	e2.jumpToLetterMode = e.jumpToLetterMode
-	e2.nanoMode.Store(e.nanoMode.Load())
 	e2.spellCheckMode = e.spellCheckMode
 	e2.createDirectoriesIfMissing = e.createDirectoriesIfMissing
 	e2.displayQuickHelp = e.displayQuickHelp
@@ -143,12 +142,12 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.dirMode = e.dirMode
 	e2.highlightCurrentLine = e.highlightCurrentLine
 	e2.highlightCurrentText = e.highlightCurrentText
+	e2.nanoMode.Store(e.nanoMode.Load())
 	e2.changed.Store(e.changed.Load())
 	e2.redraw.Store(e.redraw.Load())
 	e2.redrawCursor.Store(e.redrawCursor.Load())
 	e2.drawProgress.Store(e.drawProgress.Load())
 	e2.drawFuncName.Store(e.drawFuncName.Load())
-	e2.nanoMode.Store(e.nanoMode.Load())
 	e2.waitWithRedrawing.Store(e.waitWithRedrawing.Load())
 	e2.flaskApplication.Store(e.flaskApplication.Load())
 	e2.moveLinesMode.Store(e.moveLinesMode.Load())
