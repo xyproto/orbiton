@@ -287,8 +287,9 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 					// disable syntax highlighting, to make it clear that the text is red
 					e.syntaxHighlight = false
 				}
+			} else {
+				testfile.Close()
 			}
-			testfile.Close()
 		}
 	} else {
 		if ok, err := e.PrepareEmptySaveAndRemove(c, tty); err != nil {
