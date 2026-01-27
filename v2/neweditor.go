@@ -28,8 +28,8 @@ var (
 )
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
-// Returns an Editor, a status message for the user, a bool that is true if an image was displayed instead and the finally an error type.
-func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp bool) (*Editor, string, bool, error) {
+// Returns an Editor, a status message for the user, a bool that is true if an image was displayed instead, an action for the next file and finally an error type.
+func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp bool) (*Editor, string, bool, megafile.Action, error) {
 	if inVTEGUI {
 		noDrawUntilResize.Store(true)
 	}
@@ -53,7 +53,8 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	switch ext {
 	case ".png", ".jpg", ".jpeg", ".ico", ".gif", ".bmp", ".webp", ".qoi":
 		const waitForKeypress = true
-		return nil, "", true, displayImage(c, fnord.filename, waitForKeypress)
+		action, err := displayImage(tty, c, fnord.filename, waitForKeypress)
+		return nil, "", true, action, err
 	}
 
 	if parentIsMan == nil {
@@ -143,7 +144,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 
 		warningMessage, err = e.Load(c, tty, fnord)
 		if err != nil {
-			return e, "", false, err
+			return e, "", false, megafile.NoAction, err
 		}
 
 		if *parentIsMan {
@@ -185,7 +186,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 
 	} else if e.filename == "" { // no filename, and no data on stdin
 
-		return e, "", false, errFileNotFound
+		return e, "", false, megafile.NoAction, errFileNotFound
 
 	} else if fileInfo, err := os.Stat(e.filename); err == nil { // no issue
 
@@ -218,7 +219,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				megaFileState.HighlightBackground = vt.BackgroundWhite // TODO add to the theme struct
 
 				if _, err := megaFileState.Run(); err != nil && err != megafile.ErrExit {
-					return e, "", false, fmt.Errorf("could not browse %s: %v", e.filename, err)
+					return e, "", false, megafile.NoAction, fmt.Errorf("could not browse %s: %v", e.filename, err)
 				}
 				os.Exit(0)
 			}
@@ -226,7 +227,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 
 		warningMessage, err = e.Load(c, tty, fnord)
 		if err != nil {
-			return e, "", false, err
+			return e, "", false, megafile.NoAction, err
 		}
 
 		if !e.Empty() {
@@ -291,7 +292,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		}
 	} else {
 		if ok, err := e.PrepareEmptySaveAndRemove(c, tty); err != nil {
-			return e, "", false, err
+			return e, "", false, megafile.NoAction, err
 		} else if ok {
 			createdNewFile = true
 		}
@@ -546,7 +547,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		}
 	}
 
-	return e, statusMessage, false, nil
+	return e, statusMessage, false, megafile.NoAction, nil
 }
 
 // NewCustomEditor takes:

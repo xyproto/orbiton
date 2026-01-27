@@ -106,7 +106,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	}
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
-	e, messageAfterRedraw, displayedImage, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp)
+	e, messageAfterRedraw, displayedImage, imageAction, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp)
 	if err != nil {
 		if e != nil {
 			return "", megafile.NoAction, err
@@ -116,10 +116,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	} else if displayedImage {
 		// A special case for if an image was displayed instead of a file being opened
 		if e != nil {
-			return "", megafile.NoAction, nil
+			return "", imageAction, nil
 		}
 		clearOnQuit.Store(false)
-		return "", megafile.NoAction, nil
+		return "", imageAction, nil
 	}
 
 	// Find the absolute path to this filename

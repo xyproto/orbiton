@@ -28,9 +28,7 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar) {
 		// De-indent the current line before moving on to the next
 		e.SetCurrentLine(trimmedLine)
 		leadingWhitespace = currentLeadingWhitespace
-	} else if e.handleReturnAutocomplete(c, trimmedLine, currentLeadingWhitespace, &indent, &leadingWhitespace) {
-		// handled by autocomplete helpers
-	} else if cLikeSwitch(e.mode) {
+	} else if !e.handleReturnAutocomplete(c, trimmedLine, currentLeadingWhitespace, &indent, &leadingWhitespace) && cLikeSwitch(e.mode) {
 		currentLine := e.CurrentLine()
 		trimmedLine := e.TrimmedLine()
 		// De-indent this line by 1 if this line starts with "case " and the next line also starts with "case ", but the current line is indented differently.

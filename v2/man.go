@@ -134,36 +134,36 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 		} else if inDigits && !inWord && !unicode.IsDigit(r) && !hexDigit(r) {
 			inDigits = false
 			rs = append(rs, []rune(off+normal.String())...)
-		} else if inDigits && (unicode.IsDigit(r) || hexDigit(r)) {
-			// don't apply a new color
-		} else if !inWord && (r == '*' || r == '$' || r == '%' || r == '!' || r == '/' || r == '=' || r == '-') {
-			rs = append(rs, []rune(off+e.MenuArrowColor.String())...)
-		} else if r == '@' { // color @ gray and the rest of the string white
-			rs = append(rs, []rune(off+e.CommentColor.String())...)
-		} else if hasAlpha && r == '<' { // color < gray and the rest of the string white
-			rs = append(rs, []rune(off+e.CommentColor.String())...)
-		} else if hasAlpha && r == '>' { // color > gray and the rest of the string normal
-			rs = append(rs, []rune(off+e.CommentColor.String())...)
-		} else if inAngles || r == '>' {
-			rs = append(rs, []rune(off+e.ItalicsColor.String())...)
-		} else if inWord && unicode.IsUpper(prevRune) && ((unicode.IsUpper(r) && unicode.IsLetter(nextRune)) || (unicode.IsLower(r) && unicode.IsUpper(prevRune) && !unicode.IsLetter(nextRune))) {
-			if unicode.IsUpper(r) {
-				// This is for the leading and trailing letter of uppercase words
+		} else if !(inDigits && (unicode.IsDigit(r) || hexDigit(r))) {
+			if !inWord && (r == '*' || r == '$' || r == '%' || r == '!' || r == '/' || r == '=' || r == '-') {
+				rs = append(rs, []rune(off+e.MenuArrowColor.String())...)
+			} else if r == '@' { // color @ gray and the rest of the string white
+				rs = append(rs, []rune(off+e.CommentColor.String())...)
+			} else if hasAlpha && r == '<' { // color < gray and the rest of the string white
+				rs = append(rs, []rune(off+e.CommentColor.String())...)
+			} else if hasAlpha && r == '>' { // color > gray and the rest of the string normal
+				rs = append(rs, []rune(off+e.CommentColor.String())...)
+			} else if inAngles || r == '>' {
+				rs = append(rs, []rune(off+e.ItalicsColor.String())...)
+			} else if inWord && unicode.IsUpper(prevRune) && ((unicode.IsUpper(r) && unicode.IsLetter(nextRune)) || (unicode.IsLower(r) && unicode.IsUpper(prevRune) && !unicode.IsLetter(nextRune))) {
+				if unicode.IsUpper(r) {
+					// This is for the leading and trailing letter of uppercase words
+					rs = append(rs, []rune(off+e.ImageColor.String())...)
+				} else {
+					rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
+				}
+			} else if inWord && (unicode.IsUpper(r) || (unicode.IsUpper(prevRune) && unicode.IsLetter(r))) {
+				if !unicode.IsLower(r) && (((unicode.IsUpper(nextRune) || nextRune == ' ') && unicode.IsLetter(prevRune)) || unicode.IsUpper(nextRune) || !unicode.IsLetter(nextRune)) {
+					// This is for the center letters of uppercase words
+					rs = append(rs, []rune(off+e.ImageColor.String())...)
+				} else {
+					rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
+				}
+			} else if inWord && unicode.IsUpper(r) {
 				rs = append(rs, []rune(off+e.ImageColor.String())...)
-			} else {
+			} else if !inWord || !unicode.IsUpper(r) {
 				rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
 			}
-		} else if inWord && (unicode.IsUpper(r) || (unicode.IsUpper(prevRune) && unicode.IsLetter(r))) {
-			if !unicode.IsLower(r) && (((unicode.IsUpper(nextRune) || nextRune == ' ') && unicode.IsLetter(prevRune)) || unicode.IsUpper(nextRune) || !unicode.IsLetter(nextRune)) {
-				// This is for the center letters of uppercase words
-				rs = append(rs, []rune(off+e.ImageColor.String())...)
-			} else {
-				rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
-			}
-		} else if inWord && unicode.IsUpper(r) {
-			rs = append(rs, []rune(off+e.ImageColor.String())...)
-		} else if !inWord || !unicode.IsUpper(r) {
-			rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
 		}
 		rs = append(rs, r)
 		if r == '@' || (hasAlpha && r == '<') { // color @ or < gray and the rest of the string white
