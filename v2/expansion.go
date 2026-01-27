@@ -15,48 +15,23 @@ import (
 	"github.com/xyproto/vt"
 )
 
+type goInContainerKind int
+
+const (
+	goInContainerUnknown goInContainerKind = iota
+	goInContainerSlice
+	goInContainerArray
+	goInContainerMap
+)
+
 func (e *Editor) handleReturnAutocomplete(c *vt.Canvas, trimmedLine, currentLeadingWhitespace string, indent *bool, leadingWhitespace *string) bool {
-	if e.autocompleteCLikeParens(trimmedLine, currentLeadingWhitespace, indent, leadingWhitespace) {
-		return true
-	}
-	if e.autocompleteGoForRange(c, trimmedLine, currentLeadingWhitespace) {
-		return true
-	}
-	if e.autocompleteGoForNumericRange(c, trimmedLine, currentLeadingWhitespace) {
-		return true
-	}
-	if e.autocompleteGoIfInRange(c, trimmedLine, currentLeadingWhitespace) {
-		return true
-	}
-	if e.autocompleteGoListComprehension(c, trimmedLine, currentLeadingWhitespace) {
-		return true
-	}
-	if e.autocompleteGoTernary(c, trimmedLine, currentLeadingWhitespace) {
-		return true
-	}
-	if e.autocompleteGoArrowLambda(c, trimmedLine, currentLeadingWhitespace) {
-		return true
-	}
-	if e.autocompleteGoInAssignment(c, trimmedLine, currentLeadingWhitespace) {
-		return true
-	}
-	if e.autocompleteGoIfErrQuestion(c, trimmedLine, currentLeadingWhitespace) {
-		return true
-	}
-	if e.autocompleteIfErr(c, trimmedLine, currentLeadingWhitespace) {
-		return true
-	}
-	if e.autocompleteTagExpansion(c, trimmedLine, currentLeadingWhitespace, indent, leadingWhitespace) {
-		return true
-	}
-	return false
+	return e.autocompleteCLikeParens(trimmedLine, currentLeadingWhitespace, indent, leadingWhitespace) || e.autocompleteGoForRange(c, trimmedLine, currentLeadingWhitespace) || e.autocompleteGoForNumericRange(c, trimmedLine, currentLeadingWhitespace) || e.autocompleteGoIfInRange(c, trimmedLine, currentLeadingWhitespace) || e.autocompleteGoListComprehension(c, trimmedLine, currentLeadingWhitespace) || e.autocompleteGoTernary(c, trimmedLine, currentLeadingWhitespace) || e.autocompleteGoArrowLambda(c, trimmedLine, currentLeadingWhitespace) || e.autocompleteGoInAssignment(c, trimmedLine, currentLeadingWhitespace) || e.autocompleteGoIfErrQuestion(c, trimmedLine, currentLeadingWhitespace) || e.autocompleteIfErr(c, trimmedLine, currentLeadingWhitespace) || e.autocompleteTagExpansion(c, trimmedLine, currentLeadingWhitespace, indent, leadingWhitespace)
 }
 
 func (e *Editor) autocompleteCLikeParens(trimmedLine, currentLeadingWhitespace string, indent *bool, leadingWhitespace *string) bool {
 	if !cLikeFor(e.mode) {
 		return false
 	}
-
 	// Add missing parenthesis for "if ... {", "} else if", "} elif", "for", "while" and "when" for C-like languages
 	for _, kw := range []string{"for", "foreach", "foreach_reverse", "if", "switch", "when", "while", "while let", "} else if", "} elif"} {
 		if strings.HasPrefix(trimmedLine, kw+" ") && !strings.HasPrefix(trimmedLine, kw+" (") {
@@ -89,12 +64,10 @@ func (e *Editor) autocompleteGoForRange(c *vt.Canvas, trimmedLine, currentLeadin
 	if e.mode != mode.Go {
 		return false
 	}
-
 	replacement, ok := goForRangeAutocomplete(trimmedLine)
 	if !ok {
 		return false
 	}
-
 	e.SetCurrentLine(currentLeadingWhitespace + replacement)
 	// Keep the cursor aligned with the end of the line as if nothing changed.
 	e.End(c)
@@ -105,12 +78,10 @@ func (e *Editor) autocompleteGoForNumericRange(c *vt.Canvas, trimmedLine, curren
 	if e.mode != mode.Go {
 		return false
 	}
-
 	replacement, ok := goForNumericRangeAutocomplete(trimmedLine)
 	if !ok {
 		return false
 	}
-
 	e.SetCurrentLine(currentLeadingWhitespace + replacement)
 	e.End(c)
 	return true
@@ -120,13 +91,11 @@ func goForRangeAutocomplete(trimmedLine string) (string, bool) {
 	if !strings.HasPrefix(trimmedLine, "for ") {
 		return "", false
 	}
-
 	hasBrace := strings.HasSuffix(trimmedLine, "{")
 	base := strings.TrimSpace(strings.TrimSuffix(trimmedLine, "{"))
 	if !strings.HasPrefix(base, "for ") {
 		return "", false
 	}
-
 	rest := strings.TrimSpace(strings.TrimPrefix(base, "for "))
 	inIndex := strings.Index(rest, " in ")
 	var lhs, rhs string
@@ -154,7 +123,6 @@ func goForRangeAutocomplete(trimmedLine string) (string, bool) {
 	if lhs == "" || rhs == "" {
 		return "", false
 	}
-
 	replacement := "for "
 	if strings.Contains(lhs, ",") {
 		replacement += lhs
@@ -172,13 +140,11 @@ func goForNumericRangeAutocomplete(trimmedLine string) (string, bool) {
 	if !strings.HasPrefix(trimmedLine, "for ") {
 		return "", false
 	}
-
 	hasBrace := strings.HasSuffix(trimmedLine, "{")
 	base := strings.TrimSpace(strings.TrimSuffix(trimmedLine, "{"))
 	if !strings.HasPrefix(base, "for ") {
 		return "", false
 	}
-
 	rest := strings.TrimSpace(strings.TrimPrefix(base, "for "))
 	inIndex := strings.Index(rest, " in ")
 	if inIndex == -1 {
@@ -192,12 +158,10 @@ func goForNumericRangeAutocomplete(trimmedLine string) (string, bool) {
 	if strings.Contains(lhs, ",") {
 		return "", false
 	}
-
 	start, end, inclusive, ok := parseGoNumericRange(rangeExpr)
 	if !ok {
 		return "", false
 	}
-
 	op := "<"
 	if inclusive {
 		op = "<="
@@ -236,12 +200,10 @@ func (e *Editor) autocompleteGoIfInRange(c *vt.Canvas, trimmedLine, currentLeadi
 	if e.mode != mode.Go {
 		return false
 	}
-
 	lhs, rhs, hasBrace, negated, ok := goIfInAutocomplete(trimmedLine)
 	if !ok || !hasBrace {
 		return false
 	}
-
 	var replacement string
 	switch e.goInContainerKind(rhs, "if true {") {
 	case goInContainerMap:
@@ -276,12 +238,10 @@ func (e *Editor) autocompleteGoListComprehension(c *vt.Canvas, trimmedLine, curr
 	if e.mode != mode.Go {
 		return false
 	}
-
 	assignKind, target, exprPart, iterVar, iterable, cond, ok := goListComprehensionAutocomplete(trimmedLine)
 	if !ok {
 		return false
 	}
-
 	targetName := target
 	targetDecl := target
 	hasVarType := false
@@ -294,7 +254,6 @@ func (e *Editor) autocompleteGoListComprehension(c *vt.Canvas, trimmedLine, curr
 		targetDecl = decl
 		hasVarType = hasType
 	}
-
 	elemType, hasElemType := e.goListComprehensionElemType(exprPart, iterable)
 	var initLine string
 	switch assignKind {
@@ -319,12 +278,10 @@ func (e *Editor) autocompleteGoListComprehension(c *vt.Canvas, trimmedLine, curr
 			initLine = target + " := []any{}"
 		}
 	}
-
 	rangeLHS := "_, " + iterVar
 	if strings.Contains(iterVar, ",") {
 		rangeLHS = iterVar
 	}
-
 	oneIndentation := e.indentation.String()
 	lines := []string{
 		initLine,
@@ -338,7 +295,6 @@ func (e *Editor) autocompleteGoListComprehension(c *vt.Canvas, trimmedLine, curr
 		lines = append(lines, oneIndentation+targetName+" = append("+targetName+", "+exprPart+")")
 	}
 	lines = append(lines, "}")
-
 	for i, line := range lines {
 		if i != 0 {
 			e.InsertLineBelow()
@@ -354,23 +310,16 @@ func (e *Editor) autocompleteGoTernary(c *vt.Canvas, trimmedLine, currentLeading
 	if e.mode != mode.Go {
 		return false
 	}
-
 	assignKind, target, expr, ok := goSplitAssignment(trimmedLine)
-	if !ok || target == "" || expr == "" {
+	if (!ok || target == "" || expr == "") || strings.Contains(target, ",") {
 		return false
 	}
-	if strings.Contains(target, ",") {
-		return false
-	}
-
 	cond, trueExpr, falseExpr, ok := goParseTernary(expr)
 	if !ok {
 		return false
 	}
-
 	oneIndentation := e.indentation.String()
 	var lines []string
-
 	if assignKind == "=" {
 		lines = []string{
 			"if " + cond + " {",
@@ -411,7 +360,6 @@ func (e *Editor) autocompleteGoTernary(c *vt.Canvas, trimmedLine, currentLeading
 			"}",
 		}
 	}
-
 	for i, line := range lines {
 		if i != 0 {
 			e.InsertLineBelow()
@@ -427,7 +375,6 @@ func (e *Editor) autocompleteGoArrowLambda(c *vt.Canvas, trimmedLine, currentLea
 	if e.mode != mode.Go {
 		return false
 	}
-
 	line := trimmedLine
 	changed := false
 	for {
@@ -450,12 +397,10 @@ func (e *Editor) autocompleteGoInAssignment(c *vt.Canvas, trimmedLine, currentLe
 	if e.mode != mode.Go {
 		return false
 	}
-
 	assignKind, target, lhs, rhs, negated, ok := goInAssignmentAutocomplete(trimmedLine)
 	if !ok {
 		return false
 	}
-
 	var lines []string
 	switch e.goInContainerKind(rhs, "var _ = 0") {
 	case goInContainerMap:
@@ -477,7 +422,6 @@ func (e *Editor) autocompleteGoInAssignment(c *vt.Canvas, trimmedLine, currentLe
 	default:
 		return e.autocompleteGoInAssignmentFallback(c, currentLeadingWhitespace, assignKind, target, lhs, rhs, negated)
 	}
-
 	for i, line := range lines {
 		if i != 0 {
 			e.InsertLineBelow()
@@ -495,7 +439,6 @@ func (e *Editor) autocompleteGoIfInFallback(c *vt.Canvas, currentLeadingWhitespa
 	elemVar := "e"
 	loopHeader := "for _, " + elemVar + " := range " + rhs + " {"
 	compare := elemVar + " == " + lhs
-
 	lines := []string{
 		foundVar + " := false",
 		loopHeader,
@@ -510,7 +453,6 @@ func (e *Editor) autocompleteGoIfInFallback(c *vt.Canvas, currentLeadingWhitespa
 	} else {
 		lines = append(lines, "if "+foundVar+" {")
 	}
-
 	for i, line := range lines {
 		if i != 0 {
 			e.InsertLineBelow()
@@ -540,7 +482,6 @@ func (e *Editor) autocompleteGoInAssignmentFallback(c *vt.Canvas, currentLeading
 	} else {
 		lines = append(lines, goInAssignmentLine(assignKind, target, foundVar))
 	}
-
 	for i, line := range lines {
 		if i != 0 {
 			e.InsertLineBelow()
@@ -556,13 +497,11 @@ func goIfInAutocomplete(trimmedLine string) (string, string, bool, bool, bool) {
 	if !strings.HasPrefix(trimmedLine, "if ") {
 		return "", "", false, false, false
 	}
-
 	hasBrace := strings.HasSuffix(trimmedLine, "{")
 	base := strings.TrimSpace(strings.TrimSuffix(trimmedLine, "{"))
 	if !strings.HasPrefix(base, "if ") {
 		return "", "", hasBrace, false, false
 	}
-
 	rest := strings.TrimSpace(strings.TrimPrefix(base, "if "))
 	lhs, rhs, negated, ok := goParseInExpression(rest)
 	if !ok {
@@ -743,7 +682,6 @@ func goListComprehensionAutocomplete(trimmedLine string) (string, string, string
 	if inner == "" {
 		return "", "", "", "", "", "", false
 	}
-
 	tokens := strings.Fields(inner)
 	forIndex := -1
 	for i, tok := range tokens {
@@ -756,7 +694,6 @@ func goListComprehensionAutocomplete(trimmedLine string) (string, string, string
 		return "", "", "", "", "", "", false
 	}
 	exprPart := strings.Join(tokens[:forIndex], " ")
-
 	inIndex := -1
 	for i := forIndex + 1; i < len(tokens); i++ {
 		if tokens[i] == "in" {
@@ -771,7 +708,6 @@ func goListComprehensionAutocomplete(trimmedLine string) (string, string, string
 	if iterVar == "" {
 		return "", "", "", "", "", "", false
 	}
-
 	ifIndex := -1
 	for i := inIndex + 1; i < len(tokens); i++ {
 		if tokens[i] == "if" {
@@ -779,7 +715,6 @@ func goListComprehensionAutocomplete(trimmedLine string) (string, string, string
 			break
 		}
 	}
-
 	iterable := ""
 	cond := ""
 	if ifIndex == -1 {
@@ -857,21 +792,21 @@ func goParseTernary(expr string) (string, string, string, bool) {
 }
 
 func goArrowLambdaReplacement(line string) (string, bool) {
-	runes := []rune(line)
-	if len(runes) < 3 {
+	l := len([]rune(line))
+	if l < 3 {
 		return "", false
 	}
-
-	depthAt := make([]int, len(runes))
-	inQuoteAt := make([]bool, len(runes))
-	depth := 0
-	var quote rune
-	escaped := false
-
+	var (
+		depthAt   = make([]int, l)
+		inQuoteAt = make([]bool, l)
+		depth     = 0
+		quote     rune
+		escaped   = false
+		runes     = []rune(line)
+	)
 	for i, r := range runes {
 		depthAt[i] = depth
 		inQuoteAt[i] = quote != 0
-
 		if quote != 0 {
 			if escaped {
 				escaped = false
@@ -886,7 +821,6 @@ func goArrowLambdaReplacement(line string) (string, bool) {
 			}
 			continue
 		}
-
 		switch r {
 		case '\'', '"', '`':
 			quote = r
@@ -898,7 +832,6 @@ func goArrowLambdaReplacement(line string) (string, bool) {
 			}
 		}
 	}
-
 	arrow := -1
 	arrowDepth := 0
 	for i := 0; i < len(runes)-1; i++ {
@@ -914,7 +847,6 @@ func goArrowLambdaReplacement(line string) (string, bool) {
 	if arrow == -1 {
 		return "", false
 	}
-
 	paramsStart := 0
 	for i := arrow - 1; i >= 0; i-- {
 		if inQuoteAt[i] {
@@ -928,7 +860,6 @@ func goArrowLambdaReplacement(line string) (string, bool) {
 			paramsStart = 0
 		}
 	}
-
 	bodyEnd := len(runes)
 	for i := arrow + 2; i < len(runes); i++ {
 		if inQuoteAt[i] {
@@ -943,13 +874,11 @@ func goArrowLambdaReplacement(line string) (string, bool) {
 			break
 		}
 	}
-
 	params := strings.TrimSpace(string(runes[paramsStart:arrow]))
 	body := strings.TrimSpace(string(runes[arrow+2 : bodyEnd]))
 	if params == "" || body == "" {
 		return "", false
 	}
-
 	hadParens := strings.HasPrefix(params, "(") && strings.HasSuffix(params, ")")
 	if hadParens {
 		params = strings.TrimSpace(params[1 : len(params)-1])
@@ -957,12 +886,10 @@ func goArrowLambdaReplacement(line string) (string, bool) {
 	if params == "" {
 		return "", false
 	}
-
 	params = goArrowLambdaParamsSegment(params, hadParens)
 	if params == "" {
 		return "", false
 	}
-
 	paramParts := strings.Split(params, ",")
 	decls := make([]string, 0, len(paramParts))
 	for _, part := range paramParts {
@@ -977,14 +904,12 @@ func goArrowLambdaReplacement(line string) (string, bool) {
 		}
 	}
 	paramsDecl := strings.Join(decls, ", ")
-
 	var replacement string
 	if strings.HasPrefix(body, "{") && strings.HasSuffix(body, "}") {
 		replacement = "func(" + paramsDecl + ") " + body
 	} else {
 		replacement = "func(" + paramsDecl + ") any { return " + body + " }"
 	}
-
 	newLine := string(runes[:paramsStart]) + replacement + string(runes[bodyEnd:])
 	return newLine, true
 }
@@ -1037,15 +962,6 @@ func isSimpleGoIdentifier(s string) bool {
 	}
 	return true
 }
-
-type goInContainerKind int
-
-const (
-	goInContainerUnknown goInContainerKind = iota
-	goInContainerSlice
-	goInContainerArray
-	goInContainerMap
-)
 
 func (e *Editor) goInContainerKind(rhs, replacement string) goInContainerKind {
 	filename := e.filename
@@ -1133,11 +1049,15 @@ func (e *Editor) goEvalExprType(expr, replacement string) (types.Type, *types.Pa
 func (e *Editor) goListComprehensionElemType(exprPart, iterable string) (string, bool) {
 	const replacement = "var _ = 0"
 	if t, pkg, ok := e.goEvalExprType(exprPart, replacement); ok {
-		return goTypeString(t, pkg), true
+		if s := goTypeString(t, pkg); s != "" {
+			return s, true
+		}
 	}
 	if t, pkg, ok := e.goEvalExprType(iterable, replacement); ok {
 		if elem := goRangeValueType(t); elem != nil {
-			return goTypeString(elem, pkg), true
+			if s := goTypeString(elem, pkg); s != "" {
+				return s, true
+			}
 		}
 	}
 	return "", false
@@ -1146,16 +1066,53 @@ func (e *Editor) goListComprehensionElemType(exprPart, iterable string) (string,
 func (e *Editor) goTernaryType(trueExpr, falseExpr string) (string, bool) {
 	const replacement = "var _ = 0"
 	if t, pkg, ok := e.goEvalExprType(trueExpr, replacement); ok {
-		return goTypeString(t, pkg), true
+		if s := goTypeString(t, pkg); s != "" {
+			return s, true
+		}
 	}
 	if t, pkg, ok := e.goEvalExprType(falseExpr, replacement); ok {
-		return goTypeString(t, pkg), true
+		if s := goTypeString(t, pkg); s != "" {
+			return s, true
+		}
 	}
 	return "", false
 }
 
+// goDefaultType converts untyped basic types (from constant expressions such as
+// 42 or "hello") to their default typed equivalents so that they can be used in
+// generated Go source code.  Returns nil for types that have no sensible default
+// (UntypedNil, Invalid).
+func goDefaultType(t types.Type) types.Type {
+	if basic, ok := t.(*types.Basic); ok {
+		switch basic.Kind() {
+		case types.UntypedBool:
+			return types.Typ[types.Bool]
+		case types.UntypedInt:
+			return types.Typ[types.Int]
+		case types.UntypedRune:
+			return types.Typ[types.Rune]
+		case types.UntypedFloat:
+			return types.Typ[types.Float64]
+		case types.UntypedComplex:
+			return types.Typ[types.Complex128]
+		case types.UntypedString:
+			return types.Typ[types.String]
+		case types.UntypedNil, types.Invalid:
+			return nil
+		}
+	}
+	return t
+}
+
 func goTypeString(t types.Type, currentPkg *types.Package) string {
+	t = goDefaultType(t)
+	if t == nil {
+		return ""
+	}
 	qualifier := func(p *types.Package) string {
+		if p == nil {
+			return ""
+		}
 		if currentPkg != nil && p.Path() == currentPkg.Path() {
 			return ""
 		}
@@ -1182,7 +1139,7 @@ func goRangeValueType(t types.Type) types.Type {
 	case *types.Chan:
 		return tt.Elem()
 	case *types.Basic:
-		if tt.Kind() == types.String {
+		if tt.Kind() == types.String || tt.Kind() == types.UntypedString {
 			return types.Typ[types.Rune]
 		}
 	}
@@ -1324,12 +1281,10 @@ func (e *Editor) autocompleteGoIfErrQuestion(c *vt.Canvas, trimmedLine, currentL
 	if e.mode != mode.Go || !strings.HasSuffix(trimmedLine, "?") {
 		return false
 	}
-
 	trimmedLine = strings.TrimSuffix(trimmedLine, "?")
 	e.SetCurrentLine(currentLeadingWhitespace + trimmedLine)
 	e.InsertLineBelow()
 	e.pos.sy++
-
 	ifErrBlock := e.ifErrBlockForCurrentFunction()
 	for i, line := range strings.Split(strings.TrimSpace(ifErrBlock), "\n") {
 		if i != 0 {
@@ -1346,7 +1301,6 @@ func (e *Editor) autocompleteIfErr(c *vt.Canvas, trimmedLine, currentLeadingWhit
 	if (e.mode != mode.Go && e.mode != mode.Odin) || trimmedLine != "iferr" {
 		return false
 	}
-
 	ifErrBlock := e.ifErrBlockForCurrentFunction()
 	// insert the block of text
 	for i, line := range strings.Split(strings.TrimSpace(ifErrBlock), "\n") {
@@ -1390,7 +1344,6 @@ func (e *Editor) autocompleteTagExpansion(c *vt.Canvas, trimmedLine, currentLead
 	if strings.ToLower(string(trimmedLine[0])) != string(trimmedLine[0]) {
 		return false
 	}
-
 	// Words on a line without < or >? Expand into <tag asdf> above and </tag> below.
 	words := strings.Fields(trimmedLine)
 	tagName := words[0] // must be at least one word
@@ -1439,7 +1392,6 @@ func (e *Editor) autocompleteTagExpansion(c *vt.Canvas, trimmedLine, currentLead
 		}
 		return true
 	}
-
 	return false
 }
 
@@ -1447,7 +1399,6 @@ func (e *Editor) autocompleteTagExpansion(c *vt.Canvas, trimmedLine, currentLead
 func (e *Editor) LettersBeforeCursor() string {
 	y := int(e.DataY())
 	runes, ok := e.lines[y]
-
 	if !ok {
 		// This should never happen
 		return ""
@@ -1457,11 +1408,9 @@ func (e *Editor) LettersBeforeCursor() string {
 	if err != nil {
 		x = len(runes)
 	}
-
 	qualifies := func(r rune) bool {
 		return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_'
 	}
-
 	// Loop from the position before the current one and then leftwards on the current line.
 	// Gather the letters.
 	var word []rune
@@ -1473,7 +1422,6 @@ func (e *Editor) LettersBeforeCursor() string {
 		// Gather the letters in reverse
 		word = append([]rune{r}, word...)
 	}
-
 	// Return the letters as a string
 	return string(word)
 }
@@ -1492,11 +1440,9 @@ func (e *Editor) LettersOrDotBeforeCursor() string {
 	if err != nil {
 		x = len(runes)
 	}
-
 	qualifies := func(r rune) bool {
 		return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_' || r == '.'
 	}
-
 	// Loop from the position before the current one and then leftwards on the current line.
 	// Gather the letters.
 	var word []rune
