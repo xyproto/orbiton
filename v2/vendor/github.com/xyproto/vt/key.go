@@ -85,6 +85,7 @@ type Event struct {
 type inputReader struct {
 	buf         []byte
 	escDeadline time.Time
+	escSeqLen   int
 	inPaste     bool
 }
 
@@ -222,6 +223,7 @@ func (tty *TTY) readIntoBuffer(timeout time.Duration) error {
 func (r *inputReader) parse(now time.Time, escWait time.Duration) (Event, bool, bool) {
 	if len(r.buf) == 0 {
 		r.escDeadline = time.Time{}
+		r.escSeqLen = 0
 		return Event{Kind: EventNone}, false, false
 	}
 
@@ -230,6 +232,7 @@ func (r *inputReader) parse(now time.Time, escWait time.Duration) (Event, bool, 
 			text := string(r.buf[:idx])
 			r.buf = r.buf[idx+len(bracketedPasteEnd):]
 			r.inPaste = false
+			r.escSeqLen = 0
 			return Event{Kind: EventPaste, Text: text}, true, false
 		}
 		return Event{Kind: EventNone}, false, true
@@ -243,6 +246,7 @@ func (r *inputReader) parse(now time.Time, escWait time.Duration) (Event, bool, 
 				text := string(r.buf[:idx])
 				r.buf = r.buf[idx+len(bracketedPasteEnd):]
 				r.inPaste = false
+				r.escSeqLen = 0
 				return Event{Kind: EventPaste, Text: text}, true, false
 			}
 			return Event{Kind: EventNone}, false, true
@@ -251,27 +255,32 @@ func (r *inputReader) parse(now time.Time, escWait time.Duration) (Event, bool, 
 		if ev, consumed, ok, complete := parseCSI(r.buf); ok {
 			r.buf = r.buf[consumed:]
 			r.escDeadline = time.Time{}
+			r.escSeqLen = 0
 			return ev, true, false
 		} else if complete && consumed > 0 {
 			seq := string(r.buf[:consumed])
 			r.buf = r.buf[consumed:]
 			r.escDeadline = time.Time{}
+			r.escSeqLen = 0
 			return Event{Kind: EventText, Text: seq}, true, false
 		}
 
 		if ev, consumed, ok, complete := parseSS3(r.buf); ok {
 			r.buf = r.buf[consumed:]
 			r.escDeadline = time.Time{}
+			r.escSeqLen = 0
 			return ev, true, false
 		} else if complete && consumed > 0 {
 			seq := string(r.buf[:consumed])
 			r.buf = r.buf[consumed:]
 			r.escDeadline = time.Time{}
+			r.escSeqLen = 0
 			return Event{Kind: EventText, Text: seq}, true, false
 		}
 
-		if r.escDeadline.IsZero() {
+		if r.escDeadline.IsZero() || len(r.buf) > r.escSeqLen {
 			r.escDeadline = now.Add(escWait)
+			r.escSeqLen = len(r.buf)
 		}
 		if now.Before(r.escDeadline) {
 			return Event{Kind: EventNone}, false, true
@@ -279,10 +288,12 @@ func (r *inputReader) parse(now time.Time, escWait time.Duration) (Event, bool, 
 
 		r.buf = r.buf[1:]
 		r.escDeadline = time.Time{}
+		r.escSeqLen = 0
 		return Event{Kind: EventKey, Key: int(esc)}, true, false
 	}
 
 	r.escDeadline = time.Time{}
+	r.escSeqLen = 0
 	r0, size := utf8.DecodeRune(r.buf)
 	if r0 == utf8.RuneError && size == 1 {
 		return Event{Kind: EventNone}, false, true
@@ -349,6 +360,31 @@ func (tty *TTY) Key() int {
 	return key
 }
 
+// KeyRaw reads a key without toggling raw mode or flushing input.
+// Callers should manage tty.RawMode() / tty.Restore() themselves.
+func (tty *TTY) KeyRaw() int {
+	ev, err := tty.ReadEvent()
+	if err != nil {
+		lastKey = 0
+		return 0
+	}
+	var key int
+	switch ev.Kind {
+	case EventKey:
+		key = ev.Key
+	case EventRune:
+		key = int(ev.Rune)
+	default:
+		key = 0
+	}
+	if key == lastKey {
+		lastKey = 0
+		return 0
+	}
+	lastKey = key
+	return key
+}
+
 // String reads a string, handling key sequences and printable characters
 func (tty *TTY) String() string {
 	tty.RawMode()
@@ -380,6 +416,33 @@ func (tty *TTY) String() string {
 	}
 }
 
+// StringRaw reads a string without toggling raw mode or flushing input.
+// Callers should manage tty.RawMode() / tty.Restore() themselves.
+func (tty *TTY) StringRaw() string {
+	ev, err := tty.ReadEventBlocking()
+	if err != nil {
+		return ""
+	}
+	switch ev.Kind {
+	case EventPaste:
+		return ev.Text
+	case EventText:
+		return ev.Text
+	case EventKey:
+		if s, ok := keyCodeToString[ev.Key]; ok {
+			return s
+		}
+		return "c:" + strconv.Itoa(ev.Key)
+	case EventRune:
+		if unicode.IsPrint(ev.Rune) {
+			return string(ev.Rune)
+		}
+		return "c:" + strconv.Itoa(int(ev.Rune))
+	default:
+		return ""
+	}
+}
+
 // Rune reads a rune, handling special sequences for arrows, Home, End, etc.
 func (tty *TTY) Rune() rune {
 	tty.RawMode()
@@ -387,6 +450,32 @@ func (tty *TTY) Rune() rune {
 		tty.Restore()
 		tty.t.Flush()
 	}()
+	ev, err := tty.ReadEventBlocking()
+	if err != nil {
+		return rune(0)
+	}
+	switch ev.Kind {
+	case EventRune:
+		return ev.Rune
+	case EventKey:
+		if s, ok := keyCodeToString[ev.Key]; ok {
+			return []rune(s)[0]
+		}
+	case EventText:
+		if ev.Text != "" {
+			return []rune(ev.Text)[0]
+		}
+	case EventPaste:
+		if ev.Text != "" {
+			return []rune(ev.Text)[0]
+		}
+	}
+	return rune(0)
+}
+
+// RuneRaw reads a rune without toggling raw mode or flushing input.
+// Callers should manage tty.RawMode() / tty.Restore() themselves.
+func (tty *TTY) RuneRaw() rune {
 	ev, err := tty.ReadEventBlocking()
 	if err != nil {
 		return rune(0)
