@@ -1,15 +1,9 @@
 .PHONY: clean gui gui-install gui-symlinks install install-gui install-symlinks ko ko-install og og-install symlinks symlinks-install
 
 PROJECT ?= orbiton
-
 GOFLAGS ?= -mod=vendor -trimpath -v -ldflags "-s -w" -buildvcs=false
-
 GOBUILD := go build
-
-GOEXPERIMENT := greenteagc
-
 SRCFILES := $(wildcard go.* v2/*.go v2/go.*)
-
 
 # macOS and FreeBSD detection
 UNAME_S := $(shell uname -s)
@@ -46,7 +40,7 @@ else
 endif
 
 o: $(SRCFILES)
-	cd v2 && $(GOBUILD) $(GOFLAGS) $(BUILDFLAGS) -o ../o
+	cd v2 && $(GOBUILD) $(GOFLAGS) $(BUILDFLAGS) -o ../o || $(GOBUILD) -o ../o
 
 trace: clean $(SRCFILES)
 	cd v2 && $(GOBUILD) $(GOFLAGS) $(BUILDFLAGS) -tags=trace -o ../o
