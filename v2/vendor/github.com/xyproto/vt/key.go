@@ -119,6 +119,11 @@ func (tty *TTY) SetTimeout(d time.Duration) {
 	tty.t.SetReadTimeout(tty.timeout)
 }
 
+// SetEscTimeout sets the timeout used to decide if ESC is a standalone key.
+func (tty *TTY) SetEscTimeout(d time.Duration) {
+	tty.escTimeout = d
+}
+
 // Close will restore and close the raw terminal
 func (tty *TTY) Close() {
 	// Best-effort disable bracketed paste before restoring the terminal.

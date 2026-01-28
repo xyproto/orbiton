@@ -162,6 +162,9 @@ func (tty *TTY) SetTimeout(d time.Duration) {
 	tty.timeout = d
 }
 
+// SetEscTimeout is a no-op on Windows.
+func (tty *TTY) SetEscTimeout(d time.Duration) {}
+
 // Close will restore the terminal state
 func (tty *TTY) Close() {
 	if tty.originalState != nil {
