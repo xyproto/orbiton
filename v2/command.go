@@ -436,6 +436,11 @@ func (e *Editor) CommandPrompt(c *vt.Canvas, tty *vt.TTY, status *StatusBar, boo
 	// The spaces are intentional, to stop the shorter strings from always kicking in before
 	// the longer ones can be typed.
 	quickList := []string{":wq", "wq", "sq", "sqc", ":q", "q", ":w ", "s ", "w ", "d", "b", "↑", "↓", "c:23", "c:19", "c:17"}
+	if envVT100 {
+		for i, entry := range quickList {
+			quickList[i] = asciiFallback(entry)
+		}
+	}
 	// TODO: Show a REPL in a nicely drawn box instead of this simple command interface
 	//       The REPL can have colors, tab-completion, a command history and single-letter commands
 	const tabCommand = "help"

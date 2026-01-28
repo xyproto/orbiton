@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/mattn/go-runewidth"
 	"github.com/xyproto/vt"
 )
 
@@ -19,19 +20,26 @@ type SymbolWidget struct {
 	y              int               // current position
 	oldx           int               // previous position
 	h              int               // height (number of menu items)
-	w              int               // width
+	cellWidth      int               // width of a cell
 }
 
 // NewSymbolWidget creates a new SymbolWidget
 func NewSymbolWidget(title string, choices [][]string, titleColor, textColor, highlightColor, bgColor vt.AttributeColor, canvasWidth, canvasHeight int) *SymbolWidget {
-	maxlen := 0
+	maxCols := 0
+	maxCellWidth := 1
 	for _, choice := range choices {
-		if len(choice) > maxlen {
-			maxlen = len(choice)
+		if len(choice) > maxCols {
+			maxCols = len(choice)
+		}
+		for _, symbol := range choice {
+			if w := runewidth.StringWidth(symbol); w > maxCellWidth {
+				maxCellWidth = w
+			}
 		}
 	}
+	contentWidth := maxCols * (maxCellWidth + 1)
 	marginLeft := 10
-	if canvasWidth-(maxlen+marginLeft) <= 0 {
+	if canvasWidth-(contentWidth+marginLeft) <= 0 {
 		marginLeft = 0
 	}
 	marginTop := 8
@@ -42,8 +50,8 @@ func NewSymbolWidget(title string, choices [][]string, titleColor, textColor, hi
 	}
 	return &SymbolWidget{
 		title:          title,
-		w:              marginLeft + maxlen,
 		h:              len(choices),
+		cellWidth:      maxCellWidth,
 		x:              0,
 		oldx:           0,
 		y:              0,
@@ -71,15 +79,16 @@ func (sw *SymbolWidget) Draw(c *vt.Canvas) {
 		c.PlotColor(uint(sw.marginLeft+x), uint(sw.marginTop), sw.titleColor, r)
 	}
 	// Draw the menu entries, with various colors
+	cellStep := sw.cellWidth + 1
 	for y := 0; y < len(sw.choices); y++ {
 		row := sw.choices[y]
 		for x := 0; x < len(row); x++ {
 			symbol := sw.choices[y][x]
 			// SetXY(0, uint(sw.marginTop+y+titleHeight))
 			if y == int(sw.y) && x == int(sw.x) {
-				c.Write(uint(sw.marginLeft+x*2), uint(sw.marginTop+y+titleHeight), sw.highlightColor, sw.bgColor, symbol)
+				c.Write(uint(sw.marginLeft+x*cellStep), uint(sw.marginTop+y+titleHeight), sw.highlightColor, sw.bgColor, symbol)
 			} else {
-				c.Write(uint(sw.marginLeft+x*2), uint(sw.marginTop+y+titleHeight), sw.textColor, sw.bgColor, symbol)
+				c.Write(uint(sw.marginLeft+x*cellStep), uint(sw.marginTop+y+titleHeight), sw.textColor, sw.bgColor, symbol)
 			}
 		}
 
@@ -156,7 +165,10 @@ func (sw *SymbolWidget) Next() {
 
 // SelectIndex will select a specific index. Returns false if it was not possible.
 func (sw *SymbolWidget) SelectIndex(x, y int) bool {
-	if y >= sw.h || x >= sw.w {
+	if y < 0 || y >= sw.h {
+		return false
+	}
+	if x < 0 || x >= len(sw.choices[y]) {
 		return false
 	}
 	sw.oldx = sw.x
@@ -175,7 +187,13 @@ func (sw *SymbolWidget) SelectFirst() bool {
 func (sw *SymbolWidget) SelectLast() bool {
 	sw.oldx = sw.x
 	sw.oldy = sw.y
-	sw.x = sw.w - 1
+	if sw.h == 0 {
+		return false
+	}
 	sw.y = sw.h - 1
+	if len(sw.choices[sw.y]) == 0 {
+		return false
+	}
+	sw.x = len(sw.choices[sw.y]) - 1
 	return true
 }

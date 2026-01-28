@@ -42,6 +42,26 @@ func NewBox() *Box {
 
 // NewBoxTheme creates a new theme/style for a box/container, based on the editor theme
 func (e *Editor) NewBoxTheme() *BoxTheme {
+	if envVT100 {
+		return &BoxTheme{
+			TL:         '+',
+			TR:         '+',
+			BL:         '+',
+			BR:         '+',
+			VL:         '|',
+			VR:         '|',
+			HT:         '-',
+			HB:         '-',
+			EdgeLeftT:  '+',
+			EdgeRightT: '+',
+			Foreground: &e.Foreground,
+			Background: &e.BoxBackground,
+			Text:       &e.BoxTextColor,
+			Highlight:  &e.BoxHighlight,
+			UpperEdge:  &e.BoxUpperEdge,
+			LowerEdge:  &e.BoxTextColor,
+		}
+	}
 	return &BoxTheme{
 		TL:         '╭', // top left
 		TR:         '╮', // top right
@@ -224,6 +244,7 @@ func (e *Editor) DrawList(bt *BoxTheme, c *vt.Canvas, r *Box, items []string, se
 
 // DrawTitle draws a title at the top of a box, not exactly centered
 func (e *Editor) DrawTitle(bt *BoxTheme, c *vt.Canvas, r *Box, title string, withSpaces bool) {
+	title = asciiFallback(title)
 	titleWithSpaces := title
 	if withSpaces {
 		titleWithSpaces = " " + title + " "
@@ -237,6 +258,7 @@ func (e *Editor) DrawTitle(bt *BoxTheme, c *vt.Canvas, r *Box, title string, wit
 
 // DrawFooter draws text at the bottom of a box, not exactly centered
 func (e *Editor) DrawFooter(bt *BoxTheme, c *vt.Canvas, r *Box, text string) {
+	text = asciiFallback(text)
 	textWithSpaces := " " + text + " "
 	tmp := bt.Text
 	bt.Text = bt.UpperEdge
@@ -249,6 +271,7 @@ func (e *Editor) DrawFooter(bt *BoxTheme, c *vt.Canvas, r *Box, text string) {
 // The text is wrapped by using the WordWrap function.
 // The number of lines that are added as a consequence of wrapping lines is returned as an int.
 func (e *Editor) DrawText(bt *BoxTheme, c *vt.Canvas, r *Box, text string, dryRun bool) int {
+	text = asciiFallback(text)
 	var (
 		maxWidth   = int(r.W) - 5
 		x          = uint(r.X) + 1

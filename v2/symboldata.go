@@ -51,3 +51,16 @@ var ivySymbols = [][]string{
 	{"⍉", "⍋", "⍎", "⍒", "⍕", "⍟", "⍱"},
 	{"⍲", "⍳", "⍴", "○"},
 }
+
+var agdaSymbolsASCII = [][]string{
+	{"->", "<-", "=>", "<=", ">=", "==", "/=", "::"},
+	{"\\/", "/\\", "not", "and", "or", "in", "sub", "sup"},
+	{"forall", "exists", "lam", "pi", "sig", "sum", "prod", "sqrt"},
+	{"alpha", "beta", "gamma", "delta", "theta", "phi", "psi", "omega"},
+}
+
+var ivySymbolsASCII = [][]string{
+	{"<", ">", "<=", ">=", "!=", "==", "->", "<-"},
+	{"+", "-", "*", "/", "%", "^", "|", "&"},
+	{"~", "!", "in", "not", "and", "or", "sum", "prod"},
+}

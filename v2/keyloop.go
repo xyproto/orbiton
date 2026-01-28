@@ -578,11 +578,21 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					selectedSymbol string
 				)
 				if e.mode == mode.Agda {
-					menuChoices = agdaSymbols
-					selectedSymbol = "¤"
+					if envVT100 {
+						menuChoices = agdaSymbolsASCII
+						selectedSymbol = "->"
+					} else {
+						menuChoices = agdaSymbols
+						selectedSymbol = "¤"
+					}
 				} else if e.mode == mode.Ivy {
-					menuChoices = ivySymbols
-					selectedSymbol = "×"
+					if envVT100 {
+						menuChoices = ivySymbolsASCII
+						selectedSymbol = "*"
+					} else {
+						menuChoices = ivySymbols
+						selectedSymbol = "×"
+					}
 				}
 				e.redraw.Store(true)
 				selectedX, selectedY, cancel := e.SymbolMenu(tty, status, "Insert symbol", menuChoices, e.MenuTitleColor, e.MenuTextColor, e.MenuArrowColor)

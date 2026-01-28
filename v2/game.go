@@ -22,16 +22,34 @@ import (
 // There is a tradition for including silly little games in editors, so here goes:
 
 const (
-	bobRuneLarge      = 'O'
-	bobRuneSmall      = 'o'
-	evilGobblerRune   = '€'
-	bubbleRune        = '°'
-	gobblerRune       = 'G'
-	gobblerDeadRune   = 'T'
-	gobblerZombieRune = '@'
-	bobWonRune        = 'Y'
-	bobLostRune       = 'n'
-	pelletRune        = '¤'
+	bobRuneLarge      rune = 'O'
+	bobRuneSmall      rune = 'o'
+	gobblerRune            = 'G'
+	gobblerDeadRune        = 'T'
+	gobblerZombieRune      = '@'
+	bobWonRune             = 'Y'
+	bobLostRune            = 'n'
+)
+
+var (
+	evilGobblerRune = func() rune {
+		if envVT100 {
+			return 'E'
+		}
+		return '€'
+	}()
+	bubbleRune = func() rune {
+		if envVT100 {
+			return '.'
+		}
+		return '°'
+	}()
+	pelletRune = func() rune {
+		if envVT100 {
+			return '*'
+		}
+		return '¤'
+	}()
 )
 
 var (

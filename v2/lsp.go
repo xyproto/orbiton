@@ -614,7 +614,11 @@ func (e *Editor) handleGoCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TTY
 	for _, item := range items {
 		label := item.Label
 		if item.Detail != "" && len(item.Detail) < 40 {
-			label += " • " + item.Detail
+			if envVT100 {
+				label += " * " + item.Detail
+			} else {
+				label += " • " + item.Detail
+			}
 		}
 		choices = append(choices, label)
 	}

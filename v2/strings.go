@@ -14,6 +14,23 @@ var (
 	ansiRegexOnce sync.Once
 )
 
+var asciiFallbackReplacer = strings.NewReplacer(
+	"…", ".",
+	"•", "*",
+	"·", ".",
+	"°", "o",
+	"€", "E",
+	"↑", "^",
+	"↓", "v",
+	"←", "<",
+	"→", ">",
+	"⇞", "U",
+	"⇟", "D",
+	"⇱", "H",
+	"⇲", "E",
+	"⎘", "C",
+)
+
 // hasKey checks if the given string map contains the given key
 func hasKey(m map[string]string, key string) bool {
 	_, found := m[key]
@@ -248,6 +265,13 @@ func withinBackticks(line, what string) bool {
 		}
 	}
 	return false
+}
+
+func asciiFallback(s string) string {
+	if !envVT100 {
+		return s
+	}
+	return asciiFallbackReplacer.Replace(s)
 }
 
 // isEmoji checks if a rune is likely to be an emoji.

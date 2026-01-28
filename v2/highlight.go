@@ -19,8 +19,22 @@ import (
 )
 
 const (
-	blankRune              = ' '
-	controlRuneReplacement = '¿' // for displaying control sequence characters. Could also use: �
+	blankRune = ' '
+)
+
+var (
+	controlRuneReplacement = func() rune {
+		if envVT100 {
+			return '?'
+		}
+		return '¿' // for displaying control sequence characters. Could also use: �
+	}()
+	wrapMarkerRune = func() rune {
+		if envVT100 {
+			return '.'
+		}
+		return '·'
+	}()
 )
 
 // Kind represents a syntax highlighting kind (class) which will be assigned to tokens.
@@ -874,7 +888,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 
 		// Draw a dotted line to remind the user of where the N-column limit is
 		if (e.showColumnLimit || e.mode == mode.Git) && lineRuneCount <= uint(e.wrapWidth) {
-			c.WriteRune(uint(e.wrapWidth), yp, dottedLineColor, bg, '·')
+			c.WriteRune(uint(e.wrapWidth), yp, dottedLineColor, bg, wrapMarkerRune)
 		}
 
 	}

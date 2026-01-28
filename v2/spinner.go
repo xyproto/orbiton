@@ -37,6 +37,13 @@ var pacmanColor = []string{
 	"<red>|<yellow>○<blue>· · · <red>|<off>",
 }
 
+var spinnerASCII = []string{
+	"-",
+	"\\",
+	"|",
+	"/",
+}
+
 // Spinner waits a bit, then displays a spinner together with the given message string (msg).
 // If the spinner is aborted, the qmsg string is displayed.
 // Returns a quit channel (chan bool).
@@ -74,6 +81,9 @@ func Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn time.Duration
 			// Get the terminal codes for coloring the given user message
 			msg = textColor.Get(umsg)
 		)
+		if envVT100 {
+			msg = umsg
+		}
 
 		// Move the cursor there and write a message
 		vt.SetXY(x, y)
@@ -96,7 +106,9 @@ func Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn time.Duration
 		// Echo off
 		vt.EchoOff()
 
-		if envNoColor {
+		if envVT100 {
+			spinnerAnimation = spinnerASCII
+		} else if envNoColor {
 			spinnerAnimation = pacmanNoColor
 		} else {
 			spinnerAnimation = pacmanColor
@@ -109,8 +121,8 @@ func Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn time.Duration
 				return
 			default:
 				vt.SetXY(x, y)
-				// Iterate over the 12 different ASCII images as the counter increases
-				to.Print(spinnerAnimation[counter%12])
+				// Iterate over the spinner frames as the counter increases
+				to.Print(spinnerAnimation[counter%uint(len(spinnerAnimation))])
 				counter++
 				// Wait for a key press (also sleeps just a bit)
 				switch tty.Key() {

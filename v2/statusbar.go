@@ -83,6 +83,7 @@ func (sb *StatusBar) Draw(c *vt.Canvas, offsetY int) {
 // A couple of spaces are added as padding.
 func (sb *StatusBar) SetMessage(msg string) {
 	mut.Lock()
+	msg = asciiFallback(msg)
 
 	if len(msg)%2 == 0 {
 		sb.msg = "     "
@@ -119,6 +120,7 @@ func (sb *StatusBar) IsError() bool {
 // to make the message appear also after jumping around in the text.
 func (sb *StatusBar) SetErrorMessage(msg string) {
 	mut.Lock()
+	msg = asciiFallback(msg)
 
 	if len(msg)%2 == 0 {
 		sb.msg = fiveSpaces
@@ -365,15 +367,15 @@ func (sb *StatusBar) HoldMessage(c *vt.Canvas, dur time.Duration) {
 
 // SetMessageAfterRedraw prepares a status bar message that will be shown after redraw
 func (sb *StatusBar) SetMessageAfterRedraw(message string) {
-	sb.messageAfterRedraw = message
+	sb.messageAfterRedraw = asciiFallback(message)
 }
 
 // SetErrorAfterRedraw prepares a status bar message that will be shown after redraw
 func (sb *StatusBar) SetErrorAfterRedraw(err error) {
-	sb.messageAfterRedraw = err.Error()
+	sb.messageAfterRedraw = asciiFallback(err.Error())
 }
 
 // SetErrorMessageAfterRedraw prepares a status bar message that will be shown after redraw
 func (sb *StatusBar) SetErrorMessageAfterRedraw(errorMessage string) {
-	sb.messageAfterRedraw = errorMessage
+	sb.messageAfterRedraw = asciiFallback(errorMessage)
 }

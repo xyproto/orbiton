@@ -54,8 +54,11 @@ var (
 	// An empty *Ollama struct
 	ollama = NewOllama()
 
-	// Check if $NO_COLOR is set
-	envNoColor = env.Bool("NO_COLOR")
+	// Check if TERM is set to vt100
+	envVT100 = env.Str("TERM") == "vt100"
+
+	// Check if $NO_COLOR is set, or if the terminal is strict VT100
+	envNoColor = env.Bool("NO_COLOR") || envVT100
 
 	// Arguments given on the command line
 	globalArgs []string

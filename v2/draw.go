@@ -11,7 +11,12 @@ import (
 	"github.com/xyproto/vt"
 )
 
-const drawRune = '▒'
+var drawRune = func() rune {
+	if envVT100 {
+		return '#'
+	}
+	return '▒'
+}()
 
 // ConvertToNRGBA converts the given image.Image to *image.NRGBA
 func ConvertToNRGBA(img image.Image) (*image.NRGBA, error) {

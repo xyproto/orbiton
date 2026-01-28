@@ -77,6 +77,9 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		}
 		syntaxHighlight = origSyntaxHighlight && m != mode.Text && (m != mode.Blank || ext != "")
 	}
+	if envVT100 {
+		syntaxHighlight = false
+	}
 
 	adjustSyntaxHighlightingKeywords(m) // no theme changes, just language detection and keyword configuration
 
