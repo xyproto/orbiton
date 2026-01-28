@@ -200,6 +200,27 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 			if err == nil && len(matches) == 1 {
 				fnord.filename = matches[0]
 				e.filename = matches[0]
+				// Re-detect the file extension and mode for the single file
+				ext = strings.ToLower(filepath.Ext(fnord.filename))
+				m = mode.Detect(stripGZ(fnord.filename))
+				syntaxHighlight = origSyntaxHighlight && m != mode.Text && (m != mode.Blank || ext != "")
+				if envVT100 {
+					syntaxHighlight = false
+				}
+				adjustSyntaxHighlightingKeywords(m)
+				indentation := m.TabsSpaces()
+				rainbowParenthesis := syntaxHighlight
+				switch m {
+				case mode.ASCIIDoc, mode.Blank, mode.Email, mode.Markdown, mode.Text, mode.ReStructured, mode.SCDoc:
+					rainbowParenthesis = false
+				case mode.ManPage:
+					readOnly = true
+				}
+				// Update the editor with the corrected settings
+				e.mode = m
+				e.syntaxHighlight = syntaxHighlight
+				e.rainbowParenthesis = rainbowParenthesis
+				e.indentation = indentation
 			} else {
 				e.dirMode = true
 				startdirs := []string{e.filename}
