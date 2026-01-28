@@ -917,8 +917,12 @@ func (s *State) Run() ([]string, error) {
 
 		// the uptime
 		const fullKernelVersion = false
-		if uptimeString, err := upsieString(fullKernelVersion); err == nil { // success
-			c.WriteTagged(5, y, s.Background, o.LightTags(uptimeString))
+		if uptimeString, err := UpsieString(fullKernelVersion); err == nil { // success
+			if envNoColor {
+				c.WriteTagged(5, y, s.Background, uptimeString)
+			} else {
+				c.WriteTagged(5, y, s.Background, o.LightTags(uptimeString))
+			}
 			y++
 		}
 

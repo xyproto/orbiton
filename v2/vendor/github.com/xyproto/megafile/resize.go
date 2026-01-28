@@ -53,8 +53,12 @@ func (s *State) redraw() {
 
 	// Redraw the uptime
 	const fullKernelVersion = false
-	if uptimeString, err := upsieString(fullKernelVersion); err == nil {
-		c.WriteTagged(5, y, s.Background, o.LightTags(uptimeString))
+	if uptimeString, err := UpsieString(fullKernelVersion); err == nil {
+		if envNoColor {
+			c.WriteTagged(5, y, s.Background, uptimeString)
+		} else {
+			c.WriteTagged(5, y, s.Background, o.LightTags(uptimeString))
+		}
 		y++
 	}
 
@@ -63,7 +67,11 @@ func (s *State) redraw() {
 	if !s.RealPath() {
 		symlinkPathMarker = ">"
 	}
-	c.WriteTagged(5, y, s.Background, o.LightTags(fmt.Sprintf("<yellow>%d</yellow> <gray>[</gray><green>%s</green><gray>]</gray> <magenta>%s</magenta>", s.dirIndex, s.Directories[s.dirIndex], symlinkPathMarker)))
+	if envNoColor {
+		c.WriteTagged(5, y, s.Background, fmt.Sprintf("%d [%s] %s", s.dirIndex, s.Directories[s.dirIndex], symlinkPathMarker))
+	} else {
+		c.WriteTagged(5, y, s.Background, o.LightTags(fmt.Sprintf("<yellow>%d</yellow> <gray>[</gray><green>%s</green><gray>]</gray> <magenta>%s</magenta>", s.dirIndex, s.Directories[s.dirIndex], symlinkPathMarker)))
+	}
 	y++
 
 	// Show hidden files indicator

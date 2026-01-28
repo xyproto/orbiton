@@ -65,7 +65,7 @@ func writeUptime(w io.Writer, totalSeconds int64) {
 	fmt.Fprint(w, b.String())
 }
 
-func upsieString(fullKernelVersion bool) (string, error) {
+func UpsieString(fullKernelVersion bool) (string, error) {
 	hostname, kernelRelease, machineArch, err := uname()
 	if err != nil {
 		return "", fmt.Errorf("failed to get system information (uname): %w", err)

@@ -17,7 +17,7 @@ import (
 
 var (
 	defaultTimeout    = 2 * time.Millisecond
-	defaultESCTimeout = 20 * time.Millisecond
+	defaultESCTimeout = 100 * time.Millisecond
 	lastKey           int
 )
 
@@ -146,10 +146,10 @@ func (tty *TTY) ReadEventBlocking() (Event, error) {
 }
 
 func (tty *TTY) readEvent(poll, escWait time.Duration) (Event, error) {
-	deadline := time.Now().Add(escWait)
 	for {
 		// Try to parse what's already in the buffer.
-		if ev, ready, needMore := tty.reader.parse(time.Now(), escWait); ready {
+		ev, ready, needMore := tty.reader.parse(time.Now(), escWait)
+		if ready {
 			return ev, nil
 		} else if !needMore && len(tty.reader.buf) == 0 {
 			// No buffered input; read from terminal.
@@ -166,11 +166,12 @@ func (tty *TTY) readEvent(poll, escWait time.Duration) (Event, error) {
 			continue
 		}
 
-		if escWait > 0 && time.Now().After(deadline) {
-			if ev, ready, _ := tty.reader.parse(time.Now(), escWait); ready {
-				return ev, nil
+		// Kilo-style: after ESC, wait a little for the rest of the sequence.
+		if needMore && len(tty.reader.buf) > 0 && tty.reader.buf[0] == esc {
+			if err := tty.readIntoBuffer(escWait); err != nil {
+				return Event{Kind: EventNone}, err
 			}
-			return Event{Kind: EventNone}, nil
+			continue
 		}
 
 		readTimeout := poll

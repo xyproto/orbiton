@@ -74,6 +74,6 @@ This project can be used as the `github.com/xyproto/megafile` package, or as a s
 
 ### General info
 
-* Version: 1.4.2
+* Version: 1.4.3
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
