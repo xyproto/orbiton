@@ -51,8 +51,6 @@ var (
 
 	// Build with release mode instead of debug mode whenever applicable
 	releaseBuildFlag bool
-	// Use a longer ESC timeout for slow terminals
-	slowKeyFlag bool
 
 	// An empty *Ollama struct
 	ollama = NewOllama()
@@ -121,7 +119,6 @@ func main() {
 	pflag.BoolVarP(&releaseBuildFlag, "release", "r", false, "build with release mode instead of debug mode, whenever applicable")
 	pflag.BoolVarP(&quickHelpFlag, "quick-help", "q", false, "always display the quick help when starting")
 	pflag.BoolVarP(&noQuickHelpFlag, "no-quick-help", "z", false, "never display the quick help when starting")
-	pflag.BoolVarP(&slowKeyFlag, "slowkey", "k", false, "use a longer ESC timeout for slow terminals")
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
 	pflag.BoolVarP(&searchAndOpenFlag, "glob", "g", false, "open the first filename that matches the given glob (recursively)")
@@ -528,9 +525,6 @@ func main() {
 		os.Exit(1)
 	}
 	defer tty.Close()
-	if slowKeyFlag {
-		tty.SetEscTimeout(slowKeyEscTimeout)
-	}
 
 	// Run the main editor loop
 	userMessage, nextAction, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, noQuickHelpFlag, formatFlag, escToExitFlag, cycleFilenamesFlag)
