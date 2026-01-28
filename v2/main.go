@@ -93,9 +93,10 @@ func main() {
 		searchAndOpenFlag      bool
 		escToExitFlag          bool
 		cycleFilenamesFlag     bool // for internal use
+		upsieFlag              bool
 	)
 
-	// Available short options: j k u
+	// Available short options: j k
 
 	pflag.BoolVarP(&batFlag, "bat", "B", false, "Cat the file with colors instead of editing it, using bat")
 	pflag.BoolVarP(&buildFlag, "build", "b", false, "Try to build the file instead of editing it")
@@ -121,7 +122,8 @@ func main() {
 	pflag.StringVarP(&inputFileWhenRunning, "input-file", "i", "input.txt", "input file when building and running programs")
 	pflag.BoolVarP(&searchAndOpenFlag, "glob", "g", false, "open the first filename that matches the given glob (recursively)")
 	pflag.BoolVarP(&escToExitFlag, "esc", "y", false, "press Esc to exit the program")
-	pflag.BoolVarP(&cycleFilenamesFlag, "cycle", "w", false, "cycle files with ctrl-n and ctrl-p (undocumented)")
+	pflag.BoolVarP(&cycleFilenamesFlag, "cycle", "w", false, "cycle files with ctrl-n and ctrl-p (for internal use)")
+	pflag.BoolVarP(&upsieFlag, "upsie", "u", false, "show uname+uptime info and exit")
 
 	pflag.CommandLine.MarkHidden("cycle")
 
@@ -129,6 +131,16 @@ func main() {
 
 	if versionFlag {
 		fmt.Println(versionString)
+		return
+	}
+
+	if upsieFlag {
+		const fullKernelVersion = false
+		if taggedUptimeString, err := megafile.UpsieString(fullKernelVersion); err != nil {
+			vt.Println("up")
+		} else {
+			vt.Println(taggedUptimeString)
+		}
 		return
 	}
 
