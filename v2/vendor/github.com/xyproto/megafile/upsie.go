@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io" // Added for error logging for pprof
+
 	// Added for CPU profiling
 	"strings"
 )
@@ -86,23 +87,37 @@ func upsieString(fullKernelVersion bool) (string, error) {
 
 	var sb strings.Builder
 
-	// Print the combined information.
-	// Format: Hostname @ KernelVersion (Arch) - Up: <uptime_string>
-	sb.WriteString(fmt.Sprintf(
-		"%s%s%s %s@%s %s%s%s %s(%s%s%s%s%s)%s - %s%s%s ", // Corrected format string
-		"<blue>", hostname, "</blue>", // Hostname
-		"<white>", "</white>", // @
-		"<red>", kernelVersionDisplay, "</red>", // Kernel
-		"<darkgray>", "</darkgray>",
-		"<darkyellow>", machineArch, "</darkyellow>", // Architecture
-		"<darkgray>", "</darkgray>",
-		"<yellow>", "Up:", "</yellow>", // "Up:" label and its colors
-	))
+	if envNoColor {
+		// Print the combined information.
+		// Format: Hostname @ KernelVersion (Arch) - Up: <uptime_string>
+		sb.WriteString(fmt.Sprintf(
+			"%s @ %s (%s) - %s ", // Corrected format string
+			hostname,             // Hostname
+			kernelVersionDisplay, // Kernel
+			machineArch,          // Architecture
+			"Up:",                // "Up:" label and its colors
+		))
+		// Build and print uptime string
+		writeUptime(&sb, int64(uptimeSeconds))
+	} else {
+		// Print the combined information.
+		// Format: Hostname @ KernelVersion (Arch) - Up: <uptime_string>
+		sb.WriteString(fmt.Sprintf(
+			"%s%s%s %s@%s %s%s%s %s(%s%s%s%s%s)%s - %s%s%s ", // Corrected format string
+			"<blue>", hostname, "</blue>", // Hostname
+			"<white>", "</white>", // @
+			"<red>", kernelVersionDisplay, "</red>", // Kernel
+			"<darkgray>", "</darkgray>",
+			"<darkyellow>", machineArch, "</darkyellow>", // Architecture
+			"<darkgray>", "</darkgray>",
+			"<yellow>", "Up:", "</yellow>", // "Up:" label and its colors
+		))
+		// Build and print uptime string
+		sb.WriteString("<yellow>") // Apply yellow color for the uptime value
+		writeUptime(&sb, int64(uptimeSeconds))
+		sb.WriteString("</yellow>") // Reset color
 
-	// Build and print uptime string
-	sb.WriteString("<yellow>") // Apply yellow color for the uptime value
-	writeUptime(&sb, int64(uptimeSeconds))
-	sb.WriteString("</yellow>") // Reset color
+	}
 
 	return sb.String(), nil
 }

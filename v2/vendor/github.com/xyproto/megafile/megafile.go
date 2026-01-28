@@ -17,6 +17,14 @@ import (
 	"github.com/xyproto/vt"
 )
 
+var (
+	// Check if TERM is set to vt100
+	envVT100 = env.Str("TERM") == "vt100"
+
+	// Check if $NO_COLOR is set, or if the terminal is strict VT100
+	envNoColor = env.Bool("NO_COLOR") || envVT100
+)
+
 const (
 	leftArrow  = "←"
 	rightArrow = "→"
@@ -64,6 +72,7 @@ type State struct {
 	AngleColor                vt.AttributeColor
 	PromptColor               vt.AttributeColor
 	HeaderColor               vt.AttributeColor
+	HighlightForeground       vt.AttributeColor
 	HighlightBackground       vt.AttributeColor
 	Background                vt.AttributeColor
 	EdgeBackground            vt.AttributeColor
@@ -74,7 +83,7 @@ type State struct {
 	EmptyFileColor            vt.AttributeColor
 	ExecutableColor           vt.AttributeColor
 	BinaryColor               vt.AttributeColor
-	DefaultFileColor          vt.AttributeColor
+	FileColor                 vt.AttributeColor
 	quit                      bool
 	selectionMoved            bool
 	ShowHidden                bool
@@ -101,6 +110,41 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor, undoHist
 			absStartDirs[i] = d
 		}
 	}
+
+	// Set default colors, or disable them if NO_COLOR is set or TERM=vt100
+	var (
+		angleColor          = vt.LightRed
+		promptColor         = vt.LightGreen
+		headerColor         = vt.LightMagenta
+		fileColor           = vt.Default
+		highlightForeground = vt.Black
+		highlightBackground = vt.BackgroundWhite
+		writtenTextColor    = vt.LightYellow
+		symlinkDirColor     = vt.Blue
+		dirColor            = vt.Blue
+		symlinkFileColor    = vt.LightRed
+		emptyFileColor      = vt.Black
+		executableColor     = vt.LightGreen
+		binaryColor         = vt.LightMagenta
+	)
+
+	if envNoColor {
+		// Disable colors when NO_COLOR is set or TERM=vt100
+		angleColor = vt.Default
+		promptColor = vt.Default
+		headerColor = vt.Default
+		fileColor = vt.Gray
+		highlightForeground = vt.Default
+		highlightBackground = vt.BackgroundDefault
+		writtenTextColor = vt.Gray
+		symlinkDirColor = vt.Gray
+		dirColor = vt.Gray
+		symlinkFileColor = vt.Gray
+		emptyFileColor = vt.Gray
+		executableColor = vt.Gray
+		binaryColor = vt.Gray
+	}
+
 	state := &State{
 		canvas:                    c,
 		tty:                       tty,
@@ -116,21 +160,22 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor, undoHist
 		ShowHidden:                false,
 		Directories:               absStartDirs,
 		Header:                    header,
-		AngleColor:                vt.LightRed,
-		PromptColor:               vt.LightGreen,
-		HeaderColor:               vt.LightMagenta,
+		AngleColor:                angleColor,
+		PromptColor:               promptColor,
+		HeaderColor:               headerColor,
 		Background:                vt.BackgroundDefault,
-		HighlightBackground:       vt.BackgroundWhite,
+		HighlightForeground:       highlightForeground,
+		HighlightBackground:       highlightBackground,
 		EdgeBackground:            vt.BackgroundDefault,
-		WrittenTextColor:          vt.LightYellow,
+		WrittenTextColor:          writtenTextColor,
 		selectedIndexPerDirectory: make(map[string]int, 0),
-		SymlinkDirColor:           vt.Blue,
-		DirColor:                  vt.Blue,
-		SymlinkFileColor:          vt.LightRed,
-		EmptyFileColor:            vt.Black,
-		ExecutableColor:           vt.LightGreen,
-		BinaryColor:               vt.LightMagenta,
-		DefaultFileColor:          vt.Default,
+		SymlinkDirColor:           symlinkDirColor,
+		DirColor:                  dirColor,
+		SymlinkFileColor:          symlinkFileColor,
+		EmptyFileColor:            emptyFileColor,
+		ExecutableColor:           executableColor,
+		BinaryColor:               binaryColor,
+		FileColor:                 fileColor,
 		undoHistoryPath:           undoHistoryPath,
 	}
 	state.loadUndoHistory()
@@ -279,7 +324,7 @@ func (s *State) highlightSelection() {
 	}
 
 	entry := &s.fileEntries[s.selectedIndex()]
-	s.canvas.Write(entry.x, entry.y, vt.Black, s.HighlightBackground, entry.displayName)
+	s.canvas.Write(entry.x, entry.y, s.HighlightForeground, s.HighlightBackground, entry.displayName)
 	entry.selected = true
 }
 
@@ -408,7 +453,7 @@ func (s *State) ls(dir string) (int, error) {
 			color = s.BinaryColor
 			suffix = "¤"
 		} else {
-			color = s.DefaultFileColor
+			color = s.FileColor
 			suffix = ""
 		}
 
@@ -883,7 +928,11 @@ func (s *State) Run() ([]string, error) {
 		}
 
 		// the directory number, name and if it's "real" or not (">" for a path with symlinks)
-		c.WriteTagged(5, y, s.Background, o.LightTags(fmt.Sprintf("<yellow>%d</yellow> <gray>[</gray><green>%s</green><gray>]</gray> <magenta>%s</magenta>", s.dirIndex, s.Directories[s.dirIndex], symlinkPathMarker)))
+		if envNoColor {
+			c.WriteTagged(5, y, s.Background, fmt.Sprintf("%d [%s] %s", s.dirIndex, s.Directories[s.dirIndex], symlinkPathMarker))
+		} else {
+			c.WriteTagged(5, y, s.Background, o.LightTags(fmt.Sprintf("<yellow>%d</yellow> <gray>[</gray><green>%s</green><gray>]</gray> <magenta>%s</magenta>", s.dirIndex, s.Directories[s.dirIndex], symlinkPathMarker)))
+		}
 		y++
 
 		// if files are hidden or not
