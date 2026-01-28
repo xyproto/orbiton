@@ -66,6 +66,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	c := vt.NewCanvas()
 	c.ShowCursor()
 	vt.EchoOff()
+	tty.RawMode()
+	defer tty.Restore()
 
 	var (
 		statusDuration = 2700 * time.Millisecond
@@ -286,13 +288,13 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		if e.macro == nil || (e.playBackMacroCount == 0 && !e.macro.Recording) {
 			// Read the next key in the regular way
-			key = tty.String()
+			key = tty.StringRaw()
 			undo.IgnoreSnapshots(false)
 		} else {
 			if e.macro.Recording {
 				undo.IgnoreSnapshots(true)
 				// Read and record the next key
-				key = tty.String()
+				key = tty.StringRaw()
 				if key != "c:20" { // ctrl-t
 					// But never record the macro toggle button
 					e.macro.Add(key)
@@ -304,7 +306,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					e.macro.Home()
 					e.playBackMacroCount--
 					// No more macro keys. Read the next key.
-					key = tty.String()
+					key = tty.StringRaw()
 				}
 			}
 		}

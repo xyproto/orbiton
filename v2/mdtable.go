@@ -587,7 +587,7 @@ func (e *Editor) TableEditor(tty *vt.TTY, status *StatusBar, tableContents *[][]
 		}
 
 		// Handle events
-		key := tty.String()
+		key := tty.StringRaw()
 		switch key {
 		case upArrow: // Up
 			resizeMut.Lock()

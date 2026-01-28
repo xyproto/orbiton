@@ -771,6 +771,9 @@ retry:
 	defer tty.Close()
 
 	tty.SetTimeout(2 * time.Millisecond)
+	if slowKeyFlag {
+		tty.SetEscTimeout(slowKeyEscTimeout)
+	}
 
 	var (
 		sigChan       = make(chan os.Signal, 1)
@@ -841,6 +844,8 @@ retry:
 
 	// Don't output keypress terminal codes on the screen
 	tty.NoBlock()
+	tty.RawMode()
+	defer tty.Restore()
 
 	for running {
 
@@ -902,7 +907,7 @@ retry:
 		moved := false
 
 		// Handle events
-		key = tty.Key()
+		key = tty.KeyRaw()
 		switch key {
 		case 253, 119: // Up or w
 			resizeMut.Lock()

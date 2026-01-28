@@ -2508,7 +2508,7 @@ func (e *Editor) UserInput(c *vt.Canvas, tty *vt.TTY, status *StatusBar, title, 
 			e.DrawFlags(c, false)        // don't reposition cursor
 			e.DrawGDBOutput(c, false)    // don't reposition cursor
 		}
-		pressed := tty.String()
+		pressed := tty.StringRaw()
 		switch pressed {
 		case "c:8", "c:127": // ctrl-h or backspace
 			if len(entered) > 0 {

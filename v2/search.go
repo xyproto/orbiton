@@ -324,11 +324,11 @@ AGAIN:
 	for !doneCollectingLetters {
 		if e.macro == nil || (e.playBackMacroCount == 0 && !e.macro.Recording) {
 			// Read the next key in the regular way
-			key = tty.String()
+			key = tty.StringRaw()
 		} else {
 			if e.macro.Recording {
 				// Read and record the next key
-				key = tty.String()
+				key = tty.StringRaw()
 				if key != "c:20" { // ctrl-t
 					// But never record the macro toggle button
 					e.macro.Add(key)
@@ -339,7 +339,7 @@ AGAIN:
 					e.macro.Home()
 					e.playBackMacroCount--
 					// No more macro keys. Read the next key.
-					key = tty.String()
+					key = tty.StringRaw()
 				}
 			}
 		}

@@ -97,6 +97,7 @@ Flags:
   -a, --nano                     Emulate Pico/Nano.
   -q, --quick-help               Always display the quick help pane at start.
   -z, --no-quick-help            Never display the quick help pane at start.
+  -k, --slowkey                  Use a longer ESC timeout for slow terminals.
   -g, --glob GLOB                Search for and open the first filename that matches the substring.
   -h, --help                     Display this usage information.
   -y, --esc                      Just pressing Esc will exit the program.
@@ -265,7 +266,7 @@ func (e *Editor) DrawHotkeyOverview(tty *vt.TTY, c *vt.Canvas, status *StatusBar
 		c.HideCursorAndDraw()
 
 		// Wait for a keypress
-		key := tty.String()
+		key := tty.StringRaw()
 		switch key {
 		case " ": // Space key to go to next page
 			scrollableTextBox.NextPage()

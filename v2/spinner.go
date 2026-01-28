@@ -125,7 +125,7 @@ func Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn time.Duration
 				to.Print(spinnerAnimation[counter%uint(len(spinnerAnimation))])
 				counter++
 				// Wait for a key press (also sleeps just a bit)
-				switch tty.Key() {
+				switch tty.KeyRaw() {
 				case 27, 113, 17, 3: // esc, q, ctrl-q or ctrl-c
 					quitMessage(tty, qmsg)
 				}
