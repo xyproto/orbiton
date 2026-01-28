@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] Let altgr+space not insert c:160.
+- [ ] Fix the speed of the built-in game.
 - [ ] Remove chorded keys (ctrl-l,? etc). Instead, display a menu when ctrl-l is pressed twice or something.
       Or at least add a visual indicator for when the first part of a chorded key is pressed.
 - [ ] Add a megafile first-time tutorial.
