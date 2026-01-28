@@ -254,6 +254,11 @@ func (tty *TTY) Key() int {
 	return key
 }
 
+// KeyRaw reads a key without suppressing repeats.
+func (tty *TTY) KeyRaw() int {
+	return tty.Key()
+}
+
 // String reads a string, handling key sequences and printable characters
 func (tty *TTY) String() string {
 	bytes := make([]byte, 6)
@@ -315,6 +320,11 @@ func (tty *TTY) String() string {
 	return string(bytes[:numRead])
 }
 
+// StringRaw reads a string without suppressing repeats.
+func (tty *TTY) StringRaw() string {
+	return tty.String()
+}
+
 // Rune reads a rune, handling special sequences for arrows, Home, End, etc.
 func (tty *TTY) Rune() rune {
 	bytes := make([]byte, 6)
@@ -374,6 +384,11 @@ func (tty *TTY) Rune() rune {
 		r, _ := utf8.DecodeRune(bytes[:numRead])
 		return r
 	}
+}
+
+// RuneRaw reads a rune without suppressing repeats.
+func (tty *TTY) RuneRaw() rune {
+	return tty.Rune()
 }
 
 // RawMode switches the terminal to raw mode

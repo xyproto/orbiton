@@ -98,7 +98,8 @@ type TTY struct {
 
 // NewTTY opens /dev/tty in raw and cbreak mode as a term.Term
 func NewTTY() (*TTY, error) {
-	t, err := term.Open("/dev/tty", term.RawMode, term.CBreakMode, term.ReadTimeout(defaultTimeout))
+	// Apply raw mode last to avoid cbreak overriding raw settings.
+	t, err := term.Open("/dev/tty", term.CBreakMode, term.RawMode, term.ReadTimeout(defaultTimeout))
 	if err != nil {
 		return nil, err
 	}
@@ -159,12 +160,31 @@ func (tty *TTY) readEvent(poll, escWait time.Duration) (Event, error) {
 			return ev, nil
 		} else if !needMore && len(tty.reader.buf) == 0 {
 			// No buffered input; read from terminal.
-			readTimeout := poll
-			if poll == 0 && len(tty.reader.buf) > 0 {
-				readTimeout = tty.timeout
-			}
-			if err := tty.readIntoBuffer(readTimeout); err != nil {
-				return Event{Kind: EventNone}, err
+			if poll > 0 {
+				// Wait briefly in raw mode to avoid key echoing in cooked mode.
+				deadline := time.Now().Add(poll)
+				for {
+					avail, err := tty.t.Available()
+					if err == nil && avail > 0 {
+						break
+					}
+					if time.Now().After(deadline) {
+						return Event{Kind: EventNone}, nil
+					}
+					time.Sleep(1 * time.Millisecond)
+				}
+				// Read immediately without termios timeout quantization.
+				if err := tty.readIntoBuffer(0); err != nil {
+					return Event{Kind: EventNone}, err
+				}
+			} else {
+				readTimeout := poll
+				if poll == 0 && len(tty.reader.buf) > 0 {
+					readTimeout = tty.timeout
+				}
+				if err := tty.readIntoBuffer(readTimeout); err != nil {
+					return Event{Kind: EventNone}, err
+				}
 			}
 			if len(tty.reader.buf) == 0 {
 				return Event{Kind: EventNone}, nil
@@ -317,6 +337,9 @@ func parseCSI(buf []byte) (Event, int, bool, bool) {
 			if code, ok := csiKeyLookup[string(buf[1:i+1])]; ok {
 				return Event{Kind: EventKey, Key: code}, i + 1, true, true
 			}
+			if ev, ok := parseCSIFallback(buf[2:i], b); ok {
+				return ev, i + 1, true, true
+			}
 			return Event{}, i + 1, false, true
 		}
 	}
@@ -339,11 +362,11 @@ func parseSS3(buf []byte) (Event, int, bool, bool) {
 // Key reads the keycode or ASCII code and avoids repeated keys
 func (tty *TTY) Key() int {
 	tty.RawMode()
-	defer func() {
-		tty.Restore()
-		tty.t.Flush()
-	}()
 	ev, err := tty.ReadEvent()
+	tty.Restore()
+	if ev.Kind != EventNone {
+		tty.t.Flush()
+	}
 	if err != nil {
 		lastKey = 0
 		return 0
@@ -370,7 +393,6 @@ func (tty *TTY) Key() int {
 func (tty *TTY) KeyRaw() int {
 	ev, err := tty.ReadEvent()
 	if err != nil {
-		lastKey = 0
 		return 0
 	}
 	var key int
@@ -382,22 +404,17 @@ func (tty *TTY) KeyRaw() int {
 	default:
 		key = 0
 	}
-	if key == lastKey {
-		lastKey = 0
-		return 0
-	}
-	lastKey = key
 	return key
 }
 
 // String reads a string, handling key sequences and printable characters
 func (tty *TTY) String() string {
 	tty.RawMode()
-	defer func() {
-		tty.Restore()
-		tty.t.Flush()
-	}()
 	ev, err := tty.ReadEventBlocking()
+	tty.Restore()
+	if ev.Kind != EventNone {
+		tty.t.Flush()
+	}
 	if err != nil {
 		return ""
 	}
@@ -451,11 +468,11 @@ func (tty *TTY) StringRaw() string {
 // Rune reads a rune, handling special sequences for arrows, Home, End, etc.
 func (tty *TTY) Rune() rune {
 	tty.RawMode()
-	defer func() {
-		tty.Restore()
-		tty.t.Flush()
-	}()
 	ev, err := tty.ReadEventBlocking()
+	tty.Restore()
+	if ev.Kind != EventNone {
+		tty.t.Flush()
+	}
 	if err != nil {
 		return rune(0)
 	}
