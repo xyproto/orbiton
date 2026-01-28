@@ -2,9 +2,9 @@
 
 ## General
 
-- [ ] Fix terminal resizing in megafile + handling the delete key, and ctrl-r. Plus a megafile first-time tutorial.
 - [ ] Remove chorded keys (ctrl-l,? etc). Instead, display a menu when ctrl-l is pressed twice or something.
       Or at least add a visual indicator for when the first part of a chorded key is pressed.
+- [ ] Add a megafile first-time tutorial.
 - [ ] When opening a directory with only one file, open it, but not without highlighting.
 - [ ] When browsing a directory that contains hidden files, show: `show hidden files with ctrl-h`.
 - [ ] When editing files in connection with browsing files, let `ctrl-n` and `ctrl-p` preserve the cursor position across files.
