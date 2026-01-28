@@ -771,9 +771,6 @@ retry:
 	defer tty.Close()
 
 	tty.SetTimeout(2 * time.Millisecond)
-	if slowKeyFlag {
-		tty.SetEscTimeout(slowKeyEscTimeout)
-	}
 
 	var (
 		sigChan       = make(chan os.Signal, 1)
