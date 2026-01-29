@@ -2013,6 +2013,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if kh.Prev() == "c:10" {
 				e.GoToStartOfTextLine(c)
 			}
+		case "c:160": // altgr+space
+			key = " "
+			fallthrough
 		default: // any other key
 			keyRunes := []rune(key)
 			if len(keyRunes) > 0 && unicode.IsLetter(keyRunes[0]) { // letter
