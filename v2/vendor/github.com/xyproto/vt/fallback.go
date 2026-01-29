@@ -1,3 +1,5 @@
+//go:build !windows
+
 package vt
 
 // parseCSIFallback handles common CSI sequences that include parameters.
