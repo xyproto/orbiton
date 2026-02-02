@@ -762,6 +762,8 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					}
 				}
 
+				e.applyAccentHighlights(line, runesAndAttributes)
+
 				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
 				if e.mode != mode.Git && e.mode != mode.Email && e.rainbowParenthesis && q.None() && !q.hasSingleLineComment && !q.stoppedMultiLineComment {
 					thisLineParCount, thisLineBraCount = q.ParBraCount(trimmedLine)
@@ -898,17 +900,99 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 func (e *Editor) ArrowReplace(s string) string {
 	// TODO: Use the function that checks if e.mode is "C-like".
 	// TODO: Don't hardcode colors here, introduce theme.CArrow, theme.Arrow and theme.ArrowField instead.
-	arrowColor := e.Star
-	fieldColor := DefaultTextConfig.Protected
-	if e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC || e.mode == mode.Shader {
-		arrowColor = DefaultTextConfig.Class
-		if e.Name == "Zulu" {
-			arrowColor = "yellow"
-			fieldColor = "cyan" // lightcyan
-		}
-	}
+	arrowColor, fieldColor := e.arrowColorNames()
 	s = strings.ReplaceAll(s, ">-<", "><off><"+arrowColor+">-<")
 	return strings.ReplaceAll(s, ">"+Escape(">"), "><off><"+arrowColor+">"+Escape(">")+"<off><"+fieldColor+">")
+}
+
+func (e *Editor) arrowColorNames() (string, string) {
+	if e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC || e.mode == mode.Shader {
+		return e.cArrowColorNames()
+	}
+	return e.Star, DefaultTextConfig.Protected
+}
+
+func (e *Editor) cArrowColorNames() (string, string) {
+	arrowColor := DefaultTextConfig.Class
+	fieldColor := DefaultTextConfig.Protected
+	if e.Name == "Zulu" {
+		arrowColor = "yellow"
+		fieldColor = "cyan" // lightcyan
+	}
+	return arrowColor, fieldColor
+}
+
+func (e *Editor) ternaryAccentMode() bool {
+	switch e.mode {
+	case mode.Arduino, mode.C, mode.Cpp, mode.ObjC, mode.Shader,
+		mode.C3, mode.CS, mode.Crystal, mode.D, mode.Dart, mode.Haxe,
+		mode.Java, mode.JavaScript, mode.TypeScript, mode.PHP, mode.Perl,
+		mode.Ruby, mode.Swift, mode.V:
+		return true
+	default:
+		return false
+	}
+}
+
+func colorNameToAttribute(colorName string) (vt.AttributeColor, bool) {
+	if colorName == "" {
+		return 0, false
+	}
+	if attr, ok := vt.DarkColorMap[colorName]; ok {
+		return attr, true
+	}
+	if attr, ok := vt.DarkColorMap[strings.ToLower(colorName)]; ok {
+		return attr, true
+	}
+	return 0, false
+}
+
+func isIdentifierRune(r rune) bool {
+	return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
+}
+
+func (e *Editor) applyAccentHighlights(line string, runesAndAttributes []vt.CharAttribute) {
+	arrowColor, _ := e.cArrowColorNames()
+	arrowAttr, ok := colorNameToAttribute(arrowColor)
+	if !ok {
+		return
+	}
+	lineRunes := []rune(line)
+	if len(lineRunes) == 0 || len(runesAndAttributes) == 0 {
+		return
+	}
+	max := len(lineRunes)
+	if len(runesAndAttributes) < max {
+		max = len(runesAndAttributes)
+	}
+	if e.ternaryAccentMode() {
+		for i := 1; i+1 < max; i++ {
+			if (lineRunes[i] == '?' || lineRunes[i] == ':') && lineRunes[i-1] == ' ' && lineRunes[i+1] == ' ' {
+				runesAndAttributes[i].A = arrowAttr
+			}
+		}
+	}
+	if e.mode == mode.GDScript {
+		for i := 0; i < max; i++ {
+			if lineRunes[i] != '@' {
+				continue
+			}
+			if i > 0 && isIdentifierRune(lineRunes[i-1]) {
+				continue
+			}
+			if i+1 >= max || !isIdentifierRune(lineRunes[i+1]) {
+				continue
+			}
+			end := i + 2
+			for end < max && isIdentifierRune(lineRunes[end]) {
+				end++
+			}
+			for j := i; j < end; j++ {
+				runesAndAttributes[j].A = arrowAttr
+			}
+			i = end - 1
+		}
+	}
 }
 
 // replaceColorTagsInURL handles a special case where the highlight package doesn't handle URL's with "//" too well.
