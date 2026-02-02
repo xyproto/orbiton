@@ -30,8 +30,8 @@ type MenuWidget struct {
 func NewMenuWidget(title string, choices []string, titleColor, arrowColor, textColor, highlightColor, selectedColor vt.AttributeColor, canvasWidth, canvasHeight uint, extraDashes bool, selectionLetterMap map[string]*RuneAndPosition) *MenuWidget {
 	maxlen := uint(0)
 	for _, choice := range choices {
-		if uint(len(choice)) > uint(maxlen) {
-			maxlen = uint(len(choice))
+		if ulen(choice) > uint(maxlen) {
+			maxlen = ulen(choice)
 		}
 	}
 	marginLeft := 10
@@ -47,7 +47,7 @@ func NewMenuWidget(title string, choices []string, titleColor, arrowColor, textC
 	return &MenuWidget{
 		title:              title,
 		w:                  uint(marginLeft + int(maxlen)),
-		h:                  uint(len(choices)),
+		h:                  ulen(choices),
 		y:                  0,
 		oldy:               0,
 		marginLeft:         marginLeft,
@@ -77,7 +77,7 @@ func (m *MenuWidget) Draw(c *vt.Canvas) {
 		c.PlotColor(uint(m.marginLeft+x), uint(m.marginTop), m.titleColor, r)
 	}
 	// Draw the menu entries, with various colors
-	ulenChoices := uint(len(m.choices))
+	ulenChoices := ulen(m.choices)
 	for y := uint(0); y < m.h; y++ {
 		var itemString string
 		var selectionLetter rune
@@ -101,7 +101,7 @@ func (m *MenuWidget) Draw(c *vt.Canvas) {
 		beforeRightBracket := true
 		for x := uint(0); x < m.w; x++ {
 			r := '-'
-			if x < uint(len([]rune(itemString))) {
+			if x < ulen([]rune(itemString)) {
 				r = []rune(itemString)[x]
 			} else if !m.extraDashes {
 				break

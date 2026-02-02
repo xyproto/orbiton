@@ -822,7 +822,7 @@ func (e *Editor) DrawFlags(c *vt.Canvas, repositionCursor bool) {
 
 	// Draw the title
 	c.Write(x, y, fg, bg, title+" ")
-	x += uint(len(title)) + 1
+	x += ulen(title) + 1
 
 	// Flag colors
 	fg = e.StatusErrorForeground
@@ -834,7 +834,7 @@ func (e *Editor) DrawFlags(c *vt.Canvas, repositionCursor bool) {
 			x++
 		}
 		c.Write(x, y, fg, bg, flag)
-		x += uint(len(flag))
+		x += ulen(flag)
 	}
 
 	// Blit

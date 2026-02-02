@@ -90,7 +90,7 @@ func Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn time.Duration
 		fmt.Print(msg)
 
 		// Store the position after the message
-		x += uint(len(msg)) + 1
+		x += ulen(msg) + 1
 
 		// Prepare to output colored text
 		var (
@@ -122,7 +122,7 @@ func Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn time.Duration
 			default:
 				vt.SetXY(x, y)
 				// Iterate over the spinner frames as the counter increases
-				to.Print(spinnerAnimation[counter%uint(len(spinnerAnimation))])
+				to.Print(spinnerAnimation[counter%ulen(spinnerAnimation)])
 				counter++
 				// Wait for a key press (also sleeps just a bit)
 				switch tty.KeyRaw() {

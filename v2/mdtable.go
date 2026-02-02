@@ -564,7 +564,7 @@ func (e *Editor) TableEditor(tty *vt.TTY, status *StatusBar, tableContents *[][]
 	c.HideCursorAndRedraw()
 
 	showMessage := func(msg string, color vt.AttributeColor) {
-		msgX := (c.W() - uint(len(msg))) / 2
+		msgX := (c.W() - ulen(msg)) / 2
 		msgY := c.H() - 1
 		c.Write(msgX, msgY, color, e.Background, msg)
 		go func() {

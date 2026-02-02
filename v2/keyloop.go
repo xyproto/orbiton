@@ -1788,7 +1788,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 						status.Show(c, e)
 						// Go to the end of the line, for easy line duplication with ctrl-c, enter, ctrl-v,
 						// but only if the copied line is shorter than the terminal width.
-						if uint(len(trimmed)) < c.Width() {
+						if ulen(trimmed) < c.Width() {
 							e.End(c)
 						}
 					}
