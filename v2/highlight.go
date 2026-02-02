@@ -18,10 +18,6 @@ import (
 	"github.com/xyproto/vt"
 )
 
-const (
-	blankRune = ' '
-)
-
 var (
 	controlRuneReplacement = func() rune {
 		if envVT100 {
@@ -34,6 +30,12 @@ var (
 			return '.'
 		}
 		return '·'
+	}()
+	ellipsisRune = func() rune {
+		if envVT100 {
+			return '~'
+		}
+		return '…'
 	}()
 )
 
@@ -953,10 +955,8 @@ func isIdentifierRune(r rune) bool {
 
 func (e *Editor) applyAccentHighlights(line string, runesAndAttributes []vt.CharAttribute) {
 	arrowColor, _ := e.cArrowColorNames()
-	arrowAttr, ok := colorNameToAttribute(arrowColor)
-	if !ok {
-		return
-	}
+	arrowAttr, arrowOK := colorNameToAttribute(arrowColor)
+	keywordAttr, keywordOK := colorNameToAttribute(e.Theme.Keyword)
 	lineRunes := []rune(line)
 	if len(lineRunes) == 0 || len(runesAndAttributes) == 0 {
 		return
@@ -966,13 +966,15 @@ func (e *Editor) applyAccentHighlights(line string, runesAndAttributes []vt.Char
 		max = len(runesAndAttributes)
 	}
 	if e.ternaryAccentMode() {
-		for i := 1; i+1 < max; i++ {
-			if (lineRunes[i] == '?' || lineRunes[i] == ':') && lineRunes[i-1] == ' ' && lineRunes[i+1] == ' ' {
-				runesAndAttributes[i].A = arrowAttr
+		if keywordOK {
+			for i := 1; i+1 < max; i++ {
+				if (lineRunes[i] == '?' || lineRunes[i] == ':') && lineRunes[i-1] == ' ' && lineRunes[i+1] == ' ' {
+					runesAndAttributes[i].A = keywordAttr
+				}
 			}
 		}
 	}
-	if e.mode == mode.GDScript {
+	if arrowOK && (e.mode == mode.GDScript || e.mode == mode.Python) {
 		for i := 0; i < max; i++ {
 			if lineRunes[i] != '@' {
 				continue

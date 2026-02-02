@@ -359,17 +359,20 @@ func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
 			}
 		}
 	}
-
+	if s != "" {
+		s = " " + s + " "
+	}
 	var (
 		canvasWidth      = c.Width()
-		x           uint = (canvasWidth - uint(len(s))) - 2 // 2 is the right side padding
+		x           uint = (canvasWidth - ulen(s)) - 2 // 2 is the right side padding
 		y           uint
 	)
-	c.Write(x, y, e.Foreground, e.Background, s)
+
+	c.Write(x, y, e.StatusForeground, e.StatusBackground, s)
 
 	// Add red ellipsis when Ollama is thinking
 	if ollama.Loaded() && functionDescriptionThinking {
 		ellipsisX := canvasWidth - 1 // rightmost position
-		c.Write(ellipsisX, y, e.StatusErrorForeground, e.Background, "…")
+		c.Write(ellipsisX, y, e.StatusErrorForeground, e.StatusBackground, string(ellipsisRune))
 	}
 }
