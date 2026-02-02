@@ -46,12 +46,14 @@ type Theme struct {
 	Git                         vt.AttributeColor
 	MultiLineComment            vt.AttributeColor
 	SearchHighlight             vt.AttributeColor
-	StatusErrorBackground       vt.AttributeColor
 	StatusErrorForeground       vt.AttributeColor
-	StatusBackground            vt.AttributeColor
+	StatusErrorBackground       vt.AttributeColor
 	StatusForeground            vt.AttributeColor
-	Background                  vt.AttributeColor
+	StatusBackground            vt.AttributeColor
+	TopRightForeground          vt.AttributeColor
+	TopRightBackground          vt.AttributeColor
 	Foreground                  vt.AttributeColor
+	Background                  vt.AttributeColor
 	MarkdownTextColor           vt.AttributeColor
 	BoxUpperEdge                vt.AttributeColor
 	HeaderTextColor             vt.AttributeColor
@@ -108,6 +110,8 @@ func NewDefaultTheme() Theme {
 		Background:                  vt.BackgroundDefault,
 		StatusForeground:            vt.White,
 		StatusBackground:            vt.BackgroundBlack,
+		TopRightForeground:          vt.White,
+		TopRightBackground:          vt.BackgroundDefault,
 		StatusErrorForeground:       vt.LightRed,
 		StatusErrorBackground:       vt.BackgroundDefault,
 		SearchHighlight:             vt.LightMagenta,
@@ -197,6 +201,8 @@ func NewOrbTheme() Theme {
 		Background:                  vt.BackgroundBlack,
 		StatusForeground:            vt.LightGray,
 		StatusBackground:            vt.Gray,
+		TopRightForeground:          vt.LightGray,
+		TopRightBackground:          vt.BackgroundBlack,
 		StatusErrorForeground:       vt.LightRed,
 		StatusErrorBackground:       vt.BackgroundBlack,
 		SearchHighlight:             vt.LightMagenta,
@@ -286,6 +292,8 @@ func NewPinetreeTheme() Theme {
 		Background:                  vt.BackgroundBlack,
 		StatusForeground:            vt.LightGray,
 		StatusBackground:            vt.BackgroundBlack,
+		TopRightForeground:          vt.LightGray,
+		TopRightBackground:          vt.BackgroundBlack,
 		StatusErrorForeground:       vt.LightRed,
 		StatusErrorBackground:       vt.BackgroundBlack,
 		SearchHighlight:             vt.Yellow,
@@ -375,6 +383,8 @@ func NewZuluTheme() Theme {
 		Background:                  vt.BackgroundDefault,
 		StatusForeground:            vt.White,
 		StatusBackground:            vt.BackgroundBlack,
+		TopRightForeground:          vt.White,
+		TopRightBackground:          vt.BackgroundDefault,
 		StatusErrorForeground:       vt.LightRed,
 		StatusErrorBackground:       vt.BackgroundDefault,
 		SearchHighlight:             vt.Yellow,
@@ -464,6 +474,8 @@ func NewLitmusTheme() Theme {
 		Background:                  vt.BackgroundGray,
 		StatusForeground:            vt.Gray,
 		StatusBackground:            vt.BackgroundBlack,
+		TopRightForeground:          vt.Black,
+		TopRightBackground:          vt.BackgroundGray,
 		StatusErrorForeground:       vt.LightRed,
 		StatusErrorBackground:       vt.BackgroundDefault,
 		SearchHighlight:             vt.LightMagenta,
@@ -553,6 +565,8 @@ func NewSynthwaveTheme() Theme {
 		Background:                  vt.BackgroundDefault,
 		StatusForeground:            vt.White,
 		StatusBackground:            vt.BackgroundBlack,
+		TopRightForeground:          vt.Cyan,
+		TopRightBackground:          vt.BackgroundDefault,
 		StatusErrorForeground:       vt.Magenta,
 		StatusErrorBackground:       vt.BackgroundDefault,
 		SearchHighlight:             vt.LightMagenta,
@@ -642,6 +656,8 @@ func NewTealTheme() Theme {
 		Background:                  vt.BackgroundBlack,
 		StatusForeground:            vt.White,
 		StatusBackground:            vt.BackgroundBlack,
+		TopRightForeground:          vt.White,
+		TopRightBackground:          vt.BackgroundBlack,
 		StatusErrorForeground:       vt.LightRed,
 		StatusErrorBackground:       vt.BackgroundDefault,
 		SearchHighlight:             vt.Yellow,
@@ -732,6 +748,8 @@ func NewRedBlackTheme() Theme {
 		Background:                  vt.BackgroundBlack, // Dark gray background, as opposed tovt.BackgroundDefault
 		StatusForeground:            vt.White,
 		StatusBackground:            vt.BackgroundBlack,
+		TopRightForeground:          vt.White,
+		TopRightBackground:          vt.BackgroundBlack,
 		StatusErrorForeground:       vt.LightRed,
 		StatusErrorBackground:       vt.BackgroundDefault,
 		SearchHighlight:             vt.Red,
@@ -822,6 +840,8 @@ func NewLightBlueEditTheme() Theme {
 		Background:                  vt.BackgroundBlue,
 		StatusForeground:            vt.Black,
 		StatusBackground:            vt.BackgroundCyan,
+		TopRightForeground:          vt.White,
+		TopRightBackground:          vt.BackgroundBlue,
 		StatusErrorForeground:       vt.Black,
 		StatusErrorBackground:       vt.BackgroundRed,
 		SearchHighlight:             vt.LightRed,
@@ -912,6 +932,8 @@ func NewDarkBlueEditTheme() Theme {
 		Background:                  vt.BackgroundBlue,
 		StatusForeground:            vt.White,
 		StatusBackground:            vt.BackgroundCyan,
+		TopRightForeground:          vt.LightYellow,
+		TopRightBackground:          vt.BackgroundBlue,
 		StatusErrorForeground:       vt.Red,
 		StatusErrorBackground:       vt.BackgroundCyan,
 		SearchHighlight:             vt.Red,
@@ -1001,6 +1023,8 @@ func NewLightVSTheme() Theme {
 		Background:                  vt.BackgroundDefault,
 		StatusForeground:            vt.White,
 		StatusBackground:            vt.BackgroundBlack,
+		TopRightForeground:          vt.White,
+		TopRightBackground:          vt.BackgroundBlack,
 		StatusErrorForeground:       vt.LightRed,
 		StatusErrorBackground:       vt.BackgroundDefault,
 		SearchHighlight:             vt.Red,
@@ -1090,6 +1114,8 @@ func NewDarkVSTheme() Theme {
 		Background:                  vt.BackgroundWhite,
 		StatusForeground:            vt.White,
 		StatusBackground:            vt.BackgroundBlue,
+		TopRightForeground:          vt.White,
+		TopRightBackground:          vt.BackgroundBlue,
 		StatusErrorForeground:       vt.Red,
 		StatusErrorBackground:       vt.BackgroundCyan,
 		SearchHighlight:             vt.Red,
@@ -1176,9 +1202,7 @@ func NewGrayTheme() Theme {
 	t.Name = "Gray Mono"
 	t.Foreground = vt.LightGray
 	t.Background = vt.BackgroundDefault // black background
-	//t.StatusBackground =vt.BackgroundDefault
-	//t.StatusErrorBackground =vt.BackgroundDefault
-	t.JumpToLetterColor = vt.White // for jumping to a letter with ctrl-l
+	t.JumpToLetterColor = vt.White      // for jumping to a letter with ctrl-l
 	t.ProgressIndicatorBackground = vt.BackgroundGray
 	return t
 }
@@ -1191,6 +1215,7 @@ func NewAmberTheme() Theme {
 	t.Background = vt.BackgroundDefault // black background
 	t.JumpToLetterColor = t.Foreground  // for jumping to a letter with ctrl-l
 	t.ProgressIndicatorBackground = vt.BackgroundYellow
+	t.TopRightForeground = t.Foreground
 	return t
 }
 
@@ -1202,6 +1227,7 @@ func NewGreenTheme() Theme {
 	t.Background = vt.BackgroundDefault // black background
 	t.JumpToLetterColor = t.Foreground  // for jumping to a letter with ctrl-l
 	t.ProgressIndicatorBackground = vt.BackgroundGreen
+	t.TopRightForeground = t.Foreground
 	return t
 }
 
@@ -1213,6 +1239,7 @@ func NewBlueTheme() Theme {
 	t.Background = vt.BackgroundDefault // black background
 	t.JumpToLetterColor = t.Foreground  // for jumping to a letter with ctrl-l
 	t.ProgressIndicatorBackground = vt.BackgroundBlue
+	t.TopRightForeground = t.Foreground
 	return t
 }
 
@@ -1225,6 +1252,8 @@ func NewNoColorDarkBackgroundTheme() Theme {
 		Background:                  vt.BackgroundDefault,
 		StatusForeground:            vt.White,
 		StatusBackground:            vt.BackgroundBlack,
+		TopRightForeground:          vt.White,
+		TopRightBackground:          vt.BackgroundBlack,
 		StatusErrorForeground:       vt.White,
 		StatusErrorBackground:       vt.BackgroundDefault,
 		SearchHighlight:             vt.Default,
@@ -1314,6 +1343,8 @@ func NewNoColorLightBackgroundTheme() Theme {
 		Background:                  vt.BackgroundDefault,
 		StatusForeground:            vt.Black,
 		StatusBackground:            vt.BackgroundWhite,
+		TopRightForeground:          vt.Black,
+		TopRightBackground:          vt.BackgroundWhite,
 		StatusErrorForeground:       vt.Black,
 		StatusErrorBackground:       vt.BackgroundDefault,
 		SearchHighlight:             vt.Default,
@@ -1427,8 +1458,8 @@ func (t Theme) TextConfig() *TextConfig {
 }
 
 func (e *Editor) makeLightAdjustments() {
-	if e.Theme.HighlightForeground == vt.White && e.Theme.Background != vt.BackgroundBlack && e.Theme.Light {
-		e.Theme.HighlightForeground = vt.Black
+	if e.HighlightForeground == vt.White && e.Background != vt.BackgroundBlack && e.Light {
+		e.HighlightForeground = vt.Black
 	}
 }
 
@@ -1479,8 +1510,8 @@ func (e *Editor) setNoColorTheme() {
 	} else { //dark
 		e.Theme = NewNoColorDarkBackgroundTheme()
 	}
-	e.statusMode = e.Theme.StatusMode
-	DefaultTextConfig = *(e.Theme.TextConfig())
+	e.statusMode = e.StatusMode
+	DefaultTextConfig = *(e.TextConfig())
 	if initialLightBackground != nil && *initialLightBackground { // light
 		e.makeLightAdjustments()
 	}

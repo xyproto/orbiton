@@ -366,9 +366,11 @@ func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
 		canvasWidth      = c.Width()
 		x           uint = (canvasWidth - ulen(s)) - 2 // 2 is the right side padding
 		y           uint
+		fg          = e.TopRightForeground
+		bg          = e.TopRightBackground
 	)
 
-	c.Write(x, y, e.StatusForeground, e.StatusBackground, s)
+	c.Write(x, y, fg, bg, s)
 
 	// Add red ellipsis when Ollama is thinking
 	if ollama.Loaded() && functionDescriptionThinking {
