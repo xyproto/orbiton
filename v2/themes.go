@@ -2,7 +2,8 @@ package main
 
 import "github.com/xyproto/vt"
 
-// TODO: Restructure how themes are stored, so that it's easier to list all themes that works with a dark background or all that works with a light background, ref. initialLightBackground
+// TODO: Restructure how themes are stored, so that it's easier to list all themes that
+// works with a dark background or all that works with a light background, ref. initialLightBackground
 
 var initialLightBackground *bool
 
