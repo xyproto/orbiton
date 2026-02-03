@@ -1,83 +1,21 @@
+//go:build !windows
+
 package main
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"syscall"
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
-	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 )
 
-func quitError(tty *vt.TTY, err error) {
-	quitMut.Lock()
-	defer quitMut.Unlock()
-
-	stopBackgroundProcesses()
-
-	if tty != nil {
-		tty.Close()
-	}
-
-	vt.Reset()
-	vt.SetNoColor()
-	vt.Clear()
-	vt.Close()
-	vt.New().Err(err.Error())
-	vt.ShowCursor(true)
-	vt.SetXY(uint(0), uint(1))
-	os.Exit(1)
-}
-
-func quitMessage(tty *vt.TTY, msg string) {
-	quitMut.Lock()
-	defer quitMut.Unlock()
-
-	stopBackgroundProcesses()
-
-	if tty != nil {
-		tty.Close()
-	}
-
-	vt.Reset()
-	vt.SetNoColor()
-	vt.Clear()
-	vt.Close()
-	fmt.Fprintln(os.Stderr, msg)
-	newLineCount := strings.Count(msg, "\n")
-	vt.ShowCursor(true)
-	vt.SetXY(uint(0), uint(newLineCount+1))
-	os.Exit(1)
-}
-
-func quitMessageWithStack(tty *vt.TTY, msg string) {
-	quitMut.Lock()
-	defer quitMut.Unlock()
-
-	stopBackgroundProcesses()
-
-	if tty != nil {
-		tty.Close()
-	}
-
-	vt.Reset()
-	vt.SetNoColor()
-	vt.Clear()
-	vt.Close()
-	fmt.Fprintln(os.Stderr, msg)
-	newLineCount := strings.Count(msg, "\n")
-	vt.ShowCursor(true)
-	vt.SetXY(uint(0), uint(newLineCount+1))
-	debug.PrintStack()
-	os.Exit(1)
-}
-
+// quitExecShellCommand executes a shell command and exits
 func quitExecShellCommand(tty *vt.TTY, workDir string, shellCommand string) {
 	quitMut.Lock()
 	defer quitMut.Unlock()
@@ -97,37 +35,6 @@ func quitExecShellCommand(tty *vt.TTY, workDir string, shellCommand string) {
 	const shellExecutable = "/bin/sh"
 	_ = os.Chdir(workDir)
 	syscall.Exec(shellExecutable, []string{shellExecutable, "-c", shellCommand}, env.Environ())
-}
-
-// CatBytes detects the source code mode and outputs syntax highlighted text to the given TextOutput.
-func CatBytes(sourceCodeData []byte, o *vt.TextOutput) error {
-	detectedMode := mode.SimpleDetectBytes(sourceCodeData)
-	taggedTextBytes, err := AsText(sourceCodeData, detectedMode)
-	if err == nil {
-		o.OutputTags(string(taggedTextBytes))
-	}
-	return err
-}
-
-// quitCat tries to list the given source code file using CatBytes, and then exits
-func quitCat(fnord *FilenameOrData) {
-	quitMut.Lock()
-	defer quitMut.Unlock()
-	if fnord.Empty() {
-		if sourceCodeBytes, err := os.ReadFile(fnord.filename); err == nil { // success
-			if err := CatBytes(sourceCodeBytes, tout); err == nil { // success
-				vt.ShowCursor(true)
-				os.Exit(0)
-			}
-		}
-	} else {
-		if err := CatBytes(fnord.data, tout); err == nil { // success
-			vt.ShowCursor(true)
-			os.Exit(0)
-		}
-	}
-	vt.ShowCursor(true)
-	os.Exit(1) // could not cat the file in a syntax highlighted way
 }
 
 // quitBat tries to list the given source code file using "bat", if "bat" exists in the path, and then exits

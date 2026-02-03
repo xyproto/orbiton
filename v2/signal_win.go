@@ -5,7 +5,9 @@ package main
 import (
 	"context"
 	"os"
+	"os/exec"
 	"os/signal"
+	"strconv"
 	"sync/atomic"
 
 	"github.com/xyproto/vt"
@@ -78,13 +80,24 @@ func (e *Editor) SetUpSignalHandlers(c *vt.Canvas, tty *vt.TTY, status *StatusBa
 	}()
 }
 
-// Windows stub for stopBackgroundProcesses
+// Windows implementation for stopBackgroundProcesses
 func stopBackgroundProcesses() bool {
+	// Shutdown LSP clients
+	ShutdownAllLSPClients()
+
 	if runPID.Load() <= 0 {
-		return false
+		return false // nothing was killed
 	}
+
+	pid := int(runPID.Load())
 	runPID.Store(-1)
-	return true
+
+	// Try to kill the process on Windows using taskkill
+	// Use /F for force and /T to kill child processes
+	cmd := exec.Command("taskkill", "/F", "/PID", strconv.Itoa(pid), "/T")
+	_ = cmd.Run() // Best effort - ignore errors
+
+	return true // something was attempted to be killed
 }
 
 // Windows stub for getProcPath

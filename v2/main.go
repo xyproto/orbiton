@@ -66,10 +66,6 @@ var (
 )
 
 func main() {
-	// stop right here if the platform is Windows, because the keyboard handling needs improvements.
-	// Pull requests are welcome...
-	stopwin()
-
 	var (
 		batFlag                bool
 		buildFlag              bool
