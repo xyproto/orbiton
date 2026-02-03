@@ -157,6 +157,13 @@ var lspConfigs = map[mode.Mode]LSPConfig{
 		RootMarkerFiles: []string{"setup.py", "pyproject.toml", "requirements.txt", ".git"},
 		FileExtensions:  []string{".py"},
 	},
+	mode.Zig: {
+		Command:         "zls",
+		Args:            []string{"--disable-lsp-logs"},
+		LanguageID:      "zig",
+		RootMarkerFiles: []string{"build.zig", "build.zig.zon", "zls.json", ".git"},
+		FileExtensions:  []string{".zig"},
+	},
 }
 
 // NewLSPClient creates a new LSP client for the given language server command
@@ -430,12 +437,6 @@ func (lsp *LSPClient) GetCompletions(uri string, line, character int, triggerCha
 		params["context"] = map[string]interface{}{
 			"triggerKind": 1, // Invoked manually
 		}
-	}
-
-	// Debug: Log the request
-	if os.Getenv("ORBITON_DEBUG_LSP") != "" {
-		paramsJSON, _ := json.MarshalIndent(params, "", "  ")
-		fmt.Fprintf(os.Stderr, "LSP Request params:\n%s\n", string(paramsJSON))
 	}
 
 	if _, err := lsp.sendRequest("textDocument/completion", params); err != nil {
@@ -1575,11 +1576,31 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	}
 
 	// Detect trigger character
+	// Check if we're completing right after a dot or colon (member access)
 	var triggerChar string
 	if x > 0 && len(currentLine) > 0 {
-		lastChar := currentLine[len(currentLine)-1:]
-		if lastChar == "." || lastChar == ":" {
-			triggerChar = lastChar
+		// Look back from cursor position to find if there's a recent trigger character
+		// For "stdout.pri", currentLine is "    stdout.pri" and we're after the "i"
+		// We want to detect the "." that comes before "pri"
+
+		// Find the start of the current word we're completing
+		wordStart := x
+		for wordStart > 0 && len(currentLine) >= wordStart {
+			r := rune(currentLine[wordStart-1])
+			if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_' {
+				break
+			}
+			wordStart--
+		}
+
+		// Check if the character just before the word is a trigger
+		if wordStart > 0 && len(currentLine) >= wordStart {
+			prevChar := string(currentLine[wordStart-1])
+			if prevChar == "." {
+				triggerChar = "."
+			} else if wordStart > 1 && len(currentLine) >= wordStart && currentLine[wordStart-2:wordStart] == "::" {
+				triggerChar = ":"
+			}
 		}
 	}
 
