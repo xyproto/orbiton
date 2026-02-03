@@ -333,15 +333,15 @@ func (lsp *LSPClient) Initialize() error {
 }
 
 // TestReady sends a simple request to check if the language server is truly ready
-// For rust-analyzer, we use the workspace/symbol request as a lightweight ping
+// For rust-analyzer and clangd, we use the workspace/symbol request as a lightweight ping
 func (lsp *LSPClient) TestReady(m mode.Mode) bool {
 	if !lsp.initialized {
 		return false
 	}
 
-	// For rust-analyzer, use workspace/symbol as a lightweight ping
+	// For rust-analyzer and clangd, use workspace/symbol as a lightweight ping
 	// This doesn't require any files to be open and responds quickly once ready
-	if m == mode.Rust {
+	if m == mode.Rust || m == mode.C || m == mode.Cpp {
 		// Send a simple workspace/symbol query
 		params := map[string]interface{}{
 			"query": "",
@@ -354,7 +354,7 @@ func (lsp *LSPClient) TestReady(m mode.Mode) bool {
 		// Try to read response with a short timeout
 		_, err := lsp.readResponse(500 * time.Millisecond)
 
-		// If we got a response (even an empty one), rust-analyzer is ready
+		// If we got a response (even an empty one), server is ready
 		if err == nil {
 			return true
 		}
@@ -634,9 +634,9 @@ func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string, cancel <-chan bool)
 		return nil, err
 	}
 
-	// For rust-analyzer, wait until it's truly ready by testing it
+	// For rust-analyzer and clangd, wait until it's truly ready by testing it
 	// Try up to 50 times with 200ms intervals (10 seconds total)
-	if m == mode.Rust {
+	if m == mode.Rust || m == mode.C || m == mode.Cpp {
 		ready := false
 		for i := 0; i < 50; i++ {
 			select {
@@ -654,7 +654,7 @@ func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string, cancel <-chan bool)
 
 		if !ready {
 			client.Shutdown()
-			return nil, errors.New("rust-analyzer is not responding")
+			return nil, errors.New(config.Command + " is not responding")
 		}
 	}
 
@@ -898,6 +898,99 @@ func updateRustProjectJSON(tempDir, newFileName string) {
 	os.WriteFile(rustProjectPath, updatedJSON, 0644)
 }
 
+// ensureCWorkspace creates a temporary workspace for standalone C/C++ files
+// Returns the workspace root and the file path within the workspace
+func ensureCWorkspace(workspaceRoot, filePath string, languageID string) (string, string) {
+	// Check if there's a compile_commands.json in the current directory or parent directories
+	dir := filepath.Dir(filePath)
+	for {
+		compileCommandsPath := filepath.Join(dir, "compile_commands.json")
+		if _, err := os.Stat(compileCommandsPath); err == nil {
+			// Found compile_commands.json - use this as the workspace
+			return dir, filePath
+		}
+
+		// Try parent directory
+		parent := filepath.Dir(dir)
+		if parent == dir || parent == "." || parent == "/" {
+			// Reached root, no compile_commands.json found
+			break
+		}
+		dir = parent
+	}
+
+	// For standalone files, create a temporary workspace with compile_commands.json
+	lspMutex.Lock()
+	if tempDir, exists := rustTempDirs[filePath]; exists {
+		// Reuse existing temp workspace
+		lspMutex.Unlock()
+
+		targetPath := filepath.Join(tempDir, filepath.Base(filePath))
+
+		// Update the file content
+		if content, readErr := os.ReadFile(filePath); readErr == nil {
+			os.WriteFile(targetPath, content, 0644)
+		}
+
+		return tempDir, targetPath
+	}
+	lspMutex.Unlock()
+
+	// Create a temporary workspace
+	tempDir, err := os.MkdirTemp("", "orbiton-clangd-*")
+	if err != nil {
+		return workspaceRoot, filePath
+	}
+
+	// Copy the source file to temp directory
+	targetPath := filepath.Join(tempDir, filepath.Base(filePath))
+	if content, readErr := os.ReadFile(filePath); readErr == nil {
+		if writeErr := os.WriteFile(targetPath, content, 0644); writeErr != nil {
+			os.RemoveAll(tempDir)
+			return workspaceRoot, filePath
+		}
+	} else {
+		os.RemoveAll(tempDir)
+		return workspaceRoot, filePath
+	}
+
+	// Create compile_commands.json for clangd
+	compileCommandsPath := filepath.Join(tempDir, "compile_commands.json")
+
+	// Use clang/clang++ for clangd compatibility
+	compiler := "clang"
+	standard := "-std=c11"
+	if languageID == "cpp" {
+		compiler = "clang++"
+		standard = "-std=c++17"
+	}
+
+	// Use absolute path for the file
+	absTargetPath, _ := filepath.Abs(targetPath)
+
+	compileCommands := []map[string]interface{}{
+		{
+			"directory": tempDir,
+			"arguments": []string{compiler, standard, "-c", absTargetPath},
+			"file":      absTargetPath,
+		},
+	}
+
+	compileCommandsJSON, _ := json.MarshalIndent(compileCommands, "", "  ")
+	if err := os.WriteFile(compileCommandsPath, compileCommandsJSON, 0644); err != nil {
+		os.RemoveAll(tempDir)
+		return workspaceRoot, filePath
+	}
+
+	// Track the mapping
+	lspMutex.Lock()
+	rustFileMapping[filePath] = targetPath
+	rustTempDirs[filePath] = tempDir
+	lspMutex.Unlock()
+
+	return tempDir, targetPath
+}
+
 // gatherCodebaseStatistics scans files to find usage frequency
 func gatherCodebaseStatistics(workspaceRoot string, fileExtensions []string) map[string]int {
 	stats := make(map[string]int)
@@ -1009,8 +1102,11 @@ func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspa
 
 	scored := make([]scoredItem, 0, len(items))
 	for _, item := range items {
+		// Trim whitespace from label for comparison (clangd sometimes adds leading spaces)
+		trimmedLabel := strings.TrimSpace(item.Label)
+
 		// Filter by prefix if one exists
-		if prefix != "" && !strings.HasPrefix(strings.ToLower(item.Label), prefix) {
+		if prefix != "" && !strings.HasPrefix(strings.ToLower(trimmedLabel), prefix) {
 			continue
 		}
 
@@ -1169,11 +1265,13 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 	// Find workspace root
 	workspaceRoot := findWorkspaceRoot(absPath, config.RootMarkerFiles)
 
-	// For Rust standalone files, create a temporary workspace
-	// and get the mapped file path that rust-analyzer will understand
+	// For Rust and C/C++ standalone files, create a temporary workspace
+	// and get the mapped file path that the LSP will understand
 	lspFilePath := absPath
 	if e.mode == mode.Rust {
 		workspaceRoot, lspFilePath = ensureRustWorkspace(workspaceRoot, absPath)
+	} else if e.mode == mode.C || e.mode == mode.Cpp {
+		workspaceRoot, lspFilePath = ensureCWorkspace(workspaceRoot, absPath, config.LanguageID)
 	}
 
 	neverCancel := make(chan bool)
@@ -1214,12 +1312,12 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 
 	fileContent := buf.String()
 
-	// Use the LSP file path (which might be in temp workspace for Rust)
+	// Use the LSP file path (which might be in temp workspace for Rust/C/C++)
 	uri := "file://" + lspFilePath
 
-	// For Rust, also update the physical file in temp workspace
-	// rust-analyzer might read from disk instead of relying only on DidChange
-	if e.mode == mode.Rust && lspFilePath != absPath {
+	// For Rust and C/C++, also update the physical file in temp workspace
+	// LSP servers might read from disk instead of relying only on DidChange
+	if (e.mode == mode.Rust || e.mode == mode.C || e.mode == mode.Cpp) && lspFilePath != absPath {
 		os.WriteFile(lspFilePath, []byte(fileContent), 0644)
 	}
 
@@ -1234,9 +1332,9 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 		if err := client.DidChange(uri, fileContent, lastOpenedVersion); err != nil {
 			return nil, err
 		}
-		// Give rust-analyzer a moment to process the change
+		// Give LSP servers a moment to process the change
 		// This is especially important for the first completion request
-		if e.mode == mode.Rust {
+		if e.mode == mode.Rust || e.mode == mode.C || e.mode == mode.Cpp {
 			time.Sleep(50 * time.Millisecond)
 		}
 	}
@@ -1346,6 +1444,8 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	lspFilePath := absPath
 	if e.mode == mode.Rust {
 		workspaceRoot, lspFilePath = ensureRustWorkspace(workspaceRoot, absPath)
+	} else if e.mode == mode.C || e.mode == mode.Cpp {
+		workspaceRoot, lspFilePath = ensureCWorkspace(workspaceRoot, absPath, config.LanguageID)
 	}
 
 	// Check if LSP client already exists
@@ -1424,8 +1524,8 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	}
 	fileContent := buf.String()
 
-	// For Rust, update physical file
-	if e.mode == mode.Rust && lspFilePath != absPath {
+	// For Rust and C/C++, update physical file in temp workspace
+	if (e.mode == mode.Rust || e.mode == mode.C || e.mode == mode.Cpp) && lspFilePath != absPath {
 		os.WriteFile(lspFilePath, []byte(fileContent), 0644)
 	}
 
@@ -1441,6 +1541,12 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		}
 		lastOpenedURI = uri
 		lastOpenedVersion = 1
+
+		// For C/C++, clangd needs time to index the standard library
+		// Based on testing, indexing typically completes within 3-4 seconds
+		if e.mode == mode.C || e.mode == mode.Cpp {
+			time.Sleep(3 * time.Second)
+		}
 	} else {
 		lastOpenedVersion++
 		if err := client.DidChange(uri, fileContent, lastOpenedVersion); err != nil {
@@ -1450,8 +1556,8 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 			status.SetMessageAfterRedraw(fmt.Sprintf("%s error: %v", lspCommand, err))
 			return false
 		}
-		// Give rust-analyzer a moment to process
-		if e.mode == mode.Rust {
+		// Give LSP servers a moment to process
+		if e.mode == mode.Rust || e.mode == mode.C || e.mode == mode.Cpp {
 			time.Sleep(50 * time.Millisecond)
 		}
 	}
@@ -1466,10 +1572,10 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	}
 
 	// Request completions from LSP
-	// For Rust, retry a few times if we get empty results (rust-analyzer might still be indexing)
+	// For Rust and C/C++, retry a few times if we get empty results (server might still be indexing)
 	var items []LSPCompletionItem
 	maxAttempts := 1
-	if e.mode == mode.Rust {
+	if e.mode == mode.Rust || e.mode == mode.C || e.mode == mode.Cpp {
 		maxAttempts = 5 // Try up to 5 times with delays
 	}
 
@@ -1486,12 +1592,12 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		// Filter and sort completions
 		items = sortAndFilterCompletions(items, currentLine, workspaceRoot, config.FileExtensions)
 
-		// If we got results, or this is not Rust, we're done
-		if len(items) > 0 || e.mode != mode.Rust {
+		// If we got results, or this is not Rust/C/C++, we're done
+		if len(items) > 0 || (e.mode != mode.Rust && e.mode != mode.C && e.mode != mode.Cpp) {
 			break
 		}
 
-		// For Rust, if empty results and not last attempt, wait and retry
+		// For Rust/C/C++, if empty results and not last attempt, wait and retry
 		if attempt < maxAttempts-1 {
 			time.Sleep(500 * time.Millisecond)
 		}
@@ -1511,10 +1617,21 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	}
 
 	// Find the maximum label length for column alignment
+	// For C/C++, use just the function name (before parenthesis)
 	maxLabelLen := 0
 	for _, item := range items {
-		if len(item.Label) > maxLabelLen {
-			maxLabelLen = len(item.Label)
+		labelLen := len(item.Label)
+
+		// For C/C++ functions, measure only the function name part
+		if (e.mode == mode.C || e.mode == mode.Cpp) && strings.Contains(item.Label, "(") {
+			trimmedLabel := strings.TrimSpace(item.Label)
+			if parenIdx := strings.Index(trimmedLabel, "("); parenIdx > 0 {
+				labelLen = len(trimmedLabel[:parenIdx])
+			}
+		}
+
+		if labelLen > maxLabelLen {
+			maxLabelLen = labelLen
 		}
 	}
 
@@ -1522,7 +1639,30 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	choices := make([]string, 0, len(items))
 	for _, item := range items {
 		label := item.Label
-		if item.Detail != "" && len(item.Detail) < 80 {
+
+		// Special formatting for C/C++ functions
+		if (e.mode == mode.C || e.mode == mode.Cpp) && strings.Contains(label, "(") {
+			// Extract function name and parameters
+			// Label format from clangd: " printf(const char *restrict format, ...)"
+			trimmedLabel := strings.TrimSpace(label)
+			if parenIdx := strings.Index(trimmedLabel, "("); parenIdx > 0 {
+				funcName := trimmedLabel[:parenIdx]
+				params := trimmedLabel[parenIdx:]
+
+				// Format: "funcName    (params) -> returnType" with column alignment
+				padding := maxLabelLen - len(funcName) + 2
+				if padding < 2 {
+					padding = 2
+				}
+
+				if item.Detail != "" && len(item.Detail) < 80 {
+					label = funcName + strings.Repeat(" ", padding) + params + " -> " + item.Detail
+				} else {
+					label = funcName + strings.Repeat(" ", padding) + params
+				}
+			}
+		} else if item.Detail != "" && len(item.Detail) < 80 {
+			// Standard formatting for other languages
 			// Pad label to align details in columns
 			padding := maxLabelLen - len(item.Label) + 2 // At least 2 spaces
 			label += strings.Repeat(" ", padding) + item.Detail
@@ -1557,9 +1697,28 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		insertText = insertText[:parenIndex]
 	}
 
-	// Determine if we should add parentheses based on the Detail field
+	// Determine if we should add parentheses based on the Detail or Label field
 	addParens := ""
-	if items[choice].Detail != "" {
+
+	// For C/C++, check the Label for function signature
+	if (e.mode == mode.C || e.mode == mode.Cpp) && strings.Contains(items[choice].Label, "(") {
+		// Label format: " printf(const char *restrict format, ...)"
+		trimmedLabel := strings.TrimSpace(items[choice].Label)
+		if startIdx := strings.Index(trimmedLabel, "("); startIdx >= 0 {
+			if endIdx := strings.LastIndex(trimmedLabel, ")"); endIdx > startIdx {
+				params := strings.TrimSpace(trimmedLabel[startIdx+1 : endIdx])
+				// Check if function takes parameters
+				if params == "" || params == "void" {
+					// No parameters - add closing paren
+					addParens = "()"
+				} else {
+					// Has parameters - add opening paren only
+					addParens = "("
+				}
+			}
+		}
+	} else if items[choice].Detail != "" {
+		// For Rust and other languages, check Detail field
 		detail := items[choice].Detail
 		// Check if this is a function/method (has parentheses in detail)
 		if strings.Contains(detail, "(") && strings.Contains(detail, ")") {
