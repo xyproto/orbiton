@@ -1629,13 +1629,13 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	}
 
 	// Find the maximum label length for column alignment
-	// For C/C++, use just the function name (before parenthesis)
+	// For C/C++/Python, use just the function name (before parenthesis)
 	maxLabelLen := 0
 	for _, item := range items {
 		labelLen := len(item.Label)
 
-		// For C/C++ functions, measure only the function name part
-		if (e.mode == mode.C || e.mode == mode.Cpp) && strings.Contains(item.Label, "(") {
+		// For C/C++/Python functions, measure only the function name part
+		if (e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.Python) && strings.Contains(item.Label, "(") {
 			trimmedLabel := strings.TrimSpace(item.Label)
 			if parenIdx := strings.Index(trimmedLabel, "("); parenIdx > 0 {
 				labelLen = len(trimmedLabel[:parenIdx])
@@ -1652,10 +1652,10 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	for _, item := range items {
 		label := item.Label
 
-		// Special formatting for C/C++ functions
-		if (e.mode == mode.C || e.mode == mode.Cpp) && strings.Contains(label, "(") {
+		// Special formatting for C/C++/Python functions
+		if (e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.Python) && strings.Contains(label, "(") {
 			// Extract function name and parameters
-			// Label format from clangd: " printf(const char *restrict format, ...)"
+			// Label format from clangd/pylsp: " printf(const char *restrict format, ...)" or "print(values, sep, end, file, flush)"
 			trimmedLabel := strings.TrimSpace(label)
 			if parenIdx := strings.Index(trimmedLabel, "("); parenIdx > 0 {
 				funcName := trimmedLabel[:parenIdx]
@@ -1712,9 +1712,9 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	// Determine if we should add parentheses based on the Detail or Label field
 	addParens := ""
 
-	// For C/C++, check the Label for function signature
-	if (e.mode == mode.C || e.mode == mode.Cpp) && strings.Contains(items[choice].Label, "(") {
-		// Label format: " printf(const char *restrict format, ...)"
+	// For C/C++ and Python, check the Label for function signature
+	if (e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.Python) && strings.Contains(items[choice].Label, "(") {
+		// Label format from clangd/pylsp: " printf(const char *restrict format, ...)" or "print(values, sep, end, file, flush)"
 		trimmedLabel := strings.TrimSpace(items[choice].Label)
 		if startIdx := strings.Index(trimmedLabel, "("); startIdx >= 0 {
 			if endIdx := strings.LastIndex(trimmedLabel, ")"); endIdx > startIdx {
@@ -1758,6 +1758,27 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		charsToDelete = rangeEnd - rangeStart
 	} else if currentWord != "" {
 		charsToDelete = len([]rune(currentWord))
+	} else {
+		// If currentWord is empty, extract the prefix from currentLine
+		// This handles cases where CurrentWord() doesn't detect the typed prefix
+		trimmedLine := strings.TrimSpace(currentLine)
+		if strings.Contains(trimmedLine, ".") {
+			// Member access - get text after last dot
+			parts := strings.Split(trimmedLine, ".")
+			if len(parts) > 0 {
+				prefix := parts[len(parts)-1]
+				charsToDelete = len([]rune(prefix))
+			}
+		} else {
+			// Standalone identifier - get last word
+			words := strings.FieldsFunc(trimmedLine, func(r rune) bool {
+				return !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_'
+			})
+			if len(words) > 0 {
+				prefix := words[len(words)-1]
+				charsToDelete = len([]rune(prefix))
+			}
+		}
 	}
 
 	if charsToDelete > 0 {
