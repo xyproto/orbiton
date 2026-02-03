@@ -49,7 +49,7 @@ var spinnerASCII = []string{
 // Returns a quit channel (chan bool).
 // The spinner is shown asynchronously.
 // "true" must be sent to the quit channel once whatever operating that the spinner is spinning for is completed.
-func (e *Editor) Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn time.Duration, textColor vt.AttributeColor, atCursorPosition bool) chan bool {
+func (e *Editor) Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn time.Duration, textColor vt.AttributeColor, cursorAfterText bool) chan bool {
 	quitChan := make(chan bool)
 	go func() {
 		// Divide the startIn time into 5, then wait while listening to the quitChan
@@ -73,28 +73,31 @@ func (e *Editor) Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn t
 			return
 		}
 
-		var x, y uint
-		if atCursorPosition {
-			x, y = e.GetXY()
-			x -= 10
-		} else {
-			// Find a good start location
-			x = uint(int(c.Width()) / 7)
-			y = uint(int(c.Height()) / 7)
-		}
-
 		// Get the terminal codes for coloring the given user message
 		msg := textColor.Get(umsg)
 		if envVT100 {
 			msg = umsg
 		}
 
-		// Move the cursor there and write a message
-		vt.SetXY(x, y)
-		fmt.Print(msg)
+		var x, y uint
+		if cursorAfterText {
+			x, y = e.GetXYAfterText()
+			// Store the position after the message
+			//x += ulen(msg) + 1
+			// Move the cursor there
+			//vt.SetXY(x, y)
+		} else {
+			// Find a good start location
+			x = uint(int(c.Width()) / 7)
+			y = uint(int(c.Height()) / 7)
+			// Move the cursor there
+			vt.SetXY(x, y)
+			// Store the position after the message
+			x += ulen(msg) + 1
+		}
 
-		// Store the position after the message
-		x += ulen(msg) + 1
+		// Write a message
+		fmt.Print(msg)
 
 		// Prepare to output colored text
 		var (

@@ -150,6 +150,13 @@ var lspConfigs = map[mode.Mode]LSPConfig{
 		RootMarkerFiles: []string{"compile_commands.json", ".clangd", "CMakeLists.txt", "Makefile"},
 		FileExtensions:  []string{".cpp", ".cc", ".cxx", ".c++", ".hpp", ".hh", ".hxx", ".h++", ".h"},
 	},
+	mode.Python: {
+		Command:         "pylsp",
+		Args:            []string{},
+		LanguageID:      "python",
+		RootMarkerFiles: []string{"setup.py", "pyproject.toml", "requirements.txt", ".git"},
+		FileExtensions:  []string{".py"},
+	},
 }
 
 // NewLSPClient creates a new LSP client for the given language server command
@@ -1467,8 +1474,8 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		spinnerMsg := fmt.Sprintf("Starting %s", lspCommand)
 		status.SetMessage(spinnerMsg)
 		status.Show(c, e)
-		const atCursorPosition = true
-		quitSpinner = e.Spinner(c, tty, "", "Canceled", 750*time.Millisecond, e.MenuTextColor, atCursorPosition)
+		const cursorAfterText = true
+		quitSpinner = e.Spinner(c, tty, "", "Canceled", 750*time.Millisecond, e.MenuTextColor, cursorAfterText)
 		spinnerActive = true
 		stopSpinner = func() {
 			if spinnerActive {

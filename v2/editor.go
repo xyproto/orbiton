@@ -353,8 +353,8 @@ func (e *Editor) Load(c *vt.Canvas, tty *vt.TTY, fnord FilenameOrData) (string, 
 	)
 
 	// Start a spinner, in a short while
-	const atCursorPosition = false
-	quitChan := e.Spinner(c, tty, fmt.Sprintf("Reading %s... ", fnord.filename), fmt.Sprintf("reading %s: stopped by user", fnord.filename), 200*time.Millisecond, e.ItalicsColor, atCursorPosition)
+	const cursorAfterText = false
+	quitChan := e.Spinner(c, tty, fmt.Sprintf("Reading %s... ", fnord.filename), fmt.Sprintf("reading %s: stopped by user", fnord.filename), 200*time.Millisecond, e.ItalicsColor, cursorAfterText)
 
 	// Stop the spinner at the end of the function
 	defer func() {
@@ -547,8 +547,8 @@ func (e *Editor) SaveAs(c *vt.Canvas, tty *vt.TTY, filename string) error {
 		}
 
 		// Start a spinner, in a short while
-		const atCursorPosition = false
-		quitChan := e.Spinner(c, tty, fmt.Sprintf("Saving %s... ", filename), fmt.Sprintf("saving %s: stopped by user", filename), 200*time.Millisecond, e.ItalicsColor, atCursorPosition)
+		const cursorAfterText = false
+		quitChan := e.Spinner(c, tty, fmt.Sprintf("Saving %s... ", filename), fmt.Sprintf("saving %s: stopped by user", filename), 200*time.Millisecond, e.ItalicsColor, cursorAfterText)
 
 		// Prepare gzipped data
 		if strings.HasSuffix(filename, ".gz") {
@@ -3028,5 +3028,12 @@ func (e *Editor) OnIncludeLine() bool {
 func (e *Editor) GetXY() (uint, uint) {
 	x, _ := e.DataX()
 	y := e.DataY()
+	return uint(x), uint(y)
+}
+
+// GetXYAfterText tries to fetch the current x and y positions, as uints, at the end of the text
+func (e *Editor) GetXYAfterText() (uint, uint) {
+	y := e.DataY()
+	x := e.LastTextPosition(y) + 1
 	return uint(x), uint(y)
 }
