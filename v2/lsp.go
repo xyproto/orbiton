@@ -20,6 +20,11 @@ import (
 	"github.com/xyproto/vt"
 )
 
+// Helper function to check if mode needs special LSP handling (temp workspace, indexing wait, etc.)
+func needsWorkspaceSetup(m mode.Mode) bool {
+	return m == mode.Rust || m == mode.C || m == mode.Cpp
+}
+
 // LSPClient manages communication with a language server
 type LSPClient struct {
 	stdin         io.WriteCloser
@@ -341,7 +346,7 @@ func (lsp *LSPClient) TestReady(m mode.Mode) bool {
 
 	// For rust-analyzer and clangd, use workspace/symbol as a lightweight ping
 	// This doesn't require any files to be open and responds quickly once ready
-	if m == mode.Rust || m == mode.C || m == mode.Cpp {
+	if needsWorkspaceSetup(m) {
 		// Send a simple workspace/symbol query
 		params := map[string]interface{}{
 			"query": "",
@@ -1317,7 +1322,7 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 
 	// For Rust and C/C++, also update the physical file in temp workspace
 	// LSP servers might read from disk instead of relying only on DidChange
-	if (e.mode == mode.Rust || e.mode == mode.C || e.mode == mode.Cpp) && lspFilePath != absPath {
+	if needsWorkspaceSetup(e.mode) && lspFilePath != absPath {
 		os.WriteFile(lspFilePath, []byte(fileContent), 0644)
 	}
 
@@ -1334,7 +1339,7 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 		}
 		// Give LSP servers a moment to process the change
 		// This is especially important for the first completion request
-		if e.mode == mode.Rust || e.mode == mode.C || e.mode == mode.Cpp {
+		if needsWorkspaceSetup(e.mode) {
 			time.Sleep(50 * time.Millisecond)
 		}
 	}
@@ -1525,7 +1530,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	fileContent := buf.String()
 
 	// For Rust and C/C++, update physical file in temp workspace
-	if (e.mode == mode.Rust || e.mode == mode.C || e.mode == mode.Cpp) && lspFilePath != absPath {
+	if needsWorkspaceSetup(e.mode) && lspFilePath != absPath {
 		os.WriteFile(lspFilePath, []byte(fileContent), 0644)
 	}
 
@@ -1557,7 +1562,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 			return false
 		}
 		// Give LSP servers a moment to process
-		if e.mode == mode.Rust || e.mode == mode.C || e.mode == mode.Cpp {
+		if needsWorkspaceSetup(e.mode) {
 			time.Sleep(50 * time.Millisecond)
 		}
 	}
@@ -1575,7 +1580,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	// For Rust and C/C++, retry a few times if we get empty results (server might still be indexing)
 	var items []LSPCompletionItem
 	maxAttempts := 1
-	if e.mode == mode.Rust || e.mode == mode.C || e.mode == mode.Cpp {
+	if needsWorkspaceSetup(e.mode) {
 		maxAttempts = 5 // Try up to 5 times with delays
 	}
 
@@ -1592,8 +1597,8 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		// Filter and sort completions
 		items = sortAndFilterCompletions(items, currentLine, workspaceRoot, config.FileExtensions)
 
-		// If we got results, or this is not Rust/C/C++, we're done
-		if len(items) > 0 || (e.mode != mode.Rust && e.mode != mode.C && e.mode != mode.Cpp) {
+		// If we got results, or this doesn't need workspace setup, we're done
+		if len(items) > 0 || !needsWorkspaceSetup(e.mode) {
 			break
 		}
 
