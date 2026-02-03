@@ -25,14 +25,14 @@ func TestCompletionFiltering(t *testing.T) {
 			minItems: 3,
 		},
 		{
-			name: "no filter without dot",
+			name: "filter by prefix without dot",
 			items: []LSPCompletionItem{
 				{Label: "fmt", Kind: 9},
 				{Label: "Println", Kind: 3},
 			},
 			context:  "f",
 			filtered: "",
-			minItems: 2,
+			minItems: 1, // Only "fmt" should match prefix "f"
 		},
 	}
 

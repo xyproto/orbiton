@@ -568,7 +568,8 @@ func GetReadyLSPClient(m mode.Mode, workspaceRoot string) *LSPClient {
 
 // GetOrCreateLSPClient returns the LSP client for the given mode, creating it if necessary
 // If a client exists for a different workspace, it will be shut down and recreated
-func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string) (*LSPClient, error) {
+// The cancel channel can be used to abort the operation early
+func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string, cancel <-chan bool) (*LSPClient, error) {
 	key := lspClientKey(m, workspaceRoot)
 
 	lspMutex.Lock()
@@ -585,13 +586,18 @@ func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string) (*LSPClient, error)
 
 		// Wait up to 3 seconds for initialization
 		for i := 0; i < 30; i++ {
-			time.Sleep(100 * time.Millisecond)
-			lspMutex.Lock()
-			if client.initialized {
+			select {
+			case <-cancel:
+				return nil, errors.New("cancelled by user")
+			default:
+				time.Sleep(100 * time.Millisecond)
+				lspMutex.Lock()
+				if client.initialized {
+					lspMutex.Unlock()
+					return client, nil
+				}
 				lspMutex.Unlock()
-				return client, nil
 			}
-			lspMutex.Unlock()
 		}
 		// Timed out waiting for initialization
 		return nil, errors.New("LSP client initialization timeout")
@@ -629,15 +635,21 @@ func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string) (*LSPClient, error)
 	}
 
 	// For rust-analyzer, wait until it's truly ready by testing it
-	// Try up to 20 times with 300ms intervals (6 seconds total)
+	// Try up to 50 times with 200ms intervals (10 seconds total)
 	if m == mode.Rust {
 		ready := false
-		for i := 0; i < 20; i++ {
-			if client.TestReady(m) {
-				ready = true
-				break
+		for i := 0; i < 50; i++ {
+			select {
+			case <-cancel:
+				client.Shutdown()
+				return nil, errors.New("cancelled by user")
+			default:
+				if client.TestReady(m) {
+					ready = true
+					break
+				}
+				time.Sleep(200 * time.Millisecond)
 			}
-			time.Sleep(300 * time.Millisecond)
 		}
 
 		if !ready {
@@ -667,7 +679,8 @@ func TriggerLSPInitialization(m mode.Mode, workspaceRoot string) {
 
 	// Start LSP in background (fire and forget)
 	go func() {
-		GetOrCreateLSPClient(m, workspaceRoot)
+		neverCancel := make(chan bool)
+		GetOrCreateLSPClient(m, workspaceRoot, neverCancel)
 	}()
 }
 
@@ -1163,7 +1176,8 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 		workspaceRoot, lspFilePath = ensureRustWorkspace(workspaceRoot, absPath)
 	}
 
-	client, err := GetOrCreateLSPClient(e.mode, workspaceRoot)
+	neverCancel := make(chan bool)
+	client, err := GetOrCreateLSPClient(e.mode, workspaceRoot, neverCancel)
 	if err != nil {
 		return nil, err
 	}
@@ -1342,6 +1356,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	var quitSpinner chan bool
 	var spinnerActive bool
 	var stopSpinner func()
+	neverCancel := make(chan bool) // Never cancels - Esc shows message but doesn't abort LSP init
 
 	if isNewClient {
 		spinnerMsg := fmt.Sprintf("Starting %s", lspCommand)
@@ -1361,7 +1376,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	}
 
 	// STEP 3-5: Get or create LSP client
-	client, err := GetOrCreateLSPClient(e.mode, workspaceRoot)
+	client, err := GetOrCreateLSPClient(e.mode, workspaceRoot, neverCancel)
 	if err != nil {
 		if isNewClient {
 			stopSpinner()
