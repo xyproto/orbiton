@@ -55,7 +55,7 @@ func (e *Editor) tryLSPDefinition() *LSPLocation {
 	TriggerLSPInitialization(e.mode, workspaceRoot)
 
 	// Check if LSP is already ready (non-blocking)
-	client := GetReadyLSPClient(e.mode)
+	client := GetReadyLSPClient(e.mode, workspaceRoot)
 	if client == nil {
 		return nil // LSP not ready yet, use fallback
 	}

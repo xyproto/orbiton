@@ -353,7 +353,8 @@ func (e *Editor) Load(c *vt.Canvas, tty *vt.TTY, fnord FilenameOrData) (string, 
 	)
 
 	// Start a spinner, in a short while
-	quitChan := Spinner(c, tty, fmt.Sprintf("Reading %s... ", fnord.filename), fmt.Sprintf("reading %s: stopped by user", fnord.filename), 200*time.Millisecond, e.ItalicsColor)
+	const atCursorPosition = false
+	quitChan := e.Spinner(c, tty, fmt.Sprintf("Reading %s... ", fnord.filename), fmt.Sprintf("reading %s: stopped by user", fnord.filename), 200*time.Millisecond, e.ItalicsColor, atCursorPosition)
 
 	// Stop the spinner at the end of the function
 	defer func() {
@@ -546,7 +547,8 @@ func (e *Editor) SaveAs(c *vt.Canvas, tty *vt.TTY, filename string) error {
 		}
 
 		// Start a spinner, in a short while
-		quitChan := Spinner(c, tty, fmt.Sprintf("Saving %s... ", filename), fmt.Sprintf("saving %s: stopped by user", filename), 200*time.Millisecond, e.ItalicsColor)
+		const atCursorPosition = false
+		quitChan := e.Spinner(c, tty, fmt.Sprintf("Saving %s... ", filename), fmt.Sprintf("saving %s: stopped by user", filename), 200*time.Millisecond, e.ItalicsColor, atCursorPosition)
 
 		// Prepare gzipped data
 		if strings.HasSuffix(filename, ".gz") {
@@ -3020,4 +3022,11 @@ func (e *Editor) EnableAndPlaceCursor(c *vt.Canvas) {
 // OnIncludeLine checks if it looks like the current line is a C or C++ #include
 func (e *Editor) OnIncludeLine() bool {
 	return strings.HasPrefix(e.TrimmedLine(), "#include")
+}
+
+// GetXY tries to fetch the current x and y positions, as uints
+func (e *Editor) GetXY() (uint, uint) {
+	x, _ := e.DataX()
+	y := e.DataY()
+	return uint(x), uint(y)
 }

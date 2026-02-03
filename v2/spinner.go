@@ -49,7 +49,7 @@ var spinnerASCII = []string{
 // Returns a quit channel (chan bool).
 // The spinner is shown asynchronously.
 // "true" must be sent to the quit channel once whatever operating that the spinner is spinning for is completed.
-func Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn time.Duration, textColor vt.AttributeColor) chan bool {
+func (e *Editor) Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn time.Duration, textColor vt.AttributeColor, atCursorPosition bool) chan bool {
 	quitChan := make(chan bool)
 	go func() {
 		// Divide the startIn time into 5, then wait while listening to the quitChan
@@ -73,14 +73,18 @@ func Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn time.Duration
 			return
 		}
 
-		var (
+		var x, y uint
+		if atCursorPosition {
+			x, y = e.GetXY()
+			x -= 10
+		} else {
 			// Find a good start location
 			x = uint(int(c.Width()) / 7)
 			y = uint(int(c.Height()) / 7)
+		}
 
-			// Get the terminal codes for coloring the given user message
-			msg = textColor.Get(umsg)
-		)
+		// Get the terminal codes for coloring the given user message
+		msg := textColor.Get(umsg)
 		if envVT100 {
 			msg = umsg
 		}
@@ -129,6 +133,7 @@ func Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn time.Duration
 				case 27, 113, 17, 3: // esc, q, ctrl-q or ctrl-c
 					quitMessage(tty, qmsg)
 				}
+				time.Sleep(32 * time.Millisecond) // for a smoother animation
 			}
 		}
 	}()
