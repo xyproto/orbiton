@@ -937,18 +937,32 @@ func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspa
 	// Trim whitespace from context
 	context = strings.TrimSpace(context)
 
-	// Extract the prefix being typed after the dot/colon
+	// Determine if we're completing after a dot/colon (member access) or a standalone identifier
 	var prefix string
+	var isMemberAccess bool
+
 	if strings.Contains(context, ".") {
 		parts := strings.Split(context, ".")
 		if len(parts) > 0 {
 			prefix = strings.ToLower(parts[len(parts)-1])
 		}
-	} else if strings.Contains(context, ":") {
-		parts := strings.Split(context, ":")
+		isMemberAccess = true
+	} else if strings.Contains(context, ":") && strings.Contains(context, "::") {
+		// Namespace/module access like std::
+		parts := strings.Split(context, "::")
 		if len(parts) > 0 {
 			prefix = strings.ToLower(parts[len(parts)-1])
 		}
+		isMemberAccess = true
+	} else {
+		// Completing a standalone identifier - extract the last word
+		words := strings.FieldsFunc(context, func(r rune) bool {
+			return !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_'
+		})
+		if len(words) > 0 {
+			prefix = strings.ToLower(words[len(words)-1])
+		}
+		isMemberAccess = false
 	}
 
 	// Common methods that should be prioritized (especially for Rust)
@@ -992,9 +1006,11 @@ func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspa
 			continue
 		}
 
-		// Boost common methods
-		if boost, isCommon := commonMethods[strings.ToLower(item.Label)]; isCommon {
-			score += boost
+		// Boost common methods (only for member access)
+		if isMemberAccess {
+			if boost, isCommon := commonMethods[strings.ToLower(item.Label)]; isCommon {
+				score += boost
+			}
 		}
 
 		// Use codebase statistics
@@ -1013,24 +1029,47 @@ func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspa
 			score += (100 - len(item.SortText))
 		}
 
-		// Prioritize by item kind (LSP completion item kinds)
-		switch item.Kind {
-		case 2: // Method
-			score += 100
-		case 3: // Function
-			score += 80
-		case 5: // Field
-			score += 70
-		case 6: // Variable
-			score += 60
-		case 21: // Constant
-			score += 50
-		case 22: // Struct
-			score += 40
-		case 8: // Interface/Trait
-			score += 40
-		case 9: // Module
-			score += 30
+		// Prioritize by item kind - different priorities for member access vs standalone
+		if isMemberAccess {
+			// Completing after dot - prioritize methods
+			switch item.Kind {
+			case 2: // Method
+				score += 200
+			case 5: // Field
+				score += 150
+			case 3: // Function
+				score += 100
+			case 6: // Variable
+				score += 50
+			case 21: // Constant
+				score += 40
+			case 22: // Struct
+				score += 30
+			case 8: // Interface/Trait
+				score += 20
+			case 9: // Module
+				score += 10
+			}
+		} else {
+			// Completing standalone identifier - prioritize variables and local items
+			switch item.Kind {
+			case 6: // Variable - highest priority for standalone completion
+				score += 500
+			case 5: // Field
+				score += 400
+			case 21: // Constant
+				score += 300
+			case 3: // Function
+				score += 200
+			case 22: // Struct
+				score += 150
+			case 8: // Interface/Trait
+				score += 100
+			case 2: // Method - lower priority for standalone
+				score += 50
+			case 9: // Module
+				score += 30
+			}
 		}
 
 		// Penalize complex signatures (more parameters = more complex)
