@@ -65,6 +65,21 @@ type LSPCompletionList struct {
 	IsIncomplete bool                `json:"isIncomplete"`
 }
 
+// LSPLocation represents a location in a file
+type LSPLocation struct {
+	URI   string `json:"uri"`
+	Range struct {
+		Start struct {
+			Line      int `json:"line"`
+			Character int `json:"character"`
+		} `json:"start"`
+		End struct {
+			Line      int `json:"line"`
+			Character int `json:"character"`
+		} `json:"end"`
+	} `json:"range"`
+}
+
 type scoredItem struct {
 	item  LSPCompletionItem
 	score int
@@ -73,15 +88,59 @@ type scoredItem struct {
 const (
 	lspInitTimeout       = 5 * time.Second
 	lspCompletionTimeout = 2 * time.Second
+	lspDefinitionTimeout = 200 * time.Millisecond // Fast timeout for go-to-definition
 	lspShutdownTimeout   = 2 * time.Second
 )
 
 var (
-	goLSPClient       *LSPClient
+	lspClients        = make(map[mode.Mode]*LSPClient)
 	lspMutex          sync.Mutex
 	lastOpenedURI     string
 	lastOpenedVersion int
+	rustTempDirs      = make(map[mode.Mode]string) // Track temp directories for cleanup
+	rustFileMapping   = make(map[string]string)    // Map original file path -> temp workspace file path
 )
+
+// LSPConfig holds configuration for a language server
+type LSPConfig struct {
+	Command         string
+	Args            []string
+	LanguageID      string
+	RootMarkerFiles []string
+	FileExtensions  []string
+}
+
+// Language server configurations
+var lspConfigs = map[mode.Mode]LSPConfig{
+	mode.Go: {
+		Command:         "gopls",
+		Args:            []string{},
+		LanguageID:      "go",
+		RootMarkerFiles: []string{"go.mod", "go.work"},
+		FileExtensions:  []string{".go"},
+	},
+	mode.Rust: {
+		Command:         "rust-analyzer",
+		Args:            []string{},
+		LanguageID:      "rust",
+		RootMarkerFiles: []string{"Cargo.toml", "Cargo.lock", "rust-project.json"},
+		FileExtensions:  []string{".rs"},
+	},
+	mode.C: {
+		Command:         "clangd",
+		Args:            []string{"--background-index"},
+		LanguageID:      "c",
+		RootMarkerFiles: []string{"compile_commands.json", ".clangd", "CMakeLists.txt", "Makefile"},
+		FileExtensions:  []string{".c", ".h"},
+	},
+	mode.Cpp: {
+		Command:         "clangd",
+		Args:            []string{"--background-index"},
+		LanguageID:      "cpp",
+		RootMarkerFiles: []string{"compile_commands.json", ".clangd", "CMakeLists.txt", "Makefile"},
+		FileExtensions:  []string{".cpp", ".cc", ".cxx", ".c++", ".hpp", ".hh", ".hxx", ".h++", ".h"},
+	},
+}
 
 // NewLSPClient creates a new LSP client for the given language server command
 func NewLSPClient(serverCmd string, args []string, workspaceRoot string) (*LSPClient, error) {
@@ -244,6 +303,7 @@ func (lsp *LSPClient) Initialize() error {
 	params := map[string]interface{}{
 		"processId": os.Getpid(),
 		"rootUri":   "file://" + lsp.workspaceRoot,
+		"rootPath":  lsp.workspaceRoot, // Some servers (like rust-analyzer) prefer this
 		"capabilities": map[string]interface{}{
 			"textDocument": map[string]interface{}{
 				"completion": map[string]interface{}{
@@ -346,6 +406,57 @@ func (lsp *LSPClient) GetCompletions(uri string, line, character int) ([]LSPComp
 	return []LSPCompletionItem{}, nil
 }
 
+// GetDefinition requests the definition location for a symbol at the given position
+func (lsp *LSPClient) GetDefinition(uri string, line, character int, timeout time.Duration) (*LSPLocation, error) {
+	if !lsp.initialized {
+		return nil, errors.New("LSP client not initialized")
+	}
+	params := map[string]interface{}{
+		"textDocument": map[string]interface{}{
+			"uri": uri,
+		},
+		"position": map[string]interface{}{
+			"line":      line,
+			"character": character,
+		},
+	}
+	if _, err := lsp.sendRequest("textDocument/definition", params); err != nil {
+		return nil, err
+	}
+	response, err := lsp.readResponse(timeout)
+	if err != nil {
+		return nil, err
+	}
+	resultData, ok := response["result"]
+	if !ok {
+		if errorData, hasError := response["error"]; hasError {
+			return nil, fmt.Errorf("LSP error: %v", errorData)
+		}
+		return nil, errors.New("no result in definition response")
+	}
+	if resultData == nil {
+		return nil, errors.New("no definition found")
+	}
+	resultBytes, err := json.Marshal(resultData)
+	if err != nil {
+		return nil, err
+	}
+
+	// Try single location
+	var location LSPLocation
+	if err := json.Unmarshal(resultBytes, &location); err == nil && location.URI != "" {
+		return &location, nil
+	}
+
+	// Try array of locations (take first one)
+	var locations []LSPLocation
+	if err := json.Unmarshal(resultBytes, &locations); err == nil && len(locations) > 0 {
+		return &locations[0], nil
+	}
+
+	return nil, errors.New("could not parse definition response")
+}
+
 // Shutdown cleanly shuts down the LSP client
 func (lsp *LSPClient) Shutdown() error {
 	lsp.mutex.Lock()
@@ -383,15 +494,31 @@ func (lsp *LSPClient) Shutdown() error {
 	return nil
 }
 
-// GetOrCreateGoLSPClient returns the global Go LSP client, creating it if necessary
-func GetOrCreateGoLSPClient(workspaceRoot string) (*LSPClient, error) {
+// GetReadyLSPClient returns the LSP client if it's already running and initialized, or nil
+// This is a non-blocking check - does not create or wait for LSP
+func GetReadyLSPClient(m mode.Mode) *LSPClient {
 	lspMutex.Lock()
 	defer lspMutex.Unlock()
 
-	if goLSPClient != nil && goLSPClient.running {
-		return goLSPClient, nil
+	if client, exists := lspClients[m]; exists && client != nil && client.running && client.initialized {
+		return client
 	}
-	client, err := NewLSPClient("gopls", []string{}, workspaceRoot)
+	return nil
+}
+
+// GetOrCreateLSPClient returns the LSP client for the given mode, creating it if necessary
+func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string) (*LSPClient, error) {
+	lspMutex.Lock()
+	defer lspMutex.Unlock()
+
+	if client, exists := lspClients[m]; exists && client != nil && client.running {
+		return client, nil
+	}
+	config, ok := lspConfigs[m]
+	if !ok {
+		return nil, fmt.Errorf("no LSP configuration for mode %v", m)
+	}
+	client, err := NewLSPClient(config.Command, config.Args, workspaceRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -399,28 +526,117 @@ func GetOrCreateGoLSPClient(workspaceRoot string) (*LSPClient, error) {
 		client.Shutdown()
 		return nil, err
 	}
-	goLSPClient = client
-	return goLSPClient, nil
+	lspClients[m] = client
+	return client, nil
 }
 
-// Common Go functions ranked by popularity, as a fallback
-var commonGoFunctions = map[string]int{
-	"Println": 100, "Printf": 99, "Print": 98,
-	"Sprintf": 95, "Errorf": 94, "Error": 93,
-	"Fprintf": 90, "Scanln": 85, "Scanf": 84,
-	"Scan": 83, "New": 80, "Make": 75,
-	"Append": 70, "Len": 68, "Close": 65,
-	"Read": 63, "Write": 62, "String": 60,
-	"Open": 58, "Create": 56, "Fatal": 55,
-	"Fatalf": 54, "Log": 52, "Panic": 50,
-	"Marshal": 48, "Unmarshal": 47, "Decode": 45,
-	"Encode": 44, "Parse": 42, "Format": 40,
-	"Atoi": 92, "Itoa": 91, "ParseInt": 88, "ParseFloat": 87,
-	"FormatInt": 85, "FormatFloat": 84, "ParseBool": 82,
+// TriggerLSPInitialization starts LSP initialization in the background if not already running
+// This is called on first Tab or first Ctrl+G to warm up the LSP server
+func TriggerLSPInitialization(m mode.Mode, workspaceRoot string) {
+	// Quick check without locking - if already exists, don't bother
+	lspMutex.Lock()
+	if client, exists := lspClients[m]; exists && client != nil {
+		lspMutex.Unlock()
+		return
+	}
+	lspMutex.Unlock()
+
+	// Start LSP in background (fire and forget)
+	go func() {
+		GetOrCreateLSPClient(m, workspaceRoot)
+	}()
 }
 
-// gatherCodebaseStatistics scans *.go files to find usage frequency
-func gatherCodebaseStatistics(workspaceRoot string) map[string]int {
+// findWorkspaceRoot finds the workspace root directory based on marker files
+func findWorkspaceRoot(startPath string, markerFiles []string) string {
+	dir := filepath.Dir(startPath)
+	for {
+		for _, marker := range markerFiles {
+			if _, err := os.Stat(filepath.Join(dir, marker)); err == nil {
+				return dir
+			}
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			// Reached filesystem root, use starting directory
+			return filepath.Dir(startPath)
+		}
+		dir = parent
+	}
+}
+
+// ensureRustWorkspace creates a minimal Cargo.toml for standalone Rust files
+// For standalone files, it creates a temporary workspace to avoid cluttering user directories
+// Returns (workspaceRoot, mappedFilePath) where mappedFilePath is the file path to use for LSP
+func ensureRustWorkspace(workspaceRoot, filePath string) (string, string) {
+	cargoPath := filepath.Join(workspaceRoot, "Cargo.toml")
+
+	// Check if Cargo.toml already exists (real Rust project)
+	if _, err := os.Stat(cargoPath); err == nil {
+		return workspaceRoot, filePath // Use existing workspace, no mapping needed
+	}
+
+	// Check if we already created a temp workspace for this file
+	lspMutex.Lock()
+	if mappedPath, exists := rustFileMapping[filePath]; exists {
+		// Already have a temp workspace
+		tempDir := rustTempDirs[mode.Rust]
+		lspMutex.Unlock()
+		return tempDir, mappedPath
+	}
+	lspMutex.Unlock()
+
+	// For standalone files, create a temporary workspace
+	// This avoids cluttering user directories with auto-generated Cargo.toml
+	tempDir, err := os.MkdirTemp("", "orbiton-rust-*")
+	if err != nil {
+		return workspaceRoot, filePath // Fallback to original if can't create temp
+	}
+
+	// Create minimal Cargo.toml in temp directory
+	cargoPath = filepath.Join(tempDir, "Cargo.toml")
+	minimalCargo := `[package]
+name = "standalone"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+`
+
+	if err := os.WriteFile(cargoPath, []byte(minimalCargo), 0644); err != nil {
+		os.RemoveAll(tempDir)
+		return workspaceRoot, filePath // Fallback if write fails
+	}
+
+	// Create src directory in temp workspace
+	srcDir := filepath.Join(tempDir, "src")
+	if err := os.MkdirAll(srcDir, 0755); err != nil {
+		os.RemoveAll(tempDir)
+		return workspaceRoot, filePath
+	}
+
+	// Symlink the source file into temp workspace
+	// If symlink fails, copy the file instead
+	targetPath := filepath.Join(srcDir, filepath.Base(filePath))
+	if err := os.Symlink(filePath, targetPath); err != nil {
+		// Symlink failed, try copying instead
+		if content, readErr := os.ReadFile(filePath); readErr == nil {
+			os.WriteFile(targetPath, content, 0644)
+		}
+	}
+
+	// Track temp directory for cleanup on exit
+	lspMutex.Lock()
+	rustTempDirs[mode.Rust] = tempDir
+	// Map original file path to temp workspace file path
+	rustFileMapping[filePath] = targetPath
+	lspMutex.Unlock()
+
+	return tempDir, targetPath // Use temp workspace and mapped file path
+}
+
+// gatherCodebaseStatistics scans files to find usage frequency
+func gatherCodebaseStatistics(workspaceRoot string, fileExtensions []string) map[string]int {
 	stats := make(map[string]int)
 	filepath.WalkDir(workspaceRoot, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
@@ -428,12 +644,20 @@ func gatherCodebaseStatistics(workspaceRoot string) map[string]int {
 		}
 		if d.IsDir() {
 			name := d.Name()
-			if name == "vendor" || name == ".git" || strings.HasPrefix(name, ".") {
+			if name == "vendor" || name == "target" || name == "build" || name == ".git" || strings.HasPrefix(name, ".") {
 				return filepath.SkipDir
 			}
 			return nil
 		}
-		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+		// Check if file has one of the supported extensions
+		matchesExtension := false
+		for _, ext := range fileExtensions {
+			if strings.HasSuffix(path, ext) && !strings.HasSuffix(path, "_test"+ext) {
+				matchesExtension = true
+				break
+			}
+		}
+		if !matchesExtension {
 			return nil
 		}
 		content, err := os.ReadFile(path)
@@ -459,11 +683,11 @@ func gatherCodebaseStatistics(workspaceRoot string) map[string]int {
 }
 
 // sortAndFilterCompletions sorts completions by relevance
-func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspaceRoot string) []LSPCompletionItem {
+func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspaceRoot string, fileExtensions []string) []LSPCompletionItem {
 	// Trim whitespace from context
 	context = strings.TrimSpace(context)
 	// Gather codebase statistics
-	codebaseStats := gatherCodebaseStatistics(workspaceRoot)
+	codebaseStats := gatherCodebaseStatistics(workspaceRoot, fileExtensions)
 	hasDot := strings.HasSuffix(context, ".")
 	var packageName string
 	if hasDot {
@@ -479,9 +703,6 @@ func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspa
 		}
 		if count, found := codebaseStats[item.Label]; found && count > 0 {
 			score += count * 100
-		}
-		if popularity, ok := commonGoFunctions[item.Label]; ok {
-			score += popularity / 2
 		}
 		if item.Preselect {
 			score += 50
@@ -513,35 +734,36 @@ func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspa
 	return result
 }
 
-// GetGoCompletions is a convenience function to get completions for Go code
-func (e *Editor) GetGoCompletions() ([]LSPCompletionItem, error) {
+// GetLSPCompletions is a function to get completions for any supported language
+func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 	const maxCompletions = 15
-	if e.mode != mode.Go {
-		return nil, errors.New("not a Go file")
+
+	config, ok := lspConfigs[e.mode]
+	if !ok {
+		return nil, fmt.Errorf("LSP not supported for mode %v", e.mode)
 	}
+
 	absPath, err := filepath.Abs(e.filename)
 	if err != nil {
 		return nil, err
 	}
-	// Find workspace root (for go.mod)
-	workspaceRoot := filepath.Dir(absPath)
-	for {
-		if _, err := os.Stat(filepath.Join(workspaceRoot, "go.mod")); err == nil {
-			break
-		}
-		parent := filepath.Dir(workspaceRoot)
-		if parent == workspaceRoot {
-			// Reached root, use current directory
-			workspaceRoot = filepath.Dir(absPath)
-			break
-		}
-		workspaceRoot = parent
+
+	// Find workspace root
+	workspaceRoot := findWorkspaceRoot(absPath, config.RootMarkerFiles)
+
+	// For Rust standalone files, create a temporary workspace
+	// and get the mapped file path that rust-analyzer will understand
+	lspFilePath := absPath
+	if e.mode == mode.Rust {
+		workspaceRoot, lspFilePath = ensureRustWorkspace(workspaceRoot, absPath)
 	}
-	client, err := GetOrCreateGoLSPClient(workspaceRoot)
+
+	client, err := GetOrCreateLSPClient(e.mode, workspaceRoot)
 	if err != nil {
 		return nil, err
 	}
-	// Get current position FIRST (LSP uses 0-indexed lines and characters)
+
+	// Get current position (LSP uses 0-indexed lines and characters)
 	line := int(e.DataY())
 	x, err := e.DataX()
 	if err != nil {
@@ -551,6 +773,7 @@ func (e *Editor) GetGoCompletions() ([]LSPCompletionItem, error) {
 			x = len(lineRunes)
 		}
 	}
+
 	// Get the current line content for context BEFORE any LSP operations
 	var currentLine string
 	if lineRunes, ok := e.lines[line]; ok {
@@ -561,6 +784,7 @@ func (e *Editor) GetGoCompletions() ([]LSPCompletionItem, error) {
 			currentLine = string(lineRunes)
 		}
 	}
+
 	var buf bytes.Buffer
 	for i := 0; i < len(e.lines); i++ {
 		if lineContent, ok := e.lines[i]; ok {
@@ -568,9 +792,11 @@ func (e *Editor) GetGoCompletions() ([]LSPCompletionItem, error) {
 		}
 		buf.WriteRune('\n')
 	}
-	uri := "file://" + absPath
+
+	// Use the LSP file path (which might be in temp workspace for Rust)
+	uri := "file://" + lspFilePath
 	if lastOpenedURI != uri {
-		if err := client.DidOpen(uri, "go", buf.String()); err != nil {
+		if err := client.DidOpen(uri, config.LanguageID, buf.String()); err != nil {
 			return nil, err
 		}
 		lastOpenedURI = uri
@@ -581,14 +807,17 @@ func (e *Editor) GetGoCompletions() ([]LSPCompletionItem, error) {
 			return nil, err
 		}
 	}
+
 	items, err := client.GetCompletions(uri, line, x)
 	if err != nil {
 		return nil, err
 	}
-	items = sortAndFilterCompletions(items, currentLine, workspaceRoot)
+
+	items = sortAndFilterCompletions(items, currentLine, workspaceRoot, config.FileExtensions)
 	if len(items) > maxCompletions {
 		items = items[:maxCompletions]
 	}
+
 	return items, nil
 }
 
@@ -597,16 +826,60 @@ func ShutdownAllLSPClients() {
 	lspMutex.Lock()
 	defer lspMutex.Unlock()
 
-	if goLSPClient != nil {
-		goLSPClient.Shutdown()
-		goLSPClient = nil
+	for mode, client := range lspClients {
+		if client != nil {
+			client.Shutdown()
+		}
+		delete(lspClients, mode)
+	}
+
+	// Clean up temporary Rust workspaces
+	for mode, tempDir := range rustTempDirs {
+		if tempDir != "" {
+			os.RemoveAll(tempDir)
+		}
+		delete(rustTempDirs, mode)
 	}
 }
 
-// handleGoCompletion handles LSP-based Go code completion in the editor
-func (e *Editor) handleGoCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TTY, undo *Undo) bool {
-	items, err := e.GetGoCompletions()
-	if err != nil || len(items) == 0 {
+// ShouldOfferLSPCompletion checks if LSP completion should be offered based on context
+func (e *Editor) ShouldOfferLSPCompletion() bool {
+	// Check if LSP is supported for this mode
+	if _, ok := lspConfigs[e.mode]; !ok {
+		return false
+	}
+
+	// Check if syntax highlighting is enabled
+	if !e.syntaxHighlight {
+		return false
+	}
+
+	// Check if cursor position is valid
+	if e.pos.sx <= 0 {
+		return false
+	}
+
+	// Check if we're in a completion context (after identifier or dot)
+	leftRune := e.LeftRune()
+	if !unicode.IsLetter(leftRune) && !unicode.IsDigit(leftRune) && leftRune != '_' && leftRune != '.' {
+		return false
+	}
+
+	return true
+}
+
+// handleLSPCompletion handles LSP-based code completion in the editor for any supported language
+func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TTY, undo *Undo) bool {
+	if !e.ShouldOfferLSPCompletion() {
+		return false
+	}
+	items, err := e.GetLSPCompletions()
+	if err != nil {
+		// Show error briefly to help user understand what went wrong
+		status.SetMessageAfterRedraw("LSP: " + err.Error())
+		return false
+	}
+	if len(items) == 0 {
 		return false
 	}
 

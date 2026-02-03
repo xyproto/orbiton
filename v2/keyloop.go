@@ -1316,12 +1316,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			r := e.Rune()
 			leftRune := e.LeftRune()
 
-			if e.mode == mode.Go && e.syntaxHighlight && e.pos.sx > 0 {
-				if unicode.IsLetter(leftRune) || unicode.IsDigit(leftRune) || leftRune == '_' || leftRune == '.' {
-					if e.handleGoCompletion(c, status, tty, undo) {
-						break
-					}
-				}
+			// Try LSP completion for supported languages
+			if e.handleLSPCompletion(c, status, tty, undo) {
+				break
 			}
 
 			trimmedLine := e.TrimmedLine()

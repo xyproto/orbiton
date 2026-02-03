@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/xyproto/files"
+	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 )
 
@@ -13,9 +15,132 @@ var backFunctions []func()
 
 // GoToDefinition tries to find the definition of the given string, saves the current location and jumps to the location of the definition.
 // Returns true if it was possible to go to the definition.
-// This function is currently very experimental and may only work for a few languages, and for a few definitions!
-// TODO: Parse some programming languages before jumping.
+// First tries LSP if available, then falls back to text search.
 func (e *Editor) GoToDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bool {
+
+	// Try LSP first if it's already running and initialized
+	if lspLocation := e.tryLSPDefinition(); lspLocation != nil {
+		return e.jumpToLSPLocation(lspLocation, tty, c, status)
+	}
+
+	// Fallback to text-based search (existing implementation below)
+	return e.textSearchDefinition(tty, c, status)
+}
+
+// tryLSPDefinition attempts to get definition from LSP if ready (non-blocking)
+// Returns nil if LSP is not available or not ready
+func (e *Editor) tryLSPDefinition() *LSPLocation {
+	// Check if LSP is supported for this mode
+	config, ok := lspConfigs[e.mode]
+	if !ok {
+		return nil
+	}
+
+	// Get workspace root and absolute path
+	absPath, err := filepath.Abs(e.filename)
+	if err != nil {
+		return nil
+	}
+	workspaceRoot := findWorkspaceRoot(absPath, config.RootMarkerFiles)
+
+	// For Rust standalone files, create a temporary workspace
+	// and get the mapped file path that rust-analyzer will understand
+	lspFilePath := absPath
+	if e.mode == mode.Rust {
+		workspaceRoot, lspFilePath = ensureRustWorkspace(workspaceRoot, absPath)
+	}
+
+	// Trigger background LSP initialization if not already running
+	// This won't help the current call but will help future ones
+	TriggerLSPInitialization(e.mode, workspaceRoot)
+
+	// Check if LSP is already ready (non-blocking)
+	client := GetReadyLSPClient(e.mode)
+	if client == nil {
+		return nil // LSP not ready yet, use fallback
+	}
+
+	// Ensure document is synced with LSP
+	var buf bytes.Buffer
+	for i := 0; i < len(e.lines); i++ {
+		if lineContent, ok := e.lines[i]; ok {
+			buf.WriteString(string(lineContent))
+		}
+		buf.WriteRune('\n')
+	}
+
+	// Use the LSP file path (which might be in temp workspace for Rust)
+	uri := "file://" + lspFilePath
+	if lastOpenedURI != uri {
+		if err := client.DidOpen(uri, config.LanguageID, buf.String()); err != nil {
+			return nil
+		}
+		lastOpenedURI = uri
+		lastOpenedVersion = 1
+	} else {
+		lastOpenedVersion++
+		if err := client.DidChange(uri, buf.String(), lastOpenedVersion); err != nil {
+			return nil
+		}
+	}
+
+	// Get current cursor position
+	line := int(e.DataY())
+	x, err := e.DataX()
+	if err != nil {
+		x = 0
+	}
+
+	// Request definition with short timeout
+	location, err := client.GetDefinition(uri, line, x, lspDefinitionTimeout)
+	if err != nil {
+		return nil
+	}
+
+	return location
+}
+
+// jumpToLSPLocation jumps to a location returned by LSP
+func (e *Editor) jumpToLSPLocation(location *LSPLocation, tty *vt.TTY, c *vt.Canvas, status *StatusBar) bool {
+	// Parse URI (format: "file:///path/to/file")
+	targetPath := strings.TrimPrefix(location.URI, "file://")
+
+	// Capture current state for back navigation
+	oldFilename := e.filename
+	oldLineIndex := e.LineIndex()
+
+	// Switch to target file if different
+	if targetPath != e.filename {
+		if err := e.Switch(c, tty, status, fileLock, targetPath); err != nil {
+			return false
+		}
+	}
+
+	// Jump to line
+	targetLine := LineIndex(location.Range.Start.Line)
+	redraw, _ := e.GoTo(targetLine, c, status)
+	e.redraw.Store(redraw)
+
+	// Set horizontal position
+	targetChar := location.Range.Start.Character
+	tabs := strings.Count(e.Line(targetLine), "\t")
+	e.pos.sx = targetChar + (tabs * (e.indentation.PerTab - 1))
+	e.HorizontalScrollIfNeeded(c)
+
+	// Push back function
+	backFunctions = append(backFunctions, func() {
+		if e.filename != oldFilename {
+			e.Switch(c, tty, status, fileLock, oldFilename)
+		}
+		redraw, _ := e.GoTo(oldLineIndex, c, status)
+		e.redraw.Store(redraw)
+	})
+
+	return true
+}
+
+// textSearchDefinition is the original text-search based implementation
+func (e *Editor) textSearchDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusBar) bool {
 
 	// FuncPrefix may return strings with a leading or trailing blank
 	funcPrefix := e.FuncPrefix()
