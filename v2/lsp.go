@@ -1537,6 +1537,33 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	}
 	fileContent := buf.String()
 
+	// Detect trigger character early to determine if we need a placeholder
+	// Check if we're completing right after a dot or colon (member access)
+	var needsPlaceholder bool
+	if x > 0 && len(currentLine) > 0 {
+		// Check if cursor is right after a trigger character
+		if x > 0 && x <= len(currentLine) {
+			lastChar := string(currentLine[len(currentLine)-1])
+			if lastChar == "." || (x >= 2 && len(currentLine) >= 2 && currentLine[len(currentLine)-1:] == ":") {
+				needsPlaceholder = true
+			}
+		}
+	}
+
+	// For Zig (and potentially other languages), add a placeholder identifier after trigger characters
+	// This helps the LSP server provide better completions for incomplete syntax like "std."
+	if needsPlaceholder && e.mode == mode.Zig {
+		// Insert placeholder "X" at the cursor position
+		lines := strings.Split(fileContent, "\n")
+		if line >= 0 && line < len(lines) {
+			currentLineStr := lines[line]
+			if x >= 0 && x <= len(currentLineStr) {
+				lines[line] = currentLineStr[:x] + "X" + currentLineStr[x:]
+				fileContent = strings.Join(lines, "\n")
+			}
+		}
+	}
+
 	// For Rust and C/C++, update physical file in temp workspace
 	if needsWorkspaceSetup(e.mode) && lspFilePath != absPath {
 		os.WriteFile(lspFilePath, []byte(fileContent), 0644)
@@ -1620,6 +1647,17 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 			}
 			status.SetMessageAfterRedraw(fmt.Sprintf("%s error: %v", lspCommand, err))
 			return false
+		}
+
+		// Filter out placeholder 'X' if we added it for Zig
+		if needsPlaceholder && e.mode == mode.Zig {
+			filtered := make([]LSPCompletionItem, 0, len(items))
+			for _, item := range items {
+				if item.Label != "X" {
+					filtered = append(filtered, item)
+				}
+			}
+			items = filtered
 		}
 
 		// Filter and sort completions
