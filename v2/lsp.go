@@ -1440,7 +1440,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	// STEP 1: Check if LSP executable exists
 	lspCommand := config.Command
 	if _, err := exec.LookPath(lspCommand); err != nil {
-		// LSP executable not found, silently do nothing
+		status.SetMessageAfterRedraw(lspCommand + " is missing")
 		return false
 	}
 
