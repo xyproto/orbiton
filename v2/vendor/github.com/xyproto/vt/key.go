@@ -7,7 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
+	"syscall"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -95,6 +97,9 @@ type TTY struct {
 	escTimeout time.Duration
 	reader     *inputReader
 	noBlock    bool
+	fastRead   bool
+	fastFile   *os.File
+	fastBuf    [256]byte
 }
 
 // NewTTY opens /dev/tty in raw and cbreak mode as a term.Term
@@ -126,12 +131,43 @@ func (tty *TTY) SetEscTimeout(d time.Duration) {
 	tty.escTimeout = d
 }
 
+// FastInput enables or disables low-latency input for game loops and other real-time uses.
+func (tty *TTY) FastInput(enable bool) {
+	if enable {
+		if tty.fastRead {
+			return
+		}
+		f, err := os.OpenFile("/dev/tty", os.O_RDWR|syscall.O_NONBLOCK, 0)
+		if err == nil {
+			tty.fastFile = f
+			tty.fastRead = true
+			tty.SetTimeout(1 * time.Millisecond)
+			tty.SetEscTimeout(5 * time.Millisecond)
+		}
+	} else {
+		if !tty.fastRead {
+			return
+		}
+		if tty.fastFile != nil {
+			_ = tty.fastFile.Close()
+			tty.fastFile = nil
+		}
+		tty.fastRead = false
+		tty.SetTimeout(defaultTimeout)
+		tty.SetEscTimeout(defaultESCTimeout)
+	}
+}
+
 // Close will restore and close the raw terminal
 func (tty *TTY) Close() {
 	// Best-effort disable bracketed paste before restoring the terminal.
 	_, _ = tty.t.Write([]byte(disableBracketedPaste))
 	tty.t.Restore()
 	tty.t.Close()
+	if tty.fastFile != nil {
+		_ = tty.fastFile.Close()
+		tty.fastFile = nil
+	}
 }
 
 // ReadEvent reads and parses a single input event (key, rune, or paste).
@@ -162,20 +198,8 @@ func (tty *TTY) readEvent(poll, escWait time.Duration) (Event, error) {
 		} else if !needMore && len(tty.reader.buf) == 0 {
 			// No buffered input; read from terminal.
 			if poll > 0 {
-				// Wait briefly in raw mode to avoid key echoing in cooked mode.
-				deadline := time.Now().Add(poll)
-				for {
-					avail, err := tty.t.Available()
-					if err == nil && avail > 0 {
-						break
-					}
-					if time.Now().After(deadline) {
-						return Event{Kind: EventNone}, nil
-					}
-					time.Sleep(1 * time.Millisecond)
-				}
-				// Read immediately without termios timeout quantization.
-				if err := tty.readIntoBuffer(0); err != nil {
+				// Kilo-style: just read with a timeout and parse whatever arrived.
+				if err := tty.readIntoBuffer(poll); err != nil {
 					return Event{Kind: EventNone}, err
 				}
 			} else {
@@ -212,6 +236,9 @@ func (tty *TTY) readEvent(poll, escWait time.Duration) (Event, error) {
 }
 
 func (tty *TTY) readIntoBuffer(timeout time.Duration) error {
+	if tty.fastRead {
+		return tty.readIntoBufferFast(timeout)
+	}
 	_ = tty.t.SetReadTimeout(timeout)
 	tmp := make([]byte, 256)
 	n, err := tty.t.Read(tmp)
@@ -219,6 +246,9 @@ func (tty *TTY) readIntoBuffer(timeout time.Duration) error {
 		tty.reader.buf = append(tty.reader.buf, tmp[:n]...)
 	}
 	if err != nil && !errors.Is(err, io.EOF) {
+		if isTimeoutErr(err) {
+			return nil
+		}
 		return err
 	}
 	for {
@@ -237,6 +267,9 @@ func (tty *TTY) readIntoBuffer(timeout time.Duration) error {
 			tty.reader.buf = append(tty.reader.buf, tmp[:n]...)
 		}
 		if err != nil && !errors.Is(err, io.EOF) {
+			if isTimeoutErr(err) {
+				return nil
+			}
 			return err
 		}
 		if n == 0 {
@@ -244,6 +277,59 @@ func (tty *TTY) readIntoBuffer(timeout time.Duration) error {
 		}
 	}
 	return nil
+}
+
+func (tty *TTY) readIntoBufferFast(timeout time.Duration) error {
+	if tty.fastFile == nil {
+		return nil
+	}
+	deadline := time.Time{}
+	if timeout > 0 {
+		deadline = time.Now().Add(timeout)
+	}
+	tmp := tty.fastBuf[:]
+	for {
+		n, err := syscall.Read(int(tty.fastFile.Fd()), tmp)
+		if n > 0 {
+			tty.reader.buf = append(tty.reader.buf, tmp[:n]...)
+		}
+		if err != nil {
+			if isTimeoutErr(err) {
+				if deadline.IsZero() {
+					time.Sleep(1 * time.Millisecond)
+					continue
+				}
+				return nil
+			}
+			return err
+		}
+		if n == 0 {
+			return nil
+		}
+		if deadline.IsZero() || time.Now().After(deadline) {
+			return nil
+		}
+		time.Sleep(1 * time.Millisecond)
+	}
+}
+
+func isTimeoutErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	if errors.Is(err, os.ErrDeadlineExceeded) {
+		return true
+	}
+	if errors.Is(err, syscall.EAGAIN) || errors.Is(err, syscall.EWOULDBLOCK) || errors.Is(err, syscall.EINTR) {
+		return true
+	}
+	if perr, ok := err.(*os.PathError); ok {
+		return errors.Is(perr.Err, os.ErrDeadlineExceeded) ||
+			errors.Is(perr.Err, syscall.EAGAIN) ||
+			errors.Is(perr.Err, syscall.EWOULDBLOCK) ||
+			errors.Is(perr.Err, syscall.EINTR)
+	}
+	return false
 }
 
 func (r *inputReader) parse(now time.Time, escWait time.Duration) (Event, bool, bool) {
@@ -264,7 +350,17 @@ func (r *inputReader) parse(now time.Time, escWait time.Duration) (Event, bool, 
 		return Event{Kind: EventNone}, false, true
 	}
 
-	if r.buf[0] == esc {
+	if r.buf[0] == esc || r.buf[0] == 0x9b || r.buf[0] == 0x8f {
+		if r.buf[0] == esc && len(r.buf) >= 3 && r.buf[1] == '[' {
+			if r.buf[2] == '[' {
+				copy(r.buf[2:], r.buf[3:])
+				r.buf = r.buf[:len(r.buf)-1]
+			} else if r.buf[2] == 'O' {
+				r.buf[1] = 'O'
+				copy(r.buf[2:], r.buf[3:])
+				r.buf = r.buf[:len(r.buf)-1]
+			}
+		}
 		if bytes.HasPrefix(r.buf, []byte(bracketedPasteStart)) {
 			r.buf = r.buf[len(bracketedPasteStart):]
 			r.inPaste = true
@@ -329,16 +425,40 @@ func (r *inputReader) parse(now time.Time, escWait time.Duration) (Event, bool, 
 }
 
 func parseCSI(buf []byte) (Event, int, bool, bool) {
-	if len(buf) < 2 || buf[0] != esc || buf[1] != '[' {
+	if len(buf) == 0 {
 		return Event{}, 0, false, false
 	}
-	for i := 2; i < len(buf); i++ {
+	prefixLen := 0
+	if buf[0] == esc {
+		if len(buf) < 2 || buf[1] != '[' {
+			return Event{}, 0, false, false
+		}
+		prefixLen = 2
+	} else if buf[0] == 0x9b {
+		prefixLen = 1
+	} else {
+		return Event{}, 0, false, false
+	}
+	for i := prefixLen; i < len(buf); i++ {
 		b := buf[i]
 		if b >= 0x40 && b <= 0x7e {
-			if code, ok := csiKeyLookup[string(buf[1:i+1])]; ok {
+			if prefixLen == 2 && i == 2 && (b == '[' || b == 'O') {
+				return Event{}, 0, false, false
+			}
+			var lookup string
+			if prefixLen == 2 {
+				lookup = string(buf[1 : i+1])
+			} else {
+				lookup = "[" + string(buf[1:i+1])
+			}
+			if code, ok := csiKeyLookup[lookup]; ok {
 				return Event{Kind: EventKey, Key: code}, i + 1, true, true
 			}
-			if ev, ok := parseCSIFallback(buf[2:i], b); ok {
+			seqStart := prefixLen
+			if prefixLen == 2 {
+				seqStart = 2
+			}
+			if ev, ok := parseCSIFallback(buf[seqStart:i], b); ok {
 				return ev, i + 1, true, true
 			}
 			return Event{}, i + 1, false, true
@@ -348,16 +468,31 @@ func parseCSI(buf []byte) (Event, int, bool, bool) {
 }
 
 func parseSS3(buf []byte) (Event, int, bool, bool) {
-	if len(buf) < 2 || buf[0] != esc || buf[1] != 'O' {
+	if len(buf) == 0 {
 		return Event{}, 0, false, false
 	}
-	if len(buf) < 3 {
-		return Event{}, 0, false, false
+	if buf[0] == esc {
+		if len(buf) < 2 || buf[1] != 'O' {
+			return Event{}, 0, false, false
+		}
+		if len(buf) < 3 {
+			return Event{}, 0, false, false
+		}
+		if code, ok := ss3KeyLookup[buf[2]]; ok {
+			return Event{Kind: EventKey, Key: code}, 3, true, true
+		}
+		return Event{}, 3, false, true
 	}
-	if code, ok := ss3KeyLookup[buf[2]]; ok {
-		return Event{Kind: EventKey, Key: code}, 3, true, true
+	if buf[0] == 0x8f {
+		if len(buf) < 2 {
+			return Event{}, 0, false, false
+		}
+		if code, ok := ss3KeyLookup[buf[1]]; ok {
+			return Event{Kind: EventKey, Key: code}, 2, true, true
+		}
+		return Event{}, 2, false, true
 	}
-	return Event{}, 3, false, true
+	return Event{}, 0, false, false
 }
 
 // Key reads the keycode or ASCII code and avoids repeated keys
@@ -451,6 +586,37 @@ func (tty *TTY) StringRaw() string {
 	// Ensure raw mode is active to avoid echoing escape sequences.
 	tty.RawMode()
 	ev, err := tty.ReadEventBlocking()
+	if err != nil {
+		return ""
+	}
+	switch ev.Kind {
+	case EventPaste:
+		return ev.Text
+	case EventText:
+		return ev.Text
+	case EventKey:
+		if s, ok := keyCodeToString[ev.Key]; ok {
+			return s
+		}
+		return "c:" + strconv.Itoa(ev.Key)
+	case EventRune:
+		if unicode.IsPrint(ev.Rune) {
+			return string(ev.Rune)
+		}
+		return "c:" + strconv.Itoa(int(ev.Rune))
+	default:
+		return ""
+	}
+}
+
+// ReadStringEvent reads a string, entering raw mode and flushing after events.
+// It does not call Restore; the caller is responsible for restoring the terminal.
+func (tty *TTY) ReadStringEvent() string {
+	tty.RawMode()
+	ev, err := tty.ReadEventBlocking()
+	if ev.Kind != EventNone {
+		tty.t.Flush()
+	}
 	if err != nil {
 		return ""
 	}
