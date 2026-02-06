@@ -83,6 +83,7 @@ type Editor struct {
 	dirMode                    bool        // browse a directory and also interact with git
 	highlightCurrentLine       bool        // highlight the current line
 	highlightCurrentText       bool        // highlight the current text (not the entire line)
+	fastInputMode              bool        // reduce input latency for real-time use
 }
 
 // Copy makes a copy of an Editor struct, with most fields deep copied
@@ -142,6 +143,7 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.dirMode = e.dirMode
 	e2.highlightCurrentLine = e.highlightCurrentLine
 	e2.highlightCurrentText = e.highlightCurrentText
+	e2.fastInputMode = e.fastInputMode
 	e2.nanoMode.Store(e.nanoMode.Load())
 	e2.changed.Store(e.changed.Load())
 	e2.redraw.Store(e.redraw.Load())
@@ -2510,7 +2512,7 @@ func (e *Editor) UserInput(c *vt.Canvas, tty *vt.TTY, status *StatusBar, title, 
 			e.DrawFlags(c, false)        // don't reposition cursor
 			e.DrawGDBOutput(c, false)    // don't reposition cursor
 		}
-		pressed := tty.StringRaw()
+		pressed := tty.ReadStringEvent()
 		switch pressed {
 		case "c:8", "c:127": // ctrl-h or backspace
 			if len(entered) > 0 {

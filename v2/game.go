@@ -770,7 +770,7 @@ retry:
 	}
 	defer tty.Close()
 
-	tty.SetTimeout(2 * time.Millisecond)
+	tty.FastInput(true)
 
 	var (
 		sigChan       = make(chan os.Signal, 1)

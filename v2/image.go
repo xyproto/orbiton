@@ -70,7 +70,7 @@ func displayImage(tty *vt.TTY, c *vt.Canvas, filename string, waitForKeypress bo
 	if waitForKeypress {
 		// Use a key loop to wait for keypresses
 		for {
-			switch tty.StringRaw() {
+			switch tty.ReadStringEvent() {
 			case "c:14": // ctrl-n, next file
 				return megafile.NextFile, nil
 			case "c:16": // ctrl-p, previous file
