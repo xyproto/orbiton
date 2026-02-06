@@ -1810,6 +1810,12 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		}
 	}
 
+	// Fallback: if the item is a function, method, or constructor but the Detail/Label
+	// didn't provide parameter info (e.g. Rust macros), default to adding "("
+	if addParens == "" && (items[choice].Kind == 2 || items[choice].Kind == 3 || items[choice].Kind == 4) {
+		addParens = "("
+	}
+
 	var charsToDelete int
 	if items[choice].TextEdit != nil {
 		rangeStart := items[choice].TextEdit.Range.Start.Character
