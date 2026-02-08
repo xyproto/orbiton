@@ -91,7 +91,6 @@ func main() {
 		escToExitFlag          bool
 		cycleFilenamesFlag     bool // for internal use
 		upsieFlag              bool
-		slowKeyFlag            bool
 	)
 
 	// Available short options: j k
@@ -122,7 +121,6 @@ func main() {
 	pflag.BoolVarP(&escToExitFlag, "esc", "y", false, "press Esc to exit the program")
 	pflag.BoolVarP(&cycleFilenamesFlag, "cycle", "w", false, "cycle files with ctrl-n and ctrl-p (for internal use)")
 	pflag.BoolVarP(&upsieFlag, "upsie", "u", false, "show uname+uptime info and exit")
-	pflag.BoolVarP(&slowKeyFlag, "slowkey", "k", false, "use a longer ESC timeout for slow terminals")
 
 	pflag.CommandLine.MarkHidden("cycle")
 
@@ -523,9 +521,6 @@ func main() {
 		os.Exit(1)
 	}
 	defer tty.Close()
-	if slowKeyFlag || env.Str("TERM") == "linux" {
-		tty.SetEscTimeout(slowKeyEscTimeout)
-	}
 
 	// Run the main editor loop
 	userMessage, nextAction, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, noQuickHelpFlag, formatFlag, escToExitFlag, cycleFilenamesFlag)

@@ -619,6 +619,7 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 		e.wrapWhenTyping = false
 	}
 	e.mode = m
+	e.fastInputMode = !strings.HasPrefix(env.Str("TERM"), "vt") && env.Str("TERM") != "linux"
 	return e
 }
 

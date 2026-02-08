@@ -505,16 +505,16 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 		}
 
 		if e.fastInputMode {
-			actions.Add("Disable fast input mode", func() {
+			actions.Add("Slow input mode", func() {
 				tty.FastInput(false)
 				e.fastInputMode = false
-				status.SetMessageAfterRedraw("Fast input mode disabled")
+				status.SetMessageAfterRedraw("Slow input mode")
 			})
 		} else {
-			actions.Add("Enable fast input mode", func() {
+			actions.Add("Fast input mode", func() {
 				tty.FastInput(true)
 				e.fastInputMode = true
-				status.SetMessageAfterRedraw("Fast input mode enabled")
+				status.SetMessageAfterRedraw("Fast input mode")
 			})
 		}
 	}
