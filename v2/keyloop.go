@@ -20,22 +20,8 @@ import (
 	"github.com/xyproto/vt"
 )
 
-// For when the user scrolls too far
 const (
-	endOfFileMessage = "EOF"
-
-	leftArrow  = "←"
-	rightArrow = "→"
-	upArrow    = "↑"
-	downArrow  = "↓"
-
-	// These keys are undocumented features
-	pgUpKey = "⇞" // page up
-	pgDnKey = "⇟" // page down
-	homeKey = "⇱" // home
-	endKey  = "⇲" // end
-	copyKey = "⎘" // ctrl-insert
-
+	endOfFileMessage  = "EOF"
 	delayUntilSpeedUp = 700 * time.Millisecond
 )
 
@@ -66,8 +52,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	c := vt.NewCanvas()
 	c.ShowCursor()
 	vt.EchoOff()
-	tty.RawMode()
-	defer tty.Restore()
+	if err := startKeyInput(tty); err != nil {
+		return "", megafile.NoAction, err
+	}
+	defer stopKeyInput(tty)
 
 	var (
 		statusDuration = 2700 * time.Millisecond
@@ -179,8 +167,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	e.previousX = 1
 	e.previousY = 1
 
-	tty.SetTimeout(2 * time.Millisecond)
-
 	var lockTimestamp time.Time
 	canUseLocks.Store(!fnord.stdin && !monitorAndReadOnly)
 
@@ -288,13 +274,13 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		if e.macro == nil || (e.playBackMacroCount == 0 && !e.macro.Recording) {
 			// Read the next key in the regular way
-			key = tty.ReadStringEvent()
+			key = readKeyEvent(tty)
 			undo.IgnoreSnapshots(false)
 		} else {
 			if e.macro.Recording {
 				undo.IgnoreSnapshots(true)
 				// Read and record the next key
-				key = tty.ReadStringEvent()
+				key = readKeyEvent(tty)
 				if key != "c:20" { // ctrl-t
 					// But never record the macro toggle button
 					e.macro.Add(key)
@@ -306,7 +292,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					e.macro.Home()
 					e.playBackMacroCount--
 					// No more macro keys. Read the next key.
-					key = tty.ReadStringEvent()
+					key = readKeyEvent(tty)
 				}
 			}
 		}
