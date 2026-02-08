@@ -75,7 +75,7 @@ func (e *Editor) Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn t
 
 		// Get the terminal codes for coloring the given user message
 		msg := textColor.Get(umsg)
-		if envVT100 {
+		if useASCII {
 			msg = umsg
 		}
 
@@ -113,7 +113,7 @@ func (e *Editor) Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn t
 		// Echo off
 		vt.EchoOff()
 
-		if envVT100 {
+		if useASCII {
 			spinnerAnimation = spinnerASCII
 		} else if envNoColor {
 			spinnerAnimation = pacmanNoColor

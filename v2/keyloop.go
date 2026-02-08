@@ -580,7 +580,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					selectedSymbol string
 				)
 				if e.mode == mode.Agda {
-					if envVT100 {
+					if useASCII {
 						menuChoices = agdaSymbolsASCII
 						selectedSymbol = "->"
 					} else {
@@ -588,7 +588,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 						selectedSymbol = "¤"
 					}
 				} else if e.mode == mode.Ivy {
-					if envVT100 {
+					if useASCII {
 						menuChoices = ivySymbolsASCII
 						selectedSymbol = "*"
 					} else {

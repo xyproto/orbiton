@@ -20,19 +20,19 @@ import (
 
 var (
 	controlRuneReplacement = func() rune {
-		if envVT100 {
+		if useASCII {
 			return '?'
 		}
 		return '¿' // for displaying control sequence characters. Could also use: �
 	}()
 	wrapMarkerRune = func() rune {
-		if envVT100 {
+		if useASCII {
 			return '.'
 		}
 		return '·'
 	}()
 	ellipsisRune = func() rune {
-		if envVT100 {
+		if useASCII {
 			return '~'
 		}
 		return '…'

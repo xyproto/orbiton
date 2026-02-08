@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/vt"
 )
@@ -33,19 +34,19 @@ const (
 
 var (
 	evilGobblerRune = func() rune {
-		if envVT100 {
+		if useASCII {
 			return 'E'
 		}
 		return '€'
 	}()
 	bubbleRune = func() rune {
-		if envVT100 {
+		if useASCII {
 			return '.'
 		}
 		return '°'
 	}()
 	pelletRune = func() rune {
-		if envVT100 {
+		if useASCII {
 			return '*'
 		}
 		return '¤'
@@ -769,6 +770,9 @@ retry:
 		os.Exit(1)
 	}
 	defer tty.Close()
+	if env.Str("TERM") == "linux" {
+		tty.SetEscTimeout(slowKeyEscTimeout)
+	}
 
 	tty.FastInput(true)
 

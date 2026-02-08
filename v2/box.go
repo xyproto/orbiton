@@ -42,7 +42,7 @@ func NewBox() *Box {
 
 // NewBoxTheme creates a new theme/style for a box/container, based on the editor theme
 func (e *Editor) NewBoxTheme() *BoxTheme {
-	if envVT100 {
+	if useASCII {
 		return &BoxTheme{
 			TL:         '+',
 			TR:         '+',

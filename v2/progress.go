@@ -6,7 +6,7 @@ import (
 
 // WriteProgress draws a small progress indicator on the right hand side, but does not draw/redraw the canvas
 func (e *Editor) WriteProgress(c *vt.Canvas) {
-	if envVT100 {
+	if useASCII {
 		return
 	}
 	var (

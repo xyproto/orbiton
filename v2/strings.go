@@ -268,7 +268,7 @@ func withinBackticks(line, what string) bool {
 }
 
 func asciiFallback(s string) string {
-	if !envVT100 {
+	if !useASCII {
 		return s
 	}
 	return asciiFallbackReplacer.Replace(s)

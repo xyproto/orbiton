@@ -12,7 +12,7 @@ import (
 )
 
 var drawRune = func() rune {
-	if envVT100 {
+	if useASCII {
 		return '#'
 	}
 	return '▒'

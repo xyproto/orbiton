@@ -55,11 +55,11 @@ var (
 	// An empty *Ollama struct
 	ollama = NewOllama()
 
-	// Check if TERM is set to vt100
-	envVT100 = env.Str("TERM") == "vt100"
+	// Check if TERM is set to vt100 or linux (Linux console) for ASCII fallback
+	useASCII = env.Str("TERM") == "vt100" || env.Str("TERM") == "linux"
 
-	// Check if $NO_COLOR is set, or if the terminal is strict VT100
-	envNoColor = env.Bool("NO_COLOR") || envVT100
+	// Check if $NO_COLOR is set, or if the terminal is strict VT100 (Linux console supports colors)
+	envNoColor = env.Bool("NO_COLOR") || env.Str("TERM") == "vt100"
 
 	// Arguments given on the command line
 	globalArgs []string
@@ -91,6 +91,7 @@ func main() {
 		escToExitFlag          bool
 		cycleFilenamesFlag     bool // for internal use
 		upsieFlag              bool
+		slowKeyFlag            bool
 	)
 
 	// Available short options: j k
@@ -121,6 +122,7 @@ func main() {
 	pflag.BoolVarP(&escToExitFlag, "esc", "y", false, "press Esc to exit the program")
 	pflag.BoolVarP(&cycleFilenamesFlag, "cycle", "w", false, "cycle files with ctrl-n and ctrl-p (for internal use)")
 	pflag.BoolVarP(&upsieFlag, "upsie", "u", false, "show uname+uptime info and exit")
+	pflag.BoolVarP(&slowKeyFlag, "slowkey", "k", false, "use a longer ESC timeout for slow terminals")
 
 	pflag.CommandLine.MarkHidden("cycle")
 
@@ -521,6 +523,9 @@ func main() {
 		os.Exit(1)
 	}
 	defer tty.Close()
+	if slowKeyFlag || env.Str("TERM") == "linux" {
+		tty.SetEscTimeout(slowKeyEscTimeout)
+	}
 
 	// Run the main editor loop
 	userMessage, nextAction, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, noQuickHelpFlag, formatFlag, escToExitFlag, cycleFilenamesFlag)
