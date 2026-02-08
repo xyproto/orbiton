@@ -38,13 +38,13 @@ require (
 	github.com/xyproto/vt v1.3.17
 	github.com/xyproto/wordwrap v1.0.1
 	golang.org/x/image v0.35.0
+	golang.org/x/sys v0.40.0
 )
 
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
 	github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b // indirect
-	github.com/clipperhouse/stringish v0.1.1 // indirect
-	github.com/clipperhouse/uax29/v2 v2.5.0 // indirect
+	github.com/clipperhouse/uax29/v2 v2.6.0 // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/kr/pty v1.1.8 // indirect
@@ -55,6 +55,5 @@ require (
 	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
-	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/term v0.39.0 // indirect
 )
