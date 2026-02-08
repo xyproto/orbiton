@@ -7,6 +7,7 @@ require (
 	github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.9.0
+	github.com/gdamore/tcell/v3 v3.1.2
 	github.com/gomarkdown/markdown v0.0.0-20250810172220-2e2c11897d1a
 	github.com/ianlancetaylor/demangle v0.0.0-20251118225945-96ee0021ea0f
 	github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25
@@ -38,7 +39,6 @@ require (
 	github.com/xyproto/vt v1.3.17
 	github.com/xyproto/wordwrap v1.0.1
 	golang.org/x/image v0.35.0
-	golang.org/x/sys v0.40.0
 )
 
 require (
@@ -47,13 +47,17 @@ require (
 	github.com/clipperhouse/uax29/v2 v2.6.0 // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/gdamore/encoding v1.0.1 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
 	github.com/peterhellberg/gfx v0.0.0-20250602150231-2e41f5fad310 // indirect
 	github.com/pkg/term v1.2.0-beta.2 // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
 	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
+	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/term v0.39.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
 )
