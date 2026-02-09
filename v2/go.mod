@@ -22,7 +22,7 @@ require (
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.3.0
 	github.com/xyproto/env/v2 v2.5.4
-	github.com/xyproto/files v1.10.3
+	github.com/xyproto/files v1.10.4
 	github.com/xyproto/fullname v1.1.0
 	github.com/xyproto/globi v1.0.2
 	github.com/xyproto/iferr v1.1.0
@@ -43,8 +43,7 @@ require (
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
 	github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b // indirect
-	github.com/clipperhouse/stringish v0.1.1 // indirect
-	github.com/clipperhouse/uax29/v2 v2.5.0 // indirect
+	github.com/clipperhouse/uax29/v2 v2.6.0 // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/kr/pty v1.1.8 // indirect
@@ -55,6 +54,6 @@ require (
 	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
-	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/term v0.39.0 // indirect
 )
