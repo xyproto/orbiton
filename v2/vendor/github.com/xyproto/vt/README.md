@@ -9,4 +9,4 @@ The [Orbiton](https://github.com/xyproto/orbiton) editor and the [Algernon](http
 ### General info
 
 * License: BSD-3
-* Version: 1.3.20
+* Version: 1.4.0
