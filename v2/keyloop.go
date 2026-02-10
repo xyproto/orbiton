@@ -1990,7 +1990,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			if !wasInPasteMode {
 				e.pasteMode = false
-				status.SetMessageAfterRedraw("Paste mode disabled")
 			}
 			clearKeyHistory = true
 
