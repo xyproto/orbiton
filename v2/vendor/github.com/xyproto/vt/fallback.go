@@ -7,17 +7,17 @@ package vt
 func parseCSIFallback(seq []byte, final byte) (Event, bool) {
 	switch final {
 	case 'A':
-		return Event{Kind: EventKey, Key: 253}, true // Up Arrow
+		return Event{Kind: EventKey, Key: KeyArrowUp}, true
 	case 'B':
-		return Event{Kind: EventKey, Key: 255}, true // Down Arrow
+		return Event{Kind: EventKey, Key: KeyArrowDown}, true
 	case 'C':
-		return Event{Kind: EventKey, Key: 254}, true // Right Arrow
+		return Event{Kind: EventKey, Key: KeyArrowRight}, true
 	case 'D':
-		return Event{Kind: EventKey, Key: 252}, true // Left Arrow
+		return Event{Kind: EventKey, Key: KeyArrowLeft}, true
 	case 'H':
-		return Event{Kind: EventKey, Key: 1}, true // Home
+		return Event{Kind: EventKey, Key: KeyHome}, true
 	case 'F':
-		return Event{Kind: EventKey, Key: 5}, true // End
+		return Event{Kind: EventKey, Key: KeyEnd}, true
 	case '~':
 		params, ok := parseCSIParams(seq)
 		if !ok || len(params) == 0 {
@@ -25,13 +25,13 @@ func parseCSIFallback(seq []byte, final byte) (Event, bool) {
 		}
 		switch params[0] {
 		case 1, 7:
-			return Event{Kind: EventKey, Key: 1}, true // Home
+			return Event{Kind: EventKey, Key: KeyHome}, true
 		case 4, 8:
-			return Event{Kind: EventKey, Key: 5}, true // End
+			return Event{Kind: EventKey, Key: KeyEnd}, true
 		case 5:
-			return Event{Kind: EventKey, Key: 251}, true // Page Up
+			return Event{Kind: EventKey, Key: KeyPageUp}, true
 		case 6:
-			return Event{Kind: EventKey, Key: 250}, true // Page Down
+			return Event{Kind: EventKey, Key: KeyPageDown}, true
 		}
 	}
 	return Event{}, false

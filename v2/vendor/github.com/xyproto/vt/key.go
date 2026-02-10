@@ -9,12 +9,14 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 	"unicode"
 	"unicode/utf8"
 
 	"github.com/pkg/term"
+	"github.com/xyproto/env/v2"
 )
 
 var (
@@ -25,38 +27,69 @@ var (
 
 // Key codes for CSI (ESC [) sequences and SS3 (ESC O) sequences.
 var csiKeyLookup = map[string]int{
-	"[A":    253, // Up Arrow
-	"[B":    255, // Down Arrow
-	"[C":    254, // Right Arrow
-	"[D":    252, // Left Arrow
-	"[H":    1,   // Home
-	"[F":    5,   // End
-	"[1~":   1,   // Home
-	"[4~":   5,   // End
-	"[5~":   251, // Page Up
-	"[6~":   250, // Page Down
-	"[2;5~": 258, // Ctrl-Insert
+	"[A":    KeyArrowUp,
+	"[B":    KeyArrowDown,
+	"[C":    KeyArrowRight,
+	"[D":    KeyArrowLeft,
+	"[H":    KeyHome,
+	"[F":    KeyEnd,
+	"[1~":   KeyHome,
+	"[4~":   KeyEnd,
+	"[5~":   KeyPageUp,
+	"[6~":   KeyPageDown,
+	"[2;5~": KeyCtrlInsert,
 }
 
 var ss3KeyLookup = map[byte]int{
-	'A': 253, // Up Arrow
-	'B': 255, // Down Arrow
-	'C': 254, // Right Arrow
-	'D': 252, // Left Arrow
-	'H': 1,   // Home
-	'F': 5,   // End
+	'A': KeyArrowUp,
+	'B': KeyArrowDown,
+	'C': KeyArrowRight,
+	'D': KeyArrowLeft,
+	'H': KeyHome,
+	'F': KeyEnd,
 }
 
-var keyCodeToString = map[int]string{
-	253: "↑",
-	255: "↓",
-	254: "→",
-	252: "←",
-	1:   "⇱",
-	5:   "⇲",
-	251: "⇞",
-	250: "⇟",
-	258: "⎘",
+// Legacy lookup maps for basic terminals (Linux console, VT100)
+// These use fixed-size byte arrays which work better with blocking reads.
+var legacyKeyStringLookup = map[[3]byte]string{
+	{27, 91, 65}:  "↑", // Up Arrow
+	{27, 91, 66}:  "↓", // Down Arrow
+	{27, 91, 67}:  "→", // Right Arrow
+	{27, 91, 68}:  "←", // Left Arrow
+	{27, 91, 'H'}: "⇱", // Home
+	{27, 91, 'F'}: "⇲", // End
+}
+
+var legacyPageStringLookup = map[[4]byte]string{
+	{27, 91, 49, 126}: "⇱", // Home
+	{27, 91, 52, 126}: "⇲", // End
+	{27, 91, 53, 126}: "⇞", // Page Up
+	{27, 91, 54, 126}: "⇟", // Page Down
+}
+
+var legacyCtrlInsertStringLookup = map[[6]byte]string{
+	{27, 91, 50, 59, 53, 126}: "⎘", // Ctrl-Insert (Copy)
+}
+
+// isBasicTerminal returns true for terminals that need the legacy
+// blocking read approach (Linux console, VT100, etc.)
+func isBasicTerminal() bool {
+	term := env.Str("TERM")
+	if term == "linux" || strings.HasPrefix(term, "vt") {
+		return true
+	}
+	// Detect Linux console even if TERM is set incorrectly.
+	// Virtual consoles are /dev/tty[1-9] or /dev/tty[1-9][0-9], not /dev/pts/*.
+	if ttyName, err := os.Readlink("/proc/self/fd/0"); err == nil {
+		if strings.HasPrefix(ttyName, "/dev/tty") && !strings.HasPrefix(ttyName, "/dev/tty/") {
+			// /dev/tty followed by a digit means virtual console
+			rest := strings.TrimPrefix(ttyName, "/dev/tty")
+			if len(rest) > 0 && rest[0] >= '0' && rest[0] <= '9' {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 const (
@@ -67,39 +100,22 @@ const (
 	disableBracketedPaste = "\x1b[?2004l"
 )
 
-type EventKind int
-
-const (
-	EventNone EventKind = iota
-	EventKey
-	EventRune
-	EventText
-	EventPaste
-)
-
-type Event struct {
-	Kind EventKind
-	Key  int
-	Rune rune
-	Text string
-}
-
 type inputReader struct {
-	buf         []byte
 	escDeadline time.Time
+	buf         []byte
 	escSeqLen   int
 	inPaste     bool
 }
 
 type TTY struct {
 	t          *term.Term
+	reader     *inputReader
+	fastFile   *os.File
 	timeout    time.Duration
 	escTimeout time.Duration
-	reader     *inputReader
+	fastBuf    [256]byte
 	noBlock    bool
 	fastRead   bool
-	fastFile   *os.File
-	fastBuf    [256]byte
 }
 
 // NewTTY opens /dev/tty in raw and cbreak mode as a term.Term
@@ -566,10 +582,7 @@ func (tty *TTY) String() string {
 	case EventText:
 		return ev.Text
 	case EventKey:
-		if s, ok := keyCodeToString[ev.Key]; ok {
-			return s
-		}
-		return "c:" + strconv.Itoa(ev.Key)
+		return KeySymbol(ev.Key)
 	case EventRune:
 		if unicode.IsPrint(ev.Rune) {
 			return string(ev.Rune)
@@ -585,6 +598,13 @@ func (tty *TTY) String() string {
 func (tty *TTY) StringRaw() string {
 	// Ensure raw mode is active to avoid echoing escape sequences.
 	tty.RawMode()
+
+	// Use legacy blocking read for basic terminals (Linux console, VT100)
+	// where termios timeout-based escape sequence assembly doesn't work reliably.
+	if isBasicTerminal() {
+		return tty.stringRawLegacy()
+	}
+
 	ev, err := tty.ReadEventBlocking()
 	if err != nil {
 		return ""
@@ -595,10 +615,7 @@ func (tty *TTY) StringRaw() string {
 	case EventText:
 		return ev.Text
 	case EventKey:
-		if s, ok := keyCodeToString[ev.Key]; ok {
-			return s
-		}
-		return "c:" + strconv.Itoa(ev.Key)
+		return KeySymbol(ev.Key)
 	case EventRune:
 		if unicode.IsPrint(ev.Rune) {
 			return string(ev.Rune)
@@ -607,6 +624,54 @@ func (tty *TTY) StringRaw() string {
 	default:
 		return ""
 	}
+}
+
+// stringRawLegacy uses the old blocking read approach that works reliably
+// on the Linux console and VT100 terminals.
+func (tty *TTY) stringRawLegacy() string {
+	bytes := make([]byte, 6)
+	tty.SetTimeout(0) // Block until input
+	numRead, err := tty.t.Read(bytes)
+	if err != nil || numRead == 0 {
+		return ""
+	}
+	switch {
+	case numRead == 1:
+		r := rune(bytes[0])
+		if unicode.IsPrint(r) {
+			return string(r)
+		}
+		return "c:" + strconv.Itoa(int(r))
+	case numRead == 3:
+		seq := [3]byte{bytes[0], bytes[1], bytes[2]}
+		if str, found := legacyKeyStringLookup[seq]; found {
+			return str
+		}
+		// Attempt to interpret as UTF-8 string
+		return string(bytes[:numRead])
+	case numRead == 4:
+		seq := [4]byte{bytes[0], bytes[1], bytes[2], bytes[3]}
+		if str, found := legacyPageStringLookup[seq]; found {
+			return str
+		}
+		return string(bytes[:numRead])
+	case numRead == 6:
+		seq := [6]byte{bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]}
+		if str, found := legacyCtrlInsertStringLookup[seq]; found {
+			return str
+		}
+		fallthrough
+	default:
+		bytesLeftToRead, err := tty.t.Available()
+		if err == nil && bytesLeftToRead > 0 {
+			bytes2 := make([]byte, bytesLeftToRead)
+			numRead2, err := tty.t.Read(bytes2)
+			if err == nil && numRead2 > 0 {
+				return string(append(bytes[:numRead], bytes2[:numRead2]...))
+			}
+		}
+	}
+	return string(bytes[:numRead])
 }
 
 // ReadStringEvent reads a string, entering raw mode and flushing after events.
@@ -626,10 +691,7 @@ func (tty *TTY) ReadStringEvent() string {
 	case EventText:
 		return ev.Text
 	case EventKey:
-		if s, ok := keyCodeToString[ev.Key]; ok {
-			return s
-		}
-		return "c:" + strconv.Itoa(ev.Key)
+		return KeySymbol(ev.Key)
 	case EventRune:
 		if unicode.IsPrint(ev.Rune) {
 			return string(ev.Rune)
@@ -655,9 +717,7 @@ func (tty *TTY) Rune() rune {
 	case EventRune:
 		return ev.Rune
 	case EventKey:
-		if s, ok := keyCodeToString[ev.Key]; ok {
-			return []rune(s)[0]
-		}
+		return KeyRune(ev.Key)
 	case EventText:
 		if ev.Text != "" {
 			return []rune(ev.Text)[0]
@@ -683,9 +743,7 @@ func (tty *TTY) RuneRaw() rune {
 	case EventRune:
 		return ev.Rune
 	case EventKey:
-		if s, ok := keyCodeToString[ev.Key]; ok {
-			return []rune(s)[0]
-		}
+		return KeyRune(ev.Key)
 	case EventText:
 		if ev.Text != "" {
 			return []rune(ev.Text)[0]
@@ -853,7 +911,7 @@ func WaitForKey() {
 	defer r.Close()
 	for {
 		switch r.Key() {
-		case 3, 13, 27, 32, 113:
+		case KeyCtrlC, KeyEnter, KeyEsc, KeySpace, 'q':
 			return
 		}
 	}

@@ -46,48 +46,25 @@ var (
 
 // Key codes for 3-byte sequences (arrows, Home, End)
 var keyCodeLookup = map[[3]byte]int{
-	{27, 91, 65}:  253, // Up Arrow
-	{27, 91, 66}:  255, // Down Arrow
-	{27, 91, 67}:  254, // Right Arrow
-	{27, 91, 68}:  252, // Left Arrow
-	{27, 91, 'H'}: 1,   // Home (Ctrl-A)
-	{27, 91, 'F'}: 5,   // End (Ctrl-E)
+	{27, 91, 65}:  KeyArrowUp,
+	{27, 91, 66}:  KeyArrowDown,
+	{27, 91, 67}:  KeyArrowRight,
+	{27, 91, 68}:  KeyArrowLeft,
+	{27, 91, 'H'}: KeyHome,
+	{27, 91, 'F'}: KeyEnd,
 }
 
 // Key codes for 4-byte sequences (Page Up, Page Down, Home, End)
 var pageNavLookup = map[[4]byte]int{
-	{27, 91, 49, 126}: 1,   // Home (ESC [1~)
-	{27, 91, 52, 126}: 5,   // End (ESC [4~)
-	{27, 91, 53, 126}: 251, // Page Up (custom code)
-	{27, 91, 54, 126}: 250, // Page Down (custom code)
+	{27, 91, 49, 126}: KeyHome,
+	{27, 91, 52, 126}: KeyEnd,
+	{27, 91, 53, 126}: KeyPageUp,
+	{27, 91, 54, 126}: KeyPageDown,
 }
 
 // Key codes for 6-byte sequences (Ctrl-Insert)
 var ctrlInsertLookup = map[[6]byte]int{
-	{27, 91, 50, 59, 53, 126}: 258, // Ctrl-Insert (ESC [2;5~)
-}
-
-// String representations for 3-byte sequences
-var keyStringLookup = map[[3]byte]string{
-	{27, 91, 65}:  "↑", // Up Arrow
-	{27, 91, 66}:  "↓", // Down Arrow
-	{27, 91, 67}:  "→", // Right Arrow
-	{27, 91, 68}:  "←", // Left Arrow
-	{27, 91, 'H'}: "⇱", // Home
-	{27, 91, 'F'}: "⇲", // End
-}
-
-// String representations for 4-byte sequences
-var pageStringLookup = map[[4]byte]string{
-	{27, 91, 49, 126}: "⇱", // Home
-	{27, 91, 52, 126}: "⇲", // End
-	{27, 91, 53, 126}: "⇞", // Page Up
-	{27, 91, 54, 126}: "⇟", // Page Down
-}
-
-// String representations for 6-byte sequences (Ctrl-Insert)
-var ctrlInsertStringLookup = map[[6]byte]string{
-	{27, 91, 50, 59, 53, 126}: "⎘", // Ctrl-Insert (Copy)
+	{27, 91, 50, 59, 53, 126}: KeyCtrlInsert,
 }
 
 type TTY struct {
@@ -181,6 +158,9 @@ func (tty *TTY) SetTimeout(d time.Duration) {
 // SetEscTimeout is a no-op on Windows.
 func (tty *TTY) SetEscTimeout(d time.Duration) {}
 
+// FastInput is a no-op on Windows.
+func (tty *TTY) FastInput(enable bool) {}
+
 // Close will restore the terminal state
 func (tty *TTY) Close() {
 	if tty.originalState != nil {
@@ -211,61 +191,98 @@ func waitForInput(timeout time.Duration) bool {
 	return ret == 0
 }
 
+// readRawBytes reads raw bytes from stdin, returning the number read and an error.
+func readRawBytes(tty *TTY, buf []byte) (int, error) {
+	if !waitForInput(tty.timeout) {
+		return 0, nil
+	}
+	return os.Stdin.Read(buf)
+}
+
+// parseRawInput converts raw byte input to an Event.
+func parseRawInput(buf []byte, numRead int) Event {
+	switch {
+	case numRead == 1:
+		b := buf[0]
+		if b == 127 {
+			return Event{Kind: EventKey, Key: KeyBackspace}
+		}
+		if b < 32 {
+			return Event{Kind: EventKey, Key: int(b)}
+		}
+		return Event{Kind: EventRune, Rune: rune(b)}
+	case numRead == 3:
+		seq := [3]byte{buf[0], buf[1], buf[2]}
+		if code, found := keyCodeLookup[seq]; found {
+			return Event{Kind: EventKey, Key: code}
+		}
+		r, _ := utf8.DecodeRune(buf[:numRead])
+		if unicode.IsPrint(r) {
+			return Event{Kind: EventRune, Rune: r}
+		}
+		return Event{Kind: EventText, Text: string(buf[:numRead])}
+	case numRead == 4:
+		seq := [4]byte{buf[0], buf[1], buf[2], buf[3]}
+		if code, found := pageNavLookup[seq]; found {
+			return Event{Kind: EventKey, Key: code}
+		}
+		return Event{Kind: EventText, Text: string(buf[:numRead])}
+	case numRead == 6:
+		seq := [6]byte{buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]}
+		if code, found := ctrlInsertLookup[seq]; found {
+			return Event{Kind: EventKey, Key: code}
+		}
+		return Event{Kind: EventText, Text: string(buf[:numRead])}
+	default:
+		r, _ := utf8.DecodeRune(buf[:numRead])
+		if unicode.IsPrint(r) {
+			return Event{Kind: EventRune, Rune: r}
+		}
+		return Event{Kind: EventText, Text: string(buf[:numRead])}
+	}
+}
+
+// ReadEvent reads and parses a single input event (key, rune, or text).
+func (tty *TTY) ReadEvent() (Event, error) {
+	buf := make([]byte, 6)
+	numRead, err := readRawBytes(tty, buf)
+	if err != nil {
+		return Event{Kind: EventNone}, err
+	}
+	if numRead == 0 {
+		return Event{Kind: EventNone}, nil
+	}
+	return parseRawInput(buf, numRead), nil
+}
+
+// ReadEventBlocking waits until a full input event is available.
+func (tty *TTY) ReadEventBlocking() (Event, error) {
+	buf := make([]byte, 6)
+	for {
+		numRead, err := os.Stdin.Read(buf)
+		if err != nil {
+			return Event{Kind: EventNone}, err
+		}
+		if numRead > 0 {
+			return parseRawInput(buf, numRead), nil
+		}
+	}
+}
+
 // asciiAndKeyCode processes input into an ASCII code or key code, handling multi-byte sequences like Ctrl-Insert
 func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
-	// Wait for input with timeout
-	if !waitForInput(tty.timeout) {
-		return 0, 0, nil
-	}
-
-	bytes := make([]byte, 6) // Use 6 bytes to cover longer sequences like Ctrl-Insert
-	var numRead int
-
-	// Read bytes from stdin - terminal is already in raw mode
-	numRead, err = os.Stdin.Read(bytes)
+	ev, err := tty.ReadEvent()
 	if err != nil {
 		return 0, 0, err
 	}
-	if numRead == 0 {
+	switch ev.Kind {
+	case EventKey:
+		return 0, ev.Key, nil
+	case EventRune:
+		return int(ev.Rune), 0, nil
+	default:
 		return 0, 0, nil
 	}
-
-	// Handle multi-byte sequences
-	switch {
-	case numRead == 1:
-		ascii = int(bytes[0])
-	case numRead == 3:
-		seq := [3]byte{bytes[0], bytes[1], bytes[2]}
-		if code, found := keyCodeLookup[seq]; found {
-			keyCode = code
-			return
-		}
-		// Not found, check if it's a printable character
-		r, _ := utf8.DecodeRune(bytes[:numRead])
-		if unicode.IsPrint(r) {
-			ascii = int(r)
-		}
-	case numRead == 4:
-		seq := [4]byte{bytes[0], bytes[1], bytes[2], bytes[3]}
-		if code, found := pageNavLookup[seq]; found {
-			keyCode = code
-			return
-		}
-	case numRead == 6:
-		seq := [6]byte{bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]}
-		if code, found := ctrlInsertLookup[seq]; found {
-			keyCode = code
-			return
-		}
-	default:
-		// Attempt to decode as UTF-8
-		r, _ := utf8.DecodeRune(bytes[:numRead])
-		if unicode.IsPrint(r) {
-			ascii = int(r)
-		}
-	}
-
-	return
 }
 
 // Key reads the keycode or ASCII code and avoids repeated keys
@@ -291,52 +308,25 @@ func (tty *TTY) KeyRaw() int {
 
 // String reads a string, handling key sequences and printable characters
 func (tty *TTY) String() string {
-	// Wait for input with timeout
-	if !waitForInput(tty.timeout) {
+	ev, err := tty.ReadEvent()
+	if err != nil {
 		return ""
 	}
-
-	bytes := make([]byte, 6)
-	var numRead int
-	var err error
-
-	// Read bytes from stdin - terminal is already in raw mode
-	numRead, err = os.Stdin.Read(bytes)
-	if err != nil || numRead == 0 {
+	switch ev.Kind {
+	case EventNone:
 		return ""
-	}
-
-	switch {
-	case numRead == 1:
-		r := rune(bytes[0])
-		if unicode.IsPrint(r) {
-			return string(r)
+	case EventKey:
+		return KeySymbol(ev.Key)
+	case EventRune:
+		if unicode.IsPrint(ev.Rune) {
+			return string(ev.Rune)
 		}
-		return "c:" + strconv.Itoa(int(r))
-	case numRead == 3:
-		seq := [3]byte{bytes[0], bytes[1], bytes[2]}
-		if str, found := keyStringLookup[seq]; found {
-			return str
-		}
-		// Attempt to interpret as UTF-8 string
-		return string(bytes[:numRead])
-	case numRead == 4:
-		seq := [4]byte{bytes[0], bytes[1], bytes[2], bytes[3]}
-		if str, found := pageStringLookup[seq]; found {
-			return str
-		}
-		return string(bytes[:numRead])
-	case numRead == 6:
-		seq := [6]byte{bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]}
-		if str, found := ctrlInsertStringLookup[seq]; found {
-			return str
-		}
-		fallthrough
+		return "c:" + strconv.Itoa(int(ev.Rune))
+	case EventText:
+		return ev.Text
 	default:
-		// For simplicity, just return what we read
-		return string(bytes[:numRead])
+		return ""
 	}
-	return string(bytes[:numRead])
 }
 
 // StringRaw reads a string without suppressing repeats.
@@ -346,51 +336,26 @@ func (tty *TTY) StringRaw() string {
 
 // Rune reads a rune, handling special sequences for arrows, Home, End, etc.
 func (tty *TTY) Rune() rune {
-	// Wait for input with timeout
-	if !waitForInput(tty.timeout) {
+	ev, err := tty.ReadEvent()
+	if err != nil {
 		return rune(0)
 	}
-
-	bytes := make([]byte, 6)
-	var numRead int
-	var err error
-
-	// Read bytes from stdin - terminal is already in raw mode
-	numRead, err = os.Stdin.Read(bytes)
-	if err != nil || numRead == 0 {
+	switch ev.Kind {
+	case EventNone:
 		return rune(0)
+	case EventKey:
+		s := KeySymbol(ev.Key)
+		if len(s) > 0 {
+			return []rune(s)[0]
+		}
+	case EventRune:
+		return ev.Rune
+	case EventText:
+		if ev.Text != "" {
+			return []rune(ev.Text)[0]
+		}
 	}
-
-	switch {
-	case numRead == 1:
-		return rune(bytes[0])
-	case numRead == 3:
-		seq := [3]byte{bytes[0], bytes[1], bytes[2]}
-		if str, found := keyStringLookup[seq]; found {
-			return []rune(str)[0]
-		}
-		// Attempt to interpret as UTF-8 rune
-		r, _ := utf8.DecodeRune(bytes[:numRead])
-		return r
-	case numRead == 4:
-		seq := [4]byte{bytes[0], bytes[1], bytes[2], bytes[3]}
-		if str, found := pageStringLookup[seq]; found {
-			return []rune(str)[0]
-		}
-		r, _ := utf8.DecodeRune(bytes[:numRead])
-		return r
-	case numRead == 6:
-		seq := [6]byte{bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]}
-		if str, found := ctrlInsertStringLookup[seq]; found {
-			return []rune(str)[0]
-		}
-		r, _ := utf8.DecodeRune(bytes[:numRead])
-		return r
-	default:
-		// Attempt to interpret as UTF-8 rune
-		r, _ := utf8.DecodeRune(bytes[:numRead])
-		return r
-	}
+	return rune(0)
 }
 
 // RuneRaw reads a rune without suppressing repeats.
@@ -534,7 +499,7 @@ func WaitForKey() {
 	defer r.Close()
 	for {
 		switch r.Key() {
-		case 3, 13, 27, 32, 113:
+		case KeyCtrlC, KeyEnter, KeyEsc, KeySpace, 'q':
 			return
 		}
 	}
