@@ -84,6 +84,7 @@ type Editor struct {
 	highlightCurrentLine       bool        // highlight the current line
 	highlightCurrentText       bool        // highlight the current text (not the entire line)
 	fastInputMode              bool        // reduce input latency for real-time use
+	pasteMode                  bool        // insert incoming key data as raw text
 }
 
 // Copy makes a copy of an Editor struct, with most fields deep copied
@@ -144,6 +145,7 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.highlightCurrentLine = e.highlightCurrentLine
 	e2.highlightCurrentText = e.highlightCurrentText
 	e2.fastInputMode = e.fastInputMode
+	e2.pasteMode = e.pasteMode
 	e2.nanoMode.Store(e.nanoMode.Load())
 	e2.changed.Store(e.changed.Load())
 	e2.redraw.Store(e.redraw.Load())
