@@ -184,9 +184,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	term := env.Str("TERM")
 	if strings.HasPrefix(term, "vt") || term == "linux" ||
 		term == "cons25" || strings.HasPrefix(term, "wsvt") || term == "pccon" {
+		_ = os.Setenv("VT_LEGACY_INPUT", "1")
 		tty.SetTimeout(slowReadTimeout)
 		tty.SetEscTimeout(slowEscTimeout)
 	} else {
+		_ = os.Unsetenv("VT_LEGACY_INPUT")
 		tty.SetTimeout(fastReadTimeout)
 		tty.SetEscTimeout(fastEscTimeout)
 	}
@@ -298,13 +300,13 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		if e.macro == nil || (e.playBackMacroCount == 0 && !e.macro.Recording) {
 			// Read the next key in the regular way
-			key = tty.ReadStringEvent()
+			key = tty.StringRaw()
 			undo.IgnoreSnapshots(false)
 		} else {
 			if e.macro.Recording {
 				undo.IgnoreSnapshots(true)
 				// Read and record the next key
-				key = tty.ReadStringEvent()
+				key = tty.StringRaw()
 				if key != "c:20" { // ctrl-t
 					// But never record the macro toggle button
 					e.macro.Add(key)
@@ -316,7 +318,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					e.macro.Home()
 					e.playBackMacroCount--
 					// No more macro keys. Read the next key.
-					key = tty.ReadStringEvent()
+					key = tty.StringRaw()
 				}
 			}
 		}
