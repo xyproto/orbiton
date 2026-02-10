@@ -179,7 +179,17 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	e.previousX = 1
 	e.previousY = 1
 
-	tty.SetTimeout(2 * time.Millisecond)
+	// Set timing based on terminal type
+	// Slow terminals (vt100, vt220, linux/BSD consoles) need longer timeouts
+	term := env.Str("TERM")
+	if strings.HasPrefix(term, "vt") || term == "linux" ||
+		term == "cons25" || strings.HasPrefix(term, "wsvt") || term == "pccon" {
+		tty.SetTimeout(slowReadTimeout)
+		tty.SetEscTimeout(slowEscTimeout)
+	} else {
+		tty.SetTimeout(fastReadTimeout)
+		tty.SetEscTimeout(fastEscTimeout)
+	}
 
 	var lockTimestamp time.Time
 	canUseLocks.Store(!fnord.stdin && !monitorAndReadOnly)
@@ -308,6 +318,91 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					// No more macro keys. Read the next key.
 					key = tty.ReadStringEvent()
 				}
+			}
+		}
+
+		// Handle raw escape sequences that vt may return on the Linux console
+		// These can arrive as complete sequences or split (ESC, [, letter separately)
+		prevWasEsc := kh.Prev() == "c:27" && kh.PrevWithin(500*time.Millisecond)
+		prevWasCsiStart := kh.Prev() == "esc[" && kh.PrevWithin(500*time.Millisecond)
+		switch key {
+		case "\x1b[A", "\x1bOA", "OA": // Arrow Up (raw CSI/SS3)
+			key = upArrow
+		case "[A":
+			if prevWasEsc {
+				key = upArrow
+			}
+		case "A":
+			if prevWasCsiStart {
+				key = upArrow
+			}
+		case "\x1b[B", "\x1bOB", "OB": // Arrow Down (raw CSI/SS3)
+			key = downArrow
+		case "[B":
+			if prevWasEsc {
+				key = downArrow
+			}
+		case "B":
+			if prevWasCsiStart {
+				key = downArrow
+			}
+		case "\x1b[C", "\x1bOC", "OC": // Arrow Right (raw CSI/SS3)
+			key = rightArrow
+		case "[C":
+			if prevWasEsc {
+				key = rightArrow
+			}
+		case "C":
+			if prevWasCsiStart {
+				key = rightArrow
+			}
+		case "\x1b[D", "\x1bOD", "OD": // Arrow Left (raw CSI/SS3)
+			key = leftArrow
+		case "[D":
+			if prevWasEsc {
+				key = leftArrow
+			}
+		case "D":
+			if prevWasCsiStart {
+				key = leftArrow
+			}
+		case "\x1b[H", "\x1b[1~", "\x1bOH", "OH": // Home (raw)
+			key = homeKey
+		case "[H", "[1~":
+			if prevWasEsc {
+				key = homeKey
+			}
+		case "\x1b[F", "\x1b[4~", "\x1bOF", "OF": // End (raw)
+			key = endKey
+		case "[F", "[4~":
+			if prevWasEsc {
+				key = endKey
+			}
+		case "\x1b[5~": // Page Up (raw)
+			key = pgUpKey
+		case "[5~":
+			if prevWasEsc {
+				key = pgUpKey
+			}
+		case "\x1b[6~": // Page Down (raw)
+			key = pgDnKey
+		case "[6~":
+			if prevWasEsc {
+				key = pgDnKey
+			}
+		case "\x1b[3~": // Delete (raw)
+			key = "c:4" // treat as ctrl-d (delete)
+		case "[3~":
+			if prevWasEsc {
+				key = "c:4"
+			}
+		case "\x1b": // ESC alone
+			key = "c:27"
+		case "[":
+			// If [ follows ESC, it's the start of a CSI sequence
+			// Mark it so the next character can complete the sequence
+			if prevWasEsc {
+				key = "esc[" // marker for pending CSI sequence
 			}
 		}
 

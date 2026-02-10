@@ -22,8 +22,15 @@ import (
 )
 
 const (
-	versionString     = "Orbiton 2.70.5"
-	slowKeyEscTimeout = 250 * time.Millisecond
+	versionString = "Orbiton 2.70.5"
+
+	// Timing for slow terminals (vt100, vt220, linux/BSD consoles)
+	slowReadTimeout = 50 * time.Millisecond
+	slowEscTimeout  = 250 * time.Millisecond
+
+	// Timing for fast terminals (xterm, alacritty, konsole, etc.)
+	fastReadTimeout = 2 * time.Millisecond
+	fastEscTimeout  = 50 * time.Millisecond
 )
 
 var (

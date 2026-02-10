@@ -771,7 +771,7 @@ retry:
 	}
 	defer tty.Close()
 	if env.Str("TERM") == "linux" {
-		tty.SetEscTimeout(slowKeyEscTimeout)
+		tty.SetEscTimeout(slowEscTimeout)
 	}
 
 	tty.FastInput(true)
