@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/vt"
 )
@@ -770,11 +769,8 @@ retry:
 		os.Exit(1)
 	}
 	defer tty.Close()
-	if env.Str("TERM") == "linux" {
-		tty.SetEscTimeout(slowEscTimeout)
-	}
 
-	tty.FastInput(true)
+	ttyFastInput(tty, true)
 
 	var (
 		sigChan       = make(chan os.Signal, 1)
@@ -908,7 +904,7 @@ retry:
 		moved := false
 
 		// Handle events
-		key = tty.KeyRaw()
+		key = tty.Key()
 		switch key {
 		case 253, 119: // Up or w
 			resizeMut.Lock()

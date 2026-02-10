@@ -266,7 +266,7 @@ func (e *Editor) JumpMode(c *vt.Canvas, status *StatusBar, tty *vt.TTY) int {
 	postAction := noAction
 
 	for !doneCollectingDigits {
-		numkey := tty.ReadStringEvent()
+		numkey := tty.String()
 		switch numkey {
 		case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "%", ".", ",": // 0..9 + %,.
 			lns += numkey // string('0' + (numkey - 48))

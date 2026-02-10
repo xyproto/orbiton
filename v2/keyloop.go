@@ -52,6 +52,15 @@ var (
 	fileSearchMaxTime = 500 * time.Millisecond
 )
 
+// ttyFastInput approximates old fast/slow input toggling by adjusting read timeout.
+func ttyFastInput(tty *vt.TTY, enabled bool) {
+	if enabled {
+		tty.SetTimeout(fastReadTimeout)
+		return
+	}
+	tty.SetTimeout(slowReadTimeout)
+}
+
 // Loop will set up and run the main loop of the editor
 // a *vt.TTY struct
 // fnord contains either data or a filename to open
@@ -179,19 +188,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	e.previousX = 1
 	e.previousY = 1
 
-	// Set timing based on terminal type
-	// Slow terminals (vt100, vt220, linux/BSD consoles) need longer timeouts
-	term := env.Str("TERM")
-	if strings.HasPrefix(term, "vt") || term == "linux" ||
-		term == "cons25" || strings.HasPrefix(term, "wsvt") || term == "pccon" {
-		_ = os.Setenv("VT_LEGACY_INPUT", "1")
-		tty.SetTimeout(slowReadTimeout)
-		tty.SetEscTimeout(slowEscTimeout)
-	} else {
-		_ = os.Unsetenv("VT_LEGACY_INPUT")
-		tty.SetTimeout(fastReadTimeout)
-		tty.SetEscTimeout(fastEscTimeout)
-	}
+	tty.SetTimeout(2 * time.Millisecond)
 
 	var lockTimestamp time.Time
 	canUseLocks.Store(!fnord.stdin && !monitorAndReadOnly)
@@ -300,13 +297,13 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		if e.macro == nil || (e.playBackMacroCount == 0 && !e.macro.Recording) {
 			// Read the next key in the regular way
-			key = tty.StringRaw()
+			key = tty.String()
 			undo.IgnoreSnapshots(false)
 		} else {
 			if e.macro.Recording {
 				undo.IgnoreSnapshots(true)
 				// Read and record the next key
-				key = tty.StringRaw()
+				key = tty.String()
 				if key != "c:20" { // ctrl-t
 					// But never record the macro toggle button
 					e.macro.Add(key)
@@ -318,93 +315,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					e.macro.Home()
 					e.playBackMacroCount--
 					// No more macro keys. Read the next key.
-					key = tty.StringRaw()
+					key = tty.String()
 				}
-			}
-		}
-
-		// Handle raw escape sequences that vt may return on the Linux console
-		// These can arrive as complete sequences or split (ESC, [, letter separately)
-		prevWasEsc := kh.Prev() == "c:27" && kh.PrevWithin(500*time.Millisecond)
-		prevWasCsiStart := kh.Prev() == "esc[" && kh.PrevWithin(500*time.Millisecond)
-		switch key {
-		case "\x1b[A", "\x1bOA", "OA": // Arrow Up (raw CSI/SS3)
-			key = upArrow
-		case "[A":
-			if prevWasEsc {
-				key = upArrow
-			}
-		case "A":
-			if prevWasCsiStart {
-				key = upArrow
-			}
-		case "\x1b[B", "\x1bOB", "OB": // Arrow Down (raw CSI/SS3)
-			key = downArrow
-		case "[B":
-			if prevWasEsc {
-				key = downArrow
-			}
-		case "B":
-			if prevWasCsiStart {
-				key = downArrow
-			}
-		case "\x1b[C", "\x1bOC", "OC": // Arrow Right (raw CSI/SS3)
-			key = rightArrow
-		case "[C":
-			if prevWasEsc {
-				key = rightArrow
-			}
-		case "C":
-			if prevWasCsiStart {
-				key = rightArrow
-			}
-		case "\x1b[D", "\x1bOD", "OD": // Arrow Left (raw CSI/SS3)
-			key = leftArrow
-		case "[D":
-			if prevWasEsc {
-				key = leftArrow
-			}
-		case "D":
-			if prevWasCsiStart {
-				key = leftArrow
-			}
-		case "\x1b[H", "\x1b[1~", "\x1bOH", "OH": // Home (raw)
-			key = homeKey
-		case "[H", "[1~":
-			if prevWasEsc {
-				key = homeKey
-			}
-		case "\x1b[F", "\x1b[4~", "\x1bOF", "OF": // End (raw)
-			key = endKey
-		case "[F", "[4~":
-			if prevWasEsc {
-				key = endKey
-			}
-		case "\x1b[5~": // Page Up (raw)
-			key = pgUpKey
-		case "[5~":
-			if prevWasEsc {
-				key = pgUpKey
-			}
-		case "\x1b[6~": // Page Down (raw)
-			key = pgDnKey
-		case "[6~":
-			if prevWasEsc {
-				key = pgDnKey
-			}
-		case "\x1b[3~": // Delete (raw)
-			key = "c:4" // treat as ctrl-d (delete)
-		case "[3~":
-			if prevWasEsc {
-				key = "c:4"
-			}
-		case "\x1b": // ESC alone
-			key = "c:27"
-		case "[":
-			// If [ follows ESC, it's the start of a CSI sequence
-			// Mark it so the next character can complete the sequence
-			if prevWasEsc {
-				key = "esc[" // marker for pending CSI sequence
 			}
 		}
 

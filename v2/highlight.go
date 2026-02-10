@@ -961,13 +961,13 @@ func (e *Editor) applyAccentHighlights(line string, runesAndAttributes []vt.Char
 	if len(lineRunes) == 0 || len(runesAndAttributes) == 0 {
 		return
 	}
-	max := len(lineRunes)
-	if len(runesAndAttributes) < max {
-		max = len(runesAndAttributes)
+	maxLen := len(lineRunes)
+	if len(runesAndAttributes) < maxLen {
+		maxLen = len(runesAndAttributes)
 	}
 	if e.ternaryAccentMode() {
 		if keywordOK {
-			for i := 1; i+1 < max; i++ {
+			for i := 1; i+1 < maxLen; i++ {
 				if (lineRunes[i] == '?' || lineRunes[i] == ':') && lineRunes[i-1] == ' ' && lineRunes[i+1] == ' ' {
 					runesAndAttributes[i].A = keywordAttr
 				}
@@ -975,18 +975,18 @@ func (e *Editor) applyAccentHighlights(line string, runesAndAttributes []vt.Char
 		}
 	}
 	if arrowOK && (e.mode == mode.GDScript || e.mode == mode.Python) {
-		for i := 0; i < max; i++ {
+		for i := 0; i < maxLen; i++ {
 			if lineRunes[i] != '@' {
 				continue
 			}
 			if i > 0 && isIdentifierRune(lineRunes[i-1]) {
 				continue
 			}
-			if i+1 >= max || !isIdentifierRune(lineRunes[i+1]) {
+			if i+1 >= maxLen || !isIdentifierRune(lineRunes[i+1]) {
 				continue
 			}
 			end := i + 2
-			for end < max && isIdentifierRune(lineRunes[end]) {
+			for end < maxLen && isIdentifierRune(lineRunes[end]) {
 				end++
 			}
 			for j := i; j < end; j++ {

@@ -445,7 +445,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 						e.setLightVSTheme()
 					}
 				}
-			} else if discoverBGColor {
+			} else if discoverBGColor && env.Bool("ORBITON_TRY_BG_QUERY") {
 				// r, g, b is the background color from the current terminal emulator, if available
 				// Checke if the combined value of r, g and b (0..1) is larger than 2
 				// (a bit arbitrary, but should work for most cases)

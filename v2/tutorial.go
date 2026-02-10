@@ -386,7 +386,7 @@ func LaunchTutorial(tty *vt.TTY, c *vt.Canvas, e *Editor, status *StatusBar) {
 		step.Draw(c, e, progress, minWidth, repositionCursorAfterDrawing)
 
 		// Wait for a keypress
-		key := tty.ReadStringEvent()
+		key := tty.String()
 		switch key {
 		case " ", "c:13", "↓", "→", "j", "c:14", "n": // space, return, down, right, j, ctrl-n or n to go to the next step
 			if i < (len(tutorialSteps) - 1) {
