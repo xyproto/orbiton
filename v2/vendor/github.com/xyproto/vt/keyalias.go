@@ -10,10 +10,10 @@ var keyNameMap = map[int]string{
 	KeyTab:        "c:9",
 	KeyEnter:      "c:13",
 	KeyEsc:        "c:27",
-	KeyCtrlA:      "c:1",
+	KeyCtrlA:      "c:1", // Also KeyHome
 	KeyCtrlC:      "c:3",
 	KeyCtrlD:      "c:4",
-	KeyCtrlE:      "c:5",
+	KeyCtrlE:      "c:5", // Also KeyEnd
 	KeyCtrlF:      "c:6",
 	KeyCtrlH:      "c:8",
 	KeyCtrlL:      "c:12",
@@ -21,17 +21,14 @@ var keyNameMap = map[int]string{
 	KeyCtrlP:      "c:16",
 	KeyCtrlQ:      "c:17",
 	KeyCtrlS:      "c:19",
-	KeyBackspace:  "c:127",
-	KeyArrowLeft:  "ArrowLeft",
-	KeyArrowRight: "ArrowRight",
-	KeyArrowUp:    "ArrowUp",
-	KeyArrowDown:  "ArrowDown",
-	KeyDelete:     "Delete",
-	KeyHome:       "Home",
-	KeyEnd:        "End",
-	KeyPageUp:     "PageUp",
-	KeyPageDown:   "PageDown",
-	KeyCtrlInsert: "CtrlInsert",
+	KeyBackspace:  "c:127", // Also KeyDelete
+	KeyArrowLeft:  "←",
+	KeyArrowRight: "→",
+	KeyArrowUp:    "↑",
+	KeyArrowDown:  "↓",
+	KeyPageUp:     "⇞",
+	KeyPageDown:   "⇟",
+	KeyCtrlInsert: "⎘",
 	KeyF1:         "F1",
 	KeyF2:         "F2",
 	KeyF3:         "F3",
@@ -51,13 +48,12 @@ var keySymbolMap = map[int]string{
 	KeyArrowDown:  "↓",
 	KeyArrowRight: "→",
 	KeyArrowLeft:  "←",
-	KeyHome:       "⇱",
-	KeyEnd:        "⇲",
 	KeyPageUp:     "⇞",
 	KeyPageDown:   "⇟",
 	KeyCtrlInsert: "⎘",
 	KeyTab:        "⇥",
 	KeyEnter:      "⏎",
+	// KeyHome (1) = KeyCtrlA, KeyEnd (5) = KeyCtrlE - no separate symbols
 }
 
 var nameToKeyMap map[string]int
