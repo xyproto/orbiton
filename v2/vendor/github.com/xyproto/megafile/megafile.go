@@ -239,7 +239,7 @@ func (s *State) selectNextIndexThatIsANonBinaryFile() error {
 	var path string
 	for i := s.selectedIndex() + 1; i < len(s.fileEntries); i++ {
 		path = filepath.Join(dir, s.fileEntries[i].realName)
-		if files.File(path) && !files.Binary(path) {
+		if files.File(path) && !files.BinaryAccurate(path) {
 			s.selectedIndexPerDirectory[dir] = i
 			return nil
 		}
@@ -247,7 +247,7 @@ func (s *State) selectNextIndexThatIsANonBinaryFile() error {
 	// TODO: Cycle with a single loop instead of 2
 	for i := 0; i <= s.selectedIndex(); i++ {
 		path = filepath.Join(dir, s.fileEntries[i].realName)
-		if files.File(path) && !files.Binary(path) {
+		if files.File(path) && !files.BinaryAccurate(path) {
 			s.selectedIndexPerDirectory[dir] = i
 			return nil
 		}
@@ -260,7 +260,7 @@ func (s *State) selectPrevIndexThatIsANonBinaryFile() error {
 	var path string
 	for i := s.selectedIndex() - 1; i >= 0; i-- {
 		path = filepath.Join(dir, s.fileEntries[i].realName)
-		if files.File(path) && !files.Binary(path) {
+		if files.File(path) && !files.BinaryAccurate(path) {
 			s.selectedIndexPerDirectory[dir] = i
 			return nil
 		}
@@ -268,7 +268,7 @@ func (s *State) selectPrevIndexThatIsANonBinaryFile() error {
 	// TODO: Cycle with a single loop instead of 2
 	for i := len(s.fileEntries) - 1; i >= s.selectedIndex(); i-- {
 		path = filepath.Join(dir, s.fileEntries[i].realName)
-		if files.File(path) && !files.Binary(path) {
+		if files.File(path) && !files.BinaryAccurate(path) {
 			s.selectedIndexPerDirectory[dir] = i
 			return nil
 		}
@@ -351,14 +351,15 @@ func (s *State) clearHighlight() {
 
 func (s *State) ls(dir string) (int, error) {
 	const (
-		margin       = 1
+		margin       = 2
 		columnWidth  = 25
 		bottomMargin = 2
+		rightMargin  = 2
 	)
 	var (
 		x            = s.startx
 		y            = s.starty + 1
-		w            = s.canvas.W()
+		w            = s.canvas.W() - rightMargin
 		longestSoFar = uint(0)
 		maxY         = s.canvas.H()
 	)
@@ -449,7 +450,7 @@ func (s *State) ls(dir string) (int, error) {
 		} else if files.ExecutableCached(path) {
 			color = s.ExecutableColor
 			suffix = "*"
-		} else if files.Binary(path) {
+		} else if files.BinaryAccurate(path) {
 			color = s.BinaryColor
 			suffix = "¤"
 		} else {
@@ -781,7 +782,7 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 		}
 		// Check if file is both binary and executable
 		fullPath := filepath.Join(path, cmd)
-		if files.Binary(fullPath) && files.Executable(fullPath) {
+		if files.BinaryAccurate(fullPath) && files.Executable(fullPath) {
 			if !s.confirmBinaryEdit(cmd) {
 				return false, false, NoAction, nil // User cancelled
 			}
@@ -791,7 +792,7 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 	}
 	if files.File(cmd) { // abs absolute path
 		// Check if file is binary (but allow .gz files as they can be edited)
-		if files.Binary(cmd) && !strings.HasSuffix(cmd, ".gz") {
+		if files.BinaryAccurate(cmd) && !strings.HasSuffix(cmd, ".gz") {
 			if !s.confirmBinaryEdit(filepath.Base(cmd)) {
 				return false, false, NoAction, nil // User cancelled
 			}
@@ -1498,7 +1499,7 @@ func (s *State) Run() ([]string, error) {
 				filemode := "Directory"
 				filesize := "-"
 				if !files.Dir(path) {
-					if files.Binary(path) {
+					if files.BinaryAccurate(path) {
 						filemode = "Binary"
 					} else {
 						filemode = mode.Detect(path).String()
@@ -1684,7 +1685,7 @@ func (s *State) Run() ([]string, error) {
 					return nil
 				}
 				// Skip binary files
-				if files.Binary(path) {
+				if files.BinaryAccurate(path) {
 					return nil
 				}
 				// Read and search file

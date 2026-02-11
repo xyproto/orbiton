@@ -88,7 +88,7 @@ github.com/xfmoulet/qoi
 # github.com/xyproto/autoimport v1.5.2
 ## explicit; go 1.19
 github.com/xyproto/autoimport
-# github.com/xyproto/binary v1.3.3
+# github.com/xyproto/binary v1.4.0
 ## explicit; go 1.18
 github.com/xyproto/binary
 # github.com/xyproto/burnfont v1.2.3
@@ -109,7 +109,7 @@ github.com/xyproto/env
 # github.com/xyproto/env/v2 v2.5.4
 ## explicit; go 1.19
 github.com/xyproto/env/v2
-# github.com/xyproto/files v1.10.4
+# github.com/xyproto/files v1.10.5
 ## explicit; go 1.19
 github.com/xyproto/files
 # github.com/xyproto/fullname v1.1.0
@@ -130,7 +130,7 @@ github.com/xyproto/kotlinsig
 # github.com/xyproto/lookslikegoasm v1.0.0
 ## explicit; go 1.23.2
 github.com/xyproto/lookslikegoasm
-# github.com/xyproto/megafile v1.5.0
+# github.com/xyproto/megafile v1.5.1
 ## explicit; go 1.24.4
 github.com/xyproto/megafile
 # github.com/xyproto/mode v0.12.3

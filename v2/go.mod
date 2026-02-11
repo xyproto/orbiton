@@ -18,18 +18,18 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/xfmoulet/qoi v0.2.0
 	github.com/xyproto/autoimport v1.5.2
-	github.com/xyproto/binary v1.3.3
+	github.com/xyproto/binary v1.4.0
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.3.0
 	github.com/xyproto/env/v2 v2.5.4
-	github.com/xyproto/files v1.10.4
+	github.com/xyproto/files v1.10.5
 	github.com/xyproto/fullname v1.1.0
 	github.com/xyproto/globi v1.0.2
 	github.com/xyproto/iferr v1.1.0
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
-	github.com/xyproto/megafile v1.5.0
+	github.com/xyproto/megafile v1.5.1
 	github.com/xyproto/mode v0.12.3
 	github.com/xyproto/ollamaclient/v2 v2.7.2
 	github.com/xyproto/palgen v1.6.1
