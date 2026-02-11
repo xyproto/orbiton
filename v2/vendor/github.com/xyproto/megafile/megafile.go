@@ -100,7 +100,7 @@ var ErrExit = errors.New("exit")
 // Control characters are returned as "c:N" where N is the ASCII code.
 func (s *State) readKey() string {
 	r := s.tty.Rune()
-	if r < 32 {
+	if r < 32 || r == 127 {
 		return "c:" + strconv.Itoa(int(r))
 	}
 	return string(r)
