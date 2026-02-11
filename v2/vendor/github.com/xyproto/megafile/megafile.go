@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -94,6 +95,16 @@ type State struct {
 
 // ErrExit is the error that is returned if the user appeared to want to exit
 var ErrExit = errors.New("exit")
+
+// readKey reads a key from the TTY and returns it as a string.
+// Control characters are returned as "c:N" where N is the ASCII code.
+func (s *State) readKey() string {
+	r := s.tty.Rune()
+	if r < 32 {
+		return "c:" + strconv.Itoa(int(r))
+	}
+	return string(r)
+}
 
 // New creates a new MegaFile State
 // c and tty is a canvas and TTY, initiated with the vt package
@@ -978,7 +989,7 @@ func (s *State) Run() ([]string, error) {
 	c.Draw()
 
 	for !s.quit {
-		key := s.tty.String()
+		key := s.readKey()
 		switch key {
 		case "c:27": // esc
 			if s.selectedIndex() >= 0 {
