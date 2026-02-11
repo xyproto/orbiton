@@ -1140,10 +1140,36 @@ func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspa
 			continue
 		}
 
+		// Boost items that match the prefix more closely
+		// e.g., if prefix is "get", "getStdOut" should rank higher than "GenericReader"
+		if prefix != "" {
+			labelLower := strings.ToLower(trimmedLabel)
+			// Give a boost proportional to how much of the prefix matches
+			// This helps "getStdOut" rank higher than "GenericReader" when prefix is "ge" or "get"
+			matchLen := 0
+			for i := 0; i < len(prefix) && i < len(labelLower); i++ {
+				if prefix[i] == labelLower[i] {
+					matchLen++
+				} else {
+					break
+				}
+			}
+			score += matchLen * 50 // Boost per matching character
+		}
+
 		// Boost common methods (only for member access)
 		if isMemberAccess {
-			if boost, isCommon := commonMethods[strings.ToLower(item.Label)]; isCommon {
+			labelLower := strings.ToLower(item.Label)
+			if boost, isCommon := commonMethods[labelLower]; isCommon {
 				score += boost
+			}
+			// Also boost items that START with common method prefixes
+			for method := range commonMethods {
+				if strings.HasPrefix(labelLower, method) && len(labelLower) > len(method) {
+					// Partial boost for prefix match (e.g., "getStdOut" matches "get")
+					score += commonMethods[method] / 2
+					break
+				}
 			}
 		}
 
@@ -1365,16 +1391,18 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 	}
 
 	// Detect trigger character for better completion context
-	// Check if the character before cursor position is a trigger character
+	// Only set trigger character if cursor is IMMEDIATELY after "." or ":"
+	// If there's already a partial word typed, don't send trigger character
 	var triggerChar string
 	if x > 0 && len(currentLine) > 0 {
-		lastChar := currentLine[len(currentLine)-1:]
-		if lastChar == "." || lastChar == ":" {
-			triggerChar = lastChar
+		lastChar := string(currentLine[len(currentLine)-1])
+		if lastChar == "." {
+			triggerChar = "."
+		} else if len(currentLine) >= 2 && currentLine[len(currentLine)-2:] == "::" {
+			triggerChar = ":"
 		}
 	}
 
-	// Debug: Log the request details
 	items, err := client.GetCompletions(uri, line, x, triggerChar)
 	if err != nil {
 		return nil, err
@@ -1610,32 +1638,20 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	}
 
 	// Detect trigger character
-	// Check if we're completing right after a dot or colon (member access)
+	// Only set trigger character if cursor is IMMEDIATELY after "." or ":"
+	// If there's already a partial word typed (like "std.io.get"), don't send trigger character
+	// as it may confuse some LSP servers
 	var triggerChar string
 	if x > 0 && len(currentLine) > 0 {
-		// Look back from cursor position to find if there's a recent trigger character
-		// For "stdout.pri", currentLine is "    stdout.pri" and we're after the "i"
-		// We want to detect the "." that comes before "pri"
-
-		// Find the start of the current word we're completing
-		wordStart := x
-		for wordStart > 0 && len(currentLine) >= wordStart {
-			r := rune(currentLine[wordStart-1])
-			if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_' {
-				break
-			}
-			wordStart--
+		lastChar := string(currentLine[len(currentLine)-1])
+		if lastChar == "." {
+			triggerChar = "."
+		} else if len(currentLine) >= 2 && currentLine[len(currentLine)-2:] == "::" {
+			triggerChar = ":"
 		}
-
-		// Check if the character just before the word is a trigger
-		if wordStart > 0 && len(currentLine) >= wordStart {
-			prevChar := string(currentLine[wordStart-1])
-			if prevChar == "." {
-				triggerChar = "."
-			} else if wordStart > 1 && len(currentLine) >= wordStart && currentLine[wordStart-2:wordStart] == "::" {
-				triggerChar = ":"
-			}
-		}
+		// Note: If there's a partial word after the trigger (e.g., "std.io.get"),
+		// we don't set triggerChar. The LSP will use triggerKind=1 (Invoked)
+		// and filter based on the partial word.
 	}
 
 	// Request completions from LSP
