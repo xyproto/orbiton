@@ -90,14 +90,13 @@ Flags:
   -d, --create-dir               When opening a new file, create directories as needed.
   -s, --digraphs                 List all possible digraphs.
   -t, --list                     List the given file using the red/black theme and quit.
-  -b, --bat                      List the given file using bat, if it exists in the PATH.
+  -B, --bat                      List the given file using bat, if it exists in the PATH.
                                  This can be useful when used with together with -c or -p.
   -i, --input-file FILENAME      Used as stdin when running programs with ctrl-space.
                                  The default filename is input.txt. Handy for Advent of Code.
   -a, --nano                     Emulate Pico/Nano.
   -q, --quick-help               Always display the quick help pane at start.
   -z, --no-quick-help            Never display the quick help pane at start.
-  -k, --slowkey                  Use a longer ESC timeout for slow terminals.
   -g, --glob GLOB                Search for and open the first filename that matches the substring.
   -h, --help                     Display this usage information.
   -y, --esc                      Just pressing Esc will exit the program.
