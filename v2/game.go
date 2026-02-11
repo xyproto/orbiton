@@ -830,7 +830,7 @@ retry:
 
 	// The loop time that is aimed for
 	var (
-		loopDuration  = time.Millisecond * 100
+		loopDuration  = time.Millisecond * 5
 		start         = time.Now()
 		running       = true
 		paused        bool
