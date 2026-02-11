@@ -24,7 +24,7 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 			return err
 		}
 	}
-	e.binaryFile = binary.Data(data)
+	e.binaryFile = binary.DataAccurate(data)
 
 	var (
 		reader           = bufio.NewReader(bytes.NewReader(data))
@@ -102,7 +102,7 @@ func (e *Editor) LoadBytes(data []byte) {
 	e.Clear()
 	e.lines = make(map[int][]rune, lineCount)
 
-	e.binaryFile = binary.Data(data)
+	e.binaryFile = binary.DataAccurate(data)
 
 	var (
 		// Split the bytes into lines

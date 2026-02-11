@@ -416,7 +416,7 @@ func main() {
 					matches, err := globi.Glob(fnord.filename + "*")
 					if err == nil && len(matches) > 0 { // no error and at least 1 match
 						// Filter out any binary files
-						matches = files.FilterOutBinaryFiles(matches)
+						matches = files.FilterOutBinaryFilesAccurate(matches)
 						if len(matches) > 0 {
 							sort.Strings(matches)
 							// If the matches contains low priority suffixes, such as ".lock", then move it last
@@ -444,7 +444,7 @@ func main() {
 					matches, err := globi.Glob(fnord.filename + "*")
 					if err == nil && len(matches) > 1 { // no error and more than 1 match
 						// Use the first non-binary match of the sorted results
-						matches = files.FilterOutBinaryFiles(matches)
+						matches = files.FilterOutBinaryFilesAccurate(matches)
 						if len(matches) > 0 {
 							sort.Strings(matches)
 							fnord.filename = matches[0]
@@ -455,7 +455,7 @@ func main() {
 					matches, err := globi.Glob(strings.ToTitle(fnord.filename) + "*")
 					if err == nil && len(matches) >= 1 { // no error and at least 1 match
 						// Use the first non-binary match of the sorted results
-						matches = files.FilterOutBinaryFiles(matches)
+						matches = files.FilterOutBinaryFilesAccurate(matches)
 						if len(matches) > 0 {
 							sort.Strings(matches)
 							fnord.filename = matches[0]

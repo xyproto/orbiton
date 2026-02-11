@@ -83,10 +83,8 @@ func WriteClipboardToFile(filename string, overwrite, primaryClipboard bool) (in
 	}
 
 	// If it's not binary data, make sure there is a final newline
-	if !binary.Data(contents) {
-		if !bytes.HasSuffix(contents, []byte{'\n'}) {
-			contents = append(contents, '\n')
-		}
+	if !binary.DataAccurate(contents) && !bytes.HasSuffix(contents, []byte{'\n'}) {
+		contents = append(contents, '\n')
 	}
 
 	// Write to file
