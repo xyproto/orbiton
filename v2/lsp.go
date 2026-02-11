@@ -36,6 +36,8 @@ type LSPClient struct {
 	mutex         sync.Mutex
 	running       bool
 	initialized   bool
+	reader        *bufio.Reader // Persistent reader for stdout to preserve buffered data
+	readerMu      sync.Mutex    // Protects reader initialization
 }
 
 // LSPCompletionItem represents a single completion suggestion
@@ -91,8 +93,8 @@ type scoredItem struct {
 }
 
 const (
-	lspInitTimeout       = 5 * time.Second
-	lspCompletionTimeout = 2 * time.Second
+	lspInitTimeout       = 30 * time.Second
+	lspCompletionTimeout = 10 * time.Second
 	lspDefinitionTimeout = 200 * time.Millisecond // Fast timeout for go-to-definition
 	lspShutdownTimeout   = 2 * time.Second
 )
@@ -262,6 +264,16 @@ func (lsp *LSPClient) sendRequest(method string, params interface{}) (int, error
 // readResponse reads a JSON-RPC response from the language server
 func (lsp *LSPClient) readResponse(timeout time.Duration) (map[string]interface{}, error) {
 	deadline := time.Now().Add(timeout)
+
+	// Lock for the entire read operation to prevent concurrent reads
+	lsp.readerMu.Lock()
+	defer lsp.readerMu.Unlock()
+
+	// Create reader once and reuse it to preserve buffered data
+	if lsp.reader == nil {
+		lsp.reader = bufio.NewReader(lsp.stdout)
+	}
+
 	for time.Now().Before(deadline) {
 		done := make(chan struct{})
 		var result map[string]interface{}
@@ -269,10 +281,9 @@ func (lsp *LSPClient) readResponse(timeout time.Duration) (map[string]interface{
 
 		go func() {
 			defer close(done)
-			reader := bufio.NewReader(lsp.stdout)
 			headers := make(map[string]string)
 			for {
-				line, err := reader.ReadString('\n')
+				line, err := lsp.reader.ReadString('\n')
 				if err != nil {
 					readErr = err
 					return
@@ -296,7 +307,7 @@ func (lsp *LSPClient) readResponse(timeout time.Duration) (map[string]interface{
 				return
 			}
 			body := make([]byte, contentLength)
-			if _, err := io.ReadFull(reader, body); err != nil {
+			if _, err := io.ReadFull(lsp.reader, body); err != nil {
 				readErr = err
 				return
 			}
@@ -314,6 +325,7 @@ func (lsp *LSPClient) readResponse(timeout time.Duration) (map[string]interface{
 			if _, hasID := result["id"]; hasID {
 				return result, nil
 			}
+			// Got a notification (no "id"), continue reading for the actual response
 		case <-time.After(time.Until(deadline)):
 			return nil, errors.New("timeout reading LSP response")
 		}
@@ -1582,11 +1594,6 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		lastOpenedURI = uri
 		lastOpenedVersion = 1
 
-		// For C/C++, clangd needs time to index the standard library
-		// Based on testing, indexing typically completes within 3-4 seconds
-		if e.mode == mode.C || e.mode == mode.Cpp {
-			time.Sleep(3 * time.Second)
-		}
 	} else {
 		lastOpenedVersion++
 		if err := client.DidChange(uri, fileContent, lastOpenedVersion); err != nil {
@@ -1636,7 +1643,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	var items []LSPCompletionItem
 	maxAttempts := 1
 	if needsWorkspaceSetup(e.mode) {
-		maxAttempts = 5 // Try up to 5 times with delays
+		maxAttempts = 60 // Try up to 60 times with 500ms delays (30 seconds total)
 	}
 
 	for attempt := 0; attempt < maxAttempts; attempt++ {

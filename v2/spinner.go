@@ -45,11 +45,10 @@ var spinnerASCII = []string{
 }
 
 // Spinner waits a bit, then displays a spinner together with the given message string (msg).
-// If the spinner is aborted, the qmsg string is displayed.
 // Returns a quit channel (chan bool).
 // The spinner is shown asynchronously.
 // "true" must be sent to the quit channel once whatever operating that the spinner is spinning for is completed.
-func (e *Editor) Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn time.Duration, textColor vt.AttributeColor, cursorAfterText bool) chan bool {
+func (e *Editor) Spinner(c *vt.Canvas, _ *vt.TTY, umsg, _ string, startIn time.Duration, textColor vt.AttributeColor, cursorAfterText bool) chan bool {
 	quitChan := make(chan bool)
 	go func() {
 		// Divide the startIn time into 5, then wait while listening to the quitChan
@@ -66,8 +65,8 @@ func (e *Editor) Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn t
 			}
 		}
 
-		// If c or tty are nil, use the silent spinner
-		if (c == nil) || (tty == nil) {
+		// If c is nil, use the silent spinner
+		if c == nil {
 			// Wait for a true on the quit channel, then return
 			<-quitChan
 			return
@@ -131,11 +130,6 @@ func (e *Editor) Spinner(c *vt.Canvas, tty *vt.TTY, umsg, qmsg string, startIn t
 				// Iterate over the spinner frames as the counter increases
 				to.Print(spinnerAnimation[counter%ulen(spinnerAnimation)])
 				counter++
-				// Wait for a key press (also sleeps just a bit)
-				switch tty.Key() {
-				case 27, 113, 17, 3: // esc, q, ctrl-q or ctrl-c
-					quitMessage(tty, qmsg)
-				}
 				time.Sleep(32 * time.Millisecond) // for a smoother animation
 			}
 		}
