@@ -25,7 +25,7 @@ Ignore file locks when opening files.
 Output the last used build/format/export command.
 .TP
 .B \-m FILENAME or \-\-monitor FILENAME
-Monitor the given file for changes, and open it as read-ony.
+Monitor the given file for changes, and open it as read-only.
 .TP
 .B \-n or \-\-no-cache
 Avoid writing the location history, search history, game highscore and last build/format/export command to the cache directory.
@@ -34,7 +34,7 @@ Avoid writing the location history, search history, game highscore and last buil
 Paste the contents of the clipboard into the given file. Combine with \-f to overwrite the file.
 .TP
 .B \-e or \-\-clear-locks
-Clear all file locks.
+Clear all file locks and close all portals.
 .TP
 .B \-o or \-\-ollama
 Use Ollama for tab completion with the model specified in the \fBORBITON_OLLAMA\fP environment variable. This requires that Ollama is up and running,
@@ -43,7 +43,7 @@ either locally or at the host specified in the \fBOLLAMA_HOST\fP environment var
 .B \-r or \-\-release
 Build with release instead of debug mode whenever applicable. This can be useful when editing a CMakeLists.txt file and then pressing ctrl-space to build the project.
 .TP
-.B \-b or \-\-bat
+.B \-B or \-\-bat
 List the file with syntax highlighting using the \fBbat\fP command, if installed.
 .TP
 .B \-t or \-\-list
@@ -54,6 +54,30 @@ Build the given file instead of opening it for editing.
 .TP
 .B \-F or \-\-format
 Format the given file instead of opening it for editing.
+.TP
+.B \-d or \-\-create-dir
+When opening a new file, create directories as needed.
+.TP
+.B \-s or \-\-digraphs
+List all possible digraphs.
+.TP
+.B \-i FILENAME or \-\-input-file FILENAME
+Used as stdin when running programs with ctrl-space. The default filename is input.txt.
+.TP
+.B \-a or \-\-nano
+Emulate Pico/Nano.
+.TP
+.B \-q or \-\-quick-help
+Always display the quick help pane at start.
+.TP
+.B \-z or \-\-no-quick-help
+Never display the quick help pane at start.
+.TP
+.B \-x or \-\-noapprox
+Disable approximate filename matching.
+.TP
+.B \-g GLOB or \-\-glob GLOB
+Search for and open the first filename that matches the given substring.
 .TP
 .B \-v or \-\-version
 Display the current version.
@@ -70,8 +94,8 @@ Display brief usage information.
   Save the file.
 .sp
 .B ctrl-w
-  Format the current file with \fBgoimport\fP or \fBclang-format\fP, depending on the file extension.
-  Zig, V, Rust (\fBrustfmt\fP), Haskell (\fBbrittany\fP) and Python (\fBautopep8\fP) are also supported.
+  Format the current file with \fBgoimports\fP or \fBclang-format\fP, depending on the file extension.
+  Zig, V, Rust (\fBrustfmt\fP), Haskell (\fBbrittany\fP) and Python (\fBblack\fP) are also supported.
   If in git mode, cycle the git interactive rebase keyword on the current line.
   If in Markdown mode, format the table under the cursor.
 .sp
