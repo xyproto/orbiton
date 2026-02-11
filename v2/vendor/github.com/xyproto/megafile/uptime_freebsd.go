@@ -15,6 +15,6 @@ func uptime() (float64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("failed to get system information (uptime): %w", err)
 	}
-	bootTime := time.Unix(tv.Sec, int64(tv.Usec)*1000)
+	bootTime := time.Unix(int64(tv.Sec), int64(tv.Usec)*1000)
 	return time.Since(bootTime).Seconds(), nil
 }

@@ -1,4 +1,4 @@
-//go:build linux || darwin
+//go:build linux || darwin || freebsd || netbsd || openbsd || dragonfly
 
 package vt
 

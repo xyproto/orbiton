@@ -1,4 +1,4 @@
-//go:build !linux && !darwin
+//go:build !linux && !darwin && !freebsd && !netbsd && !openbsd && !dragonfly
 
 package vt
 
@@ -12,6 +12,19 @@ var (
 	defaultTimeout = 2 * time.Millisecond
 	lastKey        int
 )
+
+// StubTerm is a stub for term.Term on unsupported platforms
+type StubTerm struct{}
+
+// Available returns 0 bytes available (stub)
+func (s *StubTerm) Available() (int, error) {
+	return 0, errors.New("TTY is not supported on this platform")
+}
+
+// Read is a stub that returns an error
+func (s *StubTerm) Read(p []byte) (int, error) {
+	return 0, errors.New("TTY is not supported on this platform")
+}
 
 // TTY represents a terminal device
 type TTY struct {
@@ -51,6 +64,11 @@ func (tty *TTY) Restore() {}
 
 // Flush flushes the terminal output
 func (tty *TTY) Flush() {}
+
+// Term returns a stub terminal reader
+func (tty *TTY) Term() *StubTerm {
+	return &StubTerm{}
+}
 
 // WriteString writes a string to the terminal
 func (tty *TTY) WriteString(s string) error {

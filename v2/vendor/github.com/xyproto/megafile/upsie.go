@@ -9,18 +9,24 @@ import (
 	"strings"
 )
 
-// trimNullBytes converts a null-terminated []int8 slice to a Go string.
-// It explicitly copies the int8 values to a byte slice.
-func trimNullBytes(s []int8) string {
+// trimNullBytesInt8 converts a null-terminated []int8 slice to a Go string.
+func trimNullBytesInt8(s []int8) string {
 	b := make([]byte, len(s))
 	for i, v := range s {
 		b[i] = byte(v)
 	}
-	// Find the first null byte and slice up to that point.
 	if i := bytes.IndexByte(b, 0); i != -1 {
 		b = b[:i]
 	}
 	return string(b)
+}
+
+// trimNullBytesUint8 converts a null-terminated []uint8 slice to a Go string.
+func trimNullBytesUint8(s []uint8) string {
+	if i := bytes.IndexByte(s, 0); i != -1 {
+		return string(s[:i])
+	}
+	return string(s)
 }
 
 // writeUptime formats and writes the uptime duration to the given writer.
