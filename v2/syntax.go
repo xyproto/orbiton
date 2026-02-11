@@ -202,9 +202,11 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		setKeywords(gleamWords)
 	case mode.Go, mode.Dingo:
 		// TODO: Define goWords and use setKeywords instead
-		addKeywords := []string{"defer", "error", "fallthrough", "func", "go", "import", "package", "print", "println", "range", "rune", "string", "uint", "uint16", "uint32", "uint64", "uint8"}
+		addKeywords := []string{"chan", "defer", "error", "fallthrough", "func", "go", "import", "package", "print", "println", "range", "rune", "select", "string", "uint", "uint16", "uint32", "uint64", "uint8"}
 		delKeywords := []string{"assert", "auto", "build", "char", "class", "def", "def", "del", "die", "dir", "done", "end", "exec", "False", "fi", "final", "finally", "fn", "foreach", "from", "function", "get", "in", "include", "is", "lambda", "last", "let", "match", "mut", "next", "no", "None", "pass", "redo", "rescue", "ret", "retry", "set", "static", "template", "then", "this", "True", "until", "when", "where", "while", "yes"}
 		addAndRemoveKeywords(addKeywords, delKeywords)
+	case mode.Haskell:
+		addKeywords([]string{"data", "deriving", "foreign", "infix", "infixl", "infixr", "instance", "newtype"})
 	case mode.Haxe:
 		setKeywords(haxeWords)
 	case mode.HIDL:
@@ -219,8 +221,10 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		delKeywords := []string{"add", "bool", "get", "in", "local", "sub", "until"}
 		addAndRemoveKeywords(addKeywords, delKeywords)
 	case mode.JavaScript:
-		kws := []string{"super"}
+		kws := []string{"of", "super"}
 		addKeywords(kws)
+	case mode.TypeScript:
+		addKeywords([]string{"declare", "infer", "keyof", "never", "of", "readonly", "satisfies", "unknown"})
 	case mode.JSON:
 		removeKeywords([]string{"install", "until"})
 	case mode.Koka:
@@ -263,7 +267,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		delKeywords := []string{"as", "build", "byte", "end", "foreach", "get", "int", "int16", "int32", "int64", "last", "map", "mut", "next", "pass", "print", "uint16", "uint32", "uint64", "until", "var"}
 		addAndRemoveKeywords(addKeywords, delKeywords)
 	case mode.Garnet, mode.Jakt, mode.Rust: // Originally only for Rust, split up as needed
-		addKeywords := []string{"String", "assert_eq", "char", "fn", "i16", "i32", "i64", "i8", "impl", "loop", "mod", "out", "panic", "u16", "u32", "u64", "u8", "usize"}
+		addKeywords := []string{"String", "assert_eq", "async", "await", "char", "crate", "dyn", "fn", "i16", "i32", "i64", "i8", "impl", "loop", "mod", "out", "panic", "pub", "u16", "u32", "u64", "u8", "unsafe", "usize"}
 		// "as" and "mut" are treated as special cases in the syntax package
 		delKeywords := []string{"as", "build", "byte", "done", "foreach", "get", "int", "int16", "int32", "int64", "last", "map", "mut", "next", "pass", "print", "uint16", "uint32", "uint64", "until", "var"}
 		if m != mode.Garnet {
@@ -305,7 +309,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		addKeywords([]string{"buffer", "bvec2", "bvec3", "bvec4", "coherent", "dvec2", "dvec3", "dvec4", "flat", "in", "inout", "invariant", "ivec2", "ivec3", "ivec4", "layout", "mat", "mat2", "mat3", "mat4", "noperspective", "out", "precision", "readonly", "restrict", "smooth", "uniform", "uvec2", "uvec3", "uvec4", "vec2", "vec3", "vec4", "volatile", "writeonly"})
 		fallthrough // Continue to C/C++ and then to the default
 	case mode.Arduino, mode.C, mode.Cpp, mode.ObjC:
-		addKeywords := []string{"int8_t", "uint8_t", "int16_t", "uint16_t", "int32_t", "uint32_t", "int64_t", "uint64_t", "size_t"}
+		addKeywords := []string{"co_await", "co_return", "co_yield", "consteval", "constinit", "int8_t", "uint8_t", "int16_t", "uint16_t", "int32_t", "uint32_t", "int64_t", "uint64_t", "requires", "size_t"}
 		delKeywords := []string{"fn", "from", "in", "ret", "static"} // static is treated separately, as a special keyword
 		addAndRemoveKeywords(addKeywords, delKeywords)
 		fallthrough // Continue to the default
