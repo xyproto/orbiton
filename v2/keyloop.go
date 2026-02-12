@@ -132,50 +132,13 @@ func (e *Editor) handlePasteModeKey(c *vt.Canvas, status *StatusBar, undo *Undo,
 
 // readPasteBurst reads currently incoming bytes until input has been idle briefly.
 func readPasteBurst(tty *vt.TTY) string {
-	const (
-		idleWait   = 45 * time.Millisecond
-		maxReadFor = 2 * time.Second
-	)
-
+	savedTimeout := tty.Timeout()
 	tty.RawMode()
-	tty.NoBlock()
-	defer tty.Restore()
+	tty.SetTimeout(50 * time.Millisecond)
+	defer tty.SetTimeout(savedTimeout)
 
-	term := tty.Term()
-	buf := make([]byte, 4096)
-	var sb strings.Builder
-
-	idleDeadline := time.Now().Add(idleWait)
-	absoluteDeadline := time.Now().Add(maxReadFor)
-
-	for time.Now().Before(absoluteDeadline) {
-		available, err := term.Available()
-		if err != nil {
-			break
-		}
-
-		if available == 0 {
-			if time.Now().After(idleDeadline) {
-				break
-			}
-			time.Sleep(5 * time.Millisecond)
-			continue
-		}
-
-		if available > len(buf) {
-			buf = make([]byte, available)
-		}
-		n, err := term.Read(buf[:available])
-		if n > 0 {
-			sb.Write(buf[:n])
-			idleDeadline = time.Now().Add(idleWait)
-		}
-		if err != nil {
-			break
-		}
-	}
-
-	return sb.String()
+	s, _ := tty.ReadString()
+	return s
 }
 
 // Loop will set up and run the main loop of the editor
