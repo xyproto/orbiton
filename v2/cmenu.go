@@ -503,20 +503,6 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 				e.moveLinesMode.Store(true)
 			})
 		}
-
-		if e.fastInputMode {
-			actions.Add("Slow input mode", func() {
-				ttyFastInput(tty, false)
-				e.fastInputMode = false
-				status.SetMessageAfterRedraw("Slow input mode")
-			})
-		} else {
-			actions.Add("Fast input mode", func() {
-				ttyFastInput(tty, true)
-				e.fastInputMode = true
-				status.SetMessageAfterRedraw("Fast input mode")
-			})
-		}
 	}
 
 	// Only show the menu option for killing the parent process if the parent process is a known search command
