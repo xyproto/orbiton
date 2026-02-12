@@ -3,7 +3,6 @@
 ## General
 
 - [ ] Don't use "¤" on OpenBSD/vt220.
-- [ ] Don't use bright teal parantheses in the red/black theme.
 - [ ] Let altgr+space not insert c:160.
 - [ ] Fix the speed of the built-in game.
 - [ ] Remove chorded keys (ctrl-l,? etc). Instead, display a menu when ctrl-l is pressed twice or something.

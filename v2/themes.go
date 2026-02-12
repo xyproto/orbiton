@@ -805,7 +805,7 @@ func NewRedBlackTheme() Theme {
 		CheckboxColor:               vt.Default,
 		XColor:                      vt.Red,
 		TableBackground:             vt.BackgroundBlack, // Dark gray background, as opposed tovt.BackgroundDefault
-		UnmatchedParenColor:         vt.LightCyan,       // To really stand out
+		UnmatchedParenColor:         vt.White,           // Should perhaps stand out more, but cases in bash scripts looks wrong with this light cyan
 		MenuTitleColor:              vt.LightRed,
 		MenuArrowColor:              vt.Red,
 		MenuTextColor:               vt.Gray,
