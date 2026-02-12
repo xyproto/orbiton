@@ -93,10 +93,11 @@ type scoredItem struct {
 }
 
 const (
-	lspInitTimeout       = 30 * time.Second
-	lspCompletionTimeout = 10 * time.Second
-	lspDefinitionTimeout = 200 * time.Millisecond // Fast timeout for go-to-definition
-	lspShutdownTimeout   = 2 * time.Second
+	lspInitTimeout          = 30 * time.Second
+	lspCompletionTimeout    = 10 * time.Second
+	lspCompletionWaitTimout = 3 * time.Second        // Timeout for waiting to find completions
+	lspDefinitionTimeout    = 200 * time.Millisecond // Fast timeout for go-to-definition
+	lspShutdownTimeout      = 2 * time.Second
 )
 
 // lspClientKey generates a unique key for an LSP client based on mode and workspace
@@ -1655,14 +1656,12 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	}
 
 	// Request completions from LSP
-	// For Rust and C/C++, retry a few times if we get empty results (server might still be indexing)
+	// For Rust and C/C++, retry until timeout if we get empty results (server might still be indexing)
 	var items []LSPCompletionItem
-	maxAttempts := 1
-	if needsWorkspaceSetup(e.mode) {
-		maxAttempts = 60 // Try up to 60 times with 500ms delays (30 seconds total)
-	}
+	completionDeadline := time.Now().Add(lspCompletionWaitTimout)
+	retryDelay := 500 * time.Millisecond
 
-	for attempt := 0; attempt < maxAttempts; attempt++ {
+	for {
 		items, err = client.GetCompletions(uri, line, x, triggerChar)
 		if err != nil {
 			if isNewClient {
@@ -1691,9 +1690,20 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 			break
 		}
 
-		// For Rust/C/C++, if empty results and not last attempt, wait and retry
-		if attempt < maxAttempts-1 {
-			time.Sleep(500 * time.Millisecond)
+		// For Rust/C/C++, if empty results and not past deadline, wait and retry
+		if time.Now().Add(retryDelay).Before(completionDeadline) {
+			time.Sleep(retryDelay)
+		} else {
+			// Timeout reached with no completions found
+			if isNewClient {
+				stopSpinner()
+			}
+			const drawLines = true
+			e.FullResetRedraw(c, status, drawLines, false)
+			c.Draw()
+			status.SetMessage("No completions found")
+			status.Show(c, e)
+			return true // Consume Tab keypress, don't indent
 		}
 	}
 
@@ -1706,8 +1716,12 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		if isNewClient {
 			stopSpinner()
 		}
-		status.SetMessageAfterRedraw("No completions found")
-		return false
+		const drawLines = true
+		e.FullResetRedraw(c, status, drawLines, false)
+		c.Draw()
+		status.SetMessage("No completions found")
+		status.Show(c, e)
+		return true // Consume Tab keypress, don't indent
 	}
 
 	// Find the maximum label length for column alignment
