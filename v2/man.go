@@ -10,10 +10,12 @@ import (
 )
 
 // shellColorCodePattern matches shell color escape sequences (ANSI codes).
+// oscPattern matches OSC (Operating System Command) sequences like hyperlinks.
 // Compiled lazily on first use to avoid startup cost.
 var (
 	shellColorCodePattern *regexp.Regexp
-	shellColorCodeOnce    sync.Once
+	oscPattern            *regexp.Regexp
+	escapePatternOnce     sync.Once
 )
 
 func handleManPageEscape(input string) string {
@@ -43,12 +45,15 @@ func handleManPageEscape(input string) string {
 			i++
 		}
 	}
-	// Remove color codes (ANSI sequences), compiling the regex once lazily.
+	// Remove color codes (ANSI sequences) and OSC sequences (like hyperlinks),
+	// compiling the regexes once lazily.
 	cleanedString := string(cleanedRunes)
-	shellColorCodeOnce.Do(func() {
+	escapePatternOnce.Do(func() {
 		shellColorCodePattern = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+		oscPattern = regexp.MustCompile(`\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)`)
 	})
-	return shellColorCodePattern.ReplaceAllString(cleanedString, "")
+	cleanedString = shellColorCodePattern.ReplaceAllString(cleanedString, "")
+	return oscPattern.ReplaceAllString(cleanedString, "")
 }
 
 func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string {
