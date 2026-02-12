@@ -19,8 +19,11 @@ import (
 )
 
 var (
-	// Check if TERM is set to vt100
+	// Check if TERM is vt100
 	envVT100 = env.Str("TERM") == "vt100"
+
+	// Check if TERM starts with vt
+	envVT = strings.HasPrefix(env.Str("TERM"), "vt")
 
 	// Check if $NO_COLOR is set, or if the terminal is strict VT100
 	envNoColor = env.Bool("NO_COLOR") || envVT100
@@ -457,13 +460,21 @@ func (s *State) ls(dir string) (int, error) {
 			suffix = "^"
 		} else if files.Empty(path) {
 			color = s.EmptyFileColor
-			suffix = "°"
+			if envVT {
+				suffix = "#"
+			} else {
+				suffix = "°"
+			}
 		} else if files.ExecutableCached(path) {
 			color = s.ExecutableColor
 			suffix = "*"
 		} else if files.BinaryAccurate(path) {
 			color = s.BinaryColor
-			suffix = "¤"
+			if envVT {
+				suffix = "%"
+			} else {
+				suffix = "¤"
+			}
 		} else {
 			color = s.FileColor
 			suffix = ""
