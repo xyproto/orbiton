@@ -311,6 +311,10 @@ This is a brand new feature and needs more testing.
 * An indication of which line the program is at has not yet been added, and is a work in progress.
 * There are status messages indicating when the debug session is started and ended.
 
+## LSP support
+
+There is experimental Tab-completion support for Go (`gopls`), Rust (`rust-analyzer`), C and C++ (`clangd`), Python (`pylsp`) and Zig (`zls`).
+
 ## Markdown table editor
 
 While in the Markdown table editor:
