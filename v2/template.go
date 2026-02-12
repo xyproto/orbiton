@@ -304,7 +304,7 @@ func GetTemplatePrograms() TemplatePrograms {
 				2,
 			},
 			mode.Zig: {
-				"const std = @import(\"std\");\n\npub fn main() !void {\n    const stdout = std.io.getStdOut().writer();\n    try stdout.print(\"Hello, World!\\n\", .{});\n}\n",
+				"const std = @import(\"std\");\n\npub fn main() !void {\n    const stdout = std.fs.File.stdout();\n    try stdout.writeAll(\"Hello, World!\\n\");\n}\n",
 				18,
 				2,
 			},
