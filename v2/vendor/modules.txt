@@ -58,10 +58,6 @@ github.com/mattn/go-runewidth
 # github.com/peterhellberg/gfx v0.0.0-20250602150231-2e41f5fad310
 ## explicit; go 1.17
 github.com/peterhellberg/gfx
-# github.com/pkg/term v1.2.0-beta.2
-## explicit; go 1.14
-github.com/pkg/term
-github.com/pkg/term/termios
 # github.com/sajari/fuzzy v1.0.0
 ## explicit
 github.com/sajari/fuzzy
@@ -139,7 +135,7 @@ github.com/xyproto/termtitle
 # github.com/xyproto/usermodel v1.2.3
 ## explicit; go 1.23.1
 github.com/xyproto/usermodel
-# github.com/xyproto/vt v1.5.1
+# github.com/xyproto/vt v1.5.4
 ## explicit; go 1.24.4
 github.com/xyproto/vt
 # github.com/xyproto/wordwrap v1.0.1

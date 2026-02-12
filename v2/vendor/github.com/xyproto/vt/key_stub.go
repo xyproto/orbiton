@@ -1,4 +1,4 @@
-//go:build !linux && !darwin && !freebsd && !netbsd && !openbsd && !dragonfly
+//go:build windows || plan9
 
 package vt
 
