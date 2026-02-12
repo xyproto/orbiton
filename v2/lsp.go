@@ -1478,14 +1478,12 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		return false
 	}
 
-	// STEP 1: Check if LSP executable exists
 	lspCommand := config.Command
 	if _, err := exec.LookPath(lspCommand); err != nil {
 		status.SetMessageAfterRedraw(lspCommand + " is missing")
 		return false
 	}
 
-	// STEP 2: Check if we need to create a new LSP client
 	absPath, err := filepath.Abs(e.filename)
 	if err != nil {
 		status.SetMessageAfterRedraw(fmt.Sprintf("%s: %v", lspCommand, err))
@@ -1506,44 +1504,46 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	existingClient := GetReadyLSPClient(e.mode, workspaceRoot)
 	isNewClient := (existingClient == nil)
 
-	// Only show "Starting..." message and spinner if creating new client
 	var quitSpinner chan bool
 	var spinnerActive bool
-	var stopSpinner func()
-	neverCancel := make(chan bool) // Never cancels - Esc shows message but doesn't abort LSP init
+	neverCancel := make(chan bool)
 
-	if isNewClient {
-		spinnerMsg := fmt.Sprintf("Starting %s", lspCommand)
-		status.SetMessage(spinnerMsg)
-		status.Show(c, e)
+	startSpinner := func(msg string) {
+		if spinnerActive {
+			return
+		}
+		if msg != "" {
+			status.SetMessage(msg)
+			status.Show(c, e)
+		}
 		const cursorAfterText = true
 		quitSpinner = e.Spinner(c, tty, "", "Canceled", 750*time.Millisecond, e.MenuTextColor, cursorAfterText)
 		spinnerActive = true
-		stopSpinner = func() {
-			if spinnerActive {
-				quitSpinner <- true
-				spinnerActive = false
-				c.Draw() // Clear spinner
-			}
-		}
-		defer stopSpinner() // Ensure spinner stops if we return early
 	}
 
-	// STEP 3-5: Get or create LSP client
+	stopSpinner := func() {
+		if spinnerActive {
+			quitSpinner <- true
+			spinnerActive = false
+			c.Draw()
+		}
+	}
+	defer stopSpinner()
+
+	if isNewClient {
+		startSpinner(fmt.Sprintf("Starting %s", lspCommand))
+	}
+
 	client, err := GetOrCreateLSPClient(e.mode, workspaceRoot, neverCancel)
 	if err != nil {
-		if isNewClient {
-			stopSpinner()
-		}
+		stopSpinner()
 		status.SetMessageAfterRedraw(fmt.Sprintf("Could not launch %s: %v", lspCommand, err))
 		return false
 	}
 
 	// Verify client is ready
 	if !client.initialized {
-		if isNewClient {
-			stopSpinner()
-		}
+		stopSpinner()
 		status.SetMessageAfterRedraw(fmt.Sprintf("%s is not responding", lspCommand))
 		return false
 	}
@@ -1610,13 +1610,13 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		os.WriteFile(lspFilePath, []byte(fileContent), 0644)
 	}
 
+	startSpinner("")
+
 	// Send file content to LSP
 	uri := "file://" + lspFilePath
 	if lastOpenedURI != uri {
 		if err := client.DidOpen(uri, config.LanguageID, fileContent); err != nil {
-			if isNewClient {
-				stopSpinner()
-			}
+			stopSpinner()
 			status.SetMessageAfterRedraw(fmt.Sprintf("%s error: %v", lspCommand, err))
 			return false
 		}
@@ -1626,9 +1626,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	} else {
 		lastOpenedVersion++
 		if err := client.DidChange(uri, fileContent, lastOpenedVersion); err != nil {
-			if isNewClient {
-				stopSpinner()
-			}
+			stopSpinner()
 			status.SetMessageAfterRedraw(fmt.Sprintf("%s error: %v", lspCommand, err))
 			return false
 		}
@@ -1655,8 +1653,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		// and filter based on the partial word.
 	}
 
-	// Request completions from LSP
-	// For Rust and C/C++, retry until timeout if we get empty results (server might still be indexing)
+	// Request completions, retrying until timeout for Rust/C/C++
 	var items []LSPCompletionItem
 	completionDeadline := time.Now().Add(lspCompletionWaitTimout)
 	retryDelay := 500 * time.Millisecond
@@ -1664,14 +1661,12 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	for {
 		items, err = client.GetCompletions(uri, line, x, triggerChar)
 		if err != nil {
-			if isNewClient {
-				stopSpinner()
-			}
+			stopSpinner()
 			status.SetMessageAfterRedraw(fmt.Sprintf("%s error: %v", lspCommand, err))
 			return false
 		}
 
-		// Filter out placeholder 'X' if we added it for Zig
+		// Filter out placeholder 'X' added for Zig
 		if needsPlaceholder && e.mode == mode.Zig {
 			filtered := make([]LSPCompletionItem, 0, len(items))
 			for _, item := range items {
@@ -1682,28 +1677,23 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 			items = filtered
 		}
 
-		// Filter and sort completions
 		items = sortAndFilterCompletions(items, currentLine, workspaceRoot, config.FileExtensions)
 
-		// If we got results, or this doesn't need workspace setup, we're done
 		if len(items) > 0 || !needsWorkspaceSetup(e.mode) {
 			break
 		}
 
-		// For Rust/C/C++, if empty results and not past deadline, wait and retry
+		// Retry until deadline
 		if time.Now().Add(retryDelay).Before(completionDeadline) {
 			time.Sleep(retryDelay)
 		} else {
-			// Timeout reached with no completions found
-			if isNewClient {
-				stopSpinner()
-			}
+			stopSpinner()
 			const drawLines = true
 			e.FullResetRedraw(c, status, drawLines, false)
 			c.Draw()
 			status.SetMessage("No completions found")
 			status.Show(c, e)
-			return true // Consume Tab keypress, don't indent
+			return true
 		}
 	}
 
@@ -1711,17 +1701,14 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		items = items[:10]
 	}
 
-	// Check if we have completions
 	if len(items) == 0 {
-		if isNewClient {
-			stopSpinner()
-		}
+		stopSpinner()
 		const drawLines = true
 		e.FullResetRedraw(c, status, drawLines, false)
 		c.Draw()
 		status.SetMessage("No completions found")
 		status.Show(c, e)
-		return true // Consume Tab keypress, don't indent
+		return true
 	}
 
 	// Find the maximum label length for column alignment
@@ -1778,12 +1765,8 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		choices = append(choices, label)
 	}
 
-	// Stop spinner before showing menu
-	if isNewClient {
-		stopSpinner()
-	}
+	stopSpinner()
 
-	// Show menu and get user selection
 	currentWord := e.CurrentWord()
 	choice, _ := e.Menu(status, tty, "Completions", choices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, 0, false)
 	if choice < 0 || choice >= len(items) {
