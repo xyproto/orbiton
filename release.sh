@@ -21,6 +21,12 @@ platforms="
   netbsd,arm,6,netbsd_armv6_static,tar.gz
   netbsd,arm,7,netbsd_armv7_static,tar.gz
   netbsd,386,,netbsd_i386_static,tar.gz
+  openbsd,amd64,,openbsd_x86_64_static,tar.gz
+  openbsd,arm64,,openbsd_aarch64_static,tar.gz
+  openbsd,arm,6,openbsd_armv6_static,tar.gz
+  openbsd,arm,7,openbsd_armv7_static,tar.gz
+  openbsd,386,,openbsd_i386_static,tar.gz
+  windows,amd64,,windows_x86_64_static,zip
 "
 
 # plan9,amd64,,plan9_x86_64_static,tar.gz
@@ -64,6 +70,9 @@ compile_and_compress() {
       ;;
     tar.gz)
       tar zcf "$name-$version-$platform.$compression" "$name-$version-$platform"
+      ;;
+    zip)
+      zip -r "$name-$version-$platform" "$name-$version-$platform.$compression"
       ;;
   esac
 
