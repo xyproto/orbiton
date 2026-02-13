@@ -72,7 +72,7 @@ func (e *Editor) GetFormatMap() FormatMap {
 // Using exec.Cmd instead of *exec.Cmd is on purpose, to get a new cmd.stdout and cmd.stdin every time.
 func (e *Editor) formatWithUtility(c *vt.Canvas, tty *vt.TTY, status *StatusBar, cmd exec.Cmd) error {
 	if files.WhichCached(cmd.Path) == "" { // Does the formatting tool even exist?
-		return errors.New(cmd.Path + " is missing")
+		return fmt.Errorf("%s is missing", cmd.Path)
 	}
 
 	tempFirstName := "o"
