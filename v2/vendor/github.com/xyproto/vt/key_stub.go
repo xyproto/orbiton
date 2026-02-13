@@ -1,4 +1,4 @@
-//go:build windows || plan9
+//go:build plan9
 
 package vt
 

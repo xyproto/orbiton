@@ -247,6 +247,7 @@ func SetNoColor() {
 }
 
 func Init() {
+	initTerminal()
 	Reset()
 	Clear()
 	ShowCursor(false)
@@ -261,7 +262,9 @@ func Close() {
 }
 
 func EchoOff() {
-	fmt.Print(echoOff)
+	if echoOffHelper() {
+		fmt.Print(echoOff)
+	}
 }
 
 func SetLineWrap(enable bool) {
@@ -273,6 +276,7 @@ func SetLineWrap(enable bool) {
 }
 
 func ShowCursor(enable bool) {
+	showCursorHelper(enable)
 	if enable {
 		fmt.Print(showCursor)
 	} else {
