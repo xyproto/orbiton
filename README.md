@@ -380,19 +380,28 @@ It is also possible to install the symlinks that are suggested further down in t
 
 ## Dependencies
 
+C
+
+* For building code with `ctrl-space`, `gcc` must be installed.
+* For formatting code with `ctrl-w`, `clang-format` must be installed.
+* For tab completion, `clangd` must be installed.
+
 C++
 
 * For building code with `ctrl-space`, [`cxx`](https://github.com/xyproto/cxx) must be installed.
 * For formatting code with `ctrl-w`, `clang-format` must be installed.
+* For tab completion, `clangd` must be installed.
 
 Go
 
 * For building code with `ctrl-space`, The `go` compiler must be installed.
 * For formatting code with `ctrl-w`, [`goimports`](https://godoc.org/golang.org/x/tools/cmd/goimports) must be installed.
+* For tab completion, `gopls` must be installed.
 
 Zig
 
 * For building and formatting Zig code, only the `zig` command is needed.
+* For tab completion, `zls` must be installed.
 
 V
 
@@ -402,6 +411,7 @@ Rust
 
 * For building code with `ctrl-space`, `Cargo.toml` must exist and `cargo` must be installed.
 * For formatting code with `ctrl-w`, `rustfmt` must be installed.
+* For tab completion, `rust-analyzer` must be installed.
 
 Haskell
 
@@ -411,7 +421,8 @@ Haskell
 Python
 
 * `ctrl-space` only checks the syntax, without executing. This only requires `python` to be available.
-* For formatting the code with `ctrl-w`, `black` must be installed.
+* For formatting the code with `ctrl-w`, `ruff` must be installed.
+* For tab completion, `pyright-langserver` or `pypls` must be installed.
 
 Crystal
 
