@@ -16,6 +16,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 )
@@ -154,8 +155,8 @@ var lspConfigs = map[mode.Mode]LSPConfig{
 		FileExtensions:  []string{".cpp", ".cc", ".cxx", ".c++", ".hpp", ".hh", ".hxx", ".h++", ".h"},
 	},
 	mode.Python: {
-		Command:         "pylsp",
-		Args:            []string{},
+		Command:         "pyright-langserver",
+		Args:            []string{"--stdio"},
 		LanguageID:      "python",
 		RootMarkerFiles: []string{"setup.py", "pyproject.toml", "requirements.txt", ".git"},
 		FileExtensions:  []string{".py"},
@@ -651,7 +652,17 @@ func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string, cancel <-chan bool)
 		return nil, fmt.Errorf("no LSP configuration for mode %v", m)
 	}
 
-	client, err := NewLSPClient(config.Command, config.Args, workspaceRoot)
+	// For Python, fall back to pylsp if pyright-langserver is not installed
+	command := config.Command
+	args := config.Args
+	if m == mode.Python && files.WhichCached(config.Command) == "" {
+		if files.WhichCached("pylsp") != "" {
+			command = "pylsp"
+			args = []string{}
+		}
+	}
+
+	client, err := NewLSPClient(command, args, workspaceRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -1478,7 +1489,14 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		return false
 	}
 
+	// For Python, fall back to pylsp if pyright-langserver is not installed
 	lspCommand := config.Command
+	if e.mode == mode.Python && files.WhichCached(config.Command) == "" {
+		if files.WhichCached("pylsp") != "" {
+			lspCommand = "pylsp"
+		}
+	}
+
 	if _, err := exec.LookPath(lspCommand); err != nil {
 		status.SetMessageAfterRedraw(lspCommand + " is missing")
 		return false

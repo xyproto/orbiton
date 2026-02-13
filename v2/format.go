@@ -56,7 +56,7 @@ func (e *Editor) GetFormatMap() FormatMap {
 			mode.OCaml:      exec.Command("ocamlformat"),
 			mode.Odin:       exec.Command("odinfmt", "-w"),
 			mode.Perl:       exec.Command("/usr/bin/vendor_perl/perltidy", "-se", "-b", "-i=2", "-ole=unix", "-bt=2", "-pt=2", "-sbt=2", "-ce"),
-			mode.Python:     exec.Command("black"),
+			mode.Python:     exec.Command("ruff", "format"),
 			mode.Rust:       exec.Command("rustfmt"),
 			mode.Scala:      exec.Command("scalafmt"),
 			mode.Shell:      exec.Command("shfmt", "-s", "-w", "-i", "2", "-bn", "-ci", "-sr", "-kp"),
