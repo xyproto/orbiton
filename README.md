@@ -460,6 +460,11 @@ JavaScript
 
 * For formatting JavaScript code with , `prettier` must be installed.
 
+## Filebrowser
+
+* For `ctrl-g` in the filebrowser, `lazygit` is needed.
+* For `ctrl-t` in the filebrowser, `tig` is needed.
+
 ## Java
 
 Since `kotlinc $filename -include-runtime -d` builds to a `.jar`, I though I should do the same for Java. The idea is to easily compile a single or a small collection of `.java` files, where one of the files has a `main` function.
