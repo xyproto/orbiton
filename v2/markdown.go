@@ -292,7 +292,7 @@ func (e *Editor) markdownHighlight(line string, inCodeBlock bool, listItemRecord
 	lastWord := words[len(words)-1]
 
 	// A list item that is a link on a single line, possibly with some text after the link
-	if bracketPos := strings.Index(rest, "["); (firstWord == "-" || firstWord == "*") && bracketPos < 4 && strings.Count(rest, "](") >= 1 && strings.Count(rest, ")") >= 1 && strings.Index(rest, "]") != bracketPos+2 {
+	if bracketPos := strings.Index(rest, "["); (firstWord == "-" || firstWord == "*") && bracketPos < 4 && strings.Count(rest, "](") >= 1 && strings.Count(rest, ")") >= 1 && strings.Index(rest, "]") != bracketPos+2 && bracketPos >= 0 {
 		// First comes the leading space and rest[:bracketPos], then comes "[" and then....
 		twoParts := strings.SplitN(rest[bracketPos+1:], "](", 2)
 		if len(twoParts) == 2 {
@@ -303,11 +303,12 @@ func (e *Editor) markdownHighlight(line string, inCodeBlock bool, listItemRecord
 				linkColor := e.CommentColor
 				bracketColor := e.Foreground
 				// Then comes twoParts[0] and "](" and twoParts[1]
-				return leadingSpace + bulletColor.Get(rest[:bracketPos]) + bracketColor.Get("[") + labelColor.Get(twoParts[0]) + bracketColor.Get("]") + e.CommentColor.Get("(") + linkColor.Get(lastParts[0]) + e.CommentColor.Get(")") + e.ListTextColor.Get(lastParts[1]), true, false
+				if bracketPos >= 0 && bracketPos < len(rest) {
+					return leadingSpace + bulletColor.Get(rest[:bracketPos]) + bracketColor.Get("[") + labelColor.Get(twoParts[0]) + bracketColor.Get("]") + e.CommentColor.Get("(") + linkColor.Get(lastParts[0]) + e.CommentColor.Get(")") + e.ListTextColor.Get(lastParts[1]), true, false
+				}
 			}
 		}
 	}
-
 	if consistsOf(firstWord, '#', []rune{'.', ' '}) {
 		if strings.HasSuffix(lastWord, "#") && strings.Contains(rest, " ") {
 			centerLen := len(rest) - (len(firstWord) + len(lastWord))
