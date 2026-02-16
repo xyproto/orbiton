@@ -3,8 +3,8 @@ github.com/DataDog/gostackparse v0.7.0/go.mod h1:lTfqcJKqS9KnXQGnyQMCugq3u1FP6UZ
 github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b h1:1+WfnfjMtmNFvZohd6NvMP8QB5q4KjGw4kNtLt9yXVM=
 github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b/go.mod h1:aPyh7jEvrog9zAwx5N7+JUQX5dZTSGpxF1LAR4dr35I=
 github.com/boombuler/barcode v1.0.0/go.mod h1:paBWMcWSl3LHKBqUq+rly7CNSldXjb2rDl3JlRe0mD8=
-github.com/clipperhouse/uax29/v2 v2.6.0 h1:z0cDbUV+aPASdFb2/ndFnS9ts/WNXgTNNGFoKXuhpos=
-github.com/clipperhouse/uax29/v2 v2.6.0/go.mod h1:Wn1g7MK6OoeDT0vL+Q0SQLDz/KpfsVRgg6W7ihQeh4g=
+github.com/clipperhouse/uax29/v2 v2.7.0 h1:+gs4oBZ2gPfVrKPthwbMzWZDaAFPGYK72F0NJv2v7Vk=
+github.com/clipperhouse/uax29/v2 v2.7.0/go.mod h1:EFJ2TJMRUaplDxHKj1qAEhCtQPW2tJSwu5BF98AuoVM=
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
 github.com/creack/pty v1.1.24 h1:bJrF4RRfyJnbTJqzRLHzcGaZK1NeM5kTC9jGgovnR1s=
 github.com/creack/pty v1.1.24/go.mod h1:08sCNb52WyoAwi2QDyzUCTgcvVFhUzewun7wtTfvcwE=
@@ -104,8 +104,8 @@ github.com/xyproto/termtitle v1.5.1 h1:L1I+6juzNQk+BsoPCYw2c+3unEv4pxQqcyIoO9Xb3
 github.com/xyproto/termtitle v1.5.1/go.mod h1:U+yMnuL9ENDJy9+OCDEiEx01b7Uk6Zu6g1O22xY/rvQ=
 github.com/xyproto/usermodel v1.2.3 h1:yAjC5Hva0gbtc8fxHc7HC3SiZqe41hDzP6PBNm/F688=
 github.com/xyproto/usermodel v1.2.3/go.mod h1:dhHhI9eO3xPze4LwF9KSNtcZbm9aym0C9Clu8tGHvVc=
-github.com/xyproto/vt v1.5.5 h1:CYFXyNP+3mD0TaL2+3QSXPX+AfFM9GlJ5YFP5m+DGzI=
-github.com/xyproto/vt v1.5.5/go.mod h1:aOUg0MFU68LIk+wrc7WGbmE29EEbm/7qpL57k42FtAk=
+github.com/xyproto/vt v1.5.6 h1:EF45eS6cUwHpWASz+Ax5UAh6cNi2D9CrJKOoWxtM5es=
+github.com/xyproto/vt v1.5.6/go.mod h1:aOUg0MFU68LIk+wrc7WGbmE29EEbm/7qpL57k42FtAk=
 github.com/xyproto/wordwrap v1.0.1 h1:nKmUy4Jr+VBbeFfCgcUBx/e707ky7GBZLE/x1Uh3dtA=
 github.com/xyproto/wordwrap v1.0.1/go.mod h1:NIZ+TjJF24AUJzQDmr/fOMWgn3B2pK5+c9fPCp6UvcM=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=

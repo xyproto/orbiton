@@ -35,7 +35,7 @@ require (
 	github.com/xyproto/palgen v1.6.1
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.2.3
-	github.com/xyproto/vt v1.5.5
+	github.com/xyproto/vt v1.5.6
 	github.com/xyproto/wordwrap v1.0.1
 	golang.org/x/image v0.36.0
 )
@@ -43,7 +43,7 @@ require (
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
 	github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b // indirect
-	github.com/clipperhouse/uax29/v2 v2.6.0 // indirect
+	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/kr/pty v1.1.8 // indirect

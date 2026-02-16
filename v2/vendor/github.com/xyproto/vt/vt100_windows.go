@@ -67,6 +67,7 @@ func setCursorVis(handle windows.Handle, enable bool) bool {
 
 	if enable {
 		info.Visible = 1
+		info.Size = 100
 	} else {
 		info.Visible = 0
 	}
