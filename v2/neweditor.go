@@ -195,11 +195,18 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 
 		// Check if this is a directory
 		if fileInfo.IsDir() {
-			// Check if there is only one file in that directory
+			// If there is exactly one non-binary entry, open it directly.
+			var singleNonBinaryMatch string
 			matches, err := filepath.Glob(strings.TrimSuffix(e.filename, "/") + "/" + "*")
 			if err == nil && len(matches) == 1 {
-				fnord.filename = matches[0]
-				e.filename = matches[0]
+				nonBinaryMatches := files.FilterOutBinaryFilesAccurate(matches)
+				if len(nonBinaryMatches) == 1 {
+					singleNonBinaryMatch = nonBinaryMatches[0]
+				}
+			}
+			if singleNonBinaryMatch != "" {
+				fnord.filename = singleNonBinaryMatch
+				e.filename = singleNonBinaryMatch
 				// Re-detect the file extension and mode for the single file
 				ext = strings.ToLower(filepath.Ext(fnord.filename))
 				m = mode.Detect(stripGZ(fnord.filename))
