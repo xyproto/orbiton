@@ -137,6 +137,7 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 	// Define args and corresponding functions
 	commandLookup := map[int]func(){
 		build: func() { // build
+			clearBuildErrorExplanationState()
 			if e.Empty() {
 				// Empty file, nothing to build
 				e.redraw.Store(true)
@@ -159,6 +160,7 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 			if err != nil {
 				status.SetError(err)
 				status.ShowNoTimeout(c, e)
+				e.ExplainBuildErrorWithOllamaBackground(c, err)
 				return
 			}
 			// --- Success ---

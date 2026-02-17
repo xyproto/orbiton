@@ -701,6 +701,10 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 		exitCode = exitError.ExitCode()
 	}
 	outputString := string(bytes.TrimSpace(output))
+	jumpedToErrorLine := false
+	buildErr := func(message string) error {
+		return newBuildError(message, jumpedToErrorLine)
+	}
 
 	// Remove .Random.seed if a68g was just used
 	if e.mode == mode.Algol68 {
@@ -711,7 +715,7 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 
 	// Check if there was a non-zero exit code together with no output
 	if exitCode != 0 && outputString == "" {
-		return "", errors.New("non-zero exit code and no error message")
+		return "", buildErr("non-zero exit code and no error message")
 	}
 
 	// Also perform linking, if needed
@@ -769,7 +773,7 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 		if len(fields) > 1 {
 			errorMessage += ": " + strings.TrimSpace(fields[1])
 		}
-		return "", errors.New(errorMessage)
+		return "", buildErr(errorMessage)
 	} else if e.mode == mode.Go {
 		switch {
 		case bytes.Contains(output, []byte(": undefined")):
@@ -782,10 +786,10 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 			errorMarker = "error"
 		case bytes.Contains(output, []byte("go: cannot find main module")):
 			errorMessage := "no main module, try go mod init"
-			return "", errors.New(errorMessage)
+			return "", buildErr(errorMessage)
 		case bytes.Contains(output, []byte("go: ")):
 			byteLines := bytes.SplitN(output[4:], []byte("\n"), 2)
-			return "", errors.New(string(byteLines[0]))
+			return "", buildErr(string(byteLines[0]))
 		case bytes.Count(output, []byte(":")) >= 2:
 			errorMarker = ":"
 		}
@@ -808,13 +812,15 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 		if e.mode == mode.Python {
 			if errorLine, errorColumn, errorMessage := ParsePythonError(string(output), filepath.Base(e.filename)); errorLine != -1 {
 				ignoreIndentation := true
-				e.MoveToLineColumnNumber(c, status, errorLine, errorColumn, ignoreIndentation)
-				return "", errors.New(errorMessage)
+				if e.MoveToLineColumnNumber(c, status, errorLine, errorColumn, ignoreIndentation) == nil {
+					jumpedToErrorLine = true
+				}
+				return "", buildErr(errorMessage)
 			}
 			// This should never happen, the error message should be handled by ParsePythonError!
 			lines := strings.Split(strings.TrimSpace(string(output)), "\n")
 			lastLine := lines[len(lines)-1]
-			return "", errors.New(lastLine)
+			return "", buildErr(lastLine)
 		} else if e.mode == mode.Agda {
 			lines := strings.Split(string(output), "\n")
 			if len(lines) >= 4 {
@@ -830,9 +836,11 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 					fields = strings.SplitN(colRange, "-", 2)
 					lineColumnString := fields[0] // not index
 
-					e.MoveToNumber(c, status, lineNumberString, lineColumnString)
+					if e.MoveToNumber(c, status, lineNumberString, lineColumnString) == nil {
+						jumpedToErrorLine = true
+					}
 
-					return "", errors.New(errorMessage)
+					return "", buildErr(errorMessage)
 				}
 			}
 		}
@@ -867,6 +875,7 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 								// Move to (x, y), line number first and then column number
 								if i, err := strconv.Atoi(lineNumberString); err == nil {
 									foundY := LineIndex(i - 1)
+									jumpedToErrorLine = true
 									redraw, _ := e.GoTo(foundY, c, status)
 									e.redraw.Store(redraw)
 									e.redrawCursor.Store(redraw)
@@ -877,7 +886,7 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 										e.Center(c)
 									}
 								}
-								return "", errors.New(errorMessage)
+								return "", buildErr(errorMessage)
 							}
 						}
 					}
@@ -914,13 +923,15 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 					lineNumberString := fields[1]
 					lineColumnString := fields[2]
 
-					e.MoveToNumber(c, status, lineNumberString, lineColumnString)
+					if e.MoveToNumber(c, status, lineNumberString, lineColumnString) == nil {
+						jumpedToErrorLine = true
+					}
 
 					// Return the error message
 					if baseErrorFilename != baseFilename {
-						return "", errors.New("in " + baseErrorFilename + ": " + errorMessage)
+						return "", buildErr("in " + baseErrorFilename + ": " + errorMessage)
 					}
-					return "", errors.New(errorMessage)
+					return "", buildErr(errorMessage)
 
 				} else if strings.HasPrefix(line, "Error ") {
 					fields := strings.Split(line[6:], ":")
@@ -931,13 +942,15 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 						lineColumnString := fields[2]
 						errorMessage := fields[3]
 
-						e.MoveToNumber(c, status, lineNumberString, lineColumnString)
+						if e.MoveToNumber(c, status, lineNumberString, lineColumnString) == nil {
+							jumpedToErrorLine = true
+						}
 
 						// Return the error message
 						if baseErrorFilename != baseFilename {
-							return "", errors.New("in " + baseErrorFilename + ": " + errorMessage)
+							return "", buildErr("in " + baseErrorFilename + ": " + errorMessage)
 						}
-						return "", errors.New(errorMessage)
+						return "", buildErr(errorMessage)
 					}
 				}
 			} else if e.mode == mode.Odin {
@@ -955,13 +968,15 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 					lineColumnString := locCol[1]
 
 					const subtractOne = true
-					e.MoveToIndex(c, status, lineNumberString, lineColumnString, subtractOne)
+					if e.MoveToIndex(c, status, lineNumberString, lineColumnString, subtractOne) == nil {
+						jumpedToErrorLine = true
+					}
 
 					// Return the error message
 					if baseErrorFilename != baseFilename {
-						return "", errors.New("in " + baseErrorFilename + ": " + errorMessage)
+						return "", buildErr("in " + baseErrorFilename + ": " + errorMessage)
 					}
-					return "", errors.New(errorMessage)
+					return "", buildErr(errorMessage)
 				}
 			} else if e.mode == mode.Dart {
 				errorMessage = ""
@@ -978,13 +993,15 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 					lineColumnString := locCol[1]
 
 					const subtractOne = true
-					e.MoveToIndex(c, status, lineNumberString, lineColumnString, subtractOne)
+					if e.MoveToIndex(c, status, lineNumberString, lineColumnString, subtractOne) == nil {
+						jumpedToErrorLine = true
+					}
 
 					// Return the error message
 					if baseErrorFilename != baseFilename {
-						return "", errors.New("in " + baseErrorFilename + ": " + errorMessage)
+						return "", buildErr("in " + baseErrorFilename + ": " + errorMessage)
 					}
-					return "", errors.New(errorMessage)
+					return "", buildErr(errorMessage)
 				}
 			} else if e.mode == mode.CS || e.mode == mode.ObjectPascal {
 				errorMessage = ""
@@ -1017,6 +1034,7 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 					// Move to (x, y), line number first and then column number
 					if i, err := strconv.Atoi(lineNumberString); err == nil {
 						foundY := LineIndex(i - 1)
+						jumpedToErrorLine = true
 						redraw, _ := e.GoTo(foundY, c, status)
 						e.redraw.Store(redraw)
 						e.redrawCursor.Store(redraw)
@@ -1030,9 +1048,9 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 
 					// Return the error message
 					if baseErrorFilename != baseFilename {
-						return "", errors.New("In " + baseErrorFilename + ": " + errorMessage)
+						return "", buildErr("In " + baseErrorFilename + ": " + errorMessage)
 					}
-					return "", errors.New(errorMessage)
+					return "", buildErr(errorMessage)
 				}
 			} else if e.mode == mode.Lua {
 				if strings.Contains(line, " error near ") && strings.Count(line, ":") >= 3 {
@@ -1041,6 +1059,7 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 
 					if i, err := strconv.Atoi(parts[2]); err == nil {
 						foundY := LineIndex(i - 1)
+						jumpedToErrorLine = true
 						redraw, _ := e.GoTo(foundY, c, status)
 						e.redraw.Store(redraw)
 						e.redrawCursor.Store(redraw)
@@ -1048,9 +1067,9 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 
 					baseErrorFilename := filepath.Base(parts[1])
 					if baseErrorFilename != baseFilename {
-						return "", errors.New("In " + baseErrorFilename + ": " + errorMessage)
+						return "", buildErr("In " + baseErrorFilename + ": " + errorMessage)
 					}
-					return "", errors.New(errorMessage)
+					return "", buildErr(errorMessage)
 				}
 				break
 			} else if e.mode == mode.Go && errorMarker == ":" && strings.Count(line, ":") >= 2 {
@@ -1073,11 +1092,12 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 			// Crystal has the location on a different line from the error message
 			fields := strings.Split(crystalLocationLine, ":")
 			if len(fields) != 3 {
-				return "", errors.New(errorMessage)
+				return "", buildErr(errorMessage)
 			}
 			if y, err := strconv.Atoi(fields[1]); err == nil { // no error
 
 				foundY := LineIndex(y - 1)
+				jumpedToErrorLine = true
 				redraw, _ := e.GoTo(foundY, c, status)
 				e.redraw.Store(redraw)
 				e.redrawCursor.Store(redraw)
@@ -1090,7 +1110,7 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 				}
 
 			}
-			return "", errors.New(errorMessage)
+			return "", buildErr(errorMessage)
 		}
 
 		// NOTE: Don't return here even if errorMessage contains an error message
@@ -1099,19 +1119,20 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 		for i, line := range lines {
 			// Go, C++, Haskell, Kotlin and more
 			if strings.Contains(line, "fatal error") {
-				return "", errors.New(line)
+				return "", buildErr(line)
 			}
 			if strings.Count(line, ":") >= 3 && (strings.Contains(line, "error:") || strings.Contains(line, errorMarker)) {
 				fields := strings.SplitN(line, ":", 4)
 				baseErrorFilename := filepath.Base(fields[0])
 				// Check if the filenames are matching, or if the error is in a different file
 				if baseErrorFilename != baseFilename {
-					return "", errors.New("In " + baseErrorFilename + ": " + strings.TrimSpace(fields[3]))
+					return "", buildErr("In " + baseErrorFilename + ": " + strings.TrimSpace(fields[3]))
 				}
 				// Go to Y:X, if available
 				var foundY LineIndex
 				if y, err := strconv.Atoi(fields[1]); err == nil { // no error
 					foundY = LineIndex(y - 1)
+					jumpedToErrorLine = true
 					redraw, _ := e.GoTo(foundY, c, status)
 					e.redraw.Store(redraw)
 					e.redrawCursor.Store(redraw)
@@ -1128,13 +1149,13 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 						// Use the error message as the status message
 						if len(fields) >= 4 {
 							if ext != ".hs" {
-								return "", errors.New(strings.Join(fields[3:], " "))
+								return "", buildErr(strings.Join(fields[3:], " "))
 							}
-							return "", errors.New(errorMessage)
+							return "", buildErr(errorMessage)
 						}
 					}
 				}
-				return "", errors.New(errorMessage)
+				return "", buildErr(errorMessage)
 			} else if (i > 0) && i < (len(lines)-1) {
 				// Rust
 				if msgLine := lines[i-1]; strings.Contains(line, " --> ") && strings.Count(line, ":") == 2 && strings.Count(msgLine, ":") >= 1 {
@@ -1144,7 +1165,7 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 					filenameFields := strings.SplitN(locationFields[0], " --> ", 2) // [0] is fine, already checked for " ---> "
 					errorFilename := strings.TrimSpace(filenameFields[1])           // [1] is fine
 					if e.filename != errorFilename {
-						return "", errors.New("In " + errorFilename + ": " + errorMessage)
+						return "", buildErr("In " + errorFilename + ": " + errorMessage)
 					}
 					errorY := locationFields[1]
 					errorX := locationFields[2]
@@ -1153,6 +1174,7 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 					var foundY LineIndex
 					if y, err := strconv.Atoi(errorY); err == nil { // no error
 						foundY = LineIndex(y - 1)
+						jumpedToErrorLine = true
 						redraw, _ := e.GoTo(foundY, c, status)
 						e.redraw.Store(redraw)
 						e.redrawCursor.Store(redraw)
@@ -1166,7 +1188,7 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 							e.Center(c)
 							// Use the error message as the status message
 							if errorMessage != "" {
-								return "", errors.New(errorMessage)
+								return "", buildErr(errorMessage)
 							}
 						}
 					}
@@ -1191,7 +1213,7 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 	if exitCode != 0 && len(outputString) > 0 {
 		outputLines := strings.Split(outputString, "\n")
 		lastLine := outputLines[len(outputLines)-1]
-		return "", errors.New(lastLine)
+		return "", buildErr(lastLine)
 	}
 
 	if ok, what := compilationProducedSomething(); ok {
@@ -1200,7 +1222,7 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 	}
 
 	// TODO: Find ways to make the error message more informative
-	return "", errors.New("could not compile")
+	return "", buildErr("could not compile")
 }
 
 // Build starts a build and is typically triggered from either ctrl-space or the o menu
@@ -1209,6 +1231,7 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 	defer func() {
 		notRegularEditingRightNow.Store(false)
 	}()
+	clearBuildErrorExplanationState()
 
 	// If the file is empty, there is nothing to build
 	if e.Empty() {
@@ -1398,6 +1421,7 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 			// Error while building
 			status.SetError(err)
 			status.ShowNoTimeout(c, e)
+			e.ExplainBuildErrorWithOllamaBackground(c, err)
 			e.redrawCursor.Store(true)
 			return // return from goroutine
 		}

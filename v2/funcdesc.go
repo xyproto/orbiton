@@ -187,6 +187,7 @@ func (e *Editor) DismissFunctionDescription() {
 	}
 	functionDescriptionDismissed = dismissedFunctionDescription != ""
 	clearFunctionDescriptionState()
+	clearBuildErrorExplanationState()
 	clearFunctionDescriptionQueue()
 }
 
@@ -479,6 +480,9 @@ func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Can
 
 // DrawFunctionDescriptionContinuous draws the function description panel in continuous mode
 func (e *Editor) DrawFunctionDescriptionContinuous(c *vt.Canvas, repositionCursor bool) {
+	if hasBuildErrorExplanation() {
+		return
+	}
 	if !ollama.Loaded() || currentDescribedFunction == "" || !functionDescriptionReady {
 		return
 	}
