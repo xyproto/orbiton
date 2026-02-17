@@ -1,6 +1,7 @@
 *.agdai
 *.bak
 *.beam
+*.exe
 *.fil
 *.log
 *.o
