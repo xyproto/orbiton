@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -102,11 +101,7 @@ var ErrExit = errors.New("exit")
 // readKey reads a key from the TTY and returns it as a string.
 // Control characters are returned as "c:N" where N is the ASCII code.
 func (s *State) readKey() string {
-	r := s.tty.Rune()
-	if r < 32 || r == 127 {
-		return "c:" + strconv.Itoa(int(r))
-	}
-	return string(r)
+	return s.tty.String()
 }
 
 // New creates a new MegaFile State
@@ -672,15 +667,22 @@ func (s *State) edit(filename, path string) (string, error) {
 	command.Stderr = &stderr
 	command.Stdin = os.Stdin
 
+	// Restore terminal before running external command
+	s.tty.Restore()
+
 	stderrString := ""
 	err = command.Run()
 	if err == nil {
 		stderrString = strings.TrimSpace(stderr.String())
 	}
+
+	// Re-enable raw mode after external command
+	s.tty.RawMode()
+
 	return stderrString, err
 }
 
-func run(executableName string, args []string, path string) error {
+func run(tty *vt.TTY, executableName string, args []string, path string) error {
 	executablePath, err := exec.LookPath(executableName)
 	if err != nil {
 		return err
@@ -691,7 +693,20 @@ func run(executableName string, args []string, path string) error {
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
 	command.Stdin = os.Stdin
-	return command.Run()
+
+	// Restore terminal before running external command
+	if tty != nil {
+		tty.Restore()
+	}
+
+	err = command.Run()
+
+	// Re-enable raw mode after external command
+	if tty != nil {
+		tty.RawMode()
+	}
+
+	return err
 }
 
 func run2(executableName string, args []string, path string) (string, error) {
@@ -866,7 +881,7 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 		}
 		return false, false, NoAction, err
 	} else if foundExecutableInPath := files.WhichCached(cmd); foundExecutableInPath != "" {
-		return false, false, NoAction, run(foundExecutableInPath, []string{}, s.Directories[s.dirIndex])
+		return false, false, NoAction, run(s.tty, foundExecutableInPath, []string{}, s.Directories[s.dirIndex])
 	}
 
 	return false, false, NoAction, fmt.Errorf("WHAT DO YOU MEAN, %s?", cmd)
@@ -888,6 +903,9 @@ func dupli(xs []string) []string {
 
 // Run launches a file browser and returns the currently selected directories when it is done running
 func (s *State) Run() ([]string, error) {
+	s.tty.RawMode()
+	defer s.tty.Restore()
+
 	var x, y uint
 	c := s.canvas
 	drawPrompt := func() {
@@ -1684,9 +1702,9 @@ func (s *State) Run() ([]string, error) {
 			}
 			listDirectory()
 		case "c:20": // ctrl-t : tig
-			run("tig", []string{}, s.Directories[s.dirIndex])
+			run(s.tty, "tig", []string{}, s.Directories[s.dirIndex])
 		case "c:7": // ctrl-g : lazygit
-			run("lazygit", []string{}, s.Directories[s.dirIndex])
+			run(s.tty, "lazygit", []string{}, s.Directories[s.dirIndex])
 		case "c:6": // ctrl-f : find in files
 			if len(s.written) == 0 {
 				break
