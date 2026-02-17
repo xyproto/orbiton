@@ -1273,6 +1273,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			lastCutY = -1
 			// Stop background processes (like playing music with timidity), if any
 			stopBackgroundProcesses()
+			// Clear function description boxes, if any
+			e.DismissFunctionDescription()
 			// Do a full clear and redraw + clear search term + jump
 			const drawLines = true
 			e.FullResetRedraw(c, status, drawLines, false)
