@@ -10,12 +10,30 @@ UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
   PREFIX ?= /usr/local
   MAKE ?= make
+  EXE_EXT :=
 else ifeq ($(UNAME_S),FreeBSD)
   PREFIX ?= /usr/local
   MAKE ?= gmake
+  EXE_EXT :=
+else ifneq (,$(findstring MINGW,$(UNAME_S)))
+  # Git Bash on Windows (MINGW)
+  PREFIX ?= /usr
+  MAKE ?= make
+  EXE_EXT := .exe
+else ifneq (,$(findstring MSYS,$(UNAME_S)))
+  # MSYS on Windows
+  PREFIX ?= /usr
+  MAKE ?= make
+  EXE_EXT := .exe
+else ifneq (,$(findstring CYGWIN,$(UNAME_S)))
+  # Cygwin on Windows
+  PREFIX ?= /usr
+  MAKE ?= make
+  EXE_EXT := .exe
 else
   PREFIX ?= /usr
   MAKE ?= make
+  EXE_EXT :=
 endif
 
 MANDIR ?= $(PREFIX)/share/man/man1
@@ -40,18 +58,18 @@ else
 endif
 
 o: $(SRCFILES)
-	cd v2 && $(GOBUILD) $(GOFLAGS) $(BUILDFLAGS) -o ../o || $(GOBUILD) -o ../o
+	cd v2 && $(GOBUILD) $(GOFLAGS) $(BUILDFLAGS) -o ../o$(EXE_EXT) || $(GOBUILD) -o ../o$(EXE_EXT)
 
 trace: clean $(SRCFILES)
-	cd v2 && $(GOBUILD) $(GOFLAGS) $(BUILDFLAGS) -tags=trace -o ../o
+	cd v2 && $(GOBUILD) $(GOFLAGS) $(BUILDFLAGS) -tags=trace -o ../o$(EXE_EXT)
 
 pgo: v2/default.pgo
 
 v2/default.pgo: clean $(SRCFILES)
-	cd v2 && $(GOBUILD) $(GOFLAGS) $(BUILDFLAGS) -tags=trace -o ../o
+	cd v2 && $(GOBUILD) $(GOFLAGS) $(BUILDFLAGS) -tags=trace -o ../o$(EXE_EXT)
 	-rm v2/default.pgo
 	@# v2/main.go could be any filename, it's just for collecting the CPU profile info
-	./o --cpuprofile v2/default.pgo v2/main.go
+	./o$(EXE_EXT) --cpuprofile v2/default.pgo v2/main.go
 
 bench:
 	cd v2 && go test -mod=vendor -bench=. -benchmem
@@ -69,7 +87,7 @@ o.1.gz: o.1
 
 install: o o.1.gz
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
-	install -m755 o "$(DESTDIR)$(PREFIX)/bin/o"
+	install -m755 o$(EXE_EXT) "$(DESTDIR)$(PREFIX)/bin/o$(EXE_EXT)"
 	mkdir -p "$(DESTDIR)$(MANDIR)"
 	install -m644 o.1.gz "$(DESTDIR)$(MANDIR)/o.1.gz"
 
@@ -130,4 +148,4 @@ license:
 	install -m644 LICENSE "$(DESTDIR)$(PREFIX)/share/licenses/$(PROJECT)/LICENSE"
 
 clean:
-	-rm -f o o.1.gz gtk3/gtk3 v2/o v2/orbiton
+	-rm -f o$(EXE_EXT) o.1.gz gtk3/gtk3 v2/o v2/orbiton

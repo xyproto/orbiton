@@ -37,8 +37,7 @@ var (
 	editorLaunchTime = time.Now()
 
 	// The executable name is in arg 0
-	editorExecutable     = filepath.Base(os.Args[0]) // using os.Args to get the executable name
-	editorExecutablePath string                      // full path to the executable
+	editorExecutable = filepath.Base(os.Args[0]) // using os.Args to get the executable name
 
 	// quitMut disallows Exit(1) while a file is being saved
 	quitMut sync.Mutex
@@ -72,6 +71,19 @@ var (
 	// Arguments given on the command line
 	globalArgs []string
 )
+
+// getExecutablePath returns the best path to use for re-executing the editor
+func getExecutablePath() string {
+	if exePath, err := os.Executable(); err == nil {
+		return exePath
+	}
+	return os.Args[0]
+}
+
+// getEditorCommand returns the command string to use for megafile
+func getEditorCommand() string {
+	return getExecutablePath() + " -y"
+}
 
 func main() {
 	var (
@@ -133,16 +145,6 @@ func main() {
 	pflag.CommandLine.MarkHidden("cycle")
 
 	pflag.Parse()
-
-	// Get the full path to the executable for use by megafile
-	// Use os.Executable() to get the actual executable path with proper extension (.exe on Windows)
-	if exePath, err := os.Executable(); err == nil {
-		editorExecutablePath = exePath
-	} else if absPath, err := filepath.Abs(os.Args[0]); err == nil {
-		editorExecutablePath = absPath
-	} else {
-		editorExecutablePath = os.Args[0]
-	}
 
 	if versionFlag {
 		fmt.Println(versionString)

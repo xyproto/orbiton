@@ -239,7 +239,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 
 				//const title = "·-––—==[ Orbiton File Browser ]==—––-·"
 				const title = ""
-				megaFileState := megafile.New(c, tty, startdirs, title, editorExecutablePath+" -y", fileBrowserUndoHistoryFilename)
+				megaFileState := megafile.New(c, tty, startdirs, title, getEditorCommand(), fileBrowserUndoHistoryFilename)
 
 				megaFileState.WrittenTextColor = e.Foreground
 				megaFileState.Background = e.Background
