@@ -135,7 +135,10 @@ func main() {
 	pflag.Parse()
 
 	// Get the full path to the executable for use by megafile
-	if absPath, err := filepath.Abs(os.Args[0]); err == nil {
+	// Use os.Executable() to get the actual executable path with proper extension (.exe on Windows)
+	if exePath, err := os.Executable(); err == nil {
+		editorExecutablePath = exePath
+	} else if absPath, err := filepath.Abs(os.Args[0]); err == nil {
 		editorExecutablePath = absPath
 	} else {
 		editorExecutablePath = os.Args[0]
