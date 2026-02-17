@@ -16,6 +16,7 @@ platforms="
   freebsd,arm,6,freebsd_armv6_static,tar.gz
   freebsd,arm,7,freebsd_armv7_static,tar.gz
   freebsd,386,,freebsd_i386_static,tar.gz
+  freebsd,riscv64,,freebsd_riscv64_static,tar.gz
   netbsd,amd64,,netbsd_x86_64_static,tar.gz
   netbsd,arm64,,netbsd_aarch64_static,tar.gz
   netbsd,arm,6,netbsd_armv6_static,tar.gz
@@ -26,10 +27,10 @@ platforms="
   openbsd,arm,6,openbsd_armv6_static,tar.gz
   openbsd,arm,7,openbsd_armv7_static,tar.gz
   openbsd,386,,openbsd_i386_static,tar.gz
+  openbsd,riscv64,,openbsd_riscv64_static,tar.gz
   windows,amd64,,windows_x86_64_static,zip
+  windows,arm64,,windows_aarch64_static,zip
 "
-
-# plan9,amd64,,plan9_x86_64_static,tar.gz
 
 cd v2
 name=orbiton
