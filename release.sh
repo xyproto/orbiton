@@ -53,7 +53,7 @@ compile_and_compress() {
   [ -n "$goarm" ] && GOARM="$goarm" || unset GOARM
   GOOS="$goos" GOARCH="$goarch" go build -mod=vendor -trimpath -ldflags="-s -w" -a -o "$name.$platform" || {
     echo "Error: failed to compile for $platform"
-    echo "Platform string: $p"
+    echo "Target: GOOS=$goos GOARCH=$goarch GOARM=$goarm"
     echo "Environment variables: GOOS=$goos GOARCH=$goarch GOARM=$goarm"
     exit 1
   }
@@ -73,7 +73,7 @@ compile_and_compress() {
       tar zcf "$name-$version-$platform.$compression" "$name-$version-$platform"
       ;;
     zip)
-      zip -r "$name-$version-$platform" "$name-$version-$platform.$compression"
+      zip -r "$name-$version-$platform.$compression" "$name-$version-$platform"
       ;;
   esac
 
@@ -82,17 +82,29 @@ compile_and_compress() {
 }
 
 echo 'Compiling...'
+pids=""
 while read -r p; do
   [ -z "$p" ] && continue
   IFS=',' read -r goos goarch goarm platform compression <<EOF
 $p
 EOF
   compile_and_compress "$goos" "$goarch" "$goarm" "$platform" "$compression" &
+  pids="$pids $!"
 done <<EOF
 $platforms
 EOF
 
-wait
+build_failed=0
+for pid in $pids; do
+  if ! wait "$pid"; then
+    build_failed=1
+  fi
+done
+
+if [ "$build_failed" -ne 0 ]; then
+  echo "Error: one or more platform builds failed"
+  exit 1
+fi
 
 cd ..
 mkdir -p release
