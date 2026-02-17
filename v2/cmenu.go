@@ -515,7 +515,8 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 		})
 	} else {
 		actions.Add("Exit without saving", func() {
-			e.nextAction = megafile.StopParent
+			// For normal parent processes (like og), do not send SIGQUIT on exit.
+			e.nextAction = megafile.NoAction
 			e.quit = true           // indicate that the user wishes to quit
 			clearOnQuit.Store(true) // clear the terminal after quitting
 		})

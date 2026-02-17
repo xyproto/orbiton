@@ -552,9 +552,11 @@ func main() {
 	case megafile.PreviousFile:
 		fmt.Fprintln(os.Stderr, "prevfile")
 	case megafile.StopParent:
-		defer func() {
-			sendParentQuitSignal()
-		}()
+		if !inVTEGUI {
+			defer func() {
+				sendParentQuitSignal()
+			}()
+		}
 	}
 
 	// Remove the terminal title, if the current terminal emulator supports it and if NO_COLOR is not set.
