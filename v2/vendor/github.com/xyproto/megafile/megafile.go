@@ -225,9 +225,13 @@ func (s *State) drawError(text string) {
 	lines := strings.Split(text, "\n")
 	x := s.startx
 	y := s.starty + 1
+	errorColor := vt.Red
+	if envNoColor {
+		errorColor = vt.Gray
+	}
 	for _, line := range lines {
 		vt.SetXY(x, y)
-		s.canvas.Write(x, y, vt.Red, s.Background, line)
+		s.canvas.Write(x, y, errorColor, s.Background, line)
 		y++
 	}
 }
@@ -583,6 +587,19 @@ func (s *State) msgBox(line1, line2, line3, line4 string) bool {
 	w := c.W()
 	h := c.H()
 
+	borderColor := vt.LightCyan
+	line1Color := vt.LightYellow
+	line2Color := vt.Default
+	line3Color := vt.Red
+	line4Color := vt.LightGreen
+	if envNoColor {
+		borderColor = vt.White
+		line1Color = vt.White
+		line2Color = vt.Gray
+		line3Color = vt.Gray
+		line4Color = vt.Gray
+	}
+
 	// Calculate dialog box dimensions
 	boxWidth := uint(60)
 	boxHeight := uint(9)
@@ -595,40 +612,40 @@ func (s *State) msgBox(line1, line2, line3, line4 string) bool {
 
 	// Draw fancy ASCII art dialog box
 	// Top border
-	c.Write(startX, startY, vt.LightCyan, s.EdgeBackground, "╔")
+	c.Write(startX, startY, borderColor, s.EdgeBackground, "╔")
 	for i := uint(1); i < boxWidth-1; i++ {
-		c.Write(startX+i, startY, vt.LightCyan, s.EdgeBackground, "═")
+		c.Write(startX+i, startY, borderColor, s.EdgeBackground, "═")
 	}
-	c.Write(startX+boxWidth-1, startY, vt.LightCyan, s.EdgeBackground, "╗")
+	c.Write(startX+boxWidth-1, startY, borderColor, s.EdgeBackground, "╗")
 
 	// Middle rows
 	for i := uint(1); i < boxHeight-1; i++ {
-		c.Write(startX, startY+i, vt.LightCyan, s.EdgeBackground, "║")
+		c.Write(startX, startY+i, borderColor, s.EdgeBackground, "║")
 		// Clear the middle
 		for j := uint(1); j < boxWidth-1; j++ {
 			c.WriteRune(startX+j, startY+i, vt.Default, s.EdgeBackground, ' ')
 		}
-		c.Write(startX+boxWidth-1, startY+i, vt.LightCyan, s.EdgeBackground, "║")
+		c.Write(startX+boxWidth-1, startY+i, borderColor, s.EdgeBackground, "║")
 	}
 
 	// Bottom border
-	c.Write(startX, startY+boxHeight-1, vt.LightCyan, s.EdgeBackground, "╚")
+	c.Write(startX, startY+boxHeight-1, borderColor, s.EdgeBackground, "╚")
 	for i := uint(1); i < boxWidth-1; i++ {
-		c.Write(startX+i, startY+boxHeight-1, vt.LightCyan, s.EdgeBackground, "═")
+		c.Write(startX+i, startY+boxHeight-1, borderColor, s.EdgeBackground, "═")
 	}
-	c.Write(startX+boxWidth-1, startY+boxHeight-1, vt.LightCyan, s.EdgeBackground, "╝")
+	c.Write(startX+boxWidth-1, startY+boxHeight-1, borderColor, s.EdgeBackground, "╝")
 
 	line1X := startX + (boxWidth-uint(len(line1)))/2
-	c.Write(line1X, startY+2, vt.LightYellow, s.Background, line1)
+	c.Write(line1X, startY+2, line1Color, s.Background, line1)
 
 	line2X := startX + (boxWidth-uint(len(line2)))/2
-	c.Write(line2X, startY+4, vt.Default, s.Background, line2)
+	c.Write(line2X, startY+4, line2Color, s.Background, line2)
 
 	line3X := startX + (boxWidth-uint(len(line3)))/2
-	c.Write(line3X, startY+5, vt.Red, s.Background, line3)
+	c.Write(line3X, startY+5, line3Color, s.Background, line3)
 
 	line4X := startX + (boxWidth-uint(len(line4)))/2
-	c.Write(line4X, startY+6, vt.LightGreen, s.Background, line4)
+	c.Write(line4X, startY+6, line4Color, s.Background, line4)
 
 	c.Draw()
 
@@ -974,7 +991,12 @@ func (s *State) Run() ([]string, error) {
 		if index < ulen(s.written) {
 			r = s.written[index]
 		}
-		c.WriteRune(x+index, y, vt.Black, vt.BackgroundGreen, r)
+		cursorForeground := vt.Black
+		cursorBackground := vt.BackgroundGreen
+		if envNoColor {
+			cursorBackground = vt.BackgroundWhite
+		}
+		c.WriteRune(x+index, y, cursorForeground, cursorBackground, r)
 		vt.SetXY(x, y)
 	}
 
