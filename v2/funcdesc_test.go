@@ -110,3 +110,33 @@ func TestDisableFunctionDescriptionsAfterBuildError(t *testing.T) {
 		t.Fatal("expected queued hashes to be cleared")
 	}
 }
+
+func TestEnableFunctionDescriptions(t *testing.T) {
+	functionDescriptionsDisabled = true
+	EnableFunctionDescriptions()
+	if functionDescriptionsDisabled {
+		t.Fatal("expected function descriptions to be enabled")
+	}
+}
+
+func TestDismissFunctionDescriptionReEnablesDescriptions(t *testing.T) {
+	functionDescriptionsDisabled = true
+	clearBuildErrorExplanationState()
+	setBuildErrorExplanationPending()
+	t.Cleanup(func() {
+		functionDescriptionsDisabled = false
+		clearBuildErrorExplanationState()
+		clearFunctionDescriptionState()
+		clearFunctionDescriptionQueue()
+	})
+
+	e := NewSimpleEditor(80)
+	e.DismissFunctionDescription()
+
+	if functionDescriptionsDisabled {
+		t.Fatal("expected dismiss to re-enable function descriptions")
+	}
+	if hasBuildErrorExplanation() {
+		t.Fatal("expected dismiss to clear build error explanation mode")
+	}
+}

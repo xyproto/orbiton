@@ -1428,6 +1428,10 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 		}
 		// Not building any more
 		e.building = false
+		clearBuildErrorExplanationState()
+		EnableFunctionDescriptions()
+		e.drawFuncName.Store(true)
+		e.redraw.Store(true)
 
 		// --- success ---
 

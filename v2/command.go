@@ -158,12 +158,17 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 			// All clear when it comes to status messages and redrawing
 			status.ClearAll(c, false)
 			if err != nil {
+				DisableFunctionDescriptionsAfterBuildError()
 				status.SetError(err)
 				status.ShowNoTimeout(c, e)
 				e.ExplainBuildErrorWithOllamaBackground(c, err)
 				return
 			}
 			// --- Success ---
+			clearBuildErrorExplanationState()
+			EnableFunctionDescriptions()
+			e.drawFuncName.Store(true)
+			e.redraw.Store(true)
 			status.SetMessageAfterRedraw("Success, built " + outputExecutable)
 		},
 		copyall: func() { // copy all contents to the clipboard

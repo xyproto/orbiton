@@ -228,8 +228,9 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 			e.drawProgress.Store(false)
 		}
 
-		// Draw the function name if drawFuncName is set and Nano mode is not enabled
-		if e.drawFuncName.Load() && !e.nanoMode.Load() {
+		// Draw the function name if drawFuncName is set and Nano mode is not enabled.
+		// Also redraw while Ollama is thinking, so the upper-right indicator is not lost on redraw.
+		if (e.drawFuncName.Load() || functionDescriptionThinking || hasBuildErrorExplanationThinking()) && !e.nanoMode.Load() {
 			e.WriteCurrentFunctionName(c) // not drawing immediatly
 			e.drawFuncName.Store(false)
 		}

@@ -324,9 +324,17 @@ func (e *Editor) OnlyFunctionNameForLineIndex(n LineIndex) string {
 // in the top right corner of the canvas.
 func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
 	if useASCII {
+		if ollama.Loaded() && hasBuildErrorExplanationThinking() {
+			ellipsisX := c.Width() - 1
+			c.Write(ellipsisX, 0, e.StatusErrorForeground, e.StatusBackground, string(ellipsisRune))
+		}
 		return
 	}
 	if !ProgrammingLanguage(e.mode) {
+		if ollama.Loaded() && hasBuildErrorExplanationThinking() {
+			ellipsisX := c.Width() - 1
+			c.Write(ellipsisX, 0, e.StatusErrorForeground, e.StatusBackground, string(ellipsisRune))
+		}
 		return
 	}
 	functionName := e.FindCurrentFunctionName()
@@ -374,7 +382,7 @@ func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
 	c.Write(x, y, fg, bg, s)
 
 	// Add red ellipsis when Ollama is thinking
-	if ollama.Loaded() && !functionDescriptionsDisabled && functionDescriptionThinking && !(functionDescriptionDismissed && functionName != "" && functionName == dismissedFunctionDescription) {
+	if ollama.Loaded() && (hasBuildErrorExplanationThinking() || (!functionDescriptionsDisabled && functionDescriptionThinking && !(functionDescriptionDismissed && functionName != "" && functionName == dismissedFunctionDescription))) {
 		ellipsisX := canvasWidth - 1 // rightmost position
 		c.Write(ellipsisX, y, e.StatusErrorForeground, e.StatusBackground, string(ellipsisRune))
 	}

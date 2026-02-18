@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/xyproto/vt"
+	"github.com/xyproto/wordwrap"
 )
 
 // FunctionDescriptionRequest holds one queued function description request
@@ -57,6 +58,44 @@ var (
 	queueSignal        = make(chan struct{}, 1)
 )
 
+// functionDescriptionsAllowed checks if function descriptions can be requested and shown.
+func functionDescriptionsAllowed() bool {
+	return !functionDescriptionsDisabled && !hasBuildErrorExplanation()
+}
+
+// sanitizeOllamaText replaces code fence lines with blank lines.
+func sanitizeOllamaText(text string) string {
+	lines := strings.Split(text, "\n")
+	for i, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "```") {
+			lines[i] = ""
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
+// wrappedLineCount returns how many visual lines DrawText would use for this text and width.
+func wrappedLineCount(text string, maxWidth int) int {
+	if maxWidth <= 0 {
+		return 0
+	}
+	text = asciiFallback(text)
+	totalLines := 0
+	for line := range strings.SplitSeq(text, "\n") {
+		if strings.TrimSpace(line) == "" {
+			totalLines++
+			continue
+		}
+		wrappedLines, err := wordwrap.WordWrap(line, maxWidth)
+		if err != nil || len(wrappedLines) == 0 {
+			totalLines++
+			continue
+		}
+		totalLines += len(wrappedLines)
+	}
+	return totalLines
+}
+
 // hashFunctionBody returns a SHA256 hash of the function body
 func hashFunctionBody(funcBody string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(funcBody)))
@@ -94,6 +133,11 @@ func DisableFunctionDescriptionsAfterBuildError() {
 	functionDescriptionsDisabled = true
 	clearFunctionDescriptionState()
 	clearFunctionDescriptionQueue()
+}
+
+// EnableFunctionDescriptions turns function descriptions back on after build error mode.
+func EnableFunctionDescriptions() {
+	functionDescriptionsDisabled = false
 }
 
 func setCurrentDescribedFunction(functionName string, start, end LineIndex, hasRange bool) {
@@ -188,6 +232,7 @@ func (e *Editor) DismissFunctionDescription() {
 		dismissedFunctionDescription = currentDescribedFunction
 	}
 	functionDescriptionDismissed = dismissedFunctionDescription != ""
+	functionDescriptionsDisabled = false
 	clearFunctionDescriptionState()
 	clearBuildErrorExplanationState()
 	clearFunctionDescriptionQueue()
@@ -317,18 +362,22 @@ func startQueueWorker() {
 				ollamaMutex.RLock()
 				if cachedDescription, exists := ollamaResponseCache[req.bodyHash]; exists {
 					ollamaMutex.RUnlock()
-					if actualCurrentFunction == req.funcName {
+					if actualCurrentFunction == req.funcName && functionDescriptionsAllowed() {
 						setCurrentDescribedFunction(req.funcName, req.start, req.end, req.hasRange)
 						functionDescriptionReady = true
 						functionDescriptionThinking = false
 						functionDescription.Reset()
-						functionDescription.WriteString(strings.TrimSpace(cachedDescription))
+						functionDescription.WriteString(strings.TrimSpace(sanitizeOllamaText(cachedDescription)))
 						req.editor.DrawFunctionDescriptionContinuous(req.canvas, false)
 						req.canvas.HideCursorAndDraw()
 					}
 					continue
 				}
 				ollamaMutex.RUnlock()
+
+				if !functionDescriptionsAllowed() {
+					continue
+				}
 
 				functionDescriptionThinking = true
 				processingFunction = req.funcName
@@ -353,14 +402,15 @@ func startQueueWorker() {
 
 // processDescriptionRequest handles one Ollama request/response cycle
 func processDescriptionRequest(req FunctionDescriptionRequest) {
-	prompt := fmt.Sprintf("You have a PhD in Computer Science and are gifted when it comes to explaning things clearly. Be truthful and consise. If you are unsure of anything, then skip it. Describe and explain what the following %q function does, in 1-5 sentences:\n\n%s", req.funcName, req.funcBody)
+	prompt := fmt.Sprintf("You have a PhD in Computer Science and are gifted when it comes to explaining things clearly. Be truthful and concise. If you are unsure of anything, then skip it. Describe and explain what the following %q function does in 1-4 short sentences. Use plain text only (no Markdown):\n\n%s", req.funcName, req.funcBody)
 
 	if description, err := ollama.GetSimpleResponse(prompt); err == nil {
+		description = sanitizeOllamaText(description)
 		ollamaMutex.Lock()
 		ollamaResponseCache[req.bodyHash] = description
 		ollamaMutex.Unlock()
 
-		if actualCurrentFunction == req.funcName && ollama.Loaded() {
+		if actualCurrentFunction == req.funcName && ollama.Loaded() && functionDescriptionsAllowed() {
 			setCurrentDescribedFunction(req.funcName, req.start, req.end, req.hasRange)
 			functionDescription.Reset()
 			functionDescription.WriteString(strings.TrimSpace(description))
@@ -374,7 +424,7 @@ func processDescriptionRequest(req FunctionDescriptionRequest) {
 		}
 	} else {
 		// If this is still the current function, clear the ellipsis.
-		if actualCurrentFunction == req.funcName && ollama.Loaded() {
+		if actualCurrentFunction == req.funcName && ollama.Loaded() && functionDescriptionsAllowed() {
 			ellipsisX := req.canvas.Width() - 1
 			req.canvas.Write(ellipsisX, 0, req.editor.Foreground, req.editor.Background, " ")
 			req.editor.WriteCurrentFunctionName(req.canvas)
@@ -388,7 +438,7 @@ func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Can
 	if !ollama.Loaded() {
 		return
 	}
-	if functionDescriptionsDisabled {
+	if !functionDescriptionsAllowed() {
 		return
 	}
 
@@ -418,7 +468,7 @@ func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Can
 		functionDescriptionReady = true
 		functionDescriptionThinking = false
 		functionDescription.Reset()
-		functionDescription.WriteString(strings.TrimSpace(cachedDescription))
+		functionDescription.WriteString(strings.TrimSpace(sanitizeOllamaText(cachedDescription)))
 		e.DrawFunctionDescriptionContinuous(c, false)
 		c.HideCursorAndDraw()
 		return
@@ -485,10 +535,7 @@ func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Can
 
 // DrawFunctionDescriptionContinuous draws the function description panel in continuous mode
 func (e *Editor) DrawFunctionDescriptionContinuous(c *vt.Canvas, repositionCursor bool) {
-	if hasBuildErrorExplanation() {
-		return
-	}
-	if functionDescriptionsDisabled {
+	if !functionDescriptionsAllowed() {
 		return
 	}
 	if !ollama.Loaded() || currentDescribedFunction == "" || !functionDescriptionReady {
@@ -512,9 +559,8 @@ func (e *Editor) drawFunctionDescriptionPopup(c *vt.Canvas, title, descriptionTe
 	canvasBox := NewCanvasBox(c)
 
 	minWidth := 40
-	maxHeightPercent := 0.8 // use up to 80% of canvas height
-
-	maxHeight := int(float64(canvasBox.H) * maxHeightPercent)
+	defaultHeightPercent := 0.72 // preferred panel size for shorter descriptions
+	maxHeightPercent := 0.95     // can expand if text needs more room
 
 	// Start with default placement, then adjust vertically if needed.
 	descriptionBox := NewBox()
@@ -522,7 +568,15 @@ func (e *Editor) drawFunctionDescriptionPopup(c *vt.Canvas, title, descriptionTe
 
 	// Start at line 2 to leave room for the function name.
 	descriptionBox.Y = 2
-	descriptionBox.H = maxHeight
+	defaultHeight := int(float64(canvasBox.H) * defaultHeightPercent)
+	maxHeight := max(min(int(float64(canvasBox.H)*maxHeightPercent), canvasBox.H-1), 6)
+	if defaultHeight < 6 {
+		defaultHeight = 6
+	}
+	if defaultHeight > maxHeight {
+		defaultHeight = maxHeight
+	}
+	descriptionBox.H = defaultHeight
 	e.redraw.Store(true)
 
 	listBox := NewBox()
@@ -532,16 +586,28 @@ func (e *Editor) drawFunctionDescriptionPopup(c *vt.Canvas, title, descriptionTe
 	bt.Foreground = &e.BoxTextColor
 	bt.Background = &e.BoxBackground
 
-	// Figure out resulting line count after wrapping.
-	const dryRun = true
-	addedLines := e.DrawText(bt, c, listBox, descriptionText, dryRun)
+	neededTextLines := wrappedLineCount(descriptionText, listBox.W-5)
 
-	// Fit height to content without exceeding maxHeight.
-	if addedLines > 0 && addedLines < listBox.H {
-		heightDiff := listBox.H - addedLines
+	// Expand if needed, without exceeding maxHeight.
+	if neededTextLines > listBox.H {
+		missingLines := neededTextLines - listBox.H
+		availableGrowth := maxHeight - descriptionBox.H
+		growBy := min(missingLines, availableGrowth)
+		if growBy > 0 {
+			descriptionBox.H += growBy
+			listBox.H += growBy
+		}
+	}
+
+	// Fit height to content when there is significant spare space.
+	if neededTextLines > 0 && neededTextLines < listBox.H {
+		heightDiff := listBox.H - neededTextLines
 		descriptionBox.H -= (heightDiff - 1)
 		listBox.H -= (heightDiff - 1)
 	}
+
+	// Visual adjustment
+	descriptionBox.H--
 
 	descriptionBox.Y = e.preferredDescriptionBoxY(c, currentDescribedFunction, descriptionBox.H, descriptionBox.Y)
 	listBox.Y = descriptionBox.Y + 2
