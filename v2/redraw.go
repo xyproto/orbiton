@@ -195,7 +195,7 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 		status.Show(c, e)
 	}
 
-	e.WriteCurrentFunctionName(c) // not drawing immediatly
+	e.WriteCurrentFunctionName(c) // not drawing immediately
 
 	// Draw the function description if function description mode is enabled
 	if ollama.Loaded() {
@@ -231,7 +231,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 		// Draw the function name if drawFuncName is set and Nano mode is not enabled.
 		// Also redraw while Ollama is thinking, so the upper-right indicator is not lost on redraw.
 		if (e.drawFuncName.Load() || functionDescriptionThinking || hasBuildErrorExplanationThinking()) && !e.nanoMode.Load() {
-			e.WriteCurrentFunctionName(c) // not drawing immediatly
+			e.WriteCurrentFunctionName(c) // not drawing immediately
 			e.drawFuncName.Store(false)
 		}
 
