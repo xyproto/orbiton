@@ -32,13 +32,13 @@ type LSPClient struct {
 	stdout        io.ReadCloser
 	stderr        io.ReadCloser
 	cmd           *exec.Cmd
+	reader        *bufio.Reader // Persistent reader for stdout to preserve buffered data
 	workspaceRoot string
 	requestID     int
 	mutex         sync.Mutex
+	readerMu      sync.Mutex // Protects reader initialization
 	running       bool
 	initialized   bool
-	reader        *bufio.Reader // Persistent reader for stdout to preserve buffered data
-	readerMu      sync.Mutex    // Protects reader initialization
 }
 
 // LSPCompletionItem represents a single completion suggestion
