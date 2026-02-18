@@ -18,11 +18,12 @@ import (
 )
 
 var (
-	// Check if TERM is vt100
+	// Check if TERM is vt100 or vt220
 	envVT100 = env.Str("TERM") == "vt100"
+	envVT220 = env.Str("TERM") == "vt220"
 
-	// Check if TERM starts with vt
-	envVT = strings.HasPrefix(env.Str("TERM"), "vt")
+	// Check if TERM is vt100 or vt220
+	envVT = envVT100 || envVT220
 
 	// Check if $NO_COLOR is set, or if the terminal is strict VT100
 	envNoColor = env.Bool("NO_COLOR") || envVT100
@@ -59,6 +60,10 @@ type State struct {
 	canvas                    *vt.Canvas
 	tty                       *vt.TTY
 	selectedIndexPerDirectory map[string]int
+	lastHighlightX            uint
+	lastHighlightY            uint
+	lastHighlightWidth        uint
+	hasLastHighlight          bool
 	filterPattern             string
 	editor                    string // typically $EDITOR
 	Header                    string // title/header
@@ -329,8 +334,27 @@ func (s *State) highlightSelection() {
 	}
 
 	entry := &s.fileEntries[s.selectedIndex()]
+	entryWidth := ulen(entry.displayName)
+
+	// If this entry was previously highlighted with a longer name at the same
+	// position, clear the remaining tail before drawing the new highlight.
+	if s.hasLastHighlight && s.lastHighlightX == entry.x && s.lastHighlightY == entry.y && s.lastHighlightWidth > entryWidth {
+		clearFrom := entry.x + entryWidth
+		if entry.suffix != "" {
+			clearFrom++
+		}
+		clearTo := entry.x + s.lastHighlightWidth
+		for x := clearFrom; x < clearTo; x++ {
+			s.canvas.WriteRune(x, entry.y, vt.Default, s.Background, ' ')
+		}
+	}
+
 	s.canvas.Write(entry.x, entry.y, s.HighlightForeground, s.HighlightBackground, entry.displayName)
 	entry.selected = true
+	s.lastHighlightX = entry.x
+	s.lastHighlightY = entry.y
+	s.lastHighlightWidth = entryWidth
+	s.hasLastHighlight = true
 }
 
 func (s *State) clearHighlight() {
@@ -339,6 +363,9 @@ func (s *State) clearHighlight() {
 		if entry.selected {
 			// Clear only the area that was actually highlighted (displayName + suffix)
 			clearWidth := ulen(entry.displayName) + 2 // +2 for suffix and safety margin
+			if s.hasLastHighlight && s.lastHighlightX == entry.x && s.lastHighlightY == entry.y {
+				clearWidth = max(clearWidth, s.lastHighlightWidth+2)
+			}
 			for i := range clearWidth {
 				s.canvas.WriteRune(entry.x+i, entry.y, vt.Default, s.Background, ' ')
 			}
@@ -349,6 +376,7 @@ func (s *State) clearHighlight() {
 				s.canvas.Write(entry.x+ulen(entry.displayName), entry.y, vt.White, s.Background, entry.suffix)
 			}
 			entry.selected = false
+			s.hasLastHighlight = false
 			return
 		}
 	}
@@ -912,16 +940,14 @@ func (s *State) Run() ([]string, error) {
 	defer s.tty.Restore()
 
 	var (
-		x, y                uint
-		c                   = s.canvas
-		renameMode          bool
-		renameOriginal      string
-		renameSelectedIndex = -1
+		x, y   uint
+		c      = s.canvas
+		rename = newRenameSession(s)
 	)
 
 	drawPrompt := func() {
 		var prompt string
-		if renameMode {
+		if rename.isActive() {
 			prompt = "rename"
 		} else {
 			if absPath, err := filepath.Abs(s.Directories[s.dirIndex]); err == nil { // success
@@ -1016,9 +1042,7 @@ func (s *State) Run() ([]string, error) {
 		found := s.setSelectedIndexIfMissing(-1)
 		s.selectionMoved = found // Reset selection moved flag
 		s.filterPattern = ""     // Clear filter when changing directories
-		renameMode = false
-		renameOriginal = ""
-		renameSelectedIndex = -1
+		rename.reset()
 		clearAndPrepare()
 		s.ls(s.Directories[s.dirIndex])
 		s.written = []rune{}
@@ -1029,64 +1053,10 @@ func (s *State) Run() ([]string, error) {
 			s.highlightSelection()
 		}
 	}
-
-	redrawRenameUI := func(errText string) {
-		clearAndPrepare()
-		s.ls(s.Directories[s.dirIndex])
-		if renameSelectedIndex >= 0 && renameSelectedIndex < len(s.fileEntries) {
-			s.clearHighlight()
-			s.setSelectedIndex(renameSelectedIndex)
-			s.highlightSelection()
-		}
-		if errText != "" {
-			s.drawError(errText)
-		}
-		clearWritten()
-		drawWritten()
-	}
-
-	redrawAndSelect := func(targetName string, fallbackIndex int) {
-		clearAndPrepare()
-		s.ls(s.Directories[s.dirIndex])
-		s.written = []rune{}
-		index = 0
-		clearWritten()
-		drawWritten()
-		if len(s.fileEntries) == 0 {
-			return
-		}
-		s.clearHighlight()
-		if targetName != "" {
-			for i, entry := range s.fileEntries {
-				if entry.realName == targetName {
-					s.setSelectedIndex(i)
-					s.highlightSelection()
-					return
-				}
-			}
-		}
-		if fallbackIndex >= 0 && fallbackIndex < len(s.fileEntries) {
-			s.setSelectedIndex(fallbackIndex)
-			s.highlightSelection()
-			return
-		}
-		if s.selectedIndex() >= 0 && s.selectedIndex() < len(s.fileEntries) {
-			s.highlightSelection()
-		}
-	}
-
-	enterRenameMode := func() {
-		selectedIndex := s.selectedIndex()
-		if selectedIndex < 0 || selectedIndex >= len(s.fileEntries) {
-			return
-		}
-		renameMode = true
-		renameSelectedIndex = selectedIndex
-		renameOriginal = s.fileEntries[selectedIndex].realName
-		s.filterPattern = ""
-		s.written = []rune(renameOriginal)
-		index = ulen(s.written)
-		redrawRenameUI("")
+	renameHooks := renameUIHooks{
+		clearAndPrepare: clearAndPrepare,
+		clearWritten:    clearWritten,
+		drawWritten:     drawWritten,
 	}
 
 	goToRealPath := func() {
@@ -1106,109 +1076,10 @@ func (s *State) Run() ([]string, error) {
 
 	for !s.quit {
 		key := s.readKey()
-		if renameMode {
-			switch key {
-			case "c:27", "c:3": // esc or ctrl-c: cancel rename
-				renameMode = false
-				redrawAndSelect(renameOriginal, renameSelectedIndex)
-				renameOriginal = ""
-				renameSelectedIndex = -1
-			case "c:13": // return: apply rename
-				newName := string(s.written)
-				switch {
-				case newName == "":
-					redrawRenameUI("rename: empty filename")
-					c.Draw()
-					continue
-				case newName == "." || newName == "..":
-					redrawRenameUI("rename: invalid filename")
-					c.Draw()
-					continue
-				case strings.ContainsRune(newName, os.PathSeparator):
-					redrawRenameUI("rename: filename cannot contain path separator")
-					c.Draw()
-					continue
-				case newName == renameOriginal:
-					renameMode = false
-					redrawAndSelect(renameOriginal, renameSelectedIndex)
-					renameOriginal = ""
-					renameSelectedIndex = -1
-					c.Draw()
-					continue
-				}
-				currentDir := s.Directories[s.dirIndex]
-				oldPath := filepath.Join(currentDir, renameOriginal)
-				newPath := filepath.Join(currentDir, newName)
-				if _, err := os.Stat(newPath); err == nil {
-					redrawRenameUI("rename: target already exists")
-					c.Draw()
-					continue
-				} else if !os.IsNotExist(err) {
-					redrawRenameUI(err.Error())
-					c.Draw()
-					continue
-				}
-				if err := os.Rename(oldPath, newPath); err != nil {
-					redrawRenameUI(err.Error())
-					c.Draw()
-					continue
-				}
-				renameMode = false
-				redrawAndSelect(newName, renameSelectedIndex)
-				renameOriginal = ""
-				renameSelectedIndex = -1
-			case "c:127": // backspace
-				if index > 0 && len(s.written) > 0 {
-					clearWritten()
-					s.written = append(s.written[:index-1], s.written[index:]...)
-					index--
-					drawWritten()
-				}
-			case deleteKey, "c:4": // delete / ctrl-d
-				if index < ulen(s.written) {
-					clearWritten()
-					s.written = append(s.written[:index], s.written[index+1:]...)
-					drawWritten()
-				}
-			case leftArrow:
-				clearWritten()
-				if index > 0 {
-					index--
-				}
-				drawWritten()
-			case rightArrow:
-				clearWritten()
-				if index < ulen(s.written) {
-					index++
-				}
-				drawWritten()
-			case "c:1", homeKey: // ctrl-a, home
-				clearWritten()
-				index = 0
-				drawWritten()
-			case "c:5", endKey: // ctrl-e, end
-				clearWritten()
-				index = ulen(s.written)
-				drawWritten()
-			case "c:11": // ctrl-k
-				clearWritten()
-				if len(s.written) > 0 {
-					s.written = s.written[:index]
-				}
-				drawWritten()
-			case "":
-				continue
-			default:
-				if key != " " && strings.TrimSpace(key) == "" {
-					continue
-				}
-				clearWritten()
-				tmp := append(s.written[:index], []rune(key)...)
-				s.written = append(tmp, s.written[index:]...)
-				index += ulen([]rune(key))
-				drawWritten()
+		if handled, shouldDraw := rename.handleKey(key, &index, renameHooks); handled {
+			if shouldDraw {
+				c.Draw()
 			}
-			c.Draw()
 			continue
 		}
 		switch key {
@@ -1271,7 +1142,7 @@ func (s *State) Run() ([]string, error) {
 		case "c:17": // ctrl-q
 			s.quit = true
 		case "c:18": // ctrl-r : rename selected file or directory
-			enterRenameMode()
+			rename.enter(&index, renameHooks)
 		case "c:13": // return
 			okToAutoSelect := !s.autoSelected
 			if s.autoSelected && len(s.written) == 0 {
@@ -1305,15 +1176,13 @@ func (s *State) Run() ([]string, error) {
 							case NextFile:
 								if s.selectNextIndexThatIsANonBinaryFile() == nil { // success
 									goto AGAIN
-								} else {
-									s.setSelectedIndex(i)
-								}
+								} // else
+								s.setSelectedIndex(i)
 							case PreviousFile:
 								if s.selectPrevIndexThatIsANonBinaryFile() == nil { // success
 									goto AGAIN
-								} else {
-									s.setSelectedIndex(i)
-								}
+								} // else
+								s.setSelectedIndex(i)
 							default:
 								s.setSelectedIndex(i)
 							}
@@ -1381,6 +1250,7 @@ func (s *State) Run() ([]string, error) {
 			s.setSelectedIndex(-1)
 			clearWritten()
 			drawWritten()
+		case "c:19", "c:22", "c:24", "c:25": // ctrl-s, ctrl-v, ctrl-x, ctrl-y : do nothing, for now
 		case deleteKey, "c:4": // delete or ctrl-d
 			allowExit := key == "c:4"
 			if len(s.written) == 0 {
@@ -1944,8 +1814,6 @@ func (s *State) Run() ([]string, error) {
 					}
 				}
 			}
-		//case "c:18": // ctrl-r : history search
-		//run("fzf", []string{"a", "b", "c"}, s.Directories[s.dirIndex])
 		case "c:3": // ctrl-c
 			if len(s.written) == 0 {
 				Cleanup(c)
@@ -1962,7 +1830,7 @@ func (s *State) Run() ([]string, error) {
 		case "":
 			continue
 		default:
-			if key != " " && strings.TrimSpace(key) == "" {
+			if key != " " && strings.TrimSpace(key) == "" && key != "c:160" {
 				continue
 			}
 			// Reset selection when typing

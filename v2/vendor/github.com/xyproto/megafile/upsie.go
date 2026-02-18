@@ -2,9 +2,7 @@ package megafile
 
 import (
 	"fmt"
-	"io" // Added for error logging for pprof
-
-	// Added for CPU profiling
+	"io"
 	"strings"
 )
 
@@ -50,6 +48,8 @@ func writeUptime(w io.Writer, totalSeconds int64) {
 	fmt.Fprint(w, b.String())
 }
 
+// UpsieString returns a string describing the hostname, kernel/os, and platform.
+// Colors are used unless NO_COLOR=1 is set.
 func UpsieString(fullKernelVersion bool) (string, error) {
 	hostname, kernelRelease, machineArch, err := uname()
 	if err != nil {
