@@ -163,7 +163,7 @@ func (e *Editor) ExplainBuildErrorWithOllama(c *vt.Canvas, err error) {
 		return
 	}
 
-	explanationText = trimExplanationToMaxLines(explanationText, 4)
+	explanationText = strings.TrimSpace(sanitizeOllamaText(explanationText))
 	if explanationText == "" {
 		return
 	}
