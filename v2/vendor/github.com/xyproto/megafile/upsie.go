@@ -1,33 +1,12 @@
 package megafile
 
 import (
-	"bytes"
 	"fmt"
 	"io" // Added for error logging for pprof
 
 	// Added for CPU profiling
 	"strings"
 )
-
-// trimNullBytesInt8 converts a null-terminated []int8 slice to a Go string.
-func trimNullBytesInt8(s []int8) string {
-	b := make([]byte, len(s))
-	for i, v := range s {
-		b[i] = byte(v)
-	}
-	if i := bytes.IndexByte(b, 0); i != -1 {
-		b = b[:i]
-	}
-	return string(b)
-}
-
-// trimNullBytesUint8 converts a null-terminated []uint8 slice to a Go string.
-func trimNullBytesUint8(s []uint8) string {
-	if i := bytes.IndexByte(s, 0); i != -1 {
-		return string(s[:i])
-	}
-	return string(s)
-}
 
 // writeUptime formats and writes the uptime duration to the given writer.
 func writeUptime(w io.Writer, totalSeconds int64) {

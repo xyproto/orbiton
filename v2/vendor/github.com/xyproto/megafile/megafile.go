@@ -288,11 +288,7 @@ func (s *State) selectPrevIndexThatIsANonBinaryFile() error {
 // Decrease the given index
 func (s *State) decSelectedIndex() {
 	if val, ok := s.selectedIndexPerDirectory[s.Directories[s.dirIndex]]; ok && val != -1 {
-		if val-1 >= 0 {
-			s.selectedIndexPerDirectory[s.Directories[s.dirIndex]] = val - 1
-		} else {
-			s.selectedIndexPerDirectory[s.Directories[s.dirIndex]] = 0
-		}
+		s.selectedIndexPerDirectory[s.Directories[s.dirIndex]] = max(val-1, 0)
 	} else {
 		s.selectedIndexPerDirectory[s.Directories[s.dirIndex]] = 0
 	}
@@ -343,7 +339,7 @@ func (s *State) clearHighlight() {
 		if entry.selected {
 			// Clear only the area that was actually highlighted (displayName + suffix)
 			clearWidth := ulen(entry.displayName) + 2 // +2 for suffix and safety margin
-			for i := uint(0); i < clearWidth; i++ {
+			for i := range clearWidth {
 				s.canvas.WriteRune(entry.x+i, entry.y, vt.Default, s.Background, ' ')
 			}
 
@@ -915,16 +911,26 @@ func (s *State) Run() ([]string, error) {
 	s.tty.RawMode()
 	defer s.tty.Restore()
 
-	var x, y uint
-	c := s.canvas
+	var (
+		x, y                uint
+		c                   = s.canvas
+		renameMode          bool
+		renameOriginal      string
+		renameSelectedIndex = -1
+	)
+
 	drawPrompt := func() {
-		prompt := ""
-		if absPath, err := filepath.Abs(s.Directories[s.dirIndex]); err == nil { // success
-			prompt = absPath //+ "> "
+		var prompt string
+		if renameMode {
+			prompt = "rename"
 		} else {
-			prompt = s.Directories[s.dirIndex] //+ "> "
+			if absPath, err := filepath.Abs(s.Directories[s.dirIndex]); err == nil { // success
+				prompt = absPath //+ "> "
+			} else {
+				prompt = s.Directories[s.dirIndex] //+ "> "
+			}
+			prompt = strings.Replace(prompt, env.HomeDir(), "~", 1)
 		}
-		prompt = strings.Replace(prompt, env.HomeDir(), "~", 1)
 		c.Write(s.startx, s.starty, s.PromptColor, s.Background, prompt)
 		s.promptLength = ulen([]rune(prompt)) + 2 // +2 for > and " "
 		c.WriteRune(s.startx+s.promptLength-2, s.starty, s.AngleColor, s.Background, '>')
@@ -1010,6 +1016,9 @@ func (s *State) Run() ([]string, error) {
 		found := s.setSelectedIndexIfMissing(-1)
 		s.selectionMoved = found // Reset selection moved flag
 		s.filterPattern = ""     // Clear filter when changing directories
+		renameMode = false
+		renameOriginal = ""
+		renameSelectedIndex = -1
 		clearAndPrepare()
 		s.ls(s.Directories[s.dirIndex])
 		s.written = []rune{}
@@ -1021,6 +1030,75 @@ func (s *State) Run() ([]string, error) {
 		}
 	}
 
+	redrawRenameUI := func(errText string) {
+		clearAndPrepare()
+		s.ls(s.Directories[s.dirIndex])
+		if renameSelectedIndex >= 0 && renameSelectedIndex < len(s.fileEntries) {
+			s.clearHighlight()
+			s.setSelectedIndex(renameSelectedIndex)
+			s.highlightSelection()
+		}
+		if errText != "" {
+			s.drawError(errText)
+		}
+		clearWritten()
+		drawWritten()
+	}
+
+	redrawAndSelect := func(targetName string, fallbackIndex int) {
+		clearAndPrepare()
+		s.ls(s.Directories[s.dirIndex])
+		s.written = []rune{}
+		index = 0
+		clearWritten()
+		drawWritten()
+		if len(s.fileEntries) == 0 {
+			return
+		}
+		s.clearHighlight()
+		if targetName != "" {
+			for i, entry := range s.fileEntries {
+				if entry.realName == targetName {
+					s.setSelectedIndex(i)
+					s.highlightSelection()
+					return
+				}
+			}
+		}
+		if fallbackIndex >= 0 && fallbackIndex < len(s.fileEntries) {
+			s.setSelectedIndex(fallbackIndex)
+			s.highlightSelection()
+			return
+		}
+		if s.selectedIndex() >= 0 && s.selectedIndex() < len(s.fileEntries) {
+			s.highlightSelection()
+		}
+	}
+
+	enterRenameMode := func() {
+		selectedIndex := s.selectedIndex()
+		if selectedIndex < 0 || selectedIndex >= len(s.fileEntries) {
+			return
+		}
+		renameMode = true
+		renameSelectedIndex = selectedIndex
+		renameOriginal = s.fileEntries[selectedIndex].realName
+		s.filterPattern = ""
+		s.written = []rune(renameOriginal)
+		index = ulen(s.written)
+		redrawRenameUI("")
+	}
+
+	goToRealPath := func() {
+		currentPath := s.Directories[s.dirIndex]
+		if realPath, err := filepath.EvalSymlinks(currentPath); err == nil { // success
+			if absPath, err := filepath.Abs(realPath); err == nil { // success
+				s.setPath(absPath)
+				listDirectory()
+			}
+		}
+	}
+
 	clearAndPrepare()
 	s.ls(s.Directories[s.dirIndex])
 
@@ -1028,6 +1106,111 @@ func (s *State) Run() ([]string, error) {
 
 	for !s.quit {
 		key := s.readKey()
+		if renameMode {
+			switch key {
+			case "c:27", "c:3": // esc or ctrl-c: cancel rename
+				renameMode = false
+				redrawAndSelect(renameOriginal, renameSelectedIndex)
+				renameOriginal = ""
+				renameSelectedIndex = -1
+			case "c:13": // return: apply rename
+				newName := string(s.written)
+				switch {
+				case newName == "":
+					redrawRenameUI("rename: empty filename")
+					c.Draw()
+					continue
+				case newName == "." || newName == "..":
+					redrawRenameUI("rename: invalid filename")
+					c.Draw()
+					continue
+				case strings.ContainsRune(newName, os.PathSeparator):
+					redrawRenameUI("rename: filename cannot contain path separator")
+					c.Draw()
+					continue
+				case newName == renameOriginal:
+					renameMode = false
+					redrawAndSelect(renameOriginal, renameSelectedIndex)
+					renameOriginal = ""
+					renameSelectedIndex = -1
+					c.Draw()
+					continue
+				}
+				currentDir := s.Directories[s.dirIndex]
+				oldPath := filepath.Join(currentDir, renameOriginal)
+				newPath := filepath.Join(currentDir, newName)
+				if _, err := os.Stat(newPath); err == nil {
+					redrawRenameUI("rename: target already exists")
+					c.Draw()
+					continue
+				} else if !os.IsNotExist(err) {
+					redrawRenameUI(err.Error())
+					c.Draw()
+					continue
+				}
+				if err := os.Rename(oldPath, newPath); err != nil {
+					redrawRenameUI(err.Error())
+					c.Draw()
+					continue
+				}
+				renameMode = false
+				redrawAndSelect(newName, renameSelectedIndex)
+				renameOriginal = ""
+				renameSelectedIndex = -1
+			case "c:127": // backspace
+				if index > 0 && len(s.written) > 0 {
+					clearWritten()
+					s.written = append(s.written[:index-1], s.written[index:]...)
+					index--
+					drawWritten()
+				}
+			case deleteKey, "c:4": // delete / ctrl-d
+				if index < ulen(s.written) {
+					clearWritten()
+					s.written = append(s.written[:index], s.written[index+1:]...)
+					drawWritten()
+				}
+			case leftArrow:
+				clearWritten()
+				if index > 0 {
+					index--
+				}
+				drawWritten()
+			case rightArrow:
+				clearWritten()
+				if index < ulen(s.written) {
+					index++
+				}
+				drawWritten()
+			case "c:1", homeKey: // ctrl-a, home
+				clearWritten()
+				index = 0
+				drawWritten()
+			case "c:5", endKey: // ctrl-e, end
+				clearWritten()
+				index = ulen(s.written)
+				drawWritten()
+			case "c:11": // ctrl-k
+				clearWritten()
+				if len(s.written) > 0 {
+					s.written = s.written[:index]
+				}
+				drawWritten()
+			case "":
+				continue
+			default:
+				if key != " " && strings.TrimSpace(key) == "" {
+					continue
+				}
+				clearWritten()
+				tmp := append(s.written[:index], []rune(key)...)
+				s.written = append(tmp, s.written[index:]...)
+				index += ulen([]rune(key))
+				drawWritten()
+			}
+			c.Draw()
+			continue
+		}
 		switch key {
 		case "c:27": // esc
 			if s.selectedIndex() >= 0 {
@@ -1087,15 +1270,8 @@ func (s *State) Run() ([]string, error) {
 			drawWritten()
 		case "c:17": // ctrl-q
 			s.quit = true
-		case "c:18": // ctrl-r
-			// go to the "real" directory (not the symlink-based path)
-			currentPath := s.Directories[s.dirIndex]
-			if realPath, err := filepath.EvalSymlinks(currentPath); err == nil { // success
-				if absPath, err := filepath.Abs(realPath); err == nil { // success
-					s.setPath(absPath)
-					listDirectory()
-				}
-			}
+		case "c:18": // ctrl-r : rename selected file or directory
+			enterRenameMode()
 		case "c:13": // return
 			okToAutoSelect := !s.autoSelected
 			if s.autoSelected && len(s.written) == 0 {
@@ -1698,6 +1874,8 @@ func (s *State) Run() ([]string, error) {
 		case "c:12": // ctrl-l
 			c.Clear()
 			clearAndPrepare()
+		case "c:23": // ctrl-w : go to the real path (resolve symlinks)
+			goToRealPath()
 		case "c:2": // ctrl-b : go up one directory
 			if absPath, err := filepath.Abs(filepath.Join(s.Directories[s.dirIndex], "..")); err == nil { // success
 				s.setPath(absPath)

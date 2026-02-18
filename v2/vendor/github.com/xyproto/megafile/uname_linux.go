@@ -14,8 +14,8 @@ import (
 // or []uint8 depending on the architecture) to a Go string.
 func utsnameFieldToString(p unsafe.Pointer, length int) string {
 	b := unsafe.Slice((*byte)(p), length)
-	if i := bytes.IndexByte(b, 0); i != -1 {
-		return string(b[:i])
+	if before, _, ok := bytes.Cut(b, []byte{0}); ok {
+		return string(before)
 	}
 	return string(b)
 }

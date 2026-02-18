@@ -47,6 +47,7 @@ This project can be used as the `github.com/xyproto/megafile` package, or as a s
 * `Tab` - cycle through files, or tab completion
 * `Delete` - move selected file to trash (when no text is typed)
 * `ctrl-z` or `ctrl-u` - undo last trash move
+* `ctrl-r` - rename selected file or directory
 * `ctrl-f` - search for text in files
 
 **Directory Navigation**
@@ -54,6 +55,7 @@ This project can be used as the `github.com/xyproto/megafile` package, or as a s
 * `ctrl-n` - cycle to next directory
 * `ctrl-p` - cycle to previous directory
 * `ctrl-b` - go to parent directory
+* `ctrl-w` - go to the real path (resolve symlinks)
 
 **Display**
 * `ctrl-o` - toggle show hidden files
@@ -74,6 +76,6 @@ This project can be used as the `github.com/xyproto/megafile` package, or as a s
 
 ### General info
 
-* Version: 1.5.11
+* Version: 1.5.12
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
