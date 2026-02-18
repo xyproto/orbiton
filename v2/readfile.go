@@ -125,7 +125,7 @@ func (e *Editor) LoadBytes(data []byte) {
 	jobs := make(chan IndexByteLine, workerCount*2)
 	var wg sync.WaitGroup
 	wg.Add(workerCount)
-	for i := 0; i < workerCount; i++ {
+	for range workerCount {
 		go func() {
 			defer wg.Done()
 			for ib := range jobs {

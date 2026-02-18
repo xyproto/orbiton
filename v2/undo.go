@@ -187,7 +187,7 @@ func (u *Undo) shrinkForMemory() {
 	const withLines = true
 
 	// Copy the most recent entries
-	for i := 0; i < keepCount; i++ {
+	for i := range keepCount {
 		srcIndex := u.index - keepCount + i
 		if srcIndex < 0 {
 			srcIndex += len(u.editorCopies)

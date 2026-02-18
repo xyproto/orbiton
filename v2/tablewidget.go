@@ -173,7 +173,7 @@ func (tw *TableWidget) Draw(c *vt.Canvas) {
 
 		lastX := min(len((*tw.contents)[y]), cw)
 
-		for x := 0; x < lastX; x++ {
+		for x := range lastX {
 			field := (*tw.contents)[y][x]
 			color := tw.textColor
 			if y == int(tw.cy) && x == int(tw.cx) {
