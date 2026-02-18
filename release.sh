@@ -47,11 +47,13 @@ compile_and_compress() {
   goarm="$3"
   platform="$4"
   compression="$5"
+  exe_ext=""
+  [ "$goos" = "windows" ] && exe_ext=".exe"
 
   echo "Compiling $name.$platform..."
 
   [ -n "$goarm" ] && GOARM="$goarm" || unset GOARM
-  GOOS="$goos" GOARCH="$goarch" go build -mod=vendor -trimpath -ldflags="-s -w" -a -o "$name.$platform" || {
+  GOOS="$goos" GOARCH="$goarch" go build -mod=vendor -trimpath -ldflags="-s -w" -a -o "$name.$platform$exe_ext" || {
     echo "Error: failed to compile for $platform"
     echo "Target: GOOS=$goos GOARCH=$goarch GOARM=$goarm"
     echo "Environment variables: GOOS=$goos GOARCH=$goarch GOARM=$goarm"
@@ -62,7 +64,7 @@ compile_and_compress() {
   mkdir "$name-$version-$platform"
   cp ../o.1 "$name-$version-$platform/"
   gzip "$name-$version-$platform/o.1"
-  cp "$name.$platform" "$name-$version-$platform/o"
+  cp "$name.$platform$exe_ext" "$name-$version-$platform/o$exe_ext"
   cp ../LICENSE "$name-$version-$platform/"
 
   case "$compression" in
@@ -78,7 +80,7 @@ compile_and_compress() {
   esac
 
   rm -r "$name-$version-$platform"
-  rm "$name.$platform"
+  rm "$name.$platform$exe_ext"
 }
 
 echo 'Compiling...'
