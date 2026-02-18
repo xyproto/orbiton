@@ -521,7 +521,7 @@ func (e *Editor) drawFunctionDescriptionPopup(c *vt.Canvas, title, descriptionTe
 	listBox.FillWithMargins(descriptionBox, 2, 2)
 
 	bt := e.NewBoxTheme()
-	bt.Foreground = &e.ItalicsColor
+	bt.Foreground = &e.BoxTextColor
 	bt.Background = &e.BoxBackground
 
 	// Figure out resulting line count after wrapping.

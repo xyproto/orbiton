@@ -54,7 +54,7 @@ func (e *Editor) NewBoxTheme() *BoxTheme {
 			HB:         '-',
 			EdgeLeftT:  '+',
 			EdgeRightT: '+',
-			Foreground: &e.Foreground,
+			Foreground: &e.BoxTextColor,
 			Background: &e.BoxBackground,
 			Text:       &e.BoxTextColor,
 			Highlight:  &e.BoxHighlight,
@@ -73,7 +73,7 @@ func (e *Editor) NewBoxTheme() *BoxTheme {
 		HB:         '─', // horizontal bottom line
 		EdgeLeftT:  '├',
 		EdgeRightT: '┤',
-		Foreground: &e.Foreground,
+		Foreground: &e.BoxTextColor,
 		Background: &e.BoxBackground,
 		Text:       &e.BoxTextColor,
 		Highlight:  &e.BoxHighlight,
