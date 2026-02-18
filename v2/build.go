@@ -1418,6 +1418,7 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 		if err != nil {
 			// There was an error, so don't run after building after all
 			e.runAfterBuild = false
+			DisableFunctionDescriptionsAfterBuildError()
 			// Error while building
 			status.SetError(err)
 			status.ShowNoTimeout(c, e)

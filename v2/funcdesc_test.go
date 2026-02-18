@@ -74,3 +74,39 @@ func TestPreferredDescriptionBoxYStaysStableWhenCursorMoves(t *testing.T) {
 		t.Fatalf("expected stable box Y, got %d then %d", firstY, secondY)
 	}
 }
+
+func TestDisableFunctionDescriptionsAfterBuildError(t *testing.T) {
+	functionDescriptionsDisabled = false
+	t.Cleanup(func() {
+		functionDescriptionsDisabled = false
+		clearFunctionDescriptionState()
+		clearFunctionDescriptionQueue()
+	})
+
+	currentDescribedFunction = "demo"
+	functionDescriptionReady = true
+	functionDescription.WriteString("description")
+	descriptionStack = append(descriptionStack, FunctionDescriptionRequest{bodyHash: "hash"})
+	queuedHashes["hash"] = true
+
+	DisableFunctionDescriptionsAfterBuildError()
+
+	if !functionDescriptionsDisabled {
+		t.Fatal("expected function descriptions to be disabled")
+	}
+	if functionDescriptionReady {
+		t.Fatal("expected description readiness to be cleared")
+	}
+	if currentDescribedFunction != "" {
+		t.Fatalf("expected current described function to be cleared, got %q", currentDescribedFunction)
+	}
+	if functionDescription.Len() != 0 {
+		t.Fatal("expected function description text to be cleared")
+	}
+	if len(descriptionStack) != 0 {
+		t.Fatal("expected pending description queue to be cleared")
+	}
+	if len(queuedHashes) != 0 {
+		t.Fatal("expected queued hashes to be cleared")
+	}
+}

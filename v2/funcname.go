@@ -333,7 +333,7 @@ func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
 	s := functionName
 
 	// Try to display the function description if Ollama is enabled
-	if ollama.Loaded() {
+	if ollama.Loaded() && !functionDescriptionsDisabled {
 		if functionName != "" {
 			if !(functionDescriptionDismissed && functionName == dismissedFunctionDescription) {
 				functionDescriptionDismissed = false
@@ -374,7 +374,7 @@ func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
 	c.Write(x, y, fg, bg, s)
 
 	// Add red ellipsis when Ollama is thinking
-	if ollama.Loaded() && functionDescriptionThinking && !(functionDescriptionDismissed && functionName != "" && functionName == dismissedFunctionDescription) {
+	if ollama.Loaded() && !functionDescriptionsDisabled && functionDescriptionThinking && !(functionDescriptionDismissed && functionName != "" && functionName == dismissedFunctionDescription) {
 		ellipsisX := canvasWidth - 1 // rightmost position
 		c.Write(ellipsisX, y, e.StatusErrorForeground, e.StatusBackground, string(ellipsisRune))
 	}

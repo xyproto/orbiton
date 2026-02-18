@@ -36,6 +36,7 @@ var (
 	processingFunction           string
 	functionDescriptionDismissed bool
 	dismissedFunctionDescription string
+	functionDescriptionsDisabled bool
 	descriptionBoxY              int
 	descriptionBoxYFunction      string
 	descriptionBoxYBoxHeight     int
@@ -86,6 +87,13 @@ func clearFunctionDescriptionState() {
 	descriptionBoxYCanvasHeight = 0
 	descriptionBoxYLocked = false
 	functionDescription.Reset()
+}
+
+// DisableFunctionDescriptionsAfterBuildError turns off function descriptions after a build failure.
+func DisableFunctionDescriptionsAfterBuildError() {
+	functionDescriptionsDisabled = true
+	clearFunctionDescriptionState()
+	clearFunctionDescriptionQueue()
 }
 
 func setCurrentDescribedFunction(functionName string, start, end LineIndex, hasRange bool) {
@@ -380,6 +388,9 @@ func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Can
 	if !ollama.Loaded() {
 		return
 	}
+	if functionDescriptionsDisabled {
+		return
+	}
 
 	if funcBody == "" {
 		return
@@ -475,6 +486,9 @@ func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Can
 // DrawFunctionDescriptionContinuous draws the function description panel in continuous mode
 func (e *Editor) DrawFunctionDescriptionContinuous(c *vt.Canvas, repositionCursor bool) {
 	if hasBuildErrorExplanation() {
+		return
+	}
+	if functionDescriptionsDisabled {
 		return
 	}
 	if !ollama.Loaded() || currentDescribedFunction == "" || !functionDescriptionReady {
