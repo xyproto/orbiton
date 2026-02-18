@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -232,7 +233,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				e.dirMode = true
 				startdirs := []string{e.filename}
 				for _, arg := range globalArgs { // check the command line arguments
-					if files.IsDir(arg) && !hasS(startdirs, arg) {
+					if files.IsDir(arg) && !slices.Contains(startdirs, arg) {
 						startdirs = append(startdirs, arg)
 					}
 				}

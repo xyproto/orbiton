@@ -1,6 +1,7 @@
 package main
 
 import (
+	"slices"
 	"sync"
 	"time"
 )
@@ -71,12 +72,7 @@ func (kh *KeyHistory) PrevHas(keyPresses ...string) bool {
 	khMut.RLock()
 	defer khMut.RUnlock()
 
-	for _, keyPress := range keyPresses {
-		if keyPress == kh.keys[2] {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(keyPresses, kh.keys[2])
 }
 
 // PrevIsWithin checks if one of the given strings is the previous keypress, within the given duration
@@ -125,13 +121,7 @@ func (kh *KeyHistory) OnlyIn(keyPresses ...string) bool {
 
 	var found bool
 	for _, prevKeyPress := range kh.keys {
-		found = false
-		for _, keyPress := range keyPresses {
-			if prevKeyPress == keyPress {
-				found = true
-				break
-			}
-		}
+		found = slices.Contains(keyPresses, prevKeyPress)
 		if !found {
 			return false
 		}

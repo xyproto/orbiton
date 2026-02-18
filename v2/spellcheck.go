@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"errors"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/sajari/fuzzy"
@@ -71,16 +72,16 @@ func (sc *SpellChecker) Train(reTrain bool) {
 
 		var word string
 
-		for i := 0; i < lenCorrect; i++ {
+		for i := range lenCorrect {
 			word := sc.correctWords[i]
-			if !hasS(sc.ignoredWords, word) {
+			if !slices.Contains(sc.ignoredWords, word) {
 				trainWords = append(trainWords, word)
 			}
 		}
 
-		for i := 0; i < lenCustom; i++ {
+		for i := range lenCustom {
 			word = sc.customWords[i]
-			if !hasS(sc.ignoredWords, word) {
+			if !slices.Contains(sc.ignoredWords, word) {
 				trainWords = append(trainWords, word)
 			}
 		}
@@ -114,7 +115,7 @@ func (e *Editor) AddCurrentWordToWordList() string {
 		word = matches[1] // The captured word is in the second item of the slice
 	}
 
-	if hasS(spellChecker.customWords, word) || hasS(spellChecker.correctWords, word) { // already has this word
+	if slices.Contains(spellChecker.customWords, word) || slices.Contains(spellChecker.correctWords, word) { // already has this word
 		return word
 	}
 
@@ -142,7 +143,7 @@ func (e *Editor) RemoveCurrentWordFromWordList() string {
 		word = matches[1] // The captured word is in the second item of the slice
 	}
 
-	if hasS(spellChecker.ignoredWords, word) { // already has this word
+	if slices.Contains(spellChecker.ignoredWords, word) { // already has this word
 		return word
 	}
 	spellChecker.ignoredWords = append(spellChecker.ignoredWords, word)
@@ -174,18 +175,18 @@ func (e *Editor) SearchForTypo() (string, string, error) {
 		if justTheWord == "" {
 			continue
 		}
-		if hasS(spellChecker.ignoredWords, justTheWord) || hasS(spellChecker.customWords, justTheWord) { // || hasS(spellChecker.correctWords, justTheWord) {
+		if slices.Contains(spellChecker.ignoredWords, justTheWord) || slices.Contains(spellChecker.customWords, justTheWord) { // || slices.Contains(spellChecker.correctWords, justTheWord) {
 			continue
 		}
 
 		lower := strings.ToLower(justTheWord)
 
-		if hasS(spellChecker.ignoredWords, lower) || hasS(spellChecker.customWords, lower) { // || hasS(spellChecker.correctWords, lower) {
+		if slices.Contains(spellChecker.ignoredWords, lower) || slices.Contains(spellChecker.customWords, lower) { // || slices.Contains(spellChecker.correctWords, lower) {
 			continue
 		}
 
 		corrected := spellChecker.fuzzyModel.SpellCheck(justTheWord)
-		if !strings.EqualFold(justTheWord, corrected) && corrected != "" && !hasS(dontSuggest, corrected) { // case insensitive comparison of the original and spell-check-suggested word
+		if !strings.EqualFold(justTheWord, corrected) && corrected != "" && !slices.Contains(dontSuggest, corrected) { // case insensitive comparison of the original and spell-check-suggested word
 			spellChecker.markedWord = justTheWord
 			return justTheWord, corrected, nil
 		}

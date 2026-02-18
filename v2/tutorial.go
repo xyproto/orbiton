@@ -362,7 +362,7 @@ func LaunchTutorial(tty *vt.TTY, c *vt.Canvas, e *Editor, status *StatusBar) {
 
 	minWidth := 32
 	for _, step := range tutorialSteps {
-		for _, line := range strings.Split(step.description, "\n") {
+		for line := range strings.SplitSeq(step.description, "\n") {
 			if len(line) > minWidth {
 				minWidth = len(line) + marginX
 			}

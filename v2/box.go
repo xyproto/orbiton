@@ -113,10 +113,7 @@ func (b *Box) UpperRightPlacement(container *Box, minWidth int) {
 	h := float64(container.H)
 	b.X = int(w * 0.6)
 	b.Y = int(h * 0.1)
-	b.W = int(w * 0.3)
-	if b.W < minWidth {
-		b.W = minWidth
-	}
+	b.W = max(int(w*0.3), minWidth)
 	b.H = int(h * 0.25)
 	if (b.X + b.W) >= int(w) {
 		b.W = int(w) - b.X
@@ -129,10 +126,7 @@ func (b *Box) LowerRightPlacement(container *Box, minWidth int) {
 	h := float64(container.H)
 	b.X = int(w * 0.6)
 	b.Y = int(h * 0.37)
-	b.W = int(w * 0.3)
-	if b.W < minWidth {
-		b.W = minWidth
-	}
+	b.W = max(int(w*0.3), minWidth)
 	b.H = int(h * 0.45)
 	if (b.X + b.W) >= int(w) {
 		b.W = int(w) - b.X
@@ -145,10 +139,7 @@ func (b *Box) LowerLeftPlacement(container *Box, minWidth int) {
 	h := float64(container.H)
 	b.X = int(w * 0.05)
 	b.Y = int(h * 0.37)
-	b.W = int(w * 0.5)
-	if b.W < minWidth {
-		b.W = minWidth
-	}
+	b.W = max(int(w*0.5), minWidth)
 	b.H = int(h * 0.45)
 	if (b.X + b.W) >= int(w) {
 		b.W = int(w) - b.X
@@ -161,10 +152,7 @@ func (b *Box) EvenLowerRightPlacement(container *Box, minWidth int) {
 	h := float64(container.H)
 	b.X = int(w * 0.3)
 	b.Y = int(h * 0.83)
-	b.W = int(w * 0.62)
-	if b.W < minWidth {
-		b.W = minWidth
-	}
+	b.W = max(int(w*0.62), minWidth)
 	b.H = int(h * 0.18)
 	if (b.X + b.W) >= int(w) {
 		b.W = int(w) - b.X
@@ -177,10 +165,7 @@ func (b *Box) LowerPlacement(container *Box, minWidth int) {
 	h := float64(container.H)
 	b.X = int(w * 0.1)
 	b.Y = int(h * 0.3)
-	b.W = int(w * 0.8)
-	if b.W < minWidth {
-		b.W = minWidth
-	}
+	b.W = max(int(w*0.8), minWidth)
 	b.H = int(h * 0.7)
 	if (b.X + b.W) >= int(w) {
 		b.W = int(w) - b.X

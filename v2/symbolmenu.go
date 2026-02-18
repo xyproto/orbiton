@@ -119,7 +119,7 @@ func (e *Editor) SymbolMenu(tty *vt.TTY, status *StatusBar, title string, choice
 			running = false
 			changed = true
 		case "n": // handy shortcut
-			for y := 0; y < len(choices); y++ {
+			for y := range choices {
 				for x := 0; x < len(choices[y]); x++ {
 					if choices[y][x] == "ℕ" {
 						return x, y, false
@@ -127,7 +127,7 @@ func (e *Editor) SymbolMenu(tty *vt.TTY, status *StatusBar, title string, choice
 				}
 			}
 		case "t": // handy shortcut
-			for y := 0; y < len(choices); y++ {
+			for y := range choices {
 				for x := 0; x < len(choices[y]); x++ {
 					if choices[y][x] == "⊤" {
 						return x, y, false

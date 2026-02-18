@@ -32,9 +32,9 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar) {
 		currentLine := e.CurrentLine()
 		trimmedLine := e.TrimmedLine()
 		// De-indent this line by 1 if this line starts with "case " and the next line also starts with "case ", but the current line is indented differently.
-		currentCaseIndex := strings.Index(trimmedLine, "case ")
+		found := strings.Contains(trimmedLine, "case ")
 		nextCaseIndex := strings.Index(e.NextTrimmedLine(), "case ")
-		if currentCaseIndex != -1 && nextCaseIndex != -1 && strings.Index(currentLine, "case ") != strings.Index(e.NextLine(), "case ") {
+		if found && nextCaseIndex != -1 && strings.Index(currentLine, "case ") != strings.Index(e.NextLine(), "case ") {
 			oneIndentation := e.indentation.String()
 			deIndented := strings.Replace(currentLine, oneIndentation, "", 1)
 			e.SetCurrentLine(deIndented)

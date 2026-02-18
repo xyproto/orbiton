@@ -253,7 +253,7 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 				leadingWhitespace := e.LeadingWhitespace()
 				// add indentation to each line
 				firstLine = leadingWhitespace + firstLine
-				for i := 0; i < tailLineCount; i++ {
+				for i := range tailLineCount {
 					(*copyLines)[1+i] = leadingWhitespace + (*copyLines)[1+i]
 				}
 			}

@@ -98,17 +98,11 @@ func (e *Editor) GoTo(dataY LineIndex, c *vt.Canvas, status *StatusBar) (bool, b
 
 	if dataY >= topY && dataY < botY {
 		// No scrolling is needed, just move the screen y position
-		e.pos.sy = int(dataY) - e.pos.offsetY
-		if e.pos.sy < 0 {
-			e.pos.sy = 0
-		}
+		e.pos.sy = max(int(dataY)-e.pos.offsetY, 0)
 	} else if int(dataY) < h {
 		// No scrolling is needed, just move the screen y position
 		e.pos.offsetY = 0
-		e.pos.sy = int(dataY)
-		if e.pos.sy < 0 {
-			e.pos.sy = 0
-		}
+		e.pos.sy = max(int(dataY), 0)
 	} else if reachedTheEnd {
 		// To the end of the text
 		e.pos.offsetY = e.Len() - h

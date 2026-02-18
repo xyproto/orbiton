@@ -54,7 +54,7 @@ func (e *Editor) Spinner(c *vt.Canvas, _ *vt.TTY, umsg, _ string, startIn time.D
 		// Divide the startIn time into 5, then wait while listening to the quitChan
 		// If the quitChan does not receive anything by then, show the spinner
 		const N = 50
-		for i := 0; i < N; i++ {
+		for range N {
 			// Check if we should quit or wait
 			select {
 			case <-quitChan:

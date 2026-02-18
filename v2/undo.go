@@ -41,10 +41,7 @@ var (
 // NewUndo takes arguments that are only for initializing the undo buffers
 func NewUndo(maxSize int, maxMemoryUse uint64) *Undo {
 	// Start with a small initial size or the max size if it's very small
-	initialSize := initialUndoSize
-	if maxSize < initialSize {
-		initialSize = maxSize
-	}
+	initialSize := min(maxSize, initialUndoSize)
 
 	return &Undo{
 		mut:                  &sync.RWMutex{},
@@ -95,10 +92,7 @@ func (u *Undo) MemoryFootprint() uint64 {
 // grow expands the circular buffer when more space is needed
 func (u *Undo) grow() {
 	currentSize := len(u.editorCopies)
-	newSize := currentSize * undoGrowthFactor
-	if newSize > u.maxSize {
-		newSize = u.maxSize
-	}
+	newSize := min(currentSize*undoGrowthFactor, u.maxSize)
 
 	// If we can't grow anymore, we're at max capacity
 	if newSize <= currentSize {
@@ -181,16 +175,10 @@ func (u *Undo) Snapshot(e *Editor) {
 
 // shrinkForMemory reduces the buffer size when memory usage is too high
 func (u *Undo) shrinkForMemory() {
-	newSize := len(u.editorCopies) / 2
-	if newSize < initialUndoSize {
-		newSize = initialUndoSize
-	}
+	newSize := max(len(u.editorCopies)/2, initialUndoSize)
 
 	// Keep only the most recent entries
-	keepCount := newSize
-	if u.count < keepCount {
-		keepCount = u.count
-	}
+	keepCount := min(u.count, newSize)
 
 	newEditorCopies := make([]Editor, newSize)
 	newEditorLineCopies := make([]map[int][]rune, newSize)

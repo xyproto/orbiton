@@ -165,16 +165,13 @@ func (tw *TableWidget) Draw(c *vt.Canvas) {
 
 	// Draw the headers, with various colors
 	// Draw the menu entries, with various colors
-	for y := 0; y < ch; y++ {
+	for y := range ch {
 		xpos := tw.marginLeft
 		// First clear this row with spaces
 		spaces := strings.Repeat(" ", canvasWidth)
 		c.Write(0, uint(tw.marginTop+y+titleHeight), tw.textColor, tw.bgColor, spaces)
 
-		lastX := len((*tw.contents)[y])
-		if lastX > cw {
-			lastX = cw
-		}
+		lastX := min(len((*tw.contents)[y]), cw)
 
 		for x := 0; x < lastX; x++ {
 			field := (*tw.contents)[y][x]
@@ -201,7 +198,7 @@ func (tw *TableWidget) Draw(c *vt.Canvas) {
 	// Clear a few extra rows after the table
 	spaces := strings.Repeat(" ", canvasWidth)
 
-	for y := uint(0); y < 5; y++ {
+	for range uint(5) {
 		if indexY < c.H() {
 			c.Write(0, indexY, tw.textColor, tw.bgColor, spaces)
 			indexY++

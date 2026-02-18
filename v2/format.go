@@ -182,7 +182,7 @@ func oneLine(data []byte) bool {
 
 // formatJSON can format the given JSON data
 func formatJSON(data []byte, jsonFormatToggle *bool, indentationPerTab int) ([]byte, error) {
-	var v interface{}
+	var v any
 	err := json.Unmarshal(data, &v)
 	if err != nil {
 		return nil, err

@@ -82,7 +82,7 @@ func (sw *SymbolWidget) Draw(c *vt.Canvas) {
 	cellStep := sw.cellWidth + 1
 	for y := 0; y < len(sw.choices); y++ {
 		row := sw.choices[y]
-		for x := 0; x < len(row); x++ {
+		for x := range row {
 			symbol := sw.choices[y][x]
 			// SetXY(0, uint(sw.marginTop+y+titleHeight))
 			if y == int(sw.y) && x == int(sw.x) {

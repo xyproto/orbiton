@@ -369,7 +369,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 	// If in Markdown mode, figure out the current state of block quotes
 	case mode.ASCIIDoc, mode.Markdown, mode.ReStructured, mode.SCDoc:
 		// Figure out if "fromline" is within a markdown code block or not
-		for li = LineIndex(0); li < fromline; li++ {
+		for li = range fromline {
 			trimmedLine = strings.TrimSpace(e.Line(li))
 			// Check if the trimmed line starts with ~~~ or ```
 			if strings.HasPrefix(trimmedLine, "~~~") || strings.HasPrefix(trimmedLine, "```") {
@@ -391,7 +391,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 		}
 	case mode.Mojo, mode.Nim, mode.Python, mode.Starlark:
 		// Figure out if "fromline" is within a markdown code block or not
-		for li = LineIndex(0); li < fromline; li++ {
+		for li = range fromline {
 			line = e.Line(li)
 			trimmedLine = strings.TrimSpace(line)
 			inCodeBlock, _ = checkMultiLineString(trimmedLine, inCodeBlock)
@@ -961,10 +961,7 @@ func (e *Editor) applyAccentHighlights(line string, runesAndAttributes []vt.Char
 	if len(lineRunes) == 0 || len(runesAndAttributes) == 0 {
 		return
 	}
-	maxLen := len(lineRunes)
-	if len(runesAndAttributes) < maxLen {
-		maxLen = len(runesAndAttributes)
-	}
+	maxLen := min(len(runesAndAttributes), len(lineRunes))
 	if e.ternaryAccentMode() {
 		if keywordOK {
 			for i := 1; i+1 < maxLen; i++ {

@@ -61,7 +61,7 @@ func runeFromUBytes(bs []byte) (rune, error) {
 // Returns an empty string if memory cannot be allocated within append.
 func repeatRune(r rune, n uint) string {
 	var sb strings.Builder
-	for i := uint(0); i < n; i++ {
+	for range n {
 		_, err := sb.WriteRune(r)
 		if err != nil {
 			// In the unlikely event that append inside WriteRune won't work

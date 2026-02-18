@@ -525,10 +525,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 	menuChoices := actions.MenuChoices()
 
 	// Launch a generic menu
-	useMenuIndex := 0
-	if lastMenuIndex > 0 {
-		useMenuIndex = lastMenuIndex
-	}
+	useMenuIndex := max(lastMenuIndex, 0)
 
 	selected, spacePressed := e.Menu(status, tty, menuTitle, menuChoices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes)
 	if spacePressed {

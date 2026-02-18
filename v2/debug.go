@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -78,14 +79,14 @@ func (e *Editor) DebugStart(sourceDir, sourceBaseFilename, executableBaseFilenam
 	// flogf(gdbLogFile, "[gdb] starting %s: ", gdbExecutable)
 
 	// Start a new gdb session
-	e.gdb, err = gdb.NewCustom([]string{gdbPath}, func(notification map[string]interface{}) {
+	e.gdb, err = gdb.NewCustom([]string{gdbPath}, func(notification map[string]any) {
 		// Handle messages from gdb, including frames that contains line numbers
 		if payload, ok := notification["payload"]; ok {
 			switch notification["type"] {
 			case "exec":
-				if payloadMap, ok := payload.(map[string]interface{}); ok {
+				if payloadMap, ok := payload.(map[string]any); ok {
 					if frame, ok := payloadMap["frame"]; ok {
-						if frameMap, ok := frame.(map[string]interface{}); ok {
+						if frameMap, ok := frame.(map[string]any); ok {
 							if !noWriteToCache {
 								flogf(gdbLogFile, "[gdb] frame: %v\n", frameMap)
 							}
@@ -208,7 +209,7 @@ func (e *Editor) DebugNext() error {
 	// for variables there are watchpoints for.
 	if consoleString != "" {
 		var varName string
-		for _, line := range strings.Split(consoleString, "\n") {
+		for line := range strings.SplitSeq(consoleString, "\n") {
 			if strings.Contains(line, "watchpoint") && strings.Contains(line, ":") {
 				fields := strings.SplitN(line, ":", 2)
 				varName = strings.TrimSpace(fields[1])
@@ -247,7 +248,7 @@ func (e *Editor) DebugNextInstruction() error {
 	// for variables there are watchpoints for.
 	if consoleString != "" {
 		var varName string
-		for _, line := range strings.Split(consoleString, "\n") {
+		for line := range strings.SplitSeq(consoleString, "\n") {
 			if strings.Contains(line, "watchpoint") && strings.Contains(line, ":") {
 				fields := strings.SplitN(line, ":", 2)
 				varName = strings.TrimSpace(fields[1])
@@ -280,7 +281,7 @@ func (e *Editor) DebugStep() error {
 	// for variables there are watchpoints for.
 	if consoleString != "" {
 		var varName string
-		for _, line := range strings.Split(consoleString, "\n") {
+		for line := range strings.SplitSeq(consoleString, "\n") {
 			if strings.Contains(line, "watchpoint") && strings.Contains(line, ":") {
 				fields := strings.SplitN(line, ":", 2)
 				varName = strings.TrimSpace(fields[1])
@@ -311,7 +312,7 @@ func (e *Editor) DebugFinish() error {
 	// for variables there are watchpoints for.
 	if consoleString != "" {
 		var varName string
-		for _, line := range strings.Split(consoleString, "\n") {
+		for line := range strings.SplitSeq(consoleString, "\n") {
 			if strings.Contains(line, "watchpoint") && strings.Contains(line, ":") {
 				fields := strings.SplitN(line, ":", 2)
 				varName = strings.TrimSpace(fields[1])
@@ -340,9 +341,9 @@ func (e *Editor) DebugRegisterNames() ([]string, error) {
 		return []string{}, err
 	}
 	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
-		if payloadMap, ok := payload.(map[string]interface{}); ok {
+		if payloadMap, ok := payload.(map[string]any); ok {
 			if registerNames, ok := payloadMap["register-names"]; ok {
-				if registerSlice, ok := registerNames.([]interface{}); ok {
+				if registerSlice, ok := registerNames.([]any); ok {
 					registerStringSlice := make([]string, len(registerSlice))
 					for i, interfaceValue := range registerSlice {
 						if s, ok := interfaceValue.(string); ok {
@@ -367,9 +368,9 @@ func (e *Editor) DebugChangedRegisters() ([]int, error) {
 		return []int{}, err
 	}
 	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
-		if payloadMap, ok := payload.(map[string]interface{}); ok {
+		if payloadMap, ok := payload.(map[string]any); ok {
 			// flogf(gdbLogFile, "[gdb] changed reg payload: %v\n", payloadMap)
-			if registerInterfaces, ok := payloadMap["changed-registers"].([]interface{}); ok {
+			if registerInterfaces, ok := payloadMap["changed-registers"].([]any); ok {
 				changedRegisters := make([]int, len(registerInterfaces))
 				for _, registerNumberString := range registerInterfaces {
 					registerNumber, err := strconv.Atoi(registerNumberString.(string))
@@ -397,12 +398,12 @@ func (e *Editor) DebugDisassemble(n int) ([]string, error) {
 	}
 	result := []string{}
 	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
-		if payloadMap, ok := payload.(map[string]interface{}); ok {
+		if payloadMap, ok := payload.(map[string]any); ok {
 			// flogf(gdbLogFile, "[gdb] disasm payload: %v\n", payloadMap)
-			if asmDisSlice, ok := payloadMap["asm_insns"].([]interface{}); ok {
+			if asmDisSlice, ok := payloadMap["asm_insns"].([]any); ok {
 				for i, asmDis := range asmDisSlice {
 					// flogf(gdbLogFile, "[gdb] disasm asm %d: %v %T\n", i, asmDis, asmDis)
-					if asmMap, ok := asmDis.(map[string]interface{}); ok {
+					if asmMap, ok := asmDis.(map[string]any); ok {
 						instruction := asmMap["inst"]
 						result = append(result, instruction.(string))
 					}
@@ -440,12 +441,12 @@ func (e *Editor) DebugChangedRegisterMap() (map[string]string, error) {
 		return nil, err
 	}
 	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
-		if payloadMap, ok := payload.(map[string]interface{}); ok {
+		if payloadMap, ok := payload.(map[string]any); ok {
 			if registerValues, ok := payloadMap["register-values"]; ok {
-				if registerSlice, ok := registerValues.([]interface{}); ok {
+				if registerSlice, ok := registerValues.([]any); ok {
 					registers := make(map[string]string, len(names))
 					for _, singleRegisterMap := range registerSlice {
-						if registerMap, ok := singleRegisterMap.(map[string]interface{}); ok {
+						if registerMap, ok := singleRegisterMap.(map[string]any); ok {
 							numberString, ok := registerMap["number"].(string)
 							if !ok {
 								return nil, errors.New("could not convert \"number\" interface to string")
@@ -454,13 +455,7 @@ func (e *Editor) DebugChangedRegisterMap() (map[string]string, error) {
 							if err != nil {
 								return nil, err
 							}
-							thisRegisterWasChanged := false
-							for _, changedRegisterNumber := range changedRegisters {
-								if changedRegisterNumber == registerNumber {
-									thisRegisterWasChanged = true
-									break
-								}
-							}
+							thisRegisterWasChanged := slices.Contains(changedRegisters, registerNumber)
 							if !thisRegisterWasChanged {
 								// Continue to the next one in the list of all available registers
 								continue
@@ -552,12 +547,12 @@ func (e *Editor) DebugRegisterMap() (map[string]string, error) {
 		return nil, err
 	}
 	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
-		if payloadMap, ok := payload.(map[string]interface{}); ok {
+		if payloadMap, ok := payload.(map[string]any); ok {
 			if registerValues, ok := payloadMap["register-values"]; ok {
-				if registerSlice, ok := registerValues.([]interface{}); ok {
+				if registerSlice, ok := registerValues.([]any); ok {
 					registers := make(map[string]string, len(names))
 					for _, singleRegisterMap := range registerSlice {
-						if registerMap, ok := singleRegisterMap.(map[string]interface{}); ok {
+						if registerMap, ok := singleRegisterMap.(map[string]any); ok {
 							numberString, ok := registerMap["number"].(string)
 							if !ok {
 								return nil, errors.New("could not convert \"number\" interface to string")
@@ -671,11 +666,9 @@ func (e *Editor) DrawWatches(c *vt.Canvas, repositionCursor bool) {
 	e.DrawBox(bt, c, upperRightBox)
 
 	// Find the available space to draw help text in the upperRightBox
-	availableHeight := (listBox.H - marginY) - 1
-	if availableHeight < 2 {
+	availableHeight := max((listBox.H-marginY)-1,
 		// Draw at least two rows of help text, no matter what
-		availableHeight = 2
-	}
+		2)
 	if len(watchMap) == 0 {
 		// Draw the help text, if the screen is wide enough
 		if w > 120 {
@@ -779,7 +772,7 @@ func (e *Editor) DrawFlags(c *vt.Canvas, repositionCursor bool) {
 	// data-evalutate-expression is the same as print, output and call in gdb
 	if notification, err := e.gdb.CheckedSend("data-evaluate-expression", "$eflags"); err == nil {
 		if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
-			if payloadMap, ok := payload.(map[string]interface{}); ok {
+			if payloadMap, ok := payload.(map[string]any); ok {
 				if flagNames, ok := payloadMap["value"]; ok {
 					if flagNamesString, ok := flagNames.(string); ok {
 						flagNamesString = strings.TrimPrefix(flagNamesString, "[ ")
@@ -787,7 +780,7 @@ func (e *Editor) DrawFlags(c *vt.Canvas, repositionCursor bool) {
 						flags := strings.Split(flagNamesString, " ")
 						// Find which flags changed since last step
 						for _, flag := range flags {
-							if !hasS(prevFlags, flag) {
+							if !slices.Contains(prevFlags, flag) {
 								changedFlags = append(changedFlags, flag)
 							}
 						}
@@ -997,7 +990,7 @@ func (e *Editor) DrawInstructions(c *vt.Canvas, repositionCursor bool) error {
 			maxLen := 0
 			for _, line := range instructions {
 				demangledLine := line
-				for _, word := range strings.Fields(line) {
+				for word := range strings.FieldsSeq(line) {
 					word := strings.TrimSpace(word)
 					modifiedWord := word // maybe modified word
 					if strings.HasPrefix(word, "<") && strings.HasSuffix(word, ">") {

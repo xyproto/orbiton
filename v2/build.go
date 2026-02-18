@@ -1006,14 +1006,14 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 			} else if e.mode == mode.CS || e.mode == mode.ObjectPascal {
 				errorMessage = ""
 				if strings.Contains(line, " Error: ") {
-					pos := strings.Index(line, " Error: ")
-					errorMessage = line[pos+8:]
+					_, after, _ := strings.Cut(line, " Error: ")
+					errorMessage = after
 				} else if strings.Contains(line, " Fatal: ") {
-					pos := strings.Index(line, " Fatal: ")
-					errorMessage = line[pos+8:]
+					_, after, _ := strings.Cut(line, " Fatal: ")
+					errorMessage = after
 				} else if strings.Contains(line, ": error ") {
-					pos := strings.Index(line, ": error ")
-					errorMessage = line[pos+8:]
+					_, after, _ := strings.Cut(line, ": error ")
+					errorMessage = after
 				}
 				if len(errorMessage) > 0 {
 					parts := strings.SplitN(line, "(", 2)

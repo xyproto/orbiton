@@ -199,10 +199,9 @@ func (e *Editor) textSearchDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusB
 			line := e.Line(y)
 			if e.LooksLikeFunctionDef(line, "") && e.FunctionName(line) == word {
 				foundY = y
-				foundX = strings.Index(line, word) // Position cursor at the function name
-				if foundX < 0 {
-					foundX = 0
-				}
+				foundX = max(
+					// Position cursor at the function name
+					strings.Index(line, word), 0)
 				break
 			}
 		}

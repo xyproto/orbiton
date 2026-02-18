@@ -121,10 +121,7 @@ func (e *Editor) LoadBytes(data []byte) {
 		tcMut sync.RWMutex
 	)
 
-	workerCount := runtime.GOMAXPROCS(0)
-	if workerCount < 1 {
-		workerCount = 1
-	}
+	workerCount := max(runtime.GOMAXPROCS(0), 1)
 	jobs := make(chan IndexByteLine, workerCount*2)
 	var wg sync.WaitGroup
 	wg.Add(workerCount)
@@ -136,7 +133,7 @@ func (e *Editor) LoadBytes(data []byte) {
 			}
 		}()
 	}
-	for i := 0; i < lineCount; i++ {
+	for i := range lineCount {
 		jobs <- IndexByteLine{byteLines[i], i}
 	}
 	close(jobs)

@@ -12,7 +12,7 @@ func createDummyFiles(numFiles int, fileSize int) ([]string, error) {
 	var paths []string
 	charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-	for i := 0; i < numFiles; i++ {
+	for range numFiles {
 		content := make([]byte, fileSize)
 		for j := range content {
 			content[j] = charset[rand.Intn(len(charset))]

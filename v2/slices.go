@@ -22,16 +22,6 @@ func hasAnyPrefix(line string, stringList []string) bool {
 	return false
 }
 
-// hasS checks if the given string slice contains the given string
-func hasS(sl []string, s string) bool {
-	for _, e := range sl {
-		if e == s {
-			return true
-		}
-	}
-	return false
-}
-
 // equalStringSlices checks if two given string string slices are equal or not
 func equalStringSlices(a, b []string) bool {
 	if len(a) != len(b) {

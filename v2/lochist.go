@@ -92,7 +92,7 @@ func LoadLocationHistory(configFile string) (LocationHistory, error) {
 	}
 	// The format of the file is, per line:
 	// "filename":location
-	for _, filenameLocation := range strings.Split(string(contents), "\n") {
+	for filenameLocation := range strings.SplitSeq(string(contents), "\n") {
 		fields := strings.Split(filenameLocation, ":")
 
 		if len(fields) == 2 {
@@ -160,7 +160,7 @@ func LoadVimLocationHistory(vimInfoFilename string) LocationHistory {
 	if err != nil {
 		return locationHistory
 	}
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		if strings.HasPrefix(line, "-'") {
 			fields := strings.Fields(line)
 			if len(fields) < 4 {
@@ -198,7 +198,7 @@ func FindInVimLocationHistory(vimInfoFilename, searchFilename string) (LineNumbe
 	if err != nil {
 		return LineNumber(-1), err
 	}
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		if strings.HasPrefix(line, "-'") {
 			fields := strings.Fields(line)
 			if len(fields) < 4 {
@@ -455,7 +455,7 @@ func LoadEmacsLocationHistory(emacsPlacesFilename string) map[string]CharacterPo
 	if err != nil {
 		return locationCharHistory
 	}
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		// Looking for lines with filenames with ""
 		fields := strings.SplitN(line, "\"", 3)
 		if len(fields) != 3 {

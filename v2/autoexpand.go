@@ -97,11 +97,11 @@ func goForRangeAutocomplete(trimmedLine string) (string, bool) {
 		return "", false
 	}
 	rest := strings.TrimSpace(strings.TrimPrefix(base, "for "))
-	inIndex := strings.Index(rest, " in ")
+	before, after, ok := strings.Cut(rest, " in ")
 	var lhs, rhs string
-	if inIndex != -1 {
-		lhs = strings.TrimSpace(rest[:inIndex])
-		rhs = strings.TrimSpace(rest[inIndex+len(" in "):])
+	if ok {
+		lhs = strings.TrimSpace(before)
+		rhs = strings.TrimSpace(after)
 	} else {
 		tokens := strings.Fields(rest)
 		if len(tokens) < 3 {
@@ -146,12 +146,12 @@ func goForNumericRangeAutocomplete(trimmedLine string) (string, bool) {
 		return "", false
 	}
 	rest := strings.TrimSpace(strings.TrimPrefix(base, "for "))
-	inIndex := strings.Index(rest, " in ")
-	if inIndex == -1 {
+	before, after, ok := strings.Cut(rest, " in ")
+	if !ok {
 		return "", false
 	}
-	lhs := strings.TrimSpace(rest[:inIndex])
-	rangeExpr := strings.TrimSpace(rest[inIndex+len(" in "):])
+	lhs := strings.TrimSpace(before)
+	rangeExpr := strings.TrimSpace(after)
 	if lhs == "" || rangeExpr == "" {
 		return "", false
 	}
@@ -178,12 +178,12 @@ func parseGoNumericRange(expr string) (string, string, bool, bool) {
 	if expr == "" {
 		return "", "", false, false
 	}
-	dots := strings.Index(expr, "..")
-	if dots == -1 {
+	before, after, ok := strings.Cut(expr, "..")
+	if !ok {
 		return "", "", false, false
 	}
-	start := strings.TrimSpace(expr[:dots])
-	rest := strings.TrimSpace(expr[dots+2:])
+	start := strings.TrimSpace(before)
+	rest := strings.TrimSpace(after)
 	inclusive := true
 	if strings.HasPrefix(rest, "<") {
 		inclusive = false
@@ -527,8 +527,8 @@ func goSplitAssignment(line string) (string, string, string, bool) {
 	if trimmed == "" {
 		return "", "", "", false
 	}
-	if strings.HasPrefix(trimmed, "var ") {
-		rest := strings.TrimSpace(strings.TrimPrefix(trimmed, "var "))
+	if after, ok := strings.CutPrefix(trimmed, "var "); ok {
+		rest := strings.TrimSpace(after)
 		idx := goFindAssignmentOperator(rest)
 		if idx == -1 {
 			return "", "", "", false
@@ -1210,7 +1210,7 @@ func goInContainerKindFromTypeExpr(expr ast.Expr) goInContainerKind {
 func (e *Editor) contentsWithLineReplacement(lineIndex LineIndex, replacement string) string {
 	var sb strings.Builder
 	l := e.Len()
-	for i := 0; i < l; i++ {
+	for i := range l {
 		line := e.Line(LineIndex(i))
 		if LineIndex(i) == lineIndex {
 			line = replacement
@@ -1354,7 +1354,7 @@ func (e *Editor) autocompleteTagExpansion(c *vt.Canvas, trimmedLine, currentLead
 		if tagName == "img" && !strings.Contains(trimmedLine, "alt=") && strings.Contains(trimmedLine, "src=") {
 			// Pick out the image URI from the "src=" declaration
 			imageURI := ""
-			for _, word := range strings.Fields(trimmedLine) {
+			for word := range strings.FieldsSeq(trimmedLine) {
 				if strings.HasPrefix(word, "src=") {
 					imageURI = strings.SplitN(word, "=", 2)[1]
 					imageURI = strings.TrimPrefix(imageURI, "\"")

@@ -16,7 +16,7 @@ func ParsePythonError(msg, filename string) (int, int, string) {
 		columnNumber    = -1   // The column number, from the position of the "^" in the error message, if any
 		err             error  // Only used within the loop below
 	)
-	for _, line := range strings.Split(msg, "\n") {
+	for line := range strings.SplitSeq(msg, "\n") {
 		if foundHat && strings.Contains(line, ": ") {
 			errorMessage = strings.SplitN(line, ": ", 2)[1]
 			// break since this is usually the end of the approximately 5 line error message from Python

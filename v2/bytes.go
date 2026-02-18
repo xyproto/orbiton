@@ -8,7 +8,7 @@ func containsInTheFirstNLines(data []byte, n int, target []byte) bool {
 		lineStart int
 		line      []byte
 	)
-	for i := 0; i < len(data); i++ {
+	for i := range data {
 		if data[i] == '\n' {
 			line = data[lineStart:i]
 			if bytes.Contains(line, target) {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/xyproto/mode"
@@ -51,8 +52,8 @@ func startsWithCModifierAndType(line string) bool {
 	for _, modifier := range cModifiers {
 		// Check for modifier followed by space to avoid false matches
 		modifierWithSpace := modifier + " "
-		if strings.HasPrefix(line, modifierWithSpace) {
-			remaining := strings.TrimPrefix(line, modifierWithSpace)
+		if after, ok := strings.CutPrefix(line, modifierWithSpace); ok {
+			remaining := after
 			if startsWithCType(remaining) {
 				return true
 			}
@@ -125,7 +126,7 @@ func (e *Editor) cLooksLikeFunctionDef(line string) bool {
 					// Exclude common non-function declarations
 					firstWord := strings.ToLower(parts[0])
 					if firstWord != "typedef" && firstWord != "#define" &&
-						!hasS(cControlFlow, firstWord) &&
+						!slices.Contains(cControlFlow, firstWord) &&
 						!strings.HasPrefix(firstWord, "#") {
 						return true
 					}
@@ -176,7 +177,7 @@ func (e *Editor) cExtractFunctionName(line string) string {
 		} else if i > 0 && i == len(words)-1 {
 			// Last word without parenthesis - might be incomplete function def
 			// Check if any previous word is a type/modifier
-			for j := 0; j < i; j++ {
+			for j := range i {
 				if wordLooksLikeCType(words[j]) {
 					if name := stripPointerRef(word); name != "" {
 						return name

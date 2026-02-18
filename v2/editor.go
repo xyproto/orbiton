@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -314,7 +315,7 @@ func (e *Editor) Len() int {
 func (e *Editor) String() string {
 	var sb strings.Builder
 	l := e.Len()
-	for i := 0; i < l; i++ {
+	for i := range l {
 		sb.WriteString(e.Line(LineIndex(i)) + "\n")
 	}
 	return sb.String()
@@ -329,7 +330,7 @@ func (e *Editor) ContentsAndReverseSearchPrefix(prefix string) (string, LineInde
 	foundIt := false
 	var sb strings.Builder
 	l := e.Len()
-	for i := 0; i < l; i++ {
+	for i := range l {
 		lineIndex := LineIndex(i)
 		line := e.Line(lineIndex)
 		if lineIndex <= currentLineIndex && strings.HasPrefix(strings.TrimSpace(line), prefix) {
@@ -470,7 +471,7 @@ func (e *Editor) SaveAs(c *vt.Canvas, tty *vt.TTY, filename string) error {
 	} else {
 		// Strip trailing spaces on all lines
 		l := e.Len()
-		for i := 0; i < l; i++ {
+		for i := range l {
 			if e.TrimRight(LineIndex(i)) {
 				changed = true
 			}
@@ -660,8 +661,8 @@ func (e *Editor) StripSingleLineComment(line string) string {
 	// Strip single-line comments (according to language marker)
 	commentMarker := e.SingleLineCommentMarker()
 	if count := strings.Count(line, commentMarker); count == 1 {
-		if p := strings.Index(line, commentMarker); p != -1 {
-			return strings.TrimSpace(line[:p])
+		if before, _, ok := strings.Cut(line, commentMarker); ok {
+			return strings.TrimSpace(before)
 		}
 	}
 	return line
@@ -1104,7 +1105,7 @@ func (e *Editor) Insert(c *vt.Canvas, r rune) {
 		}
 		newlineLength := len(e.lines[y]) + 1
 		newline := make([]rune, newlineLength)
-		for i := 0; i < x; i++ {
+		for i := range x {
 			newline[i] = e.lines[y][i]
 		}
 		newline[x] = r
@@ -1416,11 +1417,7 @@ func (e *Editor) DownEnd(c *vt.Canvas) error {
 			e.pos.savedX = tmpx
 		}
 	} else {
-		e.pos.sx = e.pos.savedX
-
-		if e.pos.sx < 0 {
-			e.pos.sx = 0
-		}
+		e.pos.sx = max(e.pos.savedX, 0)
 		if e.AfterLineScreenContentsPlusOne() {
 			e.End(c)
 		}
@@ -1452,11 +1449,7 @@ func (e *Editor) UpEnd(c *vt.Canvas) error {
 			e.pos.savedX = tmpx
 		}
 	} else {
-		e.pos.sx = e.pos.savedX
-
-		if e.pos.sx < 0 {
-			e.pos.sx = 0
-		}
+		e.pos.sx = max(e.pos.savedX, 0)
 		if e.AfterLineScreenContentsPlusOne() {
 			e.End(c)
 		}
@@ -2531,7 +2524,7 @@ func (e *Editor) UserInput(c *vt.Canvas, tty *vt.TTY, status *StatusBar, title, 
 				status.ShowNoTimeout(c, e)
 			}
 			// Is this a special quick command, where return is not needed, like "wq"?
-			if hasS(quickList, entered) {
+			if slices.Contains(quickList, entered) {
 				break
 			}
 			fallthrough // cancel
@@ -2553,7 +2546,7 @@ func (e *Editor) UserInput(c *vt.Canvas, tty *vt.TTY, status *StatusBar, title, 
 			status.ShowNoTimeout(c, e)
 		}
 		// Is this a special quick command, where return is not needed, like "wq"?
-		if hasS(quickList, entered) {
+		if slices.Contains(quickList, entered) {
 			break
 		}
 	}

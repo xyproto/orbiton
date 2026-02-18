@@ -138,8 +138,8 @@ func (e *Editor) FunctionName(line string) string {
 			s = extractedFunctionName
 		} else {
 			// Original logic for other languages
-			words := strings.Split(s, " ")
-			for _, word := range words {
+			words := strings.SplitSeq(s, " ")
+			for word := range words {
 				if strings.HasPrefix(word, "(") {
 					continue
 				}
@@ -223,10 +223,7 @@ func (e *Editor) isWithinFunctionBody(funcDefLineIndex LineIndex) bool {
 
 	// Look for opening brace starting from the function definition line
 	// Search more lines to handle multi-line method signatures, annotations, etc.
-	searchLimit := funcDefLineIndex + 20
-	if searchLimit > totalLines {
-		searchLimit = totalLines
-	}
+	searchLimit := min(funcDefLineIndex+20, totalLines)
 
 	for i := funcDefLineIndex; i < searchLimit; i++ {
 		line := e.Line(i)

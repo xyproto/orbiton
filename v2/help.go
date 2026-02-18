@@ -223,10 +223,7 @@ func (e *Editor) DrawHotkeyOverview(tty *vt.TTY, c *vt.Canvas, status *StatusBar
 	// Create pages of text
 	var pages []Page
 	for i := 0; i < len(hotkeyLines); i += pageHeight {
-		end := i + pageHeight
-		if end > len(hotkeyLines) {
-			end = len(hotkeyLines)
-		}
+		end := min(i+pageHeight, len(hotkeyLines))
 		pages = append(pages, Page{Lines: hotkeyLines[i:end]})
 	}
 

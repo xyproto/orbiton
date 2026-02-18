@@ -209,7 +209,7 @@ func LoadSearchOrReplaceHistory(historyFilename string) *SearchHistory {
 
 	// The format of the file is, per line:
 	// timeStamp:searchTerm
-	for _, filenameSearch := range strings.Split(string(contents), "\n") {
+	for filenameSearch := range strings.SplitSeq(string(contents), "\n") {
 		fields := strings.Split(filenameSearch, ":")
 
 		if len(fields) == 2 {

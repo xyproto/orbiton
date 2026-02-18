@@ -43,7 +43,7 @@ type LSPClient struct {
 
 // LSPCompletionItem represents a single completion suggestion
 type LSPCompletionItem struct {
-	Documentation interface{} `json:"documentation"` // Can be string or object
+	Documentation any `json:"documentation"` // Can be string or object
 	TextEdit      *struct {
 		NewText string `json:"newText"`
 		Range   struct {
@@ -210,7 +210,7 @@ func NewLSPClient(serverCmd string, args []string, workspaceRoot string) (*LSPCl
 }
 
 // writeMessage writes a JSON-RPC message with proper headers
-func (lsp *LSPClient) writeMessage(message map[string]interface{}) error {
+func (lsp *LSPClient) writeMessage(message map[string]any) error {
 	body, err := json.Marshal(message)
 	if err != nil {
 		return err
@@ -226,14 +226,14 @@ func (lsp *LSPClient) writeMessage(message map[string]interface{}) error {
 }
 
 // sendNotification sends a JSON-RPC notification (no response expected)
-func (lsp *LSPClient) sendNotification(method string, params interface{}) error {
+func (lsp *LSPClient) sendNotification(method string, params any) error {
 	lsp.mutex.Lock()
 	defer lsp.mutex.Unlock()
 
 	if !lsp.running {
 		return errors.New("LSP client not running")
 	}
-	notification := map[string]interface{}{
+	notification := map[string]any{
 		"jsonrpc": "2.0",
 		"method":  method,
 		"params":  params,
@@ -242,7 +242,7 @@ func (lsp *LSPClient) sendNotification(method string, params interface{}) error 
 }
 
 // sendRequest sends a JSON-RPC request to the language server
-func (lsp *LSPClient) sendRequest(method string, params interface{}) (int, error) {
+func (lsp *LSPClient) sendRequest(method string, params any) (int, error) {
 	lsp.mutex.Lock()
 	defer lsp.mutex.Unlock()
 
@@ -251,7 +251,7 @@ func (lsp *LSPClient) sendRequest(method string, params interface{}) (int, error
 	}
 	lsp.requestID++
 	id := lsp.requestID
-	request := map[string]interface{}{
+	request := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      id,
 		"method":  method,
@@ -264,7 +264,7 @@ func (lsp *LSPClient) sendRequest(method string, params interface{}) (int, error
 }
 
 // readResponse reads a JSON-RPC response from the language server
-func (lsp *LSPClient) readResponse(timeout time.Duration) (map[string]interface{}, error) {
+func (lsp *LSPClient) readResponse(timeout time.Duration) (map[string]any, error) {
 	deadline := time.Now().Add(timeout)
 
 	// Lock for the entire read operation to prevent concurrent reads
@@ -278,7 +278,7 @@ func (lsp *LSPClient) readResponse(timeout time.Duration) (map[string]interface{
 
 	for time.Now().Before(deadline) {
 		done := make(chan struct{})
-		var result map[string]interface{}
+		var result map[string]any
 		var readErr error
 
 		go func() {
@@ -338,14 +338,14 @@ func (lsp *LSPClient) readResponse(timeout time.Duration) (map[string]interface{
 
 // Initialize sends the initialize request to the language server
 func (lsp *LSPClient) Initialize() error {
-	params := map[string]interface{}{
+	params := map[string]any{
 		"processId": os.Getpid(),
 		"rootUri":   "file://" + lsp.workspaceRoot,
 		"rootPath":  lsp.workspaceRoot, // Some servers (like rust-analyzer) prefer this
-		"capabilities": map[string]interface{}{
-			"textDocument": map[string]interface{}{
-				"completion": map[string]interface{}{
-					"completionItem": map[string]interface{}{
+		"capabilities": map[string]any{
+			"textDocument": map[string]any{
+				"completion": map[string]any{
+					"completionItem": map[string]any{
 						"snippetSupport": false,
 					},
 				},
@@ -358,7 +358,7 @@ func (lsp *LSPClient) Initialize() error {
 	if _, err := lsp.readResponse(lspInitTimeout); err != nil {
 		return err
 	}
-	if err := lsp.sendNotification("initialized", map[string]interface{}{}); err != nil {
+	if err := lsp.sendNotification("initialized", map[string]any{}); err != nil {
 		return err
 	}
 	lsp.initialized = true
@@ -376,7 +376,7 @@ func (lsp *LSPClient) TestReady(m mode.Mode) bool {
 	// This doesn't require any files to be open and responds quickly once ready
 	if needsWorkspaceSetup(m) {
 		// Send a simple workspace/symbol query
-		params := map[string]interface{}{
+		params := map[string]any{
 			"query": "",
 		}
 
@@ -401,8 +401,8 @@ func (lsp *LSPClient) TestReady(m mode.Mode) bool {
 
 // DidOpen notifies the language server that a document was opened
 func (lsp *LSPClient) DidOpen(uri, languageID, text string) error {
-	params := map[string]interface{}{
-		"textDocument": map[string]interface{}{
+	params := map[string]any{
+		"textDocument": map[string]any{
 			"uri":        uri,
 			"languageId": languageID,
 			"version":    1,
@@ -414,12 +414,12 @@ func (lsp *LSPClient) DidOpen(uri, languageID, text string) error {
 
 // DidChange notifies the language server that a document was changed
 func (lsp *LSPClient) DidChange(uri, text string, version int) error {
-	params := map[string]interface{}{
-		"textDocument": map[string]interface{}{
+	params := map[string]any{
+		"textDocument": map[string]any{
 			"uri":     uri,
 			"version": version,
 		},
-		"contentChanges": []map[string]interface{}{
+		"contentChanges": []map[string]any{
 			{"text": text},
 		},
 	}
@@ -431,11 +431,11 @@ func (lsp *LSPClient) GetCompletions(uri string, line, character int, triggerCha
 	if !lsp.initialized {
 		return nil, errors.New("LSP client not initialized")
 	}
-	params := map[string]interface{}{
-		"textDocument": map[string]interface{}{
+	params := map[string]any{
+		"textDocument": map[string]any{
 			"uri": uri,
 		},
-		"position": map[string]interface{}{
+		"position": map[string]any{
 			"line":      line,
 			"character": character,
 		},
@@ -443,12 +443,12 @@ func (lsp *LSPClient) GetCompletions(uri string, line, character int, triggerCha
 
 	// Add completion context to help LSP server understand the trigger
 	if triggerCharacter != "" {
-		params["context"] = map[string]interface{}{
+		params["context"] = map[string]any{
 			"triggerKind":      2, // TriggerCharacter
 			"triggerCharacter": triggerCharacter,
 		}
 	} else {
-		params["context"] = map[string]interface{}{
+		params["context"] = map[string]any{
 			"triggerKind": 1, // Invoked manually
 		}
 	}
@@ -497,11 +497,11 @@ func (lsp *LSPClient) GetDefinition(uri string, line, character int, timeout tim
 	if !lsp.initialized {
 		return nil, errors.New("LSP client not initialized")
 	}
-	params := map[string]interface{}{
-		"textDocument": map[string]interface{}{
+	params := map[string]any{
+		"textDocument": map[string]any{
 			"uri": uri,
 		},
-		"position": map[string]interface{}{
+		"position": map[string]any{
 			"line":      line,
 			"character": character,
 		},
@@ -552,14 +552,14 @@ func (lsp *LSPClient) Shutdown() error {
 	}
 	lsp.running = false
 	lsp.requestID++
-	request := map[string]interface{}{
+	request := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      lsp.requestID,
 		"method":  "shutdown",
 		"params":  nil,
 	}
 	lsp.writeMessage(request)
-	notification := map[string]interface{}{
+	notification := map[string]any{
 		"jsonrpc": "2.0",
 		"method":  "exit",
 	}
@@ -612,7 +612,7 @@ func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string, cancel <-chan bool)
 		lspMutex.Unlock()
 
 		// Wait up to 3 seconds for initialization
-		for i := 0; i < 30; i++ {
+		for range 30 {
 			select {
 			case <-cancel:
 				return nil, errors.New("cancelled by user")
@@ -675,7 +675,7 @@ func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string, cancel <-chan bool)
 	// Try up to 50 times with 200ms intervals (10 seconds total)
 	if m == mode.Rust || m == mode.C || m == mode.Cpp {
 		ready := false
-		for i := 0; i < 50; i++ {
+		for range 50 {
 			select {
 			case <-cancel:
 				client.Shutdown()
@@ -839,12 +839,12 @@ edition = "2021"
 		sysroot = strings.TrimSpace(string(sysrootOutput))
 	}
 
-	rustProject := map[string]interface{}{
-		"crates": []map[string]interface{}{
+	rustProject := map[string]any{
+		"crates": []map[string]any{
 			{
 				"root_module": filepath.Join("src", filepath.Base(filePath)),
 				"edition":     "2021",
-				"deps":        []interface{}{},
+				"deps":        []any{},
 			},
 		},
 	}
@@ -898,13 +898,13 @@ func updateRustProjectJSON(tempDir, newFileName string) {
 		return // Can't update if file doesn't exist
 	}
 
-	var rustProject map[string]interface{}
+	var rustProject map[string]any
 	if err := json.Unmarshal(data, &rustProject); err != nil {
 		return
 	}
 
 	// Get the crates array
-	crates, ok := rustProject["crates"].([]interface{})
+	crates, ok := rustProject["crates"].([]any)
 	if !ok {
 		return
 	}
@@ -912,7 +912,7 @@ func updateRustProjectJSON(tempDir, newFileName string) {
 	// Check if this file is already in the crates list
 	newRootModule := filepath.Join("src", newFileName)
 	for _, crateInterface := range crates {
-		crate, ok := crateInterface.(map[string]interface{})
+		crate, ok := crateInterface.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -922,10 +922,10 @@ func updateRustProjectJSON(tempDir, newFileName string) {
 	}
 
 	// Add new crate entry
-	newCrate := map[string]interface{}{
+	newCrate := map[string]any{
 		"root_module": newRootModule,
 		"edition":     "2021",
-		"deps":        []interface{}{},
+		"deps":        []any{},
 	}
 	crates = append(crates, newCrate)
 	rustProject["crates"] = crates
@@ -1005,7 +1005,7 @@ func ensureCWorkspace(workspaceRoot, filePath string, languageID string) (string
 	// Use absolute path for the file
 	absTargetPath, _ := filepath.Abs(targetPath)
 
-	compileCommands := []map[string]interface{}{
+	compileCommands := []map[string]any{
 		{
 			"directory": tempDir,
 			"arguments": []string{compiler, standard, "-c", absTargetPath},
@@ -1763,10 +1763,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 				params := trimmedLabel[parenIdx:]
 
 				// Format: "funcName    (params) -> returnType" with column alignment
-				padding := maxLabelLen - len(funcName) + 2
-				if padding < 2 {
-					padding = 2
-				}
+				padding := max(maxLabelLen-len(funcName)+2, 2)
 
 				if item.Detail != "" && len(item.Detail) < 80 {
 					label = funcName + strings.Repeat(" ", padding) + params + " -> " + item.Detail

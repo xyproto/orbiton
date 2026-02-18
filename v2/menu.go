@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -67,12 +68,7 @@ func inSmallWordOrSpace(s string, pos int) bool {
 		}
 	}
 	word := strings.ToLower(string(wordRunes))
-	for _, smallWord := range smallWords {
-		if word == smallWord {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(smallWords, word)
 }
 
 // selectionLetterForChoices loops through the choices and finds a unique letter (possibly the first one in the choice text),
@@ -85,7 +81,7 @@ func selectionLettersForChoices(choices []string) map[string]*RuneAndPosition {
 	N := 16
 	selectionLetterMap := make(map[string]*RuneAndPosition)
 	for choiceIndex, choiceString := range choices {
-		for pos := 0; pos < N; pos++ {
+		for pos := range N {
 			if pos >= len(choiceString) {
 				break
 			}

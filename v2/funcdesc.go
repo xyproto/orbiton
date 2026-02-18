@@ -130,19 +130,13 @@ func (e *Editor) functionRangeForCurrentFunction(functionName string) (LineIndex
 		return 0, 0, false
 	}
 
-	functionEnd := currentLine
-	if functionStart > functionEnd {
-		functionEnd = functionStart
-	}
+	functionEnd := max(functionStart, currentLine)
 
 	// In brace-based languages, find a stable end line to avoid popup movement.
 	if e.isBraceBasedLanguage() {
 		openBraceLineIndex := LineIndex(-1)
 		totalLines := LineIndex(e.Len())
-		searchLimit := functionStart + 20
-		if searchLimit > totalLines {
-			searchLimit = totalLines
-		}
+		searchLimit := min(functionStart+20, totalLines)
 
 		for i := functionStart; i < searchLimit; i++ {
 			line := e.Line(i)

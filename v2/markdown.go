@@ -104,29 +104,29 @@ func style(line, marker string, textColor, styleColor vt.AttributeColor) string 
 	// Split the line up in parts, then combine the parts, with colors
 	parts := strings.Split(line, marker)
 	lastIndex := len(parts) - 1
-	result := ""
+	var result strings.Builder
 	for i, part := range parts {
 		switch {
 		case i == lastIndex:
 			// Last case
-			result += part
+			result.WriteString(part)
 		case i%2 == 0:
 			// Even case that is not the last case
 			if len(part) == 0 {
-				result += marker
+				result.WriteString(marker)
 			} else {
-				result += part + vt.Stop() + styleColor.String() + marker
+				result.WriteString(part + vt.Stop() + styleColor.String() + marker)
 			}
 		default:
 			// Odd case that is not the last case
 			if len(part) == 0 {
-				result += marker
+				result.WriteString(marker)
 			} else {
-				result += part + marker + vt.Stop() + textColor.String()
+				result.WriteString(part + marker + vt.Stop() + textColor.String())
 			}
 		}
 	}
-	return result
+	return result.String()
 }
 
 func emphasis(line string, textColor, italicsColor, boldColor, strikeColor vt.AttributeColor) string {

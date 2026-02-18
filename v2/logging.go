@@ -9,7 +9,7 @@ import (
 
 // logf, for quick "printf-style" debugging
 // Will call log.Fatalln if there are problems!
-func logf(format string, args ...interface{}) {
+func logf(format string, args ...any) {
 	logFilename := filepath.Join(tempDir, "o.log")
 	if isDarwin {
 		logFilename = "/tmp/o.log"
@@ -24,7 +24,7 @@ func logf(format string, args ...interface{}) {
 var _ = logf
 
 // flogf, for logging to a file with a fprintf-style function
-func flogf(logfile, format string, args ...interface{}) error {
+func flogf(logfile, format string, args ...any) error {
 	f, err := os.OpenFile(logfile, os.O_APPEND|os.O_WRONLY, 0o644)
 	if err != nil {
 		f, err = os.Create(logfile)
