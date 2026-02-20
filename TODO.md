@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Fix odd syntax highlighting for paranthesis and -- when viewing man pages.
 - [ ] In LISP, all strings starting with " and ending with " can be multiline strings?
 - [ ] Let altgr+space not insert c:160.
 - [ ] Fix the speed of the built-in game.
