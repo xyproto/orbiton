@@ -76,17 +76,6 @@ func buildErrorExplanationCacheKey(sourceText, functionBody, lineText, compilerE
 	return hashFunctionBody(sourceText + "\n" + functionBody + "\n" + lineText + "\n" + compilerError)
 }
 
-// buildErrorExplanationPrompt builds the Ollama prompt for explaining a build error.
-func buildErrorExplanationPrompt(functionBody string, lineNumber int, lineText, compilerError string) string {
-	return fmt.Sprintf(
-		"For this function:\n\n%s\n\nThe user is currently looking at line %d:\n%s\n\nExplain to the user what should be done in order to resolve and/or understand this error:\n\n%s\n\nKeep it brief, but enlightening. Assume the user is an expert, but just forgot something. Use at most 4 short lines. Use plain text only (no Markdown).\n\nYou are an expert programmer.",
-		strings.TrimSpace(functionBody),
-		lineNumber,
-		strings.TrimSpace(lineText),
-		strings.TrimSpace(compilerError),
-	)
-}
-
 // trimExplanationToMaxLines trims and limits explanation text to maxLines lines.
 func trimExplanationToMaxLines(text string, maxLines int) string {
 	trimmed := strings.TrimSpace(sanitizeOllamaText(text))

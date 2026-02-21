@@ -402,7 +402,7 @@ func startQueueWorker() {
 
 // processDescriptionRequest handles one Ollama request/response cycle
 func processDescriptionRequest(req FunctionDescriptionRequest) {
-	prompt := fmt.Sprintf("You have a PhD in Computer Science and are gifted when it comes to explaining things clearly. Be truthful and concise. If you are unsure of anything, then skip it. Describe and explain what the following %q function does in 1-4 short sentences. Use plain text only (no Markdown):\n\n%s", req.funcName, req.funcBody)
+	prompt := req.Prompt()
 
 	if description, err := ollama.GetSimpleResponse(prompt); err == nil {
 		description = sanitizeOllamaText(description)
