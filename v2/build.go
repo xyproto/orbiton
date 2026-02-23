@@ -460,9 +460,9 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		// No result
 	case mode.C3:
 		if e.debugMode {
-			cmd = exec.Command("c3c", "compile", "-o", exeFilename, ".")
-		} else {
 			cmd = exec.Command("c3c", "compile", "-g", "-o", exeFilename, ".")
+		} else {
+			cmd = exec.Command("c3c", "compile", "-o", exeFilename, ".")
 		}
 		cmd.Dir = sourceDir
 		return cmd, exeExists, nil
