@@ -258,7 +258,7 @@ There are pretty few hotkeys to remember:
 | GLSL                   | `.glsl`, `.vert`, `.frag`                           | WIP           | `glslangValidator -V -o $output $filename`                                                                          | WIP                                                                                                           |
 | Go                     | `.go`                                               | Yes           | `go build $filename`                                                                                                | `goimports -w $filename`                                                                                      |
 | Hare                   | `.ha`                                               | Yes           | `hare build $filename`                                                                                              | N/A                                                                                                           |
-| Haskell                | `.hs`                                               | Yes           | `ghc -dynamic $filename`                                                                                            | `brittany --write-mode=inplace $filename`                                                                     |
+| Haskell                | `.hs`                                               | Yes           | `ghc -dynamic $filename`                                                                                            | `ormolu --mode=inplace $filename`                                                                     |
 | HTML                   | `.html`                                             | WIP           | No                                                                                                                  | `tidy -m $filename`                                                                                           |
 | Ivy                    | `.ivy`                                              | WIP           | WIP                                                                                                                 | N/A                                                                                                           |
 | Java                   | `.java`                                             | Yes           | `javac` + `jar`, see details below                                                                                  | `google-java-format -a -i $filename`                                                                          |
@@ -416,7 +416,7 @@ Rust
 Haskell
 
 * For building the current file with `ctrl-space`, the `ghc` compiler must be installed.
-* For formatting code with `ctrl-w`, [`brittany`](https://github.com/lspitzner/brittany) must be installed.
+* For formatting code with `ctrl-w`, [`ormolu`](https://github.com/tweag/ormolu) must be installed.
 
 Python
 
@@ -540,7 +540,7 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 * `asciidoctor` - for writing man pages
 * `astyle` - for formatting C# code
 * `black` - for formatting Python code
-* `brittany` - for formatting Haskell code
+* `ormolu` - for formatting Haskell code
 * `cargo` - for compiling Rust
 * `clang` - for formatting C++ code with `clang-format`
 * `clojure` - for compiling Clojure
