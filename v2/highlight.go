@@ -847,16 +847,24 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						rw = runewidth.RuneWidth(letter)
 						if unicode.IsControl(letter) {
 							letter = controlRuneReplacement
-						} else if rw > 1 { // NOTE: This is a hack to prevent all the text from becoming skewed! Ideally, letter should be drawn, and other text should not be skewed.
-							letter = controlRuneReplacement
+							rw = 1
 						}
 						tx = cx + lineRuneCount
 						ty = cy + uint(y)
 						if tx < cw {
-							if highlightCurrentLine && (e.highlightCurrentText || e.highlightCurrentLine) {
-								c.WriteRuneBNoLock(tx, ty, e.HighlightForeground, e.HighlightBackground, letter)
-							} else {
-								c.WriteRuneBNoLock(tx, ty, fg, bg, letter)
+							if rw == 2 && tx+1 < cw {
+								// Wide character (CJK etc): use the wide-char canvas function
+								if highlightCurrentLine && (e.highlightCurrentText || e.highlightCurrentLine) {
+									c.WriteWideRuneBNoLock(tx, ty, e.HighlightForeground, e.HighlightBackground, letter)
+								} else {
+									c.WriteWideRuneBNoLock(tx, ty, fg, bg, letter)
+								}
+							} else if rw <= 1 {
+								if highlightCurrentLine && (e.highlightCurrentText || e.highlightCurrentLine) {
+									c.WriteRuneBNoLock(tx, ty, e.HighlightForeground, e.HighlightBackground, letter)
+								} else {
+									c.WriteRuneBNoLock(tx, ty, fg, bg, letter)
+								}
 							}
 							lineRuneCount += uint(rw)
 						}

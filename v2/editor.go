@@ -14,6 +14,7 @@ import (
 	"unicode"
 
 	"github.com/cyrus-and/gdb"
+	"github.com/mattn/go-runewidth"
 	"github.com/xyproto/clip"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
@@ -252,14 +253,28 @@ func (e *Editor) ScreenLine(n int) string {
 // Can be negative, if the line is empty.
 func (e *Editor) LastScreenPosition(n LineIndex) int {
 	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.indentation.PerTab - 1))
-	return (e.LastDataPosition(n) + extraSpaceBecauseOfTabs)
+	extraSpaceBecauseOfWide := e.countExtraWideColumns(n)
+	return (e.LastDataPosition(n) + extraSpaceBecauseOfTabs + extraSpaceBecauseOfWide)
 }
 
 // LastTextPosition returns the last X index for this line, regardless of horizontal scrolling.
 // Can be negative if the line is empty. Tabs are expanded.
 func (e *Editor) LastTextPosition(n LineIndex) int {
 	extraSpaceBecauseOfTabs := int(e.CountRune('\t', n) * (e.indentation.PerTab - 1))
-	return (e.LastDataPosition(n) + extraSpaceBecauseOfTabs)
+	extraSpaceBecauseOfWide := e.countExtraWideColumns(n)
+	return (e.LastDataPosition(n) + extraSpaceBecauseOfTabs + extraSpaceBecauseOfWide)
+}
+
+// countExtraWideColumns returns the number of extra screen columns needed
+// for wide (CJK) characters on the given line (each wide char adds 1 extra).
+func (e *Editor) countExtraWideColumns(n LineIndex) int {
+	extra := 0
+	for _, r := range e.Line(n) {
+		if rw := runewidth.RuneWidth(r); rw > 1 {
+			extra += rw - 1
+		}
+	}
+	return extra
 }
 
 // FirstScreenPosition returns the first X index for this line, that is not '\t' or ' '.
@@ -1236,7 +1251,7 @@ func (e *Editor) DataX() (int, error) {
 		if r == '\t' {
 			screenCounter += e.indentation.PerTab
 		} else {
-			screenCounter++
+			screenCounter += runewidth.RuneWidth(r)
 		}
 		runeCounter++
 	}
@@ -1473,20 +1488,19 @@ func (e *Editor) UpEnd(c *vt.Canvas) error {
 func (e *Editor) Next(c *vt.Canvas) error {
 	if !e.blockMode {
 		// Ignore it if the position is out of bounds
-		atTab := e.Rune() == '\t'
+		r := e.Rune()
+		atTab := r == '\t'
+		step := 1
 		if atTab {
-			e.pos.sx += e.indentation.PerTab
-		} else {
-			e.pos.sx++
+			step = e.indentation.PerTab
+		} else if rw := runewidth.RuneWidth(r); rw > 1 {
+			step = rw
 		}
+		e.pos.sx += step
 		// Did we move too far on this line?
 		if e.AfterLineScreenContentsPlusOne() {
 			// Undo the move
-			if atTab {
-				e.pos.sx -= e.indentation.PerTab
-			} else {
-				e.pos.sx--
-			}
+			e.pos.sx -= step
 			// Move down
 			err := e.pos.Down(c)
 			if err != nil {
@@ -1499,12 +1513,15 @@ func (e *Editor) Next(c *vt.Canvas) error {
 	}
 	// block mode
 	// Ignore it if the position is out of bounds
-	atTab := e.Rune() == '\t'
+	r := e.Rune()
+	atTab := r == '\t'
+	step := 1
 	if atTab {
-		e.pos.sx += e.indentation.PerTab
-	} else {
-		e.pos.sx++
+		step = e.indentation.PerTab
+	} else if rw := runewidth.RuneWidth(r); rw > 1 {
+		step = rw
 	}
+	e.pos.sx += step
 	return nil
 }
 
@@ -1533,25 +1550,24 @@ func (e *Editor) TabToTheLeft() bool {
 // Prev will move the cursor to the previous position in the contents
 func (e *Editor) Prev(c *vt.Canvas) error {
 	atTab := e.TabToTheLeft() || (e.pos.sx <= e.indentation.PerTab && e.Get(0, e.DataY()) == '\t')
+	step := 1
+	if atTab {
+		step = e.indentation.PerTab
+	} else if leftR, err := e.LeftRune2(); err == nil {
+		if rw := runewidth.RuneWidth(leftR); rw > 1 {
+			step = rw
+		}
+	}
 	if e.pos.sx == 0 && e.pos.offsetX > 0 {
 		// at left edge, but can scroll to the left
 		e.pos.offsetX--
 		e.redraw.Store(true)
 	} else {
-		// If at a tab character, move a few more positions
-		if atTab {
-			e.pos.sx -= e.indentation.PerTab
-		} else {
-			e.pos.sx--
-		}
+		e.pos.sx -= step
 	}
 	if e.pos.sx < 0 { // Did we move too far and there is no X offset?
 		// Undo the move
-		if atTab {
-			e.pos.sx += e.indentation.PerTab
-		} else {
-			e.pos.sx++
-		}
+		e.pos.sx += step
 		// Move up, and to the end of the line above, if in EOL mode
 		err := e.pos.Up()
 		if err != nil {
@@ -1769,11 +1785,22 @@ func (e *Editor) WriteRune(c *vt.Canvas) {
 	if c == nil {
 		return
 	}
+	r := e.Rune()
+	x := uint(e.pos.sx + e.pos.offsetX)
+	y := uint(e.pos.sy)
 	if !e.blockMode {
-		c.WriteRune(uint(e.pos.sx+e.pos.offsetX), uint(e.pos.sy), e.Foreground, e.Background, e.Rune())
+		if runewidth.RuneWidth(r) > 1 {
+			c.WriteWideRuneB(x, y, e.Foreground, e.Background, r)
+		} else {
+			c.WriteRune(x, y, e.Foreground, e.Background, r)
+		}
 	} else {
 		e.ForEachLineInBlock(c, func() bool {
-			c.WriteRune(uint(e.pos.sx+e.pos.offsetX), uint(e.pos.sy), e.Foreground, e.Background, e.Rune())
+			if runewidth.RuneWidth(r) > 1 {
+				c.WriteWideRuneB(x, y, e.Foreground, e.Background, r)
+			} else {
+				c.WriteRune(x, y, e.Foreground, e.Background, r)
+			}
 			return true // continue
 		})
 	}
@@ -2893,15 +2920,20 @@ func (e *Editor) CursorForward(c *vt.Canvas, status *StatusBar) {
 
 // CursorBackward moves the cursor backward 1 step
 func (e *Editor) CursorBackward(c *vt.Canvas, status *StatusBar) {
+	// Determine step size based on the character to the left
+	step := 1
+	if e.TabToTheLeft() {
+		step = e.indentation.PerTab
+	} else if leftR, err := e.LeftRune2(); err == nil {
+		if rw := runewidth.RuneWidth(leftR); rw > 1 {
+			step = rw
+		}
+	}
 	// movement if there is horizontal scrolling
 	if e.pos.OffsetX() > 0 {
 		if e.pos.sx > 0 {
 			// Move one step left
-			if e.TabToTheLeft() {
-				e.pos.sx -= e.indentation.PerTab
-			} else {
-				e.pos.sx--
-			}
+			e.pos.sx -= step
 		} else {
 			// Scroll one step left
 			e.pos.SetOffsetX(e.pos.OffsetX() - 1)
@@ -2911,11 +2943,7 @@ func (e *Editor) CursorBackward(c *vt.Canvas, status *StatusBar) {
 	} else if e.pos.sx > 0 {
 		// no horizontal scrolling going on
 		// Move one step left
-		if e.TabToTheLeft() {
-			e.pos.sx -= e.indentation.PerTab
-		} else {
-			e.pos.sx--
-		}
+		e.pos.sx -= step
 		e.SaveX(true)
 	} else if e.DataY() > 0 {
 		// no scrolling or movement to the left going on
