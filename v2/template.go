@@ -257,6 +257,11 @@ func GetTemplatePrograms() TemplatePrograms {
 				7,
 				1,
 			},
+			mode.Ruby: {
+				"def main\n  puts 'Hello, World!'\nend\n\nmain\n",
+				7,
+				2,
+			},
 			mode.Rust: {
 				"fn main() {\n    println!(\"Hello, World!\");\n}\n",
 				10,

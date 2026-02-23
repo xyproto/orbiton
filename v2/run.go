@@ -69,6 +69,14 @@ func (e *Editor) Run() (string, bool, error) {
 		}
 	case mode.Haskell:
 		cmd = exec.Command("runhaskell", sourceFilename)
+	case mode.OCaml:
+		cmd = exec.Command("ocaml", sourceFilename)
+	case mode.Ruby:
+		cmd = exec.Command("ruby", sourceFilename)
+	case mode.Scheme:
+		cmd = exec.Command("guile", sourceFilename)
+	case mode.StandardML:
+		cmd = exec.Command("poly", "--script", sourceFilename)
 	case mode.Gleam:
 		cmd = exec.Command("gleam", "run")
 		parentDir := filepath.Clean(filepath.Join(sourceDir, ".."))

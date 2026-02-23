@@ -183,6 +183,20 @@ var lspConfigs = map[mode.Mode]LSPConfig{
 		RootMarkerFiles: []string{"hie.yaml", "*.cabal", "cabal.project", "stack.yaml", ".git"},
 		FileExtensions:  []string{".hs"},
 	},
+	mode.Lua: {
+		Command:         "lua-language-server",
+		Args:            []string{},
+		LanguageID:      "lua",
+		RootMarkerFiles: []string{".luarc.json", ".luarc.jsonc", ".luacheckrc", ".git"},
+		FileExtensions:  []string{".lua"},
+	},
+	mode.Ruby: {
+		Command:         "ruby-lsp",
+		Args:            []string{},
+		LanguageID:      "ruby",
+		RootMarkerFiles: []string{"Gemfile", ".ruby-version", ".git"},
+		FileExtensions:  []string{".rb"},
+	},
 }
 
 // NewLSPClient creates a new LSP client for the given language server command
