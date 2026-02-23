@@ -77,6 +77,8 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 			return targetName != "" && !strings.Contains(targetName, "=") && !strings.Contains(targetName, "$") && !strings.Contains(targetName, " ") // looks like it could be a Makefile target name
 		}
 
+	case mode.GoAssembly:
+		return strings.HasPrefix(trimmedLine, "TEXT ")
 	case mode.Odin:
 		if strings.Contains(trimmedLine, " :: proc(") || strings.Contains(trimmedLine, " :: proc \"") {
 			return true
@@ -108,6 +110,24 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 func (e *Editor) FunctionName(line string) string {
 	trimmedLine := strings.TrimSpace(line)
 	switch e.mode {
+	case mode.GoAssembly:
+		// Extract name from "TEXT memeqbody<>(SB),NOSPLIT,$0-0"
+		after, found := strings.CutPrefix(trimmedLine, "TEXT ")
+		if found {
+			// Strip middot prefix (·) if present
+			after = strings.TrimPrefix(after, "·")
+			after = strings.TrimPrefix(after, "\u00b7")
+			// Name ends at <, (, or whitespace
+			for i, r := range after {
+				if r == '<' || r == '(' || r == ' ' || r == '\t' {
+					name := after[:i]
+					if name != "" {
+						return name
+					}
+					break
+				}
+			}
+		}
 	case mode.Odin:
 		if strings.Contains(line, " :: proc(") || strings.Contains(line, " :: proc \"") {
 			fields := strings.SplitN(line, " :: proc", 2)
@@ -332,19 +352,39 @@ func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
 		}
 		return
 	}
-	if !ProgrammingLanguage(e.mode) {
+	if !ProgrammingLanguage(e.mode) && e.mode != mode.GoAssembly && e.mode != mode.Assembly {
 		if ollama.Loaded() && hasBuildErrorExplanationThinking() {
 			ellipsisX := c.Width() - 1
 			c.Write(ellipsisX, 0, e.StatusErrorForeground, e.StatusBackground, string(ellipsisRune))
 		}
 		return
 	}
+
+	// For assembly modes, describe only the current line (not entire functions)
+	assemblyMode := e.mode == mode.GoAssembly || e.mode == mode.Assembly
+
 	functionName := e.FindCurrentFunctionName()
 	s := functionName
 
 	// Try to display the function description if Ollama is enabled
 	if ollama.Loaded() && !functionDescriptionsDisabled {
-		if functionName != "" {
+		if assemblyMode {
+			currentLine := strings.TrimSpace(e.CurrentLine())
+			if currentLine != "" && !strings.HasPrefix(currentLine, "//") && !strings.HasPrefix(currentLine, ";") {
+				if !(functionDescriptionDismissed && currentLine == dismissedFunctionDescription) {
+					functionDescriptionDismissed = false
+					dismissedFunctionDescription = ""
+					e.RequestFunctionDescription(currentLine, currentLine, c)
+				}
+			} else {
+				functionDescriptionDismissed = false
+				dismissedFunctionDescription = ""
+				if currentDescribedFunction != "" {
+					clearFunctionDescriptionState()
+					e.redraw.Store(true)
+				}
+			}
+		} else if functionName != "" {
 			if !(functionDescriptionDismissed && functionName == dismissedFunctionDescription) {
 				functionDescriptionDismissed = false
 				dismissedFunctionDescription = ""

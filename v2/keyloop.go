@@ -350,17 +350,24 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	e.InitialRedraw(c, status)
 
 	// Request function description at startup if cursor is on a function
-	if ollama.Loaded() && ProgrammingLanguage(e.mode) {
-		s := e.FindCurrentFunctionName()
-		if s != "" {
-			// Extract function body
-			y := e.DataY()
-			funcBody, err := e.FunctionBlock(y)
-			if err != nil {
-				funcBody = e.Block(y)
+	if ollama.Loaded() && (ProgrammingLanguage(e.mode) || e.mode == mode.GoAssembly || e.mode == mode.Assembly) {
+		if e.mode == mode.GoAssembly || e.mode == mode.Assembly {
+			currentLine := strings.TrimSpace(e.CurrentLine())
+			if currentLine != "" && !strings.HasPrefix(currentLine, "//") && !strings.HasPrefix(currentLine, ";") {
+				e.RequestFunctionDescription(currentLine, currentLine, c)
 			}
-			if funcBody != "" {
-				e.RequestFunctionDescription(s, funcBody, c)
+		} else {
+			s := e.FindCurrentFunctionName()
+			if s != "" {
+				// Extract function body
+				y := e.DataY()
+				funcBody, err := e.FunctionBlock(y)
+				if err != nil {
+					funcBody = e.Block(y)
+				}
+				if funcBody != "" {
+					e.RequestFunctionDescription(s, funcBody, c)
+				}
 			}
 		}
 	}

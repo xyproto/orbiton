@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 	"github.com/xyproto/wordwrap"
 )
@@ -65,8 +66,9 @@ func functionDescriptionsAllowed() bool {
 	return !functionDescriptionsDisabled && !hasBuildErrorExplanation()
 }
 
-// sanitizeOllamaText replaces code fence lines with blank lines
+// sanitizeOllamaText replaces code fence lines with blank lines and removes control characters
 func sanitizeOllamaText(text string) string {
+	text = strings.ReplaceAll(text, "\t", "    ")
 	lines := strings.Split(text, "\n")
 	for i, line := range lines {
 		if strings.HasPrefix(strings.TrimSpace(line), "```") {
@@ -544,7 +546,11 @@ func (e *Editor) DrawFunctionDescriptionContinuous(c *vt.Canvas, repositionCurso
 		return
 	}
 
-	title := fmt.Sprintf("Function: %s", currentDescribedFunction)
+	titleLabel := "Function"
+	if e.mode == mode.GoAssembly || e.mode == mode.Assembly {
+		titleLabel = "Instruction"
+	}
+	title := fmt.Sprintf("%s: %s", titleLabel, strings.ReplaceAll(currentDescribedFunction, "\t", " "))
 	descriptionText := strings.TrimSpace(functionDescription.String())
 	if len(descriptionText) == 0 {
 		descriptionText = "No description available"
