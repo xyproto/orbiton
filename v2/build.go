@@ -1132,9 +1132,9 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 					return "", buildErr(errorMessage)
 				}
 				break
-			} else if e.mode == mode.Go && errorMarker == ":" && strings.Count(line, ":") >= 2 {
-				parts := strings.SplitN(line, ":", 2)
-				errorMessage = strings.Join(parts[2:], ":")
+			} else if e.mode == mode.Go && errorMarker == ":" && strings.Count(line, ":") >= 3 {
+				parts := strings.SplitN(line, ":", 4)
+				errorMessage = strings.Join(parts[3:], ":")
 				break
 			} else if strings.Contains(line, errorMarker) {
 				parts := strings.SplitN(line, errorMarker, 2)
