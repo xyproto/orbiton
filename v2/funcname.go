@@ -33,6 +33,8 @@ func (e *Editor) FuncPrefix() string {
 		return "proc() "
 	case mode.Gleam, mode.Hare, mode.Rust, mode.V, mode.Zig:
 		return "fn "
+	case mode.OCaml:
+		return "let "
 	case mode.Java:
 		return "void" // TODO
 	case mode.Erlang:
