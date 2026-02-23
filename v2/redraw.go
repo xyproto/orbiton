@@ -199,8 +199,9 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 
 	// Draw the function description if function description mode is enabled
 	if ollama.Loaded() {
-		e.DrawFunctionDescriptionContinuous(c, false)
+		descriptionPopupDrawn = false
 		e.DrawBuildErrorExplanationContinuous(c, false)
+		e.DrawFunctionDescriptionContinuous(c, false)
 	}
 
 	c.HideCursorAndDraw() // drawing now
@@ -237,8 +238,9 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 
 		// Draw the function description if function description mode is enabled
 		if ollama.Loaded() {
-			e.DrawFunctionDescriptionContinuous(c, false)
+			descriptionPopupDrawn = false
 			e.DrawBuildErrorExplanationContinuous(c, false)
+			e.DrawFunctionDescriptionContinuous(c, false)
 		}
 
 		c.HideCursorAndDraw()  // drawing now

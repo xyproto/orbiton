@@ -21,24 +21,27 @@ import (
 	"github.com/xyproto/vt"
 )
 
-// Helper function to check if mode needs special LSP handling (temp workspace, indexing wait, etc.)
+// needsWorkspaceSetup checks if the mode needs special LSP handling
 func needsWorkspaceSetup(m mode.Mode) bool {
 	return m == mode.Rust || m == mode.C || m == mode.Cpp
 }
 
 // LSPClient manages communication with a language server
 type LSPClient struct {
-	stdin         io.WriteCloser
-	stdout        io.ReadCloser
-	stderr        io.ReadCloser
-	cmd           *exec.Cmd
-	reader        *bufio.Reader // Persistent reader for stdout to preserve buffered data
-	workspaceRoot string
-	requestID     int
-	mutex         sync.Mutex
-	readerMu      sync.Mutex // Protects reader initialization
-	running       bool
-	initialized   bool
+	stdin          io.WriteCloser
+	stdout         io.ReadCloser
+	stderr         io.ReadCloser
+	cmd            *exec.Cmd
+	reader         *bufio.Reader // persistent reader for stdout
+	workspaceRoot  string
+	openedURI      string
+	linkedProjects []any // inline rust-project.json objects for standalone Rust files
+	openedVersion  int
+	requestID      int
+	mutex          sync.Mutex
+	readerMu       sync.Mutex // protects reader access
+	running        bool
+	initialized    bool
 }
 
 // LSPCompletionItem represents a single completion suggestion
@@ -94,11 +97,11 @@ type scoredItem struct {
 }
 
 const (
-	lspInitTimeout          = 30 * time.Second
-	lspCompletionTimeout    = 10 * time.Second
-	lspCompletionWaitTimout = 3 * time.Second        // Timeout for waiting to find completions
-	lspDefinitionTimeout    = 200 * time.Millisecond // Fast timeout for go-to-definition
-	lspShutdownTimeout      = 2 * time.Second
+	lspInitTimeout           = 30 * time.Second
+	lspCompletionTimeout     = 10 * time.Second
+	lspCompletionWaitTimeout = 3 * time.Second
+	lspDefinitionTimeout     = 200 * time.Millisecond
+	lspShutdownTimeout       = 2 * time.Second
 )
 
 // lspClientKey generates a unique key for an LSP client based on mode and workspace
@@ -107,12 +110,10 @@ func lspClientKey(m mode.Mode, workspaceRoot string) string {
 }
 
 var (
-	lspClients        = make(map[string]*LSPClient) // Key is "mode:workspaceRoot"
-	lspMutex          sync.Mutex
-	lastOpenedURI     string
-	lastOpenedVersion int
-	rustTempDirs      = make(map[string]string) // Map file path -> temp directory
-	rustFileMapping   = make(map[string]string) // Map original file path -> temp workspace file path
+	lspClients      = make(map[string]*LSPClient) // key is "mode:workspaceRoot"
+	lspMutex        sync.Mutex
+	rustTempDirs    = make(map[string]string) // file path -> temp directory
+	rustFileMapping = make(map[string]string) // original file path -> temp workspace file path
 )
 
 // LSPConfig holds configuration for a language server
@@ -198,7 +199,7 @@ func NewLSPClient(serverCmd string, args []string, workspaceRoot string) (*LSPCl
 		initialized:   false,
 		workspaceRoot: workspaceRoot,
 	}
-	// Start reading stderr in a goroutine (for debugging if needed)
+	// drain stderr in the background
 	go func() {
 		scanner := bufio.NewScanner(stderr)
 		for scanner.Scan() {
@@ -263,15 +264,14 @@ func (lsp *LSPClient) sendRequest(method string, params any) (int, error) {
 	return id, nil
 }
 
-// readResponse reads a JSON-RPC response from the language server
-func (lsp *LSPClient) readResponse(timeout time.Duration) (map[string]any, error) {
+// readResponse reads the JSON-RPC response matching expectedID,
+// skipping notifications and acknowledging server-to-client requests
+func (lsp *LSPClient) readResponse(expectedID int, timeout time.Duration) (map[string]any, error) {
 	deadline := time.Now().Add(timeout)
 
-	// Lock for the entire read operation to prevent concurrent reads
 	lsp.readerMu.Lock()
 	defer lsp.readerMu.Unlock()
 
-	// Create reader once and reuse it to preserve buffered data
 	if lsp.reader == nil {
 		lsp.reader = bufio.NewReader(lsp.stdout)
 	}
@@ -322,12 +322,30 @@ func (lsp *LSPClient) readResponse(timeout time.Duration) (map[string]any, error
 		select {
 		case <-done:
 			if readErr != nil {
+				lsp.running = false
+				lsp.openedURI = ""
 				return nil, readErr
 			}
-			if _, hasID := result["id"]; hasID {
-				return result, nil
+			// server-to-client request — acknowledge it
+			if _, hasMethod := result["method"]; hasMethod {
+				if reqID, hasID := result["id"]; hasID {
+					lsp.mutex.Lock()
+					lsp.writeMessage(map[string]any{
+						"jsonrpc": "2.0",
+						"id":      reqID,
+						"result":  nil,
+					})
+					lsp.mutex.Unlock()
+				}
+				continue
 			}
-			// Got a notification (no "id"), continue reading for the actual response
+			if idVal, hasID := result["id"]; hasID {
+				if id, ok := idVal.(float64); ok && int(id) == expectedID {
+					return result, nil
+				}
+				continue // stale response
+			}
+			// no id or method, skip
 		case <-time.After(time.Until(deadline)):
 			return nil, errors.New("timeout reading LSP response")
 		}
@@ -341,7 +359,7 @@ func (lsp *LSPClient) Initialize() error {
 	params := map[string]any{
 		"processId": os.Getpid(),
 		"rootUri":   "file://" + lsp.workspaceRoot,
-		"rootPath":  lsp.workspaceRoot, // Some servers (like rust-analyzer) prefer this
+		"rootPath":  lsp.workspaceRoot,
 		"capabilities": map[string]any{
 			"textDocument": map[string]any{
 				"completion": map[string]any{
@@ -352,10 +370,14 @@ func (lsp *LSPClient) Initialize() error {
 			},
 		},
 	}
-	if _, err := lsp.sendRequest("initialize", params); err != nil {
-		return err
+	if len(lsp.linkedProjects) > 0 {
+		params["initializationOptions"] = map[string]any{
+			"linkedProjects": lsp.linkedProjects,
+		}
 	}
-	if _, err := lsp.readResponse(lspInitTimeout); err != nil {
+	if id, err := lsp.sendRequest("initialize", params); err != nil {
+		return err
+	} else if _, err := lsp.readResponse(id, lspInitTimeout); err != nil {
 		return err
 	}
 	if err := lsp.sendNotification("initialized", map[string]any{}); err != nil {
@@ -365,33 +387,23 @@ func (lsp *LSPClient) Initialize() error {
 	return nil
 }
 
-// TestReady sends a simple request to check if the language server is truly ready
-// For rust-analyzer and clangd, we use the workspace/symbol request as a lightweight ping
+// TestReady checks if the language server is ready to serve requests
 func (lsp *LSPClient) TestReady(m mode.Mode) bool {
 	if !lsp.initialized {
 		return false
 	}
 
-	// For rust-analyzer and clangd, use workspace/symbol as a lightweight ping
-	// This doesn't require any files to be open and responds quickly once ready
+	// use workspace/symbol as a lightweight ping
 	if needsWorkspaceSetup(m) {
-		// Send a simple workspace/symbol query
 		params := map[string]any{
 			"query": "",
 		}
 
-		if _, err := lsp.sendRequest("workspace/symbol", params); err != nil {
+		if id, err := lsp.sendRequest("workspace/symbol", params); err != nil {
 			return false
-		}
-
-		// Try to read response with a short timeout
-		_, err := lsp.readResponse(500 * time.Millisecond)
-
-		// If we got a response (even an empty one), server is ready
-		if err == nil {
+		} else if _, err = lsp.readResponse(id, 500*time.Millisecond); err == nil {
 			return true
 		}
-
 		return false
 	}
 
@@ -441,7 +453,7 @@ func (lsp *LSPClient) GetCompletions(uri string, line, character int, triggerCha
 		},
 	}
 
-	// Add completion context to help LSP server understand the trigger
+	// add completion context
 	if triggerCharacter != "" {
 		params["context"] = map[string]any{
 			"triggerKind":      2, // TriggerCharacter
@@ -453,10 +465,11 @@ func (lsp *LSPClient) GetCompletions(uri string, line, character int, triggerCha
 		}
 	}
 
-	if _, err := lsp.sendRequest("textDocument/completion", params); err != nil {
+	id, err := lsp.sendRequest("textDocument/completion", params)
+	if err != nil {
 		return nil, err
 	}
-	response, err := lsp.readResponse(lspCompletionTimeout)
+	response, err := lsp.readResponse(id, lspCompletionTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -506,10 +519,11 @@ func (lsp *LSPClient) GetDefinition(uri string, line, character int, timeout tim
 			"character": character,
 		},
 	}
-	if _, err := lsp.sendRequest("textDocument/definition", params); err != nil {
+	id, err := lsp.sendRequest("textDocument/definition", params)
+	if err != nil {
 		return nil, err
 	}
-	response, err := lsp.readResponse(timeout)
+	response, err := lsp.readResponse(id, timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -580,64 +594,70 @@ func (lsp *LSPClient) Shutdown() error {
 	return nil
 }
 
-// GetReadyLSPClient returns the LSP client if it's already running and initialized, or nil
-// This is a non-blocking check - does not create or wait for LSP
+// isAlive checks whether the LSP process is still running by probing stdin
+func (lsp *LSPClient) isAlive() bool {
+	if lsp.cmd == nil || lsp.cmd.Process == nil {
+		return false
+	}
+	// a harmless notification; fails if the process has died
+	err := lsp.sendNotification("$/cancelRequest", map[string]any{"id": -1})
+	return err == nil
+}
+
+// GetReadyLSPClient returns the LSP client if already running and initialized, or nil
 func GetReadyLSPClient(m mode.Mode, workspaceRoot string) *LSPClient {
 	lspMutex.Lock()
 	defer lspMutex.Unlock()
 
 	key := lspClientKey(m, workspaceRoot)
 	if client, exists := lspClients[key]; exists && client != nil && client.running && client.initialized {
+		if !client.isAlive() {
+			client.running = false
+			delete(lspClients, key)
+			return nil
+		}
 		return client
 	}
 	return nil
 }
 
-// GetOrCreateLSPClient returns the LSP client for the given mode, creating it if necessary
-// If a client exists for a different workspace, it will be shut down and recreated
-// The cancel channel can be used to abort the operation early
-func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string, cancel <-chan bool) (*LSPClient, error) {
+// GetOrCreateLSPClient returns the LSP client for the given mode, creating it if needed
+func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string, cancel <-chan bool, linkedProjects ...any) (*LSPClient, error) {
 	key := lspClientKey(m, workspaceRoot)
 
 	lspMutex.Lock()
 
-	// Check if we have a client for the exact workspace
 	if client, exists := lspClients[key]; exists && client != nil && client.running {
-		// Check if it's initialized
-		if client.initialized {
+		if !client.isAlive() {
+			client.running = false
+			delete(lspClients, key)
+		} else if client.initialized {
 			lspMutex.Unlock()
 			return client, nil
-		}
-		// Not initialized yet, release lock and wait a bit
-		lspMutex.Unlock()
-
-		// Wait up to 3 seconds for initialization
-		for range 30 {
-			select {
-			case <-cancel:
-				return nil, errors.New("cancelled by user")
-			default:
-				time.Sleep(100 * time.Millisecond)
-				lspMutex.Lock()
-				if client.initialized {
+		} else {
+			lspMutex.Unlock()
+			for range 30 {
+				select {
+				case <-cancel:
+					return nil, errors.New("cancelled by user")
+				default:
+					time.Sleep(100 * time.Millisecond)
+					lspMutex.Lock()
+					if client.initialized {
+						lspMutex.Unlock()
+						return client, nil
+					}
 					lspMutex.Unlock()
-					return client, nil
 				}
-				lspMutex.Unlock()
 			}
+			return nil, errors.New("LSP client initialization timeout")
 		}
-		// Timed out waiting for initialization
-		return nil, errors.New("LSP client initialization timeout")
 	}
 
-	// Check if there's a client for the same mode but different workspace
-	// This can happen when switching between files that need different workspaces
+	// shut down any client for the same mode but different workspace
 	for existingKey, client := range lspClients {
-		// Check if this key is for the same mode (key format is "mode:workspace")
 		if strings.HasPrefix(existingKey, fmt.Sprintf("%d:", m)) && existingKey != key {
-			// Found a client for same mode but different workspace
 			if client != nil && client.running {
-				// Shut it down
 				client.Shutdown()
 			}
 			delete(lspClients, existingKey)
@@ -646,7 +666,6 @@ func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string, cancel <-chan bool)
 
 	lspMutex.Unlock()
 
-	// Now create a new client for the correct workspace
 	config, ok := lspConfigs[m]
 	if !ok {
 		return nil, fmt.Errorf("no LSP configuration for mode %v", m)
@@ -666,13 +685,15 @@ func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string, cancel <-chan bool)
 	if err != nil {
 		return nil, err
 	}
+	if len(linkedProjects) > 0 {
+		client.linkedProjects = linkedProjects
+	}
 	if err := client.Initialize(); err != nil {
 		client.Shutdown()
 		return nil, err
 	}
 
-	// For rust-analyzer and clangd, wait until it's truly ready by testing it
-	// Try up to 50 times with 200ms intervals (10 seconds total)
+	// wait until the server is truly ready (up to 10 seconds)
 	if m == mode.Rust || m == mode.C || m == mode.Cpp {
 		ready := false
 		for range 50 {
@@ -703,9 +724,8 @@ func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string, cancel <-chan bool)
 }
 
 // TriggerLSPInitialization starts LSP initialization in the background if not already running
-// This is called on first Tab or first Ctrl+G to warm up the LSP server
-func TriggerLSPInitialization(m mode.Mode, workspaceRoot string) {
-	// Quick check without locking - if already exists, don't bother
+func TriggerLSPInitialization(m mode.Mode, workspaceRoot string, linkedProjects ...any) {
+	// quick check — if already exists, return
 	lspMutex.Lock()
 	key := lspClientKey(m, workspaceRoot)
 	if client, exists := lspClients[key]; exists && client != nil {
@@ -714,10 +734,10 @@ func TriggerLSPInitialization(m mode.Mode, workspaceRoot string) {
 	}
 	lspMutex.Unlock()
 
-	// Start LSP in background (fire and forget)
+	// start LSP in the background
 	go func() {
 		neverCancel := make(chan bool)
-		GetOrCreateLSPClient(m, workspaceRoot, neverCancel)
+		GetOrCreateLSPClient(m, workspaceRoot, neverCancel, linkedProjects...)
 	}()
 }
 
@@ -732,213 +752,40 @@ func findWorkspaceRoot(startPath string, markerFiles []string) string {
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			// Reached filesystem root, use starting directory
+			// reached filesystem root
 			return filepath.Dir(startPath)
 		}
 		dir = parent
 	}
 }
 
-// ensureRustWorkspace creates a minimal Cargo.toml for standalone Rust files
-// For standalone files, it creates a temporary workspace to avoid cluttering user directories
-// Returns (workspaceRoot, mappedFilePath) where mappedFilePath is the file path to use for LSP
-func ensureRustWorkspace(workspaceRoot, filePath string) (string, string) {
-	cargoPath := filepath.Join(workspaceRoot, "Cargo.toml")
-
-	// Check if Cargo.toml already exists (real Rust project)
-	if _, err := os.Stat(cargoPath); err == nil {
-		return workspaceRoot, filePath // Use existing workspace, no mapping needed
-	}
-
-	// Check if we already created a temp workspace for this file
-	lspMutex.Lock()
-	if mappedPath, exists := rustFileMapping[filePath]; exists {
-		// Already have a temp workspace for this file
-		tempDir := rustTempDirs[filePath]
-		lspMutex.Unlock()
-		return tempDir, mappedPath
-	}
-
-	// Check if we already have a global temp workspace for standalone files
-	// Use a special key for the shared workspace
-	sharedKey := "standalone"
-	if tempDir, exists := rustTempDirs[sharedKey]; exists {
-		// Reuse existing temp workspace, just add this file to it
-		lspMutex.Unlock()
-
-		srcDir := filepath.Join(tempDir, "src")
-		targetPath := filepath.Join(srcDir, filepath.Base(filePath))
-
-		// Check if file already exists (might be from previous session)
-		if _, err := os.Lstat(targetPath); err == nil {
-			// File/symlink exists, remove it first to ensure clean state
-			os.Remove(targetPath)
-		}
-
-		// Always copy the file instead of symlinking for better reliability
-		// This ensures rust-analyzer can always read the file
-		if content, readErr := os.ReadFile(filePath); readErr == nil {
-			if writeErr := os.WriteFile(targetPath, content, 0644); writeErr != nil {
-				// Failed to write, return original path as fallback
-				return workspaceRoot, filePath
-			}
-		} else {
-			// Failed to read source, return original path as fallback
-			return workspaceRoot, filePath
-		}
-
-		// Verify the file was actually created
-		if _, err := os.Stat(targetPath); err != nil {
-			return workspaceRoot, filePath // File not created, fallback
-		}
-
-		// Update rust-project.json to include the new file
-		updateRustProjectJSON(tempDir, filepath.Base(filePath))
-
-		// Track the mapping
-		lspMutex.Lock()
-		rustFileMapping[filePath] = targetPath
-		rustTempDirs[filePath] = tempDir
-		lspMutex.Unlock()
-
-		return tempDir, targetPath
-	}
-	lspMutex.Unlock()
-
-	// For standalone files, create a temporary workspace
-	// This avoids cluttering user directories with auto-generated Cargo.toml
-	tempDir, err := os.MkdirTemp("", "orbiton-rust-*")
-	if err != nil {
-		return workspaceRoot, filePath // Fallback to original if can't create temp
-	}
-
-	// Create minimal Cargo.toml in temp directory
-	cargoPath = filepath.Join(tempDir, "Cargo.toml")
-	minimalCargo := `[package]
-name = "standalone"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-`
-
-	if err := os.WriteFile(cargoPath, []byte(minimalCargo), 0644); err != nil {
-		os.RemoveAll(tempDir)
-		return workspaceRoot, filePath // Fallback if write fails
-	}
-
-	// Also create rust-project.json for better rust-analyzer support
-	// This helps rust-analyzer understand standalone files without full Cargo setup
-	rustProjectPath := filepath.Join(tempDir, "rust-project.json")
-
-	// Try to find the sysroot automatically
-	sysrootCmd := exec.Command("rustc", "--print", "sysroot")
-	sysrootOutput, err := sysrootCmd.Output()
-	sysroot := ""
-	if err == nil {
-		sysroot = strings.TrimSpace(string(sysrootOutput))
-	}
-
-	rustProject := map[string]any{
-		"crates": []map[string]any{
-			{
-				"root_module": filepath.Join("src", filepath.Base(filePath)),
-				"edition":     "2021",
-				"deps":        []any{},
-			},
-		},
-	}
-
-	// Add sysroot_src if we found it
-	if sysroot != "" {
-		sysrootSrc := filepath.Join(sysroot, "lib", "rustlib", "src", "rust", "library")
-		if _, err := os.Stat(sysrootSrc); err == nil {
-			rustProject["sysroot_src"] = sysrootSrc
-		}
-	}
-
-	rustProjectJSON, _ := json.MarshalIndent(rustProject, "", "  ")
-	os.WriteFile(rustProjectPath, rustProjectJSON, 0644)
-
-	// Create src directory in temp workspace
-	srcDir := filepath.Join(tempDir, "src")
-	if err := os.MkdirAll(srcDir, 0755); err != nil {
-		os.RemoveAll(tempDir)
-		return workspaceRoot, filePath
-	}
-
-	// Symlink the source file into temp workspace
-	// If symlink fails, copy the file instead
-	targetPath := filepath.Join(srcDir, filepath.Base(filePath))
-	if err := os.Symlink(filePath, targetPath); err != nil {
-		// Symlink failed, try copying instead
-		if content, readErr := os.ReadFile(filePath); readErr == nil {
-			os.WriteFile(targetPath, content, 0644)
-		}
-	}
-
-	// Track temp directory for cleanup on exit
-	lspMutex.Lock()
-	rustTempDirs["standalone"] = tempDir // Track the shared workspace
-	rustTempDirs[filePath] = tempDir     // Track which workspace this file uses
-	// Map original file path to temp workspace file path
-	rustFileMapping[filePath] = targetPath
-	lspMutex.Unlock()
-
-	return tempDir, targetPath // Use temp workspace and mapped file path
+// hasCargoToml checks if a Cargo.toml exists in the given directory
+func hasCargoToml(dir string) bool {
+	_, err := os.Stat(filepath.Join(dir, "Cargo.toml"))
+	return err == nil
 }
 
-// updateRustProjectJSON updates the rust-project.json to include a new file
-func updateRustProjectJSON(tempDir, newFileName string) {
-	rustProjectPath := filepath.Join(tempDir, "rust-project.json")
-
-	// Read existing rust-project.json
-	data, err := os.ReadFile(rustProjectPath)
-	if err != nil {
-		return // Can't update if file doesn't exist
+// rustProjectForFile builds an inline rust-project.json object for a standalone Rust file
+func rustProjectForFile(filename string) map[string]any {
+	project := map[string]any{
+		"crates": []map[string]any{{
+			"root_module": filename,
+			"edition":     "2021",
+			"deps":        []any{},
+		}},
 	}
-
-	var rustProject map[string]any
-	if err := json.Unmarshal(data, &rustProject); err != nil {
-		return
-	}
-
-	// Get the crates array
-	crates, ok := rustProject["crates"].([]any)
-	if !ok {
-		return
-	}
-
-	// Check if this file is already in the crates list
-	newRootModule := filepath.Join("src", newFileName)
-	for _, crateInterface := range crates {
-		crate, ok := crateInterface.(map[string]any)
-		if !ok {
-			continue
-		}
-		if rootModule, ok := crate["root_module"].(string); ok && rootModule == newRootModule {
-			return // Already exists
+	if out, err := exec.Command("rustc", "--print", "sysroot").Output(); err == nil {
+		sysrootSrc := filepath.Join(strings.TrimSpace(string(out)), "lib", "rustlib", "src", "rust", "library")
+		if _, err := os.Stat(sysrootSrc); err == nil {
+			project["sysroot_src"] = sysrootSrc
 		}
 	}
-
-	// Add new crate entry
-	newCrate := map[string]any{
-		"root_module": newRootModule,
-		"edition":     "2021",
-		"deps":        []any{},
-	}
-	crates = append(crates, newCrate)
-	rustProject["crates"] = crates
-
-	// Write back
-	updatedJSON, _ := json.MarshalIndent(rustProject, "", "  ")
-	os.WriteFile(rustProjectPath, updatedJSON, 0644)
+	return project
 }
 
 // ensureCWorkspace creates a temporary workspace for standalone C/C++ files
-// Returns the workspace root and the file path within the workspace
 func ensureCWorkspace(workspaceRoot, filePath string, languageID string) (string, string) {
-	// Check if there's a compile_commands.json in the current directory or parent directories
+	// look for an existing compile_commands.json
 	dir := filepath.Dir(filePath)
 	for {
 		compileCommandsPath := filepath.Join(dir, "compile_commands.json")
@@ -947,24 +794,19 @@ func ensureCWorkspace(workspaceRoot, filePath string, languageID string) (string
 			return dir, filePath
 		}
 
-		// Try parent directory
 		parent := filepath.Dir(dir)
 		if parent == dir || parent == "." || parent == "/" {
-			// Reached root, no compile_commands.json found
 			break
 		}
 		dir = parent
 	}
 
-	// For standalone files, create a temporary workspace with compile_commands.json
+	// create a temporary workspace with compile_commands.json
 	lspMutex.Lock()
 	if tempDir, exists := rustTempDirs[filePath]; exists {
-		// Reuse existing temp workspace
 		lspMutex.Unlock()
 
 		targetPath := filepath.Join(tempDir, filepath.Base(filePath))
-
-		// Update the file content
 		if content, readErr := os.ReadFile(filePath); readErr == nil {
 			os.WriteFile(targetPath, content, 0644)
 		}
@@ -973,13 +815,11 @@ func ensureCWorkspace(workspaceRoot, filePath string, languageID string) (string
 	}
 	lspMutex.Unlock()
 
-	// Create a temporary workspace
 	tempDir, err := os.MkdirTemp("", "orbiton-clangd-*")
 	if err != nil {
 		return workspaceRoot, filePath
 	}
 
-	// Copy the source file to temp directory
 	targetPath := filepath.Join(tempDir, filepath.Base(filePath))
 	if content, readErr := os.ReadFile(filePath); readErr == nil {
 		if writeErr := os.WriteFile(targetPath, content, 0644); writeErr != nil {
@@ -991,10 +831,7 @@ func ensureCWorkspace(workspaceRoot, filePath string, languageID string) (string
 		return workspaceRoot, filePath
 	}
 
-	// Create compile_commands.json for clangd
 	compileCommandsPath := filepath.Join(tempDir, "compile_commands.json")
-
-	// Use clang/clang++ for clangd compatibility
 	compiler := "clang"
 	standard := "-std=c11"
 	if languageID == "cpp" {
@@ -1002,7 +839,6 @@ func ensureCWorkspace(workspaceRoot, filePath string, languageID string) (string
 		standard = "-std=c++17"
 	}
 
-	// Use absolute path for the file
 	absTargetPath, _ := filepath.Abs(targetPath)
 
 	compileCommands := []map[string]any{
@@ -1019,7 +855,7 @@ func ensureCWorkspace(workspaceRoot, filePath string, languageID string) (string
 		return workspaceRoot, filePath
 	}
 
-	// Track the mapping
+	// track the mapping
 	lspMutex.Lock()
 	rustFileMapping[filePath] = targetPath
 	rustTempDirs[filePath] = tempDir
@@ -1311,7 +1147,7 @@ func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspa
 	return result
 }
 
-// GetLSPCompletions is a function to get completions for any supported language
+// GetLSPCompletions gets LSP completions for the current cursor position
 func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 	const maxCompletions = 15
 
@@ -1325,26 +1161,23 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 		return nil, err
 	}
 
-	// Find workspace root
 	workspaceRoot := findWorkspaceRoot(absPath, config.RootMarkerFiles)
-
-	// For Rust and C/C++ standalone files, create a temporary workspace
-	// and get the mapped file path that the LSP will understand
 	lspFilePath := absPath
-	if e.mode == mode.Rust {
-		workspaceRoot, lspFilePath = ensureRustWorkspace(workspaceRoot, absPath)
+	var linkedProjects []any
+	if e.mode == mode.Rust && !hasCargoToml(workspaceRoot) {
+		linkedProjects = []any{rustProjectForFile(filepath.Base(absPath))}
+		workspaceRoot = filepath.Dir(absPath)
 	} else if e.mode == mode.C || e.mode == mode.Cpp {
 		workspaceRoot, lspFilePath = ensureCWorkspace(workspaceRoot, absPath, config.LanguageID)
 	}
 
 	neverCancel := make(chan bool)
-	client, err := GetOrCreateLSPClient(e.mode, workspaceRoot, neverCancel)
+	client, err := GetOrCreateLSPClient(e.mode, workspaceRoot, neverCancel, linkedProjects...)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get current position (LSP uses 0-indexed lines and characters)
-	line := int(e.DataY())
+	line := int(e.DataY()) // LSP uses 0-indexed lines and characters
 	x, err := e.DataX()
 	if err != nil {
 		x = 0
@@ -1354,7 +1187,7 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 		}
 	}
 
-	// Get the current line content for context BEFORE any LSP operations
+	// get the current line content before any LSP operations
 	var currentLine string
 	if lineRunes, ok := e.lines[line]; ok {
 		// Use the full line up to position x for context
@@ -1375,36 +1208,30 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 
 	fileContent := buf.String()
 
-	// Use the LSP file path (which might be in temp workspace for Rust/C/C++)
 	uri := "file://" + lspFilePath
-
-	// For Rust and C/C++, also update the physical file in temp workspace
-	// LSP servers might read from disk instead of relying only on DidChange
 	if needsWorkspaceSetup(e.mode) && lspFilePath != absPath {
 		os.WriteFile(lspFilePath, []byte(fileContent), 0644)
 	}
 
-	if lastOpenedURI != uri {
+	if client.openedURI != uri {
 		if err := client.DidOpen(uri, config.LanguageID, fileContent); err != nil {
+			client.openedURI = ""
 			return nil, err
 		}
-		lastOpenedURI = uri
-		lastOpenedVersion = 1
+		client.openedURI = uri
+		client.openedVersion = 1
 	} else {
-		lastOpenedVersion++
-		if err := client.DidChange(uri, fileContent, lastOpenedVersion); err != nil {
+		client.openedVersion++
+		if err := client.DidChange(uri, fileContent, client.openedVersion); err != nil {
+			client.openedURI = ""
 			return nil, err
 		}
-		// Give LSP servers a moment to process the change
-		// This is especially important for the first completion request
 		if needsWorkspaceSetup(e.mode) {
 			time.Sleep(50 * time.Millisecond)
 		}
 	}
 
-	// Detect trigger character for better completion context
-	// Only set trigger character if cursor is IMMEDIATELY after "." or ":"
-	// If there's already a partial word typed, don't send trigger character
+	// detect trigger character (only if cursor is immediately after "." or "::")
 	var triggerChar string
 	if x > 0 && len(currentLine) > 0 {
 		lastChar := string(currentLine[len(currentLine)-1])
@@ -1440,7 +1267,7 @@ func ShutdownAllLSPClients() {
 		delete(lspClients, key)
 	}
 
-	// Clean up temporary Rust workspaces
+	// clean up temporary workspaces
 	seenDirs := make(map[string]bool)
 	for key, tempDir := range rustTempDirs {
 		if tempDir != "" && !seenDirs[tempDir] {
@@ -1453,22 +1280,15 @@ func ShutdownAllLSPClients() {
 
 // ShouldOfferLSPCompletion checks if LSP completion should be offered based on context
 func (e *Editor) ShouldOfferLSPCompletion() bool {
-	// Check if LSP is supported for this mode
 	if _, ok := lspConfigs[e.mode]; !ok {
 		return false
 	}
-
-	// Check if syntax highlighting is enabled
 	if !e.syntaxHighlight {
 		return false
 	}
-
-	// Check if cursor position is valid
 	if e.pos.sx <= 0 {
 		return false
 	}
-
-	// Check if we're in a completion context (after identifier or dot)
 	leftRune := e.LeftRune()
 	if !unicode.IsLetter(leftRune) && !unicode.IsDigit(leftRune) && leftRune != '_' && leftRune != '.' {
 		return false
@@ -1477,12 +1297,14 @@ func (e *Editor) ShouldOfferLSPCompletion() bool {
 	return true
 }
 
-// handleLSPCompletion handles LSP-based code completion in the editor for any supported language
-// Timeline from Tab press to completion display
+// handleLSPCompletion handles LSP-based code completion
 func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TTY, undo *Undo) bool {
 	if !e.ShouldOfferLSPCompletion() {
 		return false
 	}
+
+	// Dismiss any active function description popup to avoid stale overlapping boxes
+	e.DismissFunctionDescription()
 
 	config, ok := lspConfigs[e.mode]
 	if !ok {
@@ -1510,15 +1332,16 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 
 	workspaceRoot := findWorkspaceRoot(absPath, config.RootMarkerFiles)
 
-	// For Rust standalone files, create a temporary workspace
 	lspFilePath := absPath
-	if e.mode == mode.Rust {
-		workspaceRoot, lspFilePath = ensureRustWorkspace(workspaceRoot, absPath)
+	var linkedProjects []any
+	if e.mode == mode.Rust && !hasCargoToml(workspaceRoot) {
+		linkedProjects = []any{rustProjectForFile(filepath.Base(absPath))}
+		workspaceRoot = filepath.Dir(absPath)
 	} else if e.mode == mode.C || e.mode == mode.Cpp {
 		workspaceRoot, lspFilePath = ensureCWorkspace(workspaceRoot, absPath, config.LanguageID)
 	}
 
-	// Check if LSP client already exists
+	// check if the LSP client already exists
 	existingClient := GetReadyLSPClient(e.mode, workspaceRoot)
 	isNewClient := (existingClient == nil)
 
@@ -1552,21 +1375,20 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		startSpinner(fmt.Sprintf("Starting %s", lspCommand))
 	}
 
-	client, err := GetOrCreateLSPClient(e.mode, workspaceRoot, neverCancel)
+	client, err := GetOrCreateLSPClient(e.mode, workspaceRoot, neverCancel, linkedProjects...)
 	if err != nil {
 		stopSpinner()
 		status.SetMessageAfterRedraw(fmt.Sprintf("Could not launch %s: %v", lspCommand, err))
 		return false
 	}
 
-	// Verify client is ready
+	// verify client is ready
 	if !client.initialized {
 		stopSpinner()
 		status.SetMessageAfterRedraw(fmt.Sprintf("%s is not responding", lspCommand))
 		return false
 	}
 
-	// Get current position
 	line := int(e.DataY())
 	x, err := e.DataX()
 	if err != nil {
@@ -1576,7 +1398,6 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		}
 	}
 
-	// Get current line for context
 	var currentLine string
 	if lineRunes, ok := e.lines[line]; ok {
 		if x >= 0 && x <= len(lineRunes) {
@@ -1586,7 +1407,6 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		}
 	}
 
-	// Build file content
 	var buf bytes.Buffer
 	for i := 0; i < len(e.lines); i++ {
 		if lineContent, ok := e.lines[i]; ok {
@@ -1596,8 +1416,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	}
 	fileContent := buf.String()
 
-	// Detect trigger character early to determine if we need a placeholder
-	// Check if we're completing right after a dot or colon (member access)
+	// check if completing right after a trigger character
 	var needsPlaceholder bool
 	if x > 0 && len(currentLine) > 0 {
 		// Check if cursor is right after a trigger character
@@ -1609,8 +1428,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		}
 	}
 
-	// For Zig (and potentially other languages), add a placeholder identifier after trigger characters
-	// This helps the LSP server provide better completions for incomplete syntax like "std."
+	// for Zig, add a placeholder identifier to help the LSP with incomplete syntax
 	if needsPlaceholder && e.mode == mode.Zig {
 		// Insert placeholder "X" at the cursor position
 		lines := strings.Split(fileContent, "\n")
@@ -1623,41 +1441,38 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		}
 	}
 
-	// For Rust and C/C++, update physical file in temp workspace
+	// update the physical file in temp workspace, if any
 	if needsWorkspaceSetup(e.mode) && lspFilePath != absPath {
 		os.WriteFile(lspFilePath, []byte(fileContent), 0644)
 	}
 
 	startSpinner("")
 
-	// Send file content to LSP
 	uri := "file://" + lspFilePath
-	if lastOpenedURI != uri {
+	if client.openedURI != uri {
 		if err := client.DidOpen(uri, config.LanguageID, fileContent); err != nil {
 			stopSpinner()
+			client.openedURI = ""
 			status.SetMessageAfterRedraw(fmt.Sprintf("%s error: %v", lspCommand, err))
 			return false
 		}
-		lastOpenedURI = uri
-		lastOpenedVersion = 1
+		client.openedURI = uri
+		client.openedVersion = 1
 
 	} else {
-		lastOpenedVersion++
-		if err := client.DidChange(uri, fileContent, lastOpenedVersion); err != nil {
+		client.openedVersion++
+		if err := client.DidChange(uri, fileContent, client.openedVersion); err != nil {
 			stopSpinner()
+			client.openedURI = ""
 			status.SetMessageAfterRedraw(fmt.Sprintf("%s error: %v", lspCommand, err))
 			return false
 		}
-		// Give LSP servers a moment to process
 		if needsWorkspaceSetup(e.mode) {
 			time.Sleep(50 * time.Millisecond)
 		}
 	}
 
-	// Detect trigger character
-	// Only set trigger character if cursor is IMMEDIATELY after "." or ":"
-	// If there's already a partial word typed (like "std.io.get"), don't send trigger character
-	// as it may confuse some LSP servers
+	// detect trigger character (only if cursor is immediately after "." or "::")
 	var triggerChar string
 	if x > 0 && len(currentLine) > 0 {
 		lastChar := string(currentLine[len(currentLine)-1])
@@ -1666,25 +1481,23 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		} else if len(currentLine) >= 2 && currentLine[len(currentLine)-2:] == "::" {
 			triggerChar = ":"
 		}
-		// Note: If there's a partial word after the trigger (e.g., "std.io.get"),
-		// we don't set triggerChar. The LSP will use triggerKind=1 (Invoked)
-		// and filter based on the partial word.
 	}
 
-	// Request completions, retrying until timeout for Rust/C/C++
+	// request completions, retrying until timeout for Rust/C/C++
 	var items []LSPCompletionItem
-	completionDeadline := time.Now().Add(lspCompletionWaitTimout)
+	completionDeadline := time.Now().Add(lspCompletionWaitTimeout)
 	retryDelay := 500 * time.Millisecond
 
 	for {
 		items, err = client.GetCompletions(uri, line, x, triggerChar)
 		if err != nil {
 			stopSpinner()
+			client.openedURI = ""
 			status.SetMessageAfterRedraw(fmt.Sprintf("%s error: %v", lspCommand, err))
 			return false
 		}
 
-		// Filter out placeholder 'X' added for Zig
+		// filter out the placeholder added for Zig
 		if needsPlaceholder && e.mode == mode.Zig {
 			filtered := make([]LSPCompletionItem, 0, len(items))
 			for _, item := range items {
@@ -1701,7 +1514,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 			break
 		}
 
-		// Retry until deadline
+		// retry until deadline
 		if time.Now().Add(retryDelay).Before(completionDeadline) {
 			time.Sleep(retryDelay)
 		} else {
@@ -1729,13 +1542,12 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		return true
 	}
 
-	// Find the maximum label length for column alignment
-	// For C/C++/Python, use just the function name (before parenthesis)
+	// find the maximum label length for column alignment
 	maxLabelLen := 0
 	for _, item := range items {
 		labelLen := len(item.Label)
 
-		// For C/C++/Python functions, measure only the function name part
+		// for C/C++/Python, measure only the function name part
 		if (e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.Python) && strings.Contains(item.Label, "(") {
 			trimmedLabel := strings.TrimSpace(item.Label)
 			if parenIdx := strings.Index(trimmedLabel, "("); parenIdx > 0 {
@@ -1748,12 +1560,12 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		}
 	}
 
-	// Build menu choices with column alignment
+	// build menu choices with column alignment
 	choices := make([]string, 0, len(items))
 	for _, item := range items {
 		label := item.Label
 
-		// Special formatting for C/C++/Python functions
+		// special formatting for C/C++/Python functions
 		if (e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.Python) && strings.Contains(label, "(") {
 			// Extract function name and parameters
 			// Label format from clangd/pylsp: " printf(const char *restrict format, ...)" or "print(values, sep, end, file, flush)"
@@ -1772,9 +1584,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 				}
 			}
 		} else if item.Detail != "" && len(item.Detail) < 80 {
-			// Standard formatting for other languages
-			// Pad label to align details in columns
-			padding := maxLabelLen - len(item.Label) + 2 // At least 2 spaces
+			padding := maxLabelLen - len(item.Label) + 2
 			label += strings.Repeat(" ", padding) + item.Detail
 		}
 		choices = append(choices, label)
@@ -1798,55 +1608,41 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		insertText = items[choice].TextEdit.NewText
 	}
 
-	// Remove any existing parentheses from the insert text
+	// remove any existing parentheses from the insert text
 	if parenIndex := strings.Index(insertText, "("); parenIndex > 0 {
 		insertText = insertText[:parenIndex]
 	}
 
-	// Determine if we should add parentheses based on the Detail or Label field
 	addParens := ""
-
-	// For C/C++ and Python, check the Label for function signature
 	if (e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.Python) && strings.Contains(items[choice].Label, "(") {
-		// Label format from clangd/pylsp: " printf(const char *restrict format, ...)" or "print(values, sep, end, file, flush)"
 		trimmedLabel := strings.TrimSpace(items[choice].Label)
 		if startIdx := strings.Index(trimmedLabel, "("); startIdx >= 0 {
 			if endIdx := strings.LastIndex(trimmedLabel, ")"); endIdx > startIdx {
 				params := strings.TrimSpace(trimmedLabel[startIdx+1 : endIdx])
-				// Check if function takes parameters
 				if params == "" || params == "void" {
-					// No parameters - add closing paren
 					addParens = "()"
 				} else {
-					// Has parameters - add opening paren only
 					addParens = "("
 				}
 			}
 		}
 	} else if items[choice].Detail != "" {
-		// For Rust and other languages, check Detail field
 		detail := items[choice].Detail
-		// Check if this is a function/method (has parentheses in detail)
 		if strings.Contains(detail, "(") && strings.Contains(detail, ")") {
-			// Extract the part between parentheses
 			startIdx := strings.Index(detail, "(")
 			endIdx := strings.Index(detail, ")")
 			if startIdx >= 0 && endIdx > startIdx {
 				params := strings.TrimSpace(detail[startIdx+1 : endIdx])
-				// Check if function takes parameters
 				if params == "" || params == "&self" || params == "self" || params == "&mut self" || params == "mut self" {
-					// No parameters or only self - add closing paren
 					addParens = "()"
 				} else {
-					// Has parameters - add opening paren only
 					addParens = "("
 				}
 			}
 		}
 	}
 
-	// Fallback: if the item is a function, method, or constructor but the Detail/Label
-	// didn't provide parameter info (e.g. Rust macros), default to adding "("
+	// fallback for functions/methods/constructors without parameter info
 	if addParens == "" && (items[choice].Kind == 2 || items[choice].Kind == 3 || items[choice].Kind == 4) {
 		addParens = "("
 	}
@@ -1859,18 +1655,15 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	} else if currentWord != "" {
 		charsToDelete = len([]rune(currentWord))
 	} else {
-		// If currentWord is empty, extract the prefix from currentLine
-		// This handles cases where CurrentWord() doesn't detect the typed prefix
+		// extract prefix from the current line
 		trimmedLine := strings.TrimSpace(currentLine)
 		if strings.Contains(trimmedLine, ".") {
-			// Member access - get text after last dot
 			parts := strings.Split(trimmedLine, ".")
 			if len(parts) > 0 {
 				prefix := parts[len(parts)-1]
 				charsToDelete = len([]rune(prefix))
 			}
 		} else {
-			// Standalone identifier - get last word
 			words := strings.FieldsFunc(trimmedLine, func(r rune) bool {
 				return !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_'
 			})

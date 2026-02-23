@@ -198,7 +198,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	}
 
 	// New editor struct. Scroll 10 lines at a time, no word wrap.
-	e, messageAfterRedraw, displayedImage, imageAction, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp)
+	e, messageAfterRedraw, displayedImage, imageAction, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, cycleFilenames)
 	if err != nil {
 		if e != nil {
 			return "", megafile.NoAction, err
@@ -935,7 +935,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
 
-			if cycleFilenames && !e.changed.Load() && !e.moveLinesMode.Load() {
+			if e.cycleFilenames && !e.changed.Load() && !e.moveLinesMode.Load() {
 				e.SaveLocation()
 				// go to the previous file, if launched from the file browser
 				return "", megafile.PreviousFile, nil
@@ -1030,7 +1030,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
 
-			if cycleFilenames && !e.changed.Load() && !e.moveLinesMode.Load() {
+			if e.cycleFilenames && !e.changed.Load() && !e.moveLinesMode.Load() {
 				e.SaveLocation()
 				// go to the next file, if launched from the file browser
 				return "", megafile.NextFile, nil
@@ -1352,7 +1352,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case "c:8", "c:127": // ctrl-h or backspace
 
-			if cycleFilenames && !e.changed.Load() && e.AtLeftEdgeOfDocument() {
+			if e.cycleFilenames && !e.changed.Load() && e.AtLeftEdgeOfDocument() {
 				e.quit = true
 				break
 			}

@@ -43,16 +43,14 @@ func (e *Editor) tryLSPDefinition() *LSPLocation {
 	}
 	workspaceRoot := findWorkspaceRoot(absPath, config.RootMarkerFiles)
 
-	// For Rust standalone files, create a temporary workspace
-	// and get the mapped file path that rust-analyzer will understand
+	// For standalone Rust files, pass an inline rust-project.json via linkedProjects
 	lspFilePath := absPath
-	if e.mode == mode.Rust {
-		workspaceRoot, lspFilePath = ensureRustWorkspace(workspaceRoot, absPath)
+	if e.mode == mode.Rust && !hasCargoToml(workspaceRoot) {
+		workspaceRoot = filepath.Dir(absPath)
+		TriggerLSPInitialization(e.mode, workspaceRoot, rustProjectForFile(filepath.Base(absPath)))
+	} else {
+		TriggerLSPInitialization(e.mode, workspaceRoot)
 	}
-
-	// Trigger background LSP initialization if not already running
-	// This won't help the current call but will help future ones
-	TriggerLSPInitialization(e.mode, workspaceRoot)
 
 	// Check if LSP is already ready (non-blocking)
 	client := GetReadyLSPClient(e.mode, workspaceRoot)
@@ -69,17 +67,17 @@ func (e *Editor) tryLSPDefinition() *LSPLocation {
 		buf.WriteRune('\n')
 	}
 
-	// Use the LSP file path (which might be in temp workspace for Rust)
+	// Use the actual file path for the LSP URI
 	uri := "file://" + lspFilePath
-	if lastOpenedURI != uri {
+	if client.openedURI != uri {
 		if err := client.DidOpen(uri, config.LanguageID, buf.String()); err != nil {
 			return nil
 		}
-		lastOpenedURI = uri
-		lastOpenedVersion = 1
+		client.openedURI = uri
+		client.openedVersion = 1
 	} else {
-		lastOpenedVersion++
-		if err := client.DidChange(uri, buf.String(), lastOpenedVersion); err != nil {
+		client.openedVersion++
+		if err := client.DidChange(uri, buf.String(), client.openedVersion); err != nil {
 			return nil
 		}
 	}

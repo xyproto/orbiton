@@ -10,7 +10,7 @@ import (
 	"github.com/xyproto/wordwrap"
 )
 
-// FunctionDescriptionRequest holds one queued function description request
+// FunctionDescriptionRequest holds a queued function description request
 type FunctionDescriptionRequest struct {
 	canvas   *vt.Canvas
 	editor   *Editor
@@ -56,6 +56,8 @@ var (
 	queueMutex         sync.Mutex
 	queueWorkerStarted bool
 	queueSignal        = make(chan struct{}, 1)
+
+	descriptionPopupDrawn bool // only one description popup per redraw frame
 )
 
 // functionDescriptionsAllowed checks if function descriptions can be requested and shown.
@@ -63,7 +65,7 @@ func functionDescriptionsAllowed() bool {
 	return !functionDescriptionsDisabled && !hasBuildErrorExplanation()
 }
 
-// sanitizeOllamaText replaces code fence lines with blank lines.
+// sanitizeOllamaText replaces code fence lines with blank lines
 func sanitizeOllamaText(text string) string {
 	lines := strings.Split(text, "\n")
 	for i, line := range lines {
@@ -74,7 +76,7 @@ func sanitizeOllamaText(text string) string {
 	return strings.Join(lines, "\n")
 }
 
-// wrappedLineCount returns how many visual lines DrawText would use for this text and width.
+// wrappedLineCount returns how many visual lines DrawText would use for the given text and width
 func wrappedLineCount(text string, maxWidth int) int {
 	if maxWidth <= 0 {
 		return 0
@@ -161,7 +163,7 @@ func setCurrentDescribedFunction(functionName string, start, end LineIndex, hasR
 		currentDescribedFunctionTo = 0
 	}
 
-	// Reset popup placement when the function or range changes
+	// reset popup placement when the function or range changes
 	if functionChanged || spanChanged {
 		descriptionBoxY = 0
 		descriptionBoxYFunction = ""
@@ -184,7 +186,7 @@ func (e *Editor) functionRangeForCurrentFunction(functionName string) (LineIndex
 
 	functionEnd := max(functionStart, currentLine)
 
-	// In brace-based languages, find a stable end line to avoid popup movement.
+	// in brace-based languages, find a stable end line to avoid popup movement
 	if e.isBraceBasedLanguage() {
 		openBraceLineIndex := LineIndex(-1)
 		totalLines := LineIndex(e.Len())
@@ -194,7 +196,7 @@ func (e *Editor) functionRangeForCurrentFunction(functionName string) (LineIndex
 			line := e.Line(i)
 			trimmedLine := strings.TrimSpace(line)
 
-			// Skip empty lines and comments while searching for the opening brace.
+			// skip empty lines and comments while searching for the opening brace
 			if trimmedLine == "" || strings.HasPrefix(trimmedLine, "//") ||
 				strings.HasPrefix(trimmedLine, "/*") || strings.HasPrefix(trimmedLine, "*") {
 				continue
@@ -352,7 +354,7 @@ func startQueueWorker() {
 				delete(queuedHashes, req.bodyHash)
 				queueMutex.Unlock()
 
-				// Check cache in case another request filled it while queued.
+				// check cache in case another request filled it while queued
 				ollamaMutex.RLock()
 				if cachedDescription, exists := ollamaResponseCache[req.bodyHash]; exists {
 					ollamaMutex.RUnlock()
@@ -362,6 +364,7 @@ func startQueueWorker() {
 						functionDescriptionThinking = false
 						functionDescription.Reset()
 						functionDescription.WriteString(strings.TrimSpace(sanitizeOllamaText(cachedDescription)))
+						descriptionPopupDrawn = false
 						req.editor.DrawFunctionDescriptionContinuous(req.canvas, false)
 						req.canvas.HideCursorAndDraw()
 					}
@@ -387,7 +390,7 @@ func startQueueWorker() {
 				req.editor.WriteCurrentFunctionName(req.canvas)
 				req.canvas.HideCursorAndDraw()
 
-				// Process one request at a time, then check for newer work.
+				// process one request at a time, then check for newer work
 				break
 			}
 		}
@@ -413,6 +416,7 @@ func processDescriptionRequest(req FunctionDescriptionRequest) {
 			ellipsisX := req.canvas.Width() - 1
 			req.canvas.Write(ellipsisX, 0, req.editor.Foreground, req.editor.Background, " ")
 			req.editor.WriteCurrentFunctionName(req.canvas)
+			descriptionPopupDrawn = false
 			req.editor.DrawFunctionDescriptionContinuous(req.canvas, false)
 			req.canvas.HideCursorAndDraw()
 		}
@@ -448,10 +452,10 @@ func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Can
 		dismissedFunctionDescription = ""
 	}
 
-	// Start queue worker if needed.
+	// start queue worker if needed
 	startQueueWorker()
 
-	// Hash function body for cache/queue lookup.
+	// hash function body for cache/queue lookup
 	bodyHash := hashFunctionBody(funcBody)
 	functionStart, functionEnd, hasRange := e.functionRangeForCurrentFunction(funcName)
 
@@ -463,6 +467,7 @@ func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Can
 		functionDescriptionThinking = false
 		functionDescription.Reset()
 		functionDescription.WriteString(strings.TrimSpace(sanitizeOllamaText(cachedDescription)))
+		descriptionPopupDrawn = false
 		e.DrawFunctionDescriptionContinuous(c, false)
 		c.HideCursorAndDraw()
 		return
@@ -501,7 +506,7 @@ func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Can
 		default:
 		}
 	} else {
-		// Already queued: move request to top of LIFO stack.
+		// already queued: move request to top of LIFO stack
 		for i, req := range descriptionStack {
 			if req.bodyHash == bodyHash {
 				descriptionStack = append(descriptionStack[:i], descriptionStack[i+1:]...)
@@ -548,19 +553,23 @@ func (e *Editor) DrawFunctionDescriptionContinuous(c *vt.Canvas, repositionCurso
 	e.drawFunctionDescriptionPopup(c, title, descriptionText, repositionCursor)
 }
 
-// drawFunctionDescriptionPopup draws a panel with function description text
+// drawFunctionDescriptionPopup draws a description popup, allowing at most one per redraw frame
 func (e *Editor) drawFunctionDescriptionPopup(c *vt.Canvas, title, descriptionText string, repositionCursorAfterDrawing bool) {
+	if descriptionPopupDrawn {
+		return
+	}
+	descriptionPopupDrawn = true
 	canvasBox := NewCanvasBox(c)
 
 	minWidth := 40
-	defaultHeightPercent := 0.72 // preferred panel size for shorter descriptions
-	maxHeightPercent := 0.95     // can expand if text needs more room
+	defaultHeightPercent := 0.72
+	maxHeightPercent := 0.95
 
 	// Start with default placement, then adjust vertically if needed.
 	descriptionBox := NewBox()
 	descriptionBox.EvenLowerRightPlacement(canvasBox, minWidth)
 
-	// Start at line 2 to leave room for the function name.
+	// start at line 2 to leave room for the function name
 	descriptionBox.Y = 2
 	defaultHeight := int(float64(canvasBox.H) * defaultHeightPercent)
 	maxHeight := max(min(int(float64(canvasBox.H)*maxHeightPercent), canvasBox.H-1), 6)
@@ -582,7 +591,7 @@ func (e *Editor) drawFunctionDescriptionPopup(c *vt.Canvas, title, descriptionTe
 
 	neededTextLines := wrappedLineCount(descriptionText, listBox.W-5)
 
-	// Expand if needed, without exceeding maxHeight.
+	// expand if needed, without exceeding maxHeight
 	if neededTextLines > listBox.H {
 		missingLines := neededTextLines - listBox.H
 		availableGrowth := maxHeight - descriptionBox.H
@@ -593,14 +602,14 @@ func (e *Editor) drawFunctionDescriptionPopup(c *vt.Canvas, title, descriptionTe
 		}
 	}
 
-	// Fit height to content when there is significant spare space.
+	// fit height to content when there is significant spare space
 	if neededTextLines > 0 && neededTextLines < listBox.H {
 		heightDiff := listBox.H - neededTextLines
 		descriptionBox.H -= (heightDiff - 1)
 		listBox.H -= (heightDiff - 1)
 	}
 
-	// Visual adjustment
+	// visual adjustment
 	descriptionBox.H--
 
 	descriptionBox.Y = e.preferredDescriptionBoxY(c, currentDescribedFunction, descriptionBox.H, descriptionBox.Y)

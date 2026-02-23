@@ -18,7 +18,7 @@ var (
 	buildErrorExplanationMutex    sync.RWMutex
 )
 
-// clearBuildErrorExplanationState clears the current build error explanation state.
+// clearBuildErrorExplanationState clears the build error explanation state
 func clearBuildErrorExplanationState() {
 	buildErrorExplanationMutex.Lock()
 	buildErrorExplanationActive = false
@@ -29,7 +29,7 @@ func clearBuildErrorExplanationState() {
 	buildErrorExplanationMutex.Unlock()
 }
 
-// setBuildErrorExplanationPending marks that a build error explanation is being fetched.
+// setBuildErrorExplanationPending marks that a build error explanation is being fetched
 func setBuildErrorExplanationPending() {
 	buildErrorExplanationMutex.Lock()
 	buildErrorExplanationActive = true
@@ -40,7 +40,7 @@ func setBuildErrorExplanationPending() {
 	buildErrorExplanationMutex.Unlock()
 }
 
-// hasBuildErrorExplanation checks if there is an active build error explanation.
+// hasBuildErrorExplanation checks if there is an active build error explanation
 func hasBuildErrorExplanation() bool {
 	buildErrorExplanationMutex.RLock()
 	active := buildErrorExplanationActive
@@ -48,7 +48,7 @@ func hasBuildErrorExplanation() bool {
 	return active
 }
 
-// hasBuildErrorExplanationThinking checks if a build error explanation is being fetched.
+// hasBuildErrorExplanationThinking checks if a build error explanation is being fetched
 func hasBuildErrorExplanationThinking() bool {
 	buildErrorExplanationMutex.RLock()
 	thinking := buildErrorExplanationThinking
@@ -56,7 +56,7 @@ func hasBuildErrorExplanationThinking() bool {
 	return thinking
 }
 
-// setBuildErrorExplanation sets the current build error explanation state.
+// setBuildErrorExplanation sets the build error explanation state
 func setBuildErrorExplanation(functionName string, explanationText string) {
 	buildErrorExplanationMutex.Lock()
 	if !buildErrorExplanationActive {
@@ -76,7 +76,7 @@ func buildErrorExplanationCacheKey(sourceText, functionBody, lineText, compilerE
 	return hashFunctionBody(sourceText + "\n" + functionBody + "\n" + lineText + "\n" + compilerError)
 }
 
-// trimExplanationToMaxLines trims and limits explanation text to maxLines lines.
+// trimExplanationToMaxLines trims and limits explanation text to maxLines lines
 func trimExplanationToMaxLines(text string, maxLines int) string {
 	trimmed := strings.TrimSpace(sanitizeOllamaText(text))
 	if trimmed == "" || maxLines <= 0 {
@@ -94,7 +94,7 @@ func trimExplanationToMaxLines(text string, maxLines int) string {
 	return strings.Join(lines, "\n")
 }
 
-// ExplainBuildErrorWithOllama asks Ollama to explain the current build error for the current function.
+// ExplainBuildErrorWithOllama asks Ollama to explain the build error for the current function
 func (e *Editor) ExplainBuildErrorWithOllama(c *vt.Canvas, err error) {
 	if c == nil || err == nil || !ollama.Loaded() {
 		return
@@ -141,6 +141,7 @@ func (e *Editor) ExplainBuildErrorWithOllama(c *vt.Canvas, err error) {
 	if hasCached {
 		setBuildErrorExplanation(functionName, cachedExplanation)
 		keepBuildErrorExplanation = true
+		descriptionPopupDrawn = false
 		e.DrawBuildErrorExplanationContinuous(c, false)
 		c.HideCursorAndDraw()
 		return
@@ -163,11 +164,12 @@ func (e *Editor) ExplainBuildErrorWithOllama(c *vt.Canvas, err error) {
 
 	setBuildErrorExplanation(functionName, explanationText)
 	keepBuildErrorExplanation = true
+	descriptionPopupDrawn = false
 	e.DrawBuildErrorExplanationContinuous(c, false)
 	c.HideCursorAndDraw()
 }
 
-// ExplainBuildErrorWithOllamaBackground asks Ollama to explain one build error, in the background.
+// ExplainBuildErrorWithOllamaBackground asks Ollama to explain one build error, in the background
 func (e *Editor) ExplainBuildErrorWithOllamaBackground(c *vt.Canvas, err error) {
 	if c == nil || err == nil || !ollama.Loaded() {
 		return
@@ -180,7 +182,7 @@ func (e *Editor) ExplainBuildErrorWithOllamaBackground(c *vt.Canvas, err error) 
 	go e.ExplainBuildErrorWithOllama(c, err)
 }
 
-// DrawBuildErrorExplanationContinuous draws the current build error explanation panel.
+// DrawBuildErrorExplanationContinuous draws the build error explanation panel
 func (e *Editor) DrawBuildErrorExplanationContinuous(c *vt.Canvas, repositionCursor bool) {
 	if c == nil || !ollama.Loaded() {
 		return
