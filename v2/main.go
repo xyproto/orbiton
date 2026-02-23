@@ -120,9 +120,9 @@ func main() {
 	pflag.BoolVarP(&catFlag, "list", "t", false, "List the file with colors instead of editing it")
 	pflag.BoolVarP(&clearLocksFlag, "clear-locks", "e", false, "clear all file locks")
 	pflag.BoolVarP(&copyFlag, "copy", "c", false, "copy a file into the clipboard and quit")
-	pflag.BoolVarP(&createDirectoriesFlag, "create-dir", "d", false, "create diretories when opening a new file")
+	pflag.BoolVarP(&createDirectoriesFlag, "create-dir", "d", false, "create directories when opening a new file")
 	pflag.BoolVarP(&forceFlag, "force", "f", false, "open even if already open")
-	pflag.BoolVarP(&formatFlag, "format", "F", false, "Try to build the file instead of editing it")
+	pflag.BoolVarP(&formatFlag, "format", "F", false, "Try to format the file instead of editing it")
 	pflag.BoolVarP(&helpFlag, "help", "h", false, "quick overview of hotkeys and flags")
 	pflag.BoolVarP(&lastCommandFlag, "last-command", "l", false, "output the last build or format command")
 	pflag.BoolVarP(&listDigraphsFlag, "digraphs", "s", false, "List digraphs")
@@ -433,8 +433,8 @@ func main() {
 						if len(matches) > 0 {
 							sort.Strings(matches)
 							// If the matches contains low priority suffixes, such as ".lock", then move it last
-							matchesRegular := make([]string, len(matches))
-							matchesLowPri := make([]string, len(matches))
+							matchesRegular := make([]string, 0, len(matches))
+							matchesLowPri := make([]string, 0, len(matches))
 							for _, fn := range matches {
 								if !hasSuffix(fn, probablyDoesNotWantToEditExtensions) && strings.Contains(fn, ".") {
 									matchesRegular = append(matchesRegular, fn)
