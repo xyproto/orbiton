@@ -675,7 +675,11 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					case (e.mode == mode.Elm || e.mode == mode.Haskell || e.mode == mode.Vibe67) && (!strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "{-") > strings.LastIndex(trimmedLine, "-}") || q.multiLineComment):
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case q.containsMultiLineComments:
-						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
+						if e.mode == mode.HTML || e.mode == mode.XML {
+							coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
+						} else {
+							coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
+						}
 					case e.mode != mode.Shell && e.mode != mode.Docker && e.mode != mode.FSTAB && e.mode != mode.Nix && e.mode != mode.Make && e.mode != mode.Just && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && (q.multiLineComment || q.stoppedMultiLineComment) && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.Contains(line, "\"(*") && !strings.Contains(line, "*)\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
 						// In the middle of a multi-line comment
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))

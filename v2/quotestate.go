@@ -200,7 +200,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			q.braCount--
 		}
 	case '>': // support HTML-style and XML-style multi-line comments
-		if prevRune == '-' && (q.mode == mode.HTML || q.mode == mode.XML) {
+		if prevRune == '-' && prevPrevRune == '-' && (q.mode == mode.HTML || q.mode == mode.XML) {
 			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
 			if q.startedMultiLineComment {
