@@ -67,6 +67,27 @@ func (e *Editor) Run() (string, bool, error) {
 		} else {
 			cmd = exec.Command("go", "run", sourceFilename)
 		}
+	case mode.Gleam:
+		cmd = exec.Command("gleam", "run")
+		parentDir := filepath.Clean(filepath.Join(sourceDir, ".."))
+		grandParentDir := filepath.Clean(filepath.Join(sourceDir, "..", ".."))
+		if files.IsFile(filepath.Join(sourceDir, "gleam.toml")) {
+			cmd.Dir = sourceDir
+		} else if files.IsFile(filepath.Join(parentDir, "gleam.toml")) {
+			cmd.Dir = parentDir
+		} else if files.IsFile(filepath.Join(grandParentDir, "gleam.toml")) {
+			cmd.Dir = grandParentDir
+		} else {
+			// standalone file: use the temporary Gleam project
+			gleamTmpDir := filepath.Join(userCacheDir, "o", "gleam")
+			os.MkdirAll(filepath.Join(gleamTmpDir, "src"), 0o755)
+			gleamToml := "name = \"main\"\nversion = \"0.1.0\"\n\n[dependencies]\ngleam_stdlib = \">= 0.44.0 and < 2.0.0\"\n"
+			os.WriteFile(filepath.Join(gleamTmpDir, "gleam.toml"), []byte(gleamToml), 0o644)
+			if data, err := os.ReadFile(sourceFilename); err == nil {
+				os.WriteFile(filepath.Join(gleamTmpDir, "src", "main.gleam"), data, 0o644)
+			}
+			cmd.Dir = gleamTmpDir
+		}
 	case mode.Lilypond:
 		ext := filepath.Ext(sourceFilename)
 		firstName := strings.TrimSuffix(filepath.Base(sourceFilename), ext)
@@ -157,7 +178,9 @@ func (e *Editor) Run() (string, bool, error) {
 		cmd = exec.Command(filepath.Join(sourceDir, e.exeName(e.filename, true)))
 	}
 
-	cmd.Dir = sourceDir
+	if cmd.Dir == "" {
+		cmd.Dir = sourceDir
+	}
 
 	// If inputFileWhenRunning has been specified (or is input.txt),
 	// check if that file can be used as stdin for the command to be run
@@ -186,6 +209,25 @@ func (e *Editor) Run() (string, bool, error) {
 	}
 
 	output, err := CombinedOutputSetPID(cmd)
+
+	// filter gleam build/run progress lines from the output
+	if e.mode == mode.Gleam {
+		var filtered []string
+		for line := range strings.SplitSeq(output, "\n") {
+			trimmed := strings.TrimSpace(line)
+			if trimmed == "" {
+				continue
+			}
+			if strings.HasPrefix(trimmed, "Compiling ") || strings.HasPrefix(trimmed, "Compiled ") ||
+				strings.HasPrefix(trimmed, "Running ") || strings.HasPrefix(trimmed, "Resolving ") ||
+				strings.HasPrefix(trimmed, "Downloading ") || strings.HasPrefix(trimmed, "Downloaded ") ||
+				strings.HasPrefix(trimmed, "Added ") {
+				continue
+			}
+			filtered = append(filtered, line)
+		}
+		output = strings.Join(filtered, "\n")
+	}
 
 	if e.mode != mode.ABC {
 		errorButTextOnStdoutOrStderr := err != nil && len(output) > 0 // error and output, or just success

@@ -407,6 +407,32 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		cmd = exec.Command("garnetc", "-o", exeFirstName, sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, exeExists, nil
+	case mode.Gleam:
+		cmd = exec.Command("gleam", "build")
+		if files.IsFile(filepath.Join(sourceDir, "gleam.toml")) {
+			cmd.Dir = sourceDir
+			return cmd, everythingIsFine, nil
+		}
+		if files.IsFile(filepath.Join(parentDir, "gleam.toml")) {
+			cmd.Dir = parentDir
+			return cmd, everythingIsFine, nil
+		}
+		if files.IsFile(filepath.Join(grandParentDir, "gleam.toml")) {
+			cmd.Dir = grandParentDir
+			return cmd, everythingIsFine, nil
+		}
+		// standalone file: create a temporary Gleam project
+		gleamTmpDir := filepath.Join(userCacheDir, "o", "gleam")
+		os.MkdirAll(filepath.Join(gleamTmpDir, "src"), 0o755)
+		gleamToml := "name = \"main\"\nversion = \"0.1.0\"\n\n[dependencies]\ngleam_stdlib = \">= 0.44.0 and < 2.0.0\"\n"
+		os.WriteFile(filepath.Join(gleamTmpDir, "gleam.toml"), []byte(gleamToml), 0o644)
+		data, err := os.ReadFile(sourceFilename)
+		if err != nil {
+			return cmd, nothingIsFine, err
+		}
+		os.WriteFile(filepath.Join(gleamTmpDir, "src", "main.gleam"), data, 0o644)
+		cmd.Dir = gleamTmpDir
+		return cmd, everythingIsFine, nil
 	case mode.Rust:
 		if e.debugMode {
 			cmd = exec.Command("cargo", "build", "--profile", "dev")
@@ -842,6 +868,32 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 
 					return "", buildErr(errorMessage)
 				}
+			}
+		} else if e.mode == mode.Gleam {
+			lines := strings.Split(string(output), "\n")
+			for i, line := range lines {
+				if !strings.Contains(line, "┌─") {
+					continue
+				}
+				// extract "filepath:line:col" after the error marker
+				_, after, _ := strings.Cut(line, "┌─")
+				location := strings.TrimSpace(after)
+				fields := strings.SplitN(location, ":", 3)
+				if len(fields) < 3 {
+					continue
+				}
+				// find the error message from the preceding "error:" line
+				errorMessage = "Build error"
+				for j := i - 1; j >= 0; j-- {
+					if after, ok := strings.CutPrefix(lines[j], "error:"); ok {
+						errorMessage = strings.TrimSpace(after)
+						break
+					}
+				}
+				if e.MoveToNumber(c, status, fields[1], fields[2]) == nil {
+					jumpedToErrorLine = true
+				}
+				return "", buildErr(errorMessage)
 			}
 		}
 

@@ -31,7 +31,7 @@ func (e *Editor) FuncPrefix() string {
 		return "terra "
 	case mode.Odin:
 		return "proc() "
-	case mode.Hare, mode.Rust, mode.V, mode.Zig:
+	case mode.Gleam, mode.Hare, mode.Rust, mode.V, mode.Zig:
 		return "fn "
 	case mode.Java:
 		return "void" // TODO
@@ -176,7 +176,7 @@ func (e *Editor) FunctionName(line string) string {
 func (e *Editor) isBraceBasedLanguage() bool {
 	switch e.mode {
 	case mode.Arduino, mode.C, mode.C3, mode.Cpp, mode.CS, mode.CSS, mode.D, mode.Dart,
-		mode.Go, mode.Hare, mode.Haxe, mode.Jakt, mode.Java, mode.JavaScript, mode.JSON,
+		mode.Gleam, mode.Go, mode.Hare, mode.Haxe, mode.Jakt, mode.Java, mode.JavaScript, mode.JSON,
 		mode.Kotlin, mode.Mojo, mode.ObjC, mode.Rust, mode.Scala, mode.Shader,
 		mode.Swift, mode.TypeScript, mode.V, mode.Zig:
 		return true

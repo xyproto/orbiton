@@ -65,7 +65,7 @@ var (
 	gdscriptWords = []string{"and", "as", "assert", "await", "break", "breakpoint", "class", "class_name", "const", "continue", "elif", "else", "enum", "export", "extends", "false", "float", "for", "func", "if", "in", "INF", "int", "is", "master", "mastersync", "match", "NAN", "not", "onready", "or", "pass", "PI", "preload", "puppet", "puppetsync", "remote", "remotesync", "return", "self", "setget", "signal", "static", "String", "TAU", "tool", "true", "var", "Vector2", "Vector3", "void", "while", "yield"}
 
 	// Gleam
-	gleamWords = []string{"as", "assert", "case", "const", "external", "fn", "import", "let", "module", "opaque", "pub", "todo", "type", "use", "when", "auto", "delegate", "derive", "else", "implement", "macro", "test"}
+	gleamWords = []string{"as", "assert", "auto", "case", "const", "delegate", "derive", "else", "external", "fn", "if", "implement", "import", "let", "macro", "module", "opaque", "panic", "pub", "test", "todo", "type", "use", "when"}
 
 	// Haxe
 	haxeWords = []string{"abstract", "break", "case", "cast", "catch", "class", "continue", "default", "do", "dynamic", "else", "enum", "extends", "extern", "false", "final", "for", "function", "if", "implements", "import", "in", "inline", "interface", "macro", "new", "null", "operator", "overload", "override", "package", "private", "public", "return", "static", "switch", "this", "throw", "true", "try", "typedef", "untyped", "using", "var", "while"}

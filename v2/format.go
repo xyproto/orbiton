@@ -47,6 +47,7 @@ func (e *Editor) GetFormatMap() FormatMap {
 			mode.CSS:        exec.Command("prettier", "--tab-width", "2", "-w"),
 			mode.Dart:       exec.Command("dart", "format"),
 			mode.Go:         exec.Command("goimports", "-w", "--"),
+			mode.Gleam:      exec.Command("gleam", "format"),
 			mode.Haskell:    exec.Command("brittany", "--write-mode=inplace"),
 			mode.Java:       exec.Command("google-java-format", "-a", "-i"),
 			mode.JavaScript: exec.Command("prettier", "--tab-width", "4", "-w"),

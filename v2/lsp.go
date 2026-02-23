@@ -23,7 +23,7 @@ import (
 
 // needsWorkspaceSetup checks if the mode needs special LSP handling
 func needsWorkspaceSetup(m mode.Mode) bool {
-	return m == mode.Rust || m == mode.C || m == mode.Cpp
+	return m == mode.Rust || m == mode.C || m == mode.Cpp || m == mode.Gleam
 }
 
 // LSPClient manages communication with a language server
@@ -168,6 +168,13 @@ var lspConfigs = map[mode.Mode]LSPConfig{
 		LanguageID:      "zig",
 		RootMarkerFiles: []string{"build.zig", "build.zig.zon", "zls.json", ".git"},
 		FileExtensions:  []string{".zig"},
+	},
+	mode.Gleam: {
+		Command:         "gleam",
+		Args:            []string{"lsp"},
+		LanguageID:      "gleam",
+		RootMarkerFiles: []string{"gleam.toml"},
+		FileExtensions:  []string{".gleam"},
 	},
 }
 
@@ -864,6 +871,26 @@ func ensureCWorkspace(workspaceRoot, filePath string, languageID string) (string
 	return tempDir, targetPath
 }
 
+// hasGleamToml checks if a gleam.toml exists in the given directory
+func hasGleamToml(dir string) bool {
+	_, err := os.Stat(filepath.Join(dir, "gleam.toml"))
+	return err == nil
+}
+
+// ensureGleamWorkspace creates a temporary Gleam project for standalone files
+// and returns the workspace root and the LSP file path within it
+func ensureGleamWorkspace(absPath string) (string, string) {
+	gleamTmpDir := filepath.Join(userCacheDir, "o", "gleam")
+	os.MkdirAll(filepath.Join(gleamTmpDir, "src"), 0o755)
+	gleamToml := "name = \"main\"\nversion = \"0.1.0\"\n\n[dependencies]\ngleam_stdlib = \">= 0.44.0 and < 2.0.0\"\n"
+	os.WriteFile(filepath.Join(gleamTmpDir, "gleam.toml"), []byte(gleamToml), 0o644)
+	targetPath := filepath.Join(gleamTmpDir, "src", "main.gleam")
+	if data, err := os.ReadFile(absPath); err == nil {
+		os.WriteFile(targetPath, data, 0o644)
+	}
+	return gleamTmpDir, targetPath
+}
+
 // gatherCodebaseStatistics scans files to find usage frequency
 func gatherCodebaseStatistics(workspaceRoot string, fileExtensions []string) map[string]int {
 	stats := make(map[string]int)
@@ -980,7 +1007,14 @@ func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspa
 
 		// Filter by prefix if one exists
 		if prefix != "" && !strings.HasPrefix(strings.ToLower(trimmedLabel), prefix) {
-			continue
+			// also match after a dot in the label (e.g. "io.println" matches prefix "pri")
+			if dotIdx := strings.LastIndex(trimmedLabel, "."); dotIdx >= 0 {
+				if !strings.HasPrefix(strings.ToLower(trimmedLabel[dotIdx+1:]), prefix) {
+					continue
+				}
+			} else {
+				continue
+			}
 		}
 
 		score := 0
@@ -1169,6 +1203,8 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 		workspaceRoot = filepath.Dir(absPath)
 	} else if e.mode == mode.C || e.mode == mode.Cpp {
 		workspaceRoot, lspFilePath = ensureCWorkspace(workspaceRoot, absPath, config.LanguageID)
+	} else if e.mode == mode.Gleam && !hasGleamToml(workspaceRoot) {
+		workspaceRoot, lspFilePath = ensureGleamWorkspace(absPath)
 	}
 
 	neverCancel := make(chan bool)
@@ -1339,6 +1375,8 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		workspaceRoot = filepath.Dir(absPath)
 	} else if e.mode == mode.C || e.mode == mode.Cpp {
 		workspaceRoot, lspFilePath = ensureCWorkspace(workspaceRoot, absPath, config.LanguageID)
+	} else if e.mode == mode.Gleam && !hasGleamToml(workspaceRoot) {
+		workspaceRoot, lspFilePath = ensureGleamWorkspace(absPath)
 	}
 
 	// check if the LSP client already exists
