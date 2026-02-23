@@ -176,6 +176,13 @@ var lspConfigs = map[mode.Mode]LSPConfig{
 		RootMarkerFiles: []string{"gleam.toml"},
 		FileExtensions:  []string{".gleam"},
 	},
+	mode.Haskell: {
+		Command:         "haskell-language-server-wrapper",
+		Args:            []string{"--lsp"},
+		LanguageID:      "haskell",
+		RootMarkerFiles: []string{"hie.yaml", "*.cabal", "cabal.project", "stack.yaml", ".git"},
+		FileExtensions:  []string{".hs"},
+	},
 }
 
 // NewLSPClient creates a new LSP client for the given language server command
@@ -753,7 +760,11 @@ func findWorkspaceRoot(startPath string, markerFiles []string) string {
 	dir := filepath.Dir(startPath)
 	for {
 		for _, marker := range markerFiles {
-			if _, err := os.Stat(filepath.Join(dir, marker)); err == nil {
+			if strings.ContainsAny(marker, "*?[") {
+				if matches, _ := filepath.Glob(filepath.Join(dir, marker)); len(matches) > 0 {
+					return dir
+				}
+			} else if _, err := os.Stat(filepath.Join(dir, marker)); err == nil {
 				return dir
 			}
 		}

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 )
 
@@ -117,6 +118,31 @@ func (e *Editor) ExplainBuildErrorWithOllama(c *vt.Canvas, err error) {
 		functionBody = e.Block(lineIndex)
 	}
 	functionBody = strings.TrimSpace(functionBody)
+	if functionBody == "" || (e.mode == mode.Haskell && len(strings.Split(functionBody, "\n")) < 3) {
+		// for Haskell, walk backwards to find the function start (top-level definition)
+		// then include everything from there through the error line
+		start := int(lineIndex)
+		if e.mode == mode.Haskell {
+			for i := int(lineIndex) - 1; i >= 0; i-- {
+				line := e.Line(LineIndex(i))
+				if strings.TrimSpace(line) == "" {
+					start = i + 1
+					break
+				}
+				start = i
+			}
+		} else {
+			start = int(lineIndex) - 5
+		}
+		if start < 0 {
+			start = 0
+		}
+		var lines []string
+		for i := start; i <= int(lineIndex); i++ {
+			lines = append(lines, e.Line(LineIndex(i)))
+		}
+		functionBody = strings.TrimSpace(strings.Join(lines, "\n"))
+	}
 	if functionBody == "" {
 		return
 	}
@@ -147,7 +173,7 @@ func (e *Editor) ExplainBuildErrorWithOllama(c *vt.Canvas, err error) {
 		return
 	}
 
-	prompt := buildErrorExplanationPrompt(functionBody, int(lineIndex)+1, lineText, compilerError)
+	prompt := buildErrorExplanationPrompt(e.mode.String(), functionBody, int(lineIndex)+1, lineText, compilerError)
 	explanationText, ollamaErr := ollama.GetSimpleResponse(prompt)
 	if ollamaErr != nil {
 		return

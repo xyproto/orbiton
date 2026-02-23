@@ -11,12 +11,13 @@ func (req FunctionDescriptionRequest) Prompt() string {
 }
 
 // buildErrorExplanationPrompt builds the Ollama prompt for explaining a build error
-func buildErrorExplanationPrompt(functionBody string, lineNumber int, lineText, compilerError string) string {
+func buildErrorExplanationPrompt(language, functionBody string, lineNumber int, lineText, compilerError string) string {
 	return fmt.Sprintf(
-		"For this function:\n\n%s\n\nThe user is currently looking at line %d:\n%s\n\nExplain to the user what should be done in order to resolve and/or understand this error:\n\n%s\n\nKeep it brief, but enlightening. Assume the user is an expert, but just forgot something. Use at most 4 short lines. Use plain text only (no Markdown).\n\nYou are an expert programmer.",
-		strings.TrimSpace(functionBody),
+		"You are an expert %s programmer. A user got this compiler error:\n\n%s\n\nThe error is on line %d:\n%s\n\nHere is the surrounding code:\n\n%s\n\nWhat is the most likely cause and fix? Focus on syntax and logic errors in the code shown. Do not suggest importing modules unless truly missing. Answer in 1-3 short sentences. Use plain text only (no Markdown, no code blocks).",
+		language,
+		strings.TrimSpace(compilerError),
 		lineNumber,
 		strings.TrimSpace(lineText),
-		strings.TrimSpace(compilerError),
+		strings.TrimSpace(functionBody),
 	)
 }

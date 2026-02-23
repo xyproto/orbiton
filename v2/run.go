@@ -67,6 +67,8 @@ func (e *Editor) Run() (string, bool, error) {
 		} else {
 			cmd = exec.Command("go", "run", sourceFilename)
 		}
+	case mode.Haskell:
+		cmd = exec.Command("runhaskell", sourceFilename)
 	case mode.Gleam:
 		cmd = exec.Command("gleam", "run")
 		parentDir := filepath.Clean(filepath.Join(sourceDir, ".."))

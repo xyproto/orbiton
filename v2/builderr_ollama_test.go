@@ -19,6 +19,7 @@ func TestBuildErrorJumpedToSource(t *testing.T) {
 
 func TestBuildErrorExplanationPrompt(t *testing.T) {
 	prompt := buildErrorExplanationPrompt(
+		"Rust",
 		"fn main() {\n    println!(greeting);\n}",
 		3,
 		`println!(greeting);`,
@@ -26,13 +27,13 @@ func TestBuildErrorExplanationPrompt(t *testing.T) {
 	)
 
 	expected := []string{
-		"For this function:",
+		"expert Rust programmer",
 		"fn main() {",
-		"The user is currently looking at line 3:",
+		"error is on line 3:",
 		"println!(greeting);",
 		"main.rs: format argument must be a string literal",
-		"Use at most 4 short lines.",
-		"Use plain text only (no Markdown).",
+		"1-3 short sentences",
+		"Use plain text only (no Markdown",
 	}
 	for _, fragment := range expected {
 		if !strings.Contains(prompt, fragment) {
