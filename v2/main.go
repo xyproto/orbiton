@@ -420,9 +420,9 @@ func main() {
 		// If the filename starts with "~", then expand it
 		fnord.ExpandUser()
 
-		// Check if the given filename is not a file or a symlink
+		// Check if the given filename is not a file, symlink or directory
 		if !noApproxMatchFlag {
-			if !files.IsFileOrSymlink(fnord.filename) {
+			if !files.IsFileOrSymlink(fnord.filename) && !files.IsDir(fnord.filename) {
 				if strings.HasSuffix(fnord.filename, ".") {
 					// If the filename ends with "." and the file does not exist, assume this was a result of tab-completion going wrong.
 					// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
