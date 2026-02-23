@@ -41,8 +41,9 @@ type AttributeColor uint32
 type ColorRune struct {
 	fg    AttributeColor
 	bg    AttributeColor
-	r     rune // The character to draw
-	drawn bool // Has been drawn to screen yet?
+	r     rune  // The character to draw
+	drawn bool  // Has been drawn to screen yet?
+	cw    uint8 // Column width: 0=normal(1-col), 1=continuation(skip), 2=wide(2-col)
 }
 
 // for API stability
@@ -532,6 +533,9 @@ func (c *Canvas) PlotAll() {
 	for y := range h {
 		for x := int(w - 1); x >= 0; x-- {
 			cr := &((*c).chars[y*w+uint(x)])
+			if cr.cw == 1 {
+				continue // continuation of a wide character
+			}
 			r := cr.r
 			if cr.r == rune(0) {
 				r = ' '
@@ -656,6 +660,9 @@ func (c *Canvas) HideCursorAndDraw() {
 	if !firstRun {
 		for index := range size {
 			cr = (*c).chars[index]
+			if cr.cw == 1 {
+				continue // continuation of a wide character
+			}
 			oldcr = (*c).oldchars[index]
 			if cr.fg.Equal(lastfg) && cr.fg.Equal(oldcr.fg) && cr.bg.Equal(lastbg) && cr.bg.Equal(oldcr.bg) && cr.r == oldcr.r {
 				// One is not skippable, can not skip all
@@ -678,6 +685,9 @@ func (c *Canvas) HideCursorAndDraw() {
 	} else {
 		for index := range size {
 			cr = (*c).chars[index]
+			if cr.cw == 1 {
+				continue // continuation of a wide character
+			}
 			// Only output a color code if it's different from the last character, or it's the first one
 			if (index == 0) || !lastfg.Equal(cr.fg) || !lastbg.Equal(cr.bg) {
 				// Write to the string builder
@@ -770,6 +780,9 @@ func (c *Canvas) Draw() {
 	if !firstRun {
 		for index := range size {
 			cr = (*c).chars[index]
+			if cr.cw == 1 {
+				continue // continuation of a wide character
+			}
 			oldcr = (*c).oldchars[index]
 			if cr.fg.Equal(lastfg) && cr.fg.Equal(oldcr.fg) && cr.bg.Equal(lastbg) && cr.bg.Equal(oldcr.bg) && cr.r == oldcr.r {
 				// One is not skippable, can not skip all
@@ -792,6 +805,9 @@ func (c *Canvas) Draw() {
 	} else {
 		for index := range size {
 			cr = (*c).chars[index]
+			if cr.cw == 1 {
+				continue // continuation of a wide character
+			}
 			// Only output a color code if it's different from the last character, or it's the first one
 			if (index == 0) || !lastfg.Equal(cr.fg) || !lastbg.Equal(cr.bg) {
 				// Write to the string builder
@@ -969,14 +985,34 @@ func (c *Canvas) WriteRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
 	index := y*c.w + x
 	c.mut.Lock()
 	defer c.mut.Unlock()
-	(*c).chars[index] = ColorRune{fg, bgb, r, false}
+	(*c).chars[index] = ColorRune{fg, bgb, r, false, 0}
 }
 
 // WriteRuneBNoLock will write a colored rune to the canvas
 // The x and y must be within range (x < c.w and y < c.h)
 // The canvas mutex is not locked
 func (c *Canvas) WriteRuneBNoLock(x, y uint, fg, bgb AttributeColor, r rune) {
-	(*c).chars[y*c.w+x] = ColorRune{fg, bgb, r, false}
+	(*c).chars[y*c.w+x] = ColorRune{fg, bgb, r, false, 0}
+}
+
+// WriteWideRuneB writes a double-width (CJK) rune to the canvas.
+// The next cell (x+1) is marked as a continuation cell and skipped during drawing.
+// The x and y must be within range (x+1 < c.w and y < c.h).
+func (c *Canvas) WriteWideRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
+	base := y*c.w + x
+	c.mut.Lock()
+	defer c.mut.Unlock()
+	(*c).chars[base] = ColorRune{fg, bgb, r, false, 2}
+	(*c).chars[base+1] = ColorRune{fg, bgb, 0, false, 1}
+}
+
+// WriteWideRuneBNoLock writes a double-width (CJK) rune to the canvas without locking.
+// The next cell (x+1) is marked as a continuation cell and skipped during drawing.
+// The x and y must be within range (x+1 < c.w and y < c.h).
+func (c *Canvas) WriteWideRuneBNoLock(x, y uint, fg, bgb AttributeColor, r rune) {
+	base := y*c.w + x
+	(*c).chars[base] = ColorRune{fg, bgb, r, false, 2}
+	(*c).chars[base+1] = ColorRune{fg, bgb, 0, false, 1}
 }
 
 // WriteBackground will write a background color to the canvas
@@ -1029,7 +1065,7 @@ func (c *Canvas) WriteRunesB(x, y uint, fg, bgb AttributeColor, r rune, count ui
 	c.mut.Lock()
 	chars := (*c).chars
 	for i := startIndex; i < afterLastIndex; i++ {
-		chars[i] = ColorRune{fg, bgb, r, false}
+		chars[i] = ColorRune{fg, bgb, r, false, 0}
 	}
 	c.mut.Unlock()
 }
