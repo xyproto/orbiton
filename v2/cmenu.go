@@ -497,6 +497,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 		if e.moveLinesMode.Load() {
 			actions.Add("Move the cursor with ctrl-n and ctrl-p", func() {
 				e.moveLinesMode.Store(false)
+				e.cycleFilenames = false
 			})
 		} else {
 			actions.Add("Move lines with ctrl-n and ctrl-p", func() {
