@@ -54,7 +54,7 @@ func (e *Editor) GetFormatMap() FormatMap {
 			mode.TypeScript: exec.Command("prettier", "--tab-width", "4", "-w"),
 			mode.Just:       exec.Command("just", "--unstable", "--fmt", "-f"),
 			mode.Kotlin:     exec.Command("ktlint", "-F"),
-			mode.Lua:        exec.Command("lua-format", "-i", "--no-keep-simple-function-one-line", "--column-limit=120", "--indent-width=2", "--no-use-tab"),
+			mode.Lua:        exec.Command("stylua"),
 			mode.OCaml:      exec.Command("ocamlformat"),
 			mode.Odin:       exec.Command("odinfmt", "-w"),
 			mode.Perl:       exec.Command("/usr/bin/vendor_perl/perltidy", "-se", "-b", "-i=2", "-ole=unix", "-bt=2", "-pt=2", "-sbt=2", "-ce"),
