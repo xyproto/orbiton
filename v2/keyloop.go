@@ -1428,7 +1428,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			trimmedLine := e.TrimmedLine()
 
-			endsWithSpecial := len(trimmedLine) > 1 && r == '{' || r == '(' || r == '[' || r == ':'
+			endsWithSpecial := len(trimmedLine) > 1 && (r == '{' || r == '(' || r == '[' || r == ':')
 
 			// Smart indent if:
 			// * the rune to the left is not a blank character or the line ends with {, (, [ or :
@@ -1439,7 +1439,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				lineAbove := 1
 				if strings.TrimSpace(e.Line(LineIndex(y-lineAbove))) == "" {
 					// The line above is empty, use the indentation before the line above that
-					lineAbove--
+					lineAbove++
 				}
 				indexAbove := LineIndex(y - lineAbove)
 				// If we have a line (one or two lines above) as a reference point for the indentation
