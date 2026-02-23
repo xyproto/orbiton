@@ -161,7 +161,13 @@ func (e *Editor) GoToLineNumberAndCol(lineNumber LineNumber, colNumber ColNumber
 	redraw, _ := e.GoTo(yIndex, c, status)
 	// Go to the correct column as well
 	if handleTabExpansion {
-		tabs := strings.Count(e.Line(yIndex), "\t")
+		lineRunes := []rune(e.Line(yIndex))
+		tabs := 0
+		for i := 0; i < int(xIndex) && i < len(lineRunes); i++ {
+			if lineRunes[i] == '\t' {
+				tabs++
+			}
+		}
 		newScreenX := int(xIndex) + (tabs * (e.indentation.PerTab - 1))
 		if e.pos.sx != newScreenX {
 			redraw = true
@@ -192,7 +198,13 @@ func (e *Editor) GoToLineIndexAndColIndex(yIndex LineIndex, xIndex ColIndex, c *
 	redraw, _ := e.GoTo(yIndex, c, status)
 	// Go to the correct column as well
 	if handleTabExpansion {
-		tabs := strings.Count(e.Line(yIndex), "\t")
+		lineRunes := []rune(e.Line(yIndex))
+		tabs := 0
+		for i := 0; i < int(xIndex) && i < len(lineRunes); i++ {
+			if lineRunes[i] == '\t' {
+				tabs++
+			}
+		}
 		newScreenX := int(xIndex) + (tabs * (e.indentation.PerTab - 1))
 		if e.pos.sx != newScreenX {
 			redraw = true
