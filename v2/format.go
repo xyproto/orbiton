@@ -28,7 +28,7 @@ var formatMap FormatMap
 func (e *Editor) InstallMissingTools() {
 	switch e.mode {
 	case mode.Go:
-		if files.WhichCached("go") != "" && files.WhichCached("goimport") == "" {
+		if files.WhichCached("go") != "" && files.WhichCached("goimports") == "" {
 			files.Run("go install golang.org/x/tools/cmd/goimports@latest")
 		}
 	}
@@ -103,18 +103,9 @@ func (e *Editor) formatWithUtility(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 			// Add the filename of the temporary file to the command
 			cmd.Args = append(cmd.Args, tempFilename)
 
-			// Save the command in a temporary file
-			saveCommand(&cmd)
-
-			// Format the temporary file
-			output, err := cmd.CombinedOutput()
-
-			// Ignore errors if the command is "tidy" and tidy exists
-			ignoreErrors := strings.HasSuffix(cmd.Path, "tidy") && files.WhichCached("tidy") != ""
-
 			// Perl may place executables in /usr/bin/vendor_perl
 			if e.mode == mode.Perl {
-				// Use perltidy from the PATH if /usr/bin/vendor_perl/perltidy does not exists
+				// Use perltidy from the PATH if /usr/bin/vendor_perl/perltidy does not exist
 				if cmd.Path == "/usr/bin/vendor_perl/perltidy" && !files.Exists("/usr/bin/vendor_perl/perltidy") {
 					perltidyPath := files.WhichCached("perltidy")
 					if perltidyPath == "" {
@@ -123,6 +114,15 @@ func (e *Editor) formatWithUtility(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 					cmd.Path = perltidyPath
 				}
 			}
+
+			// Save the command in a temporary file
+			saveCommand(&cmd)
+
+			// Format the temporary file
+			output, err := cmd.CombinedOutput()
+
+			// Ignore errors if the command is "tidy" and tidy exists
+			ignoreErrors := strings.HasSuffix(cmd.Path, "tidy") && files.WhichCached("tidy") != ""
 
 			if err != nil && !ignoreErrors {
 				// Only grab the first error message
