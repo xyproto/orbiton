@@ -240,18 +240,13 @@ func (e *Editor) DismissFunctionDescription() {
 
 // describedFunctionScreenRange returns the visible line range for the described function
 func (e *Editor) describedFunctionScreenRange(c *vt.Canvas, functionName string) (int, int, bool) {
-	if c == nil || functionName == "" {
+	if c == nil || functionName == "" || !currentDescribedFunctionSpan || currentDescribedFunction != functionName {
 		return 0, 0, false
 	}
-	if !currentDescribedFunctionSpan || currentDescribedFunction != functionName {
-		return 0, 0, false
-	}
-
 	offsetY := e.pos.OffsetY()
 	top := int(currentDescribedFunctionFrom) - offsetY
 	bottom := int(currentDescribedFunctionTo) - offsetY
 	canvasHeight := int(c.Height())
-
 	if bottom < 0 || top >= canvasHeight {
 		return 0, 0, false
 	}
@@ -261,7 +256,6 @@ func (e *Editor) describedFunctionScreenRange(c *vt.Canvas, functionName string)
 	if bottom >= canvasHeight {
 		bottom = canvasHeight - 1
 	}
-
 	return top, bottom, true
 }
 
