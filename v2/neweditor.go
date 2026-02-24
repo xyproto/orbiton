@@ -78,7 +78,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		}
 		syntaxHighlight = origSyntaxHighlight && m != mode.Text && (m != mode.Blank || ext != "")
 	}
-	if useASCII {
+	if envVT100 {
 		syntaxHighlight = false
 	}
 
@@ -213,7 +213,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				ext = strings.ToLower(filepath.Ext(fnord.filename))
 				m = mode.Detect(stripGZ(fnord.filename))
 				syntaxHighlight = origSyntaxHighlight && m != mode.Text && (m != mode.Blank || ext != "")
-				if useASCII {
+				if envVT100 {
 					syntaxHighlight = false
 				}
 				adjustSyntaxHighlightingKeywords(m)

@@ -62,11 +62,14 @@ var (
 	// An empty *Ollama struct
 	ollama = NewOllama()
 
-	// Check if TERM is set to vt100, vt220 or linux (Linux console) for ASCII fallback
-	useASCII = env.Str("TERM") == "vt100" || env.Str("TERM") == "vt220" || env.Str("TERM") == "linux"
+	// Check if TERM is set to vt100
+	envVT100 = env.Str("TERM") == "vt100"
+
+	// Check if TERM is set to vt100 or vt220 for ASCII fallback
+	useASCII = envVT100 || env.Str("TERM") == "vt220"
 
 	// Check if NO_COLOR or vt100 is set
-	envNoColor = env.Bool("NO_COLOR") || env.Str("TERM") == "vt100"
+	envNoColor = env.Bool("NO_COLOR") || envVT100
 
 	// Arguments given on the command line
 	globalArgs []string
