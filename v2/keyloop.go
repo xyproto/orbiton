@@ -781,6 +781,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			undo.Snapshot(e)
 			undoBackup := undo
 			selectedIndex, spacePressed := e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
+			c.ShowCursor()
 			lastCommandMenuIndex = selectedIndex
 			if spacePressed {
 				status.Clear(c, false)
@@ -1260,6 +1261,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			fallthrough // nano: ctrl-l to refresh
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
 			e.blockMode = false
+			c.ShowCursor()
 			// If o is used as a man page viewer, or if the escToExit flag is set, exit at the press of esc
 			if escToExit || e.mode == mode.ManPage {
 				clearOnQuit.Store(false)
@@ -2250,7 +2252,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		if clearKeyHistory {
 			kh.Clear()
 			clearKeyHistory = false
-		} else {
+		} else if key != "" {
 			kh.Push(key)
 		}
 
@@ -2261,6 +2263,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			undo.Snapshot(e)
 			undoBackup := undo
 			selectedIndex, _ := e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
+			c.ShowCursor()
 			lastCommandMenuIndex = selectedIndex
 			undo = undoBackup
 			// Reset the key history next iteration
@@ -2273,21 +2276,20 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		}
 
 		const arrowKeyHighlightTime = 1200 * time.Millisecond
-
-		// Draw and/or redraw everything, with slightly different behavior over ssh
-		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow)
-		e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown, true)
+		justMovedByKeypress := key == upArrow || key == downArrow || key == leftArrow || key == rightArrow || key == pgUpKey || key == pgDnKey || key == homeKey || key == endKey || key == "c:1" || key == "c:2" || key == "c:5" || key == "c:6" || key == "c:12" || key == "c:14" || key == "c:16" || key == "c:25"
 
 		notEmptyLine := !e.EmptyLine()
-
-		if notEmptyLine && ProgrammingLanguage(e.mode) {
+		if key != "" && notEmptyLine && ProgrammingLanguage(e.mode) {
 			e.drawFuncName.Store(true)
-			c.HideCursorAndDraw()
 		}
+
+		// Draw and/or redraw everything, with slightly different behavior over ssh
+		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow, leftArrow, rightArrow, pgUpKey, pgDnKey, homeKey, endKey, "c:1", "c:2", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25")
+		e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown, true)
 
 		if (e.highlightCurrentLine || e.highlightCurrentText) && !e.statusMode && notEmptyLine && !e.debugMode {
 			// When not moving up or down, turn off the text highlight after arrowHighlightTime
-			if status.messageAfterRedraw == "" {
+			if status.messageAfterRedraw == "" && justMovedByKeypress {
 				go func() {
 					thisID := highlightTimerCounter.Add(1)
 					time.Sleep(arrowKeyHighlightTime)
@@ -2296,7 +2298,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					}
 					highlightTimerMut.Lock()
 					defer highlightTimerMut.Unlock()
-					justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow)
+					justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow, leftArrow, rightArrow, pgUpKey, pgDnKey, homeKey, endKey, "c:1", "c:2", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25")
 					if e.waitWithRedrawing.Load() {
 						e.waitWithRedrawing.Store(false)
 					} else if !justMovedUpOrDownOrLeftOrRight && !notRegularEditingRightNow.Load() {
@@ -2319,9 +2321,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.DrawInstructions(c, repositionCursor)
 			e.DrawFlags(c, repositionCursor)
 		}
-
-		// Repositions the cursor
-		e.EnableAndPlaceCursor(c)
 
 	} // end of main loop
 

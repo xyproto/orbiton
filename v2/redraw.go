@@ -96,8 +96,6 @@ func (e *Editor) RedrawIfNeeded(c *vt.Canvas, shouldHighlight bool) {
 
 // RepositionCursor will send the VT100 commands needed to position the cursor
 func (e *Editor) RepositionCursor(x, y uint) {
-	// Redraw the cursor
-	vt.ShowCursor(true)
 	vt.SetXY(x, y)
 
 	e.previousX = int(x)
@@ -169,12 +167,13 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 	}
 
 	// Check if an extra reset is needed
+	shouldHighlightCurrentLine := e.highlightCurrentLine || e.highlightCurrentText
 	if e.sshMode {
 		drawLines := true
-		e.FullResetRedraw(c, status, drawLines, false)
+		e.FullResetRedraw(c, status, drawLines, shouldHighlightCurrentLine)
 	} else {
 		// Draw the editor lines, respect the offset (true) and redraw (true)
-		e.RedrawIfNeeded(c, false)
+		e.RedrawIfNeeded(c, shouldHighlightCurrentLine)
 	}
 
 	// Display the status message
@@ -215,6 +214,8 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 	redrawCanvas := !e.debugMode
 
 	redraw := e.redraw.Load()
+	overlayRedraw := e.drawProgress.Load() || (e.drawFuncName.Load() && !e.nanoMode.Load())
+	didDraw := false
 
 	// Redraw, if needed
 	if redraw {
@@ -222,7 +223,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 		e.HideCursorDrawLines(c, true, redrawCanvas, shouldHighlightCurrentLine)
 	}
 
-	if redraw || e.Changed() {
+	if redraw || e.Changed() || overlayRedraw {
 		// Draw the scroll progress indicator block on the right side
 		if e.drawProgress.Load() {
 			e.WriteProgress(c) // not drawing immediately
@@ -243,8 +244,9 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 			e.DrawFunctionDescriptionContinuous(c, false)
 		}
 
-		c.HideCursorAndDraw()  // drawing now
-		e.redraw.Store(redraw) // mark as redrawn
+		c.HideCursorAndDraw() // drawing now
+		didDraw = true
+		e.redraw.Store(false) // mark as redrawn
 	}
 
 	// Drawing status messages should come after redrawing, but before cursor positioning
@@ -269,7 +271,11 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 	}
 
 	if repositionCursor {
-		e.EnableAndPlaceCursor(c)
+		if didDraw {
+			e.EnableAndPlaceCursor(c)
+		} else {
+			e.RepositionCursorIfNeeded()
+		}
 	} else {
 		vt.ShowCursor(true)
 		e.RepositionCursorIfNeeded()
