@@ -229,6 +229,17 @@ func SetXYDirect(x, y uint) {
 	fmt.Printf(cursorHomeTemplate, y+1, x+1)
 }
 
+func writeAllToStdout(data []byte) bool {
+	for len(data) > 0 {
+		n, err := os.Stdout.Write(data)
+		if err != nil || n <= 0 {
+			return false
+		}
+		data = data[n:]
+	}
+	return true
+}
+
 func Home() {
 	fmt.Print(cursorHome)
 }
@@ -579,6 +590,7 @@ func (c *Canvas) Clear() {
 func (c *Canvas) SetLineWrap(enable bool) {
 	c.mut.Lock()
 	defer c.mut.Unlock()
+	c.lineWrap = enable
 	SetLineWrap(enable)
 }
 
@@ -624,16 +636,16 @@ func (c *Canvas) DrawAndSetCursor(x, y uint) {
 
 // HideCursorAndDraw will hide the cursor and then draw the entire canvas
 func (c *Canvas) HideCursorAndDraw() {
-
-	c.cursorVisible = false
 	c.SetShowCursor(false)
 
 	var (
-		lastfg = Default // AttributeColor
-		lastbg = Default // AttributeColor
-		cr     ColorRune
-		oldcr  ColorRune
-		sb     strings.Builder
+		lastfg   = Default // AttributeColor
+		lastbg   = Default // AttributeColor
+		cr       ColorRune
+		oldcr    ColorRune
+		sb       strings.Builder
+		lineWrap bool
+		runewise bool
 	)
 
 	cr.fg = Default
@@ -653,6 +665,8 @@ func (c *Canvas) HideCursorAndDraw() {
 
 	firstRun := len(c.oldchars) == 0
 	skipAll := !firstRun // true by default, except for the first run
+	lineWrap = c.lineWrap
+	runewise = c.runewise
 
 	size := c.w*c.h - 1
 	sb.Grow(int(size))
@@ -714,13 +728,13 @@ func (c *Canvas) HideCursorAndDraw() {
 
 	// Enable line wrap, temporarily, if it's disabled
 	reDisableLineWrap := false
-	if !c.lineWrap {
+	if !lineWrap {
 		c.SetLineWrap(true)
 		reDisableLineWrap = true
 	}
 
 	// Draw each and every line, or push one large string to screen?
-	if c.runewise {
+	if runewise {
 
 		Clear()
 		c.PlotAll()
@@ -728,7 +742,10 @@ func (c *Canvas) HideCursorAndDraw() {
 	} else {
 		c.mut.Lock()
 		SetXY(0, 0)
-		os.Stdout.Write([]byte(sb.String()))
+		if !writeAllToStdout([]byte(sb.String())) {
+			c.mut.Unlock()
+			return
+		}
 		c.mut.Unlock()
 	}
 
@@ -749,11 +766,14 @@ func (c *Canvas) HideCursorAndDraw() {
 // Draw the entire canvas
 func (c *Canvas) Draw() {
 	var (
-		lastfg = Default // AttributeColor
-		lastbg = Default // AttributeColor
-		cr     ColorRune
-		oldcr  ColorRune
-		sb     strings.Builder
+		lastfg        = Default // AttributeColor
+		lastbg        = Default // AttributeColor
+		cr            ColorRune
+		oldcr         ColorRune
+		sb            strings.Builder
+		cursorVisible bool
+		lineWrap      bool
+		runewise      bool
 	)
 
 	cr.fg = Default
@@ -773,6 +793,9 @@ func (c *Canvas) Draw() {
 
 	firstRun := len(c.oldchars) == 0
 	skipAll := !firstRun // true by default, except for the first run
+	cursorVisible = c.cursorVisible
+	lineWrap = c.lineWrap
+	runewise = c.runewise
 
 	size := c.w*c.h - 1
 	sb.Grow(int(size))
@@ -836,20 +859,20 @@ func (c *Canvas) Draw() {
 
 	// Hide the cursor, temporarily, if it's visible
 	reEnableCursor := false
-	if c.cursorVisible {
+	if cursorVisible {
 		c.SetShowCursor(false)
 		reEnableCursor = true
 	}
 
 	// Enable line wrap, temporarily, if it's disabled
 	reDisableLineWrap := false
-	if !c.lineWrap {
+	if !lineWrap {
 		c.SetLineWrap(true)
 		reDisableLineWrap = true
 	}
 
 	// Draw each and every line, or push one large string to screen?
-	if c.runewise {
+	if runewise {
 
 		Clear()
 		c.PlotAll()
@@ -857,7 +880,10 @@ func (c *Canvas) Draw() {
 	} else {
 		c.mut.Lock()
 		SetXY(0, 0)
-		os.Stdout.Write([]byte(sb.String()))
+		if !writeAllToStdout([]byte(sb.String())) {
+			c.mut.Unlock()
+			return
+		}
 		c.mut.Unlock()
 	}
 
@@ -1073,14 +1099,14 @@ func (c *Canvas) WriteRunesB(x, y uint, fg, bgb AttributeColor, r rune, count ui
 func (c *Canvas) Resize() {
 	w, h := MustTermSize()
 	c.mut.Lock()
+	defer c.mut.Unlock()
 	if (w != c.w) || (h != c.h) {
 		// Resize to the new size
 		c.w = w
 		c.h = h
 		c.chars = make([]ColorRune, w*h)
-		c.mut = &sync.RWMutex{}
+		c.oldchars = nil
 	}
-	c.mut.Unlock()
 }
 
 // Check if the canvas was resized, and adjust values accordingly.

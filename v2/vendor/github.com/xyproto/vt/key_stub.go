@@ -10,7 +10,6 @@ import (
 
 var (
 	defaultTimeout = 2 * time.Millisecond
-	lastKey        int
 )
 
 // StubTerm is a stub for term.Term on unsupported platforms
@@ -77,6 +76,11 @@ func (tty *TTY) WriteString(s string) error {
 
 // ReadString reads a string from the TTY
 func (tty *TTY) ReadString() (string, error) {
+	return "", errors.New("TTY is not supported on this platform")
+}
+
+// ReadStringKeepTiming reads a string from the TTY while preserving timeout settings.
+func (tty *TTY) ReadStringKeepTiming() (string, error) {
 	return "", errors.New("TTY is not supported on this platform")
 }
 

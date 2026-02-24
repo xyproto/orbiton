@@ -15,13 +15,13 @@ import (
 
 var (
 	defaultTimeout = 2 * time.Millisecond
-	lastKey        int
 )
 
 type TTY struct {
 	fd      int
 	orig    unix.Termios
 	timeout time.Duration
+	lastKey int
 }
 
 // clamp restricts v to the range [lo, hi]
@@ -121,15 +121,29 @@ func NewTTY() (*TTY, error) {
 	return &TTY{fd: fd, orig: orig, timeout: defaultTimeout}, nil
 }
 
-// SetTimeout sets the read timeout by updating VMIN/VTIME
-func (tty *TTY) SetTimeout(d time.Duration) {
+// SetTimeout sets the read timeout by updating VMIN/VTIME.
+// It returns the previous timeout duration.
+func (tty *TTY) SetTimeout(d time.Duration) (time.Duration, error) {
+	if d == tty.timeout {
+		return d, nil
+	}
+	savedTimeout := tty.timeout
+	if err := tty.SetTimeoutNoSave(tty.timeout); err != nil {
+		return 0, err
+	}
 	tty.timeout = d
+	return savedTimeout, nil
+}
+
+// SetTimeout sets the read timeout by updating VMIN/VTIME.
+func (tty *TTY) SetTimeoutNoSave(d time.Duration) error {
 	a, err := tcgetattr(tty.fd)
 	if err != nil {
-		return
+		return err
 	}
 	a.Cc[unix.VMIN], a.Cc[unix.VTIME] = timeoutVals(d)
 	tcsetattr(tty.fd, &a)
+	return nil
 }
 
 // Close restores the terminal and closes the file descriptor
@@ -213,7 +227,7 @@ func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
 func (tty *TTY) Key() int {
 	ascii, keyCode, err := asciiAndKeyCode(tty)
 	if err != nil {
-		lastKey = 0
+		tty.lastKey = 0
 		return 0
 	}
 	var key int
@@ -222,11 +236,11 @@ func (tty *TTY) Key() int {
 	} else {
 		key = ascii
 	}
-	if key == lastKey {
-		lastKey = 0
+	if key == tty.lastKey {
+		tty.lastKey = 0
 		return 0
 	}
-	lastKey = key
+	tty.lastKey = key
 	return key
 }
 
@@ -234,7 +248,13 @@ func (tty *TTY) Key() int {
 func (tty *TTY) String() string {
 	bytes := make([]byte, 6)
 	tty.RawMode()
-	tty.SetTimeout(0) // block until data
+
+	savedTimeout, err := tty.SetTimeout(0) // block until data
+	if err != nil {
+		return ""
+	}
+	defer tty.SetTimeout(savedTimeout)
+
 	numRead, err := unix.Read(tty.fd, bytes)
 	if numRead < 0 {
 		numRead = 0
@@ -284,14 +304,19 @@ func (tty *TTY) String() string {
 		}
 		return string(append(bytes[:numRead], bytes2[:numRead2]...))
 	}
-	return string(bytes[:numRead])
 }
 
 // Rune reads a rune, handling special sequences for arrows, Home, End, etc.
 func (tty *TTY) Rune() rune {
 	bytes := make([]byte, 6)
 	tty.RawMode()
-	tty.SetTimeout(0) // block until data
+
+	savedTimeout, err := tty.SetTimeout(0) // block until data
+	if err != nil {
+		return rune(0)
+	}
+	defer tty.SetTimeout(savedTimeout)
+
 	numRead, err := unix.Read(tty.fd, bytes)
 	if numRead < 0 {
 		numRead = 0
@@ -379,9 +404,46 @@ func (tty *TTY) WriteString(s string) error {
 func (tty *TTY) ReadString() (string, error) {
 	var result []byte
 	buf := make([]byte, 128)
-	// Temporarily set a short read timeout
-	tty.SetTimeout(100 * time.Millisecond)
-	defer tty.SetTimeout(tty.timeout)
+
+	// Set a long read timeout
+	d := 100 * time.Millisecond
+	_, err := tty.SetTimeout(d) // block until data
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		n, err := unix.Read(tty.fd, buf)
+		if n < 0 {
+			n = 0
+		}
+		if n > 0 {
+			result = append(result, buf[:n]...)
+		}
+		if err != nil || n == 0 {
+			break
+		}
+	}
+	if len(result) == 0 {
+		return "", errors.New("no data read from TTY")
+	}
+	return string(result), nil
+}
+
+// ReadStringKeepTiming reads all available data from the TTY while preserving
+// the caller's timeout value.
+func (tty *TTY) ReadStringKeepTiming() (string, error) {
+	var result []byte
+	buf := make([]byte, 128)
+
+	// Set a long read timeout
+	d := 100 * time.Millisecond
+	savedTimeout, err := tty.SetTimeout(d) // block until data
+	if err != nil {
+		return "", err
+	}
+	defer tty.SetTimeout(savedTimeout)
+
 	for {
 		n, err := unix.Read(tty.fd, buf)
 		if n < 0 {
@@ -404,7 +466,12 @@ func (tty *TTY) ReadString() (string, error) {
 func (tty *TTY) PrintRawBytes() {
 	bytes := make([]byte, 6)
 	tty.RawMode()
-	tty.SetTimeout(0)
+
+	// block until data
+	if savedTimeout, err := tty.SetTimeout(0); err == nil { // success
+		defer tty.SetTimeout(savedTimeout)
+	}
+
 	numRead, err := unix.Read(tty.fd, bytes)
 	if numRead < 0 {
 		numRead = 0
