@@ -21,7 +21,7 @@ require (
 	github.com/xyproto/binary v1.4.0
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.3.0
-	github.com/xyproto/env/v2 v2.5.5
+	github.com/xyproto/env/v2 v2.5.6
 	github.com/xyproto/files v1.10.6
 	github.com/xyproto/fullname v1.1.0
 	github.com/xyproto/globi v1.0.2
