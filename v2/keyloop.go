@@ -454,10 +454,13 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			// Add a watch
-			if e.debugMode { // AddWatch will start a new gdb session if needed
+			if e.debugMode { // AddWatch will start a new debug session if needed
 				// Ask the user to type in a watch expression
 				if expression, ok := e.UserInput(c, tty, status, "Variable name to watch", "", []string{}, false, ""); ok {
-					if _, err := e.AddWatch(expression); err != nil {
+					if e.debugger == nil {
+						e.debugger = newGDBDebugger(e.mode)
+					}
+					if _, err := e.debugger.AddWatch(expression); err != nil {
 						status.ClearAll(c, true)
 						status.SetError(err)
 						status.ShowNoTimeout(c, e)
@@ -514,12 +517,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			// If in Debug mode, let ctrl-f mean "finish"
 			if e.debugMode {
-				if e.gdb == nil { // success
+				if e.debugger == nil {
 					status.SetMessageAfterRedraw("Not running")
 					break
 				}
 				status.ClearAll(c, false)
-				if err := e.DebugFinish(); err != nil {
+				if err := e.debugger.Finish(); err != nil {
 					e.DebugEnd()
 					status.SetMessage(err.Error())
 					e.GoToEnd(c, nil)
@@ -1048,8 +1051,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 				// If in Debug mode, let ctrl-n mean "next instruction"
 				if e.debugMode {
-					if e.gdb != nil {
-						if !programRunning {
+					if e.debugger != nil {
+						if !e.debugger.ProgramRunning() {
 							e.DebugEnd()
 							status.SetMessage("Program stopped")
 							status.SetMessageAfterRedraw(status.Message())
@@ -1057,7 +1060,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 							e.redrawCursor.Store(true)
 							break
 						}
-						if err := e.DebugNextInstruction(); err != nil {
+						if err := e.debugger.NextInstruction(); err != nil {
 							if errorMessage := err.Error(); strings.Contains(errorMessage, "is not being run") {
 								e.DebugEnd()
 								status.SetMessage("Could not start GDB")
@@ -1069,7 +1072,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 								status.SetMessage(errorMessage)
 							}
 						} else {
-							if !programRunning {
+							if !e.debugger.ProgramRunning() {
 								e.DebugEnd()
 								status.SetMessage("Program stopped when stepping") // Next instruction
 							} else {
@@ -1080,7 +1083,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 						e.redrawCursor.Store(true)
 						status.SetMessageAfterRedraw(status.Message())
 						break
-					} // e.gdb == nil
+					} // e.debugger == nil
 					// Build or export the current file
 					outputExecutable, err := e.BuildOrExport(tty, c, status)
 					// All clear when it comes to status messages and redrawing
@@ -1416,6 +1419,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			if e.debugMode {
 				e.debugStepInto = !e.debugStepInto
+				if e.debugger != nil {
+					e.debugger.SetStepInto(e.debugStepInto)
+				}
 				break
 			}
 
@@ -1984,8 +1990,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
-			if e.debugMode {
-				e.DebugContinue()
+			if e.debugMode && e.debugger != nil {
+				e.debugger.Continue()
 				break
 			}
 
@@ -2322,7 +2328,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			const repositionCursor = false
 			e.DrawWatches(c, repositionCursor)
 			e.DrawRegisters(c, repositionCursor)
-			e.DrawGDBOutput(c, repositionCursor)
+			e.DrawDebugOutput(c, repositionCursor)
 			e.DrawInstructions(c, repositionCursor)
 			e.DrawFlags(c, repositionCursor)
 		}

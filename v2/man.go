@@ -131,8 +131,8 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 	singleSpaceFlagEnd := 0
 	if strings.HasPrefix(trimmedLine, "--") || (strings.HasPrefix(trimmedLine, "-") && len(trimmedLine) > 1 && (unicode.IsLetter(rune(trimmedLine[1])) || unicode.IsDigit(rune(trimmedLine[1])))) {
 		flagPart := trimmedLine
-		if idx := strings.Index(trimmedLine, "  "); idx >= 0 {
-			flagPart = trimmedLine[:idx]
+		if before, _, ok := strings.Cut(trimmedLine, "  "); ok {
+			flagPart = before
 		}
 		if looksLikeFlags(flagPart) {
 			isFlagLine = true

@@ -13,7 +13,6 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/cyrus-and/gdb"
 	"github.com/mattn/go-runewidth"
 	"github.com/xyproto/clip"
 	"github.com/xyproto/env/v2"
@@ -29,7 +28,7 @@ var clearOnQuit atomic.Bool // clear the terminal when quitting the editor, or n
 type Editor struct {
 	detectedTabs       *bool           // were tab or space indentations detected when loading the data?
 	breakpoint         *Position       // for the breakpoint/jump functionality in debug mode
-	gdb                *gdb.Gdb        // connection to gdb, if debugMode is enabled
+	debugger           Debugger        // connection to debugger, if debugMode is enabled
 	sameFilePortal     *Portal         // a portal that points to the same file
 	lines              map[int][]rune  // the contents of the current document
 	macro              *Macro          // the contents of the current macro (will be cleared when esc is pressed)
@@ -97,7 +96,7 @@ func (e *Editor) Copy(withLines bool) *Editor {
 		e2.detectedTabs = &detectedTabsCopy
 	}
 	e2.breakpoint = e.breakpoint         //.Copy()
-	e2.gdb = e.gdb                       //.Copy()
+	e2.debugger = e.debugger             //.Copy()
 	e2.sameFilePortal = e.sameFilePortal //.Copy()
 	if withLines {
 		e2.lines = e.CopyLines()
@@ -2531,7 +2530,7 @@ func (e *Editor) UserInput(c *vt.Canvas, tty *vt.TTY, status *StatusBar, title, 
 			e.DrawRegisters(c, false)    // don't reposition cursor
 			e.DrawInstructions(c, false) // don't reposition cursor
 			e.DrawFlags(c, false)        // don't reposition cursor
-			e.DrawGDBOutput(c, false)    // don't reposition cursor
+			e.DrawDebugOutput(c, false)  // don't reposition cursor
 		}
 		pressed := tty.String()
 		switch pressed {

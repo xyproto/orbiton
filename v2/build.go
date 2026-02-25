@@ -1334,8 +1334,8 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 	}
 
 	// debug stepping
-	if e.debugMode && e.gdb != nil {
-		if !programRunning {
+	if e.debugMode && e.debugger != nil {
+		if !e.debugger.ProgramRunning() {
 			e.DebugEnd()
 			status.SetMessage("Program stopped")
 			e.redrawCursor.Store(true)
@@ -1347,7 +1347,7 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 		// If we have a breakpoint, continue to it
 		if e.breakpoint != nil { // exists
 			// continue forward to the end or to the next breakpoint
-			if err := e.DebugContinue(); err != nil {
+			if err := e.debugger.Continue(); err != nil {
 				// logf("[continue] gdb output: %s\n", gdbOutput)
 				e.DebugEnd()
 				status.SetMessage("Done")
@@ -1356,7 +1356,7 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 				status.SetMessage("Continue")
 			}
 		} else { // if not, make one step
-			err := e.DebugStep()
+			err := e.debugger.Step()
 			if err != nil {
 				if errorMessage := err.Error(); strings.Contains(errorMessage, "is not being run") {
 					e.DebugEnd()
@@ -1518,7 +1518,7 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 		// --- success ---
 
 		// ctrl-space was pressed while in debug mode, and without a debug session running
-		if e.debugMode && e.gdb == nil {
+		if e.debugMode && e.debugger == nil {
 			if err := e.DebugStartSession(c, tty, status, outputExecutable); err != nil {
 				status.ClearAll(c, true)
 				status.SetError(err)

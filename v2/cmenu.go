@@ -204,12 +204,12 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 		actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy text from the bookmark to the cursor", "copymark")
 	}
 
-	if e.debugMode {
-		hasOutputData := len(strings.TrimSpace(gdbOutput.String())) > 0
+	if e.debugMode && e.debugger != nil {
+		hasOutputData := len(strings.TrimSpace(e.debugger.Output())) > 0
 		if hasOutputData {
 			if e.debugHideOutput {
 				actions.Add("Show output pane", func() {
-					e.debugHideOutput = true
+					e.debugHideOutput = false
 				})
 			} else {
 				actions.Add("Hide output pane", func() {
@@ -270,7 +270,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 	}
 
 	// Find the path to either "rust-gdb" or "gdb", depending on the mode, then check if it's there
-	foundGDB := e.findGDB() != ""
+	foundGDB := findGDB(e.mode) != ""
 
 	// Debug mode on/off, if gdb is found and the mode is tested
 	if foundGDB && e.UsingGDBMightWork() {
