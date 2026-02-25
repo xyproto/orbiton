@@ -20,7 +20,7 @@ func (s *State) FullResetRedraw() {
 	c := s.canvas
 
 	// Close and reset the VT terminal
-	vt.Close()
+	vt.CloseKeepContent()
 	vt.Reset()
 	vt.Clear()
 	vt.Init()
