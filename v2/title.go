@@ -6,11 +6,13 @@ import (
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/termtitle"
+	"github.com/xyproto/vt"
 )
 
-// SetTitle sets an appropriate terminal emulator title, unless NO_COLOR or TMUX is set
+// SetTitle sets an appropriate terminal emulator title, unless NO_COLOR is set
+// or the terminal does not support it
 func (fnord *FilenameOrData) SetTitle() {
-	if envNoColor || envTmux {
+	if envNoColor || !vt.XtermLike() {
 		return
 	}
 	title := "?"
@@ -35,7 +37,7 @@ func (fnord *FilenameOrData) SetTitle() {
 // NoTitle will remove the filename title by setting the shell name as the title,
 // if NO_COLOR is not set and the terminal emulator supports it.
 func NoTitle() {
-	if envNoColor {
+	if envNoColor || !vt.XtermLike() {
 		return
 	}
 	shellName := filepath.Base(env.Str("SHELL", "/bin/sh"))

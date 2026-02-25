@@ -71,9 +71,6 @@ var (
 	// Check if NO_COLOR or vt100 is set
 	envNoColor = env.Bool("NO_COLOR") || envVT100
 
-	// Check if TMUX or SCREEN is set
-	envTmux = env.Bool("TMUX") || env.Bool("SCREEN")
-
 	// Arguments given on the command line
 	globalArgs []string
 )
