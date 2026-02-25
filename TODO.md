@@ -2,24 +2,17 @@
 
 ## General
 
-- [ ] Fix blinking text issue when holding down arrow up/down in the Linux console.
-- [ ] Add a couple of test programs that uses various external packages, then test them out within tmux+mosh.
-- [ ] Make it possible to step through Odin programs in debug mode.
-- [ ] Fix odd syntax highlighting for paranthesis and -- when viewing man pages.
-- [ ] Fix the speed of the built-in game.
 - [ ] Fix the syntax highlighting dependency to view strings with `-` as single words for CSS.
-- [ ] Add support for `github.com/xyproto/ollamaclient` as an alternative to or instead of the OpenAI API. The `mistral` model is pretty fast and capable by now.
 - [ ] Do not remove indentation from JS code in HTML when `ctrl-w` is pressed. See: https://github.com/yosssi/gohtml/issues/22
-- [ ] Don't highlight `ran` and `error` when editing Markdown.
 - [ ] Fix and rewrite the multiline string detection for Python and Starlark.
 - [ ] Fix compilation of a single Scala file on macOS.
 - [ ] Fix pasting with midclick, also for multiline strings.
 - [ ] Fix the "jump to matching paren/bracket" feature so that it can jump anywhere in a file.
-- [ ] Let `--ollama` only be used for fixing simple compilation errors.
 - [ ] Searching for a rune like "U+2713" does not work.
 - [ ] Add a `Run` option to the ctrl-o menu that will only build first if needed.
 - [ ] Add syntax highlighting of "<" and ">" in C++.
 - [ ] Have many portal bookmarks. Add a menu option for selecting one of them, deleting all of them or deleting one of them.
+- [ ] Also support running tetris.el?
 - [ ] Make it possible to disable the use of v2/ollama.go at compile time using build tags, for a slightly smaller executable.
 - [ ] When goimport is downloaded, add some info for the user, like the spinner.
 - [ ] For Go and "go to definition", let it be able to also discover packages in the parent directory.
