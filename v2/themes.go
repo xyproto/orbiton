@@ -799,7 +799,7 @@ func NewRedBlackTheme() Theme {
 		HTMLColor:                   vt.LightGray,
 		CommentColor:                vt.DarkGray,
 		BoldColor:                   vt.Red,
-		ItalicsColor:                vt.Black,
+		ItalicsColor:                vt.White,
 		StrikeColor:                 vt.DarkGray,
 		TableColor:                  vt.White,
 		CheckboxColor:               vt.Default,

@@ -378,52 +378,92 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		e.syntaxHighlight = true
 	}
 
-	// Use a light theme if XTERM_VERSION (and not running with "og") or
-	// TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
-	// because $COLORFGBG is "15;0" even though the background is white.
-	if !e.readOnly && (!specificLetter || editTheme || nanoMode) {
-		assumeLightBackground := env.Bool("O_LIGHT")
-		theme := env.StrAlt("O_THEME", "THEME")
-		if envNoColor {
-			theme = ""
-		}
-		switch theme {
-		case "redblack":
-			e.SetTheme(NewRedBlackTheme(), assumeLightBackground)
-		case "synthwave":
-			e.SetTheme(NewSynthwaveTheme(), assumeLightBackground)
-		case "orb":
-			e.SetTheme(NewOrbTheme(), assumeLightBackground)
-		case "teal":
-			e.SetTheme(NewTealTheme(), assumeLightBackground)
-		case "vs":
-			e.setVSTheme(assumeLightBackground)
-		case "litmus":
-			e.SetTheme(NewLitmusTheme(), assumeLightBackground)
-		case "blueedit":
-			e.setBlueEditTheme(assumeLightBackground)
-		case "pinetree":
-			e.SetTheme(NewPinetreeTheme(), assumeLightBackground)
-		case "zulu":
-			e.SetTheme(NewZuluTheme(), assumeLightBackground)
-		case "graymono":
-			envNoColor = false
-			e.setGrayTheme()
-			e.syntaxHighlight = false
-		case "ambermono":
-			envNoColor = false
-			e.setAmberTheme()
-			e.syntaxHighlight = false
-		case "greenmono":
-			envNoColor = false
-			e.setGreenTheme()
-			e.syntaxHighlight = false
-		case "bluemono":
-			envNoColor = false
-			e.setBlueTheme()
-			e.syntaxHighlight = false
-		default:
-			if (env.Has("XTERM_VERSION") && !inVTEGUI && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
+	// Respect explicit theme choice (O_THEME / THEME) and platform defaults (BSD)
+	// even for read-only modes like man pages.
+	assumeLightBackground := env.Bool("O_LIGHT")
+	themeOverride := env.StrAlt("O_THEME", "THEME")
+	if envNoColor {
+		themeOverride = ""
+	}
+	themeWasSet := false
+	switch themeOverride {
+	case "redblack":
+		e.SetTheme(NewRedBlackTheme(), assumeLightBackground)
+		themeWasSet = true
+	case "synthwave":
+		e.SetTheme(NewSynthwaveTheme(), assumeLightBackground)
+		themeWasSet = true
+	case "orb":
+		e.SetTheme(NewOrbTheme(), assumeLightBackground)
+		themeWasSet = true
+	case "teal":
+		e.SetTheme(NewTealTheme(), assumeLightBackground)
+		themeWasSet = true
+	case "vs":
+		e.setVSTheme(assumeLightBackground)
+		themeWasSet = true
+	case "litmus":
+		e.SetTheme(NewLitmusTheme(), assumeLightBackground)
+		themeWasSet = true
+	case "blueedit":
+		e.setBlueEditTheme(assumeLightBackground)
+		themeWasSet = true
+	case "pinetree":
+		e.SetTheme(NewPinetreeTheme(), assumeLightBackground)
+		themeWasSet = true
+	case "zulu":
+		e.SetTheme(NewZuluTheme(), assumeLightBackground)
+		themeWasSet = true
+	case "graymono":
+		envNoColor = false
+		e.setGrayTheme()
+		e.syntaxHighlight = false
+		themeWasSet = true
+	case "ambermono":
+		envNoColor = false
+		e.setAmberTheme()
+		e.syntaxHighlight = false
+		themeWasSet = true
+	case "greenmono":
+		envNoColor = false
+		e.setGreenTheme()
+		e.syntaxHighlight = false
+		themeWasSet = true
+	case "bluemono":
+		envNoColor = false
+		e.setBlueTheme()
+		e.syntaxHighlight = false
+		themeWasSet = true
+	}
+	// Apply BSD platform default if no explicit theme was chosen
+	if !themeWasSet && isBSD {
+		e.SetTheme(NewRedBlackTheme())
+		DisableQuickHelpScreen(nil)
+		clearOnQuit.Store(true)
+		themeWasSet = true
+	}
+	if !themeWasSet && !e.readOnly && (!specificLetter || editTheme || nanoMode) {
+		// Use a light theme if XTERM_VERSION (and not running with "og") or
+		// TERMINAL_EMULATOR is set to "JetBrains-JediTerm",
+		// because $COLORFGBG is "15;0" even though the background is white.
+		if (env.Has("XTERM_VERSION") && !inVTEGUI && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
+			b := true
+			initialLightBackground = &b
+			if editTheme {
+				e.setBlueEditTheme(*initialLightBackground)
+			} else {
+				e.setLightVSTheme()
+			}
+		} else if shell := env.Str("SHELL"); shell != "/usr/local/bin/fish" && (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && !inVTEGUI && filepath.Base(os.Args[0]) != "default" {
+			// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
+			e.SetTheme(NewRedBlackTheme())
+			DisableQuickHelpScreen(nil)
+			clearOnQuit.Store(true)
+		} else if colorString := env.Str("COLORFGBG"); strings.Contains(colorString, ";") {
+			fields := strings.Split(colorString, ";")
+			backgroundColor := fields[len(fields)-1]
+			// 10 (light green), 11 (yellow), 12 (light blue), 13 (light purple), 14 (light cyan) or white
+			if backgroundColorNumber, err := strconv.Atoi(backgroundColor); err == nil && backgroundColorNumber >= 10 {
 				b := true
 				initialLightBackground = &b
 				if editTheme {
@@ -431,41 +471,18 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				} else {
 					e.setLightVSTheme()
 				}
-			} else if isBSD {
-				// NetBSD, FreeBSD, OpenBSD or Dragonfly
-				e.SetTheme(NewRedBlackTheme())
-				DisableQuickHelpScreen(nil)
-				clearOnQuit.Store(true)
-			} else if shell := env.Str("SHELL"); shell != "/usr/local/bin/fish" && (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && !inVTEGUI && filepath.Base(os.Args[0]) != "default" {
-				// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
-				e.SetTheme(NewRedBlackTheme())
-				DisableQuickHelpScreen(nil)
-				clearOnQuit.Store(true)
-			} else if colorString := env.Str("COLORFGBG"); strings.Contains(colorString, ";") {
-				fields := strings.Split(colorString, ";")
-				backgroundColor := fields[len(fields)-1]
-				// 10 (light green), 11 (yellow), 12 (light blue), 13 (light purple), 14 (light cyan) or white
-				if backgroundColorNumber, err := strconv.Atoi(backgroundColor); err == nil && backgroundColorNumber >= 10 {
-					b := true
-					initialLightBackground = &b
-					if editTheme {
-						e.setBlueEditTheme(*initialLightBackground)
-					} else {
-						e.setLightVSTheme()
-					}
-				}
-			} else if discoverBGColor && env.Bool("ORBITON_TRY_BG_QUERY") {
-				// r, g, b is the background color from the current terminal emulator, if available
-				// Checke if the combined value of r, g and b (0..1) is larger than 2
-				// (a bit arbitrary, but should work for most cases)
-				if r, g, b, err := vt.GetBackgroundColor(tty); err == nil && r+g+b > 2 { // success and the background is not dark
-					b := true
-					initialLightBackground = &b
-					if editTheme {
-						e.setBlueEditTheme(*initialLightBackground)
-					} else {
-						e.setLightVSTheme()
-					}
+			}
+		} else if discoverBGColor && env.Bool("ORBITON_TRY_BG_QUERY") {
+			// r, g, b is the background color from the current terminal emulator, if available
+			// Checke if the combined value of r, g and b (0..1) is larger than 2
+			// (a bit arbitrary, but should work for most cases)
+			if r, g, b, err := vt.GetBackgroundColor(tty); err == nil && r+g+b > 2 { // success and the background is not dark
+				b := true
+				initialLightBackground = &b
+				if editTheme {
+					e.setBlueEditTheme(*initialLightBackground)
+				} else {
+					e.setLightVSTheme()
 				}
 			}
 		}
