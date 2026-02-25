@@ -601,7 +601,7 @@ func (e *Editor) SaveAs(c *vt.Canvas, tty *vt.TTY, filename string) error {
 			} else if e.mode == mode.ASCIIDoc || e.mode == mode.Just || e.mode == mode.Make || e.mode == mode.Markdown || e.mode == mode.ReStructured || e.mode == mode.SCDoc {
 				fileMode = 0o644
 				os.Chmod(e.filename, fileMode)
-			} else if baseFilename := filepath.Base(e.filename); baseFilename == "PKGBUILD" || baseFilename == "APKGBUILD" {
+			} else if baseFilename := filepath.Base(e.filename); baseFilename == "PKGBUILD" || baseFilename == "APKBUILD" {
 				fileMode = 0o644
 				os.Chmod(e.filename, fileMode)
 			}

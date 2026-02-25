@@ -355,11 +355,21 @@ func (e *Editor) InsertTemplateProgram(c *vt.Canvas) error {
 		}
 	}
 
+	// If the mode is Shell and this is an APKBUILD, insert an APKBUILD template instead
+	if e.mode == mode.Shell && filepath.Base(e.filename) == "APKBUILD" {
+		fullName := fullname.Get()
+		prog = TemplateProgram{
+			"# Contributor: " + fullName + " <" + env.Email() + ">\n# Maintainer: " + fullName + " <" + env.Email() + ">\npkgname=\npkgver=1.0.0\npkgrel=0\npkgdesc='Example application'\nurl='https://github.com/example/application'\narch='all'\nlicense='MIT'\ndepends=''\nmakedepends=''\nsource=\"$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz\"\nbuilddir=\"$srcdir/$pkgname-$pkgver\"\n\nbuild() {\n\tcd \"$builddir\"\n\tmake\n}\n\ncheck() {\n\tcd \"$builddir\"\n\tmake test\n}\n\npackage() {\n\tcd \"$builddir\"\n\tmake DESTDIR=\"$pkgdir\" install\n}\n\nsha512sums=''\n",
+			9,
+			20,
+		}
+	}
+
 	// If the mode is Shell and this is a PKGBUILD, insert a PKGBUILD template instead
 	if e.mode == mode.Shell && filepath.Base(e.filename) == "PKGBUILD" {
 		fullName := fullname.Get()
 		prog = TemplateProgram{
-			"# Maintainer: " + fullName + " <" + env.Str("EMAIL", "email") + ">\n\npkgname=\npkgver=1.0.0\npkgrel=1\npkgdesc='Example application'\narch=(x86_64)\nurl='https://github.com/example/application'\nlicense=(BSD3)\nmakedepends=(git go)\nsource=(\"git+$url#commit=asdf\") # tag: v1.0.0\nb2sums=(SKIP)\n\nbuild() {\n  cd $pkgname\n  go build -v -mod=vendor -buildmode=pie -trimpath -ldflags=\"-s -w -extldflags \\\"${LDFLAGS}\\\"\"\n}\n\npackage() {\n  install -Dm755 $pkgname/$pkgname \"$pkgdir/usr/bin/$pkgname\"\n  install -Dm644 $pkgname/LICENSE \"$pkgdir/usr/share/licenses/$pkgname/LICENSE\"\n}\n",
+			"# Maintainer: " + fullName + " <" + env.Email() + ">\n\npkgname=\npkgver=1.0.0\npkgrel=1\npkgdesc='Example application'\narch=(x86_64)\nurl='https://github.com/example/application'\nlicense=(BSD3)\nmakedepends=(git go)\nsource=(\"git+$url#commit=asdf\") # tag: v1.0.0\nb2sums=(SKIP)\n\nbuild() {\n  cd $pkgname\n  go build -v -mod=vendor -buildmode=pie -trimpath -ldflags=\"-s -w -extldflags \\\"${LDFLAGS}\\\"\"\n}\n\npackage() {\n  install -Dm755 $pkgname/$pkgname \"$pkgdir/usr/bin/$pkgname\"\n  install -Dm644 $pkgname/LICENSE \"$pkgdir/usr/share/licenses/$pkgname/LICENSE\"\n}\n",
 			8,
 			20,
 		}

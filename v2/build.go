@@ -221,6 +221,28 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 			cmd.Dir = sourceDir
 			return cmd, everythingIsFine, nil
 		}
+	case "APKBUILD":
+		if has("abuild") {
+			s := "abuild -r"
+			// Save and exec / replace the process with syscall.Exec
+			if e.Save(c, tty) == nil { // success
+				// Unlock and save the lock file
+				if absFilename, err := filepath.Abs(e.filename); fileLock != nil && err == nil { // success
+					go func() {
+						quitMut.Lock()
+						defer quitMut.Unlock()
+						fileLock.Unlock(absFilename)
+						fileLock.Save()
+					}()
+				}
+				quitExecShellCommand(tty, sourceDir, s) // The program ends here
+			}
+			// Could not save the file, execute the command in a separate process
+			args := strings.Split(s, " ")
+			cmd = exec.Command(args[0], args[1:]...)
+			cmd.Dir = sourceDir
+			return cmd, everythingIsFine, nil
+		}
 	}
 
 	switch e.mode {
