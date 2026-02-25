@@ -273,9 +273,9 @@ func GetTemplatePrograms() TemplatePrograms {
 				3,
 			},
 			mode.Shell: {
-				"# Maintainer: " + fullName + " <" + env.Str("EMAIL", "email") + ">\n\npkgname=\npkgver=1.0.0\npkgrel=1\npkgdesc='Example application'\narch=(x86_64)\nurl='https://github.com/example/application'\nlicense=(BSD3)\nmakedepends=(git go)\nsource=(\"git+$url#commit=asdf\") # tag: v1.0.0\nb2sums=(SKIP)\n\nbuild() {\n  cd $pkgname\n  go build -v -mod=vendor -buildmode=pie -trimpath -ldflags=\"-s -w -extldflags \\\"${LDFLAGS}\\\"\"\n}\n\npackage() {\n  install -Dm755 $pkgname/$pkgname \"$pkgdir/usr/bin/$pkgname\"\n  install -Dm644 $pkgname/LICENSE \"$pkgdir/usr/share/licenses/$pkgname/LICENSE\"\n}\n",
-				8,
-				20,
+				"#!/bin/bash\n\n",
+				0,
+				0,
 			},
 			// This one is a bit more elaborate than strictly needed
 			mode.StandardML: {
@@ -352,6 +352,16 @@ func (e *Editor) InsertTemplateProgram(c *vt.Canvas) error {
 			"package " + packageName + "\n\nimport (\n\t\"testing\"\n)\n\nfunc TestSomething(t *testing.T) {\n\tt.Fail()\n}\n",
 			7,
 			2,
+		}
+	}
+
+	// If the mode is Shell and this is a PKGBUILD, insert a PKGBUILD template instead
+	if e.mode == mode.Shell && filepath.Base(e.filename) == "PKGBUILD" {
+		fullName := fullname.Get()
+		prog = TemplateProgram{
+			"# Maintainer: " + fullName + " <" + env.Str("EMAIL", "email") + ">\n\npkgname=\npkgver=1.0.0\npkgrel=1\npkgdesc='Example application'\narch=(x86_64)\nurl='https://github.com/example/application'\nlicense=(BSD3)\nmakedepends=(git go)\nsource=(\"git+$url#commit=asdf\") # tag: v1.0.0\nb2sums=(SKIP)\n\nbuild() {\n  cd $pkgname\n  go build -v -mod=vendor -buildmode=pie -trimpath -ldflags=\"-s -w -extldflags \\\"${LDFLAGS}\\\"\"\n}\n\npackage() {\n  install -Dm755 $pkgname/$pkgname \"$pkgdir/usr/bin/$pkgname\"\n  install -Dm644 $pkgname/LICENSE \"$pkgdir/usr/share/licenses/$pkgname/LICENSE\"\n}\n",
+			8,
+			20,
 		}
 	}
 
