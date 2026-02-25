@@ -357,8 +357,10 @@ func (lsp *LSPClient) readResponse(expectedID int, timeout time.Duration) (map[s
 		select {
 		case <-done:
 			if readErr != nil {
+				lsp.mutex.Lock()
 				lsp.running = false
 				lsp.openedURI = ""
+				lsp.mutex.Unlock()
 				return nil, readErr
 			}
 			// server-to-client request — acknowledge it
