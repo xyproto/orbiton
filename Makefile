@@ -5,13 +5,12 @@ GOFLAGS ?= -mod=vendor -trimpath -v -ldflags "-s -w" -buildvcs=false
 GOBUILD := go build
 SRCFILES := $(wildcard go.* v2/*.go v2/go.*)
 
-# macOS and FreeBSD detection
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
   PREFIX ?= /usr/local
   MAKE ?= make
   EXE_EXT :=
-else ifeq ($(UNAME_S),FreeBSD)
+else ifneq (,$(findstring BSD,$(UNAME_S)))
   PREFIX ?= /usr/local
   MAKE ?= gmake
   EXE_EXT :=
