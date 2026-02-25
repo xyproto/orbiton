@@ -826,7 +826,7 @@ retry:
 
 	vt.Init()
 	vt.EchoOff()
-	defer vt.Close()
+	defer vt.CloseKeepContent()
 
 	// The loop time that is aimed for
 	var (

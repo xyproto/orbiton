@@ -2333,7 +2333,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	// Quit everything that has to do with the terminal
 	if clearOnQuit.Load() {
 		vt.Clear()
-		vt.Close()
+		vt.CloseKeepContent()
 	} else {
 		// Clear all status bar messages
 		status.ClearAll(c, false)

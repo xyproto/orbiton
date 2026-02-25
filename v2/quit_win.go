@@ -29,7 +29,7 @@ func quitExecShellCommand(tty *vt.TTY, workDir string, shellCommand string) {
 	vt.Reset()
 	vt.SetNoColor()
 	vt.Clear()
-	vt.Close()
+	vt.CloseKeepContent()
 	vt.ShowCursor(true)
 	vt.SetXY(uint(0), uint(1))
 
@@ -129,7 +129,7 @@ func quitToMan(tty *vt.TTY, workDir, nroffFilename string, w, h uint) error {
 	vt.Reset()
 	vt.SetNoColor()
 	vt.Clear()
-	vt.Close()
+	vt.CloseKeepContent()
 	vt.ShowCursor(true)
 
 	_ = os.Chdir(workDir)
@@ -207,7 +207,7 @@ func quitToNroff(tty *vt.TTY, backupDirectory string, w, h uint) error {
 	vt.Reset()
 	vt.SetNoColor()
 	vt.Clear()
-	vt.Close()
+	vt.CloseKeepContent()
 	vt.ShowCursor(true)
 
 	// Try to find orbiton or o in PATH

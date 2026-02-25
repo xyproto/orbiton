@@ -20,7 +20,7 @@ func displayImage(tty *vt.TTY, c *vt.Canvas, filename string, waitForKeypress bo
 	// Load the given filename
 	nImage, err := LoadImage(filename)
 	if err != nil {
-		vt.Close()
+		vt.CloseKeepContent()
 		return megafile.NoAction, fmt.Errorf("could not load %s: %s", filename, err)
 	}
 
@@ -53,7 +53,7 @@ func displayImage(tty *vt.TTY, c *vt.Canvas, filename string, waitForKeypress bo
 
 	// Draw the image to the canvas, using only the basic 16 colors
 	if err := Draw(c, resizedImage); err != nil {
-		vt.Close()
+		vt.CloseKeepContent()
 		return megafile.NoAction, fmt.Errorf("could not draw image: %s", err)
 	}
 

@@ -29,7 +29,7 @@ func quitExecShellCommand(tty *vt.TTY, workDir string, shellCommand string) {
 	vt.Reset()
 	vt.SetNoColor()
 	vt.Clear()
-	vt.Close()
+	vt.CloseKeepContent()
 	vt.ShowCursor(true)
 	vt.SetXY(uint(0), uint(1))
 	const shellExecutable = "/bin/sh"
@@ -76,7 +76,7 @@ func quitToMan(tty *vt.TTY, workDir, nroffFilename string, w, h uint) error {
 
 	stopBackgroundProcesses()
 
-	vt.Close()
+	vt.CloseKeepContent()
 	vt.SetNoColor()
 	vt.Clear()
 	vt.Reset()
@@ -122,7 +122,7 @@ func quitToNroff(tty *vt.TTY, backupDirectory string, w, h uint) error {
 
 	stopBackgroundProcesses()
 
-	vt.Close()
+	vt.CloseKeepContent()
 	vt.SetNoColor()
 	vt.Clear()
 	vt.Reset()

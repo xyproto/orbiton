@@ -24,7 +24,7 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 		e.SetSearchTerm(c, status, "", false)
 	}
 
-	vt.Close()
+	vt.CloseKeepContent()
 	vt.Reset()
 	vt.Clear()
 	vt.Init()
