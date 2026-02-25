@@ -164,9 +164,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 				}
 			}
 		})
-	}
 
-	if !vsCode {
 		var alsoRun = false
 		var menuItemText = "Export"
 		if ProgrammingLanguage(e.mode) {
@@ -494,16 +492,17 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 		if !e.EmptyLine() {
 			actions.AddCommand(e, c, tty, status, bookmark, undo, "Split line on blanks outside of (), [] or {}", "splitline")
 		}
-		if e.moveLinesMode.Load() {
-			actions.Add("Move the cursor with ctrl-n and ctrl-p", func() {
-				e.moveLinesMode.Store(false)
-				e.cycleFilenames = false
-			})
-		} else {
-			actions.Add("Move lines with ctrl-n and ctrl-p", func() {
-				e.moveLinesMode.Store(true)
-			})
-		}
+	}
+
+	if e.moveLinesMode.Load() {
+		actions.Add("Scroll with ctrl-n and ctrl-p", func() {
+			e.moveLinesMode.Store(false)
+			e.cycleFilenames = false
+		})
+	} else {
+		actions.Add("Move lines with ctrl-n and ctrl-p", func() {
+			e.moveLinesMode.Store(true)
+		})
 	}
 
 	// Only show the menu option for killing the parent process if the parent process is a known search command
