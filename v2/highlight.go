@@ -437,6 +437,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 	}
 
 	highlightCurrentLine := false
+	debugCurrentLine := false
 
 	// buffer for extracting char attributes from strings with terminal codes (will be expanded if it's too small)
 	cc := make([]vt.CharAttribute, 256)
@@ -445,6 +446,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 	for y = LineIndex(0); y < LineIndex(numLinesToDraw); y++ {
 
 		highlightCurrentLine = shouldHighlightNow && int(y) == e.pos.sy
+		debugCurrentLine = e.debugMode && e.debugLine.Load() >= 0 && LineIndex(y+offsetY) == LineIndex(e.debugLine.Load())
 
 		lineRuneCount = 0 // per line rune counter, for drawing spaces afterwards
 
@@ -896,6 +898,10 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 			} else {
 				c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', cw-lineRuneCount)
 			}
+		}
+		// Draw a green left-pointing arrow at the end of the current debug line
+		if debugCurrentLine && xp < cw {
+			c.WriteRuneBNoLock(xp, yp, vt.LightGreen, bg, '←')
 		}
 
 		if noGUI {

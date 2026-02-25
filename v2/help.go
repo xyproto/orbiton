@@ -87,7 +87,8 @@ Flags:
   -x, --noapprox                 Disable approximate filename matching.
   -n, --no-cache                 Avoid writing the location history, search history, highscore,
                                  compilation and format command to ` + cacheDirForDoc + `.
-  -d, --create-dir               When opening a new file, create directories as needed.
+  -d, --debug                    Start the editor in debug mode.
+  -k, --create-dir               When opening a new file, create directories as needed.
   -s, --digraphs                 List all possible digraphs.
   -t, --list                     List the given file using the red/black theme and quit.
   -B, --bat                      List the given file using bat, if it exists in the PATH.

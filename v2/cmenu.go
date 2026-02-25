@@ -176,7 +176,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 			}
 		}
 		actions.Add(menuItemText, func() {
-			e.runAfterBuild = alsoRun
+			e.runAfterBuild.Store(alsoRun)
 			e.Build(c, status, tty)
 		})
 	}

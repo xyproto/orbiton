@@ -48,33 +48,17 @@ func (e *Editor) DebugEnd() {
 		e.debugger.End()
 	}
 	e.debugger = nil
+	e.debugLine.Store(-1)
 	lastDebugOutputLen = 0
 }
 
 // DrawWatches will draw a box with the current watch expressions and values in the upper right
 func (e *Editor) DrawWatches(c *vt.Canvas, repositionCursor bool) {
-	// First create a box the size of the entire canvas
 	canvasBox := NewCanvasBox(c)
-
-	minWidth := 32
-
-	// Window is the background box that will be drawn in the upper right
-	upperRightBox := NewBox()
-	upperRightBox.UpperRightPlacement(canvasBox, minWidth)
 
 	w := int(c.Width())
 	h := int(c.Height())
 
-	// Then create a list box
-	listBox := NewBox()
-
-	marginY := 2
-	if h < 35 {
-		marginY = 1
-	}
-	listBox.FillWithMargins(upperRightBox, 2, marginY)
-
-	// Get the current theme for the watch box
 	bt := e.NewBoxTheme()
 
 	title := "Running"
@@ -87,15 +71,6 @@ func (e *Editor) DrawWatches(c *vt.Canvas, repositionCursor bool) {
 		bt.Background = &e.DebugStoppedBackground
 	}
 
-	upperRightBox.Y--
-	upperRightBox.H++
-	if h > 35 {
-		upperRightBox.H++
-	}
-
-	// Draw the background box
-	e.DrawBox(bt, c, upperRightBox)
-
 	watchMap := make(map[string]string)
 	var lastSeenWatchVariable string
 	if e.debugger != nil {
@@ -103,89 +78,155 @@ func (e *Editor) DrawWatches(c *vt.Canvas, repositionCursor bool) {
 		lastSeenWatchVariable = e.debugger.LastSeenWatch()
 	}
 
-	// Find the available space to draw help text in the upperRightBox
-	availableHeight := max((listBox.H-marginY)-1,
-		// Draw at least two rows of help text, no matter what
-		2)
-	if len(watchMap) == 0 {
-		// Draw the help text, if the screen is wide enough
-		if w > 120 {
-			helpSlice := []string{
-				"ctrl-space : step",
-				"ctrl-n     : next instruction",
-				"ctrl-f     : finish (step out)",
-				"ctrl-r     : run to end",
-				"ctrl-w     : add a watch",
-				"ctrl-p     : reg. pane layout",
-				"ctrl-i     : toggle step into",
-			}
-			if e.debugStepInto {
-				helpSlice[0] = "ctrl-space : step into"
-				helpSlice[1] = "ctrl-n     : next instruction (step into)"
-			}
-			if h < 32 {
-				helpSlice = helpSlice[:availableHeight]
-			}
-			listBox.Y--
-			e.DrawList(bt, c, listBox, helpSlice, -1)
-		} else if w > 80 {
-			narrowHelpSlice := []string{
-				"ctrl-space: step",
-				"ctrl-n: next inst.",
-				"ctrl-f: step out",
-				"ctrl-r: run to end",
-				"ctrl-w: add watch",
-				"ctrl-p: reg. pane",
-				"ctrl-i: toggle into",
-			}
-			if e.debugStepInto {
-				narrowHelpSlice[0] = "ctrl-space: step into"
-				narrowHelpSlice[1] = "ctrl-n: into n. inst."
-			}
-			if h < 32 {
-				narrowHelpSlice = narrowHelpSlice[:availableHeight]
-			}
-			e.DrawList(bt, c, listBox, narrowHelpSlice, -1)
-		}
-	} else {
-		overview := []string{}
-		foundLastSeen := false
-
-		// First add the last seen variable, at the top of the list
-		for k, v := range watchMap {
-			if k == lastSeenWatchVariable {
-				overview = append(overview, k+": "+v)
-				foundLastSeen = true
-				break
-			}
-		}
-
-		// Then add the rest
-		for k, v := range watchMap {
-			if k == lastSeenWatchVariable {
-				// Already added
-				continue
-			}
+	// Determine the content to display
+	var overview []string
+	foundLastSeen := false
+	for k, v := range watchMap {
+		if k == lastSeenWatchVariable {
+			overview = append([]string{k + ": " + v}, overview...)
+			foundLastSeen = true
+		} else {
 			overview = append(overview, k+": "+v)
 		}
+	}
 
-		// Highlight the top item if a debug session is active, and it was changed during this session
+	// Use the same minWidth as the registers box so they align
+	minWidth := 32
+
+	upperRightBox := NewBox()
+	upperRightBox.UpperRightPlacement(canvasBox, minWidth)
+
+	// Calculate the minimum box height: title bar (2) + content rows + bottom margin (1)
+	contentRows := len(overview)
+	if contentRows == 0 {
+		contentRows = 1
+	}
+	minBoxH := contentRows + 4
+
+	// Adjust box height to fit content, clamped to available space
+	if upperRightBox.H < minBoxH {
+		upperRightBox.H = minBoxH
+	}
+	maxH := h - upperRightBox.Y - 1
+	if upperRightBox.H > maxH {
+		upperRightBox.H = maxH
+	}
+
+	// Clamp width
+	if (upperRightBox.X + upperRightBox.W) >= w {
+		upperRightBox.W = w - upperRightBox.X
+	}
+
+	e.DrawBox(bt, c, upperRightBox)
+
+	if len(overview) > 0 {
+		marginY := 2
+		if h < 35 {
+			marginY = 1
+		}
+		listBox := NewBox()
+		listBox.FillWithMargins(upperRightBox, 2, marginY)
+
 		if foundLastSeen && e.debugger != nil {
-			// Draw the list of watches, where the last changed one is highlighted (and at the top)
 			e.DrawList(bt, c, listBox, overview, 0)
 		} else {
-			// Draw the list of watches, with no highlights
 			e.DrawList(bt, c, listBox, overview, -1)
 		}
 	}
 
-	// Draw the title
 	e.DrawTitle(bt, c, upperRightBox, title, true)
 
-	// Blit
 	c.HideCursorAndDraw()
 
-	// Reposition the cursor
+	if repositionCursor {
+		e.EnableAndPlaceCursor(c)
+	}
+}
+
+// DrawDebugKeybindings will draw the debug keybindings in a box in the lower left corner
+func (e *Editor) DrawDebugKeybindings(c *vt.Canvas, repositionCursor bool) {
+	if e.debugHideKeybindings {
+		return
+	}
+	w := int(c.Width())
+	if w < 40 {
+		return
+	}
+
+	helpSlice := []string{
+		"ctrl-space : step over",
+		"ctrl-i     : step into",
+		"ctrl-o     : step out",
+		"ctrl-n     : next instruction",
+		"ctrl-r     : continue",
+		"ctrl-w     : add a watch",
+		"ctrl-p     : reg. pane layout",
+		"ctrl-k     : toggle this box",
+		"ctrl-q     : exit debug mode",
+		"esc        : toggle stdout",
+	}
+	if w <= 120 {
+		helpSlice = []string{
+			"ctrl-space: step over",
+			"ctrl-i: step into",
+			"ctrl-o: step out",
+			"ctrl-n: next inst.",
+			"ctrl-r: continue",
+			"ctrl-w: add watch",
+			"ctrl-p: reg. pane",
+			"ctrl-k: toggle keys",
+			"ctrl-q: exit debug",
+			"esc: toggle stdout",
+		}
+	}
+
+	bt := e.NewBoxTheme()
+	bt.Foreground = &e.BoxTextColor
+	bt.Background = &e.BoxBackground
+
+	// Size the box to fit the help text, with 1 blank line between title and text
+	boxW := 0
+	for _, line := range helpSlice {
+		if lw := len(line) + 6; lw > boxW {
+			boxW = lw
+		}
+	}
+	boxH := len(helpSlice) + 4 // title (2) + blank line (1) + content + bottom margin (1)
+
+	h := int(c.Height())
+
+	// Default position: lower left corner
+	boxY := h - boxH - 1
+
+	// If the instruction pane is visible, move above it or hide
+	if showInstructionPane && e.debugger != nil {
+		instructionTop := int(float64(h) * 0.83)
+		boxY = instructionTop - boxH - 1
+		if boxY < 1 {
+			return // not enough room
+		}
+	}
+
+	if boxY < 0 {
+		boxY = 0
+	}
+
+	box := &Box{
+		X: 3,
+		Y: boxY,
+		W: boxW,
+		H: boxH,
+	}
+
+	e.DrawBox(bt, c, box)
+	e.DrawTitle(bt, c, box, "Keybindings", true)
+
+	listBox := NewBox()
+	listBox.FillWithMargins(box, 2, 2) // top margin of 2 gives 1 blank line after title
+	e.DrawList(bt, c, listBox, helpSlice, -1)
+
+	c.HideCursorAndDraw()
+
 	if repositionCursor {
 		e.EnableAndPlaceCursor(c)
 	}
@@ -490,6 +531,14 @@ func (e *Editor) DrawInstructions(c *vt.Canvas, repositionCursor bool) error {
 	return nil
 }
 
+// debugOutputVisible returns true if the stdout debug pane would be drawn
+func (e *Editor) debugOutputVisible() bool {
+	if e.debugHideOutput || e.debugger == nil {
+		return false
+	}
+	return strings.TrimSpace(e.debugger.Output()) != ""
+}
+
 // DrawDebugOutput will draw a pane with the 5 last lines of the collected stdout output from the debugger
 func (e *Editor) DrawDebugOutput(c *vt.Canvas, repositionCursor bool) {
 	// Check if the output pane should be shown or not
@@ -596,11 +645,17 @@ func (e *Editor) DebugStartSession(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 
 	// Reuse existing debugger to preserve watches, or create a new one
 	if e.debugger == nil {
-		e.debugger = newGDBDebugger(e.mode)
+		if e.mode == mode.Go {
+			e.debugger = newDelveDebugger()
+		} else {
+			e.debugger = newGDBDebugger(e.mode)
+		}
 	}
 
 	lineFunc := func(lineNumber int) {
+		e.debugLine.Store(int64(lineNumber - 1))
 		e.GoToLineNumber(LineNumber(lineNumber), nil, nil, true)
+		e.redraw.Store(true)
 	}
 
 	doneFunc := func() {

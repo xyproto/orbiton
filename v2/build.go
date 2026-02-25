@@ -1356,7 +1356,7 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 				status.SetMessage("Continue")
 			}
 		} else { // if not, make one step
-			err := e.debugger.Step()
+			err := e.debugger.Next()
 			if err != nil {
 				if errorMessage := err.Error(); strings.Contains(errorMessage, "is not being run") {
 					e.DebugEnd()
@@ -1371,7 +1371,7 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 				// Go to the end, no status message
 				e.GoToEnd(c, nil)
 			} else {
-				status.SetMessage("Step")
+				status.SetMessage("Step over")
 			}
 		}
 		e.redrawCursor.Store(true)
@@ -1387,33 +1387,33 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 	e.redraw.Store(false)
 
 	// Require a double ctrl-space when exporting Markdown to HTML, because it is so easy to press by accident
-	if e.mode == mode.Markdown && !e.runAfterBuild {
+	if e.mode == mode.Markdown && !e.runAfterBuild.Load() {
 		return
 	}
 
 	// Run after building, for some modes
-	if e.building && !e.runAfterBuild {
+	if e.building.Load() && !e.runAfterBuild.Load() {
 		if e.CanRun() {
 			status.ClearAll(c, false)
 			const repositionCursorAfterDrawing = true
 			const rightHandSide = true
 			e.DrawOutput(c, 20, "", "Building and running...", e.DebugRegistersBackground, repositionCursorAfterDrawing, rightHandSide)
-			e.runAfterBuild = true
+			e.runAfterBuild.Store(true)
 		}
 		return
 	}
-	if e.building && e.runAfterBuild {
+	if e.building.Load() && e.runAfterBuild.Load() {
 		// do nothing when ctrl-space is pressed more than 2 times when building
 		return
 	}
 
 	// Not building anything right now
 	go func() {
-		e.building = true
+		e.building.Store(true)
 		defer func() {
-			e.building = false
-			if e.runAfterBuild {
-				e.runAfterBuild = false
+			e.building.Store(false)
+			if e.runAfterBuild.Load() {
+				e.runAfterBuild.Store(false)
 
 				doneRunning := false
 				go func() {
@@ -1499,7 +1499,7 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 		status.ClearAll(c, false)
 		if err != nil {
 			// There was an error, so don't run after building after all
-			e.runAfterBuild = false
+			e.runAfterBuild.Store(false)
 			DisableFunctionDescriptionsAfterBuildError()
 			// Error while building
 			status.SetError(err)
@@ -1509,7 +1509,7 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 			return // return from goroutine
 		}
 		// Not building any more
-		e.building = false
+		e.building.Store(false)
 		clearBuildErrorExplanationState()
 		EnableFunctionDescriptions()
 		e.drawFuncName.Store(true)

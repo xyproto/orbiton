@@ -96,6 +96,7 @@ func main() {
 		clearLocksFlag         bool
 		copyFlag               bool
 		createDirectoriesFlag  bool
+		debugModeFlag          bool
 		forceFlag              bool
 		formatFlag             bool
 		helpFlag               bool
@@ -116,14 +117,15 @@ func main() {
 		upsieFlag              bool
 	)
 
-	// Available short options: j k
+	// Available short options: j
 
 	pflag.BoolVarP(&batFlag, "bat", "B", false, "Cat the file with colors instead of editing it, using bat")
 	pflag.BoolVarP(&buildFlag, "build", "b", false, "Try to build the file instead of editing it")
 	pflag.BoolVarP(&catFlag, "list", "t", false, "List the file with colors instead of editing it")
 	pflag.BoolVarP(&clearLocksFlag, "clear-locks", "e", false, "clear all file locks")
 	pflag.BoolVarP(&copyFlag, "copy", "c", false, "copy a file into the clipboard and quit")
-	pflag.BoolVarP(&createDirectoriesFlag, "create-dir", "d", false, "create directories when opening a new file")
+	pflag.BoolVarP(&createDirectoriesFlag, "create-dir", "k", false, "create directories when opening a new file")
+	pflag.BoolVarP(&debugModeFlag, "debug", "d", false, "start in debug mode")
 	pflag.BoolVarP(&forceFlag, "force", "f", false, "open even if already open")
 	pflag.BoolVarP(&formatFlag, "format", "F", false, "Try to format the file instead of editing it")
 	pflag.BoolVarP(&helpFlag, "help", "h", false, "quick overview of hotkeys and flags")
@@ -546,7 +548,7 @@ func main() {
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, nextAction, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, noQuickHelpFlag, formatFlag, escToExitFlag, cycleFilenamesFlag)
+	userMessage, nextAction, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, noQuickHelpFlag, formatFlag, escToExitFlag, cycleFilenamesFlag, debugModeFlag)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	switch nextAction {

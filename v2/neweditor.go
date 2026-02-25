@@ -625,6 +625,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 // * if directories should be created when saving a file if they are missing
 func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight, rainbowParenthesis, monitorAndReadOnly, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, cycleFilenames bool) *Editor {
 	e := &Editor{}
+	e.debugLine.Store(-1)
 	e.SetTheme(theme)
 	e.lines = make(map[int][]rune)
 	e.indentation = indentation

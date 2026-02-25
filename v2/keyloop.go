@@ -149,7 +149,7 @@ func readPasteBurst(tty *vt.TTY) string {
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, fmtFlag, escToExit, cycleFilenames bool) (userMessage string, nextAction megafile.Action, err error) {
+func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, fmtFlag, escToExit, cycleFilenames, debugMode bool) (userMessage string, nextAction megafile.Action, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt.Init()
@@ -243,6 +243,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		e.StatusBackground = vt.BackgroundDefault
 	case mode.ManPage:
 		e.readOnly = true
+	}
+
+	// Enable debug mode if the -d flag was passed
+	if debugMode {
+		e.debugMode = true
 	}
 
 	// Prepare a status bar
@@ -377,6 +382,13 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		e.DrawQuickHelp(c, false)
 	}
 
+	// Draw the debug help box if starting in debug mode
+	if e.debugMode {
+		const repositionCursor = false
+		e.DrawWatches(c, repositionCursor)
+		e.DrawDebugKeybindings(c, repositionCursor)
+	}
+
 	// Place and enable the cursor
 	e.PlaceAndEnableCursor()
 
@@ -421,6 +433,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				const clearPreviousSearch = true
 				const searchForward = false
 				e.SearchMode(c, status, tty, clearPreviousSearch, searchForward, undo)
+				break
+			}
+
+			if e.debugMode {
+				e.debugMode = false
+				e.DebugEnd()
+				e.redraw.Store(true)
+				status.SetMessageAfterRedraw("Normal mode")
 				break
 			}
 
@@ -515,24 +535,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
-			// If in Debug mode, let ctrl-f mean "finish"
-			if e.debugMode {
-				if e.debugger == nil {
-					status.SetMessageAfterRedraw("Not running")
-					break
-				}
-				status.ClearAll(c, false)
-				if err := e.debugger.Finish(); err != nil {
-					e.DebugEnd()
-					status.SetMessage(err.Error())
-					e.GoToEnd(c, nil)
-				} else {
-					status.SetMessage("Finish")
-				}
-				status.SetMessageAfterRedraw(status.Message())
-				break
-			}
-
 			const clearPreviousSearch = true
 			const searchForward = true
 			e.SearchMode(c, status, tty, clearPreviousSearch, searchForward, undo)
@@ -591,7 +593,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 			default:
 				// Then build, and run if ctrl-space was double-tapped
-				e.runAfterBuild = kh.DoubleTapped("c:0")
+				e.runAfterBuild.Store(kh.DoubleTapped("c:0"))
 				// Stop background processes first (if any)
 				stopBackgroundProcesses()
 				// Then build (and run)
@@ -764,7 +766,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.ToggleCommentBlock(c)
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
-		case "c:15": // ctrl-o, launch the command menu
+		case "c:15": // ctrl-o, launch the command menu (or step out in debug mode)
 
 			if e.nanoMode.Load() { // ctrl-o, save
 				// Ask the user which filename to save to
@@ -777,6 +779,24 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					status.SetMessage("Saved nothing")
 					status.Show(c, e)
 				}
+				break
+			}
+
+			if e.debugMode {
+				if e.debugger == nil {
+					status.SetMessageAfterRedraw("Not running")
+					break
+				}
+				status.ClearAll(c, false)
+				if err := e.debugger.Finish(); err != nil {
+					e.DebugEnd()
+					status.SetMessage(err.Error())
+					e.GoToEnd(c, nil)
+				} else {
+					status.SetMessage("Step out")
+				}
+				e.redrawCursor.Store(true)
+				status.SetMessageAfterRedraw(status.Message())
 				break
 			}
 
@@ -1271,13 +1291,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.quit = true
 				break
 			}
-			// Exit debug mode, if active
+			// Toggle the debug stdout pane, if in debug mode
 			if e.debugMode {
-				e.DebugEnd()
-				e.debugMode = false
-				status.SetMessageAfterRedraw("Normal mode")
+				e.debugHideOutput = !e.debugHideOutput
 				e.redraw.Store(true)
-				e.redrawCursor.Store(true)
 				break
 			}
 			// Reset the cut/copy/paste double-keypress detection
@@ -1418,10 +1435,28 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			if e.debugMode {
-				e.debugStepInto = !e.debugStepInto
-				if e.debugger != nil {
-					e.debugger.SetStepInto(e.debugStepInto)
+				if e.debugger == nil {
+					status.SetMessageAfterRedraw("Not running")
+					break
 				}
+				status.ClearAll(c, false)
+				if err := e.debugger.Step(); err != nil {
+					if errorMessage := err.Error(); strings.Contains(errorMessage, "is not being run") {
+						e.DebugEnd()
+						status.SetMessage("Done stepping")
+					} else if err == errProgramStopped {
+						e.DebugEnd()
+						status.SetMessage("Program stopped")
+					} else {
+						e.DebugEnd()
+						status.SetMessage(errorMessage)
+					}
+					e.GoToEnd(c, nil)
+				} else {
+					status.SetMessage("Step into")
+				}
+				e.redrawCursor.Store(true)
+				status.SetMessageAfterRedraw(status.Message())
 				break
 			}
 
@@ -1815,6 +1850,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// Go to the end of the current line
 			e.End(c)
 		case "c:11": // ctrl-k, delete to end of line
+			if e.debugMode {
+				e.debugHideKeybindings = !e.debugHideKeybindings
+				e.redraw.Store(true)
+				break
+			}
 			undo.Snapshot(e)
 			if e.nanoMode.Load() { // nano: ctrl-k, cut line
 				// Prepare to cut
@@ -2331,6 +2371,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.DrawDebugOutput(c, repositionCursor)
 			e.DrawInstructions(c, repositionCursor)
 			e.DrawFlags(c, repositionCursor)
+			// Only show keybindings if the stdout pane is not visible
+			if !e.debugOutputVisible() {
+				e.DrawDebugKeybindings(c, repositionCursor)
+			}
 		}
 
 	} // end of main loop
