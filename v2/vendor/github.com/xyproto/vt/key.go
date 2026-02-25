@@ -378,9 +378,14 @@ func (tty *TTY) NoBlock() {
 	tcsetattr(tty.fd, &a)
 }
 
-// Restore the terminal to its original state
+// Restore the terminal to its original state (flushes pending input)
 func (tty *TTY) Restore() {
 	unix.IoctlSetTermios(tty.fd, ioctlFLUSHSET, &tty.orig)
+}
+
+// RestoreNoFlush restores the terminal to its original state without flushing pending input
+func (tty *TTY) RestoreNoFlush() {
+	unix.IoctlSetTermios(tty.fd, ioctlSETATTR, &tty.orig)
 }
 
 // Flush discards pending input/output

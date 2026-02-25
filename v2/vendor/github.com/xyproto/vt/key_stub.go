@@ -61,6 +61,9 @@ func (tty *TTY) NoBlock() {}
 // Restore the terminal to its original state
 func (tty *TTY) Restore() {}
 
+// RestoreNoFlush restores the terminal to its original state without flushing pending input
+func (tty *TTY) RestoreNoFlush() {}
+
 // Flush flushes the terminal output
 func (tty *TTY) Flush() {}
 

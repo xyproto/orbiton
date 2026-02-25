@@ -565,6 +565,11 @@ func (tty *TTY) Restore() {
 	}
 }
 
+// RestoreNoFlush restores the terminal without flushing pending input
+func (tty *TTY) RestoreNoFlush() {
+	tty.Restore() // Windows Restore does not flush input
+}
+
 // Flush discards pending input/output
 func (tty *TTY) Flush() {
 	// Windows FlushConsoleInputBuffer
