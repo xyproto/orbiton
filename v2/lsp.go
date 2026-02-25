@@ -197,6 +197,13 @@ var lspConfigs = map[mode.Mode]LSPConfig{
 		RootMarkerFiles: []string{"Gemfile", ".ruby-version", ".git"},
 		FileExtensions:  []string{".rb"},
 	},
+	mode.Shell: {
+		Command:         "bash-language-server",
+		Args:            []string{"start"},
+		LanguageID:      "shellscript",
+		RootMarkerFiles: []string{".git"},
+		FileExtensions:  []string{".sh", ".bash"},
+	},
 }
 
 // NewLSPClient creates a new LSP client for the given language server command
@@ -964,7 +971,7 @@ func gatherCodebaseStatistics(workspaceRoot string, fileExtensions []string) map
 }
 
 // sortAndFilterCompletions sorts completions by relevance
-func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspaceRoot string, fileExtensions []string) []LSPCompletionItem {
+func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspaceRoot string, fileExtensions []string, m mode.Mode) []LSPCompletionItem {
 	// Trim whitespace from context
 	context = strings.TrimSpace(context)
 
@@ -1139,6 +1146,11 @@ func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspa
 			}
 		}
 
+		// For shell scripts, boost builtins/keywords over external commands
+		if m == mode.Shell && item.Kind == 14 { // 14 = Keyword (builtins like if, for, echo, elif)
+			score += 600
+		}
+
 		// Penalize complex signatures (more parameters = more complex)
 		if item.Detail != "" {
 			paramCount := strings.Count(item.Detail, ",") + 1
@@ -1308,7 +1320,7 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 		return nil, err
 	}
 
-	items = sortAndFilterCompletions(items, currentLine, workspaceRoot, config.FileExtensions)
+	items = sortAndFilterCompletions(items, currentLine, workspaceRoot, config.FileExtensions, e.mode)
 	if len(items) > maxCompletions {
 		items = items[:maxCompletions]
 	}
@@ -1571,7 +1583,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 			items = filtered
 		}
 
-		items = sortAndFilterCompletions(items, currentLine, workspaceRoot, config.FileExtensions)
+		items = sortAndFilterCompletions(items, currentLine, workspaceRoot, config.FileExtensions, e.mode)
 
 		if len(items) > 0 || !needsWorkspaceSetup(e.mode) {
 			break
@@ -1708,6 +1720,11 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	// fallback for functions/methods/constructors without parameter info
 	if addParens == "" && (items[choice].Kind == 2 || items[choice].Kind == 3 || items[choice].Kind == 4) {
 		addParens = "("
+	}
+
+	// Shell commands take arguments separated by spaces, not parentheses
+	if e.mode == mode.Shell && addParens != "" {
+		addParens = " "
 	}
 
 	var charsToDelete int

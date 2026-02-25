@@ -2,6 +2,8 @@ package main
 
 import (
 	"testing"
+
+	"github.com/xyproto/mode"
 )
 
 func TestCompletionFiltering(t *testing.T) {
@@ -38,7 +40,7 @@ func TestCompletionFiltering(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := sortAndFilterCompletions(tt.items, tt.context, "/tmp/test", []string{".go"})
+			result := sortAndFilterCompletions(tt.items, tt.context, "/tmp/test", []string{".go"}, mode.Go)
 
 			if tt.filtered != "" {
 				for _, item := range result {
@@ -62,7 +64,7 @@ func TestSortingPriority(t *testing.T) {
 		{Label: "StructType", Kind: 22, SortText: "00050"},
 	}
 
-	result := sortAndFilterCompletions(items, "test.", "/tmp/test", []string{".go"})
+	result := sortAndFilterCompletions(items, "test.", "/tmp/test", []string{".go"}, mode.Go)
 
 	if len(result) != len(items) {
 		t.Errorf("Expected %d items, got %d", len(items), len(result))
