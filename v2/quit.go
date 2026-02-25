@@ -96,7 +96,7 @@ func quitToMan(tty *vt.TTY, workDir, nroffFilename string, w, h uint) error {
 	manExecutable := files.WhichCached("man")
 	args := []string{manExecutable}
 
-	if isLinux {
+	if isLinux || isBSD {
 		args = append(args, "-l", nroffFilename)
 	} else {
 		absManPageFilename, err := filepath.Abs(nroffFilename)
