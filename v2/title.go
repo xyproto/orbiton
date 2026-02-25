@@ -8,9 +8,11 @@ import (
 	"github.com/xyproto/termtitle"
 )
 
-// SetTitle sets an appropriate terminal emulator title, unless NO_COLOR is set
+var envTmux = env.Str("TMUX") != ""
+
+// SetTitle sets an appropriate terminal emulator title, unless NO_COLOR or TMUX is set
 func (fnord *FilenameOrData) SetTitle() {
-	if envNoColor {
+	if envNoColor || envTmux {
 		return
 	}
 	title := "?"
