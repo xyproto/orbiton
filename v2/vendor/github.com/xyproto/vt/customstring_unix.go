@@ -13,13 +13,7 @@ import (
 // CustomString reads a key string like String(), but preserves any pending
 // input in the kernel's tty buffer. This is critical for operations like
 // shift-insert paste, where the key escape sequence is immediately followed
-// by paste data — flushing the buffer after reading the key would lose it.
-//
-// Differences from String():
-//   - Saves and restores timeout via SetTimeout instead of Restore()+Flush(),
-//     so the terminal stays in raw mode and pending input is preserved.
-//   - When the first byte is ESC, reads the escape sequence byte-by-byte
-//     to avoid consuming any trailing paste data.
+// by paste data.
 func (tty *TTY) CustomString() string {
 	buf := make([]byte, 1)
 

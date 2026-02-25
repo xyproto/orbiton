@@ -7,33 +7,32 @@ import (
 	"sync"
 )
 
-// ColorRune holds a single terminal cell: its rune, foreground/background colors,
-// whether it has been drawn, and its column width (for wide/CJK characters).
+// ColorRune holds a single terminal cell
 type ColorRune struct {
 	fg    AttributeColor
 	bg    AttributeColor
-	r     rune  // The character to draw
-	drawn bool  // Has been drawn to screen yet?
-	cw    uint8 // Column width: 0=normal(1-col), 1=continuation(skip), 2=wide(2-col)
+	r     rune
+	drawn bool
+	cw    uint8 // 0=normal, 1=continuation (skip), 2=wide (2-col)
 }
 
-// Char is an alias for ColorRune, kept for API stability.
+// Char is an alias for ColorRune, for API stability
 type Char ColorRune
 
-// Canvas holds a 2-D grid of colored characters and manages terminal rendering.
+// Canvas represents a 2D grid of colored characters
 type Canvas struct {
 	mut               *sync.RWMutex
 	chars             []ColorRune
 	oldchars          []ColorRune
 	w                 uint
 	h                 uint
-	cursorVisible     bool // desired cursor visibility
-	termCursorVisible bool // last visibility actually sent to the terminal
+	cursorVisible     bool // desired state
+	termCursorVisible bool // last state sent to terminal
 	lineWrap          bool
 	runewise          bool
 }
 
-// canvasCopy is a Canvas without the mutex, used internally for deep copies.
+// canvasCopy is a Canvas without the mutex
 type canvasCopy struct {
 	chars             []ColorRune
 	oldchars          []ColorRune
@@ -45,7 +44,7 @@ type canvasCopy struct {
 	runewise          bool
 }
 
-// NewCanvas creates a canvas sized to the current terminal dimensions.
+// NewCanvas creates a canvas sized to the current terminal
 func NewCanvas() *Canvas {
 	c := &Canvas{}
 	c.w, c.h = MustTermSize()
@@ -59,12 +58,14 @@ func NewCanvas() *Canvas {
 	c.cursorVisible = false
 	c.termCursorVisible = true // assume visible so flushCursor emits the hide escape
 	c.lineWrap = false
+	c.runewise = multiplexed // use explicit cursor positioning under multiplexers to avoid line-wrap issues
 	c.flushCursor()
 	c.SetLineWrap(c.lineWrap)
 	return c
 }
 
-// Copy creates a deep copy of this Canvas with a fresh mutex.
+// Copy creates a new Canvas struct that is a copy of this one.
+// The mutex is initialized as a new mutex.
 func (c *Canvas) Copy() Canvas {
 	c.mut.RLock()
 	defer c.mut.RUnlock()
@@ -95,7 +96,7 @@ func (c *Canvas) Copy() Canvas {
 	}
 }
 
-// FillBackground sets the background color of every cell on the canvas.
+// FillBackground changes the background color for each character
 func (c *Canvas) FillBackground(bg AttributeColor) {
 	converted := bg.Background()
 	c.mut.Lock()
@@ -106,7 +107,7 @@ func (c *Canvas) FillBackground(bg AttributeColor) {
 	c.mut.Unlock()
 }
 
-// Fill sets the foreground color of every cell on the canvas.
+// Fill changes the foreground color for each character
 func (c *Canvas) Fill(fg AttributeColor) {
 	c.mut.Lock()
 	for i := range c.chars {
@@ -115,7 +116,7 @@ func (c *Canvas) Fill(fg AttributeColor) {
 	c.mut.Unlock()
 }
 
-// String returns the canvas contents as plain text, one row per line.
+// String returns only the characters, as a long string with a newline after each row
 func (c *Canvas) String() string {
 	var sb strings.Builder
 	c.mut.RLock()
@@ -134,8 +135,8 @@ func (c *Canvas) String() string {
 	return sb.String()
 }
 
-// PlotAll renders every cell individually to the terminal.
-// It is very inefficient and is intended as a robust fallback (e.g. for wide characters).
+// PlotAll tries to plot each individual rune.
+// It's very inefficient and meant to be used as a robust fallback.
 func (c *Canvas) PlotAll() {
 	w := c.w
 	h := c.h
@@ -157,22 +158,22 @@ func (c *Canvas) PlotAll() {
 	c.mut.Unlock()
 }
 
-// Size returns the width and height of the canvas.
+// Return the size of the current canvas
 func (c *Canvas) Size() (uint, uint) {
 	return c.w, c.h
 }
 
-// Width returns the canvas width in columns.
+// Width returns the canvas width
 func (c *Canvas) Width() uint {
 	return c.w
 }
 
-// Height returns the canvas height in rows.
+// Height returns the canvas height
 func (c *Canvas) Height() uint {
 	return c.h
 }
 
-// Clear resets every cell's rune to zero and marks all cells as undrawn.
+// Clear canvas
 func (c *Canvas) Clear() {
 	c.mut.Lock()
 	defer c.mut.Unlock()
@@ -182,7 +183,7 @@ func (c *Canvas) Clear() {
 	}
 }
 
-// SetLineWrap enables or disables terminal line-wrapping and records the setting.
+// SetLineWrap enables or disables line wrapping
 func (c *Canvas) SetLineWrap(enable bool) {
 	c.mut.Lock()
 	defer c.mut.Unlock()
@@ -190,7 +191,7 @@ func (c *Canvas) SetLineWrap(enable bool) {
 	SetLineWrap(enable)
 }
 
-// SetShowCursor sets the desired cursor visibility and immediately flushes it to the terminal.
+// SetShowCursor sets the cursor visibility
 func (c *Canvas) SetShowCursor(enable bool) {
 	c.mut.Lock()
 	c.cursorVisible = enable
@@ -198,8 +199,7 @@ func (c *Canvas) SetShowCursor(enable bool) {
 	c.flushCursor()
 }
 
-// HideCursor records that the cursor should be hidden and flushes the change to the terminal.
-// Redundant calls (cursor already hidden) emit no escape sequence.
+// HideCursor hides the cursor. Redundant calls emit no escape.
 func (c *Canvas) HideCursor() {
 	c.mut.Lock()
 	c.cursorVisible = false
@@ -207,8 +207,7 @@ func (c *Canvas) HideCursor() {
 	c.flushCursor()
 }
 
-// ShowCursor records that the cursor should be visible and flushes the change to the terminal.
-// Redundant calls (cursor already visible) emit no escape sequence.
+// ShowCursor shows the cursor. Redundant calls emit no escape.
 func (c *Canvas) ShowCursor() {
 	c.mut.Lock()
 	c.cursorVisible = true
@@ -216,10 +215,8 @@ func (c *Canvas) ShowCursor() {
 	c.flushCursor()
 }
 
-// flushCursor emits the cursor show/hide escape code only when the desired visibility
-// (c.cursorVisible) differs from what was last written to the terminal (c.termCursorVisible).
-// This coalesces redundant show/hide calls — e.g. hide→show→hide emits only one escape.
-// It is called automatically by Draw (and its variants) as well as by HideCursor/ShowCursor.
+// flushCursor emits the cursor escape only when desired != actual state.
+// Coalesces redundant calls, e.g. hide→show→hide emits only one escape.
 func (c *Canvas) flushCursor() {
 	c.mut.Lock()
 	desired := c.cursorVisible
@@ -232,36 +229,35 @@ func (c *Canvas) flushCursor() {
 	ShowCursor(desired)
 }
 
-// SetRunewise enables or disables per-rune rendering (as opposed to full-frame writes).
+// SetRunewise enables or disables per-rune rendering
 func (c *Canvas) SetRunewise(b bool) {
 	c.mut.Lock()
 	defer c.mut.Unlock()
 	c.runewise = b
 }
 
-// W returns the canvas width (acquires read lock).
+// W returns the canvas width
 func (c *Canvas) W() uint {
 	c.mut.RLock()
 	defer c.mut.RUnlock()
 	return c.w
 }
 
-// H returns the canvas height (acquires read lock).
+// H returns the canvas height
 func (c *Canvas) H() uint {
 	c.mut.RLock()
 	defer c.mut.RUnlock()
 	return c.h
 }
 
-// DrawAndSetCursor draws the entire canvas, then places the cursor at (x, y).
+// DrawAndSetCursor draws the entire canvas and then places the cursor at x,y
 func (c *Canvas) DrawAndSetCursor(x, y uint) {
 	c.Draw()
 	SetXY(x, y)
 }
 
 // draw is the shared implementation for Draw and HideCursorAndDraw.
-// When permanentlyHideCursor is true, the cursor is hidden and not restored,
-// matching the behaviour of the old HideCursorAndDraw.
+// When permanentlyHideCursor is true, the cursor stays hidden after drawing.
 func (c *Canvas) draw(permanentlyHideCursor bool) {
 	var (
 		lastfg        = Default
@@ -346,9 +342,7 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 		return
 	}
 
-	// Update desired cursor visibility before drawing, then flush once.
-	// Using direct mutation + flushCursor avoids emitting the escape more than once
-	// even if Draw is called when the cursor is already in the right state.
+	// Hide cursor before drawing, then flush once
 	reEnableCursor := false
 	c.mut.Lock()
 	if permanentlyHideCursor {
@@ -380,7 +374,7 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 		c.mut.Unlock()
 	}
 
-	// Restore cursor if it was only temporarily hidden, again via a single flush.
+	// Restore cursor if it was only temporarily hidden
 	if reEnableCursor {
 		c.mut.Lock()
 		c.cursorVisible = true
@@ -392,7 +386,7 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 		c.SetLineWrap(false)
 	}
 
-	// Save the current state to oldchars for the next frame's diff
+	// Save the current state to oldchars
 	c.mut.Lock()
 	if lc := len(c.chars); len(c.oldchars) != lc {
 		c.oldchars = make([]ColorRune, lc)
@@ -401,17 +395,17 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 	c.mut.Unlock()
 }
 
-// Draw renders the canvas to the terminal, temporarily hiding the cursor if it is visible.
+// Draw the entire canvas
 func (c *Canvas) Draw() {
 	c.draw(false)
 }
 
-// HideCursorAndDraw hides the cursor and renders the canvas; the cursor remains hidden.
+// HideCursorAndDraw hides the cursor and draws the entire canvas
 func (c *Canvas) HideCursorAndDraw() {
 	c.draw(true)
 }
 
-// Redraw marks all cells dirty and re-renders the canvas.
+// Redraw marks all cells dirty and re-renders
 func (c *Canvas) Redraw() {
 	c.mut.Lock()
 	for i := range c.chars {
@@ -421,7 +415,7 @@ func (c *Canvas) Redraw() {
 	c.draw(false)
 }
 
-// HideCursorAndRedraw marks all cells dirty, hides the cursor, and re-renders the canvas.
+// HideCursorAndRedraw marks all cells dirty, hides the cursor, and re-renders
 func (c *Canvas) HideCursorAndRedraw() {
 	c.mut.Lock()
 	for i := range c.chars {
@@ -431,7 +425,7 @@ func (c *Canvas) HideCursorAndRedraw() {
 	c.draw(true)
 }
 
-// RedrawFull forces a full-frame redraw by discarding the previous frame's state.
+// RedrawFull forces a full-frame redraw by discarding the previous frame
 func (c *Canvas) RedrawFull() {
 	c.mut.Lock()
 	for i := range c.chars {
@@ -442,7 +436,7 @@ func (c *Canvas) RedrawFull() {
 	c.draw(false)
 }
 
-// HideCursorAndRedrawFull hides the cursor and forces a full-frame redraw.
+// HideCursorAndRedrawFull hides the cursor and forces a full-frame redraw
 func (c *Canvas) HideCursorAndRedrawFull() {
 	c.mut.Lock()
 	for i := range c.chars {
@@ -453,7 +447,7 @@ func (c *Canvas) HideCursorAndRedrawFull() {
 	c.draw(true)
 }
 
-// At returns the rune at (x, y), or an error if out of bounds.
+// At returns the rune at the given coordinates, or an error if out of bounds
 func (c *Canvas) At(x, y uint) (rune, error) {
 	c.mut.RLock()
 	defer c.mut.RUnlock()
@@ -465,7 +459,7 @@ func (c *Canvas) At(x, y uint) (rune, error) {
 	return chars[index].r, nil
 }
 
-// Plot sets the rune at (x, y) and marks the cell as undrawn.
+// Plot sets the rune at (x, y) and marks the cell as undrawn
 func (c *Canvas) Plot(x, y uint, r rune) {
 	if x >= c.w || y >= c.h {
 		return
@@ -478,7 +472,7 @@ func (c *Canvas) Plot(x, y uint, r rune) {
 	c.mut.Unlock()
 }
 
-// PlotColor sets the rune and foreground color at (x, y).
+// PlotColor sets the rune and foreground color at (x, y)
 func (c *Canvas) PlotColor(x, y uint, fg AttributeColor, r rune) {
 	if x >= c.w || y >= c.h {
 		return
@@ -492,12 +486,12 @@ func (c *Canvas) PlotColor(x, y uint, fg AttributeColor, r rune) {
 	c.mut.Unlock()
 }
 
-// Write is an alias for WriteString, kept for backwards compatibility.
+// Write is an alias for WriteString, for backwards compatibility
 func (c *Canvas) Write(x, y uint, fg, bg AttributeColor, s string) {
 	c.WriteString(x, y, fg, bg, s)
 }
 
-// WriteString writes a string to the canvas starting at (x, y) with the given colors.
+// WriteString will write a string to the canvas
 func (c *Canvas) WriteString(x, y uint, fg, bg AttributeColor, s string) {
 	if x >= c.w || y >= c.h {
 		return
@@ -524,7 +518,7 @@ func (c *Canvas) WriteString(x, y uint, fg, bg AttributeColor, s string) {
 	}
 }
 
-// WriteRune writes a single colored rune to the canvas at (x, y).
+// WriteRune will write a colored rune to the canvas
 func (c *Canvas) WriteRune(x, y uint, fg, bg AttributeColor, r rune) {
 	if x >= c.w || y >= c.h {
 		return
@@ -539,11 +533,8 @@ func (c *Canvas) WriteRune(x, y uint, fg, bg AttributeColor, r rune) {
 	chars[index].drawn = false
 }
 
-// WriteRuneB writes a colored rune to the canvas at (x, y).
-// The "B" suffix signals that bgb is already a background color attribute
-// (i.e. bg.Background() has already been called by the caller), avoiding
-// a redundant conversion on hot paths.
-// x and y must be within bounds (x < c.w and y < c.h).
+// WriteRuneB will write a colored rune to the canvas.
+// The x and y must be within range (x < c.w and y < c.h).
 func (c *Canvas) WriteRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
 	index := y*c.w + x
 	c.mut.Lock()
@@ -551,15 +542,16 @@ func (c *Canvas) WriteRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
 	(*c).chars[index] = ColorRune{fg, bgb, r, false, 0}
 }
 
-// WriteRuneBNoLock is the same as WriteRuneB but does not acquire the canvas mutex.
-// The caller must hold the write lock.
+// WriteRuneBNoLock will write a colored rune to the canvas.
+// The x and y must be within range (x < c.w and y < c.h).
+// The canvas mutex is not locked.
 func (c *Canvas) WriteRuneBNoLock(x, y uint, fg, bgb AttributeColor, r rune) {
 	(*c).chars[y*c.w+x] = ColorRune{fg, bgb, r, false, 0}
 }
 
 // WriteWideRuneB writes a double-width (CJK) rune to the canvas.
-// The cell at (x+1, y) is marked as a continuation cell and skipped during drawing.
-// x+1 must be within bounds.
+// The next cell (x+1) is marked as a continuation cell and skipped during drawing.
+// The x and y must be within range (x+1 < c.w and y < c.h).
 func (c *Canvas) WriteWideRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
 	base := y*c.w + x
 	c.mut.Lock()
@@ -568,16 +560,16 @@ func (c *Canvas) WriteWideRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
 	(*c).chars[base+1] = ColorRune{fg, bgb, 0, false, 1}
 }
 
-// WriteWideRuneBNoLock is the same as WriteWideRuneB but does not acquire the canvas mutex.
-// The caller must hold the write lock.
+// WriteWideRuneBNoLock writes a double-width (CJK) rune to the canvas without locking.
+// The next cell (x+1) is marked as a continuation cell and skipped during drawing.
+// The x and y must be within range (x+1 < c.w and y < c.h).
 func (c *Canvas) WriteWideRuneBNoLock(x, y uint, fg, bgb AttributeColor, r rune) {
 	base := y*c.w + x
 	(*c).chars[base] = ColorRune{fg, bgb, r, false, 2}
 	(*c).chars[base+1] = ColorRune{fg, bgb, 0, false, 1}
 }
 
-// WriteBackground sets the background color of the cell at (x, y).
-// x and y must be within bounds.
+// WriteBackground sets the background color at (x, y)
 func (c *Canvas) WriteBackground(x, y uint, bg AttributeColor) {
 	index := y*c.w + x
 	c.mut.Lock()
@@ -586,8 +578,7 @@ func (c *Canvas) WriteBackground(x, y uint, bg AttributeColor) {
 	(*c).chars[index].drawn = false
 }
 
-// WriteBackgroundAddRuneIfEmpty sets the background color at (x, y) and writes r if the cell is empty.
-// x and y must be within bounds.
+// WriteBackgroundAddRuneIfEmpty sets the background color at (x, y) and writes r if the cell is empty
 func (c *Canvas) WriteBackgroundAddRuneIfEmpty(x, y uint, bg AttributeColor, r rune) {
 	index := y*c.w + x
 	c.mut.Lock()
@@ -599,27 +590,24 @@ func (c *Canvas) WriteBackgroundAddRuneIfEmpty(x, y uint, bg AttributeColor, r r
 	(*c).chars[index].drawn = false
 }
 
-// WriteBackgroundNoLock sets the background color at (x, y) without acquiring the mutex.
-// The caller must hold the write lock.
+// WriteBackgroundNoLock sets the background color at (x, y) without locking
 func (c *Canvas) WriteBackgroundNoLock(x, y uint, bg AttributeColor) {
 	index := y*c.w + x
 	(*c).chars[index].bg = bg
 	(*c).chars[index].drawn = false
 }
 
-// Lock acquires the canvas write lock.
+// Lock the canvas mutex
 func (c *Canvas) Lock() {
 	c.mut.Lock()
 }
 
-// Unlock releases the canvas write lock.
+// Unlock the canvas mutex
 func (c *Canvas) Unlock() {
 	c.mut.Unlock()
 }
 
-// WriteRunesB fills count cells starting at (x, y) with the given colored rune.
-// The "B" suffix signals that bgb is already a background color attribute.
-// x and y must be within bounds; x+count must also be within bounds.
+// WriteRunesB fills count cells starting at (x, y) with the given colored rune
 func (c *Canvas) WriteRunesB(x, y uint, fg, bgb AttributeColor, r rune, count uint) {
 	startIndex := y*c.w + x
 	afterLastIndex := startIndex + count
@@ -631,7 +619,7 @@ func (c *Canvas) WriteRunesB(x, y uint, fg, bgb AttributeColor, r rune, count ui
 	c.mut.Unlock()
 }
 
-// Resize adjusts the canvas to the current terminal size, discarding old content.
+// Resize adjusts the canvas to the current terminal size, discarding old content
 func (c *Canvas) Resize() {
 	w, h := MustTermSize()
 	c.mut.Lock()
@@ -644,8 +632,8 @@ func (c *Canvas) Resize() {
 	}
 }
 
-// Resized checks whether the terminal was resized and, if so, returns a new Canvas
-// with the old content copied in. Returns nil if the size has not changed.
+// Resized checks if the terminal was resized and returns a new Canvas if so.
+// Returns nil if the size has not changed.
 func (c *Canvas) Resized() *Canvas {
 	w, h := MustTermSize()
 	if (w != c.w) || (h != c.h) {

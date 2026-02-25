@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	defaultTimeout = 2 * time.Millisecond
+	defaultTimeout = 100 * time.Millisecond // consistent with Unix VTIME minimum of 1 decisecond
 )
 
 type TTY struct {

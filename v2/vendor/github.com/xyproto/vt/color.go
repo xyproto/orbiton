@@ -7,9 +7,7 @@ import (
 	"sync"
 )
 
-// AttributeColor is a terminal color/attribute value stored as a uint32.
-// The lower 16 bits hold the primary attribute; the upper 16 bits hold an
-// optional secondary attribute packed in by Combine (for fg+bg pairs, etc.).
+// AttributeColor represents a terminal color/attribute value
 type AttributeColor uint32
 
 const (
@@ -62,9 +60,7 @@ var (
 	BackgroundDefault = DefaultBackground
 )
 
-// DarkColorMap maps lowercase color names to AttributeColor values for dark terminals.
-// The tag replacer generates both <name> and <Name> patterns from these keys at
-// initialization time, so title-case duplicates are not stored here.
+// DarkColorMap maps color names to AttributeColor values for dark terminals
 var DarkColorMap = map[string]AttributeColor{
 	"black":        Black,
 	"red":          Red,
@@ -92,9 +88,7 @@ var DarkColorMap = map[string]AttributeColor{
 	"lightgray":    LightGray,
 }
 
-// LightColorMap maps lowercase color names to AttributeColor values for light terminals.
-// The tag replacer generates both <name> and <Name> patterns from these keys at
-// initialization time, so title-case duplicates are not stored here.
+// LightColorMap maps color names to AttributeColor values for light terminals
 var LightColorMap = map[string]AttributeColor{
 	"black":        Black,
 	"red":          LightRed,
@@ -122,7 +116,7 @@ var LightColorMap = map[string]AttributeColor{
 	"darkgray":     DarkGray,
 }
 
-// scache caches the rendered escape sequences for AttributeColor values.
+// scache caches the rendered escape sequences for AttributeColor values
 var scache sync.Map
 
 func (ac AttributeColor) Head() uint32 {
@@ -133,7 +127,7 @@ func (ac AttributeColor) Tail() uint32 {
 	return uint32(ac) >> 8
 }
 
-// Background converts a foreground color attribute to the corresponding background attribute.
+// Background converts a foreground color to the corresponding background attribute
 func (ac AttributeColor) Background() AttributeColor {
 	val := uint32(ac)
 	if val >= 30 && val <= 39 {
@@ -145,7 +139,7 @@ func (ac AttributeColor) Background() AttributeColor {
 	return ac
 }
 
-// String returns the VT100 escape sequence for setting this color/attribute.
+// String returns the VT100 escape sequence for this color/attribute
 func (ac AttributeColor) String() string {
 	val := uint32(ac)
 
@@ -166,43 +160,42 @@ func (ac AttributeColor) String() string {
 	return result
 }
 
-// Wrap returns text wrapped with this color's escape sequence and a trailing reset.
+// Wrap returns text wrapped with this color's escape sequence and a trailing reset
 func (ac AttributeColor) Wrap(text string) string {
 	return ac.String() + text + NoColor
 }
 
-// StartStop is an alias for Wrap.
+// StartStop is an alias for Wrap
 func (ac AttributeColor) StartStop(text string) string {
 	return ac.Wrap(text)
 }
 
-// Get is an alias for Wrap.
+// Get is an alias for Wrap
 func (ac AttributeColor) Get(text string) string {
 	return ac.Wrap(text)
 }
 
-// Start returns the escape sequence followed by text, without resetting attributes.
+// Start returns the escape sequence followed by text, without resetting
 func (ac AttributeColor) Start(text string) string {
 	return ac.String() + text
 }
 
-// Stop returns text followed by the reset escape sequence.
+// Stop returns text followed by the reset escape sequence
 func (ac AttributeColor) Stop(text string) string {
 	return text + NoColor
 }
 
-// Output prints text with this color to stdout, followed by a newline.
+// Output prints text with this color to stdout, followed by a newline
 func (ac AttributeColor) Output(text string) {
 	fmt.Println(ac.Wrap(text))
 }
 
-// Error prints text with this color to stderr, followed by a newline.
+// Error prints text with this color to stderr, followed by a newline
 func (ac AttributeColor) Error(text string) {
 	fmt.Fprintln(os.Stderr, ac.Wrap(text))
 }
 
-// Combine packs two AttributeColor values into one, storing the secondary
-// in the upper 16 bits so that String() can emit a combined escape sequence.
+// Combine packs two AttributeColor values into one
 func (ac AttributeColor) Combine(other AttributeColor) AttributeColor {
 	if ac == 0 {
 		return other
@@ -217,7 +210,7 @@ func (ac AttributeColor) Combine(other AttributeColor) AttributeColor {
 	return AttributeColor(val1 | (val2 << 16))
 }
 
-// Bright returns a new AttributeColor with the Bright attribute combined in.
+// Bright returns a new AttributeColor with the Bright attribute combined in
 func (ac AttributeColor) Bright() AttributeColor {
 	return ac.Combine(Bright)
 }

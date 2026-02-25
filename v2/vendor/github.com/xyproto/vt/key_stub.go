@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	defaultTimeout = 2 * time.Millisecond
+	defaultTimeout = 100 * time.Millisecond // VTIME resolution is 1 decisecond; anything less clamps to 100ms
 )
 
 // StubTerm is a stub for term.Term on unsupported platforms
