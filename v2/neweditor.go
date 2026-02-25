@@ -434,6 +434,8 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		e.setBlueTheme()
 		e.syntaxHighlight = false
 		themeWasSet = true
+	case "default":
+		themeWasSet = true
 	}
 	// Apply BSD platform default if no explicit theme was chosen
 	if !themeWasSet && isBSD {
