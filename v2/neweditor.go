@@ -154,6 +154,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 
 		if *parentIsMan {
 			e.mode = mode.ManPage
+			e.binaryFile = false
 		}
 
 		// Detect the file mode if the current editor mode is blank, or Prolog (since it could be Perl)
@@ -263,6 +264,12 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 			return e, "", false, megafile.NoAction, err
 		}
 
+		// Man page output contains backspace characters for nroff formatting,
+		// which causes binary detection to trigger. Override it.
+		if e.mode == mode.ManPage {
+			e.binaryFile = false
+		}
+
 		if !e.Empty() {
 			// Detect the file mode if the current editor mode is blank (or Prolog, since it could be Perl)
 			// Markdown is set by default for some files.
@@ -275,6 +282,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				}
 				if *parentIsMan {
 					e.mode = mode.ManPage
+					e.binaryFile = false
 				} else {
 					if m, found := mode.DetectFromContents(e.mode, firstLine, e.String); found {
 						e.mode = m
