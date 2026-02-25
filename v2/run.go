@@ -60,8 +60,11 @@ func (e *Editor) Run() (string, bool, error) {
 		cmd = exec.Command("java", "-jar", jarName)
 	case mode.Go:
 		if strings.HasSuffix(sourceFilename, "_test.go") {
-			// TODO: go test . -run NameOfTest and fetch NameOfTest from the test function that the cursor is within, if available
-			cmd = exec.Command("go", "test", ".")
+			if testName := e.FindCurrentFunctionName(); strings.HasPrefix(testName, "Test") {
+				cmd = exec.Command("go", "test", "-run", "^"+testName+"$", ".")
+			} else {
+				cmd = exec.Command("go", "test", ".")
+			}
 		} else if files.Exists("go.mod") {
 			cmd = exec.Command("go", "run", ".")
 		} else {
