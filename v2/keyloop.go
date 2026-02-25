@@ -804,6 +804,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			undo.Snapshot(e)
 			undoBackup := undo
 			selectedIndex, spacePressed := e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
+			c.HideCursorAndRedrawFull()
 			c.ShowCursor()
 			lastCommandMenuIndex = selectedIndex
 			if spacePressed {
@@ -2309,6 +2310,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			undo.Snapshot(e)
 			undoBackup := undo
 			selectedIndex, _ := e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
+			c.HideCursorAndRedrawFull()
 			c.ShowCursor()
 			lastCommandMenuIndex = selectedIndex
 			undo = undoBackup
