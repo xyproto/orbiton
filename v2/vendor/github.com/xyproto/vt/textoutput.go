@@ -351,7 +351,13 @@ func (o *TextOutput) ExtractToSlice(s string, pcc *[]CharAttribute) uint {
 		case r == '\033':
 			escaped = true
 		case escaped && r != 'm':
-			colorcode.WriteRune(r)
+			if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') {
+				// A letter other than 'm' terminates a non-SGR escape sequence; discard it
+				colorcode.Reset()
+				escaped = false
+			} else {
+				colorcode.WriteRune(r)
+			}
 		default:
 			if counter >= uint(len(*pcc)) {
 				// Extend the slice
