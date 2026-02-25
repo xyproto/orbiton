@@ -58,7 +58,6 @@ type Editor struct {
 	flaskApplication           atomic.Bool // Python + Flask
 	moveLinesMode              atomic.Bool // move lines up and down with ctrl-p and ctrl-n, when enabled
 	rainbowParenthesis         bool        // rainbow parenthesis
-	sshMode                    bool        // is o used over ssh, tmux or screen, in a way that usually requires extra redrawing?
 	debugMode                  bool        // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
 	statusMode                 bool        // display a status bar at all times at the bottom of the screen
 	showColumnLimit            bool        // show the line where the wrapWidth is (at 79 by default)
@@ -120,7 +119,6 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.lineBeforeSearch = e.lineBeforeSearch
 	e2.playBackMacroCount = e.playBackMacroCount
 	e2.rainbowParenthesis = e.rainbowParenthesis
-	e2.sshMode = e.sshMode
 	e2.debugMode = e.debugMode
 	e2.statusMode = e.statusMode
 	e2.showColumnLimit = e.showColumnLimit

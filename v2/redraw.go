@@ -40,7 +40,7 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 	}
 
 	if drawLines {
-		e.HideCursorDrawLines(c, true, e.sshMode, shouldHighlightCurrentLine)
+		e.HideCursorDrawLines(c, true, false, shouldHighlightCurrentLine)
 	}
 
 	// Assign the new canvas to the current canvas
@@ -64,22 +64,11 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 	}
 
 	if drawLines {
-		e.HideCursorDrawLines(c, true, e.sshMode, shouldHighlightCurrentLine)
+		e.HideCursorDrawLines(c, true, false, shouldHighlightCurrentLine)
 	}
 
-	if e.sshMode {
-		// TODO: Figure out why this helps doing a full redraw when o is used over ssh
-		// Go to the line we were at
-		e.ScrollUp(c, nil, e.pos.scrollSpeed)
-		e.HideCursorDrawLines(c, true, true, shouldHighlightCurrentLine)
-		canvasHeight := int(c.Height())
-		e.ScrollDown(c, nil, e.pos.scrollSpeed, canvasHeight)
-		e.redraw.Store(true)
-		e.redrawCursor.Store(true)
-	} else {
-		e.redraw.Store(false)
-		e.redrawCursor.Store(false)
-	}
+	e.redraw.Store(false)
+	e.redrawCursor.Store(false)
 
 	e.pos = savePos
 }
@@ -87,8 +76,8 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 // RedrawIfNeeded will redraw the text on the canvas if e.redraw is set
 func (e *Editor) RedrawIfNeeded(c *vt.Canvas, shouldHighlight bool) {
 	if e.redraw.Load() {
-		respectOffset := true
-		redrawCanvas := e.sshMode
+		const respectOffset = true
+		const redrawCanvas = false
 		e.HideCursorDrawLines(c, respectOffset, redrawCanvas, shouldHighlight)
 		e.redraw.Store(false)
 	}
@@ -168,13 +157,9 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 
 	// Check if an extra reset is needed
 	shouldHighlightCurrentLine := e.highlightCurrentLine || e.highlightCurrentText
-	if e.sshMode {
-		drawLines := true
-		e.FullResetRedraw(c, status, drawLines, shouldHighlightCurrentLine)
-	} else {
-		// Draw the editor lines, respect the offset (true) and redraw (true)
-		e.RedrawIfNeeded(c, shouldHighlightCurrentLine)
-	}
+
+	// Draw the editor lines, respect the offset (true) and redraw (true)
+	e.RedrawIfNeeded(c, shouldHighlightCurrentLine)
 
 	// Display the status message
 	if e.nanoMode.Load() {

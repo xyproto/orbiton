@@ -536,9 +536,6 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		e.redraw.Store(false)
 	}
 
-	// If SSH_TTY or TMUX is set, redraw everything and then display the status message
-	e.sshMode = !inVTEGUI && ((env.Str("SSH_TTY") != "" || env.Str("TMUX") != "" || strings.Contains(env.Str("TERMCAP"), "|screen.")) && !env.Bool("NO_SSH_MODE"))
-
 	// Craft an appropriate status message
 	if createdNewFile {
 		statusMessage = "New " + e.filename
