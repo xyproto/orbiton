@@ -2275,6 +2275,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			status.ClearAll(c, false)
 		}
 
+		// Disable filename cycling if 3 arrow keys have been pressed in a row
+		if e.cycleFilenames && kh.OnlyIn(upArrow, downArrow, leftArrow, rightArrow) {
+			e.cycleFilenames = false
+		}
+
 		const arrowKeyHighlightTime = 1200 * time.Millisecond
 		justMovedByKeypress := key == upArrow || key == downArrow || key == leftArrow || key == rightArrow || key == pgUpKey || key == pgDnKey || key == homeKey || key == endKey || key == "c:1" || key == "c:2" || key == "c:5" || key == "c:6" || key == "c:12" || key == "c:14" || key == "c:16" || key == "c:25"
 
