@@ -528,10 +528,28 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// This is only to have a minimum amount of display time for the message.
 			status.HoldMessage(c, 250*time.Millisecond)
 
-		case "c:6": // ctrl-f, search for a string
+		case "c:6": // ctrl-f, search for a string (or step out in debug mode)
 
 			if e.nanoMode.Load() { // nano: ctrl-f, cursor forward
 				e.CursorForward(c, status)
+				break
+			}
+
+			if e.debugMode {
+				if e.debugger == nil {
+					status.SetMessageAfterRedraw("Not running")
+					break
+				}
+				status.ClearAll(c, false)
+				if err := e.debugger.Finish(); err != nil {
+					e.DebugEnd()
+					status.SetMessage(err.Error())
+					e.GoToEnd(c, nil)
+				} else {
+					status.SetMessage("Step out")
+				}
+				e.redrawCursor.Store(true)
+				status.SetMessageAfterRedraw(status.Message())
 				break
 			}
 
@@ -766,7 +784,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.ToggleCommentBlock(c)
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
-		case "c:15": // ctrl-o, launch the command menu (or step out in debug mode)
+		case "c:15": // ctrl-o, launch the command menu
 
 			if e.nanoMode.Load() { // ctrl-o, save
 				// Ask the user which filename to save to
@@ -779,24 +797,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					status.SetMessage("Saved nothing")
 					status.Show(c, e)
 				}
-				break
-			}
-
-			if e.debugMode {
-				if e.debugger == nil {
-					status.SetMessageAfterRedraw("Not running")
-					break
-				}
-				status.ClearAll(c, false)
-				if err := e.debugger.Finish(); err != nil {
-					e.DebugEnd()
-					status.SetMessage(err.Error())
-					e.GoToEnd(c, nil)
-				} else {
-					status.SetMessage("Step out")
-				}
-				e.redrawCursor.Store(true)
-				status.SetMessageAfterRedraw(status.Message())
 				break
 			}
 

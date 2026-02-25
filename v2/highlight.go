@@ -899,9 +899,23 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 				c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', cw-lineRuneCount)
 			}
 		}
-		// Draw a green left-pointing arrow at the end of the current debug line
-		if debugCurrentLine && xp < cw {
-			c.WriteRuneBNoLock(xp, yp, vt.LightGreen, bg, '←')
+		// Draw a green left-pointing arrow after the current debug line
+		if debugCurrentLine && xp+1 < cw {
+			indicatorColor := e.DebugLineIndicator
+			if useASCII {
+				if xp+5 < cw {
+					c.WriteRuneBNoLock(xp+1, yp, indicatorColor, bg, '<')
+					c.WriteRuneBNoLock(xp+2, yp, indicatorColor, bg, '-')
+					c.WriteRuneBNoLock(xp+3, yp, indicatorColor, bg, '-')
+					c.WriteRuneBNoLock(xp+4, yp, indicatorColor, bg, '-')
+				}
+			} else {
+				if xp+4 < cw {
+					c.WriteRuneBNoLock(xp+1, yp, indicatorColor, bg, '◀')
+					c.WriteRuneBNoLock(xp+2, yp, indicatorColor, bg, '─')
+					c.WriteRuneBNoLock(xp+3, yp, indicatorColor, bg, '─')
+				}
+			}
 		}
 
 		if noGUI {

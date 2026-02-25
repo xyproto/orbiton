@@ -26,6 +26,7 @@ var (
 	prevFlags                []string
 	longInstructionPaneWidth int // should the instruction pane be extra wide, if so, how wide?
 	lastDebugOutputLen       int
+	watchesBoxBottom         int // bottom Y of the watches/Running box, for positioning the registers box below it
 )
 
 // DebugActivateBreakpoint sends break-insert to gdb together with the breakpoint in e.breakpoint, if available
@@ -119,6 +120,9 @@ func (e *Editor) DrawWatches(c *vt.Canvas, repositionCursor bool) {
 
 	e.DrawBox(bt, c, upperRightBox)
 
+	// Store the bottom Y so the registers box can be positioned below
+	watchesBoxBottom = upperRightBox.Y + upperRightBox.H
+
 	if len(overview) > 0 {
 		marginY := 2
 		if h < 35 {
@@ -156,7 +160,7 @@ func (e *Editor) DrawDebugKeybindings(c *vt.Canvas, repositionCursor bool) {
 	helpSlice := []string{
 		"ctrl-space : step over",
 		"ctrl-i     : step into",
-		"ctrl-o     : step out",
+		"ctrl-f     : step out",
 		"ctrl-n     : next instruction",
 		"ctrl-r     : continue",
 		"ctrl-w     : add a watch",
@@ -169,7 +173,7 @@ func (e *Editor) DrawDebugKeybindings(c *vt.Canvas, repositionCursor bool) {
 		helpSlice = []string{
 			"ctrl-space: step over",
 			"ctrl-i: step into",
-			"ctrl-o: step out",
+			"ctrl-f: step out",
 			"ctrl-n: next inst.",
 			"ctrl-r: continue",
 			"ctrl-w: add watch",
@@ -332,6 +336,14 @@ func (e *Editor) DrawRegisters(c *vt.Canvas, repositionCursor bool) error {
 		title = "Changed registers"
 		// narrow box
 		lowerRightBox.LowerRightPlacement(canvasBox, minWidth)
+		// Position 1 line below the watches box, if there is room
+		if watchesBoxBottom > 0 && watchesBoxBottom+1 < canvasBox.H {
+			desiredY := watchesBoxBottom + 1
+			if desiredY > lowerRightBox.Y {
+				lowerRightBox.H -= desiredY - lowerRightBox.Y
+			}
+			lowerRightBox.Y = desiredY
+		}
 		if showInstructionPane {
 			lowerRightBox.H = int(float64(lowerRightBox.H) * 0.9)
 		}
