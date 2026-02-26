@@ -114,6 +114,7 @@ symlinks:
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
 	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/osudo"
 	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/vs"
+	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/obuild"
 
 # For pico/nano style editing
 nano-symlink:
