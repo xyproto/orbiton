@@ -180,6 +180,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		markdownTableEditorCounter int // the number of times the Markdown table editor has been displayed
 
+		debugEscCounter int // for counting consecutive esc presses in debug mode
+
 		highlightTimerCounter atomic.Uint64
 		highlightTimerMut     sync.Mutex
 
@@ -426,6 +428,15 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			goto AFTER_KEY_HANDLING
 		}
 
+		if e.debugMode && key != "c:27" {
+			debugEscCounter = 0
+		}
+
+		// Handle debug-mode keys in a separate function
+		if e.debugMode && e.handleDebugKey(key, c, tty, status, &debugEscCounter, undo) {
+			goto AFTER_KEY_HANDLING
+		}
+
 		switch key {
 		case "c:17": // ctrl-q, quit
 
@@ -433,14 +444,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				const clearPreviousSearch = true
 				const searchForward = false
 				e.SearchMode(c, status, tty, clearPreviousSearch, searchForward, undo)
-				break
-			}
-
-			if e.debugMode {
-				e.debugMode = false
-				e.DebugEnd()
-				e.redraw.Store(true)
-				status.SetMessageAfterRedraw("Normal mode")
 				break
 			}
 
@@ -470,23 +473,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			} else if e.mode == mode.Markdown && !kh.PrevIs("c:23") {
 				e.GoToStartOfTextLine(c)
 				e.FormatAllMarkdownTables()
-				break
-			}
-
-			// Add a watch
-			if e.debugMode { // AddWatch will start a new debug session if needed
-				// Ask the user to type in a watch expression
-				if expression, ok := e.UserInput(c, tty, status, "Variable name to watch", "", []string{}, false, ""); ok {
-					if e.debugger == nil {
-						e.debugger = newGDBDebugger(e.mode)
-					}
-					if _, err := e.debugger.AddWatch(expression); err != nil {
-						status.ClearAll(c, true)
-						status.SetError(err)
-						status.ShowNoTimeout(c, e)
-						break
-					}
-				}
 				break
 			}
 
@@ -532,24 +518,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			if e.nanoMode.Load() { // nano: ctrl-f, cursor forward
 				e.CursorForward(c, status)
-				break
-			}
-
-			if e.debugMode {
-				if e.debugger == nil {
-					status.SetMessageAfterRedraw("Not running")
-					break
-				}
-				status.ClearAll(c, false)
-				if err := e.debugger.Finish(); err != nil {
-					e.DebugEnd()
-					status.SetMessage(err.Error())
-					e.GoToEnd(c, nil)
-				} else {
-					status.SetMessage("Step out")
-				}
-				e.redrawCursor.Store(true)
-				status.SetMessageAfterRedraw(status.Message())
 				break
 			}
 
@@ -784,7 +752,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.ToggleCommentBlock(c)
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
-		case "c:15": // ctrl-o, launch the command menu
+		case "c:15": // ctrl-o, launch the command menu (or step over in debug mode)
 
 			if e.nanoMode.Load() { // ctrl-o, save
 				// Ask the user which filename to save to
@@ -974,14 +942,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			if !e.nanoMode.Load() {
-				if e.debugMode {
-					// e.showRegisters has three states, 0 (SmallRegisterWindow), 1 (LargeRegisterWindow) and 2 (NoRegisterWindow)
-					e.debugShowRegisters++
-					if e.debugShowRegisters > noRegisterWindow {
-						e.debugShowRegisters = smallRegisterWindow
-					}
-					break
-				}
 				e.UseStickySearchTerm()
 				if e.SearchTerm() != "" {
 					// Go to previous match
@@ -1070,85 +1030,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			if !e.nanoMode.Load() {
 
-				// If in Debug mode, let ctrl-n mean "next instruction"
-				if e.debugMode {
-					if e.debugger != nil {
-						if !e.debugger.ProgramRunning() {
-							e.DebugEnd()
-							status.SetMessage("Program stopped")
-							status.SetMessageAfterRedraw(status.Message())
-							e.redraw.Store(true)
-							e.redrawCursor.Store(true)
-							break
-						}
-						if err := e.debugger.NextInstruction(); err != nil {
-							if errorMessage := err.Error(); strings.Contains(errorMessage, "is not being run") {
-								e.DebugEnd()
-								status.SetMessage("Could not start GDB")
-							} else if err == errProgramStopped {
-								e.DebugEnd()
-								status.SetMessage("Program stopped, could not step")
-							} else { // got an unrecognized error
-								e.DebugEnd()
-								status.SetMessage(errorMessage)
-							}
-						} else {
-							if !e.debugger.ProgramRunning() {
-								e.DebugEnd()
-								status.SetMessage("Program stopped when stepping") // Next instruction
-							} else {
-								// Don't show a status message per instruction/step when pressing ctrl-n
-								break
-							}
-						}
-						e.redrawCursor.Store(true)
-						status.SetMessageAfterRedraw(status.Message())
-						break
-					} // e.debugger == nil
-					// Build or export the current file
-					outputExecutable, err := e.BuildOrExport(tty, c, status)
-					// All clear when it comes to status messages and redrawing
-					status.ClearAll(c, false)
-					if err != nil && err != errNoSuitableBuildCommand {
-						// Error while building
-						status.SetError(err)
-						status.ShowNoTimeout(c, e)
-						e.debugMode = false
-						e.redrawCursor.Store(true)
-						e.redraw.Store(true)
-						break
-					}
-					// Was no suitable compilation or export command found?
-					if err == errNoSuitableBuildCommand {
-						// status.ClearAll(c)
-						if e.debugMode {
-							// Both in debug mode and can not find a command to build this file with.
-							status.SetError(err)
-							status.ShowNoTimeout(c, e)
-							e.debugMode = false
-							e.redrawCursor.Store(true)
-							e.redraw.Store(true)
-							break
-						}
-						// Building this file extension is not implemented yet.
-						// Just display the current time and word count.
-						// TODO: status.ClearAll() should have cleared the status bar first, but this is not always true,
-						//       which is why the message is hackily surrounded by spaces. Fix.
-						statsMessage := fmt.Sprintf("    %d words, %s    ", e.WordCount(), time.Now().Format("15:04")) // HH:MM
-						status.SetMessage(statsMessage)
-						status.Show(c, e)
-						e.redrawCursor.Store(true)
-						break
-					}
-					// Start debugging
-					if err := e.DebugStartSession(c, tty, status, outputExecutable); err != nil {
-						status.ClearAll(c, false)
-						status.SetError(err)
-						status.ShowNoTimeout(c, e)
-						e.redrawCursor.Store(true)
-					}
-					break
-				}
 				e.UseStickySearchTerm()
 				if e.SearchTerm() != "" {
 					// Go to next match
@@ -1292,12 +1173,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.quit = true
 				break
 			}
-			// Toggle the debug stdout pane, if in debug mode
-			if e.debugMode {
-				e.debugHideOutput = !e.debugHideOutput
-				e.redraw.Store(true)
-				break
-			}
 			// Reset the cut/copy/paste double-keypress detection
 			lastCopyY = -1
 			lastPasteY = -1
@@ -1432,32 +1307,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					}
 					status.SetMessageAfterRedraw(msg)
 				}
-				break
-			}
-
-			if e.debugMode {
-				if e.debugger == nil {
-					status.SetMessageAfterRedraw("Not running")
-					break
-				}
-				status.ClearAll(c, false)
-				if err := e.debugger.Step(); err != nil {
-					if errorMessage := err.Error(); strings.Contains(errorMessage, "is not being run") {
-						e.DebugEnd()
-						status.SetMessage("Done stepping")
-					} else if err == errProgramStopped {
-						e.DebugEnd()
-						status.SetMessage("Program stopped")
-					} else {
-						e.DebugEnd()
-						status.SetMessage(errorMessage)
-					}
-					e.GoToEnd(c, nil)
-				} else {
-					status.SetMessage("Step into")
-				}
-				e.redrawCursor.Store(true)
-				status.SetMessageAfterRedraw(status.Message())
 				break
 			}
 
@@ -1668,9 +1517,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if spellCheckFunc, err := e.CommandToFunction(c, tty, status, bookmark, undo, "insertdateandtime"); err == nil { // success
 				spellCheckFunc()
 			}
-		case "c:19": // ctrl-s, save (or step, if in debug mode)
+		case "c:19": // ctrl-s, save (or toggle stdout in debug mode)
 			e.UserSave(c, tty, status)
-		case "c:7": // ctrl-g, either go to definition OR jump to matching parent/bracket OR toggle the status bar
+		case "c:7": // ctrl-g, either go to definition OR jump to matching parent/bracket OR toggle the GDB console in debug mode
 
 			if e.nanoMode.Load() { // nano: ctrl-g, help
 				status.ClearAll(c, false)
@@ -1851,11 +1700,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// Go to the end of the current line
 			e.End(c)
 		case "c:11": // ctrl-k, delete to end of line
-			if e.debugMode {
-				e.debugHideKeybindings = !e.debugHideKeybindings
-				e.redraw.Store(true)
-				break
-			}
 			undo.Snapshot(e)
 			if e.nanoMode.Load() { // nano: ctrl-k, cut line
 				// Prepare to cut
@@ -2015,7 +1859,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 			clearKeyHistory = true
 
-		case "c:18": // ctrl-r, to open or close a portal. In debug mode, continue running the program.
+		case "c:18": // ctrl-r, to open or close a portal. In debug mode, reverse step.
 
 			if e.nanoMode.Load() { // nano: ctrl-r, insert file
 				// Ask the user which filename to insert
@@ -2028,11 +1872,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					}
 				}
 
-				break
-			}
-
-			if e.debugMode && e.debugger != nil {
-				e.debugger.Continue()
 				break
 			}
 
@@ -2092,58 +1931,29 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			status.ClearAll(c, false)
 
-			if e.debugMode {
-				if e.breakpoint == nil {
-					e.breakpoint = e.pos.Copy()
-					_, err := e.DebugActivateBreakpoint(filepath.Base(e.filename))
-					if err != nil {
-						status.SetError(err)
-						break
-					}
-					s := "Placed breakpoint at line " + e.LineNumber().String()
-					status.SetMessage("  " + s + "  ")
-				} else if e.breakpoint.LineNumber() == e.LineNumber() {
-					// setting a breakpoint at the same line twice: remove the breakpoint
-					s := "Removed breakpoint at line " + e.breakpoint.LineNumber().String()
-					status.SetMessage(s)
-					e.breakpoint = nil
-				} else {
-					undo.Snapshot(e)
-					// Go to the breakpoint position
-					e.GoToPosition(c, status, *e.breakpoint)
-					// TODO: Just use status.SetMessageAfterRedraw instead?
-					// Do the redraw manually before showing the status message
-					e.HideCursorDrawLines(c, true, false, true)
-					e.redraw.Store(false)
-					// Show the status message
-					s := "Jumped to breakpoint at line " + e.LineNumber().String()
-					status.SetMessage(s)
-				}
+			status.ClearAll(c, true)
+			if bookmark == nil {
+				// no bookmark, create a bookmark at the current line
+				bookmark = e.pos.Copy()
+				// TODO: Modify the statusbar implementation so that extra spaces are not needed here.
+				s := "Bookmarked line " + e.LineNumber().String()
+				status.SetMessageAfterRedraw("  " + s + "  ")
+			} else if bookmark.LineNumber() == e.LineNumber() {
+				// bookmarking the same line twice: remove the bookmark
+				s := "Removed bookmark for line " + bookmark.LineNumber().String()
+				status.SetMessage(s)
+				bookmark = nil
 			} else {
-				status.ClearAll(c, true)
-				if bookmark == nil {
-					// no bookmark, create a bookmark at the current line
-					bookmark = e.pos.Copy()
-					// TODO: Modify the statusbar implementation so that extra spaces are not needed here.
-					s := "Bookmarked line " + e.LineNumber().String()
-					status.SetMessageAfterRedraw("  " + s + "  ")
-				} else if bookmark.LineNumber() == e.LineNumber() {
-					// bookmarking the same line twice: remove the bookmark
-					s := "Removed bookmark for line " + bookmark.LineNumber().String()
-					status.SetMessage(s)
-					bookmark = nil
-				} else {
-					undo.Snapshot(e)
-					// Go to the saved bookmark position
-					e.GoToPosition(c, status, *bookmark)
-					// TODO: Just use status.SetMessageAfterRedraw instead?
-					// Do the redraw manually before showing the status message
-					e.HideCursorDrawLines(c, true, false, true)
-					e.redraw.Store(false)
-					// Show the status message
-					s := "Jumped to bookmark at line " + e.LineNumber().String()
-					status.SetMessage(s)
-				}
+				undo.Snapshot(e)
+				// Go to the saved bookmark position
+				e.GoToPosition(c, status, *bookmark)
+				// TODO: Just use status.SetMessageAfterRedraw instead?
+				// Do the redraw manually before showing the status message
+				e.HideCursorDrawLines(c, true, false, true)
+				e.redraw.Store(false)
+				// Show the status message
+				s := "Jumped to bookmark at line " + e.LineNumber().String()
+				status.SetMessage(s)
 			}
 			status.Show(c, e)
 			e.redrawCursor.Store(true)
@@ -2304,7 +2114,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		}
 
 		// Display the ctrl-o menu if esc was pressed 4 times. Do not react if space is pressed.
-		if !e.nanoMode.Load() && kh.Repeated("c:27", 4-1) { // esc pressed 4 times (minus the one that was added just now)
+		// Skip this when in debug mode, where esc×3 toggles the keybinding overview.
+		if !debugMode && !e.nanoMode.Load() && kh.Repeated("c:27", 4-1) { // esc pressed 4 times (minus the one that was added just now)
 			backFunctions = make([]func(), 0)
 			status.ClearAll(c, false)
 			undo.Snapshot(e)
@@ -2369,12 +2180,16 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		if e.debugMode {
 			const repositionCursor = false
 			e.DrawWatches(c, repositionCursor)
-			e.DrawRegisters(c, repositionCursor)
+			// Only call GDB-dependent drawing functions if the debugger is active and program hasn't exited
+			if e.debugger != nil && !e.debugComplete.Load() {
+				e.DrawRegisters(c, repositionCursor)
+				e.DrawInstructions(c, repositionCursor)
+				e.DrawFlags(c, repositionCursor)
+			}
 			e.DrawDebugOutput(c, repositionCursor)
-			e.DrawInstructions(c, repositionCursor)
-			e.DrawFlags(c, repositionCursor)
-			// Only show keybindings if the stdout pane is not visible
-			if !e.debugOutputVisible() {
+			e.DrawDebugConsole(c, repositionCursor)
+			// Only show keybindings if neither the stdout nor the console pane is visible
+			if !e.debugOutputVisible() && !e.debugConsoleVisible() {
 				e.DrawDebugKeybindings(c, repositionCursor)
 			}
 		}
