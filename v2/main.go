@@ -348,6 +348,7 @@ func main() {
 		stdinFilename = !argsGiven || (len(args) == 1 && (args[0] == "-" || args[0] == "/dev/stdin"))
 		osudoMode     = editorExecutable == "osudo" || editorExecutable == "visudo"
 		gameMode      = firstLetterOfExecutable == 'f' || firstLetterOfExecutable == 'g'
+		buildMode     = editorExecutable == "obuild"
 		err           error
 	)
 
@@ -358,6 +359,11 @@ func main() {
 			os.Exit(1)
 		}
 		return
+	}
+
+	// Behave like if the "-b" flag was given if the executable name was "obuild"
+	if buildMode {
+		buildFlag = true
 	}
 
 	// If no regular filename is given, check if data is ready at stdin
