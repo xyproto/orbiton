@@ -560,7 +560,11 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.ObjectPascal:
-		cmd = exec.Command("fpc", sourceFilename)
+		if e.debugMode {
+			cmd = exec.Command("fpc", "-g", "-gl", sourceFilename)
+		} else {
+			cmd = exec.Command("fpc", sourceFilename)
+		}
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.D:

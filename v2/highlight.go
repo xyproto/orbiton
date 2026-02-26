@@ -899,9 +899,9 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 				c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', cw-lineRuneCount)
 			}
 		}
-		// Draw a green left-pointing arrow after the current debug line
+		// Draw a left-pointing arrow after the current debug line
 		if debugCurrentLine && xp+1 < cw {
-			indicatorColor := e.DebugLineIndicator
+			indicatorColor := e.ImageColor
 			if useASCII {
 				if xp+5 < cw {
 					c.WriteRuneBNoLock(xp+1, yp, indicatorColor, bg, '<')

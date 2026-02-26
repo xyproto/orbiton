@@ -264,6 +264,41 @@ func (e *Editor) formatCode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, jsonFo
 			e.redraw.Store(true)
 			return // All done
 		}
+	case mode.ObjectPascal: // Format with ptop
+		if files.WhichCached("ptop") == "" {
+			status.ClearAll(c, true)
+			status.SetErrorAfterRedraw(errors.New("ptop is missing"))
+			return
+		}
+		tmpInput, err := os.CreateTemp(tempDir, "o.*.pas")
+		if err != nil {
+			break
+		}
+		defer os.Remove(tmpInput.Name())
+		tmpOutput, err := os.CreateTemp(tempDir, "o.*.pas")
+		if err != nil {
+			os.Remove(tmpInput.Name())
+			break
+		}
+		defer os.Remove(tmpOutput.Name())
+		tmpInput.Write([]byte(e.String()))
+		tmpInput.Close()
+		tmpOutput.Close()
+		cmd := exec.Command("ptop", tmpInput.Name(), tmpOutput.Name())
+		if output, err := cmd.CombinedOutput(); err != nil {
+			status.ClearAll(c, true)
+			errorMessage := strings.TrimSpace(string(output))
+			if errorMessage == "" {
+				errorMessage = err.Error()
+			}
+			status.SetErrorAfterRedraw(errors.New("failed to format code: " + errorMessage))
+			return
+		}
+		if data, err := os.ReadFile(tmpOutput.Name()); err == nil {
+			e.LoadBytes(data)
+			e.redraw.Store(true)
+			return
+		}
 	case mode.Java, mode.Kotlin:
 		const removeExistingImports = false
 		const deGlobImports = true

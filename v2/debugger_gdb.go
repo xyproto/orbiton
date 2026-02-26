@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/cyrus-and/gdb"
 	"github.com/xyproto/files"
@@ -32,15 +33,18 @@ type gdbDebugger struct {
 	watchMap        map[string]string
 	lastWatch       string
 	running         bool
+	recording       bool // true when "record full" is active
 	stepInto        bool
 	filterRegisters bool
 	mode            mode.Mode
+	stopped         chan struct{} // signaled when a *stopped exec notification arrives
 }
 
 func newGDBDebugger(m mode.Mode) *gdbDebugger {
 	return &gdbDebugger{
 		watchMap: make(map[string]string),
 		mode:     m,
+		stopped:  make(chan struct{}, 1),
 	}
 }
 
@@ -85,6 +89,37 @@ func (d *gdbDebugger) Start(sourceDir, sourceBaseFilename, executableBaseFilenam
 
 	// Start a new gdb session
 	d.conn, err = gdb.NewCustom([]string{gdbPath}, func(notification map[string]any) {
+		// If the program hit an exit syscall catchpoint, transparently stop
+		// recording and continue so the program can exit without hanging.
+		if notification["type"] == "exec" && notification["class"] == "stopped" {
+			if isExitSyscallCatchpoint(notification) {
+				go func() {
+					conn := d.conn
+					if conn == nil {
+						return
+					}
+					if d.recording {
+						conn.Send("interpreter-exec", "console", "record stop")
+						d.recording = false
+					}
+					conn.Send("exec-continue")
+				}()
+				return
+			}
+			select {
+			case d.stopped <- struct{}{}:
+			default:
+			}
+		}
+		if notification["type"] == "notify" && notification["class"] == "thread-group-exited" {
+			d.running = false
+			select {
+			case d.stopped <- struct{}{}:
+			default:
+			}
+			doneFunc()
+		}
+
 		// Handle messages from gdb, including frames that contains line numbers
 		if payload, ok := notification["payload"]; ok {
 			switch notification["type"] {
@@ -106,11 +141,6 @@ func (d *gdbDebugger) Start(sourceDir, sourceBaseFilename, executableBaseFilenam
 			case "console":
 				if s, ok := payload.(string); ok {
 					d.console.WriteString(s)
-				}
-			case "notify":
-				if notification["class"] == "thread-group-exited" {
-					d.running = false
-					doneFunc()
 				}
 			default:
 			}
@@ -163,6 +193,15 @@ func (d *gdbDebugger) SetupAndRun(assemblyMode bool) (string, error) {
 		return output, err
 	}
 
+	// Enable execution recording for reverse stepping
+	d.conn.Send("interpreter-exec", "console", "record full")
+	d.recording = true
+
+	// Catch exit syscalls so we can stop recording before GDB tries to
+	// record them (which causes GDB to hang with record full).
+	d.conn.Send("interpreter-exec", "console", "catch syscall exit_group")
+	d.conn.Send("interpreter-exec", "console", "catch syscall exit")
+
 	// Add any existing watches
 	for varName := range d.watchMap {
 		d.AddWatch(varName)
@@ -170,15 +209,105 @@ func (d *gdbDebugger) SetupAndRun(assemblyMode bool) (string, error) {
 
 	d.running = true
 
+	// Drain any stale stop signals
+	select {
+	case <-d.stopped:
+	default:
+	}
+
 	return "started gdb", nil
+}
+
+// isExitSyscallCatchpoint checks if a GDB notification is a *stopped event
+// caused by hitting an exit syscall catchpoint (set to prevent record full hangs).
+func isExitSyscallCatchpoint(notification map[string]any) bool {
+	payload, ok := notification["payload"]
+	if !ok {
+		return false
+	}
+	payloadMap, ok := payload.(map[string]any)
+	if !ok {
+		return false
+	}
+	reason, _ := payloadMap["reason"].(string)
+	return reason == "syscall-entry"
+}
+
+// nextInstructionIsSyscall disassembles the instruction at $pc and returns
+// true if it is a "syscall" instruction. This is used to avoid stepping into
+// an exit syscall while record full is active, which hangs GDB.
+func (d *gdbDebugger) nextInstructionIsSyscall() bool {
+	if d.conn == nil {
+		return false
+	}
+	instructions, err := d.Disassemble(1)
+	if err != nil || len(instructions) == 0 {
+		return false
+	}
+	return strings.TrimSpace(instructions[0]) == "syscall"
+}
+
+// waitForStop waits for a *stopped notification from GDB.
+// If the step hangs (e.g., syscall with record full), it interrupts GDB,
+// disables recording, and returns true to indicate the step was interrupted.
+func (d *gdbDebugger) waitForStop() bool {
+	// Wait for the primary stopped signal
+	select {
+	case <-d.stopped:
+		// Step completed. Drain a possible follow-up (e.g., thread-group-exited).
+		select {
+		case <-d.stopped:
+		case <-time.After(50 * time.Millisecond):
+		}
+		return false
+	case <-time.After(2 * time.Second):
+		// Step is taking too long — likely hung on a recorded syscall
+	}
+
+	// Interrupt GDB to regain control
+	if d.conn != nil {
+		d.conn.Interrupt()
+	}
+
+	// Wait for GDB to acknowledge the interrupt
+	select {
+	case <-d.stopped:
+	case <-time.After(2 * time.Second):
+	}
+
+	// Disable recording to prevent future hangs on this instruction
+	if d.conn != nil && d.recording {
+		done := make(chan struct{})
+		go func() {
+			d.conn.Send("interpreter-exec", "console", "record stop")
+			close(done)
+		}()
+		select {
+		case <-done:
+		case <-time.After(2 * time.Second):
+		}
+		d.recording = false
+	}
+
+	return true
 }
 
 // End terminates the current gdb session.
 func (d *gdbDebugger) End() {
 	if d.conn != nil {
-		d.conn.Exit()
+		conn := d.conn
+		d.conn = nil
+		// Run Exit in a goroutine with a timeout so a hung GDB cannot freeze the editor
+		done := make(chan struct{})
+		go func() {
+			conn.Exit()
+			close(done)
+		}()
+		select {
+		case <-done:
+		case <-time.After(2 * time.Second):
+		}
 	}
-	d.conn = nil
 	d.output.Reset()
 	d.console.Reset()
 	d.lastWatch = ""
@@ -186,6 +315,7 @@ func (d *gdbDebugger) End() {
 		os.Chdir(originalDirectory)
 	}
 	d.running = false
+	d.recording = false
 	longInstructionPaneWidth = 0
 }
 
@@ -229,6 +359,9 @@ func (d *gdbDebugger) Next() error {
 	if !d.running {
 		return errProgramStopped
 	}
+	if d.nextInstructionIsSyscall() {
+		return errProgramStopped
+	}
 	gdbMI := "exec-next"
 	if d.stepInto {
 		gdbMI = "exec-step"
@@ -236,8 +369,11 @@ func (d *gdbDebugger) Next() error {
 	if _, err := d.conn.CheckedSend(gdbMI); err != nil {
 		return err
 	}
+	if d.waitForStop() {
+		return errRecordingStopped
+	}
 	d.parseWatchOutput()
-	if !d.running {
+	if !d.running || d.nextInstructionIsSyscall() {
 		return errProgramStopped
 	}
 	return nil
@@ -246,6 +382,9 @@ func (d *gdbDebugger) Next() error {
 // NextInstruction steps to the next machine instruction.
 func (d *gdbDebugger) NextInstruction() error {
 	if !d.running {
+		return errProgramStopped
+	}
+	if d.nextInstructionIsSyscall() {
 		return errProgramStopped
 	}
 	showInstructionPane = true
@@ -257,8 +396,11 @@ func (d *gdbDebugger) NextInstruction() error {
 	if err != nil {
 		return err
 	}
+	if d.waitForStop() {
+		return errRecordingStopped
+	}
 	d.parseWatchOutput()
-	if !d.running {
+	if !d.running || d.nextInstructionIsSyscall() {
 		return errProgramStopped
 	}
 	return nil
@@ -269,8 +411,52 @@ func (d *gdbDebugger) Step() error {
 	if !d.running {
 		return errProgramStopped
 	}
+	if d.nextInstructionIsSyscall() {
+		return errProgramStopped
+	}
 	if _, err := d.conn.CheckedSend("exec-step"); err != nil {
 		return err
+	}
+	if d.waitForStop() {
+		return errRecordingStopped
+	}
+	d.parseWatchOutput()
+	if !d.running || d.nextInstructionIsSyscall() {
+		return errProgramStopped
+	}
+	return nil
+}
+
+// Finish runs until the current function returns (step out).
+func (d *gdbDebugger) Finish() error {
+	if d.nextInstructionIsSyscall() {
+		return errProgramStopped
+	}
+	_, err := d.conn.CheckedSend("exec-finish")
+	if err != nil {
+		return err
+	}
+	if d.waitForStop() {
+		return errRecordingStopped
+	}
+	d.parseWatchOutput()
+	if !d.running || d.nextInstructionIsSyscall() {
+		return errProgramStopped
+	}
+	return nil
+}
+
+// ReverseStep steps backward one source line.
+func (d *gdbDebugger) ReverseStep() error {
+	if !d.running {
+		return errProgramStopped
+	}
+	_, err := d.conn.CheckedSend("interpreter-exec", "console", "reverse-step")
+	if err != nil {
+		return err
+	}
+	if d.waitForStop() {
+		return errRecordingStopped
 	}
 	d.parseWatchOutput()
 	if !d.running {
@@ -279,11 +465,17 @@ func (d *gdbDebugger) Step() error {
 	return nil
 }
 
-// Finish runs until the current function returns (step out).
-func (d *gdbDebugger) Finish() error {
-	_, err := d.conn.CheckedSend("exec-finish")
+// ReverseNextInstruction steps backward one machine instruction.
+func (d *gdbDebugger) ReverseNextInstruction() error {
+	if !d.running {
+		return errProgramStopped
+	}
+	_, err := d.conn.CheckedSend("interpreter-exec", "console", "reverse-stepi")
 	if err != nil {
 		return err
+	}
+	if d.waitForStop() {
+		return errRecordingStopped
 	}
 	d.parseWatchOutput()
 	if !d.running {

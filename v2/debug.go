@@ -23,6 +23,7 @@ var (
 	originalDirectory        string
 	showInstructionPane      bool
 	errProgramStopped        = errors.New("program stopped") // must contain "program stopped"
+	errRecordingStopped      = errors.New("recording stopped, please repeat the last step")
 	prevFlags                []string
 	longInstructionPaneWidth int // should the instruction pane be extra wide, if so, how wide?
 	lastDebugOutputLen       int
@@ -46,10 +47,20 @@ func (e *Editor) DebugActivateBreakpoint(sourceBaseFilename string) (string, err
 // DebugEnd will end the current debug session, but not set debugMode to false
 func (e *Editor) DebugEnd() {
 	if e.debugger != nil {
+		// Preserve watches across sessions
+		if wm := e.debugger.WatchMap(); len(wm) > 0 {
+			if e.debugWatches == nil {
+				e.debugWatches = make(map[string]string)
+			}
+			for k, v := range wm {
+				e.debugWatches[k] = v
+			}
+		}
 		e.debugger.End()
 	}
 	e.debugger = nil
 	e.debugLine.Store(-1)
+	e.debugConsoleOutput = ""
 	lastDebugOutputLen = 0
 }
 
@@ -77,6 +88,11 @@ func (e *Editor) DrawWatches(c *vt.Canvas, repositionCursor bool) {
 	if e.debugger != nil {
 		watchMap = e.debugger.WatchMap()
 		lastSeenWatchVariable = e.debugger.LastSeenWatch()
+	} else if len(e.debugWatches) > 0 {
+		// Show preserved watches when debugger is not running
+		for k, v := range e.debugWatches {
+			watchMap[k] = v
+		}
 	}
 
 	// Determine the content to display
@@ -158,35 +174,53 @@ func (e *Editor) DrawDebugKeybindings(c *vt.Canvas, repositionCursor bool) {
 	}
 
 	helpSlice := []string{
-		"ctrl-space : step over",
+		"ctrl-space : continue",
+		"ctrl-o     : step over",
 		"ctrl-i     : step into",
 		"ctrl-f     : step out",
 		"ctrl-n     : next instruction",
-		"ctrl-r     : continue",
+		"ctrl-r     : reverse step",
 		"ctrl-w     : add a watch",
+		"ctrl-c     : clear watches",
+		"ctrl-s     : toggle stdout",
+		"ctrl-g     : toggle GDB console",
 		"ctrl-p     : reg. pane layout",
 		"ctrl-k     : toggle this box",
 		"ctrl-q     : exit debug mode",
-		"esc        : toggle stdout",
 	}
 	if w <= 120 {
 		helpSlice = []string{
-			"ctrl-space: step over",
+			"ctrl-space: continue",
+			"ctrl-o: step over",
 			"ctrl-i: step into",
 			"ctrl-f: step out",
 			"ctrl-n: next inst.",
-			"ctrl-r: continue",
+			"ctrl-r: reverse step",
 			"ctrl-w: add watch",
+			"ctrl-c: clear watches",
+			"ctrl-s: toggle stdout",
+			"ctrl-g: toggle console",
 			"ctrl-p: reg. pane",
 			"ctrl-k: toggle keys",
 			"ctrl-q: exit debug",
-			"esc: toggle stdout",
 		}
 	}
 
+	// When the program is not running, only show relevant keybindings
+	programRunning := e.debugger != nil && e.debugger.ProgramRunning()
+	if !programRunning {
+		filtered := helpSlice[:0]
+		for _, line := range helpSlice {
+			if strings.Contains(line, "reverse") || strings.Contains(line, "stdout") || strings.Contains(line, "console") || strings.Contains(line, "pane") || strings.Contains(line, "reg.") {
+				continue
+			}
+			filtered = append(filtered, line)
+		}
+		helpSlice = filtered
+	}
+
 	bt := e.NewBoxTheme()
-	bt.Foreground = &e.BoxTextColor
-	bt.Background = &e.BoxBackground
+	bt.Background = &e.DebugRunningBackground
 
 	// Size the box to fit the help text, with 1 blank line between title and text
 	boxW := 0
@@ -205,7 +239,7 @@ func (e *Editor) DrawDebugKeybindings(c *vt.Canvas, repositionCursor bool) {
 	// If the instruction pane is visible, move above it or hide
 	if showInstructionPane && e.debugger != nil {
 		instructionTop := int(float64(h) * 0.83)
-		boxY = instructionTop - boxH - 1
+		boxY = instructionTop - boxH - 2
 		if boxY < 1 {
 			return // not enough room
 		}
@@ -625,8 +659,101 @@ func (e *Editor) DrawDebugOutput(c *vt.Canvas, repositionCursor bool) {
 	}
 }
 
+// debugConsoleVisible returns true if the GDB console pane would be drawn
+func (e *Editor) debugConsoleVisible() bool {
+	if !e.debugShowConsole || e.debugger == nil {
+		return false
+	}
+	// Drain any new console output from the debugger
+	if s := e.debugger.ConsoleString(); s != "" {
+		e.debugConsoleOutput += s
+	}
+	return strings.TrimSpace(e.debugConsoleOutput) != ""
+}
+
+// DrawDebugConsole will draw a pane with the last 5 lines of the GDB console output
+func (e *Editor) DrawDebugConsole(c *vt.Canvas, repositionCursor bool) {
+	if !e.debugShowConsole || e.debugger == nil {
+		return
+	}
+
+	// Drain any new console output from the debugger
+	if s := e.debugger.ConsoleString(); s != "" {
+		e.debugConsoleOutput += s
+	}
+
+	const title = "GDB console"
+
+	collectedConsole := strings.TrimSpace(strings.ReplaceAll(e.debugConsoleOutput, "\t", "  "))
+
+	if len(collectedConsole) > 0 {
+		// First create a box the size of the entire canvas
+		canvasBox := NewCanvasBox(c)
+
+		minWidth := 32
+
+		lowerLeftBox := NewBox()
+		lowerLeftBox.LowerLeftPlacement(canvasBox, minWidth)
+		if showInstructionPane {
+			lowerLeftBox.H = int(float64(lowerLeftBox.H) * 0.9)
+		}
+		// Offset to the right if the stdout pane is also visible
+		if e.debugOutputVisible() {
+			lowerLeftBox.X += lowerLeftBox.W + 2
+		}
+
+		// Then create a list box
+		listBox := NewBox()
+		listBox.FillWithMargins(lowerLeftBox, 2, 2)
+
+		// Get the current theme for the console box
+		bt := e.NewBoxTheme()
+		bt.Background = &e.DebugOutputBackground
+		bt.UpperEdge = bt.LowerEdge
+
+		e.DrawBox(bt, c, lowerLeftBox)
+
+		e.DrawTitle(bt, c, lowerLeftBox, title, true)
+
+		// Get the last 5 lines, and create a string slice
+		lines := strings.Split(collectedConsole, "\n")
+		if l := len(lines); l > 5 {
+			lines = lines[l-5:]
+		}
+
+		// Trim and shorten the lines
+		var newLines []string
+		for _, line := range lines {
+			trimmedLine := strings.TrimSpace(line)
+			if len(trimmedLine) > listBox.W {
+				if listBox.W-7 > 0 {
+					trimmedLine = trimmedLine[:listBox.W-7] + " [...]"
+				} else {
+					trimmedLine = trimmedLine[:listBox.W]
+				}
+			}
+			newLines = append(newLines, trimmedLine)
+		}
+		lines = newLines
+
+		e.DrawList(bt, c, listBox, lines, -1)
+
+		// Blit
+		c.HideCursorAndDraw()
+
+		repositionCursor = true
+	}
+
+	// Reposition the cursor
+	if repositionCursor {
+		e.EnableAndPlaceCursor(c)
+	}
+}
+
 // DebugStartSession builds and then connects to the debugger
 func (e *Editor) DebugStartSession(c *vt.Canvas, tty *vt.TTY, status *StatusBar, optionalOutputExecutable string) error {
+	e.debugComplete.Store(false)
+
 	absFilename, err := e.AbsFilename()
 	if err != nil {
 		return err
@@ -662,6 +789,12 @@ func (e *Editor) DebugStartSession(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 		} else {
 			e.debugger = newGDBDebugger(e.mode)
 		}
+		// Restore watches from previous sessions
+		if len(e.debugWatches) > 0 {
+			for k, v := range e.debugWatches {
+				e.debugger.WatchMap()[k] = v
+			}
+		}
 	}
 
 	lineFunc := func(lineNumber int) {
@@ -671,6 +804,7 @@ func (e *Editor) DebugStartSession(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 	}
 
 	doneFunc := func() {
+		e.debugComplete.Store(true)
 		status.SetMessageAfterRedraw("Execution complete")
 		e.redraw.Store(true)
 		e.redrawCursor.Store(true)
@@ -710,9 +844,9 @@ func (e *Editor) DebugStartSession(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 
 	status.ClearAll(c, false)
 	if e.breakpoint == nil {
-		status.SetMessage("Running")
+		status.SetMessage("Started executing")
 	} else {
-		status.SetMessage("Running. Breakpoint at line " + e.breakpoint.LineNumber().String() + ".")
+		status.SetMessage("Started executing. Breakpoint at line " + e.breakpoint.LineNumber().String() + ".")
 	}
 	status.Show(c, e)
 	return nil

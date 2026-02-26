@@ -535,3 +535,9 @@ func (d *delveDebugger) WatchMap() map[string]string { return d.watchMap }
 func (d *delveDebugger) LastSeenWatch() string       { return d.lastWatch }
 func (d *delveDebugger) ProgramRunning() bool        { return d.running }
 func (d *delveDebugger) SetStepInto(stepInto bool)   { d.stepInto = stepInto }
+func (d *delveDebugger) ReverseStep() error {
+	return errors.New("reverse stepping is not supported by Delve")
+}
+func (d *delveDebugger) ReverseNextInstruction() error {
+	return errors.New("reverse stepping is not supported by Delve")
+}

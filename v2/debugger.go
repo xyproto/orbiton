@@ -72,4 +72,10 @@ type Debugger interface {
 
 	// SetStepInto controls whether stepping goes into function calls.
 	SetStepInto(stepInto bool)
+
+	// ReverseStep steps backward one source line (into calls).
+	ReverseStep() error
+
+	// ReverseNextInstruction steps backward one machine instruction.
+	ReverseNextInstruction() error
 }
