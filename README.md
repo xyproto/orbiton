@@ -178,6 +178,8 @@ These features are unique to `o`, as far as I am aware:
 * Can organize imports, for Java and for Kotlin, when formatting code with `ctrl-w`.
 * Has a built-in spellchecker (press `ctrl-f` and then `t` to search for a typo, `ctrl-n` for next match and then `ctrl-a` to add it and `ctrl-i` to ignore it).
 * Can jump directly to a selection of highlighted letters on the screen, when `ctrl-l` is pressed.
+* Comes with a file browser that can open, rename and delete files.
+* Comes with a build tool that can auto-detect the required build flags for C and C++ (`o -b`).
 
 ## Known issues
 
