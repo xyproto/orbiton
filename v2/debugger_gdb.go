@@ -28,16 +28,16 @@ var _ Debugger = (*gdbDebugger)(nil)
 
 type gdbDebugger struct {
 	conn            *gdb.Gdb
-	output          bytes.Buffer
-	console         strings.Builder
 	watchMap        map[string]string
+	stopped         chan struct{} // signaled when a *stopped exec notification arrives
 	lastWatch       string
+	console         strings.Builder
+	output          bytes.Buffer
+	mode            mode.Mode
 	running         bool
 	recording       bool // true when "record full" is active
 	stepInto        bool
 	filterRegisters bool
-	mode            mode.Mode
-	stopped         chan struct{} // signaled when a *stopped exec notification arrives
 }
 
 func newGDBDebugger(m mode.Mode) *gdbDebugger {

@@ -77,6 +77,27 @@ func saveCommand(cmd *exec.Cmd) error {
 	return err
 }
 
+// saveCommandString saves a command string as the "last command"
+func saveCommandString(commandString string) error {
+	if noWriteToCache {
+		return nil
+	}
+
+	p := lastCommandFile
+
+	folderPath := filepath.Dir(p)
+	_ = os.MkdirAll(folderPath, 0o755)
+
+	f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = f.WriteString(fmt.Sprintf("#!/bin/sh\n%s\n", commandString))
+	return err
+}
+
 // Read last command tries to read the last used external command, but also present it in a nice way
 func readLastCommand() (string, error) {
 	data, err := os.ReadFile(lastCommandFile)

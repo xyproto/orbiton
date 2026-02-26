@@ -231,7 +231,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				e.syntaxHighlight = syntaxHighlight
 				e.rainbowParenthesis = rainbowParenthesis
 				e.indentation = indentation
-			} else {
+			} else if tty != nil {
 				e.dirMode = true
 				startdirs := []string{e.filename}
 				for _, arg := range globalArgs { // check the command line arguments

@@ -14,6 +14,7 @@ import (
 
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
+	"github.com/xyproto/orchideous"
 	"github.com/xyproto/vt"
 )
 
@@ -363,35 +364,12 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 			executableFirstName := filepath.Base(sourceFilenameWithoutExt)
 			return files.IsFile(sourceFilenameWithoutPath), executableFirstName
 		}, nil
-	case mode.C:
-		if files.IsDir(exeFilename) {
-			exeFilename = "main"
-		}
-		// Use gcc directly
-		if e.debugMode {
-			cmd = exec.Command("gcc", "-o", exeFilename, "-Og", "-g", "-pipe", "-D_BSD_SOURCE", sourceFilename)
-			cmd.Dir = sourceDir
-			return cmd, exeOrMainExists, nil
-		}
-		cmd = exec.Command("gcc", "-o", exeFilename, "-O2", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-D_BSD_SOURCE", sourceFilename)
-		cmd.Dir = sourceDir
-		return cmd, exeOrMainExists, nil
 	case mode.Cpp:
-		if files.IsFile("BUILD.bazel") && files.WhichCached("bazel") != "" { // Google-style C++ + Bazel projects if
+		if files.IsFile("BUILD.bazel") && files.WhichCached("bazel") != "" { // Google-style C++ + Bazel projects
 			return exec.Command("bazel", "build"), everythingIsFine, nil
 		}
-		if files.IsDir(exeFilename) {
-			exeFilename = "main"
-		}
-		// Use g++ directly
-		if e.debugMode {
-			cmd = exec.Command("g++", "-o", exeFilename, "-Og", "-g", "-pipe", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename)
-			cmd.Dir = sourceDir
-			return cmd, exeOrMainExists, nil
-		}
-		cmd = exec.Command("g++", "-o", exeFilename, "-O2", "-pipe", "-fPIC", "-fno-plt", "-fstack-protector-strong", "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers", sourceFilename)
-		cmd.Dir = sourceDir
-		return cmd, exeOrMainExists, nil
+		// C and C++ are handled by orchideous in BuildOrExport
+		return nil, nothingIsFine, errNoSuitableBuildCommand
 	case mode.Zig:
 		if files.WhichCached("zig") != "" {
 			if files.IsFile("build.zig") {
@@ -719,36 +697,87 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 
 	// The immediate builds are done, time to build a exec.Cmd, run it and analyze the output
 
-	cmd, compilationProducedSomething, err := e.GenerateBuildCommand(c, tty, sourceFilename)
-	if err != nil {
-		return "", err
-	}
+	var (
+		output                       []byte
+		cmd                          *exec.Cmd
+		compilationProducedSomething func() (bool, string)
+	)
 
-	// Check that the resulting cmd.Path executable exists
-	if files.WhichCached(cmd.Path) == "" {
-		return "", fmt.Errorf("%s (%s %s)", errNoSuitableBuildCommand.Error(), "could not find", cmd.Path)
-	}
-
-	// Display a status message with no timeout, about what is currently being done
-	if status != nil {
-		var progressStatusMessage string
-		if e.mode == mode.HTML || e.mode == mode.XML {
-			progressStatusMessage = "Displaying"
-		} else if !e.debugMode {
-			progressStatusMessage = "Building"
+	// Use orchideous for C and C++ builds
+	if e.mode == mode.C || e.mode == mode.Cpp {
+		if e.mode == mode.Cpp && files.IsFile("BUILD.bazel") && files.WhichCached("bazel") != "" {
+			goto cmdBuild // Bazel projects use the command-based flow
 		}
-		status.SetMessage(progressStatusMessage)
-		status.ShowNoTimeout(c, e)
+
+		// Display a status message
+		if status != nil && !e.debugMode {
+			status.SetMessage("Building")
+			status.ShowNoTimeout(c, e)
+		}
+
+		result, buildError := orchideous.Build(sourceDir, orchideous.BuildOptions{
+			Debug:        e.debugMode,
+			NoSanitizers: e.debugMode,
+		})
+		output = result.Output
+
+		// Save the last command
+		if len(result.CommandsRun) > 0 {
+			saveCommandString(strings.Join(result.CommandsRun, " && "))
+		}
+
+		compilationProducedSomething = func() (bool, string) {
+			if result.OutputExecutable != "" && files.IsFile(filepath.Join(sourceDir, result.OutputExecutable)) {
+				return true, result.OutputExecutable
+			}
+			return false, ""
+		}
+
+		if buildError != nil {
+			err = buildError
+		}
+
+		goto analyzeOutput
 	}
 
-	// Save the command in a temporary file
-	saveCommand(cmd)
+cmdBuild:
+	{
+		var cpsFn func() (bool, string)
+		var cmdErr error
+		cmd, cpsFn, cmdErr = e.GenerateBuildCommand(c, tty, sourceFilename)
+		if cmdErr != nil {
+			return "", cmdErr
+		}
+		compilationProducedSomething = cpsFn
 
-	// --- Compilation ---
+		// Check that the resulting cmd.Path executable exists
+		if files.WhichCached(cmd.Path) == "" {
+			return "", fmt.Errorf("%s (%s %s)", errNoSuitableBuildCommand.Error(), "could not find", cmd.Path)
+		}
 
-	// Run the command and fetch the combined output from stderr and stdout.
-	// Ignore the status code / error, only look at the output.
-	output, err := cmd.CombinedOutput()
+		// Display a status message with no timeout, about what is currently being done
+		if status != nil {
+			var progressStatusMessage string
+			if e.mode == mode.HTML || e.mode == mode.XML {
+				progressStatusMessage = "Displaying"
+			} else if !e.debugMode {
+				progressStatusMessage = "Building"
+			}
+			status.SetMessage(progressStatusMessage)
+			status.ShowNoTimeout(c, e)
+		}
+
+		// Save the command in a temporary file
+		saveCommand(cmd)
+
+		// --- Compilation ---
+
+		// Run the command and fetch the combined output from stderr and stdout.
+		// Ignore the status code / error, only look at the output.
+		output, err = cmd.CombinedOutput()
+	}
+
+analyzeOutput:
 
 	// Done building, clear the "Building" message
 	if status != nil {
@@ -757,7 +786,8 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 
 	// Get the exit code and combined output of the build command
 	exitCode := 0
-	if exitError, ok := err.(*exec.ExitError); ok {
+	var exitError *exec.ExitError
+	if errors.As(err, &exitError) {
 		exitCode = exitError.ExitCode()
 	}
 	outputString := string(bytes.TrimSpace(output))
@@ -800,8 +830,10 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 	}
 
 	// Special considerations for Kotlin Native
-	if usingKotlinNative := strings.HasSuffix(cmd.Path, "kotlinc-native"); usingKotlinNative && files.IsFile(exeFirstName+".kexe") {
-		os.Rename(exeFirstName+".kexe", exeFirstName)
+	if cmd != nil {
+		if usingKotlinNative := strings.HasSuffix(cmd.Path, "kotlinc-native"); usingKotlinNative && files.IsFile(exeFirstName+".kexe") {
+			os.Rename(exeFirstName+".kexe", exeFirstName)
+		}
 	}
 
 	// Special considerations for Koka
@@ -1538,8 +1570,57 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 	}()
 }
 
+// findSourceFileInDir finds a buildable source file in the given directory
+func findSourceFileInDir(dir string) (string, error) {
+	prevDir, _ := os.Getwd()
+	_ = os.Chdir(dir)
+	defer os.Chdir(prevDir)
+
+	// Use orchideous detection for C/C++ source files
+	if mainSrc := orchideous.GetMainSourceFile(nil); mainSrc != "" {
+		return filepath.Join(dir, mainSrc), nil
+	}
+	// Check for non-C/C++ main source files
+	otherMainFiles := []string{
+		"main.go", "main.pas", "main.pp", "main.lpr",
+		"main.rs", "main.zig", "main.d",
+		"main.java", "main.kt", "main.scala",
+	}
+	for _, name := range otherMainFiles {
+		path := filepath.Join(dir, name)
+		if files.Exists(path) {
+			return path, nil
+		}
+	}
+	// Check for build system files
+	buildFiles := []string{"Makefile", "CMakeLists.txt", "meson.build", "Cargo.toml", "go.mod", "build.zig"}
+	for _, name := range buildFiles {
+		path := filepath.Join(dir, name)
+		if files.Exists(path) {
+			return path, nil
+		}
+	}
+	// Fall back to any source file with a known extension
+	otherExts := []string{".go", ".pas", ".pp", ".lpr", ".rs", ".zig", ".d", ".java", ".kt", ".scala"}
+	for _, ext := range otherExts {
+		matches, _ := filepath.Glob(filepath.Join(dir, "*"+ext))
+		if len(matches) > 0 {
+			return matches[0], nil
+		}
+	}
+	return "", errNoSuitableBuildCommand
+}
+
 // OnlyBuild tries to build/export the given FilenameOrData, without starting a full editor
 func OnlyBuild(fnord FilenameOrData) (string, error) {
+	// If the filename is a directory, find a source file for mode detection
+	if info, err := os.Stat(fnord.filename); err == nil && info.IsDir() {
+		sourceFile, err := findSourceFileInDir(fnord.filename)
+		if err != nil {
+			return "", err
+		}
+		fnord.filename = sourceFile
+	}
 	// Prepare an editor, without tty and canvas
 	e, _, _, _, err := NewEditor(nil, nil, fnord, 0, 0, NewDefaultTheme(), false, true, false, false, false, false, false, false)
 	if err != nil {

@@ -412,14 +412,19 @@ func main() {
 	}
 
 	// Check if the given filename contains something
+	implicitBuild := false
 	if fnord.Empty() {
 
 		if fnord.filename == "" {
-			fmt.Fprintln(os.Stderr, "please provide a filename")
-
-			quitMut.Lock()
-			defer quitMut.Unlock()
-			os.Exit(1)
+			if buildFlag {
+				// When building without a filename, assume the current directory
+				fnord.filename = "."
+			} else {
+				// No arguments at all: try building the current directory
+				buildFlag = true
+				implicitBuild = true
+				fnord.filename = "."
+			}
 		}
 
 		// If the filename starts with "~", then expand it
@@ -530,7 +535,12 @@ func main() {
 	} else if buildFlag {
 		msg, err := OnlyBuild(fnord)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			if implicitBuild {
+				// Build was attempted silently, show the usual message instead
+				fmt.Fprintln(os.Stderr, "please provide a filename")
+			} else {
+				fmt.Fprintln(os.Stderr, err)
+			}
 			os.Exit(1)
 		}
 		fmt.Println(msg)

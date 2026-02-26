@@ -31,18 +31,18 @@ func findDlv() string {
 var _ Debugger = (*delveDebugger)(nil)
 
 type delveDebugger struct {
-	cmd           *exec.Cmd
 	conn          net.Conn
+	cmd           *exec.Cmd
 	enc           *json.Encoder
 	dec           *json.Decoder
-	mu            sync.Mutex
-	seq           int64
-	output        bytes.Buffer
 	watchMap      map[string]string
-	lastWatch     string
 	prevRegisters map[string]string
 	lineFunc      func(int)
 	doneFunc      func()
+	lastWatch     string
+	output        bytes.Buffer
+	seq           int64
+	mu            sync.Mutex
 	running       bool
 	stepInto      bool
 }
@@ -63,9 +63,9 @@ type dlvRequest struct {
 }
 
 type dlvResponse struct {
-	ID     int64           `json:"id"`
-	Result json.RawMessage `json:"result"`
 	Error  *string         `json:"error"`
+	Result json.RawMessage `json:"result"`
+	ID     int64           `json:"id"`
 }
 
 // --- Delve API input types ---
@@ -103,9 +103,9 @@ type dlvLoadConfig struct {
 }
 
 type dlvEvalIn struct {
-	Scope dlvEvalScope  `json:"Scope"`
 	Expr  string        `json:"Expr"`
 	Cfg   dlvLoadConfig `json:"Cfg"`
+	Scope dlvEvalScope  `json:"Scope"`
 }
 
 type dlvListRegistersIn struct {
@@ -132,17 +132,17 @@ type dlvRestartIn struct {
 // These mirror Delve's api package, which uses lowercase json tags.
 
 type dlvThread struct {
+	File string `json:"file"`
 	ID   int    `json:"id"`
 	PC   uint64 `json:"pc"`
-	File string `json:"file"`
 	Line int    `json:"line"`
 }
 
 type dlvState struct {
 	CurrentThread *dlvThread `json:"currentThread"`
-	Exited        bool       `json:"exited"`
-	ExitStatus    int        `json:"exitStatus"`
 	Err           *string    `json:"err,omitempty"`
+	ExitStatus    int        `json:"exitStatus"`
+	Exited        bool       `json:"exited"`
 }
 
 // Result wrappers: top-level field names match Go struct field names (capital).
@@ -174,13 +174,13 @@ type dlvEvalOut struct {
 }
 
 type dlvAsmInstruction struct {
-	Loc struct {
-		PC   uint64 `json:"pc"`
+	Text string `json:"text"`
+	Loc  struct {
 		File string `json:"file"`
+		PC   uint64 `json:"pc"`
 		Line int    `json:"line"`
 	} `json:"loc"`
-	Text string `json:"text"`
-	AtPC bool   `json:"atPC"`
+	AtPC bool `json:"atPC"`
 }
 
 type dlvDisassembleOut struct {
