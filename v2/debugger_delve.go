@@ -57,9 +57,9 @@ func newDelveDebugger() *delveDebugger {
 // --- JSON-RPC wire types ---
 
 type dlvRequest struct {
-	Method string        `json:"method"`
-	Params []interface{} `json:"params"`
-	ID     int64         `json:"id"`
+	Method string `json:"method"`
+	Params []any  `json:"params"`
+	ID     int64  `json:"id"`
 }
 
 type dlvResponse struct {
@@ -188,13 +188,13 @@ type dlvDisassembleOut struct {
 }
 
 // call sends a JSON-RPC 2.0 request to Delve and decodes the result into out.
-func (d *delveDebugger) call(method string, in interface{}, out interface{}) error {
+func (d *delveDebugger) call(method string, in any, out any) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.seq++
 	if err := d.enc.Encode(dlvRequest{
 		Method: "RPCServer." + method,
-		Params: []interface{}{in},
+		Params: []any{in},
 		ID:     d.seq,
 	}); err != nil {
 		return fmt.Errorf("dlv send: %w", err)
@@ -323,7 +323,7 @@ func (d *delveDebugger) Start(sourceDir, sourceBaseFilename, executableBaseFilen
 
 	// Retry connecting until dlv is ready (up to 3 seconds).
 	var conn net.Conn
-	for i := 0; i < 30; i++ {
+	for range 30 {
 		time.Sleep(100 * time.Millisecond)
 		if conn, err = net.Dial("tcp", addr); err == nil {
 			break

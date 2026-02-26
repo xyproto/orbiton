@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"maps"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -52,9 +53,7 @@ func (e *Editor) DebugEnd() {
 			if e.debugWatches == nil {
 				e.debugWatches = make(map[string]string)
 			}
-			for k, v := range wm {
-				e.debugWatches[k] = v
-			}
+			maps.Copy(e.debugWatches, wm)
 		}
 		e.debugger.End()
 	}
@@ -90,9 +89,7 @@ func (e *Editor) DrawWatches(c *vt.Canvas, repositionCursor bool) {
 		lastSeenWatchVariable = e.debugger.LastSeenWatch()
 	} else if len(e.debugWatches) > 0 {
 		// Show preserved watches when debugger is not running
-		for k, v := range e.debugWatches {
-			watchMap[k] = v
-		}
+		maps.Copy(watchMap, e.debugWatches)
 	}
 
 	// Determine the content to display
@@ -791,9 +788,7 @@ func (e *Editor) DebugStartSession(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 		}
 		// Restore watches from previous sessions
 		if len(e.debugWatches) > 0 {
-			for k, v := range e.debugWatches {
-				e.debugger.WatchMap()[k] = v
-			}
+			maps.Copy(e.debugger.WatchMap(), e.debugWatches)
 		}
 	}
 
