@@ -338,9 +338,12 @@ func (d *delveDebugger) Start(sourceDir, sourceBaseFilename, executableBaseFilen
 	d.dec = json.NewDecoder(bufio.NewReader(conn))
 	d.running = true
 
-	// Set a breakpoint at main.main, then continue to it.
+	// Set breakpoints at main.main and at the start of the source file, then continue to one of them.
 	_ = d.call("CreateBreakpoint", dlvCreateBreakpointIn{
 		Breakpoint: dlvBreakpoint{FunctionName: "main.main"},
+	}, nil)
+	_ = d.call("CreateBreakpoint", dlvCreateBreakpointIn{
+		Breakpoint: dlvBreakpoint{File: sourceBaseFilename, Line: 1},
 	}, nil)
 
 	state, err := d.command("continue")

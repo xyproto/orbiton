@@ -490,9 +490,6 @@ func (e *Editor) DrawInstructions(c *vt.Canvas, repositionCursor bool) error {
 			numberOfInstructionsToFetch := 5
 			instructions, err := e.debugger.Disassemble(numberOfInstructionsToFetch)
 			if err != nil { // We end up here if the program is done running, when stepping
-				if err.Error() == "No registers." {
-					// program is done running
-				}
 				return err
 			}
 
