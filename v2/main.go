@@ -425,7 +425,7 @@ func main() {
 			if buildFlag {
 				// When building without a filename, assume the current directory
 				fnord.filename = "."
-			} else if sourceFile, err := findSourceFileInDir("."); err == nil {
+			} else if sourceFile, err := guessMainFileOfDirectory("."); err == nil {
 				// No arguments: a source file was found, open it for editing
 				fnord.filename = sourceFile
 			} else {
