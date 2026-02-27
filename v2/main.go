@@ -174,7 +174,7 @@ func main() {
 		}
 	}
 
-	if helpFlag {
+	if helpFlag && !buildFlag {
 		Usage()
 		return
 	}
@@ -364,6 +364,23 @@ func main() {
 	// Behave like if the "-b" flag was given if the executable name was "obuild"
 	if buildMode {
 		buildFlag = true
+	}
+
+	// If -b was given (or obuild), dispatch to orchideous and exit
+	if buildFlag {
+		obuildArgs := args
+		if helpFlag {
+			obuildArgs = []string{"help"}
+		}
+		commandName := editorExecutable + " -b"
+		if buildMode {
+			commandName = "obuild"
+		}
+		if err := runObuild(obuildArgs, commandName); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		os.Exit(0)
 	}
 
 	// If no regular filename is given, check if data is ready at stdin
