@@ -8,7 +8,7 @@ Zero-configuration build tool for C and C++ projects.
 
 Have you ever had a single `main.cpp` file that you just want to compile, without having to make sure the order of flags are correct and ideally without having to provide any flags at all?
 
-**Orchideous** (or `oh` for short) handles compiler detection, flag ordering, library discovery via `pkg-config`, incremental rebuilds, testing, formatting, cross-compilation, and more — all without a single configuration file.
+**Orchideous** (or `oh` for short) handles compiler detection, flag ordering, library discovery via `pkg-config`, testing, formatting, cross-compilation, and more — all without a single configuration file.
 
 It should be possible to compile all of the examples in the `examples` directory, simply by running `oh` in each directory, as long as the right packages and libraries have been installed.
 
@@ -30,8 +30,6 @@ The auto-detection of external libraries and headers relies on them being includ
 
 ### Arch Linux
 
-Install `orchideous` from AUR, or build from source:
-
 ```sh
 git clone https://github.com/xyproto/orchideous
 cd orchideous
@@ -46,6 +44,15 @@ git clone https://github.com/xyproto/orchideous
 cd orchideous
 make
 sudo make install    # use gmake on BSD
+```
+
+### Windows (MSYS2)
+
+```sh
+git clone https://github.com/xyproto/orchideous
+cd orchideous
+make
+make install
 ```
 
 Or with `go install`:
@@ -189,7 +196,8 @@ myproject/
 ├── img/                  # images
 ├── shaders/              # shaders
 ├── data/                 # data files
-└── shared/               # optional data files
+├── share/                # shared data files (or shared/)
+└── scripts/              # script files
 ```
 
 * The main source file can live in the project root or `src/`.
@@ -209,6 +217,7 @@ These defines are passed to the compiler, with paths that work both during devel
 | `SHAREDIR` | `./share` or `../share` | `$PREFIX/share/$app` |
 | `RESOURCEDIR` | `./resources` or `../resources` | `$PREFIX/share/$app/resources` |
 | `RESDIR` | `./res` or `../res` | `$PREFIX/share/$app/res` |
+| `SCRIPTDIR` | `./scripts` or `../scripts` | `$PREFIX/share/$app/scripts` |
 
 See `examples/sdl2`, `examples/win64crate` (uses `IMGDIR`) and `examples/mixer` (uses `RESOURCEDIR`).
 
@@ -225,7 +234,7 @@ Orchideous auto-detects libraries from `#include` directives in your source file
 * **Graphics**: OpenGL, GLUT, GLFW, GLEW, GLM, Vulkan, SDL2, SFML (2 & 3), raylib
 * **GUI**: GTK (2, 3 & 4), Qt6, VTE
 * **Audio**: OpenAL, SDL2_mixer, PipeWire, rtaudio
-* **Other**: Boost, libconfig++, FastCGI, ReactPhysics3D, libnotify, X11
+* **Other**: Boost, libconfig++, FastCGI, ReactPhysics3D, Gio/GLib, X11
 
 For versioned libraries, the newest available version is preferred (e.g. GTK 4 over GTK 3, SFML 3 over SFML 2).
 
@@ -295,7 +304,7 @@ The formatting style is fixed and not configurable, on purpose.
 
 ## Requirements
 
-* `g++` with C++20 support (or later)
+* `g++` with C++23 support (or later)
 * `pkg-config`
 * `make` (for the project Makefile, not for building C++ projects)
 
@@ -356,6 +365,29 @@ pkgin install pkgconf gmake
 
 Install g++ 11+ and build with `oh CXX=eg++`.
 
+### Windows
+
+Windows is supported via two development environments:
+
+**MSYS2** (recommended): Install [MSYS2](https://www.msys2.org/), then use pacman to install libraries:
+
+```sh
+pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-pkg-config
+pacman -S mingw-w64-x86_64-SDL2   # example: install SDL2
+```
+
+Orchideous auto-detects the MSYS2 environment via the `MSYSTEM` variable and uses pacman for package resolution, similar to Arch Linux.
+
+**vcpkg**: Install [vcpkg](https://vcpkg.io/) and set `VCPKG_ROOT` or add `vcpkg` to your PATH:
+
+```sh
+vcpkg install sdl2   # example: install SDL2
+```
+
+Orchideous uses vcpkg's pkg-config files and installed tree for library resolution. The default triplet is `x64-windows` (override with `VCPKG_DEFAULT_TRIPLET`).
+
+In both cases, a GCC or Clang compiler must be available on PATH.
+
 ## Features and Limitations
 
 * **No configuration files needed** — follows the directory structure conventions above.
@@ -369,5 +401,5 @@ Install g++ 11+ and build with `oh CXX=eg++`.
 ## General Info
 
 * License: BSD-3
-* Version: 1.0.2
+* Version: 1.0.3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

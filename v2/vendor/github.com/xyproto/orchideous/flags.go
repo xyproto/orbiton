@@ -5,36 +5,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"slices"
 	"strings"
 )
 
-// systemIncludeDirs returns the system include directories.
-func systemIncludeDirs() []string {
-	dirs := []string{}
-	if fileExists("/usr/include") {
-		dirs = append(dirs, "/usr/include")
-	}
-	cxx := findCompiler(false, false)
-	if cxx != "" {
-		out, err := exec.Command(cxx, "-dumpmachine").Output()
-		if err == nil {
-			machine := strings.TrimSpace(string(out))
-			machineDir := "/usr/include/" + machine
-			if fileExists(machineDir) {
-				dirs = append(dirs, machineDir)
-			}
-		}
-	}
-	if fileExists("/usr/local/include") {
-		dirs = append(dirs, "/usr/local/include")
-	}
-	if fileExists("/usr/pkg/include") {
-		dirs = append(dirs, "/usr/pkg/include")
-	}
-	return dirs
-}
+// systemIncludeDirs and compilerSupportsStd are in sysinclude_*.go files.
 
 // pkgConfigFlags runs pkg-config for a given package name and returns the flags.
 func pkgConfigFlags(pkg string) string {
@@ -169,7 +144,7 @@ func pkgNameFromInclude(inc string) string {
 // resolveExtraFlags returns additional link/compile flags for special includes.
 func resolveExtraFlags(includes []string, win64 bool) (cflags, ldflags []string) {
 	hasPkg := hasPkgConfig()
-	isDarwin := runtime.GOOS == "darwin"
+	darwin := isDarwin()
 	hasFrameworks := fileExists("/Library/Frameworks")
 	hasSysFrameworks := fileExists("/System/Library/Frameworks")
 
@@ -331,7 +306,7 @@ func resolveExtraFlags(includes []string, win64 bool) (cflags, ldflags []string)
 		}
 
 		// macOS framework detection for arbitrary includes
-		if isDarwin && hasFrameworks && !win64 {
+		if darwin && hasFrameworks && !win64 {
 			firstWord := lower
 			if strings.Contains(inc, "/") {
 				firstWord = strings.Split(lower, "/")[0]
@@ -434,6 +409,7 @@ func dirDefines() []string {
 		"shaders":   "SHADERDIR",
 		"shader":    "SHADERDIR",
 		"share":     "SHAREDIR",
+		"shared":    "SHAREDIR",
 		"resources": "RESOURCEDIR",
 		"resource":  "RESOURCEDIR",
 		"res":       "RESDIR",
@@ -454,12 +430,7 @@ func dirDefines() []string {
 	return defs
 }
 
-// compilerSupportsStd checks if the compiler supports a given -std= flag.
-func compilerSupportsStd(compiler, std string) bool {
-	cmd := exec.Command("sh", "-c",
-		"echo 'int main(){}' | "+compiler+" -std="+std+" -x c++ -fsyntax-only - 2>/dev/null")
-	return cmd.Run() == nil
-}
+// compilerSupportsStd and systemIncludeDirs are in sysinclude_*.go files.
 
 // bestStdFlag returns the best C++ standard flag the compiler supports.
 func bestStdFlag(compiler string) string {
@@ -478,6 +449,13 @@ func appendUnique(slice []string, val string) []string {
 	return append(slice, val)
 }
 
+func prependUnique(slice []string, val string) []string {
+	if slices.Contains(slice, val) {
+		return slice
+	}
+	return append([]string{val}, slice...)
+}
+
 // installDirDefines generates -D flags pointing to installed paths.
 func installDirDefines(prefix string) []string {
 	var defs []string
@@ -487,6 +465,7 @@ func installDirDefines(prefix string) []string {
 		"shaders":   "SHADERDIR",
 		"shader":    "SHADERDIR",
 		"share":     "SHAREDIR",
+		"shared":    "SHAREDIR",
 		"resources": "RESOURCEDIR",
 		"resource":  "RESOURCEDIR",
 		"res":       "RESDIR",
@@ -500,11 +479,6 @@ func installDirDefines(prefix string) []string {
 		}
 	}
 	return defs
-}
-
-// isLinux returns true if running on Linux.
-func isLinux() bool {
-	return runtime.GOOS == "linux"
 }
 
 // isCompilerGCC checks if a compiler path looks like gcc/g++.

@@ -40,9 +40,9 @@ func doCMake(opts BuildOptions) error {
 	fmt.Fprintln(f, "cmake_minimum_required(VERSION 3.12)")
 	fmt.Fprintf(f, "project(%s)\n", exe)
 	if !proj.IsC {
-		fmt.Fprintf(f, "set(TARGET %s PROPERTY CXX_STANDARD 23)\n", exe)
+		fmt.Fprintf(f, "set_property(TARGET %s PROPERTY CXX_STANDARD 23)\n", exe)
 	}
-	fmt.Fprintf(f, "set(TARGET %s PROPERTY C_STANDARD 18)\n", exe)
+	fmt.Fprintf(f, "set_property(TARGET %s PROPERTY C_STANDARD 18)\n", exe)
 	fmt.Fprintf(f, "set(SOURCES %s)\n", strings.Join(srcs, " "))
 	fmt.Fprintf(f, "add_executable(%s ${SOURCES})\n", exe)
 
@@ -83,7 +83,7 @@ func doCMake(opts BuildOptions) error {
 	// Link flags
 	linkFlags := extractLinkFlags(flags.LDFlags)
 	if len(linkFlags) > 0 {
-		fmt.Fprintf(f, "set(TARGET %s PROPERTY LINK_FLAGS %s)\n", exe, strings.Join(linkFlags, " "))
+		fmt.Fprintf(f, "set_property(TARGET %s PROPERTY LINK_FLAGS %s)\n", exe, strings.Join(linkFlags, " "))
 		fmt.Fprintf(f, "target_link_libraries(%s %s)\n", exe, strings.Join(linkFlags, " "))
 	}
 
@@ -126,7 +126,7 @@ func doPro(opts BuildOptions) error {
 	srcs := append([]string{proj.MainSource}, proj.DepSources...)
 
 	fmt.Fprintf(f, "TEMPLATE = app\n\n")
-	fmt.Fprintln(f, "CONFIG += c++20")
+	fmt.Fprintln(f, "CONFIG += c++23")
 	fmt.Fprintln(f, "CONFIG -= console")
 	fmt.Fprintln(f, "CONFIG -= app_bundle")
 	fmt.Fprintf(f, "CONFIG -= qt\n\n")
@@ -276,7 +276,7 @@ func doInstall() error {
 		"shaders": "shaders", "shader": "shaders",
 		"resources": "resources", "resource": "resources",
 		"res": "res", "scripts": "scripts",
-		"share": "",
+		"share": "", "shared": "",
 	}
 
 	for srcDir, dstName := range dataDirs {

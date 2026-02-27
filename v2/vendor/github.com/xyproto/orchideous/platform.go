@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/xyproto/files"
@@ -18,33 +17,6 @@ var skipPackages = map[string]bool{
 
 // cachedPCFiles caches package -> .pc file list lookups.
 var cachedPCFiles = make(map[string][]string)
-
-// detectPlatformType returns the type of platform for package management.
-func detectPlatformType() string {
-	switch runtime.GOOS {
-	case "darwin":
-		if files.WhichCached("brew") != "" {
-			return "brew"
-		}
-	case "freebsd":
-		if fileExists("/usr/sbin/pkg") {
-			return "freebsd"
-		}
-	case "openbsd":
-		if fileExists("/usr/sbin/pkg_info") {
-			return "openbsd"
-		}
-	case "linux":
-		// Arch before Debian (pacman check distinguishes Arch from others)
-		if fileExists("/usr/bin/pacman") {
-			return "arch"
-		}
-		if fileExists("/usr/bin/dpkg-query") {
-			return "deb"
-		}
-	}
-	return "generic"
-}
 
 // resolveIncludesViaPackageManager resolves unresolved includes using the platform's
 // package manager. Returns additional cflags and ldflags.
@@ -102,6 +74,10 @@ func platformResolve(platform, incPath, cxx string) string {
 		return openbsdIncludePathToFlags(incPath)
 	case "brew":
 		return brewIncludePathToFlags(incPath)
+	case "msys2":
+		return msys2IncludePathToFlags(incPath)
+	case "vcpkg":
+		return vcpkgIncludePathToFlags(incPath)
 	default:
 		return genericIncludePathToFlags(incPath)
 	}
@@ -109,18 +85,32 @@ func platformResolve(platform, incPath, cxx string) string {
 
 // findIncludeFile searches for an include file under a system include directory.
 func findIncludeFile(sysDir, inc string) string {
-	out, err := exec.Command("find", sysDir, "-maxdepth", "3", "-type", "f",
-		"-wholename", "*/"+inc).CombinedOutput()
-	if err != nil {
-		return ""
+	// Direct check first (works on all platforms)
+	direct := filepath.Join(sysDir, inc)
+	if fileExists(direct) {
+		return direct
 	}
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-	for i := len(lines) - 1; i >= 0; i-- {
-		if lines[i] != "" {
-			return strings.TrimSpace(lines[i])
+	// Try recursive walk (up to 3 levels deep) — portable alternative to Unix find
+	maxDepth := 3
+	target := filepath.ToSlash(inc)
+	var found string
+	filepath.WalkDir(sysDir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return filepath.SkipDir
 		}
-	}
-	return ""
+		// Enforce max depth
+		rel, _ := filepath.Rel(sysDir, path)
+		depth := strings.Count(filepath.ToSlash(rel), "/")
+		if d.IsDir() && depth >= maxDepth {
+			return filepath.SkipDir
+		}
+		if !d.IsDir() && strings.HasSuffix(filepath.ToSlash(path), target) {
+			found = path
+			return filepath.SkipAll
+		}
+		return nil
+	})
+	return found
 }
 
 // pcFilesToFlags takes a list of .pc file paths and returns combined pkg-config flags.
@@ -480,39 +470,6 @@ func recommendPackage(missingIncludes []string) {
 					}
 				}
 			}
-		}
-	}
-}
-
-// platformHints outputs platform-specific hints for missing includes.
-func platformHints(missingIncludes []string) {
-	if runtime.GOOS != "darwin" {
-		return
-	}
-	for _, inc := range missingIncludes {
-		switch inc {
-		case "GL/glut.h":
-			fmt.Fprintln(os.Stderr, `
-NOTE: On macOS, include GLUT/glut.h instead of GL/glut.h.
-
-Suggested code:
-
-    #ifdef __APPLE__
-    #include <GLUT/glut.h>
-    #else
-    #include <GL/glut.h>
-    #endif`)
-		case "GL/gl.h":
-			fmt.Fprintln(os.Stderr, `
-NOTE: On macOS, include OpenGL/gl.h instead of GL/gl.h.
-
-Suggested code:
-
-    #ifdef __APPLE__
-    #include <OpenGL/gl.h>
-    #else
-    #include <GL/gl.h>
-    #endif`)
 		}
 	}
 }

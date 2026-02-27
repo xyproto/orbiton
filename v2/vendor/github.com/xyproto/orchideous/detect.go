@@ -98,6 +98,10 @@ func detectProject() Project {
 	// Resolve common/ sources from includes (iteratively)
 	p.resolveCommonDeps()
 
+	// Final deduplication
+	p.DepSources = uniqueStrings(p.DepSources)
+	p.TestSources = uniqueStrings(p.TestSources)
+
 	// Collect external includes from all sources
 	allSrcs := []string{}
 	if p.MainSource != "" {
@@ -421,10 +425,13 @@ func (p *Project) resolveCommonDeps() {
 			for _, cp := range localCommonPaths {
 				for _, ext := range SourceExts {
 					candidate := filepath.Join(cp, base+ext)
-					if fileExists(candidate) && !existingDeps[candidate] {
-						p.DepSources = append(p.DepSources, candidate)
-						existingDeps[candidate] = true
-						foundNew = true
+					if fileExists(candidate) {
+						key := normalizePath(candidate)
+						if !existingDeps[key] {
+							p.DepSources = append(p.DepSources, candidate)
+							existingDeps[key] = true
+							foundNew = true
+						}
 					}
 				}
 			}
@@ -505,7 +512,7 @@ func fileExists(path string) bool {
 func toSet(strs []string) map[string]bool {
 	m := make(map[string]bool)
 	for _, s := range strs {
-		m[s] = true
+		m[normalizePath(s)] = true
 	}
 	return m
 }
@@ -514,9 +521,10 @@ func uniqueStrings(strs []string) []string {
 	seen := make(map[string]bool)
 	var result []string
 	for _, s := range strs {
-		if !seen[s] {
-			seen[s] = true
-			result = append(result, s)
+		norm := normalizePath(s)
+		if !seen[norm] {
+			seen[norm] = true
+			result = append(result, filepath.Clean(s))
 		}
 	}
 	return result
