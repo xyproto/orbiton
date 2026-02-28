@@ -1,6 +1,6 @@
 module github.com/xyproto/orbiton/v2
 
-go 1.24
+go 1.24.4
 
 require (
 	github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa
@@ -29,7 +29,7 @@ require (
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
-	github.com/xyproto/megafile v1.6.0
+	github.com/xyproto/megafile v1.6.1
 	github.com/xyproto/mode v0.12.3
 	github.com/xyproto/ollamaclient/v2 v2.7.2
 	github.com/xyproto/orchideous v1.0.3

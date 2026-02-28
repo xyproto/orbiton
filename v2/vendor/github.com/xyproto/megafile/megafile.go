@@ -1132,7 +1132,7 @@ func (s *State) Run() ([]string, error) {
 			//break
 			//}
 			fallthrough
-		case "c:127": // backspace, either go one directory up or delete text
+		case "c:127", "c:31": // backspace or ctrl-dash, either go one directory up or delete text
 			if index == 0 { // cursor is at the start of the line, nothing to delete
 				// go one directory up
 				if absPath, err := filepath.Abs(filepath.Join(s.Directories[s.dirIndex], "..")); err == nil { // success
