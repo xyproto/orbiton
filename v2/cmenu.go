@@ -270,10 +270,10 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 	}
 
 	// Find the path to either "rust-gdb" or "gdb", depending on the mode, then check if it's there
-	foundGDB := findGDB(e.mode) != ""
+	foundDebugger := findGDB(e.mode) != "" || (e.mode == mode.Go && findDlv() != "")
 
 	// Debug mode on/off, if gdb is found and the mode is tested
-	if foundGDB && e.UsingGDBMightWork() {
+	if foundDebugger && e.UsingGDBMightWork() {
 		if e.debugMode {
 			actions.Add("Exit debug mode", func() {
 				status.Clear(c, false)
