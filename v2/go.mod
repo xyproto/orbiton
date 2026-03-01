@@ -1,6 +1,6 @@
 module github.com/xyproto/orbiton/v2
 
-go 1.24.4
+go 1.26
 
 require (
 	github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa
