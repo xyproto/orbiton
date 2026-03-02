@@ -1096,27 +1096,16 @@ func (s *State) Run() ([]string, error) {
 
 	c.Draw()
 
-	keyChan := make(chan string, 1)
-	uptimeTicker := time.NewTicker(1 * time.Minute)
-	defer uptimeTicker.Stop()
-
-	go func() {
-		for {
-			k := s.readKey()
-			keyChan <- k
-		}
-	}()
+	lastUptimeUpdate := time.Now()
 
 	for !s.quit {
-		var key string
-		select {
-		case key = <-keyChan:
-		case <-uptimeTicker.C:
-			// Redraw uptime line without disturbing anything else
+		key := s.readKey()
+
+		// Update uptime display if a minute has passed
+		if time.Since(lastUptimeUpdate) >= 1*time.Minute {
 			const fullKernelVersion = false
 			if uptimeString, err := UpsieString(fullKernelVersion); err == nil {
 				uptimeY := topLine + 1
-				// Clear the uptime line
 				c.Write(5, uptimeY, vt.Default, s.Background, strings.Repeat(" ", int(c.W())-5))
 				if envNoColor {
 					c.WriteTagged(5, uptimeY, s.Background, uptimeString)
@@ -1125,8 +1114,9 @@ func (s *State) Run() ([]string, error) {
 				}
 				c.Draw()
 			}
-			continue
+			lastUptimeUpdate = time.Now()
 		}
+
 		if handled, shouldDraw := rename.handleKey(key, &index, renameHooks); handled {
 			if shouldDraw {
 				c.Draw()
