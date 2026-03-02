@@ -616,6 +616,8 @@ func (lsp *LSPClient) Shutdown() error {
 	}
 	lsp.writeMessage(notification)
 	lsp.stdin.Close()
+	lsp.stdout.Close()
+	lsp.stderr.Close()
 	lsp.mutex.Unlock()
 
 	done := make(chan error, 1)
