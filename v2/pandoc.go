@@ -51,13 +51,13 @@ func (e *Editor) exportPandocPDF(c *vt.Canvas, tty *vt.TTY, status *StatusBar, p
 	// The reason for writing to a temporary file is to be able to export without saving
 	// the currently edited file.
 
-	tempFilename := ""
 	f, err := os.CreateTemp(tempDir, "_o*.md")
 	if err != nil {
 		return err
 	}
+	f.Close()
+	tempFilename := f.Name()
 	defer os.Remove(tempFilename)
-	tempFilename = f.Name()
 
 	// TODO: Implement a SaveAs function
 
