@@ -3,6 +3,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -62,7 +63,7 @@ func quitBat(filename string) error {
 		batExecutable = files.Which(batExecutable)
 	}
 	if batExecutable == "" {
-		return fmt.Errorf("%q is not available in the PATH", batExecutable)
+		return errors.New("bat is not available in the PATH")
 	}
 	args = append(args, filename)
 	vt.ShowCursor(true)
