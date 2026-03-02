@@ -2213,6 +2213,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		status.ClearAll(c, false)
 		// Redraw
 		c.Draw()
+		// Place the cursor at the bottom of the screen so that
+		// the shell prompt appears at the bottom after quitting.
+		vt.SetXY(0, c.H()-1)
 	}
 
 	// Make sure to enable the cursor again
