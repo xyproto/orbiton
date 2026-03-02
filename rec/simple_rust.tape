@@ -5,19 +5,12 @@ Require o
 Require rustc
 Require rust-analyzer
 
-Set FontSize 14
-Set Width 1200
-Set Height 600
-Set Shell "bash"
-Set TypingSpeed 30ms
-
-# Editor theme
-Env O_THEME "zulu"
+Source style.tape
 
 # Open a new Rust file
 Type "o /tmp/main.rs"
 Enter
-Sleep 1s
+Sleep 2s
 
 # Insert Rust template with ctrl-w
 Ctrl+W
@@ -31,22 +24,15 @@ Sleep 500ms
 Ctrl+Space
 Sleep 200ms
 Ctrl+Space
-Sleep 3s
+Wait+Screen /Program output/
+Sleep 1s
 
-# Move cursor down
-Down
+# Move cursor to the end of the line
+Ctrl+E
 Sleep 500ms
 
 # Insert a new line
 Enter
-Sleep 500ms
-
-# Move cursor up
-Up
-Sleep 500ms
-
-# Insert indentation
-Tab
 Sleep 500ms
 
 # Type "pri" to trigger rust-analyzer autocomplete for println!
@@ -55,7 +41,8 @@ Sleep 8s
 
 # Tab to autocomplete with rust-analyzer
 Tab
-Sleep 3s
+Wait+Screen /Completions/
+Sleep 1s
 
 # Accept the completion suggestion
 Enter
@@ -76,26 +63,5 @@ Ctrl+S
 Sleep 500ms
 
 # Quit the editor
-Ctrl+Q
-Sleep 1s
-
-# Open file browser on /tmp
-Type "o /tmp"
-Enter
-Sleep 1s
-
-# Filter to show only main.rs
-Type "main.rs"
-Sleep 1s
-
-# Select the file
-Down
-Sleep 500ms
-
-# Delete the file
-Delete
-Sleep 1s
-
-# Quit the file browser
 Ctrl+Q
 Sleep 1s
