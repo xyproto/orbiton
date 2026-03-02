@@ -285,6 +285,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 		foundDocstringMarker               bool
 		doneHighlighting                   = true
 		hasSearchTerm                      = len(e.searchTerm) > 0
+		searchCaseInsensitive              = hasSearchTerm && !ProgrammingLanguage(e.mode)
 		ignoreSingleQuotes                 = e.mode == mode.Lisp || e.mode == mode.Clojure || e.mode == mode.Scheme || e.mode == mode.Ini
 		numLinesToDraw                     int
 		runeIndex                          int
@@ -807,7 +808,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 							// Coloring an already found match
 							fg = e.SearchHighlight
 							matchForAnotherN--
-						} else if hasSearchTerm && ra.R == searchTermRunes[0] {
+						} else if hasSearchTerm && (ra.R == searchTermRunes[0] || (searchCaseInsensitive && unicode.ToLower(ra.R) == unicode.ToLower(searchTermRunes[0]))) {
 							// Potential search highlight match
 							length = utf8.RuneCountInString(e.searchTerm)
 							counter = 0
@@ -818,7 +819,13 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 									break
 								}
 								ra2 = runesAndAttributes[i]
-								if ra2.R != []rune(e.searchTerm)[counter] {
+								searchRune := []rune(e.searchTerm)[counter]
+								if searchCaseInsensitive {
+									if unicode.ToLower(ra2.R) != unicode.ToLower(searchRune) {
+										match = false
+										break
+									}
+								} else if ra2.R != searchRune {
 									// mismatch, not a hit
 									match = false
 									break

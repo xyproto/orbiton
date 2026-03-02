@@ -7,12 +7,31 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/xyproto/clip"
 	"github.com/xyproto/vt"
 )
 
 var errNoSearchMatch = errors.New("no search match")
+
+// searchContains checks if haystack contains needle, using case-insensitive
+// comparison for non-programming-language modes.
+func (e *Editor) searchContains(haystack, needle string) bool {
+	if !ProgrammingLanguage(e.mode) {
+		return strings.Contains(strings.ToLower(haystack), strings.ToLower(needle))
+	}
+	return strings.Contains(haystack, needle)
+}
+
+// searchIndex returns the byte index of needle in haystack, using case-insensitive
+// comparison for non-programming-language modes.
+func (e *Editor) searchIndex(haystack, needle string) int {
+	if !ProgrammingLanguage(e.mode) {
+		return strings.Index(strings.ToLower(haystack), strings.ToLower(needle))
+	}
+	return strings.Index(haystack, needle)
+}
 
 // SetSearchTerm will set the current search term. This initializes a new search.
 func (e *Editor) SetSearchTerm(c *vt.Canvas, status *StatusBar, s string, spellCheckMode bool) bool {
@@ -26,7 +45,7 @@ func (e *Editor) SetSearchTerm(c *vt.Canvas, status *StatusBar, s string, spellC
 	// Go to the first instance after the current line, if found
 	e.lineBeforeSearch = e.DataY()
 	for y := e.DataY(); y < LineIndex(e.Len()); y++ {
-		if strings.Contains(e.Line(y), s) {
+		if e.searchContains(e.Line(y), s) {
 			// Found an instance, scroll there
 			// GoTo returns true if the screen should be redrawn
 			redraw, _ := e.GoTo(y, c, status)
@@ -60,13 +79,21 @@ func (e *Editor) SetSearchTermWithTimeout(c *vt.Canvas, status *StatusBar, s str
 	var foundMutex sync.RWMutex
 
 	// run the search in a separate goroutine
+	caseInsensitive := !ProgrammingLanguage(e.mode)
 	go func() {
 		for y := e.DataY(); y < LineIndex(e.Len()); y++ {
-			if strings.Contains(e.Line(y), s) {
-				matchFound <- true
+			line := e.Line(y)
+			found := false
+			if caseInsensitive {
+				found = strings.Contains(strings.ToLower(line), strings.ToLower(s))
+			} else {
+				found = strings.Contains(line, s)
+			}
+			if found {
 				foundMutex.Lock()
 				foundMatch = y
 				foundMutex.Unlock()
+				matchFound <- true
 				return
 			}
 		}
@@ -140,20 +167,27 @@ func (e *Editor) forwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex)
 			if err != nil {
 				continue
 			}
-			// Search from the next byte (not rune) position on this line
-			// TODO: Move forward one rune instead of one byte
-			x++
-			if x >= len(lineContents) {
+			// Convert rune index from DataX() to byte offset, then advance one rune
+			byteOffset := 0
+			for i := 0; i < x && byteOffset < len(lineContents); i++ {
+				_, size := utf8.DecodeRuneInString(lineContents[byteOffset:])
+				byteOffset += size
+			}
+			if byteOffset < len(lineContents) {
+				_, size := utf8.DecodeRuneInString(lineContents[byteOffset:])
+				byteOffset += size
+			}
+			if byteOffset >= len(lineContents) {
 				continue
 			}
-			if strings.Contains(lineContents[x:], s) {
-				foundX = x + strings.Index(lineContents[x:], s)
+			if e.searchContains(lineContents[byteOffset:], s) {
+				foundX = byteOffset + e.searchIndex(lineContents[byteOffset:], s)
 				foundY = y
 				break
 			}
 		} else {
-			if strings.Contains(lineContents, s) {
-				foundX = strings.Index(lineContents, s)
+			if e.searchContains(lineContents, s) {
+				foundX = e.searchIndex(lineContents, s)
 				foundY = y
 				break
 			}
@@ -184,20 +218,27 @@ func (e *Editor) backwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex
 			if err != nil {
 				continue
 			}
-			// Search from the next byte (not rune) position on this line
-			// TODO: Move forward one rune instead of one byte
-			x++
-			if x >= len(lineContents) {
+			// Convert rune index from DataX() to byte offset, then advance one rune
+			byteOffset := 0
+			for i := 0; i < x && byteOffset < len(lineContents); i++ {
+				_, size := utf8.DecodeRuneInString(lineContents[byteOffset:])
+				byteOffset += size
+			}
+			if byteOffset < len(lineContents) {
+				_, size := utf8.DecodeRuneInString(lineContents[byteOffset:])
+				byteOffset += size
+			}
+			if byteOffset >= len(lineContents) {
 				continue
 			}
-			if strings.Contains(lineContents[x:], s) {
-				foundX = x + strings.Index(lineContents[x:], s)
+			if e.searchContains(lineContents[byteOffset:], s) {
+				foundX = byteOffset + e.searchIndex(lineContents[byteOffset:], s)
 				foundY = y
 				break
 			}
 		} else {
-			if strings.Contains(lineContents, s) {
-				foundX = strings.Index(lineContents, s)
+			if e.searchContains(lineContents, s) {
+				foundX = e.searchIndex(lineContents, s)
 				foundY = y
 				break
 			}
@@ -209,7 +250,7 @@ func (e *Editor) backwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex
 // GoToNextMatch will go to the next match, searching for "e.SearchTerm()".
 // * The search wraps around if wrap is true.
 // * The search is backawards if forward is false.
-// * The search is case-sensitive.
+// * The search is case-insensitive for non-programming-language modes.
 // Returns an error if the search was successful but no match was found.
 func (e *Editor) GoToNextMatch(c *vt.Canvas, status *StatusBar, wrap, forward bool) error {
 	var (
@@ -461,8 +502,13 @@ AGAIN:
 	foundNoTypos := false
 	spellCheckMode := false
 	if s == "" && !replaceMode {
-		// No search string entered, and not in replace mode, use the current word, if available
-		s = e.CurrentWord()
+		// No search string entered, and not in replace mode.
+		// First try the most recent search from history, then fall back to the current word.
+		if last := searchHistory.LastAdded(); last != "" {
+			s = last
+		} else {
+			s = e.CurrentWord()
+		}
 	} else if s == "t" {
 		// A special case, search forward for typos
 		spellCheckMode = true
@@ -557,15 +603,19 @@ AGAIN:
 		e.redraw.Store(true)
 		return
 	}
+	// Check if we're searching for a unicode character, like "U+0047" or "u+006E"
+	if r, err := runeFromUBytes([]byte(s)); err == nil {
+		s = string(r)
+	}
 	e.SetSearchTermWithTimeout(c, status, s, spellCheckMode, timeout)
 	if pressedReturn {
 		// Return to the first location before performing the actual search
 		e.GoToLineNumber(initialLocation, c, status, false)
-		// Save "s" to the search or replace history, if we are on a fast enough system
-
 		// Save "s" to the search history, if we are on a fast enough system
-		if trimmedSearchString := strings.TrimSpace(s); trimmedSearchString != "" && !e.slowLoad {
-			searchHistory.AddAndSave(trimmedSearchString)
+		if s != "" {
+			if trimmedSearchString := strings.TrimSpace(s); trimmedSearchString != "" && !e.slowLoad {
+				searchHistory.AddAndSave(trimmedSearchString)
+			}
 		} else if !searchHistory.Empty() {
 			const newestFirst = false
 			s = searchHistory.GetIndex(searchHistoryIndex, newestFirst)
