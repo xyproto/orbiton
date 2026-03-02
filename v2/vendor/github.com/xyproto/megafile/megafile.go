@@ -1348,6 +1348,9 @@ func (s *State) Run() ([]string, error) {
 				break
 			}
 			clearWritten()
+			if index >= uint(len(s.written)) {
+				break
+			}
 			s.written = append(s.written[:index], s.written[index+1:]...)
 			// Update filter pattern and redraw
 			s.clearHighlight()
