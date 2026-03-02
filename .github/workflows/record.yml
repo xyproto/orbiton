@@ -1,0 +1,32 @@
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'rec/*.tape'
+      - '.github/workflows/record.yml'
+name: Record
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+    - name: Install Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: 1.26.x
+    - name: Build Orbiton
+      run: cd v2 && go build -mod=vendor -o o && sudo cp o /usr/local/bin/
+    - name: Install clangd
+      run: sudo apt-get update && sudo apt-get install -y clangd
+    - name: Record simplec
+      uses: charmbracelet/vhs-action@v2
+      with:
+        path: rec/simplec.tape
+    - name: Move recording
+      run: mv simplec.gif rec/
+    - name: Upload recordings
+      uses: actions/upload-artifact@v4
+      with:
+        name: recordings
+        path: rec/*.gif
