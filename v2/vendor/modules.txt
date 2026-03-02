@@ -126,7 +126,7 @@ github.com/xyproto/mode
 # github.com/xyproto/ollamaclient/v2 v2.7.2
 ## explicit; go 1.23.1
 github.com/xyproto/ollamaclient/v2
-# github.com/xyproto/orchideous v1.0.4
+# github.com/xyproto/orchideous v1.0.5
 ## explicit; go 1.24
 github.com/xyproto/orchideous
 # github.com/xyproto/palgen v1.6.1

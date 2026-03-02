@@ -95,6 +95,13 @@ func detectProject() Project {
 		scanSourceForFlags(src, &p)
 	}
 
+	// Verify HasWin64 using the C preprocessor: if windows.h is only
+	// included inside #ifdef _WIN32 guards, it won't survive preprocessing
+	// on non-Windows hosts, so we should not treat this as a win64 project.
+	if p.HasWin64 {
+		p.HasWin64 = verifyWin64WithPreprocessor(allSources)
+	}
+
 	// Resolve common/ sources from includes (iteratively)
 	p.resolveCommonDeps()
 
@@ -168,6 +175,33 @@ func scanSourceForFlags(filename string, p *Project) {
 			p.HasGLFWVulkan = true
 		}
 	}
+}
+
+// verifyWin64WithPreprocessor checks if windows.h actually survives
+// C preprocessing (i.e., is not guarded by #ifdef _WIN32 or similar).
+// If the preprocessor is unavailable, the naive scan result is kept.
+func verifyWin64WithPreprocessor(sources []string) bool {
+	preprocessorWorked := false
+	for _, src := range sources {
+		if src == "" {
+			continue
+		}
+		lines := cppPreprocessIncludes(src)
+		if lines == nil {
+			continue
+		}
+		preprocessorWorked = true
+		for _, inc := range lines {
+			if inc == "windows.h" {
+				return true
+			}
+		}
+	}
+	if !preprocessorWorked {
+		// Preprocessor unavailable; keep naive scan result
+		return true
+	}
+	return false
 }
 
 // getTestSources returns all test source files.
