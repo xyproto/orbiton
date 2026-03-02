@@ -21,9 +21,14 @@ var errNoMainFile = errors.New("no main file found")
 //  4. Build system files (Makefile, CMakeLists.txt, etc.)
 //  5. README files
 func guessMainFileOfDirectory(dir string) (string, error) {
-	prevDir, _ := os.Getwd()
+	prevDir, err := os.Getwd()
+	if err != nil {
+		prevDir = ""
+	}
 	_ = os.Chdir(dir)
-	defer os.Chdir(prevDir)
+	if prevDir != "" {
+		defer os.Chdir(prevDir)
+	}
 
 	// Try C/C++ detection via orchideous
 	if mainSrc := orchideous.GetMainSourceFile(nil); mainSrc != "" {
