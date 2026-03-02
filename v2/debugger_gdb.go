@@ -193,10 +193,23 @@ func (d *gdbDebugger) SetupAndRun(assemblyMode bool) (string, error) {
 		d.conn.Send("gdb-set", "disassembly-flavor", "intel")
 	}
 
-	if _, err := d.conn.CheckedSend("exec-run", "--start"); err != nil {
-		output := d.output.String()
-		d.output.Reset()
-		return output, err
+	if isDarwin {
+		d.conn.Send("gdb-set", "startup-with-shell", "off")
+		// Some versions of GDB on macOS struggle with "exec-run --start"
+		// using the MI interface. A more robust approach is setting a
+		// temporary breakpoint at main and then just running.
+		d.conn.Send("break-insert", "-t", "main")
+		if _, err := d.conn.CheckedSend("exec-run"); err != nil {
+			output := d.output.String()
+			d.output.Reset()
+			return output, err
+		}
+	} else {
+		if _, err := d.conn.CheckedSend("exec-run", "--start"); err != nil {
+			output := d.output.String()
+			d.output.Reset()
+			return output, err
+		}
 	}
 
 	if !isDarwin {
