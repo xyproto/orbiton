@@ -5,16 +5,11 @@ cd "$(dirname "$0")"
 
 export VHS_NO_SANDBOX=1
 
-vhs simple_c.tape
-rm /tmp/tmp /tmp/main.*
+for lang in c cpp rust zig python; do
+  rm -f /tmp/main.* /tmp/tmp
+  vhs simple_$lang.tape
+done
 
-vhs simple_cpp.tape
-rm /tmp/tmp /tmp/main.*
-
-vhs simple_rust.tape
-rm /tmp/tmp /tmp/main.*
-
-vhs simple_zig.tape
-rm /tmp/tmp /tmp/main.*
+rm -f /tmp/main.* /tmp/tmp
 
 echo 'All recordings done.'
