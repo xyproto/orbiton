@@ -1,4 +1,4 @@
-//go:build freebsd
+//go:build freebsd || netbsd || openbsd
 
 package megafile
 

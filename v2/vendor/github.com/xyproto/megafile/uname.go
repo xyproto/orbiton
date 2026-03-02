@@ -1,4 +1,4 @@
-//go:build !linux && !darwin && !freebsd && !netbsd && !windows && !plan9
+//go:build !linux && !darwin && !freebsd && !openbsd && !netbsd && !windows && !plan9
 
 package megafile
 
