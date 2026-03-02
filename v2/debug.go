@@ -4,6 +4,7 @@ import (
 	"errors"
 	"maps"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"sort"
 	"strings"
@@ -282,8 +283,13 @@ func (e *Editor) DrawFlags(c *vt.Canvas, repositionCursor bool) {
 
 	changedFlags := []string{}
 
+	flagRegister := "$eflags"
+	if runtime.GOARCH == "arm64" || runtime.GOARCH == "arm" {
+		flagRegister = "$cpsr"
+	}
+
 	// Fetch the value of the machine flags (zero flag, carry etc)
-	if flagNamesString, err := e.debugger.EvalExpression("$eflags"); err == nil {
+	if flagNamesString, err := e.debugger.EvalExpression(flagRegister); err == nil {
 		flagNamesString = strings.TrimPrefix(flagNamesString, "[ ")
 		flagNamesString = strings.TrimSuffix(flagNamesString, " ]")
 		flags := strings.Split(flagNamesString, " ")

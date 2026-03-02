@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
@@ -60,6 +61,9 @@ func findGDB(m mode.Mode) string {
 	}
 	if gdbPathRegular == nil {
 		path := files.WhichCached("gdb")
+		if path == "" && isDarwin {
+			path = files.WhichCached("ggdb")
+		}
 		gdbPathRegular = &path
 	}
 	return *gdbPathRegular
@@ -185,7 +189,9 @@ func (d *gdbDebugger) SetupAndRun(assemblyMode bool) (string, error) {
 		d.conn.Send("break-insert", "-t", "1")
 	}
 
-	d.conn.Send("gdb-set", "disassembly-flavor", "intel")
+	if runtime.GOARCH == "amd64" || runtime.GOARCH == "386" {
+		d.conn.Send("gdb-set", "disassembly-flavor", "intel")
+	}
 
 	if _, err := d.conn.CheckedSend("exec-run", "--start"); err != nil {
 		output := d.output.String()
@@ -193,14 +199,16 @@ func (d *gdbDebugger) SetupAndRun(assemblyMode bool) (string, error) {
 		return output, err
 	}
 
-	// Enable execution recording for reverse stepping
-	d.conn.Send("interpreter-exec", "console", "record full")
-	d.recording = true
+	if !isDarwin {
+		// Enable execution recording for reverse stepping
+		d.conn.Send("interpreter-exec", "console", "record full")
+		d.recording = true
 
-	// Catch exit syscalls so we can stop recording before GDB tries to
-	// record them (which causes GDB to hang with record full).
-	d.conn.Send("interpreter-exec", "console", "catch syscall exit_group")
-	d.conn.Send("interpreter-exec", "console", "catch syscall exit")
+		// Catch exit syscalls so we can stop recording before GDB tries to
+		// record them (which causes GDB to hang with record full).
+		d.conn.Send("interpreter-exec", "console", "catch syscall exit_group")
+		d.conn.Send("interpreter-exec", "console", "catch syscall exit")
+	}
 
 	// Add any existing watches
 	for varName := range d.watchMap {
@@ -610,40 +618,43 @@ func (d *gdbDebugger) ChangedRegisterMap() (map[string]string, error) {
 					reg1byteL := []string{"al", "cl", "dl", "bl", "sil", "dil", "spl", "bpl", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"}
 					reg1byteH := []string{"ah", "ch", "dh", "bh", "sil", "dil", "spl", "bpl", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"}
 
-					filterRegisters := d.filterRegisters
-					if filterRegisters {
-						for _, regSlice := range [][]string{reg8byte, reg4byte, reg2byte} {
-							for _, regName := range regSlice {
-								if !hasKey(registers, regName) {
-									continue
+					if d.filterRegisters {
+						if runtime.GOARCH == "amd64" || runtime.GOARCH == "386" {
+							for i, r64 := range reg8byte {
+								if hasKey(registers, r64) {
+									delete(registers, reg4byte[i])
+									delete(registers, reg2byte[i])
+									delete(registers, reg1byteL[i])
+									delete(registers, reg1byteH[i])
 								}
-								for i, r8b := range reg8byte {
-									if hasKey(registers, r8b) {
-										delete(registers, reg4byte[i])
-										delete(registers, reg2byte[i])
-										delete(registers, reg1byteL[i])
-										delete(registers, reg1byteH[i])
-									}
+							}
+							for i, r32 := range reg4byte {
+								if hasKey(registers, r32) {
+									delete(registers, reg2byte[i])
+									delete(registers, reg1byteL[i])
+									delete(registers, reg1byteH[i])
 								}
-								for i, r4b := range reg4byte {
-									if hasKey(registers, r4b) {
-										delete(registers, reg2byte[i])
-										delete(registers, reg1byteL[i])
-										delete(registers, reg1byteH[i])
-									}
+							}
+							for i, r16 := range reg2byte {
+								if hasKey(registers, r16) {
+									delete(registers, reg1byteL[i])
+									delete(registers, reg1byteH[i])
 								}
-								for i, r2b := range reg2byte {
-									if hasKey(registers, r2b) {
-										delete(registers, reg1byteL[i])
-										delete(registers, reg1byteH[i])
-									}
+							}
+						} else if runtime.GOARCH == "arm64" || runtime.GOARCH == "arm" {
+							for i := 0; i <= 30; i++ {
+								xReg := fmt.Sprintf("x%d", i)
+								wReg := fmt.Sprintf("w%d", i)
+								if hasKey(registers, xReg) {
+									delete(registers, wReg)
 								}
-
 							}
 						}
 					}
 
 					delete(registers, "eflags")
+					delete(registers, "cpsr")
+					delete(registers, "pstate")
 
 					return registers, nil
 				}
