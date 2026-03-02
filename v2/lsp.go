@@ -1727,7 +1727,8 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	}
 
 	// clangd may return Kind=1 (Text) with a leading space in the Label for C/C++ functions
-	if addParens == "" && (e.mode == mode.C || e.mode == mode.Cpp) && strings.HasPrefix(items[choice].Label, " ") {
+	// but not for variables like std::cout, so skip qualified names (lines containing ::)
+	if addParens == "" && (e.mode == mode.C || e.mode == mode.Cpp) && items[choice].Kind <= 1 && strings.HasPrefix(items[choice].Label, " ") && !strings.Contains(currentLine, "::") {
 		addParens = "("
 	}
 
