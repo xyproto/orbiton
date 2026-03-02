@@ -48,11 +48,11 @@ Sleep 500ms
 
 # Type "pri" to trigger rust-analyzer autocomplete for println!
 Type "pri"
-Sleep 3s
+Sleep 8s
 
 # Tab to autocomplete with rust-analyzer
 Tab
-Sleep 2s
+Sleep 3s
 
 # Accept the completion suggestion
 Enter
