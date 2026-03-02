@@ -16,7 +16,7 @@ jobs:
     - name: Install Go
       uses: actions/setup-go@v6
       with:
-        go-version: 1.26.x
+        go-version: "1.24"
     - name: Build Orbiton
       run: cd v2 && go build -mod=vendor -o o && sudo cp o /usr/local/bin/
     - name: Install dependencies
