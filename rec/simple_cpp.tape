@@ -10,6 +10,9 @@ Set Height 600
 Set Shell "bash"
 Set TypingSpeed 30ms
 
+# Editor theme
+Env O_THEME "zulu"
+
 # Open a new C++ file
 Type "o /tmp/main.cpp"
 Enter

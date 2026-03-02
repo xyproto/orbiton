@@ -11,6 +11,9 @@ Set Height 600
 Set Shell "bash"
 Set TypingSpeed 30ms
 
+# Editor theme
+Env O_THEME "zulu"
+
 # Open a new Rust file
 Type "o /tmp/main.rs"
 Enter
