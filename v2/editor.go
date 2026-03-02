@@ -3008,9 +3008,19 @@ func (e *Editor) CursorDownward(c *vt.Canvas, status *StatusBar) {
 			// Output a helpful message
 			if !e.AfterEndOfDocument() {
 				canvasHeight := int(c.Height())
-				e.redraw.Store(e.ScrollDown(c, status, 1, canvasHeight))
+				redraw := e.ScrollDown(c, status, 1, canvasHeight)
+				e.redraw.Store(redraw)
+				if !redraw && status != nil && e.AtOrAfterLastLineOfDocument() {
+					status.Clear(c, false)
+					status.SetMessage("EOF")
+					status.Show(c, e)
+				}
 				e.pos.Up()
 				e.DownEnd(c)
+			} else if status != nil {
+				status.Clear(c, false)
+				status.SetMessage("EOF")
+				status.Show(c, e)
 			}
 		}
 		// If the cursor is after the length of the current line, move it to the end of the current line
