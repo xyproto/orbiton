@@ -14,7 +14,10 @@ const (
 	fiveSpaces = "     "
 )
 
-var mut *sync.RWMutex
+var (
+	mut     *sync.RWMutex
+	mutOnce sync.Once
+)
 
 // StatusBar represents the little status field that can appear at the bottom of the screen
 type StatusBar struct {
@@ -37,7 +40,7 @@ var statusBeingShown int
 // NewStatusBar takes a foreground color, background color, foreground color for clearing,
 // background color for clearing and a duration for how long to display status messages.
 func (e *Editor) NewStatusBar(statusDuration time.Duration, initialMessageAfterRedraw string) *StatusBar {
-	mut = &sync.RWMutex{}
+	mutOnce.Do(func() { mut = &sync.RWMutex{} })
 	return &StatusBar{e, "", initialMessageAfterRedraw, e.StatusForeground, e.StatusBackground, e.StatusErrorForeground, e.StatusErrorBackground, statusDuration, 0, false, e.nanoMode.Load()}
 }
 

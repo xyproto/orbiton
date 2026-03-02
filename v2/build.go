@@ -207,12 +207,10 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 			if e.Save(c, tty) == nil { // success
 				// Unlock and save the lock file
 				if absFilename, err := filepath.Abs(e.filename); fileLock != nil && err == nil { // success
-					go func() {
-						quitMut.Lock()
-						defer quitMut.Unlock()
-						fileLock.Unlock(absFilename)
-						fileLock.Save()
-					}()
+					quitMut.Lock()
+					fileLock.Unlock(absFilename)
+					fileLock.Save()
+					quitMut.Unlock()
 				}
 				quitExecShellCommand(tty, sourceDir, s) // The program ends here
 			}
@@ -229,12 +227,10 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 			if e.Save(c, tty) == nil { // success
 				// Unlock and save the lock file
 				if absFilename, err := filepath.Abs(e.filename); fileLock != nil && err == nil { // success
-					go func() {
-						quitMut.Lock()
-						defer quitMut.Unlock()
-						fileLock.Unlock(absFilename)
-						fileLock.Save()
-					}()
+					quitMut.Lock()
+					fileLock.Unlock(absFilename)
+					fileLock.Save()
+					quitMut.Unlock()
 				}
 				quitExecShellCommand(tty, sourceDir, s) // The program ends here
 			}
