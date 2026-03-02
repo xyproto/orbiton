@@ -22,13 +22,12 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y gcc clang clangd ffmpeg
+        sudo apt-get install -y gcc clang clangd ffmpeg libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libxdamage1 libpango-1.0-0 libcairo2 libasound2t64
     - name: Install ttyd
       run: |
-        curl -fsSL -o /tmp/ttyd "$(gh release view --repo tsl0922/ttyd --json assets --jq '.assets[] | select(.name | endswith("x86_64")) | .url')"
+        TTYD_URL="$(curl -fsSL https://api.github.com/repos/tsl0922/ttyd/releases/latest | grep -o 'https://[^"]*ttyd\.x86_64' | head -1)"
+        curl -fsSL -o /tmp/ttyd "$TTYD_URL"
         sudo install /tmp/ttyd /usr/local/bin/ttyd
-      env:
-        GH_TOKEN: ${{ github.token }}
     - name: Install vhs
       run: go install github.com/charmbracelet/vhs@latest
     - name: Install Rust
@@ -39,16 +38,16 @@ jobs:
       uses: mlugg/setup-zig@v2
     - name: Install zls
       run: |
-        ZLS_URL="$(gh release view --repo zigtools/zls --json assets --jq '.assets[] | select(.name | test("x86_64-linux\\.tar")) | .url' | head -1)"
+        ZLS_URL="$(curl -fsSL https://api.github.com/repos/zigtools/zls/releases/latest | grep -o 'https://[^"]*zls-x86_64-linux\.tar\.xz' | head -1)"
         curl -fsSL -o /tmp/zls.tar.xz "$ZLS_URL"
         tar xf /tmp/zls.tar.xz -C /tmp
         sudo install /tmp/zls /usr/local/bin/zls
-      env:
-        GH_TOKEN: ${{ github.token }}
 
     # Record simple C
     - name: Record simple_c
       run: cd rec && vhs simple_c.tape
+      env:
+        VHS_NO_SANDBOX: "1"
     - name: Verify /tmp/main.c deleted
       run: |
         if [ -f /tmp/main.c ]; then
@@ -59,6 +58,8 @@ jobs:
     # Record simple C++
     - name: Record simple_cpp
       run: cd rec && vhs simple_cpp.tape
+      env:
+        VHS_NO_SANDBOX: "1"
     - name: Verify /tmp/main.cpp deleted
       run: |
         if [ -f /tmp/main.cpp ]; then
@@ -69,6 +70,8 @@ jobs:
     # Record simple Rust
     - name: Record simple_rust
       run: cd rec && vhs simple_rust.tape
+      env:
+        VHS_NO_SANDBOX: "1"
     - name: Verify /tmp/main.rs deleted
       run: |
         if [ -f /tmp/main.rs ]; then
@@ -79,6 +82,8 @@ jobs:
     # Record simple Zig
     - name: Record simple_zig
       run: cd rec && vhs simple_zig.tape
+      env:
+        VHS_NO_SANDBOX: "1"
     - name: Verify /tmp/main.zig deleted
       run: |
         if [ -f /tmp/main.zig ]; then
