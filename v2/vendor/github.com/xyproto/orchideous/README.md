@@ -8,7 +8,7 @@ Zero-configuration build tool for C and C++ projects.
 
 Have you ever had a single `main.cpp` file that you just want to compile, without having to make sure the order of flags are correct and ideally without having to provide any flags at all?
 
-**Orchideous** (or `oh` for short) handles compiler detection, flag ordering, library discovery via `pkg-config`, testing, formatting, cross-compilation, and more — all without a single configuration file.
+**Orchideous** (or `oh` for short) handles compiler detection, flag ordering, library discovery via `pkg-config`, testing, formatting, cross-compilation, etc., without a single configuration file.
 
 It should be possible to compile all of the examples in the `examples` directory, simply by running `oh` in each directory, as long as the right packages and libraries have been installed.
 
@@ -401,5 +401,5 @@ In both cases, a GCC or Clang compiler must be available on PATH.
 ## General Info
 
 * License: BSD-3
-* Version: 1.0.3
+* Version: 1.0.4
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

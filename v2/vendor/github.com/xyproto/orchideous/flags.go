@@ -326,7 +326,7 @@ func resolveExtraFlags(includes []string, win64 bool) (cflags, ldflags []string)
 
 // mergeFlags splits pkg-config output and adds to cflags/ldflags.
 func mergeFlags(cflags, ldflags []string, flags string) ([]string, []string) {
-	for f := range strings.FieldsSeq(flags) {
+	for _, f := range strings.Fields(flags) {
 		if strings.HasPrefix(f, "-l") || strings.HasPrefix(f, "-L") || strings.HasPrefix(f, "-Wl,") {
 			ldflags = appendUnique(ldflags, f)
 		} else {

@@ -12,5 +12,5 @@ func dotSlash(name string) string {
 	if filepath.IsAbs(name) || strings.HasPrefix(name, "./") {
 		return name
 	}
-	return "./" + name
+	return "." + string(filepath.Separator) + name
 }

@@ -287,7 +287,7 @@ func containsMain(filename string) bool {
 	if err != nil {
 		return false
 	}
-	for line := range strings.SplitSeq(string(data), "\n") {
+	for _, line := range strings.Split(string(data), "\n") {
 		trimmed := strings.TrimSpace(line)
 		// Skip single-line comments
 		if strings.HasPrefix(trimmed, "//") {
@@ -352,7 +352,7 @@ func cppPreprocessIncludes(filename string) []string {
 		return nil
 	}
 	var includes []string
-	for line := range strings.SplitSeq(string(out), "\n") {
+	for _, line := range strings.Split(string(out), "\n") {
 		line = strings.TrimSpace(line)
 		if !strings.HasPrefix(line, "#include") {
 			continue

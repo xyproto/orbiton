@@ -7,10 +7,10 @@ import (
 	"strings"
 )
 
-// dotSlash prepends ./ to a relative path to make it executable.
+// dotSlash prepends .\ to a relative path to make it executable.
 func dotSlash(name string) string {
 	if filepath.IsAbs(name) || strings.HasPrefix(name, "./") || strings.HasPrefix(name, ".\\") || strings.HasPrefix(name, "/") {
 		return name
 	}
-	return "./" + name
+	return "." + string(filepath.Separator) + name
 }
