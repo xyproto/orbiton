@@ -2013,12 +2013,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					break
 				} else if keyRunes[0] == 'q' && !e.nanoMode.Load() && kh.PrevPrev() == "c:27" && kh.Prev() == "," { // <esc> ,q
 					// Remove the ","
+					undo.Snapshot(e)
 					e.Backspace(c, bookmark)
 					// Quit
 					e.quit = true
 					break
 				} else if keyRunes[0] == 'w' && !e.nanoMode.Load() && kh.PrevPrev() == "c:27" && kh.Prev() == "," { // <esc> ,w
 					// Remove the ","
+					undo.Snapshot(e)
 					e.Backspace(c, bookmark)
 					// Save the file
 					e.UserSave(c, tty, status)
