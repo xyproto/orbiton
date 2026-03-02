@@ -8,6 +8,8 @@ name: Record
 jobs:
   record:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - name: Checkout code
       uses: actions/checkout@v6
@@ -31,8 +33,10 @@ jobs:
       run: go install github.com/charmbracelet/vhs@latest
     - name: Record simplec
       run: cd rec && vhs simplec.tape
-    - name: Upload recordings
-      uses: actions/upload-artifact@v4
-      with:
-        name: recordings
-        path: rec/*.gif
+    - name: Commit recordings
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add rec/*.gif
+        git diff --cached --quiet || git commit -m "Update recorded GIFs [skip ci]"
+        git push

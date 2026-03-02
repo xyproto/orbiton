@@ -1,3 +1,5 @@
+name: Build
+
 on:
   push:
     paths-ignore:
@@ -11,46 +13,106 @@ on:
       - '**/*.md'
       - '**/*.txt'
       - '**/*.sh'
-name: Build
-jobs:
-  test:
-    strategy:
-      matrix:
-        go-version: [1.25.x, 1.26.x]
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-    - name: Install Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: ${{ matrix.go-version }}
-    - name: Checkout code
-      uses: actions/checkout@v6
-    - name: Build
-      run: cd v2 && go build -mod=vendor
-    - name: Test
-      run: cd v2 && go test
 
-  test-cache:
-    runs-on: ubuntu-latest
+jobs:
+  ubuntu:
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["1.24", "1.25", "1.26"]
+    runs-on: ubuntu-24.04
     steps:
-    - name: Install Go
-      uses: actions/setup-go@v6
-      with:
-        go-version: 1.25.x
-    - name: Checkout code
-      uses: actions/checkout@v6
-    - uses: actions/cache@v5
-      with:
-        path: |
-          ~/go/pkg/mod              # Module download cache
-          ~/.cache/go-build         # Build cache (Linux)
-          ~/Library/Caches/go-build # Build cache (Mac)
-          '%LocalAppData%\go-build' # Build cache (Windows)
-        key: ${{ runner.os }}-go-${{ hashFiles('**/v2/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-    - name: Build
-      run: cd v2 && go build -mod=vendor
-    - name: Test
-      run: cd v2 && go test
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Build
+        run: cd v2 && go build -mod=vendor
+      - name: Test
+        run: cd v2 && go test
+      - name: Vet
+        run: cd v2 && go vet ./...
+
+  macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["1.24", "1.25", "1.26"]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Build
+        run: cd v2 && go build -mod=vendor
+      - name: Test
+        run: cd v2 && go test
+      - name: Vet
+        run: cd v2 && go vet ./...
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.26"
+      - name: Build
+        run: cd v2 && go build -mod=vendor
+      - name: Test
+        run: cd v2 && go test
+      - name: Vet
+        run: cd v2 && go vet ./...
+
+  freebsd:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build and test on FreeBSD
+        uses: vmactions/freebsd-vm@v1
+        with:
+          usesh: true
+          prepare: pkg install -y go
+          run: |
+            cd v2
+            go build -mod=vendor
+            go test
+            go vet ./...
+
+  openbsd:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build and test on OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          usesh: true
+          prepare: pkg_add go
+          run: |
+            cd v2
+            go build -mod=vendor
+            go test
+            go vet ./...
+
+  netbsd:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build and test on NetBSD
+        uses: vmactions/netbsd-vm@v1
+        with:
+          usesh: true
+          prepare: /usr/sbin/pkg_add wget gtar-base
+          run: |
+            set -eu
+            GOGZ="go1.24.4.netbsd-amd64.tar.gz"
+            wget -q https://go.dev/dl/${GOGZ}
+            mkdir -p /tmp/goinstall
+            gtar xzf ${GOGZ} -C /tmp/goinstall
+            rm ${GOGZ}
+            export PATH=/tmp/goinstall/go/bin:$PATH
+            cd v2
+            go build -mod=vendor
+            go test
+            go vet ./...
