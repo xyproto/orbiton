@@ -50,8 +50,8 @@ func (sh *SearchHistory) Empty() bool {
 
 // AddWithTimestamp adds a new line number for the given absolute path, and also records the current time
 func (sh *SearchHistory) AddWithTimestamp(searchTerm string, timestamp int64) {
-	sh.mut.RLock()
-	defer sh.mut.RUnlock()
+	sh.mut.Lock()
+	defer sh.mut.Unlock()
 
 	sh.entries[time.Unix(timestamp, 0)] = searchTerm
 }
