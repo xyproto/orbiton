@@ -1726,6 +1726,11 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		addParens = "("
 	}
 
+	// clangd may return Kind=1 (Text) with a leading space in the Label for C/C++ functions
+	if addParens == "" && (e.mode == mode.C || e.mode == mode.Cpp) && strings.HasPrefix(items[choice].Label, " ") {
+		addParens = "("
+	}
+
 	// Shell commands take arguments separated by spaces, not parentheses
 	if e.mode == mode.Shell && addParens != "" {
 		addParens = " "
