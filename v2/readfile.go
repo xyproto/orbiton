@@ -31,6 +31,7 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 		lines            = make(map[int][]rune)
 		index            int
 		tabIndentCounter int64
+		minSpaces        int
 		first            byte
 	)
 
@@ -53,6 +54,14 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 					tabIndentCounter++
 				} else if first == ' ' && line[1] == ' ' {
 					tabIndentCounter--
+					// Count leading spaces to detect indentation width
+					spaces := 0
+					for i := 0; i < len(line) && line[i] == ' '; i++ {
+						spaces++
+					}
+					if spaces >= 2 && (minSpaces == 0 || spaces < minSpaces) {
+						minSpaces = spaces
+					}
 				}
 			}
 			lines[index] = []rune(line)
@@ -65,16 +74,25 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 	}
 	e.Clear()
 	e.lines = lines
-	if detectedTabs := tabIndentCounter > 0; !e.binaryFile && e.indentation.Spaces {
-		e.detectedTabs = &detectedTabs
-		e.indentation.Spaces = !detectedTabs
+	if !e.binaryFile {
+		if detectedTabs := tabIndentCounter > 0; detectedTabs {
+			e.detectedTabs = &detectedTabs
+			e.indentation.Spaces = false
+		} else if tabIndentCounter < 0 {
+			detectedTabs := false
+			e.detectedTabs = &detectedTabs
+			e.indentation.Spaces = true
+			if minSpaces >= 2 {
+				e.indentation.PerTab = minSpaces
+			}
+		}
 	}
 	e.changed.Store(true)
 	return nil
 }
 
 // LoadByteLine loads a single byte line
-func (e *Editor) LoadByteLine(ib IndexByteLine, eMut, tcMut *sync.RWMutex, tabIndentCounter, numLines *int) {
+func (e *Editor) LoadByteLine(ib IndexByteLine, eMut, tcMut *sync.RWMutex, tabIndentCounter, minSpaces, numLines *int) {
 	// Require at least two bytes. Ignore lines with a single tab indentation or a single space
 	if len(ib.byteLine) > 2 {
 		first := ib.byteLine[0]
@@ -85,6 +103,14 @@ func (e *Editor) LoadByteLine(ib IndexByteLine, eMut, tcMut *sync.RWMutex, tabIn
 		} else if first == ' ' && ib.byteLine[1] == ' ' { // assume that two spaces is the smallest space indentation
 			tcMut.Lock()
 			*tabIndentCounter-- // a space indentation counts like a negative tab indentation
+			// Count leading spaces to detect indentation width
+			spaces := 0
+			for i := 0; i < len(ib.byteLine) && ib.byteLine[i] == ' '; i++ {
+				spaces++
+			}
+			if spaces >= 2 && (*minSpaces == 0 || spaces < *minSpaces) {
+				*minSpaces = spaces
+			}
 			tcMut.Unlock()
 		}
 	}
@@ -111,13 +137,16 @@ func (e *Editor) LoadBytes(data []byte) {
 		// Place the lines into the editor, while counting tab indentations vs space indentations
 		tabIndentCounter int
 
+		// Minimum leading space count for detecting spaces-per-tab
+		minSpaces int
+
 		// Count the number of lines as the lines are being processed
 		numLines int
 
 		// Mutex for the editor lines and the numLines counter
 		eMut sync.RWMutex
 
-		// Mutex for the tabIndentCounter
+		// Mutex for the tabIndentCounter and minSpaces
 		tcMut sync.RWMutex
 	)
 
@@ -129,7 +158,7 @@ func (e *Editor) LoadBytes(data []byte) {
 		go func() {
 			defer wg.Done()
 			for ib := range jobs {
-				e.LoadByteLine(ib, &eMut, &tcMut, &tabIndentCounter, &numLines)
+				e.LoadByteLine(ib, &eMut, &tcMut, &tabIndentCounter, &minSpaces, &numLines)
 			}
 		}()
 	}
@@ -144,10 +173,18 @@ func (e *Editor) LoadBytes(data []byte) {
 		delete(e.lines, numLines-1)
 	}
 
-	if detectedTabs := tabIndentCounter > 0; detectedTabs && e.indentation.Spaces {
-		// Check if there were more tab indentations than space indentations
+	if detectedTabs := tabIndentCounter > 0; detectedTabs {
+		// More tab indentations than space indentations
 		e.detectedTabs = &detectedTabs
-		e.indentation.Spaces = !detectedTabs
+		e.indentation.Spaces = false
+	} else if tabIndentCounter < 0 {
+		// More space indentations than tab indentations
+		detectedTabs := false
+		e.detectedTabs = &detectedTabs
+		e.indentation.Spaces = true
+		if minSpaces >= 2 {
+			e.indentation.PerTab = minSpaces
+		}
 	}
 
 	// Mark the editor contents as "changed"
