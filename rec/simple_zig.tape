@@ -1,9 +1,9 @@
-# Record a simple C editing workflow with Orbiton
-Output simplec.gif
+# Record a simple Zig editing workflow with Orbiton
+Output simple_zig.gif
 
 Require o
-Require gcc
-Require clangd
+Require zig
+Require zls
 
 Set FontSize 14
 Set Width 1200
@@ -11,12 +11,12 @@ Set Height 600
 Set Shell "bash"
 Set TypingSpeed 30ms
 
-# Open a new C file
-Type "o /tmp/main.c"
+# Open a new Zig file
+Type "o /tmp/main.zig"
 Enter
 Sleep 1s
 
-# Insert C template with ctrl-w
+# Insert Zig template with ctrl-w
 Ctrl+W
 Sleep 1s
 
@@ -46,11 +46,11 @@ Sleep 500ms
 Tab
 Sleep 500ms
 
-# Type "pr" to trigger clangd autocomplete
-Type "pr"
+# Type "std.debug.p" to trigger zls autocomplete for std.debug.print
+Type "std.debug.p"
 Sleep 3s
 
-# Tab to autocomplete with clangd
+# Tab to autocomplete with zls
 Tab
 Sleep 2s
 
@@ -58,9 +58,9 @@ Sleep 2s
 Enter
 Sleep 500ms
 
-# Complete the printf line: printf("hey\n");
+# Complete the line: std.debug.print("hey\n", .{});
 Type '"hey'
-Type '\n");'
+Type '\n", .{});'
 Sleep 1s
 
 # Compile and run again to see new output
@@ -82,8 +82,8 @@ Type "o /tmp"
 Enter
 Sleep 1s
 
-# Filter to show only main.c
-Type "main.c"
+# Filter to show only main.zig
+Type "main.zig"
 Sleep 1s
 
 # Select the file
