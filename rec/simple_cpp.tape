@@ -2,7 +2,6 @@
 Output simple_cpp.gif
 
 Require o
-Require clang++
 Require clangd
 
 Set FontSize 14
