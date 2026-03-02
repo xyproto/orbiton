@@ -310,7 +310,7 @@ func GetTemplatePrograms() TemplatePrograms {
 			},
 			mode.Zig: {
 				"const std = @import(\"std\");\n\npub fn main() !void {\n    const stdout = std.fs.File.stdout();\n    try stdout.writeAll(\"Hello, World!\\n\");\n}\n",
-				18,
+				21,
 				2,
 			},
 		}
