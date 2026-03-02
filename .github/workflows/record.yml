@@ -33,6 +33,12 @@ jobs:
       run: go install github.com/charmbracelet/vhs@latest
     - name: Record simplec
       run: cd rec && vhs simplec.tape
+    - name: Verify file deletion
+      run: |
+        if [ -f /tmp/main.c ]; then
+          echo "FAIL: /tmp/main.c was not deleted by the file browser"
+          exit 1
+        fi
     - name: Commit recordings
       run: |
         git config user.name "github-actions[bot]"
