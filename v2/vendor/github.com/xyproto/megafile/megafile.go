@@ -1096,8 +1096,37 @@ func (s *State) Run() ([]string, error) {
 
 	c.Draw()
 
+	keyChan := make(chan string, 1)
+	uptimeTicker := time.NewTicker(1 * time.Minute)
+	defer uptimeTicker.Stop()
+
+	go func() {
+		for {
+			k := s.readKey()
+			keyChan <- k
+		}
+	}()
+
 	for !s.quit {
-		key := s.readKey()
+		var key string
+		select {
+		case key = <-keyChan:
+		case <-uptimeTicker.C:
+			// Redraw uptime line without disturbing anything else
+			const fullKernelVersion = false
+			if uptimeString, err := UpsieString(fullKernelVersion); err == nil {
+				uptimeY := topLine + 1
+				// Clear the uptime line
+				c.Write(5, uptimeY, vt.Default, s.Background, strings.Repeat(" ", int(c.W())-5))
+				if envNoColor {
+					c.WriteTagged(5, uptimeY, s.Background, uptimeString)
+				} else {
+					c.WriteTagged(5, uptimeY, s.Background, o.LightTags(uptimeString))
+				}
+				c.Draw()
+			}
+			continue
+		}
 		if handled, shouldDraw := rename.handleKey(key, &index, renameHooks); handled {
 			if shouldDraw {
 				c.Draw()
@@ -1275,7 +1304,7 @@ func (s *State) Run() ([]string, error) {
 		case "c:19", "c:22", "c:24", "c:25": // ctrl-s, ctrl-v, ctrl-x, ctrl-y : do nothing, for now
 		case deleteKey, "c:4": // delete or ctrl-d
 			allowExit := key == "c:4"
-			if len(s.written) == 0 {
+			if len(s.written) == 0 || index >= uint(len(s.written)) {
 				if s.selectedIndex() >= 0 && s.selectedIndex() < len(s.fileEntries) {
 					if path, err := s.selectedPath(); err == nil {
 						if trashPath, fileHash, err := s.moveToTrash(path); err != nil {
