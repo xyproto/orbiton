@@ -33,6 +33,24 @@ func ConvertToNRGBA(img image.Image) (*image.NRGBA, error) {
 	return nImage, nil
 }
 
+// paletteColorMap maps RGB values to VT100 attribute colors for fast lookup
+var paletteColorMap map[[3]uint8]vt.AttributeColor
+
+func init() {
+	vtColors := []vt.AttributeColor{
+		vt.Black, vt.Red, vt.Green, vt.Yellow,
+		vt.Blue, vt.Magenta, vt.Cyan, vt.LightGray,
+		vt.DarkGray, vt.LightRed, vt.LightGreen, vt.LightYellow,
+		vt.LightBlue, vt.LightMagenta, vt.LightCyan, vt.White,
+	}
+	paletteColorMap = make(map[[3]uint8]vt.AttributeColor, len(palgen.BasicPalette16))
+	for i, rgb := range palgen.BasicPalette16 {
+		if i < len(vtColors) {
+			paletteColorMap[rgb] = vtColors[i]
+		}
+	}
+}
+
 // Draw attempts to draw the given image.Image onto a VT100 Canvas
 func Draw(canvas *vt.Canvas, m image.Image) error {
 	// Convert the image to only use the basic 16-color palette
@@ -43,50 +61,12 @@ func Draw(canvas *vt.Canvas, m image.Image) error {
 	}
 
 	// img is now an indexed image
-	var vc vt.AttributeColor
 	for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
 		for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
 			c := color.NRGBAModel.Convert(img.At(x, y)).(color.NRGBA)
-			for i, rgb := range palgen.BasicPalette16 {
-				if rgb[0] == c.R && rgb[1] == c.G && rgb[2] == c.B {
-					switch i {
-					case 0:
-						vc = vt.Black
-					case 1:
-						vc = vt.Red
-					case 2:
-						vc = vt.Green
-					case 3:
-						vc = vt.Yellow
-					case 4:
-						vc = vt.Blue
-					case 5:
-						vc = vt.Magenta
-					case 6:
-						vc = vt.Cyan
-					case 7:
-						vc = vt.LightGray
-					case 8:
-						vc = vt.DarkGray
-					case 9:
-						vc = vt.LightRed
-					case 10:
-						vc = vt.LightGreen
-					case 11:
-						vc = vt.LightYellow
-					case 12:
-						vc = vt.LightBlue
-					case 13:
-						vc = vt.LightMagenta
-					case 14:
-						vc = vt.LightCyan
-					case 15:
-						vc = vt.White
-					default:
-						vc = vt.White
-					}
-					break
-				}
+			vc := vt.White // default
+			if found, ok := paletteColorMap[[3]uint8{c.R, c.G, c.B}]; ok {
+				vc = found
 			}
 			// Draw the "pixel" on the canvas using the vc color and the draw rune
 			canvas.PlotColor(uint(x), uint(y), vc, drawRune)

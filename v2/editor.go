@@ -733,18 +733,8 @@ func (e *Editor) DeleteLine(n LineIndex) {
 		delete(e.lines, int(n))
 		return
 	}
-	// TODO: Rely on the length of the hash map for finding the index instead of
-	//       searching through each line number key.
-	var maxIndex LineIndex
-	found := false
-	for k := range e.lines {
-		if LineIndex(k) > maxIndex {
-			maxIndex = LineIndex(k)
-			found = true
-		}
-	}
-	if !found {
-		// This should never happen
+	maxIndex := LineIndex(len(e.lines) - 1)
+	if maxIndex < 0 {
 		return
 	}
 	if _, ok := e.lines[int(maxIndex)]; !ok {
