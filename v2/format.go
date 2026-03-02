@@ -281,7 +281,10 @@ func (e *Editor) formatCode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, jsonFo
 			break
 		}
 		defer os.Remove(tmpOutput.Name())
-		tmpInput.Write([]byte(e.String()))
+		if _, err := tmpInput.Write([]byte(e.String())); err != nil {
+			tmpInput.Close()
+			break
+		}
 		tmpInput.Close()
 		tmpOutput.Close()
 		cmd := exec.Command("ptop", tmpInput.Name(), tmpOutput.Name())
