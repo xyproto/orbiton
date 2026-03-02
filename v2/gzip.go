@@ -31,12 +31,13 @@ func gUnzipData(data []byte) ([]byte, error) {
 func gZipData(data []byte) ([]byte, error) {
 	var b bytes.Buffer
 	gz := gzip.NewWriter(&b)
-	defer gz.Close()
 
 	if _, err := gz.Write(data); err != nil {
+		gz.Close()
 		return nil, err
 	}
 	if err := gz.Flush(); err != nil {
+		gz.Close()
 		return nil, err
 	}
 	if err := gz.Close(); err != nil {
