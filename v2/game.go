@@ -652,7 +652,7 @@ func (g *Gobbler) Next(pellets *[]*Pellet, bob *Bob) bool {
 				g.y = g.oldy + (rand.Intn(3) - 1)
 			}
 
-			if !g.hunting.removed && g.huntingDistance < 2 || (g.hunting.x == g.x && g.hunting.y == g.y) {
+			if !g.hunting.removed && (g.huntingDistance < 2 || (g.hunting.x == g.x && g.hunting.y == g.y)) {
 				g.hunting.removed = true
 				g.counter++
 				g.hunting = nil
