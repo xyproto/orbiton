@@ -15,6 +15,20 @@ import (
 
 var errNoSearchMatch = errors.New("no search match")
 
+// smartTrimSearch trims whitespace from a search string only if it's a single
+// word (letters and digits). Preserves intentional spaces in multi-word or
+// whitespace-only search strings like "  ".
+func smartTrimSearch(s string) string {
+	trimmed := strings.TrimSpace(s)
+	if trimmed == "" {
+		return s // preserve whitespace-only strings
+	}
+	if !strings.Contains(trimmed, " ") {
+		return trimmed // single word, trim surrounding whitespace
+	}
+	return s // multi-word, keep as-is
+}
+
 // searchContains checks if haystack contains needle, using case-insensitive
 // comparison for non-programming-language modes.
 func (e *Editor) searchContains(haystack, needle string) bool {
@@ -545,6 +559,13 @@ AGAIN:
 		// replace once
 		searchFor := previousSearch
 		replaceWith := s
+		// check if we're searching and replacing a unicode character, like "U+0047" or "u+0000"
+		if r, err := runeFromUBytes([]byte(searchFor)); err == nil {
+			searchFor = string(r)
+		}
+		if r, err := runeFromUBytes([]byte(replaceWith)); err == nil {
+			replaceWith = string(r)
+		}
 		replaced := strings.Replace(e.String(), searchFor, replaceWith, 1)
 		e.LoadBytes([]byte(replaced))
 		if replaceWith == "" {
@@ -607,6 +628,8 @@ AGAIN:
 	if r, err := runeFromUBytes([]byte(s)); err == nil {
 		s = string(r)
 	}
+	// Smart trim: only trim whitespace from single-word searches
+	s = smartTrimSearch(s)
 	e.SetSearchTermWithTimeout(c, status, s, spellCheckMode, timeout)
 	if pressedReturn {
 		// Return to the first location before performing the actual search
