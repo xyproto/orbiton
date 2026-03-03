@@ -248,9 +248,9 @@ func GetTemplatePrograms() TemplatePrograms {
 				4,
 			},
 			mode.Python: {
-				"#!/usr/bin/env python3\n\ndef main():\n    print(\"Hello, World!\")\n\n\nif __name__ == \"__main__\":\n    main()\n",
+				"#!/usr/bin/env python3\n\n\ndef main():\n    print(\"Hello, World!\")\n\n\nif __name__ == \"__main__\":\n    main()\n",
 				7,
-				4,
+				5,
 			},
 			mode.R: {
 				"print(\"Hello, World!\", quote=FALSE)",
