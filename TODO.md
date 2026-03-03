@@ -61,7 +61,7 @@
 - [ ] Let `game` or the konami code from the file browser also launch the easter egg.
 - [ ] Let altgr+space not insert c:160.
 - [ ] Let the status bar be toggled by the `ctrl-o` menu. Let `ctrl-g` when not on a definition do something useful, like cycle indenting a block 0 to 7 indentations.
-- [ ] Parse some programming languages to improve the quality of the "go to defintion" feature.
+- [ ] Parse some programming languages to improve the quality of the "go to definition" feature.
 - [ ] Pressing ctrl-g in a script should toggle the status bar unless the cursor is on a function call and the function was found.
 - [ ] Re-think the minimap feature.
 - [ ] Save a "custom words" and "ignored words" list to disk.
@@ -123,7 +123,7 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 - [ ] Create an SDL2 frontend.
 - [ ] Use enet or another UDP protocol to communicate between the core editor and the GUI application. Or REST, just to make it even more accessible for developers?
 - [ ] Use proper RPC between `o` and the VTE/GTK3 frontend. This also helps when upgrading to GTK4.
-- [ ] When changing themes from within the VTE/GKT3 frontend, let `o` be able to communicate a palette change per theme, using some sort of RPC.
+- [ ] When changing themes from within the VTE/GTK3 frontend, let `o` be able to communicate a palette change per theme, using some sort of RPC.
 
 ## Maybe
 
@@ -185,7 +185,7 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 - [ ] When `}` is the last character of a file, sometimes pressing enter right before it does not work.
 - [ ] If joining a line that starts with a single-line comment with a line below that also starts with a single line comment, remove the extra comment marker.
 - [ ] If there are four lines: not comment, comment, not comment, comment, let ctrl+/ behave differently.
-- [ ] Let ctrl-k first delete until "{" and then util the end of the line if there is no "{"?
+- [ ] Let ctrl-k first delete until "{" and then until the end of the line if there is no "{"?
 - [ ] Smarter indentation for `}`. There are still a few cases where it's not too smart. Perhaps use the logic for tab-indenting for when dedenting `}`?
 - [ ] Tab in the middle of a line, especially on a `|` character, could insert spaces until the `|` aligns with the `|` above, if applicable (For Markdown tables).
 - [ ] When changing a file from tabs to spaces, or the other way around, also modify indentations after comment markers.
