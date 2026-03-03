@@ -244,7 +244,7 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 
 	switch e.mode {
 	case mode.ABC:
-		cmd = exec.Command("abc2midi", e.filename, "-o", filepath.Join(tempDir, "o.mid"))
+		cmd = exec.Command("abc2midi", sourceFilename, "-o", filepath.Join(tempDir, "o.mid"))
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.Shell:
@@ -675,12 +675,12 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 		}
 		return manFilename, nil
 	case mode.Lilypond:
-		ext := filepath.Ext(e.filename)
-		firstName := strings.TrimSuffix(filepath.Base(e.filename), ext)
+		ext := filepath.Ext(sourceFilename)
+		firstName := strings.TrimSuffix(filepath.Base(sourceFilename), ext)
 		outputFilename := firstName + ".pdf" // lilypond may output .midi and/or .pdf by default. --svg is also possible.
 		status.SetMessage("Exporting Lilypond to PDF")
 		status.Show(c, e)
-		cmd := exec.Command("lilypond", "-o", firstName, e.filename)
+		cmd := exec.Command("lilypond", "-o", firstName, sourceFilename)
 		saveCommand(cmd)
 		return outputFilename, cmd.Run()
 	case mode.Markdown:
