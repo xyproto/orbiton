@@ -273,9 +273,9 @@ func GetTemplatePrograms() TemplatePrograms {
 				3,
 			},
 			mode.Shell: {
-				"#!/bin/bash\n\n",
-				0,
-				0,
+				"#!/usr/bin/env bash\n\necho 'Hello, World!'\n",
+				7,
+				2,
 			},
 			// This one is a bit more elaborate than strictly needed
 			mode.StandardML: {
