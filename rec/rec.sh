@@ -8,8 +8,7 @@ export VHS_NO_SANDBOX=1
 rm -rf ./tmp
 mkdir -p tmp
 for lang in c cpp rust zig python bash odin go haskell; do
-  #$HOME/clones/vhs/build/vhs simple_$lang.tape --keypress-overlay
-  vhs simple_$lang.tape
+  $HOME/clones/vhs/build/vhs simple_$lang.tape --keypress-overlay || vhs simple_$lang.tape
   mv -v simple_$lang.gif gif/
   rm -rf ./tmp
   mkdir -p tmp
