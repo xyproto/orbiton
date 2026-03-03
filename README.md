@@ -233,6 +233,44 @@ There are pretty few hotkeys to remember:
 * `ctrl-~` - Insert the current date and time.
 * `esc`    - Redraw everything and clear the last search.
 
+## Screen recordings for some programming languages
+
+### C
+
+![C](rec/gif/simple_c.gif)
+
+### C++
+
+![C++](rec/gif/simple_cpp.gif)
+
+### Go
+
+![Go](rec/gif/simple_go.gif)
+
+### Rust
+
+![Rust](rec/gif/simple_rust.gif)
+
+### Zig
+
+![Zig](rec/gif/simple_zig.gif)
+
+### Odin
+
+![Odin](rec/gif/simple_odin.gif)
+
+### Python
+
+![Python](rec/gif/simple_python.gif)
+
+### Haskell
+
+![Haskell](rec/gif/simple_haskell.gif)
+
+### Bash
+
+![Bash](rec/gif/simple_bash.gif)
+
 ## Build and format
 
 * Press `ctrl-space` to build or export the current file.
