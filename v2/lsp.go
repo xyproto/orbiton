@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -96,6 +96,17 @@ type scoredItem struct {
 	score int
 }
 
+// lineUpToX returns the content of the given line up to position x
+func (e *Editor) lineUpToX(line, x int) string {
+	if lineRunes, ok := e.lines[line]; ok {
+		if x >= 0 && x <= len(lineRunes) {
+			return string(lineRunes[:x])
+		}
+		return string(lineRunes)
+	}
+	return ""
+}
+
 const (
 	lspInitTimeout           = 30 * time.Second
 	lspCompletionTimeout     = 10 * time.Second
@@ -104,16 +115,45 @@ const (
 	lspShutdownTimeout       = 2 * time.Second
 )
 
+// LSP CompletionItemKind constants (from the LSP specification)
+const (
+	lspKindText          = 1
+	lspKindMethod        = 2
+	lspKindFunction      = 3
+	lspKindConstructor   = 4
+	lspKindField         = 5
+	lspKindVariable      = 6
+	lspKindClass         = 7
+	lspKindInterface     = 8
+	lspKindModule        = 9
+	lspKindProperty      = 10
+	lspKindUnit          = 11
+	lspKindValue         = 12
+	lspKindEnum          = 13
+	lspKindKeyword       = 14
+	lspKindSnippet       = 15
+	lspKindColor         = 16
+	lspKindFile          = 17
+	lspKindReference     = 18
+	lspKindFolder        = 19
+	lspKindEnumMember    = 20
+	lspKindConstant      = 21
+	lspKindStruct        = 22
+	lspKindEvent         = 23
+	lspKindOperator      = 24
+	lspKindTypeParameter = 25
+)
+
 // lspClientKey generates a unique key for an LSP client based on mode and workspace
 func lspClientKey(m mode.Mode, workspaceRoot string) string {
 	return fmt.Sprintf("%d:%s", m, workspaceRoot)
 }
 
 var (
-	lspClients      = make(map[string]*LSPClient) // key is "mode:workspaceRoot"
-	lspMutex        sync.Mutex
-	rustTempDirs    = make(map[string]string) // file path -> temp directory
-	rustFileMapping = make(map[string]string) // original file path -> temp workspace file path
+	lspClients     = make(map[string]*LSPClient) // key is "mode:workspaceRoot"
+	lspMutex       sync.Mutex
+	lspTempDirs    = make(map[string]string) // file path -> temp directory
+	lspFileMapping = make(map[string]string) // original file path -> temp workspace file path
 )
 
 // LSPConfig holds configuration for a language server
@@ -661,7 +701,7 @@ func GetReadyLSPClient(m mode.Mode, workspaceRoot string) *LSPClient {
 }
 
 // GetOrCreateLSPClient returns the LSP client for the given mode, creating it if needed
-func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string, cancel <-chan bool, linkedProjects ...any) (*LSPClient, error) {
+func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string, ctx context.Context, linkedProjects ...any) (*LSPClient, error) {
 	key := lspClientKey(m, workspaceRoot)
 
 	lspMutex.Lock()
@@ -677,8 +717,8 @@ func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string, cancel <-chan bool,
 			lspMutex.Unlock()
 			for range 30 {
 				select {
-				case <-cancel:
-					return nil, errors.New("cancelled by user")
+				case <-ctx.Done():
+					return nil, ctx.Err()
 				default:
 					time.Sleep(100 * time.Millisecond)
 					lspMutex.Lock()
@@ -737,9 +777,9 @@ func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string, cancel <-chan bool,
 		ready := false
 		for range 50 {
 			select {
-			case <-cancel:
+			case <-ctx.Done():
 				client.Shutdown()
-				return nil, errors.New("cancelled by user")
+				return nil, ctx.Err()
 			default:
 				if client.TestReady(m) {
 					ready = true
@@ -775,8 +815,7 @@ func TriggerLSPInitialization(m mode.Mode, workspaceRoot string, linkedProjects 
 
 	// start LSP in the background
 	go func() {
-		neverCancel := make(chan bool)
-		GetOrCreateLSPClient(m, workspaceRoot, neverCancel, linkedProjects...)
+		GetOrCreateLSPClient(m, workspaceRoot, context.Background(), linkedProjects...)
 	}()
 }
 
@@ -846,7 +885,7 @@ func ensureCWorkspace(workspaceRoot, filePath string, languageID string) (string
 
 	// create a temporary workspace with compile_commands.json
 	lspMutex.Lock()
-	if tempDir, exists := rustTempDirs[filePath]; exists {
+	if tempDir, exists := lspTempDirs[filePath]; exists {
 		lspMutex.Unlock()
 
 		targetPath := filepath.Join(tempDir, filepath.Base(filePath))
@@ -900,8 +939,8 @@ func ensureCWorkspace(workspaceRoot, filePath string, languageID string) (string
 
 	// track the mapping
 	lspMutex.Lock()
-	rustFileMapping[filePath] = targetPath
-	rustTempDirs[filePath] = tempDir
+	lspFileMapping[filePath] = targetPath
+	lspTempDirs[filePath] = tempDir
 	lspMutex.Unlock()
 
 	return tempDir, targetPath
@@ -1111,47 +1150,47 @@ func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspa
 		if isMemberAccess {
 			// Completing after dot - prioritize methods
 			switch item.Kind {
-			case 2: // Method
+			case lspKindMethod:
 				score += 200
-			case 5: // Field
+			case lspKindField:
 				score += 150
-			case 3: // Function
+			case lspKindFunction:
 				score += 100
-			case 6: // Variable
+			case lspKindVariable:
 				score += 50
-			case 21: // Constant
+			case lspKindConstant:
 				score += 40
-			case 22: // Struct
+			case lspKindStruct:
 				score += 30
-			case 8: // Interface/Trait
+			case lspKindInterface:
 				score += 20
-			case 9: // Module
+			case lspKindModule:
 				score += 10
 			}
 		} else {
 			// Completing standalone identifier - prioritize variables and local items
 			switch item.Kind {
-			case 6: // Variable - highest priority for standalone completion
+			case lspKindVariable:
 				score += 500
-			case 5: // Field
+			case lspKindField:
 				score += 400
-			case 21: // Constant
+			case lspKindConstant:
 				score += 300
-			case 3: // Function
+			case lspKindFunction:
 				score += 200
-			case 22: // Struct
+			case lspKindStruct:
 				score += 150
-			case 8: // Interface/Trait
+			case lspKindInterface:
 				score += 100
-			case 2: // Method - lower priority for standalone
+			case lspKindMethod:
 				score += 50
-			case 9: // Module
+			case lspKindModule:
 				score += 30
 			}
 		}
 
 		// For shell scripts, boost builtins/keywords over external commands
-		if m == mode.Shell && item.Kind == 14 { // 14 = Keyword (builtins like if, for, echo, elif)
+		if m == mode.Shell && item.Kind == lspKindKeyword {
 			score += 600
 		}
 
@@ -1248,8 +1287,7 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 		workspaceRoot, lspFilePath = ensureGleamWorkspace(absPath)
 	}
 
-	neverCancel := make(chan bool)
-	client, err := GetOrCreateLSPClient(e.mode, workspaceRoot, neverCancel, linkedProjects...)
+	client, err := GetOrCreateLSPClient(e.mode, workspaceRoot, context.Background(), linkedProjects...)
 	if err != nil {
 		return nil, err
 	}
@@ -1264,26 +1302,8 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 		}
 	}
 
-	// get the current line content before any LSP operations
-	var currentLine string
-	if lineRunes, ok := e.lines[line]; ok {
-		// Use the full line up to position x for context
-		if x >= 0 && x <= len(lineRunes) {
-			currentLine = string(lineRunes[:x])
-		} else {
-			currentLine = string(lineRunes)
-		}
-	}
-
-	var buf bytes.Buffer
-	for i := 0; i < len(e.lines); i++ {
-		if lineContent, ok := e.lines[i]; ok {
-			buf.WriteString(string(lineContent))
-		}
-		buf.WriteRune('\n')
-	}
-
-	fileContent := buf.String()
+	currentLine := e.lineUpToX(line, x)
+	fileContent := e.String()
 
 	uri := "file://" + lspFilePath
 	if needsWorkspaceSetup(e.mode) && lspFilePath != absPath {
@@ -1346,12 +1366,12 @@ func ShutdownAllLSPClients() {
 
 	// clean up temporary workspaces
 	seenDirs := make(map[string]bool)
-	for key, tempDir := range rustTempDirs {
+	for key, tempDir := range lspTempDirs {
 		if tempDir != "" && !seenDirs[tempDir] {
 			os.RemoveAll(tempDir)
 			seenDirs[tempDir] = true
 		}
-		delete(rustTempDirs, key)
+		delete(lspTempDirs, key)
 	}
 }
 
@@ -1367,7 +1387,7 @@ func (e *Editor) ShouldOfferLSPCompletion() bool {
 		return false
 	}
 	leftRune := e.LeftRune()
-	if !unicode.IsLetter(leftRune) && !unicode.IsDigit(leftRune) && leftRune != '_' && leftRune != '.' {
+	if !unicode.IsLetter(leftRune) && !unicode.IsDigit(leftRune) && leftRune != '_' && leftRune != '.' && leftRune != ':' {
 		return false
 	}
 
@@ -1426,7 +1446,6 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 
 	var quitSpinner chan bool
 	var spinnerActive bool
-	neverCancel := make(chan bool)
 
 	startSpinner := func(msg string) {
 		if spinnerActive {
@@ -1454,7 +1473,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		startSpinner(fmt.Sprintf("Starting %s", lspCommand))
 	}
 
-	client, err := GetOrCreateLSPClient(e.mode, workspaceRoot, neverCancel, linkedProjects...)
+	client, err := GetOrCreateLSPClient(e.mode, workspaceRoot, context.Background(), linkedProjects...)
 	if err != nil {
 		stopSpinner()
 		status.SetMessageAfterRedraw(fmt.Sprintf("Could not launch %s: %v", lspCommand, err))
@@ -1477,33 +1496,15 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		}
 	}
 
-	var currentLine string
-	if lineRunes, ok := e.lines[line]; ok {
-		if x >= 0 && x <= len(lineRunes) {
-			currentLine = string(lineRunes[:x])
-		} else {
-			currentLine = string(lineRunes)
-		}
-	}
-
-	var buf bytes.Buffer
-	for i := 0; i < len(e.lines); i++ {
-		if lineContent, ok := e.lines[i]; ok {
-			buf.WriteString(string(lineContent))
-		}
-		buf.WriteRune('\n')
-	}
-	fileContent := buf.String()
+	currentLine := e.lineUpToX(line, x)
+	fileContent := e.String()
 
 	// check if completing right after a trigger character
 	var needsPlaceholder bool
-	if x > 0 && len(currentLine) > 0 {
-		// Check if cursor is right after a trigger character
-		if x > 0 && x <= len(currentLine) {
-			lastChar := string(currentLine[len(currentLine)-1])
-			if lastChar == "." || (x >= 2 && len(currentLine) >= 2 && currentLine[len(currentLine)-1:] == ":") {
-				needsPlaceholder = true
-			}
+	if x > 0 && x <= len(currentLine) {
+		lastChar := currentLine[len(currentLine)-1]
+		if lastChar == '.' || (len(currentLine) >= 2 && lastChar == ':') {
+			needsPlaceholder = true
 		}
 	}
 
@@ -1722,19 +1723,28 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	}
 
 	// fallback for functions/methods/constructors without parameter info
-	if addParens == "" && (items[choice].Kind == 2 || items[choice].Kind == 3 || items[choice].Kind == 4) {
+	if addParens == "" && (items[choice].Kind == lspKindMethod || items[choice].Kind == lspKindFunction || items[choice].Kind == lspKindConstructor) {
 		addParens = "("
 	}
 
-	// clangd may return Kind=1 (Text) with a leading space in the Label for C/C++ functions
+	// clangd may return Kind=Text with a leading space in the Label for C/C++ functions
 	// but not for variables like std::cout, so skip qualified names (lines containing ::)
-	if addParens == "" && (e.mode == mode.C || e.mode == mode.Cpp) && items[choice].Kind <= 1 && strings.HasPrefix(items[choice].Label, " ") && !strings.Contains(currentLine, "::") {
+	if addParens == "" && (e.mode == mode.C || e.mode == mode.Cpp) && items[choice].Kind <= lspKindText && strings.HasPrefix(items[choice].Label, " ") && !strings.Contains(currentLine, "::") {
 		addParens = "("
 	}
 
 	// Shell commands take arguments separated by spaces, not parentheses
 	if e.mode == mode.Shell && addParens != "" {
 		addParens = " "
+	}
+
+	// For C/C++, don't add parens for qualified completions (e.g. std::cout)
+	// unless the Kind explicitly indicates a callable
+	if addParens != "" && (e.mode == mode.C || e.mode == mode.Cpp) && strings.Contains(currentLine, "::") {
+		kind := items[choice].Kind
+		if kind != lspKindMethod && kind != lspKindFunction && kind != lspKindConstructor {
+			addParens = ""
+		}
 	}
 
 	var charsToDelete int
