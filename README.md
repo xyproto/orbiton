@@ -139,7 +139,7 @@ These features are unique to `o`, as far as I am aware:
 * Can compile `"Hello, World"` in many popular programming languages simply by pressing `ctrl-space`.
 * Create, build and run a simple program in C, by running `o main.c`, pressing `ctrl-w` and then a double `ctrl-space`.
 * Configuration-free, for better and for worse.
-* Can preview `.png`, `.jpg`, `.jpeg`, `.gif`, `.ico`, `.bmp` and `.webp` images directly in the terminal (using a scaled down version and up to 16 colors).
+* Can preview `.png`, `.jpg`, `.jpeg`, `.gif`, `.ico` and `.bmp` images directly in the terminal (using a scaled down version and up to 16 colors).
 * The `-p` flag followed by a filename can be used for just pasting the clipboard to a new file, instead of editing a file.
 * `ctrl-t` can jump between a C++ header and source file, when editing C++ code.
 * `ctrl-t` shows the Markdown table editor, when editing Markdown and the cursor is on a Markdown table.
@@ -154,44 +154,35 @@ These features are unique to `o`, as far as I am aware:
 * Never asks before saving or quitting. Be careful.
 * The [`NO_COLOR`](https://no-color.org) environment variable can be set to disable all colors.
 * Rainbow parentheses makes lines with many parentheses easier to read.
-* Limited to VT100, so hotkeys like `ctrl-a` and `ctrl-e` may need to be used instead of `Home` and `End`. And for browsing up and down, `ctrl-n` and `ctrl-p` may be used.
-* Compiles with either `go` or `gccgo`.
+* When limited to vt100 or vt220, hotkeys like `ctrl-a` and `ctrl-e` may need to be used instead of `Home` and `End`. And for browsing up and down, `ctrl-n` and `ctrl-p` may be used.
 * Will strip trailing whitespace whenever it can.
-* Must be given a filename at start.
-* May provide smart indentation.
+* Usually expects to be given a filename at start.
+* Has smart indentation.
 * Requires that `/dev/tty` is available.
 * `xclip` for X, `wl-clipboard` for Wayland or `pbcopy` for macOS needs to be installed to access the system clipboard.
 * May take a line number as the second argument, with an optional `+` or `:` prefix.
 * If the filename is `COMMIT_EDITMSG`, the look and feel will be adjusted for git commit messages.
-* Supports `UTF-8`, but some runes may be displayed incorrectly.
+* Supports `UTF-8`. (Requires a terminal emulator that supports unicode to be able to display unicode runes, though).
 * Only UNIX-style line endings are supported (`\n`).
 * Will convert DOS/Windows line endings (`\r\n`) to UNIX line endings (just `\n`), whenever possible.
 * Will replace non-breaking space (`0xc2 0xa0`) with a regular space (`0x20`) whenever possible.
 * Will replace annoying tilde (`0xcc 0x88`) with a regular tilde (`~`) whenever possible.
 * Will replace the greek question mark that looks like a semicolon (`0xcd 0xbe`) with a regular semicolon (`;`) whenever possible.
 * If interactive rebase is launched with `git rebase -i`, then either `ctrl-w` or `ctrl-r` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
-* If the editor executable is renamed to a word starting with `r` (or have a symlink with that name), the default theme will be red/black.
-* If the editor executable is renamed to a word starting with `l` (or have a symlink with that name), the default theme will be suitable for light backgrounds.
-* If the editor executable is renamed to a word starting with `s` (or have a symlink with that name), the default theme will be the "synthwave" theme.
 * Want to quickly convert Markdown to HTML? Try `o filename.md`, press `ctrl-space` twice and quit with `ctrl-q`.
 * The default syntax highlighting theme aims to be as pretty as possible with less than 16 colors, but it mainly aims for clarity. It should be easy to spot a keyword, number, string or a stray parenthesis.
 * Press `ctrl-space` or `ctrl-t` to toggle the check mark in `- [ ] TODO item` boxes in Markdown.
-* Orbiton is written almost exclusively in Orbiton, with some use of NeoVim for the initial development.
 * Can load, edit and save gzipped text files or man pages that ends with a `.gz` extension.
 * Can organize imports, for Java and for Kotlin, when formatting code with `ctrl-w`.
 * Has a built-in spellchecker (press `ctrl-f` and then `t` to search for a typo, `ctrl-n` for next match and then `ctrl-a` to add it and `ctrl-i` to ignore it).
 * Can jump directly to a selection of highlighted letters on the screen, when `ctrl-l` is pressed.
 * Comes with a file browser that can open, rename and delete files.
 * Comes with a build tool that can auto-detect the required build flags for C and C++ (`o -b`).
+* Has LSP support for Tab completion, for several programming languages.
 
 ## Known issues
 
-* Some unicode runes may disrupt the text flow! This is generally not a problem for editing code and configuration files, but is an issue when editing files that contains text in many languages, or emojis.
-* The man page viewer can not display some special characters, such as the long dash (&mdash;), just yet.
-* Using `tmux` or `screen` and resizing the terminal emulator window may trigger text rendering issues. Try pressing `esc` to redraw the text, or `ctrl-f` to search for text. Setting `TERM` correctly might help (but probably not). Using [`zellij`](https://zellij.dev/) instead of `tmux` should work.
 * For some terminal emulators, if `o` is busy performing an operation, pressing `ctrl-s` may lock the terminal. Some terminal emulators, like `konsole`, can be configured to turn off this behavior. Press `ctrl-q` to unlock the terminal again (together with the unfortunate risk of quitting `o`). To sidestep this issue, the `ctrl-o` menu can be used instead, for saving and quitting.
-* Using `mosh` may cause text rendering issues (in both `nvim` and `o`).
-* Pressing `cmd-v`, `cmd-x` and `cmd-c` on macOS only works when using the `og` GUI/VTE frontend. For `o`, `ctrl-v`, `ctrl-x` and `ctrl-c` can be used instead.
 * The Markdown table editor does not have scrolling, so the table must fit within the current terminal emulator width and height. Resize the terminal as needed.
 
 ## Hotkeys
