@@ -248,7 +248,7 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.Shell:
-		cmd = exec.Command("bash", "-n", e.filename)
+		cmd = exec.Command("bash", "-n", sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.Chuck, mode.SuperCollider:
