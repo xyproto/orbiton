@@ -1080,7 +1080,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 						if !redraw {
 							status.Clear(c, false)
 							status.SetMessage(endOfFileMessage)
-							status.Show(c, e)
+							status.ShowNoTimeout(c, e)
 						}
 					}
 
@@ -1205,7 +1205,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				if !redraw {
 					status.Clear(c, false)
 					status.SetMessage(endOfFileMessage)
-					status.Show(c, e)
+					status.ShowNoTimeout(c, e)
 				}
 				e.redrawCursor.Store(true)
 				if e.AfterLineScreenContents() {
@@ -1418,7 +1418,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !redraw {
 				status.Clear(c, false)
 				status.SetMessage(endOfFileMessage)
-				status.Show(c, e)
+				status.ShowNoTimeout(c, e)
 			}
 			e.redrawCursor.Store(true)
 			if e.AfterLineScreenContents() {
