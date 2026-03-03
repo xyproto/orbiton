@@ -21,11 +21,30 @@ Sleep 2s
 # Compile and run with double ctrl-space
 Source common/run.tape
 
-# Move cursor to the end of the line
+# Go to the beginning of line 2 ("main = putStrLn ...")
+Ctrl+A
+Sleep 100ms
+
+# Move right past "main = " (7 chars) to insert "do" before "putStrLn"
+Right
+Right
+Right
+Right
+Right
+Right
+Right
+
+# Insert "do\n  " to create a do block, pushing putStrLn to next indented line
+Type "do"
+Enter
+Type "  "
+Sleep 100ms
+
+# Move to end of the putStrLn line
 Ctrl+E
 Sleep 100ms
 
-# Insert a new line
+# Add a new line for the second putStrLn
 Enter
 Sleep 100ms
 
