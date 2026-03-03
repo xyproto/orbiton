@@ -9,23 +9,16 @@ Source style.tape
 
 # Open a new Zig file
 Type "o /tmp/main.zig"
+Sleep 1s
 Enter
-Sleep 2s
+Sleep 1s
 
 # Insert Zig template with ctrl-w
 Ctrl+W
 Sleep 1s
 
-# Save with ctrl-s
-Ctrl+S
-Sleep 500ms
-
 # Compile and run with double ctrl-space
-Ctrl+Space
-Sleep 200ms
-Ctrl+Space
-Wait+Screen /Program output/
-Sleep 1s
+Source common/run.tape
 
 # Move cursor to the end of the line
 Ctrl+E
@@ -57,15 +50,7 @@ Type '\n", .{});'
 Sleep 1s
 
 # Compile and run again to see new output
-Ctrl+Space
-Sleep 200ms
-Ctrl+Space
-Sleep 4s
+Source common/run.tape
 
-# Save
-Ctrl+S
-Sleep 500ms
-
-# Quit the editor
-Ctrl+Q
-Sleep 1s
+# Format, save and quit
+Source common/fsq.tape

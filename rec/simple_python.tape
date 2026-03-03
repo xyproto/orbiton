@@ -16,16 +16,8 @@ Sleep 2s
 Ctrl+W
 Sleep 1s
 
-# Save with ctrl-s
-Ctrl+S
-Sleep 500ms
-
-# Run with double ctrl-space
-Ctrl+Space
-Sleep 200ms
-Ctrl+Space
-Wait+Screen /Program output/
-Sleep 2s
+# Compile and run with double ctrl-space
+Source common/run.tape
 
 # Move to the end of the line: print("Hello, World!")
 Ctrl+E
@@ -53,16 +45,7 @@ Type '"hey")'
 Sleep 1s
 
 # Compile and run again to see new output
-Ctrl+Space
-Sleep 200ms
-Ctrl+Space
-Wait+Screen /Program output/
-Sleep 4s
+Source common/run.tape
 
-# Save
-Ctrl+S
-Sleep 500ms
-
-# Quit the editor
-Ctrl+Q
-Sleep 1s
+# Format, save and quit
+Source common/fsq.tape
