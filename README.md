@@ -1,6 +1,9 @@
 ![Orbiton Logo](img/icon_128x128.png)
 
-[![Build](https://github.com/xyproto/orbiton/actions/workflows/build.yml/badge.svg)](https://github.com/xyproto/orbiton/actions/workflows/build.yml) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Forbiton.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Forbiton?ref=badge_shield) [![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/orbiton/v2)](https://goreportcard.com/report/github.com/xyproto/orbiton/v2) [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/orbiton/main/LICENSE)
+[![Build](https://github.com/xyproto/orbiton/actions/workflows/build.yml/badge.svg)](https://github.com/xyproto/orbiton/actions/workflows/build.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/xyproto/orbiton/v2)](https://goreportcard.com/report/github.com/xyproto/orbiton/v2)
+[![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/orbiton/main/LICENSE)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Forbiton.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Forbiton?ref=badge_shield)
 
 Orbiton is a text editor and a simple IDE with the following leading principles:
 
@@ -233,7 +236,7 @@ There are pretty few hotkeys to remember:
 * `ctrl-~` - Insert the current date and time.
 * `esc`    - Redraw everything and clear the last search.
 
-## Screen recordings for some programming languages
+## Screen recordings for a few select programming languages
 
 ### C
 
