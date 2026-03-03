@@ -6,29 +6,29 @@ Require bash
 Require bash-language-server
 Require shfmt
 
-Source style.tape
+Source common/style.tape
 
 # Open a new Bash script
-Type "o /tmp/main.sh"
-Sleep 1s
+Type "o tmp/main.sh"
+Sleep 2s
 Enter
-Sleep 1s
+Sleep 100ms
 
 # Insert Bash template with ctrl-w
 Ctrl+W
-Sleep 1s
+Sleep 2s
 
 # Run the program with double ctrl-space
-Source run.tape
+Source common/run.tape
 
-# Move to the end of the line: print("Hello, World!")
+# Move to the end of the line
 Ctrl+E
-Sleep 500ms
+Sleep 100ms
 
 # Insert two new lines
 Enter
 Enter
-Sleep 500ms
+Sleep 100ms
 
 # Insert more text
 Type "for x in 1 2 3; do"
@@ -41,15 +41,15 @@ Sleep 1s
 # Tab to autocomplete "do" to "done"
 Tab
 Wait+Screen /Completions/
-Sleep 500ms
+Sleep 2s
 
 # Select the second option
 Down
-Sleep 500ms
+Sleep 100ms
 
 # Accept the completion suggestion
 Enter
-Sleep 500ms
+Sleep 100ms
 
 # Compile and run again to see new output
 Source common/run.tape

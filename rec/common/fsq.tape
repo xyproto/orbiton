@@ -4,7 +4,7 @@ Sleep 2s
 
 # Save
 Ctrl+S
-Sleep 200ms
+Sleep 100ms
 
 # Quit the editor
 Ctrl+Q
