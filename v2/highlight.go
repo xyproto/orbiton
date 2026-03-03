@@ -857,6 +857,9 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						if unicode.IsControl(letter) {
 							letter = controlRuneReplacement
 							rw = 1
+						} else if useASCII && letter > 127 {
+							letter = '?'
+							rw = 1
 						}
 						tx = cx + lineRuneCount
 						ty = cy + uint(y)
@@ -891,6 +894,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 			}
 			// Output a regular line, scrolled to the current e.pos.offsetX
 			screenLine = e.ChopLine(line, int(cw))
+			screenLine = asciiFallback(screenLine)
 			c.Write(cx+lineRuneCount, cy+uint(y), e.Foreground, e.Background, screenLine)
 			lineRuneCount += uint(utf8.RuneCountInString(screenLine)) // rune count
 		}

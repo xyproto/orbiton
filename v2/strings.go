@@ -271,7 +271,17 @@ func asciiFallback(s string) string {
 	if !useASCII {
 		return s
 	}
-	return asciiFallbackReplacer.Replace(s)
+	// First apply known replacements, then replace any remaining non-ASCII runes
+	s = asciiFallbackReplacer.Replace(s)
+	return strings.Map(asciiFilterRune, s)
+}
+
+// asciiFilterRune replaces non-ASCII runes with '?' for terminals that cannot display Unicode
+func asciiFilterRune(r rune) rune {
+	if r > 127 {
+		return '?'
+	}
+	return r
 }
 
 // isEmoji checks if a rune is likely to be an emoji.
