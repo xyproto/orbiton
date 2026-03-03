@@ -37,7 +37,7 @@ Paste the contents of the clipboard into the given file. Combine with \-f to ove
 Clear all file locks and close all portals.
 .TP
 .B \-o or \-\-ollama
-Use Ollama for tab completion with the model specified in the \fBORBITON_OLLAMA\fP environment variable. This requires that Ollama is up and running,
+Enable Ollama-specific features. The model can be specified in the \fBOLLAMA_MODEL\fP environment variable. This requires that Ollama is up and running,
 either locally or at the host specified in the \fBOLLAMA_HOST\fP environment variable.
 .TP
 .B \-r or \-\-release
@@ -55,8 +55,11 @@ Build the given file instead of opening it for editing.
 .B \-F or \-\-format
 Format the given file instead of opening it for editing.
 .TP
-.B \-d or \-\-create-dir
+.B \-k or \-\-create-dir
 When opening a new file, create directories as needed.
+.TP
+.B \-d or \-\-debug
+Start in debug mode.
 .TP
 .B \-s or \-\-digraphs
 List all possible digraphs.
@@ -95,7 +98,7 @@ Display brief usage information.
 .sp
 .B ctrl-w
   Format the current file with \fBgoimports\fP or \fBclang-format\fP, depending on the file extension.
-  Zig, V, Rust (\fBrustfmt\fP), Haskell (\fBormolu\fP) and Python (\fBblack\fP) are also supported.
+  Zig, V, Rust (\fBrustfmt\fP), Haskell (\fBormolu\fP) and Python (\fBruff format\fP) are also supported.
   If in git mode, cycle the git interactive rebase keyword on the current line.
   If in Markdown mode, format the table under the cursor.
 .sp
@@ -159,7 +162,7 @@ Display brief usage information.
   Join lines.
 .sp
 .B ctrl-u
-  Undo (\fBctrl-z\P is also possible, but may background the application).
+  Undo (\fBctrl-z\fP is also possible, but may background the application).
 .sp
 .B ctrl-l
   Jump to a specific line number or percentage. Press return to jump to the top. Press return again to jump to the bottom.
@@ -170,18 +173,18 @@ Display brief usage information.
   There is also support for text replacement, after typing in the search term:
   To replace all, press tab instead of return, enter a replace term and then press tab.
   To replace once, press tab instead of return, enter a replace term and then press return.
-  Search for just \fBf\P to find the previous function signature.
+  Search for just \fBf\fP to find the previous function signature.
 .sp
 .B esc
   Redraw the screen and clear the last search.
 .sp
 .B ctrl-space
   Build Go programs with `go`.
-  Build C++ programs with `cxx`.
+  Build C and C++ programs with the built-in \fBorchideous\fP package, or with \fBcmake\fP or \fBbazel\fP.
   Build Rust programs with `cargo` or `rustc`.
   Build Zig programs with `zig`.
   Build Haskell programs with `ghc`.
-  Check Python programs with `python -m py_compile`.
+  Check Python programs with \fBpython3 -m py_compile\fP.
   Build Crystal programs with `crystal`.
   Build Kotlin programs with `kotlinc`,
     or `kotlinc-native` if available.
@@ -192,7 +195,7 @@ Display brief usage information.
   Build Nim programs with `nim`.
   Build Odin programs with `odin`.
   Build V programs with `v`.
-  Build C# programs with `csc -nollogo -unsafe`.
+  Build C# programs with \fBcsc -nologo -unsafe\fP.
   Build D programs with `gdc`.
   Build Standard ML programs with `mlton`.
   Build OCaml programs with `ocamlopt`.
@@ -227,7 +230,9 @@ The \fBNO_COLOR\fP environment variable can be set to 1 to disable all colors.
 .sp
 If \fBXTERM_VERSION\fP is set (usually automatically by xterm), the "light" color scheme will be used.
 .sp
-The \fBORBITON_OLLAMA\fP environment variable can be set to 1 to enable Ollama tab completion.
+The \fBORBITON_OLLAMA\fP environment variable can be set to 1 to enable Ollama-specific features.
+.sp
+The \fBOLLAMA_MODEL\fP environment variable can be set to specify which Ollama model to use for code completion.
 .sp
 The \fBOLLAMA_HOST\fP environment variable specifies the host for the Ollama service if a non-local service should be used.
 .sp
