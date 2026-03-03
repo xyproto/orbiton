@@ -66,7 +66,7 @@ Adjust the `mv` flags and the `~/go/bin` path as needed. Perhaps `go install` wi
 
 Alternatively, download and install a [release version](https://github.com/xyproto/orbiton/releases). For example, for Raspberry Pi 2, 3 or 4 running Linux:
 
-    curl -sL 'https://github.com/xyproto/orbiton/releases/download/v2.72.1/orbiton-2.72.1-linux_armv7_static.tar.xz' | tar JxC /tmp && sudo install -Dm755 /tmp/orbiton-2.72.1-linux_armv7_static/o /usr/bin/o && sudo install -Dm644 /tmp/orbiton-2.72.1-linux_armv7_static/o.1.gz /usr/share/man/man1/o.1.gz
+    curl -sL 'https://github.com/xyproto/orbiton/releases/download/v2.73.0/orbiton-2.73.0-linux_armv7_static.tar.xz' | tar JxC /tmp && sudo install -Dm755 /tmp/orbiton-2.73.0-linux_armv7_static/o /usr/bin/o && sudo install -Dm644 /tmp/orbiton-2.73.0-linux_armv7_static/o.1.gz /usr/share/man/man1/o.1.gz
 
 ## Setting `o` as the default editor executable for `git`
 
@@ -801,6 +801,6 @@ The above copyright notice and this permission notice shall be included in all c
 
 ## General info
 
-* Version: 2.72.1
+* Version: 2.73.0
 * License: 3-clause BSD
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
