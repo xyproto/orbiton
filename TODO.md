@@ -3,7 +3,7 @@
 ## General
 
 - [ ] If pressing ctrl-e when block editing, then move all the cursors to the end of the lines.
-- [ ] Differenciate between `bash` and `sh` shell scripts.
+- [ ] Differentiate between `bash` and `sh` shell scripts.
 - [ ] Also support syntax highlighting for `.tape` files (Charmbracelet VHS).
 - [ ] Fix the syntax highlighting dependency to view strings with `-` as single words for CSS.
 - [ ] Do not remove indentation from JS code in HTML when `ctrl-w` is pressed. See: https://github.com/yosssi/gohtml/issues/22
@@ -109,7 +109,7 @@
 - [ ] ctrl-\\ for replace (use ctrl-w, type in text to search for and then press Tab instead of Return).
 - [ ] ctrl-q for searching backwards.
 - [ ] If the file is huge, let ctrl-t time out instead of waiting for it to complete.
-- [ ] Make the spell check dictionary persitent.
+- [ ] Make the spell check dictionary persistent.
 - [ ] Support other themes, like the Mono Gray theme.
 
 See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
@@ -157,7 +157,7 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 - [ ] Build Jakt and Prolog programs with ctrl-space.
 - [ ] Make it possible to step through Go programs as well.
 - [ ] Support for Prolog.
-- [ ] Supporty for Red.
+- [ ] Support for Red.
 - [ ] When switching register pane layout with `ctrl-p`, save the contents of the old pane and use that.
 
 ## Saving and loading
