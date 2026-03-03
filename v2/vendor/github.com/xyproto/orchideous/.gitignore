@@ -69,3 +69,12 @@ orchideous
 
 # Emacs
 \#*#
+
+# QtCreator
+*.pro
+
+# Profiling etc
+*.profdata
+*.profraw
+*.gcda
+*.gcno

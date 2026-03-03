@@ -110,13 +110,31 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 		}
 	} else if opts.Small {
 		bf.CFlags = append(bf.CFlags, "-Os", "-ffunction-sections", "-fdata-sections")
-		bf.LDFlags = append(bf.LDFlags, "-ffunction-sections", "-fdata-sections", "-Wl,-s", "-Wl,-gc-sections")
+		if isDarwin() {
+			// macOS linker uses -dead_strip for dead code elimination; -gc-sections and -s are not supported
+			bf.LDFlags = append(bf.LDFlags, "-Wl,-dead_strip")
+		} else {
+			bf.LDFlags = append(bf.LDFlags, "-ffunction-sections", "-fdata-sections", "-Wl,-s", "-Wl,-gc-sections")
+		}
 		if opts.Tiny {
-			bf.CFlags = append(bf.CFlags, "-s", "-nostdlib", "-fno-rtti", "-fno-ident", "-fomit-frame-pointer")
-			bf.LDFlags = append(bf.LDFlags, "-Wl,-z,norelro")
+			// -fno-rtti, -fno-ident and -fomit-frame-pointer are safe on all platforms
+			bf.CFlags = append(bf.CFlags, "-fno-rtti", "-fno-ident", "-fomit-frame-pointer")
+			if !isDarwin() {
+				// -s is unused during compilation on macOS; -nostdlib is macOS-incompatible
+				bf.CFlags = append(bf.CFlags, "-s", "-nostdlib")
+				if !win64 {
+					// -Wl,-z,norelro disables RELRO, an ELF security feature; not applicable to Windows PE/COFF
+					bf.LDFlags = append(bf.LDFlags, "-Wl,-z,norelro")
+				}
+			}
 		}
 	} else if opts.Opt {
-		bf.CFlags = append(bf.CFlags, "-Ofast", "-flto")
+		if isEffectivelyClang(compiler) {
+			// -Ofast is deprecated in clang 17+; use the equivalent flags instead
+			bf.CFlags = append(bf.CFlags, "-O3", "-ffast-math", "-flto")
+		} else {
+			bf.CFlags = append(bf.CFlags, "-Ofast", "-flto")
+		}
 		bf.LDFlags = append(bf.LDFlags, "-flto")
 	} else if proj.HasOpenMP {
 		bf.CFlags = append(bf.CFlags, "-O3")
@@ -230,31 +248,32 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 
 	// Profile-guided optimization
 	if opts.ProfileGenerate {
-		if isCompilerGCC(compiler) {
-			bf.CFlags = append(bf.CFlags, "-coverage", "-fprofile-generate", "-fprofile-correction")
-			bf.LDFlags = append(bf.LDFlags, "-coverage", "-fprofile-generate", "-fprofile-correction")
-		} else if isCompilerClang(compiler) {
+		if isEffectivelyClang(compiler) {
 			bf.CFlags = append(bf.CFlags, "-fprofile-generate")
 			bf.LDFlags = append(bf.LDFlags, "-fprofile-generate")
+		} else if isCompilerGCC(compiler) {
+			// -coverage and -fprofile-correction are GCC-specific
+			bf.CFlags = append(bf.CFlags, "-coverage", "-fprofile-generate", "-fprofile-correction")
+			bf.LDFlags = append(bf.LDFlags, "-coverage", "-fprofile-generate", "-fprofile-correction")
 		}
 	} else if opts.ProfileUse {
-		if isCompilerGCC(compiler) {
-			bf.CFlags = append(bf.CFlags, "-fprofile-use", "-fprofile-correction")
-			bf.LDFlags = append(bf.LDFlags, "-fprofile-use", "-fprofile-correction")
-		} else if isCompilerClang(compiler) {
+		if isEffectivelyClang(compiler) {
 			bf.CFlags = append(bf.CFlags, "-fprofile-use")
 			bf.LDFlags = append(bf.LDFlags, "-fprofile-use")
+		} else if isCompilerGCC(compiler) {
+			bf.CFlags = append(bf.CFlags, "-fprofile-use", "-fprofile-correction")
+			bf.LDFlags = append(bf.LDFlags, "-fprofile-use", "-fprofile-correction")
 		}
 	} else {
 		// Auto-detect profile data for non-rec builds
 		gcdaFiles, _ := filepath.Glob("*.gcda")
 		if len(gcdaFiles) > 0 {
-			if isCompilerGCC(compiler) {
-				bf.CFlags = append(bf.CFlags, "-fprofile-use", "-fprofile-correction")
-				bf.LDFlags = append(bf.LDFlags, "-fprofile-use", "-fprofile-correction")
-			} else if isCompilerClang(compiler) {
+			if isEffectivelyClang(compiler) {
 				bf.CFlags = append(bf.CFlags, "-fprofile-use")
 				bf.LDFlags = append(bf.LDFlags, "-fprofile-use")
+			} else if isCompilerGCC(compiler) {
+				bf.CFlags = append(bf.CFlags, "-fprofile-use", "-fprofile-correction")
+				bf.LDFlags = append(bf.LDFlags, "-fprofile-use", "-fprofile-correction")
 			}
 		}
 	}
@@ -302,7 +321,7 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 
 	// lib/ directory
 	if fileExists("lib") {
-		bf.LDFlags = append(bf.LDFlags, "-Llib", "-Wl,-rpath", "./lib")
+		bf.LDFlags = append(bf.LDFlags, "-Llib", "-Wl,-rpath,./lib")
 		soFiles, _ := filepath.Glob("lib/*.so")
 		for _, so := range soFiles {
 			name := filepath.Base(so)

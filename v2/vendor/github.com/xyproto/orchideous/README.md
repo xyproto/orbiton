@@ -1,7 +1,7 @@
 ## Orchideous <img src="img/orchideous.svg" width="128" align="right">
 
-![Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg)
 [![CI](https://github.com/xyproto/orchideous/actions/workflows/ci.yml/badge.svg)](https://github.com/xyproto/orchideous/actions/workflows/ci.yml)
+![Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg)
 [![License](https://img.shields.io/badge/license-BSD3-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 Zero-configuration build tool for C and C++ projects.
@@ -25,6 +25,20 @@ oh clean        # remove built files
 No configuration files are needed, but the project needs to either be very simple (a single `main.cpp`) or have an `oh`-friendly directory structure.
 
 The auto-detection of external libraries and headers relies on them being included in the main source file.
+
+## Badge
+
+If you want this excellent hand drawn badge added to your project:
+
+[![Compiles with Orchideous](https://raw.githubusercontent.com/xyproto/orchideous/e0dc79b81eede2f6270b8ad345467cf6f0222b02/img/badge1.svg)](https://raw.githubusercontent.com/xyproto/orchideous/e0dc79b81eede2f6270b8ad345467cf6f0222b02/img/badge1.svg)
+
+Then just make sure that it builds with `oh` first, then add this to your `README.md`:
+
+```markdown
+[![Compiles with Orchideous](https://raw.githubusercontent.com/xyproto/orchideous/e0dc79b81eede2f6270b8ad345467cf6f0222b02/img/badge1.svg)](https://github.com/xyproto/orchideous)
+```
+
+If you want, you can also add it to [the list of projects that compiles with Orchideous](https://github.com/xyproto/orchideous/wiki/List-of-projects-that-compile-with-Orchideous), for some extra promo.
 
 ## Installation
 
@@ -401,5 +415,5 @@ In both cases, a GCC or Clang compiler must be available on PATH.
 ## General Info
 
 * License: BSD-3
-* Version: 1.0.5
+* Version: 1.0.6
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

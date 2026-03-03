@@ -39,12 +39,13 @@ func doCMake(opts BuildOptions) error {
 	fmt.Fprintf(f, "# Generated using oh from https://github.com/xyproto/orchideous, %s\n", date)
 	fmt.Fprintln(f, "cmake_minimum_required(VERSION 3.12)")
 	fmt.Fprintf(f, "project(%s)\n", exe)
+	fmt.Fprintf(f, "set(SOURCES %s)\n", strings.Join(srcs, " "))
+	fmt.Fprintf(f, "add_executable(%s ${SOURCES})\n", exe)
+	// set_property requires the target to exist, so these come after add_executable
 	if !proj.IsC {
 		fmt.Fprintf(f, "set_property(TARGET %s PROPERTY CXX_STANDARD 23)\n", exe)
 	}
 	fmt.Fprintf(f, "set_property(TARGET %s PROPERTY C_STANDARD 18)\n", exe)
-	fmt.Fprintf(f, "set(SOURCES %s)\n", strings.Join(srcs, " "))
-	fmt.Fprintf(f, "add_executable(%s ${SOURCES})\n", exe)
 
 	// Libraries
 	libs := extractLibs(flags.LDFlags)

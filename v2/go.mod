@@ -32,7 +32,7 @@ require (
 	github.com/xyproto/megafile v1.6.6
 	github.com/xyproto/mode v0.12.3
 	github.com/xyproto/ollamaclient/v2 v2.7.2
-	github.com/xyproto/orchideous v1.0.5
+	github.com/xyproto/orchideous v1.0.6
 	github.com/xyproto/palgen v1.6.1
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.2.3

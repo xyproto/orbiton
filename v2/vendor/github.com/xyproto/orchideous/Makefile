@@ -32,6 +32,8 @@ else
 	EXE_EXT :=
 endif
 
+MANDIR ?= $(PREFIX)/share/man/man1
+
 UNAME_R ?= $(shell uname -r)
 ifneq (,$(findstring arch,$(UNAME_R)))
 # Arch Linux
@@ -61,6 +63,7 @@ test:
 
 install: oh
 	install -Dm755 oh$(EXE_EXT) "$(DESTDIR)$(PREFIX)/bin/oh$(EXE_EXT)"
+	install -Dm644 oh.1.gz "$(DESTDIR)$(MANDIR)/oh.1.gz"
 
 examples-clean:
 	@for d in $(EXAMPLE_DIRS); do \
