@@ -701,7 +701,7 @@ func GetReadyLSPClient(m mode.Mode, workspaceRoot string) *LSPClient {
 }
 
 // GetOrCreateLSPClient returns the LSP client for the given mode, creating it if needed
-func GetOrCreateLSPClient(m mode.Mode, workspaceRoot string, ctx context.Context, linkedProjects ...any) (*LSPClient, error) {
+func GetOrCreateLSPClient(ctx context.Context, m mode.Mode, workspaceRoot string, linkedProjects ...any) (*LSPClient, error) {
 	key := lspClientKey(m, workspaceRoot)
 
 	lspMutex.Lock()
@@ -815,7 +815,7 @@ func TriggerLSPInitialization(m mode.Mode, workspaceRoot string, linkedProjects 
 
 	// start LSP in the background
 	go func() {
-		GetOrCreateLSPClient(m, workspaceRoot, context.Background(), linkedProjects...)
+		GetOrCreateLSPClient(context.Background(), m, workspaceRoot, linkedProjects...)
 	}()
 }
 
@@ -1287,7 +1287,7 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 		workspaceRoot, lspFilePath = ensureGleamWorkspace(absPath)
 	}
 
-	client, err := GetOrCreateLSPClient(e.mode, workspaceRoot, context.Background(), linkedProjects...)
+	client, err := GetOrCreateLSPClient(context.Background(), e.mode, workspaceRoot, linkedProjects...)
 	if err != nil {
 		return nil, err
 	}
@@ -1473,7 +1473,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		startSpinner(fmt.Sprintf("Starting %s", lspCommand))
 	}
 
-	client, err := GetOrCreateLSPClient(e.mode, workspaceRoot, context.Background(), linkedProjects...)
+	client, err := GetOrCreateLSPClient(context.Background(), e.mode, workspaceRoot, linkedProjects...)
 	if err != nil {
 		stopSpinner()
 		status.SetMessageAfterRedraw(fmt.Sprintf("Could not launch %s: %v", lspCommand, err))
