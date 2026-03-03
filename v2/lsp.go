@@ -1738,6 +1738,11 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		addParens = " "
 	}
 
+	// Haskell uses space-separated arguments, not parentheses
+	if e.mode == mode.Haskell && addParens != "" {
+		addParens = " "
+	}
+
 	// For C/C++, don't add parens for qualified completions (e.g. std::cout)
 	// unless the Kind explicitly indicates a callable
 	if addParens != "" && (e.mode == mode.C || e.mode == mode.Cpp) && strings.Contains(currentLine, "::") {
