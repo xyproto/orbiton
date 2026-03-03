@@ -247,6 +247,10 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		cmd = exec.Command("abc2midi", e.filename, "-o", filepath.Join(tempDir, "o.mid"))
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
+	case mode.Shell:
+		cmd = exec.Command("bash", "-n", e.filename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Chuck, mode.SuperCollider:
 		cmd = exec.Command("true")
 		cmd.Dir = sourceDir
