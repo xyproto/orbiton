@@ -143,7 +143,7 @@ func (e *Editor) Run() (string, bool, error) {
 	case mode.Just:
 		cmd = exec.Command("just")
 	case mode.Odin:
-		if efn := e.exeName(e.filename, true); files.IsExecutable(efn) {
+		if efn := e.exeName(e.filename, true); files.IsExecutable(filepath.Join(sourceDir, efn)) {
 			cmd = exec.Command(filepath.Join(sourceDir, efn))
 		}
 	case mode.Perl:
@@ -191,6 +191,10 @@ func (e *Editor) Run() (string, bool, error) {
 		}
 	default:
 		cmd = exec.Command(filepath.Join(sourceDir, e.exeName(e.filename, true)))
+	}
+
+	if cmd == nil {
+		return "", false, errors.New("could not find the built executable")
 	}
 
 	if cmd.Dir == "" {
