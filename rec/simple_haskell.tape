@@ -26,13 +26,7 @@ Ctrl+A
 Sleep 100ms
 
 # Move right past "main = " (7 chars) to insert "do" before "putStrLn"
-Right
-Right
-Right
-Right
-Right
-Right
-Right
+Right 7
 
 # Insert "do\n  " to create a do block, pushing putStrLn to next indented line
 Type "do"
@@ -64,8 +58,8 @@ Down
 Enter
 Sleep 100ms
 
-# Complete the line: putStrLn("hey")
-Type '"hey")'
+# Complete the line: putStrLn "hey"
+Type '"hey"'
 Sleep 2s
 
 # Compile and run again to see new output
