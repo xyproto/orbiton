@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Differenciate between `bash` and `sh` shell scripts.
 - [ ] Also support `.tape` files (Charmbracelet VHS).
 - [ ] Fix the syntax highlighting dependency to view strings with `-` as single words for CSS.
 - [ ] Do not remove indentation from JS code in HTML when `ctrl-w` is pressed. See: https://github.com/yosssi/gohtml/issues/22
