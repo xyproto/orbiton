@@ -315,7 +315,11 @@ func (e *Editor) DrawFlags(c *vt.Canvas, repositionCursor bool) {
 	textLength := len(title + " " + strings.Join(changedFlags, "|"))
 
 	// The left side margin, if the text is adjusted to the right
-	x := uint(lastWidthIndex - textLength)
+	xInt := lastWidthIndex - textLength
+	if xInt < 0 {
+		xInt = 0
+	}
+	x := uint(xInt)
 
 	// The bottom line
 	y := uint(lastHeightIndex)

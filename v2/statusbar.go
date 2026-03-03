@@ -58,20 +58,29 @@ func (sb *StatusBar) Draw(c *vt.Canvas, offsetY int) {
 		h -= 2
 	}
 
+	msgX := (w - len(sb.msg)) / 2
+	if msgX < 0 {
+		msgX = 0
+	}
+
 	if sb.IsError() {
 		mut.RLock()
-		c.Write(uint((w-len(sb.msg))/2), h, sb.errfg, sb.errbg, sb.msg)
+		c.Write(uint(msgX), h, sb.errfg, sb.errbg, sb.msg)
 		mut.RUnlock()
 	} else {
 		mut.RLock()
-		c.Write(uint((w-len(sb.msg))/2), h, sb.fg, sb.bg, sb.msg)
+		c.Write(uint(msgX), h, sb.fg, sb.bg, sb.msg)
 		mut.RUnlock()
 	}
 
 	if sb.nanoMode {
 		mut.RLock()
 		// x-align
-		x := uint((w - len(nanoHelpString1)) / 2)
+		helpX := (w - len(nanoHelpString1)) / 2
+		if helpX < 0 {
+			helpX = 0
+		}
+		x := uint(helpX)
 		c.Write(x, h+1, sb.editor.NanoHelpForeground, sb.editor.NanoHelpBackground, nanoHelpString1)
 		c.Write(x, h+2, sb.editor.NanoHelpForeground, sb.editor.NanoHelpBackground, nanoHelpString2)
 		mut.RUnlock()
