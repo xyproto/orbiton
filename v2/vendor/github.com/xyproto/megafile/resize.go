@@ -12,8 +12,13 @@ import (
 
 var resizeMutex sync.Mutex
 
-// FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
+// FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct.
+// Only redraws when in file browsing mode, not when an external editor/command is running.
 func (s *State) FullResetRedraw() {
+	if !s.browsing.Load() {
+		return
+	}
+
 	resizeMutex.Lock()
 	defer resizeMutex.Unlock()
 
@@ -31,6 +36,13 @@ func (s *State) FullResetRedraw() {
 	vt.EchoOff()
 
 	// Assign the new canvas to the current canvas
+	*c = newC.Copy()
+
+	// Create another new canvas to ensure the terminal size is correct after resize
+	newC = vt.NewCanvas()
+	newC.ShowCursor()
+	vt.EchoOff()
+
 	*c = newC.Copy()
 
 	// Trigger a complete redraw

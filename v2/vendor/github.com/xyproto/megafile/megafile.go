@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/xyproto/env/v2"
@@ -96,6 +97,7 @@ type State struct {
 	selectionMoved            bool
 	ShowHidden                bool
 	autoSelected              bool
+	browsing                  atomic.Bool // true when in file browsing mode (not running an external command)
 	visibleEntries            int
 	hiddenEntries             int
 	cachedUncommitted         int
@@ -755,6 +757,7 @@ func (s *State) edit(filename, path string) (string, error) {
 	command.Stdin = os.Stdin
 
 	// Restore terminal before running external command
+	s.browsing.Store(false)
 	s.tty.Restore()
 
 	stderrString := ""
@@ -765,11 +768,12 @@ func (s *State) edit(filename, path string) (string, error) {
 
 	// Re-enable raw mode after external command
 	s.tty.RawMode()
+	s.browsing.Store(true)
 
 	return stderrString, err
 }
 
-func run(tty *vt.TTY, executableName string, args []string, path string) error {
+func (s *State) run(executableName string, args []string, path string) error {
 	executablePath, err := exec.LookPath(executableName)
 	if err != nil {
 		return err
@@ -782,16 +786,18 @@ func run(tty *vt.TTY, executableName string, args []string, path string) error {
 	command.Stdin = os.Stdin
 
 	// Restore terminal before running external command
-	if tty != nil {
-		tty.Restore()
+	s.browsing.Store(false)
+	if s.tty != nil {
+		s.tty.Restore()
 	}
 
 	err = command.Run()
 
 	// Re-enable raw mode after external command
-	if tty != nil {
-		tty.RawMode()
+	if s.tty != nil {
+		s.tty.RawMode()
 	}
+	s.browsing.Store(true)
 
 	return err
 }
@@ -802,6 +808,21 @@ func run2(executableName string, args []string, path string) (string, error) {
 	command.Env = env.Environ()
 	outBytes, err := command.CombinedOutput()
 	if err != nil {
+		return "", err
+	}
+	return string(outBytes), nil
+}
+
+// runShell executes a command string via /bin/sh -c
+func runShell(cmdStr, path string) (string, error) {
+	command := exec.Command("/bin/sh", "-c", cmdStr)
+	command.Dir = path
+	command.Env = env.Environ()
+	outBytes, err := command.CombinedOutput()
+	if err != nil {
+		if len(outBytes) > 0 {
+			return "", fmt.Errorf("%s: %s", err, strings.TrimSpace(string(outBytes)))
+		}
 		return "", err
 	}
 	return string(outBytes), nil
@@ -968,7 +989,7 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 		}
 		return false, false, NoAction, err
 	} else if foundExecutableInPath := files.WhichCached(cmd); foundExecutableInPath != "" {
-		return false, false, NoAction, run(s.tty, foundExecutableInPath, []string{}, s.Directories[s.dirIndex])
+		return false, false, NoAction, s.run(foundExecutableInPath, []string{}, s.Directories[s.dirIndex])
 	}
 
 	return false, false, NoAction, fmt.Errorf("WHAT DO YOU MEAN, %s?", cmd)
@@ -990,6 +1011,7 @@ func dupli(xs []string) []string {
 
 // Run launches a file browser and returns the currently selected directories when it is done running
 func (s *State) Run() ([]string, error) {
+	s.browsing.Store(true)
 	s.tty.RawMode()
 	defer s.tty.Restore()
 
@@ -1290,6 +1312,26 @@ func (s *State) Run() ([]string, error) {
 			}
 			// No file selected and no text written, break out
 			if len(s.written) == 0 { // nothing was written
+				break
+			}
+			// If the text starts with "!", execute as a shell command
+			if len(s.written) > 1 && s.written[0] == '!' {
+				shellCmd := string(s.written[1:])
+				s.written = []rune{}
+				index = 0
+				s.filterPattern = ""
+				clearAndPrepare()
+				clearWritten()
+				c.Draw()
+				output, err := runShell(shellCmd, s.Directories[s.dirIndex])
+				if err != nil {
+					s.drawError(err.Error())
+				} else if output != "" {
+					s.drawOutput(output, s.tty)
+				}
+				clearAndPrepare()
+				s.ls(s.Directories[s.dirIndex])
+				drawWritten() // for the cursor
 				break
 			}
 			// Text has been written - execute it as a command
@@ -1840,9 +1882,9 @@ func (s *State) Run() ([]string, error) {
 			}
 			listDirectory()
 		case "c:20": // ctrl-t : tig
-			run(s.tty, "tig", []string{}, s.Directories[s.dirIndex])
+			s.run("tig", []string{}, s.Directories[s.dirIndex])
 		case "c:7": // ctrl-g : lazygit
-			run(s.tty, "lazygit", []string{}, s.Directories[s.dirIndex])
+			s.run("lazygit", []string{}, s.Directories[s.dirIndex])
 		case "c:6": // ctrl-f : find in files
 			if len(s.written) == 0 {
 				break
@@ -1921,15 +1963,22 @@ func (s *State) Run() ([]string, error) {
 			tmp := append(s.written[:index], []rune(key)...)
 			s.written = append(tmp, s.written[index:]...)
 			index += ulen([]rune(key))
-			// Update filter pattern and redraw file list
-			s.filterPattern = string(s.written)
-			clearAndPrepare()
-			count, _ := s.ls(s.Directories[s.dirIndex])
-			// If no matches, redraw without filter
-			if count == 0 && s.filterPattern != "" {
+			// Don't filter when typing a shell command (starting with "!")
+			if len(s.written) > 0 && s.written[0] == '!' {
 				s.filterPattern = ""
 				clearAndPrepare()
 				s.ls(s.Directories[s.dirIndex])
+			} else {
+				// Update filter pattern and redraw file list
+				s.filterPattern = string(s.written)
+				clearAndPrepare()
+				count, _ := s.ls(s.Directories[s.dirIndex])
+				// If no matches, redraw without filter
+				if count == 0 && s.filterPattern != "" {
+					s.filterPattern = ""
+					clearAndPrepare()
+					s.ls(s.Directories[s.dirIndex])
+				}
 			}
 			clearWritten()
 			drawWritten()
