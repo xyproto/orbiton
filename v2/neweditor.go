@@ -252,6 +252,12 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				megaFileState.EdgeBackground = e.Background            // TODO using e.BoxBackground needs some more work in megafile
 				megaFileState.HighlightBackground = vt.BackgroundWhite // TODO add to the theme struct
 
+				// Pause the editor's signal handler so the file browser owns SIGWINCH
+				if cancelPreviousSignalHandler != nil {
+					cancelPreviousSignalHandler()
+				}
+				resetResizeSignal()
+
 				if _, err := megaFileState.Run(); err != nil && err != megafile.ErrExit {
 					return e, "", false, megafile.NoAction, fmt.Errorf("could not browse %s: %v", e.filename, err)
 				}
