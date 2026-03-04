@@ -98,6 +98,8 @@ type State struct {
 	autoSelected              bool
 	visibleEntries            int
 	hiddenEntries             int
+	cachedUncommitted         int
+	cachedUncommittedDir      string
 }
 
 // ErrExit is the error that is returned if the user appeared to want to exit
@@ -422,6 +424,7 @@ func (s *State) ls(dir string) (int, error) {
 	}
 	s.visibleEntries = visibleEntries
 	s.hiddenEntries = hiddenEntries
+	s.cachedUncommittedDir = "" // invalidate git status cache
 
 	// Clear file entries for new listing
 	s.fileEntries = []FileEntry{}
@@ -550,19 +553,53 @@ func pluralSuffix(n int) string {
 	return "s"
 }
 
+// gitUncommittedCount returns the number of uncommitted files in a git repo,
+// or 0 if the directory is not in a git repository.
+func gitUncommittedCount(dir string) int {
+	cmd := exec.Command("git", "status", "--porcelain")
+	cmd.Dir = dir
+	out, err := cmd.Output()
+	if err != nil {
+		return 0
+	}
+	count := 0
+	for _, line := range strings.Split(string(out), "\n") {
+		if strings.TrimSpace(line) != "" {
+			count++
+		}
+	}
+	return count
+}
+
+// uncommittedCount returns the cached uncommitted file count,
+// refreshing only when the directory changes.
+func (s *State) uncommittedCount() int {
+	dir := s.Directories[s.dirIndex]
+	if dir != s.cachedUncommittedDir {
+		s.cachedUncommitted = gitUncommittedCount(dir)
+		s.cachedUncommittedDir = dir
+	}
+	return s.cachedUncommitted
+}
+
 func (s *State) statusLine() string {
 	visible := s.visibleEntries
 	hidden := s.hiddenEntries
+	var line string
 	switch {
 	case visible == 0 && hidden == 0:
-		return "no files"
+		line = "no files"
 	case visible == 0:
-		return fmt.Sprintf("%d hidden file%s", hidden, pluralSuffix(hidden))
+		line = fmt.Sprintf("%d hidden file%s", hidden, pluralSuffix(hidden))
 	case hidden == 0:
-		return fmt.Sprintf("%d file%s", visible, pluralSuffix(visible))
+		line = fmt.Sprintf("%d file%s", visible, pluralSuffix(visible))
 	default:
-		return fmt.Sprintf("%d file%s, %d hidden", visible, pluralSuffix(visible), hidden)
+		line = fmt.Sprintf("%d file%s, %d hidden", visible, pluralSuffix(visible), hidden)
 	}
+	if uncommitted := s.uncommittedCount(); uncommitted > 0 {
+		line += fmt.Sprintf(", %d uncommitted file%s", uncommitted, pluralSuffix(uncommitted))
+	}
+	return line
 }
 
 func (s *State) drawStatusLine() {

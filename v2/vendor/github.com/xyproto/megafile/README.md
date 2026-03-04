@@ -1,5 +1,6 @@
 # MegaFile
 
+[![License](https://img.shields.io/badge/license-BSD3-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![CI](https://github.com/xyproto/megafile/actions/workflows/ci.yml/badge.svg)](https://github.com/xyproto/megafile/actions/workflows/ci.yml)
 
 A simple and colorful TUI shell for Linux, written in Go.
@@ -78,6 +79,6 @@ This project can be used as the `github.com/xyproto/megafile` package, or as a s
 
 ### General info
 
-* Version: 1.6.6
+* Version: 1.6.7
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
