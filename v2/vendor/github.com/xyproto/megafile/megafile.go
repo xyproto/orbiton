@@ -904,9 +904,9 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 			}
 			return false, false, NoAction, err
 		}
-		// Check if file is both binary and executable
+		// Check if file is binary (but allow .gz files as they can be edited)
 		fullPath := filepath.Join(path, cmd)
-		if files.BinaryAccurate(fullPath) && files.Executable(fullPath) {
+		if files.BinaryAccurate(fullPath) && !strings.HasSuffix(fullPath, ".gz") {
 			if !s.confirmBinaryEdit(cmd) {
 				return false, false, NoAction, nil // User cancelled
 			}
