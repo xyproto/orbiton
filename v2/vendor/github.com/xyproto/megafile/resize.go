@@ -3,6 +3,7 @@ package megafile
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -136,7 +137,12 @@ func (s *State) startResizeHandler() {
 	done := make(chan struct{})
 	s.resizeChan = sigChan
 	s.resizeCancel = func() {
-		ResetResizeSignal()
+		signal.Stop(sigChan)
+		// Drain any buffered signal
+		select {
+		case <-sigChan:
+		default:
+		}
 		close(done)
 	}
 
