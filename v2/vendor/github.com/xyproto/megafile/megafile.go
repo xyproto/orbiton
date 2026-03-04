@@ -102,6 +102,8 @@ type State struct {
 	hiddenEntries             int
 	cachedUncommitted         int
 	cachedUncommittedDir      string
+	resizeChan                chan os.Signal
+	resizeCancel              func()
 }
 
 // ErrExit is the error that is returned if the user appeared to want to exit
@@ -757,6 +759,7 @@ func (s *State) edit(filename, path string) (string, error) {
 	command.Stdin = os.Stdin
 
 	// Restore terminal before running external command
+	s.stopResizeHandler()
 	s.browsing.Store(false)
 	s.tty.Restore()
 
@@ -769,6 +772,7 @@ func (s *State) edit(filename, path string) (string, error) {
 	// Re-enable raw mode after external command
 	s.tty.RawMode()
 	s.browsing.Store(true)
+	s.startResizeHandler()
 
 	return stderrString, err
 }
@@ -786,6 +790,7 @@ func (s *State) run(executableName string, args []string, path string) error {
 	command.Stdin = os.Stdin
 
 	// Restore terminal before running external command
+	s.stopResizeHandler()
 	s.browsing.Store(false)
 	if s.tty != nil {
 		s.tty.Restore()
@@ -798,6 +803,7 @@ func (s *State) run(executableName string, args []string, path string) error {
 		s.tty.RawMode()
 	}
 	s.browsing.Store(true)
+	s.startResizeHandler()
 
 	return err
 }
@@ -1014,6 +1020,9 @@ func (s *State) Run() ([]string, error) {
 	s.browsing.Store(true)
 	s.tty.RawMode()
 	defer s.tty.Restore()
+
+	s.startResizeHandler()
+	defer s.stopResizeHandler()
 
 	var (
 		x, y   uint

@@ -2,9 +2,11 @@ package megafile
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/vt"
@@ -123,4 +125,42 @@ func (s *State) redraw() {
 
 	// Draw the canvas
 	c.Draw()
+}
+
+// startResizeHandler starts a goroutine that listens for terminal resize
+// signals and triggers a full redraw. Only one handler is active at a time.
+func (s *State) startResizeHandler() {
+	s.stopResizeHandler()
+
+	sigChan := make(chan os.Signal, 1)
+	done := make(chan struct{})
+	s.resizeChan = sigChan
+	s.resizeCancel = func() {
+		ResetResizeSignal()
+		close(done)
+	}
+
+	SetupResizeSignal(sigChan)
+
+	go func() {
+		for {
+			select {
+			case <-sigChan:
+				s.FullResetRedraw()
+				time.Sleep(150 * time.Millisecond)
+				s.FullResetRedraw()
+			case <-done:
+				return
+			}
+		}
+	}()
+}
+
+// stopResizeHandler stops the current resize signal handler goroutine.
+func (s *State) stopResizeHandler() {
+	if s.resizeCancel != nil {
+		s.resizeCancel()
+		s.resizeCancel = nil
+		s.resizeChan = nil
+	}
 }
