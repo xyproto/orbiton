@@ -282,7 +282,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 				e.debugMode = false
 				// Also end the gdb session if there is one in progress
 				e.DebugEnd()
-				status.SetMessageAfterRedraw("Normal mode")
+				status.SetMessageAfterRedraw("Default mode")
 			})
 		} else {
 			actions.Add("Debug mode", func() {

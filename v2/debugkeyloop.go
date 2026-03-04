@@ -15,7 +15,7 @@ func (e *Editor) handleDebugKey(key string, c *vt.Canvas, tty *vt.TTY, status *S
 		e.debugMode = false
 		e.DebugEnd()
 		e.redraw.Store(true)
-		status.SetMessageAfterRedraw("Normal mode")
+		status.SetMessageAfterRedraw("Default mode")
 		return true
 
 	case "c:23": // ctrl-w, add watch
