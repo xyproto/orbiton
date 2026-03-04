@@ -50,10 +50,14 @@ func (e *Editor) FuncPrefix() string {
 // LooksLikeFunctionDef tries to decide if the given line looks like a function definition or not
 func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 	trimmedLine := strings.TrimSpace(line)
+	singleLineComment := e.SingleLineCommentMarker()
+	if singleLineComment != "" && strings.HasPrefix(trimmedLine, singleLineComment) {
+		return false // skip commented-out lines
+	}
 	if funcPrefix != "" && strings.HasPrefix(trimmedLine, funcPrefix) {
 		return true
 	}
-	if singleLineComment := e.SingleLineCommentMarker(); strings.Contains(trimmedLine, singleLineComment) {
+	if strings.Contains(trimmedLine, singleLineComment) {
 		parts := strings.Split(trimmedLine, singleLineComment)
 		trimmedLine = strings.TrimSpace(parts[0])
 	}
