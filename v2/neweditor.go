@@ -256,7 +256,6 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				if cancelPreviousSignalHandler != nil {
 					cancelPreviousSignalHandler()
 				}
-				resetResizeSignal()
 
 				if _, err := megaFileState.Run(); err != nil && err != megafile.ErrExit {
 					return e, "", false, megafile.NoAction, fmt.Errorf("could not browse %s: %v", e.filename, err)

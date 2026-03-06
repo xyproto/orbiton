@@ -28,18 +28,17 @@ func (e *Editor) SetUpSignalHandlers(c *vt.Canvas, tty *vt.TTY, status *StatusBa
 
 	sigChan := make(chan os.Signal, 1)
 	ctx, cancel := context.WithCancel(context.Background())
-	cancelPreviousSignalHandler = cancel
+	cancelPreviousSignalHandler = func() {
+		signal.Stop(sigChan)
+		cancel()
+	}
 
 	// Handle signals differently for VTEGUI
 	if inVTEGUI {
-		signal.Reset(syscall.SIGTERM, syscall.SIGUSR1, syscall.SIGWINCH)
 		signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGUSR1, syscall.SIGWINCH)
 		syscall.Kill(os.Getppid(), syscall.SIGWINCH)
 	} else {
-		defer func() {
-			signal.Reset(syscall.SIGTERM, syscall.SIGUSR1, syscall.SIGWINCH)
-			signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGUSR1, syscall.SIGWINCH)
-		}()
+		defer signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGUSR1, syscall.SIGWINCH)
 	}
 
 	resizeMut.Unlock()
