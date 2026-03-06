@@ -760,7 +760,6 @@ func (s *State) edit(filename, path string) (string, error) {
 
 	// Restore terminal before running external command
 	s.stopResizeHandler()
-	ResetResizeSignal()
 	s.browsing.Store(false)
 	s.tty.Restore()
 
@@ -774,6 +773,9 @@ func (s *State) edit(filename, path string) (string, error) {
 	s.tty.RawMode()
 	s.browsing.Store(true)
 	s.startResizeHandler()
+
+	// Force a full redraw to pick up any terminal size changes during editing
+	s.FullResetRedraw()
 
 	return stderrString, err
 }
@@ -792,7 +794,6 @@ func (s *State) run(executableName string, args []string, path string) error {
 
 	// Restore terminal before running external command
 	s.stopResizeHandler()
-	ResetResizeSignal()
 	s.browsing.Store(false)
 	if s.tty != nil {
 		s.tty.Restore()
@@ -806,6 +807,9 @@ func (s *State) run(executableName string, args []string, path string) error {
 	}
 	s.browsing.Store(true)
 	s.startResizeHandler()
+
+	// Force a full redraw to pick up any terminal size changes during the external command
+	s.FullResetRedraw()
 
 	return err
 }
