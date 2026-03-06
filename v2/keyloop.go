@@ -392,7 +392,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	}
 
 	// Place and enable the cursor
-	e.PlaceAndEnableCursor()
+	e.PlaceAndEnableCursor(c)
 
 	// This is the main loop for the editor
 	for !e.quit {

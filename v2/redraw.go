@@ -92,14 +92,14 @@ func (e *Editor) RepositionCursor(x, y uint) {
 }
 
 // PlaceAndEnableCursor will enable the cursor and then place it
-func (e *Editor) PlaceAndEnableCursor() {
+func (e *Editor) PlaceAndEnableCursor(c *vt.Canvas) {
 	// Redraw the cursor, if needed
 	e.pos.mut.RLock()
 	x := uint(e.pos.ScreenX())
 	y := uint(e.pos.ScreenY())
 	e.pos.mut.RUnlock()
 
-	vt.ShowCursor(true)
+	c.ShowCursor()
 	vt.SetXY(x, y)
 
 	e.previousX = int(x)
@@ -107,7 +107,7 @@ func (e *Editor) PlaceAndEnableCursor() {
 }
 
 // RepositionCursorIfNeeded will reposition the cursor using VT100 commands, if needed
-func (e *Editor) RepositionCursorIfNeeded() {
+func (e *Editor) RepositionCursorIfNeeded(c *vt.Canvas) {
 	// Redraw the cursor, if needed
 	e.pos.mut.RLock()
 	x := e.pos.ScreenX()
@@ -115,7 +115,7 @@ func (e *Editor) RepositionCursorIfNeeded() {
 	e.pos.mut.RUnlock()
 
 	if x != e.previousX || y != e.previousY || e.redrawCursor.Load() {
-		vt.ShowCursor(true)
+		c.ShowCursor()
 		e.RepositionCursor(uint(x), uint(y))
 		e.redrawCursor.Store(false)
 	}
@@ -259,10 +259,10 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 		if didDraw {
 			e.EnableAndPlaceCursor(c)
 		} else {
-			e.RepositionCursorIfNeeded()
+			e.RepositionCursorIfNeeded(c)
 		}
 	} else {
-		vt.ShowCursor(true)
-		e.RepositionCursorIfNeeded()
+		c.ShowCursor()
+		e.RepositionCursorIfNeeded(c)
 	}
 }
