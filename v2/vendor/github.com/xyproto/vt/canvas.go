@@ -670,18 +670,12 @@ func (c *Canvas) Resized() *Canvas {
 		c.mut.Lock()
 		defer c.mut.Unlock()
 		defer nc.mut.Unlock()
-	OUT:
 		// Copy over old characters, marking them as not yet drawn
 		for y := uint(0); y < umin(oldc.h, h); y++ {
 			for x := uint(0); x < umin(oldc.w, w); x++ {
-				oldIndex := y*oldc.w + x
-				index := y*nc.w + x
-				if oldIndex > index {
-					break OUT
-				}
-				cr := oldc.chars[oldIndex]
+				cr := oldc.chars[y*oldc.w+x]
 				cr.drawn = false
-				nc.chars[index] = cr
+				nc.chars[y*nc.w+x] = cr
 			}
 		}
 		return nc
