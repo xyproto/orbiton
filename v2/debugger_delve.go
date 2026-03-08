@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -305,7 +306,11 @@ func (d *delveDebugger) Start(sourceDir, sourceBaseFilename, executableBaseFilen
 	addr := l.Addr().String()
 	l.Close()
 
-	d.cmd = exec.Command(dlv, "exec", executableBaseFilename,
+	executablePath := executableBaseFilename
+	if !filepath.IsAbs(executablePath) {
+		executablePath = filepath.Join(sourceDir, executableBaseFilename)
+	}
+	d.cmd = exec.Command(dlv, "exec", executablePath,
 		"--headless", "--api-version=2", "--accept-multiclient",
 		"--listen="+addr, "--log-dest=/dev/null",
 	)

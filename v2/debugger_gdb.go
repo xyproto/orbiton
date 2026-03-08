@@ -161,8 +161,12 @@ func (d *gdbDebugger) Start(sourceDir, sourceBaseFilename, executableBaseFilenam
 	// Handle output to stdout from programs that are being debugged
 	go io.Copy(&d.output, d.conn)
 
-	// Load the executable file
-	if retvalMap, err := d.conn.CheckedSend("file-exec-and-symbols", executableBaseFilename); err != nil {
+	// Load the executable file using an absolute path so that GDB finds it regardless of CWD
+	executablePath := executableBaseFilename
+	if !filepath.IsAbs(executablePath) {
+		executablePath = filepath.Join(sourceDir, executableBaseFilename)
+	}
+	if retvalMap, err := d.conn.CheckedSend("file-exec-and-symbols", executablePath); err != nil {
 		return fmt.Sprintf("%v", retvalMap), err
 	}
 

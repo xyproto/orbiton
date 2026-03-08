@@ -28,41 +28,33 @@ var (
 // If shouldExist is true, the function will try to select either "main" or the parent
 // directory name, depending on which one is there.
 func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
-	exeFirstName := "main" // The default name
 	sourceDir := filepath.Dir(sourceFilename)
 
 	// NOTE: Abs is used to prevent sourceDirectoryName from becoming just "."
 	absDir, err := filepath.Abs(sourceDir)
 	if err != nil {
-		return exeFirstName
+		return "main"
 	}
 
 	sourceDirectoryName := filepath.Base(absDir)
 
-	if shouldExist {
-		// If "main" exists, use that
-		if files.IsFile(filepath.Join(sourceDir, exeFirstName)) {
-			return exeFirstName
-		}
-		// If the name of the source file, without the extension, exists, use that
-		exeFirstName = strings.TrimSuffix(filepath.Base(sourceFilename), filepath.Ext(sourceFilename))
-		if files.IsFile(filepath.Join(sourceDir, exeFirstName)) {
-			return exeFirstName
-		}
-		// Use the name of the source directory as the default executable filename instead
-		if files.IsFile(filepath.Join(sourceDir, sourceDirectoryName)) {
-			// exeFirstName = sourceDirectoryName
-			return sourceDirectoryName
-		}
-	}
-
 	// Find a suitable default executable first name
 	switch e.mode {
-	case mode.Assembly, mode.Kotlin, mode.Lua, mode.OCaml, mode.Rust, mode.Terra, mode.Zig:
+	case mode.Assembly, mode.Go, mode.Kotlin, mode.Lua, mode.OCaml, mode.Rust, mode.Terra, mode.Zig:
 		if sourceDirectoryName == "build" {
 			parentDirName := filepath.Base(filepath.Clean(filepath.Join(sourceDir, "..")))
 			if shouldExist && files.IsFile(filepath.Join(sourceDir, parentDirName)) {
 				return parentDirName
+			}
+		}
+		if shouldExist {
+			// Check the directory name first — that is what go build and cargo build create by default
+			if files.IsFile(filepath.Join(sourceDir, sourceDirectoryName)) {
+				return sourceDirectoryName
+			}
+			// Fall back to "main" in case the project was built with an explicit -o main flag
+			if files.IsFile(filepath.Join(sourceDir, "main")) {
+				return "main"
 			}
 		}
 		// Default to the source directory base name, for these programming languages
@@ -75,9 +67,21 @@ func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
 		return sourceDirectoryName
 	}
 
-	// Use the name of the current directory, if a file with that name exists
-	if shouldExist && files.IsFile(filepath.Join(sourceDir, sourceDirectoryName)) {
-		return sourceDirectoryName
+	// For all other modes the conventional output name is "main"
+	exeFirstName := "main"
+	if shouldExist {
+		if files.IsFile(filepath.Join(sourceDir, exeFirstName)) {
+			return exeFirstName
+		}
+		// If the name of the source file, without the extension, exists, use that
+		exeFirstName = strings.TrimSuffix(filepath.Base(sourceFilename), filepath.Ext(sourceFilename))
+		if files.IsFile(filepath.Join(sourceDir, exeFirstName)) {
+			return exeFirstName
+		}
+		// Use the name of the source directory as the default executable filename instead
+		if files.IsFile(filepath.Join(sourceDir, sourceDirectoryName)) {
+			return sourceDirectoryName
+		}
 	}
 
 	// Default to "main"
