@@ -95,6 +95,24 @@ jobs:
             go test
             go vet ./...
 
+  vhs-validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install vhs
+        run: |
+          sudo mkdir -p /etc/apt/keyrings
+          curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
+          sudo apt-get update && sudo apt-get install -y vhs
+      - name: Validate tape files
+        run: |
+          cd rec
+          for tape in *.tape; do
+            echo "Validating $tape"
+            vhs validate "$tape"
+          done
+
   netbsd:
     runs-on: ubuntu-24.04
     steps:
