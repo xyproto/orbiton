@@ -349,14 +349,46 @@ func (d *gdbDebugger) Continue() error {
 	if !d.running {
 		return errProgramStopped
 	}
-	_, err := d.conn.CheckedSend("exec-continue")
-	return err
+	if _, err := d.conn.CheckedSend("exec-continue"); err != nil {
+		return err
+	}
+	// Wait for the program to stop (at a breakpoint, watchpoint, or exit).
+	// Unlike stepping, continue may run for a long time, so we use the
+	// stopped channel directly without the short timeout of waitForStop.
+	<-d.stopped
+	// Drain a possible follow-up notification (e.g. thread-group-exited).
+	select {
+	case <-d.stopped:
+	case <-time.After(50 * time.Millisecond):
+	}
+	d.parseWatchOutput()
+	d.refreshWatches()
+	if !d.running {
+		return errProgramStopped
+	}
+	return nil
 }
 
 // Run starts (or restarts) the program from the beginning.
 func (d *gdbDebugger) Run() error {
 	_, err := d.conn.CheckedSend("exec-run")
 	return err
+}
+
+// refreshWatches re-evaluates all watch expressions using data-evaluate-expression.
+// This ensures watch values are always up-to-date, matching Delve's behavior.
+func (d *gdbDebugger) refreshWatches() {
+	if d.conn == nil {
+		return
+	}
+	for expr := range d.watchMap {
+		if value, err := d.EvalExpression(expr); err == nil {
+			if value != d.watchMap[expr] {
+				d.lastWatch = expr
+			}
+			d.watchMap[expr] = value
+		}
+	}
 }
 
 // parseWatchOutput interprets gdb console output and extracts watch variable changes.
@@ -398,6 +430,7 @@ func (d *gdbDebugger) Next() error {
 		return errRecordingStopped
 	}
 	d.parseWatchOutput()
+	d.refreshWatches()
 	if !d.running || d.nextInstructionIsSyscall() {
 		return errProgramStopped
 	}
@@ -425,6 +458,7 @@ func (d *gdbDebugger) NextInstruction() error {
 		return errRecordingStopped
 	}
 	d.parseWatchOutput()
+	d.refreshWatches()
 	if !d.running || d.nextInstructionIsSyscall() {
 		return errProgramStopped
 	}
@@ -446,6 +480,7 @@ func (d *gdbDebugger) Step() error {
 		return errRecordingStopped
 	}
 	d.parseWatchOutput()
+	d.refreshWatches()
 	if !d.running || d.nextInstructionIsSyscall() {
 		return errProgramStopped
 	}
@@ -465,6 +500,7 @@ func (d *gdbDebugger) Finish() error {
 		return errRecordingStopped
 	}
 	d.parseWatchOutput()
+	d.refreshWatches()
 	if !d.running || d.nextInstructionIsSyscall() {
 		return errProgramStopped
 	}
@@ -484,6 +520,7 @@ func (d *gdbDebugger) ReverseStep() error {
 		return errRecordingStopped
 	}
 	d.parseWatchOutput()
+	d.refreshWatches()
 	if !d.running {
 		return errProgramStopped
 	}
@@ -503,6 +540,7 @@ func (d *gdbDebugger) ReverseNextInstruction() error {
 		return errRecordingStopped
 	}
 	d.parseWatchOutput()
+	d.refreshWatches()
 	if !d.running {
 		return errProgramStopped
 	}
@@ -753,8 +791,16 @@ func (d *gdbDebugger) AddWatch(expression string) (string, error) {
 		}
 		output = d.output.String()
 		d.output.Reset()
+		// Evaluate the expression to get the initial value (like Delve does)
+		if value, err := d.EvalExpression(expression); err == nil {
+			d.watchMap[expression] = value
+			d.lastWatch = expression
+		} else {
+			d.watchMap[expression] = "?"
+		}
+	} else {
+		d.watchMap[expression] = "?"
 	}
-	d.watchMap[expression] = "?"
 	return output, nil
 }
 

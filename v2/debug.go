@@ -790,6 +790,9 @@ func (e *Editor) DebugStartSession(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 	if e.debugger == nil {
 		if e.mode == mode.Go {
 			e.debugger = newDelveDebugger()
+		} else if isDarwin && findLLDB() != "" {
+			// On macOS, prefer LLDB over GDB (GDB cannot debug arm64 natively)
+			e.debugger = newLLDBDebugger()
 		} else {
 			e.debugger = newGDBDebugger(e.mode)
 		}
