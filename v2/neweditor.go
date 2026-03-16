@@ -249,8 +249,10 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				megaFileState.HeaderColor = e.HeaderTextColor
 				megaFileState.PromptColor = e.LinkColor
 				megaFileState.AngleColor = e.JumpToLetterColor
-				megaFileState.EdgeBackground = e.Background            // TODO using e.BoxBackground needs some more work in megafile
-				megaFileState.HighlightBackground = vt.BackgroundWhite // TODO add to the theme struct
+				megaFileState.EdgeBackground = e.Background // TODO using e.BoxBackground needs some more work in megafile
+				//megaFileState.HighlightBackground = vt.BackgroundWhite // TODO add to the theme struct
+				megaFileState.HighlightBackground = e.NanoHelpBackground
+				megaFileState.EmptyFileColor = e.MultiLineComment
 
 				// Pause the editor's signal handler so the file browser owns SIGWINCH
 				if cancelPreviousSignalHandler != nil {
