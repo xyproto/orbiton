@@ -136,6 +136,9 @@ var (
 	// SuperCollider
 	superColliderWords = []string{"arg", "var", "nil", "true", "false", "this", "super", "thisProcess", "thisThread", "thisMethod", "thisFunction", "currentEnvironment", "topEnvironment", "inf", "pi", "__FILE__", "__LINE__"}
 
+	// Nix expression language
+	nixWords = []string{"abort", "all", "any", "assert", "attrNames", "attrValues", "baseNameOf", "bitAnd", "bitOr", "bitXor", "builtins", "callPackage", "callPackages", "catAttrs", "compareVersions", "concatLists", "concatMap", "concatStringsSep", "config", "deepSeq", "derivation", "dirOf", "elem", "elemAt", "else", "enable", "environment", "false", "fetchFromBitbucket", "fetchFromGitHub", "fetchFromGitLab", "fetchFromSourcehut", "fetchgit", "fetchhg", "fetchpatch", "fetchTarball", "fetchurl", "fetchzip", "filter", "filterSource", "foldl", "fromJSON", "fromTOML", "functionArgs", "genList", "getAttr", "getEnv", "hasAttr", "head", "if", "import", "in", "inherit", "intersectAttrs", "isAttrs", "isBool", "isFloat", "isFunction", "isInt", "isList", "isNull", "isPath", "isString", "length", "lessThan", "let", "lib", "listToAttrs", "makeWrapper", "map", "mapAttrs", "match", "mkDefault", "mkDerivation", "mkEnableOption", "mkForce", "mkIf", "mkMerge", "mkOption", "mkPackageOption", "networking", "null", "options", "or", "packages", "parseDrvName", "partition", "pathExists", "pkgs", "placeholder", "programs", "readDir", "readFile", "rec", "removeAttrs", "replaceStrings", "runCommand", "seq", "services", "sort", "split", "splitVersion", "stdenv", "stdenvNoCC", "storeDir", "stringLength", "substring", "systemd", "tail", "then", "throw", "toFile", "toJSON", "toPath", "toString", "toXML", "trace", "true", "tryEval", "typeOf", "types", "users", "with", "wrapProgram", "zipAttrsWith"}
+
 	// Keywords contains the default syntax highlighting keywords
 	Keywords = map[string]struct{}{
 		"#define":          {},

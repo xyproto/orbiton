@@ -75,6 +75,10 @@ func tokenKind(tok rune, tokText string, inComment *bool, m mode.Mode) Kind {
 	case scanner.Char, scanner.String, scanner.RawString:
 		return String
 	case scanner.Comment:
+		// In Nix, // is the attribute set update operator, not a comment
+		if m == mode.Nix && strings.HasPrefix(tokText, "//") {
+			return AndOr
+		}
 		return Comment
 	}
 
@@ -158,9 +162,11 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		setKeywords(clojureWords)
 	case mode.CMake:
 		addAndRemoveKeywords(cmakeWords, []string{"build", "package"})
-	case mode.Config, mode.Ini, mode.FSTAB, mode.Nix:
+	case mode.Config, mode.Ini, mode.FSTAB:
 		removeKeywords([]string{"auto", "build", "def", "default", "for", "from", "get", "install", "int", "local", "no", "not", "package", "return", "super", "type", "var", "with"})
 		addKeywords([]string{"bind", "bindsym", "DB_PASSWORD", "exec_always", "PASSWORD", "Password", "password", "POSTGRES_PASSWORD", "PWD", "Pwd", "pwd", "Secret", "SECRET", "secret", "Secrets", "SECRETS", "secrets", "set-option", "set-window-option", "unbind", "uses"})
+	case mode.Nix:
+		setKeywords(nixWords)
 	case mode.CS:
 		setKeywords(csWords)
 	case mode.CSS:
