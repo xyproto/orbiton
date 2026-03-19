@@ -500,14 +500,33 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 		}
 	}
 
-	if e.moveLinesMode.Load() {
-		actions.Add("Scroll with ctrl-n and ctrl-p", func() {
-			e.moveLinesMode.Store(false)
-			e.cycleFilenames = false
-		})
-	} else {
-		actions.Add("Move lines with ctrl-n and ctrl-p", func() {
-			e.moveLinesMode.Store(true)
+	if !vsCode && c != nil && c.Height() > 32 {
+		if e.moveLinesMode.Load() {
+			actions.Add("Scroll with ctrl-n and ctrl-p", func() {
+				e.moveLinesMode.Store(false)
+				e.cycleFilenames = false
+			})
+		} else {
+			actions.Add("Move lines with ctrl-n and ctrl-p", func() {
+				e.moveLinesMode.Store(true)
+			})
+		}
+	}
+
+	// Remount / as read-write, for recovery use cases like "single init=/usr/bin/o"
+	if os.Geteuid() == 0 {
+		actions.Add("Remount / as rw", func() {
+			output, err := files.Shell("mount -o rw,remount /")
+			if err != nil {
+				if output != "" {
+					status.SetErrorMessage(output)
+				} else {
+					status.SetError(err)
+				}
+				status.Show(c, e)
+			} else {
+				status.SetMessageAfterRedraw("Remounted / as rw")
+			}
 		})
 	}
 
