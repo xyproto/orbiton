@@ -148,6 +148,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 			const tabInputText = "79"
 			if wordWrapString, ok := e.UserInput(c, tty, status, fmt.Sprintf("Word wrap at [%d]", wrapWidth), "", []string{}, false, tabInputText); ok {
 				if strings.TrimSpace(wordWrapString) == "" {
+					undo.Snapshot(e)
 					e.WrapNow(wrapWidth)
 					e.wrapWhenTyping = true
 					status.SetMessageAfterRedraw(fmt.Sprintf("Word wrap at %d", wrapWidth))
@@ -157,9 +158,10 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 						status.SetError(err)
 						status.Show(c, e)
 					} else {
+						undo.Snapshot(e)
 						e.WrapNow(ww)
 						e.wrapWhenTyping = true
-						status.SetMessageAfterRedraw(fmt.Sprintf("Word wrap at %d", wrapWidth))
+						status.SetMessageAfterRedraw(fmt.Sprintf("Word wrap at %d", ww))
 					}
 				}
 			}
