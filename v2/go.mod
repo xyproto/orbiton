@@ -1,8 +1,9 @@
 module github.com/xyproto/orbiton/v2
 
-go 1.24.4
+go 1.25.0
 
 require (
+	github.com/creack/pty v1.1.24
 	github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa
 	github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06
 	github.com/felixge/fgtrace v0.2.0
@@ -29,7 +30,7 @@ require (
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
-	github.com/xyproto/megafile v1.6.13
+	github.com/xyproto/megafile v1.6.14
 	github.com/xyproto/mode v0.12.3
 	github.com/xyproto/ollamaclient/v2 v2.7.2
 	github.com/xyproto/orchideous v1.0.6
@@ -38,14 +39,13 @@ require (
 	github.com/xyproto/usermodel v1.2.3
 	github.com/xyproto/vt v1.7.5
 	github.com/xyproto/wordwrap v1.0.1
-	golang.org/x/image v0.36.0
+	golang.org/x/image v0.37.0
 )
 
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
 	github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
-	github.com/creack/pty v1.1.24 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
@@ -54,6 +54,6 @@ require (
 	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
-	golang.org/x/sys v0.41.0 // indirect
-	golang.org/x/term v0.40.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/term v0.41.0 // indirect
 )

@@ -395,7 +395,7 @@ func (s *State) clearHighlight() {
 func (s *State) ls(dir string) (int, error) {
 	const (
 		margin       = 2
-		columnWidth  = 25
+		defColWidth  = 25
 		bottomMargin = 2
 		rightMargin  = 2
 	)
@@ -419,16 +419,45 @@ func (s *State) ls(dir string) (int, error) {
 
 	visibleEntries := 0
 	hiddenEntries := 0
+	filteredCount := 0
 	for _, e := range entries {
-		if strings.HasPrefix(e.Name(), ".") {
+		name := e.Name()
+		if strings.HasPrefix(name, ".") {
 			hiddenEntries++
+			if !s.ShowHidden {
+				continue
+			}
 		} else {
 			visibleEntries++
 		}
+		// Check filter
+		if s.filterPattern != "" {
+			hasGlobChars := strings.ContainsAny(s.filterPattern, "*?[]")
+			matched := false
+			if hasGlobChars {
+				matched, _ = filepath.Match(s.filterPattern, name)
+			} else {
+				matched = strings.HasPrefix(strings.ToLower(name), strings.ToLower(s.filterPattern))
+			}
+			if !matched {
+				continue
+			}
+		}
+		filteredCount++
 	}
 	s.visibleEntries = visibleEntries
 	s.hiddenEntries = hiddenEntries
 	s.cachedUncommittedDir = "" // invalidate git status cache
+
+	// Use full width if all entries fit in a single column
+	availableRows := uint(0)
+	if maxY > s.starty+1 {
+		availableRows = maxY - s.starty - 1
+	}
+	columnWidth := uint(defColWidth)
+	if availableRows > 0 && uint(filteredCount) <= availableRows && w > x+1 {
+		columnWidth = w - x
+	}
 
 	// Clear file entries for new listing
 	s.fileEntries = []FileEntry{}
