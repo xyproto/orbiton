@@ -224,37 +224,39 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 	}
 
 	// Delete the rest of the file
-	actions.Add("Delete the rest of the file", func() { // copy file to clipboard
+	if !e.Empty() {
+		actions.Add("Delete the rest of the file", func() { // copy file to clipboard
 
-		prepareFunction := func() {
-			// Prepare to delete all lines from this one and out
-			undo.Snapshot(e)
-			// Also close the portal, if any
-			e.ClosePortal()
-			// Mark the file as changed
-			e.changed.Store(true)
-		}
-
-		// Get the current index and remove the rest of the lines
-		currentLineIndex := int(e.DataY())
-
-		for y := range e.lines {
-			if y >= currentLineIndex {
-				// Run the prepareFunction, but only once, if there was changes to be made
-				if prepareFunction != nil {
-					prepareFunction()
-					prepareFunction = nil
-				}
-				delete(e.lines, y)
+			prepareFunction := func() {
+				// Prepare to delete all lines from this one and out
+				undo.Snapshot(e)
+				// Also close the portal, if any
+				e.ClosePortal()
+				// Mark the file as changed
+				e.changed.Store(true)
 			}
-		}
 
-		if e.changed.Load() {
-			e.MakeConsistent()
-			e.redraw.Store(true)
-			e.redrawCursor.Store(true)
-		}
-	})
+			// Get the current index and remove the rest of the lines
+			currentLineIndex := int(e.DataY())
+
+			for y := range e.lines {
+				if y >= currentLineIndex {
+					// Run the prepareFunction, but only once, if there was changes to be made
+					if prepareFunction != nil {
+						prepareFunction()
+						prepareFunction = nil
+					}
+					delete(e.lines, y)
+				}
+			}
+
+			if e.changed.Load() {
+				e.MakeConsistent()
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+			}
+		})
+	}
 
 	actions.Add("Block edit", func() {
 		e.blockMode = !e.blockMode
