@@ -200,7 +200,9 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 		})
 	}
 
-	actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy all text to the clipboard", "copyall")
+	if !e.Empty() {
+		actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy all text to the clipboard", "copyall")
+	}
 
 	if bookmark != nil {
 		actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy text from the bookmark to the cursor", "copymark")
@@ -324,7 +326,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 		})
 	}
 
-	if !vsCode {
+	if !vsCode && !e.Empty() {
 
 		// Render to PDF using the gofpdf package
 		actions.Add("Render to PDF", func() {
@@ -481,9 +483,9 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 
 	// Add a menu item to toggle primary/non-primary clipboard on Linux
 	if isLinux {
-		primaryToggleText := "Switch to the secondary clipboard"
+		primaryToggleText := "Toggle clipboard to secondary"
 		if !e.primaryClipboard {
-			primaryToggleText = "Switch to the primary clipboard"
+			primaryToggleText = "Toggle clipboard to primary"
 		}
 		actions.Add(primaryToggleText, func() {
 			e.primaryClipboard = !e.primaryClipboard
@@ -506,6 +508,29 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 			e.moveLinesMode.Store(true)
 		})
 	}
+
+	// Launch the megafile file browser
+	actions.Add("File browser", func() {
+		startdir := filepath.Dir(e.filename)
+		if startdir == "" || startdir == "." {
+			startdir, _ = os.Getwd()
+		}
+		megaFileState := megafile.New(c, tty, []string{startdir}, "", getEditorCommand(), fileBrowserUndoHistoryFilename)
+		megaFileState.WrittenTextColor = e.Foreground
+		megaFileState.Background = e.Background
+		megaFileState.HeaderColor = e.HeaderTextColor
+		megaFileState.PromptColor = e.LinkColor
+		megaFileState.AngleColor = e.JumpToLetterColor
+		megaFileState.EdgeBackground = e.Background
+		megaFileState.HighlightBackground = e.NanoHelpBackground
+		megaFileState.EmptyFileColor = e.MultiLineComment
+		if _, err := megaFileState.Run(); err != nil && err != megafile.ErrExit {
+			status.SetError(err)
+			status.Show(c, e)
+			return
+		}
+		os.Exit(0)
+	})
 
 	// Only show the menu option for killing the parent process if the parent process is a known search command
 	searchProcessNames := []string{"ag", "find", "rg"}
