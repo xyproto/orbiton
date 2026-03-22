@@ -349,7 +349,7 @@ This is a brand new feature and needs more testing.
 
 ## LSP support
 
-There is experimental Tab-completion support for Go (`gopls`), Rust (`rust-analyzer`), C and C++ (`clangd`), Python (`pylsp`) and Zig (`zls`).
+There is Tab-completion support for Go (`gopls`), Rust (`rust-analyzer`), C and C++ (`clangd`), Python (`pyright-langserver` or `pylsp`), Zig (`zls`), Odin (`ols`), Haskell (`haskell-language-server-wrapper`), Gleam (`gleam lsp`), Lua (`lua-language-server`), Ruby (`ruby-lsp`) and Bash (`bash-language-server`).
 
 ## Markdown table editor
 
@@ -443,6 +443,31 @@ V
 
 * For building and formatting V code, only the `v` command is needed.
 
+Odin
+
+* For building code with `ctrl-space`, `odin` must be installed.
+* For tab completion, `ols` must be installed.
+
+Gleam
+
+* For building code with `ctrl-space`, `gleam` must be installed.
+* For tab completion, `gleam lsp` is used.
+
+Lua
+
+* For building code with `ctrl-space`, `luac` must be installed.
+* For formatting code with `ctrl-w`, `lua-format` must be installed.
+* For tab completion, `lua-language-server` must be installed.
+
+Ruby
+
+* For formatting code with `ctrl-w`, `rubocop` must be installed.
+* For tab completion, `ruby-lsp` must be installed.
+
+Bash
+
+* For tab completion, `bash-language-server` must be installed.
+
 Rust
 
 * For building code with `ctrl-space`, `Cargo.toml` must exist and `cargo` must be installed.
@@ -453,12 +478,13 @@ Haskell
 
 * For building the current file with `ctrl-space`, the `ghc` compiler must be installed.
 * For formatting code with `ctrl-w`, [`ormolu`](https://github.com/tweag/ormolu) must be installed.
+* For tab completion, `haskell-language-server-wrapper` must be installed.
 
 Python
 
 * `ctrl-space` only checks the syntax, without executing. This only requires `python` to be available.
 * For formatting the code with `ctrl-w`, `ruff` must be installed.
-* For tab completion, `pyright-langserver` or `pypls` must be installed.
+* For tab completion, `pyright-langserver` or `pylsp` must be installed.
 
 Crystal
 
@@ -575,10 +601,11 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 * `agda` - for compiling Agda code
 * `asciidoctor` - for writing man pages
 * `astyle` - for formatting C# code
+* `bash-language-server` - for tab completion for Bash
 * `black` - for formatting Python code
-* `ormolu` - for formatting Haskell code
 * `cargo` - for compiling Rust
 * `clang` - for formatting C++ code with `clang-format`
+* `clangd` - for tab completion for C and C++
 * `clojure` - for compiling Clojure
 * `crystal` - for compiling Crystal
 * [`cxx`](https://github.com/xyproto/cxx) - for compiling C++
@@ -586,22 +613,31 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 * `g++` - for compiling C++ code
 * `gdc` - for compiling D code
 * `ghc` - for compiling Haskell code
+* `gleam` - for compiling Gleam code and for tab completion
 * `go` - for compiling Go code
 * `go-tools` - for formatting Go code and handling imports with `goimports`
 * `google-java-format` - for formatting Java code
+* `gopls` - for tab completion for Go
+* `haskell-language-server-wrapper` - for tab completion for Haskell
 * `jad` - decompile `.class` files on the fly when opening them with `o`
 * `java-environment` - for compiling Java code and creating `.jar` files with `javac` and `jar`
 * `kotlin` - for compiling Kotlin
 * `ktlint` - for formatting Kotlin code
 * `lua` - for compiling Lua to bytecode
 * `lua-format` - for formatting Lua code
+* `lua-language-server` - for tab completion for Lua
 * `mlton` - for compiling Standard ML
 * `mono` - for compiling C# code
 * `ocaml` - for compiling and formatting OCaml code
 * `odin` - for compiling Odin
+* `ols` - for tab completion for Odin
+* `ormolu` - for formatting Haskell code
 * `pandoc` - for exporting Markdown to PDF
 * `prettier` - for formatting JavaScript, TypeScript and CSS
+* `pyright-langserver` - for tab completion for Python (or `pylsp`)
 * `python` - for compiling Python to bytecode
+* `ruby-lsp` - for tab completion for Ruby
+* `rust-analyzer` - for tab completion for Rust
 * `rustc` - for compiling Rust
 * `rustfmt` - for formatting Rust
 * `scala` - for compiling Scala
@@ -609,6 +645,7 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 * `tidy` - for formatting XML
 * `v` - for compiling and formatting V code
 * `zig` - for compiling and formatting Zig code
+* `zls` - for tab completion for Zig
 
 ## Size
 
