@@ -1926,9 +1926,15 @@ func (s *State) Run() ([]string, error) {
 			}
 			listDirectory()
 		case "c:20": // ctrl-t : tig
-			s.run("tig", []string{}, s.Directories[s.dirIndex])
+			gitDir := filepath.Join(s.Directories[s.dirIndex], ".git")
+			if files.IsDir(gitDir) {
+				s.run("tig", []string{}, s.Directories[s.dirIndex])
+			}
 		case "c:7": // ctrl-g : lazygit
-			s.run("lazygit", []string{}, s.Directories[s.dirIndex])
+			gitDir := filepath.Join(s.Directories[s.dirIndex], ".git")
+			if files.IsDir(gitDir) {
+				s.run("lazygit", []string{}, s.Directories[s.dirIndex])
+			}
 		case "c:6": // ctrl-f : find in files
 			if len(s.written) == 0 {
 				break
