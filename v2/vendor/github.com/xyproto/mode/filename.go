@@ -53,9 +53,9 @@ func Detect(filename string) Mode {
 	case ext == ".just" || ext == ".justfile" || baseFilename == "justfile":
 		// NOTE: This one MUST come before the ext == "" check below!
 		mode = Just
-	case strings.HasSuffix(filename, ".git/config") || ext == ".cfg" || ext == ".conf" || ext == ".service" || ext == ".target" || ext == ".socket" || ext == ".godot" || ext == ".import" || ext == ".tres" || strings.HasPrefix(ext, "rc") || ext == ".prop" || ext == ".properties":
+	case strings.HasSuffix(filename, ".git/config") || ext == ".cfg" || ext == ".conf" || ext == ".service" || ext == ".target" || ext == ".socket" || ext == ".godot" || ext == ".import" || ext == ".tres" || ext == ".rc" || ext == ".prop" || ext == ".properties":
 		fallthrough
-	case ext == ".yml" || ext == ".yaml" || ext == ".toml" || ext == ".bp" || ext == ".rule" || strings.HasSuffix(filename, ".git/config") || (ext == "" && (strings.HasSuffix(baseFilename, "file") || strings.HasSuffix(baseFilename, "rc") || hasS(configFilenames, baseFilename))):
+	case ext == ".yml" || ext == ".yaml" || ext == ".toml" || ext == ".bp" || ext == ".rule" || (ext == "" && (strings.HasSuffix(baseFilename, "file") || strings.HasSuffix(baseFilename, "rc") || hasS(configFilenames, baseFilename))):
 		mode = Config
 	case ext == ".sh" || ext == ".fish" || ext == ".install" || ext == ".ksh" || ext == ".tcsh" || ext == ".bash" || ext == ".zsh" || ext == ".local" || ext == ".profile" || baseFilename == "PKGBUILD" || baseFilename == "APKBUILD" || (strings.HasPrefix(baseFilename, ".") && strings.Contains(baseFilename, "sh")): // This last part covers .bashrc, .zshrc etc
 		mode = Shell
@@ -112,10 +112,10 @@ func Detect(filename string) Mode {
 		case ".cm":
 			// Standard ML project file
 			mode = StandardML
-		case ".cpp", ".cc", ".c++", ".cxx", ".hpp", ".h", ".h++": // C++ mode
+		case ".cpp", ".cc", ".c++", ".cxx", ".hh", ".hpp", ".h", ".h++": // C++ mode
 			// TODO: Find a way to discover is a .h file is most likely to be C or C++
 			mode = Cpp
-		case ".clj", ".clojure", "cljs":
+		case ".clj", ".clojure", ".cljs":
 			mode = Clojure
 		case ".cs": // C#
 			mode = CS
@@ -139,6 +139,8 @@ func Detect(filename string) Mode {
 			mode = Dingo
 		case ".patch", ".diff":
 			mode = Diff
+		case ".ex", ".exs":
+			mode = Elixir
 		case ".elm":
 			mode = Elm
 		case ".eml":
@@ -173,6 +175,8 @@ func Detect(filename string) Mode {
 			mode = Haskell
 		case ".htm", ".html":
 			mode = HTML
+		case ".http":
+			mode = HTTP
 		case ".hx", ".hxml":
 			mode = Haxe
 		case ".ini":
@@ -230,7 +234,9 @@ func Detect(filename string) Mode {
 			mode = Perl
 		case ".plg", ".pro":
 			mode = Prolog
-		case ".py", ".bzl":
+		case ".proto":
+			mode = Config
+		case ".py":
 			mode = Python
 		case ".pov":
 			mode = POV
@@ -269,9 +275,11 @@ func Detect(filename string) Mode {
 			mode = Terra
 		case ".te":
 			mode = PolicyLanguage
+		case ".tf", ".tfvars":
+			mode = Config
 		case ".tl":
 			mode = Teal
-		case ".ts":
+		case ".ts", ".tsx":
 			mode = TypeScript
 		case ".txt", ".text", ".nfo", ".diz":
 			mode = Text

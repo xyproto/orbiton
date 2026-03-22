@@ -39,6 +39,7 @@ const (
 	Dingo                 // Dingo
 	Docker                // For Dockerfiles
 	Email                 // For using o with ie. Mutt
+	Elixir                // Elixir
 	Elm                   // Elm
 	Erlang                // Erlang
 	Faust                 // Faust
@@ -104,7 +105,7 @@ const (
 	SCDoc                 // SC Doc
 	Scheme                // Scheme
 	Shader                // GLSL Shader
-	Shell                 // Shell scripts and PKGBUILD files
+	Shell                 // Shell scripts, PKGBUILD and APKBUILD files
 	StandardML            // Standard ML
 	Starlark              // Starlark
 	SQL                   // Structured Query Language
@@ -193,6 +194,8 @@ func (mode Mode) String() string {
 		return "Dingo"
 	case Docker:
 		return "Docker"
+	case Elixir:
+		return "Elixir"
 	case Elm:
 		return "Elm"
 	case Email:
