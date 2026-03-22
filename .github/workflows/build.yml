@@ -7,12 +7,20 @@ on:
       - '**/*.md'
       - '**/*.txt'
       - '**/*.sh'
+      - '**/*.gif'
+      - '**/*.png'
+      - '**/*.svg'
+      - '**/*.jpg'
   pull_request:
     paths-ignore:
       - '.gitignore'
       - '**/*.md'
       - '**/*.txt'
       - '**/*.sh'
+      - '**/*.gif'
+      - '**/*.png'
+      - '**/*.svg'
+      - '**/*.jpg'
 
 jobs:
   ubuntu:
