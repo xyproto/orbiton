@@ -275,15 +275,17 @@ There are pretty few hotkeys to remember:
 
 | Programming language   | File extensions                                     | Jump to error | Build command                                                                                                       | Format command                                                                                                |
 |------------------------|-----------------------------------------------------|---------------|---------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| ABC Music              | `.abc`                                              | WIP           | `abc2midi $filename`                                                                                                | N/A                                                                                                           |
 | Ada                    | `.adb`, `.gpr`, `.ads`, `.ada`                      | WIP           | WIP                                                                                                                 | WIP                                                                                                           |
 | Agda                   | `.agda`                                             | Yes           | `agda -c $filename`                                                                                                 | N/A                                                                                                           |
 | ALGOL 68               | `.a68`                                              | WIP           | `a68g --compile $filename`                                                                                          | WIP                                                                                                           |
 | Assembly               | `.asm`, `.s`, `.S`, `.inc`                          | Yes           | `yasm -f elf64 -o $output.o $filename`                                                                              | N/A                                                                                                           |
-| C                      | `.c`, `.h`                                          | Yes           | `gcc $filename -o $output`                                                                                          | `clang-format -i --style=WebKit $filename`                                                                    |
-| C++                    | `.cpp`, `.cc`, `.cxx`, `.h`, `.hpp`, `.h++`, `.c++` | Yes           | `g++ $filename -o $output`                                                                                          | `clang-format -i --style=WebKit $filename`                                                                    |
-| C#                     | `.cs`                                               | Yes           | `dotnet build $filename`                                                                                            | `astyle --mode=cs $filename`                                                                                  |
+| C                      | `.c`, `.h`                                          | Yes           | `gcc $filename -o $output`                                                                                          | `clang-format -fallback-style=WebKit -style=file -i -- $filename`                                             |
+| C++                    | `.cpp`, `.cc`, `.cxx`, `.h`, `.hpp`, `.h++`, `.c++` | Yes           | `g++ $filename -o $output`                                                                                          | `clang-format -fallback-style=WebKit -style=file -i -- $filename`                                             |
+| C#                     | `.cs`                                               | Yes           | `csc $filename`                                                                                                     | `astyle --mode=cs $filename`                                                                                  |
 | C3                     | `.c3`                                               | Yes           | `c3c compile -o $output $filename`                                                                                  | `c3fmt --rewrite $filename`                                                                                   |
 | Clojure                | `.clj`, `.cljs`, `.clojure`                         | WIP           | `lein compile $filename`                                                                                            | WIP                                                                                                           |
+| COBOL                  | `.cb`, `.cbl`, `.cob`, `.cby`, `.cobol`             | WIP           | `cobc -x -o $output $filename`                                                                                      | N/A                                                                                                           |
 | Crystal                | `.cr`                                               | Yes           | `crystal build $filename --release`                                                                                 | `crystal tool format $filename`                                                                               |
 | CSS                    | `.css`                                              | WIP           | No                                                                                                                  | `prettier --tab-width 2 -w $filename`                                                                         |
 | D                      | `.d`                                                | Yes           | `dmd $filename -of$output`                                                                                          | WIP                                                                                                           |
@@ -292,30 +294,36 @@ There are pretty few hotkeys to remember:
 | Fortran77, Fortran90   | `.f`, `.f90`                                        | Yes           | `gfortran -o $output $filename`                                                                                     | WIP                                                                                                           |
 | Garnet                 | `.gt`                                               | WIP           | `garnetc -o $output $filename`                                                                                      | WIP                                                                                                           |
 | GLSL                   | `.glsl`, `.vert`, `.frag`                           | WIP           | `glslangValidator -V -o $output $filename`                                                                          | WIP                                                                                                           |
+| Gleam                  | `.gleam`                                            | Yes           | `gleam build`                                                                                                       | `gleam format $filename`                                                                                      |
 | Go                     | `.go`                                               | Yes           | `go build $filename`                                                                                                | `goimports -w $filename`                                                                                      |
 | Hare                   | `.ha`                                               | Yes           | `hare build $filename`                                                                                              | N/A                                                                                                           |
 | Haskell                | `.hs`                                               | Yes           | `ghc -dynamic $filename`                                                                                            | `ormolu --mode=inplace $filename`                                                                             |
 | HTML                   | `.html`                                             | WIP           | No                                                                                                                  | `tidy -m $filename`                                                                                           |
+| Inko                   | `.inko`                                             | WIP           | `inko build $filename`                                                                                              | N/A                                                                                                           |
 | Ivy                    | `.ivy`                                              | WIP           | WIP                                                                                                                 | N/A                                                                                                           |
 | Java                   | `.java`                                             | Yes           | `javac` + `jar`, see details below                                                                                  | `google-java-format -a -i $filename`                                                                          |
 | JavaScript             | `.js`                                               | WIP           | No                                                                                                                  | `prettier --tab-width 4 -w $filename`                                                                         |
 | Jakt                   | `.jakt`                                             | WIP           | `jakt $filename`                                                                                                    | WIP                                                                                                           |
 | Just                   | `justfile`, `.justfile`                             | No            | No                                                                                                                  | `just --unstable --fmt -f $filename`                                                                          |
+| Koka                   | `.kk`                                               | WIP           | `koka -o $output $filename`                                                                                         | N/A                                                                                                           |
 | Kotlin                 | `.kt`, `.kts`                                       | Yes           | `kotlinc $filename -include-runtime -d $output.jar`                                                                 | `ktlint -F $filename`                                                                                         |
 | Kotlin Native          | `.kt`, `.kts`                                       | Yes           | `kotlinc-native -nowarn -opt -Xallocator=mimalloc -produce program -linker-option --as-needed $filename -o $output` | `ktlint -F $filename`                                                                                         |
-| Lua                    | `.lua`                                              | Yes           | `luac -o $output.luac $filename`                                                                                    | `lua-format -i --no-keep-simple-function-one-line --column-limit=120 --indent-width=2 --no-use-tab $filename` |
+| Lilypond               | `.ly`                                               | WIP           | `lilypond -o $output $filename` (exports to PDF)                                                                    | N/A                                                                                                           |
+| Lua                    | `.lua`                                              | Yes           | `luac -o $output.luac $filename`                                                                                    | `stylua $filename`                                                                                            |
 | Markdown               | `.md`                                               | WIP           | No                                                                                                                  | `prettier --write $filename`                                                                                  |
 | Nim                    | `.nim`                                              | WIP           | `nim c -o:$output $filename`                                                                                        | WIP                                                                                                           |
-| Objective-C            | `.m`                                                | Yes           | `clang $filename -o $output`                                                                                        | `clang-format -i --style=WebKit $filename`                                                                    |
-| Odin                   | `.odin`                                             | Yes           | `odin build $filename`                                                                                              | N/A                                                                                                           |
+| Objective-C            | `.m`                                                | Yes           | `clang $filename -o $output`                                                                                        | `clang-format -fallback-style=WebKit -style=file -i -- $filename`                                             |
+| Odin                   | `.odin`                                             | Yes           | `odin build $filename`                                                                                              | `odinfmt -w $filename`                                                                                        |
 | Objective Pascal       | `.pas`, `.pp`, `.lpr`                               | Yes           | `fpc $filename`                                                                                                     | WIP                                                                                                           |
 | OCaml                  | `.ml`                                               | WIP           | No                                                                                                                  | `ocamlformat $filename`                                                                                       |
 | Perl                   | `.pl`                                               | Yes           | `perl $filename`                                                                                                    | `/usr/bin/vendor_perl/perltidy -se -b -i=2 -ole=unix -bt=2 -pt=2 -sbt=2 -ce $filename`                        |
-| Python                 | `.py`                                               | Yes           | `python -m py_compile $filename`                                                                                    | `black $filename`                                                                                             |
-| Ruby                   | `.rb`                                               | No            | No                                                                                                                  | `rubocop -A $filename`                                                                                        |
+| PHP                    | `.php`, `.php3`, `.php4`, `.php5`, `.phtml`          | WIP           | No                                                                                                                  | `php-cs-fixer fix $filename`                                                                                  |
+| Python                 | `.py`                                               | Yes           | `python -m py_compile $filename`                                                                                    | `ruff format $filename`                                                                                       |
+| Ruby                   | `.rb`                                               | No            | `ruby -c $filename`                                                                                                 | `rubocop --autocorrect $filename`                                                                             |
 | Rust (with Cargo.toml) | `.rs`                                               | Yes           | `cargo build`                                                                                                       | `rustfmt $filename`                                                                                           |
 | Rust                   | `.rs`                                               | Yes           | `rustc $filename`                                                                                                   | `rustfmt $filename`                                                                                           |
 | Scala                  | `.scala`                                            | Yes           | `scalac $filename && jar cfe $output MainClass *.class`                                                             | `scalafmt $filename`                                                                                          |
+| Scheme                 | `.scm`, `.rkt`, `.ss`                               | WIP           | `guile -s $filename`                                                                                                | N/A                                                                                                           |
 | Shell                  | `.sh`, `PKGBUILD`, `APKBUILD`                       | WIP           | `makepkg`                                                                                                           | `shfmt -s -w -i 2 -bn -ci -sr -kp $filename`                                                                  |
 | Standard ML            | `.sml`, `.fun`, `.mlb`, `.cm`                       | Yes           | `mlton $filename`                                                                                                   | WIP                                                                                                           |
 | Swift                  | `.swift`                                            | WIP           | WIP                                                                                                                 | WIP                                                                                                           |
@@ -335,6 +343,7 @@ CXX can be downloaded here: [GitHub project page for CXX](https://github.com/xyp
 | File type | File extensions  | Build or export command                                           |
 |-----------|------------------|-------------------------------------------------------------------|
 | AsciiDoc  | `.adoc`          | `asciidoctor -b manpage` (writes to `out.1`)                      |
+| Lilypond  | `.ly`            | `lilypond -o $output $filename` (writes to `$output.pdf`)         |
 | scdoc     | `.scd`, `.scdoc` | `scdoc` (writes to `out.1`)                                       |
 | Markdown  | `.md`            | `pandoc -N --toc -V geometry:a4paper` (writes to `$filename.pdf`) |
 
@@ -446,6 +455,7 @@ V
 Odin
 
 * For building code with `ctrl-space`, `odin` must be installed.
+* For formatting code with `ctrl-w`, `odinfmt` must be installed.
 * For tab completion, `ols` must be installed.
 
 Gleam
@@ -456,7 +466,7 @@ Gleam
 Lua
 
 * For building code with `ctrl-space`, `luac` must be installed.
-* For formatting code with `ctrl-w`, `lua-format` must be installed.
+* For formatting code with `ctrl-w`, `stylua` must be installed.
 * For tab completion, `lua-language-server` must be installed.
 
 Ruby
@@ -602,7 +612,6 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 * `asciidoctor` - for writing man pages
 * `astyle` - for formatting C# code
 * `bash-language-server` - for tab completion for Bash
-* `black` - for formatting Python code
 * `cargo` - for compiling Rust
 * `clang` - for formatting C++ code with `clang-format`
 * `clangd` - for tab completion for C and C++
@@ -624,24 +633,27 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 * `kotlin` - for compiling Kotlin
 * `ktlint` - for formatting Kotlin code
 * `lua` - for compiling Lua to bytecode
-* `lua-format` - for formatting Lua code
 * `lua-language-server` - for tab completion for Lua
 * `mlton` - for compiling Standard ML
 * `mono` - for compiling C# code
 * `ocaml` - for compiling and formatting OCaml code
 * `odin` - for compiling Odin
+* `odinfmt` - for formatting Odin code
 * `ols` - for tab completion for Odin
 * `ormolu` - for formatting Haskell code
 * `pandoc` - for exporting Markdown to PDF
+* `php-cs-fixer` - for formatting PHP code
 * `prettier` - for formatting JavaScript, TypeScript and CSS
 * `pyright-langserver` - for tab completion for Python (or `pylsp`)
 * `python` - for compiling Python to bytecode
 * `ruby-lsp` - for tab completion for Ruby
 * `rust-analyzer` - for tab completion for Rust
 * `rustc` - for compiling Rust
+* `ruff` - for formatting Python code
 * `rustfmt` - for formatting Rust
 * `scala` - for compiling Scala
 * `sdoc` - for writing man pages
+* `stylua` - for formatting Lua code
 * `tidy` - for formatting XML
 * `v` - for compiling and formatting V code
 * `zig` - for compiling and formatting Zig code
