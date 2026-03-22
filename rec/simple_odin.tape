@@ -4,6 +4,7 @@ Output simple_odin.gif
 Require o
 Require odin
 Require odinfmt
+Require ols
 
 Source common/style.tape
 
@@ -27,8 +28,21 @@ Sleep 100ms
 Enter
 Sleep 100ms
 
-# Type a second fmt.println line
-Type 'fmt.println("hey");'
+# Type "fmt.p" to trigger ols autocomplete for fmt.println
+Type "fmt.p"
+Sleep 3s
+
+# Tab to autocomplete with ols
+Tab
+Wait+Screen /Completions/
+Sleep 1500ms
+
+# Accept the completion suggestion
+Enter
+Sleep 100ms
+
+# Complete the line: fmt.println("hey");
+Type '"hey");'
 
 # Pause to show the completed code
 Sleep 1500ms

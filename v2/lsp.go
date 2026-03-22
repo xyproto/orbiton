@@ -244,6 +244,13 @@ var lspConfigs = map[mode.Mode]LSPConfig{
 		RootMarkerFiles: []string{".git"},
 		FileExtensions:  []string{".sh", ".bash"},
 	},
+	mode.Odin: {
+		Command:         "ols",
+		Args:            []string{},
+		LanguageID:      "odin",
+		RootMarkerFiles: []string{"ols.json", ".git"},
+		FileExtensions:  []string{".odin"},
+	},
 }
 
 // NewLSPClient creates a new LSP client for the given language server command
