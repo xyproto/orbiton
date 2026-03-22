@@ -580,9 +580,9 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 	case mode.Odin:
 		pattern := filepath.Join(sourceDir, "*.odin")
 		if matches, err := filepath.Glob(pattern); err == nil && len(matches) != 1 {
-			cmd = exec.Command("odin", "build", ".", "-max-error-count:1")
+			cmd = exec.Command("odin", "build", ".", "-out:"+exeFirstName, "-max-error-count:1")
 		} else {
-			cmd = exec.Command("odin", "build", sourceFilename, "-file", "-max-error-count:1")
+			cmd = exec.Command("odin", "build", sourceFilename, "-file", "-out:"+exeFirstName, "-max-error-count:1")
 		}
 		if e.debugMode {
 			cmd.Args = append(cmd.Args, "-strict-style", "-vet-unused", "-vet-using-stmt", "-vet-using-param", "-vet-style", "-vet-semicolon", "-debug")
