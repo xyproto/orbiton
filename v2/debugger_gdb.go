@@ -411,6 +411,27 @@ func (d *gdbDebugger) parseWatchOutput() {
 	}
 }
 
+// currentFrameHasSource checks if the current GDB frame has source line info.
+// Returns false when execution has left the user's code (e.g., C runtime epilogue).
+func (d *gdbDebugger) currentFrameHasSource() bool {
+	if d.conn == nil {
+		return false
+	}
+	notification, err := d.conn.CheckedSend("stack-info-frame")
+	if err != nil {
+		return false
+	}
+	if payload, ok := notification["payload"]; ok && notification["class"] == "done" {
+		if payloadMap, ok := payload.(map[string]any); ok {
+			if frame, ok := payloadMap["frame"].(map[string]any); ok {
+				_, hasLine := frame["line"]
+				return hasLine
+			}
+		}
+	}
+	return false
+}
+
 // Next steps to the next source line (over calls).
 func (d *gdbDebugger) Next() error {
 	if !d.running {
@@ -424,6 +445,9 @@ func (d *gdbDebugger) Next() error {
 		gdbMI = "exec-step"
 	}
 	if _, err := d.conn.CheckedSend(gdbMI); err != nil {
+		if strings.Contains(err.Error(), "Cannot find bounds of current function") {
+			return errProgramStopped
+		}
 		return err
 	}
 	if d.waitForStop() {
@@ -431,7 +455,7 @@ func (d *gdbDebugger) Next() error {
 	}
 	d.parseWatchOutput()
 	d.refreshWatches()
-	if !d.running || d.nextInstructionIsSyscall() {
+	if !d.running || d.nextInstructionIsSyscall() || !d.currentFrameHasSource() {
 		return errProgramStopped
 	}
 	return nil
@@ -481,7 +505,7 @@ func (d *gdbDebugger) Step() error {
 	}
 	d.parseWatchOutput()
 	d.refreshWatches()
-	if !d.running || d.nextInstructionIsSyscall() {
+	if !d.running || d.nextInstructionIsSyscall() || !d.currentFrameHasSource() {
 		return errProgramStopped
 	}
 	return nil
@@ -501,7 +525,7 @@ func (d *gdbDebugger) Finish() error {
 	}
 	d.parseWatchOutput()
 	d.refreshWatches()
-	if !d.running || d.nextInstructionIsSyscall() {
+	if !d.running || d.nextInstructionIsSyscall() || !d.currentFrameHasSource() {
 		return errProgramStopped
 	}
 	return nil
