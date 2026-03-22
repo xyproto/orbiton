@@ -333,15 +333,23 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		hasGoMod := files.IsFile(filepath.Join(sourceDir, "go.mod")) ||
 			files.IsFile(filepath.Join(sourceDir, "..", "go.mod")) ||
 			files.IsFile(filepath.Join(sourceDir, "..", "..", "go.mod"))
-		if hasGoMod {
-			cmd = exec.Command("go", "build")
-		} else {
-			cmd = exec.Command("go", "build", sourceFilename)
-		}
 		if strings.HasSuffix(sourceFilename, "_test.go") {
 			// go test run a test that does not exist in order to build just the tests
 			// thanks @cespare at github https://github.com/golang/go/issues/15513#issuecomment-216410016
 			cmd = exec.Command("go", "test", "-run", "xxxxxxx")
+		} else if e.debugMode {
+			// Disable optimizations and inlining so that Delve can inspect all variables
+			if hasGoMod {
+				cmd = exec.Command("go", "build", "-gcflags=all=-N -l")
+			} else {
+				cmd = exec.Command("go", "build", "-gcflags=all=-N -l", sourceFilename)
+			}
+		} else {
+			if hasGoMod {
+				cmd = exec.Command("go", "build")
+			} else {
+				cmd = exec.Command("go", "build", sourceFilename)
+			}
 		}
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
