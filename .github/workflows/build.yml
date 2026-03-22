@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: ["1.24", "1.25", "1.26"]
+        go-version: ["1.25", "1.26"]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: ["1.24", "1.25", "1.26"]
+        go-version: ["1.25", "1.26"]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
@@ -124,7 +124,7 @@ jobs:
           prepare: /usr/sbin/pkg_add wget gtar-base
           run: |
             set -eu
-            GOGZ="go1.24.4.netbsd-amd64.tar.gz"
+            GOGZ="go1.25.8.netbsd-amd64.tar.gz"
             wget -q https://go.dev/dl/${GOGZ}
             mkdir -p /tmp/goinstall
             gtar xzf ${GOGZ} -C /tmp/goinstall
