@@ -10,13 +10,12 @@ Source common/style.tape
 
 # Open a new Rust file
 Type "o tmp/main.rs"
-Sleep 2s
 Enter
-Sleep 100ms
+Sleep 500ms
 
 # Insert Rust template with ctrl-w
 Ctrl+W
-Sleep 2s
+Sleep 1s
 
 # Compile and run with double ctrl-space
 Source common/run.tape
@@ -36,7 +35,7 @@ Sleep 2s
 # Tab to autocomplete with rust-analyzer
 Tab
 Wait+Screen /Completions/
-Sleep 2s
+Sleep 1500ms
 
 # Accept the completion suggestion
 Enter
@@ -44,7 +43,9 @@ Sleep 100ms
 
 # Complete the line: println!("hey");
 Type '"hey");'
-Sleep 2s
+
+# Pause to show the completed code
+Sleep 1500ms
 
 # Compile and run again to see new output
 Source common/run.tape

@@ -10,11 +10,11 @@ Source common/style.tape
 # Open a new C file and insert the template
 Type "o tmp/main.c"
 Enter
-Sleep 100ms
+Sleep 500ms
 
 # Insert C template with ctrl-w
 Ctrl+W
-Sleep 100ms
+Sleep 1s
 
 # Move up to the opening brace and add a local variable before printf
 Up
@@ -28,9 +28,12 @@ Type "x = 42;"
 Enter
 Type 'printf("%d\n", x);'
 
+# Pause to let the viewer read the code
+Sleep 1500ms
+
 # Save the file
 Ctrl+S
-Sleep 100ms
+Sleep 300ms
 
 # Open the Ctrl+O menu
 Ctrl+O
@@ -48,7 +51,7 @@ Sleep 1s
 # Start the debug session: compile with debug info and launch GDB
 Ctrl+Space
 Wait+Screen /Running/
-Sleep 200ms
+Sleep 1500ms
 
 # Add a watch for x with ctrl-w
 Ctrl+W
@@ -56,7 +59,7 @@ Sleep 200ms
 Type "x"
 Enter
 Wait+Screen /x:/
-Sleep 200ms
+Sleep 1500ms
 
 # Step over the first line (x = 42 is now executed and in scope)
 Ctrl+O
@@ -64,11 +67,11 @@ Sleep 2s
 
 # Step over the printf line
 Ctrl+O
-Sleep 500ms
+Sleep 1s
 
 # Step over the x = 256 line
 Ctrl+O
-Sleep 500ms
+Sleep 1s
 
 # Step over the printf
 Ctrl+O
@@ -76,7 +79,7 @@ Sleep 2s
 
 # Step over the return line
 Ctrl+O
-Sleep 500ms
+Sleep 1s
 
 # Step one final time, to end the debugging
 Ctrl+O

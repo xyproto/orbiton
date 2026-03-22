@@ -1,6 +1,6 @@
 # Format
 Ctrl+W
-Sleep 2s
+Sleep 1500ms
 
 # Save
 Ctrl+S

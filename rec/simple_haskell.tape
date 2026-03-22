@@ -10,13 +10,12 @@ Source common/style.tape
 
 # Open a new Haskell file
 Type "o tmp/main.hs"
-Sleep 2s
 Enter
-Sleep 100ms
+Sleep 500ms
 
 # Insert Haskell template with ctrl-w
 Ctrl+W
-Sleep 2s
+Sleep 1s
 
 # Compile and run with double ctrl-space
 Source common/run.tape
@@ -49,7 +48,7 @@ Sleep 5s
 # Tab to autocomplete with HLS
 Tab
 Wait+Screen /Completions/
-Sleep 2s
+Sleep 1500ms
 
 # Select the second option (putStrLn)
 Down
@@ -60,7 +59,9 @@ Sleep 100ms
 
 # Complete the line: putStrLn "hey"
 Type '"hey"'
-Sleep 2s
+
+# Pause to show the completed code
+Sleep 1500ms
 
 # Compile and run again to see new output
 Source common/run.tape

@@ -9,13 +9,12 @@ Source common/style.tape
 
 # Open a new C++ file
 Type "o tmp/main.cpp"
-Sleep 2s
 Enter
-Sleep 100ms
+Sleep 500ms
 
 # Insert C++ template with ctrl-w
 Ctrl+W
-Sleep 2s
+Sleep 1s
 
 # Compile and run with double ctrl-space
 Source common/run.tape
@@ -35,7 +34,7 @@ Sleep 3s
 # Tab to autocomplete with clangd
 Tab
 Wait+Screen /Completions/
-Sleep 2s
+Sleep 1500ms
 
 # Accept the completion suggestion
 Enter
@@ -43,7 +42,9 @@ Sleep 100ms
 
 # Complete the line: std::cout << "hey"s << std::endl;
 Type ' << "hey"s << std::endl;'
-Sleep 2s
+
+# Pause to show the completed code
+Sleep 1500ms
 
 # Compile and run again to see new output
 Source common/run.tape
