@@ -231,39 +231,41 @@ There are pretty few hotkeys to remember:
 
 ### C
 
-![C](rec/gif/simple_c.gif)
-
-### C++
-
-![C++](rec/gif/simple_cpp.gif)
+![Building and tab-completing C](rec/gif/simple_c.gif)
+![Debugging C](rec/gif/debug_c.gif)
 
 ### Go
 
-![Go](rec/gif/simple_go.gif)
+![Building and tab-completing Go](rec/gif/simple_go.gif)
+![Debugging Go](rec/gif/debug_go.gif)
+
+### C++
+
+![Building and tab-completing C++](rec/gif/simple_cpp.gif)
 
 ### Rust
 
-![Rust](rec/gif/simple_rust.gif)
+![Building and tab-completing Rust](rec/gif/simple_rust.gif)
 
 ### Zig
 
-![Zig](rec/gif/simple_zig.gif)
+![Building and tab-completing Zig](rec/gif/simple_zig.gif)
 
 ### Odin
 
-![Odin](rec/gif/simple_odin.gif)
+![Building and tab-completing Odin](rec/gif/simple_odin.gif)
 
 ### Python
 
-![Python](rec/gif/simple_python.gif)
+![Building and tab-completing Python](rec/gif/simple_python.gif)
 
 ### Haskell
 
-![Haskell](rec/gif/simple_haskell.gif)
+![Building and tab-completing Haskell](rec/gif/simple_haskell.gif)
 
 ### Bash
 
-![Bash](rec/gif/simple_bash.gif)
+![Running and tab-completing Bash](rec/gif/simple_bash.gif)
 
 ## Build and format
 
