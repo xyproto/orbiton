@@ -17,12 +17,6 @@ Sleep 200ms
 Ctrl+W
 Sleep 2s
 
-# Cursor lands inside the string (after the opening "); step left once to be
-# between '(' and '"', then insert x as the first argument so it gets used
-Left
-Type "x, "
-Sleep 500ms
-
 # Move up to the opening brace and add the declaration before fmt.Println
 Up
 Ctrl+E
@@ -34,34 +28,35 @@ Down
 Ctrl+E
 Enter
 Type "x = 256"
+Enter
+Type "fmt.Println(x)"
 Sleep 1s
 
 # Save the file
 Ctrl+S
 Sleep 200ms
 
-# Quit the editor
-Ctrl+Q
-Sleep 500ms
-
-# Reopen the file with the -d flag to start in debug mode
-Type "o -d tmp/main.go"
+# Open the ctrl-o menu
+Ctrl+O
 Sleep 100ms
+
+# Select debug mode
+Type e
 Enter
 Sleep 100ms
 
 # Disable keybinding overview
 Ctrl+K
-Sleep 1s
+Sleep 500ms
 
 # Start the debug session: compile with debug info and launch Delve
 Ctrl+Space
 Wait+Screen /Running/
-Sleep 2s
+Sleep 500ms
 
 # Step over the first line (x := 42 is now executed and in scope)
 Ctrl+O
-Sleep 1s
+Sleep 2s
 
 # Add a watch for x with ctrl-w
 Ctrl+W
@@ -69,15 +64,21 @@ Sleep 100ms
 Type "x"
 Enter
 Wait+Screen /x:/
-Sleep 2s
+Sleep 500ms
 
 # Step over the fmt.Println line
 Ctrl+O
-Sleep 1s
+Sleep 2s
 
-# Step two final times, to end the debugging
+# Step
 Ctrl+O
 Sleep 1s
+
+# Step
+Ctrl+O
+Sleep 1s
+
+# Step
 Ctrl+O
 Sleep 2s
 
