@@ -41,8 +41,8 @@ Sleep 100ms
 Enter
 Sleep 100ms
 
-# Type "putS" to trigger HLS autocomplete for putStrLn
-Type "putS"
+# Type "putStr" to trigger HLS autocomplete for putStrLn
+Type "putStr"
 Sleep 5s
 
 # Tab to autocomplete with HLS
@@ -50,10 +50,7 @@ Tab
 Wait+Screen /Completions/
 Sleep 1500ms
 
-# Select the second option (putStrLn)
-Down
-
-# Accept the completion suggestion
+# Accept the first completion suggestion (putStrLn)
 Enter
 Sleep 100ms
 
