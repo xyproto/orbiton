@@ -290,6 +290,11 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				if *parentIsMan {
 					e.mode = mode.ManPage
 					e.binaryFile = false
+					// Strip nroff/ANSI escape codes and trailing whitespace from each stored line,
+					// so that cursor navigation and rendering both see clean content.
+					for i, runes := range e.lines {
+						e.lines[i] = []rune(strings.TrimRight(handleManPageEscape(string(runes)), " \t"))
+					}
 				} else {
 					if m, found := mode.DetectFromContents(e.mode, firstLine, e.String); found {
 						e.mode = m
