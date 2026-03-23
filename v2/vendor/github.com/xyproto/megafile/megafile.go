@@ -125,7 +125,12 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor, undoHist
 	absStartDirs := make([]string, len(startdirs))
 	for i, d := range startdirs {
 		if abs, err := filepath.Abs(d); err == nil {
-			absStartDirs[i] = abs
+			// Resolve symlinks to get the real path
+			if real, err := filepath.EvalSymlinks(abs); err == nil { // success
+				absStartDirs[i] = real
+			} else {
+				absStartDirs[i] = abs
+			}
 		} else {
 			absStartDirs[i] = d
 		}
@@ -872,6 +877,10 @@ func runShell(cmdStr, path string) (string, error) {
 func (s *State) setPath(path string) {
 	absPath, err := filepath.Abs(path)
 	if err == nil { // success
+		// Resolve symlinks to prevent path accumulation through circular symlinks
+		if realPath, err := filepath.EvalSymlinks(absPath); err == nil { // success
+			absPath = realPath
+		}
 		s.prevdir[s.dirIndex] = s.Directories[s.dirIndex]
 		s.Directories[s.dirIndex] = absPath
 	} else {
