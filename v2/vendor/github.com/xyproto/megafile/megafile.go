@@ -45,6 +45,20 @@ const (
 	topLine = uint(1)
 )
 
+// extensions that skip the yellow binary-open confirmation:
+// .gz files are decompressed by orbiton, image files are displayed by orbiton
+var noBinaryConfirmExts = map[string]bool{
+	".gz":  true,
+	".png": true, ".jpg": true, ".jpeg": true, ".gif": true,
+	".bmp": true, ".webp": true, ".ico": true, ".qoi": true,
+	".tiff": true, ".tif": true, ".heic": true, ".heif": true, ".avif": true,
+}
+
+func needsBinaryConfirm(path string) bool {
+	_, ok := noBinaryConfirmExts[strings.ToLower(filepath.Ext(path))]
+	return !ok
+}
+
 // FileEntry represents a file entry with position and name information
 type FileEntry struct {
 	realName    string
@@ -93,8 +107,11 @@ type State struct {
 	ExecutableColor           vt.AttributeColor
 	BinaryColor               vt.AttributeColor
 	FileColor                 vt.AttributeColor
+	BinaryConfirmForeground   vt.AttributeColor
+	BinaryConfirmBackground   vt.AttributeColor
 	quit                      bool
 	selectionMoved            bool
+	binaryConfirmPending      bool
 	ShowHidden                bool
 	autoSelected              bool
 	browsing                  atomic.Bool // true when in file browsing mode (not running an external command)
@@ -126,8 +143,8 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor, undoHist
 	for i, d := range startdirs {
 		if abs, err := filepath.Abs(d); err == nil {
 			// Resolve symlinks to get the real path
-			if real, err := filepath.EvalSymlinks(abs); err == nil { // success
-				absStartDirs[i] = real
+			if realPath, err := filepath.EvalSymlinks(abs); err == nil { // success
+				absStartDirs[i] = realPath
 			} else {
 				absStartDirs[i] = abs
 			}
@@ -138,19 +155,21 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor, undoHist
 
 	// Set default colors, or disable them if NO_COLOR is set or TERM=vt100
 	var (
-		angleColor          = vt.LightRed
-		promptColor         = vt.LightGreen
-		headerColor         = vt.LightMagenta
-		fileColor           = vt.Default
-		highlightForeground = vt.Black
-		highlightBackground = vt.BackgroundWhite
-		writtenTextColor    = vt.LightYellow
-		symlinkDirColor     = vt.Blue
-		dirColor            = vt.Blue
-		symlinkFileColor    = vt.LightRed
-		emptyFileColor      = vt.Black
-		executableColor     = vt.LightGreen
-		binaryColor         = vt.LightMagenta
+		angleColor              = vt.LightRed
+		promptColor             = vt.LightGreen
+		headerColor             = vt.LightMagenta
+		fileColor               = vt.Default
+		highlightForeground     = vt.Black
+		highlightBackground     = vt.BackgroundWhite
+		writtenTextColor        = vt.LightYellow
+		symlinkDirColor         = vt.Blue
+		dirColor                = vt.Blue
+		symlinkFileColor        = vt.LightRed
+		emptyFileColor          = vt.Black
+		executableColor         = vt.LightGreen
+		binaryColor             = vt.LightMagenta
+		binaryConfirmForeground = vt.Black
+		binaryConfirmBackground = vt.BackgroundYellow
 	)
 
 	if envNoColor {
@@ -168,6 +187,8 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor, undoHist
 		emptyFileColor = vt.Gray
 		executableColor = vt.Gray
 		binaryColor = vt.Gray
+		binaryConfirmForeground = vt.Gray
+		binaryConfirmBackground = vt.BackgroundDefault
 	}
 
 	state := &State{
@@ -201,6 +222,8 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor, undoHist
 		ExecutableColor:           executableColor,
 		BinaryColor:               binaryColor,
 		FileColor:                 fileColor,
+		BinaryConfirmForeground:   binaryConfirmForeground,
+		BinaryConfirmBackground:   binaryConfirmBackground,
 		undoHistoryPath:           undoHistoryPath,
 	}
 	state.loadUndoHistory()
@@ -373,6 +396,7 @@ func (s *State) highlightSelection() {
 }
 
 func (s *State) clearHighlight() {
+	s.binaryConfirmPending = false
 	for i := range s.fileEntries {
 		entry := &s.fileEntries[i]
 		if entry.selected {
@@ -395,6 +419,35 @@ func (s *State) clearHighlight() {
 			return
 		}
 	}
+}
+
+func (s *State) highlightBinaryPending() {
+	if len(s.fileEntries) == 0 || s.selectedIndex() < 0 {
+		return
+	}
+	if s.selectedIndex() >= len(s.fileEntries) {
+		return
+	}
+	entry := &s.fileEntries[s.selectedIndex()]
+	entryWidth := ulen(entry.displayName)
+	if s.hasLastHighlight && s.lastHighlightX == entry.x && s.lastHighlightY == entry.y && s.lastHighlightWidth > entryWidth {
+		clearFrom := entry.x + entryWidth
+		if entry.suffix != "" {
+			clearFrom++
+		}
+		for x := clearFrom; x < entry.x+s.lastHighlightWidth; x++ {
+			s.canvas.WriteRune(x, entry.y, vt.Default, s.Background, ' ')
+		}
+	}
+	s.canvas.Write(entry.x, entry.y, s.BinaryConfirmForeground, s.BinaryConfirmBackground, entry.displayName)
+	if entry.suffix != "" {
+		s.canvas.Write(entry.x+entryWidth, entry.y, s.BinaryConfirmForeground, s.BinaryConfirmBackground, entry.suffix)
+	}
+	entry.selected = true
+	s.lastHighlightX = entry.x
+	s.lastHighlightY = entry.y
+	s.lastHighlightWidth = entryWidth
+	s.hasLastHighlight = true
 }
 
 func (s *State) ls(dir string) (int, error) {
@@ -710,17 +763,17 @@ func (s *State) msgBox(line1, line2, line3, line4 string) bool {
 	}
 	c.Write(startX+boxWidth-1, startY+boxHeight-1, borderColor, s.EdgeBackground, "╝")
 
-	line1X := startX + (boxWidth-uint(len(line1)))/2
-	c.Write(line1X, startY+2, line1Color, s.Background, line1)
+	centerInBox := func(s string) uint {
+		if uint(len(s)) >= boxWidth {
+			return startX
+		}
+		return startX + (boxWidth-uint(len(s)))/2
+	}
 
-	line2X := startX + (boxWidth-uint(len(line2)))/2
-	c.Write(line2X, startY+4, line2Color, s.Background, line2)
-
-	line3X := startX + (boxWidth-uint(len(line3)))/2
-	c.Write(line3X, startY+5, line3Color, s.Background, line3)
-
-	line4X := startX + (boxWidth-uint(len(line4)))/2
-	c.Write(line4X, startY+6, line4Color, s.Background, line4)
+	c.Write(centerInBox(line1), startY+2, line1Color, s.Background, line1)
+	c.Write(centerInBox(line2), startY+4, line2Color, s.Background, line2)
+	c.Write(centerInBox(line3), startY+5, line3Color, s.Background, line3)
+	c.Write(centerInBox(line4), startY+6, line4Color, s.Background, line4)
 
 	c.Draw()
 
@@ -734,22 +787,6 @@ func (s *State) msgBox(line1, line2, line3, line4 string) bool {
 		}
 	}
 
-}
-
-func (s *State) confirmBinaryEdit(filename string) bool {
-	boxWidth := uint(60)
-	// First line: filename is a binary file
-	maxNameLen := int(boxWidth - 20) // Leave room for " is a binary file"
-	displayName := filename
-	if len(filename) > maxNameLen {
-		displayName = filename[:maxNameLen-3] + "..."
-	}
-
-	line1 := displayName + " is binary and executable"
-	line2 := "Do you really want to edit it?"
-	line3 := "Press y to edit or any other key to cancel."
-
-	return s.msgBox(line1, line2, "", line3)
 }
 
 // edit a file, but return stderr when done
@@ -975,23 +1012,10 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 			}
 			return false, false, NoAction, err
 		}
-		// Check if file is binary (but allow .gz files as they can be edited)
-		fullPath := filepath.Join(path, cmd)
-		if files.BinaryAccurate(fullPath) && !strings.HasSuffix(fullPath, ".gz") {
-			if !s.confirmBinaryEdit(cmd) {
-				return false, false, NoAction, nil // User cancelled
-			}
-		}
 		stderrString, err := s.edit(cmd, path)
 		return false, true, string2action(stderrString), err
 	}
 	if files.File(cmd) { // abs absolute path
-		// Check if file is binary (but allow .gz files as they can be edited)
-		if files.BinaryAccurate(cmd) && !strings.HasSuffix(cmd, ".gz") {
-			if !s.confirmBinaryEdit(filepath.Base(cmd)) {
-				return false, false, NoAction, nil // User cancelled
-			}
-		}
 		stderrString, err := s.edit(cmd, path)
 		return false, true, string2action(stderrString), err
 
@@ -1308,9 +1332,19 @@ func (s *State) Run() ([]string, error) {
 			// If a file is selected (via arrow keys), execute it regardless of text
 			// unless it was auto-selected, then there must be no text
 			if s.selectedIndex() >= 0 && s.selectedIndex() < len(s.fileEntries) && okToAutoSelect {
+				selectedFile := s.fileEntries[s.selectedIndex()].realName
+				fullPath := filepath.Join(s.Directories[s.dirIndex], selectedFile)
+				isBinary := files.File(fullPath) && files.BinaryAccurate(fullPath) && needsBinaryConfirm(fullPath)
+				if isBinary && !s.binaryConfirmPending {
+					// yellow highlight signals that a second return is needed
+					s.binaryConfirmPending = true
+					s.highlightBinaryPending()
+					c.Draw()
+					break
+				}
+				s.binaryConfirmPending = false
 			AGAIN:
 				s.clearHighlight()
-				selectedFile := s.fileEntries[s.selectedIndex()].realName
 				savedFilename := selectedFile // Save the filename before editing
 				if changedDirectory, editedFile, nextAction, err := s.execute(selectedFile, s.Directories[s.dirIndex], s.tty); err != nil {
 					clearAndPrepare()
@@ -1766,7 +1800,7 @@ func (s *State) Run() ([]string, error) {
 			}
 		case "c:15": // ctrl-o, show more actions for the selected file
 			if path, err := s.selectedPath(); err == nil { // success
-				filename := path
+				filename := filepath.Base(path)
 				filemode := "Directory"
 				filesize := "-"
 				if !files.Dir(path) {
