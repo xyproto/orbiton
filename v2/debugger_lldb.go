@@ -125,7 +125,7 @@ func checkExited(output string) bool {
 }
 
 // Start begins a new debug session using LLDB.
-func (d *lldbDebugger) Start(sourceDir, sourceBaseFilename, executableBaseFilename string, lineFunc func(int), doneFunc func()) (string, error) {
+func (d *lldbDebugger) Start(sourceDir, _, executableBaseFilename string, lineFunc func(int), doneFunc func()) (string, error) {
 	d.End()
 
 	d.lineFunc = lineFunc
