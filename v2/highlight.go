@@ -851,7 +851,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						}
 					}
 
-					if ra.R != '\t' && !e.binaryFile {
+					if ra.R != '\t' {
 						letter = ra.R
 						rw = runewidth.RuneWidth(letter)
 						if unicode.IsControl(letter) {
