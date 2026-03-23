@@ -111,7 +111,7 @@ func looksLikeFlags(s string) bool {
 
 // manPageHighlight returns the given line with man page syntax highlighting
 func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string {
-	line = handleManPageEscape(line)
+	line = strings.TrimRight(handleManPageEscape(line), " \t")
 	var (
 		normal      = e.Foreground
 		off         = vt.Stop()
