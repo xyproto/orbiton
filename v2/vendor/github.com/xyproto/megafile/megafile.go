@@ -1345,6 +1345,8 @@ func (s *State) Run() ([]string, error) {
 				s.binaryConfirmPending = false
 			AGAIN:
 				s.clearHighlight()
+				s.setSelectedIndex(-1)
+				c.Draw()
 				savedFilename := selectedFile // Save the filename before editing
 				if changedDirectory, editedFile, nextAction, err := s.execute(selectedFile, s.Directories[s.dirIndex], s.tty); err != nil {
 					clearAndPrepare()
@@ -1427,6 +1429,7 @@ func (s *State) Run() ([]string, error) {
 			index = 0
 			clearAndPrepare()
 			clearWritten()
+			s.clearHighlight()
 			c.Draw()
 			if changedDirectory, editedFile, _, err := s.execute(commandText, s.Directories[s.dirIndex], s.tty); err != nil {
 				s.drawError(err.Error())
