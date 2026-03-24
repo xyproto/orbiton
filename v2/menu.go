@@ -285,19 +285,14 @@ func (e *Editor) Menu(status *StatusBar, tty *vt.TTY, title string, choices []st
 		if collectedString == konami {
 			collectedString = ""
 			// Start the game
-			if ctrlq, err := Game(); err != nil {
+			if _, err := Game(); err != nil {
 				// This should never happen
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
-			} else if ctrlq {
-				// ctrl-q was pressed, quit entirely
-				running = false
-				e.quit = true
-			} else {
-				// The game ended, return from the menu
-				running = false
-				changed = true
 			}
+			// The game ended, return from the menu
+			running = false
+			changed = true
 		}
 
 		// If the menu was changed, draw the canvas

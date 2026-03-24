@@ -826,7 +826,13 @@ retry:
 
 	vt.Init()
 	vt.EchoOff()
-	defer vt.CloseKeepContent()
+	defer func() {
+		vt.SetNoColor()
+		vt.Clear()
+		vt.CloseKeepContent()
+		vt.ShowCursor(true)
+		vt.SetXY(0, c.H()-1)
+	}()
 
 	// The loop time that is aimed for
 	var (
