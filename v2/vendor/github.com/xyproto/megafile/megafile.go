@@ -162,7 +162,7 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor, undoHist
 		highlightForeground     = vt.Black
 		highlightBackground     = vt.BackgroundWhite
 		writtenTextColor        = vt.LightYellow
-		symlinkDirColor         = vt.Blue
+		symlinkDirColor         = vt.LightMagenta
 		dirColor                = vt.Blue
 		symlinkFileColor        = vt.LightRed
 		emptyFileColor          = vt.Black
@@ -1809,7 +1809,9 @@ func (s *State) Run() ([]string, error) {
 				filename := filepath.Base(path)
 				filemode := "Directory"
 				filesize := "-"
-				if !files.Dir(path) {
+				if files.Dir(path) && files.Symlink(path) {
+					filemode = "Symlink to directory"
+				} else if !files.Dir(path) {
 					if files.BinaryAccurate(path) {
 						filemode = "Binary"
 					} else {
