@@ -1016,32 +1016,59 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 			}
 			return false, false, NoAction, nil
 		} else if files.Dir(possibleDirectory) {
-			if s.Directories[s.dirIndex] != possibleDirectory {
-				s.setPath(possibleDirectory)
+			resolved := possibleDirectory
+			if files.Symlink(possibleDirectory) {
+				if realPath, err := filepath.EvalSymlinks(possibleDirectory); err == nil {
+					resolved = realPath
+				}
+			}
+			if s.Directories[s.dirIndex] != resolved {
+				s.setPath(resolved)
 				return true, false, NoAction, nil
 			}
 			return false, false, NoAction, nil
 		} else if files.Dir(rest) {
-			if s.Directories[s.dirIndex] != rest {
-				s.setPath(rest)
+			resolved := rest
+			if files.Symlink(rest) {
+				if realPath, err := filepath.EvalSymlinks(rest); err == nil {
+					resolved = realPath
+				}
+			}
+			if s.Directories[s.dirIndex] != resolved {
+				s.setPath(resolved)
 				return true, false, NoAction, nil
 			}
 			return false, false, NoAction, nil
 		}
 		return false, false, NoAction, errors.New("cd WHAT?")
 	}
-	if files.Dir(filepath.Join(path, cmd)) { // relative path
-		newPath := filepath.Join(path, cmd)
-		if s.Directories[s.dirIndex] != newPath {
-			s.setPath(newPath)
+	if fullPath := filepath.Join(path, cmd); files.DirAndNotSymlink(fullPath) { // relative path, not a symlink
+		if s.Directories[s.dirIndex] != fullPath {
+			s.setPath(fullPath)
 			return true, false, NoAction, nil
 		}
 		return false, false, NoAction, nil
+	} else if files.Symlink(fullPath) && files.Dir(fullPath) { // symlink to a directory
+		if realPath, err := filepath.EvalSymlinks(fullPath); err == nil {
+			if s.Directories[s.dirIndex] != realPath {
+				s.setPath(realPath)
+				return true, false, NoAction, nil
+			}
+		}
+		return false, false, NoAction, nil
 	}
-	if files.Dir(cmd) { // absolute path
+	if files.DirAndNotSymlink(cmd) { // absolute path, not a symlink
 		if s.Directories[s.dirIndex] != cmd {
 			s.setPath(cmd)
 			return true, false, NoAction, nil
+		}
+		return false, false, NoAction, nil
+	} else if files.Symlink(cmd) && files.Dir(cmd) { // absolute symlink to a directory
+		if realPath, err := filepath.EvalSymlinks(cmd); err == nil {
+			if s.Directories[s.dirIndex] != realPath {
+				s.setPath(realPath)
+				return true, false, NoAction, nil
+			}
 		}
 		return false, false, NoAction, nil
 	}
