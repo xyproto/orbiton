@@ -15,13 +15,10 @@ import (
 
 var resizeMutex sync.Mutex
 
-// FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct.
-// Only redraws when in file browsing mode, not when an external editor/command is running.
-func (s *State) FullResetRedraw() {
-	if !s.browsing.Load() {
-		return
-	}
-
+// ResetTerminal resets the VT terminal and creates a fresh canvas,
+// without redrawing any content. Use this when the screen will be
+// immediately taken over by another external command.
+func (s *State) ResetTerminal() {
 	resizeMutex.Lock()
 	defer resizeMutex.Unlock()
 
@@ -47,6 +44,16 @@ func (s *State) FullResetRedraw() {
 	vt.EchoOff()
 
 	*c = newC.Copy()
+}
+
+// FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct.
+// Only redraws when in file browsing mode, not when an external editor/command is running.
+func (s *State) FullResetRedraw() {
+	if !s.browsing.Load() {
+		return
+	}
+
+	s.ResetTerminal()
 
 	// Trigger a complete redraw
 	s.redraw()

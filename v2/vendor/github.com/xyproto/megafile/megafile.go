@@ -286,7 +286,7 @@ func (s *State) selectedPath() (string, error) {
 	return path, nil
 }
 
-func (s *State) selectNextIndexThatIsANonBinaryFile() error {
+func (s *State) selectNextNonBinaryFile() error {
 	dir := s.Directories[s.dirIndex]
 	var path string
 	for i := s.selectedIndex() + 1; i < len(s.fileEntries); i++ {
@@ -307,7 +307,7 @@ func (s *State) selectNextIndexThatIsANonBinaryFile() error {
 	return errors.New("could not find another non-binary file to select")
 }
 
-func (s *State) selectPrevIndexThatIsANonBinaryFile() error {
+func (s *State) selectPrevNonBinaryFile() error {
 	dir := s.Directories[s.dirIndex]
 	var path string
 	for i := s.selectedIndex() - 1; i >= 0; i-- {
@@ -363,6 +363,31 @@ func (s *State) selectedIndex() int {
 	return -1
 }
 
+// highlightEntry highlights a file entry with the given foreground and background colors.
+// It clears any leftover tail from a previous longer highlight at the same position.
+func (s *State) highlightEntry(entry *FileEntry, fg, bg vt.AttributeColor, withSuffix bool) {
+	entryWidth := ulen(entry.displayName)
+	// If this position was previously highlighted with a longer name, clear the tail
+	if s.hasLastHighlight && s.lastHighlightX == entry.x && s.lastHighlightY == entry.y && s.lastHighlightWidth > entryWidth {
+		clearFrom := entry.x + entryWidth
+		if entry.suffix != "" {
+			clearFrom++
+		}
+		for x := clearFrom; x < entry.x+s.lastHighlightWidth; x++ {
+			s.canvas.WriteRune(x, entry.y, vt.Default, s.Background, ' ')
+		}
+	}
+	s.canvas.Write(entry.x, entry.y, fg, bg, entry.displayName)
+	if withSuffix && entry.suffix != "" {
+		s.canvas.Write(entry.x+entryWidth, entry.y, fg, bg, entry.suffix)
+	}
+	entry.selected = true
+	s.lastHighlightX = entry.x
+	s.lastHighlightY = entry.y
+	s.lastHighlightWidth = entryWidth
+	s.hasLastHighlight = true
+}
+
 func (s *State) highlightSelection() {
 	if len(s.fileEntries) == 0 || s.selectedIndex() < 0 {
 		return
@@ -370,29 +395,7 @@ func (s *State) highlightSelection() {
 	if s.selectedIndex() >= len(s.fileEntries) {
 		s.setSelectedIndex(len(s.fileEntries) - 1)
 	}
-
-	entry := &s.fileEntries[s.selectedIndex()]
-	entryWidth := ulen(entry.displayName)
-
-	// If this entry was previously highlighted with a longer name at the same
-	// position, clear the remaining tail before drawing the new highlight.
-	if s.hasLastHighlight && s.lastHighlightX == entry.x && s.lastHighlightY == entry.y && s.lastHighlightWidth > entryWidth {
-		clearFrom := entry.x + entryWidth
-		if entry.suffix != "" {
-			clearFrom++
-		}
-		clearTo := entry.x + s.lastHighlightWidth
-		for x := clearFrom; x < clearTo; x++ {
-			s.canvas.WriteRune(x, entry.y, vt.Default, s.Background, ' ')
-		}
-	}
-
-	s.canvas.Write(entry.x, entry.y, s.HighlightForeground, s.HighlightBackground, entry.displayName)
-	entry.selected = true
-	s.lastHighlightX = entry.x
-	s.lastHighlightY = entry.y
-	s.lastHighlightWidth = entryWidth
-	s.hasLastHighlight = true
+	s.highlightEntry(&s.fileEntries[s.selectedIndex()], s.HighlightForeground, s.HighlightBackground, false)
 }
 
 func (s *State) clearHighlight() {
@@ -408,7 +411,6 @@ func (s *State) clearHighlight() {
 			for i := range clearWidth {
 				s.canvas.WriteRune(entry.x+i, entry.y, vt.Default, s.Background, ' ')
 			}
-
 			// Redraw with original colors
 			s.canvas.Write(entry.x, entry.y, entry.color, s.Background, entry.displayName)
 			if entry.suffix != "" {
@@ -428,26 +430,70 @@ func (s *State) highlightBinaryPending() {
 	if s.selectedIndex() >= len(s.fileEntries) {
 		return
 	}
-	entry := &s.fileEntries[s.selectedIndex()]
-	entryWidth := ulen(entry.displayName)
-	if s.hasLastHighlight && s.lastHighlightX == entry.x && s.lastHighlightY == entry.y && s.lastHighlightWidth > entryWidth {
-		clearFrom := entry.x + entryWidth
-		if entry.suffix != "" {
-			clearFrom++
+	s.highlightEntry(&s.fileEntries[s.selectedIndex()], s.BinaryConfirmForeground, s.BinaryConfirmBackground, true)
+}
+
+// editSelectedFile opens the currently selected file in the editor,
+// then handles the next action (ctrl-n/ctrl-p cycling or normal exit).
+// The clearAndPrepare and listDirectory functions are passed in from the main loop.
+func (s *State) editSelectedFile(clearAndPrepare func(), listDirectory func()) {
+	dir := s.Directories[s.dirIndex]
+	for {
+		s.clearHighlight()
+		selectedFile := s.fileEntries[s.selectedIndex()].realName
+		changedDirectory, editedFile, nextAction, err := s.execute(selectedFile, dir, s.tty)
+		if err != nil {
+			clearAndPrepare()
+			s.ls(dir)
+			s.drawError(err.Error())
+			s.highlightSelection()
+			return
 		}
-		for x := clearFrom; x < entry.x+s.lastHighlightWidth; x++ {
-			s.canvas.WriteRune(x, entry.y, vt.Default, s.Background, ' ')
+		if changedDirectory {
+			listDirectory()
+			return
+		}
+		if !editedFile {
+			// User cancelled or nothing happened, redraw screen
+			clearAndPrepare()
+			s.ls(dir)
+			s.selectFileByName(selectedFile)
+			s.highlightSelection()
+			return
+		}
+		// File was edited. If the editor requested the next or previous file, cycle.
+		// Rebuild file entries to pick up any changes, without drawing to the screen.
+		s.filterPattern = ""
+		s.fileEntries = []FileEntry{}
+		s.ls(dir)
+		s.selectFileByName(selectedFile)
+		switch nextAction {
+		case NextFile:
+			if s.selectNextNonBinaryFile() == nil { // success
+				continue // open the next file
+			}
+		case PreviousFile:
+			if s.selectPrevNonBinaryFile() == nil { // success
+				continue // open the previous file
+			}
+		}
+		// Normal exit or no more files to cycle to, redraw with the selection
+		clearAndPrepare()
+		s.ls(dir)
+		s.selectFileByName(selectedFile)
+		s.highlightSelection()
+		return
+	}
+}
+
+// selectFileByName sets the selected index to the file entry with the given name
+func (s *State) selectFileByName(name string) {
+	for i, entry := range s.fileEntries {
+		if entry.realName == name {
+			s.setSelectedIndex(i)
+			return
 		}
 	}
-	s.canvas.Write(entry.x, entry.y, s.BinaryConfirmForeground, s.BinaryConfirmBackground, entry.displayName)
-	if entry.suffix != "" {
-		s.canvas.Write(entry.x+entryWidth, entry.y, s.BinaryConfirmForeground, s.BinaryConfirmBackground, entry.suffix)
-	}
-	entry.selected = true
-	s.lastHighlightX = entry.x
-	s.lastHighlightY = entry.y
-	s.lastHighlightWidth = entryWidth
-	s.hasLastHighlight = true
 }
 
 func (s *State) ls(dir string) (int, error) {
@@ -845,8 +891,9 @@ func (s *State) edit(filename, path string) (string, error) {
 	s.browsing.Store(true)
 	s.startResizeHandler()
 
-	// Force a full redraw to pick up any terminal size changes during editing
-	s.FullResetRedraw()
+	// Reset the terminal and canvas, but don't redraw content yet.
+	// The caller decides when to redraw (e.g. skip redraw for ctrl-n/ctrl-p cycling).
+	s.ResetTerminal()
 
 	return stderrString, err
 }
@@ -926,17 +973,16 @@ func (s *State) setPath(path string) {
 	}
 }
 
-func string2action(s string) Action {
-	var nextAction Action = NoAction
+func parseAction(s string) Action {
 	switch s {
 	case "nextfile":
-		nextAction = NextFile
+		return NextFile
 	case "prevfile":
-		nextAction = PreviousFile
+		return PreviousFile
 	case "stopparent":
-		nextAction = StopParent
+		return StopParent
 	}
-	return nextAction
+	return NoAction
 }
 
 // execute tries to execute the given command in the given directory,
@@ -1013,11 +1059,11 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 			return false, false, NoAction, err
 		}
 		stderrString, err := s.edit(cmd, path)
-		return false, true, string2action(stderrString), err
+		return false, true, parseAction(stderrString), err
 	}
 	if files.File(cmd) { // abs absolute path
 		stderrString, err := s.edit(cmd, path)
-		return false, true, string2action(stderrString), err
+		return false, true, parseAction(stderrString), err
 
 	}
 	if cmd == "l" || cmd == "ls" || cmd == "dir" {
@@ -1042,7 +1088,7 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 	}
 	if cmd == filepath.Base(env.Str("EDITOR")) {
 		stderrString, err := s.edit(cmd, path)
-		return false, true, string2action(stderrString), err
+		return false, true, parseAction(stderrString), err
 	}
 	if strings.HasPrefix(cmd, filepath.Base(env.Str("EDITOR"))+" ") {
 		spaceIndex := strings.Index(cmd, " ")
@@ -1051,7 +1097,7 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 			rest = cmd[spaceIndex+1:]
 		}
 		stderrString, err := s.edit(rest, path)
-		return false, true, string2action(stderrString), err
+		return false, true, parseAction(stderrString), err
 	}
 	if strings.Contains(cmd, " ") {
 		fields := strings.Split(cmd, " ")
@@ -1194,6 +1240,18 @@ func (s *State) Run() ([]string, error) {
 		drawWritten()
 	}
 
+	// applyFilter sets the filter pattern from the written text and redraws.
+	// If the filter matches nothing, the filter is cleared and all files are shown.
+	applyFilter := func() {
+		s.filterPattern = string(s.written)
+		clearAndPrepare()
+		if count, _ := s.ls(s.Directories[s.dirIndex]); count == 0 && s.filterPattern != "" {
+			s.filterPattern = ""
+			clearAndPrepare()
+			s.ls(s.Directories[s.dirIndex])
+		}
+	}
+
 	listDirectory := func() {
 		s.clearHighlight()
 		s.fileEntries = []FileEntry{}
@@ -1302,17 +1360,8 @@ func (s *State) Run() ([]string, error) {
 				s.written = append(s.written[:index-1], s.written[index:]...)
 				index--
 			}
-			// Update filter pattern and redraw
 			s.clearHighlight()
-			s.filterPattern = string(s.written)
-			clearAndPrepare()
-			count, _ := s.ls(s.Directories[s.dirIndex])
-			// If no matches, redraw without filter
-			if count == 0 && s.filterPattern != "" {
-				s.filterPattern = ""
-				clearAndPrepare()
-				s.ls(s.Directories[s.dirIndex])
-			}
+			applyFilter()
 			s.setSelectedIndexIfMissing(-1)
 			clearWritten()
 			drawWritten()
@@ -1343,55 +1392,7 @@ func (s *State) Run() ([]string, error) {
 					break
 				}
 				s.binaryConfirmPending = false
-			AGAIN:
-				s.clearHighlight()
-				s.setSelectedIndex(-1)
-				c.Draw()
-				savedFilename := selectedFile // Save the filename before editing
-				if changedDirectory, editedFile, nextAction, err := s.execute(selectedFile, s.Directories[s.dirIndex], s.tty); err != nil {
-					clearAndPrepare()
-					s.ls(s.Directories[s.dirIndex])
-					s.drawError(err.Error())
-					s.highlightSelection()
-				} else if changedDirectory {
-					listDirectory()
-				} else if editedFile {
-					// File was edited, restore selection by finding the filename
-					listDirectory()
-					// Search for the file by name
-					for i, entry := range s.fileEntries {
-						if entry.realName == savedFilename {
-							switch nextAction {
-							case NextFile:
-								if s.selectNextIndexThatIsANonBinaryFile() == nil { // success
-									goto AGAIN
-								} // else
-								s.setSelectedIndex(i)
-							case PreviousFile:
-								if s.selectPrevIndexThatIsANonBinaryFile() == nil { // success
-									goto AGAIN
-								} // else
-								s.setSelectedIndex(i)
-							default:
-								s.setSelectedIndex(i)
-							}
-							s.highlightSelection()
-							break
-						}
-					}
-				} else {
-					// User cancelled or nothing happened, redraw screen
-					clearAndPrepare()
-					s.ls(s.Directories[s.dirIndex])
-					// Search for the file by name
-					for i, entry := range s.fileEntries {
-						if entry.realName == savedFilename {
-							s.setSelectedIndex(i)
-							s.highlightSelection()
-							break
-						}
-					}
-				}
+				s.editSelectedFile(clearAndPrepare, listDirectory)
 				s.written = []rune{}
 				index = 0
 				s.filterPattern = ""
@@ -1429,7 +1430,6 @@ func (s *State) Run() ([]string, error) {
 			index = 0
 			clearAndPrepare()
 			clearWritten()
-			s.clearHighlight()
 			c.Draw()
 			if changedDirectory, editedFile, _, err := s.execute(commandText, s.Directories[s.dirIndex], s.tty); err != nil {
 				s.drawError(err.Error())
@@ -1446,17 +1446,8 @@ func (s *State) Run() ([]string, error) {
 			if len(s.written) > 0 {
 				s.written = s.written[:index]
 			}
-			// Update filter pattern and redraw
 			s.clearHighlight()
-			s.filterPattern = string(s.written)
-			clearAndPrepare()
-			count, _ := s.ls(s.Directories[s.dirIndex])
-			// If no matches, redraw without filter
-			if count == 0 && s.filterPattern != "" {
-				s.filterPattern = ""
-				clearAndPrepare()
-				s.ls(s.Directories[s.dirIndex])
-			}
+			applyFilter()
 			s.setSelectedIndex(-1)
 			clearWritten()
 			drawWritten()
@@ -1540,17 +1531,8 @@ func (s *State) Run() ([]string, error) {
 				break
 			}
 			s.written = append(s.written[:index], s.written[index+1:]...)
-			// Update filter pattern and redraw
 			s.clearHighlight()
-			s.filterPattern = string(s.written)
-			clearAndPrepare()
-			count, _ := s.ls(s.Directories[s.dirIndex])
-			// If no matches, redraw without filter
-			if count == 0 && s.filterPattern != "" {
-				s.filterPattern = ""
-				clearAndPrepare()
-				s.ls(s.Directories[s.dirIndex])
-			}
+			applyFilter()
 			s.setSelectedIndex(-1)
 			clearWritten()
 			drawWritten()
@@ -1568,15 +1550,9 @@ func (s *State) Run() ([]string, error) {
 			}
 			if filepath.Dir(entry.original) == s.Directories[s.dirIndex] {
 				listDirectory()
-				restoredName := filepath.Base(entry.original)
-				for i, fileEntry := range s.fileEntries {
-					if fileEntry.realName == restoredName {
-						s.clearHighlight()
-						s.setSelectedIndex(i)
-						s.highlightSelection()
-						break
-					}
-				}
+				s.clearHighlight()
+				s.selectFileByName(filepath.Base(entry.original))
+				s.highlightSelection()
 			}
 		case pgUpKey: // page up
 			if len(s.fileEntries) > 0 && s.selectedIndex() >= 0 {
@@ -2022,16 +1998,10 @@ func (s *State) Run() ([]string, error) {
 				s.written = []rune{}
 				index = 0
 				listDirectory()
-				// Find and highlight the found file
-				for i, entry := range s.fileEntries {
-					if entry.realName == foundFile {
-						s.clearHighlight()
-						s.setSelectedIndex(i)
-						s.selectionMoved = true
-						s.highlightSelection()
-						break
-					}
-				}
+				s.clearHighlight()
+				s.selectFileByName(foundFile)
+				s.selectionMoved = true
+				s.highlightSelection()
 			}
 		case "c:3": // ctrl-c
 			if len(s.written) == 0 {
@@ -2065,16 +2035,7 @@ func (s *State) Run() ([]string, error) {
 				clearAndPrepare()
 				s.ls(s.Directories[s.dirIndex])
 			} else {
-				// Update filter pattern and redraw file list
-				s.filterPattern = string(s.written)
-				clearAndPrepare()
-				count, _ := s.ls(s.Directories[s.dirIndex])
-				// If no matches, redraw without filter
-				if count == 0 && s.filterPattern != "" {
-					s.filterPattern = ""
-					clearAndPrepare()
-					s.ls(s.Directories[s.dirIndex])
-				}
+				applyFilter()
 			}
 			clearWritten()
 			drawWritten()
