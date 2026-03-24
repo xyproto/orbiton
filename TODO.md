@@ -2,7 +2,6 @@
 
 ## General
 
-- [ ] When monitoring a file with `-m` it can be modified without the monitoring noticing. Figure out why.
 - [ ] If pressing `ctrl-e` when block editing, then move all the cursors to the end of the lines.
 - [ ] Pressing `ctrl-space` by accident when editing a `PKGBUILD` file is annyoing. Remove or require 2x `ctrl-space`.
 - [ ] Differentiate between `bash`, `zsh`, `tsch`, `fish` and `sh` shell scripts in the `mode` package (+ more?).
