@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: ["1.25", "1.26"]
+        go-version: ["1.24", "1.25", "1.26"]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
@@ -45,7 +45,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: ["1.25", "1.26"]
+        go-version: ["1.24", "1.25", "1.26"]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
