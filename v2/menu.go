@@ -18,7 +18,7 @@ const konami = "↑↑↓↓←→←→ba"
 
 var (
 	errNoLetter = errors.New("no letter")
-	smallWords  = []string{"a", "and", "at", "by", "in", "is", "let", "of", "or", "the", "to"}
+	smallWords  = []string{"a", "and", "at", "by", "from", "in", "is", "let", "of", "or", "the", "to"}
 )
 
 // RuneAndPosition is used to store a rune and a position within a string
