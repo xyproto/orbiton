@@ -17,7 +17,7 @@ fi
 
 rm -rf ./tmp
 mkdir -p tmp
-for lang in c cpp rust zig python bash odin go haskell; do
+for lang in gleam c cpp rust zig python bash odin go haskell; do
   # github.com/xyproto/vhs has --keypress-overlay support
   "$VHS" simple_$lang.tape --keypress-overlay || "$VHS" simple_$lang.tape
   mv -v simple_$lang.gif gif/
