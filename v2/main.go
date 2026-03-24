@@ -90,7 +90,6 @@ func getEditorCommand() string {
 
 func main() {
 	var (
-		batFlag                bool
 		buildFlag              bool
 		catFlag                bool
 		clearLocksFlag         bool
@@ -119,7 +118,6 @@ func main() {
 
 	// Available short options: j
 
-	pflag.BoolVarP(&batFlag, "bat", "B", false, "Cat the file with colors instead of editing it, using bat")
 	pflag.BoolVarP(&buildFlag, "build", "b", false, "Try to build the file instead of editing it")
 	pflag.BoolVarP(&catFlag, "list", "t", false, "List the file with colors instead of editing it")
 	pflag.BoolVarP(&clearLocksFlag, "clear-locks", "e", false, "clear all file locks")
@@ -255,10 +253,7 @@ func main() {
 			if n == 1 {
 				plural = ""
 			}
-			if !catFlag && env.Has("ORBITON_BAT") {
-				batFlag = true
-			}
-			if tailString != "" && !batFlag {
+			if tailString != "" {
 				if envNoColor {
 					fmt.Printf("Copied %d byte%s from %s to the clipboard. Tail bytes: %s\n", n, plural, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
 				} else {
@@ -270,9 +265,6 @@ func main() {
 			if catFlag {
 				// List the file in a colorful way and quit
 				quitCat(&FilenameOrData{filename, []byte{}, 0, false})
-			} else if batFlag {
-				// List the file in a colorful way, using bat, and quit
-				quitBat(filename)
 			}
 			return
 		}
@@ -298,7 +290,7 @@ func main() {
 		if filepath.Ext(filename) == ".sh" || files.BinDirectory(filename) || strings.HasPrefix(headString, "#!") {
 			os.Chmod(filename, 0o755)
 		}
-		if tailString != "" && !batFlag {
+		if tailString != "" {
 			if envNoColor {
 				fmt.Printf("Wrote %d bytes to %s from the clipboard. Tail bytes: %s\n", n, filename, strings.TrimSpace(strings.ReplaceAll(tailString, "\n", "\\n")))
 			} else {
@@ -310,9 +302,6 @@ func main() {
 		if catFlag {
 			// List the file in a colorful way and quit
 			quitCat(&FilenameOrData{filename, []byte{}, 0, false})
-		} else if batFlag {
-			// List the file in a colorful way, using bat, and quit
-			quitBat(filename)
 		}
 		return
 	}
@@ -555,9 +544,6 @@ func main() {
 	if catFlag {
 		// List the file in a colorful way and quit
 		quitCat(&fnord)
-	} else if batFlag { // This should NOT happen if only ORBITON_BAT is set!
-		// List the file in a colorful way, using bat, and quit
-		quitBat(fnord.filename)
 	} else if buildFlag {
 		msg, err := OnlyBuild(fnord)
 		if err != nil {
