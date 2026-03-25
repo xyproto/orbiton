@@ -61,7 +61,7 @@ func (e *Editor) GetFormatMap() FormatMap {
 			mode.Python:     exec.Command("ruff", "format"),
 			mode.Rust:       exec.Command("rustfmt"),
 			mode.Scala:      exec.Command("scalafmt"),
-			mode.Shell:      exec.Command("shfmt", "-s", "-w", "-i", "2", "-bn", "-ci", "-sr", "-kp"),
+			mode.Shell:      exec.Command("shfmt", "-s", "-w", "-i", "2", "-bn", "-ci", "-sr"),
 			mode.Ruby:       exec.Command("rubocop", "--autocorrect", "--fail-level", "fatal"),
 			mode.V:          exec.Command("v", "fmt"),
 			mode.XML:        exec.Command("tidy", "-w", "80", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "-xml", "-m"),
