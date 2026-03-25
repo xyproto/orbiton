@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Highlight `<tags>` differently in `JSX` files.
 - [ ] When piping command line output to `o -m` or `o -m -`, Orbiton should behave as a log colorizer.
 - [ ] If pressing `ctrl-e` when block editing, then move all the cursors to the end of the lines.
 - [ ] Pressing `ctrl-space` by accident when editing a `PKGBUILD` file is annyoing. Remove or require 2x `ctrl-space`.
