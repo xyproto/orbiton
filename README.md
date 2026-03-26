@@ -342,8 +342,6 @@ There are pretty few hotkeys to remember:
 * For regular text files, `ctrl-w` will word wrap the lines to a length of 99.
 * If `kotlinc-native` is not available, this build command will be used instead: `kotlinc $filename -include-runtime -d $name.jar`
 
-CXX can be downloaded here: [GitHub project page for CXX](https://github.com/xyproto/cxx).
-
 | File type | File extensions  | Build or export command                                           |
 |-----------|------------------|-------------------------------------------------------------------|
 | AsciiDoc  | `.adoc`          | `asciidoctor -b manpage` (writes to `out.1`)                      |
