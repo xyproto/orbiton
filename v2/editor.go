@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"image"
 	"os"
 	"path/filepath"
 	"slices"
@@ -93,6 +94,8 @@ type Editor struct {
 	fastInputMode               bool        // reduce input latency for real-time use
 	pasteMode                   bool        // insert incoming key data as raw text
 	cycleFilenames              bool
+	minimapCacheLines           int         // line count when minimap base image was last rendered
+	minimapCacheImg             *image.RGBA // cached minimap base image (without viewport indicator)
 }
 
 // Copy makes a copy of an Editor struct, with most fields deep copied

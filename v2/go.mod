@@ -20,6 +20,7 @@ require (
 	github.com/xfmoulet/qoi v0.2.0
 	github.com/xyproto/autoimport v1.5.2
 	github.com/xyproto/binary v1.4.0
+	github.com/xyproto/burnfont v1.2.3
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.3.0
 	github.com/xyproto/env/v2 v2.5.6
@@ -51,9 +52,8 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
 	github.com/peterhellberg/gfx v0.0.0-20250602150231-2e41f5fad310 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
-	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sys v0.42.0
 	golang.org/x/term v0.41.0 // indirect
 )

@@ -30,6 +30,9 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 	vt.Init()
 
 	newC := vt.NewCanvas()
+	if envKitty && newC.W() > minimapCols+40 {
+		newC.SetDisplayWidth(newC.W() - minimapCols)
+	}
 	newC.ShowCursor()
 	vt.EchoOff()
 
@@ -51,6 +54,9 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 	resizeMut.Lock()
 
 	newC = vt.NewCanvas()
+	if envKitty && newC.W() > minimapCols+40 {
+		newC.SetDisplayWidth(newC.W() - minimapCols)
+	}
 	newC.ShowCursor()
 	vt.EchoOff()
 	w = int(newC.Width())
@@ -189,6 +195,7 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 	}
 
 	c.HideCursorAndDraw() // drawing now
+	e.DrawMinimap(c, e.Theme)
 }
 
 // RedrawAtEndOfKeyLoop is called after each main loop
@@ -230,6 +237,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 		}
 
 		c.HideCursorAndDraw() // drawing now
+		e.DrawMinimap(c, e.Theme)
 		didDraw = true
 		e.redraw.Store(false) // mark as redrawn
 	}

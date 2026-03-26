@@ -109,6 +109,7 @@ func main() {
 		pasteFlag              bool
 		quickHelpFlag          bool
 		noQuickHelpFlag        bool
+		renderOutput           string
 		versionFlag            bool
 		searchAndOpenFlag      bool
 		escToExitFlag          bool
@@ -116,7 +117,7 @@ func main() {
 		upsieFlag              bool
 	)
 
-	// Available short options: j
+	// Available short options: (none)
 
 	pflag.BoolVarP(&buildFlag, "build", "b", false, "Try to build the file instead of editing it")
 	pflag.BoolVarP(&catFlag, "list", "t", false, "List the file with colors instead of editing it")
@@ -143,6 +144,7 @@ func main() {
 	pflag.BoolVarP(&searchAndOpenFlag, "glob", "g", false, "open the first filename that matches the given glob (recursively)")
 	pflag.BoolVarP(&escToExitFlag, "esc", "y", false, "press Esc to exit the program")
 	pflag.BoolVarP(&cycleFilenamesFlag, "cycle", "w", false, "cycle files with ctrl-n and ctrl-p (for internal use)")
+	pflag.StringVarP(&renderOutput, "render", "j", "", "render the file as a syntax highlighted PNG image to the given output filename")
 	pflag.BoolVarP(&upsieFlag, "upsie", "u", false, "show uname+uptime info and exit")
 
 	pflag.CommandLine.MarkHidden("cycle")
@@ -541,7 +543,14 @@ func main() {
 		}
 	}
 
-	if catFlag {
+	if renderOutput != "" {
+		if err := renderFileToPNG(fnord.filename, renderOutput, theme); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		fmt.Println(renderOutput)
+		return
+	} else if catFlag {
 		// List the file in a colorful way and quit
 		quitCat(&fnord)
 	} else if buildFlag {

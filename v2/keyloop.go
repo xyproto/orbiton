@@ -154,6 +154,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	// Create a Canvas for drawing onto the terminal
 	vt.Init()
 	c := vt.NewCanvas()
+	if envKitty && c.W() > minimapCols+40 {
+		c.SetDisplayWidth(c.W() - minimapCols)
+	}
 	c.ShowCursor()
 	vt.EchoOff()
 	tty.RawMode()

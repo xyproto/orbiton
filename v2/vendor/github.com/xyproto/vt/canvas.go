@@ -24,8 +24,9 @@ type Canvas struct {
 	mut               *sync.RWMutex
 	chars             []ColorRune
 	oldchars          []ColorRune
-	w                 uint
+	w                 uint // full terminal width (chars array stride)
 	h                 uint
+	displayW          uint // 0 means use w; set < w to limit the drawn columns
 	cursorVisible     bool // desired state
 	termCursorVisible bool // last state sent to terminal
 	lineWrap          bool
@@ -38,6 +39,7 @@ type canvasCopy struct {
 	oldchars          []ColorRune
 	w                 uint
 	h                 uint
+	displayW          uint
 	cursorVisible     bool
 	termCursorVisible bool
 	lineWrap          bool
@@ -75,6 +77,7 @@ func (c *Canvas) Copy() Canvas {
 		oldchars:          make([]ColorRune, len(c.oldchars)),
 		w:                 c.w,
 		h:                 c.h,
+		displayW:          c.displayW,
 		cursorVisible:     c.cursorVisible,
 		termCursorVisible: c.termCursorVisible,
 		lineWrap:          c.lineWrap,
@@ -88,11 +91,23 @@ func (c *Canvas) Copy() Canvas {
 		oldchars:          cc.oldchars,
 		w:                 cc.w,
 		h:                 cc.h,
+		displayW:          cc.displayW,
 		cursorVisible:     cc.cursorVisible,
 		termCursorVisible: cc.termCursorVisible,
 		lineWrap:          cc.lineWrap,
 		runewise:          cc.runewise,
 		mut:               &sync.RWMutex{},
+	}
+}
+
+// SetDisplayWidth limits the number of columns the canvas draws to, while keeping
+// the full terminal width as the chars array stride. Call with w < c.Width() to
+// leave the rightmost columns untouched (e.g. for an image overlay like a minimap).
+func (c *Canvas) SetDisplayWidth(w uint) {
+	c.mut.Lock()
+	defer c.mut.Unlock()
+	if w < c.w {
+		c.displayW = w
 	}
 }
 
@@ -163,8 +178,11 @@ func (c *Canvas) Size() (uint, uint) {
 	return c.w, c.h
 }
 
-// Width returns the canvas width
+// Width returns the effective drawing width (displayW if set, else the full terminal width).
 func (c *Canvas) Width() uint {
+	if c.displayW > 0 {
+		return c.displayW
+	}
 	return c.w
 }
 
@@ -236,10 +254,13 @@ func (c *Canvas) SetRunewise(b bool) {
 	c.runewise = b
 }
 
-// W returns the canvas width
+// W returns the effective drawing width (displayW if set, else the full terminal width).
 func (c *Canvas) W() uint {
 	c.mut.RLock()
 	defer c.mut.RUnlock()
+	if c.displayW > 0 {
+		return c.displayW
+	}
 	return c.w
 }
 
@@ -266,7 +287,11 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 		return
 	}
 
-	w := c.w
+	stride := c.w // full terminal width, used as chars array stride
+	drawW := stride
+	if c.displayW > 0 && c.displayW < stride {
+		drawW = c.displayW
+	}
 	h := c.h
 	firstRun := len(c.oldchars) == 0
 	cursorVisible := c.cursorVisible
@@ -275,7 +300,7 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 	// Quick change detection with early exit
 	if !firstRun {
 		skipAll := true
-		size := w*h - 1
+		size := stride*h - 1
 		for i := range size {
 			cr := (*c).chars[i]
 			if cr.cw == 1 {
@@ -295,7 +320,7 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 
 	// Build the entire output in a single buffer
 	var sb strings.Builder
-	sb.Grow(int(w * h * 2))
+	sb.Grow(int(stride * h * 2))
 
 	// Begin synchronized update so the terminal renders atomically
 	sb.WriteString(beginSyncUpdate)
@@ -306,10 +331,10 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 		// Per-cell rendering with explicit positioning (robust fallback).
 		// Only rewrite cells that actually changed.
 		for y := range h {
-			base := y * w
-			for x := range w {
+			base := y * stride
+			for x := range drawW {
 				idx := base + x
-				if y == h-1 && x == w-1 {
+				if y == h-1 && x == drawW-1 {
 					break // skip bottom-right corner to prevent scroll
 				}
 				cr := (*c).chars[idx]
@@ -336,10 +361,10 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 		// Only lines with at least one changed cell are rewritten.
 		var lastfg, lastbg AttributeColor
 		for y := range h {
-			base := y * w
-			maxX := w
+			base := y * stride
+			maxX := drawW
 			if y == h-1 {
-				maxX = w - 1 // skip bottom-right corner to prevent scroll
+				maxX = drawW - 1 // skip bottom-right corner to prevent scroll
 			}
 
 			lineChanged := firstRun
