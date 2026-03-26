@@ -3,6 +3,7 @@ package megafile
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -121,6 +122,12 @@ type State struct {
 	cachedUncommittedDir      string
 	resizeChan                chan os.Signal
 	resizeCancel              func()
+	currentPreviewPath        string             // path shown in the kitty preview pane, "" if none
+	currentPreviewEncoded     string             // cached base64 PNG data for the current image preview
+	currentPreviewImgW        uint               // pixel width of the cached preview image
+	currentPreviewImgH        uint               // pixel height of the cached preview image
+	previewCancel             context.CancelFunc // cancels the in-flight loadImageAsync goroutine
+	previewResultChan         chan previewResult // receives results from loadImageAsync
 }
 
 // ErrExit is the error that is returned if the user appeared to want to exit
@@ -225,6 +232,7 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor, undoHist
 		BinaryConfirmForeground:   binaryConfirmForeground,
 		BinaryConfirmBackground:   binaryConfirmBackground,
 		undoHistoryPath:           undoHistoryPath,
+		previewResultChan:         make(chan previewResult, 1),
 	}
 	state.loadUndoHistory()
 	return state
@@ -506,10 +514,15 @@ func (s *State) ls(dir string) (int, error) {
 	var (
 		x            = s.startx
 		y            = s.starty + 1
-		w            = s.canvas.W() - rightMargin
 		longestSoFar = uint(0)
 		maxY         = s.canvas.H()
 	)
+	// In kitty mode the right half is reserved for the preview pane.
+	// A separator column sits at W/2, so the listing stops one column before it.
+	w := s.canvas.W() - rightMargin
+	if envKitty && s.canvas.W() >= 20 {
+		w = s.canvas.W()/2 - 1
+	}
 	if maxY > bottomMargin {
 		maxY -= bottomMargin
 	}
@@ -677,6 +690,18 @@ func (s *State) ls(dir string) (int, error) {
 		s.autoSelected = true
 	} else {
 		s.autoSelected = false
+	}
+
+	// In kitty mode, draw a vertical separator between the file listing and the preview pane.
+	if envKitty && s.canvas.W() >= 20 {
+		sepX := s.canvas.W() / 2
+		sepColor := vt.Gray
+		if envNoColor {
+			sepColor = vt.Default
+		}
+		for iy := s.starty + 1; iy < maxY; iy++ {
+			s.canvas.Write(sepX, iy, sepColor, s.Background, "│")
+		}
 	}
 
 	s.drawStatusLine()
@@ -1316,14 +1341,29 @@ func (s *State) Run() ([]string, error) {
 	s.ls(s.Directories[s.dirIndex])
 
 	c.Draw()
+	s.redrawPreview()
 
-	lastUptimeUpdate := time.Now()
+	// keyChan receives keys from a background goroutine so the main loop can
+	// also react to async preview results without blocking on readKey().
+	keyChan := make(chan string, 1)
+	startReadKey := func() { go func() { keyChan <- s.readKey() }() }
+	startReadKey()
+
+	uptimeTicker := time.NewTicker(time.Minute)
+	defer uptimeTicker.Stop()
 
 	for !s.quit {
-		key := s.readKey()
-
-		// Update uptime display if a minute has passed
-		if time.Since(lastUptimeUpdate) >= 1*time.Minute {
+		var key string
+		select {
+		case key = <-keyChan:
+			startReadKey()
+		case result := <-s.previewResultChan:
+			if s.applyPreviewResult(result) {
+				col, row, cols, rows := s.previewPaneBounds()
+				s.flushImageFromCache(col, row, cols, rows)
+			}
+			continue
+		case <-uptimeTicker.C:
 			const fullKernelVersion = false
 			if uptimeString, err := UpsieString(fullKernelVersion); err == nil {
 				uptimeY := topLine + 1
@@ -1334,8 +1374,9 @@ func (s *State) Run() ([]string, error) {
 					c.WriteTagged(5, uptimeY, s.Background, o.LightTags(uptimeString))
 				}
 				c.Draw()
+				s.redrawPreview()
 			}
-			lastUptimeUpdate = time.Now()
+			continue
 		}
 
 		if handled, shouldDraw := rename.handleKey(key, &index, renameHooks); handled {
@@ -1345,6 +1386,8 @@ func (s *State) Run() ([]string, error) {
 			continue
 		}
 		switch key {
+		case "": // TTY timeout — no key pressed
+			continue
 		case "c:27": // esc
 			if s.selectedIndex() >= 0 {
 				// If a file selection is active, clear it
@@ -1478,7 +1521,7 @@ func (s *State) Run() ([]string, error) {
 			s.setSelectedIndex(-1)
 			clearWritten()
 			drawWritten()
-		case "c:19", "c:22", "c:24", "c:25": // ctrl-s, ctrl-v, ctrl-x, ctrl-y : do nothing, for now
+		case "c:10", "c:19", "c:22", "c:24", "c:25": // ctrl-j, ctrl-s, ctrl-v, ctrl-x, ctrl-y : do nothing, for now
 		case deleteKey, "c:4": // delete or ctrl-d
 			allowExit := key == "c:4"
 			if len(s.written) == 0 || index >= uint(len(s.written)) {
@@ -2045,8 +2088,6 @@ func (s *State) Run() ([]string, error) {
 			s.ls(s.Directories[s.dirIndex])
 			clearWritten()
 			drawWritten() // for the cursor
-		case "":
-			continue
 		default:
 			if key != " " && strings.TrimSpace(key) == "" && key != "c:160" {
 				continue
@@ -2070,6 +2111,7 @@ func (s *State) Run() ([]string, error) {
 			drawWritten()
 		}
 		c.Draw()
+		s.redrawPreview()
 	}
 
 	Cleanup(c)

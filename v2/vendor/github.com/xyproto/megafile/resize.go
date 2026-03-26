@@ -133,6 +133,7 @@ func (s *State) redraw() {
 
 	// Draw the canvas
 	c.Draw()
+	s.redrawPreview()
 }
 
 // startResizeHandler starts a goroutine that listens for terminal resize
