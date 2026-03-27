@@ -354,7 +354,7 @@ func (d *lldbDebugger) RegisterNames() ([]string, error) {
 		return nil, err
 	}
 	var names []string
-	for _, line := range strings.Split(resp, "\n") {
+	for line := range strings.SplitSeq(resp, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "General") || strings.HasPrefix(line, "Floating") || strings.HasPrefix(line, "register") {
 			continue
@@ -380,7 +380,7 @@ func (d *lldbDebugger) ChangedRegisterMap() (map[string]string, error) {
 	}
 
 	current := make(map[string]string)
-	for _, line := range strings.Split(resp, "\n") {
+	for line := range strings.SplitSeq(resp, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "General") || strings.HasPrefix(line, "Floating") || strings.HasPrefix(line, "register") {
 			continue
@@ -415,7 +415,7 @@ func (d *lldbDebugger) RegisterMap() (map[string]string, error) {
 	}
 
 	regs := make(map[string]string)
-	for _, line := range strings.Split(resp, "\n") {
+	for line := range strings.SplitSeq(resp, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "General") || strings.HasPrefix(line, "Floating") || strings.HasPrefix(line, "register") {
 			continue
@@ -436,7 +436,7 @@ func (d *lldbDebugger) Disassemble(n int) ([]string, error) {
 	}
 
 	var instructions []string
-	for _, line := range strings.Split(resp, "\n") {
+	for line := range strings.SplitSeq(resp, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" || !strings.Contains(line, ":") {
 			continue
@@ -450,8 +450,8 @@ func (d *lldbDebugger) Disassemble(n int) ([]string, error) {
 		}
 		line = strings.TrimPrefix(line, "->")
 		line = strings.TrimSpace(line)
-		if idx := strings.Index(line, ": "); idx >= 0 {
-			inst := strings.TrimSpace(line[idx+2:])
+		if _, after, ok := strings.Cut(line, ": "); ok {
+			inst := strings.TrimSpace(after)
 			if inst != "" {
 				instructions = append(instructions, inst)
 			}

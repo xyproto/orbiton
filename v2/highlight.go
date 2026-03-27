@@ -232,6 +232,32 @@ type TextAnnotator TextConfig
 
 // Print scans tokens from s, using Printer p for mode m.
 func Print(s *scanner.Scanner, w io.Writer, p Printer, m mode.Mode) error {
+	switch m {
+	case mode.C3:
+		s.IsIdentRune = func(ch rune, i int) bool {
+			return ch == '$' || ch == '@' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
+		}
+	case mode.Clojure, mode.Lisp:
+		s.IsIdentRune = func(ch rune, i int) bool {
+			return ch == '*' || ch == '-' || ch == '+' || ch == '/' || ch == '?' || ch == '!' || ch == '.' || ch == ':' || ch == '&' || ch == '<' || ch == '>' || ch == '=' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
+		}
+	case mode.Shell, mode.Make, mode.Just:
+		s.IsIdentRune = func(ch rune, i int) bool {
+			return ch == '-' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
+		}
+	case mode.Spec:
+		s.IsIdentRune = func(ch rune, i int) bool {
+			return ch == '%' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
+		}
+	case mode.Swift:
+		s.IsIdentRune = func(ch rune, i int) bool {
+			return ch == '#' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
+		}
+	case mode.Vibe67:
+		s.IsIdentRune = func(ch rune, i int) bool {
+			return ch == '&' || ch == '<' || ch == '>' || ch == '^' || ch == '|' || ch == '~' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
+		}
+	}
 	inComment := false
 	for tok := s.Scan(); tok != scanner.EOF; tok = s.Scan() {
 		tokText := s.TokenText()

@@ -134,7 +134,7 @@ var (
 	shellWords = []string{"--force", "-f", "checkout", "configure", "dd", "do", "doas", "done", "endif", "exec", "fdisk", "for", "gdisk", "ifeq", "ifneq", "in", "make", "mv", "ninja", "rm", "rmdir", "setopt", "su", "sudo", "while"}
 
 	// For RPM Spec files (.spec)
-	specWords = []string{"%autosetup", "%build", "%changelog", "%description", "%files", "%install", "%prep", "BuildRequires", "License", "Name", "Release", "Source0", "Summary", "Version"}
+	specWords = []string{"%autosetup", "%build", "%changelog", "%check", "%clean", "%description", "%files", "%install", "%prep", "%setup", "%patch", "%if", "%else", "%endif", "%define", "%global", "%package", "%post", "%postun", "%pre", "%preun", "BuildRequires", "License", "Name", "Release", "Source0", "Summary", "Version"}
 
 	// SuperCollider
 	superColliderWords = []string{"arg", "var", "nil", "true", "false", "this", "super", "thisProcess", "thisThread", "thisMethod", "thisFunction", "currentEnvironment", "topEnvironment", "inf", "pi", "__FILE__", "__LINE__"}
