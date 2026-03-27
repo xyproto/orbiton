@@ -128,15 +128,32 @@ type State struct {
 	currentPreviewImgH        uint               // pixel height of the cached preview image
 	previewCancel             context.CancelFunc // cancels the in-flight loadImageAsync goroutine
 	previewResultChan         chan previewResult // receives results from loadImageAsync
+	keyChan                   chan string        // receives keys from the background readKey goroutine
 }
 
 // ErrExit is the error that is returned if the user appeared to want to exit
 var ErrExit = errors.New("exit")
 
-// readKey reads a key from the TTY and returns it as a string.
-// Control characters are returned as "c:N" where N is the ASCII code.
-func (s *State) readKey() string {
-	return s.tty.String()
+// startReadKey launches a goroutine that reads one key and sends it to s.keyChan.
+// It polls with a short timeout so it can yield the TTY when browsing is false
+// (i.e. while an external editor or command has taken over the terminal).
+func (s *State) startReadKey() {
+	go func() {
+		for {
+			if !s.browsing.Load() {
+				return
+			}
+			hasInput, _ := s.tty.Poll(50 * time.Millisecond)
+			if !hasInput {
+				continue
+			}
+			if !s.browsing.Load() {
+				return
+			}
+			s.keyChan <- s.tty.KeyString()
+			return
+		}
+	}()
 }
 
 // New creates a new MegaFile State
@@ -233,6 +250,7 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor, undoHist
 		BinaryConfirmBackground:   binaryConfirmBackground,
 		undoHistoryPath:           undoHistoryPath,
 		previewResultChan:         make(chan previewResult, 1),
+		keyChan:                   make(chan string, 1),
 	}
 	state.loadUndoHistory()
 	return state
@@ -249,7 +267,7 @@ func (s *State) RealPath() bool {
 	return files.RealPath(currentPath)
 }
 
-func (s *State) drawOutput(text string, tty *vt.TTY) {
+func (s *State) drawOutput(text string) {
 	lines := strings.Split(text, "\n")
 	x := s.startx
 	y := s.starty + 1
@@ -260,7 +278,8 @@ func (s *State) drawOutput(text string, tty *vt.TTY) {
 	}
 	s.canvas.Draw()
 	// Wait for a key press before continuing
-	_ = tty.String()
+	<-s.keyChan
+	s.startReadKey()
 }
 
 func (s *State) drawError(text string) {
@@ -449,7 +468,7 @@ func (s *State) editSelectedFile(clearAndPrepare func(), listDirectory func()) {
 	for {
 		s.clearHighlight()
 		selectedFile := s.fileEntries[s.selectedIndex()].realName
-		changedDirectory, editedFile, nextAction, err := s.execute(selectedFile, dir, s.tty)
+		changedDirectory, editedFile, nextAction, err := s.execute(selectedFile, dir)
 		if err != nil {
 			clearAndPrepare()
 			s.ls(dir)
@@ -781,7 +800,6 @@ func (s *State) drawStatusLine() {
 }
 
 func (s *State) msgBox(line1, line2, line3, line4 string) bool {
-	tty := s.tty
 	c := s.canvas
 	w := c.W()
 	h := c.H()
@@ -849,14 +867,9 @@ func (s *State) msgBox(line1, line2, line3, line4 string) bool {
 	c.Draw()
 
 	// Wait for key press
-	for {
-		switch tty.String() {
-		case "y", "j": // y or j (undocumented)
-			return true
-		default:
-			return false
-		}
-	}
+	key := <-s.keyChan
+	s.startReadKey()
+	return key == "y" || key == "j"
 
 }
 
@@ -915,6 +928,7 @@ func (s *State) edit(filename, path string) (string, error) {
 	s.tty.RawMode()
 	s.browsing.Store(true)
 	s.startResizeHandler()
+	s.startReadKey()
 
 	// Reset the terminal and canvas, but don't redraw content yet.
 	// The caller decides when to redraw (e.g. skip redraw for ctrl-n/ctrl-p cycling).
@@ -950,6 +964,7 @@ func (s *State) run(executableName string, args []string, path string) error {
 	}
 	s.browsing.Store(true)
 	s.startResizeHandler()
+	s.startReadKey()
 
 	// Force a full redraw to pick up any terminal size changes during the external command
 	s.FullResetRedraw()
@@ -1014,7 +1029,7 @@ func parseAction(s string) Action {
 // and returns true if the directory was changed
 // and returns true if a file was edited
 // and returns an error if something went wrong
-func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, error) {
+func (s *State) execute(cmd, path string) (bool, bool, Action, error) {
 	// Common for non-bash and bash mode
 	if cmd == "exit" || cmd == "quit" || cmd == "q" || cmd == "bye" {
 		s.quit = true
@@ -1106,7 +1121,7 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 			}
 			output, err := run2(cmd, args, path)
 			if err == nil {
-				s.drawOutput(output, tty)
+				s.drawOutput(output)
 			}
 			return false, false, NoAction, err
 		}
@@ -1127,7 +1142,7 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 		if len(cmd) > 6 {
 			rest = cmd[6:]
 			found := files.WhichCached(rest)
-			s.drawOutput(found, tty)
+			s.drawOutput(found)
 		}
 		return false, false, NoAction, nil
 	}
@@ -1135,7 +1150,7 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 		return false, false, NoAction, nil
 	}
 	if strings.HasPrefix(cmd, "echo ") {
-		s.drawOutput(cmd[5:], tty)
+		s.drawOutput(cmd[5:])
 		return false, false, NoAction, nil
 	}
 	if cmd == filepath.Base(env.Str("EDITOR")) {
@@ -1157,7 +1172,7 @@ func (s *State) execute(cmd, path string, tty *vt.TTY) (bool, bool, Action, erro
 		arguments := fields[1:]
 		output, err := run2(program, arguments, s.Directories[s.dirIndex])
 		if err == nil {
-			s.drawOutput(output, tty)
+			s.drawOutput(output)
 		}
 		return false, false, NoAction, err
 	} else if foundExecutableInPath := files.WhichCached(cmd); foundExecutableInPath != "" {
@@ -1343,11 +1358,7 @@ func (s *State) Run() ([]string, error) {
 	c.Draw()
 	s.redrawPreview()
 
-	// keyChan receives keys from a background goroutine so the main loop can
-	// also react to async preview results without blocking on readKey().
-	keyChan := make(chan string, 1)
-	startReadKey := func() { go func() { keyChan <- s.readKey() }() }
-	startReadKey()
+	s.startReadKey()
 
 	uptimeTicker := time.NewTicker(time.Minute)
 	defer uptimeTicker.Stop()
@@ -1355,8 +1366,8 @@ func (s *State) Run() ([]string, error) {
 	for !s.quit {
 		var key string
 		select {
-		case key = <-keyChan:
-			startReadKey()
+		case key = <-s.keyChan:
+			s.startReadKey()
 		case result := <-s.previewResultChan:
 			if s.applyPreviewResult(result) {
 				col, row, cols, rows := s.previewPaneBounds()
@@ -1386,8 +1397,6 @@ func (s *State) Run() ([]string, error) {
 			continue
 		}
 		switch key {
-		case "": // TTY timeout — no key pressed
-			continue
 		case "c:27": // esc
 			if s.selectedIndex() >= 0 {
 				// If a file selection is active, clear it
@@ -1487,7 +1496,7 @@ func (s *State) Run() ([]string, error) {
 				if err != nil {
 					s.drawError(err.Error())
 				} else if output != "" {
-					s.drawOutput(output, s.tty)
+					s.drawOutput(output)
 				}
 				clearAndPrepare()
 				s.ls(s.Directories[s.dirIndex])
@@ -1501,7 +1510,7 @@ func (s *State) Run() ([]string, error) {
 			clearAndPrepare()
 			clearWritten()
 			c.Draw()
-			if changedDirectory, editedFile, _, err := s.execute(commandText, s.Directories[s.dirIndex], s.tty); err != nil {
+			if changedDirectory, editedFile, _, err := s.execute(commandText, s.Directories[s.dirIndex]); err != nil {
 				s.drawError(err.Error())
 			} else if changedDirectory || editedFile {
 				listDirectory()
