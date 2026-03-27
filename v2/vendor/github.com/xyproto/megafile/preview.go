@@ -11,9 +11,12 @@ import (
 	_ "image/jpeg"
 	"image/png"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
+	_ "github.com/dkua/go-ico"
+	_ "github.com/xfmoulet/qoi"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 )
@@ -21,9 +24,10 @@ import (
 // envKitty is true when TERM=xterm-kitty, enabling Kitty graphics protocol features.
 var envKitty = env.Str("TERM") == "xterm-kitty"
 
-// imageExts lists extensions decodable by Go's standard image package.
+// imageExts lists file extensions handled by the image preview path.
 var imageExts = map[string]bool{
-	".png": true, ".jpg": true, ".jpeg": true, ".gif": true,
+	".png": true, ".jpg": true, ".jpeg": true, ".gif": true, ".svg": true, ".qoi": true,
+	".ico": true, ".jxl": true,
 }
 
 func isImageExt(path string) bool {
@@ -82,7 +86,7 @@ func (s *State) clearPreviewPane() {
 		return
 	}
 	blank := strings.Repeat(" ", int(cols))
-	for r := uint(0); r < rows; r++ {
+	for r := range rows {
 		fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row+r, col, blank)
 	}
 	s.currentPreviewPath = ""
@@ -100,58 +104,99 @@ func (s *State) clearPreviewPane() {
 // PNG files are sent directly (no re-encode needed). All other formats (JPEG, GIF, …)
 // are decoded and re-encoded as PNG because the Kitty graphics protocol only supports
 // raw pixel data and PNG (f=100); it has no native JPEG support.
-func (s *State) loadImageAsync(ctx context.Context, path string) {
-	f, err := os.Open(path)
-	if err != nil {
-		return
-	}
-	defer f.Close()
-
-	// Use DecodeConfig to read dimensions from the header cheaply, without
-	// decoding the full image.
-	config, format, err := image.DecodeConfig(f)
-	if err != nil || ctx.Err() != nil {
-		return
-	}
-
-	imgW := uint(config.Width)
-	imgH := uint(config.Height)
+func (s *State) loadImageAsync(ctx context.Context, path string, panePixW, panePixH uint) {
+	ext := strings.ToLower(filepath.Ext(path))
 
 	var encoded string
+	var imgW, imgH uint
 
-	if format == "png" && strings.ToLower(filepath.Ext(path)) == ".png" {
-		// PNG can be forwarded verbatim — Kitty accepts it as f=100.
-		data, err := os.ReadFile(path)
+	if ext == ".svg" {
+		// SVG: render via inkscape at the pane's pixel dimensions.
+		w := panePixW
+		if w == 0 {
+			w = 800
+		}
+		enc, iw, ih, err := convertToPNG(ctx, "inkscape",
+			"--export-type=png", "--export-filename=-",
+			"--export-area-drawing", "--export-width="+fmt.Sprintf("%d", w), path)
 		if err != nil || ctx.Err() != nil {
 			return
 		}
-		encoded = base64.StdEncoding.EncodeToString(data)
+		encoded, imgW, imgH = enc, iw, ih
+	} else if ext == ".jxl" {
+		// JPEG XL: convert via ImageMagick.
+		enc, iw, ih, err := convertToPNG(ctx, "magick", path, "png:-")
+		if err != nil || ctx.Err() != nil {
+			return
+		}
+		encoded, imgW, imgH = enc, iw, ih
 	} else {
-		// JPEG, GIF, and any other format must be decoded and re-encoded as PNG.
-		// Seek back to the start because DecodeConfig advanced the read position.
-		if _, err := f.Seek(0, 0); err != nil {
+		// Standard bitmap formats via Go's image package.
+		f, err := os.Open(path)
+		if err != nil {
 			return
 		}
-		img, _, err := image.Decode(f)
+		defer f.Close()
+
+		// Use DecodeConfig to read dimensions from the header cheaply.
+		config, format, err := image.DecodeConfig(f)
 		if err != nil || ctx.Err() != nil {
 			return
 		}
-		var buf bytes.Buffer
-		if err := png.Encode(&buf, img); err != nil || ctx.Err() != nil {
-			return
+		imgW = uint(config.Width)
+		imgH = uint(config.Height)
+
+		if format == "png" && ext == ".png" {
+			// PNG can be forwarded verbatim — Kitty accepts it as f=100.
+			data, err := os.ReadFile(path)
+			if err != nil || ctx.Err() != nil {
+				return
+			}
+			encoded = base64.StdEncoding.EncodeToString(data)
+		} else {
+			// JPEG, GIF: decode and re-encode as PNG.
+			if _, err := f.Seek(0, 0); err != nil {
+				return
+			}
+			img, _, err := image.Decode(f)
+			if err != nil || ctx.Err() != nil {
+				return
+			}
+			var buf bytes.Buffer
+			if err := png.Encode(&buf, img); err != nil || ctx.Err() != nil {
+				return
+			}
+			encoded = base64.StdEncoding.EncodeToString(buf.Bytes())
 		}
-		encoded = base64.StdEncoding.EncodeToString(buf.Bytes())
 	}
 
 	if ctx.Err() != nil {
 		return
 	}
-
 	result := previewResult{path: path, encoded: encoded, imgW: imgW, imgH: imgH}
 	select {
 	case s.previewResultChan <- result:
 	case <-ctx.Done():
 	}
+}
+
+// convertToPNG runs an external command that writes PNG data to stdout,
+// base64-encodes the result, and returns the encoded string with pixel dimensions.
+func convertToPNG(ctx context.Context, args ...string) (encoded string, w, h uint, err error) {
+	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	if err = cmd.Run(); err != nil {
+		return
+	}
+	cfg, _, cfgErr := image.DecodeConfig(bytes.NewReader(buf.Bytes()))
+	if cfgErr != nil {
+		err = cfgErr
+		return
+	}
+	encoded = base64.StdEncoding.EncodeToString(buf.Bytes())
+	w, h = uint(cfg.Width), uint(cfg.Height)
+	return
 }
 
 // applyPreviewResult stores the data from a finished async load into the state cache.
@@ -177,10 +222,7 @@ func (s *State) flushImageFromCache(col, row, cols, rows uint) {
 	const chunkSize = 4096
 	total := len(encoded)
 	for i := 0; i < total; i += chunkSize {
-		end := i + chunkSize
-		if end > total {
-			end = total
-		}
+		end := min(i+chunkSize, total)
 		chunk := encoded[i:end]
 		isLast := end >= total
 		isFirst := i == 0
@@ -217,7 +259,7 @@ func (s *State) showPreview(path string) {
 		s.cancelPreviewLoad()
 		kittyDeleteImages()
 		blank := strings.Repeat(" ", int(cols))
-		for r := uint(0); r < rows; r++ {
+		for r := range rows {
 			fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row+r, col, blank)
 		}
 		s.currentPreviewPath = path
@@ -236,9 +278,10 @@ func (s *State) showPreview(path string) {
 			s.flushImageFromCache(col, row, cols, rows)
 		} else if s.previewCancel == nil {
 			// No goroutine running yet: start one.
+			cellW, cellH := terminalCellPixels()
 			ctx, cancel := context.WithCancel(context.Background())
 			s.previewCancel = cancel
-			go s.loadImageAsync(ctx, path)
+			go s.loadImageAsync(ctx, path, cols*cellW, rows*cellH)
 		}
 		// If previewCancel != nil and encoded == "": goroutine is already running; wait.
 	case !files.BinaryAccurate(path):
@@ -280,18 +323,12 @@ func aspectRatioCells(imgW, imgH, availCols, availRows uint) (cols, rows uint) {
 		// Wider than pane: fit to width, reduce rows.
 		cols = availCols
 		pixH := paneW * imgH / imgW
-		rows = (pixH + cellH - 1) / cellH
-		if rows > availRows {
-			rows = availRows
-		}
+		rows = min((pixH+cellH-1)/cellH, availRows)
 	} else {
 		// Taller than pane: fit to height, reduce cols.
 		rows = availRows
 		pixW := paneH * imgW / imgH
-		cols = (pixW + cellW - 1) / cellW
-		if cols > availCols {
-			cols = availCols
-		}
+		cols = min((pixW+cellW-1)/cellW, availCols)
 	}
 	if cols == 0 {
 		cols = 1

@@ -744,7 +744,7 @@ func gitUncommittedCount(dir string) int {
 		return 0
 	}
 	count := 0
-	for _, line := range strings.Split(string(out), "\n") {
+	for line := range strings.SplitSeq(string(out), "\n") {
 		if strings.TrimSpace(line) != "" {
 			count++
 		}
