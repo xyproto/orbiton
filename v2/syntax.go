@@ -280,6 +280,8 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 			delKeywords = append(delKeywords, "end")
 		}
 		addAndRemoveKeywords(addKeywords, delKeywords)
+	case mode.Spec:
+		setKeywords(specWords)
 	case mode.Scala:
 		setKeywords(scalaWords)
 	case mode.OCaml:
@@ -340,7 +342,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "'"
 	case mode.Bat:
 		return "@rem" // or rem or just ":" ...
-	case mode.Algol68, mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.Docker, mode.FSTAB, mode.GDScript, mode.Ignore, mode.Just, mode.Make, mode.Nim, mode.Nix, mode.Mojo, mode.PolicyLanguage, mode.Python, mode.R, mode.Ruby, mode.Shell, mode.Starlark:
+	case mode.Algol68, mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.Docker, mode.FSTAB, mode.GDScript, mode.Ignore, mode.Just, mode.Make, mode.Nim, mode.Nix, mode.Mojo, mode.PolicyLanguage, mode.Python, mode.R, mode.Ruby, mode.Shell, mode.Spec, mode.Starlark:
 		return "#"
 	case mode.Clojure, mode.Lisp:
 		return ";;"
