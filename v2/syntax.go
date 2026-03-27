@@ -13,7 +13,8 @@ import (
 func tokenKind(tok rune, tokText string, inComment *bool, m mode.Mode) Kind {
 	// Detect single-line comment start/end.
 	if (m == mode.Assembly && tok == ';') ||
-		(m != mode.Assembly && m != mode.GoAssembly && m != mode.Clojure && m != mode.Lisp && m != mode.C && m != mode.Cpp && m != mode.Lua && tok == '#') {
+		(m != mode.Assembly && m != mode.GoAssembly && m != mode.Clojure && m != mode.Lisp && m != mode.C && m != mode.Cpp && m != mode.Lua && tok == '#') ||
+		((m == mode.ABC || m == mode.Lilypond || m == mode.Perl || m == mode.Prolog) && tok == '%') {
 		*inComment = true
 	} else if tok == '\n' {
 		*inComment = false
