@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"image"
+	"image/color"
 	_ "image/gif"
 	_ "image/jpeg"
 	"image/png"
@@ -96,14 +97,33 @@ func (s *State) clearPreviewPane() {
 	s.currentPreviewImgH = 0
 }
 
+// scaleNearestNeighbor scales src to dstW×dstH using nearest-neighbor interpolation,
+// producing sharp pixels instead of a blurry bilinear upscale.
+func scaleNearestNeighbor(src image.Image, dstW, dstH int) *image.RGBA {
+	dst := image.NewRGBA(image.Rect(0, 0, dstW, dstH))
+	bounds := src.Bounds()
+	srcW := bounds.Dx()
+	srcH := bounds.Dy()
+	for y := range dstH {
+		srcY := bounds.Min.Y + y*srcH/dstH
+		for x := range dstW {
+			srcX := bounds.Min.X + x*srcW/dstW
+			r, g, b, a := src.At(srcX, srcY).RGBA()
+			dst.SetRGBA(x, y, color.RGBA{uint8(r >> 8), uint8(g >> 8), uint8(b >> 8), uint8(a >> 8)})
+		}
+	}
+	return dst
+}
+
 // loadImageAsync decodes an image file, re-encodes it as PNG, base64-encodes the result,
 // and sends it to s.previewResultChan. The goroutine checks ctx.Done() between the
 // expensive steps so that fast navigation can cancel stale loads before they write anything.
 // This function must be called as a goroutine; it never writes to stdout.
 //
-// PNG files are sent directly (no re-encode needed). All other formats (JPEG, GIF, …)
-// are decoded and re-encoded as PNG because the Kitty graphics protocol only supports
-// raw pixel data and PNG (f=100); it has no native JPEG support.
+// PNG files are sent directly when they are large enough to not require upscaling.
+// All other formats (JPEG, GIF, etc) are decoded and re-encoded as PNG because the
+// Kitty graphics protocol only supports raw pixel data and PNG (f=100).
+// Small images are pre-scaled with nearest-neighbor so Kitty renders sharp pixels.
 func (s *State) loadImageAsync(ctx context.Context, path string, panePixW, panePixH uint) {
 	ext := strings.ToLower(filepath.Ext(path))
 
@@ -146,7 +166,11 @@ func (s *State) loadImageAsync(ctx context.Context, path string, panePixW, paneP
 		imgW = uint(config.Width)
 		imgH = uint(config.Height)
 
-		if format == "png" && ext == ".png" {
+		// needsUpscale is true when the image is smaller than the pane in both
+		// dimensions and would be stretched by Kitty's bilinear filter.
+		needsUpscale := imgW < panePixW && imgH < panePixH
+
+		if format == "png" && ext == ".png" && !needsUpscale {
 			// PNG can be forwarded verbatim — Kitty accepts it as f=100.
 			data, err := os.ReadFile(path)
 			if err != nil || ctx.Err() != nil {
@@ -154,13 +178,27 @@ func (s *State) loadImageAsync(ctx context.Context, path string, panePixW, paneP
 			}
 			encoded = base64.StdEncoding.EncodeToString(data)
 		} else {
-			// JPEG, GIF: decode and re-encode as PNG.
+			// JPEG, GIF, or small PNG: decode and re-encode as PNG.
 			if _, err := f.Seek(0, 0); err != nil {
 				return
 			}
 			img, _, err := image.Decode(f)
 			if err != nil || ctx.Err() != nil {
 				return
+			}
+			if needsUpscale {
+				// Scale up with nearest-neighbor so Kitty renders sharp pixels
+				// rather than a blurry bilinear upscale.
+				var targetW, targetH uint
+				if imgW*panePixH > imgH*panePixW {
+					targetW = panePixW
+					targetH = panePixW * imgH / imgW
+				} else {
+					targetH = panePixH
+					targetW = panePixH * imgW / imgH
+				}
+				img = scaleNearestNeighbor(img, int(targetW), int(targetH))
+				imgW, imgH = targetW, targetH
 			}
 			var buf bytes.Buffer
 			if err := png.Encode(&buf, img); err != nil || ctx.Err() != nil {

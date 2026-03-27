@@ -30,7 +30,7 @@ require (
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
-	github.com/xyproto/megafile v1.6.24
+	github.com/xyproto/megafile v1.6.25
 	github.com/xyproto/mode v0.12.6
 	github.com/xyproto/ollamaclient/v2 v2.7.2
 	github.com/xyproto/orchideous v1.0.6
