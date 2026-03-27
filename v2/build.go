@@ -593,6 +593,10 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		cmd = exec.Command("csc", "-nologo", "-unsafe", sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
+	case mode.Spec:
+		cmd = exec.Command("rpmbuild", "-ba", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.StandardML:
 		cmd = exec.Command("mlton", sourceFilename)
 		cmd.Dir = sourceDir
