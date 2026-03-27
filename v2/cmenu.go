@@ -545,11 +545,14 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 		megaFileState.EdgeBackground = e.Background
 		megaFileState.HighlightBackground = e.NanoHelpBackground
 		megaFileState.EmptyFileColor = e.MultiLineComment
+		c.HideCursor()
 		if _, err := megaFileState.Run(); err != nil && err != megafile.ErrExit {
+			c.ShowCursor()
 			status.SetError(err)
 			status.Show(c, e)
 			return
 		}
+		c.ShowCursor()
 		os.Exit(0)
 	})
 

@@ -259,9 +259,12 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 					cancelPreviousSignalHandler()
 				}
 
+				c.HideCursor()
 				if _, err := megaFileState.Run(); err != nil && err != megafile.ErrExit {
+					c.ShowCursor()
 					return e, "", false, megafile.NoAction, fmt.Errorf("could not browse %s: %v", e.filename, err)
 				}
+				c.ShowCursor()
 				os.Exit(0)
 			}
 		}
