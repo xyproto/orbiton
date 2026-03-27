@@ -269,6 +269,8 @@ func Detect(filename string) Mode {
 			mode = Swift
 		case ".fun", ".sml":
 			mode = StandardML
+		case ".spec":
+			mode = Spec
 		case ".sql":
 			mode = SQL
 		case ".t":

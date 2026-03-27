@@ -94,8 +94,8 @@ github.com/xyproto/lookslikegoasm v1.0.0 h1:/2nuhAu67tdjqXHkdOjP/UUAH9uJbAdptIkF
 github.com/xyproto/lookslikegoasm v1.0.0/go.mod h1:4ck0t+iH2rEAmjwnRhMZl72lCeCxK4iylxdcZ3K3FbY=
 github.com/xyproto/megafile v1.6.24 h1:Egbq29KnK5EpZCRu9E0RjIbJh5APxjmp1zLTFDF4to4=
 github.com/xyproto/megafile v1.6.24/go.mod h1:y93AGaVWywb21vfPhwA4a9nUDTTi7ql2oh8tUEMnxc4=
-github.com/xyproto/mode v0.12.5 h1:EvvGOqQ2xIpU167q2395mycUxUx6xFd6W0I7XjsGhwM=
-github.com/xyproto/mode v0.12.5/go.mod h1:Bl7ymMitqlFLl3lgyAY3knkZb0t9/4fzgja7mWp66n0=
+github.com/xyproto/mode v0.12.6 h1:+lPZ/SaKWcvAU58KWJ5lCzv3RcnFhdVtl5/o3fbsn0s=
+github.com/xyproto/mode v0.12.6/go.mod h1:Bl7ymMitqlFLl3lgyAY3knkZb0t9/4fzgja7mWp66n0=
 github.com/xyproto/ollamaclient/v2 v2.7.2 h1:Z5uAZool07r2HuhPmdEJ6N8kmxNnwsjii0/uOl415uc=
 github.com/xyproto/ollamaclient/v2 v2.7.2/go.mod h1:5wie2hPoN9YSTQIo1qQrfTxUy8mc/D84j9J/OI0N7m0=
 github.com/xyproto/orchideous v1.0.6 h1:DGtW9G4UMv+ytHEiVXacyZT3S4rhVymSTA9QWEi4/CE=
