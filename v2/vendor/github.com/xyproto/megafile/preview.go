@@ -21,11 +21,16 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
+	"github.com/xyproto/palgen"
 	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt"
+	"golang.org/x/image/draw"
 )
 
 var (
+	// paletteColorMap maps RGB values to VT100 attribute colors for fast lookup
+	paletteColorMap map[[3]uint8]vt.AttributeColor
+
 	// envKitty is true when TERM=xterm-kitty, enabling Kitty graphics protocol features.
 	envKitty = env.Str("TERM") == "xterm-kitty"
 
@@ -33,13 +38,29 @@ var (
 	envITerm2 = env.Str("TERM_PROGRAM") == "iTerm.app"
 
 	// envGraphics is true when the terminal supports an inline image protocol.
-	envGraphics = envKitty || envITerm2
+	// It is disabled if TERM is vt100/vt220 or if NO_COLOR is set.
+	envGraphics = (envKitty || envITerm2) && !envVT && !env.Bool("NO_COLOR")
+
+	// imageExts lists file extensions handled by the image preview path.
+	imageExts = map[string]bool{
+		".png": true, ".jpg": true, ".jpeg": true, ".gif": true, ".svg": true, ".qoi": true,
+		".ico": true, ".jxl": true,
+	}
 )
 
-// imageExts lists file extensions handled by the image preview path.
-var imageExts = map[string]bool{
-	".png": true, ".jpg": true, ".jpeg": true, ".gif": true, ".svg": true, ".qoi": true,
-	".ico": true, ".jxl": true,
+func init() {
+	vtColors := []vt.AttributeColor{
+		vt.Black, vt.Red, vt.Green, vt.Yellow,
+		vt.Blue, vt.Magenta, vt.Cyan, vt.LightGray,
+		vt.DarkGray, vt.LightRed, vt.LightGreen, vt.LightYellow,
+		vt.LightBlue, vt.LightMagenta, vt.LightCyan, vt.White,
+	}
+	paletteColorMap = make(map[[3]uint8]vt.AttributeColor, len(palgen.BasicPalette16))
+	for i, rgb := range palgen.BasicPalette16 {
+		if i < len(vtColors) {
+			paletteColorMap[rgb] = vtColors[i]
+		}
+	}
 }
 
 func isImageExt(path string) bool {
@@ -65,12 +86,17 @@ func deleteInlineImages() {
 }
 
 // previewPaneBounds returns the 1-indexed terminal column/row and the cell dimensions
-// (cols, rows) of the preview pane.  A separator column sits at W/2 (canvas, 0-indexed),
+// (cols, rows) of the preview pane.  A separator column sits at splitX (canvas, 0-indexed),
 // so the preview starts one column to the right of it.
 func (s *State) previewPaneBounds() (col, row, cols, rows uint) {
 	W := s.canvas.W()
 	H := s.canvas.H()
-	half := W / 2
+	var half uint
+	if s.showPreviewPane() && s.splitX > 0 {
+		half = s.splitX
+	} else {
+		half = W / 2
+	}
 	col = half + 2
 	row = s.starty + 2
 	if W > half+1 {
@@ -308,7 +334,7 @@ func (s *State) flushImageFromCache(col, row, cols, rows uint) {
 // s.previewResultChan, which is consumed by the main event loop.
 // Non-image previews (text, directory, binary) are rendered synchronously.
 func (s *State) showPreview(path string) {
-	if !envGraphics {
+	if !s.showPreviewPane() {
 		return
 	}
 	col, row, cols, rows := s.previewPaneBounds()
@@ -335,15 +361,19 @@ func (s *State) showPreview(path string) {
 	case files.IsDir(path):
 		s.drawDirPreview(path, col, row, cols, rows)
 	case isImageExt(path):
-		if s.currentPreviewEncoded != "" {
-			// Cache hit: write immediately (no goroutine needed).
-			s.flushImageFromCache(col, row, cols, rows)
-		} else if s.previewCancel == nil {
-			// No goroutine running yet: start one.
-			cellW, cellH := terminalCellPixels()
-			ctx, cancel := context.WithCancel(context.Background())
-			s.previewCancel = cancel
-			go s.loadImageAsync(ctx, path, cols*cellW, rows*cellH)
+		if envGraphics {
+			if s.currentPreviewEncoded != "" {
+				// Cache hit: write immediately (no goroutine needed).
+				s.flushImageFromCache(col, row, cols, rows)
+			} else if s.previewCancel == nil {
+				// No goroutine running yet: start one.
+				cellW, cellH := terminalCellPixels()
+				ctx, cancel := context.WithCancel(context.Background())
+				s.previewCancel = cancel
+				go s.loadImageAsync(ctx, path, cols*cellW, rows*cellH)
+			}
+		} else {
+			s.drawTextImagePreview(path, col, row, cols, rows)
 		}
 		// If previewCancel != nil and encoded == "": goroutine is already running; wait.
 	case !files.BinaryAccurate(path):
@@ -356,7 +386,7 @@ func (s *State) showPreview(path string) {
 // redrawPreview refreshes the preview pane to match the current selection state.
 // Call this after every c.Draw() to restore preview content erased by the canvas flush.
 func (s *State) redrawPreview() {
-	if !envGraphics {
+	if !s.showPreviewPane() {
 		return
 	}
 	if s.selectedIndex() >= 0 && s.selectedIndex() < len(s.fileEntries) {
@@ -399,6 +429,63 @@ func aspectRatioCells(imgW, imgH, availCols, availRows uint) (cols, rows uint) {
 		rows = 1
 	}
 	return
+}
+
+// drawTextImagePreview renders an image file into the preview pane using text characters.
+func (s *State) drawTextImagePreview(path string, col, row, cols, rows uint) {
+	f, err := os.Open(path)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	img, _, err := image.Decode(f)
+	if err != nil {
+		return
+	}
+
+	bounds := img.Bounds()
+	imgW := float64(bounds.Dx())
+	imgH := float64(bounds.Dy())
+	if imgW == 0 || imgH == 0 {
+		return
+	}
+
+	width := int(cols)
+	height := int(rows)
+
+	// Adjustment for terminal cell aspect ratio (roughly 2:1 height:width)
+	ratio := (imgH / imgW) * 2.0
+
+	if proportionalWidth := int(float64(height) / ratio); proportionalWidth < width {
+		width = proportionalWidth
+	} else if proportionalHeight := int(float64(width) * ratio); proportionalHeight < height {
+		height = proportionalHeight
+	}
+
+	if width <= 0 || height <= 0 {
+		return
+	}
+
+	resizedImage := image.NewRGBA(image.Rect(0, 0, width, height))
+	draw.CatmullRom.Scale(resizedImage, resizedImage.Rect, img, bounds, draw.Over, nil)
+
+	indexedImg, err := palgen.ConvertBasic(resizedImage)
+	if err != nil {
+		return
+	}
+
+	const blockRune = '▒'
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			c := color.NRGBAModel.Convert(indexedImg.At(x, y)).(color.NRGBA)
+			vc := vt.White // default
+			if found, ok := paletteColorMap[[3]uint8{c.R, c.G, c.B}]; ok {
+				vc = found
+			}
+			s.canvas.PlotColor(col+uint(x), row+uint(y), vc, blockRune)
+		}
+	}
 }
 
 // drawTextPreview renders the first rows lines of a text file into the preview pane

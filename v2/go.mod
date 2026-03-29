@@ -30,14 +30,14 @@ require (
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
-	github.com/xyproto/megafile v1.6.27
+	github.com/xyproto/megafile v1.6.28
 	github.com/xyproto/mode v0.12.6
 	github.com/xyproto/ollamaclient/v2 v2.7.2
 	github.com/xyproto/orchideous v1.0.6
 	github.com/xyproto/palgen v1.6.1
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.2.3
-	github.com/xyproto/vt v1.7.6
+	github.com/xyproto/vt v1.7.7
 	github.com/xyproto/wordwrap v1.0.1
 	golang.org/x/image v0.38.0
 )
