@@ -539,7 +539,7 @@ func (s *State) ls(dir string) (int, error) {
 	// In kitty mode the right half is reserved for the preview pane.
 	// A separator column sits at W/2, so the listing stops one column before it.
 	w := s.canvas.W() - rightMargin
-	if envKitty && s.canvas.W() >= 20 {
+	if envGraphics && s.canvas.W() >= 20 {
 		w = s.canvas.W()/2 - 1
 	}
 	if maxY > bottomMargin {
@@ -712,7 +712,7 @@ func (s *State) ls(dir string) (int, error) {
 	}
 
 	// In kitty mode, draw a vertical separator between the file listing and the preview pane.
-	if envKitty && s.canvas.W() >= 20 {
+	if envGraphics && s.canvas.W() >= 20 {
 		sepX := s.canvas.W() / 2
 		sepColor := vt.Gray
 		if envNoColor {

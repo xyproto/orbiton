@@ -20,10 +20,21 @@ import (
 	_ "github.com/xfmoulet/qoi"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
+	"github.com/xyproto/mode"
+	"github.com/xyproto/syntax"
+	"github.com/xyproto/vt"
 )
 
-// envKitty is true when TERM=xterm-kitty, enabling Kitty graphics protocol features.
-var envKitty = env.Str("TERM") == "xterm-kitty"
+var (
+	// envKitty is true when TERM=xterm-kitty, enabling Kitty graphics protocol features.
+	envKitty = env.Str("TERM") == "xterm-kitty"
+
+	// envITerm2 is true when running inside iTerm2 (which sets TERM_PROGRAM=iTerm.app).
+	envITerm2 = env.Str("TERM_PROGRAM") == "iTerm.app"
+
+	// envGraphics is true when the terminal supports an inline image protocol.
+	envGraphics = envKitty || envITerm2
+)
 
 // imageExts lists file extensions handled by the image preview path.
 var imageExts = map[string]bool{
@@ -45,9 +56,12 @@ type previewResult struct {
 	imgH    uint   // pixel height of the source image
 }
 
-// kittyDeleteImages sends the Kitty graphics protocol command to delete all placed images.
-func kittyDeleteImages() {
-	fmt.Fprintf(os.Stdout, "\033_Ga=d,d=A,q=2\033\\")
+// deleteInlineImages sends the appropriate protocol command to delete all placed images.
+func deleteInlineImages() {
+	if envKitty {
+		fmt.Fprintf(os.Stdout, "\033_Ga=d,d=A,q=2\033\\")
+	}
+	// iTerm2 doesn't require an explicit delete; overwriting the cells is sufficient.
 }
 
 // previewPaneBounds returns the 1-indexed terminal column/row and the cell dimensions
@@ -81,7 +95,7 @@ func (s *State) cancelPreviewLoad() {
 // and cancels any in-flight image loading goroutine.
 func (s *State) clearPreviewPane() {
 	s.cancelPreviewLoad()
-	kittyDeleteImages()
+	deleteInlineImages()
 	col, row, cols, rows := s.previewPaneBounds()
 	if cols == 0 || rows == 0 {
 		return
@@ -250,13 +264,23 @@ func (s *State) applyPreviewResult(result previewResult) bool {
 }
 
 // flushImageFromCache writes the cached PNG image to the preview pane using the
-// Kitty graphics protocol (f=100). The caller must ensure currentPreviewEncoded is non-empty.
+// Kitty graphics protocol (f=100) or iTerm2 inline image protocol.
+// The caller must ensure currentPreviewEncoded is non-empty.
 func (s *State) flushImageFromCache(col, row, cols, rows uint) {
 	dispCols, dispRows := aspectRatioCells(s.currentPreviewImgW, s.currentPreviewImgH, cols, rows)
 
 	fmt.Fprintf(os.Stdout, "\033[%d;%dH", row, col)
 
 	encoded := s.currentPreviewEncoded
+
+	if envITerm2 {
+		// iTerm2 inline image protocol: ESC ] 1337 ; File=[args] : <base64> BEL
+		fmt.Fprintf(os.Stdout, "\033]1337;File=inline=1;width=%d;height=%d;preserveAspectRatio=1:%s\a",
+			dispCols, dispRows, encoded)
+		return
+	}
+
+	// Kitty graphics protocol with chunked transmission.
 	const chunkSize = 4096
 	total := len(encoded)
 	for i := 0; i < total; i += chunkSize {
@@ -284,7 +308,7 @@ func (s *State) flushImageFromCache(col, row, cols, rows uint) {
 // s.previewResultChan, which is consumed by the main event loop.
 // Non-image previews (text, directory, binary) are rendered synchronously.
 func (s *State) showPreview(path string) {
-	if !envKitty {
+	if !envGraphics {
 		return
 	}
 	col, row, cols, rows := s.previewPaneBounds()
@@ -295,7 +319,7 @@ func (s *State) showPreview(path string) {
 	if path != s.currentPreviewPath {
 		// New file selected: cancel any stale load and clear the pane.
 		s.cancelPreviewLoad()
-		kittyDeleteImages()
+		deleteInlineImages()
 		blank := strings.Repeat(" ", int(cols))
 		for r := range rows {
 			fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row+r, col, blank)
@@ -332,7 +356,7 @@ func (s *State) showPreview(path string) {
 // redrawPreview refreshes the preview pane to match the current selection state.
 // Call this after every c.Draw() to restore preview content erased by the canvas flush.
 func (s *State) redrawPreview() {
-	if !envKitty {
+	if !envGraphics {
 		return
 	}
 	if s.selectedIndex() >= 0 && s.selectedIndex() < len(s.fileEntries) {
@@ -377,7 +401,8 @@ func aspectRatioCells(imgW, imgH, availCols, availRows uint) (cols, rows uint) {
 	return
 }
 
-// drawTextPreview renders the first rows lines of a text file into the preview pane.
+// drawTextPreview renders the first rows lines of a text file into the preview pane
+// with syntax highlighting using the same method as Orbiton.
 func (s *State) drawTextPreview(path string, col, row, cols, rows uint) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -385,15 +410,27 @@ func (s *State) drawTextPreview(path string, col, row, cols, rows uint) {
 	}
 	defer f.Close()
 
-	scanner := bufio.NewScanner(f)
-	for r := uint(0); r < rows && scanner.Scan(); r++ {
-		line := scanner.Text()
+	// Detect the file mode and adjust keywords for syntax highlighting.
+	m := mode.Detect(path)
+	syntax.AdjustKeywords(m)
+	syntax.SetDefaultTextConfigFromEnv()
+	tout := vt.New()
+
+	sc := bufio.NewScanner(f)
+	for r := uint(0); r < rows && sc.Scan(); r++ {
+		line := sc.Text()
 		line = strings.ReplaceAll(line, "\t", "    ")
 		runes := []rune(line)
 		if uint(len(runes)) >= cols {
 			runes = runes[:cols-1]
 		}
-		fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row+r, col, string(runes))
+		truncated := string(runes)
+		tagged, err := syntax.AsText([]byte(truncated), m)
+		if err != nil {
+			fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row+r, col, truncated)
+		} else {
+			fmt.Fprintf(os.Stdout, "\033[%d;%dH%s\033[0m", row+r, col, tout.DarkTags(string(tagged)))
+		}
 	}
 }
 
