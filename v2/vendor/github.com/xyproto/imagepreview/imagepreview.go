@@ -3,6 +3,7 @@ package imagepreview
 import (
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/palgen"
@@ -10,6 +11,9 @@ import (
 )
 
 var (
+	// Sync is a global mutex to coordinate terminal output between text and graphics.
+	Sync sync.Mutex
+
 	// IsKitty is true when TERM=xterm-kitty, enabling Kitty graphics protocol features.
 	IsKitty = env.Str("TERM") == "xterm-kitty"
 
@@ -61,4 +65,18 @@ type PreviewResult struct {
 	Encoded string // base64-encoded PNG
 	ImgW    uint   // pixel width of the source image
 	ImgH    uint   // pixel height of the source image
+}
+
+// BeginSync locks the global Sync mutex and emits the terminal's begin synchronized
+// update escape sequence. Pair this with EndSync.
+func BeginSync() {
+	Sync.Lock()
+	vt.BeginSyncUpdate()
+}
+
+// EndSync emits the terminal's end synchronized update escape sequence and unlocks
+// the global Sync mutex. Pair this with BeginSync.
+func EndSync() {
+	vt.EndSyncUpdate()
+	Sync.Unlock()
 }

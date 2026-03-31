@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/xyproto/env/v2"
+	"github.com/xyproto/imagepreview"
 	"github.com/xyproto/vt"
 )
 
@@ -132,8 +133,10 @@ func (s *State) redraw() {
 	}
 
 	// Draw the canvas
+	imagepreview.BeginSync()
 	c.Draw()
 	s.redrawPreview()
+	imagepreview.EndSync()
 }
 
 // startResizeHandler starts a goroutine that listens for terminal resize

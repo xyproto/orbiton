@@ -285,7 +285,10 @@ func (s *State) drawOutput(text string) {
 		s.canvas.Write(x, y, vt.Default, s.Background, strings.TrimSpace(line))
 		y++
 	}
+	imagepreview.BeginSync()
 	s.canvas.Draw()
+	s.redrawPreview()
+	imagepreview.EndSync()
 	// Wait for a key press before continuing
 	<-s.keyChan
 	s.startReadKey()
@@ -923,7 +926,10 @@ func (s *State) msgBox(line1, line2, line3, line4 string) bool {
 	c.Write(centerInBox(line3), startY+5, line3Color, s.Background, line3)
 	c.Write(centerInBox(line4), startY+6, line4Color, s.Background, line4)
 
+	imagepreview.BeginSync()
 	c.Draw()
+	s.redrawPreview()
+	imagepreview.EndSync()
 
 	// Wait for key press
 	key := <-s.keyChan
@@ -1415,8 +1421,10 @@ func (s *State) Run() ([]string, error) {
 	clearAndPrepare()
 	s.ls(s.Directories[s.dirIndex])
 
+	imagepreview.BeginSync()
 	c.Draw()
 	s.redrawPreview()
+	imagepreview.EndSync()
 
 	s.startReadKey()
 
@@ -1431,7 +1439,9 @@ func (s *State) Run() ([]string, error) {
 		case result := <-s.previewResultChan:
 			if s.applyPreviewResult(result) {
 				col, row, cols, rows := s.previewPaneBounds()
+				imagepreview.BeginSync()
 				s.flushImageFromCache(col, row, cols, rows)
+				imagepreview.EndSync()
 			}
 			continue
 		case <-uptimeTicker.C:
@@ -1444,15 +1454,20 @@ func (s *State) Run() ([]string, error) {
 				} else {
 					c.WriteTagged(5, uptimeY, s.Background, o.LightTags(uptimeString))
 				}
+				imagepreview.BeginSync()
 				c.Draw()
 				s.redrawPreview()
+				imagepreview.EndSync()
 			}
 			continue
 		}
 
 		if handled, shouldDraw := rename.handleKey(key, &index, renameHooks); handled {
 			if shouldDraw {
+				imagepreview.BeginSync()
 				c.Draw()
+				s.redrawPreview()
+				imagepreview.EndSync()
 			}
 			continue
 		}
@@ -1462,7 +1477,10 @@ func (s *State) Run() ([]string, error) {
 				// If a file selection is active, clear it
 				s.clearHighlight()
 				s.setSelectedIndex(-1)
+				imagepreview.BeginSync()
 				c.Draw()
+				s.redrawPreview()
+				imagepreview.EndSync()
 				break
 			}
 			if s.filterPattern != "" || len(s.written) > 0 {
@@ -1476,7 +1494,10 @@ func (s *State) Run() ([]string, error) {
 				c.Clear()
 				clearAndPrepare()
 				s.ls(s.Directories[s.dirIndex])
+				imagepreview.BeginSync()
 				c.Draw()
+				s.redrawPreview()
+				imagepreview.EndSync()
 				break
 			}
 			//if absPath, err := filepath.Abs(s.Directories[s.dirIndex]); err == nil && absPath == "/" { // at root
@@ -1527,7 +1548,10 @@ func (s *State) Run() ([]string, error) {
 					// yellow highlight signals that a second return is needed
 					s.binaryConfirmPending = true
 					s.highlightBinaryPending()
+					imagepreview.BeginSync()
 					c.Draw()
+					s.redrawPreview()
+					imagepreview.EndSync()
 					break
 				}
 				s.binaryConfirmPending = false
@@ -1551,7 +1575,10 @@ func (s *State) Run() ([]string, error) {
 				s.filterPattern = ""
 				clearAndPrepare()
 				clearWritten()
+				imagepreview.BeginSync()
 				c.Draw()
+				s.redrawPreview()
+				imagepreview.EndSync()
 				output, err := runShell(shellCmd, s.Directories[s.dirIndex])
 				if err != nil {
 					s.drawError(err.Error())
@@ -1569,7 +1596,10 @@ func (s *State) Run() ([]string, error) {
 			index = 0
 			clearAndPrepare()
 			clearWritten()
+			imagepreview.BeginSync()
 			c.Draw()
+			s.redrawPreview()
+			imagepreview.EndSync()
 			if changedDirectory, editedFile, _, err := s.execute(commandText, s.Directories[s.dirIndex]); err != nil {
 				s.drawError(err.Error())
 			} else if changedDirectory || editedFile {
@@ -2201,8 +2231,10 @@ func (s *State) Run() ([]string, error) {
 			clearWritten()
 			drawWritten()
 		}
+		imagepreview.BeginSync()
 		c.Draw()
 		s.redrawPreview()
+		imagepreview.EndSync()
 	}
 
 	Cleanup(c)

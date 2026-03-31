@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"fmt"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
@@ -15,6 +14,8 @@ import (
 	"strings"
 
 	_ "github.com/dkua/go-ico"
+	"github.com/srwiley/oksvg"
+	"github.com/srwiley/rasterx"
 	_ "github.com/xfmoulet/qoi"
 )
 
@@ -27,7 +28,7 @@ import (
 // (f=100). Small images are pre-scaled with nearest-neighbor so Kitty renders
 // sharp pixels instead of a blurry bilinear upscale.
 //
-// SVG files are rendered via inkscape; JPEG XL files are converted via
+// SVG files are rendered via native Go packages; JPEG XL files are converted via
 // ImageMagick (magick).
 func LoadAndEncode(ctx context.Context, path string, panePixW, panePixH uint) (PreviewResult, error) {
 	ext := strings.ToLower(filepath.Ext(path))
@@ -36,21 +37,47 @@ func LoadAndEncode(ctx context.Context, path string, panePixW, panePixH uint) (P
 	var imgW, imgH uint
 
 	if ext == ".svg" {
-		// SVG: render via inkscape at the pane's pixel dimensions.
+		// SVG: render via native Go packages at the pane's pixel dimensions.
 		w := panePixW
 		if w == 0 {
 			w = 800
 		}
-		enc, iw, ih, err := ConvertToPNG(ctx, "inkscape",
-			"--export-type=png", "--export-filename=-",
-			"--export-area-drawing", "--export-width="+fmt.Sprintf("%d", w), path)
+
+		f, err := os.Open(path)
 		if err != nil {
+			return PreviewResult{}, err
+		}
+		defer f.Close()
+
+		icon, err := oksvg.ReadIconStream(f)
+		if err != nil {
+			return PreviewResult{}, err
+		}
+
+		var h uint
+		if icon.ViewBox.W != 0 {
+			h = uint(float64(w) * icon.ViewBox.H / icon.ViewBox.W)
+		}
+		if h == 0 {
+			h = w
+		}
+		icon.SetTarget(0, 0, float64(w), float64(h))
+
+		img := image.NewRGBA(image.Rect(0, 0, int(w), int(h)))
+		scanner := rasterx.NewScannerGV(int(w), int(h), img, img.Bounds())
+		dasher := rasterx.NewDasher(int(w), int(h), scanner)
+
+		icon.Draw(dasher, 1.0)
+
+		imgW, imgH = w, h
+		var buf bytes.Buffer
+		if err := png.Encode(&buf, img); err != nil {
 			return PreviewResult{}, err
 		}
 		if ctx.Err() != nil {
 			return PreviewResult{}, ctx.Err()
 		}
-		encoded, imgW, imgH = enc, iw, ih
+		encoded = base64.StdEncoding.EncodeToString(buf.Bytes())
 	} else if ext == ".jxl" {
 		// JPEG XL: convert via ImageMagick.
 		enc, iw, ih, err := ConvertToPNG(ctx, "magick", path, "png:-")
