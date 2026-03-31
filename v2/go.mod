@@ -30,7 +30,7 @@ require (
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
-	github.com/xyproto/megafile v1.6.31
+	github.com/xyproto/megafile v1.6.32
 	github.com/xyproto/mode v0.12.6
 	github.com/xyproto/ollamaclient/v2 v2.7.2
 	github.com/xyproto/orchideous v1.0.6
@@ -55,7 +55,7 @@ require (
 	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
-	github.com/xyproto/imagepreview v1.0.9 // indirect
+	github.com/xyproto/imagepreview v1.0.10 // indirect
 	github.com/xyproto/syntax v1.12.2 // indirect
 	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect

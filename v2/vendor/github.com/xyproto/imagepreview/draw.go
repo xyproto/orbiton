@@ -81,8 +81,8 @@ func DrawTextImage(canvas *vt.Canvas, path string, col, row, cols, rows uint, dr
 		return
 	}
 
-	width := int(cols)
-	height := int(rows)
+	targetW := int(cols)
+	targetH := int(rows)
 
 	// Terminal cells are taller than they are wide (typically ~2:1).
 	// Account for this so the image is not stretched or squished.
@@ -90,21 +90,21 @@ func DrawTextImage(canvas *vt.Canvas, path string, col, row, cols, rows uint, dr
 	cellRatio := float64(cH) / float64(cW) // e.g. 2.0 for 8x16 cells
 
 	// Given the available height, how wide should the image be?
-	targetW := int(float64(height) * (imgW / imgH) * cellRatio)
+	fitW := int(float64(targetH) * (imgW / imgH) * cellRatio)
 	// Given the available width, how tall should the image be?
-	targetH := int(float64(width) * (imgH / imgW) / cellRatio)
+	fitH := int(float64(targetW) * (imgH / imgW) / cellRatio)
 
-	if targetW < width {
-		width = targetW
-	} else if targetH < height {
-		height = targetH
+	if fitW < targetW {
+		targetW = fitW
+	} else if fitH < targetH {
+		targetH = fitH
 	}
 
-	if width <= 0 || height <= 0 {
+	if targetW <= 0 || targetH <= 0 {
 		return
 	}
 
-	resizedImage := image.NewRGBA(image.Rect(0, 0, width, height))
+	resizedImage := image.NewRGBA(image.Rect(0, 0, targetW, targetH))
 	draw.CatmullRom.Scale(resizedImage, resizedImage.Rect, img, bounds, draw.Over, nil)
 
 	indexedImg, err := palgen.ConvertBasic(resizedImage)
@@ -112,8 +112,8 @@ func DrawTextImage(canvas *vt.Canvas, path string, col, row, cols, rows uint, dr
 		return
 	}
 
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
+	for y := 0; y < targetH; y++ {
+		for x := 0; x < targetW; x++ {
 			if IsVT {
 				c := color.NRGBAModel.Convert(indexedImg.At(x, y)).(color.NRGBA)
 				vc := vt.White // default
