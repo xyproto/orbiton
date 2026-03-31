@@ -1,6 +1,6 @@
 module github.com/xyproto/orbiton/v2
 
-go 1.24.13
+go 1.25.8
 
 require (
 	github.com/creack/pty v1.1.24
@@ -30,16 +30,16 @@ require (
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
-	github.com/xyproto/megafile v1.6.34
+	github.com/xyproto/megafile v1.6.35
 	github.com/xyproto/mode v0.12.6
 	github.com/xyproto/ollamaclient/v2 v2.7.2
 	github.com/xyproto/orchideous v1.0.6
 	github.com/xyproto/palgen v1.6.1
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.2.3
-	github.com/xyproto/vt v1.7.10
+	github.com/xyproto/vt v1.7.13
 	github.com/xyproto/wordwrap v1.0.1
-	golang.org/x/image v0.36.0
+	golang.org/x/image v0.38.0
 )
 
 require (
@@ -55,10 +55,10 @@ require (
 	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
-	github.com/xyproto/imagepreview v1.0.12 // indirect
-	github.com/xyproto/syntax v1.12.4 // indirect
-	golang.org/x/net v0.50.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
-	golang.org/x/term v0.40.0 // indirect
-	golang.org/x/text v0.34.0 // indirect
+	github.com/xyproto/imagepreview v1.1.0 // indirect
+	github.com/xyproto/syntax v1.12.6 // indirect
+	golang.org/x/net v0.52.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/term v0.41.0 // indirect
+	golang.org/x/text v0.35.0 // indirect
 )

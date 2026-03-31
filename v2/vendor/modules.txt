@@ -112,7 +112,7 @@ github.com/xyproto/globi
 # github.com/xyproto/iferr v1.1.0
 ## explicit; go 1.19
 github.com/xyproto/iferr
-# github.com/xyproto/imagepreview v1.0.12
+# github.com/xyproto/imagepreview v1.1.0
 ## explicit; go 1.24.13
 github.com/xyproto/imagepreview
 # github.com/xyproto/javasig v1.0.3
@@ -124,8 +124,8 @@ github.com/xyproto/kotlinsig
 # github.com/xyproto/lookslikegoasm v1.0.0
 ## explicit; go 1.23.2
 github.com/xyproto/lookslikegoasm
-# github.com/xyproto/megafile v1.6.34
-## explicit; go 1.24.13
+# github.com/xyproto/megafile v1.6.35
+## explicit; go 1.25.8
 github.com/xyproto/megafile
 # github.com/xyproto/mode v0.12.6
 ## explicit; go 1.23.2
@@ -139,8 +139,8 @@ github.com/xyproto/orchideous
 # github.com/xyproto/palgen v1.6.1
 ## explicit; go 1.16
 github.com/xyproto/palgen
-# github.com/xyproto/syntax v1.12.4
-## explicit; go 1.24.13
+# github.com/xyproto/syntax v1.12.6
+## explicit; go 1.25.8
 github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.5.1
 ## explicit; go 1.11
@@ -148,8 +148,8 @@ github.com/xyproto/termtitle
 # github.com/xyproto/usermodel v1.2.3
 ## explicit; go 1.23.1
 github.com/xyproto/usermodel
-# github.com/xyproto/vt v1.7.10
-## explicit; go 1.24.13
+# github.com/xyproto/vt v1.7.13
+## explicit; go 1.25.8
 github.com/xyproto/vt
 # github.com/xyproto/wordwrap v1.0.1
 ## explicit; go 1.21.3
