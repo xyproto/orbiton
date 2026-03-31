@@ -15,6 +15,7 @@ import (
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
+	"github.com/xyproto/imagepreview"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 )
@@ -122,15 +123,15 @@ type State struct {
 	cachedUncommittedDir      string
 	resizeChan                chan os.Signal
 	resizeCancel              func()
-	currentPreviewPath        string             // path shown in the kitty preview pane, "" if none
-	currentPreviewEncoded     string             // cached base64 PNG data for the current image preview
-	currentPreviewImgW        uint               // pixel width of the cached preview image
-	currentPreviewImgH        uint               // pixel height of the cached preview image
-	listOffset                int                // scroll offset for the file listing
-	splitX                    uint               // split point between the file listing and the preview pane
-	previewCancel             context.CancelFunc // cancels the in-flight loadImageAsync goroutine
-	previewResultChan         chan previewResult // receives results from loadImageAsync
-	keyChan                   chan string        // receives keys from the background readKey goroutine
+	currentPreviewPath        string                          // path shown in the kitty preview pane, "" if none
+	currentPreviewEncoded     string                          // cached base64 PNG data for the current image preview
+	currentPreviewImgW        uint                            // pixel width of the cached preview image
+	currentPreviewImgH        uint                            // pixel height of the cached preview image
+	listOffset                int                             // scroll offset for the file listing
+	splitX                    uint                            // split point between the file listing and the preview pane
+	previewCancel             context.CancelFunc              // cancels the in-flight loadImageAsync goroutine
+	previewResultChan         chan imagepreview.PreviewResult // receives results from loadImageAsync
+	keyChan                   chan string                     // receives keys from the background readKey goroutine
 }
 
 // ErrExit is the error that is returned if the user appeared to want to exit
@@ -251,7 +252,7 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor, undoHist
 		BinaryConfirmForeground:   binaryConfirmForeground,
 		BinaryConfirmBackground:   binaryConfirmBackground,
 		undoHistoryPath:           undoHistoryPath,
-		previewResultChan:         make(chan previewResult, 1),
+		previewResultChan:         make(chan imagepreview.PreviewResult, 1),
 		keyChan:                   make(chan string, 1),
 	}
 	state.loadUndoHistory()
@@ -645,15 +646,12 @@ func (s *State) ls(dir string) (int, error) {
 	}
 
 	if s.showPreviewPane() {
-		s.splitX = s.startx + maxLen + 2
-		// Cap splitX so preview pane doesn't become too narrow
-		if s.splitX > s.canvas.W()-20 {
-			s.splitX = s.canvas.W() - 20
-		}
-		// Also don't let it be too small
-		if s.splitX < 15 {
-			s.splitX = 15
-		}
+		s.splitX = max(
+			// Cap splitX so preview pane doesn't become too narrow
+			// Also don't let it be too small
+			min(
+
+				s.startx+maxLen+2, s.canvas.W()-20), 15)
 		w = s.splitX - 1
 	}
 
@@ -776,7 +774,7 @@ func (s *State) ls(dir string) (int, error) {
 			sepColor = vt.Default
 		}
 		sepChar := "│"
-		if !envGraphics {
+		if !imagepreview.HasGraphics {
 			sepChar = "|"
 		}
 		for iy := s.starty + 1; iy < maxY; iy++ {

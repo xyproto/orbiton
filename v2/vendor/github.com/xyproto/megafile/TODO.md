@@ -5,3 +5,4 @@
 - [ ] Let `ctrl-n`/`ctrl-p` scroll the preview text down/up.
 - [ ] Move/refactor the terminal image viewing code from Orbiton to Megafile,
       then use this code from Orbiton too.
+- [ ] Render SVG files using a Go package. Download and cache fonts, as needed.
