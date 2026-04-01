@@ -255,7 +255,10 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 		status.Show(c, e)
 	}
 
-	if repositionCursor {
+	if e.blockMode {
+		// In block mode, hide the hardware cursor and rely on virtual cursors
+		c.HideCursor()
+	} else if repositionCursor {
 		if didDraw {
 			e.EnableAndPlaceCursor(c)
 		} else {

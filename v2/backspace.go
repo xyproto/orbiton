@@ -44,6 +44,9 @@ func (e *Editor) Backspace(c *vt.Canvas) {
 					e.pos.sx++
 				}
 				e.pos.mut.Unlock()
+			} else {
+				// At the end of the line, trim trailing whitespace
+				e.TrimRight(e.DataY())
 			}
 		}
 		return true // success

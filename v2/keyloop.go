@@ -449,6 +449,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.quit = true
 		case "c:23": // ctrl-w, format or insert template (or if in git mode, cycle interactive rebase keywords)
 
+			if e.blockMode {
+				e.blockMode = false
+				e.blockCursors = nil
+				c.ShowCursor()
+			}
+
 			if e.nanoMode.Load() { // nano: ctrl-w, search
 				const clearPreviousSearch = true
 				const searchForward = true
@@ -514,6 +520,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			status.HoldMessage(c, 250*time.Millisecond)
 
 		case "c:6": // ctrl-f, search for a string (or step out in debug mode)
+
+			if e.blockMode {
+				e.blockMode = false
+				e.blockCursors = nil
+				c.ShowCursor()
+			}
 
 			if e.nanoMode.Load() { // nano: ctrl-f, cursor forward
 				e.CursorForward(c, status)
@@ -749,6 +761,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		case "c:28": // ctrl-\, toggle comment for this block
 			undo.Snapshot(e)
 			e.ToggleCommentBlock(c)
+			if e.blockMode {
+				e.InitBlockCursors(c)
+			}
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 		case "c:15": // ctrl-o, launch the command menu (or step over in debug mode)
@@ -804,8 +819,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					wrapped := e.InsertRune(c, r)
 					if !wrapped {
 						e.WriteRune(c)
-						// Move to the next position
-						e.Next(c)
+						if e.blockMode {
+							e.BlockCursorRight()
+						} else {
+							e.Next(c)
+						}
 					}
 					e.redraw.Store(true)
 				}
@@ -822,6 +840,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.CommandPrompt(c, tty, status, undo)
 				// It's important to reset the key history after hitting this combo
 				clearKeyHistory = true
+				break
+			}
+
+			if e.blockMode {
+				e.BlockCursorLeft()
+				e.redraw.Store(true)
 				break
 			}
 
@@ -857,6 +881,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.CommandPrompt(c, tty, status, undo)
 				// It's important to reset the key history after hitting this combo
 				clearKeyHistory = true
+				break
+			}
+
+			if e.blockMode {
+				e.BlockCursorRight()
+				e.redraw.Store(true)
 				break
 			}
 
@@ -898,10 +928,15 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.CursorUpward(c, status)
 			}
 
+			if e.blockMode {
+				e.InitBlockCursors(c)
+			}
+
 			if e.highlightCurrentLine || e.highlightCurrentText {
 				e.redraw.Store(true)
 				e.drawFuncName.Store(true)
 			}
+			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
 		case downArrow: // down arrow
@@ -921,15 +956,18 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.CursorDownward(c, status)
 			}
 
+			if e.blockMode {
+				e.InitBlockCursors(c)
+			}
+
 			// If the cursor is after the length of the current line, move it to the end of the current line
 			if e.AfterLineScreenContents() || e.AfterEndOfLine() {
 				e.End(c)
-				e.redraw.Store(true)
 			}
 			if e.highlightCurrentLine || e.highlightCurrentText {
-				e.redraw.Store(true)
 				e.drawFuncName.Store(true)
 			}
+			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
@@ -986,6 +1024,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 						e.redrawCursor.Store(true)
 						if e.AfterLineScreenContents() {
 							e.End(c)
+						}
+						if e.blockMode {
+							e.InitBlockCursors(c)
 						}
 					}
 				}
@@ -1087,6 +1128,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					if e.AfterLineScreenContents() {
 						e.End(c)
 					}
+					if e.blockMode {
+						e.InitBlockCursors(c)
+					}
 				}
 				e.drawProgress.Store(true)
 				e.drawFuncName.Store(true)
@@ -1159,12 +1203,16 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					e.redraw.Store(false)
 					e.redrawCursor.Store(false)
 				}
+				if e.blockMode {
+					e.InitBlockCursors(c)
+				}
 				notRegularEditingRightNow.Store(false)
 				break
 			}
 			fallthrough // nano: ctrl-l to refresh
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
 			e.blockMode = false
+			e.blockCursors = nil
 			c.ShowCursor()
 			// If o is used as a man page viewer, or if the escToExit flag is set, exit at the press of esc
 			if escToExit || e.mode == mode.ManPage {
@@ -1228,12 +1276,21 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			wrapped := e.InsertRune(c, ' ')
 			if !wrapped {
 				e.WriteRune(c)
-				// Move to the next position
-				e.Next(c)
+				if e.blockMode {
+					e.BlockCursorRight()
+				} else {
+					e.Next(c)
+				}
 			}
 			e.redraw.Store(true)
 
 		case "c:13", "\n": // return
+
+			if e.blockMode {
+				e.blockMode = false
+				e.blockCursors = nil
+				c.ShowCursor()
+			}
 
 			// Show a "Read only" status message if a man page is being viewed or if the editor is read-only
 			// It is an alternative way to quickly check if the file is read-only,
@@ -1384,7 +1441,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					// Write the spaces that represent the tab to the canvas
 					e.WriteTab(c)
 					// Move to the next position
-					e.Next(c)
+					if e.blockMode {
+						e.BlockCursorRight()
+					} else {
+						e.Next(c)
+					}
 				}
 			} else {
 				// Insert a tab character to the file
@@ -1392,7 +1453,13 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				// Write the spaces that represent the tab to the canvas
 				e.WriteTab(c)
 				// Move to the next position
-				e.Next(c)
+				if e.blockMode {
+					for i := 0; i < e.indentation.PerTab; i++ {
+						e.BlockCursorRight()
+					}
+				} else {
+					e.Next(c)
+				}
 			}
 
 			// Prepare to redraw
@@ -1405,6 +1472,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redrawCursor.Store(true)
 			if e.AfterLineScreenContents() {
 				e.End(c)
+			}
+			if e.blockMode {
+				e.InitBlockCursors(c)
 			}
 			e.drawProgress.Store(true)
 			e.drawFuncName.Store(true)
@@ -1422,6 +1492,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redrawCursor.Store(true)
 			if e.AfterLineScreenContents() {
 				e.End(c)
+			}
+			if e.blockMode {
+				e.InitBlockCursors(c)
 			}
 			e.drawProgress.Store(true)
 			e.drawFuncName.Store(true)
@@ -1642,6 +1715,36 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 		case "c:24": // ctrl-x, cut line
 
+			if e.blockMode { // cut the entire block
+
+				undo.Snapshot(e)
+				y := e.DataY()
+				s := e.Block(y)
+				lines := strings.Split(s, "\n")
+				if len(lines) > 0 {
+					copyLines = lines
+					if isDarwin {
+						pbcopy(s)
+					} else {
+						_ = clip.WriteAll(s, e.primaryClipboard)
+					}
+					notRegularEditingRightNow.Store(true)
+					for range lines {
+						e.DeleteLineMoveBookmark(y)
+					}
+					notRegularEditingRightNow.Store(false)
+				}
+				e.blockMode = false
+				e.blockCursors = nil
+				c.ShowCursor()
+				lastCutY = -1
+				lastCopyY = -1
+				lastPasteY = -1
+				e.redrawCursor.Store(true)
+				e.redraw.Store(true)
+				break
+			}
+
 			if e.nanoMode.Load() { // nano: ctrl-x, quit
 
 				if e.changed.Load() {
@@ -1703,6 +1806,23 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// Go to the end of the current line
 			e.End(c)
 		case "c:11": // ctrl-k, delete to end of line
+			if e.blockMode { // delete to end of line on all lines in the block
+
+				undo.Snapshot(e)
+				e.ForEachLineInBlock(c, func() bool {
+					e.DeleteRestOfLine()
+					return true
+				})
+				e.blockMode = false
+				e.blockCursors = nil
+				c.ShowCursor()
+				lastCopyY = -1
+				lastPasteY = -1
+				lastCutY = -1
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				break
+			}
 			undo.Snapshot(e)
 			if e.nanoMode.Load() { // nano: ctrl-k, cut line
 				// Prepare to cut
@@ -1750,6 +1870,43 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				// Forget the cut and paste line state
 				lastCutY = -1
 				lastPasteY = -1
+
+				if e.blockMode { // 1x copies the block, 2x copies the function
+					var s string
+					if lastCopyY == y {
+						var err error
+						s, err = e.FunctionBlock(y)
+						if err != nil {
+							s = e.Block(y)
+						}
+					} else {
+						s = e.Block(y)
+					}
+					lastCopyY = y
+					if s != "" {
+						copyLines = strings.Split(s, "\n")
+						lineCount := strings.Count(s, "\n")
+						plural := "s"
+						if lineCount == 1 {
+							plural = ""
+						}
+						var clipErr error
+						if isDarwin {
+							clipErr = pbcopy(s)
+						} else {
+							clipErr = clip.WriteAll(s, e.primaryClipboard)
+						}
+						fmtMsg := "Copied %d line%s from %s"
+						if clipErr != nil {
+							fmtMsg = "Copied %d line%s from %s to internal buffer"
+						}
+						status.SetMessage(fmt.Sprintf(fmtMsg, lineCount, plural, filepath.Base(e.filename)))
+						status.Show(c, e)
+					}
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
+					return
+				}
 
 				// check if this operation is done on the same line as last time
 				singleLineCopy := lastCopyY != y
@@ -1831,6 +1988,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}()
 
 		case "c:22": // ctrl-v, paste
+
+			if e.blockMode {
+				e.blockMode = false
+				e.blockCursors = nil
+				c.ShowCursor()
+			}
 
 			if e.nanoMode.Load() { // nano: ctrl-v, page down
 				h := int(c.H())
@@ -1934,10 +2097,13 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			e.blockMode = !e.blockMode
 			if e.blockMode {
+				e.InitBlockCursors(c)
 				status.SetMessageAfterRedraw("Block editing enabled")
 			} else {
+				e.blockCursors = nil
 				status.SetMessageAfterRedraw("Block editing disabled")
 			}
+			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 		case "c:10": // ctrl-j, join line
 			if e.Empty() {
@@ -1946,10 +2112,26 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 			undo.Snapshot(e)
+
+			if e.blockMode { // join all lines in the block into one
+				e.blockMode = false
+				e.blockCursors = nil
+				c.ShowCursor()
+				for range e.Len() {
+					if !e.JoinLineWithNext(c) {
+						break
+					}
+				}
+				e.Home()
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				break
+			}
+
 			if e.nanoMode.Load() {
-				// Up to 999 times, join the current line with the next, until the next line is empty
+				// Join the current line with the next, until the next line is empty
 				joinCount := 0
-				for range 999 {
+				for range e.Len() {
 					if !e.JoinLineWithNext(c) {
 						break
 					}
@@ -2076,8 +2258,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				wrapped := e.InsertRune(c, r)
 				e.WriteRune(c)
 				if !wrapped {
-					// Move to the next position
-					e.Next(c)
+					if e.blockMode {
+						e.BlockCursorRight()
+					} else {
+						e.Next(c)
+					}
+				}
+				if e.blockMode {
+					e.redraw.Store(true)
 				}
 				e.redrawCursor.Store(true)
 			}
