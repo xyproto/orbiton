@@ -1934,9 +1934,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			e.blockMode = !e.blockMode
 			if e.blockMode {
-				status.SetMessageAfterRedraw("Block edit: on")
+				status.SetMessageAfterRedraw("Block editing enabled")
 			} else {
-				status.SetMessageAfterRedraw("Block edit: off")
+				status.SetMessageAfterRedraw("Block editing disabled")
 			}
 			e.redrawCursor.Store(true)
 		case "c:10": // ctrl-j, join line
