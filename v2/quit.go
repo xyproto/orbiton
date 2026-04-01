@@ -3,12 +3,10 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"syscall"
 
 	"github.com/xyproto/env/v2"
