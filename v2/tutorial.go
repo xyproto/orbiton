@@ -34,18 +34,8 @@ var tutorialSteps = Tutorial{
 		expectKeys:  []string{"c:1", "c:1", "c:1"}, // ctrl-a
 	},
 	TutorialStep{
-		title:       "Create a bookmark",
-		description: "Press ctrl-b to bookmark the current line.",
-		expectKeys:  []string{"c:2"}, // ctrl-b
-	},
-	TutorialStep{
-		title:       "Jump to a bookmark",
-		description: "Press ctrl-b to jump to the bookmark. It must be on a different line than the current line.",
-		expectKeys:  []string{"c:2"}, // ctrl-b
-	},
-	TutorialStep{
-		title:       "Remove a bookmark",
-		description: "Press ctrl-b to clear a bookmark. The bookmark must be set and the current line must be the bookmarked line.",
+		title:       "Toggle block editing mode",
+		description: "Press ctrl-b to toggle block editing mode, where multiple lines in a block (until a blank line or EOF) can be edited at once.",
 		expectKeys:  []string{"c:2"}, // ctrl-b
 	},
 	TutorialStep{
@@ -86,11 +76,6 @@ var tutorialSteps = Tutorial{
 	TutorialStep{
 		title:       "Go to definition",
 		description: "For some programming languages, ctrl-g can be pressed to jump to a definition, and ctrl-b can be used to jump back.",
-		expectKeys:  []string{"c:7"}, // ctrl-g
-	},
-	TutorialStep{
-		title:       "Toggle block editing mode",
-		description: "ctrl-g will toggle block editing mode, where multiple lines in a block (until a blank line of EOF) can be edited at once. An informative status bar will also be shown.",
 		expectKeys:  []string{"c:7"}, // ctrl-g
 	},
 	TutorialStep{

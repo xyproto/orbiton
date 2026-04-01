@@ -61,7 +61,7 @@ ctrl-c      to copy the current line, press twice to copy the current block
 ctrl-v      to paste one line, press twice to paste the rest
 ctrl-x      to cut the current line, press twice to cut the current block
 ctrl-b      to jump back after having jumped to a definition or include
-            to toggle a bookmark for the current line, or jump to a bookmark
+            to toggle block edit mode
             to toggle a breakpoint if in debug mode
 ctrl-u      to undo (ctrl-z is also possible, but may background the application)
 ctrl-l      to jump to a specific line or letter (press return to jump to the top or bottom)
