@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Let `ctrl-b` be for block editing rather than bookmarking.
 - [ ] Highlight `<tags>` differently in `JSX` files.
 - [ ] When piping command line output to `o -m` or `o -m -`, Orbiton should behave as a log colorizer.
 - [ ] If pressing `ctrl-e` when block editing, then move all the cursors to the end of the lines.
