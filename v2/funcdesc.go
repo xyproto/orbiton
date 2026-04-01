@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"strings"
 	"sync"
@@ -100,9 +99,21 @@ func wrappedLineCount(text string, maxWidth int) int {
 	return totalLines
 }
 
-// hashFunctionBody returns a SHA256 hash of the function body
+// hashFunctionBody returns a FNV-1a hash of the function body.
+// FNV-1a is a fast, non-cryptographic hash function that produces consistent
+// hashes suitable for detecting function body changes. It's pure Go with no
+// external dependencies, keeping the executable smaller.
 func hashFunctionBody(funcBody string) string {
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(funcBody)))
+	const (
+		fnvOffset uint64 = 14695981039346656037
+		fnvPrime  uint64 = 1099511628211
+	)
+	hash := fnvOffset
+	for _, b := range funcBody {
+		hash ^= uint64(b)
+		hash *= fnvPrime
+	}
+	return fmt.Sprintf("%016x", hash)
 }
 
 // clearFunctionDescriptionQueue clears pending description requests
