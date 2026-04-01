@@ -964,6 +964,17 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 			c.WriteRune(uint(e.wrapWidth), yp, dottedLineColor, bg, wrapMarkerRune)
 		}
 
+		// Draw virtual cursors for block editing mode on all lines in the block
+		if e.blockMode && e.blockCursors != nil {
+			fileLineY := int(y + offsetY)
+			if virtualCursorAbsX, exists := e.blockCursors[fileLineY]; exists {
+				virtualCursorScreenX := virtualCursorAbsX - e.pos.offsetX
+				if virtualCursorScreenX >= 0 && virtualCursorScreenX < int(cw) {
+					c.WriteRuneBNoLock(uint(virtualCursorScreenX), yp, vt.Black, vt.Yellow, '_')
+				}
+			}
+		}
+
 	}
 }
 

@@ -825,6 +825,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
+			if e.blockMode {
+				e.BlockCursorLeft()
+				e.redraw.Store(true)
+				break
+			}
+
 			e.CursorBackward(c, status)
 
 			// Move extra if the key is held down
@@ -860,6 +866,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
+			if e.blockMode {
+				e.BlockCursorRight()
+				e.redraw.Store(true)
+				break
+			}
+
 			e.CursorForward(c, status)
 
 			// Move extra if the key is held down
@@ -891,6 +903,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
+			if e.blockMode {
+				e.blockCursors = nil
+			}
 			e.CursorUpward(c, status)
 
 			// Move extra if the key is held down
@@ -902,6 +917,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.redraw.Store(true)
 				e.drawFuncName.Store(true)
 			}
+			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
 		case downArrow: // down arrow
@@ -914,6 +930,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
+			if e.blockMode {
+				e.blockCursors = nil
+			}
 			e.CursorDownward(c, status)
 
 			// Move extra if the key is held down
@@ -924,12 +943,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// If the cursor is after the length of the current line, move it to the end of the current line
 			if e.AfterLineScreenContents() || e.AfterEndOfLine() {
 				e.End(c)
-				e.redraw.Store(true)
 			}
 			if e.highlightCurrentLine || e.highlightCurrentText {
-				e.redraw.Store(true)
 				e.drawFuncName.Store(true)
 			}
+			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
@@ -1934,10 +1952,13 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			e.blockMode = !e.blockMode
 			if e.blockMode {
+				e.InitBlockCursors(c)
 				status.SetMessageAfterRedraw("Block editing enabled")
 			} else {
+				e.blockCursors = nil
 				status.SetMessageAfterRedraw("Block editing disabled")
 			}
+			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 		case "c:10": // ctrl-j, join line
 			if e.Empty() {

@@ -1402,11 +1402,81 @@ func (e *Editor) Home() {
 // HomeBlock moves the cursor to the start of each line in the current block.
 // Each line gets its own cursor position (virtual cursor) at the start of that line.
 func (e *Editor) HomeBlock() {
-	e.ForEachLineInBlock(nil, func() bool {
-		e.pos.sx = 0
-		e.pos.offsetX = 0
-		return true
-	})
+	if e.blockCursors == nil {
+		e.blockCursors = make(map[int]int)
+	}
+
+	downCounter := 0
+	currentDataY := int(e.DataY())
+
+	// Set virtual cursor to 0 for each line in the block
+	for !e.EmptyRightTrimmedLine() {
+		e.blockCursors[currentDataY] = 0
+		if e.AtOrAfterEndOfDocument() {
+			break
+		}
+		if e.Down(nil, nil) {
+			break
+		}
+		downCounter++
+		currentDataY++
+		if e.EmptyLine() {
+			break
+		}
+	}
+
+	// Return to first line
+	for i := downCounter; i > 0; i-- {
+		e.Up(nil, nil)
+	}
+
+	// Set cursor to start of first line
+	e.pos.sx = 0
+	e.pos.offsetX = 0
+	e.redraw.Store(true)
+}
+
+// EndBlock moves the cursor to the end of each line in the current block.
+// Each line gets its own cursor position (virtual cursor) at the end of that line.
+func (e *Editor) EndBlock(c *vt.Canvas) {
+	if e.blockCursors == nil {
+		e.blockCursors = make(map[int]int)
+	}
+
+	firstDataY := int(e.DataY())
+	downCounter := 0
+	currentDataY := firstDataY
+
+	// Set virtual cursor to line end for each line in the block
+	for !e.EmptyRightTrimmedLine() {
+		y := e.DataY()
+		e.TrimRight(y)
+		x := e.LastTextPosition(y) + 1
+		e.blockCursors[currentDataY] = x
+
+		if e.AtOrAfterEndOfDocument() {
+			break
+		}
+		if e.Down(c, nil) {
+			break
+		}
+		downCounter++
+		currentDataY++
+		if e.EmptyLine() {
+			break
+		}
+	}
+
+	// Return to first line
+	for i := downCounter; i > 0; i-- {
+		e.Up(c, nil)
+	}
+
+	// Set cursor to end of first line
+	y := e.DataY()
+	e.TrimRight(y)
+	x := e.LastTextPosition(y) + 1
+	e.pos.SetX(c, x)
 	e.redraw.Store(true)
 }
 
@@ -1420,17 +1490,64 @@ func (e *Editor) End(c *vt.Canvas) {
 	e.redraw.Store(true)
 }
 
-// EndBlock moves the cursor to the end of each line in the current block.
-// Each line gets its own cursor position (virtual cursor) at the end of that line.
-func (e *Editor) EndBlock(c *vt.Canvas) {
-	e.ForEachLineInBlock(c, func() bool {
-		y := e.DataY()
-		e.TrimRight(y)
-		x := e.LastTextPosition(y) + 1
-		e.pos.SetX(c, x)
-		return true
-	})
-	e.redraw.Store(true)
+// InitBlockCursors initializes blockCursors for every line in the current block,
+// setting each virtual cursor to the current absolute X position.
+func (e *Editor) InitBlockCursors(c *vt.Canvas) {
+	absX := e.pos.sx + e.pos.offsetX
+	firstScreenY := e.pos.sy
+	firstOffsetX := e.pos.offsetX
+	currentDataY := int(e.DataY())
+	e.blockCursors = make(map[int]int)
+	downCounter := 0
+	for !e.EmptyRightTrimmedLine() {
+		e.blockCursors[currentDataY] = absX
+		if e.AtOrAfterEndOfDocument() {
+			break
+		}
+		if e.Down(c, nil) {
+			break
+		}
+		downCounter++
+		currentDataY++
+		if e.EmptyLine() {
+			break
+		}
+	}
+	for i := downCounter; i > 0; i-- {
+		e.Up(c, nil)
+	}
+	// Restore cursor position (Down/Up via GoTo resets X to FirstScreenPosition)
+	e.pos.sy = firstScreenY
+	e.pos.offsetX = firstOffsetX
+	e.pos.sx = absX - firstOffsetX
+}
+
+// BlockCursorLeft moves all virtual cursors and the real cursor one step to the left
+func (e *Editor) BlockCursorLeft() {
+	if e.blockCursors == nil {
+		return
+	}
+	for k, v := range e.blockCursors {
+		if v > 0 {
+			e.blockCursors[k] = v - 1
+		}
+	}
+	if e.pos.sx > 0 {
+		e.pos.sx--
+	} else if e.pos.offsetX > 0 {
+		e.pos.offsetX--
+	}
+}
+
+// BlockCursorRight moves all virtual cursors and the real cursor one step to the right
+func (e *Editor) BlockCursorRight() {
+	if e.blockCursors == nil {
+		return
+	}
+	for k, v := range e.blockCursors {
+		e.blockCursors[k] = v + 1
+	}
+	e.pos.sx++
 }
 
 // EndNoTrim will move the cursor to the position right after the end of the current line contents
@@ -1814,24 +1931,19 @@ func (e *Editor) WriteRune(c *vt.Canvas) {
 	if c == nil {
 		return
 	}
+	// In block mode, a full redraw always follows, so skip the canvas write here.
+	// Also avoids nested ForEachLineInBlock calls when WriteRune is called from
+	// within Backspace (which already iterates the block).
+	if e.blockMode {
+		return
+	}
 	r := e.Rune()
 	x := uint(e.pos.sx + e.pos.offsetX)
 	y := uint(e.pos.sy)
-	if !e.blockMode {
-		if runewidth.RuneWidth(r) > 1 {
-			c.WriteWideRuneB(x, y, e.Foreground, e.Background, r)
-		} else {
-			c.WriteRune(x, y, e.Foreground, e.Background, r)
-		}
+	if runewidth.RuneWidth(r) > 1 {
+		c.WriteWideRuneB(x, y, e.Foreground, e.Background, r)
 	} else {
-		e.ForEachLineInBlock(c, func() bool {
-			if runewidth.RuneWidth(r) > 1 {
-				c.WriteWideRuneB(x, y, e.Foreground, e.Background, r)
-			} else {
-				c.WriteRune(x, y, e.Foreground, e.Background, r)
-			}
-			return true // continue
-		})
+		c.WriteRune(x, y, e.Foreground, e.Background, r)
 	}
 }
 
@@ -2141,41 +2253,83 @@ func (e *Editor) ForEachLineInBlockWithCommentMarker(c *vt.Canvas, f func(string
 
 // ForEachLineInBlock will move the cursor and run the given function for
 // each line in the current block of text (until newline or end of document).
-// It maintains per-line cursor positions (virtual cursors) when blockCursors
-// is populated, or keeps X the same for all lines if blockCursors is empty.
-// It will then use the X value after the final successful call of the given function.
+// It maintains per-line cursor positions (virtual cursors) in absolute coordinates.
+// After all operations, the cursor returns to the first line with its updated position.
 func (e *Editor) ForEachLineInBlock(c *vt.Canvas, f func() bool) {
-	firstX := e.pos.sx
-	firstY := e.pos.sy
-	firstOffsetX := e.pos.offsetX
-	finalX := e.pos.sx
-	finalOffsetX := e.pos.offsetX
+	firstScreenY := e.pos.sy
+	firstDataY := int(e.DataY())
+	// Store initial position in absolute coordinates (not screen coordinates)
+	initialAbsX := e.pos.sx + e.pos.offsetX
+
 	downCounter := 0
-	currentY := firstY
-	for !e.EmptyRightTrimmedLine() {
-		// Check if we have a virtual cursor saved for this line
-		if cursorX, exists := e.blockCursors[currentY]; exists {
-			e.pos.SetX(c, cursorX)
-		} else {
-			// Reset to original X/offsetX if no virtual cursor
-			e.pos.sx = firstX
-			e.pos.offsetX = firstOffsetX
+	currentDataY := firstDataY
+
+	// Initialize blockCursors if needed
+	if e.blockCursors == nil {
+		e.blockCursors = make(map[int]int)
+	}
+
+	// If this is the first time entering this block, initialize all cursors to the same position
+	if _, exists := e.blockCursors[currentDataY]; !exists {
+		tempDataY := currentDataY
+		for !e.EmptyRightTrimmedLine() {
+			e.blockCursors[tempDataY] = initialAbsX
+			if e.Down(c, nil) {
+				break
+			}
+			tempDataY++
+			if e.EmptyLine() {
+				break
+			}
 		}
+		// Reset to starting position
+		e.pos.sy = firstScreenY
+		e.pos.sx = initialAbsX
+		e.pos.offsetX = 0
+		if e.pos.sx >= 80 { // assuming default terminal width; will be adjusted by SetX
+			e.pos.SetX(c, initialAbsX)
+		}
+	} else {
+		// Sync the real cursor position with blockCursors: if the cursor moved
+		// since the last ForEachLineInBlock call (e.g. via Next or Prev),
+		// propagate the same delta to all virtual cursors in the block.
+		savedAbsX := e.blockCursors[firstDataY]
+		if delta := initialAbsX - savedAbsX; delta != 0 {
+			for k, v := range e.blockCursors {
+				newX := v + delta
+				if newX < 0 {
+					newX = 0
+				}
+				e.blockCursors[k] = newX
+			}
+		}
+	}
+
+	// Now perform operations on each line
+	currentDataY = firstDataY
+	for !e.EmptyRightTrimmedLine() {
+		// Restore the virtual cursor position for this line
+		if absX, exists := e.blockCursors[currentDataY]; exists {
+			e.pos.SetX(c, absX)
+		} else {
+			// Shouldn't happen if initialization worked, but fallback to initial
+			e.pos.SetX(c, initialAbsX)
+		}
+
 		// Clamp cursor position to line length (accounting for tabs/wide chars)
 		lineEndX := e.LastTextPosition(e.DataY()) + 1
-		if e.pos.sx+e.pos.offsetX > lineEndX {
+		currentAbsX := e.pos.sx + e.pos.offsetX
+		if currentAbsX > lineEndX {
 			e.pos.SetX(c, lineEndX)
 		}
+
 		if !f() {
 			break
 		}
-		// Save the cursor position for this line
-		if e.blockCursors == nil {
-			e.blockCursors = make(map[int]int)
-		}
-		e.blockCursors[currentY] = e.pos.sx + e.pos.offsetX
-		finalX = e.pos.sx
-		finalOffsetX = e.pos.offsetX
+
+		// Save the updated cursor position (in absolute coordinates)
+		e.blockCursors[currentDataY] = e.pos.sx + e.pos.offsetX
+
 		if e.AtOrAfterEndOfDocument() {
 			break
 		}
@@ -2183,18 +2337,22 @@ func (e *Editor) ForEachLineInBlock(c *vt.Canvas, f func() bool) {
 			break
 		}
 		downCounter++
-		currentY++
+		currentDataY++
 		if e.EmptyLine() {
 			break
 		}
 	}
-	// Go up again
+
+	// Restore original line (Y position)
 	for i := downCounter; i > 0; i-- {
 		e.Up(c, nil)
 	}
-	e.pos.sx = finalX
-	e.pos.sy = firstY
-	e.pos.offsetX = finalOffsetX
+
+	// Restore cursor to first line with its current virtual cursor position
+	finalAbsX := e.blockCursors[firstDataY]
+	e.pos.SetX(c, finalAbsX)
+	e.pos.sy = firstScreenY
+
 	// Make sure no lines are nil
 	e.MakeConsistent()
 }
