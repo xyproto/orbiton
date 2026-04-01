@@ -162,9 +162,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	var (
 		statusDuration = 2700 * time.Millisecond
 
-		copyLines         []string  // for the cut/copy/paste functionality
-		previousCopyLines []string  // for checking if a paste is the same as last time
-		bookmark          *Position // for the bookmark/jump functionality
+		copyLines         []string // for the cut/copy/paste functionality
+		previousCopyLines []string // for checking if a paste is the same as last time
 
 		firstPasteAction = true
 		firstCopyAction  = true
@@ -468,7 +467,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				// Just format the Markdown table
 				const justFormat = true
 				const displayQuickHelp = false
-				e.EditMarkdownTable(tty, c, status, bookmark, justFormat, displayQuickHelp)
+				e.EditMarkdownTable(tty, c, status, justFormat, displayQuickHelp)
 				break
 			} else if e.mode == mode.Markdown && !kh.PrevIs("c:23") {
 				e.GoToStartOfTextLine(c)
@@ -633,7 +632,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					// Edit the Markdown table
 					const justFormat = false
 					var displayQuickHelp = markdownTableEditorCounter < 1
-					e.EditMarkdownTable(tty, c, status, bookmark, justFormat, displayQuickHelp)
+					e.EditMarkdownTable(tty, c, status, justFormat, displayQuickHelp)
 					markdownTableEditorCounter++
 					// Full redraw
 					const drawLines = true
@@ -771,14 +770,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			status.ClearAll(c, false)
 			undo.Snapshot(e)
 			undoBackup := undo
-			selectedIndex, spacePressed := e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
+			selectedIndex, spacePressed := e.CommandMenu(c, tty, status, undo, lastCommandMenuIndex, forceFlag, fileLock)
 			c.HideCursorAndRedrawFull()
 			c.ShowCursor()
 			lastCommandMenuIndex = selectedIndex
 			if spacePressed {
 				status.Clear(c, false)
 				// Ask the user for a command and run it
-				e.CommandPrompt(c, tty, status, bookmark, undo)
+				e.CommandPrompt(c, tty, status, undo)
 			}
 			undo = undoBackup
 
@@ -820,7 +819,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.Up(c, status)
 				e.Up(c, status)
 				// Ask the user for a command and run it
-				e.CommandPrompt(c, tty, status, bookmark, undo)
+				e.CommandPrompt(c, tty, status, undo)
 				// It's important to reset the key history after hitting this combo
 				clearKeyHistory = true
 				break
@@ -855,7 +854,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.Up(c, status)
 				e.Up(c, status)
 				// Ask the user for a command and run it
-				e.CommandPrompt(c, tty, status, bookmark, undo)
+				e.CommandPrompt(c, tty, status, undo)
 				// It's important to reset the key history after hitting this combo
 				clearKeyHistory = true
 				break
@@ -886,7 +885,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// Check if it's a special case
 			if kh.SpecialArrowKeypressWith(upArrow) {
 				// Ask the user for a command and run it
-				e.CommandPrompt(c, tty, status, bookmark, undo)
+				e.CommandPrompt(c, tty, status, undo)
 				// It's important to reset the key history after hitting this combo
 				clearKeyHistory = true
 				break
@@ -909,7 +908,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// Check if it's a special case
 			if kh.SpecialArrowKeypressWith(downArrow) {
 				// Ask the user for a command and run it
-				e.CommandPrompt(c, tty, status, bookmark, undo)
+				e.CommandPrompt(c, tty, status, undo)
 				// It's important to reset the key history after hitting this combo
 				clearKeyHistory = true
 				break
@@ -975,7 +974,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					if e.moveLinesMode.Load() && e.AtSecondLineOfDocumentOrLater() {
 						// Move the current line up
 						line := e.CurrentLine()
-						e.DeleteCurrentLineMoveBookmark(bookmark)
+						e.DeleteCurrentLineMoveBookmark()
 						e.Up(c, nil) // no status message if the end of document is reached, there should always be a new line
 						e.Home()
 						e.InsertLineAbove()
@@ -1065,7 +1064,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					if e.moveLinesMode.Load() && !e.AtOrAfterLastLineOfDocument() {
 						// Move the current line down
 						line := e.CurrentLine()
-						e.DeleteCurrentLineMoveBookmark(bookmark)
+						e.DeleteCurrentLineMoveBookmark()
 						e.InsertLineBelow()
 						e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
 						e.Home()
@@ -1285,7 +1284,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			undo.Snapshot(e)
 
-			e.Backspace(c, bookmark)
+			e.Backspace(c)
 
 			e.redrawCursor.Store(true)
 			e.redraw.Store(true)
@@ -1463,7 +1462,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			// First check if we just moved to this line with the arrow keys
 			justMovedUpOrDown := kh.PrevHas(downArrow, upArrow)
-			if e.macro != nil {
+			if e.blockMode {
+				e.HomeBlock()
+			} else if e.macro != nil {
 				e.Home()
 			} else if !justMovedUpOrDown && e.EmptyRightTrimmedLine() && e.SearchTerm() == "" {
 				// If at an empty line, go up one line
@@ -1490,7 +1491,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			// First check if we just moved to this line with the arrow keys, or just cut a line with ctrl-x
 			justMovedUpOrDown := kh.PrevHas(downArrow, upArrow, "c:24")
-			if e.AtEndOfDocument() || e.macro != nil {
+			if e.blockMode {
+				e.EndBlock(c)
+			} else if e.AtEndOfDocument() || e.macro != nil {
 				e.End(c)
 			} else if !justMovedUpOrDown && e.AfterEndOfLine() && e.SearchTerm() == "" {
 				// If we didn't just move here, and are at the end of the line,
@@ -1514,7 +1517,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 			e.redrawCursor.Store(true)
 		case "c:29", "c:30": // ctrl-~, insert the current date and time
-			if spellCheckFunc, err := e.CommandToFunction(c, tty, status, bookmark, undo, "insertdateandtime"); err == nil { // success
+			if spellCheckFunc, err := e.CommandToFunction(c, tty, status, undo, "insertdateandtime"); err == nil { // success
 				spellCheckFunc()
 			}
 		case "c:19": // ctrl-s, save (or toggle stdout in debug mode)
@@ -1661,7 +1664,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			undo.Snapshot(e)
 
 			// First try a single line cut
-			if y, multilineCut := e.CutSingleLine(status, bookmark, &lastCutY, &lastCopyY, &lastPasteY, &copyLines, &firstCopyAction); multilineCut { // Multi line cut (add to the clipboard, since it's the second press)
+			if y, multilineCut := e.CutSingleLine(status, &lastCutY, &lastCopyY, &lastPasteY, &copyLines, &firstCopyAction); multilineCut { // Multi line cut (add to the clipboard, since it's the second press)
 				lastCutY = y
 				lastCopyY = -1
 				lastPasteY = -1
@@ -1689,7 +1692,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				// Delete the corresponding number of lines
 				notRegularEditingRightNow.Store(true)
 				for range lines {
-					e.DeleteLineMoveBookmark(y, bookmark)
+					e.DeleteLineMoveBookmark(y)
 				}
 				notRegularEditingRightNow.Store(false)
 
@@ -1703,11 +1706,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			undo.Snapshot(e)
 			if e.nanoMode.Load() { // nano: ctrl-k, cut line
 				// Prepare to cut
-				e.CutSingleLine(status, bookmark, &lastCutY, &lastCopyY, &lastPasteY, &copyLines, &firstCopyAction)
+				e.CutSingleLine(status, &lastCutY, &lastCopyY, &lastPasteY, &copyLines, &firstCopyAction)
 				break
 			}
 
-			e.DeleteToEndOfLine(c, status, bookmark, &lastCopyY, &lastPasteY, &lastCutY)
+			e.DeleteToEndOfLine(c, status, &lastCopyY, &lastPasteY, &lastCutY)
 
 			// Delete extra if the key is held down
 			if kh.TwoLastAre("c:11") && kh.AllWithin(200*time.Millisecond) && kh.LastChanged(200*time.Millisecond) {
@@ -1718,7 +1721,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				// 2x slower step up for ctrl-k than for left/right arrow
 				steps := int(int64(heldDuration) / int64(delayUntilSpeedUp*2))
 				for i := 1; i < steps; i++ {
-					e.DeleteToEndOfLine(c, status, bookmark, &lastCopyY, &lastPasteY, &lastCutY)
+					e.DeleteToEndOfLine(c, status, &lastCopyY, &lastPasteY, &lastCutY)
 				}
 			} else {
 				heldDownCtrlKTime = time.Time{}
@@ -1864,7 +1867,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.nanoMode.Load() { // nano: ctrl-r, insert file
 				// Ask the user which filename to insert
 				if insertFilename, ok := e.UserInput(c, tty, status, "Insert file", "", []string{e.filename}, false, e.filename); ok {
-					err := e.RunCommand(c, tty, status, bookmark, undo, "insertfile", insertFilename)
+					err := e.RunCommand(c, tty, status, undo, "insertfile", insertFilename)
 					if err != nil {
 						status.SetError(err)
 						status.Show(c, e)
@@ -1908,9 +1911,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 				status.SetMessageAfterRedraw("Opening a portal at " + portal.String())
 			}
-		case "c:2": // ctrl-b, go back after jumping to a definition, bookmark, unbookmark or jump to bookmark. Toggle breakpoint if in debug mode.
+		case "c:2": // ctrl-b, go back after jumping to a definition, or toggle block edit mode
 
-			if e.nanoMode.Load() { // nano: ctrl-b, cursor forward
+			if e.nanoMode.Load() { // nano: ctrl-b, cursor backward
 				e.CursorBackward(c, status)
 				break
 			}
@@ -1929,33 +1932,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
-			status.ClearAll(c, false)
-
-			status.ClearAll(c, true)
-			if bookmark == nil {
-				// no bookmark, create a bookmark at the current line
-				bookmark = e.pos.Copy()
-				// TODO: Modify the statusbar implementation so that extra spaces are not needed here.
-				s := "Bookmarked line " + e.LineNumber().String()
-				status.SetMessageAfterRedraw("  " + s + "  ")
-			} else if bookmark.LineNumber() == e.LineNumber() {
-				// bookmarking the same line twice: remove the bookmark
-				s := "Removed bookmark for line " + bookmark.LineNumber().String()
-				status.SetMessage(s)
-				bookmark = nil
+			e.blockMode = !e.blockMode
+			if e.blockMode {
+				status.SetMessageAfterRedraw("Block edit: on")
 			} else {
-				undo.Snapshot(e)
-				// Go to the saved bookmark position
-				e.GoToPosition(c, status, *bookmark)
-				// TODO: Just use status.SetMessageAfterRedraw instead?
-				// Do the redraw manually before showing the status message
-				e.HideCursorDrawLines(c, true, false, true)
-				e.redraw.Store(false)
-				// Show the status message
-				s := "Jumped to bookmark at line " + e.LineNumber().String()
-				status.SetMessage(s)
+				status.SetMessageAfterRedraw("Block edit: off")
 			}
-			status.Show(c, e)
 			e.redrawCursor.Store(true)
 		case "c:10": // ctrl-j, join line
 			if e.Empty() {
@@ -1968,7 +1950,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				// Up to 999 times, join the current line with the next, until the next line is empty
 				joinCount := 0
 				for range 999 {
-					if !e.JoinLineWithNext(c, bookmark) {
+					if !e.JoinLineWithNext(c) {
 						break
 					}
 					joinCount++
@@ -1985,7 +1967,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			// The normal join behavior
-			e.JoinLineWithNext(c, bookmark)
+			e.JoinLineWithNext(c)
 
 			// Go to the start of the line when pressing ctrl-j, but only if it is pressed repeatedly
 			if kh.Prev() == "c:10" {
@@ -2014,14 +1996,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				} else if keyRunes[0] == 'q' && !e.nanoMode.Load() && kh.PrevPrev() == "c:27" && kh.Prev() == "," { // <esc> ,q
 					// Remove the ","
 					undo.Snapshot(e)
-					e.Backspace(c, bookmark)
+					e.Backspace(c)
 					// Quit
 					e.quit = true
 					break
 				} else if keyRunes[0] == 'w' && !e.nanoMode.Load() && kh.PrevPrev() == "c:27" && kh.Prev() == "," { // <esc> ,w
 					// Remove the ","
 					undo.Snapshot(e)
-					e.Backspace(c, bookmark)
+					e.Backspace(c)
 					// Save the file
 					e.UserSave(c, tty, status)
 					// Skip the rest
@@ -2122,7 +2104,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			status.ClearAll(c, false)
 			undo.Snapshot(e)
 			undoBackup := undo
-			selectedIndex, _ := e.CommandMenu(c, tty, status, bookmark, undo, lastCommandMenuIndex, forceFlag, fileLock)
+			selectedIndex, _ := e.CommandMenu(c, tty, status, undo, lastCommandMenuIndex, forceFlag, fileLock)
 			c.HideCursorAndRedrawFull()
 			c.ShowCursor()
 			lastCommandMenuIndex = selectedIndex

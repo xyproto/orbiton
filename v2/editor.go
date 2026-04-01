@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -29,6 +30,7 @@ type Editor struct {
 	debugger           Debugger          // connection to debugger, if debugMode is enabled
 	detectedTabs       *bool             // were tab or space indentations detected when loading the data?
 	breakpoint         *Position         // for the breakpoint/jump functionality in debug mode
+	bookmark           *Position         // for the bookmark/jump functionality
 	sameFilePortal     *Portal           // a portal that points to the same file
 	lines              map[int][]rune    // the contents of the current document
 	macro              *Macro            // the contents of the current macro (will be cleared when esc is pressed)
@@ -87,6 +89,7 @@ type Editor struct {
 	displayQuickHelp            bool        // display the quick help box?
 	noDisplayQuickHelp          bool        // prevent the quick help box from being displayed?
 	blockMode                   bool        // toggle if typing should affect the current line or the current block
+	blockCursors                map[int]int // per-line cursor X positions for block editing (line Y -> X)
 	dirMode                     bool        // browse a directory and also interact with git
 	highlightCurrentLine        bool        // highlight the current line
 	highlightCurrentText        bool        // highlight the current text (not the entire line)
@@ -152,6 +155,10 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.createDirectoriesIfMissing = e.createDirectoriesIfMissing
 	e2.displayQuickHelp = e.displayQuickHelp
 	e2.blockMode = e.blockMode
+	if e.blockCursors != nil {
+		e2.blockCursors = make(map[int]int)
+		maps.Copy(e2.blockCursors, e.blockCursors)
+	}
 	e2.dirMode = e.dirMode
 	e2.highlightCurrentLine = e.highlightCurrentLine
 	e2.highlightCurrentText = e.highlightCurrentText
@@ -758,17 +765,17 @@ func (e *Editor) DeleteLine(n LineIndex) {
 }
 
 // DeleteLineMoveBookmark will delete the given line index and also move the bookmark if it's after n
-func (e *Editor) DeleteLineMoveBookmark(n LineIndex, bookmark *Position) {
-	if bookmark != nil && bookmark.LineIndex() > n {
-		bookmark.DecY()
+func (e *Editor) DeleteLineMoveBookmark(n LineIndex) {
+	if e.bookmark != nil && e.bookmark.LineIndex() > n {
+		e.bookmark.DecY()
 	}
 	e.DeleteLine(n)
 }
 
 // DeleteCurrentLineMoveBookmark will delete the current line and also move the bookmark one up
 // if it's after the current line.
-func (e *Editor) DeleteCurrentLineMoveBookmark(bookmark *Position) {
-	e.DeleteLineMoveBookmark(e.DataY(), bookmark)
+func (e *Editor) DeleteCurrentLineMoveBookmark() {
+	e.DeleteLineMoveBookmark(e.DataY())
 }
 
 // Delete will delete a character at the given position
@@ -1392,6 +1399,17 @@ func (e *Editor) Home() {
 	e.redraw.Store(true)
 }
 
+// HomeBlock moves the cursor to the start of each line in the current block.
+// Each line gets its own cursor position (virtual cursor) at the start of that line.
+func (e *Editor) HomeBlock() {
+	e.ForEachLineInBlock(nil, func() bool {
+		e.pos.sx = 0
+		e.pos.offsetX = 0
+		return true
+	})
+	e.redraw.Store(true)
+}
+
 // End will move the cursor to the position right after the end of the current line contents,
 // and also trim away whitespace from the right side.
 func (e *Editor) End(c *vt.Canvas) {
@@ -1399,6 +1417,19 @@ func (e *Editor) End(c *vt.Canvas) {
 	e.TrimRight(y)
 	x := e.LastTextPosition(y) + 1
 	e.pos.SetX(c, x)
+	e.redraw.Store(true)
+}
+
+// EndBlock moves the cursor to the end of each line in the current block.
+// Each line gets its own cursor position (virtual cursor) at the end of that line.
+func (e *Editor) EndBlock(c *vt.Canvas) {
+	e.ForEachLineInBlock(c, func() bool {
+		y := e.DataY()
+		e.TrimRight(y)
+		x := e.LastTextPosition(y) + 1
+		e.pos.SetX(c, x)
+		return true
+	})
 	e.redraw.Store(true)
 }
 
@@ -2110,7 +2141,8 @@ func (e *Editor) ForEachLineInBlockWithCommentMarker(c *vt.Canvas, f func(string
 
 // ForEachLineInBlock will move the cursor and run the given function for
 // each line in the current block of text (until newline or end of document).
-// It will also keep X the same for each line.
+// It maintains per-line cursor positions (virtual cursors) when blockCursors
+// is populated, or keeps X the same for all lines if blockCursors is empty.
 // It will then use the X value after the final successful call of the given function.
 func (e *Editor) ForEachLineInBlock(c *vt.Canvas, f func() bool) {
 	firstX := e.pos.sx
@@ -2119,12 +2151,29 @@ func (e *Editor) ForEachLineInBlock(c *vt.Canvas, f func() bool) {
 	finalX := e.pos.sx
 	finalOffsetX := e.pos.offsetX
 	downCounter := 0
+	currentY := firstY
 	for !e.EmptyRightTrimmedLine() {
-		e.pos.sx = firstX
-		e.pos.offsetX = firstOffsetX
+		// Check if we have a virtual cursor saved for this line
+		if cursorX, exists := e.blockCursors[currentY]; exists {
+			e.pos.SetX(c, cursorX)
+		} else {
+			// Reset to original X/offsetX if no virtual cursor
+			e.pos.sx = firstX
+			e.pos.offsetX = firstOffsetX
+		}
+		// Clamp cursor position to line length (accounting for tabs/wide chars)
+		lineEndX := e.LastTextPosition(e.DataY()) + 1
+		if e.pos.sx+e.pos.offsetX > lineEndX {
+			e.pos.SetX(c, lineEndX)
+		}
 		if !f() {
 			break
 		}
+		// Save the cursor position for this line
+		if e.blockCursors == nil {
+			e.blockCursors = make(map[int]int)
+		}
+		e.blockCursors[currentY] = e.pos.sx + e.pos.offsetX
 		finalX = e.pos.sx
 		finalOffsetX = e.pos.offsetX
 		if e.AtOrAfterEndOfDocument() {
@@ -2134,6 +2183,7 @@ func (e *Editor) ForEachLineInBlock(c *vt.Canvas, f func() bool) {
 			break
 		}
 		downCounter++
+		currentY++
 		if e.EmptyLine() {
 			break
 		}
@@ -2668,7 +2718,7 @@ func (e *Editor) GoToEnd(c *vt.Canvas, status *StatusBar) {
 }
 
 // SortBlock sorts the a block of lines, at the current position
-func (e *Editor) SortBlock(c *vt.Canvas, status *StatusBar, bookmark *Position) {
+func (e *Editor) SortBlock(c *vt.Canvas, status *StatusBar) {
 	if e.CurrentLine() == "" {
 		status.SetErrorMessage("no text block at the current position")
 		return
@@ -2690,14 +2740,14 @@ func (e *Editor) SortBlock(c *vt.Canvas, status *StatusBar, bookmark *Position) 
 	}
 	lines.Sort()
 	e.GoTo(y, c, status)
-	e.DeleteBlock(bookmark)
+	e.DeleteBlock()
 	e.GoTo(y, c, status)
 	e.InsertBlock(c, lines, addEmptyLine)
 	e.GoTo(y, c, status)
 }
 
 // SmartSplitLineOnBlanks splits the current line on space, as separate lines, but not if spaces are within brackets, parentheses or curly brackets
-func (e *Editor) SmartSplitLineOnBlanks(c *vt.Canvas, status *StatusBar, bookmark *Position) {
+func (e *Editor) SmartSplitLineOnBlanks(c *vt.Canvas, status *StatusBar) {
 	if e.CurrentLine() == "" {
 		status.SetErrorMessage("nothing to split on blanks")
 		return
@@ -2718,14 +2768,14 @@ func (e *Editor) SmartSplitLineOnBlanks(c *vt.Canvas, status *StatusBar, bookmar
 	}
 
 	// Remove the current line and insert the new lines
-	e.DeleteCurrentLineMoveBookmark(bookmark)
+	e.DeleteCurrentLineMoveBookmark()
 	const addEmptyLine = false
 	e.InsertBlock(c, trimmedLines, addEmptyLine)
 	e.GoTo(y, c, status)
 }
 
 // ReplaceBlock replaces the current block with the given string, if possible
-func (e *Editor) ReplaceBlock(c *vt.Canvas, status *StatusBar, bookmark *Position, s string) {
+func (e *Editor) ReplaceBlock(c *vt.Canvas, status *StatusBar, s string) {
 	if e.CurrentLine() == "" {
 		status.SetErrorMessage("no text block at the current position")
 		return
@@ -2743,14 +2793,14 @@ func (e *Editor) ReplaceBlock(c *vt.Canvas, status *StatusBar, bookmark *Positio
 		addEmptyLine = true
 	}
 	e.GoTo(y, c, status)
-	e.DeleteBlock(bookmark)
+	e.DeleteBlock()
 	e.GoTo(y, c, status)
 	e.InsertBlock(c, lines, addEmptyLine)
 	e.GoTo(y, c, status)
 }
 
 // DeleteBlock will deletes a block of lines at the current position
-func (e *Editor) DeleteBlock(bookmark *Position) {
+func (e *Editor) DeleteBlock() {
 	s := e.Block(e.LineIndex())
 	lines := strings.Split(s, "\n")
 	if len(lines) == 0 {
@@ -2758,7 +2808,7 @@ func (e *Editor) DeleteBlock(bookmark *Position) {
 		return
 	}
 	for range lines {
-		e.DeleteLineMoveBookmark(e.LineIndex(), bookmark)
+		e.DeleteLineMoveBookmark(e.LineIndex())
 	}
 }
 
@@ -2812,7 +2862,7 @@ func (e *Editor) OnParenOrBracket() bool {
 }
 
 // DeleteToEndOfLine (ctrl-k)
-func (e *Editor) DeleteToEndOfLine(c *vt.Canvas, status *StatusBar, bookmark *Position, lastCopyY, lastPasteY, lastCutY *LineIndex) {
+func (e *Editor) DeleteToEndOfLine(c *vt.Canvas, status *StatusBar, lastCopyY, lastPasteY, lastCutY *LineIndex) {
 	if e.Empty() {
 		status.SetMessage("Empty file")
 		status.Show(c, e)
@@ -2823,7 +2873,7 @@ func (e *Editor) DeleteToEndOfLine(c *vt.Canvas, status *StatusBar, bookmark *Po
 	*lastPasteY = -1
 	*lastCutY = -1
 	if e.EmptyLine() {
-		e.DeleteCurrentLineMoveBookmark(bookmark)
+		e.DeleteCurrentLineMoveBookmark()
 		e.redraw.Store(true)
 		e.redrawCursor.Store(true)
 		return
@@ -2832,7 +2882,7 @@ func (e *Editor) DeleteToEndOfLine(c *vt.Canvas, status *StatusBar, bookmark *Po
 	if e.EmptyRightTrimmedLine() {
 		// Deleting the rest of the line cleared this line,
 		// so just remove it.
-		e.DeleteCurrentLineMoveBookmark(bookmark)
+		e.DeleteCurrentLineMoveBookmark()
 		// Then go to the end of the line, if needed
 		if e.AfterEndOfLine() {
 			e.End(c)
@@ -2844,14 +2894,14 @@ func (e *Editor) DeleteToEndOfLine(c *vt.Canvas, status *StatusBar, bookmark *Po
 
 // CutSingleLine can be called when ctrl-x is pressed (or ctrl-k in nano mode)
 // returns true if a multi-line cut should happen instead
-func (e *Editor) CutSingleLine(status *StatusBar, bookmark *Position, lastCutY, lastCopyY, lastPasteY *LineIndex, copyLines *[]string, firstCopyAction *bool) (y LineIndex, multiLineCut bool) {
+func (e *Editor) CutSingleLine(status *StatusBar, lastCutY, lastCopyY, lastPasteY *LineIndex, copyLines *[]string, firstCopyAction *bool) (y LineIndex, multiLineCut bool) {
 	y = e.DataY()
 	line := e.Line(y)
 	// Now check if there is anything to cut
 	if strings.TrimSpace(line) == "" {
 		// Nothing to cut, just remove the current line
 		e.Home()
-		e.DeleteCurrentLineMoveBookmark(bookmark)
+		e.DeleteCurrentLineMoveBookmark()
 		e.redraw.Store(true)
 		e.redrawCursor.Store(true)
 		// Check if ctrl-x was pressed once or twice, for this line
@@ -2883,7 +2933,7 @@ func (e *Editor) CutSingleLine(status *StatusBar, bookmark *Position, lastCutY, 
 			}
 		}
 		// Delete the line
-		e.DeleteLineMoveBookmark(y, bookmark)
+		e.DeleteLineMoveBookmark(y)
 		// No status message is needed for the cut operation, because it's visible that lines are cut
 		e.redrawCursor.Store(true)
 		e.redraw.Store(true)
@@ -3027,13 +3077,13 @@ func (e *Editor) CursorDownward(c *vt.Canvas, status *StatusBar) {
 // JoinLineWithNext tries to join the current line with the next.
 // If the next line is empty, the next line is removed.
 // Returns true if this and the next line had text and they were joined to this line.
-func (e *Editor) JoinLineWithNext(c *vt.Canvas, bookmark *Position) bool {
+func (e *Editor) JoinLineWithNext(c *vt.Canvas) bool {
 	nextLineIndex := e.DataY() + 1
 	e.redraw.Store(true)
 	e.redrawCursor.Store(true)
 	if e.EmptyRightTrimmedLineBelow() {
 		// Just delete the line below if it's empty
-		e.DeleteLineMoveBookmark(nextLineIndex, bookmark)
+		e.DeleteLineMoveBookmark(nextLineIndex)
 		return false
 	}
 	// Join the line below with this line. Also add a space in between.

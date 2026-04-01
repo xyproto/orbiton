@@ -112,7 +112,7 @@ func (e *Editor) CurrentTableString() (string, error) {
 }
 
 // DeleteCurrentTable will delete the current Markdown table
-func (e *Editor) DeleteCurrentTable(c *vt.Canvas, status *StatusBar, bookmark *Position) (LineIndex, error) {
+func (e *Editor) DeleteCurrentTable(c *vt.Canvas, status *StatusBar) (LineIndex, error) {
 	s, err := e.CurrentTableString()
 	if err != nil {
 		return 0, err
@@ -124,15 +124,15 @@ func (e *Editor) DeleteCurrentTable(c *vt.Canvas, status *StatusBar, bookmark *P
 	const centerCursor = false
 	topOfTable := e.GoToTopOfCurrentTable(c, status, centerCursor)
 	for range lines {
-		e.DeleteLineMoveBookmark(e.LineIndex(), bookmark)
+		e.DeleteLineMoveBookmark(e.LineIndex())
 	}
 	return topOfTable, nil
 }
 
 // ReplaceCurrentTableWith will try to replace the current table with the given string.
 // Also moves the current bookmark, if needed.
-func (e *Editor) ReplaceCurrentTableWith(c *vt.Canvas, status *StatusBar, bookmark *Position, tableString string) error {
-	topOfTable, err := e.DeleteCurrentTable(c, status, bookmark)
+func (e *Editor) ReplaceCurrentTableWith(c *vt.Canvas, status *StatusBar, tableString string) error {
+	topOfTable, err := e.DeleteCurrentTable(c, status)
 	if err != nil {
 		return err
 	}
@@ -429,7 +429,7 @@ func (e *Editor) FormatAllMarkdownTables() {
 }
 
 // EditMarkdownTable presents the user with a dedicated table editor for the current Markdown table, or just formats it
-func (e *Editor) EditMarkdownTable(tty *vt.TTY, c *vt.Canvas, status *StatusBar, bookmark *Position, justFormat, displayQuickHelp bool) {
+func (e *Editor) EditMarkdownTable(tty *vt.TTY, c *vt.Canvas, status *StatusBar, justFormat, displayQuickHelp bool) {
 
 	initialY, err := e.CurrentTableY()
 	if err != nil {
@@ -485,7 +485,7 @@ func (e *Editor) EditMarkdownTable(tty *vt.TTY, c *vt.Canvas, status *StatusBar,
 		newTableString := tableToString(headers, body)
 
 		// Replace the current table with this new string
-		if err := e.ReplaceCurrentTableWith(c, status, bookmark, newTableString); err != nil {
+		if err := e.ReplaceCurrentTableWith(c, status, newTableString); err != nil {
 			status.ClearAll(c, true)
 			status.SetError(err)
 			status.ShowNoTimeout(c, e)

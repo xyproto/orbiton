@@ -19,7 +19,7 @@ const commandTimeout = 10 * time.Second
 
 // CommandToFunction takes an editor command as a string (with optional arguments) and returns a function that
 // takes no arguments and performs the suggested action, like "save". Some functions may take an undo snapshot first.
-func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookmark *Position, undo *Undo, args ...string) (func(), error) {
+func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo *Undo, args ...string) (func(), error) {
 	if len(args) == 0 {
 		return nil, errors.New("no command given")
 	}
@@ -94,7 +94,7 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 			}
 
 			undo.Snapshot(e)
-			e.ReplaceBlock(c, status, bookmark, outputString)
+			e.ReplaceBlock(c, status, outputString)
 		}, nil
 	}
 
@@ -191,8 +191,8 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 			startIndex := e.LineIndex()
 			stopIndex := startIndex
 			// If no bookmark has been set, just copy the line that the cursor is currently at
-			if bookmark != nil {
-				stopIndex = bookmark.LineIndex()
+			if e.bookmark != nil {
+				stopIndex = e.bookmark.LineIndex()
 			}
 			if startIndex > stopIndex {
 				startIndex, stopIndex = stopIndex, startIndex
@@ -336,7 +336,7 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 		},
 		sortblock: func() { // sort the current block of lines, until the next blank line or EOF
 			undo.Snapshot(e)
-			e.SortBlock(c, status, bookmark)
+			e.SortBlock(c, status)
 		},
 		sortstrings: func() { // sort the words on the current line
 			undo.Snapshot(e)
@@ -359,7 +359,7 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 		},
 		splitline: func() { // split the current line on space
 			undo.Snapshot(e)
-			e.SmartSplitLineOnBlanks(c, status, bookmark)
+			e.SmartSplitLineOnBlanks(c, status)
 		},
 		quit: func() { // quit
 			e.quit = true
@@ -428,8 +428,8 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 }
 
 // RunCommand takes a command string and performs and action (like "save" or "quit")
-func (e *Editor) RunCommand(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookmark *Position, undo *Undo, args ...string) error {
-	f, err := e.CommandToFunction(c, tty, status, bookmark, undo, args...)
+func (e *Editor) RunCommand(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo *Undo, args ...string) error {
+	f, err := e.CommandToFunction(c, tty, status, undo, args...)
 	if err != nil {
 		return err
 	}
@@ -439,7 +439,7 @@ func (e *Editor) RunCommand(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookma
 
 // CommandPrompt shows and handles user input that is interpreted as internal commands,
 // or external commands if they start with "!"
-func (e *Editor) CommandPrompt(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookmark *Position, undo *Undo) {
+func (e *Editor) CommandPrompt(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo *Undo) {
 	// The spaces are intentional, to stop the shorter strings from always kicking in before
 	// the longer ones can be typed.
 	quickList := []string{":wq", "wq", "sq", "sqc", ":q", "q", ":w ", "s ", "w ", "d", "b", "↑", "↓", "c:23", "c:19", "c:17"}
@@ -453,7 +453,7 @@ func (e *Editor) CommandPrompt(c *vt.Canvas, tty *vt.TTY, status *StatusBar, boo
 	const tabCommand = "help"
 	if commandString, ok := e.UserInput(c, tty, status, "o", "", quickList, true, tabCommand); ok {
 		args := strings.Split(strings.TrimSpace(commandString), " ")
-		if err := e.RunCommand(c, tty, status, bookmark, undo, args...); err != nil {
+		if err := e.RunCommand(c, tty, status, undo, args...); err != nil {
 			status.SetErrorMessage(err.Error())
 		}
 		if e.quit {

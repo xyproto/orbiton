@@ -83,8 +83,8 @@ func (a *Actions) Perform(index int) {
 }
 
 // AddCommand will add a command to the action menu, if it can be looked up by e.CommandToFunction
-func (a *Actions) AddCommand(e *Editor, c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookmark *Position, undo *Undo, title string, args ...string) error {
-	f, err := e.CommandToFunction(c, tty, status, bookmark, undo, args...)
+func (a *Actions) AddCommand(e *Editor, c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo *Undo, title string, args ...string) error {
+	f, err := e.CommandToFunction(c, tty, status, undo, args...)
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func (a *Actions) AddCommand(e *Editor, c *vt.Canvas, tty *vt.TTY, status *Statu
 // CommandMenu will display a menu with various commands that can be browsed with arrow up and arrow down.
 // Also returns the selected menu index (can be -1), and if a space should be added to the text editor after the return.
 // Returns -1, true if space was pressed.
-func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookmark *Position, undo *Undo, lastMenuIndex int, forced bool, fileLock *LockKeeper) (int, bool) {
+func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo *Undo, lastMenuIndex int, forced bool, fileLock *LockKeeper) (int, bool) {
 	const insertFilename = "include.txt"
 
 	notRegularEditingRightNow.Store(true)
@@ -131,13 +131,13 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 
 	// TODO: Create a string->[]string map from title to command, then add them
 	// TODO: Add the 6 first arguments to a context struct instead
-	actions.AddCommand(e, c, tty, status, bookmark, undo, "Save and quit", "savequitclear")
+	actions.AddCommand(e, c, tty, status, undo, "Save and quit", "savequitclear")
 
-	actions.AddCommand(e, c, tty, status, bookmark, undo, "Sort the current block of lines", "sortblock")
-	actions.AddCommand(e, c, tty, status, bookmark, undo, "Sort strings on the current line", "sortwords")
+	actions.AddCommand(e, c, tty, status, undo, "Sort the current block of lines", "sortblock")
+	actions.AddCommand(e, c, tty, status, undo, "Sort strings on the current line", "sortwords")
 
 	if !vsCode {
-		actions.AddCommand(e, c, tty, status, bookmark, undo, "Insert \""+insertFilename+"\" at the current line", "insertfile", insertFilename)
+		actions.AddCommand(e, c, tty, status, undo, "Insert \""+insertFilename+"\" at the current line", "insertfile", insertFilename)
 
 		actions.Add("Toggle column limit indicator", func() {
 			e.showColumnLimit = !e.showColumnLimit
@@ -201,11 +201,11 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 	}
 
 	if !e.Empty() {
-		actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy all text to the clipboard", "copyall")
+		actions.AddCommand(e, c, tty, status, undo, "Copy all text to the clipboard", "copyall")
 	}
 
-	if bookmark != nil {
-		actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy text from the bookmark to the cursor", "copymark")
+	if e.bookmark != nil {
+		actions.AddCommand(e, c, tty, status, undo, "Copy text from the bookmark to the cursor", "copymark")
 	}
 
 	if e.debugMode && e.debugger != nil {
@@ -258,8 +258,42 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 		})
 	}
 
-	actions.Add("Block edit", func() {
-		e.blockMode = !e.blockMode
+	// Determine the bookmark menu title based on the current state
+	var bookmarkTitle string
+	if e.bookmark == nil {
+		bookmarkTitle = "Bookmark line " + e.LineNumber().String()
+	} else if e.bookmark.LineNumber() == e.LineNumber() {
+		bookmarkTitle = "Remove bookmark at line " + e.bookmark.LineNumber().String()
+	} else {
+		bookmarkTitle = "Jump to bookmark at line " + e.bookmark.LineNumber().String()
+	}
+
+	actions.Add(bookmarkTitle, func() {
+		status.ClearAll(c, false)
+		status.ClearAll(c, true)
+		if e.bookmark == nil {
+			// no bookmark, create a bookmark at the current line
+			e.bookmark = e.pos.Copy()
+			s := "Bookmarked line " + e.LineNumber().String()
+			status.SetMessageAfterRedraw("  " + s + "  ")
+		} else if e.bookmark.LineNumber() == e.LineNumber() {
+			// bookmarking the same line twice: remove the bookmark
+			s := "Removed bookmark for line " + e.bookmark.LineNumber().String()
+			status.SetMessage(s)
+			e.bookmark = nil
+		} else {
+			undo.Snapshot(e)
+			// Go to the saved bookmark position
+			e.GoToPosition(c, status, *e.bookmark)
+			// Do the redraw manually before showing the status message
+			e.HideCursorDrawLines(c, true, false, true)
+			e.redraw.Store(false)
+			// Show the status message
+			s := "Jumped to bookmark at line " + e.LineNumber().String()
+			status.SetMessage(s)
+		}
+		status.Show(c, e)
+		e.redrawCursor.Store(true)
 	})
 
 	// Disable or enable the tag-expanding behavior when typing in HTML or XML
@@ -496,7 +530,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, bookm
 
 	if !vsCode {
 		if !e.EmptyLine() {
-			actions.AddCommand(e, c, tty, status, bookmark, undo, "Split line on blanks outside of (), [] or {}", "splitline")
+			actions.AddCommand(e, c, tty, status, undo, "Split line on blanks outside of (), [] or {}", "splitline")
 		}
 	}
 
