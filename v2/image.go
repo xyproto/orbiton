@@ -6,6 +6,7 @@ import (
 	"image"
 	"path/filepath"
 
+	"github.com/xyproto/imagepreview"
 	"github.com/xyproto/megafile"
 	"github.com/xyproto/vt"
 	"golang.org/x/image/draw"
@@ -18,7 +19,7 @@ func displayImage(tty *vt.TTY, c *vt.Canvas, filename string, waitForKeypress bo
 	height := int(c.Height())
 
 	// Load the given filename
-	nImage, err := LoadImage(filename)
+	nImage, err := imagepreview.LoadImage(filename)
 	if err != nil {
 		vt.CloseKeepContent()
 		return megafile.NoAction, fmt.Errorf("could not load %s: %s", filename, err)
