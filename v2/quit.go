@@ -38,39 +38,6 @@ func quitExecShellCommand(tty *vt.TTY, workDir string, shellCommand string) {
 	syscall.Exec(shellExecutable, []string{shellExecutable, "-c", shellCommand}, env.Environ())
 }
 
-// quitBat tries to list the given source code file using "bat", if "bat" exists in the path, and then exits
-func quitBat(filename string) error {
-	quitMut.Lock()
-	defer quitMut.Unlock()
-
-	stopBackgroundProcesses()
-
-	// ORBITON_BAT environment variable allows configuring the bat command and flags used when invoking "bat" via -c, -p, -b, or --bat options.
-	batCommandLine := env.Str("ORBITON_BAT", "bat")
-	batExecutable := batCommandLine
-	args := []string{batExecutable}
-	if strings.Contains(batCommandLine, " ") {
-		batCommandLine = strings.ReplaceAll(batCommandLine, "\\ ", "\\")
-		fields := strings.Split(batCommandLine, " ")
-		batExecutable = files.Which(fields[0])
-		args = append([]string{batExecutable}, fields[1:]...)
-		for i, arg := range args {
-			if strings.Contains(arg, "\\") {
-				args[i] = strings.ReplaceAll(arg, "\\", " ")
-			}
-		}
-	} else {
-		batExecutable = files.Which(batExecutable)
-	}
-	if batExecutable == "" {
-		return errors.New("bat is not available in the PATH")
-	}
-	args = append(args, filename)
-	vt.ShowCursor(true)
-	syscall.Exec(batExecutable, args, env.Environ())
-	return nil // this is never reached
-}
-
 func quitToMan(tty *vt.TTY, workDir, nroffFilename string, w, h uint) error {
 	quitMut.Lock()
 	defer quitMut.Unlock()
