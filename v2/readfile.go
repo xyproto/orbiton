@@ -115,7 +115,7 @@ func (e *Editor) LoadByteLine(ib IndexByteLine, eMut, tcMut *sync.RWMutex, tabIn
 		}
 	}
 	eMut.Lock()
-	e.lines[ib.index] = []rune(string(ib.byteLine))
+	e.lines[ib.index] = bytes.Runes(ib.byteLine)
 	*numLines++
 	eMut.Unlock()
 }
