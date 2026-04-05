@@ -135,6 +135,38 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	// TODO: Add the 6 first arguments to a context struct instead
 	actions.AddCommand(e, c, tty, status, undo, "Save and quit", "savequitclear")
 
+	// Determine the bookmark menu title based on the current state
+	var bookmarkTitle string
+	if e.bookmark == nil {
+		bookmarkTitle = "Bookmark line " + e.LineNumber().String()
+	} else if e.bookmark.LineNumber() == e.LineNumber() {
+		bookmarkTitle = "Remove bookmark at line " + e.bookmark.LineNumber().String()
+	} else {
+		bookmarkTitle = "Jump to bookmark at line " + e.bookmark.LineNumber().String()
+	}
+	actions.Add(bookmarkTitle, func() {
+		status.ClearAll(c, false)
+		status.ClearAll(c, true)
+		if e.bookmark == nil { // setting bookmark
+			e.bookmark = e.pos.Copy()
+			s := "Bookmarked line " + e.LineNumber().String()
+			status.SetMessageAfterRedraw("  " + s + "  ")
+		} else if e.bookmark.LineNumber() == e.LineNumber() { // removing bookmark
+			s := "Removed bookmark for line " + e.bookmark.LineNumber().String()
+			status.SetMessage(s)
+			e.bookmark = nil
+		} else { // jumping to bookmark
+			undo.Snapshot(e)
+			e.GoToPosition(c, status, *e.bookmark)
+			e.HideCursorDrawLines(c, true, false, true)
+			e.redraw.Store(false)
+			s := "Jumped to bookmark at line " + e.LineNumber().String()
+			status.SetMessage(s)
+		}
+		status.Show(c, e)
+		e.redrawCursor.Store(true)
+	})
+
 	actions.AddCommand(e, c, tty, status, undo, "Sort the current block of lines", "sortblock")
 	actions.AddCommand(e, c, tty, status, undo, "Sort strings on the current line", "sortwords")
 
@@ -176,9 +208,9 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		if ProgrammingLanguage(e.mode) {
 			if e.CanRun() {
 				alsoRun = true
-				menuItemText = "Build and run"
+				menuItemText = "Compile and run"
 			} else {
-				menuItemText = "Build"
+				menuItemText = "Compile"
 			}
 		}
 		actions.Add(menuItemText, func() {
@@ -259,44 +291,6 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 			}
 		})
 	}
-
-	// Determine the bookmark menu title based on the current state
-	var bookmarkTitle string
-	if e.bookmark == nil {
-		bookmarkTitle = "Bookmark line " + e.LineNumber().String()
-	} else if e.bookmark.LineNumber() == e.LineNumber() {
-		bookmarkTitle = "Remove bookmark at line " + e.bookmark.LineNumber().String()
-	} else {
-		bookmarkTitle = "Jump to bookmark at line " + e.bookmark.LineNumber().String()
-	}
-
-	actions.Add(bookmarkTitle, func() {
-		status.ClearAll(c, false)
-		status.ClearAll(c, true)
-		if e.bookmark == nil {
-			// no bookmark, create a bookmark at the current line
-			e.bookmark = e.pos.Copy()
-			s := "Bookmarked line " + e.LineNumber().String()
-			status.SetMessageAfterRedraw("  " + s + "  ")
-		} else if e.bookmark.LineNumber() == e.LineNumber() {
-			// bookmarking the same line twice: remove the bookmark
-			s := "Removed bookmark for line " + e.bookmark.LineNumber().String()
-			status.SetMessage(s)
-			e.bookmark = nil
-		} else {
-			undo.Snapshot(e)
-			// Go to the saved bookmark position
-			e.GoToPosition(c, status, *e.bookmark)
-			// Do the redraw manually before showing the status message
-			e.HideCursorDrawLines(c, true, false, true)
-			e.redraw.Store(false)
-			// Show the status message
-			s := "Jumped to bookmark at line " + e.LineNumber().String()
-			status.SetMessage(s)
-		}
-		status.Show(c, e)
-		e.redrawCursor.Store(true)
-	})
 
 	// Disable or enable the tag-expanding behavior when typing in HTML or XML
 	if e.mode == mode.HTML || e.mode == mode.XML {
