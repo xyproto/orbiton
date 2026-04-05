@@ -2075,12 +2075,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				status.SetMessageAfterRedraw("Opening a portal at " + portal.String())
 			}
 		case "c:2": // ctrl-b, go back after jumping to a definition, or toggle block edit mode
-
 			if e.nanoMode.Load() { // nano: ctrl-b, cursor backward
 				e.CursorBackward(c, status)
 				break
 			}
-
 			// Check if we have jumped to a definition and need to go back
 			if len(backFunctions) > 0 {
 				lastIndex := len(backFunctions) - 1
@@ -2094,14 +2092,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 				break
 			}
-
+			// Block edit mode
 			e.blockMode = !e.blockMode
 			if e.blockMode {
 				e.InitBlockCursors(c)
-				status.SetMessageAfterRedraw("Block editing enabled")
 			} else {
 				e.blockCursors = nil
-				status.SetMessageAfterRedraw("Block editing disabled")
 			}
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
