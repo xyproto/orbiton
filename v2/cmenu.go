@@ -125,8 +125,10 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	}
 
 	var (
-		extraDashes bool
-		actions     = NewActions()
+		extraDashes         bool
+		actions             = NewActions()
+		height              = int(c.Height())
+		menuHeightThreshold = 22 // the canvas height threshold before some menu items should not be drawn
 	)
 
 	// TODO: Create a string->[]string map from title to command, then add them
@@ -139,9 +141,11 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	if !vsCode {
 		actions.AddCommand(e, c, tty, status, undo, "Insert \""+insertFilename+"\" at the current line", "insertfile", insertFilename)
 
-		actions.Add("Toggle column limit indicator", func() {
-			e.showColumnLimit = !e.showColumnLimit
-		})
+		if height > menuHeightThreshold {
+			actions.Add("Toggle column limit indicator", func() {
+				e.showColumnLimit = !e.showColumnLimit
+			})
+		}
 
 		// Word wrap at a custom width + enable word wrap when typing
 		actions.Add("Word wrap at...", func() {
@@ -184,20 +188,22 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	}
 
 	// Disable or enable word wrap when typing
-	if e.wrapWhenTyping {
-		actions.Add("Disable word wrap when typing", func() {
-			e.wrapWhenTyping = false
-			if e.wrapWidth == 0 {
-				e.wrapWidth = wrapWidth
-			}
-		})
-	} else {
-		actions.Add("Word wrap when typing", func() {
-			e.wrapWhenTyping = true
-			if e.wrapWidth == 0 {
-				e.wrapWidth = wrapWidth
-			}
-		})
+	if height > menuHeightThreshold {
+		if e.wrapWhenTyping {
+			actions.Add("Disable word wrap when typing", func() {
+				e.wrapWhenTyping = false
+				if e.wrapWidth == 0 {
+					e.wrapWidth = wrapWidth
+				}
+			})
+		} else {
+			actions.Add("Word wrap when typing", func() {
+				e.wrapWhenTyping = true
+				if e.wrapWidth == 0 {
+					e.wrapWidth = wrapWidth
+				}
+			})
+		}
 	}
 
 	if !e.Empty() {
@@ -226,7 +232,6 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	// Delete the rest of the file
 	if !e.Empty() {
 		actions.Add("Delete the rest of the file", func() { // copy file to clipboard
-
 			prepareFunction := func() {
 				// Prepare to delete all lines from this one and out
 				undo.Snapshot(e)
@@ -235,10 +240,8 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				// Mark the file as changed
 				e.changed.Store(true)
 			}
-
 			// Get the current index and remove the rest of the lines
 			currentLineIndex := int(e.DataY())
-
 			for y := range e.lines {
 				if y >= currentLineIndex {
 					// Run the prepareFunction, but only once, if there was changes to be made
@@ -249,7 +252,6 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 					delete(e.lines, y)
 				}
 			}
-
 			if e.changed.Load() {
 				e.MakeConsistent()
 				e.redraw.Store(true)
@@ -336,7 +338,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	}
 
 	// Add the syntax highlighting toggle menu item
-	if !envNoColor {
+	if !envNoColor && (height > menuHeightThreshold) {
 		syntaxToggleText := "Disable syntax highlighting"
 		if !e.syntaxHighlight {
 			syntaxToggleText = "Enable syntax highlighting"
@@ -518,7 +520,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	}
 
 	// Add a menu item to toggle primary/non-primary clipboard on Linux
-	if isLinux {
+	if isLinux && height > menuHeightThreshold {
 		primaryToggleText := "Toggle clipboard to secondary"
 		if !e.primaryClipboard {
 			primaryToggleText = "Toggle clipboard to primary"
@@ -534,7 +536,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		}
 	}
 
-	if !vsCode && c != nil && c.Height() > 32 {
+	if !vsCode && c != nil && height > menuHeightThreshold {
 		if e.moveLinesMode.Load() {
 			actions.Add("Scroll with ctrl-n and ctrl-p", func() {
 				e.moveLinesMode.Store(false)
