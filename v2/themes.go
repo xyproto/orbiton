@@ -98,6 +98,7 @@ type Theme struct {
 	NanoHelpBackground          vt.AttributeColor
 	HighlightForeground         vt.AttributeColor
 	HighlightBackground         vt.AttributeColor
+	MultiCursorBackground       vt.AttributeColor
 	StatusMode                  bool
 	Light                       bool
 }
@@ -191,6 +192,7 @@ func NewDefaultTheme() Theme {
 		JumpToLetterColor:           vt.LightRed,
 		NanoHelpForeground:          vt.Black,
 		NanoHelpBackground:          vt.BackgroundGray,
+		MultiCursorBackground:       vt.BackgroundYellow,
 	}
 }
 
@@ -283,6 +285,7 @@ func NewOrbTheme() Theme {
 		JumpToLetterColor:           vt.LightRed,
 		NanoHelpForeground:          vt.White,
 		NanoHelpBackground:          vt.DarkGray,
+		MultiCursorBackground:       vt.BackgroundYellow,
 	}
 }
 
@@ -375,6 +378,7 @@ func NewPinetreeTheme() Theme {
 		JumpToLetterColor:           vt.LightRed,
 		NanoHelpForeground:          vt.Black,
 		NanoHelpBackground:          vt.BackgroundGray,
+		MultiCursorBackground:       vt.BackgroundYellow,
 	}
 }
 
@@ -467,6 +471,7 @@ func NewZuluTheme() Theme {
 		JumpToLetterColor:           vt.LightMagenta,
 		NanoHelpForeground:          vt.Black,
 		NanoHelpBackground:          vt.BackgroundGray,
+		MultiCursorBackground:       vt.BackgroundYellow,
 	}
 }
 
@@ -559,6 +564,7 @@ func NewLitmusTheme() Theme {
 		JumpToLetterColor:           vt.LightRed,
 		NanoHelpForeground:          vt.Black,
 		NanoHelpBackground:          vt.BackgroundGray,
+		MultiCursorBackground:       vt.BackgroundYellow,
 	}
 }
 
@@ -651,6 +657,7 @@ func NewSynthwaveTheme() Theme {
 		JumpToLetterColor:           vt.LightMagenta,
 		NanoHelpForeground:          vt.Black,
 		NanoHelpBackground:          vt.BackgroundGray,
+		MultiCursorBackground:       vt.BackgroundYellow,
 	}
 }
 
@@ -743,6 +750,7 @@ func NewTealTheme() Theme {
 		JumpToLetterColor:           vt.White,
 		NanoHelpForeground:          vt.Black,
 		NanoHelpBackground:          vt.BackgroundGray,
+		MultiCursorBackground:       vt.BackgroundYellow,
 	}
 }
 
@@ -836,6 +844,7 @@ func NewRedBlackTheme() Theme {
 		JumpToLetterColor:           vt.Red,
 		NanoHelpForeground:          vt.Black,
 		NanoHelpBackground:          vt.BackgroundGray,
+		MultiCursorBackground:       vt.BackgroundRed,
 	}
 }
 
@@ -929,6 +938,7 @@ func NewLightBlueEditTheme() Theme {
 		JumpToLetterColor:           vt.LightBlue,
 		NanoHelpForeground:          vt.Black,
 		NanoHelpBackground:          vt.BackgroundGray,
+		MultiCursorBackground:       vt.BackgroundYellow,
 	}
 }
 
@@ -1022,6 +1032,7 @@ func NewDarkBlueEditTheme() Theme {
 		JumpToLetterColor:           vt.White,
 		NanoHelpForeground:          vt.Black,
 		NanoHelpBackground:          vt.BackgroundGray,
+		MultiCursorBackground:       vt.BackgroundYellow,
 	}
 }
 
@@ -1114,6 +1125,7 @@ func NewLightVSTheme() Theme {
 		JumpToLetterColor:           vt.Red,
 		NanoHelpForeground:          vt.Black,
 		NanoHelpBackground:          vt.BackgroundGray,
+		MultiCursorBackground:       vt.BackgroundYellow,
 	}
 }
 
@@ -1206,6 +1218,7 @@ func NewDarkVSTheme() Theme {
 		JumpToLetterColor:           vt.Red,
 		NanoHelpForeground:          vt.Black,
 		NanoHelpBackground:          vt.BackgroundGray,
+		MultiCursorBackground:       vt.BackgroundYellow,
 	}
 }
 
@@ -1217,6 +1230,7 @@ func NewGrayTheme() Theme {
 	t.Background = vt.BackgroundDefault // black background
 	t.JumpToLetterColor = vt.White      // for jumping to a letter with ctrl-l
 	t.ProgressIndicatorBackground = vt.BackgroundGray
+	t.MultiCursorBackground = vt.BackgroundWhite
 	return t
 }
 
@@ -1229,6 +1243,7 @@ func NewAmberTheme() Theme {
 	t.JumpToLetterColor = t.Foreground  // for jumping to a letter with ctrl-l
 	t.ProgressIndicatorBackground = vt.BackgroundYellow
 	t.TopRightForeground = t.Foreground
+	t.MultiCursorBackground = vt.BackgroundYellow
 	return t
 }
 
@@ -1241,6 +1256,7 @@ func NewGreenTheme() Theme {
 	t.JumpToLetterColor = t.Foreground  // for jumping to a letter with ctrl-l
 	t.ProgressIndicatorBackground = vt.BackgroundGreen
 	t.TopRightForeground = t.Foreground
+	t.MultiCursorBackground = vt.BackgroundGreen
 	return t
 }
 
@@ -1253,6 +1269,7 @@ func NewBlueTheme() Theme {
 	t.JumpToLetterColor = t.Foreground  // for jumping to a letter with ctrl-l
 	t.ProgressIndicatorBackground = vt.BackgroundBlue
 	t.TopRightForeground = t.Foreground
+	t.MultiCursorBackground = vt.BackgroundBlue
 	return t
 }
 
@@ -1345,6 +1362,7 @@ func NewNoColorDarkBackgroundTheme() Theme {
 		JumpToLetterColor:           vt.White,
 		NanoHelpForeground:          vt.Black,
 		NanoHelpBackground:          vt.BackgroundGray,
+		MultiCursorBackground:       vt.BackgroundGray,
 	}
 }
 
@@ -1436,6 +1454,7 @@ func NewNoColorLightBackgroundTheme() Theme {
 		BoxUpperEdge:                vt.White,
 		JumpToLetterColor:           vt.Black,
 		NanoHelpBackground:          vt.BackgroundGray,
+		MultiCursorBackground:       vt.BackgroundGray,
 	}
 }
 

@@ -970,7 +970,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 			if virtualCursorAbsX, exists := e.blockCursors[fileLineY]; exists {
 				virtualCursorScreenX := virtualCursorAbsX - e.pos.offsetX
 				if virtualCursorScreenX >= 0 && virtualCursorScreenX < int(cw) {
-					c.WriteBackgroundNoLock(uint(virtualCursorScreenX), yp, vt.BackgroundYellow)
+					c.WriteBackgroundNoLock(uint(virtualCursorScreenX), yp, e.MultiCursorBackground)
 				}
 			}
 		}
