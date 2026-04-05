@@ -166,8 +166,6 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 		status.Show(c, e)
 	} else if e.statusMode {
 		status.ShowFilenameLineColWordCount(c, e)
-	} else if e.blockMode {
-		status.ShowBlockModeStatusLine(c, e)
 	} else if status.IsError() {
 		status.Show(c, e)
 	}
@@ -239,8 +237,6 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 		status.Show(c, e)
 	} else if e.statusMode {
 		status.ShowFilenameLineColWordCount(c, e)
-	} else if e.blockMode {
-		status.ShowBlockModeStatusLine(c, e)
 	} else if status.IsError() {
 		// Show the status message, if *statusMessage is not set
 		if status.messageAfterRedraw == "" {
