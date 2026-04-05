@@ -1516,7 +1516,7 @@ func (e *Editor) InitBlockCursors(c *vt.Canvas) {
 			break
 		}
 	}
-	for i := downCounter; i > 0; i-- {
+	for _ = range downCounter {
 		e.Up(c, nil)
 	}
 	// Restore cursor position (Down/Up via GoTo resets X to FirstScreenPosition)
