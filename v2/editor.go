@@ -2256,6 +2256,7 @@ func (e *Editor) ForEachLineInBlockWithCommentMarker(c *vt.Canvas, f func(string
 func (e *Editor) ForEachLineInBlock(c *vt.Canvas, f func() bool) {
 	firstScreenY := e.pos.sy
 	firstDataY := int(e.DataY())
+	firstOffsetX := e.pos.offsetX
 	// Store initial position in absolute coordinates (not screen coordinates)
 	initialAbsX := e.pos.sx + e.pos.offsetX
 
@@ -2282,11 +2283,8 @@ func (e *Editor) ForEachLineInBlock(c *vt.Canvas, f func() bool) {
 		}
 		// Reset to starting position
 		e.pos.sy = firstScreenY
-		e.pos.sx = initialAbsX
-		e.pos.offsetX = 0
-		if e.pos.sx >= 80 { // assuming default terminal width; will be adjusted by SetX
-			e.pos.SetX(c, initialAbsX)
-		}
+		e.pos.offsetX = firstOffsetX
+		e.pos.sx = initialAbsX - firstOffsetX
 	} else {
 		// Sync the real cursor position with blockCursors: if the cursor moved
 		// since the last ForEachLineInBlock call (e.g. via Next or Prev),
@@ -2342,7 +2340,9 @@ func (e *Editor) ForEachLineInBlock(c *vt.Canvas, f func() bool) {
 	for i := downCounter; i > 0; i-- {
 		e.Up(c, nil)
 	}
-
+	// Restore original screen position and offset
+	e.pos.sy = firstScreenY
+	e.pos.offsetX = firstOffsetX
 	// Restore cursor to first line with its current virtual cursor position
 	finalAbsX := e.blockCursors[firstDataY]
 	e.pos.SetX(c, finalAbsX)
