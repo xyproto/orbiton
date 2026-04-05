@@ -98,8 +98,8 @@ github.com/xyproto/kotlinsig v0.0.1 h1:WsRn1dyJ7EwQk5MngOujIcSZazjG+yAIiZzWIJC0F
 github.com/xyproto/kotlinsig v0.0.1/go.mod h1:tq9ILkFh43rUuDiscyTZoBs6zSDxPa+hKKM5c6Bdnio=
 github.com/xyproto/lookslikegoasm v1.0.0 h1:/2nuhAu67tdjqXHkdOjP/UUAH9uJbAdptIkF2WzXqz4=
 github.com/xyproto/lookslikegoasm v1.0.0/go.mod h1:4ck0t+iH2rEAmjwnRhMZl72lCeCxK4iylxdcZ3K3FbY=
-github.com/xyproto/megafile v1.6.36 h1:X3HFMWeiFv6/qSCaoEHfL5DutZb4qAakshfS9o6C5JE=
-github.com/xyproto/megafile v1.6.36/go.mod h1:NHnTlhiCGOdrhDUC9mWokVlDxdCU/ZQMddKn94g8abY=
+github.com/xyproto/megafile v1.6.37 h1:ORcbK0wzsvad3xmDBTvW6drIGvqhrZMH37L9RXcTHWM=
+github.com/xyproto/megafile v1.6.37/go.mod h1:Cjo5ivp9HN8sv3pbTyr9vNQHjHPFtIGWV8fEjvhPp+A=
 github.com/xyproto/mode v0.12.6 h1:+lPZ/SaKWcvAU58KWJ5lCzv3RcnFhdVtl5/o3fbsn0s=
 github.com/xyproto/mode v0.12.6/go.mod h1:Bl7ymMitqlFLl3lgyAY3knkZb0t9/4fzgja7mWp66n0=
 github.com/xyproto/ollamaclient/v2 v2.7.2 h1:Z5uAZool07r2HuhPmdEJ6N8kmxNnwsjii0/uOl415uc=
@@ -108,8 +108,8 @@ github.com/xyproto/orchideous v1.0.6 h1:DGtW9G4UMv+ytHEiVXacyZT3S4rhVymSTA9QWEi4
 github.com/xyproto/orchideous v1.0.6/go.mod h1:KzSShfPitun+d1zFnwWNlLry6T+G2DtTdEoQ/vrzvf8=
 github.com/xyproto/palgen v1.6.1 h1:TmVtbNZ6VAPzTBxFDFm0Fxk5Xw+NVdnl1xmJuvzFHsI=
 github.com/xyproto/palgen v1.6.1/go.mod h1:HOIPtsPHOgpGTSLifWenL1Q6C+Sq/QoC8REct5J8OPI=
-github.com/xyproto/syntax v1.12.10 h1:iVsknbfZ4en/cmfSIISIW40lVjE1SraukiJG/wx3sBs=
-github.com/xyproto/syntax v1.12.10/go.mod h1:4WQ2QHa7M00VQzm1cj6sYFq8Gsyw7l28ClByb8byQaQ=
+github.com/xyproto/syntax v1.12.11 h1:S2zd5Tv9cqZFfNRBR5Ci/Nh0ZqTckVs84XsUMlWAb6Q=
+github.com/xyproto/syntax v1.12.11/go.mod h1:4WQ2QHa7M00VQzm1cj6sYFq8Gsyw7l28ClByb8byQaQ=
 github.com/xyproto/termtitle v1.5.1 h1:L1I+6juzNQk+BsoPCYw2c+3unEv4pxQqcyIoO9Xb3qc=
 github.com/xyproto/termtitle v1.5.1/go.mod h1:U+yMnuL9ENDJy9+OCDEiEx01b7Uk6Zu6g1O22xY/rvQ=
 github.com/xyproto/usermodel v1.2.3 h1:yAjC5Hva0gbtc8fxHc7HC3SiZqe41hDzP6PBNm/F688=
