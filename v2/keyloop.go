@@ -2196,9 +2196,16 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					wrapped := e.InsertRune(c, r)
 					if !wrapped {
 						e.WriteRune(c)
-						e.Next(c)
+						if e.blockMode {
+							e.BlockCursorRight()
+						} else {
+							e.Next(c)
+						}
 					}
 					e.redraw.Store(true)
+				}
+				if e.blockMode {
+					e.redrawCursor.Store(true)
 				}
 			} else if len(keyRunes) > 0 && unicode.IsGraphic(keyRunes[0]) { // any other key that can be drawn
 				undo.Snapshot(e)

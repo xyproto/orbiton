@@ -44,15 +44,15 @@ func (e *Editor) Backspace(c *vt.Canvas) {
 					e.pos.sx++
 				}
 				e.pos.mut.Unlock()
-			} else {
-				// At the end of the line, trim trailing whitespace
-				e.TrimRight(e.DataY())
 			}
 		}
 		return true // success
 	}
 	if e.blockMode {
 		e.ForEachLineInBlock(c, doBackspace)
+		for k := range e.blockCursors {
+			e.TrimRight(LineIndex(k))
+		}
 	} else {
 		doBackspace()
 	}
