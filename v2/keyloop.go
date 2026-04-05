@@ -1373,11 +1373,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// Try LSP completion for supported languages
 			if e.handleLSPCompletion(c, status, tty, undo) {
 				break
-			} else {
-				const drawLines = true
-				const justMovedUpOrDown = false
-				e.FullResetRedraw(c, status, drawLines, justMovedUpOrDown)
 			}
+
+			const drawLines = true
+			const justMovedUpOrDown = false
+			e.FullResetRedraw(c, status, drawLines, justMovedUpOrDown)
 
 			trimmedLine := e.TrimmedLine()
 
