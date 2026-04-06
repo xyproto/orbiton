@@ -358,56 +358,6 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		})
 	}
 
-	if !vsCode && !e.Empty() {
-
-		// Render to PDF using the gofpdf package
-		actions.Add("Render to PDF", func() {
-			// Write to PDF in a goroutine
-			pdfFilename := strings.ReplaceAll(filepath.Base(e.filename), ".", "_") + ".pdf"
-
-			// Show a status message while writing
-			status.SetMessage("Writing " + pdfFilename + "...")
-			status.ShowNoTimeout(c, e)
-
-			statusMessage := ""
-
-			// TODO: Only overwrite if the previous PDF file was also rendered by "o".
-			_ = os.Remove(pdfFilename)
-			// Write the file
-			if err := e.SavePDF(e.filename, pdfFilename); err != nil {
-				statusMessage = err.Error()
-			} else {
-				statusMessage = "Wrote " + pdfFilename
-			}
-			// Show a status message after writing
-			status.ClearAll(c, true)
-			status.SetMessage(statusMessage)
-			status.ShowNoTimeout(c, e)
-		})
-
-		// Render to PDF using pandoc
-		if (e.mode == mode.Markdown || e.mode == mode.ASCIIDoc || e.mode == mode.SCDoc) && files.WhichCached("pandoc") != "" {
-			actions.Add("Render to PDF using pandoc", func() {
-				// pandoc
-				if pandocPath := files.WhichCached("pandoc"); pandocPath != "" {
-					pdfFilename := strings.ReplaceAll(filepath.Base(e.filename), ".", "_") + ".pdf"
-					go func() {
-						pandocMutex.Lock()
-						_ = e.exportPandocPDF(c, tty, status, pandocPath, pdfFilename)
-						pandocMutex.Unlock()
-					}()
-					// the exportPandoc function handles it's own status output
-					return
-				}
-				status.SetErrorMessage("Could not find pandoc")
-				status.ShowNoTimeout(c, e)
-			})
-		}
-	}
-
-	// This is a bit odd, but useful when copying the file in 200 line chunks.
-	// actions.AddCommand(e, c, tty, status, bookmark, undo, "Copy the next 200 lines", "copy200")
-
 	if !envNoColor || changedTheme {
 		// Add an option for selecting a theme
 		actions.Add("Change theme", func() {
@@ -527,6 +477,48 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	if !vsCode {
 		if !e.EmptyLine() {
 			actions.AddCommand(e, c, tty, status, undo, "Split line on blanks outside of (), [] or {}", "splitline")
+		}
+	}
+
+	if !vsCode && !e.Empty() {
+		// Render to PDF using the gofpdf package
+		actions.Add("Render to PDF", func() {
+			// Write to PDF in a goroutine
+			pdfFilename := strings.ReplaceAll(filepath.Base(e.filename), ".", "_") + ".pdf"
+			// Show a status message while writing
+			status.SetMessage("Writing " + pdfFilename + "...")
+			status.ShowNoTimeout(c, e)
+			statusMessage := ""
+			// TODO: Only overwrite if the previous PDF file was also rendered by "o".
+			_ = os.Remove(pdfFilename)
+			// Write the file
+			if err := e.SavePDF(e.filename, pdfFilename); err != nil {
+				statusMessage = err.Error()
+			} else {
+				statusMessage = "Wrote " + pdfFilename
+			}
+			// Show a status message after writing
+			status.ClearAll(c, true)
+			status.SetMessage(statusMessage)
+			status.ShowNoTimeout(c, e)
+		})
+		// Render to PDF using pandoc
+		if (e.mode == mode.Markdown || e.mode == mode.ASCIIDoc || e.mode == mode.SCDoc) && files.WhichCached("pandoc") != "" {
+			actions.Add("Render to PDF using pandoc", func() {
+				// pandoc
+				if pandocPath := files.WhichCached("pandoc"); pandocPath != "" {
+					pdfFilename := strings.ReplaceAll(filepath.Base(e.filename), ".", "_") + ".pdf"
+					go func() {
+						pandocMutex.Lock()
+						_ = e.exportPandocPDF(c, tty, status, pandocPath, pdfFilename)
+						pandocMutex.Unlock()
+					}()
+					// the exportPandoc function handles it's own status output
+					return
+				}
+				status.SetErrorMessage("Could not find pandoc")
+				status.ShowNoTimeout(c, e)
+			})
 		}
 	}
 
