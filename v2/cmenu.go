@@ -203,20 +203,20 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 			}
 		})
 
-		var alsoRun = false
-		var menuItemText = "Export"
 		if ProgrammingLanguage(e.mode) {
+			var alsoRun = false
+			var menuItemText = "Export"
 			if e.CanRun() {
 				alsoRun = true
 				menuItemText = "Compile and run"
 			} else {
 				menuItemText = "Compile"
 			}
+			actions.Add(menuItemText, func() {
+				e.runAfterBuild.Store(alsoRun)
+				e.Build(c, status, tty)
+			})
 		}
-		actions.Add(menuItemText, func() {
-			e.runAfterBuild.Store(alsoRun)
-			e.Build(c, status, tty)
-		})
 	}
 
 	// Disable or enable word wrap when typing
