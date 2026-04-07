@@ -194,7 +194,7 @@ func (e *Editor) SearchForTypo() (string, string, error) {
 	return "", "", errFoundNoTypos
 }
 
-// applyTypoHighlights colors words in single-line comments that appear to be typos, using e.MenuArrowColor.
+// applyTypoHighlights colors words in single-line comments that appear to be typos.
 // It modifies runesAndAttributes in-place, following the same pattern as applyAccentHighlights.
 func (e *Editor) applyTypoHighlights(line, commentMarker string, runesAndAttributes []vt.CharAttribute) {
 	if spellChecker == nil || !ProgrammingLanguage(e.mode) || commentMarker == "" || len(runesAndAttributes) == 0 {
@@ -228,7 +228,7 @@ func (e *Editor) applyTypoHighlights(line, commentMarker string, runesAndAttribu
 		wordRuneStart := commentRuneStart + len([]rune(commentText[:loc[0]]))
 		wordRuneEnd := wordRuneStart + len([]rune(word))
 		for k := wordRuneStart; k < wordRuneEnd && k < len(runesAndAttributes); k++ {
-			runesAndAttributes[k].A = e.MenuArrowColor
+			runesAndAttributes[k].A = e.UnmatchedParenColor
 		}
 	}
 }
