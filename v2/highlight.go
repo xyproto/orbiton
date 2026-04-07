@@ -798,6 +798,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 				}
 
 				e.applyAccentHighlights(line, runesAndAttributes)
+				e.applyTypoHighlights(line, singleLineCommentMarker, runesAndAttributes)
 
 				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
 				if e.mode != mode.Git && e.mode != mode.Email && e.rainbowParenthesis && q.None() && !q.hasSingleLineComment && !q.stoppedMultiLineComment {
@@ -954,7 +955,6 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 				}
 			}
 		}
-
 		if noGUI {
 			vt.SetXY(0, yp+1)
 		}

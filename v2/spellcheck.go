@@ -194,6 +194,45 @@ func (e *Editor) SearchForTypo() (string, string, error) {
 	return "", "", errFoundNoTypos
 }
 
+// applyTypoHighlights colors words in single-line comments that appear to be typos, using e.MenuArrowColor.
+// It modifies runesAndAttributes in-place, following the same pattern as applyAccentHighlights.
+func (e *Editor) applyTypoHighlights(line, commentMarker string, runesAndAttributes []vt.CharAttribute) {
+	if spellChecker == nil || !ProgrammingLanguage(e.mode) || commentMarker == "" || len(runesAndAttributes) == 0 {
+		return
+	}
+	// Find where the comment text begins in the (tab-expanded) line
+	commentStart := -1
+	if idx := strings.Index(line, " "+commentMarker); idx >= 0 {
+		commentStart = idx + 1 + len(commentMarker)
+	} else if idx := strings.Index(line, commentMarker); idx >= 0 && strings.TrimSpace(line[:idx]) == "" {
+		commentStart = idx + len(commentMarker)
+	}
+	if commentStart < 0 || commentStart >= len(line) {
+		return
+	}
+	commentText := line[commentStart:]
+	// Rune offset into runesAndAttributes where the comment text begins
+	commentRuneStart := len([]rune(line[:commentStart]))
+	// Find each word and color the ones flagged as typos
+	for _, loc := range wordRegexp.FindAllStringIndex(commentText, -1) {
+		word := commentText[loc[0]:loc[1]]
+		lower := strings.ToLower(word)
+		if slices.Contains(spellChecker.ignoredWords, word) || slices.Contains(spellChecker.customWords, word) ||
+			slices.Contains(spellChecker.ignoredWords, lower) || slices.Contains(spellChecker.customWords, lower) {
+			continue
+		}
+		corrected := spellChecker.fuzzyModel.SpellCheck(word)
+		if strings.EqualFold(word, corrected) || corrected == "" || slices.Contains(dontSuggest, corrected) {
+			continue
+		}
+		wordRuneStart := commentRuneStart + len([]rune(commentText[:loc[0]]))
+		wordRuneEnd := wordRuneStart + len([]rune(word))
+		for k := wordRuneStart; k < wordRuneEnd && k < len(runesAndAttributes); k++ {
+			runesAndAttributes[k].A = e.MenuArrowColor
+		}
+	}
+}
+
 // NanoNextTypo tries to jump to the next typo
 func (e *Editor) NanoNextTypo(c *vt.Canvas, status *StatusBar) (string, string) {
 	if typo, corrected, err := e.SearchForTypo(); err == nil || err == errFoundNoTypos {

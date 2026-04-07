@@ -355,6 +355,15 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	// Draw everything once, with slightly different behavior if used over ssh
 	e.InitialRedraw(c, status)
 
+	// Initialize the spell checker in the background, but only if the document has single-line comments
+	if spellChecker == nil && ProgrammingLanguage(e.mode) {
+		go func() {
+			if sc, err := NewSpellChecker(); err == nil {
+				spellChecker = sc
+			}
+		}()
+	}
+
 	// Request function description at startup if cursor is on a function
 	if ollama.Loaded() && (ProgrammingLanguage(e.mode) || e.mode == mode.GoAssembly || e.mode == mode.Assembly) {
 		if e.mode == mode.GoAssembly || e.mode == mode.Assembly {
