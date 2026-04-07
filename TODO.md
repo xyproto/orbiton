@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] If Orbiton is launched by a symlink starting with `p` (for `preview`), then act as an auto-reloading Markdown preview program.
 - [ ] `o -b` should also build Go projects, Rust projects etc. (similar to `ctrl-space`), not only C and C++.
 - [ ] If the user saves a file that ends with `.sh`, and there is no shebang, but the first word of the first line is an executable in the PATH, then `chmod +x` the file when saving.
 - [x] Let `ctrl-b` be for block editing rather than bookmarking.
