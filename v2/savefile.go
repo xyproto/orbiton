@@ -1,5 +1,18 @@
 package main
 
+import (
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/xyproto/files"
+	"github.com/xyproto/mode"
+	"github.com/xyproto/vt"
+)
+
 // Save will try to save the current editor contents to file.
 // It needs a canvas in case trailing spaces are stripped and the cursor needs to move to the end.
 func (e *Editor) Save(c *vt.Canvas, tty *vt.TTY) error {
