@@ -11,6 +11,9 @@ import (
 // SymbolMenu starts a loop where keypresses are handled. When a choice is made, a number is returned.
 // x and y are returned. -1,-1 is "no choice", 0,0 is the top left index.
 func (e *Editor) SymbolMenu(tty *vt.TTY, status *StatusBar, title string, choices [][]string, titleColor, textColor, highlightColor vt.AttributeColor) (int, int, bool) {
+	notRegularEditingRightNow.Store(true)
+	defer notRegularEditingRightNow.Store(false)
+
 	// Clear the existing handler
 	resetResizeSignal()
 

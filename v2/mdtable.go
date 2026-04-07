@@ -499,6 +499,8 @@ func (e *Editor) EditMarkdownTable(tty *vt.TTY, c *vt.Canvas, status *StatusBar,
 // initialY is the initial Y position of the cursor in the table
 // Returns true if the user changed the contents.
 func (e *Editor) TableEditor(tty *vt.TTY, status *StatusBar, tableContents *[][]string, initialY int, displayQuickHelp bool) (bool, error) {
+	notRegularEditingRightNow.Store(true)
+	defer notRegularEditingRightNow.Store(false)
 
 	title := "Markdown Table Editor"
 	titleColor := e.Foreground // HeaderBulletColor
