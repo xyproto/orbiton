@@ -552,13 +552,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			switch e.mode {
 			case mode.Markdown:
-				if kh.DoubleTapped("c:0") && has("algernon") {
-					e.runAfterBuild.Store(true)
-					stopBackgroundProcesses()
-					e.Build(c, status, tty)
+				if e.ToggleCheckboxCurrentLine() { // Toggle checkbox
+					undo.Snapshot(e)
+					break
 				}
-				e.redrawCursor.Store(true)
-				break
 			case mode.Config, mode.FSTAB:
 				break // do nothing
 			case mode.Nroff:
