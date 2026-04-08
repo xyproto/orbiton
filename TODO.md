@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] support ctrl+arrow keys, alt+arrow keys and shift+arrow keys.
 - [ ] `ctrl-y` to redo.
 - [ ] If Orbiton is launched by a symlink starting with `p` (for `preview`), then act as an auto-reloading Markdown preview program.
 - [ ] `o -b` should also build Go projects, Rust projects etc. (similar to `ctrl-space`), not only C and C++.
