@@ -31,11 +31,13 @@ const (
 	downArrow  = "↓"
 
 	// These keys are undocumented features
-	pgUpKey = "⇞" // page up
-	pgDnKey = "⇟" // page down
-	homeKey = "⇱" // home
-	endKey  = "⇲" // end
-	copyKey = "⎘" // ctrl-insert
+	pgUpKey    = "⇞"    // page up
+	pgDnKey    = "⇟"    // page down
+	homeKey    = "⇱"    // home
+	endKey     = "⇲"    // end
+	copyKey    = "⎘"    // ctrl-insert
+	altUpKey   = "alt↑" // alt-up (xterm-class terminals only)
+	altDownKey = "alt↓" // alt-down (xterm-class terminals only)
 
 	delayUntilSpeedUp = 700 * time.Millisecond
 
@@ -976,6 +978,16 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.highlightCurrentLine || e.highlightCurrentText {
 				e.drawFuncName.Store(true)
 			}
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+
+		case altUpKey: // alt-up, jump to the start of the previous paragraph
+			e.GoToPrevParagraph(c, status)
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+
+		case altDownKey: // alt-down, jump to the start of the next paragraph
+			e.GoToNextParagraph(c, status)
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
@@ -2328,7 +2340,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		}
 
 		const arrowKeyHighlightTime = 1200 * time.Millisecond
-		justMovedByKeypress := key == upArrow || key == downArrow || key == leftArrow || key == rightArrow || key == pgUpKey || key == pgDnKey || key == homeKey || key == endKey || key == "c:1" || key == "c:2" || key == "c:5" || key == "c:6" || key == "c:12" || key == "c:14" || key == "c:16" || key == "c:25"
+		justMovedByKeypress := key == upArrow || key == downArrow || key == leftArrow || key == rightArrow || key == pgUpKey || key == pgDnKey || key == homeKey || key == endKey || key == altUpKey || key == altDownKey || key == "c:1" || key == "c:2" || key == "c:5" || key == "c:6" || key == "c:12" || key == "c:14" || key == "c:16" || key == "c:25"
 
 		notEmptyLine := !e.EmptyLine()
 		if key != "" && notEmptyLine && ProgrammingLanguage(e.mode) {
@@ -2336,7 +2348,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		}
 
 		// Draw and/or redraw everything, with slightly different behavior over ssh
-		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow, leftArrow, rightArrow, pgUpKey, pgDnKey, homeKey, endKey, "c:1", "c:2", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25")
+		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow, leftArrow, rightArrow, pgUpKey, pgDnKey, homeKey, endKey, altUpKey, altDownKey, "c:1", "c:2", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25")
 		e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown, true)
 
 		if (e.highlightCurrentLine || e.highlightCurrentText) && !e.statusMode && notEmptyLine && !e.debugMode {
@@ -2350,7 +2362,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					}
 					highlightTimerMut.Lock()
 					defer highlightTimerMut.Unlock()
-					justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow, leftArrow, rightArrow, pgUpKey, pgDnKey, homeKey, endKey, "c:1", "c:2", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25")
+					justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow, leftArrow, rightArrow, pgUpKey, pgDnKey, homeKey, endKey, altUpKey, altDownKey, "c:1", "c:2", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25")
 					if e.waitWithRedrawing.Load() {
 						e.waitWithRedrawing.Store(false)
 					} else if !justMovedUpOrDownOrLeftOrRight && !notRegularEditingRightNow.Load() {
