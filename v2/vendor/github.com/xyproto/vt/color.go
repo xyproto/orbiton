@@ -148,7 +148,15 @@ func (ac AttributeColor) String() string {
 	}
 
 	var result string
-	if val > 0xFFFF {
+	if val&(1<<31) != 0 {
+		// 256-color mode: bit 31 set, bit 30 selects bg vs fg, bits 0-7 are the index
+		idx := val & 0xFF
+		if val&(1<<30) != 0 {
+			result = fmt.Sprintf("\033[48;5;%dm", idx)
+		} else {
+			result = fmt.Sprintf("\033[38;5;%dm", idx)
+		}
+	} else if val > 0xFFFF {
 		primary := val & 0xFFFF
 		secondary := (val >> 16) & 0xFFFF
 		result = fmt.Sprintf(attributeTemplate, strconv.FormatUint(uint64(primary), 10)+";"+strconv.FormatUint(uint64(secondary), 10))
@@ -158,6 +166,18 @@ func (ac AttributeColor) String() string {
 
 	scache.Store(val, result)
 	return result
+}
+
+// Color256 returns an AttributeColor for the given xterm 256-color foreground index (0–255).
+// Use Has256Colors() to check whether the terminal supports this.
+func Color256(n uint8) AttributeColor {
+	return AttributeColor(uint32(1<<31) | uint32(n))
+}
+
+// Background256 returns an AttributeColor for the given xterm 256-color background index (0–255).
+// Use Has256Colors() to check whether the terminal supports this.
+func Background256(n uint8) AttributeColor {
+	return AttributeColor(uint32(1<<31) | uint32(1<<30) | uint32(n))
 }
 
 // Wrap returns text wrapped with this color's escape sequence and a trailing reset

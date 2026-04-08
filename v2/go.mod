@@ -11,7 +11,7 @@ require (
 	github.com/ianlancetaylor/demangle v0.0.0-20251118225945-96ee0021ea0f
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/klauspost/asmfmt v1.3.2
-	github.com/mattn/go-runewidth v0.0.22
+	github.com/mattn/go-runewidth v0.0.23
 	github.com/sajari/fuzzy v1.0.0
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d
 	github.com/spf13/pflag v1.0.10
@@ -34,7 +34,7 @@ require (
 	github.com/xyproto/orchideous v1.0.6
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.2.3
-	github.com/xyproto/vt v1.7.14
+	github.com/xyproto/vt v1.7.15
 	github.com/xyproto/wordwrap v1.0.1
 	golang.org/x/image v0.38.0
 )
@@ -58,7 +58,7 @@ require (
 	github.com/xyproto/palgen v1.6.1 // indirect
 	github.com/xyproto/syntax v1.12.11 // indirect
 	golang.org/x/net v0.52.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/term v0.41.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 )

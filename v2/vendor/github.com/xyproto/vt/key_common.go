@@ -20,9 +20,11 @@ var pageNavLookup = map[[4]byte]int{
 	{27, 91, 56, 126}: 5,   // End (ESC [8~)
 }
 
-// Key codes for 6-byte sequences (Ctrl-Insert)
-var ctrlInsertLookup = map[[6]byte]int{
+// Key codes for 6-byte modifier-key sequences (CSI with modifier parameter)
+var modKeyLookup = map[[6]byte]int{
 	{27, 91, 50, 59, 53, 126}: 258, // Ctrl-Insert (ESC [2;5~)
+	{27, 91, 49, 59, 51, 65}:  259, // Alt-Up (ESC [1;3A)
+	{27, 91, 49, 59, 51, 66}:  260, // Alt-Down (ESC [1;3B)
 }
 
 // String representations for 3-byte sequences
@@ -47,7 +49,9 @@ var pageStringLookup = map[[4]byte]string{
 	{27, 91, 56, 126}: "⇲", // End
 }
 
-// String representations for 6-byte sequences (Ctrl-Insert)
-var ctrlInsertStringLookup = map[[6]byte]string{
-	{27, 91, 50, 59, 53, 126}: "⎘", // Ctrl-Insert (Copy)
+// String representations for 6-byte modifier-key sequences (CSI with modifier parameter)
+var modKeyStringLookup = map[[6]byte]string{
+	{27, 91, 50, 59, 53, 126}: "⎘",    // Ctrl-Insert
+	{27, 91, 49, 59, 51, 65}:  "alt↑", // Alt-Up
+	{27, 91, 49, 59, 51, 66}:  "alt↓", // Alt-Down
 }

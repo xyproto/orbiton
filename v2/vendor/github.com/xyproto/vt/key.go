@@ -229,7 +229,7 @@ func asciiAndKeyCode(tty *TTY) (ascii, keyCode int, err error) {
 		}
 	case numRead == 6:
 		seq := [6]byte{bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]}
-		if code, found := ctrlInsertLookup[seq]; found {
+		if code, found := modKeyLookup[seq]; found {
 			keyCode = code
 			tty.Restore()
 			tty.Flush()
@@ -311,7 +311,7 @@ func (tty *TTY) String() string {
 		return string(bytes[:numRead])
 	case numRead == 6:
 		seq := [6]byte{bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]}
-		if str, found := ctrlInsertStringLookup[seq]; found {
+		if str, found := modKeyStringLookup[seq]; found {
 			return str
 		}
 		fallthrough
@@ -371,7 +371,7 @@ func (tty *TTY) Rune() rune {
 		return r
 	case numRead == 6:
 		seq := [6]byte{bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]}
-		if str, found := ctrlInsertStringLookup[seq]; found {
+		if str, found := modKeyStringLookup[seq]; found {
 			return []rune(str)[0]
 		}
 		r, _ := utf8.DecodeRune(bytes[:numRead])
