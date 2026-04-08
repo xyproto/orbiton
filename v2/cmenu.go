@@ -375,8 +375,11 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				"Gray Mono      (O_THEME=graymono)",
 				"Amber Mono     (O_THEME=ambermono)",
 				"Green Mono     (O_THEME=greenmono)",
-				"Blue Mono      (O_THEME=bluemono)",
-				"No colors      (NO_COLOR=1)"}
+				"Blue Mono      (O_THEME=bluemono)"}
+			//if vt.Has256Colors() {
+			  //menuChoices = append(menuChoices, "Xoria 256      (O_THEME=xoria)")
+			//}
+			menuChoices = append(menuChoices, "No colors      (NO_COLOR=1)")
 			useMenuIndex := 0
 			for i, menuChoiceText := range menuChoices {
 				themePrefix := menuChoiceText
@@ -389,68 +392,84 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				}
 			}
 			if useMenuIndex == 0 && env.Bool("NO_COLOR") {
-				useMenuIndex = 10 // The "No colors" menu choice
+				useMenuIndex = len(menuChoices) - 1 // The "No colors" menu choice is always last
 			}
 			changedTheme = true
 			selectedItemIndex, _ := e.Menu(status, tty, "Select color theme", menuChoices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes)
-			switch selectedItemIndex {
-			case 0: // Default
+			// Extract the O_THEME value (or "nocolor") from the selected menu entry for string matching
+			var selectedTheme string
+			if selectedItemIndex >= 0 && selectedItemIndex < len(menuChoices) {
+				text := menuChoices[selectedItemIndex]
+				if _, after, ok := strings.Cut(text, "O_THEME="); ok {
+					selectedTheme = strings.TrimRight(strings.TrimSpace(after), ")")
+				} else if strings.Contains(text, "NO_COLOR=1") {
+					selectedTheme = "nocolor"
+				} else {
+					selectedTheme = strings.ToLower(strings.TrimSpace(text))
+				}
+			}
+			switch selectedTheme {
+			case "default":
 				envNoColor = false
 				e.setDefaultTheme()
 				e.syntaxHighlight = true
-			case 1: // Synthwave
+			case "synthwave":
 				envNoColor = false
 				e.SetTheme(NewSynthwaveTheme())
 				e.syntaxHighlight = true
-			case 2: // Red & Black
+			case "redblack":
 				envNoColor = false
 				e.SetTheme(NewRedBlackTheme())
 				e.syntaxHighlight = true
-			case 3: // VS
+			case "vs":
 				envNoColor = false
 				e.setVSTheme()
 				e.syntaxHighlight = true
-			case 4: // Orb
+			case "orb":
 				envNoColor = false
 				e.SetTheme(NewOrbTheme())
 				e.syntaxHighlight = true
-			case 5: // Litmus
+			case "litmus":
 				envNoColor = false
 				e.SetTheme(NewLitmusTheme())
 				e.syntaxHighlight = true
-			case 6: // Teal
+			case "teal":
 				envNoColor = false
 				e.SetTheme(NewTealTheme())
 				e.syntaxHighlight = true
-			case 7: // Blue Edit
+			case "blueedit":
 				envNoColor = false
 				e.setBlueEditTheme()
 				e.syntaxHighlight = true
-			case 8: // Pinetree
+			case "pinetree":
 				envNoColor = false
 				e.SetTheme(NewPinetreeTheme())
 				e.syntaxHighlight = true
-			case 9: // Zulu
+			case "zulu":
 				envNoColor = false
 				e.SetTheme(NewZuluTheme())
 				e.syntaxHighlight = true
-			case 10: // Gray Mono
+			case "graymono":
 				envNoColor = false
 				e.setGrayTheme()
 				e.syntaxHighlight = false
-			case 11: // Amber Mono
+			case "ambermono":
 				envNoColor = false
 				e.setAmberTheme()
 				e.syntaxHighlight = false
-			case 12: // Green Mono
+			case "greenmono":
 				envNoColor = false
 				e.setGreenTheme()
 				e.syntaxHighlight = false
-			case 13: // Blue Mono
+			case "bluemono":
 				envNoColor = false
 				e.setBlueTheme()
 				e.syntaxHighlight = false
-			case 14: // No color
+//			case "xoria":
+				//envNoColor = false
+				//e.SetTheme(NewXoriaTheme())
+//				e.syntaxHighlight = true
+			case "nocolor":
 				envNoColor = true
 				e.setNoColorTheme()
 				e.syntaxHighlight = false
