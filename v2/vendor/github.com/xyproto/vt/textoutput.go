@@ -323,7 +323,8 @@ func (o *TextOutput) initializeTagReplacers() {
 // ExtractToSlice iterates over an ANSI encoded string, parsing out color codes and places it in
 // a slice of CharAttribute. Each CharAttribute in the slice represents a character in the
 // input string and its corresponding color attributes. This function handles escaping sequences
-// and converts ANSI color codes to AttributeColor structs.
+// and converts ANSI color codes to AttributeColor structs, including 256-color sequences
+// of the form ESC[38;5;Nm (foreground) and ESC[48;5;Nm (background).
 // The returned uint is the number of stored elements.
 func (o *TextOutput) ExtractToSlice(s string, pcc *[]CharAttribute) uint {
 	var (
@@ -337,21 +338,24 @@ func (o *TextOutput) ExtractToSlice(s string, pcc *[]CharAttribute) uint {
 		case escaped && r == 'm':
 			colorAttributes := strings.Split(strings.TrimPrefix(colorcode.String(), "["), ";")
 			if len(colorAttributes) != 1 || colorAttributes[0] != "0" {
-				var primaryAttr, secondaryAttr AttributeColor
-				for i, attribute := range colorAttributes {
-					if attributeNumber, err := strconv.Atoi(attribute); err == nil {
-						if i == 0 {
-							primaryAttr = AttributeColor(attributeNumber)
-						} else {
-							secondaryAttr = AttributeColor(attributeNumber)
-							break // Only handle two attributes for now
-						}
+				// Parse the numeric fields up front
+				nums := make([]int, 0, len(colorAttributes))
+				for _, attribute := range colorAttributes {
+					if n, err := strconv.Atoi(attribute); err == nil {
+						nums = append(nums, n)
 					}
 				}
-				if secondaryAttr != 0 {
-					currentColor = primaryAttr.Combine(secondaryAttr)
-				} else {
-					currentColor = primaryAttr
+				switch {
+				case len(nums) >= 3 && nums[0] == 38 && nums[1] == 5:
+					// ESC[38;5;Nm — 256-color foreground
+					currentColor = Color256(uint8(nums[2]))
+				case len(nums) >= 3 && nums[0] == 48 && nums[1] == 5:
+					// ESC[48;5;Nm — 256-color background
+					currentColor = Background256(uint8(nums[2]))
+				case len(nums) == 2:
+					currentColor = AttributeColor(nums[0]).Combine(AttributeColor(nums[1]))
+				case len(nums) == 1:
+					currentColor = AttributeColor(nums[0])
 				}
 			} else {
 				currentColor = AttributeColor(0)
