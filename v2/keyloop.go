@@ -1524,7 +1524,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.drawProgress.Store(true)
 			e.drawFuncName.Store(true)
 
-		case "c:25": // ctrl-y
+		case "c:25": // ctrl-y, redo
 
 			if e.nanoMode.Load() { // nano: ctrl-y, page up
 				h := int(c.H())
@@ -1536,8 +1536,23 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
-			fallthrough
-		case "c:1", homeKey: // ctrl-a, home (or ctrl-y for scrolling up in the st terminal)
+			// Redo: save current state to undo (keeping redo intact), then restore from redo
+			if redo.Len() == 0 {
+				status.SetMessageAfterRedraw("Nothing to redo")
+				break
+			}
+			undo.IgnoreRedoClear(true)
+			undo.Snapshot(e)
+			undo.IgnoreRedoClear(false)
+			if err := redo.Restore(e); err != nil {
+				status.SetErrorAfterRedraw(err)
+				break
+			}
+			e.EnableAndPlaceCursor(c)
+			e.redrawCursor.Store(true)
+			e.redraw.Store(true)
+
+		case "c:1", homeKey: // ctrl-a, home
 
 			if e.spellCheckMode {
 				if addedWord := e.AddCurrentWordToWordList(); addedWord != "" {
@@ -1730,14 +1745,19 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			lastCutY = -1
 			lastPasteY = -1
 			lastCopyY = -1
-			// Try to restore the previous editor state in the undo buffer
-			if err := undo.Restore(e); err == nil {
-				e.EnableAndPlaceCursor(c)
-				e.redrawCursor.Store(true)
-				e.redraw.Store(true)
-			} else {
+			if undo.Len() == 0 {
 				status.SetMessageAfterRedraw("Nothing more to undo")
+				break
 			}
+			// Save current state to redo before undoing, so redo can restore it
+			redo.Snapshot(e)
+			if err := undo.Restore(e); err != nil {
+				status.SetErrorAfterRedraw(err)
+				break
+			}
+			e.EnableAndPlaceCursor(c)
+			e.redrawCursor.Store(true)
+			e.redraw.Store(true)
 		case "c:24": // ctrl-x, cut line
 
 			if e.blockMode { // cut the entire block

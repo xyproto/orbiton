@@ -9,6 +9,7 @@ import (
 // Undo is a struct that can store several states of the editor and position
 type Undo struct {
 	mut                  *sync.RWMutex
+	redoBuffer           *Undo // if set, cleared when a new snapshot is taken (i.e. a new edit is made)
 	editorCopies         []Editor
 	editorLineCopies     []map[int][]rune
 	editorPositionCopies []Position
@@ -17,6 +18,7 @@ type Undo struct {
 	maxSize              int
 	maxMemoryUse         uint64 // can be <= 0 to not check for memory use
 	ignoreSnapshots      bool   // used when playing back macros
+	ignoreRedoClear      bool   // used when snapshotting as part of a redo operation
 }
 
 const (
@@ -27,8 +29,11 @@ const (
 )
 
 var (
+	// Redo buffer, populated on undo, cleared on new edits
+	redo = NewUndo(defaultMaxUndoCount, defaultUndoMemory)
+
 	// Circular undo buffer that starts small and grows as needed
-	undo = NewUndo(defaultMaxUndoCount, defaultUndoMemory)
+	undo = NewUndo(defaultMaxUndoCount, defaultUndoMemory).WithRedoBuffer(redo)
 
 	// Save the contents of one switch.
 	// Used when switching between a .c or .cpp file to the corresponding .h file.
@@ -59,6 +64,25 @@ func NewUndo(maxSize int, maxMemoryUse uint64) *Undo {
 // IgnoreSnapshots is used when playing back macros, to snapshot the macro playback as a whole instead
 func (u *Undo) IgnoreSnapshots(b bool) {
 	u.ignoreSnapshots = b
+}
+
+// WithRedoBuffer links a redo buffer that will be cleared whenever a new snapshot is taken
+func (u *Undo) WithRedoBuffer(r *Undo) *Undo {
+	u.redoBuffer = r
+	return u
+}
+
+// IgnoreRedoClear is used when snapshotting as part of a redo, to keep the redo buffer intact
+func (u *Undo) IgnoreRedoClear(b bool) {
+	u.ignoreRedoClear = b
+}
+
+// Reset clears all stored states
+func (u *Undo) Reset() {
+	u.mut.Lock()
+	defer u.mut.Unlock()
+	u.index = 0
+	u.count = 0
 }
 
 func lineMapMemoryFootprint(m map[int][]rune) uint64 {
@@ -138,6 +162,11 @@ func (u *Undo) grow() {
 func (u *Undo) Snapshot(e *Editor) {
 	if u.ignoreSnapshots {
 		return
+	}
+
+	// New edits clear the redo buffer, unless this snapshot is part of a redo operation
+	if !u.ignoreRedoClear && u.redoBuffer != nil {
+		u.redoBuffer.Reset()
 	}
 
 	u.mut.Lock()
