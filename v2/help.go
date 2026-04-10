@@ -64,6 +64,7 @@ ctrl-b      to jump back after having jumped to a definition or include
             to toggle block edit mode
             to toggle a breakpoint if in debug mode
 ctrl-u      to undo (ctrl-z is also possible, but may background the application)
+ctrl-y      to redo
 ctrl-l      to jump to a specific line or letter (press return to jump to the top or bottom)
 ctrl-f      to find text. To search and replace, press Tab instead of Return.
             to spellcheck, search for "t", then press ctrl-a to add and ctrl-i to ignore

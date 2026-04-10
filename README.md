@@ -215,6 +215,7 @@ There are pretty few hotkeys to remember:
                  For Markdown: toggle checkboxes, or double press to export to HTML.
 * `ctrl-j` - Join the current line with the next one.
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
+* `ctrl-y` - Redo.
 * `ctrl-l` - Jump to a specific line number or percentage. Press `return` to jump to the top. If at the top, press `return` to jump to the bottom.
              Press one of the highlighted on-screen letters to jump to that location.
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive. Press `tab` instead of `return` to search and replace.
