@@ -189,21 +189,34 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 	c.HideCursorAndDraw() // drawing now
 }
 
+// updateCanvasLines writes the current editor lines to the canvas buffer, without drawing
+func (e *Editor) updateCanvasLines(c *vt.Canvas, shouldHighlightCurrentLine bool) {
+	if c == nil {
+		return
+	}
+	h := int(c.Height())
+	offsetY := e.pos.OffsetY()
+	const hideCursorWhenDrawing = false
+	e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0, shouldHighlightCurrentLine, hideCursorWhenDrawing)
+}
+
 // RedrawAtEndOfKeyLoop is called after each main loop
 func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHighlightCurrentLine, repositionCursor bool) {
 	redrawMutex.Lock()
 	defer redrawMutex.Unlock()
 
-	redrawCanvas := !e.debugMode
-
 	redraw := e.redraw.Load()
 	overlayRedraw := e.drawProgress.Load() || (e.drawFuncName.Load() && !e.nanoMode.Load())
 	didDraw := false
 
-	// Redraw, if needed
+	// Update the canvas buffer with fresh line content if needed.
+	// Defer the actual terminal write to the single HideCursorAndDraw below,
+	// so the lines and overlays are flushed together in one frame.
 	if redraw {
-		// Draw the editor lines on the canvas, respecting the offset
-		e.HideCursorDrawLines(c, true, redrawCanvas, shouldHighlightCurrentLine)
+		e.updateCanvasLines(c, shouldHighlightCurrentLine)
+		if e.debugMode {
+			c.HideCursorAndDraw() // debug panes are drawn separately, so draw now
+		}
 	}
 
 	if redraw || e.Changed() || overlayRedraw {
