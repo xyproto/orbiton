@@ -211,113 +211,68 @@ func (o *TextOutput) DarkTags(colors ...string) string {
 	return o.darkReplacer.Replace(strings.Join(colors, ""))
 }
 
-func (o *TextOutput) initializeTagReplacers() {
-	// Initialize tag replacement tables with as few memory allocations as possible (no append).
-	// Each lowercase map key generates 4 replacer pairs: <key>/</key> and <Key>/</Key>,
-	// so both <blue> and <Blue> are recognized without storing title-case duplicates in the map.
+// buildTagReplacer builds a strings.Replacer that substitutes <color>/</color>
+// HTML-like tags in text. Each key in colorMap generates four pairs covering
+// both <key>/</key> and <Key>/</Key>. When enabled is false every tag is
+// replaced with an empty string (strip-only mode).
+func buildTagReplacer(colorMap map[string]AttributeColor, enabled bool) *strings.Replacer {
 	off := NoColor
-	rs := make([]string, len(LightColorMap)*8+2)
+	rs := make([]string, len(colorMap)*8+2)
 	i := 0
-	if o.color {
-		for key, value := range LightColorMap {
-			titled := strings.ToUpper(key[:1]) + key[1:]
-			vs := value.String()
-			rs[i] = "<" + key + ">"
-			i++
-			rs[i] = vs
-			i++
-			rs[i] = "</" + key + ">"
-			i++
-			rs[i] = off
-			i++
-			rs[i] = "<" + titled + ">"
-			i++
-			rs[i] = vs
-			i++
-			rs[i] = "</" + titled + ">"
-			i++
-			rs[i] = off
-			i++
+	for key, value := range colorMap {
+		titled := strings.ToUpper(key[:1]) + key[1:]
+		var esc, reset string
+		if enabled {
+			esc = value.String()
+			reset = off
 		}
-		rs[i] = "<off>"
-		i++
-		rs[i] = off
-	} else {
-		for key := range LightColorMap {
-			titled := strings.ToUpper(key[:1]) + key[1:]
-			rs[i] = "<" + key + ">"
-			i++
-			rs[i] = ""
-			i++
-			rs[i] = "</" + key + ">"
-			i++
-			rs[i] = ""
-			i++
-			rs[i] = "<" + titled + ">"
-			i++
-			rs[i] = ""
-			i++
-			rs[i] = "</" + titled + ">"
-			i++
-			rs[i] = ""
-			i++
-		}
-		rs[i] = "<off>"
-		i++
-		rs[i] = ""
+		rs[i] = "<" + key + ">"
+		rs[i+1] = esc
+		rs[i+2] = "</" + key + ">"
+		rs[i+3] = reset
+		rs[i+4] = "<" + titled + ">"
+		rs[i+5] = esc
+		rs[i+6] = "</" + titled + ">"
+		rs[i+7] = reset
+		i += 8
 	}
-	o.lightReplacer = strings.NewReplacer(rs...)
-	// Initialize the replacer for the dark color scheme, reusing the rs slice
-	i = 0
-	if o.color {
-		for key, value := range DarkColorMap {
-			titled := strings.ToUpper(key[:1]) + key[1:]
-			vs := value.String()
-			rs[i] = "<" + key + ">"
-			i++
-			rs[i] = vs
-			i++
-			rs[i] = "</" + key + ">"
-			i++
-			rs[i] = off
-			i++
-			rs[i] = "<" + titled + ">"
-			i++
-			rs[i] = vs
-			i++
-			rs[i] = "</" + titled + ">"
-			i++
-			rs[i] = off
-			i++
-		}
+	if enabled {
 		rs[i] = "<off>"
-		i++
-		rs[i] = off
+		rs[i+1] = off
 	} else {
-		for key := range DarkColorMap {
-			titled := strings.ToUpper(key[:1]) + key[1:]
-			rs[i] = "<" + key + ">"
-			i++
-			rs[i] = ""
-			i++
-			rs[i] = "</" + key + ">"
-			i++
-			rs[i] = ""
-			i++
-			rs[i] = "<" + titled + ">"
-			i++
-			rs[i] = ""
-			i++
-			rs[i] = "</" + titled + ">"
-			i++
-			rs[i] = ""
-			i++
-		}
 		rs[i] = "<off>"
-		i++
-		rs[i] = ""
+		rs[i+1] = ""
 	}
-	o.darkReplacer = strings.NewReplacer(rs...)
+	return strings.NewReplacer(rs...)
+}
+
+// Tag replacers are built once at package init and shared across all TextOutput
+// instances; building them is O(|colorMap|) and involves string allocations, so
+// doing it once avoids repeated work on every New() call.
+var (
+	cachedLightOnReplacer  *strings.Replacer
+	cachedLightOffReplacer *strings.Replacer
+	cachedDarkOnReplacer   *strings.Replacer
+	cachedDarkOffReplacer  *strings.Replacer
+)
+
+func init() {
+	cachedLightOnReplacer = buildTagReplacer(LightColorMap, true)
+	cachedLightOffReplacer = buildTagReplacer(LightColorMap, false)
+	cachedDarkOnReplacer = buildTagReplacer(DarkColorMap, true)
+	cachedDarkOffReplacer = buildTagReplacer(DarkColorMap, false)
+}
+
+// initializeTagReplacers assigns pre-built singleton replacers to this
+// TextOutput based on whether colors are enabled.
+func (o *TextOutput) initializeTagReplacers() {
+	if o.color {
+		o.lightReplacer = cachedLightOnReplacer
+		o.darkReplacer = cachedDarkOnReplacer
+	} else {
+		o.lightReplacer = cachedLightOffReplacer
+		o.darkReplacer = cachedDarkOffReplacer
+	}
 }
 
 // ExtractToSlice iterates over an ANSI encoded string, parsing out color codes and places it in
