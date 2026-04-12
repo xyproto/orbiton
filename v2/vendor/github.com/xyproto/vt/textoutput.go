@@ -263,6 +263,16 @@ func init() {
 	cachedDarkOffReplacer = buildTagReplacer(DarkColorMap, false)
 }
 
+// RebuildTagReplacers rebuilds the cached tag replacers from the current
+// DarkColorMap and LightColorMap. Call this after adding entries to either map
+// so that the new entries are recognized by DarkTags and LightTags.
+func RebuildTagReplacers() {
+	cachedLightOnReplacer = buildTagReplacer(LightColorMap, true)
+	cachedLightOffReplacer = buildTagReplacer(LightColorMap, false)
+	cachedDarkOnReplacer = buildTagReplacer(DarkColorMap, true)
+	cachedDarkOffReplacer = buildTagReplacer(DarkColorMap, false)
+}
+
 // initializeTagReplacers assigns pre-built singleton replacers to this
 // TextOutput based on whether colors are enabled.
 func (o *TextOutput) initializeTagReplacers() {
