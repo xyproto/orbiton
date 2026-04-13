@@ -41,8 +41,10 @@ const (
 
 	delayUntilSpeedUp = 700 * time.Millisecond
 
-	shiftInsertKey1 = "\x1b[2~"
-	shiftInsertKey2 = "\x1b[2;2~"
+	shiftInsertKey1   = "\x1b[2~"
+	shiftInsertKey2   = "\x1b[2;2~"
+	ctrlShiftLeftKey  = "\x1b[1;6D" // ctrl-shift-left (not in the vt library)
+	ctrlShiftRightKey = "\x1b[1;6C" // ctrl-shift-right (not in the vt library)
 )
 
 var (
@@ -83,6 +85,10 @@ func (e *Editor) handlePasteModeKey(c *vt.Canvas, status *StatusBar, undo *Undo,
 		if !snapshotTaken {
 			undo.Snapshot(e)
 			snapshotTaken = true
+			if e.HasSelection() {
+				e.DeleteSelection(c, status)
+				e.ClearSelection()
+			}
 		}
 	}
 
@@ -860,6 +866,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
+			e.ClearSelection()
 			e.CursorBackward(c, status)
 
 			// Move extra if the key is held down
@@ -901,6 +908,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
+			e.ClearSelection()
 			e.CursorForward(c, status)
 
 			// Move extra if the key is held down
@@ -932,6 +940,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
+			e.ClearSelection()
 			e.CursorUpward(c, status)
 
 			// Move extra if the key is held down
@@ -960,6 +969,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
+			e.ClearSelection()
 			e.CursorDownward(c, status)
 
 			// Move extra if the key is held down
@@ -982,14 +992,145 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redrawCursor.Store(true)
 
 		case altUpKey: // alt-up, jump to the start of the previous paragraph
+			e.ClearSelection()
 			e.GoToPrevParagraph(c, status)
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
 		case altDownKey: // alt-down, jump to the start of the next paragraph
+			e.ClearSelection()
 			e.GoToNextParagraph(c, status)
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
+
+		case "alt→": // alt-right, jump to the start of the next paragraph
+			e.ClearSelection()
+			e.GoToNextParagraph(c, status)
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+
+		case "alt←": // alt-left, jump to the start of the previous paragraph
+			e.ClearSelection()
+			e.GoToPrevParagraph(c, status)
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+
+		case "ctrl←": // ctrl-left, go to the start of the previous word
+			e.ClearSelection()
+			e.GoToPrevWord(c, status)
+
+		case "ctrl→": // ctrl-right, go to the start of the next word
+			e.ClearSelection()
+			e.GoToNextWord(c, status)
+
+		case ctrlShiftLeftKey: // ctrl-shift-left, extend selection to the start of the previous word
+			if !e.HasSelection() {
+				e.StartSelection()
+			}
+			e.GoToPrevWord(c, status)
+			e.UpdateSelection()
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+
+		case ctrlShiftRightKey: // ctrl-shift-right, extend selection to the start of the next word
+			if !e.HasSelection() {
+				e.StartSelection()
+			}
+			e.GoToNextWord(c, status)
+			e.UpdateSelection()
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+
+		case "ctrl↑": // ctrl-up, go to the previous function/header/paragraph
+			e.ClearSelection()
+			e.GoToPrevFuncOrSection(c, status)
+
+		case "ctrl↓": // ctrl-down, go to the next function/header/paragraph
+			e.ClearSelection()
+			e.GoToNextFuncOrSection(c, status)
+
+		case "shift←": // shift-left, extend selection one character to the left
+			if !e.HasSelection() {
+				e.StartSelection()
+			}
+			e.CursorBackward(c, status)
+			e.UpdateSelection()
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+
+		case "shift→": // shift-right, extend selection one character to the right
+			if !e.HasSelection() {
+				e.StartSelection()
+			}
+			e.CursorForward(c, status)
+			e.UpdateSelection()
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+
+		case "shift↑": // shift-up, extend selection one line up
+			if !e.HasSelection() {
+				e.StartSelection()
+			}
+			e.CursorUpward(c, status)
+			e.UpdateSelection()
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+
+		case "shift↓": // shift-down, extend selection one line down
+			if !e.HasSelection() {
+				e.StartSelection()
+			}
+			e.CursorDownward(c, status)
+			e.UpdateSelection()
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+
+		case "shift⇲": // shift-end, extend selection to end of line
+			if !e.HasSelection() {
+				e.StartSelection()
+			}
+			if e.AtOrAfterEndOfLine() {
+				e.Down(c, status)
+			}
+			e.End(c)
+			e.UpdateSelection()
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+
+		case "shift⇱": // shift-home, cycle selection: to start of text, to col 0, to start of text above
+			if !e.HasSelection() {
+				e.StartSelection()
+			}
+			if e.AtStartOfTextScreenLine() && (e.pos.sx+e.pos.offsetX) != 0 {
+				e.Home()
+			} else if e.pos.sx == 0 && e.pos.offsetX == 0 {
+				e.Up(c, status)
+				e.GoToStartOfTextLine(c)
+			} else {
+				e.GoToStartOfTextLine(c)
+			}
+			e.UpdateSelection()
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+
+		case "shift⌦": // shift-delete, cut selection (or cut line if no selection)
+			if e.HasSelection() {
+				undo.Snapshot(e)
+				selText := e.selection.Text(e)
+				if isDarwin {
+					_ = pbcopy(selText)
+				} else {
+					_ = clip.WriteAll(selText, e.primaryClipboard)
+				}
+				e.DeleteSelection(c, status)
+				e.ClearSelection()
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+			} else {
+				undo.Snapshot(e)
+				e.CutSingleLine(status, &lastCutY, &lastCopyY, &lastPasteY, &copyLines, &firstCopyAction)
+				e.End(c)
+			}
 
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
 
@@ -1234,6 +1375,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
 			e.blockMode = false
 			e.blockCursors = nil
+			e.ClearSelection()
 			c.ShowCursor()
 			// If o is used as a man page viewer, or if the escToExit flag is set, exit at the press of esc
 			if escToExit || e.mode == mode.ManPage {
@@ -1491,7 +1633,21 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redrawCursor.Store(true)
 			e.redraw.Store(true)
 
+		case "shift⇞": // shift-pgup, extend selection one page up
+			if !e.HasSelection() {
+				e.StartSelection()
+			}
+			h := int(c.H())
+			e.redraw.Store(e.ScrollUp(c, status, int(float64(h)*0.9)))
+			e.redrawCursor.Store(true)
+			if e.AfterLineScreenContents() {
+				e.End(c)
+			}
+			e.UpdateSelection()
+			e.redraw.Store(true)
+
 		case pgUpKey: // page up
+			e.ClearSelection()
 			h := int(c.H())
 			e.redraw.Store(e.ScrollUp(c, status, int(float64(h)*0.9)))
 			e.redrawCursor.Store(true)
@@ -1504,7 +1660,22 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.drawProgress.Store(true)
 			e.drawFuncName.Store(true)
 
+		case "shift⇟": // shift-pgdn, extend selection one page down
+			if !e.HasSelection() {
+				e.StartSelection()
+			}
+			h := int(c.H())
+			redraw := e.ScrollDown(c, status, int(float64(h)*0.9), h)
+			e.redraw.Store(redraw)
+			e.redrawCursor.Store(true)
+			if e.AfterLineScreenContents() {
+				e.End(c)
+			}
+			e.UpdateSelection()
+			e.redraw.Store(true)
+
 		case pgDnKey: // page down
+			e.ClearSelection()
 			h := int(c.H())
 			redraw := e.ScrollDown(c, status, int(float64(h)*0.9), h)
 			e.redraw.Store(redraw)
@@ -1553,7 +1724,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redraw.Store(true)
 
 		case "c:1", homeKey: // ctrl-a, home
-
+			e.ClearSelection()
 			if e.spellCheckMode {
 				if addedWord := e.AddCurrentWordToWordList(); addedWord != "" {
 					typo, corrected := e.NanoNextTypo(c, status)
@@ -1599,6 +1770,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redrawCursor.Store(true)
 			e.SaveX(true)
 		case "c:5", endKey: // ctrl-e, end
+			e.ClearSelection()
 
 			// Do not reset cut/copy/paste status
 
@@ -1760,6 +1932,24 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redraw.Store(true)
 		case "c:24": // ctrl-x, cut line
 
+			// If there is an active text selection, cut it
+			if e.HasSelection() {
+				undo.Snapshot(e)
+				selText := e.selection.Text(e)
+				if selText != "" {
+					if isDarwin {
+						_ = pbcopy(selText)
+					} else {
+						_ = clip.WriteAll(selText, e.primaryClipboard)
+					}
+					e.DeleteSelection(c, status)
+				}
+				e.ClearSelection()
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				break
+			}
+
 			if e.blockMode { // cut the entire block
 
 				undo.Snapshot(e)
@@ -1893,6 +2083,28 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 		case "c:3", copyKey: // ctrl-c, copy the stripped contents of the current line
+
+			// If there is an active text selection, copy it and clear the selection
+			if e.HasSelection() {
+				selText := e.selection.Text(e)
+				if selText != "" {
+					if isDarwin {
+						_ = pbcopy(selText)
+					} else {
+						_ = clip.WriteAll(selText, e.primaryClipboard)
+					}
+					copied := len(strings.Split(selText, "\n"))
+					plural := "s"
+					if copied == 1 {
+						plural = ""
+					}
+					status.SetMessageAfterRedraw(fmt.Sprintf("Copied %d line%s", copied, plural))
+				}
+				e.ClearSelection()
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				break
+			}
 
 			// Stop background processes (like playing music with timidity), if any
 			if stopBackgroundProcesses() {

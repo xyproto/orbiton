@@ -128,6 +128,10 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 			status.ClearAll(c, false)
 			status.SetMessageAfterRedraw("Pasting through the portal")
 			undo.Snapshot(e)
+			if e.HasSelection() {
+				e.DeleteSelection(c, status)
+				e.ClearSelection()
+			}
 			if e.EmptyRightTrimmedLine() {
 				// If the line is empty, replace with the string from the portal
 				e.SetCurrentLine(line)
@@ -208,6 +212,10 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 
 	// Prepare to paste
 	undo.Snapshot(e)
+	if e.HasSelection() {
+		e.DeleteSelection(c, status)
+		e.ClearSelection()
+	}
 	y := e.DataY()
 
 	// Forget the cut and copy line state

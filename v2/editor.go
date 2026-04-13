@@ -90,6 +90,7 @@ type Editor struct {
 	noDisplayQuickHelp          bool        // prevent the quick help box from being displayed?
 	blockMode                   bool        // toggle if typing should affect the current line or the current block
 	blockCursors                map[int]int // per-line cursor X positions for block editing (line Y -> X)
+	selection                   *Selection  // active text selection, nil if none
 	dirMode                     bool        // browse a directory and also interact with git
 	highlightCurrentLine        bool        // highlight the current line
 	highlightCurrentText        bool        // highlight the current text (not the entire line)

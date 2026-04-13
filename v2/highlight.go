@@ -826,6 +826,9 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						skipX--
 						continue
 					}
+					// Check if this character falls within an active text selection
+					// runeIndex is the display X (column in the tab-expanded line)
+					inSelection := e.selection != nil && e.selection.ContainsPos(y+offsetY, runeIndex)
 					if ra.R == ' ' {
 						fg = e.Foreground
 					} else {
@@ -893,13 +896,17 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						if tx < cw {
 							if rw == 2 && tx+1 < cw {
 								// Wide character (CJK etc): use the wide-char canvas function
-								if highlightCurrentLine && (e.highlightCurrentText || e.highlightCurrentLine) {
+								if inSelection {
+									c.WriteWideRuneBNoLock(tx, ty, e.NanoHelpForeground, e.NanoHelpBackground, letter)
+								} else if highlightCurrentLine && (e.highlightCurrentText || e.highlightCurrentLine) {
 									c.WriteWideRuneBNoLock(tx, ty, e.HighlightForeground, e.HighlightBackground, letter)
 								} else {
 									c.WriteWideRuneBNoLock(tx, ty, fg, bg, letter)
 								}
 							} else if rw <= 1 {
-								if highlightCurrentLine && (e.highlightCurrentText || e.highlightCurrentLine) {
+								if inSelection {
+									c.WriteRuneBNoLock(tx, ty, e.NanoHelpForeground, e.NanoHelpBackground, letter)
+								} else if highlightCurrentLine && (e.highlightCurrentText || e.highlightCurrentLine) {
 									c.WriteRuneBNoLock(tx, ty, e.HighlightForeground, e.HighlightBackground, letter)
 								} else {
 									c.WriteRuneBNoLock(tx, ty, fg, bg, letter)
@@ -908,7 +915,11 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 							lineRuneCount += uint(rw)
 						}
 					} else {
-						c.Write(cx+lineRuneCount, cy+uint(y), fg, e.Background, tabString)
+						tabBg := e.Background
+						if inSelection {
+							tabBg = e.NanoHelpBackground
+						}
+						c.Write(cx+lineRuneCount, cy+uint(y), fg, tabBg, tabString)
 						lineRuneCount += uint(e.indentation.PerTab)
 					}
 
