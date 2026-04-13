@@ -2,9 +2,9 @@
 
 ## General
 
-- [ ] support ctrl+arrow keys, alt+arrow keys and shift+arrow keys.
-- [ ] Let the default theme have a 256-color variant that is like the default theme, only nicer.
+- [ ] Only highlight typos for the currently highlighted line, if it is a comment.
 - [ ] Do not spell check `Name Name <email@email.com>` strings.
+- [ ] Let the default theme have a 256-color variant that is like the default theme, only nicer.
 - [ ] If Orbiton is launched by a symlink starting with `p` (for `preview`), then act as an auto-reloading Markdown preview program.
 - [ ] `o -b` should also build Go projects, Rust projects etc. (similar to `ctrl-space`), not only C and C++.
 - [ ] If the user saves a file that ends with `.sh`, and there is no shebang, but the first word of the first line is an executable in the PATH, then `chmod +x` the file when saving.
