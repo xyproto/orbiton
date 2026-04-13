@@ -376,9 +376,6 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				"Amber Mono     (O_THEME=ambermono)",
 				"Green Mono     (O_THEME=greenmono)",
 				"Blue Mono      (O_THEME=bluemono)"}
-			//if vt.Has256Colors() {
-			  //menuChoices = append(menuChoices, "Xoria 256      (O_THEME=xoria)")
-			//}
 			menuChoices = append(menuChoices, "No colors      (NO_COLOR=1)")
 			useMenuIndex := 0
 			for i, menuChoiceText := range menuChoices {
@@ -465,10 +462,6 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				envNoColor = false
 				e.setBlueTheme()
 				e.syntaxHighlight = false
-//			case "xoria":
-				//envNoColor = false
-				//e.SetTheme(NewXoriaTheme())
-//				e.syntaxHighlight = true
 			case "nocolor":
 				envNoColor = true
 				e.setNoColorTheme()
