@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] When selecting text and copying/cutting, then don't require a double `ctrl-v` to paste everything.
 - [ ] Only highlight typos for the currently highlighted line, if it is a comment.
 - [ ] Do not spell check `Name Name <email@email.com>` strings.
 - [ ] Let the default theme have a 256-color variant that is like the default theme, only nicer.
