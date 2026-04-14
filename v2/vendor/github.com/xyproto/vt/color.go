@@ -15,7 +15,9 @@ const (
 	// Non-color attributes
 	ResetAll   AttributeColor = 0
 	Bright     AttributeColor = 1
+	Bold       AttributeColor = 1
 	Dim        AttributeColor = 2
+	Italic     AttributeColor = 3
 	Underscore AttributeColor = 4
 	Blink      AttributeColor = 5
 	Reverse    AttributeColor = 7
@@ -120,6 +122,8 @@ var DarkColorMap = map[string]AttributeColor{
 	"lightmagenta": LightMagenta,
 	"lightcyan":    LightCyan,
 	"lightgray":    LightGray,
+	"bold":         Bold,
+	"italic":       Italic,
 }
 
 // LightColorMap maps color names to AttributeColor values for light terminals
@@ -148,6 +152,8 @@ var LightColorMap = map[string]AttributeColor{
 	"darkmagenta":  Magenta,
 	"darkcyan":     Cyan,
 	"darkgray":     DarkGray,
+	"bold":         Bold,
+	"italic":       Italic,
 }
 
 // ansiEscapes holds the pre-computed VT100 escape sequence for every standard
@@ -339,6 +345,16 @@ func (ac AttributeColor) Combine(other AttributeColor) AttributeColor {
 // Bright returns a new AttributeColor with the Bright attribute combined in
 func (ac AttributeColor) Bright() AttributeColor {
 	return ac.Combine(Bright)
+}
+
+// Bold returns a new AttributeColor with the Bold attribute combined in
+func (ac AttributeColor) Bold() AttributeColor {
+	return ac.Combine(Bold)
+}
+
+// Italic returns a new AttributeColor with the Italic attribute combined in
+func (ac AttributeColor) Italic() AttributeColor {
+	return ac.Combine(Italic)
 }
 
 func (ac AttributeColor) Ints() []int {
