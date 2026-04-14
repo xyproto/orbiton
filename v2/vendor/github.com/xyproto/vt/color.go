@@ -124,6 +124,13 @@ var DarkColorMap = map[string]AttributeColor{
 	"lightgray":    LightGray,
 	"bold":         Bold,
 	"italic":       Italic,
+	"boldwhite":    Bold.Combine(White),
+	"boldred":      Bold.Combine(LightRed),
+	"boldgreen":    Bold.Combine(LightGreen),
+	"boldyellow":   Bold.Combine(LightYellow),
+	"boldblue":     Bold.Combine(LightBlue),
+	"boldmagenta":  Bold.Combine(LightMagenta),
+	"boldcyan":     Bold.Combine(LightCyan),
 }
 
 // LightColorMap maps color names to AttributeColor values for light terminals
@@ -154,6 +161,13 @@ var LightColorMap = map[string]AttributeColor{
 	"darkgray":     DarkGray,
 	"bold":         Bold,
 	"italic":       Italic,
+	"boldwhite":    Bold.Combine(White),
+	"boldred":      Bold.Combine(LightRed),
+	"boldgreen":    Bold.Combine(LightGreen),
+	"boldyellow":   Bold.Combine(LightYellow),
+	"boldblue":     Bold.Combine(LightBlue),
+	"boldmagenta":  Bold.Combine(LightMagenta),
+	"boldcyan":     Bold.Combine(LightCyan),
 }
 
 // ansiEscapes holds the pre-computed VT100 escape sequence for every standard
