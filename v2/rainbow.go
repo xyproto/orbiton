@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt"
 )
 
@@ -28,14 +29,14 @@ func (e *Editor) rainbowParen(parCount, braCount *int, chars *[]vt.CharAttribute
 		lastColor = rainbowParenColors[len(rainbowParenColors)-1]
 	)
 
-	q, qerr := NewQuoteState(singleLineCommentMarker, e.mode, ignoreSingleQuotes)
+	q, qerr := syntax.NewQuoteState(singleLineCommentMarker, e.mode, ignoreSingleQuotes)
 	if qerr != nil {
 		return qerr
 	}
 
 	// Initialize the quote state parenthesis count with the one that is for the beginning of this line, in the current document
-	q.parCount = *parCount // parenthesis count
-	q.braCount = *braCount // bracket count
+	q.SetParCount(*parCount) // parenthesis count
+	q.SetBraCount(*braCount) // bracket count
 
 	unmatchedParenColor := e.UnmatchedParenColor
 
@@ -62,9 +63,9 @@ func (e *Editor) rainbowParen(parCount, braCount *int, chars *[]vt.CharAttribute
 		}
 
 		// Count parenthesis
-		*parCount = q.parCount
+		*parCount = q.ParCount()
 		// Count square brackets
-		*braCount = q.braCount
+		*braCount = q.BraCount()
 
 		openingP := false // parenthesis
 		openingB := false // bracket

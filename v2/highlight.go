@@ -3,20 +3,31 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"regexp"
 	"strings"
 	"sync"
-	"text/scanner"
 	"unicode"
 	"unicode/utf8"
 
 	"github.com/mattn/go-runewidth"
-	"github.com/sourcegraph/annotate"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/mode"
+	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt"
 )
+
+// Type aliases for syntax package types used throughout the codebase.
+type (
+	Kind        = syntax.Kind
+	TextConfig  = syntax.TextConfig
+	TextPrinter = syntax.TextPrinter
+	Option      = syntax.Option
+	Printer     = syntax.Printer
+	QuoteState  = syntax.QuoteState
+)
+
+// DefaultTextConfig is the active highlighting configuration, typically set by the current theme.
+var DefaultTextConfig = syntax.DefaultTextConfig
 
 var (
 	controlRuneReplacement = func() rune {
@@ -39,262 +50,12 @@ var (
 	}()
 )
 
-// Kind represents a syntax highlighting kind (class) which will be assigned to tokens.
-// A syntax highlighting scheme (style) maps text style properties to each token kind.
-type Kind uint8
-
-// Supported highlighting kinds.
-const (
-	Whitespace Kind = iota
-	AndOr
-	AngleBracket
-	AssemblyEnd
-	Class
-	Comment
-	Decimal
-	Dollar
-	Literal
-	Keyword
-	Mut
-	Plaintext
-	Private
-	Protected
-	Public
-	Punctuation
-	Self
-	Star
-	Static
-	String
-	Tag
-	TextAttrName
-	TextAttrValue
-	TextTag
-	Type
-)
-
-// TextConfig holds the Text class configuration to be used by annotators when highlighting code.
-type TextConfig struct {
-	AndOr         string
-	AngleBracket  string
-	AssemblyEnd   string
-	Class         string
-	Comment       string
-	Decimal       string
-	Dollar        string
-	Keyword       string
-	Literal       string
-	Mut           string
-	Plaintext     string
-	Private       string
-	Protected     string
-	Public        string
-	Punctuation   string
-	Self          string
-	Star          string
-	Static        string
-	String        string
-	Tag           string
-	TextAttrName  string
-	TextAttrValue string
-	TextTag       string
-	Type          string
-	Whitespace    string
-}
-
-// Option is a function that can modify TextConfig.
-type Option func(*TextConfig)
-
 var (
 	colorTagRegex = regexp.MustCompile(`<([a-nA-Np-zP-Z]\w+)>`) // not starting with "o"
 	tout          = vt.New()
 	resizeMut     sync.RWMutex                                         // locked when the terminal emulator is being resized
 	noGUI         = !env.Has("DISPLAY") && !env.Has("WAYLAND_DISPLAY") // no X, no Wayland
 )
-
-// DefaultTextConfig provides class names matching the color names of textoutput tags.
-var DefaultTextConfig = TextConfig{
-	AndOr:         "red",
-	AngleBracket:  "red",
-	AssemblyEnd:   "lightyellow",
-	Class:         "white",
-	Comment:       "darkgray",
-	Decimal:       "red",
-	Dollar:        "white",
-	Keyword:       "red",
-	Literal:       "white",
-	Mut:           "magenta",
-	Plaintext:     "white",
-	Private:       "red",
-	Protected:     "red",
-	Public:        "red",
-	Punctuation:   "red",
-	Self:          "magenta",
-	Star:          "white",
-	Static:        "lightyellow",
-	String:        "lightwhite",
-	Tag:           "white",
-	TextAttrName:  "white",
-	TextAttrValue: "white",
-	TextTag:       "white",
-	Type:          "white",
-	Whitespace:    "",
-}
-
-// GetClass returns the CSS class for a given token kind.
-func (c TextConfig) GetClass(kind Kind) string {
-	switch kind {
-	case String:
-		return c.String
-	case Keyword:
-		return c.Keyword
-	case Comment:
-		return c.Comment
-	case Type:
-		return c.Type
-	case Literal:
-		return c.Literal
-	case Punctuation:
-		return c.Punctuation
-	case Plaintext:
-		return c.Plaintext
-	case Tag:
-		return c.Tag
-	case TextTag:
-		return c.TextTag
-	case TextAttrName:
-		return c.TextAttrName
-	case TextAttrValue:
-		return c.TextAttrValue
-	case Decimal:
-		return c.Decimal
-	case AndOr:
-		return c.AndOr
-	case AngleBracket:
-		return c.AngleBracket
-	case Dollar:
-		return c.Dollar
-	case Star:
-		return c.Star
-	case Static:
-		return c.Static
-	case Self:
-		return c.Self
-	case Class:
-		return c.Class
-	case Public:
-		return c.Public
-	case Private:
-		return c.Private
-	case Protected:
-		return c.Protected
-	case AssemblyEnd:
-		return c.AssemblyEnd
-	case Mut:
-		return c.Mut
-	}
-	return ""
-}
-
-// Printer renders highlighted output.
-type Printer interface {
-	Print(w io.Writer, kind Kind, tokText string) error
-}
-
-// TextPrinter wraps TextConfig to implement Printer.
-type TextPrinter TextConfig
-
-// Print writes token text with start/end tags based on its kind.
-func (p TextPrinter) Print(w io.Writer, kind Kind, tokText string) error {
-	class := TextConfig(p).GetClass(kind)
-	if class != "" {
-		if _, err := io.WriteString(w, "<"+class+">"); err != nil {
-			return err
-		}
-	}
-	if _, err := io.WriteString(w, tokText); err != nil {
-		return err
-	}
-	if class != "" {
-		if _, err := io.WriteString(w, "<off>"); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// Annotator produces syntax highlighting annotations.
-type Annotator interface {
-	Annotate(start int, kind Kind, tokText string) (*annotate.Annotation, error)
-}
-
-// TextAnnotator wraps TextConfig to implement Annotator.
-type TextAnnotator TextConfig
-
-// Print scans tokens from s, using Printer p for mode m.
-func Print(s *scanner.Scanner, w io.Writer, p Printer, m mode.Mode) error {
-	switch m {
-	case mode.C3:
-		s.IsIdentRune = func(ch rune, i int) bool {
-			return ch == '$' || ch == '@' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
-		}
-	case mode.Clojure, mode.Lisp:
-		s.IsIdentRune = func(ch rune, i int) bool {
-			return ch == '*' || ch == '-' || ch == '+' || ch == '/' || ch == '?' || ch == '!' || ch == '.' || ch == ':' || ch == '&' || ch == '<' || ch == '>' || ch == '=' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
-		}
-	case mode.Shell, mode.Make, mode.Just:
-		s.IsIdentRune = func(ch rune, i int) bool {
-			return ch == '-' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
-		}
-	case mode.Spec:
-		s.IsIdentRune = func(ch rune, i int) bool {
-			return ch == '%' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
-		}
-	case mode.Swift:
-		s.IsIdentRune = func(ch rune, i int) bool {
-			return ch == '#' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
-		}
-	case mode.Vibe67:
-		s.IsIdentRune = func(ch rune, i int) bool {
-			return ch == '&' || ch == '<' || ch == '>' || ch == '^' || ch == '|' || ch == '~' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
-		}
-	}
-	inComment := false
-	for tok := s.Scan(); tok != scanner.EOF; tok = s.Scan() {
-		tokText := s.TokenText()
-		if err := p.Print(w, tokenKind(tok, tokText, &inComment, m), tokText); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// AsText returns src highlighted for mode m, applying options to TextConfig.
-func AsText(src []byte, m mode.Mode, options ...Option) ([]byte, error) {
-	cfg := DefaultTextConfig
-	for _, opt := range options {
-		opt(&cfg)
-	}
-	var buf bytes.Buffer
-	if err := Print(NewScanner(src), &buf, TextPrinter(cfg), m); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-// NewScanner returns a scanner.Scanner configured for syntax highlighting.
-func NewScanner(src []byte) *scanner.Scanner {
-	return NewScannerReader(bytes.NewReader(src))
-}
-
-// NewScannerReader returns a scanner.Scanner configured for syntax highlighting from r.
-func NewScannerReader(r io.Reader) *scanner.Scanner {
-	var s scanner.Scanner
-	s.Init(r)
-	s.Error = func(*scanner.Scanner, string) {}
-	s.Whitespace = 0
-	s.Mode ^= scanner.SkipComments
-	return &s
-}
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uint, shouldHighlightNow, hideCursorWhenDrawing bool) {
@@ -421,11 +182,11 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 		for li = range fromline {
 			line = e.Line(li)
 			trimmedLine = strings.TrimSpace(line)
-			inCodeBlock, _ = checkMultiLineString(trimmedLine, inCodeBlock)
+			inCodeBlock, _ = syntax.CheckMultiLineString(trimmedLine, inCodeBlock)
 		}
 	}
 
-	q, err = NewQuoteState(singleLineCommentMarker, e.mode, ignoreSingleQuotes)
+	q, err = syntax.NewQuoteState(singleLineCommentMarker, e.mode, ignoreSingleQuotes)
 	if err != nil {
 		return // err
 	}
@@ -443,12 +204,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 		for li = LineIndex(0); li < offsetY; li++ {
 			trimmedLine = strings.TrimSpace(e.Line(li))
 			if strings.HasPrefix(trimmedLine, "\"") {
-				q.hasSingleLineComment = true
-				q.startedMultiLineString = false
-				q.stoppedMultiLineComment = false
-				q.backtick = 0
-				q.doubleQuote = 0
-				q.singleQuote = 0
+				q.ResetVim()
 				continue
 			}
 			// Have a trimmed line. Want to know: the current state of which quotes, comments or strings we are in.
@@ -488,7 +244,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 		if e.syntaxHighlight && !envNoColor {
 			// Output a syntax highlighted line. Escape any tags in the input line.
 			// textWithTags must be unescaped if there is not an error.
-			if textWithTags, err = AsText([]byte(escapeFunction(line)), e.mode); err != nil {
+			if textWithTags, err = syntax.AsText([]byte(escapeFunction(line)), e.mode); err != nil {
 				// Only output the line up to the width of the canvas
 				screenLine = e.ChopLine(line, int(cw))
 				// TODO: Check if just "fmt.Print" works here, for several terminal emulators
@@ -516,7 +272,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					trimmedLine = strings.TrimSpace(line)
 					foundDocstringMarker = false
 
-					inCodeBlock, foundDocstringMarker = checkMultiLineString(trimmedLine, inCodeBlock)
+					inCodeBlock, foundDocstringMarker = syntax.CheckMultiLineString(trimmedLine, inCodeBlock)
 
 					if inCodeBlock || foundDocstringMarker {
 						// Purple
@@ -582,7 +338,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						// Inline Lua comment, e.g. "local x = 42 -- set x to 42"
 						parts := strings.SplitN(line, "--", 2)
 						// Highlight the code portion before the comment
-						if newTextWithTags, err = AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
+						if newTextWithTags, err = syntax.AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
 							coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 						} else {
 							// Append the comment portion highlighted as a comment
@@ -628,7 +384,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 				case mode.Log:
 					coloredString = vt.Colorize(line)
 				case mode.Lisp, mode.Clojure:
-					q.singleQuote = 0
+					q.SetSingleQuote(0)
 					// Special case for Lisp single-line comments
 					trimmedLine = strings.TrimSpace(line)
 					if doubleSemiCount = strings.Count(trimmedLine, ";;"); doubleSemiCount > 0 {
@@ -637,14 +393,14 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 							coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
 						} else if doubleSemiCount == 1 {
 							parts = strings.SplitN(line, ";;", 2)
-							if newTextWithTags, err = AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
+							if newTextWithTags, err = syntax.AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
 								coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 							} else {
 								coloredString = unEscapeFunction(tout.DarkTags(string(newTextWithTags)) + e.MultiLineComment.Get(";;"+parts[1]))
 							}
 						} else if strings.Count(trimmedLine, ";") == 1 {
 							parts = strings.SplitN(line, ";", 2)
-							if newTextWithTags, err = AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
+							if newTextWithTags, err = syntax.AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
 								coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 							} else {
 								coloredString = unEscapeFunction(tout.DarkTags(string(newTextWithTags)) + e.MultiLineComment.Start(";"+parts[1]))
@@ -663,7 +419,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 							coloredString = unEscapeFunction(e.MultiLineComment.Start(line))
 						} else {
 							parts = strings.SplitN(line, "\"", 2)
-							if newTextWithTags, err = AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
+							if newTextWithTags, err = syntax.AsText([]byte(escapeFunction(parts[0])), e.mode); err != nil {
 								coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 							} else {
 								coloredString = unEscapeFunction(tout.DarkTags(string(newTextWithTags)) + e.MultiLineComment.Start("\""+parts[1]))
@@ -686,33 +442,33 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					// logf("%s -[ %d ]-->\n\t%s\n", trimmedLine, addedPar, q.String())
 
 					switch {
-					case (e.mode == mode.Nim || e.mode == mode.Mojo || e.mode == mode.Python || e.mode == mode.Starlark) && q.startedMultiLineString:
+					case (e.mode == mode.Nim || e.mode == mode.Mojo || e.mode == mode.Python || e.mode == mode.Starlark) && q.StartedMultiLineString():
 						// Python docstring
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
-					case (e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC || e.mode == mode.Shader || e.mode == mode.Make || e.mode == mode.Just) && !q.multiLineComment && (strings.HasPrefix(trimmedLine, "#if") || strings.HasPrefix(trimmedLine, "#else") || strings.HasPrefix(trimmedLine, "#elseif") || strings.HasPrefix(trimmedLine, "#endif") || strings.HasPrefix(trimmedLine, "#elif") || strings.HasPrefix(trimmedLine, "#define") || strings.HasPrefix(trimmedLine, "#pragma")):
+					case (e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC || e.mode == mode.Shader || e.mode == mode.Make || e.mode == mode.Just) && !q.InMultiLineComment() && (strings.HasPrefix(trimmedLine, "#if") || strings.HasPrefix(trimmedLine, "#else") || strings.HasPrefix(trimmedLine, "#elseif") || strings.HasPrefix(trimmedLine, "#endif") || strings.HasPrefix(trimmedLine, "#elif") || strings.HasPrefix(trimmedLine, "#define") || strings.HasPrefix(trimmedLine, "#pragma")):
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
 					case e.mode != mode.Shell && e.mode != mode.Docker && e.mode != mode.Make && e.mode != mode.Just && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*/") && !strings.Contains(trimmedLine, "/*"):
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
 					case (e.mode == mode.StandardML || e.mode == mode.OCaml) && (!strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*)") && !strings.Contains(trimmedLine, "(*")):
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
-					case (e.mode == mode.Elm || e.mode == mode.Haskell || e.mode == mode.Vibe67) && (!strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "-}") && !strings.Contains(trimmedLine, "{-") || q.multiLineComment):
+					case (e.mode == mode.Elm || e.mode == mode.Haskell || e.mode == mode.Vibe67) && (!strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "-}") && !strings.Contains(trimmedLine, "{-") || q.InMultiLineComment()):
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
 					case e.mode != mode.Shell && e.mode != mode.Docker && e.mode != mode.Make && e.mode != mode.Just && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "/*") > strings.LastIndex(trimmedLine, "*/"):
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case (e.mode == mode.StandardML || e.mode == mode.OCaml) && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "(*") > strings.LastIndex(trimmedLine, "*)"):
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
-					case (e.mode == mode.Elm || e.mode == mode.Haskell || e.mode == mode.Vibe67) && (!strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "{-") > strings.LastIndex(trimmedLine, "-}") || q.multiLineComment):
+					case (e.mode == mode.Elm || e.mode == mode.Haskell || e.mode == mode.Vibe67) && (!strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "{-") > strings.LastIndex(trimmedLine, "-}") || q.InMultiLineComment()):
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
-					case q.containsMultiLineComments:
+					case q.ContainsMultiLineComments():
 						if e.mode == mode.HTML || e.mode == mode.XML {
 							coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
 						} else {
 							coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 						}
-					case e.mode != mode.Shell && e.mode != mode.Docker && e.mode != mode.FSTAB && e.mode != mode.Nix && e.mode != mode.Make && e.mode != mode.Just && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && (q.multiLineComment || q.stoppedMultiLineComment) && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.Contains(line, "\"(*") && !strings.Contains(line, "*)\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
+					case e.mode != mode.Shell && e.mode != mode.Docker && e.mode != mode.FSTAB && e.mode != mode.Nix && e.mode != mode.Make && e.mode != mode.Just && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && (q.InMultiLineComment() || q.StoppedMultiLineComment()) && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.Contains(line, "\"(*") && !strings.Contains(line, "*)\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
 						// In the middle of a multi-line comment
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
-					case q.hasSingleLineComment || q.stoppedMultiLineComment:
+					case q.HasSingleLineComment() || q.StoppedMultiLineComment():
 						// Fix for interpreting URLs in shell scripts as single line comments
 						if singleLineCommentMarker != "//" {
 							commentColorName = e.Comment
@@ -721,7 +477,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						}
 						// A single line comment (the syntax module did the highlighting)
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
-					case !q.startedMultiLineString && q.backtick > 0:
+					case !q.StartedMultiLineString() && q.Backtick() > 0:
 						// A multi-line string
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
 					case (e.mode != mode.HTML && e.mode != mode.XML && e.mode != mode.Markdown && e.mode != mode.Make && e.mode != mode.Just && e.mode != mode.Blank && e.mode != mode.Vibe67) && strings.Contains(line, "->"):
@@ -741,11 +497,11 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					if singleLineCommentMarker == "#" {
 						otherCommentMarker = "//"
 					}
-					if strings.HasPrefix(trimmedLine, otherCommentMarker) && !q.containsMultiLineComments && strings.HasPrefix(strings.TrimSpace(string(textWithTags)), "<"+e.Comment+">") {
+					if strings.HasPrefix(trimmedLine, otherCommentMarker) && !q.ContainsMultiLineComments() && strings.HasPrefix(strings.TrimSpace(string(textWithTags)), "<"+e.Comment+">") {
 						parts = strings.SplitN(line, otherCommentMarker, 2)
 						commentMarkerString = tout.DarkTags(parts[0] + "<" + e.Dollar + ">" + otherCommentMarker + "<off>")
 						theRestString = tout.DarkTags(parts[1])
-						if theRestWithTags, err = AsText([]byte(escapeFunction(parts[1])), e.mode); err == nil {
+						if theRestWithTags, err = syntax.AsText([]byte(escapeFunction(parts[1])), e.mode); err == nil {
 							theRestString = tout.DarkTags(string(theRestWithTags))
 						}
 						coloredString = unEscapeFunction(commentMarkerString + theRestString)
@@ -803,14 +559,14 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 				}
 
 				// If e.rainbowParenthesis is true and we're not in a comment or a string, enable rainbow parenthesis
-				if e.mode != mode.Git && e.mode != mode.Email && e.rainbowParenthesis && q.None() && !q.hasSingleLineComment && !q.stoppedMultiLineComment {
+				if e.mode != mode.Git && e.mode != mode.Email && e.rainbowParenthesis && q.None() && !q.HasSingleLineComment() && !q.StoppedMultiLineComment() {
 					thisLineParCount, thisLineBraCount = q.ParBraCount(trimmedLine)
-					parCountBeforeThisLine = q.parCount - thisLineParCount
-					braCountBeforeThisLine = q.braCount - thisLineBraCount
+					parCountBeforeThisLine = q.ParCount() - thisLineParCount
+					braCountBeforeThisLine = q.BraCount() - thisLineBraCount
 					if e.rainbowParen(&parCountBeforeThisLine, &braCountBeforeThisLine, &runesAndAttributes, singleLineCommentMarker, ignoreSingleQuotes) == errUnmatchedParenthesis {
 						// Don't mark the rest of the parenthesis as wrong, even though this one is
-						q.parCount = 0
-						q.braCount = 0
+						q.SetParCount(0)
+						q.SetBraCount(0)
 					}
 				}
 

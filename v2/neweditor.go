@@ -16,6 +16,7 @@ import (
 	"github.com/xyproto/files"
 	"github.com/xyproto/megafile"
 	"github.com/xyproto/mode"
+	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt"
 )
 
@@ -82,7 +83,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		syntaxHighlight = false
 	}
 
-	adjustSyntaxHighlightingKeywords(m) // no theme changes, just language detection and keyword configuration
+	syntax.AdjustKeywords(m) // no theme changes, just language detection and keyword configuration
 
 	indentation := m.TabsSpaces()
 
@@ -217,7 +218,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				if envVT100 {
 					syntaxHighlight = false
 				}
-				adjustSyntaxHighlightingKeywords(m)
+				syntax.AdjustKeywords(m)
 				indentation := m.TabsSpaces()
 				rainbowParenthesis := syntaxHighlight
 				switch m {
@@ -363,7 +364,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	// The editing mode is decided at this point
 
 	// The shebang may have been for bash, make further adjustments
-	adjustSyntaxHighlightingKeywords(e.mode)
+	syntax.AdjustKeywords(e.mode)
 
 	// Additional per-mode considerations, before launching the editor
 	e.indentation = m.TabsSpaces()

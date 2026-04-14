@@ -8,6 +8,7 @@ import (
 
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
+	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt"
 )
 
@@ -155,7 +156,7 @@ func (e *Editor) textSearchDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusB
 	}
 
 	// Is the word a language keyword?
-	for kw := range Keywords {
+	for kw := range syntax.Keywords {
 		if kw == word {
 			// Don't go to the definition of keywords
 			return false

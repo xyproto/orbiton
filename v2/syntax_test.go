@@ -5,86 +5,105 @@ import (
 	"testing"
 
 	"github.com/xyproto/mode"
+	"github.com/xyproto/syntax"
 )
 
+// originalDefaultTextConfig captures the hardcoded default before any test can mutate it.
+var originalDefaultTextConfig = syntax.DefaultTextConfig
+
+// savedDefaultTextConfig saves and restores syntax.DefaultTextConfig around a test,
+// so that theme state from other tests (e.g. TestEditor setting zulu) does not leak in.
+func savedDefaultTextConfig(t *testing.T) {
+	t.Helper()
+	saved := syntax.DefaultTextConfig
+	t.Cleanup(func() { syntax.DefaultTextConfig = saved })
+	syntax.DefaultTextConfig = originalDefaultTextConfig
+}
+
 func TestRPMHighlight(t *testing.T) {
-	adjustSyntaxHighlightingKeywords(mode.Spec)
+	savedDefaultTextConfig(t)
+	syntax.AdjustKeywords(mode.Spec)
 	input := []byte("%install")
-	highlighted, err := AsText(input, mode.Spec)
+	highlighted, err := syntax.AsText(input, mode.Spec)
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := []byte("<lightred>%install<off>")
+	expected := []byte("<red>%install<off>")
 	if !bytes.Equal(highlighted, expected) {
 		t.Errorf("Expected %q, got %q", string(expected), string(highlighted))
 	}
 }
 
 func TestClojureHighlight(t *testing.T) {
-	adjustSyntaxHighlightingKeywords(mode.Clojure)
+	savedDefaultTextConfig(t)
+	syntax.AdjustKeywords(mode.Clojure)
 	input := []byte("*agent*")
-	highlighted, err := AsText(input, mode.Clojure)
+	highlighted, err := syntax.AsText(input, mode.Clojure)
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := []byte("<lightred>*agent*<off>")
+	expected := []byte("<red>*agent*<off>")
 	if !bytes.Equal(highlighted, expected) {
 		t.Errorf("Expected %q, got %q", string(expected), string(highlighted))
 	}
 }
 
 func TestC3Highlight(t *testing.T) {
-	adjustSyntaxHighlightingKeywords(mode.C3)
+	savedDefaultTextConfig(t)
+	syntax.AdjustKeywords(mode.C3)
 	input := []byte("$alignof")
-	highlighted, err := AsText(input, mode.C3)
+	highlighted, err := syntax.AsText(input, mode.C3)
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := []byte("<lightred>$alignof<off>")
+	expected := []byte("<red>$alignof<off>")
 	if !bytes.Equal(highlighted, expected) {
 		t.Errorf("Expected %q, got %q", string(expected), string(highlighted))
 	}
 }
 
 func TestShellHighlight(t *testing.T) {
-	adjustSyntaxHighlightingKeywords(mode.Shell)
+	savedDefaultTextConfig(t)
+	syntax.AdjustKeywords(mode.Shell)
 	input := []byte("--force")
-	highlighted, err := AsText(input, mode.Shell)
+	highlighted, err := syntax.AsText(input, mode.Shell)
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := []byte("<lightred>--force<off>")
+	expected := []byte("<red>--force<off>")
 	if !bytes.Equal(highlighted, expected) {
 		t.Errorf("Expected %q, got %q", string(expected), string(highlighted))
 	}
 }
 
 func TestVibe67Highlight(t *testing.T) {
-	adjustSyntaxHighlightingKeywords(mode.Vibe67)
+	savedDefaultTextConfig(t)
+	syntax.AdjustKeywords(mode.Vibe67)
 	input := []byte("<<<b")
-	highlighted, err := AsText(input, mode.Vibe67)
+	highlighted, err := syntax.AsText(input, mode.Vibe67)
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := []byte("<lightred><<<b<off>")
+	expected := []byte("<red><<<b<off>")
 	if !bytes.Equal(highlighted, expected) {
 		t.Errorf("Expected %q, got %q", string(expected), string(highlighted))
 	}
 }
 
 func TestPrologHighlight(t *testing.T) {
+	savedDefaultTextConfig(t)
 	// Initialize keywords for Prolog mode
-	adjustSyntaxHighlightingKeywords(mode.Prolog)
+	syntax.AdjustKeywords(mode.Prolog)
 
 	input := []byte("code % comment")
-	highlighted, err := AsText(input, mode.Prolog)
+	highlighted, err := syntax.AsText(input, mode.Prolog)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// The word "code" should be plaintext (white), and "% comment" should be a comment (darkgray)
 	// The highlighter outputs token by token, so we check for several tags.
-	if !bytes.Contains(highlighted, []byte("<gray>%<off>")) || !bytes.Contains(highlighted, []byte("<gray>comment<off>")) {
+	if !bytes.Contains(highlighted, []byte("<darkgray>%<off>")) || !bytes.Contains(highlighted, []byte("<darkgray>comment<off>")) {
 		t.Errorf("Expected comment to be highlighted, got:\n%q", string(highlighted))
 	}
 }
