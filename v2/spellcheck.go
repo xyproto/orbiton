@@ -22,6 +22,7 @@ var (
 
 	errFoundNoTypos = errors.New("found no typos")
 	wordRegexp      = regexp.MustCompile(`(?:%2[A-Z])?([a-zA-Z0-9]+)`) // avoid capturing "%2F" and "%2B", other than that, capture English words
+	emailPattern    = regexp.MustCompile(`[a-zA-Z0-9._ -]*<[a-zA-Z0-9._+\-]+@[a-zA-Z0-9._\-]+>`)
 
 	dontSuggest = []string{"urine"}
 )
@@ -153,6 +154,16 @@ func (e *Editor) RemoveCurrentWordFromWordList() string {
 	return word
 }
 
+// isInEmailPattern checks if a byte position range in text falls within an email pattern like "Name <email@domain.com>"
+func isInEmailPattern(text string, startPos, endPos int) bool {
+	for _, match := range emailPattern.FindAllStringIndex(text, -1) {
+		if startPos >= match[0] && endPos <= match[1] {
+			return true
+		}
+	}
+	return false
+}
+
 // SearchForTypo returns the first misspelled word in the document (as defined by the dictionary),
 // or an empty string. The second returned string is what the word could be if it was corrected.
 func (e *Editor) SearchForTypo() (string, string, error) {
@@ -166,13 +177,18 @@ func (e *Editor) SearchForTypo() (string, string, error) {
 	e.spellCheckMode = true
 	spellChecker.markedWord = ""
 
-	// Use the regular expression to find all the words
-	words := wordRegexp.FindAllString(e.String(), -1)
+	// Use the regular expression to find all the words with positions
+	content := e.String()
+	wordLocs := wordRegexp.FindAllStringIndex(content, -1)
 
 	// Now spellcheck all the words
-	for _, word := range words {
+	for _, loc := range wordLocs {
+		word := content[loc[0]:loc[1]]
 		justTheWord := strings.TrimSpace(word)
 		if justTheWord == "" {
+			continue
+		}
+		if isInEmailPattern(content, loc[0], loc[1]) {
 			continue
 		}
 		if slices.Contains(spellChecker.ignoredWords, justTheWord) || slices.Contains(spellChecker.customWords, justTheWord) { // || slices.Contains(spellChecker.correctWords, justTheWord) {
@@ -216,6 +232,9 @@ func (e *Editor) applyTypoHighlights(line, commentMarker string, runesAndAttribu
 	// Find each word and color the ones flagged as typos
 	for _, loc := range wordRegexp.FindAllStringIndex(commentText, -1) {
 		word := commentText[loc[0]:loc[1]]
+		if isInEmailPattern(commentText, loc[0], loc[1]) {
+			continue
+		}
 		lower := strings.ToLower(word)
 		if slices.Contains(spellChecker.ignoredWords, word) || slices.Contains(spellChecker.customWords, word) ||
 			slices.Contains(spellChecker.ignoredWords, lower) || slices.Contains(spellChecker.customWords, lower) {
