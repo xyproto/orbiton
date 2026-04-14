@@ -129,15 +129,13 @@ jobs:
         uses: vmactions/netbsd-vm@v1
         with:
           usesh: true
-          prepare: /usr/sbin/pkg_add wget gtar-base
           run: |
             set -eu
             GOGZ="go1.25.8.netbsd-amd64.tar.gz"
-            wget -q https://go.dev/dl/${GOGZ}
-            mkdir -p /tmp/goinstall
-            gtar xzf ${GOGZ} -C /tmp/goinstall
-            rm ${GOGZ}
-            export PATH=/tmp/goinstall/go/bin:$PATH
+            ftp -o "${GOGZ}" "https://go.dev/dl/${GOGZ}"
+            tar xzf "${GOGZ}" -C /tmp
+            rm "${GOGZ}"
+            export PATH=/tmp/go/bin:$PATH
             cd v2
             go build -mod=vendor
             go test
