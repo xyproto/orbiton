@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] If a Markdown table contains "`" (and presumably unicode too), then the formatting of the "|" edges is skewed.
 - [ ] When selecting text and copying/cutting, then don't require a double `ctrl-v` to paste everything.
 - [ ] Only highlight typos for the currently highlighted line, if it is a comment.
 - [ ] Do not spell check `Name Name <email@email.com>` strings.
