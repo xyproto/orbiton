@@ -13,7 +13,6 @@ require (
 	github.com/klauspost/asmfmt v1.3.2
 	github.com/mattn/go-runewidth v0.0.23
 	github.com/sajari/fuzzy v1.0.0
-	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d
 	github.com/spf13/pflag v1.0.10
 	github.com/xyproto/autoimport v1.5.2
 	github.com/xyproto/binary v1.4.0
@@ -39,6 +38,8 @@ require (
 	golang.org/x/image v0.39.0
 )
 
+require github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
+
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
 	github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b // indirect
@@ -56,9 +57,11 @@ require (
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.6.1 // indirect
-	github.com/xyproto/syntax v1.12.11 // indirect
+	github.com/xyproto/syntax v1.13.0
 	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/term v0.42.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
 )
+
+replace github.com/xyproto/syntax => ../../syntax
