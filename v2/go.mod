@@ -38,7 +38,7 @@ require (
 	golang.org/x/image v0.39.0
 )
 
-require github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
+require github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d
 
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
@@ -57,7 +57,7 @@ require (
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.6.1 // indirect
-	github.com/xyproto/syntax v1.13.0
+	github.com/xyproto/syntax v1.14.0 // indirect
 	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/term v0.42.0 // indirect
