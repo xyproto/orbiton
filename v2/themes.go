@@ -17,6 +17,7 @@ type Theme struct {
 	Name                        string
 	Decimal                     string
 	Mut                         string
+	Brace                       string
 	AssemblyEnd                 string
 	Whitespace                  string
 	Public                      string
@@ -128,6 +129,7 @@ func NewDefaultTheme() Theme {
 		Type:                        "lightblue",
 		Literal:                     "lightgreen",
 		Punctuation:                 "lightblue",
+		Brace:                       "lightblue",
 		Plaintext:                   "lightgreen",
 		Tag:                         "lightgreen",
 		TextTag:                     "lightgreen",
@@ -221,6 +223,7 @@ func NewOrbTheme() Theme {
 		Type:                        "lightblue",
 		Literal:                     "lightcyan",
 		Punctuation:                 "lightgray",
+		Brace:                       "lightgray",
 		Plaintext:                   "white",
 		Tag:                         "lightcyan",
 		TextTag:                     "lightcyan",
@@ -314,6 +317,7 @@ func NewPinetreeTheme() Theme {
 		Type:                        "lightcyan",
 		Literal:                     "lightgreen",
 		Punctuation:                 "lightgray",
+		Brace:                       "lightgray",
 		Plaintext:                   "lightgray",
 		Tag:                         "lightred",
 		TextTag:                     "lightred",
@@ -407,6 +411,7 @@ func NewZuluTheme() Theme {
 		Type:                        "lightcyan",
 		Literal:                     "lightmagenta",
 		Punctuation:                 "lightgray",
+		Brace:                       "lightgray",
 		Plaintext:                   "lightgray",
 		Tag:                         "lightcyan",
 		TextTag:                     "lightcyan",
@@ -500,6 +505,7 @@ func NewLitmusTheme() Theme {
 		Type:                        "cyan",
 		Literal:                     "black",
 		Punctuation:                 "black",
+		Brace:                       "black",
 		Plaintext:                   "black",
 		Tag:                         "black",
 		TextTag:                     "black",
@@ -593,6 +599,7 @@ func NewSynthwaveTheme() Theme {
 		Type:                        "lightblue",
 		Literal:                     "cyan",
 		Punctuation:                 "lightblue",
+		Brace:                       "lightblue",
 		Plaintext:                   "cyan",
 		Tag:                         "cyan",
 		TextTag:                     "cyan",
@@ -686,6 +693,7 @@ func NewTealTheme() Theme {
 		Type:                        "lightcyan",
 		Literal:                     "white",
 		Punctuation:                 "white",
+		Brace:                       "white",
 		Plaintext:                   "white",
 		Tag:                         "white",
 		TextTag:                     "white",
@@ -780,6 +788,7 @@ func NewRedBlackTheme() Theme {
 		Type:                        "white",
 		Literal:                     "lightgray",
 		Punctuation:                 "darkred",
+		Brace:                       "darkred",
 		Plaintext:                   "lightgray",
 		Tag:                         "darkred",
 		TextTag:                     "darkred",
@@ -874,6 +883,7 @@ func NewLightBlueEditTheme() Theme {
 		Type:                        "white",
 		Literal:                     "white",
 		Punctuation:                 "white",
+		Brace:                       "white",
 		Plaintext:                   "white",
 		Tag:                         "white",
 		TextTag:                     "white",
@@ -968,6 +978,7 @@ func NewDarkBlueEditTheme() Theme {
 		Type:                        "white",
 		Literal:                     "white",
 		Punctuation:                 "white",
+		Brace:                       "white",
 		Plaintext:                   "white",
 		Tag:                         "white",
 		TextTag:                     "white",
@@ -1061,6 +1072,7 @@ func NewLightVSTheme() Theme {
 		Type:                        "blue",
 		Literal:                     "darkcyan",
 		Punctuation:                 "black",
+		Brace:                       "black",
 		Plaintext:                   "black",
 		Tag:                         "black",
 		TextTag:                     "black",
@@ -1154,6 +1166,7 @@ func NewDarkVSTheme() Theme {
 		Type:                        "blue",
 		Literal:                     "darkcyan",
 		Punctuation:                 "black",
+		Brace:                       "black",
 		Plaintext:                   "black",
 		Tag:                         "black",
 		TextTag:                     "black",
@@ -1298,6 +1311,7 @@ func NewNoColorDarkBackgroundTheme() Theme {
 		Type:                        "",
 		Literal:                     "",
 		Punctuation:                 "",
+		Brace:                       "",
 		Plaintext:                   "",
 		Tag:                         "",
 		TextTag:                     "",
@@ -1391,6 +1405,7 @@ func NewNoColorLightBackgroundTheme() Theme {
 		Type:                        "",
 		Literal:                     "",
 		Punctuation:                 "",
+		Brace:                       "",
 		Plaintext:                   "",
 		Tag:                         "",
 		TextTag:                     "",
@@ -1458,6 +1473,174 @@ func NewNoColorLightBackgroundTheme() Theme {
 	}
 }
 
+// NewJoeTheme creates a theme inspired by the default color scheme of the Joe text editor
+// (default.jcf). When truecolor or 256-color support is available, vt.BestColor provides
+// slightly refined RGB variants of the standard ANSI palette. On 16-color terminals,
+// BestColor falls back to the nearest ANSI color, closely matching Joe's native appearance.
+func NewJoeTheme() Theme {
+	// Joe's default.jcf maps:
+	//   Idle       = default (terminal fg)     Keyword    = bold (bright fg)
+	//   Comment    = green                     Type       = bold (bright fg)
+	//   Constant   = cyan                      Escape     = bold cyan
+	//   Preproc    = blue                      Define/Tag = bold blue
+	//   Brace      = magenta                   Bad        = bold red
+	//   selection  = inverse                   linum      = dim
+	//
+	// "bold" in JCF means the bright/intense ANSI variant, NOT a separate color.
+
+	// Truecolor-enhanced versions of the standard ANSI palette used by Joe.
+	// The RGB values are close to typical ANSI defaults so that BestColor
+	// maps back to the correct ANSI color on 16-color terminals.
+	joeGreen := vt.BestColor(0, 205, 0)        // green (ANSI 32)
+	joeBrightGreen := vt.BestColor(0, 255, 0)  // bold green (ANSI 92)
+	joeCyan := vt.BestColor(0, 205, 205)       // cyan (ANSI 36)
+	joeBrightCyan := vt.BestColor(0, 255, 255) // bold cyan (ANSI 96)
+	joeBlue := vt.BestColor(0, 0, 238)         // blue (ANSI 34)
+	joeBrightBlue := vt.BestColor(92, 92, 255) // bold blue (ANSI 94)
+	joeMagenta := vt.BestColor(205, 0, 205)    // magenta (ANSI 35)
+	joeRed := vt.BestColor(205, 0, 0)          // red (ANSI 31)
+	joeBrightRed := vt.BestColor(255, 0, 0)    // bold red (ANSI 91)
+	joeWhite := vt.BestColor(255, 255, 255)    // bold = bright white (ANSI 97)
+	joeDimWhite := vt.BestColor(160, 160, 160) // dim white (ANSI 37 / light gray)
+
+	return Theme{
+		Name:  "Joe",
+		Light: false,
+
+		// Joe: Idle = default fg/bg — use terminal defaults
+		Foreground: vt.Default,
+		Background: vt.BackgroundDefault,
+
+		// Joe: status line uses inverse video; approximate with white-on-black
+		StatusForeground:      vt.White,
+		StatusBackground:      vt.BackgroundBlack,
+		StatusErrorForeground: joeBrightRed,
+		StatusErrorBackground: vt.BackgroundDefault,
+		StatusMode:            false,
+
+		// Top-right info — dim, unobtrusive like Joe's line numbers
+		TopRightForeground: joeDimWhite,
+		TopRightBackground: vt.BackgroundDefault,
+
+		// Search & highlight — Joe uses inverse for selection
+		SearchHighlight:     joeBrightCyan,
+		HighlightForeground: vt.White,
+		HighlightBackground: vt.BackgroundDefault,
+
+		// Git
+		Git: joeBrightGreen,
+
+		// Syntax highlighting (string fields)
+		// Joe: Keyword = bold bright white
+		Keyword: "boldwhite",
+		// Joe: Type = bold bright white
+		Type: "boldwhite",
+		// Joe: Comment = green
+		Comment: "green",
+		// Joe: Constant = cyan → strings and literals
+		String:  "cyan",
+		Literal: "cyan",
+		// Joe: Escape = bold cyan → numeric literals within strings
+		Decimal: "boldcyan",
+		// Joe: Idle = default → most punctuation/operators have no special color
+		Punctuation: "",
+		// Joe: Brace = magenta
+		Brace: "magenta",
+		// Joe: Idle → ||, &&, *, ==, <, > have no special color
+		AndOr:        "",
+		Star:         "",
+		AngleBracket: "",
+		// Joe: Preproc = blue → $ and # preprocessor markers
+		Dollar: "blue",
+		// Joe: Keyword = bold bright white for static
+		Static: "boldwhite",
+		// Joe: Tag = bold blue
+		Tag:           "boldblue",
+		TextTag:       "boldblue",
+		TextAttrName:  "boldcyan",
+		TextAttrValue: "cyan",
+		// Joe: Idle/Control/Ident = default
+		Plaintext: "lightgray",
+		Self:      "lightgray",
+		// Joe: Keyword = bold bright white for class names
+		Class:     "boldwhite",
+		Private:   "blue",
+		Protected: "blue",
+		// Joe: Comment-adjacent → green for public visibility
+		Public:     "green",
+		Whitespace: "",
+		// Joe: IncLocal = cyan
+		AssemblyEnd: "cyan",
+		// Joe: Define = bold blue
+		Mut: "boldblue",
+
+		// Multi-line colors
+		MultiLineComment: joeGreen,
+		// Joe: Define = bold blue → #include, #define, #endif lines (light blue)
+		MultiLineString: vt.LightBlue,
+
+		// Markdown — use Joe's palette consistently
+		MarkdownTextColor: vt.Default,
+		HeaderBulletColor: joeDimWhite,
+		HeaderTextColor:   joeBrightCyan,
+		ListBulletColor:   joeRed,
+		ListTextColor:     vt.Default,
+		ListCodeColor:     joeCyan,
+		CodeColor:         joeCyan,
+		CodeBlockColor:    joeCyan,
+		ImageColor:        joeBrightBlue,
+		LinkColor:         joeBlue,
+		QuoteColor:        joeGreen,
+		QuoteTextColor:    vt.Default,
+		HTMLColor:         joeBrightBlue,
+		CommentColor:      joeGreen,
+		BoldColor:         joeWhite,
+		ItalicsColor:      joeDimWhite,
+		StrikeColor:       joeDimWhite,
+		TableColor:        joeBlue,
+		CheckboxColor:     joeBrightCyan,
+		XColor:            joeWhite,
+		TableBackground:   vt.BackgroundDefault,
+
+		// Joe: Brace = magenta; Bad = bold red for unmatched
+		UnmatchedParenColor: joeBrightRed,
+		RainbowParenColors:  []vt.AttributeColor{joeMagenta, joeBlue, joeBrightCyan, joeGreen, joeBrightBlue, joeCyan, joeBrightRed},
+
+		// Menu — Joe uses inverse for menu selection; use subtle ANSI colors
+		MenuTitleColor:     joeWhite,
+		MenuArrowColor:     joeBrightCyan,
+		MenuTextColor:      joeDimWhite,
+		MenuHighlightColor: joeBrightBlue,
+		MenuSelectedColor:  joeBrightCyan,
+
+		// Man pages
+		ManSectionColor:  joeBrightRed,
+		ManSynopsisColor: joeWhite,
+
+		// Box/dialog — Joe-like inverse feel
+		BoxTextColor:                vt.White,
+		BoxBackground:               vt.BackgroundBlue,
+		BoxUpperEdge:                joeWhite,
+		BoxHighlight:                joeBrightCyan,
+		ProgressIndicatorBackground: vt.BackgroundBlue,
+
+		// Debug
+		DebugRunningBackground:      vt.BackgroundCyan,
+		DebugStoppedBackground:      vt.BackgroundMagenta,
+		DebugRegistersBackground:    vt.BackgroundBlue,
+		DebugOutputBackground:       vt.BackgroundYellow,
+		DebugLineIndicator:          joeBrightGreen,
+		DebugInstructionsForeground: joeWhite,
+		DebugInstructionsBackground: vt.BackgroundMagenta,
+
+		// Jump & nano
+		JumpToLetterColor:     joeBrightRed,
+		NanoHelpForeground:    vt.Black,
+		NanoHelpBackground:    vt.BackgroundGray,
+		MultiCursorBackground: vt.BackgroundYellow,
+	}
+}
+
 // TextConfig returns a TextConfig struct that can be used for settings
 // the syntax highlighting colors in the public TextConfig variable that is
 // exported from the syntax package.
@@ -1469,6 +1652,7 @@ func (t Theme) TextConfig() *TextConfig {
 		Type:          t.Type,
 		Literal:       t.Literal,
 		Punctuation:   t.Punctuation,
+		Brace:         t.Brace,
 		Plaintext:     t.Plaintext,
 		Tag:           t.Tag,
 		TextTag:       t.TextTag,

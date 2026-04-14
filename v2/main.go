@@ -521,6 +521,8 @@ func main() {
 			theme = NewDarkBlueEditTheme()
 			// TODO: Later, when specificLetter is examined, use either NewEditLightTheme or NewEditDarkTheme
 			editTheme = true
+		case 'j': // joe
+			theme = NewJoeTheme()
 		case 'l': // lo, light etc
 			theme = NewLitmusTheme()
 		case 'r': // rb, ro, rt, red etc.

@@ -49,6 +49,7 @@ const (
 	AndOr
 	AngleBracket
 	AssemblyEnd
+	Brace
 	Class
 	Comment
 	Decimal
@@ -77,6 +78,7 @@ type TextConfig struct {
 	AndOr         string
 	AngleBracket  string
 	AssemblyEnd   string
+	Brace         string
 	Class         string
 	Comment       string
 	Decimal       string
@@ -116,6 +118,7 @@ var DefaultTextConfig = TextConfig{
 	AndOr:         "red",
 	AngleBracket:  "red",
 	AssemblyEnd:   "lightyellow",
+	Brace:         "red",
 	Class:         "white",
 	Comment:       "darkgray",
 	Decimal:       "red",
@@ -155,6 +158,8 @@ func (c TextConfig) GetClass(kind Kind) string {
 		return c.Literal
 	case Punctuation:
 		return c.Punctuation
+	case Brace:
+		return c.Brace
 	case Plaintext:
 		return c.Plaintext
 	case Tag:
@@ -689,7 +694,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					case (e.mode == mode.Nim || e.mode == mode.Mojo || e.mode == mode.Python || e.mode == mode.Starlark) && q.startedMultiLineString:
 						// Python docstring
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
-					case (e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC || e.mode == mode.Shader || e.mode == mode.Make || e.mode == mode.Just) && !q.multiLineComment && (strings.HasPrefix(trimmedLine, "#if") || strings.HasPrefix(trimmedLine, "#else") || strings.HasPrefix(trimmedLine, "#elseif") || strings.HasPrefix(trimmedLine, "#endif") || strings.HasPrefix(trimmedLine, "#elif") || strings.HasPrefix(trimmedLine, "#define") || strings.HasPrefix(trimmedLine, "#pragma")):
+					case (e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC || e.mode == mode.Shader || e.mode == mode.Make || e.mode == mode.Just) && !q.multiLineComment && (strings.HasPrefix(trimmedLine, "#if") || strings.HasPrefix(trimmedLine, "#else") || strings.HasPrefix(trimmedLine, "#elseif") || strings.HasPrefix(trimmedLine, "#endif") || strings.HasPrefix(trimmedLine, "#elif") || strings.HasPrefix(trimmedLine, "#define") || strings.HasPrefix(trimmedLine, "#include") || strings.HasPrefix(trimmedLine, "#pragma")):
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
 					case e.mode != mode.Shell && e.mode != mode.Docker && e.mode != mode.Make && e.mode != mode.Just && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*/") && !strings.Contains(trimmedLine, "/*"):
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
@@ -996,6 +1001,9 @@ func (e *Editor) ArrowReplace(s string) string {
 	// TODO: Use the function that checks if e.mode is "C-like".
 	// TODO: Don't hardcode colors here, introduce theme.CArrow, theme.Arrow and theme.ArrowField instead.
 	arrowColor, fieldColor := e.arrowColorNames()
+	if arrowColor == "" && fieldColor == "" {
+		return s
+	}
 	s = strings.ReplaceAll(s, ">-<", "><off><"+arrowColor+">-<")
 	return strings.ReplaceAll(s, ">"+Escape(">"), "><off><"+arrowColor+">"+Escape(">")+"<off><"+fieldColor+">")
 }
@@ -1013,6 +1021,9 @@ func (e *Editor) cArrowColorNames() (string, string) {
 	if e.Name == "Zulu" {
 		arrowColor = "yellow"
 		fieldColor = "cyan" // lightcyan
+	} else if e.Name == "Joe" {
+		arrowColor = ""
+		fieldColor = ""
 	}
 	return arrowColor, fieldColor
 }

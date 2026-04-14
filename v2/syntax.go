@@ -91,6 +91,8 @@ func tokenKind(tok rune, tokText string, inComment *bool, m mode.Mode) Kind {
 		return Dollar
 	} else if tok == '<' || tok == '>' {
 		return AngleBracket
+	} else if tok == '{' || tok == '}' {
+		return Brace
 	}
 
 	if unicode.IsSpace(tok) {

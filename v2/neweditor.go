@@ -108,6 +108,11 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		noDisplayQuickHelp,
 		cycleFilenames)
 
+	// Disable rainbow parenthesis for the Joe theme
+	if theme.Name == "Joe" {
+		e.SetRainbow(false)
+	}
+
 	e.highlightCurrentText = !envNoColor
 
 	if readOnly || fnord.stdin || monitorAndReadOnly {
@@ -456,6 +461,10 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		envNoColor = false
 		e.setBlueTheme()
 		e.syntaxHighlight = false
+		themeWasSet = true
+	case "joe":
+		e.SetTheme(NewJoeTheme(), assumeLightBackground)
+		e.SetRainbow(false)
 		themeWasSet = true
 	case "default":
 		themeWasSet = true

@@ -375,7 +375,8 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				"Gray Mono      (O_THEME=graymono)",
 				"Amber Mono     (O_THEME=ambermono)",
 				"Green Mono     (O_THEME=greenmono)",
-				"Blue Mono      (O_THEME=bluemono)"}
+				"Blue Mono      (O_THEME=bluemono)",
+				"Joe            (O_THEME=joe)"}
 			menuChoices = append(menuChoices, "No colors      (NO_COLOR=1)")
 			useMenuIndex := 0
 			for i, menuChoiceText := range menuChoices {
@@ -462,6 +463,11 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				envNoColor = false
 				e.setBlueTheme()
 				e.syntaxHighlight = false
+			case "joe":
+				envNoColor = false
+				e.SetTheme(NewJoeTheme())
+				e.SetRainbow(false)
+				e.syntaxHighlight = true
 			case "nocolor":
 				envNoColor = true
 				e.setNoColorTheme()
