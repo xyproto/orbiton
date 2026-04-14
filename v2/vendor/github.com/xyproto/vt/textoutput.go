@@ -350,12 +350,3 @@ func (o *TextOutput) ExtractToSlice(s string, pcc *[]CharAttribute) uint {
 	}
 	return counter
 }
-
-// WriteTagged writes a tagged string ("<green>hello</green>") to the Canvas
-func (c *Canvas) WriteTagged(x, y uint, bgColor AttributeColor, tagged string) {
-	pcc := make([]CharAttribute, len([]rune(tagged)))
-	n := New().ExtractToSlice(tagged, &pcc)
-	for i := range n {
-		c.WriteRune(i+x, y, pcc[i].A, bgColor, pcc[i].R)
-	}
-}
