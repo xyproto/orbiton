@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mattn/go-runewidth"
+
 	"github.com/xyproto/vt"
 )
 
@@ -217,18 +219,18 @@ func TableColumnWidths(headers []string, body [][]string) []int {
 
 	columnWidths := make([]int, maxColumns)
 
-	// find the width of the longest string per column
+	// find the width of the longest string per column (using visual width for unicode)
 	for i, field := range headers {
-		if len(field) > columnWidths[i] {
-			columnWidths[i] = len(field)
+		if w := runewidth.StringWidth(field); w > columnWidths[i] {
+			columnWidths[i] = w
 		}
 	}
 
-	// find the width of the longest string per column
+	// find the width of the longest string per column (using visual width for unicode)
 	for _, row := range body {
 		for i, field := range row {
-			if len(field) > columnWidths[i] {
-				columnWidths[i] = len(field)
+			if w := runewidth.StringWidth(field); w > columnWidths[i] {
+				columnWidths[i] = w
 			}
 		}
 	}
@@ -281,8 +283,8 @@ func tableToString(headers []string, body [][]string) string {
 	for i, field := range headers {
 		sb.WriteString(" ")
 		sb.WriteString(field)
-		if len(field) < columnWidths[i] {
-			neededSpaces := columnWidths[i] - len(field)
+		if w := runewidth.StringWidth(field); w < columnWidths[i] {
+			neededSpaces := columnWidths[i] - w
 			spaces := strings.Repeat(" ", neededSpaces)
 			sb.WriteString(spaces)
 		}
@@ -321,8 +323,8 @@ func tableToString(headers []string, body [][]string) string {
 		for i, field := range row {
 			sb.WriteString(" ")
 			sb.WriteString(field)
-			if len(field) < columnWidths[i] {
-				neededSpaces := columnWidths[i] - len(field)
+			if w := runewidth.StringWidth(field); w < columnWidths[i] {
+				neededSpaces := columnWidths[i] - w
 				spaces := strings.Repeat(" ", neededSpaces)
 				sb.WriteString(spaces)
 			}
