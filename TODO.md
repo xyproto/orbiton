@@ -2,10 +2,6 @@
 
 ## General
 
-- [ ] If a Markdown table contains "`" (and presumably unicode too), then the formatting of the "|" edges is skewed.
-- [ ] When selecting text and copying/cutting, then don't require a double `ctrl-v` to paste everything.
-- [ ] Only highlight typos for the currently highlighted line, if it is a comment.
-- [ ] Do not spell check `Name Name <email@email.com>` strings.
 - [ ] Let the default theme have a 256-color variant that is like the default theme, only nicer.
 - [ ] If Orbiton is launched by a symlink starting with `p` (for `preview`), then act as an auto-reloading Markdown preview program.
 - [ ] `o -b` should also build Go projects, Rust projects etc. (similar to `ctrl-space`), not only C and C++.
