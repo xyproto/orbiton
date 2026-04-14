@@ -6,7 +6,6 @@ import (
 	"github.com/xyproto/javasig"
 	"github.com/xyproto/kotlinsig"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt"
 )
 
@@ -193,7 +192,7 @@ func (e *Editor) FunctionName(line string) string {
 		return ""
 	}
 	// Don't return language keywords as function names
-	if _, isKeyword := syntax.Keywords[withoutFuncPrefix]; isKeyword {
+	if _, isKeyword := Keywords[withoutFuncPrefix]; isKeyword {
 		return ""
 	}
 	return withoutFuncPrefix

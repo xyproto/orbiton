@@ -1,9 +1,6 @@
 package main
 
-import (
-	"github.com/xyproto/syntax"
-	"github.com/xyproto/vt"
-)
+import "github.com/xyproto/vt"
 
 // TODO: Restructure how themes are stored, so that it's easier to list all themes that
 // works with a dark background or all that works with a light background, ref. initialLightBackground
@@ -1535,7 +1532,6 @@ func (e *Editor) SetTheme(theme Theme, bs ...bool) {
 	e.Theme = theme
 	e.statusMode = theme.StatusMode
 	DefaultTextConfig = *(theme.TextConfig())
-	syntax.DefaultTextConfig = DefaultTextConfig
 	if initialLightBackground != nil && *initialLightBackground { // light
 		e.makeLightAdjustments()
 	}
@@ -1550,7 +1546,6 @@ func (e *Editor) setNoColorTheme() {
 	}
 	e.statusMode = e.StatusMode
 	DefaultTextConfig = *(e.TextConfig())
-	syntax.DefaultTextConfig = DefaultTextConfig
 	if initialLightBackground != nil && *initialLightBackground { // light
 		e.makeLightAdjustments()
 	}

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/xyproto/mode"
-	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt"
 )
 
@@ -80,7 +79,7 @@ func quitMessageWithStack(tty *vt.TTY, msg string) {
 // CatBytes detects the source code mode and outputs syntax highlighted text to the given TextOutput.
 func CatBytes(sourceCodeData []byte, o *vt.TextOutput) error {
 	detectedMode := mode.SimpleDetectBytes(sourceCodeData)
-	taggedTextBytes, err := syntax.AsText(sourceCodeData, detectedMode)
+	taggedTextBytes, err := AsText(sourceCodeData, detectedMode)
 	if err == nil {
 		o.OutputTags(string(taggedTextBytes))
 	}
