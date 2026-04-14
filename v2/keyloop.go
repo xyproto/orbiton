@@ -180,6 +180,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		lastPasteY LineIndex = -1 // used for keeping track if ctrl-v has been pressed twice on the same line
 		lastCutY   LineIndex = -1 // used for keeping track if ctrl-x has been pressed twice on the same line
 
+		pasteAllAtOnce bool // set when copying/cutting a selection, to paste all lines at once
+
 		clearKeyHistory  bool              // for clearing the last pressed key, for exiting modes that also reads keys
 		kh               = NewKeyHistory() // keep track of the previous key presses
 		key              string            // for the main loop
@@ -1906,7 +1908,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		case "c:21": // ctrl-u to undo
 
 			if e.nanoMode.Load() { // nano: paste after cutting
-				e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, kh.PrevIs("c:13"))
+				e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, &pasteAllAtOnce, kh.PrevIs("c:13"))
 				break
 			}
 
@@ -1942,6 +1944,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					} else {
 						_ = clip.WriteAll(selText, e.primaryClipboard)
 					}
+					copyLines = strings.Split(selText, "\n")
+					pasteAllAtOnce = true
 					e.DeleteSelection(c, status)
 				}
 				e.ClearSelection()
@@ -2093,7 +2097,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					} else {
 						_ = clip.WriteAll(selText, e.primaryClipboard)
 					}
-					copied := len(strings.Split(selText, "\n"))
+					copyLines = strings.Split(selText, "\n")
+					pasteAllAtOnce = true
+					copied := len(copyLines)
 					plural := "s"
 					if copied == 1 {
 						plural = ""
@@ -2263,7 +2269,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			// paste from the portal, clipboard or line buffer. Takes an undo snapshot if text is pasted.
-			e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, kh.PrevIs("c:13"))
+			e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, &pasteAllAtOnce, kh.PrevIs("c:13"))
 
 		case shiftInsertKey1, shiftInsertKey2: // shift-insert, one-shot paste mode
 			wasInPasteMode := e.pasteMode
