@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] Add a mode for writing books under Kitty, with the editor to the left and a preview to the right, nice text flow and a typewriter-like user experience.
+- [ ] There is some duplication between this source code and the source code of the `syntax` package. Refactor and fix.
 - [ ] When globbing, prioritize `.sh` over `.bat`, unless on Windows.
 - [ ] Let the default theme have a 256-color variant that is like the default theme, only nicer.
 - [ ] If Orbiton is launched by a symlink starting with `p` (for `preview`), then act as an auto-reloading Markdown preview program.
