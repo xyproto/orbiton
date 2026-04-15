@@ -32,6 +32,8 @@ func NewDefaultTextConfig() TextConfig {
 		Whitespace:    "",
 		AssemblyEnd:   "cyan",
 		Mut:           "darkyellow",
+		CurlyBracket:  "lightblue",
+		IncludeSystem: "lightyellow",
 	}
 }
 
@@ -63,6 +65,8 @@ func NewOrbTextConfig() TextConfig {
 		Whitespace:    "",
 		AssemblyEnd:   "lightblue",
 		Mut:           "lightgreen",
+		CurlyBracket:  "lightgray",
+		IncludeSystem: "lightcyan",
 	}
 }
 
@@ -94,6 +98,8 @@ func NewPinetreeTextConfig() TextConfig {
 		Whitespace:    "",
 		AssemblyEnd:   "cyan",
 		Mut:           "darkyellow",
+		CurlyBracket:  "lightgray",
+		IncludeSystem: "lightred",
 	}
 }
 
@@ -125,6 +131,8 @@ func NewZuluTextConfig() TextConfig {
 		Whitespace:    "",
 		AssemblyEnd:   "lightcyan",
 		Mut:           "lightgreen",
+		CurlyBracket:  "lightgray",
+		IncludeSystem: "lightgreen",
 	}
 }
 
@@ -156,6 +164,8 @@ func NewLitmusTextConfig() TextConfig {
 		Whitespace:    "",
 		AssemblyEnd:   "magenta",
 		Mut:           "yellow",
+		CurlyBracket:  "black",
+		IncludeSystem: "lightred",
 	}
 }
 
@@ -187,6 +197,8 @@ func NewSynthwaveTextConfig() TextConfig {
 		Whitespace:    "",
 		AssemblyEnd:   "cyan",
 		Mut:           "darkgray",
+		CurlyBracket:  "lightblue",
+		IncludeSystem: "magenta",
 	}
 }
 
@@ -218,6 +230,8 @@ func NewTealTextConfig() TextConfig {
 		Whitespace:    "",
 		AssemblyEnd:   "white",
 		Mut:           "white",
+		CurlyBracket:  "white",
+		IncludeSystem: "white",
 	}
 }
 
@@ -249,6 +263,8 @@ func NewRedBlackTextConfig() TextConfig {
 		Whitespace:    "",
 		AssemblyEnd:   "darkred",
 		Mut:           "lightgray",
+		CurlyBracket:  "darkred",
+		IncludeSystem: "darkred",
 	}
 }
 
@@ -280,6 +296,8 @@ func NewLightBlueEditTextConfig() TextConfig {
 		Whitespace:    "",
 		AssemblyEnd:   "lightcyan",
 		Mut:           "lightyellow",
+		CurlyBracket:  "white",
+		IncludeSystem: "lightcyan",
 	}
 }
 
@@ -311,6 +329,8 @@ func NewDarkBlueEditTextConfig() TextConfig {
 		Whitespace:    "",
 		AssemblyEnd:   "white",
 		Mut:           "lightyellow",
+		CurlyBracket:  "white",
+		IncludeSystem: "lightyellow",
 	}
 }
 
@@ -342,6 +362,8 @@ func NewLightVSTextConfig() TextConfig {
 		Whitespace:    "",
 		AssemblyEnd:   "red",
 		Mut:           "black",
+		CurlyBracket:  "black",
+		IncludeSystem: "blue",
 	}
 }
 
@@ -373,12 +395,84 @@ func NewDarkVSTextConfig() TextConfig {
 		Whitespace:    "",
 		AssemblyEnd:   "red",
 		Mut:           "black",
+		CurlyBracket:  "black",
+		IncludeSystem: "blue",
 	}
 }
 
 // NewNoColorTextConfig returns an empty TextConfig with no colors.
 func NewNoColorTextConfig() TextConfig {
 	return TextConfig{}
+}
+
+// NewXoria16TextConfig returns the TextConfig for the "xoria" theme on
+// terminals with fewer than 256 colors. Uses standard 16-color ANSI names
+// approximating the Xoria256 palette.
+func NewXoria16TextConfig() TextConfig {
+	return TextConfig{
+		String:        "lightyellow",
+		Keyword:       "lightblue",
+		Comment:       "gray",
+		Type:          "white",
+		Literal:       "lightyellow",
+		Punctuation:   "lightgray",
+		Plaintext:     "white",
+		Tag:           "lightblue",
+		TextTag:       "lightblue",
+		TextAttrName:  "white",
+		TextAttrValue: "lightyellow",
+		Decimal:       "darkyellow",
+		AndOr:         "lightgray",
+		AngleBracket:  "lightblue",
+		Dollar:        "lightgreen",
+		Star:          "white",
+		Static:        "lightblue",
+		Self:          "white",
+		Class:         "white",
+		Private:       "lightred",
+		Protected:     "white",
+		Public:        "lightgreen",
+		Whitespace:    "",
+		AssemblyEnd:   "lightred",
+		Mut:           "lightgreen",
+		CurlyBracket:  "lightgray",
+		IncludeSystem: "lightblue",
+	}
+}
+
+// NewXoria256TextConfig returns the TextConfig for the "xoria256" theme.
+// The color names (prefixed with "x") must be registered in the vt color maps
+// before rendering, since they refer to 256-color palette entries.
+func NewXoria256TextConfig() TextConfig {
+	return TextConfig{
+		String:        "xstring",
+		Keyword:       "xkeyword",
+		Comment:       "xcomment",
+		Type:          "xtype",
+		Literal:       "xstring",
+		Punctuation:   "xpunct",
+		Plaintext:     "xplain",
+		Tag:           "xkeyword",
+		TextTag:       "xkeyword",
+		TextAttrName:  "xtype",
+		TextAttrValue: "xstring",
+		Decimal:       "xnumber",
+		AndOr:         "xpunct",
+		AngleBracket:  "xkeyword",
+		Dollar:        "xpreproc",
+		Star:          "xplain",
+		Static:        "xkeyword",
+		Self:          "xident",
+		Class:         "xident",
+		Private:       "xescape",
+		Protected:     "xtype",
+		Public:        "xpreproc",
+		Whitespace:    "",
+		AssemblyEnd:   "xescape",
+		Mut:           "xpreproc",
+		CurlyBracket:  "xcurly",
+		IncludeSystem: "xincsys",
+	}
 }
 
 // TextConfigByName returns the TextConfig for the given theme name.
@@ -407,6 +501,15 @@ func TextConfigByName(name string) TextConfig {
 		return NewDarkVSTextConfig()
 	case "graymono", "ambermono", "greenmono", "bluemono":
 		return NewNoColorTextConfig()
+	case "xoria256":
+		return NewXoria256TextConfig()
+	case "xoria16":
+		return NewXoria16TextConfig()
+	case "xoria":
+		if env.Has("COLORTERM") || env.Contains("TERM", "256color") {
+			return NewXoria256TextConfig()
+		}
+		return NewXoria16TextConfig()
 	default:
 		return NewDefaultTextConfig()
 	}

@@ -46,6 +46,8 @@ const (
 	TextAttrValue
 	TextTag
 	Type
+	CurlyBracket
+	IncludeSystem
 )
 
 // TextConfig holds the Text class configuration to be used by annotators when
@@ -56,8 +58,10 @@ type TextConfig struct {
 	AssemblyEnd   string
 	Class         string
 	Comment       string
+	CurlyBracket  string
 	Decimal       string
 	Dollar        string
+	IncludeSystem string
 	Keyword       string
 	Literal       string
 	Mut           string
@@ -129,6 +133,10 @@ func (c TextConfig) GetClass(kind Kind) string {
 		return c.AssemblyEnd
 	case Mut:
 		return c.Mut
+	case CurlyBracket:
+		return c.CurlyBracket
+	case IncludeSystem:
+		return c.IncludeSystem
 	}
 	return ""
 }
@@ -196,8 +204,10 @@ var DefaultTextConfig = TextConfig{
 	AssemblyEnd:   "lightyellow",
 	Class:         "white",
 	Comment:       "darkgray",
+	CurlyBracket:  "red",
 	Decimal:       "red",
 	Dollar:        "white",
+	IncludeSystem: "red",
 	Keyword:       "red",
 	Literal:       "white",
 	Mut:           "magenta",
@@ -243,9 +253,10 @@ func Print(s *scanner.Scanner, w io.Writer, p Printer, m mode.Mode) error {
 		}
 	}
 	inComment := false
+	inInclude := false
 	for tok := s.Scan(); tok != scanner.EOF; tok = s.Scan() {
 		tokText := s.TokenText()
-		if err := p.Print(w, tokenKind(tok, tokText, &inComment, m), tokText); err != nil {
+		if err := p.Print(w, tokenKind(tok, tokText, &inComment, &inInclude, m), tokText); err != nil {
 			return err
 		}
 	}
@@ -259,11 +270,12 @@ func Annotate(src []byte, a Annotator, m mode.Mode) (annotate.Annotations, error
 		s         = NewScanner(src)
 		read      = 0
 		inComment = false
+		inInclude = false
 		tok       = s.Scan()
 	)
 	for tok != scanner.EOF {
 		tokText := s.TokenText()
-		ann, err := a.Annotate(read, tokenKind(tok, tokText, &inComment, m), tokText)
+		ann, err := a.Annotate(read, tokenKind(tok, tokText, &inComment, &inInclude, m), tokText)
 		if err != nil {
 			return nil, err
 		}
