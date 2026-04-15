@@ -11,4 +11,4 @@ The `hicat` utility can be installed with:
 ### General info
 
 * License: BSD 3-Clause
-* Version: 1.14.1
+* Version: 1.14.2

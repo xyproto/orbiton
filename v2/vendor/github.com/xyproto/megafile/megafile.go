@@ -18,6 +18,9 @@ import (
 	"github.com/xyproto/imagepreview"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
+	"mvdan.cc/sh/v3/expand"
+	"mvdan.cc/sh/v3/interp"
+	"mvdan.cc/sh/v3/syntax"
 )
 
 var (
@@ -1048,19 +1051,28 @@ func run2(executableName string, args []string, path string) (string, error) {
 	return string(outBytes), nil
 }
 
-// runShell executes a command string via /bin/sh -c
+// runShell executes a command string using a pure Go shell interpreter
 func runShell(cmdStr, path string) (string, error) {
-	command := exec.Command("/bin/sh", "-c", cmdStr)
-	command.Dir = path
-	command.Env = env.Environ()
-	outBytes, err := command.CombinedOutput()
+	prog, err := syntax.NewParser().Parse(strings.NewReader(cmdStr), "")
 	if err != nil {
-		if len(outBytes) > 0 {
-			return "", fmt.Errorf("%s: %s", err, strings.TrimSpace(string(outBytes)))
+		return "", err
+	}
+	var buf bytes.Buffer
+	runner, err := interp.New(
+		interp.Dir(path),
+		interp.Env(expand.ListEnviron(env.Environ()...)),
+		interp.StdIO(nil, &buf, &buf),
+	)
+	if err != nil {
+		return "", err
+	}
+	if err := runner.Run(context.Background(), prog); err != nil {
+		if buf.Len() > 0 {
+			return "", fmt.Errorf("%s: %s", err, strings.TrimSpace(buf.String()))
 		}
 		return "", err
 	}
-	return string(outBytes), nil
+	return buf.String(), nil
 }
 
 func (s *State) setPath(path string) {

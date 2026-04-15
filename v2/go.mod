@@ -27,7 +27,7 @@ require (
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
-	github.com/xyproto/megafile v1.6.37
+	github.com/xyproto/megafile v1.6.38
 	github.com/xyproto/mode v0.12.6
 	github.com/xyproto/ollamaclient/v2 v2.7.2
 	github.com/xyproto/orchideous v1.0.6
@@ -38,7 +38,7 @@ require (
 	golang.org/x/image v0.39.0
 )
 
-require github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d
+require github.com/xyproto/syntax v1.14.2
 
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
@@ -50,6 +50,7 @@ require (
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.0 // indirect
 	github.com/peterhellberg/gfx v0.0.0-20250602150231-2e41f5fad310 // indirect
+	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
 	github.com/xfmoulet/qoi v0.2.0 // indirect
@@ -57,9 +58,9 @@ require (
 	github.com/xyproto/burnpal v1.0.0 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.6.1 // indirect
-	github.com/xyproto/syntax v1.14.1 // indirect
 	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/term v0.42.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
+	mvdan.cc/sh/v3 v3.13.1 // indirect
 )

@@ -124,7 +124,7 @@ github.com/xyproto/kotlinsig
 # github.com/xyproto/lookslikegoasm v1.0.0
 ## explicit; go 1.23.2
 github.com/xyproto/lookslikegoasm
-# github.com/xyproto/megafile v1.6.37
+# github.com/xyproto/megafile v1.6.38
 ## explicit; go 1.25.1
 github.com/xyproto/megafile
 # github.com/xyproto/mode v0.12.6
@@ -139,7 +139,7 @@ github.com/xyproto/orchideous
 # github.com/xyproto/palgen v1.6.1
 ## explicit; go 1.16
 github.com/xyproto/palgen
-# github.com/xyproto/syntax v1.14.1
+# github.com/xyproto/syntax v1.14.2
 ## explicit; go 1.25.1
 github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.5.1
@@ -197,3 +197,11 @@ golang.org/x/text/internal/utf8internal
 golang.org/x/text/language
 golang.org/x/text/runes
 golang.org/x/text/transform
+# mvdan.cc/sh/v3 v3.13.1
+## explicit; go 1.25.0
+mvdan.cc/sh/v3/expand
+mvdan.cc/sh/v3/fileutil
+mvdan.cc/sh/v3/internal
+mvdan.cc/sh/v3/interp
+mvdan.cc/sh/v3/pattern
+mvdan.cc/sh/v3/syntax

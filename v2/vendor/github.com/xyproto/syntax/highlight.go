@@ -243,6 +243,10 @@ func Print(s *scanner.Scanner, w io.Writer, p Printer, m mode.Mode) error {
 		s.IsIdentRune = func(ch rune, i int) bool {
 			return ch == '-' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
 		}
+	case mode.Spec:
+		s.IsIdentRune = func(ch rune, i int) bool {
+			return ch == '%' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
+		}
 	case mode.Swift:
 		s.IsIdentRune = func(ch rune, i int) bool {
 			return ch == '#' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0

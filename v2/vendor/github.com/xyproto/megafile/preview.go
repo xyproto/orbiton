@@ -185,7 +185,6 @@ func (s *State) drawTextPreview(path string, col, row, cols, rows uint) {
 	// Detect the file mode and adjust keywords for syntax highlighting.
 	m := mode.Detect(path)
 	syntax.AdjustKeywords(m)
-	syntax.SetDefaultTextConfigFromEnv()
 	tout := vt.New()
 
 	sc := bufio.NewScanner(f)
