@@ -70,6 +70,8 @@ const (
 	TextAttrValue
 	TextTag
 	Type
+	CurlyBracket
+	IncludeSystem
 )
 
 // TextConfig holds the Text class configuration to be used by annotators when highlighting code.
@@ -79,8 +81,10 @@ type TextConfig struct {
 	AssemblyEnd   string
 	Class         string
 	Comment       string
+	CurlyBracket  string
 	Decimal       string
 	Dollar        string
+	IncludeSystem string
 	Keyword       string
 	Literal       string
 	Mut           string
@@ -118,8 +122,10 @@ var DefaultTextConfig = TextConfig{
 	AssemblyEnd:   "lightyellow",
 	Class:         "white",
 	Comment:       "darkgray",
+	CurlyBracket:  "red",
 	Decimal:       "red",
 	Dollar:        "white",
+	IncludeSystem: "red",
 	Keyword:       "red",
 	Literal:       "white",
 	Mut:           "magenta",
@@ -191,6 +197,10 @@ func (c TextConfig) GetClass(kind Kind) string {
 		return c.AssemblyEnd
 	case Mut:
 		return c.Mut
+	case CurlyBracket:
+		return c.CurlyBracket
+	case IncludeSystem:
+		return c.IncludeSystem
 	}
 	return ""
 }
@@ -259,9 +269,10 @@ func Print(s *scanner.Scanner, w io.Writer, p Printer, m mode.Mode) error {
 		}
 	}
 	inComment := false
+	inInclude := false
 	for tok := s.Scan(); tok != scanner.EOF; tok = s.Scan() {
 		tokText := s.TokenText()
-		if err := p.Print(w, tokenKind(tok, tokText, &inComment, m), tokText); err != nil {
+		if err := p.Print(w, tokenKind(tok, tokText, &inComment, &inInclude, m), tokText); err != nil {
 			return err
 		}
 	}
@@ -901,7 +912,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 								if inSelection {
 									c.WriteWideRuneBNoLock(tx, ty, e.NanoHelpForeground, e.NanoHelpBackground, letter)
 								} else if highlightCurrentLine && (e.highlightCurrentText || e.highlightCurrentLine) {
-									c.WriteWideRuneBNoLock(tx, ty, e.HighlightForeground, e.HighlightBackground, letter)
+									c.WriteWideRuneBNoLock(tx, ty, e.HighlightForeground, e.Background, letter)
 								} else {
 									c.WriteWideRuneBNoLock(tx, ty, fg, bg, letter)
 								}
@@ -909,7 +920,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 								if inSelection {
 									c.WriteRuneBNoLock(tx, ty, e.NanoHelpForeground, e.NanoHelpBackground, letter)
 								} else if highlightCurrentLine && (e.highlightCurrentText || e.highlightCurrentLine) {
-									c.WriteRuneBNoLock(tx, ty, e.HighlightForeground, e.HighlightBackground, letter)
+									c.WriteRuneBNoLock(tx, ty, e.HighlightForeground, e.Background, letter)
 								} else {
 									c.WriteRuneBNoLock(tx, ty, fg, bg, letter)
 								}
@@ -945,7 +956,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 		xp = cx + lineRuneCount
 		if int(cw-lineRuneCount) > 0 {
 			if highlightCurrentLine && e.highlightCurrentLine {
-				c.WriteRunesB(xp, yp, e.HighlightForeground, e.HighlightBackground, ' ', cw-lineRuneCount)
+				c.WriteRunesB(xp, yp, e.HighlightForeground, e.Background, ' ', cw-lineRuneCount)
 			} else {
 				c.WriteRunesB(xp, yp, e.Foreground, bg, ' ', cw-lineRuneCount)
 			}

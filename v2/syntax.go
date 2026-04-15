@@ -10,7 +10,7 @@ import (
 )
 
 // tokenKind determines the Kind of a token for syntax highlighting.
-func tokenKind(tok rune, tokText string, inComment *bool, m mode.Mode) Kind {
+func tokenKind(tok rune, tokText string, inComment *bool, inInclude *bool, m mode.Mode) Kind {
 	// Detect single-line comment start/end.
 	if (m == mode.Assembly && tok == ';') ||
 		(m != mode.Assembly && m != mode.GoAssembly && m != mode.Clojure && m != mode.Lisp && m != mode.C && m != mode.Cpp && m != mode.Lua && tok == '#') ||
@@ -18,12 +18,32 @@ func tokenKind(tok rune, tokText string, inComment *bool, m mode.Mode) Kind {
 		*inComment = true
 	} else if tok == '\n' {
 		*inComment = false
+		*inInclude = false
 	}
 
 	// C-style preprocessor directives.
 	if (m == mode.C || m == mode.Cpp) && (tokText == "include" || tokText == "define" || tokText == "ifdef" || tokText == "ifndef" || tokText == "endif" || tokText == "else" || tokText == "elif") {
 		*inComment = false
+		if tokText == "include" {
+			*inInclude = true
+		}
 		return Keyword
+	}
+
+	// If we are inside a #include <...> directive, color tokens as IncludeSystem
+	if *inInclude && (m == mode.C || m == mode.Cpp) {
+		if tok == scanner.Char || tok == scanner.String || tok == scanner.RawString {
+			// #include "..." gets String color (local include)
+			*inInclude = false
+			return String
+		}
+		if unicode.IsSpace(tok) {
+			return Whitespace
+		}
+		if tok == '>' {
+			*inInclude = false
+		}
+		return IncludeSystem
 	}
 
 	if *inComment {
@@ -91,6 +111,8 @@ func tokenKind(tok rune, tokText string, inComment *bool, m mode.Mode) Kind {
 		return Dollar
 	} else if tok == '<' || tok == '>' {
 		return AngleBracket
+	} else if tok == '{' || tok == '}' {
+		return CurlyBracket
 	}
 
 	if unicode.IsSpace(tok) {

@@ -457,6 +457,14 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		e.setBlueTheme()
 		e.syntaxHighlight = false
 		themeWasSet = true
+	case "xoria":
+		if termHas256Colors() {
+			registerXoria256Colors()
+			e.SetTheme(NewXoria256Theme(), assumeLightBackground)
+		} else if !envNoColor {
+			e.SetTheme(NewXoria16Theme(), assumeLightBackground)
+		}
+		themeWasSet = true
 	case "default":
 		themeWasSet = true
 	}

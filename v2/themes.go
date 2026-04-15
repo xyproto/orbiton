@@ -1,6 +1,27 @@
 package main
 
-import "github.com/xyproto/vt"
+import (
+	"strings"
+
+	"github.com/xyproto/env/v2"
+	"github.com/xyproto/vt"
+)
+
+// termHas256Colors reports whether the terminal actually supports >=256 colors.
+// It checks TERM first: if TERM indicates a basic terminal (vt100, vt220, dumb, etc.)
+// then COLORTERM is ignored, because some terminal emulators (e.g. Kitty) always set
+// COLORTERM=truecolor even when TERM is overridden to a limited value.
+func termHas256Colors() bool {
+	term := strings.ToLower(env.Str("TERM"))
+	switch {
+	case term == "", term == "dumb":
+		return false
+	case strings.HasPrefix(term, "vt") && !strings.Contains(term, "256color"):
+		// vt100, vt220, vt320, vt52, etc. — but not something like vt-256color
+		return false
+	}
+	return vt.Has256Colors() || vt.HasTrueColor()
+}
 
 // TODO: Restructure how themes are stored, so that it's easier to list all themes that
 // works with a dark background or all that works with a light background, ref. initialLightBackground
@@ -39,6 +60,8 @@ type Theme struct {
 	AngleBracket                string
 	TextTag                     string
 	TextAttrName                string
+	CurlyBracket                string
+	IncludeSystem               string
 	RainbowParenColors          []vt.AttributeColor
 	HeaderBulletColor           vt.AttributeColor
 	MultiLineString             vt.AttributeColor
@@ -147,6 +170,8 @@ func NewDefaultTheme() Theme {
 		Whitespace:                  "",
 		AssemblyEnd:                 "cyan",
 		Mut:                         "darkyellow",
+		CurlyBracket:                "lightblue",
+		IncludeSystem:               "lightred",
 		RainbowParenColors:          []vt.AttributeColor{vt.LightMagenta, vt.LightRed, vt.Yellow, vt.LightYellow, vt.LightGreen, vt.LightBlue, vt.Red},
 		MarkdownTextColor:           vt.LightBlue,
 		HeaderBulletColor:           vt.DarkGray,
@@ -240,6 +265,8 @@ func NewOrbTheme() Theme {
 		Whitespace:                  "",
 		AssemblyEnd:                 "lightblue",
 		Mut:                         "lightgreen",
+		CurlyBracket:                "lightgray",
+		IncludeSystem:               "lightcyan",
 		RainbowParenColors:          []vt.AttributeColor{vt.LightRed, vt.LightCyan, vt.LightGreen, vt.LightYellow, vt.LightBlue, vt.Gray, vt.LightGray},
 		MarkdownTextColor:           vt.LightGray,
 		HeaderBulletColor:           vt.White,
@@ -333,6 +360,8 @@ func NewPinetreeTheme() Theme {
 		Whitespace:                  "",
 		AssemblyEnd:                 "cyan",
 		Mut:                         "darkyellow",
+		CurlyBracket:                "lightgray",
+		IncludeSystem:               "lightred",
 		RainbowParenColors:          []vt.AttributeColor{vt.LightMagenta, vt.LightRed, vt.Yellow, vt.LightYellow, vt.LightGreen, vt.LightBlue, vt.Red},
 		MarkdownTextColor:           vt.LightGray,
 		HeaderBulletColor:           vt.DarkGray,
@@ -426,6 +455,8 @@ func NewZuluTheme() Theme {
 		Whitespace:                  "",
 		AssemblyEnd:                 "lightcyan",
 		Mut:                         "lightgreen",
+		CurlyBracket:                "lightgray",
+		IncludeSystem:               "lightgreen",
 		RainbowParenColors:          []vt.AttributeColor{vt.LightYellow, vt.LightGreen, vt.LightCyan, vt.LightMagenta, vt.White},
 		MarkdownTextColor:           vt.LightGray,
 		HeaderBulletColor:           vt.Gray,
@@ -519,6 +550,8 @@ func NewLitmusTheme() Theme {
 		Whitespace:                  "",
 		AssemblyEnd:                 "magenta",
 		Mut:                         "yellow",
+		CurlyBracket:                "black",
+		IncludeSystem:               "lightred",
 		RainbowParenColors:          []vt.AttributeColor{vt.LightMagenta, vt.LightRed, vt.Yellow, vt.Green, vt.Blue, vt.LightBlue, vt.Red},
 		MarkdownTextColor:           vt.Black,
 		HeaderBulletColor:           vt.DarkGray,
@@ -612,6 +645,8 @@ func NewSynthwaveTheme() Theme {
 		Whitespace:                  "",
 		AssemblyEnd:                 "cyan",
 		Mut:                         "darkgray",
+		CurlyBracket:                "lightblue",
+		IncludeSystem:               "magenta",
 		RainbowParenColors:          []vt.AttributeColor{vt.LightRed, vt.LightMagenta, vt.Blue, vt.LightCyan, vt.LightBlue, vt.Magenta, vt.Cyan},
 		MarkdownTextColor:           vt.LightBlue,
 		HeaderBulletColor:           vt.DarkGray,
@@ -705,6 +740,8 @@ func NewTealTheme() Theme {
 		Whitespace:                  "",
 		AssemblyEnd:                 "white",
 		Mut:                         "white",
+		CurlyBracket:                "white",
+		IncludeSystem:               "white",
 		RainbowParenColors:          []vt.AttributeColor{vt.White, vt.LightCyan, vt.Gray, vt.LightBlue, vt.Blue},
 		MarkdownTextColor:           vt.White,
 		HeaderBulletColor:           vt.Gray,
@@ -799,6 +836,8 @@ func NewRedBlackTheme() Theme {
 		Whitespace:                  "",
 		AssemblyEnd:                 "darkred",
 		Mut:                         "lightgray",
+		CurlyBracket:                "darkred",
+		IncludeSystem:               "darkred",
 		RainbowParenColors:          []vt.AttributeColor{vt.LightGray, vt.White, vt.Red},
 		MarkdownTextColor:           vt.LightGray,
 		HeaderBulletColor:           vt.DarkGray,
@@ -893,6 +932,8 @@ func NewLightBlueEditTheme() Theme {
 		Whitespace:                  "",
 		AssemblyEnd:                 "lightcyan",
 		Mut:                         "lightyellow",
+		CurlyBracket:                "white",
+		IncludeSystem:               "lightcyan",
 		RainbowParenColors:          []vt.AttributeColor{vt.LightCyan, vt.LightYellow, vt.LightGreen, vt.White},
 		MarkdownTextColor:           vt.White,
 		HeaderBulletColor:           vt.LightGray,
@@ -987,6 +1028,8 @@ func NewDarkBlueEditTheme() Theme {
 		Whitespace:                  "",
 		AssemblyEnd:                 "white",
 		Mut:                         "lightyellow",
+		CurlyBracket:                "white",
+		IncludeSystem:               "lightyellow",
 		RainbowParenColors:          []vt.AttributeColor{vt.White, vt.LightYellow},
 		MarkdownTextColor:           vt.White,
 		HeaderBulletColor:           vt.LightRed,
@@ -1080,6 +1123,8 @@ func NewLightVSTheme() Theme {
 		Whitespace:                  "",
 		AssemblyEnd:                 "red",
 		Mut:                         "black",
+		CurlyBracket:                "black",
+		IncludeSystem:               "blue",
 		RainbowParenColors:          []vt.AttributeColor{vt.Magenta, vt.Black, vt.Blue, vt.Green},
 		MarkdownTextColor:           vt.Default,
 		HeaderBulletColor:           vt.DarkGray,
@@ -1173,6 +1218,8 @@ func NewDarkVSTheme() Theme {
 		Whitespace:                  "",
 		AssemblyEnd:                 "red",
 		Mut:                         "black",
+		CurlyBracket:                "black",
+		IncludeSystem:               "blue",
 		RainbowParenColors:          []vt.AttributeColor{vt.Magenta, vt.Black, vt.Blue, vt.Green},
 		MarkdownTextColor:           vt.Black,
 		HeaderBulletColor:           vt.DarkGray,
@@ -1317,6 +1364,8 @@ func NewNoColorDarkBackgroundTheme() Theme {
 		Whitespace:                  "",
 		AssemblyEnd:                 "",
 		Mut:                         "",
+		CurlyBracket:                "",
+		IncludeSystem:               "",
 		RainbowParenColors:          []vt.AttributeColor{vt.Gray},
 		MarkdownTextColor:           vt.Default,
 		HeaderBulletColor:           vt.Default,
@@ -1410,6 +1459,8 @@ func NewNoColorLightBackgroundTheme() Theme {
 		Whitespace:                  "",
 		AssemblyEnd:                 "",
 		Mut:                         "",
+		CurlyBracket:                "",
+		IncludeSystem:               "",
 		RainbowParenColors:          []vt.AttributeColor{vt.Gray},
 		MarkdownTextColor:           vt.Default,
 		HeaderBulletColor:           vt.Default,
@@ -1488,12 +1539,228 @@ func (t Theme) TextConfig() *TextConfig {
 		Whitespace:    t.Whitespace,
 		AssemblyEnd:   t.AssemblyEnd,
 		Mut:           t.Mut,
+		CurlyBracket:  t.CurlyBracket,
+		IncludeSystem: t.IncludeSystem,
 	}
 }
 
 func (e *Editor) makeLightAdjustments() {
 	if e.HighlightForeground == vt.White && e.Background != vt.BackgroundBlack && e.Light {
 		e.HighlightForeground = vt.Black
+	}
+}
+
+// registerXoria256Colors adds the Xoria256 palette entries to the vt color maps
+// and rebuilds the tag replacers so the custom color names are recognized.
+func registerXoria256Colors() {
+	vt.DarkColorMap["xcomment"] = vt.Color256(244)
+	vt.DarkColorMap["xstring"] = vt.Color256(229)
+	vt.DarkColorMap["xident"] = vt.Color256(182)
+	vt.DarkColorMap["xnumber"] = vt.Color256(180)
+	vt.DarkColorMap["xpreproc"] = vt.Color256(150)
+	vt.DarkColorMap["xkeyword"] = vt.Color256(110)
+	vt.DarkColorMap["xtype"] = vt.Color256(146)
+	vt.DarkColorMap["xplain"] = vt.Color256(252)
+	vt.DarkColorMap["xescape"] = vt.Color256(174)
+	vt.DarkColorMap["xpunct"] = vt.Color256(247)
+	vt.DarkColorMap["xincsys"] = vt.Color256(110) // same as keyword
+	vt.DarkColorMap["xcurly"] = vt.Color256(247)
+	vt.RebuildTagReplacers()
+	tout = vt.New()
+}
+
+// NewXoria256Theme creates the Xoria256 theme, ported from the Vim color scheme
+// by Dmitriy Y. Zotikov. Requires a terminal with 256-color or true-color support.
+func NewXoria256Theme() Theme {
+	return Theme{
+		Name:                  "Xoria256",
+		Light:                 false,
+		Foreground:            vt.Color256(252),
+		Background:            vt.Background256(234),
+		StatusForeground:      vt.Color256(231),
+		StatusBackground:      vt.Background256(239),
+		TopRightForeground:    vt.Color256(252),
+		TopRightBackground:    vt.Background256(234),
+		StatusErrorForeground: vt.Color256(231),
+		StatusErrorBackground: vt.Background256(160),
+		SearchHighlight:       vt.Color256(214),
+		MultiLineComment:      vt.Color256(244),
+		MultiLineString:       vt.Color256(229),
+		HighlightForeground:   vt.Color256(255),
+		HighlightBackground:   vt.BackgroundDefault,
+		Git:                   vt.Color256(150),
+		String:                "xstring",
+		Keyword:               "xkeyword",
+		Comment:               "xcomment",
+		Type:                  "xtype",
+		Literal:               "xstring",
+		Punctuation:           "xpunct",
+		Plaintext:             "xplain",
+		Tag:                   "xkeyword",
+		TextTag:               "xkeyword",
+		TextAttrName:          "xtype",
+		TextAttrValue:         "xstring",
+		Decimal:               "xnumber",
+		AndOr:                 "xpunct",
+		AngleBracket:          "xkeyword",
+		Dollar:                "xpreproc",
+		Star:                  "xplain",
+		Static:                "xkeyword",
+		Self:                  "xident",
+		Class:                 "xident",
+		Private:               "xescape",
+		Protected:             "xtype",
+		Public:                "xpreproc",
+		Whitespace:            "",
+		AssemblyEnd:           "xescape",
+		Mut:                   "xpreproc",
+		CurlyBracket:          "xcurly",
+		IncludeSystem:         "xincsys",
+		RainbowParenColors: []vt.AttributeColor{
+			vt.Color256(110), vt.Color256(150), vt.Color256(174),
+			vt.Color256(229), vt.Color256(182), vt.Color256(146), vt.Color256(180),
+		},
+		MarkdownTextColor:           vt.Color256(252),
+		HeaderBulletColor:           vt.Color256(244),
+		HeaderTextColor:             vt.Color256(229),
+		ListBulletColor:             vt.Color256(174),
+		ListTextColor:               vt.Color256(252),
+		ListCodeColor:               vt.Color256(150),
+		CodeColor:                   vt.Color256(150),
+		CodeBlockColor:              vt.Color256(150),
+		ImageColor:                  vt.Color256(229),
+		LinkColor:                   vt.Color256(110),
+		QuoteColor:                  vt.Color256(229),
+		QuoteTextColor:              vt.Color256(252),
+		HTMLColor:                   vt.Color256(110),
+		CommentColor:                vt.Color256(244),
+		BoldColor:                   vt.Color256(229),
+		ItalicsColor:                vt.Color256(252),
+		StrikeColor:                 vt.Color256(244),
+		TableColor:                  vt.Color256(110),
+		CheckboxColor:               vt.Color256(150),
+		XColor:                      vt.Color256(229),
+		TableBackground:             vt.Background256(234),
+		UnmatchedParenColor:         vt.Color256(231),
+		MenuTitleColor:              vt.Color256(229),
+		MenuArrowColor:              vt.Color256(174),
+		MenuTextColor:               vt.Color256(250),
+		MenuHighlightColor:          vt.Color256(110),
+		MenuSelectedColor:           vt.Color256(255),
+		ManSectionColor:             vt.Color256(174),
+		ManSynopsisColor:            vt.Color256(229),
+		BoxTextColor:                vt.Color256(16),
+		BoxBackground:               vt.Background256(250),
+		ProgressIndicatorBackground: vt.Background256(136),
+		BoxHighlight:                vt.Color256(229),
+		DebugRunningBackground:      vt.Background256(150),
+		DebugStoppedBackground:      vt.Background256(174),
+		DebugRegistersBackground:    vt.Background256(110),
+		DebugOutputBackground:       vt.Background256(229),
+		DebugLineIndicator:          vt.Color256(150),
+		DebugInstructionsForeground: vt.Color256(229),
+		DebugInstructionsBackground: vt.Background256(174),
+		BoxUpperEdge:                vt.Color256(252),
+		JumpToLetterColor:           vt.Color256(214),
+		NanoHelpForeground:          vt.Color256(16),
+		NanoHelpBackground:          vt.Background256(250),
+		MultiCursorBackground:       vt.Background256(96),
+	}
+}
+
+// NewXoria16Theme creates a 16-color approximation of the Xoria256 theme,
+// for terminals that do not support 256 colors.
+func NewXoria16Theme() Theme {
+	return Theme{
+		Name:                        "Xoria",
+		Light:                       false,
+		Foreground:                  vt.White,
+		Background:                  vt.BackgroundBlack,
+		StatusForeground:            vt.White,
+		StatusBackground:            vt.BackgroundDefault,
+		TopRightForeground:          vt.White,
+		TopRightBackground:          vt.BackgroundBlack,
+		StatusErrorForeground:       vt.White,
+		StatusErrorBackground:       vt.BackgroundRed,
+		SearchHighlight:             vt.Yellow,
+		MultiLineComment:            vt.Gray,
+		MultiLineString:             vt.LightYellow,
+		HighlightForeground:         vt.White,
+		HighlightBackground:         vt.BackgroundDefault,
+		Git:                         vt.LightGreen,
+		String:                      "lightyellow",
+		Keyword:                     "lightblue",
+		Comment:                     "gray",
+		Type:                        "white",
+		Literal:                     "lightyellow",
+		Punctuation:                 "lightgray",
+		Plaintext:                   "white",
+		Tag:                         "lightblue",
+		TextTag:                     "lightblue",
+		TextAttrName:                "white",
+		TextAttrValue:               "lightyellow",
+		Decimal:                     "darkyellow",
+		AndOr:                       "lightgray",
+		AngleBracket:                "lightblue",
+		Dollar:                      "lightgreen",
+		Star:                        "white",
+		Static:                      "lightblue",
+		Self:                        "white",
+		Class:                       "white",
+		Private:                     "lightred",
+		Protected:                   "white",
+		Public:                      "lightgreen",
+		Whitespace:                  "",
+		AssemblyEnd:                 "lightred",
+		Mut:                         "lightgreen",
+		CurlyBracket:                "lightgray",
+		IncludeSystem:               "lightblue",
+		RainbowParenColors:          []vt.AttributeColor{vt.LightBlue, vt.LightGreen, vt.LightRed, vt.LightYellow, vt.White, vt.LightCyan, vt.Yellow},
+		MarkdownTextColor:           vt.White,
+		HeaderBulletColor:           vt.Gray,
+		HeaderTextColor:             vt.LightYellow,
+		ListBulletColor:             vt.LightRed,
+		ListTextColor:               vt.White,
+		ListCodeColor:               vt.LightGreen,
+		CodeColor:                   vt.LightGreen,
+		CodeBlockColor:              vt.LightGreen,
+		ImageColor:                  vt.LightYellow,
+		LinkColor:                   vt.LightBlue,
+		QuoteColor:                  vt.LightYellow,
+		QuoteTextColor:              vt.White,
+		HTMLColor:                   vt.LightBlue,
+		CommentColor:                vt.Gray,
+		BoldColor:                   vt.LightYellow,
+		ItalicsColor:                vt.White,
+		StrikeColor:                 vt.Gray,
+		TableColor:                  vt.LightBlue,
+		CheckboxColor:               vt.LightGreen,
+		XColor:                      vt.LightYellow,
+		TableBackground:             vt.BackgroundBlack,
+		UnmatchedParenColor:         vt.White,
+		MenuTitleColor:              vt.LightYellow,
+		MenuArrowColor:              vt.LightRed,
+		MenuTextColor:               vt.Gray,
+		MenuHighlightColor:          vt.LightBlue,
+		MenuSelectedColor:           vt.White,
+		ManSectionColor:             vt.LightRed,
+		ManSynopsisColor:            vt.LightYellow,
+		BoxTextColor:                vt.Black,
+		BoxBackground:               vt.BackgroundBlue,
+		ProgressIndicatorBackground: vt.BackgroundYellow,
+		BoxHighlight:                vt.LightYellow,
+		DebugRunningBackground:      vt.BackgroundGreen,
+		DebugStoppedBackground:      vt.BackgroundMagenta,
+		DebugRegistersBackground:    vt.BackgroundBlue,
+		DebugOutputBackground:       vt.BackgroundYellow,
+		DebugLineIndicator:          vt.LightGreen,
+		DebugInstructionsForeground: vt.LightYellow,
+		DebugInstructionsBackground: vt.BackgroundMagenta,
+		BoxUpperEdge:                vt.White,
+		JumpToLetterColor:           vt.Yellow,
+		NanoHelpForeground:          vt.Black,
+		NanoHelpBackground:          vt.BackgroundGray,
+		MultiCursorBackground:       vt.BackgroundYellow,
 	}
 }
 
