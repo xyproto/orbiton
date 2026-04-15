@@ -3,18 +3,16 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"regexp"
 	"strings"
 	"sync"
-	"text/scanner"
 	"unicode"
 	"unicode/utf8"
 
 	"github.com/mattn/go-runewidth"
-	"github.com/sourcegraph/annotate"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/mode"
+	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt"
 )
 
@@ -39,74 +37,45 @@ var (
 	}()
 )
 
-// Kind represents a syntax highlighting kind (class) which will be assigned to tokens.
-// A syntax highlighting scheme (style) maps text style properties to each token kind.
-type Kind uint8
+// Kind is a type alias for syntax.Kind.
+type Kind = syntax.Kind
 
-// Supported highlighting kinds.
+// TextConfig is a type alias for syntax.TextConfig.
+type TextConfig = syntax.TextConfig
+
+// Option is a type alias for syntax.Option.
+type Option = syntax.Option
+
+// Supported highlighting kinds (aliases for syntax constants).
 const (
-	Whitespace Kind = iota
-	AndOr
-	AngleBracket
-	AssemblyEnd
-	Class
-	Comment
-	Decimal
-	Dollar
-	Literal
-	Keyword
-	Mut
-	Plaintext
-	Private
-	Protected
-	Public
-	Punctuation
-	Self
-	Star
-	Static
-	String
-	Tag
-	TextAttrName
-	TextAttrValue
-	TextTag
-	Type
-	CurlyBracket
-	IncludeSystem
+	Whitespace    = syntax.Whitespace
+	AndOr         = syntax.AndOr
+	AngleBracket  = syntax.AngleBracket
+	AssemblyEnd   = syntax.AssemblyEnd
+	Class         = syntax.Class
+	Comment       = syntax.Comment
+	Decimal       = syntax.Decimal
+	Dollar        = syntax.Dollar
+	Literal       = syntax.Literal
+	Keyword       = syntax.Keyword
+	Mut           = syntax.Mut
+	Plaintext     = syntax.Plaintext
+	Private       = syntax.Private
+	Protected     = syntax.Protected
+	Public        = syntax.Public
+	Punctuation   = syntax.Punctuation
+	Self          = syntax.Self
+	Star          = syntax.Star
+	Static        = syntax.Static
+	String        = syntax.String
+	Tag           = syntax.Tag
+	TextAttrName  = syntax.TextAttrName
+	TextAttrValue = syntax.TextAttrValue
+	TextTag       = syntax.TextTag
+	Type          = syntax.Type
+	CurlyBracket  = syntax.CurlyBracket
+	IncludeSystem = syntax.IncludeSystem
 )
-
-// TextConfig holds the Text class configuration to be used by annotators when highlighting code.
-type TextConfig struct {
-	AndOr         string
-	AngleBracket  string
-	AssemblyEnd   string
-	Class         string
-	Comment       string
-	CurlyBracket  string
-	Decimal       string
-	Dollar        string
-	IncludeSystem string
-	Keyword       string
-	Literal       string
-	Mut           string
-	Plaintext     string
-	Private       string
-	Protected     string
-	Public        string
-	Punctuation   string
-	Self          string
-	Star          string
-	Static        string
-	String        string
-	Tag           string
-	TextAttrName  string
-	TextAttrValue string
-	TextTag       string
-	Type          string
-	Whitespace    string
-}
-
-// Option is a function that can modify TextConfig.
-type Option func(*TextConfig)
 
 var (
 	colorTagRegex = regexp.MustCompile(`<([a-nA-Np-zP-Z]\w+)>`) // not starting with "o"
@@ -115,197 +84,8 @@ var (
 	noGUI         = !env.Has("DISPLAY") && !env.Has("WAYLAND_DISPLAY") // no X, no Wayland
 )
 
-// DefaultTextConfig provides class names matching the color names of textoutput tags.
-var DefaultTextConfig = TextConfig{
-	AndOr:         "red",
-	AngleBracket:  "red",
-	AssemblyEnd:   "lightyellow",
-	Class:         "white",
-	Comment:       "darkgray",
-	CurlyBracket:  "red",
-	Decimal:       "red",
-	Dollar:        "white",
-	IncludeSystem: "red",
-	Keyword:       "red",
-	Literal:       "white",
-	Mut:           "magenta",
-	Plaintext:     "white",
-	Private:       "red",
-	Protected:     "red",
-	Public:        "red",
-	Punctuation:   "red",
-	Self:          "magenta",
-	Star:          "white",
-	Static:        "lightyellow",
-	String:        "lightwhite",
-	Tag:           "white",
-	TextAttrName:  "white",
-	TextAttrValue: "white",
-	TextTag:       "white",
-	Type:          "white",
-	Whitespace:    "",
-}
-
-// GetClass returns the CSS class for a given token kind.
-func (c TextConfig) GetClass(kind Kind) string {
-	switch kind {
-	case String:
-		return c.String
-	case Keyword:
-		return c.Keyword
-	case Comment:
-		return c.Comment
-	case Type:
-		return c.Type
-	case Literal:
-		return c.Literal
-	case Punctuation:
-		return c.Punctuation
-	case Plaintext:
-		return c.Plaintext
-	case Tag:
-		return c.Tag
-	case TextTag:
-		return c.TextTag
-	case TextAttrName:
-		return c.TextAttrName
-	case TextAttrValue:
-		return c.TextAttrValue
-	case Decimal:
-		return c.Decimal
-	case AndOr:
-		return c.AndOr
-	case AngleBracket:
-		return c.AngleBracket
-	case Dollar:
-		return c.Dollar
-	case Star:
-		return c.Star
-	case Static:
-		return c.Static
-	case Self:
-		return c.Self
-	case Class:
-		return c.Class
-	case Public:
-		return c.Public
-	case Private:
-		return c.Private
-	case Protected:
-		return c.Protected
-	case AssemblyEnd:
-		return c.AssemblyEnd
-	case Mut:
-		return c.Mut
-	case CurlyBracket:
-		return c.CurlyBracket
-	case IncludeSystem:
-		return c.IncludeSystem
-	}
-	return ""
-}
-
-// Printer renders highlighted output.
-type Printer interface {
-	Print(w io.Writer, kind Kind, tokText string) error
-}
-
-// TextPrinter wraps TextConfig to implement Printer.
-type TextPrinter TextConfig
-
-// Print writes token text with start/end tags based on its kind.
-func (p TextPrinter) Print(w io.Writer, kind Kind, tokText string) error {
-	class := TextConfig(p).GetClass(kind)
-	if class != "" {
-		if _, err := io.WriteString(w, "<"+class+">"); err != nil {
-			return err
-		}
-	}
-	if _, err := io.WriteString(w, tokText); err != nil {
-		return err
-	}
-	if class != "" {
-		if _, err := io.WriteString(w, "<off>"); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// Annotator produces syntax highlighting annotations.
-type Annotator interface {
-	Annotate(start int, kind Kind, tokText string) (*annotate.Annotation, error)
-}
-
-// TextAnnotator wraps TextConfig to implement Annotator.
-type TextAnnotator TextConfig
-
-// Print scans tokens from s, using Printer p for mode m.
-func Print(s *scanner.Scanner, w io.Writer, p Printer, m mode.Mode) error {
-	switch m {
-	case mode.C3:
-		s.IsIdentRune = func(ch rune, i int) bool {
-			return ch == '$' || ch == '@' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
-		}
-	case mode.Clojure, mode.Lisp:
-		s.IsIdentRune = func(ch rune, i int) bool {
-			return ch == '*' || ch == '-' || ch == '+' || ch == '/' || ch == '?' || ch == '!' || ch == '.' || ch == ':' || ch == '&' || ch == '<' || ch == '>' || ch == '=' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
-		}
-	case mode.Shell, mode.Make, mode.Just:
-		s.IsIdentRune = func(ch rune, i int) bool {
-			return ch == '-' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
-		}
-	case mode.Spec:
-		s.IsIdentRune = func(ch rune, i int) bool {
-			return ch == '%' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
-		}
-	case mode.Swift:
-		s.IsIdentRune = func(ch rune, i int) bool {
-			return ch == '#' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
-		}
-	case mode.Vibe67:
-		s.IsIdentRune = func(ch rune, i int) bool {
-			return ch == '&' || ch == '<' || ch == '>' || ch == '^' || ch == '|' || ch == '~' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
-		}
-	}
-	inComment := false
-	inInclude := false
-	for tok := s.Scan(); tok != scanner.EOF; tok = s.Scan() {
-		tokText := s.TokenText()
-		if err := p.Print(w, tokenKind(tok, tokText, &inComment, &inInclude, m), tokText); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// AsText returns src highlighted for mode m, applying options to TextConfig.
-func AsText(src []byte, m mode.Mode, options ...Option) ([]byte, error) {
-	cfg := DefaultTextConfig
-	for _, opt := range options {
-		opt(&cfg)
-	}
-	var buf bytes.Buffer
-	if err := Print(NewScanner(src), &buf, TextPrinter(cfg), m); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-// NewScanner returns a scanner.Scanner configured for syntax highlighting.
-func NewScanner(src []byte) *scanner.Scanner {
-	return NewScannerReader(bytes.NewReader(src))
-}
-
-// NewScannerReader returns a scanner.Scanner configured for syntax highlighting from r.
-func NewScannerReader(r io.Reader) *scanner.Scanner {
-	var s scanner.Scanner
-	s.Init(r)
-	s.Error = func(*scanner.Scanner, string) {}
-	s.Whitespace = 0
-	s.Mode ^= scanner.SkipComments
-	return &s
-}
+// AsText delegates to syntax.AsText, using the current syntax.DefaultTextConfig.
+var AsText = syntax.AsText
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uint, shouldHighlightNow, hideCursorWhenDrawing bool) {
@@ -1015,12 +795,12 @@ func (e *Editor) arrowColorNames() (string, string) {
 	if e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC || e.mode == mode.Shader {
 		return e.cArrowColorNames()
 	}
-	return e.Star, DefaultTextConfig.Protected
+	return e.Star, syntax.DefaultTextConfig.Protected
 }
 
 func (e *Editor) cArrowColorNames() (string, string) {
-	arrowColor := DefaultTextConfig.Class
-	fieldColor := DefaultTextConfig.Protected
+	arrowColor := syntax.DefaultTextConfig.Class
+	fieldColor := syntax.DefaultTextConfig.Protected
 	if e.Name == "Zulu" {
 		arrowColor = "yellow"
 		fieldColor = "cyan" // lightcyan

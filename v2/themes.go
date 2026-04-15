@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/xyproto/env/v2"
+	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt"
 )
 
@@ -1798,7 +1799,7 @@ func (e *Editor) SetTheme(theme Theme, bs ...bool) {
 	}
 	e.Theme = theme
 	e.statusMode = theme.StatusMode
-	DefaultTextConfig = *(theme.TextConfig())
+	syntax.DefaultTextConfig = *(theme.TextConfig())
 	if initialLightBackground != nil && *initialLightBackground { // light
 		e.makeLightAdjustments()
 	}
@@ -1812,7 +1813,7 @@ func (e *Editor) setNoColorTheme() {
 		e.Theme = NewNoColorDarkBackgroundTheme()
 	}
 	e.statusMode = e.StatusMode
-	DefaultTextConfig = *(e.TextConfig())
+	syntax.DefaultTextConfig = *(e.TextConfig())
 	if initialLightBackground != nil && *initialLightBackground { // light
 		e.makeLightAdjustments()
 	}

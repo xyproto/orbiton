@@ -2,165 +2,38 @@ package main
 
 import (
 	"strings"
-	"text/scanner"
-	"unicode"
-	"unicode/utf8"
 
 	"github.com/xyproto/mode"
+	"github.com/xyproto/syntax"
 )
 
-// tokenKind determines the Kind of a token for syntax highlighting.
-func tokenKind(tok rune, tokText string, inComment *bool, inInclude *bool, m mode.Mode) Kind {
-	// Detect single-line comment start/end.
-	if (m == mode.Assembly && tok == ';') ||
-		(m != mode.Assembly && m != mode.GoAssembly && m != mode.Clojure && m != mode.Lisp && m != mode.C && m != mode.Cpp && m != mode.Lua && tok == '#') ||
-		((m == mode.ABC || m == mode.Lilypond || m == mode.Perl || m == mode.Prolog) && tok == '%') {
-		*inComment = true
-	} else if tok == '\n' {
-		*inComment = false
-		*inInclude = false
-	}
-
-	// C-style preprocessor directives.
-	if (m == mode.C || m == mode.Cpp) && (tokText == "include" || tokText == "define" || tokText == "ifdef" || tokText == "ifndef" || tokText == "endif" || tokText == "else" || tokText == "elif") {
-		*inComment = false
-		if tokText == "include" {
-			*inInclude = true
-		}
-		return Keyword
-	}
-
-	// If we are inside a #include <...> directive, color tokens as IncludeSystem
-	if *inInclude && (m == mode.C || m == mode.Cpp) {
-		if tok == scanner.Char || tok == scanner.String || tok == scanner.RawString {
-			// #include "..." gets String color (local include)
-			*inInclude = false
-			return String
-		}
-		if unicode.IsSpace(tok) {
-			return Whitespace
-		}
-		if tok == '>' {
-			*inInclude = false
-		}
-		return IncludeSystem
-	}
-
-	if *inComment {
-		return Comment
-	}
-
-	// Rust-specific cases.
-	if m == mode.Rust {
-		switch tokText {
-		case "as":
-			return Type
-		case "mut":
-			return Mut
-		}
-	}
-
-	// Python-specific self.
-	if m == mode.Python && tokText == "self" {
-		return Self
-	}
-
-	switch tok {
-	case scanner.Ident:
-		if _, ok := Keywords[tokText]; ok {
-			return Keyword
-		}
-		switch tokText {
-		case "private":
-			return Private
-		case "public":
-			return Public
-		case "protected":
-			return Protected
-		case "class":
-			return Class
-		case "static":
-			return Static
-		case "JMP", "jmp", "LEAVE", "leave", "RET", "ret", "CALL", "call":
-			if m == mode.Assembly || m == mode.GoAssembly {
-				return AssemblyEnd
-			}
-		}
-		if r, _ := utf8.DecodeRuneInString(tokText); unicode.IsUpper(r) {
-			return Type
-		}
-		return Plaintext
-
-	case scanner.Float, scanner.Int:
-		return Decimal
-	case scanner.Char, scanner.String, scanner.RawString:
-		return String
-	case scanner.Comment:
-		// In Nix, // is the attribute set update operator, not a comment
-		if m == mode.Nix && strings.HasPrefix(tokText, "//") {
-			return AndOr
-		}
-		return Comment
-	}
-
-	if tok == '&' || tok == '|' {
-		return AndOr
-	} else if tok == '*' {
-		return Star
-	} else if tok == '$' {
-		return Dollar
-	} else if tok == '<' || tok == '>' {
-		return AngleBracket
-	} else if tok == '{' || tok == '}' {
-		return CurlyBracket
-	}
-
-	if unicode.IsSpace(tok) {
-		return Whitespace
-	}
-
-	return Punctuation
-}
+// Keywords is a reference to the syntax package's global keyword map.
+var Keywords = syntax.Keywords
 
 func clearKeywords() {
-	Keywords = make(map[string]struct{})
+	syntax.ClearKeywords()
+	Keywords = syntax.Keywords
 }
 
-func addKeywords(addKeywords []string) {
-	// Add the keywords that are to be syntax highlighted
-	for _, kw := range addKeywords {
-		Keywords[kw] = struct{}{}
-	}
+func addKeywords(kws []string) {
+	syntax.AddKeywords(kws)
 }
 
 func addKeywordsAsUppercase(xs []string) {
-	uppercase := []string{}
-	for _, word := range xs {
-		uppercase = append(uppercase, strings.ToUpper(word))
-	}
-	addKeywords(uppercase)
+	syntax.AddKeywordsAsUppercase(xs)
 }
 
-func removeKeywords(delKeywords []string) {
-	// Remove keywords that should not be syntax highlighted
-	for _, kw := range delKeywords {
-		delete(Keywords, kw)
-	}
+func removeKeywords(kws []string) {
+	syntax.RemoveKeywords(kws)
 }
 
 func addAndRemoveKeywords(addAndDelKeywords ...[]string) {
-	l := len(addAndDelKeywords)
-	if l > 0 {
-		addKeywords(addAndDelKeywords[0])
-	}
-	if l > 1 {
-		removeKeywords(addAndDelKeywords[1])
-	}
+	syntax.AddAndRemoveKeywords(addAndDelKeywords...)
 }
 
 func setKeywords(addAndDelKeywords ...[]string) {
-	clearKeywords()
-	addAndRemoveKeywords(addAndDelKeywords...)
+	syntax.SetKeywords(addAndDelKeywords...)
+	Keywords = syntax.Keywords
 }
 
 // adjustSyntaxHighlightingKeywords contains per-language adjustments to highlighting of keywords
