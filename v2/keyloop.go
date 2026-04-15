@@ -1378,6 +1378,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.blockMode = false
 			e.blockCursors = nil
 			e.ClearSelection()
+			e.showTypoHighlights = false
 			c.ShowCursor()
 			// If o is used as a man page viewer, or if the escToExit flag is set, exit at the press of esc
 			if escToExit || e.mode == mode.ManPage {

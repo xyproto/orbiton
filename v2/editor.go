@@ -85,6 +85,7 @@ type Editor struct {
 	primaryClipboard            bool        // use the primary or the secondary clipboard on UNIX?
 	jumpToLetterMode            bool        // jump directly to a highlighted letter
 	spellCheckMode              bool        // spell check mode?
+	showTypoHighlights          bool        // show typo highlights in comments?
 	createDirectoriesIfMissing  bool        // when saving a file, should directories be created if they are missing?
 	displayQuickHelp            bool        // display the quick help box?
 	noDisplayQuickHelp          bool        // prevent the quick help box from being displayed?
@@ -153,6 +154,7 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.primaryClipboard = e.primaryClipboard
 	e2.jumpToLetterMode = e.jumpToLetterMode
 	e2.spellCheckMode = e.spellCheckMode
+	e2.showTypoHighlights = e.showTypoHighlights
 	e2.createDirectoriesIfMissing = e.createDirectoriesIfMissing
 	e2.displayQuickHelp = e.displayQuickHelp
 	e2.blockMode = e.blockMode

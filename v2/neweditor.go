@@ -109,6 +109,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		cycleFilenames)
 
 	e.highlightCurrentText = !envNoColor
+	e.showTypoHighlights = false
 
 	if readOnly || fnord.stdin || monitorAndReadOnly {
 		e.readOnly = true

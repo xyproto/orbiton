@@ -7,6 +7,8 @@ import (
 // InsertRune will insert a rune at the current data position, with word wrap
 // Returns true if the line was wrapped
 func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
+	// Re-enable typo highlights when the user starts typing
+	e.showTypoHighlights = true
 	// Insert a regular space instead of a non-breaking space.
 	// Nobody likes non-breaking spaces.
 	switch r {

@@ -809,7 +809,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 				}
 
 				e.applyAccentHighlights(line, runesAndAttributes)
-				if highlightCurrentLine {
+				if e.showTypoHighlights {
 					e.applyTypoHighlights(line, singleLineCommentMarker, runesAndAttributes)
 				}
 
