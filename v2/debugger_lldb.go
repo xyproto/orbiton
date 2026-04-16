@@ -24,16 +24,17 @@ var _ Debugger = (*lldbDebugger)(nil)
 // It is used on macOS where GDB does not support native arm64 debugging.
 type lldbDebugger struct {
 	cmd      *exec.Cmd
-	ptyFile  *os.File   // PTY master (read/write to LLDB)
-	mu       sync.Mutex // guards PTY writes and response reads
+	ptyFile  *os.File // PTY master (read/write to LLDB)
 	watchMap map[string]string
-	output   bytes.Buffer // program stdout
-	console  strings.Builder
 	prevRegs map[string]string // previous register values for change detection
 
+	lineFunc func(int)
+	doneFunc func()
+
 	lastWatch string
-	lineFunc  func(int)
-	doneFunc  func()
+	console   strings.Builder
+	output    bytes.Buffer // program stdout
+	mu        sync.Mutex   // guards PTY writes and response reads
 	running   bool
 	stepInto  bool
 }

@@ -35,6 +35,8 @@ type Editor struct {
 	lines              map[int][]rune    // the contents of the current document
 	macro              *Macro            // the contents of the current macro (will be cleared when esc is pressed)
 	debugWatches       map[string]string // watches preserved across debug sessions
+	blockCursors       map[int]int       // per-line cursor X positions for block editing (line Y -> X)
+	selection          *Selection        // active text selection, nil if none
 	filename           string            // the current filename
 	searchTerm         string            // the current search term, used when searching
 	stickySearchTerm   string            // used when going to the next match with ctrl-n, unless esc has been pressed
@@ -90,8 +92,6 @@ type Editor struct {
 	displayQuickHelp            bool        // display the quick help box?
 	noDisplayQuickHelp          bool        // prevent the quick help box from being displayed?
 	blockMode                   bool        // toggle if typing should affect the current line or the current block
-	blockCursors                map[int]int // per-line cursor X positions for block editing (line Y -> X)
-	selection                   *Selection  // active text selection, nil if none
 	dirMode                     bool        // browse a directory and also interact with git
 	highlightCurrentLine        bool        // highlight the current line
 	highlightCurrentText        bool        // highlight the current text (not the entire line)
