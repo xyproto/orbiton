@@ -249,7 +249,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	}
 
 	//if e.bookmark != nil {
-		//actions.AddCommand(e, c, tty, status, undo, "Copy text from the bookmark to the cursor", "copymark")
+	//actions.AddCommand(e, c, tty, status, undo, "Copy text from the bookmark to the cursor", "copymark")
 	//}
 
 	if e.debugMode && e.debugger != nil {
