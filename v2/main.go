@@ -16,7 +16,6 @@ import (
 	"github.com/xyproto/digraph"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
-	"github.com/xyproto/globi"
 	"github.com/xyproto/megafile"
 	"github.com/xyproto/vt"
 )
@@ -448,58 +447,7 @@ func main() {
 		// Check if the given filename is not a file, symlink or directory
 		if !noApproxMatchFlag {
 			if !files.IsFileOrSymlink(fnord.filename) && !files.IsDir(fnord.filename) {
-				if strings.HasSuffix(fnord.filename, ".") {
-					// If the filename ends with "." and the file does not exist, assume this was a result of tab-completion going wrong.
-					// If there are multiple files that exist that start with the given filename, open the one first in the alphabet (.cpp before .o)
-					matches, err := globi.Glob(fnord.filename + "*")
-					if err == nil && len(matches) > 0 { // no error and at least 1 match
-						// Filter out any binary files
-						matches = files.FilterOutBinaryFilesAccurate(matches)
-						if len(matches) > 0 {
-							sort.Strings(matches)
-							// If the matches contains low priority suffixes, such as ".lock", then move it last
-							matchesRegular := make([]string, 0, len(matches))
-							matchesLowPri := make([]string, 0, len(matches))
-							for _, fn := range matches {
-								if !hasSuffix(fn, probablyDoesNotWantToEditExtensions) && strings.Contains(fn, ".") {
-									matchesRegular = append(matchesRegular, fn)
-								} else {
-									// Store as a low-priority match
-									matchesLowPri = append(matchesLowPri, fn)
-								}
-							}
-							// Combine the regular and the low-priority matches
-							matches = append(matchesRegular, matchesLowPri...)
-							if len(matches) > 0 && len(matches[0]) > 0 {
-								// Use the first filename in the list of matches
-								fnord.filename = matches[0]
-							}
-						}
-					}
-				} else if !strings.Contains(fnord.filename, ".") && allLower(fnord.filename) {
-					// The filename has no ".", is written in lowercase and it does not exist,
-					// but more than one file that starts with the filename  exists. Assume tab-completion failed.
-					matches, err := globi.Glob(fnord.filename + "*")
-					if err == nil && len(matches) > 1 { // no error and more than 1 match
-						// Use the first non-binary match of the sorted results
-						matches = files.FilterOutBinaryFilesAccurate(matches)
-						if len(matches) > 0 {
-							sort.Strings(matches)
-							fnord.filename = matches[0]
-						}
-					}
-				} else {
-					// Also match ie. "PKGBUILD" if just "Pk" was entered
-					matches, err := globi.Glob(strings.ToTitle(fnord.filename) + "*")
-					if err == nil && len(matches) >= 1 { // no error and at least 1 match
-						// Use the first non-binary match of the sorted results
-						matches = files.FilterOutBinaryFilesAccurate(matches)
-						if len(matches) > 0 {
-							sort.Strings(matches)
-							fnord.filename = matches[0]
-						}
-					}
-				}
+				fnord.filename = approximateFilename(fnord.filename)
 			} // !noApproxMatchFlag
 		}
 	}
