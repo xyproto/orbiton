@@ -2,6 +2,8 @@ package main
 
 import (
 	"errors"
+
+	"github.com/mattn/go-runewidth"
 	"github.com/xyproto/vt"
 )
 
@@ -131,4 +133,73 @@ func (e *Editor) rainbowParen(parCount, braCount *int, chars *[]vt.CharAttribute
 		(*chars)[i] = char
 	}
 	return
+}
+
+// rawToDisplayCol converts a raw rune index in a line to its display column,
+// accounting for tab expansion and wide characters.
+func rawToDisplayCol(runes []rune, rawIdx int, tabWidth int) int {
+	col := 0
+	for i := 0; i < rawIdx && i < len(runes); i++ {
+		if runes[i] == '\t' {
+			col += tabWidth
+		} else {
+			col += runewidth.RuneWidth(runes[i])
+		}
+	}
+	return col
+}
+
+// findMatchingCurly finds the matching { or } for the rune at (dataY, dataX).
+// Returns the matching line index, raw rune index and true on success, or 0, 0, false if not found.
+func (e *Editor) findMatchingCurly(dataY LineIndex, dataX int) (LineIndex, int, bool) {
+	ch := e.Get(dataX, dataY)
+	switch ch {
+	case '{':
+		depth := 0
+		for lineIdx := dataY; ; lineIdx++ {
+			runes, ok := e.lines[int(lineIdx)]
+			if !ok {
+				break
+			}
+			startCol := 0
+			if lineIdx == dataY {
+				startCol = dataX
+			}
+			for col := startCol; col < len(runes); col++ {
+				switch runes[col] {
+				case '{':
+					depth++
+				case '}':
+					depth--
+					if depth == 0 {
+						return lineIdx, col, true
+					}
+				}
+			}
+		}
+	case '}':
+		depth := 0
+		for lineIdx := dataY; lineIdx >= 0; lineIdx-- {
+			runes, ok := e.lines[int(lineIdx)]
+			if !ok {
+				continue
+			}
+			endCol := len(runes) - 1
+			if lineIdx == dataY {
+				endCol = dataX
+			}
+			for col := endCol; col >= 0; col-- {
+				switch runes[col] {
+				case '}':
+					depth++
+				case '{':
+					depth--
+					if depth == 0 {
+						return lineIdx, col, true
+					}
+				}
+			}
+		}
+	}
+	return 0, 0, false
 }

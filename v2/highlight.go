@@ -260,6 +260,30 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 	// buffer for extracting char attributes from strings with terminal codes (will be expanded if it's too small)
 	cc := make([]vt.CharAttribute, 256)
 
+	// Find the matching { or } for the cursor position, if any
+	var (
+		hasCurlyMatch          bool
+		cursorDataYForCurly    LineIndex
+		cursorDisplayXForCurly int
+		matchCurlyDataY        LineIndex
+		matchCurlyDisplayX     int
+		matchingCurlyColor     vt.AttributeColor
+	)
+	if shouldHighlightNow && len(e.RainbowParenColors) > 0 {
+		matchingCurlyColor = e.RainbowParenColors[len(e.RainbowParenColors)-1]
+		if cursorDataX, err := e.DataX(); err == nil {
+			cursorDataYForCurly = e.DataY()
+			if mDataY, mDataX, ok := e.findMatchingCurly(cursorDataYForCurly, cursorDataX); ok {
+				hasCurlyMatch = true
+				matchCurlyDataY = mDataY
+				matchCurlyDisplayX = rawToDisplayCol(e.lines[int(mDataY)], mDataX, e.indentation.PerTab)
+				e.pos.mut.RLock()
+				cursorDisplayXForCurly = e.pos.sx + e.pos.offsetX
+				e.pos.mut.RUnlock()
+			}
+		}
+	}
+
 	// Loop from 0 to numlines (used as y+offset in the loop) to draw the text
 	for y = LineIndex(0); y < LineIndex(numLinesToDraw); y++ {
 
@@ -674,6 +698,13 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						}
 					}
 
+					// Matching curly brace at the cursor position takes priority over other fg colors
+					if hasCurlyMatch &&
+						((LineIndex(y+offsetY) == cursorDataYForCurly && runeIndex == cursorDisplayXForCurly) ||
+							(LineIndex(y+offsetY) == matchCurlyDataY && runeIndex == matchCurlyDisplayX)) {
+						fg = matchingCurlyColor
+					}
+
 					if ra.R != '\t' {
 						letter = ra.R
 						rw = runewidth.RuneWidth(letter)
@@ -687,11 +718,16 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						tx = cx + lineRuneCount
 						ty = cy + uint(y)
 						if tx < cw {
+							// Rainbow paren colors and matching curly brace colors take priority over the current-line highlight
+							isRainbowParen := e.rainbowParenthesis && (letter == '(' || letter == ')' || letter == '[' || letter == ']')
+							isMatchingCurly := hasCurlyMatch &&
+								((LineIndex(y+offsetY) == cursorDataYForCurly && runeIndex == cursorDisplayXForCurly) ||
+									(LineIndex(y+offsetY) == matchCurlyDataY && runeIndex == matchCurlyDisplayX))
 							if rw == 2 && tx+1 < cw {
 								// Wide character (CJK etc): use the wide-char canvas function
 								if inSelection {
 									c.WriteWideRuneBNoLock(tx, ty, e.NanoHelpForeground, e.NanoHelpBackground, letter)
-								} else if highlightCurrentLine && (e.highlightCurrentText || e.highlightCurrentLine) {
+								} else if highlightCurrentLine && (e.highlightCurrentText || e.highlightCurrentLine) && !isRainbowParen && !isMatchingCurly {
 									c.WriteWideRuneBNoLock(tx, ty, e.HighlightForeground, e.Background, letter)
 								} else {
 									c.WriteWideRuneBNoLock(tx, ty, fg, bg, letter)
@@ -699,7 +735,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 							} else if rw <= 1 {
 								if inSelection {
 									c.WriteRuneBNoLock(tx, ty, e.NanoHelpForeground, e.NanoHelpBackground, letter)
-								} else if highlightCurrentLine && (e.highlightCurrentText || e.highlightCurrentLine) {
+								} else if highlightCurrentLine && (e.highlightCurrentText || e.highlightCurrentLine) && !isRainbowParen && !isMatchingCurly {
 									c.WriteRuneBNoLock(tx, ty, e.HighlightForeground, e.Background, letter)
 								} else {
 									c.WriteRuneBNoLock(tx, ty, fg, bg, letter)
