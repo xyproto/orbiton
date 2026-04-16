@@ -1955,6 +1955,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
+			// No selection: block method — leave single-line/block paste mode
+			pasteAllAtOnce = false
+
 			if e.blockMode { // cut the entire block
 
 				undo.Snapshot(e)
@@ -2112,6 +2115,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.redrawCursor.Store(true)
 				break
 			}
+
+			// No selection: block method — leave selection-paste mode
+			pasteAllAtOnce = false
 
 			// Stop background processes (like playing music with timidity), if any
 			if stopBackgroundProcesses() {

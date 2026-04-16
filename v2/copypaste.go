@@ -226,7 +226,6 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 	e.redraw.Store(true)
 
 	if *pasteAllAtOnce && len(*copyLines) > 0 { // Paste all lines at once (after copying/cutting a selection)
-		*pasteAllAtOnce = false
 		*lastPasteY = y
 
 		var (
