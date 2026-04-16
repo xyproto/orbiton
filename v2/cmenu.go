@@ -167,8 +167,18 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		e.redrawCursor.Store(true)
 	})
 
-	actions.AddCommand(e, c, tty, status, undo, "Sort the current block of lines", "sortblock")
-	actions.AddCommand(e, c, tty, status, undo, "Sort strings on the current line", "sortwords")
+	if e.selection == nil {
+		actions.AddCommand(e, c, tty, status, undo, "Sort the current block of lines", "sortblock")
+		actions.AddCommand(e, c, tty, status, undo, "Sort strings on the current line", "sortwords")
+	} else {
+		// TODO: Implement
+		actions.AddCommand(e, c, tty, status, undo, "Sort the selected lines", "sortblock")
+		actions.AddCommand(e, c, tty, status, undo, "Sort strings in the the selected text", "sortwords")
+	}
+
+	if !e.Empty() {
+		actions.AddCommand(e, c, tty, status, undo, "Copy all text to the clipboard", "copyall")
+	}
 
 	if !vsCode {
 		actions.AddCommand(e, c, tty, status, undo, "Insert \""+insertFilename+"\" at the current line", "insertfile", insertFilename)
@@ -238,13 +248,9 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		}
 	}
 
-	if !e.Empty() {
-		actions.AddCommand(e, c, tty, status, undo, "Copy all text to the clipboard", "copyall")
-	}
-
-	if e.bookmark != nil {
-		actions.AddCommand(e, c, tty, status, undo, "Copy text from the bookmark to the cursor", "copymark")
-	}
+	//if e.bookmark != nil {
+		//actions.AddCommand(e, c, tty, status, undo, "Copy text from the bookmark to the cursor", "copymark")
+	//}
 
 	if e.debugMode && e.debugger != nil {
 		hasOutputData := len(strings.TrimSpace(e.debugger.Output())) > 0
