@@ -56,6 +56,7 @@ require (
 	github.com/xfmoulet/qoi v0.2.0 // indirect
 	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/burnpal v1.0.0 // indirect
+	github.com/xyproto/distrodetector v1.3.1 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.6.1 // indirect
 	golang.org/x/net v0.53.0 // indirect

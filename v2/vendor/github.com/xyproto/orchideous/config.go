@@ -310,7 +310,7 @@ func (c *Config) LaunchDebugger() error {
 			}
 		}
 		if debugger == "" {
-			return fmt.Errorf("no debugger found\n  hint: install gdb (apt install gdb) or lldb (apt install lldb)")
+			return fmt.Errorf("no debugger found\n  hint: %s", installHint("gdb"))
 		}
 
 		cmd := exec.Command(debugger, exePath)
@@ -412,7 +412,7 @@ func (c *Config) Rec(args ...string) error {
 func (c *Config) Fmt() error {
 	return c.withDir(func() error {
 		if !hasCommand("clang-format") {
-			return fmt.Errorf("clang-format not found in PATH\n  hint: install clang-format (apt install clang-format)")
+			return fmt.Errorf("clang-format not found in PATH\n  hint: %s", installHint("clang-format"))
 		}
 		exts := []string{"cpp", "cc", "cxx", "h", "hpp", "hh", "h++"}
 		dirs := []string{".", "include", "common"}
@@ -450,7 +450,7 @@ func (c *Config) Valgrind() error {
 			return fmt.Errorf("no executable to profile")
 		}
 		if !hasCommand("valgrind") {
-			return fmt.Errorf("valgrind not found in PATH\n  hint: install valgrind (apt install valgrind)")
+			return fmt.Errorf("valgrind not found in PATH\n  hint: %s", installHint("valgrind"))
 		}
 		exePath := dotSlash(exe)
 		cmd := exec.Command("valgrind", "--tool=callgrind", exePath)

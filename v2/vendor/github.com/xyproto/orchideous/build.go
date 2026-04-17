@@ -84,7 +84,7 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 	}
 	if compiler == "" {
 		fmt.Fprintln(os.Stderr, "error: no C/C++ compiler found")
-		fmt.Fprintln(os.Stderr, "  hint: install gcc or clang (apt install build-essential)")
+		fmt.Fprintf(os.Stderr, "  hint: %s\n", installHint("gcc"))
 		os.Exit(1)
 	}
 

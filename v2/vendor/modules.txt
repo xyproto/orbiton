@@ -94,6 +94,9 @@ github.com/xyproto/clip
 # github.com/xyproto/digraph v1.3.0
 ## explicit; go 1.20
 github.com/xyproto/digraph
+# github.com/xyproto/distrodetector v1.3.1
+## explicit; go 1.11
+github.com/xyproto/distrodetector
 # github.com/xyproto/env v1.9.1
 ## explicit; go 1.15
 github.com/xyproto/env

@@ -192,7 +192,7 @@ func doNinja() error {
 	// Try running ninja directly if a previous cmake+ninja build exists
 	if fileExists(filepath.Join("build", "build.ninja")) {
 		if _, err := exec.LookPath("ninja"); err != nil {
-			return fmt.Errorf("ninja not found in PATH\n  hint: install ninja-build (apt install ninja-build)")
+			return fmt.Errorf("ninja not found in PATH\n  hint: %s", installHint("ninja"))
 		}
 		ninja := exec.Command("ninja", "-C", "build")
 		ninja.Stdout = os.Stdout
@@ -228,8 +228,12 @@ func doCMakeNinja() error {
 		return fmt.Errorf("could not find CMakeLists.txt\n  hint: run 'oh generate' to create one")
 	}
 
+	if _, err := exec.LookPath("cmake"); err != nil {
+		return fmt.Errorf("cmake not found in PATH\n  hint: %s", installHint("cmake"))
+	}
+
 	if _, err := exec.LookPath("ninja"); err != nil {
-		return fmt.Errorf("ninja not found in PATH\n  hint: install ninja-build (apt install ninja-build)")
+		return fmt.Errorf("ninja not found in PATH\n  hint: %s", installHint("ninja"))
 	}
 
 	if needsCMakeRegen() {
@@ -267,7 +271,7 @@ func doMake() error {
 	// Try running make directly if a Makefile exists
 	if fileExists("Makefile") {
 		if _, err := exec.LookPath("make"); err != nil {
-			return fmt.Errorf("make not found in PATH\n  hint: install make (apt install build-essential)")
+			return fmt.Errorf("make not found in PATH\n  hint: %s", installHint("make"))
 		}
 		jobs := strconv.Itoa(runtime.NumCPU())
 		cmd := exec.Command("make", "-j"+jobs)
@@ -593,8 +597,12 @@ func doCMakeMake() error {
 		return fmt.Errorf("could not find CMakeLists.txt\n  hint: run 'oh generate' to create one")
 	}
 
+	if _, err := exec.LookPath("cmake"); err != nil {
+		return fmt.Errorf("cmake not found in PATH\n  hint: %s", installHint("cmake"))
+	}
+
 	if _, err := exec.LookPath("make"); err != nil {
-		return fmt.Errorf("make not found in PATH\n  hint: install build-essential (apt install build-essential)")
+		return fmt.Errorf("make not found in PATH\n  hint: %s", installHint("make"))
 	}
 
 	if needsCMakeRegen() {
