@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/xyproto/vt"
 )
@@ -236,7 +237,7 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 			hasCamelCase = true
 		}
 		if inUpperWord {
-			if hasCamelCase || !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == '+' || r == '_') {
+			if hasCamelCase || !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == '+' || r == '_' || r == '-') {
 				inUpperWord = false
 			}
 		} else if inWord && unicode.IsUpper(r) && unicode.IsUpper(prevRune) && !hasCamelCase {
@@ -261,7 +262,12 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 			} else if hasAlpha && r == '>' {
 				rs = append(rs, []rune(off+e.CommentColor.String())...)
 			} else if inAngles || r == '>' {
-				rs = append(rs, []rune(off+e.ItalicsColor.String())...)
+				// Uppercase letters inside <...> are control/escape codes like <LF>, <CR>, <NULL> — highlight them
+				if inAngles && unicode.IsUpper(r) {
+					rs = append(rs, []rune(off+e.ImageColor.String())...)
+				} else {
+					rs = append(rs, []rune(off+e.ItalicsColor.String())...)
+				}
 			} else if inWord && unicode.IsUpper(prevRune) && ((unicode.IsUpper(r) && unicode.IsLetter(nextRune)) || (unicode.IsLower(r) && unicode.IsUpper(prevRune) && !unicode.IsLetter(nextRune))) {
 				if unicode.IsUpper(r) {
 					// Leading and trailing letter of uppercase words
@@ -270,13 +276,39 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 					rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
 				}
 			} else if inWord && (unicode.IsUpper(r) || (unicode.IsUpper(prevRune) && unicode.IsLetter(r))) {
-				if !unicode.IsLower(r) && (((unicode.IsUpper(nextRune) || nextRune == ' ') && unicode.IsLetter(prevRune)) || unicode.IsUpper(nextRune) || !unicode.IsLetter(nextRune)) {
+				// Don't highlight a word-start capital unless the word contains more uppercase later.
+				// "A tags file" and "The option" should not be highlighted, but "NiST" and "MS-DOS" still should.
+				// Use byte-correct UTF-8 scanning to avoid rune/byte index mismatches in lines with
+				// multi-byte characters (e.g. box-drawing │ before the word in a table).
+				wordStart := !unicode.IsLetter(prevRune) && !unicode.IsDigit(prevRune) && prevRune != '_'
+				useNormalColor := false
+				if wordStart {
+					hasLaterUpper := false
+					for pos := i + utf8.RuneLen(r); pos < len(line); {
+						ch, size := utf8.DecodeRuneInString(line[pos:])
+						if !unicode.IsLetter(ch) && !unicode.IsDigit(ch) && ch != '_' {
+							break
+						}
+						if unicode.IsUpper(ch) {
+							hasLaterUpper = true
+							break
+						}
+						pos += size
+					}
+					useNormalColor = !hasLaterUpper
+				}
+				if useNormalColor {
+					rs = append(rs, []rune(off+normal.String())...)
+				} else if !unicode.IsLower(r) && (((unicode.IsUpper(nextRune) || nextRune == ' ') && unicode.IsLetter(prevRune)) || unicode.IsUpper(nextRune) || !unicode.IsLetter(nextRune)) {
 					// Center letters of uppercase words
 					rs = append(rs, []rune(off+e.ImageColor.String())...)
 				} else {
 					rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
 				}
 			} else if inWord && unicode.IsUpper(r) {
+				rs = append(rs, []rune(off+e.ImageColor.String())...)
+			} else if r >= '\u2500' && r <= '\u257F' {
+				// Box-drawing characters in table content rows
 				rs = append(rs, []rune(off+e.ImageColor.String())...)
 			} else if !inWord || !unicode.IsUpper(r) {
 				rs = append(rs, []rune(off+e.MarkdownTextColor.String())...)
