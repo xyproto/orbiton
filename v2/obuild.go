@@ -388,13 +388,9 @@ oh -C <dir> ... - run in the given directory
 	case "fmt":
 		ohDoFmt()
 	case "cmake":
-		if len(subArgs) > 0 && subArgs[0] == "ninja" {
-			if err := orchideous.DoCMake(orchideous.BuildOptions{}); err != nil {
-				return err
-			}
-			return orchideous.DoNinja()
-		}
-		return orchideous.DoCMake(orchideous.BuildOptions{})
+		return orchideous.DoCMakeBuild(orchideous.BuildOptions{})
+	case "generate":
+		return orchideous.DoGenerate(orchideous.BuildOptions{})
 	case "pro":
 		return orchideous.DoPro(orchideous.BuildOptions{})
 	case "ninja":
@@ -410,7 +406,7 @@ oh -C <dir> ... - run in the given directory
 	case "export":
 		return orchideous.DoExport()
 	case "make":
-		return orchideous.DoMakeFile()
+		return orchideous.DoMake()
 	case "script":
 		return orchideous.DoScript()
 	case "valgrind":

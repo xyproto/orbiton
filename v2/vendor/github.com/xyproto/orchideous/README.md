@@ -28,17 +28,17 @@ The auto-detection of external libraries and headers relies on them being includ
 
 ## Badge
 
-If you want this excellent hand drawn badge added to your project:
+If you like, you can add this shield to your project to indicate that it can be compiled without any particular build-related configuration:
 
-[![Compiles with Orchideous](https://raw.githubusercontent.com/xyproto/orchideous/e0dc79b81eede2f6270b8ad345467cf6f0222b02/img/badge1.svg)](https://raw.githubusercontent.com/xyproto/orchideous/e0dc79b81eede2f6270b8ad345467cf6f0222b02/img/badge1.svg)
+![Compiles with Orchideous](https://img.shields.io/badge/Compiles_with-Orchideous-2fc298)
 
-Then just make sure that it builds with `oh` first, then add this to your `README.md`:
+Just make sure that it builds with `oh` first, then add this to your `README.md`:
 
 ```markdown
-[![Compiles with Orchideous](https://raw.githubusercontent.com/xyproto/orchideous/e0dc79b81eede2f6270b8ad345467cf6f0222b02/img/badge1.svg)](https://github.com/xyproto/orchideous)
+[![Compiles with Orchideous](https://img.shields.io/badge/Compiles_with-Orchideous-2fc298)](https://github.com/xyproto/orchideous)
 ```
 
-If you want, you can also add it to [the list of projects that compiles with Orchideous](https://github.com/xyproto/orchideous/wiki/List-of-projects-that-compile-with-Orchideous), for some extra promo.
+It is also possible to add it to [the list of projects that compiles with Orchideous](https://github.com/xyproto/orchideous/wiki/List-of-projects-that-compile-with-Orchideous).
 
 ## Installation
 
@@ -245,7 +245,7 @@ See `examples/sdl2`, `examples/win64crate` (uses `IMGDIR`) and `examples/mixer` 
 
 Orchideous auto-detects libraries from `#include` directives in your source files using `pkg-config`. Supported libraries include:
 
-* **Graphics**: OpenGL, GLUT, GLFW, GLEW, GLM, Vulkan, SDL2, SFML (2 & 3), raylib
+* **Graphics**: OpenGL, GLUT, GLFW, GLEW, GLM, Vulkan, SDL (2 & 3), SFML (2 & 3), raylib
 * **GUI**: GTK (2, 3 & 4), Qt6, VTE
 * **Audio**: OpenAL, SDL2_mixer, PipeWire, rtaudio
 * **Other**: Boost, libconfig++, FastCGI, ReactPhysics3D, Gio/GLib, X11

@@ -2,6 +2,10 @@ package orchideous
 
 import (
 	"fmt"
+	"runtime"
+	"sync"
+
+	"github.com/xyproto/files"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,13 +31,13 @@ type BuildOptions struct {
 
 // BuildFlags holds the assembled compiler and linker flags.
 type BuildFlags struct {
-	Compiler    string
-	Std         string
-	CFlags      []string
-	LDFlags     []string
-	Defines     []string
-	IncPaths    []string
-	DockerImage string // if set, compile via "docker run" with this image
+	Compiler       string
+	Std            string
+	CFlags         []string
+	LDFlags        []string
+	Defines        []string
+	IncPaths       []string
+	ContainerImage string // if set, compile via "docker run" or "podman run" with this image
 }
 
 // assembleFlags creates the full set of build flags for a project.
@@ -53,19 +57,24 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 	if compiler == "" && win64 {
 		compiler = findWin64Compiler(proj.IsC)
 		if compiler == "" {
+			hasDocker := files.WhichCached("docker") != ""
+			hasPodman := files.WhichCached("podman") != ""
 			// Fallback: use Docker with mingw image
-			if _, err := exec.LookPath("docker"); err == nil {
-				const dockerImage = "jhasse/mingw:latest"
-				fmt.Fprintf(os.Stderr, "warning: x86_64-w64-mingw32-g++ not found, using Docker image: %s\n", dockerImage)
+			if hasDocker || hasPodman {
+				containerImage := "jhasse/mingw:latest"
+				if hasPodman {
+					containerImage = "docker.io/jhasse/mingw:latest"
+				}
+				fmt.Fprintf(os.Stderr, "warning: x86_64-w64-mingw32-g++ not found, using container image: %s\n", containerImage)
 				if proj.IsC {
 					compiler = "x86_64-w64-mingw32-gcc"
 				} else {
 					compiler = "x86_64-w64-mingw32-g++"
 				}
-				bf.DockerImage = dockerImage
+				bf.ContainerImage = containerImage
 			} else {
-				fmt.Fprintln(os.Stderr, "error: no mingw cross-compiler found for win64 and docker is not available")
-				fmt.Fprintln(os.Stderr, "Install x86_64-w64-mingw32-g++ or docker to cross-compile for Windows.")
+				fmt.Fprintln(os.Stderr, "error: no mingw cross-compiler found for win64, and podman/docker is not available")
+				fmt.Fprintln(os.Stderr, "Install x86_64-w64-mingw32-g++, podman or docker to cross-compile for Windows.")
 				os.Exit(1)
 			}
 		}
@@ -75,6 +84,7 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 	}
 	if compiler == "" {
 		fmt.Fprintln(os.Stderr, "error: no C/C++ compiler found")
+		fmt.Fprintln(os.Stderr, "  hint: install gcc or clang (apt install build-essential)")
 		os.Exit(1)
 	}
 
@@ -117,11 +127,16 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 			bf.LDFlags = append(bf.LDFlags, "-ffunction-sections", "-fdata-sections", "-Wl,-s", "-Wl,-gc-sections")
 		}
 		if opts.Tiny {
-			// -fno-rtti, -fno-ident and -fomit-frame-pointer are safe on all platforms
-			bf.CFlags = append(bf.CFlags, "-fno-rtti", "-fno-ident", "-fomit-frame-pointer")
+			// -fno-ident and -fomit-frame-pointer are safe on all platforms
+			bf.CFlags = append(bf.CFlags, "-fno-ident", "-fomit-frame-pointer")
+			if !proj.IsC {
+				// -fno-rtti is only valid for C++/ObjC++, not for C
+				bf.CFlags = append(bf.CFlags, "-fno-rtti")
+			}
 			if !isDarwin() {
-				// -s is unused during compilation on macOS; -nostdlib is macOS-incompatible
-				bf.CFlags = append(bf.CFlags, "-s", "-nostdlib")
+				// -s strips symbols; -nostdlib removes the C runtime (not usable for
+				// win64 cross-builds, which need the mingw runtime for stdio etc.)
+				bf.CFlags = append(bf.CFlags, "-s")
 				if !win64 {
 					// -Wl,-z,norelro disables RELRO, an ELF security feature; not applicable to Windows PE/COFF
 					bf.LDFlags = append(bf.LDFlags, "-Wl,-z,norelro")
@@ -233,10 +248,10 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 
 	// Qt6
 	if proj.HasQt6 {
-		for _, f := range strings.Fields(qt6CxxFlags) {
+		for f := range strings.FieldsSeq(qt6CxxFlags) {
 			bf.CFlags = appendUnique(bf.CFlags, f)
 		}
-		for _, f := range strings.Fields(qt6LinkFlags) {
+		for f := range strings.FieldsSeq(qt6LinkFlags) {
 			bf.LDFlags = appendUnique(bf.LDFlags, f)
 		}
 	}
@@ -280,6 +295,18 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 
 	// Win64 specific flags
 	if win64 {
+		// Auto-detect the minimum Windows version and provide fallback
+		// defines for constants that may be missing from older mingw-w64.
+		allSources := []string{}
+		if proj.MainSource != "" {
+			allSources = append(allSources, proj.MainSource)
+		}
+		allSources = append(allSources, proj.DepSources...)
+		winAPI := detectWinAPI(allSources)
+		if winAPI.MinVersion > 0 {
+			bf.Defines = append(bf.Defines, fmt.Sprintf("-D_WIN32_WINNT=0x%04X", winAPI.MinVersion))
+		}
+		bf.Defines = append(bf.Defines, winAPI.FallbackDefines...)
 		bf.CFlags = append(bf.CFlags, "-Wno-unused-variable")
 		if !proj.IsC {
 			bf.CFlags = append(bf.CFlags, "-mwindows", "-fms-extensions")
@@ -422,30 +449,20 @@ func compileSources(srcs []string, output string, flags BuildFlags) error {
 	var objFiles []string
 	needLink := false
 
+	// Collect sources that need recompiling
+	type compileJob struct {
+		src string
+		obj string
+	}
+	var jobs []compileJob
+
 	for _, src := range srcs {
 		obj := strings.TrimSuffix(src, filepath.Ext(src)) + ".o"
 		objFiles = append(objFiles, obj)
 
-		if !needsRecompile(src, obj) {
-			continue
-		}
-		needLink = true
-
-		// Compile source to object (with -MMD for dependency tracking)
-		args := []string{"-std=" + flags.Std, "-MMD"}
-		args = append(args, flags.CFlags...)
-		args = append(args, flags.Defines...)
-		for _, ip := range flags.IncPaths {
-			args = append(args, "-I"+ip)
-		}
-		args = append(args, "-c", "-o", obj, src)
-
-		cmd := runCompiler(flags, args)
-		fmt.Println(flags.Compiler, strings.Join(compactArgs(args), " "))
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("compiling %s: %w", src, err)
+		if needsRecompile(src, obj) {
+			needLink = true
+			jobs = append(jobs, compileJob{src, obj})
 		}
 	}
 
@@ -457,6 +474,63 @@ func compileSources(srcs []string, output string, flags BuildFlags) error {
 	if !needLink {
 		fmt.Println("up to date")
 		return nil
+	}
+
+	// Compile sources in parallel
+	if len(jobs) > 0 {
+		maxWorkers := runtime.NumCPU()
+		if maxWorkers > len(jobs) {
+			maxWorkers = len(jobs)
+		}
+		sem := make(chan struct{}, maxWorkers)
+		var mu sync.Mutex
+		var firstErr error
+
+		var wg sync.WaitGroup
+		for _, job := range jobs {
+			wg.Add(1)
+			go func(src, obj string) {
+				defer wg.Done()
+
+				sem <- struct{}{}
+				defer func() { <-sem }()
+
+				mu.Lock()
+				if firstErr != nil {
+					mu.Unlock()
+					return
+				}
+				mu.Unlock()
+
+				args := []string{"-std=" + flags.Std, "-MMD"}
+				args = append(args, flags.CFlags...)
+				args = append(args, flags.Defines...)
+				for _, ip := range flags.IncPaths {
+					args = append(args, "-I"+ip)
+				}
+				args = append(args, "-c", "-o", obj, src)
+
+				cmd := runCompiler(flags, args)
+				mu.Lock()
+				fmt.Println(flags.Compiler, strings.Join(compactArgs(args), " "))
+				mu.Unlock()
+				out, err := cmd.CombinedOutput()
+
+				mu.Lock()
+				defer mu.Unlock()
+				if len(out) > 0 {
+					os.Stderr.Write(out)
+				}
+				if err != nil && firstErr == nil {
+					firstErr = fmt.Errorf("compiling %s: %w", src, err)
+				}
+			}(job.src, job.obj)
+		}
+		wg.Wait()
+
+		if firstErr != nil {
+			return firstErr
+		}
 	}
 
 	// Link
@@ -490,14 +564,20 @@ func buildCompileArgs(flags BuildFlags, srcs []string, output string) []string {
 	return args
 }
 
-// runCompiler executes the compiler, routing through Docker if DockerImage is set.
+// runCompiler executes the compiler, routing through podman/docker if ContainerImage is set.
 func runCompiler(flags BuildFlags, args []string) *exec.Cmd {
-	if flags.DockerImage != "" {
+	if flags.ContainerImage != "" {
 		cwd, _ := os.Getwd()
-		dockerArgs := []string{"run", "-v", cwd + ":/home", "-w", "/home", "--rm", flags.DockerImage, flags.Compiler}
-		dockerArgs = append(dockerArgs, args...)
-		return exec.Command("docker", dockerArgs...)
+		podmanDockerArgs := []string{"run", "-v", cwd + ":/home", "-w", "/home", "--rm", flags.ContainerImage, flags.Compiler}
+		podmanDockerArgs = append(podmanDockerArgs, args...)
+		if files.WhichCached("podman") != "" {
+			return exec.Command("podman", podmanDockerArgs...)
+		}
+		if files.WhichCached("docker") != "" {
+			return exec.Command("docker", podmanDockerArgs...)
+		}
 	}
+	// Also fallback if podman and docker were not found
 	return exec.Command(flags.Compiler, args...)
 }
 
@@ -524,9 +604,9 @@ func needsRecompile(src, obj string) bool {
 	// Parse the .d file: format is "obj: src header1 header2 ..."
 	// Lines may be continued with backslash
 	content := strings.ReplaceAll(string(data), "\\\n", " ")
-	for _, line := range strings.Split(content, "\n") {
+	for line := range strings.SplitSeq(content, "\n") {
 		if _, after, ok := strings.Cut(line, ":"); ok {
-			for _, dep := range strings.Fields(after) {
+			for dep := range strings.FieldsSeq(after) {
 				depInfo, err := os.Stat(dep)
 				if err != nil {
 					continue

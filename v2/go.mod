@@ -64,3 +64,5 @@ require (
 	golang.org/x/text v0.36.0 // indirect
 	mvdan.cc/sh/v3 v3.13.1 // indirect
 )
+
+replace github.com/xyproto/orchideous => /home/u64078/clones/orchideous

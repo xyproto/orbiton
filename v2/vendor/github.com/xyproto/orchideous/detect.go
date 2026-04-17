@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -53,6 +54,98 @@ var stdHeaders = map[string]bool{
 	"numbers": true, "stop_token": true, "semaphore": true, "latch": true,
 	"barrier": true, "concepts": true, "coroutine": true, "stacktrace": true,
 	"dlfcn.h": true, "pthread.h": true, "glibc": true,
+}
+
+// winAPIConst describes a Windows API constant that may be missing from
+// older mingw-w64 headers. Version is the minimum _WIN32_WINNT value,
+// and Value (if non-empty) is the constant's actual value, used as a
+// fallback -D define for toolchains that lack the definition entirely.
+type winAPIConst struct {
+	Version int
+	Value   string // e.g. "0x0004"; empty for function identifiers (no fallback needed)
+}
+
+// winAPIConstants maps Windows API identifiers to their version requirement
+// and fallback values for cross-compilation with older mingw-w64.
+var winAPIConstants = map[string]winAPIConst{
+	// 0x0600 — Windows Vista / Server 2008
+	"ENABLE_VIRTUAL_TERMINAL_PROCESSING": {0x0600, "0x0004"},
+	"DISABLE_NEWLINE_AUTO_RETURN":        {0x0600, "0x0008"},
+	"ENABLE_VIRTUAL_TERMINAL_INPUT":      {0x0600, "0x0200"},
+	"GetTickCount64":                     {0x0600, ""},
+	"InitializeCriticalSectionEx":        {0x0600, ""},
+	"INIT_ONCE":                          {0x0600, ""},
+	"InitOnceExecuteOnce":                {0x0600, ""},
+	"CreateSymbolicLink":                 {0x0600, ""},
+	"CONDITION_VARIABLE":                 {0x0600, ""},
+	"InitializeConditionVariable":        {0x0600, ""},
+	"SleepConditionVariableCS":           {0x0600, ""},
+	"WakeConditionVariable":              {0x0600, ""},
+	"WakeAllConditionVariable":           {0x0600, ""},
+	"SRWLOCK":                            {0x0600, ""},
+	"InitializeSRWLock":                  {0x0600, ""},
+	"AcquireSRWLockExclusive":            {0x0600, ""},
+	"ReleaseSRWLockExclusive":            {0x0600, ""},
+	"AcquireSRWLockShared":               {0x0600, ""},
+	"ReleaseSRWLockShared":               {0x0600, ""},
+	// 0x0601 — Windows 7
+	"SetProcessDPIAware":          {0x0601, ""},
+	"GetCurrentProcessorNumberEx": {0x0601, ""},
+	"QueryUnbiasedInterruptTime":  {0x0601, ""},
+	"TryAcquireSRWLockExclusive":  {0x0601, ""},
+	"TryAcquireSRWLockShared":     {0x0601, ""},
+	// 0x0602 — Windows 8
+	"GetSystemTimePreciseAsFileTime": {0x0602, ""},
+	// 0x0A00 — Windows 10
+	"CreatePseudoConsole":           {0x0A00, ""},
+	"ClosePseudoConsole":            {0x0A00, ""},
+	"GetDpiForWindow":               {0x0A00, ""},
+	"GetDpiForSystem":               {0x0A00, ""},
+	"SetProcessDpiAwarenessContext": {0x0A00, ""},
+	"DPI_AWARENESS_CONTEXT":         {0x0A00, ""},
+}
+
+// winAPIResult holds the results of scanning source files for Windows API usage.
+type winAPIResult struct {
+	MinVersion      int      // highest _WIN32_WINNT value needed (0 if none)
+	FallbackDefines []string // -D flags for constants that may be missing from older mingw
+}
+
+// detectWinAPI scans source files for Windows API identifiers and returns the
+// minimum _WIN32_WINNT value needed plus fallback defines for constants that
+// may be absent from older mingw-w64 headers.
+func detectWinAPI(sources []string) winAPIResult {
+	var result winAPIResult
+	for _, src := range sources {
+		if src == "" {
+			continue
+		}
+		data, err := os.ReadFile(src)
+		if err != nil {
+			continue
+		}
+		content := string(data)
+		for ident, info := range winAPIConstants {
+			if !strings.Contains(content, ident) {
+				continue
+			}
+			if info.Version > result.MinVersion {
+				result.MinVersion = info.Version
+			}
+			if info.Value != "" {
+				result.FallbackDefines = appendUnique(result.FallbackDefines,
+					fmt.Sprintf("-D%s=%s", ident, info.Value))
+			}
+		}
+	}
+	return result
+}
+
+// detectMinWinVersion scans source files for Windows API identifiers and
+// returns the highest _WIN32_WINNT value needed (e.g. 0x0600 for Vista).
+// Returns 0 if no version-gated APIs are detected.
+func detectMinWinVersion(sources []string) int {
+	return detectWinAPI(sources).MinVersion
 }
 
 // Project holds all detected project information.
@@ -191,10 +284,8 @@ func verifyWin64WithPreprocessor(sources []string) bool {
 			continue
 		}
 		preprocessorWorked = true
-		for _, inc := range lines {
-			if inc == "windows.h" {
-				return true
-			}
+		if slices.Contains(lines, "windows.h") {
+			return true
 		}
 	}
 	if !preprocessorWorked {
@@ -321,7 +412,7 @@ func containsMain(filename string) bool {
 	if err != nil {
 		return false
 	}
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		trimmed := strings.TrimSpace(line)
 		// Skip single-line comments
 		if strings.HasPrefix(trimmed, "//") {
@@ -386,7 +477,7 @@ func cppPreprocessIncludes(filename string) []string {
 		return nil
 	}
 	var includes []string
-	for _, line := range strings.Split(string(out), "\n") {
+	for line := range strings.SplitSeq(string(out), "\n") {
 		line = strings.TrimSpace(line)
 		if !strings.HasPrefix(line, "#include") {
 			continue
