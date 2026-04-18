@@ -365,7 +365,7 @@ func main() {
 			commandName = "obuild"
 		}
 		if err := runObuild(obuildArgs, commandName); err != nil {
-			if err.Error() == "no sources found" {
+			if err.Error() == "no source files found" {
 				fmt.Fprintln(os.Stderr, "no C or C++ sources found")
 			} else {
 				fmt.Fprintln(os.Stderr, err)
