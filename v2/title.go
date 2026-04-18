@@ -35,11 +35,14 @@ func (fnord *FilenameOrData) SetTitle() {
 }
 
 // NoTitle will remove the filename title by setting the shell name as the title,
-// if NO_COLOR is not set and the terminal emulator supports it.
+// or just "-", if NO_COLOR is not set and the terminal emulator supports it.
 func NoTitle() {
 	if envNoColor || !vt.XtermLike() {
 		return
 	}
-	shellName := filepath.Base(env.Str("SHELL", "/bin/sh"))
-	termtitle.Set(shellName)
+	if shell := env.Str("SHELL"); shell != "" {
+		termtitle.Set(shell)
+	} else {
+		termtitle.Set("-")
+	}
 }
