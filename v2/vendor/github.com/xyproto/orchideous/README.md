@@ -102,16 +102,18 @@ oh test             build and run tests
 oh testbuild        build tests (without running)
 oh rec              profile-guided optimization (build, run, rebuild)
 oh fmt              format source code with clang-format
-oh cmake            generate CMakeLists.txt
-oh cmake ninja      generate CMakeLists.txt and build with ninja
-oh ninja            build using existing CMakeLists.txt and ninja
+oh generate         generate CMakeLists.txt
+oh cmake            build with cmake (generates CMakeLists.txt if needed, prefers ninja)
+oh ninja            build with ninja (falls back to cmake+ninja)
 oh ninja_install    install from ninja build
 oh ninja_clean      clean ninja build
+oh make             build with make (falls back to cmake+make)
+oh make_install     install from cmake+make build
+oh make_clean       clean cmake+make build
 oh pro              generate QtCreator project file
 oh install          install the project (PREFIX, DESTDIR)
 oh pkg              package the project into pkg/
 oh export           export a standalone Makefile and build.sh
-oh make             generate a standalone Makefile
 oh script           generate build.sh and clean.sh
 oh valgrind         build and profile with valgrind
 oh win64            cross-compile for 64-bit Windows
@@ -415,5 +417,5 @@ In both cases, a GCC or Clang compiler must be available on PATH.
 ## General Info
 
 * License: BSD-3
-* Version: 1.0.6
+* Version: 1.0.7
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
