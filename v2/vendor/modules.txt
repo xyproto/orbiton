@@ -136,7 +136,7 @@ github.com/xyproto/mode
 # github.com/xyproto/ollamaclient/v2 v2.7.2
 ## explicit; go 1.23.1
 github.com/xyproto/ollamaclient/v2
-# github.com/xyproto/orchideous v1.0.6 => /home/u64078/clones/orchideous
+# github.com/xyproto/orchideous v1.0.7
 ## explicit; go 1.24
 github.com/xyproto/orchideous
 # github.com/xyproto/palgen v1.6.1
@@ -208,4 +208,3 @@ mvdan.cc/sh/v3/internal
 mvdan.cc/sh/v3/interp
 mvdan.cc/sh/v3/pattern
 mvdan.cc/sh/v3/syntax
-# github.com/xyproto/orchideous => /home/u64078/clones/orchideous

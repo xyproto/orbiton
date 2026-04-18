@@ -30,7 +30,7 @@ require (
 	github.com/xyproto/megafile v1.6.38
 	github.com/xyproto/mode v0.12.6
 	github.com/xyproto/ollamaclient/v2 v2.7.2
-	github.com/xyproto/orchideous v1.0.6
+	github.com/xyproto/orchideous v1.0.7
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.2.3
 	github.com/xyproto/vt v1.8.3
@@ -65,5 +65,3 @@ require (
 	golang.org/x/text v0.36.0 // indirect
 	mvdan.cc/sh/v3 v3.13.1 // indirect
 )
-
-replace github.com/xyproto/orchideous => /home/u64078/clones/orchideous
