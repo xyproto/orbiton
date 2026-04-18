@@ -1,7 +1,6 @@
 package main
 
 import (
-	"path/filepath"
 	"strings"
 
 	"github.com/xyproto/env/v2"
