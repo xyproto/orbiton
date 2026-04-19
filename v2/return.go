@@ -78,12 +78,18 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar) {
 	e.MakeConsistent()
 
 	h := int(c.Height())
-	if e.pos.sy > (h - 1) {
+	// In graphical book mode the bottom terminal row belongs to the status bar,
+	// so the effective editing height is one row shorter.
+	editH := h
+	if e.bookGraphicalMode() {
+		editH--
+	}
+	if e.pos.sy > (editH - 1) {
 		e.pos.Down(c)
-		e.redraw.Store(e.ScrollDown(c, status, 1, h))
+		e.redraw.Store(e.ScrollDown(c, status, 1, editH))
 		e.redrawCursor.Store(true)
-	} else if e.pos.sy == (h - 1) {
-		e.redraw.Store(e.ScrollDown(c, status, 1, h))
+	} else if e.pos.sy == (editH - 1) {
+		e.redraw.Store(e.ScrollDown(c, status, 1, editH))
 		e.redrawCursor.Store(true)
 	} else {
 		e.pos.Down(c)

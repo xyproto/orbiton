@@ -159,6 +159,14 @@ func (sb *StatusBar) Clear(c *vt.Canvas, repositionCursorAfterDrawing bool) {
 		return
 	}
 
+	// In book mode with graphics the image renderer owns the terminal; skip text
+	// drawing but do clear the graphical overlay message and re-render the bar.
+	if sb.editor.bookGraphicalMode() {
+		bookModeSetStatusMsg("")
+		sb.editor.bookModeStatusBar(c)
+		return
+	}
+
 	// Then clear/redraw the bottom line
 	h := int(c.H())
 	if sb.nanoMode {
@@ -191,6 +199,14 @@ func (sb *StatusBar) ClearAll(c *vt.Canvas, repositionCursorAfterDrawing bool) {
 		return
 	}
 
+	// In book mode with graphics the image renderer owns the terminal; skip text
+	// drawing but do clear the graphical overlay message and re-render the bar.
+	if sb.editor.bookGraphicalMode() {
+		bookModeSetStatusMsg("")
+		sb.editor.bookModeStatusBar(c)
+		return
+	}
+
 	// Then clear/redraw the bottom line
 	h := int(c.H())
 	if sb.nanoMode {
@@ -210,6 +226,35 @@ func (sb *StatusBar) ClearAll(c *vt.Canvas, repositionCursorAfterDrawing bool) {
 // Show will draw a status message, then clear it after a certain delay
 func (sb *StatusBar) Show(c *vt.Canvas, e *Editor) {
 	if c == nil {
+		return
+	}
+
+	// In book mode with graphics, show the message via the graphical status bar.
+	if sb.editor.bookGraphicalMode() {
+		mut.RLock()
+		msg := sb.msg
+		dur := sb.show
+		isErr := sb.isError
+		mut.RUnlock()
+		if msg != "" {
+			if isErr {
+				dur *= 3
+			}
+			bookModeSetStatusMsg(msg)
+			sb.editor.bookModeStatusBar(c)
+			go func() {
+				time.Sleep(dur)
+				bookModeSetStatusMsg("")
+				mut.Lock()
+				sb.msg = ""
+				sb.isError = false
+				mut.Unlock()
+				// Re-render the graphical status bar now that the message has expired.
+				redrawMutex.Lock()
+				sb.editor.bookModeStatusBar(c)
+				redrawMutex.Unlock()
+			}()
+		}
 		return
 	}
 
@@ -275,6 +320,18 @@ func (sb *StatusBar) ShowNoTimeout(c *vt.Canvas, e *Editor) {
 		return
 	}
 
+	// In book mode with graphics, show the message via the graphical status bar.
+	if sb.editor.bookGraphicalMode() {
+		mut.RLock()
+		msg := sb.msg
+		mut.RUnlock()
+		if msg != "" {
+			bookModeSetStatusMsg(msg)
+			sb.editor.bookModeStatusBar(c)
+		}
+		return
+	}
+
 	mut.RLock()
 	if sb.msg == "" && !sb.nanoMode {
 		mut.RUnlock()
@@ -297,7 +354,11 @@ func (sb *StatusBar) ShowNoTimeout(c *vt.Canvas, e *Editor) {
 
 func getPercentage(lineNumber, lastLineNumber LineNumber) int {
 	if lastLineNumber > 0 {
-		return int(100.0 * (float64(lineNumber) / float64(lastLineNumber)))
+		p := int(100.0 * (float64(lineNumber) / float64(lastLineNumber)))
+		if p > 100 {
+			return 100
+		}
+		return p
 	}
 	return 0
 }

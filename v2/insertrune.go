@@ -36,8 +36,11 @@ func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
 		limit -= 5
 	}
 
-	// If wrapWhenTyping is enabled, check if we should wrap to the next line
-	if e.wrapWhenTyping && e.wrapWidth > 0 && e.pos.sx >= limit {
+	// If wrapWhenTyping is enabled, check if we should wrap to the next line.
+	// Never wrap immediately before a character that must follow its preceding
+	// word (apostrophe, closing punctuation, etc.) — e.g. typing 's should
+	// not break the line before the apostrophe.
+	if e.wrapWhenTyping && e.wrapWidth > 0 && e.pos.sx >= limit && !noLineStartRune(r) {
 
 		e.InsertLineBelow()
 		e.pos.sy++

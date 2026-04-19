@@ -81,6 +81,9 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	if envVT100 {
 		syntaxHighlight = false
 	}
+	if bookModeFlag {
+		syntaxHighlight = false
+	}
 
 	adjustSyntaxHighlightingKeywords(m) // no theme changes, just language detection and keyword configuration
 
@@ -677,6 +680,13 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 	case mode.ASCIIDoc, mode.Blank, mode.Markdown, mode.ReStructured, mode.SCDoc, mode.Text:
 		e.wrapWidth = 79
 		e.wrapWhenTyping = false
+	}
+	if bookModeFlag {
+		e.bookMode.Store(true)
+		e.syntaxHighlight = false
+		e.wrapWidth = 72
+		e.wrapWhenTyping = true
+		e.statusMode = true
 	}
 	e.mode = m
 	e.fastInputMode = !strings.HasPrefix(env.Str("TERM"), "vt") && env.Str("TERM") != "linux"

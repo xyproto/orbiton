@@ -66,6 +66,7 @@ type Editor struct {
 	debugComplete               atomic.Bool // set when the debugged program has finished execution
 	building                    atomic.Bool // currently building code or exporting to a file?
 	runAfterBuild               atomic.Bool // run the application after building?
+	bookMode                    atomic.Bool // book mode: word wrap, no syntax highlighting, text focus
 	rainbowParenthesis          bool        // rainbow parenthesis
 	debugMode                   bool        // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
 	statusMode                  bool        // display a status bar at all times at the bottom of the screen
@@ -176,6 +177,7 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.waitWithRedrawing.Store(e.waitWithRedrawing.Load())
 	e2.flaskApplication.Store(e.flaskApplication.Load())
 	e2.moveLinesMode.Store(e.moveLinesMode.Load())
+	e2.bookMode.Store(e.bookMode.Load())
 	return &e2
 }
 
@@ -695,6 +697,17 @@ func (e *Editor) LastWord(y int) string {
 	return ""
 }
 
+// noLineStartRune returns true for punctuation that must not begin a line.
+// These are characters that in good typography always follow the preceding word.
+func noLineStartRune(r rune) bool {
+	switch r {
+	case '.', ',', '!', '?', ':', ';', ')', ']', '}', '\'', '"', '\u2019', '\u201D', '\u00BB', '\u2014', '\u2013':
+		// ) ] } ' " ' " » — –
+		return true
+	}
+	return false
+}
+
 // SplitOvershoot will split the line into a first part that is within the
 // word wrap length and a second part that is the overshooting part.
 // y is the line index (y position, counting from 0).
@@ -714,15 +727,29 @@ func (e *Editor) SplitOvershoot(index LineIndex, isSpace bool) ([]rune, []rune, 
 	if isSpace {
 		splitPosition, _ = e.DataX()
 	} else {
-		// Starting at the split position, move left until a space is reached (or the start of the line).
-		// If a space is reached, check if it is too far away from n to be used as a split position, or not.
+		// Scan left from the wrap column looking for a space that produces a
+		// good split — one where the second part does not start with punctuation
+		// that typographically must not begin a line (e.g. "." "," "!" etc.).
 		spacePosition := -1
 		for i := splitPosition; i >= 0; i-- {
-			if i < len(e.lines[y]) && unicode.IsSpace(e.lines[y][i]) {
-				// Found a space at position i
-				spacePosition = i
-				break
+			if i >= len(e.lines[y]) {
+				continue
 			}
+			if !unicode.IsSpace(e.lines[y][i]) {
+				continue
+			}
+			// Candidate space found at i. Check that the character following it
+			// (the first character of the prospective new line) is not a
+			// no-line-start character.
+			nextIdx := i + 1
+			for nextIdx < len(e.lines[y]) && unicode.IsSpace(e.lines[y][nextIdx]) {
+				nextIdx++ // skip any run of spaces
+			}
+			if nextIdx < len(e.lines[y]) && noLineStartRune(e.lines[y][nextIdx]) {
+				continue // bad split: punctuation would start the new line
+			}
+			spacePosition = i
+			break
 		}
 		// Found a better position to split, at a nearby space?
 		if spacePosition != -1 {
@@ -735,12 +762,9 @@ func (e *Editor) SplitOvershoot(index LineIndex, isSpace bool) ([]rune, []rune, 
 	}
 
 	// Split the line into two parts
-
 	n := splitPosition
-	// Make space for the two parts
 	first := make([]rune, len(e.lines[y][:n]))
 	second := make([]rune, len(e.lines[y][n:]))
-	// Copy the line into first and second
 	copy(first, e.lines[y][:n])
 	copy(second, e.lines[y][n:])
 
@@ -1575,7 +1599,11 @@ func (e *Editor) ScrollDown(c *vt.Canvas, status *StatusBar, scrollSpeed, canvas
 	l := e.Len()
 
 	if offset >= l-canvasLastY {
-		c.HideCursorAndDraw()
+		// In graphical book mode the image renderer owns the terminal output;
+		// flushing the text canvas here would cause a text-mode flash.
+		if !e.bookGraphicalMode() {
+			c.HideCursorAndDraw()
+		}
 		// Don't redraw
 		return false
 	}

@@ -468,6 +468,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.quit = true
 		case "c:23": // ctrl-w, format or insert template (or if in git mode, cycle interactive rebase keywords)
 
+			if e.bookMode.Load() { // not relevant for prose writing
+				break
+			}
+
 			if e.blockMode {
 				e.blockMode = false
 				e.blockCursors = nil
@@ -559,7 +563,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.nanoMode.Load() {
 				break // do nothing
 			}
-
 			switch e.mode {
 			case mode.Markdown:
 				if e.ToggleCheckboxCurrentLine() { // Toggle checkbox
@@ -618,6 +621,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 		case "c:20": // ctrl-t
+
+			if e.bookMode.Load() { // macro/debug not relevant for prose writing
+				break
+			}
 
 			// for C or C++: jump to header/source, or insert symbol
 			// for Agda: insert symbol
@@ -778,6 +785,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.playBackMacroCount = 1
 			}
 		case "c:28": // ctrl-\, toggle comment for this block
+			if e.bookMode.Load() { // toggle comment not relevant for prose writing
+				break
+			}
 			undo.Snapshot(e)
 			e.ToggleCommentBlock(c)
 			if e.blockMode {
@@ -1022,12 +1032,18 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			"\x1b[5D": // ctrl-left without modifier parameter (some terminal emulators)
 			e.ClearSelection()
 			e.GoToPrevWord(c, status)
+			if e.bookMode.Load() {
+				e.redraw.Store(true) // cursor is embedded in the image
+			}
 
 		case "ctrl→", // ctrl-right, go to the start of the next word
 			"\x1bf",   // ESC+f: ctrl/alt-right in macOS Terminal.app and some iTerm2 configurations
 			"\x1b[5C": // ctrl-right without modifier parameter (some terminal emulators)
 			e.ClearSelection()
 			e.GoToNextWord(c, status)
+			if e.bookMode.Load() {
+				e.redraw.Store(true) // cursor is embedded in the image
+			}
 
 		case ctrlShiftLeftKey: // ctrl-shift-left, extend selection to the start of the previous word
 			if !e.HasSelection() {
@@ -1095,7 +1111,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
-			if e.AtOrAfterEndOfLine() {
+			if !e.bookMode.Load() && e.AtOrAfterEndOfLine() {
+				// Non-book: wrap to start of next line when already at end.
 				e.Down(c, status)
 			}
 			e.End(c)
@@ -1103,11 +1120,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
-		case "shift⇱": // shift-home, cycle selection: to start of text, to col 0, to start of text above
+		case "shift⇱": // shift-home, extend selection to start of line
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
-			if e.AtStartOfTextScreenLine() && (e.pos.sx+e.pos.offsetX) != 0 {
+			if e.bookMode.Load() {
+				// Standard word-processor behaviour: go straight to column 0.
+				e.Home()
+			} else if e.AtStartOfTextScreenLine() && (e.pos.sx+e.pos.offsetX) != 0 {
 				e.Home()
 			} else if e.pos.sx == 0 && e.pos.offsetX == 0 {
 				e.Up(c, status)
@@ -1117,6 +1137,31 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 			e.UpdateSelection()
 			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+
+		case "⌦": // forward-delete (Delete key)
+			if e.bookMode.Load() {
+				// In book mode: delete the character to the right, standard word-processor behaviour.
+				undo.Snapshot(e)
+				if e.HasSelection() {
+					e.DeleteSelection(c, status)
+					e.ClearSelection()
+				} else {
+					e.Delete(c, false)
+				}
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				break
+			}
+			// Default: same as ctrl-d (delete character to the right).
+			undo.Snapshot(e)
+			if e.Empty() {
+				status.SetMessage("Empty")
+				status.Show(c, e)
+			} else {
+				e.Delete(c, e.blockMode)
+				e.redraw.Store(true)
+			}
 			e.redrawCursor.Store(true)
 
 		case "shift⌦": // shift-delete, cut selection (or cut line if no selection)
@@ -1518,6 +1563,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case "c:9": // tab or ctrl-i
 
+			if e.bookMode.Load() { // book mode: toggle italic (tab not needed in prose mode)
+				undo.Snapshot(e)
+				e.bookToggleFormat(c, "*")
+				break
+			}
+
 			if e.spellCheckMode {
 				// TODO: Save a "custom words" and "ignored words" list to disk
 				if ignoredWord := e.RemoveCurrentWordFromWordList(); ignoredWord != "" {
@@ -1827,6 +1878,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
+			if e.bookMode.Load() { // book mode: toggle word-statistics display
+				e.statusMode = !e.statusMode
+				e.bookModeStatusBar(c)
+				break
+			}
+
 			// If a search is in progress, clear the search first
 			if e.searchTerm != "" {
 				e.ClearSearch()
@@ -1911,6 +1968,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redraw.Store(true)
 
 		case "c:21": // ctrl-u to undo
+
+			if e.bookMode.Load() { // book mode: toggle underline
+				undo.Snapshot(e)
+				e.bookToggleFormat(c, "__")
+				break
+			}
 
 			if e.nanoMode.Load() { // nano: paste after cutting
 				e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, &pasteAllAtOnce, kh.PrevIs("c:13"))
@@ -2349,6 +2412,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				status.SetMessageAfterRedraw("Opening a portal at " + portal.String())
 			}
 		case "c:2": // ctrl-b, go back after jumping to a definition, or toggle block edit mode
+			if e.bookMode.Load() { // book mode: toggle bold
+				undo.Snapshot(e)
+				e.bookToggleFormat(c, "**")
+				break
+			}
 			if e.nanoMode.Load() { // nano: ctrl-b, cursor backward
 				e.CursorBackward(c, status)
 				break
@@ -2663,6 +2731,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		// Place the cursor at the bottom of the screen so that
 		// the shell prompt appears at the bottom after quitting.
 		vt.SetXY(0, c.H()-1)
+	}
+
+	// Restore cursor shape to steady block when leaving book mode
+	if e.bookMode.Load() {
+		bookModeResetCursor()
 	}
 
 	// Make sure to enable the cursor again
