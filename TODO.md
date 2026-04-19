@@ -2,11 +2,12 @@
 
 ## General
 
-- [ ] Also enable text selection with shift-arrows for .txt files.
-- [ ] Also handle ctrl-left and ctrl-right under iTerm2.
+- [x] Also enable text selection with shift-arrows for .txt files.
+- [x] Also handle ctrl-left and ctrl-right under iTerm2.
 - [ ] Add a poetry mode for writing, reading, rating and browsing poetry.
-- [ ] Add a book mode for writing books under Kitty or iTerm2, with the editor to the left and a preview to the right, nice text flow and a typewriter-like user experience.
+- [x] Add a book mode for writing books under Kitty or iTerm2, with the editor to the left and a preview to the right, nice text flow and a typewriter-like user experience.
       OR let the book mode be fullscreen and only use text rendering, but be a "zoomed in" view of a document, with font rendering.
+      (Basic book mode added with `--book`/`-B`: word wrap at 72, no syntax highlighting, status bar shown.)
 - [ ] There is some duplication between this source code and the source code of the `syntax` package. Refactor and fix.
 - [x] When globbing, prioritize `.sh` over `.bat`, unless on Windows.
 - [ ] Let the default theme have a 256-color variant that is like the default theme, only nicer.
