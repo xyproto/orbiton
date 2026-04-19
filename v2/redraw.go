@@ -35,11 +35,16 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 
 	w := int(newC.Width())
 
-	if (w < e.wrapWidth) || (e.wrapWidth < 80 && w >= 80) {
-		e.wrapWidth = w
+	if !e.bookMode.Load() {
+		if (w < e.wrapWidth) || (e.wrapWidth < 80 && w >= 80) {
+			e.wrapWidth = w
+		}
 	}
 
-	if drawLines {
+	// In graphical book mode the canvas dimensions are stale here (newC already
+	// reflects the new size, but c still has the old one). Skip the first text
+	// render; graphical rendering happens below after the canvas is updated.
+	if drawLines && !e.bookGraphicalMode() {
 		e.HideCursorDrawLines(c, true, false, shouldHighlightCurrentLine)
 	}
 
@@ -57,14 +62,23 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 
 	resizeMut.Unlock()
 
-	if w < e.wrapWidth {
-		e.wrapWidth = w
-	} else if e.wrapWidth < 80 && w >= 80 {
-		e.wrapWidth = w
+	if !e.bookMode.Load() {
+		if w < e.wrapWidth {
+			e.wrapWidth = w
+		} else if e.wrapWidth < 80 && w >= 80 {
+			e.wrapWidth = w
+		}
 	}
 
 	if drawLines {
-		e.HideCursorDrawLines(c, true, false, shouldHighlightCurrentLine)
+		if e.bookGraphicalMode() {
+			// c now has the new terminal dimensions; render the image pipeline.
+			e.bookModeRenderImage(c)
+			e.bookModeStatusBar(c)
+			e.bookModeShowCursor(c)
+		} else {
+			e.HideCursorDrawLines(c, true, false, shouldHighlightCurrentLine)
+		}
 	}
 
 	e.redraw.Store(false)
@@ -155,6 +169,34 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 		return
 	}
 
+	// Book mode with graphics: render the editing area as an image
+	if e.bookGraphicalMode() {
+		e.bookModeEnsureCursorVisible(c)
+		e.bookModeRenderImage(c)
+		// Route any pending one-shot message through the graphical status bar.
+		if msg := status.messageAfterRedraw; len(msg) > 0 {
+			status.SetMessage(msg)
+			status.messageAfterRedraw = ""
+			status.Show(c, e) // bookGraphicalMode path: sets bookStatusMsg + re-renders
+		} else {
+			e.bookModeStatusBar(c)
+		}
+		e.bookModeShowCursor(c)
+		e.redraw.Store(false)
+		return
+	}
+
+	// Book mode with text (VT100/xterm): render Markdown via ANSI escape codes
+	if e.bookTextMode() {
+		e.bookTextModeRender(c)
+		if !e.statusMode {
+			status.NanoInfo(c, e)
+		}
+		c.HideCursorAndDraw()
+		e.redraw.Store(false)
+		return
+	}
+
 	// Check if an extra reset is needed
 	shouldHighlightCurrentLine := e.highlightCurrentLine || e.highlightCurrentText
 
@@ -164,6 +206,8 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 	// Display the status message
 	if e.nanoMode.Load() {
 		status.Show(c, e)
+	} else if e.bookMode.Load() {
+		status.NanoInfo(c, e)
 	} else if e.statusMode {
 		status.ShowFilenameLineColWordCount(c, e)
 	} else if status.IsError() {
@@ -204,6 +248,38 @@ func (e *Editor) updateCanvasLines(c *vt.Canvas, shouldHighlightCurrentLine bool
 func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHighlightCurrentLine, repositionCursor bool) {
 	redrawMutex.Lock()
 	defer redrawMutex.Unlock()
+
+	// Book mode with graphics: bypass canvas, render image + status bar directly.
+	// The cursor is drawn inside the image, so we re-render on every key loop
+	// iteration to keep it current regardless of whether content changed.
+	if e.bookGraphicalMode() {
+		e.bookModeEnsureCursorVisible(c)
+		e.bookModeRenderImage(c)
+		// Route any pending one-shot message through the graphical status bar.
+		if msg := status.messageAfterRedraw; len(msg) > 0 {
+			status.SetMessage(msg)
+			status.messageAfterRedraw = ""
+			status.Show(c, e) // bookGraphicalMode path: sets bookStatusMsg + re-renders
+		} else {
+			e.bookModeStatusBar(c)
+		}
+		e.bookModeShowCursor(c)
+		e.redraw.Store(false)
+		return
+	}
+
+	// Book mode with text (VT100/xterm): re-render Markdown on every key loop
+	// iteration so movement and edits are reflected immediately.
+	if e.bookTextMode() {
+		e.bookTextModeRender(c)
+		if !e.statusMode {
+			status.NanoInfo(c, e)
+		}
+		c.HideCursorAndDraw()
+		e.redraw.Store(false)
+		e.EnableAndPlaceCursor(c)
+		return
+	}
 
 	redraw := e.redraw.Load()
 	overlayRedraw := e.drawProgress.Load() || (e.drawFuncName.Load() && !e.nanoMode.Load())
@@ -248,6 +324,8 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 	// Drawing status messages should come after redrawing, but before cursor positioning
 	if e.nanoMode.Load() {
 		status.Show(c, e)
+	} else if e.bookMode.Load() {
+		status.NanoInfo(c, e)
 	} else if e.statusMode {
 		status.ShowFilenameLineColWordCount(c, e)
 	} else if status.IsError() {

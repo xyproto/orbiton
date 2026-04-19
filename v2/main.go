@@ -58,6 +58,9 @@ var (
 	// Build with release mode instead of debug mode whenever applicable
 	releaseBuildFlag bool
 
+	// Book mode: word wrap, no syntax highlighting, text focus
+	bookModeFlag bool
+
 	// An empty *Ollama struct
 	ollama = NewOllama()
 
@@ -135,6 +138,7 @@ func main() {
 	pflag.BoolVarP(&ollamaEnabled, "ollama", "o", env.Bool("ORBITON_OLLAMA"), "enable Ollama-specific features")
 	pflag.BoolVarP(&pasteFlag, "paste", "p", false, "paste the clipboard into the file and quit")
 	pflag.BoolVarP(&releaseBuildFlag, "release", "r", false, "build with release mode instead of debug mode, whenever applicable")
+	pflag.BoolVarP(&bookModeFlag, "book", "B", false, "open in book mode: word wrap, plain text, word count")
 	pflag.BoolVarP(&quickHelpFlag, "quick-help", "q", false, "always display the quick help when starting")
 	pflag.BoolVarP(&noQuickHelpFlag, "no-quick-help", "z", false, "never display the quick help when starting")
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
@@ -491,6 +495,10 @@ func main() {
 		default:
 			specificLetter = false
 		}
+	}
+
+	if bookModeFlag {
+		theme = NewLightVSTheme()
 	}
 
 	if catFlag {
