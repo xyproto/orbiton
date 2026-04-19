@@ -1017,15 +1017,15 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
-		case "ctrl←",        // ctrl-left, go to the start of the previous word
-			"\x1bb",      // ESC+b: ctrl/alt-left in macOS Terminal.app and some iTerm2 configurations
-			"\x1b[5D":    // ctrl-left without modifier parameter (some terminal emulators)
+		case "ctrl←", // ctrl-left, go to the start of the previous word
+			"\x1bb",   // ESC+b: ctrl/alt-left in macOS Terminal.app and some iTerm2 configurations
+			"\x1b[5D": // ctrl-left without modifier parameter (some terminal emulators)
 			e.ClearSelection()
 			e.GoToPrevWord(c, status)
 
-		case "ctrl→",        // ctrl-right, go to the start of the next word
-			"\x1bf",      // ESC+f: ctrl/alt-right in macOS Terminal.app and some iTerm2 configurations
-			"\x1b[5C":    // ctrl-right without modifier parameter (some terminal emulators)
+		case "ctrl→", // ctrl-right, go to the start of the next word
+			"\x1bf",   // ESC+f: ctrl/alt-right in macOS Terminal.app and some iTerm2 configurations
+			"\x1b[5C": // ctrl-right without modifier parameter (some terminal emulators)
 			e.ClearSelection()
 			e.GoToNextWord(c, status)
 
