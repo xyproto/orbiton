@@ -759,11 +759,39 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 			if e.mode == mode.ManPage {
 				line = handleManPageEscape(line)
 			}
-			// Output a regular line, scrolled to the current e.pos.offsetX
-			screenLine = e.ChopLine(line, int(cw))
-			screenLine = asciiFallback(screenLine)
-			c.Write(cx+lineRuneCount, cy+uint(y), e.Foreground, e.Background, screenLine)
-			lineRuneCount += uint(utf8.RuneCountInString(screenLine)) // rune count
+			if e.selection != nil {
+				// Render character by character so that selection highlighting is visible
+				skipX := e.pos.offsetX
+				for runeIndex, r := range []rune(line) {
+					if skipX > 0 {
+						skipX--
+						continue
+					}
+					rw := runewidth.RuneWidth(r)
+					if useASCII && r > 127 {
+						r = '?'
+						rw = 1
+					}
+					if cx+lineRuneCount+uint(rw) > cw {
+						break
+					}
+					inSel := e.selection.ContainsPos(y+offsetY, runeIndex)
+					fgColor := e.Foreground
+					bgColor := e.Background
+					if inSel {
+						fgColor = e.NanoHelpForeground
+						bgColor = e.NanoHelpBackground
+					}
+					c.Write(cx+lineRuneCount, cy+uint(y), fgColor, bgColor, string(r))
+					lineRuneCount += uint(rw)
+				}
+			} else {
+				// Output a regular line, scrolled to the current e.pos.offsetX
+				screenLine = e.ChopLine(line, int(cw))
+				screenLine = asciiFallback(screenLine)
+				c.Write(cx+lineRuneCount, cy+uint(y), e.Foreground, e.Background, screenLine)
+				lineRuneCount += uint(utf8.RuneCountInString(screenLine)) // rune count
+			}
 		}
 
 		// Fill the rest of the line on the canvas with "blanks"
