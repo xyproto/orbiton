@@ -2,6 +2,13 @@
 
 ## General
 
+- [ ] Visual soft word wrap (no clipping at the right margin, when in book mode).
+- [ ] Optional first-line indent for body paragraphs for book mode.
+- [ ] Strikethrough rendering for graphical book mode.
+- [ ] Table rendering for graphical book mode.
+- [ ] Footnotes, for book mode ([^1] style).
+- [ ] Adjust line spacing in the ctrl-o menu.
+- [ ] Zoom, for graphical book mode?
 - [x] Also enable text selection with shift-arrows for .txt files.
 - [x] Also handle ctrl-left and ctrl-right under iTerm2.
 - [ ] Add a poetry mode for writing, reading, rating and browsing poetry.
