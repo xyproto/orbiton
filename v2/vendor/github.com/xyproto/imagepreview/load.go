@@ -14,11 +14,12 @@ import (
 	ico "github.com/dkua/go-ico"
 	bmp "github.com/jsummers/gobmp"
 	"github.com/xfmoulet/qoi"
+	"golang.org/x/image/tiff"
 	"golang.org/x/image/webp"
 )
 
 // LoadImage loads an image and converts it to *image.NRGBA.
-// PNG, JPEG, ICO, GIF, BMP, WebP and QOI images are supported.
+// PNG, JPEG, ICO, GIF, BMP, WebP, QOI and TIFF images are supported.
 func LoadImage(filename string) (*image.NRGBA, error) {
 	f, err := os.Open(filename)
 	if err != nil {
@@ -40,6 +41,8 @@ func LoadImage(filename string) (*image.NRGBA, error) {
 		img, err = png.Decode(f)
 	case ".qoi":
 		img, err = qoi.Decode(f)
+	case ".tiff", ".tif":
+		img, err = tiff.Decode(f)
 	case ".webp":
 		img, err = webp.Decode(f)
 	}

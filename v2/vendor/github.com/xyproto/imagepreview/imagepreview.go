@@ -20,18 +20,22 @@ var (
 	// IsITerm2 is true when running inside iTerm2 (which sets TERM_PROGRAM=iTerm.app).
 	IsITerm2 = env.Str("TERM_PROGRAM") == "iTerm.app"
 
+	// IsSixel is true when the terminal is known to support the Sixel graphics
+	// protocol. Currently detected for foot, mlterm, yaft, contour, and wezterm.
+	IsSixel = isSixelTerminal()
+
 	// IsVT is true when TERM starts with vt100 or vt220.
 	IsVT = strings.HasPrefix(env.Str("TERM"), "vt100") || strings.HasPrefix(env.Str("TERM"), "vt220")
 
 	// HasGraphics is true when the terminal supports an inline image protocol.
 	// It is disabled if TERM is vt100/vt220 or if NO_COLOR is set.
-	HasGraphics = (IsKitty || IsITerm2) && !IsVT && !env.Bool("NO_COLOR")
+	HasGraphics = (IsKitty || IsITerm2 || IsSixel) && !IsVT && !env.Bool("NO_COLOR")
 
 	// ImageExts lists file extensions handled by the image preview path.
 	ImageExts = map[string]bool{
 		".png": true, ".jpg": true, ".jpeg": true, ".gif": true,
-		".svg": true, ".qoi": true, ".ico": true, ".jxl": true,
-		".bmp": true, ".webp": true,
+		".svg": true, ".qoi": true, ".ico": true,
+		".bmp": true, ".webp": true, ".tiff": true, ".tif": true,
 	}
 
 	// PaletteColorMap maps RGB values to VT100 attribute colors for fast lookup.
@@ -56,6 +60,24 @@ func init() {
 // IsImageExt checks if the file extension indicates a supported image file.
 func IsImageExt(path string) bool {
 	return ImageExts[strings.ToLower(filepath.Ext(path))]
+}
+
+// isSixelTerminal returns true when the terminal is known to support Sixel.
+func isSixelTerminal() bool {
+	term := env.Str("TERM")
+	switch {
+	case strings.HasPrefix(term, "foot"):
+		return true
+	case strings.HasPrefix(term, "mlterm"):
+		return true
+	case strings.HasPrefix(term, "yaft"):
+		return true
+	case strings.HasPrefix(term, "contour"):
+		return true
+	case strings.HasPrefix(term, "wezterm"):
+		return true
+	}
+	return false
 }
 
 // PreviewResult holds a fully-prepared image preview ready to be displayed.
