@@ -359,12 +359,12 @@ func parseFirstKey(buf []byte) (string, int) {
 	return string(buf[:1]), 1
 }
 
-// String reads a string, handling key sequences and printable characters.
+// ReadKey reads a key sequence (or printable character) from the TTY.
 // When multiple key sequences arrive in one read (for example a held-down
 // arrow key during a slow redraw), they are returned one by one on
 // successive calls via a pending byte buffer — this prevents queued arrow
 // escapes from leaking into the document as literal "^[[..." text.
-func (tty *TTY) String() string {
+func (tty *TTY) ReadKey() string {
 	// Note: we deliberately do NOT restore the original terminal state or
 	// flush the input queue on exit. Restoring would re-enable echo between
 	// keystrokes (causing raw escape sequences like "\x1b[A" to be echoed

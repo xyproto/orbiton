@@ -49,8 +49,8 @@ func (tty *TTY) Poll(d time.Duration) (bool, error) { return true, nil }
 // Key reads the keycode or ASCII code
 func (tty *TTY) Key() int { return 0 }
 
-// String reads a string from the TTY
-func (tty *TTY) String() string { return "" }
+// ReadKey reads a key sequence from the TTY.
+func (tty *TTY) ReadKey() string { return "" }
 
 // Rune reads a rune from the TTY
 func (tty *TTY) Rune() rune { return rune(0) }
