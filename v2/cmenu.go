@@ -276,7 +276,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				// Also close the portal, if any
 				e.ClosePortal()
 				// Mark the file as changed
-				e.changed.Store(true)
+				e.MarkChanged()
 			}
 			// Get the current index and remove the rest of the lines
 			currentLineIndex := int(e.DataY())

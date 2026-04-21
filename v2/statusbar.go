@@ -159,11 +159,17 @@ func (sb *StatusBar) Clear(c *vt.Canvas, repositionCursorAfterDrawing bool) {
 		return
 	}
 
-	// In book mode with graphics the image renderer owns the terminal; skip text
-	// drawing but do clear the graphical overlay message and re-render the bar.
+	// In book mode with graphics the image renderer owns the terminal.
+	// Just clear the state; bookModeRenderAll at the end of the key loop
+	// will render the updated status bar as part of the full frame.
 	if sb.editor.bookGraphicalMode() {
 		bookModeSetStatusMsg("")
-		sb.editor.bookModeStatusBar(c)
+		return
+	}
+
+	// In text book mode the end-of-keyloop always fully redraws the canvas.
+	// Skipping the intermediate draw avoids a flash of stale content.
+	if sb.editor.bookTextMode() {
 		return
 	}
 
@@ -199,11 +205,17 @@ func (sb *StatusBar) ClearAll(c *vt.Canvas, repositionCursorAfterDrawing bool) {
 		return
 	}
 
-	// In book mode with graphics the image renderer owns the terminal; skip text
-	// drawing but do clear the graphical overlay message and re-render the bar.
+	// In book mode with graphics the image renderer owns the terminal.
+	// Just clear the state; bookModeRenderAll at the end of the key loop
+	// will render the updated status bar as part of the full frame.
 	if sb.editor.bookGraphicalMode() {
 		bookModeSetStatusMsg("")
-		sb.editor.bookModeStatusBar(c)
+		return
+	}
+
+	// In text book mode the end-of-keyloop always fully redraws the canvas.
+	// Skipping the intermediate draw avoids a flash of stale content.
+	if sb.editor.bookTextMode() {
 		return
 	}
 
@@ -241,17 +253,27 @@ func (sb *StatusBar) Show(c *vt.Canvas, e *Editor) {
 				dur *= 3
 			}
 			bookModeSetStatusMsg(msg)
-			sb.editor.bookModeStatusBar(c)
+			redrawMutex.Lock()
+			sb.editor.bookModeFullFrame(c)
+			redrawMutex.Unlock()
+			// Schedule a single auto-clear after dur. The generation
+			// counter ensures that rapid repeated Show() calls don't
+			// pile up stale goroutines all re-acquiring redrawMutex and
+			// issuing full-frame re-renders — only the freshest one
+			// actually fires and clears.
+			myGen := bookStatusClearGen.Add(1)
 			go func() {
 				time.Sleep(dur)
+				if bookStatusClearGen.Load() != myGen {
+					return
+				}
 				bookModeSetStatusMsg("")
 				mut.Lock()
 				sb.msg = ""
 				sb.isError = false
 				mut.Unlock()
-				// Re-render the graphical status bar now that the message has expired.
 				redrawMutex.Lock()
-				sb.editor.bookModeStatusBar(c)
+				sb.editor.bookModeFullFrame(c)
 				redrawMutex.Unlock()
 			}()
 		}
@@ -320,15 +342,15 @@ func (sb *StatusBar) ShowNoTimeout(c *vt.Canvas, e *Editor) {
 		return
 	}
 
-	// In book mode with graphics, show the message via the graphical status bar.
-	if sb.editor.bookGraphicalMode() {
-		mut.RLock()
-		msg := sb.msg
-		mut.RUnlock()
-		if msg != "" {
-			bookModeSetStatusMsg(msg)
-			sb.editor.bookModeStatusBar(c)
-		}
+	// In book mode (graphical or text), the "no timeout" semantic of the
+	// regular terminal path doesn't really hold: the full-frame renderer
+	// owns the bottom row, so a stale message like "EOF" would otherwise
+	// linger on the page until something else happens to redraw. Route
+	// these calls through the same auto-clearing code path that Show uses
+	// so transient status messages disappear after sb.show, matching the
+	// user-visible behaviour of the regular (non-book) mode.
+	if sb.editor.bookGraphicalMode() || sb.editor.bookTextMode() {
+		sb.Show(c, e)
 		return
 	}
 

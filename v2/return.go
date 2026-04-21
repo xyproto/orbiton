@@ -24,6 +24,25 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar) {
 		indent = false
 	}
 
+	// In book mode or Markdown mode, detect list prefixes for auto-continuation.
+	var listPrefix string
+	if e.bookMode.Load() && e.AtOrAfterEndOfLine() {
+		rawLine := e.CurrentLine()
+		pfx := rawMarkdownPrefix(strings.ReplaceAll(rawLine, "\t", "    "))
+		if pfx != "" {
+			body := strings.TrimRight(rawLine, " \t")
+			if len(body) <= len(pfx) {
+				// The line is just a prefix with no body text — end the list.
+				// Clear the prefix and fall through to normal Return handling
+				// so a new line is inserted and the cursor moves down.
+				e.SetCurrentLine("")
+				e.Home()
+			} else {
+				listPrefix = nextListPrefix(pfx)
+			}
+		}
+	}
+
 	if trimmedLine == "private:" || trimmedLine == "protected:" || trimmedLine == "public:" {
 		// De-indent the current line before moving on to the next
 		e.SetCurrentLine(trimmedLine)
@@ -84,7 +103,16 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar) {
 	if e.bookGraphicalMode() {
 		editH--
 	}
-	if e.pos.sy > (editH - 1) {
+	if e.bookMode.Load() {
+		// Book mode: pos.sy is a data-line offset from offsetY, and the
+		// canvas-row based scroll math in ScrollDown does not account
+		// for soft wrap. Just advance DataY directly and let
+		// bookModeEnsureCursorVisible (called from RedrawAtEndOfKeyLoop)
+		// scroll the viewport based on the real display-row layout.
+		e.pos.Down(c)
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
+	} else if e.pos.sy > (editH - 1) {
 		e.pos.Down(c)
 		e.redraw.Store(e.ScrollDown(c, status, 1, editH))
 		e.redrawCursor.Store(true)
@@ -116,6 +144,14 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar) {
 			// Then move to the start of the text
 			e.GoToStartOfTextLine(c)
 		}
+	}
+
+	// Auto-continue Markdown lists: insert the next prefix on the new line.
+	if listPrefix != "" {
+		e.SetCurrentLine(listPrefix + e.LineContentsFromCursorPosition())
+		// Position cursor after the prefix. Don't use End() — it trims
+		// trailing whitespace which would strip the space from "* ".
+		e.pos.SetX(c, len([]rune(listPrefix)))
 	}
 
 	e.SaveX(true)

@@ -201,7 +201,16 @@ func (e *Editor) DeleteSelection(c *vt.Canvas, status *StatusBar) {
 	// Move cursor to the start of the deleted selection
 	e.GoTo(startY, c, status)
 	e.pos.SetX(c, startDisplayX)
-	e.changed.Store(true)
+
+	// Clamp the cursor to the (now shorter) line length to prevent the next
+	// Insert from being silently skipped because x > len(line).
+	if runes, ok := e.lines[int(startY)]; ok {
+		if dx := e.pos.sx + e.pos.offsetX; dx > len(runes) {
+			e.pos.SetX(c, len(runes))
+		}
+	}
+
+	e.MarkChanged()
 	e.redraw.Store(true)
 	e.redrawCursor.Store(true)
 }

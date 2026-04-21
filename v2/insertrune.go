@@ -21,7 +21,7 @@ func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
 	}
 
 	// The document will be changed
-	e.changed.Store(true)
+	e.MarkChanged()
 
 	// Repaint afterwards
 	e.redraw.Store(true)
