@@ -21,7 +21,9 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 
 	if status != nil {
 		status.ClearAll(c, false)
-		e.SetSearchTerm(c, status, "", false)
+		if !e.bookMode.Load() {
+			e.SetSearchTerm(c, status, "", false)
+		}
 	}
 
 	vt.CloseKeepContent()
@@ -30,7 +32,9 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 	vt.Init()
 
 	newC := vt.NewCanvas()
-	newC.ShowCursor()
+	if !e.bookGraphicalMode() {
+		newC.ShowCursor()
+	}
 	vt.EchoOff()
 
 	w := int(newC.Width())
@@ -41,10 +45,11 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 		}
 	}
 
-	// In graphical book mode the canvas dimensions are stale here (newC already
-	// reflects the new size, but c still has the old one). Skip the first text
-	// render; graphical rendering happens below after the canvas is updated.
-	if drawLines && !e.bookGraphicalMode() {
+	// Book mode has its own rendering pipeline (graphical renders an image,
+	// text renders styled VT100 output). Skip the regular WriteLines path
+	// for both variants so that syntax-highlighted bold/colour attributes
+	// don't briefly flash on screen.
+	if drawLines && !e.bookMode.Load() {
 		e.HideCursorDrawLines(c, true, false, shouldHighlightCurrentLine)
 	}
 
@@ -56,7 +61,9 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 	resizeMut.Lock()
 
 	newC = vt.NewCanvas()
-	newC.ShowCursor()
+	if !e.bookGraphicalMode() {
+		newC.ShowCursor()
+	}
 	vt.EchoOff()
 	w = int(newC.Width())
 
@@ -73,9 +80,11 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 	if drawLines {
 		if e.bookGraphicalMode() {
 			// c now has the new terminal dimensions; render the image pipeline.
-			e.bookModeRenderImage(c)
-			e.bookModeStatusBar(c)
-			e.bookModeShowCursor(c)
+			e.bookModeRenderAll(c, nil)
+		} else if e.bookTextMode() {
+			// Text book mode: re-render styled Markdown into the canvas.
+			e.bookTextModeRender(c)
+			c.HideCursorAndDraw()
 		} else {
 			e.HideCursorDrawLines(c, true, false, shouldHighlightCurrentLine)
 		}
@@ -172,16 +181,7 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 	// Book mode with graphics: render the editing area as an image
 	if e.bookGraphicalMode() {
 		e.bookModeEnsureCursorVisible(c)
-		e.bookModeRenderImage(c)
-		// Route any pending one-shot message through the graphical status bar.
-		if msg := status.messageAfterRedraw; len(msg) > 0 {
-			status.SetMessage(msg)
-			status.messageAfterRedraw = ""
-			status.Show(c, e) // bookGraphicalMode path: sets bookStatusMsg + re-renders
-		} else {
-			e.bookModeStatusBar(c)
-		}
-		e.bookModeShowCursor(c)
+		e.bookModeRenderAll(c, status)
 		e.redraw.Store(false)
 		return
 	}
@@ -254,16 +254,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 	// iteration to keep it current regardless of whether content changed.
 	if e.bookGraphicalMode() {
 		e.bookModeEnsureCursorVisible(c)
-		e.bookModeRenderImage(c)
-		// Route any pending one-shot message through the graphical status bar.
-		if msg := status.messageAfterRedraw; len(msg) > 0 {
-			status.SetMessage(msg)
-			status.messageAfterRedraw = ""
-			status.Show(c, e) // bookGraphicalMode path: sets bookStatusMsg + re-renders
-		} else {
-			e.bookModeStatusBar(c)
-		}
-		e.bookModeShowCursor(c)
+		e.bookModeRenderAll(c, status)
 		e.redraw.Store(false)
 		return
 	}
@@ -271,13 +262,14 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 	// Book mode with text (VT100/xterm): re-render Markdown on every key loop
 	// iteration so movement and edits are reflected immediately.
 	if e.bookTextMode() {
+		e.bookModeEnsureCursorVisible(c)
 		e.bookTextModeRender(c)
 		if !e.statusMode {
 			status.NanoInfo(c, e)
 		}
 		c.HideCursorAndDraw()
 		e.redraw.Store(false)
-		e.EnableAndPlaceCursor(c)
+		e.bookTextModePlaceCursor(c)
 		return
 	}
 

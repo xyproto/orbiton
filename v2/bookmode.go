@@ -9,13 +9,18 @@ import (
 	"image/color"
 	"image/draw"
 	"image/png"
+	"math"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 	"unicode"
 
 	"github.com/xyproto/imagepreview"
+	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
@@ -31,6 +36,12 @@ var vollkornItalicTTF []byte
 //go:embed fonts/Montserrat-Bold.ttf
 var montserratBoldTTF []byte
 
+//go:embed fonts/FiraMono-Bold.ttf
+var firaMonoBoldTTF []byte
+
+//go:embed fonts/Montserrat-Light.ttf
+var montserratLightTTF []byte
+
 // Margin ratios for book mode (fraction of pixel dimensions).
 const (
 	bookMarginLeft   = 0.10
@@ -39,11 +50,13 @@ const (
 	bookMarginBottom = 0.02
 )
 
-// bookFontSet caches Vollkorn body faces, Montserrat Bold header faces and a small
-// Montserrat Bold face for the status bar, all derived from the same base pixel size.
+// bookFontSet caches Vollkorn body faces, Montserrat Bold header faces, a small
+// Montserrat Bold face for the status bar, and a FiraMono Bold face for code,
+// all derived from the same base pixel size.
 type bookFontSet struct {
 	regular       font.Face
 	italic        font.Face
+	code          font.Face // FiraMono Bold — used for inline code, fenced blocks, indented code
 	h1            font.Face
 	h2            font.Face
 	h3            font.Face
@@ -95,14 +108,38 @@ var (
 	parsedVollkornRegular   *opentype.Font
 	parsedVollkornItalic    *opentype.Font
 	parsedMontserratBold    *opentype.Font
+	parsedMontserratLight   *opentype.Font
+	parsedFiraMonoBold      *opentype.Font
 	parseFontsOnce          sync.Once
 	parseFontsErr           error
 	bookContentCache        *image.RGBA
 	bookContentCacheW       int
 	bookContentCacheH       int
 	bookContentCacheOffsetY int
+	bookContentCacheGen     uint64 // generation counter when content cache was built
+	bookContentGen          uint64 // bumped each time document content changes
+	bookContentGenMu        sync.Mutex
+	bookPageEncoded         string // cached base64-encoded PNG of the last page image
+	bookPageEncodedCols     uint   // terminal cols when bookPageEncoded was produced
+	bookPageEncodedRows     uint   // editRows when bookPageEncoded was produced
 	bookStatusMsg           string
 	bookStatusMsgMu         sync.Mutex
+	// bookStatusClearGen coalesces status auto-clear goroutines: each
+	// status message bumps the counter and only the freshest goroutine
+	// actually clears + re-renders after the timeout.
+	bookStatusClearGen atomic.Uint64
+
+	// bookPNGEncoder and bookPNGBuf are reused across frames to avoid
+	// per-frame allocations. BestSpeed keeps encoding time low.
+	bookPNGEncoder = png.Encoder{CompressionLevel: png.BestSpeed}
+	bookPNGBuf     bytes.Buffer
+	// bookPageImageBuf is the reusable RGBA destination for bookPageToImage.
+	bookPageImageBuf *image.RGBA
+	// bookComposeBuf is the reusable RGBA destination for bookComposeFullPage.
+	bookComposeBuf *image.RGBA
+	// bookWriteBuf batches a frame's escape sequences and image payload into
+	// one Write so the terminal sees it atomically.
+	bookWriteBuf bytes.Buffer
 )
 
 func parsedFonts() error {
@@ -118,6 +155,14 @@ func parsedFonts() error {
 		}
 		if parsedMontserratBold, err = opentype.Parse(montserratBoldTTF); err != nil {
 			parseFontsErr = err
+			return
+		}
+		if parsedMontserratLight, err = opentype.Parse(montserratLightTTF); err != nil {
+			parseFontsErr = err
+			return
+		}
+		if parsedFiraMonoBold, err = opentype.Parse(firaMonoBoldTTF); err != nil {
+			parseFontsErr = err
 		}
 	})
 	return parseFontsErr
@@ -126,13 +171,26 @@ func parsedFonts() error {
 // bookGraphicalMode returns true when book mode uses the Kitty/iTerm2 graphics
 // protocol for rendering (terminal supports pixel-level image display).
 func (e *Editor) bookGraphicalMode() bool {
-	return e.bookMode.Load() && imagepreview.HasGraphics
+	return e.bookMode.Load() && imagepreview.HasGraphics && !e.bookForceTextMode.Load()
 }
 
 // bookTextMode returns true when book mode uses VT100/xterm text rendering
 // (vt100, vt220, xterm, xterm-color, xterm-256color, linux terminals).
 func (e *Editor) bookTextMode() bool {
-	return e.bookMode.Load() && !imagepreview.HasGraphics
+	return e.bookMode.Load() && (!imagepreview.HasGraphics || e.bookForceTextMode.Load())
+}
+
+// bookEditRows returns the number of terminal rows available for the graphical
+// book content. When the status bar is hidden (statusMode==true), the full
+// terminal height is used; otherwise one row is reserved for the status bar.
+func (e *Editor) bookEditRows(totalRows uint) uint {
+	if e.statusMode {
+		return totalRows
+	}
+	if totalRows == 0 {
+		return 0
+	}
+	return totalRows - 1
 }
 
 // bookModeSetStatusMsg atomically sets the temporary status bar message.
@@ -149,12 +207,28 @@ func bookModeGetStatusMsg() string {
 	return bookStatusMsg
 }
 
+// bookBumpContentGen increments the content generation counter so the content
+// cache is invalidated on the next render. This is cheaper than using
+// e.Changed() which stays true until the file is saved.
+func bookBumpContentGen() {
+	bookContentGenMu.Lock()
+	bookContentGen++
+	bookContentGenMu.Unlock()
+}
+
+// bookCurrentContentGen returns the current content generation counter.
+func bookCurrentContentGen() uint64 {
+	bookContentGenMu.Lock()
+	defer bookContentGenMu.Unlock()
+	return bookContentGen
+}
+
 func newFace(f *opentype.Font, size float64) (font.Face, error) {
-	// TODO: Find better DPI values
-	const defaultDPI = 72
 	return opentype.NewFace(f, &opentype.FaceOptions{
-		Size:    size,
-		DPI:     defaultDPI,
+		Size: size,
+		// The page image is rendered at the terminal's real cell size, so we
+		// always use 96 DPI here; environment-based probes proved unreliable.
+		DPI:     96,
 		Hinting: font.HintingFull,
 	})
 }
@@ -178,11 +252,11 @@ func bookFaces(pixelSize float64) (*bookFontSet, error) {
 	if err != nil {
 		return nil, err
 	}
-	h1Size := pixelSize * 2.1
-	h2Size := pixelSize * 1.9
-	h3Size := pixelSize * 1.6
-	h4Size := pixelSize * 1.3
-	h5Size := pixelSize * 1.1
+	h1Size := pixelSize * 1.85
+	h2Size := pixelSize * 1.65
+	h3Size := pixelSize * 1.4
+	h4Size := pixelSize * 1.2
+	h5Size := pixelSize * 1.05
 	h1, err := newFace(parsedMontserratBold, h1Size)
 	if err != nil {
 		return nil, err
@@ -207,13 +281,23 @@ func bookFaces(pixelSize float64) (*bookFontSet, error) {
 	if statusBarSize < 8 {
 		statusBarSize = 8
 	}
-	sb, err := newFace(parsedMontserratBold, statusBarSize)
+	sb, err := newFace(parsedMontserratLight, statusBarSize)
+	if err != nil {
+		return nil, err
+	}
+	// Code font is slightly smaller than the body to visually distinguish it.
+	codeSize := pixelSize * 0.88
+	if codeSize < 6 {
+		codeSize = 6
+	}
+	cod, err := newFace(parsedFiraMonoBold, codeSize)
 	if err != nil {
 		return nil, err
 	}
 	bookFontCache = &bookFontSet{
 		regular:       reg,
 		italic:        ita,
+		code:          cod,
 		h1:            h1,
 		h2:            h2,
 		h3:            h3,
@@ -243,14 +327,14 @@ func faceAscent(face font.Face, fontSizePx float64) int {
 	return a
 }
 
-// ── Inline Markdown parsing ────────────────────────────────────────────────
-
 // textSegment is one styled run of text within a body line.
 type textSegment struct {
 	text      string
 	bold      bool
 	italic    bool
 	underline bool
+	strike    bool // rendered with a strikethrough line
+	code      bool // rendered in the monospace code font (FiraMono Bold)
 }
 
 // parseLineSegments converts a line with Markdown-like inline markers into
@@ -260,18 +344,19 @@ type textSegment struct {
 //	**text**       bold
 //	*text*         italic
 //	__text__       underline
+//	~~text~~       strikethrough
 //	`code`         italic (code style; backticks stripped)
 //	[text](url)    underlined link text (URL discarded)
 //	![alt](url)    skipped entirely (image)
 func parseLineSegments(line string) []textSegment {
-	flush := func(segs []textSegment, cur *strings.Builder, bold, italic, underline bool) []textSegment {
+	flush := func(segs []textSegment, cur *strings.Builder, bold, italic, underline, strike bool) []textSegment {
 		if cur.Len() > 0 {
-			segs = append(segs, textSegment{text: cur.String(), bold: bold, italic: italic, underline: underline})
+			segs = append(segs, textSegment{text: cur.String(), bold: bold, italic: italic, underline: underline, strike: strike})
 			cur.Reset()
 		}
 		return segs
 	}
-	type state struct{ bold, italic, underline bool }
+	type state struct{ bold, italic, underline, strike bool }
 	var (
 		segs  []textSegment
 		cur   strings.Builder
@@ -291,7 +376,7 @@ func parseLineSegments(line string) []textSegment {
 					k++
 				}
 				if k < len(runes) {
-					segs = flush(segs, &cur, st.bold, st.italic, st.underline)
+					segs = flush(segs, &cur, st.bold, st.italic, st.underline, st.strike)
 					i = k + 1
 					continue
 				}
@@ -312,9 +397,9 @@ func parseLineSegments(line string) []textSegment {
 					k++
 				}
 				if k < len(runes) {
-					segs = flush(segs, &cur, st.bold, st.italic, st.underline)
+					segs = flush(segs, &cur, st.bold, st.italic, st.underline, st.strike)
 					linkText := string(runes[i+1 : j])
-					segs = append(segs, textSegment{text: linkText, bold: st.bold, italic: st.italic, underline: true})
+					segs = append(segs, textSegment{text: linkText, bold: st.bold, italic: st.italic, underline: true, strike: st.strike})
 					i = k + 1
 					continue
 				}
@@ -323,16 +408,16 @@ func parseLineSegments(line string) []textSegment {
 			i++
 			continue
 		}
-		// inline code is rendered as italic text with backticks stripped
+		// inline code: render in the monospace code font with backticks stripped
 		if runes[i] == '`' {
 			j := i + 1
 			for j < len(runes) && runes[j] != '`' {
 				j++
 			}
 			if j < len(runes) {
-				segs = flush(segs, &cur, st.bold, st.italic, st.underline)
+				segs = flush(segs, &cur, st.bold, st.italic, st.underline, st.strike)
 				codeText := string(runes[i+1 : j])
-				segs = append(segs, textSegment{text: codeText, bold: st.bold, italic: true, underline: st.underline})
+				segs = append(segs, textSegment{text: codeText, code: true, underline: st.underline, strike: st.strike})
 				i = j + 1
 				continue
 			}
@@ -341,34 +426,40 @@ func parseLineSegments(line string) []textSegment {
 			continue
 		}
 		if i+2 < len(runes) && runes[i] == '*' && runes[i+1] == '*' && runes[i+2] == '*' {
-			segs = flush(segs, &cur, st.bold, st.italic, st.underline)
+			segs = flush(segs, &cur, st.bold, st.italic, st.underline, st.strike)
 			st.bold = !st.bold
 			st.italic = !st.italic
 			i += 3
 			continue
 		}
 		if i+1 < len(runes) && runes[i] == '*' && runes[i+1] == '*' {
-			segs = flush(segs, &cur, st.bold, st.italic, st.underline)
+			segs = flush(segs, &cur, st.bold, st.italic, st.underline, st.strike)
 			st.bold = !st.bold
 			i += 2
 			continue
 		}
 		if runes[i] == '*' {
-			segs = flush(segs, &cur, st.bold, st.italic, st.underline)
+			segs = flush(segs, &cur, st.bold, st.italic, st.underline, st.strike)
 			st.italic = !st.italic
 			i++
 			continue
 		}
 		if i+1 < len(runes) && runes[i] == '_' && runes[i+1] == '_' {
-			segs = flush(segs, &cur, st.bold, st.italic, st.underline)
+			segs = flush(segs, &cur, st.bold, st.italic, st.underline, st.strike)
 			st.underline = !st.underline
+			i += 2
+			continue
+		}
+		if i+1 < len(runes) && runes[i] == '~' && runes[i+1] == '~' {
+			segs = flush(segs, &cur, st.bold, st.italic, st.underline, st.strike)
+			st.strike = !st.strike
 			i += 2
 			continue
 		}
 		cur.WriteRune(runes[i])
 		i++
 	}
-	segs = flush(segs, &cur, st.bold, st.italic, st.underline)
+	segs = flush(segs, &cur, st.bold, st.italic, st.underline, st.strike)
 	return segs
 }
 
@@ -384,6 +475,7 @@ const (
 	lineKindRule               // --- horizontal rule
 	lineKindBlank
 	lineKindImage // standalone ![alt](path) image
+	lineKindCode  // fenced (``` / ~~~) or 4-space-indented code block body line
 )
 
 type parsedLine struct {
@@ -392,6 +484,27 @@ type parsedLine struct {
 	indent      int    // leading spaces & 2 (list nesting depth)
 	prefix      string // rendered prefix, e.g. "• ", "1. ", "☐ ", "☑ "
 	body        string // text after the prefix, may contain inline markers
+}
+
+// isFencedCodeMarker reports whether the raw line is a fenced code block
+// delimiter (``` or ~~~ with optional language tag / trailing spaces).
+func isFencedCodeMarker(line string) bool {
+	trimmed := strings.TrimSpace(line)
+	return strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~")
+}
+
+// fenceStateAtLine returns true if document line lineIdx is inside a fenced
+// code block, by counting opening/closing fence markers from line 0.
+func (e *Editor) fenceStateAtLine(lineIdx int) bool {
+	inFence := false
+	for i := range lineIdx {
+		raw := e.Line(LineIndex(i))
+		raw = strings.ReplaceAll(raw, "\t", "    ")
+		if isFencedCodeMarker(raw) {
+			inFence = !inFence
+		}
+	}
+	return inFence
 }
 
 // isHorizontalRule reports whether the line is a Markdown thematic break
@@ -524,13 +637,21 @@ func parseBookLine(line string) parsedLine {
 		}
 		break
 	}
+	// 4-space (or deeper) indented lines not caught by the above rules are
+	// treated as indented code blocks (Markdown CommonMark spec §4.4).
+	if indent >= 4 {
+		return parsedLine{kind: lineKindCode, body: trimmed}
+	}
 	return parsedLine{kind: lineKindBody, body: line}
 }
 
 // faceForSeg returns the font face for a text segment. Bold is served by the
-// regular Vollkorn face (faux bold is applied by the caller).
-// Italic uses the Vollkorn Italic face.
+// regular Vollkorn face (faux bold is applied by the caller). Italic uses the
+// Vollkorn Italic face. Code segments use FiraMono Bold.
 func faceForSeg(fs *bookFontSet, seg textSegment) font.Face {
+	if seg.code {
+		return fs.code
+	}
 	if seg.italic {
 		return fs.italic
 	}
@@ -559,15 +680,25 @@ func drawSegments(img *image.RGBA, fs *bookFontSet, x, baselineY int, segs []tex
 			// Faux bold: draw again 1 px to the right for thicker strokes
 			drawString(img, face, x+1, baselineY, seg.text, clr)
 		}
+		right := endX
+		if seg.bold {
+			right++
+		}
 		if seg.underline {
 			ulY := baselineY + 2
 			if ulY < img.Bounds().Max.Y {
-				right := endX
-				if seg.bold {
-					right++
-				}
 				for px := x; px < right; px++ {
 					img.Set(px, ulY, clr)
+				}
+			}
+		}
+		if seg.strike {
+			// Strikethrough: horizontal line roughly at x-height centre.
+			asc := face.Metrics().Ascent.Round()
+			stY := baselineY - asc/3
+			if stY >= img.Bounds().Min.Y && stY < img.Bounds().Max.Y {
+				for px := x; px < right; px++ {
+					img.Set(px, stY, clr)
 				}
 			}
 		}
@@ -652,6 +783,9 @@ func bookScaleImage(src image.Image, maxW, maxH int) image.Image {
 	if srcW == 0 || srcH == 0 {
 		return src
 	}
+	if maxW < 1 || maxH < 1 {
+		return src
+	}
 	scaleX := float64(maxW) / float64(srcW)
 	scaleY := float64(maxH) / float64(srcH)
 	scale := scaleX
@@ -659,6 +793,9 @@ func bookScaleImage(src image.Image, maxW, maxH int) image.Image {
 		scale = scaleY
 	}
 	if scale >= 1.0 {
+		return src
+	}
+	if scale <= 0 {
 		return src
 	}
 	dstW := max(int(float64(srcW)*scale), 1)
@@ -678,8 +815,16 @@ func bookScaleImage(src image.Image, maxW, maxH int) image.Image {
 const bookMaxImageRows = 8
 
 // bookImageRows returns the number of display rows a Markdown image line will
-// occupy. Returns 1 if the image cannot be loaded.
-func (e *Editor) bookImageRows(imgPath string, lineH, maxW, maxAvailH int) int {
+// occupy. The size is fixed — it does not depend on where on the page the image
+// appears — so that images don't change size when scrolled.
+// Returns 1 if the image cannot be loaded.
+func (e *Editor) bookImageRows(imgPath string, lineH, maxW int) int {
+	if lineH < 1 {
+		lineH = 1
+	}
+	if maxW < 1 {
+		return 1
+	}
 	abs := e.resolveBookImagePath(imgPath)
 	src := bookLoadImage(abs)
 	if src == nil {
@@ -690,7 +835,7 @@ func (e *Editor) bookImageRows(imgPath string, lineH, maxW, maxAvailH int) int {
 	if srcW == 0 || srcH == 0 {
 		return 1
 	}
-	maxH := min(bookMaxImageRows*lineH, maxAvailH)
+	maxH := bookMaxImageRows * lineH // fixed ceiling — no available-height dependency
 	scaleX := float64(maxW) / float64(srcW)
 	scaleY := float64(maxH) / float64(srcH)
 	scale := scaleX
@@ -707,14 +852,19 @@ func (e *Editor) bookImageRows(imgPath string, lineH, maxW, maxAvailH int) int {
 
 // bookDrawInlineImage loads, scales and draws a Markdown image into img at
 // (marginLeft, cellTop). Returns the number of display rows consumed.
-func (e *Editor) bookDrawInlineImage(img *image.RGBA, imgPath string, marginLeft, marginRight, cellTop, availPixH, lineH int) int {
+// Image size is fixed (same as bookImageRows) — it does not shrink near the
+// bottom of the page. Pixels outside img.Bounds() are automatically clipped.
+func (e *Editor) bookDrawInlineImage(img *image.RGBA, imgPath string, marginLeft, marginRight, cellTop, lineH int) int {
+	if lineH < 1 {
+		lineH = 1
+	}
 	abs := e.resolveBookImagePath(imgPath)
 	src := bookLoadImage(abs)
 	if src == nil {
 		return 1
 	}
 	maxW := marginRight - marginLeft
-	maxH := min(bookMaxImageRows*lineH, availPixH)
+	maxH := bookMaxImageRows * lineH // fixed ceiling — no available-height dependency
 	scaled := bookScaleImage(src, maxW, maxH)
 	b := scaled.Bounds()
 	dstRect := image.Rect(marginLeft, cellTop, marginLeft+b.Dx(), cellTop+b.Dy())
@@ -834,6 +984,10 @@ func rawXToVisualX(line string, rawX int) int {
 			i += 2
 			continue
 		}
+		if i+1 < len(runes) && runes[i] == '~' && runes[i+1] == '~' {
+			i += 2
+			continue
+		}
 		// Backtick (inline code marker): skip only the backtick itself.
 		if runes[i] == '`' {
 			i++
@@ -845,12 +999,370 @@ func rawXToVisualX(line string, rawX int) int {
 	return vis
 }
 
+// visualXToRawX is the inverse of rawXToVisualX: given a visual (rendered)
+// rune offset into a line, return the corresponding raw rune offset that
+// includes Markdown formatting characters (*, **, ___, `).
+func visualXToRawX(line string, visX int) int {
+	runes := []rune(line)
+	vis := 0
+	i := 0
+	for i < len(runes) && vis < visX {
+		if i+2 < len(runes) && runes[i] == '*' && runes[i+1] == '*' && runes[i+2] == '*' {
+			i += 3
+			continue
+		}
+		if i+1 < len(runes) && runes[i] == '*' && runes[i+1] == '*' {
+			i += 2
+			continue
+		}
+		if runes[i] == '*' {
+			i++
+			continue
+		}
+		if i+1 < len(runes) && runes[i] == '_' && runes[i+1] == '_' {
+			i += 2
+			continue
+		}
+		if i+1 < len(runes) && runes[i] == '~' && runes[i+1] == '~' {
+			i += 2
+			continue
+		}
+		if runes[i] == '`' {
+			i++
+			continue
+		}
+		vis++
+		i++
+	}
+	// Skip any trailing formatting markers so the cursor lands after them.
+	for i < len(runes) {
+		if i+2 < len(runes) && runes[i] == '*' && runes[i+1] == '*' && runes[i+2] == '*' {
+			i += 3
+			continue
+		}
+		if i+1 < len(runes) && runes[i] == '*' && runes[i+1] == '*' {
+			i += 2
+			continue
+		}
+		if runes[i] == '*' {
+			i++
+			continue
+		}
+		if i+1 < len(runes) && runes[i] == '_' && runes[i+1] == '_' {
+			i += 2
+			continue
+		}
+		if i+1 < len(runes) && runes[i] == '~' && runes[i+1] == '~' {
+			i += 2
+			continue
+		}
+		if runes[i] == '`' {
+			i++
+			continue
+		}
+		break
+	}
+	return i
+}
+
+// bookWrapLine splits a body/bullet/numbered/checked/unchecked line into display
+// segments that each fit within availW runes. Headers, code, images, rules and
+// blanks return a single segment. The first segment keeps any line prefix;
+// continuation segments are indented to the same column. Each segment is a
+// rune-range [start, end) into the raw line.
+type wrapSegment struct {
+	start int // rune offset into the raw line (for cursor mapping)
+	end   int // exclusive rune end
+	text  string
+}
+
+// bookWrapBody wraps a body string (no prefix) to fit within availW visible
+// columns, breaking at word boundaries. Visible columns ignore Markdown
+// inline markers (*, **, ***, __, ~~ and `), so the wrap result reflects
+// what the reader will actually see, while the returned rune offsets still
+// refer to the raw body string (needed for cursor mapping).
+func bookWrapBody(body string, availW int) []wrapSegment {
+	if availW <= 0 {
+		availW = 1
+	}
+	runes := []rune(body)
+	if len(runes) == 0 {
+		return []wrapSegment{{0, 0, body}}
+	}
+	// markerLen returns how many runes make up a Markdown marker at
+	// position p that should be counted as zero visible width, or 0 if
+	// there is no marker there.
+	markerLen := func(p int) int {
+		if p+2 < len(runes) && runes[p] == '*' && runes[p+1] == '*' && runes[p+2] == '*' {
+			return 3
+		}
+		if p+1 < len(runes) && runes[p] == '*' && runes[p+1] == '*' {
+			return 2
+		}
+		if runes[p] == '*' {
+			return 1
+		}
+		if p+1 < len(runes) && runes[p] == '_' && runes[p+1] == '_' {
+			return 2
+		}
+		if p+1 < len(runes) && runes[p] == '~' && runes[p+1] == '~' {
+			return 2
+		}
+		if runes[p] == '`' {
+			return 1
+		}
+		return 0
+	}
+	var segs []wrapSegment
+	pos := 0
+	for pos < len(runes) {
+		rowStart := pos
+		visCount := 0
+		lastSpaceEnd := -1 // raw index just after the last space seen on this row
+		end := pos
+		for end < len(runes) {
+			if ml := markerLen(end); ml > 0 {
+				end += ml
+				continue
+			}
+			if visCount >= availW {
+				break
+			}
+			visCount++
+			// Record the break point only for the first space in a run of
+			// spaces, so consecutive spaces stay visible as leading
+			// whitespace on the next row instead of being absorbed into
+			// the invisible trailing region of the current row.
+			if runes[end] == ' ' && (end == rowStart || runes[end-1] != ' ') {
+				lastSpaceEnd = end + 1
+			}
+			end++
+		}
+		if end >= len(runes) {
+			segs = append(segs, wrapSegment{rowStart, len(runes), string(runes[rowStart:])})
+			break
+		}
+		brk := end
+		if lastSpaceEnd > rowStart {
+			brk = lastSpaceEnd
+		}
+		if brk <= rowStart {
+			// No progress would be made: force at least one rune of
+			// progress to avoid an infinite loop on pathological input.
+			brk = rowStart + 1
+		}
+		segs = append(segs, wrapSegment{rowStart, brk, string(runes[rowStart:brk])})
+		pos = brk
+	}
+	if len(segs) == 0 {
+		segs = append(segs, wrapSegment{0, len(runes), body})
+	}
+	return segs
+}
+
+// bookWrapLineRunes returns the number of display rows a parsed line will
+// occupy when soft-wrapped to fit within availW visible columns. Code,
+// images, rules, blanks, and headers are never wrapped and always return 1
+// (images return their own row count elsewhere).
+func bookWrapLineRunes(pl parsedLine, availW int) int {
+	switch pl.kind {
+	case lineKindHeader, lineKindCode, lineKindBlank, lineKindRule, lineKindImage:
+		return 1
+	}
+	pfxLen := len([]rune(pl.prefix))
+	bodyAvailW := availW - pfxLen
+	if bodyAvailW <= 0 {
+		bodyAvailW = 1
+	}
+	n := len(bookWrapBody(pl.body, bodyAvailW))
+	if n < 1 {
+		return 1
+	}
+	return n
+}
+
+// bookWrapSegmentsPixel splits styled inline segments into display rows that
+// fit within availPx pixels. It returns a slice of per-row segment slices
+// that the caller can pass to drawSegments. Word-boundary breaking is done
+// by scanning for spaces.
+type wrappedRow struct {
+	segs       []textSegment // styled segments for this display row
+	runeOffset int           // rune offset into the original body text
+	runeCount  int           // number of visual body runes on this row
+}
+
+func bookWrapSegmentsPixel(fs *bookFontSet, body string, availPx int) []wrappedRow {
+	if availPx <= 0 {
+		availPx = 1
+	}
+	segs := parseLineSegments(body)
+	// Flatten all segments into a single rune+face list so we can measure
+	// and break across segment boundaries.
+	type runeInfo struct {
+		r    rune
+		face font.Face
+		seg  int // index into segs
+		bold bool
+	}
+	var runes []runeInfo
+	for si, seg := range segs {
+		f := faceForSeg(fs, seg)
+		for _, r := range seg.text {
+			runes = append(runes, runeInfo{r, f, si, seg.bold})
+		}
+	}
+	if len(runes) == 0 {
+		return []wrappedRow{{segs: segs, runeOffset: 0, runeCount: 0}}
+	}
+
+	// Measure and break into rows.
+	var rows []wrappedRow
+	pos := 0
+	for pos < len(runes) {
+		rowStart := pos
+		x := fixed.Int26_6(0)
+		lastSpace := -1
+		end := pos
+		for end < len(runes) {
+			adv, _ := runes[end].face.GlyphAdvance(runes[end].r)
+			extra := fixed.Int26_6(0)
+			if runes[end].bold {
+				extra = fixed.I(1)
+			}
+			if (x+adv+extra).Round() > availPx && end > rowStart {
+				break
+			}
+			x += adv + extra
+			// Only break on the first space in a run of spaces (mirrors
+			// bookWrapBody) so consecutive spaces don't all get absorbed
+			// into the previous row, making an inserted space invisible.
+			if runes[end].r == ' ' && (end == rowStart || runes[end-1].r != ' ') {
+				lastSpace = end
+			}
+			end++
+		}
+		if end < len(runes) && lastSpace > rowStart {
+			end = lastSpace + 1 // break after the first space of the run
+		}
+		// Build textSegments for this row from the runes slice.
+		var rowSegs []textSegment
+		i := rowStart
+		for i < end {
+			si := runes[i].seg
+			var b strings.Builder
+			for i < end && runes[i].seg == si {
+				b.WriteRune(runes[i].r)
+				i++
+			}
+			orig := segs[si]
+			rowSegs = append(rowSegs, textSegment{
+				text:      b.String(),
+				bold:      orig.bold,
+				italic:    orig.italic,
+				underline: orig.underline,
+				strike:    orig.strike,
+				code:      orig.code,
+			})
+		}
+		rows = append(rows, wrappedRow{
+			segs:       rowSegs,
+			runeOffset: rowStart,
+			runeCount:  end - rowStart,
+		})
+		pos = end
+	}
+	return rows
+}
+
+// bookWrapLinePixel returns the number of display rows a body/list line
+// will occupy when rendered with the given font set within the available
+// pixel width (excluding the prefix). Non-body kinds always return 1.
+func bookWrapLinePixel(fs *bookFontSet, pl parsedLine, bodyAvailPx int) int {
+	switch pl.kind {
+	case lineKindHeader, lineKindCode, lineKindBlank, lineKindRule, lineKindImage:
+		return 1
+	}
+	return len(bookWrapSegmentsPixel(fs, pl.body, bodyAvailPx))
+}
+
+// bookRoundedCorners paints anti-aliased dark quarter-circles in the specified
+// corners of img so that the white page appears to have rounded corners against
+// a dark terminal background.
+func bookRoundedCorners(img *image.RGBA, radius int, top, bottom bool) {
+	if radius <= 0 || (!top && !bottom) {
+		return
+	}
+	bg := color.NRGBA{0x00, 0x00, 0x00, 0xff}
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+
+	// Blend a single pixel between the background and the existing colour based
+	// on how far outside the quarter-circle it lies. A 1-pixel anti-aliasing
+	// fringe keeps edges smooth.
+	blend := func(x, y, cx, cy int) {
+		dx := float64(x) - float64(cx) + 0.5
+		dy := float64(y) - float64(cy) + 0.5
+		dist := math.Sqrt(dx*dx+dy*dy) - float64(radius)
+		if dist >= 1.0 {
+			img.Set(x, y, bg)
+		} else if dist > 0 {
+			// Anti-alias fringe.
+			a := dist
+			orig := img.RGBAAt(x, y)
+			img.Set(x, y, color.NRGBA{
+				R: uint8(float64(bg.R)*a + float64(orig.R)*(1-a)),
+				G: uint8(float64(bg.G)*a + float64(orig.G)*(1-a)),
+				B: uint8(float64(bg.B)*a + float64(orig.B)*(1-a)),
+				A: 0xff,
+			})
+		}
+	}
+
+	if top {
+		// Top-left corner (centre of circle at radius, radius).
+		for y := 0; y < radius; y++ {
+			for x := 0; x < radius; x++ {
+				blend(x, y, radius, radius)
+			}
+		}
+		// Top-right corner.
+		for y := 0; y < radius; y++ {
+			for x := w - radius; x < w; x++ {
+				blend(x, y, w-radius-1, radius)
+			}
+		}
+	}
+	if bottom {
+		// Bottom-left corner.
+		for y := h - radius; y < h; y++ {
+			for x := 0; x < radius; x++ {
+				blend(x, y, radius, h-radius-1)
+			}
+		}
+		// Bottom-right corner.
+		for y := h - radius; y < h; y++ {
+			for x := w - radius; x < w; x++ {
+				blend(x, y, w-radius-1, h-radius-1)
+			}
+		}
+	}
+}
+
 // bookContentImage renders the visible document lines to a white RGBA image
 // with proper Markdown formatting. It does NOT draw the cursor; call
 // bookOverlayCursor on the result to add the I-beam before displaying.
 func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, pixW, pixH))
 	draw.Draw(img, img.Bounds(), image.White, image.Point{}, draw.Src)
+
+	// Bottom corners are part of the cached content layer so they scroll
+	// with the document. Top corners are applied per-frame in bookPageToImage
+	// so they stay fixed at the top of the window.
+	cornerRadius := min(pixW, pixH) / 40
+	if cornerRadius < 6 {
+		cornerRadius = 6
+	}
+	bookRoundedCorners(img, cornerRadius, false, true)
 
 	if editRows <= 0 || pixW <= 0 || pixH <= 0 {
 		return img
@@ -885,19 +1397,36 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 	startLine := e.pos.offsetY
 	totalLines := e.Len()
 
+	// Determine whether we start inside a fenced code block.
+	inFence := e.fenceStateAtLine(startLine)
+
+	codeBg := color.NRGBA{0xf0, 0xf0, 0xf0, 0xff} // light-gray background for code blocks
+
 	// Use separate document-line (docLine) and display-row (row) counters so that
-	// image lines can consume multiple display rows.
+	// image lines and soft-wrapped body lines can consume multiple display rows.
 	docLine := startLine
+	textW := rightMargin - marginLeft
 	for row := 0; row < maxLines && docLine < totalLines; {
 		rawLine := e.Line(LineIndex(docLine))
 		rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
-		pl := parseBookLine(rawLine)
-		cellTop := marginTop + row*lineH
 		docLine++
+
+		// Fence marker: toggle state, render as blank row.
+		if isFencedCodeMarker(rawLine) {
+			inFence = !inFence
+			row++
+			continue
+		}
+
+		pl := parseBookLine(rawLine)
+		if inFence {
+			pl = parsedLine{kind: lineKindCode, body: rawLine}
+		}
+		cellTop := marginTop + row*lineH
 
 		switch pl.kind {
 		case lineKindImage:
-			rowsUsed := e.bookDrawInlineImage(img, pl.body, marginLeft, rightMargin, cellTop, pixH-marginBottom-cellTop, lineH)
+			rowsUsed := e.bookDrawInlineImage(img, pl.body, marginLeft, rightMargin, cellTop, lineH)
 			row += rowsUsed
 			continue // no right-margin clip needed for images
 
@@ -913,8 +1442,17 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 
 		case lineKindHeader:
 			hFace := fs.headerForLevel(pl.headerLevel)
-			hAscent := faceAscent(hFace, fs.headerSizeForLevel(pl.headerLevel))
-			vPad := max((lineH-hAscent)/2, 0)
+			hSize := fs.headerSizeForLevel(pl.headerLevel)
+			hAscent := faceAscent(hFace, hSize)
+			hDescent := hFace.Metrics().Descent.Round()
+			if hDescent <= 0 {
+				hDescent = int(hSize*0.2 + 0.5)
+			}
+			nRows := bookHeaderRows(fs, pl.headerLevel, lineH)
+			blockH := nRows * lineH
+			// Center text vertically within the allocated block.
+			totalH := hAscent + hDescent
+			vPad := max((blockH-totalH)/2, 0)
 			d := &font.Drawer{
 				Dst:  img,
 				Src:  image.NewUniform(dark),
@@ -922,41 +1460,104 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 				Dot:  fixed.P(marginLeft, cellTop+vPad+hAscent),
 			}
 			d.DrawString(pl.body)
+			if rightMargin < pixW {
+				draw.Draw(img, image.Rect(rightMargin, cellTop, pixW, cellTop+blockH), image.White, image.Point{}, draw.Src)
+			}
+			row += nRows
+			continue
 
-		case lineKindUnchecked:
-			prefixX := bookDrawCheckbox(img, marginLeft, cellTop, lineH, false)
-			vPad := max((lineH-ascent)/2, 0)
-			drawSegments(img, fs, prefixX, cellTop+vPad+ascent, parseLineSegments(pl.body), dark)
-
-		case lineKindChecked:
-			prefixX := bookDrawCheckbox(img, marginLeft, cellTop, lineH, true)
-			vPad := max((lineH-ascent)/2, 0)
-			bodyClr := color.NRGBA{0x55, 0x55, 0x55, 0xff} // slightly grayed
-			drawSegments(img, fs, prefixX, cellTop+vPad+ascent, parseLineSegments(pl.body), bodyClr)
+		case lineKindUnchecked, lineKindChecked:
+			checked := pl.kind == lineKindChecked
+			prefixX := bookDrawCheckbox(img, marginLeft, cellTop, lineH, checked)
+			bodyClr := dark
+			if checked {
+				bodyClr = color.NRGBA{0x55, 0x55, 0x55, 0xff}
+			}
+			bodyPx := rightMargin - prefixX
+			wrows := bookWrapSegmentsPixel(fs, pl.body, bodyPx)
+			for wi, wr := range wrows {
+				if row+wi >= maxLines {
+					break
+				}
+				ct := marginTop + (row+wi)*lineH
+				vPad := max((lineH-ascent)/2, 0)
+				if wi == 0 {
+					drawSegments(img, fs, prefixX, ct+vPad+ascent, wr.segs, bodyClr)
+				} else {
+					drawSegments(img, fs, prefixX, ct+vPad+ascent, wr.segs, bodyClr)
+				}
+				// Hard-clip overflow.
+				if rightMargin < pixW {
+					draw.Draw(img, image.Rect(rightMargin, ct, pixW, ct+lineH), image.White, image.Point{}, draw.Src)
+				}
+			}
+			row += len(wrows)
+			continue
 
 		case lineKindBullet, lineKindNumbered:
 			vPad := max((lineH-ascent)/2, 0)
 			baseline := cellTop + vPad + ascent
 			prefixX := drawString(img, fs.regular, marginLeft, baseline, pl.prefix, dark)
-			drawSegments(img, fs, prefixX, baseline, parseLineSegments(pl.body), dark)
+			bodyPx := rightMargin - prefixX
+			wrows := bookWrapSegmentsPixel(fs, pl.body, bodyPx)
+			for wi, wr := range wrows {
+				if row+wi >= maxLines {
+					break
+				}
+				ct := marginTop + (row+wi)*lineH
+				bl := ct + vPad + ascent
+				drawSegments(img, fs, prefixX, bl, wr.segs, dark)
+				// Hard-clip overflow.
+				if rightMargin < pixW {
+					draw.Draw(img, image.Rect(rightMargin, ct, pixW, ct+lineH), image.White, image.Point{}, draw.Src)
+				}
+			}
+			row += len(wrows)
+			continue
+
+		case lineKindCode:
+			// Light-gray background spanning left-margin to right-margin.
+			draw.Draw(img, image.Rect(marginLeft, cellTop, rightMargin, cellTop+lineH),
+				image.NewUniform(codeBg), image.Point{}, draw.Src)
+			codeAscent := faceAscent(fs.code, float64(cellH)*0.72*0.88)
+			vPad := max((lineH-codeAscent)/2, 0)
+			drawString(img, fs.code, marginLeft+4, cellTop+vPad+codeAscent, pl.body, dark)
 
 		default: // lineKindBody
 			vPad := max((lineH-ascent)/2, 0)
-			drawSegments(img, fs, marginLeft, cellTop+vPad+ascent, parseLineSegments(pl.body), dark)
+			wrows := bookWrapSegmentsPixel(fs, pl.body, textW)
+			for wi, wr := range wrows {
+				if row+wi >= maxLines {
+					break
+				}
+				ct := marginTop + (row+wi)*lineH
+				bl := ct + vPad + ascent
+				drawSegments(img, fs, marginLeft, bl, wr.segs, dark)
+				// Hard-clip overflow.
+				if rightMargin < pixW {
+					draw.Draw(img, image.Rect(rightMargin, ct, pixW, ct+lineH), image.White, image.Point{}, draw.Src)
+				}
+			}
+			row += len(wrows)
+			continue
 		}
 
-		// Hard-clip any text that overflowed past the right margin.
+		// Hard-clip any text that overflowed past the right margin (for
+		// non-wrapped line kinds that fall through: blank, rule, header, code).
 		if rightMargin < pixW {
 			draw.Draw(img, image.Rect(rightMargin, cellTop, pixW, cellTop+lineH), image.White, image.Point{}, draw.Src)
 		}
 		row++
 	}
 
+	_ = textW // used above
 	return img
 }
 
 // bookOverlayCursor draws the I-beam cursor onto dst (which should be a copy
 // of the content image) at the position matching the editor's current cursor.
+// Soft-wrapped body/list lines are accounted for: the cursor is placed on the
+// correct sub-row within the wrapped line.
 func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, cellH uint) {
 	fontSize := float64(cellH) * 0.72
 	if fontSize < 6 {
@@ -987,53 +1588,90 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 
 	maxLines := min((pixH-marginTop-marginBottom)/lineH, editRows)
 	marginRight := pixW - int(float64(pixW)*bookMarginRight)
+	textW := marginRight - marginLeft
 
 	cursorDataY := int(e.DataY())
 	cursorRawX := e.pos.sx + e.pos.offsetX
 	startLine := e.pos.offsetY
 	totalLines := e.Len()
 
-	// Map cursor document line to its display row, accounting for multi-row images.
+	// Map cursor document line to its display row, accounting for multi-row
+	// images, fenced code blocks, and soft-wrapped body/list lines.
+	inFence := e.fenceStateAtLine(startLine)
 	cursorDisplayRow := -1
+	cursorInFence := false
 	{
 		dl := startLine
 		for row := 0; row < maxLines && dl < totalLines; {
-			if dl == cursorDataY {
-				cursorDisplayRow = row
-				break
-			}
 			rl := e.Line(LineIndex(dl))
 			rl = strings.ReplaceAll(rl, "\t", "    ")
-			if parseBookLine(rl).kind == lineKindImage {
-				rowsConsumed := e.bookImageRows(parseBookLine(rl).body, lineH, marginRight-marginLeft, pixH-marginTop-marginBottom)
-				row += rowsConsumed
-			} else {
+			if isFencedCodeMarker(rl) {
+				inFence = !inFence
+				if dl == cursorDataY {
+					cursorDisplayRow = row
+					cursorInFence = false
+					break
+				}
 				row++
+				dl++
+				continue
+			}
+			pl := parseBookLine(rl)
+			if inFence {
+				pl = parsedLine{kind: lineKindCode, body: rl}
+			}
+			if dl == cursorDataY {
+				cursorDisplayRow = row
+				cursorInFence = inFence
+				break
+			}
+			switch {
+			case pl.kind == lineKindImage:
+				row += e.bookImageRows(pl.body, lineH, textW)
+			default:
+				row += bookPixelRowCount(fs, pl, lineH, marginLeft, marginRight)
 			}
 			dl++
 		}
 	}
 	if cursorDisplayRow < 0 {
-		return
+		fallback := cursorDataY - startLine
+		if fallback >= 0 && fallback < maxLines {
+			cursorDisplayRow = fallback
+		} else {
+			return
+		}
 	}
 
 	rawLine := e.Line(LineIndex(cursorDataY))
 	rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
 	pl := parseBookLine(rawLine)
-	cellTop := marginTop + cursorDisplayRow*lineH
+	if cursorInFence {
+		pl = parsedLine{kind: lineKindCode, body: rawLine}
+	}
 
 	// maxBottom ensures the cursor bar never renders inside the bottom margin.
 	maxBottom := pixH - marginBottom - 1
 
-	// If cursor is on an image line, show the I-beam at the left margin.
-	if pl.kind == lineKindImage {
-		drawCursorBar(dst, marginLeft, cellTop+regVPad, min(cellTop+regVPad+ascent+regDescent, maxBottom))
-		return
+	// Helper to draw the bar at a given row and pixel X. nRows is the number
+	// of display rows the line occupies (>1 for headers). The bar height is
+	// clamped to nRows*lineH so it never overflows into an adjacent line's rows.
+	drawBar := func(px, dispRow, vpad, asc, desc, nRows int) {
+		ct := marginTop + dispRow*lineH
+		top := ct + vpad
+		bottom := top + asc + desc
+		if rowBottom := ct + nRows*lineH; bottom > rowBottom {
+			bottom = rowBottom
+		}
+		if bottom > maxBottom {
+			bottom = maxBottom
+		}
+		drawCursorBar(dst, px, top, bottom)
 	}
 
 	switch pl.kind {
-	case lineKindBlank:
-		drawCursorBar(dst, marginLeft, cellTop+regVPad, min(cellTop+regVPad+ascent+regDescent, maxBottom))
+	case lineKindImage, lineKindBlank:
+		drawBar(marginLeft, cursorDisplayRow, regVPad, ascent, regDescent, 1)
 
 	case lineKindHeader:
 		hFace := fs.headerForLevel(pl.headerLevel)
@@ -1043,7 +1681,10 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 		if hDescent <= 0 {
 			hDescent = int(hSize*0.2 + 0.5)
 		}
-		hVPad := max((lineH-hAscent)/2, 0)
+		nRows := bookHeaderRows(fs, pl.headerLevel, lineH)
+		blockH := nRows * lineH
+		totalH := hAscent + hDescent
+		hVPad := max((blockH-totalH)/2, 0)
 		prefixLen := pl.headerLevel + 1
 		adjRawX := max(cursorRawX-prefixLen, 0)
 		bodyRunes := []rune(pl.body)
@@ -1052,14 +1693,31 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 		}
 		hd := &font.Drawer{Face: hFace}
 		adv := hd.MeasureString(string(bodyRunes[:adjRawX]))
-		drawCursorBar(dst, marginLeft+adv.Round(), cellTop+hVPad, min(cellTop+hVPad+hAscent+hDescent, maxBottom))
+		drawBar(marginLeft+adv.Round(), cursorDisplayRow, hVPad, hAscent, hDescent, nRows)
+
+	case lineKindCode:
+		codeAscent := faceAscent(fs.code, float64(cellH)*0.72*0.88)
+		codeDescent := fs.code.Metrics().Descent.Round()
+		if codeDescent <= 0 {
+			codeDescent = int(float64(cellH)*0.72*0.88*0.2 + 0.5)
+		}
+		codeVPad := max((lineH-codeAscent)/2, 0)
+		codeRunes := []rune(pl.body)
+		adjX := cursorRawX
+		if pl.body != rawLine {
+			adjX = max(cursorRawX-4, 0)
+		}
+		if adjX > len(codeRunes) {
+			adjX = len(codeRunes)
+		}
+		adv := (&font.Drawer{Face: fs.code}).MeasureString(string(codeRunes[:adjX]))
+		drawBar(marginLeft+4+adv.Round(), cursorDisplayRow, codeVPad, codeAscent, codeDescent, 1)
 
 	case lineKindBullet, lineKindUnchecked, lineKindChecked, lineKindNumbered:
 		rawPrefix := rawMarkdownPrefix(rawLine)
 		rawBodyStart := len([]rune(rawPrefix))
 		bodyRawX := cursorRawX - rawBodyStart
-		segs := parseLineSegments(pl.body)
-		// Compute prefix pixel width (checkbox icon or font-rendered prefix).
+		// Compute prefix pixel width.
 		var prefixEndX int
 		if pl.kind == lineKindUnchecked || pl.kind == lineKindChecked {
 			size := max(lineH*55/100, 5)
@@ -1067,19 +1725,48 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 		} else {
 			prefixEndX = marginLeft + (&font.Drawer{Face: fs.regular}).MeasureString(pl.prefix).Round()
 		}
-		var cursorX int
 		if bodyRawX < 0 {
-			cursorX = prefixEndX
-		} else {
-			bodyVisX := rawXToVisualX(pl.body, bodyRawX)
-			cursorX = prefixEndX + measureSegmentsToRune(fs, segs, bodyVisX)
+			drawBar(prefixEndX, cursorDisplayRow, regVPad, ascent, regDescent, 1)
+			break
 		}
-		drawCursorBar(dst, cursorX, cellTop+regVPad, min(cellTop+regVPad+ascent+regDescent, maxBottom))
+		bodyVisX := rawXToVisualX(pl.body, bodyRawX)
+		// Determine which wrapped sub-row the cursor falls on.
+		bodyAvailPx := marginRight - prefixEndX
+		wrows := bookWrapSegmentsPixel(fs, pl.body, bodyAvailPx)
+		subRow := 0
+		localVisX := bodyVisX
+		for i, wr := range wrows {
+			if localVisX < wr.runeCount || i == len(wrows)-1 {
+				subRow = i
+				break
+			}
+			localVisX -= wr.runeCount
+			subRow = i + 1
+		}
+		if subRow >= len(wrows) {
+			subRow = len(wrows) - 1
+		}
+		cursorPx := prefixEndX + measureSegmentsToRune(fs, wrows[subRow].segs, localVisX)
+		drawBar(cursorPx, cursorDisplayRow+subRow, regVPad, ascent, regDescent, 1)
 
 	default: // lineKindBody
-		segs := parseLineSegments(pl.body)
 		visX := rawXToVisualX(rawLine, cursorRawX)
-		drawCursorBar(dst, marginLeft+measureSegmentsToRune(fs, segs, visX), cellTop+regVPad, min(cellTop+regVPad+ascent+regDescent, maxBottom))
+		wrows := bookWrapSegmentsPixel(fs, pl.body, textW)
+		subRow := 0
+		localVisX := visX
+		for i, wr := range wrows {
+			if localVisX < wr.runeCount || i == len(wrows)-1 {
+				subRow = i
+				break
+			}
+			localVisX -= wr.runeCount
+			subRow = i + 1
+		}
+		if subRow >= len(wrows) {
+			subRow = len(wrows) - 1
+		}
+		cursorPx := marginLeft + measureSegmentsToRune(fs, wrows[subRow].segs, localVisX)
+		drawBar(cursorPx, cursorDisplayRow+subRow, regVPad, ascent, regDescent, 1)
 	}
 }
 
@@ -1108,6 +1795,36 @@ func rawMarkdownPrefix(line string) string {
 	return ""
 }
 
+// nextListPrefix returns the prefix to use for a new list item that follows a
+// line with the given prefix. Numbered lists are incremented; checked checkboxes
+// become unchecked; all other prefixes are carried through unchanged.
+func nextListPrefix(pfx string) string {
+	trimmed := strings.TrimLeft(pfx, " \t")
+	indent := pfx[:len(pfx)-len(trimmed)]
+
+	// Checked checkbox → unchecked
+	if strings.HasPrefix(trimmed, "- [x] ") || strings.HasPrefix(trimmed, "- [X] ") {
+		return indent + "- [ ] "
+	}
+
+	// Numbered list: increment the number
+	for i, r := range trimmed {
+		if unicode.IsDigit(r) {
+			continue
+		}
+		if i > 0 && r == '.' && i+2 <= len(trimmed) && trimmed[i+1] == ' ' {
+			numStr := trimmed[:i]
+			if n, err := strconv.Atoi(numStr); err == nil {
+				return indent + strconv.Itoa(n+1) + ". "
+			}
+		}
+		break
+	}
+
+	// Bullet, unchecked checkbox — same prefix
+	return pfx
+}
+
 // writeBookTextSegs writes parsed inline Markdown segments to the canvas at
 // (startX, y), advancing x for each rune. maxX is the right pixel bound.
 func writeBookTextSegs(c *vt.Canvas, startX uint, y uint, segs []textSegment, maxX int) {
@@ -1116,19 +1833,35 @@ func writeBookTextSegs(c *vt.Canvas, startX uint, y uint, segs []textSegment, ma
 		if int(x) >= maxX {
 			break
 		}
-		var fg, bg vt.AttributeColor
-		switch {
-		case seg.bold && seg.italic:
-			fg, bg = vt.Bold, vt.Italic // Combine → \033[1;3m
-		case seg.bold:
-			fg, bg = vt.Bold, vt.DefaultBackground
-		case seg.italic:
-			fg, bg = vt.Italic, vt.DefaultBackground
-		default:
-			fg, bg = vt.Default, vt.DefaultBackground
+		// Build a priority-ordered attribute list. vt.Combine packs two
+		// attributes per AttributeColor value, so we fill fg then bg.
+		var attrs []vt.AttributeColor
+		if seg.bold {
+			attrs = append(attrs, vt.Bold)
+		}
+		if seg.italic {
+			attrs = append(attrs, vt.Italic)
 		}
 		if seg.underline {
-			bg = vt.Underscore // encode underline in bg → Combine adds \033[4m
+			attrs = append(attrs, vt.Underscore)
+		}
+		if seg.strike {
+			attrs = append(attrs, vt.Strikethrough)
+		}
+		fg, bg := vt.Default, vt.DefaultBackground
+		switch len(attrs) {
+		case 1:
+			fg = attrs[0]
+		case 2:
+			fg, bg = attrs[0], attrs[1]
+		case 3, 4:
+			// More than two attributes requested: combine the first two
+			// into the fg slot, and the remaining one(s) into bg.
+			fg = attrs[0].Combine(attrs[1])
+			bg = attrs[2]
+			if len(attrs) == 4 {
+				bg = attrs[2].Combine(attrs[3])
+			}
 		}
 		runes := []rune(seg.text)
 		if rem := maxX - int(x); len(runes) > rem {
@@ -1144,19 +1877,22 @@ func writeBookTextSegs(c *vt.Canvas, startX uint, y uint, segs []textSegment, ma
 // bookTextModeRender renders the visible document using VT100/ANSI escape codes
 // for terminals without Kitty/iTerm2 graphics support. It writes styled lines
 // directly to the canvas buffer; the caller must follow up with HideCursorAndDraw.
+// Long body and list lines are soft-wrapped at word boundaries.
 func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 	if c == nil {
 		return
 	}
 	w := int(c.Width())
 	h := int(c.Height())
-	editRows := h - 1 // last row reserved for the status bar
+	editRows := int(e.bookEditRows(uint(h))) // last row reserved for the status bar (unless hidden)
 	if editRows <= 0 || w <= 0 {
 		return
 	}
 
 	marginLeft := max(int(float64(w)*bookMarginLeft), 2)
 	marginRight := w - max(int(float64(w)*bookMarginRight), 1)
+	textW := marginRight - marginLeft
+	topMargin := int(float64(editRows) * bookMarginTop)
 
 	// Clear the editing rows with default colours.
 	blank := strings.Repeat(" ", w)
@@ -1167,32 +1903,31 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 	startLine := e.pos.offsetY
 	totalLines := e.Len()
 
-	for i := range editRows {
-		lineIdx := startLine + i
-		if lineIdx >= totalLines {
-			break
-		}
-		rawLine := e.Line(LineIndex(lineIdx))
+	row := 0
+	docLine := startLine
+	for row+topMargin < editRows && docLine < totalLines {
+		rawLine := e.Line(LineIndex(docLine))
 		rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
 		pl := parseBookLine(rawLine)
-		y := uint(i)
+		docLine++
+		y := uint(row + topMargin)
 		x := uint(marginLeft)
 
 		switch pl.kind {
 		case lineKindBlank:
-			// nothing
+			row++
 
 		case lineKindRule:
-			width := marginRight - marginLeft
-			if width > 0 {
-				c.Write(x, y, vt.Dim, vt.DefaultBackground, strings.Repeat("─", width))
+			if textW > 0 {
+				c.Write(x, y, vt.Dim, vt.DefaultBackground, strings.Repeat("─", textW))
 			}
+			row++
 
 		case lineKindHeader:
 			var fg vt.AttributeColor
 			switch pl.headerLevel {
 			case 1:
-				fg = vt.White // bg=Bold gives \033[97;1m (bright white + bold)
+				fg = vt.White
 			case 2:
 				fg = vt.LightCyan
 			default:
@@ -1200,39 +1935,69 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 			}
 			text := pl.body
 			runes := []rune(text)
-			if len(runes) > marginRight-marginLeft {
-				runes = runes[:marginRight-marginLeft]
+			if len(runes) > textW {
+				runes = runes[:textW]
 				text = string(runes)
 			}
-			c.Write(x, y, fg, vt.Bold, text) // bg=Bold → fg.Combine(Bold) adds bold attr
+			c.Write(x, y, fg, vt.Bold, text)
+			row++
 
-		case lineKindBullet:
-			prefixFg := vt.Default
-			if strings.HasPrefix(pl.prefix, "│") {
-				prefixFg = vt.Dim // blockquote bar slightly dimmed
+		case lineKindCode:
+			text := pl.body
+			runes := []rune(text)
+			if len(runes) > textW {
+				runes = runes[:textW]
+				text = string(runes)
 			}
-			c.Write(x, y, prefixFg, vt.DefaultBackground, pl.prefix)
-			writeBookTextSegs(c, x+uint(len([]rune(pl.prefix))), y, parseLineSegments(pl.body), marginRight)
-
-		case lineKindUnchecked:
-			c.Write(x, y, vt.Default, vt.DefaultBackground, pl.prefix)
-			writeBookTextSegs(c, x+uint(len([]rune(pl.prefix))), y, parseLineSegments(pl.body), marginRight)
-
-		case lineKindChecked:
-			c.Write(x, y, vt.Green, vt.Bold, pl.prefix) // green + bold ✓
-			writeBookTextSegs(c, x+uint(len([]rune(pl.prefix))), y, parseLineSegments(pl.body), marginRight)
-
-		case lineKindNumbered:
-			c.Write(x, y, vt.Default, vt.DefaultBackground, pl.prefix)
-			writeBookTextSegs(c, x+uint(len([]rune(pl.prefix))), y, parseLineSegments(pl.body), marginRight)
+			c.Write(x, y, vt.Default, vt.DefaultBackground, text)
+			row++
 
 		case lineKindImage:
-			// In text mode, show the alt text (stored in pl.body contains the path;
-			// we have no alt text here so show "[image]" as a placeholder).
 			c.Write(x, y, vt.Dim, vt.DefaultBackground, "[image: "+pl.body+"]")
+			row++
+
+		case lineKindBullet, lineKindNumbered, lineKindUnchecked, lineKindChecked:
+			prefixFg := vt.Default
+			prefixBg := vt.DefaultBackground
+			if pl.kind == lineKindBullet && strings.HasPrefix(pl.prefix, "│") {
+				prefixFg = vt.Dim
+			}
+			if pl.kind == lineKindChecked {
+				prefixFg = vt.Green
+				prefixBg = vt.Bold
+			}
+			pfxRunes := []rune(pl.prefix)
+			pfxLen := len(pfxRunes)
+			bodyAvailW := textW - pfxLen
+			if bodyAvailW <= 0 {
+				bodyAvailW = 1
+			}
+			wsegs := bookWrapBody(pl.body, bodyAvailW)
+			for i, ws := range wsegs {
+				if row+topMargin >= editRows {
+					break
+				}
+				dy := uint(row + topMargin)
+				if i == 0 {
+					c.Write(x, dy, prefixFg, prefixBg, pl.prefix)
+					writeBookTextSegs(c, x+uint(pfxLen), dy, parseLineSegments(ws.text), marginRight)
+				} else {
+					// Continuation line: indent to match prefix width.
+					writeBookTextSegs(c, x+uint(pfxLen), dy, parseLineSegments(ws.text), marginRight)
+				}
+				row++
+			}
 
 		default: // lineKindBody
-			writeBookTextSegs(c, x, y, parseLineSegments(pl.body), marginRight)
+			wsegs := bookWrapBody(pl.body, textW)
+			for _, ws := range wsegs {
+				if row+topMargin >= editRows {
+					break
+				}
+				dy := uint(row + topMargin)
+				writeBookTextSegs(c, x, dy, parseLineSegments(ws.text), marginRight)
+				row++
+			}
 		}
 	}
 }
@@ -1309,11 +2074,132 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 	selStartY, selStartX := e.selection.start()
 	selEndY, selEndX := e.selection.end()
 
-	selBg := color.NRGBA{0xD0, 0xD0, 0xD0, 0xFF} // solid light gray
+	selBg := color.NRGBA{0xD0, 0xD0, 0xD0, 0xFF}
 	dark := color.NRGBA{0x10, 0x10, 0x10, 0xff}
+	codeBg := color.NRGBA{0xf0, 0xf0, 0xf0, 0xff}
 
-	// Iterate visible display rows, tracking document lines separately so that
-	// multi-row image lines are handled correctly.
+	// paintSubRow paints one wrapped sub-row with a selection stripe from
+	// pxL..pxR, then re-renders the segments starting at segsStartX so
+	// glyphs blend correctly with the new background.
+	paintSubRow := func(subRow int, pxL, pxR int, segs []textSegment, segsStartX int, textClr color.Color) {
+		ct := marginTop + subRow*lineH
+		draw.Draw(dst, image.Rect(0, ct, pixW, ct+lineH),
+			image.White, image.Point{}, draw.Src)
+		if pxR > pxL {
+			draw.Draw(dst, image.Rect(pxL, ct, pxR, ct+lineH),
+				image.NewUniform(selBg), image.Point{}, draw.Src)
+		}
+		vPad := max((lineH-ascent)/2, 0)
+		baseline := ct + vPad + ascent
+		drawSegments(dst, fs, segsStartX, baseline, segs, textClr)
+	}
+
+	clampX := func(x int) int {
+		if x < 0 {
+			return 0
+		}
+		if x > pixW {
+			return pixW
+		}
+		return x
+	}
+
+	// wrappedSel paints selection for a body-style wrapped line.
+	wrappedSel := func(lineIdx LineIndex, pl parsedLine, rowBase, nRows int, prefixEndX, rawPfxLen int, textClr color.Color) {
+		body := pl.body
+		bodyAvailPx := marginRight - prefixEndX
+		if bodyAvailPx <= 0 {
+			return
+		}
+		wrows := bookWrapSegmentsPixel(fs, body, bodyAvailPx)
+		if len(wrows) == 0 {
+			return
+		}
+		if nRows > len(wrows) {
+			nRows = len(wrows)
+		}
+
+		bodyRunes := []rune(body)
+		bodyVisTotal := rawXToVisualX(body, len(bodyRunes))
+
+		var visStart, visEnd int
+		switch {
+		case lineIdx == selStartY && lineIdx == selEndY:
+			s := selStartX - rawPfxLen
+			en := selEndX - rawPfxLen
+			if s < 0 {
+				s = 0
+			}
+			if en < 0 {
+				en = 0
+			}
+			visStart = rawXToVisualX(body, s)
+			visEnd = rawXToVisualX(body, en)
+			if visStart > visEnd {
+				visStart, visEnd = visEnd, visStart
+			}
+		case lineIdx == selStartY:
+			s := selStartX - rawPfxLen
+			if s < 0 {
+				s = 0
+			}
+			visStart = rawXToVisualX(body, s)
+			visEnd = bodyVisTotal
+		case lineIdx == selEndY:
+			en := selEndX - rawPfxLen
+			if en < 0 {
+				en = 0
+			}
+			visStart = 0
+			visEnd = rawXToVisualX(body, en)
+		default:
+			visStart = 0
+			visEnd = bodyVisTotal
+		}
+
+		offset := 0
+		for i := 0; i < len(wrows) && i < nRows; i++ {
+			wr := wrows[i]
+			subStart := offset
+			subEnd := offset + wr.runeCount
+			offset = subEnd
+
+			lo := visStart
+			hi := visEnd
+			if lo < subStart {
+				lo = subStart
+			}
+			if hi > subEnd {
+				hi = subEnd
+			}
+			if hi <= lo {
+				// No highlight on this sub-row: just re-render content.
+				paintSubRow(rowBase+i, 0, 0, wr.segs, prefixEndX, textClr)
+				continue
+			}
+			localL := lo - subStart
+			localH := hi - subStart
+			pxL := prefixEndX + measureSegmentsToRune(fs, wr.segs, localL)
+			var pxR int
+			// Extend highlight to right margin on sub-rows that are fully
+			// inside a selection spanning into the next data line, or when
+			// this is a non-terminal sub-row of a fully selected middle line.
+			extend := false
+			if lineIdx < selEndY && hi == subEnd {
+				extend = true
+			} else if i < len(wrows)-1 && hi == subEnd && lineIdx < selEndY {
+				extend = true
+			}
+			if extend {
+				pxR = marginRight
+			} else {
+				pxR = prefixEndX + measureSegmentsToRune(fs, wr.segs, localH)
+			}
+			paintSubRow(rowBase+i, clampX(pxL), clampX(pxR), wr.segs, prefixEndX, textClr)
+		}
+	}
+
+	inFenceSel := e.fenceStateAtLine(startLine)
 	docLine2 := startLine
 	for row := 0; row < maxLines && docLine2 < totalLines; {
 		lineIdx := LineIndex(docLine2)
@@ -1321,100 +2207,185 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 
 		rawLine := e.Line(lineIdx)
 		rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
-		pl := parseBookLine(rawLine)
-		cellTop := marginTop + row*lineH
 
-		// Image lines consume multiple rows; skip selection highlighting on them.
-		if pl.kind == lineKindImage {
-			rowsConsumed := e.bookImageRows(pl.body, lineH, marginRight-marginLeft, pixH-marginTop-marginBottom)
+		if isFencedCodeMarker(rawLine) {
+			inFenceSel = !inFenceSel
+			row++
+			continue
+		}
+
+		pl := parseBookLine(rawLine)
+		if inFenceSel {
+			pl = parsedLine{kind: lineKindCode, body: rawLine}
+		}
+
+		var rowsConsumed int
+		switch pl.kind {
+		case lineKindImage:
+			rowsConsumed = e.bookImageRows(pl.body, lineH, marginRight-marginLeft)
+		default:
+			rowsConsumed = bookPixelRowCount(fs, pl, lineH, marginLeft, marginRight)
+		}
+		if rowsConsumed < 1 {
+			rowsConsumed = 1
+		}
+
+		if lineIdx < selStartY || lineIdx > selEndY {
 			row += rowsConsumed
 			continue
 		}
 
-		if lineIdx < selStartY || lineIdx > selEndY {
-			row++
+		if pl.kind == lineKindImage {
+			row += rowsConsumed
 			continue
 		}
 
-		// Determine the pixel X range to highlight on this line.
-		var hLeft, hRight int
-		switch {
-		case lineIdx == selStartY && lineIdx == selEndY:
-			hLeft = bookRawXToPixelX(fs, pl, rawLine, selStartX, marginLeft)
-			hRight = bookRawXToPixelX(fs, pl, rawLine, selEndX, marginLeft)
-		case lineIdx == selStartY:
-			hLeft = bookRawXToPixelX(fs, pl, rawLine, selStartX, marginLeft)
-			hRight = marginRight
-		case lineIdx == selEndY:
-			hLeft = marginLeft
-			hRight = bookRawXToPixelX(fs, pl, rawLine, selEndX, marginLeft)
-		default: // fully selected middle line
-			hLeft = marginLeft
-			hRight = marginRight
-		}
-		if hLeft > hRight {
-			hLeft, hRight = hRight, hLeft
-		}
-		if hLeft < 0 {
-			hLeft = 0
-		}
-		if hRight > pixW {
-			hRight = pixW
-		}
-		if hLeft >= hRight {
-			row++
-			continue
-		}
-
-		// 1. Repaint the full cell white so glyph anti-aliasing starts fresh.
-		draw.Draw(dst, image.Rect(0, cellTop, pixW, cellTop+lineH),
-			image.White, image.Point{}, draw.Src)
-
-		// 2. Fill the selected pixel columns with the selection background.
-		draw.Draw(dst, image.Rect(hLeft, cellTop, hRight, cellTop+lineH),
-			image.NewUniform(selBg), image.Point{}, draw.Src)
-
-		// 3. Re-render the line text so glyphs blend with the correct background.
-		vPad := max((lineH-ascent)/2, 0)
-		baseline := cellTop + vPad + ascent
+		cellTop := marginTop + row*lineH
 
 		switch pl.kind {
-		case lineKindBlank:
-			// nothing to draw
-		case lineKindRule:
-			ruleY := cellTop + lineH/2
-			for px := marginLeft; px < marginRight; px++ {
-				dst.Set(px, ruleY, dark)
-				dst.Set(px, ruleY+1, dark)
+		case lineKindBlank, lineKindRule:
+			if !(lineIdx == selStartY && lineIdx == selEndY && selStartX == selEndX) {
+				draw.Draw(dst, image.Rect(marginLeft, cellTop, marginRight, cellTop+lineH),
+					image.NewUniform(selBg), image.Point{}, draw.Src)
+				if pl.kind == lineKindRule {
+					ruleY := cellTop + lineH/2
+					for px := marginLeft; px < marginRight; px++ {
+						dst.Set(px, ruleY, dark)
+						dst.Set(px, ruleY+1, dark)
+					}
+				}
 			}
+
 		case lineKindHeader:
 			hFace := fs.headerForLevel(pl.headerLevel)
-			hAscent := faceAscent(hFace, fs.headerSizeForLevel(pl.headerLevel))
-			hVPad := max((lineH-hAscent)/2, 0)
-			d := &font.Drawer{
-				Dst:  dst,
-				Src:  image.NewUniform(dark),
-				Face: hFace,
-				Dot:  fixed.P(marginLeft, cellTop+hVPad+hAscent),
+			hSize := fs.headerSizeForLevel(pl.headerLevel)
+			hAscent := faceAscent(hFace, hSize)
+			hDescent := hFace.Metrics().Descent.Round()
+			if hDescent <= 0 {
+				hDescent = int(hSize*0.2 + 0.5)
 			}
-			d.DrawString(pl.body)
-		case lineKindUnchecked:
-			bookDrawCheckbox(dst, marginLeft, cellTop, lineH, false)
-			prefixX := max(marginLeft+lineH*55/100+3, marginLeft+5+3)
-			drawSegments(dst, fs, prefixX, baseline, parseLineSegments(pl.body), dark)
-		case lineKindChecked:
-			bookDrawCheckbox(dst, marginLeft, cellTop, lineH, true)
-			prefixX := max(marginLeft+lineH*55/100+3, marginLeft+5+3)
-			bodyClr := color.NRGBA{0x55, 0x55, 0x55, 0xff}
-			drawSegments(dst, fs, prefixX, baseline, parseLineSegments(pl.body), bodyClr)
+			nRows := bookHeaderRows(fs, pl.headerLevel, lineH)
+			blockH := nRows * lineH
+			totalH := hAscent + hDescent
+			hVPad := max((blockH-totalH)/2, 0)
+
+			prefixLen := pl.headerLevel + 1
+			bodyRunes := []rune(pl.body)
+			measureTo := func(n int) int {
+				if n < 0 {
+					n = 0
+				}
+				if n > len(bodyRunes) {
+					n = len(bodyRunes)
+				}
+				return (&font.Drawer{Face: hFace}).MeasureString(string(bodyRunes[:n])).Round()
+			}
+			var hLeft, hRight int
+			switch {
+			case lineIdx == selStartY && lineIdx == selEndY:
+				hLeft = marginLeft + measureTo(selStartX-prefixLen)
+				hRight = marginLeft + measureTo(selEndX-prefixLen)
+			case lineIdx == selStartY:
+				hLeft = marginLeft + measureTo(selStartX-prefixLen)
+				hRight = marginRight
+			case lineIdx == selEndY:
+				hLeft = marginLeft
+				hRight = marginLeft + measureTo(selEndX-prefixLen)
+			default:
+				hLeft = marginLeft
+				hRight = marginRight
+			}
+			if hLeft > hRight {
+				hLeft, hRight = hRight, hLeft
+			}
+			hLeft = clampX(hLeft)
+			hRight = clampX(hRight)
+			if hRight > hLeft {
+				draw.Draw(dst, image.Rect(0, cellTop, pixW, cellTop+blockH),
+					image.White, image.Point{}, draw.Src)
+				draw.Draw(dst, image.Rect(hLeft, cellTop, hRight, cellTop+blockH),
+					image.NewUniform(selBg), image.Point{}, draw.Src)
+				d := &font.Drawer{
+					Dst:  dst,
+					Src:  image.NewUniform(dark),
+					Face: hFace,
+					Dot:  fixed.P(marginLeft, cellTop+hVPad+hAscent),
+				}
+				d.DrawString(pl.body)
+			}
+
+		case lineKindCode:
+			codeAscent := faceAscent(fs.code, fontSize*0.88)
+			codeVPad := max((lineH-codeAscent)/2, 0)
+			codeRunes := []rune(pl.body)
+			measureTo := func(n int) int {
+				if n < 0 {
+					n = 0
+				}
+				if n > len(codeRunes) {
+					n = len(codeRunes)
+				}
+				return (&font.Drawer{Face: fs.code}).MeasureString(string(codeRunes[:n])).Round()
+			}
+			adj := 0
+			if pl.body != rawLine {
+				adj = 4
+			}
+			var hLeft, hRight int
+			switch {
+			case lineIdx == selStartY && lineIdx == selEndY:
+				hLeft = marginLeft + 4 + measureTo(selStartX-adj)
+				hRight = marginLeft + 4 + measureTo(selEndX-adj)
+			case lineIdx == selStartY:
+				hLeft = marginLeft + 4 + measureTo(selStartX-adj)
+				hRight = marginRight
+			case lineIdx == selEndY:
+				hLeft = marginLeft + 4
+				hRight = marginLeft + 4 + measureTo(selEndX-adj)
+			default:
+				hLeft = marginLeft
+				hRight = marginRight
+			}
+			if hLeft > hRight {
+				hLeft, hRight = hRight, hLeft
+			}
+			hLeft = clampX(hLeft)
+			hRight = clampX(hRight)
+			draw.Draw(dst, image.Rect(marginLeft, cellTop, marginRight, cellTop+lineH),
+				image.NewUniform(codeBg), image.Point{}, draw.Src)
+			if hRight > hLeft {
+				draw.Draw(dst, image.Rect(hLeft, cellTop, hRight, cellTop+lineH),
+					image.NewUniform(selBg), image.Point{}, draw.Src)
+			}
+			drawString(dst, fs.code, marginLeft+4, cellTop+codeVPad+codeAscent, pl.body, dark)
+
+		case lineKindUnchecked, lineKindChecked:
+			checked := pl.kind == lineKindChecked
+			size := max(lineH*55/100, 5)
+			prefixEndX := marginLeft + size + 3
+			rawPrefix := rawMarkdownPrefix(rawLine)
+			rawPfxLen := len([]rune(rawPrefix))
+			textClr := dark
+			if checked {
+				textClr = color.NRGBA{0x55, 0x55, 0x55, 0xff}
+			}
+			wrappedSel(lineIdx, pl, row, rowsConsumed, prefixEndX, rawPfxLen, textClr)
+			bookDrawCheckbox(dst, marginLeft, cellTop, lineH, checked)
+
 		case lineKindBullet, lineKindNumbered:
-			prefixX := drawString(dst, fs.regular, marginLeft, baseline, pl.prefix, dark)
-			drawSegments(dst, fs, prefixX, baseline, parseLineSegments(pl.body), dark)
-		default:
-			drawSegments(dst, fs, marginLeft, baseline, parseLineSegments(pl.body), dark)
+			prefixPx := (&font.Drawer{Face: fs.regular}).MeasureString(pl.prefix).Round()
+			prefixEndX := marginLeft + prefixPx
+			rawPrefix := rawMarkdownPrefix(rawLine)
+			rawPfxLen := len([]rune(rawPrefix))
+			wrappedSel(lineIdx, pl, row, rowsConsumed, prefixEndX, rawPfxLen, dark)
+			vPad := max((lineH-ascent)/2, 0)
+			drawString(dst, fs.regular, marginLeft, cellTop+vPad+ascent, pl.prefix, dark)
+
+		default: // lineKindBody
+			wrappedSel(lineIdx, pl, row, rowsConsumed, marginLeft, 0, dark)
 		}
 
-		row++
+		row += rowsConsumed
 	}
 }
 
@@ -1423,28 +2394,173 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 // content have not changed; selection and cursor are always composited fresh.
 func (e *Editor) bookPageToImage(pixW, pixH, editRows int, cellH uint) *image.RGBA {
 	// Invalidate cache if dimensions, scroll offset, or document content changed.
-	if bookContentCache == nil || bookContentCacheW != pixW || bookContentCacheH != pixH || bookContentCacheOffsetY != e.pos.offsetY || e.Changed() {
+	gen := bookCurrentContentGen()
+	if bookContentCache == nil || bookContentCacheW != pixW || bookContentCacheH != pixH || bookContentCacheOffsetY != e.pos.offsetY || gen != bookContentCacheGen {
 		bookContentCache = e.bookContentImage(pixW, pixH, editRows, cellH)
 		bookContentCacheW = pixW
 		bookContentCacheH = pixH
 		bookContentCacheOffsetY = e.pos.offsetY
+		bookContentCacheGen = gen
 	}
 
 	// Copy the content image so overlays don't pollute the cache.
-	dst := image.NewRGBA(bookContentCache.Bounds())
-	draw.Draw(dst, dst.Bounds(), bookContentCache, image.Point{}, draw.Src)
+	// Reuse a single destination buffer across frames to avoid a fresh
+	// multi-MB allocation (and matching GC work) on every keystroke.
+	bounds := bookContentCache.Bounds()
+	if bookPageImageBuf == nil || bookPageImageBuf.Bounds() != bounds {
+		bookPageImageBuf = image.NewRGBA(bounds)
+	}
+	dst := bookPageImageBuf
+	copy(dst.Pix, bookContentCache.Pix)
 
 	e.bookOverlaySelection(dst, pixW, pixH, editRows, cellH)
 	e.bookOverlayCursor(dst, pixW, pixH, editRows, cellH)
+
+	// Top corners are painted per-frame so they stay fixed at the top of the
+	// window regardless of scroll position.
+	cornerRadius := min(pixW, pixH) / 40
+	if cornerRadius < 6 {
+		cornerRadius = 6
+	}
+	bookRoundedCorners(dst, cornerRadius, true, false)
+
 	return dst
 }
 
-// ── Scroll-to-cursor ──────────────────────────────────────────────────────────
+// bookStatusBarImage renders the status bar strip as a standalone RGBA image.
+// Line/col anchor left, words/progress anchor right, and numeric padding is
+// fixed-width so the bar doesn't reflow as the cursor moves. A pending message
+// replaces the stats half and is shown centered.
+func (e *Editor) bookStatusBarImage(pixW, statusPixH int, renderH uint) *image.RGBA {
+	img := image.NewRGBA(image.Rect(0, 0, pixW, statusPixH))
+	bgClr := color.NRGBA{0x1a, 0x1a, 0x1a, 0xff}
+	draw.Draw(img, img.Bounds(), image.NewUniform(bgClr), image.Point{}, draw.Src)
 
-// countDisplayRowsTo scans visible document lines starting at startDoc and
-// returns the display-row index at which targetDoc appears, or -1 if it is
-// not reached within maxRows (e.g. because multi-row images consume the budget).
-func (e *Editor) countDisplayRowsTo(startDoc, targetDoc, maxRows, lineH, textW, textH int) int {
+	// Subtle 1 px separator line along the top edge, reminiscent of the thin
+	// rule that sits above the status bar in typical word processors.
+	sepClr := color.NRGBA{0x30, 0x30, 0x30, 0xff}
+	for x := 0; x < pixW; x++ {
+		img.Set(x, 0, sepClr)
+	}
+
+	mainFontSize := float64(renderH) * 0.72
+	if mainFontSize < 6 {
+		mainFontSize = 6
+	}
+	fs, err := bookFaces(mainFontSize)
+	if err != nil {
+		return img
+	}
+
+	textClr := color.NRGBA{0xd0, 0xd0, 0xd0, 0xff}
+	dimClr := color.NRGBA{0x80, 0x80, 0x80, 0xff}
+
+	sbAscent := faceAscent(fs.statusBar, fs.statusBarSize)
+	baseline := (statusPixH+sbAscent)/2 + 1
+
+	// A centered message takes over the whole bar.
+	if msg := bookModeGetStatusMsg(); msg != "" {
+		text := strings.TrimSpace(msg)
+		d := &font.Drawer{Face: fs.statusBar}
+		w := d.MeasureString(text).Round()
+		x := max((pixW-w)/2, 8)
+		drawString(img, fs.statusBar, x, baseline, text, textClr)
+		return img
+	}
+
+	// No status bar content when stats are hidden and no message is pending.
+	if e.statusMode {
+		return img
+	}
+
+	percentage, lineNumber, lastLineNumber := e.PLA()
+
+	// Left half: cursor position — fixed-width so digits don't shift the
+	// surrounding labels as the cursor moves. The widths (5 / 4) are chosen
+	// to cover documents up to 99 999 lines and 9999 columns comfortably;
+	// longer values still render correctly, they just push the separator.
+	leftText := fmt.Sprintf("Line %5d of %-5d   Col %4d",
+		int(lineNumber), int(lastLineNumber), e.ColNumber())
+
+	// Right half: document stats.
+	words := e.WordCount()
+	rightText := fmt.Sprintf("Words %6d   %3d%%", words, percentage)
+
+	// Draw left, left-anchored with a small padding.
+	marginX := 16
+	drawString(img, fs.statusBar, marginX, baseline, leftText, textClr)
+
+	// Draw right, right-anchored.
+	dRight := &font.Drawer{Face: fs.statusBar}
+	rightW := dRight.MeasureString(rightText).Round()
+	drawString(img, fs.statusBar, pixW-marginX-rightW, baseline, rightText, textClr)
+
+	// Draw a small center crumb: the basename of the current file, dimmed,
+	// so the user always has a reminder of what they're editing. We only
+	// show it when there's room between the left and right halves.
+	dLeft := &font.Drawer{Face: fs.statusBar}
+	leftW := dLeft.MeasureString(leftText).Round()
+	leftEnd := marginX + leftW
+	rightStart := pixW - marginX - rightW
+	if rightStart-leftEnd > 80 && e.filename != "" {
+		base := e.filename
+		if i := strings.LastIndexAny(base, "/\\"); i >= 0 {
+			base = base[i+1:]
+		}
+		dCenter := &font.Drawer{Face: fs.statusBar}
+		cw := dCenter.MeasureString(base).Round()
+		cx := (pixW - cw) / 2
+		if cx-leftEnd >= 20 && rightStart-(cx+cw) >= 20 {
+			drawString(img, fs.statusBar, cx, baseline, base, dimClr)
+		}
+	}
+
+	return img
+}
+
+// bookComposeFullPage builds a single RGBA image covering the full terminal:
+// the rounded page (content + selection + cursor) on top, and the status bar
+// strip at the bottom unless it is hidden with no pending message.
+func (e *Editor) bookComposeFullPage(pixW, rowsTotal, editRows int, renderH uint) *image.RGBA {
+	editPixH := editRows * int(renderH)
+	pageImg := e.bookPageToImage(pixW, editPixH, editRows, renderH)
+
+	// If the page already covers the full terminal (status bar hidden and no
+	// pending message), just return the page image unchanged.
+	showStatus := !e.statusMode || bookModeGetStatusMsg() != ""
+	if !showStatus || rowsTotal <= editRows {
+		return pageImg
+	}
+
+	totalPixH := rowsTotal * int(renderH)
+	bounds := image.Rect(0, 0, pixW, totalPixH)
+	if bookComposeBuf == nil || bookComposeBuf.Bounds() != bounds {
+		bookComposeBuf = image.NewRGBA(bounds)
+	}
+	full := bookComposeBuf
+	// Dark background everywhere so any gap matches the terminal chrome.
+	// Clearing via a direct slice fill is cheaper than draw.Draw with a
+	// uniform source.
+	for i := 0; i < len(full.Pix); i += 4 {
+		full.Pix[i] = 0
+		full.Pix[i+1] = 0
+		full.Pix[i+2] = 0
+		full.Pix[i+3] = 0xff
+	}
+	// Copy the page (content + selection + cursor + top rounded corners) to the top.
+	draw.Draw(full, image.Rect(0, 0, pixW, editPixH), pageImg, image.Point{}, draw.Src)
+	// Paint the status strip(s) at the bottom (typically one row).
+	statusPixH := totalPixH - editPixH
+	status := e.bookStatusBarImage(pixW, statusPixH, renderH)
+	draw.Draw(full, image.Rect(0, editPixH, pixW, totalPixH), status, image.Point{}, draw.Src)
+	return full
+}
+
+// countDisplayRowsTo returns the display-row index at which targetDoc appears
+// when starting at startDoc, or -1 if it is not reached within maxRows.
+// Accounts for multi-row images and soft-wrapped body/list lines. When fs is
+// non-nil, pixel-based wrapping is used; otherwise rune-based wrapping.
+func (e *Editor) countDisplayRowsTo(startDoc, targetDoc, maxRows, lineH, textW, marginLeft, marginRight int, fs *bookFontSet) int {
 	dl := startDoc
 	row := 0
 	totalLines := e.Len()
@@ -1455,14 +2571,100 @@ func (e *Editor) countDisplayRowsTo(startDoc, targetDoc, maxRows, lineH, textW, 
 		rl := e.Line(LineIndex(dl))
 		rl = strings.ReplaceAll(rl, "\t", "    ")
 		pl := parseBookLine(rl)
-		if pl.kind == lineKindImage {
-			row += e.bookImageRows(pl.body, lineH, textW, textH)
-		} else {
-			row++
+		switch {
+		case pl.kind == lineKindImage:
+			row += e.bookImageRows(pl.body, lineH, textW)
+		default:
+			if fs != nil {
+				row += bookPixelRowCount(fs, pl, lineH, marginLeft, marginRight)
+			} else {
+				row += bookWrapRowCount(pl, textW)
+			}
 		}
 		dl++
 	}
 	return -1
+}
+
+// bookWrapRowCount returns the number of display rows a parsed line occupies
+// when soft-wrapped to fit within availW characters. Non-body line kinds
+// return 1. Rune-based; use bookPixelRowCount for the graphical renderer.
+func bookWrapRowCount(pl parsedLine, availW int) int {
+	switch pl.kind {
+	case lineKindHeader, lineKindCode, lineKindBlank, lineKindRule, lineKindImage:
+		return 1
+	}
+	pfxLen := len([]rune(pl.prefix))
+	bodyLen := len([]rune(pl.body))
+	firstW := availW - pfxLen
+	if firstW <= 0 {
+		firstW = 1
+	}
+	if bodyLen <= firstW {
+		return 1
+	}
+	rows := 1
+	remaining := bodyLen - firstW
+	contW := availW - pfxLen
+	if contW <= 0 {
+		contW = 1
+	}
+	rows += (remaining + contW - 1) / contW
+	return rows
+}
+
+// bookHeaderRows returns the number of display rows a header line occupies
+// based on its actual font metrics. Large headers need multiple rows to avoid
+// overflowing into adjacent line slots.
+func bookHeaderRows(fs *bookFontSet, level, lineH int) int {
+	if lineH < 1 {
+		lineH = 1
+	}
+	hFace := fs.headerForLevel(level)
+	hSize := fs.headerSizeForLevel(level)
+	hAscent := faceAscent(hFace, hSize)
+	hDescent := hFace.Metrics().Descent.Round()
+	if hDescent <= 0 {
+		hDescent = int(hSize*0.2 + 0.5)
+	}
+	totalH := hAscent + hDescent
+	return max((totalH+lineH-1)/lineH, 1)
+}
+
+// bookPixelRowCount returns the number of display rows a parsed line occupies
+// when soft-wrapped using pixel-based measurement with proportional fonts.
+// The cursor overlay and scroll logic rely on this matching bookContentImage.
+func bookPixelRowCount(fs *bookFontSet, pl parsedLine, lineH, marginLeft, rightMargin int) int {
+	switch pl.kind {
+	case lineKindHeader:
+		return bookHeaderRows(fs, pl.headerLevel, lineH)
+	case lineKindCode, lineKindBlank, lineKindRule, lineKindImage:
+		return 1
+	}
+	textW := rightMargin - marginLeft
+	switch pl.kind {
+	case lineKindUnchecked, lineKindChecked:
+		size := max(lineH*55/100, 5)
+		prefixEndX := marginLeft + size + 3
+		bodyPx := rightMargin - prefixEndX
+		if bodyPx <= 0 {
+			return 1
+		}
+		return len(bookWrapSegmentsPixel(fs, pl.body, bodyPx))
+	case lineKindBullet, lineKindNumbered:
+		prefixPx := (&font.Drawer{Face: fs.regular}).MeasureString(pl.prefix).Round()
+		prefixEndX := marginLeft + prefixPx
+		bodyPx := rightMargin - prefixEndX
+		if bodyPx <= 0 {
+			return 1
+		}
+		return len(bookWrapSegmentsPixel(fs, pl.body, bodyPx))
+	default: // lineKindBody
+		if textW <= 0 {
+			return 1
+		}
+		return len(bookWrapSegmentsPixel(fs, pl.body, textW))
+	}
 }
 
 // bookModeEnsureCursorVisible adjusts e.pos.offsetY (and e.pos.sy) so that
@@ -1476,14 +2678,17 @@ func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
 	if cellW == 0 {
 		cellW = 8
 	}
+	// Use the same capped cell size as the rendering pipeline so the number
+	// of visible display rows matches exactly.
+	_, renderH := bookRenderCellSize(cellW, cellH)
 
 	rows := int(c.Height())
-	editRows := rows - 1
+	editRows := int(e.bookEditRows(uint(rows)))
 	if editRows <= 0 {
 		return
 	}
 
-	lineH := int(cellH)
+	lineH := int(renderH)
 	pixH := editRows * lineH
 	pixW := int(uint(c.Width()) * cellW)
 
@@ -1492,11 +2697,22 @@ func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
 	marginTop := int(float64(pixH) * bookMarginTop)
 	marginBottom := int(float64(pixH) * bookMarginBottom)
 	textW := marginRight - marginLeft
-	textH := pixH - marginTop - marginBottom
 
 	maxDisplayRows := min((pixH-marginTop-marginBottom)/lineH, editRows)
 	if maxDisplayRows <= 0 {
 		return
+	}
+
+	// Load font set for pixel-based row counting in graphical mode.
+	var fs *bookFontSet
+	if e.bookGraphicalMode() {
+		fontSize := float64(renderH) * 0.72
+		if fontSize < 6 {
+			fontSize = 6
+		}
+		if f, err := bookFaces(fontSize); err == nil {
+			fs = f
+		}
 	}
 
 	cursorDataY := int(e.DataY())
@@ -1507,6 +2723,15 @@ func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
 	// is one past the last line).
 	if cursorDataY >= totalLines {
 		cursorDataY = totalLines - 1
+		if cursorDataY < 0 {
+			return
+		}
+		// Fix the editor position so bookOverlayCursor finds the cursor.
+		e.pos.sy = cursorDataY - e.pos.offsetY
+		if e.pos.sy < 0 {
+			e.pos.offsetY = cursorDataY
+			e.pos.sy = 0
+		}
 	}
 	if cursorDataY < 0 || totalLines == 0 {
 		return
@@ -1520,7 +2745,7 @@ func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
 	}
 
 	// Check whether the cursor is already within the visible rows.
-	if e.countDisplayRowsTo(e.pos.offsetY, cursorDataY, maxDisplayRows, lineH, textW, textH) >= 0 {
+	if e.countDisplayRowsTo(e.pos.offsetY, cursorDataY, maxDisplayRows, lineH, textW, marginLeft, marginRight, fs) >= 0 {
 		return
 	}
 
@@ -1528,7 +2753,7 @@ func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
 	// a time until the cursor fits inside maxDisplayRows.
 	for e.pos.offsetY < cursorDataY && e.pos.offsetY < totalLines-1 {
 		e.pos.offsetY++
-		if e.countDisplayRowsTo(e.pos.offsetY, cursorDataY, maxDisplayRows, lineH, textW, textH) >= 0 {
+		if e.countDisplayRowsTo(e.pos.offsetY, cursorDataY, maxDisplayRows, lineH, textW, marginLeft, marginRight, fs) >= 0 {
 			break
 		}
 	}
@@ -1537,25 +2762,51 @@ func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
 	e.pos.sy = max(cursorDataY-e.pos.offsetY, 0)
 }
 
-// ── Terminal output ────────────────────────────────────────────────────────
-
-func flushImageToTerminal(img image.Image, dispCols, dispRows uint) {
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, img); err != nil {
-		return
+func flushImageToTerminal(img image.Image, dispCols, dispRows uint) string {
+	if imagepreview.IsSixel {
+		// DECSDM (CSI ? 80 h) keeps sixel output from scrolling the terminal.
+		// "\033[2J\033[H" clears any stale image remnants before the new frame.
+		fmt.Fprintf(os.Stdout, "\033[?80h\033[2J\033[H")
+		imagepreview.FlushSixelImage(os.Stdout, img)
+		// Home the cursor again in case the terminal ignored DECSDM.
+		fmt.Fprintf(os.Stdout, "\033[H")
+		return "" // no cached encoded form for Sixel
 	}
-	encoded := base64.StdEncoding.EncodeToString(buf.Bytes())
-	fmt.Fprintf(os.Stdout, "\033[H")
-	imagepreview.FlushImage(os.Stdout, encoded, dispCols, dispRows)
+	bookPNGBuf.Reset()
+	// BestSpeed keeps per-frame PNG encoding fast; Kitty decodes to RGBA
+	// internally, so a larger base64 payload is cheap compared to deflate time.
+	if err := bookPNGEncoder.Encode(&bookPNGBuf, img); err != nil {
+		return ""
+	}
+	encoded := base64.StdEncoding.EncodeToString(bookPNGBuf.Bytes())
+	// Buffer the whole frame (cursor-home + kitty graphics payload) into a
+	// single Write so the terminal receives it atomically.
+	bookWriteBuf.Reset()
+	fmt.Fprintf(&bookWriteBuf, "\033[H")
+	imagepreview.FlushImageWithID(&bookWriteBuf, encoded, dispCols, dispRows, 1)
+	os.Stdout.Write(bookWriteBuf.Bytes())
+	// Stable image ID (1) lets Kitty replace the image in place; iTerm2 ignores it.
+	return encoded
 }
 
-func (e *Editor) bookModeRenderImage(c *vt.Canvas) {
+// bookRenderCellSize returns the pixel (width, height) to use when building
+// the page image. The page is rendered at the terminal's reported cell size
+// so glyphs are pixel-perfect without terminal-side upscaling.
+func bookRenderCellSize(cellW, cellH uint) (uint, uint) {
+	return cellW, cellH
+}
+
+// bookModeRenderAll performs a full synchronized render of book mode:
+// content image + status bar + cursor positioning, all wrapped in a DEC 2026
+// synchronized update. Takes a cursor-only fast path when the content cache
+// is valid and a Sixel strip fast path when the terminal supports Sixel.
+func (e *Editor) bookModeRenderAll(c *vt.Canvas, status *StatusBar) {
 	cols := uint(c.Width())
 	rows := uint(c.Height())
 	if rows < 2 {
 		return
 	}
-	editRows := rows - 1
+	editRows := e.bookEditRows(rows)
 
 	cellW, cellH := imagepreview.TerminalCellPixels()
 	if cellW == 0 {
@@ -1564,17 +2815,136 @@ func (e *Editor) bookModeRenderImage(c *vt.Canvas) {
 	if cellH == 0 {
 		cellH = 16
 	}
+	renderW, renderH := bookRenderCellSize(cellW, cellH)
+	pixW := int(cols * renderW)
+	pixH := int(editRows * renderH)
 
-	pixW := int(cols * cellW)
-	pixH := int(editRows * cellH)
+	// Consume messageAfterRedraw before deciding fast vs full path.
+	hasPendingMsg := false
+	if status != nil {
+		if msg := status.messageAfterRedraw; len(msg) > 0 {
+			status.SetMessage(msg)
+			status.messageAfterRedraw = ""
+			bookModeSetStatusMsg(msg)
+			hasPendingMsg = true
+			mut.RLock()
+			dur := status.show
+			isErr := status.isError
+			mut.RUnlock()
+			if isErr {
+				dur *= 3
+			}
+			// Coalesce auto-clear goroutines via bookStatusClearGen so a burst
+			// of messageAfterRedraw bumps doesn't pile up stale goroutines.
+			myGen := bookStatusClearGen.Add(1)
+			go func() {
+				time.Sleep(dur)
+				if bookStatusClearGen.Load() != myGen {
+					return
+				}
+				bookModeSetStatusMsg("")
+				mut.Lock()
+				status.msg = ""
+				status.isError = false
+				mut.Unlock()
+				redrawMutex.Lock()
+				e.bookModeFullFrame(c)
+				redrawMutex.Unlock()
+			}()
+		}
+	}
 
-	img := e.bookPageToImage(pixW, pixH, int(editRows), cellH)
-	flushImageToTerminal(img, cols, editRows)
+	// Fast path: if the content cache is valid (no scroll, no edits) and no
+	// pending message requires a status-bar re-render, skip re-encoding the
+	// full page image. Just reposition the terminal cursor and update the
+	// (small) status-bar image — both are very cheap compared to PNG encoding.
+	gen := bookCurrentContentGen()
+	contentCacheValid := bookContentCache != nil &&
+		bookContentCacheW == pixW &&
+		bookContentCacheH == pixH &&
+		bookContentCacheOffsetY == e.pos.offsetY &&
+		gen == bookContentCacheGen
+
+	if contentCacheValid && !hasPendingMsg {
+		e.bookModeFullFrame(c)
+		return
+	}
+
+	// Full path: content changed or scrolled — re-encode and send the page image.
+	vt.BeginSyncUpdate()
+	if imagepreview.IsSixel {
+		fmt.Fprintf(os.Stdout, "\033[1;%dr", rows)
+	}
+	// Stable image ID (see flushImageToTerminal) makes Kitty replace the image
+	// in place, so no DeleteInlineImages() call is needed here. Calling delete
+	// every frame was the main source of the "image jumps / flashes" flicker.
+	e.bookModeRenderImageAt(cols, rows, editRows, renderH, pixW, pixH)
+	e.bookModeShowCursor(c)
+	if imagepreview.IsSixel {
+		fmt.Fprintf(os.Stdout, "\033[r")
+	}
+	vt.EndSyncUpdate()
+}
+
+// bookModeFullFrame re-composes and flushes the whole page image.
+// The caller must hold redrawMutex.
+func (e *Editor) bookModeFullFrame(c *vt.Canvas) {
+	cols := uint(c.Width())
+	rows := uint(c.Height())
+	if rows < 2 {
+		return
+	}
+	editRows := e.bookEditRows(rows)
+
+	cellW, cellH := imagepreview.TerminalCellPixels()
+	if cellW == 0 {
+		cellW = 8
+	}
+	if cellH == 0 {
+		cellH = 16
+	}
+	renderW, renderH := bookRenderCellSize(cellW, cellH)
+	pixW := int(cols * renderW)
+
+	vt.BeginSyncUpdate()
+	if imagepreview.IsSixel {
+		// Lock scroll region so Sixel output can't push past the bottom.
+		fmt.Fprintf(os.Stdout, "\033[1;%dr", rows)
+	}
+	img := e.bookComposeFullPage(pixW, int(rows), int(editRows), renderH)
+	encoded := flushImageToTerminal(img, cols, rows)
+	bookPageEncoded = encoded
+	bookPageEncodedCols = cols
+	bookPageEncodedRows = rows
+	e.bookModeShowCursor(c)
+	if imagepreview.IsSixel {
+		// Reset scroll region.
+		fmt.Fprintf(os.Stdout, "\033[r")
+	}
+	vt.EndSyncUpdate()
+}
+
+// bookModeRenderImageAt renders the unified page image and flushes it to the
+// terminal, caching the encoded PNG for reuse.
+func (e *Editor) bookModeRenderImageAt(cols, rowsTotal, editRows, renderH uint, pixW, pixH int) {
+	img := e.bookComposeFullPage(pixW, int(rowsTotal), int(editRows), renderH)
+	encoded := flushImageToTerminal(img, cols, rowsTotal)
+	bookPageEncoded = encoded
+	bookPageEncodedCols = cols
+	bookPageEncodedRows = rowsTotal
 }
 
 // bookModeStatusBar renders the bottom status row as a small image sent via
 // the Kitty/iTerm2 graphics protocol, using the Montserrat Bold sans-serif face.
+// When called outside of a bookModeRenderAll cycle, the caller should wrap the
+// call in vt.BeginSyncUpdate / vt.EndSyncUpdate to avoid flicker on Kitty.
 func (e *Editor) bookModeStatusBar(c *vt.Canvas) {
+	// When the status bar is hidden, don't render anything — the content
+	// image already fills the full terminal height.
+	if e.statusMode && bookModeGetStatusMsg() == "" {
+		return
+	}
+
 	cols := uint(c.Width())
 	rows := uint(c.Height())
 
@@ -1585,58 +2955,31 @@ func (e *Editor) bookModeStatusBar(c *vt.Canvas) {
 	if cellH == 0 {
 		cellH = 16
 	}
+	renderW, renderH := bookRenderCellSize(cellW, cellH)
 
-	pixW := int(cols * cellW)
-	pixH := int(cellH) // one terminal row
+	pixW := int(cols * renderW)
+	pixH := int(renderH) // one terminal row
 
-	// Dark background, white text.
-	img := image.NewRGBA(image.Rect(0, 0, pixW, pixH))
-	bgClr := color.NRGBA{0x1a, 0x1a, 0x1a, 0xff}
-	draw.Draw(img, img.Bounds(), image.NewUniform(bgClr), image.Point{}, draw.Src)
-
-	// Reuse the font set already cached for the main font size.
-	mainFontSize := float64(cellH) * 0.72
-	if mainFontSize < 6 {
-		mainFontSize = 6
-	}
-	if fs, err := bookFaces(mainFontSize); err == nil {
-		if msg := bookModeGetStatusMsg(); msg != "" {
-			// Temporary status message (e.g. "Saved foo.md") — always show over dark bar.
-		} else if e.statusMode {
-			// statusMode=true means "hide status bar": render the row white so it
-			// blends with the book page and is visually absent.
-			draw.Draw(img, img.Bounds(), image.White, image.Point{}, draw.Src)
-		}
-
-		var text string
-		if msg := bookModeGetStatusMsg(); msg != "" {
-			text = "  " + strings.TrimSpace(msg) + "  "
-		} else if !e.statusMode {
-			// Default: position + word count.
-			percentage, lineNumber, lastLineNumber := e.PLA()
-			text = fmt.Sprintf("  line %d / %d  (%d%%)   col %d   words %d  ",
-				lineNumber, lastLineNumber, percentage, e.ColNumber(), e.WordCount())
-		}
-
-		white := color.NRGBA{0xff, 0xff, 0xff, 0xff}
-		sbAscent := faceAscent(fs.statusBar, fs.statusBarSize)
-		baseline := (pixH+sbAscent)/2 + 1 // vertically centred
-		d := &font.Drawer{Face: fs.statusBar}
-		textPixW := d.MeasureString(text).Round()
-		x := max(
-			// centred horizontally
-			(pixW-textPixW)/2, 4)
-		drawString(img, fs.statusBar, x, baseline, text, white)
-	}
+	// Render the status bar image. bookStatusBarImage paints its own dark
+	// background, separator line and text; sharing this code path with the
+	// unified page compositor keeps the layout consistent.
+	img := e.bookStatusBarImage(pixW, pixH, renderH)
 
 	// Encode and send at the last terminal row.
-	var buf bytes.Buffer
-	if png.Encode(&buf, img) != nil {
-		return
-	}
-	encoded := base64.StdEncoding.EncodeToString(buf.Bytes())
 	fmt.Fprintf(os.Stdout, "\033[%d;1H", rows)
-	imagepreview.FlushImage(os.Stdout, encoded, cols, 1)
+	if imagepreview.IsSixel {
+		// DECSDM ON: don't let the sixel output move the cursor and
+		// scroll the terminal (see flushImageToTerminal for details).
+		fmt.Fprintf(os.Stdout, "\033[?80h")
+		imagepreview.FlushSixelImage(os.Stdout, img)
+	} else {
+		var buf bytes.Buffer
+		if png.Encode(&buf, img) != nil {
+			return
+		}
+		encoded := base64.StdEncoding.EncodeToString(buf.Bytes())
+		imagepreview.FlushImage(os.Stdout, encoded, cols, 1)
+	}
 }
 
 // bookModeShowCursor positions the hidden terminal cursor at the current
@@ -1646,7 +2989,7 @@ func (e *Editor) bookModeStatusBar(c *vt.Canvas) {
 func (e *Editor) bookModeShowCursor(c *vt.Canvas) {
 	cols := uint(c.Width())
 	rows := uint(c.Height())
-	editRows := rows - 1
+	editRows := e.bookEditRows(rows)
 
 	leftMarginCells := int(float64(cols) * bookMarginLeft)
 	topMarginCells := int(float64(editRows) * bookMarginTop)
@@ -1682,6 +3025,861 @@ func bookModeResetCursor() {
 	fmt.Fprintf(os.Stdout, "\033[?25h\033[2 q")
 }
 
+// bookTextModePlaceCursor positions the terminal cursor at the correct
+// column and row in text book mode, accounting for the left margin and
+// any Markdown prefix that is hidden from the editing position.
+func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
+	w := int(c.Width())
+	marginLeft := max(int(float64(w)*bookMarginLeft), 2)
+	marginRight := w - max(int(float64(w)*bookMarginRight), 1)
+	textW := marginRight - marginLeft
+
+	rawLine := e.Line(e.DataY())
+	rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
+	cursorRawX := e.pos.sx + e.pos.offsetX
+
+	pl := parseBookLine(rawLine)
+
+	// Count display rows from offsetY to DataY, accounting for soft wrapping.
+	startLine := e.pos.offsetY
+	cursorDataY := int(e.DataY())
+	totalLines := e.Len()
+	displayRow := 0
+	for dl := startLine; dl < cursorDataY && dl < totalLines; dl++ {
+		rl := e.Line(LineIndex(dl))
+		rl = strings.ReplaceAll(rl, "\t", "    ")
+		dpl := parseBookLine(rl)
+		displayRow += bookWrapRowCount(dpl, textW)
+	}
+
+	// Determine the sub-row within the current (possibly wrapped) line.
+	subRow := 0
+	var x int
+	switch pl.kind {
+	case lineKindHeader:
+		prefixLen := pl.headerLevel + 1
+		adjX := max(cursorRawX-prefixLen, 0)
+		x = adjX + marginLeft
+
+	case lineKindBullet, lineKindNumbered, lineKindUnchecked, lineKindChecked:
+		pfxRunes := []rune(pl.prefix)
+		pfxLen := len(pfxRunes)
+		bodyAvailW := textW - pfxLen
+		if bodyAvailW <= 0 {
+			bodyAvailW = 1
+		}
+		rawPrefix := rawMarkdownPrefix(rawLine)
+		rawBodyStart := len([]rune(rawPrefix))
+		bodyRawX := cursorRawX - rawBodyStart
+		if bodyRawX < 0 {
+			x = marginLeft + cursorRawX
+		} else {
+			// Find the wrap segment containing bodyRawX, then convert the
+			// raw offset within that segment to a visual offset so markers
+			// stripped by parseLineSegments don't shift the cursor.
+			wsegs := bookWrapBody(pl.body, bodyAvailW)
+			for i, ws := range wsegs {
+				if bodyRawX < ws.end || i == len(wsegs)-1 {
+					subRow = i
+					localRawX := bodyRawX - ws.start
+					if localRawX < 0 {
+						localRawX = 0
+					}
+					localVisX := rawXToVisualX(ws.text, localRawX)
+					x = marginLeft + pfxLen + localVisX
+					break
+				}
+			}
+		}
+
+	case lineKindCode, lineKindBlank, lineKindRule, lineKindImage:
+		x = cursorRawX + marginLeft
+
+	default: // lineKindBody
+		wsegs := bookWrapBody(pl.body, textW)
+		for i, ws := range wsegs {
+			if cursorRawX < ws.end || i == len(wsegs)-1 {
+				subRow = i
+				localRawX := cursorRawX - ws.start
+				if localRawX < 0 {
+					localRawX = 0
+				}
+				localVisX := rawXToVisualX(ws.text, localRawX)
+				x = marginLeft + localVisX
+				break
+			}
+		}
+	}
+
+	h := int(c.Height())
+	editRows := int(e.bookEditRows(uint(h)))
+	topMargin := int(float64(editRows) * bookMarginTop)
+
+	y := displayRow + subRow + topMargin
+
+	if x >= w {
+		x = w - 1
+	}
+	if x < marginLeft {
+		x = marginLeft
+	}
+
+	c.ShowCursor()
+	vt.SetXY(uint(x), uint(y))
+}
+
+// bookWrapWidth returns the available text width in runes for wrapping
+// in the current terminal (marginRight - marginLeft).
+func bookWrapWidth(c *vt.Canvas) int {
+	w := int(c.Width())
+	marginLeft := max(int(float64(w)*bookMarginLeft), 2)
+	marginRight := w - max(int(float64(w)*bookMarginRight), 1)
+	return marginRight - marginLeft
+}
+
+// bookPixelWrapInfo holds the pixel-based wrapping parameters needed by the
+// graphical book mode cursor movement functions. When non-nil it causes
+// sub-row calculations to use bookWrapSegmentsPixel (proportional font) instead
+// of bookWrapBody (fixed-width rune count).
+type bookPixelWrapInfo struct {
+	fs                *bookFontSet
+	marginLeft        int
+	marginRight       int
+	lineH             int
+	bodyTextPxFullRow int // pixel width available for body text on a full-width row (marginRight - marginLeft)
+}
+
+// bookGetPixelWrapInfo returns the pixel wrapping parameters when in graphical
+// book mode, or nil when in text mode.
+func (e *Editor) bookGetPixelWrapInfo(c *vt.Canvas) *bookPixelWrapInfo {
+	if !e.bookGraphicalMode() {
+		return nil
+	}
+	cellW, cellH := imagepreview.TerminalCellPixels()
+	if cellH == 0 {
+		cellH = 16
+	}
+	if cellW == 0 {
+		cellW = 8
+	}
+	_, renderH := bookRenderCellSize(cellW, cellH)
+	rows := int(c.Height())
+	editRows := int(e.bookEditRows(uint(rows)))
+	if editRows <= 0 {
+		return nil
+	}
+	lineH := int(renderH)
+	if lineH < 1 {
+		lineH = 1
+	}
+	pixW := int(uint(c.Width()) * cellW)
+	marginLeft := int(float64(pixW) * bookMarginLeft)
+	marginRight := pixW - int(float64(pixW)*bookMarginRight)
+	fontSize := float64(renderH) * 0.72
+	if fontSize < 6 {
+		fontSize = 6
+	}
+	fs, err := bookFaces(fontSize)
+	if err != nil {
+		return nil
+	}
+	return &bookPixelWrapInfo{
+		fs:                fs,
+		marginLeft:        marginLeft,
+		marginRight:       marginRight,
+		lineH:             lineH,
+		bodyTextPxFullRow: marginRight - marginLeft,
+	}
+}
+
+// pixelBodyAvailPx returns the pixel width available for body text on a
+// list/checkbox line, matching the calculation in bookContentImage and
+// bookOverlayCursor.
+func (pw *bookPixelWrapInfo) pixelBodyAvailPx(pl parsedLine) int {
+	switch pl.kind {
+	case lineKindUnchecked, lineKindChecked:
+		size := max(pw.lineH*55/100, 5)
+		prefixEndX := pw.marginLeft + size + 3
+		return pw.marginRight - prefixEndX
+	case lineKindBullet, lineKindNumbered:
+		prefixEndX := pw.marginLeft + (&font.Drawer{Face: pw.fs.regular}).MeasureString(pl.prefix).Round()
+		return pw.marginRight - prefixEndX
+	default:
+		return pw.bodyTextPxFullRow
+	}
+}
+
+// bookCursorSubRow returns (subRow, totalSubRows) for the current cursor
+// within a soft-wrapped line. For non-wrapping line kinds (header, code,
+// blank, rule, image) it returns (0, 1). When pw is non-nil, pixel-based
+// wrapping (proportional font) is used instead of character-count wrapping.
+func (e *Editor) bookCursorSubRow(textW int, pw *bookPixelWrapInfo) (subRow, totalRows int) {
+	rawLine := e.Line(e.DataY())
+	rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
+	cursorRawX := e.pos.sx + e.pos.offsetX
+	pl := parseBookLine(rawLine)
+
+	switch pl.kind {
+	case lineKindHeader, lineKindCode, lineKindBlank, lineKindRule, lineKindImage:
+		return 0, 1
+	}
+
+	if pw != nil {
+		// Pixel-based wrapping for graphical mode.
+		bodyAvailPx := pw.pixelBodyAvailPx(pl)
+		wrows := bookWrapSegmentsPixel(pw.fs, pl.body, bodyAvailPx)
+
+		// Determine the visual body rune offset.
+		rawPrefix := rawMarkdownPrefix(rawLine)
+		rawBodyStart := len([]rune(rawPrefix))
+		bodyRawX := cursorRawX
+		if pl.kind != lineKindBody {
+			bodyRawX -= rawBodyStart
+		}
+		if bodyRawX < 0 {
+			return 0, len(wrows)
+		}
+		bodyVisX := rawXToVisualX(pl.body, bodyRawX)
+		pos := 0
+		for i, wr := range wrows {
+			if bodyVisX < pos+wr.runeCount || i == len(wrows)-1 {
+				return i, len(wrows)
+			}
+			pos += wr.runeCount
+		}
+		return 0, len(wrows)
+	}
+
+	// Character-count wrapping for text mode.
+	switch pl.kind {
+	case lineKindBullet, lineKindNumbered, lineKindUnchecked, lineKindChecked:
+		pfxLen := len([]rune(pl.prefix))
+		rawPrefix := rawMarkdownPrefix(rawLine)
+		rawBodyStart := len([]rune(rawPrefix))
+		bodyRawX := cursorRawX - rawBodyStart
+		bodyAvailW := textW - pfxLen
+		if bodyAvailW <= 0 {
+			bodyAvailW = 1
+		}
+		wsegs := bookWrapBody(pl.body, bodyAvailW)
+		if bodyRawX < 0 {
+			return 0, len(wsegs)
+		}
+		pos := 0
+		for i, ws := range wsegs {
+			segLen := len([]rune(ws.text))
+			if bodyRawX < pos+segLen || i == len(wsegs)-1 {
+				return i, len(wsegs)
+			}
+			pos += segLen
+		}
+		return 0, len(wsegs)
+	default: // lineKindBody
+		wsegs := bookWrapBody(pl.body, textW)
+		pos := 0
+		for i, ws := range wsegs {
+			segLen := len([]rune(ws.text))
+			if cursorRawX < pos+segLen || i == len(wsegs)-1 {
+				return i, len(wsegs)
+			}
+			pos += segLen
+		}
+		return 0, len(wsegs)
+	}
+}
+
+// bookLineDisplayRows returns the number of display rows a data line occupies
+// given the current wrap context. When pw is non-nil, pixel-based wrapping is
+// used (graphical book mode); otherwise rune-based wrapping is used (text
+// book mode).
+func (e *Editor) bookLineDisplayRows(dl int, textW int, pw *bookPixelWrapInfo) int {
+	rl := e.Line(LineIndex(dl))
+	rl = strings.ReplaceAll(rl, "\t", "    ")
+	pl := parseBookLine(rl)
+	if pl.kind == lineKindImage {
+		var lineH, renderTextW int
+		if pw != nil {
+			lineH = pw.lineH
+			renderTextW = pw.bodyTextPxFullRow
+		} else {
+			renderTextW = textW
+		}
+		return e.bookImageRows(pl.body, lineH, renderTextW)
+	}
+	if pw != nil {
+		return bookPixelRowCount(pw.fs, pl, pw.lineH, pw.marginLeft, pw.marginRight)
+	}
+	return bookWrapRowCount(pl, textW)
+}
+
+// bookVisibleDataLines scans forward from startDoc and returns how many data
+// lines fit within editRows display rows. A partially-visible line at the
+// bottom is NOT counted. The minimum return value is 1 so PgDn always makes
+// progress, even when the top line alone would overflow the edit area.
+func (e *Editor) bookVisibleDataLines(startDoc, editRows, textW int, pw *bookPixelWrapInfo) int {
+	totalLines := e.Len()
+	rowsUsed := 0
+	count := 0
+	for dl := startDoc; dl < totalLines; dl++ {
+		lineRows := e.bookLineDisplayRows(dl, textW, pw)
+		if lineRows < 1 {
+			lineRows = 1
+		}
+		if rowsUsed+lineRows > editRows {
+			break
+		}
+		rowsUsed += lineRows
+		count++
+	}
+	if count < 1 {
+		count = 1
+	}
+	return count
+}
+
+// bookPgDn scrolls forward by approximately one visible page of display rows,
+// honouring soft wrap. It moves both offsetY and the cursor to the first data
+// line that was previously just below the visible area. Returns true if the
+// viewport changed.
+func (e *Editor) bookPgDn(c *vt.Canvas) bool {
+	rows := int(c.Height())
+	editRows := int(e.bookEditRows(uint(rows)))
+	if editRows <= 0 {
+		return false
+	}
+	textW := bookWrapWidth(c)
+	pw := e.bookGetPixelWrapInfo(c)
+	totalLines := e.Len()
+	if totalLines == 0 {
+		return false
+	}
+	step := e.bookVisibleDataLines(e.pos.offsetY, editRows, textW, pw)
+	newOffset := e.pos.offsetY + step
+	if newOffset >= totalLines {
+		newOffset = totalLines - 1
+	}
+	if newOffset == e.pos.offsetY && int(e.DataY()) == newOffset {
+		return false
+	}
+	e.pos.offsetY = newOffset
+	e.pos.sy = 0
+	e.pos.SetX(c, 0)
+	e.bookSavedLocalX = -1
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
+	return true
+}
+
+// bookPgUp scrolls backward by approximately one visible page of display
+// rows, honouring soft wrap. It moves both offsetY and the cursor back by as
+// many data lines as fit on the previous page. Returns true if the viewport
+// changed.
+func (e *Editor) bookPgUp(c *vt.Canvas) bool {
+	rows := int(c.Height())
+	editRows := int(e.bookEditRows(uint(rows)))
+	if editRows <= 0 {
+		return false
+	}
+	if e.pos.offsetY == 0 && int(e.DataY()) == 0 {
+		return false
+	}
+	textW := bookWrapWidth(c)
+	pw := e.bookGetPixelWrapInfo(c)
+	// Walk backwards accumulating display rows until we've covered editRows.
+	dl := e.pos.offsetY - 1
+	rowsUsed := 0
+	for dl >= 0 {
+		lineRows := e.bookLineDisplayRows(dl, textW, pw)
+		if lineRows < 1 {
+			lineRows = 1
+		}
+		if rowsUsed+lineRows > editRows && dl < e.pos.offsetY-1 {
+			dl++
+			break
+		}
+		rowsUsed += lineRows
+		if dl == 0 {
+			break
+		}
+		dl--
+	}
+	if dl < 0 {
+		dl = 0
+	}
+	if dl == e.pos.offsetY && int(e.DataY()) == dl {
+		return false
+	}
+	e.pos.offsetY = dl
+	e.pos.sy = 0
+	e.pos.SetX(c, 0)
+	e.bookSavedLocalX = -1
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
+	return true
+}
+
+// bookCursorDown moves the cursor down one display row. If the current line
+// is soft-wrapped and the cursor is not on the last sub-row, it moves within
+// the same data line. Otherwise it moves to the next data line.
+func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
+	textW := bookWrapWidth(c)
+	pw := e.bookGetPixelWrapInfo(c)
+	sub, total := e.bookCursorSubRow(textW, pw)
+
+	// Save the visual X on the first up/down press so that subsequent
+	// presses try to land on the same column.
+	if e.bookSavedLocalX < 0 {
+		e.bookSavedLocalX = e.pos.sx + e.pos.offsetX
+	}
+	savedX := e.bookSavedLocalX
+
+	if sub < total-1 {
+		// Move within the same data line to the next sub-row.
+		newX := bookSubRowX(e.Line(e.DataY()), textW, sub+1, savedX, pw)
+		e.pos.SetX(c, newX)
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
+		return true
+	}
+	// At the last sub-row — move to the next data line. Not using
+	// e.CursorDownward because it thinks in canvas cells and triggers a
+	// scroll at the wrong time for soft-wrapped book-mode layout.
+	if int(e.DataY()) >= e.Len()-1 {
+		// Already on the last data line. Surface an EOF message the first time
+		// we bump into the end, like CursorDownward does in non-book mode.
+		if status != nil && status.Message() != endOfFileMessage {
+			status.Clear(c, false)
+			status.SetMessage(endOfFileMessage)
+			status.ShowNoTimeout(c, e)
+		}
+		return false
+	}
+	e.pos.SetY(e.pos.sy + 1)
+	// Land on the first sub-row of the new line at the saved visual column.
+	newX := bookSubRowX(e.Line(e.DataY()), textW, 0, savedX, pw)
+	e.pos.SetX(c, newX)
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
+	return true
+}
+
+// bookCursorUp moves the cursor up one display row. If the current line
+// is soft-wrapped and the cursor is not on the first sub-row, it moves within
+// the same data line. Otherwise it moves to the previous data line.
+func (e *Editor) bookCursorUp(c *vt.Canvas, status *StatusBar) bool {
+	textW := bookWrapWidth(c)
+	pw := e.bookGetPixelWrapInfo(c)
+	sub, _ := e.bookCursorSubRow(textW, pw)
+
+	// Save the visual X on the first up/down press.
+	if e.bookSavedLocalX < 0 {
+		e.bookSavedLocalX = e.pos.sx + e.pos.offsetX
+	}
+	savedX := e.bookSavedLocalX
+
+	if sub > 0 {
+		// Move within the same data line to the previous sub-row.
+		newX := bookSubRowX(e.Line(e.DataY()), textW, sub-1, savedX, pw)
+		e.pos.SetX(c, newX)
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
+		return true
+	}
+	// At the first sub-row — move to the previous data line.
+	if e.DataY() == 0 {
+		return false
+	}
+	// Don't use e.CursorUpward (see bookCursorDown for the rationale).
+	// Advance DataY directly by decrementing sy; bookModeEnsureCursorVisible
+	// will handle scroll-up when sy goes below zero.
+	e.pos.SetY(e.pos.sy - 1)
+	// Land on the last sub-row of the previous line at the saved visual column.
+	lastSub := bookLineSubRowCount(e.Line(e.DataY()), textW, pw) - 1
+	if lastSub < 0 {
+		lastSub = 0
+	}
+	newX := bookSubRowX(e.Line(e.DataY()), textW, lastSub, savedX, pw)
+	e.pos.SetX(c, newX)
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
+	return true
+}
+
+// bookLineSubRowCount returns the total number of display sub-rows for a data
+// line when soft-wrapped at the given textW. When pw is non-nil, pixel-based
+// wrapping is used.
+func bookLineSubRowCount(rawLine string, textW int, pw *bookPixelWrapInfo) int {
+	rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
+	pl := parseBookLine(rawLine)
+	switch pl.kind {
+	case lineKindHeader, lineKindCode, lineKindBlank, lineKindRule, lineKindImage:
+		return 1
+	}
+	if pw != nil {
+		bodyAvailPx := pw.pixelBodyAvailPx(pl)
+		n := len(bookWrapSegmentsPixel(pw.fs, pl.body, bodyAvailPx))
+		if n < 1 {
+			return 1
+		}
+		return n
+	}
+	switch pl.kind {
+	case lineKindBullet, lineKindNumbered, lineKindUnchecked, lineKindChecked:
+		bodyAvailW := textW - len([]rune(pl.prefix))
+		if bodyAvailW <= 0 {
+			bodyAvailW = 1
+		}
+		n := len(bookWrapBody(pl.body, bodyAvailW))
+		if n < 1 {
+			return 1
+		}
+		return n
+	default: // lineKindBody
+		n := len(bookWrapBody(pl.body, textW))
+		if n < 1 {
+			return 1
+		}
+		return n
+	}
+}
+
+// bookSubRowX computes the rune position within a data line that corresponds
+// to visual column savedX on the given sub-row (0-based). The returned value
+// accounts for list prefixes and soft wrapping. When pw is non-nil, pixel-based
+// wrapping is used.
+func bookSubRowX(rawLine string, textW, targetSub, savedX int, pw *bookPixelWrapInfo) int {
+	rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
+	pl := parseBookLine(rawLine)
+
+	switch pl.kind {
+	case lineKindHeader, lineKindCode, lineKindBlank, lineKindRule, lineKindImage:
+		lineLen := len([]rune(rawLine))
+		if savedX > lineLen {
+			return lineLen
+		}
+		return savedX
+	}
+
+	rawPfxLen := 0
+	if pl.kind != lineKindBody {
+		rawPfxLen = len([]rune(rawMarkdownPrefix(rawLine)))
+	}
+
+	if pw != nil {
+		// Pixel-based wrapping for graphical mode.
+		bodyAvailPx := pw.pixelBodyAvailPx(pl)
+		wrows := bookWrapSegmentsPixel(pw.fs, pl.body, bodyAvailPx)
+		if targetSub < 0 {
+			targetSub = 0
+		}
+		if targetSub >= len(wrows) {
+			targetSub = len(wrows) - 1
+		}
+
+		// savedX is a raw rune position — convert to visual body rune offset.
+		bodyRawX := savedX
+		if pl.kind != lineKindBody {
+			bodyRawX -= rawPfxLen
+		}
+		if bodyRawX < 0 {
+			bodyRawX = 0
+		}
+		bodyVisX := rawXToVisualX(pl.body, bodyRawX)
+
+		// Subtract rune counts of sub-rows before the target to get the
+		// local visual column within this sub-row.
+		localVisX := bodyVisX
+		for i := 0; i < targetSub && i < len(wrows); i++ {
+			localVisX -= wrows[i].runeCount
+		}
+		if localVisX < 0 {
+			localVisX = 0
+		}
+		if localVisX > wrows[targetSub].runeCount {
+			localVisX = wrows[targetSub].runeCount
+		}
+
+		// Convert the visual position back to a raw rune position.
+		// The target visual rune count is the sum of prior rows + localVisX.
+		targetVisX := 0
+		for i := 0; i < targetSub; i++ {
+			targetVisX += wrows[i].runeCount
+		}
+		targetVisX += localVisX
+		newX := visualXToRawX(pl.body, targetVisX)
+		if pl.kind != lineKindBody {
+			newX += rawPfxLen
+		}
+		return newX
+	}
+
+	// Character-count wrapping for text mode.
+	pfxLen := 0
+	bodyText := rawLine
+	bodyAvailW := textW
+
+	switch pl.kind {
+	case lineKindBullet, lineKindNumbered, lineKindUnchecked, lineKindChecked:
+		pfxLen = len([]rune(pl.prefix))
+		bodyText = pl.body
+		bodyAvailW = textW - pfxLen
+		if bodyAvailW <= 0 {
+			bodyAvailW = 1
+		}
+	}
+
+	wsegs := bookWrapBody(bodyText, bodyAvailW)
+	if targetSub < 0 {
+		targetSub = 0
+	}
+	if targetSub >= len(wsegs) {
+		targetSub = len(wsegs) - 1
+	}
+
+	runeOffset := 0
+	for i := 0; i < targetSub; i++ {
+		runeOffset += len([]rune(wsegs[i].text))
+	}
+	segLen := len([]rune(wsegs[targetSub].text))
+
+	localX := savedX
+	if pl.kind != lineKindBody {
+		localX -= pfxLen
+	}
+	localX -= runeOffset
+	if localX < 0 {
+		localX = 0
+	}
+	if localX > segLen {
+		localX = segLen
+	}
+
+	newX := runeOffset + localX
+	if pl.kind != lineKindBody {
+		newX += rawPfxLen
+	}
+	return newX
+}
+
+// bookHome moves the cursor to the start of the current display sub-row.
+// If the cursor is already at the start of the current sub-row, it goes
+// to the very start of the data line (column 0).
+func (e *Editor) bookHome(c *vt.Canvas) {
+	textW := bookWrapWidth(c)
+	pw := e.bookGetPixelWrapInfo(c)
+	sub, _ := e.bookCursorSubRow(textW, pw)
+	if sub == 0 {
+		e.Home()
+		return
+	}
+	// Place cursor at the start of the current sub-row.
+	newX := bookSubRowX(e.Line(e.DataY()), textW, sub, 0, pw)
+	curX := e.pos.sx + e.pos.offsetX
+	if curX == newX {
+		e.Home()
+		return
+	}
+	e.pos.SetX(c, newX)
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
+}
+
+// bookEnd moves the cursor to the end of the current display sub-row.
+// If the cursor is already at the end of the current sub-row, it goes
+// to the very end of the data line.
+func (e *Editor) bookEnd(c *vt.Canvas) {
+	textW := bookWrapWidth(c)
+	pw := e.bookGetPixelWrapInfo(c)
+	sub, total := e.bookCursorSubRow(textW, pw)
+	if sub >= total-1 {
+		e.End(c)
+		return
+	}
+	// Place cursor at the end of the current sub-row by requesting the
+	// start of the next sub-row (which is the end of the current one).
+	rawLine := e.Line(e.DataY())
+	rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
+	pl := parseBookLine(rawLine)
+
+	rawPfxLen := 0
+	if pl.kind != lineKindBody {
+		rawPfxLen = len([]rune(rawMarkdownPrefix(rawLine)))
+	}
+
+	var newX int
+	if pw != nil {
+		// Pixel wrapping: sum runeCount of sub-rows 0..sub.
+		bodyAvailPx := pw.pixelBodyAvailPx(pl)
+		wrows := bookWrapSegmentsPixel(pw.fs, pl.body, bodyAvailPx)
+		visEnd := 0
+		for i := 0; i <= sub && i < len(wrows); i++ {
+			visEnd += wrows[i].runeCount
+		}
+		newX = visualXToRawX(pl.body, visEnd)
+		if pl.kind != lineKindBody {
+			newX += rawPfxLen
+		}
+	} else {
+		// Character wrapping.
+		pfxLen := 0
+		bodyText := rawLine
+		bodyAvailW := textW
+		switch pl.kind {
+		case lineKindBullet, lineKindNumbered, lineKindUnchecked, lineKindChecked:
+			pfxLen = len([]rune(rawMarkdownPrefix(rawLine)))
+			bodyText = pl.body
+			bodyAvailW = textW - len([]rune(pl.prefix))
+			if bodyAvailW <= 0 {
+				bodyAvailW = 1
+			}
+		}
+		_ = pfxLen
+		wsegs := bookWrapBody(bodyText, bodyAvailW)
+		runeOffset := 0
+		for i := 0; i <= sub && i < len(wsegs); i++ {
+			runeOffset += len([]rune(wsegs[i].text))
+		}
+		newX = runeOffset
+		if pl.kind != lineKindBody {
+			newX += rawPfxLen
+		}
+	}
+
+	curX := e.pos.sx + e.pos.offsetX
+	if curX == newX {
+		e.End(c)
+		return
+	}
+	e.pos.SetX(c, newX)
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
+}
+
+// bookMarkerLenAt returns the length in runes of an inline Markdown marker
+// starting at index i in runes, or 0 if there is no marker there. Recognised
+// markers: ***, **, *, __, ~~, `. This mirrors the logic used by
+// rawXToVisualX/visualXToRawX so the three stay in sync.
+func bookMarkerLenAt(runes []rune, i int) int {
+	n := len(runes)
+	if i < 0 || i >= n {
+		return 0
+	}
+	if i+2 < n && runes[i] == '*' && runes[i+1] == '*' && runes[i+2] == '*' {
+		return 3
+	}
+	if i+1 < n && runes[i] == '*' && runes[i+1] == '*' {
+		return 2
+	}
+	if runes[i] == '*' {
+		return 1
+	}
+	if i+1 < n && runes[i] == '_' && runes[i+1] == '_' {
+		return 2
+	}
+	if i+1 < n && runes[i] == '~' && runes[i+1] == '~' {
+		return 2
+	}
+	if runes[i] == '`' {
+		return 1
+	}
+	return 0
+}
+
+// bookSkipMarkersForward advances rawX past any inline Markdown markers at
+// rawX so the cursor lands just after them.
+func bookSkipMarkersForward(runes []rune, rawX int) int {
+	for rawX < len(runes) {
+		ml := bookMarkerLenAt(runes, rawX)
+		if ml == 0 {
+			break
+		}
+		rawX += ml
+	}
+	return rawX
+}
+
+// bookSkipMarkersBackward retreats rawX past any inline Markdown marker that
+// ends exactly at rawX so the cursor lands just before the marker rather
+// than inside or right after it.
+func bookSkipMarkersBackward(runes []rune, rawX int) int {
+	for rawX > 0 {
+		switch {
+		case rawX >= 3 && runes[rawX-1] == '*' && runes[rawX-2] == '*' && runes[rawX-3] == '*':
+			rawX -= 3
+		case rawX >= 2 && runes[rawX-1] == '*' && runes[rawX-2] == '*':
+			rawX -= 2
+		case rawX >= 2 && runes[rawX-1] == '_' && runes[rawX-2] == '_':
+			rawX -= 2
+		case rawX >= 2 && runes[rawX-1] == '~' && runes[rawX-2] == '~':
+			rawX -= 2
+		case rawX >= 1 && runes[rawX-1] == '*':
+			rawX--
+		case rawX >= 1 && runes[rawX-1] == '`':
+			rawX--
+		default:
+			return rawX
+		}
+	}
+	return rawX
+}
+
+// bookCursorForward moves one visible column to the right, skipping over any
+// Markdown inline markers (*, **, ***, __, ~~, `) so that each key-press
+// actually advances the visible cursor position — matching the behaviour of
+// WYSIWYG word processors.
+func (e *Editor) bookCursorForward(c *vt.Canvas, status *StatusBar) bool {
+	runes := []rune(e.Line(e.DataY()))
+	rawX := e.pos.sx + e.pos.offsetX
+	// First, skip any marker the cursor is sitting at/inside.
+	snapped := bookSkipMarkersForward(runes, rawX)
+	if snapped != rawX {
+		e.pos.SetX(c, snapped)
+		e.redrawCursor.Store(true)
+		e.SaveX(true)
+		return true
+	}
+	// No leading marker: advance one raw char, then skip over any trailing
+	// markers so the cursor stops on the next visible position.
+	beforeY, beforeX := e.DataY(), e.pos.sx
+	e.CursorForward(c, status)
+	runes = []rune(e.Line(e.DataY()))
+	rawX = e.pos.sx + e.pos.offsetX
+	snapped = bookSkipMarkersForward(runes, rawX)
+	if snapped != rawX {
+		e.pos.SetX(c, snapped)
+		e.redrawCursor.Store(true)
+		e.SaveX(true)
+	}
+	return e.DataY() != beforeY || e.pos.sx != beforeX
+}
+
+// bookCursorBackward moves one visible column to the left, skipping over any
+// Markdown inline markers so each key-press advances visibly.
+func (e *Editor) bookCursorBackward(c *vt.Canvas, status *StatusBar) bool {
+	runes := []rune(e.Line(e.DataY()))
+	rawX := e.pos.sx + e.pos.offsetX
+	// First, if the cursor is right after a marker, step past it in one go.
+	snapped := bookSkipMarkersBackward(runes, rawX)
+	if snapped != rawX {
+		e.pos.SetX(c, snapped)
+		e.redrawCursor.Store(true)
+		e.SaveX(true)
+		return true
+	}
+	// Otherwise retreat one raw char, then skip any marker we landed in.
+	beforeY, beforeX := e.DataY(), e.pos.sx
+	e.CursorBackward(c, status)
+	runes = []rune(e.Line(e.DataY()))
+	rawX = e.pos.sx + e.pos.offsetX
+	snapped = bookSkipMarkersBackward(runes, rawX)
+	if snapped != rawX {
+		e.pos.SetX(c, snapped)
+		e.redrawCursor.Store(true)
+		e.SaveX(true)
+	}
+	return e.DataY() != beforeY || e.pos.sx != beforeX
+}
+
 func (e *Editor) bookToggleFormat(c *vt.Canvas, marker string) {
 	if e.HasSelection() {
 		sel := e.selection.Text(e)
@@ -1700,6 +3898,232 @@ func (e *Editor) bookToggleFormat(c *vt.Canvas, marker string) {
 			e.CursorBackward(c, nil)
 		}
 	}
-	e.changed.Store(true)
+	e.MarkChanged()
 	e.redraw.Store(true)
+}
+
+// bookScreenshot opens the given Markdown file in graphical book mode, renders
+// the first visible page to a PNG image and writes it to outPath. Headless
+// operation used for visual debugging. When outPath ends with ".png", a single
+// screenshot is taken; otherwise per-line screenshots are written as
+// outPath_0.png, outPath_1.png, …
+func bookScreenshot(mdPath, outPath string) error {
+	// Simulated terminal dimensions (columns × rows).
+	const termCols = 120
+	const termRows = 40
+	// Simulated cell size in pixels.
+	const cellW = 8
+	const cellH = 18
+
+	// Create a minimal editor in book mode.
+	t := NewLightVSTheme()
+	e := NewCustomEditor(mode.DefaultTabsSpaces, 1, mode.Markdown, t, false, false, false, false, false, false, false)
+	e.filename = mdPath
+
+	if err := e.ReadFileAndProcessLines(mdPath); err != nil {
+		return fmt.Errorf("reading %s: %w", mdPath, err)
+	}
+
+	// Compute image dimensions.
+	editRows := uint(termRows - 1)
+	renderW, renderH := bookRenderCellSize(cellW, cellH)
+	pixW := int(uint(termCols) * renderW)
+	pixH := int(editRows * renderH)
+
+	// Generate screenshots with the cursor on each visible line.
+	totalLines := e.Len()
+	maxLines := min(totalLines, int(editRows))
+
+	for curLine := 0; curLine < maxLines; curLine++ {
+		// Position cursor at the start of this line.
+		e.pos.sy = curLine
+		e.pos.sx = 0
+		e.pos.offsetX = 0
+		e.pos.offsetY = 0
+
+		// Force fresh content render.
+		bookContentCache = nil
+
+		img := e.bookContentImage(pixW, pixH, int(editRows), renderH)
+		e.bookOverlayCursor(img, pixW, pixH, int(editRows), renderH)
+
+		// Apply top corners.
+		cornerRadius := min(pixW, pixH) / 40
+		if cornerRadius < 6 {
+			cornerRadius = 6
+		}
+		bookRoundedCorners(img, cornerRadius, true, false)
+
+		// Draw row guides.
+		bookScreenshotAnnotate(img, e, pixW, pixH, int(editRows), renderH)
+
+		path := fmt.Sprintf("%s_%d.png", strings.TrimSuffix(outPath, ".png"), curLine)
+		f, err := os.Create(path)
+		if err != nil {
+			return err
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			return err
+		}
+		f.Close()
+
+		rl := e.Line(LineIndex(curLine))
+		preview := strings.ReplaceAll(rl, "\t", "    ")
+		if len(preview) > 60 {
+			preview = preview[:60] + "…"
+		}
+		fmt.Printf("Line %2d: %s → %s\n", curLine, preview, path)
+	}
+
+	fmt.Printf("\nGenerated %d screenshots (%dx%d px, %d cols × %d rows)\n",
+		maxLines, pixW, pixH, termCols, termRows)
+	return nil
+}
+
+// bookScreenshotAnnotate draws thin red horizontal guides at each display row
+// boundary and a small red dot at the cursor position for visual debugging.
+func bookScreenshotAnnotate(img *image.RGBA, e *Editor, pixW, pixH, editRows int, cellH uint) {
+	lineH := int(cellH)
+	marginTop := int(float64(pixH) * bookMarginTop)
+	marginBottom := int(float64(pixH) * bookMarginBottom)
+	marginLeft := int(float64(pixW) * bookMarginLeft)
+	marginRight := pixW - int(float64(pixW)*bookMarginRight)
+
+	maxLines := min((pixH-marginTop-marginBottom)/lineH, editRows)
+
+	guideClr := color.NRGBA{0xFF, 0x00, 0x00, 0x60} // semi-transparent red
+
+	// Horizontal guides at each row boundary.
+	for row := 0; row <= maxLines; row++ {
+		y := marginTop + row*lineH
+		if y >= pixH {
+			break
+		}
+		for x := marginLeft; x < marginRight; x += 2 { // dashed
+			img.Set(x, y, guideClr)
+		}
+	}
+
+	// Mark cursor position with a small crosshair.
+	fontSize := float64(cellH) * 0.72
+	if fontSize < 6 {
+		fontSize = 6
+	}
+	fs, err := bookFaces(fontSize)
+	if err != nil {
+		return
+	}
+
+	ascent := faceAscent(fs.regular, fontSize)
+	textW := marginRight - marginLeft
+
+	cursorDataY := int(e.DataY())
+	cursorRawX := e.pos.sx + e.pos.offsetX
+	startLine := e.pos.offsetY
+	totalLines := e.Len()
+
+	// Compute cursor display row using pixel-based counting.
+	inFence := e.fenceStateAtLine(startLine)
+	cursorDisplayRow := -1
+	{
+		dl := startLine
+		for row := 0; row < maxLines && dl < totalLines; {
+			rl := e.Line(LineIndex(dl))
+			rl = strings.ReplaceAll(rl, "\t", "    ")
+			if isFencedCodeMarker(rl) {
+				inFence = !inFence
+				if dl == cursorDataY {
+					cursorDisplayRow = row
+					break
+				}
+				row++
+				dl++
+				continue
+			}
+			pl := parseBookLine(rl)
+			if inFence {
+				pl = parsedLine{kind: lineKindCode, body: rl}
+			}
+			if dl == cursorDataY {
+				cursorDisplayRow = row
+				break
+			}
+			row += bookPixelRowCount(fs, pl, lineH, marginLeft, marginRight)
+			dl++
+		}
+	}
+	if cursorDisplayRow < 0 {
+		return
+	}
+
+	// Compute cursor pixel X.
+	rawLine := e.Line(LineIndex(cursorDataY))
+	rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
+	pl := parseBookLine(rawLine)
+	var cursorPx int
+	switch pl.kind {
+	case lineKindHeader:
+		hFace := fs.headerForLevel(pl.headerLevel)
+		prefixLen := pl.headerLevel + 1
+		adjRawX := max(cursorRawX-prefixLen, 0)
+		bodyRunes := []rune(pl.body)
+		if adjRawX > len(bodyRunes) {
+			adjRawX = len(bodyRunes)
+		}
+		hd := &font.Drawer{Face: hFace}
+		cursorPx = marginLeft + hd.MeasureString(string(bodyRunes[:adjRawX])).Round()
+	default:
+		visX := rawXToVisualX(rawLine, cursorRawX)
+		_ = visX
+		cursorPx = marginLeft + (&font.Drawer{Face: fs.regular}).MeasureString(string([]rune(rawLine)[:min(cursorRawX, len([]rune(rawLine)))])).Round()
+	}
+
+	cursorY := marginTop + cursorDisplayRow*lineH + (lineH-ascent)/2 + ascent/2
+
+	// Draw crosshair.
+	crossClr := color.NRGBA{0xFF, 0x00, 0x00, 0xFF}
+	for dx := -4; dx <= 4; dx++ {
+		img.Set(cursorPx+dx, cursorY, crossClr)
+	}
+	for dy := -4; dy <= 4; dy++ {
+		img.Set(cursorPx, cursorY+dy, crossClr)
+	}
+
+	// Label: row number and cursor position.
+	fmt.Printf("  Cursor: dataY=%d rawX=%d displayRow=%d cursorPx=%d cursorY=%d\n",
+		cursorDataY, cursorRawX, cursorDisplayRow, cursorPx, cursorY)
+	fmt.Printf("  Layout: marginTop=%d lineH=%d ascent=%d textW=%d\n",
+		marginTop, lineH, ascent, textW)
+
+	// Print row map for debugging.
+	inFence2 := e.fenceStateAtLine(startLine)
+	dl := startLine
+	for row := 0; row < maxLines && dl < totalLines; {
+		rl := e.Line(LineIndex(dl))
+		rl = strings.ReplaceAll(rl, "\t", "    ")
+		if isFencedCodeMarker(rl) {
+			inFence2 = !inFence2
+			fmt.Printf("  Row %2d: doc=%d (fence marker)\n", row, dl)
+			row++
+			dl++
+			continue
+		}
+		pl2 := parseBookLine(rl)
+		if inFence2 {
+			pl2 = parsedLine{kind: lineKindCode, body: rl}
+		}
+		nrows := bookPixelRowCount(fs, pl2, lineH, marginLeft, marginRight)
+		marker := " "
+		if dl == cursorDataY {
+			marker = "*"
+		}
+		preview := rl
+		if len(preview) > 50 {
+			preview = preview[:50] + "…"
+		}
+		fmt.Printf("  Row %2d: doc=%d rows=%d kind=%d %s %q\n", row, dl, nrows, pl2.kind, marker, preview)
+		row += nrows
+		dl++
+	}
 }

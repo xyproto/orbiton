@@ -16,6 +16,7 @@ import (
 	"github.com/xyproto/digraph"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
+	"github.com/xyproto/imagepreview"
 	"github.com/xyproto/megafile"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
@@ -223,6 +224,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		}
 		clearOnQuit.Store(false)
 		return "", imageAction, nil
+	}
+
+	// For graphical book mode, hide the terminal cursor from the start
+	if e.bookGraphicalMode() {
+		c.HideCursor()
 	}
 
 	// Find the absolute path to this filename
@@ -455,6 +461,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			goto AFTER_KEY_HANDLING
 		}
 
+		// Reset the saved visual column for book mode unless the user is
+		// pressing up/down arrows (which should retain it).
+		if key != upArrow && key != downArrow {
+			e.bookSavedLocalX = -1
+		}
+
 		switch key {
 		case "c:17": // ctrl-q, quit
 
@@ -468,7 +480,21 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.quit = true
 		case "c:23": // ctrl-w, format or insert template (or if in git mode, cycle interactive rebase keywords)
 
-			if e.bookMode.Load() { // not relevant for prose writing
+			if e.bookMode.Load() {
+				// In book mode, ctrl-w toggles between graphical and text
+				// rendering when the terminal supports graphics (Kitty/iTerm2).
+				if imagepreview.HasGraphics {
+					if e.bookForceTextMode.Load() {
+						e.bookForceTextMode.Store(false)
+					} else {
+						// Switching from graphical to text: clean up images.
+						if imagepreview.IsKitty {
+							imagepreview.DeleteInlineImages()
+						}
+						e.bookForceTextMode.Store(true)
+					}
+					e.FullResetRedraw(c, status, true, false)
+				}
 				break
 			}
 
@@ -879,7 +905,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			e.ClearSelection()
-			e.CursorBackward(c, status)
+			cur := e.Cursor()
+			cur.Left(c, status)
 
 			// Move extra if the key is held down
 			if kh.TwoLastAre(leftArrow) && kh.AllWithin(200*time.Millisecond) && kh.LastChanged(200*time.Millisecond) {
@@ -889,7 +916,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				heldDuration := time.Since(heldDownLeftArrowTime)
 				steps := int(int64(heldDuration) / int64(delayUntilSpeedUp))
 				for i := 1; i < steps; i++ {
-					e.CursorBackward(c, status)
+					cur.Left(c, status)
 				}
 			} else {
 				heldDownLeftArrowTime = time.Time{}
@@ -921,7 +948,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			e.ClearSelection()
-			e.CursorForward(c, status)
+			cur := e.Cursor()
+			cur.Right(c, status)
 
 			// Move extra if the key is held down
 			if kh.TwoLastAre(rightArrow) && kh.AllWithin(200*time.Millisecond) && kh.LastChanged(200*time.Millisecond) {
@@ -931,7 +959,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				heldDuration := time.Since(heldDownRightArrowTime)
 				steps := int(int64(heldDuration) / int64(delayUntilSpeedUp))
 				for i := 1; i < steps; i++ {
-					e.CursorForward(c, status)
+					cur.Right(c, status)
 				}
 			} else {
 				heldDownRightArrowTime = time.Time{}
@@ -953,11 +981,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			e.ClearSelection()
-			e.CursorUpward(c, status)
+			cur := e.Cursor()
+			moved := cur.Up(c, status)
 
 			// Move extra if the key is held down
 			if kh.TwoLastAre(upArrow) && kh.AllWithin(200*time.Millisecond) && kh.LastChanged(200*time.Millisecond) {
-				e.CursorUpward(c, status)
+				if cur.Up(c, status) {
+					moved = true
+				}
 			}
 
 			if e.blockMode {
@@ -968,8 +999,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.redraw.Store(true)
 				e.drawFuncName.Store(true)
 			}
-			e.redraw.Store(true)
-			e.redrawCursor.Store(true)
+			// In book mode, skip the redraw when the cursor actually
+			// can't move (e.g. at the very top). Otherwise every
+			// held-down key still triggers a full PNG re-encode,
+			// which makes the editor feel stuck at boundaries.
+			if !e.bookMode.Load() || moved {
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+			}
 
 		case downArrow: // down arrow
 			// Check if it's a special case
@@ -982,11 +1019,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			e.ClearSelection()
-			e.CursorDownward(c, status)
+			cur := e.Cursor()
+			moved := cur.Down(c, status)
 
 			// Move extra if the key is held down
 			if kh.TwoLastAre(downArrow) && kh.AllWithin(200*time.Millisecond) && kh.LastChanged(200*time.Millisecond) {
-				e.CursorDownward(c, status)
+				if cur.Down(c, status) {
+					moved = true
+				}
 			}
 
 			if e.blockMode {
@@ -994,14 +1034,20 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			// If the cursor is after the length of the current line, move it to the end of the current line
-			if e.AfterLineScreenContents() || e.AfterEndOfLine() {
+			if !e.bookMode.Load() && (e.AfterLineScreenContents() || e.AfterEndOfLine()) {
 				e.End(c)
 			}
 			if e.highlightCurrentLine || e.highlightCurrentText {
 				e.drawFuncName.Store(true)
 			}
-			e.redraw.Store(true)
-			e.redrawCursor.Store(true)
+			// In book mode, skip the redraw when the cursor actually
+			// can't move (e.g. at the very bottom). Otherwise every
+			// held-down key still triggers a full PNG re-encode,
+			// which makes the editor feel stuck at boundaries.
+			if !e.bookMode.Load() || moved {
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+			}
 
 		case altUpKey: // alt-up, jump to the start of the previous paragraph
 			e.ClearSelection()
@@ -1075,7 +1121,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
-			e.CursorBackward(c, status)
+			e.Cursor().Left(c, status)
 			e.UpdateSelection()
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
@@ -1084,7 +1130,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
-			e.CursorForward(c, status)
+			e.Cursor().Right(c, status)
 			e.UpdateSelection()
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
@@ -1093,7 +1139,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
-			e.CursorUpward(c, status)
+			e.Cursor().Up(c, status)
 			e.UpdateSelection()
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
@@ -1102,7 +1148,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
-			e.CursorDownward(c, status)
+			e.Cursor().Down(c, status)
 			e.UpdateSelection()
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
@@ -1111,11 +1157,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
-			if !e.bookMode.Load() && e.AtOrAfterEndOfLine() {
-				// Non-book: wrap to start of next line when already at end.
+			if e.bookMode.Load() {
+				e.bookEnd(c)
+			} else if e.AtOrAfterEndOfLine() {
 				e.Down(c, status)
+				e.End(c)
+			} else {
+				e.End(c)
 			}
-			e.End(c)
 			e.UpdateSelection()
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
@@ -1125,8 +1174,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.StartSelection()
 			}
 			if e.bookMode.Load() {
-				// Standard word-processor behaviour: go straight to column 0.
-				e.Home()
+				e.bookHome(c)
 			} else if e.AtStartOfTextScreenLine() && (e.pos.sx+e.pos.offsetX) != 0 {
 				e.Home()
 			} else if e.pos.sx == 0 && e.pos.offsetX == 0 {
@@ -1168,11 +1216,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.HasSelection() {
 				undo.Snapshot(e)
 				selText := e.selection.Text(e)
-				if isDarwin {
-					_ = pbcopy(selText)
-				} else {
-					_ = clip.WriteAll(selText, e.primaryClipboard)
-				}
+				writeClipboardAsync(selText, e.primaryClipboard)
 				e.DeleteSelection(c, status)
 				e.ClearSelection()
 				e.redraw.Store(true)
@@ -1524,6 +1568,13 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			undo.Snapshot(e)
 
+			// Book mode has word-processor-style type-to-replace: if a
+			// selection exists when Return is pressed, replace it.
+			if e.bookMode.Load() && e.HasSelection() {
+				e.DeleteSelection(c, status)
+				e.ClearSelection()
+			}
+
 			e.ReturnPressed(c, status)
 
 		case "c:8", "c:127": // ctrl-h or backspace
@@ -1556,7 +1607,41 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			undo.Snapshot(e)
 
-			e.Backspace(c)
+			// In book mode: if a selection exists, delete it and continue
+			// typing (word-processor-style type-to-replace). In non-book
+			// mode, backspace falls through to single-character deletion
+			// to preserve the original behaviour.
+			if e.bookMode.Load() && e.HasSelection() {
+				e.DeleteSelection(c, status)
+				e.ClearSelection()
+				e.redrawCursor.Store(true)
+				e.redraw.Store(true)
+				break
+			}
+
+			// In book mode, backspace at the visual start of the body text
+			// (right after the list prefix) removes the prefix rather than
+			// deleting a single character.
+			if e.bookMode.Load() {
+				rawLine := e.Line(e.DataY())
+				expanded := strings.ReplaceAll(rawLine, "\t", "    ")
+				pl := parseBookLine(expanded)
+				pfx := rawMarkdownPrefix(expanded)
+				cursorX := e.pos.sx + e.pos.offsetX
+				atOrBeforePrefix := pfx != "" && cursorX <= len([]rune(pfx))
+				switch {
+				case atOrBeforePrefix && (pl.kind == lineKindBullet || pl.kind == lineKindNumbered || pl.kind == lineKindUnchecked || pl.kind == lineKindChecked):
+					// Replace the current line with just the body text.
+					e.SetLine(e.DataY(), pl.body)
+					e.Home()
+					e.redrawCursor.Store(true)
+					e.redraw.Store(true)
+				default:
+					e.Backspace(c)
+				}
+			} else {
+				e.Backspace(c)
+			}
 
 			e.redrawCursor.Store(true)
 			e.redraw.Store(true)
@@ -1706,6 +1791,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case pgUpKey: // page up
 			e.ClearSelection()
+			if e.bookMode.Load() {
+				if !e.bookPgUp(c) {
+					status.Clear(c, false)
+					status.SetMessage("Start of file")
+					status.ShowNoTimeout(c, e)
+				}
+				break
+			}
 			h := int(c.H())
 			e.redraw.Store(e.ScrollUp(c, status, int(float64(h)*0.9)))
 			e.redrawCursor.Store(true)
@@ -1734,6 +1827,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case pgDnKey: // page down
 			e.ClearSelection()
+			if e.bookMode.Load() {
+				if !e.bookPgDn(c) {
+					status.Clear(c, false)
+					status.SetMessage(endOfFileMessage)
+					status.ShowNoTimeout(c, e)
+				}
+				break
+			}
 			h := int(c.H())
 			redraw := e.ScrollDown(c, status, int(float64(h)*0.9), h)
 			e.redraw.Store(redraw)
@@ -1804,7 +1905,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			// First check if we just moved to this line with the arrow keys
 			justMovedUpOrDown := kh.PrevHas(downArrow, upArrow)
-			if e.blockMode {
+			if e.bookMode.Load() {
+				// Word-processor behaviour: navigate to the start of the
+				// current visual sub-row, or to column 0 if already there.
+				e.bookHome(c)
+			} else if e.blockMode {
 				e.HomeBlock()
 			} else if e.macro != nil {
 				e.Home()
@@ -1834,7 +1939,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			// First check if we just moved to this line with the arrow keys, or just cut a line with ctrl-x
 			justMovedUpOrDown := kh.PrevHas(downArrow, upArrow, "c:24")
-			if e.blockMode {
+			if e.bookMode.Load() {
+				// Word-processor behaviour: navigate to the end of the
+				// current visual sub-row, or to end of data line if already there.
+				e.bookEnd(c)
+			} else if e.blockMode {
 				e.EndBlock(c)
 			} else if e.AtEndOfDocument() || e.macro != nil {
 				e.End(c)
@@ -1880,7 +1989,16 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			if e.bookMode.Load() { // book mode: toggle word-statistics display
 				e.statusMode = !e.statusMode
-				e.bookModeStatusBar(c)
+				if e.bookGraphicalMode() {
+					// Invalidate cached content so it re-renders at the new height
+					bookContentCache = nil
+					e.bookModeEnsureCursorVisible(c)
+					e.bookModeRenderAll(c, status)
+				} else {
+					vt.BeginSyncUpdate()
+					e.bookModeStatusBar(c)
+					vt.EndSyncUpdate()
+				}
 				break
 			}
 
@@ -2007,11 +2125,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				undo.Snapshot(e)
 				selText := e.selection.Text(e)
 				if selText != "" {
-					if isDarwin {
-						_ = pbcopy(selText)
-					} else {
-						_ = clip.WriteAll(selText, e.primaryClipboard)
-					}
+					writeClipboardAsync(selText, e.primaryClipboard)
 					copyLines = strings.Split(selText, "\n")
 					pasteAllAtOnce = true
 					e.DeleteSelection(c, status)
@@ -2033,11 +2147,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				lines := strings.Split(s, "\n")
 				if len(lines) > 0 {
 					copyLines = lines
-					if isDarwin {
-						pbcopy(s)
-					} else {
-						_ = clip.WriteAll(s, e.primaryClipboard)
-					}
+					writeClipboardAsync(s, e.primaryClipboard)
 					notRegularEditingRightNow.Store(true)
 					for range lines {
 						e.DeleteLineMoveBookmark(y)
@@ -2094,13 +2204,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				copyLines = append(copyLines, lines...)
 				s = strings.Join(copyLines, "\n")
 
-				// Place the block of text in the clipboard
-				if isDarwin {
-					pbcopy(s)
-				} else {
-					// Place it in the non-primary clipboard
-					_ = clip.WriteAll(s, e.primaryClipboard)
-				}
+				// Place the block of text in the clipboard (async to keep
+				// ctrl-x snappy — forking xclip/wl-copy/pbcopy is slow).
+				writeClipboardAsync(s, e.primaryClipboard)
 
 				// Delete the corresponding number of lines
 				notRegularEditingRightNow.Store(true)
@@ -2163,11 +2269,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.HasSelection() {
 				selText := e.selection.Text(e)
 				if selText != "" {
-					if isDarwin {
-						_ = pbcopy(selText)
-					} else {
-						_ = clip.WriteAll(selText, e.primaryClipboard)
-					}
+					writeClipboardAsync(selText, e.primaryClipboard)
 					copyLines = strings.Split(selText, "\n")
 					pasteAllAtOnce = true
 					copied := len(copyLines)
@@ -2532,6 +2634,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 				undo.Snapshot(e)
 
+				// Book mode: word-processor-style type-to-replace.
+				if e.bookMode.Load() && e.HasSelection() {
+					e.DeleteSelection(c, status)
+					e.ClearSelection()
+				}
+
 				// Type in the letters that were pressed
 				for _, r := range keyRunes {
 					// Insert a letter. This is what normally happens.
@@ -2551,6 +2659,13 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 			} else if len(keyRunes) > 0 && unicode.IsGraphic(keyRunes[0]) { // any other key that can be drawn
 				undo.Snapshot(e)
+
+				// Book mode: word-processor-style type-to-replace.
+				if e.bookMode.Load() && e.HasSelection() {
+					e.DeleteSelection(c, status)
+					e.ClearSelection()
+				}
+
 				e.redraw.Store(true)
 
 				// Place *something*

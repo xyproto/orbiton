@@ -573,7 +573,9 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		fallthrough
 	default:
 		// Draw editor lines from line 0 to h onto the canvas at 0,0
-		e.HideCursorDrawLines(c, false, false, false)
+		if !e.bookGraphicalMode() {
+			e.HideCursorDrawLines(c, false, false, false)
+		}
 		e.redraw.Store(false)
 	}
 
@@ -586,7 +588,9 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	// Redraw the TUI, if needed
 	if e.redraw.Load() && c != nil {
 		e.Center(c)
-		e.HideCursorDrawLines(c, true, false, false)
+		if !e.bookGraphicalMode() {
+			e.HideCursorDrawLines(c, true, false, false)
+		}
 		e.redraw.Store(false)
 	}
 
@@ -685,8 +689,9 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 		e.bookMode.Store(true)
 		e.syntaxHighlight = false
 		e.wrapWidth = 72
-		e.wrapWhenTyping = true
+		e.wrapWhenTyping = false // soft wrapping is handled visually by the book mode renderer
 		e.statusMode = true
+		e.bookSavedLocalX = -1
 	}
 	e.mode = m
 	e.fastInputMode = !strings.HasPrefix(env.Str("TERM"), "vt") && env.Str("TERM") != "linux"

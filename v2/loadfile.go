@@ -87,7 +87,7 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 			}
 		}
 	}
-	e.changed.Store(true)
+	e.MarkChanged()
 	return nil
 }
 
@@ -188,5 +188,5 @@ func (e *Editor) LoadBytes(data []byte) {
 	}
 
 	// Mark the editor contents as "changed"
-	e.changed.Store(true)
+	e.MarkChanged()
 }

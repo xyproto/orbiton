@@ -167,7 +167,7 @@ func (e *Editor) formatWithUtility(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 				return err
 			}
 			// Mark the data as changed, despite just having loaded a file
-			e.changed.Store(true)
+			e.MarkChanged()
 			e.redrawCursor.Store(true)
 		}
 		// Try to close the file. f.Close() checks if f is nil before closing.

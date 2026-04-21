@@ -426,7 +426,7 @@ func (e *Editor) FormatAllMarkdownTables() {
 		e.SetLine(LineIndex(i), line)
 	}
 
-	e.changed.Store(true)
+	e.MarkChanged()
 	e.redraw.Store(true)
 }
 

@@ -61,6 +61,9 @@ var (
 	// Book mode: word wrap, no syntax highlighting, text focus
 	bookModeFlag bool
 
+	// Book screenshot: render one frame in graphical book mode and save as PNG
+	bookScreenshotFlag string
+
 	// An empty *Ollama struct
 	ollama = NewOllama()
 
@@ -139,6 +142,7 @@ func main() {
 	pflag.BoolVarP(&pasteFlag, "paste", "p", false, "paste the clipboard into the file and quit")
 	pflag.BoolVarP(&releaseBuildFlag, "release", "r", false, "build with release mode instead of debug mode, whenever applicable")
 	pflag.BoolVarP(&bookModeFlag, "book", "B", false, "open in book mode: word wrap, plain text, word count")
+	pflag.StringVar(&bookScreenshotFlag, "bookscreenshot", "", "render graphical book mode and save a PNG screenshot to the given path")
 	pflag.BoolVarP(&quickHelpFlag, "quick-help", "q", false, "always display the quick help when starting")
 	pflag.BoolVarP(&noQuickHelpFlag, "no-quick-help", "z", false, "never display the quick help when starting")
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
@@ -151,6 +155,21 @@ func main() {
 	pflag.CommandLine.MarkHidden("cycle")
 
 	pflag.Parse()
+
+	// --bookscreenshot: render graphical book mode headlessly and save a PNG.
+	if bookScreenshotFlag != "" {
+		bookModeFlag = true
+		args := pflag.Args()
+		if len(args) == 0 {
+			fmt.Fprintln(os.Stderr, "--bookscreenshot requires a filename argument")
+			os.Exit(1)
+		}
+		if err := bookScreenshot(args[0], bookScreenshotFlag); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 
 	if versionFlag {
 		fmt.Println(versionString)

@@ -18,6 +18,22 @@ import (
 // When pasting text, portals older than this duration will be disregarded
 const maxPortalAge = 25 * time.Minute
 
+// writeClipboardAsync writes text to the system clipboard in a background
+// goroutine. On Linux this forks xclip/wl-copy and on macOS it execs pbcopy,
+// both of which add noticeable latency (tens to hundreds of ms) to the
+// foreground keyloop when performed synchronously. Fire-and-forget is fine
+// for Ctrl-X / Ctrl-C because the user only needs the text in the clipboard
+// before the next paste, not before the next keystroke.
+func writeClipboardAsync(text string, primaryClipboard bool) {
+	go func(s string, primary bool) {
+		if isDarwin {
+			_ = pbcopy(s)
+			return
+		}
+		_ = clip.WriteAll(s, primary)
+	}(text, primaryClipboard)
+}
+
 // SetClipboardFromFile can copy the given file to the clipboard.
 // The returned int is the number of bytes written.
 // The returned string is the last 7 characters written to the file.

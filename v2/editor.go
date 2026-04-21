@@ -67,6 +67,8 @@ type Editor struct {
 	building                    atomic.Bool // currently building code or exporting to a file?
 	runAfterBuild               atomic.Bool // run the application after building?
 	bookMode                    atomic.Bool // book mode: word wrap, no syntax highlighting, text focus
+	bookForceTextMode           atomic.Bool // force text rendering even when graphics are available
+	bookSavedLocalX             int         // sticky visual column within a sub-row for up/down movement (-1 = unset)
 	rainbowParenthesis          bool        // rainbow parenthesis
 	debugMode                   bool        // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
 	statusMode                  bool        // display a status bar at all times at the bottom of the screen
@@ -178,6 +180,8 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.flaskApplication.Store(e.flaskApplication.Load())
 	e2.moveLinesMode.Store(e.moveLinesMode.Load())
 	e2.bookMode.Store(e.bookMode.Load())
+	e2.bookForceTextMode.Store(e.bookForceTextMode.Load())
+	e2.bookSavedLocalX = e.bookSavedLocalX
 	return &e2
 }
 
@@ -190,6 +194,13 @@ func (e *Editor) CopyLines() map[int][]rune {
 		lines2[key] = runes2
 	}
 	return lines2
+}
+
+// MarkChanged marks the document as changed and bumps the book-mode content
+// generation counter so the graphical content cache is invalidated.
+func (e *Editor) MarkChanged() {
+	e.changed.Store(true)
+	bookBumpContentGen()
 }
 
 // Set will store a rune in the editor data, at the given data coordinates
@@ -205,7 +216,7 @@ func (e *Editor) Set(x int, index LineIndex, r rune) {
 	l := len(e.lines[y])
 	if x < l {
 		e.lines[y][x] = r
-		e.changed.Store(true)
+		e.MarkChanged()
 		return
 	}
 	// If the line is too short, fill it up with spaces
@@ -216,7 +227,7 @@ func (e *Editor) Set(x int, index LineIndex, r rune) {
 
 	// Set the rune
 	e.lines[y][x] = r
-	e.changed.Store(true)
+	e.MarkChanged()
 }
 
 // Get will retrieve a rune from the editor data, at the given coordinates
@@ -382,7 +393,7 @@ func (e *Editor) ContentsAndReverseSearchPrefix(prefix string) (string, LineInde
 // Clear removes all data from the editor
 func (e *Editor) Clear() {
 	e.lines = make(map[int][]rune)
-	e.changed.Store(true)
+	e.MarkChanged()
 }
 
 // Load will try to load a file. The file is assumed to be checked to already exist.
@@ -545,7 +556,7 @@ func (e *Editor) DeleteRestOfLine() {
 		return
 	}
 	e.lines[y] = e.lines[y][:x]
-	e.changed.Store(true)
+	e.MarkChanged()
 
 	// Make sure no lines are nil
 	e.MakeConsistent()
@@ -582,7 +593,7 @@ func (e *Editor) DeleteLine(n LineIndex) {
 	delete(e.lines, int(maxIndex))
 
 	// This changes the document
-	e.changed.Store(true)
+	e.MarkChanged()
 
 	// Make sure no lines are nil
 	e.MakeConsistent()
@@ -615,7 +626,7 @@ func (e *Editor) Delete(c *vt.Canvas, useBlockMode bool) {
 			// All keys in the map that are > y should be shifted -1.
 			// This also overwrites e.lines[y].
 			e.DeleteLine(LineIndex(y))
-			e.changed.Store(true)
+			e.MarkChanged()
 			return true // continue
 		}
 		x, err := e.DataX()
@@ -632,7 +643,7 @@ func (e *Editor) Delete(c *vt.Canvas, useBlockMode bool) {
 					e.DeleteLine(LineIndex(y + 1))
 				}
 			}
-			e.changed.Store(true)
+			e.MarkChanged()
 			return true // continue
 		}
 		// Delete just this character
@@ -646,7 +657,7 @@ func (e *Editor) Delete(c *vt.Canvas, useBlockMode bool) {
 		deleteThisRune()
 	}
 
-	e.changed.Store(true)
+	e.MarkChanged()
 	// Make sure no lines are nil
 	e.MakeConsistent()
 }
@@ -675,7 +686,7 @@ func (e *Editor) MakeConsistent() {
 	for i := 0; i < len(e.lines); i++ {
 		if _, found := e.lines[i]; !found {
 			e.lines[i] = make([]rune, 0)
-			e.changed.Store(true)
+			e.MarkChanged()
 		}
 	}
 }
@@ -808,7 +819,7 @@ func (e *Editor) WrapAllLines() bool {
 				insertedLines++
 			}
 
-			e.changed.Store(true)
+			e.MarkChanged()
 		}
 	}
 
@@ -893,7 +904,7 @@ func (e *Editor) InsertLineAbove() {
 			break
 		}
 	}
-	e.changed.Store(true)
+	e.MarkChanged()
 }
 
 // InsertLineBelow will attempt to insert a new line below the current position
@@ -915,7 +926,7 @@ func (e *Editor) InsertLineBelowAt(index LineIndex) {
 	// If we are the the last line, add an empty line at the end and return
 	if y == (len(e.lines) - 1) {
 		e.lines[int(y)+1] = make([]rune, 0)
-		e.changed.Store(true)
+		e.MarkChanged()
 		return
 	}
 
@@ -946,7 +957,7 @@ func (e *Editor) InsertLineBelowAt(index LineIndex) {
 		}
 	}
 
-	e.changed.Store(true)
+	e.MarkChanged()
 }
 
 // Insert will insert a rune at the given position, with no word wrap,
@@ -992,7 +1003,7 @@ func (e *Editor) Insert(c *vt.Canvas, r rune) {
 		doInsert()
 	}
 
-	e.changed.Store(true)
+	e.MarkChanged()
 
 	// Make sure no lines are nil
 	e.MakeConsistent()
@@ -1006,7 +1017,7 @@ func (e *Editor) CreateLineIfMissing(n LineIndex) {
 	_, ok := e.lines[int(n)]
 	if !ok {
 		e.lines[int(n)] = make([]rune, 0)
-		e.changed.Store(true)
+		e.MarkChanged()
 	}
 }
 
