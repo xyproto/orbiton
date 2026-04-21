@@ -436,7 +436,7 @@ C
 
 C++
 
-* For building code with `ctrl-space`, [`cxx`](https://github.com/xyproto/cxx) must be installed.
+* For building code with `ctrl-space`, `gcc`/`clang`/`cmake`/`make`/`ninja` should be installed.
 * For formatting code with `ctrl-w`, `clang-format` must be installed.
 * For tab completion, `clangd` must be installed.
 
@@ -620,7 +620,6 @@ When editing `PKGBUILD` files, it is possible to press `ctrl-o` and select `Call
 * `clangd` - for tab completion for C and C++
 * `clojure` - for compiling Clojure
 * `crystal` - for compiling Crystal
-* [`cxx`](https://github.com/xyproto/cxx) - for compiling C++
 * `fpc` - for compiling Object Pascal
 * `g++` - for compiling C++ code
 * `gdc` - for compiling D code
