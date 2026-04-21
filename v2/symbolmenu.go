@@ -77,7 +77,7 @@ func (e *Editor) SymbolMenu(tty *vt.TTY, status *StatusBar, title string, choice
 		}
 
 		// Handle events
-		key := tty.String()
+		key := tty.ReadKey()
 		switch key {
 		case upArrow, "c:16": // Up or ctrl-p
 			resizeMut.Lock()

@@ -262,7 +262,7 @@ func (e *Editor) DrawHotkeyOverview(tty *vt.TTY, c *vt.Canvas, status *StatusBar
 		c.HideCursorAndDraw()
 
 		// Wait for a keypress
-		key := tty.String()
+		key := tty.ReadKey()
 		switch key {
 		case " ": // Space key to go to next page
 			scrollableTextBox.NextPage()
