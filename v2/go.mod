@@ -23,7 +23,7 @@ require (
 	github.com/xyproto/fullname v1.1.0
 	github.com/xyproto/globi v1.0.2
 	github.com/xyproto/iferr v1.1.0
-	github.com/xyproto/imagepreview v1.1.1
+	github.com/xyproto/imagepreview v1.1.3
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
@@ -33,7 +33,7 @@ require (
 	github.com/xyproto/orchideous v1.0.7
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.2.3
-	github.com/xyproto/vt v1.8.3
+	github.com/xyproto/vt v1.8.5
 	github.com/xyproto/wordwrap v1.0.2
 	golang.org/x/image v0.39.0
 )
